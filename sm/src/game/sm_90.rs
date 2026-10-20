@@ -59,9 +59,10 @@ use ::core::ptr::null_mut;
 pub type Func_Y_To_PairU16 = unsafe fn(u16, &mut Game) -> PairU16;
 pub use crate::types::LiquidPhysicsType;
 pub use crate::types::{OamEnt, SamusPose, VramWriteEntry};
-pub const kLiquidPhysicsType_LavaAcid: LiquidPhysicsType = 2;
-pub const kLiquidPhysicsType_Water: LiquidPhysicsType = 1;
-pub const kLiquidPhysicsType_Air: LiquidPhysicsType = 0;
+crate::game::constants::typed_constants! { LiquidPhysicsType;
+    kLiquidPhysicsType_LavaAcid = 2, kLiquidPhysicsType_Water = 1,
+    kLiquidPhysicsType_Air = 0,
+}
 pub use crate::types::SamusPoseParams;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
@@ -89,8 +90,9 @@ pub use crate::types::GameState;
 pub use crate::types::{
     CheckEnemyColl_Result, CheckSolidEnemyColl_Result, Func_SpazerSba_V, Pair_Bool_Amt,
 };
-pub const true_0: i32 = 1;
-pub const false_0: i32 = 0;
+crate::game::constants::typed_constants! { i32;
+    true_0 = 1, false_0 = 0,
+}
 const RomPtr_82: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x82>;
 const RomPtr_90: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x90>;
 const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
@@ -102,114 +104,149 @@ crate::ram_map::ram_pointer_functions! {
 unsafe fn get_SamusSpeedTableEntry(a: u16, game: &mut Game) -> *mut SamusSpeedTableEntry {
     RomPtr((0x900000u32) | ((a) as u32), game) as *mut SamusSpeedTableEntry
 }
-pub const fnSamus_MoveHandler_ReleaseFromGrapple: u32 = 9475182;
-pub const fnSamus_HandleMovement_DrainedCrouching: i32 = 0x9094cb;
-pub const fnSamus_ScrollFinishedHook_SporeSpawnFight: u32 = 9475465;
-pub const fnSamus_MovementHandler_Normal: i32 = 0x90a337;
-pub const fnProjPreInstr_Beam_NoWaveBeam: i32 = 0x90aef3;
-pub const fnProjPreInstr_Dir0459: u32 = 9482058;
-pub const fnProjPreInstr_Dir1368: u32 = 9482066;
-pub const fnProjPreInstr_Dir27: u32 = 9482080;
-pub const fnProjPreInstr_Missile: i32 = 0x90af68;
-pub const fnProjPreInstr_Missile_Func0459: u32 = 9482183;
-pub const fnProjPreInstr_Missile_Func1368: u32 = 9482191;
-pub const fnProjPreInstr_Missile_Func27: u32 = 9482205;
-pub const fnProjPreInstr_SuperMissile: i32 = 0x90afe5;
-pub const fnProjPreInstr_SuperMissile_Func0459: u32 = 9482311;
-pub const fnProjPreInstr_SuperMissile_Func1368: u32 = 9482322;
-pub const fnProjPreInstr_SuperMissile_Func27: u32 = 9482346;
-pub const fnProjPreInstr_Func1: i32 = 0x90b075;
-pub const fnProjPreInstr_Bomb: i32 = 0x90b099;
-pub const fnProjPreInstr_PowerBomb: i32 = 0x90b0ae;
-pub const fnProjPreInstr_WavePlasmaEtc: i32 = 0x90b0c3;
-pub const fnProjPreInstr_BeamOrIceWave: i32 = 0x90b0e4;
-pub const fnProjPreInstr_Wave_Shared: u32 = 9482499;
-pub const fnProjPreInstr_WavePlasmaEtc_0459: u32 = 9482555;
-pub const fnProjPreInstr_WavePlasmaEtc_1368: u32 = 9482563;
-pub const fnProjPreInstr_WavePlasmaEtc_27: u32 = 9482577;
-pub const fnProjPreInstr_HyperBeam: i32 = 0x90b159;
-pub const fnProjPreInstr_Empty: i32 = 0x90b169;
-pub const fnProjInstr_MoveLeftProjectileTrailDown: u32 = 9483557;
-pub const fnProjInstr_MoveRightProjectileTrailDown: u32 = 9483655;
-pub const fnProjInstr_MoveLeftProjectileTrailUp: u32 = 9483699;
-pub const fnProjPreInstr_IceSba: i32 = 0x90cf09;
-pub const fnProjPreInstr_IceSba2: i32 = 0x90cf7a;
-pub const fnSamus_MoveHandlerShinesparkWindup: i32 = 0x90d068;
-pub const fnSamus_MoveHandlerVerticalShinespark: i32 = 0x90d0ab;
-pub const fnSamus_MoveHandler_Shinespark_Diag: u32 = 9490647;
-pub const fnSamus_MoveHandler_Shinespark_Horiz: u32 = 9490694;
-pub const fnSamus_MoveHandler_ShinesparkCrash: i32 = 0x90d346;
-pub const fnSamus_MoveHandler_ShinesparkCrash_0: u32 = 9491331;
-pub const fnSamus_MoveHandler_ShinesparkCrash_1: u32 = 9491350;
-pub const fnSamus_MoveHandler_ShinesparkCrash_2: u32 = 9491404;
-pub const fnSamus_MoveHandler_ShinesparkCrashEchoCircle: i32 = 0x90d3f3;
-pub const fnSamus_MoveHandler_ShinesparkCrashFinish: i32 = 0x90d40d;
-pub const fnProjPreInstr_SpeedEcho: i32 = 0x90d4d2;
-pub const fnSamusMoveHandler_CrystalFlashStart: i32 = 0x90d678;
-pub const fnSamusMoveHandler_CrystalFlashMain: i32 = 0x90d6ce;
-pub const fnkSamusMoveHandler_CrystalFlashFinish: i32 = 0x90d75b;
-pub const fnProjPreInstr_PlasmaSba: i32 = 0x90d793;
-pub const fnProjPreInstr_PlasmaSbaFunc_0: u32 = 9492449;
-pub const fnProjPreInstr_PlasmaSbaFunc_1: u32 = 9492474;
-pub const fnProjPreInstr_PlasmaSbaFunc_2: u32 = 9492499;
-pub const fnProjPreInstr_SpreadBomb: i32 = 0x90d8f7;
-pub const fnProjPreInstr_WaveSba: i32 = 0x90da08;
-pub const fnProjPreInstr_SpazerSba: i32 = 0x90db06;
-pub const fnProjPreInstr_EndOfSpazerSba: i32 = 0x90dc9c;
-pub const fnSamus_MoveHandler_Knockback: u32 = 9494328;
-pub const fnSamus_MoveHandler_Knockback_0: u32 = 9494352;
-pub const fnSamus_MoveHandler_Knockback_Up: u32 = 9494355;
-pub const fnSamus_MoveHandler_Knockback_3: u32 = 9494365;
-pub const fnSamus_MoveHandler_Knockback_Down: u32 = 9494372;
-pub const fnSamus_MoveHandler_BombJumpStart: u32 = 9494565;
-pub const fnSamus_MoveHandler_BombJumpMain: i32 = 0x90e032;
-pub const fnSamus_MoveHandler_BombJumpFunc1: u32 = 9494653;
-pub const fnSamus_Func1: i32 = 0x90e09b;
-pub const fnSamus_Func2: i32 = 0x90e0c5;
-pub const fnSamus_Func3: i32 = 0x90e0e6;
-pub const fnDrawTimer_: i32 = 0x90e114;
-pub const fnSamus_PushOutOfRidleysWay: i32 = 0x90e12e;
-pub const fnSamus_Func4: i32 = 0x90e1c8;
-pub const fnSamus_GrabbedByDraygonFrameHandler: i32 = 0x90e2a1;
-pub const fnnullsub_151: u32 = 9495422;
-pub const fnSamus_Func7: u32 = 9495459;
-pub const fnSamus_Func9: i32 = 0x90e41b;
-pub const fnSamus_FrameHandlerAlfa_Func11: i32 = 0x90e695;
-pub const fnSamus_FrameHandlerAlfa_Func12: u32 = 9496265;
-pub const fnSamus_FrameHandlerAlfa_Func13: i32 = 0x90e713;
-pub const fnSamus_FrameHandlerBeta_Func17: i32 = 0x90e725;
-pub const fnHandleDemoRecorder_3: i32 = 0x90e7d2;
-pub const fnSamus_FrameHandlerBeta_Func14: u32 = 9496565;
-pub const fnSamus_Func15: u32 = 9496627;
-pub const fnSamus_Func16: u32 = 9496682;
-pub const fnSamus_Func18: i32 = 0x90e8aa;
-pub const fnEmptyFunction: i32 = 0x90e8cd;
-pub const fnj_HandleDemoRecorder_2: i32 = 0x90e8d6;
-pub const fnj_HandleDemoRecorder_2_0: i32 = 0x90e8d9;
-pub const fnSetContactDamageIndexAndUpdateMinimap: i32 = 0x90e8dc;
-pub const fnSamus_Func19: i32 = 0x90e8ec;
-pub const fnSamus_LowHealthCheck: i32 = 0x90e902;
-pub const fnnullsub_152: i32 = 0x90e90e;
-pub const fnSamus_InputHandler_E913: i32 = 0x90e913;
-pub const fnSamus_Func20_: u32 = 9496856;
-pub const fnSamus_InputHandler_E91D: i32 = 0x90e91d;
-pub const fnHandleAutoJumpHack: i32 = 0x90e926;
-pub const fnSamusMovementType_Xray: u32 = 9496911;
-pub const fnSamusDrawHandler_Default: i32 = 0x90eb52;
-pub const fnsub_90EB86: u32 = 9497478;
-pub const fnnullsub_156: u32 = 9497586;
-pub const fnSamus_DrawHandler_EndOfShinespark: i32 = 0x90ebf3;
-pub const fnSamusDisplayHandler_UsingElevator: i32 = 0x90ec14;
-pub const fnSamusDisplayHandler_SamusReceivedFatal: i32 = 0x90ec1d;
-pub const fnProjPreInstr_UnknownProj8027: u32 = 9498579;
-pub const fnSamus_Func25_ShineSpark: i32 = 0x90f04b;
-pub const fnSamus_MoveHandler_F072: i32 = 0x90f072;
-pub const fnGrappleBeamFunc_Inactive: i32 = 0x9bc4f0;
-pub const fnGrappleBeamFunc_Firing: i32 = 0x9bc703;
-pub const fnUNUSED_sub_9BC759: i32 = 0x9bc759;
-pub const fnGrappleBeamFunc_ConnectedLockedInPlace: i32 = 0x9bc77e;
-pub const fnGrappleBeamFunc_Cancel: i32 = 0x9bc856;
-pub const fnGrappleBeam_Func2: i32 = 0x9bc8c5;
+crate::game::constants::typed_constants! { u32;
+    fnSamus_MoveHandler_ReleaseFromGrapple = 9475182,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamus_HandleMovement_DrainedCrouching = 0x9094cb,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSamus_ScrollFinishedHook_SporeSpawnFight = 9475465,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamus_MovementHandler_Normal = 0x90a337, fnProjPreInstr_Beam_NoWaveBeam = 0x90aef3,
+}
+crate::game::constants::typed_constants! { u32;
+    fnProjPreInstr_Dir0459 = 9482058, fnProjPreInstr_Dir1368 = 9482066,
+    fnProjPreInstr_Dir27 = 9482080,
+}
+crate::game::constants::typed_constants! { i32;
+    fnProjPreInstr_Missile = 0x90af68,
+}
+crate::game::constants::typed_constants! { u32;
+    fnProjPreInstr_Missile_Func0459 = 9482183, fnProjPreInstr_Missile_Func1368 = 9482191,
+    fnProjPreInstr_Missile_Func27 = 9482205,
+}
+crate::game::constants::typed_constants! { i32;
+    fnProjPreInstr_SuperMissile = 0x90afe5,
+}
+crate::game::constants::typed_constants! { u32;
+    fnProjPreInstr_SuperMissile_Func0459 = 9482311, fnProjPreInstr_SuperMissile_Func1368 = 9482322,
+    fnProjPreInstr_SuperMissile_Func27 = 9482346,
+}
+crate::game::constants::typed_constants! { i32;
+    fnProjPreInstr_Func1 = 0x90b075, fnProjPreInstr_Bomb = 0x90b099,
+    fnProjPreInstr_PowerBomb = 0x90b0ae, fnProjPreInstr_WavePlasmaEtc = 0x90b0c3,
+    fnProjPreInstr_BeamOrIceWave = 0x90b0e4,
+}
+crate::game::constants::typed_constants! { u32;
+    fnProjPreInstr_Wave_Shared = 9482499, fnProjPreInstr_WavePlasmaEtc_0459 = 9482555,
+    fnProjPreInstr_WavePlasmaEtc_1368 = 9482563, fnProjPreInstr_WavePlasmaEtc_27 = 9482577,
+}
+crate::game::constants::typed_constants! { i32;
+    fnProjPreInstr_HyperBeam = 0x90b159, fnProjPreInstr_Empty = 0x90b169,
+}
+crate::game::constants::typed_constants! { u32;
+    fnProjInstr_MoveLeftProjectileTrailDown = 9483557, fnProjInstr_MoveRightProjectileTrailDown = 9483655,
+    fnProjInstr_MoveLeftProjectileTrailUp = 9483699,
+}
+crate::game::constants::typed_constants! { i32;
+    fnProjPreInstr_IceSba = 0x90cf09, fnProjPreInstr_IceSba2 = 0x90cf7a,
+    fnSamus_MoveHandlerShinesparkWindup = 0x90d068, fnSamus_MoveHandlerVerticalShinespark = 0x90d0ab,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSamus_MoveHandler_Shinespark_Diag = 9490647, fnSamus_MoveHandler_Shinespark_Horiz = 9490694,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamus_MoveHandler_ShinesparkCrash = 0x90d346,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSamus_MoveHandler_ShinesparkCrash_0 = 9491331, fnSamus_MoveHandler_ShinesparkCrash_1 = 9491350,
+    fnSamus_MoveHandler_ShinesparkCrash_2 = 9491404,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamus_MoveHandler_ShinesparkCrashEchoCircle = 0x90d3f3, fnSamus_MoveHandler_ShinesparkCrashFinish = 0x90d40d,
+    fnProjPreInstr_SpeedEcho = 0x90d4d2, fnSamusMoveHandler_CrystalFlashStart = 0x90d678,
+    fnSamusMoveHandler_CrystalFlashMain = 0x90d6ce, fnkSamusMoveHandler_CrystalFlashFinish = 0x90d75b,
+    fnProjPreInstr_PlasmaSba = 0x90d793,
+}
+crate::game::constants::typed_constants! { u32;
+    fnProjPreInstr_PlasmaSbaFunc_0 = 9492449, fnProjPreInstr_PlasmaSbaFunc_1 = 9492474,
+    fnProjPreInstr_PlasmaSbaFunc_2 = 9492499,
+}
+crate::game::constants::typed_constants! { i32;
+    fnProjPreInstr_SpreadBomb = 0x90d8f7, fnProjPreInstr_WaveSba = 0x90da08,
+    fnProjPreInstr_SpazerSba = 0x90db06, fnProjPreInstr_EndOfSpazerSba = 0x90dc9c,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSamus_MoveHandler_Knockback = 9494328, fnSamus_MoveHandler_Knockback_0 = 9494352,
+    fnSamus_MoveHandler_Knockback_Up = 9494355, fnSamus_MoveHandler_Knockback_3 = 9494365,
+    fnSamus_MoveHandler_Knockback_Down = 9494372, fnSamus_MoveHandler_BombJumpStart = 9494565,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamus_MoveHandler_BombJumpMain = 0x90e032,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSamus_MoveHandler_BombJumpFunc1 = 9494653,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamus_Func1 = 0x90e09b, fnSamus_Func2 = 0x90e0c5,
+    fnSamus_Func3 = 0x90e0e6, fnDrawTimer_ = 0x90e114,
+    fnSamus_PushOutOfRidleysWay = 0x90e12e, fnSamus_Func4 = 0x90e1c8,
+    fnSamus_GrabbedByDraygonFrameHandler = 0x90e2a1,
+}
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_151 = 9495422, fnSamus_Func7 = 9495459,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamus_Func9 = 0x90e41b, fnSamus_FrameHandlerAlfa_Func11 = 0x90e695,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSamus_FrameHandlerAlfa_Func12 = 9496265,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamus_FrameHandlerAlfa_Func13 = 0x90e713, fnSamus_FrameHandlerBeta_Func17 = 0x90e725,
+    fnHandleDemoRecorder_3 = 0x90e7d2,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSamus_FrameHandlerBeta_Func14 = 9496565, fnSamus_Func15 = 9496627,
+    fnSamus_Func16 = 9496682,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamus_Func18 = 0x90e8aa, fnEmptyFunction = 0x90e8cd,
+    fnj_HandleDemoRecorder_2 = 0x90e8d6, fnj_HandleDemoRecorder_2_0 = 0x90e8d9,
+    fnSetContactDamageIndexAndUpdateMinimap = 0x90e8dc, fnSamus_Func19 = 0x90e8ec,
+    fnSamus_LowHealthCheck = 0x90e902, fnnullsub_152 = 0x90e90e,
+    fnSamus_InputHandler_E913 = 0x90e913,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSamus_Func20_ = 9496856,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamus_InputHandler_E91D = 0x90e91d, fnHandleAutoJumpHack = 0x90e926,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSamusMovementType_Xray = 9496911,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamusDrawHandler_Default = 0x90eb52,
+}
+crate::game::constants::typed_constants! { u32;
+    fnsub_90EB86 = 9497478, fnnullsub_156 = 9497586,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamus_DrawHandler_EndOfShinespark = 0x90ebf3, fnSamusDisplayHandler_UsingElevator = 0x90ec14,
+    fnSamusDisplayHandler_SamusReceivedFatal = 0x90ec1d,
+}
+crate::game::constants::typed_constants! { u32;
+    fnProjPreInstr_UnknownProj8027 = 9498579,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamus_Func25_ShineSpark = 0x90f04b, fnSamus_MoveHandler_F072 = 0x90f072,
+    fnGrappleBeamFunc_Inactive = 0x9bc4f0, fnGrappleBeamFunc_Firing = 0x9bc703,
+    fnUNUSED_sub_9BC759 = 0x9bc759, fnGrappleBeamFunc_ConnectedLockedInPlace = 0x9bc77e,
+    fnGrappleBeamFunc_Cancel = 0x9bc856, fnGrappleBeam_Func2 = 0x9bc8c5,
+}
 static kUnchargedProjectile_Sfx: [u16; 12] = [
     0xb, 0xd, 0xc, 0xe, 0xf, 0x12, 0x10, 0x11, 0x13, 0x16, 0x14, 0x15,
 ];

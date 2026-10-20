@@ -36,7 +36,9 @@ pub struct RoomDefStateSelect_E6E5_Finish {
 pub use crate::types::Consts_87;
 pub use crate::types::SpawnHardcodedPlmArgs;
 pub use crate::types::{Consts_86, DoorDef, RoomDefRoomstate};
-pub const kCoroutineNone: i32 = 0;
+crate::game::constants::typed_constants! { i32;
+    kCoroutineNone = 0,
+}
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
 #[inline]
 unsafe fn get_DoorDef(a: u16, game: &mut Game) -> *mut DoorDef {
@@ -53,145 +55,82 @@ unsafe fn get_RoomDefStateSelect_E6E5_Finish(
 ) -> *mut RoomDefStateSelect_E6E5_Finish {
     RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefStateSelect_E6E5_Finish
 }
-pub const fnRoomSetup_AfterSavingAnimals: u32 = 9408916;
-pub const fnRoomSetup_AutoDestroyWallAfterEscape: u32 = 9408937;
-pub const fnRoomSetup_TurnWallIntoShotblocks: u32 = 9408946;
-pub const fnnullsub_132: u32 = 9408955;
-pub const fnnullsub_133: u32 = 9408956;
-pub const fnRoomSetup_ShakeDuringEscape: u32 = 9408957;
-pub const fnRoomSetup_ScrollingSkyLand: u32 = 9408969;
-pub const fnRoomSetup_ScrollingSkyOcean: u32 = 9408974;
-pub const fnnullsub_134: u32 = 9408979;
-pub const fnnullsub_135: u32 = 9408980;
-pub const fnnullsub_136: u32 = 9408981;
-pub const fnnullsub_137: u32 = 9408982;
-pub const fnRoomSetup_RunStatueUnlockAnims: u32 = 9408983;
-pub const fnnullsub_138: u32 = 9409012;
-pub const fnnullsub_139: u32 = 9409013;
-pub const fnnullsub_140: u32 = 9409014;
-pub const fnnullsub_141: u32 = 9409015;
-pub const fnDoorCode_StartWreckedShipTreadmillWest: u32 = 9419121;
-pub const fnDoorCode_Scroll6_Green: u32 = 9419137;
-pub const fnDoorCode_Scroll0_Blue: u32 = 9419148;
-pub const fnDoorCode_Scroll13_Blue: u32 = 9419159;
-pub const fnDoorCode_Scroll_4Blue_8Green: u32 = 9419170;
-pub const fnDoorCode_Scroll_8toB_Red: u32 = 9419187;
-pub const fnDoorCode_Scroll_LotsRed: u32 = 9419210;
-pub const fnDoorCode_Scroll_1_4_Green: u32 = 9419249;
-pub const fnDoorCode_Scroll_2_Blue: u32 = 9419264;
-pub const fnDoorCode_Scroll_17_Blue: u32 = 9419275;
-pub const fnDoorCode_Scroll_4_Blue: u32 = 9419286;
-pub const fnDoorCode_Scroll_6_Green: u32 = 9419297;
-pub const fnDoorCode_Scroll_3_Green: u32 = 9419308;
-pub const fnDoorCode_SetScroll_0: u32 = 9420039;
-pub const fnDoorCode_SetScroll_1: u32 = 9420054;
-pub const fnDoorCode_SetScroll_2: u32 = 9420069;
-pub const fnDoorCode_SetScroll_3: u32 = 9420080;
-pub const fnDoorCode_SetScroll_4: u32 = 9420095;
-pub const fnDoorCode_SetScroll_5: u32 = 9420112;
-pub const fnDoorCode_SetScroll_6: u32 = 9420123;
-pub const fnDoorCode_SetScroll_7: u32 = 9420140;
-pub const fnDoorCode_SetScroll_8: u32 = 9420151;
-pub const fnDoorCode_SetScroll_9: u32 = 9420170;
-pub const fnDoorCode_SetScroll_10: u32 = 9420181;
-pub const fnDoorCode_SetScroll_11: u32 = 9420192;
-pub const fnDoorCode_SetScroll_12: u32 = 9420207;
-pub const fnDoorCode_SetScroll_13: u32 = 9420224;
-pub const fnDoorCode_SetScroll_14: u32 = 9420241;
-pub const fnDoorCode_SetScroll_15: u32 = 9420258;
-pub const fnDoorCode_SetScroll_16: u32 = 9420273;
-pub const fnDoorCode_SetScroll_17: u32 = 9420288;
-pub const fnDoorCode_SetScroll_18: u32 = 9420299;
-pub const fnDoorCode_SetScroll_19: u32 = 9420314;
-pub const fnDoorCode_SetScroll_20: u32 = 9420325;
-pub const fnDoorCode_SetScroll_21: u32 = 9420342;
-pub const fnDoorCode_SetScroll_22: u32 = 9420702;
-pub const fnDoorCode_SetScroll_23: u32 = 9420731;
-pub const fnDoorCode_SetScroll_24: u32 = 9420762;
-pub const fnDoorCode_SetScroll_25: u32 = 9420777;
-pub const fnDoorCode_SetScroll_26: u32 = 9420794;
-pub const fnDoorCode_SetScroll_28: u32 = 9420822;
-pub const fnDoorCode_SetScroll_29: u32 = 9420837;
-pub const fnDoorCode_SetScroll_30: u32 = 9420858;
-pub const fnDoorCode_SetScroll_31: u32 = 9420875;
-pub const fnDoorCode_SetScroll_32: u32 = 9420886;
-pub const fnDoorCode_SetScroll_33: u32 = 9420903;
-pub const fnDoorCode_SetScroll_34: u32 = 9420920;
-pub const fnDoorCode_SetScroll_35: u32 = 9420937;
-pub const fnDoorCode_SetScroll_36: u32 = 9420962;
-pub const fnDoorCode_SetScroll_37: u32 = 9420973;
-pub const fnDoorCode_SetScroll_38: u32 = 9420994;
-pub const fnDoorCode_SetScroll_39: u32 = 9421011;
-pub const fnDoorCode_SetScroll_40: u32 = 9421022;
-pub const fnDoorCode_SetScroll_41: u32 = 9421039;
-pub const fnDoorCode_SetScroll_42: u32 = 9421050;
-pub const fnDoorCode_SetScroll_43: u32 = 9421067;
-pub const fnRoomCode_ScrollingSkyLand_: u32 = 9421078;
-pub const fnRoomCode_ScrollingSkyOcean_: u32 = 9421083;
-pub const fnRoomCode_ScrollingSkyLand_Shakes: u32 = 9421088;
-pub const fnRoomCode_ExplodeShakes: u32 = 9421092;
-pub const fnRoomCode_ScrollRightDachora: u32 = 9421286;
-pub const fnnullsub_142: u32 = 9423047;
-pub const fnRoomCode_8FC8C8: u32 = 9423048;
-pub const fnnullsub_143: u32 = 9423056;
-pub const fnnullsub_144: u32 = 9423057;
-pub const fnnullsub_145: u32 = 9423058;
-pub const fnRoomCode_SetupShaktoolRoomPlm: u32 = 9423059;
-pub const fnnullsub_146: u32 = 9423068;
-pub const fnRoomCode_SetPauseCodeForDraygon: u32 = 9423069;
-pub const fnPauseHook_DraygonRoom: i32 = 0x8fc8f6;
-pub const fnUnpauseHook_DraygonRoom: i32 = 0x8fc8fc;
-pub const fnRoomCode_SetCollectedMap: u32 = 9423114;
-pub const fnnullsub_147: u32 = 9423134;
-pub const fnRoomCode_SetZebesTimebombEvent: u32 = 9423135;
-pub const fnRoomCode_SetLightHorizRoomShake: u32 = 9423155;
-pub const fnRoomCode_SetMediumHorizRoomShake: u32 = 9423174;
-pub const fnRoomCode_Escape4_SetMediumHorizRoomShake: u32 = 9423187;
-pub const fnRoomCode_SetCeresDoorSolid: u32 = 9423214;
-pub const fnRoomCode_CeresColorMathHdma: u32 = 9423222;
-pub const fnRoomCode_CeresColorMathHdma_BgBase: u32 = 9423227;
-pub const fnDoorCode_StartWreckedSkipTreadmill_East: u32 = 9429464;
-pub const fnDoorCode_SetScroll_44: u32 = 9429480;
-pub const fnDoorCode_SetScroll_45: u32 = 9429491;
-pub const fnDoorCode_SetScroll_46: u32 = 9429502;
-pub const fnDoorCode_SetScroll_47: u32 = 9429519;
-pub const fnDoorCode_SetScroll_48: u32 = 9429530;
-pub const fnDoorCode_SetScroll_49: u32 = 9429545;
-pub const fnDoorCode_SetupElevatubeFromSouth: u32 = 9429612;
-pub const fnDoorCode_SetupElevatubeFromNorth: u32 = 9429649;
-pub const fnRoomCode_Elevatube: u32 = 9429686;
-pub const fnDoorCode_ResetElevatubeNorthExit: u32 = 9429761;
-pub const fnDoorCode_ResetElevatubeSouthExit: u32 = 9429769;
-pub const fnDoorCode_SetScroll_50: u32 = 9429784;
-pub const fnDoorCode_SetScroll_53: u32 = 9429829;
-pub const fnDoorCode_SetScroll_54: u32 = 9429846;
-pub const fnDoorCode_SetScroll_55: u32 = 9429863;
-pub const fnDoorCode_SetScroll_56: u32 = 9429880;
-pub const fnDoorCode_SetScroll_57: u32 = 9429901;
-pub const fnDoorCode_SetScroll_58: u32 = 9429912;
-pub const fnDoorCode_SetScroll_59: u32 = 9429923;
-pub const fnDoorCode_SetScroll_61: u32 = 9429945;
-pub const fnDoorCode_SetScroll_62: u32 = 9429960;
-pub const fnDoorCode_SetScroll_63: u32 = 9429977;
-pub const fnDoorCode_SetScroll_64: u32 = 9430208;
-pub const fnDoorCode_SetScroll_65: u32 = 9430223;
-pub const fnDoorCode_CeresElevatorShaft: u32 = 9430240;
-pub const fnDoorCode_CeresElevatorShaft_2: u32 = 9430291;
-pub const fnRoomCode_CeresElevatorShaft_: u32 = 9430303;
-pub const fnnullsub_148: u32 = 9430308;
-pub const fnRoomCode_SpawnCeresFallingDebris: u32 = 9430309;
-pub const fnRoomCode_HandleCeresRidleyGetaway: u32 = 9430385;
-pub const fnRoomCode_ShakeScreenHorizDiag: u32 = 9430396;
-pub const fnRoomCode_GenRandomExplodes_4th_: u32 = 9430432;
-pub const fnRoomCode_ShakeScreenHorizDiagStrong: u32 = 9430436;
-pub const fnRoomDefStateSelect_Finish: u32 = 9430502;
-pub const fnRoomDefStateSelect_TourianBoss01: u32 = 9430527;
-pub const fnRoomDefStateSelect_IsEventSet: u32 = 9430546;
-pub const fnRoomDefStateSelect_IsBossDead: u32 = 9430569;
-pub const fnRoomDefStateSelect_MorphBallMissiles: u32 = 9430610;
-pub const fnRoomDefStateSelect_PowerBombs: u32 = 9430633;
-pub const fnRoomCode_CrocomireShaking: u32 = 9431245;
-pub const fnRoomCode_RidleyRoomShaking: u32 = 9431376;
+crate::game::constants::typed_constants! { u32;
+    fnRoomSetup_AfterSavingAnimals = 9408916, fnRoomSetup_AutoDestroyWallAfterEscape = 9408937,
+    fnRoomSetup_TurnWallIntoShotblocks = 9408946, fnnullsub_132 = 9408955,
+    fnnullsub_133 = 9408956, fnRoomSetup_ShakeDuringEscape = 9408957,
+    fnRoomSetup_ScrollingSkyLand = 9408969, fnRoomSetup_ScrollingSkyOcean = 9408974,
+    fnnullsub_134 = 9408979, fnnullsub_135 = 9408980,
+    fnnullsub_136 = 9408981, fnnullsub_137 = 9408982,
+    fnRoomSetup_RunStatueUnlockAnims = 9408983, fnnullsub_138 = 9409012,
+    fnnullsub_139 = 9409013, fnnullsub_140 = 9409014,
+    fnnullsub_141 = 9409015, fnDoorCode_StartWreckedShipTreadmillWest = 9419121,
+    fnDoorCode_Scroll6_Green = 9419137, fnDoorCode_Scroll0_Blue = 9419148,
+    fnDoorCode_Scroll13_Blue = 9419159, fnDoorCode_Scroll_4Blue_8Green = 9419170,
+    fnDoorCode_Scroll_8toB_Red = 9419187, fnDoorCode_Scroll_LotsRed = 9419210,
+    fnDoorCode_Scroll_1_4_Green = 9419249, fnDoorCode_Scroll_2_Blue = 9419264,
+    fnDoorCode_Scroll_17_Blue = 9419275, fnDoorCode_Scroll_4_Blue = 9419286,
+    fnDoorCode_Scroll_6_Green = 9419297, fnDoorCode_Scroll_3_Green = 9419308,
+    fnDoorCode_SetScroll_0 = 9420039, fnDoorCode_SetScroll_1 = 9420054,
+    fnDoorCode_SetScroll_2 = 9420069, fnDoorCode_SetScroll_3 = 9420080,
+    fnDoorCode_SetScroll_4 = 9420095, fnDoorCode_SetScroll_5 = 9420112,
+    fnDoorCode_SetScroll_6 = 9420123, fnDoorCode_SetScroll_7 = 9420140,
+    fnDoorCode_SetScroll_8 = 9420151, fnDoorCode_SetScroll_9 = 9420170,
+    fnDoorCode_SetScroll_10 = 9420181, fnDoorCode_SetScroll_11 = 9420192,
+    fnDoorCode_SetScroll_12 = 9420207, fnDoorCode_SetScroll_13 = 9420224,
+    fnDoorCode_SetScroll_14 = 9420241, fnDoorCode_SetScroll_15 = 9420258,
+    fnDoorCode_SetScroll_16 = 9420273, fnDoorCode_SetScroll_17 = 9420288,
+    fnDoorCode_SetScroll_18 = 9420299, fnDoorCode_SetScroll_19 = 9420314,
+    fnDoorCode_SetScroll_20 = 9420325, fnDoorCode_SetScroll_21 = 9420342,
+    fnDoorCode_SetScroll_22 = 9420702, fnDoorCode_SetScroll_23 = 9420731,
+    fnDoorCode_SetScroll_24 = 9420762, fnDoorCode_SetScroll_25 = 9420777,
+    fnDoorCode_SetScroll_26 = 9420794, fnDoorCode_SetScroll_28 = 9420822,
+    fnDoorCode_SetScroll_29 = 9420837, fnDoorCode_SetScroll_30 = 9420858,
+    fnDoorCode_SetScroll_31 = 9420875, fnDoorCode_SetScroll_32 = 9420886,
+    fnDoorCode_SetScroll_33 = 9420903, fnDoorCode_SetScroll_34 = 9420920,
+    fnDoorCode_SetScroll_35 = 9420937, fnDoorCode_SetScroll_36 = 9420962,
+    fnDoorCode_SetScroll_37 = 9420973, fnDoorCode_SetScroll_38 = 9420994,
+    fnDoorCode_SetScroll_39 = 9421011, fnDoorCode_SetScroll_40 = 9421022,
+    fnDoorCode_SetScroll_41 = 9421039, fnDoorCode_SetScroll_42 = 9421050,
+    fnDoorCode_SetScroll_43 = 9421067, fnRoomCode_ScrollingSkyLand_ = 9421078,
+    fnRoomCode_ScrollingSkyOcean_ = 9421083, fnRoomCode_ScrollingSkyLand_Shakes = 9421088,
+    fnRoomCode_ExplodeShakes = 9421092, fnRoomCode_ScrollRightDachora = 9421286,
+    fnnullsub_142 = 9423047, fnRoomCode_8FC8C8 = 9423048,
+    fnnullsub_143 = 9423056, fnnullsub_144 = 9423057,
+    fnnullsub_145 = 9423058, fnRoomCode_SetupShaktoolRoomPlm = 9423059,
+    fnnullsub_146 = 9423068, fnRoomCode_SetPauseCodeForDraygon = 9423069,
+}
+crate::game::constants::typed_constants! { i32;
+    fnPauseHook_DraygonRoom = 0x8fc8f6, fnUnpauseHook_DraygonRoom = 0x8fc8fc,
+}
+crate::game::constants::typed_constants! { u32;
+    fnRoomCode_SetCollectedMap = 9423114, fnnullsub_147 = 9423134,
+    fnRoomCode_SetZebesTimebombEvent = 9423135, fnRoomCode_SetLightHorizRoomShake = 9423155,
+    fnRoomCode_SetMediumHorizRoomShake = 9423174, fnRoomCode_Escape4_SetMediumHorizRoomShake = 9423187,
+    fnRoomCode_SetCeresDoorSolid = 9423214, fnRoomCode_CeresColorMathHdma = 9423222,
+    fnRoomCode_CeresColorMathHdma_BgBase = 9423227, fnDoorCode_StartWreckedSkipTreadmill_East = 9429464,
+    fnDoorCode_SetScroll_44 = 9429480, fnDoorCode_SetScroll_45 = 9429491,
+    fnDoorCode_SetScroll_46 = 9429502, fnDoorCode_SetScroll_47 = 9429519,
+    fnDoorCode_SetScroll_48 = 9429530, fnDoorCode_SetScroll_49 = 9429545,
+    fnDoorCode_SetupElevatubeFromSouth = 9429612, fnDoorCode_SetupElevatubeFromNorth = 9429649,
+    fnRoomCode_Elevatube = 9429686, fnDoorCode_ResetElevatubeNorthExit = 9429761,
+    fnDoorCode_ResetElevatubeSouthExit = 9429769, fnDoorCode_SetScroll_50 = 9429784,
+    fnDoorCode_SetScroll_53 = 9429829, fnDoorCode_SetScroll_54 = 9429846,
+    fnDoorCode_SetScroll_55 = 9429863, fnDoorCode_SetScroll_56 = 9429880,
+    fnDoorCode_SetScroll_57 = 9429901, fnDoorCode_SetScroll_58 = 9429912,
+    fnDoorCode_SetScroll_59 = 9429923, fnDoorCode_SetScroll_61 = 9429945,
+    fnDoorCode_SetScroll_62 = 9429960, fnDoorCode_SetScroll_63 = 9429977,
+    fnDoorCode_SetScroll_64 = 9430208, fnDoorCode_SetScroll_65 = 9430223,
+    fnDoorCode_CeresElevatorShaft = 9430240, fnDoorCode_CeresElevatorShaft_2 = 9430291,
+    fnRoomCode_CeresElevatorShaft_ = 9430303, fnnullsub_148 = 9430308,
+    fnRoomCode_SpawnCeresFallingDebris = 9430309, fnRoomCode_HandleCeresRidleyGetaway = 9430385,
+    fnRoomCode_ShakeScreenHorizDiag = 9430396, fnRoomCode_GenRandomExplodes_4th_ = 9430432,
+    fnRoomCode_ShakeScreenHorizDiagStrong = 9430436, fnRoomDefStateSelect_Finish = 9430502,
+    fnRoomDefStateSelect_TourianBoss01 = 9430527, fnRoomDefStateSelect_IsEventSet = 9430546,
+    fnRoomDefStateSelect_IsBossDead = 9430569, fnRoomDefStateSelect_MorphBallMissiles = 9430610,
+    fnRoomDefStateSelect_PowerBombs = 9430633, fnRoomCode_CrocomireShaking = 9431245,
+    fnRoomCode_RidleyRoomShaking = 9431376,
+}
 pub unsafe fn RoomSetup_AfterSavingAnimals(game: &mut Game) {
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs::new(0x3du8, 0xbu8, 0xbb30 as VoidP),

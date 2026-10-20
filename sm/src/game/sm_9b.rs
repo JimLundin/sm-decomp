@@ -49,39 +49,33 @@ const RomPtr_A0: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_p
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
-pub const fnSamus_MoveHandler_ReleaseFromGrapple: i32 = 0x90946e;
-pub const fnSamus_MovementHandler_Normal: i32 = 0x90a337;
-pub const fnSamusDrawHandler_Default: i32 = 0x90eb52;
-pub const fnsub_90EB86: i32 = 0x90eb86;
-pub const fnGrappleNext_SwingClockwise: u32 = 10205657;
-pub const fnGrappleNext_SwingAntiClockwise: u32 = 10205666;
-pub const fnGrappleNext_StandAimRight: u32 = 10205674;
-pub const fnGrappleNext_StandAimDownRight: u32 = 10205683;
-pub const fnGrappleNext_StandAimDownLeft: u32 = 10205692;
-pub const fnGrappleNext_StandAimLeft: u32 = 10205701;
-pub const fnGrappleNext_CrouchAimRight: u32 = 10205710;
-pub const fnGrappleNext_CrouchAimDownRight: u32 = 10205719;
-pub const fnGrappleNext_CrouchAimDownLeft: u32 = 10205728;
-pub const fnGrappleNext_CrouchAimLeft: u32 = 10205737;
-pub const fnGrappleBeamFunc_BB64: u32 = 10206052;
-pub const fnGrappleBeamFunc_BC1F: u32 = 10206239;
-pub const fnGrappleBeamFunc_BCFF: u32 = 10206463;
-pub const fnGrappleBeamFunc_BD44: u32 = 10206532;
-pub const fnGrappleBeamFunc_BD95: u32 = 10206613;
-pub const fnGrappleBeamFunc_BE98: u32 = 10206872;
-pub const fnGrappleBeamFunc_BEEB: u32 = 10206955;
-pub const fnGrappleBeamFunc_BF1B: u32 = 10207003;
-pub const fnGrappleBeamFunc_Inactive: i32 = 0x9bc4f0;
-pub const fnGrappleBeamFunc_FireGoToCancel: i32 = 0x9bc51e;
-pub const fnGrappleBeamFunc_Firing: i32 = 0x9bc703;
-pub const fnGrappleBeamFunc_ConnectedLockedInPlace: i32 = 0x9bc77e;
-pub const fnGrappleBeamFunc_Connected_Swinging: u32 = 10209181;
-pub const fnGrappleBeamFunc_Wallgrab: u32 = 10209300;
-pub const fnGrappleBeamFunc_C832: i32 = 0x9bc832;
-pub const fnGrappleBeamFunc_Cancel: i32 = 0x9bc856;
-pub const fnGrappleBeam_Func2: i32 = 0x9bc8c5;
-pub const fnGrappleBeamFunc_C9CE: i32 = 0x9bc9ce;
-pub const fnGrappleBeamFunc_ReleaseFromSwing: i32 = 0x9bcb8b;
+crate::game::constants::typed_constants! { i32;
+    fnSamus_MoveHandler_ReleaseFromGrapple = 0x90946e, fnSamus_MovementHandler_Normal = 0x90a337,
+    fnSamusDrawHandler_Default = 0x90eb52, fnsub_90EB86 = 0x90eb86,
+}
+crate::game::constants::typed_constants! { u32;
+    fnGrappleNext_SwingClockwise = 10205657, fnGrappleNext_SwingAntiClockwise = 10205666,
+    fnGrappleNext_StandAimRight = 10205674, fnGrappleNext_StandAimDownRight = 10205683,
+    fnGrappleNext_StandAimDownLeft = 10205692, fnGrappleNext_StandAimLeft = 10205701,
+    fnGrappleNext_CrouchAimRight = 10205710, fnGrappleNext_CrouchAimDownRight = 10205719,
+    fnGrappleNext_CrouchAimDownLeft = 10205728, fnGrappleNext_CrouchAimLeft = 10205737,
+    fnGrappleBeamFunc_BB64 = 10206052, fnGrappleBeamFunc_BC1F = 10206239,
+    fnGrappleBeamFunc_BCFF = 10206463, fnGrappleBeamFunc_BD44 = 10206532,
+    fnGrappleBeamFunc_BD95 = 10206613, fnGrappleBeamFunc_BE98 = 10206872,
+    fnGrappleBeamFunc_BEEB = 10206955, fnGrappleBeamFunc_BF1B = 10207003,
+}
+crate::game::constants::typed_constants! { i32;
+    fnGrappleBeamFunc_Inactive = 0x9bc4f0, fnGrappleBeamFunc_FireGoToCancel = 0x9bc51e,
+    fnGrappleBeamFunc_Firing = 0x9bc703, fnGrappleBeamFunc_ConnectedLockedInPlace = 0x9bc77e,
+}
+crate::game::constants::typed_constants! { u32;
+    fnGrappleBeamFunc_Connected_Swinging = 10209181, fnGrappleBeamFunc_Wallgrab = 10209300,
+}
+crate::game::constants::typed_constants! { i32;
+    fnGrappleBeamFunc_C832 = 0x9bc832, fnGrappleBeamFunc_Cancel = 0x9bc856,
+    fnGrappleBeam_Func2 = 0x9bc8c5, fnGrappleBeamFunc_C9CE = 0x9bc9ce,
+    fnGrappleBeamFunc_ReleaseFromSwing = 0x9bcb8b,
+}
 static kDeathAnimationFrames: [u8; 28] = [
     5, 5, 5, 5, 1, 5, 5, 0, 1, 0, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5,
 ];

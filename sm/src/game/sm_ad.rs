@@ -17,10 +17,14 @@ extern "C" {
 pub use crate::types::Consts_86;
 pub use crate::types::Consts_AD;
 pub use crate::types::{EnemyBase, EnemyData, EnemyProps, Func_V, Point16U, VoidP};
-pub const addr_kTurnOffLightsForShitroidDeath: Consts_AD = 61999;
+crate::game::constants::typed_constants! { Consts_AD;
+    addr_kTurnOffLightsForShitroidDeath = 61999,
+}
 pub use crate::types::{Enemy_MotherBrain, Func_CalcHdma, Ram8000_Default, SpawnHardcodedPlmArgs};
 const RomPtr_AD: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xad>;
-pub const fnMotherBrainBody_FakeDeath_Descent_0_Pause: i32 = 0xa9881d;
+crate::game::constants::typed_constants! { i32;
+    fnMotherBrainBody_FakeDeath_Descent_0_Pause = 0xa9881d,
+}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gRam8000_Default(o: i32) -> Ram8000_Default = [0x8000, o as isize];

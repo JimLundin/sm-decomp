@@ -299,110 +299,88 @@ enemy_layout! {
     }
 }
 
-pub const true_0: i32 = 1;
-pub const false_0: i32 = 0;
+crate::game::constants::typed_constants! { i32;
+    true_0 = 1, false_0 = 0,
+}
 const RomPtr_A0: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa0>;
 const RomPtr_A6: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa6>;
 crate::ram_map::ram_pointer_functions! {
     gOamEnt(v: i32) -> OamEnt = [(0x370i32 + v) as isize];
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
-pub const fnBoulder_Func_1: i32 = 0xa6879a;
-pub const fnBoulder_Func_2: i32 = 0xa687ed;
-pub const fnBoulder_Func_3: i32 = 0xa68832;
-pub const fnBoulder_Func_4: i32 = 0xa6888b;
-pub const fnBoulder_Func_5: i32 = 0xa68942;
-pub const fnBoulder_Func_6: i32 = 0xa689fc;
-pub const fnSpikeyPlatform_Func_1: i32 = 0xa68bb4;
-pub const fnSpikeyPlatform_Func_2: i32 = 0xa68bdc;
-pub const fnSpikeyPlatform_Func_3: i32 = 0xa68c4a;
-pub const fnSpikeyPlatform_Func_4: i32 = 0xa68c5d;
-pub const fnFireGeyser_Func_1: i32 = 0xa6902f;
-pub const fnFireGeyser_Func_2: i32 = 0xa69062;
-pub const fnNuclearWaffle_Func_1: i32 = 0xa69615;
-pub const fnNuclearWaffle_Func_2: i32 = 0xa69682;
-pub const fnCeresRidley_Func_2: i32 = 0xa6a354;
-pub const fnCeresRidley_Func_3: i32 = 0xa6a35b;
-pub const fnCeresRidley_A377: i32 = 0xa6a377;
-pub const fnCeresRidley_Func_4: i32 = 0xa6a389;
-pub const fnCeresRidley_Func_5: i32 = 0xa6a3df;
-pub const fnCeresRidley_Func_6: i32 = 0xa6a455;
-pub const fnCeresRidley_Func_7: i32 = 0xa6a478;
-pub const fnCeresRidley_Func_9: i32 = 0xa6a6af;
-pub const fnCeresRidley_Func_10: i32 = 0xa6a6c8;
-pub const fnCeresRidley_Func_11: i32 = 0xa6a6e8;
-pub const fnCeresRidley_Func_13: u32 = 10921858;
-pub const fnCeresRidley_A7F9: u32 = 10921977;
-pub const fnCeresRidley_Func_14: u32 = 10922044;
-pub const fnCeresRidley_Func_15: i32 = 0xa6a84e;
-pub const fnCeresRidley_Func_16: i32 = 0xa6a88d;
-pub const fnCeresRidley_Func_17: i32 = 0xa6a8a4;
-pub const fnCeresRidley_Func_18: i32 = 0xa6a8d4;
-pub const fnCeresRidley_Func_19: i32 = 0xa6a8f8;
-pub const fnCeresRidley_Func_20: i32 = 0xa6a923;
-pub const fnCeresRidley_Func_21: i32 = 0xa6a947;
-pub const fnCeresRidley_Func_22: i32 = 0xa6a971;
-pub const fnCeresRidley_Func_23: i32 = 0xa6a9a0;
-pub const fnCeresRidley_Func_24: i32 = 0xa6aa11;
-pub const fnnullsub_233: i32 = 0xa6aa4f;
-pub const fnCeresRidley_Func_26: i32 = 0xa6aa50;
-pub const fnRidley_Func_3: i32 = 0xa6b2f3;
-pub const fnRidley_Func_3b: i32 = 0xa6b321;
-pub const fnRidley_Func_5: i32 = 0xa6b3ec;
-pub const fnRidley_Func_6: i32 = 0xa6b3f8;
-pub const fnRidley_Func_8: u32 = 10925121;
-pub const fnRidley_B455: u32 = 10925141;
-pub const fnRidley_Func_9: i32 = 0xa6b493;
-pub const fnRidley_Func_10: i32 = 0xa6b4d1;
-pub const fnRidley_Func_11: i32 = 0xa6b516;
-pub const fnRidley_Func_12: i32 = 0xa6b554;
-pub const fnRidley_Func_13: i32 = 0xa6b594;
-pub const fnRidley_Func_14: u32 = 10925508;
-pub const fnRidley_Func_15: i32 = 0xa6b5e5;
-pub const fnRidley_Func_16: i32 = 0xa6b613;
-pub const fnRidley_Func_19: i32 = 0xa6b6a7;
-pub const fnRidley_Func_20: i32 = 0xa6b6dd;
-pub const fnRidley_Func_21: i32 = 0xa6b70e;
-pub const fnRidley_Func_22: i32 = 0xa6b7b9;
-pub const fnRidley_Func_33: i32 = 0xa6bab7;
-pub const fnRidley_Func_33b: i32 = 0xa6bb8f;
-pub const fnRidley_Func_34: i32 = 0xa6bbc4;
-pub const fnRidley_Func_35: i32 = 0xa6bbf1;
-pub const fnRidley_Func_36: i32 = 0xa6bc2e;
-pub const fnRidley_Func_43: i32 = 0xa6bd4e;
-pub const fnRidley_Func_44: i32 = 0xa6bd9a;
-pub const fnRidley_Func_45: i32 = 0xa6bdbc;
-pub const fnRidley_Func_46: i32 = 0xa6bdf2;
-pub const fnRidley_Func_47: i32 = 0xa6be03;
-pub const fnRidley_Func_50: i32 = 0xa6be9c;
-pub const fnRidley_Func_51: i32 = 0xa6beb3;
-pub const fnRidley_Func_52: i32 = 0xa6beca;
-pub const fnRidley_Func_53: i32 = 0xa6bedc;
-pub const fnnullsub_348: u32 = 10927897;
-pub const fnBabyMetroid_Instr_2: u32 = 10928073;
-pub const fnBabyMetroid_Instr_3: u32 = 10928097;
-pub const fnBabyMetroid_Instr_1: u32 = 10928114;
-pub const fnBabyMetroid_Instr_4: u32 = 10928120;
-pub const fnRidley_Func_54: i32 = 0xa6c04e;
-pub const fnRidley_Func_63: i32 = 0xa6c538;
-pub const fnRidley_C53E: i32 = 0xa6c53e;
-pub const fnRidley_C551: i32 = 0xa6c551;
-pub const fnRidley_Func_64: i32 = 0xa6c588;
-pub const fnRidley_Func_65: i32 = 0xa6c5a8;
-pub const fnRidley_Func_66: i32 = 0xa6c5c8;
-pub const fnRidley_Func_67: i32 = 0xa6c5da;
-pub const fnnullsub_349: u32 = 10929664;
-pub const fnnullsub_350: u32 = 10940404;
-pub const fnCeresSteam_Func_1: u32 = 10940441;
-pub const fnCeresDoor_Func_2: u32 = 10942315;
-pub const fnCeresDoor_Func_3: u32 = 10942320;
-pub const fnCeresDoor_Func_4: u32 = 10942373;
-pub const fnCeresDoor_Func_5: u32 = 10942397;
-pub const fnCeresDoor_Func_6: i32 = 0xa6f7dc;
-pub const fnCeresDoor_Func_7: i32 = 0xa6f850;
-pub const fnZebetites_Func_1: i32 = 0xa6fc41;
-pub const fnZebetites_Func_2: i32 = 0xa6fc5b;
-pub const fnZebetites_Func_3: i32 = 0xa6fc67;
+crate::game::constants::typed_constants! { i32;
+    fnBoulder_Func_1 = 0xa6879a, fnBoulder_Func_2 = 0xa687ed,
+    fnBoulder_Func_3 = 0xa68832, fnBoulder_Func_4 = 0xa6888b,
+    fnBoulder_Func_5 = 0xa68942, fnBoulder_Func_6 = 0xa689fc,
+    fnSpikeyPlatform_Func_1 = 0xa68bb4, fnSpikeyPlatform_Func_2 = 0xa68bdc,
+    fnSpikeyPlatform_Func_3 = 0xa68c4a, fnSpikeyPlatform_Func_4 = 0xa68c5d,
+    fnFireGeyser_Func_1 = 0xa6902f, fnFireGeyser_Func_2 = 0xa69062,
+    fnNuclearWaffle_Func_1 = 0xa69615, fnNuclearWaffle_Func_2 = 0xa69682,
+    fnCeresRidley_Func_2 = 0xa6a354, fnCeresRidley_Func_3 = 0xa6a35b,
+    fnCeresRidley_A377 = 0xa6a377, fnCeresRidley_Func_4 = 0xa6a389,
+    fnCeresRidley_Func_5 = 0xa6a3df, fnCeresRidley_Func_6 = 0xa6a455,
+    fnCeresRidley_Func_7 = 0xa6a478, fnCeresRidley_Func_9 = 0xa6a6af,
+    fnCeresRidley_Func_10 = 0xa6a6c8, fnCeresRidley_Func_11 = 0xa6a6e8,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCeresRidley_Func_13 = 10921858, fnCeresRidley_A7F9 = 10921977,
+    fnCeresRidley_Func_14 = 10922044,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCeresRidley_Func_15 = 0xa6a84e, fnCeresRidley_Func_16 = 0xa6a88d,
+    fnCeresRidley_Func_17 = 0xa6a8a4, fnCeresRidley_Func_18 = 0xa6a8d4,
+    fnCeresRidley_Func_19 = 0xa6a8f8, fnCeresRidley_Func_20 = 0xa6a923,
+    fnCeresRidley_Func_21 = 0xa6a947, fnCeresRidley_Func_22 = 0xa6a971,
+    fnCeresRidley_Func_23 = 0xa6a9a0, fnCeresRidley_Func_24 = 0xa6aa11,
+    fnnullsub_233 = 0xa6aa4f, fnCeresRidley_Func_26 = 0xa6aa50,
+    fnRidley_Func_3 = 0xa6b2f3, fnRidley_Func_3b = 0xa6b321,
+    fnRidley_Func_5 = 0xa6b3ec, fnRidley_Func_6 = 0xa6b3f8,
+}
+crate::game::constants::typed_constants! { u32;
+    fnRidley_Func_8 = 10925121, fnRidley_B455 = 10925141,
+}
+crate::game::constants::typed_constants! { i32;
+    fnRidley_Func_9 = 0xa6b493, fnRidley_Func_10 = 0xa6b4d1,
+    fnRidley_Func_11 = 0xa6b516, fnRidley_Func_12 = 0xa6b554,
+    fnRidley_Func_13 = 0xa6b594,
+}
+crate::game::constants::typed_constants! { u32;
+    fnRidley_Func_14 = 10925508,
+}
+crate::game::constants::typed_constants! { i32;
+    fnRidley_Func_15 = 0xa6b5e5, fnRidley_Func_16 = 0xa6b613,
+    fnRidley_Func_19 = 0xa6b6a7, fnRidley_Func_20 = 0xa6b6dd,
+    fnRidley_Func_21 = 0xa6b70e, fnRidley_Func_22 = 0xa6b7b9,
+    fnRidley_Func_33 = 0xa6bab7, fnRidley_Func_33b = 0xa6bb8f,
+    fnRidley_Func_34 = 0xa6bbc4, fnRidley_Func_35 = 0xa6bbf1,
+    fnRidley_Func_36 = 0xa6bc2e, fnRidley_Func_43 = 0xa6bd4e,
+    fnRidley_Func_44 = 0xa6bd9a, fnRidley_Func_45 = 0xa6bdbc,
+    fnRidley_Func_46 = 0xa6bdf2, fnRidley_Func_47 = 0xa6be03,
+    fnRidley_Func_50 = 0xa6be9c, fnRidley_Func_51 = 0xa6beb3,
+    fnRidley_Func_52 = 0xa6beca, fnRidley_Func_53 = 0xa6bedc,
+}
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_348 = 10927897, fnBabyMetroid_Instr_2 = 10928073,
+    fnBabyMetroid_Instr_3 = 10928097, fnBabyMetroid_Instr_1 = 10928114,
+    fnBabyMetroid_Instr_4 = 10928120,
+}
+crate::game::constants::typed_constants! { i32;
+    fnRidley_Func_54 = 0xa6c04e, fnRidley_Func_63 = 0xa6c538,
+    fnRidley_C53E = 0xa6c53e, fnRidley_C551 = 0xa6c551,
+    fnRidley_Func_64 = 0xa6c588, fnRidley_Func_65 = 0xa6c5a8,
+    fnRidley_Func_66 = 0xa6c5c8, fnRidley_Func_67 = 0xa6c5da,
+}
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_349 = 10929664, fnnullsub_350 = 10940404,
+    fnCeresSteam_Func_1 = 10940441, fnCeresDoor_Func_2 = 10942315,
+    fnCeresDoor_Func_3 = 10942320, fnCeresDoor_Func_4 = 10942373,
+    fnCeresDoor_Func_5 = 10942397,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCeresDoor_Func_6 = 0xa6f7dc, fnCeresDoor_Func_7 = 0xa6f850,
+    fnZebetites_Func_1 = 0xa6fc41, fnZebetites_Func_2 = 0xa6fc5b,
+    fnZebetites_Func_3 = 0xa6fc67,
+}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];

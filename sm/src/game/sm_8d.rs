@@ -20,38 +20,31 @@ const RomPtr_8D: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_p
 unsafe fn get_PalFxDef(a: u16, game: &mut Game) -> *mut PalFxDef {
     RomPtr((0x8d0000u32) | ((a) as u32), game) as *mut PalFxDef
 }
-pub const fnCinematicFunction_Intro_Page2: i32 = 0x8bb35f;
-pub const fnPalPreInstr_nullsub_129: i32 = 0x8dc526;
-pub const fnPalInstr_Wait: u32 = 9291157;
-pub const fnPalInstr_ColorPlus2: u32 = 9291161;
-pub const fnPalInstr_ColorPlus3: u32 = 9291170;
-pub const fnPalInstr_ColorPlus4: u32 = 9291179;
-pub const fnPalInstr_ColorPlus8: u32 = 9291188;
-pub const fnPalInstr_ColorPlus9: u32 = 9291197;
-pub const fnPalInstr_ColorPlus15: u32 = 9291206;
-pub const fnPalInstr_Delete: u32 = 9291215;
-pub const fnPalInstr_SetPreInstr: u32 = 9291220;
-pub const fnPalInstr_ClearPreInstr: u32 = 9291229;
-pub const fnPalInstr_Goto: u32 = 9291294;
-pub const fnPalInstr_DecTimerGoto: u32 = 9291321;
-pub const fnPalInstr_SetTimer: u32 = 9291336;
-pub const fnPalInstr_SetColorIndex: u32 = 9291349;
-pub const fnPalInstr_QueueMusic: u32 = 9291358;
-pub const fnPalInstr_QueueSfx1: u32 = 9291370;
-pub const fnPalInstr_QueueSfx2: u32 = 9291379;
-pub const fnPalInstr_QueueSfx3: u32 = 9291388;
-pub const fnnullsub_131: u32 = 9291397;
-pub const fnPalInit_E1BC: u32 = 9298436;
-pub const fnPalPreInstr_E1BC: i32 = 0x8de20b;
-pub const fnPalPreInstr_CheckEnemy0Health: u32 = 9298656;
-pub const fnPalPreInstr_SamusInHeat: u32 = 9298809;
-pub const fnPalInit_F761_Norfair1: u32 = 9299008;
-pub const fnPalPreInstr_SwitchIfYpos: u32 = 9301081;
-pub const fnPalPreInstr_SwitchIfYpos2: u32 = 9301380;
-pub const fnPalPreInstr_DeletePalfxIfMinibossDead: u32 = 9301701;
-pub const fnPalInstr_SetPalfxIndex: u32 = 9302470;
-pub const fnPalPreInstr_F621: u32 = 9303585;
-pub const fnPalInit_F779_Brinstar8: u32 = 9303856;
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Page2 = 0x8bb35f, fnPalPreInstr_nullsub_129 = 0x8dc526,
+}
+crate::game::constants::typed_constants! { u32;
+    fnPalInstr_Wait = 9291157, fnPalInstr_ColorPlus2 = 9291161,
+    fnPalInstr_ColorPlus3 = 9291170, fnPalInstr_ColorPlus4 = 9291179,
+    fnPalInstr_ColorPlus8 = 9291188, fnPalInstr_ColorPlus9 = 9291197,
+    fnPalInstr_ColorPlus15 = 9291206, fnPalInstr_Delete = 9291215,
+    fnPalInstr_SetPreInstr = 9291220, fnPalInstr_ClearPreInstr = 9291229,
+    fnPalInstr_Goto = 9291294, fnPalInstr_DecTimerGoto = 9291321,
+    fnPalInstr_SetTimer = 9291336, fnPalInstr_SetColorIndex = 9291349,
+    fnPalInstr_QueueMusic = 9291358, fnPalInstr_QueueSfx1 = 9291370,
+    fnPalInstr_QueueSfx2 = 9291379, fnPalInstr_QueueSfx3 = 9291388,
+    fnnullsub_131 = 9291397, fnPalInit_E1BC = 9298436,
+}
+crate::game::constants::typed_constants! { i32;
+    fnPalPreInstr_E1BC = 0x8de20b,
+}
+crate::game::constants::typed_constants! { u32;
+    fnPalPreInstr_CheckEnemy0Health = 9298656, fnPalPreInstr_SamusInHeat = 9298809,
+    fnPalInit_F761_Norfair1 = 9299008, fnPalPreInstr_SwitchIfYpos = 9301081,
+    fnPalPreInstr_SwitchIfYpos2 = 9301380, fnPalPreInstr_DeletePalfxIfMinibossDead = 9301701,
+    fnPalInstr_SetPalfxIndex = 9302470, fnPalPreInstr_F621 = 9303585,
+    fnPalInit_F779_Brinstar8 = 9303856,
+}
 pub unsafe fn EnablePaletteFx(game: &mut Game) {
     update_ram_word!(game.flag_for_palette_fx_objects, |fresh1| (fresh1)
         | (0x8000u16));

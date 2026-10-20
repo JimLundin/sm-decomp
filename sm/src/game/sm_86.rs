@@ -118,366 +118,258 @@ unsafe fn get_EprojDef(a: u16, game: &mut Game) -> *mut EprojDef {
 crate::ram_map::ram_pointer_functions! {
     gRam7800_Default(a: u16) -> Ram7800_Default = [(0x7800i32 + a as i32) as isize];
 }
-pub const fnEprojInstr_Delete: u32 = 8814932;
-pub const fnEprojInstr_Sleep: u32 = 8814937;
-pub const fnEprojInstr_SetPreInstr_: u32 = 8814945;
-pub const fnEprojInstr_ClearPreInstr: u32 = 8814954;
-pub const fnEprojPreInstr_nullsub_297: u32 = 8814960;
-pub const fnEprojInstr_CallFunc: u32 = 8814961;
-pub const fnEprojInstr_Goto: u32 = 8815019;
-pub const fnEprojInstr_GotoRel: u32 = 8815024;
-pub const fnEprojInstr_DecTimerAndGotoIfNonZero: u32 = 8815046;
-pub const fnEprojInstr_DecTimerAndGotoRelIfNonZero: u32 = 8815054;
-pub const fnEprojInstr_SetTimer: u32 = 8815061;
-pub const fnnullsub_82: u32 = 8815070;
-pub const fnEprojInstr_MoveRandomlyWithinRadius: u32 = 8815071;
-pub const fnEprojInstr_SetProjectileProperties: u32 = 8815152;
-pub const fnEprojInstr_ClearProjectileProperties: u32 = 8815164;
-pub const fnEprojInstr_EnableCollisionWithSamusProj: u32 = 8815176;
-pub const fnEprojInstr_DisableCollisionWithSamusProj: u32 = 8815186;
-pub const fnEprojInstr_DisableCollisionWithSamus: u32 = 8815196;
-pub const fnEprojInstr_EnableCollisionWithSamus: u32 = 8815206;
-pub const fnEprojInstr_SetToNotDieOnContact: u32 = 8815216;
-pub const fnEprojInstr_SetToDieOnContact: u32 = 8815226;
-pub const fnEprojInstr_SetLowPriority: u32 = 8815236;
-pub const fnEprojInstr_SetHighPriority: u32 = 8815246;
-pub const fnEprojInstr_SetXyRadius: u32 = 8815256;
-pub const fnEprojInstr_SetXyRadiusZero: u32 = 8815265;
-pub const fnEprojInstr_CalculateDirectionTowardsSamus: u32 = 8815269;
-pub const fnEprojInstr_WriteColorsToPalette: u32 = 8815317;
-pub const fnEprojInstr_QueueMusic: u32 = 8815357;
-pub const fnEprojInstr_QueueSfx1_Max6: u32 = 8815369;
-pub const fnEprojInstr_QueueSfx2_Max6: u32 = 8815378;
-pub const fnEprojInstr_QueueSfx3_Max6: u32 = 8815387;
-pub const fnEprojInstr_QueueSfx1_Max15: u32 = 8815396;
-pub const fnEprojInstr_QueueSfx2_Max15: u32 = 8815405;
-pub const fnEprojInstr_QueueSfx3_Max15: u32 = 8815414;
-pub const fnEprojInstr_QueueSfx1_Max3: u32 = 8815423;
-pub const fnEprojInstr_QueueSfx2_Max3: u32 = 8815432;
-pub const fnEprojInstr_QueueSfx3_Max3: u32 = 8815441;
-pub const fnEprojInstr_QueueSfx1_Max9: u32 = 8815450;
-pub const fnEprojInstr_QueueSfx2_Max9: u32 = 8815459;
-pub const fnEprojInstr_QueueSfx3_Max9: u32 = 8815468;
-pub const fnEprojInstr_QueueSfx1_Max1: u32 = 8815477;
-pub const fnEprojInstr_QueueSfx2_Max1: u32 = 8815486;
-pub const fnEprojInstr_QueueSfx3_Max1: u32 = 8815495;
-pub const fnEprojPreInstr_nullsub_83: u32 = 8815867;
-pub const fnEproj_Init_0x8aaf: u32 = 8817209;
-pub const fnEproj_PreInit_0x8aaf: u32 = 8817277;
-pub const fnEproj_Init_0x8bc2_SkreeDownRight: u32 = 8817357;
-pub const fnEproj_Init_0x8bd0_SkreeUpRight: u32 = 8817393;
-pub const fnEproj_Init_0x8bde_SkreeDownLeft: u32 = 8817429;
-pub const fnEproj_Init_0x8bec_SkreeUpLeft: u32 = 8817465;
-pub const fnEproj_PreInstr_SkreeParticle: u32 = 8817501;
-pub const fnEprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops: u32 = 8817768;
-pub const fnEprojInstr_SetPreInstrA: u32 = 8817910;
-pub const fnEprojInstr_SetPreInstrB: u32 = 8817917;
-pub const fnEprojInit_DraygonsGunk: u32 = 8817924;
-pub const fnEprojInit_DraygonsWallTurretProjs: u32 = 8817984;
-pub const fnnullsub_84: i32 = 0x868d54;
-pub const fnEprojInstr_868D99: u32 = 8818073;
-pub const fnEprojPreInstr_8DCA: i32 = 0x868dca;
-pub const fnEprojPreInstr_DraygonsTurret_8DFF: i32 = 0x868dff;
-pub const fnEprojPreInstr_DraygonsGunk_8E0F: u32 = 8818191;
-pub const fnEprojInit_CrocomireProjectile: u32 = 8818723;
-pub const fnEprojPreInstr_CrocomireProjectile: u32 = 8818795;
-pub const fnsub_8690B3: i32 = 0x8690b3;
-pub const fnEprojInit_CrocomireSpikeWallPieces: u32 = 8818895;
-pub const fnEprojPreInstr_CrocomireSpikeWallPieces: u32 = 8818965;
-pub const fnEprojInstr_9270: u32 = 8819312;
-pub const fnEprojInit_CrocomireBridgeCrumbling: u32 = 8819334;
-pub const fnEprojPreInstr_CrocomireBridgeCrumbling: u32 = 8819386;
-pub const fnEprojInit_9634: u32 = 8819533;
-pub const fnEprojPreInstr_9634: u32 = 8819602;
-pub const fnEprojInit_9642_RidleysFireball: u32 = 8819658;
-pub const fnEprojPreInstr_9642_RidleysFireball: u32 = 8819726;
-pub const fnEprojInstr_DisableCollisionsWithSamus: u32 = 8819829;
-pub const fnEprojInit_9660_FireballExplosion: u32 = 8819839;
-pub const fnEprojInit_9688: u32 = 8819872;
-pub const fnEprojInit_9696: u32 = 8819892;
-pub const fnEprojInit_966C: u32 = 8819912;
-pub const fnEprojInit_967A: u32 = 8819932;
-pub const fnnullsub_85: u32 = 8819980;
-pub const fnEprojPreInstr_966C: u32 = 8819981;
-pub const fnEprojPreInstr_9688: u32 = 8820002;
-pub const fnEprojPreInstr_96A4: u32 = 8820023;
-pub const fnEprojPreInstr_96C0: u32 = 8820032;
-pub const fnEprojPreInstr_96CE: u32 = 8820041;
-pub const fnEprojInstr_95BA: u32 = 8820154;
-pub const fnEprojInstr_95ED: u32 = 8820205;
-pub const fnEprojInstr_9620: u32 = 8820256;
-pub const fnEprojInit_9734_CeresFallingDebris: u32 = 8820444;
-pub const fnEprojPreInstr_9734_CeresFallingDebris: u32 = 8820481;
-pub const fnEprojInstr_980E: u32 = 8820750;
-pub const fnEprojInit_PhantoonDestroyableFireballs: u32 = 8820772;
-pub const fnEprojInit_PhantoonStartingFireballs: u32 = 8821050;
-pub const fnEprojPreInstr_PhantoonStartingFireballs: u32 = 8821121;
-pub const fnEprojPreInstr_PhantoonStartingFireballs2: i32 = 0x8699bf;
-pub const fnEprojPreInstr_PhantoonStartingFireballs3: i32 = 0x869a01;
-pub const fnnullsub_86: i32 = 0x869a44;
-pub const fnEprojPreInstr_PhantoonDestroyableFireballs: i32 = 0x869a45;
-pub const fnEprojPreInstr_PhantoonDestroyableFireballs_2: i32 = 0x869a94;
-pub const fnEprojPreInstr_PhantoonDestroyableFireballs_3: i32 = 0x869ada;
-pub const fnEprojPreInstr_PhantoonStartingFireballsB: u32 = 8821545;
-pub const fnEprojPreInstr_PhantoonStartingFireballsB_2: i32 = 0x869b41;
-pub const fnEprojInit_RocksKraidSpits: u32 = 8821923;
-pub const fnEprojInit_RocksFallingKraidCeiling: u32 = 8821976;
-pub const fnEprojInit_RocksWhenKraidRises: u32 = 8822028;
-pub const fnEprojPreInstr_KraidRocks: u32 = 8822102;
-pub const fnEprojPreInstr_RocksFallingKraidCeiling: u32 = 8822153;
-pub const fnsub_869DA5: u32 = 8822181;
-pub const fnEprojInit_MiniKraidSpit: u32 = 8822252;
-pub const fnEprojPreInit_MiniKraidSpit: u32 = 8822302;
-pub const fnEprojInit_MiniKraidSpikesLeft: u32 = 8822342;
-pub const fnEprojInit_MiniKraidSpikesRight: u32 = 8822347;
-pub const fnEprojPreInstr_MiniKraidSpikes: u32 = 8822403;
-pub const fnEprojInit_WalkingLavaSeahorseFireball: u32 = 8822450;
-pub const fnEprojPreInstr_WalkingLavaSeahorseFireball: u32 = 8822527;
-pub const fnEprojInit_PirateMotherBrainLaser: u32 = 8822793;
-pub const fnEprojInstr_SetPreInstrAndRun: u32 = 8822864;
-pub const fnnullsub_87: i32 = 0x86a05b;
-pub const fnEprojPreInstr_PirateMotherBrainLaser_MoveLeft: u32 = 8822876;
-pub const fnEprojPreInstr_PirateMotherBrainLaser_MoveRight: u32 = 8822906;
-pub const fnEprojInit_PirateClaw: u32 = 8822936;
-pub const fnEprojPreInstr_PirateClawThrownLeft: u32 = 8822993;
-pub const fnEprojPreInstr_PirateClawThrownRight: u32 = 8823076;
-pub const fnEprojInit_A379: u32 = 8823457;
-pub const fnEprojInit_CeresElevatorPad: u32 = 8823534;
-pub const fnEprojInit_CeresElevatorPlatform: u32 = 8823579;
-pub const fnnullsub_88: u32 = 8823591;
-pub const fnEprojPreInstr_CeresElevatorPad: u32 = 8823592;
-pub const fnEprojPreInstr_CeresElevatorPlatform: u32 = 8823652;
-pub const fnEprojPreInstr_PrePhantomRoom: u32 = 8823715;
-pub const fnEprojInstr_A3BE: u32 = 8823742;
-pub const fnEprojInstr_GotoWithProbability25: u32 = 8823894;
-pub const fnEprojInit_BombTorizoLowHealthDrool: u32 = 8824275;
-pub const fnEprojInit_BombTorizoLowHealthInitialDrool: u32 = 8824413;
-pub const fnEprojInit_A977: u32 = 8824519;
-pub const fnEprojInit_BombTorizoExplosiveSwipe: u32 = 8824566;
-pub const fnEprojInit_BombTorizoStatueBreaking: u32 = 8824676;
-pub const fnEprojInit_BombTorizoLowHealthExplode: u32 = 8824859;
-pub const fnEprojInit_BombTorizoDeathExplosion: u32 = 8824945;
-pub const fnsub_86A887: u32 = 8824967;
-pub const fnEprojPreInstr_A977: u32 = 8825071;
-pub const fnnullsub_352: u32 = 8825112;
-pub const fnnullsub_89: u32 = 8825113;
-pub const fnEprojInit_AB07: u32 = 8825405;
-pub const fnEprojPreInstr_AB07: u32 = 8825484;
-pub const fnEprojInstr_SpawnEnemyDrops: u32 = 8825738;
-pub const fnEprojInit_BombTorizosChozoOrbs: u32 = 8825835;
-pub const fnEprojInit_GoldenTorizosChozoOrbs: u32 = 8825980;
-pub const fnEprojPreInstr_BombTorizosChozoOrbs: u32 = 8826029;
-pub const fnEprojPreInstr_GoldenTorizosChozoOrbs: u32 = 8826106;
-pub const fnEprojInstr_GotoDependingOnXDirection: u32 = 8826258;
-pub const fnEprojInit_TorizoSonicBoom: u32 = 8826389;
-pub const fnEprojPreInstr_TorizoSonicBoom: u32 = 8826476;
-pub const fnEprojInit_WreckedShipChozoSpikeFootsteps: u32 = 8826620;
-pub const fnEprojInstr_ResetXYpos1: u32 = 8826678;
-pub const fnEprojInit_TourianStatueDustClouds: u32 = 8826691;
-pub const fnEprojInit_TourianLandingDustCloudsRightFoot: u32 = 8826704;
-pub const fnEprojInstr_MoveY_Minus4: u32 = 8826770;
-pub const fnEprojInstr_SetVelTowardsSamus1: u32 = 8827497;
-pub const fnEprojInstr_SetVelTowardsSamus2: u32 = 8827506;
-pub const fnEprojInit_TorizoLandingDustCloudLeftFoot: u32 = 8826829;
-pub const fnEprojInit_GoldenTorizoEgg: u32 = 8826881;
-pub const fnEprojPreInstr_GoldenTorizoEgg: u32 = 8826947;
-pub const fnsub_86B0B9: u32 = 8827065;
-pub const fnsub_86B0DD: u32 = 8827101;
-pub const fnsub_86B13E: u32 = 8827198;
-pub const fnEprojInit_GoldenTorizoSuperMissile: u32 = 8827342;
-pub const fnEprojPreInstr_GoldenTorizoSuperMissile: u32 = 8827405;
-pub const fnEprojPreInstr_B237: u32 = 8827447;
-pub const fnEprojInit_GoldenTorizoEyeBeam: u32 = 8827688;
-pub const fnEprojPreInstr_GoldenTorizoEyeBeam: u32 = 8827786;
-pub const fnEprojInstr_GotoIfFunc1: u32 = 8827832;
-pub const fnEprojInstr_ResetXYpos2: u32 = 8827958;
-pub const fnEprojInit_TourianEscapeShaftFakeWallExplode: u32 = 8828061;
-pub const fnnullsub_90: u32 = 8828080;
-pub const fnEprojInit_LavaSeahorseFireball: u32 = 8828143;
-pub const fnsub_86B535: u32 = 8828213;
-pub const fnEprojInit_EyeDoorProjectile: u32 = 8828461;
-pub const fnEprojInit_EyeDoorSweat: u32 = 8828547;
-pub const fnEprojPreInstr_EyeDoorProjectile: u32 = 8828601;
-pub const fnEprojPreInstr_EyeDoorSweat: u32 = 8828692;
-pub const fnEprojInstr_SpawnTourianStatueUnlockingParticle: u32 = 8828906;
-pub const fnEprojInstr_Earthquake: u32 = 8828917;
-pub const fnEprojInstr_SpawnTourianStatueUnlockingParticleTail: u32 = 8828952;
-pub const fnEprojInstr_AddToYpos: u32 = 8828993;
-pub const fnEprojInit_TourianStatueUnlockingParticleWaterSplash: u32 = 8829050;
-pub const fnEprojInit_TourianStatueEyeGlow: u32 = 8829070;
-pub const fnEprojInit_TourianStatueUnlockingParticle: u32 = 8829109;
-pub const fnEprojIni_TourianStatueUnlockingParticleTail: u32 = 8829160;
-pub const fnEprojInit_TourianStatueSoul: u32 = 8829176;
-pub const fnEprojInit_TourianStatueBaseDecoration: u32 = 8829246;
-pub const fnEprojInit_TourianStatueRidley: u32 = 8829265;
-pub const fnEprojInit_TourianStatuePhantoon: u32 = 8829284;
-pub const fnEprojPreInstr_TourianStatueUnlockingParticleWaterSplash: u32 = 8829303;
-pub const fnEprojPreInstr_TourianStatueUnlockingParticle: u32 = 8829314;
-pub const fnEprojPreInstr_TourianStatueSoul: u32 = 8829437;
-pub const fnEprojPreInstr_TourianStatueStuff: u32 = 8829495;
-pub const fnEprojPreInstr_BA42: u32 = 8829506;
-pub const fnsub_86BB30: u32 = 8829744;
-pub const fnnullsub_91: u32 = 8829775;
-pub const fnEprojInit_NuclearWaffleBody: u32 = 8829842;
-pub const fnnullsub_92: u32 = 8829894;
-pub const fnEprojInit_NorfairLavaquakeRocks: u32 = 8829915;
-pub const fnEprojPreInstr_NorfairLavaquakeRocks: u32 = 8829967;
-pub const fnEproj_NorfairLavaquakeRocks_Func1: i32 = 0x86bc16;
-pub const fnEproj_NorfairLavaquakeRocks_Func2: i32 = 0x86bc8f;
-pub const fnEprojPreInstr_NorfairLavaquakeRocks_Inner: u32 = 8830238;
-pub const fnEprojPreInstr_NorfairLavaquakeRocks_Inner2: u32 = 8830250;
-pub const fnEprojInit_ShaktoolAttackMiddleBackCircle: u32 = 8830364;
-pub const fnEprojInit_BDA2: u32 = 8830370;
-pub const fnEprojInit_ShaktoolAttackFrontCircle: u32 = 8830467;
-pub const fnEprojPreInstr_BE12: u32 = 8830482;
-pub const fnEprojInit_MotherBrainRoomTurrets: u32 = 8830543;
-pub const fnEprojInit_MotherBrainRoomTurretBullets: u32 = 8830809;
-pub const fnEprojPreInstr_MotherBrainRoomTurrets: u32 = 8830943;
-pub const fnEprojPreInstr_MotherBrainRoomTurretBullets: u32 = 8831200;
-pub const fnEprojInstr_SwitchJump: u32 = 8831347;
-pub const fnEprojInstr_UserPalette0: u32 = 8831412;
-pub const fnEproj_MotherBrainsBlueRingLasers: u32 = 8831731;
-pub const fnEproj_MoveToBlueRingSpawnPosition: u32 = 8831797;
-pub const fnEprojInit_MotherBrainBomb: u32 = 8832130;
-pub const fnEprojPreInstr_MotherBrainBomb: u32 = 8832200;
-pub const fnsub_86C605: u32 = 8832517;
-pub const fnEprojInit_MotherBrainDeathBeemFired: u32 = 8832644;
-pub const fnnullsub_366: u32 = 8832877;
-pub const fnSpawnMotherBrainDeathBeam: u32 = 8833019;
-pub const fnEprojInit_MotherBrainRainbowBeam: u32 = 8833034;
-pub const fnEprojPreInstr_MotherBrainRainbowBeam: u32 = 8833044;
-pub const fnEprojInit_MotherBrainsDrool: u32 = 8833091;
-pub const fnEprojPreInstr_C84D: u32 = 8833101;
-pub const fnEprojInit_MotherBrainsDrool_Falling: u32 = 8833158;
-pub const fnEprojInstr_Add12ToY: u32 = 8833232;
-pub const fnEprojInit_MotherBrainsDeathExplosion: u32 = 8833269;
-pub const fnEprojPreInit_MotherBrainsDeathExplosion_0: u32 = 8833300;
-pub const fnEprojInit_MotherBrainsRainbowBeamExplosion: u32 = 8833327;
-pub const fnEprojPreInstr_MotherBrainsRainbowBeamExplosion: u32 = 8833356;
-pub const fnEprojInit_MotherBrainEscapeDoorParticles: u32 = 8833377;
-pub const fnEprojPreInstr_MotherBrainsExplodedDoorParticles: u32 = 8833490;
-pub const fnEprojInit_MotherBrainPurpleBreathBig: u32 = 8833642;
-pub const fnEprojInit_MotherBrainPurpleBreathSmall: u32 = 8833667;
-pub const fnnullsub_94: u32 = 8833699;
-pub const fnEprojInstr_MotherBrainPurpleBreathIsActive: u32 = 8833774;
-pub const fnEprojInit_TimeBombSetJapaneseText: u32 = 8833782;
-pub const fnEprojPreInstr_TimeBombSetJapaneseText: u32 = 8833786;
-pub const fnEprojInit_MotherBrainTubeFalling: u32 = 8833993;
-pub const fnEprojPreInstr_MotherBrainTubeFalling: u32 = 8834023;
-pub const fnMotherBrainTubeFallingFunc_GenerateExplosion: i32 = 0x86cbea;
-pub const fnMotherBrainTubeFallingFunc_Falling: i32 = 0x86cc08;
-pub const fnEprojInit_MotherBrainGlassShatteringShard: u32 = 8834501;
-pub const fnEprojInit_MotherBrainGlassShatteringSparkle: u32 = 8834669;
-pub const fnEprojPreInstr_MotherBrainGlassShatteringShard: u32 = 8834715;
-pub const fnEprojInit_KiHunterAcidSpitLeft: u32 = 8834960;
-pub const fnEprojInit_KiHunterAcidSpitRight: u32 = 8834982;
-pub const fnsub_86CFD5: u32 = 8835029;
-pub const fnsub_86CFE6: u32 = 8835046;
-pub const fnnullsub_95: u32 = 8835063;
-pub const fnsub_86CFF8: i32 = 0x86cff8;
-pub const fnEprojInit_KagosBugs: u32 = 8835208;
-pub const fnEprojPreInstr_KagosBugs_Func1: u32 = 8835251;
-pub const fnEprojPreInstr_KagosBugs: i32 = 0x86d0ca;
-pub const fnnullsub_302: i32 = 0x86d0eb;
-pub const fnEprojPreInstr_D0EC: i32 = 0x86d0ec;
-pub const fnEprojPreInstr_D128: i32 = 0x86d128;
-pub const fnEprojInstr_D15C: u32 = 8835420;
-pub const fnEprojInstr_D1B6: u32 = 8835510;
-pub const fnEprojInstr_D1C7: u32 = 8835527;
-pub const fnEprojInstr_D1CE: u32 = 8835534;
-pub const fnEprojPreInstr_KagosBugs_Func2: u32 = 8835556;
-pub const fnEprojInit_MaridiaFloatersSpikes: u32 = 8835642;
-pub const fnEprojPreInstr_MaridiaFloatersSpikes: u32 = 8835683;
-pub const fnEprojInit_WreckedShipRobotLaserDown: u32 = 8835852;
-pub const fnEprojInit_WreckedShipRobotLaserHorizontal: u32 = 8835886;
-pub const fnEprojInit_WreckedShipRobotLaserUp: u32 = 8835905;
-pub const fnEprojPreInstr_WreckedShipRobotLaser: u32 = 8836031;
-pub const fnEprojInstr_AssignNewN00bTubeShardVelocity: u32 = 8836577;
-pub const fnEprojInstr_SetN00bTubeShardX: u32 = 8836594;
-pub const fnEprojInstr_D62A: u32 = 8836650;
-pub const fnEprojInstr_SetXvelRandom: u32 = 8836762;
-pub const fnEprojInit_N00bTubeCrack: u32 = 8836773;
-pub const fnEprojInit_N00bTubeShards: u32 = 8836809;
-pub const fnEprojInit_N00bTubeReleasedAirBubbles: u32 = 8836980;
-pub const fnsub_86D7BF: u32 = 8837055;
-pub const fnsub_86D7DE: u32 = 8837086;
-pub const fnEprojPreInstr_N00bTubeShards: u32 = 8837117;
-pub const fnsub_86D83D: u32 = 8837181;
-pub const fnsub_86D89F: u32 = 8837279;
-pub const fnsub_86D8DF: u32 = 8837343;
-pub const fnsub_86D992: u32 = 8837522;
-pub const fnEprojPreInstr_SpikeShootingPlantSpikes: u32 = 8837595;
-pub const fnEprojPreInstr_SpikeShootingPlantSpikes_MoveY1: u32 = 8837606;
-pub const fnEprojPreInstr_SpikeShootingPlantSpikes_MoveY2: u32 = 8837648;
-pub const fnEprojPreInstr_SpikeShootingPlantSpikes_MoveX1: u32 = 8837690;
-pub const fnEprojPreInstr_SpikeShootingPlantSpikes_MoveX2: u32 = 8837732;
-pub const fnEprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1: u32 = 8837774;
-pub const fnEprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2: u32 = 8837779;
-pub const fnEprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1: u32 = 8837784;
-pub const fnEprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2: u32 = 8837789;
-pub const fnEprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1: u32 = 8837794;
-pub const fnEprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2: u32 = 8837802;
-pub const fnEprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1: u32 = 8837810;
-pub const fnEprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2: u32 = 8837818;
-pub const fnEprojInit_DBF2: u32 = 8837912;
-pub const fnEprojPreInstr_DBF2: u32 = 8837979;
-pub const fnEprojPreInstr_DBF2_MoveX1: i32 = 0x86db62;
-pub const fnEprojPreInstr_DBF2_MoveX2: i32 = 0x86db8c;
-pub const fnEprojPreInstr_DBF2_Func1: u32 = 8838070;
-pub const fnEprojInstr_DC5A: u32 = 8838234;
-pub const fnEprojInstr_SpawnEnemyDrops_0: u32 = 8838241;
-pub const fnEprojInstr_SpawnSporesEproj: u32 = 8838263;
-pub const fnEprojInit_Spores: u32 = 8838285;
-pub const fnEprojInit_SporeSpawnStalk: u32 = 8838307;
-pub const fnEprojInit_SporeSpawners: u32 = 8838356;
-pub const fnEprojPreInstr_Spores: u32 = 8838382;
-pub const fnnullsub_96: u32 = 8838468;
-pub const fnEprojPreInstr_SporeSpawners: u32 = 8838470;
-pub const fnEprojInit_NamiFuneFireball: u32 = 8838870;
-pub const fnEprojPreInstr_NamiFuneFireball: u32 = 8838969;
-pub const fnEprojInit_NamiFuneFireball_MoveX1: i32 = 0x86df40;
-pub const fnEprojInit_NamiFuneFireball_MoveX2: i32 = 0x86df6a;
-pub const fnEprojInstr_DFEA: u32 = 8839146;
-pub const fnEprojInit_LavaThrownByLavaman: u32 = 8839168;
-pub const fnsub_86E049: u32 = 8839241;
-pub const fnEproj_LavaThrownByLavaman_MoveX1: i32 = 0x86e050;
-pub const fnEproj_LavaThrownByLavaman_MoveX2: i32 = 0x86e07a;
-pub const fnEprojInit_DustCloudOrExplosion: u32 = 8840296;
-pub const fnEprojInit_EyeDoorSmoke: u32 = 8840358;
-pub const fnEprojPreInstr_DustCloudOrExplosion: u32 = 8840446;
-pub const fnEprojPreInstr_nullsub_98: u32 = 8840456;
-pub const fnEprojInstr_SetYVel: u32 = 8840499;
-pub const fnEprojInit_SpawnedShotGate: u32 = 8840656;
-pub const fnEprojInit_ClosedDownwardsShotGate: u32 = 8840661;
-pub const fnEprojInit_ClosedUpwardsShotGate: u32 = 8840666;
-pub const fnEprojPreInstr_nullsub_99: u32 = 8840708;
-pub const fnEprojPreInstr_E605: u32 = 8840709;
-pub const fnEprojInit_SaveStationElectricity: u32 = 8840877;
-pub const fnnullsub_100: u32 = 8840913;
-pub const fnEprojInit_BotwoonsBody: u32 = 8841777;
-pub const fnEprojPreInstr_BotwoonsBody: u32 = 8841856;
-pub const fnEproj_BotwoonsBody_Main: i32 = 0x86ea98;
-pub const fnEproj_BotwonsBodyFunction_Dying: i32 = 0x86eaf4;
-pub const fnEproj_BotwonsBodyFunction_Dying2: u32 = 8841988;
-pub const fnEproj_BotwonsBodyFunction_DyingFalling: i32 = 0x86eb1f;
-pub const fnnullsub_101: i32 = 0x86eb93;
-pub const fnEprojInit_BotwoonsSpit: u32 = 8842182;
-pub const fnEprojPreInstr_BotwoonsSpit: u32 = 8842245;
-pub const fnEprojInit_YappingMawsBody: u32 = 8842338;
-pub const fnEprojPreInstr_Empty2: u32 = 8842388;
-pub const fnEprojInstr_ECE3: u32 = 8842467;
-pub const fnEprojInstr_ED17: u32 = 8842519;
-pub const fnEprojInstr_QueueSfx2_9: u32 = 8842891;
-pub const fnEprojInstr_QueueSfx2_24: u32 = 8842903;
-pub const fnEprojInstr_QueueSfx2_B: u32 = 8842915;
-pub const fnEprojInstr_EEAF: u32 = 8842927;
-pub const fnEprojInstr_HandleRespawningEnemy: u32 = 8843024;
-pub const fnEprojInit_F337: u32 = 8843049;
-pub const fnEprojInit_EnemyDeathExplosion: u32 = 8843145;
-pub const fnEprojPreInstr_Empty: i32 = 0x86efdf;
-pub const fnEprojPreInstr_Pickup: i32 = 0x86efe0;
-pub const fnEprojInit_Sparks: u32 = 8844177;
-pub const fnEprojPreInstr_Sparks: u32 = 8844272;
+crate::game::constants::typed_constants! { u32;
+    fnEprojInstr_Delete = 8814932, fnEprojInstr_Sleep = 8814937,
+    fnEprojInstr_SetPreInstr_ = 8814945, fnEprojInstr_ClearPreInstr = 8814954,
+    fnEprojPreInstr_nullsub_297 = 8814960, fnEprojInstr_CallFunc = 8814961,
+    fnEprojInstr_Goto = 8815019, fnEprojInstr_GotoRel = 8815024,
+    fnEprojInstr_DecTimerAndGotoIfNonZero = 8815046, fnEprojInstr_DecTimerAndGotoRelIfNonZero = 8815054,
+    fnEprojInstr_SetTimer = 8815061, fnnullsub_82 = 8815070,
+    fnEprojInstr_MoveRandomlyWithinRadius = 8815071, fnEprojInstr_SetProjectileProperties = 8815152,
+    fnEprojInstr_ClearProjectileProperties = 8815164, fnEprojInstr_EnableCollisionWithSamusProj = 8815176,
+    fnEprojInstr_DisableCollisionWithSamusProj = 8815186, fnEprojInstr_DisableCollisionWithSamus = 8815196,
+    fnEprojInstr_EnableCollisionWithSamus = 8815206, fnEprojInstr_SetToNotDieOnContact = 8815216,
+    fnEprojInstr_SetToDieOnContact = 8815226, fnEprojInstr_SetLowPriority = 8815236,
+    fnEprojInstr_SetHighPriority = 8815246, fnEprojInstr_SetXyRadius = 8815256,
+    fnEprojInstr_SetXyRadiusZero = 8815265, fnEprojInstr_CalculateDirectionTowardsSamus = 8815269,
+    fnEprojInstr_WriteColorsToPalette = 8815317, fnEprojInstr_QueueMusic = 8815357,
+    fnEprojInstr_QueueSfx1_Max6 = 8815369, fnEprojInstr_QueueSfx2_Max6 = 8815378,
+    fnEprojInstr_QueueSfx3_Max6 = 8815387, fnEprojInstr_QueueSfx1_Max15 = 8815396,
+    fnEprojInstr_QueueSfx2_Max15 = 8815405, fnEprojInstr_QueueSfx3_Max15 = 8815414,
+    fnEprojInstr_QueueSfx1_Max3 = 8815423, fnEprojInstr_QueueSfx2_Max3 = 8815432,
+    fnEprojInstr_QueueSfx3_Max3 = 8815441, fnEprojInstr_QueueSfx1_Max9 = 8815450,
+    fnEprojInstr_QueueSfx2_Max9 = 8815459, fnEprojInstr_QueueSfx3_Max9 = 8815468,
+    fnEprojInstr_QueueSfx1_Max1 = 8815477, fnEprojInstr_QueueSfx2_Max1 = 8815486,
+    fnEprojInstr_QueueSfx3_Max1 = 8815495, fnEprojPreInstr_nullsub_83 = 8815867,
+    fnEproj_Init_0x8aaf = 8817209, fnEproj_PreInit_0x8aaf = 8817277,
+    fnEproj_Init_0x8bc2_SkreeDownRight = 8817357, fnEproj_Init_0x8bd0_SkreeUpRight = 8817393,
+    fnEproj_Init_0x8bde_SkreeDownLeft = 8817429, fnEproj_Init_0x8bec_SkreeUpLeft = 8817465,
+    fnEproj_PreInstr_SkreeParticle = 8817501, fnEprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops = 8817768,
+    fnEprojInstr_SetPreInstrA = 8817910, fnEprojInstr_SetPreInstrB = 8817917,
+    fnEprojInit_DraygonsGunk = 8817924, fnEprojInit_DraygonsWallTurretProjs = 8817984,
+}
+crate::game::constants::typed_constants! { i32;
+    fnnullsub_84 = 0x868d54,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojInstr_868D99 = 8818073,
+}
+crate::game::constants::typed_constants! { i32;
+    fnEprojPreInstr_8DCA = 0x868dca, fnEprojPreInstr_DraygonsTurret_8DFF = 0x868dff,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojPreInstr_DraygonsGunk_8E0F = 8818191, fnEprojInit_CrocomireProjectile = 8818723,
+    fnEprojPreInstr_CrocomireProjectile = 8818795,
+}
+crate::game::constants::typed_constants! { i32;
+    fnsub_8690B3 = 0x8690b3,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojInit_CrocomireSpikeWallPieces = 8818895, fnEprojPreInstr_CrocomireSpikeWallPieces = 8818965,
+    fnEprojInstr_9270 = 8819312, fnEprojInit_CrocomireBridgeCrumbling = 8819334,
+    fnEprojPreInstr_CrocomireBridgeCrumbling = 8819386, fnEprojInit_9634 = 8819533,
+    fnEprojPreInstr_9634 = 8819602, fnEprojInit_9642_RidleysFireball = 8819658,
+    fnEprojPreInstr_9642_RidleysFireball = 8819726, fnEprojInstr_DisableCollisionsWithSamus = 8819829,
+    fnEprojInit_9660_FireballExplosion = 8819839, fnEprojInit_9688 = 8819872,
+    fnEprojInit_9696 = 8819892, fnEprojInit_966C = 8819912,
+    fnEprojInit_967A = 8819932, fnnullsub_85 = 8819980,
+    fnEprojPreInstr_966C = 8819981, fnEprojPreInstr_9688 = 8820002,
+    fnEprojPreInstr_96A4 = 8820023, fnEprojPreInstr_96C0 = 8820032,
+    fnEprojPreInstr_96CE = 8820041, fnEprojInstr_95BA = 8820154,
+    fnEprojInstr_95ED = 8820205, fnEprojInstr_9620 = 8820256,
+    fnEprojInit_9734_CeresFallingDebris = 8820444, fnEprojPreInstr_9734_CeresFallingDebris = 8820481,
+    fnEprojInstr_980E = 8820750, fnEprojInit_PhantoonDestroyableFireballs = 8820772,
+    fnEprojInit_PhantoonStartingFireballs = 8821050, fnEprojPreInstr_PhantoonStartingFireballs = 8821121,
+}
+crate::game::constants::typed_constants! { i32;
+    fnEprojPreInstr_PhantoonStartingFireballs2 = 0x8699bf, fnEprojPreInstr_PhantoonStartingFireballs3 = 0x869a01,
+    fnnullsub_86 = 0x869a44, fnEprojPreInstr_PhantoonDestroyableFireballs = 0x869a45,
+    fnEprojPreInstr_PhantoonDestroyableFireballs_2 = 0x869a94, fnEprojPreInstr_PhantoonDestroyableFireballs_3 = 0x869ada,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojPreInstr_PhantoonStartingFireballsB = 8821545,
+}
+crate::game::constants::typed_constants! { i32;
+    fnEprojPreInstr_PhantoonStartingFireballsB_2 = 0x869b41,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojInit_RocksKraidSpits = 8821923, fnEprojInit_RocksFallingKraidCeiling = 8821976,
+    fnEprojInit_RocksWhenKraidRises = 8822028, fnEprojPreInstr_KraidRocks = 8822102,
+    fnEprojPreInstr_RocksFallingKraidCeiling = 8822153, fnsub_869DA5 = 8822181,
+    fnEprojInit_MiniKraidSpit = 8822252, fnEprojPreInit_MiniKraidSpit = 8822302,
+    fnEprojInit_MiniKraidSpikesLeft = 8822342, fnEprojInit_MiniKraidSpikesRight = 8822347,
+    fnEprojPreInstr_MiniKraidSpikes = 8822403, fnEprojInit_WalkingLavaSeahorseFireball = 8822450,
+    fnEprojPreInstr_WalkingLavaSeahorseFireball = 8822527, fnEprojInit_PirateMotherBrainLaser = 8822793,
+    fnEprojInstr_SetPreInstrAndRun = 8822864,
+}
+crate::game::constants::typed_constants! { i32;
+    fnnullsub_87 = 0x86a05b,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojPreInstr_PirateMotherBrainLaser_MoveLeft = 8822876, fnEprojPreInstr_PirateMotherBrainLaser_MoveRight = 8822906,
+    fnEprojInit_PirateClaw = 8822936, fnEprojPreInstr_PirateClawThrownLeft = 8822993,
+    fnEprojPreInstr_PirateClawThrownRight = 8823076, fnEprojInit_A379 = 8823457,
+    fnEprojInit_CeresElevatorPad = 8823534, fnEprojInit_CeresElevatorPlatform = 8823579,
+    fnnullsub_88 = 8823591, fnEprojPreInstr_CeresElevatorPad = 8823592,
+    fnEprojPreInstr_CeresElevatorPlatform = 8823652, fnEprojPreInstr_PrePhantomRoom = 8823715,
+    fnEprojInstr_A3BE = 8823742, fnEprojInstr_GotoWithProbability25 = 8823894,
+    fnEprojInit_BombTorizoLowHealthDrool = 8824275, fnEprojInit_BombTorizoLowHealthInitialDrool = 8824413,
+    fnEprojInit_A977 = 8824519, fnEprojInit_BombTorizoExplosiveSwipe = 8824566,
+    fnEprojInit_BombTorizoStatueBreaking = 8824676, fnEprojInit_BombTorizoLowHealthExplode = 8824859,
+    fnEprojInit_BombTorizoDeathExplosion = 8824945, fnsub_86A887 = 8824967,
+    fnEprojPreInstr_A977 = 8825071, fnnullsub_352 = 8825112,
+    fnnullsub_89 = 8825113, fnEprojInit_AB07 = 8825405,
+    fnEprojPreInstr_AB07 = 8825484, fnEprojInstr_SpawnEnemyDrops = 8825738,
+    fnEprojInit_BombTorizosChozoOrbs = 8825835, fnEprojInit_GoldenTorizosChozoOrbs = 8825980,
+    fnEprojPreInstr_BombTorizosChozoOrbs = 8826029, fnEprojPreInstr_GoldenTorizosChozoOrbs = 8826106,
+    fnEprojInstr_GotoDependingOnXDirection = 8826258, fnEprojInit_TorizoSonicBoom = 8826389,
+    fnEprojPreInstr_TorizoSonicBoom = 8826476, fnEprojInit_WreckedShipChozoSpikeFootsteps = 8826620,
+    fnEprojInstr_ResetXYpos1 = 8826678, fnEprojInit_TourianStatueDustClouds = 8826691,
+    fnEprojInit_TourianLandingDustCloudsRightFoot = 8826704, fnEprojInstr_MoveY_Minus4 = 8826770,
+    fnEprojInstr_SetVelTowardsSamus1 = 8827497, fnEprojInstr_SetVelTowardsSamus2 = 8827506,
+    fnEprojInit_TorizoLandingDustCloudLeftFoot = 8826829, fnEprojInit_GoldenTorizoEgg = 8826881,
+    fnEprojPreInstr_GoldenTorizoEgg = 8826947, fnsub_86B0B9 = 8827065,
+    fnsub_86B0DD = 8827101, fnsub_86B13E = 8827198,
+    fnEprojInit_GoldenTorizoSuperMissile = 8827342, fnEprojPreInstr_GoldenTorizoSuperMissile = 8827405,
+    fnEprojPreInstr_B237 = 8827447, fnEprojInit_GoldenTorizoEyeBeam = 8827688,
+    fnEprojPreInstr_GoldenTorizoEyeBeam = 8827786, fnEprojInstr_GotoIfFunc1 = 8827832,
+    fnEprojInstr_ResetXYpos2 = 8827958, fnEprojInit_TourianEscapeShaftFakeWallExplode = 8828061,
+    fnnullsub_90 = 8828080, fnEprojInit_LavaSeahorseFireball = 8828143,
+    fnsub_86B535 = 8828213, fnEprojInit_EyeDoorProjectile = 8828461,
+    fnEprojInit_EyeDoorSweat = 8828547, fnEprojPreInstr_EyeDoorProjectile = 8828601,
+    fnEprojPreInstr_EyeDoorSweat = 8828692, fnEprojInstr_SpawnTourianStatueUnlockingParticle = 8828906,
+    fnEprojInstr_Earthquake = 8828917, fnEprojInstr_SpawnTourianStatueUnlockingParticleTail = 8828952,
+    fnEprojInstr_AddToYpos = 8828993, fnEprojInit_TourianStatueUnlockingParticleWaterSplash = 8829050,
+    fnEprojInit_TourianStatueEyeGlow = 8829070, fnEprojInit_TourianStatueUnlockingParticle = 8829109,
+    fnEprojIni_TourianStatueUnlockingParticleTail = 8829160, fnEprojInit_TourianStatueSoul = 8829176,
+    fnEprojInit_TourianStatueBaseDecoration = 8829246, fnEprojInit_TourianStatueRidley = 8829265,
+    fnEprojInit_TourianStatuePhantoon = 8829284, fnEprojPreInstr_TourianStatueUnlockingParticleWaterSplash = 8829303,
+    fnEprojPreInstr_TourianStatueUnlockingParticle = 8829314, fnEprojPreInstr_TourianStatueSoul = 8829437,
+    fnEprojPreInstr_TourianStatueStuff = 8829495, fnEprojPreInstr_BA42 = 8829506,
+    fnsub_86BB30 = 8829744, fnnullsub_91 = 8829775,
+    fnEprojInit_NuclearWaffleBody = 8829842, fnnullsub_92 = 8829894,
+    fnEprojInit_NorfairLavaquakeRocks = 8829915, fnEprojPreInstr_NorfairLavaquakeRocks = 8829967,
+}
+crate::game::constants::typed_constants! { i32;
+    fnEproj_NorfairLavaquakeRocks_Func1 = 0x86bc16, fnEproj_NorfairLavaquakeRocks_Func2 = 0x86bc8f,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojPreInstr_NorfairLavaquakeRocks_Inner = 8830238, fnEprojPreInstr_NorfairLavaquakeRocks_Inner2 = 8830250,
+    fnEprojInit_ShaktoolAttackMiddleBackCircle = 8830364, fnEprojInit_BDA2 = 8830370,
+    fnEprojInit_ShaktoolAttackFrontCircle = 8830467, fnEprojPreInstr_BE12 = 8830482,
+    fnEprojInit_MotherBrainRoomTurrets = 8830543, fnEprojInit_MotherBrainRoomTurretBullets = 8830809,
+    fnEprojPreInstr_MotherBrainRoomTurrets = 8830943, fnEprojPreInstr_MotherBrainRoomTurretBullets = 8831200,
+    fnEprojInstr_SwitchJump = 8831347, fnEprojInstr_UserPalette0 = 8831412,
+    fnEproj_MotherBrainsBlueRingLasers = 8831731, fnEproj_MoveToBlueRingSpawnPosition = 8831797,
+    fnEprojInit_MotherBrainBomb = 8832130, fnEprojPreInstr_MotherBrainBomb = 8832200,
+    fnsub_86C605 = 8832517, fnEprojInit_MotherBrainDeathBeemFired = 8832644,
+    fnnullsub_366 = 8832877, fnSpawnMotherBrainDeathBeam = 8833019,
+    fnEprojInit_MotherBrainRainbowBeam = 8833034, fnEprojPreInstr_MotherBrainRainbowBeam = 8833044,
+    fnEprojInit_MotherBrainsDrool = 8833091, fnEprojPreInstr_C84D = 8833101,
+    fnEprojInit_MotherBrainsDrool_Falling = 8833158, fnEprojInstr_Add12ToY = 8833232,
+    fnEprojInit_MotherBrainsDeathExplosion = 8833269, fnEprojPreInit_MotherBrainsDeathExplosion_0 = 8833300,
+    fnEprojInit_MotherBrainsRainbowBeamExplosion = 8833327, fnEprojPreInstr_MotherBrainsRainbowBeamExplosion = 8833356,
+    fnEprojInit_MotherBrainEscapeDoorParticles = 8833377, fnEprojPreInstr_MotherBrainsExplodedDoorParticles = 8833490,
+    fnEprojInit_MotherBrainPurpleBreathBig = 8833642, fnEprojInit_MotherBrainPurpleBreathSmall = 8833667,
+    fnnullsub_94 = 8833699, fnEprojInstr_MotherBrainPurpleBreathIsActive = 8833774,
+    fnEprojInit_TimeBombSetJapaneseText = 8833782, fnEprojPreInstr_TimeBombSetJapaneseText = 8833786,
+    fnEprojInit_MotherBrainTubeFalling = 8833993, fnEprojPreInstr_MotherBrainTubeFalling = 8834023,
+}
+crate::game::constants::typed_constants! { i32;
+    fnMotherBrainTubeFallingFunc_GenerateExplosion = 0x86cbea, fnMotherBrainTubeFallingFunc_Falling = 0x86cc08,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojInit_MotherBrainGlassShatteringShard = 8834501, fnEprojInit_MotherBrainGlassShatteringSparkle = 8834669,
+    fnEprojPreInstr_MotherBrainGlassShatteringShard = 8834715, fnEprojInit_KiHunterAcidSpitLeft = 8834960,
+    fnEprojInit_KiHunterAcidSpitRight = 8834982, fnsub_86CFD5 = 8835029,
+    fnsub_86CFE6 = 8835046, fnnullsub_95 = 8835063,
+}
+crate::game::constants::typed_constants! { i32;
+    fnsub_86CFF8 = 0x86cff8,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojInit_KagosBugs = 8835208, fnEprojPreInstr_KagosBugs_Func1 = 8835251,
+}
+crate::game::constants::typed_constants! { i32;
+    fnEprojPreInstr_KagosBugs = 0x86d0ca, fnnullsub_302 = 0x86d0eb,
+    fnEprojPreInstr_D0EC = 0x86d0ec, fnEprojPreInstr_D128 = 0x86d128,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojInstr_D15C = 8835420, fnEprojInstr_D1B6 = 8835510,
+    fnEprojInstr_D1C7 = 8835527, fnEprojInstr_D1CE = 8835534,
+    fnEprojPreInstr_KagosBugs_Func2 = 8835556, fnEprojInit_MaridiaFloatersSpikes = 8835642,
+    fnEprojPreInstr_MaridiaFloatersSpikes = 8835683, fnEprojInit_WreckedShipRobotLaserDown = 8835852,
+    fnEprojInit_WreckedShipRobotLaserHorizontal = 8835886, fnEprojInit_WreckedShipRobotLaserUp = 8835905,
+    fnEprojPreInstr_WreckedShipRobotLaser = 8836031, fnEprojInstr_AssignNewN00bTubeShardVelocity = 8836577,
+    fnEprojInstr_SetN00bTubeShardX = 8836594, fnEprojInstr_D62A = 8836650,
+    fnEprojInstr_SetXvelRandom = 8836762, fnEprojInit_N00bTubeCrack = 8836773,
+    fnEprojInit_N00bTubeShards = 8836809, fnEprojInit_N00bTubeReleasedAirBubbles = 8836980,
+    fnsub_86D7BF = 8837055, fnsub_86D7DE = 8837086,
+    fnEprojPreInstr_N00bTubeShards = 8837117, fnsub_86D83D = 8837181,
+    fnsub_86D89F = 8837279, fnsub_86D8DF = 8837343,
+    fnsub_86D992 = 8837522, fnEprojPreInstr_SpikeShootingPlantSpikes = 8837595,
+    fnEprojPreInstr_SpikeShootingPlantSpikes_MoveY1 = 8837606, fnEprojPreInstr_SpikeShootingPlantSpikes_MoveY2 = 8837648,
+    fnEprojPreInstr_SpikeShootingPlantSpikes_MoveX1 = 8837690, fnEprojPreInstr_SpikeShootingPlantSpikes_MoveX2 = 8837732,
+    fnEprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1 = 8837774, fnEprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2 = 8837779,
+    fnEprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1 = 8837784, fnEprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2 = 8837789,
+    fnEprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1 = 8837794, fnEprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2 = 8837802,
+    fnEprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1 = 8837810, fnEprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2 = 8837818,
+    fnEprojInit_DBF2 = 8837912, fnEprojPreInstr_DBF2 = 8837979,
+}
+crate::game::constants::typed_constants! { i32;
+    fnEprojPreInstr_DBF2_MoveX1 = 0x86db62, fnEprojPreInstr_DBF2_MoveX2 = 0x86db8c,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojPreInstr_DBF2_Func1 = 8838070, fnEprojInstr_DC5A = 8838234,
+    fnEprojInstr_SpawnEnemyDrops_0 = 8838241, fnEprojInstr_SpawnSporesEproj = 8838263,
+    fnEprojInit_Spores = 8838285, fnEprojInit_SporeSpawnStalk = 8838307,
+    fnEprojInit_SporeSpawners = 8838356, fnEprojPreInstr_Spores = 8838382,
+    fnnullsub_96 = 8838468, fnEprojPreInstr_SporeSpawners = 8838470,
+    fnEprojInit_NamiFuneFireball = 8838870, fnEprojPreInstr_NamiFuneFireball = 8838969,
+}
+crate::game::constants::typed_constants! { i32;
+    fnEprojInit_NamiFuneFireball_MoveX1 = 0x86df40, fnEprojInit_NamiFuneFireball_MoveX2 = 0x86df6a,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojInstr_DFEA = 8839146, fnEprojInit_LavaThrownByLavaman = 8839168,
+    fnsub_86E049 = 8839241,
+}
+crate::game::constants::typed_constants! { i32;
+    fnEproj_LavaThrownByLavaman_MoveX1 = 0x86e050, fnEproj_LavaThrownByLavaman_MoveX2 = 0x86e07a,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojInit_DustCloudOrExplosion = 8840296, fnEprojInit_EyeDoorSmoke = 8840358,
+    fnEprojPreInstr_DustCloudOrExplosion = 8840446, fnEprojPreInstr_nullsub_98 = 8840456,
+    fnEprojInstr_SetYVel = 8840499, fnEprojInit_SpawnedShotGate = 8840656,
+    fnEprojInit_ClosedDownwardsShotGate = 8840661, fnEprojInit_ClosedUpwardsShotGate = 8840666,
+    fnEprojPreInstr_nullsub_99 = 8840708, fnEprojPreInstr_E605 = 8840709,
+    fnEprojInit_SaveStationElectricity = 8840877, fnnullsub_100 = 8840913,
+    fnEprojInit_BotwoonsBody = 8841777, fnEprojPreInstr_BotwoonsBody = 8841856,
+}
+crate::game::constants::typed_constants! { i32;
+    fnEproj_BotwoonsBody_Main = 0x86ea98, fnEproj_BotwonsBodyFunction_Dying = 0x86eaf4,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEproj_BotwonsBodyFunction_Dying2 = 8841988,
+}
+crate::game::constants::typed_constants! { i32;
+    fnEproj_BotwonsBodyFunction_DyingFalling = 0x86eb1f, fnnullsub_101 = 0x86eb93,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojInit_BotwoonsSpit = 8842182, fnEprojPreInstr_BotwoonsSpit = 8842245,
+    fnEprojInit_YappingMawsBody = 8842338, fnEprojPreInstr_Empty2 = 8842388,
+    fnEprojInstr_ECE3 = 8842467, fnEprojInstr_ED17 = 8842519,
+    fnEprojInstr_QueueSfx2_9 = 8842891, fnEprojInstr_QueueSfx2_24 = 8842903,
+    fnEprojInstr_QueueSfx2_B = 8842915, fnEprojInstr_EEAF = 8842927,
+    fnEprojInstr_HandleRespawningEnemy = 8843024, fnEprojInit_F337 = 8843049,
+    fnEprojInit_EnemyDeathExplosion = 8843145,
+}
+crate::game::constants::typed_constants! { i32;
+    fnEprojPreInstr_Empty = 0x86efdf, fnEprojPreInstr_Pickup = 0x86efe0,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEprojInit_Sparks = 8844177, fnEprojPreInstr_Sparks = 8844272,
+}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];

@@ -67,150 +67,87 @@ pub use crate::types::{
     Ram4000_Backups, StartDmaCopy,
 };
 pub use crate::types::{GameState, Mode7VramWriteQueue};
-pub const addr_kCinematicBgObjectDef_8BF74E: Consts_8B = 63310;
-pub const addr_kCinematicBgObjectDef_8BF748: Consts_8B = 63304;
-pub const addr_stru_8BF6F8: Consts_8B = 63224;
-pub const addr_kCinematicSpriteObjectDef_8BEF93: Consts_8B = 61331;
-pub const addr_kCinematicSpriteObjectDef_8BEF8D: Consts_8B = 61325;
-pub const addr_kCinematicSpriteObjectDef_8BEF87: Consts_8B = 61319;
-pub const addr_kCinematicSpriteObjectDef_8BEF81: Consts_8B = 61313;
-pub const addr_kCinematicSpriteObjectDef_8BEF7B: Consts_8B = 61307;
-pub const addr_kCinematicSpriteObjectDef_8BEF75: Consts_8B = 61301;
-pub const addr_kCinematicSpriteObjectDef_8BEF6F: Consts_8B = 61295;
-pub const addr_kCinematicSpriteObjectDef_8BEF69: Consts_8B = 61289;
-pub const addr_kCinematicSpriteObjectDef_8BEF63: Consts_8B = 61283;
-pub const addr_kCinematicSpriteObjectDef_8BEF5D: Consts_8B = 61277;
-pub const addr_kCinematicSpriteObjectDef_8BEF57: Consts_8B = 61271;
-pub const addr_kCinematicSpriteObjectDef_8BEF51: Consts_8B = 61265;
-pub const addr_kCinematicSpriteObjectDef_8BEF4B: Consts_8B = 61259;
-pub const addr_kCinematicSpriteObjectDef_8BEF45: Consts_8B = 61253;
-pub const addr_kCinematicSpriteObjectDef_8BEF3F: Consts_8B = 61247;
-pub const addr_kCinematicSpriteObjectDef_8BEF39: Consts_8B = 61241;
-pub const addr_kCinematicSpriteObjectDef_8BEF33: Consts_8B = 61235;
-pub const addr_kCinematicSpriteObjectDef_8BEF2D: Consts_8B = 61229;
-pub const addr_kCinematicSpriteObjectDef_8BEF27: Consts_8B = 61223;
-pub const addr_kCinematicSpriteObjectDef_8BEF1B: Consts_8B = 61211;
-pub const addr_kCinematicSpriteObjectDef_8BEF15: Consts_8B = 61205;
-pub const addr_kCinematicSpriteObjectDef_8BEF0F: Consts_8B = 61199;
-pub const addr_kCinematicSpriteObjectDef_8BEF09: Consts_8B = 61193;
-pub const addr_kCinematicSpriteObjectDef_8BEF03: Consts_8B = 61187;
-pub const addr_kCinematicSpriteObjectDef_8BEEFD: Consts_8B = 61181;
-pub const addr_kCinematicSpriteObjectDef_8BEEF7: Consts_8B = 61175;
-pub const addr_kCinematicSpriteObjectDef_8BEEF1: Consts_8B = 61169;
-pub const addr_kCinematicSpriteObjectDef_8BEEEB: Consts_8B = 61163;
-pub const addr_kCinematicSpriteObjectDef_8BEEE5: Consts_8B = 61157;
-pub const addr_kCinematicSpriteObjectDef_8BEEDF: Consts_8B = 61151;
-pub const addr_kCinematicSpriteObjectDef_8BEED9: Consts_8B = 61145;
-pub const addr_kCinematicSpriteObjectDef_8BEED3: Consts_8B = 61139;
-pub const addr_kCinematicSpriteObjectDef_8BEECD: Consts_8B = 61133;
-pub const addr_kCinematicSpriteObjectDef_8BEEC7: Consts_8B = 61127;
-pub const addr_kCinematicSpriteObjectDef_8BEEC1: Consts_8B = 61121;
-pub const addr_kCinematicSpriteObjectDef_8BEEBB: Consts_8B = 61115;
-pub const addr_kCinematicSpriteObjectDef_8BEEB5: Consts_8B = 61109;
-pub const addr_kCinematicSpriteObjectDef_8BEEAF: Consts_8B = 61103;
-pub const addr_kCinematicSpriteObjectDef_8BEEA9: Consts_8B = 61097;
-pub const addr_kCinematicSpriteObjectDef_8BEEA3: Consts_8B = 61091;
-pub const addr_kCinematicSpriteObjectDef_8BEE9D: Consts_8B = 61085;
-pub const addr_off_8BEE9B: Consts_8B = 61083;
-pub const addr_word_8BED9D: Consts_8B = 60829;
-pub const addr_word_8BED95: Consts_8B = 60821;
-pub const addr_loc_8BE1B4: Consts_8B = 57780;
-pub const addr_kMode7ObjectDef_8BD437: Consts_8B = 54327;
-pub const addr_kMode7ObjectDef_8BD431: Consts_8B = 54321;
-pub const addr_kMode7ObjectDef_8BD42B: Consts_8B = 54315;
-pub const addr_kMode7ObjectDef_8BD425: Consts_8B = 54309;
-pub const addr_kMode7ObjectDef_8BD41F: Consts_8B = 54303;
-pub const addr_kMode7ObjectDef_8BD419: Consts_8B = 54297;
-pub const addr_kMode7ObjectDef_8BD413: Consts_8B = 54291;
-pub const addr_kMode7ObjectDef_8BD40D: Consts_8B = 54285;
-pub const addr_kMode7ObjectDef_8BD407: Consts_8B = 54279;
-pub const addr_kMode7ObjectDef_8BD401: Consts_8B = 54273;
-pub const addr_off_8BD3E7: Consts_8B = 54247;
-pub const addr_word_8BD389: Consts_8B = 54153;
-pub const addr_word_8BD371: Consts_8B = 54129;
-pub const addr_word_8BD30D: Consts_8B = 54029;
-pub const addr_word_8BD2D5: Consts_8B = 53973;
-pub const addr_word_8BD2A5: Consts_8B = 53925;
-pub const addr_word_8BD259: Consts_8B = 53849;
-pub const addr_word_8BD215: Consts_8B = 53781;
-pub const addr_word_8BD1B9: Consts_8B = 53689;
-pub const addr_word_8BD15D: Consts_8B = 53597;
-pub const addr_word_8BD0F9: Consts_8B = 53497;
-pub const addr_word_8BD0E1: Consts_8B = 53473;
-pub const addr_word_8BD085: Consts_8B = 53381;
-pub const addr_word_8BD055: Consts_8B = 53333;
-pub const addr_word_8BCFFD: Consts_8B = 53245;
-pub const addr_word_8BCFBD: Consts_8B = 53181;
-pub const addr_word_8BCF75: Consts_8B = 53109;
-pub const addr_kCinematicBgObjectDef_8BCF69: Consts_8B = 53097;
-pub const addr_kCinematicBgObjectDef_8BCF63: Consts_8B = 53091;
-pub const addr_kCinematicBgObjectDef_8BCF5D: Consts_8B = 53085;
-pub const addr_kCinematicBgObjectDef_8BCF57: Consts_8B = 53079;
-pub const addr_kCinematicBgObjectDef_8BCF51: Consts_8B = 53073;
-pub const addr_kCinematicBgObjectDef_8BCF4B: Consts_8B = 53067;
-pub const addr_kCinematicBgObjectDef_8BCF45: Consts_8B = 53061;
-pub const addr_kCinematicBgObjectDef_8BCF3F: Consts_8B = 53055;
-pub const addr_kCinematicSpriteObjectDef_8BCF39: Consts_8B = 53049;
-pub const addr_kCinematicSpriteObjectDef_8BCF33: Consts_8B = 53043;
-pub const addr_kCinematicSpriteObjectDef_8BCF2D: Consts_8B = 53037;
-pub const addr_kCinematicSpriteObjectDef_8BCF27: Consts_8B = 53031;
-pub const addr_kCinematicSpriteObjectDef_8BCF21: Consts_8B = 53025;
-pub const addr_kCinematicSpriteObjectDef_8BCF1B: Consts_8B = 53019;
-pub const addr_kCinematicSpriteObjectDef_8BCF15: Consts_8B = 53013;
-pub const addr_kCinematicSpriteObjectDef_8BCF0F: Consts_8B = 53007;
-pub const addr_kCinematicSpriteObjectDef_8BCF09: Consts_8B = 53001;
-pub const addr_kCinematicSpriteObjectDef_8BCF03: Consts_8B = 52995;
-pub const addr_kCinematicSpriteObjectDef_8BCEFD: Consts_8B = 52989;
-pub const addr_kCinematicSpriteObjectDef_8BCEF7: Consts_8B = 52983;
-pub const addr_kCinematicSpriteObjectDef_8BCEF1: Consts_8B = 52977;
-pub const addr_kCinematicSpriteObjectDef_8BCEEB: Consts_8B = 52971;
-pub const addr_kCinematicSpriteObjectDef_8BCEE5: Consts_8B = 52965;
-pub const addr_kCinematicSpriteObjectDef_8BCEDF: Consts_8B = 52959;
-pub const addr_kCinematicSpriteObjectDef_8BCED9: Consts_8B = 52953;
-pub const addr_kCinematicSpriteObjectDef_8BCED3: Consts_8B = 52947;
-pub const addr_kCinematicSpriteObjectDef_8BCECD: Consts_8B = 52941;
-pub const addr_kCinematicSpriteObjectDef_8BCEC7: Consts_8B = 52935;
-pub const addr_kCinematicSpriteObjectDef_8BCEC1: Consts_8B = 52929;
-pub const addr_kCinematicSpriteObjectDef_8BCEBB: Consts_8B = 52923;
-pub const addr_kCinematicSpriteObjectDef_8BCEB5: Consts_8B = 52917;
-pub const addr_kCinematicSpriteObjectDef_8BCEAF: Consts_8B = 52911;
-pub const addr_kCinematicSpriteObjectDef_8BCEA3: Consts_8B = 52899;
-pub const addr_kCinematicSpriteObjectDef_8BCE91: Consts_8B = 52881;
-pub const addr_kCinematicSpriteObjectDef_8BCE8B: Consts_8B = 52875;
-pub const addr_kCinematicSpriteObjectDef_8BCE85: Consts_8B = 52869;
-pub const addr_kCinematicSpriteObjectDef_8BCE7F: Consts_8B = 52863;
-pub const addr_kCinematicSpriteObjectDef_8BCE79: Consts_8B = 52857;
-pub const addr_kCinematicSpriteObjectDef_8BCE73: Consts_8B = 52851;
-pub const addr_kCinematicSpriteObjectDef_8BCE6D: Consts_8B = 52845;
-pub const addr_kCinematicSpriteObjectDef_8BCE67: Consts_8B = 52839;
-pub const addr_kCinematicSpriteObjectDef_8BCE61: Consts_8B = 52833;
-pub const addr_kCinematicSpriteObjectDef_8BCE5B: Consts_8B = 52827;
-pub const addr_kCinematicSpriteObjectDef_8BCE55: Consts_8B = 52821;
-pub const addr_off_8BCE53: Consts_8B = 52819;
-pub const addr_word_8BCD71: Consts_8B = 52593;
-pub const addr_word_8BCC23: Consts_8B = 52259;
-pub const addr_unk_8BCC03: Consts_8B = 52227;
-pub const addr_word_8BCBFB: Consts_8B = 52219;
-pub const addr_word_8BCB3B: Consts_8B = 52027;
-pub const addr_off_8BCB19: Consts_8B = 51993;
-pub const addr_kCinematicFunction_Intro_Func76_M7_2: Consts_8B = 50170;
-pub const addr_kCinematicFunction_Intro_Func76_M7_1: Consts_8B = 50160;
-pub const addr_kCinematicFunction_Intro_Func76_M7_0: Consts_8B = 50150;
-pub const addr_kCinematicFunction_Intro_Func56_M7: Consts_8B = 48756;
-pub const addr_kMode7ObjBabyMetroidInTitle: Consts_8B = 41813;
-pub const addr_kCinematicSpriteObjectDef_8BA125: Consts_8B = 41253;
-pub const addr_kCinematicSpriteObjectDef_8BA119: Consts_8B = 41241;
-pub const addr_kCinematicSpriteObjectDef_8BA113: Consts_8B = 41235;
-pub const addr_kCinematicSpriteObjectDef_8BA107: Consts_8B = 41223;
-pub const addr_kCinematicSpriteObjectDef_8BA101: Consts_8B = 41217;
-pub const addr_kCinematicSpriteObjectDef_8BA0FB: Consts_8B = 41211;
-pub const addr_kCinematicSpriteObjectDef_8BA0F5: Consts_8B = 41205;
-pub const addr_kCinematicSpriteObjectDef_8BA0EF: Consts_8B = 41199;
+crate::game::constants::typed_constants! { Consts_8B;
+    addr_kCinematicBgObjectDef_8BF74E = 63310, addr_kCinematicBgObjectDef_8BF748 = 63304,
+    addr_stru_8BF6F8 = 63224, addr_kCinematicSpriteObjectDef_8BEF93 = 61331,
+    addr_kCinematicSpriteObjectDef_8BEF8D = 61325, addr_kCinematicSpriteObjectDef_8BEF87 = 61319,
+    addr_kCinematicSpriteObjectDef_8BEF81 = 61313, addr_kCinematicSpriteObjectDef_8BEF7B = 61307,
+    addr_kCinematicSpriteObjectDef_8BEF75 = 61301, addr_kCinematicSpriteObjectDef_8BEF6F = 61295,
+    addr_kCinematicSpriteObjectDef_8BEF69 = 61289, addr_kCinematicSpriteObjectDef_8BEF63 = 61283,
+    addr_kCinematicSpriteObjectDef_8BEF5D = 61277, addr_kCinematicSpriteObjectDef_8BEF57 = 61271,
+    addr_kCinematicSpriteObjectDef_8BEF51 = 61265, addr_kCinematicSpriteObjectDef_8BEF4B = 61259,
+    addr_kCinematicSpriteObjectDef_8BEF45 = 61253, addr_kCinematicSpriteObjectDef_8BEF3F = 61247,
+    addr_kCinematicSpriteObjectDef_8BEF39 = 61241, addr_kCinematicSpriteObjectDef_8BEF33 = 61235,
+    addr_kCinematicSpriteObjectDef_8BEF2D = 61229, addr_kCinematicSpriteObjectDef_8BEF27 = 61223,
+    addr_kCinematicSpriteObjectDef_8BEF1B = 61211, addr_kCinematicSpriteObjectDef_8BEF15 = 61205,
+    addr_kCinematicSpriteObjectDef_8BEF0F = 61199, addr_kCinematicSpriteObjectDef_8BEF09 = 61193,
+    addr_kCinematicSpriteObjectDef_8BEF03 = 61187, addr_kCinematicSpriteObjectDef_8BEEFD = 61181,
+    addr_kCinematicSpriteObjectDef_8BEEF7 = 61175, addr_kCinematicSpriteObjectDef_8BEEF1 = 61169,
+    addr_kCinematicSpriteObjectDef_8BEEEB = 61163, addr_kCinematicSpriteObjectDef_8BEEE5 = 61157,
+    addr_kCinematicSpriteObjectDef_8BEEDF = 61151, addr_kCinematicSpriteObjectDef_8BEED9 = 61145,
+    addr_kCinematicSpriteObjectDef_8BEED3 = 61139, addr_kCinematicSpriteObjectDef_8BEECD = 61133,
+    addr_kCinematicSpriteObjectDef_8BEEC7 = 61127, addr_kCinematicSpriteObjectDef_8BEEC1 = 61121,
+    addr_kCinematicSpriteObjectDef_8BEEBB = 61115, addr_kCinematicSpriteObjectDef_8BEEB5 = 61109,
+    addr_kCinematicSpriteObjectDef_8BEEAF = 61103, addr_kCinematicSpriteObjectDef_8BEEA9 = 61097,
+    addr_kCinematicSpriteObjectDef_8BEEA3 = 61091, addr_kCinematicSpriteObjectDef_8BEE9D = 61085,
+    addr_off_8BEE9B = 61083, addr_word_8BED9D = 60829,
+    addr_word_8BED95 = 60821, addr_loc_8BE1B4 = 57780,
+    addr_kMode7ObjectDef_8BD437 = 54327, addr_kMode7ObjectDef_8BD431 = 54321,
+    addr_kMode7ObjectDef_8BD42B = 54315, addr_kMode7ObjectDef_8BD425 = 54309,
+    addr_kMode7ObjectDef_8BD41F = 54303, addr_kMode7ObjectDef_8BD419 = 54297,
+    addr_kMode7ObjectDef_8BD413 = 54291, addr_kMode7ObjectDef_8BD40D = 54285,
+    addr_kMode7ObjectDef_8BD407 = 54279, addr_kMode7ObjectDef_8BD401 = 54273,
+    addr_off_8BD3E7 = 54247, addr_word_8BD389 = 54153,
+    addr_word_8BD371 = 54129, addr_word_8BD30D = 54029,
+    addr_word_8BD2D5 = 53973, addr_word_8BD2A5 = 53925,
+    addr_word_8BD259 = 53849, addr_word_8BD215 = 53781,
+    addr_word_8BD1B9 = 53689, addr_word_8BD15D = 53597,
+    addr_word_8BD0F9 = 53497, addr_word_8BD0E1 = 53473,
+    addr_word_8BD085 = 53381, addr_word_8BD055 = 53333,
+    addr_word_8BCFFD = 53245, addr_word_8BCFBD = 53181,
+    addr_word_8BCF75 = 53109, addr_kCinematicBgObjectDef_8BCF69 = 53097,
+    addr_kCinematicBgObjectDef_8BCF63 = 53091, addr_kCinematicBgObjectDef_8BCF5D = 53085,
+    addr_kCinematicBgObjectDef_8BCF57 = 53079, addr_kCinematicBgObjectDef_8BCF51 = 53073,
+    addr_kCinematicBgObjectDef_8BCF4B = 53067, addr_kCinematicBgObjectDef_8BCF45 = 53061,
+    addr_kCinematicBgObjectDef_8BCF3F = 53055, addr_kCinematicSpriteObjectDef_8BCF39 = 53049,
+    addr_kCinematicSpriteObjectDef_8BCF33 = 53043, addr_kCinematicSpriteObjectDef_8BCF2D = 53037,
+    addr_kCinematicSpriteObjectDef_8BCF27 = 53031, addr_kCinematicSpriteObjectDef_8BCF21 = 53025,
+    addr_kCinematicSpriteObjectDef_8BCF1B = 53019, addr_kCinematicSpriteObjectDef_8BCF15 = 53013,
+    addr_kCinematicSpriteObjectDef_8BCF0F = 53007, addr_kCinematicSpriteObjectDef_8BCF09 = 53001,
+    addr_kCinematicSpriteObjectDef_8BCF03 = 52995, addr_kCinematicSpriteObjectDef_8BCEFD = 52989,
+    addr_kCinematicSpriteObjectDef_8BCEF7 = 52983, addr_kCinematicSpriteObjectDef_8BCEF1 = 52977,
+    addr_kCinematicSpriteObjectDef_8BCEEB = 52971, addr_kCinematicSpriteObjectDef_8BCEE5 = 52965,
+    addr_kCinematicSpriteObjectDef_8BCEDF = 52959, addr_kCinematicSpriteObjectDef_8BCED9 = 52953,
+    addr_kCinematicSpriteObjectDef_8BCED3 = 52947, addr_kCinematicSpriteObjectDef_8BCECD = 52941,
+    addr_kCinematicSpriteObjectDef_8BCEC7 = 52935, addr_kCinematicSpriteObjectDef_8BCEC1 = 52929,
+    addr_kCinematicSpriteObjectDef_8BCEBB = 52923, addr_kCinematicSpriteObjectDef_8BCEB5 = 52917,
+    addr_kCinematicSpriteObjectDef_8BCEAF = 52911, addr_kCinematicSpriteObjectDef_8BCEA3 = 52899,
+    addr_kCinematicSpriteObjectDef_8BCE91 = 52881, addr_kCinematicSpriteObjectDef_8BCE8B = 52875,
+    addr_kCinematicSpriteObjectDef_8BCE85 = 52869, addr_kCinematicSpriteObjectDef_8BCE7F = 52863,
+    addr_kCinematicSpriteObjectDef_8BCE79 = 52857, addr_kCinematicSpriteObjectDef_8BCE73 = 52851,
+    addr_kCinematicSpriteObjectDef_8BCE6D = 52845, addr_kCinematicSpriteObjectDef_8BCE67 = 52839,
+    addr_kCinematicSpriteObjectDef_8BCE61 = 52833, addr_kCinematicSpriteObjectDef_8BCE5B = 52827,
+    addr_kCinematicSpriteObjectDef_8BCE55 = 52821, addr_off_8BCE53 = 52819,
+    addr_word_8BCD71 = 52593, addr_word_8BCC23 = 52259,
+    addr_unk_8BCC03 = 52227, addr_word_8BCBFB = 52219,
+    addr_word_8BCB3B = 52027, addr_off_8BCB19 = 51993,
+    addr_kCinematicFunction_Intro_Func76_M7_2 = 50170, addr_kCinematicFunction_Intro_Func76_M7_1 = 50160,
+    addr_kCinematicFunction_Intro_Func76_M7_0 = 50150, addr_kCinematicFunction_Intro_Func56_M7 = 48756,
+    addr_kMode7ObjBabyMetroidInTitle = 41813, addr_kCinematicSpriteObjectDef_8BA125 = 41253,
+    addr_kCinematicSpriteObjectDef_8BA119 = 41241, addr_kCinematicSpriteObjectDef_8BA113 = 41235,
+    addr_kCinematicSpriteObjectDef_8BA107 = 41223, addr_kCinematicSpriteObjectDef_8BA101 = 41217,
+    addr_kCinematicSpriteObjectDef_8BA0FB = 41211, addr_kCinematicSpriteObjectDef_8BA0F5 = 41205,
+    addr_kCinematicSpriteObjectDef_8BA0EF = 41199,
+}
 pub use crate::types::Consts_8C;
-pub const addr_kSpriteMap_NintendoLogo: Consts_8C = 32955;
+crate::game::constants::typed_constants! { Consts_8C;
+    addr_kSpriteMap_NintendoLogo = 32955,
+}
 pub use crate::types::Consts_8D;
 pub use crate::types::Consts_91;
-pub const kCoroutineNone: i32 = 0;
+crate::game::constants::typed_constants! { i32;
+    kCoroutineNone = 0,
+}
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
     '_c2rust_label: {
@@ -236,341 +173,343 @@ crate::ram_map::ram_pointer_functions! {
 unsafe fn get_Mode7ObjectDef(a: u16, game: &mut Game) -> *mut Mode7ObjectDef {
     RomPtr((0x8b0000u32) | ((a) as u32), game) as *mut Mode7ObjectDef
 }
-pub const fnProcessCinematicBgObject_Nothing: u32 = 9144393;
-pub const fnProcessCinematicBgObject_DrawChar: u32 = 9144397;
-pub const fnProcessCinematicBgObject_DrawToTextTilemap: u32 = 9144503;
-pub const fnProcessCinematicBgObject_DrawToBgTilemap: u32 = 9144573;
-pub const fnProcessCinematicBgObject_Unk1: u32 = 9144683;
-pub const fnProcessCinematicBgObject_Unk2: u32 = 9144783;
-pub const fnCinematicFunction_nullsub_116: i32 = 0x8b93d9;
-pub const fnCinematicSprInstr_Delete: u32 = 9147448;
-pub const fnCinematicSprInstr_Sleep: u32 = 9147458;
-pub const fnCinematicSprInstr_SetPreInstr: u32 = 9147468;
-pub const fnCinematicSprInstr_ClearPreInstr: u32 = 9147479;
-pub const fnCinematicFunction_nullsub_298: i32 = 0x8b945f;
-pub const fnCinematicSprInstr_GotoRel: u32 = 9147554;
-pub const fnCinematicSprInstr_Goto: u32 = 9147580;
-pub const fnCinematicSprInstr_DecTimerGoto: u32 = 9147587;
-pub const fnCinematicSprInstr_DecTimerGotoRel: u32 = 9147597;
-pub const fnCinematicSprInstr_SetTimer: u32 = 9147606;
-pub const fnMode7Instr_Delete: u32 = 9147755;
-pub const fnMode7Instr_SetPreInstr: u32 = 9147762;
-pub const fnMode7Instr_ClearPreInstr: u32 = 9147773;
-pub const fnMode7Instr_Goto: u32 = 9147782;
-pub const fnMode7Instr_DecTimerAndGoto: u32 = 9147789;
-pub const fnMode7Instr_SetTimer: u32 = 9147799;
-pub const fnCinematicBgInstr_Delete: u32 = 9148056;
-pub const fnCinematicBgInstr_Goto: u32 = 9148190;
-pub const fnIntroObject_Delete: u32 = 9148926;
-pub const fnIntroObject_Goto: u32 = 9148934;
-pub const fnIntroObject_DecTimerGoto: u32 = 9148941;
-pub const fnIntroObject_SetTimer: u32 = 9148951;
-pub const fnCinematicFunctionNone: i32 = 0x8b9a47;
-pub const fnCinematicSpriteInit_7: u32 = 9149210;
-pub const fnCinematicSpriteInit_8: u32 = 9149229;
-pub const fnCinematicSpriteInit_9: u32 = 9149248;
-pub const fnCinematicFunctionOpening: i32 = 0x8b9b68;
-pub const fnCinematicSpriteInit_0: u32 = 9149628;
-pub const fnsub_8B9CCF: u32 = 9149647;
-pub const fnCinematicSprInstr_9CE1: u32 = 9149665;
-pub const fnCinematicFunc_Func2: i32 = 0x8b9d17;
-pub const fnCinematicSpriteInit_1: u32 = 9149770;
-pub const fnCinematicSprInstr_9D5D: u32 = 9149789;
-pub const fnCinematicFunc_Func4: i32 = 0x8b9d90;
-pub const fnCinematicSpriteInit_2: u32 = 9149891;
-pub const fnCinematicSprInstr_9DD6: u32 = 9149910;
-pub const fnCinematicFunc_Func5: i32 = 0x8b9e12;
-pub const fnCinematicSpriteInit_3: u32 = 9150021;
-pub const fnCinematicSprInstr_Func8: u32 = 9150040;
-pub const fnCinematicFunc_Func7: i32 = 0x8b9e8b;
-pub const fnCinematicSpriteInit_4: u32 = 9150131;
-pub const fnCinematicSprInstr_Func9: u32 = 9150157;
-pub const fnCinematicSpriteInit_5: u32 = 9150166;
-pub const fnCinematicSprInstr_sub_8B9EF0: u32 = 9150192;
-pub const fnCinematicSpriteInit_6: u32 = 9150207;
-pub const fnCinematicSprInstr_9F19: u32 = 9150233;
-pub const fnnullsub_117: i32 = 0x8b9f28;
-pub const fnCinematicFunc_Func1: i32 = 0x8b9f29;
-pub const fnCinematicFunc_Func10: i32 = 0x8b9f52;
-pub const fnCinematicFunc_Func9: i32 = 0x8b9fae;
-pub const fnPlayBabyMetroidCry1: u32 = 9151067;
-pub const fnPlayBabyMetroidCry2: u32 = 9151075;
-pub const fnPlayBabyMetroidCry3: u32 = 9151083;
-pub const fnCinematicSetPal1: u32 = 9151091;
-pub const fnCinematicSetPal2: u32 = 9151108;
-pub const fnCinematicSetPal3: u32 = 9151125;
-pub const fnCinematicSetPal4: u32 = 9151142;
-pub const fnnullsub_120: i32 = 0x8ba38f;
-pub const fnnullsub_121: i32 = 0x8ba390;
-pub const fnCinematicFunc_Nothing: i32 = 0x8ba391;
-pub const fnCinematicFunction_Intro_Initial: u32 = 9151381;
-pub const fnCinematicFunction_Intro_FadeIn: i32 = 0x8ba5a7;
-pub const fnCinematicFunction_Intro_DrawInitJpn: i32 = 0x8ba5bd;
-pub const fnCinematicFunction_Intro_LastMetroidCaptivity: i32 = 0x8ba5f8;
-pub const fnCinematicFunc_Intro_QueueGalaxyIsAtPeace: i32 = 0x8ba613;
-pub const fnCinematicFunc_Intro_WaitForQueueWait4secs: i32 = 0x8ba639;
-pub const fnCinematicFunc_Intro_FadeOut: i32 = 0x8ba64c;
-pub const fnCinematicFunc_Intro_WaitForFadeOut: i32 = 0x8ba663;
-pub const fnCinematicFunc_Intro_SetupTextPage2: i32 = 0x8ba66f;
-pub const fnCinematicFunc_Intro_WaitFadeinShowText: i32 = 0x8ba82b;
-pub const fnCinematicFunc_Intro_WaitForFadeinSleep: i32 = 0x8ba84a;
-pub const fnSetSomeStuffForSpriteObject_2: u32 = 9152705;
-pub const fnnullsub_122: u32 = 9152724;
-pub const fnSetSomeStuffForSpriteObject_3: u32 = 9152725;
-pub const fnSetSomeStuffForSpriteObject_4_MetroidEgg: u32 = 9152744;
-pub const fnCinematicSprPreInstr_A903: u32 = 9152771;
-pub const fnCinematicSprInstr_SpawnMetroidEggParticles: u32 = 9152792;
-pub const fnSetSomeStuffForSpriteObject_6: u32 = 9152856;
-pub const fnSetSomeStuffForSpriteObject_7: u32 = 9152916;
-pub const fnSetSomeStuffForSpriteObject_8: u32 = 9153178;
-pub const fnSetSomeStuffForSpriteObject_9: u32 = 9153203;
-pub const fnSetSomeStuffForSpriteObject_10: u32 = 9153877;
-pub const fnSetSomeStuffForSpriteObject_11: u32 = 9153896;
-pub const fnSetSomeStuffForSpriteObject_12: u32 = 9153939;
-pub const fnSetSomeStuffForSpriteObject_13: u32 = 9153958;
-pub const fnCinematicBgInstr_SetSomeStuffForSpriteObject_14: u32 = 9154004;
-pub const fnSetSomeStuffForSpriteObject_17: u32 = 9154055;
-pub const fnSetSomeStuffForSpriteObject_18: u32 = 9154074;
-pub const fnCinematicBgInstr_HandleCreateJpnText_Page1: u32 = 9154115;
-pub const fnCinematicBgInstr_SpawnMarkerWaitInput_Page1: u32 = 9154139;
-pub const fnCinematicBgInstr_HandleCreateJpnText_Page2: u32 = 9154169;
-pub const fnCinematicBgInstr_SpawnMarkerWaitInput_Page2: u32 = 9154193;
-pub const fnCinematicFunction_Intro_WaitInputSetupMotherBrainFight: i32 = 0x8baeb8;
-pub const fnCinematicFunction_Intro_WaitInputSetupBabyMetroid: i32 = 0x8baf6c;
-pub const fnCinematicBgInstr_HandleCreateJpnText_Page3: u32 = 9154676;
-pub const fnCinematicBgInstr_SpawnMarkerWaitInput_Page3: u32 = 9154700;
-pub const fnCinematicBgInstr_HandleCreateJpnText_Page4: u32 = 9154739;
-pub const fnCinematicBgInstr_SpawnMarkerWaitInput_Page4: u32 = 9154763;
-pub const fnCinematicFunction_Intro_Func11: i32 = 0x8bb0f2;
-pub const fnCinematicFunction_Intro_Func12: i32 = 0x8bb123;
-pub const fnCinematicBgInstr_HandleCreateJpnText_Page5: u32 = 9154971;
-pub const fnCinematicBgInstr_SpawnMarkerWaitInput_Page5: u32 = 9154995;
-pub const fnCinematicFunction_Intro_Func15: i32 = 0x8bb1da;
-pub const fnCinematicFunction_Intro_Func15b: i32 = 0x8bb207;
-pub const fnCinematicBgInstr_Func16: u32 = 9155112;
-pub const fnCinematicBgInstr_Func17: u32 = 9155136;
-pub const fnCinematicFunction_Intro_XfadeGameplayFade: i32 = 0x8bb250;
-pub const fnCinematicFunction_Intro_XfadeScientistFade: i32 = 0x8bb2d2;
-pub const fnCinematicSprInstr_StartIntroPage2: u32 = 9155382;
-pub const fnCinematicSprInstr_StartIntroPage3: u32 = 9155390;
-pub const fnCinematicSprInstr_StartIntroPage4: u32 = 9155398;
-pub const fnCinematicSprInstr_StartIntroPage5: u32 = 9155406;
-pub const fnCinematicFunction_Intro_Page2: i32 = 0x8bb35f;
-pub const fnCinematicFunction_Intro_Page3: i32 = 0x8bb370;
-pub const fnCinematicFunction_Intro_Page4: i32 = 0x8bb381;
-pub const fnCinematicFunction_Intro_Page5: i32 = 0x8bb392;
-pub const fnCinematicFunction_Intro_Fadestuff: i32 = 0x8bb3f4;
-pub const fnCinematicFunction_Intro_Fadestuff2: i32 = 0x8bb458;
-pub const fnCinematicBgPreInstr_SamusBlink: u32 = 9155772;
-pub const fnsub_8BB51E: u32 = 9155870;
-pub const fnEnableCinematicBgTilemapUpdates__0: u32 = 9155919;
-pub const fnCinematicFunction_Intro_Func21: u32 = 9155924;
-pub const fnCinematicFunction_Intro_Func22: u32 = 9155973;
-pub const fnCinematicFunction_Intro_ThenWaitInputSetupBabyMetroid: u32 = 9156024;
-pub const fnCinematicFunction_Intro_Func23: u32 = 9156035;
-pub const fnCinematicFunction_Intro_Func24: u32 = 9156078;
-pub const fnCinematicFunction_Intro_Func25: u32 = 9156123;
-pub const fnCinematicFunction_Intro_Func26: u32 = 9156134;
-pub const fnCinematicFunction_Intro_Func27: u32 = 9156183;
-pub const fnCinematicFunction_Intro_Func28: u32 = 9156234;
-pub const fnCinematicFunction_Intro_Func29: u32 = 9156245;
-pub const fnCinematicFunction_Intro_Func30: u32 = 9156288;
-pub const fnCinematicFunction_Intro_Func31: u32 = 9156333;
-pub const fnCinematicFunction_Intro_Func32: u32 = 9156344;
-pub const fnEnableCinematicBgTilemapUpdates__: u32 = 9156363;
-pub const fnCinematicFunction_Intro_Func34: i32 = 0x8bb72f;
-pub const fnCinematicFunction_Intro_Func35: u32 = 9156467;
-pub const fnCinematicFunction_Intro_Func36: u32 = 9156486;
-pub const fnCinematicFunction_Intro_Func39: i32 = 0x8bb80f;
-pub const fnCinematicSprPreInstr_B82E: u32 = 9156654;
-pub const fnCinematicFunction_Intro_Func42: u32 = 9156758;
-pub const fnCinematicSprInstr_Func43: u32 = 9156805;
-pub const fnCinematicFunction_Intro_Func44: i32 = 0x8bb8d8;
-pub const fnCinematicFunction_Intro_Func45: i32 = 0x8bb93b;
-pub const fnCinematicFunction_Intro_Func46: u32 = 9157005;
-pub const fnCinematicFunction_Intro_Func47: u32 = 9157076;
-pub const fnCinematicFunction_Intro_Func48: u32 = 9157135;
-pub const fnCinematicSprInstr_SpawnIntroRinkas01: u32 = 9157153;
-pub const fnCinematicSprInstr_SpawnIntroRinkas23: u32 = 9157174;
-pub const fnCinematicFunction_Intro_Func49: u32 = 9157195;
-pub const fnCinematicFunction_Intro_Func50: u32 = 9157214;
-pub const fnCinematicFunction_Intro_Func51: i32 = 0x8bba73;
-pub const fnCinematicFunction_Intro_Func52: i32 = 0x8bbb0d;
-pub const fnCinematicFunction_Intro_Func53: i32 = 0x8bbb24;
-pub const fnCinematicFunction_Intro_Func54: i32 = 0x8bbca0;
-pub const fnCinematicFunction_Intro_Func55: i32 = 0x8bbde4;
-pub const fnCinematicFunction_Intro_Func56: i32 = 0x8bbdf9;
-pub const fnCinematicFunction_Intro_Func57: u32 = 9158270;
-pub const fnCinematicFunction_Intro_Func58: u32 = 9158325;
-pub const fnCinematicFunction_Intro_Func59: u32 = 9158434;
-pub const fnCinematicFunction_Intro_Func60: u32 = 9158453;
-pub const fnCinematicFunction_Intro_Func61: u32 = 9158476;
-pub const fnCinematicFunction_Intro_Func62: u32 = 9158495;
-pub const fnCinematicFunction_Intro_Func63: u32 = 9158518;
-pub const fnCinematicFunction_Intro_Func64: u32 = 9158537;
-pub const fnCinematicFunction_Intro_Func65: u32 = 9158560;
-pub const fnCinematicFunction_Intro_Func66: i32 = 0x8bbfc6;
-pub const fnCinematicSprPreInstr_nullsub_300: i32 = 0x8bbfd9;
-pub const fnCinematicFunction_Intro_Func67: i32 = 0x8bbfda;
-pub const fnCinematicFunction_Intro_Func68: u32 = 9158787;
-pub const fnCinematicCommonInstr_Func69: u32 = 9158806;
-pub const fnCinematicCommonInstr_Func70: u32 = 9158818;
-pub const fnCinematicFunction_Intro_Func71: u32 = 9158834;
-pub const fnCinematicFunction_Intro_Func72: i32 = 0x8bc0c5;
-pub const fnCinematicFunction_Intro_Func73: i32 = 0x8bc100;
-pub const fnCinematicFunctionBlackoutFromCeres: u32 = 9158939;
-pub const fnCinematicFunction_Intro_Func74: i32 = 0x8bc2e4;
-pub const fnCinematicFunction_Intro_Func75: i32 = 0x8bc2f1;
-pub const fnCinematicFunction_Intro_Func76: i32 = 0x8bc345;
-pub const fnCinematicSprInstr_SpawnCeresExplosions1: u32 = 9159684;
-pub const fnCinematicFunction_Intro_Func78: u32 = 9159732;
-pub const fnCinematicSprPreInstr_C489: u32 = 9159817;
-pub const fnCinematicFunction_Intro_Func80: u32 = 9159865;
-pub const fnCinematicSprInstr_SpawnCeresExplosions3: u32 = 9159948;
-pub const fnCinematicFunction_Intro_Func81: u32 = 9159987;
-pub const fnCinematicFunction_Intro_Func82: u32 = 9160066;
-pub const fnCinematicFunction_Intro_Func83: u32 = 9160105;
-pub const fnCinematicFunction_Intro_Func77: i32 = 0x8bc5ca;
-pub const fnCinematicFunction_Intro_Func84: i32 = 0x8bc610;
-pub const fnCinematicFunction_Intro_Func85: i32 = 0x8bc627;
-pub const fnCinematicFunction_Intro_Func86: i32 = 0x8bc699;
-pub const fnCinematicFunction_Intro_Func87: i32 = 0x8bc79c;
-pub const fnCinematicFunction_Intro_Func88: i32 = 0x8bc7ca;
-pub const fnCinematicFunction_Intro_Func89: u32 = 9160763;
-pub const fnCinematicFunction_Intro_Func90: u32 = 9160782;
-pub const fnCinematicFunction_Intro_Func91: i32 = 0x8bc85d;
-pub const fnCinematicFunction_Intro_Func92: u32 = 9160855;
-pub const fnCinematicFunction_Intro_Func93: u32 = 9160874;
-pub const fnCinematicFunction_Intro_Func94: i32 = 0x8bc8b9;
-pub const fnCinematicFunction_Intro_Func96: u32 = 9160953;
-pub const fnCinematicFunction_Intro_Func97: i32 = 0x8bc908;
-pub const fnCinematicFunction_Intro_Func98: u32 = 9161026;
-pub const fnCinematicFunction_Intro_Func99: u32 = 9161046;
-pub const fnCinematicFunction_Intro_Func100: u32 = 9161066;
-pub const fnCinematicFunction_Intro_Func101: u32 = 9161086;
-pub const fnCinematicFunction_Intro_Func102: u32 = 9161106;
-pub const fnCinematicSprInstr_C9A5: u32 = 9161125;
-pub const fnCinematicSprInstr_C9AF: u32 = 9161135;
-pub const fnCinematicSprInstr_C9BD: u32 = 9161149;
-pub const fnCinematicSprInstr_C9C7: u32 = 9161159;
-pub const fnCinematicFunction_Intro_Func104: u32 = 9161190;
-pub const fnCinematicFunction_Intro_Func105: i32 = 0x8bc9f9;
-pub const fnCinematicFunction_Intro_Func106: i32 = 0x8bca36;
-pub const fnCinematicFunction_Intro_Func107: i32 = 0x8bca85;
-pub const fnCinematicFunction_Intro_Func108: i32 = 0x8bcad0;
-pub const fnnullsub_124: i32 = 0x8bcade;
-pub const fnCinematicFunction_Intro_Func95: i32 = 0x8bcadf;
-pub const fnCinematicFunctionEscapeFromCebes: u32 = 9163904;
-pub const fnCinematicFunction_Intro_Func109: i32 = 0x8bd6d7;
-pub const fnCinematicFunction_Intro_Func110: i32 = 0x8bd6f2;
-pub const fnCinematicFunction_Intro_Func111: i32 = 0x8bd701;
-pub const fnCinematicFunction_Intro_Func112: i32 = 0x8bd731;
-pub const fnCinematicFunction_Intro_Func113: i32 = 0x8bd7f8;
-pub const fnCinematicFunction_Intro_Func114: i32 = 0x8bd807;
-pub const fnCinematicFunction_Intro_Func115: i32 = 0x8bd837;
-pub const fnCinematicFunction_Intro_Func116: i32 = 0x8bda02;
-pub const fnCinematicFunction_Intro_Func117: i32 = 0x8bda1a;
-pub const fnCinematicFunction_Intro_Func118: i32 = 0x8bdad3;
-pub const fnnullsub_125: i32 = 0x8bdb9d;
-pub const fnCinematicFunction_Intro_Func119: i32 = 0x8bdb9e;
-pub const fnCinematicFunction_Intro_Func120: i32 = 0x8bdbc4;
-pub const fnCinematicFunction_Intro_Func121: i32 = 0x8bdca5;
-pub const fnCinematicFunction_Intro_Func123: i32 = 0x8bdd42;
-pub const fnCinematicFunction_Intro_Func124: i32 = 0x8bddcd;
-pub const fnnullsub_126: i32 = 0x8bde63;
-pub const fnCinematicFunction_Intro_Func125: i32 = 0x8bde64;
-pub const fnCinematicFunction_Intro_Func126: i32 = 0x8bde80;
-pub const fnCinematicFunction_Intro_Func129: i32 = 0x8be0f4;
-pub const fnCinematicFunction_Intro_Func130: i32 = 0x8be110;
-pub const fnCinematicFunction_Intro_Func131: i32 = 0x8be158;
-pub const fnCinematicFunction_Intro_Func132: i32 = 0x8be190;
-pub const fnCinematicFunction_Intro_Func134: i32 = 0x8be1d2;
-pub const fnCinematicFunction_Intro_Func136: i32 = 0x8be265;
-pub const fnCinematicFunction_Intro_Func135: i32 = 0x8be293;
-pub const fnCinematicFunction_Intro_Func137: i32 = 0x8be2dd;
-pub const fnCinematicFunction_Intro_Func138: i32 = 0x8be314;
-pub const fnCinematicFunction_Intro_Func145: i32 = 0x8be342;
-pub const fnCinematicFunction_Intro_Func139: i32 = 0x8be3ae;
-pub const fnCinematicFunction_Intro_Func141: i32 = 0x8be48a;
-pub const fnCinematicFunction_Intro_Func143: i32 = 0x8be504;
-pub const fnCinematicFunction_Intro_Func144: i32 = 0x8be58a;
-pub const fnCalcItemPercentageCount: u32 = 9168423;
-pub const fnCinematicFunction_Intro_Func146: u32 = 9168745;
-pub const fnCinematicFunction_Intro_Func147: u32 = 9168768;
-pub const fnCinematicFunction_Intro_Func148: i32 = 0x8be797;
-pub const fnnullsub_127: i32 = 0x8be7ba;
-pub const fnCinematicFunction_Intro_Func150: u32 = 9170841;
-pub const fnCinematicFunction_Intro_Func151: u32 = 9170866;
-pub const fnCinematicFunction_Intro_Func152: u32 = 9170922;
-pub const fnCinematicFunction_Intro_Func153: u32 = 9170941;
-pub const fnCinematicFunction_Intro_Func154: u32 = 9170949;
-pub const fnCinematicFunction_Intro_Func155: u32 = 9170968;
-pub const fnCinematicFunction_Intro_Func156: u32 = 9170987;
-pub const fnCinematicFunction_Intro_Func157: u32 = 9171006;
-pub const fnCinematicFunction_Intro_Func159: u32 = 9171038;
-pub const fnCinematicFunction_Intro_Func161: u32 = 9171053;
-pub const fnCinematicFunction_Intro_Func162: u32 = 9171068;
-pub const fnCinematicFunction_Intro_Func163: u32 = 9171077;
-pub const fnCinematicFunction_Intro_Func164: u32 = 9171092;
-pub const fnCinematicFunction_Intro_Func165: u32 = 9171122;
-pub const fnCinematicFunction_Intro_Func166: u32 = 9171169;
-pub const fnCinematicFunction_Intro_Func167: u32 = 9171177;
-pub const fnCinematicFunction_Intro_Func168: u32 = 9171185;
-pub const fnCinematicFunction_Intro_Func169: u32 = 9171193;
-pub const fnCinematicFunction_Intro_Func170: u32 = 9171230;
-pub const fnCinematicFunction_Intro_Func171: u32 = 9171267;
-pub const fnCinematicFunction_Intro_Func172: u32 = 9171286;
-pub const fnCinematicFunction_Intro_Func173: u32 = 9171305;
-pub const fnCinematicFunction_Intro_Func174: u32 = 9171324;
-pub const fnCinematicFunction_Intro_Func175: u32 = 9171343;
-pub const fnCinematicFunction_Intro_Func176: u32 = 9171368;
-pub const fnCinematicFunction_Intro_Func177: u32 = 9171393;
-pub const fnCinematicFunction_Intro_Func178: u32 = 9171412;
-pub const fnCinematicFunction_Intro_Func179: u32 = 9171431;
-pub const fnCinematicFunction_Intro_Func180: u32 = 9171495;
-pub const fnCinematicSprInstr_Func181: u32 = 9171550;
-pub const fnCinematicSprInstr_Func182: u32 = 9171588;
-pub const fnCinematicSprInstr_Func183: u32 = 9171605;
-pub const fnCinematicFunction_Intro_Func184: u32 = 9171621;
-pub const fnCinematicSprInstr_Func185: u32 = 9171639;
-pub const fnCinematicSprInstr_Func186: u32 = 9171706;
-pub const fnCinematicSprInstr_Func187: u32 = 9171755;
-pub const fnCinematicSprPreInstr_F35A: u32 = 9171802;
-pub const fnCinematicFunction_Intro_Func189: i32 = 0x8bf375;
-pub const fnCinematicFunction_Intro_Func189b: u32 = 9171867;
-pub const fnCinematicSprInstr_Func190: u32 = 9171888;
-pub const fnCinematicFunction_Intro_Func191: u32 = 9171897;
-pub const fnCinematicSprInstr_Func192: u32 = 9171918;
-pub const fnCinematicSprInstr_Func193: u32 = 9171995;
-pub const fnCinematicSprInstr_Func194: u32 = 9172004;
-pub const fnCinematicSprInstr_Func195: u32 = 9172013;
-pub const fnCinematicSprInstr_Func196: u32 = 9172022;
-pub const fnCinematicSprInstr_Func197: u32 = 9172031;
-pub const fnCinematicSprInstr_Func198: u32 = 9172040;
-pub const fnCinematicFunction_Intro_Func199: u32 = 9172053;
-pub const fnCinematicFunction_Intro_Func200: i32 = 0x8bf464;
-pub const fnCinematicFunction_Intro_Func201: u32 = 9172088;
-pub const fnCinematicFunction_Intro_Func202: i32 = 0x8bf487;
-pub const fnCinematicFunction_Intro_Func203: u32 = 9172123;
-pub const fnCinematicFunction_Intro_Func204: i32 = 0x8bf4aa;
-pub const fnCinematicFunction_Intro_Func205: u32 = 9172177;
-pub const fnCinematicFunction_Intro_Func206: i32 = 0x8bf4e0;
-pub const fnCinematicFunction_Intro_Func207: u32 = 9172231;
-pub const fnnullsub_128: u32 = 9172252;
-pub const fnCinematicSprInstr_Func208: u32 = 9172253;
-pub const fnCinematicSprPreInstr_F528: u32 = 9172264;
-pub const fnCinematicSprInstr_Func211: u32 = 9172308;
-pub const fnCinematicSprPreInstr_F57F: u32 = 9172351;
-pub const fnCinematicSprInstr_Func213: u32 = 9172375;
-pub const fnCinematicSprInstr_Func214: u32 = 9172410;
-pub const fnCinematicFunction_Intro_Func215: i32 = 0x8bf5dd;
-pub const fnCinematicSprInstr_Func217: u32 = 9172484;
-pub const fnCinematicSprInstr_Func218: u32 = 9172561;
-pub const fnCinematicFunction_Intro_Func219: u32 = 9172734;
-pub const fnSamus_FrameHandlerAlfa_Func12: i32 = 0x90e6c9;
-pub const fnSamus_Func15: i32 = 0x90e833;
-pub const fnSamusDrawHandler_Default: i32 = 0x90eb52;
-pub const fnlocret_8B9585: i32 = 0x8b9585;
+crate::game::constants::typed_constants! { u32;
+    fnProcessCinematicBgObject_Nothing = 9144393, fnProcessCinematicBgObject_DrawChar = 9144397,
+    fnProcessCinematicBgObject_DrawToTextTilemap = 9144503, fnProcessCinematicBgObject_DrawToBgTilemap = 9144573,
+    fnProcessCinematicBgObject_Unk1 = 9144683, fnProcessCinematicBgObject_Unk2 = 9144783,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_nullsub_116 = 0x8b93d9,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicSprInstr_Delete = 9147448, fnCinematicSprInstr_Sleep = 9147458,
+    fnCinematicSprInstr_SetPreInstr = 9147468, fnCinematicSprInstr_ClearPreInstr = 9147479,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_nullsub_298 = 0x8b945f,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicSprInstr_GotoRel = 9147554, fnCinematicSprInstr_Goto = 9147580,
+    fnCinematicSprInstr_DecTimerGoto = 9147587, fnCinematicSprInstr_DecTimerGotoRel = 9147597,
+    fnCinematicSprInstr_SetTimer = 9147606, fnMode7Instr_Delete = 9147755,
+    fnMode7Instr_SetPreInstr = 9147762, fnMode7Instr_ClearPreInstr = 9147773,
+    fnMode7Instr_Goto = 9147782, fnMode7Instr_DecTimerAndGoto = 9147789,
+    fnMode7Instr_SetTimer = 9147799, fnCinematicBgInstr_Delete = 9148056,
+    fnCinematicBgInstr_Goto = 9148190, fnIntroObject_Delete = 9148926,
+    fnIntroObject_Goto = 9148934, fnIntroObject_DecTimerGoto = 9148941,
+    fnIntroObject_SetTimer = 9148951,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunctionNone = 0x8b9a47,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicSpriteInit_7 = 9149210, fnCinematicSpriteInit_8 = 9149229,
+    fnCinematicSpriteInit_9 = 9149248,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunctionOpening = 0x8b9b68,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicSpriteInit_0 = 9149628, fnsub_8B9CCF = 9149647,
+    fnCinematicSprInstr_9CE1 = 9149665,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunc_Func2 = 0x8b9d17,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicSpriteInit_1 = 9149770, fnCinematicSprInstr_9D5D = 9149789,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunc_Func4 = 0x8b9d90,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicSpriteInit_2 = 9149891, fnCinematicSprInstr_9DD6 = 9149910,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunc_Func5 = 0x8b9e12,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicSpriteInit_3 = 9150021, fnCinematicSprInstr_Func8 = 9150040,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunc_Func7 = 0x8b9e8b,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicSpriteInit_4 = 9150131, fnCinematicSprInstr_Func9 = 9150157,
+    fnCinematicSpriteInit_5 = 9150166, fnCinematicSprInstr_sub_8B9EF0 = 9150192,
+    fnCinematicSpriteInit_6 = 9150207, fnCinematicSprInstr_9F19 = 9150233,
+}
+crate::game::constants::typed_constants! { i32;
+    fnnullsub_117 = 0x8b9f28, fnCinematicFunc_Func1 = 0x8b9f29,
+    fnCinematicFunc_Func10 = 0x8b9f52, fnCinematicFunc_Func9 = 0x8b9fae,
+}
+crate::game::constants::typed_constants! { u32;
+    fnPlayBabyMetroidCry1 = 9151067, fnPlayBabyMetroidCry2 = 9151075,
+    fnPlayBabyMetroidCry3 = 9151083, fnCinematicSetPal1 = 9151091,
+    fnCinematicSetPal2 = 9151108, fnCinematicSetPal3 = 9151125,
+    fnCinematicSetPal4 = 9151142,
+}
+crate::game::constants::typed_constants! { i32;
+    fnnullsub_120 = 0x8ba38f, fnnullsub_121 = 0x8ba390,
+    fnCinematicFunc_Nothing = 0x8ba391,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Initial = 9151381,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_FadeIn = 0x8ba5a7, fnCinematicFunction_Intro_DrawInitJpn = 0x8ba5bd,
+    fnCinematicFunction_Intro_LastMetroidCaptivity = 0x8ba5f8, fnCinematicFunc_Intro_QueueGalaxyIsAtPeace = 0x8ba613,
+    fnCinematicFunc_Intro_WaitForQueueWait4secs = 0x8ba639, fnCinematicFunc_Intro_FadeOut = 0x8ba64c,
+    fnCinematicFunc_Intro_WaitForFadeOut = 0x8ba663, fnCinematicFunc_Intro_SetupTextPage2 = 0x8ba66f,
+    fnCinematicFunc_Intro_WaitFadeinShowText = 0x8ba82b, fnCinematicFunc_Intro_WaitForFadeinSleep = 0x8ba84a,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSetSomeStuffForSpriteObject_2 = 9152705, fnnullsub_122 = 9152724,
+    fnSetSomeStuffForSpriteObject_3 = 9152725, fnSetSomeStuffForSpriteObject_4_MetroidEgg = 9152744,
+    fnCinematicSprPreInstr_A903 = 9152771, fnCinematicSprInstr_SpawnMetroidEggParticles = 9152792,
+    fnSetSomeStuffForSpriteObject_6 = 9152856, fnSetSomeStuffForSpriteObject_7 = 9152916,
+    fnSetSomeStuffForSpriteObject_8 = 9153178, fnSetSomeStuffForSpriteObject_9 = 9153203,
+    fnSetSomeStuffForSpriteObject_10 = 9153877, fnSetSomeStuffForSpriteObject_11 = 9153896,
+    fnSetSomeStuffForSpriteObject_12 = 9153939, fnSetSomeStuffForSpriteObject_13 = 9153958,
+    fnCinematicBgInstr_SetSomeStuffForSpriteObject_14 = 9154004, fnSetSomeStuffForSpriteObject_17 = 9154055,
+    fnSetSomeStuffForSpriteObject_18 = 9154074, fnCinematicBgInstr_HandleCreateJpnText_Page1 = 9154115,
+    fnCinematicBgInstr_SpawnMarkerWaitInput_Page1 = 9154139, fnCinematicBgInstr_HandleCreateJpnText_Page2 = 9154169,
+    fnCinematicBgInstr_SpawnMarkerWaitInput_Page2 = 9154193,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_WaitInputSetupMotherBrainFight = 0x8baeb8, fnCinematicFunction_Intro_WaitInputSetupBabyMetroid = 0x8baf6c,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicBgInstr_HandleCreateJpnText_Page3 = 9154676, fnCinematicBgInstr_SpawnMarkerWaitInput_Page3 = 9154700,
+    fnCinematicBgInstr_HandleCreateJpnText_Page4 = 9154739, fnCinematicBgInstr_SpawnMarkerWaitInput_Page4 = 9154763,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func11 = 0x8bb0f2, fnCinematicFunction_Intro_Func12 = 0x8bb123,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicBgInstr_HandleCreateJpnText_Page5 = 9154971, fnCinematicBgInstr_SpawnMarkerWaitInput_Page5 = 9154995,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func15 = 0x8bb1da, fnCinematicFunction_Intro_Func15b = 0x8bb207,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicBgInstr_Func16 = 9155112, fnCinematicBgInstr_Func17 = 9155136,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_XfadeGameplayFade = 0x8bb250, fnCinematicFunction_Intro_XfadeScientistFade = 0x8bb2d2,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicSprInstr_StartIntroPage2 = 9155382, fnCinematicSprInstr_StartIntroPage3 = 9155390,
+    fnCinematicSprInstr_StartIntroPage4 = 9155398, fnCinematicSprInstr_StartIntroPage5 = 9155406,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Page2 = 0x8bb35f, fnCinematicFunction_Intro_Page3 = 0x8bb370,
+    fnCinematicFunction_Intro_Page4 = 0x8bb381, fnCinematicFunction_Intro_Page5 = 0x8bb392,
+    fnCinematicFunction_Intro_Fadestuff = 0x8bb3f4, fnCinematicFunction_Intro_Fadestuff2 = 0x8bb458,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicBgPreInstr_SamusBlink = 9155772, fnsub_8BB51E = 9155870,
+    fnEnableCinematicBgTilemapUpdates__0 = 9155919, fnCinematicFunction_Intro_Func21 = 9155924,
+    fnCinematicFunction_Intro_Func22 = 9155973, fnCinematicFunction_Intro_ThenWaitInputSetupBabyMetroid = 9156024,
+    fnCinematicFunction_Intro_Func23 = 9156035, fnCinematicFunction_Intro_Func24 = 9156078,
+    fnCinematicFunction_Intro_Func25 = 9156123, fnCinematicFunction_Intro_Func26 = 9156134,
+    fnCinematicFunction_Intro_Func27 = 9156183, fnCinematicFunction_Intro_Func28 = 9156234,
+    fnCinematicFunction_Intro_Func29 = 9156245, fnCinematicFunction_Intro_Func30 = 9156288,
+    fnCinematicFunction_Intro_Func31 = 9156333, fnCinematicFunction_Intro_Func32 = 9156344,
+    fnEnableCinematicBgTilemapUpdates__ = 9156363,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func34 = 0x8bb72f,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func35 = 9156467, fnCinematicFunction_Intro_Func36 = 9156486,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func39 = 0x8bb80f,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicSprPreInstr_B82E = 9156654, fnCinematicFunction_Intro_Func42 = 9156758,
+    fnCinematicSprInstr_Func43 = 9156805,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func44 = 0x8bb8d8, fnCinematicFunction_Intro_Func45 = 0x8bb93b,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func46 = 9157005, fnCinematicFunction_Intro_Func47 = 9157076,
+    fnCinematicFunction_Intro_Func48 = 9157135, fnCinematicSprInstr_SpawnIntroRinkas01 = 9157153,
+    fnCinematicSprInstr_SpawnIntroRinkas23 = 9157174, fnCinematicFunction_Intro_Func49 = 9157195,
+    fnCinematicFunction_Intro_Func50 = 9157214,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func51 = 0x8bba73, fnCinematicFunction_Intro_Func52 = 0x8bbb0d,
+    fnCinematicFunction_Intro_Func53 = 0x8bbb24, fnCinematicFunction_Intro_Func54 = 0x8bbca0,
+    fnCinematicFunction_Intro_Func55 = 0x8bbde4, fnCinematicFunction_Intro_Func56 = 0x8bbdf9,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func57 = 9158270, fnCinematicFunction_Intro_Func58 = 9158325,
+    fnCinematicFunction_Intro_Func59 = 9158434, fnCinematicFunction_Intro_Func60 = 9158453,
+    fnCinematicFunction_Intro_Func61 = 9158476, fnCinematicFunction_Intro_Func62 = 9158495,
+    fnCinematicFunction_Intro_Func63 = 9158518, fnCinematicFunction_Intro_Func64 = 9158537,
+    fnCinematicFunction_Intro_Func65 = 9158560,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func66 = 0x8bbfc6, fnCinematicSprPreInstr_nullsub_300 = 0x8bbfd9,
+    fnCinematicFunction_Intro_Func67 = 0x8bbfda,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func68 = 9158787, fnCinematicCommonInstr_Func69 = 9158806,
+    fnCinematicCommonInstr_Func70 = 9158818, fnCinematicFunction_Intro_Func71 = 9158834,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func72 = 0x8bc0c5, fnCinematicFunction_Intro_Func73 = 0x8bc100,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunctionBlackoutFromCeres = 9158939,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func74 = 0x8bc2e4, fnCinematicFunction_Intro_Func75 = 0x8bc2f1,
+    fnCinematicFunction_Intro_Func76 = 0x8bc345,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicSprInstr_SpawnCeresExplosions1 = 9159684, fnCinematicFunction_Intro_Func78 = 9159732,
+    fnCinematicSprPreInstr_C489 = 9159817, fnCinematicFunction_Intro_Func80 = 9159865,
+    fnCinematicSprInstr_SpawnCeresExplosions3 = 9159948, fnCinematicFunction_Intro_Func81 = 9159987,
+    fnCinematicFunction_Intro_Func82 = 9160066, fnCinematicFunction_Intro_Func83 = 9160105,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func77 = 0x8bc5ca, fnCinematicFunction_Intro_Func84 = 0x8bc610,
+    fnCinematicFunction_Intro_Func85 = 0x8bc627, fnCinematicFunction_Intro_Func86 = 0x8bc699,
+    fnCinematicFunction_Intro_Func87 = 0x8bc79c, fnCinematicFunction_Intro_Func88 = 0x8bc7ca,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func89 = 9160763, fnCinematicFunction_Intro_Func90 = 9160782,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func91 = 0x8bc85d,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func92 = 9160855, fnCinematicFunction_Intro_Func93 = 9160874,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func94 = 0x8bc8b9,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func96 = 9160953,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func97 = 0x8bc908,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func98 = 9161026, fnCinematicFunction_Intro_Func99 = 9161046,
+    fnCinematicFunction_Intro_Func100 = 9161066, fnCinematicFunction_Intro_Func101 = 9161086,
+    fnCinematicFunction_Intro_Func102 = 9161106, fnCinematicSprInstr_C9A5 = 9161125,
+    fnCinematicSprInstr_C9AF = 9161135, fnCinematicSprInstr_C9BD = 9161149,
+    fnCinematicSprInstr_C9C7 = 9161159, fnCinematicFunction_Intro_Func104 = 9161190,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func105 = 0x8bc9f9, fnCinematicFunction_Intro_Func106 = 0x8bca36,
+    fnCinematicFunction_Intro_Func107 = 0x8bca85, fnCinematicFunction_Intro_Func108 = 0x8bcad0,
+    fnnullsub_124 = 0x8bcade, fnCinematicFunction_Intro_Func95 = 0x8bcadf,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunctionEscapeFromCebes = 9163904,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func109 = 0x8bd6d7, fnCinematicFunction_Intro_Func110 = 0x8bd6f2,
+    fnCinematicFunction_Intro_Func111 = 0x8bd701, fnCinematicFunction_Intro_Func112 = 0x8bd731,
+    fnCinematicFunction_Intro_Func113 = 0x8bd7f8, fnCinematicFunction_Intro_Func114 = 0x8bd807,
+    fnCinematicFunction_Intro_Func115 = 0x8bd837, fnCinematicFunction_Intro_Func116 = 0x8bda02,
+    fnCinematicFunction_Intro_Func117 = 0x8bda1a, fnCinematicFunction_Intro_Func118 = 0x8bdad3,
+    fnnullsub_125 = 0x8bdb9d, fnCinematicFunction_Intro_Func119 = 0x8bdb9e,
+    fnCinematicFunction_Intro_Func120 = 0x8bdbc4, fnCinematicFunction_Intro_Func121 = 0x8bdca5,
+    fnCinematicFunction_Intro_Func123 = 0x8bdd42, fnCinematicFunction_Intro_Func124 = 0x8bddcd,
+    fnnullsub_126 = 0x8bde63, fnCinematicFunction_Intro_Func125 = 0x8bde64,
+    fnCinematicFunction_Intro_Func126 = 0x8bde80, fnCinematicFunction_Intro_Func129 = 0x8be0f4,
+    fnCinematicFunction_Intro_Func130 = 0x8be110, fnCinematicFunction_Intro_Func131 = 0x8be158,
+    fnCinematicFunction_Intro_Func132 = 0x8be190, fnCinematicFunction_Intro_Func134 = 0x8be1d2,
+    fnCinematicFunction_Intro_Func136 = 0x8be265, fnCinematicFunction_Intro_Func135 = 0x8be293,
+    fnCinematicFunction_Intro_Func137 = 0x8be2dd, fnCinematicFunction_Intro_Func138 = 0x8be314,
+    fnCinematicFunction_Intro_Func145 = 0x8be342, fnCinematicFunction_Intro_Func139 = 0x8be3ae,
+    fnCinematicFunction_Intro_Func141 = 0x8be48a, fnCinematicFunction_Intro_Func143 = 0x8be504,
+    fnCinematicFunction_Intro_Func144 = 0x8be58a,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCalcItemPercentageCount = 9168423, fnCinematicFunction_Intro_Func146 = 9168745,
+    fnCinematicFunction_Intro_Func147 = 9168768,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func148 = 0x8be797, fnnullsub_127 = 0x8be7ba,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func150 = 9170841, fnCinematicFunction_Intro_Func151 = 9170866,
+    fnCinematicFunction_Intro_Func152 = 9170922, fnCinematicFunction_Intro_Func153 = 9170941,
+    fnCinematicFunction_Intro_Func154 = 9170949, fnCinematicFunction_Intro_Func155 = 9170968,
+    fnCinematicFunction_Intro_Func156 = 9170987, fnCinematicFunction_Intro_Func157 = 9171006,
+    fnCinematicFunction_Intro_Func159 = 9171038, fnCinematicFunction_Intro_Func161 = 9171053,
+    fnCinematicFunction_Intro_Func162 = 9171068, fnCinematicFunction_Intro_Func163 = 9171077,
+    fnCinematicFunction_Intro_Func164 = 9171092, fnCinematicFunction_Intro_Func165 = 9171122,
+    fnCinematicFunction_Intro_Func166 = 9171169, fnCinematicFunction_Intro_Func167 = 9171177,
+    fnCinematicFunction_Intro_Func168 = 9171185, fnCinematicFunction_Intro_Func169 = 9171193,
+    fnCinematicFunction_Intro_Func170 = 9171230, fnCinematicFunction_Intro_Func171 = 9171267,
+    fnCinematicFunction_Intro_Func172 = 9171286, fnCinematicFunction_Intro_Func173 = 9171305,
+    fnCinematicFunction_Intro_Func174 = 9171324, fnCinematicFunction_Intro_Func175 = 9171343,
+    fnCinematicFunction_Intro_Func176 = 9171368, fnCinematicFunction_Intro_Func177 = 9171393,
+    fnCinematicFunction_Intro_Func178 = 9171412, fnCinematicFunction_Intro_Func179 = 9171431,
+    fnCinematicFunction_Intro_Func180 = 9171495, fnCinematicSprInstr_Func181 = 9171550,
+    fnCinematicSprInstr_Func182 = 9171588, fnCinematicSprInstr_Func183 = 9171605,
+    fnCinematicFunction_Intro_Func184 = 9171621, fnCinematicSprInstr_Func185 = 9171639,
+    fnCinematicSprInstr_Func186 = 9171706, fnCinematicSprInstr_Func187 = 9171755,
+    fnCinematicSprPreInstr_F35A = 9171802,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func189 = 0x8bf375,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func189b = 9171867, fnCinematicSprInstr_Func190 = 9171888,
+    fnCinematicFunction_Intro_Func191 = 9171897, fnCinematicSprInstr_Func192 = 9171918,
+    fnCinematicSprInstr_Func193 = 9171995, fnCinematicSprInstr_Func194 = 9172004,
+    fnCinematicSprInstr_Func195 = 9172013, fnCinematicSprInstr_Func196 = 9172022,
+    fnCinematicSprInstr_Func197 = 9172031, fnCinematicSprInstr_Func198 = 9172040,
+    fnCinematicFunction_Intro_Func199 = 9172053,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func200 = 0x8bf464,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func201 = 9172088,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func202 = 0x8bf487,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func203 = 9172123,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func204 = 0x8bf4aa,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func205 = 9172177,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func206 = 0x8bf4e0,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicFunction_Intro_Func207 = 9172231, fnnullsub_128 = 9172252,
+    fnCinematicSprInstr_Func208 = 9172253, fnCinematicSprPreInstr_F528 = 9172264,
+    fnCinematicSprInstr_Func211 = 9172308, fnCinematicSprPreInstr_F57F = 9172351,
+    fnCinematicSprInstr_Func213 = 9172375, fnCinematicSprInstr_Func214 = 9172410,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunction_Intro_Func215 = 0x8bf5dd,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCinematicSprInstr_Func217 = 9172484, fnCinematicSprInstr_Func218 = 9172561,
+    fnCinematicFunction_Intro_Func219 = 9172734,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSamus_FrameHandlerAlfa_Func12 = 0x90e6c9, fnSamus_Func15 = 0x90e833,
+    fnSamusDrawHandler_Default = 0x90eb52, fnlocret_8B9585 = 0x8b9585,
+}
 // Cinematic graphics loads keep source, destination, then transfer size together.
 // RAM destinations are byte offsets; VRAM destinations are word addresses.
 enum CinematicAsset {

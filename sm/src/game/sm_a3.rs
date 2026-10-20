@@ -47,49 +47,30 @@ pub struct MaridiaSnailData2 {
 }
 pub use crate::types::Consts_A3;
 pub use crate::types::{Consts_86, EnemyDef};
-pub const addr_kMetroid_Ilist_EA25: Consts_A3 = 59941;
-pub const addr_kMetroid_Ilist_E9CF: Consts_A3 = 59855;
-pub const addr_locret_A3E08A: Consts_A3 = 57482;
-pub const addr_kWreckedShipOrangeZoomer_Ilist_E01F: Consts_A3 = 57375;
-pub const addr_kWreckedShipOrangeZoomer_Ilist_E003: Consts_A3 = 57347;
-pub const addr_kWreckedShipOrangeZoomer_Ilist_DFE7: Consts_A3 = 57319;
-pub const addr_kWreckedShipOrangeZoomer_Ilist_DFCB: Consts_A3 = 57291;
-pub const addr_stru_A3CD3A: Consts_A3 = 52538;
-pub const addr_stru_A3CD32: Consts_A3 = 52530;
-pub const addr_stru_A3CD2A: Consts_A3 = 52522;
-pub const addr_stru_A3CD22: Consts_A3 = 52514;
-pub const addr_stru_A3CD1A: Consts_A3 = 52506;
-pub const addr_stru_A3CD12: Consts_A3 = 52498;
-pub const addr_stru_A3CD0A: Consts_A3 = 52490;
-pub const addr_stru_A3CD02: Consts_A3 = 52482;
-pub const addr_stru_A3CCFA: Consts_A3 = 52474;
-pub const addr_stru_A3CCF2: Consts_A3 = 52466;
-pub const addr_stru_A3CCEA: Consts_A3 = 52458;
-pub const addr_stru_A3CCE2: Consts_A3 = 52450;
-pub const addr_kSkree_Ilist_C65E: Consts_A3 = 50782;
-pub const addr_kBang_Ilist_B75E: Consts_A3 = 46942;
-pub const addr_kMaridiaRefillCandy_Ilist_B3C1: Consts_A3 = 46017;
-pub const addr_kMochtroid_Ilist_A759: Consts_A3 = 42841;
-pub const addr_kMochtroid_Ilist_A745: Consts_A3 = 42821;
-pub const addr_kPlatformThatFallsWithSamus_Sprmap_A015: Consts_A3 = 40981;
-pub const addr_kPlatformThatFallsWithSamus_Sprmap_A009: Consts_A3 = 40969;
-pub const addr_kPlatformThatFallsWithSamus_Ilist_9C55: Consts_A3 = 40021;
-pub const addr_kPlatformThatFallsWithSamus_Ilist_9C3F: Consts_A3 = 39999;
-pub const addr_kPlatformThatFallsWithSamus_Ilist_9C29: Consts_A3 = 39977;
-pub const addr_kPlatformThatFallsWithSamus_Ilist_9C13: Consts_A3 = 39955;
-pub const addr_kPlatformThatFallsWithSamus_Ilist_9BFD: Consts_A3 = 39933;
-pub const addr_kPlatformThatFallsWithSamus_Ilist_9BE7: Consts_A3 = 39911;
-pub const addr_kPlatformThatFallsWithSamus_Ilist_9BD1: Consts_A3 = 39889;
-pub const addr_kPlatformThatFallsWithSamus_Ilist_9BBB: Consts_A3 = 39867;
-pub const addr_kElevator_Ilist_94D6: Consts_A3 = 38102;
-pub const addr_kMaridiaFish_Ilist_9072: Consts_A3 = 36978;
-pub const addr_kMaridiaFish_Ilist_9060: Consts_A3 = 36960;
-pub const addr_kMaridiaFish_Ilist_903C: Consts_A3 = 36924;
-pub const addr_kMaridiaFish_Ilist_902A: Consts_A3 = 36906;
-pub const addr_kFireflea_Ilist_8C2F: Consts_A3 = 35887;
-pub const addr_kMetalee_Ilist_8910: Consts_A3 = 35088;
-pub const addr_kWaver_Ilist_86A7: Consts_A3 = 34471;
-pub const addr_kSpritemap_Nothing_A3: Consts_A3 = 32845;
+crate::game::constants::typed_constants! { Consts_A3;
+    addr_kMetroid_Ilist_EA25 = 59941, addr_kMetroid_Ilist_E9CF = 59855,
+    addr_locret_A3E08A = 57482, addr_kWreckedShipOrangeZoomer_Ilist_E01F = 57375,
+    addr_kWreckedShipOrangeZoomer_Ilist_E003 = 57347, addr_kWreckedShipOrangeZoomer_Ilist_DFE7 = 57319,
+    addr_kWreckedShipOrangeZoomer_Ilist_DFCB = 57291, addr_stru_A3CD3A = 52538,
+    addr_stru_A3CD32 = 52530, addr_stru_A3CD2A = 52522,
+    addr_stru_A3CD22 = 52514, addr_stru_A3CD1A = 52506,
+    addr_stru_A3CD12 = 52498, addr_stru_A3CD0A = 52490,
+    addr_stru_A3CD02 = 52482, addr_stru_A3CCFA = 52474,
+    addr_stru_A3CCF2 = 52466, addr_stru_A3CCEA = 52458,
+    addr_stru_A3CCE2 = 52450, addr_kSkree_Ilist_C65E = 50782,
+    addr_kBang_Ilist_B75E = 46942, addr_kMaridiaRefillCandy_Ilist_B3C1 = 46017,
+    addr_kMochtroid_Ilist_A759 = 42841, addr_kMochtroid_Ilist_A745 = 42821,
+    addr_kPlatformThatFallsWithSamus_Sprmap_A015 = 40981, addr_kPlatformThatFallsWithSamus_Sprmap_A009 = 40969,
+    addr_kPlatformThatFallsWithSamus_Ilist_9C55 = 40021, addr_kPlatformThatFallsWithSamus_Ilist_9C3F = 39999,
+    addr_kPlatformThatFallsWithSamus_Ilist_9C29 = 39977, addr_kPlatformThatFallsWithSamus_Ilist_9C13 = 39955,
+    addr_kPlatformThatFallsWithSamus_Ilist_9BFD = 39933, addr_kPlatformThatFallsWithSamus_Ilist_9BE7 = 39911,
+    addr_kPlatformThatFallsWithSamus_Ilist_9BD1 = 39889, addr_kPlatformThatFallsWithSamus_Ilist_9BBB = 39867,
+    addr_kElevator_Ilist_94D6 = 38102, addr_kMaridiaFish_Ilist_9072 = 36978,
+    addr_kMaridiaFish_Ilist_9060 = 36960, addr_kMaridiaFish_Ilist_903C = 36924,
+    addr_kMaridiaFish_Ilist_902A = 36906, addr_kFireflea_Ilist_8C2F = 35887,
+    addr_kMetalee_Ilist_8910 = 35088, addr_kWaver_Ilist_86A7 = 34471,
+    addr_kSpritemap_Nothing_A3 = 32845,
+}
 pub use crate::types::Consts_B4;
 pub use crate::types::Point32;
 enemy_layout! {
@@ -429,64 +410,46 @@ const RomPtr_A3: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_p
 unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
     RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
-pub const fnMetalee_Func_1: i32 = 0xa38987;
-pub const fnMetalee_Func_3: i32 = 0xa389d4;
-pub const fnMetalee_Func_4: i32 = 0xa389f3;
-pub const fnMetalee_Func_5: i32 = 0xa38a5c;
-pub const fnMaridiaFish_Func_1: i32 = 0xa39132;
-pub const fnMaridiaFish_Func_2: i32 = 0xa391ab;
-pub const fnMaridiaFish_Func_3: i32 = 0xa39224;
-pub const fnMaridiaFish_Func_4: i32 = 0xa39256;
-pub const fnRoach_Func_9: i32 = 0xa3a2d7;
-pub const fnRoach_Func_10: u32 = 10724097;
-pub const fnRoach_Func_11: u32 = 10724107;
-pub const fnRoach_Func_12: u32 = 10724117;
-pub const fnRoach_Func_13: u32 = 10724133;
-pub const fnRoach_Func_14: u32 = 10724155;
-pub const fnRoach_Func_15: u32 = 10724171;
-pub const fnRoach_Func_16: u32 = 10724224;
-pub const fnRoach_Func_19: i32 = 0xa3a407;
-pub const fnRoach_Func_20: i32 = 0xa3a40e;
-pub const fnRoach_Func_21: i32 = 0xa3a440;
-pub const fnRoach_Func_22: i32 = 0xa3a447;
-pub const fnRoach_Func_23: i32 = 0xa3a44e;
-pub const fnRoach_Func_24: i32 = 0xa3a462;
-pub const fnRoach_Func_25: i32 = 0xa3a476;
-pub const fnRoach_Func_26: i32 = 0xa3a4b6;
-pub const fnRoach_Func_27: i32 = 0xa3a4f0;
-pub const fnSidehopper_Func_4: i32 = 0xa3abd6;
-pub const fnSidehopper_Func_5: u32 = 10726374;
-pub const fnSidehopper_Func_6: u32 = 10726419;
-pub const fnSidehopper_Func_7: i32 = 0xa3ac40;
-pub const fnSidehopper_Func_8: i32 = 0xa3ac56;
-pub const fnSidehopper_Func_9: i32 = 0xa3ac6c;
-pub const fnSidehopper_Func_10: i32 = 0xa3ac8f;
-pub const fnSidehopper_Func_11: i32 = 0xa3aca8;
-pub const fnSidehopper_Func_12: i32 = 0xa3accb;
-pub const fnSidehopper_Func_13: i32 = 0xa3ace4;
-pub const fnSidehopper_Func_14: i32 = 0xa3ad0e;
-pub const fnSidehopper_Func_15: i32 = 0xa3ad20;
-pub const fnSidehopper_Func_16: i32 = 0xa3ad32;
-pub const fnSidehopper_Func_17: i32 = 0xa3ad44;
-pub const fnSidehopper_Func_18: i32 = 0xa3ad56;
-pub const fnMaridiaRefillCandy_Func_1: i32 = 0xa3b482;
-pub const fnMaridiaRefillCandy_Func_2: i32 = 0xa3b4a8;
-pub const fnMaridiaRefillCandy_Func_3: i32 = 0xa3b4d6;
-pub const fnBang_Func_6: i32 = 0xa3bca5;
-pub const fnBang_Func_7: i32 = 0xa3bcc1;
-pub const fnBang_Func_8: i32 = 0xa3bcc5;
-pub const fnBang_Func_10: i32 = 0xa3bd1c;
-pub const fnBang_Func_11: i32 = 0xa3bd2c;
-pub const fnSkree_Func_1: i32 = 0xa3c6d5;
-pub const fnSkree_Func_2: i32 = 0xa3c6f7;
-pub const fnSkree_Func_3: i32 = 0xa3c716;
-pub const fnSkree_Func_4: i32 = 0xa3c77f;
-pub const fnnullsub_215: i32 = 0xa3cf5f;
-pub const fnMaridiaSnail_Func_15: i32 = 0xa3d1b3;
-pub const fnReflec_Func_1: i32 = 0xa3db0c;
-pub const fnnullsub_304: i32 = 0xa3e6c1;
-pub const fnFireZoomer_Func_1: i32 = 0xa3e6c8;
-pub const fnFireZoomer_Func_2: i32 = 0xa3e785;
+crate::game::constants::typed_constants! { i32;
+    fnMetalee_Func_1 = 0xa38987, fnMetalee_Func_3 = 0xa389d4,
+    fnMetalee_Func_4 = 0xa389f3, fnMetalee_Func_5 = 0xa38a5c,
+    fnMaridiaFish_Func_1 = 0xa39132, fnMaridiaFish_Func_2 = 0xa391ab,
+    fnMaridiaFish_Func_3 = 0xa39224, fnMaridiaFish_Func_4 = 0xa39256,
+    fnRoach_Func_9 = 0xa3a2d7,
+}
+crate::game::constants::typed_constants! { u32;
+    fnRoach_Func_10 = 10724097, fnRoach_Func_11 = 10724107,
+    fnRoach_Func_12 = 10724117, fnRoach_Func_13 = 10724133,
+    fnRoach_Func_14 = 10724155, fnRoach_Func_15 = 10724171,
+    fnRoach_Func_16 = 10724224,
+}
+crate::game::constants::typed_constants! { i32;
+    fnRoach_Func_19 = 0xa3a407, fnRoach_Func_20 = 0xa3a40e,
+    fnRoach_Func_21 = 0xa3a440, fnRoach_Func_22 = 0xa3a447,
+    fnRoach_Func_23 = 0xa3a44e, fnRoach_Func_24 = 0xa3a462,
+    fnRoach_Func_25 = 0xa3a476, fnRoach_Func_26 = 0xa3a4b6,
+    fnRoach_Func_27 = 0xa3a4f0, fnSidehopper_Func_4 = 0xa3abd6,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSidehopper_Func_5 = 10726374, fnSidehopper_Func_6 = 10726419,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSidehopper_Func_7 = 0xa3ac40, fnSidehopper_Func_8 = 0xa3ac56,
+    fnSidehopper_Func_9 = 0xa3ac6c, fnSidehopper_Func_10 = 0xa3ac8f,
+    fnSidehopper_Func_11 = 0xa3aca8, fnSidehopper_Func_12 = 0xa3accb,
+    fnSidehopper_Func_13 = 0xa3ace4, fnSidehopper_Func_14 = 0xa3ad0e,
+    fnSidehopper_Func_15 = 0xa3ad20, fnSidehopper_Func_16 = 0xa3ad32,
+    fnSidehopper_Func_17 = 0xa3ad44, fnSidehopper_Func_18 = 0xa3ad56,
+    fnMaridiaRefillCandy_Func_1 = 0xa3b482, fnMaridiaRefillCandy_Func_2 = 0xa3b4a8,
+    fnMaridiaRefillCandy_Func_3 = 0xa3b4d6, fnBang_Func_6 = 0xa3bca5,
+    fnBang_Func_7 = 0xa3bcc1, fnBang_Func_8 = 0xa3bcc5,
+    fnBang_Func_10 = 0xa3bd1c, fnBang_Func_11 = 0xa3bd2c,
+    fnSkree_Func_1 = 0xa3c6d5, fnSkree_Func_2 = 0xa3c6f7,
+    fnSkree_Func_3 = 0xa3c716, fnSkree_Func_4 = 0xa3c77f,
+    fnnullsub_215 = 0xa3cf5f, fnMaridiaSnail_Func_15 = 0xa3d1b3,
+    fnReflec_Func_1 = 0xa3db0c, fnnullsub_304 = 0xa3e6c1,
+    fnFireZoomer_Func_1 = 0xa3e6c8, fnFireZoomer_Func_2 = 0xa3e785,
+}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];

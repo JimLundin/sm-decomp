@@ -59,9 +59,10 @@ pub use crate::types::SpawnHardcodedPlmArgs;
 pub use crate::types::{Consts_60, RoomDefRoomstate, TileTable, TileTables};
 pub use crate::types::{EnemyData, RoomPlmEntry, SamusPose};
 pub const NULL: *mut c_void = null_mut::<c_void>();
-pub const true_0: i32 = 1;
-pub const false_0: i32 = 0;
-pub const kCoroutineNone: i32 = 0;
+crate::game::constants::typed_constants! { i32;
+    true_0 = 1, false_0 = 0,
+    kCoroutineNone = 0,
+}
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
     '_c2rust_label: {
@@ -98,287 +99,180 @@ unsafe fn get_RoomPlmEntry(a: u16, game: &mut Game) -> *mut RoomPlmEntry {
 unsafe fn get_PlmHeader_Size4(a: u16, game: &mut Game) -> *mut PlmHeader_Size4 {
     RomPtr((0x840000u32) | ((a) as u32), game) as *mut PlmHeader_Size4
 }
-pub const fnPlmPreInstr_nullsub_60: u32 = 8684649;
-pub const fnPlmPreInstr_Empty2: i32 = 0x8484e6;
-pub const fnPlmPreInstr_Empty3: i32 = 0x84853d;
-pub const fnPlmInstr_Sleep: u32 = 8685236;
-pub const fnPlmInstr_Delete: u32 = 8685244;
-pub const fnPlmInstr_PreInstr: u32 = 8685249;
-pub const fnPlmInstr_ClearPreInstr: u32 = 8685258;
-pub const fnPlmPreInstr_Empty: i32 = 0x8486d0;
-pub const fnPlmInstr_CallFunction: u32 = 8685323;
-pub const fnPlmInstr_Goto: u32 = 8685348;
-pub const fnPlmInstr_DecrementAndBranchNonzero: u32 = 8685375;
-pub const fnPlmInstr_SetTimer: u32 = 8685390;
-pub const fnPlmInstr_LoadItemPlmGfx: u32 = 8685412;
-pub const fnPlmInstr_CopyFromRamToVram: u32 = 8685541;
-pub const fnPlmInstr_GotoIfBossBitSet: u32 = 8685582;
-pub const fnPlmInstr_GotoIfEventSet: u32 = 8685613;
-pub const fnPlmInstr_SetEvent: u32 = 8685630;
-pub const fnPlmInstr_GotoIfChozoSet: u32 = 8685640;
-pub const fnPlmInstr_SetRoomChozoBit: u32 = 8685669;
-pub const fnPlmInstr_GotoIfItemBitSet: u32 = 8685692;
-pub const fnPlmInstr_SetItemBit: u32 = 8685721;
-pub const fnPlmInstr_PickupBeamAndShowMessage: u32 = 8685744;
-pub const fnPlmInstr_PickupEquipmentAndShowMessage: u32 = 8685811;
-pub const fnPlmInstr_PickupEquipmentAddGrappleShowMessage: u32 = 8685850;
-pub const fnPlmInstr_PickupEquipmentAddXrayShowMessage: u32 = 8685889;
-pub const fnPlmInstr_CollectHealthEnergyTank: u32 = 8685928;
-pub const fnPlmInstr_CollectHealthReserveTank: u32 = 8685958;
-pub const fnPlmInstr_CollectAmmoMissileTank: u32 = 8685993;
-pub const fnPlmInstr_CollectAmmoSuperMissileTank: u32 = 8686034;
-pub const fnPlmInstr_CollectAmmoPowerBombTank: u32 = 8686075;
-pub const fnPlmInstr_SetLinkReg: u32 = 8686116;
-pub const fnPlmInstr_Call: u32 = 8686126;
-pub const fnPlmInstr_Return: u32 = 8686138;
-pub const fnPlmInstr_GotoIfDoorBitSet: u32 = 8686194;
-pub const fnPlmInstr_IncrementDoorHitCounterAndJGE: u32 = 8686225;
-pub const fnPlmInstr_IncrementArgumentAndJGE: u32 = 8686285;
-pub const fnlocret_848AE0: u32 = 8686304;
-pub const fnPlmInstr_SetBTS: u32 = 8686321;
-pub const fnPlmInstr_DrawPlmBlock: u32 = 8686341;
-pub const fnPlmInstr_DrawPlmBlock_: u32 = 8686359;
-pub const fnPlmInstr_ProcessAirScrollUpdate: u32 = 8686421;
-pub const fnPlmInstr_ProcessSolidScrollUpdate: u32 = 8686483;
-pub const fnPlmInstr_QueueMusic: u32 = 8686545;
-pub const fnPlmInstr_ClearMusicQueueAndQueueTrack: u32 = 8686557;
-pub const fnPlmInstr_QueueSfx1_Max6: u32 = 8686599;
-pub const fnPlmInstr_QueueSfx2_Max6: u32 = 8686608;
-pub const fnPlmInstr_QueueSfx3_Max6: u32 = 8686617;
-pub const fnPlmInstr_QueueSfx1_Max15: u32 = 8686626;
-pub const fnPlmInstr_QueueSfx2_Max15: u32 = 8686635;
-pub const fnPlmInstr_QueueSfx3_Max15: u32 = 8686644;
-pub const fnPlmInstr_QueueSfx1_Max3: u32 = 8686653;
-pub const fnPlmInstr_QueueSfx2_Max3: u32 = 8686662;
-pub const fnPlmInstr_QueueSfx_Max3: u32 = 8686671;
-pub const fnPlmInstr_QueueSfx1_Max9: u32 = 8686680;
-pub const fnPlmInstr_QueueSfx2_Max9: u32 = 8686689;
-pub const fnPlmInstr_QueueSfx3_Max9: u32 = 8686698;
-pub const fnPlmInstr_QueueSfx1_Max1: u32 = 8686707;
-pub const fnPlmInstr_QueueSfx2_Max1: u32 = 8686716;
-pub const fnPlmInstr_QueueSfx3_Max1: u32 = 8686725;
-pub const fnPlmInstr_ActivateMapStation: u32 = 8686735;
-pub const fnPlmInstr_ActivateEnergyStation: u32 = 8686767;
-pub const fnPlmInstr_ActivateMissileStation: u32 = 8686800;
-pub const fnPlmInstr_ActivateSaveStationAndGotoIfNo: u32 = 8686833;
-pub const fnPlmInstr_GotoIfSamusNear: u32 = 8686913;
-pub const fnPlmInstr_MovePlmDownOneBlock: u32 = 8694528;
-pub const fnnullsub_67: u32 = 8694567;
-pub const fnPlmSetup_CrumbleBotwoonWall: u32 = 8694568;
-pub const fnPlmInstr_Scroll_0_1_Blue: u32 = 8694609;
-pub const fnPlmInstr_MovePlmDownOneBlock_0: u32 = 8694617;
-pub const fnPlmInstr_ABD6: u32 = 8694742;
-pub const fnPlmPreInstr_PositionSamusAndInvincible: u32 = 8694921;
-pub const fnPlmInstr_DealDamage_2: u32 = 8694941;
-pub const fnPlmInstr_GiveInvincibility: u32 = 8694961;
-pub const fnPlmInstr_Draw0x38FramesOfRightTreadmill: u32 = 8695107;
-pub const fnPlmInstr_Draw0x38FramesOfLeftTreadmill: u32 = 8695128;
-pub const fnPlmInstr_GotoIfSamusHealthFull: u32 = 8695349;
-pub const fnPlmInstr_GotoIfMissilesFull: u32 = 8695487;
-pub const fnPlmInstr_PlaceSamusOnSaveStation: u32 = 8695822;
-pub const fnPlmInstr_DisplayGameSavedMessageBox: u32 = 8695844;
-pub const fnPlmInstr_EnableMovementAndSetSaveStationUsed: u32 = 8695856;
-pub const fnPlmSetup_SetrupWreckedShipEntrance: i32 = 0x84b04a;
-pub const fnPlmSetup_BTS_Brinstar_0x80_Floorplant: u32 = 8696028;
-pub const fnPlmSetup_BTS_Brinstar_0x81_Ceilingplant: u32 = 8696083;
-pub const fnPlmSetup_B6D3_MapStation: u32 = 8696203;
-pub const fnPlmSetup_Bts47_MapStationRightAccess: u32 = 8696264;
-pub const fnPlmSetup_Bts4_MapStationLeftAccess: u32 = 8696304;
-pub const fnPlmSetup_PlmB6DF_EnergyStation: u32 = 8696349;
-pub const fnPlmSetup_PlmB6EB_EnergyStation: u32 = 8696389;
-pub const fnPlmSetup_B6E3_EnergyStationRightAccess: u32 = 8696429;
-pub const fnPlmSetup_B6E7_EnergyStationLeftAccess: u32 = 8696477;
-pub const fnPlmSetup_B6EF_MissileStationRightAccess: u32 = 8696528;
-pub const fnPlmSetup_B6F3_MissileStationLeftAccess: u32 = 8696576;
-pub const fnPlmSetup_B638_Rightwards_Extension: u32 = 8696634;
-pub const fnPlmSetup_B63F_Leftwards_Extension: u32 = 8696645;
-pub const fnPlmSetup_B643_Downwards_Extension: u32 = 8696656;
-pub const fnPlmSetup_B647_Upwards_Extension: u32 = 8696667;
-pub const fnPlmSetup_B703_ScrollPLM: u32 = 8696689;
-pub const fnPlmSetup_B707_SolidScrollPLM: u32 = 8696706;
-pub const fnPlmSetup_B6FF_ScrollBlockTouch: u32 = 8696723;
-pub const fnPlmSetup_DeactivatePlm: u32 = 8696769;
-pub const fnnullsub_290: u32 = 8696783;
-pub const fnPlmSetup_ReturnCarryClear: u32 = 8696784;
-pub const fnPlmSetup_ReturnCarrySet: u32 = 8696786;
-pub const fnPlmSetup_D094_EnemyBreakableBlock: u32 = 8696788;
-pub const fnUNUSED_sub_84B3E3: u32 = 8696803;
-pub const fnPlmSetup_B70F_IcePhysics: u32 = 8696811;
-pub const fnPlmSetup_QuicksandSurface: u32 = 8696840;
-pub const fnPlmSetup_B71F_SubmergingQuicksand: u32 = 8696983;
-pub const fnPlmSetup_B723_SandfallsSlow: u32 = 8697000;
-pub const fnPlmSetup_B727_SandFallsFast: u32 = 8697014;
-pub const fnPlmSetup_QuicksandSurfaceB: u32 = 8697028;
-pub const fnPlmSetup_B737_SubmergingQuicksand: u32 = 8697153;
-pub const fnPlmSetup_B73B_B73F_SandFalls: u32 = 8697167;
-pub const fnPlmSetup_ClearShitroidInvisibleWall: u32 = 8697169;
-pub const fnPlmSetup_B767_ClearShitroidInvisibleWall: u32 = 8697199;
-pub const fnPlmSetup_B76B_SaveStationTrigger: u32 = 8697232;
-pub const fnPlmSetup_B76F_SaveStation: u32 = 8697326;
-pub const fnPlmSetup_MotherBrainRoomEscapeDoor: u32 = 8697336;
-pub const fnPlmSetup_B7EB_EnableSoundsIn32Frames: u32 = 8697795;
-pub const fnPlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm: i32 = 0x84b7dd;
-pub const fnPlmPreInstr_WakeAndLavaIfBoosterCollected: u32 = 8697839;
-pub const fnPlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft: u32 = 8697898;
-pub const fnPlmPreInstr_AdvanceLavaSamusMovesLeft: u32 = 8697926;
-pub const fnPlmSetup_SpeedBoosterEscape: u32 = 8698012;
-pub const fnPlmPreInstr_ShaktoolsRoom: u32 = 8698032;
-pub const fnPlmSetup_ShaktoolsRoom: u32 = 8698076;
-pub const fnnullsub_68: u32 = 8698095;
-pub const fnPlmPreInstr_OldTourianEscapeShaftEscape: u32 = 8698151;
-pub const fnPlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft: u32 = 8698184;
-pub const fnPlmSetup_B974: u32 = 8698220;
-pub const fnPlmSetup_B9C1_CrittersEscapeBlock: u32 = 8698232;
-pub const fnPlmInstr_SetCrittersEscapedEvent: u32 = 8698297;
-pub const fnPlmSetup_B9ED_CrittersEscapeBlock: u32 = 8698309;
-pub const fnsub_84B9F1: u32 = 8698353;
-pub const fnPlmInstr_JumpIfSamusHasNoBombs: u32 = 8698479;
-pub const fnnullsub_84BAFA: u32 = 8698618;
-pub const fnPlmSetup_BB30_CrateriaMainstreetEscape: u32 = 8698633;
-pub const fnPlmInstr_MovePlmRight4Blocks: u32 = 8698661;
-pub const fnPlmPreInstr_WakePlmIfTriggered: u32 = 8698706;
-pub const fnnullsub_359: u32 = 8698730;
-pub const fnPlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm: u32 = 8698731;
-pub const fnPlmPreInstr_Empty5: i32 = 0x84bba3;
-pub const fnPlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm: u32 = 8698788;
-pub const fnPlmInstr_ClearTrigger: u32 = 8698845;
-pub const fnPlmInstr_SpawnEproj: u32 = 8698849;
-pub const fnPlmInstr_WakeEprojAtPlmPos: u32 = 8698864;
-pub const fnPlmPreInstr_GoToLinkInstrIfShot: u32 = 8699151;
-pub const fnPlmPreInstr_GoToLinkInstrIfShotWithPowerBomb: u32 = 8699174;
-pub const fnPlmPreInstr_GoToLinkInstrIfShotWithAnyMissile: u32 = 8699216;
-pub const fnPlmPreInstr_GoToLinkInstrIfShotWithSuperMissile: u32 = 8699272;
-pub const fnPlmPreInstr_GoToLinkInstruction: u32 = 8699314;
-pub const fnPlmPreInstr_GotoLinkIfBoss1Dead: u32 = 8699348;
-pub const fnPlmPreInstr_GotoLinkIfMiniBossDead: u32 = 8699363;
-pub const fnPlmPreInstr_GotoLinkIfTorizoDead: u32 = 8699378;
-pub const fnPlmPreInstr_GotoLinkIfEnemyDeathQuotaOk: u32 = 8699393;
-pub const fnPlmPreInstr_PlayDudSound: u32 = 8699420;
-pub const fnPlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing: u32 = 8699423;
-pub const fnPlmPreInstr_GotoLinkIfCrittersEscaped: u32 = 8699440;
-pub const fnPlmInstr_SetGreyDoorPreInstr: u32 = 8699455;
-pub const fnPlmSetup_C806_LeftGreenGateTrigger: u32 = 8701261;
-pub const fnPlmSetup_C80A_RightGreenGateTrigger: u32 = 8701292;
-pub const fnPlmSetup_C80E_LeftRedGateTrigger: u32 = 8701323;
-pub const fnPlmSetup_C812_RightRedGateTrigger: u32 = 8701359;
-pub const fnPlmSetup_C81E_LeftYellowGateTrigger: u32 = 8701395;
-pub const fnPlmSetup_C822_RightYellowGateTrigger: u32 = 8701425;
-pub const fnPlmSetup_C816_LeftBlueGateTrigger: u32 = 8701456;
-pub const fnPlmSetup_C81A_RightBlueGateTrigger: u32 = 8701479;
-pub const fnPlmSetup_C82A_DownwardsClosedGate: u32 = 8701630;
-pub const fnPlmSetup_C832_UpwardsClosedGate: u32 = 8701643;
-pub const fnPlmSetup_C826_DownwardsOpenGate: u32 = 8701656;
-pub const fnPlmSetup_C82E_UpwardsOpenGate: u32 = 8701660;
-pub const fnPlmSetup_C836_DownwardsGateShootblock: u32 = 8701664;
-pub const fnPlmSetup_C73A_UpwardsGateShootblock: u32 = 8701754;
-pub const fnPlmSetup_C794_GreyDoor: u32 = 8701844;
-pub const fnPlmSetup_Door_Colored: u32 = 8701873;
-pub const fnPlmSetup_Door_Blue: u32 = 8701883;
-pub const fnPlmSetup_Door_Strange: u32 = 8701922;
-pub const fnPlmInstr_SetBtsTo1: u32 = 8703379;
-pub const fnPlmSetup_D028_D02C_Unused: u32 = 8703426;
-pub const fnPlmSetup_RespawningSpeedBoostBlock: u32 = 8703466;
-pub const fnPlmSetup_RespawningCrumbleBlock: u32 = 8703543;
-pub const fnPlmSetup_RespawningShotBlock: u32 = 8703595;
-pub const fnPlmSetup_RespawningBombBlock: u32 = 8703619;
-pub const fnPlmSetup_RespawningBombBlock2: u32 = 8703706;
-pub const fnPlmSetup_RespawningPowerBombBlock: u32 = 8703790;
-pub const fnPlmSetup_D08C_SuperMissileBlockRespawning: u32 = 8703847;
-pub const fnPlmSetup_D08C_CrumbleBlock: u32 = 8703904;
-pub const fnPlmSetup_D0DC_BreakableGrappleBlock: u32 = 8703925;
-pub const fnPlmSetup_D0D8_SetVFlag: u32 = 8703949;
-pub const fnPlmSetup_D0D8_ClearVflag: u32 = 8703953;
-pub const fnPlmSetup_D0E8_GiveSamusDamage: u32 = 8703957;
-pub const fnPlmSetup_D113_LowerNorfairChozoRoomPlug: u32 = 8704264;
-pub const fnPlmSetup_D127: u32 = 8704279;
-pub const fnPlmSetup_D138: u32 = 8704299;
-pub const fnPlmInstr_FxBaseYPos_0x2D2: u32 = 8704341;
-pub const fnPlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed: u32 = 8704348;
-pub const fnnullsub_69: u32 = 8704398;
-pub const fnPlmSetup_D6DA_LowerNorfairChozoHandTrigger: u32 = 8704399;
-pub const fnPlmPreInstr_IncrementRoomArgIfShotBySuperMissile: u32 = 8704486;
-pub const fnPlmInstr_GotoIfRoomArgLess: u32 = 8704761;
-pub const fnPlmInstr_SpawnFourMotherBrainGlass: u32 = 8704779;
-pub const fnPlmPreInstr_WakePlmIfSamusHasBombs: u32 = 8704827;
-pub const fnnullsub_351: i32 = 0x84d356;
-pub const fnPlmInstr_SpawnTorizoStatueBreaking: u32 = 8704855;
-pub const fnPlmInstr_QueueSong1MusicTrack: u32 = 8704967;
-pub const fnPlmInstr_TransferWreckedShipChozoSpikesToSlopes: u32 = 8704983;
-pub const fnPlmInstr_TransferWreckedShipSlopesToChozoSpikes: u32 = 8705012;
-pub const fnPlmPreInstr_WakeOnKeyPress: u32 = 8705215;
-pub const fnPlmInstr_EnableWaterPhysics: u32 = 8705317;
-pub const fnPlmInstr_SpawnN00bTubeCrackEproj: u32 = 8705324;
-pub const fnPlmInstr_DiagonalEarthquake: u32 = 8705334;
-pub const fnPlmInstr_Spawn10shardsAnd6n00bs: u32 = 8705347;
-pub const fnPlmInstr_DisableSamusControls: u32 = 8705510;
-pub const fnPlmInstr_EnableSamusControls: u32 = 8705518;
-pub const fnPlmSetup_MotherBrainGlass: u32 = 8705526;
-pub const fnPlmSetup_DeletePlmIfAreaTorizoDead: u32 = 8705542;
-pub const fnPlmSetup_MakeBllockChozoHandTrigger: u32 = 8705558;
-pub const fnPlmSetup_D6F2_WreckedShipChozoHandTrigger: u32 = 8705568;
-pub const fnPlmSetup_D700_MakePlmAirBlock_Unused: u32 = 8705663;
-pub const fnPlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused: u32 = 8705673;
-pub const fnPlmSetup_D708_LowerNorfairChozoBlockUnused: u32 = 8705683;
-pub const fnPlmSetup_D70C_NoobTube: u32 = 8705740;
-pub const fnnullsub_71: u32 = 8705782;
-pub const fnnullsub_72: u32 = 8705783;
-pub const fnPlmPreInstr_WakePlmIfRoomArgumentDoorIsSet: u32 = 8705875;
-pub const fnPlmInstr_ShootEyeDoorProjectileWithProjectileArg: u32 = 8705914;
-pub const fnPlmInstr_SpawnEyeDoorSweatEproj: u32 = 8705936;
-pub const fnPlmInstr_SpawnTwoEyeDoorSmoke: u32 = 8705951;
-pub const fnPlmInstr_SpawnEyeDoorSmokeProjectile: u32 = 8705974;
-pub const fnPlmInstr_MoveUpAndMakeBlueDoorFacingRight: u32 = 8705987;
-pub const fnPlmInstr_MoveUpAndMakeBlueDoorFacingLeft: u32 = 8706010;
-pub const fnPlmSetup_EyeDoorEye: u32 = 8706700;
-pub const fnPlmSetup_EyeDoor: u32 = 8706745;
-pub const fnnullsub_73: u32 = 8706773;
-pub const fnnullsub_74: u32 = 8706774;
-pub const fnnullsub_75: u32 = 8706775;
-pub const fnnullsub_76: u32 = 8706776;
-pub const fnnullsub_77: u32 = 8706777;
-pub const fnnullsub_78: u32 = 8706778;
-pub const fnnullsub_79: u32 = 8706779;
-pub const fnnullsub_80: u32 = 8706780;
-pub const fnnullsub_81: u32 = 8706781;
-pub const fnPlmPreInstr_SetMetroidsClearState_Ev0x10: u32 = 8706782;
-pub const fnPlmPreInstr_SetMetroidsClearState_Ev0x11: u32 = 8706798;
-pub const fnPlmPreInstr_SetMetroidsClearState_Ev0x12: u32 = 8706814;
-pub const fnPlmPreInstr_SetMetroidsClearState_Ev0x13: u32 = 8706830;
-pub const fnPlmSetup_SetMetroidRequiredClearState: u32 = 8706846;
-pub const fnPlmPreInstr_GotoLinkIfShotWithSuperMissile: u32 = 8706916;
-pub const fnPlmInstr_DamageDraygonTurret: u32 = 8706958;
-pub const fnPlmInstr_DamageDraygonTurretFacingDownRight: u32 = 8707000;
-pub const fnPlmInstr_DamageDraygonTurretFacingUpRight: u32 = 8707063;
-pub const fnPlmInstr_DamageDraygonTurret2: u32 = 8707126;
-pub const fnPlmInstr_DamageDraygonTurretFacingDownLeft: u32 = 8707168;
-pub const fnPlmInstr_DamageDraygonTurretFacingUpLeft: u32 = 8707231;
-pub const fnPlmSetup_DraygonCannonFacingRight: u32 = 8707732;
-pub const fnPlmSetup_DraygonCannonFacingDiagonalRight: u32 = 8707769;
-pub const fnPlmSetup_DraygonCannonFacingLeft: u32 = 8707824;
-pub const fnPlmSetup_DraygonCannonFacingDiagonalLeft: u32 = 8707861;
-pub const fnPlmSetup_DraygonCannon: u32 = 8707916;
-pub const fnPlmPreInstr_GotoLinkIfTriggered: i32 = 0x84df89;
-pub const fnPlmPreInstr_nullsub_301: i32 = 0x84dfa8;
-pub const fnPlmPreInstr_WakeIfTriggered: u32 = 8708070;
-pub const fnPlmInstr_DrawItemFrame0: u32 = 8708175;
-pub const fnPlmInstr_DrawItemFrame1: u32 = 8708199;
-pub const fnPlmInstr_DrawItemFrame_Common: u32 = 8708223;
-pub const fnPlmInstr_ClearChargeBeamCounter: u32 = 8708765;
-pub const fnPlmInstr_E63B: u32 = 8709691;
-pub const fnsub_84EE4D: u32 = 8711757;
-pub const fnsub_84EE52: u32 = 8711762;
-pub const fnsub_84EE57: u32 = 8711767;
-pub const fnsub_84EE5C: u32 = 8711772;
-pub const fnsub_84EE64: u32 = 8711780;
-pub const fnsub_84EE77: u32 = 8711799;
-pub const fnsub_84EE7C: u32 = 8711804;
-pub const fnsub_84EE81: u32 = 8711809;
-pub const fnsub_84EE86: u32 = 8711814;
-pub const fnsub_84EE8E: u32 = 8711822;
-pub const fnsub_84EEAB: u32 = 8711851;
-pub const fnVariaSuitPickup: u32 = 9557220;
-pub const fnGravitySuitPickup: u32 = 9557434;
-pub const fnPlmPreInstr_Empty4: u32 = 8686246;
+crate::game::constants::typed_constants! { u32;
+    fnPlmPreInstr_nullsub_60 = 8684649,
+}
+crate::game::constants::typed_constants! { i32;
+    fnPlmPreInstr_Empty2 = 0x8484e6, fnPlmPreInstr_Empty3 = 0x84853d,
+}
+crate::game::constants::typed_constants! { u32;
+    fnPlmInstr_Sleep = 8685236, fnPlmInstr_Delete = 8685244,
+    fnPlmInstr_PreInstr = 8685249, fnPlmInstr_ClearPreInstr = 8685258,
+}
+crate::game::constants::typed_constants! { i32;
+    fnPlmPreInstr_Empty = 0x8486d0,
+}
+crate::game::constants::typed_constants! { u32;
+    fnPlmInstr_CallFunction = 8685323, fnPlmInstr_Goto = 8685348,
+    fnPlmInstr_DecrementAndBranchNonzero = 8685375, fnPlmInstr_SetTimer = 8685390,
+    fnPlmInstr_LoadItemPlmGfx = 8685412, fnPlmInstr_CopyFromRamToVram = 8685541,
+    fnPlmInstr_GotoIfBossBitSet = 8685582, fnPlmInstr_GotoIfEventSet = 8685613,
+    fnPlmInstr_SetEvent = 8685630, fnPlmInstr_GotoIfChozoSet = 8685640,
+    fnPlmInstr_SetRoomChozoBit = 8685669, fnPlmInstr_GotoIfItemBitSet = 8685692,
+    fnPlmInstr_SetItemBit = 8685721, fnPlmInstr_PickupBeamAndShowMessage = 8685744,
+    fnPlmInstr_PickupEquipmentAndShowMessage = 8685811, fnPlmInstr_PickupEquipmentAddGrappleShowMessage = 8685850,
+    fnPlmInstr_PickupEquipmentAddXrayShowMessage = 8685889, fnPlmInstr_CollectHealthEnergyTank = 8685928,
+    fnPlmInstr_CollectHealthReserveTank = 8685958, fnPlmInstr_CollectAmmoMissileTank = 8685993,
+    fnPlmInstr_CollectAmmoSuperMissileTank = 8686034, fnPlmInstr_CollectAmmoPowerBombTank = 8686075,
+    fnPlmInstr_SetLinkReg = 8686116, fnPlmInstr_Call = 8686126,
+    fnPlmInstr_Return = 8686138, fnPlmInstr_GotoIfDoorBitSet = 8686194,
+    fnPlmInstr_IncrementDoorHitCounterAndJGE = 8686225, fnPlmInstr_IncrementArgumentAndJGE = 8686285,
+    fnlocret_848AE0 = 8686304, fnPlmInstr_SetBTS = 8686321,
+    fnPlmInstr_DrawPlmBlock = 8686341, fnPlmInstr_DrawPlmBlock_ = 8686359,
+    fnPlmInstr_ProcessAirScrollUpdate = 8686421, fnPlmInstr_ProcessSolidScrollUpdate = 8686483,
+    fnPlmInstr_QueueMusic = 8686545, fnPlmInstr_ClearMusicQueueAndQueueTrack = 8686557,
+    fnPlmInstr_QueueSfx1_Max6 = 8686599, fnPlmInstr_QueueSfx2_Max6 = 8686608,
+    fnPlmInstr_QueueSfx3_Max6 = 8686617, fnPlmInstr_QueueSfx1_Max15 = 8686626,
+    fnPlmInstr_QueueSfx2_Max15 = 8686635, fnPlmInstr_QueueSfx3_Max15 = 8686644,
+    fnPlmInstr_QueueSfx1_Max3 = 8686653, fnPlmInstr_QueueSfx2_Max3 = 8686662,
+    fnPlmInstr_QueueSfx_Max3 = 8686671, fnPlmInstr_QueueSfx1_Max9 = 8686680,
+    fnPlmInstr_QueueSfx2_Max9 = 8686689, fnPlmInstr_QueueSfx3_Max9 = 8686698,
+    fnPlmInstr_QueueSfx1_Max1 = 8686707, fnPlmInstr_QueueSfx2_Max1 = 8686716,
+    fnPlmInstr_QueueSfx3_Max1 = 8686725, fnPlmInstr_ActivateMapStation = 8686735,
+    fnPlmInstr_ActivateEnergyStation = 8686767, fnPlmInstr_ActivateMissileStation = 8686800,
+    fnPlmInstr_ActivateSaveStationAndGotoIfNo = 8686833, fnPlmInstr_GotoIfSamusNear = 8686913,
+    fnPlmInstr_MovePlmDownOneBlock = 8694528, fnnullsub_67 = 8694567,
+    fnPlmSetup_CrumbleBotwoonWall = 8694568, fnPlmInstr_Scroll_0_1_Blue = 8694609,
+    fnPlmInstr_MovePlmDownOneBlock_0 = 8694617, fnPlmInstr_ABD6 = 8694742,
+    fnPlmPreInstr_PositionSamusAndInvincible = 8694921, fnPlmInstr_DealDamage_2 = 8694941,
+    fnPlmInstr_GiveInvincibility = 8694961, fnPlmInstr_Draw0x38FramesOfRightTreadmill = 8695107,
+    fnPlmInstr_Draw0x38FramesOfLeftTreadmill = 8695128, fnPlmInstr_GotoIfSamusHealthFull = 8695349,
+    fnPlmInstr_GotoIfMissilesFull = 8695487, fnPlmInstr_PlaceSamusOnSaveStation = 8695822,
+    fnPlmInstr_DisplayGameSavedMessageBox = 8695844, fnPlmInstr_EnableMovementAndSetSaveStationUsed = 8695856,
+}
+crate::game::constants::typed_constants! { i32;
+    fnPlmSetup_SetrupWreckedShipEntrance = 0x84b04a,
+}
+crate::game::constants::typed_constants! { u32;
+    fnPlmSetup_BTS_Brinstar_0x80_Floorplant = 8696028, fnPlmSetup_BTS_Brinstar_0x81_Ceilingplant = 8696083,
+    fnPlmSetup_B6D3_MapStation = 8696203, fnPlmSetup_Bts47_MapStationRightAccess = 8696264,
+    fnPlmSetup_Bts4_MapStationLeftAccess = 8696304, fnPlmSetup_PlmB6DF_EnergyStation = 8696349,
+    fnPlmSetup_PlmB6EB_EnergyStation = 8696389, fnPlmSetup_B6E3_EnergyStationRightAccess = 8696429,
+    fnPlmSetup_B6E7_EnergyStationLeftAccess = 8696477, fnPlmSetup_B6EF_MissileStationRightAccess = 8696528,
+    fnPlmSetup_B6F3_MissileStationLeftAccess = 8696576, fnPlmSetup_B638_Rightwards_Extension = 8696634,
+    fnPlmSetup_B63F_Leftwards_Extension = 8696645, fnPlmSetup_B643_Downwards_Extension = 8696656,
+    fnPlmSetup_B647_Upwards_Extension = 8696667, fnPlmSetup_B703_ScrollPLM = 8696689,
+    fnPlmSetup_B707_SolidScrollPLM = 8696706, fnPlmSetup_B6FF_ScrollBlockTouch = 8696723,
+    fnPlmSetup_DeactivatePlm = 8696769, fnnullsub_290 = 8696783,
+    fnPlmSetup_ReturnCarryClear = 8696784, fnPlmSetup_ReturnCarrySet = 8696786,
+    fnPlmSetup_D094_EnemyBreakableBlock = 8696788, fnUNUSED_sub_84B3E3 = 8696803,
+    fnPlmSetup_B70F_IcePhysics = 8696811, fnPlmSetup_QuicksandSurface = 8696840,
+    fnPlmSetup_B71F_SubmergingQuicksand = 8696983, fnPlmSetup_B723_SandfallsSlow = 8697000,
+    fnPlmSetup_B727_SandFallsFast = 8697014, fnPlmSetup_QuicksandSurfaceB = 8697028,
+    fnPlmSetup_B737_SubmergingQuicksand = 8697153, fnPlmSetup_B73B_B73F_SandFalls = 8697167,
+    fnPlmSetup_ClearShitroidInvisibleWall = 8697169, fnPlmSetup_B767_ClearShitroidInvisibleWall = 8697199,
+    fnPlmSetup_B76B_SaveStationTrigger = 8697232, fnPlmSetup_B76F_SaveStation = 8697326,
+    fnPlmSetup_MotherBrainRoomEscapeDoor = 8697336, fnPlmSetup_B7EB_EnableSoundsIn32Frames = 8697795,
+}
+crate::game::constants::typed_constants! { i32;
+    fnPlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm = 0x84b7dd,
+}
+crate::game::constants::typed_constants! { u32;
+    fnPlmPreInstr_WakeAndLavaIfBoosterCollected = 8697839, fnPlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft = 8697898,
+    fnPlmPreInstr_AdvanceLavaSamusMovesLeft = 8697926, fnPlmSetup_SpeedBoosterEscape = 8698012,
+    fnPlmPreInstr_ShaktoolsRoom = 8698032, fnPlmSetup_ShaktoolsRoom = 8698076,
+    fnnullsub_68 = 8698095, fnPlmPreInstr_OldTourianEscapeShaftEscape = 8698151,
+    fnPlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft = 8698184, fnPlmSetup_B974 = 8698220,
+    fnPlmSetup_B9C1_CrittersEscapeBlock = 8698232, fnPlmInstr_SetCrittersEscapedEvent = 8698297,
+    fnPlmSetup_B9ED_CrittersEscapeBlock = 8698309, fnsub_84B9F1 = 8698353,
+    fnPlmInstr_JumpIfSamusHasNoBombs = 8698479, fnnullsub_84BAFA = 8698618,
+    fnPlmSetup_BB30_CrateriaMainstreetEscape = 8698633, fnPlmInstr_MovePlmRight4Blocks = 8698661,
+    fnPlmPreInstr_WakePlmIfTriggered = 8698706, fnnullsub_359 = 8698730,
+    fnPlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm = 8698731,
+}
+crate::game::constants::typed_constants! { i32;
+    fnPlmPreInstr_Empty5 = 0x84bba3,
+}
+crate::game::constants::typed_constants! { u32;
+    fnPlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm = 8698788, fnPlmInstr_ClearTrigger = 8698845,
+    fnPlmInstr_SpawnEproj = 8698849, fnPlmInstr_WakeEprojAtPlmPos = 8698864,
+    fnPlmPreInstr_GoToLinkInstrIfShot = 8699151, fnPlmPreInstr_GoToLinkInstrIfShotWithPowerBomb = 8699174,
+    fnPlmPreInstr_GoToLinkInstrIfShotWithAnyMissile = 8699216, fnPlmPreInstr_GoToLinkInstrIfShotWithSuperMissile = 8699272,
+    fnPlmPreInstr_GoToLinkInstruction = 8699314, fnPlmPreInstr_GotoLinkIfBoss1Dead = 8699348,
+    fnPlmPreInstr_GotoLinkIfMiniBossDead = 8699363, fnPlmPreInstr_GotoLinkIfTorizoDead = 8699378,
+    fnPlmPreInstr_GotoLinkIfEnemyDeathQuotaOk = 8699393, fnPlmPreInstr_PlayDudSound = 8699420,
+    fnPlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing = 8699423, fnPlmPreInstr_GotoLinkIfCrittersEscaped = 8699440,
+    fnPlmInstr_SetGreyDoorPreInstr = 8699455, fnPlmSetup_C806_LeftGreenGateTrigger = 8701261,
+    fnPlmSetup_C80A_RightGreenGateTrigger = 8701292, fnPlmSetup_C80E_LeftRedGateTrigger = 8701323,
+    fnPlmSetup_C812_RightRedGateTrigger = 8701359, fnPlmSetup_C81E_LeftYellowGateTrigger = 8701395,
+    fnPlmSetup_C822_RightYellowGateTrigger = 8701425, fnPlmSetup_C816_LeftBlueGateTrigger = 8701456,
+    fnPlmSetup_C81A_RightBlueGateTrigger = 8701479, fnPlmSetup_C82A_DownwardsClosedGate = 8701630,
+    fnPlmSetup_C832_UpwardsClosedGate = 8701643, fnPlmSetup_C826_DownwardsOpenGate = 8701656,
+    fnPlmSetup_C82E_UpwardsOpenGate = 8701660, fnPlmSetup_C836_DownwardsGateShootblock = 8701664,
+    fnPlmSetup_C73A_UpwardsGateShootblock = 8701754, fnPlmSetup_C794_GreyDoor = 8701844,
+    fnPlmSetup_Door_Colored = 8701873, fnPlmSetup_Door_Blue = 8701883,
+    fnPlmSetup_Door_Strange = 8701922, fnPlmInstr_SetBtsTo1 = 8703379,
+    fnPlmSetup_D028_D02C_Unused = 8703426, fnPlmSetup_RespawningSpeedBoostBlock = 8703466,
+    fnPlmSetup_RespawningCrumbleBlock = 8703543, fnPlmSetup_RespawningShotBlock = 8703595,
+    fnPlmSetup_RespawningBombBlock = 8703619, fnPlmSetup_RespawningBombBlock2 = 8703706,
+    fnPlmSetup_RespawningPowerBombBlock = 8703790, fnPlmSetup_D08C_SuperMissileBlockRespawning = 8703847,
+    fnPlmSetup_D08C_CrumbleBlock = 8703904, fnPlmSetup_D0DC_BreakableGrappleBlock = 8703925,
+    fnPlmSetup_D0D8_SetVFlag = 8703949, fnPlmSetup_D0D8_ClearVflag = 8703953,
+    fnPlmSetup_D0E8_GiveSamusDamage = 8703957, fnPlmSetup_D113_LowerNorfairChozoRoomPlug = 8704264,
+    fnPlmSetup_D127 = 8704279, fnPlmSetup_D138 = 8704299,
+    fnPlmInstr_FxBaseYPos_0x2D2 = 8704341, fnPlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed = 8704348,
+    fnnullsub_69 = 8704398, fnPlmSetup_D6DA_LowerNorfairChozoHandTrigger = 8704399,
+    fnPlmPreInstr_IncrementRoomArgIfShotBySuperMissile = 8704486, fnPlmInstr_GotoIfRoomArgLess = 8704761,
+    fnPlmInstr_SpawnFourMotherBrainGlass = 8704779, fnPlmPreInstr_WakePlmIfSamusHasBombs = 8704827,
+}
+crate::game::constants::typed_constants! { i32;
+    fnnullsub_351 = 0x84d356,
+}
+crate::game::constants::typed_constants! { u32;
+    fnPlmInstr_SpawnTorizoStatueBreaking = 8704855, fnPlmInstr_QueueSong1MusicTrack = 8704967,
+    fnPlmInstr_TransferWreckedShipChozoSpikesToSlopes = 8704983, fnPlmInstr_TransferWreckedShipSlopesToChozoSpikes = 8705012,
+    fnPlmPreInstr_WakeOnKeyPress = 8705215, fnPlmInstr_EnableWaterPhysics = 8705317,
+    fnPlmInstr_SpawnN00bTubeCrackEproj = 8705324, fnPlmInstr_DiagonalEarthquake = 8705334,
+    fnPlmInstr_Spawn10shardsAnd6n00bs = 8705347, fnPlmInstr_DisableSamusControls = 8705510,
+    fnPlmInstr_EnableSamusControls = 8705518, fnPlmSetup_MotherBrainGlass = 8705526,
+    fnPlmSetup_DeletePlmIfAreaTorizoDead = 8705542, fnPlmSetup_MakeBllockChozoHandTrigger = 8705558,
+    fnPlmSetup_D6F2_WreckedShipChozoHandTrigger = 8705568, fnPlmSetup_D700_MakePlmAirBlock_Unused = 8705663,
+    fnPlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused = 8705673, fnPlmSetup_D708_LowerNorfairChozoBlockUnused = 8705683,
+    fnPlmSetup_D70C_NoobTube = 8705740, fnnullsub_71 = 8705782,
+    fnnullsub_72 = 8705783, fnPlmPreInstr_WakePlmIfRoomArgumentDoorIsSet = 8705875,
+    fnPlmInstr_ShootEyeDoorProjectileWithProjectileArg = 8705914, fnPlmInstr_SpawnEyeDoorSweatEproj = 8705936,
+    fnPlmInstr_SpawnTwoEyeDoorSmoke = 8705951, fnPlmInstr_SpawnEyeDoorSmokeProjectile = 8705974,
+    fnPlmInstr_MoveUpAndMakeBlueDoorFacingRight = 8705987, fnPlmInstr_MoveUpAndMakeBlueDoorFacingLeft = 8706010,
+    fnPlmSetup_EyeDoorEye = 8706700, fnPlmSetup_EyeDoor = 8706745,
+    fnnullsub_73 = 8706773, fnnullsub_74 = 8706774,
+    fnnullsub_75 = 8706775, fnnullsub_76 = 8706776,
+    fnnullsub_77 = 8706777, fnnullsub_78 = 8706778,
+    fnnullsub_79 = 8706779, fnnullsub_80 = 8706780,
+    fnnullsub_81 = 8706781, fnPlmPreInstr_SetMetroidsClearState_Ev0x10 = 8706782,
+    fnPlmPreInstr_SetMetroidsClearState_Ev0x11 = 8706798, fnPlmPreInstr_SetMetroidsClearState_Ev0x12 = 8706814,
+    fnPlmPreInstr_SetMetroidsClearState_Ev0x13 = 8706830, fnPlmSetup_SetMetroidRequiredClearState = 8706846,
+    fnPlmPreInstr_GotoLinkIfShotWithSuperMissile = 8706916, fnPlmInstr_DamageDraygonTurret = 8706958,
+    fnPlmInstr_DamageDraygonTurretFacingDownRight = 8707000, fnPlmInstr_DamageDraygonTurretFacingUpRight = 8707063,
+    fnPlmInstr_DamageDraygonTurret2 = 8707126, fnPlmInstr_DamageDraygonTurretFacingDownLeft = 8707168,
+    fnPlmInstr_DamageDraygonTurretFacingUpLeft = 8707231, fnPlmSetup_DraygonCannonFacingRight = 8707732,
+    fnPlmSetup_DraygonCannonFacingDiagonalRight = 8707769, fnPlmSetup_DraygonCannonFacingLeft = 8707824,
+    fnPlmSetup_DraygonCannonFacingDiagonalLeft = 8707861, fnPlmSetup_DraygonCannon = 8707916,
+}
+crate::game::constants::typed_constants! { i32;
+    fnPlmPreInstr_GotoLinkIfTriggered = 0x84df89, fnPlmPreInstr_nullsub_301 = 0x84dfa8,
+}
+crate::game::constants::typed_constants! { u32;
+    fnPlmPreInstr_WakeIfTriggered = 8708070, fnPlmInstr_DrawItemFrame0 = 8708175,
+    fnPlmInstr_DrawItemFrame1 = 8708199, fnPlmInstr_DrawItemFrame_Common = 8708223,
+    fnPlmInstr_ClearChargeBeamCounter = 8708765, fnPlmInstr_E63B = 8709691,
+    fnsub_84EE4D = 8711757, fnsub_84EE52 = 8711762,
+    fnsub_84EE57 = 8711767, fnsub_84EE5C = 8711772,
+    fnsub_84EE64 = 8711780, fnsub_84EE77 = 8711799,
+    fnsub_84EE7C = 8711804, fnsub_84EE81 = 8711809,
+    fnsub_84EE86 = 8711814, fnsub_84EE8E = 8711822,
+    fnsub_84EEAB = 8711851, fnVariaSuitPickup = 9557220,
+    fnGravitySuitPickup = 9557434, fnPlmPreInstr_Empty4 = 8686246,
+}
 pub unsafe fn SetGoldenTorizoPalette(mut a: u16, game: &mut Game) {
     let mut v1: i16 = 0;
     v1 = ((*(&raw mut a as *mut u8).offset(1isize)) as i16) & (0x78i16);

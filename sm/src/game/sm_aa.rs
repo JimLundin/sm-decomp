@@ -36,28 +36,19 @@ pub use crate::types::Consts_8D;
 pub use crate::types::Consts_AA;
 pub use crate::types::EnemyProps;
 pub use crate::types::{EnemyBase, EnemyData, SamusPose, VoidP};
-pub const addr_kShaktool_Ilist_E461: Consts_AA = 58465;
-pub const addr_kShaktool_Ilist_E3A7: Consts_AA = 58279;
-pub const addr_kTorizo_Ilist_D2BF: Consts_AA = 53951;
-pub const addr_kTorizo_Ilist_D2AD: Consts_AA = 53933;
-pub const addr_kTorizo_Ilist_D203: Consts_AA = 53763;
-pub const addr_kTorizo_Ilist_D1F1: Consts_AA = 53745;
-pub const addr_kTorizo_Ilist_CEFF: Consts_AA = 52991;
-pub const addr_kTorizo_Ilist_CEA5: Consts_AA = 52901;
-pub const addr_kTorizo_Ilist_CE43: Consts_AA = 52803;
-pub const addr_kTorizo_Ilist_CDE1: Consts_AA = 52705;
-pub const addr_locret_AAC95E: Consts_AA = 51550;
-pub const addr_kTorizo_Ilist_C188: Consts_AA = 49544;
-pub const addr_off_AAC0F2: Consts_AA = 49394;
-pub const addr_kTorizo_Ilist_BDD8: Consts_AA = 48600;
-pub const addr_kTorizo_Ilist_BD0E: Consts_AA = 48398;
-pub const addr_off_AABC78: Consts_AA = 48248;
-pub const addr_kTorizo_Ilist_B962: Consts_AA = 47458;
-pub const addr_kTorizo_Ilist_B1C8: Consts_AA = 45512;
-pub const addr_kTorizo_Ilist_B155: Consts_AA = 45397;
-pub const addr_kTorizo_Ilist_B0E5: Consts_AA = 45285;
-pub const addr_kTorizo_ExtSprmap_87D0: Consts_AA = 34768;
-pub const addr_kSpritemap_Nothing_AA: Consts_AA = 32845;
+crate::game::constants::typed_constants! { Consts_AA;
+    addr_kShaktool_Ilist_E461 = 58465, addr_kShaktool_Ilist_E3A7 = 58279,
+    addr_kTorizo_Ilist_D2BF = 53951, addr_kTorizo_Ilist_D2AD = 53933,
+    addr_kTorizo_Ilist_D203 = 53763, addr_kTorizo_Ilist_D1F1 = 53745,
+    addr_kTorizo_Ilist_CEFF = 52991, addr_kTorizo_Ilist_CEA5 = 52901,
+    addr_kTorizo_Ilist_CE43 = 52803, addr_kTorizo_Ilist_CDE1 = 52705,
+    addr_locret_AAC95E = 51550, addr_kTorizo_Ilist_C188 = 49544,
+    addr_off_AAC0F2 = 49394, addr_kTorizo_Ilist_BDD8 = 48600,
+    addr_kTorizo_Ilist_BD0E = 48398, addr_off_AABC78 = 48248,
+    addr_kTorizo_Ilist_B962 = 47458, addr_kTorizo_Ilist_B1C8 = 45512,
+    addr_kTorizo_Ilist_B155 = 45397, addr_kTorizo_Ilist_B0E5 = 45285,
+    addr_kTorizo_ExtSprmap_87D0 = 34768, addr_kSpritemap_Nothing_AA = 32845,
+}
 pub use crate::types::SpawnHardcodedPlmArgs;
 enemy_layout! {
     Enemy_Shaktool {
@@ -93,16 +84,18 @@ enemy_layout! {
 unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
     RomPtr((((bank as i32) << 16i32) + 0x8000i32) as u32, game).offset(-(0x8000i32 as isize))
 }
-pub const fnnullsub_171_AA: i32 = 0xaa807b;
-pub const fnnullsub_270: i32 = 0xaac6ab;
-pub const fnTorizo_Func_3: i32 = 0xaac6bf;
-pub const fnTorizo_Func_4: u32 = 11192006;
-pub const fnTorizo_Func_1: u32 = 11192063;
-pub const fnTorizo_Func_9: u32 = 11195842;
-pub const fnTorizo_Func_10: u32 = 11195871;
-pub const fnTorizo_D5E6: u32 = 11195878;
-pub const fnnullsub_274: i32 = 0xaadcaa;
-pub const fnnullsub_276: i32 = 0xaae7a6;
+crate::game::constants::typed_constants! { i32;
+    fnnullsub_171_AA = 0xaa807b, fnnullsub_270 = 0xaac6ab,
+    fnTorizo_Func_3 = 0xaac6bf,
+}
+crate::game::constants::typed_constants! { u32;
+    fnTorizo_Func_4 = 11192006, fnTorizo_Func_1 = 11192063,
+    fnTorizo_Func_9 = 11195842, fnTorizo_Func_10 = 11195871,
+    fnTorizo_D5E6 = 11195878,
+}
+crate::game::constants::typed_constants! { i32;
+    fnnullsub_274 = 0xaadcaa, fnnullsub_276 = 0xaae7a6,
+}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_Shaktool(o: i32) -> Enemy_Shaktool = [0xf78, o as isize];

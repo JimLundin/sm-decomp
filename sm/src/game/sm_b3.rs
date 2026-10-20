@@ -26,26 +26,18 @@ use crate::rtl::{RomPtr, Unreachable};
 pub use crate::types::Consts_86;
 pub use crate::types::Consts_B3;
 pub use crate::types::{EnemyBase, EnemyData, EnemyProps, Point16U, VoidP};
-pub const addr_kEscapeDachora_Ilist_E964: Consts_B3 = 59748;
-pub const addr_kEscapeEtecoon_Ilist_E5DA: Consts_B3 = 58842;
-pub const addr_kEscapeEtecoon_Ilist_E5AE: Consts_B3 = 58798;
-pub const addr_kEscapeEtecoon_Ilist_E582: Consts_B3 = 58754;
-pub const addr_kEscapeEtecoon_Ilist_E556: Consts_B3 = 58710;
-pub const addr_loc_B3E28C: Consts_B3 = 57996;
-pub const addr_stru_B3E150: Consts_B3 = 57680;
-pub const addr_kBotwoon_Ilist_9389: Consts_B3 = 37769;
-pub const addr_kBrinstarYellowPipeBug_Ilist_8F38: Consts_B3 = 36664;
-pub const addr_kBrinstarYellowPipeBug_Ilist_8F24: Consts_B3 = 36644;
-pub const addr_kBrinstarYellowPipeBug_Ilist_8F10: Consts_B3 = 36624;
-pub const addr_kBrinstarYellowPipeBug_Ilist_8EFC: Consts_B3 = 36604;
-pub const addr_kNorfairPipeBug_Ilist_8B45: Consts_B3 = 35653;
-pub const addr_kNorfairPipeBug_Ilist_8B21: Consts_B3 = 35617;
-pub const addr_kNorfairPipeBug_Ilist_8B05: Consts_B3 = 35589;
-pub const addr_kNorfairPipeBug_Ilist_8AE1: Consts_B3 = 35553;
-pub const addr_kBrinstarPipeBug_Ilist_8A1D: Consts_B3 = 35357;
-pub const addr_kBrinstarPipeBug_Ilist_87AB: Consts_B3 = 34731;
-pub const addr_kUnusedSpinningTurtleEye_Ilist_86A7: Consts_B3 = 34471;
-pub const addr_kSpritemap_Nothing_B3: Consts_B3 = 32845;
+crate::game::constants::typed_constants! { Consts_B3;
+    addr_kEscapeDachora_Ilist_E964 = 59748, addr_kEscapeEtecoon_Ilist_E5DA = 58842,
+    addr_kEscapeEtecoon_Ilist_E5AE = 58798, addr_kEscapeEtecoon_Ilist_E582 = 58754,
+    addr_kEscapeEtecoon_Ilist_E556 = 58710, addr_loc_B3E28C = 57996,
+    addr_stru_B3E150 = 57680, addr_kBotwoon_Ilist_9389 = 37769,
+    addr_kBrinstarYellowPipeBug_Ilist_8F38 = 36664, addr_kBrinstarYellowPipeBug_Ilist_8F24 = 36644,
+    addr_kBrinstarYellowPipeBug_Ilist_8F10 = 36624, addr_kBrinstarYellowPipeBug_Ilist_8EFC = 36604,
+    addr_kNorfairPipeBug_Ilist_8B45 = 35653, addr_kNorfairPipeBug_Ilist_8B21 = 35617,
+    addr_kNorfairPipeBug_Ilist_8B05 = 35589, addr_kNorfairPipeBug_Ilist_8AE1 = 35553,
+    addr_kBrinstarPipeBug_Ilist_8A1D = 35357, addr_kBrinstarPipeBug_Ilist_87AB = 34731,
+    addr_kUnusedSpinningTurtleEye_Ilist_86A7 = 34471, addr_kSpritemap_Nothing_B3 = 32845,
+}
 pub use crate::types::{Enemy_Botwoon, Point32, SpawnHardcodedPlmArgs};
 enemy_layout! {
     Enemy_EscapeDachora {
@@ -96,45 +88,30 @@ enemy_layout! {
 }
 
 const RomPtr_B3: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb3>;
-pub const fnnullsub_171_B3: i32 = 0xb3807b;
-pub const fnBrinstarPipeBug_PreInstr_1: i32 = 0xb38880;
-pub const fnBrinstarPipeBug_PreInstr_2: i32 = 0xb38890;
-pub const fnBrinstarPipeBug_PreInstr_3: i32 = 0xb388e3;
-pub const fnBrinstarPipeBug_PreInstr_4: i32 = 0xb3891c;
-pub const fnBrinstarPipeBug_PreInstr_5: i32 = 0xb3897e;
-pub const fnNorfairPipeBug_Func_1: i32 = 0xb38bcd;
-pub const fnNorfairPipeBug_Func_2: i32 = 0xb38bff;
-pub const fnNorfairPipeBug_Func_4: i32 = 0xb38ca6;
-pub const fnNorfairPipeBug_Func_5: i32 = 0xb38cff;
-pub const fnNorfairPipeBug_Func_6: i32 = 0xb38d0c;
-pub const fnNorfairPipeBug_Func_7: i32 = 0xb38d4e;
-pub const fnNorfairPipeBug_Func_8: i32 = 0xb38d90;
-pub const fnNorfairPipeBug_Func_9: i32 = 0xb38dd2;
-pub const fnNorfairPipeBug_Func_10: i32 = 0xb38e14;
-pub const fnNorfairPipeBug_Func_11: i32 = 0xb38e35;
-pub const fnNorfairPipeBug_Func_12: i32 = 0xb38e5a;
-pub const fnBrinstarYellowPipeBug_Func_1: i32 = 0xb38fb5;
-pub const fnBrinstarYellowPipeBug_Func_2: i32 = 0xb38ff5;
-pub const fnBrinstarYellowPipeBug_Func_3: i32 = 0xb39028;
-pub const fnBrinstarYellowPipeBug_Func_5: i32 = 0xb390bd;
-pub const fnBrinstarYellowPipeBug_Func_7: i32 = 0xb3915a;
-pub const fnBrinstarYellowPipeBug_Func_8: i32 = 0xb391d8;
-pub const fnBotwoon_Func_6: i32 = 0xb39878;
-pub const fnBotwoon_Func_7: i32 = 0xb3989d;
-pub const fnBotwoon_Func_12: i32 = 0xb399a4;
-pub const fnBotwoon_Func_13: i32 = 0xb399e4;
-pub const fnBotwoon_Func_14: i32 = 0xb39a46;
-pub const fnBotwoon_Func_15: i32 = 0xb39a5e;
-pub const fnBotwoon_Func_16: i32 = 0xb39aca;
-pub const fnBotwoon_Func_18: i32 = 0xb39af9;
-pub const fnBotwoon_Func_19: i32 = 0xb39bb7;
-pub const fnBotwoon_Func_26: i32 = 0xb39dc0;
-pub const fnBotwoon_Func_27: i32 = 0xb39e7d;
-pub const fnBotwoon_Func_28: i32 = 0xb39ee0;
-pub const fnBotwoon_Func_29: i32 = 0xb39f34;
-pub const fnBotwoon_Func_30: i32 = 0xb39f7a;
-pub const fnBotwoon_Func_32: i32 = 0xb3e250;
-pub const fnBotwoon_Func_33: u32 = 11788940;
+crate::game::constants::typed_constants! { i32;
+    fnnullsub_171_B3 = 0xb3807b, fnBrinstarPipeBug_PreInstr_1 = 0xb38880,
+    fnBrinstarPipeBug_PreInstr_2 = 0xb38890, fnBrinstarPipeBug_PreInstr_3 = 0xb388e3,
+    fnBrinstarPipeBug_PreInstr_4 = 0xb3891c, fnBrinstarPipeBug_PreInstr_5 = 0xb3897e,
+    fnNorfairPipeBug_Func_1 = 0xb38bcd, fnNorfairPipeBug_Func_2 = 0xb38bff,
+    fnNorfairPipeBug_Func_4 = 0xb38ca6, fnNorfairPipeBug_Func_5 = 0xb38cff,
+    fnNorfairPipeBug_Func_6 = 0xb38d0c, fnNorfairPipeBug_Func_7 = 0xb38d4e,
+    fnNorfairPipeBug_Func_8 = 0xb38d90, fnNorfairPipeBug_Func_9 = 0xb38dd2,
+    fnNorfairPipeBug_Func_10 = 0xb38e14, fnNorfairPipeBug_Func_11 = 0xb38e35,
+    fnNorfairPipeBug_Func_12 = 0xb38e5a, fnBrinstarYellowPipeBug_Func_1 = 0xb38fb5,
+    fnBrinstarYellowPipeBug_Func_2 = 0xb38ff5, fnBrinstarYellowPipeBug_Func_3 = 0xb39028,
+    fnBrinstarYellowPipeBug_Func_5 = 0xb390bd, fnBrinstarYellowPipeBug_Func_7 = 0xb3915a,
+    fnBrinstarYellowPipeBug_Func_8 = 0xb391d8, fnBotwoon_Func_6 = 0xb39878,
+    fnBotwoon_Func_7 = 0xb3989d, fnBotwoon_Func_12 = 0xb399a4,
+    fnBotwoon_Func_13 = 0xb399e4, fnBotwoon_Func_14 = 0xb39a46,
+    fnBotwoon_Func_15 = 0xb39a5e, fnBotwoon_Func_16 = 0xb39aca,
+    fnBotwoon_Func_18 = 0xb39af9, fnBotwoon_Func_19 = 0xb39bb7,
+    fnBotwoon_Func_26 = 0xb39dc0, fnBotwoon_Func_27 = 0xb39e7d,
+    fnBotwoon_Func_28 = 0xb39ee0, fnBotwoon_Func_29 = 0xb39f34,
+    fnBotwoon_Func_30 = 0xb39f7a, fnBotwoon_Func_32 = 0xb3e250,
+}
+crate::game::constants::typed_constants! { u32;
+    fnBotwoon_Func_33 = 11788940,
+}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_Botwoon(o: i32) -> Enemy_Botwoon = [0xf78, o as isize];

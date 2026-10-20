@@ -66,67 +66,39 @@ pub use crate::types::Consts_A7;
 pub use crate::types::{
     Consts_86, EnemyDef, Ram4000, Ram4000_Backups, StartDmaCopy, VramReadQueueEnt,
 };
-pub const addr_kDachora_Ilist_F4C1: Consts_A7 = 62657;
-pub const addr_kDachora_Ilist_F4B9: Consts_A7 = 62649;
-pub const addr_kDachora_Ilist_F4B3: Consts_A7 = 62643;
-pub const addr_kDachora_Ilist_F48B: Consts_A7 = 62603;
-pub const addr_kDachora_Ilist_F45B: Consts_A7 = 62555;
-pub const addr_kDachora_Ilist_F407: Consts_A7 = 62471;
-pub const addr_kDachora_Ilist_F3FF: Consts_A7 = 62463;
-pub const addr_kDachora_Ilist_F3F7: Consts_A7 = 62455;
-pub const addr_kDachora_Ilist_F3C9: Consts_A7 = 62409;
-pub const addr_kDachora_Ilist_F399: Consts_A7 = 62361;
-pub const addr_kDachora_Ilist_F345: Consts_A7 = 62277;
-pub const addr_kDachora_Palette: Consts_A7 = 61989;
-pub const addr_kEtecoon_Ilist_E8D6: Consts_A7 = 59606;
-pub const addr_kEtecoon_Ilist_E8CE: Consts_A7 = 59598;
-pub const addr_kEtecoon_Ilist_E8C8: Consts_A7 = 59592;
-pub const addr_kEtecoon_Ilist_E8AC: Consts_A7 = 59564;
-pub const addr_stru_A7E898: Consts_A7 = 59544;
-pub const addr_kEtecoon_Ilist_E894: Consts_A7 = 59540;
-pub const addr_stru_A7E880: Consts_A7 = 59520;
-pub const addr_kEtecoon_Ilist_E876: Consts_A7 = 59510;
-pub const addr_kEtecoon_Ilist_E870: Consts_A7 = 59504;
-pub const addr_stru_A7E862: Consts_A7 = 59490;
-pub const addr_kEtecoon_Ilist_E854: Consts_A7 = 59476;
-pub const addr_kEtecoon_Ilist_E83C: Consts_A7 = 59452;
-pub const addr_stru_A7E828: Consts_A7 = 59432;
-pub const addr_kEtecoon_Ilist_E81E: Consts_A7 = 59422;
-pub const addr_kPhantoonMoveData: Consts_A7 = 58322;
-pub const addr_kKraid_Ilist_CCEB: Consts_A7 = 52459;
-pub const addr_kKraid_Ilist_CC9D: Consts_A7 = 52381;
-pub const addr_kKraid_Ilist_CC91: Consts_A7 = 52369;
-pub const addr_kKraid_Ilist_CC81: Consts_A7 = 52353;
-pub const addr_kKraid_Ilist_CC53: Consts_A7 = 52307;
-pub const addr_kKraid_Ilist_CC4D: Consts_A7 = 52301;
-pub const addr_kKraid_Ilist_CC47: Consts_A7 = 52295;
-pub const addr_kKraid_Ilist_CC41: Consts_A7 = 52289;
-pub const addr_locret_A7B831: Consts_A7 = 47153;
-pub const addr_kKraidsRoomBg: Consts_A7 = 42774;
-pub const addr_kKraid_Sprmap_A5DF: Consts_A7 = 42463;
-pub const addr_kKraidTilemaps_3: Consts_A7 = 41160;
-pub const addr_kKraidTilemaps_2: Consts_A7 = 40392;
-pub const addr_kKraidTilemaps_1: Consts_A7 = 39624;
-pub const addr_kKraidTilemaps_0: Consts_A7 = 38856;
-pub const addr_stru_A79764: Consts_A7 = 38756;
-pub const addr_stru_A7974A: Consts_A7 = 38730;
-pub const addr_stru_A796DA: Consts_A7 = 38618;
-pub const addr_kKraid_Sprmap_8C6C: Consts_A7 = 35948;
-pub const addr_kKraid_Ilist_8B0A: Consts_A7 = 35594;
-pub const addr_kKraid_Ilist_8B04: Consts_A7 = 35588;
-pub const addr_kKraid_Ilist_8AFE: Consts_A7 = 35582;
-pub const addr_kKraid_Ilist_8AF0: Consts_A7 = 35568;
-pub const addr_kKraid_Ilist_8AA4: Consts_A7 = 35492;
-pub const addr_kKraid_Ilist_8A41: Consts_A7 = 35393;
-pub const addr_kKraid_Ilist_89F3: Consts_A7 = 35315;
-pub const addr_kKraid_Ilist_8887: Consts_A7 = 34951;
-pub const addr_off_A78885: Consts_A7 = 34949;
-pub const addr_kKraid_Ilist_87BD: Consts_A7 = 34749;
-pub const addr_off_A787BB: Consts_A7 = 34747;
-pub const addr_kKraid_Ilist_86F3: Consts_A7 = 34547;
-pub const addr_kKraid_Ilist_86ED: Consts_A7 = 34541;
-pub const addr_kKraid_Ilist_86E7: Consts_A7 = 34535;
-pub const addr_kSpritemap_Nothing_A7: Consts_A7 = 32845;
+crate::game::constants::typed_constants! { Consts_A7;
+    addr_kDachora_Ilist_F4C1 = 62657, addr_kDachora_Ilist_F4B9 = 62649,
+    addr_kDachora_Ilist_F4B3 = 62643, addr_kDachora_Ilist_F48B = 62603,
+    addr_kDachora_Ilist_F45B = 62555, addr_kDachora_Ilist_F407 = 62471,
+    addr_kDachora_Ilist_F3FF = 62463, addr_kDachora_Ilist_F3F7 = 62455,
+    addr_kDachora_Ilist_F3C9 = 62409, addr_kDachora_Ilist_F399 = 62361,
+    addr_kDachora_Ilist_F345 = 62277, addr_kDachora_Palette = 61989,
+    addr_kEtecoon_Ilist_E8D6 = 59606, addr_kEtecoon_Ilist_E8CE = 59598,
+    addr_kEtecoon_Ilist_E8C8 = 59592, addr_kEtecoon_Ilist_E8AC = 59564,
+    addr_stru_A7E898 = 59544, addr_kEtecoon_Ilist_E894 = 59540,
+    addr_stru_A7E880 = 59520, addr_kEtecoon_Ilist_E876 = 59510,
+    addr_kEtecoon_Ilist_E870 = 59504, addr_stru_A7E862 = 59490,
+    addr_kEtecoon_Ilist_E854 = 59476, addr_kEtecoon_Ilist_E83C = 59452,
+    addr_stru_A7E828 = 59432, addr_kEtecoon_Ilist_E81E = 59422,
+    addr_kPhantoonMoveData = 58322, addr_kKraid_Ilist_CCEB = 52459,
+    addr_kKraid_Ilist_CC9D = 52381, addr_kKraid_Ilist_CC91 = 52369,
+    addr_kKraid_Ilist_CC81 = 52353, addr_kKraid_Ilist_CC53 = 52307,
+    addr_kKraid_Ilist_CC4D = 52301, addr_kKraid_Ilist_CC47 = 52295,
+    addr_kKraid_Ilist_CC41 = 52289, addr_locret_A7B831 = 47153,
+    addr_kKraidsRoomBg = 42774, addr_kKraid_Sprmap_A5DF = 42463,
+    addr_kKraidTilemaps_3 = 41160, addr_kKraidTilemaps_2 = 40392,
+    addr_kKraidTilemaps_1 = 39624, addr_kKraidTilemaps_0 = 38856,
+    addr_stru_A79764 = 38756, addr_stru_A7974A = 38730,
+    addr_stru_A796DA = 38618, addr_kKraid_Sprmap_8C6C = 35948,
+    addr_kKraid_Ilist_8B0A = 35594, addr_kKraid_Ilist_8B04 = 35588,
+    addr_kKraid_Ilist_8AFE = 35582, addr_kKraid_Ilist_8AF0 = 35568,
+    addr_kKraid_Ilist_8AA4 = 35492, addr_kKraid_Ilist_8A41 = 35393,
+    addr_kKraid_Ilist_89F3 = 35315, addr_kKraid_Ilist_8887 = 34951,
+    addr_off_A78885 = 34949, addr_kKraid_Ilist_87BD = 34749,
+    addr_off_A787BB = 34747, addr_kKraid_Ilist_86F3 = 34547,
+    addr_kKraid_Ilist_86ED = 34541, addr_kKraid_Ilist_86E7 = 34535,
+    addr_kSpritemap_Nothing_A7 = 32845,
+}
 pub use crate::types::SpawnHardcodedPlmArgs;
 enemy_layout! {
     Enemy_Phantoon {
@@ -179,7 +151,9 @@ enemy_layout! {
     }
 }
 
-pub const kCoroutineNone: i32 = 0;
+crate::game::constants::typed_constants! { i32;
+    kCoroutineNone = 0,
+}
 const RomPtr_A7: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa7>;
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
@@ -188,138 +162,93 @@ crate::ram_map::ram_pointer_functions! {
 unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
     RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
-pub const fnnullsub_170_A7: i32 = 0xa7804c;
-pub const fnKraid_GetsBig_BreakCeilingPlatforms: i32 = 0xa7ac4d;
-pub const fnKraid_GetsBig_SetBG2TilemapPrioBits: i32 = 0xa7ad3a;
-pub const fnKraid_GetsBig_FinishUpdateBg2Tilemap: i32 = 0xa7ad61;
-pub const fnKraid_GetsBig_DrawRoomBg: i32 = 0xa7ad8e;
-pub const fnKraid_GetsBig_FadeInRoomBg: i32 = 0xa7ae23;
-pub const fnKraid_Mainloop_Thinking: i32 = 0xa7aea4;
-pub const fnKraid_GetsBig_Thinking: i32 = 0xa7aec4;
-pub const fnKraid_Shot_MouthIsOpen: i32 = 0xa7aee4;
-pub const fnKraidInstr_PlayRoarSfx: u32 = 10989460;
-pub const fnKraidInstr_PlayDyingSfx: u32 = 10989471;
-pub const fnKraid_InitEyeGlowing: i32 = 0xa7b6bf;
-pub const fnKraid_Shot_GlowHisEye: i32 = 0xa7b6d7;
-pub const fnKraid_Shot_UnglowEye: i32 = 0xa7b73d;
-pub const fnnullsub_347: u32 = 10991665;
-pub const fnKraidLint_ProduceLint: i32 = 0xa7b832;
-pub const fnKraidLint_ChargeLint: i32 = 0xa7b868;
-pub const fnKraidLint_FireLint: i32 = 0xa7b89b;
-pub const fnKraidFingernail_WaitForLintXpos: i32 = 0xa7b907;
-pub const fnKraid_AlignEnemyToKraid: i32 = 0xa7b923;
-pub const fnKraidEnemy_HandleFunctionTimer: i32 = 0xa7b92d;
-pub const fnKraidEnemy_DecrementEnemyFunctionTimer: i32 = 0xa7b93f;
-pub const fnKraidFoot_FirstPhase_Thinking: i32 = 0xa7b960;
-pub const fnKraidEnemy_ProcessInstrEnemyTimer: i32 = 0xa7b965;
-pub const fnnullsub_234: i32 = 0xa7ba2d;
-pub const fnKraidsFoot_SecondPhase_Thinking: i32 = 0xa7ba2e;
-pub const fnKraidsFoot_SecondPhase_WalkingBackwards: i32 = 0xa7bb45;
-pub const fnKraidsFoot_SecondPhaseSetup_WalkToStartPt: i32 = 0xa7bb6e;
-pub const fnKraidsFoot_SecondPhase_Init: i32 = 0xa7bba4;
-pub const fnKraidsFoot_SecondPhase_WalkForward: i32 = 0xa7bbae;
-pub const fnKraid_Main_AttackWithMouthOpen: i32 = 0xa7bbea;
-pub const fnKraidsFingernail_Init: i32 = 0xa7bd60;
-pub const fnKraidsFingernail_Fire: i32 = 0xa7be8e;
-pub const fnKraidsFoot_PrepareToLungeForward: i32 = 0xa7bf2d;
-pub const fnKraidsFoot_FirstPhase_LungeForward: i32 = 0xa7bf5d;
-pub const fnKraidsFoot_FirstPhase_RetreatFromLunge: i32 = 0xa7bfab;
-pub const fnKraid_GetsBig_ReleaseCamera: i32 = 0xa7c0a1;
-pub const fnUnpauseHook_Kraid_IsDead: i32 = 0xa7c1fb;
-pub const fnUnpauseHook_Kraid_IsAlive: i32 = 0xa7c24e;
-pub const fnKraid_UnpauseHook_IsSinking: i32 = 0xa7c2a0;
-pub const fnPauseHook_Kraid: i32 = 0xa7c325;
-pub const fnKraid_Death_Init: i32 = 0xa7c360;
-pub const fnKraid_Death_Fadeout: i32 = 0xa7c3f9;
-pub const fnKraid_Death_UpdateBG2TilemapTopHalf: i32 = 0xa7c4a4;
-pub const fnKraid_Death_UpdateBG2TilemapBottomHalf: i32 = 0xa7c4c8;
-pub const fnKraid_Death_SinkThroughFloor: i32 = 0xa7c537;
-pub const fnKraid_CrumbleLeftPlatform_Left: u32 = 10995345;
-pub const fnnullsub_356: u32 = 10995366;
-pub const fnKraid_CrumbleRightPlatform_Middle: u32 = 10995367;
-pub const fnKraid_CrumbleRightPlatform_Left: u32 = 10995389;
-pub const fnKraid_CrumbleLeftPlatform_Right: u32 = 10995411;
-pub const fnKraid_CrumbleLeftPlatform_Middle: u32 = 10995433;
-pub const fnKraid_CrumbleRightPlatform_Right: u32 = 10995455;
-pub const fnKraid_FadeInBg_ClearBg2TilemapTopHalf: i32 = 0xa7c715;
-pub const fnKraid_FadeInBg_ClearBg2TilemapBottomHalf: i32 = 0xa7c751;
-pub const fnKraid_FadeInBg_LoadBg3Tiles1of4: i32 = 0xa7c777;
-pub const fnKraid_FadeInBg_LoadBg3Tiles2of4: i32 = 0xa7c7a3;
-pub const fnKraid_FadeInBg_LoadBg3Tiles3of4: i32 = 0xa7c7c9;
-pub const fnKraid_FadeInBg_LoadBg3Tiles4of4: i32 = 0xa7c7ef;
-pub const fnKraid_FadeInBg_FadeInBp6: i32 = 0xa7c815;
-pub const fnKraid_FadeInBg_SetEnemyDead_KraidWasAlive: i32 = 0xa7c843;
-pub const fnKraid_FadeInBg_SetEnemyDead_KraidWasDead: i32 = 0xa7c851;
-pub const fnKraid_RestrictSamusXtoFirstScreen: i32 = 0xa7c865;
-pub const fnKraid_RaiseKraidThroughFloor: i32 = 0xa7c86b;
-pub const fnKraid_Raise_LoadTilemapBottomAndShake: i32 = 0xa7c89a;
-pub const fnKraid_Raise_SpawnRandomEarthquakeProjs16: i32 = 0xa7c8e0;
-pub const fnKraid_Raise_SpawnRandomEarthquakeProjs8: i32 = 0xa7c902;
-pub const fnKraid_Raise_Handler: i32 = 0xa7c924;
-pub const fnPhantoon_Func_1: u32 = 10997485;
-pub const fnPhantoon_Func_4: u32 = 10997598;
-pub const fnPhantoon_StartTrackingSamusAndInitEyeTimer: u32 = 10997823;
-pub const fnPhantoon_PickPatternForRound2: u32 = 10997878;
-pub const fnnullsub_237: i32 = 0xa7d4a8;
-pub const fnPhantoon_Spawn8FireballsInCircleAtStart: i32 = 0xa7d4a9;
-pub const fnPhantoon_WaitBetweenSpawningAndSpinningFireballs: i32 = 0xa7d4ee;
-pub const fnPhantoon_SpawnFireballsBeforeFight: i32 = 0xa7d508;
-pub const fnPhantoon_WavyFadeIn: i32 = 0xa7d54a;
-pub const fnPhantoon_PickPatternForRound1: i32 = 0xa7d596;
-pub const fnPhantoon_MovePhantoonInFigure8ThenOpenEye: i32 = 0xa7d5e7;
-pub const fnPhantoon_EyeFollowsSamusUntilTimerRunsOut: i32 = 0xa7d60d;
-pub const fnPhantoon_BecomesSolidAndBodyVuln: i32 = 0xa7d65c;
-pub const fnPhantoon_IsSwooping: i32 = 0xa7d678;
-pub const fnPhantoon_FadeoutWithSwoop: i32 = 0xa7d6b9;
-pub const fnPhantoon_WaitAfterFadeOut: i32 = 0xa7d6d4;
-pub const fnPhantoon_MoveLeftOrRightAndPickEyeOpenPatt: i32 = 0xa7d6e2;
-pub const fnPhantoon_FadeInBeforeFigure8: i32 = 0xa7d72d;
-pub const fnPhantoon_BecomeSolidAfterRainingFireballs: i32 = 0xa7d73f;
-pub const fnPhantoon_FadeInDuringFireballRain: i32 = 0xa7d767;
-pub const fnPhantoon_FollowSamusWithEyeDuringFireballRain: i32 = 0xa7d788;
-pub const fnPhantoon_FadeOutDuringFireballRain: i32 = 0xa7d7d5;
-pub const fnPhantoon_SpawnRainingFireballs: i32 = 0xa7d7f7;
-pub const fnPhantoon_FadeOutBeforeFirstFireballRain: i32 = 0xa7d82a;
-pub const fnPhantoon_FadeOutBeforeEnrage: i32 = 0xa7d85c;
-pub const fnPhantoon_MoveEnragedPhantoonToTopCenter: i32 = 0xa7d874;
-pub const fnPhantoon_FadeInEnragedPhantoon: i32 = 0xa7d891;
-pub const fnPhantoon_Enraged: i32 = 0xa7d8ac;
-pub const fnPhantoon_FadeoutAfterEnrage: i32 = 0xa7d916;
-pub const fnPhantoon_CompleteSwoopAfterFatalShot: i32 = 0xa7d92e;
-pub const fnPhantoon_DyingPhantoonFadeInOut: i32 = 0xa7d948;
-pub const fnPhantoon_DyingPhantoonExplosions: i32 = 0xa7d98b;
-pub const fnPhantoon_WavyDyingPhantoonAndCry: i32 = 0xa7da51;
-pub const fnPhantoon_DyingFadeOut: i32 = 0xa7da86;
-pub const fnPhantoon_AlmostDead: i32 = 0xa7dad7;
-pub const fnPhantoon_Dead: i32 = 0xa7db3d;
-pub const fnEtecoon_Func_4: i32 = 0xa7e9af;
-pub const fnEtecoon_Func_5: i32 = 0xa7ea00;
-pub const fnEtecoon_Func_6: i32 = 0xa7ea37;
-pub const fnEtecoon_Func_7: i32 = 0xa7eab5;
-pub const fnEtecoon_Func_8: i32 = 0xa7eb02;
-pub const fnEtecoon_Func_9: i32 = 0xa7eb2c;
-pub const fnEtecoon_Func_10: i32 = 0xa7eb50;
-pub const fnEtecoon_Func_11: i32 = 0xa7ebcd;
-pub const fnEtecoon_Func_12: i32 = 0xa7ec1b;
-pub const fnEtecoon_Func_16: i32 = 0xa7ec97;
-pub const fnEtecoon_Func_17: i32 = 0xa7ecbb;
-pub const fnEtecoon_Func_18: i32 = 0xa7ecdf;
-pub const fnEtecoon_Func_19: i32 = 0xa7ed09;
-pub const fnEtecoon_Func_20: i32 = 0xa7ed2a;
-pub const fnEtecoon_Func_21: i32 = 0xa7ed54;
-pub const fnEtecoon_Func_22: i32 = 0xa7ed75;
-pub const fnEtecoon_Func_23: i32 = 0xa7edc7;
-pub const fnEtecoon_Func_24: i32 = 0xa7ee3e;
-pub const fnEtecoon_Func_25: i32 = 0xa7ee9a;
-pub const fnEtecoon_Func_26: i32 = 0xa7eeb8;
-pub const fnDachora_Func_2: i32 = 0xa7f570;
-pub const fnDachora_Func_3: i32 = 0xa7f5bc;
-pub const fnDachora_Func_4: i32 = 0xa7f5ed;
-pub const fnDachora_Func_5: i32 = 0xa7f65e;
-pub const fnDachora_Func_7: i32 = 0xa7f78f;
-pub const fnDachora_Func_8: i32 = 0xa7f806;
-pub const fnDachora_Func_11: i32 = 0xa7f935;
-pub const fnDachora_Func_12: i32 = 0xa7f98c;
+crate::game::constants::typed_constants! { i32;
+    fnnullsub_170_A7 = 0xa7804c, fnKraid_GetsBig_BreakCeilingPlatforms = 0xa7ac4d,
+    fnKraid_GetsBig_SetBG2TilemapPrioBits = 0xa7ad3a, fnKraid_GetsBig_FinishUpdateBg2Tilemap = 0xa7ad61,
+    fnKraid_GetsBig_DrawRoomBg = 0xa7ad8e, fnKraid_GetsBig_FadeInRoomBg = 0xa7ae23,
+    fnKraid_Mainloop_Thinking = 0xa7aea4, fnKraid_GetsBig_Thinking = 0xa7aec4,
+    fnKraid_Shot_MouthIsOpen = 0xa7aee4,
+}
+crate::game::constants::typed_constants! { u32;
+    fnKraidInstr_PlayRoarSfx = 10989460, fnKraidInstr_PlayDyingSfx = 10989471,
+}
+crate::game::constants::typed_constants! { i32;
+    fnKraid_InitEyeGlowing = 0xa7b6bf, fnKraid_Shot_GlowHisEye = 0xa7b6d7,
+    fnKraid_Shot_UnglowEye = 0xa7b73d,
+}
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_347 = 10991665,
+}
+crate::game::constants::typed_constants! { i32;
+    fnKraidLint_ProduceLint = 0xa7b832, fnKraidLint_ChargeLint = 0xa7b868,
+    fnKraidLint_FireLint = 0xa7b89b, fnKraidFingernail_WaitForLintXpos = 0xa7b907,
+    fnKraid_AlignEnemyToKraid = 0xa7b923, fnKraidEnemy_HandleFunctionTimer = 0xa7b92d,
+    fnKraidEnemy_DecrementEnemyFunctionTimer = 0xa7b93f, fnKraidFoot_FirstPhase_Thinking = 0xa7b960,
+    fnKraidEnemy_ProcessInstrEnemyTimer = 0xa7b965, fnnullsub_234 = 0xa7ba2d,
+    fnKraidsFoot_SecondPhase_Thinking = 0xa7ba2e, fnKraidsFoot_SecondPhase_WalkingBackwards = 0xa7bb45,
+    fnKraidsFoot_SecondPhaseSetup_WalkToStartPt = 0xa7bb6e, fnKraidsFoot_SecondPhase_Init = 0xa7bba4,
+    fnKraidsFoot_SecondPhase_WalkForward = 0xa7bbae, fnKraid_Main_AttackWithMouthOpen = 0xa7bbea,
+    fnKraidsFingernail_Init = 0xa7bd60, fnKraidsFingernail_Fire = 0xa7be8e,
+    fnKraidsFoot_PrepareToLungeForward = 0xa7bf2d, fnKraidsFoot_FirstPhase_LungeForward = 0xa7bf5d,
+    fnKraidsFoot_FirstPhase_RetreatFromLunge = 0xa7bfab, fnKraid_GetsBig_ReleaseCamera = 0xa7c0a1,
+    fnUnpauseHook_Kraid_IsDead = 0xa7c1fb, fnUnpauseHook_Kraid_IsAlive = 0xa7c24e,
+    fnKraid_UnpauseHook_IsSinking = 0xa7c2a0, fnPauseHook_Kraid = 0xa7c325,
+    fnKraid_Death_Init = 0xa7c360, fnKraid_Death_Fadeout = 0xa7c3f9,
+    fnKraid_Death_UpdateBG2TilemapTopHalf = 0xa7c4a4, fnKraid_Death_UpdateBG2TilemapBottomHalf = 0xa7c4c8,
+    fnKraid_Death_SinkThroughFloor = 0xa7c537,
+}
+crate::game::constants::typed_constants! { u32;
+    fnKraid_CrumbleLeftPlatform_Left = 10995345, fnnullsub_356 = 10995366,
+    fnKraid_CrumbleRightPlatform_Middle = 10995367, fnKraid_CrumbleRightPlatform_Left = 10995389,
+    fnKraid_CrumbleLeftPlatform_Right = 10995411, fnKraid_CrumbleLeftPlatform_Middle = 10995433,
+    fnKraid_CrumbleRightPlatform_Right = 10995455,
+}
+crate::game::constants::typed_constants! { i32;
+    fnKraid_FadeInBg_ClearBg2TilemapTopHalf = 0xa7c715, fnKraid_FadeInBg_ClearBg2TilemapBottomHalf = 0xa7c751,
+    fnKraid_FadeInBg_LoadBg3Tiles1of4 = 0xa7c777, fnKraid_FadeInBg_LoadBg3Tiles2of4 = 0xa7c7a3,
+    fnKraid_FadeInBg_LoadBg3Tiles3of4 = 0xa7c7c9, fnKraid_FadeInBg_LoadBg3Tiles4of4 = 0xa7c7ef,
+    fnKraid_FadeInBg_FadeInBp6 = 0xa7c815, fnKraid_FadeInBg_SetEnemyDead_KraidWasAlive = 0xa7c843,
+    fnKraid_FadeInBg_SetEnemyDead_KraidWasDead = 0xa7c851, fnKraid_RestrictSamusXtoFirstScreen = 0xa7c865,
+    fnKraid_RaiseKraidThroughFloor = 0xa7c86b, fnKraid_Raise_LoadTilemapBottomAndShake = 0xa7c89a,
+    fnKraid_Raise_SpawnRandomEarthquakeProjs16 = 0xa7c8e0, fnKraid_Raise_SpawnRandomEarthquakeProjs8 = 0xa7c902,
+    fnKraid_Raise_Handler = 0xa7c924,
+}
+crate::game::constants::typed_constants! { u32;
+    fnPhantoon_Func_1 = 10997485, fnPhantoon_Func_4 = 10997598,
+    fnPhantoon_StartTrackingSamusAndInitEyeTimer = 10997823, fnPhantoon_PickPatternForRound2 = 10997878,
+}
+crate::game::constants::typed_constants! { i32;
+    fnnullsub_237 = 0xa7d4a8, fnPhantoon_Spawn8FireballsInCircleAtStart = 0xa7d4a9,
+    fnPhantoon_WaitBetweenSpawningAndSpinningFireballs = 0xa7d4ee, fnPhantoon_SpawnFireballsBeforeFight = 0xa7d508,
+    fnPhantoon_WavyFadeIn = 0xa7d54a, fnPhantoon_PickPatternForRound1 = 0xa7d596,
+    fnPhantoon_MovePhantoonInFigure8ThenOpenEye = 0xa7d5e7, fnPhantoon_EyeFollowsSamusUntilTimerRunsOut = 0xa7d60d,
+    fnPhantoon_BecomesSolidAndBodyVuln = 0xa7d65c, fnPhantoon_IsSwooping = 0xa7d678,
+    fnPhantoon_FadeoutWithSwoop = 0xa7d6b9, fnPhantoon_WaitAfterFadeOut = 0xa7d6d4,
+    fnPhantoon_MoveLeftOrRightAndPickEyeOpenPatt = 0xa7d6e2, fnPhantoon_FadeInBeforeFigure8 = 0xa7d72d,
+    fnPhantoon_BecomeSolidAfterRainingFireballs = 0xa7d73f, fnPhantoon_FadeInDuringFireballRain = 0xa7d767,
+    fnPhantoon_FollowSamusWithEyeDuringFireballRain = 0xa7d788, fnPhantoon_FadeOutDuringFireballRain = 0xa7d7d5,
+    fnPhantoon_SpawnRainingFireballs = 0xa7d7f7, fnPhantoon_FadeOutBeforeFirstFireballRain = 0xa7d82a,
+    fnPhantoon_FadeOutBeforeEnrage = 0xa7d85c, fnPhantoon_MoveEnragedPhantoonToTopCenter = 0xa7d874,
+    fnPhantoon_FadeInEnragedPhantoon = 0xa7d891, fnPhantoon_Enraged = 0xa7d8ac,
+    fnPhantoon_FadeoutAfterEnrage = 0xa7d916, fnPhantoon_CompleteSwoopAfterFatalShot = 0xa7d92e,
+    fnPhantoon_DyingPhantoonFadeInOut = 0xa7d948, fnPhantoon_DyingPhantoonExplosions = 0xa7d98b,
+    fnPhantoon_WavyDyingPhantoonAndCry = 0xa7da51, fnPhantoon_DyingFadeOut = 0xa7da86,
+    fnPhantoon_AlmostDead = 0xa7dad7, fnPhantoon_Dead = 0xa7db3d,
+    fnEtecoon_Func_4 = 0xa7e9af, fnEtecoon_Func_5 = 0xa7ea00,
+    fnEtecoon_Func_6 = 0xa7ea37, fnEtecoon_Func_7 = 0xa7eab5,
+    fnEtecoon_Func_8 = 0xa7eb02, fnEtecoon_Func_9 = 0xa7eb2c,
+    fnEtecoon_Func_10 = 0xa7eb50, fnEtecoon_Func_11 = 0xa7ebcd,
+    fnEtecoon_Func_12 = 0xa7ec1b, fnEtecoon_Func_16 = 0xa7ec97,
+    fnEtecoon_Func_17 = 0xa7ecbb, fnEtecoon_Func_18 = 0xa7ecdf,
+    fnEtecoon_Func_19 = 0xa7ed09, fnEtecoon_Func_20 = 0xa7ed2a,
+    fnEtecoon_Func_21 = 0xa7ed54, fnEtecoon_Func_22 = 0xa7ed75,
+    fnEtecoon_Func_23 = 0xa7edc7, fnEtecoon_Func_24 = 0xa7ee3e,
+    fnEtecoon_Func_25 = 0xa7ee9a, fnEtecoon_Func_26 = 0xa7eeb8,
+    fnDachora_Func_2 = 0xa7f570, fnDachora_Func_3 = 0xa7f5bc,
+    fnDachora_Func_4 = 0xa7f5ed, fnDachora_Func_5 = 0xa7f65e,
+    fnDachora_Func_7 = 0xa7f78f, fnDachora_Func_8 = 0xa7f806,
+    fnDachora_Func_11 = 0xa7f935, fnDachora_Func_12 = 0xa7f98c,
+}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_Dachora(o: i32) -> Enemy_Dachora = [0xf78, o as isize];

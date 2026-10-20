@@ -35,105 +35,58 @@ pub use crate::types::Consts_86;
 pub use crate::types::Consts_A8;
 pub use crate::types::{EnemyBase, EnemyData, EnemyProps, EnemySpawnData};
 pub use crate::types::{Func_V, LongPtr, PairU16, Point16U, SnesRegs, VoidP, VramWriteEntry};
-pub const addr_locret_A8F5E3: Consts_A8 = 62947;
-pub const addr_kKiHunter_Ilist_EB10: Consts_A8 = 60176;
-pub const addr_kKiHunter_Ilist_EAF2: Consts_A8 = 60146;
-pub const addr_kKiHunter_Ilist_EADA: Consts_A8 = 60122;
-pub const addr_kKiHunter_Ilist_EAC2: Consts_A8 = 60098;
-pub const addr_kKiHunter_Ilist_EAA6: Consts_A8 = 60070;
-pub const addr_kKiHunter_Ilist_EA8A: Consts_A8 = 60042;
-pub const addr_kKiHunter_Ilist_EA7E: Consts_A8 = 60030;
-pub const addr_kKiHunter_Ilist_EA5E: Consts_A8 = 59998;
-pub const addr_kKiHunter_Ilist_EA4E: Consts_A8 = 59982;
-pub const addr_kKiHunter_Ilist_EA32: Consts_A8 = 59954;
-pub const addr_kKiHunter_Ilist_EA24: Consts_A8 = 59940;
-pub const addr_kKiHunter_Ilist_EA08: Consts_A8 = 59912;
-pub const addr_kKiHunter_Ilist_E9FA: Consts_A8 = 59898;
-pub const addr_kBlueBrinstarFaceBlock_Ilist_E828: Consts_A8 = 59432;
-pub const addr_kBlueBrinstarFaceBlock_Ilist_E81A: Consts_A8 = 59418;
-pub const addr_kBlueBrinstarFaceBlock_Ilist_E80C: Consts_A8 = 59404;
-pub const addr_kWreckedShipSpark_Ilist_E5E5: Consts_A8 = 58853;
-pub const addr_kWreckedShipSpark_Ilist_E5A7: Consts_A8 = 58791;
-pub const addr_kWalkingLavaSeahorse_Ilist_DCC1: Consts_A8 = 56513;
-pub const addr_stru_A8DCBB: Consts_A8 = 56507;
-pub const addr_kWalkingLavaSeahorse_Ilist_DC73: Consts_A8 = 56435;
-pub const addr_stru_A8DC59: Consts_A8 = 56409;
-pub const addr_kWalkingLavaSeahorse_Ilist_DC57: Consts_A8 = 56407;
-pub const addr_kWalkingLavaSeahorse_Ilist_DC51: Consts_A8 = 56401;
-pub const addr_stru_A8DC4B: Consts_A8 = 56395;
-pub const addr_kWalkingLavaSeahorse_Ilist_DC03: Consts_A8 = 56323;
-pub const addr_stru_A8DBE9: Consts_A8 = 56297;
-pub const addr_kWalkingLavaSeahorse_Ilist_DBE7: Consts_A8 = 56295;
-pub const addr_kMaridiaPuffer_Ilist_D855: Consts_A8 = 55381;
-pub const addr_kMaridiaPuffer_Ilist_D841: Consts_A8 = 55361;
-pub const addr_loc_A8D02E: Consts_A8 = 53294;
-pub const addr_loc_A8CF26: Consts_A8 = 53030;
-pub const addr_loc_A8CF18: Consts_A8 = 53016;
-pub const addr_kWreckedShipRobot_Ilist_CB65: Consts_A8 = 52069;
-pub const addr_kWreckedShipRobot_Ilist_CB1D: Consts_A8 = 51997;
-pub const addr_kWreckedShipRobot_Ilist_CB09: Consts_A8 = 51977;
-pub const addr_kWreckedShipRobot_Ilist_CAFD: Consts_A8 = 51965;
-pub const addr_kWreckedShipRobot_Ilist_CA7D: Consts_A8 = 51837;
-pub const addr_kWreckedShipRobot_Ilist_CA01: Consts_A8 = 51713;
-pub const addr_kWreckedShipRobot_Ilist_C985: Consts_A8 = 51589;
-pub const addr_kWreckedShipRobot_Ilist_C92D: Consts_A8 = 51501;
-pub const addr_kWreckedShipRobot_Ilist_C91B: Consts_A8 = 51483;
-pub const addr_kWreckedShipRobot_Ilist_C8D1: Consts_A8 = 51409;
-pub const addr_kWreckedShipRobot_Ilist_C8BD: Consts_A8 = 51389;
-pub const addr_kWreckedShipRobot_Ilist_C8B1: Consts_A8 = 51377;
-pub const addr_kWreckedShipRobot_Ilist_C833: Consts_A8 = 51251;
-pub const addr_kWreckedShipRobot_Ilist_C7BB: Consts_A8 = 51131;
-pub const addr_kWreckedShipRobot_Ilist_C73F: Consts_A8 = 51007;
-pub const addr_stru_A8C6E9: Consts_A8 = 50921;
-pub const addr_kWreckedShipRobot_Ilist_C6E5: Consts_A8 = 50917;
-pub const addr_stru_A8C199: Consts_A8 = 49561;
-pub const addr_kMaridiaFloater_Ilist_C191: Consts_A8 = 49553;
-pub const addr_kMaridiaFloater_Ilist_C183: Consts_A8 = 49539;
-pub const addr_kMaridiaFloater_Ilist_C173: Consts_A8 = 49523;
-pub const addr_kMaridiaFloater_Ilist_C163: Consts_A8 = 49507;
-pub const addr_kBeetom_Ilist_B728: Consts_A8 = 46888;
-pub const addr_kBeetom_Ilist_B708: Consts_A8 = 46856;
-pub const addr_kBeetom_Ilist_B6F2: Consts_A8 = 46834;
-pub const addr_kBeetom_Ilist_B6CC: Consts_A8 = 46796;
-pub const addr_kBeetom_Ilist_B6AC: Consts_A8 = 46764;
-pub const addr_kBeetom_Ilist_B696: Consts_A8 = 46742;
-pub const addr_kNorfairLavaMan_Ilist_AE0C: Consts_A8 = 44556;
-pub const addr_kNorfairLavaMan_Ilist_ADDC: Consts_A8 = 44508;
-pub const addr_kNorfairLavaMan_Ilist_ADAC: Consts_A8 = 44460;
-pub const addr_kNorfairLavaMan_Ilist_AD7E: Consts_A8 = 44414;
-pub const addr_kNorfairLavaMan_Ilist_AD50: Consts_A8 = 44368;
-pub const addr_kNorfairLavaMan_Ilist_AD3C: Consts_A8 = 44348;
-pub const addr_kNorfairLavaMan_Ilist_AD0C: Consts_A8 = 44300;
-pub const addr_kNorfairLavaMan_Ilist_ACDE: Consts_A8 = 44254;
-pub const addr_kNorfairLavaMan_Ilist_ACB0: Consts_A8 = 44208;
-pub const addr_kNorfairLavaMan_Ilist_AC9C: Consts_A8 = 44188;
-pub const addr_kKago_Ilist_AB32: Consts_A8 = 43826;
-pub const addr_kKago_Ilist_AB1E: Consts_A8 = 43806;
-pub const addr_kYappingMaw_Ilist_A079: Consts_A8 = 41081;
-pub const addr_off_A8A061: Consts_A8 = 41057;
-pub const addr_kYappingMaw_Ilist_A05B: Consts_A8 = 41051;
-pub const addr_kYappingMaw_Ilist_A03D: Consts_A8 = 41021;
-pub const addr_off_A8A025: Consts_A8 = 40997;
-pub const addr_kYappingMaw_Ilist_A01F: Consts_A8 = 40991;
-pub const addr_kYappingMaw_Ilist_9FC7: Consts_A8 = 40903;
-pub const addr_kYappingMaw_Ilist_9F6F: Consts_A8 = 40815;
-pub const addr_loc_A89E90: Consts_A8 = 40592;
-pub const addr_kWreckedShipGhost_Ilist_9A8C: Consts_A8 = 39564;
-pub const addr_off_A896DF: Consts_A8 = 38623;
-pub const addr_off_A896D7: Consts_A8 = 38615;
-pub const addr_kMorphBallEye_Ilist_9026: Consts_A8 = 36902;
-pub const addr_kMorphBallEye_Ilist_9014: Consts_A8 = 36884;
-pub const addr_stru_A8900E: Consts_A8 = 36878;
-pub const addr_kMorphBallEye_Ilist_9002: Consts_A8 = 36866;
-pub const addr_stru_A88FFC: Consts_A8 = 36860;
-pub const addr_kMorphBallEye_Ilist_8FF0: Consts_A8 = 36848;
-pub const addr_kMiniDraygon_Ilist_8775: Consts_A8 = 34677;
-pub const addr_kMiniDraygon_Ilist_876F: Consts_A8 = 34671;
-pub const addr_kMiniDraygon_Ilist_8727: Consts_A8 = 34599;
-pub const addr_kMiniDraygon_Ilist_870B: Consts_A8 = 34571;
-pub const addr_kMiniDraygon_Ilist_86C3: Consts_A8 = 34499;
-pub const addr_kMiniDraygon_Ilist_86A7: Consts_A8 = 34471;
-pub const addr_kSpritemap_Nothing_A8: Consts_A8 = 32845;
+crate::game::constants::typed_constants! { Consts_A8;
+    addr_locret_A8F5E3 = 62947, addr_kKiHunter_Ilist_EB10 = 60176,
+    addr_kKiHunter_Ilist_EAF2 = 60146, addr_kKiHunter_Ilist_EADA = 60122,
+    addr_kKiHunter_Ilist_EAC2 = 60098, addr_kKiHunter_Ilist_EAA6 = 60070,
+    addr_kKiHunter_Ilist_EA8A = 60042, addr_kKiHunter_Ilist_EA7E = 60030,
+    addr_kKiHunter_Ilist_EA5E = 59998, addr_kKiHunter_Ilist_EA4E = 59982,
+    addr_kKiHunter_Ilist_EA32 = 59954, addr_kKiHunter_Ilist_EA24 = 59940,
+    addr_kKiHunter_Ilist_EA08 = 59912, addr_kKiHunter_Ilist_E9FA = 59898,
+    addr_kBlueBrinstarFaceBlock_Ilist_E828 = 59432, addr_kBlueBrinstarFaceBlock_Ilist_E81A = 59418,
+    addr_kBlueBrinstarFaceBlock_Ilist_E80C = 59404, addr_kWreckedShipSpark_Ilist_E5E5 = 58853,
+    addr_kWreckedShipSpark_Ilist_E5A7 = 58791, addr_kWalkingLavaSeahorse_Ilist_DCC1 = 56513,
+    addr_stru_A8DCBB = 56507, addr_kWalkingLavaSeahorse_Ilist_DC73 = 56435,
+    addr_stru_A8DC59 = 56409, addr_kWalkingLavaSeahorse_Ilist_DC57 = 56407,
+    addr_kWalkingLavaSeahorse_Ilist_DC51 = 56401, addr_stru_A8DC4B = 56395,
+    addr_kWalkingLavaSeahorse_Ilist_DC03 = 56323, addr_stru_A8DBE9 = 56297,
+    addr_kWalkingLavaSeahorse_Ilist_DBE7 = 56295, addr_kMaridiaPuffer_Ilist_D855 = 55381,
+    addr_kMaridiaPuffer_Ilist_D841 = 55361, addr_loc_A8D02E = 53294,
+    addr_loc_A8CF26 = 53030, addr_loc_A8CF18 = 53016,
+    addr_kWreckedShipRobot_Ilist_CB65 = 52069, addr_kWreckedShipRobot_Ilist_CB1D = 51997,
+    addr_kWreckedShipRobot_Ilist_CB09 = 51977, addr_kWreckedShipRobot_Ilist_CAFD = 51965,
+    addr_kWreckedShipRobot_Ilist_CA7D = 51837, addr_kWreckedShipRobot_Ilist_CA01 = 51713,
+    addr_kWreckedShipRobot_Ilist_C985 = 51589, addr_kWreckedShipRobot_Ilist_C92D = 51501,
+    addr_kWreckedShipRobot_Ilist_C91B = 51483, addr_kWreckedShipRobot_Ilist_C8D1 = 51409,
+    addr_kWreckedShipRobot_Ilist_C8BD = 51389, addr_kWreckedShipRobot_Ilist_C8B1 = 51377,
+    addr_kWreckedShipRobot_Ilist_C833 = 51251, addr_kWreckedShipRobot_Ilist_C7BB = 51131,
+    addr_kWreckedShipRobot_Ilist_C73F = 51007, addr_stru_A8C6E9 = 50921,
+    addr_kWreckedShipRobot_Ilist_C6E5 = 50917, addr_stru_A8C199 = 49561,
+    addr_kMaridiaFloater_Ilist_C191 = 49553, addr_kMaridiaFloater_Ilist_C183 = 49539,
+    addr_kMaridiaFloater_Ilist_C173 = 49523, addr_kMaridiaFloater_Ilist_C163 = 49507,
+    addr_kBeetom_Ilist_B728 = 46888, addr_kBeetom_Ilist_B708 = 46856,
+    addr_kBeetom_Ilist_B6F2 = 46834, addr_kBeetom_Ilist_B6CC = 46796,
+    addr_kBeetom_Ilist_B6AC = 46764, addr_kBeetom_Ilist_B696 = 46742,
+    addr_kNorfairLavaMan_Ilist_AE0C = 44556, addr_kNorfairLavaMan_Ilist_ADDC = 44508,
+    addr_kNorfairLavaMan_Ilist_ADAC = 44460, addr_kNorfairLavaMan_Ilist_AD7E = 44414,
+    addr_kNorfairLavaMan_Ilist_AD50 = 44368, addr_kNorfairLavaMan_Ilist_AD3C = 44348,
+    addr_kNorfairLavaMan_Ilist_AD0C = 44300, addr_kNorfairLavaMan_Ilist_ACDE = 44254,
+    addr_kNorfairLavaMan_Ilist_ACB0 = 44208, addr_kNorfairLavaMan_Ilist_AC9C = 44188,
+    addr_kKago_Ilist_AB32 = 43826, addr_kKago_Ilist_AB1E = 43806,
+    addr_kYappingMaw_Ilist_A079 = 41081, addr_off_A8A061 = 41057,
+    addr_kYappingMaw_Ilist_A05B = 41051, addr_kYappingMaw_Ilist_A03D = 41021,
+    addr_off_A8A025 = 40997, addr_kYappingMaw_Ilist_A01F = 40991,
+    addr_kYappingMaw_Ilist_9FC7 = 40903, addr_kYappingMaw_Ilist_9F6F = 40815,
+    addr_loc_A89E90 = 40592, addr_kWreckedShipGhost_Ilist_9A8C = 39564,
+    addr_off_A896DF = 38623, addr_off_A896D7 = 38615,
+    addr_kMorphBallEye_Ilist_9026 = 36902, addr_kMorphBallEye_Ilist_9014 = 36884,
+    addr_stru_A8900E = 36878, addr_kMorphBallEye_Ilist_9002 = 36866,
+    addr_stru_A88FFC = 36860, addr_kMorphBallEye_Ilist_8FF0 = 36848,
+    addr_kMiniDraygon_Ilist_8775 = 34677, addr_kMiniDraygon_Ilist_876F = 34671,
+    addr_kMiniDraygon_Ilist_8727 = 34599, addr_kMiniDraygon_Ilist_870B = 34571,
+    addr_kMiniDraygon_Ilist_86C3 = 34499, addr_kMiniDraygon_Ilist_86A7 = 34471,
+    addr_kSpritemap_Nothing_A8 = 32845,
+}
 enemy_layout! {
     Enemy_Fune {
         base: EnemyBase,
@@ -415,121 +368,88 @@ const RomPtr_A8: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_p
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
-pub const fnnullsub_152: i32 = 0x90e90e;
-pub const fnSamus_InputHandler_E913: i32 = 0x90e913;
-pub const fnSamus_InputHandler_E91D: i32 = 0x90e91d;
-pub const fnnullsub_170_A8: i32 = 0xa8804c;
-pub const fnMiniDraygon_Func_4: i32 = 0xa88922;
-pub const fnMiniDraygon_Func_8: i32 = 0xa88a34;
-pub const fnMiniDraygon_Func_9: i32 = 0xa88a3b;
-pub const fnMiniDraygon_Func_10: i32 = 0xa88a78;
-pub const fnMorphBallEye_Func_1: i32 = 0xa890f1;
-pub const fnMorphBallEye_Func_2: i32 = 0xa8912e;
-pub const fnMorphBallEye_Func_3: i32 = 0xa89160;
-pub const fnMorphBallEye_Func_4: i32 = 0xa891ce;
-pub const fnnullsub_244: i32 = 0xa891dc;
-pub const fnFune_Func_1: i32 = 0xa89737;
-pub const fnFune_Func_2: i32 = 0xa8975c;
-pub const fnnullsub_247: i32 = 0xa8978e;
-pub const fnnullsub_248: i32 = 0xa8978f;
-pub const fnWreckedShipGhost_Func_1: i32 = 0xa89b42;
-pub const fnWreckedShipGhost_Func_2: i32 = 0xa89bad;
-pub const fnWreckedShipGhost_Func_4: i32 = 0xa89c69;
-pub const fnWreckedShipGhost_Func_5: i32 = 0xa89c8a;
-pub const fnWreckedShipGhost_Func_6: i32 = 0xa89d13;
-pub const fnWreckedShipGhost_Func_7: i32 = 0xa89d36;
-pub const fnYappingMaw_Func_1: i32 = 0xa8a235;
-pub const fnYappingMaw_Func_2: i32 = 0xa8a28c;
-pub const fnYappingMaw_Func_8: i32 = 0xa8a445;
-pub const fnYappingMaw_Func_11: i32 = 0xa8a68a;
-pub const fnKago_Func_1: i32 = 0xa8ab7b;
-pub const fnnullsub_306: i32 = 0xa8ab81;
-pub const fnNorfairLavaMan_Func_6: i32 = 0xa8b0b2;
-pub const fnNorfairLavaMan_Func_7: i32 = 0xa8b11a;
-pub const fnNorfairLavaMan_Func_8: i32 = 0xa8b175;
-pub const fnsub_A8B193: i32 = 0xa8b193;
-pub const fnNorfairLavaMan_Func_9: i32 = 0xa8b1b8;
-pub const fnNorfairLavaMan_Func_10: i32 = 0xa8b1dd;
-pub const fnNorfairLavaMan_Func_11: i32 = 0xa8b204;
-pub const fnsub_A8B291: i32 = 0xa8b291;
-pub const fnNorfairLavaMan_Func_13: i32 = 0xa8b295;
-pub const fnNorfairLavaMan_Func_15: i32 = 0xa8b30d;
-pub const fnNorfairLavaMan_Func_16: i32 = 0xa8b31f;
-pub const fnNorfairLavaMan_Func_17: i32 = 0xa8b356;
-pub const fnNorfairLavaMan_Func_18: i32 = 0xa8b3a7;
-pub const fnBeetom_Func_3: i32 = 0xa8b814;
-pub const fnBeetom_Func_4: i32 = 0xa8b82f;
-pub const fnBeetom_Func_5: u32 = 11057231;
-pub const fnBeetom_Func_6: i32 = 0xa8b85f;
-pub const fnBeetom_Func_7: i32 = 0xa8b873;
-pub const fnBeetom_Func_8: u32 = 11057287;
-pub const fnBeetom_Func_9: u32 = 11057321;
-pub const fnBeetom_Func_10: u32 = 11057355;
-pub const fnBeetom_Func_11: u32 = 11057389;
-pub const fnBeetom_Func_12: i32 = 0xa8b90f;
-pub const fnBeetom_Func_13: i32 = 0xa8b952;
-pub const fnBeetom_Func_14: i32 = 0xa8b966;
-pub const fnBeetom_Func_15: i32 = 0xa8b97a;
-pub const fnBeetom_Func_16: i32 = 0xa8b9a2;
-pub const fnBeetom_Func_17: i32 = 0xa8b9b2;
-pub const fnBeetom_Func_18: i32 = 0xa8b9c1;
-pub const fnBeetom_Func_19: i32 = 0xa8ba24;
-pub const fnBeetom_Func_20: i32 = 0xa8ba84;
-pub const fnBeetom_Func_21: i32 = 0xa8bab7;
-pub const fnBeetom_Func_24: i32 = 0xa8bb55;
-pub const fnBeetom_Func_25: i32 = 0xa8bb88;
-pub const fnBeetom_Func_28: i32 = 0xa8bc26;
-pub const fnBeetom_Func_29: i32 = 0xa8bc5a;
-pub const fnBeetom_Func_32: i32 = 0xa8bcf8;
-pub const fnBeetom_Func_33: i32 = 0xa8bd42;
-pub const fnBeetom_Func_35: i32 = 0xa8bd9d;
-pub const fnBeetom_Func_36: i32 = 0xa8bdc5;
-pub const fnMaridiaFloater_Func_3: i32 = 0xa8c283;
-pub const fnMaridiaFloater_Func_4: i32 = 0xa8c2a6;
-pub const fnMaridiaFloater_Func_5: i32 = 0xa8c2cf;
-pub const fnMaridiaFloater_Func_6: i32 = 0xa8c36b;
-pub const fnMaridiaFloater_Func_7: i32 = 0xa8c3e1;
-pub const fnMaridiaFloater_Func_8: i32 = 0xa8c469;
-pub const fnMaridiaFloater_Func_9: i32 = 0xa8c4dc;
-pub const fnMaridiaFloater_Func_10: i32 = 0xa8c500;
-pub const fnMaridiaFloater_Func_11: i32 = 0xa8c51d;
-pub const fnnullsub_256: i32 = 0xa8c568;
-pub const fnMaridiaFloater_Func_12: i32 = 0xa8c569;
-pub const fnMaridiaFloater_Func_13: i32 = 0xa8c59f;
-pub const fnWreckedShipRobot_Func_1: i32 = 0xa8cc67;
-pub const fnMaridiaPuffer_Func_1: i32 = 0xa8d92b;
-pub const fnMaridiaPuffer_Func_2: i32 = 0xa8d940;
-pub const fnMaridiaPuffer_Func_3: i32 = 0xa8d963;
-pub const fnMaridiaPuffer_Func_4: i32 = 0xa8d97c;
-pub const fnWalkingLavaSeahorse_Func_3: i32 = 0xa8dd71;
-pub const fnWalkingLavaSeahorse_Func_4: i32 = 0xa8ddc6;
-pub const fnWalkingLavaSeahorse_Func_6: i32 = 0xa8de05;
-pub const fnWalkingLavaSeahorse_Func_7: i32 = 0xa8de4b;
-pub const fnnullsub_257: i32 = 0xa8decc;
-pub const fnWalkingLavaSeahorse_Func_8: i32 = 0xa8decd;
-pub const fnWalkingLavaSeahorse_Func_9: i32 = 0xa8deec;
-pub const fnWreckedShipOrbs_Func_3: i32 = 0xa8e405;
-pub const fnWreckedShipOrbs_Func_4: i32 = 0xa8e424;
-pub const fnWreckedShipOrbs_Func_5: i32 = 0xa8e443;
-pub const fnWreckedShipOrbs_Func_6: i32 = 0xa8e462;
-pub const fnnullsub_259: u32 = 11069076;
-pub const fnWreckedShipSpark_Func_1: i32 = 0xa8e695;
-pub const fnWreckedShipSpark_Func_2: i32 = 0xa8e6b7;
-pub const fnWreckedShipSpark_Func_3: u32 = 11069148;
-pub const fnBlueBrinstarFaceBlock_Func_1: i32 = 0xa8e86e;
-pub const fnKiHunter_Func_1: i32 = 0xa8f268;
-pub const fnKiHunter_Func_2: i32 = 0xa8f3b8;
-pub const fnKiHunter_Func_3: i32 = 0xa8f4ed;
-pub const fnKiHunter_Func_4: i32 = 0xa8f55a;
-pub const fnKiHunter_Func_5: i32 = 0xa8f58b;
-pub const fnnullsub_346: u32 = 11072995;
-pub const fnKiHunter_Func_6: i32 = 0xa8f5f0;
-pub const fnKiHunter_Func_7: i32 = 0xa8f68b;
-pub const fnKiHunter_Func_8: i32 = 0xa8f6b3;
-pub const fnKiHunter_Func_9: i32 = 0xa8f6f3;
-pub const fnKiHunter_Func_10: i32 = 0xa8f7cf;
-pub const fnKiHunter_Func_11: i32 = 0xa8f7db;
-pub const fnKiHunter_Func_14: i32 = 0xa8f8ad;
+crate::game::constants::typed_constants! { i32;
+    fnnullsub_152 = 0x90e90e, fnSamus_InputHandler_E913 = 0x90e913,
+    fnSamus_InputHandler_E91D = 0x90e91d, fnnullsub_170_A8 = 0xa8804c,
+    fnMiniDraygon_Func_4 = 0xa88922, fnMiniDraygon_Func_8 = 0xa88a34,
+    fnMiniDraygon_Func_9 = 0xa88a3b, fnMiniDraygon_Func_10 = 0xa88a78,
+    fnMorphBallEye_Func_1 = 0xa890f1, fnMorphBallEye_Func_2 = 0xa8912e,
+    fnMorphBallEye_Func_3 = 0xa89160, fnMorphBallEye_Func_4 = 0xa891ce,
+    fnnullsub_244 = 0xa891dc, fnFune_Func_1 = 0xa89737,
+    fnFune_Func_2 = 0xa8975c, fnnullsub_247 = 0xa8978e,
+    fnnullsub_248 = 0xa8978f, fnWreckedShipGhost_Func_1 = 0xa89b42,
+    fnWreckedShipGhost_Func_2 = 0xa89bad, fnWreckedShipGhost_Func_4 = 0xa89c69,
+    fnWreckedShipGhost_Func_5 = 0xa89c8a, fnWreckedShipGhost_Func_6 = 0xa89d13,
+    fnWreckedShipGhost_Func_7 = 0xa89d36, fnYappingMaw_Func_1 = 0xa8a235,
+    fnYappingMaw_Func_2 = 0xa8a28c, fnYappingMaw_Func_8 = 0xa8a445,
+    fnYappingMaw_Func_11 = 0xa8a68a, fnKago_Func_1 = 0xa8ab7b,
+    fnnullsub_306 = 0xa8ab81, fnNorfairLavaMan_Func_6 = 0xa8b0b2,
+    fnNorfairLavaMan_Func_7 = 0xa8b11a, fnNorfairLavaMan_Func_8 = 0xa8b175,
+    fnsub_A8B193 = 0xa8b193, fnNorfairLavaMan_Func_9 = 0xa8b1b8,
+    fnNorfairLavaMan_Func_10 = 0xa8b1dd, fnNorfairLavaMan_Func_11 = 0xa8b204,
+    fnsub_A8B291 = 0xa8b291, fnNorfairLavaMan_Func_13 = 0xa8b295,
+    fnNorfairLavaMan_Func_15 = 0xa8b30d, fnNorfairLavaMan_Func_16 = 0xa8b31f,
+    fnNorfairLavaMan_Func_17 = 0xa8b356, fnNorfairLavaMan_Func_18 = 0xa8b3a7,
+    fnBeetom_Func_3 = 0xa8b814, fnBeetom_Func_4 = 0xa8b82f,
+}
+crate::game::constants::typed_constants! { u32;
+    fnBeetom_Func_5 = 11057231,
+}
+crate::game::constants::typed_constants! { i32;
+    fnBeetom_Func_6 = 0xa8b85f, fnBeetom_Func_7 = 0xa8b873,
+}
+crate::game::constants::typed_constants! { u32;
+    fnBeetom_Func_8 = 11057287, fnBeetom_Func_9 = 11057321,
+    fnBeetom_Func_10 = 11057355, fnBeetom_Func_11 = 11057389,
+}
+crate::game::constants::typed_constants! { i32;
+    fnBeetom_Func_12 = 0xa8b90f, fnBeetom_Func_13 = 0xa8b952,
+    fnBeetom_Func_14 = 0xa8b966, fnBeetom_Func_15 = 0xa8b97a,
+    fnBeetom_Func_16 = 0xa8b9a2, fnBeetom_Func_17 = 0xa8b9b2,
+    fnBeetom_Func_18 = 0xa8b9c1, fnBeetom_Func_19 = 0xa8ba24,
+    fnBeetom_Func_20 = 0xa8ba84, fnBeetom_Func_21 = 0xa8bab7,
+    fnBeetom_Func_24 = 0xa8bb55, fnBeetom_Func_25 = 0xa8bb88,
+    fnBeetom_Func_28 = 0xa8bc26, fnBeetom_Func_29 = 0xa8bc5a,
+    fnBeetom_Func_32 = 0xa8bcf8, fnBeetom_Func_33 = 0xa8bd42,
+    fnBeetom_Func_35 = 0xa8bd9d, fnBeetom_Func_36 = 0xa8bdc5,
+    fnMaridiaFloater_Func_3 = 0xa8c283, fnMaridiaFloater_Func_4 = 0xa8c2a6,
+    fnMaridiaFloater_Func_5 = 0xa8c2cf, fnMaridiaFloater_Func_6 = 0xa8c36b,
+    fnMaridiaFloater_Func_7 = 0xa8c3e1, fnMaridiaFloater_Func_8 = 0xa8c469,
+    fnMaridiaFloater_Func_9 = 0xa8c4dc, fnMaridiaFloater_Func_10 = 0xa8c500,
+    fnMaridiaFloater_Func_11 = 0xa8c51d, fnnullsub_256 = 0xa8c568,
+    fnMaridiaFloater_Func_12 = 0xa8c569, fnMaridiaFloater_Func_13 = 0xa8c59f,
+    fnWreckedShipRobot_Func_1 = 0xa8cc67, fnMaridiaPuffer_Func_1 = 0xa8d92b,
+    fnMaridiaPuffer_Func_2 = 0xa8d940, fnMaridiaPuffer_Func_3 = 0xa8d963,
+    fnMaridiaPuffer_Func_4 = 0xa8d97c, fnWalkingLavaSeahorse_Func_3 = 0xa8dd71,
+    fnWalkingLavaSeahorse_Func_4 = 0xa8ddc6, fnWalkingLavaSeahorse_Func_6 = 0xa8de05,
+    fnWalkingLavaSeahorse_Func_7 = 0xa8de4b, fnnullsub_257 = 0xa8decc,
+    fnWalkingLavaSeahorse_Func_8 = 0xa8decd, fnWalkingLavaSeahorse_Func_9 = 0xa8deec,
+    fnWreckedShipOrbs_Func_3 = 0xa8e405, fnWreckedShipOrbs_Func_4 = 0xa8e424,
+    fnWreckedShipOrbs_Func_5 = 0xa8e443, fnWreckedShipOrbs_Func_6 = 0xa8e462,
+}
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_259 = 11069076,
+}
+crate::game::constants::typed_constants! { i32;
+    fnWreckedShipSpark_Func_1 = 0xa8e695, fnWreckedShipSpark_Func_2 = 0xa8e6b7,
+}
+crate::game::constants::typed_constants! { u32;
+    fnWreckedShipSpark_Func_3 = 11069148,
+}
+crate::game::constants::typed_constants! { i32;
+    fnBlueBrinstarFaceBlock_Func_1 = 0xa8e86e, fnKiHunter_Func_1 = 0xa8f268,
+    fnKiHunter_Func_2 = 0xa8f3b8, fnKiHunter_Func_3 = 0xa8f4ed,
+    fnKiHunter_Func_4 = 0xa8f55a, fnKiHunter_Func_5 = 0xa8f58b,
+}
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_346 = 11072995,
+}
+crate::game::constants::typed_constants! { i32;
+    fnKiHunter_Func_6 = 0xa8f5f0, fnKiHunter_Func_7 = 0xa8f68b,
+    fnKiHunter_Func_8 = 0xa8f6b3, fnKiHunter_Func_9 = 0xa8f6f3,
+    fnKiHunter_Func_10 = 0xa8f7cf, fnKiHunter_Func_11 = 0xa8f7db,
+    fnKiHunter_Func_14 = 0xa8f8ad,
+}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];

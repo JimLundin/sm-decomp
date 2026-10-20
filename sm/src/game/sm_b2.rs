@@ -24,40 +24,25 @@ pub use crate::types::Consts_A0;
 pub use crate::types::Consts_B2;
 pub use crate::types::{Consts_86, EnemyDef, Vulnerability};
 pub use crate::types::{EnemyBase, EnemyData, LongPtr, Point16U, ProjectileType, Rect16U, VoidP};
-pub const addr_kSpacePirates_Ilist_FC48: Consts_B2 = 64584;
-pub const addr_kSpacePirates_Ilist_FC0E: Consts_B2 = 64526;
-pub const addr_kSpacePirates_Ilist_FBE6: Consts_B2 = 64486;
-pub const addr_kSpacePirates_Ilist_FBC6: Consts_B2 = 64454;
-pub const addr_kSpacePirates_Ilist_FB8C: Consts_B2 = 64396;
-pub const addr_kSpacePirates_Ilist_FB64: Consts_B2 = 64356;
-pub const addr_kSpacePirates_Ilist_FB58: Consts_B2 = 64344;
-pub const addr_kSpacePirates_Ilist_FB4C: Consts_B2 = 64332;
-pub const addr_kSpacePirates_Ilist_F51A: Consts_B2 = 62746;
-pub const addr_kSpacePirates_Ilist_F4EA: Consts_B2 = 62698;
-pub const addr_kSpacePirates_Ilist_F4CC: Consts_B2 = 62668;
-pub const addr_kSpacePirates_Ilist_F4A4: Consts_B2 = 62628;
-pub const addr_kSpacePirates_Ilist_F492: Consts_B2 = 62610;
-pub const addr_kSpacePirates_Ilist_F462: Consts_B2 = 62562;
-pub const addr_kSpacePirates_Ilist_F420: Consts_B2 = 62496;
-pub const addr_kSpacePirates_Ilist_F3B2: Consts_B2 = 62386;
-pub const addr_kSpacePirates_Ilist_F34A: Consts_B2 = 62282;
-pub const addr_kSpacePirates_Ilist_F32E: Consts_B2 = 62254;
-pub const addr_kSpacePirates_Ilist_F2F8: Consts_B2 = 62200;
-pub const addr_kSpacePirates_Ilist_F2DA: Consts_B2 = 62170;
-pub const addr_kSpacePirates_Ilist_F2B2: Consts_B2 = 62130;
-pub const addr_kSpacePirates_Ilist_F2A0: Consts_B2 = 62112;
-pub const addr_kSpacePirates_Ilist_F270: Consts_B2 = 62064;
-pub const addr_kSpacePirates_Ilist_F22E: Consts_B2 = 61998;
-pub const addr_kSpacePirates_Ilist_F1C4: Consts_B2 = 61892;
-pub const addr_kSpacePirates_Ilist_F15C: Consts_B2 = 61788;
-pub const addr_kSpacePirates_Ilist_EDF6: Consts_B2 = 60918;
-pub const addr_off_B2EDAC: Consts_B2 = 60844;
-pub const addr_kSpacePirates_Ilist_EDA4: Consts_B2 = 60836;
-pub const addr_kSpacePirates_Ilist_ED80: Consts_B2 = 60800;
-pub const addr_kSpacePirates_Ilist_ED36: Consts_B2 = 60726;
-pub const addr_off_B2ECEC: Consts_B2 = 60652;
-pub const addr_kSpacePirates_Ilist_ECE4: Consts_B2 = 60644;
-pub const addr_kSpacePirates_Ilist_ECC0: Consts_B2 = 60608;
+crate::game::constants::typed_constants! { Consts_B2;
+    addr_kSpacePirates_Ilist_FC48 = 64584, addr_kSpacePirates_Ilist_FC0E = 64526,
+    addr_kSpacePirates_Ilist_FBE6 = 64486, addr_kSpacePirates_Ilist_FBC6 = 64454,
+    addr_kSpacePirates_Ilist_FB8C = 64396, addr_kSpacePirates_Ilist_FB64 = 64356,
+    addr_kSpacePirates_Ilist_FB58 = 64344, addr_kSpacePirates_Ilist_FB4C = 64332,
+    addr_kSpacePirates_Ilist_F51A = 62746, addr_kSpacePirates_Ilist_F4EA = 62698,
+    addr_kSpacePirates_Ilist_F4CC = 62668, addr_kSpacePirates_Ilist_F4A4 = 62628,
+    addr_kSpacePirates_Ilist_F492 = 62610, addr_kSpacePirates_Ilist_F462 = 62562,
+    addr_kSpacePirates_Ilist_F420 = 62496, addr_kSpacePirates_Ilist_F3B2 = 62386,
+    addr_kSpacePirates_Ilist_F34A = 62282, addr_kSpacePirates_Ilist_F32E = 62254,
+    addr_kSpacePirates_Ilist_F2F8 = 62200, addr_kSpacePirates_Ilist_F2DA = 62170,
+    addr_kSpacePirates_Ilist_F2B2 = 62130, addr_kSpacePirates_Ilist_F2A0 = 62112,
+    addr_kSpacePirates_Ilist_F270 = 62064, addr_kSpacePirates_Ilist_F22E = 61998,
+    addr_kSpacePirates_Ilist_F1C4 = 61892, addr_kSpacePirates_Ilist_F15C = 61788,
+    addr_kSpacePirates_Ilist_EDF6 = 60918, addr_off_B2EDAC = 60844,
+    addr_kSpacePirates_Ilist_EDA4 = 60836, addr_kSpacePirates_Ilist_ED80 = 60800,
+    addr_kSpacePirates_Ilist_ED36 = 60726, addr_off_B2ECEC = 60652,
+    addr_kSpacePirates_Ilist_ECE4 = 60644, addr_kSpacePirates_Ilist_ECC0 = 60608,
+}
 pub use crate::types::Consts_B4;
 enemy_layout! {
     Enemy_SpacePirates {
@@ -96,29 +81,45 @@ unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
 unsafe fn get_Vulnerability(a: u16, game: &mut Game) -> *mut Vulnerability {
     RomPtr((0xb40000u32) | ((a) as u32), game) as *mut Vulnerability
 }
-pub const fnnullsub_169_B2: i32 = 0xb2804b;
-pub const fnSpacePirates_Func_1: i32 = 0xb2f034;
-pub const fnnullsub_279: u32 = 11726927;
-pub const fnSpacePirates_Func_2: u32 = 11726928;
-pub const fnSpacePirates_Func_3: i32 = 0xb2f0c8;
-pub const fnnullsub_281: u32 = 11727075;
-pub const fnSpacePirates_Func_4: u32 = 11727076;
-pub const fnSpacePirates_Func_5: u32 = 11728553;
-pub const fnSpacePirates_Func_6: u32 = 11728612;
-pub const fnSpacePirates_Func_11: u32 = 11728919;
-pub const fnSpacePirates_Func_12: i32 = 0xb2f84c;
-pub const fnSpacePirates_Func_13: u32 = 11729040;
-pub const fnSpacePirates_Func_14: i32 = 0xb2f8c5;
-pub const fnSpacePirates_Func_15: u32 = 11729161;
-pub const fnSpacePirates_F985: u32 = 11729285;
-pub const fnSpacePirates_F9C1: i32 = 0xb2f9c1;
-pub const fnSpacePirates_FA15: i32 = 0xb2fa15;
-pub const fnSpacePirates_FA59: u32 = 11729497;
-pub const fnSpacePirates_FA95: i32 = 0xb2fa95;
-pub const fnSpacePirates_FAE9: i32 = 0xb2fae9;
-pub const fnWalkingSpacePirates_FD44: u32 = 11730244;
-pub const fnWalkingSpacePirates_FDCE: u32 = 11730382;
-pub const fnnullsub_282: u32 = 11730506;
+crate::game::constants::typed_constants! { i32;
+    fnnullsub_169_B2 = 0xb2804b, fnSpacePirates_Func_1 = 0xb2f034,
+}
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_279 = 11726927, fnSpacePirates_Func_2 = 11726928,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSpacePirates_Func_3 = 0xb2f0c8,
+}
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_281 = 11727075, fnSpacePirates_Func_4 = 11727076,
+    fnSpacePirates_Func_5 = 11728553, fnSpacePirates_Func_6 = 11728612,
+    fnSpacePirates_Func_11 = 11728919,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSpacePirates_Func_12 = 0xb2f84c,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSpacePirates_Func_13 = 11729040,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSpacePirates_Func_14 = 0xb2f8c5,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSpacePirates_Func_15 = 11729161, fnSpacePirates_F985 = 11729285,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSpacePirates_F9C1 = 0xb2f9c1, fnSpacePirates_FA15 = 0xb2fa15,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSpacePirates_FA59 = 11729497,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSpacePirates_FA95 = 0xb2fa95, fnSpacePirates_FAE9 = 0xb2fae9,
+}
+crate::game::constants::typed_constants! { u32;
+    fnWalkingSpacePirates_FD44 = 11730244, fnWalkingSpacePirates_FDCE = 11730382,
+    fnnullsub_282 = 11730506,
+}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_SpacePirates(o: i32) -> Enemy_SpacePirates = [0xf78, o as isize];

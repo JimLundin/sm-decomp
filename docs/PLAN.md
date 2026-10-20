@@ -31,6 +31,27 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Gameplay numeric declarations (2026-10-20): one typed-list macro
+shares all 5093 public integer-literal constants in 356 consecutive groups
+across 30 files, including primitive and alias declarations. Every original
+name, caller-resolved type, literal token,
+declaration order and module scope remain exact. No selected declaration has
+adjacent attributes. The eight nonnumeric pointer/string declarations retain
+their original form.
+All 44 type spellings resolve to 3980 u32 and 1113 i32 values, all in range.
+Every runtime body remains unchanged.
+
+Complete source reconstruction and whole-library compiler expansion pass;
+the expanded token streams match exactly after removing only the new
+macro/import and comments, with no comma normalization. Final composition
+on 03ff047e includes reviewed CPU, string and all 95 callback tables.
+Normal release (24.06s), formatting and progress pass. Full any% passes
+129712/0 (107.74s), native exit 0; all 72 committed inputs,
+69 replay sources and 74 pins remain fixed.
+Net Rust lines -1726 (135572 total); raw-offset, unsafe-function and cast-line
+counts are unchanged. Frontend is compiler-checked; any% covers core gameplay.
+Continue substantial shared implementations; broader gameplay/hardware remain open.
+
 Callback tables (2026-10-20): all 95 existing Option-function arrays use one
 initializer macro, retaining their native static declarations, lengths and
 1039 ordered slots: 1020 explicit function casts, 18 None entries and the

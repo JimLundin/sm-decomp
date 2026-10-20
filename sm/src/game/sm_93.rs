@@ -34,8 +34,9 @@ unsafe fn get_ProjectileDataTable(a: u16, game: &mut Game) -> *mut ProjectileDat
 unsafe fn get_ProjectileInstr(a: u16, game: &mut Game) -> *mut ProjectileInstr {
     RomPtr((0x930000u32) | ((a) as u32), game) as *mut ProjectileInstr
 }
-pub const fnProj93Instr_Delete: u32 = 9667119;
-pub const fnProj93Instr_Goto: u32 = 9667129;
+crate::game::constants::typed_constants! { u32;
+    fnProj93Instr_Delete = 9667119, fnProj93Instr_Goto = 9667129,
+}
 pub unsafe fn InitializeProjectile(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     let r18: i32 = ram_word!(game, projectile_dir[v1]) as i32 & 0xfi32;

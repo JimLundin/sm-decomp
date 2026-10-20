@@ -20,10 +20,10 @@ pub use crate::types::Consts_90;
 pub use crate::types::Consts_94;
 pub use crate::types::GameState;
 pub use crate::types::{DoorDef, Func_V, OamEnt, SamusPose, VoidP};
-pub const addr_word_94B197: Consts_94 = 45463;
-pub const addr_word_94B193: Consts_94 = 45459;
-pub const addr_word_94B18F: Consts_94 = 45455;
-pub const addr_word_94B18B: Consts_94 = 45451;
+crate::game::constants::typed_constants! { Consts_94;
+    addr_word_94B197 = 45463, addr_word_94B193 = 45459,
+    addr_word_94B18F = 45455, addr_word_94B18B = 45451,
+}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct CollInfo {
@@ -45,8 +45,9 @@ struct PostGrappleCollisionSample {
     edge_position: u16,
 }
 pub const NULL: *mut c_void = null_mut::<c_void>();
-pub const true_0: i32 = 1;
-pub const false_0: i32 = 0;
+crate::game::constants::typed_constants! { i32;
+    true_0 = 1, false_0 = 0,
+}
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
 const RomPtr_94: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x94>;
 crate::ram_map::ram_pointer_functions! {
@@ -56,9 +57,15 @@ crate::ram_map::ram_pointer_functions! {
 unsafe fn get_DoorDef(a: u16, game: &mut Game) -> *mut DoorDef {
     RomPtr((0x830000u32) | ((a) as u32), game) as *mut DoorDef
 }
-pub const fnDoorTransitionFunction_HandleElevator: i32 = 0x82e17d;
-pub const fnGrappleInstr_Goto: u32 = 9744628;
-pub const fnGrappleBeam_Func2: i32 = 0x9bc8c5;
+crate::game::constants::typed_constants! { i32;
+    fnDoorTransitionFunction_HandleElevator = 0x82e17d,
+}
+crate::game::constants::typed_constants! { u32;
+    fnGrappleInstr_Goto = 9744628,
+}
+crate::game::constants::typed_constants! { i32;
+    fnGrappleBeam_Func2 = 0x9bc8c5,
+}
 
 static kAlignPos_Tab1: [u8; 512] = [
     16, 16, 16, 16, 16, 16, 16, 16, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,

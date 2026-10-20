@@ -49,93 +49,52 @@ pub use crate::types::{
     EnemyBase, EnemyData, Func_V, LongPtr, Point16U, SamusPose, VoidP, VramWriteEntry,
 };
 pub use crate::types::{EnemyProps, EnemySpawnData};
-pub const addr_kRisingFallingPlatform_Ilist_EDE7: Consts_A2 = 60903;
-pub const addr_kTimedShutter_Ilist_E9D4: Consts_A2 = 59860;
-pub const addr_kTimedShutter_Ilist_E9AA: Consts_A2 = 59818;
-pub const addr_kTimedShutter_Ilist_E9A4: Consts_A2 = 59812;
-pub const addr_kTimedShutter_Ilist_E99E: Consts_A2 = 59806;
-pub const addr_kTimedShutter_Ilist_E998: Consts_A2 = 59800;
-pub const addr_kLavaSeahorse_Ilist_E5A1: Consts_A2 = 58785;
-pub const addr_kLavaSeahorse_Ilist_E59B: Consts_A2 = 58779;
-pub const addr_kRipper_Ilist_E48B: Consts_A2 = 58507;
-pub const addr_kRipper_Ilist_E477: Consts_A2 = 58487;
-pub const addr_kGripper_Sprmap_E44B: Consts_A2 = 58443;
-pub const addr_kGripper_Sprmap_E43F: Consts_A2 = 58431;
-pub const addr_kRipper_Ilist_E2F4: Consts_A2 = 58100;
-pub const addr_kRipper_Ilist_E2E0: Consts_A2 = 58080;
-pub const addr_kGripper_Ilist_E1AF: Consts_A2 = 57775;
-pub const addr_kGripper_Ilist_E19B: Consts_A2 = 57755;
-pub const addr_kHirisingSlowfalling_Ilist_D840: Consts_A2 = 55360;
-pub const addr_kHirisingSlowfalling_Ilist_D834: Consts_A2 = 55348;
-pub const addr_kHirisingSlowfalling_Ilist_D82C: Consts_A2 = 55340;
-pub const addr_kMaridiaLargeSnail_Ilist_CA4B: Consts_A2 = 51787;
-pub const addr_kLowerNorfairRio_Ilist_C6B0: Consts_A2 = 50864;
-pub const addr_kLowerNorfairRio_Ilist_C686: Consts_A2 = 50822;
-pub const addr_kLowerNorfairRio_Ilist_C674: Consts_A2 = 50804;
-pub const addr_kLowerNorfairRio_Ilist_C662: Consts_A2 = 50786;
-pub const addr_kLowerNorfairRio_Ilist_C65A: Consts_A2 = 50778;
-pub const addr_kLowerNorfairRio_Ilist_C630: Consts_A2 = 50736;
-pub const addr_kLowerNorfairRio_Ilist_C61A: Consts_A2 = 50714;
-pub const addr_kNorfairRio_Ilist_C1A3: Consts_A2 = 49571;
-pub const addr_kNorfairRio_Ilist_C18F: Consts_A2 = 49551;
-pub const addr_kNorfairRio_Ilist_C179: Consts_A2 = 49529;
-pub const addr_kNorfairRio_Ilist_C145: Consts_A2 = 49477;
-pub const addr_kNorfairRio_Ilist_C12F: Consts_A2 = 49455;
-pub const addr_kNorfairRio_Ilist_C107: Consts_A2 = 49415;
-pub const addr_kNorfairRio_Ilist_C0F1: Consts_A2 = 49393;
-pub const addr_kNorfairLavajumpingEnemy_Ilist_BE62: Consts_A2 = 48738;
-pub const addr_kNorfairLavajumpingEnemy_Ilist_BE42: Consts_A2 = 48706;
-pub const addr_kNorfairLavajumpingEnemy_Ilist_BE3C: Consts_A2 = 48700;
-pub const addr_kRio_Ilist_BBA3: Consts_A2 = 48035;
-pub const addr_kRio_Ilist_BB97: Consts_A2 = 48023;
-pub const addr_kRio_Ilist_BB7F: Consts_A2 = 47999;
-pub const addr_stru_A2BB53: Consts_A2 = 47955;
-pub const addr_kRio_Ilist_BB4B: Consts_A2 = 47947;
-pub const addr_kRinka_Ilist_BA0C: Consts_A2 = 47628;
-pub const addr_kRinka_Ilist_B9E0: Consts_A2 = 47584;
-pub const addr_kNorfairErraticFireball_Ilist_B51A: Consts_A2 = 46362;
-pub const addr_kNorfairErraticFireball_Ilist_B2DC: Consts_A2 = 45788;
-pub const addr_kFlies_Ilist_B013: Consts_A2 = 45075;
-pub const addr_kGunshipTop_Ilist_A61C: Consts_A2 = 42524;
-pub const addr_kGunshipTop_Ilist_A616: Consts_A2 = 42518;
-pub const addr_kGunshipTop_Ilist_A60E: Consts_A2 = 42510;
-pub const addr_kGunshipTop_Ilist_A5EE: Consts_A2 = 42478;
-pub const addr_kGunshipTop_Ilist_A5BE: Consts_A2 = 42430;
-pub const addr_kMaridiaSpikeyShell_Ilist_A3BD: Consts_A2 = 41917;
-pub const addr_kMaridiaSpikeyShell_Ilist_A3AB: Consts_A2 = 41899;
-pub const addr_kSpikeShootingPlant_Ilist_9F00: Consts_A2 = 40704;
-pub const addr_kSpikeShootingPlant_Ilist_9EDA: Consts_A2 = 40666;
-pub const addr_kSpikeShootingPlant_Ilist_9EB0: Consts_A2 = 40624;
-pub const addr_kSpikeShootingPlant_Ilist_9E8A: Consts_A2 = 40586;
-pub const addr_kThinHoppingBlobs_Ilist_9A01: Consts_A2 = 39425;
-pub const addr_kThinHoppingBlobs_Ilist_99FB: Consts_A2 = 39419;
-pub const addr_kThinHoppingBlobs_Ilist_99F5: Consts_A2 = 39413;
-pub const addr_kThinHoppingBlobs_Ilist_99EF: Consts_A2 = 39407;
-pub const addr_kThinHoppingBlobs_Ilist_99E9: Consts_A2 = 39401;
-pub const addr_kThinHoppingBlobs_Ilist_99D5: Consts_A2 = 39381;
-pub const addr_kThinHoppingBlobs_Ilist_99C1: Consts_A2 = 39361;
-pub const addr_kThinHoppingBlobs_Ilist_99AD: Consts_A2 = 39341;
-pub const addr_locret_A28E09: Consts_A2 = 36361;
-pub const addr_kMaridiaBeybladeTurtle_Ilist_8D40: Consts_A2 = 36160;
-pub const addr_kMaridiaBeybladeTurtle_Ilist_8D28: Consts_A2 = 36136;
-pub const addr_kMaridiaBeybladeTurtle_Ilist_8D14: Consts_A2 = 36116;
-pub const addr_kMaridiaBeybladeTurtle_Ilist_8D00: Consts_A2 = 36096;
-pub const addr_kMaridiaBeybladeTurtle_Ilist_8C72: Consts_A2 = 35954;
-pub const addr_kMaridiaBeybladeTurtle_Ilist_8C62: Consts_A2 = 35938;
-pub const addr_kMaridiaBeybladeTurtle_Ilist_8C4A: Consts_A2 = 35914;
-pub const addr_kMaridiaBeybladeTurtle_Ilist_8C44: Consts_A2 = 35908;
-pub const addr_kMaridiaBeybladeTurtle_Ilist_8C30: Consts_A2 = 35888;
-pub const addr_kMaridiaBeybladeTurtle_Ilist_8C1C: Consts_A2 = 35868;
-pub const addr_kMaridiaBeybladeTurtle_Ilist_8C02: Consts_A2 = 35842;
-pub const addr_kMaridiaBeybladeTurtle_Ilist_8BD2: Consts_A2 = 35794;
-pub const addr_kMaridiaBeybladeTurtle_Ilist_8B80: Consts_A2 = 35712;
-pub const addr_kMiniCrocomire_Ilist_896E: Consts_A2 = 35182;
-pub const addr_kMiniCrocomire_Ilist_8958: Consts_A2 = 35160;
-pub const addr_kMiniCrocomire_Ilist_8948: Consts_A2 = 35144;
-pub const addr_kMiniCrocomire_Ilist_8932: Consts_A2 = 35122;
-pub const addr_kBouncingGoofball_Ilist_86BF: Consts_A2 = 34495;
-pub const addr_kBouncingGoofball_Ilist_86A7: Consts_A2 = 34471;
-pub const addr_kSpritemap_Nothing_A2: Consts_A2 = 32845;
+crate::game::constants::typed_constants! { Consts_A2;
+    addr_kRisingFallingPlatform_Ilist_EDE7 = 60903, addr_kTimedShutter_Ilist_E9D4 = 59860,
+    addr_kTimedShutter_Ilist_E9AA = 59818, addr_kTimedShutter_Ilist_E9A4 = 59812,
+    addr_kTimedShutter_Ilist_E99E = 59806, addr_kTimedShutter_Ilist_E998 = 59800,
+    addr_kLavaSeahorse_Ilist_E5A1 = 58785, addr_kLavaSeahorse_Ilist_E59B = 58779,
+    addr_kRipper_Ilist_E48B = 58507, addr_kRipper_Ilist_E477 = 58487,
+    addr_kGripper_Sprmap_E44B = 58443, addr_kGripper_Sprmap_E43F = 58431,
+    addr_kRipper_Ilist_E2F4 = 58100, addr_kRipper_Ilist_E2E0 = 58080,
+    addr_kGripper_Ilist_E1AF = 57775, addr_kGripper_Ilist_E19B = 57755,
+    addr_kHirisingSlowfalling_Ilist_D840 = 55360, addr_kHirisingSlowfalling_Ilist_D834 = 55348,
+    addr_kHirisingSlowfalling_Ilist_D82C = 55340, addr_kMaridiaLargeSnail_Ilist_CA4B = 51787,
+    addr_kLowerNorfairRio_Ilist_C6B0 = 50864, addr_kLowerNorfairRio_Ilist_C686 = 50822,
+    addr_kLowerNorfairRio_Ilist_C674 = 50804, addr_kLowerNorfairRio_Ilist_C662 = 50786,
+    addr_kLowerNorfairRio_Ilist_C65A = 50778, addr_kLowerNorfairRio_Ilist_C630 = 50736,
+    addr_kLowerNorfairRio_Ilist_C61A = 50714, addr_kNorfairRio_Ilist_C1A3 = 49571,
+    addr_kNorfairRio_Ilist_C18F = 49551, addr_kNorfairRio_Ilist_C179 = 49529,
+    addr_kNorfairRio_Ilist_C145 = 49477, addr_kNorfairRio_Ilist_C12F = 49455,
+    addr_kNorfairRio_Ilist_C107 = 49415, addr_kNorfairRio_Ilist_C0F1 = 49393,
+    addr_kNorfairLavajumpingEnemy_Ilist_BE62 = 48738, addr_kNorfairLavajumpingEnemy_Ilist_BE42 = 48706,
+    addr_kNorfairLavajumpingEnemy_Ilist_BE3C = 48700, addr_kRio_Ilist_BBA3 = 48035,
+    addr_kRio_Ilist_BB97 = 48023, addr_kRio_Ilist_BB7F = 47999,
+    addr_stru_A2BB53 = 47955, addr_kRio_Ilist_BB4B = 47947,
+    addr_kRinka_Ilist_BA0C = 47628, addr_kRinka_Ilist_B9E0 = 47584,
+    addr_kNorfairErraticFireball_Ilist_B51A = 46362, addr_kNorfairErraticFireball_Ilist_B2DC = 45788,
+    addr_kFlies_Ilist_B013 = 45075, addr_kGunshipTop_Ilist_A61C = 42524,
+    addr_kGunshipTop_Ilist_A616 = 42518, addr_kGunshipTop_Ilist_A60E = 42510,
+    addr_kGunshipTop_Ilist_A5EE = 42478, addr_kGunshipTop_Ilist_A5BE = 42430,
+    addr_kMaridiaSpikeyShell_Ilist_A3BD = 41917, addr_kMaridiaSpikeyShell_Ilist_A3AB = 41899,
+    addr_kSpikeShootingPlant_Ilist_9F00 = 40704, addr_kSpikeShootingPlant_Ilist_9EDA = 40666,
+    addr_kSpikeShootingPlant_Ilist_9EB0 = 40624, addr_kSpikeShootingPlant_Ilist_9E8A = 40586,
+    addr_kThinHoppingBlobs_Ilist_9A01 = 39425, addr_kThinHoppingBlobs_Ilist_99FB = 39419,
+    addr_kThinHoppingBlobs_Ilist_99F5 = 39413, addr_kThinHoppingBlobs_Ilist_99EF = 39407,
+    addr_kThinHoppingBlobs_Ilist_99E9 = 39401, addr_kThinHoppingBlobs_Ilist_99D5 = 39381,
+    addr_kThinHoppingBlobs_Ilist_99C1 = 39361, addr_kThinHoppingBlobs_Ilist_99AD = 39341,
+    addr_locret_A28E09 = 36361, addr_kMaridiaBeybladeTurtle_Ilist_8D40 = 36160,
+    addr_kMaridiaBeybladeTurtle_Ilist_8D28 = 36136, addr_kMaridiaBeybladeTurtle_Ilist_8D14 = 36116,
+    addr_kMaridiaBeybladeTurtle_Ilist_8D00 = 36096, addr_kMaridiaBeybladeTurtle_Ilist_8C72 = 35954,
+    addr_kMaridiaBeybladeTurtle_Ilist_8C62 = 35938, addr_kMaridiaBeybladeTurtle_Ilist_8C4A = 35914,
+    addr_kMaridiaBeybladeTurtle_Ilist_8C44 = 35908, addr_kMaridiaBeybladeTurtle_Ilist_8C30 = 35888,
+    addr_kMaridiaBeybladeTurtle_Ilist_8C1C = 35868, addr_kMaridiaBeybladeTurtle_Ilist_8C02 = 35842,
+    addr_kMaridiaBeybladeTurtle_Ilist_8BD2 = 35794, addr_kMaridiaBeybladeTurtle_Ilist_8B80 = 35712,
+    addr_kMiniCrocomire_Ilist_896E = 35182, addr_kMiniCrocomire_Ilist_8958 = 35160,
+    addr_kMiniCrocomire_Ilist_8948 = 35144, addr_kMiniCrocomire_Ilist_8932 = 35122,
+    addr_kBouncingGoofball_Ilist_86BF = 34495, addr_kBouncingGoofball_Ilist_86A7 = 34471,
+    addr_kSpritemap_Nothing_A2 = 32845,
+}
 pub use crate::types::Point32;
 enemy_layout! {
     Enemy_BouncingGoofball {
@@ -585,126 +544,86 @@ const RomPtr_A2: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_p
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
-pub const fnSamus_FrameHandlerAlfa_Func11: i32 = 0x90e695;
-pub const fnSamus_FrameHandlerBeta_Func17: i32 = 0x90e725;
-pub const fnMiniCrocomire_PreInstr5: i32 = 0xa28a43;
-pub const fnMiniCrocomire_PreInstr6: i32 = 0xa28a5c;
-pub const fnnullsub_175: i32 = 0xa28a75;
-pub const fnMaridiaBeybladeTurtle_Func1: i32 = 0xa28dd8;
-pub const fnnullsub_360: u32 = 10653193;
-pub const fnMaridiaBeybladeTurtle_Func2: i32 = 0xa28e0a;
-pub const fnMaridiaBeybladeTurtle_Func3: i32 = 0xa28ee0;
-pub const fnMaridiaBeybladeTurtle_Func5: i32 = 0xa28f3f;
-pub const fnMaridiaBeybladeTurtle_Func7: i32 = 0xa28f8d;
-pub const fnMaridiaBeybladeTurtle_Func8: i32 = 0xa28feb;
-pub const fnMaridiaBeybladeTurtle_Func9: i32 = 0xa29083;
-pub const fnMaridiaBeybladeTurtle_Func10: i32 = 0xa290cc;
-pub const fnMaridiaBeybladeTurtle_Func11: i32 = 0xa290e1;
-pub const fnMiniMaridiaBeybladeTurtle_Func1: i32 = 0xa29142;
-pub const fnMiniMaridiaBeybladeTurtle_Func2: i32 = 0xa2916e;
-pub const fnMiniMaridiaBeybladeTurtle_Func3: i32 = 0xa29198;
-pub const fnMiniMaridiaBeybladeTurtle_Func4: i32 = 0xa291f8;
-pub const fnMiniMaridiaBeybladeTurtle_Func6: i32 = 0xa29239;
-pub const fnMiniMaridiaBeybladeTurtle_Func7: i32 = 0xa2925e;
-pub const fnThinHoppingBlobs_Func6: i32 = 0xa29b65;
-pub const fnThinHoppingBlobs_Func7: i32 = 0xa29b81;
-pub const fnThinHoppingBlobs_Func11: u32 = 10657035;
-pub const fnThinHoppingBlobs_Func12: u32 = 10657067;
-pub const fnThinHoppingBlobs_Func13: u32 = 10657099;
-pub const fnThinHoppingBlobs_Func14: u32 = 10657131;
-pub const fnThinHoppingBlobs_Func15: i32 = 0xa29d98;
-pub const fnThinHoppingBlobs_Func16: u32 = 10657229;
-pub const fnSpikeShootingPlant_2: i32 = 0xa29fba;
-pub const fnSpikeShootingPlant_3: i32 = 0xa29fec;
-pub const fnnullsub_182: i32 = 0xa2a01b;
-pub const fnnullsub_187: i32 = 0xa2a7d7;
-pub const fnGunshipTop_3: i32 = 0xa2a80c;
-pub const fnGunshipTop_4: i32 = 0xa2a8d0;
-pub const fnGunshipTop_5: i32 = 0xa2a942;
-pub const fnGunshipTop_6: i32 = 0xa2a950;
-pub const fnGunshipTop_7: i32 = 0xa2a987;
-pub const fnGunshipTop_8: i32 = 0xa2a9bd;
-pub const fnGunshipTop_9: i32 = 0xa2aa4f;
-pub const fnGunshipTop_10: i32 = 0xa2aa5d;
-pub const fnGunshipTop_11: i32 = 0xa2aa94;
-pub const fnGunshipTop_12: i32 = 0xa2aaa2;
-pub const fnGunshipTop_13: i32 = 0xa2ab1f;
-pub const fnGunshipTop_14: i32 = 0xa2ab60;
-pub const fnGunshipTop_15: i32 = 0xa2ab6e;
-pub const fnGunshipTop_16: i32 = 0xa2aba5;
-pub const fnGunshipTop_17: i32 = 0xa2abc7;
-pub const fnGunshipTop_18: i32 = 0xa2ac1b;
-pub const fnGunshipTop_19: i32 = 0xa2acd7;
-pub const fnGunshipTop_20: i32 = 0xa2ad0e;
-pub const fnGunshipTop_21: i32 = 0xa2ad2d;
-pub const fnFlies_4: i32 = 0xa2b14e;
-pub const fnFlies_5: i32 = 0xa2b17c;
-pub const fnFlies_6: i32 = 0xa2b1aa;
-pub const fnFlies_7: i32 = 0xa2b1d2;
-pub const fnLavaquakeRocks_1: i32 = 0xa2b596;
-pub const fnLavaquakeRocks_2: i32 = 0xa2b5b2;
-pub const fnLavaquakeRocks_3: i32 = 0xa2b5ea;
-pub const fnRinka_3: i32 = 0xa2b7df;
-pub const fnRinka_4: i32 = 0xa2b844;
-pub const fnRinka_5: i32 = 0xa2b852;
-pub const fnRinka_B85B: i32 = 0xa2b85b;
-pub const fnRio_1: i32 = 0xa2bbed;
-pub const fnRio_2: i32 = 0xa2bc32;
-pub const fnRio_3: i32 = 0xa2bc48;
-pub const fnRio_4: i32 = 0xa2bcb7;
-pub const fnRio_5: i32 = 0xa2bcff;
-pub const fnNorfairLavajumpingEnemy_Func_1: i32 = 0xa2bedc;
-pub const fnNorfairLavajumpingEnemy_Func_2: i32 = 0xa2bf1a;
-pub const fnNorfairLavajumpingEnemy_Func_3: i32 = 0xa2bf3e;
-pub const fnNorfairLavajumpingEnemy_Func_4: i32 = 0xa2bf7c;
-pub const fnNorfairLavajumpingEnemy_Func_5: i32 = 0xa2bfbc;
-pub const fnNorfairRio_Func_1: i32 = 0xa2c281;
-pub const fnNorfairRio_Func_2: i32 = 0xa2c2e7;
-pub const fnNorfairRio_Func_3: i32 = 0xa2c33f;
-pub const fnNorfairRio_Func_4: i32 = 0xa2c361;
-pub const fnNorfairRio_Func_5: i32 = 0xa2c3b1;
-pub const fnNorfairRio_Func_6: i32 = 0xa2c406;
-pub const fnLowerNorfairRio_Func_1: i32 = 0xa2c72e;
-pub const fnLowerNorfairRio_Func_2: i32 = 0xa2c771;
-pub const fnLowerNorfairRio_Func_3: i32 = 0xa2c7bb;
-pub const fnLowerNorfairRio_Func_4: i32 = 0xa2c7d6;
-pub const fnLowerNorfairRio_Func_5: i32 = 0xa2c82d;
-pub const fnLowerNorfairRio_Func_6: i32 = 0xa2c888;
-pub const fnMaridiaLargeSnail_Func_4: i32 = 0xa2cde6;
-pub const fnMaridiaLargeSnail_Func_5: i32 = 0xa2ce2b;
-pub const fnMaridiaLargeSnail_Func_6: i32 = 0xa2cf40;
-pub const fnMaridiaLargeSnail_Func_7: i32 = 0xa2cf66;
-pub const fnMaridiaLargeSnail_Func_8: i32 = 0xa2cfa9;
-pub const fnHirisingSlowfalling_Func_4: i32 = 0xa2e035;
-pub const fnHirisingSlowfalling_Func_5: i32 = 0xa2e04f;
-pub const fnHirisingSlowfalling_Func_6: i32 = 0xa2e06a;
-pub const fnHirisingSlowfalling_Func_7: i32 = 0xa2e0cd;
-pub const fnLavaSeahorse_Func_1: i32 = 0xa2e654;
-pub const fnLavaSeahorse_Func_2: i32 = 0xa2e6ad;
-pub const fnLavaSeahorse_Func_3: i32 = 0xa2e6f1;
-pub const fnLavaSeahorse_Func_4: i32 = 0xa2e734;
-pub const fnLavaSeahorse_Func_5: i32 = 0xa2e749;
-pub const fnnullsub_196: i32 = 0xa2e781;
-pub const fnTimedShutter_Func_1: u32 = 10676925;
-pub const fnTimedShutter_Func_2: u32 = 10676945;
-pub const fnTimedShutter_Func_3: u32 = 10676967;
-pub const fnTimedShutter_Func_4: u32 = 10676989;
-pub const fnTimedShutter_Func_5: i32 = 0xa2eb11;
-pub const fnTimedShutter_Func_10: i32 = 0xa2ec13;
-pub const fnRisingFallingPlatform_Func_2: i32 = 0xa2ef09;
-pub const fnRisingFallingPlatform_Func_4: i32 = 0xa2ef28;
-pub const fnRisingFallingPlatform_Func_9: i32 = 0xa2ef68;
-pub const fnRisingFallingPlatform_Func_10: i32 = 0xa2efd4;
-pub const fnRisingFallingPlatform_Func_11: i32 = 0xa2f040;
-pub const fnRisingFallingPlatform_Func_12: i32 = 0xa2f072;
-pub const fnRisingFallingPlatform_Func_13: i32 = 0xa2f099;
-pub const fnHorizontalShootableShutter_Func_2: i32 = 0xa2f224;
-pub const fnHorizontalShootableShutter_Func_4: i32 = 0xa2f243;
-pub const fnHorizontalShootableShutter_Func_8: i32 = 0xa2f272;
-pub const fnHorizontalShootableShutter_Func_9: i32 = 0xa2f2e4;
-pub const fnHorizontalShootableShutter_Func_12: i32 = 0xa2f38c;
-pub const fnHorizontalShootableShutter_Func_13: i32 = 0xa2f3b0;
-pub const fnHorizontalShootableShutter_Func_14: i32 = 0xa2f3d4;
+crate::game::constants::typed_constants! { i32;
+    fnSamus_FrameHandlerAlfa_Func11 = 0x90e695, fnSamus_FrameHandlerBeta_Func17 = 0x90e725,
+    fnMiniCrocomire_PreInstr5 = 0xa28a43, fnMiniCrocomire_PreInstr6 = 0xa28a5c,
+    fnnullsub_175 = 0xa28a75, fnMaridiaBeybladeTurtle_Func1 = 0xa28dd8,
+}
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_360 = 10653193,
+}
+crate::game::constants::typed_constants! { i32;
+    fnMaridiaBeybladeTurtle_Func2 = 0xa28e0a, fnMaridiaBeybladeTurtle_Func3 = 0xa28ee0,
+    fnMaridiaBeybladeTurtle_Func5 = 0xa28f3f, fnMaridiaBeybladeTurtle_Func7 = 0xa28f8d,
+    fnMaridiaBeybladeTurtle_Func8 = 0xa28feb, fnMaridiaBeybladeTurtle_Func9 = 0xa29083,
+    fnMaridiaBeybladeTurtle_Func10 = 0xa290cc, fnMaridiaBeybladeTurtle_Func11 = 0xa290e1,
+    fnMiniMaridiaBeybladeTurtle_Func1 = 0xa29142, fnMiniMaridiaBeybladeTurtle_Func2 = 0xa2916e,
+    fnMiniMaridiaBeybladeTurtle_Func3 = 0xa29198, fnMiniMaridiaBeybladeTurtle_Func4 = 0xa291f8,
+    fnMiniMaridiaBeybladeTurtle_Func6 = 0xa29239, fnMiniMaridiaBeybladeTurtle_Func7 = 0xa2925e,
+    fnThinHoppingBlobs_Func6 = 0xa29b65, fnThinHoppingBlobs_Func7 = 0xa29b81,
+}
+crate::game::constants::typed_constants! { u32;
+    fnThinHoppingBlobs_Func11 = 10657035, fnThinHoppingBlobs_Func12 = 10657067,
+    fnThinHoppingBlobs_Func13 = 10657099, fnThinHoppingBlobs_Func14 = 10657131,
+}
+crate::game::constants::typed_constants! { i32;
+    fnThinHoppingBlobs_Func15 = 0xa29d98,
+}
+crate::game::constants::typed_constants! { u32;
+    fnThinHoppingBlobs_Func16 = 10657229,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSpikeShootingPlant_2 = 0xa29fba, fnSpikeShootingPlant_3 = 0xa29fec,
+    fnnullsub_182 = 0xa2a01b, fnnullsub_187 = 0xa2a7d7,
+    fnGunshipTop_3 = 0xa2a80c, fnGunshipTop_4 = 0xa2a8d0,
+    fnGunshipTop_5 = 0xa2a942, fnGunshipTop_6 = 0xa2a950,
+    fnGunshipTop_7 = 0xa2a987, fnGunshipTop_8 = 0xa2a9bd,
+    fnGunshipTop_9 = 0xa2aa4f, fnGunshipTop_10 = 0xa2aa5d,
+    fnGunshipTop_11 = 0xa2aa94, fnGunshipTop_12 = 0xa2aaa2,
+    fnGunshipTop_13 = 0xa2ab1f, fnGunshipTop_14 = 0xa2ab60,
+    fnGunshipTop_15 = 0xa2ab6e, fnGunshipTop_16 = 0xa2aba5,
+    fnGunshipTop_17 = 0xa2abc7, fnGunshipTop_18 = 0xa2ac1b,
+    fnGunshipTop_19 = 0xa2acd7, fnGunshipTop_20 = 0xa2ad0e,
+    fnGunshipTop_21 = 0xa2ad2d, fnFlies_4 = 0xa2b14e,
+    fnFlies_5 = 0xa2b17c, fnFlies_6 = 0xa2b1aa,
+    fnFlies_7 = 0xa2b1d2, fnLavaquakeRocks_1 = 0xa2b596,
+    fnLavaquakeRocks_2 = 0xa2b5b2, fnLavaquakeRocks_3 = 0xa2b5ea,
+    fnRinka_3 = 0xa2b7df, fnRinka_4 = 0xa2b844,
+    fnRinka_5 = 0xa2b852, fnRinka_B85B = 0xa2b85b,
+    fnRio_1 = 0xa2bbed, fnRio_2 = 0xa2bc32,
+    fnRio_3 = 0xa2bc48, fnRio_4 = 0xa2bcb7,
+    fnRio_5 = 0xa2bcff, fnNorfairLavajumpingEnemy_Func_1 = 0xa2bedc,
+    fnNorfairLavajumpingEnemy_Func_2 = 0xa2bf1a, fnNorfairLavajumpingEnemy_Func_3 = 0xa2bf3e,
+    fnNorfairLavajumpingEnemy_Func_4 = 0xa2bf7c, fnNorfairLavajumpingEnemy_Func_5 = 0xa2bfbc,
+    fnNorfairRio_Func_1 = 0xa2c281, fnNorfairRio_Func_2 = 0xa2c2e7,
+    fnNorfairRio_Func_3 = 0xa2c33f, fnNorfairRio_Func_4 = 0xa2c361,
+    fnNorfairRio_Func_5 = 0xa2c3b1, fnNorfairRio_Func_6 = 0xa2c406,
+    fnLowerNorfairRio_Func_1 = 0xa2c72e, fnLowerNorfairRio_Func_2 = 0xa2c771,
+    fnLowerNorfairRio_Func_3 = 0xa2c7bb, fnLowerNorfairRio_Func_4 = 0xa2c7d6,
+    fnLowerNorfairRio_Func_5 = 0xa2c82d, fnLowerNorfairRio_Func_6 = 0xa2c888,
+    fnMaridiaLargeSnail_Func_4 = 0xa2cde6, fnMaridiaLargeSnail_Func_5 = 0xa2ce2b,
+    fnMaridiaLargeSnail_Func_6 = 0xa2cf40, fnMaridiaLargeSnail_Func_7 = 0xa2cf66,
+    fnMaridiaLargeSnail_Func_8 = 0xa2cfa9, fnHirisingSlowfalling_Func_4 = 0xa2e035,
+    fnHirisingSlowfalling_Func_5 = 0xa2e04f, fnHirisingSlowfalling_Func_6 = 0xa2e06a,
+    fnHirisingSlowfalling_Func_7 = 0xa2e0cd, fnLavaSeahorse_Func_1 = 0xa2e654,
+    fnLavaSeahorse_Func_2 = 0xa2e6ad, fnLavaSeahorse_Func_3 = 0xa2e6f1,
+    fnLavaSeahorse_Func_4 = 0xa2e734, fnLavaSeahorse_Func_5 = 0xa2e749,
+    fnnullsub_196 = 0xa2e781,
+}
+crate::game::constants::typed_constants! { u32;
+    fnTimedShutter_Func_1 = 10676925, fnTimedShutter_Func_2 = 10676945,
+    fnTimedShutter_Func_3 = 10676967, fnTimedShutter_Func_4 = 10676989,
+}
+crate::game::constants::typed_constants! { i32;
+    fnTimedShutter_Func_5 = 0xa2eb11, fnTimedShutter_Func_10 = 0xa2ec13,
+    fnRisingFallingPlatform_Func_2 = 0xa2ef09, fnRisingFallingPlatform_Func_4 = 0xa2ef28,
+    fnRisingFallingPlatform_Func_9 = 0xa2ef68, fnRisingFallingPlatform_Func_10 = 0xa2efd4,
+    fnRisingFallingPlatform_Func_11 = 0xa2f040, fnRisingFallingPlatform_Func_12 = 0xa2f072,
+    fnRisingFallingPlatform_Func_13 = 0xa2f099, fnHorizontalShootableShutter_Func_2 = 0xa2f224,
+    fnHorizontalShootableShutter_Func_4 = 0xa2f243, fnHorizontalShootableShutter_Func_8 = 0xa2f272,
+    fnHorizontalShootableShutter_Func_9 = 0xa2f2e4, fnHorizontalShootableShutter_Func_12 = 0xa2f38c,
+    fnHorizontalShootableShutter_Func_13 = 0xa2f3b0, fnHorizontalShootableShutter_Func_14 = 0xa2f3d4,
+}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];

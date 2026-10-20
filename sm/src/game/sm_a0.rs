@@ -343,9 +343,10 @@ pub struct EnemyPopulation {
     pub parameter2: u16,
 }
 pub use crate::types::{EnemyAiBits, EnemyTileset};
-pub const kEnemyAiBits_Frozen: EnemyAiBits = 4;
-pub const kEnemyAiBits_Hurt: EnemyAiBits = 2;
-pub const kEnemyAiBits_Grapple: EnemyAiBits = 1;
+crate::game::constants::typed_constants! { EnemyAiBits;
+    kEnemyAiBits_Frozen = 4, kEnemyAiBits_Hurt = 2,
+    kEnemyAiBits_Grapple = 1,
+}
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct EnemyTileLoadData {
@@ -431,1148 +432,586 @@ unsafe fn get_ExtendedSpriteMap(db: u8, a: u16, game: &mut Game) -> *mut Extende
 unsafe fn get_EnemyPopulation(db: u8, a: u16, game: &mut Game) -> *mut EnemyPopulation {
     RomPtr(((db as i32) << 16i32 | a as i32) as u32, game) as *mut EnemyPopulation
 }
-pub const fnEprojPreInstr_nullsub_83: i32 = 0x8684fb;
-pub const fnGrappleBeam_Func2: i32 = 0x9bc8c5;
-pub const fnEnemy_GrappleReact_NoInteract_A0: i32 = 0xa08000;
-pub const fnEnemy_GrappleReact_SamusLatchesOn_A0: i32 = 0xa08005;
-pub const fnEnemy_GrappleReact_KillEnemy_A0: i32 = 0xa0800a;
-pub const fnEnemy_GrappleReact_CancelBeam_A0: i32 = 0xa0800f;
-pub const fnEnemy_GrappleReact_SamusLatchesNoInvinc_A0: i32 = 0xa08014;
-pub const fnEnemy_GrappleReact_SamusLatchesParalyze_A0: i32 = 0xa08019;
-pub const fnEnemy_GrappleReact_HurtSamus_A0: i32 = 0xa0801e;
-pub const fnEnemy_NormalTouchAI_A0: u32 = 10518563;
-pub const fnEnemy_NormalShotAI_A0: u32 = 10518573;
-pub const fnEnemy_NormalPowerBombAI_A0: i32 = 0xa08037;
-pub const fnnullsub_169: i32 = 0xa0804b;
-pub const fnnullsub_170: i32 = 0xa0804c;
-pub const fnnullsub_171: i32 = 0xa0807b;
-pub const fnEnemy_GrappleReact_SamusLatchesOn_A2: u32 = 10649605;
-pub const fnEnemy_GrappleReact_KillEnemy_A2: u32 = 10649610;
-pub const fnEnemy_GrappleReact_CancelBeam_A2: u32 = 10649615;
-pub const fnEnemy_NormalTouchAI_A2: u32 = 10649635;
-pub const fnEnemy_NormalShotAI_A2: u32 = 10649645;
-pub const fnEnemy_NormalPowerBombAI_A2: u32 = 10649655;
-pub const fnEnemy_NormalFrozenAI_A2: u32 = 10649665;
-pub const fnnullsub_170_A2: u32 = 10649676;
-pub const fnnullsub_171_A2: u32 = 10649723;
-pub const fnEnemyInstr_Goto_A2: u32 = 10649837;
-pub const fnEnemyInstr_DecTimerAndGoto2_A2: u32 = 10649872;
-pub const fnEnemyInstr_SetTimer_A2: u32 = 10649891;
-pub const fnEnemyInstr_Sleep_A2: u32 = 10649903;
-pub const fnEnemyInstr_EnableOffScreenProcessing_A2: u32 = 10649971;
-pub const fnEnemyInstr_DisableOffScreenProcessing_A2: u32 = 10649981;
-pub const fnBouncingGoofball_Init: u32 = 10651420;
-pub const fnBouncingGoofball_Main: u32 = 10651548;
-pub const fnBouncingGoofball_Instr_88C5: u32 = 10651845;
-pub const fnBouncingGoofball_Instr_88C6: u32 = 10651846;
-pub const fnMiniCrocomire_Instr_897E: u32 = 10652030;
-pub const fnMiniCrocomire_Instr_8990: u32 = 10652048;
-pub const fnMiniCrocomire_Instr_899D: u32 = 10652061;
-pub const fnMiniCrocomire_Init: u32 = 10652077;
-pub const fnMiniCrocomire_Main: u32 = 10652144;
-pub const fnMiniCrocomire_PreInstr5: u32 = 10652227;
-pub const fnMiniCrocomire_PreInstr6: u32 = 10652252;
-pub const fnnullsub_175: u32 = 10652277;
-pub const fnMaridiaBeybladeTurtle_Init: u32 = 10653036;
-pub const fnMiniMaridiaBeybladeTurtle_Init: u32 = 10653085;
-pub const fnMaridiaBeybladeTurtle_Main: u32 = 10653138;
-pub const fnMiniMaridiaBeybladeTurtle_Main: u32 = 10653998;
-pub const fnMaridiaBeybladeTurtle_Touch: u32 = 10654337;
-pub const fnMiniMaridiaBeybladeTurtle_Touch: u32 = 10654367;
-pub const fnMiniMaridiaBeybladeTurtle_Shot: u32 = 10654479;
-pub const fnMaridiaBeybladeTurtle_Instr_9381: u32 = 10654593;
-pub const fnMaridiaBeybladeTurtle_Instr_9412: u32 = 10654738;
-pub const fnMaridiaBeybladeTurtle_Instr_9447: u32 = 10654791;
-pub const fnMaridiaBeybladeTurtle_Instr_9451: u32 = 10654801;
-pub const fnMaridiaBeybladeTurtle_Instr_946B: u32 = 10654827;
-pub const fnMaridiaBeybladeTurtle_Instr_9485: u32 = 10654853;
-pub const fnMaridiaBeybladeTurtle_Instr_94A1: u32 = 10654881;
-pub const fnMaridiaBeybladeTurtle_Instr_94C7: u32 = 10654919;
-pub const fnMaridiaBeybladeTurtle_Instr_94D1: u32 = 10654929;
-pub const fnThinHoppingBlobs_Init: u32 = 10656319;
-pub const fnThinHoppingBlobs_Main: u32 = 10656381;
-pub const fnSpikeShootingPlant_Instr_9F2A: u32 = 10657578;
-pub const fnSpikeShootingPlant_Init: u32 = 10657608;
-pub const fnSpikeShootingPlant_Main: u32 = 10657715;
-pub const fnSpikeShootingPlant_2: u32 = 10657722;
-pub const fnSpikeShootingPlant_3: u32 = 10657772;
-pub const fnnullsub_182: u32 = 10657819;
-pub const fnSpikeShootingPlant_Instr_A095: u32 = 10657941;
-pub const fnSpikeShootingPlant_Instr_A0A7: u32 = 10657959;
-pub const fnMaridiaSpikeyShell_Init: u32 = 10658809;
-pub const fnMaridiaSpikeyShell_Main: u32 = 10658942;
-pub const fnMaridiaSpikeyShell_Instr_A56D: u32 = 10659181;
-pub const fnMaridiaSpikeyShell_Instr_A571: u32 = 10659185;
-pub const fnMaridiaSpikeyShell_Shot: u32 = 10659193;
-pub const fnGunshipTop_Init: u32 = 10659396;
-pub const fnGunshipBottom_Init: u32 = 10659538;
-pub const fnGunshipTop_Main: u32 = 10659673;
-pub const fnnullsub_187: u32 = 10659799;
-pub const fnGunshipTop_3: u32 = 10659852;
-pub const fnGunshipTop_4: u32 = 10660048;
-pub const fnGunshipTop_5: u32 = 10660162;
-pub const fnGunshipTop_6: u32 = 10660176;
-pub const fnGunshipTop_7: u32 = 10660231;
-pub const fnGunshipTop_8: u32 = 10660285;
-pub const fnGunshipTop_9: u32 = 10660431;
-pub const fnGunshipTop_10: u32 = 10660445;
-pub const fnGunshipTop_11: u32 = 10660500;
-pub const fnGunshipTop_12: u32 = 10660514;
-pub const fnGunshipTop_13: u32 = 10660639;
-pub const fnGunshipTop_14: u32 = 10660704;
-pub const fnGunshipTop_15: u32 = 10660718;
-pub const fnGunshipTop_16: u32 = 10660773;
-pub const fnGunshipTop_17: u32 = 10660807;
-pub const fnGunshipTop_18: u32 = 10660891;
-pub const fnGunshipTop_19: u32 = 10661079;
-pub const fnGunshipTop_20: u32 = 10661134;
-pub const fnGunshipTop_21: u32 = 10661165;
-pub const fnFlies_Init: u32 = 10661995;
-pub const fnFlies_Main: u32 = 10662175;
-pub const fnFlies_4: u32 = 10662222;
-pub const fnFlies_5: u32 = 10662268;
-pub const fnFlies_6: u32 = 10662314;
-pub const fnFlies_7: u32 = 10662354;
-pub const fnNorfairErraticFireball_Init: u32 = 10662880;
-pub const fnNorfairErraticFireball_Main: u32 = 10662927;
-pub const fnLavaquakeRocks_Init: u32 = 10663280;
-pub const fnLavaquakeRocks_Main: u32 = 10663311;
-pub const fnRinka_Init: u32 = 10663426;
-pub const fnRinka_Main: u32 = 10663876;
-pub const fnRinka_Frozen: u32 = 10664233;
-pub const fnRinka_Touch: u32 = 10664263;
-pub const fnRinka_Shot: u32 = 10664269;
-pub const fnRinka_Powerbomb: u32 = 10664275;
-pub const fnRinka_Instr_B9B3: u32 = 10664371;
-pub const fnRinka_Instr_B9BD: u32 = 10664381;
-pub const fnRinka_Instr_B9C7: u32 = 10664391;
-pub const fnEnemyInstr_Rio_Instr_1: u32 = 10664899;
-pub const fnRio_Init: u32 = 10664909;
-pub const fnRio_Main: u32 = 10664931;
-pub const fnNorfairLavajumpingEnemy_Instr_BE8E: u32 = 10665614;
-pub const fnNorfairLavajumpingEnemy_Init: u32 = 10665625;
-pub const fnNorfairLavajumpingEnemy_Main: u32 = 10665682;
-pub const fnNorfairLavajumpingEnemy_Func_1: u32 = 10665692;
-pub const fnNorfairLavajumpingEnemy_Func_2: u32 = 10665754;
-pub const fnNorfairLavajumpingEnemy_Func_3: u32 = 10665790;
-pub const fnNorfairLavajumpingEnemy_Func_4: u32 = 10665852;
-pub const fnNorfairLavajumpingEnemy_Func_5: u32 = 10665916;
-pub const fnNorfairRio_Instr_C1C9: u32 = 10666441;
-pub const fnNorfairRio_Instr_C1D4: u32 = 10666452;
-pub const fnNorfairRio_Instr_C1DF: u32 = 10666463;
-pub const fnNorfairRio_Instr_C1EA: u32 = 10666474;
-pub const fnNorfairRio_Instr_C1F5: u32 = 10666485;
-pub const fnNorfairRio_Instr_C200: u32 = 10666496;
-pub const fnNorfairRio_Instr_C20B: u32 = 10666507;
-pub const fnNorfairRio_Instr_C216: u32 = 10666518;
-pub const fnNorfairRio_Instr_C221: u32 = 10666529;
-pub const fnNorfairRio_Instr_C22C: u32 = 10666540;
-pub const fnNorfairRio_Instr_C237: u32 = 10666551;
-pub const fnNorfairRio_Init: u32 = 10666562;
-pub const fnNorfairRio_Main: u32 = 10666615;
-pub const fnNorfairRio_Func_1: u32 = 10666625;
-pub const fnNorfairRio_Func_2: u32 = 10666727;
-pub const fnNorfairRio_Func_3: u32 = 10666815;
-pub const fnNorfairRio_Func_4: u32 = 10666849;
-pub const fnNorfairRio_Func_5: u32 = 10666929;
-pub const fnNorfairRio_Func_6: u32 = 10667014;
-pub const fnLowerNorfairRio_Instr_C6D2: u32 = 10667730;
-pub const fnLowerNorfairRio_Instr_C6DD: u32 = 10667741;
-pub const fnLowerNorfairRio_Instr_C6E8: u32 = 10667752;
-pub const fnLowerNorfairRio_Init: u32 = 10667763;
-pub const fnLowerNorfairRio_Main: u32 = 10667812;
-pub const fnLowerNorfairRio_Func_1: u32 = 10667822;
-pub const fnLowerNorfairRio_Func_2: u32 = 10667889;
-pub const fnLowerNorfairRio_Func_3: u32 = 10667963;
-pub const fnLowerNorfairRio_Func_4: u32 = 10667990;
-pub const fnLowerNorfairRio_Func_5: u32 = 10668077;
-pub const fnLowerNorfairRio_Func_6: u32 = 10668168;
-pub const fnMaridiaLargeSnail_Instr_CB6B: u32 = 10668907;
-pub const fnMaridiaLargeSnail_Instr_CCB3: u32 = 10669235;
-pub const fnMaridiaLargeSnail_Instr_CCBE: u32 = 10669246;
-pub const fnMaridiaLargeSnail_Instr_CCC9: u32 = 10669257;
-pub const fnMaridiaLargeSnail_Init: u32 = 10669268;
-pub const fnMaridiaLargeSnail_Main: u32 = 10669331;
-pub const fnMaridiaLargeSnail_Func_7: u32 = 10669926;
-pub const fnMaridiaLargeSnail_Func_8: u32 = 10669993;
-pub const fnMaridiaLargeSnail_Func_12: u32 = 10670984;
-pub const fnMaridiaLargeSnail_Touch: u32 = 10670988;
-pub const fnMaridiaLargeSnail_Shot: u32 = 10671028;
-pub const fnHirisingSlowfalling_Init: u32 = 10674038;
-pub const fnHirisingSlowfalling_Main: u32 = 10674222;
-pub const fnGripper_Init: u32 = 10674643;
-pub const fnGripper_Main: u32 = 10674721;
-pub const fnJetPowerRipper_Init: u32 = 10674968;
-pub const fnJetPowerRipper_Main: u32 = 10675027;
-pub const fnJetPowerRipper_Shot: u32 = 10675113;
-pub const fnRipper_Init: u32 = 10675359;
-pub const fnRipper_Main: u32 = 10675418;
-pub const fnLavaSeahorse_Instr_E5FB: u32 = 10675707;
-pub const fnLavaSeahorse_Init: u32 = 10675718;
-pub const fnLavaSeahorse_Main: u32 = 10675790;
-pub const fnLavaSeahorse_Func_1: u32 = 10675796;
-pub const fnLavaSeahorse_Func_2: u32 = 10675885;
-pub const fnLavaSeahorse_Func_3: u32 = 10675953;
-pub const fnLavaSeahorse_Func_4: u32 = 10676020;
-pub const fnLavaSeahorse_Func_5: u32 = 10676041;
-pub const fnnullsub_196: u32 = 10676097;
-pub const fnLavaSeahorse_Touch: u32 = 10676168;
-pub const fnLavaSeahorse_Shot: u32 = 10676174;
-pub const fnLavaSeahorse_Powerbomb: u32 = 10676180;
-pub const fnTimedShutter_Init: u32 = 10676698;
-pub const fnTimedShutter_Main: u32 = 10676918;
-pub const fnRisingFallingPlatform_Init: u32 = 10677765;
-pub const fnShootableShutter_Init: u32 = 10677778;
-pub const fnRisingFallingPlatform_Main: u32 = 10677969;
-pub const fnRisingFallingPlatform_Touch: u32 = 10678429;
-pub const fnRisingFallingPlatform_Shot: u32 = 10678434;
-pub const fnShootableShutter_Shot: u32 = 10678442;
-pub const fnRisingFallingPlatform_Powerbomb: u32 = 10678454;
-pub const fnHorizontalShootableShutter_Init: u32 = 10678545;
-pub const fnHorizontalShootableShutter_Main: u32 = 10678750;
-pub const fnHorizontalShootableShutter_Touch: u32 = 10679256;
-pub const fnHorizontalShootableShutter_Shot: u32 = 10679310;
-pub const fnHorizontalShootableShutter_Powerbomb: u32 = 10679322;
-pub const fnEnemy_GrappleReact_NoInteract_A3: u32 = 10715136;
-pub const fnEnemy_GrappleReact_KillEnemy_A3: u32 = 10715146;
-pub const fnEnemy_GrappleReact_CancelBeam_A3: u32 = 10715151;
-pub const fnEnemy_NormalTouchAI_A3: u32 = 10715171;
-pub const fnEnemy_NormalShotAI_A3: u32 = 10715181;
-pub const fnEnemy_NormalPowerBombAI_A3: u32 = 10715191;
-pub const fnEnemy_NormalFrozenAI_A3: u32 = 10715201;
-pub const fnnullsub_170_A3: u32 = 10715212;
-pub const fnEnemyInstr_Goto_A3: u32 = 10715373;
-pub const fnEnemyInstr_Sleep_A3: u32 = 10715439;
-pub const fnEnemyInstr_EnableOffScreenProcessing_A3: u32 = 10715507;
-pub const fnEnemyInstr_DisableOffScreenProcessing_A3: u32 = 10715517;
-pub const fnWaver_Instr_1: u32 = 10716899;
-pub const fnWaver_Init: u32 = 10716909;
-pub const fnWaver_Main: u32 = 10717004;
-pub const fnMetalee_Instr_1: u32 = 10717526;
-pub const fnMetalee_Init: u32 = 10717536;
-pub const fnMetalee_Main: u32 = 10717561;
-pub const fnMetalee_Shot: u32 = 10717967;
-pub const fnFireflea_Init: u32 = 10718509;
-pub const fnFireflea_Main: u32 = 10718702;
-pub const fnFireflea_Touch: u32 = 10718827;
-pub const fnFireflea_Powerbomb: u32 = 10718851;
-pub const fnFireflea_Shot: u32 = 10718857;
-pub const fnMaridiaFish_Instr_3: u32 = 10719382;
-pub const fnMaridiaFish_Instr_1: u32 = 10719392;
-pub const fnMaridiaFish_Instr_2: u32 = 10719402;
-pub const fnMaridiaFish_Init: u32 = 10719413;
-pub const fnMaridiaFish_Main: u32 = 10719531;
-pub const fnElevator_Init: u32 = 10720486;
-pub const fnElevator_Frozen: u32 = 10720554;
-pub const fnCrab_Init: u32 = 10720995;
-pub const fnSlug_Init: u32 = 10721595;
-pub const fnPlatformThatFallsWithSamus_Instr_3: u32 = 10722411;
-pub const fnPlatformThatFallsWithSamus_Instr_4: u32 = 10722422;
-pub const fnPlatformThatFallsWithSamus_Instr_1: u32 = 10722433;
-pub const fnPlatformThatFallsWithSamus_Instr_2: u32 = 10722444;
-pub const fnPlatformThatFallsWithSamus_Init: u32 = 10722463;
-pub const fnFastMovingSlowSinkingPlatform_Init: u32 = 10722490;
-pub const fnPlatformThatFallsWithSamus_Main: u32 = 10722582;
-pub const fnnullsub_32: u32 = 10723079;
-pub const fnFastMovingSlowSinkingPlatform_Shot: u32 = 10723080;
-pub const fnRoach_Init: u32 = 10723661;
-pub const fnRoach_Main: u32 = 10724048;
-pub const fnMochtroid_Init: u32 = 10725245;
-pub const fnMochtroid_Main: u32 = 10725264;
-pub const fnMochtroid_Touch: u32 = 10725715;
-pub const fnMochtroid_Shot: u32 = 10725800;
-pub const fnSidehopper_Func_1: u32 = 10725992;
-pub const fnSidehopper_Instr_1: u32 = 10726142;
-pub const fnSidehopper_Init: u32 = 10726153;
-pub const fnSidehopper_Main: u32 = 10726351;
-pub const fnMaridiaRefillCandy_Instr_1: u32 = 10728489;
-pub const fnMaridiaRefillCandy_Instr_2: u32 = 10728500;
-pub const fnMaridiaRefillCandy_Instr_3: u32 = 10728511;
-pub const fnMaridiaRefillCandy_Init: u32 = 10728522;
-pub const fnMaridiaRefillCandy_Main: u32 = 10728572;
-pub const fnNorfairSlowFireball_Init: u32 = 10729071;
-pub const fnBang_Instr_1: u32 = 10730104;
-pub const fnBang_Instr_2: u32 = 10730152;
-pub const fnBang_Init: u32 = 10730163;
-pub const fnBang_Main: u32 = 10730277;
-pub const fnBang_Func_6: u32 = 10730661;
-pub const fnBang_Func_7: u32 = 10730689;
-pub const fnBang_Func_8: u32 = 10730693;
-pub const fnBang_Func_10: u32 = 10730780;
-pub const fnBang_Func_11: u32 = 10730796;
-pub const fnBang_Shot: u32 = 10731261;
-pub const fnSkree_Instr_1: u32 = 10733220;
-pub const fnSkree_Init: u32 = 10733230;
-pub const fnSkree_Main: u32 = 10733255;
-pub const fnSkree_Shot: u32 = 10733557;
-pub const fnMaridiaSnail_Instr_1: u32 = 10734646;
-pub const fnMaridiaSnail_Instr_2: u32 = 10734655;
-pub const fnMaridiaSnail_Instr_4: u32 = 10734664;
-pub const fnMaridiaSnail_Instr_3: u32 = 10734687;
-pub const fnMaridiaSnail_Instr_5: u32 = 10734712;
-pub const fnMaridiaSnail_Init: u32 = 10735074;
-pub const fnMaridiaSnail_Main: u32 = 10735204;
-pub const fnnullsub_215: u32 = 10735455;
-pub const fnMaridiaSnail_Func_7: u32 = 10735456;
-pub const fnMaridiaSnail_Func_9: u32 = 10735526;
-pub const fnMaridiaSnail_CFB7: u32 = 10735543;
-pub const fnMaridiaSnail_CFBD: u32 = 10735549;
-pub const fnMaridiaSnail_CFCE: u32 = 10735566;
-pub const fnMaridiaSnail_CFD4: u32 = 10735572;
-pub const fnMaridiaSnail_CFE5: u32 = 10735589;
-pub const fnMaridiaSnail_CFEB: u32 = 10735595;
-pub const fnMaridiaSnail_CFFC: u32 = 10735612;
-pub const fnMaridiaSnail_Func_15: u32 = 10736051;
-pub const fnMaridiaSnail_Touch: u32 = 10736560;
-pub const fnMaridiaSnail_Shot: u32 = 10736745;
-pub const fnReflec_Func_1: u32 = 10738444;
-pub const fnReflec_Instr_1: u32 = 10738632;
-pub const fnReflec_Init: u32 = 10738643;
-pub const fnnullsub_33: u32 = 10738715;
-pub const fnReflec_Shot: u32 = 10738716;
-pub const fnWreckedShipOrangeZoomer_Func_1: u32 = 10739650;
-pub const fnWreckedShipOrangeZoomer_Init: u32 = 10739779;
-pub const fnnullsub_343: u32 = 10739850;
-pub const fnWreckedShipOrangeZoomer_Func_2: u32 = 10739857;
-pub const fnWreckedShipOrangeZoomer_Main: u32 = 10739851;
-pub const fnsub_A3E168: u32 = 10740072;
-pub const fnBigEyeBugs_Init: u32 = 10740436;
-pub const fnFireZoomer_Init: u32 = 10741148;
-pub const fnZoomer_Instr_SetPreinstr: u32 = 10741344;
-pub const fnStoneZoomer_Init: u32 = 10741353;
-pub const fnnullsub_304: u32 = 10741441;
-pub const fnStoneZoomer_Main: u32 = 10741442;
-pub const fnFireZoomer_Func_1: u32 = 10741448;
-pub const fnFireZoomer_Func_2: u32 = 10741637;
-pub const fnFireZoomer_Func_3: u32 = 10741746;
-pub const fnMetroid_Init: u32 = 10742351;
-pub const fnMetroid_Instr_2: u32 = 10742437;
-pub const fnMetroid_Instr_1: u32 = 10742449;
-pub const fnMetroid_Frozen: u32 = 10742502;
-pub const fnMetroid_Hurt: u32 = 10742579;
-pub const fnMetroid_Main: u32 = 10742680;
-pub const fnMetroid_Touch: u32 = 10743275;
-pub const fnMetroid_Shot: u32 = 10743559;
-pub const fnMetroid_Powerbomb: u32 = 10743874;
-pub const fnEnemy_GrappleReact_SamusLatchesOn_A4: u32 = 10780677;
-pub const fnEnemy_NormalTouchAI_A4: u32 = 10780707;
-pub const fnEnemy_NormalShotAI_A4: u32 = 10780717;
-pub const fnEnemy_NormalPowerBombAI_A4: u32 = 10780727;
-pub const fnEnemy_NormalFrozenAI_A4: u32 = 10780737;
-pub const fnnullsub_170_A4: u32 = 10780748;
-pub const fnEnemyInstr_Goto_A4: u32 = 10780909;
-pub const fnEnemyInstr_Sleep_A4: u32 = 10780975;
-pub const fnCrocomire_Hurt: u32 = 10782343;
-pub const fnCrocomire_Instr_1: u32 = 10782374;
-pub const fnCrocomire_Instr_14: u32 = 10782546;
-pub const fnCrocomire_Init: u32 = 10783322;
-pub const fnCrocomire_Main: u32 = 10783748;
-pub const fnCrocomire_Instr_11: u32 = 10783995;
-pub const fnCrocomire_Instr_7: u32 = 10784007;
-pub const fnCrocomire_Instr_19: u32 = 10784019;
-pub const fnCrocomire_Instr_2: u32 = 10784711;
-pub const fnCrocomire_Instr_4: u32 = 10784735;
-pub const fnCrocomire_Instr_3: u32 = 10784762;
-pub const fnCrocomire_Instr_15: u32 = 10784767;
-pub const fnCrocomire_Instr_16: u32 = 10784797;
-pub const fnCrocomire_Instr_13: u32 = 10784859;
-pub const fnCrocomire_Instr_18: u32 = 10784895;
-pub const fnCrocomire_Instr_12: u32 = 10784911;
-pub const fnCrocomire_Instr_17: u32 = 10784916;
-pub const fnCrocomire_Instr_8: u32 = 10787483;
-pub const fnCrocomire_Instr_6: u32 = 10787488;
-pub const fnCrocomire_Instr_9: u32 = 10787493;
-pub const fnCrocomire_Instr_5: u32 = 10787498;
-pub const fnCrocomire_Instr_20: u32 = 10787503;
-pub const fnCrocomire_Instr_21: u32 = 10787508;
-pub const fnCrocomire_Instr_22: u32 = 10787513;
-pub const fnCrocomire_Instr_23: u32 = 10787518;
-pub const fnCrocomire_Instr_24: u32 = 10787523;
-pub const fnCrocomire_Instr_10: u32 = 10787528;
-pub const fnCrocomire_Instr_25: u32 = 10787533;
-pub const fnCrocomire_Instr_26: u32 = 10787538;
-pub const fnCrocomire_Instr_27: u32 = 10787543;
-pub const fnCrocomire_Func_92: u32 = 10795325;
-pub const fnnullsub_34: u32 = 10795344;
-pub const fnCrocomire_Func_93: u32 = 10795345;
-pub const fnCrocomire_Func_94: u32 = 10795368;
-pub const fnCrocomire_Powerbomb: u32 = 10795410;
-pub const fnCrocomire_Func_95: u32 = 10795525;
-pub const fnCrocomire_Func_1: u32 = 10795700;
-pub const fnCrocomireTongue_Init: u32 = 10811002;
-pub const fnCrocomireTongue_Main: u32 = 10811067;
-pub const fnEnemy_GrappleReact_NoInteract_A5: u32 = 10846208;
-pub const fnEnemy_GrappleReact_CancelBeam_A5: u32 = 10846223;
-pub const fnEnemy_NormalTouchAI_A5: u32 = 10846243;
-pub const fnEnemy_NormalShotAI_A5: u32 = 10846253;
-pub const fnEnemy_NormalPowerBombAI_A5: u32 = 10846263;
-pub const fnEnemy_NormalFrozenAI_A5: u32 = 10846273;
-pub const fnCreateADudShot_A5: u32 = 10846278;
-pub const fnnullsub_170_A5: u32 = 10846284;
-pub const fnEnemyInstr_StopScript_A5: u32 = 10846332;
-pub const fnEnemyInstr_Goto_A5: u32 = 10846445;
-pub const fnEnemyInstr_DecTimerAndGoto2_A5: u32 = 10846480;
-pub const fnEnemyInstr_SetTimer_A5: u32 = 10846499;
-pub const fnEnemyInstr_Sleep_A5: u32 = 10846511;
-pub const fnEnemyInstr_WaitNframes_A5: u32 = 10846522;
-pub const fnDraygon_Init: u32 = 10847879;
-pub const fnDraygon_Main: u32 = 10847996;
-pub const fnDraygon_Func_36: u32 = 10851138;
-pub const fnDraygon_Instr_1: u32 = 10851549;
-pub const fnDraygon_Hurt: u32 = 10851661;
-pub const fnDraygon_Touch: u32 = 10851818;
-pub const fnDraygon_Shot: u32 = 10851824;
-pub const fnDraygon_Powerbomb: u32 = 10851847;
-pub const fnDraygon_Instr_13: u32 = 10852150;
-pub const fnDraygon_Instr_8: u32 = 10852159;
-pub const fnDraygon_Instr_7: u32 = 10852178;
-pub const fnDraygon_Instr_6: u32 = 10852197;
-pub const fnDraygon_Instr_9: u32 = 10852216;
-pub const fnDraygon_Instr_2: u32 = 10852501;
-pub const fnDraygon_Instr_11: u32 = 10852563;
-pub const fnDraygon_Instr_5: u32 = 10852591;
-pub const fnDraygon_Instr_15: u32 = 10853274;
-pub const fnDraygon_Instr_17: u32 = 10853514;
-pub const fnDraygon_Instr_14: u32 = 10853898;
-pub const fnDraygon_Instr_16: u32 = 10854231;
-pub const fnDraygon_Instr_10: u32 = 10854240;
-pub const fnDraygon_Instr_4: u32 = 10854254;
-pub const fnDraygon_Instr_12: u32 = 10854268;
-pub const fnDraygon_Instr_18: u32 = 10854318;
-pub const fnDraygonsEye_Init: u32 = 10863723;
-pub const fnDraygon_Instr_3: u32 = 10863739;
-pub const fnDraygonsEye_Main: u32 = 10863750;
-pub const fnDraygonsTail_Init: u32 = 10864025;
-pub const fnnullsub_37: u32 = 10864042;
-pub const fnDraygonsArms_Init: u32 = 10864045;
-pub const fnnullsub_38: u32 = 10864068;
-pub const fnDraygon_Instr_25: u32 = 10872671;
-pub const fnDraygon_Instr_24: u32 = 10872689;
-pub const fnDraygon_Instr_21: u32 = 10872877;
-pub const fnDraygon_Instr_22: u32 = 10872946;
-pub const fnDraygon_Instr_27: u32 = 10872956;
-pub const fnDraygon_Instr_23: u32 = 10872981;
-pub const fnDraygon_Instr_30: u32 = 10873009;
-pub const fnDraygon_Instr_20: u32 = 10873018;
-pub const fnDraygon_Instr_29: u32 = 10873034;
-pub const fnDraygon_Instr_19: u32 = 10873116;
-pub const fnDraygon_Instr_28: u32 = 10873198;
-pub const fnDraygon_Instr_26: u32 = 10873265;
-pub const fnSporeSpawn_Init: u32 = 10873386;
-pub const fnSporeSpawn_Main: u32 = 10873619;
-pub const fnSporeSpawn_Shot: u32 = 10874202;
-pub const fnSporeSpawn_Touch: u32 = 10874348;
-pub const fnnullsub_39: u32 = 10874354;
-pub const fnEnemy_GrappleReact_NoInteract_A6: u32 = 10911744;
-pub const fnEnemy_GrappleReact_CancelBeam_A6: u32 = 10911759;
-pub const fnEnemy_NormalTouchAI_A6: u32 = 10911779;
-pub const fnEnemy_NormalShotAI_A6: u32 = 10911789;
-pub const fnEnemy_NormalPowerBombAI_A6: u32 = 10911799;
-pub const fnEnemy_NormalFrozenAI_A6: u32 = 10911809;
-pub const fnnullsub_170_A6: u32 = 10911820;
-pub const fnEnemyInstr_Goto_A6: u32 = 10911981;
-pub const fnEnemyInstr_Sleep_A6: u32 = 10912047;
-pub const fnBoulder_Init: u32 = 10913525;
-pub const fnBoulder_Main: u32 = 10913683;
-pub const fnSpikeyPlatform_Init: u32 = 10914607;
-pub const fnSpikeyPlatform2ndEnemy_Init: u32 = 10914693;
-pub const fnSpikeyPlatform2ndEnemy_Main: u32 = 10914713;
-pub const fnSpikeyPlatform_Main: u32 = 10914733;
-pub const fnFireGeyser_Instr_1: u32 = 10915247;
-pub const fnFireGeyser_Instr_2: u32 = 10915347;
-pub const fnFireGeyser_Instr_3: u32 = 10915373;
-pub const fnFireGeyser_Instr_4: u32 = 10915393;
-pub const fnFireGeyser_Instr_5: u32 = 10915413;
-pub const fnFireGeyser_Instr_6: u32 = 10915433;
-pub const fnFireGeyser_Instr_7: u32 = 10915453;
-pub const fnFireGeyser_Instr_8: u32 = 10915473;
-pub const fnFireGeyser_Instr_9: u32 = 10915493;
-pub const fnFireGeyser_Instr_10: u32 = 10915513;
-pub const fnFireGeyser_Instr_11: u32 = 10915533;
-pub const fnFireGeyser_Instr_12: u32 = 10915553;
-pub const fnFireGeyser_Instr_13: u32 = 10915573;
-pub const fnFireGeyser_Instr_14: u32 = 10915593;
-pub const fnFireGeyser_Instr_15: u32 = 10915613;
-pub const fnFireGeyser_Instr_16: u32 = 10915633;
-pub const fnFireGeyser_Instr_17: u32 = 10915653;
-pub const fnFireGeyser_Instr_18: u32 = 10915673;
-pub const fnFireGeyser_Instr_19: u32 = 10915693;
-pub const fnFireGeyser_Instr_20: u32 = 10915713;
-pub const fnFireGeyser_Instr_21: u32 = 10915733;
-pub const fnFireGeyser_Instr_22: u32 = 10915753;
-pub const fnFireGeyser_Instr_23: u32 = 10915773;
-pub const fnFireGeyser_Instr_24: u32 = 10915793;
-pub const fnFireGeyser_Init: u32 = 10915836;
-pub const fnFireGeyser_Main: u32 = 10915875;
-pub const fnNuclearWaffle_Init: u32 = 10917060;
-pub const fnNuclearWaffle_Main: u32 = 10917390;
-pub const fnFakeKraid_Init: u32 = 10918488;
-pub const fnFakeKraid_Main: u32 = 10918594;
-pub const fnFakeKraid_Instr_2: u32 = 10918694;
-pub const fnFakeKraid_Instr_1: u32 = 10918772;
-pub const fnFakeKraid_Instr_3: u32 = 10918834;
-pub const fnFakeKraid_Instr_4: u32 = 10918852;
-pub const fnFakeKraid_Instr_5: u32 = 10918914;
-pub const fnFakeKraid_Touch: u32 = 10918946;
-pub const fnFakeKraid_Shot: u32 = 10918969;
-pub const fnCeresRidley_Init: u32 = 10920181;
-pub const fnCeresRidley_Main: u32 = 10920584;
-pub const fnCeresRidley_Hurt: u32 = 10920659;
-pub const fnRidley_A2F2: u32 = 10920690;
-pub const fnRidley_Main: u32 = 10924583;
-pub const fnRidley_Func_2: u32 = 10924682;
-pub const fnRidley_Hurt: u32 = 10924695;
-pub const fnRidleysExplosion_Init: u32 = 10929814;
-pub const fnRidleysExplosion_Main: u32 = 10930388;
-pub const fnsub_A6DF59: u32 = 10936153;
-pub const fnRidley_Shot: u32 = 10936202;
-pub const fnRidley_Powerbomb: u32 = 10936242;
-pub const fnRidley_Instr_5: u32 = 10937534;
-pub const fnRidley_Instr_6: u32 = 10937546;
-pub const fnRidley_Instr_10: u32 = 10937554;
-pub const fnRidley_Instr_4: u32 = 10937582;
-pub const fnRidley_Instr_3: u32 = 10937592;
-pub const fnRidley_Instr_2: u32 = 10937601;
-pub const fnRidley_Instr_1: u32 = 10937623;
-pub const fnRidley_Instr_14: u32 = 10937631;
-pub const fnRidley_Instr_9: u32 = 10938140;
-pub const fnRidley_Instr_7: u32 = 10938151;
-pub const fnRidley_Instr_8: u32 = 10938159;
-pub const fnRidley_Instr_11: u32 = 10938445;
-pub const fnRidley_Instr_12: u32 = 10938628;
-pub const fnRidley_Instr_13: u32 = 10938633;
-pub const fnRidley_Instr_15: u32 = 10938729;
-pub const fnRidley_Instr_16: u32 = 10938742;
-pub const fnCeresSteam_Init: u32 = 10940337;
-pub const fnCeresSteam_Main: u32 = 10940429;
-pub const fnCeresSteam_Touch: u32 = 10940479;
-pub const fnCeresSteam_Instr_1: u32 = 10940701;
-pub const fnCeresSteam_Instr_2: u32 = 10940711;
-pub const fnCeresSteam_Instr_3: u32 = 10940725;
-pub const fnCeresDoor_Instr_6: u32 = 10942014;
-pub const fnCeresDoor_Instr_4: u32 = 10942058;
-pub const fnCeresDoor_Instr_8: u32 = 10942072;
-pub const fnCeresSteam_Instr_4: u32 = 10942091;
-pub const fnCeresDoor_Instr_1: u32 = 10942101;
-pub const fnCeresDoor_Instr_3: u32 = 10942111;
-pub const fnCeresSteam_Instr_5: u32 = 10942118;
-pub const fnCeresDoor_Instr_5: u32 = 10942128;
-pub const fnCeresDoor_Instr_2: u32 = 10942131;
-pub const fnCeresDoor_Instr_7: u32 = 10942141;
-pub const fnCeresDoor_Init: u32 = 10942149;
-pub const fnCeresDoor_Main: u32 = 10942309;
-pub const fnnullsub_41: u32 = 10942752;
-pub const fnZebetites_Init: u32 = 10943346;
-pub const fnZebetites_Main: u32 = 10943539;
-pub const fnZebetites_Touch: u32 = 10943911;
-pub const fnZebetites_Shot: u32 = 10943916;
-pub const fnEnemy_GrappleReact_NoInteract_A7: u32 = 10977280;
-pub const fnEnemy_GrappleReact_CancelBeam_A7: u32 = 10977295;
-pub const fnEnemy_NormalShotAI_A7: u32 = 10977325;
-pub const fnEnemy_NormalPowerBombAI_A7: u32 = 10977335;
-pub const fnEnemy_NormalPowerBombAI_SkipDeathAnim_A7: u32 = 10977340;
-pub const fnEnemy_NormalFrozenAI_A7: u32 = 10977345;
-pub const fnnullsub_170_A7: u32 = 10977356;
-pub const fnEnemyInstr_Call_A7: u32 = 10977418;
-pub const fnEnemyInstr_Goto_A7: u32 = 10977517;
-pub const fnEnemyInstr_DecTimerAndGoto2_A7: u32 = 10977552;
-pub const fnEnemyInstr_SetTimer_A7: u32 = 10977571;
-pub const fnEnemyInstr_Sleep_A7: u32 = 10977583;
-pub const fnKraid_Instr_9: u32 = 10979983;
-pub const fnKraid_Touch_ArmFoot: u32 = 10982539;
-pub const fnnullsub_44: u32 = 10982543;
-pub const fnKraidsArm_Touch: u32 = 10982544;
-pub const fnKraid_Touch: u32 = 10982559;
-pub const fnnullsub_43: u32 = 10982581;
-pub const fnKraid_Arm_Shot: u32 = 10982582;
-pub const fnKraid_Init: u32 = 10987865;
-pub const fnKraidsArm_Init: u32 = 10988355;
-pub const fnKraidsTopLint_Init: u32 = 10988392;
-pub const fnKraidsMiddleLint_Init: u32 = 10988444;
-pub const fnKraidsBottomLint_Init: u32 = 10988490;
-pub const fnKraidsFoot_Init: u32 = 10988536;
-pub const fnKraid_Main: u32 = 10988577;
-pub const fnKraid_Instr_1: u32 = 10991155;
-pub const fnKraid_Instr_DecYpos: u32 = 10991158;
-pub const fnKraid_Instr_IncrYpos_Shake: u32 = 10991164;
-pub const fnKraid_Instr_PlaySound_0x76: u32 = 10991182;
-pub const fnKraid_Instr_XposMinus3: u32 = 10991194;
-pub const fnKraid_Instr_XposMinus3b: u32 = 10991207;
-pub const fnKraid_Instr_XposPlus3: u32 = 10991220;
-pub const fnKraid_Instr_MoveHimRight: u32 = 10991235;
-pub const fnKraidsArm_Main: u32 = 10991549;
-pub const fnKraidsTopLint_Main: u32 = 10991617;
-pub const fnKraidsMiddleLint_Main: u32 = 10991629;
-pub const fnKraidsBottomLint_Main: u32 = 10991641;
-pub const fnKraidsFoot_Main: u32 = 10992118;
-pub const fnKraidsGoodFingernail_Touch: u32 = 10992847;
-pub const fnKraidsBadFingernail_Touch: u32 = 10992862;
-pub const fnKraidsGoodFingernail_Init: u32 = 10992879;
-pub const fnKraidsBadFingernail_Init: u32 = 10992941;
-pub const fnKraidsGoodFingernail_Main: u32 = 10992946;
-pub const fnKraidsBadFingernail_Main: u32 = 10992969;
-pub const fnPhantoon_Init: u32 = 10997235;
-pub const fnPhantoon2_Init: u32 = 10997333;
-pub const fnPhantoon_Main: u32 = 10997414;
-pub const fnnullsub_237: u32 = 10998952;
-pub const fnPhantoon_Spawn8FireballsInCircleAtStart: u32 = 10998953;
-pub const fnPhantoon_WaitBetweenSpawningAndSpinningFireballs: u32 = 10999022;
-pub const fnPhantoon_SpawnFireballsBeforeFight: u32 = 10999048;
-pub const fnPhantoon_WavyFadeIn: u32 = 10999114;
-pub const fnPhantoon_PickPatternForRound1: u32 = 10999190;
-pub const fnPhantoon_MovePhantoonInFigure8ThenOpenEye: u32 = 10999271;
-pub const fnPhantoon_EyeFollowsSamusUntilTimerRunsOut: u32 = 10999309;
-pub const fnPhantoon_BecomesSolidAndBodyVuln: u32 = 10999388;
-pub const fnPhantoon_IsSwooping: u32 = 10999416;
-pub const fnPhantoon_FadeoutWithSwoop: u32 = 10999481;
-pub const fnPhantoon_WaitAfterFadeOut: u32 = 10999508;
-pub const fnPhantoon_MoveLeftOrRightAndPickEyeOpenPatt: u32 = 10999522;
-pub const fnPhantoon_FadeInBeforeFigure8: u32 = 10999597;
-pub const fnPhantoon_BecomeSolidAfterRainingFireballs: u32 = 10999615;
-pub const fnPhantoon_FadeInDuringFireballRain: u32 = 10999655;
-pub const fnPhantoon_FollowSamusWithEyeDuringFireballRain: u32 = 10999688;
-pub const fnPhantoon_FadeOutDuringFireballRain: u32 = 10999765;
-pub const fnPhantoon_SpawnRainingFireballs: u32 = 10999799;
-pub const fnPhantoon_FadeOutBeforeFirstFireballRain: u32 = 10999850;
-pub const fnPhantoon_FadeOutBeforeEnrage: u32 = 10999900;
-pub const fnPhantoon_MoveEnragedPhantoonToTopCenter: u32 = 10999924;
-pub const fnPhantoon_FadeInEnragedPhantoon: u32 = 10999953;
-pub const fnPhantoon_Enraged: u32 = 10999980;
-pub const fnPhantoon_FadeoutAfterEnrage: u32 = 11000086;
-pub const fnPhantoon_CompleteSwoopAfterFatalShot: u32 = 11000110;
-pub const fnPhantoon_DyingPhantoonFadeInOut: u32 = 11000136;
-pub const fnPhantoon_DyingPhantoonExplosions: u32 = 11000203;
-pub const fnPhantoon_WavyDyingPhantoonAndCry: u32 = 11000401;
-pub const fnPhantoon_DyingFadeOut: u32 = 11000454;
-pub const fnPhantoon_AlmostDead: u32 = 11000535;
-pub const fnPhantoon_Dead: u32 = 11000637;
-pub const fnPhantoon_Hurt: u32 = 11001151;
-pub const fnPhantoon_Touch: u32 = 11001237;
-pub const fnnullsub_358: u32 = 11001242;
-pub const fnPhantoon_Shot: u32 = 11001243;
-pub const fnnullsub_45: u32 = 11001873;
-pub const fnEtecoon_Init: u32 = 11004178;
-pub const fnEtecoon_Main: u32 = 11004224;
-pub const fnEtecoon_Func_4: u32 = 11004335;
-pub const fnEtecoon_Func_5: u32 = 11004416;
-pub const fnEtecoon_Func_6: u32 = 11004471;
-pub const fnEtecoon_Func_7: u32 = 11004597;
-pub const fnEtecoon_Func_8: u32 = 11004674;
-pub const fnEtecoon_Func_9: u32 = 11004716;
-pub const fnEtecoon_Func_10: u32 = 11004752;
-pub const fnEtecoon_Func_11: u32 = 11004877;
-pub const fnEtecoon_Func_12: u32 = 11004955;
-pub const fnEtecoon_Func_16: u32 = 11005079;
-pub const fnEtecoon_Func_17: u32 = 11005115;
-pub const fnEtecoon_Func_18: u32 = 11005151;
-pub const fnEtecoon_Func_19: u32 = 11005193;
-pub const fnEtecoon_Func_20: u32 = 11005226;
-pub const fnEtecoon_Func_21: u32 = 11005268;
-pub const fnEtecoon_Func_22: u32 = 11005301;
-pub const fnEtecoon_Func_23: u32 = 11005383;
-pub const fnEtecoon_Func_24: u32 = 11005502;
-pub const fnEtecoon_Func_25: u32 = 11005594;
-pub const fnEtecoon_Func_26: u32 = 11005624;
-pub const fnDachora_Init: u32 = 11007197;
-pub const fnDachora_Main: u32 = 11007278;
-pub const fnDachora_Func_2: u32 = 11007344;
-pub const fnDachora_Func_3: u32 = 11007420;
-pub const fnDachora_Func_4: u32 = 11007469;
-pub const fnDachora_Func_5: u32 = 11007582;
-pub const fnDachora_Func_7: u32 = 11007887;
-pub const fnDachora_Func_8: u32 = 11008006;
-pub const fnDachora_Func_11: u32 = 11008309;
-pub const fnDachora_Func_12: u32 = 11008396;
-pub const fnEnemy_GrappleReact_NoInteract_A8: u32 = 11042816;
-pub const fnEnemy_GrappleReact_KillEnemy_A8: u32 = 11042826;
-pub const fnEnemy_GrappleReact_CancelBeam_A8: u32 = 11042831;
-pub const fnEnemy_GrappleReact_SamusLatchesNoInvinc_A8: u32 = 11042836;
-pub const fnEnemy_GrappleReact_HurtSamus_A8: u32 = 11042846;
-pub const fnEnemy_NormalTouchAI_A8: u32 = 11042851;
-pub const fnEnemy_NormalShotAI_A8: u32 = 11042861;
-pub const fnEnemy_NormalPowerBombAI_A8: u32 = 11042871;
-pub const fnEnemy_NormalFrozenAI_A8: u32 = 11042881;
-pub const fnnullsub_170_A8: u32 = 11042892;
-pub const fnEnemyInstr_Goto_A8: u32 = 11043053;
-pub const fnEnemyInstr_DecTimerAndGoto2_A8: u32 = 11043088;
-pub const fnEnemyInstr_SetTimer_A8: u32 = 11043107;
-pub const fnEnemyInstr_Sleep_A8: u32 = 11043119;
-pub const fnEnemyInstr_EnableOffScreenProcessing_A8: u32 = 11043187;
-pub const fnEnemyInstr_DisableOffScreenProcessing_A8: u32 = 11043197;
-pub const fnMiniDraygon_Instr_2: u32 = 11044751;
-pub const fnMiniDraygon_Instr_1: u32 = 11044763;
-pub const fnMiniDraygon_Instr_3: u32 = 11044790;
-pub const fnMiniDraygon_Instr_4: u32 = 11044811;
-pub const fnMiniDraygon_Init: u32 = 11044832;
-pub const fnEvirProjectile_Init: u32 = 11045040;
-pub const fnMiniDraygon_Main: u32 = 11045147;
-pub const fnEvirProjectile_Main: u32 = 11045278;
-pub const fnMiniDraygon_Touch: u32 = 11045638;
-pub const fnMiniDraygon_Powerbomb: u32 = 11045644;
-pub const fnMiniDraygon_Shot: u32 = 11045650;
-pub const fnMorphBallEye_Init: u32 = 11047000;
-pub const fnMorphBallEye_Main: u32 = 11047138;
-pub const fnMorphBallEye_Func_1: u32 = 11047153;
-pub const fnMorphBallEye_Func_2: u32 = 11047214;
-pub const fnMorphBallEye_Func_3: u32 = 11047264;
-pub const fnMorphBallEye_Func_4: u32 = 11047374;
-pub const fnnullsub_244: u32 = 11047388;
-pub const fnFune_Instr_2: u32 = 11048485;
-pub const fnFune_Instr_6: u32 = 11048497;
-pub const fnFune_Instr_7: u32 = 11048522;
-pub const fnFune_Instr_1: u32 = 11048547;
-pub const fnFune_Instr_4: u32 = 11048572;
-pub const fnFune_Instr_3: u32 = 11048597;
-pub const fnFune_Instr_5: u32 = 11048628;
-pub const fnFune_Init: u32 = 11048675;
-pub const fnFune_Main: u32 = 11048752;
-pub const fnWreckedShipGhost_Init: u32 = 11049710;
-pub const fnWreckedShipGhost_Main: u32 = 11049788;
-pub const fnYappingMaw_Instr_2: u32 = 11051207;
-pub const fnYappingMaw_Instr_4: u32 = 11051225;
-pub const fnYappingMaw_Instr_5: u32 = 11051243;
-pub const fnYappingMaw_Instr_7: u32 = 11051261;
-pub const fnYappingMaw_Instr_3: u32 = 11051279;
-pub const fnYappingMaw_Instr_6: u32 = 11051297;
-pub const fnYappingMaw_Instr_1: u32 = 11051315;
-pub const fnYappingMaw_Init: u32 = 11051336;
-pub const fnYappingMaw_Main: u32 = 11051537;
-pub const fnYappingMaw_Touch: u32 = 11052953;
-pub const fnYappingMaw_Shot: u32 = 11052989;
-pub const fnYappingMaw_Frozen: u32 = 11053109;
-pub const fnKago_Init: u32 = 11053894;
-pub const fnKago_Main: u32 = 11053941;
-pub const fnKago_Shot: u32 = 11053955;
-pub const fnNorfairLavaMan_Instr_1: u32 = 11054610;
-pub const fnNorfairLavaMan_Instr_8: u32 = 11054630;
-pub const fnNorfairLavaMan_Instr_14: u32 = 11054640;
-pub const fnNorfairLavaMan_Instr_2: u32 = 11054650;
-pub const fnNorfairLavaMan_Instr_7: u32 = 11054661;
-pub const fnNorfairLavaMan_Instr_10: u32 = 11054672;
-pub const fnNorfairLavaMan_Instr_12: u32 = 11054682;
-pub const fnNorfairLavaMan_Instr_9: u32 = 11054692;
-pub const fnNorfairLavaMan_Instr_11: u32 = 11054728;
-pub const fnNorfairLavaMan_Instr_13: u32 = 11054742;
-pub const fnNorfairLavaMan_Instr_5: u32 = 11054778;
-pub const fnNorfairLavaMan_Instr_15: u32 = 11054794;
-pub const fnNorfairLavaMan_Instr_4: u32 = 11054820;
-pub const fnNorfairLavaMan_Instr_16: u32 = 11054846;
-pub const fnNorfairLavaMan_Instr_6: u32 = 11054872;
-pub const fnNorfairLavaMan_Instr_3: u32 = 11054916;
-pub const fnNorfairLavaMan_Init: u32 = 11054987;
-pub const fnNorfairLavaMan_Func_6: u32 = 11055282;
-pub const fnNorfairLavaMan_Main: u32 = 11055370;
-pub const fnNorfairLavaMan_Func_7: u32 = 11055386;
-pub const fnNorfairLavaMan_Func_8: u32 = 11055477;
-pub const fnsub_A8B193: u32 = 11055507;
-pub const fnNorfairLavaMan_Func_9: u32 = 11055544;
-pub const fnNorfairLavaMan_Func_10: u32 = 11055581;
-pub const fnNorfairLavaMan_Func_11: u32 = 11055620;
-pub const fnsub_A8B291: u32 = 11055761;
-pub const fnNorfairLavaMan_Func_13: u32 = 11055765;
-pub const fnNorfairLavaMan_Func_15: u32 = 11055885;
-pub const fnNorfairLavaMan_Func_16: u32 = 11055903;
-pub const fnNorfairLavaMan_Func_17: u32 = 11055958;
-pub const fnNorfairLavaMan_Func_18: u32 = 11056039;
-pub const fnNorfairLavaMan_Powerbomb: u32 = 11056128;
-pub const fnNorfairLavaMan_Touch: u32 = 11056134;
-pub const fnNorfairLavaMan_Shot: u32 = 11056140;
-pub const fnBeetom_Instr_1: u32 = 11056990;
-pub const fnBeetom_Init: u32 = 11057014;
-pub const fnBeetom_Main: u32 = 11057165;
-pub const fnBeetom_Touch: u32 = 11058734;
-pub const fnBeetom_Shot: u32 = 11058860;
-pub const fnMaridiaFloater_Init: u32 = 11059657;
-pub const fnMaridiaFloater_Main: u32 = 11059740;
-pub const fnMaridiaFloater_Func_3: u32 = 11059843;
-pub const fnMaridiaFloater_Func_4: u32 = 11059878;
-pub const fnMaridiaFloater_Func_5: u32 = 11059919;
-pub const fnMaridiaFloater_Func_6: u32 = 11060075;
-pub const fnMaridiaFloater_Func_7: u32 = 11060193;
-pub const fnMaridiaFloater_Func_8: u32 = 11060329;
-pub const fnMaridiaFloater_Func_9: u32 = 11060444;
-pub const fnMaridiaFloater_Func_10: u32 = 11060480;
-pub const fnMaridiaFloater_Func_11: u32 = 11060509;
-pub const fnnullsub_256: u32 = 11060584;
-pub const fnMaridiaFloater_Func_12: u32 = 11060585;
-pub const fnMaridiaFloater_Func_13: u32 = 11060639;
-pub const fnMaridiaFloater_Touch: u32 = 11060670;
-pub const fnMaridiaFloater_Shot: u32 = 11060719;
-pub const fnMaridiaFloater_Powerbomb: u32 = 11060799;
-pub const fnWreckedShipRobot_Init: u32 = 11062135;
-pub const fnWreckedShipRobotDeactivated_Init: u32 = 11062220;
-pub const fnWreckedShipRobot_Main: u32 = 11062326;
-pub const fnnullsub_342: u32 = 11062374;
-pub const fnWreckedShipRobot_Func_1: u32 = 11062375;
-pub const fnWreckedShipRobot_Instr_4: u32 = 11062537;
-pub const fnWreckedShipRobot_Instr_9: u32 = 11062692;
-pub const fnWreckedShipRobot_Instr_6: u32 = 11062762;
-pub const fnWreckedShipRobot_Instr_8: u32 = 11062917;
-pub const fnWreckedShipRobot_Instr_7: u32 = 11062987;
-pub const fnWreckedShipRobot_Instr_15: u32 = 11062991;
-pub const fnWreckedShipRobot_Instr_18: u32 = 11063146;
-pub const fnWreckedShipRobot_Instr_16: u32 = 11063216;
-pub const fnWreckedShipRobot_Instr_17: u32 = 11063371;
-pub const fnWreckedShipRobot_Instr_3: u32 = 11063441;
-pub const fnWreckedShipRobot_Instr_10: u32 = 11063490;
-pub const fnWreckedShipRobot_Instr_14: u32 = 11063494;
-pub const fnWreckedShipRobot_Instr_2: u32 = 11063506;
-pub const fnWreckedShipRobot_Instr_13: u32 = 11063552;
-pub const fnWreckedShipRobot_Instr_1: u32 = 11063559;
-pub const fnWreckedShipRobot_Instr_12: u32 = 11063601;
-pub const fnWreckedShipRobot_Instr_5: u32 = 11063613;
-pub const fnWreckedShipRobot_Instr_11: u32 = 11063659;
-pub const fnWreckedShipRobotDeactivated_Touch: u32 = 11063668;
-pub const fnWreckedShipRobotDeactivated_Shot: u32 = 11063693;
-pub const fnWreckedShipRobot_Shot: u32 = 11063698;
-pub const fnMaridiaPuffer_Init: u32 = 11065545;
-pub const fnMaridiaPuffer_Main: u32 = 11065611;
-pub const fnMaridiaPuffer_Shot: u32 = 11066132;
-pub const fnWalkingLavaSeahorse_Init: u32 = 11066573;
-pub const fnWalkingLavaSeahorse_Main: u32 = 11066731;
-pub const fnWalkingLavaSeahorse_Instr_4: u32 = 11067164;
-pub const fnWalkingLavaSeahorse_Instr_3: u32 = 11067187;
-pub const fnWalkingLavaSeahorse_Instr_5: u32 = 11067193;
-pub const fnWalkingLavaSeahorse_Instr_6: u32 = 11067199;
-pub const fnWalkingLavaSeahorse_Instr_2: u32 = 11067235;
-pub const fnWalkingLavaSeahorse_Instr_1: u32 = 11067249;
-pub const fnWreckedShipOrbs_Init: u32 = 11068296;
-pub const fnWreckedShipOrbs_Main: u32 = 11068355;
-pub const fnWreckedShipSpark_Instr_2: u32 = 11068957;
-pub const fnWreckedShipSpark_Instr_1: u32 = 11068970;
-pub const fnWreckedShipSpark_Init: u32 = 11068983;
-pub const fnWreckedShipSpark_Main: u32 = 11069070;
-pub const fnWreckedShipSpark_Shot: u32 = 11069198;
-pub const fnBlueBrinstarFaceBlock_Init: u32 = 11069486;
-pub const fnBlueBrinstarFaceBlock_Func_1: u32 = 11069550;
-pub const fnBlueBrinstarFaceBlock_Main: u32 = 11069614;
-pub const fnBlueBrinstarFaceBlock_Shot: u32 = 11069725;
-pub const fnKiHunter_Init: u32 = 11071880;
-pub const fnKiHunterWings_Init: u32 = 11072020;
-pub const fnKiHunter_Main: u32 = 11072092;
-pub const fnKiHunterWings_Main: u32 = 11072098;
-pub const fnKiHunter_Instr_1: u32 = 11072806;
-pub const fnKiHunter_Instr_2: u32 = 11072996;
-pub const fnKiHunter_Instr_3: u32 = 11073151;
-pub const fnKiHunter_Instr_4: u32 = 11073234;
-pub const fnKiHunter_Instr_5: u32 = 11073240;
-pub const fnKiHunter_Shot: u32 = 11073281;
-pub const fnEnemy_GrappleReact_CancelBeam_A9: u32 = 11108367;
-pub const fnEnemy_NormalPowerBombAI_A9: u32 = 11108407;
-pub const fnEnemy_NormalFrozenAI_A9: u32 = 11108417;
-pub const fnnullsub_170_A9: u32 = 11108428;
-pub const fnEnemyInstr_Sleep_A9: u32 = 11108655;
-pub const fnMotherBrainsBody_Init: u32 = 11110023;
-pub const fnMotherBrainsBrain_Init: u32 = 11110149;
-pub const fnMotherBrainsBody_Hurt: u32 = 11110206;
-pub const fnnullsub_264: u32 = 11110278;
-pub const fnMotherBrainsBody_Powerbomb: u32 = 11110279;
-pub const fnMotherBrainsBrain_Hurt: u32 = 11110283;
-pub const fnMotherBrain_DrawBrainNeck_EnemyGfxDrawHook: u32 = 11110345;
-pub const fnMotherBrainsBrain_GfxDrawHook: u32 = 11110365;
-pub const fnMotherBrainsTubesFalling_Init: u32 = 11111221;
-pub const fnMotherBrainsTubesFalling_Main: u32 = 11111301;
-pub const fnMotherBrain_Instr_MoveBodyUp10Left4: u32 = 11113910;
-pub const fnMotherBrain_Instr_MoveBodyUp16Left4: u32 = 11113920;
-pub const fnMotherBrain_Instr_MoveBodyUp12Right2: u32 = 11113930;
-pub const fnMotherBrain_Instr_MoveDown12Left4: u32 = 11113950;
-pub const fnMotherBrain_Instr_MoveDown16Right2: u32 = 11113960;
-pub const fnMotherBrain_Instr_MoveDown10Right2: u32 = 11113970;
-pub const fnMotherBrain_Instr_MoveUp2Right1: u32 = 11113980;
-pub const fnMotherBrain_Instr_MoveRight2: u32 = 11113996;
-pub const fnMotherBrain_Instr_MoveUp1: u32 = 11114012;
-pub const fnMotherBrain_Instr_MoveUp1Right3_Sfx: u32 = 11114018;
-pub const fnMotherBrain_Instr_Down2Right15: u32 = 11114040;
-pub const fnMotherBrain_Instr_Down4Right6: u32 = 11114056;
-pub const fnMotherBrain_Instr_Up4Left2: u32 = 11114072;
-pub const fnMotherBrain_Instr_Up2Left1_Sfx: u32 = 11114088;
-pub const fnMotherBrain_Instr_Up2Left1_Sfx2: u32 = 11114110;
-pub const fnMotherBrain_Instr_MoveLeft2: u32 = 11114132;
-pub const fnMotherBrain_Instr_MoveDown1: u32 = 11114148;
-pub const fnMotherBrain_Instr_MoveDown1Left3: u32 = 11114154;
-pub const fnMotherBrain_Instr_MoveUp2Left15_Sfx: u32 = 11114170;
-pub const fnMotherBrain_Instr_MoveUp4Left6: u32 = 11114192;
-pub const fnMotherBrain_Instr_MoveDown4Right2: u32 = 11114208;
-pub const fnMotherBrain_Instr_MoveDown2Right1: u32 = 11114224;
-pub const fnMotherBrain_Instr_SetPose_Standing: u32 = 11114240;
-pub const fnMotherBrain_Instr_SetPose_Walking: u32 = 11114248;
-pub const fnMotherBrain_Instr_SetPose_Crouched: u32 = 11114256;
-pub const fnMotherBrain_Instr_SetPose_CrouchedTrans: u32 = 11114264;
-pub const fnMotherBrain_Instr_SetPose_DeathBeamMode: u32 = 11114272;
-pub const fnMotherBrain_Instr_SetPose_LeaningDown: u32 = 11114280;
-pub const fnMotherBrain_Instr_SpawnEprojToOffset: u32 = 11115208;
-pub const fnMotherBrain_Instr_SpawnDeathBeamEproj: u32 = 11115247;
-pub const fnMotherBrain_Instr_IncrBeamAttackPhase: u32 = 11115269;
-pub const fnMotherBrainsBody_Shot: u32 = 11121923;
-pub const fnMotherBrainsBrain_Shot: u32 = 11121927;
-pub const fnnullsub_47: u32 = 11122117;
-pub const fnMotherBrainsBrain_Touch: u32 = 11122118;
-pub const fnShitroidInCutscene_Init: u32 = 11126544;
-pub const fnShitroidInCutscene_Main: u32 = 11126649;
-pub const fnShitroidInCutscene_Touch: u32 = 11128579;
-pub const fnShitroid_Instr_1: u32 = 11128756;
-pub const fnShitroid_Instr_2: u32 = 11128778;
-pub const fnDeadTorizo_Init: u32 = 11129608;
-pub const fnDeadTorizo_Main: u32 = 11129704;
-pub const fnDeadTorizo_MainGfxHook: u32 = 11129754;
-pub const fnDeadTorizo_Powerbomb: u32 = 11129898;
-pub const fnDeadTorizo_Shot: u32 = 11129907;
-pub const fnDeadSidehopper_Init: u32 = 11130806;
-pub const fnDeadZoomer_Init: u32 = 11130953;
-pub const fnDeadRipper_Init: u32 = 11130998;
-pub const fnDeadSkree_Init: u32 = 11131039;
-pub const fnDeadSidehopper_Powerbomb: u32 = 11131084;
-pub const fnDeadSidehopper_Main: u32 = 11131099;
-pub const fnDeadZoomer_Powerbomb: u32 = 11132141;
-pub const fnDeadZoomer_Shot: u32 = 11132152;
-pub const fnDeadRipper_Powerbomb: u32 = 11132157;
-pub const fnDeadRipper_Shot: u32 = 11132168;
-pub const fnDeadSkree_Powerbomb: u32 = 11132173;
-pub const fnDeadSkree_Shot: u32 = 11132184;
-pub const fnDeadSidehopper_Shot: u32 = 11132189;
-pub const fnDeadSidehopper_Touch: u32 = 11132228;
-pub const fnsub_A9ECD0: u32 = 11136208;
-pub const fnShitroid_Init: u32 = 11136823;
-pub const fnShitroid_Powerbomb: u32 = 11136954;
-pub const fnShitroid_Main: u32 = 11136965;
-pub const fnShitroid_Touch: u32 = 11138953;
-pub const fnShitroid_Shot: u32 = 11139138;
-pub const fnShitroid_Instr_3: u32 = 11139360;
-pub const fnShitroid_Instr_4: u32 = 11139382;
-pub const fnShitroid_Instr_6: u32 = 11139472;
-pub const fnShitroid_Instr_5: u32 = 11139476;
-pub const fnEnemy_GrappleReact_CancelBeam_AA: u32 = 11173903;
-pub const fnEnemy_NormalPowerBombAI_AA: u32 = 11173943;
-pub const fnEnemy_NormalFrozenAI_AA: u32 = 11173953;
-pub const fnnullsub_170_AA: u32 = 11173964;
-pub const fnEnemy_SetAiPreInstr_AA: u32 = 11173995;
-pub const fnEnemy_ClearAiPreInstr_AA: u32 = 11174004;
-pub const fnnullsub_171_AA: u32 = 11174011;
-pub const fnEnemyInstr_StopScript_AA: u32 = 11174012;
-pub const fnEnemyInstr_Goto_AA: u32 = 11174125;
-pub const fnEnemyInstr_DecTimerAndGoto2_AA: u32 = 11174160;
-pub const fnEnemyInstr_SetTimer_AA: u32 = 11174179;
-pub const fnEnemyInstr_Sleep_AA: u32 = 11174191;
-pub const fnEnemyInstr_WaitNframes_AA: u32 = 11174202;
-pub const fnEnemyInstr_CopyToVram_AA: u32 = 11174219;
-pub const fnTorizo_Instr_3: u32 = 11186332;
-pub const fnTorizo_Instr_31: u32 = 11186461;
-pub const fnTorizo_Instr_33: u32 = 11186622;
-pub const fnTorizo_Instr_36: u32 = 11186724;
-pub const fnTorizo_Instr_37: u32 = 11186734;
-pub const fnTorizo_Instr_35: u32 = 11186744;
-pub const fnTorizo_Instr_38: u32 = 11186765;
-pub const fnTorizo_Instr_6: u32 = 11186801;
-pub const fnTorizo_Instr_5: u32 = 11188557;
-pub const fnTorizo_Instr_9: u32 = 11188561;
-pub const fnTorizo_Instr_7: u32 = 11190984;
-pub const fnTorizo_Instr_2: u32 = 11190985;
-pub const fnTorizo_Instr_8: u32 = 11190993;
-pub const fnTorizo_Instr_25: u32 = 11191001;
-pub const fnTorizo_Instr_22: u32 = 11191021;
-pub const fnTorizo_Instr_19: u32 = 11191031;
-pub const fnTorizo_Instr_32: u32 = 11191037;
-pub const fnTorizo_Instr_30: u32 = 11191043;
-pub const fnTorizo_Instr_34: u32 = 11191087;
-pub const fnTorizo_Instr_24: u32 = 11191114;
-pub const fnTorizo_Instr_12: u32 = 11191131;
-pub const fnTorizo_Instr_10: u32 = 11191149;
-pub const fnTorizo_Instr_11: u32 = 11191159;
-pub const fnTorizo_Instr_29: u32 = 11191178;
-pub const fnTorizo_Instr_1: u32 = 11191200;
-pub const fnTorizo_Instr_28: u32 = 11191222;
-pub const fnTorizo_Instr_4: u32 = 11191244;
-pub const fnTorizo_Instr_40: u32 = 11191326;
-pub const fnTorizo_Instr_16: u32 = 11191408;
-pub const fnTorizo_Instr_27: u32 = 11191525;
-pub const fnTorizo_Instr_23: u32 = 11191642;
-pub const fnTorizo_Instr_14: u32 = 11191655;
-pub const fnTorizo_Instr_15: u32 = 11191691;
-pub const fnTorizo_Instr_26: u32 = 11191716;
-pub const fnTorizo_Instr_18: u32 = 11191755;
-pub const fnTorizo_Instr_20: u32 = 11191779;
-pub const fnTorizo_Instr_44: u32 = 11191794;
-pub const fnTorizo_Instr_21: u32 = 11191809;
-pub const fnTorizo_Instr_17: u32 = 11191824;
-pub const fnTorizo_Instr_13: u32 = 11191832;
-pub const fnTorizo_Hurt: u32 = 11191934;
-pub const fnTorizo_Main: u32 = 11191972;
-pub const fnTorizo_Func_5: u32 = 11192146;
-pub const fnTorizo_Func_6: u32 = 11192360;
-pub const fnTorizo_Func_7: u32 = 11192364;
-pub const fnTorizo_Init: u32 = 11192447;
-pub const fnnullsub_344: u32 = 11192670;
-pub const fnGoldTorizo_Touch: u32 = 11192695;
-pub const fnTorizo_Shot: u32 = 11192700;
-pub const fnnullsub_271: u32 = 11192769;
-pub const fnTorizo_Func_8: u32 = 11192770;
-pub const fnTorizo_Instr_39: u32 = 11193038;
-pub const fnTorizo_Instr_41: u32 = 11193054;
-pub const fnTorizo_Instr_42: u32 = 11193058;
-pub const fnTorizo_Instr_48: u32 = 11193815;
-pub const fnTorizo_Instr_57: u32 = 11194601;
-pub const fnTorizo_Instr_58: u32 = 11194611;
-pub const fnTorizo_Instr_59: u32 = 11194747;
-pub const fnTorizo_Instr_62: u32 = 11194759;
-pub const fnTorizo_Instr_63: u32 = 11194855;
-pub const fnGoldTorizo_Main: u32 = 11195241;
-pub const fnTorizo_Instr_56: u32 = 11195279;
-pub const fnTorizo_Instr_60: u32 = 11195287;
-pub const fnTorizo_Instr_46: u32 = 11195295;
-pub const fnGoldTorizo_Hurt: u32 = 11195322;
-pub const fnTorizo_Instr_47: u32 = 11195360;
-pub const fnTorizo_Instr_49: u32 = 11195370;
-pub const fnTorizo_Instr_61: u32 = 11195446;
-pub const fnTorizo_Instr_53: u32 = 11195461;
-pub const fnTorizo_Instr_55: u32 = 11195508;
-pub const fnTorizo_Instr_52: u32 = 11195547;
-pub const fnTorizo_Instr_50: u32 = 11195578;
-pub const fnTorizo_Instr_43: u32 = 11195635;
-pub const fnTorizo_Instr_51: u32 = 11195645;
-pub const fnTorizo_Instr_45: u32 = 11195686;
-pub const fnTorizo_Instr_54: u32 = 11195725;
-pub const fnTorizo_D5ED: u32 = 11195885;
-pub const fnTorizo_D5F1: u32 = 11195889;
-pub const fnGoldTorizo_Shot: u32 = 11196007;
-pub const fnnullsub_49: u32 = 11196359;
-pub const fnTourianEntranceStatue_Init: u32 = 11196360;
-pub const fnShaktool_Instr_2: u32 = 11196721;
-pub const fnShaktool_Instr_3: u32 = 11196735;
-pub const fnShaktool_Instr_4: u32 = 11196746;
-pub const fnShaktool_Instr_5: u32 = 11196755;
-pub const fnShaktool_Instr_6: u32 = 11196831;
-pub const fnShaktool_Instr_1: u32 = 11196858;
-pub const fnShaktool_Hurt: u32 = 11197603;
-pub const fnnullsub_274: u32 = 11197610;
-pub const fnnullsub_275: u32 = 11197611;
-pub const fnShaktool_DCAC: u32 = 11197612;
-pub const fnShaktool_DCD7: u32 = 11197655;
-pub const fnShaktool_DD25: u32 = 11197733;
-pub const fnShaktool_Init: u32 = 11198019;
-pub const fnShaktool_Touch: u32 = 11198255;
-pub const fnShaktool_Shot: u32 = 11198260;
-pub const fnShaktool_Instr_9: u32 = 11199529;
-pub const fnShaktool_Instr_11: u32 = 11199542;
-pub const fnShaktool_Instr_10: u32 = 11199549;
-pub const fnsub_AAE445: u32 = 11199557;
-pub const fnShaktool_Instr_8: u32 = 11199871;
-pub const fnShaktool_Instr_13: u32 = 11199879;
-pub const fnShaktool_Instr_12: u32 = 11199887;
-pub const fnShaktool_Instr_7: u32 = 11199960;
-pub const fnShaktool_Instr_14: u32 = 11200240;
-pub const fnN00bTubeCracks_Init: u32 = 11200278;
-pub const fnChozoStatue_Init: u32 = 11200293;
-pub const fnnullsub_276: u32 = 11200422;
-pub const fnChozoStatue_Main: u32 = 11200423;
-pub const fnShaktool_PreInstr_0: u32 = 11200430;
-pub const fnnullsub_277: u32 = 11200474;
-pub const fnnullsub_51: u32 = 11200475;
-pub const fnnullsub_52: u32 = 11200476;
-pub const fnEnemy_GrappleReact_CancelBeam_B2: u32 = 11698191;
-pub const fnEnemy_NormalPowerBombAI_B2: u32 = 11698231;
-pub const fnEnemy_NormalFrozenAI_B2: u32 = 11698241;
-pub const fnnullsub_170_B2: u32 = 11698252;
-pub const fnEnemyInstr_Goto_B2: u32 = 11698413;
-pub const fnEnemyInstr_DecTimerAndGoto2_B2: u32 = 11698448;
-pub const fnEnemyInstr_SetTimer_B2: u32 = 11698467;
-pub const fnEnemyInstr_Sleep_B2: u32 = 11698479;
-pub const fnEnemyInstr_WaitNframes_B2: u32 = 11698490;
-pub const fnWalkingSpacePirates_Powerbomb: u32 = 11700071;
-pub const fnWalkingSpacePirates_Touch: u32 = 11700076;
-pub const fnWalkingSpacePirates_Shot: u32 = 11700089;
-pub const fnWalkingSpacePirates_87C8: u32 = 11700168;
-pub const fnWalkingSpacePirates_883E: u32 = 11700286;
-pub const fnSpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight: u32 = 11726400;
-pub const fnSpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft: u32 = 11726450;
-pub const fnSpacePirates_Instr_RandomNewDirFaceR: u32 = 11726500;
-pub const fnSpacePirates_Instr_RandomNewDirFaceL: u32 = 11726524;
-pub const fnSpacePirates_Instr_PrepareWallJumpR: u32 = 11726548;
-pub const fnSpacePirates_Instr_PrepareWallJumpL: u32 = 11726589;
-pub const fnSpacePirates_Instr_FireLaserL: u32 = 11726634;
-pub const fnSpacePirates_Instr_FireLaserR: u32 = 11726685;
-pub const fnSpacePirates_Instr_SetEnemyFunc: u32 = 11726723;
-pub const fnSpacePirates_Instr_PlaySfx: u32 = 11726739;
-pub const fnWallSpacePirates_Init: u32 = 11726751;
-pub const fnWallSpacePirates_Main: u32 = 11726893;
-pub const fnSpacePirates_Instr_20: u32 = 11728182;
-pub const fnSpacePirates_Instr_16: u32 = 11728198;
-pub const fnSpacePirates_Instr_15: u32 = 11728228;
-pub const fnSpacePirates_Instr_18: u32 = 11728272;
-pub const fnSpacePirates_Instr_17: u32 = 11728342;
-pub const fnNinjaSpacePirates_Init: u32 = 11728350;
-pub const fnNinjaSpacePirates_Main: u32 = 11728546;
-pub const fnSpacePirates_Instr_19: u32 = 11729257;
-pub const fnSpacePirates_Instr_21: u32 = 11729469;
-pub const fnSpacePirates_Instr_12: u32 = 11730024;
-pub const fnSpacePirates_Instr_14: u32 = 11730064;
-pub const fnSpacePirates_Instr_11: u32 = 11730104;
-pub const fnSpacePirates_Instr_13: u32 = 11730120;
-pub const fnWalkingSpacePirates_Init: u32 = 11730178;
-pub const fnWalkingSpacePirates_Main: u32 = 11730226;
-pub const fnEnemy_GrappleReact_NoInteract_B3: u32 = 11763712;
-pub const fnEnemy_GrappleReact_KillEnemy_B3: u32 = 11763722;
-pub const fnEnemy_GrappleReact_CancelBeam_B3: u32 = 11763727;
-pub const fnEnemy_NormalTouchAI_B3: u32 = 11763747;
-pub const fnEnemy_NormalShotAI_B3: u32 = 11763757;
-pub const fnEnemy_NormalPowerBombAI_B3: u32 = 11763767;
-pub const fnEnemy_NormalFrozenAI_B3: u32 = 11763777;
-pub const fnnullsub_170_B3: u32 = 11763788;
-pub const fnEnemy_SetAiPreInstr_B3: u32 = 11763819;
-pub const fnEnemy_ClearAiPreInstr_B3: u32 = 11763828;
-pub const fnnullsub_171_B3: u32 = 11763835;
-pub const fnEnemyInstr_Goto_B3: u32 = 11763949;
-pub const fnEnemyInstr_DecTimerAndGoto2_B3: u32 = 11763984;
-pub const fnEnemyInstr_SetTimer_B3: u32 = 11764003;
-pub const fnEnemyInstr_Sleep_B3: u32 = 11764015;
-pub const fnUnusedSpinningTurtleEye_Init: u32 = 11765499;
-pub const fnUnusedSpinningTurtleEye_Main: u32 = 11765518;
-pub const fnBrinstarPipeBug_Init: u32 = 11765819;
-pub const fnBrinstarPipeBug_Main: u32 = 11765882;
-pub const fnBrinstarPipeBug_PreInstr_1: u32 = 11765888;
-pub const fnBrinstarPipeBug_PreInstr_2: u32 = 11765904;
-pub const fnBrinstarPipeBug_PreInstr_3: u32 = 11765987;
-pub const fnBrinstarPipeBug_PreInstr_4: u32 = 11766044;
-pub const fnBrinstarPipeBug_PreInstr_5: u32 = 11766142;
-pub const fnNorfairPipeBug_Init: u32 = 11766625;
-pub const fnNorfairPipeBug_Main: u32 = 11766686;
-pub const fnNorfairPipeBug_Func_5: u32 = 11767039;
-pub const fnBrinstarYellowPipeBug_Init: u32 = 11767628;
-pub const fnBrinstarYellowPipeBug_Main: u32 = 11767726;
-pub const fnBotwoon_Instr_1: u32 = 11769031;
-pub const fnBotwoon_Instr_2: u32 = 11769047;
-pub const fnBotwoon_Instr_3: u32 = 11769063;
-pub const fnBotwoon_Instr_4: u32 = 11769079;
-pub const fnBotwoon_Instr_5: u32 = 11769095;
-pub const fnBotwoon_Instr_6: u32 = 11769111;
-pub const fnBotwoon_Instr_7: u32 = 11769127;
-pub const fnBotwoon_Instr_8: u32 = 11769143;
-pub const fnBotwoon_Instr_9: u32 = 11769159;
-pub const fnBotwoon_Instr_10: u32 = 11769175;
-pub const fnBotwoon_Instr_SetSpitting: u32 = 11769191;
-pub const fnBotwoon_Instr_QueueSpitSfx: u32 = 11769202;
-pub const fnBotwoon_Init: u32 = 11769219;
-pub const fnBotwoon_Main: u32 = 11769448;
-pub const fnBotwoon_Func_26: u32 = 11771328;
-pub const fnBotwoon_Func_27: u32 = 11771517;
-pub const fnBotwoon_Func_28: u32 = 11771616;
-pub const fnBotwoon_Func_29: u32 = 11771700;
-pub const fnBotwoon_Func_30: u32 = 11771770;
-pub const fnBotwoon_Touch: u32 = 11771903;
-pub const fnBotwoon_Shot: u32 = 11771926;
-pub const fnBotwoon_Powerbomb: u32 = 11771969;
-pub const fnEscapeEtecoon_Instr_1: u32 = 11789637;
-pub const fnEscapeEtecoon_Instr_2: u32 = 11789840;
-pub const fnEscapeEtecoon_Main: u32 = 11789909;
-pub const fnEscapeEtecoon_E65C: u32 = 11789916;
-pub const fnEscapeEtecoon_E670: u32 = 11789936;
-pub const fnEscapeEtecoon_E680: u32 = 11789952;
-pub const fnEscapeEtecoon_Init: u32 = 11790027;
-pub const fnEscapeDachora_Instr_2: u32 = 11791016;
-pub const fnEscapeDachora_Instr_3: u32 = 11791032;
-pub const fnEscapeDachora_Instr_1: u32 = 11791049;
-pub const fnEscapeDachora_Instr_4: u32 = 11791063;
-pub const fnEscapeDachora_Init: u32 = 11791077;
-pub const fnnullsub_54: u32 = 11791130;
+crate::game::constants::typed_constants! { i32;
+    fnEprojPreInstr_nullsub_83 = 0x8684fb, fnGrappleBeam_Func2 = 0x9bc8c5,
+    fnEnemy_GrappleReact_NoInteract_A0 = 0xa08000, fnEnemy_GrappleReact_SamusLatchesOn_A0 = 0xa08005,
+    fnEnemy_GrappleReact_KillEnemy_A0 = 0xa0800a, fnEnemy_GrappleReact_CancelBeam_A0 = 0xa0800f,
+    fnEnemy_GrappleReact_SamusLatchesNoInvinc_A0 = 0xa08014, fnEnemy_GrappleReact_SamusLatchesParalyze_A0 = 0xa08019,
+    fnEnemy_GrappleReact_HurtSamus_A0 = 0xa0801e,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEnemy_NormalTouchAI_A0 = 10518563, fnEnemy_NormalShotAI_A0 = 10518573,
+}
+crate::game::constants::typed_constants! { i32;
+    fnEnemy_NormalPowerBombAI_A0 = 0xa08037, fnnullsub_169 = 0xa0804b,
+    fnnullsub_170 = 0xa0804c, fnnullsub_171 = 0xa0807b,
+}
+crate::game::constants::typed_constants! { u32;
+    fnEnemy_GrappleReact_SamusLatchesOn_A2 = 10649605, fnEnemy_GrappleReact_KillEnemy_A2 = 10649610,
+    fnEnemy_GrappleReact_CancelBeam_A2 = 10649615, fnEnemy_NormalTouchAI_A2 = 10649635,
+    fnEnemy_NormalShotAI_A2 = 10649645, fnEnemy_NormalPowerBombAI_A2 = 10649655,
+    fnEnemy_NormalFrozenAI_A2 = 10649665, fnnullsub_170_A2 = 10649676,
+    fnnullsub_171_A2 = 10649723, fnEnemyInstr_Goto_A2 = 10649837,
+    fnEnemyInstr_DecTimerAndGoto2_A2 = 10649872, fnEnemyInstr_SetTimer_A2 = 10649891,
+    fnEnemyInstr_Sleep_A2 = 10649903, fnEnemyInstr_EnableOffScreenProcessing_A2 = 10649971,
+    fnEnemyInstr_DisableOffScreenProcessing_A2 = 10649981, fnBouncingGoofball_Init = 10651420,
+    fnBouncingGoofball_Main = 10651548, fnBouncingGoofball_Instr_88C5 = 10651845,
+    fnBouncingGoofball_Instr_88C6 = 10651846, fnMiniCrocomire_Instr_897E = 10652030,
+    fnMiniCrocomire_Instr_8990 = 10652048, fnMiniCrocomire_Instr_899D = 10652061,
+    fnMiniCrocomire_Init = 10652077, fnMiniCrocomire_Main = 10652144,
+    fnMiniCrocomire_PreInstr5 = 10652227, fnMiniCrocomire_PreInstr6 = 10652252,
+    fnnullsub_175 = 10652277, fnMaridiaBeybladeTurtle_Init = 10653036,
+    fnMiniMaridiaBeybladeTurtle_Init = 10653085, fnMaridiaBeybladeTurtle_Main = 10653138,
+    fnMiniMaridiaBeybladeTurtle_Main = 10653998, fnMaridiaBeybladeTurtle_Touch = 10654337,
+    fnMiniMaridiaBeybladeTurtle_Touch = 10654367, fnMiniMaridiaBeybladeTurtle_Shot = 10654479,
+    fnMaridiaBeybladeTurtle_Instr_9381 = 10654593, fnMaridiaBeybladeTurtle_Instr_9412 = 10654738,
+    fnMaridiaBeybladeTurtle_Instr_9447 = 10654791, fnMaridiaBeybladeTurtle_Instr_9451 = 10654801,
+    fnMaridiaBeybladeTurtle_Instr_946B = 10654827, fnMaridiaBeybladeTurtle_Instr_9485 = 10654853,
+    fnMaridiaBeybladeTurtle_Instr_94A1 = 10654881, fnMaridiaBeybladeTurtle_Instr_94C7 = 10654919,
+    fnMaridiaBeybladeTurtle_Instr_94D1 = 10654929, fnThinHoppingBlobs_Init = 10656319,
+    fnThinHoppingBlobs_Main = 10656381, fnSpikeShootingPlant_Instr_9F2A = 10657578,
+    fnSpikeShootingPlant_Init = 10657608, fnSpikeShootingPlant_Main = 10657715,
+    fnSpikeShootingPlant_2 = 10657722, fnSpikeShootingPlant_3 = 10657772,
+    fnnullsub_182 = 10657819, fnSpikeShootingPlant_Instr_A095 = 10657941,
+    fnSpikeShootingPlant_Instr_A0A7 = 10657959, fnMaridiaSpikeyShell_Init = 10658809,
+    fnMaridiaSpikeyShell_Main = 10658942, fnMaridiaSpikeyShell_Instr_A56D = 10659181,
+    fnMaridiaSpikeyShell_Instr_A571 = 10659185, fnMaridiaSpikeyShell_Shot = 10659193,
+    fnGunshipTop_Init = 10659396, fnGunshipBottom_Init = 10659538,
+    fnGunshipTop_Main = 10659673, fnnullsub_187 = 10659799,
+    fnGunshipTop_3 = 10659852, fnGunshipTop_4 = 10660048,
+    fnGunshipTop_5 = 10660162, fnGunshipTop_6 = 10660176,
+    fnGunshipTop_7 = 10660231, fnGunshipTop_8 = 10660285,
+    fnGunshipTop_9 = 10660431, fnGunshipTop_10 = 10660445,
+    fnGunshipTop_11 = 10660500, fnGunshipTop_12 = 10660514,
+    fnGunshipTop_13 = 10660639, fnGunshipTop_14 = 10660704,
+    fnGunshipTop_15 = 10660718, fnGunshipTop_16 = 10660773,
+    fnGunshipTop_17 = 10660807, fnGunshipTop_18 = 10660891,
+    fnGunshipTop_19 = 10661079, fnGunshipTop_20 = 10661134,
+    fnGunshipTop_21 = 10661165, fnFlies_Init = 10661995,
+    fnFlies_Main = 10662175, fnFlies_4 = 10662222,
+    fnFlies_5 = 10662268, fnFlies_6 = 10662314,
+    fnFlies_7 = 10662354, fnNorfairErraticFireball_Init = 10662880,
+    fnNorfairErraticFireball_Main = 10662927, fnLavaquakeRocks_Init = 10663280,
+    fnLavaquakeRocks_Main = 10663311, fnRinka_Init = 10663426,
+    fnRinka_Main = 10663876, fnRinka_Frozen = 10664233,
+    fnRinka_Touch = 10664263, fnRinka_Shot = 10664269,
+    fnRinka_Powerbomb = 10664275, fnRinka_Instr_B9B3 = 10664371,
+    fnRinka_Instr_B9BD = 10664381, fnRinka_Instr_B9C7 = 10664391,
+    fnEnemyInstr_Rio_Instr_1 = 10664899, fnRio_Init = 10664909,
+    fnRio_Main = 10664931, fnNorfairLavajumpingEnemy_Instr_BE8E = 10665614,
+    fnNorfairLavajumpingEnemy_Init = 10665625, fnNorfairLavajumpingEnemy_Main = 10665682,
+    fnNorfairLavajumpingEnemy_Func_1 = 10665692, fnNorfairLavajumpingEnemy_Func_2 = 10665754,
+    fnNorfairLavajumpingEnemy_Func_3 = 10665790, fnNorfairLavajumpingEnemy_Func_4 = 10665852,
+    fnNorfairLavajumpingEnemy_Func_5 = 10665916, fnNorfairRio_Instr_C1C9 = 10666441,
+    fnNorfairRio_Instr_C1D4 = 10666452, fnNorfairRio_Instr_C1DF = 10666463,
+    fnNorfairRio_Instr_C1EA = 10666474, fnNorfairRio_Instr_C1F5 = 10666485,
+    fnNorfairRio_Instr_C200 = 10666496, fnNorfairRio_Instr_C20B = 10666507,
+    fnNorfairRio_Instr_C216 = 10666518, fnNorfairRio_Instr_C221 = 10666529,
+    fnNorfairRio_Instr_C22C = 10666540, fnNorfairRio_Instr_C237 = 10666551,
+    fnNorfairRio_Init = 10666562, fnNorfairRio_Main = 10666615,
+    fnNorfairRio_Func_1 = 10666625, fnNorfairRio_Func_2 = 10666727,
+    fnNorfairRio_Func_3 = 10666815, fnNorfairRio_Func_4 = 10666849,
+    fnNorfairRio_Func_5 = 10666929, fnNorfairRio_Func_6 = 10667014,
+    fnLowerNorfairRio_Instr_C6D2 = 10667730, fnLowerNorfairRio_Instr_C6DD = 10667741,
+    fnLowerNorfairRio_Instr_C6E8 = 10667752, fnLowerNorfairRio_Init = 10667763,
+    fnLowerNorfairRio_Main = 10667812, fnLowerNorfairRio_Func_1 = 10667822,
+    fnLowerNorfairRio_Func_2 = 10667889, fnLowerNorfairRio_Func_3 = 10667963,
+    fnLowerNorfairRio_Func_4 = 10667990, fnLowerNorfairRio_Func_5 = 10668077,
+    fnLowerNorfairRio_Func_6 = 10668168, fnMaridiaLargeSnail_Instr_CB6B = 10668907,
+    fnMaridiaLargeSnail_Instr_CCB3 = 10669235, fnMaridiaLargeSnail_Instr_CCBE = 10669246,
+    fnMaridiaLargeSnail_Instr_CCC9 = 10669257, fnMaridiaLargeSnail_Init = 10669268,
+    fnMaridiaLargeSnail_Main = 10669331, fnMaridiaLargeSnail_Func_7 = 10669926,
+    fnMaridiaLargeSnail_Func_8 = 10669993, fnMaridiaLargeSnail_Func_12 = 10670984,
+    fnMaridiaLargeSnail_Touch = 10670988, fnMaridiaLargeSnail_Shot = 10671028,
+    fnHirisingSlowfalling_Init = 10674038, fnHirisingSlowfalling_Main = 10674222,
+    fnGripper_Init = 10674643, fnGripper_Main = 10674721,
+    fnJetPowerRipper_Init = 10674968, fnJetPowerRipper_Main = 10675027,
+    fnJetPowerRipper_Shot = 10675113, fnRipper_Init = 10675359,
+    fnRipper_Main = 10675418, fnLavaSeahorse_Instr_E5FB = 10675707,
+    fnLavaSeahorse_Init = 10675718, fnLavaSeahorse_Main = 10675790,
+    fnLavaSeahorse_Func_1 = 10675796, fnLavaSeahorse_Func_2 = 10675885,
+    fnLavaSeahorse_Func_3 = 10675953, fnLavaSeahorse_Func_4 = 10676020,
+    fnLavaSeahorse_Func_5 = 10676041, fnnullsub_196 = 10676097,
+    fnLavaSeahorse_Touch = 10676168, fnLavaSeahorse_Shot = 10676174,
+    fnLavaSeahorse_Powerbomb = 10676180, fnTimedShutter_Init = 10676698,
+    fnTimedShutter_Main = 10676918, fnRisingFallingPlatform_Init = 10677765,
+    fnShootableShutter_Init = 10677778, fnRisingFallingPlatform_Main = 10677969,
+    fnRisingFallingPlatform_Touch = 10678429, fnRisingFallingPlatform_Shot = 10678434,
+    fnShootableShutter_Shot = 10678442, fnRisingFallingPlatform_Powerbomb = 10678454,
+    fnHorizontalShootableShutter_Init = 10678545, fnHorizontalShootableShutter_Main = 10678750,
+    fnHorizontalShootableShutter_Touch = 10679256, fnHorizontalShootableShutter_Shot = 10679310,
+    fnHorizontalShootableShutter_Powerbomb = 10679322, fnEnemy_GrappleReact_NoInteract_A3 = 10715136,
+    fnEnemy_GrappleReact_KillEnemy_A3 = 10715146, fnEnemy_GrappleReact_CancelBeam_A3 = 10715151,
+    fnEnemy_NormalTouchAI_A3 = 10715171, fnEnemy_NormalShotAI_A3 = 10715181,
+    fnEnemy_NormalPowerBombAI_A3 = 10715191, fnEnemy_NormalFrozenAI_A3 = 10715201,
+    fnnullsub_170_A3 = 10715212, fnEnemyInstr_Goto_A3 = 10715373,
+    fnEnemyInstr_Sleep_A3 = 10715439, fnEnemyInstr_EnableOffScreenProcessing_A3 = 10715507,
+    fnEnemyInstr_DisableOffScreenProcessing_A3 = 10715517, fnWaver_Instr_1 = 10716899,
+    fnWaver_Init = 10716909, fnWaver_Main = 10717004,
+    fnMetalee_Instr_1 = 10717526, fnMetalee_Init = 10717536,
+    fnMetalee_Main = 10717561, fnMetalee_Shot = 10717967,
+    fnFireflea_Init = 10718509, fnFireflea_Main = 10718702,
+    fnFireflea_Touch = 10718827, fnFireflea_Powerbomb = 10718851,
+    fnFireflea_Shot = 10718857, fnMaridiaFish_Instr_3 = 10719382,
+    fnMaridiaFish_Instr_1 = 10719392, fnMaridiaFish_Instr_2 = 10719402,
+    fnMaridiaFish_Init = 10719413, fnMaridiaFish_Main = 10719531,
+    fnElevator_Init = 10720486, fnElevator_Frozen = 10720554,
+    fnCrab_Init = 10720995, fnSlug_Init = 10721595,
+    fnPlatformThatFallsWithSamus_Instr_3 = 10722411, fnPlatformThatFallsWithSamus_Instr_4 = 10722422,
+    fnPlatformThatFallsWithSamus_Instr_1 = 10722433, fnPlatformThatFallsWithSamus_Instr_2 = 10722444,
+    fnPlatformThatFallsWithSamus_Init = 10722463, fnFastMovingSlowSinkingPlatform_Init = 10722490,
+    fnPlatformThatFallsWithSamus_Main = 10722582, fnnullsub_32 = 10723079,
+    fnFastMovingSlowSinkingPlatform_Shot = 10723080, fnRoach_Init = 10723661,
+    fnRoach_Main = 10724048, fnMochtroid_Init = 10725245,
+    fnMochtroid_Main = 10725264, fnMochtroid_Touch = 10725715,
+    fnMochtroid_Shot = 10725800, fnSidehopper_Func_1 = 10725992,
+    fnSidehopper_Instr_1 = 10726142, fnSidehopper_Init = 10726153,
+    fnSidehopper_Main = 10726351, fnMaridiaRefillCandy_Instr_1 = 10728489,
+    fnMaridiaRefillCandy_Instr_2 = 10728500, fnMaridiaRefillCandy_Instr_3 = 10728511,
+    fnMaridiaRefillCandy_Init = 10728522, fnMaridiaRefillCandy_Main = 10728572,
+    fnNorfairSlowFireball_Init = 10729071, fnBang_Instr_1 = 10730104,
+    fnBang_Instr_2 = 10730152, fnBang_Init = 10730163,
+    fnBang_Main = 10730277, fnBang_Func_6 = 10730661,
+    fnBang_Func_7 = 10730689, fnBang_Func_8 = 10730693,
+    fnBang_Func_10 = 10730780, fnBang_Func_11 = 10730796,
+    fnBang_Shot = 10731261, fnSkree_Instr_1 = 10733220,
+    fnSkree_Init = 10733230, fnSkree_Main = 10733255,
+    fnSkree_Shot = 10733557, fnMaridiaSnail_Instr_1 = 10734646,
+    fnMaridiaSnail_Instr_2 = 10734655, fnMaridiaSnail_Instr_4 = 10734664,
+    fnMaridiaSnail_Instr_3 = 10734687, fnMaridiaSnail_Instr_5 = 10734712,
+    fnMaridiaSnail_Init = 10735074, fnMaridiaSnail_Main = 10735204,
+    fnnullsub_215 = 10735455, fnMaridiaSnail_Func_7 = 10735456,
+    fnMaridiaSnail_Func_9 = 10735526, fnMaridiaSnail_CFB7 = 10735543,
+    fnMaridiaSnail_CFBD = 10735549, fnMaridiaSnail_CFCE = 10735566,
+    fnMaridiaSnail_CFD4 = 10735572, fnMaridiaSnail_CFE5 = 10735589,
+    fnMaridiaSnail_CFEB = 10735595, fnMaridiaSnail_CFFC = 10735612,
+    fnMaridiaSnail_Func_15 = 10736051, fnMaridiaSnail_Touch = 10736560,
+    fnMaridiaSnail_Shot = 10736745, fnReflec_Func_1 = 10738444,
+    fnReflec_Instr_1 = 10738632, fnReflec_Init = 10738643,
+    fnnullsub_33 = 10738715, fnReflec_Shot = 10738716,
+    fnWreckedShipOrangeZoomer_Func_1 = 10739650, fnWreckedShipOrangeZoomer_Init = 10739779,
+    fnnullsub_343 = 10739850, fnWreckedShipOrangeZoomer_Func_2 = 10739857,
+    fnWreckedShipOrangeZoomer_Main = 10739851, fnsub_A3E168 = 10740072,
+    fnBigEyeBugs_Init = 10740436, fnFireZoomer_Init = 10741148,
+    fnZoomer_Instr_SetPreinstr = 10741344, fnStoneZoomer_Init = 10741353,
+    fnnullsub_304 = 10741441, fnStoneZoomer_Main = 10741442,
+    fnFireZoomer_Func_1 = 10741448, fnFireZoomer_Func_2 = 10741637,
+    fnFireZoomer_Func_3 = 10741746, fnMetroid_Init = 10742351,
+    fnMetroid_Instr_2 = 10742437, fnMetroid_Instr_1 = 10742449,
+    fnMetroid_Frozen = 10742502, fnMetroid_Hurt = 10742579,
+    fnMetroid_Main = 10742680, fnMetroid_Touch = 10743275,
+    fnMetroid_Shot = 10743559, fnMetroid_Powerbomb = 10743874,
+    fnEnemy_GrappleReact_SamusLatchesOn_A4 = 10780677, fnEnemy_NormalTouchAI_A4 = 10780707,
+    fnEnemy_NormalShotAI_A4 = 10780717, fnEnemy_NormalPowerBombAI_A4 = 10780727,
+    fnEnemy_NormalFrozenAI_A4 = 10780737, fnnullsub_170_A4 = 10780748,
+    fnEnemyInstr_Goto_A4 = 10780909, fnEnemyInstr_Sleep_A4 = 10780975,
+    fnCrocomire_Hurt = 10782343, fnCrocomire_Instr_1 = 10782374,
+    fnCrocomire_Instr_14 = 10782546, fnCrocomire_Init = 10783322,
+    fnCrocomire_Main = 10783748, fnCrocomire_Instr_11 = 10783995,
+    fnCrocomire_Instr_7 = 10784007, fnCrocomire_Instr_19 = 10784019,
+    fnCrocomire_Instr_2 = 10784711, fnCrocomire_Instr_4 = 10784735,
+    fnCrocomire_Instr_3 = 10784762, fnCrocomire_Instr_15 = 10784767,
+    fnCrocomire_Instr_16 = 10784797, fnCrocomire_Instr_13 = 10784859,
+    fnCrocomire_Instr_18 = 10784895, fnCrocomire_Instr_12 = 10784911,
+    fnCrocomire_Instr_17 = 10784916, fnCrocomire_Instr_8 = 10787483,
+    fnCrocomire_Instr_6 = 10787488, fnCrocomire_Instr_9 = 10787493,
+    fnCrocomire_Instr_5 = 10787498, fnCrocomire_Instr_20 = 10787503,
+    fnCrocomire_Instr_21 = 10787508, fnCrocomire_Instr_22 = 10787513,
+    fnCrocomire_Instr_23 = 10787518, fnCrocomire_Instr_24 = 10787523,
+    fnCrocomire_Instr_10 = 10787528, fnCrocomire_Instr_25 = 10787533,
+    fnCrocomire_Instr_26 = 10787538, fnCrocomire_Instr_27 = 10787543,
+    fnCrocomire_Func_92 = 10795325, fnnullsub_34 = 10795344,
+    fnCrocomire_Func_93 = 10795345, fnCrocomire_Func_94 = 10795368,
+    fnCrocomire_Powerbomb = 10795410, fnCrocomire_Func_95 = 10795525,
+    fnCrocomire_Func_1 = 10795700, fnCrocomireTongue_Init = 10811002,
+    fnCrocomireTongue_Main = 10811067, fnEnemy_GrappleReact_NoInteract_A5 = 10846208,
+    fnEnemy_GrappleReact_CancelBeam_A5 = 10846223, fnEnemy_NormalTouchAI_A5 = 10846243,
+    fnEnemy_NormalShotAI_A5 = 10846253, fnEnemy_NormalPowerBombAI_A5 = 10846263,
+    fnEnemy_NormalFrozenAI_A5 = 10846273, fnCreateADudShot_A5 = 10846278,
+    fnnullsub_170_A5 = 10846284, fnEnemyInstr_StopScript_A5 = 10846332,
+    fnEnemyInstr_Goto_A5 = 10846445, fnEnemyInstr_DecTimerAndGoto2_A5 = 10846480,
+    fnEnemyInstr_SetTimer_A5 = 10846499, fnEnemyInstr_Sleep_A5 = 10846511,
+    fnEnemyInstr_WaitNframes_A5 = 10846522, fnDraygon_Init = 10847879,
+    fnDraygon_Main = 10847996, fnDraygon_Func_36 = 10851138,
+    fnDraygon_Instr_1 = 10851549, fnDraygon_Hurt = 10851661,
+    fnDraygon_Touch = 10851818, fnDraygon_Shot = 10851824,
+    fnDraygon_Powerbomb = 10851847, fnDraygon_Instr_13 = 10852150,
+    fnDraygon_Instr_8 = 10852159, fnDraygon_Instr_7 = 10852178,
+    fnDraygon_Instr_6 = 10852197, fnDraygon_Instr_9 = 10852216,
+    fnDraygon_Instr_2 = 10852501, fnDraygon_Instr_11 = 10852563,
+    fnDraygon_Instr_5 = 10852591, fnDraygon_Instr_15 = 10853274,
+    fnDraygon_Instr_17 = 10853514, fnDraygon_Instr_14 = 10853898,
+    fnDraygon_Instr_16 = 10854231, fnDraygon_Instr_10 = 10854240,
+    fnDraygon_Instr_4 = 10854254, fnDraygon_Instr_12 = 10854268,
+    fnDraygon_Instr_18 = 10854318, fnDraygonsEye_Init = 10863723,
+    fnDraygon_Instr_3 = 10863739, fnDraygonsEye_Main = 10863750,
+    fnDraygonsTail_Init = 10864025, fnnullsub_37 = 10864042,
+    fnDraygonsArms_Init = 10864045, fnnullsub_38 = 10864068,
+    fnDraygon_Instr_25 = 10872671, fnDraygon_Instr_24 = 10872689,
+    fnDraygon_Instr_21 = 10872877, fnDraygon_Instr_22 = 10872946,
+    fnDraygon_Instr_27 = 10872956, fnDraygon_Instr_23 = 10872981,
+    fnDraygon_Instr_30 = 10873009, fnDraygon_Instr_20 = 10873018,
+    fnDraygon_Instr_29 = 10873034, fnDraygon_Instr_19 = 10873116,
+    fnDraygon_Instr_28 = 10873198, fnDraygon_Instr_26 = 10873265,
+    fnSporeSpawn_Init = 10873386, fnSporeSpawn_Main = 10873619,
+    fnSporeSpawn_Shot = 10874202, fnSporeSpawn_Touch = 10874348,
+    fnnullsub_39 = 10874354, fnEnemy_GrappleReact_NoInteract_A6 = 10911744,
+    fnEnemy_GrappleReact_CancelBeam_A6 = 10911759, fnEnemy_NormalTouchAI_A6 = 10911779,
+    fnEnemy_NormalShotAI_A6 = 10911789, fnEnemy_NormalPowerBombAI_A6 = 10911799,
+    fnEnemy_NormalFrozenAI_A6 = 10911809, fnnullsub_170_A6 = 10911820,
+    fnEnemyInstr_Goto_A6 = 10911981, fnEnemyInstr_Sleep_A6 = 10912047,
+    fnBoulder_Init = 10913525, fnBoulder_Main = 10913683,
+    fnSpikeyPlatform_Init = 10914607, fnSpikeyPlatform2ndEnemy_Init = 10914693,
+    fnSpikeyPlatform2ndEnemy_Main = 10914713, fnSpikeyPlatform_Main = 10914733,
+    fnFireGeyser_Instr_1 = 10915247, fnFireGeyser_Instr_2 = 10915347,
+    fnFireGeyser_Instr_3 = 10915373, fnFireGeyser_Instr_4 = 10915393,
+    fnFireGeyser_Instr_5 = 10915413, fnFireGeyser_Instr_6 = 10915433,
+    fnFireGeyser_Instr_7 = 10915453, fnFireGeyser_Instr_8 = 10915473,
+    fnFireGeyser_Instr_9 = 10915493, fnFireGeyser_Instr_10 = 10915513,
+    fnFireGeyser_Instr_11 = 10915533, fnFireGeyser_Instr_12 = 10915553,
+    fnFireGeyser_Instr_13 = 10915573, fnFireGeyser_Instr_14 = 10915593,
+    fnFireGeyser_Instr_15 = 10915613, fnFireGeyser_Instr_16 = 10915633,
+    fnFireGeyser_Instr_17 = 10915653, fnFireGeyser_Instr_18 = 10915673,
+    fnFireGeyser_Instr_19 = 10915693, fnFireGeyser_Instr_20 = 10915713,
+    fnFireGeyser_Instr_21 = 10915733, fnFireGeyser_Instr_22 = 10915753,
+    fnFireGeyser_Instr_23 = 10915773, fnFireGeyser_Instr_24 = 10915793,
+    fnFireGeyser_Init = 10915836, fnFireGeyser_Main = 10915875,
+    fnNuclearWaffle_Init = 10917060, fnNuclearWaffle_Main = 10917390,
+    fnFakeKraid_Init = 10918488, fnFakeKraid_Main = 10918594,
+    fnFakeKraid_Instr_2 = 10918694, fnFakeKraid_Instr_1 = 10918772,
+    fnFakeKraid_Instr_3 = 10918834, fnFakeKraid_Instr_4 = 10918852,
+    fnFakeKraid_Instr_5 = 10918914, fnFakeKraid_Touch = 10918946,
+    fnFakeKraid_Shot = 10918969, fnCeresRidley_Init = 10920181,
+    fnCeresRidley_Main = 10920584, fnCeresRidley_Hurt = 10920659,
+    fnRidley_A2F2 = 10920690, fnRidley_Main = 10924583,
+    fnRidley_Func_2 = 10924682, fnRidley_Hurt = 10924695,
+    fnRidleysExplosion_Init = 10929814, fnRidleysExplosion_Main = 10930388,
+    fnsub_A6DF59 = 10936153, fnRidley_Shot = 10936202,
+    fnRidley_Powerbomb = 10936242, fnRidley_Instr_5 = 10937534,
+    fnRidley_Instr_6 = 10937546, fnRidley_Instr_10 = 10937554,
+    fnRidley_Instr_4 = 10937582, fnRidley_Instr_3 = 10937592,
+    fnRidley_Instr_2 = 10937601, fnRidley_Instr_1 = 10937623,
+    fnRidley_Instr_14 = 10937631, fnRidley_Instr_9 = 10938140,
+    fnRidley_Instr_7 = 10938151, fnRidley_Instr_8 = 10938159,
+    fnRidley_Instr_11 = 10938445, fnRidley_Instr_12 = 10938628,
+    fnRidley_Instr_13 = 10938633, fnRidley_Instr_15 = 10938729,
+    fnRidley_Instr_16 = 10938742, fnCeresSteam_Init = 10940337,
+    fnCeresSteam_Main = 10940429, fnCeresSteam_Touch = 10940479,
+    fnCeresSteam_Instr_1 = 10940701, fnCeresSteam_Instr_2 = 10940711,
+    fnCeresSteam_Instr_3 = 10940725, fnCeresDoor_Instr_6 = 10942014,
+    fnCeresDoor_Instr_4 = 10942058, fnCeresDoor_Instr_8 = 10942072,
+    fnCeresSteam_Instr_4 = 10942091, fnCeresDoor_Instr_1 = 10942101,
+    fnCeresDoor_Instr_3 = 10942111, fnCeresSteam_Instr_5 = 10942118,
+    fnCeresDoor_Instr_5 = 10942128, fnCeresDoor_Instr_2 = 10942131,
+    fnCeresDoor_Instr_7 = 10942141, fnCeresDoor_Init = 10942149,
+    fnCeresDoor_Main = 10942309, fnnullsub_41 = 10942752,
+    fnZebetites_Init = 10943346, fnZebetites_Main = 10943539,
+    fnZebetites_Touch = 10943911, fnZebetites_Shot = 10943916,
+    fnEnemy_GrappleReact_NoInteract_A7 = 10977280, fnEnemy_GrappleReact_CancelBeam_A7 = 10977295,
+    fnEnemy_NormalShotAI_A7 = 10977325, fnEnemy_NormalPowerBombAI_A7 = 10977335,
+    fnEnemy_NormalPowerBombAI_SkipDeathAnim_A7 = 10977340, fnEnemy_NormalFrozenAI_A7 = 10977345,
+    fnnullsub_170_A7 = 10977356, fnEnemyInstr_Call_A7 = 10977418,
+    fnEnemyInstr_Goto_A7 = 10977517, fnEnemyInstr_DecTimerAndGoto2_A7 = 10977552,
+    fnEnemyInstr_SetTimer_A7 = 10977571, fnEnemyInstr_Sleep_A7 = 10977583,
+    fnKraid_Instr_9 = 10979983, fnKraid_Touch_ArmFoot = 10982539,
+    fnnullsub_44 = 10982543, fnKraidsArm_Touch = 10982544,
+    fnKraid_Touch = 10982559, fnnullsub_43 = 10982581,
+    fnKraid_Arm_Shot = 10982582, fnKraid_Init = 10987865,
+    fnKraidsArm_Init = 10988355, fnKraidsTopLint_Init = 10988392,
+    fnKraidsMiddleLint_Init = 10988444, fnKraidsBottomLint_Init = 10988490,
+    fnKraidsFoot_Init = 10988536, fnKraid_Main = 10988577,
+    fnKraid_Instr_1 = 10991155, fnKraid_Instr_DecYpos = 10991158,
+    fnKraid_Instr_IncrYpos_Shake = 10991164, fnKraid_Instr_PlaySound_0x76 = 10991182,
+    fnKraid_Instr_XposMinus3 = 10991194, fnKraid_Instr_XposMinus3b = 10991207,
+    fnKraid_Instr_XposPlus3 = 10991220, fnKraid_Instr_MoveHimRight = 10991235,
+    fnKraidsArm_Main = 10991549, fnKraidsTopLint_Main = 10991617,
+    fnKraidsMiddleLint_Main = 10991629, fnKraidsBottomLint_Main = 10991641,
+    fnKraidsFoot_Main = 10992118, fnKraidsGoodFingernail_Touch = 10992847,
+    fnKraidsBadFingernail_Touch = 10992862, fnKraidsGoodFingernail_Init = 10992879,
+    fnKraidsBadFingernail_Init = 10992941, fnKraidsGoodFingernail_Main = 10992946,
+    fnKraidsBadFingernail_Main = 10992969, fnPhantoon_Init = 10997235,
+    fnPhantoon2_Init = 10997333, fnPhantoon_Main = 10997414,
+    fnnullsub_237 = 10998952, fnPhantoon_Spawn8FireballsInCircleAtStart = 10998953,
+    fnPhantoon_WaitBetweenSpawningAndSpinningFireballs = 10999022, fnPhantoon_SpawnFireballsBeforeFight = 10999048,
+    fnPhantoon_WavyFadeIn = 10999114, fnPhantoon_PickPatternForRound1 = 10999190,
+    fnPhantoon_MovePhantoonInFigure8ThenOpenEye = 10999271, fnPhantoon_EyeFollowsSamusUntilTimerRunsOut = 10999309,
+    fnPhantoon_BecomesSolidAndBodyVuln = 10999388, fnPhantoon_IsSwooping = 10999416,
+    fnPhantoon_FadeoutWithSwoop = 10999481, fnPhantoon_WaitAfterFadeOut = 10999508,
+    fnPhantoon_MoveLeftOrRightAndPickEyeOpenPatt = 10999522, fnPhantoon_FadeInBeforeFigure8 = 10999597,
+    fnPhantoon_BecomeSolidAfterRainingFireballs = 10999615, fnPhantoon_FadeInDuringFireballRain = 10999655,
+    fnPhantoon_FollowSamusWithEyeDuringFireballRain = 10999688, fnPhantoon_FadeOutDuringFireballRain = 10999765,
+    fnPhantoon_SpawnRainingFireballs = 10999799, fnPhantoon_FadeOutBeforeFirstFireballRain = 10999850,
+    fnPhantoon_FadeOutBeforeEnrage = 10999900, fnPhantoon_MoveEnragedPhantoonToTopCenter = 10999924,
+    fnPhantoon_FadeInEnragedPhantoon = 10999953, fnPhantoon_Enraged = 10999980,
+    fnPhantoon_FadeoutAfterEnrage = 11000086, fnPhantoon_CompleteSwoopAfterFatalShot = 11000110,
+    fnPhantoon_DyingPhantoonFadeInOut = 11000136, fnPhantoon_DyingPhantoonExplosions = 11000203,
+    fnPhantoon_WavyDyingPhantoonAndCry = 11000401, fnPhantoon_DyingFadeOut = 11000454,
+    fnPhantoon_AlmostDead = 11000535, fnPhantoon_Dead = 11000637,
+    fnPhantoon_Hurt = 11001151, fnPhantoon_Touch = 11001237,
+    fnnullsub_358 = 11001242, fnPhantoon_Shot = 11001243,
+    fnnullsub_45 = 11001873, fnEtecoon_Init = 11004178,
+    fnEtecoon_Main = 11004224, fnEtecoon_Func_4 = 11004335,
+    fnEtecoon_Func_5 = 11004416, fnEtecoon_Func_6 = 11004471,
+    fnEtecoon_Func_7 = 11004597, fnEtecoon_Func_8 = 11004674,
+    fnEtecoon_Func_9 = 11004716, fnEtecoon_Func_10 = 11004752,
+    fnEtecoon_Func_11 = 11004877, fnEtecoon_Func_12 = 11004955,
+    fnEtecoon_Func_16 = 11005079, fnEtecoon_Func_17 = 11005115,
+    fnEtecoon_Func_18 = 11005151, fnEtecoon_Func_19 = 11005193,
+    fnEtecoon_Func_20 = 11005226, fnEtecoon_Func_21 = 11005268,
+    fnEtecoon_Func_22 = 11005301, fnEtecoon_Func_23 = 11005383,
+    fnEtecoon_Func_24 = 11005502, fnEtecoon_Func_25 = 11005594,
+    fnEtecoon_Func_26 = 11005624, fnDachora_Init = 11007197,
+    fnDachora_Main = 11007278, fnDachora_Func_2 = 11007344,
+    fnDachora_Func_3 = 11007420, fnDachora_Func_4 = 11007469,
+    fnDachora_Func_5 = 11007582, fnDachora_Func_7 = 11007887,
+    fnDachora_Func_8 = 11008006, fnDachora_Func_11 = 11008309,
+    fnDachora_Func_12 = 11008396, fnEnemy_GrappleReact_NoInteract_A8 = 11042816,
+    fnEnemy_GrappleReact_KillEnemy_A8 = 11042826, fnEnemy_GrappleReact_CancelBeam_A8 = 11042831,
+    fnEnemy_GrappleReact_SamusLatchesNoInvinc_A8 = 11042836, fnEnemy_GrappleReact_HurtSamus_A8 = 11042846,
+    fnEnemy_NormalTouchAI_A8 = 11042851, fnEnemy_NormalShotAI_A8 = 11042861,
+    fnEnemy_NormalPowerBombAI_A8 = 11042871, fnEnemy_NormalFrozenAI_A8 = 11042881,
+    fnnullsub_170_A8 = 11042892, fnEnemyInstr_Goto_A8 = 11043053,
+    fnEnemyInstr_DecTimerAndGoto2_A8 = 11043088, fnEnemyInstr_SetTimer_A8 = 11043107,
+    fnEnemyInstr_Sleep_A8 = 11043119, fnEnemyInstr_EnableOffScreenProcessing_A8 = 11043187,
+    fnEnemyInstr_DisableOffScreenProcessing_A8 = 11043197, fnMiniDraygon_Instr_2 = 11044751,
+    fnMiniDraygon_Instr_1 = 11044763, fnMiniDraygon_Instr_3 = 11044790,
+    fnMiniDraygon_Instr_4 = 11044811, fnMiniDraygon_Init = 11044832,
+    fnEvirProjectile_Init = 11045040, fnMiniDraygon_Main = 11045147,
+    fnEvirProjectile_Main = 11045278, fnMiniDraygon_Touch = 11045638,
+    fnMiniDraygon_Powerbomb = 11045644, fnMiniDraygon_Shot = 11045650,
+    fnMorphBallEye_Init = 11047000, fnMorphBallEye_Main = 11047138,
+    fnMorphBallEye_Func_1 = 11047153, fnMorphBallEye_Func_2 = 11047214,
+    fnMorphBallEye_Func_3 = 11047264, fnMorphBallEye_Func_4 = 11047374,
+    fnnullsub_244 = 11047388, fnFune_Instr_2 = 11048485,
+    fnFune_Instr_6 = 11048497, fnFune_Instr_7 = 11048522,
+    fnFune_Instr_1 = 11048547, fnFune_Instr_4 = 11048572,
+    fnFune_Instr_3 = 11048597, fnFune_Instr_5 = 11048628,
+    fnFune_Init = 11048675, fnFune_Main = 11048752,
+    fnWreckedShipGhost_Init = 11049710, fnWreckedShipGhost_Main = 11049788,
+    fnYappingMaw_Instr_2 = 11051207, fnYappingMaw_Instr_4 = 11051225,
+    fnYappingMaw_Instr_5 = 11051243, fnYappingMaw_Instr_7 = 11051261,
+    fnYappingMaw_Instr_3 = 11051279, fnYappingMaw_Instr_6 = 11051297,
+    fnYappingMaw_Instr_1 = 11051315, fnYappingMaw_Init = 11051336,
+    fnYappingMaw_Main = 11051537, fnYappingMaw_Touch = 11052953,
+    fnYappingMaw_Shot = 11052989, fnYappingMaw_Frozen = 11053109,
+    fnKago_Init = 11053894, fnKago_Main = 11053941,
+    fnKago_Shot = 11053955, fnNorfairLavaMan_Instr_1 = 11054610,
+    fnNorfairLavaMan_Instr_8 = 11054630, fnNorfairLavaMan_Instr_14 = 11054640,
+    fnNorfairLavaMan_Instr_2 = 11054650, fnNorfairLavaMan_Instr_7 = 11054661,
+    fnNorfairLavaMan_Instr_10 = 11054672, fnNorfairLavaMan_Instr_12 = 11054682,
+    fnNorfairLavaMan_Instr_9 = 11054692, fnNorfairLavaMan_Instr_11 = 11054728,
+    fnNorfairLavaMan_Instr_13 = 11054742, fnNorfairLavaMan_Instr_5 = 11054778,
+    fnNorfairLavaMan_Instr_15 = 11054794, fnNorfairLavaMan_Instr_4 = 11054820,
+    fnNorfairLavaMan_Instr_16 = 11054846, fnNorfairLavaMan_Instr_6 = 11054872,
+    fnNorfairLavaMan_Instr_3 = 11054916, fnNorfairLavaMan_Init = 11054987,
+    fnNorfairLavaMan_Func_6 = 11055282, fnNorfairLavaMan_Main = 11055370,
+    fnNorfairLavaMan_Func_7 = 11055386, fnNorfairLavaMan_Func_8 = 11055477,
+    fnsub_A8B193 = 11055507, fnNorfairLavaMan_Func_9 = 11055544,
+    fnNorfairLavaMan_Func_10 = 11055581, fnNorfairLavaMan_Func_11 = 11055620,
+    fnsub_A8B291 = 11055761, fnNorfairLavaMan_Func_13 = 11055765,
+    fnNorfairLavaMan_Func_15 = 11055885, fnNorfairLavaMan_Func_16 = 11055903,
+    fnNorfairLavaMan_Func_17 = 11055958, fnNorfairLavaMan_Func_18 = 11056039,
+    fnNorfairLavaMan_Powerbomb = 11056128, fnNorfairLavaMan_Touch = 11056134,
+    fnNorfairLavaMan_Shot = 11056140, fnBeetom_Instr_1 = 11056990,
+    fnBeetom_Init = 11057014, fnBeetom_Main = 11057165,
+    fnBeetom_Touch = 11058734, fnBeetom_Shot = 11058860,
+    fnMaridiaFloater_Init = 11059657, fnMaridiaFloater_Main = 11059740,
+    fnMaridiaFloater_Func_3 = 11059843, fnMaridiaFloater_Func_4 = 11059878,
+    fnMaridiaFloater_Func_5 = 11059919, fnMaridiaFloater_Func_6 = 11060075,
+    fnMaridiaFloater_Func_7 = 11060193, fnMaridiaFloater_Func_8 = 11060329,
+    fnMaridiaFloater_Func_9 = 11060444, fnMaridiaFloater_Func_10 = 11060480,
+    fnMaridiaFloater_Func_11 = 11060509, fnnullsub_256 = 11060584,
+    fnMaridiaFloater_Func_12 = 11060585, fnMaridiaFloater_Func_13 = 11060639,
+    fnMaridiaFloater_Touch = 11060670, fnMaridiaFloater_Shot = 11060719,
+    fnMaridiaFloater_Powerbomb = 11060799, fnWreckedShipRobot_Init = 11062135,
+    fnWreckedShipRobotDeactivated_Init = 11062220, fnWreckedShipRobot_Main = 11062326,
+    fnnullsub_342 = 11062374, fnWreckedShipRobot_Func_1 = 11062375,
+    fnWreckedShipRobot_Instr_4 = 11062537, fnWreckedShipRobot_Instr_9 = 11062692,
+    fnWreckedShipRobot_Instr_6 = 11062762, fnWreckedShipRobot_Instr_8 = 11062917,
+    fnWreckedShipRobot_Instr_7 = 11062987, fnWreckedShipRobot_Instr_15 = 11062991,
+    fnWreckedShipRobot_Instr_18 = 11063146, fnWreckedShipRobot_Instr_16 = 11063216,
+    fnWreckedShipRobot_Instr_17 = 11063371, fnWreckedShipRobot_Instr_3 = 11063441,
+    fnWreckedShipRobot_Instr_10 = 11063490, fnWreckedShipRobot_Instr_14 = 11063494,
+    fnWreckedShipRobot_Instr_2 = 11063506, fnWreckedShipRobot_Instr_13 = 11063552,
+    fnWreckedShipRobot_Instr_1 = 11063559, fnWreckedShipRobot_Instr_12 = 11063601,
+    fnWreckedShipRobot_Instr_5 = 11063613, fnWreckedShipRobot_Instr_11 = 11063659,
+    fnWreckedShipRobotDeactivated_Touch = 11063668, fnWreckedShipRobotDeactivated_Shot = 11063693,
+    fnWreckedShipRobot_Shot = 11063698, fnMaridiaPuffer_Init = 11065545,
+    fnMaridiaPuffer_Main = 11065611, fnMaridiaPuffer_Shot = 11066132,
+    fnWalkingLavaSeahorse_Init = 11066573, fnWalkingLavaSeahorse_Main = 11066731,
+    fnWalkingLavaSeahorse_Instr_4 = 11067164, fnWalkingLavaSeahorse_Instr_3 = 11067187,
+    fnWalkingLavaSeahorse_Instr_5 = 11067193, fnWalkingLavaSeahorse_Instr_6 = 11067199,
+    fnWalkingLavaSeahorse_Instr_2 = 11067235, fnWalkingLavaSeahorse_Instr_1 = 11067249,
+    fnWreckedShipOrbs_Init = 11068296, fnWreckedShipOrbs_Main = 11068355,
+    fnWreckedShipSpark_Instr_2 = 11068957, fnWreckedShipSpark_Instr_1 = 11068970,
+    fnWreckedShipSpark_Init = 11068983, fnWreckedShipSpark_Main = 11069070,
+    fnWreckedShipSpark_Shot = 11069198, fnBlueBrinstarFaceBlock_Init = 11069486,
+    fnBlueBrinstarFaceBlock_Func_1 = 11069550, fnBlueBrinstarFaceBlock_Main = 11069614,
+    fnBlueBrinstarFaceBlock_Shot = 11069725, fnKiHunter_Init = 11071880,
+    fnKiHunterWings_Init = 11072020, fnKiHunter_Main = 11072092,
+    fnKiHunterWings_Main = 11072098, fnKiHunter_Instr_1 = 11072806,
+    fnKiHunter_Instr_2 = 11072996, fnKiHunter_Instr_3 = 11073151,
+    fnKiHunter_Instr_4 = 11073234, fnKiHunter_Instr_5 = 11073240,
+    fnKiHunter_Shot = 11073281, fnEnemy_GrappleReact_CancelBeam_A9 = 11108367,
+    fnEnemy_NormalPowerBombAI_A9 = 11108407, fnEnemy_NormalFrozenAI_A9 = 11108417,
+    fnnullsub_170_A9 = 11108428, fnEnemyInstr_Sleep_A9 = 11108655,
+    fnMotherBrainsBody_Init = 11110023, fnMotherBrainsBrain_Init = 11110149,
+    fnMotherBrainsBody_Hurt = 11110206, fnnullsub_264 = 11110278,
+    fnMotherBrainsBody_Powerbomb = 11110279, fnMotherBrainsBrain_Hurt = 11110283,
+    fnMotherBrain_DrawBrainNeck_EnemyGfxDrawHook = 11110345, fnMotherBrainsBrain_GfxDrawHook = 11110365,
+    fnMotherBrainsTubesFalling_Init = 11111221, fnMotherBrainsTubesFalling_Main = 11111301,
+    fnMotherBrain_Instr_MoveBodyUp10Left4 = 11113910, fnMotherBrain_Instr_MoveBodyUp16Left4 = 11113920,
+    fnMotherBrain_Instr_MoveBodyUp12Right2 = 11113930, fnMotherBrain_Instr_MoveDown12Left4 = 11113950,
+    fnMotherBrain_Instr_MoveDown16Right2 = 11113960, fnMotherBrain_Instr_MoveDown10Right2 = 11113970,
+    fnMotherBrain_Instr_MoveUp2Right1 = 11113980, fnMotherBrain_Instr_MoveRight2 = 11113996,
+    fnMotherBrain_Instr_MoveUp1 = 11114012, fnMotherBrain_Instr_MoveUp1Right3_Sfx = 11114018,
+    fnMotherBrain_Instr_Down2Right15 = 11114040, fnMotherBrain_Instr_Down4Right6 = 11114056,
+    fnMotherBrain_Instr_Up4Left2 = 11114072, fnMotherBrain_Instr_Up2Left1_Sfx = 11114088,
+    fnMotherBrain_Instr_Up2Left1_Sfx2 = 11114110, fnMotherBrain_Instr_MoveLeft2 = 11114132,
+    fnMotherBrain_Instr_MoveDown1 = 11114148, fnMotherBrain_Instr_MoveDown1Left3 = 11114154,
+    fnMotherBrain_Instr_MoveUp2Left15_Sfx = 11114170, fnMotherBrain_Instr_MoveUp4Left6 = 11114192,
+    fnMotherBrain_Instr_MoveDown4Right2 = 11114208, fnMotherBrain_Instr_MoveDown2Right1 = 11114224,
+    fnMotherBrain_Instr_SetPose_Standing = 11114240, fnMotherBrain_Instr_SetPose_Walking = 11114248,
+    fnMotherBrain_Instr_SetPose_Crouched = 11114256, fnMotherBrain_Instr_SetPose_CrouchedTrans = 11114264,
+    fnMotherBrain_Instr_SetPose_DeathBeamMode = 11114272, fnMotherBrain_Instr_SetPose_LeaningDown = 11114280,
+    fnMotherBrain_Instr_SpawnEprojToOffset = 11115208, fnMotherBrain_Instr_SpawnDeathBeamEproj = 11115247,
+    fnMotherBrain_Instr_IncrBeamAttackPhase = 11115269, fnMotherBrainsBody_Shot = 11121923,
+    fnMotherBrainsBrain_Shot = 11121927, fnnullsub_47 = 11122117,
+    fnMotherBrainsBrain_Touch = 11122118, fnShitroidInCutscene_Init = 11126544,
+    fnShitroidInCutscene_Main = 11126649, fnShitroidInCutscene_Touch = 11128579,
+    fnShitroid_Instr_1 = 11128756, fnShitroid_Instr_2 = 11128778,
+    fnDeadTorizo_Init = 11129608, fnDeadTorizo_Main = 11129704,
+    fnDeadTorizo_MainGfxHook = 11129754, fnDeadTorizo_Powerbomb = 11129898,
+    fnDeadTorizo_Shot = 11129907, fnDeadSidehopper_Init = 11130806,
+    fnDeadZoomer_Init = 11130953, fnDeadRipper_Init = 11130998,
+    fnDeadSkree_Init = 11131039, fnDeadSidehopper_Powerbomb = 11131084,
+    fnDeadSidehopper_Main = 11131099, fnDeadZoomer_Powerbomb = 11132141,
+    fnDeadZoomer_Shot = 11132152, fnDeadRipper_Powerbomb = 11132157,
+    fnDeadRipper_Shot = 11132168, fnDeadSkree_Powerbomb = 11132173,
+    fnDeadSkree_Shot = 11132184, fnDeadSidehopper_Shot = 11132189,
+    fnDeadSidehopper_Touch = 11132228, fnsub_A9ECD0 = 11136208,
+    fnShitroid_Init = 11136823, fnShitroid_Powerbomb = 11136954,
+    fnShitroid_Main = 11136965, fnShitroid_Touch = 11138953,
+    fnShitroid_Shot = 11139138, fnShitroid_Instr_3 = 11139360,
+    fnShitroid_Instr_4 = 11139382, fnShitroid_Instr_6 = 11139472,
+    fnShitroid_Instr_5 = 11139476, fnEnemy_GrappleReact_CancelBeam_AA = 11173903,
+    fnEnemy_NormalPowerBombAI_AA = 11173943, fnEnemy_NormalFrozenAI_AA = 11173953,
+    fnnullsub_170_AA = 11173964, fnEnemy_SetAiPreInstr_AA = 11173995,
+    fnEnemy_ClearAiPreInstr_AA = 11174004, fnnullsub_171_AA = 11174011,
+    fnEnemyInstr_StopScript_AA = 11174012, fnEnemyInstr_Goto_AA = 11174125,
+    fnEnemyInstr_DecTimerAndGoto2_AA = 11174160, fnEnemyInstr_SetTimer_AA = 11174179,
+    fnEnemyInstr_Sleep_AA = 11174191, fnEnemyInstr_WaitNframes_AA = 11174202,
+    fnEnemyInstr_CopyToVram_AA = 11174219, fnTorizo_Instr_3 = 11186332,
+    fnTorizo_Instr_31 = 11186461, fnTorizo_Instr_33 = 11186622,
+    fnTorizo_Instr_36 = 11186724, fnTorizo_Instr_37 = 11186734,
+    fnTorizo_Instr_35 = 11186744, fnTorizo_Instr_38 = 11186765,
+    fnTorizo_Instr_6 = 11186801, fnTorizo_Instr_5 = 11188557,
+    fnTorizo_Instr_9 = 11188561, fnTorizo_Instr_7 = 11190984,
+    fnTorizo_Instr_2 = 11190985, fnTorizo_Instr_8 = 11190993,
+    fnTorizo_Instr_25 = 11191001, fnTorizo_Instr_22 = 11191021,
+    fnTorizo_Instr_19 = 11191031, fnTorizo_Instr_32 = 11191037,
+    fnTorizo_Instr_30 = 11191043, fnTorizo_Instr_34 = 11191087,
+    fnTorizo_Instr_24 = 11191114, fnTorizo_Instr_12 = 11191131,
+    fnTorizo_Instr_10 = 11191149, fnTorizo_Instr_11 = 11191159,
+    fnTorizo_Instr_29 = 11191178, fnTorizo_Instr_1 = 11191200,
+    fnTorizo_Instr_28 = 11191222, fnTorizo_Instr_4 = 11191244,
+    fnTorizo_Instr_40 = 11191326, fnTorizo_Instr_16 = 11191408,
+    fnTorizo_Instr_27 = 11191525, fnTorizo_Instr_23 = 11191642,
+    fnTorizo_Instr_14 = 11191655, fnTorizo_Instr_15 = 11191691,
+    fnTorizo_Instr_26 = 11191716, fnTorizo_Instr_18 = 11191755,
+    fnTorizo_Instr_20 = 11191779, fnTorizo_Instr_44 = 11191794,
+    fnTorizo_Instr_21 = 11191809, fnTorizo_Instr_17 = 11191824,
+    fnTorizo_Instr_13 = 11191832, fnTorizo_Hurt = 11191934,
+    fnTorizo_Main = 11191972, fnTorizo_Func_5 = 11192146,
+    fnTorizo_Func_6 = 11192360, fnTorizo_Func_7 = 11192364,
+    fnTorizo_Init = 11192447, fnnullsub_344 = 11192670,
+    fnGoldTorizo_Touch = 11192695, fnTorizo_Shot = 11192700,
+    fnnullsub_271 = 11192769, fnTorizo_Func_8 = 11192770,
+    fnTorizo_Instr_39 = 11193038, fnTorizo_Instr_41 = 11193054,
+    fnTorizo_Instr_42 = 11193058, fnTorizo_Instr_48 = 11193815,
+    fnTorizo_Instr_57 = 11194601, fnTorizo_Instr_58 = 11194611,
+    fnTorizo_Instr_59 = 11194747, fnTorizo_Instr_62 = 11194759,
+    fnTorizo_Instr_63 = 11194855, fnGoldTorizo_Main = 11195241,
+    fnTorizo_Instr_56 = 11195279, fnTorizo_Instr_60 = 11195287,
+    fnTorizo_Instr_46 = 11195295, fnGoldTorizo_Hurt = 11195322,
+    fnTorizo_Instr_47 = 11195360, fnTorizo_Instr_49 = 11195370,
+    fnTorizo_Instr_61 = 11195446, fnTorizo_Instr_53 = 11195461,
+    fnTorizo_Instr_55 = 11195508, fnTorizo_Instr_52 = 11195547,
+    fnTorizo_Instr_50 = 11195578, fnTorizo_Instr_43 = 11195635,
+    fnTorizo_Instr_51 = 11195645, fnTorizo_Instr_45 = 11195686,
+    fnTorizo_Instr_54 = 11195725, fnTorizo_D5ED = 11195885,
+    fnTorizo_D5F1 = 11195889, fnGoldTorizo_Shot = 11196007,
+    fnnullsub_49 = 11196359, fnTourianEntranceStatue_Init = 11196360,
+    fnShaktool_Instr_2 = 11196721, fnShaktool_Instr_3 = 11196735,
+    fnShaktool_Instr_4 = 11196746, fnShaktool_Instr_5 = 11196755,
+    fnShaktool_Instr_6 = 11196831, fnShaktool_Instr_1 = 11196858,
+    fnShaktool_Hurt = 11197603, fnnullsub_274 = 11197610,
+    fnnullsub_275 = 11197611, fnShaktool_DCAC = 11197612,
+    fnShaktool_DCD7 = 11197655, fnShaktool_DD25 = 11197733,
+    fnShaktool_Init = 11198019, fnShaktool_Touch = 11198255,
+    fnShaktool_Shot = 11198260, fnShaktool_Instr_9 = 11199529,
+    fnShaktool_Instr_11 = 11199542, fnShaktool_Instr_10 = 11199549,
+    fnsub_AAE445 = 11199557, fnShaktool_Instr_8 = 11199871,
+    fnShaktool_Instr_13 = 11199879, fnShaktool_Instr_12 = 11199887,
+    fnShaktool_Instr_7 = 11199960, fnShaktool_Instr_14 = 11200240,
+    fnN00bTubeCracks_Init = 11200278, fnChozoStatue_Init = 11200293,
+    fnnullsub_276 = 11200422, fnChozoStatue_Main = 11200423,
+    fnShaktool_PreInstr_0 = 11200430, fnnullsub_277 = 11200474,
+    fnnullsub_51 = 11200475, fnnullsub_52 = 11200476,
+    fnEnemy_GrappleReact_CancelBeam_B2 = 11698191, fnEnemy_NormalPowerBombAI_B2 = 11698231,
+    fnEnemy_NormalFrozenAI_B2 = 11698241, fnnullsub_170_B2 = 11698252,
+    fnEnemyInstr_Goto_B2 = 11698413, fnEnemyInstr_DecTimerAndGoto2_B2 = 11698448,
+    fnEnemyInstr_SetTimer_B2 = 11698467, fnEnemyInstr_Sleep_B2 = 11698479,
+    fnEnemyInstr_WaitNframes_B2 = 11698490, fnWalkingSpacePirates_Powerbomb = 11700071,
+    fnWalkingSpacePirates_Touch = 11700076, fnWalkingSpacePirates_Shot = 11700089,
+    fnWalkingSpacePirates_87C8 = 11700168, fnWalkingSpacePirates_883E = 11700286,
+    fnSpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight = 11726400, fnSpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft = 11726450,
+    fnSpacePirates_Instr_RandomNewDirFaceR = 11726500, fnSpacePirates_Instr_RandomNewDirFaceL = 11726524,
+    fnSpacePirates_Instr_PrepareWallJumpR = 11726548, fnSpacePirates_Instr_PrepareWallJumpL = 11726589,
+    fnSpacePirates_Instr_FireLaserL = 11726634, fnSpacePirates_Instr_FireLaserR = 11726685,
+    fnSpacePirates_Instr_SetEnemyFunc = 11726723, fnSpacePirates_Instr_PlaySfx = 11726739,
+    fnWallSpacePirates_Init = 11726751, fnWallSpacePirates_Main = 11726893,
+    fnSpacePirates_Instr_20 = 11728182, fnSpacePirates_Instr_16 = 11728198,
+    fnSpacePirates_Instr_15 = 11728228, fnSpacePirates_Instr_18 = 11728272,
+    fnSpacePirates_Instr_17 = 11728342, fnNinjaSpacePirates_Init = 11728350,
+    fnNinjaSpacePirates_Main = 11728546, fnSpacePirates_Instr_19 = 11729257,
+    fnSpacePirates_Instr_21 = 11729469, fnSpacePirates_Instr_12 = 11730024,
+    fnSpacePirates_Instr_14 = 11730064, fnSpacePirates_Instr_11 = 11730104,
+    fnSpacePirates_Instr_13 = 11730120, fnWalkingSpacePirates_Init = 11730178,
+    fnWalkingSpacePirates_Main = 11730226, fnEnemy_GrappleReact_NoInteract_B3 = 11763712,
+    fnEnemy_GrappleReact_KillEnemy_B3 = 11763722, fnEnemy_GrappleReact_CancelBeam_B3 = 11763727,
+    fnEnemy_NormalTouchAI_B3 = 11763747, fnEnemy_NormalShotAI_B3 = 11763757,
+    fnEnemy_NormalPowerBombAI_B3 = 11763767, fnEnemy_NormalFrozenAI_B3 = 11763777,
+    fnnullsub_170_B3 = 11763788, fnEnemy_SetAiPreInstr_B3 = 11763819,
+    fnEnemy_ClearAiPreInstr_B3 = 11763828, fnnullsub_171_B3 = 11763835,
+    fnEnemyInstr_Goto_B3 = 11763949, fnEnemyInstr_DecTimerAndGoto2_B3 = 11763984,
+    fnEnemyInstr_SetTimer_B3 = 11764003, fnEnemyInstr_Sleep_B3 = 11764015,
+    fnUnusedSpinningTurtleEye_Init = 11765499, fnUnusedSpinningTurtleEye_Main = 11765518,
+    fnBrinstarPipeBug_Init = 11765819, fnBrinstarPipeBug_Main = 11765882,
+    fnBrinstarPipeBug_PreInstr_1 = 11765888, fnBrinstarPipeBug_PreInstr_2 = 11765904,
+    fnBrinstarPipeBug_PreInstr_3 = 11765987, fnBrinstarPipeBug_PreInstr_4 = 11766044,
+    fnBrinstarPipeBug_PreInstr_5 = 11766142, fnNorfairPipeBug_Init = 11766625,
+    fnNorfairPipeBug_Main = 11766686, fnNorfairPipeBug_Func_5 = 11767039,
+    fnBrinstarYellowPipeBug_Init = 11767628, fnBrinstarYellowPipeBug_Main = 11767726,
+    fnBotwoon_Instr_1 = 11769031, fnBotwoon_Instr_2 = 11769047,
+    fnBotwoon_Instr_3 = 11769063, fnBotwoon_Instr_4 = 11769079,
+    fnBotwoon_Instr_5 = 11769095, fnBotwoon_Instr_6 = 11769111,
+    fnBotwoon_Instr_7 = 11769127, fnBotwoon_Instr_8 = 11769143,
+    fnBotwoon_Instr_9 = 11769159, fnBotwoon_Instr_10 = 11769175,
+    fnBotwoon_Instr_SetSpitting = 11769191, fnBotwoon_Instr_QueueSpitSfx = 11769202,
+    fnBotwoon_Init = 11769219, fnBotwoon_Main = 11769448,
+    fnBotwoon_Func_26 = 11771328, fnBotwoon_Func_27 = 11771517,
+    fnBotwoon_Func_28 = 11771616, fnBotwoon_Func_29 = 11771700,
+    fnBotwoon_Func_30 = 11771770, fnBotwoon_Touch = 11771903,
+    fnBotwoon_Shot = 11771926, fnBotwoon_Powerbomb = 11771969,
+    fnEscapeEtecoon_Instr_1 = 11789637, fnEscapeEtecoon_Instr_2 = 11789840,
+    fnEscapeEtecoon_Main = 11789909, fnEscapeEtecoon_E65C = 11789916,
+    fnEscapeEtecoon_E670 = 11789936, fnEscapeEtecoon_E680 = 11789952,
+    fnEscapeEtecoon_Init = 11790027, fnEscapeDachora_Instr_2 = 11791016,
+    fnEscapeDachora_Instr_3 = 11791032, fnEscapeDachora_Instr_1 = 11791049,
+    fnEscapeDachora_Instr_4 = 11791063, fnEscapeDachora_Init = 11791077,
+    fnnullsub_54 = 11791130,
+}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];

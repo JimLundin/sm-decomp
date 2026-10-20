@@ -54,9 +54,10 @@ pub use crate::types::{
     CoroutineRet, Func_V, LongPtr, OamEnt, Point16U, Rect16U, SnesRegs, VoidP, VramWriteEntry,
 };
 pub use crate::types::{EnemyBase, EnemyData, EnemyProps};
-pub const addr_kMotherBrain_Misc_TileData: Consts_B7 = 52736;
-pub const addr_kDeadMonsters_TileData: Consts_B7 = 49152;
-pub const addr_kDeadTorizo_TileData: Consts_B7 = 43008;
+crate::game::constants::typed_constants! { Consts_B7;
+    addr_kMotherBrain_Misc_TileData = 52736, addr_kDeadMonsters_TileData = 49152,
+    addr_kDeadTorizo_TileData = 43008,
+}
 pub use crate::types::SpawnHardcodedPlmArgs;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -228,7 +229,9 @@ enemy_layout! {
     }
 }
 
-pub const kCoroutineNone: i32 = 0;
+crate::game::constants::typed_constants! { i32;
+    kCoroutineNone = 0,
+}
 const RomPtr_A9: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa9>;
 const RomPtr_B7: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb7>;
 use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
@@ -236,296 +239,206 @@ crate::ram_map::ram_pointer_functions! {
     gOamEnt(v: i32) -> OamEnt = [(0x370i32 + v) as isize];
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
-pub const fnEproj_Init_0x8bde_SkreeDownLeft: i32 = 0x868b15;
-pub const fnMotherBrainsBody_UnpauseHook: i32 = 0xa98763;
-pub const fnMotherBrainsBrain_SetupBrainAndNeckToDraw: i32 = 0xa987a2;
-pub const fnMotherBrainsBrain_SetupBrainToDraw: i32 = 0xa987d0;
-pub const fnMotherBrainsBody_FirstPhase_DoubleRet: i32 = 0xa987e1;
-pub const fnMotherBrainBody_FakeDeath_Descent_0_Pause: u32 = 11110429;
-pub const fnMotherBrainBody_FakeDeath_Descent_1: i32 = 0xa98829;
-pub const fnMotherBrainBody_FakeDeath_Descent_2: i32 = 0xa9884d;
-pub const fnMotherBrainBody_FakeDeath_Descent_3: i32 = 0xa9886c;
-pub const fnMotherBrainBody_FakeDeath_Descent_4: i32 = 0xa98884;
-pub const fnMotherBrainBody_FakeDeath_Descent_5: i32 = 0xa988b2;
-pub const fnMotherBrainBody_FakeDeath_Descent_6: i32 = 0xa988d3;
-pub const fnMotherBrainBody_0_Wait: i32 = 0xa98949;
-pub const fnMotherBrainBody_1_ClearBottomLeftTube: i32 = 0xa9896e;
-pub const fnMotherBrainBody_2_SpawnTopRightTubeFalling: i32 = 0xa98983;
-pub const fnMotherBrainBody_3_ClearCeilingBlock9: u32 = 11110816;
-pub const fnMotherBrainBody_4_SpawnTopLeftTubeFalling: i32 = 0xa989b5;
-pub const fnMotherBrainBody_4_ClearCeilingBlock6: i32 = 0xa989d2;
-pub const fnMotherBrainBody_5_SpawnTubeFallingEnemy1: i32 = 0xa989e7;
-pub const fnMotherBrainBody_6_ClearBottomRightTube: i32 = 0xa989fa;
-pub const fnMotherBrainBody_7_SpawnTubeFallingEnemy2: i32 = 0xa98a0f;
-pub const fnMotherBrainBody_8_ClearBottomMiddleLeftTube: i32 = 0xa98a22;
-pub const fnMotherBrainBody_9_SpawnTopMiddleLeftFalling: i32 = 0xa98a37;
-pub const fnMotherBrainBody_10_ClearCeilingTubeColumn7: i32 = 0xa98a54;
-pub const fnMotherBrainBody_11_SpawnTopMiddleRightFalling: i32 = 0xa98a69;
-pub const fnMotherBrainBody_12_ClearCeilingTubeColumn8: i32 = 0xa98a86;
-pub const fnMotherBrainBody_13_SpawnTubeFallingEnemy3: i32 = 0xa98a9b;
-pub const fnMotherBrainBody_14_ClearBottomMiddleRightTube: i32 = 0xa98aae;
-pub const fnMotherBrainBody_15_SpawnTubeFallingEnemy4: i32 = 0xa98ac3;
-pub const fnMotherBrainBody_16_ClearBottomMiddleTubes: i32 = 0xa98ad6;
-pub const fnnullsub_365: u32 = 11111140;
-pub const fnMotherBrainsTubesFalling_Main_NonMain: u32 = 11111304;
-pub const fnMotherBrainsTubesFalling_WaitToFall: u32 = 11111371;
-pub const fnMotherBrainsTubesFalling_Falling: i32 = 0xa98bd6;
-pub const fnMotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23: i32 = 0xa98c87;
-pub const fnMotherBrainBody_FakeDeath_Ascent_1_DrawBG1Row45: i32 = 0xa98c9e;
-pub const fnMotherBrainBody_FakeDeath_Ascent_2_DrawBG1Row67: i32 = 0xa98cb5;
-pub const fnMotherBrainBody_FakeDeath_Ascent_3_DrawBG1Row89: i32 = 0xa98ccc;
-pub const fnMotherBrainBody_FakeDeath_Ascent_4_DrawBG1RowAB: i32 = 0xa98ce3;
-pub const fnMotherBrainBody_FakeDeath_Ascent_5_DrawBG1RowCD: i32 = 0xa98cfa;
-pub const fnMotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx: i32 = 0xa98d11;
-pub const fnMotherBrainBody_FakeDeath_Ascent_7_SetupPhase2Brain: i32 = 0xa98d49;
-pub const fnMotherBrainBody_FakeDeath_Ascent_8_Pause: i32 = 0xa98d79;
-pub const fnMotherBrainBody_FakeDeath_Ascent_9_PrepareRise: i32 = 0xa98d8b;
-pub const fnMotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles: i32 = 0xa98db4;
-pub const fnMotherBrainBody_FakeDeath_Ascent_11_ContinuePause: i32 = 0xa98dc3;
-pub const fnMotherBrainBody_FakeDeath_Ascent_12_StartMusic: i32 = 0xa98dec;
-pub const fnMotherBrainBody_FakeDeath_Ascent_13_Raise: i32 = 0xa98e4d;
-pub const fnMotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching: i32 = 0xa98e95;
-pub const fnMotherBrainBody_FakeDeath_Ascent_15_TransitionFromGrey: i32 = 0xa98eaa;
-pub const fnMotherBrainBody_2ndphase_16_ShakeHeadMenacingly: i32 = 0xa98ef5;
-pub const fnMotherBrainBody_2ndphase_17_BringHeadBackUp: i32 = 0xa98f14;
-pub const fnMotherBrainBody_2ndphase_18_FinishStretching: i32 = 0xa98f33;
-pub const fnMotherBrain_Instr_Goto: u32 = 11115279;
-pub const fnMotherBrain_Instr_EnableNeckMovementGoto: u32 = 11115284;
-pub const fnMotherBrain_Instr_DisableNeckMovement: u32 = 11115296;
-pub const fnMotherBrain_Instr_QueueSfx2: u32 = 11115304;
-pub const fnMotherBrain_Instr_QueueSfx3: u32 = 11115314;
-pub const fnMotherBrain_Instr_SpawnDroolEproj: u32 = 11115324;
-pub const fnMotherBrain_Instr_SpawnPurpleBreath: u32 = 11115373;
-pub const fnMotherBrain_Instr_SetMainShakeTimer50: u32 = 11115383;
-pub const fnMotherBrain_Instr_GotoEitherOr: u32 = 11115621;
-pub const fnMotherBrain_Instr_MaybeGoto: u32 = 11115693;
-pub const fnMotherBrain_Instr_MaybeGoto2: u32 = 11115789;
-pub const fnMotherBrain_Instr_Goto2: u32 = 11115809;
-pub const fnMotherBrain_Instr_QueueShitroidAttackSfx: u32 = 11116023;
-pub const fnMotherBrain_Instr_SpawnBlueRingEproj: u32 = 11116073;
-pub const fnMotherBrain_Instr_AimRingsAtShitroid: u32 = 11116087;
-pub const fnMotherBrain_Instr_AimRingsAtSamus: u32 = 11116123;
-pub const fnMotherBrain_Instr_IncrShitroidAttackCtr: u32 = 11116195;
-pub const fnMotherBrain_Instr_SetShitroidAttackCtr0: u32 = 11116213;
-pub const fnMotherBrain_Instr_SpawnBombEproj: u32 = 11116221;
-pub const fnMotherBrain_Instr_SpawnLaserEproj: u32 = 11116358;
-pub const fnMotherBrain_Instr_SpawnRainbowEproj: u32 = 11116420;
-pub const fnMotherBrain_Instr_SetupFxForRainbowBeam: u32 = 11116430;
-pub const fnMotherBrain_Phase3_Death_0: i32 = 0xa9aee1;
-pub const fnMotherBrain_Phase3_Death_1: i32 = 0xa9af12;
-pub const fnMotherBrain_Phase3_Death_2: i32 = 0xa9af21;
-pub const fnMotherBrain_Phase3_Death_3: i32 = 0xa9af54;
-pub const fnMotherBrain_Phase3_Death_4: i32 = 0xa9af9d;
-pub const fnMotherBrain_Phase3_Death_5: i32 = 0xa9afb6;
-pub const fnMotherBrain_Phase3_Death_6: i32 = 0xa9b013;
-pub const fnMotherBrain_Phase3_Death_7: i32 = 0xa9b115;
-pub const fnMotherBrain_Phase3_Death_8: i32 = 0xa9b12d;
-pub const fnMotherBrain_Phase3_Death_9: i32 = 0xa9b15e;
-pub const fnMotherBrain_Phase3_Death_10: i32 = 0xa9b173;
-pub const fnMotherBrain_Phase3_Death_11: i32 = 0xa9b189;
-pub const fnMotherBrain_Phase3_Death_12: i32 = 0xa9b1b8;
-pub const fnMotherBrain_Phase3_Death_13: i32 = 0xa9b1d5;
-pub const fnMotherBrain_Phase3_Death_14_20framedelay: i32 = 0xa9b211;
-pub const fnMotherBrain_CorpseRottingFinished: u32 = 11121187;
-pub const fnMotherBrain_Phase3_Death_15_LoadEscapeTimerTiles: i32 = 0xa9b258;
-pub const fnMotherBrain_Phase3_Death_16_StartEscape: i32 = 0xa9b26d;
-pub const fnMotherBrain_Phase3_Death_17_SpawnTimeBomb: i32 = 0xa9b2d1;
-pub const fnMotherBrain_Phase3_Death_18_TypesZebesText: i32 = 0xa9b2e3;
-pub const fnMotherBrain_Phase3_Death_19_EscapeDoorExploding: i32 = 0xa9b2f9;
-pub const fnMotherBrain_Phase3_Death_20_BlowUpEscapeDoor: i32 = 0xa9b32a;
-pub const fnMotherBrain_Phase3_Death_21_KeepEarthquakeGoing: i32 = 0xa9b33c;
-pub const fnMotherBrain_Body_Phase2_Thinking: i32 = 0xa9b605;
-pub const fnMotherBrain_Body_Phase2_TryAttack: i32 = 0xa9b64b;
-pub const fnMotherBrain_FiringBomb_DecideOnWalking: i32 = 0xa9b781;
-pub const fnMotherBrain_FiringBomb_WalkingBackwards: i32 = 0xa9b7ac;
-pub const fnMotherBrain_FiringBomb_Crouch: i32 = 0xa9b7c6;
-pub const fnMotherBrain_FiringBomb_Fired: i32 = 0xa9b7e8;
-pub const fnMotherBrain_FiringBomb_Standup: i32 = 0xa9b7f8;
-pub const fnMotherBomb_FiringLaser_PositionHead: i32 = 0xa9b80e;
-pub const fnMotherBomb_FiringLaser_PositionHeadSlowlyFire: i32 = 0xa9b839;
-pub const fnMotherBomb_FiringLaser_FinishAttack: i32 = 0xa9b863;
-pub const fnMotherBomb_FiringDeathBeam: i32 = 0xa9b87d;
-pub const fnMotherBomb_FiringRainbowBeam_0: i32 = 0xa9b8eb;
-pub const fnMotherBomb_FiringRainbowBeam_1_StartCharge: i32 = 0xa9b91a;
-pub const fnMotherBomb_FiringRainbowBeam_2_RetractNeck: i32 = 0xa9b92b;
-pub const fnMotherBomb_FiringRainbowBeam_3_Wait: i32 = 0xa9b93f;
-pub const fnMotherBomb_FiringRainbowBeam_4_ExtendNeckDown: i32 = 0xa9b951;
-pub const fnMotherBomb_FiringRainbowBeam_5_StartFiring: i32 = 0xa9b975;
-pub const fnMotherBomb_FiringRainbowBeam_6_MoveSamusToWall: i32 = 0xa9b9e5;
-pub const fnMotherBomb_FiringRainbowBeam_7_DelayFrame: i32 = 0xa9ba00;
-pub const fnMotherBomb_FiringRainbowBeam_8_StartDrainSamus: i32 = 0xa9ba27;
-pub const fnMotherBomb_FiringRainbowBeam_9_DrainingSamus: i32 = 0xa9ba3c;
-pub const fnMotherBomb_FiringRainbowBeam_10_FinishFiringRainbow: i32 = 0xa9ba5e;
-pub const fnMotherBomb_FiringRainbowBeam_11_LetSamusFall: i32 = 0xa9bac4;
-pub const fnMotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround: i32 = 0xa9bad1;
-pub const fnMotherBomb_FiringRainbowBeam_13_LowerHead: i32 = 0xa9badd;
-pub const fnMotherBomb_FiringRainbowBeam_14_DecideNextAction: i32 = 0xa9bb06;
-pub const fnMotherBrain_Phase2Cut_0: i32 = 0xa9bd45;
-pub const fnMotherBrain_Phase2Cut_1: i32 = 0xa9bd98;
-pub const fnMotherBrain_Phase2Cut_2: i32 = 0xa9bda9;
-pub const fnMotherBrain_Phase2Cut_3: i32 = 0xa9bdc1;
-pub const fnMotherBrain_Phase2Cut_4: i32 = 0xa9bdd2;
-pub const fnMotherBrain_Phase2Cut_5: i32 = 0xa9bded;
-pub const fnnullsub_364: i32 = 0xa9be1a;
-pub const fnMotherBrain_DrainedByShitroid_0: i32 = 0xa9be38;
-pub const fnMotherBrain_DrainedByShitroid_1: i32 = 0xa9be5d;
-pub const fnMotherBrain_DrainedByShitroid_2: i32 = 0xa9be96;
-pub const fnMotherBrain_DrainedByShitroid_3: i32 = 0xa9bf0e;
-pub const fnMotherBrain_DrainedByShitroid_4: i32 = 0xa9bf41;
-pub const fnMotherBrain_DrainedByShitroid_5: i32 = 0xa9bf56;
-pub const fnMotherBrain_DrainedByShitroid_6: i32 = 0xa9bf7d;
-pub const fnMotherBrain_DrainedByShitroid_7: i32 = 0xa9bf95;
-pub const fnMotherBrain_PainfulWalkForwards: i32 = 0xa9bfd0;
-pub const fnMotherBrain_PainfulWalkingForwards: i32 = 0xa9bfe8;
-pub const fnMotherBrain_PainfulWalkBackwards: i32 = 0xa9c004;
-pub const fnMotherBrain_PainfulWalkingBackwards: i32 = 0xa9c01c;
-pub const fnMotherBrain_Phase2_Revive_0: i32 = 0xa9c059;
-pub const fnMotherBrain_Phase2_Revive_1: i32 = 0xa9c066;
-pub const fnMotherBrain_Phase2_Revive_2: i32 = 0xa9c082;
-pub const fnMotherBrain_Phase2_Revive_3: i32 = 0xa9c08f;
-pub const fnMotherBrain_Phase2_Revive_4: i32 = 0xa9c0ba;
-pub const fnMotherBrain_Phase2_Revive_5: i32 = 0xa9c0e4;
-pub const fnMotherBrain_Phase2_Revive_6: i32 = 0xa9c0fb;
-pub const fnMotherBrain_Phase2_Revive_7: i32 = 0xa9c11e;
-pub const fnMotherBrain_Phase2_Revive_8: i32 = 0xa9c147;
-pub const fnMotherBrain_Phase2_MurderShitroid_1: i32 = 0xa9c15c;
-pub const fnMotherBrain_Phase2_MurderShitroid_2: i32 = 0xa9c182;
-pub const fnnullsub_367: u32 = 11125133;
-pub const fnMotherBrain_Phase2_PrepareForFinalShitroid: i32 = 0xa9c18e;
-pub const fnMotherBrain_Phase2_ExecuteFinalkShitroid: i32 = 0xa9c19a;
-pub const fnnullsub_363: i32 = 0xa9c1a6;
-pub const fnMotherBrain_Phase3_Recover_MakeDistance: i32 = 0xa9c1cf;
-pub const fnMotherBrain_Phase3_Recover_SetupForFight: i32 = 0xa9c1f0;
-pub const fnMotherBrain_Phase3_Fighting_Main: i32 = 0xa9c209;
-pub const fnMotherBrain_Phase3_Fighting_Cooldown: i32 = 0xa9c24e;
-pub const fnMotherBrain_Phase3_Walk_TryToInchForward: i32 = 0xa9c26a;
-pub const fnMotherBrain_Phase3_Walk_RetreatQuickly: i32 = 0xa9c2b3;
-pub const fnMotherBrain_Phase3_Walk_RetreatSlowly: i32 = 0xa9c2d2;
-pub const fnMotherBrain_Phase3_Neck_Normal: i32 = 0xa9c330;
-pub const fnnullsub_369: u32 = 11125587;
-pub const fnMotherBrain_Phase3_Neck_SetupRecoilRecovery: i32 = 0xa9c354;
-pub const fnMotherBrain_Phase3_Neck_RecoilRecovery: i32 = 0xa9c37b;
-pub const fnMotherBrain_Phase3_Neck_SetupHyperBeamRecoil: i32 = 0xa9c395;
-pub const fnMotherBrain_Phase3_Neck_HyperBeamRecoil: i32 = 0xa9c3cd;
-pub const fnShitroidInCutscene_DashOntoScreen: i32 = 0xa9c7cc;
-pub const fnShitroidInCutscene_CurveTowardsBrain: i32 = 0xa9c7ec;
-pub const fnShitroidInCutscene_GetIntoFace: i32 = 0xa9c811;
-pub const fnShitroidInCutscene_LatchOntoBrain: i32 = 0xa9c851;
-pub const fnShitroidInCutscene_SetMotherBrainToStumbleBack: i32 = 0xa9c879;
-pub const fnShitroidInCutscene_ActivateRainbowBeam: i32 = 0xa9c889;
-pub const fnShitroidInCutscene_BrainTurnsToCorpse: i32 = 0xa9c8e2;
-pub const fnShitroidInCutscene_StopDraining: i32 = 0xa9c915;
-pub const fnShitroidInCutscene_LetGoAndSpawnDust: i32 = 0xa9c94b;
-pub const fnShitroidInCutscene_MoveUpToCeiling: u32 = 11127129;
-pub const fnShitroidInCutscene_MoveToSamus: i32 = 0xa9c9c3;
-pub const fnShitroidInCutscene_LatchOntoSamus: i32 = 0xa9ca66;
-pub const fnShitroidInCutscene_HealSamusToFullHealth: i32 = 0xa9ca7a;
-pub const fnnullsub_368: i32 = 0xa9cabc;
-pub const fnShitroidInCutscene_IdleUntilToNoHealth: i32 = 0xa9cabd;
-pub const fnShitroidInCutscene_ReleaseSamus: i32 = 0xa9cb13;
-pub const fnShitroidInCutscene_StareDownMotherBrain: i32 = 0xa9cb2d;
-pub const fnShitroidInCutscene_FlyOffScreen: i32 = 0xa9cb56;
-pub const fnShitroidInCutscene_MoveToFinalChargeStart: i32 = 0xa9cb7b;
-pub const fnShitroidInCutscene_InitiateFinalCharge: i32 = 0xa9cbb3;
-pub const fnShitroidInCutscene_FinalCharge: i32 = 0xa9cbd8;
-pub const fnShitroidInCutscene_ShitroidFinalBelow: i32 = 0xa9cc3e;
-pub const fnShitroidInCutscene_PlaySamusTheme: i32 = 0xa9cc60;
-pub const fnShitroidInCutscene_PrepareSamusHyperbeam: i32 = 0xa9cc7f;
-pub const fnnullsub_338: i32 = 0xa9cc98;
-pub const fnShitroidInCutscene_DeathSequence: i32 = 0xa9cc99;
-pub const fnShitroidInCutscene_UnloadShitroid: i32 = 0xa9ccc0;
-pub const fnShitroidInCutscene_LetSamusRainbowMore: i32 = 0xa9ccde;
-pub const fnShitroidInCutscene_FinishCutscene: i32 = 0xa9ccf0;
-pub const fnSamusRainbowPaletteFunc_ActivateWhenEnemyLow: i32 = 0xa9cd30;
-pub const fnSamusRainbowPaletteFunc_GraduallySlowDown: i32 = 0xa9cd4b;
-pub const fnDeadTorizo_WaitForSamusColl: i32 = 0xa9d3ad;
-pub const fnnullsub_361: i32 = 0xa9d3c7;
-pub const fnDeadTorizo_PreRotDelay: i32 = 0xa9d3c8;
-pub const fnDeadTorizo_Rotting: i32 = 0xa9d3e6;
-pub const fnDeadTorizo_CorpseRottingFinished: u32 = 11130301;
-pub const fnDeadSidehopper_Alive_WaitForActivate: i32 = 0xa9d8e2;
-pub const fnDeadSidehopper_Activated: i32 = 0xa9d8f1;
-pub const fnnullsub_362: i32 = 0xa9d90f;
-pub const fnDeadMonsters_Func_1: i32 = 0xa9d910;
-pub const fnDeadMonsters_Func_2: i32 = 0xa9d91d;
-pub const fnDeadMonsters_Func_5: i32 = 0xa9da08;
-pub const fnnullsub_268: i32 = 0xa9da63;
-pub const fnDeadSidehopper_WaitForSamusColl: i32 = 0xa9da64;
-pub const fnDeadZoomer_WaitForSamusColl: i32 = 0xa9da69;
-pub const fnDeadSkree_WaitForSamusColl: i32 = 0xa9da6e;
-pub const fnDeadRipper_WaitForSamusColl: i32 = 0xa9da73;
-pub const fnDeadSidehopper_PreRotDelay: i32 = 0xa9da8f;
-pub const fnDeadZoomer_PreRotDelay: i32 = 0xa9da94;
-pub const fnDeadRipper_PreRotDelay: i32 = 0xa9da99;
-pub const fnDeadSkree_PreRotDelay: i32 = 0xa9da9e;
-pub const fnDeadSidehopper_Rotting: i32 = 0xa9daba;
-pub const fnDeadZoomer_Rotting: i32 = 0xa9dad0;
-pub const fnDeadRipper_Rotting: i32 = 0xa9dae6;
-pub const fnDeadSkree_Rotting: i32 = 0xa9dafc;
-pub const fnCorpseRottingRotEntryFinishedHook: u32 = 11131912;
-pub const fnTorizo_CorpseRottingInitFunc: u32 = 11132440;
-pub const fnSidehopper_CorpseRottingInitFunc_0: u32 = 11132609;
-pub const fnSidehopper_CorpseRottingInitFunc_2: u32 = 11132680;
-pub const fnZoomer_CorpseRottingInitFunc_0: u32 = 11132751;
-pub const fnZoomer_CorpseRottingInitFunc_2: u32 = 11132780;
-pub const fnZoomer_CorpseRottingInitFunc_4: u32 = 11132809;
-pub const fnRipper_CorpseRottingInitFunc_0: u32 = 11132838;
-pub const fnRipper_CorpseRottingInitFunc_2: u32 = 11132867;
-pub const fnSkree_CorpseRottingInitFunc_0: u32 = 11132896;
-pub const fnSkree_CorpseRottingInitFunc_2: u32 = 11132953;
-pub const fnSkree_CorpseRottingInitFunc_4: u32 = 11133010;
-pub const fnMotherBrain_CorpseRottingInitFunc: u32 = 11133067;
-pub const fnTorizo_CorpseRottingMoveFunc: u32 = 11133554;
-pub const fnTorizo_CorpseRottingCopyFunc: u32 = 11133835;
-pub const fnSidehopper_CorpseRottingMoveFunc_0: u32 = 11134056;
-pub const fnSidehopper_CorpseRottingCopyFunc_0: u32 = 11134197;
-pub const fnSidehopper_CorpseRottingMoveFunc_2: u32 = 11134308;
-pub const fnSidehopper_CorpseRottingCopyFunc_2: u32 = 11134454;
-pub const fnZoomer_CorpseRottingMoveFunc_0: u32 = 11134570;
-pub const fnZoomer_CorpseRottingCopyFunc_0: u32 = 11134649;
-pub const fnZoomer_CorpseRottingMoveFunc_2: u32 = 11134710;
-pub const fnZoomer_CorpseRottingCopyFunc_2: u32 = 11134789;
-pub const fnZoomer_CorpseRottingMoveFunc_4: u32 = 11134850;
-pub const fnZoomer_CorpseRottingCopyFunc_4: u32 = 11134929;
-pub const fnRipper_CorpseRottingMoveFunc_0: u32 = 11134990;
-pub const fnRipper_CorpseRottingCopyFunc_0: u32 = 11135069;
-pub const fnRipper_CorpseRottingMoveFunc_2: u32 = 11135130;
-pub const fnRipper_CorpseRottingCopyFunc_2: u32 = 11135209;
-pub const fnSkree_CorpseRottingMoveFunc_0: u32 = 11135270;
-pub const fnSkree_CorpseRottingCopyFunc_0: u32 = 11135323;
-pub const fnSkree_CorpseRottingMoveFunc_2: u32 = 11135364;
-pub const fnSkree_CorpseRottingCopyFunc_2: u32 = 11135417;
-pub const fnSkree_CorpseRottingMoveFunc_4: u32 = 11135458;
-pub const fnSkree_CorpseRottingCopyFunc_4: u32 = 11135511;
-pub const fnMotherBrain_CorpseRottingMoveFunc: u32 = 11135552;
-pub const fnMotherBrain_CorpseRottingCopyFunc: u32 = 11135755;
-pub const fnShitroid_Func_3: i32 = 0xa9efdf;
-pub const fnShitroid_Func_4: i32 = 0xa9efe6;
-pub const fnShitroid_Func_5: i32 = 0xa9f02b;
-pub const fnShitroid_Func_6: i32 = 0xa9f037;
-pub const fnShitroid_Func_7: i32 = 0xa9f049;
-pub const fnShitroid_Func_8: i32 = 0xa9f06d;
-pub const fnShitroid_Func_9: i32 = 0xa9f094;
-pub const fnShitroid_Func_10: i32 = 0xa9f0e6;
-pub const fnShitroid_Func_11: i32 = 0xa9f125;
-pub const fnShitroid_Func_12: i32 = 0xa9f138;
-pub const fnShitroid_Func_13: i32 = 0xa9f180;
-pub const fnShitroid_Func_14: i32 = 0xa9f1fa;
-pub const fnShitroid_Func_15: i32 = 0xa9f20e;
-pub const fnShitroid_Func_16: i32 = 0xa9f21b;
-pub const fnShitroid_Func_17: i32 = 0xa9f2a2;
-pub const fnShitroid_Func_18: i32 = 0xa9f2ae;
-pub const fnShitroid_Func_19: i32 = 0xa9f2c0;
-pub const fnShitroid_Func_20: i32 = 0xa9f2fb;
-pub const fnShitroid_Func_21: i32 = 0xa9f324;
-pub const fnShitroid_Func_22: i32 = 0xa9f360;
-pub const fnShitroid_Func_23: i32 = 0xa9f36d;
-pub const fnShitroid_Func_24: i32 = 0xa9f3a3;
-pub const fnShitroid_Func_25: i32 = 0xa9f3be;
-pub const fnShitroid_GraduallyAccelerateTowards0x8: u32 = 11138143;
-pub const fnShitroid_GraduallyAccelerateTowards0x10: u32 = 11138150;
-pub const fnShitroid_HandleCutscenePalette: i32 = 0xa9f683;
-pub const fnShitroid_HandleCutscenePalette_LowHealth: i32 = 0xa9f68f;
+crate::game::constants::typed_constants! { i32;
+    fnEproj_Init_0x8bde_SkreeDownLeft = 0x868b15, fnMotherBrainsBody_UnpauseHook = 0xa98763,
+    fnMotherBrainsBrain_SetupBrainAndNeckToDraw = 0xa987a2, fnMotherBrainsBrain_SetupBrainToDraw = 0xa987d0,
+    fnMotherBrainsBody_FirstPhase_DoubleRet = 0xa987e1,
+}
+crate::game::constants::typed_constants! { u32;
+    fnMotherBrainBody_FakeDeath_Descent_0_Pause = 11110429,
+}
+crate::game::constants::typed_constants! { i32;
+    fnMotherBrainBody_FakeDeath_Descent_1 = 0xa98829, fnMotherBrainBody_FakeDeath_Descent_2 = 0xa9884d,
+    fnMotherBrainBody_FakeDeath_Descent_3 = 0xa9886c, fnMotherBrainBody_FakeDeath_Descent_4 = 0xa98884,
+    fnMotherBrainBody_FakeDeath_Descent_5 = 0xa988b2, fnMotherBrainBody_FakeDeath_Descent_6 = 0xa988d3,
+    fnMotherBrainBody_0_Wait = 0xa98949, fnMotherBrainBody_1_ClearBottomLeftTube = 0xa9896e,
+    fnMotherBrainBody_2_SpawnTopRightTubeFalling = 0xa98983,
+}
+crate::game::constants::typed_constants! { u32;
+    fnMotherBrainBody_3_ClearCeilingBlock9 = 11110816,
+}
+crate::game::constants::typed_constants! { i32;
+    fnMotherBrainBody_4_SpawnTopLeftTubeFalling = 0xa989b5, fnMotherBrainBody_4_ClearCeilingBlock6 = 0xa989d2,
+    fnMotherBrainBody_5_SpawnTubeFallingEnemy1 = 0xa989e7, fnMotherBrainBody_6_ClearBottomRightTube = 0xa989fa,
+    fnMotherBrainBody_7_SpawnTubeFallingEnemy2 = 0xa98a0f, fnMotherBrainBody_8_ClearBottomMiddleLeftTube = 0xa98a22,
+    fnMotherBrainBody_9_SpawnTopMiddleLeftFalling = 0xa98a37, fnMotherBrainBody_10_ClearCeilingTubeColumn7 = 0xa98a54,
+    fnMotherBrainBody_11_SpawnTopMiddleRightFalling = 0xa98a69, fnMotherBrainBody_12_ClearCeilingTubeColumn8 = 0xa98a86,
+    fnMotherBrainBody_13_SpawnTubeFallingEnemy3 = 0xa98a9b, fnMotherBrainBody_14_ClearBottomMiddleRightTube = 0xa98aae,
+    fnMotherBrainBody_15_SpawnTubeFallingEnemy4 = 0xa98ac3, fnMotherBrainBody_16_ClearBottomMiddleTubes = 0xa98ad6,
+}
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_365 = 11111140, fnMotherBrainsTubesFalling_Main_NonMain = 11111304,
+    fnMotherBrainsTubesFalling_WaitToFall = 11111371,
+}
+crate::game::constants::typed_constants! { i32;
+    fnMotherBrainsTubesFalling_Falling = 0xa98bd6, fnMotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23 = 0xa98c87,
+    fnMotherBrainBody_FakeDeath_Ascent_1_DrawBG1Row45 = 0xa98c9e, fnMotherBrainBody_FakeDeath_Ascent_2_DrawBG1Row67 = 0xa98cb5,
+    fnMotherBrainBody_FakeDeath_Ascent_3_DrawBG1Row89 = 0xa98ccc, fnMotherBrainBody_FakeDeath_Ascent_4_DrawBG1RowAB = 0xa98ce3,
+    fnMotherBrainBody_FakeDeath_Ascent_5_DrawBG1RowCD = 0xa98cfa, fnMotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx = 0xa98d11,
+    fnMotherBrainBody_FakeDeath_Ascent_7_SetupPhase2Brain = 0xa98d49, fnMotherBrainBody_FakeDeath_Ascent_8_Pause = 0xa98d79,
+    fnMotherBrainBody_FakeDeath_Ascent_9_PrepareRise = 0xa98d8b, fnMotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles = 0xa98db4,
+    fnMotherBrainBody_FakeDeath_Ascent_11_ContinuePause = 0xa98dc3, fnMotherBrainBody_FakeDeath_Ascent_12_StartMusic = 0xa98dec,
+    fnMotherBrainBody_FakeDeath_Ascent_13_Raise = 0xa98e4d, fnMotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching = 0xa98e95,
+    fnMotherBrainBody_FakeDeath_Ascent_15_TransitionFromGrey = 0xa98eaa, fnMotherBrainBody_2ndphase_16_ShakeHeadMenacingly = 0xa98ef5,
+    fnMotherBrainBody_2ndphase_17_BringHeadBackUp = 0xa98f14, fnMotherBrainBody_2ndphase_18_FinishStretching = 0xa98f33,
+}
+crate::game::constants::typed_constants! { u32;
+    fnMotherBrain_Instr_Goto = 11115279, fnMotherBrain_Instr_EnableNeckMovementGoto = 11115284,
+    fnMotherBrain_Instr_DisableNeckMovement = 11115296, fnMotherBrain_Instr_QueueSfx2 = 11115304,
+    fnMotherBrain_Instr_QueueSfx3 = 11115314, fnMotherBrain_Instr_SpawnDroolEproj = 11115324,
+    fnMotherBrain_Instr_SpawnPurpleBreath = 11115373, fnMotherBrain_Instr_SetMainShakeTimer50 = 11115383,
+    fnMotherBrain_Instr_GotoEitherOr = 11115621, fnMotherBrain_Instr_MaybeGoto = 11115693,
+    fnMotherBrain_Instr_MaybeGoto2 = 11115789, fnMotherBrain_Instr_Goto2 = 11115809,
+    fnMotherBrain_Instr_QueueShitroidAttackSfx = 11116023, fnMotherBrain_Instr_SpawnBlueRingEproj = 11116073,
+    fnMotherBrain_Instr_AimRingsAtShitroid = 11116087, fnMotherBrain_Instr_AimRingsAtSamus = 11116123,
+    fnMotherBrain_Instr_IncrShitroidAttackCtr = 11116195, fnMotherBrain_Instr_SetShitroidAttackCtr0 = 11116213,
+    fnMotherBrain_Instr_SpawnBombEproj = 11116221, fnMotherBrain_Instr_SpawnLaserEproj = 11116358,
+    fnMotherBrain_Instr_SpawnRainbowEproj = 11116420, fnMotherBrain_Instr_SetupFxForRainbowBeam = 11116430,
+}
+crate::game::constants::typed_constants! { i32;
+    fnMotherBrain_Phase3_Death_0 = 0xa9aee1, fnMotherBrain_Phase3_Death_1 = 0xa9af12,
+    fnMotherBrain_Phase3_Death_2 = 0xa9af21, fnMotherBrain_Phase3_Death_3 = 0xa9af54,
+    fnMotherBrain_Phase3_Death_4 = 0xa9af9d, fnMotherBrain_Phase3_Death_5 = 0xa9afb6,
+    fnMotherBrain_Phase3_Death_6 = 0xa9b013, fnMotherBrain_Phase3_Death_7 = 0xa9b115,
+    fnMotherBrain_Phase3_Death_8 = 0xa9b12d, fnMotherBrain_Phase3_Death_9 = 0xa9b15e,
+    fnMotherBrain_Phase3_Death_10 = 0xa9b173, fnMotherBrain_Phase3_Death_11 = 0xa9b189,
+    fnMotherBrain_Phase3_Death_12 = 0xa9b1b8, fnMotherBrain_Phase3_Death_13 = 0xa9b1d5,
+    fnMotherBrain_Phase3_Death_14_20framedelay = 0xa9b211,
+}
+crate::game::constants::typed_constants! { u32;
+    fnMotherBrain_CorpseRottingFinished = 11121187,
+}
+crate::game::constants::typed_constants! { i32;
+    fnMotherBrain_Phase3_Death_15_LoadEscapeTimerTiles = 0xa9b258, fnMotherBrain_Phase3_Death_16_StartEscape = 0xa9b26d,
+    fnMotherBrain_Phase3_Death_17_SpawnTimeBomb = 0xa9b2d1, fnMotherBrain_Phase3_Death_18_TypesZebesText = 0xa9b2e3,
+    fnMotherBrain_Phase3_Death_19_EscapeDoorExploding = 0xa9b2f9, fnMotherBrain_Phase3_Death_20_BlowUpEscapeDoor = 0xa9b32a,
+    fnMotherBrain_Phase3_Death_21_KeepEarthquakeGoing = 0xa9b33c, fnMotherBrain_Body_Phase2_Thinking = 0xa9b605,
+    fnMotherBrain_Body_Phase2_TryAttack = 0xa9b64b, fnMotherBrain_FiringBomb_DecideOnWalking = 0xa9b781,
+    fnMotherBrain_FiringBomb_WalkingBackwards = 0xa9b7ac, fnMotherBrain_FiringBomb_Crouch = 0xa9b7c6,
+    fnMotherBrain_FiringBomb_Fired = 0xa9b7e8, fnMotherBrain_FiringBomb_Standup = 0xa9b7f8,
+    fnMotherBomb_FiringLaser_PositionHead = 0xa9b80e, fnMotherBomb_FiringLaser_PositionHeadSlowlyFire = 0xa9b839,
+    fnMotherBomb_FiringLaser_FinishAttack = 0xa9b863, fnMotherBomb_FiringDeathBeam = 0xa9b87d,
+    fnMotherBomb_FiringRainbowBeam_0 = 0xa9b8eb, fnMotherBomb_FiringRainbowBeam_1_StartCharge = 0xa9b91a,
+    fnMotherBomb_FiringRainbowBeam_2_RetractNeck = 0xa9b92b, fnMotherBomb_FiringRainbowBeam_3_Wait = 0xa9b93f,
+    fnMotherBomb_FiringRainbowBeam_4_ExtendNeckDown = 0xa9b951, fnMotherBomb_FiringRainbowBeam_5_StartFiring = 0xa9b975,
+    fnMotherBomb_FiringRainbowBeam_6_MoveSamusToWall = 0xa9b9e5, fnMotherBomb_FiringRainbowBeam_7_DelayFrame = 0xa9ba00,
+    fnMotherBomb_FiringRainbowBeam_8_StartDrainSamus = 0xa9ba27, fnMotherBomb_FiringRainbowBeam_9_DrainingSamus = 0xa9ba3c,
+    fnMotherBomb_FiringRainbowBeam_10_FinishFiringRainbow = 0xa9ba5e, fnMotherBomb_FiringRainbowBeam_11_LetSamusFall = 0xa9bac4,
+    fnMotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround = 0xa9bad1, fnMotherBomb_FiringRainbowBeam_13_LowerHead = 0xa9badd,
+    fnMotherBomb_FiringRainbowBeam_14_DecideNextAction = 0xa9bb06, fnMotherBrain_Phase2Cut_0 = 0xa9bd45,
+    fnMotherBrain_Phase2Cut_1 = 0xa9bd98, fnMotherBrain_Phase2Cut_2 = 0xa9bda9,
+    fnMotherBrain_Phase2Cut_3 = 0xa9bdc1, fnMotherBrain_Phase2Cut_4 = 0xa9bdd2,
+    fnMotherBrain_Phase2Cut_5 = 0xa9bded, fnnullsub_364 = 0xa9be1a,
+    fnMotherBrain_DrainedByShitroid_0 = 0xa9be38, fnMotherBrain_DrainedByShitroid_1 = 0xa9be5d,
+    fnMotherBrain_DrainedByShitroid_2 = 0xa9be96, fnMotherBrain_DrainedByShitroid_3 = 0xa9bf0e,
+    fnMotherBrain_DrainedByShitroid_4 = 0xa9bf41, fnMotherBrain_DrainedByShitroid_5 = 0xa9bf56,
+    fnMotherBrain_DrainedByShitroid_6 = 0xa9bf7d, fnMotherBrain_DrainedByShitroid_7 = 0xa9bf95,
+    fnMotherBrain_PainfulWalkForwards = 0xa9bfd0, fnMotherBrain_PainfulWalkingForwards = 0xa9bfe8,
+    fnMotherBrain_PainfulWalkBackwards = 0xa9c004, fnMotherBrain_PainfulWalkingBackwards = 0xa9c01c,
+    fnMotherBrain_Phase2_Revive_0 = 0xa9c059, fnMotherBrain_Phase2_Revive_1 = 0xa9c066,
+    fnMotherBrain_Phase2_Revive_2 = 0xa9c082, fnMotherBrain_Phase2_Revive_3 = 0xa9c08f,
+    fnMotherBrain_Phase2_Revive_4 = 0xa9c0ba, fnMotherBrain_Phase2_Revive_5 = 0xa9c0e4,
+    fnMotherBrain_Phase2_Revive_6 = 0xa9c0fb, fnMotherBrain_Phase2_Revive_7 = 0xa9c11e,
+    fnMotherBrain_Phase2_Revive_8 = 0xa9c147, fnMotherBrain_Phase2_MurderShitroid_1 = 0xa9c15c,
+    fnMotherBrain_Phase2_MurderShitroid_2 = 0xa9c182,
+}
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_367 = 11125133,
+}
+crate::game::constants::typed_constants! { i32;
+    fnMotherBrain_Phase2_PrepareForFinalShitroid = 0xa9c18e, fnMotherBrain_Phase2_ExecuteFinalkShitroid = 0xa9c19a,
+    fnnullsub_363 = 0xa9c1a6, fnMotherBrain_Phase3_Recover_MakeDistance = 0xa9c1cf,
+    fnMotherBrain_Phase3_Recover_SetupForFight = 0xa9c1f0, fnMotherBrain_Phase3_Fighting_Main = 0xa9c209,
+    fnMotherBrain_Phase3_Fighting_Cooldown = 0xa9c24e, fnMotherBrain_Phase3_Walk_TryToInchForward = 0xa9c26a,
+    fnMotherBrain_Phase3_Walk_RetreatQuickly = 0xa9c2b3, fnMotherBrain_Phase3_Walk_RetreatSlowly = 0xa9c2d2,
+    fnMotherBrain_Phase3_Neck_Normal = 0xa9c330,
+}
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_369 = 11125587,
+}
+crate::game::constants::typed_constants! { i32;
+    fnMotherBrain_Phase3_Neck_SetupRecoilRecovery = 0xa9c354, fnMotherBrain_Phase3_Neck_RecoilRecovery = 0xa9c37b,
+    fnMotherBrain_Phase3_Neck_SetupHyperBeamRecoil = 0xa9c395, fnMotherBrain_Phase3_Neck_HyperBeamRecoil = 0xa9c3cd,
+    fnShitroidInCutscene_DashOntoScreen = 0xa9c7cc, fnShitroidInCutscene_CurveTowardsBrain = 0xa9c7ec,
+    fnShitroidInCutscene_GetIntoFace = 0xa9c811, fnShitroidInCutscene_LatchOntoBrain = 0xa9c851,
+    fnShitroidInCutscene_SetMotherBrainToStumbleBack = 0xa9c879, fnShitroidInCutscene_ActivateRainbowBeam = 0xa9c889,
+    fnShitroidInCutscene_BrainTurnsToCorpse = 0xa9c8e2, fnShitroidInCutscene_StopDraining = 0xa9c915,
+    fnShitroidInCutscene_LetGoAndSpawnDust = 0xa9c94b,
+}
+crate::game::constants::typed_constants! { u32;
+    fnShitroidInCutscene_MoveUpToCeiling = 11127129,
+}
+crate::game::constants::typed_constants! { i32;
+    fnShitroidInCutscene_MoveToSamus = 0xa9c9c3, fnShitroidInCutscene_LatchOntoSamus = 0xa9ca66,
+    fnShitroidInCutscene_HealSamusToFullHealth = 0xa9ca7a, fnnullsub_368 = 0xa9cabc,
+    fnShitroidInCutscene_IdleUntilToNoHealth = 0xa9cabd, fnShitroidInCutscene_ReleaseSamus = 0xa9cb13,
+    fnShitroidInCutscene_StareDownMotherBrain = 0xa9cb2d, fnShitroidInCutscene_FlyOffScreen = 0xa9cb56,
+    fnShitroidInCutscene_MoveToFinalChargeStart = 0xa9cb7b, fnShitroidInCutscene_InitiateFinalCharge = 0xa9cbb3,
+    fnShitroidInCutscene_FinalCharge = 0xa9cbd8, fnShitroidInCutscene_ShitroidFinalBelow = 0xa9cc3e,
+    fnShitroidInCutscene_PlaySamusTheme = 0xa9cc60, fnShitroidInCutscene_PrepareSamusHyperbeam = 0xa9cc7f,
+    fnnullsub_338 = 0xa9cc98, fnShitroidInCutscene_DeathSequence = 0xa9cc99,
+    fnShitroidInCutscene_UnloadShitroid = 0xa9ccc0, fnShitroidInCutscene_LetSamusRainbowMore = 0xa9ccde,
+    fnShitroidInCutscene_FinishCutscene = 0xa9ccf0, fnSamusRainbowPaletteFunc_ActivateWhenEnemyLow = 0xa9cd30,
+    fnSamusRainbowPaletteFunc_GraduallySlowDown = 0xa9cd4b, fnDeadTorizo_WaitForSamusColl = 0xa9d3ad,
+    fnnullsub_361 = 0xa9d3c7, fnDeadTorizo_PreRotDelay = 0xa9d3c8,
+    fnDeadTorizo_Rotting = 0xa9d3e6,
+}
+crate::game::constants::typed_constants! { u32;
+    fnDeadTorizo_CorpseRottingFinished = 11130301,
+}
+crate::game::constants::typed_constants! { i32;
+    fnDeadSidehopper_Alive_WaitForActivate = 0xa9d8e2, fnDeadSidehopper_Activated = 0xa9d8f1,
+    fnnullsub_362 = 0xa9d90f, fnDeadMonsters_Func_1 = 0xa9d910,
+    fnDeadMonsters_Func_2 = 0xa9d91d, fnDeadMonsters_Func_5 = 0xa9da08,
+    fnnullsub_268 = 0xa9da63, fnDeadSidehopper_WaitForSamusColl = 0xa9da64,
+    fnDeadZoomer_WaitForSamusColl = 0xa9da69, fnDeadSkree_WaitForSamusColl = 0xa9da6e,
+    fnDeadRipper_WaitForSamusColl = 0xa9da73, fnDeadSidehopper_PreRotDelay = 0xa9da8f,
+    fnDeadZoomer_PreRotDelay = 0xa9da94, fnDeadRipper_PreRotDelay = 0xa9da99,
+    fnDeadSkree_PreRotDelay = 0xa9da9e, fnDeadSidehopper_Rotting = 0xa9daba,
+    fnDeadZoomer_Rotting = 0xa9dad0, fnDeadRipper_Rotting = 0xa9dae6,
+    fnDeadSkree_Rotting = 0xa9dafc,
+}
+crate::game::constants::typed_constants! { u32;
+    fnCorpseRottingRotEntryFinishedHook = 11131912, fnTorizo_CorpseRottingInitFunc = 11132440,
+    fnSidehopper_CorpseRottingInitFunc_0 = 11132609, fnSidehopper_CorpseRottingInitFunc_2 = 11132680,
+    fnZoomer_CorpseRottingInitFunc_0 = 11132751, fnZoomer_CorpseRottingInitFunc_2 = 11132780,
+    fnZoomer_CorpseRottingInitFunc_4 = 11132809, fnRipper_CorpseRottingInitFunc_0 = 11132838,
+    fnRipper_CorpseRottingInitFunc_2 = 11132867, fnSkree_CorpseRottingInitFunc_0 = 11132896,
+    fnSkree_CorpseRottingInitFunc_2 = 11132953, fnSkree_CorpseRottingInitFunc_4 = 11133010,
+    fnMotherBrain_CorpseRottingInitFunc = 11133067, fnTorizo_CorpseRottingMoveFunc = 11133554,
+    fnTorizo_CorpseRottingCopyFunc = 11133835, fnSidehopper_CorpseRottingMoveFunc_0 = 11134056,
+    fnSidehopper_CorpseRottingCopyFunc_0 = 11134197, fnSidehopper_CorpseRottingMoveFunc_2 = 11134308,
+    fnSidehopper_CorpseRottingCopyFunc_2 = 11134454, fnZoomer_CorpseRottingMoveFunc_0 = 11134570,
+    fnZoomer_CorpseRottingCopyFunc_0 = 11134649, fnZoomer_CorpseRottingMoveFunc_2 = 11134710,
+    fnZoomer_CorpseRottingCopyFunc_2 = 11134789, fnZoomer_CorpseRottingMoveFunc_4 = 11134850,
+    fnZoomer_CorpseRottingCopyFunc_4 = 11134929, fnRipper_CorpseRottingMoveFunc_0 = 11134990,
+    fnRipper_CorpseRottingCopyFunc_0 = 11135069, fnRipper_CorpseRottingMoveFunc_2 = 11135130,
+    fnRipper_CorpseRottingCopyFunc_2 = 11135209, fnSkree_CorpseRottingMoveFunc_0 = 11135270,
+    fnSkree_CorpseRottingCopyFunc_0 = 11135323, fnSkree_CorpseRottingMoveFunc_2 = 11135364,
+    fnSkree_CorpseRottingCopyFunc_2 = 11135417, fnSkree_CorpseRottingMoveFunc_4 = 11135458,
+    fnSkree_CorpseRottingCopyFunc_4 = 11135511, fnMotherBrain_CorpseRottingMoveFunc = 11135552,
+    fnMotherBrain_CorpseRottingCopyFunc = 11135755,
+}
+crate::game::constants::typed_constants! { i32;
+    fnShitroid_Func_3 = 0xa9efdf, fnShitroid_Func_4 = 0xa9efe6,
+    fnShitroid_Func_5 = 0xa9f02b, fnShitroid_Func_6 = 0xa9f037,
+    fnShitroid_Func_7 = 0xa9f049, fnShitroid_Func_8 = 0xa9f06d,
+    fnShitroid_Func_9 = 0xa9f094, fnShitroid_Func_10 = 0xa9f0e6,
+    fnShitroid_Func_11 = 0xa9f125, fnShitroid_Func_12 = 0xa9f138,
+    fnShitroid_Func_13 = 0xa9f180, fnShitroid_Func_14 = 0xa9f1fa,
+    fnShitroid_Func_15 = 0xa9f20e, fnShitroid_Func_16 = 0xa9f21b,
+    fnShitroid_Func_17 = 0xa9f2a2, fnShitroid_Func_18 = 0xa9f2ae,
+    fnShitroid_Func_19 = 0xa9f2c0, fnShitroid_Func_20 = 0xa9f2fb,
+    fnShitroid_Func_21 = 0xa9f324, fnShitroid_Func_22 = 0xa9f360,
+    fnShitroid_Func_23 = 0xa9f36d, fnShitroid_Func_24 = 0xa9f3a3,
+    fnShitroid_Func_25 = 0xa9f3be,
+}
+crate::game::constants::typed_constants! { u32;
+    fnShitroid_GraduallyAccelerateTowards0x8 = 11138143, fnShitroid_GraduallyAccelerateTowards0x10 = 11138150,
+}
+crate::game::constants::typed_constants! { i32;
+    fnShitroid_HandleCutscenePalette = 0xa9f683, fnShitroid_HandleCutscenePalette_LowHealth = 0xa9f68f,
+}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_DeadEnemy(o: i32) -> Enemy_DeadEnemy = [0xf78, o as isize];

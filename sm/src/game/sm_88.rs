@@ -46,25 +46,24 @@ pub use crate::types::Consts_87;
 pub use crate::types::Consts_88;
 pub use crate::types::{Consts_86, ExpandingSquareTransitionHdma, Ram4000, Ram4000_Backups};
 pub use crate::types::{SamusPose, SpawnHdmaObject_Args};
-pub const addr_word_88DF71: Consts_88 = 57201;
-pub const addr_word_88DF6B: Consts_88 = 57195;
-pub const addr_word_88DF65: Consts_88 = 57189;
-pub const addr_word_88DF5F: Consts_88 = 57183;
-pub const addr_off_88ADA6: Consts_88 = 44454;
-pub const addr_off_88AD9C: Consts_88 = 44444;
-pub const addr_word_88A8E8: Consts_88 = 43240;
-pub const addr_byte_889F06: Consts_88 = 40710;
-pub const addr_kPowerBombExplosionShapeDef0: Consts_88 = 37446;
-pub const addr_loc_889180: Consts_88 = 37248;
-pub const addr_locret_88858A: Consts_88 = 34186;
+crate::game::constants::typed_constants! { Consts_88;
+    addr_word_88DF71 = 57201, addr_word_88DF6B = 57195,
+    addr_word_88DF65 = 57189, addr_word_88DF5F = 57183,
+    addr_off_88ADA6 = 44454, addr_off_88AD9C = 44444,
+    addr_word_88A8E8 = 43240, addr_byte_889F06 = 40710,
+    addr_kPowerBombExplosionShapeDef0 = 37446, addr_loc_889180 = 37248,
+    addr_locret_88858A = 34186,
+}
 pub use crate::types::Consts_89;
-pub const addr_kIndirectHdmaTable_PowerBombExplodeRight: Consts_89 = 41217;
-pub const addr_kIndirectHdmaTable_PowerBombExplodeLeft: Consts_89 = 38912;
+crate::game::constants::typed_constants! { Consts_89;
+    addr_kIndirectHdmaTable_PowerBombExplodeRight = 41217, addr_kIndirectHdmaTable_PowerBombExplodeLeft = 38912,
+}
 pub use crate::types::Consts_8F;
 pub use crate::types::SpawnHardcodedPlmArgs;
 pub const NULL: *mut c_void = null_mut::<c_void>();
-pub const true_0: i32 = 1;
-pub const false_0: i32 = 0;
+crate::game::constants::typed_constants! { i32;
+    true_0 = 1, false_0 = 0,
+}
 const RomPtr_88: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x88>;
 #[inline]
 unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
@@ -73,125 +72,92 @@ unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
-pub const fnnullsub_56: u32 = 8491739;
-pub const fnDoorTransitionFunction_FadeOutScreen: i32 = 0x82e2db;
-pub const fnDoorTransition_FadeInScreenAndFinish: i32 = 0x82e737;
-pub const fnLayerBlendingHandler: i32 = 0x888000;
-pub const fnPauseHook_Empty: i32 = 0x8883e1;
-pub const fnnullsub_293: i32 = 0x8884b8;
-pub const fnHdmaobjInstr_Delete: u32 = 8947049;
-pub const fnHdmaobjInstr_SetPreInstr: u32 = 8947056;
-pub const fnHdmaobjInstr_ClearPreInstr: u32 = 8947076;
-pub const fnHdmaobjInstr_CallFarFunc: u32 = 8947124;
-pub const fnHdmaobjInstr_Goto: u32 = 8947180;
-pub const fnHdmaobjInstr_GotoRel: u32 = 8947185;
-pub const fnHdmaobjInstr_DecrementAndGoto: u32 = 8947207;
-pub const fnHdmaobjInstr_DecrementAndGotoRel: u32 = 8947215;
-pub const fnHdmaobjInstr_SetTimer: u32 = 8947222;
-pub const fnHdmaobjInstr_SetHdmaControl: u32 = 8947234;
-pub const fnHdmaobjInstr_SetHdmaTarget: u32 = 8947255;
-pub const fnHdmaobjInstr_SetHdmaTablePtr: u32 = 8947276;
-pub const fnHdmaobjInstr_SetHdmaTableBank: u32 = 8947285;
-pub const fnHdmaobjInstr_SetIndirectHdmaDataBank: u32 = 8947306;
-pub const fnHdmaobjInstr_Sleep: u32 = 8947330;
-pub const fnHdmaobjPreInstr_Xray: u32 = 8947439;
-pub const fnHdmaobjPreInstr_XrayFunc0_NoBeam: u32 = 8947506;
-pub const fnHdmaobjPreInstr_XrayFunc1_BeamWidening: u32 = 8947540;
-pub const fnHdmaobjPreInstr_XrayFunc2_FullBeam: u32 = 8947627;
-pub const fnHdmaobjPreInstr_XrayFunc3_DeactivateBeam: u32 = 8948020;
-pub const fnHdmaobjPreInstr_XrayFunc4_DeactivateBeam: u32 = 8948154;
-pub const fnHdmaobjPreInstr_XrayFunc5_DeactivateBeam: u32 = 8948232;
-pub const fnHdmaobj_PreExplodeWhite: u32 = 8948500;
-pub const fnHdmaobj_PreExplodeYellow: u32 = 8948530;
-pub const fnHdmaobj_ExplodeYellow: u32 = 8948537;
-pub const fnHdmaobj_ExplodeWhite: u32 = 8948551;
-pub const fnHdmaobj_CleanUpTryCrystalFlash: u32 = 8948558;
-pub const fnHdmaobjPreInstr_PowerBombExplode_SetWindowConf: u32 = 8948623;
-pub const fnHdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow: u32 = 8948632;
-pub const fnHdmaobjPreInstr_PowerBombExplode_ExplosionYellow: u32 = 8949225;
-pub const fnHdmaobjPreInstr_PowerBombExplode_ExplosionWhite: u32 = 8949426;
-pub const fnHdmaobjPreInstr_PowerBombExplode_PreExplosionWhite: u32 = 8949983;
-pub const fnHdmaobjPreInstr_PowerBombExplode_PreExplosionYellow: u32 = 8950184;
-pub const fnCrystalFlashSetupPart1: u32 = 8954596;
-pub const fnCrystalFlashSetupPart2: u32 = 8954633;
-pub const fnCrystalFlashCleanup: u32 = 8954647;
-pub const fnHdmaobjPreInstr_CrystalFlash_CustomLayerBlend: u32 = 8954681;
-pub const fnHdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow: u32 = 8954717;
-pub const fnHdmaobjPreInstr_CrystalFlash_Stage1_Explosion: u32 = 8955218;
-pub const fnHdmaobjPreInstr_FxType22_BG3Yscroll: u32 = 8955459;
-pub const fnHdmaobjInstr_SetFlagB: u32 = 8955500;
-pub const fnHdmaobjPreInstr_BG3Xscroll: u32 = 8955507;
-pub const fnHdmaobjPreInstr_SkyLandBG2Xscroll: u32 = 8957362;
-pub const fnHdmaobjPreInstr_SkyLandBG2Xscroll2: u32 = 8957370;
-pub const fnHdmaobjPreInstr_SkyLandBG2XscrollInner: u32 = 8957378;
-pub const fnHdmaobjPreInstr_FirefleaBG3XScroll: u32 = 8958140;
-pub const fnFxRisingFunction_LavaAcid: i32 = 0x88b343;
-pub const fnFxRisingFunction_LavaAcid_WaitToRise: i32 = 0x88b367;
-pub const fnFxRisingFunction_LavaAcid_Raising: i32 = 0x88b382;
-pub const fnHdmaobjInstr_B3A9: u32 = 8958889;
-pub const fnHdmaobjPreInstr_LavaAcidBG3YScroll: u32 = 8958896;
-pub const fnHdmaobjInstr_SetFlagB_Copy: u32 = 8959182;
-pub const fnHdmaobjPreInstr_LavaAcidBG2YScroll: u32 = 8959189;
-pub const fnFxRisingFunction_C428_WaterNormal: i32 = 0x88c428;
-pub const fnFxRisingFunction_WaterWaitToRise: i32 = 0x88c44c;
-pub const fnFxRisingFunction_WaterRising: i32 = 0x88c458;
-pub const fnHdmaobjInstr_SetFlagB_Copy2: u32 = 8963175;
-pub const fnHdmaobjPreInstr_WaterBG3XScroll: u32 = 8963214;
-pub const fnHdmaobjInstr_SetFlagB_Copy3: u32 = 8963458;
-pub const fnHdmaobjPreInstr_WaterBG2XScroll: u32 = 8963465;
-pub const fnHdmaobjPreInstr_WaterBG2XScroll_Func2: u32 = 8963556;
-pub const fnHdmaobjPreInstr_WaterBG2XScroll_Func1: u32 = 8963638;
-pub const fnsub_88D916: u32 = 8968470;
-pub const fnHdmaobjInstr_SetVideoMode1: u32 = 8968521;
-pub const fnHdmaobjInstr_1938_RandomNumber: u32 = 8968577;
-pub const fnHdmaobjPreInstr_RainBg3Scroll: u32 = 8968609;
-pub const fnHdmaobjPreInstr_SporesBG3Xscroll: u32 = 8968775;
-pub const fnnullsub_112: u32 = 8969006;
-pub const fnHdmaobjPreInstr_FogBG3Scroll: u32 = 8969014;
-pub const fnHdmaobjPreInstr_CheckLotsOfEventsHappened: u32 = 8969175;
-pub const fnHdmaobjPreInstr_DC23: u32 = 8969251;
-pub const fnHdmaobjPreInstr_DC69: u32 = 8969321;
-pub const fnHdmaobjPreInstr_DCBA: u32 = 8969402;
-pub const fnHdmaobjInstr_GotoIfEventHappened: u32 = 8969419;
-pub const fnHdmaobjPreInstr_BombTorizoHazeColorMathBgColor: u32 = 8969539;
-pub const fnHdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyAlive: u32 = 8969744;
-pub const fnHdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyDead: u32 = 8969749;
-pub const fnHdmaobjPreInstr_HazeColorMathSubscreen_FadingIn: i32 = 0x88de2d;
-pub const fnHdmaobjPreInstr_HazeColorMathSubscreen_FadedIn: i32 = 0x88de74;
-pub const fnHdmaobjPreInstr_HazeColorMathSubscreen_FadingOut: i32 = 0x88de96;
-pub const fnnullsub_113: u32 = 8970129;
-pub const fnnullsub_114: u32 = 8970130;
-pub const fnHdmaobjPreInstr_DF94: u32 = 8970132;
-pub const fnHdmaobjPreInstr_VariaSuitPickup: u32 = 8970278;
-pub const fnHdmaobjPreInstr_GravitySuitPickup: u32 = 8970332;
-pub const fnHdmaobjPreInstr_E449: u32 = 8971337;
-pub const fnHdmaobjInstr_E4BD: u32 = 8971453;
-pub const fnHdmaobjPreInstr_E567: u32 = 8971623;
-pub const fnnullsub_357: u32 = 8972070;
-pub const fnInitializeRainbowBeam: u32 = 8972135;
-pub const fnHdmaobjPreInstr_E7BC: u32 = 8972220;
-pub const fnHdmaobjInstr_InitMorphBallEyeBeamHdma: u32 = 0x88e917;
-pub const fnHdmaobjPreInstr_MorphBallEyeBeamWidening: u32 = 0x88e9e6;
-pub const fnHdmaobjPreInstr_MorphBallEyeBeamFull: u32 = 0x88ea3c;
-pub const fnHdmaobjPreInstr_MorphBallEyeBeamFading: u32 = 0x88eacb;
-pub const fnHdmaobjInsr_ConfigTitleSequenceGradientHDMA: u32 = 8973215;
-pub const fnHdmaobjPreInstr_Backdrop_TitleSequenceGradient: u32 = 8973232;
-pub const fnHdmaobjPreInstr_ColorMathControlB_TitleGradient: u32 = 8973266;
-pub const fnHdmaobjPreInstr_IntroCutsceneCrossfade: u32 = 8973341;
-pub const fnHdmaobjInstr_EC9F_ClearVars: u32 = 8973471;
-pub const fnHdmaobjPreInstr_ECB6: u32 = 8973494;
-pub const fnCinematicFunctionOpening: i32 = 0x8b9b68;
-pub const fnXray_SetupStage1_FreezeTimeBackup: u32 = 9554681;
-pub const fnXray_SetupStage2_ReadBg1_2ndScreen: u32 = 9554716;
-pub const fnXray_SetupStage3_ReadBg1_1stScreen: u32 = 9554775;
-pub const fnXray_SetupStage4: u32 = 9554830;
-pub const fnXray_SetupStage5: u32 = 9556179;
-pub const fnXray_SetupStage6: u32 = 9556339;
-pub const fnXray_SetupStage7: u32 = 9556384;
-pub const fnHdmaobjPreInstr_XraySetup: u32 = 9556607;
-pub const fnXray_SetupStage8_SetBackdropColor: u32 = 9556668;
-pub const fnInitializeSuitPickupHdma: u32 = 9557650;
-pub const fnnullsub_309: u32 = 10785852;
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_56 = 8491739,
+}
+crate::game::constants::typed_constants! { i32;
+    fnDoorTransitionFunction_FadeOutScreen = 0x82e2db, fnDoorTransition_FadeInScreenAndFinish = 0x82e737,
+    fnLayerBlendingHandler = 0x888000, fnPauseHook_Empty = 0x8883e1,
+    fnnullsub_293 = 0x8884b8,
+}
+crate::game::constants::typed_constants! { u32;
+    fnHdmaobjInstr_Delete = 8947049, fnHdmaobjInstr_SetPreInstr = 8947056,
+    fnHdmaobjInstr_ClearPreInstr = 8947076, fnHdmaobjInstr_CallFarFunc = 8947124,
+    fnHdmaobjInstr_Goto = 8947180, fnHdmaobjInstr_GotoRel = 8947185,
+    fnHdmaobjInstr_DecrementAndGoto = 8947207, fnHdmaobjInstr_DecrementAndGotoRel = 8947215,
+    fnHdmaobjInstr_SetTimer = 8947222, fnHdmaobjInstr_SetHdmaControl = 8947234,
+    fnHdmaobjInstr_SetHdmaTarget = 8947255, fnHdmaobjInstr_SetHdmaTablePtr = 8947276,
+    fnHdmaobjInstr_SetHdmaTableBank = 8947285, fnHdmaobjInstr_SetIndirectHdmaDataBank = 8947306,
+    fnHdmaobjInstr_Sleep = 8947330, fnHdmaobjPreInstr_Xray = 8947439,
+    fnHdmaobjPreInstr_XrayFunc0_NoBeam = 8947506, fnHdmaobjPreInstr_XrayFunc1_BeamWidening = 8947540,
+    fnHdmaobjPreInstr_XrayFunc2_FullBeam = 8947627, fnHdmaobjPreInstr_XrayFunc3_DeactivateBeam = 8948020,
+    fnHdmaobjPreInstr_XrayFunc4_DeactivateBeam = 8948154, fnHdmaobjPreInstr_XrayFunc5_DeactivateBeam = 8948232,
+    fnHdmaobj_PreExplodeWhite = 8948500, fnHdmaobj_PreExplodeYellow = 8948530,
+    fnHdmaobj_ExplodeYellow = 8948537, fnHdmaobj_ExplodeWhite = 8948551,
+    fnHdmaobj_CleanUpTryCrystalFlash = 8948558, fnHdmaobjPreInstr_PowerBombExplode_SetWindowConf = 8948623,
+    fnHdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow = 8948632, fnHdmaobjPreInstr_PowerBombExplode_ExplosionYellow = 8949225,
+    fnHdmaobjPreInstr_PowerBombExplode_ExplosionWhite = 8949426, fnHdmaobjPreInstr_PowerBombExplode_PreExplosionWhite = 8949983,
+    fnHdmaobjPreInstr_PowerBombExplode_PreExplosionYellow = 8950184, fnCrystalFlashSetupPart1 = 8954596,
+    fnCrystalFlashSetupPart2 = 8954633, fnCrystalFlashCleanup = 8954647,
+    fnHdmaobjPreInstr_CrystalFlash_CustomLayerBlend = 8954681, fnHdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow = 8954717,
+    fnHdmaobjPreInstr_CrystalFlash_Stage1_Explosion = 8955218, fnHdmaobjPreInstr_FxType22_BG3Yscroll = 8955459,
+    fnHdmaobjInstr_SetFlagB = 8955500, fnHdmaobjPreInstr_BG3Xscroll = 8955507,
+    fnHdmaobjPreInstr_SkyLandBG2Xscroll = 8957362, fnHdmaobjPreInstr_SkyLandBG2Xscroll2 = 8957370,
+    fnHdmaobjPreInstr_SkyLandBG2XscrollInner = 8957378, fnHdmaobjPreInstr_FirefleaBG3XScroll = 8958140,
+}
+crate::game::constants::typed_constants! { i32;
+    fnFxRisingFunction_LavaAcid = 0x88b343, fnFxRisingFunction_LavaAcid_WaitToRise = 0x88b367,
+    fnFxRisingFunction_LavaAcid_Raising = 0x88b382,
+}
+crate::game::constants::typed_constants! { u32;
+    fnHdmaobjInstr_B3A9 = 8958889, fnHdmaobjPreInstr_LavaAcidBG3YScroll = 8958896,
+    fnHdmaobjInstr_SetFlagB_Copy = 8959182, fnHdmaobjPreInstr_LavaAcidBG2YScroll = 8959189,
+}
+crate::game::constants::typed_constants! { i32;
+    fnFxRisingFunction_C428_WaterNormal = 0x88c428, fnFxRisingFunction_WaterWaitToRise = 0x88c44c,
+    fnFxRisingFunction_WaterRising = 0x88c458,
+}
+crate::game::constants::typed_constants! { u32;
+    fnHdmaobjInstr_SetFlagB_Copy2 = 8963175, fnHdmaobjPreInstr_WaterBG3XScroll = 8963214,
+    fnHdmaobjInstr_SetFlagB_Copy3 = 8963458, fnHdmaobjPreInstr_WaterBG2XScroll = 8963465,
+    fnHdmaobjPreInstr_WaterBG2XScroll_Func2 = 8963556, fnHdmaobjPreInstr_WaterBG2XScroll_Func1 = 8963638,
+    fnsub_88D916 = 8968470, fnHdmaobjInstr_SetVideoMode1 = 8968521,
+    fnHdmaobjInstr_1938_RandomNumber = 8968577, fnHdmaobjPreInstr_RainBg3Scroll = 8968609,
+    fnHdmaobjPreInstr_SporesBG3Xscroll = 8968775, fnnullsub_112 = 8969006,
+    fnHdmaobjPreInstr_FogBG3Scroll = 8969014, fnHdmaobjPreInstr_CheckLotsOfEventsHappened = 8969175,
+    fnHdmaobjPreInstr_DC23 = 8969251, fnHdmaobjPreInstr_DC69 = 8969321,
+    fnHdmaobjPreInstr_DCBA = 8969402, fnHdmaobjInstr_GotoIfEventHappened = 8969419,
+    fnHdmaobjPreInstr_BombTorizoHazeColorMathBgColor = 8969539, fnHdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyAlive = 8969744,
+    fnHdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyDead = 8969749,
+}
+crate::game::constants::typed_constants! { i32;
+    fnHdmaobjPreInstr_HazeColorMathSubscreen_FadingIn = 0x88de2d, fnHdmaobjPreInstr_HazeColorMathSubscreen_FadedIn = 0x88de74,
+    fnHdmaobjPreInstr_HazeColorMathSubscreen_FadingOut = 0x88de96,
+}
+crate::game::constants::typed_constants! { u32;
+    fnnullsub_113 = 8970129, fnnullsub_114 = 8970130,
+    fnHdmaobjPreInstr_DF94 = 8970132, fnHdmaobjPreInstr_VariaSuitPickup = 8970278,
+    fnHdmaobjPreInstr_GravitySuitPickup = 8970332, fnHdmaobjPreInstr_E449 = 8971337,
+    fnHdmaobjInstr_E4BD = 8971453, fnHdmaobjPreInstr_E567 = 8971623,
+    fnnullsub_357 = 8972070, fnInitializeRainbowBeam = 8972135,
+    fnHdmaobjPreInstr_E7BC = 8972220, fnHdmaobjInstr_InitMorphBallEyeBeamHdma = 0x88e917,
+    fnHdmaobjPreInstr_MorphBallEyeBeamWidening = 0x88e9e6, fnHdmaobjPreInstr_MorphBallEyeBeamFull = 0x88ea3c,
+    fnHdmaobjPreInstr_MorphBallEyeBeamFading = 0x88eacb, fnHdmaobjInsr_ConfigTitleSequenceGradientHDMA = 8973215,
+    fnHdmaobjPreInstr_Backdrop_TitleSequenceGradient = 8973232, fnHdmaobjPreInstr_ColorMathControlB_TitleGradient = 8973266,
+    fnHdmaobjPreInstr_IntroCutsceneCrossfade = 8973341, fnHdmaobjInstr_EC9F_ClearVars = 8973471,
+    fnHdmaobjPreInstr_ECB6 = 8973494,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunctionOpening = 0x8b9b68,
+}
+crate::game::constants::typed_constants! { u32;
+    fnXray_SetupStage1_FreezeTimeBackup = 9554681, fnXray_SetupStage2_ReadBg1_2ndScreen = 9554716,
+    fnXray_SetupStage3_ReadBg1_1stScreen = 9554775, fnXray_SetupStage4 = 9554830,
+    fnXray_SetupStage5 = 9556179, fnXray_SetupStage6 = 9556339,
+    fnXray_SetupStage7 = 9556384, fnHdmaobjPreInstr_XraySetup = 9556607,
+    fnXray_SetupStage8_SetBackdropColor = 9556668, fnInitializeSuitPickupHdma = 9557650,
+    fnnullsub_309 = 10785852,
+}
 pub fn nullsub_9(j: u16, game: &mut Game) -> u16 {
     j
 }

@@ -49,42 +49,29 @@ pub use crate::types::{
     Consts_81, MapScrollArrowData, Ram3000, Ram3000_Menu, Ram3000_Misc, Ram3000_MsgBox, Ram4000,
     Ram4000_Backups,
 };
-pub const addr_kAreaSelectBackgroundTilemaps: Consts_81 = 48922;
-pub const addr_kAreaSelectForegroundTilemap: Consts_81 = 46874;
-pub const addr_kMenuTilemap_DataCleared: Consts_81 = 46810;
-pub const addr_kMenuTilemap_ClearSamusA: Consts_81 = 46746;
-pub const addr_kMenuTilemap_ClearWhichData: Consts_81 = 46682;
-pub const addr_kMenuTilemap_CopyCompleted: Consts_81 = 46650;
-pub const addr_kMenuTilemap_No: Consts_81 = 46634;
-pub const addr_kMenuTilemap_Yes: Consts_81 = 46618;
-pub const addr_kMenuTilemap_IsThisOk: Consts_81 = 46594;
-pub const addr_kMenuTilemap_CopySamusToSamus: Consts_81 = 46536;
-pub const addr_kMenuTilemap_CopySamusToWhere: Consts_81 = 46486;
-pub const addr_kMenuTilemap_CopyWhichData: Consts_81 = 46452;
-pub const addr_kMenuTilemap_DataClearMode: Consts_81 = 46388;
-pub const addr_kMenuTilemap_DataCopyMode: Consts_81 = 46328;
-pub const addr_kMenuTilemap_Exit: Consts_81 = 46318;
-pub const addr_kMenuTilemap_DataClear: Consts_81 = 46296;
-pub const addr_kMenuTilemap_DataCopy: Consts_81 = 46276;
-pub const addr_kMenuTilemap_NoData: Consts_81 = 46252;
-pub const addr_word_81B4A8: Consts_81 = 46248;
-pub const addr_kMenuTilemap_TIME: Consts_81 = 46240;
-pub const addr_kMenuTilemap_Energy: Consts_81 = 46230;
-pub const addr_kMenuTilemap_SamusC: Consts_81 = 46198;
-pub const addr_kMenuTilemap_SamusB: Consts_81 = 46166;
-pub const addr_kMenuTilemap_SamusA: Consts_81 = 46134;
-pub const addr_kMenuTilemap_SamusData: Consts_81 = 46090;
-pub const addr_kDownMapScrollArrowData: Consts_81 = 44880;
-pub const addr_kUpMapScrollArrowData: Consts_81 = 44870;
-pub const addr_kRightMapScrollArrowData: Consts_81 = 44860;
-pub const addr_kLeftMapScrollArrowData: Consts_81 = 44850;
-pub const addr_kMenuTilemap_NoGoToTitle: Consts_81 = 37792;
-pub const addr_kMenuTilemap_YesReturnToGame: Consts_81 = 37708;
-pub const addr_kMenuTilemap_TryAgain: Consts_81 = 37684;
-pub const addr_kMenuTilemap_FindMetroidLarva: Consts_81 = 37636;
-pub const addr_kMenuTilemap_GameOver: Consts_81 = 37596;
+crate::game::constants::typed_constants! { Consts_81;
+    addr_kAreaSelectBackgroundTilemaps = 48922, addr_kAreaSelectForegroundTilemap = 46874,
+    addr_kMenuTilemap_DataCleared = 46810, addr_kMenuTilemap_ClearSamusA = 46746,
+    addr_kMenuTilemap_ClearWhichData = 46682, addr_kMenuTilemap_CopyCompleted = 46650,
+    addr_kMenuTilemap_No = 46634, addr_kMenuTilemap_Yes = 46618,
+    addr_kMenuTilemap_IsThisOk = 46594, addr_kMenuTilemap_CopySamusToSamus = 46536,
+    addr_kMenuTilemap_CopySamusToWhere = 46486, addr_kMenuTilemap_CopyWhichData = 46452,
+    addr_kMenuTilemap_DataClearMode = 46388, addr_kMenuTilemap_DataCopyMode = 46328,
+    addr_kMenuTilemap_Exit = 46318, addr_kMenuTilemap_DataClear = 46296,
+    addr_kMenuTilemap_DataCopy = 46276, addr_kMenuTilemap_NoData = 46252,
+    addr_word_81B4A8 = 46248, addr_kMenuTilemap_TIME = 46240,
+    addr_kMenuTilemap_Energy = 46230, addr_kMenuTilemap_SamusC = 46198,
+    addr_kMenuTilemap_SamusB = 46166, addr_kMenuTilemap_SamusA = 46134,
+    addr_kMenuTilemap_SamusData = 46090, addr_kDownMapScrollArrowData = 44880,
+    addr_kUpMapScrollArrowData = 44870, addr_kRightMapScrollArrowData = 44860,
+    addr_kLeftMapScrollArrowData = 44850, addr_kMenuTilemap_NoGoToTitle = 37792,
+    addr_kMenuTilemap_YesReturnToGame = 37708, addr_kMenuTilemap_TryAgain = 37684,
+    addr_kMenuTilemap_FindMetroidLarva = 37636, addr_kMenuTilemap_GameOver = 37596,
+}
 pub use crate::types::Consts_82;
-pub const true_0: i32 = 1;
+crate::game::constants::typed_constants! { i32;
+    true_0 = 1,
+}
 const RomPtr_81: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x81>;
 const RomPtr_82: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x82>;
 const RomPtr_8C: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8c>;

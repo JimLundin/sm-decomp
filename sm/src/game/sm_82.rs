@@ -173,11 +173,15 @@ pub use crate::types::{
     Consts_60, EnemyDef, Ram3000, Ram3000_Menu, Ram3000_Misc, Ram3000_MsgBox, Ram3800, Ram4000,
     Ram4000_Backups,
 };
-pub const addr_kDoorDef_947a: Consts_83 = 38010;
+crate::game::constants::typed_constants! { Consts_83;
+    addr_kDoorDef_947a = 38010,
+}
 pub use crate::types::Consts_8F;
 pub const __ASSERT_FUNCTION: [c_char; 28] =
     unsafe { transmute::<[u8; 28], [c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0") };
-pub const kCoroutineNone: i32 = 0;
+crate::game::constants::typed_constants! { i32;
+    kCoroutineNone = 0,
+}
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
     '_c2rust_label: {
@@ -239,62 +243,48 @@ unsafe fn get_LoadBg_E(a: u16, game: &mut Game) -> *mut LoadBg_E {
 unsafe fn get_PlmHeader_Size6(a: u16, game: &mut Game) -> *mut PlmHeader_Size6 {
     RomPtr((0x840000u32) | ((a) as u32), game) as *mut PlmHeader_Size6
 }
-pub const fnDemoRoom_ChargeBeamRoomScroll21: u32 = 8554778;
-pub const fnnullsub_291: u32 = 8554788;
-pub const fnDemoRoom_SetBG2TilemapBase: u32 = 8554789;
-pub const fnDemoRoom_SetKraidFunctionTimer: u32 = 8554795;
-pub const fnDemoRoom_SetBrinstarBossBits: u32 = 8554802;
-pub const fnOptionsPreInstr_nullsub_57: u32 = 8555536;
-pub const fnOptionsInstr_Destroy: u32 = 8555610;
-pub const fnOptionsInstr_8C64: u32 = 8555620;
-pub const fnOptionsInstr_SetPreInstr: u32 = 8555630;
-pub const fnOptionsInstr_8C79: u32 = 8555641;
-pub const fnOptionsInstr_Goto: u32 = 8555650;
-pub const fnOptionsInstr_8C89: u32 = 8555657;
-pub const fnOptionsInstr_8C93: u32 = 8555667;
-pub const fnBabyMetroidPlaySfx0x23: u32 = 8567820;
-pub const fnBabyMetroidPlaySfx0x26: u32 = 8567829;
-pub const fnBabyMetroidPlaySfx0x27: u32 = 8567838;
-pub const fnDoorTransitionFunction_HandleElevator: u32 = 8577405;
-pub const fnDoorTransitionFunction_Wait48frames: i32 = 0x82e19f;
-pub const fnDoorTransitionFunction_WaitForSoundsToFinish: i32 = 0x82e29e;
-pub const fnDoorTransitionFunction_FadeOutScreen: i32 = 0x82e2db;
-pub const fnDoorTransitionFunction_LoadDoorHeaderEtc: i32 = 0x82e2f7;
-pub const fnDoorTransitionFunction_ScrollScreenToAlignment: i32 = 0x82e310;
-pub const fnDoorTransitionFunction_FixDoorsMovingUp: i32 = 0x82e353;
-pub const fnDoorTransitionFunction_SetupNewRoom: i32 = 0x82e36e;
-pub const fnDoorTransitionFunction_SetupScrolling: i32 = 0x82e38e;
-pub const fnDoorTransitionFunction_PlaceSamusLoadTiles: i32 = 0x82e3c0;
-pub const fnDoorTransitionFunction_LoadMoreThings_Async: i32 = 0x82e4a9;
-pub const fnDoorTransition_C_HandleAnimTiles: i32 = 0x82e659;
-pub const fnDoorTransition_WaitForMusicToClear: i32 = 0x82e664;
-pub const fnDoorTransition_HandleTransition: i32 = 0x82e6a2;
-pub const fnDoorTransition_FadeInScreenAndFinish: i32 = 0x82e737;
-pub const fnsub_82F296: u32 = 8581782;
-pub const fnOptionsPreInstr_F2A9: u32 = 8581801;
-pub const fnsub_82F34B: u32 = 8581963;
-pub const fnsub_82F353: u32 = 8581971;
-pub const fnsub_82F35B: u32 = 8581979;
-pub const fnsub_82F363: u32 = 8581987;
-pub const fnOptionsPreInstr_F376: u32 = 8582006;
-pub const fnOptionsPreInstr_F3A0: u32 = 8582048;
-pub const fnOptionsPreInstr_F3E2: u32 = 8582114;
-pub const fnsub_82F419: u32 = 8582169;
-pub const fnOptionsPreInstr_F42C: u32 = 8582188;
-pub const fnPauseHook_Empty: u32 = 8946657;
-pub const fnCinematicFunctionNone: i32 = 0x8b9a47;
-pub const fnCinematicFunctionOpening: i32 = 0x8b9b68;
-pub const fnCinematicFunction_Intro_Initial: i32 = 0x8ba395;
-pub const fnCinematicFunctionBlackoutFromCeres: i32 = 0x8bc11b;
-pub const fnCinematicFunctionEscapeFromCebes: i32 = 0x8bd480;
-pub const fnPauseHook_DraygonRoom: u32 = 9423094;
-pub const fnUnpauseHook_DraygonRoom: u32 = 9423100;
-pub const fnUnpauseHook_Kraid_IsDead: u32 = 10994171;
-pub const fnUnpauseHook_Kraid_IsAlive: u32 = 10994254;
-pub const fnKraid_UnpauseHook_IsSinking: u32 = 10994336;
-pub const fnPauseHook_Kraid: u32 = 10994469;
-pub const fnMotherBrainsBody_UnpauseHook: u32 = 11110243;
-pub const fnlocret_828C81: i32 = 0x828c81;
+crate::game::constants::typed_constants! { u32;
+    fnDemoRoom_ChargeBeamRoomScroll21 = 8554778, fnnullsub_291 = 8554788,
+    fnDemoRoom_SetBG2TilemapBase = 8554789, fnDemoRoom_SetKraidFunctionTimer = 8554795,
+    fnDemoRoom_SetBrinstarBossBits = 8554802, fnOptionsPreInstr_nullsub_57 = 8555536,
+    fnOptionsInstr_Destroy = 8555610, fnOptionsInstr_8C64 = 8555620,
+    fnOptionsInstr_SetPreInstr = 8555630, fnOptionsInstr_8C79 = 8555641,
+    fnOptionsInstr_Goto = 8555650, fnOptionsInstr_8C89 = 8555657,
+    fnOptionsInstr_8C93 = 8555667, fnBabyMetroidPlaySfx0x23 = 8567820,
+    fnBabyMetroidPlaySfx0x26 = 8567829, fnBabyMetroidPlaySfx0x27 = 8567838,
+    fnDoorTransitionFunction_HandleElevator = 8577405,
+}
+crate::game::constants::typed_constants! { i32;
+    fnDoorTransitionFunction_Wait48frames = 0x82e19f, fnDoorTransitionFunction_WaitForSoundsToFinish = 0x82e29e,
+    fnDoorTransitionFunction_FadeOutScreen = 0x82e2db, fnDoorTransitionFunction_LoadDoorHeaderEtc = 0x82e2f7,
+    fnDoorTransitionFunction_ScrollScreenToAlignment = 0x82e310, fnDoorTransitionFunction_FixDoorsMovingUp = 0x82e353,
+    fnDoorTransitionFunction_SetupNewRoom = 0x82e36e, fnDoorTransitionFunction_SetupScrolling = 0x82e38e,
+    fnDoorTransitionFunction_PlaceSamusLoadTiles = 0x82e3c0, fnDoorTransitionFunction_LoadMoreThings_Async = 0x82e4a9,
+    fnDoorTransition_C_HandleAnimTiles = 0x82e659, fnDoorTransition_WaitForMusicToClear = 0x82e664,
+    fnDoorTransition_HandleTransition = 0x82e6a2, fnDoorTransition_FadeInScreenAndFinish = 0x82e737,
+}
+crate::game::constants::typed_constants! { u32;
+    fnsub_82F296 = 8581782, fnOptionsPreInstr_F2A9 = 8581801,
+    fnsub_82F34B = 8581963, fnsub_82F353 = 8581971,
+    fnsub_82F35B = 8581979, fnsub_82F363 = 8581987,
+    fnOptionsPreInstr_F376 = 8582006, fnOptionsPreInstr_F3A0 = 8582048,
+    fnOptionsPreInstr_F3E2 = 8582114, fnsub_82F419 = 8582169,
+    fnOptionsPreInstr_F42C = 8582188, fnPauseHook_Empty = 8946657,
+}
+crate::game::constants::typed_constants! { i32;
+    fnCinematicFunctionNone = 0x8b9a47, fnCinematicFunctionOpening = 0x8b9b68,
+    fnCinematicFunction_Intro_Initial = 0x8ba395, fnCinematicFunctionBlackoutFromCeres = 0x8bc11b,
+    fnCinematicFunctionEscapeFromCebes = 0x8bd480,
+}
+crate::game::constants::typed_constants! { u32;
+    fnPauseHook_DraygonRoom = 9423094, fnUnpauseHook_DraygonRoom = 9423100,
+    fnUnpauseHook_Kraid_IsDead = 10994171, fnUnpauseHook_Kraid_IsAlive = 10994254,
+    fnKraid_UnpauseHook_IsSinking = 10994336, fnPauseHook_Kraid = 10994469,
+    fnMotherBrainsBody_UnpauseHook = 11110243,
+}
+crate::game::constants::typed_constants! { i32;
+    fnlocret_828C81 = 0x828c81,
+}
 crate::game::address_dispatch! {
     pub unsafe fn CallDemoRoomDataFunc(ea: u32, game: &mut Game) => ea, game {
         8554778 => DemoRoom_ChargeBeamRoomScroll21(game),

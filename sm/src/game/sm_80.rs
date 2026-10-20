@@ -75,11 +75,11 @@ pub struct Mode7CgvmWriteQueue {
 }
 pub use crate::types::Consts_60;
 pub use crate::types::Consts_80;
-pub const addr_word_80A060: Consts_80 = 41056;
-pub const addrl_kDigitTilesetsWeapon: Consts_80 = 8429011;
-pub const addrl_kDigitTilesetsHealth: Consts_80 = 8428991;
-pub const addr_kHudTilemaps_Missiles: Consts_80 = 39331;
-pub const addr_kHudTilemaps_AutoReserve: Consts_80 = 39307;
+crate::game::constants::typed_constants! { Consts_80;
+    addr_word_80A060 = 41056, addrl_kDigitTilesetsWeapon = 8429011,
+    addrl_kDigitTilesetsHealth = 8428991, addr_kHudTilemaps_Missiles = 39331,
+    addr_kHudTilemaps_AutoReserve = 39307,
+}
 pub use crate::types::SpawnHardcodedPlmArgs;
 const RomPtr_80: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x80>;
 const RomPtr_92: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x92>;
@@ -91,7 +91,9 @@ crate::ram_map::ram_pointer_functions! {
 unsafe fn get_RoomDefHeader(a: u16, game: &mut Game) -> *mut RoomDefHeader {
     RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefHeader
 }
-pub const fnDoorTransition_FadeInScreenAndFinish: i32 = 0x82e737;
+crate::game::constants::typed_constants! { i32;
+    fnDoorTransition_FadeInScreenAndFinish = 0x82e737,
+}
 pub unsafe fn APU_UploadBank(addr: u32, game: &mut Game) {
     if !game.g_use_my_apu_code {
         crate::native_audio::upload(addr, game);

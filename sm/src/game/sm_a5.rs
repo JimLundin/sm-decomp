@@ -37,56 +37,33 @@ pub use crate::types::{
     size_t, EnemyBase, EnemyData, EnemyProps, LongPtr, Point16U, VoidP, VramWriteEntry,
 };
 pub use crate::types::{Consts_86, EnemyDef};
-pub const addr_kDraygon_Ilist_E77D: Consts_A5 = 59261;
-pub const addr_stru_A5E729: Consts_A5 = 59177;
-pub const addr_kDraygon_Ilist_E6D5: Consts_A5 = 59093;
-pub const addr_kDraygon_Ilist_E6C7: Consts_A5 = 59079;
-pub const addr_kDraygon_Ilist_E6B9: Consts_A5 = 59065;
-pub const addr_kDraygon_BigSprmap_C11B: Consts_A5 = 49435;
-pub const addr_kDraygon_BigSprmap_C08F: Consts_A5 = 49295;
-pub const addr_word_A5A297: Consts_A5 = 41623;
-pub const addr_kDraygon_MorePalettes2: Consts_A5 = 41591;
-pub const addr_kDraygon_Palette: Consts_A5 = 41463;
-pub const addr_kDraygon_Ilist_9F15: Consts_A5 = 40725;
-pub const addr_kDraygon_Ilist_9EA1: Consts_A5 = 40609;
-pub const addr_kDraygon_Ilist_9E21: Consts_A5 = 40481;
-pub const addr_kDraygon_Ilist_9D9E: Consts_A5 = 40350;
-pub const addr_kDraygon_Ilist_9D62: Consts_A5 = 40290;
-pub const addr_kDraygon_Ilist_9D5C: Consts_A5 = 40284;
-pub const addr_kDraygon_Ilist_9D56: Consts_A5 = 40278;
-pub const addr_kDraygon_Ilist_9D50: Consts_A5 = 40272;
-pub const addr_kDraygon_Ilist_9D3E: Consts_A5 = 40254;
-pub const addr_kDraygon_Ilist_9D1C: Consts_A5 = 40220;
-pub const addr_kDraygon_Ilist_9CB4: Consts_A5 = 40116;
-pub const addr_kDraygon_Ilist_9C90: Consts_A5 = 40080;
-pub const addr_kDraygon_Ilist_9C5A: Consts_A5 = 40026;
-pub const addr_kDraygon_Ilist_9C38: Consts_A5 = 39992;
-pub const addr_kDraygon_Ilist_9C18: Consts_A5 = 39960;
-pub const addr_kDraygon_Ilist_9C06: Consts_A5 = 39942;
-pub const addr_kDraygon_Ilist_9BDA: Consts_A5 = 39898;
-pub const addr_kDraygon_Ilist_9B5A: Consts_A5 = 39770;
-pub const addr_kDraygon_Ilist_9AE8: Consts_A5 = 39656;
-pub const addr_kDraygon_Ilist_9A68: Consts_A5 = 39528;
-pub const addr_kDraygon_Ilist_99FC: Consts_A5 = 39420;
-pub const addr_kDraygon_Ilist_99C0: Consts_A5 = 39360;
-pub const addr_kDraygon_Ilist_99BA: Consts_A5 = 39354;
-pub const addr_kDraygon_Ilist_99B4: Consts_A5 = 39348;
-pub const addr_kDraygon_Ilist_99AE: Consts_A5 = 39342;
-pub const addr_kDraygon_Ilist_999C: Consts_A5 = 39324;
-pub const addr_kDraygon_Ilist_997A: Consts_A5 = 39290;
-pub const addr_kDraygon_Ilist_9944: Consts_A5 = 39236;
-pub const addr_kDraygon_Ilist_9922: Consts_A5 = 39202;
-pub const addr_kDraygon_Ilist_98FE: Consts_A5 = 39166;
-pub const addr_kDraygon_Ilist_98ED: Consts_A5 = 39149;
-pub const addr_kDraygon_Ilist_9889: Consts_A5 = 39049;
-pub const addr_kDraygon_Ilist_9867: Consts_A5 = 39015;
-pub const addr_kDraygon_Ilist_9845: Consts_A5 = 38981;
-pub const addr_kDraygon_Ilist_9825: Consts_A5 = 38949;
-pub const addr_kDraygon_Ilist_9813: Consts_A5 = 38931;
-pub const addr_kDraygon_Ilist_97E7: Consts_A5 = 38887;
-pub const addr_kDraygon_Ilist_97D1: Consts_A5 = 38865;
-pub const addr_kDraygon_Ilist_97BB: Consts_A5 = 38843;
-pub const addr_kDraygon_Ilist_97B9: Consts_A5 = 38841;
+crate::game::constants::typed_constants! { Consts_A5;
+    addr_kDraygon_Ilist_E77D = 59261, addr_stru_A5E729 = 59177,
+    addr_kDraygon_Ilist_E6D5 = 59093, addr_kDraygon_Ilist_E6C7 = 59079,
+    addr_kDraygon_Ilist_E6B9 = 59065, addr_kDraygon_BigSprmap_C11B = 49435,
+    addr_kDraygon_BigSprmap_C08F = 49295, addr_word_A5A297 = 41623,
+    addr_kDraygon_MorePalettes2 = 41591, addr_kDraygon_Palette = 41463,
+    addr_kDraygon_Ilist_9F15 = 40725, addr_kDraygon_Ilist_9EA1 = 40609,
+    addr_kDraygon_Ilist_9E21 = 40481, addr_kDraygon_Ilist_9D9E = 40350,
+    addr_kDraygon_Ilist_9D62 = 40290, addr_kDraygon_Ilist_9D5C = 40284,
+    addr_kDraygon_Ilist_9D56 = 40278, addr_kDraygon_Ilist_9D50 = 40272,
+    addr_kDraygon_Ilist_9D3E = 40254, addr_kDraygon_Ilist_9D1C = 40220,
+    addr_kDraygon_Ilist_9CB4 = 40116, addr_kDraygon_Ilist_9C90 = 40080,
+    addr_kDraygon_Ilist_9C5A = 40026, addr_kDraygon_Ilist_9C38 = 39992,
+    addr_kDraygon_Ilist_9C18 = 39960, addr_kDraygon_Ilist_9C06 = 39942,
+    addr_kDraygon_Ilist_9BDA = 39898, addr_kDraygon_Ilist_9B5A = 39770,
+    addr_kDraygon_Ilist_9AE8 = 39656, addr_kDraygon_Ilist_9A68 = 39528,
+    addr_kDraygon_Ilist_99FC = 39420, addr_kDraygon_Ilist_99C0 = 39360,
+    addr_kDraygon_Ilist_99BA = 39354, addr_kDraygon_Ilist_99B4 = 39348,
+    addr_kDraygon_Ilist_99AE = 39342, addr_kDraygon_Ilist_999C = 39324,
+    addr_kDraygon_Ilist_997A = 39290, addr_kDraygon_Ilist_9944 = 39236,
+    addr_kDraygon_Ilist_9922 = 39202, addr_kDraygon_Ilist_98FE = 39166,
+    addr_kDraygon_Ilist_98ED = 39149, addr_kDraygon_Ilist_9889 = 39049,
+    addr_kDraygon_Ilist_9867 = 39015, addr_kDraygon_Ilist_9845 = 38981,
+    addr_kDraygon_Ilist_9825 = 38949, addr_kDraygon_Ilist_9813 = 38931,
+    addr_kDraygon_Ilist_97E7 = 38887, addr_kDraygon_Ilist_97D1 = 38865,
+    addr_kDraygon_Ilist_97BB = 38843, addr_kDraygon_Ilist_97B9 = 38841,
+}
 pub use crate::types::{Point32, SpawnHardcodedPlmArgs};
 enemy_layout! {
     Enemy_Draygon {
@@ -174,47 +151,40 @@ crate::ram_map::ram_pointer_functions! {
 unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
     RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
-pub const fnSamus_ScrollFinishedHook_SporeSpawnFight: i32 = 0x909589;
-pub const fnGrappleBeam_Func2: i32 = 0x9bc8c5;
-pub const fnnullsub_169_A5: i32 = 0xa5804b;
-pub const fnDraygon_Func_1: i32 = 0xa5871b;
-pub const fnDraygon_Func_2: i32 = 0xa5878b;
-pub const fnDraygon_Func_4: i32 = 0xa587f4;
-pub const fnDraygon_Func_6: i32 = 0xa588b1;
-pub const fnDraygon_Func_8: i32 = 0xa58922;
-pub const fnDraygon_Func_9: i32 = 0xa58951;
-pub const fnDraygon_Func_10: i32 = 0xa589b3;
-pub const fnDraygon_Func_11: i32 = 0xa58a00;
-pub const fnDraygon_Func_12: i32 = 0xa58a50;
-pub const fnDraygon_Func_13: i32 = 0xa58a90;
-pub const fnDraygon_Func_14: i32 = 0xa58b0a;
-pub const fnDraygon_Func_15: i32 = 0xa58b52;
-pub const fnDraygon_Func_16: i32 = 0xa58bae;
-pub const fnDraygon_Func_17: i32 = 0xa58c33;
-pub const fnDraygon_Func_18: i32 = 0xa58c8e;
-pub const fnDraygon_Func_19: i32 = 0xa58cd4;
-pub const fnDraygon_Func_20: i32 = 0xa58d30;
-pub const fnDraygon_Func_21: i32 = 0xa58db2;
-pub const fnDraygon_Func_22: i32 = 0xa58e19;
-pub const fnDraygon_Func_23: i32 = 0xa58f10;
-pub const fnDraygon_Func_24: i32 = 0xa58f1e;
-pub const fnDraygon_Func_25: i32 = 0xa58fd6;
-pub const fnDraygon_Func_26: i32 = 0xa590d4;
-pub const fnDraygon_Func_27: i32 = 0xa59105;
-pub const fnDraygon_Func_28: i32 = 0xa59124;
-pub const fnDraygon_Func_29: i32 = 0xa59128;
-pub const fnDraygon_Func_30: i32 = 0xa59154;
-pub const fnDraygon_Func_31: i32 = 0xa59185;
-pub const fnDraygon_Func_32: i32 = 0xa59294;
-pub const fnDraygon_Func_33: i32 = 0xa592ab;
-pub const fnDraygon_Func_36: i32 = 0xa59342;
-pub const fnDraygon_Func_48: u32 = 10863757;
-pub const fnDraygon_Func_49: u32 = 10863891;
-pub const fnnullsub_223: i32 = 0xa5eb1a;
-pub const fnSporeSpawn_Func_1: u32 = 10873627;
-pub const fnSporeSpawn_Func_2: i32 = 0xa5eb52;
-pub const fnSporeSpawn_Func_3: u32 = 10873755;
-pub const fnSporeSpawn_Func_4: u32 = 10873838;
+crate::game::constants::typed_constants! { i32;
+    fnSamus_ScrollFinishedHook_SporeSpawnFight = 0x909589, fnGrappleBeam_Func2 = 0x9bc8c5,
+    fnnullsub_169_A5 = 0xa5804b, fnDraygon_Func_1 = 0xa5871b,
+    fnDraygon_Func_2 = 0xa5878b, fnDraygon_Func_4 = 0xa587f4,
+    fnDraygon_Func_6 = 0xa588b1, fnDraygon_Func_8 = 0xa58922,
+    fnDraygon_Func_9 = 0xa58951, fnDraygon_Func_10 = 0xa589b3,
+    fnDraygon_Func_11 = 0xa58a00, fnDraygon_Func_12 = 0xa58a50,
+    fnDraygon_Func_13 = 0xa58a90, fnDraygon_Func_14 = 0xa58b0a,
+    fnDraygon_Func_15 = 0xa58b52, fnDraygon_Func_16 = 0xa58bae,
+    fnDraygon_Func_17 = 0xa58c33, fnDraygon_Func_18 = 0xa58c8e,
+    fnDraygon_Func_19 = 0xa58cd4, fnDraygon_Func_20 = 0xa58d30,
+    fnDraygon_Func_21 = 0xa58db2, fnDraygon_Func_22 = 0xa58e19,
+    fnDraygon_Func_23 = 0xa58f10, fnDraygon_Func_24 = 0xa58f1e,
+    fnDraygon_Func_25 = 0xa58fd6, fnDraygon_Func_26 = 0xa590d4,
+    fnDraygon_Func_27 = 0xa59105, fnDraygon_Func_28 = 0xa59124,
+    fnDraygon_Func_29 = 0xa59128, fnDraygon_Func_30 = 0xa59154,
+    fnDraygon_Func_31 = 0xa59185, fnDraygon_Func_32 = 0xa59294,
+    fnDraygon_Func_33 = 0xa592ab, fnDraygon_Func_36 = 0xa59342,
+}
+crate::game::constants::typed_constants! { u32;
+    fnDraygon_Func_48 = 10863757, fnDraygon_Func_49 = 10863891,
+}
+crate::game::constants::typed_constants! { i32;
+    fnnullsub_223 = 0xa5eb1a,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSporeSpawn_Func_1 = 10873627,
+}
+crate::game::constants::typed_constants! { i32;
+    fnSporeSpawn_Func_2 = 0xa5eb52,
+}
+crate::game::constants::typed_constants! { u32;
+    fnSporeSpawn_Func_3 = 10873755, fnSporeSpawn_Func_4 = 10873838,
+}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_Draygon(o: i32) -> Enemy_Draygon = [0xf78, o as isize];
