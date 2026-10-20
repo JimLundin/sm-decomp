@@ -676,6 +676,58 @@ keep the fixed target visible instead of claiming success from small cleanups.
 
 ### Already harvested or parked
 
+- Further repeated-pattern pricing (2026-10-20, `7a9e0122` through
+  `50be971e`) produced these complete formatted TEMP drafts. Positive values
+  below mean lines removed, including helpers and callers, before any new
+  coverage probes. These are projections, not landed reductions:
+
+  | Family | Complete scope | Net lines removed |
+  | --- | --- | ---: |
+  | Promoted arithmetic to native wrapping | 620 sites / 27 banks | -576 |
+  | Pure bitwise width narrowing | 101 sites / 18 banks | 17 |
+  | Fractional-position kernels | 18 kernels / 14 functions | 29 |
+  | Reflected Draygon cycle | Eight entries / five helpers | 25 |
+  | Station activation access | Four entries / one helper | 23 |
+  | Reflec/Blue Brinstar palette cycle | Two entries / one helper | 14 |
+  | Weapon firing and slot selection | Ten entries / six helpers | 99 |
+  | Projectile-trail advancement/drawing | One entry / two macros | 77 |
+
+  Keep these parked under the substantial-reduction priority. Only the
+  Draygon draft received a metadata compile; none has behavioral validation
+  or replay results. The simpler 103-site arithmetic subset also grows three
+  lines. Do not repeat these projections or add overlapping subsets together.
+  Reports are in `%TEMP%/sm-promoted-arithmetic-7a9e0122`,
+  `sm-width-algebra-7a9e0122`, `sm-fraction-kernels-7a9e0122`,
+  `sm-reflected-cycles-7a9e0122`, `sm-mir-semantic-families-f858c922`,
+  `sm-reflec-palette-price-f858c922`, `sm-beam-fire-50be971e` and
+  `sm-projectile-trails-50be971e`.
+
+  The delegated efficiency investigation compared optimized compiler control
+  flow, ordered operations and types, with explicit constant/field mappings.
+  It bound unchanged ordinary functions to current source before pricing;
+  expanded macro wrappers and changed old-source bodies were excluded.
+  Its broadest overlapping group set contains 163 functions / 1783 source
+  lines, not removable lines. This distinct method found the station/palette
+  drafts above but no substantial new family. It is a discovery tool, not
+  an equivalence proof or an exhaustion claim. Further work needs a concrete
+  larger algorithmic lead, not another broad textual or compiler clone scan.
+  At `50be971e`, committed Rust is 113508 lines; 13509 further lines are still
+  needed. These studies do not establish the remaining reduction budget.
+
+  Oracle-method review: the homing component checks execute 49152 actual
+  patched-oracle entry calls in 4.41s, comparing WRAM except arithmetic scratch
+  $16..$19 and CPU stack $100..$1FF. They use constructed RAM and fixed CPU
+  entry conventions, without frame/audio/rendering advancement. This is useful
+  supplementary coverage for bounded numerical routines. The disclosed homing
+  landing does not amend the general movie-execution requirement below;
+  unvisited gameplay variants still need execution in context.
+
+  This bounded investigation ends without a maintained Rust edit. Formatting,
+  diff check and progress pass. Committed source is checked against the frozen
+  camera build that passed any% 129712/0 and Speed Booster 148406/0; those are
+  retained results, not new replays. The unrelated uncommitted shader edit
+  accounts for the working-tree count of 113425 and remains outside this work.
+
 - Queue-builder projection (2026-10-20): 28 selected single-entry writers
   share cursor/field construction with byte-bank versus overlapping word-bank
   stores explicit. The function-like macro draft saves only **32 net lines**
