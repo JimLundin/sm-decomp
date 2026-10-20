@@ -5140,6 +5140,13 @@ Everything that existed before is in the branch `archive/pre-transpile-2026-10-1
 
 ## Workspace discipline
 
+Retired transpiler fixup (2026-10-20): remove the unused 110-line
+tools/transpile/fixup.py. Its original-output paths and line numbers have no
+current build, CI or maintenance callers. Keep the provenance README and a
+byte-checked recovery reference at 1311d3b4:tools/transpile/fixup.py. This
+changes no runtime inputs or progress counters; the preceding release,
+format and any% 129712/0 checks remain applicable without another replay.
+
 Retired PLM command commit helpers (2026-10-19): moved five completed
 copy/jump/draw/coordinate/clear commit scripts and their five temporary Git
 indexes out of target/xray-read-audit. Their changes and notes are already
