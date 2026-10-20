@@ -8,9 +8,9 @@ pub use crate::game::constants::game_states::*;
 pub use crate::game::constants::samus_poses::*;
 use crate::game::sm_80::{
     memset7E, CheckEventHappened, ClearOamExt, ClearUnusedOam, CopySuperMetroidString,
-    DecompressToMem, DisableIrqInterrupts, EnableNMI, HandleFadeIn, HandleFadeOut, HasQueuedMusic,
-    QueueMode7Transfers, QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15, QueueSfx2_Max6,
-    QueueSfx3_Max6, SetupDmaTransfer, WaitForNMI_Async,
+    DecompressToMem, DisableIrqInterrupts, EnableNMI, GraphicsAsset, HandleFadeIn, HandleFadeOut,
+    HasQueuedMusic, QueueMode7Transfers, QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15,
+    QueueSfx2_Max6, QueueSfx3_Max6, WaitForNMI_Async,
 };
 use crate::game::sm_81::{DrawSpritemap, DrawSpritemapOffScreen, SaveToSram};
 use crate::game::sm_88::{
@@ -55,7 +55,7 @@ pub use crate::types::Consts_8B;
 pub use crate::types::SamusPose;
 pub use crate::types::{
     Consts_60, Ram3000, Ram3000_Menu, Ram3000_Misc, Ram3000_MsgBox, Ram3800, Ram4000,
-    Ram4000_Backups, StartDmaCopy,
+    Ram4000_Backups,
 };
 pub use crate::types::{GameState, Mode7VramWriteQueue};
 crate::game::constants::typed_constants! { Consts_8B;
@@ -179,45 +179,6 @@ crate::game::constants::typed_constants! { i32;
     fnSamus_FrameHandlerAlfa_Func12 = 0x90e6c9, fnSamus_Func15 = 0x90e833,
     fnSamusDrawHandler_Default = 0x90eb52,
 }
-// Cinematic graphics loads keep source, destination, then transfer size together.
-// RAM destinations are byte offsets; VRAM destinations are word addresses.
-enum CinematicAsset {
-    Decompress(u32, isize),
-    VramWords(u32, u16, u16),
-    VramLowBytes(u32, u16, u16),
-    VramHighBytes(u32, u16, u16),
-}
-
-impl CinematicAsset {
-    unsafe fn load(self, game: &mut Game) {
-        let (transfer, destination, vmain) = match self {
-            Self::Decompress(source, destination) => {
-                DecompressToMem(source, ram_ptr!(game; destination), game);
-                return;
-            }
-            Self::VramWords(source, destination, size) => {
-                (StartDmaCopy::vram_words(1, source, size), destination, 0x80)
-            }
-            Self::VramLowBytes(source, destination, size) => (
-                StartDmaCopy::vram_low_bytes(1, source, size),
-                destination,
-                0,
-            ),
-            Self::VramHighBytes(source, destination, size) => (
-                StartDmaCopy::vram_high_bytes(1, source, size),
-                destination,
-                0x80,
-            ),
-        };
-        crate::rtl::register_writes! { game;
-            byte(VMADDL as u16, destination as u8); byte(VMADDH as u16, (destination >> 8) as u8);
-            byte(VMAIN as u16, vmain);
-        }
-        SetupDmaTransfer(&raw const transfer as *const c_void, game);
-        WriteReg(MDMAEN as u16, 2, game);
-    }
-}
-
 pub unsafe fn SetupPpuForTitleSequence(game: &mut Game) {
     crate::rtl::register_writes! { game;
         mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
@@ -1024,8 +985,8 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                 *ram_ptr!(game; 0x74, 1) = 64;
                 *ram_ptr!(game; 0x74, 2) = 0x80;
                 crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
-                CinematicAsset::Decompress(0x9580d8, 0x15000).load(game);
-                CinematicAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
+                GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
+                GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
                 *ram_ptr!(game; 0x51) = 0x80;
                 word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce1e9, 0));
                 EnableNMI(game);
@@ -1792,11 +1753,11 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
     SetupPpuForTitleSequence(game);
     word! { game, 0; cur_irq_handler, irqhandler_next_handler }
     word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce1e9, 0));
-    CinematicAsset::Decompress(0x94e000, 0x10000).load(game);
-    CinematicAsset::Decompress(0x96fc04, 0x14000).load(game);
-    CinematicAsset::Decompress(0x9580d8, 0x15000).load(game);
-    CinematicAsset::Decompress(0x95a5e1, 0x19000).load(game);
-    CinematicAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
+    GraphicsAsset::Decompress(0x94e000, 0x10000).load(game);
+    GraphicsAsset::Decompress(0x96fc04, 0x14000).load(game);
+    GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
+    GraphicsAsset::Decompress(0x95a5e1, 0x19000).load(game);
+    GraphicsAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
     crate::rtl::register_writes! { game;
         byte(VMAIN as u16, 0); byte(VMADDL as u16, 0);
         byte(VMADDH as u16, 0);
@@ -1804,8 +1765,8 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
     for _ in 0i16..0x4000i16 {
         WriteReg(VMDATAL as u16, 0xff, game);
     }
-    CinematicAsset::VramLowBytes(0x7f4000, 0x0000, 0x1000).load(game);
-    CinematicAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
+    GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x1000).load(game);
+    GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
     WriteRegWord(M7A as u16, 0x100, game);
     word!(game.reg_M7A = 256);
     WriteRegWord(M7B as u16, 0, game);
@@ -2141,20 +2102,20 @@ pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
     word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
     word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
     word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce3e9, 0));
-    CinematicAsset::Decompress(0x95f90e, 0x10000).load(game);
-    CinematicAsset::Decompress(0x95d089, 0x18000).load(game);
-    CinematicAsset::Decompress(0x9788cc, 0x19000).load(game);
-    CinematicAsset::Decompress(0x96ff14, 0x19800).load(game);
-    CinematicAsset::Decompress(0x95e4c2, 0x1b800).load(game);
-    CinematicAsset::Decompress(0x978d12, 0x1e000).load(game);
-    CinematicAsset::VramWords(0x7f0000, 0x0000, 0x8000).load(game);
-    CinematicAsset::VramWords(0x7f8000, 0x4000, 0x900).load(game);
-    CinematicAsset::VramWords(0x7f9000, 0x4800, 0x800).load(game);
-    CinematicAsset::VramWords(0x7fe000, 0x4c00, 0x800).load(game);
-    CinematicAsset::VramWords(0x7f9800, 0x5000, 0x2000).load(game);
-    CinematicAsset::VramWords(0x9ad200, 0x6000, 0x2000).load(game);
-    CinematicAsset::VramWords(0x7fb800, 0x6e00, 0x2400).load(game);
-    CinematicAsset::Decompress(0x95d713, 0x1a000).load(game);
+    GraphicsAsset::Decompress(0x95f90e, 0x10000).load(game);
+    GraphicsAsset::Decompress(0x95d089, 0x18000).load(game);
+    GraphicsAsset::Decompress(0x9788cc, 0x19000).load(game);
+    GraphicsAsset::Decompress(0x96ff14, 0x19800).load(game);
+    GraphicsAsset::Decompress(0x95e4c2, 0x1b800).load(game);
+    GraphicsAsset::Decompress(0x978d12, 0x1e000).load(game);
+    GraphicsAsset::VramWords(0x7f0000, 0x0000, 0x8000).load(game);
+    GraphicsAsset::VramWords(0x7f8000, 0x4000, 0x900).load(game);
+    GraphicsAsset::VramWords(0x7f9000, 0x4800, 0x800).load(game);
+    GraphicsAsset::VramWords(0x7fe000, 0x4c00, 0x800).load(game);
+    GraphicsAsset::VramWords(0x7f9800, 0x5000, 0x2000).load(game);
+    GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x2000).load(game);
+    GraphicsAsset::VramWords(0x7fb800, 0x6e00, 0x2400).load(game);
+    GraphicsAsset::Decompress(0x95d713, 0x1a000).load(game);
     EnableNMI(game);
     word! { game, 3; screen_fade_delay, screen_fade_counter }
     EnableHdmaObjects(game);
@@ -2233,7 +2194,7 @@ pub unsafe fn CinematicFunc_Intro_WaitForFadeOut(game: &mut Game) {
 }
 pub unsafe fn CinematicFunc_Intro_SetupTextPage2(game: &mut Game) {
     ClearJapaneseTextTiles(game);
-    CinematicAsset::VramWords(0x7e4000, 0x4180, 0x600).load(game);
+    GraphicsAsset::VramWords(0x7e4000, 0x4180, 0x600).load(game);
     crate::rtl::write_register_and_mirror(TM as u16, 0x16, 0x69, false, game);
     ClearCinematicBgObjects(0x2f, game);
     EnableCinematicBgObjects(game);
@@ -3496,18 +3457,18 @@ pub unsafe fn CinematicFunction_Intro_Func54(game: &mut Game) {
     ClearCinematicSprites(game);
     word! { game, 0; cur_irq_handler, irqhandler_next_handler }
     word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce5e9, 0));
-    CinematicAsset::Decompress(0x95a82f, 0x10000).load(game);
-    CinematicAsset::Decompress(0x96fe69, 0x14000).load(game);
-    CinematicAsset::Decompress(0x96d10a, 0x15000).load(game);
-    CinematicAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
+    GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game);
+    GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game);
+    GraphicsAsset::Decompress(0x96d10a, 0x15000).load(game);
+    GraphicsAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
     crate::rtl::register_writes! { game;
         byte(VMAIN as u16, 0); word(VMADDL as u16, 0);
     }
     for _ in 0i16..0x4000i16 {
         WriteReg(VMDATAL as u16, 0x8c, game);
     }
-    CinematicAsset::VramLowBytes(0x7f4000, 0x0000, 0x300).load(game);
-    CinematicAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
+    GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x300).load(game);
+    GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
     WriteRegWord(M7A as u16, 0x100, game);
     word!(game.reg_M7A = 256);
     WriteRegWord(M7B as u16, 0, game);
@@ -3753,10 +3714,10 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
     word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
     word! { game, 0; door_def_ptr, layer1_x_pos, layer1_y_pos }
     word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce5e9, 0));
-    CinematicAsset::Decompress(0x95a82f, 0x10000).load(game);
-    CinematicAsset::Decompress(0x96fe69, 0x14000).load(game);
-    CinematicAsset::Decompress(0x96d10a, 0x15000).load(game);
-    CinematicAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
+    GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game);
+    GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game);
+    GraphicsAsset::Decompress(0x96d10a, 0x15000).load(game);
+    GraphicsAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
     crate::rtl::register_writes! { game;
         byte(VMAIN as u16, 0); byte(VMADDL as u16, 0);
         byte(VMADDH as u16, 0);
@@ -3764,9 +3725,9 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
     for _ in 0i16..0x4000i16 {
         WriteReg(VMDATAL as u16, 0x8c, game);
     }
-    CinematicAsset::VramLowBytes(0x7f4600, 0x0000, 0x600).load(game);
-    CinematicAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
-    CinematicAsset::VramWords(0x9ad200, 0x6000, 0x1a00).load(game);
+    GraphicsAsset::VramLowBytes(0x7f4600, 0x0000, 0x600).load(game);
+    GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
+    GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1a00).load(game);
     WriteRegWord(M7A as u16, 0x100, game);
     word!(game.reg_M7A = 256);
     WriteRegWord(M7B as u16, 0, game);
@@ -4033,11 +3994,11 @@ pub unsafe fn CinematicFunction_Intro_Func85(game: &mut Game) {
 pub unsafe fn CinematicFunction_Intro_Func86(game: &mut Game) {
     SetupPpu_4_Mode1(game);
     word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
-    CinematicAsset::Decompress(0x978adb, 0x19000).load(game);
-    CinematicAsset::Decompress(0x96ec76, 0x15000).load(game);
-    CinematicAsset::VramLowBytes(0x7f4300, 0x0000, 0x300).load(game);
-    CinematicAsset::VramWords(0x7f9000, 0x5c00, 0x800).load(game);
-    CinematicAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
+    GraphicsAsset::Decompress(0x978adb, 0x19000).load(game);
+    GraphicsAsset::Decompress(0x96ec76, 0x15000).load(game);
+    GraphicsAsset::VramLowBytes(0x7f4300, 0x0000, 0x300).load(game);
+    GraphicsAsset::VramWords(0x7f9000, 0x5c00, 0x800).load(game);
+    GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
     WriteRegWord(M7A as u16, 0x100, game);
     word!(game.reg_M7A = 256);
     WriteRegWord(M7B as u16, 0, game);
@@ -4316,24 +4277,24 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
     SetupPpu_5_Mode7(game);
     word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
     word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8cede9, 0));
-    CinematicAsset::Decompress(0x98bcd6, 0x10000).load(game);
-    CinematicAsset::Decompress(0x99a56f, 0x14000).load(game);
-    CinematicAsset::Decompress(0x99d17e, 0x18000).load(game);
-    CinematicAsset::VramWords(0x7f8000, 0x0000, 0x4000).load(game);
-    CinematicAsset::VramWords(0x7f8000, 0x2000, 0x4000).load(game);
-    CinematicAsset::VramWords(0x7f4000, 0x6000, 0x4000).load(game);
-    CinematicAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
-    CinematicAsset::Decompress(0x988304, 0x18000).load(game);
-    CinematicAsset::Decompress(0x95a82f, 0x10000).load(game);
-    CinematicAsset::Decompress(0x96fe69, 0x14000).load(game);
+    GraphicsAsset::Decompress(0x98bcd6, 0x10000).load(game);
+    GraphicsAsset::Decompress(0x99a56f, 0x14000).load(game);
+    GraphicsAsset::Decompress(0x99d17e, 0x18000).load(game);
+    GraphicsAsset::VramWords(0x7f8000, 0x0000, 0x4000).load(game);
+    GraphicsAsset::VramWords(0x7f8000, 0x2000, 0x4000).load(game);
+    GraphicsAsset::VramWords(0x7f4000, 0x6000, 0x4000).load(game);
+    GraphicsAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
+    GraphicsAsset::Decompress(0x988304, 0x18000).load(game);
+    GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game);
+    GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game);
     word_transfers!(game, ascending, 7808; native(0x14300) <- value(0x8c8c));
-    CinematicAsset::Decompress(0x98b5c1, 0x1e000).load(game);
-    CinematicAsset::Decompress(0x98b857, 0x1e800).load(game);
-    CinematicAsset::Decompress(0x98baed, 0x1f000).load(game);
-    CinematicAsset::Decompress(0x98bccd, 0x1f800).load(game);
-    CinematicAsset::Decompress(0x97e7de, 0xa000).load(game);
-    CinematicAsset::Decompress(0x99d65b, 0x2000).load(game);
-    CinematicAsset::Decompress(0x99d932, 0x6000).load(game);
+    GraphicsAsset::Decompress(0x98b5c1, 0x1e000).load(game);
+    GraphicsAsset::Decompress(0x98b857, 0x1e800).load(game);
+    GraphicsAsset::Decompress(0x98baed, 0x1f000).load(game);
+    GraphicsAsset::Decompress(0x98bccd, 0x1f800).load(game);
+    GraphicsAsset::Decompress(0x97e7de, 0xa000).load(game);
+    GraphicsAsset::Decompress(0x99d65b, 0x2000).load(game);
+    GraphicsAsset::Decompress(0x99d932, 0x6000).load(game);
     WriteRegWord(M7A as u16, 0x100, game);
     word!(game.reg_M7A = 256);
     WriteRegWord(M7B as u16, 0, game);
@@ -4395,10 +4356,10 @@ pub unsafe fn CinematicFunction_Intro_Func111(game: &mut Game) {
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func112(game: &mut Game) {
-    CinematicAsset::VramWords(0x7e2000, 0x0000, 0x4000).load(game);
-    CinematicAsset::VramWords(0x7e2000, 0x2000, 0x4000).load(game);
-    CinematicAsset::Decompress(0x98ed4f, 0x2000).load(game);
-    CinematicAsset::VramHighBytes(0x7e2000, 0x0000, 0x4000).load(game);
+    GraphicsAsset::VramWords(0x7e2000, 0x0000, 0x4000).load(game);
+    GraphicsAsset::VramWords(0x7e2000, 0x2000, 0x4000).load(game);
+    GraphicsAsset::Decompress(0x98ed4f, 0x2000).load(game);
+    GraphicsAsset::VramHighBytes(0x7e2000, 0x0000, 0x4000).load(game);
     ClearPaletteFXObjects(game);
     ClearCinematicSprites(game);
     SpawnPalfxObject(addr_kPalfx_E1E0 as u16, game);
@@ -4429,16 +4390,16 @@ pub unsafe fn CinematicFunction_Intro_Func113(game: &mut Game) {
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
-    CinematicAsset::VramWords(0x7e6000, 0x0000, 0x4000).load(game);
-    CinematicAsset::VramWords(0x7e6000, 0x2000, 0x4000).load(game);
-    CinematicAsset::Decompress(0x999101, 0x6000).load(game);
-    CinematicAsset::VramHighBytes(0x7e6000, 0x0000, 0x4000).load(game);
-    CinematicAsset::VramWords(0x7f8000, 0x4000, 0x6000).load(game);
-    CinematicAsset::VramWords(0x7fe000, 0x7000, 0x800).load(game);
-    CinematicAsset::VramWords(0x7fe800, 0x7400, 0x800).load(game);
-    CinematicAsset::VramWords(0x7ff000, 0x7800, 0x800).load(game);
-    CinematicAsset::VramWords(0x7ff800, 0x7c00, 0x800).load(game);
-    CinematicAsset::VramWords(0x7ea000, 0x5000, 0x1000).load(game);
+    GraphicsAsset::VramWords(0x7e6000, 0x0000, 0x4000).load(game);
+    GraphicsAsset::VramWords(0x7e6000, 0x2000, 0x4000).load(game);
+    GraphicsAsset::Decompress(0x999101, 0x6000).load(game);
+    GraphicsAsset::VramHighBytes(0x7e6000, 0x0000, 0x4000).load(game);
+    GraphicsAsset::VramWords(0x7f8000, 0x4000, 0x6000).load(game);
+    GraphicsAsset::VramWords(0x7fe000, 0x7000, 0x800).load(game);
+    GraphicsAsset::VramWords(0x7fe800, 0x7400, 0x800).load(game);
+    GraphicsAsset::VramWords(0x7ff000, 0x7800, 0x800).load(game);
+    GraphicsAsset::VramWords(0x7ff800, 0x7c00, 0x800).load(game);
+    GraphicsAsset::VramWords(0x7ea000, 0x5000, 0x1000).load(game);
     game.g_ram[0x52] = 2;
     ClearPaletteFXObjects(game);
     ClearCinematicSprites(game);
@@ -4724,26 +4685,26 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
     ClearCinematicSprites(game);
     ClearPaletteFXObjects(game);
     word_transfers!(game, ascending, 128; le(palette_buffer, 0) <- rom(0x8ce9e9, 0));
-    CinematicAsset::Decompress(0x979803, 0x10000).load(game);
-    CinematicAsset::Decompress(0x97b957, 0x2000).load(game);
-    CinematicAsset::Decompress(0x97d7fc, 0x6000).load(game);
-    CinematicAsset::Decompress(0x97e7de, 0x1c000).load(game);
-    CinematicAsset::Decompress(0x9796f4, 0x1e000).load(game);
-    CinematicAsset::Decompress(0x97f987, 0x14000).load(game);
-    CinematicAsset::Decompress(0x99da9f, 0x1e800).load(game);
-    CinematicAsset::Decompress(0x99dab1, 0x1f000).load(game);
-    CinematicAsset::VramWords(0x7fe800, 0x2000, 0x100).load(game);
-    CinematicAsset::VramWords(0x7ff000, 0x2400, 0x800).load(game);
-    CinematicAsset::VramWords(0x7fc000, 0x4000, 0x1000).load(game);
-    CinematicAsset::VramWords(0x7e6000, 0x6000, 0x4000).load(game);
-    CinematicAsset::VramWords(0x7f0000, 0x5000, 0x2000).load(game);
-    CinematicAsset::VramWords(0x7fe000, 0x4c00, 0x800).load(game);
-    CinematicAsset::Decompress(0x99e089, 0x6000).load(game);
-    CinematicAsset::Decompress(0x99ecc4, 0x8000).load(game);
+    GraphicsAsset::Decompress(0x979803, 0x10000).load(game);
+    GraphicsAsset::Decompress(0x97b957, 0x2000).load(game);
+    GraphicsAsset::Decompress(0x97d7fc, 0x6000).load(game);
+    GraphicsAsset::Decompress(0x97e7de, 0x1c000).load(game);
+    GraphicsAsset::Decompress(0x9796f4, 0x1e000).load(game);
+    GraphicsAsset::Decompress(0x97f987, 0x14000).load(game);
+    GraphicsAsset::Decompress(0x99da9f, 0x1e800).load(game);
+    GraphicsAsset::Decompress(0x99dab1, 0x1f000).load(game);
+    GraphicsAsset::VramWords(0x7fe800, 0x2000, 0x100).load(game);
+    GraphicsAsset::VramWords(0x7ff000, 0x2400, 0x800).load(game);
+    GraphicsAsset::VramWords(0x7fc000, 0x4000, 0x1000).load(game);
+    GraphicsAsset::VramWords(0x7e6000, 0x6000, 0x4000).load(game);
+    GraphicsAsset::VramWords(0x7f0000, 0x5000, 0x2000).load(game);
+    GraphicsAsset::VramWords(0x7fe000, 0x4c00, 0x800).load(game);
+    GraphicsAsset::Decompress(0x99e089, 0x6000).load(game);
+    GraphicsAsset::Decompress(0x99ecc4, 0x8000).load(game);
     if word!(game.game_time_hours) as i32 - 3i32 & 0x8000 != 0 {
-        CinematicAsset::VramWords(0x7e2000, 0x0000, 0x4000).load(game);
+        GraphicsAsset::VramWords(0x7e2000, 0x0000, 0x4000).load(game);
     } else {
-        CinematicAsset::VramWords(0x7f0000, 0x0000, 0x4000).load(game);
+        GraphicsAsset::VramWords(0x7f0000, 0x0000, 0x4000).load(game);
     }
     WriteRegWord(M7A as u16, 0x100, game);
     word!(game.reg_M7A = 256);
@@ -4767,7 +4728,7 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
     EnableHdmaObjects(game);
     word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(0));
     CinematicFunction_Intro_Func127(game);
-    CinematicAsset::Decompress(0x97eeff, 0x10000).load(game);
+    GraphicsAsset::Decompress(0x97eeff, 0x10000).load(game);
     ClearCinematicBgObjects(0x7f, game);
     CinematicFunction_Intro_Func128(0x7f, game);
     EnableTextGlowObjects_(game);

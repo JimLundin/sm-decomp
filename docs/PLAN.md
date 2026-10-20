@@ -20,6 +20,44 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared graphics loads (2026-10-20)
+
+The cinematic asset loader now lives beside shared DMA setup in sm_80.rs as
+GraphicsAsset. Another 22 transfer sequences across menu, gameplay, pause and
+Kraid code use it, including two WRAM transfers. Destination registers, DMA
+descriptor writes and triggers retain their order. WRAM keeps all three
+destination-register bytes, including the ignored bank bits. HUD's word write
+to VMAIN, pause-map rendering between setup and transfer, and the options-menu
+RAM mirror remain explicit at their existing sites.
+
+An extracted-Rust DLL harness passes 1441792 caller comparisons across eleven
+bodies/prefixes and 262144 asset comparisons, checking register traces and RAM.
+It covers every pair of destination-mirror bytes, all word-sized destinations,
+size boundaries and synthetic DMA callbacks that change later destination
+reads. Actual VMADDL writes affect the PPU, not those RAM mirrors. Source checks
+retain surrounding state logic and all other declarations/functions. These
+synthetic bus comparisons supplement the actual hardware/oracle replays below;
+Kraid's sinking-hook coverage remains limited to its extracted DMA prefix.
+
+Formatting, all-target release check, normal release (29.06s), diff check and
+progress pass. Source-checked any% passes 129712/0 (110.33s replay). Full-boot
+pause/equipment/resume extensions pass Speed Booster 149031/0, Kraid alive
+120448/0 and Kraid defeated 121445/0, all native exits 0. Every extension hits
+all five loader modes and returns to gameplay. Every run validates the same
+compiled source; source/input hashes stay fixed. The unchanged Speed Booster
+prefix first passed 148406/0 but exited 2
+for the absent WRAM probe. Initial single-frame menu presses entered pause;
+eight-frame shoulder/Start presses pass its held-input filter and exercise
+equipment switching and resume. Final inputs remain ignored in movies as
+`speed-booster-pause-resume.inputs`, `kraid-phase2-pause-resume.inputs` and
+`kraid-defeated-pause-resume.inputs`; no input, checkpoint or ROM is committed.
+
+Rust lines -82 to 115338, cast-containing lines -1 to 9271; other progress
+counters are unchanged. The under-100000 target still needs **15339 lines**
+removed. This proven family contributes to the reduction; the complete
+remaining budget remains unestablished. Temporary drafts/comparisons are under
+`%TEMP%/sm-graphics-loads-7ccac620`.
+
 ## Shared sprite traversal (2026-10-20)
 
 Ten OAM-writing implementations now share two traversals in sm_81.rs. The

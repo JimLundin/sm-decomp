@@ -5,8 +5,8 @@ pub use crate::game::constants::enemy_properties::*;
 use crate::game::enemy_instruction;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{
-    DecompressToMem, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max15,
-    QueueSfx2_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn, SetupDmaTransfer, WaitForNMI_Async,
+    DecompressToMem, GraphicsAsset, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6,
+    QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn, WaitForNMI_Async,
 };
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
 use crate::game::sm_84::SpawnHardcodedPlm;
@@ -63,9 +63,7 @@ crate::typed_struct! {
     }
 }
 pub use crate::types::Consts_A7;
-pub use crate::types::{
-    Consts_86, EnemyDef, Ram4000, Ram4000_Backups, StartDmaCopy, VramReadQueueEnt,
-};
+pub use crate::types::{Consts_86, EnemyDef, Ram4000, Ram4000_Backups, VramReadQueueEnt};
 crate::game::constants::typed_constants! { Consts_A7;
     addr_kDachora_Ilist_F4C1 = 62657, addr_kDachora_Ilist_F4B9 = 62649,
     addr_kDachora_Ilist_F4B3 = 62643, addr_kDachora_Ilist_F48B = 62603,
@@ -1727,48 +1725,37 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
     );
 }
 pub unsafe fn UnpauseHook_Kraid_IsDead(game: &mut Game) -> CoroutineRet {
-    static unk_A7C21E: StartDmaCopy = StartDmaCopy::vram_words(1, 0xa7a716, 0x200);
-    static unk_A7C23E: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ab200, 0x800);
     ScreenOff(game);
-    crate::rtl::register_writes! { game;
-        byte(VMADDL as u16, 0); byte(VMADDH as u16,
-        (16 * (*ram_ptr!(game; 0x5d) as i32 & 0xf) + 63) as u8,);
-        byte(VMAIN as u16, 0x80);
-    }
-    SetupDmaTransfer(&raw const unk_A7C21E as *const c_void, game);
-    crate::rtl::register_writes! { game;
-        byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0);
-        byte(VMADDH as u16, 0x40); byte(VMAIN as u16, 0x80);
-    }
-    SetupDmaTransfer(&raw const unk_A7C23E as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2, game);
+    GraphicsAsset::VramWords(
+        0xa7a716,
+        ((16 * (*ram_ptr!(game; 0x5d) as i32 & 0xf) + 63) as u8 as u16) << 8,
+        0x200,
+    )
+    .load(game);
+    GraphicsAsset::VramWords(0x9ab200, 0x4000, 0x800).load(game);
     Kraid_TransferTopHalfToVram(game);
     kCoroutineNone as CoroutineRet
 }
-static unk_A7C26B: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e5000, 0x400);
-static unk_A7C28D: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e2000, 0x800);
 pub unsafe fn UnpauseHook_Kraid_IsAlive(game: &mut Game) -> CoroutineRet {
     ScreenOff(game);
-    crate::rtl::register_writes! { game;
-        byte(VMADDL as u16, 0); byte(VMADDH as u16,
-        (*ram_ptr!(game; 0x5d)).wrapping_add(62),);
-        byte(VMAIN as u16, 0x80);
-    }
-    SetupDmaTransfer(&raw const unk_A7C26B as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2, game);
+    GraphicsAsset::VramWords(
+        0x7e5000,
+        ((*ram_ptr!(game; 0x5d)).wrapping_add(62) as u16) << 8,
+        0x400,
+    )
+    .load(game);
     Kraid_TransferTopHalfToVram(game);
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn Kraid_TransferTopHalfToVram(game: &mut Game) {
-    crate::rtl::register_writes! { game;
-        byte(VMADDL as u16, 0); byte(VMADDH as u16, (*ram_ptr!(game; 0x59)) & (0xfcu8));
-        byte(VMAIN as u16, 0x80);
-    }
-    SetupDmaTransfer(&raw const unk_A7C28D as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2, game);
+    GraphicsAsset::VramWords(
+        0x7e2000,
+        ((*ram_ptr!(game; 0x59) & 0xfc) as u16) << 8,
+        0x800,
+    )
+    .load(game);
     ScreenOn(game);
 }
-static unk_A7C2BD: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e5000, 0x400);
 pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
     let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x613);
     's_100: {
@@ -1776,13 +1763,12 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
         match *_state_variable_ as i32 {
             0 => {
                 ScreenOff(game);
-                crate::rtl::register_writes! { game;
-                    byte(VMADDL as u16, 0); byte(VMADDH as u16,
-                    (*ram_ptr!(game; 0x5d)).wrapping_add(62),);
-                    byte(VMAIN as u16, 0x80);
-                }
-                SetupDmaTransfer(&raw const unk_A7C2BD as *const c_void, game);
-                WriteReg(MDMAEN as u16, 2, game);
+                GraphicsAsset::VramWords(
+                    0x7e5000,
+                    ((*ram_ptr!(game; 0x5d)).wrapping_add(62) as u16) << 8,
+                    0x400,
+                )
+                .load(game);
                 if (((*Get_Kraid(0i32, game)).base.y_pos) as i16).wrapping_sub(
                     ((*(game.g_rom.offset(crate::rtl::lorom_offset(0xa7c5e7))
                         as *mut KraidSinkTable)

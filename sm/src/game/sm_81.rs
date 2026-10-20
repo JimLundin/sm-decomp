@@ -5,8 +5,9 @@ pub use crate::game::constants::buttons::*;
 pub use crate::game::constants::game_states::*;
 use crate::game::enemy_instruction;
 use crate::game::sm_80::{
-    HandleFadeIn, HandleFadeOut, HasQueuedMusic, LoadFromLoadStation, LoadMirrorOfExploredMapTiles,
-    QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn, SetupDmaTransfer,
+    GraphicsAsset, HandleFadeIn, HandleFadeOut, HasQueuedMusic, LoadFromLoadStation,
+    LoadMirrorOfExploredMapTiles, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx3_Max6, ScreenOff,
+    ScreenOn,
 };
 use crate::game::sm_82::{
     AdvanceGradualColorChangeOfPalette, DisplayMapElevatorDestinations,
@@ -472,31 +473,10 @@ pub unsafe fn MapVramForMenu(game: &mut Game) {
     *ram_ptr!(game; 0x69) = 19;
 }
 pub unsafe fn LoadInitialMenuTiles(game: &mut Game) {
-    crate::rtl::register_writes! { game;
-        byte(VMADDL as u16, 0); byte(VMADDH as u16, 0);
-        byte(VMAIN as u16, 0x80);
-    }
-    static unk_818DF1: StartDmaCopy = StartDmaCopy::vram_words(1, 0x8e8000, 0x5600);
-    SetupDmaTransfer(&raw const unk_818DF1 as *const c_void, game);
-    crate::rtl::register_writes! { game;
-        byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0);
-        byte(VMADDH as u16, 0x30); byte(VMAIN as u16, 0x80);
-    }
-    static unk_818E11: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb68000, 0x2000);
-    SetupDmaTransfer(&raw const unk_818E11 as *const c_void, game);
-    crate::rtl::register_writes! { game;
-        byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0);
-        byte(VMADDH as u16, 0x60); byte(VMAIN as u16, 0x80);
-    }
-    static unk_818E31: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb6c000, 0x2000);
-    SetupDmaTransfer(&raw const unk_818E31 as *const c_void, game);
-    crate::rtl::register_writes! { game;
-        byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0);
-        byte(VMADDH as u16, 0x40); byte(VMAIN as u16, 0x80);
-    }
-    static unk_818E51: StartDmaCopy = StartDmaCopy::vram_words(1, 0x8ed600, 0x600);
-    SetupDmaTransfer(&raw const unk_818E51 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2, game);
+    GraphicsAsset::VramWords(0x8e8000, 0, 0x5600).load(game);
+    GraphicsAsset::VramWords(0xb68000, 0x3000, 0x2000).load(game);
+    GraphicsAsset::VramWords(0xb6c000, 0x6000, 0x2000).load(game);
+    GraphicsAsset::VramWords(0x8ed600, 0x4000, 0x600).load(game);
 }
 pub unsafe fn LoadMenuPalettes(game: &mut Game) {
     word_transfers!(game, (4), 128;

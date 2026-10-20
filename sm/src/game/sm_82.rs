@@ -14,7 +14,7 @@ use crate::game::sm_80::{
     ClearFXTilemap, ClearOamExt, ClearTimerRam, ClearUnusedOam, CopyToVramNow,
     DebugScrollPosSaveLoad, DecompressToMem, DecompressToVRAM, DisableIrqInterrupts,
     DoorTransitionScrollingSetup, DrawTimer, EnableIrqInterruptsNow, EnableNMI, FixDoorsMovingUp,
-    HandleFadeIn, HandleFadeOut, HandleHudTilemap, HasQueuedMusic, InitializeHud,
+    GraphicsAsset, HandleFadeIn, HandleFadeOut, HandleHudTilemap, HasQueuedMusic, InitializeHud,
     LoadFromLoadStation, LoadMirrorOfExploredMapTiles, NextRandom, PrepareBitAccess,
     QueueClearingOfFxTilemap, QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15,
     QueueSfx1_Max6, QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max3,
@@ -459,31 +459,10 @@ pub unsafe fn LoadInitialPalette(game: &mut Game) {
     word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x9a8000, 0));
 }
 pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps(game: &mut Game) {
-    crate::rtl::register_writes! { game;
-        byte(VMADDL as u16, 0); byte(VMADDH as u16, 0x40);
-        byte(VMAIN as u16, 0x80);
-    }
-    static unk_8282F8: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ab200, 0x2000);
-    SetupDmaTransfer(&raw const unk_8282F8 as *const c_void, game);
-    crate::rtl::register_writes! { game;
-        byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0);
-        byte(VMADDH as u16, 0x60); byte(VMAIN as u16, 0x80);
-    }
-    static unk_828318: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ad200, 0x2e00);
-    SetupDmaTransfer(&raw const unk_828318 as *const c_void, game);
-    crate::rtl::register_writes! { game;
-        byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0);
-        byte(VMADDH as u16, 0x50); byte(VMAIN as u16, 0x80);
-    }
-    static unk_828338: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e4000, 0x1000);
-    SetupDmaTransfer(&raw const unk_828338 as *const c_void, game);
-    crate::rtl::register_writes! { game;
-        byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0);
-        byte(VMADDH as u16, 0x58); byte(VMAIN as u16, 0x80);
-    }
-    static unk_828358: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e4000, 0x800);
-    SetupDmaTransfer(&raw const unk_828358 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2, game);
+    GraphicsAsset::VramWords(0x9ab200, 0x4000, 0x2000).load(game);
+    GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x2e00).load(game);
+    GraphicsAsset::VramWords(0x7e4000, 0x5000, 0x1000).load(game);
+    GraphicsAsset::VramWords(0x7e4000, 0x5800, 0x800).load(game);
 }
 pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRet {
     if word!(game.timer_status) != 0 {
@@ -1281,13 +1260,12 @@ pub unsafe fn BackupBG2TilemapForPauseMenu(game: &mut Game) {
     }
 }
 pub unsafe fn RestoreBG2TilemapFromPauseScreen(game: &mut Game) {
-    crate::rtl::register_writes! { game;
-        word(VMADDL as u16,
-        ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16,); byte(VMAIN as u16, 0x80);
-    }
-    static unk_828DAE: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7edf5c, 0x1000);
-    SetupDmaTransfer(&raw const unk_828DAE as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2, game);
+    GraphicsAsset::VramWords(
+        0x7edf5c,
+        ((*ram_ptr!(game; 0x59) as u16 & 0xfc) << 8),
+        0x1000,
+    )
+    .load(game);
 }
 pub unsafe fn BackupSomeGfxStateForPause(game: &mut Game) {
     *ram_ptr!(game; 0x765) = *ram_ptr!(game; 0x58);
@@ -1328,46 +1306,14 @@ pub unsafe fn RestoreSomeGfxStateForPause(game: &mut Game) {
     *ram_ptr!(game; 0x71) = *ram_ptr!(game; 0x775);
 }
 pub unsafe fn LoadPauseMenuTilesAndClearBG2(game: &mut Game) {
-    crate::rtl::register_writes! { game;
-        byte(VMADDL as u16, 0); byte(VMADDH as u16, 0);
-        byte(VMAIN as u16, 0x80);
-    }
-    static unk_828E8B: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb68000, 0x4000);
-    SetupDmaTransfer(&raw const unk_828E8B as *const c_void, game);
-    crate::rtl::register_writes! { game;
-        byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0);
-        byte(VMADDH as u16, 0x20); byte(VMAIN as u16, 0x80);
-    }
-    static unk_828EAB: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb6c000, 0x2000);
-    SetupDmaTransfer(&raw const unk_828EAB as *const c_void, game);
-    crate::rtl::register_writes! { game;
-        byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0);
-        byte(VMADDH as u16, 0x40); byte(VMAIN as u16, 0x80);
-    }
-    static unk_828ECB: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ab200, 0x2000);
-    SetupDmaTransfer(&raw const unk_828ECB as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2, game);
+    GraphicsAsset::VramWords(0xb68000, 0, 0x4000).load(game);
+    GraphicsAsset::VramWords(0xb6c000, 0x2000, 0x2000).load(game);
+    GraphicsAsset::VramWords(0x9ab200, 0x4000, 0x2000).load(game);
 }
 pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
-    crate::rtl::register_writes! { game;
-        byte(VMADDL as u16, 0); byte(VMADDH as u16, 0x38);
-        byte(VMAIN as u16, 0x80);
-    }
-    static unk_828EF0: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb6e000, 0x800);
-    SetupDmaTransfer(&raw const unk_828EF0 as *const c_void, game);
-    crate::rtl::register_writes! { game;
-        byte(MDMAEN as u16, 2); byte(WMADDL as u16, 0);
-        byte(WMADDM as u16, 0x34); byte(WMADDH as u16, 0x7e);
-    }
-    static unk_828F10: StartDmaCopy = StartDmaCopy::wram_bytes(1, 0xb6e400, 0x400);
-    SetupDmaTransfer(&raw const unk_828F10 as *const c_void, game);
-    crate::rtl::register_writes! { game;
-        byte(MDMAEN as u16, 2); byte(WMADDL as u16, 0);
-        byte(WMADDM as u16, 0x38); byte(WMADDH as u16, 0x7e);
-    }
-    static unk_828F30: StartDmaCopy = StartDmaCopy::wram_bytes(1, 0xb6e800, 0x800);
-    SetupDmaTransfer(&raw const unk_828F30 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2, game);
+    GraphicsAsset::VramWords(0xb6e000, 0x3800, 0x800).load(game);
+    GraphicsAsset::WramBytes(0xb6e400, 0x7e3400, 0x400).load(game);
+    GraphicsAsset::WramBytes(0xb6e800, 0x7e3800, 0x800).load(game);
     let mut v0: u16 = addr_kDummySamusWireframeTilemap as u16;
     let mut v1: u16 = 236;
     for _ in 0..17 {
@@ -2118,13 +2064,7 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
     }
 }
 pub unsafe fn ClearSamusBeamTiles(game: &mut Game) {
-    crate::rtl::register_writes! { game;
-        byte(VMADDL as u16, 0); byte(VMADDH as u16, 0x60);
-        byte(VMAIN as u16, 0x80);
-    }
-    static unk_82A2D4: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ad200, 0x1000);
-    SetupDmaTransfer(&raw const unk_82A2D4 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2, game);
+    GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1000).load(game);
 }
 pub unsafe fn ContinueInitGameplayResume(game: &mut Game) {
     word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- pause_map(384));
@@ -2473,13 +2413,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
     }
 }
 pub unsafe fn EquipmentScreenTransferBG1Tilemap(game: &mut Game) {
-    crate::rtl::register_writes! { game;
-        byte(VMADDL as u16, 0); byte(VMADDH as u16, 0x30);
-        byte(VMAIN as u16, 0x80);
-    }
-    static unk_82AC3B: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e3800, 0x800);
-    SetupDmaTransfer(&raw const unk_82AC3B as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2, game);
+    GraphicsAsset::VramWords(0x7e3800, 0x3000, 0x800).load(game);
     word!(game.reg_BG1VOFS = 0);
 }
 static kEquipmentScreenCategories: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;

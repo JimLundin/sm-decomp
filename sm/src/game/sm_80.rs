@@ -844,6 +844,63 @@ pub unsafe fn SetupDmaTransfer(p: *const c_void, game: &mut Game) {
         byte((v2 + A1B0 as i32) as SnesRegs as u16, (*s).a1.bank); word((v2 + DAS0L as i32) as SnesRegs as u16, (*s).das);
     }
 }
+// Graphics loads keep source, destination, then transfer size together.
+// Decompression uses RAM offsets; VRAM uses word addresses. WRAM transfers
+// retain all three destination-register bytes, including ignored bank bits.
+pub(crate) enum GraphicsAsset {
+    Decompress(u32, isize),
+    VramWords(u32, u16, u16),
+    VramLowBytes(u32, u16, u16),
+    VramHighBytes(u32, u16, u16),
+    WramBytes(u32, u32, u16),
+}
+
+impl GraphicsAsset {
+    pub(crate) unsafe fn load(self, game: &mut Game) {
+        crate::verify_probe::hit(match &self {
+            Self::Decompress(..) => "graphics-load-decompress",
+            Self::VramWords(..) => "graphics-load-vram-words",
+            Self::VramLowBytes(..) => "graphics-load-vram-low",
+            Self::VramHighBytes(..) => "graphics-load-vram-high",
+            Self::WramBytes(..) => "graphics-load-wram",
+        });
+        let (transfer, vram) = match self {
+            Self::Decompress(source, destination) => {
+                DecompressToMem(source, ram_ptr!(game; destination), game);
+                return;
+            }
+            Self::VramWords(source, destination, size) => (
+                StartDmaCopy::vram_words(1, source, size),
+                Some((destination, 0x80)),
+            ),
+            Self::VramLowBytes(source, destination, size) => (
+                StartDmaCopy::vram_low_bytes(1, source, size),
+                Some((destination, 0)),
+            ),
+            Self::VramHighBytes(source, destination, size) => (
+                StartDmaCopy::vram_high_bytes(1, source, size),
+                Some((destination, 0x80)),
+            ),
+            Self::WramBytes(source, destination, size) => {
+                crate::rtl::register_writes! { game;
+                    byte(WMADDL as u16, destination as u8);
+                    byte(WMADDM as u16, (destination >> 8) as u8);
+                    byte(WMADDH as u16, (destination >> 16) as u8);
+                }
+                (StartDmaCopy::wram_bytes(1, source, size), None)
+            }
+        };
+        if let Some((destination, vmain)) = vram {
+            crate::rtl::register_writes! { game;
+                byte(VMADDL as u16, destination as u8); byte(VMADDH as u16, (destination >> 8) as u8);
+                byte(VMAIN as u16, vmain);
+            }
+        }
+        SetupDmaTransfer(&raw const transfer as *const c_void, game);
+        WriteReg(MDMAEN as u16, 2, game);
+    }
+}
+
 pub unsafe fn NmiUpdateIoRegisters(game: &mut Game) {
     crate::rtl::register_writes! { game;
         byte(NMITIMEN as u16, game.g_ram[0x84]); byte(INIDISP as u16, game.g_ram[0x51]);
