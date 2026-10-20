@@ -663,27 +663,28 @@ pub unsafe fn MapVramForMenu(game: &mut Game) {
     *ram_ptr!(game; 0x69) = 19u8;
 }
 pub unsafe fn LoadInitialMenuTiles(game: &mut Game) {
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(VMADDL as u16, 0u8); byte(VMADDH as u16, 0u8);
+        byte(VMAIN as u16, 0x80u8);
+    }
     static unk_818DF1: StartDmaCopy = StartDmaCopy::vram_words(1, 0x8e8000, 0x5600);
     SetupDmaTransfer(&raw const unk_818DF1 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x30u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(MDMAEN as u16, 2u8); byte(VMADDL as u16, 0u8);
+        byte(VMADDH as u16, 0x30u8); byte(VMAIN as u16, 0x80u8);
+    }
     static unk_818E11: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb68000, 0x2000);
     SetupDmaTransfer(&raw const unk_818E11 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x60u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(MDMAEN as u16, 2u8); byte(VMADDL as u16, 0u8);
+        byte(VMADDH as u16, 0x60u8); byte(VMAIN as u16, 0x80u8);
+    }
     static unk_818E31: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb6c000, 0x2000);
     SetupDmaTransfer(&raw const unk_818E31 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x40u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(MDMAEN as u16, 2u8); byte(VMADDL as u16, 0u8);
+        byte(VMADDH as u16, 0x40u8); byte(VMAIN as u16, 0x80u8);
+    }
     static unk_818E51: StartDmaCopy = StartDmaCopy::vram_words(1, 0x8ed600, 0x600);
     SetupDmaTransfer(&raw const unk_818E51 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
@@ -759,9 +760,10 @@ pub unsafe fn RestorePalettesAndIoAfterDebugGameover(game: &mut Game) {
     }
 }
 pub unsafe fn GameOverMenu_5_Continue(game: &mut Game) {
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x40u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(VMADDL as u16, 0u8); byte(VMADDH as u16, 0x40u8);
+        byte(VMAIN as u16, 0x80u8);
+    }
     static unk_819093: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ab200, 0x2000);
     SetupDmaTransfer(&raw const unk_819093 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
@@ -2276,10 +2278,10 @@ pub unsafe fn LoadAreaSelectBackgroundTilemap(j: u16, game: &mut Game) {
 }
 pub unsafe fn FileSelectMap_4_SetupExpandingSquareTransition(game: &mut Game) {
     *ram_ptr!(game; 0x6b) = 4u8;
-    crate::rtl::write_register_and_mirror(TS as u16, 4, 0x6d, false, game);
-    WriteReg(TSW as u16, 4u8, game);
-    crate::rtl::write_register_and_mirror(CGWSEL as u16, 2, 0x6f, true, game);
-    crate::rtl::write_register_and_mirror(CGADSUB as u16, 0x25, 0x72, true, game);
+    crate::rtl::register_writes! { game;
+        mirror(TS as u16, 4, 0x6d, false); byte(TSW as u16, 4u8);
+        mirror(CGWSEL as u16, 2, 0x6f, true); mirror(CGADSUB as u16, 0x25, 0x72, true);
+    }
     *ram_ptr!(game; 0x74, 2) = 0x80u8;
     *ram_ptr!(game; 0x74, 1) = 64u8;
     *ram_ptr!(game; 0x74, 0) = 32u8;
@@ -2292,11 +2294,11 @@ pub unsafe fn FileSelectMap_4_SetupExpandingSquareTransition(game: &mut Game) {
 }
 pub unsafe fn ConfigureWindow1ForExpandingSquare(game: &mut Game) {
     *ram_ptr!(game; 0x69) = 19u8;
-    crate::rtl::write_register_and_mirror(TM as u16, 0x13, 0x6c, false, game);
-    WriteReg(TMW as u16, 0x13u8, game);
-    crate::rtl::write_register_and_mirror(W12SEL as u16, 0x23, 0x60, true, game);
-    crate::rtl::write_register_and_mirror(W34SEL as u16, 3, 0x61, true, game);
-    crate::rtl::write_register_and_mirror(WOBJSEL as u16, 0x23, 0x62, true, game);
+    crate::rtl::register_writes! { game;
+        mirror(TM as u16, 0x13, 0x6c, false); byte(TMW as u16, 0x13u8);
+        mirror(W12SEL as u16, 0x23, 0x60, true); mirror(W34SEL as u16, 3, 0x61, true);
+        mirror(WOBJSEL as u16, 0x23, 0x62, true);
+    }
 }
 pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     set_ram_word!(game.expand_sq_topbottom_margin_right_pos = 0u16);
@@ -2315,17 +2317,14 @@ pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_0 = 111u8;
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_1 = 32u8;
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_2 = -98i32 as u8;
-    WriteReg(DMAP2 as u16, 0x40u8, game);
-    WriteReg(BBAD2 as u16, 0x26u8, game);
-    WriteReg(A1T2L as u16, 0u8, game);
-    WriteReg(A1T2H as u16, 0x9eu8, game);
-    WriteReg(A1B2 as u16, 0x7eu8, game);
-    WriteReg(DAS20 as u16, 0x7eu8, game);
-    WriteReg(DAS2L as u16, 0u8, game);
-    WriteReg(DAS2H as u16, 0u8, game);
-    WriteReg(A2A2L as u16, 0u8, game);
-    WriteReg(A2A2H as u16, 0u8, game);
-    WriteReg(NTRL2 as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        byte(DMAP2 as u16, 0x40u8); byte(BBAD2 as u16, 0x26u8);
+        byte(A1T2L as u16, 0u8); byte(A1T2H as u16, 0x9eu8);
+        byte(A1B2 as u16, 0x7eu8); byte(DAS20 as u16, 0x7eu8);
+        byte(DAS2L as u16, 0u8); byte(DAS2H as u16, 0u8);
+        byte(A2A2L as u16, 0u8); byte(A2A2H as u16, 0u8);
+        byte(NTRL2 as u16, 0u8);
+    }
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_0 = 111u8;
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_1 = 32u8;
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_2 = -98i32 as u8;
@@ -2338,17 +2337,14 @@ pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_0 = 111u8;
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_1 = 32u8;
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_2 = -98i32 as u8;
-    WriteReg(DMAP3 as u16, 0x40u8, game);
-    WriteReg(BBAD3 as u16, 0x27u8, game);
-    WriteReg(A1T3L as u16, 0x10u8, game);
-    WriteReg(A1T3H as u16, 0x9eu8, game);
-    WriteReg(A1B3 as u16, 0x7eu8, game);
-    WriteReg(DAS30 as u16, 0x7eu8, game);
-    WriteReg(DAS3L as u16, 0u8, game);
-    WriteReg(DAS3H as u16, 0u8, game);
-    WriteReg(A2A3L as u16, 0u8, game);
-    WriteReg(A2A3H as u16, 0u8, game);
-    WriteReg(NTRL3 as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        byte(DMAP3 as u16, 0x40u8); byte(BBAD3 as u16, 0x27u8);
+        byte(A1T3L as u16, 0x10u8); byte(A1T3H as u16, 0x9eu8);
+        byte(A1B3 as u16, 0x7eu8); byte(DAS30 as u16, 0x7eu8);
+        byte(DAS3L as u16, 0u8); byte(DAS3H as u16, 0u8);
+        byte(A2A3L as u16, 0u8); byte(A2A3H as u16, 0u8);
+        byte(NTRL3 as u16, 0u8);
+    }
 }
 static kExpandingSquareTransitionSpeed: u8 = 4u8;
 pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
@@ -2673,10 +2669,10 @@ pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
     SetupInitialExpandingSquareHDMA(game);
     *ram_ptr!(game; 0x69) = 19u8;
     *ram_ptr!(game; 0x6c) = 19u8;
-    crate::rtl::write_register_and_mirror(W12SEL as u16, 0x32, 0x60, true, game);
-    crate::rtl::write_register_and_mirror(W34SEL as u16, 2, 0x61, true, game);
-    crate::rtl::write_register_and_mirror(CGADSUB as u16, 5, 0x72, true, game);
-    crate::rtl::write_register_and_mirror(WOBJSEL as u16, 0x22, 0x62, true, game);
+    crate::rtl::register_writes! { game;
+        mirror(W12SEL as u16, 0x32, 0x60, true); mirror(W34SEL as u16, 2, 0x61, true);
+        mirror(CGADSUB as u16, 5, 0x72, true); mirror(WOBJSEL as u16, 0x22, 0x62, true);
+    }
     *ram_ptr!(game; 0x5d) = 48u8;
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_0 = 0u8;
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_0 = 0u8;
@@ -3175,9 +3171,10 @@ pub unsafe fn FileSelectMap_20_SetupExpandingSquare(game: &mut Game) {
     set_ram_word!(game.expand_sq_bottom_subpos = 0u16);
     SetupRoomSelectMapExpandingSquareTransHDMA(game);
     update_ram_word!(game.menu_index, wrapping_add(1));
-    crate::rtl::write_register_and_mirror(HDMAEN as u16, 0xc, 0x85, true, game);
-    crate::rtl::write_register_and_mirror(W12SEL as u16, 0x32, 0x60, true, game);
-    crate::rtl::write_register_and_mirror(W34SEL as u16, 2, 0x61, true, game);
+    crate::rtl::register_writes! { game;
+        mirror(HDMAEN as u16, 0xc, 0x85, true); mirror(W12SEL as u16, 0x32, 0x60, true);
+        mirror(W34SEL as u16, 2, 0x61, true);
+    }
     *ram_ptr!(game; 0x5d) = 48u8;
     *ram_ptr!(game; 0x62) = 34u8;
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_0 = 0u8;

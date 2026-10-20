@@ -31,6 +31,25 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Register-write sequences (2026-10-20): a caller-side macro shares all
+121 consecutive groups of two or more direct byte, word and mirrored writes
+in gameplay: 778 operations across eight caller files. The other 121 isolated
+writes stay explicit. Every address/value expression, mirror offset/order,
+operation order and statement boundary remain exact. Later arguments are
+not pre-evaluated; no runtime descriptor array or wider borrow is introduced.
+
+Complete source reconstruction and actual whole-library compiler expansion
+pass, including all commas/semicolons, after removing the helper/import and
+resolving the exact caller-imported RTL function qualifications. All caller
+bindings are checked. Final source includes 3848ea69 numeric declarations.
+Formatting/check, normal release (23.60s), progress and full any% pass:
+129712/0 (102.85s), native exit 0. All 72 committed inputs,
+69 replay sources and 74 pins remain stable.
+Net Rust lines -147, to 135425; the cast-line counter falls one through
+formatting, with all cast operations preserved. Other counters are unchanged.
+Any% supplies core integration coverage; broader hardware/gameplay remain open.
+Continue substantial shared implementations.
+
 Gameplay numeric declarations (2026-10-20): one typed-list macro
 shares all 5093 public integer-literal constants in 356 consecutive groups
 across 30 files, including primitive and alias declarations. Every original

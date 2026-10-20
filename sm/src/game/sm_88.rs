@@ -415,8 +415,9 @@ pub unsafe fn DisableHdmaObjects(game: &mut Game) {
     );
 }
 pub unsafe fn WaitUntilEndOfVblankAndClearHdma(game: &mut Game) {
-    WriteReg(MDMAEN as u16, 0u8, game);
-    WriteReg(HDMAEN as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        byte(MDMAEN as u16, 0u8); byte(HDMAEN as u16, 0u8);
+    }
     sub_8882AC(game);
 }
 pub unsafe fn sub_8882AC(game: &mut Game) {
@@ -442,15 +443,13 @@ pub unsafe fn InitializeSpecialEffectsForNewRoom(game: &mut Game) {
     set_ram_word!(game.debug_disable_minimap = 0u16);
     let mut i: i32 = 32i32;
     while i != 0x80i32 {
-        WriteReg((i + 17152i32) as SnesRegs as u16, 0u8, game);
-        WriteReg((i + 17153i32) as SnesRegs as u16, 0x13u8, game);
-        WriteReg((i + 17154i32) as SnesRegs as u16, 0u8, game);
-        WriteReg((i + 17155i32) as SnesRegs as u16, 0u8, game);
-        WriteReg((i + 17156i32) as SnesRegs as u16, 0u8, game);
-        WriteReg((i + 17157i32) as SnesRegs as u16, 0u8, game);
-        WriteReg((i + 17158i32) as SnesRegs as u16, 0u8, game);
-        WriteReg((i + 17160i32) as SnesRegs as u16, 0u8, game);
-        WriteReg((i + 17161i32) as SnesRegs as u16, 0u8, game);
+        crate::rtl::register_writes! { game;
+            byte((i + 17152i32) as SnesRegs as u16, 0u8); byte((i + 17153i32) as SnesRegs as u16, 0x13u8);
+            byte((i + 17154i32) as SnesRegs as u16, 0u8); byte((i + 17155i32) as SnesRegs as u16, 0u8);
+            byte((i + 17156i32) as SnesRegs as u16, 0u8); byte((i + 17157i32) as SnesRegs as u16, 0u8);
+            byte((i + 17158i32) as SnesRegs as u16, 0u8); byte((i + 17160i32) as SnesRegs as u16, 0u8);
+            byte((i + 17161i32) as SnesRegs as u16, 0u8);
+        }
         i += 16i32;
     }
     set_ram_word!(game.fx_y_subpos = 0u16);
@@ -493,9 +492,10 @@ pub unsafe fn InitializeSpecialEffectsForNewRoom(game: &mut Game) {
         -30720i32 as VoidP;
     (*(ram_ptr!(game, LongPtr; 0x601))).addr = ((0x8883e1i32) as u16);
     (*(ram_ptr!(game, LongPtr; 0x604))).addr = ((0x8883e1i32) as u16);
-    WriteReg(WMADDL as u16, 0xf0u8, game);
-    WriteReg(WMADDM as u16, 0xffu8, game);
-    WriteReg(WMADDH as u16, 1u8, game);
+    crate::rtl::register_writes! { game;
+        byte(WMADDL as u16, 0xf0u8); byte(WMADDM as u16, 0xffu8);
+        byte(WMADDH as u16, 1u8);
+    }
     *ram_ptr!(game; 0x85) = 0u8;
     *ram_ptr!(game; 0x74, 0) = 32u8;
     *ram_ptr!(game; 0x74, 1) = 64u8;

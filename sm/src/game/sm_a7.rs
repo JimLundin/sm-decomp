@@ -2024,18 +2024,16 @@ pub unsafe fn UnpauseHook_Kraid_IsDead(game: &mut Game) -> CoroutineRet {
     static unk_A7C21E: StartDmaCopy = StartDmaCopy::vram_words(1, 0xa7a716, 0x200);
     static unk_A7C23E: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ab200, 0x800);
     ScreenOff(game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(
-        VMADDH as u16,
-        (16i32 * (*ram_ptr!(game; 0x5d) as i32 & 0xfi32) + 63i32) as u8,
-        game,
-    );
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(VMADDL as u16, 0u8); byte(VMADDH as u16,
+        (16i32 * (*ram_ptr!(game; 0x5d) as i32 & 0xfi32) + 63i32) as u8,);
+        byte(VMAIN as u16, 0x80u8);
+    }
     SetupDmaTransfer(&raw const unk_A7C21E as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x40u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(MDMAEN as u16, 2u8); byte(VMADDL as u16, 0u8);
+        byte(VMADDH as u16, 0x40u8); byte(VMAIN as u16, 0x80u8);
+    }
     SetupDmaTransfer(&raw const unk_A7C23E as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     Kraid_TransferTopHalfToVram(game);
@@ -2045,22 +2043,21 @@ static unk_A7C26B: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e5000, 0x400);
 static unk_A7C28D: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e2000, 0x800);
 pub unsafe fn UnpauseHook_Kraid_IsAlive(game: &mut Game) -> CoroutineRet {
     ScreenOff(game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(
-        VMADDH as u16,
-        (*ram_ptr!(game; 0x5d)).wrapping_add(62u8),
-        game,
-    );
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(VMADDL as u16, 0u8); byte(VMADDH as u16,
+        (*ram_ptr!(game; 0x5d)).wrapping_add(62u8),);
+        byte(VMAIN as u16, 0x80u8);
+    }
     SetupDmaTransfer(&raw const unk_A7C26B as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     Kraid_TransferTopHalfToVram(game);
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn Kraid_TransferTopHalfToVram(game: &mut Game) {
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, (*ram_ptr!(game; 0x59)) & (0xfcu8), game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(VMADDL as u16, 0u8); byte(VMADDH as u16, (*ram_ptr!(game; 0x59)) & (0xfcu8));
+        byte(VMAIN as u16, 0x80u8);
+    }
     SetupDmaTransfer(&raw const unk_A7C28D as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     ScreenOn(game);
@@ -2074,13 +2071,11 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
         match *_state_variable_ as i32 {
             0 => {
                 ScreenOff(game);
-                WriteReg(VMADDL as u16, 0u8, game);
-                WriteReg(
-                    VMADDH as u16,
-                    (*ram_ptr!(game; 0x5d)).wrapping_add(62u8),
-                    game,
-                );
-                WriteReg(VMAIN as u16, 0x80u8, game);
+                crate::rtl::register_writes! { game;
+                    byte(VMADDL as u16, 0u8); byte(VMADDH as u16,
+                    (*ram_ptr!(game; 0x5d)).wrapping_add(62u8),);
+                    byte(VMAIN as u16, 0x80u8);
+                }
                 SetupDmaTransfer(&raw const unk_A7C2BD as *const c_void, game);
                 WriteReg(MDMAEN as u16, 2u8, game);
                 if (((*Get_Kraid(0i32, game)).base.y_pos) as i16).wrapping_sub(

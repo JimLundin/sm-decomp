@@ -4012,9 +4012,10 @@ pub unsafe fn ComputeCosMult(a: u16, r18: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn sub_A9C46C(a: u16, j: u16, game: &mut Game) -> u16 {
     let mut v2: u16 = kSinCosTable8bit_Sext[((a as i32 & 0xffi32) + 64i32) as usize] as u16;
-    WriteReg(M7A as u16, v2 as u8, game);
-    WriteReg(M7A as u16, *(&raw mut v2 as *mut u8).offset(1isize), game);
-    WriteReg(M7B as u16, j as u8, game);
+    crate::rtl::register_writes! { game;
+        byte(M7A as u16, v2 as u8); byte(M7A as u16, *(&raw mut v2 as *mut u8).offset(1isize));
+        byte(M7B as u16, j as u8);
+    }
     ReadRegWord(MPYM as u16, game)
 }
 pub unsafe fn Enemy_IncreaseYpos(k: u16, mut a: u16, game: &mut Game) {

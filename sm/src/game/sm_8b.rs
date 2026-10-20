@@ -540,34 +540,30 @@ impl CinematicAsset {
                 0x80,
             ),
         };
-        WriteReg(VMADDL as u16, destination as u8, game);
-        WriteReg(VMADDH as u16, (destination >> 8) as u8, game);
-        WriteReg(VMAIN as u16, vmain, game);
+        crate::rtl::register_writes! { game;
+            byte(VMADDL as u16, destination as u8); byte(VMADDH as u16, (destination >> 8) as u8);
+            byte(VMAIN as u16, vmain);
+        }
         SetupDmaTransfer(&raw const transfer as *const c_void, game);
         WriteReg(MDMAEN as u16, 2u8, game);
     }
 }
 
 pub unsafe fn SetupPpuForTitleSequence(game: &mut Game) {
-    crate::rtl::write_register_and_mirror(INIDISP as u16, 0x80, 0x51, false, game);
-    crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
-    crate::rtl::write_register_and_mirror(BGMODE as u16, 7, 0x55, false, game);
-    crate::rtl::write_register_and_mirror(M7SEL as u16, 0x80, 0x5f, false, game);
+    crate::rtl::register_writes! { game;
+        mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
+        mirror(BGMODE as u16, 7, 0x55, false); mirror(M7SEL as u16, 0x80, 0x5f, false);
+    }
     *ram_ptr!(game; 0x58) = 0u8;
-    crate::rtl::write_register_and_mirror(BG1SC as u16, 0, 0x59, false, game);
-    crate::rtl::write_register_and_mirror(BG2SC as u16, 0, 0x5a, false, game);
-    crate::rtl::write_register_and_mirror(BG3SC as u16, 0, 0x5c, false, game);
-    crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5d, false, game);
-    crate::rtl::write_register_and_mirror(BG12NBA as u16, 0, 0x5e, false, game);
-    WriteReg(BG34NBA as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(TM as u16, 0x10, 0x69, false, game);
-    crate::rtl::write_register_and_mirror(TS as u16, 0, 0x6b, false, game);
-    crate::rtl::write_register_and_mirror(TMW as u16, 0, 0x6c, false, game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(CGWSEL as u16, 0, 0x6e, false, game);
-    crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
-    WriteReg(COLDATA as u16, 0xe0u8, game);
-    crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
+    crate::rtl::register_writes! { game;
+        mirror(BG1SC as u16, 0, 0x59, false); mirror(BG2SC as u16, 0, 0x5a, false);
+        mirror(BG3SC as u16, 0, 0x5c, false); mirror(BG4SC as u16, 0, 0x5d, false);
+        mirror(BG12NBA as u16, 0, 0x5e, false); byte(BG34NBA as u16, 0u8);
+        mirror(TM as u16, 0x10, 0x69, false); mirror(TS as u16, 0, 0x6b, false);
+        mirror(TMW as u16, 0, 0x6c, false); byte(VMAIN as u16, 0u8);
+        mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
+        byte(COLDATA as u16, 0xe0u8); mirror(SETINI as u16, 0, 0x77, false);
+    }
     memset(ram_ptr!(game, c_void; 0x3000), 0i32, 0x7fe as size_t);
     set_ram_word!(game.oam_next_ptr = 0u16);
     set_ram_word!(game.menu_option_index = 0u16);
@@ -602,25 +598,21 @@ pub unsafe fn SetupPpuForTitleSequence(game: &mut Game) {
     set_ram_word!(game.g_word_7E199F = 0u16);
 }
 pub unsafe fn SetupPpu_Intro(game: &mut Game) {
-    crate::rtl::write_register_and_mirror(INIDISP as u16, 0x80, 0x51, false, game);
-    crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
-    crate::rtl::write_register_and_mirror(BGMODE as u16, 9, 0x55, false, game);
-    crate::rtl::write_register_and_mirror(M7SEL as u16, 0, 0x5f, false, game);
-    crate::rtl::write_register_and_mirror(BG1SC as u16, 0x50, 0x58, true, game);
-    crate::rtl::write_register_and_mirror(BG2SC as u16, 0x48, 0x59, true, game);
-    crate::rtl::write_register_and_mirror(BG3SC as u16, 0x4c, 0x5a, true, game);
+    crate::rtl::register_writes! { game;
+        mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
+        mirror(BGMODE as u16, 9, 0x55, false); mirror(M7SEL as u16, 0, 0x5f, false);
+        mirror(BG1SC as u16, 0x50, 0x58, true); mirror(BG2SC as u16, 0x48, 0x59, true);
+        mirror(BG3SC as u16, 0x4c, 0x5a, true);
+    }
     *ram_ptr!(game; 0x5c) = 0u8;
-    crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5d, false, game);
-    WriteReg(BG12NBA as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(BG34NBA as u16, 4, 0x5e, true, game);
-    crate::rtl::write_register_and_mirror(TM as u16, 4, 0x69, false, game);
-    crate::rtl::write_register_and_mirror(TS as u16, 0, 0x6b, false, game);
-    crate::rtl::write_register_and_mirror(TMW as u16, 0, 0x6c, false, game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(CGWSEL as u16, 0, 0x6e, false, game);
-    crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
-    WriteReg(COLDATA as u16, 0xe0u8, game);
-    crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
+    crate::rtl::register_writes! { game;
+        mirror(BG4SC as u16, 0, 0x5d, false); byte(BG12NBA as u16, 0u8);
+        mirror(BG34NBA as u16, 4, 0x5e, true); mirror(TM as u16, 4, 0x69, false);
+        mirror(TS as u16, 0, 0x6b, false); mirror(TMW as u16, 0, 0x6c, false);
+        byte(VMAIN as u16, 0u8); mirror(CGWSEL as u16, 0, 0x6e, false);
+        mirror(CGADSUB as u16, 0, 0x71, false); byte(COLDATA as u16, 0xe0u8);
+        mirror(SETINI as u16, 0, 0x77, false);
+    }
     *ram_ptr!(game; 0x6f) = 0u8;
     *ram_ptr!(game; 0x72) = 0u8;
     *ram_ptr!(game; 0x74, 0) = 32u8;
@@ -646,24 +638,20 @@ pub unsafe fn SetupPpu_Intro(game: &mut Game) {
     set_ram_word!(game.reg_BG3VOFS = 0u16);
 }
 pub unsafe fn SetupPpu_3_Mode7(game: &mut Game) {
-    crate::rtl::write_register_and_mirror(INIDISP as u16, 0x80, 0x51, false, game);
-    crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
-    crate::rtl::write_register_and_mirror(BGMODE as u16, 7, 0x55, false, game);
-    crate::rtl::write_register_and_mirror(M7SEL as u16, 0x80, 0x5f, false, game);
+    crate::rtl::register_writes! { game;
+        mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
+        mirror(BGMODE as u16, 7, 0x55, false); mirror(M7SEL as u16, 0x80, 0x5f, false);
+    }
     *ram_ptr!(game; 0x58) = 0u8;
-    crate::rtl::write_register_and_mirror(BG1SC as u16, 0, 0x59, false, game);
-    crate::rtl::write_register_and_mirror(BG2SC as u16, 0, 0x5a, false, game);
-    crate::rtl::write_register_and_mirror(BG3SC as u16, 0, 0x5c, false, game);
-    crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5d, false, game);
-    crate::rtl::write_register_and_mirror(BG12NBA as u16, 0, 0x5e, false, game);
-    WriteReg(BG34NBA as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(TM as u16, 0x11, 0x69, false, game);
-    crate::rtl::write_register_and_mirror(TS as u16, 0, 0x6b, false, game);
-    crate::rtl::write_register_and_mirror(TMW as u16, 0, 0x6c, false, game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(CGWSEL as u16, 0, 0x6e, false, game);
-    crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
-    WriteReg(COLDATA as u16, 0xe0u8, game);
+    crate::rtl::register_writes! { game;
+        mirror(BG1SC as u16, 0, 0x59, false); mirror(BG2SC as u16, 0, 0x5a, false);
+        mirror(BG3SC as u16, 0, 0x5c, false); mirror(BG4SC as u16, 0, 0x5d, false);
+        mirror(BG12NBA as u16, 0, 0x5e, false); byte(BG34NBA as u16, 0u8);
+        mirror(TM as u16, 0x11, 0x69, false); mirror(TS as u16, 0, 0x6b, false);
+        mirror(TMW as u16, 0, 0x6c, false); byte(VMAIN as u16, 0u8);
+        mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
+        byte(COLDATA as u16, 0xe0u8);
+    }
     *ram_ptr!(game; 0x6f) = 0u8;
     *ram_ptr!(game; 0x72) = 0u8;
     *ram_ptr!(game; 0x74, 0) = 32u8;
@@ -681,19 +669,18 @@ pub unsafe fn SetupPpu_3_Mode7(game: &mut Game) {
     set_ram_word!(game.fx_layer_blending_config_a = 0u16);
 }
 pub unsafe fn SetupPpu_4_Mode1(game: &mut Game) {
-    crate::rtl::write_register_and_mirror(INIDISP as u16, 0x80, 0x51, false, game);
-    crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
-    crate::rtl::write_register_and_mirror(BGMODE as u16, 1, 0x55, false, game);
-    crate::rtl::write_register_and_mirror(M7SEL as u16, 0, 0x5f, false, game);
-    crate::rtl::write_register_and_mirror(BG1SC as u16, 0x5c, 0x58, true, game);
+    crate::rtl::register_writes! { game;
+        mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
+        mirror(BGMODE as u16, 1, 0x55, false); mirror(M7SEL as u16, 0, 0x5f, false);
+        mirror(BG1SC as u16, 0x5c, 0x58, true);
+    }
     *ram_ptr!(game; 0x59) = 0u8;
-    crate::rtl::write_register_and_mirror(BG2SC as u16, 0, 0x5a, false, game);
-    crate::rtl::write_register_and_mirror(BG3SC as u16, 0, 0x5c, false, game);
-    WriteReg(BG4SC as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(BG12NBA as u16, 6, 0x5d, true, game);
-    crate::rtl::write_register_and_mirror(BG34NBA as u16, 0, 0x5e, true, game);
-    crate::rtl::write_register_and_mirror(TM as u16, 0x11, 0x69, false, game);
-    crate::rtl::write_register_and_mirror(TS as u16, 0, 0x6b, false, game);
+    crate::rtl::register_writes! { game;
+        mirror(BG2SC as u16, 0, 0x5a, false); mirror(BG3SC as u16, 0, 0x5c, false);
+        byte(BG4SC as u16, 0u8); mirror(BG12NBA as u16, 6, 0x5d, true);
+        mirror(BG34NBA as u16, 0, 0x5e, true); mirror(TM as u16, 0x11, 0x69, false);
+        mirror(TS as u16, 0, 0x6b, false);
+    }
     *ram_ptr!(game; 0x60) = 0u8;
     *ram_ptr!(game; 0x61) = 0u8;
     *ram_ptr!(game; 0x62) = 0u8;
@@ -705,28 +692,27 @@ pub unsafe fn SetupPpu_4_Mode1(game: &mut Game) {
     set_ram_word!(game.reg_BG1VOFS = 0u16);
 }
 pub unsafe fn SetupPpu_5_Mode7(game: &mut Game) {
-    crate::rtl::write_register_and_mirror(INIDISP as u16, 0x80, 0x51, false, game);
-    WriteReg(OBSEL as u16, 0xa3u8, game);
+    crate::rtl::register_writes! { game;
+        mirror(INIDISP as u16, 0x80, 0x51, false); byte(OBSEL as u16, 0xa3u8);
+    }
     *ram_ptr!(game; 0x52) = -93i32 as u8;
-    crate::rtl::write_register_and_mirror(BGMODE as u16, 7, 0x55, false, game);
-    crate::rtl::write_register_and_mirror(M7SEL as u16, 0, 0x5f, false, game);
+    crate::rtl::register_writes! { game;
+        mirror(BGMODE as u16, 7, 0x55, false); mirror(M7SEL as u16, 0, 0x5f, false);
+    }
     *ram_ptr!(game; 0x58) = 0u8;
-    crate::rtl::write_register_and_mirror(BG1SC as u16, 0, 0x59, false, game);
-    crate::rtl::write_register_and_mirror(BG2SC as u16, 0, 0x5a, false, game);
-    crate::rtl::write_register_and_mirror(BG3SC as u16, 0, 0x5c, false, game);
-    crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5d, false, game);
-    crate::rtl::write_register_and_mirror(BG12NBA as u16, 0, 0x5e, false, game);
-    WriteReg(BG34NBA as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(TM as u16, 0x11, 0x69, false, game);
-    crate::rtl::write_register_and_mirror(TS as u16, 0, 0x6b, false, game);
-    crate::rtl::write_register_and_mirror(TMW as u16, 0, 0x6c, false, game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(CGWSEL as u16, 0, 0x6e, false, game);
-    crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
+    crate::rtl::register_writes! { game;
+        mirror(BG1SC as u16, 0, 0x59, false); mirror(BG2SC as u16, 0, 0x5a, false);
+        mirror(BG3SC as u16, 0, 0x5c, false); mirror(BG4SC as u16, 0, 0x5d, false);
+        mirror(BG12NBA as u16, 0, 0x5e, false); byte(BG34NBA as u16, 0u8);
+        mirror(TM as u16, 0x11, 0x69, false); mirror(TS as u16, 0, 0x6b, false);
+        mirror(TMW as u16, 0, 0x6c, false); byte(VMAIN as u16, 0u8);
+        mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
+    }
     *ram_ptr!(game; 0x6f) = 0u8;
     *ram_ptr!(game; 0x72) = 0u8;
-    WriteReg(COLDATA as u16, 0xe0u8, game);
-    crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
+    crate::rtl::register_writes! { game;
+        byte(COLDATA as u16, 0xe0u8); mirror(SETINI as u16, 0, 0x77, false);
+    }
     *ram_ptr!(game; 0x74, 0) = 32u8;
     *ram_ptr!(game; 0x74, 1) = 64u8;
     *ram_ptr!(game; 0x74, 2) = 0x80u8;
@@ -745,24 +731,20 @@ pub unsafe fn SetupPpu_5_Mode7(game: &mut Game) {
     set_ram_word!(game.g_word_7E199F = 0u16);
 }
 pub unsafe fn SetupPpu_6_Mode1(game: &mut Game) {
-    crate::rtl::write_register_and_mirror(INIDISP as u16, 0x80, 0x51, false, game);
-    crate::rtl::write_register_and_mirror(OBSEL as u16, 2, 0x52, false, game);
-    crate::rtl::write_register_and_mirror(BGMODE as u16, 1, 0x55, false, game);
-    crate::rtl::write_register_and_mirror(M7SEL as u16, 0, 0x5f, false, game);
-    crate::rtl::write_register_and_mirror(BG1SC as u16, 0x70, 0x58, true, game);
-    crate::rtl::write_register_and_mirror(BG2SC as u16, 0x78, 0x59, true, game);
+    crate::rtl::register_writes! { game;
+        mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 2, 0x52, false);
+        mirror(BGMODE as u16, 1, 0x55, false); mirror(M7SEL as u16, 0, 0x5f, false);
+        mirror(BG1SC as u16, 0x70, 0x58, true); mirror(BG2SC as u16, 0x78, 0x59, true);
+    }
     *ram_ptr!(game; 0x5a) = 0u8;
-    crate::rtl::write_register_and_mirror(BG3SC as u16, 0, 0x5c, false, game);
-    WriteReg(BG4SC as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(BG12NBA as u16, 0x44, 0x5d, true, game);
-    crate::rtl::write_register_and_mirror(BG34NBA as u16, 0, 0x5e, true, game);
-    crate::rtl::write_register_and_mirror(TM as u16, 0x10, 0x69, false, game);
-    crate::rtl::write_register_and_mirror(TS as u16, 0, 0x6b, false, game);
-    crate::rtl::write_register_and_mirror(TMW as u16, 0, 0x6c, false, game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(CGWSEL as u16, 0, 0x6e, false, game);
-    crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
-    WriteReg(COLDATA as u16, 0xe0u8, game);
+    crate::rtl::register_writes! { game;
+        mirror(BG3SC as u16, 0, 0x5c, false); byte(BG4SC as u16, 0u8);
+        mirror(BG12NBA as u16, 0x44, 0x5d, true); mirror(BG34NBA as u16, 0, 0x5e, true);
+        mirror(TM as u16, 0x10, 0x69, false); mirror(TS as u16, 0, 0x6b, false);
+        mirror(TMW as u16, 0, 0x6c, false); byte(VMAIN as u16, 0u8);
+        mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
+        byte(COLDATA as u16, 0xe0u8);
+    }
     *ram_ptr!(game; 0x6f) = 0u8;
     *ram_ptr!(game; 0x72) = 0u8;
     *ram_ptr!(game; 0x74, 0) = 32u8;
@@ -782,18 +764,14 @@ pub unsafe fn SetupPpu_6_Mode1(game: &mut Game) {
     set_ram_word!(game.reg_BG2VOFS = 0u16);
 }
 pub unsafe fn SetupPpu_7_Mode1(game: &mut Game) {
-    crate::rtl::write_register_and_mirror(INIDISP as u16, 0x80, 0x51, false, game);
-    crate::rtl::write_register_and_mirror(OBSEL as u16, 0, 0x52, false, game);
-    crate::rtl::write_register_and_mirror(BGMODE as u16, 1, 0x55, false, game);
-    crate::rtl::write_register_and_mirror(M7SEL as u16, 0, 0x5f, false, game);
-    crate::rtl::write_register_and_mirror(BG1SC as u16, 0x48, 0x58, true, game);
-    crate::rtl::write_register_and_mirror(BG2SC as u16, 0x4c, 0x59, true, game);
-    crate::rtl::write_register_and_mirror(BG3SC as u16, 0x24, 0x5a, true, game);
-    crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5c, true, game);
-    crate::rtl::write_register_and_mirror(BG12NBA as u16, 0x54, 0x5d, true, game);
-    crate::rtl::write_register_and_mirror(BG34NBA as u16, 2, 0x5e, true, game);
-    crate::rtl::write_register_and_mirror(TM as u16, 1, 0x69, false, game);
-    crate::rtl::write_register_and_mirror(TS as u16, 0, 0x6b, false, game);
+    crate::rtl::register_writes! { game;
+        mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 0, 0x52, false);
+        mirror(BGMODE as u16, 1, 0x55, false); mirror(M7SEL as u16, 0, 0x5f, false);
+        mirror(BG1SC as u16, 0x48, 0x58, true); mirror(BG2SC as u16, 0x4c, 0x59, true);
+        mirror(BG3SC as u16, 0x24, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
+        mirror(BG12NBA as u16, 0x54, 0x5d, true); mirror(BG34NBA as u16, 2, 0x5e, true);
+        mirror(TM as u16, 1, 0x69, false); mirror(TS as u16, 0, 0x6b, false);
+    }
     *ram_ptr!(game; 0x60) = 0u8;
     *ram_ptr!(game; 0x61) = 0u8;
     *ram_ptr!(game; 0x62) = 0u8;
@@ -1463,75 +1441,46 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                 set_ram_word!(game.nmi_copy_samus_halves = 0u16);
                 set_ram_word!(game.nmi_copy_samus_top_half_src = 0u16);
                 set_ram_word!(game.nmi_copy_samus_bottom_half_src = 0u16);
-                crate::rtl::write_register_and_mirror(NMITIMEN as u16, 1, 0x84, false, game);
-                WriteReg(WRIO as u16, 0u8, game);
-                WriteReg(WRMPYA as u16, 0u8, game);
-                WriteReg(WRMPYB as u16, 0u8, game);
-                WriteReg(WRDIVL as u16, 0u8, game);
-                WriteReg(WRDIVH as u16, 0u8, game);
-                WriteReg(WRDIVB as u16, 0u8, game);
-                WriteReg(HTIMEL as u16, 0u8, game);
-                WriteReg(HTIMEH as u16, 0u8, game);
-                WriteReg(VTIMEL as u16, 0u8, game);
-                WriteReg(VTIMEH as u16, 0u8, game);
-                WriteReg(MDMAEN as u16, 0u8, game);
-                crate::rtl::write_register_and_mirror(HDMAEN as u16, 0, 0x85, false, game);
-                crate::rtl::write_register_and_mirror(MEMSEL as u16, 1, 0x86, false, game);
-                crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
-                WriteReg(OAMADDL as u16, 0u8, game);
+                crate::rtl::register_writes! { game;
+                    mirror(NMITIMEN as u16, 1, 0x84, false); byte(WRIO as u16, 0u8);
+                    byte(WRMPYA as u16, 0u8); byte(WRMPYB as u16, 0u8);
+                    byte(WRDIVL as u16, 0u8); byte(WRDIVH as u16, 0u8);
+                    byte(WRDIVB as u16, 0u8); byte(HTIMEL as u16, 0u8);
+                    byte(HTIMEH as u16, 0u8); byte(VTIMEL as u16, 0u8);
+                    byte(VTIMEH as u16, 0u8); byte(MDMAEN as u16, 0u8);
+                    mirror(HDMAEN as u16, 0, 0x85, false); mirror(MEMSEL as u16, 1, 0x86, false);
+                    mirror(OBSEL as u16, 3, 0x52, false); byte(OAMADDL as u16, 0u8);
+                }
                 *(ram_ptr!(game, u16; 0x53) as *mut u8).offset(0) = 0u8;
                 WriteReg(OAMADDH as u16, 0x80u8, game);
                 *(ram_ptr!(game, u16; 0x53) as *mut u8).offset(1isize) = 0x80u8;
-                WriteReg(OAMDATA as u16, 0u8, game);
-                WriteReg(OAMDATA as u16, 0u8, game);
-                crate::rtl::write_register_and_mirror(BGMODE as u16, 1, 0x55, false, game);
-                crate::rtl::write_register_and_mirror(MOSAIC as u16, 0, 0x57, false, game);
-                crate::rtl::write_register_and_mirror(BG1SC as u16, 0, 0x58, false, game);
-                crate::rtl::write_register_and_mirror(BG2SC as u16, 0, 0x59, false, game);
-                crate::rtl::write_register_and_mirror(BG3SC as u16, 0, 0x5a, false, game);
-                crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5c, false, game);
-                crate::rtl::write_register_and_mirror(BG12NBA as u16, 0, 0x5d, false, game);
-                crate::rtl::write_register_and_mirror(BG34NBA as u16, 0, 0x5e, false, game);
-                WriteReg(BG1HOFS as u16, 0u8, game);
-                WriteReg(BG1HOFS as u16, 0u8, game);
-                WriteReg(BG1VOFS as u16, 0u8, game);
-                WriteReg(BG1VOFS as u16, 0u8, game);
-                WriteReg(BG2HOFS as u16, 0u8, game);
-                WriteReg(BG2HOFS as u16, 0u8, game);
-                WriteReg(BG2VOFS as u16, 0u8, game);
-                WriteReg(BG2VOFS as u16, 0u8, game);
-                WriteReg(BG3HOFS as u16, 0u8, game);
-                WriteReg(BG3HOFS as u16, 0u8, game);
-                WriteReg(BG3VOFS as u16, 0u8, game);
-                WriteReg(BG3VOFS as u16, 0u8, game);
-                WriteReg(BG4HOFS as u16, 0u8, game);
-                WriteReg(BG4HOFS as u16, 0u8, game);
-                WriteReg(BG4VOFS as u16, 0u8, game);
-                WriteReg(BG4VOFS as u16, 0u8, game);
-                WriteReg(VMAIN as u16, 0u8, game);
-                crate::rtl::write_register_and_mirror(M7SEL as u16, 0, 0x5f, false, game);
-                WriteReg(M7A as u16, 0u8, game);
-                WriteReg(M7B as u16, 0u8, game);
-                WriteReg(M7C as u16, 0u8, game);
-                WriteReg(M7D as u16, 0u8, game);
-                WriteReg(M7X as u16, 0u8, game);
-                WriteReg(M7Y as u16, 0u8, game);
-                crate::rtl::write_register_and_mirror(W12SEL as u16, 0, 0x60, false, game);
-                crate::rtl::write_register_and_mirror(W34SEL as u16, 0, 0x61, false, game);
-                crate::rtl::write_register_and_mirror(WOBJSEL as u16, 0, 0x62, false, game);
-                crate::rtl::write_register_and_mirror(WH0 as u16, 0, 0x63, false, game);
-                crate::rtl::write_register_and_mirror(WH1 as u16, 0, 0x64, false, game);
-                crate::rtl::write_register_and_mirror(WH2 as u16, 0, 0x65, false, game);
-                crate::rtl::write_register_and_mirror(WH3 as u16, 0, 0x66, false, game);
-                crate::rtl::write_register_and_mirror(WBGLOG as u16, 0, 0x67, false, game);
-                crate::rtl::write_register_and_mirror(WOBJLOG as u16, 0, 0x68, false, game);
-                crate::rtl::write_register_and_mirror(TM as u16, 0x10, 0x69, false, game);
-                crate::rtl::write_register_and_mirror(TMW as u16, 0, 0x6c, false, game);
-                crate::rtl::write_register_and_mirror(TS as u16, 0, 0x6b, false, game);
-                crate::rtl::write_register_and_mirror(TSW as u16, 0, 0x6d, false, game);
-                crate::rtl::write_register_and_mirror(CGWSEL as u16, 0, 0x6e, false, game);
-                crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
-                WriteReg(COLDATA as u16, 0xe0u8, game);
+                crate::rtl::register_writes! { game;
+                    byte(OAMDATA as u16, 0u8); byte(OAMDATA as u16, 0u8);
+                    mirror(BGMODE as u16, 1, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
+                    mirror(BG1SC as u16, 0, 0x58, false); mirror(BG2SC as u16, 0, 0x59, false);
+                    mirror(BG3SC as u16, 0, 0x5a, false); mirror(BG4SC as u16, 0, 0x5c, false);
+                    mirror(BG12NBA as u16, 0, 0x5d, false); mirror(BG34NBA as u16, 0, 0x5e, false);
+                    byte(BG1HOFS as u16, 0u8); byte(BG1HOFS as u16, 0u8);
+                    byte(BG1VOFS as u16, 0u8); byte(BG1VOFS as u16, 0u8);
+                    byte(BG2HOFS as u16, 0u8); byte(BG2HOFS as u16, 0u8);
+                    byte(BG2VOFS as u16, 0u8); byte(BG2VOFS as u16, 0u8);
+                    byte(BG3HOFS as u16, 0u8); byte(BG3HOFS as u16, 0u8);
+                    byte(BG3VOFS as u16, 0u8); byte(BG3VOFS as u16, 0u8);
+                    byte(BG4HOFS as u16, 0u8); byte(BG4HOFS as u16, 0u8);
+                    byte(BG4VOFS as u16, 0u8); byte(BG4VOFS as u16, 0u8);
+                    byte(VMAIN as u16, 0u8); mirror(M7SEL as u16, 0, 0x5f, false);
+                    byte(M7A as u16, 0u8); byte(M7B as u16, 0u8);
+                    byte(M7C as u16, 0u8); byte(M7D as u16, 0u8);
+                    byte(M7X as u16, 0u8); byte(M7Y as u16, 0u8);
+                    mirror(W12SEL as u16, 0, 0x60, false); mirror(W34SEL as u16, 0, 0x61, false);
+                    mirror(WOBJSEL as u16, 0, 0x62, false); mirror(WH0 as u16, 0, 0x63, false);
+                    mirror(WH1 as u16, 0, 0x64, false); mirror(WH2 as u16, 0, 0x65, false);
+                    mirror(WH3 as u16, 0, 0x66, false); mirror(WBGLOG as u16, 0, 0x67, false);
+                    mirror(WOBJLOG as u16, 0, 0x68, false); mirror(TM as u16, 0x10, 0x69, false);
+                    mirror(TMW as u16, 0, 0x6c, false); mirror(TS as u16, 0, 0x6b, false);
+                    mirror(TSW as u16, 0, 0x6d, false); mirror(CGWSEL as u16, 0, 0x6e, false);
+                    mirror(CGADSUB as u16, 0, 0x71, false); byte(COLDATA as u16, 0xe0u8);
+                }
                 *ram_ptr!(game; 0x74, 0) = 32u8;
                 *ram_ptr!(game; 0x74, 1) = 64u8;
                 *ram_ptr!(game; 0x74, 2) = 0x80u8;
@@ -2476,9 +2425,10 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
     CinematicAsset::Decompress(0x9580d8, 0x15000).load(game);
     CinematicAsset::Decompress(0x95a5e1, 0x19000).load(game);
     CinematicAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        byte(VMAIN as u16, 0u8); byte(VMADDL as u16, 0u8);
+        byte(VMADDH as u16, 0u8);
+    }
     v1 = 0x4000i16;
     loop {
         WriteReg(VMDATAL as u16, 0xffu8, game);
@@ -4547,8 +4497,9 @@ pub unsafe fn CinematicFunction_Intro_Func54(game: &mut Game) {
     CinematicAsset::Decompress(0x96fe69, 0x14000).load(game);
     CinematicAsset::Decompress(0x96d10a, 0x15000).load(game);
     CinematicAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    WriteRegWord(VMADDL as u16, 0u16, game);
+    crate::rtl::register_writes! { game;
+        byte(VMAIN as u16, 0u8); word(VMADDL as u16, 0u16);
+    }
     v1 = 0x4000i16;
     loop {
         WriteReg(VMDATAL as u16, 0x8cu8, game);
@@ -4853,9 +4804,10 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
     CinematicAsset::Decompress(0x96fe69, 0x14000).load(game);
     CinematicAsset::Decompress(0x96d10a, 0x15000).load(game);
     CinematicAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        byte(VMAIN as u16, 0u8); byte(VMADDL as u16, 0u8);
+        byte(VMADDH as u16, 0u8);
+    }
     v3 = 0x4000i16;
     loop {
         WriteReg(VMDATAL as u16, 0x8cu8, game);

@@ -399,82 +399,59 @@ pub unsafe fn SaveExploredMapTilesToSaved(game: &mut Game) {
     }
 }
 pub unsafe fn InitializeCpuIoRegs(game: &mut Game) {
-    crate::rtl::write_register_and_mirror(NMITIMEN as u16, 1, 0x84, false, game);
-    WriteReg(WRIO as u16, 0u8, game);
-    WriteReg(WRMPYA as u16, 0u8, game);
-    WriteReg(WRMPYB as u16, 0u8, game);
-    WriteReg(WRDIVL as u16, 0u8, game);
-    WriteReg(WRDIVH as u16, 0u8, game);
-    WriteReg(WRDIVB as u16, 0u8, game);
-    WriteReg(HTIMEL as u16, 0u8, game);
-    WriteReg(HTIMEH as u16, 0u8, game);
-    WriteReg(VTIMEL as u16, 0u8, game);
-    WriteReg(VTIMEH as u16, 0u8, game);
-    WriteReg(MDMAEN as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(HDMAEN as u16, 0, 0x85, false, game);
-    crate::rtl::write_register_and_mirror(MEMSEL as u16, 1, 0x86, false, game);
+    crate::rtl::register_writes! { game;
+        mirror(NMITIMEN as u16, 1, 0x84, false); byte(WRIO as u16, 0u8);
+        byte(WRMPYA as u16, 0u8); byte(WRMPYB as u16, 0u8);
+        byte(WRDIVL as u16, 0u8); byte(WRDIVH as u16, 0u8);
+        byte(WRDIVB as u16, 0u8); byte(HTIMEL as u16, 0u8);
+        byte(HTIMEH as u16, 0u8); byte(VTIMEL as u16, 0u8);
+        byte(VTIMEH as u16, 0u8); byte(MDMAEN as u16, 0u8);
+        mirror(HDMAEN as u16, 0, 0x85, false); mirror(MEMSEL as u16, 1, 0x86, false);
+    }
 }
 pub unsafe fn InitializePpuIoRegs(game: &mut Game) {
-    crate::rtl::write_register_and_mirror(INIDISP as u16, 0x8f, 0x51, false, game);
-    crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
-    WriteReg(OAMADDL as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        mirror(INIDISP as u16, 0x8f, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
+        byte(OAMADDL as u16, 0u8);
+    }
     *(ram_ptr!(game, u16; 0x53) as *mut u8).offset(0) = 0u8;
     WriteReg(OAMADDH as u16, 0x80u8, game);
     *(ram_ptr!(game, u16; 0x53) as *mut u8).offset(1isize) = 0x80u8;
-    WriteReg(OAMDATA as u16, 0u8, game);
-    WriteReg(OAMDATA as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(BGMODE as u16, 9, 0x55, false, game);
-    crate::rtl::write_register_and_mirror(MOSAIC as u16, 0, 0x57, false, game);
-    crate::rtl::write_register_and_mirror(BG1SC as u16, 0x40, 0x58, false, game);
-    crate::rtl::write_register_and_mirror(BG2SC as u16, 0x44, 0x59, false, game);
-    crate::rtl::write_register_and_mirror(BG3SC as u16, 0x48, 0x5a, false, game);
-    crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5c, false, game);
-    crate::rtl::write_register_and_mirror(BG12NBA as u16, 0, 0x5d, false, game);
-    crate::rtl::write_register_and_mirror(BG34NBA as u16, 5, 0x5e, false, game);
-    WriteReg(BG1HOFS as u16, 0u8, game);
-    WriteReg(BG1HOFS as u16, 0u8, game);
-    WriteReg(BG1VOFS as u16, 0u8, game);
-    WriteReg(BG1VOFS as u16, 0u8, game);
-    WriteReg(BG2HOFS as u16, 0u8, game);
-    WriteReg(BG2HOFS as u16, 0u8, game);
-    WriteReg(BG2VOFS as u16, 0u8, game);
-    WriteReg(BG2VOFS as u16, 0u8, game);
-    WriteReg(BG3HOFS as u16, 0u8, game);
-    WriteReg(BG3HOFS as u16, 0u8, game);
-    WriteReg(BG3VOFS as u16, 0u8, game);
-    WriteReg(BG3VOFS as u16, 0u8, game);
-    WriteReg(BG4HOFS as u16, 0u8, game);
-    WriteReg(BG4HOFS as u16, 0u8, game);
-    WriteReg(BG4VOFS as u16, 0u8, game);
-    WriteReg(BG4VOFS as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(M7SEL as u16, 0, 0x5f, false, game);
-    WriteReg(M7A as u16, 0u8, game);
-    WriteReg(M7B as u16, 0u8, game);
-    WriteReg(M7C as u16, 0u8, game);
-    WriteReg(M7D as u16, 0u8, game);
-    WriteReg(M7X as u16, 0u8, game);
-    WriteReg(M7Y as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(W12SEL as u16, 0, 0x60, false, game);
-    crate::rtl::write_register_and_mirror(W34SEL as u16, 0, 0x61, false, game);
-    crate::rtl::write_register_and_mirror(WOBJSEL as u16, 0, 0x62, false, game);
-    crate::rtl::write_register_and_mirror(WH0 as u16, 0, 0x63, false, game);
-    WriteReg(WH1 as u16, 0xf8u8, game);
+    crate::rtl::register_writes! { game;
+        byte(OAMDATA as u16, 0u8); byte(OAMDATA as u16, 0u8);
+        mirror(BGMODE as u16, 9, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
+        mirror(BG1SC as u16, 0x40, 0x58, false); mirror(BG2SC as u16, 0x44, 0x59, false);
+        mirror(BG3SC as u16, 0x48, 0x5a, false); mirror(BG4SC as u16, 0, 0x5c, false);
+        mirror(BG12NBA as u16, 0, 0x5d, false); mirror(BG34NBA as u16, 5, 0x5e, false);
+        byte(BG1HOFS as u16, 0u8); byte(BG1HOFS as u16, 0u8);
+        byte(BG1VOFS as u16, 0u8); byte(BG1VOFS as u16, 0u8);
+        byte(BG2HOFS as u16, 0u8); byte(BG2HOFS as u16, 0u8);
+        byte(BG2VOFS as u16, 0u8); byte(BG2VOFS as u16, 0u8);
+        byte(BG3HOFS as u16, 0u8); byte(BG3HOFS as u16, 0u8);
+        byte(BG3VOFS as u16, 0u8); byte(BG3VOFS as u16, 0u8);
+        byte(BG4HOFS as u16, 0u8); byte(BG4HOFS as u16, 0u8);
+        byte(BG4VOFS as u16, 0u8); byte(BG4VOFS as u16, 0u8);
+        byte(VMAIN as u16, 0u8); mirror(M7SEL as u16, 0, 0x5f, false);
+        byte(M7A as u16, 0u8); byte(M7B as u16, 0u8);
+        byte(M7C as u16, 0u8); byte(M7D as u16, 0u8);
+        byte(M7X as u16, 0u8); byte(M7Y as u16, 0u8);
+        mirror(W12SEL as u16, 0, 0x60, false); mirror(W34SEL as u16, 0, 0x61, false);
+        mirror(WOBJSEL as u16, 0, 0x62, false); mirror(WH0 as u16, 0, 0x63, false);
+        byte(WH1 as u16, 0xf8u8);
+    }
     *ram_ptr!(game; 0x64) = -8i32 as u8;
-    crate::rtl::write_register_and_mirror(WH2 as u16, 0, 0x65, false, game);
-    crate::rtl::write_register_and_mirror(WH3 as u16, 0, 0x66, false, game);
-    crate::rtl::write_register_and_mirror(WBGLOG as u16, 0, 0x67, false, game);
-    crate::rtl::write_register_and_mirror(WOBJLOG as u16, 0, 0x68, false, game);
-    crate::rtl::write_register_and_mirror(TM as u16, 0x11, 0x69, false, game);
-    crate::rtl::write_register_and_mirror(TMW as u16, 0x11, 0x6c, false, game);
-    crate::rtl::write_register_and_mirror(TS as u16, 2, 0x6b, false, game);
-    crate::rtl::write_register_and_mirror(TSW as u16, 2, 0x6d, false, game);
-    crate::rtl::write_register_and_mirror(CGWSEL as u16, 2, 0x6e, false, game);
-    WriteReg(CGADSUB as u16, 0xa1u8, game);
+    crate::rtl::register_writes! { game;
+        mirror(WH2 as u16, 0, 0x65, false); mirror(WH3 as u16, 0, 0x66, false);
+        mirror(WBGLOG as u16, 0, 0x67, false); mirror(WOBJLOG as u16, 0, 0x68, false);
+        mirror(TM as u16, 0x11, 0x69, false); mirror(TMW as u16, 0x11, 0x6c, false);
+        mirror(TS as u16, 2, 0x6b, false); mirror(TSW as u16, 2, 0x6d, false);
+        mirror(CGWSEL as u16, 2, 0x6e, false); byte(CGADSUB as u16, 0xa1u8);
+    }
     *ram_ptr!(game; 0x71) = -95i32 as u8;
-    WriteReg(COLDATA as u16, 0xe0u8, game);
-    WriteReg(COLDATA as u16, 0xe0u8, game);
-    WriteReg(COLDATA as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(COLDATA as u16, 0xe0u8); byte(COLDATA as u16, 0xe0u8);
+        byte(COLDATA as u16, 0x80u8);
+    }
     *ram_ptr!(game; 0x74, 0) = 0x80u8;
     WriteReg(COLDATA as u16, 0x40u8, game);
     *ram_ptr!(game; 0x74, 1) = 64u8;
@@ -593,29 +570,30 @@ pub unsafe fn NMI_ProcessMode7QueueInner(mut p: *const u8, game: &mut Game) {
             }
             WriteReg(DMAP1 as u16, (v2) & (0x1fu8), game);
             let v5: *mut Mode7CgvmWriteQueue = p as *mut Mode7CgvmWriteQueue;
-            WriteRegWord(A1T1L as u16, (*v5).src_addr.addr, game);
-            WriteReg(A1B1 as u16, (*v5).src_addr.bank, game);
-            WriteRegWord(DAS1L as u16, (*v5).count, game);
+            crate::rtl::register_writes! { game;
+                word(A1T1L as u16, (*v5).src_addr.addr); byte(A1B1 as u16, (*v5).src_addr.bank);
+                word(DAS1L as u16, (*v5).count);
+            }
             if v2 as i32 & 0x40i32 != 0 {
                 WriteReg(BBAD1 as u16, 0x19u8, game);
             } else {
                 WriteReg(BBAD1 as u16, 0x18u8, game);
             }
-            WriteRegWord(VMADDL as u16, (*v5).vram_addr, game);
-            WriteReg(VMAIN as u16, (*v5).vmain, game);
-            WriteReg(MDMAEN as u16, 2u8, game);
+            crate::rtl::register_writes! { game;
+                word(VMADDL as u16, (*v5).vram_addr); byte(VMAIN as u16, (*v5).vmain);
+                byte(MDMAEN as u16, 2u8);
+            }
             p = p.offset(size_of::<Mode7CgvmWriteQueue>() as isize);
         }
         if v2 as i32 & 0x40i32 == 0 {
             break;
         }
-        WriteReg(DMAP1 as u16, (v2) & (0x1fu8), game);
-        WriteRegWord(A1T1L as u16, *(p.offset(1) as *mut u16), game);
-        WriteReg(A1B1 as u16, *p.offset(3), game);
-        WriteRegWord(DAS1L as u16, *(p as *mut u16).offset(2), game);
-        WriteReg(BBAD1 as u16, 0x22u8, game);
-        WriteReg(CGADD as u16, *p.offset(6), game);
-        WriteReg(MDMAEN as u16, 2u8, game);
+        crate::rtl::register_writes! { game;
+            byte(DMAP1 as u16, (v2) & (0x1fu8)); word(A1T1L as u16, *(p.offset(1) as *mut u16));
+            byte(A1B1 as u16, *p.offset(3)); word(DAS1L as u16, *(p as *mut u16).offset(2));
+            byte(BBAD1 as u16, 0x22u8); byte(CGADD as u16, *p.offset(6));
+            byte(MDMAEN as u16, 2u8);
+        }
         p = p.offset(7);
     }
 }
@@ -635,18 +613,20 @@ pub unsafe fn NMI_ProcessVramWriteQueue(game: &mut Game) {
             if size == 0 {
                 break;
             }
-            WriteRegWord(DAS1L as u16, size, game);
-            WriteRegWord(A1T1L as u16, read_word(game, entry + 2), game);
-            WriteReg(A1B1 as u16, game.g_ram[entry + 4], game);
+            crate::rtl::register_writes! { game;
+                word(DAS1L as u16, size); word(A1T1L as u16, read_word(game, entry + 2));
+                byte(A1B1 as u16, game.g_ram[entry + 4]);
+            }
             let increment = if read_word(game, entry + 5) & 0x8000 != 0 {
                 0x81
             } else {
                 0x80
             };
             // This word write also clears VMADDL before the full destination write.
-            WriteRegWord(VMAIN as u16, increment, game);
-            WriteRegWord(VMADDL as u16, read_word(game, entry + 5), game);
-            WriteReg(MDMAEN as u16, 2, game);
+            crate::rtl::register_writes! { game;
+                word(VMAIN as u16, increment); word(VMADDL as u16, read_word(game, entry + 5));
+                byte(MDMAEN as u16, 2);
+            }
             entry += 7;
         }
     }
@@ -690,22 +670,18 @@ unsafe fn transfer_scrolling_tilemap(
     };
 
     let destination = read_parameter(game, 4);
-    WriteRegWord(VMADDL as u16, destination, game);
-    WriteRegWord(DMAP1 as u16, 0x1801, game);
-    WriteRegWord(A1T1L as u16, initial_sources[0], game);
-    WriteReg(A1B1 as u16, 0x7e, game);
+    crate::rtl::register_writes! { game;
+        word(VMADDL as u16, destination); word(DMAP1 as u16, 0x1801);
+        word(A1T1L as u16, initial_sources[0]); byte(A1B1 as u16, 0x7e);
+    }
     let size = read_parameter(game, 0);
     // A zero unwrapped size still triggers a full 65,536-byte DMA.
-    WriteRegWord(DAS1L as u16, size, game);
-    WriteReg(MDMAEN as u16, 2, game);
-    WriteRegWord(
-        VMADDL as u16,
-        layout.second_half_destination(destination),
-        game,
-    );
-    WriteRegWord(DAS1L as u16, size, game);
-    WriteRegWord(A1T1L as u16, initial_sources[1], game);
-    WriteReg(MDMAEN as u16, 2, game);
+    crate::rtl::register_writes! { game;
+        word(DAS1L as u16, size); byte(MDMAEN as u16, 2);
+        word(VMADDL as u16,
+        layout.second_half_destination(destination),); word(DAS1L as u16, size);
+        word(A1T1L as u16, initial_sources[1]); byte(MDMAEN as u16, 2);
+    }
 
     // Prepare the wrapped source even when there is no wrapped transfer.
     WriteRegWord(A1T1L as u16, read_parameter(game, 8), game);
@@ -713,16 +689,12 @@ unsafe fn transfer_scrolling_tilemap(
     if wrapped_size != 0 {
         WriteRegWord(DAS1L as u16, wrapped_size, game);
         let wrapped_destination = read_parameter(game, 6);
-        WriteRegWord(VMADDL as u16, wrapped_destination, game);
-        WriteReg(MDMAEN as u16, 2, game);
-        WriteRegWord(
-            VMADDL as u16,
-            layout.second_half_destination(wrapped_destination),
-            game,
-        );
-        WriteRegWord(DAS1L as u16, wrapped_size, game);
-        WriteRegWord(A1T1L as u16, read_parameter(game, 10), game);
-        WriteReg(MDMAEN as u16, 2, game);
+        crate::rtl::register_writes! { game;
+            word(VMADDL as u16, wrapped_destination); byte(MDMAEN as u16, 2);
+            word(VMADDL as u16,
+            layout.second_half_destination(wrapped_destination),); word(DAS1L as u16, wrapped_size);
+            word(A1T1L as u16, read_parameter(game, 10)); byte(MDMAEN as u16, 2);
+        }
     }
 }
 
@@ -752,34 +724,21 @@ pub unsafe fn NMI_ProcessVramReadQueue(game: &mut Game) {
                 game,
             );
             ReadRegWord(RDVRAML as u16, game);
-            WriteRegWord(
-                DMAP1 as u16,
-                (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(v0 as isize)).dma_parameters,
-                game,
-            );
-            WriteRegWord(
-                A1T1L as u16,
+            crate::rtl::register_writes! { game;
+                word(DMAP1 as u16,
+                (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(v0 as isize)).dma_parameters,); word(A1T1L as u16,
                 (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(v0 as isize))
                     .src
-                    .addr,
-                game,
-            );
-            WriteRegWord(
-                A1T1H as u16,
+                    .addr,);
+                word(A1T1H as u16,
                 *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(v0 as isize))
                     .src
                     .addr as *mut u8)
-                    .offset(1) as *mut VoidP),
-                game,
-            );
-            WriteRegWord(
-                DAS1L as u16,
-                (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(v0 as isize)).size,
-                game,
-            );
-            WriteRegWord(DAS10 as u16, 0u16, game);
-            WriteRegWord(A2A1H as u16, 0u16, game);
-            WriteReg(MDMAEN as u16, 2u8, game);
+                    .offset(1) as *mut VoidP),); word(DAS1L as u16,
+                (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(v0 as isize)).size,);
+                word(DAS10 as u16, 0u16); word(A2A1H as u16, 0u16);
+                byte(MDMAEN as u16, 2u8);
+            }
             v0 += 1;
         }
         *(ram_ptr!(game, u16; 0x360) as *mut u8).offset(0) = 0u8;
@@ -970,116 +929,91 @@ pub fn QueueSfx3_Internal(packed: u16, game: &mut Game) {
 pub unsafe fn SetupDmaTransfer(p: *const c_void, game: &mut Game) {
     let s: *const StartDmaCopy = p as *const StartDmaCopy;
     let v2: i32 = (*s).chan as i32 * 16i32;
-    WriteRegWord(
-        (v2 + DMAP0 as i32) as SnesRegs as u16,
-        (&raw const (*s).dmap).cast::<u16>().read_unaligned(),
-        game,
-    );
-    WriteRegWord(
-        (v2 + A1T0L as i32) as SnesRegs as u16,
-        (&raw const (*s).a1.addr).read_unaligned(),
-        game,
-    );
-    WriteReg((v2 + A1B0 as i32) as SnesRegs as u16, (*s).a1.bank, game);
-    WriteRegWord((v2 + DAS0L as i32) as SnesRegs as u16, (*s).das, game);
+    crate::rtl::register_writes! { game;
+        word((v2 + DMAP0 as i32) as SnesRegs as u16,
+        (&raw const (*s).dmap).cast::<u16>().read_unaligned(),); word((v2 + A1T0L as i32) as SnesRegs as u16,
+        (&raw const (*s).a1.addr).read_unaligned(),);
+        byte((v2 + A1B0 as i32) as SnesRegs as u16, (*s).a1.bank); word((v2 + DAS0L as i32) as SnesRegs as u16, (*s).das);
+    }
 }
 pub unsafe fn NmiUpdateIoRegisters(game: &mut Game) {
-    WriteReg(NMITIMEN as u16, game.g_ram[0x84], game);
-    WriteReg(INIDISP as u16, game.g_ram[0x51], game);
-    WriteReg(OBSEL as u16, game.g_ram[0x52], game);
-    WriteReg(BGMODE as u16, game.g_ram[0x55], game);
-    WriteReg(MOSAIC as u16, game.g_ram[0x57], game);
-    WriteReg(BG1SC as u16, game.g_ram[0x58], game);
-    WriteReg(BG2SC as u16, game.g_ram[0x59], game);
-    WriteReg(BG3SC as u16, game.g_ram[0x5a], game);
-    WriteReg(BG4SC as u16, game.g_ram[0x5c], game);
-    WriteReg(BG12NBA as u16, game.g_ram[0x5d], game);
-    WriteReg(BG34NBA as u16, game.g_ram[0x5e], game);
-    WriteReg(M7SEL as u16, game.g_ram[0x5f], game);
-    WriteReg(W12SEL as u16, game.g_ram[0x60], game);
-    WriteReg(W34SEL as u16, game.g_ram[0x61], game);
-    WriteReg(WOBJSEL as u16, game.g_ram[0x62], game);
-    WriteReg(WH0 as u16, game.g_ram[0x63], game);
-    WriteReg(WH1 as u16, game.g_ram[0x64], game);
-    WriteReg(WH2 as u16, game.g_ram[0x65], game);
-    WriteReg(WH3 as u16, game.g_ram[0x66], game);
-    WriteReg(WBGLOG as u16, game.g_ram[0x67], game);
-    WriteReg(WOBJLOG as u16, game.g_ram[0x68], game);
+    crate::rtl::register_writes! { game;
+        byte(NMITIMEN as u16, game.g_ram[0x84]); byte(INIDISP as u16, game.g_ram[0x51]);
+        byte(OBSEL as u16, game.g_ram[0x52]); byte(BGMODE as u16, game.g_ram[0x55]);
+        byte(MOSAIC as u16, game.g_ram[0x57]); byte(BG1SC as u16, game.g_ram[0x58]);
+        byte(BG2SC as u16, game.g_ram[0x59]); byte(BG3SC as u16, game.g_ram[0x5a]);
+        byte(BG4SC as u16, game.g_ram[0x5c]); byte(BG12NBA as u16, game.g_ram[0x5d]);
+        byte(BG34NBA as u16, game.g_ram[0x5e]); byte(M7SEL as u16, game.g_ram[0x5f]);
+        byte(W12SEL as u16, game.g_ram[0x60]); byte(W34SEL as u16, game.g_ram[0x61]);
+        byte(WOBJSEL as u16, game.g_ram[0x62]); byte(WH0 as u16, game.g_ram[0x63]);
+        byte(WH1 as u16, game.g_ram[0x64]); byte(WH2 as u16, game.g_ram[0x65]);
+        byte(WH3 as u16, game.g_ram[0x66]); byte(WBGLOG as u16, game.g_ram[0x67]);
+        byte(WOBJLOG as u16, game.g_ram[0x68]);
+    }
     game.g_ram[0x6a] = game.g_ram[0x69];
-    WriteReg(TM as u16, game.g_ram[0x69], game);
-    WriteReg(TMW as u16, game.g_ram[0x6c], game);
-    WriteReg(TS as u16, game.g_ram[0x6b], game);
-    WriteReg(TSW as u16, game.g_ram[0x6d], game);
-    WriteReg(CGWSEL as u16, game.g_ram[0x6f], game);
-    WriteReg(CGADSUB as u16, game.g_ram[0x72], game);
+    crate::rtl::register_writes! { game;
+        byte(TM as u16, game.g_ram[0x69]); byte(TMW as u16, game.g_ram[0x6c]);
+        byte(TS as u16, game.g_ram[0x6b]); byte(TSW as u16, game.g_ram[0x6d]);
+        byte(CGWSEL as u16, game.g_ram[0x6f]); byte(CGADSUB as u16, game.g_ram[0x72]);
+    }
     game.g_ram[0x70] = game.g_ram[0x6e];
     game.g_ram[0x73] = game.g_ram[0x71];
-    WriteReg(COLDATA as u16, game.g_ram[0x74], game);
-    WriteReg(COLDATA as u16, game.g_ram[0x75], game);
-    WriteReg(COLDATA as u16, game.g_ram[0x76], game);
-    WriteReg(SETINI as u16, game.g_ram[0x77], game);
+    crate::rtl::register_writes! { game;
+        byte(COLDATA as u16, game.g_ram[0x74]); byte(COLDATA as u16, game.g_ram[0x75]);
+        byte(COLDATA as u16, game.g_ram[0x76]); byte(SETINI as u16, game.g_ram[0x77]);
+    }
 
     // Scroll and Mode 7 words latch low then high bytes through the same address.
-    WriteReg(BG1HOFS as u16, game.g_ram[0xb1], game);
-    WriteReg(BG1HOFS as u16, game.g_ram[0xb2], game);
-    WriteReg(BG1VOFS as u16, game.g_ram[0xb3], game);
-    WriteReg(BG1VOFS as u16, game.g_ram[0xb4], game);
-    WriteReg(BG2HOFS as u16, game.g_ram[0xb5], game);
-    WriteReg(BG2HOFS as u16, game.g_ram[0xb6], game);
-    WriteReg(BG2VOFS as u16, game.g_ram[0xb7], game);
-    WriteReg(BG2VOFS as u16, game.g_ram[0xb8], game);
-    WriteReg(BG3HOFS as u16, game.g_ram[0xb9], game);
-    WriteReg(BG3HOFS as u16, game.g_ram[0xba], game);
-    WriteReg(BG3VOFS as u16, game.g_ram[0xbb], game);
-    WriteReg(BG3VOFS as u16, game.g_ram[0xbc], game);
-    WriteReg(BG4HOFS as u16, game.g_ram[0xbd], game);
-    WriteReg(BG4HOFS as u16, game.g_ram[0xbe], game);
-    WriteReg(BG4VOFS as u16, game.g_ram[0xbf], game);
-    WriteReg(BG4VOFS as u16, game.g_ram[0xc0], game);
+    crate::rtl::register_writes! { game;
+        byte(BG1HOFS as u16, game.g_ram[0xb1]); byte(BG1HOFS as u16, game.g_ram[0xb2]);
+        byte(BG1VOFS as u16, game.g_ram[0xb3]); byte(BG1VOFS as u16, game.g_ram[0xb4]);
+        byte(BG2HOFS as u16, game.g_ram[0xb5]); byte(BG2HOFS as u16, game.g_ram[0xb6]);
+        byte(BG2VOFS as u16, game.g_ram[0xb7]); byte(BG2VOFS as u16, game.g_ram[0xb8]);
+        byte(BG3HOFS as u16, game.g_ram[0xb9]); byte(BG3HOFS as u16, game.g_ram[0xba]);
+        byte(BG3VOFS as u16, game.g_ram[0xbb]); byte(BG3VOFS as u16, game.g_ram[0xbc]);
+        byte(BG4HOFS as u16, game.g_ram[0xbd]); byte(BG4HOFS as u16, game.g_ram[0xbe]);
+        byte(BG4VOFS as u16, game.g_ram[0xbf]); byte(BG4VOFS as u16, game.g_ram[0xc0]);
+    }
     game.g_ram[0x7ec] = game.g_ram[0x56];
     if game.g_ram[0x55] & 7 == 7 || game.g_ram[0x56] & 7 == 7 {
-        WriteReg(M7A as u16, game.g_ram[0x78], game);
-        WriteReg(M7A as u16, game.g_ram[0x79], game);
-        WriteReg(M7B as u16, game.g_ram[0x7a], game);
-        WriteReg(M7B as u16, game.g_ram[0x7b], game);
-        WriteReg(M7C as u16, game.g_ram[0x7c], game);
-        WriteReg(M7C as u16, game.g_ram[0x7d], game);
-        WriteReg(M7D as u16, game.g_ram[0x7e], game);
-        WriteReg(M7D as u16, game.g_ram[0x7f], game);
-        WriteReg(M7X as u16, game.g_ram[0x80], game);
-        WriteReg(M7X as u16, game.g_ram[0x81], game);
-        WriteReg(M7Y as u16, game.g_ram[0x82], game);
-        WriteReg(M7Y as u16, game.g_ram[0x83], game);
+        crate::rtl::register_writes! { game;
+            byte(M7A as u16, game.g_ram[0x78]); byte(M7A as u16, game.g_ram[0x79]);
+            byte(M7B as u16, game.g_ram[0x7a]); byte(M7B as u16, game.g_ram[0x7b]);
+            byte(M7C as u16, game.g_ram[0x7c]); byte(M7C as u16, game.g_ram[0x7d]);
+            byte(M7D as u16, game.g_ram[0x7e]); byte(M7D as u16, game.g_ram[0x7f]);
+            byte(M7X as u16, game.g_ram[0x80]); byte(M7X as u16, game.g_ram[0x81]);
+            byte(M7Y as u16, game.g_ram[0x82]); byte(M7Y as u16, game.g_ram[0x83]);
+        }
     }
 }
 pub unsafe fn NmiUpdatePalettesAndOam(game: &mut Game) {
     // Channel 0 uploads the OAM entries and their high table from RAM.
-    WriteRegWord(DMAP0 as u16, 0x0400, game);
-    WriteRegWord(A1T0L as u16, 0x0370, game);
-    WriteReg(A1B0 as u16, 0, game);
-    WriteRegWord(DAS0L as u16, 0x0220, game);
-    WriteRegWord(OAMADDL as u16, 0, game);
+    crate::rtl::register_writes! { game;
+        word(DMAP0 as u16, 0x0400); word(A1T0L as u16, 0x0370);
+        byte(A1B0 as u16, 0); word(DAS0L as u16, 0x0220);
+        word(OAMADDL as u16, 0);
+    }
 
     // Channel 1 uploads palette_buffer to CGRAM.
-    WriteRegWord(DMAP1 as u16, 0x2200, game);
-    WriteRegWord(A1T1L as u16, 0xc000, game);
-    WriteReg(A1B1 as u16, 0x7e, game);
-    WriteRegWord(DAS1L as u16, 0x0200, game);
-    WriteReg(CGADD as u16, 0, game);
-    WriteReg(MDMAEN as u16, 3, game);
+    crate::rtl::register_writes! { game;
+        word(DMAP1 as u16, 0x2200); word(A1T1L as u16, 0xc000);
+        byte(A1B1 as u16, 0x7e); word(DAS1L as u16, 0x0200);
+        byte(CGADD as u16, 0); byte(MDMAEN as u16, 3);
+    }
 }
 unsafe fn transfer_samus_tile_half(descriptor_addr: u16, vram_addr: u16, game: &mut Game) {
     // Keep the diagnostic and failure flag for low-address ROM mirrors.
     let _ = RomPtr_92(descriptor_addr, game);
     let descriptor = 0x928000 | u32::from(descriptor_addr & 0x7fff);
     // Packed fields: source address at 0, bank at 2, and byte counts at 3 and 5.
-    WriteRegWord(VMADDL as u16, vram_addr, game);
-    WriteRegWord(DMAP1 as u16, 0x1801, game);
-    WriteRegWord(A1T1L as u16, game.read_rom_word(descriptor, 0), game);
-    WriteReg(A1B1 as u16, game.read_rom_byte(descriptor, 2), game);
+    crate::rtl::register_writes! { game;
+        word(VMADDL as u16, vram_addr); word(DMAP1 as u16, 0x1801);
+        word(A1T1L as u16, game.read_rom_word(descriptor, 0)); byte(A1B1 as u16, game.read_rom_byte(descriptor, 2));
+    }
     // A zero first count still runs a 65,536-byte DMA.
-    WriteRegWord(DAS1L as u16, game.read_rom_word(descriptor, 3), game);
-    WriteReg(MDMAEN as u16, 2, game);
+    crate::rtl::register_writes! { game;
+        word(DAS1L as u16, game.read_rom_word(descriptor, 3)); byte(MDMAEN as u16, 2);
+    }
 
     // Prepare the second destination/source even when its count is zero.
     WriteRegWord(VMADDL as u16, vram_addr.wrapping_add(0x100), game);
@@ -1088,8 +1022,9 @@ unsafe fn transfer_samus_tile_half(descriptor_addr: u16, vram_addr: u16, game: &
         .wrapping_add(game.read_rom_word(descriptor, 3));
     WriteRegWord(A1T1L as u16, second_source, game);
     if game.read_rom_word(descriptor, 5) != 0 {
-        WriteRegWord(DAS1L as u16, game.read_rom_word(descriptor, 5), game);
-        WriteReg(MDMAEN as u16, 2, game);
+        crate::rtl::register_writes! { game;
+            word(DAS1L as u16, game.read_rom_word(descriptor, 5)); byte(MDMAEN as u16, 2);
+        }
     }
 }
 
@@ -1121,16 +1056,18 @@ pub unsafe fn NmiProcessAnimtilesVramTransfers(game: &mut Game) {
             continue;
         }
 
-        WriteRegWord(A1T0L as u16, source, game);
-        WriteReg(A1B0 as u16, 0x87, game);
-        WriteRegWord(DMAP0 as u16, 0x1801, game);
+        crate::rtl::register_writes! { game;
+            word(A1T0L as u16, source); byte(A1B0 as u16, 0x87);
+            word(DMAP0 as u16, 0x1801);
+        }
         let size = u16::from_le_bytes([game.g_ram[0x1f31 + offset], game.g_ram[0x1f32 + offset]]);
         WriteRegWord(DAS0L as u16, size, game);
         let vram_addr =
             u16::from_le_bytes([game.g_ram[0x1f3d + offset], game.g_ram[0x1f3e + offset]]);
-        WriteRegWord(VMADDL as u16, vram_addr, game);
-        WriteReg(VMAIN as u16, 0x80, game);
-        WriteReg(MDMAEN as u16, 1, game);
+        crate::rtl::register_writes! { game;
+            word(VMADDL as u16, vram_addr); byte(VMAIN as u16, 0x80);
+            byte(MDMAEN as u16, 1);
+        }
         // Consume the request only after its transfer completes.
         game.g_ram[source_index..source_index + 2].fill(0);
     }
@@ -1314,20 +1251,19 @@ pub unsafe fn Vector_NMI(game: &mut Game) {
         .copy_from_slice(&frame_counter.to_le_bytes());
 }
 pub unsafe fn CopyToVramNow(vram_dst: u16, src: u32, size: u16, game: &mut Game) {
-    WriteReg(INIDISP as u16, 0x80u8, game);
-    WriteRegWord(VMADDL as u16, vram_dst, game);
-    WriteRegWord(DMAP1 as u16, 0x1801u16, game);
-    WriteRegWord(A1T1L as u16, src as u16, game);
-    WriteReg(A1B1 as u16, (src >> 16i32) as u8, game);
-    WriteRegWord(DAS1L as u16, size, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(INIDISP as u16, 0xfu8, game);
+    crate::rtl::register_writes! { game;
+        byte(INIDISP as u16, 0x80u8); word(VMADDL as u16, vram_dst);
+        word(DMAP1 as u16, 0x1801u16); word(A1T1L as u16, src as u16);
+        byte(A1B1 as u16, (src >> 16i32) as u8); word(DAS1L as u16, size);
+        byte(VMAIN as u16, 0x80u8); byte(MDMAEN as u16, 2u8);
+        byte(INIDISP as u16, 0xfu8);
+    }
 }
 pub unsafe fn IrqHandler_SetResult(a: u16, y: u16, x: u16, game: &mut Game) {
     set_ram_word!(game.cur_irq_handler = a);
-    WriteRegWord(VTIMEL as u16, y, game);
-    WriteRegWord(HTIMEL as u16, x, game);
+    crate::rtl::register_writes! { game;
+        word(VTIMEL as u16, y); word(HTIMEL as u16, x);
+    }
 }
 pub unsafe fn IrqHandler_0_Nothing(game: &mut Game) {
     let a: u16 = ram_word!(game, irqhandler_next_handler);
@@ -1340,17 +1276,17 @@ pub unsafe fn IrqHandler_2_DisableIRQ(game: &mut Game) {
     IrqHandler_SetResult(0u16, 0u16, 0u16, game);
 }
 pub unsafe fn IrqHandler_4_Main_BeginHudDraw(game: &mut Game) {
-    WriteReg(BG3SC as u16, 0x5au8, game);
-    WriteReg(CGWSEL as u16, 0u8, game);
-    WriteReg(CGADSUB as u16, 0u8, game);
-    WriteReg(TM as u16, 4u8, game);
+    crate::rtl::register_writes! { game;
+        byte(BG3SC as u16, 0x5au8); byte(CGWSEL as u16, 0u8);
+        byte(CGADSUB as u16, 0u8); byte(TM as u16, 4u8);
+    }
     IrqHandler_SetResult(6u16, 31u16, 152u16, game);
 }
 pub unsafe fn IrqHandler_6_Main_EndHudDraw(game: &mut Game) {
-    WriteReg(CGWSEL as u16, *ram_ptr!(game; 0x70), game);
-    WriteReg(CGADSUB as u16, *ram_ptr!(game; 0x73), game);
-    WriteReg(BG3SC as u16, *ram_ptr!(game; 0x5b), game);
-    WriteReg(TM as u16, *ram_ptr!(game; 0x6a), game);
+    crate::rtl::register_writes! { game;
+        byte(CGWSEL as u16, *ram_ptr!(game; 0x70)); byte(CGADSUB as u16, *ram_ptr!(game; 0x73));
+        byte(BG3SC as u16, *ram_ptr!(game; 0x5b)); byte(TM as u16, *ram_ptr!(game; 0x6a));
+    }
     let a: u16 = ram_word!(game, irqhandler_next_handler);
     set_ram_word!(game.irqhandler_next_handler = 0u16);
     IrqHandler_SetResult(
@@ -1361,10 +1297,10 @@ pub unsafe fn IrqHandler_6_Main_EndHudDraw(game: &mut Game) {
     );
 }
 pub unsafe fn IrqHandler_8_StartOfDoor_BeginHud(game: &mut Game) {
-    WriteReg(BG3SC as u16, 0x5au8, game);
-    WriteReg(TM as u16, 4u8, game);
-    WriteReg(CGWSEL as u16, 0u8, game);
-    WriteReg(CGADSUB as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        byte(BG3SC as u16, 0x5au8); byte(TM as u16, 4u8);
+        byte(CGWSEL as u16, 0u8); byte(CGADSUB as u16, 0u8);
+    }
     IrqHandler_SetResult(10u16, 31u16, 152u16, game);
 }
 pub unsafe fn IrqHandler_10_StartOfDoor_EndHud(game: &mut Game) {
@@ -1387,15 +1323,17 @@ pub unsafe fn IrqHandler_10_StartOfDoor_EndHud(game: &mut Game) {
     );
 }
 pub unsafe fn IrqHandler_12_Draygon_BeginHud(game: &mut Game) {
-    WriteReg(TM as u16, 4u8, game);
-    WriteReg(CGWSEL as u16, 0u8, game);
-    WriteReg(CGADSUB as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        byte(TM as u16, 4u8); byte(CGWSEL as u16, 0u8);
+        byte(CGADSUB as u16, 0u8);
+    }
     IrqHandler_SetResult(14u16, 31u16, 152u16, game);
 }
 pub unsafe fn IrqHandler_14_Draygon_EndHud(game: &mut Game) {
-    WriteReg(BG3SC as u16, *ram_ptr!(game; 0x5b), game);
-    WriteReg(CGWSEL as u16, *ram_ptr!(game; 0x70), game);
-    WriteReg(CGADSUB as u16, *ram_ptr!(game; 0x73), game);
+    crate::rtl::register_writes! { game;
+        byte(BG3SC as u16, *ram_ptr!(game; 0x5b)); byte(CGWSEL as u16, *ram_ptr!(game; 0x70));
+        byte(CGADSUB as u16, *ram_ptr!(game; 0x73));
+    }
     let a: u16 = ram_word!(game, irqhandler_next_handler);
     set_ram_word!(game.irqhandler_next_handler = 0u16);
     IrqHandler_SetResult(
@@ -1406,9 +1344,10 @@ pub unsafe fn IrqHandler_14_Draygon_EndHud(game: &mut Game) {
     );
 }
 pub unsafe fn IrqHandler_16_VerticalDoor_BeginHud(game: &mut Game) {
-    WriteReg(TM as u16, 4u8, game);
-    WriteReg(CGWSEL as u16, 0u8, game);
-    WriteReg(CGADSUB as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        byte(TM as u16, 4u8); byte(CGWSEL as u16, 0u8);
+        byte(CGADSUB as u16, 0u8);
+    }
     IrqHandler_SetResult(18u16, 31u16, 152u16, game);
 }
 pub unsafe fn IrqHandler_18_VerticalDoor_EndHud(game: &mut Game) {
@@ -1420,9 +1359,10 @@ pub unsafe fn IrqHandler_18_VerticalDoor_EndHud(game: &mut Game) {
     } else {
         v0 = 17u8;
     }
-    WriteReg(TM as u16, v0, game);
-    WriteReg(CGWSEL as u16, 0u8, game);
-    WriteReg(CGADSUB as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        byte(TM as u16, v0); byte(CGWSEL as u16, 0u8);
+        byte(CGADSUB as u16, 0u8);
+    }
     if (ram_word!(game, door_transition_flag) as i32 & 0x8000i32) == 0i32 {
         Irq_FollowDoorTransition(game);
     }
@@ -1439,9 +1379,10 @@ pub unsafe fn IrqHandler_20_VerticalDoor_EndDraw(game: &mut Game) {
     );
 }
 pub unsafe fn IrqHandler_22_HorizDoor_BeginHud(game: &mut Game) {
-    WriteReg(TM as u16, 4u8, game);
-    WriteReg(CGWSEL as u16, 0u8, game);
-    WriteReg(CGADSUB as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        byte(TM as u16, 4u8); byte(CGWSEL as u16, 0u8);
+        byte(CGADSUB as u16, 0u8);
+    }
     IrqHandler_SetResult(24u16, 31u16, 152u16, game);
 }
 pub unsafe fn IrqHandler_24_HorizDoor_EndHud(game: &mut Game) {
@@ -1453,9 +1394,10 @@ pub unsafe fn IrqHandler_24_HorizDoor_EndHud(game: &mut Game) {
     } else {
         v0 = 17u8;
     }
-    WriteReg(TM as u16, v0, game);
-    WriteReg(CGWSEL as u16, 0u8, game);
-    WriteReg(CGADSUB as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        byte(TM as u16, v0); byte(CGWSEL as u16, 0u8);
+        byte(CGADSUB as u16, 0u8);
+    }
     if (ram_word!(game, door_transition_flag) as i32 & 0x8000i32) == 0i32 {
         Irq_FollowDoorTransition(game);
     }
@@ -1472,14 +1414,16 @@ pub unsafe fn IrqHandler_26_HorizDoor_EndDraw(game: &mut Game) {
     );
 }
 pub unsafe fn EnableIrqInterrupts(game: &mut Game) {
-    WriteRegWord(VTIMEL as u16, 0u16, game);
-    WriteRegWord(HTIMEL as u16, 152u16, game);
+    crate::rtl::register_writes! { game;
+        word(VTIMEL as u16, 0u16); word(HTIMEL as u16, 152u16);
+    }
     let ref mut fresh64 = *(ram_ptr!(game, u16; 0x84));
     *fresh64 = (*fresh64) | (0x30u16);
 }
 pub unsafe fn EnableIrqInterruptsNow(game: &mut Game) {
-    WriteRegWord(VTIMEL as u16, 0u16, game);
-    WriteRegWord(HTIMEL as u16, 152u16, game);
+    crate::rtl::register_writes! { game;
+        word(VTIMEL as u16, 0u16); word(HTIMEL as u16, 152u16);
+    }
     let ref mut fresh65 = *(ram_ptr!(game, u16; 0x84));
     *fresh65 = (*fresh65) | (0x30u16);
     WriteReg(NMITIMEN as u16, *ram_ptr!(game; 0x84), game);
@@ -1569,8 +1513,9 @@ pub unsafe fn AddToTilemapInner(k: u16, j: *const u16, game: &mut Game) {
     }
 }
 pub unsafe fn InitializeHud(game: &mut Game) {
-    WriteRegWord(VMADDL as u16, addr_unk_605800 as u16, game);
-    WriteRegWord(VMAIN as u16, 0x80u16, game);
+    crate::rtl::register_writes! { game;
+        word(VMADDL as u16, addr_unk_605800 as u16); word(VMAIN as u16, 0x80u16);
+    }
     static unk_809A8F: StartDmaCopy = StartDmaCopy::vram_words(1, 0x80988b, 0x40);
     SetupDmaTransfer(&raw const unk_809A8F as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
@@ -2175,36 +2120,26 @@ pub unsafe fn QueueClearingOfFxTilemap(game: &mut Game) {
     set_ram_word!(game.vram_write_queue_tail = (v1).wrapping_add(7u16));
 }
 pub unsafe fn ClearBG2Tilemap(game: &mut Game) {
-    WriteRegWord(VMADDL as u16, 0x4800u16, game);
-    WriteRegWord(DMAP1 as u16, 0x1808u16, game);
-    WriteRegWord(A1T1L as u16, 0xa29au16, game);
-    WriteRegWord(A1B1 as u16, 0x80u16, game);
-    WriteRegWord(DAS1L as u16, 0x800u16, game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteRegWord(VMADDL as u16, 0x4800u16, game);
-    WriteRegWord(DMAP1 as u16, 0x1908u16, game);
-    WriteRegWord(A1T1L as u16, 0xa29au16, game);
-    WriteRegWord(A1B1 as u16, 0x80u16, game);
-    WriteRegWord(DAS1L as u16, 0x800u16, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    crate::rtl::register_writes! { game;
+        word(VMADDL as u16, 0x4800u16); word(DMAP1 as u16, 0x1808u16);
+        word(A1T1L as u16, 0xa29au16); word(A1B1 as u16, 0x80u16);
+        word(DAS1L as u16, 0x800u16); byte(VMAIN as u16, 0u8);
+        byte(MDMAEN as u16, 2u8); word(VMADDL as u16, 0x4800u16);
+        word(DMAP1 as u16, 0x1908u16); word(A1T1L as u16, 0xa29au16);
+        word(A1B1 as u16, 0x80u16); word(DAS1L as u16, 0x800u16);
+        byte(VMAIN as u16, 0x80u8); byte(MDMAEN as u16, 2u8);
+    }
 }
 pub unsafe fn ClearFXTilemap(game: &mut Game) {
-    WriteRegWord(VMADDL as u16, 0x5880u16, game);
-    WriteRegWord(DMAP1 as u16, 0x1808u16, game);
-    WriteRegWord(A1T1L as u16, 0xa2f7u16, game);
-    WriteRegWord(A1B1 as u16, 0x80u16, game);
-    WriteRegWord(DAS1L as u16, 0x780u16, game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteRegWord(VMADDL as u16, 0x5880u16, game);
-    WriteRegWord(DMAP1 as u16, 0x1908u16, game);
-    WriteRegWord(A1T1L as u16, 0xa2f8u16, game);
-    WriteRegWord(A1B1 as u16, 0x80u16, game);
-    WriteRegWord(DAS1L as u16, 0x780u16, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    crate::rtl::register_writes! { game;
+        word(VMADDL as u16, 0x5880u16); word(DMAP1 as u16, 0x1808u16);
+        word(A1T1L as u16, 0xa2f7u16); word(A1B1 as u16, 0x80u16);
+        word(DAS1L as u16, 0x780u16); byte(VMAIN as u16, 0u8);
+        byte(MDMAEN as u16, 2u8); word(VMADDL as u16, 0x5880u16);
+        word(DMAP1 as u16, 0x1908u16); word(A1T1L as u16, 0xa2f8u16);
+        word(A1B1 as u16, 0x80u16); word(DAS1L as u16, 0x780u16);
+        byte(VMAIN as u16, 0x80u8); byte(MDMAEN as u16, 2u8);
+    }
 }
 pub unsafe fn CalculateLayer2Xpos(game: &mut Game) -> u8 {
     if *ram_ptr!(game; 0x91b) == 0 {

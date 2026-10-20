@@ -521,57 +521,41 @@ pub unsafe fn InitIoForGameplay(game: &mut Game) {
     InitPpuForGameplay(game);
 }
 pub unsafe fn InitCpuForGameplay(game: &mut Game) {
-    crate::rtl::write_register_and_mirror(NMITIMEN as u16, 1, 0x84, false, game);
-    WriteReg(WRIO as u16, 0u8, game);
-    WriteReg(WRMPYA as u16, 0u8, game);
-    WriteReg(WRMPYB as u16, 0u8, game);
-    WriteReg(WRDIVL as u16, 0u8, game);
-    WriteReg(WRDIVH as u16, 0u8, game);
-    WriteReg(WRDIVB as u16, 0u8, game);
-    WriteReg(HTIMEL as u16, 0u8, game);
-    WriteReg(HTIMEH as u16, 0u8, game);
-    WriteReg(VTIMEL as u16, 0u8, game);
-    WriteReg(VTIMEH as u16, 0u8, game);
-    WriteReg(MDMAEN as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(HDMAEN as u16, 0, 0x85, false, game);
-    crate::rtl::write_register_and_mirror(MEMSEL as u16, 1, 0x86, false, game);
+    crate::rtl::register_writes! { game;
+        mirror(NMITIMEN as u16, 1, 0x84, false); byte(WRIO as u16, 0u8);
+        byte(WRMPYA as u16, 0u8); byte(WRMPYB as u16, 0u8);
+        byte(WRDIVL as u16, 0u8); byte(WRDIVH as u16, 0u8);
+        byte(WRDIVB as u16, 0u8); byte(HTIMEL as u16, 0u8);
+        byte(HTIMEH as u16, 0u8); byte(VTIMEL as u16, 0u8);
+        byte(VTIMEH as u16, 0u8); byte(MDMAEN as u16, 0u8);
+        mirror(HDMAEN as u16, 0, 0x85, false); mirror(MEMSEL as u16, 1, 0x86, false);
+    }
 }
 pub unsafe fn InitPpuForGameplay(game: &mut Game) {
-    crate::rtl::write_register_and_mirror(INIDISP as u16, 0x80, 0x51, false, game);
-    crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
-    WriteReg(OAMADDL as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
+        byte(OAMADDL as u16, 0u8);
+    }
     *(ram_ptr!(game, u16; 0x53) as *mut u8).offset(0) = 0u8;
     WriteReg(OAMADDH as u16, 0x80u8, game);
     *(ram_ptr!(game, u16; 0x53) as *mut u8).offset(1isize) = 0x80u8;
-    WriteReg(OAMDATA as u16, 0u8, game);
-    WriteReg(OAMDATA as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(BGMODE as u16, 9, 0x55, false, game);
-    crate::rtl::write_register_and_mirror(MOSAIC as u16, 0, 0x57, false, game);
-    crate::rtl::write_register_and_mirror(BG12NBA as u16, 0, 0x5d, true, game);
-    crate::rtl::write_register_and_mirror(BG34NBA as u16, 4, 0x5e, true, game);
-    crate::rtl::write_register_and_mirror(BG1SC as u16, 0x51, 0x58, true, game);
-    crate::rtl::write_register_and_mirror(BG2SC as u16, 0x49, 0x59, true, game);
-    crate::rtl::write_register_and_mirror(BG3SC as u16, 0x5a, 0x5a, true, game);
-    crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5c, true, game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    crate::rtl::write_register_and_mirror(W12SEL as u16, 0, 0x60, false, game);
-    crate::rtl::write_register_and_mirror(W12SEL as u16, 0, 0x60, false, game);
-    crate::rtl::write_register_and_mirror(W34SEL as u16, 0, 0x61, false, game);
-    crate::rtl::write_register_and_mirror(WOBJSEL as u16, 0, 0x62, false, game);
-    crate::rtl::write_register_and_mirror(WH0 as u16, 0, 0x63, false, game);
-    crate::rtl::write_register_and_mirror(WH1 as u16, 0, 0x64, false, game);
-    crate::rtl::write_register_and_mirror(WH2 as u16, 0, 0x65, false, game);
-    crate::rtl::write_register_and_mirror(WH3 as u16, 0, 0x66, false, game);
-    crate::rtl::write_register_and_mirror(WBGLOG as u16, 0, 0x67, false, game);
-    crate::rtl::write_register_and_mirror(WOBJLOG as u16, 0, 0x68, false, game);
-    crate::rtl::write_register_and_mirror(TM as u16, 0x17, 0x69, false, game);
-    crate::rtl::write_register_and_mirror(TMW as u16, 0, 0x6c, false, game);
-    crate::rtl::write_register_and_mirror(TS as u16, 0, 0x6b, false, game);
-    crate::rtl::write_register_and_mirror(TSW as u16, 0, 0x6d, false, game);
-    crate::rtl::write_register_and_mirror(CGWSEL as u16, 0, 0x6e, false, game);
-    crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
-    WriteReg(COLDATA as u16, 0xe0u8, game);
-    crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
+    crate::rtl::register_writes! { game;
+        byte(OAMDATA as u16, 0u8); byte(OAMDATA as u16, 0u8);
+        mirror(BGMODE as u16, 9, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
+        mirror(BG12NBA as u16, 0, 0x5d, true); mirror(BG34NBA as u16, 4, 0x5e, true);
+        mirror(BG1SC as u16, 0x51, 0x58, true); mirror(BG2SC as u16, 0x49, 0x59, true);
+        mirror(BG3SC as u16, 0x5a, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
+        byte(VMAIN as u16, 0u8); mirror(W12SEL as u16, 0, 0x60, false);
+        mirror(W12SEL as u16, 0, 0x60, false); mirror(W34SEL as u16, 0, 0x61, false);
+        mirror(WOBJSEL as u16, 0, 0x62, false); mirror(WH0 as u16, 0, 0x63, false);
+        mirror(WH1 as u16, 0, 0x64, false); mirror(WH2 as u16, 0, 0x65, false);
+        mirror(WH3 as u16, 0, 0x66, false); mirror(WBGLOG as u16, 0, 0x67, false);
+        mirror(WOBJLOG as u16, 0, 0x68, false); mirror(TM as u16, 0x17, 0x69, false);
+        mirror(TMW as u16, 0, 0x6c, false); mirror(TS as u16, 0, 0x6b, false);
+        mirror(TSW as u16, 0, 0x6d, false); mirror(CGWSEL as u16, 0, 0x6e, false);
+        mirror(CGADSUB as u16, 0, 0x71, false); byte(COLDATA as u16, 0xe0u8);
+        mirror(SETINI as u16, 0, 0x77, false);
+    }
     set_ram_word!(game.oam_next_ptr = 0u16);
     memset7E(ram_ptr!(game, Ram3000; 0x3000) as *mut u16, 0u16, 0x7feu16);
     memset7E(
@@ -602,27 +586,28 @@ pub unsafe fn LoadInitialPalette(game: &mut Game) {
     }
 }
 pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps(game: &mut Game) {
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x40u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(VMADDL as u16, 0u8); byte(VMADDH as u16, 0x40u8);
+        byte(VMAIN as u16, 0x80u8);
+    }
     static unk_8282F8: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ab200, 0x2000);
     SetupDmaTransfer(&raw const unk_8282F8 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x60u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(MDMAEN as u16, 2u8); byte(VMADDL as u16, 0u8);
+        byte(VMADDH as u16, 0x60u8); byte(VMAIN as u16, 0x80u8);
+    }
     static unk_828318: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ad200, 0x2e00);
     SetupDmaTransfer(&raw const unk_828318 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x50u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(MDMAEN as u16, 2u8); byte(VMADDL as u16, 0u8);
+        byte(VMADDH as u16, 0x50u8); byte(VMAIN as u16, 0x80u8);
+    }
     static unk_828338: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e4000, 0x1000);
     SetupDmaTransfer(&raw const unk_828338 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x58u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(MDMAEN as u16, 2u8); byte(VMADDL as u16, 0u8);
+        byte(VMADDH as u16, 0x58u8); byte(VMAIN as u16, 0x80u8);
+    }
     static unk_828358: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e4000, 0x800);
     SetupDmaTransfer(&raw const unk_828358 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
@@ -1508,29 +1493,21 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn BackupBG2TilemapForPauseMenu(game: &mut Game) {
-    WriteRegWord(
-        VMADDL as u16,
-        ((*ram_ptr!(game; 0x59) as i32 & 0xfci32) << 8i32 | 1i32) as u16,
-        game,
-    );
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    WriteReg(DMAP1 as u16, 0x81u8, game);
-    WriteReg(BBAD1 as u16, 0x39u8, game);
-    WriteRegWord(A1T1L as u16, 0xdf5cu16, game);
-    WriteReg(A1B1 as u16, 0x7eu8, game);
-    WriteRegWord(DAS1L as u16, 0x1000u16, game);
-    WriteReg(DAS10 as u16, 0u8, game);
-    WriteRegWord(A2A1L as u16, 0u16, game);
-    WriteReg(NTRL1 as u16, 0u8, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    crate::rtl::register_writes! { game;
+        word(VMADDL as u16,
+        ((*ram_ptr!(game; 0x59) as i32 & 0xfci32) << 8i32 | 1i32) as u16,); byte(VMAIN as u16, 0x80u8);
+        byte(DMAP1 as u16, 0x81u8); byte(BBAD1 as u16, 0x39u8);
+        word(A1T1L as u16, 0xdf5cu16); byte(A1B1 as u16, 0x7eu8);
+        word(DAS1L as u16, 0x1000u16); byte(DAS10 as u16, 0u8);
+        word(A2A1L as u16, 0u16); byte(NTRL1 as u16, 0u8);
+        byte(MDMAEN as u16, 2u8);
+    }
 }
 pub unsafe fn RestoreBG2TilemapFromPauseScreen(game: &mut Game) {
-    WriteRegWord(
-        VMADDL as u16,
-        ((*ram_ptr!(game; 0x59) as i32 & 0xfci32) << 8i32) as u16,
-        game,
-    );
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        word(VMADDL as u16,
+        ((*ram_ptr!(game; 0x59) as i32 & 0xfci32) << 8i32) as u16,); byte(VMAIN as u16, 0x80u8);
+    }
     static unk_828DAE: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7edf5c, 0x1000);
     SetupDmaTransfer(&raw const unk_828DAE as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
@@ -1574,41 +1551,43 @@ pub unsafe fn RestoreSomeGfxStateForPause(game: &mut Game) {
     *ram_ptr!(game; 0x71) = *ram_ptr!(game; 0x775);
 }
 pub unsafe fn LoadPauseMenuTilesAndClearBG2(game: &mut Game) {
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(VMADDL as u16, 0u8); byte(VMADDH as u16, 0u8);
+        byte(VMAIN as u16, 0x80u8);
+    }
     static unk_828E8B: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb68000, 0x4000);
     SetupDmaTransfer(&raw const unk_828E8B as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x20u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(MDMAEN as u16, 2u8); byte(VMADDL as u16, 0u8);
+        byte(VMADDH as u16, 0x20u8); byte(VMAIN as u16, 0x80u8);
+    }
     static unk_828EAB: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb6c000, 0x2000);
     SetupDmaTransfer(&raw const unk_828EAB as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x40u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(MDMAEN as u16, 2u8); byte(VMADDL as u16, 0u8);
+        byte(VMADDH as u16, 0x40u8); byte(VMAIN as u16, 0x80u8);
+    }
     static unk_828ECB: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ab200, 0x2000);
     SetupDmaTransfer(&raw const unk_828ECB as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
 }
 pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x38u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(VMADDL as u16, 0u8); byte(VMADDH as u16, 0x38u8);
+        byte(VMAIN as u16, 0x80u8);
+    }
     static unk_828EF0: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb6e000, 0x800);
     SetupDmaTransfer(&raw const unk_828EF0 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(WMADDL as u16, 0u8, game);
-    WriteReg(WMADDM as u16, 0x34u8, game);
-    WriteReg(WMADDH as u16, 0x7eu8, game);
+    crate::rtl::register_writes! { game;
+        byte(MDMAEN as u16, 2u8); byte(WMADDL as u16, 0u8);
+        byte(WMADDM as u16, 0x34u8); byte(WMADDH as u16, 0x7eu8);
+    }
     static unk_828F10: StartDmaCopy = StartDmaCopy::wram_bytes(1, 0xb6e400, 0x400);
     SetupDmaTransfer(&raw const unk_828F10 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(WMADDL as u16, 0u8, game);
-    WriteReg(WMADDM as u16, 0x38u8, game);
-    WriteReg(WMADDH as u16, 0x7eu8, game);
+    crate::rtl::register_writes! { game;
+        byte(MDMAEN as u16, 2u8); byte(WMADDL as u16, 0u8);
+        byte(WMADDM as u16, 0x38u8); byte(WMADDH as u16, 0x7eu8);
+    }
     static unk_828F30: StartDmaCopy = StartDmaCopy::wram_bytes(1, 0xb6e800, 0x800);
     SetupDmaTransfer(&raw const unk_828F30 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
@@ -2005,31 +1984,28 @@ pub unsafe fn GameState_18_Unpausing(game: &mut Game) -> CoroutineRet {
 pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
     set_ram_word!(game.reg_BG1HOFS = ram_word!(game, reg_BG4HOFS));
     set_ram_word!(game.reg_BG1VOFS = ram_word!(game, reg_BG4VOFS));
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x30u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(VMADDL as u16, 0u8); byte(VMADDH as u16, 0x30u8);
+        byte(VMAIN as u16, 0x80u8);
+    }
     LoadPauseMenuMapTilemap(game);
     static unk_8293E9: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e4000, 0x1000);
     SetupDmaTransfer(&raw const unk_8293E9 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0xaau8, game);
-    WriteReg(VMADDH as u16, 0x38u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    WriteReg(DMAP1 as u16, 1u8, game);
-    WriteReg(BBAD1 as u16, 0x18u8, game);
-    WriteReg(DAS1L as u16, 0x18u8, game);
-    WriteReg(DAS1H as u16, 0u8, game);
+    crate::rtl::register_writes! { game;
+        byte(MDMAEN as u16, 2u8); byte(VMADDL as u16, 0xaau8);
+        byte(VMADDH as u16, 0x38u8); byte(VMAIN as u16, 0x80u8);
+        byte(DMAP1 as u16, 1u8); byte(BBAD1 as u16, 0x18u8);
+        byte(DAS1L as u16, 0x18u8); byte(DAS1H as u16, 0u8);
+    }
     let mut v0: u16 = ram_word!(game, area_index);
     if ram_word!(game, area_index) as i32 - 7i32 & 0x8000i32 == 0 {
         v0 = 0u16;
     }
-    WriteRegWord(
-        A1T1L as u16,
-        crate::rtl::rom_table_word!(game, 0x82965f, v0 as isize),
-        game,
-    );
-    WriteReg(A1B1 as u16, 0x82u8, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    crate::rtl::register_writes! { game;
+        word(A1T1L as u16,
+        crate::rtl::rom_table_word!(game, 0x82965f, v0 as isize),); byte(A1B1 as u16, 0x82u8);
+        byte(MDMAEN as u16, 2u8);
+    }
 }
 pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
     let mut v0: u16 = ram_word!(game, area_index);
@@ -2395,16 +2371,13 @@ pub unsafe fn DetermineMapScrollLimits(game: &mut Game) {
     );
 }
 pub unsafe fn SetupPpuForPauseMenu(game: &mut Game) {
-    crate::rtl::write_register_and_mirror(OBSEL as u16, 1, 0x52, false, game);
-    crate::rtl::write_register_and_mirror(BGMODE as u16, 9, 0x55, false, game);
-    crate::rtl::write_register_and_mirror(BG12NBA as u16, 0, 0x5d, true, game);
-    crate::rtl::write_register_and_mirror(BG34NBA as u16, 4, 0x5e, true, game);
-    crate::rtl::write_register_and_mirror(BG1SC as u16, 0x31, 0x58, true, game);
-    crate::rtl::write_register_and_mirror(BG2SC as u16, 0x38, 0x59, true, game);
-    crate::rtl::write_register_and_mirror(BG3SC as u16, 0x58, 0x5a, true, game);
-    crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5c, true, game);
-    crate::rtl::write_register_and_mirror(TM as u16, 0x17, 0x69, false, game);
-    crate::rtl::write_register_and_mirror(MOSAIC as u16, 0, 0x57, false, game);
+    crate::rtl::register_writes! { game;
+        mirror(OBSEL as u16, 1, 0x52, false); mirror(BGMODE as u16, 9, 0x55, false);
+        mirror(BG12NBA as u16, 0, 0x5d, true); mirror(BG34NBA as u16, 4, 0x5e, true);
+        mirror(BG1SC as u16, 0x31, 0x58, true); mirror(BG2SC as u16, 0x38, 0x59, true);
+        mirror(BG3SC as u16, 0x58, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
+        mirror(TM as u16, 0x17, 0x69, false); mirror(MOSAIC as u16, 0, 0x57, false);
+    }
     let ref mut fresh24 = *ram_ptr!(game; 0x74, 0);
     *fresh24 = (*fresh24) & (0xe0u8);
     let ref mut fresh25 = *ram_ptr!(game; 0x74, 1);
@@ -2564,9 +2537,10 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
     }
 }
 pub unsafe fn ClearSamusBeamTiles(game: &mut Game) {
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x60u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(VMADDL as u16, 0u8); byte(VMADDH as u16, 0x60u8);
+        byte(VMAIN as u16, 0x80u8);
+    }
     static unk_82A2D4: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ad200, 0x1000);
     SetupDmaTransfer(&raw const unk_82A2D4 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
@@ -2593,14 +2567,12 @@ pub unsafe fn ContinueInitGameplayResume(game: &mut Game) {
     CallSomeSamusCode(0xcu16, game);
 }
 pub unsafe fn SetupPpuForGameplayResume(game: &mut Game) {
-    crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
-    crate::rtl::write_register_and_mirror(BGMODE as u16, 9, 0x55, false, game);
-    crate::rtl::write_register_and_mirror(BG12NBA as u16, 0, 0x5d, true, game);
-    crate::rtl::write_register_and_mirror(BG34NBA as u16, 4, 0x5e, true, game);
-    crate::rtl::write_register_and_mirror(BG1SC as u16, 0x51, 0x58, true, game);
-    crate::rtl::write_register_and_mirror(BG2SC as u16, 0x49, 0x59, true, game);
-    crate::rtl::write_register_and_mirror(BG3SC as u16, 0x5a, 0x5a, true, game);
-    crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5c, true, game);
+    crate::rtl::register_writes! { game;
+        mirror(OBSEL as u16, 3, 0x52, false); mirror(BGMODE as u16, 9, 0x55, false);
+        mirror(BG12NBA as u16, 0, 0x5d, true); mirror(BG34NBA as u16, 4, 0x5e, true);
+        mirror(BG1SC as u16, 0x51, 0x58, true); mirror(BG2SC as u16, 0x49, 0x59, true);
+        mirror(BG3SC as u16, 0x5a, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
+    }
 }
 pub unsafe fn CalculateBgScrolls_Unpause(game: &mut Game) {
     set_ram_word!(
@@ -3025,9 +2997,10 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
     }
 }
 pub unsafe fn EquipmentScreenTransferBG1Tilemap(game: &mut Game) {
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x30u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        byte(VMADDL as u16, 0u8); byte(VMADDH as u16, 0x30u8);
+        byte(VMAIN as u16, 0x80u8);
+    }
     static unk_82AC3B: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e3800, 0x800);
     SetupDmaTransfer(&raw const unk_82AC3B as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
@@ -5394,8 +5367,9 @@ pub unsafe fn LoadDestinationRoomThings(game: &mut Game) {
 }
 pub unsafe fn LoadCRETilesTilesetTilesAndPalette(game: &mut Game) {
     set_ram_word!(game.elevator_flags = 0u16);
-    WriteRegWord(VMAIN as u16, 0x80u16, game);
-    WriteRegWord(VMADDL as u16, (addr_unk_605000 as i32 >> 1i32) as u16, game);
+    crate::rtl::register_writes! { game;
+        word(VMAIN as u16, 0x80u16); word(VMADDL as u16, (addr_unk_605000 as i32 >> 1i32) as u16);
+    }
     DecompressToVRAM(0xb98000u32, addr_unk_605000 as u16, game);
     WriteRegWord(VMADDL as u16, 0u16, game);
     DecompressToVRAM(Load24(ram_ptr!(game, LongPtr; 0x7c3)), 0u16, game);
@@ -5561,13 +5535,12 @@ pub unsafe fn LoadLibraryBackground(game: &mut Game) {
     let mut bg_data_ptr: u16 = 0;
     ClearFXTilemap(game);
     if ram_word!(game, fx_tilemap_ptr) != 0 {
-        WriteRegWord(A1T1L as u16, ram_word!(game, fx_tilemap_ptr), game);
-        WriteRegWord(VMADDL as u16, addr_unk_605BE0 as u16, game);
-        WriteRegWord(DMAP1 as u16, 0x1801u16, game);
-        WriteRegWord(A1B1 as u16, 0x8au16, game);
-        WriteRegWord(DAS1L as u16, 0x840u16, game);
-        WriteReg(VMAIN as u16, 0x80u8, game);
-        WriteReg(MDMAEN as u16, 2u8, game);
+        crate::rtl::register_writes! { game;
+            word(A1T1L as u16, ram_word!(game, fx_tilemap_ptr)); word(VMADDL as u16, addr_unk_605BE0 as u16);
+            word(DMAP1 as u16, 0x1801u16); word(A1B1 as u16, 0x8au16);
+            word(DAS1L as u16, 0x840u16); byte(VMAIN as u16, 0x80u8);
+            byte(MDMAEN as u16, 2u8);
+        }
     }
     bg_data_ptr = (*get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game)).bg_data_ptr;
     if bg_data_ptr as i32 & 0x8000i32 != 0 {
@@ -5598,21 +5571,14 @@ pub unsafe fn LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram(
 }
 pub unsafe fn LoadLibraryBackgroundFunc_2_TransferToVram(j: u16, game: &mut Game) -> u16 {
     let LoadBg_28: *mut u16 = RomPtr_8F(j, game) as *mut u16;
-    WriteRegWord(
-        VMADDL as u16,
-        *((LoadBg_28 as *mut u8).offset(3) as *mut u16),
-        game,
-    );
-    WriteRegWord(DMAP1 as u16, 0x1801u16, game);
-    WriteRegWord(A1T1L as u16, *LoadBg_28, game);
-    WriteRegWord(A1B1 as u16, *LoadBg_28.offset(1), game);
-    WriteRegWord(
-        DAS1L as u16,
-        *((LoadBg_28 as *mut u8).offset(5) as *mut u16),
-        game,
-    );
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    crate::rtl::register_writes! { game;
+        word(VMADDL as u16,
+        *((LoadBg_28 as *mut u8).offset(3) as *mut u16),); word(DMAP1 as u16, 0x1801u16);
+        word(A1T1L as u16, *LoadBg_28); word(A1B1 as u16, *LoadBg_28.offset(1));
+        word(DAS1L as u16,
+        *((LoadBg_28 as *mut u8).offset(5) as *mut u16),); byte(VMAIN as u16, 0x80u8);
+        byte(MDMAEN as u16, 2u8);
+    }
     (j).wrapping_add(7u16)
 }
 pub unsafe fn LoadLibraryBackgroundFunc_4_Decompress(j: u16, game: &mut Game) -> u16 {
@@ -5790,9 +5756,10 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
     *ram_ptr!(game; 0x6e) = 0u8;
     *ram_ptr!(game; 0x71) = 0u8;
     *ram_ptr!(game; 0x6f) = 0u8;
-    crate::rtl::write_register_and_mirror(VMADDL as u16, 0, 0x72, true, game);
-    WriteReg(VMADDH as u16, 0x58u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
+    crate::rtl::register_writes! { game;
+        mirror(VMADDL as u16, 0, 0x72, true); byte(VMADDH as u16, 0x58u8);
+        byte(VMAIN as u16, 0x80u8);
+    }
     static unk_82EC3D: StartDmaCopy = StartDmaCopy::vram_words(1, 0x8edc00, 0x800);
     SetupDmaTransfer(&raw const unk_82EC3D as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);

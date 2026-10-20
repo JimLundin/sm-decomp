@@ -1,3 +1,20 @@
+/// Apply an ordered register sequence without pre-evaluating later values.
+macro_rules! register_writes {
+    ($game:ident; $($kind:ident($($argument:tt)*);)*) => {
+        $($crate::rtl::register_writes!(@write $game; $kind($($argument)*));)*
+    };
+    (@write $game:ident; byte($address:expr, $value:expr $(, $($tail:tt)*)?)) => {
+        $crate::rtl::WriteReg($address, $value, $game $(, $($tail)*)?)
+    };
+    (@write $game:ident; word($address:expr, $value:expr $(, $($tail:tt)*)?)) => {
+        $crate::rtl::WriteRegWord($address, $value, $game $(, $($tail)*)?)
+    };
+    (@write $game:ident; mirror($address:expr, $value:expr, $offset:expr, $before:expr $(, $($tail:tt)*)?)) => {
+        $crate::rtl::write_register_and_mirror($address, $value, $offset, $before, $game $(, $($tail)*)?)
+    };
+}
+pub(crate) use register_writes;
+
 /// Read a word from a fixed LoROM table, retaining pointer-before-index order.
 macro_rules! rom_table_word {
     ($game:ident, $address:literal, $index:expr $(,)?) => {
