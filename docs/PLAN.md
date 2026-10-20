@@ -218,6 +218,28 @@ flowchart LR
    before claiming that the under-100,000 route is demonstrated. A small sample
    or extrapolated percentage does not establish that budget. Useful proven
    families can land while the rest of the budget is being established.
+
+   Discovery stop (2026-10-20): after an hour on the remaining budget, no
+   complete measured set accounts for the gap. At `e63544a3`, progress is
+   115,420 Rust lines; **15,421 further lines remain unaccounted for**. The
+   broader cross-bank scan covers 1,750 ordinary gameplay functions of at
+   least 15 lines and yields 59 structural-similarity pairs. These are search
+   leads, not net savings or a bound on semantic sharing. No full replacement
+   draft or new source change results from this pass.
+
+   The strongest new lead is Ridley/endgame Metroid homing in A6/A9. Manual
+   comparison finds different reversal forces, velocity caps (1280 versus
+   2048), on-screen callbacks and live velocity reads. Related speed/angle
+   updates also use different enemy layouts and indices. The shared kernels
+   found so far are small; complete boss behaviour cycles remain unpriced,
+   and neither current route supplies their gameplay coverage. Menu loaders,
+   map arrows, queue writers and on-screen tests are additional unpriced leads.
+   Frozen tracked-source snapshots and pair lists remain temporarily under
+   `%TEMP%/sm-cross-family-{cc630155,e63544a3}`. Existing parked drafts remain
+   parked. Progress counters are unchanged; the latest source verification is
+   still any% 129712/0 and Speed Booster 148406/0 from the sprite commit.
+   Stop this discovery pass under the one-hour rule; the target stays open.
+
 2. **Resolve coverage before changing each algorithm.** Use existing normal-input
    routes and explicit required routine/branch hits. Extend inputs where no route
    reaches the family. Any% currently covers six rooms; Speed Booster covers
