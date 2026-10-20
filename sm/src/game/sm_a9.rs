@@ -36,8 +36,7 @@ use crate::game::sm_ad::{
 };
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
-use crate::ram_map::set_ram_words;
-use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
+use crate::ram_map::word;
 use crate::rtl::abs16;
 use crate::rtl::{mov24, MemCpy, ReadRegWord, RomPtr, SnesDivide, Unreachable, WriteReg};
 use crate::set_fields;
@@ -291,7 +290,7 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
 pub unsafe fn MotherBrainsBody_Init(game: &mut Game) {
     let mut i: i32 = 4094;
     while i >= 0 {
-        set_ram_word!(game.tilemap_stuff[(i >> 1)] = 824);
+        word!(game.tilemap_stuff[(i >> 1)] = 824);
         i -= 2;
     }
     MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_9C13 as u16, game);
@@ -370,8 +369,8 @@ pub unsafe fn MotherBrainsBody_UnpauseHook(game: &mut Game) -> CoroutineRet {
         QueueSfx1_Max6(0x40, game);
     }
     if ((*E).base.extra_properties & 4) != 0 {
-        set_ram_word!(game.enemy_bg2_tilemap_size = 2048);
-        set_ram_word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
+        word!(game.enemy_bg2_tilemap_size = 2048);
+        word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
     }
     kCoroutineNone as CoroutineRet
 }
@@ -387,7 +386,7 @@ pub unsafe fn MotherBrainsBrain_Hurt(game: &mut Game) {
     }
 }
 pub unsafe fn MotherBrainsBrain_SetupBrainAndNeckToDraw(game: &mut Game) {
-    if ram_word!(game, time_is_frozen_flag) == 0 {
+    if word!(game.time_is_frozen_flag) == 0 {
         MotherBrain_HandleNeck(game);
     }
     let E1 = Get_MotherBrain(0x40, game);
@@ -406,8 +405,8 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
 pub unsafe fn MotherBrainsBody_FirstPhase_DoubleRet(game: &mut Game) {
     if CheckEventHappened(2, game) != 0 {
         let E1 = Get_MotherBrain(0x40, game);
-        (*E1).var_00 = ram_word!(game, earthquake_timer);
-        if ram_word!(game, samus_x_pos) as i32 - 236i32 & 0x8000 != 0 && (*E1).base.health == 0 {
+        (*E1).var_00 = word!(game.earthquake_timer);
+        if word!(game.samus_x_pos) as i32 - 236i32 & 0x8000 != 0 && (*E1).base.health == 0 {
             let E = Get_MotherBrain(0, game);
             set_fields! {[(*E)], 1; var_1D, var_00}
             DisableMinimapAndMarkBossRoomAsExplored(game);
@@ -500,7 +499,7 @@ pub unsafe fn MotherBrain_HandleFakeDeathExplosions(game: &mut Game) {
             x: crate::rtl::rom_table_word!(game, 0xa98929, v3 as isize),
             y: crate::rtl::rom_table_word!(game, 0xa98929, (v3 + 1) as isize),
         };
-        let v4: u16 = (if ram_word!(game, random_number) < 0x4000 {
+        let v4: u16 = (if word!(game.random_number) < 0x4000 {
             12
         } else {
             3
@@ -661,7 +660,7 @@ pub unsafe fn MotherBrainBody_16_ClearBottomMiddleTubes(game: &mut Game) {
     (*Get_MotherBrainBody(0x40i32, game)).var_E = addr_locret_A98AE4 as u16;
 }
 pub unsafe fn MotherBrainsTubesFalling_Init(game: &mut Game) {
-    let E = Get_MotherBrainsTubesFalling(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_MotherBrainsTubesFalling(word!(game.cur_enemy_index) as i32, game);
     let v1: i32 = (*E).parameter_1 as i32 >> 1;
     (*E).base.x_width = g_word_A98B5D[v1 as usize];
     (*E).base.y_height = g_word_A98B67[v1 as usize];
@@ -734,7 +733,7 @@ pub unsafe fn MotherBrainsTubesFalling_Falling(k: u16, game: &mut Game) {
     } else {
         MotherBrain_Pal_EndScreenFlash(game);
         EnableEarthquakeAframes(0x19, game);
-        set_ram_words! { game, 0;
+        word! { game, 0;
             hdma_object_channels_bitmask[0], hdma_object_channels_bitmask[1],
         }
         (*E1).base.y_pos = 196;
@@ -743,7 +742,7 @@ pub unsafe fn MotherBrainsTubesFalling_Falling(k: u16, game: &mut Game) {
         (*E0).base.y_pos = 279;
         MotherBrain_SetupNeckForFakeAscent(game);
         (*E0).var_A = ((0xa98c87i32) as u16);
-        MotherBrainsTubesFalling_Explode(ram_word!(game, cur_enemy_index), game);
+        MotherBrainsTubesFalling_Explode(word!(game.cur_enemy_index), game);
     };
 }
 pub unsafe fn MotherBrainsTubesFalling_SpawnSmoke(k: u16, game: &mut Game) {
@@ -805,11 +804,11 @@ pub unsafe fn MotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx(game: &mut Game)
         game,
     );
     (*Get_MotherBrain(0i32, game)).var_A = ((0xa98d49i32) as u16);
-    set_ram_word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
+    word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
     (*Get_MotherBrain(0x40i32, game)).var_02 = 1;
 }
 pub unsafe fn MotherBrainBody_FakeDeath_Ascent_7_SetupPhase2Brain(game: &mut Game) {
-    set_ram_word!(game.fx_layer_blending_config_a = 52);
+    word!(game.fx_layer_blending_config_a = 52);
     let E = Get_MotherBrainBody(0x40, game);
     (*E).var_A = ((0xa987a2i32) as u16);
     let E0 = Get_MotherBrainBody(0, game);
@@ -854,8 +853,8 @@ pub unsafe fn MotherBrainBody_FakeDeath_Ascent_11_ContinuePause(game: &mut Game)
     if ((*E).var_F & 0x8000) != 0 {
         (*E).base.x_pos = 59;
         (*E).base.y_pos = 279;
-        set_ram_word!(game.reg_BG2HOFS = -27i32 as u16);
-        set_ram_word!(game.reg_BG2VOFS = -217i32 as u16);
+        word!(game.reg_BG2HOFS = -27i32 as u16);
+        word!(game.reg_BG2VOFS = -217i32 as u16);
         (*E).var_04 = 7;
         (*E).var_A = ((0xa98deci32) as u16);
     }
@@ -868,11 +867,11 @@ pub unsafe fn MotherBrainBody_FakeDeath_Ascent_12_StartMusic(game: &mut Game) {
     (*E0).base.properties = ((*E0).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
     (*E0).base.x_pos = 59;
     (*E0).base.y_pos = 279;
-    set_ram_word!(game.reg_BG2HOFS = -27i32 as u16);
-    set_ram_word!(game.reg_BG2VOFS = -217i32 as u16);
+    word!(game.reg_BG2HOFS = -27i32 as u16);
+    word!(game.reg_BG2VOFS = -217i32 as u16);
     QueueMusic_Delayed8(5, game);
-    set_ram_word!(game.earthquake_type = 2);
-    set_ram_word!(game.earthquake_timer = 256);
+    word!(game.earthquake_type = 2);
+    word!(game.earthquake_timer = 256);
     (*E1).var_34 = 80;
     (*E1).var_31 = 1;
     (*E1).var_32 = 8;
@@ -881,16 +880,16 @@ pub unsafe fn MotherBrainBody_FakeDeath_Ascent_12_StartMusic(game: &mut Game) {
 }
 pub unsafe fn MotherBrainBody_FakeDeath_Ascent_13_Raise(game: &mut Game) {
     let E = Get_MotherBrain(0, game);
-    if !((ram_word!(game, nmi_frame_counter_word) & 3) != 0 || {
+    if !((word!(game.nmi_frame_counter_word) & 3) != 0 || {
         MotherBrain_SpawnDustCloudsForAscent(game);
-        update_ram_word!(game.reg_BG2VOFS, wrapping_add(2));
+        word!(game.reg_BG2VOFS, wrapping_add(2));
         let mut v1: u16 = ((*E).base.y_pos).wrapping_sub(2);
         (*E).base.y_pos = v1;
         v1 >= 0xbd
     }) {
-        set_ram_word!(game.enemy_bg2_tilemap_size = 320);
+        word!(game.enemy_bg2_tilemap_size = 320);
         (*E).base.y_pos = 188;
-        set_ram_words! { game, 0;
+        word! { game, 0;
             earthquake_timer, hdma_object_channels_bitmask[((*E).var_09 as i32 >> 1)],
         }
         MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_99AA as u16, game);
@@ -968,7 +967,7 @@ pub unsafe fn MotherBrain_SpawnDustCloudsForAscent(game: &mut Game) {
     };
     SpawnEprojWithRoomGfx(
         addr_kEproj_DustCloudExplosion as u16,
-        g_byte_A98F7D[(((ram_word!(game, random_number)) & (0x100u16)) >> 8) as usize] as u16,
+        g_byte_A98F7D[(((word!(game.random_number)) & (0x100u16)) >> 8) as usize] as u16,
         game,
     );
     QueueSfx2_Max3(0x29, game);
@@ -1046,7 +1045,7 @@ pub unsafe fn MotherBrain_HandleNeckUpper(game: &mut Game) {
     if mbn_var_33 != 0 {
         match mbn_var_33 as i32 {
             2 => {
-                if (((*E).base.y_pos as i32 + 4 - ram_word!(game, samus_y_pos) as i32) as i16) < 0 {
+                if (((*E).base.y_pos as i32 + 4 - word!(game.samus_y_pos) as i32) as i16) < 0 {
                     let mut v2: i16 = (((*E).var_21) as i16).wrapping_sub(((*E).var_34) as i16);
                     if (v2 as u16) < 0x2000 {
                         (*E).var_33 = 4;
@@ -1148,7 +1147,7 @@ pub unsafe fn MotherBrain_Func_1_DoubleRet(game: &mut Game) -> i32 {
         return -1i32;
     }
     let mut p = RomPtr_A9(pc, game);
-    if ram_word!(game, time_is_frozen_flag) != 0 {
+    if word!(game.time_is_frozen_flag) != 0 {
         return *(p.offset(2) as *mut u16) as i32;
     }
     let mut v5: u16 = *(p as *mut u16);
@@ -1191,10 +1190,10 @@ pub unsafe fn MotherBrain_DrawNeck(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_DrawBrain(game: &mut Game) {
     let E = Get_MotherBrain(0x40, game);
-    if (*E).var_14 != 0 && (*E).var_15 == 0 && (ram_word!(game, random_number) & 0x8000) == 0 {
+    if (*E).var_14 != 0 && (*E).var_15 == 0 && (word!(game.random_number) & 0x8000) == 0 {
         SpawnEprojWithRoomGfx(
             addr_kEproj_MotherBrainPurpleBreathSmall as u16,
-            ram_word!(game, random_number),
+            word!(game.random_number),
             game,
         );
     }
@@ -1221,7 +1220,7 @@ pub unsafe fn MotherBrain_DrawBrain(game: &mut Game) {
     }
     let v6: i32 = (flash_timer as i32 & 6) >> 1;
     let r18: u16 = ((*E).base.x_pos).wrapping_add((g_word_A993BB[v6 as usize]) as u16);
-    if ((r18 as i32 + 32 - ram_word!(game, layer1_x_pos) as i32) as i16) >= 0 {
+    if ((r18 as i32 + 32 - word!(game.layer1_x_pos) as i32) as i16) >= 0 {
         let r20: u16 = ((*E).base.y_pos).wrapping_add((g_word_A993C3[v6 as usize]) as u16);
         MotherBrain_AddSpritemapToOam(v2, r18, r20, r22, game);
     }
@@ -1240,18 +1239,18 @@ pub unsafe fn MotherBrain_AddSpritemapToOam(j: u16, r18: u16, r20: u16, r22: u16
     let mut p = RomPtr_A9(j, game);
     let mut n: i32 = *(p as *mut u16) as i32;
     p = p.offset(2);
-    let mut idx: i32 = ram_word!(game, oam_next_ptr) as i32;
+    let mut idx: i32 = word!(game.oam_next_ptr) as i32;
     loop {
         let y: i16 =
-            (r20 as i32 + *p.offset(2) as i8 as i32 - ram_word!(game, layer1_y_pos) as i32) as i16;
+            (r20 as i32 + *p.offset(2) as i8 as i32 - word!(game.layer1_y_pos) as i32) as i16;
         if y >= 0 {
             let oam = gOamEnt(idx, game);
-            let x: u16 = (r18 as i32 + *(p as *mut u16) as i32
-                - ram_word!(game, layer1_x_pos) as i32) as u16;
+            let x: u16 =
+                (r18 as i32 + *(p as *mut u16) as i32 - word!(game.layer1_x_pos) as i32) as u16;
             (*oam).xcoord = x as u8;
             (*oam).ycoord = y as u8;
             *(&raw mut (*oam).charnum as *mut u16) = (r22) | (*(p.offset(3) as *mut u16));
-            update_ram_word!(game.oam_ext[(idx >> 5)], |fresh6| (fresh6 as i32
+            word!(game.oam_ext[(idx >> 5)], |fresh6| (fresh6 as i32
                 | ((x as i32 & 0x100) >> 8 | (*(p as *mut i16) < 0) as i32 * 2)
                     << 2 * (idx >> 2 & 7))
                 as u16);
@@ -1263,7 +1262,7 @@ pub unsafe fn MotherBrain_AddSpritemapToOam(j: u16, r18: u16, r20: u16, r22: u16
             break;
         }
     }
-    set_ram_word!(game.oam_next_ptr = idx as u16);
+    word!(game.oam_next_ptr = idx as u16);
 }
 pub unsafe fn MotherBrain_CalculateRainbowBeamHdma(game: &mut Game) {
     MotherBrain_CalcHdma(game);
@@ -1271,18 +1270,18 @@ pub unsafe fn MotherBrain_CalculateRainbowBeamHdma(game: &mut Game) {
 pub unsafe fn MotherBrain_MoveBodyDownScrollLeft(k: u16, a: u16, game: &mut Game) {
     let E = Get_MotherBrain(0, game);
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(a);
-    update_ram_word!(game.reg_BG2VOFS, wrapping_sub(a));
-    set_ram_word!(game.reg_BG2HOFS = (k as i32 + 34 - (*E).base.x_pos as i32) as u16);
+    word!(game.reg_BG2VOFS, wrapping_sub(a));
+    word!(game.reg_BG2HOFS = (k as i32 + 34 - (*E).base.x_pos as i32) as u16);
 }
 pub unsafe fn MotherBrain_MoveBodyDown(a: u16, game: &mut Game) {
     let E = Get_MotherBrain(0, game);
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(a);
-    update_ram_word!(game.reg_BG2VOFS, wrapping_sub(a));
-    set_ram_word!(game.reg_BG2HOFS = (34u16).wrapping_sub((*E).base.x_pos));
+    word!(game.reg_BG2VOFS, wrapping_sub(a));
+    word!(game.reg_BG2HOFS = (34u16).wrapping_sub((*E).base.x_pos));
 }
 pub unsafe fn MotherBrain_FootstepEffect(game: &mut Game) {
-    set_ram_word!(game.earthquake_type = 1);
-    set_ram_word!(game.earthquake_timer = 4);
+    word!(game.earthquake_type = 1);
+    word!(game.earthquake_timer = 4);
     if (*Get_MotherBrain(0i32, game)).var_00 == 3 {
         printf(b"Write to rom!\n\0" as *const u8 as *const c_char);
     }
@@ -1473,17 +1472,17 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, game: &mut Game) -> u16;
     MotherBrain_Instr_SetMainShakeTimer50 [k] { (*Get_MotherBrain(0x40, game)).var_00 = 50; };
     MotherBrain_Instr_GotoEitherOr [result] {
         let result: u16 = addr_stru_A99C5F as u16;
-        if (ram_word!(game, random_number) & 0xfff) >= 0xfe0 {
+        if (word!(game.random_number) & 0xfff) >= 0xfe0 {
             return addr_stru_A99C47 as u16;
         }
     };
     MotherBrain_Instr_MaybeGoto [k] {
-        if ram_word!(game, random_number) < 0xf000 {
+        if word!(game.random_number) < 0xf000 {
             return addr_stru_A99C9F as u16;
         }
     };
     MotherBrain_Instr_MaybeGoto2 [k] {
-        if (ram_word!(game, random_number) & 0xfff) < 0xec0 {
+        if (word!(game.random_number) & 0xfff) < 0xec0 {
             return MotherBrain_Instr_Goto2(k);
         }
     };
@@ -1517,8 +1516,8 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, game: &mut Game) -> u16;
     MotherBrain_Instr_AimRingsAtSamus [k] {
         let E = Get_MotherBrain(0x40, game);
         MotherBrain_Instr_AimRings(
-            (ram_word!(game, samus_x_pos) as i32 - (*E).base.x_pos as i32 - 10i32) as u16,
-            (ram_word!(game, samus_y_pos) as i32 - (*E).base.y_pos as i32 - 16i32) as u16,
+            (word!(game.samus_x_pos) as i32 - (*E).base.x_pos as i32 - 10i32) as u16,
+            (word!(game.samus_y_pos) as i32 - (*E).base.y_pos as i32 - 16i32) as u16,
             game,
         );
     };
@@ -1617,9 +1616,9 @@ pub unsafe fn MotherBrain_Phase3_Death_3(game: &mut Game) {
         set_fields! {[(*E1)], 0; var_32, var_33, var_12, var_14, var_10, var_11}
         let mut i: i32 = 28;
         while i >= 0 {
-            set_ram_word!(
+            word!(
                 game.palette_buffer[((i >> 1) + 241)] =
-                    ram_word!(game, palette_buffer[((i >> 1) + 145)])
+                    word!(game.palette_buffer[((i >> 1) + 145)])
             );
             i -= 2;
         }
@@ -1651,13 +1650,13 @@ pub unsafe fn MotherBrain_Phase3_Death_5(game: &mut Game) {
         let v2: u16 = ((*E).var_37).wrapping_add(1);
         (*E).var_37 = v2;
         if MotherBrain_FadePalToBlack((v2).wrapping_sub(1), game) & 1 != 0 {
-            set_ram_word!(game.enemy_bg2_tilemap_size = 710);
+            word!(game.enemy_bg2_tilemap_size = 710);
             let mut i: i32 = 710;
             while i >= 0 {
-                set_ram_word!(game.tilemap_stuff[(i >> 1)] = 824);
+                word!(game.tilemap_stuff[(i >> 1)] = 824);
                 i -= 2;
             }
-            set_ram_word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
+            word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
             (*E).base.properties = ((*E).base.properties & 0xdeff | 0x100);
             (*E).base.extra_properties = 0;
             (*E).var_A = ((0xa9b013i32) as u16);
@@ -1810,12 +1809,11 @@ pub unsafe fn MotherBrain_Phase3_Death_14_20framedelay(game: &mut Game) {
 pub unsafe fn MotherBrain_CorpseRottingFinished(game: &mut Game) {
     let E1 = Get_MotherBrain(0x40, game);
     game.eproj_spawn_pt = Point16U {
-        x: ((*E1).base.x_pos as i32 + (ram_word!(game, random_number) as i32 & 0x1f) - 16i32)
-            as u16,
+        x: ((*E1).base.x_pos as i32 + (word!(game.random_number) as i32 & 0x1f) - 16i32) as u16,
         y: (((*E1).base.y_pos).wrapping_add(16)),
     };
     SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xa, game);
-    if (ram_word!(game, random_enemy_counter) & 7) == 0 {
+    if (word!(game.random_enemy_counter) & 7) == 0 {
         QueueSfx2_Max3(0x10, game);
     }
 }
@@ -1835,8 +1833,8 @@ pub unsafe fn MotherBrain_Phase3_Death_16_StartEscape(game: &mut Game) {
             game,
         );
         QueueMusic_Delayed8(7, game);
-        set_ram_word!(game.earthquake_type = 5);
-        set_ram_word!(game.earthquake_timer = -1i32 as u16);
+        word!(game.earthquake_type = 5);
+        word!(game.earthquake_timer = -1i32 as u16);
         SpawnPalfxObject(addr_kPalfx_FFC9 as u16, game);
         SpawnPalfxObject(addr_kPalfx_FFCD as u16, game);
         SpawnPalfxObject(addr_kPalfx_FFD1 as u16, game);
@@ -1846,7 +1844,7 @@ pub unsafe fn MotherBrain_Phase3_Death_16_StartEscape(game: &mut Game) {
         let E = Get_MotherBrain(0, game);
         (*E).var_F = 32;
         let mut v1: u16 = ((0xa9b2d1i32) as u16);
-        if ram_word!(game, japanese_text_flag) == 0 {
+        if word!(game.japanese_text_flag) == 0 {
             v1 = ((0xa9b2e3i32) as u16);
         }
         (*E).var_A = v1;
@@ -1878,7 +1876,7 @@ pub unsafe fn MotherBrain_Phase3_Death_19_EscapeDoorExploding(game: &mut Game) {
     (*E).var_F = (*E).var_F.wrapping_sub(1);
     if ((*E).var_F & 0x8000) != 0 {
         CallSomeSamusCode(0xf, game);
-        set_ram_word!(game.timer_status = 2);
+        word!(game.timer_status = 2);
         SetBossBitForCurArea(2, game);
         SetEventHappened(0xe, game);
         (*E).var_A = ((0xa9b32ai32) as u16);
@@ -1892,8 +1890,8 @@ pub unsafe fn MotherBrain_Phase3_Death_20_BlowUpEscapeDoor(game: &mut Game) {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0, 0x6, 0xb677 as VoidP), game);
 }
 pub unsafe fn MotherBrain_Phase3_Death_21_KeepEarthquakeGoing(game: &mut Game) {
-    if ram_word!(game, earthquake_timer) == 0 {
-        update_ram_word!(game.earthquake_timer, wrapping_sub(1));
+    if word!(game.earthquake_timer) == 0 {
+        word!(game.earthquake_timer, wrapping_sub(1));
     }
 }
 pub unsafe fn MotherBrain_GenerateEscapeDoorExploding(game: &mut Game) {
@@ -1971,40 +1969,40 @@ pub unsafe fn MotherBrain_SamusCollDetectPart(k: u16, r18: u16, r20: u16, game: 
         let mut v3: u16 = 0;
         let mut v4: u16 = 0;
         let mut R24: u16 = 0;
-        if ((ram_word!(game, samus_y_pos)) as i16).wrapping_sub((r20) as i16) >= 0 {
-            R24 = (ram_word!(game, samus_y_pos)).wrapping_sub(r20);
+        if ((word!(game.samus_y_pos)) as i16).wrapping_sub((r20) as i16) >= 0 {
+            R24 = (word!(game.samus_y_pos)).wrapping_sub(r20);
             v3 = *(p.offset(6) as *mut u16);
         } else {
-            R24 = (r20).wrapping_sub(ram_word!(game, samus_y_pos));
+            R24 = (r20).wrapping_sub(word!(game.samus_y_pos));
             v3 = *(p.offset(2) as *mut u16);
         }
-        if ((ram_word!(game, samus_y_radius) as i32 + abs16(v3) as i32 - R24 as i32) as i16) >= 0 {
-            if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub((r18) as i16) >= 0 {
-                R24 = (ram_word!(game, samus_x_pos)).wrapping_sub(r18);
+        if ((word!(game.samus_y_radius) as i32 + abs16(v3) as i32 - R24 as i32) as i16) >= 0 {
+            if ((word!(game.samus_x_pos)) as i16).wrapping_sub((r18) as i16) >= 0 {
+                R24 = (word!(game.samus_x_pos)).wrapping_sub(r18);
                 v4 = *(p.offset(4) as *mut u16);
             } else {
-                R24 = (r18).wrapping_sub(ram_word!(game, samus_x_pos));
+                R24 = (r18).wrapping_sub(word!(game.samus_x_pos));
                 v4 = *(p as *mut u16);
             }
             let mut v5: i16 =
-                (ram_word!(game, samus_x_radius) as i32 + abs16(v4) as i32 - R24 as i32) as i16;
+                (word!(game.samus_x_radius) as i32 + abs16(v4) as i32 - R24 as i32) as i16;
             if v5 >= 0 {
                 if v5 as i32 - 4i32 & 0x8000 != 0 {
                     v5 = 4;
                 }
-                set_ram_word!(game.extra_samus_x_displacement = v5 as u16);
-                set_ram_word!(game.extra_samus_y_displacement = 4);
-                set_ram_words! { game, 0;
+                word!(game.extra_samus_x_displacement = v5 as u16);
+                word!(game.extra_samus_y_displacement = 4);
+                word! { game, 0;
                     extra_samus_x_subdisplacement, extra_samus_y_subdisplacement,
                 }
-                set_ram_word!(game.samus_invincibility_timer = 96);
-                set_ram_word!(game.samus_knockback_timer = 5);
-                set_ram_word!(game.knockback_x_dir = 1);
-                if ram_word!(game, samus_y_pos) as i32 - 192i32 & 0x8000 != 0 {
-                    set_ram_word!(game.samus_y_dir = 2);
+                word!(game.samus_invincibility_timer = 96);
+                word!(game.samus_knockback_timer = 5);
+                word!(game.knockback_x_dir = 1);
+                if word!(game.samus_y_pos) as i32 - 192i32 & 0x8000 != 0 {
+                    word!(game.samus_y_dir = 2);
                 }
                 if (((*Get_MotherBrain(0i32, game)).base.x_pos as i32 + 24
-                    - ram_word!(game, samus_x_pos) as i32) as i16)
+                    - word!(game.samus_x_pos) as i32) as i16)
                     < 0
                 {
                     MotherBrain_HurtSamus(game);
@@ -2031,12 +2029,12 @@ pub unsafe fn MotherBrainsBrain_Shot(game: &mut Game) {
         }
     } else {
         let v1: u16 = ((*((ram_ptr!(game, u16; 0xc18))
-            .offset(ram_word!(game, collision_detection_index) as isize)
+            .offset(word!(game.collision_detection_index) as isize)
             as *mut u8)
             .offset(1)) as u16)
             & (7u16);
         if g_byte_A9B546[v1 as usize] != 0 {
-            update_ram_word!(
+            word!(
                 game.plm_room_arguments[39],
                 wrapping_add((g_byte_A9B546[v1 as usize]) as u16)
             );
@@ -2069,8 +2067,7 @@ pub unsafe fn MotherBrain_Phase23_ShotReaction(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_DetermineShotReactionType(game: &mut Game) -> u16 {
     g_byte_A9B5A1[(*((ram_ptr!(game, u16; 0xc18))
-        .offset(ram_word!(game, collision_detection_index) as isize)
-        as *mut u8)
+        .offset(word!(game.collision_detection_index) as isize) as *mut u8)
         .offset(1) as i32
         & 7) as usize] as u16
 }
@@ -2097,11 +2094,11 @@ pub unsafe fn MotherBrainsBrain_Touch(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_HurtSamus(game: &mut Game) {
     Ridley_Func_98(game);
-    set_ram_word!(game.samus_invincibility_timer = 96);
-    set_ram_word!(game.samus_knockback_timer = 5);
-    set_ram_word!(
-        game.knockback_x_dir = (((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
-            ((*Get_MotherBrain(ram_word!(game, cur_enemy_index) as i32, game))
+    word!(game.samus_invincibility_timer = 96);
+    word!(game.samus_knockback_timer = 5);
+    word!(
+        game.knockback_x_dir = (((word!(game.samus_x_pos)) as i16).wrapping_sub(
+            ((*Get_MotherBrain(word!(game.cur_enemy_index) as i32, game))
                 .base
                 .x_pos) as i16,
         ) >= 0) as u16
@@ -2118,10 +2115,10 @@ pub unsafe fn MotherBrain_Body_Phase2_Thinking(game: &mut Game) {
     if (*E).var_02 == 0 {
         let keep_walking: bool;
         if (*E1).base.health as i32 - 4500i32 & 0x8000 == 0 {
-            keep_walking = (ram_word!(game, random_number) >= 0x1000);
-        } else if ram_word!(game, random_number) < 0x2000 {
+            keep_walking = (word!(game.random_number) >= 0x1000);
+        } else if word!(game.random_number) < 0x2000 {
             keep_walking = true;
-        } else if ram_word!(game, random_number) >= 0xa000 {
+        } else if word!(game.random_number) >= 0xa000 {
             keep_walking = false;
         } else {
             (*E).var_A = ((0xa9b87di32) as u16);
@@ -2155,17 +2152,16 @@ pub unsafe fn MotherBrain_Body_Phase2_TryAttack(game: &mut Game) {
         }
         let mut v2: u16 = addr_byte_A9B6DC as u16;
         let E1 = Get_MotherBrain(0x40, game);
-        if abs16(((*E1).base.y_pos as i32 + 4 - ram_word!(game, samus_y_pos) as i32) as u16) < 0x20
-        {
+        if abs16(((*E1).base.y_pos as i32 + 4 - word!(game.samus_y_pos) as i32) as u16) < 0x20 {
             v2 = addr_byte_A9B6DF as u16;
         }
         let mut v4: u16 = 0;
         let v5 = RomPtr_A9(v2, game);
-        if (ram_word!(game, random_number) as u8) >= *v5 {
+        if (word!(game.random_number) as u8) >= *v5 {
             v4 = 2;
-            if (ram_word!(game, random_number) as u8) >= *v5.offset(1) {
+            if (word!(game.random_number) as u8) >= *v5.offset(1) {
                 v4 = 4;
-                if (ram_word!(game, random_number) as u8) >= *v5.offset(2) {
+                if (word!(game.random_number) as u8) >= *v5.offset(2) {
                     v4 = 6;
                 }
             }
@@ -2186,7 +2182,7 @@ pub unsafe fn MotherBrain_Body_Phase2_TryAttack(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_Phase2_DecideAttackStrategy_DoubleRet(game: &mut Game) -> u8 {
     if g_word_A9B72C[*ram_ptr!(game; 0xa1f) as usize] != 0 {
-        if ram_word!(game, random_number) as u8 as i32 - 128i32 & 0x8000 != 0 {
+        if word!(game.random_number) as u8 as i32 - 128i32 & 0x8000 != 0 {
             0
         } else {
             let E1 = Get_MotherBrain(0x40, game);
@@ -2198,7 +2194,7 @@ pub unsafe fn MotherBrain_Phase2_DecideAttackStrategy_DoubleRet(game: &mut Game)
             0
         }
     } else {
-        if ram_word!(game, random_number) as u8 as i32 - 128i32 & 0x8000 != 0 {
+        if word!(game.random_number) as u8 as i32 - 128i32 & 0x8000 != 0 {
             (*Get_MotherBrain(0i32, game)).var_A = ((0xa9b80ei32) as u16);
             MotherBomb_FiringLaser_PositionHead(game);
         } else {
@@ -2220,12 +2216,12 @@ pub unsafe fn MotherBrain_Phase2_Attack_End(game: &mut Game) {
     (*E).var_A = ((0xa9b605i32) as u16);
 }
 pub unsafe fn MotherBrain_FiringBomb_DecideOnWalking(game: &mut Game) {
-    if ram_word!(game, random_number) >= 0xff80 {
+    if word!(game.random_number) >= 0xff80 {
         MotherBrain_FiringBomb_DecideOnCrouching(game);
         return;
     }
     let mut v0: u16 = 64;
-    if ram_word!(game, random_number) < 0x6000 {
+    if word!(game.random_number) < 0x6000 {
         v0 = 96;
     }
     let E = Get_MotherBrain(0, game);
@@ -2295,7 +2291,7 @@ pub unsafe fn MotherBrain_FiringBomb_Finish(game: &mut Game) {
 pub unsafe fn MotherBomb_FiringLaser_PositionHead(game: &mut Game) {
     let mut v0: i16 = 8;
     let E1 = Get_MotherBrain(0x40, game);
-    if (((*E1).base.y_pos) as i16).wrapping_sub((ram_word!(game, samus_y_pos)) as i16) < 0 {
+    if (((*E1).base.y_pos) as i16).wrapping_sub((word!(game.samus_y_pos)) as i16) < 0 {
         v0 = 6;
     }
     (*E1).var_32 = v0 as u16;
@@ -2402,7 +2398,7 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_3_Wait(game: &mut Game) {
     }
 }
 pub unsafe fn MotherBomb_FiringRainbowBeam_4_ExtendNeckDown(game: &mut Game) {
-    set_ram_word!(game.cooldown_timer = 8);
+    word!(game.cooldown_timer = 8);
     let E1 = Get_MotherBrain(0x40, game);
     set_fields! {[(*E1)], 6; var_32, var_33}
     (*E1).var_34 = 1280;
@@ -2413,11 +2409,11 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_4_ExtendNeckDown(game: &mut Game) {
 }
 pub unsafe fn MotherBomb_FiringRainbowBeam_5_StartFiring(game: &mut Game) {
     MotherBrain_AimBeamAndIncrWidth(game);
-    if ram_word!(game, power_bomb_flag) == 0 {
+    if word!(game.power_bomb_flag) == 0 {
         let E = Get_MotherBrain(0, game);
         (*E).var_F = (*E).var_F.wrapping_sub(1);
-        if ((*E).var_F & 0x8000) != 0 && ram_word!(game, power_bomb_flag) == 0 {
-            set_ram_word!(game.cooldown_timer = 0);
+        if ((*E).var_F & 0x8000) != 0 && word!(game.power_bomb_flag) == 0 {
+            word!(game.cooldown_timer = 0);
             MotherBrain_BodyRainbowBeamPalAnimIndex0(game);
             MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C77 as u16, game);
             (*E).var_33 = 512;
@@ -2429,7 +2425,7 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_5_StartFiring(game: &mut Game) {
             (*E1).var_33 = 4;
             set_fields! {[(*E)], 0; parameter_1, parameter_2}
             let mut v4: u16 = 5;
-            if ((ram_word!(game, samus_health)) as i16).wrapping_sub(700) < 0 {
+            if ((word!(game.samus_health)) as i16).wrapping_sub(700) < 0 {
                 v4 = 24;
             }
             CallSomeSamusCode(v4, game);
@@ -2458,7 +2454,7 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_7_DelayFrame(game: &mut Game) {
     let E = Get_MotherBomb(0, game);
     (*E).var_F = (*E).var_F.wrapping_sub(1);
     if ((*E).var_F & 0x8000) != 0 {
-        set_ram_words! { game, 8; earthquake_type, earthquake_timer }
+        word! { game, 8; earthquake_type, earthquake_timer }
         (*E).var_A = ((0xa9ba27i32) as u16);
     }
 }
@@ -2466,8 +2462,8 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_8_StartDrainSamus(game: &mut Game) {
     let E = Get_MotherBomb(0, game);
     (*E).var_A = ((0xa9ba3ci32) as u16);
     (*E).var_F = 299;
-    set_ram_word!(game.earthquake_timer = 299);
-    set_ram_word!(game.earthquake_type = 8);
+    word!(game.earthquake_timer = 299);
+    word!(game.earthquake_type = 8);
     MotherBomb_FiringRainbowBeam_9_DrainingSamus(game);
 }
 pub unsafe fn MotherBomb_FiringRainbowBeam_9_DrainingSamus(game: &mut Game) {
@@ -2496,7 +2492,7 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_10_FinishFiringRainbow(game: &mut Gam
         (*E).var_33 = 512;
         (*E).parameter_1 = -256i32 as u16;
         (*E).parameter_2 = 0;
-        set_ram_words! { game, 0;
+        word! { game, 0;
             hdma_object_channels_bitmask[((*E).var_09 as i32 >> 1)], earthquake_timer,
         }
         MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C87 as u16, game);
@@ -2505,7 +2501,7 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_10_FinishFiringRainbow(game: &mut Gam
         QueueSfx1_Max6(2, game);
         (*E).var_16 = 0;
         CallSomeSamusCode(1, game);
-        set_ram_word!(game.cooldown_timer = 8);
+        word!(game.cooldown_timer = 8);
         (*E).var_A = ((0xa9bac4i32) as u16);
     }
 }
@@ -2533,7 +2529,7 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_14_DecideNextAction(game: &mut Game) 
     let E = Get_MotherBomb(0, game);
     (*E).var_F = (*E).var_F.wrapping_sub(1);
     if ((*E).var_F & 0x8000) != 0 {
-        if ram_word!(game, samus_health) as i32 - 400i32 & 0x8000 != 0 {
+        if word!(game.samus_health) as i32 - 400i32 & 0x8000 != 0 {
             MotherBrain_MakeWalkForwards(0xa, ((*E).base.x_pos).wrapping_add(16), game);
             (*E).var_A = ((0xa9bd45i32) as u16);
         } else {
@@ -2576,8 +2572,8 @@ pub unsafe fn MotherBrain_AimBeamAndIncrWidth(game: &mut Game) {
 pub unsafe fn MotherBrain_AimBeam(game: &mut Game) {
     let E = Get_MotherBrain(0x40, game);
     (*Get_MotherBrain(0i32, game)).var_31 = -(CalculateAngleFromXY(
-        (ram_word!(game, samus_x_pos) as i32 - (*E).base.x_pos as i32 - 16i32) as u16,
-        (ram_word!(game, samus_y_pos) as i32 - (*E).base.y_pos as i32 - 4i32) as u16,
+        (word!(game.samus_x_pos) as i32 - (*E).base.x_pos as i32 - 16i32) as u16,
+        (word!(game.samus_y_pos) as i32 - (*E).base.y_pos as i32 - 4i32) as u16,
         game,
     ) as i32
         + 0x80i32) as u8 as u16;
@@ -2592,7 +2588,7 @@ pub unsafe fn MotherBrain_MoveSamusTowardsWallDueToBeam(game: &mut Game) -> u8 {
 }
 pub unsafe fn MotherBrain_MoveSamusTowardsMiddleOfWall(game: &mut Game) {
     let mut v0: u16 = 64;
-    if (124i16).wrapping_sub((ram_word!(game, samus_y_pos)) as i16) < 0 {
+    if (124i16).wrapping_sub((word!(game.samus_y_pos)) as i16) < 0 {
         v0 = -64i32 as u16;
     }
     MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(v0, game);
@@ -2617,22 +2613,21 @@ pub unsafe fn MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(
         + *(&raw mut a as *mut u8).offset(0) as i32;
     *(ram_ptr!(game, u16; 0xafc) as *mut u8).offset(1) = carry as u8;
     *(ram_ptr!(game, u16; 0xb16) as *mut u8).offset(1) = carry as u8;
-    let v4: u16 =
-        (ram_word!(game, samus_y_pos) as i32 + (a >> 8) as i8 as i32 + (carry >> 8)) as u16;
+    let v4: u16 = (word!(game.samus_y_pos) as i32 + (a >> 8) as i8 as i32 + (carry >> 8)) as u16;
     let mut v6: u16 = 0;
     if v4 as i32 - 48i32 & 0x8000 != 0 {
         v6 = 48;
     } else {
         if v4 as i32 - 192i32 & 0x8000 != 0 {
             crate::update_place! { reference fresh2 = *(ram_ptr!(game, u16; 0xafa)) => v4; }
-            set_ram_word!(game.samus_prev_y_pos = *fresh2);
+            word!(game.samus_prev_y_pos = *fresh2);
             return 0;
         }
         v6 = 192;
     }
     crate::update_place! { reference fresh3 = *(ram_ptr!(game, u16; 0xafa)) => v6; }
-    set_ram_word!(game.samus_prev_y_pos = *fresh3);
-    set_ram_words! { game, 0; samus_y_subpos, samus_prev_y_subpos }
+    word!(game.samus_prev_y_pos = *fresh3);
+    word! { game, 0; samus_y_subpos, samus_prev_y_subpos }
     1
 }
 pub unsafe fn MotherBrain_MoveSamusHorizTowardsWall(mut a: u16, game: &mut Game) -> u8 {
@@ -2640,15 +2635,14 @@ pub unsafe fn MotherBrain_MoveSamusHorizTowardsWall(mut a: u16, game: &mut Game)
         + *(&raw mut a as *mut u8).offset(0) as i32;
     *(ram_ptr!(game, u16; 0xaf8) as *mut u8).offset(1) = carry as u8;
     *(ram_ptr!(game, u16; 0xb12) as *mut u8).offset(1) = carry as u8;
-    let v4: u16 =
-        (ram_word!(game, samus_x_pos) as i32 + (a >> 8) as i8 as i32 + (carry >> 8)) as u16;
+    let v4: u16 = (word!(game.samus_x_pos) as i32 + (a >> 8) as i8 as i32 + (carry >> 8)) as u16;
     if v4 as i32 - 235i32 & 0x8000 != 0 {
-        set_ram_word!(game.samus_x_pos = v4);
-        set_ram_word!(game.samus_prev_x_pos = v4);
+        word!(game.samus_x_pos = v4);
+        word!(game.samus_prev_x_pos = v4);
         0
     } else {
-        set_ram_words! { game, 235; samus_x_pos, samus_prev_x_pos }
-        set_ram_words! { game, 0; samus_x_subpos, samus_prev_x_subpos }
+        word! { game, 235; samus_x_pos, samus_prev_x_pos }
+        word! { game, 0; samus_x_subpos, samus_prev_x_subpos }
         1
     }
 }
@@ -2724,20 +2718,19 @@ pub unsafe fn MotherBrain_WritePalette(j: u16, game: &mut Game) {
 }
 pub unsafe fn MotherBrain_Phase2Cut_0(game: &mut Game) {
     let v0: u16 = SuitDamageDivision(0x50, game);
-    if ((4 * v0 as i32 + 20 - ram_word!(game, samus_health) as i32) as i16) >= 0 {
+    if ((4 * v0 as i32 + 20 - word!(game.samus_health) as i32) as i16) >= 0 {
         (*Get_MotherBrain(0i32, game)).var_A = ((0xa9bd98i32) as u16);
-    } else if (ram_word!(game, random_number) & 0xfff) < 0xfa0 {
+    } else if (word!(game.random_number) & 0xfff) < 0xfa0 {
         if ((*Get_MotherBrain(0i32, game)).base.frame_counter & 0x1f) == 0 {
             MotherBrain_MaybeStandupOrLeanDown(game);
         }
     } else {
         let mut v1: u16 = 0;
-        if ((SuitDamageDivision(0xa0, game) as i32 + 20 - ram_word!(game, samus_health) as i32)
-            as i16)
+        if ((SuitDamageDivision(0xa0, game) as i32 + 20 - word!(game.samus_health) as i32) as i16)
             >= 0
             || {
                 v1 = addr_kMotherBrain_Ilist_9ECC as u16;
-                (ram_word!(game, random_number) & 0xfff) < 0xff0
+                (word!(game.random_number) & 0xfff) < 0xff0
             }
         {
             v1 = addr_kMotherBrain_Ilist_9D7F as u16;
@@ -3033,7 +3026,7 @@ pub unsafe fn MotherBrain_Phase2_Revive_8(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_Phase2_MurderShitroid_1(game: &mut Game) {
     MotherBrain_MaybeStandupOrLeanDown(game);
-    if (ram_word!(game, random_number) & 0x8000) != 0 {
+    if (word!(game.random_number) & 0x8000) != 0 {
         let mut v0: u16 = addr_kMotherBrain_Ilist_9DBB as u16;
         if (*Get_MotherBrain(0x40i32, game)).var_0A != 0 {
             v0 = addr_kMotherBrain_Ilist_9DB1 as u16;
@@ -3062,10 +3055,10 @@ pub unsafe fn MotherBrain_Phase2_ExecuteFinalkShitroid(game: &mut Game) {
 pub unsafe fn MotherBrain_MaybeStandupOrLeanDown(game: &mut Game) {
     let mbn_var_02: u16 = (*Get_MotherBrain(0i32, game)).var_02;
     if mbn_var_02 != 0 {
-        if mbn_var_02 == 6 && (ram_word!(game, random_number) as u8) >= 0xc0 {
+        if mbn_var_02 == 6 && (word!(game.random_number) as u8) >= 0xc0 {
             MotherBrain_MakeHerStandUp(game);
         }
-    } else if (ram_word!(game, random_number) as u8) >= 0xc0 {
+    } else if (word!(game.random_number) as u8) >= 0xc0 {
         MotherBrain_MakeHerLeanDown(game);
     }
 }
@@ -3092,9 +3085,9 @@ pub unsafe fn MotherBrain_Phase3_Fighting_Main(game: &mut Game) {
         MotherBrain_Phase3_NeckHandler(game);
         MotherBrain_Phase3_WalkHandler(game);
         let E = Get_MotherBrain(0, game);
-        if (*E).var_02 == 0 && (*E).var_06 == 0 && (ram_word!(game, random_number) & 0x8000) != 0 {
+        if (*E).var_02 == 0 && (*E).var_06 == 0 && (word!(game.random_number) & 0x8000) != 0 {
             let mut v1: u16 = addr_kMotherBrain_Ilist_9F00 as u16;
-            if (ram_word!(game, random_number) as u8) >= 0x80 {
+            if (word!(game.random_number) as u8) >= 0x80 {
                 v1 = addr_kMotherBrain_Ilist_9DBB as u16;
             }
             MotherBrain_SetBrainInstrs(v1, game);
@@ -3140,7 +3133,7 @@ pub unsafe fn MotherBrain_Phase3_Walk_TryToInchForward(game: &mut Game) {
             let E1 = Get_MotherBrain(0x40, game);
             (*E1).var_1B = v4;
             if MotherBrain_MakeWalkForwards(
-                ((ram_word!(game, random_number) as i32 & 2) + 4) as u16,
+                ((word!(game.random_number) as i32 & 2) + 4) as u16,
                 (*E1).var_1B,
                 game,
             ) & 1
@@ -3245,7 +3238,7 @@ pub unsafe fn MotherBrain_Phase3_Neck_HyperBeamRecoil(game: &mut Game) {
     };
 }
 pub unsafe fn MoveEnemyWithVelocity(game: &mut Game) {
-    let v0 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
+    let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
     let mut ai_var_B: u16 = (*v0).ai_var_B;
     let mut carry: i32 = *(&raw mut (*v0).x_subpos as *mut u8).offset(1) as i32
         + *(&raw mut ai_var_B as *mut u8).offset(0) as i32;
@@ -3297,83 +3290,76 @@ pub unsafe fn Enemy_IncreaseYpos(k: u16, mut a: u16, game: &mut Game) {
     (*v2).y_pos = ((*v2).y_pos as i32 + ((a >> 8) as i8 as i32 + (carry >> 8))) as u16;
 }
 pub unsafe fn Samus_DecrementAmmoDueToRainbowBeam(game: &mut Game) {
-    if (ram_word!(game, random_enemy_counter) & 3) == 0 && ram_word!(game, samus_missiles) != 0 {
-        let mut v0: u16 = (ram_word!(game, samus_missiles)).wrapping_sub(g_word_A9C544);
-        if ram_word!(game, samus_missiles) as i32 - g_word_A9C544 as i32 - 1i32 & 0x8000 != 0 {
-            if ram_word!(game, hud_item_index) == 1 {
-                set_ram_word!(game.hud_item_index = 0);
+    if (word!(game.random_enemy_counter) & 3) == 0 && word!(game.samus_missiles) != 0 {
+        let mut v0: u16 = (word!(game.samus_missiles)).wrapping_sub(g_word_A9C544);
+        if word!(game.samus_missiles) as i32 - g_word_A9C544 as i32 - 1i32 & 0x8000 != 0 {
+            if word!(game.hud_item_index) == 1 {
+                word!(game.hud_item_index = 0);
             }
             v0 = 0;
-            set_ram_word!(game.samus_auto_cancel_hud_item_index = 0);
+            word!(game.samus_auto_cancel_hud_item_index = 0);
         }
-        set_ram_word!(game.samus_missiles = v0);
+        word!(game.samus_missiles = v0);
     }
-    if (ram_word!(game, random_enemy_counter) & 3) == 0
-        && ram_word!(game, samus_super_missiles) != 0
-    {
-        let mut v1: u16 = (ram_word!(game, samus_super_missiles)).wrapping_sub(g_word_A9C544);
-        if ram_word!(game, samus_super_missiles) as i32 - g_word_A9C544 as i32 - 1i32 & 0x8000 != 0
-        {
-            if ram_word!(game, hud_item_index) == 2 {
-                set_ram_word!(game.hud_item_index = 0);
+    if (word!(game.random_enemy_counter) & 3) == 0 && word!(game.samus_super_missiles) != 0 {
+        let mut v1: u16 = (word!(game.samus_super_missiles)).wrapping_sub(g_word_A9C544);
+        if word!(game.samus_super_missiles) as i32 - g_word_A9C544 as i32 - 1i32 & 0x8000 != 0 {
+            if word!(game.hud_item_index) == 2 {
+                word!(game.hud_item_index = 0);
             }
             v1 = 0;
-            set_ram_word!(game.samus_auto_cancel_hud_item_index = 0);
+            word!(game.samus_auto_cancel_hud_item_index = 0);
         }
-        set_ram_word!(game.samus_super_missiles = v1);
+        word!(game.samus_super_missiles = v1);
     }
-    if ram_word!(game, samus_power_bombs) != 0 {
-        let mut v2: u16 = (ram_word!(game, samus_power_bombs)).wrapping_sub(g_word_A9C544);
-        if ram_word!(game, samus_power_bombs) as i32 - g_word_A9C544 as i32 - 1i32 & 0x8000 != 0 {
-            if ram_word!(game, hud_item_index) == 3 {
-                set_ram_word!(game.hud_item_index = 0);
+    if word!(game.samus_power_bombs) != 0 {
+        let mut v2: u16 = (word!(game.samus_power_bombs)).wrapping_sub(g_word_A9C544);
+        if word!(game.samus_power_bombs) as i32 - g_word_A9C544 as i32 - 1i32 & 0x8000 != 0 {
+            if word!(game.hud_item_index) == 3 {
+                word!(game.hud_item_index = 0);
             }
             v2 = 0;
-            set_ram_word!(game.samus_auto_cancel_hud_item_index = 0);
+            word!(game.samus_auto_cancel_hud_item_index = 0);
         }
-        set_ram_word!(game.samus_power_bombs = v2);
+        word!(game.samus_power_bombs = v2);
     }
 }
 pub unsafe fn Samus_PlayGainingLosingHealthSfx(game: &mut Game) {
-    if ram_word!(game, samus_health) as i32 - 81i32 & 0x8000 == 0
-        && (ram_word!(game, random_enemy_counter) & 7) == 0
+    if word!(game.samus_health) as i32 - 81i32 & 0x8000 == 0
+        && (word!(game.random_enemy_counter) & 7) == 0
     {
         QueueSfx3_Max3(0x2d, game);
     }
 }
 pub unsafe fn Samus_DamageDueToShitroid(game: &mut Game) {
     let mut v0: i16 = -4i16;
-    if ram_word!(game, equipped_items) & 1 != 0 {
+    if word!(game.equipped_items) & 1 != 0 {
         v0 = -3i16;
     }
-    let mut v1: u16 = (ram_word!(game, samus_health) as i32
-        + (ram_word!(game, equipped_items) as i32 & 1)
+    let mut v1: u16 = (word!(game.samus_health) as i32
+        + (word!(game.equipped_items) as i32 & 1)
         + v0 as i32) as u16;
     if v1 as i32 - 2i32 & 0x8000 != 0 {
         v1 = 1;
     }
-    set_ram_word!(game.samus_health = v1);
+    word!(game.samus_health = v1);
 }
 pub unsafe fn Samus_DamageDueToRainbowBeam(game: &mut Game) {
-    let mut v0: u16 = (ram_word!(game, samus_health) as i32
-        + (ram_word!(game, equipped_items) as i32 & 1)
-        - 2i32) as u16;
+    let mut v0: u16 =
+        (word!(game.samus_health) as i32 + (word!(game.equipped_items) as i32 & 1) - 2i32) as u16;
     if v0 as i32 - 1i32 & 0x8000 != 0 {
         v0 = 0;
     }
-    set_ram_word!(game.samus_health = v0);
+    word!(game.samus_health = v0);
     Samus_PlayGainingLosingHealthSfx(game);
 }
 pub unsafe fn Samus_HealDueToShitroid(game: &mut Game) -> u8 {
-    if ((ram_word!(game, samus_health) as i32 + 1 - ram_word!(game, samus_max_health) as i32)
-        as i16)
-        < 0
-    {
-        update_ram_word!(game.samus_health, wrapping_add(1));
+    if ((word!(game.samus_health) as i32 + 1 - word!(game.samus_max_health) as i32) as i16) < 0 {
+        word!(game.samus_health, wrapping_add(1));
         Samus_PlayGainingLosingHealthSfx(game);
         1
     } else {
-        set_ram_word!(game.samus_health = ram_word!(game, samus_max_health));
+        word!(game.samus_health = word!(game.samus_max_health));
         Samus_PlayGainingLosingHealthSfx(game);
         0
     }
@@ -3385,17 +3371,17 @@ pub unsafe fn ProcessSpriteTilesTransfers(db: u8, k: u16, game: &mut Game) -> u8
     if src == 0 {
         src = k;
     }
-    let v4: u16 = ram_word!(game, vram_write_queue_tail);
+    let v4: u16 = word!(game.vram_write_queue_tail);
     let v5 = RomPtrWithBank(db, src, game);
     let mut v6: u16 = *(v5 as *mut u16);
     if v6 != 0 {
-        v7 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+        v7 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
         (*v7).size = v6;
         *((&raw mut (*v7).src.addr as *mut u8).offset(1) as *mut VoidP) =
             *(v5.offset(3) as *mut u16);
         (*v7).src.addr = *(v5.offset(2) as *mut u16);
         (*v7).vram_dst = *(v5.offset(5) as *mut u16);
-        set_ram_word!(game.vram_write_queue_tail = (v4).wrapping_add(7));
+        word!(game.vram_write_queue_tail = (v4).wrapping_add(7));
         (*E).var_22 = (src).wrapping_add(7);
         v6 = *(RomPtrWithBank(db, (*E).var_22, game) as *mut u16);
         if v6 != 0 {
@@ -3497,8 +3483,7 @@ pub unsafe fn MotherBrain_HandleWalking(game: &mut Game) {
             }
             true
         };
-        if can_pause_walk && (ram_word!(game, random_number) as i32 & 0xfff) - 4032i32 & 0x8000 != 0
-        {
+        if can_pause_walk && (word!(game.random_number) as i32 & 0xfff) - 4032i32 & 0x8000 != 0 {
             return;
         }
         (*E).var_07 = 128;
@@ -3508,7 +3493,7 @@ pub unsafe fn MotherBrain_HandleWalking(game: &mut Game) {
     }
 }
 pub unsafe fn ShitroidInCutscene_Init(game: &mut Game) {
-    let E = Get_ShitdroidInCutscene(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_ShitdroidInCutscene(word!(game.cur_enemy_index) as i32, game);
     (*E).base.properties = ((*E).base.properties as i32
         | (kEnemyProps_DisableSamusColl as i32 | kEnemyProps_BlockPlasmaBeam as i32))
         as u16;
@@ -3569,17 +3554,17 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn ShitroidInCutscene_Main(game: &mut Game) {
-    let E = Get_ShitdroidInCutscene(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_ShitdroidInCutscene(word!(game.cur_enemy_index) as i32, game);
     (*E).base.shake_timer = 0;
     CallShitroidCutsceneFuncA(
         (((*E).var_A) as u32) | (0xa90000u32),
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         game,
     );
     MoveEnemyWithVelocity(game);
-    ShitroidInCutscene_Flashing(ram_word!(game, cur_enemy_index), game);
-    ShitroidInCutscene_HandleHealthBasedPalette(ram_word!(game, cur_enemy_index), game);
-    let r18: u16 = (*Get_ShitdroidInCutscene(ram_word!(game, cur_enemy_index) as i32, game)).var_0F;
+    ShitroidInCutscene_Flashing(word!(game.cur_enemy_index), game);
+    ShitroidInCutscene_HandleHealthBasedPalette(word!(game.cur_enemy_index), game);
+    let r18: u16 = (*Get_ShitdroidInCutscene(word!(game.cur_enemy_index) as i32, game)).var_0F;
     CallShitroidCutsceneFunc0F(((r18) as u32) | (0xa90000u32), game);
 }
 pub unsafe fn ShitroidInCutscene_Flashing(k: u16, game: &mut Game) {
@@ -3758,7 +3743,7 @@ pub unsafe fn ShitroidInCutscene_MoveToSamus(k: u16, game: &mut Game) {
     let E = Get_ShitdroidInCutscene(k as i32, game);
     (*E).var_04 = 0;
     (*E).var_09 = 1;
-    if (ram_word!(game, random_number) & 0xfff) >= 0xfa0 {
+    if (word!(game.random_number) & 0xfff) >= 0xfa0 {
         QueueSfx2_Max6(0x52, game);
     }
     let sice_var_0E: u16 = (*E).var_0E;
@@ -3790,8 +3775,8 @@ pub unsafe fn ShitroidInCutscene_LatchOntoSamus(k: u16, game: &mut Game) {
     Shitroid_Func_GraduallyAccelerateTowards0x400(
         k,
         0,
-        ram_word!(game, samus_x_pos),
-        (ram_word!(game, samus_y_pos)).wrapping_sub(20),
+        word!(game.samus_x_pos),
+        (word!(game.samus_y_pos)).wrapping_sub(20),
         game,
     );
 }
@@ -3800,12 +3785,11 @@ pub unsafe fn ShitroidInCutscene_HealSamusToFullHealth(k: u16, game: &mut Game) 
     (*E).var_04 = 0;
     ShitroidInCutscene_HandleCry(game);
     let v2: i32 = ((*E).base.frame_counter as i32 & 6) >> 1;
-    (*E).base.x_pos =
-        (ram_word!(game, samus_x_pos)).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
+    (*E).base.x_pos = (word!(game.samus_x_pos)).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
     (*E).base.y_pos =
-        (ram_word!(game, samus_y_pos) as i32 + g_word_A993C3[v2 as usize] as i32 - 20i32) as u16;
+        (word!(game.samus_y_pos) as i32 + g_word_A993C3[v2 as usize] as i32 - 20i32) as u16;
     if Samus_HealDueToShitroid(game) & 1 == 0 {
-        set_ram_word!(game.samus_reserve_health = ram_word!(game, samus_max_reserve_health));
+        word!(game.samus_reserve_health = word!(game.samus_max_reserve_health));
         (*E).var_A = ((0xa9cabdi32) as u16);
         (*E).var_0F = ((0xa9cabci32) as u16);
     }
@@ -3817,10 +3801,9 @@ pub unsafe fn ShitroidInCutscene_IdleUntilToNoHealth(k: u16, game: &mut Game) {
     if sice_var_06 != 0 {
         let v3: i32 = (sice_var_06 as i32 & 6) >> 1;
         (*E).base.x_pos =
-            (ram_word!(game, samus_x_pos) as i32 + 2 * g_word_A993BB[v3 as usize] as i32) as u16;
-        (*E).base.y_pos = (ram_word!(game, samus_y_pos) as i32
-            + 2 * g_word_A993C3[v3 as usize] as i32
-            - 20i32) as u16;
+            (word!(game.samus_x_pos) as i32 + 2 * g_word_A993BB[v3 as usize] as i32) as u16;
+        (*E).base.y_pos =
+            (word!(game.samus_y_pos) as i32 + 2 * g_word_A993C3[v3 as usize] as i32 - 20i32) as u16;
     }
     if (*E).base.health == 0 {
         (*E).base.health = 320;
@@ -3841,7 +3824,7 @@ pub unsafe fn ShitroidInCutscene_ReleaseSamus(k: u16, game: &mut Game) {
 }
 pub unsafe fn ShitroidInCutscene_StareDownMotherBrain(k: u16, game: &mut Game) {
     let rect: Rect16U = Rect16U {
-        x: ((ram_word!(game, samus_x_pos)).wrapping_sub(4)),
+        x: ((word!(game.samus_x_pos)).wrapping_sub(4)),
         y: 96,
         w: 4,
         h: 4,
@@ -4009,7 +3992,7 @@ pub unsafe fn HandleSamusRainbowPaletteAnimation(k: u16, game: &mut Game) {
 }
 pub unsafe fn SamusRainbowPaletteFunc_ActivateWhenEnemyLow(k: u16, game: &mut Game) {
     if (((*Get_ShitdroidInCutscene(k as i32, game)).base.y_pos as i32 + 16
-        - ram_word!(game, samus_y_pos) as i32) as i16)
+        - word!(game.samus_y_pos) as i32) as i16)
         >= 0
     {
         CallSomeSamusCode(0x16, game);
@@ -4020,11 +4003,11 @@ pub unsafe fn SamusRainbowPaletteFunc_GraduallySlowDown(game: &mut Game) {
     let E = Get_ShitdroidInCutscene(0x40, game);
     crate::update_place! { previous sice_var_1D: u16 = (*E).var_1D => (sice_var_1D).wrapping_add(768); }
     if sice_var_1D >= 0xfd00 {
-        let mut v2: u16 = (ram_word!(game, special_samus_palette_frame)).wrapping_add(1);
-        if ram_word!(game, special_samus_palette_frame) as i32 - 9i32 & 0x8000 == 0 {
+        let mut v2: u16 = (word!(game.special_samus_palette_frame)).wrapping_add(1);
+        if word!(game.special_samus_palette_frame) as i32 - 9i32 & 0x8000 == 0 {
             v2 = 10;
         }
-        set_ram_word!(game.special_samus_palette_frame = v2);
+        word!(game.special_samus_palette_frame = v2);
     }
 }
 pub unsafe fn ShitroidInCutscene_FadeShitroidToBlack(k: u16, game: &mut Game) -> u8 {
@@ -4149,13 +4132,13 @@ pub unsafe fn ShitroidInCutscene_Shake(k: u16, game: &mut Game) {
     (*E).base.y_pos = ((*E).var_11).wrapping_add((g_word_A993C3[v2 as usize]) as u16);
 }
 pub unsafe fn ShitroidInCutscene_Touch(game: &mut Game) {
-    let E = Get_ShitroidInCutscene(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_ShitroidInCutscene(word!(game.cur_enemy_index) as i32, game);
     if (*E).var_A as i32 == 0xa9ca66 & 0xffff
         && Shitroid_AccelerateTowardsPoint(
-            ram_word!(game, cur_enemy_index),
+            word!(game.cur_enemy_index),
             0x10,
-            ram_word!(game, samus_x_pos),
-            (ram_word!(game, samus_y_pos)).wrapping_sub(20),
+            word!(game.samus_x_pos),
+            (word!(game.samus_y_pos)).wrapping_sub(20),
             game,
         ) & 1
             != 0
@@ -4215,10 +4198,10 @@ pub unsafe fn MotherBrain_Pal_ProcessInvincibility(game: &mut Game) {
             let mut i: i32 = 28;
             while i >= 0 {
                 let v2: i32 = i >> 1;
-                let v3: u16 = ram_word!(game, palette_buffer[(v2 + 129)]);
-                set_ram_word!(game.palette_buffer[(v2 + 145)] = v3);
-                set_ram_word!(game.palette_buffer[(v2 + 177)] = v3);
-                set_ram_word!(game.palette_buffer[(v2 + 65)] = v3);
+                let v3: u16 = word!(game.palette_buffer[(v2 + 129)]);
+                word!(game.palette_buffer[(v2 + 145)] = v3);
+                word!(game.palette_buffer[(v2 + 177)] = v3);
+                word!(game.palette_buffer[(v2 + 65)] = v3);
                 i -= 2;
             }
         }
@@ -4339,7 +4322,7 @@ pub unsafe fn MotherBrain_HandleBrainPal(game: &mut Game) {
 pub unsafe fn WriteColorsToPalette(mut k: u16, db: u8, mut j: u16, a: u16, game: &mut Game) {
     let mut n: i32 = a as i32;
     loop {
-        set_ram_word!(game.palette_buffer[(k >> 1)] = *(RomPtrWithBank(db, j, game) as *mut u16));
+        word!(game.palette_buffer[(k >> 1)] = *(RomPtrWithBank(db, j, game) as *mut u16));
         k = (k).wrapping_add(2);
         j = (j).wrapping_add(2);
         n -= 1;
@@ -4351,7 +4334,7 @@ pub unsafe fn WriteColorsToPalette(mut k: u16, db: u8, mut j: u16, a: u16, game:
 pub unsafe fn WriteColorsToTargetPalette(db: u8, mut k: u16, mut j: u16, a: u16, game: &mut Game) {
     let mut n: i32 = a as i32;
     loop {
-        set_ram_word!(game.target_palettes[(k >> 1)] = *(RomPtrWithBank(db, j, game) as *mut u16));
+        word!(game.target_palettes[(k >> 1)] = *(RomPtrWithBank(db, j, game) as *mut u16));
         k = (k).wrapping_add(2);
         j = (j).wrapping_add(2);
         n -= 1;
@@ -4363,7 +4346,7 @@ pub unsafe fn WriteColorsToTargetPalette(db: u8, mut k: u16, mut j: u16, a: u16,
 pub unsafe fn DeadTorizo_Init(game: &mut Game) {
     let mut i: i32 = 4094;
     while i >= 0 {
-        set_ram_word!(game.tilemap_stuff[(i >> 1)] = 0);
+        word!(game.tilemap_stuff[(i >> 1)] = 0);
         i -= 2;
     }
     let E = Get_DeadTorizo(0, game);
@@ -4384,7 +4367,7 @@ crate::game::address_dispatch! {
         call (game); default { Unreachable(game); };
     {
         11129773 => [{
-                    DeadTorizo_WaitForSamusColl(ram_word!(game, cur_enemy_index), game);
+                    DeadTorizo_WaitForSamusColl(word!(game.cur_enemy_index), game);
                 }];
         11129830 => DeadTorizo_Rotting; 11129800 => DeadTorizo_PreRotDelay; 11129799 => [()];
     }
@@ -4405,10 +4388,10 @@ pub unsafe fn DeadTorizo_MainGfxHook(game: &mut Game) {
     MotherBrain_AddSpritemapToOam(addr_kDeadTorizo_Sprmap_D761 as u16, 296, 187, 0, game);
 }
 pub unsafe fn DeadTorizo_WaitForSamusColl(k: u16, game: &mut Game) {
-    if k == ram_word!(game, enemy_index_colliding_dirs[0])
-        || k == ram_word!(game, enemy_index_colliding_dirs[1])
-        || k == ram_word!(game, enemy_index_colliding_dirs[2])
-        || k == ram_word!(game, enemy_index_colliding_dirs[3])
+    if k == word!(game.enemy_index_colliding_dirs[0])
+        || k == word!(game.enemy_index_colliding_dirs[1])
+        || k == word!(game.enemy_index_colliding_dirs[2])
+        || k == word!(game.enemy_index_colliding_dirs[3])
     {
         (*Get_DeadTorizo(0i32, game)).var_A = ((0xa9d3c8i32) as u16);
     }
@@ -4462,30 +4445,30 @@ pub unsafe fn DeadTorizo_Func_0(game: &mut Game) -> u8 {
     let mut R24: u16 = 0;
     p = p.offset(2);
     while R22 != 0 {
-        if ((ram_word!(game, samus_y_pos)) as i16).wrapping_sub((r20) as i16) >= 0 {
-            R24 = (ram_word!(game, samus_y_pos)).wrapping_sub(r20);
+        if ((word!(game.samus_y_pos)) as i16).wrapping_sub((r20) as i16) >= 0 {
+            R24 = (word!(game.samus_y_pos)).wrapping_sub(r20);
             v3 = *(p.offset(6) as *mut u16);
         } else {
-            R24 = (r20).wrapping_sub(ram_word!(game, samus_y_pos));
+            R24 = (r20).wrapping_sub(word!(game.samus_y_pos));
             v3 = *(p.offset(2) as *mut u16);
         }
-        if ((ram_word!(game, samus_y_radius) as i32 + abs16(v3) as i32 - R24 as i32) as i16) >= 0 {
-            if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub((r18) as i16) >= 0 {
-                R24 = (ram_word!(game, samus_x_pos)).wrapping_sub(r18);
+        if ((word!(game.samus_y_radius) as i32 + abs16(v3) as i32 - R24 as i32) as i16) >= 0 {
+            if ((word!(game.samus_x_pos)) as i16).wrapping_sub((r18) as i16) >= 0 {
+                R24 = (word!(game.samus_x_pos)).wrapping_sub(r18);
                 v4 = *(p.offset(4) as *mut u16);
             } else {
-                R24 = (r18).wrapping_sub(ram_word!(game, samus_x_pos));
+                R24 = (r18).wrapping_sub(word!(game.samus_x_pos));
                 v4 = *(p as *mut u16);
             }
             let mut v5: i16 =
-                (ram_word!(game, samus_x_radius) as i32 + abs16(v4) as i32 - R24 as i32) as i16;
+                (word!(game.samus_x_radius) as i32 + abs16(v4) as i32 - R24 as i32) as i16;
             if v5 >= 0 {
                 if v5 as i32 - 4i32 & 0x8000 != 0 {
                     v5 = 4;
                 }
-                set_ram_word!(game.extra_samus_x_displacement = v5 as u16);
-                set_ram_word!(game.extra_samus_y_displacement = 4);
-                set_ram_words! { game, 0;
+                word!(game.extra_samus_x_displacement = v5 as u16);
+                word!(game.extra_samus_y_displacement = 4);
+                word! { game, 0;
                     extra_samus_x_subdisplacement, extra_samus_y_subdisplacement,
                 }
                 return 1;
@@ -4502,7 +4485,7 @@ pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
     let E = Get_DeadTorizo(0, game);
     let v1: u16 = ((*E).var_00).wrapping_add(1);
     (*E).var_00 = v1;
-    let mut v3: u16 = ram_word!(game, vram_write_queue_tail);
+    let mut v3: u16 = word!(game.vram_write_queue_tail);
     if v1 & 1 != 0 {
         let mut v8: u16 = 0;
         let mut v9: u16 = crate::rtl::rom_table_word!(game, 0xa9d583, 0);
@@ -4541,15 +4524,15 @@ pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
         }
     }
     (*Get_DeadEnemy(0i32, game)).var_22 = 0;
-    set_ram_word!(game.vram_write_queue_tail = v3);
+    word!(game.vram_write_queue_tail = v3);
 }
 pub unsafe fn DeadTorizo_CorpseRottingFinished(game: &mut Game) {
     game.eproj_spawn_pt = Point16U {
-        x: ((ram_word!(game, random_number) as i32 & 0x1f) + 272) as u16,
+        x: ((word!(game.random_number) as i32 & 0x1f) + 272) as u16,
         y: 188,
     };
     SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xa, game);
-    if (ram_word!(game, random_enemy_counter) & 7) == 0 {
+    if (word!(game.random_enemy_counter) & 7) == 0 {
         QueueSfx2_Max6(0x10, game);
     }
 }
@@ -4595,7 +4578,7 @@ pub unsafe fn DeadTorizo_CopyLineOfSandHeapTileData(a: u16, game: &mut Game) {
 }
 pub unsafe fn DeadSidehopper_Init(game: &mut Game) {
     let dsr_parameter_1: u16 =
-        (*Get_DeadSidehopper(ram_word!(game, cur_enemy_index) as i32, game)).parameter_1;
+        (*Get_DeadSidehopper(word!(game.cur_enemy_index) as i32, game)).parameter_1;
     if dsr_parameter_1 != 0 {
         if dsr_parameter_1 != 2 {
             Unreachable(game);
@@ -4606,7 +4589,7 @@ pub unsafe fn DeadSidehopper_Init(game: &mut Game) {
     };
 }
 pub unsafe fn DeadSidehopper_Init_0(game: &mut Game) {
-    let E = Get_DeadSidehopper(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_DeadSidehopper(word!(game.cur_enemy_index) as i32, game);
     (*E).base.properties =
         ((*E).base.properties as i32 & 0x77ff | kEnemyProps_ProcessedOffscreen as i32) as u16;
     if ((*Get_DeadSidehopper(0i32, game)).base.properties as i32 & kEnemyProps_Invisible as i32)
@@ -4623,82 +4606,74 @@ pub unsafe fn DeadSidehopper_Init_0(game: &mut Game) {
     (*E).base.palette_index = 512;
     (*E).base.y_height = 21;
     Enemy_SetInstrList(
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         addr_kDeadMonsters_Ilist_ECE3 as u16,
         game,
     );
-    InitializeEnemyCorpseRotting(
-        ram_word!(game, cur_enemy_index),
-        addr_stru_A9DD68 as u16,
-        game,
-    );
+    InitializeEnemyCorpseRotting(word!(game.cur_enemy_index), addr_stru_A9DD68 as u16, game);
 }
 pub unsafe fn DeadSidehopper_Init_1(game: &mut Game) {
-    let E = Get_DeadSidehopper(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_DeadSidehopper(word!(game.cur_enemy_index) as i32, game);
     (*E).var_08 = -1i32 as u16;
     (*E).var_A = ((0xa9da64i32) as u16);
     (*E).base.palette_index = 3584;
     Enemy_SetInstrList(
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         addr_kDeadMonsters_Ilist_ECEF as u16,
         game,
     );
-    InitializeEnemyCorpseRotting(
-        ram_word!(game, cur_enemy_index),
-        addr_stru_A9DD78 as u16,
-        game,
-    );
+    InitializeEnemyCorpseRotting(word!(game.cur_enemy_index), addr_stru_A9DD78 as u16, game);
 }
 pub unsafe fn DeadZoomer_Init(game: &mut Game) {
-    let v1 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
+    let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
     (*v1).palette_index = 3584;
     (*v1).ai_var_A = ((0xa9da69i32) as u16);
     let v2: i32 = (*v1).parameter_1 as i32 >> 1;
     Enemy_SetInstrList(
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         crate::rtl::rom_table_word!(game, 0xa9d86a, v2 as isize),
         game,
     );
     InitializeEnemyCorpseRotting(
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         crate::rtl::rom_table_word!(game, 0xa9d870, v2 as isize),
         game,
     );
 }
 pub unsafe fn DeadRipper_Init(game: &mut Game) {
-    let v1 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
+    let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
     (*v1).palette_index = 3584;
     (*v1).ai_var_A = ((0xa9da73i32) as u16);
     let v2: i32 = (*v1).parameter_1 as i32 >> 1;
     Enemy_SetInstrList(
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         crate::rtl::rom_table_word!(game, 0xa9d897, v2 as isize),
         game,
     );
     InitializeEnemyCorpseRotting(
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         crate::rtl::rom_table_word!(game, 0xa9d89b, v2 as isize),
         game,
     );
 }
 pub unsafe fn DeadSkree_Init(game: &mut Game) {
-    let v1 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
+    let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
     (*v1).palette_index = 3584;
     (*v1).ai_var_A = ((0xa9da6ei32) as u16);
     let v2: i32 = (*v1).parameter_1 as i32 >> 1;
     Enemy_SetInstrList(
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         crate::rtl::rom_table_word!(game, 0xa9d8c0, v2 as isize),
         game,
     );
     InitializeEnemyCorpseRotting(
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         crate::rtl::rom_table_word!(game, 0xa9d8c6, v2 as isize),
         game,
     );
 }
 pub unsafe fn DeadSidehopper_Powerbomb(game: &mut Game) {
-    if (*Get_DeadSidehopper(ram_word!(game, cur_enemy_index) as i32, game)).var_08 >= 8 {
+    if (*Get_DeadSidehopper(word!(game.cur_enemy_index) as i32, game)).var_08 >= 8 {
         DeadSidehopper_Shot(game);
     } else {
         DeadSidehopper_Main(game);
@@ -4720,15 +4695,15 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn DeadSidehopper_Main(game: &mut Game) {
-    let E = Get_DeadSidehopper(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_DeadSidehopper(word!(game.cur_enemy_index) as i32, game);
     CallDeadSidehopperFunc(
         (((*E).var_A) as u32) | (0xa90000u32),
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         game,
     );
 }
 pub unsafe fn DeadSidehopper_Alive_WaitForActivate(k: u16, game: &mut Game) {
-    if ram_word!(game, layer1_x_pos) as i32 - 513i32 & 0x8000 != 0 {
+    if word!(game.layer1_x_pos) as i32 - 513i32 & 0x8000 != 0 {
         (*Get_DeadSidehopper(k as i32, game)).var_A = ((0xa9d8f1i32) as u16);
         DeadSidehopper_Activated(k, game);
     }
@@ -4805,7 +4780,7 @@ pub unsafe fn DeadMonsters_Func_5(k: u16, game: &mut Game) {
             0xf,
             game,
         );
-        let v3: u16 = ram_word!(game, cur_enemy_index);
+        let v3: u16 = word!(game.cur_enemy_index);
         let v5: u16 = ((*E).var_08).wrapping_add(1);
         (*E).var_08 = v5;
         if v5 >= 8 {
@@ -4824,10 +4799,10 @@ crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game);
     DeadRipper_WaitForSamusColl => DeadMonsters_WaitForSamusColl(k, ((0xa9da99i32) as u16), game);
 }
 pub unsafe fn DeadMonsters_WaitForSamusColl(k: u16, j: u16, game: &mut Game) {
-    if k == ram_word!(game, enemy_index_colliding_dirs[0])
-        || k == ram_word!(game, enemy_index_colliding_dirs[1])
-        || k == ram_word!(game, enemy_index_colliding_dirs[2])
-        || k == ram_word!(game, enemy_index_colliding_dirs[3])
+    if k == word!(game.enemy_index_colliding_dirs[0])
+        || k == word!(game.enemy_index_colliding_dirs[1])
+        || k == word!(game.enemy_index_colliding_dirs[2])
+        || k == word!(game.enemy_index_colliding_dirs[3])
     {
         (*Get_DeadMonsters(k as i32, game)).var_A = j;
     }
@@ -4849,37 +4824,37 @@ pub unsafe fn DeadMonsters_PreRotDelay_Common(k: u16, j: u16, game: &mut Game) {
 pub unsafe fn DeadSidehopper_Rotting(k: u16, game: &mut Game) {
     let v1: u8 = ProcessCorpseRotting(k, game);
     if v1 & 1 == 0 {
-        (*Get_DeadMonsters(ram_word!(game, cur_enemy_index) as i32, game)).var_A =
+        (*Get_DeadMonsters(word!(game.cur_enemy_index) as i32, game)).var_A =
             ((0xa9da64i32) as u16);
     }
-    let dms_var_53: u16 = (*Get_DeadMonsters(ram_word!(game, cur_enemy_index) as i32, game)).var_53;
+    let dms_var_53: u16 = (*Get_DeadMonsters(word!(game.cur_enemy_index) as i32, game)).var_53;
     ProcessCorpseRottingVramTransfers(dms_var_53, game);
 }
 pub unsafe fn DeadZoomer_Rotting(k: u16, game: &mut Game) {
     let v1: u8 = ProcessCorpseRotting(k, game);
     if v1 & 1 == 0 {
-        (*Get_DeadMonsters(ram_word!(game, cur_enemy_index) as i32, game)).var_A =
+        (*Get_DeadMonsters(word!(game.cur_enemy_index) as i32, game)).var_A =
             ((0xa9da63i32) as u16);
     }
-    let dms_var_53: u16 = (*Get_DeadMonsters(ram_word!(game, cur_enemy_index) as i32, game)).var_53;
+    let dms_var_53: u16 = (*Get_DeadMonsters(word!(game.cur_enemy_index) as i32, game)).var_53;
     ProcessCorpseRottingVramTransfers(dms_var_53, game);
 }
 pub unsafe fn DeadRipper_Rotting(k: u16, game: &mut Game) {
     let v1: u8 = ProcessCorpseRotting(k, game);
     if v1 & 1 == 0 {
-        (*Get_DeadMonsters(ram_word!(game, cur_enemy_index) as i32, game)).var_A =
+        (*Get_DeadMonsters(word!(game.cur_enemy_index) as i32, game)).var_A =
             ((0xa9da63i32) as u16);
     }
-    let dms_var_53: u16 = (*Get_DeadMonsters(ram_word!(game, cur_enemy_index) as i32, game)).var_53;
+    let dms_var_53: u16 = (*Get_DeadMonsters(word!(game.cur_enemy_index) as i32, game)).var_53;
     ProcessCorpseRottingVramTransfers(dms_var_53, game);
 }
 pub unsafe fn DeadSkree_Rotting(k: u16, game: &mut Game) {
     let v1: u8 = ProcessCorpseRotting(k, game);
     if v1 & 1 == 0 {
-        (*Get_DeadMonsters(ram_word!(game, cur_enemy_index) as i32, game)).var_A =
+        (*Get_DeadMonsters(word!(game.cur_enemy_index) as i32, game)).var_A =
             ((0xa9da63i32) as u16);
     }
-    let dms_var_53: u16 = (*Get_DeadMonsters(ram_word!(game, cur_enemy_index) as i32, game)).var_53;
+    let dms_var_53: u16 = (*Get_DeadMonsters(word!(game.cur_enemy_index) as i32, game)).var_53;
     ProcessCorpseRottingVramTransfers(dms_var_53, game);
 }
 pub unsafe fn ProcessCorpseRotting(k: u16, game: &mut Game) -> u8 {
@@ -4966,13 +4941,13 @@ pub unsafe fn CopyMoveCorpseRottingRotEntry(r20: *const u16, a: u16, r18: u16, g
     };
 }
 pub unsafe fn CorpseRottingRotEntryFinishedHook(game: &mut Game) {
-    let v0 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
+    let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
     game.eproj_spawn_pt = Point16U {
-        x: ((*v0).x_pos as i32 + (ram_word!(game, random_number) as i32 & 0x1a) - 14i32) as u16,
+        x: ((*v0).x_pos as i32 + (word!(game.random_number) as i32 & 0x1a) - 14i32) as u16,
         y: (((*v0).y_pos).wrapping_add(16)),
     };
     SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xa, game);
-    if (ram_word!(game, random_enemy_counter) & 7) == 0 {
+    if (word!(game.random_enemy_counter) & 7) == 0 {
         QueueSfx2_Max3(0x10, game);
     }
 }
@@ -5012,7 +4987,7 @@ pub unsafe fn InitializeEnemyCorpseRotting(k: u16, j: u16, game: &mut Game) {
 }
 pub unsafe fn ProcessCorpseRottingVramTransfers(k: u16, game: &mut Game) {
     let mut p = RomPtr_A9(k, game);
-    let mut v1: u16 = ram_word!(game, vram_write_queue_tail);
+    let mut v1: u16 = word!(game.vram_write_queue_tail);
     let mut v2: u16 = *(p as *mut u16);
     loop {
         let v3 = gVramWriteEntry(v1 as i32, game);
@@ -5029,10 +5004,10 @@ pub unsafe fn ProcessCorpseRottingVramTransfers(k: u16, game: &mut Game) {
         }
     }
     (*Get_DeadEnemy(0i32, game)).var_22 = 0;
-    set_ram_word!(game.vram_write_queue_tail = v1);
+    word!(game.vram_write_queue_tail = v1);
 }
 pub unsafe fn DeadZoomer_Powerbomb(game: &mut Game) {
-    if ((*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).properties as i32
+    if ((*gEnemyData(word!(game.cur_enemy_index) as i32, game)).properties as i32
         & kEnemyProps_Tangible as i32)
         == 0
     {
@@ -5043,7 +5018,7 @@ pub unsafe fn DeadZoomer_Shot(game: &mut Game) {
     DeadSidehopper_DD34(((0xa9dad0i32) as u16), game);
 }
 pub unsafe fn DeadRipper_Powerbomb(game: &mut Game) {
-    if ((*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).properties as i32
+    if ((*gEnemyData(word!(game.cur_enemy_index) as i32, game)).properties as i32
         & kEnemyProps_Tangible as i32)
         == 0
     {
@@ -5054,7 +5029,7 @@ pub unsafe fn DeadRipper_Shot(game: &mut Game) {
     DeadSidehopper_DD34(((0xa9dae6i32) as u16), game);
 }
 pub unsafe fn DeadSkree_Powerbomb(game: &mut Game) {
-    if ((*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).properties as i32
+    if ((*gEnemyData(word!(game.cur_enemy_index) as i32, game)).properties as i32
         & kEnemyProps_Tangible as i32)
         == 0
     {
@@ -5065,7 +5040,7 @@ pub unsafe fn DeadSkree_Shot(game: &mut Game) {
     DeadSidehopper_DD34(((0xa9dafci32) as u16), game);
 }
 pub unsafe fn DeadSidehopper_Shot(game: &mut Game) {
-    let E = Get_DeadSidehopper(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_DeadSidehopper(word!(game.cur_enemy_index) as i32, game);
     if !(((*E).base.properties as i32 & kEnemyProps_Tangible as i32) != 0 || (*E).var_08 < 8) {
         DeadSidehopper_DD31(game);
     }
@@ -5074,14 +5049,14 @@ pub unsafe fn DeadSidehopper_DD31(game: &mut Game) {
     DeadSidehopper_DD34(((0xa9dabai32) as u16), game);
 }
 pub unsafe fn DeadSidehopper_DD34(a: u16, game: &mut Game) {
-    let E = Get_DeadSidehopper(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_DeadSidehopper(word!(game.cur_enemy_index) as i32, game);
     (*E).var_A = a;
     (*E).base.properties = ((*E).base.properties as i32
         | (kEnemyProps_ProcessedOffscreen as i32 | kEnemyProps_Tangible as i32))
         as u16;
 }
 pub unsafe fn DeadSidehopper_Touch(game: &mut Game) {
-    if (*Get_DeadSidehopper(ram_word!(game, cur_enemy_index) as i32, game)).var_08 < 8 {
+    if (*Get_DeadSidehopper(word!(game.cur_enemy_index) as i32, game)).var_08 < 8 {
         NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
     } else {
         DeadSidehopper_DD31(game);
@@ -5390,10 +5365,10 @@ pub unsafe fn Shitroid_Func_2(k: u16, rect: Rect16U, game: &mut Game) -> u8 {
 pub unsafe fn Shitroid_Init(game: &mut Game) {
     let mut i: i32 = 4094;
     while i >= 0 {
-        set_ram_word!(game.tilemap_stuff[(i >> 1)] = 0);
+        word!(game.tilemap_stuff[(i >> 1)] = 0);
         i -= 2;
     }
-    let E = Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Shitroid(word!(game.cur_enemy_index) as i32, game);
     (*E).base.properties = ((*E).base.properties as i32
         | (kEnemyProps_DisableSamusColl as i32 | kEnemyProps_BlockPlasmaBeam as i32))
         as u16;
@@ -5401,7 +5376,7 @@ pub unsafe fn Shitroid_Init(game: &mut Game) {
     enemy_instruction! {[(*E).base]; instruction = addr_kShitroid_Ilist_F90E as u16, timer = 1}
     (*E).base.timer = 0;
     let mut v2: u16 = ((0xa9efe6i32) as u16);
-    if (ram_word!(game, layer1_x_pos) & 0x8000) != 0 {
+    if (word!(game.layer1_x_pos) & 0x8000) != 0 {
         (*E).base.properties = ((*E).base.properties as i32
             | (kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
             as u16;
@@ -5428,8 +5403,8 @@ pub unsafe fn Shitroid_Init(game: &mut Game) {
     );
 }
 pub unsafe fn Shitroid_Powerbomb(game: &mut Game) {
-    if (*Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game)).parameter_2 != 0 {
-        Shitroid_Func_26(ram_word!(game, cur_enemy_index), game);
+    if (*Get_Shitroid(word!(game.cur_enemy_index) as i32, game)).parameter_2 != 0 {
+        Shitroid_Func_26(word!(game.cur_enemy_index), game);
     }
     Shitroid_Main(game);
 }
@@ -5449,15 +5424,15 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn Shitroid_Main(game: &mut Game) {
-    let E = Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Shitroid(word!(game.cur_enemy_index) as i32, game);
     (*E).base.health = 0x7fff;
     CallShitroidFunc(
         (((*E).var_A) as u32) | (0xa90000u32),
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         game,
     );
     MoveEnemyWithVelocity(game);
-    if ram_word!(game, palette_change_num) == 0 {
+    if word!(game.palette_change_num) == 0 {
         Shitroid_HandleNormalPalette(game);
     }
 }
@@ -5466,13 +5441,13 @@ pub unsafe fn Shitroid_Func_3(k: u16, game: &mut Game) {
     set_fields! {[(*E)], 0; var_B, var_C}
 }
 pub unsafe fn Shitroid_Func_4(game: &mut Game) {
-    if ram_word!(game, layer1_x_pos) as i32 - 513i32 & 0x8000 != 0 {
-        set_ram_word!(game.layer1_x_pos = 512);
+    if word!(game.layer1_x_pos) as i32 - 513i32 & 0x8000 != 0 {
+        word!(game.layer1_x_pos = 512);
         *(ram_ptr!(game, u16; 0xcd20)) = *ram_ptr!(game; 0xcd20, 0) as u16;
         *(ram_ptr!(game, u16; 0xcd20, 2)) = *ram_ptr!(game; 0xcd20, 2) as u16;
         SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb767 as VoidP), game);
         SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x1f, 0x3, 0xb767 as VoidP), game);
-        let E = Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game);
+        let E = Get_Shitroid(word!(game.cur_enemy_index) as i32, game);
         (*E).var_A = ((0xa9f02bi32) as u16);
         (*E).var_04 = 1;
     }
@@ -5576,7 +5551,7 @@ pub unsafe fn Shitroid_Func_12(k: u16, game: &mut Game) {
 }
 pub unsafe fn Shitroid_Func_13(k: u16, game: &mut Game) {
     let E = Get_Shitroid(k as i32, game);
-    let v2: u16 = abs16(((*E).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos)));
+    let v2: u16 = abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)));
     let mut shitro_var_02: u16 = 0;
     if v2 >= 8 {
         shitro_var_02 = (*E).var_02;
@@ -5590,25 +5565,24 @@ pub unsafe fn Shitroid_Func_13(k: u16, game: &mut Game) {
         shitro_var_02 = ((v2 >= 8) as i32 + (*E).var_02 as i32 + 2) as u16;
     }
     (*E).var_02 = shitro_var_02;
-    if shitro_var_02 >= 0x100 || ram_word!(game, samus_x_pos) as i32 - 512i32 & 0x8000 != 0 {
-        (*Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game)).var_A =
-            ((0xa9f1fai32) as u16);
+    if shitro_var_02 >= 0x100 || word!(game.samus_x_pos) as i32 - 512i32 & 0x8000 != 0 {
+        (*Get_Shitroid(word!(game.cur_enemy_index) as i32, game)).var_A = ((0xa9f1fai32) as u16);
     } else {
         let shitro_var_01: u16 = (*E).var_01;
         let mut v5: u16 = 0;
         if shitro_var_01 != 0 {
             (*E).var_01 = (shitro_var_01).wrapping_sub(1);
-            v5 = ram_word!(game, samus_y_pos);
+            v5 = word!(game.samus_y_pos);
         } else {
             v5 = 80;
-            if (ram_word!(game, random_number) & 0xfff) >= 0xfe0 {
+            if (word!(game.random_number) & 0xfff) >= 0xfe0 {
                 (*E).var_01 = 32;
             }
         }
         Shitroid_Func_GraduallyAccelerateTowards0x400(
-            ram_word!(game, cur_enemy_index),
+            word!(game.cur_enemy_index),
             0xa,
-            ram_word!(game, samus_x_pos),
+            word!(game.samus_x_pos),
             v5,
             game,
         );
@@ -5618,8 +5592,8 @@ pub unsafe fn Shitroid_Func_14(k: u16, game: &mut Game) {
     Shitroid_Func_GraduallyAccelerateTowards0x400(
         k,
         0xf,
-        ram_word!(game, samus_x_pos),
-        (ram_word!(game, samus_y_pos)).wrapping_sub(32),
+        word!(game.samus_x_pos),
+        (word!(game.samus_y_pos)).wrapping_sub(32),
         game,
     );
 }
@@ -5630,8 +5604,8 @@ pub unsafe fn Shitroid_Func_15(k: u16, game: &mut Game) {
 }
 pub unsafe fn Shitroid_Func_16(k: u16, game: &mut Game) {
     let E = Get_Shitroid(k as i32, game);
-    if ram_word!(game, samus_health) < 2 {
-        set_ram_words! { game, 0; samus_x_speed_divisor, bomb_counter }
+    if word!(game.samus_health) < 2 {
+        word! { game, 0; samus_x_speed_divisor, bomb_counter }
         (*E).var_A = ((0xa9f2a2i32) as u16);
         set_fields! {[(*E)], 0; var_B, var_C}
         Enemy_SetInstrList(k, addr_kShitroid_Ilist_F906 as u16, game);
@@ -5641,17 +5615,17 @@ pub unsafe fn Shitroid_Func_16(k: u16, game: &mut Game) {
         (*E).var_04 = 0;
         QueueMusic_Delayed8(7, game);
     } else {
-        set_ram_word!(game.cooldown_timer = 8);
-        set_ram_word!(game.bomb_counter = 5);
-        set_ram_word!(game.samus_x_speed_divisor = 2);
-        if ram_word!(game, samus_y_speed) as i32 - 4i32 & 0x8000 == 0 {
-            set_ram_word!(game.samus_y_speed = 2);
+        word!(game.cooldown_timer = 8);
+        word!(game.bomb_counter = 5);
+        word!(game.samus_x_speed_divisor = 2);
+        if word!(game.samus_y_speed) as i32 - 4i32 & 0x8000 == 0 {
+            word!(game.samus_y_speed = 2);
         }
         let v2: i32 = ((*E).base.frame_counter as i32 & 6) >> 1;
         (*E).base.x_pos =
-            (ram_word!(game, samus_x_pos)).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
-        (*E).base.y_pos = (ram_word!(game, samus_y_pos) as i32 + g_word_A993C3[v2 as usize] as i32
-            - 20i32) as u16;
+            (word!(game.samus_x_pos)).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
+        (*E).base.y_pos =
+            (word!(game.samus_y_pos) as i32 + g_word_A993C3[v2 as usize] as i32 - 20i32) as u16;
         Samus_DamageDueToShitroid(game);
     };
 }
@@ -5672,13 +5646,13 @@ pub unsafe fn Shitroid_Func_18(k: u16, game: &mut Game) {
 }
 pub unsafe fn Shitroid_Func_19(k: u16, game: &mut Game) {
     Shitroid_Func_GraduallyAccelerateTowards0x400(
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         0,
-        ram_word!(game, samus_x_pos),
+        word!(game.samus_x_pos),
         104,
         game,
     );
-    let E = Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Shitroid(word!(game.cur_enemy_index) as i32, game);
     (*E).var_F = (*E).var_F.wrapping_sub(1);
     if ((*E).var_F & 0x8000) != 0 {
         QueueSfx2_Max6(0x7d, game);
@@ -5691,13 +5665,13 @@ pub unsafe fn Shitroid_Func_19(k: u16, game: &mut Game) {
 }
 pub unsafe fn Shitroid_Func_20(game: &mut Game) {
     Shitroid_Func_GraduallyAccelerateTowards0x400(
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         0,
-        (ram_word!(game, samus_x_pos)).wrapping_sub(64),
+        (word!(game.samus_x_pos)).wrapping_sub(64),
         100,
         game,
     );
-    let E = Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Shitroid(word!(game.cur_enemy_index) as i32, game);
     (*E).var_F = (*E).var_F.wrapping_sub(1);
     if ((*E).var_F & 0x8000) != 0 {
         (*E).var_A = ((0xa9f324i32) as u16);
@@ -5707,13 +5681,13 @@ pub unsafe fn Shitroid_Func_20(game: &mut Game) {
 }
 pub unsafe fn Shitroid_Func_21(game: &mut Game) {
     Shitroid_Func_GraduallyAccelerateTowards0x400(
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         0,
-        (ram_word!(game, samus_x_pos)).wrapping_add(96),
+        (word!(game.samus_x_pos)).wrapping_add(96),
         104,
         game,
     );
-    let E = Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Shitroid(word!(game.cur_enemy_index) as i32, game);
     (*E).var_F = (*E).var_F.wrapping_sub(1);
     if ((*E).var_F & 0x8000) != 0 {
         (*E).var_A = ((0xa9f3a3i32) as u16);
@@ -5735,14 +5709,14 @@ pub unsafe fn Shitroid_Func_23(game: &mut Game) {
         h: 8,
     };
     Shitroid_Func_GraduallyAccelerateTowards0x400(
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         0,
         rect.x,
         rect.y,
         game,
     );
-    if Shitroid_Func_2(ram_word!(game, cur_enemy_index), rect, game) == 0 {
-        let E = Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game);
+    if Shitroid_Func_2(word!(game.cur_enemy_index), rect, game) == 0 {
+        let E = Get_Shitroid(word!(game.cur_enemy_index) as i32, game);
         set_fields! {[(*E)], 0; var_B, var_C}
         (*E).base.properties = ((*E).base.properties as i32
             & !(kEnemyProps_DisableSamusColl as i32 | kEnemyProps_Invisible as i32))
@@ -5777,7 +5751,7 @@ pub unsafe fn Shitroid_Func_26(k: u16, game: &mut Game) {
 }
 pub unsafe fn Shitroid_Func_27(k: u16, game: &mut Game) -> u8 {
     let E = Get_Shitroid(k as i32, game);
-    let v2: u16 = abs16(((*E).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos)));
+    let v2: u16 = abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)));
     let mut shitro_var_02: u16 = 0;
     if v2 >= 2 {
         shitro_var_02 = (*E).var_02;
@@ -5795,22 +5769,22 @@ pub unsafe fn Shitroid_Func_27(k: u16, game: &mut Game) -> u8 {
     let mut v5: u16 = 0;
     if shitro_var_01 != 0 {
         (*E).var_01 = (shitro_var_01).wrapping_sub(1);
-        v5 = (ram_word!(game, samus_y_pos)).wrapping_sub(18);
+        v5 = (word!(game.samus_y_pos)).wrapping_sub(18);
     } else {
         v5 = 80;
-        if (ram_word!(game, random_number) & 0xfff) >= 0xfe0 {
+        if (word!(game.random_number) & 0xfff) >= 0xfe0 {
             (*E).var_01 = 32;
         }
     }
     Shitroid_Func_GraduallyAccelerateTowards0x400(
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         8,
-        ram_word!(game, samus_x_pos),
+        word!(game.samus_x_pos),
         v5,
         game,
     );
-    ((*Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game)).var_02 >= 0x400
-        || ram_word!(game, samus_x_pos) as i32 - 128i32 & 0x8000 != 0) as u8
+    ((*Get_Shitroid(word!(game.cur_enemy_index) as i32, game)).var_02 >= 0x400
+        || word!(game.samus_x_pos) as i32 - 128i32 & 0x8000 != 0) as u8
 }
 pub unsafe fn Shitroid_GraduallyAccelerateTowardsPt(
     k: u16,
@@ -5929,11 +5903,11 @@ pub unsafe fn Shitroid_CheckIfOnScreen(k: u16, game: &mut Game) -> u8 {
     let mut y_pos: i16 = (*E).base.y_pos as i16;
     let result: u8 = 1;
     if y_pos >= 0 {
-        let mut v3: i16 = (y_pos as i32 + 96 - ram_word!(game, layer1_y_pos) as i32) as i16;
+        let mut v3: i16 = (y_pos as i32 + 96 - word!(game.layer1_y_pos) as i32) as i16;
         if v3 >= 0 && v3 as i32 - 416i32 & 0x8000 != 0 {
             let mut x_pos: i16 = (*E).base.x_pos as i16;
             if x_pos >= 0 {
-                let mut v5: i16 = (x_pos as i32 + 16 - ram_word!(game, layer1_x_pos) as i32) as i16;
+                let mut v5: i16 = (x_pos as i32 + 16 - word!(game.layer1_x_pos) as i32) as i16;
                 if v5 >= 0 && v5 as i32 - 288i32 & 0x8000 != 0 {
                     return 0;
                 }
@@ -6020,7 +5994,7 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
 }
 pub unsafe fn Shitroid_HandleCutscenePalette_Common(r22: u16, r18: u16, game: &mut Game) {
     let mut shitro_var_D_high: i8 = 0;
-    let E = Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Shitroid(word!(game.cur_enemy_index) as i32, game);
     shitro_var_D_high = *(&raw mut (*E).var_D as *mut u8).offset(1) as i8;
     if shitro_var_D_high != 0 {
         *(&raw mut (*E).var_D as *mut u8).offset(1) = ((shitro_var_D_high) as u8).wrapping_sub(1);
@@ -6028,8 +6002,7 @@ pub unsafe fn Shitroid_HandleCutscenePalette_Common(r22: u16, r18: u16, game: &m
         *(&raw mut (*E).var_D as *mut u8).offset(1) = (*E).var_E as u8;
         let v3: u8 = (*(&raw mut (*E).var_D as *mut u8).offset(0) as i32 + 1 & 7) as u8;
         *(&raw mut (*E).var_D as *mut u8).offset(0) = v3;
-        let v4: u16 =
-            Shitroid_HandleCrySoundEffect(ram_word!(game, cur_enemy_index), v3 as u16, game);
+        let v4: u16 = Shitroid_HandleCrySoundEffect(word!(game.cur_enemy_index), v3 as u16, game);
         WriteColorsToPalette(r18, 0xa9, (r22 as i32 + 8 * v4 as i32) as u16, 4, game);
     };
 }
@@ -6053,15 +6026,14 @@ pub unsafe fn Shitroid_HandleCrySoundEffect(k: u16, a: u16, game: &mut Game) -> 
     a
 }
 pub unsafe fn Shitroid_Touch(game: &mut Game) {
-    let E = Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Shitroid(word!(game.cur_enemy_index) as i32, game);
     if (*E).parameter_2 != 0 {
-        Shitroid_Func_26(ram_word!(game, cur_enemy_index), game);
-        if *ram_ptr!(game; 0xa1f) == 3 && ram_word!(game, samus_x_pos) as i32 - 512i32 & 0x8000 == 0
-        {
+        Shitroid_Func_26(word!(game.cur_enemy_index), game);
+        if *ram_ptr!(game; 0xa1f) == 3 && word!(game.samus_x_pos) as i32 - 512i32 & 0x8000 == 0 {
             let r18: u16 = (0x80
                 - CalculateAngleFromXY(
-                    (ram_word!(game, samus_x_pos)).wrapping_sub((*E).base.x_pos),
-                    (ram_word!(game, samus_y_pos)).wrapping_sub((*E).base.y_pos),
+                    (word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos),
+                    (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos),
                     game,
                 ) as i32
                 + 0x80) as u8 as u16;
@@ -6069,10 +6041,10 @@ pub unsafe fn Shitroid_Touch(game: &mut Game) {
             (*E).var_C = ((*E).var_C).wrapping_add(Math_MultByCos(0x40, r18));
         } else if (*E).var_A as i32 == 0xa9f1fa & 0xffff {
             if Shitroid_AccelerateTowardsPoint(
-                ram_word!(game, cur_enemy_index),
+                word!(game.cur_enemy_index),
                 0x200,
-                ram_word!(game, samus_x_pos),
-                (ram_word!(game, samus_y_pos)).wrapping_sub(32),
+                word!(game.samus_x_pos),
+                (word!(game.samus_y_pos)).wrapping_sub(32),
                 game,
             ) & 1
                 != 0
@@ -6089,17 +6061,16 @@ pub unsafe fn Shitroid_Touch(game: &mut Game) {
     }
 }
 pub unsafe fn Shitroid_Shot(game: &mut Game) {
-    let E = Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Shitroid(word!(game.cur_enemy_index) as i32, game);
     if (*E).parameter_2 != 0 {
-        Shitroid_Func_26(ram_word!(game, cur_enemy_index), game);
+        Shitroid_Func_26(word!(game.cur_enemy_index), game);
         let r18: u16 = -(CalculateAngleFromXY(
-            (ram_word!(game, projectile_x_pos[0])).wrapping_sub((*E).base.x_pos),
-            (ram_word!(game, projectile_y_pos[0])).wrapping_sub((*E).base.y_pos),
+            (word!(game.projectile_x_pos[0])).wrapping_sub((*E).base.x_pos),
+            (word!(game.projectile_y_pos[0])).wrapping_sub((*E).base.y_pos),
             game,
         ) as i32) as u8 as u16;
-        let mut v1: u16 = (8u16).wrapping_mul(ram_word!(
-            game,
-            projectile_damage[ram_word!(game, collision_detection_index)]
+        let mut v1: u16 = (8u16).wrapping_mul(word!(
+            game.projectile_damage[word!(game.collision_detection_index)]
         ));
         if v1 >= 0xf0 {
             v1 = 240;
@@ -6114,7 +6085,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16) -> *const
     Shitroid_Instr_6 [addr_kShitroid_Ilist_F93A as i32 as usize as *const u16] { };
 }
 pub unsafe fn Shitroid_Instr_5(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    if (ram_word!(game, random_number) & 0x8000) == 0 {
+    if (word!(game.random_number) & 0x8000) == 0 {
         return *jp.offset(0) as usize as *const u16;
     }
     QueueSfx2_Max6(0x52, game);

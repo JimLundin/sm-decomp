@@ -11,8 +11,7 @@ use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
-use crate::ram_map::set_ram_words;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::word;
 use crate::rtl::RomPtr;
 
 pub use crate::types::Func_V;
@@ -33,31 +32,29 @@ unsafe fn get_FxDef(a: u16, game: &mut Game) -> *mut FxDef {
 }
 pub unsafe fn LoadFxEntry(v0: u16, game: &mut Game) {
     let FD = get_FxDef(
-        (ram_word!(game, room_layer3_asm_ptr) as i32 + 16 * (v0 as i32 & 7)) as u16,
+        (word!(game.room_layer3_asm_ptr) as i32 + 16 * (v0 as i32 & 7)) as u16,
         game,
     );
-    set_ram_word!(game.fx_base_y_pos = (*FD).base_y_pos);
-    set_ram_word!(game.fx_target_y_pos = (*FD).target_y_pos);
-    set_ram_word!(game.fx_y_vel = (*FD).y_vel);
-    set_ram_word!(game.fx_timer = (*FD).timer as u16);
-    set_ram_word!(game.fx_layer_blending_config_a = (*FD).default_layer_blend as u16);
-    set_ram_word!(game.fx_layer_blending_config_b = (*FD).layer3_layer_blend as u16);
-    set_ram_word!(game.fx_liquid_options = (*FD).fx_liquid_options_ as u16);
+    word!(game.fx_base_y_pos = (*FD).base_y_pos);
+    word!(game.fx_target_y_pos = (*FD).target_y_pos);
+    word!(game.fx_y_vel = (*FD).y_vel);
+    word!(game.fx_timer = (*FD).timer as u16);
+    word!(game.fx_layer_blending_config_a = (*FD).default_layer_blend as u16);
+    word!(game.fx_layer_blending_config_b = (*FD).layer3_layer_blend as u16);
+    word!(game.fx_liquid_options = (*FD).fx_liquid_options_ as u16);
     if (*FD).palette_blend != 0 {
         let v2: i32 = (*FD).palette_blend as i32 >> 1;
-        set_ram_word!(
-            game.palette_buffer[25] = crate::rtl::rom_table_word!(game, 0x89aa02, v2 as isize)
-        );
-        set_ram_word!(
+        word!(game.palette_buffer[25] = crate::rtl::rom_table_word!(game, 0x89aa02, v2 as isize));
+        word!(
             game.palette_buffer[26] =
                 crate::rtl::rom_table_word!(game, 0x89aa02, (v2 + 1) as isize)
         );
-        set_ram_word!(
+        word!(
             game.palette_buffer[27] =
                 crate::rtl::rom_table_word!(game, 0x89aa02, (v2 + 2) as isize)
         );
     } else {
-        set_ram_word!(game.palette_buffer[27] = 0);
+        word!(game.palette_buffer[27] = 0);
     };
 }
 pub fn nullsub_106(game: &mut Game) {}
@@ -69,7 +66,7 @@ static kFxTypeFuncPtrs: [Option<Func_V>; 23] = callback_table! { unsafe Func_V;
     FxTypeFunc_28_CeresRidley, FxTypeFunc_CeresElevator, FxTypeFunc_2C_Haze,
 };
 pub unsafe fn LoadFXHeader(game: &mut Game) {
-    let mut entry_ptr: u16 = ram_word!(game, room_layer3_asm_ptr);
+    let mut entry_ptr: u16 = word!(game.room_layer3_asm_ptr);
     if entry_ptr == 0 {
         return;
     }
@@ -81,38 +78,36 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         if door_ptr == 0xffff {
             return;
         }
-        if door_ptr == ram_word!(game, door_def_ptr) {
+        if door_ptr == word!(game.door_def_ptr) {
             break;
         }
         entry_ptr = (entry_ptr).wrapping_add(16);
     }
     let FD = get_FxDef(entry_ptr, game);
-    set_ram_word!(game.fx_base_y_pos = (*FD).base_y_pos);
-    set_ram_word!(game.fx_target_y_pos = (*FD).target_y_pos);
-    set_ram_word!(game.fx_y_vel = (*FD).y_vel);
-    set_ram_word!(game.fx_timer = (*FD).timer as u16);
-    set_ram_word!(game.fx_layer_blending_config_a = (*FD).default_layer_blend as u16);
-    set_ram_word!(game.fx_layer_blending_config_b = (*FD).layer3_layer_blend as u16);
-    set_ram_word!(game.fx_liquid_options = (*FD).fx_liquid_options_ as u16);
+    word!(game.fx_base_y_pos = (*FD).base_y_pos);
+    word!(game.fx_target_y_pos = (*FD).target_y_pos);
+    word!(game.fx_y_vel = (*FD).y_vel);
+    word!(game.fx_timer = (*FD).timer as u16);
+    word!(game.fx_layer_blending_config_a = (*FD).default_layer_blend as u16);
+    word!(game.fx_layer_blending_config_b = (*FD).layer3_layer_blend as u16);
+    word!(game.fx_liquid_options = (*FD).fx_liquid_options_ as u16);
     if (*FD).palette_blend != 0 {
         let v4: i32 = (*FD).palette_blend as i32 >> 1;
-        set_ram_word!(
-            game.target_palettes[25] = crate::rtl::rom_table_word!(game, 0x89aa02, v4 as isize)
-        );
-        set_ram_word!(
+        word!(game.target_palettes[25] = crate::rtl::rom_table_word!(game, 0x89aa02, v4 as isize));
+        word!(
             game.target_palettes[26] =
                 crate::rtl::rom_table_word!(game, 0x89aa02, (v4 + 1) as isize)
         );
-        set_ram_word!(
+        word!(
             game.target_palettes[27] =
                 crate::rtl::rom_table_word!(game, 0x89aa02, (v4 + 2) as isize)
         );
     } else {
-        set_ram_word!(game.target_palettes[27] = 0);
+        word!(game.target_palettes[27] = 0);
     }
-    set_ram_word!(game.fx_type = (*FD).type_0 as u16);
+    word!(game.fx_type = (*FD).type_0 as u16);
     if (*FD).type_0 != 0 {
-        set_ram_word!(
+        word!(
             game.fx_tilemap_ptr =
                 crate::rtl::rom_table_word!(game, 0x83abf0, ((*FD).type_0 >> 1) as isize)
         );
@@ -121,7 +116,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     if (*FD).palette_fx_bitset != 0 {
         let mut bits: i32 = (*FD).palette_fx_bitset as i32;
         let v11 = RomPtr_83(
-            crate::rtl::rom_table_word!(game, 0x83ac46, ram_word!(game, area_index) as isize),
+            crate::rtl::rom_table_word!(game, 0x83ac46, word!(game.area_index) as isize),
             game,
         );
         let mut j: i32 = 0;
@@ -136,7 +131,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     if (*FD).animtiles_bitset != 0 {
         let mut bits_0: i32 = (*FD).animtiles_bitset as i32;
         let v14 = RomPtr_83(
-            crate::rtl::rom_table_word!(game, 0x83ac56, ram_word!(game, area_index) as isize),
+            crate::rtl::rom_table_word!(game, 0x83ac56, word!(game.area_index) as isize),
             game,
         );
         let mut k: i32 = 0;
@@ -151,32 +146,28 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
 }
 pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
     let mut v1: i16 = 0;
-    if (ram_word!(game, ceres_status) & 0x8000) != 0 {
-        if (112i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) < 0
-            && (144i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) >= 0
-            && ram_word!(game, samus_y_pos) as i32 - 128i32 & 0x8000 != 0
-            && ram_word!(game, samus_y_pos) as i32 - 75i32 & 0x8000 == 0
-            && ram_word!(game, samus_y_speed) == 0
-            && ram_word!(game, samus_y_subspeed) == 0
-            && ram_word!(game, game_state) as i32 == kGameState_8_MainGameplay as i32
+    if (word!(game.ceres_status) & 0x8000) != 0 {
+        if (112i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0
+            && (144i16).wrapping_sub((word!(game.samus_x_pos)) as i16) >= 0
+            && word!(game.samus_y_pos) as i32 - 128i32 & 0x8000 != 0
+            && word!(game.samus_y_pos) as i32 - 75i32 & 0x8000 == 0
+            && word!(game.samus_y_speed) == 0
+            && word!(game.samus_y_subspeed) == 0
+            && word!(game.game_state) as i32 == kGameState_8_MainGameplay as i32
         {
             CallSomeSamusCode(2, game);
-            set_ram_words! { game, 0; screen_fade_delay, screen_fade_counter }
-            set_ram_word!(game.game_state = 32);
+            word! { game, 0; screen_fade_delay, screen_fade_counter }
+            word!(game.game_state = 32);
         }
         crate::update_place! { reference fresh0 = *(ram_ptr!(game, u16; 0x7e1, 2)) => (*fresh0).wrapping_sub(1); }
         if *(ram_ptr!(game, i16; 0x7e1, 2)) < 0 {
             let v0: i32 = ((6u16).wrapping_mul(*(ram_ptr!(game, u16; 0x7e1)))) as i32 >> 1;
             *(ram_ptr!(game, u16; 0x7e1, 2)) =
                 crate::rtl::rom_table_word!(game, 0x89ad5f, v0 as isize);
-            set_ram_word!(
-                game.reg_M7B = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 1) as isize)
-            );
-            set_ram_word!(game.reg_M7C = -(ram_word!(game, reg_M7B) as i32) as u16);
-            set_ram_word!(
-                game.reg_M7A = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 2) as isize)
-            );
-            set_ram_word!(game.reg_M7D = ram_word!(game, reg_M7A));
+            word!(game.reg_M7B = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 1) as isize));
+            word!(game.reg_M7C = -(word!(game.reg_M7B) as i32) as u16);
+            word!(game.reg_M7A = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 2) as isize));
+            word!(game.reg_M7D = word!(game.reg_M7A));
             if *(ram_ptr!(game, i16; 0x7e1)) < 0 {
                 v1 = ((*(ram_ptr!(game, u16; 0x7e1))) as i16).wrapping_sub(1);
                 if *(ram_ptr!(game, u16; 0x7e1)) == 0x8001 {

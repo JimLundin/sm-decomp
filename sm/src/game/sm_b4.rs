@@ -1,8 +1,7 @@
 use crate::game::sm_81::DrawSpritemapWithBaseTile;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
-use crate::ram_map::set_ram_words;
-use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
+use crate::ram_map::word;
 use crate::rtl::{RomPtr, Unreachable};
 
 const RomPtr_B4: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb4>;
@@ -14,22 +13,22 @@ pub unsafe fn CreateSpriteAtPos(
     game: &mut Game,
 ) -> u16 {
     let mut v0: i32 = 62;
-    while ram_word!(game, sprite_instr_list_ptrs[(v0 >> 1)]) != 0 {
+    while word!(game.sprite_instr_list_ptrs[(v0 >> 1)]) != 0 {
         v0 -= 2;
         if (v0 & 0x8000) != 0 {
             return 0xffff;
         }
     }
     let v1: i32 = v0 >> 1;
-    set_ram_words! { game, 0;
+    word! { game, 0;
         sprite_palettes[v1], sprite_x_subpos[v1], sprite_y_subpos[v1], sprite_disable_flag[v1],
     }
-    set_ram_word!(game.sprite_x_pos[v1] = x_r18);
-    set_ram_word!(game.sprite_y_pos[v1] = y_r20);
-    set_ram_word!(game.sprite_palettes[v1] = pal_r24);
+    word!(game.sprite_x_pos[v1] = x_r18);
+    word!(game.sprite_y_pos[v1] = y_r20);
+    word!(game.sprite_palettes[v1] = pal_r24);
     let v2: u16 = crate::rtl::rom_table_word!(game, 0xb4bda8, ilist_r22 as isize);
-    set_ram_word!(game.sprite_instr_list_ptrs[v1] = v2);
-    set_ram_word!(game.sprite_instr_timer[v1] = *(RomPtr_B4(v2, game) as *mut u16));
+    word!(game.sprite_instr_list_ptrs[v1] = v2);
+    word!(game.sprite_instr_timer[v1] = *(RomPtr_B4(v2, game) as *mut u16));
     v0 as u16
 }
 crate::game::address_dispatch! {
@@ -41,31 +40,30 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn HandleSpriteObjects(game: &mut Game) {
-    if ram_word!(game, debug_time_frozen_for_enemies) | ram_word!(game, time_is_frozen_flag) != 0 {
+    if word!(game.debug_time_frozen_for_enemies) | word!(game.time_is_frozen_flag) != 0 {
         return;
     }
-    set_ram_word!(game.sprite_object_index = 62);
+    word!(game.sprite_object_index = 62);
     let mut skip_instruction: bool;
     loop {
-        let mut v0: i32 = ram_word!(game, sprite_object_index) as i32 >> 1;
-        if !(ram_word!(game, sprite_instr_list_ptrs[v0]) == 0
-            || (ram_word!(game, sprite_disable_flag[v0]) & 1) != 0)
+        let mut v0: i32 = word!(game.sprite_object_index) as i32 >> 1;
+        if !(word!(game.sprite_instr_list_ptrs[v0]) == 0
+            || (word!(game.sprite_disable_flag[v0]) & 1) != 0)
         {
-            let mut v1: u16 = ram_word!(game, sprite_instr_timer[v0]);
+            let mut v1: u16 = word!(game.sprite_instr_timer[v0]);
             skip_instruction = !(v1 & 0x8000 != 0)
                 && ({
-                    set_ram_word!(game.sprite_instr_timer[v0] = (v1).wrapping_sub(1));
+                    word!(game.sprite_instr_timer[v0] = (v1).wrapping_sub(1));
                     !(v1 == 1)
                         || ({
-                            let v3: u16 =
-                                (ram_word!(game, sprite_instr_list_ptrs[v0])).wrapping_add(4);
-                            set_ram_word!(game.sprite_instr_list_ptrs[v0] = v3);
+                            let v3: u16 = (word!(game.sprite_instr_list_ptrs[v0])).wrapping_add(4);
+                            word!(game.sprite_instr_list_ptrs[v0] = v3);
                             v1 = *(RomPtr_B4(v3, game) as *mut u16);
                             !(v1 & 0x8000 != 0)
                                 && ({
-                                    *(ram_ptr!(game, u16; 0xeff8)).offset(
-                                        (ram_word!(game, sprite_object_index) >> 1) as isize,
-                                    ) = v1;
+                                    *(ram_ptr!(game, u16; 0xeff8))
+                                        .offset((word!(game.sprite_object_index) >> 1) as isize) =
+                                        v1;
                                     true
                                 })
                         })
@@ -74,44 +72,42 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
                 CallSpriteObjectInstr(((v1) as u32) | (0xb40000u32), game);
             }
         }
-        if (update_ram_word!(game.sprite_object_index, wrapping_sub(2), reread) & 0x8000 != 0) {
+        if (word!(game.sprite_object_index, wrapping_sub(2), reread) & 0x8000 != 0) {
             break;
         }
     }
 }
 pub unsafe fn SpriteObject_Instr_RepeatLast(game: &mut Game) {
-    let v2: i32 = ram_word!(game, sprite_object_index) as i32 >> 1;
-    update_ram_word!(game.sprite_instr_list_ptrs[v2], wrapping_sub(4));
-    set_ram_word!(game.sprite_instr_timer[v2] = 0x7fff);
+    let v2: i32 = word!(game.sprite_object_index) as i32 >> 1;
+    word!(game.sprite_instr_list_ptrs[v2], wrapping_sub(4));
+    word!(game.sprite_instr_timer[v2] = 0x7fff);
 }
 pub unsafe fn SpriteObject_Instr_Terminate(game: &mut Game) {
-    *(ram_ptr!(game, u16; 0xef78)).offset((ram_word!(game, sprite_object_index) >> 1) as isize) = 0;
+    *(ram_ptr!(game, u16; 0xef78)).offset((word!(game.sprite_object_index) >> 1) as isize) = 0;
 }
 pub unsafe fn SpriteObject_Instr_Goto(game: &mut Game) {
     let v2: u16 = *(RomPtr_B4(
-        *(ram_ptr!(game, u16; 0xef78)).offset((ram_word!(game, sprite_object_index) >> 1) as isize),
+        *(ram_ptr!(game, u16; 0xef78)).offset((word!(game.sprite_object_index) >> 1) as isize),
         game,
     )
     .offset(2) as *mut u16);
-    *(ram_ptr!(game, u16; 0xef78)).offset((ram_word!(game, sprite_object_index) >> 1) as isize) =
-        v2;
-    *(ram_ptr!(game, u16; 0xeff8)).offset((ram_word!(game, sprite_object_index) >> 1) as isize) =
+    *(ram_ptr!(game, u16; 0xef78)).offset((word!(game.sprite_object_index) >> 1) as isize) = v2;
+    *(ram_ptr!(game, u16; 0xeff8)).offset((word!(game.sprite_object_index) >> 1) as isize) =
         *(RomPtr_B4(v2, game) as *mut u16);
 }
 pub unsafe fn DrawSpriteObjects(game: &mut Game) {
     let mut i: i32 = 62;
     while i >= 0 {
         let v1: i32 = i >> 1;
-        if ram_word!(game, sprite_instr_list_ptrs[v1]) != 0 {
-            let x: u16 =
-                (ram_word!(game, sprite_x_pos[v1])).wrapping_sub(ram_word!(game, layer1_x_pos));
+        if word!(game.sprite_instr_list_ptrs[v1]) != 0 {
+            let x: u16 = (word!(game.sprite_x_pos[v1])).wrapping_sub(word!(game.layer1_x_pos));
             if ((x) as i16).wrapping_add(16) >= 0 && x as i32 - 272i32 & 0x8000 != 0 {
-                let y: i16 = ((ram_word!(game, sprite_y_pos[v1])) as i16)
-                    .wrapping_sub((ram_word!(game, layer1_y_pos)) as i16);
+                let y: i16 = ((word!(game.sprite_y_pos[v1])) as i16)
+                    .wrapping_sub((word!(game.layer1_y_pos)) as i16);
                 if y >= 0 && y as i32 - 272i32 & 0x8000 != 0 {
-                    let r3: u16 = (ram_word!(game, sprite_palettes[v1])) & (0xe00u16);
-                    let r0: u16 = (ram_word!(game, sprite_palettes[v1])) & (0x1ffu16);
-                    let v3 = RomPtr_B4(ram_word!(game, sprite_instr_list_ptrs[v1]), game);
+                    let r3: u16 = (word!(game.sprite_palettes[v1])) & (0xe00u16);
+                    let r0: u16 = (word!(game.sprite_palettes[v1])) & (0x1ffu16);
+                    let v3 = RomPtr_B4(word!(game.sprite_instr_list_ptrs[v1]), game);
                     DrawSpritemapWithBaseTile(
                         0xb4,
                         *(v3.offset(2) as *mut u16),
@@ -130,7 +126,7 @@ pub unsafe fn DrawSpriteObjects(game: &mut Game) {
 pub unsafe fn ClearSpriteObjects(game: &mut Game) {
     let mut v0: i32 = 1022;
     loop {
-        set_ram_word!(game.sprite_instr_list_ptrs[(v0 >> 1)] = 0);
+        word!(game.sprite_instr_list_ptrs[(v0 >> 1)] = 0);
         v0 -= 2;
         if (v0 == 0) {
             break;

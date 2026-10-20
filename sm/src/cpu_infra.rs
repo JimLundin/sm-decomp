@@ -2,7 +2,7 @@ use crate::game::sm_80::Vector_IRQ;
 use crate::game::sm_82::RunOneFrameOfGame;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
-use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
+use crate::ram_map::word;
 pub use crate::snes::registers::*;
 use crate::types::SpcPlayer;
 use ::core::ffi::{c_char, c_void};
@@ -190,32 +190,31 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
     } else if FixBugHook(0xa794ba, game) {
         (*game.g_cpu).y = (*game.g_cpu).x;
     } else if FixBugHook(0xa7b968, game) {
-        (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
+        (*game.g_cpu).x = word!(game.cur_enemy_index);
     } else if FixBugHook(0xa7b963, game) {
-        (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
+        (*game.g_cpu).x = word!(game.cur_enemy_index);
     } else if FixBugHook(0xa496c8, game) {
         (*game.g_cpu).a = 0;
     } else if FixBugHook(0x9085aa, game) {
-        (*game.g_cpu).a = ram_word!(game, speed_boost_counter);
+        (*game.g_cpu).a = word!(game.speed_boost_counter);
     } else if FixBugHook(0xa29044, game) as i32 != 0 || FixBugHook(0xa2905d, game) as i32 != 0 {
         (*game.g_cpu).c = (*game.g_cpu).a as i32 == 0;
     } else if FixBugHook(0xa29051, game) {
         (*game.g_cpu).a = (*game.g_cpu).a.wrapping_sub(1);
     } else if FixBugHook(0xa5931c, game) {
-        (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
+        (*game.g_cpu).x = word!(game.cur_enemy_index);
     } else if FixBugHook(0x80ada4, game) {
-        (*game.g_cpu).a = ram_word!(game, layer2_y_pos);
+        (*game.g_cpu).a = word!(game.layer2_y_pos);
     } else if FixBugHook(0x80add9, game) {
-        (*game.g_cpu).a = ram_word!(game, layer2_y_pos);
+        (*game.g_cpu).a = word!(game.layer2_y_pos);
     } else if FixBugHook(0x80ad4d, game) {
-        (*game.g_cpu).a = ram_word!(game, layer2_x_pos);
+        (*game.g_cpu).a = word!(game.layer2_x_pos);
     } else if FixBugHook(0x80ad77, game) {
-        (*game.g_cpu).a = ram_word!(game, layer2_x_pos);
+        (*game.g_cpu).a = word!(game.layer2_x_pos);
     } else if FixBugHook(0x9381db, game) {
         let k: i32 = (*game.g_cpu).x as i32;
-        let ip: i32 = ram_word!(game, projectile_bomb_instruction_ptr[(k >> 1)]) as i32;
-        let delta: i32 = if ram_word!(game, projectile_bomb_instruction_timers[(k >> 1)]) as i32
-            == 1
+        let ip: i32 = word!(game.projectile_bomb_instruction_ptr[(k >> 1)]) as i32;
+        let delta: i32 = if word!(game.projectile_bomb_instruction_timers[(k >> 1)]) as i32 == 1
             && (*get_ProjectileInstr(ip as u16, game)).timer & 0x8000 == 0
         {
             0
@@ -233,37 +232,37 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
         } else if FixBugHook(0x848acd, game) {
             (*game.g_cpu).a = 0;
         } else if FixBugHook(0xa7ceb2, game) {
-            (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
+            (*game.g_cpu).x = word!(game.cur_enemy_index);
         } else if FixBugHook(0x91cd44, game) {
             if (*game.g_cpu).x as i32 == 0 {
                 (*game.g_cpu).pc = 0xcd52;
             }
         } else if FixBugHook(0x82afd3, game) {
-            if ram_word!(game, pausemenu_equipment_category_item) as u8 as i32 != 1 {
+            if word!(game.pausemenu_equipment_category_item) as u8 as i32 != 1 {
                 return 0x82afd9;
             }
         } else if FixBugHook(0x82b0cd, game) {
-            if ram_word!(game, pausemenu_equipment_category_item) as u8 as i32 != 2 {
+            if word!(game.pausemenu_equipment_category_item) as u8 as i32 != 2 {
                 return 0x82afd9;
             }
         } else if FixBugHook(0x82b15b, game) {
-            if ram_word!(game, pausemenu_equipment_category_item) as u8 as i32 != 3 {
+            if word!(game.pausemenu_equipment_category_item) as u8 as i32 != 3 {
                 return 0x82afd9;
             }
         } else if FixBugHook(0xa2d38c, game) {
-            (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
+            (*game.g_cpu).x = word!(game.cur_enemy_index);
         } else if FixBugHook(0xa4970f, game) {
             (*game.g_cpu).a = ((*game.g_cpu).a & 0xff);
             (*game.g_cpu).y = ((*game.g_cpu).x & 0x7);
         } else if FixBugHook(0xa496e0, game) {
             if (*game.g_cpu).x as i32 > 48 {
-                set_ram_word!(game.croco_cur_vline_idx = (*game.g_cpu).x);
+                word!(game.croco_cur_vline_idx = (*game.g_cpu).x);
                 (*game.g_cpu).mf = 0 != 0;
                 return 0xa497ce;
             }
         } else if FixBugHook(0x91da89, game) {
-            if ram_word!(game, special_samus_palette_frame) as i32 > 6 {
-                set_ram_word!(game.special_samus_palette_frame = 6);
+            if word!(game.special_samus_palette_frame) as i32 > 6 {
+                word!(game.special_samus_palette_frame = 6);
             }
         } else if FixBugHook(0x828d56, game) {
             WriteReg(VMAIN as i32 as u16, 0x80, game);
@@ -290,32 +289,32 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
         } else if FixBugHook(0x94a85b, game) {
             memset(ram_ptr!(game, c_void; 0xd82), 0, 8 as size_t);
         } else if FixBugHook(0xa0a35c, game) {
-            set_ram_word!(
+            word!(
                 game.REMOVED_R18 = *(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(
                     (size_of::<u16>() as usize)
                         .wrapping_div(size_of::<u8>() as usize)
                         .wrapping_sub(1_) as isize,
                 ) as u16
             );
-            set_ram_word!(
-                game.REMOVED_R20 = (ram_word!(game, REMOVED_R18) as i32
-                    + (ram_word!(game, REMOVED_R18) as i32 >> 1)
+            word!(
+                game.REMOVED_R20 = (word!(game.REMOVED_R18) as i32
+                    + (word!(game.REMOVED_R18) as i32 >> 1)
                     >> 1) as u16
             );
         } else if FixBugHook(0xa7b049, game) {
             (*game.g_cpu).x = 0;
         } else if FixBugHook(0xa5a018, game) {
-            set_ram_word!(game.REMOVED_varE24 = 0);
+            word!(game.REMOVED_varE24 = 0);
         } else if FixBugHook(0xb39ddb, game) {
-            let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-            set_ram_word!(game.REMOVED_R18 = ((*E).base.x_pos as i32 - (*E).var_56 as i32) as u16);
-            set_ram_word!(game.REMOVED_R20 = ((*E).base.y_pos as i32 - (*E).var_57 as i32) as u16);
+            let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game);
+            word!(game.REMOVED_R18 = ((*E).base.x_pos as i32 - (*E).var_56 as i32) as u16);
+            word!(game.REMOVED_R20 = ((*E).base.y_pos as i32 - (*E).var_57 as i32) as u16);
         } else if FixBugHook(0xb39e13, game) {
-            let E_0 = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+            let E_0 = Get_Botwoon(word!(game.cur_enemy_index) as i32, game);
             (*E_0).var_45 = ((*E_0).var_45 as i32
-                + (ram_word!(game, REMOVED_R22) as i32 - (*E_0).var_45 as i32) as i8 as i32 * 3 / 4)
+                + (word!(game.REMOVED_R22) as i32 - (*E_0).var_45 as i32) as i8 as i32 * 3 / 4)
                 as u8 as u16;
-            set_ram_word!(game.REMOVED_R22 = (*E_0).var_45);
+            word!(game.REMOVED_R22 = (*E_0).var_45);
         }
     }
     0
@@ -1275,7 +1274,7 @@ pub unsafe fn FixupCarry(addr: u32, game: &mut Game) {
 }
 
 pub unsafe fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
-    game.currently_installed_bug_fix_counter = ram_word!(game, bug_fix_counter);
+    game.currently_installed_bug_fix_counter = word!(game.bug_fix_counter);
     PatchBytes(0x8584a3, &[0x20, 0x50, 0x96, 0x60], game);
     PatchBytes(
         0x859650,
@@ -1290,7 +1289,7 @@ pub unsafe fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
             0xc2,
             0x30,
             0xa5,
-            (if (ram_word!(game, bug_fix_counter) as i32) < 1 {
+            (if (word!(game.bug_fix_counter) as i32) < 1 {
                 0x8f
             } else {
                 0x8b
@@ -1550,7 +1549,7 @@ pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
     }
 }
 pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
-    let bug_fix_bak: u16 = ram_word!(game, bug_fix_counter);
+    let bug_fix_bak: u16 = word!(game.bug_fix_counter);
     let cpu = (*game.g_snes).cpu;
     if (*cpu).k == 0x80 && (*cpu).pc == 0x8459 {
         RunCpuUntilPC(0x808460, 0x808460, game);
@@ -1559,7 +1558,7 @@ pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
     RunCpuUntilPC(0x808343, 0x85813c, game);
     (*(*game.g_snes).cpu).nmiWanted = true_0 != 0;
     RunCpuUntilPC(0x80834a, 0x858142, game);
-    set_ram_word!(game.bug_fix_counter = bug_fix_bak);
+    word!(game.bug_fix_counter = bug_fix_bak);
 }
 pub unsafe fn DrawFrameToPpu(game: &mut Game) {
     (*game.g_snes).vPos = 0;
@@ -1782,15 +1781,15 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         (*game.g_snes).snes_ppu
     };
     (*game.g_snes).runningWhichVersion = 0;
-    if ram_word!(game, game_state) as i32 == 0xffff {
+    if word!(game.game_state) as i32 == 0xffff {
         (*(*game.g_snes).cpu).k = 0x80;
         (*(*game.g_snes).cpu).pc = 0x8459;
         *ram_ptr!(game; 0x611) = 3;
     }
-    if ram_word!(game, menu_index) & 0xff00 != 0 {
+    if word!(game.menu_index) & 0xff00 != 0 {
         printf(b"MENU INDEX TOO BIG!\n\0" as *const u8 as *const c_char);
         SaveBugSnapshot(game);
-        update_ram_word!(game.menu_index, |fresh1| (fresh1 & 0xff));
+        word!(game.menu_index, |fresh1| (fresh1 & 0xff));
     }
     if game.g_got_mismatch_count != 0 {
         game.g_got_mismatch_count -= 1;

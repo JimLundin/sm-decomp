@@ -59,13 +59,22 @@ macro_rules! ram_vars {
     (@array $addr:literal, $name:tt, $ty:ident, $shape:ident) => {};
 }
 
-// Keep these loads at the caller: a whole-Game/RAM borrow can invalidate a
-// retained raw enemy pointer. The macro still requires an unsafe context.
-// Named scalar/array fields come from RAM_VARS; odd addresses are valid.
-// Array indices retain signed pointer offsets, including accesses outside a
-// named table. Form the base before evaluating the index, as in the raw access.
-macro_rules! ram_word {
-    ($game:ident, $field:ident[$index:expr]) => {
+// Named SNES word reads, assignments and updates share one caller-side interface.
+// `word!(game.field)` reads; `word!(game.field = value)` writes. Arrays use
+// `field[index]`. Updates use `(game.field, method(argument), reread)` or an
+// expression `(game.field, |old| value)`; `reread` is optional. Ordered stores
+// of one literal use `(game, value; field, other[index])`.
+//
+// These operations require an unsafe context. Keep raw loads/stores at the
+// caller: a whole-Game/RAM borrow can invalidate retained raw enemy pointers.
+// Odd addresses and signed array offsets outside a named table remain valid.
+// Reads form the base before the index; assignments evaluate RHS before the
+// destination, retaining RHS temporaries through the store. Updates capture
+// the destination and read its old value before evaluating the RHS. `reread`
+// loads that destination after RHS temporaries are dropped. No value or index
+// is hoisted across ordered stores; update expressions create no closure.
+macro_rules! word {
+    ($game:ident.$field:ident[$index:expr]) => {
         u16::from_le(
             (&raw const $game.g_ram)
                 .cast::<u8>()
@@ -75,7 +84,7 @@ macro_rules! ram_word {
                 .read_unaligned(),
         )
     };
-    ($game:ident, $field:ident) => {
+    ($game:ident.$field:ident) => {
         u16::from_le(
             (&raw const $game.g_ram)
                 .cast::<u8>()
@@ -84,13 +93,6 @@ macro_rules! ram_word {
                 .read_unaligned(),
         )
     };
-}
-pub(crate) use ram_word;
-
-// Function arguments preserve assignment order: evaluate the RHS before the
-// destination, and keep RHS temporaries alive through the store. Form the raw
-// pointer at the caller without borrowing the whole Game or RAM allocation.
-macro_rules! set_ram_word {
     ($game:ident.$field:ident[$index:expr] = $value:expr $(,)?) => {
         $crate::ram_map::write_word(
             $value,
@@ -110,28 +112,14 @@ macro_rules! set_ram_word {
                 .cast::<u16>(),
         )
     };
-}
-pub(crate) use set_ram_word;
-
-// Share a literal across ordered stores without introducing a runtime block.
-// Every index is still evaluated by its original setter, at its original store.
-macro_rules! set_ram_words {
     ($game:ident, $value:literal; $($field:ident$([$index:expr])?),+ $(,)?) => {
-        $($crate::ram_map::set_ram_word!($game.$field$([$index])? = $value);)+
+        $($crate::ram_map::word!($game.$field$([$index])? = $value);)+
     };
-}
-pub(crate) use set_ram_words;
-
-// Capture the raw destination, read its old word first, then evaluate/store RHS.
-// The expression form binds a primitive value; it does not create a closure.
-// Indices use only primitives, with no extending temporary lifetimes.
-// `reread` loads that same destination after RHS temporaries have been dropped.
-macro_rules! update_ram_word {
     ($game:ident.$field:ident$([$index:expr])?, $method:ident($argument:expr $(,)?) $(, $result:ident)? $(,)?) => {
-        $crate::ram_map::update_ram_word!($game.$field$([$index])?, |word| word.$method($argument) $(, $result)?)
+        $crate::ram_map::word!($game.$field$([$index])?, |word| word.$method($argument) $(, $result)?)
     };
     ($game:ident.$field:ident$([$index:expr])?, |$old:ident| { $value:expr } $(, $result:ident)? $(,)?) => {
-        $crate::ram_map::update_ram_word!($game.$field$([$index])?, |$old| $value $(, $result)?)
+        $crate::ram_map::word!($game.$field$([$index])?, |$old| $value $(, $result)?)
     };
     ($game:ident.$field:ident[$index:expr], |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
         let destination = (&raw mut $game.g_ram)
@@ -141,7 +129,7 @@ macro_rules! update_ram_word {
             .offset(($index) as isize);
         let $old = u16::from_le(destination.read_unaligned());
         $crate::ram_map::write_word($value, destination);
-        $crate::ram_map::update_ram_word!(@result destination $(, $result)?)
+        $crate::ram_map::word!(@result destination $(, $result)?)
     }};
     ($game:ident.$field:ident, |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
         let destination = (&raw mut $game.g_ram)
@@ -150,14 +138,14 @@ macro_rules! update_ram_word {
             .cast::<u16>();
         let $old = u16::from_le(destination.read_unaligned());
         $crate::ram_map::write_word($value, destination);
-        $crate::ram_map::update_ram_word!(@result destination $(, $result)?)
+        $crate::ram_map::word!(@result destination $(, $result)?)
     }};
     (@result $destination:ident) => { () };
     (@result $destination:ident, reread) => {
         u16::from_le($destination.read_unaligned())
     };
 }
-pub(crate) use update_ram_word;
+pub(crate) use word;
 
 /// Store one SNES word without imposing host alignment.
 ///

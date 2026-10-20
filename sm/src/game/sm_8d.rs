@@ -2,7 +2,7 @@ pub use crate::game::constants::bank_8d::*;
 use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
-use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
+use crate::ram_map::word;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{MakePairU16, RomPtr, Unreachable};
 use ::core::ptr::{null, null_mut};
@@ -25,35 +25,35 @@ crate::game::constants::typed_constants! { i32;
     fnCinematicFunction_Intro_Page2 = 0x8bb35f,
 }
 pub unsafe fn EnablePaletteFx(game: &mut Game) {
-    update_ram_word!(game.flag_for_palette_fx_objects, |fresh1| (fresh1)
+    word!(game.flag_for_palette_fx_objects, |fresh1| (fresh1)
         | (0x8000u16));
 }
 pub unsafe fn DisablePaletteFx(game: &mut Game) {
-    update_ram_word!(game.flag_for_palette_fx_objects, |fresh0| (fresh0
+    word!(game.flag_for_palette_fx_objects, |fresh0| (fresh0
         & !(0x8000)));
 }
 pub unsafe fn ClearPaletteFXObjects(game: &mut Game) {
     let mut i: i32 = 14;
     while i >= 0 {
-        set_ram_word!(game.palettefx_ids[(i >> 1)] = 0);
+        word!(game.palettefx_ids[(i >> 1)] = 0);
         i -= 2;
     }
 }
 pub unsafe fn SpawnPalfxObject(j: u16, game: &mut Game) {
     let mut v1: u16 = 14;
-    while ram_word!(game, palettefx_ids[(v1 >> 1)]) != 0 {
+    while word!(game.palettefx_ids[(v1 >> 1)]) != 0 {
         v1 = (v1).wrapping_sub(2);
         if (v1 & 0x8000) != 0 {
             return;
         }
     }
     let v2: i32 = v1 as i32 >> 1;
-    set_ram_word!(game.palettefx_ids[v2] = j);
-    set_ram_word!(game.palettefx_color_indexes[v2] = 0);
-    set_ram_word!(game.palettefx_pre_instr[v2] = ((0x8dc526i32) as u16));
-    set_ram_word!(game.palettefx_instr_list_ptrs[v2] = (*get_PalFxDef(j, game)).instrs);
-    set_ram_word!(game.palettefx_instr_timers[v2] = 1);
-    set_ram_word!(game.palettefx_timers[v2] = 0);
+    word!(game.palettefx_ids[v2] = j);
+    word!(game.palettefx_color_indexes[v2] = 0);
+    word!(game.palettefx_pre_instr[v2] = ((0x8dc526i32) as u16));
+    word!(game.palettefx_instr_list_ptrs[v2] = (*get_PalFxDef(j, game)).instrs);
+    word!(game.palettefx_instr_timers[v2] = 1);
+    word!(game.palettefx_timers[v2] = 0);
     let mut PalFxDef = get_PalFxDef(j, game);
     CallPalfxFunc(
         (((*PalFxDef).func) as u32) | (0x8d0000u32),
@@ -64,13 +64,13 @@ pub unsafe fn SpawnPalfxObject(j: u16, game: &mut Game) {
 }
 pub fn PalPreInstr_nullsub_129(k: u16) {}
 pub unsafe fn PaletteFxHandler(game: &mut Game) {
-    if (ram_word!(game, flag_for_palette_fx_objects) & 0x8000) != 0 {
+    if (word!(game.flag_for_palette_fx_objects) & 0x8000) != 0 {
         let mut i: i32 = 14;
         while i >= 0 {
-            set_ram_word!(game.palettefx_index = i as u16);
-            if ram_word!(game, palettefx_ids[(i >> 1)]) != 0 {
+            word!(game.palettefx_index = i as u16);
+            if word!(game.palettefx_ids[(i >> 1)]) != 0 {
                 PalFx_ProcessOne(i as u16, game);
-                i = ram_word!(game, palettefx_index) as i32;
+                i = word!(game.palettefx_index) as i32;
             }
             i -= 2;
         }
@@ -78,16 +78,16 @@ pub unsafe fn PaletteFxHandler(game: &mut Game) {
 }
 pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
     CallPalFxPreInstr(
-        ((ram_word!(game, palettefx_pre_instr[(k >> 1)])) as u32) | (0x8d0000u32),
+        ((word!(game.palettefx_pre_instr[(k >> 1)])) as u32) | (0x8d0000u32),
         k,
         game,
     );
-    let mut v1: u16 = ram_word!(game, palettefx_index);
+    let mut v1: u16 = word!(game.palettefx_index);
     crate::update_place! { reference fresh2 [fresh3] = *(ram_ptr!(game, u16; 0x1ecd)).offset((v1 >> 1) as isize) => (*fresh2).wrapping_sub(1); }
     if fresh3 != 1 {
         return;
     }
-    let mut j: u16 = ram_word!(game, palettefx_instr_list_ptrs[(v1 >> 1)]);
+    let mut j: u16 = word!(game.palettefx_instr_list_ptrs[(v1 >> 1)]);
     let mut v6: u16 = 0;
     loop {
         let p = RomPtr_8D(j, game) as *const u16;
@@ -104,8 +104,8 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
         }
     }
     let v8: i32 = v1 as i32 >> 1;
-    set_ram_word!(game.palettefx_instr_timers[v8] = v6);
-    let mut color_idx: u16 = ram_word!(game, palettefx_color_indexes[v8]);
+    word!(game.palettefx_instr_timers[v8] = v6);
+    let mut color_idx: u16 = word!(game.palettefx_color_indexes[v8]);
     let mut v11: u16 = 0;
     loop {
         loop {
@@ -114,7 +114,7 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
             if v11 & 0x8000 != 0 {
                 break;
             }
-            set_ram_word!(game.palette_buffer[(color_idx >> 1)] = v11);
+            word!(game.palette_buffer[(color_idx >> 1)] = v11);
             color_idx = (color_idx).wrapping_add(2);
             j = (j).wrapping_add(2);
         }
@@ -127,7 +127,7 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn PalInstr_Wait(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    *(ram_ptr!(game, u16; 0x1ebd)).offset((ram_word!(game, palettefx_index) >> 1) as isize) =
+    *(ram_ptr!(game, u16; 0x1ebd)).offset((word!(game.palettefx_index) >> 1) as isize) =
         (j).wrapping_add(4);
     MakePairU16(0, 0)
 }
@@ -140,12 +140,12 @@ crate::forward_calls! { pub unsafe fn (k: u16, j: u16) -> PairU16;
     PalInstr_ColorPlus15 => MakePairU16((k).wrapping_add(30), (j).wrapping_add(2));
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) -> PairU16;
-    PalInstr_Delete [MakePairU16(k, 0)] { set_ram_word!(game.palettefx_ids[(k >> 1)] = 0); };
+    PalInstr_Delete [MakePairU16(k, 0)] { word!(game.palettefx_ids[(k >> 1)] = 0); };
     PalInstr_SetPreInstr [MakePairU16(k, (j).wrapping_add(2))] {
-        set_ram_word!(game.palettefx_pre_instr[(k >> 1)] = *(RomPtr_8D(j, game) as *mut u16));
+        word!(game.palettefx_pre_instr[(k >> 1)] = *(RomPtr_8D(j, game) as *mut u16));
     };
     PalInstr_ClearPreInstr [MakePairU16(k, j)] {
-        set_ram_word!(game.palettefx_pre_instr[(k >> 1)] = addr_locret_8DC5E3 as u16);
+        word!(game.palettefx_pre_instr[(k >> 1)] = addr_locret_8DC5E3 as u16);
     };
     PalInstr_Goto [MakePairU16(k, v2)] { let v2: u16 = *(RomPtr_8D(j, game) as *mut u16); };
     PalInstr_DecTimerGoto [MakePairU16(v4.k, v4.j)] {
@@ -161,7 +161,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) 
         *(ram_ptr!(game, u16; 0x1edd) as *mut u8).offset(k as i32 as isize) = *RomPtr_8D(j, game);
     };
     PalInstr_SetColorIndex [MakePairU16(k, (j).wrapping_add(2))] {
-        set_ram_word!(game.palettefx_color_indexes[(k >> 1)] = *(RomPtr_8D(j, game) as *mut u16));
+        word!(game.palettefx_color_indexes[(k >> 1)] = *(RomPtr_8D(j, game) as *mut u16));
     };
     PalInstr_QueueMusic [MakePairU16(k, (j).wrapping_add(1))] {
         let v2 = RomPtr_8D(j, game);
@@ -175,51 +175,45 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) 
     PalInstr_QueueSfx3 [MakePairU16(k, (j).wrapping_add(1))] {  QueueSfx3_Max6(*v2, game); };
 }
 pub unsafe fn PalInit_E1BC(k: u16, j: u16, game: &mut Game) {
-    set_ram_word!(game.palettefx_pre_instr[(j >> 1)] = ((0x8de20bi32) as u16));
+    word!(game.palettefx_pre_instr[(j >> 1)] = ((0x8de20bi32) as u16));
 }
 pub unsafe fn PalPreInstr_E1BC(k: u16, game: &mut Game) {
-    if ram_word!(game, cinematic_function) as i32 == 0x8bb35f & 0xffff {
+    if word!(game.cinematic_function) as i32 == 0x8bb35f & 0xffff {
         let v1: i32 = k as i32 >> 1;
-        set_ram_word!(game.palettefx_instr_list_ptrs[v1] = addr_off_8DE192 as u16);
-        set_ram_word!(game.palettefx_instr_timers[v1] = 1);
+        word!(game.palettefx_instr_list_ptrs[v1] = addr_off_8DE192 as u16);
+        word!(game.palettefx_instr_timers[v1] = 1);
     }
 }
 pub unsafe fn PalPreInstr_CheckEnemy0Health(k: u16, game: &mut Game) {
     if (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).health == 0 {
-        set_ram_word!(game.palettefx_ids[(k >> 1)] = 0);
+        word!(game.palettefx_ids[(k >> 1)] = 0);
     }
 }
 pub unsafe fn PalPreInstr_SamusInHeat(k: u16, game: &mut Game) {
-    if (ram_word!(game, equipped_items) & 0x21) == 0 {
+    if (word!(game.equipped_items) & 0x21) == 0 {
         AddToHiLo(
             ram_ptr!(game, u16; 0xa50),
             ram_ptr!(game, u16; 0xa4e),
             0x4000,
         );
-        if (ram_word!(game, nmi_frame_counter_word) & 7) == 0
-            && ram_word!(game, samus_health) > 0x46
-        {
+        if (word!(game.nmi_frame_counter_word) & 7) == 0 && word!(game.samus_health) > 0x46 {
             QueueSfx3_Max6(0x2d, game);
         }
     }
-    if ram_word!(game, samus_in_heat_palfx_index)
-        != ram_word!(game, samus_in_heat_palettefx_prev_index)
-    {
-        set_ram_word!(
-            game.samus_in_heat_palettefx_prev_index = ram_word!(game, samus_in_heat_palfx_index)
-        );
-        let v2: u16 = (2u16).wrapping_mul(ram_word!(game, samus_in_heat_palfx_index));
+    if word!(game.samus_in_heat_palfx_index) != word!(game.samus_in_heat_palettefx_prev_index) {
+        word!(game.samus_in_heat_palettefx_prev_index = word!(game.samus_in_heat_palfx_index));
+        let v2: u16 = (2u16).wrapping_mul(word!(game.samus_in_heat_palfx_index));
         let mut v4: u16 = 0;
         let v3: i32 = k as i32 >> 1;
-        set_ram_word!(game.palettefx_instr_timers[v3] = 1);
-        if (ram_word!(game, equipped_items) & 0x20) != 0 {
+        word!(game.palettefx_instr_timers[v3] = 1);
+        if (word!(game.equipped_items) & 0x20) != 0 {
             v4 = addr_off_8DE3E0 as u16;
-        } else if (ram_word!(game, equipped_items) & 1) != 0 {
+        } else if (word!(game.equipped_items) & 1) != 0 {
             v4 = addr_off_8DE400 as u16;
         } else {
             v4 = addr_off_8DE420 as u16;
         }
-        set_ram_word!(
+        word!(
             game.palettefx_instr_list_ptrs[v3] =
                 *((RomPtr_8D as unsafe fn(u16, &mut Game) -> *const u8)(v4, game)
                     .offset(v2 as isize) as *mut u16)
@@ -228,46 +222,46 @@ pub unsafe fn PalPreInstr_SamusInHeat(k: u16, game: &mut Game) {
 }
 pub unsafe fn PalInit_F761_Norfair1(k: u16, j: u16, game: &mut Game) {
     let mut v2: u16 = 0;
-    if (ram_word!(game, equipped_items) & 0x20) != 0 {
+    if (word!(game.equipped_items) & 0x20) != 0 {
         v2 = addr_off_8DE8B6 as u16;
-    } else if (ram_word!(game, equipped_items) & 1) != 0 {
+    } else if (word!(game.equipped_items) & 1) != 0 {
         v2 = addr_off_8DE68A as u16;
     } else {
         v2 = addr_kPalfxInstrList_E45E as u16;
     }
-    set_ram_word!(game.palettefx_instr_list_ptrs[(j >> 1)] = v2);
+    word!(game.palettefx_instr_list_ptrs[(j >> 1)] = v2);
 }
 pub unsafe fn PalPreInstr_SwitchIfYpos(k: u16, game: &mut Game) {
-    if ram_word!(game, samus_y_pos) < 0x380 {
+    if word!(game.samus_y_pos) < 0x380 {
         let v2: i32 = k as i32 >> 1;
-        set_ram_word!(game.palettefx_instr_timers[v2] = 1);
-        set_ram_word!(game.palettefx_instr_list_ptrs[v2] = addr_word_8DEB43 as u16);
+        word!(game.palettefx_instr_timers[v2] = 1);
+        word!(game.palettefx_instr_list_ptrs[v2] = addr_word_8DEB43 as u16);
     }
 }
 pub unsafe fn PalPreInstr_SwitchIfYpos2(k: u16, game: &mut Game) {
-    if ram_word!(game, samus_y_pos) < 0x380 {
+    if word!(game.samus_y_pos) < 0x380 {
         let v2: i32 = k as i32 >> 1;
-        set_ram_word!(game.palettefx_instr_timers[v2] = 1);
-        set_ram_word!(game.palettefx_instr_list_ptrs[v2] = addr_word_8DEC76 as u16);
+        word!(game.palettefx_instr_timers[v2] = 1);
+        word!(game.palettefx_instr_list_ptrs[v2] = addr_word_8DEC76 as u16);
     }
 }
 pub unsafe fn PalPreInstr_DeletePalfxIfMinibossDead(k: u16, game: &mut Game) {
-    if (*(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) & 2) != 0 {
-        set_ram_word!(game.palettefx_ids[(k >> 1)] = 0);
+    if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 2) != 0 {
+        word!(game.palettefx_ids[(k >> 1)] = 0);
     }
 }
 pub unsafe fn PalInstr_SetPalfxIndex(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    set_ram_word!(game.samus_in_heat_palfx_index = *RomPtr_8D(j, game) as u16);
+    word!(game.samus_in_heat_palfx_index = *RomPtr_8D(j, game) as u16);
     MakePairU16(k, (j).wrapping_add(1))
 }
 pub unsafe fn PalPreInstr_F621(k: u16, game: &mut Game) {
     if *((ram_ptr!(game, u16; 0x1e79) as *mut u8).offset(k as i32 as isize) as *mut u16) != 0 {
-        set_ram_word!(game.palettefx_ids[(k >> 1)] = 0);
+        word!(game.palettefx_ids[(k >> 1)] = 0);
     }
 }
 pub unsafe fn PalInit_F779_Brinstar8(k: u16, j: u16, game: &mut Game) {
-    if (*(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) & 2) != 0 {
-        set_ram_word!(game.palettefx_ids[(j >> 1)] = 0);
+    if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 2) != 0 {
+        word!(game.palettefx_ids[(j >> 1)] = 0);
     }
 }
 crate::game::address_dispatch! {

@@ -45,7 +45,7 @@ use crate::c_library::{
 use crate::cpu_infra::RtlUpdateSnesPatchForBugfix;
 use crate::game_state::Game;
 use crate::host::{Die, RtlApuLock, RtlApuUnlock};
-use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
+use crate::ram_map::word;
 use crate::snes::apu::apu_cycle;
 use crate::snes::dsp::dsp_getSamples;
 use crate::snes::ppu::ppu_copy;
@@ -692,16 +692,16 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
         if game.state_recorder.snapshot_flags & 1 != 0 {
             game.state_recorder.snapshot_flags &= !(1i32) as u32;
             inputs = game.state_recorder.last_inputs as i32;
-        } else if ram_word!(game, bug_fix_counter) as i32 != kCurrentBugFixCounter as i32 {
+        } else if word!(game.bug_fix_counter) as i32 != kCurrentBugFixCounter as i32 {
             if game.g_debug_flag {
                 printf(
                     b"bug_fix_counter %d => %d\n\0" as *const u8 as *const c_char,
-                    ram_word!(game, bug_fix_counter) as i32,
+                    word!(game.bug_fix_counter) as i32,
                     kCurrentBugFixCounter as i32,
                 );
             }
-            if (ram_word!(game, bug_fix_counter) as i32) < kCurrentBugFixCounter as i32 {
-                set_ram_word!(game.bug_fix_counter = kCurrentBugFixCounter as i32 as u16);
+            if (word!(game.bug_fix_counter) as i32) < kCurrentBugFixCounter as i32 {
+                word!(game.bug_fix_counter = kCurrentBugFixCounter as i32 as u16);
                 StateRecorder_RecordPatchByte(
                     &raw mut game.state_recorder,
                     (ram_ptr!(game, u16; 0xc2) as *mut u8)
@@ -714,7 +714,7 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
         }
         StateRecorder_Record(&raw mut game.state_recorder, inputs as u16);
     }
-    if ram_word!(game, bug_fix_counter) as i32 != game.currently_installed_bug_fix_counter as i32 {
+    if word!(game.bug_fix_counter) as i32 != game.currently_installed_bug_fix_counter as i32 {
         RtlUpdateSnesPatchForBugfix(game);
     }
     game.g_rtl_runframe.expect("non-null function pointer")(inputs as u16, 0, game);
@@ -808,10 +808,10 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
             );
         }
         if *ram_ptr!(game; 0x611) as i32 == 4 {
-            *ram_ptr!(game; 0x611) = (10 + ram_word!(game, game_state) as i32) as u8;
+            *ram_ptr!(game; 0x611) = (10 + word!(game.game_state) as i32) as u8;
         }
-        if ram_word!(game, bug_fix_counter) as i32 == 0 {
-            set_ram_word!(game.bug_fix_counter = ram_word!(game, bug_fix_counter_BAD));
+        if word!(game.bug_fix_counter) as i32 == 0 {
+            word!(game.bug_fix_counter = word!(game.bug_fix_counter_BAD));
         }
     } else {
         RtlSaveSnapshot(&raw mut name as *mut c_char, false_0 != 0, game);
@@ -956,7 +956,7 @@ pub unsafe fn RtlApuWrite(adr: u32, val: u8, game: &mut Game) {
         b"adr >= APUI00 && adr <= APUI03\0", b"src/sm_rtl.c\0", 571,
         b"void RtlApuWrite(uint32, uint8)\0"
     };
-    if ram_word!(game, is_uploading_apu) != 0 {
+    if word!(game.is_uploading_apu) != 0 {
         snes_catchupApu(game.g_snes, game);
         (*(*game.g_snes).apu).inPorts[(adr & 0x3) as usize] = val;
         return;
@@ -971,7 +971,7 @@ unsafe fn IsFrameEmpty(w: *mut ApuWriteEnt) -> bool {
 }
 pub unsafe fn RtlPushApuState(game: &mut Game) {
     RtlApuLock();
-    if ram_word!(game, is_uploading_apu) == 0 {
+    if word!(game.is_uploading_apu) == 0 {
         if game.g_apu_queue_size as i32 == 0 {
             game.g_apu_time_since_empty = 0;
         } else {
@@ -1013,7 +1013,7 @@ pub unsafe fn RtlPushApuState(game: &mut Game) {
     RtlApuUnlock();
 }
 unsafe fn RtlPopApuState_Locked(game: &mut Game) {
-    if ram_word!(game, is_uploading_apu) != 0 {
+    if word!(game.is_uploading_apu) != 0 {
         return;
     }
     let input_ports = if game.g_use_my_apu_code as i32 != 0 {
@@ -1128,7 +1128,7 @@ pub unsafe fn RtlRenderAudio(audio_buffer: *mut i16, samples: i32, channels: i32
     RtlApuLock();
     RtlPopApuState_Locked(game);
     if !game.g_use_my_apu_code {
-        if ram_word!(game, is_uploading_apu) == 0 {
+        if word!(game.is_uploading_apu) == 0 {
             while ((*(*(*game.g_snes).apu).dsp).sampleOffset as i32) < 534 {
                 apu_cycle((*game.g_snes).apu, game);
             }
@@ -1142,7 +1142,7 @@ pub unsafe fn RtlRenderAudio(audio_buffer: *mut i16, samples: i32, channels: i32
 }
 pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
     if c as i32 == 'w' as i32 {
-        set_ram_word!(game.samus_health = ram_word!(game, samus_max_health));
+        word!(game.samus_health = word!(game.samus_max_health));
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
             0x9c2,
@@ -1150,8 +1150,8 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
             2,
         );
     } else if c as i32 == 'q' as i32 {
-        update_ram_word!(game.samus_y_pos, |fresh0| (fresh0 as i32 - 4i32) as u16);
-        set_ram_word!(game.samus_y_speed = -8i32 as u16);
+        word!(game.samus_y_pos, |fresh0| (fresh0 as i32 - 4i32) as u16);
+        word!(game.samus_y_speed = -8i32 as u16);
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
             0xafa,
@@ -1164,11 +1164,9 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
             ram_ptr!(game, u16; 0xb2e) as *mut u8,
             2,
         );
-        set_ram_word!(game.menu_index = 0);
+        word!(game.menu_index = 0);
     } else if c as i32 == 'q' as i32 {
-        set_ram_word!(
-            game.japanese_text_flag = (ram_word!(game, japanese_text_flag) == 0) as i32 as u16
-        );
+        word!(game.japanese_text_flag = (word!(game.japanese_text_flag) == 0) as i32 as u16);
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
             0x9e2,

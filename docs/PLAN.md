@@ -90,6 +90,26 @@ The unused-function closure below completes that root/reference review.
 Further thousand-line reductions remain open; the remaining unused-data
 census (177 raw lines) is below the current priority and stays parked.
 
+Unified RAM-word interface (2026-10-20): one `word!` macro replaces the
+separate read, write, ordered-literal-store and update macros at 14758 sites
+across 33 callers. Reads use `word!(game.field)` and writes use
+`word!(game.field = value)`; arrays and updates retain their existing forms.
+The 8299 reads, 5127 writes, 476 store groups and 856 updates preserve word
+width, raw caller-side pointers, unaligned access, evaluation order, temporary
+lifetimes and rereads. No whole-Game borrow or RAM layout change is introduced.
+
+Complete source inversion and exact macro-arm comparison pass. Core/frontend
+library, executable and verifier expansions retain all 3830902 remaining
+tokens after removing only reviewed macro declarations/imports, comments and
+precisely bound source payloads. Maintained source matches the verified draft.
+Formatting, all-target feature checks, normal release (20.41s), diff check
+and progress pass. Full any% 129712/0 (107.71s wall) and Speed Booster
+148406/0 (136.79s wall), native exits 0, pass with fixed source/input/artifact
+bytes and normal-library reuse. Rust lines -1325 to 117475; cast-containing
+lines -78 to 9538 reflect reflow, with all other counters unchanged. This
+preserves existing route coverage; broader ownership and further substantial
+reductions remain open.
+
 Redundant integer suffixes (2026-10-20): remove 25912 suffixes across 53
 files where the compiler retains the original integer type. Keep inference
 anchors, negative-expression guards and literals without a bound compiler

@@ -8,8 +8,7 @@ use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_a9::WriteColorsToPalette;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
-use crate::ram_map::set_ram_word;
-use crate::ram_map::set_ram_words;
+use crate::ram_map::word;
 use crate::rtl::RomPtr;
 pub use crate::types::Consts_86;
 pub use crate::types::Consts_AD;
@@ -67,7 +66,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight2(game: &mut Game) {
     *(ram_ptr!(game, u16; 0x9c00, 12)) = 0;
 }
 pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, game: &mut Game) {
-    set_ram_words! { game, 255; hdma_table_2[0], hdma_table_2[1] }
+    word! { game, 255; hdma_table_2[0], hdma_table_2[1] }
     let E = Get_MotherBrain(0, game);
     let r18: u16 = crate::rtl::rom_table_word!(
         game,
@@ -183,7 +182,7 @@ unsafe fn mother_brain_beam_edges(
     let add_left = matches!(direction, UpRight | DownRight);
     let add_right = matches!(direction, UpRight | Up | DownRight | Down);
     let zero_sentinel = matches!(direction, DownLeft);
-    set_ram_words! { game, 255; hdma_table_2[0], hdma_table_2[1] }
+    word! { game, 255; hdma_table_2[0], hdma_table_2[1] }
     let enemy = Get_MotherBrain(0, game);
     let left_step = crate::rtl::rom_table_word!(game, 0x91c9d4, {
         let angle = if down {
@@ -436,8 +435,8 @@ pub unsafe fn MotherBrain_Phase3_TurnLightsBackOn(a: u16, game: &mut Game) -> u8
     0
 }
 pub unsafe fn EnableEarthquakeAframes(a: u16, game: &mut Game) {
-    set_ram_word!(game.earthquake_type = a);
-    set_ram_word!(game.earthquake_timer = 20);
+    word!(game.earthquake_type = a);
+    word!(game.earthquake_timer = 20);
     QueueSfx2_Max6(0x25, game);
 }
 pub unsafe fn HandleMotherBrainBodyFlickering(game: &mut Game) {

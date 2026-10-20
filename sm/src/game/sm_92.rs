@@ -3,7 +3,7 @@ use crate::game::sm_81::DrawSamusSpritemap;
 use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
-use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
+use crate::ram_map::word;
 use crate::rtl::RomPtr;
 
 crate::typed_struct! {
@@ -18,18 +18,18 @@ unsafe fn get_SamusTileAnimationDefs(a: u16, game: &mut Game) -> *mut SamusTileA
     RomPtr((0x920000u32) | ((a) as u32), game) as *mut SamusTileAnimationDefs
 }
 pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
-    let v0: u16 = (4 * ram_word!(game, samus_anim_frame) as i32
-        + crate::rtl::rom_table_word!(game, 0x92d94e, ram_word!(game, samus_pose) as isize) as i32)
+    let v0: u16 = (4 * word!(game.samus_anim_frame) as i32
+        + crate::rtl::rom_table_word!(game, 0x92d94e, word!(game.samus_pose) as isize) as i32)
         as u16;
     let AD = get_SamusTileAnimationDefs(v0, game);
-    set_ram_word!(
+    word!(
         game.nmi_copy_samus_top_half_src = (7 * (*AD).top_half_pos as i32
             + crate::rtl::rom_table_word!(game, 0x92d91e, (*AD).top_half_idx as isize) as i32)
             as u16
     );
     *(ram_ptr!(game, u16; 0x71d) as *mut u8).offset(0) = 1;
     if (*AD).bottom_half_idx != 255 {
-        set_ram_word!(
+        word!(
             game.nmi_copy_samus_bottom_half_src = (7 * (*AD).bottom_half_pos as i32
                 + crate::rtl::rom_table_word!(game, 0x92d938, (*AD).bottom_half_idx as isize)
                     as i32) as u16
@@ -38,35 +38,30 @@ pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
     }
 }
 pub unsafe fn PlaySamusFanfare(game: &mut Game) -> u8 {
-    if ram_word!(game, substate) != 0 {
-        if ram_word!(game, substate) == 5 {
+    if word!(game.substate) != 0 {
+        if word!(game.substate) == 5 {
             PlayRoomMusicTrackAfterAFrames(0x168, game);
         }
     } else {
         QueueMusic_DelayedY(1, 0xe, game);
     }
-    if ram_word!(game, substate) as i32 - 359i32 & 0x8000 != 0 {
-        update_ram_word!(game.substate, wrapping_add(1));
+    if word!(game.substate) as i32 - 359i32 & 0x8000 != 0 {
+        word!(game.substate, wrapping_add(1));
         0
     } else {
-        set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
+        word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
         *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-        set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
+        word!(game.samus_prev_pose = word!(game.samus_pose));
         *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
-        set_ram_word!(game.substate = 0);
+        word!(game.substate = 0);
         1
     }
 }
 pub unsafe fn DrawSamusSuitExploding(game: &mut Game) {
     let r18: u16 = (if *ram_ptr!(game; 0xa1e) == 4 {
-        ram_word!(game, g_word_7E0DE4) as i32 + 2085
+        word!(game.g_word_7E0DE4) as i32 + 2085
     } else {
-        ram_word!(game, g_word_7E0DE4) as i32 + 2076
+        word!(game.g_word_7E0DE4) as i32 + 2076
     }) as u16;
-    DrawSamusSpritemap(
-        r18,
-        ram_word!(game, samus_x_pos),
-        ram_word!(game, samus_y_pos),
-        game,
-    );
+    DrawSamusSpritemap(r18, word!(game.samus_x_pos), word!(game.samus_y_pos), game);
 }

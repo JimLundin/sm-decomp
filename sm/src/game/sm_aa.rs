@@ -23,8 +23,7 @@ use crate::game::sm_a0::{
 };
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
-use crate::ram_map::set_ram_words;
-use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
+use crate::ram_map::word;
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
@@ -187,7 +186,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         let mut i: i32 = 30;
         while i >= 0 {
             let v3: i32 = i >> 1;
-            set_ram_words! { game, 0;
+            word! { game, 0;
                 target_palettes[(v3 + 160)], target_palettes[(v3 + 144)],
             }
             i -= 2;
@@ -196,7 +195,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Torizo_Instr_38 [jp] {
         SetBossBitForCurArea(4, game);
         QueueMusic_Delayed8(g_word_AAB09A, game);
-        if ram_word!(game, area_index) != 0 {
+        if word!(game.area_index) != 0 {
             Enemy_ItemDrop_GoldenTorizo(k, game);
         } else {
             Enemy_ItemDrop_BombTorizo(k, game);
@@ -239,8 +238,8 @@ pub unsafe fn Torizo_C250(game: &mut Game) {
     let mut i: i32 = 30;
     while i >= 0 {
         let v1: i32 = i >> 1;
-        set_ram_word!(game.target_palettes[(v1 + 160)] = kTorizo_Palettes_3[v1 as usize]);
-        set_ram_word!(game.target_palettes[(v1 + 144)] = kTorizo_Palettes_2[v1 as usize]);
+        word!(game.target_palettes[(v1 + 160)] = kTorizo_Palettes_3[v1 as usize]);
+        word!(game.target_palettes[(v1 + 144)] = kTorizo_Palettes_2[v1 as usize]);
         i -= 2;
     }
 }
@@ -248,8 +247,8 @@ pub unsafe fn Torizo_C268(game: &mut Game) {
     let mut i: i32 = 30;
     while i >= 0 {
         let v1: i32 = i >> 1;
-        set_ram_word!(game.target_palettes[(v1 + 160)] = kTorizo_Palettes_5[v1 as usize]);
-        set_ram_word!(game.target_palettes[(v1 + 144)] = kTorizo_Palettes_4[v1 as usize]);
+        word!(game.target_palettes[(v1 + 160)] = kTorizo_Palettes_5[v1 as usize]);
+        word!(game.target_palettes[(v1 + 144)] = kTorizo_Palettes_4[v1 as usize]);
         i -= 2;
     }
 }
@@ -257,8 +256,8 @@ pub unsafe fn Torizo_C280(game: &mut Game) {
     let mut i: i32 = 30;
     while i >= 0 {
         let v1: i32 = i >> 1;
-        set_ram_word!(game.target_palettes[(v1 + 160)] = kTorizo_Palettes_7[v1 as usize]);
-        set_ram_word!(game.target_palettes[(v1 + 144)] = kTorizo_Palettes_6[v1 as usize]);
+        word!(game.target_palettes[(v1 + 160)] = kTorizo_Palettes_7[v1 as usize]);
+        word!(game.target_palettes[(v1 + 144)] = kTorizo_Palettes_6[v1 as usize]);
         i -= 2;
     }
 }
@@ -266,8 +265,8 @@ pub unsafe fn Torizo_C298(game: &mut Game) {
     let mut i: i32 = 30;
     while i >= 0 {
         let v1: i32 = i >> 1;
-        set_ram_word!(game.target_palettes[(v1 + 160)] = kTorizo_Palettes_10[v1 as usize]);
-        set_ram_word!(game.target_palettes[(v1 + 144)] = kTorizo_Palettes_8[v1 as usize]);
+        word!(game.target_palettes[(v1 + 160)] = kTorizo_Palettes_10[v1 as usize]);
+        word!(game.target_palettes[(v1 + 144)] = kTorizo_Palettes_8[v1 as usize]);
         i -= 2;
     }
 }
@@ -275,8 +274,8 @@ pub unsafe fn Torizo_C2B0(game: &mut Game) {
     let mut i: i32 = 30;
     while i >= 0 {
         let v1: i32 = i >> 1;
-        set_ram_word!(game.palette_buffer[(v1 + 160)] = kTorizo_Palettes_5[v1 as usize]);
-        set_ram_word!(game.palette_buffer[(v1 + 144)] = kTorizo_Palettes_4[v1 as usize]);
+        word!(game.palette_buffer[(v1 + 160)] = kTorizo_Palettes_5[v1 as usize]);
+        word!(game.palette_buffer[(v1 + 144)] = kTorizo_Palettes_4[v1 as usize]);
         i -= 2;
     }
 }
@@ -290,7 +289,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         if ((*Get_Torizo(k as i32, game)).parameter_2 & 0x4000) != 0 {
             return *jp.offset(0) as usize as *const u16;
         }
-        if ram_word!(game, area_index) != 0 {
+        if word!(game.area_index) != 0 {
             *jp.offset(1) as usize as *const u16
         } else {
             jp.offset(2)
@@ -389,7 +388,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         } else {
             EnemyFunc_C8AD(k, game);
             if (((*E).parameter_1 as i32
-                ^ ram_word!(game, samus_x_pos) as i32 - (*E).base.x_pos as i32)
+                ^ word!(game.samus_x_pos) as i32 - (*E).base.x_pos as i32)
                 & 0x8000)
                 == 0
             {
@@ -415,7 +414,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         } else {
             EnemyFunc_C8AD(k, game);
             if (((*E).parameter_1 as i32
-                ^ ram_word!(game, samus_x_pos) as i32 - (*E).base.x_pos as i32)
+                ^ word!(game.samus_x_pos) as i32 - (*E).base.x_pos as i32)
                 & 0x8000)
                 == 0
             {
@@ -440,7 +439,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
             return jp.offset(1);
         }
         let E = Get_Torizo(k as i32, game);
-        if (((*E).parameter_1 as i32 ^ ram_word!(game, samus_x_pos) as i32 - (*E).base.x_pos as i32)
+        if (((*E).parameter_1 as i32 ^ word!(game.samus_x_pos) as i32 - (*E).base.x_pos as i32)
             & 0x8000)
             == 0
         {
@@ -461,10 +460,10 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         (*E).var_00 = (jp.offset(2) as *mut u8)
             .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
             as c_long as u16;
-        if ram_word!(game, samus_missiles) < 5
-            || (ram_word!(game, nmi_frame_counter_word) as i32
-                + (ram_word!(game, samus_x_pos) as i32 & 1)
-                + (ram_word!(game, samus_x_pos) as i32 >> 1)
+        if word!(game.samus_missiles) < 5
+            || (word!(game.nmi_frame_counter_word) as i32
+                + (word!(game.samus_x_pos) as i32 & 1)
+                + (word!(game.samus_x_pos) as i32 >> 1)
                 & 8)
                 != 0
         {
@@ -506,7 +505,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Torizo_Instr_13 [jp] { QueueSfx2_Max6(0x4b, game); };
 }
 pub unsafe fn Torizo_C620(k: u16, game: &mut Game) {
-    if ram_word!(game, area_index) == 0 && (ram_word!(game, random_number) & 0x8142) == 0 {
+    if word!(game.area_index) == 0 && (word!(game.random_number) & 0x8142) == 0 {
         let health: u16 = (*Get_Torizo(k as i32, game)).base.health;
         if health != 0 && health < 0x15e {
             SpawnEprojWithGfx(
@@ -523,8 +522,8 @@ pub unsafe fn Torizo_C643(k: u16, game: &mut Game) {
     if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) != 0 {
         let v3: i16 = (*E).var_B as i16;
         if v3 >= 0 && v3 != 256 {
-            set_ram_word!(game.earthquake_type = 4);
-            set_ram_word!(game.earthquake_timer = 32);
+            word!(game.earthquake_type = 4);
+            word!(game.earthquake_timer = 32);
             (*E).var_B = 256;
         }
     } else {
@@ -532,8 +531,8 @@ pub unsafe fn Torizo_C643(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn Torizo_Hurt(game: &mut Game) {
-    Torizo_C620(ram_word!(game, cur_enemy_index), game);
-    if (*Get_Torizo(ram_word!(game, cur_enemy_index) as i32, game))
+    Torizo_C620(word!(game.cur_enemy_index), game);
+    if (*Get_Torizo(word!(game.cur_enemy_index) as i32, game))
         .base
         .flash_timer
         & 1
@@ -542,7 +541,7 @@ pub unsafe fn Torizo_Hurt(game: &mut Game) {
         let mut i: i32 = 30;
         while i >= 0 {
             let v2: i32 = i >> 1;
-            set_ram_words! { game, 0x7fff;
+            word! { game, 0x7fff;
                 palette_buffer[(v2 + 160)], palette_buffer[(v2 + 144)],
             }
             i -= 2;
@@ -561,10 +560,10 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn Torizo_Main(game: &mut Game) {
-    let E = Get_Torizo(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
     CallTorizoFunc(
         (((*E).var_E) as u32) | (0xaa0000u32),
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         game,
     );
 }
@@ -576,7 +575,7 @@ pub unsafe fn Torizo_Func_4(k: u16, game: &mut Game) {
     let E = Get_Torizo(k as i32, game);
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
     let mut v2: u16 = 78;
-    while ram_word!(game, plm_header_ptr[(v2 >> 1)]) as i32 != addr_kPlmHeader_D6EA as i32 {
+    while word!(game.plm_header_ptr[(v2 >> 1)]) as i32 != addr_kPlmHeader_D6EA as i32 {
         v2 = (v2).wrapping_sub(2);
         if (v2 & 0x8000) != 0 {
             QueueMusic_Delayed8(g_word_AAB096, game);
@@ -686,18 +685,18 @@ pub unsafe fn Torizo_Func_7(k: u16, game: &mut Game) {
     if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) != 0 {
         enemy_instruction! {[(*E).base]; instruction = (*E).var_00, timer = 1}
         (*E).var_B = 256;
-        set_ram_word!(game.earthquake_type = 4);
-        set_ram_word!(game.earthquake_timer = 32);
+        word!(game.earthquake_type = 4);
+        word!(game.earthquake_timer = 32);
     } else {
         (*E).var_B = ((*E).var_B).wrapping_add((*E).var_C);
     };
 }
 pub unsafe fn Torizo_Init(game: &mut Game) {
-    let E = Get_Torizo(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
     if CheckBossBitForCurArea(4, game) & 1 != 0 {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
     } else {
-        let v2: i32 = ram_word!(game, area_index) as i32 >> 1;
+        let v2: i32 = word!(game.area_index) as i32 >> 1;
         (*E).base.properties = ((*E).base.properties) | ((g_word_AAC96B[v2 as usize]) as u16);
         (*E).base.extra_properties = ((*E).base.extra_properties) | (4u16);
         (*E).base.x_width = g_word_AAC96F[v2 as usize] as u16;
@@ -715,23 +714,23 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
         let mut i: i32 = 30;
         while i >= 0 {
             let v4: i32 = i >> 1;
-            set_ram_word!(game.target_palettes[(v4 + 240)] = kTorizo_Palettes_1[v4 as usize]);
-            set_ram_word!(game.target_palettes[(v4 + 176)] = kTorizo_Palette[v4 as usize]);
+            word!(game.target_palettes[(v4 + 240)] = kTorizo_Palettes_1[v4 as usize]);
+            word!(game.target_palettes[(v4 + 176)] = kTorizo_Palette[v4 as usize]);
             i -= 2;
         }
-        if ram_word!(game, area_index) != 0 {
+        if word!(game.area_index) != 0 {
             Torizo_C280(game);
-            if ram_word!(game, joypad1_lastkeys) == 0xc0c0 {
-                set_ram_words! { game, 700; samus_health, samus_max_health }
-                set_ram_words! { game, 300; samus_max_reserve_health, samus_reserve_health }
-                set_ram_words! { game, 100; samus_missiles, samus_max_missiles }
-                set_ram_words! { game, 20;
+            if word!(game.joypad1_lastkeys) == 0xc0c0 {
+                word! { game, 700; samus_health, samus_max_health }
+                word! { game, 300; samus_max_reserve_health, samus_reserve_health }
+                word! { game, 100; samus_missiles, samus_max_missiles }
+                word! { game, 20;
                     samus_super_missiles, samus_max_super_missiles, samus_power_bombs,
                     samus_max_power_bombs,
                 }
-                set_ram_word!(game.equipped_items = -3273i32 as u16);
-                set_ram_word!(game.collected_items = -3273i32 as u16);
-                set_ram_words! { game, 4111; equipped_beams, collected_beams }
+                word!(game.equipped_items = -3273i32 as u16);
+                word!(game.collected_items = -3273i32 as u16);
+                word! { game, 4111; equipped_beams, collected_beams }
             }
         } else {
             Torizo_C250(game);
@@ -743,10 +742,10 @@ pub unsafe fn GoldTorizo_Touch(game: &mut Game) {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
 }
 pub unsafe fn Torizo_Shot(game: &mut Game) {
-    if ram_word!(game, area_index) != 0 {
+    if word!(game.area_index) != 0 {
         GoldTorizo_Shot(game);
     } else {
-        let E = Get_Torizo(ram_word!(game, cur_enemy_index) as i32, game);
+        let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
         if (*E).var_04 | (*E).base.flash_timer == 0 {
             NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
             if (*E).base.health == 0 {
@@ -759,7 +758,7 @@ pub unsafe fn Torizo_Shot(game: &mut Game) {
     };
 }
 pub unsafe fn Torizo_Func_8(game: &mut Game) {
-    if ram_word!(game, area_index) != 0 {
+    if word!(game.area_index) != 0 {
         Torizo_D658(game);
     }
 }
@@ -803,9 +802,9 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Torizo_Instr_63 [jp] {  (*E).parameter_2 = ((*E).parameter_2 & !(0x2000)); };
 }
 pub unsafe fn GoldTorizo_Main(game: &mut Game) {
-    let E = Get_Torizo(ram_word!(game, cur_enemy_index) as i32, game);
-    if ram_word!(game, samus_pose) as i32 == kPose_1B_FaceR_SpaceJump as i32
-        || ram_word!(game, samus_pose) as i32 == kPose_1C_FaceL_SpaceJump as i32
+    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
+    if word!(game.samus_pose) as i32 == kPose_1B_FaceR_SpaceJump as i32
+        || word!(game.samus_pose) as i32 == kPose_1C_FaceL_SpaceJump as i32
     {
         (*E).var_07 = (*E).var_07.wrapping_add(1);
     } else {
@@ -813,7 +812,7 @@ pub unsafe fn GoldTorizo_Main(game: &mut Game) {
     }
     CallTorizoFunc(
         (((*E).var_E) as u32) | (0xaa0000u32),
-        ram_word!(game, cur_enemy_index),
+        word!(game.cur_enemy_index),
         game,
     );
 }
@@ -824,25 +823,25 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
 }
 pub unsafe fn Torizo_Func_12(k: u16, game: &mut Game) -> u16 {
     let E = Get_Torizo(k as i32, game);
-    ((*E).parameter_1 as i32 ^ (*E).base.x_pos as i32 - ram_word!(game, samus_x_pos) as i32) as u16
+    ((*E).parameter_1 as i32 ^ (*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32) as u16
 }
 pub unsafe fn Torizo_Func_11(k: u16, game: &mut Game) {
     let E = Get_Torizo(k as i32, game);
     SetGoldenTorizoPalette((*E).base.health, game);
 }
 pub unsafe fn GoldTorizo_Hurt(game: &mut Game) {
-    Torizo_C620(ram_word!(game, cur_enemy_index), game);
-    if (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).flash_timer & 1 != 0 {
+    Torizo_C620(word!(game.cur_enemy_index), game);
+    if (*gEnemyData(word!(game.cur_enemy_index) as i32, game)).flash_timer & 1 != 0 {
         let mut i: i32 = 30;
         while i >= 0 {
             let v2: i32 = i >> 1;
-            set_ram_words! { game, 0x7fff;
+            word! { game, 0x7fff;
                 palette_buffer[(v2 + 160)], palette_buffer[(v2 + 144)],
             }
             i -= 2;
         }
     } else {
-        Torizo_Func_11(ram_word!(game, cur_enemy_index), game);
+        Torizo_Func_11(word!(game.cur_enemy_index), game);
     };
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
@@ -853,13 +852,13 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         if (Torizo_Func_12(k, game) & 0x8000) == 0
             || CompareDistToSamus_X(k, 4, game) & 1 == 0
             || CompareDistToSamus_X(k, 0x28, game) & 1 != 0
-            || ram_word!(game, samus_pose) as i32 != kPose_1D_FaceR_Morphball_Ground as i32
-                && ram_word!(game, samus_pose) as i32 != kPose_1E_MoveR_Morphball_Ground as i32
-                && ram_word!(game, samus_pose) as i32 != kPose_1F_MoveL_Morphball_Ground as i32
-                && ram_word!(game, samus_pose) as i32 != kPose_79_FaceR_Springball_Ground as i32
-                && ram_word!(game, samus_pose) as i32 != kPose_7A_FaceL_Springball_Ground as i32
-                && ram_word!(game, samus_pose) as i32 != kPose_7B_MoveR_Springball_Ground as i32
-                && ram_word!(game, samus_pose) as i32 != kPose_7C_MoveL_Springball_Ground as i32
+            || word!(game.samus_pose) as i32 != kPose_1D_FaceR_Morphball_Ground as i32
+                && word!(game.samus_pose) as i32 != kPose_1E_MoveR_Morphball_Ground as i32
+                && word!(game.samus_pose) as i32 != kPose_1F_MoveL_Morphball_Ground as i32
+                && word!(game.samus_pose) as i32 != kPose_79_FaceR_Springball_Ground as i32
+                && word!(game.samus_pose) as i32 != kPose_7A_FaceL_Springball_Ground as i32
+                && word!(game.samus_pose) as i32 != kPose_7B_MoveR_Springball_Ground as i32
+                && word!(game.samus_pose) as i32 != kPose_7C_MoveL_Springball_Ground as i32
         {
             return jp.offset(1);
         }
@@ -908,7 +907,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         }
         let E = Get_Torizo(k as i32, game);
         if (*E).var_07 <= 0x168
-            && ((ram_word!(game, joypad1_lastkeys) & 0x300) == 0 || (NextRandom(game) & 0x101) == 0)
+            && ((word!(game.joypad1_lastkeys) & 0x300) == 0 || (NextRandom(game) & 0x101) == 0)
         {
             return jp.offset(1);
         }
@@ -933,10 +932,10 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         (*Get_Torizo(k as i32, game)).var_00 = (jp.offset(2) as *mut u8)
             .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
             as c_long as u16;
-        if ram_word!(game, samus_missiles) < 0x20
-            || (ram_word!(game, nmi_frame_counter_word) as i32
-                + (ram_word!(game, samus_x_pos) as i32 & 1)
-                + (ram_word!(game, samus_x_pos) as i32 >> 1)
+        if word!(game.samus_missiles) < 0x20
+            || (word!(game.nmi_frame_counter_word) as i32
+                + (word!(game.samus_x_pos) as i32 & 1)
+                + (word!(game.samus_x_pos) as i32 >> 1)
                 & 8)
                 != 0
         {
@@ -958,7 +957,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         } else {
             EnemyFunc_C8AD(k, game);
             if (((*E).parameter_1 as i32
-                ^ ram_word!(game, samus_x_pos) as i32 - (*E).base.x_pos as i32)
+                ^ word!(game.samus_x_pos) as i32 - (*E).base.x_pos as i32)
                 & 0x8000)
                 == 0
             {
@@ -973,8 +972,8 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     };
 }
 pub unsafe fn Torizo_Func_9(k: u16, game: &mut Game) {
-    let E = Get_Torizo(ram_word!(game, cur_enemy_index) as i32, game);
-    if ram_word!(game, samus_y_pos) > 0x140 && ram_word!(game, samus_x_pos) > 0x170 {
+    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
+    if word!(game.samus_y_pos) > 0x140 && word!(game.samus_x_pos) > 0x170 {
         (*E).base.current_instruction = (*E).base.current_instruction.wrapping_add(1);
         enemy_instruction! {[(*E).base]; instruction = (*E).base.current_instruction.wrapping_add(1), timer = 1}
     }
@@ -1026,13 +1025,13 @@ pub unsafe fn Torizo_D5F1(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn Torizo_D658(game: &mut Game) {
-    let E = Get_Torizo(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
     if (*E).base.flash_timer == 0 && (*E).var_04 == 0 {
         Torizo_D6A6(game);
     }
 }
 pub unsafe fn GoldTorizo_Shot(game: &mut Game) {
-    let E = Get_Torizo(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
     if (*E).base.flash_timer == 0 {
         if (*E).var_04 != 0 {
             Torizo_D6A6(game);
@@ -1042,19 +1041,17 @@ pub unsafe fn GoldTorizo_Shot(game: &mut Game) {
             || ({
                 let mut v2: u16 = 0;
                 let mut v3: u16 = 0;
-                v2 = (2u16).wrapping_mul(ram_word!(game, collision_detection_index));
-                v3 = (ram_word!(
-                    game,
-                    projectile_type[ram_word!(game, collision_detection_index)]
-                )) & (0xf00u16);
+                v2 = (2u16).wrapping_mul(word!(game.collision_detection_index));
+                v3 = (word!(game.projectile_type[word!(game.collision_detection_index)]))
+                    & (0xf00u16);
                 (*E).var_05 = v3;
                 if v3 == 256 {
-                    Torizo_D6D1(ram_word!(game, cur_enemy_index), v2, game);
+                    Torizo_D6D1(word!(game.cur_enemy_index), v2, game);
                     return;
                 }
                 (v3 != 512)
                     || ({
-                        Torizo_D6F7(ram_word!(game, cur_enemy_index), v2, game);
+                        Torizo_D6F7(word!(game.cur_enemy_index), v2, game);
                         false
                     })
             });
@@ -1066,7 +1063,7 @@ pub unsafe fn GoldTorizo_Shot(game: &mut Game) {
 }
 pub unsafe fn Torizo_D6A6(game: &mut Game) {
     NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-    let E = Get_Torizo(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
     if (*E).base.health == 0 {
         enemy_instruction! {[(*E).base]; instruction = addr_kTorizo_Ilist_B1C8 as u16, timer = 1}
         (*E).parameter_2 = ((*E).parameter_2) | (0xc000u16);
@@ -1074,7 +1071,7 @@ pub unsafe fn Torizo_D6A6(game: &mut Game) {
     }
 }
 pub unsafe fn Torizo_D6D1(k: u16, j: u16, game: &mut Game) {
-    update_ram_word!(game.projectile_dir[(j >> 1)], |fresh1| (fresh1 & !(0x10)));
+    word!(game.projectile_dir[(j >> 1)], |fresh1| (fresh1 & !(0x10)));
     let E = Get_Torizo(k as i32, game);
     (*E).var_E = ((0xaac6abi32) as u16);
     (*E).base.instruction_timer = 1;
@@ -1087,11 +1084,11 @@ pub unsafe fn Torizo_D6D1(k: u16, j: u16, game: &mut Game) {
     (*E).base.current_instruction = v3;
 }
 pub unsafe fn Torizo_D6F7(k: u16, j: u16, game: &mut Game) {
-    let E = Get_Torizo(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
     if (Torizo_Func_12(k, game) & 0x8000) == 0 {
         (*E).parameter_2 = ((*E).parameter_2) | (0x1000u16);
         (*E).var_E = ((0xaac6abi32) as u16);
-        update_ram_word!(game.projectile_dir[(j >> 1)], |fresh0| (fresh0) | (0x10u16));
+        word!(game.projectile_dir[(j >> 1)], |fresh0| (fresh0) | (0x10u16));
         (*E).base.instruction_timer = 1;
         let mut v3: u16 = 0;
         if ((*E).parameter_1 & 0x2000) != 0 {
@@ -1111,7 +1108,7 @@ pub unsafe fn Torizo_D6F7(k: u16, j: u16, game: &mut Game) {
     };
 }
 pub unsafe fn TourianEntranceStatue_Init(game: &mut Game) {
-    let v0 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
+    let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
     (*v0).palette_index = 0;
     (*v0).instruction_timer = 1;
     (*v0).timer = 0;
@@ -1125,11 +1122,11 @@ pub unsafe fn TourianEntranceStatue_Init(game: &mut Game) {
     let mut i: i32 = 30;
     while i >= 0 {
         let v5: i32 = i >> 1;
-        set_ram_word!(
+        word!(
             game.target_palettes[(v5 + 240)] =
                 crate::rtl::rom_table_word!(game, 0xaad785, v5 as isize)
         );
-        set_ram_word!(
+        word!(
             game.target_palettes[(v5 + 160)] =
                 crate::rtl::rom_table_word!(game, 0xaad765, v5 as isize)
         );
@@ -1307,8 +1304,8 @@ pub unsafe fn Shaktool_DC2A(k: u16, game: &mut Game) {
         &raw mut (*E).base.x_subpos,
         (((crate::rtl::rom_table_word!(game, 0xaae0bd, v3 as isize) as i16 as i32) << 8i32) as u32)
             .wrapping_add(
-                (ram_word!(game, enemy_drawing_queue[(v5 + 91)]) as u32) << 16
-                    | ram_word!(game, enemy_drawing_queue[(v5 + 92)]) as u32,
+                (word!(game.enemy_drawing_queue[(v5 + 91)]) as u32) << 16
+                    | word!(game.enemy_drawing_queue[(v5 + 92)]) as u32,
             ),
     );
     SetHiLo(
@@ -1316,8 +1313,8 @@ pub unsafe fn Shaktool_DC2A(k: u16, game: &mut Game) {
         &raw mut (*E).base.y_subpos,
         (((crate::rtl::rom_table_word!(game, 0xaae03d, v3 as isize) as i16 as i32) << 8i32) as u32)
             .wrapping_add(
-                (ram_word!(game, enemy_drawing_queue[(v5 + 93)]) as u32) << 16
-                    | ram_word!(game, enemy_drawing_queue[(v5 + 94)]) as u32,
+                (word!(game.enemy_drawing_queue[(v5 + 93)]) as u32) << 16
+                    | word!(game.enemy_drawing_queue[(v5 + 94)]) as u32,
             ),
     );
 }
@@ -1334,7 +1331,7 @@ pub unsafe fn Shaktool_DC6F(k: u16, game: &mut Game) {
     (*Get_Shaktool(shakto_var_E as i32 + 384i32, game)).var_C = g_word_AADEE9[6i32 as usize];
 }
 pub unsafe fn Shaktool_Hurt(game: &mut Game) {
-    let E = Get_Shaktool(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Shaktool(word!(game.cur_enemy_index) as i32, game);
     CallEnemyPreInstr((((*E).var_F) as u32) | (0xaa0000u32), game);
 }
 pub unsafe fn Shaktool_DCAC(k: u16, game: &mut Game) {
@@ -1401,12 +1398,12 @@ pub unsafe fn Shaktool_DD25(mut k: u16, game: &mut Game) {
             (*E).base.y_pos = y_pos;
             Shaktool_DB59(k, game);
             Shaktool_DB0E(
-                ram_word!(game, cur_enemy_index),
+                word!(game.cur_enemy_index),
                 ((*E).parameter_1) | (0x2000u16),
                 game,
             );
             Shaktool_DB0E(
-                ram_word!(game, cur_enemy_index),
+                word!(game.cur_enemy_index),
                 ((*E).parameter_1) & (0xbfffu16),
                 game,
             );
@@ -1451,7 +1448,7 @@ pub unsafe fn Shaktool_DD25(mut k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn Shaktool_Init(game: &mut Game) {
-    let E = Get_Shaktool(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Shaktool(word!(game.cur_enemy_index) as i32, game);
     (*E).base.instruction_timer = 1;
     (*E).base.timer = 0;
     set_fields! {[(*E)], 0; var_A, var_D}
@@ -1459,7 +1456,7 @@ pub unsafe fn Shaktool_Init(game: &mut Game) {
     let v3: i32 = shakto_parameter_2 as i32 >> 1;
     (*E).base.properties =
         ((*E).base.properties) | (crate::rtl::rom_table_word!(game, 0xaade95, v3 as isize));
-    (*E).var_E = (ram_word!(game, cur_enemy_index)).wrapping_sub(crate::rtl::rom_table_word!(
+    (*E).var_E = (word!(game.cur_enemy_index)).wrapping_sub(crate::rtl::rom_table_word!(
         game,
         0xaadea3,
         v3 as isize
@@ -1473,7 +1470,7 @@ pub unsafe fn Shaktool_Init(game: &mut Game) {
     (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xaadeb1, (v3 + 7) as isize);
     (*E).base.layer = crate::rtl::rom_table_word!(game, 0xaadecd, v3 as isize);
     if shakto_parameter_2 != 0 {
-        Shaktool_DC2A(ram_word!(game, cur_enemy_index), game);
+        Shaktool_DC2A(word!(game.cur_enemy_index), game);
     }
 }
 pub unsafe fn Shaktool_Touch(game: &mut Game) {
@@ -1481,7 +1478,7 @@ pub unsafe fn Shaktool_Touch(game: &mut Game) {
 }
 pub unsafe fn Shaktool_Shot(game: &mut Game) {
     NormalEnemyShotAi(game);
-    let E = Get_Shaktool(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Shaktool(word!(game.cur_enemy_index) as i32, game);
     if (*E).base.health == 0 {
         let shakto_var_E: u16 = (*E).var_E;
         (*Get_Shaktool(shakto_var_E as i32, game)).base.properties = 512;
@@ -1507,10 +1504,10 @@ pub unsafe fn Shaktool_Shot(game: &mut Game) {
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     Shaktool_Instr_9 [jp] {
-        set_ram_word!(game.fx_timer = 32);
-        set_ram_word!(game.fx_y_vel = 64);
+        word!(game.fx_timer = 32);
+        word!(game.fx_y_vel = 64);
     };
-    Shaktool_Instr_11 [jp] { set_ram_word!(game.fx_base_y_pos = 722); };
+    Shaktool_Instr_11 [jp] { word!(game.fx_base_y_pos = 722); };
     Shaktool_Instr_10 [jp] { CallSomeSamusCode(1, game); };
 }
 pub unsafe fn sub_AAE445(k: u16, game: &mut Game) {
@@ -1531,7 +1528,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
             game,
         );
         if (*(ram_ptr!(game, u16; 0x10002)).offset(
-            (ram_word!(game, room_width_in_blocks) as i32 + ram_word!(game, cur_block_index) as i32)
+            (word!(game.room_width_in_blocks) as i32 + word!(game.cur_block_index) as i32)
                 as isize,
         ) & 0xf000)
             == 0xa000
@@ -1565,11 +1562,11 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         );
         EnemyFunc_C8AD(k, game);
         let v6: i32 = (*E).var_C as i32 >> 1;
-        set_ram_word!(
+        word!(
             game.samus_x_pos = (crate::rtl::rom_table_word!(game, 0xaae670, v6 as isize))
                 .wrapping_add((*E).base.x_pos)
         );
-        set_ram_word!(
+        word!(
             game.samus_y_pos = (crate::rtl::rom_table_word!(game, 0xaae6b0, v6 as isize))
                 .wrapping_add((*E).base.y_pos)
         );
@@ -1589,7 +1586,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
 pub unsafe fn N00bTubeCracks_Init(game: &mut Game) {
     let mut i: i32 = 62;
     while i >= 0 {
-        set_ram_word!(
+        word!(
             game.target_palettes[((i >> 1) + 144)] =
                 crate::rtl::rom_table_word!(game, 0xaae2dd, (i >> 1) as isize)
         );
@@ -1597,7 +1594,7 @@ pub unsafe fn N00bTubeCracks_Init(game: &mut Game) {
     }
 }
 pub unsafe fn ChozoStatue_Init(game: &mut Game) {
-    let v0 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
+    let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
     (*v0).properties = ((*v0).properties as i32
         | (kEnemyProps_DisableSamusColl as i32 | kEnemyProps_ProcessedOffscreen as i32 | 0x8000))
         as u16;
@@ -1616,10 +1613,8 @@ pub unsafe fn ChozoStatue_Init(game: &mut Game) {
         let mut i: i32 = 30;
         while i >= 0 {
             let v3: i32 = i >> 1;
-            set_ram_word!(
-                game.target_palettes[(v3 + 160)] = kChozoStatue_Palettes[v3 as usize] as u16
-            );
-            set_ram_word!(game.target_palettes[(v3 + 144)] = kChozoStatue_Palette[v3 as usize]);
+            word!(game.target_palettes[(v3 + 160)] = kChozoStatue_Palettes[v3 as usize] as u16);
+            word!(game.target_palettes[(v3 + 144)] = kChozoStatue_Palette[v3 as usize]);
             i -= 2;
         }
         SpawnHardcodedPlm(
@@ -1636,22 +1631,18 @@ pub unsafe fn sub_AAE784(game: &mut Game) {
     let mut i: i32 = 30;
     while i >= 0 {
         let v1: i32 = i >> 1;
-        set_ram_word!(
-            game.target_palettes[(v1 + 160)] = kChozoStatue_Palettes3[v1 as usize] as u16
-        );
-        set_ram_word!(
-            game.target_palettes[(v1 + 144)] = kChozoStatue_Palettes2[v1 as usize] as u16
-        );
+        word!(game.target_palettes[(v1 + 160)] = kChozoStatue_Palettes3[v1 as usize] as u16);
+        word!(game.target_palettes[(v1 + 144)] = kChozoStatue_Palettes2[v1 as usize] as u16);
         i -= 2;
     }
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xc, 0x1d, 0xd6d6 as VoidP), game);
 }
 pub unsafe fn ChozoStatue_Main(game: &mut Game) {
-    let v0 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
+    let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
     CallEnemyPreInstr((((*v0).ai_preinstr) as u32) | (0xaa0000u32), game);
 }
 pub unsafe fn Shaktool_PreInstr_0(k: u16, game: &mut Game) {
-    if (*(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) & 1) != 0 {
+    if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 1) != 0 {
         let E = Get_Shaktool(k as i32, game);
         if (*E).parameter_1 != 0 {
             enemy_instruction! {[(*E).base]; instruction = addr_kShaktool_Ilist_E461 as u16, timer = 1}
