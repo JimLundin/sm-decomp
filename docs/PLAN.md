@@ -65,6 +65,20 @@ Disposable checks are under the bindings root's `navigation/` directory;
 its existing `integrated/` target is reused without copying game/host artifacts.
 The complete remaining reduction budget is still unproven.
 
+After commit b9759013, all owned navigation build/check handles are terminal.
+Checked native PowerShell deletion of `navigation/` was rejected as "blocked
+by policy"; its completed scripts, DLL and logs remain. The integration target
+is retained as the current build cache. No cleanup is falsely credited.
+
+Next distinct draft shares the three file-copy row-display modes and their
+three per-slot drawing entries. Complete formatted source saves **47 lines**
+including helpers, enum and retained entries, before temporary probes. It is
+not compiled or behaviorally/oracle validated and is not counted as landed.
+Review the removed intermediate palette-zero store against the distinct
+occupancy word, and exercise real SRAM loading, health/time drawing, palette
+selection, short-circuit reads and VRAM queue writes. Draft/pricing files:
+`%TEMP%/sm-bindings-root-9c4daf2f/file-rows-next.rs` and `price-file-rows.py`.
+
 ## Remove zero pointer offsets (2026-10-20)
 
 Remove all 514 literal `.offset(0)` operations across 32 source files. Complete
