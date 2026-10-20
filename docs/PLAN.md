@@ -31,6 +31,23 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Next-family measurements (2026-10-20): three isolated runtime drafts remain
+parked under substantial-family priority. All eight timed-shutter opening/
+closing stages save only 17 formatted lines after named modes and endpoint
+exceptions. Four Fire/Orange Zoomer wall-following variants save 43 after
+slope callbacks, Samus-relative turns and correction ordering stay explicit.
+Neither draft has candidate runtime acceptance or maintained-source changes.
+
+Seventeen Beetom ledge/jump/traversal/release entries save 89 formatted lines
+after preserving the distinct phase-step values and post-store rereads. An
+extracted draft comparison passes 34816 ordered RAM/ROM/callback/full-RAM
+cases, including callbacks changing phase, coordinates and live enemy index.
+Pointer formation itself is excluded from the event trace. This is preliminary
+factored control evidence; no real-library, alias or gameplay-route acceptance
+is claimed. No full release/replay was started for these parked drafts.
+Continue a larger complete shared implementation rather than publishing
+these small projections; wider routes/frontend/ownership remain open.
+
 Ridley tail segments (2026-10-20): share the repeated tail reset,
 coordinate-chain and six length-update bodies in Ridley_Func_85/86/87.
 The three entry points retain ordered byte/word reads and stores in the shared
