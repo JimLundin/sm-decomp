@@ -1,3 +1,4 @@
+use super::intro_pages;
 use crate::c_library::{__assert_fail, memcpy, memset};
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_60::*;
@@ -15,8 +16,7 @@ use crate::game::sm_80::{
 use crate::game::sm_81::{DrawSpritemap, DrawSpritemapOffScreen, SaveToSram};
 use crate::game::sm_88::{
     CinematicFunction_Intro_Func133, DisableHdmaObjects, EnableHdmaObjects,
-    SpawnIntroCutsceneCrossfadeHdma, SpawnPowerBombExplosion, SpawnTitleScreenGradientObjs,
-    WaitUntilEndOfVblankAndClearHdma,
+    SpawnPowerBombExplosion, SpawnTitleScreenGradientObjs, WaitUntilEndOfVblankAndClearHdma,
 };
 use crate::game::sm_8d::{
     ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx, PaletteFxHandler, SpawnPalfxObject,
@@ -25,10 +25,7 @@ use crate::game::sm_90::{
     DrawSamusAndProjectiles, HandleControllerInputForGamePhysics, HandleSamusMovementAndPause,
     KillProjectile, UpdateBeamTilesAndPalette,
 };
-use crate::game::sm_91::{
-    EnableDemoInput, LoadDemoInputObject, ResetDemoData, SamusFunc_F433, Samus_Initialize,
-    Samus_SetAnimationFrameIfPoseChanged,
-};
+use crate::game::sm_91::Samus_Initialize;
 use crate::game::sm_93::DrawPlayerExplosions2;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game_state::Game;
@@ -2382,451 +2379,6 @@ pub unsafe fn SetSomeStuffForSpriteObject_18(k: u16, game: &mut Game) {
         word!(game.cinematicspr_instr_ptr[v2] = addr_off_8BCE53 as u16);
     }
 }
-// The arrow initializer leaves its palette in A for the mode-7 spawn. When
-// sprite slots are full, the allocator instead leaves slot zero's instruction.
-unsafe fn spawn_intro_japanese_continuation(object: u16, game: &mut Game) {
-    let failed = SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCE73 as u16,
-        word!(game.japanese_text_flag),
-        game,
-    ) != 0;
-    let parameter = if failed {
-        word!(game.cinematicspr_instr_ptr[0])
-    } else {
-        0x0c00
-    };
-    SpawnMode7Object(object, parameter, game);
-}
-
-pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page1(k: u16, j: u16, game: &mut Game) -> u16 {
-    word!(game.cinematicbg_var1 = 0);
-    if word!(game.japanese_text_flag) != 0 {
-        SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD401 as u16,
-            word!(game.japanese_text_flag),
-            game,
-        );
-    }
-    j
-}
-pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page1(
-    k: u16,
-    mut j: u16,
-    game: &mut Game,
-) -> u16 {
-    j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
-    if word!(game.japanese_text_flag) != 0 {
-        SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE73 as u16,
-            word!(game.japanese_text_flag),
-            game,
-        );
-    }
-    word!(game.cinematic_function = ((0x8baeb8i32) as u16));
-    j
-}
-pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page2(k: u16, j: u16, game: &mut Game) -> u16 {
-    word!(game.cinematicbg_var1 = 0);
-    if word!(game.japanese_text_flag) != 0 {
-        SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD407 as u16,
-            word!(game.japanese_text_flag),
-            game,
-        );
-    }
-    j
-}
-pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page2(
-    k: u16,
-    mut j: u16,
-    game: &mut Game,
-) -> u16 {
-    j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
-    if word!(game.japanese_text_flag) != 0 {
-        spawn_intro_japanese_continuation(addr_kMode7ObjectDef_8BD40D as u16, game);
-    } else {
-        word!(game.cinematic_function = ((0x8baf6ci32) as u16));
-    }
-    j
-}
-pub unsafe fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game: &mut Game) {
-    if word!(game.cinematic_var16) != 0 {
-        word!(game.cinematic_var16, wrapping_sub(1));
-    } else if word!(game.joypad1_newkeys) != 0 {
-        *ram_ptr!(game; 0x58) = 80;
-        word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
-        SamusFunc_F433(game);
-        Samus_SetAnimationFrameIfPoseChanged(game);
-        word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-        *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-        word!(game.samus_prev_pose = word!(game.samus_pose));
-        *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
-        word! { game, 155; samus_x_pos, samus_prev_x_pos }
-        word! { game, 115; samus_y_pos, samus_prev_y_pos }
-        word!(game.cinematic_var8 = 0);
-        word!(game.cinematic_var13 = 127);
-        SpawnCinematicSpriteObjectAtSlot(
-            addr_kCinematicSpriteObjectDef_8BCE55 as u16,
-            0,
-            0x007f, // The preceding $1A4B store leaves $007F in A.
-            game,
-        );
-        SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCF27 as u16,
-            0x0e00, // Palette left in A by the first sprite initializer.
-            game,
-        );
-        word_transfers!(game, ascending, 224; le(level_data, 0) <- rom(0x8cbec3, 0));
-        word_transfers!(game, ascending, 256; native(0x16402) <- value(0));
-        word!(game.hud_item_index = 1);
-        word!(game.frame_handler_alfa = ((0x90e6c9i32) as u16));
-        word!(game.frame_handler_beta = ((0x90e833i32) as u16));
-        ResetDemoData(game);
-        EnableDemoInput(game);
-        // EnableDemoInput leaves $8000 in the ROM accumulator for the loader.
-        LoadDemoInputObject(0x8000, addr_stru_918784 as u16, game);
-        word!(game.cinematic_var15 = -1i32 as u16);
-        CinematicFunction_Intro_SetupTransitionToGameplay(game);
-    }
-}
-pub unsafe fn CinematicFunction_Intro_WaitInputSetupBabyMetroid(game: &mut Game) {
-    if word!(game.cinematic_var16) != 0 {
-        word!(game.cinematic_var16, wrapping_sub(1));
-    } else if word!(game.joypad1_newkeys) != 0 {
-        *ram_ptr!(game; 0x58) = 84;
-        word!(game.room_width_in_blocks = 32);
-        word!(game.room_height_in_blocks = 16);
-        word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
-        SamusFunc_F433(game);
-        Samus_SetAnimationFrameIfPoseChanged(game);
-        word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-        *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-        word!(game.samus_prev_pose = word!(game.samus_pose));
-        *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
-        word! { game, 376; samus_x_pos, samus_prev_x_pos }
-        word! { game, 147; samus_y_pos, samus_prev_y_pos }
-        word!(game.cinematic_var8 = 0);
-        word!(game.cinematic_var13 = 127);
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCE5B as u16, 0x7f, game);
-        SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE79 as u16,
-            0x0e00, // Palette left in A by the first sprite initializer.
-            game,
-        );
-        word!(game.cinematic_var11 = 0);
-        word_transfers!(game, ascending, 384; le(level_data, 0) <- rom(0x8cc083, 0));
-        word!(game.hud_item_index = 0);
-        word!(game.frame_handler_alfa = ((0x90e6c9i32) as u16));
-        word!(game.frame_handler_beta = ((0x90e833i32) as u16));
-        ResetDemoData(game);
-        EnableDemoInput(game);
-        // EnableDemoInput leaves $8000 in the ROM accumulator for the loader.
-        LoadDemoInputObject(0x8000, addr_stru_91877E as u16, game);
-        word!(game.cinematic_var15 = 1);
-        CinematicFunction_Intro_SetupTransitionToGameplay(game);
-    }
-}
-pub unsafe fn CinematicFunction_Intro_SetupTransitionToGameplay(game: &mut Game) {
-    *ram_ptr!(game; 0x69) = 6;
-    *ram_ptr!(game; 0x6b) = 17;
-    *ram_ptr!(game; 0x6f) = 2;
-    *ram_ptr!(game; 0x72) = 0;
-    SpawnIntroCutsceneCrossfadeHdma(game);
-    SetSomeStuffForSpriteObject_15(game);
-    word!(game.cinematic_function = ((0x8bb250i32) as u16));
-    word_transfers!(game, ascending, 256; native(0x2200) <- rom(0x8ce3e9, 0));
-    DecomposePaletteDataForFading(game);
-    ClearYColorsFromIndexX(0x28, 3, game);
-    ClearYColorsFromIndexX(0xe0, 0x10, game);
-    ClearYColorsFromIndexX(0x180, 0x20, game);
-    ClearYColorsFromIndexX(0x1e0, 0x10, game);
-    ComposeFadingPalettes(game);
-}
-pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page3(k: u16, j: u16, game: &mut Game) -> u16 {
-    word!(game.cinematicbg_var1 = 0);
-    if word!(game.japanese_text_flag) != 0 {
-        SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD413 as u16,
-            word!(game.japanese_text_flag),
-            game,
-        );
-    }
-    j
-}
-pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page3(
-    k: u16,
-    mut j: u16,
-    game: &mut Game,
-) -> u16 {
-    j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
-    if word!(game.japanese_text_flag) != 0 {
-        spawn_intro_japanese_continuation(addr_kMode7ObjectDef_8BD419 as u16, game);
-    } else {
-        word!(game.cinematic_function = ((0x8bb0f2i32) as u16));
-    }
-    j
-}
-pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page4(k: u16, j: u16, game: &mut Game) -> u16 {
-    word!(game.cinematicbg_var1 = 0);
-    if word!(game.japanese_text_flag) != 0 {
-        SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD41F as u16,
-            word!(game.japanese_text_flag),
-            game,
-        );
-    }
-    j
-}
-pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page4(
-    k: u16,
-    mut j: u16,
-    game: &mut Game,
-) -> u16 {
-    j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
-    if word!(game.japanese_text_flag) != 0 {
-        spawn_intro_japanese_continuation(addr_kMode7ObjectDef_8BD425 as u16, game);
-    } else {
-        word!(game.cinematic_function = ((0x8bb123i32) as u16));
-    }
-    j
-}
-pub unsafe fn CinematicFunction_Intro_Func11(game: &mut Game) {
-    if word!(game.cinematic_var16) != 0 {
-        word!(game.cinematic_var16, wrapping_sub(1));
-    } else if word!(game.joypad1_newkeys) != 0 {
-        *ram_ptr!(game; 0x58) = 88;
-        word!(game.cinematic_var8 = 32);
-        word!(game.cinematic_var10 = 8);
-        word!(game.cinematic_var13 = 127);
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCE61 as u16, 0x7f, game);
-        CinematicFunction_Intro_Func13(game);
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func12(game: &mut Game) {
-    if word!(game.cinematic_var16) != 0 {
-        word!(game.cinematic_var16, wrapping_sub(1));
-    } else if word!(game.joypad1_newkeys) != 0 {
-        *ram_ptr!(game; 0x58) = 92;
-        word!(game.cinematic_var8 = 0);
-        word!(game.cinematic_var10 = -24i32 as u16);
-        word!(game.cinematic_var13 = 127);
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCE67 as u16, 0x7f, game);
-        CinematicFunction_Intro_Func13(game);
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func13(game: &mut Game) {
-    *ram_ptr!(game; 0x69) = 6;
-    *ram_ptr!(game; 0x6b) = 17;
-    *ram_ptr!(game; 0x6f) = 2;
-    *ram_ptr!(game; 0x72) = 0;
-    SpawnIntroCutsceneCrossfadeHdma(game);
-    SetSomeStuffForSpriteObject_15(game);
-    word!(game.cinematic_function = ((0x8bb2d2i32) as u16));
-    word_transfers!(game, ascending, 256; native(0x2200) <- rom(0x8ce3e9, 0));
-    DecomposePaletteDataForFading(game);
-    ClearYColorsFromIndexX(0x40, 0x10, game);
-    ClearYColorsFromIndexX(0x1c0, 9, game);
-    ComposeFadingPalettes(game);
-}
-pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page5(k: u16, j: u16, game: &mut Game) -> u16 {
-    word!(game.cinematicbg_var1 = 0);
-    if word!(game.japanese_text_flag) != 0 {
-        SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD42B as u16,
-            word!(game.japanese_text_flag),
-            game,
-        );
-    }
-    j
-}
-pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page5(
-    k: u16,
-    mut j: u16,
-    game: &mut Game,
-) -> u16 {
-    j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
-    if word!(game.japanese_text_flag) != 0 {
-        spawn_intro_japanese_continuation(addr_kMode7ObjectDef_8BD431 as u16, game);
-    } else {
-        word!(game.cinematic_function = ((0x8bb1dai32) as u16));
-    }
-    j
-}
-pub unsafe fn CinematicFunction_Intro_Func15b(game: &mut Game) {
-    EnableCinematicBgTilemapUpdates(game);
-    ClearEnglishTextTilemap(game);
-    SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BCF5D as u16, 0x4c00, game);
-    word!(game.cinematic_function = ((0x8ba390i32) as u16));
-    SetSomeStuffForSpriteObject_16(game);
-    QueueMusic_Delayed8(0, game);
-}
-pub unsafe fn CinematicFunction_Intro_Func15(game: &mut Game) {
-    if word!(game.cinematic_var16) != 0 {
-        word!(game.cinematic_var16, wrapping_sub(1));
-    } else if word!(game.joypad1_newkeys) != 0 {
-        word!(game.cinematic_var13 = 127);
-        if word!(game.japanese_text_flag) != 0 {
-            word!(game.cinematic_function = ((0x8bb207i32) as u16));
-            DisableCinematicBgTilemapUpdates(game);
-            ClearJapaneseTextTiles(game);
-            TransferJapaneseTextTilesToVram(game);
-        } else {
-            CinematicFunction_Intro_Func15b(game);
-        }
-    }
-}
-crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16;
-    CinematicBgInstr_Func16 [j] {
-        word!(game.cinematicbg_var1 = 0);
-        if word!(game.japanese_text_flag) != 0 {
-            SpawnMode7Object(
-                addr_kMode7ObjectDef_8BD437 as u16,
-                word!(game.japanese_text_flag),
-                game,
-            );
-        }
-    };
-    CinematicBgInstr_Func17 [j] {
-        word!(game.cinematic_function = ((0x8bb72fi32) as u16));
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
-    };
-}
-pub unsafe fn CinematicFunction_Intro_XfadeGameplayFade(game: &mut Game) {
-    if (word!(game.cinematic_var4) & 3) == 0 {
-        FadeOutYColorsFromIndexX(0, 0x14, game);
-        FadeOutYColorsFromIndexX(0x60, 0x10, game);
-        FadeOutYColorsFromIndexX(0x1d2, 6, game);
-        FadeInYColorsFromIndexX(0x28, 3, game);
-        FadeInYColorsFromIndexX(0xe0, 0x10, game);
-        FadeInYColorsFromIndexX(0x180, 0x20, game);
-        FadeInYColorsFromIndexX(0x1e0, 0x10, game);
-        ComposeFadingPalettes(game);
-    }
-    if (word!(game.cinematic_var4, wrapping_sub(1), reread) & 0x8000) != 0 {
-        *ram_ptr!(game; 0x69) = 21;
-        *ram_ptr!(game; 0x6b) = 0;
-        *ram_ptr!(game; 0x6f) = 0;
-        word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
-        ClearJapaneseTextTiles(game);
-        word!(game.cinematic_function = ((0x8ba391i32) as u16));
-        if (word!(game.cinematic_var15) & 0x8000) != 0 {
-            SpawnPalfxObject(addr_kPalfx_E1BC as u16, game);
-        }
-    }
-}
-pub unsafe fn CinematicFunction_Intro_XfadeScientistFade(game: &mut Game) {
-    if (word!(game.cinematic_var4) & 3) == 0 {
-        FadeOutYColorsFromIndexX(0, 0x14, game);
-        FadeOutYColorsFromIndexX(0x60, 0x10, game);
-        FadeOutYColorsFromIndexX(0x1d2, 6, game);
-        FadeInYColorsFromIndexX(0x40, 0x10, game);
-        FadeInYColorsFromIndexX(0x1c0, 9, game);
-        ComposeFadingPalettes(game);
-    }
-    if (word!(game.cinematic_var4, wrapping_sub(1), reread) & 0x8000) != 0 {
-        *ram_ptr!(game; 0x69) = 21;
-        *ram_ptr!(game; 0x6b) = 0;
-        *ram_ptr!(game; 0x6f) = 0;
-        word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
-        ClearJapaneseTextTiles(game);
-        word!(game.cinematic_function = ((0x8ba391i32) as u16));
-    }
-}
-crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16;
-    CinematicSprInstr_StartIntroPage2 [j] {
-        word!(game.cinematic_function = ((0x8bb35fi32) as u16));
-        Instr_StartIntroPage_Common(game);
-    };
-    CinematicSprInstr_StartIntroPage3 [j] {
-        word!(game.cinematic_function = ((0x8bb370i32) as u16));
-        Instr_StartIntroPage_Common(game);
-    };
-    CinematicSprInstr_StartIntroPage4 [j] {
-        word!(game.cinematic_function = ((0x8bb381i32) as u16));
-        Instr_StartIntroPage_Common(game);
-    };
-    CinematicSprInstr_StartIntroPage5 [j] {
-        word!(game.cinematic_function = ((0x8bb392i32) as u16));
-        Instr_StartIntroPage_Common(game);
-    };
-}
-pub unsafe fn Instr_StartIntroPage_Common(game: &mut Game) {
-    DisableCinematicBgTilemapUpdates(game);
-    ClearJapaneseTextTiles(game);
-    TransferJapaneseTextTilesToVram(game);
-}
-pub unsafe fn CinematicFunction_Intro_SetupStuff(game: &mut Game) {
-    *ram_ptr!(game; 0x69) = 6;
-    *ram_ptr!(game; 0x6b) = 17;
-    *ram_ptr!(game; 0x6f) = 2;
-    *ram_ptr!(game; 0x72) = 0;
-    word_transfers!(game, ascending, 256; native(0x2200) <- rom(0x8ce3e9, 0));
-    DecomposePaletteDataForFading(game);
-    ClearYColorsFromIndexX(0, 0x10, game);
-    ClearYColorsFromIndexX(0x60, 0x10, game);
-    ClearYColorsFromIndexX(0x1d2, 6, game);
-    ComposeFadingPalettes(game);
-    word!(game.cinematic_var4 = 127);
-    EnableCinematicBgTilemapUpdates(game);
-    SetSomeStuffForSpriteObject_16(game);
-}
-pub unsafe fn CinematicFunction_Intro_Page2(game: &mut Game) {
-    SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BCF45 as u16, 0x4c00, game);
-    word!(game.cinematic_function = ((0x8bb3f4i32) as u16));
-    CinematicFunction_Intro_SetupStuff(game);
-}
-pub unsafe fn CinematicFunction_Intro_Page3(game: &mut Game) {
-    SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BCF4B as u16, 0x4c00, game);
-    word!(game.cinematic_function = ((0x8bb3f4i32) as u16));
-    CinematicFunction_Intro_SetupStuff(game);
-}
-pub unsafe fn CinematicFunction_Intro_Page4(game: &mut Game) {
-    SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BCF51 as u16, 0x4c00, game);
-    word!(game.cinematic_function = ((0x8bb458i32) as u16));
-    CinematicFunction_Intro_SetupStuff(game);
-}
-pub unsafe fn CinematicFunction_Intro_Page5(game: &mut Game) {
-    SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BCF57 as u16, 0x4c00, game);
-    word!(game.cinematic_function = ((0x8bb458i32) as u16));
-    CinematicFunction_Intro_SetupStuff(game);
-}
-pub unsafe fn CinematicFunction_Intro_Fadestuff(game: &mut Game) {
-    if (word!(game.cinematic_var13) & 3) == 0 {
-        FadeInYColorsFromIndexX(0, 0x10, game);
-        FadeInYColorsFromIndexX(0x60, 0x10, game);
-        FadeInYColorsFromIndexX(0x1d2, 6, game);
-        FadeOutYColorsFromIndexX(0x28, 3, game);
-        FadeOutYColorsFromIndexX(0xe0, 0x10, game);
-        FadeOutYColorsFromIndexX(0x180, 0x20, game);
-        FadeOutYColorsFromIndexX(0x1e0, 0x10, game);
-        ComposeFadingPalettes(game);
-    }
-    if (word!(game.cinematic_var13, wrapping_sub(1), reread) & 0x8000) != 0 {
-        *ram_ptr!(game; 0x69) = 22;
-        *ram_ptr!(game; 0x6b) = 0;
-        *ram_ptr!(game; 0x6f) = 0;
-        *ram_ptr!(game; 0x72) = 0;
-        word!(game.cinematic_function = ((0x8ba391i32) as u16));
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Fadestuff2(game: &mut Game) {
-    if (word!(game.cinematic_var13) & 3) == 0 {
-        FadeInYColorsFromIndexX(0, 0x10, game);
-        FadeInYColorsFromIndexX(0x60, 0x10, game);
-        FadeInYColorsFromIndexX(0x1d2, 6, game);
-        FadeOutYColorsFromIndexX(0x40, 0x10, game);
-        FadeOutYColorsFromIndexX(0x1c0, 9, game);
-        ComposeFadingPalettes(game);
-    }
-    if (word!(game.cinematic_var13, wrapping_sub(1), reread) & 0x8000) != 0 {
-        *ram_ptr!(game; 0x69) = 22;
-        *ram_ptr!(game; 0x6b) = 0;
-        *ram_ptr!(game; 0x6f) = 0;
-        *ram_ptr!(game; 0x72) = 0;
-        word_transfers!(game, ascending, 7; native(0xc1c0) <- rom(0x8ce3e9, 224));
-        word!(game.cinematic_function = ((0x8ba391i32) as u16));
-    }
-}
 pub unsafe fn CinematicBgPreInstr_SamusBlink(k: u16, game: &mut Game) {
     if word!(game.cinematic_function) as i32 == 0x8bb207 & 0xffff
         || word!(game.cinematic_function) as i32 == 0x8ba390 & 0xffff
@@ -2842,163 +2394,6 @@ crate::game::address_dispatch! {
         call (k, game); default { Unreachable(game); };
     {
         9147353 => [()]; 9155772 => CinematicBgPreInstr_SamusBlink;
-    }
-}
-pub unsafe fn sub_8BB51E(k: u16, j: u16, game: &mut Game) -> u16 {
-    DisableCinematicBgTilemapUpdates(game);
-    word!(game.palette_buffer[17] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 17));
-    word!(game.palette_buffer[18] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 18));
-    word!(game.palette_buffer[19] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 19));
-    ClearJapaneseTextTiles(game);
-    CinematicFunction_Intro_Func20(addr_word_8BCF75 as u16, game);
-    CinematicFunction_Intro_Func20(addr_word_8BCFBD as u16, game);
-    TransferJapaneseTextTilesToVram(game);
-    j
-}
-pub unsafe fn EnableCinematicBgTilemapUpdates__0(k: u16, j: u16, game: &mut Game) -> u16 {
-    EnableCinematicBgTilemapUpdates(game);
-    j
-}
-pub unsafe fn CinematicFunction_Intro_Func21(k: u16, j: u16, game: &mut Game) -> u16 {
-    DisableCinematicBgTilemapUpdates(game);
-    word!(game.palette_buffer[17] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 17));
-    word!(game.palette_buffer[18] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 18));
-    word!(game.palette_buffer[19] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 19));
-    ClearJapaneseTextTiles(game);
-    CinematicFunction_Intro_Func20(addr_word_8BCFFD as u16, game);
-    CinematicFunction_Intro_Func20(addr_word_8BD055 as u16, game);
-    TransferJapaneseTextTilesToVram(game);
-    j
-}
-pub unsafe fn CinematicFunction_Intro_Func22(k: u16, game: &mut Game) {
-    if word!(game.joypad1_newkeys) != 0 {
-        let v1: i32 = k as i32 >> 1;
-        word!(game.mode7_obj_instr_ptr[v1] = -11355i32 as u16);
-        word!(game.mode7_obj_instr_timer[v1] = 1);
-        word!(game.mode7_obj_preinstr_func[v1] = ((0x8b93d9i32) as u16));
-        DisableCinematicBgTilemapUpdates(game);
-        ClearJapaneseTextTiles(game);
-        CinematicFunction_Intro_Func20(addr_word_8BD085 as u16, game);
-        CinematicFunction_Intro_Func20(addr_word_8BD0E1 as u16, game);
-        TransferJapaneseTextTilesToVram(game);
-        word!(game.cinematic_var16 = 60);
-    }
-}
-pub unsafe fn CinematicFunction_Intro_ThenWaitInputSetupBabyMetroid(
-    k: u16,
-    j: u16,
-    game: &mut Game,
-) -> u16 {
-    EnableCinematicBgTilemapUpdates(game);
-    word!(game.cinematic_function = ((0x8baf6ci32) as u16));
-    j
-}
-pub unsafe fn CinematicFunction_Intro_Func23(k: u16, j: u16, game: &mut Game) -> u16 {
-    DisableCinematicBgTilemapUpdates(game);
-    word!(game.palette_buffer[17] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 17));
-    word!(game.palette_buffer[18] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 18));
-    word!(game.palette_buffer[19] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 19));
-    ClearJapaneseTextTiles(game);
-    CinematicFunction_Intro_Func20(addr_word_8BD0F9 as u16, game);
-    TransferJapaneseTextTilesToVram(game);
-    j
-}
-pub unsafe fn CinematicFunction_Intro_Func24(k: u16, game: &mut Game) {
-    if word!(game.joypad1_newkeys) != 0 {
-        let v1: i32 = k as i32 >> 1;
-        word!(game.mode7_obj_instr_ptr[v1] = -11333i32 as u16);
-        word!(game.mode7_obj_instr_timer[v1] = 1);
-        word!(game.mode7_obj_preinstr_func[v1] = ((0x8b93d9i32) as u16));
-        DisableCinematicBgTilemapUpdates(game);
-        ClearJapaneseTextTiles(game);
-        CinematicFunction_Intro_Func20(addr_word_8BD15D as u16, game);
-        TransferJapaneseTextTilesToVram(game);
-        word!(game.cinematic_var16 = 60);
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func25(k: u16, j: u16, game: &mut Game) -> u16 {
-    EnableCinematicBgTilemapUpdates(game);
-    word!(game.cinematic_function = ((0x8bb0f2i32) as u16));
-    j
-}
-pub unsafe fn CinematicFunction_Intro_Func26(k: u16, j: u16, game: &mut Game) -> u16 {
-    DisableCinematicBgTilemapUpdates(game);
-    word!(game.palette_buffer[17] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 17));
-    word!(game.palette_buffer[18] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 18));
-    word!(game.palette_buffer[19] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 19));
-    ClearJapaneseTextTiles(game);
-    CinematicFunction_Intro_Func20(addr_word_8BD1B9 as u16, game);
-    CinematicFunction_Intro_Func20(addr_word_8BD215 as u16, game);
-    TransferJapaneseTextTilesToVram(game);
-    j
-}
-pub unsafe fn CinematicFunction_Intro_Func27(k: u16, game: &mut Game) {
-    if word!(game.joypad1_newkeys) != 0 {
-        let v1: i32 = k as i32 >> 1;
-        word!(game.mode7_obj_instr_ptr[v1] = -11311i32 as u16);
-        word!(game.mode7_obj_instr_timer[v1] = 1);
-        word!(game.mode7_obj_preinstr_func[v1] = ((0x8b93d9i32) as u16));
-        DisableCinematicBgTilemapUpdates(game);
-        ClearJapaneseTextTiles(game);
-        CinematicFunction_Intro_Func20(addr_word_8BD259 as u16, game);
-        CinematicFunction_Intro_Func20(addr_word_8BD2A5 as u16, game);
-        TransferJapaneseTextTilesToVram(game);
-        word!(game.cinematic_var16 = 60);
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func28(k: u16, j: u16, game: &mut Game) -> u16 {
-    EnableCinematicBgTilemapUpdates(game);
-    word!(game.cinematic_function = ((0x8bb123i32) as u16));
-    j
-}
-pub unsafe fn CinematicFunction_Intro_Func29(k: u16, j: u16, game: &mut Game) -> u16 {
-    DisableCinematicBgTilemapUpdates(game);
-    word!(game.palette_buffer[17] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 17));
-    word!(game.palette_buffer[18] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 18));
-    word!(game.palette_buffer[19] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 19));
-    ClearJapaneseTextTiles(game);
-    CinematicFunction_Intro_Func20(addr_word_8BD2D5 as u16, game);
-    TransferJapaneseTextTilesToVram(game);
-    j
-}
-pub unsafe fn CinematicFunction_Intro_Func30(k: u16, game: &mut Game) {
-    if word!(game.joypad1_newkeys) != 0 {
-        let v1: i32 = k as i32 >> 1;
-        word!(game.mode7_obj_instr_ptr[v1] = addr_off_8BD3E7 as u16);
-        word!(game.mode7_obj_instr_timer[v1] = 1);
-        word!(game.mode7_obj_preinstr_func[v1] = ((0x8b93d9i32) as u16));
-        DisableCinematicBgTilemapUpdates(game);
-        ClearJapaneseTextTiles(game);
-        CinematicFunction_Intro_Func20(addr_word_8BD30D as u16, game);
-        TransferJapaneseTextTilesToVram(game);
-        word!(game.cinematic_var16 = 60);
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func31(k: u16, j: u16, game: &mut Game) -> u16 {
-    EnableCinematicBgTilemapUpdates(game);
-    word!(game.cinematic_function = ((0x8bb1dai32) as u16));
-    j
-}
-pub unsafe fn CinematicFunction_Intro_Func32(k: u16, j: u16, game: &mut Game) -> u16 {
-    DisableCinematicBgTilemapUpdates(game);
-    ClearJapaneseTextTiles(game);
-    CinematicFunction_Intro_Func20(addr_word_8BD371 as u16, game);
-    TransferJapaneseTextTilesToVram(game);
-    j
-}
-pub use self::EnableCinematicBgTilemapUpdates__0 as EnableCinematicBgTilemapUpdates__;
-pub unsafe fn CinematicFunction_Intro_Func34(game: &mut Game) {
-    HandleFadeOut(game);
-    if *ram_ptr!(game; 0x51) == 0x80 {
-        EnableNMI(game);
-        word! { game, 0;
-            screen_fade_delay, screen_fade_counter, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
-            reg_BG3VOFS, cinematic_var5,
-        }
-        word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
-        word!(game.cinematic_function = ((0x8bbca0i32) as u16));
-        RevertButtonConfig(game);
-        word! { game, 0; samus_max_missiles, samus_missiles }
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func35(j: u16, game: &mut Game) {
@@ -5650,16 +5045,16 @@ crate::game::address_dispatch! {
         9152111 => CinematicFunc_Intro_SetupTextPage2;
         9152555 => CinematicFunc_Intro_WaitFadeinShowText;
         9152586 => CinematicFunc_Intro_WaitForFadeinSleep;
-        9154232 => CinematicFunction_Intro_WaitInputSetupMotherBrainFight;
-        9154412 => CinematicFunction_Intro_WaitInputSetupBabyMetroid;
-        9154802 => CinematicFunction_Intro_Func11; 9154851 => CinematicFunction_Intro_Func12;
-        9155034 => CinematicFunction_Intro_Func15; 9155079 => CinematicFunction_Intro_Func15b;
-        9155152 => CinematicFunction_Intro_XfadeGameplayFade;
-        9155282 => CinematicFunction_Intro_XfadeScientistFade;
-        9155423 => CinematicFunction_Intro_Page2; 9155440 => CinematicFunction_Intro_Page3;
-        9155457 => CinematicFunction_Intro_Page4; 9155474 => CinematicFunction_Intro_Page5;
-        9155572 => CinematicFunction_Intro_Fadestuff; 9155672 => CinematicFunction_Intro_Fadestuff2;
-        9156399 => CinematicFunction_Intro_Func34; 9157792 => CinematicFunction_Intro_Func54;
+        9154232 => [intro_pages::wait_for_scene(intro_pages::Scene::MotherBrain, game)];
+        9154412 => [intro_pages::wait_for_scene(intro_pages::Scene::BabyMetroid, game)];
+        9154802 => [intro_pages::wait_for_scene(intro_pages::Scene::ScientistPage3, game)]; 9154851 => [intro_pages::wait_for_scene(intro_pages::Scene::ScientistPage4, game)];
+        9155034 => [intro_pages::wait_for_final_page(game)]; 9155079 => [intro_pages::show_final_page(game)];
+        9155152 => [intro_pages::fade_to_scene(intro_pages::Palette::Gameplay, game)];
+        9155282 => [intro_pages::fade_to_scene(intro_pages::Palette::Scientist, game)];
+        9155423 => [intro_pages::show_page(addr_kCinematicBgObjectDef_8BCF45 as u16, 0xb3f4, game)]; 9155440 => [intro_pages::show_page(addr_kCinematicBgObjectDef_8BCF4B as u16, 0xb3f4, game)];
+        9155457 => [intro_pages::show_page(addr_kCinematicBgObjectDef_8BCF51 as u16, 0xb458, game)]; 9155474 => [intro_pages::show_page(addr_kCinematicBgObjectDef_8BCF57 as u16, 0xb458, game)];
+        9155572 => [intro_pages::fade_to_page(intro_pages::Palette::Gameplay, game)]; 9155672 => [intro_pages::fade_to_page(intro_pages::Palette::Scientist, game)];
+        9156399 => [intro_pages::fade_out_to_ceres(game)]; 9157792 => CinematicFunction_Intro_Func54;
         9158116 => CinematicFunction_Intro_Func55; 9158137 => CinematicFunction_Intro_Func56;
         9158618 => CinematicFunction_Intro_Func67; 9158853 => CinematicFunction_Intro_Func72;
         9158912 => CinematicFunction_Intro_Func73; 9158939 => CinematicFunctionBlackoutFromCeres;
@@ -5704,8 +5099,8 @@ crate::game::address_dispatch! {
         9150040 => CinematicSprInstr_Func8; 9150157 => CinematicSprInstr_Func9;
         9150192 => CinematicSprInstr_sub_8B9EF0; 9150233 => CinematicSprInstr_9F19;
         9152792 => CinematicSprInstr_SpawnMetroidEggParticles;
-        9155382 => CinematicSprInstr_StartIntroPage2; 9155390 => CinematicSprInstr_StartIntroPage3;
-        9155398 => CinematicSprInstr_StartIntroPage4; 9155406 => CinematicSprInstr_StartIntroPage5;
+        9155382 => [intro_pages::start_page(0xb35f, j, game)]; 9155390 => [intro_pages::start_page(0xb370, j, game)];
+        9155398 => [intro_pages::start_page(0xb381, j, game)]; 9155406 => [intro_pages::start_page(0xb392, j, game)];
         9156805 => CinematicSprInstr_Func43; 9157153 => CinematicSprInstr_SpawnIntroRinkas01;
         9157174 => CinematicSprInstr_SpawnIntroRinkas23; 9158806 => CinematicCommonInstr_Func69;
         9158818 => CinematicCommonInstr_Func70; 9159684 => CinematicSprInstr_SpawnCeresExplosions1;
@@ -5768,17 +5163,17 @@ crate::game::address_dispatch! {
     {
         9148056 => CinematicBgInstr_Delete; 9148190 => CinematicBgInstr_Goto;
         9154004 => CinematicBgInstr_SetSomeStuffForSpriteObject_14;
-        9154115 => CinematicBgInstr_HandleCreateJpnText_Page1;
-        9154139 => CinematicBgInstr_SpawnMarkerWaitInput_Page1;
-        9154169 => CinematicBgInstr_HandleCreateJpnText_Page2;
-        9154193 => CinematicBgInstr_SpawnMarkerWaitInput_Page2;
-        9154676 => CinematicBgInstr_HandleCreateJpnText_Page3;
-        9154700 => CinematicBgInstr_SpawnMarkerWaitInput_Page3;
-        9154739 => CinematicBgInstr_HandleCreateJpnText_Page4;
-        9154763 => CinematicBgInstr_SpawnMarkerWaitInput_Page4;
-        9154971 => CinematicBgInstr_HandleCreateJpnText_Page5;
-        9154995 => CinematicBgInstr_SpawnMarkerWaitInput_Page5; 9155112 => CinematicBgInstr_Func16;
-        9155136 => CinematicBgInstr_Func17; 9158806 => CinematicCommonInstr_Func69;
+        9154115 => [intro_pages::create_japanese_text(addr_kMode7ObjectDef_8BD401 as u16, j, game)];
+        9154139 => [intro_pages::spawn_marker(0xaeb8, None, k, j, game)];
+        9154169 => [intro_pages::create_japanese_text(addr_kMode7ObjectDef_8BD407 as u16, j, game)];
+        9154193 => [intro_pages::spawn_marker(0xaf6c, Some(addr_kMode7ObjectDef_8BD40D as u16), k, j, game)];
+        9154676 => [intro_pages::create_japanese_text(addr_kMode7ObjectDef_8BD413 as u16, j, game)];
+        9154700 => [intro_pages::spawn_marker(0xb0f2, Some(addr_kMode7ObjectDef_8BD419 as u16), k, j, game)];
+        9154739 => [intro_pages::create_japanese_text(addr_kMode7ObjectDef_8BD41F as u16, j, game)];
+        9154763 => [intro_pages::spawn_marker(0xb123, Some(addr_kMode7ObjectDef_8BD425 as u16), k, j, game)];
+        9154971 => [intro_pages::create_japanese_text(addr_kMode7ObjectDef_8BD42B as u16, j, game)];
+        9154995 => [intro_pages::spawn_marker(0xb1da, Some(addr_kMode7ObjectDef_8BD431 as u16), k, j, game)]; 9155112 => [intro_pages::create_japanese_text(addr_kMode7ObjectDef_8BD437 as u16, j, game)];
+        9155136 => [intro_pages::finish_pages(j, game)]; 9158806 => CinematicCommonInstr_Func69;
         9158818 => CinematicCommonInstr_Func70; 9168423 => CalcItemPercentageCount;
         9168745 => CinematicFunction_Intro_Func146; 9168768 => CinematicFunction_Intro_Func147;
     }
@@ -5852,21 +5247,21 @@ crate::game::address_dispatch! {
         9147789 => Mode7Instr_DecTimerAndGoto; 9147799 => Mode7Instr_SetTimer;
         9151067 => PlayBabyMetroidCry1; 9151075 => PlayBabyMetroidCry2;
         9151083 => PlayBabyMetroidCry3; 9151091 => CinematicSetPal1; 9151108 => CinematicSetPal2;
-        9151125 => CinematicSetPal3; 9151142 => CinematicSetPal4; 9155870 => sub_8BB51E;
-        9155919 => EnableCinematicBgTilemapUpdates__0; 9155924 => CinematicFunction_Intro_Func21;
-        9156024 => CinematicFunction_Intro_ThenWaitInputSetupBabyMetroid;
-        9156035 => CinematicFunction_Intro_Func23; 9156123 => CinematicFunction_Intro_Func25;
-        9156134 => CinematicFunction_Intro_Func26; 9156234 => CinematicFunction_Intro_Func28;
-        9156245 => CinematicFunction_Intro_Func29; 9156333 => CinematicFunction_Intro_Func31;
-        9156344 => CinematicFunction_Intro_Func32; 9156363 => EnableCinematicBgTilemapUpdates__;
+        9151125 => CinematicSetPal3; 9151142 => CinematicSetPal4; 9155870 => [intro_pages::draw_japanese_text(&[addr_word_8BCF75 as u16, addr_word_8BCFBD as u16], true, j, game)];
+        9155919 => [intro_pages::enable_text(j, game)]; 9155924 => [intro_pages::draw_japanese_text(&[addr_word_8BCFFD as u16, addr_word_8BD055 as u16], true, j, game)];
+        9156024 => [intro_pages::wait_after_japanese_text(0xaf6c, j, game)];
+        9156035 => [intro_pages::draw_japanese_text(&[addr_word_8BD0F9 as u16], true, j, game)]; 9156123 => [intro_pages::wait_after_japanese_text(0xb0f2, j, game)];
+        9156134 => [intro_pages::draw_japanese_text(&[addr_word_8BD1B9 as u16, addr_word_8BD215 as u16], true, j, game)]; 9156234 => [intro_pages::wait_after_japanese_text(0xb123, j, game)];
+        9156245 => [intro_pages::draw_japanese_text(&[addr_word_8BD2D5 as u16], true, j, game)]; 9156333 => [intro_pages::wait_after_japanese_text(0xb1da, j, game)];
+        9156344 => [intro_pages::draw_japanese_text(&[addr_word_8BD371 as u16], false, j, game)]; 9156363 => [intro_pages::enable_text(j, game)];
     }
 }
 crate::game::address_dispatch! {
     pub unsafe fn CallMode7PreInstr(ea: u32, k: u16, game: &mut Game) => ea;
         call (k, game); default { Unreachable(game); };
     {
-        9147353 => [()]; 9155973 => CinematicFunction_Intro_Func22;
-        9156078 => CinematicFunction_Intro_Func24; 9156183 => CinematicFunction_Intro_Func27;
-        9156288 => CinematicFunction_Intro_Func30;
+        9147353 => [()]; 9155973 => [intro_pages::continue_japanese_text(54181, &[addr_word_8BD085 as u16, addr_word_8BD0E1 as u16], k, game)];
+        9156078 => [intro_pages::continue_japanese_text(54203, &[addr_word_8BD15D as u16], k, game)]; 9156183 => [intro_pages::continue_japanese_text(54225, &[addr_word_8BD259 as u16, addr_word_8BD2A5 as u16], k, game)];
+        9156288 => [intro_pages::continue_japanese_text(addr_off_8BD3E7 as u16, &[addr_word_8BD30D as u16], k, game)];
     }
 }

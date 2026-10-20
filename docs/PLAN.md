@@ -215,14 +215,13 @@ explicit domain migration but is not evidence of a large volume payoff.
    their projectile consumers. Existing algorithms are already shared; the
    remaining phase contracts differ. This is bounded evidence, not exhaustion.
 
-   The overseer is validating the intro
-   narrative-page lifecycle: four scene setups, page transitions, crossfades
-   and Japanese continuations. Its first compiled draft removes 276 lines;
-   domain-module migration and final validation remain before pricing adoption.
-   A Japanese controller route exposed an existing lost-accumulator defect in
-   four continuation spawns. Correct that first, then retire its temporary
-   helper into the complete page lifecycle. Drafts: TEMP
-   sm-bindings-root-9c4daf2f/intro-cycle/.
+   The intro narrative-page replacement qualifies for item 3: `intro_pages`
+   owns page markers/input, four scene setups, both crossfade directions,
+   Japanese continuations and the handoff to Ceres. The separate Japanese
+   accumulator correction landed first; its helper is retired into the module.
+   Engine primitives and scene sprite motion remain in their existing homes.
+   Continue discovery from the remaining responsibilities, using these bounded
+   preflights and measured drafts instead of repeating the same searches.
 
    - Enemy/projectile lifecycles across A2/A3/A8/B2/B3/86: initialization,
      state selection, movement, collision, animation and reset together.
@@ -248,7 +247,7 @@ explicit domain migration but is not evidence of a large volume payoff.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **12,070-line** gap; parked small drafts are not
+   replacement yet funds the **11,837-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -259,6 +258,15 @@ explicit domain migration but is not evidence of a large volume payoff.
    normal release and compiled-source checks pass. Static-only validation;
    no new movie result is claimed. This is useful landed repetition cleanup,
    but does not establish the desired multi-thousand-line replacement.
+
+   Complete intro-page ownership removes **233 lines (112,069 -> 111,836)**:
+   605 bank lines retired, a 367-line descriptive module, and five import/source
+   registration lines. All 47 numeric callback entries retain their addresses.
+   English/Japanese routes exercise the page-to-Ceres transition; focused oracle
+   cases cover slot exhaustion and idle/delayed input. Full any% and Speed
+   Booster pass; final unused-import retirement has static/compiler validation.
+   This is a completed family replacement, not a forecast of the remaining gap.
+   Routine results are in its commit.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -373,12 +381,11 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full subsystem integration: af8c1745 passed any% **129712/0** and
-Speed Booster **148406/0**, with normal rendering, audio and comparisons.
-2941c9a9 subsequently passed the exercised HUD boot segment **48512/0**,
-8,544 component cases and 8,064 oracle calls. The later ec45c573 snapshot
-field sharing passed static compiler-expansion equivalence and release checks;
-no later full replay is claimed here.
+Latest full subsystem integration: the intro-page replacement over 4c5e744e
+passes any% **129712/0** and Speed Booster **148406/0**, with normal rendering,
+audio and comparisons. The Japanese intro route passes **7570/0** and 233
+focused oracle cases cover markers and inactive input. These checks also
+include the preceding Japanese correction and local-binding cohort.
 
 The any% input visits six rooms; Speed Booster visits 55 rooms and 53 enemy
 definitions. Neither reaches credits. Kraid/Varia are reached by the extended
@@ -434,16 +441,14 @@ movies, save states or other ROM-derived files.
 
 Baseline at ec45c573: raw g_ram offsets 30; extern C blocks 3; counted C ABI
 exports 4; no_mangle 8; unsafe functions 5307; i32/c_int cast lines 8848;
-Rust lines 112265. The working tree at this review also contains an unrelated
-83-line shader reduction, so `sh tools/progress.sh` reports **112182**. That
-uncommitted draft is excluded from the committed baseline and budget.
+Rust lines 112265. The unrelated 83-line shader draft is excluded from the
+committed baseline and budget.
 
-After the Japanese intro correction and the 192-line local-binding cohort,
-maintained Rust is **112,069**, leaving **12,070** to reach 99,999. Counters:
+After the Japanese correction, local-binding cohort and intro-page replacement,
+maintained Rust is **111,836**, leaving **11,837** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 5308; cast lines 8848. The local-binding cohort changes only
-the Rust line count. The unrelated 83-line shader draft remains excluded;
-working-tree progress reports **111,986**. Intro lifecycle reduction remains
-active in its separate owner; boss and repeated-pattern preflights are complete.
+unsafe functions 5278; cast lines 8844. The unrelated 83-line shader draft
+remains excluded; working-tree progress reports **111,753**. Intro lifecycle
+replacement is complete; continue item 2's remaining-responsibility comparison.
 
 Historical details before this reset remain in **ec45c573:docs/PLAN.md**.
