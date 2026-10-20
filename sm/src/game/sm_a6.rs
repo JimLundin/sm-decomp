@@ -1195,14 +1195,6 @@ pub unsafe fn CeresRidley_Func_3(game: &mut Game) {
         CeresRidley_A377(game);
     }
 }
-pub unsafe fn CeresRidley_A377(game: &mut Game) {
-    let E = Get_CeresRidley(0, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
-        (*E).var_A = ((0xa6a389i32) as u16);
-        set_fields! {[(*E)], 0; var_E, var_F}
-    }
-}
 pub unsafe fn CeresRidley_Func_4(game: &mut Game) {
     let E = Get_CeresRidley(0, game);
     if ((*E).var_E & 0x8000) == 0 {
@@ -1263,18 +1255,6 @@ pub unsafe fn CeresRidley_Func_5(game: &mut Game) {
             QueueMusic_Delayed8(5, game);
         } else {
             (*E).var_E = cry_var_E;
-        }
-    }
-}
-pub unsafe fn CeresRidley_Func_6(game: &mut Game) {
-    let E = Get_CeresRidley(0, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
-        Ridley_Func_99(addr_kRidley_Ilist_E690 as u16, game);
-        (*E).var_F = 0;
-        (*E).var_A = ((0xa6a478i32) as u16);
-        if word!(game.area_index) != 2 {
-            (*E).var_F = 252;
         }
     }
 }
@@ -1510,10 +1490,26 @@ pub unsafe fn CeresRidley_A994(game: &mut Game) {
     (*E).var_F = 64;
     CeresRidley_Func_23(game);
 }
-pub unsafe fn CeresRidley_Func_23(game: &mut Game) {
-    let E = Get_CeresRidley(0, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
+crate::game::countdown_callbacks! {
+    pub unsafe fn (game: &mut Game);
+    before {
+        let E = Get_CeresRidley(0, game);
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+    }
+    when ((*E).var_F & 0x8000) != 0;
+    CeresRidley_A377 {
+        (*E).var_A = ((0xa6a389i32) as u16);
+        set_fields! {[(*E)], 0; var_E, var_F}
+    };
+    CeresRidley_Func_6 {
+        Ridley_Func_99(addr_kRidley_Ilist_E690 as u16, game);
+        (*E).var_F = 0;
+        (*E).var_A = ((0xa6a478i32) as u16);
+        if word!(game.area_index) != 2 {
+            (*E).var_F = 252;
+        }
+    };
+    CeresRidley_Func_23 {
         CeresRidley_Func_25(game);
         set_fields! {[(*E)], 0; var_B, var_C}
         word!(game.tilemap_stuff[0] = 0);
@@ -1521,7 +1517,7 @@ pub unsafe fn CeresRidley_Func_23(game: &mut Game) {
         WriteColorsToPalette(0xa2, 0xa6, addr_word_A6A9E3 as u16, 0xf, game);
         WriteColorsToPalette(0x42, 0xa6, addr_word_A6AA01 as u16, 8, game);
         WriteColorsToPalette(0x1e2, 0xa6, addr_word_A6AA01 as u16, 8, game);
-    }
+    };
 }
 pub unsafe fn CeresRidley_Func_24(game: &mut Game) {
     (*Get_CeresRidley(0i32, game)).var_A = ((0xa6aa4fi32) as u16);
@@ -2466,15 +2462,6 @@ pub unsafe fn Ridley_Func_45(game: &mut Game) {
         (*E).var_F = 21;
     }
 }
-pub unsafe fn Ridley_Func_46(game: &mut Game) {
-    let E = Get_Ridley(0, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
-        Ridley_Func_99(addr_kRidley_Ilist_E658 as u16, game);
-        (*E).var_A = ((0xa6be03i32) as u16);
-        Ridley_Func_47(game);
-    }
-}
 pub unsafe fn Ridley_Func_47(game: &mut Game) {
     let E = Get_Ridley(0, game);
     Ridley_Func_104_0(
@@ -2879,18 +2866,23 @@ pub unsafe fn Ridley_Func_65(game: &mut Game) {
     (*E).var_A = ((0xa6c5c8i32) as u16);
     (*E).var_F = 32;
 }
-pub unsafe fn Ridley_Func_66(game: &mut Game) {
-    let E = Get_Ridley(0, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
+crate::game::countdown_callbacks! {
+    pub unsafe fn (game: &mut Game);
+    before {
+        let E = Get_Ridley(0, game);
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+    }
+    when ((*E).var_F & 0x8000) != 0;
+    Ridley_Func_46 {
+        Ridley_Func_99(addr_kRidley_Ilist_E658 as u16, game);
+        (*E).var_A = ((0xa6be03i32) as u16);
+        Ridley_Func_47(game);
+    };
+    Ridley_Func_66 {
         (*E).var_A = ((0xa6c5dai32) as u16);
         (*E).var_F = 256;
-    }
-}
-pub unsafe fn Ridley_Func_67(game: &mut Game) {
-    let E = Get_Ridley(0, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
+    };
+    Ridley_Func_67 {
         let k: u16 = 0;
         printf(b"Warning: X undefined\n\0" as *const u8 as *const c_char);
         SetBossBitForCurArea(1, game);
@@ -2898,7 +2890,7 @@ pub unsafe fn Ridley_Func_67(game: &mut Game) {
         QueueMusic_Delayed8(3, game);
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
         (*E).var_A = addr_locret_A6C600 as u16;
-    }
+    };
 }
 pub unsafe fn Ridley_Func_68(game: &mut Game) -> u8 {
     let rect: Rect16U = Rect16U {

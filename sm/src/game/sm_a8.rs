@@ -518,12 +518,15 @@ pub unsafe fn MorphBallEye_Func_1(k: u16, game: &mut Game) {
         (*E).var_F = ((0xa8912ei32) as u16);
     }
 }
-pub unsafe fn MorphBallEye_Func_2(k: u16, game: &mut Game) {
-    let E = Get_MorphBallEye(k as i32, game);
-    let v2: bool = (*E).var_E == 1;
-    (*E).var_E = (*E).var_E.wrapping_sub(1);
-    let v3: bool = ((*E).var_E & 0x8000) != 0;
-    if v2 || v3 {
+crate::game::countdown_callbacks! {
+    pub unsafe fn (k: u16, game: &mut Game);
+    before {
+        let E = Get_MorphBallEye(k as i32, game);
+        let v2: bool = (*E).var_E == 1;
+        (*E).var_E = (*E).var_E.wrapping_sub(1);
+        let v3: bool = ((*E).var_E & 0x8000) != 0;
+    } when v2 || v3;
+    MorphBallEye_Func_2 {
         QueueSfx2_Max6(0x17, game);
         SpawnMorphBallEyeBeamHdma(game);
         (*E).var_F = ((0xa89160i32) as u16);
@@ -532,7 +535,10 @@ pub unsafe fn MorphBallEye_Func_2(k: u16, game: &mut Game) {
             (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos),
             game,
         );
-    }
+    };
+    MorphBallEye_Func_4 {
+        (*E).var_F = ((0xa890f1i32) as u16);
+    };
 }
 pub unsafe fn MorphBallEye_Func_3(k: u16, game: &mut Game) {
     let E = Get_MorphBallEye(k as i32, game);
@@ -558,15 +564,6 @@ pub unsafe fn MorphBallEye_Func_3(k: u16, game: &mut Game) {
         (*E).var_F = ((0xa891cei32) as u16);
     }
     (*E).base.instruction_timer = 1;
-}
-pub unsafe fn MorphBallEye_Func_4(k: u16, game: &mut Game) {
-    let E = Get_MorphBallEye(k as i32, game);
-    let v2: bool = (*E).var_E == 1;
-    (*E).var_E = (*E).var_E.wrapping_sub(1);
-    let v3: bool = ((*E).var_E & 0x8000) != 0;
-    if v2 || v3 {
-        (*E).var_F = ((0xa890f1i32) as u16);
-    }
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     Fune_Instr_2 [jp] { QueueSfx2_Max9(0x1f, game); };
@@ -2361,32 +2358,49 @@ pub unsafe fn MaridiaFloater_Func_2(k: u16, game: &mut Game) {
         );
     };
 }
-pub unsafe fn MaridiaFloater_Func_3(k: u16, game: &mut Game) {
-    let E = Get_MaridiaFloater(k as i32, game);
-    let v2: bool = (*E).var_E == 1;
-    (*E).var_E = (*E).var_E.wrapping_sub(1);
-    let v3: bool = ((*E).var_E & 0x8000) != 0;
-    if v2 || v3 {
+crate::game::countdown_callbacks! {
+    pub unsafe fn (k: u16, game: &mut Game);
+    before {
+        let E = Get_MaridiaFloater(k as i32, game);
+        let v2: bool = (*E).var_E == 1;
+        (*E).var_E = (*E).var_E.wrapping_sub(1);
+        let v3: bool = ((*E).var_E & 0x8000) != 0;
+    } when v2 || v3;
+    MaridiaFloater_Func_3 {
         let v4: i32 = k as i32 >> 1;
         word!(game.enemy_drawing_queue[(v4 + 104)] = 1);
         word!(game.enemy_drawing_queue[(v4 + 103)] = addr_kMaridiaFloater_Ilist_C183 as u16);
         (*E).var_F = ((0xa8c2a6i32) as u16);
         (*E).var_E = 10;
-    }
-    MaridiaFloater_Func_2(k, game);
-}
-pub unsafe fn MaridiaFloater_Func_4(k: u16, game: &mut Game) {
-    let E = Get_MaridiaFloater(k as i32, game);
-    let v2: bool = (*E).var_E == 1;
-    (*E).var_E = (*E).var_E.wrapping_sub(1);
-    let v3: bool = ((*E).var_E & 0x8000) != 0;
-    if v2 || v3 {
+    } after {
+        MaridiaFloater_Func_2(k, game);
+    };
+    MaridiaFloater_Func_4 {
         (*E).var_F = ((0xa8c2cfi32) as u16);
         (*E).var_A = g_word_A8C1C5;
         (*E).var_B = g_word_A8C1C7;
         enemy_instruction! {[(*E).base]; timer = 1, instruction = addr_kMaridiaFloater_Ilist_C163 as u16}
-    }
-    MaridiaFloater_Func_2(k, game);
+    } after {
+        MaridiaFloater_Func_2(k, game);
+    };
+    MaridiaFloater_Func_10 {
+        (*E).var_F = ((0xa8c51di32) as u16);
+        (*E).var_A = g_word_A8C1C1;
+        (*E).var_B = g_word_A8C1C3;
+    } after {
+        MaridiaFloater_Func_2(k, game);
+    };
+    MaridiaFloater_Func_13 {
+        let v4: i32 = k as i32 >> 1;
+        word!(game.enemy_drawing_queue[(v4 + 100)] = 0);
+        word!(game.enemy_drawing_queue[(v4 + 97)], |fresh2| (fresh2)
+            | (0x200u16));
+        MaridiaFloater_Func_1(k, game);
+        let mut v5: u16 = 0;
+        EnemyDeathAnimation(k, v5, game);
+    } else {
+        MaridiaFloater_Func_2(k, game);
+    } after { ; };
 }
 
 macro_rules! advance_maridia_floater_bob {
@@ -2544,18 +2558,6 @@ pub unsafe fn MaridiaFloater_Func_9(k: u16, game: &mut Game) {
     }
     MaridiaFloater_Func_2(k, game);
 }
-pub unsafe fn MaridiaFloater_Func_10(k: u16, game: &mut Game) {
-    let E = Get_MaridiaFloater(k as i32, game);
-    let v2: bool = (*E).var_E == 1;
-    (*E).var_E = (*E).var_E.wrapping_sub(1);
-    let v3: bool = ((*E).var_E & 0x8000) != 0;
-    if v2 || v3 {
-        (*E).var_F = ((0xa8c51di32) as u16);
-        (*E).var_A = g_word_A8C1C1;
-        (*E).var_B = g_word_A8C1C3;
-    }
-    MaridiaFloater_Func_2(k, game);
-}
 pub unsafe fn MaridiaFloater_Func_11(k: u16, game: &mut Game) {
     let E = Get_MaridiaFloater(k as i32, game);
     words!((*E), var_A, var_B += words!((g_word_A8C1BD, g_word_A8C1BF)));
@@ -2589,23 +2591,6 @@ pub unsafe fn MaridiaFloater_Func_12(k: u16, game: &mut Game) {
     (*E).var_F = ((0xa8c59fi32) as u16);
     (*E).var_E = 32;
     MaridiaFloater_Func_2(k, game);
-}
-pub unsafe fn MaridiaFloater_Func_13(k: u16, game: &mut Game) {
-    let E = Get_MaridiaFloater(k as i32, game);
-    let v2: bool = (*E).var_E == 1;
-    (*E).var_E = (*E).var_E.wrapping_sub(1);
-    let v3: bool = ((*E).var_E & 0x8000) != 0;
-    if v2 || v3 {
-        let v4: i32 = k as i32 >> 1;
-        word!(game.enemy_drawing_queue[(v4 + 100)] = 0);
-        word!(game.enemy_drawing_queue[(v4 + 97)], |fresh2| (fresh2)
-            | (0x200u16));
-        MaridiaFloater_Func_1(k, game);
-        let mut v5: u16 = 0;
-        EnemyDeathAnimation(k, v5, game);
-    } else {
-        MaridiaFloater_Func_2(k, game);
-    };
 }
 pub unsafe fn MaridiaFloater_Touch(game: &mut Game) {
     let E = Get_MaridiaFloater(word!(game.cur_enemy_index) as i32, game);
@@ -3133,23 +3118,22 @@ pub unsafe fn MaridiaPuffer_Func_7(game: &mut Game) {
     }
     words!((*E).base, y_pos, y_subpos += t);
 }
-pub unsafe fn MaridiaPuffer_Func_8(k: u16, game: &mut Game) {
-    let E = Get_MaridiaPuffer(k as i32, game);
-    crate::update_place! { previous fresh8 = (*E).var_F => (*E).var_F.wrapping_sub(1); }
-    if fresh8 == 1 {
+crate::game::countdown_callbacks! {
+    pub unsafe fn (k: u16, game: &mut Game);
+    before {
+        let E = Get_MaridiaPuffer(k as i32, game);
+        crate::update_place! { previous previous_timer = (*E).var_F => (*E).var_F.wrapping_sub(1); }
+    } when previous_timer == 1;
+    MaridiaPuffer_Func_8 {
         (*E).var_F = (*E).var_05;
         (*E).var_B = ((*E).var_B).wrapping_add((*E).var_C);
         (*E).var_D = ((*E).var_D).wrapping_add((*E).var_B);
-    }
-}
-pub unsafe fn MaridiaPuffer_Func_9(k: u16, game: &mut Game) {
-    let E = Get_MaridiaPuffer(k as i32, game);
-    crate::update_place! { previous fresh9 = (*E).var_F => (*E).var_F.wrapping_sub(1); }
-    if fresh9 == 1 {
+    };
+    MaridiaPuffer_Func_9 {
         (*E).var_F = (*E).var_06;
         (*E).var_B = ((*E).var_B).wrapping_sub((*E).var_C);
         (*E).var_D = ((*E).var_D).wrapping_sub((*E).var_B);
-    }
+    };
 }
 pub unsafe fn MaridiaPuffer_Shot(game: &mut Game) {
     let E = Get_MaridiaPuffer(word!(game.cur_enemy_index) as i32, game);
@@ -3500,29 +3484,26 @@ pub unsafe fn WreckedShipSpark_Main(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn WreckedShipSpark_Func_1(k: u16, game: &mut Game) {
-    let E = Get_WreckedShipSpark(k as i32, game);
-    if (*E).var_F == 1 {
+crate::game::countdown_callbacks! {
+    pub unsafe fn (k: u16, game: &mut Game);
+    before {
+        let E = Get_WreckedShipSpark(k as i32, game);
+    } when (*E).var_F == 1;
+    WreckedShipSpark_Func_1 {
         (*E).var_B = ((0xa8e6b7i32) as u16);
         enemy_instruction! {[(*E).base]; instruction = addr_kWreckedShipSpark_Ilist_E5A7 as u16, timer = 1}
         WreckedShipSpark_Func_4(k, 0, game);
     } else {
         (*E).var_F = (*E).var_F.wrapping_sub(1);
-    };
-}
-pub unsafe fn WreckedShipSpark_Func_2(k: u16, game: &mut Game) {
-    let E = Get_WreckedShipSpark(k as i32, game);
-    if (*E).var_F == 1 {
+    } after { ; };
+    WreckedShipSpark_Func_2 {
         (*E).var_B = ((0xa8e695i32) as u16);
         enemy_instruction! {[(*E).base]; instruction = addr_kWreckedShipSpark_Ilist_E5E5 as u16, timer = 1}
         WreckedShipSpark_Func_4(k, 8, game);
     } else {
         (*E).var_F = (*E).var_F.wrapping_sub(1);
-    };
-}
-pub unsafe fn WreckedShipSpark_Func_3(k: u16, game: &mut Game) {
-    let E = Get_WreckedShipSpark(k as i32, game);
-    if (*E).var_F == 1 {
+    } after { ; };
+    WreckedShipSpark_Func_3 {
         let v2: u16 = word!(game.cur_enemy_index);
         SpawnEprojWithGfx(
             0,
@@ -3533,7 +3514,7 @@ pub unsafe fn WreckedShipSpark_Func_3(k: u16, game: &mut Game) {
         WreckedShipSpark_Func_4(v2, 0, game);
     } else {
         (*E).var_F = (*E).var_F.wrapping_sub(1);
-    };
+    } after { ; };
 }
 pub unsafe fn WreckedShipSpark_Shot(game: &mut Game) {
     word!(

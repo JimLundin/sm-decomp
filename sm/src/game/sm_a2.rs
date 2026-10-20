@@ -2569,10 +2569,13 @@ pub unsafe fn Rinka_Main(game: &mut Game) {
         );
     };
 }
-pub unsafe fn Rinka_3(k: u16, game: &mut Game) {
-    let E = Get_Rinka(k as i32, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
+crate::game::countdown_callbacks! {
+    pub unsafe fn (k: u16, game: &mut Game);
+    before {
+        let E = Get_Rinka(k as i32, game);
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+    } when ((*E).var_F & 0x8000) != 0;
+    Rinka_3 {
         (*E).var_A = ((0xa2b85bi32) as u16);
         let mut v3: u16 = if (*E).parameter_1 != 0 {
             ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16
@@ -2588,15 +2591,11 @@ pub unsafe fn Rinka_3(k: u16, game: &mut Game) {
             + 0x80i32) as u8 as u16;
         (*E).var_B = Math_MultBySin(0x120, r18);
         (*E).var_C = Math_MultByCos(0x120, r18);
-    }
-}
-pub unsafe fn Rinka_4(k: u16, game: &mut Game) {
-    let E = Get_Rinka(k as i32, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
+    };
+    Rinka_4 {
         (*E).base.health = 10;
         Rinka_Init2(k, game);
-    }
+    };
 }
 pub unsafe fn Rinka_5(k: u16, game: &mut Game) {
     if Rinka_9(k, game) & 1 != 0 {
@@ -3757,10 +3756,13 @@ pub unsafe fn LavaSeahorse_Main(game: &mut Game) {
     let E = Get_LavaSeahorse(word!(game.cur_enemy_index) as i32, game);
     CallEnemyPreInstr((((*E).var_F) as u32) | (0xa20000u32), game);
 }
-pub unsafe fn LavaSeahorse_Func_1(k: u16, game: &mut Game) {
-    let E = Get_LavaSeahorse(k as i32, game);
-    (*E).var_D = (*E).var_D.wrapping_sub(1);
-    if ((*E).var_D & 0x8000) != 0 {
+crate::game::countdown_callbacks! {
+    pub unsafe fn (k: u16, game: &mut Game);
+    before {
+        let E = Get_LavaSeahorse(k as i32, game);
+        (*E).var_D = (*E).var_D.wrapping_sub(1);
+    } when ((*E).var_D & 0x8000) != 0;
+    LavaSeahorse_Func_1 {
         (*E).var_D = 48;
         (*E).var_F = ((0xa2e6adi32) as u16);
         let t: u16 = GetSamusEnemyDelta_X(k, game);
@@ -3776,19 +3778,24 @@ pub unsafe fn LavaSeahorse_Func_1(k: u16, game: &mut Game) {
         }
         LavaSeahorse_Func_6(game);
         LavaSeahorse_Func_7(game);
-    }
-}
-pub unsafe fn LavaSeahorse_Func_2(k: u16, game: &mut Game) {
-    let E = Get_LavaSeahorse(k as i32, game);
-    (*E).var_D = (*E).var_D.wrapping_sub(1);
-    if ((*E).var_D & 0x8000) != 0 {
+    };
+    LavaSeahorse_Func_2 {
         (*E).var_00 = ((*E).var_00).wrapping_add(4);
         (*E).var_D = 3;
         (*E).var_F = ((0xa2e6f1i32) as u16);
-    }
-    (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
-    let E1 = Get_LavaSeahorse(k as i32 + 64, game);
-    (*E1).base.y_pos = (*E1).base.y_pos.wrapping_sub(1);
+    } after {
+        (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
+        let E1 = Get_LavaSeahorse(k as i32 + 64, game);
+        (*E1).base.y_pos = (*E1).base.y_pos.wrapping_sub(1);
+    };
+    LavaSeahorse_Func_5 {
+        (*E).var_D = 128;
+        (*E).var_F = ((0xa2e654i32) as u16);
+    } after {
+        (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
+        let E1 = Get_LavaSeahorse(k as i32 + 64, game);
+        (*E1).base.y_pos = (*E1).base.y_pos.wrapping_add(1);
+    };
 }
 pub unsafe fn LavaSeahorse_Func_3(k: u16, game: &mut Game) {
     LavaSeahorse_Func_6(game);
@@ -3814,17 +3821,6 @@ pub unsafe fn LavaSeahorse_Func_4(k: u16, game: &mut Game) {
         (*E).var_F = ((0xa2e749i32) as u16);
         LavaSeahorse_Func_6(game);
     }
-}
-pub unsafe fn LavaSeahorse_Func_5(k: u16, game: &mut Game) {
-    let E = Get_LavaSeahorse(k as i32, game);
-    (*E).var_D = (*E).var_D.wrapping_sub(1);
-    if ((*E).var_D & 0x8000) != 0 {
-        (*E).var_D = 128;
-        (*E).var_F = ((0xa2e654i32) as u16);
-    }
-    (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
-    let E1 = Get_LavaSeahorse(k as i32 + 64, game);
-    (*E1).base.y_pos = (*E1).base.y_pos.wrapping_add(1);
 }
 pub unsafe fn LavaSeahorse_Func_6(game: &mut Game) {
     let E = Get_LavaSeahorse(word!(game.cur_enemy_index) as i32, game);

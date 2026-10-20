@@ -148,6 +148,40 @@ pub(crate) use set_fields;
 mod word_transfers;
 
 pub mod game {
+    // Share the exact countdown prefix and expiry test across named callbacks.
+    macro_rules! countdown_callbacks {
+        (
+            $visibility:vis unsafe fn $parameters:tt;
+            before $before:tt
+            when $condition:expr;
+            $(
+                $name:ident $effects:tt
+                $(else $otherwise:tt)?
+                $(after $after:tt)?;
+            )+
+        ) => {
+            $(
+                $crate::game::countdown_callbacks! {
+                    @function [$visibility unsafe fn $name $parameters]
+                    $before [$condition] $effects
+                    $(else $otherwise)? $(after $after)?
+                }
+            )+
+        };
+        (
+            @function [$($header:tt)*]
+            { $($before:tt)* } [$condition:expr] $effects:block
+            $(else $otherwise:block)? $(after { $($after:tt)* })?
+        ) => {
+            $($header)* {
+                $($before)*
+                if $condition $effects $(else $otherwise)?
+                $($($after)*)?
+            }
+        };
+    }
+    pub(crate) use countdown_callbacks;
+
     pub(crate) mod callback_tables;
     // Declare address tables with the same calls and unreachable fallback.
     macro_rules! address_dispatch {

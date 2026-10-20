@@ -2711,57 +2711,6 @@ pub unsafe fn Phantoon_FadeIn(a: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn Phantoon_Spawn8FireballsInCircleAtStart(k: u16, game: &mut Game) {
-    let EK = Get_Phantoon(k as i32, game);
-    let v2: bool = (*EK).var_E == 1;
-    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
-    let v3: bool = ((*EK).var_E & 0x8000) != 0;
-    if v2 || v3 {
-        let E0 = Get_Phantoon(0, game);
-        SpawnEprojWithGfx((*E0).var_A, k, addr_kEproj_StartingFireballs as u16, game);
-        QueueSfx3_Max6(0x1d, game);
-        (*EK).var_E = 30;
-        let v5: u16 = ((*E0).var_A).wrapping_add(1);
-        (*E0).var_A = v5;
-        if v5 as i32 - 8i32 & 0x8000 == 0 {
-            (*E0).var_A = 0;
-            (*Get_Phantoon(k as i32 + 128i32, game)).var_B = 0;
-            (*EK).var_F = ((0xa7d4eei32) as u16);
-            (*EK).var_E = 30;
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0, 0x6, 0xb781 as VoidP), game);
-        }
-    }
-}
-pub unsafe fn Phantoon_WaitBetweenSpawningAndSpinningFireballs(k: u16, game: &mut Game) {
-    let E = Get_Phantoon(k as i32, game);
-    let v2: bool = (*E).var_E == 1;
-    (*E).var_E = (*E).var_E.wrapping_sub(1);
-    let v3: bool = ((*E).var_E & 0x8000) != 0;
-    if v2 || v3 {
-        (*E).var_E = 240;
-        (*E).var_B = 1;
-        (*E).var_F = ((0xa7d508i32) as u16);
-    }
-}
-pub unsafe fn Phantoon_SpawnFireballsBeforeFight(k: u16, game: &mut Game) {
-    let EK = Get_Phantoon(k as i32, game);
-    let v3: bool = (*EK).var_E == 1;
-    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
-    let v4: bool = ((*EK).var_E & 0x8000) != 0;
-    if v3 || v4 {
-        (*EK).var_B = 0;
-        word!(game.phantom_related_layer_flag, |fresh30| (fresh30)
-            | (0x4000u16));
-        (*EK).var_F = ((0xa7d54ai32) as u16);
-        let E3 = Get_Phantoon(0xc0, game);
-        (*E3).parameter_1 = -32767i32 as u16;
-        (*EK).var_E = 120;
-        sub_88E487(2, g_word_A7CDA3, game);
-        (*E3).var_D = g_word_A7CD9D;
-        (*Get_Phantoon(0x40i32, game)).var_F = 0;
-        QueueMusic_Delayed8(5, game);
-    }
-}
 pub unsafe fn Phantoon_WavyFadeIn(k: u16, game: &mut Game) {
     Phantoon_FadeIn(0xc, game);
     if Phantoon_Func_3((words!((g_word_A7CD9D, g_word_A7CD9B))) as i32, game) != 0 {
@@ -2778,34 +2727,6 @@ pub unsafe fn Phantoon_WavyFadeIn(k: u16, game: &mut Game) {
             (*Get_Phantoon(0xc0i32, game)).var_E = 1;
         }
     };
-}
-pub unsafe fn Phantoon_PickPatternForRound1(k: u16, game: &mut Game) {
-    let EK = Get_Phantoon(k as i32, game);
-    let v2: bool = (*EK).var_E == 1;
-    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
-    let v3: bool = ((*EK).var_E & 0x8000) != 0;
-    if v2 || v3 {
-        let E1 = Get_Phantoon(0x40, game);
-        (*E1).parameter_1 = 0;
-        (*EK).var_F = ((0xa7d5e7i32) as u16);
-        (*E1).var_A = crate::rtl::rom_table_word!(
-            game,
-            0xa7cd53,
-            (word!(game.nmi_frame_counter_word) as i32 >> 1 & 3) as isize
-        );
-        if (NextRandom(game) & 1) != 0 {
-            let E = Get_Phantoon(0, game);
-            set_fields! {[(*E)], 0; var_C, var_B, var_D}
-            (*E1).var_C = 1;
-            (*E).var_A = 533;
-        } else {
-            let E_0 = Get_Phantoon(0, game);
-            (*E_0).var_C = 1;
-            set_fields! {[(*E_0)], 0; var_B, var_D}
-            (*E1).var_C = 0;
-            (*E_0).var_A = 0;
-        }
-    }
 }
 pub unsafe fn Phantoon_MovePhantoonInFigure8ThenOpenEye(k: u16, game: &mut Game) {
     Phantoon_AdjustSpeedAndMoveInFigure8(game);
@@ -2886,15 +2807,6 @@ pub unsafe fn Phantoon_FadeoutWithSwoop(k: u16, game: &mut Game) {
         (*E).var_E = 120;
     }
 }
-pub unsafe fn Phantoon_WaitAfterFadeOut(k: u16, game: &mut Game) {
-    let E = Get_Phantoon(k as i32, game);
-    let v2: bool = (*E).var_E == 1;
-    (*E).var_E = (*E).var_E.wrapping_sub(1);
-    let v3: bool = ((*E).var_E & 0x8000) != 0;
-    if v2 || v3 {
-        (*E).var_F = ((0xa7d6e2i32) as u16);
-    }
-}
 pub unsafe fn Phantoon_MoveLeftOrRightAndPickEyeOpenPatt(k: u16, game: &mut Game) {
     let E = Get_Phantoon(0, game);
     if (NextRandom(game) & 1) != 0 {
@@ -2941,33 +2853,6 @@ pub unsafe fn Phantoon_FadeInDuringFireballRain(k: u16, game: &mut Game) {
         (*E).var_E = 90;
     }
 }
-pub unsafe fn Phantoon_FollowSamusWithEyeDuringFireballRain(k: u16, game: &mut Game) {
-    let EK = Get_Phantoon(k as i32, game);
-    let v2: bool = (*EK).var_E == 1;
-    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
-    let v3: bool = ((*EK).var_E & 0x8000) != 0;
-    if v2 || v3 {
-        (*Get_Phantoon(k as i32 + 128i32, game)).var_B = 0;
-        let E2 = Get_Phantoon(0x80, game);
-        if (*E2).var_A != 0 {
-            (*E2).var_A = 0;
-            (*Get_Phantoon(0i32, game)).parameter_2 = 1;
-            Phantoon_BeginSwoopingPattern(k, game);
-        } else {
-            (*EK).var_F = ((0xa7d7d5i32) as u16);
-            let E1 = Get_Phantoon(0x40, game);
-            (*E1).var_F = 0;
-            let E0 = Get_Phantoon(0, game);
-            (*E0).base.instruction_timer = 1;
-            (*E1).base.instruction_timer = 1;
-            (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as u16;
-            (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as u16;
-            (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
-            word!(game.phantom_related_layer_flag, |fresh26| (fresh26)
-                | (0x4000u16));
-        }
-    }
-}
 pub unsafe fn Phantoon_FadeOutDuringFireballRain(k: u16, game: &mut Game) {
     Phantoon_FadeOut(0xc, game);
     if (*Get_Phantoon(0x40i32, game)).var_F != 0 {
@@ -2975,23 +2860,6 @@ pub unsafe fn Phantoon_FadeOutDuringFireballRain(k: u16, game: &mut Game) {
         (*E).var_F = ((0xa7d7f7i32) as u16);
         (*E).var_E =
             crate::rtl::rom_table_word!(game, 0xa7cd63, (NextRandom(game) as i32 & 7) as isize);
-    }
-}
-pub unsafe fn Phantoon_SpawnRainingFireballs(k: u16, game: &mut Game) {
-    let EK = Get_Phantoon(k as i32, game);
-    let v2: bool = (*EK).var_E == 1;
-    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
-    let v3: bool = ((*EK).var_E & 0x8000) != 0;
-    if v2 || v3 {
-        let a: u16 = (NextRandom(game)) & (7u16);
-        let v4: i32 = 8 * a as i32 >> 1;
-        let E0 = Get_Phantoon(0, game);
-        (*E0).var_A = crate::rtl::rom_table_word!(game, 0xa7cdad, v4 as isize);
-        (*E0).base.x_pos = crate::rtl::rom_table_word!(game, 0xa7cdad, (v4 + 1) as isize);
-        (*E0).base.y_pos = crate::rtl::rom_table_word!(game, 0xa7cdad, (v4 + 2) as isize);
-        (*Get_Phantoon(0x40i32, game)).var_C = 0;
-        (*EK).var_F = ((0xa7d73fi32) as u16);
-        Phantoon_Func_6(k, a, game);
     }
 }
 pub unsafe fn Phantoon_FadeOutBeforeFirstFireballRain(k: u16, game: &mut Game) {
@@ -3018,19 +2886,6 @@ pub unsafe fn Phantoon_FadeOutBeforeEnrage(k: u16, game: &mut Game) {
         let E = Get_Phantoon(k as i32, game);
         (*E).var_F = ((0xa7d874i32) as u16);
         (*E).var_E = 120;
-    }
-}
-pub unsafe fn Phantoon_MoveEnragedPhantoonToTopCenter(k: u16, game: &mut Game) {
-    let E = Get_Phantoon(k as i32, game);
-    let v2: bool = (*E).var_E == 1;
-    (*E).var_E = (*E).var_E.wrapping_sub(1);
-    let v3: bool = ((*E).var_E & 0x8000) != 0;
-    if v2 || v3 {
-        (*E).var_F = ((0xa7d891i32) as u16);
-        let E_0 = Get_Phantoon(0, game);
-        (*E_0).base.x_pos = 128;
-        (*E_0).base.y_pos = 32;
-        (*Get_Phantoon(0x40i32, game)).var_F = 0;
     }
 }
 pub unsafe fn Phantoon_FadeInEnragedPhantoon(k: u16, game: &mut Game) {
@@ -3128,20 +2983,120 @@ pub unsafe fn Phantoon_DyingPhantoonFadeInOut(k: u16, game: &mut Game) {
         (*Get_Phantoon(0i32, game)).var_A = 0;
     }
 }
-pub unsafe fn Phantoon_DyingPhantoonExplosions(k: u16, game: &mut Game) {
-    let EK = Get_Phantoon(k as i32, game);
-    let v2: bool = (*EK).var_E == 1;
-    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
-    let v3: bool = ((*EK).var_E & 0x8000) != 0;
-    if v2 || v3 {
+crate::game::countdown_callbacks! {
+    pub unsafe fn (k: u16, game: &mut Game);
+    before {
+        let EK = Get_Phantoon(k as i32, game);
+        let v2: bool = (*EK).var_E == 1;
+        (*EK).var_E = (*EK).var_E.wrapping_sub(1);
+        let v3: bool = ((*EK).var_E & 0x8000) != 0;
+    }
+    when v2 || v3;
+    Phantoon_Spawn8FireballsInCircleAtStart {
+        let E0 = Get_Phantoon(0, game);
+        SpawnEprojWithGfx((*E0).var_A, k, addr_kEproj_StartingFireballs as u16, game);
+        QueueSfx3_Max6(0x1d, game);
+        (*EK).var_E = 30;
+        let v5: u16 = ((*E0).var_A).wrapping_add(1);
+        (*E0).var_A = v5;
+        if v5 as i32 - 8i32 & 0x8000 == 0 {
+            (*E0).var_A = 0;
+            (*Get_Phantoon(k as i32 + 128i32, game)).var_B = 0;
+            (*EK).var_F = ((0xa7d4eei32) as u16);
+            (*EK).var_E = 30;
+            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0, 0x6, 0xb781 as VoidP), game);
+        }
+    };
+    Phantoon_WaitBetweenSpawningAndSpinningFireballs {
+        (*EK).var_E = 240;
+        (*EK).var_B = 1;
+        (*EK).var_F = ((0xa7d508i32) as u16);
+    };
+    Phantoon_SpawnFireballsBeforeFight {
+        (*EK).var_B = 0;
+        word!(game.phantom_related_layer_flag, |fresh30| (fresh30)
+            | (0x4000u16));
+        (*EK).var_F = ((0xa7d54ai32) as u16);
+        let E3 = Get_Phantoon(0xc0, game);
+        (*E3).parameter_1 = -32767i32 as u16;
+        (*EK).var_E = 120;
+        sub_88E487(2, g_word_A7CDA3, game);
+        (*E3).var_D = g_word_A7CD9D;
+        (*Get_Phantoon(0x40i32, game)).var_F = 0;
+        QueueMusic_Delayed8(5, game);
+    };
+    Phantoon_PickPatternForRound1 {
+        let E1 = Get_Phantoon(0x40, game);
+        (*E1).parameter_1 = 0;
+        (*EK).var_F = ((0xa7d5e7i32) as u16);
+        (*E1).var_A = crate::rtl::rom_table_word!(
+            game,
+            0xa7cd53,
+            (word!(game.nmi_frame_counter_word) as i32 >> 1 & 3) as isize
+        );
+        if (NextRandom(game) & 1) != 0 {
+            let E = Get_Phantoon(0, game);
+            set_fields! {[(*E)], 0; var_C, var_B, var_D}
+            (*E1).var_C = 1;
+            (*E).var_A = 533;
+        } else {
+            let E_0 = Get_Phantoon(0, game);
+            (*E_0).var_C = 1;
+            set_fields! {[(*E_0)], 0; var_B, var_D}
+            (*E1).var_C = 0;
+            (*E_0).var_A = 0;
+        }
+    };
+    Phantoon_WaitAfterFadeOut {
+        (*EK).var_F = ((0xa7d6e2i32) as u16);
+    };
+    Phantoon_FollowSamusWithEyeDuringFireballRain {
+        (*Get_Phantoon(k as i32 + 128i32, game)).var_B = 0;
+        let E2 = Get_Phantoon(0x80, game);
+        if (*E2).var_A != 0 {
+            (*E2).var_A = 0;
+            (*Get_Phantoon(0i32, game)).parameter_2 = 1;
+            Phantoon_BeginSwoopingPattern(k, game);
+        } else {
+            (*EK).var_F = ((0xa7d7d5i32) as u16);
+            let E1 = Get_Phantoon(0x40, game);
+            (*E1).var_F = 0;
+            let E0 = Get_Phantoon(0, game);
+            (*E0).base.instruction_timer = 1;
+            (*E1).base.instruction_timer = 1;
+            (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as u16;
+            (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as u16;
+            (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
+            word!(game.phantom_related_layer_flag, |fresh26| (fresh26)
+                | (0x4000u16));
+        }
+    };
+    Phantoon_SpawnRainingFireballs {
+        let a: u16 = (NextRandom(game)) & (7u16);
+        let v4: i32 = 8 * a as i32 >> 1;
+        let E0 = Get_Phantoon(0, game);
+        (*E0).var_A = crate::rtl::rom_table_word!(game, 0xa7cdad, v4 as isize);
+        (*E0).base.x_pos = crate::rtl::rom_table_word!(game, 0xa7cdad, (v4 + 1) as isize);
+        (*E0).base.y_pos = crate::rtl::rom_table_word!(game, 0xa7cdad, (v4 + 2) as isize);
+        (*Get_Phantoon(0x40i32, game)).var_C = 0;
+        (*EK).var_F = ((0xa7d73fi32) as u16);
+        Phantoon_Func_6(k, a, game);
+    };
+    Phantoon_MoveEnragedPhantoonToTopCenter {
+        (*EK).var_F = ((0xa7d891i32) as u16);
+        let E_0 = Get_Phantoon(0, game);
+        (*E_0).base.x_pos = 128;
+        (*E_0).base.y_pos = 32;
+        (*Get_Phantoon(0x40i32, game)).var_F = 0;
+    };
+    Phantoon_DyingPhantoonExplosions {
         let E2 = Get_Phantoon(0x80, game);
         let v5: u16 = (4u16).wrapping_mul((*E2).var_F);
         let E0 = Get_Phantoon(0, game);
         game.eproj_spawn_pt = Point16U {
             x: (((byte!(@pointer rom_ptr!(game; 0xa7da1d); v5 as isize) as i8) as u16)
                 .wrapping_add((*E0).base.x_pos)),
-            y: (((byte!(@pointer rom_ptr!(game; 0xa7da1d); (v5 as i32 + 1i32) as isize) as i8)
-                as u16)
+            y: (((byte!(@pointer rom_ptr!(game; 0xa7da1d); (v5 as i32 + 1i32) as isize) as i8) as u16)
                 .wrapping_add((*E0).base.y_pos)),
         };
         let v11: u16 = byte!(@pointer rom_ptr!(game; 0xa7da1d); (v5 as i32 + 2) as isize) as u16;
@@ -3162,7 +3117,7 @@ pub unsafe fn Phantoon_DyingPhantoonExplosions(k: u16, game: &mut Game) {
                 (*EK).var_F = ((0xa7da51i32) as u16);
             }
         }
-    }
+    };
 }
 pub unsafe fn Phantoon_WavyDyingPhantoonAndCry(k: u16, game: &mut Game) {
     sub_88E487(1, g_word_A7CDA3, game);
@@ -3579,21 +3534,6 @@ pub unsafe fn Etecoon_Func_4(k: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn Etecoon_Func_5(k: u16, game: &mut Game) {
-    let E = Get_Etecoon(k as i32, game);
-    let v2: bool = (*E).var_E == 1;
-    (*E).var_E = (*E).var_E.wrapping_sub(1);
-    let v3: bool = ((*E).var_E & 0x8000) != 0;
-    if v2 || v3 {
-        (*E).var_A = g_word_A7E900;
-        (*E).var_B = g_word_A7E902;
-        enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2), timer = 1}
-        (*E).var_F = ((0xa7ea37i32) as u16);
-        if word!(game.samus_x_pos) as i32 - 256i32 & 0x8000 == 0 {
-            QueueSfx2_Max6(0x33, game);
-        }
-    }
-}
 pub unsafe fn Etecoon_Func_6(k: u16, game: &mut Game) {
     if Etecoon_Func_3(k, game) & 1 != 0 {
         let E = Get_Etecoon(k as i32, game);
@@ -3621,26 +3561,6 @@ pub unsafe fn Etecoon_Func_6(k: u16, game: &mut Game) {
             set_fields! {[(*E)], 0; var_A, var_B}
             enemy_instruction! {[(*E).base]; timer = 3, instruction = addr_stru_A7E862 as u16}
         }
-    }
-}
-pub unsafe fn Etecoon_Func_7(k: u16, game: &mut Game) {
-    let E = Get_Etecoon(k as i32, game);
-    let v2: bool = (*E).var_E == 1;
-    (*E).var_E = (*E).var_E.wrapping_sub(1);
-    let v3: bool = ((*E).var_E & 0x8000) != 0;
-    if v2 || v3 {
-        enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2), timer = 1}
-        if (*E).parameter_1 != 0 {
-            (*E).var_C = g_word_A7E908;
-            (*E).var_D = g_word_A7E90A;
-            (*E).var_F = ((0xa7eb2ci32) as u16);
-        } else {
-            (*E).var_C = g_word_A7E90C;
-            (*E).var_D = g_word_A7E90E;
-            (*E).var_F = ((0xa7eb02i32) as u16);
-        }
-        (*E).var_A = g_word_A7E900;
-        (*E).var_B = g_word_A7E902;
     }
 }
 pub unsafe fn Etecoon_Func_8(k: u16, game: &mut Game) {
@@ -3718,19 +3638,44 @@ pub unsafe fn Etecoon_Func_11(k: u16, game: &mut Game) {
 static funcs_A2A79: [Option<Func_Y_V>; 3] = callback_table! { unsafe Func_Y_V;
     Etecoon_Func_13, Etecoon_Func_14, Etecoon_Func_15,
 };
-pub unsafe fn Etecoon_Func_12(k: u16, game: &mut Game) {
-    let E = Get_Etecoon(k as i32, game);
-    let v2: bool = (*E).var_E == 1;
-    (*E).var_E = (*E).var_E.wrapping_sub(1);
-    let v3: bool = ((*E).var_E & 0x8000) != 0;
-    if v2 || v3 {
+crate::game::countdown_callbacks! {
+    pub unsafe fn (k: u16, game: &mut Game);
+    before {
+        let E = Get_Etecoon(k as i32, game);
+        let v2: bool = (*E).var_E == 1;
+        (*E).var_E = (*E).var_E.wrapping_sub(1);
+        let v3: bool = ((*E).var_E & 0x8000) != 0;
+    }
+    when v2 || v3;
+    Etecoon_Func_5 {
         (*E).var_A = g_word_A7E900;
         (*E).var_B = g_word_A7E902;
-        funcs_A2A79[byte!((*E).parameter_2; 0) as usize].expect("non-null function pointer")(
-            k, game,
-        );
+        enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2), timer = 1}
+        (*E).var_F = ((0xa7ea37i32) as u16);
+        if word!(game.samus_x_pos) as i32 - 256i32 & 0x8000 == 0 {
+            QueueSfx2_Max6(0x33, game);
+        }
+    };
+    Etecoon_Func_7 {
+        enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2), timer = 1}
+        if (*E).parameter_1 != 0 {
+            (*E).var_C = g_word_A7E908;
+            (*E).var_D = g_word_A7E90A;
+            (*E).var_F = ((0xa7eb2ci32) as u16);
+        } else {
+            (*E).var_C = g_word_A7E90C;
+            (*E).var_D = g_word_A7E90E;
+            (*E).var_F = ((0xa7eb02i32) as u16);
+        }
+        (*E).var_A = g_word_A7E900;
+        (*E).var_B = g_word_A7E902;
+    };
+    Etecoon_Func_12 {
+        (*E).var_A = g_word_A7E900;
+        (*E).var_B = g_word_A7E902;
+        funcs_A2A79[byte!((*E).parameter_2; 0) as usize].expect("non-null function pointer")(k, game);
         (*Get_Etecoon(k as i32, game)).base.instruction_timer = 1;
-    }
+    };
 }
 pub unsafe fn Etecoon_Func_13(j: u16, game: &mut Game) {
     let E = Get_Etecoon(j as i32, game);

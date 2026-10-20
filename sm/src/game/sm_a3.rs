@@ -1055,23 +1055,22 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
     Roach_Func_21 => Roach_Func_32(word!(game.cur_enemy_index), game);
     Roach_Func_22 => Roach_Func_32(word!(game.cur_enemy_index), game);
 }
-pub unsafe fn Roach_Func_23(game: &mut Game) {
-    let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
+crate::game::countdown_callbacks! {
+    pub unsafe fn (game: &mut Game);
+    before {
+        let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+    } when ((*E).var_F & 0x8000) != 0;
+    Roach_Func_23 {
         (*E).var_B = ((0xa3a2d7i32) as u16);
     } else {
         Roach_Func_29(word!(game.cur_enemy_index), game);
-    };
-}
-pub unsafe fn Roach_Func_24(game: &mut Game) {
-    let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
+    } after { ; };
+    Roach_Func_24 {
         (*E).var_B = ((0xa3a4f0i32) as u16);
     } else {
         Roach_Func_33(word!(game.cur_enemy_index), game);
-    };
+    } after { ; };
 }
 pub unsafe fn Roach_Func_25(game: &mut Game) {
     let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
@@ -1825,27 +1824,25 @@ pub unsafe fn Bang_Func_11(k: u16, game: &mut Game) {
         (*E).var_F = ((0xa3bca5i32) as u16);
     }
 }
-pub unsafe fn Bang_Func_12(game: &mut Game) {
-    let E = Get_Bang(word!(game.cur_enemy_index) as i32, game);
-    let v1: i16 = (((*E).var_0C) as i16).wrapping_sub(1);
-    (*E).var_0C = v1 as u16;
-    if v1 < 0 {
+crate::game::countdown_callbacks! {
+    pub unsafe fn (game: &mut Game);
+    before {
+        let E = Get_Bang(word!(game.cur_enemy_index) as i32, game);
+        let v1: i16 = (((*E).var_0C) as i16).wrapping_sub(1);
+        (*E).var_0C = v1 as u16;
+    } when v1 < 0;
+    Bang_Func_12 {
         (*E).var_0C = (*E).var_0D;
         if (((*E).var_0A) as i16).wrapping_sub(((*E).var_0B) as i16) < 0 {
             (*E).var_09 = ((*E).var_09).wrapping_add(22);
             (*E).var_0A = ((*E).var_0A).wrapping_add((*E).var_09);
         }
-    }
-}
-pub unsafe fn Bang_Func_13(game: &mut Game) {
-    let E = Get_Bang(word!(game.cur_enemy_index) as i32, game);
-    let v1: i16 = (((*E).var_0C) as i16).wrapping_sub(1);
-    (*E).var_0C = v1 as u16;
-    if v1 < 0 {
+    };
+    Bang_Func_13 {
         (*E).var_0C = (*E).var_0E;
         (*E).var_09 = ((*E).var_09).wrapping_sub(22);
         (*E).var_0A = ((*E).var_0A).wrapping_sub((*E).var_09);
-    }
+    };
 }
 pub unsafe fn Bang_Func_14(game: &mut Game) {
     let E = Get_Bang(word!(game.cur_enemy_index) as i32, game);

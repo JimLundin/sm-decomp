@@ -2031,34 +2031,10 @@ pub unsafe fn CinematicFunction_Intro_DrawInitJpn(game: &mut Game) {
         }
     }
 }
-pub unsafe fn CinematicFunction_Intro_LastMetroidCaptivity(game: &mut Game) {
-    let v0: bool = (word!(game.cinematic_var4, wrapping_sub(1), reread) & 0x8000) != 0;
-    if word!(game.cinematic_var4) == 0 || v0 {
-        word!(game.cinematic_function = ((0x8ba613i32) as u16));
-        word!(game.cinematic_var4 = 200);
-        QueueMusic_Delayed8(5, game);
-    }
-}
-pub unsafe fn CinematicFunc_Intro_QueueGalaxyIsAtPeace(game: &mut Game) {
-    let v0: bool = (word!(game.cinematic_var4, wrapping_sub(1), reread) & 0x8000) != 0;
-    if word!(game.cinematic_var4) == 0 || v0 {
-        QueueMusic_Delayed8(0, game);
-        QueueMusic_Delayed8(0xff42, game);
-        QueueMusic_DelayedY(5, 0xe, game);
-        word!(game.cinematic_function = ((0x8ba639i32) as u16));
-    }
-}
 pub unsafe fn CinematicFunc_Intro_WaitForQueueWait4secs(game: &mut Game) {
     if HasQueuedMusic(game) & 1 == 0 {
         word!(game.cinematic_function = ((0x8ba64ci32) as u16));
         word!(game.cinematic_var4 = 240);
-    }
-}
-pub unsafe fn CinematicFunc_Intro_FadeOut(game: &mut Game) {
-    let v0: bool = (word!(game.cinematic_var4, wrapping_sub(1), reread) & 0x8000) != 0;
-    if word!(game.cinematic_var4) == 0 || v0 {
-        word!(game.cinematic_function = ((0x8ba663i32) as u16));
-        word! { game, 2; screen_fade_delay, screen_fade_counter }
     }
 }
 pub unsafe fn CinematicFunc_Intro_WaitForFadeOut(game: &mut Game) {
@@ -3211,13 +3187,6 @@ pub unsafe fn CinematicFunction_Intro_Func77(game: &mut Game) {
         word!(game.cinematic_var6, wrapping_sub(16));
     };
 }
-pub unsafe fn CinematicFunction_Intro_Func84(game: &mut Game) {
-    let v0: bool = (word!(game.cinematic_var4, wrapping_sub(1), reread) & 0x8000) != 0;
-    if word!(game.cinematic_var4) == 0 || v0 {
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
-        word!(game.cinematic_function = ((0x8bc627i32) as u16));
-    }
-}
 pub unsafe fn CinematicFunction_Intro_Func85(game: &mut Game) {
     HandleFadeOut(game);
     if *ram_ptr!(game; 0x51) == 0x80 {
@@ -3481,12 +3450,6 @@ pub unsafe fn CinematicFunction_Intro_Func107(game: &mut Game) {
         word!(game.cinematic_function = ((0x8bcad0i32) as u16));
         word!(game.cinematic_var4 = 64);
     };
-}
-pub unsafe fn CinematicFunction_Intro_Func108(game: &mut Game) {
-    let v0: bool = (word!(game.cinematic_var4, wrapping_sub(1), reread) & 0x8000) != 0;
-    if word!(game.cinematic_var4) == 0 || v0 {
-        word!(game.cinematic_function = ((0x8bcadei32) as u16));
-    }
 }
 pub unsafe fn CinematicFunction_Intro_Func95(game: &mut Game) {
     *ram_ptr!(game; 0x51) = 0x80;
@@ -3760,15 +3723,6 @@ pub unsafe fn CinematicFunction_Intro_Func118(game: &mut Game) {
         word!(game.cinematic_function = ((0x8bdb9di32) as u16));
     }
 }
-pub unsafe fn CinematicFunction_Intro_Func119(game: &mut Game) {
-    let v0: bool = (word!(game.cinematic_var4, wrapping_sub(1), reread) & 0x8000) != 0;
-    if word!(game.cinematic_var4) == 0 || v0 {
-        QueueMusic_Delayed8(0, game);
-        QueueMusic_Delayed8(0xff3c, game);
-        QueueMusic_DelayedY(5, 0xe, game);
-        word!(game.cinematic_function = ((0x8bdbc4i32) as u16));
-    }
-}
 pub unsafe fn CinematicFunction_Intro_Func120(game: &mut Game) {
     if HasQueuedMusic(game) & 1 == 0 {
         *ram_ptr!(game; 0x55) = 7;
@@ -3795,20 +3749,6 @@ pub unsafe fn CinematicFunction_Intro_Func120(game: &mut Game) {
         word!(game.cinematic_var13 = 192);
         word!(game.cinematic_var14 = 0);
         word!(game.cinematic_function = ((0x8bdca5i32) as u16));
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func122(game: &mut Game) {
-    let v0: bool = (word!(game.cinematic_var4, wrapping_sub(1), reread) & 0x8000) != 0;
-    if word!(game.cinematic_var4) == 0 || v0 {
-        fade_cinematic_fixed_color!(fresh97, game, fresh98, fresh99);
-        if *ram_ptr!(game; 0x74, 0) == 32
-            && *ram_ptr!(game; 0x74, 1) == 64
-            && *ram_ptr!(game; 0x74, 2) == 0x80
-        {
-            *ram_ptr!(game; 0x6f) = 0;
-            *ram_ptr!(game; 0x72) = 0;
-        }
-        word!(game.cinematic_var4 = 8);
     }
 }
 static kCinematicFunction_Intro_Func121_Tab0: [u16; 32] = [
@@ -3948,13 +3888,56 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
     CreditsObject_Init(addr_stru_8BF6F8 as u16, game);
     word!(game.cinematic_function = ((0x8bdb9di32) as u16));
 }
-pub unsafe fn CinematicFunction_Intro_Func129(game: &mut Game) {
-    let v0: bool = (word!(game.cinematic_var4, wrapping_sub(1), reread) & 0x8000) != 0;
-    if word!(game.cinematic_var4) == 0 || v0 {
+crate::game::countdown_callbacks! {
+    pub unsafe fn (game: &mut Game);
+    before {
+        let v0: bool = (word!(game.cinematic_var4, wrapping_sub(1), reread) & 0x8000) != 0;
+    }
+    when word!(game.cinematic_var4) == 0 || v0;
+    CinematicFunction_Intro_LastMetroidCaptivity {
+        word!(game.cinematic_function = ((0x8ba613i32) as u16));
+        word!(game.cinematic_var4 = 200);
+        QueueMusic_Delayed8(5, game);
+    };
+    CinematicFunc_Intro_QueueGalaxyIsAtPeace {
+        QueueMusic_Delayed8(0, game);
+        QueueMusic_Delayed8(0xff42, game);
+        QueueMusic_DelayedY(5, 0xe, game);
+        word!(game.cinematic_function = ((0x8ba639i32) as u16));
+    };
+    CinematicFunc_Intro_FadeOut {
+        word!(game.cinematic_function = ((0x8ba663i32) as u16));
+        word! { game, 2; screen_fade_delay, screen_fade_counter }
+    };
+    CinematicFunction_Intro_Func84 {
+        word! { game, 1; screen_fade_delay, screen_fade_counter }
+        word!(game.cinematic_function = ((0x8bc627i32) as u16));
+    };
+    CinematicFunction_Intro_Func108 {
+        word!(game.cinematic_function = ((0x8bcadei32) as u16));
+    };
+    CinematicFunction_Intro_Func119 {
+        QueueMusic_Delayed8(0, game);
+        QueueMusic_Delayed8(0xff3c, game);
+        QueueMusic_DelayedY(5, 0xe, game);
+        word!(game.cinematic_function = ((0x8bdbc4i32) as u16));
+    };
+    CinematicFunction_Intro_Func122 {
+        fade_cinematic_fixed_color!(fresh97, game, fresh98, fresh99);
+        if *ram_ptr!(game; 0x74, 0) == 32
+            && *ram_ptr!(game; 0x74, 1) == 64
+            && *ram_ptr!(game; 0x74, 2) == 0x80
+        {
+            *ram_ptr!(game; 0x6f) = 0;
+            *ram_ptr!(game; 0x72) = 0;
+        }
+        word!(game.cinematic_var4 = 8);
+    };
+    CinematicFunction_Intro_Func129 {
         word!(game.cinematic_function = ((0x8be110i32) as u16));
         word!(game.cinematic_var4 = 120);
         *ram_ptr!(game; 0x69) = 16;
-    }
+    };
 }
 pub unsafe fn CinematicFunction_Intro_Func130(game: &mut Game) {
     HandleFadeIn(game);

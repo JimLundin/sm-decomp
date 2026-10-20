@@ -278,7 +278,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **9,903-line** gap; parked small drafts are not
+   replacement yet funds the **9,705-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -351,6 +351,16 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the original decoder, including normal-library file loading, invalid values,
    aliasing outputs and the accepted control-byte booleans. Release, formatting
    and all-target checks pass. This frontend-only change needs no movie replay.
+
+   Complete countdown-callback sharing removes **198 lines
+   (109,902 -> 109,704)** across 97 callbacks in eight banks, including the
+   shared declaration helper. Exact setup, capture, expiry, effects and tails
+   remain explicit; callback names and routes are unchanged. Independent
+   compiler expansion matches all 97 bodies after bound-local renaming;
+   outside selected spans and macro resolution remain unchanged. Formatting,
+   normal release and compiled-source checks pass. This is static equivalence,
+   with no new movie result. Lower unsafe/cast counters reflect shared source
+   declarations, not removal of unsafe runtime operations.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -448,6 +458,15 @@ Drafts/reports: TEMP sm-slot-index-price-7617b682,
 sm-word-arithmetic-7617b682, sm-ppu-kernels-7617b682 and
 sm-signature-headers-7617b682. Continue discovery beyond these bounded
 cohorts; they do not exhaust possible algorithmic reductions.
+
+Countdown pricing selected the landed callback form over runtime stage enums
+(-11 boss/presentation, +34 ordinary-enemy lines) and operation-level gates
+(-173 before any additional caller scope). The bounded census found 374
+countdown-containing functions / 9,364 gross lines, not removable duplication.
+Snapshot capture/restore mapping removes only 84 lines including its macros;
+park this uncompiled draft, with no runtime claim. Reports: TEMP
+sm-timed-transitions-63b0ffe4, sm-enemy-programs-63b0ffe4 and
+sm-snapshot-map-price-f698eb50.
 
 When revisiting one of these exact families, consult its historical section
 with `git show ec45c573:docs/PLAN.md` and search the relevant heading/symbol.
@@ -577,10 +596,10 @@ committed baseline and budget.
 
 After the Japanese correction, local bindings, intro pages, enemy callback
 imports, ordered stores, PNG texture loading, beam firing, moving platforms,
-byte-partial-product sharing and INI decoding, maintained Rust is **109,902**,
-leaving **9,903** to reach 99,999. Counters:
+byte-partial-product sharing, INI decoding and countdown callbacks, maintained
+Rust is **109,704**, leaving **9,705** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 5190; cast lines 8658. The unrelated 83-line shader draft
+unsafe functions 5118; cast lines 8633. The unrelated 83-line shader draft
 remains excluded; working-tree counts are not the committed baseline.
 Continue item 2's remaining-responsibility comparison. The complete hopping
 draft remains parked; neither it nor the completed small migrations establish

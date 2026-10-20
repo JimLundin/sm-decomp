@@ -875,23 +875,24 @@ pub unsafe fn SfxHandlers_1_WaitForAck(j: u16, game: &mut Game) {
     crate::update_place! { reference fresh138 = *ram_ptr!(game; 0x649, j as isize) => (*fresh138).wrapping_add(1); }
     *ram_ptr!(game; 0x650, j as isize) = 6;
 }
-pub unsafe fn SfxHandlers_2_ClearRequest(j: u16, game: &mut Game) {
-    crate::update_place! { reference fresh135 [fresh136] = *ram_ptr!(game; 0x650, j as isize) => (*fresh135).wrapping_sub(1); }
-    if fresh136 == 1 {
-        *ram_ptr!(game; 0x64d, j as isize) = 0;
-        crate::update_place! { reference fresh137 = *ram_ptr!(game; 0x649, j as isize) => (*fresh137).wrapping_add(1); }
-    }
-}
 pub unsafe fn SfxHandlers_3_WaitForAck(j: u16, game: &mut Game) {
     let v1: u8 = *ram_ptr!(game; 0x64d, j as isize);
     *ram_ptr!(game; 0x649, j as isize) = 0;
     SfxHandlers_0_SendToApu(j, game);
 }
-pub unsafe fn SfxHandlers_4_Reset(j: u16, game: &mut Game) {
-    crate::update_place! { reference fresh132 [fresh133] = *ram_ptr!(game; 0x650, j as isize) => (*fresh132).wrapping_sub(1); }
-    if fresh133 == 1 {
-        *ram_ptr!(game; 0x649, j as isize) = 0;
+crate::game::countdown_callbacks! {
+    pub unsafe fn (j: u16, game: &mut Game);
+    before {
+        crate::update_place! { reference fresh135 [fresh136] = *ram_ptr!(game; 0x650, j as isize) => (*fresh135).wrapping_sub(1); }
     }
+    when fresh136 == 1;
+    SfxHandlers_2_ClearRequest {
+        *ram_ptr!(game; 0x64d, j as isize) = 0;
+        crate::update_place! { reference fresh137 = *ram_ptr!(game; 0x649, j as isize) => (*fresh137).wrapping_add(1); }
+    };
+    SfxHandlers_4_Reset {
+        *ram_ptr!(game; 0x649, j as isize) = 0;
+    };
 }
 pub unsafe fn ResetSoundQueues(game: &mut Game) {
     *(ram_ptr!(game, u16; 0x643)) = 0;
