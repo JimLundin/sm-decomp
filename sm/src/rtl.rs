@@ -222,7 +222,7 @@ pub unsafe fn StateRecorder_RecordCmd(sr: *mut StateRecorder, cmd: u8) {
     }
 }
 pub unsafe fn StateRecorder_Record(sr: *mut StateRecorder, inputs: u16) {
-    let diff: u16 = (inputs as i32 ^ (*sr).last_inputs as i32) as u16;
+    let diff: u16 = (inputs ^ (*sr).last_inputs);
     if diff as i32 != 0i32 {
         (*sr).last_inputs = inputs;
         let mut i: i32 = 0i32;
@@ -820,11 +820,11 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
         RtlApuUnlock();
         RtlSynchronizeWholeState(game);
         fclose(f);
-        if *ram_ptr!(game; 0x611) as i32
-            | *ram_ptr!(game; 0x612) as i32
-            | *ram_ptr!(game; 0x613) as i32
-            | *ram_ptr!(game; 0x614) as i32
-            | *ram_ptr!(game; 0x615) as i32
+        if *ram_ptr!(game; 0x611)
+            | *ram_ptr!(game; 0x612)
+            | *ram_ptr!(game; 0x613)
+            | *ram_ptr!(game; 0x614)
+            | *ram_ptr!(game; 0x615)
             != 0
         {
             printf(

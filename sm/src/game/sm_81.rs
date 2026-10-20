@@ -152,11 +152,9 @@ pub unsafe fn LoadFromSram(a: u16, game: &mut Game) -> u8 {
     }
     let v4: i32 = r18 as i32 >> 1i32;
     if r20 == *(game.g_sram.offset(0) as *mut u16).offset(v4 as isize)
-        && r20 as i32 ^ 0xffffi32
-            == *(game.g_sram.offset(0x8) as *mut u16).offset(v4 as isize) as i32
+        && r20 ^ 0xffff == *(game.g_sram.offset(0x8) as *mut u16).offset(v4 as isize)
         || r20 == *(game.g_sram.offset(0x1ff0) as *mut u16).offset(v4 as isize)
-            && r20 as i32 ^ 0xffffi32
-                == *(game.g_sram.offset(0x1ff8) as *mut u16).offset(v4 as isize) as i32
+            && r20 ^ 0xffff == *(game.g_sram.offset(0x1ff8) as *mut u16).offset(v4 as isize)
     {
         let mut i: i32 = 94i32;
         while i >= 0i32 {
@@ -258,7 +256,7 @@ pub unsafe fn DrawSpritemap(db: u8, j: u16, x_r20: u16, y_r18: u16, chr_r22: u16
         let oam: *mut OamEnt = gOamEnt(idx, game);
         let mut x: i32 = x_r20 as i32 + *(pp as *mut u16) as i32;
         let mut y: i32 = y_r18 as u8 as i32 + *pp.offset(2) as i32;
-        if if *pp.offset(2) as i32 & 0x80i32 == 0 {
+        if if *pp.offset(2) & 0x80 == 0 {
             (y >= 0xe0i32) as i32
         } else if y & 0x100i32 != 0 {
             ((y as u8) >= 0xe0u8) as i32
@@ -271,8 +269,7 @@ pub unsafe fn DrawSpritemap(db: u8, j: u16, x_r20: u16, y_r18: u16, chr_r22: u16
         }
         (*oam).xcoord = x as u8;
         (*oam).ycoord = y as u8;
-        *(&raw mut (*oam).charnum as *mut u16) =
-            (chr_r22 as i32 | *(pp.offset(3) as *mut u16) as i32 & 0xf1ffi32) as u16;
+        *(&raw mut (*oam).charnum as *mut u16) = (chr_r22 | *(pp.offset(3) as *mut u16) & 0xf1ff);
         update_ram_word!(game.oam_ext[(idx >> 5i32)], |fresh9| (fresh9 as i32
             | ((x & 0x100i32) >> 8i32 | (*(pp as *mut i16) < 0i16) as i32 * 2i32)
                 << 2i32 * (idx >> 2i32 & 7i32))
@@ -298,7 +295,7 @@ pub unsafe fn DrawSpritemapOffScreen(
         let oam: *mut OamEnt = gOamEnt(idx, game);
         let mut x: i32 = x_r20 as i32 + *(pp as *mut u16) as i32;
         let mut y: i32 = y_r18 as u8 as i32 + *pp.offset(2) as i32;
-        if if *pp.offset(2) as i32 & 0x80i32 == 0 {
+        if if *pp.offset(2) & 0x80 == 0 {
             (y < 0xe0i32) as i32
         } else if y & 0x100i32 != 0 {
             ((y as u8) < 0xe0u8) as i32
@@ -311,8 +308,7 @@ pub unsafe fn DrawSpritemapOffScreen(
         }
         (*oam).xcoord = x as u8;
         (*oam).ycoord = y as u8;
-        *(&raw mut (*oam).charnum as *mut u16) =
-            (chr_r22 as i32 | *(pp.offset(3) as *mut u16) as i32 & 0xf1ffi32) as u16;
+        *(&raw mut (*oam).charnum as *mut u16) = (chr_r22 | *(pp.offset(3) as *mut u16) & 0xf1ff);
         update_ram_word!(game.oam_ext[(idx >> 5i32)], |fresh10| (fresh10 as i32
             | ((x & 0x100i32) >> 8i32 | (*(pp as *mut i16) < 0i16) as i32 * 2i32)
                 << 2i32 * (idx >> 2i32 & 7i32))
@@ -340,8 +336,7 @@ pub unsafe fn DrawMenuSpritemap(a: u16, k: u16, j: u16, chr_r3: u16, game: &mut 
                 << 2i32 * (idx >> 2i32 & 7i32))
             as u16);
         (*oam).ycoord = ((j) as u8).wrapping_add(*pp.offset(2));
-        *(&raw mut (*oam).charnum as *mut u16) =
-            (chr_r3 as i32 | *(pp.offset(3) as *mut u16) as i32 & 0xf1ffi32) as u16;
+        *(&raw mut (*oam).charnum as *mut u16) = (chr_r3 | *(pp.offset(3) as *mut u16) & 0xf1ff);
         pp = pp.offset(5);
         idx = idx + 4i32 & 0x1ffi32;
         n -= 1;
@@ -477,12 +472,11 @@ pub unsafe fn DrawSpritemapWithBaseTile2(
                 << 2i32 * (idx >> 2i32 & 7i32))
             as u16);
         let y: i32 = *pp.offset(2) as i32 + r18_y as u8 as i32;
-        (*oam).ycoord =
-            (if (y & 0x100i32 == 0) as i32 == (*pp.offset(2) as i32 & 0x80i32 == 0) as i32 {
-                y
-            } else {
-                0xf0i32
-            }) as u8;
+        (*oam).ycoord = (if (y & 0x100i32 == 0) as i32 == (*pp.offset(2) & 0x80 == 0) as i32 {
+            y
+        } else {
+            0xf0i32
+        }) as u8;
         *(&raw mut (*oam).charnum as *mut u16) =
             (r3 as i32 | r0 as i32 + *(pp.offset(3) as *mut u16) as i32) as u16;
         pp = pp.offset(5);
@@ -513,12 +507,11 @@ pub unsafe fn DrawSpritemapWithBaseTileOffscreen(
                 << 2i32 * (idx >> 2i32 & 7i32))
             as u16);
         let y: i32 = *pp.offset(2) as i32 + r18_y as u8 as i32;
-        (*oam).ycoord =
-            (if (y & 0x100i32 == 0) as i32 != (*pp.offset(2) as i32 & 0x80i32 == 0) as i32 {
-                y
-            } else {
-                0xf0i32
-            }) as u8;
+        (*oam).ycoord = (if (y & 0x100i32 == 0) as i32 != (*pp.offset(2) & 0x80 == 0) as i32 {
+            y
+        } else {
+            0xf0i32
+        }) as u8;
         *(&raw mut (*oam).charnum as *mut u16) =
             (r3 as i32 | r0 as i32 + *(pp.offset(3) as *mut u16) as i32) as u16;
         pp = pp.offset(5);
@@ -549,12 +542,11 @@ pub unsafe fn DrawEprojSpritemapWithBaseTile(
                 << 2i32 * (idx >> 2i32 & 7i32))
             as u16);
         let y: i32 = *pp.offset(2) as i32 + y_r18 as u8 as i32;
-        (*oam).ycoord =
-            (if (y & 0x100i32 == 0) as i32 == (*pp.offset(2) as i32 & 0x80i32 == 0) as i32 {
-                y
-            } else {
-                0xf0i32
-            }) as u8;
+        (*oam).ycoord = (if (y & 0x100i32 == 0) as i32 == (*pp.offset(2) & 0x80 == 0) as i32 {
+            y
+        } else {
+            0xf0i32
+        }) as u8;
         *(&raw mut (*oam).charnum as *mut u16) =
             (chr_r28 as i32 | chr_r26 as i32 + *(pp.offset(3) as *mut u16) as i32) as u16;
         idx = idx + 4i32 & 0x1ffi32;
@@ -585,12 +577,11 @@ pub unsafe fn DrawEprojSpritemapWithBaseTileOffscreen(
                 << 2i32 * (idx >> 2i32 & 7i32))
             as u16);
         let y: i32 = *pp.offset(2) as i32 + y_r18 as u8 as i32;
-        (*oam).ycoord =
-            (if (y & 0x100i32 == 0) as i32 != (*pp.offset(2) as i32 & 0x80i32 == 0) as i32 {
-                y
-            } else {
-                0xf0i32
-            }) as u8;
+        (*oam).ycoord = (if (y & 0x100i32 == 0) as i32 != (*pp.offset(2) & 0x80 == 0) as i32 {
+            y
+        } else {
+            0xf0i32
+        }) as u8;
         *(&raw mut (*oam).charnum as *mut u16) =
             (chr_r28 as i32 | chr_r26 as i32 + *(pp.offset(3) as *mut u16) as i32) as u16;
         idx = idx + 4i32 & 0x1ffi32;
@@ -601,7 +592,7 @@ pub unsafe fn DrawEprojSpritemapWithBaseTileOffscreen(
 }
 pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
     HandleFadeOut(game);
-    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
         ScreenOff(game);
         QueueSfx3_Max6(1u16, game);
         DisableHdmaObjects(game);
@@ -636,7 +627,7 @@ pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
 }
 pub unsafe fn GameOverMenu_24_FadeIn(game: &mut Game) {
     HandleFadeIn(game);
-    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 15i32 {
+    if (*ram_ptr!(game; 0x51) & 0xf) == 15 {
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
@@ -701,9 +692,9 @@ pub unsafe fn GameOverMenu_3_Main(game: &mut Game) {
     {
         update_ram_word!(game.file_select_map_area_index, |fresh91| (fresh91)
             ^ (1u16));
-    } else if (ram_word!(game, joypad1_newkeys) as i32
-        & (kButton_B as i32 | kButton_Start as i32 | kButton_A as i32) as u16 as i32)
-        != 0i32
+    } else if (ram_word!(game, joypad1_newkeys)
+        & (kButton_B as i32 | kButton_Start as i32 | kButton_A as i32) as u16)
+        != 0
     {
         if ram_word!(game, file_select_map_area_index) != 0 {
             update_ram_word!(game.menu_index, wrapping_add(1));
@@ -771,7 +762,7 @@ pub unsafe fn GameOverMenu_3_FadeIn(game: &mut Game) {
     HandleGameOverBabyMetroid(game);
     DrawMenuSelectionMissile(game);
     HandleFadeIn(game);
-    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 15i32 {
+    if (*ram_ptr!(game; 0x51) & 0xf) == 15 {
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
@@ -779,7 +770,7 @@ pub unsafe fn GameOverMenu_5_FadeOutToGameMap(game: &mut Game) {
     HandleGameOverBabyMetroid(game);
     DrawMenuSelectionMissile(game);
     HandleFadeOut(game);
-    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
@@ -787,7 +778,7 @@ pub unsafe fn GameOverMenu_7_FadeOutToSoftReset(game: &mut Game) {
     DrawMenuSelectionMissile(game);
     HandleGameOverBabyMetroid(game);
     HandleFadeOut(game);
-    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
         SoftReset(game);
     }
 }
@@ -910,7 +901,7 @@ pub unsafe fn FileSelectMenu(game: &mut Game) {
 }
 pub unsafe fn FileSelectMenu_0_FadeOutConfigGfx(game: &mut Game) {
     HandleFadeOut(game);
-    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) != 0i32 {
+    if (*ram_ptr!(game; 0x51) & 0xf) != 0 {
         return;
     }
     ScreenOff(game);
@@ -947,7 +938,7 @@ pub unsafe fn FileSelectMenu_32_FadeOutToOptions(game: &mut Game) {
     DrawBorderAroundSamusData(game);
     DrawFileSelectSamusHelmets(game);
     HandleFadeOut(game);
-    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
         set_ram_word!(game.game_state = kGameState_2_GameOptionsMenu as u16);
         set_ram_word!(game.menu_index = 0u16);
         let mut v0: i32 = 0i32;
@@ -964,7 +955,7 @@ pub unsafe fn FileSelectMenu_33_FadeOutToTitle(game: &mut Game) {
     DrawBorderAroundSamusData(game);
     DrawFileSelectSamusHelmets(game);
     HandleFadeOut(game);
-    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
         SoftReset(game);
     }
 }
@@ -977,7 +968,7 @@ pub unsafe fn FileSelectMenu_15_FadeOutToMain(game: &mut Game) {
     *ram_ptr!(game; 0x57) = (*ram_ptr!(game; 0x57) as i32 & 0xfi32
         | 16i32 * (*ram_ptr!(game; 0x51) as i32 & 0xfi32) ^ 0xf0i32)
         as u8;
-    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
         ScreenOff(game);
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
@@ -997,7 +988,7 @@ pub unsafe fn FileSelectMenu_7_FadeInFromMain(game: &mut Game) {
     *ram_ptr!(game; 0x57) = (*ram_ptr!(game; 0x57) as i32 & 0xfi32
         | 16i32 * (*ram_ptr!(game; 0x51) as i32 & 0xfi32) ^ 0xf0i32)
         as u8;
-    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 15i32 {
+    if (*ram_ptr!(game; 0x51) & 0xf) == 15 {
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
@@ -1046,19 +1037,19 @@ pub unsafe fn LoadMenuExitTilemap(game: &mut Game) {
 pub unsafe fn DrawFileCopySaveFileInfo(game: &mut Game) {
     LoadFromSram_(0u16, game);
     (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
-    if (ram_word!(game, nonempty_save_slots) as i32 & 1i32) == 0i32 {
+    if (ram_word!(game, nonempty_save_slots) & 1) == 0 {
         (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 1024u16;
     }
     DrawFileCopySaveSlotAInfo(game);
     LoadFromSram_(1u16, game);
     (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
-    if (ram_word!(game, nonempty_save_slots) as i32 & 2i32) == 0i32 {
+    if (ram_word!(game, nonempty_save_slots) & 2) == 0 {
         (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 1024u16;
     }
     DrawFileCopySaveSlotBInfo(game);
     LoadFromSram_(2u16, game);
     (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
-    if (ram_word!(game, nonempty_save_slots) as i32 & 4i32) == 0i32 {
+    if (ram_word!(game, nonempty_save_slots) & 4) == 0 {
         (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 1024u16;
     }
     DrawFileCopySaveSlotCInfo(game);
@@ -1066,12 +1057,12 @@ pub unsafe fn DrawFileCopySaveFileInfo(game: &mut Game) {
 }
 pub unsafe fn DrawFileCopySaveSlotAInfo(game: &mut Game) {
     DrawFileSelectionHealth(
-        ((ram_word!(game, nonempty_save_slots) as i32 & 1i32) == 0i32) as u16,
+        ((ram_word!(game, nonempty_save_slots) & 1) == 0) as u16,
         0x218u16,
         game,
     );
     DrawFileSelectionTime(
-        ((ram_word!(game, nonempty_save_slots) as i32 & 1i32) == 0i32) as u16,
+        ((ram_word!(game, nonempty_save_slots) & 1) == 0) as u16,
         0x272u16,
         game,
     );
@@ -1080,12 +1071,12 @@ pub unsafe fn DrawFileCopySaveSlotAInfo(game: &mut Game) {
 }
 pub unsafe fn DrawFileCopySaveSlotBInfo(game: &mut Game) {
     DrawFileSelectionHealth(
-        (!(ram_word!(game, nonempty_save_slots) as i32) & 2i32) as u16,
+        (!(ram_word!(game, nonempty_save_slots)) & 2),
         0x318u16,
         game,
     );
     DrawFileSelectionTime(
-        (!(ram_word!(game, nonempty_save_slots) as i32) & 2i32) as u16,
+        (!(ram_word!(game, nonempty_save_slots)) & 2),
         0x372u16,
         game,
     );
@@ -1094,12 +1085,12 @@ pub unsafe fn DrawFileCopySaveSlotBInfo(game: &mut Game) {
 }
 pub unsafe fn DrawFileCopySaveSlotCInfo(game: &mut Game) {
     DrawFileSelectionHealth(
-        (!(ram_word!(game, nonempty_save_slots) as i32) & 4i32) as u16,
+        (!(ram_word!(game, nonempty_save_slots)) & 4),
         0x418u16,
         game,
     );
     DrawFileSelectionTime(
-        (!(ram_word!(game, nonempty_save_slots) as i32) & 4i32) as u16,
+        (!(ram_word!(game, nonempty_save_slots)) & 4),
         0x472u16,
         game,
     );
@@ -1130,7 +1121,7 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
             set_ram_word!(game.eproj_id[16] = ram_word!(game, eproj_id[15]));
             update_ram_word!(game.menu_index, wrapping_add(1));
         }
-    } else if (ram_word!(game, joypad1_newkeys) as i32 & 0x8000i32) != 0i32 {
+    } else if (ram_word!(game, joypad1_newkeys) & 0x8000) != 0 {
         update_ram_word!(game.menu_index, wrapping_add(7u16));
         QueueSfx1_Max6(0x37u16, game);
     } else {
@@ -1139,13 +1130,11 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
             v0 = ram_word!(game, eproj_id[15]) as u8;
             loop {
                 v0 = v0.wrapping_sub(1);
-                if ((v0 as i32 & 0x80i32) != 0i32) {
+                if ((v0 & 0x80) != 0) {
                     selection_unchanged = true;
                     break;
                 }
-                if (kBitShl[v0 as usize] as i32 & ram_word!(game, nonempty_save_slots) as i32)
-                    != 0i32
-                {
+                if (kBitShl[v0 as usize] as u16 & ram_word!(game, nonempty_save_slots)) != 0 {
                     selection_unchanged = false;
                     break;
                 }
@@ -1159,8 +1148,7 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
                     break;
                 }
                 if v0 == 3u8
-                    || (kBitShl[v0 as usize] as i32 & ram_word!(game, nonempty_save_slots) as i32)
-                        != 0i32
+                    || (kBitShl[v0 as usize] as u16 & ram_word!(game, nonempty_save_slots)) != 0
                 {
                     selection_unchanged = false;
                     break;
@@ -1246,13 +1234,13 @@ pub unsafe fn FileSelectMenu_10_FileCopySelectDest(game: &mut Game) {
             update_ram_word!(game.menu_index, wrapping_add(5u16));
             current_block = 16203760046146113240;
         }
-    } else if (ram_word!(game, joypad1_newkeys) as i32 & 0x8000i32) == 0i32 {
+    } else if (ram_word!(game, joypad1_newkeys) & 0x8000) == 0 {
         if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32 {
             QueueSfx1_Max6(0x37u16, game);
             v0 = ram_word!(game, eproj_id[15]);
             loop {
                 v0 = v0.wrapping_sub(1);
-                if ((v0 as i32 & 0x8000i32) != 0i32) {
+                if ((v0 & 0x8000) != 0) {
                     current_block = 16545170798630791882;
                     break;
                 }
@@ -1366,7 +1354,7 @@ pub unsafe fn FileSelectMenu_12_FileCopyConfirm(game: &mut Game) {
         update_ram_word!(game.eproj_id[15], |fresh64| (fresh64) ^ (1u16));
         QueueSfx1_Max6(0x37u16, game);
     } else {
-        if (ram_word!(game, joypad1_newkeys) as i32 & 0x8000i32) != 0i32 {
+        if (ram_word!(game, joypad1_newkeys) & 0x8000) != 0 {
             update_ram_word!(game.menu_index, wrapping_sub(3u16));
             set_ram_word!(game.eproj_id[15] = ram_word!(game, eproj_id[17]));
             QueueSfx1_Max6(0x37u16, game);
@@ -1519,19 +1507,17 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
             update_ram_word!(game.menu_index, wrapping_add(1));
             return;
         }
-    } else if ((ram_word!(game, joypad1_newkeys) as i32 & 0x8000i32) == 0i32) {
+    } else if ((ram_word!(game, joypad1_newkeys) & 0x8000) == 0) {
         let selection_unchanged: bool;
         if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32 {
             v1 = ram_word!(game, eproj_id[15]) as u8;
             loop {
                 v1 = v1.wrapping_sub(1);
-                if ((v1 as i32 & 0x80i32) != 0i32) {
+                if ((v1 & 0x80) != 0) {
                     selection_unchanged = true;
                     break;
                 }
-                if (kBitShl_[v1 as usize] as i32 & ram_word!(game, nonempty_save_slots) as i32)
-                    != 0i32
-                {
+                if (kBitShl_[v1 as usize] as u16 & ram_word!(game, nonempty_save_slots)) != 0 {
                     selection_unchanged = false;
                     break;
                 }
@@ -1545,8 +1531,7 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
                     break;
                 }
                 if v1 == 3u8
-                    || (kBitShl_[v1 as usize] as i32 & ram_word!(game, nonempty_save_slots) as i32)
-                        != 0i32
+                    || (kBitShl_[v1 as usize] as u16 & ram_word!(game, nonempty_save_slots)) != 0
                 {
                     selection_unchanged = false;
                     break;
@@ -1593,7 +1578,7 @@ pub unsafe fn FileSelectMenu_24_FileClearConfirm(game: &mut Game) {
         update_ram_word!(game.eproj_id[15], |fresh52| (fresh52) ^ (1u16));
         QueueSfx1_Max6(0x37u16, game);
     } else {
-        if (ram_word!(game, joypad1_newkeys) as i32 & 0x8000i32) != 0i32 {
+        if (ram_word!(game, joypad1_newkeys) & 0x8000) != 0 {
             keep_confirming = false;
         } else if ram_word!(game, joypad1_newkeys) as i32
             & (kButton_Start as i32 | kButton_A as i32)
@@ -1767,7 +1752,7 @@ pub unsafe fn FileSelectMap(game: &mut Game) {
 pub unsafe fn FileSelectMap_22(game: &mut Game) {
     DrawAreaSelectMapLabels(game);
     HandleFadeOut(game);
-    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
         set_ram_word!(game.game_state = kGameState_2_GameOptionsMenu as u16);
         set_ram_word!(game.menu_index = 0u16);
     }
@@ -1795,13 +1780,12 @@ pub unsafe fn FileSelectMenu_1_LoadFileSelectMenuBG2(game: &mut Game) {
 }
 pub unsafe fn FileSelectMenu_2_InitMain(game: &mut Game) {
     let mut v0: u16 = 0;
-    if *(game.g_sram.offset(0x1fec) as *mut u16) as i32 & 0x8000i32 != 0
+    if *(game.g_sram.offset(0x1fec) as *mut u16) & 0x8000 != 0
         || *(game.g_sram.offset(0x1fec) as *mut u16) as i32 - 3i32 & 0x8000i32 == 0
         || {
             v0 = *(game.g_sram.offset(0x1fec) as *mut u16);
-            (*(game.g_sram.offset(0x1fee) as *mut u16) as i32
-                & *(game.g_sram.offset(0x1fec) as *mut u16) as i32)
-                != 0i32
+            (*(game.g_sram.offset(0x1fee) as *mut u16) & *(game.g_sram.offset(0x1fec) as *mut u16))
+                != 0
         }
     {
         v0 = 0u16;
@@ -1912,7 +1896,7 @@ pub unsafe fn FileSelectMenu_3_FadeInToMain(game: &mut Game) {
     DrawMenuSelectionMissile(game);
     DrawBorderAroundSamusData(game);
     HandleFadeIn(game);
-    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 15i32 {
+    if (*ram_ptr!(game; 0x51) & 0xf) == 15 {
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
@@ -2079,8 +2063,7 @@ pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
             if ram_word!(game, selected_save_slot) == 3u16 {
                 QueueSfx1_Max6(0x37u16, game);
                 update_ram_word!(game.menu_index, wrapping_add(1));
-                *(ram_ptr!(game, u16; 0x57)) =
-                    (*(ram_ptr!(game, u16; 0x57)) as i32 & 0xff0ci32 | 3i32) as u16;
+                *(ram_ptr!(game, u16; 0x57)) = (*(ram_ptr!(game, u16; 0x57)) & 0xff0c | 3);
             } else {
                 if ram_word!(game, selected_save_slot) == 4u16 {
                     QueueSfx1_Max6(0x37u16, game);
@@ -2303,7 +2286,7 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
         *(ram_ptr!(game, u16; 0x727) as *mut u8).offset(0) =
             ((ram_word!(game, menu_index)) as u8).wrapping_add(1u8);
         let ref mut fresh36 = *ram_ptr!(game; 0x69);
-        *fresh36 = (*fresh36 as i32 & !(2i32)) as u8;
+        *fresh36 = (*fresh36 & !(2));
         *ram_ptr!(game; 0x6c) = 0u8;
         *ram_ptr!(game; 0x6d) = 0u8;
         set_ram_word!(game.reg_BG2VOFS = 24u16);
@@ -2450,7 +2433,7 @@ pub unsafe fn FileSelectMap_6_AreaSelectMap(game: &mut Game) {
 }
 pub unsafe fn DecAndWraparoundTo5(a: u16) -> u16 {
     let result: u16 = (a).wrapping_sub(1u16);
-    if (result as i32 & 0x8000i32) != 0i32 {
+    if (result & 0x8000) != 0 {
         return 5u16;
     }
     result
@@ -2684,7 +2667,7 @@ pub unsafe fn SetupRoomSelectMapExpandingSquareTransHDMA(game: &mut Game) {
         .offset(k as i32 as isize) = 0u8;
 }
 pub unsafe fn AddExpandingSqTransLeftIndirHDMA(a: u16, k: u16, j: u16, game: &mut Game) {
-    if (a as i32 & 0x80i32) != 0i32 {
+    if (a & 0x80) != 0 {
         *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_0)
             .offset(k as i32 as isize) = ((a) as u8).wrapping_sub(127u8);
         *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0)
@@ -2701,7 +2684,7 @@ pub unsafe fn AddExpandingSqTransLeftIndirHDMA(a: u16, k: u16, j: u16, game: &mu
     };
 }
 pub unsafe fn AddExpandingSqTransRightIndirHDMA(a: u16, k: u16, j: u16, game: &mut Game) -> u16 {
-    if (a as i32 & 0x80i32) != 0i32 {
+    if (a & 0x80) != 0 {
         *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_0)
             .offset(k as i32 as isize) = ((a) as u8).wrapping_sub(127u8);
         *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1)).field_0)
@@ -2720,7 +2703,7 @@ pub unsafe fn AddExpandingSqTransRightIndirHDMA(a: u16, k: u16, j: u16, game: &m
     }
 }
 pub unsafe fn FileSelectMap_8_ExpandSquareTransToRoomSelectMap(game: &mut Game) {
-    if (HandleRoomSelectMapExpandingSquareTrans(game) as i32 & 0x8000i32) != 0i32 {
+    if (HandleRoomSelectMapExpandingSquareTrans(game) & 0x8000) != 0 {
         update_ram_word!(game.menu_index, wrapping_add(1));
         *ram_ptr!(game; 0x69) = 2u8;
         *ram_ptr!(game; 0x6c) = 0u8;
@@ -2783,7 +2766,7 @@ pub unsafe fn FileSelectMap_9_InitRoomSelectMap(game: &mut Game) {
     update_ram_word!(game.map_min_y_scroll, wrapping_add(24u16));
     set_ram_word!(game.reg_BG2VOFS = 24u16);
     let ref mut fresh31 = *(ram_ptr!(game, u16; 0x69));
-    *fresh31 = (*fresh31 as i32 & !(4i32)) as u16;
+    *fresh31 = (*fresh31 & !(4));
     update_ram_word!(game.menu_index, wrapping_add(1));
     set_ram_words! { game, 0u16;
         map_scrolling_direction, map_scrolling_speed_index,
@@ -2896,7 +2879,7 @@ pub unsafe fn FileSelectMap_10_RoomSelectMap(game: &mut Game) {
             }
             set_ram_word!(game.reg_BG1VOFS = v11);
         }
-    } else if (ram_word!(game, joypad1_newkeys) as i32 & 0x8000i32) != 0i32 {
+    } else if (ram_word!(game, joypad1_newkeys) & 0x8000) != 0 {
         update_ram_word!(game.menu_index, wrapping_add(5u16));
         let mut v0: u16 = 0u16;
         while ram_word!(game, area_index)
@@ -2964,7 +2947,7 @@ pub unsafe fn FileSelectMap_13(game: &mut Game) {
     DrawFileSelectMapIcons(game);
     DisplayMapElevatorDestinations(game);
     HandleFadeOut(game);
-    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
         update_ram_word!(game.menu_index, wrapping_add(1));
         (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).x_pos = 32u16;
     }
@@ -3142,8 +3125,7 @@ pub unsafe fn FileSelectMap_21_MoveExpandingSquare(game: &mut Game) {
     );
     SetupRoomSelectMapExpandingSquareTransHDMA(game);
     DrawAreaSelectMapLabels(game);
-    if (update_ram_word!(game.expand_sq_timer, wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32
-    {
+    if (update_ram_word!(game.expand_sq_timer, wrapping_sub(1), reread) & 0x8000) != 0 {
         update_ram_word!(game.menu_index, wrapping_sub(15u16));
         *ram_ptr!(game; 0x69) = 17u8;
         *ram_ptr!(game; 0x6c) = 0u8;

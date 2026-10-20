@@ -32,10 +32,7 @@ pub unsafe fn EnableAnimtiles(game: &mut Game) {
     update_ram_word!(game.animtiles_enable_flag, |fresh9| (fresh9) | (0x8000u16));
 }
 pub unsafe fn DisableAnimtiles(game: &mut Game) {
-    update_ram_word!(
-        game.animtiles_enable_flag,
-        |fresh8| (fresh8 as i32 & !(0x8000i32)) as u16
-    );
+    update_ram_word!(game.animtiles_enable_flag, |fresh8| (fresh8 & !(0x8000)));
 }
 pub unsafe fn ClearAnimtiles(game: &mut Game) {
     let mut i: i32 = 10i32;
@@ -49,7 +46,7 @@ pub unsafe fn SpawnAnimtiles(j: u16, game: &mut Game) {
     let mut v1: u16 = 10u16;
     while ram_word!(game, animtiles_ids[(v1 as i32 >> 1i32)]) != 0 {
         v1 = (v1).wrapping_sub(2u16);
-        if (v1 as i32 & 0x8000i32) != 0i32 {
+        if (v1 & 0x8000) != 0 {
             return;
         }
     }
@@ -64,7 +61,7 @@ pub unsafe fn SpawnAnimtiles(j: u16, game: &mut Game) {
     set_ram_word!(game.animtiles_instr_timers[v2] = 1u16);
 }
 pub unsafe fn AnimtilesHandler(game: &mut Game) {
-    if (ram_word!(game, animtiles_enable_flag) as i32 & 0x8000i32) != 0i32 {
+    if (ram_word!(game, animtiles_enable_flag) & 0x8000) != 0 {
         let mut i: i32 = 10i32;
         while i >= 0i32 {
             set_ram_word!(game.animtiles_object_index = i as u16);
@@ -110,7 +107,7 @@ pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {
         loop {
             let v4: *const u16 = RomPtr_87(v3, game) as *const u16;
             v5 = *v4;
-            if (*v4 as i32 & 0x8000i32) == 0i32 {
+            if (*v4 & 0x8000) == 0 {
                 break;
             }
             set_ram_word!(game.animtiles_instruction = *v4);
@@ -190,7 +187,7 @@ pub unsafe fn AnimtilesInstr_QueueSfx3(k: u16, j: u16, game: &mut Game) -> u16 {
 pub unsafe fn AnimtilesInstr_GotoIfBossBitSet(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: *const u8 = RomPtr_87(j, game);
     let v3: u16 = (j).wrapping_add(1u16);
-    if CheckBossBitForCurArea(*(v2 as *mut u16) as u8 as u16, game) as i32 & 1i32 != 0 {
+    if CheckBossBitForCurArea(*(v2 as *mut u16) as u8 as u16, game) & 1 != 0 {
         AnimtilesInstr_Goto(k, v3, game)
     } else {
         (v3).wrapping_add(2u16)
@@ -204,7 +201,7 @@ pub unsafe fn AnimtilesInstr_SetBossBit(k: u16, j: u16, game: &mut Game) -> u16 
 pub unsafe fn AnimtilesInstr_GotoIfEventHappened(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: *const u16 = RomPtr_87(j, game) as *const u16;
     let v3: u16 = (j).wrapping_add(2u16);
-    if CheckEventHappened(*v2, game) as i32 & 1i32 != 0 {
+    if CheckEventHappened(*v2, game) & 1 != 0 {
         AnimtilesInstr_Goto(k, v3, game)
     } else {
         (v3).wrapping_add(2u16)
@@ -226,7 +223,7 @@ pub unsafe fn AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet(
     j: u16,
     game: &mut Game,
 ) -> u16 {
-    if CheckBossBitForCurArea(1u16, game) as i32 & 1i32 == 0 {
+    if CheckBossBitForCurArea(1u16, game) & 1 == 0 {
         set_ram_word!(game.animtiles_instr_timers[(k as i32 >> 1i32)] = 1u16);
         return 0u16;
     }
@@ -235,7 +232,7 @@ pub unsafe fn AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet(
 pub unsafe fn AnimtilesInstr_GotoIfBossBitSetInArea(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: *const u8 = RomPtr_87(j, game);
     let v3: u16 = (j).wrapping_add(2u16);
-    if (*v2 as i32 & *ram_ptr!(game; 0xd828, *v2.offset(1) as isize) as i32) != 0i32 {
+    if (*v2 & *ram_ptr!(game; 0xd828, *v2.offset(1) as isize)) != 0 {
         AnimtilesInstr_Goto(k, v3, game)
     } else {
         (v3).wrapping_add(2u16)
@@ -252,7 +249,7 @@ pub unsafe fn AnimtilesInstr_SpawnTourianStatueSoul(k: u16, j: u16, game: &mut G
     (j).wrapping_add(2u16)
 }
 pub unsafe fn AnimtilesInstr_GotoIfTourianStatueBusy(k: u16, j: u16, game: &mut Game) -> u16 {
-    if (ram_word!(game, tourian_entrance_statue_animstate) as i32 & 0x8000i32) == 0i32 {
+    if (ram_word!(game, tourian_entrance_statue_animstate) & 0x8000) == 0 {
         (j).wrapping_add(2u16)
     } else {
         AnimtilesInstr_Goto(k, j, game)
@@ -264,10 +261,8 @@ pub unsafe fn AnimtilesInstr_TourianStatueSetState(k: u16, j: u16, game: &mut Ga
     (j).wrapping_add(2u16)
 }
 pub unsafe fn AnimtilesInstr_TourianStatueClearState(k: u16, j: u16, game: &mut Game) -> u16 {
-    update_ram_word!(
-        game.tourian_entrance_statue_animstate,
-        |fresh4| (fresh4 as i32 & !(*(RomPtr_87(j, game) as *mut u16) as i32)) as u16
-    );
+    update_ram_word!(game.tourian_entrance_statue_animstate, |fresh4| (fresh4
+        & !(*(RomPtr_87(j, game) as *mut u16))));
     (j).wrapping_add(2u16)
 }
 pub unsafe fn AnimtilesInstr_Clear3PaletteColors(k: u16, j: u16, game: &mut Game) -> u16 {

@@ -233,7 +233,7 @@ pub unsafe fn LayerBlendFunc_1C(j: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn LayerBlendFunc_18(mut j: u16, game: &mut Game) -> u16 {
     j = 2u16;
-    if (*ram_ptr!(game; 0x84) as i32 & 0x30i32) == 0x30i32 {
+    if (*ram_ptr!(game; 0x84) & 0x30) == 0x30 {
         *ram_ptr!(game; 0x71) = 36u8;
         *ram_ptr!(game; 0x6b) = 19u8;
         *ram_ptr!(game; 0x69) = 4u8;
@@ -250,7 +250,7 @@ pub unsafe fn LayerBlendFunc_26(j: u16, game: &mut Game) -> u16 {
 pub unsafe fn LayerBlendFunc_28(j: u16, game: &mut Game) -> u16 {
     *ram_ptr!(game; 0x6e) = 0u8;
     *ram_ptr!(game; 0x71) = -77i32 as u8;
-    if (ram_word!(game, fx_layer_blending_config_c) as i32 & 0x8000i32) == 0i32 {
+    if (ram_word!(game, fx_layer_blending_config_c) & 0x8000) == 0 {
         *ram_ptr!(game; 0x74, 0) = 37u8;
         *ram_ptr!(game; 0x74, 1) = 64u8;
         *ram_ptr!(game; 0x74, 2) = 0x80u8;
@@ -260,7 +260,7 @@ pub unsafe fn LayerBlendFunc_28(j: u16, game: &mut Game) -> u16 {
 pub unsafe fn LayerBlendFunc_2A(j: u16, game: &mut Game) -> u16 {
     *ram_ptr!(game; 0x6e) = 0u8;
     *ram_ptr!(game; 0x71) = -77i32 as u8;
-    if (ram_word!(game, fx_layer_blending_config_c) as i32 & 0x8000i32) == 0i32 {
+    if (ram_word!(game, fx_layer_blending_config_c) & 0x8000) == 0 {
         *ram_ptr!(game; 0x74, 0) = 38u8;
         *ram_ptr!(game; 0x74, 1) = 66u8;
         *ram_ptr!(game; 0x74, 2) = 0x80u8;
@@ -305,7 +305,7 @@ pub unsafe fn HandleLayerBlendingXrayCanShowBlocks(game: &mut Game) {
     *ram_ptr!(game; 0x6c) = 3u8;
     *ram_ptr!(game; 0x6d) = 4u8;
     *ram_ptr!(game; 0x6e) = 34u8;
-    *ram_ptr!(game; 0x71) = (*ram_ptr!(game; 0x71) as i32 & 0x80i32 | 0x73i32) as u8;
+    *ram_ptr!(game; 0x71) = (*ram_ptr!(game; 0x71) & 0x80 | 0x73);
 }
 pub unsafe fn HandleLayerBlendingXrayCantShowBlocks(game: &mut Game) {
     *ram_ptr!(game; 0x60) = 0u8;
@@ -316,7 +316,7 @@ pub unsafe fn HandleLayerBlendingXrayCantShowBlocks(game: &mut Game) {
     *ram_ptr!(game; 0x6c) = 3u8;
     *ram_ptr!(game; 0x6d) = 4u8;
     *ram_ptr!(game; 0x6e) = 34u8;
-    *ram_ptr!(game; 0x71) = (*ram_ptr!(game; 0x71) as i32 & 0x80i32 | 0x61i32) as u8;
+    *ram_ptr!(game; 0x71) = (*ram_ptr!(game; 0x71) & 0x80 | 0x61);
     if ram_word!(game, room_ptr) as i32 == addr_kRoom_cefb as i32 {
         *ram_ptr!(game; 0x69) = 17u8;
     }
@@ -382,12 +382,12 @@ pub unsafe fn LayerBlendingHandler(game: &mut Game) {
             v0, game,
         );
     }
-    if (ram_word!(game, fx_layer_blending_config_c) as i32 & 0x8000i32) == 0i32 {
-        if (ram_word!(game, fx_layer_blending_config_c) as i32 & 0x4000i32) != 0i32 {
+    if (ram_word!(game, fx_layer_blending_config_c) & 0x8000) == 0 {
+        if (ram_word!(game, fx_layer_blending_config_c) & 0x4000) != 0 {
             HandleLayerBlendingXrayCanShowBlocks(game);
-        } else if (ram_word!(game, fx_layer_blending_config_c) as i32 & 0x2000i32) != 0i32 {
+        } else if (ram_word!(game, fx_layer_blending_config_c) & 0x2000) != 0 {
             HandleLayerBlendingXrayCantShowBlocks(game);
-        } else if (ram_word!(game, fx_layer_blending_config_c) as i32 & 0x1000i32) != 0i32 {
+        } else if (ram_word!(game, fx_layer_blending_config_c) & 0x1000) != 0 {
             HandleLayerBlendingXrayFirefleaRoom(game);
         }
     } else {
@@ -411,10 +411,8 @@ pub unsafe fn EnableHdmaObjects(game: &mut Game) {
         | (0x8000u16));
 }
 pub unsafe fn DisableHdmaObjects(game: &mut Game) {
-    update_ram_word!(
-        game.hdma_objects_enable_flag,
-        |fresh30| (fresh30 as i32 & !(0x8000i32)) as u16
-    );
+    update_ram_word!(game.hdma_objects_enable_flag, |fresh30| (fresh30
+        & !(0x8000)));
 }
 pub unsafe fn WaitUntilEndOfVblankAndClearHdma(game: &mut Game) {
     crate::rtl::register_writes! { game;
@@ -558,7 +556,7 @@ pub unsafe fn SpawnHdmaObjectToSlot0xA(db: u8, p: *const c_void, game: &mut Game
 pub unsafe fn HdmaObjectHandler(game: &mut Game) {
     HandleMusicQueue(game);
     if ram_word!(game, time_is_frozen_flag) == 0
-        && (ram_word!(game, power_bomb_explosion_status) as i32 & 0x4000i32) != 0i32
+        && (ram_word!(game, power_bomb_explosion_status) & 0x4000) != 0
     {
         set_ram_word!(game.power_bomb_explosion_status = 0x8000u16);
         static unk_8884D5: SpawnHdmaObject_Args =
@@ -569,7 +567,7 @@ pub unsafe fn HdmaObjectHandler(game: &mut Game) {
         SpawnHdmaObject(0x88u8, &raw const unk_8884DD as *const c_void, game);
     }
     set_ram_word!(game.fx_layer_blending_config_c = ram_word!(game, fx_layer_blending_config_a));
-    if (ram_word!(game, hdma_objects_enable_flag) as i32 & 0x8000i32) != 0i32 {
+    if (ram_word!(game, hdma_objects_enable_flag) & 0x8000) != 0 {
         *ram_ptr!(game; 0x85) = 0u8;
         let mut i: i32 = 0i32;
         loop {
@@ -609,7 +607,7 @@ pub unsafe fn HdmaobjInstructionHandler(k: u8, game: &mut Game) {
         );
         let mut p: *const u8 =
             base.offset(ram_word!(game, hdma_object_instruction_list_pointers[kh]) as i32 as isize);
-        while *(p as *mut u16) as i32 & 0x8000i32 != 0 {
+        while *(p as *mut u16) & 0x8000 != 0 {
             p = CallHdmaobjInstr(
                 ((*(p as *mut u16)) as u32) | (0x880000u32),
                 k as u16,
@@ -764,11 +762,11 @@ pub unsafe fn HdmaobjInstr_Sleep(k: u16, hdp: *const u8, game: &mut Game) -> *co
     null::<u8>()
 }
 pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> u8 {
-    if (ram_word!(game, fx_target_y_pos) as i32 & 0x8000i32) != 0i32 {
+    if (ram_word!(game, fx_target_y_pos) & 0x8000) != 0 {
         return 1u8;
     }
     let r24_r22: u32 = ((ram_word!(game, fx_y_vel) as i16 as i32) << 8i32) as u32;
-    if (ram_word!(game, fx_y_vel) as i32 & 0x8000i32) == 0i32 {
+    if (ram_word!(game, fx_y_vel) & 0x8000) == 0 {
         let mut v2: u16 = (r24_r22.wrapping_add(
             (ram_word!(game, fx_base_y_pos) as u32) << 16i32
                 | ram_word!(game, fx_base_y_subpos) as u32,
@@ -777,7 +775,7 @@ pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> u8 {
             game.fx_base_y_subpos,
             |fresh13| (fresh13 as u32).wrapping_add(r24_r22) as u16
         );
-        if (v2 as i32 & 0x8000i32) != 0i32 {
+        if (v2 & 0x8000) != 0 {
             v2 = -1i32 as u16;
         }
         set_ram_word!(game.fx_base_y_pos = v2);
@@ -797,7 +795,7 @@ pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> u8 {
             game.fx_base_y_subpos,
             |fresh14| (fresh14 as u32).wrapping_add(r24_r22) as u16
         );
-        if (v0 as i32 & 0x8000i32) != 0i32 {
+        if (v0 & 0x8000) != 0 {
             v0 = 0u16;
         }
         set_ram_word!(game.fx_base_y_pos = v0);
@@ -809,9 +807,7 @@ pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc0_NoBeam(k: u16, game: &mut Game) {
-    if (ram_word!(game, button_config_run_b) as i32 & ram_word!(game, joypad1_lastkeys) as i32)
-        != 0i32
-    {
+    if (ram_word!(game, button_config_run_b) & ram_word!(game, joypad1_lastkeys)) != 0 {
         CalculateXrayHdmaTable(game);
         update_ram_word!(game.demo_input_pre_instr, wrapping_add(1));
     } else {
@@ -819,9 +815,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc0_NoBeam(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc1_BeamWidening(k: u16, game: &mut Game) {
-    if (ram_word!(game, button_config_run_b) as i32 & ram_word!(game, joypad1_lastkeys) as i32)
-        != 0i32
-    {
+    if (ram_word!(game, button_config_run_b) & ram_word!(game, joypad1_lastkeys)) != 0 {
         AddToHiLo(
             ram_ptr!(game, u16; 0xa7c),
             ram_ptr!(game, u16; 0xa7e),
@@ -844,9 +838,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc1_BeamWidening(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc2_FullBeam(k: u16, game: &mut Game) {
-    if (ram_word!(game, button_config_run_b) as i32 & ram_word!(game, joypad1_lastkeys) as i32)
-        != 0i32
-    {
+    if (ram_word!(game, button_config_run_b) & ram_word!(game, joypad1_lastkeys)) != 0 {
         HandleMovingXrayUpDown(game);
         CalculateXrayHdmaTable(game);
     } else {
@@ -854,13 +846,9 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc2_FullBeam(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn HandleMovingXrayUpDown(game: &mut Game) {
-    if (ram_word!(game, button_config_up) as i32 & ram_word!(game, joypad1_lastkeys) as i32) != 0i32
-    {
+    if (ram_word!(game, button_config_up) & ram_word!(game, joypad1_lastkeys)) != 0 {
         MoveXrayUp(game);
-    } else if (ram_word!(game, button_config_down) as i32
-        & ram_word!(game, joypad1_lastkeys) as i32)
-        != 0i32
-    {
+    } else if (ram_word!(game, button_config_down) & ram_word!(game, joypad1_lastkeys)) != 0 {
         MoveXrayDown(game);
     }
 }
@@ -1151,7 +1139,7 @@ pub unsafe fn Hdmaobj_ExplodeWhite(game: &mut Game) {
 pub unsafe fn Hdmaobj_CleanUpTryCrystalFlash(v0: u16, game: &mut Game) {
     if ram_word!(game, samus_x_pos) != ram_word!(game, power_bomb_explosion_x_pos)
         || ram_word!(game, samus_y_pos) != ram_word!(game, power_bomb_explosion_y_pos)
-        || Hdmaobj_CrystalFlash(game) as i32 & 1i32 != 0
+        || Hdmaobj_CrystalFlash(game) & 1 != 0
     {
         set_ram_word!(game.power_bomb_flag = 0u16);
     }
@@ -1168,12 +1156,9 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_SetWindowConf(k: u16, game: &mut 
         | (0x8000u16));
 }
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(k: u16, game: &mut Game) {
-    if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) != 0i32 {
+    if (ram_word!(game, power_bomb_explosion_status) & 0x8000) != 0 {
         let v1: i32 = k as u8 as i32 >> 1i32;
-        if (update_ram_word!(game.hdma_object_timers[v1], wrapping_sub(1), reread) as i32
-            & 0x8000i32)
-            != 0i32
-        {
+        if (update_ram_word!(game.hdma_object_timers[v1], wrapping_sub(1), reread) & 0x8000) != 0 {
             let ref mut fresh126 =
                 *(ram_ptr!(game, u16; 0x1938) as *mut u8).offset(k as u8 as i32 as isize);
             let fresh127 = *fresh126;
@@ -1185,15 +1170,15 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(k: u16, game: &m
                     wrapping_add(2u16)
                 );
             } else {
-                if (*ram_ptr!(game; 0x74, 0) as i32 & 0x1fi32) != 0i32 {
+                if (*ram_ptr!(game; 0x74, 0) & 0x1f) != 0 {
                     *ram_ptr!(game; 0x74, 0) =
                         ((*ram_ptr!(game; 0x74, 0) as i32 & 0x1fi32) - 1i32 | 0x20i32) as u8;
                 }
-                if (*ram_ptr!(game; 0x74, 1) as i32 & 0x1fi32) != 0i32 {
+                if (*ram_ptr!(game; 0x74, 1) & 0x1f) != 0 {
                     *ram_ptr!(game; 0x74, 1) =
                         ((*ram_ptr!(game; 0x74, 1) as i32 & 0x1fi32) - 1i32 | 0x40i32) as u8;
                 }
-                if (*ram_ptr!(game; 0x74, 2) as i32 & 0x1fi32) != 0i32 {
+                if (*ram_ptr!(game; 0x74, 2) & 0x1f) != 0 {
                     *ram_ptr!(game; 0x74, 2) =
                         ((*ram_ptr!(game; 0x74, 2) as i32 & 0x1fi32) - 1i32 | 0x80i32) as u8;
                 }
@@ -1382,7 +1367,7 @@ unsafe fn calculate_explosion_hdma_scaled(
             }
             ExplosionWindowScale::CrystalFlash => j = j.wrapping_add(1),
         }
-        if (j as i32 & 0x80i32) != 0i32 {
+        if (j & 0x80) != 0 {
             break;
         }
     }
@@ -1391,7 +1376,7 @@ unsafe fn calculate_explosion_hdma_scaled(
 }
 
 unsafe fn calculate_explosion_hdma_table_pointers(k: u16, pre_explosion: bool, game: &mut Game) {
-    if pre_explosion && (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) == 0i32 {
+    if pre_explosion && (ram_word!(game, power_bomb_explosion_status) & 0x8000) == 0 {
         return;
     }
     let mut v1: u16 = 0;
@@ -1421,7 +1406,7 @@ unsafe fn calculate_explosion_hdma_table_pointers(k: u16, pre_explosion: bool, g
     } else {
         ram_word!(game, power_bomb_explosion_radius)
     };
-    if (radius as i32 & 0xff00i32) == 0i32 {
+    if (radius & 0xff00) == 0 {
         set_ram_word!(game.power_bomb_explosion_y_pos_rsub_0x1ff = 0u16);
     }
     set_ram_word!(
@@ -1445,7 +1430,7 @@ unsafe fn set_explosion_fixed_color(table: u32, pos: i32, game: &mut Game) {
 }
 
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(k: u16, game: &mut Game) {
-    if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) == 0i32 {
+    if (ram_word!(game, power_bomb_explosion_status) & 0x8000) == 0 {
         return;
     }
     calculate_explosion_hdma_table_pointers(k, false, game);
@@ -1505,7 +1490,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(k: u16, game: &mu
     };
 }
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(k: u16, game: &mut Game) {
-    if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) == 0i32 {
+    if (ram_word!(game, power_bomb_explosion_status) & 0x8000) == 0 {
         return;
     }
     calculate_explosion_hdma_table_pointers(k, false, game);
@@ -1550,7 +1535,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(k: u16, game: &mut
 }
 
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k: u16, game: &mut Game) {
-    if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) == 0i32 {
+    if (ram_word!(game, power_bomb_explosion_status) & 0x8000) == 0 {
         return;
     }
     calculate_explosion_hdma_table_pointers(k, true, game);
@@ -1577,7 +1562,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k: u16, game: &
             game
         );
         i = i.wrapping_sub(1);
-        if ((i as i32 & 0x80i32) != 0i32) {
+        if ((i & 0x80) != 0) {
             break;
         }
     }
@@ -1607,7 +1592,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k: u16, game: &
     };
 }
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(k: u16, game: &mut Game) {
-    if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) == 0i32 {
+    if (ram_word!(game, power_bomb_explosion_status) & 0x8000) == 0 {
         return;
     }
     calculate_explosion_hdma_table_pointers(k, true, game);
@@ -1686,27 +1671,22 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_CustomLayerBlend(k: u16, game: &mut G
     *ram_ptr!(game; 0x6d) = 4u8;
 }
 pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(k: u16, game: &mut Game) {
-    if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) != 0i32 {
+    if (ram_word!(game, power_bomb_explosion_status) & 0x8000) != 0 {
         let v1: i32 = k as i32 >> 1i32;
-        if (update_ram_word!(game.hdma_object_timers[v1], wrapping_sub(1), reread) as i32
-            & 0x8000i32)
-            != 0i32
-        {
-            if ((*ram_ptr!(game; 0x74, 2) as i32
-                | *ram_ptr!(game; 0x74, 1) as i32
-                | *ram_ptr!(game; 0x74, 0) as i32)
-                & 0x1fi32)
-                != 0i32
+        if (update_ram_word!(game.hdma_object_timers[v1], wrapping_sub(1), reread) & 0x8000) != 0 {
+            if ((*ram_ptr!(game; 0x74, 2) | *ram_ptr!(game; 0x74, 1) | *ram_ptr!(game; 0x74, 0))
+                & 0x1f)
+                != 0
             {
-                if (*ram_ptr!(game; 0x74, 0) as i32 & 0x1fi32) != 0i32 {
+                if (*ram_ptr!(game; 0x74, 0) & 0x1f) != 0 {
                     *ram_ptr!(game; 0x74, 0) =
                         ((*ram_ptr!(game; 0x74, 0) as i32 & 0x1fi32) - 1i32 | 0x20i32) as u8;
                 }
-                if (*ram_ptr!(game; 0x74, 1) as i32 & 0x1fi32) != 0i32 {
+                if (*ram_ptr!(game; 0x74, 1) & 0x1f) != 0 {
                     *ram_ptr!(game; 0x74, 1) =
                         ((*ram_ptr!(game; 0x74, 1) as i32 & 0x1fi32) - 1i32 | 0x40i32) as u8;
                 }
-                if (*ram_ptr!(game; 0x74, 2) as i32 & 0x1fi32) != 0i32 {
+                if (*ram_ptr!(game; 0x74, 2) & 0x1f) != 0 {
                     *ram_ptr!(game; 0x74, 2) =
                         ((*ram_ptr!(game; 0x74, 2) as i32 & 0x1fi32) - 1i32 | 0x80i32) as u8;
                 }
@@ -1724,7 +1704,7 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(k: u16, game: &mut G
 }
 
 pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(k: u16, game: &mut Game) {
-    if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) == 0i32 {
+    if (ram_word!(game, power_bomb_explosion_status) & 0x8000) == 0 {
         return;
     }
     calculate_explosion_hdma_table_pointers(k, false, game);
@@ -1888,7 +1868,7 @@ pub unsafe fn HdmaobjInstr_SetFlagB(k: u16, hdp: *const u8, game: &mut Game) -> 
 static g_word_88C46E: [i16; 16] = [0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0];
 pub unsafe fn HdmaobjPreInstr_BG3Xscroll(k: u16, game: &mut Game) {
     if ram_word!(game, layer1_y_pos) as i32 - 1024i32 & 0x8000i32 != 0 {
-        if (*ram_ptr!(game; 0x5b5) as i32 & 1i32) == 0i32 {
+        if (*ram_ptr!(game; 0x5b5) & 1) == 0 {
             set_ram_word!(
                 game.g_word_7E0596 =
                     (ram_word!(game, g_word_7E0596) as i32 + 2i32 & 0x1ei32) as u16
@@ -2210,7 +2190,7 @@ pub unsafe fn HdmaobjPreInstr_FirefleaBG3XScroll(k: u16, game: &mut Game) {
     let mut v1: u16 = 0;
     set_ram_word!(
         game.fx_layer_blending_config_c =
-            (ram_word!(game, fx_layer_blending_config_c) as i32 & 0xff00i32 | 0xci32) as u16
+            (ram_word!(game, fx_layer_blending_config_c) & 0xff00 | 0xc)
     );
     if ram_word!(game, time_is_frozen_flag) == 0 {
         if update_ram_word!(game.fireflea_flashing_timer, wrapping_sub(1), reread) == 0 {
@@ -2280,9 +2260,8 @@ static g_word_88B256: [u16; 17] = [
     0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
 ];
 pub unsafe fn HandleEarthquakeSoundEffect(game: &mut Game) {
-    if (ram_word!(game, earthquake_sfx_timer) as i32 & 0x8000i32) == 0i32 && {
-        (update_ram_word!(game.earthquake_sfx_timer, wrapping_sub(1), reread) as i32 & 0x8000i32)
-            != 0i32
+    if (ram_word!(game, earthquake_sfx_timer) & 0x8000) == 0 && {
+        (update_ram_word!(game.earthquake_sfx_timer, wrapping_sub(1), reread) & 0x8000) != 0
     } {
         let mut v0: u16 = ram_word!(game, earthquake_sfx_index);
         let mut v1: i16 =
@@ -2332,27 +2311,25 @@ pub unsafe fn FxHandleTide(game: &mut Game) {
         set_ram_words! { game, 0u16; fx_y_suboffset, fx_y_offset }
         let v0: i32 = *(ram_ptr!(game, u16; 0x1974) as *mut u8).offset(1isize) as i32;
         let v1: u16 = (8u16).wrapping_mul((kSinCosTable8bit_Sext[v0 as usize]) as u16);
-        if (kSinCosTable8bit_Sext[v0 as usize] as i32 & 0x1000i32) != 0i32 {
+        if (kSinCosTable8bit_Sext[v0 as usize] as u16 & 0x1000) != 0 {
             update_ram_word!(game.fx_y_offset, wrapping_sub(1));
         }
         *((ram_ptr!(game, u16; 0x1970) as *mut u8).offset(1) as *mut u16) = v1;
-        if (kSinCosTable8bit_Sext[v0 as usize] as i32 & 0x8000i32) == 0i32 {
+        if (kSinCosTable8bit_Sext[v0 as usize] as u16 & 0x8000) == 0 {
             v2 = (ram_word!(game, tide_phase)).wrapping_add(288u16);
         } else {
             v2 = (ram_word!(game, tide_phase)).wrapping_add(192u16);
         }
         set_ram_word!(game.tide_phase = v2);
-    } else if (*((ram_ptr!(game, u16; 0x197c) as *mut u8).offset(1) as *mut u16) as i32 & 0x4000i32)
-        != 0i32
-    {
+    } else if (*((ram_ptr!(game, u16; 0x197c) as *mut u8).offset(1) as *mut u16) & 0x4000) != 0 {
         set_ram_words! { game, 0u16; fx_y_suboffset, fx_y_offset }
         let v3: i32 = *(ram_ptr!(game, u16; 0x1974) as *mut u8).offset(1isize) as i32;
         let v4: u16 = (32u16).wrapping_mul((kSinCosTable8bit_Sext[v3 as usize]) as u16);
-        if (kSinCosTable8bit_Sext[v3 as usize] as i32 & 0x400i32) != 0i32 {
+        if (kSinCosTable8bit_Sext[v3 as usize] as u16 & 0x400) != 0 {
             update_ram_word!(game.fx_y_offset, wrapping_sub(1));
         }
         *((ram_ptr!(game, u16; 0x1970) as *mut u8).offset(1) as *mut u16) = v4;
-        if (kSinCosTable8bit_Sext[v3 as usize] as i32 & 0x8000i32) == 0i32 {
+        if (kSinCosTable8bit_Sext[v3 as usize] as u16 & 0x8000) == 0 {
             v5 = (ram_word!(game, tide_phase)).wrapping_add(224u16);
         } else {
             v5 = (ram_word!(game, tide_phase)).wrapping_add(128u16);
@@ -2362,7 +2339,7 @@ pub unsafe fn FxHandleTide(game: &mut Game) {
 }
 pub unsafe fn FxRisingFunction_LavaAcid(game: &mut Game) {
     if ram_word!(game, fx_y_vel) != 0 {
-        if (ram_word!(game, fx_y_vel) as i32 & 0x8000i32) == 0i32 {
+        if (ram_word!(game, fx_y_vel) & 0x8000) == 0 {
             if ram_word!(game, fx_target_y_pos) < ram_word!(game, fx_base_y_pos)
                 || ram_word!(game, fx_target_y_pos) == ram_word!(game, fx_base_y_pos)
             {
@@ -2388,7 +2365,7 @@ pub unsafe fn FxRisingFunction_LavaAcid_Raising(game: &mut Game) {
     HandleEarthquakeSoundEffect(game);
     set_ram_word!(game.earthquake_type = 21u16);
     update_ram_word!(game.earthquake_timer, |fresh42| (fresh42) | (0x20u16));
-    if RaiseOrLowerFx(game) as i32 & 1i32 != 0 {
+    if RaiseOrLowerFx(game) & 1 != 0 {
         set_ram_word!(game.fx_y_vel = 0u16);
         set_ram_word!(game.fx_rising_function_bank_88 = ((0x88b343i32) as u16));
     }
@@ -2456,9 +2433,7 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(k: u16, game: &mut Game) {
             v4 = 0i16;
         }
         *(ram_ptr!(game, u16; 0x9c00, 2)) = v4 as u16;
-        if ram_word!(game, fx_type) == 2u16
-            && (ram_word!(game, lava_acid_y_pos) as i32 & 0x8000i32) == 0i32
-        {
+        if ram_word!(game, fx_type) == 2u16 && (ram_word!(game, lava_acid_y_pos) & 0x8000) == 0 {
             let v5: i32 = ram_word!(game, hdma_object_index) as u8 as i32 >> 1i32;
             let ref mut fresh101 = *(ram_ptr!(game, u16; 0x192c)).offset(v5 as isize);
             let fresh102 = *fresh101;
@@ -2473,7 +2448,7 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(k: u16, game: &mut Game) {
             }
         }
         set_ram_word!(game.random_number = u16::swap_bytes(ram_word!(game, random_number)));
-        if (ram_word!(game, lava_acid_y_pos) as i32 & 0x8000i32) == 0i32 {
+        if (ram_word!(game, lava_acid_y_pos) & 0x8000) == 0 {
             v8 = (ram_word!(game, lava_acid_y_pos) as i32 - ram_word!(game, layer1_y_pos) as i32
                 + 256i32) as i16;
             if v8 < 0i16 {
@@ -2502,10 +2477,8 @@ pub unsafe fn HdmaobjInstr_SetFlagB_Copy(k: u16, hdp: *const u8, game: &mut Game
 }
 pub unsafe fn HdmaobjPreInstr_LavaAcidBG2YScroll(k: u16, game: &mut Game) {
     set_ram_word!(game.g_word_7E9C44 = ram_word!(game, reg_BG2VOFS));
-    if ram_word!(game, time_is_frozen_flag) == 0
-        && (ram_word!(game, fx_liquid_options) as i32 & 6i32) != 0i32
-    {
-        if (ram_word!(game, fx_liquid_options) as i32 & 2i32) != 0i32 {
+    if ram_word!(game, time_is_frozen_flag) == 0 && (ram_word!(game, fx_liquid_options) & 6) != 0 {
+        if (ram_word!(game, fx_liquid_options) & 2) != 0 {
             Handle_LavaAcidBG2YScroll_Func3(k, game);
         } else {
             Handle_LavaAcidBG2YScroll_Func2(k, game);
@@ -2529,7 +2502,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func1(v0: u16, game: &mut Game) {
     loop {
         set_ram_word!(game.g_word_7E9C46[(v1 as i32 >> 1i32)] = v2);
         v1 = (v1).wrapping_sub(2u8);
-        if ((v1 as i32 & 0x80i32) != 0i32) {
+        if ((v1 & 0x80) != 0) {
             break;
         }
     }
@@ -2607,14 +2580,14 @@ pub unsafe fn FxTypeFunc_6_Water(game: &mut Game) {
     set_ram_word!(game.fx_rising_function_bank_88 = ((0x88c428i32) as u16));
     set_ram_word!(game.fx_y_pos = ram_word!(game, fx_base_y_pos));
     SpawnHdmaObject(0x88u8, &raw const unk_88C40F as *const c_void, game);
-    if (ram_word!(game, fx_liquid_options) as i32 & 2i32) != 0i32 {
+    if (ram_word!(game, fx_liquid_options) & 2) != 0 {
         SpawnHdmaObject(0x88u8, &raw const unk_88C41F as *const c_void, game);
     }
     SpawnBG3ScrollHdmaObject(game);
 }
 pub unsafe fn FxRisingFunction_C428_WaterNormal(game: &mut Game) {
     if ram_word!(game, fx_y_vel) != 0 {
-        if (ram_word!(game, fx_y_vel) as i32 & 0x8000i32) == 0i32 {
+        if (ram_word!(game, fx_y_vel) & 0x8000) == 0 {
             if ram_word!(game, fx_target_y_pos) < ram_word!(game, fx_base_y_pos)
                 || ram_word!(game, fx_target_y_pos) == ram_word!(game, fx_base_y_pos)
             {
@@ -2634,7 +2607,7 @@ pub unsafe fn FxRisingFunction_WaterWaitToRise(game: &mut Game) {
     }
 }
 pub unsafe fn FxRisingFunction_WaterRising(game: &mut Game) {
-    if RaiseOrLowerFx(game) as i32 & 1i32 != 0 {
+    if RaiseOrLowerFx(game) & 1 != 0 {
         set_ram_word!(game.fx_rising_function_bank_88 = ((0x88c428i32) as u16));
         set_ram_word!(game.fx_y_vel = 0u16);
     }
@@ -2676,7 +2649,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(k: u16, game: &mut Game) {
     if (ram_word!(game, fx_y_pos) as i16) < 0i16 {
         set_ram_word!(game.bg3_ypos = 0u16);
     } else if v3 <= 0i16 {
-        set_ram_word!(game.bg3_ypos = ((v3 as i32 ^ 0x1fi32) & 0x1fi32 | 0x100i32) as u16);
+        set_ram_word!(game.bg3_ypos = ((v3 as u16 ^ 0x1f) & 0x1f | 0x100));
     } else if (v3 as u16) < 0x100u16 {
         set_ram_word!(game.bg3_ypos = !(v3 as i32) as u8 as u16);
     } else {
@@ -2705,7 +2678,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(k: u16, game: &mut Game) {
         v7 = (v7 as i32 - 2i32 & 0x1ei32) as u8;
         i -= 2i32;
     }
-    if (ram_word!(game, fx_liquid_options) as i32 & 1i32) != 0i32 {
+    if (ram_word!(game, fx_liquid_options) & 1) != 0 {
         update_ram_word!(game.hdma_object_C[(k as i32 >> 1i32)], wrapping_add(64u16));
     }
     let mut v9: i16 =
@@ -2732,7 +2705,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll(k: u16, game: &mut Game) {
     set_ram_word!(game.g_word_7E9C44 = ram_word!(game, reg_BG2HOFS));
     if ram_word!(game, time_is_frozen_flag) != 0 {
         HdmaobjPreInstr_WaterBG2XScroll_Func1(k, game);
-    } else if (ram_word!(game, fx_liquid_options) as i32 & 2i32) == 0i32 {
+    } else if (ram_word!(game, fx_liquid_options) & 2) == 0 {
         set_ram_word!(game.hdma_object_channels_bitmask[(k as u8 as i32 >> 1i32)] = 0u16);
         HdmaobjPreInstr_WaterBG2XScroll_Func1(k, game);
     } else {
@@ -2787,7 +2760,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func1(k: u16, game: &mut Game) {
     loop {
         *(ram_ptr!(game, u16; 0x9c46)).offset(((v1 as i32 >> 1i32) + 1i32) as isize) = v2;
         v1 = (v1).wrapping_sub(2u8);
-        if ((v1 as i32 & 0x80i32) != 0i32) {
+        if ((v1 & 0x80) != 0) {
             break;
         }
     }
@@ -2923,7 +2896,7 @@ pub unsafe fn FxTypeFunc_26_TourianEntranceStatue(game: &mut Game) {
         SpawnHdmaObject_Args::new(0x42u8, 0x11u8, 0xd856 as VoidP);
     static unk_88DBC2: SpawnHdmaObject_Args =
         SpawnHdmaObject_Args::new(0x42u8, 0x10u8, 0xdcfa as VoidP);
-    if CheckEventHappened(0xau16, game) as i32 & 1i32 != 0 {
+    if CheckEventHappened(0xau16, game) & 1 != 0 {
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0x6u8, 0xcu8, 0xb777 as VoidP),
             game,
@@ -2943,14 +2916,14 @@ pub unsafe fn sub_88DBCB(k: u16, game: &mut Game) {
         .wrapping_add(ram_word!(game, hdma_object_B[(k as i32 >> 1i32)]));
 }
 pub unsafe fn HdmaobjPreInstr_CheckLotsOfEventsHappened(mut v0: u16, game: &mut Game) {
-    if CheckEventHappened(6u16, game) as i32 & 1i32 != 0
-        && CheckEventHappened(7u16, game) as i32 & 1i32 != 0
-        && CheckEventHappened(8u16, game) as i32 & 1i32 != 0
-        && CheckEventHappened(9u16, game) as i32 & 1i32 != 0
+    if CheckEventHappened(6u16, game) & 1 != 0
+        && CheckEventHappened(7u16, game) & 1 != 0
+        && CheckEventHappened(8u16, game) & 1 != 0
+        && CheckEventHappened(9u16, game) & 1 != 0
     {
         update_ram_word!(game.tourian_entrance_statue_animstate, |fresh90| (fresh90)
             | (0x10u16));
-        if (ram_word!(game, tourian_entrance_statue_animstate) as i32 & 0x8000i32) == 0i32 {
+        if (ram_word!(game, tourian_entrance_statue_animstate) & 0x8000) == 0 {
             set_ram_word!(game.hdma_object_C[(v0 as i32 >> 1i32)] = 300u16);
             v0 = ram_word!(game, hdma_object_index);
             let v1: i32 = ram_word!(game, hdma_object_index) as i32 >> 1i32;
@@ -2969,9 +2942,7 @@ pub unsafe fn HdmaobjPreInstr_DC23(k: u16, game: &mut Game) {
     set_ram_word!(game.earthquake_type = 13u16);
     update_ram_word!(game.earthquake_timer, |fresh87| (fresh87) | (0x20u16));
     let v1: i32 = v0 as u8 as i32 >> 1i32;
-    if (update_ram_word!(game.hdma_object_C[v1], wrapping_sub(1), reread) as i32 & 0x8000i32)
-        != 0i32
-    {
+    if (update_ram_word!(game.hdma_object_C[v1], wrapping_sub(1), reread) & 0x8000) != 0 {
         SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueDustClouds as u16, 0u16, game);
         SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueDustClouds as u16, 0u16, game);
         SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueDustClouds as u16, 0u16, game);
@@ -3051,7 +3022,7 @@ pub unsafe fn FxTypeFunc_2C_Haze(game: &mut Game) {
         SpawnHdmaObject_Args::new(0x40u8, 0x32u8, 0xded3 as VoidP);
     static unk_88DDDD: SpawnHdmaObject_Args =
         SpawnHdmaObject_Args::new(0x40u8, 0x32u8, 0xdeeb as VoidP);
-    if CheckBossBitForCurArea(1u16, game) as i32 & 1i32 != 0 {
+    if CheckBossBitForCurArea(1u16, game) & 1 != 0 {
         SpawnHdmaObject(0x88u8, &raw const unk_88DDDD as *const c_void, game);
     } else {
         SpawnHdmaObject(0x88u8, &raw const unk_88DDD4 as *const c_void, game);
@@ -3149,7 +3120,7 @@ pub unsafe fn sub_88DF46(game: &mut Game) {
 }
 pub unsafe fn HdmaobjPreInstr_DF94(v0: u16, game: &mut Game) {
     let mut v1: i16 = 0;
-    if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).properties as i32 & 0x200i32) == 0i32
+    if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).properties & 0x200) == 0
         && (((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).x_pos as i32
             - ram_word!(game, layer1_x_pos) as i32
             + 64i32) as i16)
@@ -3202,9 +3173,7 @@ static off_88E04E: [Option<Func_U8>; 7] = callback_table! { unsafe Func_U8;
     VariaSuitPickup_5_LightBeamDissipates, VariaSuitPickup_6,
 };
 pub unsafe fn HdmaobjPreInstr_VariaSuitPickup(k: u16, game: &mut Game) {
-    if off_88E04E[ram_word!(game, substate) as usize].expect("non-null function pointer")(game)
-        as i32
-        & 1i32
+    if off_88E04E[ram_word!(game, substate) as usize].expect("non-null function pointer")(game) & 1
         != 0
     {
         *ram_ptr!(game; 0x74, 0) = *ram_ptr!(game; 0xdf0);
@@ -3219,9 +3188,7 @@ static off_88E084: [Option<Func_U8>; 7] = callback_table! { unsafe Func_U8;
     VariaSuitPickup_5_LightBeamDissipates, GravitySuitPickup_6,
 };
 pub unsafe fn HdmaobjPreInstr_GravitySuitPickup(k: u16, game: &mut Game) {
-    if off_88E084[ram_word!(game, substate) as usize].expect("non-null function pointer")(game)
-        as i32
-        & 1i32
+    if off_88E084[ram_word!(game, substate) as usize].expect("non-null function pointer")(game) & 1
         != 0
     {
         *ram_ptr!(game; 0x74, 0) = *ram_ptr!(game; 0xdf0);
@@ -3534,7 +3501,7 @@ pub unsafe fn AdvanceSuitPickupColorMathToBlue(game: &mut Game) -> u8 {
     1u8
 }
 pub unsafe fn HdmaobjPreInstr_E449(k: u16, game: &mut Game) {
-    if (ram_word!(game, phantom_related_layer_flag) as i32 & 0x4000i32) != 0i32 {
+    if (ram_word!(game, phantom_related_layer_flag) & 0x4000) != 0 {
         set_ram_word!(game.fx_layer_blending_config_c = 26u16);
     } else if *(&raw mut (*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).parameter_1 as *mut u8)
         .offset(0)
@@ -3570,7 +3537,7 @@ pub unsafe fn HdmaobjInstr_E4BD(k: u16, hdp: *const u8, game: &mut Game) -> *con
     let mut v5: u32 = 0;
     (*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 =
         (*(ram_ptr!(game, EnemyData; 0xf78)).offset(2)).parameter_1;
-    if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(2)).parameter_1 as i32 & 1i32) != 0i32 {
+    if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(2)).parameter_1 & 1) != 0 {
         set_ram_words! { game, 192u16; kraid_unk9000, g_word_7E9006 }
         v4 = 12620032i32 as u32;
         *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(1) as *mut u16) =
@@ -3615,7 +3582,7 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
     let mut r28: u16 = 0;
     let mut r30: u16 = 0;
     if (*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 != 0 {
-        if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 as i32 & 1i32) != 0i32 {
+        if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 & 1) != 0 {
             r28 = 4u16;
             r30 = 128u16;
         } else {
@@ -3702,7 +3669,7 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
                 break;
             }
         }
-        if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 as i32 & 1i32) != 0i32 {
+        if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 & 1) != 0 {
             let mut i: i32 = 126i32;
             while i >= 0i32 {
                 *((ram_ptr!(game, u16; 0x9180) as *mut u8).offset(i as isize) as *mut u16) =
@@ -3713,7 +3680,7 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
             }
         } else {
             let mut j: u16 = 62u16;
-            while (j as i32 & 0x8000i32) == 0i32 {
+            while (j & 0x8000) == 0 {
                 *((ram_ptr!(game, u16; 0x9140) as *mut u8).offset(j as i32 as isize) as *mut u16) =
                     (ram_word!(game, reg_BG2HOFS) as i32 + ram_word!(game, reg_BG2HOFS) as i32
                         - *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(j as i32 as isize)
@@ -3770,7 +3737,7 @@ pub unsafe fn sub_88E7ED(game: &mut Game) {
         0x88e833,
         (ram_word!(game, hdma_object_A[0]) as i32 >> 1i32) as isize
     );
-    if (v0 as i32 & 0x8000i32) == 0i32 {
+    if (v0 & 0x8000) == 0 {
         update_ram_word!(game.hdma_object_A[0], wrapping_add(1));
         update_ram_word!(game.hdma_object_A[0], wrapping_add(1));
         update_ram_word!(game.hdma_object_A[0], wrapping_add(1));
@@ -3779,7 +3746,7 @@ pub unsafe fn sub_88E7ED(game: &mut Game) {
         set_ram_word!(game.hdma_object_A[0] = 0u16);
         v0 = crate::rtl::rom_table_word!(game, 0x88e833, 0);
     }
-    *ram_ptr!(game; 0x74, 0) = (v0 as i32 & 0x1fi32 | 0x20i32) as u8;
+    *ram_ptr!(game; 0x74, 0) = (v0 as u8 & 0x1f | 0x20);
     *ram_ptr!(game; 0x74, 1) = (v0 as i32 >> 5i32 & 0x1fi32 | 0x40i32) as u8;
     *ram_ptr!(game; 0x74, 2) =
         ((v0 as i32 >> 2i32) as u16 as i32 >> 8i32 & 0x1fi32 | 0x80i32) as u8;

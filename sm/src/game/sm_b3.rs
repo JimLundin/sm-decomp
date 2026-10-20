@@ -192,15 +192,14 @@ pub unsafe fn BrinstarPipeBug_PreInstr_2(k: u16, game: &mut Game) {
     if SamusEnemyDelta_Y < 0i16 && SamusEnemyDelta_Y as i32 + 96i32 & 0x8000i32 == 0 {
         let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
         let a: u16 = GetSamusEnemyDelta_X(k, game);
-        (*PipeBug).pbg_var_A =
-            ((*PipeBug).pbg_var_A as i32 & 0x7fffi32 | a as i32 & 0x8000i32) as u16;
+        (*PipeBug).pbg_var_A = ((*PipeBug).pbg_var_A & 0x7fff | a & 0x8000);
         if abs16(((*PipeBug).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos))) < 0x40u16 {
             (*PipeBug).pbg_var_F = ((0xb388e3i32) as u16);
             (*PipeBug).base.properties =
                 ((*PipeBug).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
             (*PipeBug).base.timer = 0u16;
             let mut v4: u16 = 0;
-            if ((*PipeBug).pbg_var_A as i32 & 0x8000i32) != 0i32 {
+            if ((*PipeBug).pbg_var_A & 0x8000) != 0 {
                 v4 = 0u16;
             } else {
                 v4 = 2u16;
@@ -226,14 +225,14 @@ pub unsafe fn BrinstarPipeBug_PreInstr_3(k: u16, game: &mut Game) {
 }
 pub unsafe fn BrinstarPipeBug_PreInstr_4(k: u16, game: &mut Game) {
     let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
-    if ((*PipeBug).pbg_var_A as i32 & 0x8000i32) == 0i32 {
+    if ((*PipeBug).pbg_var_A & 0x8000) == 0 {
         (*PipeBug).base.x_subpos = (*PipeBug).base.x_subpos;
         (*PipeBug).base.x_pos = ((*PipeBug).base.x_pos).wrapping_add(2u16);
     } else {
         (*PipeBug).base.x_subpos = (*PipeBug).base.x_subpos;
         (*PipeBug).base.x_pos = ((*PipeBug).base.x_pos).wrapping_sub(2u16);
     }
-    if IsEnemyLeavingScreen(k, game) as i32 & 1i32 != 0 {
+    if IsEnemyLeavingScreen(k, game) & 1 != 0 {
         (*PipeBug).base.x_pos = (*PipeBug).pbg_var_B;
         (*PipeBug).base.x_subpos = 0u16;
         let pbg_var_C: u16 = (*PipeBug).pbg_var_C;
@@ -353,7 +352,7 @@ pub unsafe fn NorfairPipeBug_Func_2(game: &mut Game) {
         (*PipeBug).pbg_var_C = (*PipeBug).pbg_var_C.wrapping_add(1);
         (*PipeBug).base.instruction_timer = 1u16;
         (*PipeBug).base.timer = 0u16;
-        if (GetSamusEnemyDelta_X(k as u16, game) as i32 & 0x8000i32) == 0i32 {
+        if (GetSamusEnemyDelta_X(k as u16, game) & 0x8000) == 0 {
             (*Get_PipeBug(k, game)).base.current_instruction =
                 addr_kNorfairPipeBug_Ilist_8B21 as u16;
             (*Get_PipeBug(k + 64i32, game)).base.current_instruction =
@@ -409,8 +408,7 @@ pub unsafe fn NorfairPipeBug_Func_4(game: &mut Game) {
         (*E).pbg_var_01 = (*E).base.y_pos;
         (*E).base.instruction_timer = 1u16;
         (*E).base.timer = 0u16;
-        if (GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as i32 & 0x8000i32) == 0i32
-        {
+        if (GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) & 0x8000) == 0 {
             (*E).base.current_instruction = addr_kNorfairPipeBug_Ilist_8B21 as u16;
         } else {
             (*E).base.current_instruction = addr_kNorfairPipeBug_Ilist_8AE1 as u16;
@@ -512,8 +510,7 @@ pub unsafe fn NorfairPipeBug_Func_12(game: &mut Game) {
         (*E).base.timer = 0u16;
         (*E).pbg_var_A = ((0xb38e14i32) as u16);
         (*E).base.current_instruction = addr_kNorfairPipeBug_Ilist_8B05 as u16;
-        if (GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as i32 & 0x8000i32) == 0i32
-        {
+        if (GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) & 0x8000) == 0 {
             (*E).pbg_var_A = ((0xb38e35i32) as u16);
             (*E).base.current_instruction = addr_kNorfairPipeBug_Ilist_8B45 as u16;
         }
@@ -713,7 +710,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_9(k: u16, game: &mut Game) {
 pub unsafe fn BrinstarYellowPipeBug_Func_10(k: u16, game: &mut Game) {
     let E: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
     (*E).pbg_var_E = (*E).pbg_var_E.wrapping_sub(1);
-    if ((*E).pbg_var_E as i32 & 0x8000i32) != 0i32 {
+    if ((*E).pbg_var_E & 0x8000) != 0 {
         set_fields! {[(*E)], 0u16; pbg_var_E, pbg_var_F}
     } else {
         let v4: i32 = 8i32 * (*E).pbg_var_E as i32 >> 1i32;
@@ -794,7 +791,7 @@ pub unsafe fn Botwoon_QueueExplosionSfx(game: &mut Game) {
 }
 pub unsafe fn Botwoon_Init(game: &mut Game) {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    if (*ram_ptr!(game; 0xd828, 4) as i32 & 2i32) != 0i32 {
+    if (*ram_ptr!(game; 0xd828, 4) & 2) != 0 {
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0xfu8, 0x4u8, 0xb797 as VoidP),
             game,
@@ -875,9 +872,9 @@ pub unsafe fn Botwoon_Main(game: &mut Game) {
 }
 pub unsafe fn Botwoon_Func_1(k: u16, game: &mut Game) {
     let E: *mut Enemy_Botwoon = Get_Botwoon(k as i32, game);
-    if (crate::rtl::rom_table_word!(game, 0xb39675, (*E).botwoon_var_3F as isize) as i32
-        & NextRandom(game) as i32)
-        == 0i32
+    if (crate::rtl::rom_table_word!(game, 0xb39675, (*E).botwoon_var_3F as isize)
+        & NextRandom(game))
+        == 0
     {
         (*E).botwoon_var_2E = 1u16;
     }
@@ -1218,7 +1215,7 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
             if v4 {
                 update_ram_word!(
                     game.eproj_properties[(botwoo_var_00 as i32 >> 1i32)],
-                    |fresh0| (fresh0 as i32 & !(0x2000i32)) as u16
+                    |fresh0| (fresh0 & !(0x2000))
                 );
                 *(ram_ptr!(game, u16; 0xf380)).offset((botwoo_var_00 as i32 >> 1i32) as isize) =
                     1u16;
@@ -1482,7 +1479,7 @@ pub unsafe fn Botwoon_Func_33(game: &mut Game) {
     let mut y: u16 = 0u16;
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     let mut n: i32 = (*E).botwoon_var_38 as i32;
-    let step: i32 = if ((*E).botwoon_var_44 as i32 & 0x8000i32) == 0i32 {
+    let step: i32 = if ((*E).botwoon_var_44 & 0x8000) == 0 {
         2i32
     } else {
         -2i32
@@ -1507,7 +1504,7 @@ pub unsafe fn Botwoon_Func_33(game: &mut Game) {
             break;
         }
     }
-    if ((*E).botwoon_var_44 as i32 & 0x8000i32) != 0i32 {
+    if ((*E).botwoon_var_44 & 0x8000) != 0 {
         x = -(x as i32) as u16;
         y = -(y as i32) as u16;
     }

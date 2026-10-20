@@ -1138,10 +1138,9 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
             let is_replay: u8 = owner.with(|game| RtlRunFrame(inputs, game)) as u8;
             frameCtr = frameCtr.wrapping_add(1);
             let (want_bug_in_title, disable_render) = owner.with(|game| {
-                (*game.g_snes).disableRender =
-                    g_turbo as i32 ^ is_replay as i32 & g_replay_turbo as i32 != 0
-                        && frameCtr & (if g_turbo as i32 != 0 { 0xfi32 } else { 0x7fi32 }) as u32
-                            != 0u32;
+                (*game.g_snes).disableRender = g_turbo ^ is_replay & g_replay_turbo != 0
+                    && frameCtr & (if g_turbo as i32 != 0 { 0xfi32 } else { 0x7fi32 }) as u32
+                        != 0u32;
                 if !(*game.g_snes).disableRender {
                     DrawPpuFrameWithPerf(game);
                 }

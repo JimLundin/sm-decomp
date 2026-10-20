@@ -245,7 +245,7 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
         let ip: i32 = ram_word!(game, projectile_bomb_instruction_ptr[(k >> 1i32)]) as i32;
         let delta: i32 = if ram_word!(game, projectile_bomb_instruction_timers[(k >> 1i32)]) as i32
             == 1i32
-            && (*get_ProjectileInstr(ip as u16, game)).timer as i32 & 0x8000i32 == 0
+            && (*get_ProjectileInstr(ip as u16, game)).timer & 0x8000 == 0
         {
             0i32
         } else {
@@ -282,8 +282,8 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
         } else if FixBugHook(0xa2d38cu32, game) {
             (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
         } else if FixBugHook(0xa4970fu32, game) {
-            (*game.g_cpu).a = ((*game.g_cpu).a as i32 & 0xffi32) as u16;
-            (*game.g_cpu).y = ((*game.g_cpu).x as i32 & 0x7i32) as u16;
+            (*game.g_cpu).a = ((*game.g_cpu).a & 0xff);
+            (*game.g_cpu).y = ((*game.g_cpu).x & 0x7);
         } else if FixBugHook(0xa496e0u32, game) {
             if (*game.g_cpu).x as i32 > 48i32 {
                 set_ram_word!(game.croco_cur_vline_idx = (*game.g_cpu).x);
@@ -297,7 +297,7 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
         } else if FixBugHook(0x828d56u32, game) {
             WriteReg(VMAIN as i32 as u16, 0x80u8, game);
         } else if FixBugHook(0x88afcfu32, game) {
-            if (*game.g_cpu).a as i32 & 0x8000i32 != 0 {
+            if (*game.g_cpu).a & 0x8000 != 0 {
                 (*game.g_cpu).a = 0u16;
             }
         } else if FixBugHook(0x88aff2u32, game) {
@@ -1949,10 +1949,10 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         (*(*game.g_snes).cpu).pc = 0x8459u16;
         *ram_ptr!(game; 0x611) = 3u8;
     }
-    if ram_word!(game, menu_index) as i32 & 0xff00i32 != 0 {
+    if ram_word!(game, menu_index) & 0xff00 != 0 {
         printf(b"MENU INDEX TOO BIG!\n\0" as *const u8 as *const c_char);
         SaveBugSnapshot(game);
-        update_ram_word!(game.menu_index, |fresh1| (fresh1 as i32 & 0xffi32) as u16);
+        update_ram_word!(game.menu_index, |fresh1| (fresh1 & 0xff));
     }
     if game.g_got_mismatch_count != 0 {
         game.g_got_mismatch_count -= 1;

@@ -51,10 +51,8 @@ pub unsafe fn EnablePaletteFx(game: &mut Game) {
         | (0x8000u16));
 }
 pub unsafe fn DisablePaletteFx(game: &mut Game) {
-    update_ram_word!(
-        game.flag_for_palette_fx_objects,
-        |fresh0| (fresh0 as i32 & !(0x8000i32)) as u16
-    );
+    update_ram_word!(game.flag_for_palette_fx_objects, |fresh0| (fresh0
+        & !(0x8000)));
 }
 pub unsafe fn ClearPaletteFXObjects(game: &mut Game) {
     let mut i: i32 = 14i32;
@@ -67,7 +65,7 @@ pub unsafe fn SpawnPalfxObject(j: u16, game: &mut Game) {
     let mut v1: u16 = 14u16;
     while ram_word!(game, palettefx_ids[(v1 as i32 >> 1i32)]) != 0 {
         v1 = (v1).wrapping_sub(2u16);
-        if (v1 as i32 & 0x8000i32) != 0i32 {
+        if (v1 & 0x8000) != 0 {
             return;
         }
     }
@@ -88,7 +86,7 @@ pub unsafe fn SpawnPalfxObject(j: u16, game: &mut Game) {
 }
 pub fn PalPreInstr_nullsub_129(k: u16) {}
 pub unsafe fn PaletteFxHandler(game: &mut Game) {
-    if (ram_word!(game, flag_for_palette_fx_objects) as i32 & 0x8000i32) != 0i32 {
+    if (ram_word!(game, flag_for_palette_fx_objects) & 0x8000) != 0 {
         let mut i: i32 = 14i32;
         while i >= 0i32 {
             set_ram_word!(game.palettefx_index = i as u16);
@@ -118,7 +116,7 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
     loop {
         let p: *const u16 = RomPtr_8D(j, game) as *const u16;
         v6 = *p;
-        if (*p as i32 & 0x8000i32) == 0i32 {
+        if (*p & 0x8000) == 0 {
             break;
         }
         let v7: PairU16 = CallPalInstr(
@@ -141,7 +139,7 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
         loop {
             let mut v10: *const u8 = RomPtr_8D(j, game);
             v11 = *(v10.offset(2) as *mut u16);
-            if v11 as i32 & 0x8000i32 != 0 {
+            if v11 & 0x8000 != 0 {
                 break;
             }
             set_ram_word!(game.palette_buffer[(color_idx as i32 >> 1i32)] = v11);
@@ -254,13 +252,13 @@ pub unsafe fn PalPreInstr_CheckEnemy0Health(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn PalPreInstr_SamusInHeat(k: u16, game: &mut Game) {
-    if (ram_word!(game, equipped_items) as i32 & 0x21i32) == 0i32 {
+    if (ram_word!(game, equipped_items) & 0x21) == 0 {
         AddToHiLo(
             ram_ptr!(game, u16; 0xa50),
             ram_ptr!(game, u16; 0xa4e),
             0x4000u32,
         );
-        if (ram_word!(game, nmi_frame_counter_word) as i32 & 7i32) == 0i32
+        if (ram_word!(game, nmi_frame_counter_word) & 7) == 0
             && ram_word!(game, samus_health) > 0x46u16
         {
             QueueSfx3_Max6(0x2du16, game);
@@ -276,9 +274,9 @@ pub unsafe fn PalPreInstr_SamusInHeat(k: u16, game: &mut Game) {
         let mut v4: u16 = 0;
         let v3: i32 = k as i32 >> 1i32;
         set_ram_word!(game.palettefx_instr_timers[v3] = 1u16);
-        if (ram_word!(game, equipped_items) as i32 & 0x20i32) != 0i32 {
+        if (ram_word!(game, equipped_items) & 0x20) != 0 {
             v4 = addr_off_8DE3E0 as u16;
-        } else if (ram_word!(game, equipped_items) as i32 & 1i32) != 0i32 {
+        } else if (ram_word!(game, equipped_items) & 1) != 0 {
             v4 = addr_off_8DE400 as u16;
         } else {
             v4 = addr_off_8DE420 as u16;
@@ -292,9 +290,9 @@ pub unsafe fn PalPreInstr_SamusInHeat(k: u16, game: &mut Game) {
 }
 pub unsafe fn PalInit_F761_Norfair1(k: u16, j: u16, game: &mut Game) {
     let mut v2: u16 = 0;
-    if (ram_word!(game, equipped_items) as i32 & 0x20i32) != 0i32 {
+    if (ram_word!(game, equipped_items) & 0x20) != 0 {
         v2 = addr_off_8DE8B6 as u16;
-    } else if (ram_word!(game, equipped_items) as i32 & 1i32) != 0i32 {
+    } else if (ram_word!(game, equipped_items) & 1) != 0 {
         v2 = addr_off_8DE68A as u16;
     } else {
         v2 = addr_kPalfxInstrList_E45E as u16;
@@ -316,8 +314,7 @@ pub unsafe fn PalPreInstr_SwitchIfYpos2(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn PalPreInstr_DeletePalfxIfMinibossDead(k: u16, game: &mut Game) {
-    if (*(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) as i32 & 2i32) != 0i32
-    {
+    if (*(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) & 2) != 0 {
         set_ram_word!(game.palettefx_ids[(k as i32 >> 1i32)] = 0u16);
     }
 }
@@ -331,8 +328,7 @@ pub unsafe fn PalPreInstr_F621(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn PalInit_F779_Brinstar8(k: u16, j: u16, game: &mut Game) {
-    if (*(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) as i32 & 2i32) != 0i32
-    {
+    if (*(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) & 2) != 0 {
         set_ram_word!(game.palettefx_ids[(j as i32 >> 1i32)] = 0u16);
     }
 }

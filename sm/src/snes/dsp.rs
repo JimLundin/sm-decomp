@@ -263,7 +263,7 @@ unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
             .offset((adr as i32 + 3i32 & 0xffffi32) as isize) = (inR >> 8i32) as u8;
     }
     (*dsp).firBufferIndex = (*dsp).firBufferIndex.wrapping_add(1);
-    (*dsp).firBufferIndex = ((*dsp).firBufferIndex as i32 & 7i32) as u8;
+    (*dsp).firBufferIndex = ((*dsp).firBufferIndex & 7);
     (*dsp).echoBufferIndex = (*dsp).echoBufferIndex.wrapping_add(1);
     (*dsp).echoRemain = (*dsp).echoRemain.wrapping_sub(1);
     if (*dsp).echoRemain as i32 == 0i32 {
@@ -454,7 +454,7 @@ unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
     let header: u8 = *(*dsp).apu_ram.offset(fresh0 as isize);
     let shift: i32 = header as i32 >> 4i32;
     let filter: i32 = (header as i32 & 0xci32) >> 2i32;
-    (*dsp).channel[ch as usize].previousFlags = (header as i32 & 0x3i32) as u8;
+    (*dsp).channel[ch as usize].previousFlags = (header & 0x3);
     let mut curByte: u8 = 0u8;
     let mut old: i32 = (*dsp).channel[ch as usize].old as i32;
     let mut older: i32 = (*dsp).channel[ch as usize].older as i32;
@@ -516,7 +516,7 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
         1 | 17 | 33 | 49 | 65 | 81 | 97 | 113 => (*dsp).channel[ch as usize].volumeR = val as i8,
         2 | 18 | 34 | 50 | 66 | 82 | 98 | 114 => {
             (*dsp).channel[ch as usize].pitch =
-                ((*dsp).channel[ch as usize].pitch as i32 & 0x3f00i32 | val as i32) as u16
+                ((*dsp).channel[ch as usize].pitch & 0x3f00 | val as u16)
         }
         3 | 19 | 35 | 51 | 67 | 83 | 99 | 115 => {
             (*dsp).channel[ch as usize].pitch =
@@ -529,7 +529,7 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
                 rateValues[((val as i32 & 0xfi32) * 2i32 + 1i32) as usize] as u16;
             (*dsp).channel[ch as usize].adsrRates[1i32 as usize] =
                 rateValues[(((val as i32 & 0x70i32) >> 4i32) * 2i32 + 16i32) as usize] as u16;
-            (*dsp).channel[ch as usize].useGain = val as i32 & 0x80i32 == 0i32;
+            (*dsp).channel[ch as usize].useGain = val & 0x80 == 0;
         }
         6 | 22 | 38 | 54 | 70 | 86 | 102 | 118 => {
             (*dsp).channel[ch as usize].adsrRates[2i32 as usize] =
@@ -538,8 +538,8 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
                 ((((val as i32 & 0xe0i32) >> 5i32) + 1i32) * 0x100i32) as u16;
         }
         7 | 23 | 39 | 55 | 71 | 87 | 103 | 119 => {
-            (*dsp).channel[ch as usize].directGain = val as i32 & 0x80i32 == 0i32;
-            if val as i32 & 0x80i32 != 0 {
+            (*dsp).channel[ch as usize].directGain = val & 0x80 == 0;
+            if val & 0x80 != 0 {
                 (*dsp).channel[ch as usize].gainMode = ((val as i32 & 0x60i32) >> 5i32) as u8;
                 (*dsp).channel[ch as usize].adsrRates[3i32 as usize] =
                     rateValues[(val as i32 & 0x1fi32) as usize] as u16;
@@ -599,9 +599,9 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
             }
         }
         108 => {
-            (*dsp).reset = val as i32 & 0x80i32 != 0;
-            (*dsp).mute = val as i32 & 0x40i32 != 0;
-            (*dsp).echoWrites = val as i32 & 0x20i32 == 0i32;
+            (*dsp).reset = val & 0x80 != 0;
+            (*dsp).mute = val & 0x40 != 0;
+            (*dsp).echoWrites = val & 0x20 == 0;
             (*dsp).noiseRate = rateValues[(val as i32 & 0x1fi32) as usize] as u16;
         }
         124 => val = 0u8,

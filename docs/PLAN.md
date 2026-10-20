@@ -72,6 +72,28 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Native-width bitwise expressions (2026-10-20): simplify all 2276 eligible
+expressions across 41 files: 1984 comparisons and 292 final truncations,
+including existing RAM/instruction macros and the frontend turbo toggle.
+Unshifted masks, complements, AND/OR/XOR retain operand order and native
+value widths. Signed comparisons require matching known high bits; arithmetic,
+shifts and unsupported source types stay outside this projection.
+
+Complete formatted-source reconstruction and compiler type binding pass,
+including all 11 nested pairs. Z3 proves each replacement for every native
+input bit pattern across 2573 distinct ordered operand occurrences; wrong-mask
+and wrong-high-bit controls fail. Seven macro operands bind the unchanged
+explicit u16 read result. No helper, borrow or cached operand is introduced.
+
+Final composition preserves DSP saturation and both published Bang coordinate
+fixes. Formatting/check, normal release (20.55s), progress and shared-library
+replays pass: any% 129712/0 (123.08s wall), Speed Booster
+148406/0 (159.17s wall), native exits 0. The host reuses the
+normal library; all 140 verification pins stay fixed. Rust lines -576,
+to 128340; i32 cast-containing lines -2348. Other progress counters are unchanged.
+These proofs cover the selected integer expressions; the movies provide
+integration coverage. Broader routes, frontend and alias ownership remain open.
+
 Bang native ownership assessment (2026-10-20): Bang_Main remains the sole
 maintained gameplay Call into the emulated 65816. The bank A3 log names the
 three parameter-selected entries BB2B/BB4A/BB66 as electricity/shell/core;

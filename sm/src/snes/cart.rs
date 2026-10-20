@@ -134,7 +134,7 @@ unsafe fn cart_writeLorom(cart: *mut Cart, bank: u8, address: u16, value: u8) {
     }
 }
 unsafe fn cart_readHirom(cart: *mut Cart, mut bank: u8, adr: u16) -> u8 {
-    bank = (bank as i32 & 0x7fi32) as u8;
+    bank = (bank & 0x7f);
     if (bank as i32) < 0x40i32
         && adr as i32 >= 0x6000i32
         && (adr as i32) < 0x8000i32
@@ -158,7 +158,7 @@ unsafe fn cart_readHirom(cart: *mut Cart, mut bank: u8, adr: u16) -> u8 {
     (*(*cart).snes).openBus
 }
 unsafe fn cart_writeHirom(cart: *mut Cart, mut bank: u8, adr: u16, val: u8) {
-    bank = (bank as i32 & 0x7fi32) as u8;
+    bank = (bank & 0x7f);
     if (bank as i32) < 0x40i32
         && adr as i32 >= 0x6000i32
         && (adr as i32) < 0x8000i32

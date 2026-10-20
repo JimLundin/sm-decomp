@@ -466,13 +466,13 @@ pub unsafe fn EnableEarthquakeAframes(a: u16, game: &mut Game) {
 }
 pub unsafe fn HandleMotherBrainBodyFlickering(game: &mut Game) {
     let v0: *mut EnemyData = gEnemyData(0i32, game);
-    if (*v0).frame_counter as i32 & 1i32 != 0 {
+    if (*v0).frame_counter & 1 != 0 {
         let ref mut fresh0 = *(ram_ptr!(game, u16; 0x69));
         *fresh0 = (*fresh0) | (2u16);
         (*v0).properties = ((*v0).properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
     } else {
         let ref mut fresh1 = *(ram_ptr!(game, u16; 0x69));
-        *fresh1 = (*fresh1 as i32 & !(2i32)) as u16;
+        *fresh1 = (*fresh1 & !(2));
         (*v0).properties = ((*v0).properties) | ((kEnemyProps_Invisible) as u16);
     };
 }

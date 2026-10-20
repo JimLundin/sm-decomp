@@ -263,7 +263,7 @@ crate::game::constants::typed_constants! { u32;
 pub unsafe fn SetGoldenTorizoPalette(mut a: u16, game: &mut Game) {
     let mut v1: i16 = 0;
     v1 = ((*(&raw mut a as *mut u8).offset(1isize)) as i16) & (0x78i16);
-    if (v1 as i32 & 0x40i32) != 0i32 {
+    if (v1 as u16 & 0x40) != 0 {
         v1 = 56i16;
     }
     let mut v2: u16 = (4i32 * v1 as i32 | 0x1ei32) as u16;
@@ -364,7 +364,7 @@ pub unsafe fn LoadXrayBlocks(game: &mut Game) {
             let v2: u16 = *ram_ptr!(game; 0xd870, PrepareBitAccess(ram_word!(game, plm_room_arguments[v1]), game) as isize)
                 as u16;
             i = k as i32;
-            if (ram_word!(game, bitmask) as i32 & v2 as i32) == 0i32 {
+            if (ram_word!(game, bitmask) & v2) == 0 {
                 CalculatePlmBlockCoords(k, game);
                 let v3: *const u8 = RomPtr_84(
                     crate::rtl::rom_table_word!(
@@ -408,8 +408,7 @@ pub fn EnablePLMs(game: &mut Game) {
     game.g_ram[0x1c23..0x1c25].copy_from_slice(&(flags | 0x8000).to_le_bytes());
 }
 pub unsafe fn DisablePLMs(game: &mut Game) {
-    update_ram_word!(game.plm_flag, |fresh22| (fresh22 as i32 & !(0x8000i32))
-        as u16);
+    update_ram_word!(game.plm_flag, |fresh22| (fresh22 & !(0x8000)));
 }
 pub fn ClearPLMs(game: &mut Game) {
     for slot in (0..40).rev() {
@@ -431,7 +430,7 @@ unsafe fn spawn_hardcoded_plm(
     let mut v1: u16 = 78u16;
     while ram_word!(game, plm_header_ptr[(v1 as i32 >> 1i32)]) != 0 {
         v1 = (v1).wrapping_sub(2u16);
-        if (v1 as i32 & 0x8000i32) != 0i32 {
+        if (v1 & 0x8000) != 0 {
             return;
         }
     }
@@ -569,7 +568,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
         let mut current_block_28: u64;
         match *_state_variable_ as i32 {
             0 => {
-                if (ram_word!(game, plm_flag) as i32 & 0x8000i32) == 0i32 {
+                if (ram_word!(game, plm_flag) & 0x8000) == 0 {
                     return kCoroutineNone as CoroutineRet;
                 }
                 set_ram_word!(game.plm_draw_tilemap_index = 0u16);
@@ -583,7 +582,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
             match current_block_28 {
                 2569451025026770673 => break 's_158,
                 17179679302217393232 => {
-                    if (ram_word!(game, plm_id) as i32 & 0x8000i32) == 0i32 {
+                    if (ram_word!(game, plm_id) & 0x8000) == 0 {
                         if *(ram_ptr!(game, u16; 0x1c37))
                             .offset((ram_word!(game, plm_id) as i32 >> 1i32) as isize)
                             == 0
@@ -648,7 +647,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                         continue 'c_23315;
                     }
                     _ => {
-                        if (*(v5 as *mut u16) as i32 & 0x8000i32) == 0i32 {
+                        if (*(v5 as *mut u16) & 0x8000) == 0 {
                             let mut v7: i32 = ram_word!(game, plm_id) as i32 >> 1i32;
                             set_ram_word!(game.plm_instruction_timer[v7] = *(v5 as *mut u16));
                             set_ram_word!(
@@ -696,7 +695,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
 }
 #[inline]
 unsafe fn RomPtr_84orRAM(addr: u16, game: &mut Game) -> *mut u8 {
-    if addr as i32 & 0x8000i32 != 0 {
+    if addr & 0x8000 != 0 {
         RomPtr((0x840000u32) | ((addr) as u32), game) as *mut u8
     } else {
         crate::native_assertion! {
@@ -864,8 +863,8 @@ pub unsafe fn PlmInstr_SetEvent(plmp: *const u8, k: u16, game: &mut Game) -> *co
 pub unsafe fn PlmInstr_GotoIfChozoSet(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
     let v3: u16 = ram_word!(game, plm_room_arguments[(k as i32 >> 1i32)]);
     let idx: i32 = PrepareBitAccess(v3, game) as i32;
-    if v3 as i32 & 0x8000i32 == 0
-        && (ram_word!(game, bitmask) as i32 & *ram_ptr!(game; 0xd830, idx as isize) as i32) != 0i32
+    if v3 & 0x8000 == 0
+        && (ram_word!(game, bitmask) & *ram_ptr!(game; 0xd830, idx as isize) as u16) != 0
     {
         PlmInstr_Goto(plmp, k)
     } else {
@@ -874,7 +873,7 @@ pub unsafe fn PlmInstr_GotoIfChozoSet(plmp: *const u8, k: u16, game: &mut Game) 
 }
 pub unsafe fn PlmInstr_SetRoomChozoBit(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
     let v3: u16 = ram_word!(game, plm_room_arguments[(k as i32 >> 1i32)]);
-    if v3 as i32 & 0x8000i32 == 0 {
+    if v3 & 0x8000 == 0 {
         let idx: i32 = PrepareBitAccess(v3, game) as i32;
         let ref mut fresh64 = *ram_ptr!(game; 0xd830, idx as isize);
         *fresh64 = (*fresh64) | ((ram_word!(game, bitmask)) as u8);
@@ -1176,15 +1175,12 @@ pub unsafe fn PlmInstr_ProcessSolidScrollUpdate(
         ram_word!(game, plm_room_arguments[(k as i32 >> 1i32)]),
         game,
     );
-    while (*v5.offset(0) as i32 & 0x80i32 == 0) {
+    while (*v5.offset(0) & 0x80 == 0) {
         *ram_ptr!(game; 0xcd20, *v5.offset(0) as isize) = *v5.offset(1);
         v5 = v5.offset(2);
     }
     let v7: i32 = ram_word!(game, plm_block_indices[(k as i32 >> 1i32)]) as i32 >> 1i32;
-    set_ram_word!(
-        game.level_data[v7] =
-            (ram_word!(game, level_data[v7]) as i32 & 0xfffi32 | 0xb000i32) as u16
-    );
+    set_ram_word!(game.level_data[v7] = (ram_word!(game, level_data[v7]) & 0xfff | 0xb000));
     plmp
 }
 pub unsafe fn PlmInstr_QueueMusic(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
@@ -1377,12 +1373,12 @@ unsafe fn CalculatePlmDrawTilemapVramDst(
     let v1: u16 = (r24) & (0x1fu16);
     if v1 >= 0x10u16 {
         a = (prod as i32 + r12 as i32 + 2i32 * v1 as i32) as u16;
-        if (ram_word!(game, bg1_x_offset) as i32 & 0x100i32) != 0i32 {
+        if (ram_word!(game, bg1_x_offset) & 0x100) != 0 {
             a = (a).wrapping_sub(1024u16);
         }
     } else {
         a = (prod as i32 + r9 as i32 + 2i32 * v1 as i32) as u16;
-        if (ram_word!(game, bg1_x_offset) as i32 & 0x100i32) != 0i32 {
+        if (ram_word!(game, bg1_x_offset) & 0x100) != 0 {
             a = (a).wrapping_add(1024u16);
         }
     }
@@ -1441,7 +1437,7 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
                 }
             }
             r22 = (r20 as i32 + r26 as i32 - r22 as i32) as u16;
-            if !((r22 as i32 & 0x8000i32) != 0i32 || {
+            if !((r22 & 0x8000) != 0 || {
                 let mut v23: bool = ((r20) as i16).wrapping_sub((r22) as i16) < 0i16;
                 r20 = (r20).wrapping_sub(r22);
                 r20 != 0u16 && !v23
@@ -1531,7 +1527,7 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
                 break;
             }
             r22 = (r20 as i32 + r24 as i32 - 1i32 - r22 as i32) as u16;
-            if !((r22 as i32 & 0x8000i32) != 0i32 || {
+            if !((r22 & 0x8000) != 0 || {
                 r20 = (r20).wrapping_sub(r22);
                 r20 != 0u16
             }) {
@@ -1553,14 +1549,14 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
             if v4 >= 0x10u16 {
                 let mut v8: i16 = (r12 as i32 + 2i32 * v4 as i32) as i16;
                 a = (prod).wrapping_add((v8) as u16);
-                if (ram_word!(game, bg1_x_offset) as i32 & 0x100i32) != 0i32 {
+                if (ram_word!(game, bg1_x_offset) & 0x100) != 0 {
                     a = (a).wrapping_sub(1024u16);
                 }
             } else {
                 let mut v5: i16 = (r9 as i32 + 2i32 * v4 as i32) as i16;
                 let RegWord: u16 = prod;
                 a = (RegWord).wrapping_add((v5) as u16);
-                if (ram_word!(game, bg1_x_offset) as i32 & 0x100i32) != 0i32 {
+                if (ram_word!(game, bg1_x_offset) & 0x100) != 0 {
                     a = (a).wrapping_add(1024u16);
                 }
             }
@@ -1577,7 +1573,7 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
                 (*v10).size = v9;
                 (*v10.offset(2)).size = v9;
                 (*v10.offset(0)).vram_dst = a;
-                (*v10.offset(1)).vram_dst = (a as i32 & 0xffe0i32 ^ 0x400i32) as u16;
+                (*v10.offset(1)).vram_dst = (a & 0xffe0 ^ 0x400);
                 (*v10.offset(3)).vram_dst = ((*v10.offset(1)).vram_dst).wrapping_add(32u16);
                 (*v10.offset(2)).vram_dst = ((*v10).vram_dst).wrapping_add(32u16);
                 x = (4u16).wrapping_mul(r20);
@@ -1638,7 +1634,7 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
         }
         k = v35;
         let mut addr: u16 = r3;
-        if (r22 as i32 & 0x8000i32) == 0i32 {
+        if (r22 & 0x8000) == 0 {
             addr = (r3 as i32 + 2i32 * r22 as i32) as u16;
         }
         let mut v31: i16 = *(RomPtr_84orRAM(addr, game) as *mut u16) as i16;
@@ -1809,15 +1805,15 @@ pub unsafe fn ActivateStationIfSamusCannonLinedUp(a: u16, j: u16, game: &mut Gam
             break;
         }
         v2 = (v2).wrapping_sub(2u16);
-        if (v2 as i32 & 0x8000i32) != 0i32 {
+        if (v2 & 0x8000) != 0 {
             found_plm = false;
             break;
         }
     }
     if found_plm {
         CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
-        if ((16u16).wrapping_mul(ram_word!(game, plm_y_block))) as i32 | 0xbi32
-            == ram_word!(game, samus_y_pos) as i32
+        if ((16u16).wrapping_mul(ram_word!(game, plm_y_block))) | 0xb
+            == ram_word!(game, samus_y_pos)
         {
             let v3: i32 = v2 as i32 >> 1i32;
             set_ram_word!(
@@ -1834,10 +1830,7 @@ pub unsafe fn ActivateStationIfSamusCannonLinedUp(a: u16, j: u16, game: &mut Gam
 pub unsafe fn PlmSetup_B6D3_MapStation(j: u16, game: &mut Game) -> u8 {
     let v1: i32 = j as i32 >> 1i32;
     let v2: i32 = ram_word!(game, plm_block_indices[v1]) as i32 >> 1i32;
-    set_ram_word!(
-        game.level_data[v2] =
-            (ram_word!(game, level_data[v2]) as i32 & 0xfffi32 | 0x8000i32) as u16
-    );
+    set_ram_word!(game.level_data[v2] = (ram_word!(game, level_data[v2]) & 0xfff | 0x8000));
     if *ram_ptr!(game; 0xd908, ram_word!(game, area_index) as isize) != 0 {
         set_ram_word!(game.plm_instr_list_ptrs[v1] = addr_word_84AD76 as u16);
     } else {
@@ -1855,9 +1848,9 @@ pub unsafe fn PlmSetup_B6D3_MapStation(j: u16, game: &mut Game) -> u8 {
     0u8
 }
 pub unsafe fn PlmSetup_Bts47_MapStationRightAccess(j: u16, game: &mut Game) -> u8 {
-    if (ram_word!(game, samus_collision_direction) as i32 & 0xfi32) == 0i32
+    if (ram_word!(game, samus_collision_direction) & 0xf) == 0
         && ram_word!(game, samus_pose) as i32 == kPose_8A_FaceL_Ranintowall as i32
-        && (*ram_ptr!(game; 0xa1e) as i32 & 4i32) != 0i32
+        && (*ram_ptr!(game; 0xa1e) & 4) != 0
     {
         return ActivateStationIfSamusCannonLinedUp(
             (ram_word!(game, plm_block_indices[(j as i32 >> 1i32)])).wrapping_sub(2u16),
@@ -1869,9 +1862,9 @@ pub unsafe fn PlmSetup_Bts47_MapStationRightAccess(j: u16, game: &mut Game) -> u
     1u8
 }
 pub unsafe fn PlmSetup_Bts4_MapStationLeftAccess(j: u16, game: &mut Game) -> u8 {
-    if (ram_word!(game, samus_collision_direction) as i32 & 0xfi32) == 1i32
+    if (ram_word!(game, samus_collision_direction) & 0xf) == 1
         && ram_word!(game, samus_pose) as i32 == kPose_89_FaceR_Ranintowall as i32
-        && (*ram_ptr!(game; 0xa1e) as i32 & 8i32) != 0i32
+        && (*ram_ptr!(game; 0xa1e) & 8) != 0
     {
         return ActivateStationIfSamusCannonLinedUp(
             (ram_word!(game, plm_block_indices[(j as i32 >> 1i32)])).wrapping_add(4u16),
@@ -1885,10 +1878,7 @@ pub unsafe fn PlmSetup_Bts4_MapStationLeftAccess(j: u16, game: &mut Game) -> u8 
 pub unsafe fn PlmSetup_PlmB6DF_EnergyStation(j: u16, game: &mut Game) -> u8 {
     let v1: i32 = j as i32 >> 1i32;
     let v2: i32 = ram_word!(game, plm_block_indices[v1]) as i32 >> 1i32;
-    set_ram_word!(
-        game.level_data[v2] =
-            (ram_word!(game, level_data[v2]) as i32 & 0xfffi32 | 0x8000i32) as u16
-    );
+    set_ram_word!(game.level_data[v2] = (ram_word!(game, level_data[v2]) & 0xfff | 0x8000));
     WriteLevelDataBlockTypeAndBts(
         (ram_word!(game, plm_block_indices[v1])).wrapping_add(2u16),
         0xb049u16,
@@ -1904,10 +1894,7 @@ pub unsafe fn PlmSetup_PlmB6DF_EnergyStation(j: u16, game: &mut Game) -> u8 {
 pub unsafe fn PlmSetup_PlmB6EB_EnergyStation(j: u16, game: &mut Game) -> u8 {
     let v1: i32 = j as i32 >> 1i32;
     let v2: i32 = ram_word!(game, plm_block_indices[v1]) as i32 >> 1i32;
-    set_ram_word!(
-        game.level_data[v2] =
-            (ram_word!(game, level_data[v2]) as i32 & 0xfffi32 | 0x8000i32) as u16
-    );
+    set_ram_word!(game.level_data[v2] = (ram_word!(game, level_data[v2]) & 0xfff | 0x8000));
     WriteLevelDataBlockTypeAndBts(
         (ram_word!(game, plm_block_indices[v1])).wrapping_add(2u16),
         0xb04bu16,
@@ -1921,9 +1908,9 @@ pub unsafe fn PlmSetup_PlmB6EB_EnergyStation(j: u16, game: &mut Game) -> u8 {
     0u8
 }
 pub unsafe fn PlmSetup_B6E3_EnergyStationRightAccess(j: u16, game: &mut Game) -> u8 {
-    if (ram_word!(game, samus_collision_direction) as i32 & 0xfi32) != 0i32
+    if (ram_word!(game, samus_collision_direction) & 0xf) != 0
         || ram_word!(game, samus_pose) as i32 != kPose_8A_FaceL_Ranintowall as i32
-        || (*ram_ptr!(game; 0xa1e) as i32 & 4i32) == 0i32
+        || (*ram_ptr!(game; 0xa1e) & 4) == 0
         || ram_word!(game, samus_health) == ram_word!(game, samus_max_health)
     {
         set_ram_word!(game.plm_header_ptr[(j as i32 >> 1i32)] = 0u16);
@@ -1937,9 +1924,9 @@ pub unsafe fn PlmSetup_B6E3_EnergyStationRightAccess(j: u16, game: &mut Game) ->
     }
 }
 pub unsafe fn PlmSetup_B6E7_EnergyStationLeftAccess(j: u16, game: &mut Game) -> u8 {
-    if (ram_word!(game, samus_collision_direction) as i32 & 0xfi32) == 1i32
+    if (ram_word!(game, samus_collision_direction) & 0xf) == 1
         && ram_word!(game, samus_pose) as i32 == kPose_89_FaceR_Ranintowall as i32
-        && (*ram_ptr!(game; 0xa1e) as i32 & 8i32) != 0i32
+        && (*ram_ptr!(game; 0xa1e) & 8) != 0
         && ram_word!(game, samus_health) != ram_word!(game, samus_max_health)
     {
         return ActivateStationIfSamusCannonLinedUp(
@@ -1952,9 +1939,9 @@ pub unsafe fn PlmSetup_B6E7_EnergyStationLeftAccess(j: u16, game: &mut Game) -> 
     1u8
 }
 pub unsafe fn PlmSetup_B6EF_MissileStationRightAccess(j: u16, game: &mut Game) -> u8 {
-    if (ram_word!(game, samus_collision_direction) as i32 & 0xfi32) != 0i32
+    if (ram_word!(game, samus_collision_direction) & 0xf) != 0
         || ram_word!(game, samus_pose) as i32 != kPose_8A_FaceL_Ranintowall as i32
-        || (*ram_ptr!(game; 0xa1e) as i32 & 4i32) == 0i32
+        || (*ram_ptr!(game; 0xa1e) & 4) == 0
         || ram_word!(game, samus_missiles) == ram_word!(game, samus_max_missiles)
     {
         set_ram_word!(game.plm_header_ptr[(j as i32 >> 1i32)] = 0u16);
@@ -1967,9 +1954,9 @@ pub unsafe fn PlmSetup_B6EF_MissileStationRightAccess(j: u16, game: &mut Game) -
     )
 }
 pub unsafe fn PlmSetup_B6F3_MissileStationLeftAccess(j: u16, game: &mut Game) -> u8 {
-    if (ram_word!(game, samus_collision_direction) as i32 & 0xfi32) == 1i32
+    if (ram_word!(game, samus_collision_direction) & 0xf) == 1
         && ram_word!(game, samus_pose) as i32 == kPose_89_FaceR_Ranintowall as i32
-        && (*ram_ptr!(game; 0xa1e) as i32 & 8i32) != 0i32
+        && (*ram_ptr!(game; 0xa1e) & 8) != 0
         && ram_word!(game, samus_missiles) != ram_word!(game, samus_max_missiles)
     {
         ActivateStationIfSamusCannonLinedUp(
@@ -2234,8 +2221,7 @@ pub unsafe fn PlmSetup_B767_ClearShitroidInvisibleWall(j: u16, game: &mut Game) 
     for _ in 0i16..10i16 {
         set_ram_word!(
             game.level_data[(v1 as i32 >> 1i32)] =
-                (ram_word!(game, level_data[(v1 as i32 >> 1i32)]) as i32 & 0xfffi32 | 0x8000i32)
-                    as u16
+                (ram_word!(game, level_data[(v1 as i32 >> 1i32)]) & 0xfff | 0x8000)
         );
         v1 = (v1 as i32 + ram_word!(game, room_width_in_blocks) as i32 * 2i32) as u16;
     }
@@ -2320,8 +2306,8 @@ pub unsafe fn PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm(k: u16, game: &mut 
     }
 }
 pub unsafe fn PlmPreInstr_WakeAndLavaIfBoosterCollected(k: u16, game: &mut Game) {
-    if (ram_word!(game, collected_items) as i32 & 0x2000i32) != 0i32 {
-        if (ram_word!(game, fx_target_y_pos) as i32 & 0x8000i32) != 0i32 {
+    if (ram_word!(game, collected_items) & 0x2000) != 0 {
+        if (ram_word!(game, fx_target_y_pos) & 0x8000) != 0 {
             set_ram_word!(game.plm_header_ptr[(k as i32 >> 1i32)] = 0u16);
         } else {
             set_ram_word!(game.fx_y_vel = -128i32 as u16);
@@ -2356,7 +2342,7 @@ pub unsafe fn PlmPreInstr_AdvanceLavaSamusMovesLeft(k: u16, game: &mut Game) {
     let v2: u16 = ram_word!(game, plm_timers[v1]);
     let v3: i32 = v2 as i32 >> 1i32;
     let v4: u16 = g_word_84B876[v3 as usize];
-    if (v4 as i32 & 0x8000i32) != 0i32 {
+    if (v4 & 0x8000) != 0 {
         SetEventHappened(0x15u16, game);
     } else if v4 >= ram_word!(game, samus_x_pos) {
         if g_word_84B876[(v3 + 1i32) as usize] < ram_word!(game, fx_base_y_pos) {
@@ -2422,7 +2408,7 @@ pub unsafe fn PlmSetup_B9C1_CrittersEscapeBlock(j: u16, game: &mut Game) -> u8 {
     {
         let v1: i32 = j as i32 >> 1i32;
         let v2: i32 = ram_word!(game, plm_block_indices[v1]) as i32 >> 1i32;
-        let v3: u16 = (ram_word!(game, level_data[v2]) as i32 & 0xf000i32 | 0x9fi32) as u16;
+        let v3: u16 = (ram_word!(game, level_data[v2]) & 0xf000 | 0x9f);
         set_ram_word!(game.plm_variable[v1] = v3);
         set_ram_word!(game.level_data[v2] = (v3) & (0x8fffu16));
     } else {
@@ -2469,7 +2455,7 @@ pub unsafe fn PlmInstr_JumpIfSamusHasNoBombs(
     k: u16,
     game: &mut Game,
 ) -> *const u8 {
-    if (ram_word!(game, collected_items) as i32 & 0x1000i32) != 0i32 {
+    if (ram_word!(game, collected_items) & 0x1000) != 0 {
         plmp.offset(2)
     } else {
         *(plmp as *mut u16) as usize as *const u8
@@ -2563,7 +2549,7 @@ pub unsafe fn PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb(k: u16, game: &mut Ga
     let v2: i32 = k as i32 >> 1i32;
     let v3: u16 = ram_word!(game, plm_timers[v2]);
     if v3 != 0 {
-        if (v3 as i32 & 0xf00i32) == 768i32 {
+        if (v3 & 0xf00) == 768 {
             set_ram_word!(game.plm_timers[v2] = 0u16);
             set_ram_word!(
                 game.plm_instr_list_ptrs[v2] = ram_word!(game, plm_instruction_list_link_reg[v2])
@@ -2606,7 +2592,7 @@ pub unsafe fn PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile(k: u16, game: &mut
     let v2: i32 = k as i32 >> 1i32;
     let v3: u16 = ram_word!(game, plm_timers[v2]);
     if v3 != 0 {
-        if (v3 as i32 & 0xf00i32) == 512i32 {
+        if (v3 & 0xf00) == 512 {
             set_ram_word!(game.plm_timers[v2] = 0u16);
             set_ram_word!(
                 game.plm_instr_list_ptrs[v2] = ram_word!(game, plm_instruction_list_link_reg[v2])
@@ -2634,21 +2620,21 @@ pub unsafe fn PlmPreInstr_PlayDudSound(k: u16, game: &mut Game) {
     set_ram_word!(game.plm_timers[v2] = 0u16);
 }
 pub unsafe fn PlmPreInstr_GotoLinkIfBoss1Dead(k: u16, game: &mut Game) {
-    if CheckBossBitForCurArea(1u16, game) as i32 & 1i32 != 0 {
+    if CheckBossBitForCurArea(1u16, game) & 1 != 0 {
         PlmPreInstr_GoToLinkInstruction(k, game);
     } else {
         PlmPreInstr_PlayDudSound(k, game);
     };
 }
 pub unsafe fn PlmPreInstr_GotoLinkIfMiniBossDead(k: u16, game: &mut Game) {
-    if CheckBossBitForCurArea(2u16, game) as i32 & 1i32 != 0 {
+    if CheckBossBitForCurArea(2u16, game) & 1 != 0 {
         PlmPreInstr_GoToLinkInstruction(k, game);
     } else {
         PlmPreInstr_PlayDudSound(k, game);
     };
 }
 pub unsafe fn PlmPreInstr_GotoLinkIfTorizoDead(k: u16, game: &mut Game) {
-    if CheckBossBitForCurArea(4u16, game) as i32 & 1i32 != 0 {
+    if CheckBossBitForCurArea(4u16, game) & 1 != 0 {
         PlmPreInstr_GoToLinkInstruction(k, game);
     } else {
         PlmPreInstr_PlayDudSound(k, game);
@@ -2664,14 +2650,14 @@ pub unsafe fn PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn PlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing(k: u16, game: &mut Game) {
-    if (ram_word!(game, tourian_entrance_statue_finished) as i32 & 0x8000i32) == 0i32 {
+    if (ram_word!(game, tourian_entrance_statue_finished) & 0x8000) == 0 {
         PlmPreInstr_PlayDudSound(k, game);
     } else {
         PlmPreInstr_GoToLinkInstruction(k, game);
     };
 }
 pub unsafe fn PlmPreInstr_GotoLinkIfCrittersEscaped(k: u16, game: &mut Game) {
-    if CheckEventHappened(0xfu16, game) as i32 & 1i32 != 0 {
+    if CheckEventHappened(0xfu16, game) & 1 != 0 {
         PlmPreInstr_GoToLinkInstruction(k, game);
     } else {
         PlmPreInstr_PlayDudSound(k, game);
@@ -2688,9 +2674,9 @@ pub unsafe fn PlmInstr_SetGreyDoorPreInstr(plmp: *const u8, k: u16, game: &mut G
 }
 pub unsafe fn PlmSetup_C806_LeftGreenGateTrigger(j: u16, game: &mut Game) -> u8 {
     if (*(ram_ptr!(game, u16; 0xc18))
-        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) as i32
-        & 0xfffi32)
-        == 512i32
+        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
+        & 0xfff)
+        == 512
     {
         return sub_84C63F(j, game);
     }
@@ -2700,9 +2686,9 @@ pub unsafe fn PlmSetup_C806_LeftGreenGateTrigger(j: u16, game: &mut Game) -> u8 
 }
 pub unsafe fn PlmSetup_C80A_RightGreenGateTrigger(j: u16, game: &mut Game) -> u8 {
     if (*(ram_ptr!(game, u16; 0xc18))
-        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) as i32
-        & 0xfffi32)
-        == 512i32
+        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
+        & 0xfff)
+        == 512
     {
         return sub_84C647(j, game);
     }
@@ -2736,9 +2722,9 @@ pub unsafe fn PlmSetup_C812_RightRedGateTrigger(j: u16, game: &mut Game) -> u8 {
 }
 pub unsafe fn PlmSetup_C822_RightYellowGateTrigger(j: u16, game: &mut Game) -> u8 {
     if (*(ram_ptr!(game, u16; 0xc18))
-        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) as i32
-        & 0xfffi32)
-        != 768i32
+        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
+        & 0xfff)
+        != 768
     {
         return sub_84C647(j, game);
     }
@@ -2748,9 +2734,9 @@ pub unsafe fn PlmSetup_C822_RightYellowGateTrigger(j: u16, game: &mut Game) -> u
 }
 pub unsafe fn PlmSetup_C81E_LeftYellowGateTrigger(j: u16, game: &mut Game) -> u8 {
     if (*(ram_ptr!(game, u16; 0xc18))
-        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) as i32
-        & 0xfffi32)
-        == 768i32
+        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
+        & 0xfff)
+        == 768
     {
         return sub_84C63F(j, game);
     }
@@ -2761,9 +2747,9 @@ pub unsafe fn PlmSetup_C81E_LeftYellowGateTrigger(j: u16, game: &mut Game) -> u8
 }
 pub unsafe fn PlmSetup_C81A_RightBlueGateTrigger(j: u16, game: &mut Game) -> u8 {
     if (*(ram_ptr!(game, u16; 0xc18))
-        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) as i32
-        & 0xfffi32)
-        != 768i32
+        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
+        & 0xfff)
+        != 768
     {
         return sub_84C647(j, game);
     }
@@ -2772,9 +2758,9 @@ pub unsafe fn PlmSetup_C81A_RightBlueGateTrigger(j: u16, game: &mut Game) -> u8 
 }
 pub unsafe fn PlmSetup_C816_LeftBlueGateTrigger(j: u16, game: &mut Game) -> u8 {
     if (*(ram_ptr!(game, u16; 0xc18))
-        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) as i32
-        & 0xfffi32)
-        != 768i32
+        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
+        & 0xfff)
+        != 768
     {
         return sub_84C63F(j, game);
     }
@@ -2804,7 +2790,7 @@ pub unsafe fn sub_84C64C(j: u16, a: u16, game: &mut Game) -> u8 {
             break;
         }
         v2 = (v2).wrapping_sub(2u16);
-        if (v2 as i32 & 0x8000i32) != 0i32 {
+        if (v2 & 0x8000) != 0 {
             found_plm = false;
             break;
         }
@@ -2945,10 +2931,7 @@ pub unsafe fn PlmSetup_C794_GreyDoor(j: u16, game: &mut Game) -> u8 {
             & (0x7cu16)) as i32
             >> 1i32) as u16
     );
-    update_ram_word!(
-        game.plm_room_arguments[v1],
-        |fresh6| (fresh6 as i32 & !(0x7c00i32)) as u16
-    );
+    update_ram_word!(game.plm_room_arguments[v1], |fresh6| (fresh6 & !(0x7c00)));
     WriteLevelDataBlockTypeAndBts(ram_word!(game, plm_block_indices[v1]), 0xc044u16, game);
     0u8
 }
@@ -2959,11 +2942,11 @@ pub fn PlmSetup_Door_Colored(j: u16, game: &mut Game) -> u8 {
     0
 }
 pub unsafe fn PlmSetup_Door_Blue(j: u16, game: &mut Game) -> u8 {
-    if ram_word!(game, projectile_index) as i32 & 0x8000i32 == 0
+    if ram_word!(game, projectile_index) & 0x8000 == 0
         && (*(ram_ptr!(game, u16; 0xc18))
-            .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) as i32
-            & 0xf00i32)
-            == 768i32
+            .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
+            & 0xf00)
+            == 768
     {
         set_ram_word!(game.plm_header_ptr[(j as i32 >> 1i32)] = 0u16);
     } else {
@@ -2971,8 +2954,7 @@ pub unsafe fn PlmSetup_Door_Blue(j: u16, game: &mut Game) -> u8 {
         let v1 = u16::from_le_bytes([game.g_ram[0x1c87 + index], game.g_ram[0x1c88 + index]]);
         set_ram_word!(
             game.level_data[(v1 as i32 >> 1i32)] =
-                (ram_word!(game, level_data[(v1 as i32 >> 1i32)]) as i32 & 0xfffi32 | 0x8000i32)
-                    as u16
+                (ram_word!(game, level_data[(v1 as i32 >> 1i32)]) & 0xfff | 0x8000)
         );
     }
     0u8
@@ -2984,16 +2966,15 @@ pub unsafe fn PlmSetup_Door_Strange(j: u16, game: &mut Game) -> u8 {
     let mut v3: u16 = 78u16;
     while v2 != ram_word!(game, plm_block_indices[(v3 as i32 >> 1i32)]) {
         v3 = (v3).wrapping_sub(2u16);
-        if (v3 as i32 & 0x8000i32) != 0i32 {
+        if (v3 & 0x8000) != 0 {
             return 0u8;
         }
     }
     set_ram_word!(
         game.plm_timers[(v3 as i32 >> 1i32)] = (*(ram_ptr!(game, u16; 0xc18))
             .offset((ram_word!(game, projectile_index) as i16 as i32 >> 1i32) as isize,)
-            as i32
-            & 0x1fffi32
-            | 0x8000i32) as u16
+            & 0x1fff
+            | 0x8000)
     );
     0u8
 }
@@ -3018,7 +2999,7 @@ pub unsafe fn PlmSetup_D028_D02C_Unused(j: u16, game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn PlmSetup_RespawningSpeedBoostBlock(j: u16, game: &mut Game) -> u8 {
-    if (ram_word!(game, speed_boost_counter) as i32 & 0xf00i32) == 1024i32
+    if (ram_word!(game, speed_boost_counter) & 0xf00) == 1024
         || ram_word!(game, samus_pose) as i32 == kPose_C9_FaceR_Shinespark_Horiz as i32
         || ram_word!(game, samus_pose) as i32 == kPose_CA_FaceL_Shinespark_Horiz as i32
         || ram_word!(game, samus_pose) as i32 == kPose_CB_FaceR_Shinespark_Vert as i32
@@ -3028,7 +3009,7 @@ pub unsafe fn PlmSetup_RespawningSpeedBoostBlock(j: u16, game: &mut Game) -> u8 
     {
         let v1: i32 = j as i32 >> 1i32;
         let v2: i32 = ram_word!(game, plm_block_indices[v1]) as i32 >> 1i32;
-        let v3: u16 = (ram_word!(game, level_data[v2]) as i32 & 0xf000i32 | 0xb6i32) as u16;
+        let v3: u16 = (ram_word!(game, level_data[v2]) & 0xf000 | 0xb6);
         set_ram_word!(game.plm_variable[v1] = v3);
         set_ram_word!(game.level_data[v2] = (v3) & (0xfffu16));
         0u8
@@ -3038,10 +3019,10 @@ pub unsafe fn PlmSetup_RespawningSpeedBoostBlock(j: u16, game: &mut Game) -> u8 
     }
 }
 pub unsafe fn PlmSetup_RespawningCrumbleBlock(j: u16, game: &mut Game) -> u8 {
-    if (ram_word!(game, samus_collision_direction) as i32 & 0xfi32) == 3i32 {
+    if (ram_word!(game, samus_collision_direction) & 0xf) == 3 {
         let v1: i32 = j as i32 >> 1i32;
         let v2: i32 = ram_word!(game, plm_block_indices[v1]) as i32 >> 1i32;
-        let v3: u16 = (ram_word!(game, level_data[v2]) as i32 & 0xf000i32 | 0xbci32) as u16;
+        let v3: u16 = (ram_word!(game, level_data[v2]) & 0xf000 | 0xbc);
         set_ram_word!(game.plm_variable[v1] = v3);
         set_ram_word!(game.level_data[v2] = (v3) & (0x8fffu16));
         set_ram_word!(game.plm_instruction_timer[v1] = 4u16);
@@ -3053,13 +3034,13 @@ pub unsafe fn PlmSetup_RespawningCrumbleBlock(j: u16, game: &mut Game) -> u8 {
 pub unsafe fn PlmSetup_RespawningShotBlock(j: u16, game: &mut Game) -> u8 {
     let v1: i32 = j as i32 >> 1i32;
     let v2: i32 = ram_word!(game, plm_block_indices[v1]) as i32 >> 1i32;
-    let v3: u16 = (ram_word!(game, level_data[v2]) as i32 & 0xf000i32 | 0x52i32) as u16;
+    let v3: u16 = (ram_word!(game, level_data[v2]) & 0xf000 | 0x52);
     set_ram_word!(game.plm_variable[v1] = v3);
     set_ram_word!(game.level_data[v2] = (v3) & (0x8fffu16));
     0u8
 }
 pub unsafe fn PlmSetup_RespawningBombBlock(j: u16, game: &mut Game) -> u8 {
-    if (ram_word!(game, speed_boost_counter) as i32 & 0xf00i32) == 1024i32
+    if (ram_word!(game, speed_boost_counter) & 0xf00) == 1024
         || ram_word!(game, samus_pose) as i32 == kPose_81_FaceR_Screwattack as i32
         || ram_word!(game, samus_pose) as i32 == kPose_82_FaceL_Screwattack as i32
         || ram_word!(game, samus_pose) as i32 == kPose_C9_FaceR_Shinespark_Horiz as i32
@@ -3071,7 +3052,7 @@ pub unsafe fn PlmSetup_RespawningBombBlock(j: u16, game: &mut Game) -> u8 {
     {
         let v2: i32 = j as i32 >> 1i32;
         let v3: i32 = ram_word!(game, plm_block_indices[v2]) as i32 >> 1i32;
-        let v4: u16 = (ram_word!(game, level_data[v3]) as i32 & 0xf000i32 | 0x58i32) as u16;
+        let v4: u16 = (ram_word!(game, level_data[v3]) & 0xf000 | 0x58);
         set_ram_word!(game.plm_variable[v2] = v4);
         set_ram_word!(game.level_data[v3] = (v4) & (0xfffu16));
         0u8
@@ -3089,13 +3070,13 @@ pub unsafe fn PlmSetup_RespawningBombBlock2(j: u16, game: &mut Game) -> u8 {
         let v5: i32 = j as i32 >> 1i32;
         advance_plm_instruction(v5 as usize, 3, game);
         let v6: i32 = ram_word!(game, plm_block_indices[v5]) as i32 >> 1i32;
-        let v7: u16 = (ram_word!(game, level_data[v6]) as i32 & 0xf000i32 | 0x58i32) as u16;
+        let v7: u16 = (ram_word!(game, level_data[v6]) & 0xf000 | 0x58);
         set_ram_word!(game.plm_variable[v5] = v7);
         set_ram_word!(game.level_data[v6] = (v7) & (0x8fffu16));
     } else if v1 == 768i16 {
         let v2: i32 = j as i32 >> 1i32;
         let v3: i32 = ram_word!(game, plm_block_indices[v2]) as i32 >> 1i32;
-        let v4: u16 = (ram_word!(game, level_data[v3]) as i32 & 0xf000i32 | 0x58i32) as u16;
+        let v4: u16 = (ram_word!(game, level_data[v3]) & 0xf000 | 0x58);
         set_ram_word!(game.plm_variable[v2] = v4);
         set_ram_word!(game.level_data[v3] = (v4) & (0x8fffu16));
     } else {
@@ -3139,7 +3120,7 @@ pub unsafe fn PlmSetup_D08C_SuperMissileBlockRespawning(j: u16, game: &mut Game)
     } else if v1 == 512i16 {
         let v2: i32 = j as i32 >> 1i32;
         let v3: i32 = ram_word!(game, plm_block_indices[v2]) as i32 >> 1i32;
-        let v4: u16 = (ram_word!(game, level_data[v3]) as i32 & 0xf000i32 | 0x9fi32) as u16;
+        let v4: u16 = (ram_word!(game, level_data[v3]) & 0xf000 | 0x9f);
         set_ram_word!(game.plm_variable[v2] = v4);
         set_ram_word!(game.level_data[v3] = (v4) & (0x8fffu16));
     } else {
@@ -3149,9 +3130,9 @@ pub unsafe fn PlmSetup_D08C_SuperMissileBlockRespawning(j: u16, game: &mut Game)
 }
 pub unsafe fn PlmSetup_D08C_CrumbleBlock(j: u16, game: &mut Game) -> u8 {
     if (*(ram_ptr!(game, u16; 0xc18))
-        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) as i32
-        & 0xf00i32)
-        != 1280i32
+        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
+        & 0xf00)
+        != 1280
     {
         set_ram_word!(game.plm_header_ptr[(j as i32 >> 1i32)] = 0u16);
     }
@@ -3216,8 +3197,8 @@ pub unsafe fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(
     displacement: *mut i32,
     game: &mut Game,
 ) -> u8 {
-    if (ram_word!(game, collected_items) as i32 & 0x200i32) != 0i32
-        && (ram_word!(game, samus_collision_direction) as i32 & 0xfi32) == 3i32
+    if (ram_word!(game, collected_items) & 0x200) != 0
+        && (ram_word!(game, samus_collision_direction) & 0xf) == 3
         && (ram_word!(game, samus_pose) as i32 == kPose_1D_FaceR_Morphball_Ground as i32
             || ram_word!(game, samus_pose) as i32 == kPose_79_FaceR_Springball_Ground as i32
             || ram_word!(game, samus_pose) as i32 == kPose_7A_FaceL_Springball_Ground as i32)
@@ -3239,7 +3220,7 @@ pub unsafe fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(
 pub unsafe fn PlmPreInstr_IncrementRoomArgIfShotBySuperMissile(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     let v2: u16 = ram_word!(game, plm_timers[v1]);
-    if (v2 as i32 & 0xf00i32) == 512i32 || (v2 as i32 & 0xf00i32) == 256i32 {
+    if (v2 & 0xf00) == 512 || (v2 & 0xf00) == 256 {
         update_ram_word!(game.plm_room_arguments[v1], wrapping_add(1));
     }
     set_ram_word!(game.plm_timers[v1] = 0u16);
@@ -3267,7 +3248,7 @@ pub unsafe fn SpawnMotherBrainGlassShatteringShard(a: u16, game: &mut Game) {
     SpawnEprojWithRoomGfx(0xcefcu16, a, game);
 }
 pub unsafe fn PlmPreInstr_WakePlmIfSamusHasBombs(k: u16, game: &mut Game) {
-    if (ram_word!(game, collected_items) as i32 & 0x1000i32) != 0i32 {
+    if (ram_word!(game, collected_items) & 0x1000) != 0 {
         let v1: i32 = k as i32 >> 1i32;
         set_ram_word!(game.plm_instruction_timer[v1] = 1u16);
         advance_plm_instruction(v1 as usize, 2, game);
@@ -3305,14 +3286,14 @@ pub unsafe fn PlmInstr_TransferWreckedShipSlopesToChozoSpikes(
     plmp
 }
 pub unsafe fn PlmPreInstr_WakeOnKeyPress(k: u16, game: &mut Game) {
-    if (ram_word!(game, joypad1_newkeys) as i32
+    if (ram_word!(game, joypad1_newkeys)
         & (kButton_B as i32
             | kButton_Y as i32
             | kButton_Left as i32
             | kButton_Right as i32
             | kButton_A as i32
-            | kButton_X as i32) as u16 as i32)
-        != 0i32
+            | kButton_X as i32) as u16)
+        != 0
     {
         let v2: i32 = k as i32 >> 1i32;
         set_ram_word!(game.plm_instruction_timer[v2] = 1u16);
@@ -3321,8 +3302,7 @@ pub unsafe fn PlmPreInstr_WakeOnKeyPress(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn PlmInstr_EnableWaterPhysics(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    update_ram_word!(game.fx_liquid_options, |fresh34| (fresh34 as i32 & !(4i32))
-        as u16);
+    update_ram_word!(game.fx_liquid_options, |fresh34| (fresh34 & !(4)));
     plmp
 }
 pub unsafe fn PlmInstr_SpawnN00bTubeCrackEproj(
@@ -3376,7 +3356,7 @@ pub unsafe fn PlmSetup_MotherBrainGlass(j: u16, game: &mut Game) -> u8 {
     0u8
 }
 pub unsafe fn PlmSetup_DeletePlmIfAreaTorizoDead(j: u16, game: &mut Game) -> u8 {
-    if CheckBossBitForCurArea(4u16, game) as i32 & 1i32 != 0 {
+    if CheckBossBitForCurArea(4u16, game) & 1 != 0 {
         set_ram_word!(game.plm_header_ptr[(j as i32 >> 1i32)] = 0u16);
     }
     0u8
@@ -3394,8 +3374,8 @@ pub unsafe fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(
     displacement: *mut i32,
     game: &mut Game,
 ) -> u8 {
-    if CheckBossBitForCurArea(1u16, game) as i32 & 1i32 != 0
-        && (ram_word!(game, samus_collision_direction) as i32 & 0xfi32) == 3i32
+    if CheckBossBitForCurArea(1u16, game) & 1 != 0
+        && (ram_word!(game, samus_collision_direction) & 0xf) == 3
         && (ram_word!(game, samus_pose) as i32 == kPose_1D_FaceR_Morphball_Ground as i32
             || ram_word!(game, samus_pose) as i32 == kPose_79_FaceR_Springball_Ground as i32
             || ram_word!(game, samus_pose) as i32 == kPose_7A_FaceL_Springball_Ground as i32)
@@ -3467,7 +3447,7 @@ pub unsafe fn PlmSetup_D70C_NoobTube(j: u16, game: &mut Game) -> u8 {
 pub unsafe fn PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet(k: u16, game: &mut Game) {
     let v2: i32 = k as i32 >> 1i32;
     let idx: i32 = PrepareBitAccess(ram_word!(game, plm_room_arguments[v2]), game) as i32;
-    if (ram_word!(game, bitmask) as i32 & *ram_ptr!(game; 0xd8b0, idx as isize) as i32) != 0i32 {
+    if (ram_word!(game, bitmask) & *ram_ptr!(game; 0xd8b0, idx as isize) as u16) != 0 {
         let v3: i32 = k as i32 >> 1i32;
         set_ram_word!(game.plm_pre_instrs[v3] = addr_locret_84D779 as u16);
         set_ram_word!(
@@ -3556,7 +3536,7 @@ pub unsafe fn PlmSetup_EyeDoorEye(j: u16, game: &mut Game) -> u8 {
         ram_word!(game, plm_room_arguments[(j as i32 >> 1i32)]),
         game,
     ) as i32;
-    if (ram_word!(game, bitmask) as i32 & *ram_ptr!(game; 0xd8b0, idx as isize) as i32) == 0i32 {
+    if (ram_word!(game, bitmask) & *ram_ptr!(game; 0xd8b0, idx as isize) as u16) == 0 {
         let v1: i32 = j as i32 >> 1i32;
         WriteLevelDataBlockTypeAndBts(ram_word!(game, plm_block_indices[v1]), 0xc044u16, game);
         WriteLevelDataBlockTypeAndBts(
@@ -3573,7 +3553,7 @@ pub unsafe fn PlmSetup_EyeDoor(j: u16, game: &mut Game) -> u8 {
         ram_word!(game, plm_room_arguments[(j as i32 >> 1i32)]),
         game,
     ) as i32;
-    if (ram_word!(game, bitmask) as i32 & *ram_ptr!(game; 0xd8b0, idx as isize) as i32) == 0i32 {
+    if (ram_word!(game, bitmask) & *ram_ptr!(game; 0xd8b0, idx as isize) as u16) == 0 {
         WriteLevelDataBlockTypeAndBts(
             ram_word!(game, plm_block_indices[(j as i32 >> 1i32)]),
             0xa000u16,

@@ -213,7 +213,7 @@ pub unsafe fn Draygon_Init(game: &mut Game) {
         i -= 2i32;
     }
     let mut j: u16 = 4094u16;
-    while (j as i32 & 0x8000i32) == 0i32 {
+    while (j & 0x8000) == 0 {
         set_ram_word!(game.tilemap_stuff[(j as i32 >> 1i32)] = 824u16);
         j = (j).wrapping_sub(2u16);
     }
@@ -317,7 +317,7 @@ pub unsafe fn Draygon_Func_2(game: &mut Game) {
     };
 }
 pub unsafe fn Draygon_Func_3(game: &mut Game) {
-    if (ram_word!(game, nmi_frame_counter_word) as i32 & 0x3fi32) == 0i32 {
+    if (ram_word!(game, nmi_frame_counter_word) & 0x3f) == 0 {
         let mut Random: i8 = NextRandom(game) as i8;
         let result: u16 = (2i32 * ((Random as i32 & 3i32) + 2i32)) as u16;
         if (*Get_Draygon(result as i32, game)).draygon_var_40 == 0 {
@@ -397,7 +397,7 @@ pub unsafe fn Draygon_Func_6(game: &mut Game) {
 }
 pub unsafe fn Draygon_Func_7(game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
-    if (ram_word!(game, nmi_frame_counter_word) as i32 & 0xfi32) == 0i32 {
+    if (ram_word!(game, nmi_frame_counter_word) & 0xf) == 0 {
         (*E).base.current_instruction = addr_kDraygon_Ilist_98FE as u16;
         if (*E).draygon_var_20 != 0 {
             (*E).base.current_instruction = addr_kDraygon_Ilist_9C90 as u16;
@@ -430,7 +430,7 @@ pub unsafe fn Draygon_Func_9(game: &mut Game) {
     (*E).draygon_var_B = ((*E).draygon_var_B).wrapping_add(4u16);
     if (*E).draygon_var_B == (*E).draygon_var_C {
         (*E).draygon_var_B = 0u16;
-        if (ram_word!(game, random_number) as i32 & 1i32) != 0i32 {
+        if (ram_word!(game, random_number) & 1) != 0 {
             (*E).draygon_var_A = ((0xa589b3i32) as u16);
         } else {
             (*E).draygon_var_A = ((0xa58c8ei32) as u16);
@@ -509,7 +509,7 @@ pub unsafe fn Draygon_Func_13(game: &mut Game) {
         as *mut u16);
     (*E).draygon_var_B = ((*E).draygon_var_B).wrapping_add(4u16);
     if (*E).draygon_var_B == (*E).draygon_var_C {
-        if (ram_word!(game, random_number) as i32 & 1i32) != 0i32 {
+        if (ram_word!(game, random_number) & 1) != 0 {
             (*E).draygon_var_A = ((0xa587f4i32) as u16);
             (*E).draygon_var_B = 0u16;
             (*E).base.x_pos = (*E).draygon_var_00;
@@ -565,7 +565,7 @@ pub unsafe fn Draygon_Func_16(game: &mut Game) {
     if ram_word!(game, samus_x_speed_divisor) != 0 {
         current_block = 1399980599923904196;
     } else {
-        if (ram_word!(game, random_number) as i32 & 0xfi32) == 0i32 {
+        if (ram_word!(game, random_number) & 0xf) == 0 {
             let v1: u16 = ((*E).draygon_var_03).wrapping_sub(1u16);
             (*E).draygon_var_03 = v1;
             if v1 == 0 {
@@ -662,7 +662,7 @@ pub unsafe fn Draygon_Func_20(game: &mut Game) {
     if ram_word!(game, samus_x_speed_divisor) != 0 {
         current_block = 11384386367536015713;
     } else {
-        if (ram_word!(game, random_number) as i32 & 0xfi32) == 0i32 {
+        if (ram_word!(game, random_number) & 0xf) == 0 {
             let v1: u16 = ((*E).draygon_var_03).wrapping_sub(1u16);
             (*E).draygon_var_03 = v1;
             if v1 == 0 {
@@ -779,7 +779,7 @@ pub unsafe fn Draygon_Func_23(game: &mut Game) {
 }
 pub unsafe fn Draygon_Func_24(k: u16, game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
-    if (ram_word!(game, samus_grapple_flags) as i32 & 1i32) != 0i32 {
+    if (ram_word!(game, samus_grapple_flags) & 1) != 0 {
         (*E).base.flash_timer = (((*get_EnemyDef_A2((*E).base.enemy_ptr, game)).hurt_ai_time)
             as u16)
             .wrapping_add(8u16);
@@ -815,7 +815,7 @@ pub unsafe fn Draygon_Func_24(k: u16, game: &mut Game) {
 pub unsafe fn Draygon_Func_25(k: u16, game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
     let mut v6: u16 = 0;
-    if (ram_word!(game, samus_grapple_flags) as i32 & 1i32) != 0i32 {
+    if (ram_word!(game, samus_grapple_flags) & 1) != 0 {
         (*E).base.flash_timer = (((*get_EnemyDef_A2((*E).base.enemy_ptr, game)).hurt_ai_time)
             as u16)
             .wrapping_add(8u16);
@@ -831,7 +831,7 @@ pub unsafe fn Draygon_Func_25(k: u16, game: &mut Game) {
             ((*E).draygon_var_05 as i32 >> 2i32) as u16,
             game,
         ));
-        if ((*Get_Draygon(k as i32, game)).base.frame_counter as i32 & 7i32) == 0i32 {
+        if ((*Get_Draygon(k as i32, game)).base.frame_counter & 7) == 0 {
             let x: u16 = (if (*E).draygon_var_20 != 0u16 {
                 (*E).base.x_pos as i32 + 32i32
             } else {
@@ -931,9 +931,9 @@ pub unsafe fn Draygon_Func_31(game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
     if ((*Get_Draygon(ram_word!(game, cur_enemy_index) as i32, game))
         .base
-        .frame_counter as i32
-        & 0xfi32)
-        == 0i32
+        .frame_counter
+        & 0xf)
+        == 0
     {
         let x: u16 = (if (*E).draygon_var_20 != 0u16 {
             (*E).base.x_pos as i32 + 32i32
@@ -1010,7 +1010,7 @@ pub unsafe fn Draygon_Func_33(game: &mut Game) {
     }
 }
 pub unsafe fn Draygon_Func_34(game: &mut Game) {
-    if (ram_word!(game, nmi_frame_counter_word) as i32 & 7i32) == 0i32 {
+    if (ram_word!(game, nmi_frame_counter_word) & 7) == 0 {
         let x: u16 = ((NextRandom(game) as i32 & 0x7fi32) + 192i32) as u16;
         let y: u16 =
             ((((ram_word!(game, random_number)) & (0x3f00u16)) as i32 >> 8i32) + 400i32) as u16;
@@ -1020,7 +1020,7 @@ pub unsafe fn Draygon_Func_34(game: &mut Game) {
 pub unsafe fn Draygon_Func_35(game: &mut Game) {
     let mut Draygon: *mut Enemy_Draygon =
         Get_Draygon(ram_word!(game, cur_enemy_index) as i32, game);
-    if ((*Draygon).base.frame_counter as i32 & 0x7fi32) == 0i32 {
+    if ((*Draygon).base.frame_counter & 0x7f) == 0 {
         Draygon = Get_Draygon(0i32, game);
         CreateSpriteAtPos(
             ((*Draygon).base.x_pos).wrapping_sub(16u16),
@@ -1046,19 +1046,19 @@ pub unsafe fn Draygon_Func_36(game: &mut Game) {
 }
 pub unsafe fn Draygon_Func_37(game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
-    if (ram_word!(game, joypad2_last) as i32 & 0x40i32) != 0i32 {
+    if (ram_word!(game, joypad2_last) & 0x40) != 0 {
         Draygon_Func_39(game);
     } else {
         Draygon_Func_38(game);
     }
-    if (ram_word!(game, joypad2_new_keys) as i32 & 0x4000i32) != 0i32 {
+    if (ram_word!(game, joypad2_new_keys) & 0x4000) != 0 {
         let mut v0: u16 = addr_kDraygon_Ilist_98FE as u16;
         if (*E).draygon_var_20 != 0 {
             v0 = addr_kDraygon_Ilist_9C90 as u16;
         }
         enemy_instruction! {[(*E).base]; instruction = v0, timer = 1u16}
-    } else if (ram_word!(game, joypad2_new_keys) as i32 & 0x8000i32) == 0i32 {
-        if (ram_word!(game, joypad2_new_keys) as i32 & 0x80i32) != 0i32 {
+    } else if (ram_word!(game, joypad2_new_keys) & 0x8000) == 0 {
+        if (ram_word!(game, joypad2_new_keys) & 0x80) != 0 {
             let mut v4: u16 = addr_kDraygon_Ilist_9825 as u16;
             if (*E).draygon_var_20 != 0 {
                 v4 = addr_kDraygon_Ilist_9C18 as u16;
@@ -1079,11 +1079,11 @@ pub unsafe fn Draygon_Func_38(game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
     let v0: u16 = ram_word!(game, joypad2_last);
     let mut v2: u16 = 0;
-    let change_instruction: bool = if (ram_word!(game, joypad2_last) as i32 & 0x200i32) == 0i32 || {
+    let change_instruction: bool = if (ram_word!(game, joypad2_last) & 0x200) == 0 || {
         (*E).base.x_pos = (*E).base.x_pos.wrapping_sub(1);
         v0 == ram_word!(game, debug_enemy_population_pointer)
     } {
-        !((v0 as i32 & 0x100i32) == 0i32)
+        !((v0 & 0x100) == 0)
             && ({
                 (*E).base.x_pos = (*E).base.x_pos.wrapping_add(1);
                 !(v0 == ram_word!(game, debug_enemy_population_pointer))
@@ -1103,9 +1103,9 @@ pub unsafe fn Draygon_Func_38(game: &mut Game) {
     if change_instruction {
         enemy_instruction! {[(*E).base]; instruction = v2, timer = 1u16}
     }
-    if (ram_word!(game, joypad2_last) as i32 & 0x800i32) != 0i32 {
+    if (ram_word!(game, joypad2_last) & 0x800) != 0 {
         (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
-    } else if (ram_word!(game, joypad2_last) as i32 & 0x400i32) != 0i32 {
+    } else if (ram_word!(game, joypad2_last) & 0x400) != 0 {
         (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
     }
 }
@@ -1113,12 +1113,12 @@ pub unsafe fn Draygon_Func_39(game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
     let mut v0: u16 = ram_word!(game, joypad2_last);
     let mut v2: u16 = 0;
-    let change_instruction: bool = if (ram_word!(game, joypad2_last) as i32 & 0x200i32) == 0i32 || {
+    let change_instruction: bool = if (ram_word!(game, joypad2_last) & 0x200) == 0 || {
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(4u16);
         v0 = ram_word!(game, joypad2_last);
         ram_word!(game, joypad2_last) == ram_word!(game, debug_enemy_population_pointer)
     } {
-        !((v0 as i32 & 0x100i32) == 0i32)
+        !((v0 & 0x100) == 0)
             && ({
                 (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(4u16);
                 !(ram_word!(game, joypad2_last) == ram_word!(game, debug_enemy_population_pointer))
@@ -1140,9 +1140,9 @@ pub unsafe fn Draygon_Func_39(game: &mut Game) {
     if change_instruction {
         enemy_instruction! {[(*E).base]; instruction = v2, timer = 1u16}
     }
-    if (ram_word!(game, joypad2_last) as i32 & 0x800i32) != 0i32 {
+    if (ram_word!(game, joypad2_last) & 0x800) != 0 {
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub(4u16);
-    } else if (ram_word!(game, joypad2_last) as i32 & 0x400i32) != 0i32 {
+    } else if (ram_word!(game, joypad2_last) & 0x400) != 0 {
         (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(4u16);
     }
@@ -1156,7 +1156,7 @@ pub unsafe fn Draygon_Func_40(k: u16, game: &mut Game) {
     set_ram_word!(game.samus_x_pos = ((*E).base.x_pos).wrapping_add((v1) as u16));
     set_ram_word!(game.samus_y_pos = ((*E).base.y_pos).wrapping_add(40u16));
     EnemyFunc_B7A1(game);
-    if (ram_word!(game, samus_grapple_flags) as i32 & 2i32) != 0i32 {
+    if (ram_word!(game, samus_grapple_flags) & 2) != 0 {
         set_ram_word!(game.samus_grapple_flags = 0u16);
         (*E).draygon_var_A = ((0xa59154i32) as u16);
     }
@@ -1176,9 +1176,9 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
     let mut v0: u16 = addr_kDraygon_MorePalettes2 as u16;
     if ((*Get_Draygon(ram_word!(game, cur_enemy_index) as i32, game))
         .base
-        .flash_timer as i32
-        & 2i32)
-        != 0i32
+        .flash_timer
+        & 2)
+        != 0
     {
         v0 = addr_word_A5A297 as u16;
     }
@@ -1189,9 +1189,9 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
     );
     if ((*Get_Draygon(ram_word!(game, cur_enemy_index) as i32, game))
         .base
-        .flash_timer as i32
-        & 2i32)
-        == 0i32
+        .flash_timer
+        & 2)
+        == 0
     {
         let mut v3: u16 = (4u16).wrapping_mul((*Get_Draygon(0i32, game)).draygon_var_0E);
         let mut i: i32 = 0i32;
@@ -1207,9 +1207,9 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
     let mut v5: u16 = addr_kDraygon_Palette as u16;
     if ((*Get_Draygon(ram_word!(game, cur_enemy_index) as i32, game))
         .base
-        .flash_timer as i32
-        & 2i32)
-        != 0i32
+        .flash_timer
+        & 2)
+        != 0
     {
         v5 = addr_word_A5A297 as u16;
     }
@@ -1218,9 +1218,9 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
         RomPtr_A5(v5, game) as *const c_void,
         32 as size_t,
     );
-    if (ram_word!(game, samus_grapple_flags) as i32 & 1i32) != 0i32 {
+    if (ram_word!(game, samus_grapple_flags) & 1) != 0 {
         let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
-        if ((*E).base.frame_counter as i32 & 7i32) == 0i32 {
+        if ((*E).base.frame_counter & 7) == 0 {
             let mut v9: i16 = (((*E).base.health) as i16).wrapping_sub(256i16);
             if v9 < 0i16 {
                 v9 = 0i16;
@@ -1522,7 +1522,7 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
                 0xa5a19f,
                 (((v0).wrapping_sub(56u16)) as i32 >> 1i32) as isize
             ));
-        if (v1 as i32 & 0x8000i32) == 0i32 {
+        if (v1 & 0x8000) == 0 {
             let v2: u16 = v1;
             if *((game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *mut u8)
                 .offset(v1 as isize) as *mut u16)
@@ -1573,7 +1573,7 @@ pub unsafe fn DraygonsEye_Main(game: &mut Game) {
     );
 }
 pub unsafe fn Draygon_Func_48(k: u16, game: &mut Game) {
-    if ((*Get_Draygon(k as i32, game)).base.frame_counter as i32 & 0x7fi32) == 0i32 {
+    if ((*Get_Draygon(k as i32, game)).base.frame_counter & 0x7f) == 0 {
         let E1: *mut Enemy_Draygon = Get_Draygon(0x40i32, game);
         game.eproj_spawn_pt = Point16U {
             x: (((*E1).base.x_pos).wrapping_sub(24u16)),
@@ -1609,7 +1609,7 @@ pub unsafe fn Draygon_Func_48(k: u16, game: &mut Game) {
 }
 pub unsafe fn Draygon_Func_49(k: u16, game: &mut Game) {
     let E0: *mut Enemy_Draygon = Get_Draygon(0i32, game);
-    if ((*Get_Draygon(k as i32, game)).base.frame_counter as i32 & 0x7fi32) == 0i32 {
+    if ((*Get_Draygon(k as i32, game)).base.frame_counter & 0x7f) == 0 {
         game.eproj_spawn_pt = Point16U {
             x: (((*E0).base.x_pos).wrapping_add(24u16)),
             y: (((*E0).base.y_pos).wrapping_sub(32u16)),
@@ -1697,7 +1697,7 @@ pub unsafe fn Draygon_Instr_27(k: u16, jp: *const u16, game: &mut Game) -> *cons
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
     (*E).base.x_pos = 128u16;
     (*E).base.y_pos = 624u16;
-    (*E).base.properties = ((*E).base.properties as i32 & 0x5bffi32 | 0xa000i32) as u16;
+    (*E).base.properties = ((*E).base.properties & 0x5bff | 0xa000);
     jp
 }
 pub unsafe fn Draygon_Instr_23(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -1794,7 +1794,7 @@ pub unsafe fn Draygon_Instr_26(k: u16, jp: *const u16, game: &mut Game) -> *cons
     jp
 }
 pub unsafe fn sub_A5E9F5(game: &mut Game) {
-    if (ram_word!(game, nmi_frame_counter_word) as i32 & 0xfi32) == 0i32 {
+    if (ram_word!(game, nmi_frame_counter_word) & 0xf) == 0 {
         NextRandom(game);
         let x: u16 = ((ram_word!(game, random_number) as i32 & 0x3fi32) + 96i32) as u16;
         let y: u16 =
@@ -1844,7 +1844,7 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
     (*E).ssn_var_C = (*E).base.x_pos;
     (*E).ssn_var_D = (*E).base.y_pos;
     (*E).ssn_var_F = 0u16;
-    if (*ram_ptr!(game; 0xd828, ram_word!(game, area_index) as isize) as i32 & 2i32) != 0i32 {
+    if (*ram_ptr!(game; 0xd828, ram_word!(game, area_index) as isize) & 2) != 0 {
         (*E0).base.current_instruction = addr_kDraygon_Ilist_E6B9 as u16;
         (*E0).ssn_var_A = ((0xa5eb1ai32) as u16);
         (*E0).base.properties = ((*E0).base.properties) | (0x8000u16);
@@ -1959,7 +1959,7 @@ pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
     let mut r18: u16 = 0;
     let mut r20: u16 = 0;
     let mut r22: u16 = 0;
-    if (v1 as i32 & 0x8000i32) == 0i32 {
+    if (v1 & 0x8000) == 0 {
         r18 = (v1 as i32 >> 1i32) as u16;
         r20 = (v1 as i32 >> 2i32) as u16;
         r22 = ((v1 as i32 >> 1i32) + (v1 as i32 >> 2i32)) as u16;
@@ -1984,7 +1984,7 @@ pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
     (*E).ssn_var_22 = v2;
     let v3: u16 = ((*E).base.y_pos as i32 - 40i32 - (*E).ssn_var_05 as i32) as u16;
     let mut v4: u16 = 0;
-    if (v3 as i32 & 0x8000i32) == 0i32 {
+    if (v3 & 0x8000) == 0 {
         r18 = (v3 as i32 >> 1i32) as u16;
         r20 = (v3 as i32 >> 2i32) as u16;
         r22 = ((v3 as i32 >> 1i32) + (v3 as i32 >> 2i32)) as u16;
@@ -2015,7 +2015,7 @@ pub unsafe fn SporeSpawn_Shot(game: &mut Game) {
         game,
         projectile_type[ram_word!(game, collision_detection_index)]
     );
-    if (v1 as i32 & 0x700i32) != 0i32 || (v1 as i32 & 0x10i32) != 0i32 {
+    if (v1 & 0x700) != 0 || (v1 & 0x10) != 0 {
         EnemyFunc_A6B4_UsedBySporeSpawn(game);
         v0 = ram_word!(game, cur_enemy_index);
         let EK: *mut Enemy_SporeSpawn = Get_SporeSpawn(v0 as i32, game);
@@ -2024,7 +2024,7 @@ pub unsafe fn SporeSpawn_Shot(game: &mut Game) {
             (*EK).ssn_var_A = ((0xa5eb52i32) as u16);
             let mut v4: i16 = 2i16;
             if (*EK).base.health as i32 - 400i32 & 0x8000i32 != 0 {
-                if ((*E).ssn_var_0C as i32 & 0x8000i32) != 0i32 {
+                if ((*E).ssn_var_0C & 0x8000) != 0 {
                     v4 = -2i16;
                 }
                 (*E).ssn_var_0C = v4 as u16;

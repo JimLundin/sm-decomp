@@ -1143,7 +1143,7 @@ pub unsafe fn HandleRoomShaking(game: &mut Game) {
         && ram_word!(game, earthquake_type) as i32 - 36i32 & 0x8000i32 != 0
     {
         let v0: i32 = 8i32 * ram_word!(game, earthquake_type) as i32 >> 1i32;
-        if (ram_word!(game, earthquake_timer) as i32 & 2i32) != 0i32 {
+        if (ram_word!(game, earthquake_timer) & 2) != 0 {
             update_ram_word!(game.reg_BG1HOFS, wrapping_sub(kRoomShakes[v0 as usize]));
             update_ram_word!(
                 game.reg_BG1VOFS,
@@ -1340,9 +1340,9 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
             game,
         );
         (*E).spritemap_pointer = 0u16;
-        if ((*E).properties as i32 & 0x2000i32) != 0i32 {
+        if ((*E).properties & 0x2000) != 0 {
             let mut v12: u16 = addr_kSpritemap_Nothing_A4 as u16;
-            if ((*E).extra_properties as i32 & 4i32) != 0i32 {
+            if ((*E).extra_properties & 4) != 0 {
                 v12 = addr_kExtendedSpritemap_Nothing_A4 as u16;
             }
             (*E).spritemap_pointer = v12;
@@ -1477,7 +1477,7 @@ pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
         (*LD).tile_data_size = ((*ED).tile_data_size) & (0x7fffu16);
         (*LD).tile_data_ptr = (*ED).tile_data;
         let mut v10: u16 = r30;
-        if ((*ED).tile_data_size as i32 & 0x8000i32) != 0i32 {
+        if ((*ED).tile_data_size & 0x8000) != 0 {
             v10 = ((((*ET).vram_dst) & (0x3000u16)) as i32 >> 3i32) as u16;
         }
         (*LD).offset_into_ram = v10;
@@ -1505,7 +1505,7 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
             let v5: u16 = ram_word!(game, cur_enemy_index);
             let v6: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
             if (*v6).enemy_ptr != 0u16 && (*v6).enemy_ptr as i32 != addr_kEnemyDef_DAFF as i32 {
-                if ((*v6).properties as i32 & 0x200i32) != 0i32 {
+                if ((*v6).properties & 0x200) != 0 {
                     (*v6).enemy_ptr = 0u16;
                 } else {
                     let v7: u16 = ram_word!(game, active_enemy_indexes_write_ptr);
@@ -1513,7 +1513,7 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                     set_ram_word!(game.active_enemy_indexes[v8] = ram_word!(game, cur_enemy_index));
                     set_ram_word!(game.interactive_enemy_indexes[v8] = v5);
                     set_ram_word!(game.active_enemy_indexes_write_ptr = (v7).wrapping_add(2u16));
-                    if ((*v6).properties as i32 & 0x400i32) == 0i32 {
+                    if ((*v6).properties & 0x400) == 0 {
                         let v9: u16 = ram_word!(game, interactive_enemy_indexes_write_ptr);
                         *(ram_ptr!(game, u16; 0x17ec)).offset(
                             (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32 >> 1i32)
@@ -1542,10 +1542,10 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
             let v1: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
             if (*v1).enemy_ptr != 0u16 && (*v1).enemy_ptr as i32 != addr_kEnemyDef_DAFF as i32 {
                 let properties: u16 = (*v1).properties;
-                if (properties as i32 & 0x200i32) != 0i32 {
+                if (properties & 0x200) != 0 {
                     (*v1).enemy_ptr = 0u16;
-                } else if (properties as i32 & 0x800i32) != 0i32
-                    || ((*v1).ai_handler_bits as i32 & 4i32) != 0i32
+                } else if (properties & 0x800) != 0
+                    || ((*v1).ai_handler_bits & 4) != 0
                     || (((*v1).x_width as i32 + (*v1).x_pos as i32
                         - ram_word!(game, layer1_x_pos) as i32) as i16)
                         >= 0i16
@@ -1564,7 +1564,7 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                         (ram_word!(game, active_enemy_indexes_write_ptr) as i32 >> 1i32) as isize,
                     ) = ram_word!(game, cur_enemy_index);
                     set_ram_word!(game.active_enemy_indexes_write_ptr = (v3).wrapping_add(2u16));
-                    if ((*v1).properties as i32 & 0x400i32) == 0i32 {
+                    if ((*v1).properties & 0x400) == 0 {
                         let v4: u16 = ram_word!(game, interactive_enemy_indexes_write_ptr);
                         *(ram_ptr!(game, u16; 0x17ec)).offset(
                             (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32 >> 1i32)
@@ -2244,13 +2244,13 @@ pub unsafe fn EnemyMain(game: &mut Game) {
             }
             set_ram_word!(game.cur_enemy_index = v1);
             let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-            if ((*E).properties as i32 & 0x400i32) == 0i32 {
+            if ((*E).properties & 0x400) == 0 {
                 if (*E).invincibility_timer != 0 {
                     (*E).invincibility_timer = (*E).invincibility_timer.wrapping_sub(1);
                     current_block_39 = 8457315219000651999;
                 } else if ram_word!(game, debug_disable_sprite_interact) == 0 {
-                    if ram_word!(game, debug_time_frozen_for_enemies) as i32
-                        | ram_word!(game, time_is_frozen_flag) as i32
+                    if ram_word!(game, debug_time_frozen_for_enemies)
+                        | ram_word!(game, time_is_frozen_flag)
                         == 0
                     {
                         EnemyCollisionHandler(game);
@@ -2265,7 +2265,7 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                     match current_block_39 {
                         10758786907990354186 => {}
                         _ => {
-                            if ((*E).extra_properties as i32 & 1i32) != 0i32 {
+                            if ((*E).extra_properties & 1) != 0 {
                                 current_block_39 = 1836292691772056875;
                             } else {
                                 current_block_39 = 8457315219000651999;
@@ -2280,8 +2280,8 @@ pub unsafe fn EnemyMain(game: &mut Game) {
             }
             if current_block_39 == 8457315219000651999 {
                 set_ram_word!(game.UNUSED_word_7E17A2 = 0u16);
-                if ram_word!(game, debug_time_frozen_for_enemies) as i32
-                    | ram_word!(game, time_is_frozen_flag) as i32
+                if ram_word!(game, debug_time_frozen_for_enemies)
+                    | ram_word!(game, time_is_frozen_flag)
                     == 0
                 {
                     let mut v6: i16 = 0i16;
@@ -2320,12 +2320,12 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                 }
                 if current_block_39 == 1836292691772056875 {
                 } else {
-                    if ram_word!(game, debug_time_frozen_for_enemies) as i32
-                        | ram_word!(game, time_is_frozen_flag) as i32
+                    if ram_word!(game, debug_time_frozen_for_enemies)
+                        | ram_word!(game, time_is_frozen_flag)
                         == 0
                     {
                         (*E).frame_counter = (*E).frame_counter.wrapping_add(1);
-                        if ((*E).properties as i32 & 0x2000i32) != 0i32 {
+                        if ((*E).properties & 0x2000) != 0 {
                             set_ram_word!(game.enemy_processing_stage = 2u16);
                             ProcessEnemyInstructions(game);
                         }
@@ -2334,29 +2334,29 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                 }
             }
             if current_block_39 == 1836292691772056875 {
-                if ((*E).extra_properties as i32 & 1i32) != 0i32
+                if ((*E).extra_properties & 1) != 0
                     && ((*E).flash_timer == 1u16 || (*E).frozen_timer == 1u16)
                 {
                     (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game))
                         .cause_of_death = 0u16;
                     EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 0u16, game);
                 }
-                if (((*E).extra_properties as i32 & 4i32) != 0i32
+                if (((*E).extra_properties & 4) != 0
                     || EnemyWithNormalSpritesIsOffScreen(game) == 0)
-                    && ((*E).properties as i32 & 0x300i32) == 0i32
-                    && (ram_word!(game, UNUSED_word_7E17A2) as i32 & 1i32) == 0i32
+                    && ((*E).properties & 0x300) == 0
+                    && (ram_word!(game, UNUSED_word_7E17A2) & 1) == 0
                 {
                     DrawOneEnemy(game);
                 }
             }
             if (*E).flash_timer != 0u16
-                && ram_word!(game, debug_time_frozen_for_enemies) as i32
-                    | ram_word!(game, time_is_frozen_flag) as i32
+                && ram_word!(game, debug_time_frozen_for_enemies)
+                    | ram_word!(game, time_is_frozen_flag)
                     == 0
             {
                 (*E).flash_timer = (*E).flash_timer.wrapping_sub(1);
                 if (*E).flash_timer as i32 - 8i32 & 0x8000i32 != 0 {
-                    (*E).ai_handler_bits = ((*E).ai_handler_bits as i32 & !(2i32)) as u16;
+                    (*E).ai_handler_bits = ((*E).ai_handler_bits & !(2));
                 }
             }
             active_enemy_indexes_index += 2i32;
@@ -2479,13 +2479,13 @@ pub unsafe fn SpawnEnemy(db: u8, k: u16, game: &mut Game) -> u16 {
             (*E).frame_counter = 0u16;
             RecordEnemySpawnData(new_enemy_index, game);
             set_ram_word!(game.cur_enemy_index = new_enemy_index);
-            if (*ED).ai_init as i32 & 0x8000i32 != 0 {
+            if (*ED).ai_init & 0x8000 != 0 {
                 CallEnemyAi(
                     (((*ED).bank as i32) << 16i32 | (*ED).ai_init as i32) as u32,
                     game,
                 );
             }
-            if ((*E).properties as i32 & 0x2000i32) != 0i32 {
+            if ((*E).properties & 0x2000) != 0 {
                 (*E).spritemap_pointer = addr_kSpritemap_Nothing_A0 as u16;
             }
             if varE26 == 0 || {
@@ -2526,7 +2526,7 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
         ((*ES).ypos2 as i32 + (*E).y_pos as i32 - ram_word!(game, layer1_y_pos) as i32) as u16;
     if (*E).shake_timer != 0 {
         x2 = (x2 as i32
-            + if ((*E).frame_counter as i32 & 2i32) == 0i32 {
+            + if ((*E).frame_counter & 2) == 0 {
                 1i32
             } else {
                 -1i32
@@ -2535,10 +2535,10 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
     }
     let mut x: u16 = x2;
     let mut y: u16 = y2;
-    if (*E).flash_timer != 0u16 && (ram_word!(game, random_enemy_counter) as i32 & 2i32) != 0i32 {
+    if (*E).flash_timer != 0u16 && (ram_word!(game, random_enemy_counter) & 2) != 0 {
         palette_index = 0 as VoidP;
     } else if (*E).frozen_timer != 0u16
-        && ((*E).frozen_timer >= 0x5au16 || ((*E).frozen_timer as i32 & 2i32) != 0i32)
+        && ((*E).frozen_timer >= 0x5au16 || ((*E).frozen_timer & 2) != 0)
     {
         palette_index = 3072 as VoidP;
     } else {
@@ -2546,7 +2546,7 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
     }
     let r3: u16 = palette_index;
     let r0: u16 = (*E).vram_tiles_index;
-    if ((*E).extra_properties as i32 & 4i32) != 0i32 {
+    if ((*E).extra_properties & 4) != 0 {
         if (((*E).spritemap_pointer) as i16).wrapping_add((0x8000i32) as i16) < 0i16 {
             Unreachable(game);
         }
@@ -2557,7 +2557,7 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
             if *(RomPtrWithBank((*E).bank, (*ext).spritemap, game) as *mut u16) == 0xfffeu16 {
                 x = (x2).wrapping_add((*ext).xpos);
                 y = (y2).wrapping_add((*ext).ypos);
-                if ((*E).extra_properties as i32 & 0x8000i32) != 0i32 {
+                if ((*E).extra_properties & 0x8000) != 0 {
                     ProcessExtendedTilemap((*E).bank, (*ext).spritemap, game);
                 }
             } else {
@@ -2597,7 +2597,7 @@ pub unsafe fn NormalEnemyFrozenAI(game: &mut Game) {
     (*v0).flash_timer = 0u16;
     if (*v0).frozen_timer == 0 || {
         (*v0).frozen_timer = (*v0).frozen_timer.wrapping_sub(1);
-        (ram_word!(game, equipped_beams) as i32 & 2i32) == 0i32
+        (ram_word!(game, equipped_beams) & 2) == 0
     } {
         let v1: u16 = ((*v0).ai_handler_bits) & (0xfffbu16);
         (*v0).ai_handler_bits = v1;
@@ -2639,9 +2639,7 @@ pub fn QueueEnemyBG2TilemapTransfers(game: &mut Game) {
     game.set_nmi_flag_bg2_enemy_vram_transfer(0);
 }
 pub unsafe fn EnemyCollisionHandler(game: &mut Game) {
-    if ((*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).extra_properties as i32 & 4i32)
-        != 0i32
-    {
+    if ((*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).extra_properties & 4) != 0 {
         EprojCollHandler_Multibox(game);
         EnemyBombCollHandler_Multibox(game);
         EnemySamusCollHandler_Multibox(game);
@@ -2672,10 +2670,10 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
     while pidx != num_colls_to_check {
         set_ram_word!(game.collision_detection_index = pidx as u16);
         if !(ram_word!(game, projectile_damage[pidx]) == 0
-            || ram_word!(game, projectile_type[pidx]) as i32 & 0x8000i32 != 0
+            || ram_word!(game, projectile_type[pidx]) & 0x8000 != 0
             || (ram_word!(game, projectile_type[pidx]) as i32 & 0xf00i32) - 1792i32 & 0x8000i32
                 == 0)
-            && ((ram_word!(game, projectile_dir[pidx]) as i32 & 0x10i32) == 0i32)
+            && ((ram_word!(game, projectile_dir[pidx]) & 0x10) == 0)
             && (abs16(
                 (ram_word!(game, projectile_x_pos[pidx]))
                     .wrapping_sub(ram_word!(game, samus_x_pos)),
@@ -2689,8 +2687,8 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
                 - ram_word!(game, projectile_y_radius[pidx]) as i32)
                 < ram_word!(game, samus_y_radius) as i32
         {
-            if (ram_word!(game, projectile_type[pidx]) as i32 & 0xff00i32) != 768i32
-                && (ram_word!(game, projectile_type[pidx]) as i32 & 0xff00i32) != 1280i32
+            if (ram_word!(game, projectile_type[pidx]) & 0xff00) != 768
+                && (ram_word!(game, projectile_type[pidx]) & 0xff00) != 1280
             {
                 update_ram_word!(game.projectile_dir[pidx], |fresh43| (fresh43) | (0x10u16));
                 Samus_DealDamage(
@@ -2743,7 +2741,7 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
     let mut i: i32 = 17i32;
     while i >= 0i32 {
         if ram_word!(game, eproj_id[i]) != 0u16
-            && (ram_word!(game, eproj_properties[i]) as i32 & 0x2000i32) == 0i32
+            && (ram_word!(game, eproj_properties[i]) & 0x2000) == 0
             && ram_word!(game, eproj_radius[i]) != 0u16
         {
             let varE20: u16 =
@@ -2781,7 +2779,7 @@ pub unsafe fn HandleEprojCollWithSamus(k: u16, game: &mut Game) {
         set_ram_word!(game.eproj_instr_timers[v2] = 1u16);
     }
     let v3: i32 = k as i32 >> 1i32;
-    if (ram_word!(game, eproj_properties[v3]) as i32 & 0x4000i32) == 0i32 {
+    if (ram_word!(game, eproj_properties[v3]) & 0x4000) == 0 {
         *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(k as i32 as isize) as *mut u16) = 0u16;
     }
     Samus_DealDamage(
@@ -2802,7 +2800,7 @@ pub unsafe fn EprojProjCollDet(game: &mut Game) {
     let mut i: i32 = 17i32;
     while i >= 0i32 {
         if !(ram_word!(game, eproj_id[i]) == 0
-            || (ram_word!(game, eproj_properties[i]) as i32 & 0x8000i32) == 0i32)
+            || (ram_word!(game, eproj_properties[i]) & 0x8000) == 0)
         {
             let mut j: i32 = 0i32;
             while j < 5i32 {
@@ -2811,13 +2809,13 @@ pub unsafe fn EprojProjCollDet(game: &mut Game) {
                 }
                 let v4: u16 = ram_word!(game, projectile_type[j]);
                 if v4 != 0u16
-                    && (v4 as i32 & 0xf00i32) != 768i32
-                    && (v4 as i32 & 0xf00i32) != 1280i32
+                    && (v4 & 0xf00) != 768
+                    && (v4 & 0xf00) != 1280
                     && (v4 as i32 & 0xf00i32) - 1792i32 & 0x8000i32 != 0
-                    && ram_word!(game, eproj_x_pos[i]) as i32 & 0xffe0i32
-                        == ram_word!(game, projectile_x_pos[j]) as i32 & 0xffe0i32
-                    && ram_word!(game, eproj_y_pos[i]) as i32 & 0xffe0i32
-                        == ram_word!(game, projectile_y_pos[j]) as i32 & 0xffe0i32
+                    && ram_word!(game, eproj_x_pos[i]) & 0xffe0
+                        == ram_word!(game, projectile_x_pos[j]) & 0xffe0
+                    && ram_word!(game, eproj_y_pos[i]) & 0xffe0
+                        == ram_word!(game, projectile_y_pos[j]) & 0xffe0
                 {
                     HandleEprojCollWithProj((i * 2i32) as u16, (j * 2i32) as u16, game);
                 }
@@ -2829,7 +2827,7 @@ pub unsafe fn EprojProjCollDet(game: &mut Game) {
 }
 pub unsafe fn HandleEprojCollWithProj(k: u16, j: u16, game: &mut Game) {
     let i: i32 = j as i32 >> 1i32;
-    if (ram_word!(game, projectile_type[i]) as i32 & 8i32) == 0i32 {
+    if (ram_word!(game, projectile_type[i]) & 8) == 0 {
         update_ram_word!(game.projectile_dir[i], |fresh30| (fresh30) | (0x10u16));
     }
     if ram_word!(game, eproj_flags[(k as i32 >> 1i32)]) == 1u16 {
@@ -2898,7 +2896,7 @@ pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {
     } else if ram_word!(game, samus_invincibility_timer) != 0 {
         return;
     }
-    if (*E).spritemap_pointer as i32 & 0x8000i32 == 0 {
+    if (*E).spritemap_pointer & 0x8000 == 0 {
         return;
     }
     let samus_right_border_coll: u16 =
@@ -2958,7 +2956,7 @@ pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
     if shot_ai as i32 == 0xa0804ci32 & 0xffffi32 || shot_ai as i32 == 0xa0804bi32 & 0xffffi32 {
         return;
     }
-    if ((*E).properties as i32 & 0x400i32) != 0i32
+    if ((*E).properties & 0x400) != 0
         || (*E).invincibility_timer != 0u16
         || (*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32
     {
@@ -2968,11 +2966,11 @@ pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
     while pidx < 5i32 {
         let v4: u16 = ram_word!(game, projectile_type[pidx]);
         if v4 != 0u16
-            && (v4 as i32 & 0xf00i32) != 768i32
-            && (v4 as i32 & 0xf00i32) != 1280i32
+            && (v4 & 0xf00) != 768
+            && (v4 & 0xf00) != 1280
             && (v4 as i32 & 0xf00i32) - 1792i32 & 0x8000i32 != 0
         {
-            if (*E).spritemap_pointer as i32 & 0x8000i32 == 0 {
+            if (*E).spritemap_pointer & 0x8000 == 0 {
                 Unreachable(game);
             }
             let esep: *const u8 = RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game);
@@ -3005,12 +3003,12 @@ pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
                             as i16)
                             < 0i16
                     {
-                        if (ram_word!(game, projectile_type[pidx]) as i32 & 0xf00i32) == 512i32 {
+                        if (ram_word!(game, projectile_type[pidx]) & 0xf00) == 512 {
                             set_ram_word!(game.earthquake_timer = 30u16);
                             set_ram_word!(game.earthquake_type = 18u16);
                         }
-                        if ((*E).properties as i32 & 0x1000i32) != 0i32
-                            || (ram_word!(game, projectile_type[pidx]) as i32 & 8i32) == 0i32
+                        if ((*E).properties & 0x1000) != 0
+                            || (ram_word!(game, projectile_type[pidx]) & 8) == 0
                         {
                             update_ram_word!(game.projectile_dir[pidx], |fresh27| (fresh27)
                                 | (0x10u16));
@@ -3037,7 +3035,7 @@ pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     set_ram_word!(game.enemy_processing_stage = 4u16);
     if (*E).spritemap_pointer == 0
-        || ((*E).properties as i32 & 0x400i32) != 0i32
+        || ((*E).properties & 0x400) != 0
         || (*E).invincibility_timer != 0u16
     {
         return;
@@ -3054,10 +3052,10 @@ pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
         if (ram_word!(game, projectile_x_pos[pidx]) != 0) {
             let v4: u16 = ram_word!(game, projectile_type[pidx]);
             if v4 != 0u16
-                && (v4 as i32 & 0xf00i32) == 1280i32
+                && (v4 & 0xf00) == 1280
                 && ram_word!(game, projectile_variables[pidx]) == 0
             {
-                if (*E).spritemap_pointer as i32 & 0x8000i32 == 0 {
+                if (*E).spritemap_pointer & 0x8000 == 0 {
                     Unreachable(game);
                 }
                 let esep: *const u8 = RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game);
@@ -3277,7 +3275,7 @@ pub unsafe fn EprojCollHandler(game: &mut Game) {
     }
     if (*E).spritemap_pointer == 0
         || (*E).spritemap_pointer as i32 == addr_kSpritemap_Nothing_A0 as i32
-        || ((*E).properties as i32 & 0x400i32) != 0i32
+        || ((*E).properties & 0x400) != 0
         || (*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32
         || (*E).invincibility_timer != 0u16
     {
@@ -3287,8 +3285,8 @@ pub unsafe fn EprojCollHandler(game: &mut Game) {
     while pidx < 5i32 {
         let j: u16 = ram_word!(game, projectile_type[pidx]);
         if j != 0u16
-            && (j as i32 & 0xf00i32) != 768i32
-            && (j as i32 & 0xf00i32) != 1280i32
+            && (j & 0xf00) != 768
+            && (j & 0xf00) != 1280
             && (j as i32 & 0xf00i32) - 1792i32 & 0x8000i32 != 0
         {
             let x: u16 = abs16((ram_word!(game, projectile_x_pos[pidx])).wrapping_sub((*E).x_pos));
@@ -3297,12 +3295,12 @@ pub unsafe fn EprojCollHandler(game: &mut Game) {
                 && (y as i32 - ram_word!(game, projectile_y_radius[pidx]) as i32)
                     < (*E).y_height as i32
             {
-                if (ram_word!(game, projectile_type[pidx]) as i32 & 0xf00i32) == 512i32 {
+                if (ram_word!(game, projectile_type[pidx]) & 0xf00) == 512 {
                     set_ram_word!(game.earthquake_timer = 30u16);
                     set_ram_word!(game.earthquake_type = 18u16);
                 }
-                if ((*E).properties as i32 & 0x1000i32) != 0i32
-                    || (ram_word!(game, projectile_type[pidx]) as i32 & 8i32) == 0i32
+                if ((*E).properties & 0x1000) != 0
+                    || (ram_word!(game, projectile_type[pidx]) & 8) == 0
                 {
                     update_ram_word!(game.projectile_dir[pidx], |fresh26| (fresh26) | (0x10u16));
                 }
@@ -3333,8 +3331,8 @@ pub unsafe fn EnemyBombCollHandler(game: &mut Game) {
     while pidx < 10i32 {
         if !(ram_word!(game, projectile_type[pidx]) == 0
             || ram_word!(game, projectile_variables[pidx]) != 0u16
-            || (ram_word!(game, projectile_type[pidx]) as i32 & 0xf00i32) != 1280i32
-                && (ram_word!(game, projectile_type[pidx]) as i32 & 0x8000i32) == 0i32)
+            || (ram_word!(game, projectile_type[pidx]) & 0xf00) != 1280
+                && (ram_word!(game, projectile_type[pidx]) & 0x8000) == 0)
             && (abs16((ram_word!(game, projectile_x_pos[pidx])).wrapping_sub((*E).x_pos)) as i32
                 - ram_word!(game, projectile_x_radius[pidx]) as i32)
                 < (*E).x_width as i32
@@ -3375,9 +3373,9 @@ pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
                 }) as u16,
                 game,
             ))
-            .power_bomb as i32
-                & 0x7fi32)
-                != 0i32)
+            .power_bomb
+                & 0x7f)
+                != 0)
                 && abs16((ram_word!(game, power_bomb_explosion_x_pos)).wrapping_sub((*E).x_pos))
                     < rx
                 && abs16((ram_word!(game, power_bomb_explosion_y_pos)).wrapping_sub((*E).y_pos))
@@ -3437,10 +3435,10 @@ pub unsafe fn RinkasDeathAnimation(mut a: u16, game: &mut Game) {
     }
 }
 pub unsafe fn SuitDamageDivision(a: u16, game: &mut Game) -> u16 {
-    if (ram_word!(game, equipped_items) as i32 & 0x20i32) != 0i32 {
+    if (ram_word!(game, equipped_items) & 0x20) != 0 {
         return (a as i32 >> 2i32) as u16;
     }
-    if ram_word!(game, equipped_items) as i32 & 1i32 != 0 {
+    if ram_word!(game, equipped_items) & 1 != 0 {
         return (a as i32 >> 1i32) as u16;
     }
     a
@@ -3497,7 +3495,7 @@ pub unsafe fn NormalEnemyTouchAiSkipDeathAnim(game: &mut Game) {
         .power as *mut u16)
     );
     let varE32: u16 = (ram_word!(game, last_enemy_power)) & (0x7fu16);
-    if (ram_word!(game, last_enemy_power) as i32 & 0x7fi32) != 0i32 {
+    if (ram_word!(game, last_enemy_power) & 0x7f) != 0 {
         let dmg: u16 = ((r22 as i32 >> 1i32) * varE32 as i32) as u16;
         if dmg != 0 {
             (*E).flash_timer = (if (*ED).hurt_ai_time != 0u8 {
@@ -3535,7 +3533,7 @@ pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim(game: &mut Game) {
     let power_bomb: u8 = (*get_Vulnerability(vulnerability_ptr, game)).power_bomb;
     if power_bomb != 255u8 {
         let varE32: u16 = ((power_bomb) as u16) & (0x7fu16);
-        if (power_bomb as i32 & 0x7fi32) != 0i32 {
+        if (power_bomb & 0x7f) != 0 {
             let ttt: u32 = (100u32).wrapping_mul((varE32) as u32);
             if ttt != 0 {
                 (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).invincibility_timer =
@@ -3609,9 +3607,9 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
         vulnerability_ptr = addr_stru_B4EC1C as u16;
     }
     let r20: u16 = vulnerability_ptr;
-    if (r18 as i32 & 0xf00i32) != 0i32 {
+    if (r18 & 0xf00) != 0 {
         let mut v5: i16 = ((r18) as i16) & (0xf00i16);
-        apply_damage = if (r18 as i32 & 0xf00i32) == 256i32 || v5 == 512i16 {
+        apply_damage = if (r18 & 0xf00) == 256 || v5 == 512i16 {
             let mut v6: i16 = ((r18 as i32 & 0xf00i32) >> 8i32) as i16;
             varE32 = (((*get_Vulnerability((r20).wrapping_add((v6) as u16), game)).plasma_ice_wave)
                 as u16)
@@ -3635,7 +3633,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
         );
         varE32 = (ram_word!(game, last_enemy_power)) & (0x7fu16);
         if ram_word!(game, last_enemy_power) != 255u16 {
-            apply_damage = !((r18 as i32 & 0x10i32) != 0i32)
+            apply_damage = !((r18 & 0x10) != 0)
                 || ({
                     let charged_beam: u8 = (*get_Vulnerability(r20, game)).charged_beam;
                     !(charged_beam == 255u8)
@@ -3688,9 +3686,8 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
             if (ram_word!(
                 game,
                 projectile_type[ram_word!(game, collision_detection_index)]
-            ) as i32
-                & 8i32)
-                != 0i32
+            ) & 8)
+                != 0
             {
                 (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).invincibility_timer =
                     16u16;
@@ -3704,10 +3701,9 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
                 if (ram_word!(
                     game,
                     projectile_type[ram_word!(game, collision_detection_index)]
-                ) as i32
-                    & 2i32)
-                    != 0i32
-                    && (ram_word!(game, last_enemy_power) as i32 & 0xf0i32) != 128i32
+                ) & 2)
+                    != 0
+                    && (ram_word!(game, last_enemy_power) & 0xf0) != 128
                     && (*v16).frozen_timer == 0
                 {
                     let mut v20: i16 = 400i16;
@@ -4886,9 +4882,8 @@ pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
         ((*E).y_pos as i32 + (*E).y_height as i32 - 1i32) as u16,
         game,
     );
-    if (ram_word!(game, level_data[ram_word!(game, cur_block_index)]) as i32 & 0xf000i32) == 4096i32
-        && (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32 & 0x1fi32)
-            >= 5i32
+    if (ram_word!(game, level_data[ram_word!(game, cur_block_index)]) & 0xf000) == 4096
+        && (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) & 0x1f) >= 5
     {
         result = 1u8;
         let temp_collision_DD4: u16 =
@@ -4896,13 +4891,10 @@ pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
         let temp_collision_DD6: u16 = (16i32
             * (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32
                 & 0x1fi32)) as u16;
-        if (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32 & 0x80i32)
-            == 0i32
-        {
+        if (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) & 0x80) == 0 {
             let j: u16 = (if (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize)
-                as i32
-                & 0x40i32)
-                != 0i32
+                & 0x40)
+                != 0
             {
                 (*E).x_pos as i32 ^ 0xfi32
             } else {
@@ -4920,9 +4912,8 @@ pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
         }
     }
     CalculateBlockContainingPixelPos((*E).x_pos, ((*E).y_pos).wrapping_sub((*E).y_height), game);
-    if (ram_word!(game, level_data[ram_word!(game, cur_block_index)]) as i32 & 0xf000i32) == 4096i32
-        && (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32 & 0x1fi32)
-            >= 5i32
+    if (ram_word!(game, level_data[ram_word!(game, cur_block_index)]) & 0xf000) == 4096
+        && (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) & 0x1f) >= 5
     {
         result = 1u8;
         let temp_collision_DD4_0: u16 =
@@ -4930,12 +4921,10 @@ pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
         let temp_collision_DD6_0: u16 = (16i32
             * (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32
                 & 0x1fi32)) as u16;
-        if *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32 & 0x80i32 != 0
-        {
+        if *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) & 0x80 != 0 {
             let j_0: u16 = (if (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize)
-                as i32
-                & 0x40i32)
-                != 0i32
+                & 0x40)
+                != 0
             {
                 (*E).x_pos as i32 ^ 0xfi32
             } else {

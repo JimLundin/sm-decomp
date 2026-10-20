@@ -284,9 +284,8 @@ pub unsafe fn dma_doHdma(dma: *mut Dma, game: &mut Game) {
             }
             (*dma).channel[i as usize].repCount =
                 (*dma).channel[i as usize].repCount.wrapping_sub(1);
-            (*dma).channel[i as usize].doTransfer =
-                (*dma).channel[i as usize].repCount as i32 & 0x80i32 != 0;
-            if (*dma).channel[i as usize].repCount as i32 & 0x7fi32 == 0i32 {
+            (*dma).channel[i as usize].doTransfer = (*dma).channel[i as usize].repCount & 0x80 != 0;
+            if (*dma).channel[i as usize].repCount & 0x7f == 0 {
                 (*dma).channel[i as usize].repCount = hdma_read_table_byte(dma, i as usize, game);
                 if (*dma).channel[i as usize].indirect {
                     hdma_load_indirect_address(dma, i as usize, game);

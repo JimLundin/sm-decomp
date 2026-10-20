@@ -199,7 +199,7 @@ unsafe fn spc_adrIndInd(spc: *mut Spc, src: *mut u16) -> u16 {
 }
 unsafe fn spc_adrAbsBit(spc: *mut Spc, adr: *mut u16) -> u8 {
     let adrBit: u16 = spc_readOpcodeWord(spc);
-    *adr = (adrBit as i32 & 0x1fffi32) as u16;
+    *adr = (adrBit & 0x1fff);
     (adrBit as i32 >> 13i32) as u8
 }
 unsafe fn spc_adrDpWord(spc: *mut Spc, low: *mut u16) -> u16 {
@@ -384,7 +384,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             let val_1: u8 = spc_read(spc, adr_3);
             let result: u8 = ((*spc).a as i32 + (val_1 as i32 ^ 0xffi32) + 1i32) as u8;
             spc_setZN(spc, result);
-            spc_write(spc, adr_3, (val_1 as i32 | (*spc).a as i32) as u8);
+            spc_write(spc, adr_3, (val_1 | (*spc).a));
         }
         15 => {
             spc_pushWord(spc, (*spc).pc);
@@ -445,7 +445,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
         44 => spc_shift_memory::<false, true>(spc, spc_adrAbs(spc)),
         45 => spc_pushByte(spc, (*spc).a),
         46 => {
-            let val_2: u8 = (spc_read(spc, spc_adrDp(spc)) as i32 ^ 0xffi32) as u8;
+            let val_2: u8 = (spc_read(spc, spc_adrDp(spc)) ^ 0xff);
             let result_0: u8 = ((*spc).a as i32 + val_2 as i32 + 1i32) as u8;
             spc_doBranch(spc, spc_readOpcode(spc), result_0 as i32 != 0i32);
         }
@@ -477,18 +477,18 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             let val_3: u8 = spc_read(spc, adr_6);
             let result_1: u8 = ((*spc).a as i32 + (val_3 as i32 ^ 0xffi32) + 1i32) as u8;
             spc_setZN(spc, result_1);
-            spc_write(spc, adr_6, (val_3 as i32 & !((*spc).a as i32)) as u8);
+            spc_write(spc, adr_6, (val_3 & !((*spc).a)));
         }
         79 => {
             let dst_7: u8 = spc_readOpcode(spc);
             spc_pushWord(spc, (*spc).pc);
-            (*spc).pc = (0xff00i32 | dst_7 as i32) as u16;
+            (*spc).pc = (0xff00 | dst_7 as u16);
         }
         80 => spc_doBranch(spc, spc_readOpcode(spc), !(*spc).v),
         90 => {
             let mut low_1: u16 = 0u16;
             let high_1: u16 = spc_adrDpWord(spc, &raw mut low_1);
-            let value_1: u16 = (spc_readWord(spc, low_1, high_1) as i32 ^ 0xffffi32) as u16;
+            let value_1: u16 = (spc_readWord(spc, low_1, high_1) ^ 0xffff);
             let ya: u16 = ((*spc).a as i32 | ((*spc).y as i32) << 8i32) as u16;
             let result_2: i32 = ya as i32 + value_1 as i32 + 1i32;
             (*spc).c = result_2 > 0xffffi32;
@@ -550,7 +550,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             let value_2: u16 = spc_readWord(spc, low_2, high_2);
             let ya_0: u16 = ((*spc).a as i32 | ((*spc).y as i32) << 8i32) as u16;
             let result_4: i32 = ya_0 as i32 + value_2 as i32;
-            (*spc).v = ya_0 as i32 & 0x8000i32 == value_2 as i32 & 0x8000i32
+            (*spc).v = ya_0 & 0x8000 == value_2 & 0x8000
                 && value_2 as i32 & 0x8000i32 != result_4 & 0x8000i32;
             (*spc).h = (ya_0 as i32 & 0xfffi32) + (value_2 as i32 & 0xfffi32) + 1i32 > 0xfffi32;
             (*spc).c = result_4 > 0xffffi32;
@@ -615,10 +615,10 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
         154 => {
             let mut low_3: u16 = 0u16;
             let high_3: u16 = spc_adrDpWord(spc, &raw mut low_3);
-            let value_3: u16 = (spc_readWord(spc, low_3, high_3) as i32 ^ 0xffffi32) as u16;
+            let value_3: u16 = (spc_readWord(spc, low_3, high_3) ^ 0xffff);
             let ya_1: u16 = ((*spc).a as i32 | ((*spc).y as i32) << 8i32) as u16;
             let result_5: i32 = ya_1 as i32 + value_3 as i32 + 1i32;
-            (*spc).v = ya_1 as i32 & 0x8000i32 == value_3 as i32 & 0x8000i32
+            (*spc).v = ya_1 & 0x8000 == value_3 & 0x8000
                 && value_3 as i32 & 0x8000i32 != result_5 & 0x8000i32;
             (*spc).h = (ya_1 as i32 & 0xfffi32) + (value_3 as i32 & 0xfffi32) + 1i32 > 0xfffi32;
             (*spc).c = result_5 > 0xffffi32;
@@ -647,7 +647,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
                 mod_0 = value_4 as i32 % (*spc).x as i32;
             }
             (*spc).v = result_6 > 0xffi32;
-            (*spc).h = (*spc).x as i32 & 0xfi32 <= (*spc).y as i32 & 0xfi32;
+            (*spc).h = (*spc).x & 0xf <= (*spc).y & 0xf;
             (*spc).a = result_6 as u8;
             (*spc).y = mod_0 as u8;
             spc_setZN(spc, (*spc).a);
@@ -668,10 +668,10 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             let mut low_4: u16 = 0u16;
             let high_4: u16 = spc_adrDpWord(spc, &raw mut low_4);
             let val_5: u16 = spc_readWord(spc, low_4, high_4);
-            (*spc).a = (val_5 as i32 & 0xffi32) as u8;
+            (*spc).a = (val_5 as u8 & 0xff);
             (*spc).y = (val_5 as i32 >> 8i32) as u8;
             (*spc).z = val_5 as i32 == 0i32;
-            (*spc).n = val_5 as i32 & 0x8000i32 != 0;
+            (*spc).n = val_5 & 0x8000 != 0;
         }
         189 => (*spc).sp = (*spc).x,
         190 => {
@@ -679,7 +679,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
                 (*spc).a = ((*spc).a as i32 - 0x60i32) as u8;
                 (*spc).c = false_0 != 0;
             }
-            if (*spc).a as i32 & 0xfi32 > 9i32 || !(*spc).h {
+            if (*spc).a & 0xf > 9 || !(*spc).h {
                 (*spc).a = ((*spc).a as i32 - 6i32) as u8;
             }
             spc_setZN(spc, (*spc).a);
@@ -701,7 +701,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
         206 => (*spc).x = spc_pullByte(spc),
         207 => {
             let result_8: u16 = ((*spc).a as i32 * (*spc).y as i32) as u16;
-            (*spc).a = (result_8 as i32 & 0xffi32) as u8;
+            (*spc).a = (result_8 as u8 & 0xff);
             (*spc).y = (result_8 as i32 >> 8i32) as u8;
             spc_setZN(spc, (*spc).y);
         }
@@ -731,7 +731,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             spc_setZN(spc, (*spc).a);
         }
         222 => {
-            let val_6: u8 = (spc_read(spc, spc_adrDpx(spc)) as i32 ^ 0xffi32) as u8;
+            let val_6: u8 = (spc_read(spc, spc_adrDpx(spc)) ^ 0xff);
             let result_9: u8 = ((*spc).a as i32 + val_6 as i32 + 1i32) as u8;
             spc_doBranch(spc, spc_readOpcode(spc), result_9 as i32 != 0i32);
         }
@@ -740,7 +740,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
                 (*spc).a = ((*spc).a as i32 + 0x60i32) as u8;
                 (*spc).c = true_0 != 0;
             }
-            if (*spc).a as i32 & 0xfi32 > 9i32 || (*spc).h as i32 != 0 {
+            if (*spc).a & 0xf > 9 || (*spc).h as i32 != 0 {
                 (*spc).a = ((*spc).a as i32 + 6i32) as u8;
             }
             spc_setZN(spc, (*spc).a);

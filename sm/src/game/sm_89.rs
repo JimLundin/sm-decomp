@@ -153,7 +153,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
 }
 pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
     let mut v1: i16 = 0;
-    if (ram_word!(game, ceres_status) as i32 & 0x8000i32) != 0i32 {
+    if (ram_word!(game, ceres_status) & 0x8000) != 0 {
         if (112i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) < 0i16
             && (144i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) >= 0i16
             && ram_word!(game, samus_y_pos) as i32 - 128i32 & 0x8000i32 != 0

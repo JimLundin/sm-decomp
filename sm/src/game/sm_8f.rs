@@ -402,7 +402,7 @@ pub unsafe fn RoomCode_ScrollingSkyOcean_(game: &mut Game) {
 }
 pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
     if ram_word!(game, time_is_frozen_flag) == 0
-        && (ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) == 0i32
+        && (ram_word!(game, nmi_frame_counter_word) & 1) == 0
     {
         let mut Random: u16 = NextRandom(game);
         let x: u16 = (ram_word!(game, layer1_x_pos)).wrapping_add((Random as u8) as u16);
@@ -413,9 +413,8 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
             ram_word!(game, room_width_in_blocks) as u8,
         );
         if (*(ram_ptr!(game, u16; 0x10002)).offset((prod as i32 + (x as i32 >> 4i32)) as isize)
-            as i32
-            & 0x3ffi32)
-            != 255i32
+            & 0x3ff)
+            != 255
         {
             RoomCode_GenRandomExplodes(x, y, game);
         }
@@ -432,7 +431,7 @@ pub unsafe fn RoomCode_ExplodeShakes(game: &mut Game) {
 }
 pub unsafe fn RoomCode_GenRandomExplodes_4th(game: &mut Game) {
     if ram_word!(game, time_is_frozen_flag) == 0
-        && (ram_word!(game, nmi_frame_counter_word) as i32 & 3i32) == 0i32
+        && (ram_word!(game, nmi_frame_counter_word) & 3) == 0
     {
         let mut Random: u16 = NextRandom(game);
         RoomCode_GenRandomExplodes(
@@ -719,7 +718,7 @@ pub unsafe fn RoomCode_SpawnCeresFallingDebris(game: &mut Game) {
     } {
         *ram_ptr!(game; 0x7e1, 0) = 8u8;
         *ram_ptr!(game; 0x7e1, 1) = 0u8;
-        let v0: u16 = (if ram_word!(game, random_number) as i32 & 0x8000i32 != 0 {
+        let v0: u16 = (if ram_word!(game, random_number) & 0x8000 != 0 {
             addr_stru_869742 as i32
         } else {
             addr_stru_869734 as i32
@@ -733,7 +732,7 @@ pub unsafe fn RoomCode_SpawnCeresFallingDebris(game: &mut Game) {
     }
 }
 pub unsafe fn RoomCode_HandleCeresRidleyGetaway(game: &mut Game) {
-    if ram_word!(game, ceres_status) as i32 & 1i32 != 0 {
+    if ram_word!(game, ceres_status) & 1 != 0 {
         HandleCeresRidleyGetawayCutscene(game);
     }
 }
@@ -820,7 +819,7 @@ pub unsafe fn RoomDefStateSelect_Finish(k: u16, game: &mut Game) -> u16 {
     0u16
 }
 pub unsafe fn RoomDefStateSelect_TourianBoss01(k: u16, game: &mut Game) -> u16 {
-    if CheckBossBitForCurArea(1u16, game) as i32 & 1i32 == 0 {
+    if CheckBossBitForCurArea(1u16, game) & 1 == 0 {
         return (k).wrapping_add(2u16);
     }
     let v1: *const u16 = RomPtr_8F(k, game) as *const u16;
@@ -836,16 +835,14 @@ pub unsafe fn RoomDefStateSelect_IsEventSet(k: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn RoomDefStateSelect_IsBossDead(k: u16, game: &mut Game) -> u16 {
     let v1: *const u8 = RomPtr_8F(k, game);
-    if CheckBossBitForCurArea(*v1 as u16, game) as i32 & 1i32 != 0 {
+    if CheckBossBitForCurArea(*v1 as u16, game) & 1 != 0 {
         RoomDefStateSelect_Finish(*(v1.offset(1) as *mut u16), game)
     } else {
         (k).wrapping_add(3u16)
     }
 }
 pub unsafe fn RoomDefStateSelect_MorphBallMissiles(k: u16, game: &mut Game) -> u16 {
-    if (ram_word!(game, collected_items) as i32 & 4i32) == 0i32
-        || ram_word!(game, samus_max_missiles) == 0
-    {
+    if (ram_word!(game, collected_items) & 4) == 0 || ram_word!(game, samus_max_missiles) == 0 {
         return (k).wrapping_add(2u16);
     }
     let v1: *const u16 = RomPtr_8F(k, game) as *const u16;
@@ -941,7 +938,7 @@ pub unsafe fn RunDoorSetupCode(game: &mut Game) {
 }
 pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
     let mut ai_var_D: u16 = 0;
-    if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).properties as i32 & 0x200i32) == 0i32 {
+    if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).properties & 0x200) == 0 {
         if (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_A == 64u16 {
             set_ram_word!(
                 game.reg_BG1VOFS = ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).ai_var_D as i32
@@ -949,9 +946,7 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
                     + ram_word!(game, layer1_y_pos) as i32)
                     as u16
             );
-        } else if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_B as i32 & 0x400i32)
-            != 0i32
-        {
+        } else if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_B & 0x400) != 0 {
             let fresh5 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).ai_var_D;
             fresh5.write_unaligned(fresh5.read_unaligned().wrapping_sub(1));
             if fresh5.read_unaligned() as i32 + 7i32 & 0x8000i32 != 0 {
@@ -969,7 +964,7 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
         {
             let fresh7 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_D;
             fresh7.write_unaligned(fresh7.read_unaligned().wrapping_sub(1));
-            if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_D as i32 & 1i32) != 0i32 {
+            if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_D & 1) != 0 {
                 update_ram_word!(game.layer1_x_pos, wrapping_sub(4u16));
             } else {
                 update_ram_word!(game.layer1_x_pos, wrapping_add(4u16));
