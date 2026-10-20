@@ -2535,7 +2535,44 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `db17de38` shares 121 ordered
+Latest reviewed integration (2026-10-20): `44930f5a` completes the shared
+C-library/RAM/control composition with `24fcc574` and `fb65629d`.
+Independent reconstruction binds all 77 inputs at each of the three focused
+commits to its reviewed stage; the final commit matches the verified source.
+
+The C-library boundary preserves all 172 declarations' ABI signatures and
+42 symbol names, including caller-resolved FILE, size_t and native C types.
+Both Windows-specific foreign blocks and both main platform guards remain.
+Actual library expansion retains all 2241993 remaining tokens, including
+65358 commas, after removing relocated declarations, the new module and
+separately checked imports. All 965 original imports retain their exact
+contents and module scopes despite rustfmt moves.
+
+All 486 RAM runs retain 1692 ordered setters, including 409 indexed stores.
+Actual compiler output on the final C-library/register baseline matches all
+10243078 bytes after removing only the exact added macro, re-export and
+25 imports. The original setter expansion, statement boundaries and index
+evaluation order remain intact; all three expansion/helper pins stay fixed.
+
+All 106 Boolean locals across 104 functions reconstruct through 611 finite
+mapping edits, 95 decision folds, 62 declaration merges, 13 match rewrites
+and 300 identifier substitutions. All 47 multistate locals and unselected
+functions remain exact. Independent checks preserve 212 ordered comments and
+130 attributes. Condition types, macro internals, discarded unit values and
+retained prefix scopes rule out new destructor-timing changes.
+The 399 mapping checks and all 4178 condition/effect traces pass, with
+4178 result-inversion, 47 reorder and 81 effect-deletion controls detected.
+
+One normal release (22.72s), formatting/check, progress and full any% run
+verify the combined source: 129712/0, native exit 0, 105.19s wall/105.02s
+replay. Review reused this run; all 102 replay/proof pins remain stable.
+Rust lines fall 1248 to 134177 (-260 C-library, -631 RAM, -357 control).
+Foreign blocks fall 39 to 3. Cast lines rise four through formatting;
+15773 source as-i32 occurrences and 14027 parsed cast nodes remain unchanged.
+Any% still covers six rooms, three enemy definitions and zero ending/credits
+frames. Broader gameplay, frontend execution and alias safety remain open.
+
+Included `db17de38` shares 121 ordered
 register-write runs across eight callers. Independent AST inventory accounts
 for all 899 direct writes: 778 grouped operations and 121 unchanged isolated
 writes. Caller imports resolve to the original RTL functions without local
