@@ -22,6 +22,24 @@ further, by tackling large structural changes before individual cleanup.
 Use **90,000 lines as a stretch planning checkpoint**, not a demonstrated
 forecast. This work order replaces earlier reduction and cleanup queues.
 
+Active persistent goal: keep improving the translation process until there is
+a verified path to an implementation below 100,000 lines. A successful partial
+profile or pilot does not finish this goal. The latest implemented composition
+now produces **162,136 -> 125,802 (-36,334)**, with complete optimized library
+and actual frontend metadata compilation passing. It combines current-derived
+numeric/table policies, RAM and ROM access, external GL bindings, PNG algorithms,
+unreferenced declarations, canonical types and shared transfer/tile kernels.
+All local support and overlaps are counted; external GL dependency code is
+disclosed separately. No new main deletion or whole-game replay is claimed.
+Next are the earlier C algorithm families and alpha-equivalent enemy layouts.
+Then match remaining generated routines to current named kernels, accounting
+for moved helpers. Numeric, comparison, entity-access and initialization trials
+on current source save only 31, 69, 152 and 13 lines on their separate inputs;
+park these as volume priorities. Moving functions into associated Game
+functions increases code, so reject that spelling as a volume strategy.
+Extend the accepted process instead of restarting prior audits or adding
+standalone savings.
+
 The requested parallel **implemented original-C pattern experiments** are
 complete. The selected mixed C/native-Rust candidate removes **3,016 lines
 (82,234 -> 79,218)** across 16 gameplay units and shared support after identical
@@ -59,7 +77,7 @@ with 5,004 C/generated-Rust cases passing. Current helpers and shared owners
 are retained and counted; no current-main reduction is claimed. These are
 executable emission rules, not a proposal to restart or fork a compiler.
 
-The complete compatible emission composition is **195,699 -> 162,136
+The preceding compatible emission composition was **195,699 -> 162,136
 (-33,563)** after the earlier compact preparation of the 278,936-line initial
 Rust. It runs primitive types, prior constructors/constants, structured control,
 current data/type templates, RAM metadata and callback/table sharing in order.

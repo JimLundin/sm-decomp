@@ -1104,6 +1104,144 @@ translation retained for unsupported forms. No maintained compiler fork is
 needed. Frozen rules, all stage outputs, hashes, compiler results and the
 reproducer are under integration/whole-original and integration/compose_whole.py.
 
+### Extend the complete profile using current engine representations
+
+The next implemented composition starts from the exact **162,136-line**
+output above. Its complete new composition produces **125,802 lines (-36,334)**;
+the complete optimized library and actual separate frontend entrypoint both
+compile. This is additional reduction of the early generated implementation,
+not 36,334 lines removable from the maintained 107,520-line engine.
+
+The original input remains 278,936 Rust lines. The original Makefile's C
+implementation remains 100,374 lines, including 83,657 gameplay lines, with
+headers counted separately. Neither denominator changes for this experiment.
+No under-100,000 result or whole-game runtime equivalence is established yet.
+The cumulative generated-source reduction is **153,134 lines (54.9%)**.
+
+| Sequential emission policy | Complete Rust lines | Incremental removal |
+| --- | ---: | ---: |
+| Previous complete profile | 162,136 | - |
+| Numeric cleanup after primitive resolution | 152,687 | 9,449 |
+| Literal array emission | 150,977 | 1,710 |
+| Immutable C string tables | 150,407 | 570 |
+| Unreferenced original-C function addresses | 148,214 | 2,193 |
+| Unreferenced native functions | 147,112 | 1,102 |
+| Ordered word-transfer kernels | 146,383 | 729 |
+| Current RAM/ROM access representation | 143,637 | 2,746 |
+| Source-recognized corpse-tile kernel | 143,104 | 533 |
+| External GL bindings with original loader behavior | 131,428 | 11,676 |
+| Macro registration repair | 131,428 | 0 |
+| Source-specialized PNG kernel | 128,669 | 2,759 |
+| Unreferenced auxiliary declarations | 127,973 | 696 |
+| Canonical backend types | 126,418 | 1,555 |
+| Shared forwarding/no-op declarations | 126,083 | 335 |
+| Source-recognized tile-flip writers | **125,802** | **281** |
+
+Each row uses the preceding actual output and the same formatter. All local
+helpers, adapters, declarations and module registrations remain counted. The
+literal-array pass saves 1,710 here, versus 5,758 alone: most of its standalone
+gain overlaps numeric cleanup. The corpse kernel saves 533 here, versus 764
+on the prior complete profile and 2,111 in its earlier isolated raw family.
+Those larger overlapping measurements are not added. String-table emission
+also contains macro representation compression; its standalone expansion
+accounts for 615 lines, with 45 ordinary support lines. It is not removal of
+game algorithms.
+
+The final snapshot includes 62 Rust files and a nine-line dependency manifest.
+This round's invoked Python rules, validators and orchestration total 3,911
+lines separately; they are research tools, not gameplay code omitted
+from the Rust count. All emitted game algorithms and shared support are counted.
+
+The useful compiler lesson is ordering and visibility. Primitive resolution
+exposed 35,495 remaining integer-literal casts. Callback expansion exposed
+2,031 bodies previously hidden from syntax passes and compiler diagnostics.
+The numeric pass applies only its proved rules and machine-applicable compiler
+suggestions, then regenerates shared callbacks. All 3,407 distinct literal
+assertions pass; complete expanded correspondence retains 7,205 functions,
+including 118 dispatcher maps. The separate binary lacked two macro providers;
+their one-line repair is charged to the numeric stage.
+
+The memory policy recovers current caller-side named reads, writes, updates,
+split-word operations, ROM reads and typed pointer declarations while keeping
+the older global storage model. Its actual composed output checks 867 map rows
+against original C, every one of 150 getter declarations and 49 ROM wrappers,
+19,904 offset-cast values, and over 13 million executed getter/wrapper address
+comparisons. It preserves unaligned access and evaluation order. Current main
+already implements this supported policy: its measured remaining match count
+is zero.
+
+The algorithm policies recognize ordered C effects and emit existing ordinary
+Rust kernels. All 150 actual composed transfer regions pass 9,600 C/pre-pass/
+replacement cases, comparing full RAM and retained counters. The composed
+corpse family exactly matches the 24-member replacement tested over 126,720
+original-C cases, including the independently checked progress-field offset.
+These are constructed component checks, not game-route execution.
+
+Backend type sharing replaces 94 repeated declarations with eight canonical
+C layouts. Actual composed-library checks pass for 2,018 fields, 194 original-C
+header values and 6,054 raw-byte probes; all other source tokens are retained
+across the 62-file stage. The actual forwarding stage preserves all 6,863
+function signatures, 364 forwarding/no-op effect identities, 6,381 other
+bodies, 118 complete dispatch maps and 4,350 storage items. The four tile-flip
+writers emit the existing tile kernel and pass
+540,672 C/pre-pass/replacement component cases, including overlap and boundary
+counters. Their actual combined marginals appear in the table above; ordinary
+kernel support and the forwarding macro are included.
+
+The GL policy replaces locally generated bindings with published `gl` 0.14.0.
+Its counted adapter retains original extension-dependent lookup order, version
+caching and missing-symbol behavior. All 1,310 loader traces, 423 calls across
+47 used procedures, and 121 unchanged caller argument lists pass against
+scripted SDL/driver contracts. The external dependency generates **21,338
+binding lines**, outside maintained project source; this is dependency reuse,
+not a claim that total third-party build source shrinks. No real GPU test or
+linked SDL executable is claimed.
+
+The PNG policy recognizes the pinned public stb implementation, derives its
+parameters, emits the existing compact PNG algorithm template, and extracts
+all 18 legacy inflater functions from the actual input. It preserves the
+original loader's malformed-input and C stream behavior. The tested kernel
+and inflater are byte-identical in the composed result: 427 fixtures pass 854
+decoder/loader comparisons, 427 actual texture-consumer comparisons and 3,702
+ordered C file-call comparisons. A general PNG crate was not assumed equivalent.
+
+The symbol passes retain exports, attributes, ambiguous names, dispatch routes
+and referenced tables. Public native declarations must also be absent from the
+frozen current source contract. Actual-input inverse token checks and guard
+cases verify the omissions; these passes do not promise an API for unknown
+external consumers.
+
+Complete integration caught a real composition defect: a newly inserted module
+split `#[macro_export]` from its macro. The module is now registered after the
+complete item, with compiled attribute guards; the zero-line repair is explicit
+above. Earlier failed output is retained and excluded from accepted compilation
+claims. This is why isolated successful passes are insufficient.
+
+Frozen passes, complete outputs, component checks and reproduction commands
+are under `TEMP/sm-tailored-next/`, with the accepted composition in
+`integration/phase4/RESULTS.json`. The earlier C algorithm families and
+alpha-equivalent enemy layouts are the next composition work. Current-source
+numeric, comparison, entity-access and local-initialization experiments remove
+only 31, 69, 152 and 13 lines respectively on their separate inputs. They have
+compiled component checks but are parked as volume priorities, rather than
+presented as a substantial deletion budget. The maintained source remains
+unchanged, including the unrelated shader draft.
+
+A signed-word delta helper also saves only 51 current lines across 491 typed
+sites, with full compilation and source-expression correspondence. An eight-bit
+wrapping subtraction was correctly excluded. This is another parked option;
+its native algebra executable was blocked by Windows, so no executed Rust
+algebra claim is made.
+
+A separate current-source architecture experiment moves Game-dependent
+functions into inherent associated functions, preserving argument order and
+function-pointer signatures. It **increases** the complete source by 1,011
+lines for 2,644 eligible functions; limiting it to 408 cross-module functions
+still adds 97. Both full roots compile, all 17,058 ordinary calls retain their
+argument/target structure, and callback/order controls pass. Reject associated
+ownership as a volume reduction. Receiver methods and reorganization into
+domain modules remain untested by this trial.
+
 ## Independent transpilers: executed comparisons
 
 The initial trial built three independent translators from pinned source and
