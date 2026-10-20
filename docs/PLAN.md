@@ -31,6 +31,18 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Next prepared family (2026-10-20): isolated literal field-store candidate
+covers all 220 adjacent same-receiver/same-integer-literal runs, 559 stores
+across 24 gameplay/hardware/frontend callers and 23 literal spellings.
+Measured net -304 formatted Rust lines. Source reconstruction and both
+core/actual frontend compiler expansions pass; all original nonblank expanded
+lines are byte-exact after removing only added helper/comment/imports.
+Receiver expressions and contextually typed literals repeat at each original
+assignment; no value, receiver or borrow is hoisted. Candidate is preserved
+outside maintained source, pending reconciliation with the active 55-loop/
+702-local composition before final normal release and one any% replay.
+No field-literal build/replay has started; avoid stale parallel integration.
+
 Enemy instruction/timer pairs (2026-10-20): one caller-side macro shares all
 249 adjacent direct field pairs with exactly matching receiver expressions
 across 13 callers: 192 instruction-first and 57 timer-first. Receiver tokens
