@@ -971,24 +971,20 @@ pub unsafe fn Crocomire_Func_59(game: &mut Game) {
 pub unsafe fn Crocomire_Func_60(game: &mut Game) {
     let E = Get_Crocomire(word!(game.cur_enemy_index) as i32, game);
     (*E).var_A = ((*E).var_A).wrapping_add(2);
-    word!(game.g_word_7E0692 = 256);
-    word!(game.croco_cur_vline_idx = 0);
-    word!(
-        game.g_word_7E0698 = *((rom_ptr!(game, u16; 0xa49bc5) as *mut u8)
+    word! { game;
+        g_word_7E0692 = 256;
+        croco_cur_vline_idx = 0;
+        g_word_7E0698 = *((rom_ptr!(game, u16; 0xa49bc5) as *mut u8)
             .offset(word!(game.croco_word_7E069A) as i32 as isize)
-            as *mut u16)
-    );
-    word!(game.g_word_7E0694 = word!(game.g_word_7E0698));
-    word!(
-        game.g_word_7E0696 = *((rom_ptr!(game, u16; 0xa49bc7) as *mut u8)
+            as *mut u16);
+        g_word_7E0694 = word!(game.g_word_7E0698);
+        g_word_7E0696 = *((rom_ptr!(game, u16; 0xa49bc7) as *mut u8)
             .offset(word!(game.croco_word_7E069A) as i32 as isize)
-            as *mut u16)
-    );
-    word!(
-        game.g_word_7E068E = *((rom_ptr!(game, u16; 0xa49bc9) as *mut u8)
+            as *mut u16);
+        g_word_7E068E = *((rom_ptr!(game, u16; 0xa49bc9) as *mut u8)
             .offset(word!(game.croco_word_7E069A) as i32 as isize)
-            as *mut u16)
-    );
+            as *mut u16);
+    }
     let bank: u8 = *((rom_ptr!(game, u16; 0xa49bcb) as *mut u8)
         .offset(word!(game.croco_word_7E069A) as i32 as isize) as *mut u16)
         as u8;

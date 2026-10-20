@@ -680,20 +680,19 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
             as u16,
         game,
     );
-    word!(game.room_ptr = (*drd).room_ptr_);
-    word!(game.door_def_ptr = (*drd).door_ptr);
-    word!(game.layer1_x_pos = (*drd).screen_x_pos);
-    word!(game.bg1_x_offset = word!(game.layer1_x_pos));
-    word!(game.layer1_y_pos = (*drd).screen_y_pos);
-    word!(game.bg1_y_offset = word!(game.layer1_y_pos));
-    word!(game.samus_y_pos = (word!(game.layer1_y_pos)).wrapping_add((*drd).samus_x_offs));
-    word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
-    word!(
-        game.samus_x_pos =
-            ((*drd).samus_y_offs as i32 + word!(game.layer1_x_pos) as i32 + 128) as u16
-    );
-    word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
-    word!(game.demo_timer = (*drd).demo_length);
+    word! { game;
+        room_ptr = (*drd).room_ptr_;
+        door_def_ptr = (*drd).door_ptr;
+        layer1_x_pos = (*drd).screen_x_pos;
+        bg1_x_offset = word!(game.layer1_x_pos);
+        layer1_y_pos = (*drd).screen_y_pos;
+        bg1_y_offset = word!(game.layer1_y_pos);
+        samus_y_pos = (word!(game.layer1_y_pos)).wrapping_add((*drd).samus_x_offs);
+        samus_prev_y_pos = word!(game.samus_y_pos);
+        samus_x_pos = ((*drd).samus_y_offs as i32 + word!(game.layer1_x_pos) as i32 + 128) as u16;
+        samus_prev_x_pos = word!(game.samus_x_pos);
+        demo_timer = (*drd).demo_length;
+    }
     byte!(@pointer ram_ptr!(game, u16; 0x79f); 0) =
         (*get_RoomDefHeader(word!(game.room_ptr), game)).area_index_;
     word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
@@ -3282,14 +3281,10 @@ static kDrawMenuSelectionMissile_SpriteMap: [u16; 4] = [0x37, 0x36, 0x35, 0x34];
 pub unsafe fn DrawMenuSelectionMissile(game: &mut Game) {
     if word!(game.cinematic_var5) != 0 {
         if word!(game.cinematic_var5, wrapping_sub(1), reread) == 0 {
-            word!(
-                game.eproj_id[0] =
-                    (*((ram_ptr!(game, u16; 0x1997)) as *mut u8) as i32 + 1 & 3) as u16
-            );
-            word!(
-                game.cinematic_var5 =
-                    kDrawMenuSelectionMissile_Enable[word!(game.eproj_id[0]) as usize]
-            );
+            word! { game;
+                eproj_id[0] = (*((ram_ptr!(game, u16; 0x1997)) as *mut u8) as i32 + 1 & 3) as u16;
+                cinematic_var5 = kDrawMenuSelectionMissile_Enable[word!(game.eproj_id[0]) as usize];
+            }
         }
     }
     DrawMenuSpritemap(

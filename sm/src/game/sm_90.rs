@@ -1103,14 +1103,11 @@ pub unsafe fn Samus_CalcSpritemapPos(k: u16, game: &mut Game) -> PairU16 {
 pub unsafe fn Samus_CalcSpritemapPos_Default(j: u16, game: &mut Game) -> PairU16 {
     let v1: i32 = *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629))).y_offset_to_gfx)
         .offset((4 * j as i32) as isize) as i8 as i32;
-    word!(
-        game.samus_spritemap_y_pos =
-            (word!(game.samus_y_pos) as i32 - v1 - word!(game.layer1_y_pos) as i32) as u16
-    );
-    word!(
-        game.samus_spritemap_x_pos =
-            (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos))
-    );
+    word! { game;
+        samus_spritemap_y_pos =
+            (word!(game.samus_y_pos) as i32 - v1 - word!(game.layer1_y_pos) as i32) as u16;
+        samus_spritemap_x_pos = (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos));
+    }
     MakePairU16(
         word!(game.samus_spritemap_x_pos),
         word!(game.samus_spritemap_y_pos),
@@ -1122,15 +1119,13 @@ pub unsafe fn Samus_CalcSpritemapPos_Standing(j: u16, game: &mut Game) -> PairU1
     let mut v1: i16 = (j >> 1) as i16;
     if j as i32 >> 1 == 0 || v1 as i32 == kPose_9B_FaceF_VariaGravitySuit as i32 {
         if word!(game.samus_anim_frame) as i32 - 2i32 & 0x8000 == 0 {
-            word!(
-                game.samus_spritemap_y_pos =
+            word! { game;
+                samus_spritemap_y_pos =
                     (word!(game.samus_y_pos) as i32 - 1i32 - word!(game.layer1_y_pos) as i32)
-                        as u16
-            );
-            word!(
-                game.samus_spritemap_x_pos =
-                    (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos))
-            );
+                        as u16;
+                samus_spritemap_x_pos =
+                    (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos));
+            }
             return MakePairU16(
                 (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos)),
                 (word!(game.samus_y_pos) as i32 - 1i32 - word!(game.layer1_y_pos) as i32) as u16,
@@ -1142,15 +1137,13 @@ pub unsafe fn Samus_CalcSpritemapPos_Standing(j: u16, game: &mut Game) -> PairU1
         let r18: u16 = *((&raw const g_byte_908D28 as *const u8).offset(
             (word!(game.samus_anim_frame) as i32 + 4 * (v1 as i32 - 164i32)) as u16 as isize,
         ) as *mut u16);
-        word!(
-            game.samus_spritemap_y_pos = (word!(game.samus_y_pos) as i32
+        word! { game;
+            samus_spritemap_y_pos = (word!(game.samus_y_pos) as i32
                 - r18 as i32
-                - word!(game.layer1_y_pos) as i32) as u16
-        );
-        word!(
-            game.samus_spritemap_x_pos =
-                (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos))
-        );
+                - word!(game.layer1_y_pos) as i32) as u16;
+            samus_spritemap_x_pos =
+                (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos));
+        }
         return MakePairU16(
             (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos)),
             (word!(game.samus_y_pos) as i32 - r18 as i32 - word!(game.layer1_y_pos) as i32) as u16,
@@ -1172,14 +1165,12 @@ pub unsafe fn Samus_CalcSpritemapPos_Crouch(j: u16, game: &mut Game) -> PairU16 
         let v4: i32 = byte_908D80
             [(word!(game.samus_anim_frame) as i32 + 2 * (v1 as i32 - 53i32)) as u16 as usize]
             as i32;
-        word!(
-            game.samus_spritemap_y_pos =
-                (v4 + word!(game.samus_y_pos) as i32 - word!(game.layer1_y_pos) as i32) as u16
-        );
-        word!(
-            game.samus_spritemap_x_pos =
-                (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos))
-        );
+        word! { game;
+            samus_spritemap_y_pos =
+                (v4 + word!(game.samus_y_pos) as i32 - word!(game.layer1_y_pos) as i32) as u16;
+            samus_spritemap_x_pos =
+                (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos));
+        }
         MakePairU16(
             (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos)),
             word!(game.samus_spritemap_y_pos),
@@ -1204,14 +1195,11 @@ pub unsafe fn Samus_CalcSpritemapPos_Special(j: u16, game: &mut Game) -> PairU16
         }
         -3i32
     };
-    word!(
-        game.samus_spritemap_y_pos =
-            (v2 + word!(game.samus_y_pos) as i32 - word!(game.layer1_y_pos) as i32) as u16
-    );
-    word!(
-        game.samus_spritemap_x_pos =
-            (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos))
-    );
+    word! { game;
+        samus_spritemap_y_pos =
+            (v2 + word!(game.samus_y_pos) as i32 - word!(game.layer1_y_pos) as i32) as u16;
+        samus_spritemap_x_pos = (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos));
+    }
     MakePairU16(
         (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos)),
         (v2 + word!(game.samus_y_pos) as i32 - word!(game.layer1_y_pos) as i32) as u16,
@@ -1967,14 +1955,11 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
                         .wrapping_sub((kSamus_HandleExtraRunspeedX_Tab3[0i32 as usize]) as i16)
                         >= 0
                 {
-                    word!(
-                        game.samus_x_extra_run_speed =
-                            kSamus_HandleExtraRunspeedX_Tab2[0i32 as usize]
-                    );
-                    word!(
-                        game.samus_x_extra_run_subspeed =
-                            kSamus_HandleExtraRunspeedX_Tab3[0i32 as usize]
-                    );
+                    word! { game;
+                        samus_x_extra_run_speed = kSamus_HandleExtraRunspeedX_Tab2[0i32 as usize];
+                        samus_x_extra_run_subspeed =
+                            kSamus_HandleExtraRunspeedX_Tab3[0i32 as usize];
+                    }
                     current_block = 7368539786447134940;
                 } else {
                     current_block = 15768484401365413375;
@@ -1991,14 +1976,11 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
                         .wrapping_sub((kSamus_HandleExtraRunspeedX_Tab5[0i32 as usize]) as i16)
                         >= 0
                 {
-                    word!(
-                        game.samus_x_extra_run_speed =
-                            kSamus_HandleExtraRunspeedX_Tab4[0i32 as usize]
-                    );
-                    word!(
-                        game.samus_x_extra_run_subspeed =
-                            kSamus_HandleExtraRunspeedX_Tab5[0i32 as usize]
-                    );
+                    word! { game;
+                        samus_x_extra_run_speed = kSamus_HandleExtraRunspeedX_Tab4[0i32 as usize];
+                        samus_x_extra_run_subspeed =
+                            kSamus_HandleExtraRunspeedX_Tab5[0i32 as usize];
+                    }
                     current_block = 7368539786447134940;
                 } else {
                     current_block = 15768484401365413375;
@@ -3401,16 +3383,14 @@ pub unsafe fn InitializeProjectileSpeed(k: u16, r22: u16, game: &mut Game) {
             );
         }
         6 => {
-            word!(
-                game.projectile_bomb_y_speed[kh] = (*((ram_ptr!(game, u16; 0xdb4) as *mut u8)
-                    .offset(1) as *mut u16))
-                    .wrapping_add(r22)
-            );
-            word!(
-                game.projectile_bomb_x_speed[kh] = (*((ram_ptr!(game, u16; 0xdac) as *mut u8)
-                    .offset(1) as *mut u16))
-                    .wrapping_add(r22)
-            );
+            word! { game;
+                projectile_bomb_y_speed[kh] = (*((ram_ptr!(game, u16; 0xdb4) as *mut u8).offset(1)
+                    as *mut u16))
+                    .wrapping_add(r22);
+                projectile_bomb_x_speed[kh] = (*((ram_ptr!(game, u16; 0xdac) as *mut u8).offset(1)
+                    as *mut u16))
+                    .wrapping_add(r22);
+            }
         }
         8 | 10 => {
             word!(
@@ -3421,16 +3401,14 @@ pub unsafe fn InitializeProjectileSpeed(k: u16, r22: u16, game: &mut Game) {
             word!(game.projectile_bomb_x_speed[kh] = 0);
         }
         12 => {
-            word!(
-                game.projectile_bomb_y_speed[kh] = (*((ram_ptr!(game, u16; 0xdb4) as *mut u8)
-                    .offset(1) as *mut u16))
-                    .wrapping_add(r22)
-            );
-            word!(
-                game.projectile_bomb_x_speed[kh] = (*((ram_ptr!(game, u16; 0xda8) as *mut u8)
-                    .offset(1) as *mut u16))
-                    .wrapping_sub(r22)
-            );
+            word! { game;
+                projectile_bomb_y_speed[kh] = (*((ram_ptr!(game, u16; 0xdb4) as *mut u8).offset(1)
+                    as *mut u16))
+                    .wrapping_add(r22);
+                projectile_bomb_x_speed[kh] = (*((ram_ptr!(game, u16; 0xda8) as *mut u8).offset(1)
+                    as *mut u16))
+                    .wrapping_sub(r22);
+            }
         }
         14 => {
             word!(game.projectile_bomb_y_speed[kh] = 0);
@@ -3611,14 +3589,12 @@ pub unsafe fn SpawnProjectileTrail(k: u16, game: &mut Game) {
         projectiletrail_left_instr_timer[v5], projectiletrail_right_instr_timer[v5],
     }
     let v6: i32 = v2 as i32;
-    word!(
-        game.projectiletrail_left_instr_list_ptr[v5] =
-            crate::rtl::rom_table_word!(game, 0x90b5bb, v6 as isize)
-    );
-    word!(
-        game.projectiletrail_right_instr_list_ptr[v5] =
-            crate::rtl::rom_table_word!(game, 0x90b609, v6 as isize)
-    );
+    word! { game;
+        projectiletrail_left_instr_list_ptr[v5] =
+            crate::rtl::rom_table_word!(game, 0x90b5bb, v6 as isize);
+        projectiletrail_right_instr_list_ptr[v5] =
+            crate::rtl::rom_table_word!(game, 0x90b609, v6 as isize);
+    }
     ProjectileTrail_Func5(word!(game.projectile_index), v4, game);
 }
 crate::game::address_dispatch! {
@@ -3983,27 +3959,23 @@ pub unsafe fn InitProjectilePositionDirection(r20: u16, game: &mut Game) -> u8 {
         || *ram_ptr!(game; 0xa1f) == 1
     {
         let v6: i32 = v3 as i32 >> 1;
-        word!(
-            game.projectile_x_pos[v2] = (word!(game.samus_x_pos))
-                .wrapping_add((kProjectileOriginOffsets4_X[v6 as usize]) as u16)
-        );
-        word!(
-            game.projectile_y_pos[v2] = (word!(game.samus_y_pos) as i32
+        word! { game;
+            projectile_x_pos[v2] = (word!(game.samus_x_pos))
+                .wrapping_add((kProjectileOriginOffsets4_X[v6 as usize]) as u16);
+            projectile_y_pos[v2] = (word!(game.samus_y_pos) as i32
                 + kProjectileOriginOffsets4_Y[v6 as usize] as i32
-                - r22 as i32) as u16
-        );
+                - r22 as i32) as u16;
+        }
         0
     } else {
         let v4: i32 = v3 as i32 >> 1;
-        word!(
-            game.projectile_x_pos[v2] = (word!(game.samus_x_pos))
-                .wrapping_add((kProjectileOriginOffsets3_X[v4 as usize]) as u16)
-        );
-        word!(
-            game.projectile_y_pos[v2] = (word!(game.samus_y_pos) as i32
+        word! { game;
+            projectile_x_pos[v2] = (word!(game.samus_x_pos))
+                .wrapping_add((kProjectileOriginOffsets3_X[v4 as usize]) as u16);
+            projectile_y_pos[v2] = (word!(game.samus_y_pos) as i32
                 + kProjectileOriginOffsets3_Y[v4 as usize] as i32
-                - r22 as i32) as u16
-        );
+                - r22 as i32) as u16;
+        }
         0
     }
 }
@@ -4826,14 +4798,12 @@ pub unsafe fn FireSba_FireWave(game: &mut Game) -> u8 {
             projectile_bomb_x_speed[v1], projectile_variables[v1], projectile_bomb_x_subpos[v1],
             projectile_bomb_y_subpos[v1],
         }
-        word!(
-            game.projectile_x_pos[v1] =
-                ((kFireSba_FireWave_X[v1 as usize]) as u16).wrapping_add(word!(game.samus_x_pos))
-        );
-        word!(
-            game.projectile_y_pos[v1] =
-                ((kFireSba_FireWave_Y[v1 as usize]) as u16).wrapping_add(word!(game.samus_y_pos))
-        );
+        word! { game;
+            projectile_x_pos[v1] =
+                ((kFireSba_FireWave_X[v1 as usize]) as u16).wrapping_add(word!(game.samus_x_pos));
+            projectile_y_pos[v1] =
+                ((kFireSba_FireWave_Y[v1 as usize]) as u16).wrapping_add(word!(game.samus_y_pos));
+        }
         InitializeSbaProjectile(i as u16, game);
         i -= 2;
     }
@@ -5012,19 +4982,16 @@ pub unsafe fn ProjPreInstr_IceSba2(mut k: u16, game: &mut Game) {
                 }
                 || v7 as i32 - 256i32 & 0x8000 == 0)
                 || ({
-                    word!(
-                        game.projectile_variables[v3] = (((word!(game.used_for_sba_attacksB60))
-                            as u8)
-                            .wrapping_add((word!(game.projectile_variables[v3])) as u8,))
-                            as u16
-                    );
-                    word!(
-                        game.projectile_bomb_x_speed[v3] =
+                    word! { game;
+                        projectile_variables[v3] = (((word!(game.used_for_sba_attacksB60)) as u8)
+                            .wrapping_add((word!(game.projectile_variables[v3])) as u8))
+                            as u16;
+                        projectile_bomb_x_speed[v3] =
                             (((word!(game.projectile_bomb_x_speed[v3])) as u8).wrapping_add(8))
-                                as u16
-                    );
-                    word!(game.cooldown_timer = 2);
-                    word!(game.flare_counter = 0);
+                                as u16;
+                        cooldown_timer = 2;
+                        flare_counter = 0;
+                    }
                     false
                 })
         });
@@ -5256,16 +5223,14 @@ pub unsafe fn Samus_MoveHandler_ShinesparkCrash_0(game: &mut Game) {
     word!(game.speed_echoes_index = v0);
 }
 pub unsafe fn Samus_MoveHandler_ShinesparkCrash_1(game: &mut Game) {
-    word!(
-        game.speed_echo_xspeed[0] = ((*((ram_ptr!(game, u16; 0xab0)).offset(2) as *mut u8))
-            .wrapping_add(*((ram_ptr!(game, u16; 0xac0)) as *mut u8),))
-            as u16
-    );
-    word!(
-        game.speed_echo_xspeed[1] = ((*((ram_ptr!(game, u16; 0xab0)).offset(2) as *mut u8))
-            .wrapping_add(*((ram_ptr!(game, u16; 0xac0)).offset(1) as *mut u8),))
-            as u16
-    );
+    word! { game;
+        speed_echo_xspeed[0] = ((*((ram_ptr!(game, u16; 0xab0)).offset(2) as *mut u8))
+            .wrapping_add(*((ram_ptr!(game, u16; 0xac0)) as *mut u8)))
+            as u16;
+        speed_echo_xspeed[1] = ((*((ram_ptr!(game, u16; 0xab0)).offset(2) as *mut u8))
+            .wrapping_add(*((ram_ptr!(game, u16; 0xac0)).offset(1) as *mut u8)))
+            as u16;
+    }
     word!(game.speed_echo_ypos[2], wrapping_add(4));
     if word!(game.speed_echo_ypos[2]) as i32 - 128i32 & 0x8000 == 0 {
         word!(
@@ -7118,19 +7083,15 @@ pub unsafe fn ProjPreInstr_UnknownProj8027(k: u16, game: &mut Game) {
         } else {
             let v3: i32 = k as i32 >> 1;
             word!(game.projectile_variables[v3], wrapping_add(1));
-            word!(game.samus_shine_timer = 180);
-            word!(game.timer_for_shine_timer = 1);
-            word!(game.special_samus_palette_frame = 0);
-            word!(
-                game.projectile_x_pos[v3] = ((kProjPreInstr_UnknownProj8027_X2[v3 as usize])
-                    as u16)
-                    .wrapping_add(word!(game.samus_x_pos))
-            );
-            word!(
-                game.projectile_y_pos[v3] = ((kProjPreInstr_UnknownProj8027_Y2[v3 as usize])
-                    as u16)
-                    .wrapping_add(word!(game.samus_y_pos))
-            );
+            word! { game;
+                samus_shine_timer = 180;
+                timer_for_shine_timer = 1;
+                special_samus_palette_frame = 0;
+                projectile_x_pos[v3] = ((kProjPreInstr_UnknownProj8027_X2[v3 as usize]) as u16)
+                    .wrapping_add(word!(game.samus_x_pos));
+                projectile_y_pos[v3] = ((kProjPreInstr_UnknownProj8027_Y2[v3 as usize]) as u16)
+                    .wrapping_add(word!(game.samus_y_pos));
+            }
         }
     }
 }

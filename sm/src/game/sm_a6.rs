@@ -1218,18 +1218,13 @@ pub unsafe fn CeresRidley_Func_4(game: &mut Game) {
             } else {
                 (*E).var_E = (cry_var_E).wrapping_add(1);
                 let v3: i32 = ((6u16).wrapping_mul((v2) as u16)) as i32 >> 1;
-                word!(
-                    game.palette_buffer[252] =
-                        crate::rtl::rom_table_word!(game, 0xa6e2aa, v3 as isize)
-                );
-                word!(
-                    game.palette_buffer[253] =
-                        crate::rtl::rom_table_word!(game, 0xa6e2aa, (v3 + 1) as isize)
-                );
-                word!(
-                    game.palette_buffer[254] =
-                        crate::rtl::rom_table_word!(game, 0xa6e2aa, (v3 + 2) as isize)
-                );
+                word! { game;
+                    palette_buffer[252] = crate::rtl::rom_table_word!(game, 0xa6e2aa, v3 as isize);
+                    palette_buffer[253] =
+                        crate::rtl::rom_table_word!(game, 0xa6e2aa, (v3 + 1) as isize);
+                    palette_buffer[254] =
+                        crate::rtl::rom_table_word!(game, 0xa6e2aa, (v3 + 2) as isize);
+                }
             }
         }
     }
@@ -1610,20 +1605,18 @@ unsafe fn CeresMult(a: u16, b: u16) -> u16 {
 pub unsafe fn CeresRidley_Func_29(game: &mut Game) {
     let E = Get_CeresRidley(0, game);
     let r18: u16 = byte!((*E).var_0A; 1) as u16;
-    word!(
-        game.reg_M7A = CeresMult(
+    word! { game;
+        reg_M7A = CeresMult(
             CeresRidley_AC30((r18).wrapping_add(64), 0x100) as u16,
             (*E).var_30,
-        )
-    );
-    word!(game.reg_M7B = CeresMult(CeresRidley_AC30(r18, 0x100) as u16, (*E).var_30,));
-    word!(game.reg_M7C = CeresMult(-(CeresRidley_AC30(r18, 0x100) as i32) as u16, (*E).var_30,));
-    word!(
-        game.reg_M7D = CeresMult(
+        );
+        reg_M7B = CeresMult(CeresRidley_AC30(r18, 0x100) as u16, (*E).var_30);
+        reg_M7C = CeresMult(-(CeresRidley_AC30(r18, 0x100) as i32) as u16, (*E).var_30);
+        reg_M7D = CeresMult(
             CeresRidley_AC30((r18).wrapping_add(64), 0x100) as u16,
             (*E).var_30,
-        )
-    );
+        );
+    }
 }
 pub unsafe fn CeresRidley_AC30(a: u16, r20: i16) -> i16 {
     (kSinCosTable8bit_Sext[((a as i32 & 0xff) + 64) as usize] as i32 * r20 as i32 >> 8) as i16
@@ -2218,18 +2211,16 @@ pub unsafe fn Ridley_Func_30(game: &mut Game) {
     reduce_ridley_axis_speed!(ridley_var_14, v3, E, var_14);
     let ridley_var_15: u16 = (*E).var_15;
     reduce_ridley_axis_speed!(ridley_var_15, v6, E, var_15);
-    word!(
-        game.samus_x_pos = ((*E).var_14 as i32
+    word! { game;
+        samus_x_pos = ((*E).var_14 as i32
             + (*E).base.x_pos as i32
             + crate::rtl::rom_table_word!(game, 0xa6b9d5, (*E).var_10 as isize) as i32)
-            as u16
-    );
-    word!(
-        game.samus_y_pos = ((*E).var_15 as i32
+            as u16;
+        samus_y_pos = ((*E).var_15 as i32
             + (*E).base.y_pos as i32
             + crate::rtl::rom_table_word!(game, 0xa6b9db, ((*E).var_1D >> 1) as isize) as i32)
-            as u16
-    );
+            as u16;
+    }
 }
 pub unsafe fn Ridley_Func_31(game: &mut Game) {
     let E = Get_Ridley(0, game);
@@ -2714,15 +2705,11 @@ pub unsafe fn Ridley_Func_61(game: &mut Game) {
         }
         (*E).var_38 = v1;
         let v2: i32 = (*E).var_38 as i32 + 2 * v1 as i32;
-        word!(game.palette_buffer[97] = crate::rtl::rom_table_word!(game, 0xa6c1df, v2 as isize));
-        word!(
-            game.palette_buffer[98] =
-                crate::rtl::rom_table_word!(game, 0xa6c1df, (v2 + 1) as isize)
-        );
-        word!(
-            game.palette_buffer[99] =
-                crate::rtl::rom_table_word!(game, 0xa6c1df, (v2 + 2) as isize)
-        );
+        word! { game;
+            palette_buffer[97] = crate::rtl::rom_table_word!(game, 0xa6c1df, v2 as isize);
+            palette_buffer[98] = crate::rtl::rom_table_word!(game, 0xa6c1df, (v2 + 1) as isize);
+            palette_buffer[99] = crate::rtl::rom_table_word!(game, 0xa6c1df, (v2 + 2) as isize);
+        }
     }
 }
 pub unsafe fn SetupZebesEscapeTypewriter(game: &mut Game) {
@@ -3539,22 +3526,18 @@ pub unsafe fn Ridley_Func_88(k: u16, game: &mut Game) {
         .wrapping_add((r18) as u8)) as u16;
     }
     let v7: i32 = k as i32 >> 1;
-    word!(
-        game.tilemap_stuff[(v7 + 24)] = ComputeSinMult(
-            *((ram_ptr!(game, u16; 0x2000)).offset((v7 + 19) as isize) as *mut u8).offset(1,)
-                as u16,
+    word! { game;
+        tilemap_stuff[(v7 + 24)] = ComputeSinMult(
+            *((ram_ptr!(game, u16; 0x2000)).offset((v7 + 19) as isize) as *mut u8).offset(1) as u16,
             r18,
             game,
-        )
-    );
-    word!(
-        game.tilemap_stuff[(v7 + 25)] = ComputeCosMult(
-            *((ram_ptr!(game, u16; 0x2000)).offset((v7 + 19) as isize) as *mut u8).offset(1,)
-                as u16,
+        );
+        tilemap_stuff[(v7 + 25)] = ComputeCosMult(
+            *((ram_ptr!(game, u16; 0x2000)).offset((v7 + 19) as isize) as *mut u8).offset(1) as u16,
             r18,
             game,
-        )
-    );
+        );
+    }
 }
 pub unsafe fn Ridley_Func_89(a: u16, game: &mut Game) {
     let mut v1: u16 = 0;

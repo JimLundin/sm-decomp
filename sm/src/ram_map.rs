@@ -63,7 +63,8 @@ macro_rules! ram_vars {
 // `word!(game.field)` reads; `word!(game.field = value)` writes. Arrays use
 // `field[index]`. Updates use `(game.field, method(argument), reread)` or an
 // expression `(game.field, |old| value)`; `reread` is optional. Ordered stores
-// of one literal use `(game, value; field, other[index])`.
+// of one literal use `(game, value; field, other[index])`; different values use
+// `(game; field = value; other[index] = next;)`.
 //
 // These operations require an unsafe context. Keep raw loads/stores at the
 // caller: a whole-Game/RAM borrow can invalidate retained raw enemy pointers.
@@ -111,6 +112,9 @@ macro_rules! word {
                 .add($crate::ram_map::words::$field)
                 .cast::<u16>(),
         )
+    };
+    ($game:ident; $($field:ident$([$index:expr])? = $value:expr;)+) => {
+        $($crate::ram_map::word!($game.$field$([$index])? = $value);)+
     };
     ($game:ident, $value:literal; $($field:ident$([$index:expr])?),+ $(,)?) => {
         $($crate::ram_map::word!($game.$field$([$index])? = $value);)+

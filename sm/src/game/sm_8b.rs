@@ -724,21 +724,17 @@ pub unsafe fn FadeOutYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) 
 pub unsafe fn FadeInYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
     loop {
         let v2: i32 = k as i32 >> 1;
-        word!(
-            game.tilemap_stuff[(v2 + 512)] = (word!(game.tilemap_stuff[(v2 + 1280)]) as i32
+        word! { game;
+            tilemap_stuff[(v2 + 512)] = (word!(game.tilemap_stuff[(v2 + 1280)]) as i32
                 + word!(game.tilemap_stuff[(v2 + 512)]) as i32
-                & 0x1fff) as u16
-        );
-        word!(
-            game.tilemap_stuff[(v2 + 768)] = (word!(game.tilemap_stuff[(v2 + 1536)]) as i32
+                & 0x1fff) as u16;
+            tilemap_stuff[(v2 + 768)] = (word!(game.tilemap_stuff[(v2 + 1536)]) as i32
                 + word!(game.tilemap_stuff[(v2 + 768)]) as i32
-                & 0x1fff) as u16
-        );
-        word!(
-            game.tilemap_stuff[(v2 + 1024)] = (word!(game.tilemap_stuff[(v2 + 1792)]) as i32
+                & 0x1fff) as u16;
+            tilemap_stuff[(v2 + 1024)] = (word!(game.tilemap_stuff[(v2 + 1792)]) as i32
                 + word!(game.tilemap_stuff[(v2 + 1024)]) as i32
-                & 0x1fff) as u16
-        );
+                & 0x1fff) as u16;
+        }
         k = (k).wrapping_add(2);
         j = j.wrapping_sub(1);
         if (j == 0) {
@@ -2162,15 +2158,13 @@ pub unsafe fn SetSomeStuffForSpriteObject_6(j: u16, game: &mut Game) {
     let v2: i32 = j as i32 >> 1;
     word!(game.cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param));
     let v3: i32 = ((4u16).wrapping_mul(v1)) as i32 >> 1;
-    word!(
-        game.cinematicbg_arr7[v2] =
-            ((kSetSomeStuffForSpriteObject_6_Tab[v3 as usize]) as u16).wrapping_add(16)
-    );
-    word!(
-        game.cinematicbg_arr8[v2] =
-            ((kSetSomeStuffForSpriteObject_6_Tab[(v3 + 1) as usize]) as u16).wrapping_add(59)
-    );
-    word!(game.cinematicbg_arr9[v2] = 3584);
+    word! { game;
+        cinematicbg_arr7[v2] =
+            ((kSetSomeStuffForSpriteObject_6_Tab[v3 as usize]) as u16).wrapping_add(16);
+        cinematicbg_arr8[v2] =
+            ((kSetSomeStuffForSpriteObject_6_Tab[(v3 + 1) as usize]) as u16).wrapping_add(59);
+        cinematicbg_arr9[v2] = 3584;
+    }
 }
 static kSetSomeStuffForSpriteObject_7_Tab0: [i16; 12] = [
     -1, 0x4000, 0, 0x4000, -1, -0x8000, -1, 0x2000, 0, -0x8000, 0, 0x2000,
@@ -2479,12 +2473,11 @@ pub unsafe fn CinematicFunction_Intro_Func42(j: u16, game: &mut Game) {
     let v2: i32 = j as i32 >> 1;
     word!(game.cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param));
     let v3: i32 = v1 as i32;
-    word!(game.cinematicbg_arr7[v2] = kCinematicFunction_Intro_Func42_Tab0[v3 as usize]);
-    word!(
-        game.cinematicbg_arr8[v2] =
-            (kCinematicFunction_Intro_Func42_Tab1[v3 as usize]).wrapping_sub(8)
-    );
-    word!(game.cinematicbg_arr9[v2] = 3584);
+    word! { game;
+        cinematicbg_arr7[v2] = kCinematicFunction_Intro_Func42_Tab0[v3 as usize];
+        cinematicbg_arr8[v2] = (kCinematicFunction_Intro_Func42_Tab1[v3 as usize]).wrapping_sub(8);
+        cinematicbg_arr9[v2] = 3584;
+    }
 }
 pub unsafe fn CinematicSprInstr_Func43(k: u16, j: u16, game: &mut Game) -> u16 {
     let v1: i32 = k as i32 >> 1;
@@ -2551,16 +2544,13 @@ pub unsafe fn CinematicFunction_Intro_Func46(j: u16, game: &mut Game) {
     let v2: i32 = j as i32 >> 1;
     word!(game.cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param));
     let v3: i32 = v1 as i32;
-    word!(
-        game.cinematicbg_arr7[v2] =
-            (kCinematicFunction_Intro_Func46_Tab0[v3 as usize]).wrapping_add(56)
-    );
-    word!(
-        game.cinematicbg_arr8[v2] =
-            (kCinematicFunction_Intro_Func46_Tab1[v3 as usize]).wrapping_add(111)
-    );
-    word!(game.cinematicspr_instr_timer[v2] = kCinematicFunction_Intro_Func46_Tab2[v3 as usize]);
-    word!(game.cinematicbg_arr9[v2] = 2560);
+    word! { game;
+        cinematicbg_arr7[v2] = (kCinematicFunction_Intro_Func46_Tab0[v3 as usize]).wrapping_add(56);
+        cinematicbg_arr8[v2] =
+            (kCinematicFunction_Intro_Func46_Tab1[v3 as usize]).wrapping_add(111);
+        cinematicspr_instr_timer[v2] = kCinematicFunction_Intro_Func46_Tab2[v3 as usize];
+        cinematicbg_arr9[v2] = 2560;
+    }
 }
 static kCinematicFunction_Intro_Func47_Tab0: [u16; 3] = [0x10, 0xfff0, 0xfff0];
 static kCinematicFunction_Intro_Func47_Tab1: [u16; 3] = [0, 4, 0xfff8];
@@ -2570,16 +2560,13 @@ pub unsafe fn CinematicFunction_Intro_Func47(j: u16, game: &mut Game) {
     let v2: i32 = j as i32 >> 1;
     word!(game.cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param));
     let v3: i32 = v1 as i32;
-    word!(
-        game.cinematicbg_arr7[v2] =
-            (kCinematicFunction_Intro_Func47_Tab0[v3 as usize]).wrapping_add(56)
-    );
-    word!(
-        game.cinematicbg_arr8[v2] =
-            (kCinematicFunction_Intro_Func47_Tab1[v3 as usize]).wrapping_add(111)
-    );
-    word!(game.cinematicspr_instr_timer[v2] = kCinematicFunction_Intro_Func47_Tab2[v3 as usize]);
-    word!(game.cinematicbg_arr9[v2] = 2560);
+    word! { game;
+        cinematicbg_arr7[v2] = (kCinematicFunction_Intro_Func47_Tab0[v3 as usize]).wrapping_add(56);
+        cinematicbg_arr8[v2] =
+            (kCinematicFunction_Intro_Func47_Tab1[v3 as usize]).wrapping_add(111);
+        cinematicspr_instr_timer[v2] = kCinematicFunction_Intro_Func47_Tab2[v3 as usize];
+        cinematicbg_arr9[v2] = 2560;
+    }
 }
 pub unsafe fn CinematicFunction_Intro_Func48(k: u16, game: &mut Game) {
     if word!(game.cinematic_var13) == 0 {
@@ -3085,14 +3072,12 @@ pub unsafe fn CinematicFunction_Intro_Func76(game: &mut Game) {
     if word!(game.cinematic_var6) as i32 - 640i32 & 0x8000 != 0 {
         word!(game.cinematic_var6, wrapping_add(1));
     } else {
-        word!(
-            game.power_bomb_explosion_x_pos =
-                (word!(game.reg_M7X)).wrapping_sub(word!(game.cinematic_var8))
-        );
-        word!(
-            game.power_bomb_explosion_y_pos =
-                (word!(game.reg_M7Y)).wrapping_sub(word!(game.cinematic_var10))
-        );
+        word! { game;
+            power_bomb_explosion_x_pos =
+                (word!(game.reg_M7X)).wrapping_sub(word!(game.cinematic_var8));
+            power_bomb_explosion_y_pos =
+                (word!(game.reg_M7Y)).wrapping_sub(word!(game.cinematic_var10));
+        }
         EnableHdmaObjects(game);
         SpawnPowerBombExplosion(game);
         *ram_ptr!(game; 0x6f) = 16;
@@ -3124,18 +3109,16 @@ pub unsafe fn CinematicFunction_Intro_Func78(j: u16, game: &mut Game) {
     let v2: i32 = j as i32 >> 1;
     word!(game.cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param));
     let v3: i32 = v1 as i32;
-    word!(game.cinematicspr_instr_timer[v2] = kCinematicFunction_Intro_Func78_Tab0[v3 as usize]);
-    word!(
-        game.cinematicbg_arr7[v2] = (kCinematicFunction_Intro_Func78_Tab1[v3 as usize] as i32
+    word! { game;
+        cinematicspr_instr_timer[v2] = kCinematicFunction_Intro_Func78_Tab0[v3 as usize];
+        cinematicbg_arr7[v2] = (kCinematicFunction_Intro_Func78_Tab1[v3 as usize] as i32
             + word!(game.reg_M7X) as i32
-            - word!(game.cinematic_var8) as i32) as u16
-    );
-    word!(
-        game.cinematicbg_arr8[v2] = (kCinematicFunction_Intro_Func78_Tab2[v3 as usize] as i32
+            - word!(game.cinematic_var8) as i32) as u16;
+        cinematicbg_arr8[v2] = (kCinematicFunction_Intro_Func78_Tab2[v3 as usize] as i32
             + word!(game.reg_M7Y) as i32
-            - word!(game.cinematic_var10) as i32) as u16
-    );
-    word!(game.cinematicbg_arr9[v2] = 2560);
+            - word!(game.cinematic_var10) as i32) as u16;
+        cinematicbg_arr9[v2] = 2560;
+    }
 }
 pub unsafe fn CinematicSprPreInstr_C489(k: u16, game: &mut Game) {
     if word!(game.cinematic_function) as i32 == 0x8bc5ca & 0xffff {
@@ -3164,16 +3147,14 @@ pub unsafe fn CinematicFunction_Intro_Func80(j: u16, game: &mut Game) {
     let v2: i32 = j as i32 >> 1;
     word!(game.cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param));
     let v3: i32 = 2 * v1 as i32;
-    word!(
-        game.cinematicbg_arr7[v2] = (g_word_8BC4EB[v3 as usize] as i32 + word!(game.reg_M7X) as i32
-            - word!(game.cinematic_var8) as i32) as u16
-    );
-    word!(
-        game.cinematicbg_arr8[v2] = (g_word_8BC4EB[(v3 + 1) as usize] as i32
+    word! { game;
+        cinematicbg_arr7[v2] = (g_word_8BC4EB[v3 as usize] as i32 + word!(game.reg_M7X) as i32
+            - word!(game.cinematic_var8) as i32) as u16;
+        cinematicbg_arr8[v2] = (g_word_8BC4EB[(v3 + 1) as usize] as i32
             + word!(game.reg_M7Y) as i32
-            - word!(game.cinematic_var10) as i32) as u16
-    );
-    word!(game.cinematicbg_arr9[v2] = 2560);
+            - word!(game.cinematic_var10) as i32) as u16;
+        cinematicbg_arr9[v2] = 2560;
+    }
 }
 pub unsafe fn CinematicSprInstr_SpawnCeresExplosions3(k: u16, j: u16, game: &mut Game) -> u16 {
     SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCEC7 as u16, 0, game);
@@ -3185,22 +3166,17 @@ pub unsafe fn CinematicSprInstr_SpawnCeresExplosions3(k: u16, j: u16, game: &mut
 pub unsafe fn CinematicFunction_Intro_Func81(j: u16, game: &mut Game) {
     let v1: u16 = word!(game.cinematic_spawn_param);
     let v2: i32 = j as i32 >> 1;
-    word!(game.cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param));
-    word!(
-        game.cinematicspr_instr_timer[v2] =
-            kCinematicFunction_Intro_Func81_Tab0[v1 as usize] as u16
-    );
-    word!(
-        game.cinematicbg_arr7[v2] = (kCinematicFunction_Intro_Func81_Tab1[v1 as usize] as i32
+    word! { game;
+        cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param);
+        cinematicspr_instr_timer[v2] = kCinematicFunction_Intro_Func81_Tab0[v1 as usize] as u16;
+        cinematicbg_arr7[v2] = (kCinematicFunction_Intro_Func81_Tab1[v1 as usize] as i32
             + word!(game.reg_M7X) as i32
-            - word!(game.cinematic_var8) as i32) as u16
-    );
-    word!(
-        game.cinematicbg_arr8[v2] = (kCinematicFunction_Intro_Func81_Tab2[v1 as usize] as i32
+            - word!(game.cinematic_var8) as i32) as u16;
+        cinematicbg_arr8[v2] = (kCinematicFunction_Intro_Func81_Tab2[v1 as usize] as i32
             + word!(game.reg_M7Y) as i32
-            - word!(game.cinematic_var10) as i32) as u16
-    );
-    word!(game.cinematicbg_arr9[v2] = 2560);
+            - word!(game.cinematic_var10) as i32) as u16;
+        cinematicbg_arr9[v2] = 2560;
+    }
 }
 pub unsafe fn CinematicFunction_Intro_Func82(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1;
@@ -3217,13 +3193,11 @@ pub unsafe fn CinematicFunction_Intro_Func82(k: u16, game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func83(j: u16, game: &mut Game) {
     let v1: i32 = j as i32 >> 1;
-    word!(
-        game.cinematicbg_arr7[v1] = (word!(game.reg_M7X)).wrapping_sub(word!(game.cinematic_var8))
-    );
-    word!(
-        game.cinematicbg_arr8[v1] = (word!(game.reg_M7Y)).wrapping_sub(word!(game.cinematic_var10))
-    );
-    word!(game.cinematicbg_arr9[v1] = 2560);
+    word! { game;
+        cinematicbg_arr7[v1] = (word!(game.reg_M7X)).wrapping_sub(word!(game.cinematic_var8));
+        cinematicbg_arr8[v1] = (word!(game.reg_M7Y)).wrapping_sub(word!(game.cinematic_var10));
+        cinematicbg_arr9[v1] = 2560;
+    }
 }
 pub unsafe fn CinematicFunction_Intro_Func77(game: &mut Game) {
     *ram_ptr!(game; 0x6f) = 16;

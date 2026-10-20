@@ -290,18 +290,16 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
         } else if FixBugHook(0x94a85b, game) {
             memset(ram_ptr!(game, c_void; 0xd82), 0, 8 as size_t);
         } else if FixBugHook(0xa0a35c, game) {
-            word!(
-                game.REMOVED_R18 = *(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(
+            word! { game;
+                REMOVED_R18 = *(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(
                     (size_of::<u16>() as usize)
                         .wrapping_div(size_of::<u8>() as usize)
                         .wrapping_sub(1_) as isize,
-                ) as u16
-            );
-            word!(
-                game.REMOVED_R20 = (word!(game.REMOVED_R18) as i32
+                ) as u16;
+                REMOVED_R20 = (word!(game.REMOVED_R18) as i32
                     + (word!(game.REMOVED_R18) as i32 >> 1)
-                    >> 1) as u16
-            );
+                    >> 1) as u16;
+            }
         } else if FixBugHook(0xa7b049, game) {
             (*game.g_cpu).x = 0;
         } else if FixBugHook(0xa5a018, game) {

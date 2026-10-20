@@ -119,12 +119,11 @@ pub unsafe fn ReleaseButtonsFilter(v0: u16, game: &mut Game) {
         if (word!(game.timed_held_input_timer, wrapping_sub(1), reread) & 0x8000) == 0 {
             word!(game.timed_held_input = 0);
         } else {
-            word!(game.timed_held_input_timer = 0);
-            word!(game.previous_timed_held_input = word!(game.timed_held_input));
-            word!(
-                game.timed_held_input =
-                    (!(word!(game.joypad1_newkeys)) & word!(game.joypad1_lastkeys))
-            );
+            word! { game;
+                timed_held_input_timer = 0;
+                previous_timed_held_input = word!(game.timed_held_input);
+                timed_held_input = (!(word!(game.joypad1_newkeys)) & word!(game.joypad1_lastkeys));
+            }
         }
     }
     word!(
@@ -1090,22 +1089,20 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
                         let v2: bool = (!(word!(game.joypad_dbg_flags)) & 0x8000) != 0;
                         word!(game.joypad_dbg_flags, |fresh83| (fresh83) ^ (0x8000u16));
                         if v2 {
-                            word!(game.joypad_dbg_missiles_swap = word!(game.samus_missiles));
-                            word!(
-                                game.joypad_dbg_super_missiles_swap =
-                                    word!(game.samus_super_missiles)
-                            );
-                            word!(game.joypad_dbg_power_bombs_swap = word!(game.samus_power_bombs));
+                            word! { game;
+                                joypad_dbg_missiles_swap = word!(game.samus_missiles);
+                                joypad_dbg_super_missiles_swap = word!(game.samus_super_missiles);
+                                joypad_dbg_power_bombs_swap = word!(game.samus_power_bombs);
+                            }
                             word! { game, 0;
                                 samus_missiles, samus_super_missiles, samus_power_bombs,
                             }
                         } else {
-                            word!(game.samus_missiles = word!(game.joypad_dbg_missiles_swap));
-                            word!(
-                                game.samus_super_missiles =
-                                    word!(game.joypad_dbg_super_missiles_swap)
-                            );
-                            word!(game.samus_power_bombs = word!(game.joypad_dbg_power_bombs_swap));
+                            word! { game;
+                                samus_missiles = word!(game.joypad_dbg_missiles_swap);
+                                samus_super_missiles = word!(game.joypad_dbg_super_missiles_swap);
+                                samus_power_bombs = word!(game.joypad_dbg_power_bombs_swap);
+                            }
                         }
                     }
                     if (word!(game.joypad_dbg_2) & 0x40) != 0 {
@@ -1595,14 +1592,12 @@ pub unsafe fn DrawThreeHudDigits(addr: u32, a: u16, k: u16, game: &mut Game) {
 }
 pub unsafe fn DrawTwoHudDigits(addr: u32, a: u16, k: u16, game: &mut Game) {
     let v3: i32 = k as i32 >> 1;
-    word!(
-        game.hud_tilemap[v3] =
-            *(RomPtr((addr).wrapping_add((2 * (a as i32 / 10)) as u32,), game,) as *mut u16)
-    );
-    word!(
-        game.hud_tilemap[(v3 + 1)] =
-            *(RomPtr((addr).wrapping_add((2 * (a as i32 % 10)) as u32,), game,) as *mut u16)
-    );
+    word! { game;
+        hud_tilemap[v3] =
+            *(RomPtr((addr).wrapping_add((2 * (a as i32 / 10)) as u32), game) as *mut u16);
+        hud_tilemap[(v3 + 1)] =
+            *(RomPtr((addr).wrapping_add((2 * (a as i32 % 10)) as u32), game) as *mut u16);
+    }
 }
 static kTimerProcessFuncs: [Option<Func_U8>; 7] = callback_table! { unsafe Func_U8;
     ProcessTimer_Empty, ProcessTimer_CeresStart, ProcessTimer_MotherBrainStart,
@@ -2609,22 +2604,12 @@ pub unsafe fn DoorTransition_Up(game: &mut Game) -> u8 {
         if word!(game.door_transition_frame_counter) >= 5 {
             UpdateScrollVarsUpdateMap(game);
         } else {
-            word!(
-                game.reg_BG1HOFS =
-                    (word!(game.bg1_x_offset)).wrapping_add(word!(game.layer1_x_pos))
-            );
-            word!(
-                game.reg_BG1VOFS =
-                    (word!(game.bg1_y_offset)).wrapping_add(word!(game.layer1_y_pos))
-            );
-            word!(
-                game.reg_BG2HOFS =
-                    (word!(game.bg2_x_scroll)).wrapping_add(word!(game.layer2_x_pos))
-            );
-            word!(
-                game.reg_BG2VOFS =
-                    (word!(game.bg2_y_scroll)).wrapping_add(word!(game.layer2_y_pos))
-            );
+            word! { game;
+                reg_BG1HOFS = (word!(game.bg1_x_offset)).wrapping_add(word!(game.layer1_x_pos));
+                reg_BG1VOFS = (word!(game.bg1_y_offset)).wrapping_add(word!(game.layer1_y_pos));
+                reg_BG2HOFS = (word!(game.bg2_x_scroll)).wrapping_add(word!(game.layer2_x_pos));
+                reg_BG2VOFS = (word!(game.bg2_y_scroll)).wrapping_add(word!(game.layer2_y_pos));
+            }
         }
     } else {
         let v5: u16 = word!(game.reg_BG1VOFS);
@@ -2807,14 +2792,13 @@ pub unsafe fn LoadFromLoadStation(game: &mut Game) {
     crate::update_place! { reference fresh77 = *(ram_ptr!(game, u16; 0x911)) => (*L).screen_x_pos; }
     word!(game.bg1_x_offset = *fresh77);
     crate::update_place! { reference fresh78 = *(ram_ptr!(game, u16; 0x915)) => (*L).screen_y_pos; }
-    word!(game.bg1_y_offset = *fresh78);
-    word!(game.samus_y_pos = (word!(game.layer1_y_pos)).wrapping_add((*L).samus_y_offset));
-    word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
-    word!(
-        game.samus_x_pos =
-            (word!(game.layer1_x_pos) as i32 + 128 + (*L).samus_x_offset as i32) as u16
-    );
-    word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
+    word! { game;
+        bg1_y_offset = *fresh78;
+        samus_y_pos = (word!(game.layer1_y_pos)).wrapping_add((*L).samus_y_offset);
+        samus_prev_y_pos = word!(game.samus_y_pos);
+        samus_x_pos = (word!(game.layer1_x_pos) as i32 + 128 + (*L).samus_x_offset as i32) as u16;
+        samus_prev_x_pos = word!(game.samus_x_pos);
+    }
     word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
     *(ram_ptr!(game, u16; 0x79f) as *mut u8) =
         (*get_RoomDefHeader(word!(game.room_ptr), game)).area_index_;

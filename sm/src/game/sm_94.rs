@@ -2410,13 +2410,11 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
         }
     }
     if current_block == 15145243721762997867 {
-        word!(game.grapple_beam_unkD30 = 16);
-        word!(
-            game.grapple_beam_unkD26 = -(word!(game.grapple_beam_unkD26) as i16 as i32 >> 1) as u16
-        );
-        word!(
-            game.grapple_beam_unkD2E = -(word!(game.grapple_beam_unkD2E) as i16 as i32 >> 1) as u16
-        );
+        word! { game;
+            grapple_beam_unkD30 = 16;
+            grapple_beam_unkD26 = -(word!(game.grapple_beam_unkD26) as i16 as i32 >> 1) as u16;
+            grapple_beam_unkD2E = -(word!(game.grapple_beam_unkD2E) as i16 as i32 >> 1) as u16;
+        }
         1
     } else {
         word!(game.grapple_beam_unkD36, |fresh3| (fresh3) | (0x8000u16));

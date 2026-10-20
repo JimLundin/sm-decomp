@@ -1264,16 +1264,14 @@ unsafe fn calculate_explosion_hdma_table_pointers(k: u16, pre_explosion: bool, g
     if (radius & 0xff00) == 0 {
         word!(game.power_bomb_explosion_y_pos_rsub_0x1ff = 0);
     }
-    word!(
-        game.hdma_object_table_pointers[(k >> 1)] =
+    word! { game;
+        hdma_object_table_pointers[(k >> 1)] =
             (3 * word!(game.power_bomb_explosion_y_pos_rsub_0x1ff) as i32
-                + addr_kIndirectHdmaTable_PowerBombExplodeLeft as i32) as u16
-    );
-    word!(
-        game.hdma_object_table_pointers[((k as i32 >> 1) + 1)] =
+                + addr_kIndirectHdmaTable_PowerBombExplodeLeft as i32) as u16;
+        hdma_object_table_pointers[((k as i32 >> 1) + 1)] =
             (3 * word!(game.power_bomb_explosion_y_pos_rsub_0x1ff) as i32
-                + addr_kIndirectHdmaTable_PowerBombExplodeRight as i32) as u16
-    );
+                + addr_kIndirectHdmaTable_PowerBombExplodeRight as i32) as u16;
+    }
 }
 
 unsafe fn set_explosion_fixed_color(table: u32, pos: i32, game: &mut Game) {
@@ -2023,13 +2021,12 @@ pub unsafe fn HandleEarthquakeSoundEffect(game: &mut Game) {
             v1 = g_word_88B256[0i32 as usize] as i16;
         }
         QueueSfx2_Max6(v1 as u16, game);
-        word!(
-            game.earthquake_sfx_timer = (g_word_88B256[((v0 as i32 >> 1) + 1) as usize] as i32
+        word! { game;
+            earthquake_sfx_timer = (g_word_88B256[((v0 as i32 >> 1) + 1) as usize] as i32
                 + (v0 as i32 & 1)
-                + (word!(game.random_number) as i32 & 3))
-                as u16
-        );
-        word!(game.earthquake_sfx_index = (v0).wrapping_add(4));
+                + (word!(game.random_number) as i32 & 3)) as u16;
+            earthquake_sfx_index = (v0).wrapping_add(4);
+        }
     }
 }
 static unk_88B289: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x12, 0xc3e1 as VoidP);

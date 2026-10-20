@@ -1718,14 +1718,10 @@ pub unsafe fn LoadBlockToXrayTilemap(a: u16, k: u16, j: u16, game: &mut Game) {
 pub unsafe fn Xray_SetupStage5(game: &mut Game) {
     if CanXrayShowBlocks(game) {
         if word!(game.earthquake_timer) != 0 {
-            word!(
-                game.reg_BG1HOFS =
-                    (word!(game.layer1_x_pos)).wrapping_add(word!(game.bg1_x_offset))
-            );
-            word!(
-                game.reg_BG1VOFS =
-                    (word!(game.layer1_y_pos)).wrapping_add(word!(game.bg1_y_offset))
-            );
+            word! { game;
+                reg_BG1HOFS = (word!(game.layer1_x_pos)).wrapping_add(word!(game.bg1_x_offset));
+                reg_BG1VOFS = (word!(game.layer1_y_pos)).wrapping_add(word!(game.bg1_y_offset));
+            }
         }
         word!(game.reg_BG2HOFS = (word!(game.reg_BG1HOFS)) & (0xfu16));
         word!(game.reg_BG2VOFS = (word!(game.reg_BG1VOFS)) & (0xfu16));
@@ -4433,18 +4429,16 @@ pub unsafe fn HandleCollDueToChangedPose(game: &mut Game) {
     {
         return;
     }
-    word!(
-        game.samus_y_radius = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
+    word! { game;
+        samus_y_radius = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
             .offset(word!(game.samus_prev_pose) as isize))
-        .y_radius as u16
-    );
-    word!(
-        game.samus_y_radius_diff = (((*(rom_ptr!(game, SamusPoseParams; 0x91b629))
+        .y_radius as u16;
+        samus_y_radius_diff = (((*(rom_ptr!(game, SamusPoseParams; 0x91b629))
             .offset(word!(game.samus_pose) as isize))
         .y_radius) as u16)
-            .wrapping_sub((v0) as u16)
-    );
-    word!(game.samus_collision_direction = 2);
+            .wrapping_sub((v0) as u16);
+        samus_collision_direction = 2;
+    }
     cres = Samus_CheckSolidEnemyColl((word!(game.samus_y_radius_diff) as i16 as i32) << 16, game);
     word!(game.samus_collision_flag = cres.collision);
     let mut amt: i32 = cres.amt;

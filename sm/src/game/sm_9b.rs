@@ -115,19 +115,12 @@ pub unsafe fn ProjectileTrail_Func5(k: u16, j: u16, game: &mut Game) {
     let v6: u16 = (*(RomPtr_9B(v5, game) as *mut u16) as i32 + 4 * R22 as i32) as u16;
     let p = RomPtr_9B(v6, game);
     let v7: i32 = j as i32 >> 1;
-    word!(
-        game.projectiletrail_left_y_pos[v7] =
-            (r20 as i32 + *p.offset(1) as i8 as i32 - 4i32) as u16
-    );
-    word!(game.projectiletrail_left_x_pos[v7] = (r18 as i32 + *p as i8 as i32 - 4i32) as u16);
-    word!(
-        game.projectiletrail_right_y_pos[v7] =
-            (r20 as i32 + *p.offset(3) as i8 as i32 - 4i32) as u16
-    );
-    word!(
-        game.projectiletrail_right_x_pos[v7] =
-            (r18 as i32 + *p.offset(2) as i8 as i32 - 4i32) as u16
-    );
+    word! { game;
+        projectiletrail_left_y_pos[v7] = (r20 as i32 + *p.offset(1) as i8 as i32 - 4i32) as u16;
+        projectiletrail_left_x_pos[v7] = (r18 as i32 + *p as i8 as i32 - 4i32) as u16;
+        projectiletrail_right_y_pos[v7] = (r20 as i32 + *p.offset(3) as i8 as i32 - 4i32) as u16;
+        projectiletrail_right_x_pos[v7] = (r18 as i32 + *p.offset(2) as i8 as i32 - 4i32) as u16;
+    }
 }
 pub unsafe fn StartSamusDeathAnimation(game: &mut Game) {
     let v0: u16 = *ram_ptr!(game; 0xa1f) as u16;
@@ -484,24 +477,18 @@ pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> u8 {
             return 0;
         }
     }
-    word!(
-        game.samus_new_pose_interrupted =
-            (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_2
-    );
-    word!(
-        game.samus_x_pos = (word!(game.grapple_beam_end_x_pos)).wrapping_add(
+    word! { game;
+        samus_new_pose_interrupted =
+            (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_2;
+        samus_x_pos = (word!(game.grapple_beam_end_x_pos)).wrapping_add(
             (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_4,
-        )
-    );
-    word!(
-        game.samus_y_pos = (word!(game.grapple_beam_end_y_pos)).wrapping_add(
+        );
+        samus_y_pos = (word!(game.grapple_beam_end_y_pos)).wrapping_add(
             (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_6,
-        )
-    );
-    word!(
-        game.grapple_beam_function =
-            (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_8
-    );
+        );
+        grapple_beam_function =
+            (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_8;
+    }
     word! { game, 0; samus_special_transgfx_index, slow_grabble_scrolling_flag }
     let v2: i16 =
         ((word!(game.samus_x_pos)) as i16).wrapping_sub((word!(game.samus_prev_x_pos)) as i16);
@@ -661,18 +648,16 @@ pub unsafe fn GrappleBeamFunc_BD44(game: &mut Game) {
 
 macro_rules! place_samus_relative_to_grapple_origin {
     ($game:ident, $offset_table:literal, $offset_index:ident) => {
-        word!(
-            $game.samus_x_pos = (word!($game.x_pos_of_start_of_grapple_beam)).wrapping_add(
+        word! { $game;
+            samus_x_pos = (word!($game.x_pos_of_start_of_grapple_beam)).wrapping_add(
                 (*($game.g_rom.offset(crate::rtl::lorom_offset($offset_table)) as *mut u8)
                     .offset($offset_index as isize) as i8) as u16,
-            )
-        );
-        word!(
-            $game.samus_y_pos = (word!($game.y_pos_of_start_of_grapple_beam)).wrapping_add(
+            );
+            samus_y_pos = (word!($game.y_pos_of_start_of_grapple_beam)).wrapping_add(
                 (*($game.g_rom.offset(crate::rtl::lorom_offset($offset_table)) as *mut u8)
                     .offset(($offset_index as i32 + 1) as isize) as i8) as u16,
-            )
-        );
+            );
+        }
     };
 }
 
@@ -714,12 +699,10 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
     } else {
         place_samus_relative_to_grapple_origin!(game, 0x9bc302, v2);
     }
-    word!(
-        game.x_pos_of_start_of_grapple_beam_prevframe = word!(game.x_pos_of_start_of_grapple_beam)
-    );
-    word!(
-        game.y_pos_of_start_of_grapple_beam_prevframe = word!(game.y_pos_of_start_of_grapple_beam)
-    );
+    word! { game;
+        x_pos_of_start_of_grapple_beam_prevframe = word!(game.x_pos_of_start_of_grapple_beam);
+        y_pos_of_start_of_grapple_beam_prevframe = word!(game.y_pos_of_start_of_grapple_beam);
+    }
     GrappleBeamFunc_BE98(game);
 }
 pub unsafe fn GrappleBeamFunc_BE98(game: &mut Game) {
@@ -729,24 +712,18 @@ pub unsafe fn GrappleBeamFunc_BE98(game: &mut Game) {
 }
 pub unsafe fn GrappleBeamFunc_BEEB(game: &mut Game) {
     let v0: i32 = word!(game.grapple_beam_direction) as i32;
-    word!(
-        game.samus_x_pos = (word!(game.x_pos_of_start_of_grapple_beam))
-            .wrapping_sub(crate::rtl::rom_table_word!(game, 0x9bc122, v0 as isize),)
-    );
-    word!(
-        game.x_pos_of_start_of_grapple_beam_prevframe =
+    word! { game;
+        samus_x_pos = (word!(game.x_pos_of_start_of_grapple_beam))
+            .wrapping_sub(crate::rtl::rom_table_word!(game, 0x9bc122, v0 as isize));
+        x_pos_of_start_of_grapple_beam_prevframe =
             (crate::rtl::rom_table_word!(game, 0x9bc14a, v0 as isize))
-                .wrapping_add(word!(game.samus_x_pos))
-    );
-    word!(
-        game.samus_y_pos = (word!(game.y_pos_of_start_of_grapple_beam))
-            .wrapping_sub(crate::rtl::rom_table_word!(game, 0x9bc136, v0 as isize),)
-    );
-    word!(
-        game.y_pos_of_start_of_grapple_beam_prevframe =
+                .wrapping_add(word!(game.samus_x_pos));
+        samus_y_pos = (word!(game.y_pos_of_start_of_grapple_beam))
+            .wrapping_sub(crate::rtl::rom_table_word!(game, 0x9bc136, v0 as isize));
+        y_pos_of_start_of_grapple_beam_prevframe =
             (crate::rtl::rom_table_word!(game, 0x9bc15e, v0 as isize))
-                .wrapping_add(word!(game.samus_y_pos))
-    );
+                .wrapping_add(word!(game.samus_y_pos));
+    }
 }
 
 macro_rules! restore_grapple_start_positions {
@@ -755,28 +732,22 @@ macro_rules! restore_grapple_start_positions {
         $origin_y_table:literal, $y_adjustment:ident, $previous_y_table:literal $(,)?
     ) => {
         let v1: i32 = $pose_offset as i32 >> 1;
-        word!(
-            $game.x_pos_of_start_of_grapple_beam =
+        word! { $game;
+            x_pos_of_start_of_grapple_beam =
                 (crate::rtl::rom_table_word!($game, $origin_x_table, v1 as isize))
-                    .wrapping_add(word!($game.samus_x_pos))
-        );
-        word!(
-            $game.x_pos_of_start_of_grapple_beam_prevframe =
+                    .wrapping_add(word!($game.samus_x_pos));
+            x_pos_of_start_of_grapple_beam_prevframe =
                 (crate::rtl::rom_table_word!($game, $previous_x_table, v1 as isize))
-                    .wrapping_add(word!($game.samus_x_pos))
-        );
-        word!(
-            $game.y_pos_of_start_of_grapple_beam =
+                    .wrapping_add(word!($game.samus_x_pos));
+            y_pos_of_start_of_grapple_beam =
                 (crate::rtl::rom_table_word!($game, $origin_y_table, v1 as isize) as i32
                     + word!($game.samus_y_pos) as i32
-                    - $y_adjustment as i32) as u16
-        );
-        word!(
-            $game.y_pos_of_start_of_grapple_beam_prevframe =
+                    - $y_adjustment as i32) as u16;
+            y_pos_of_start_of_grapple_beam_prevframe =
                 (crate::rtl::rom_table_word!($game, $previous_y_table, v1 as isize) as i32
                     + word!($game.samus_y_pos) as i32
-                    - $y_adjustment as i32) as u16
-        );
+                    - $y_adjustment as i32) as u16;
+        }
     };
 }
 
@@ -933,39 +904,29 @@ macro_rules! initialize_grapple_endpoints {
         $game:ident, $origin_x_table:literal, $pose_index:ident, $origin_y_table:literal,
         $y_adjustment:ident, $previous_x_table:literal, $previous_y_table:literal $(,)?
     ) => {
-        word!(
-            $game.grapple_beam_origin_x_offset =
-                crate::rtl::rom_table_word!($game, $origin_x_table, $pose_index as isize)
-        );
-        word!(
-            $game.grapple_beam_origin_y_offset =
+        word! { $game;
+            grapple_beam_origin_x_offset =
+                crate::rtl::rom_table_word!($game, $origin_x_table, $pose_index as isize);
+            grapple_beam_origin_y_offset =
                 (crate::rtl::rom_table_word!($game, $origin_y_table, $pose_index as isize))
-                    .wrapping_sub($y_adjustment)
-        );
-        word!(
-            $game.grapple_beam_end_x_pos =
+                    .wrapping_sub($y_adjustment);
+            grapple_beam_end_x_pos =
                 (crate::rtl::rom_table_word!($game, $origin_x_table, $pose_index as isize))
-                    .wrapping_add(word!($game.samus_x_pos))
-        );
-        word!($game.x_pos_of_start_of_grapple_beam = word!($game.grapple_beam_end_x_pos));
-        word!(
-            $game.x_pos_of_start_of_grapple_beam_prevframe =
+                    .wrapping_add(word!($game.samus_x_pos));
+            x_pos_of_start_of_grapple_beam = word!($game.grapple_beam_end_x_pos);
+            x_pos_of_start_of_grapple_beam_prevframe =
                 (crate::rtl::rom_table_word!($game, $previous_x_table, $pose_index as isize))
-                    .wrapping_add(word!($game.samus_x_pos))
-        );
-        word!(
-            $game.grapple_beam_end_y_pos =
+                    .wrapping_add(word!($game.samus_x_pos));
+            grapple_beam_end_y_pos =
                 (crate::rtl::rom_table_word!($game, $origin_y_table, $pose_index as isize) as i32
                     + word!($game.samus_y_pos) as i32
-                    - $y_adjustment as i32) as u16
-        );
-        word!($game.y_pos_of_start_of_grapple_beam = word!($game.grapple_beam_end_y_pos));
-        word!(
-            $game.y_pos_of_start_of_grapple_beam_prevframe =
+                    - $y_adjustment as i32) as u16;
+            y_pos_of_start_of_grapple_beam = word!($game.grapple_beam_end_y_pos);
+            y_pos_of_start_of_grapple_beam_prevframe =
                 (crate::rtl::rom_table_word!($game, $previous_y_table, $pose_index as isize) as i32
                     + word!($game.samus_y_pos) as i32
-                    - $y_adjustment as i32) as u16
-        );
+                    - $y_adjustment as i32) as u16;
+        }
     };
 }
 
@@ -989,17 +950,15 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
     }
     word!(game.grapple_beam_direction = v0 as u16);
     let v1: i32 = v0;
-    word!(
-        game.grapple_beam_extension_x_velocity =
-            crate::rtl::rom_table_word!(game, 0x9bc0db, v1 as isize)
-    );
-    word!(
-        game.grapple_beam_extension_y_velocity =
-            crate::rtl::rom_table_word!(game, 0x9bc0ef, v1 as isize)
-    );
-    word!(game.grapple_beam_end_angle16 = crate::rtl::rom_table_word!(game, 0x9bc104, v1 as isize));
-    word!(game.grapple_beam_end_angles_mirror = word!(game.grapple_beam_end_angle16));
-    word!(game.grapple_varCF6 = 10);
+    word! { game;
+        grapple_beam_extension_x_velocity =
+            crate::rtl::rom_table_word!(game, 0x9bc0db, v1 as isize);
+        grapple_beam_extension_y_velocity =
+            crate::rtl::rom_table_word!(game, 0x9bc0ef, v1 as isize);
+        grapple_beam_end_angle16 = crate::rtl::rom_table_word!(game, 0x9bc104, v1 as isize);
+        grapple_beam_end_angles_mirror = word!(game.grapple_beam_end_angle16);
+        grapple_varCF6 = 10;
+    }
     if word!(game.samus_pose) as i32 == kPose_49_FaceL_Moonwalk as i32
         || word!(game.samus_pose) as i32 == kPose_4A_FaceR_Moonwalk as i32
         || *ram_ptr!(game; 0xa1f) != 1

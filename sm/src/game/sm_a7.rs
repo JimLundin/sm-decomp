@@ -443,14 +443,12 @@ pub unsafe fn Kraid_Main(game: &mut Game) {
     Kraid_Shot_Body(game);
     Kraid_Enemy_Touch(game);
     let E = Get_Kraid(0, game);
-    word!(
-        game.reg_BG2HOFS = ((*E).base.x_width as i32 + word!(game.reg_BG1HOFS) as i32
+    word! { game;
+        reg_BG2HOFS = ((*E).base.x_width as i32 + word!(game.reg_BG1HOFS) as i32
             - word!(game.bg1_x_offset) as i32
-            - (*E).base.x_pos as i32) as u16
-    );
-    word!(
-        game.reg_BG2VOFS = (word!(game.layer1_y_pos) as i32 - (*E).base.y_pos as i32 + 152) as u16
-    );
+            - (*E).base.x_pos as i32) as u16;
+        reg_BG2VOFS = (word!(game.layer1_y_pos) as i32 - (*E).base.y_pos as i32 + 152) as u16;
+    }
     CallKraidFunc((((*E).kraid_var_A) as u32) | (0xa70000u32), game);
 }
 pub unsafe fn Kraid_GetsBig_BreakCeilingPlatforms(game: &mut Game) {
@@ -990,14 +988,10 @@ pub unsafe fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
     loop {
         let v5: i32 = v0 as i32 >> 1;
         let v6: i32 = v4 as i32 >> 1;
-        word!(
-            game.palette_buffer[(v6 + 112)] =
-                crate::rtl::rom_table_word!(game, 0xa7b3d3, v5 as isize)
-        );
-        word!(
-            game.palette_buffer[(v6 + 240)] =
-                crate::rtl::rom_table_word!(game, 0xa7b513, v5 as isize)
-        );
+        word! { game;
+            palette_buffer[(v6 + 112)] = crate::rtl::rom_table_word!(game, 0xa7b3d3, v5 as isize);
+            palette_buffer[(v6 + 240)] = crate::rtl::rom_table_word!(game, 0xa7b513, v5 as isize);
+        }
         v0 = (v0).wrapping_add(2);
         v4 = (v4).wrapping_add(2);
         if (((v4) as i16).wrapping_sub(32) >= 0) {
@@ -2315,14 +2309,12 @@ pub unsafe fn Phantoon_Main(game: &mut Game) {
         (*E2).base.y_pos = y_pos;
         (*E3).base.y_pos = y_pos;
         if (*E1).parameter_1 == 0 {
-            word!(
-                game.reg_BG2HOFS =
-                    (word!(game.layer1_x_pos) as i32 - (*E0).base.x_pos as i32 + 40) as u16
-            );
-            word!(
-                game.reg_BG2VOFS =
-                    (word!(game.layer1_y_pos) as i32 - (*E0).base.y_pos as i32 + 40) as u16
-            );
+            word! { game;
+                reg_BG2HOFS =
+                    (word!(game.layer1_x_pos) as i32 - (*E0).base.x_pos as i32 + 40) as u16;
+                reg_BG2VOFS =
+                    (word!(game.layer1_y_pos) as i32 - (*E0).base.y_pos as i32 + 40) as u16;
+            }
         }
     }
 }

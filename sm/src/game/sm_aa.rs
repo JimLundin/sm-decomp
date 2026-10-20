@@ -1459,14 +1459,12 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         );
         EnemyFunc_C8AD(k, game);
         let v6: i32 = (*E).var_C as i32 >> 1;
-        word!(
-            game.samus_x_pos = (crate::rtl::rom_table_word!(game, 0xaae670, v6 as isize))
-                .wrapping_add((*E).base.x_pos)
-        );
-        word!(
-            game.samus_y_pos = (crate::rtl::rom_table_word!(game, 0xaae6b0, v6 as isize))
-                .wrapping_add((*E).base.y_pos)
-        );
+        word! { game;
+            samus_x_pos = (crate::rtl::rom_table_word!(game, 0xaae670, v6 as isize))
+                .wrapping_add((*E).base.x_pos);
+            samus_y_pos = (crate::rtl::rom_table_word!(game, 0xaae6b0, v6 as isize))
+                .wrapping_add((*E).base.y_pos);
+        }
     };
     Shaktool_Instr_14 [jp] {
         CallSomeSamusCode(1, game);

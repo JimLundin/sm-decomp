@@ -1052,14 +1052,12 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
             }
         }
         let v7: i32 = botwoo_var_00 as i32 >> 1;
-        word!(
-            game.eproj_x_pos[v7] =
-                *((ram_ptr!(game, u16; 0x9000) as *mut u8).offset(r18 as i32 as isize) as *mut u16)
-        );
-        word!(
-            game.eproj_y_pos[v7] =
-                *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(r18 as i32 as isize) as *mut u16)
-        );
+        word! { game;
+            eproj_x_pos[v7] =
+                *((ram_ptr!(game, u16; 0x9000) as *mut u8).offset(r18 as i32 as isize) as *mut u16);
+            eproj_y_pos[v7] =
+                *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(r18 as i32 as isize) as *mut u16);
+        }
         r18 = (r18 as i32 - (*E).var_C as i32 & 0x3ff) as u16;
         n -= 2;
         if ((n & 0x8000) != 0) {

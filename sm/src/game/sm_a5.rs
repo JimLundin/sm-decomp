@@ -803,16 +803,14 @@ pub unsafe fn Draygon_Func_35(game: &mut Game) {
 }
 pub unsafe fn Draygon_Func_36(game: &mut Game) {
     let E = Get_Draygon(0, game);
-    word!(
-        game.reg_BG2HOFS = ((*E).var_5E as i32 + word!(game.layer1_x_pos) as i32
+    word! { game;
+        reg_BG2HOFS = ((*E).var_5E as i32 + word!(game.layer1_x_pos) as i32
             - (*E).base.x_pos as i32
-            - 450i32) as u16
-    );
-    word!(
-        game.reg_BG2VOFS = ((*E).var_5F as i32 + word!(game.layer1_y_pos) as i32
+            - 450i32) as u16;
+        reg_BG2VOFS = ((*E).var_5F as i32 + word!(game.layer1_y_pos) as i32
             - (*E).base.y_pos as i32
-            - 192i32) as u16
-    );
+            - 192i32) as u16;
+    }
 }
 pub unsafe fn Draygon_Func_40(k: u16, game: &mut Game) {
     let mut v1: i16 = 8;

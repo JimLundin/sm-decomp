@@ -96,14 +96,10 @@ pub unsafe fn SetGoldenTorizoPalette(mut a: u16, game: &mut Game) {
     while i >= 0 {
         let v4: i32 = v2 as i32 >> 1;
         let v5: i32 = i >> 1;
-        word!(
-            game.palette_buffer[(v5 + 160)] =
-                crate::rtl::rom_table_word!(game, 0x848132, v4 as isize)
-        );
-        word!(
-            game.palette_buffer[(v5 + 144)] =
-                crate::rtl::rom_table_word!(game, 0x848032, v4 as isize)
-        );
+        word! { game;
+            palette_buffer[(v5 + 160)] = crate::rtl::rom_table_word!(game, 0x848132, v4 as isize);
+            palette_buffer[(v5 + 144)] = crate::rtl::rom_table_word!(game, 0x848032, v4 as isize);
+        }
         v2 = (v2).wrapping_sub(2);
         i -= 2;
     }
@@ -437,12 +433,11 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                 }
                 if (*(v5 as *mut u16) & 0x8000) == 0 {
                     let mut v7: i32 = word!(game.plm_id) as i32 >> 1;
-                    word!(game.plm_instruction_timer[v7] = *(v5 as *mut u16));
-                    word!(game.plm_instruction_draw_ptr[v7] = *(v5.offset(2) as *mut u16));
-                    word!(
-                        game.plm_instr_list_ptrs[v7] =
-                            v5.offset(4).offset_from(base) as c_long as u16
-                    );
+                    word! { game;
+                        plm_instruction_timer[v7] = *(v5 as *mut u16);
+                        plm_instruction_draw_ptr[v7] = *(v5.offset(2) as *mut u16);
+                        plm_instr_list_ptrs[v7] = v5.offset(4).offset_from(base) as c_long as u16;
+                    }
                     ProcessPlmDrawInstruction(word!(game.plm_id), game);
                     CalculatePlmBlockCoords(word!(game.plm_id), game);
                     DrawPlm(word!(game.plm_id), game);
