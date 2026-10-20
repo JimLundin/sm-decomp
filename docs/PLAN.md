@@ -144,6 +144,25 @@ nativeexit0 (121.29s replay/123.92s wall), passes with all77 inputs fixed.
 Progress counters unchanged. No ROM-derived files or temporary harnesses are
 committed. Next: continue complete native Bang ownership against the oracle.
 
+Bang continuation (2026-10-20): source-bound wrappers on 1d83d967 pass
+all65536 initializer parameters and29282 acceleration/deceleration boundary
+cases for the stated enemy-field ranges. Four wrapper DLLs independently expose
+all67 compiled library inputs byte-exact against that frozen source. Existing
+3840 mode cases and new1920 growth/death cases inventory every RAM difference;
+growth covers all10 instruction phases, blocked/free/second projectile slots,
+valid beam combinations, retained-enemy and grapple death modes. Enemy/projectile
+fields match in these cases. An invalid Spazer+Plasma probe panicked; its source,
+DLL and failed output are preserved separately before corrected inputs.
+
+Remaining differences include scratch12..1f, E20/E32/E34, direction1872,
+return-stack bytes and bridge1ffff; CPU/hardware state is not compared. The
+maintained verifier already normalizes scratch and stack ranges, so passing it
+would not resolve these differences. No normalization was added and Bang_Main
+still uses Call. Further native ownership needs an explicit residue/CPU-boundary
+decision and exercised route coverage; no complete alias/ownership claim.
+Only temporary wrappers compiled; no normal build or replay repeated. Stop this
+assessment here under the one-hour rule and resume substantial shared families.
+
 DSP signed-sample saturation (2026-10-20): all 14 identical signed16-bit
 clamps share one safe saturate_sample operation. Channel-by-channel mixing,
 master-volume output, FIR sums/feedback, Gaussian interpolation and BRR retain
