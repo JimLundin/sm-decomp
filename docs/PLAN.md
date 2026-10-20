@@ -53,6 +53,35 @@ transpilation, not whether a restart beats current main. Keep maintained Rust
 as the implementation and measure actual paired C2Rust output, including
 shared helpers and registration. Do not infer whole-game savings from a pilot.
 
+Latest clarification: learn from the compact representation **before generated
+code obscures its structure**. The user is not requesting a restart or a
+maintained compiler fork. Use original C to discover whole repeated families;
+prevent or normalize translation noise before evaluating their Rust output.
+An experiment need not beat current main to answer that research question.
+Current-main counts govern adoption and the remaining target, not whether
+early-source discovery is worthwhile. Prefer isolated C-boundary changes and
+small proved emission passes to a compiler-maintenance commitment.
+
+The C-boundary experiment changes only RAM macros/getters, using two shared
+pointer-forming helpers: all 32 gameplay units produce **221,547 -> 188,606
+Rust lines (-32,941)**, including helper/declaration/root costs. This prevents
+expansion before translation. All paired C/Rust units and both roots compile;
+complete C correspondence and 12,032 constructed full-RAM component comparisons
+pass, without a full-game replay claim. The complete original Rust control
+separately composes numeric, declaration, native-call and address cleanup into **278,936
+-> 195,699 (-83,237)**, with optimized compilation, frontend metadata and
+complete inverse address correspondence. The results overlap and have different
+scopes. No gameplay algorithms are removed by these representation changes.
+Generic pointer helpers still lose C's meaningful RAM names; retain named C as
+the discovery view and preserve those names in any adopted engine routines.
+
+A paired control also applies the identical numeric policy to both C versions:
+**191,082 -> 185,133**, so the existing C restructuring removes **5,949 lines**
+after numeric noise is controlled. Numeric cleanup alone preserves all 6,371
+function names/signatures and the measured declaration/control-flow counts;
+restructuring then removes 861 function definitions and 255 extern declarations
+net. Use this pair to distinguish structural changes from emission savings.
+
 The expanded experiment now measures **44,215 fewer generated Rust lines
 (229,348 -> 185,133, 19.3%)** across all 32 gameplay banks, CPU infrastructure
 and SPC player, including replacement helpers. It composes shared C algorithms

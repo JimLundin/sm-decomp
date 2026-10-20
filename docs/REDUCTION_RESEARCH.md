@@ -5,15 +5,19 @@ preserving behavior. This note records primary-source research, scanner trials
 and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
-Latest result: the broader original-C changes plus a tested numeric emission
-pass reduce the complete measured gameplay/support cohort from **229,348 to
-185,133 lines (-44,215, 19.3%)**, under one formatter. The original complete
-54-file Rust crate independently loses **35,000 lines** from numeric emission
-alone, or **59,227 (278,936 -> 219,709)** when composed with shared declarations
-and native gameplay calls. These overlapping candidates are generated-code
-experiments, not current-main deletions. The
-final sections distinguish algorithm sharing, emitter policy and independently
-tested alternative transpilers.
+Latest direction: start from the compact C representation to discover repeated
+game operations, and prevent translation noise from obscuring them. The user
+does not request a restart or a maintained compiler fork. An early-source
+experiment is useful when it explains expansion or exposes a shared algorithm;
+beating current main is a separate adoption question.
+
+Changing the C RAM boundary now prevents **32,941 generated Rust lines** across
+all 32 gameplay units. Separately, composing the tested emission cleanups gives
+a complete **195,699-line** early Rust control, down **83,237** from 278,936.
+The paired numeric control also separates the earlier **44,215-line** result:
+**38,266** lines of emission noise, followed by **5,949** from C restructuring
+under the same policy. The source-first section records checks and limits.
+These experiments have overlapping savings and different scopes; do not add them.
 
 The subsequent Cpp2Rust trial builds and executes both backends on real C;
 neither reduces source volume in the tested scopes. Its default mode does
@@ -552,6 +556,124 @@ The sibling `source-study/REPORT.md` links each emission decision to pinned
 upstream source and includes both unbuilt translator patches. Only public C
 and nonsecret experimental code were sent to Compiler Explorer; ROM data,
 save states, test buffers and private current source stayed local.
+
+## Learning from the compact source before expansion
+
+These experiments answer the latest clarification directly. The original C is
+the discovery input; generated Rust is a controlled measurement of what each
+representation costs. The complete early Rust control is also retained so that
+future comparisons can start after mechanical noise has been removed. Neither
+requires replacing maintained Rust or committing to a compiler fork.
+
+### Prevent RAM-address expansion at the C boundary
+
+The original C expresses RAM access through named macros. Preprocessing erases
+those names and exposes a pointer construction at every use. For example:
+
+```c
+#define samus_x_pos (*(uint16*)(g_ram+0xAF6))
+// Experimental header replacement:
+#define samus_x_pos (*RamWordAt(0xAF6))
+```
+
+Two ordinary shared C functions form byte/word pointers into the same `g_ram`;
+dereferences, indexing and stores stay at the callers. The experimental header
+changes 1,100 pointer constructions and three existing getters. All gameplay
+`.c` bodies stay unchanged. Actual C2Rust translation gives:
+
+| Complete measured source, including helper and root costs | Original Rust | C-boundary candidate |
+| --- | ---: | ---: |
+| Samus unit sm_90 pilot | 17,872 | 13,453 |
+| All 32 gameplay units | **221,547** | **188,606** |
+
+That prevents **32,941 lines (14.9%)** of generated address machinery across
+the measured gameplay scope. Every unit decreases. The result includes the
+25-line generated helper once, per-unit declarations and root registration.
+It does not apply numeric cleanup or change gameplay algorithms. Source hashes,
+options, translator version and output hashes guard reuse of earlier original
+translations; the C2Rust service reports 0.22.1 but its build is not commit-pinned.
+
+All 65 original/replacement C object builds, 65 generated Rust units and both
+complete module roots compile; no constant-initializer exceptions were needed.
+Independent source inversion restores all 1,100 macro constructions and three
+getters; all 32 gameplay C files are byte-identical. Actual original/prepared C
+and original/prepared generated Rust pass **12,032 full-RAM/return comparisons**:
+9,984 cases across 39 real routines, plus 2,048 aliasing, odd-address, indexing,
+address-of and single-evaluation cases. The gameplay cases use constructed RAM,
+enemy index zero and synthetic zero ROM, without stubbing those routines. This
+is component coverage, not a full-game/SNES replay or a runtime-speed claim.
+
+Generic `RamWordAt` still emits an offset, so this experiment prevents address
+expansion but does **not** recover the name
+`samus_x_pos` in Rust. The named original C remains the better discovery view.
+Artifacts: TEMP/sm-compact-source-first/ram-emission, including the exact header
+patch, immutable candidate, emitted units and complete measurements.
+
+### A complete compact Rust control for subsequent experiments
+
+Composing the already-tested numeric, shared-declaration, native-call and
+RAM/constant-ROM extraction policies produces a complete source tree:
+
+| Complete original Rust project | Lines |
+| --- | ---: |
+| First transpilation | 278,936 |
+| Numeric, shared-declaration and native-call policies | 219,709 |
+| Plus shared RAM/constant-ROM expressions | **195,699** |
+
+This removes **83,237 lines (29.8%)** of generated representation overhead
+without changing gameplay algorithms. The final 56-file count includes
+hardware/frontend source, all helpers, imports and registration, using the
+same normal formatter. It is an actual composed count, not a sum of independent
+estimates. The C-boundary experiment above overlaps this address extraction
+and has a different scope; do not add its 32,941 lines.
+
+The complete optimized library compiles and the frontend passes metadata
+checking against it. Inverse expansion of **24,548 helper calls** recovers the
+preceding source with zero token-differing files, ignoring formatting and
+optional trailing commas. The 22-line helper is identical to the implementation
+already checked by 17,301,508 pointer comparisons; those checks are reused.
+These establish mechanical correspondence and compilation, not full-game
+execution. The ROM matcher only adapts equivalent numeric literal spelling;
+unmatched expression forms are retained.
+
+Retained source: TEMP/sm-compact-source-first/compact-original/sm/src. Its
+REPORT.md records exact commands and limits; ../EXAMPLES.md contains unedited
+three-way extractions. `Samus_JumpingMovement` is 32 lines in C, 90 in raw Rust
+and 56 in this compact Rust. C still preserves the meaningful RAM/table names
+that both generated views lose. Use it for finding whole repeated operations;
+use the compiled compact Rust to inspect and price their generated forms.
+
+### A fair structural comparison after removing numeric noise
+
+The earlier 229,348 -> 185,133 result combined two effects. Applying the same
+existing numeric pass to the untouched C output now supplies the missing control:
+
+| All 32 gameplay units, CPU infrastructure, SPC player and roots | Rust lines |
+| --- | ---: |
+| Original C, generated Rust under the common formatter | 229,348 |
+| Original C, numeric emission normalized | **191,082** |
+| Restructured C, identical normalization | **185,133** |
+
+The C restructuring therefore removes **5,949 lines** with numeric noise
+controlled. That is the measured structural benefit; the earlier 7,227 raw
+output reduction also included differences in how much noise was generated.
+The new comparison charges the replacement arithmetic helper and registration.
+
+Numeric normalization preserves all **6,371 function names/signatures**, 2,191
+extern declarations, 541 structs, 466 aliases, 12 enums and the measured counts
+of conditionals, matches and loops. Cast nodes fall from 221,347 to 125,965.
+The subsequent C restructuring removes **861 function definitions and 255
+extern declarations net**, including the handler/wrapper consolidation already
+documented above. These counts separate eliminated representation from deleted
+entry points; the represented game operations remain.
+
+The new compact original passes optimized library compilation and formatting.
+The unchanged numeric policy's arithmetic/constant checks and the previously
+validated restructured candidate are reused. This adds no gameplay execution
+coverage. Exact paired per-file counts and three extracted C/raw-Rust/compact-
+Rust examples are in TEMP/sm-compact-source-first/numeric-control/{REPORT.md,
+PER_FILE.md,SNIPPETS.md,RESULTS.json}. The original compact source is under
+numeric-control/compact-before/sm/src.
 
 ## Independent transpilers: executed comparisons
 
