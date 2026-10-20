@@ -2638,7 +2638,37 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `939101ab` shares callback arguments
+Latest reviewed integration (2026-10-20): `1354f34f` shares both map renderers
+and all four directional bound scans; `5c69507d` corrects their focused read
+instrumentation. Independent reconstruction binds all 74 committed inputs
+to the composed dispatch candidate. All 321 unselected functions remain exact,
+and the removed mask table has identical values and no other use.
+
+Exploration-byte rotation, its carry reread, mapped-word prefetch after the
+final tile, screen-specific blank tiles and VRAM queue field order remain
+exact. Bound scans retain the asymmetric column jumps, skipped terminal rows
+and empty-map defaults. The test adapter uses real Game and field layouts;
+its unaligned reads retain the original widths and valid backing ranges.
+
+Independent source/instrumentation reconstruction and rerun of the corrected
+DLL pass 1024 ordered/full-RAM rendering cases, including actual-library
+outputs, and 9220 extracted edge-scan cases. The latter cover the empty map,
+every individual map bit and 256 patterned maps in all four directions.
+Prefetch removal, wrong blank value and read reordering are detected. The
+added carry-reread controls detect 17 versus 16 reads on both screens while
+requiring identical final RAM. All four mutant bodies reconstruct exactly;
+all six previously missed method-receiver reads are now recorded.
+
+Normal release (17.62s), formatting/check, progress and full any% pass:
+129712/0, native exit 0, 123.75s wall/104.68s replay. Review reused this run;
+all 94 corrected source/proof/build/fixture pins remain stable, with the
+three replaced focused artifacts bound to their preserved originals.
+Rust lines fall 104 to 132341; cast lines fall 27 and the two private helpers
+add two unsafe functions. Other counters are unchanged. Rendering data is
+sampled, and the movie has no ending/credits coverage. Broader gameplay,
+frontend execution and alias safety remain open.
+
+Included `939101ab` shares callback arguments
 across 133 address dispatchers: all 114 existing macro declarations and
 19 ordinary functions. The 3126 arms retain 2860 shared calls and 266 explicit
 expressions. Independent reconstruction binds all 77 committed inputs to the
