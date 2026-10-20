@@ -829,6 +829,66 @@ fn record_opcode_history(bank: u8, pc: u16, game: &mut Game) {
     game.pc_hist[game.pc_hist_ctr as usize] = cur_pc;
     game.pc_hist_ctr = game.pc_hist_ctr.wrapping_add(1) & 7;
 }
+// Decode the repeated operation/address-mode grids while retaining each bus helper.
+unsafe fn execute_opcode_grid(cpu: *mut Cpu, opcode: u8, game: &mut Game) -> bool {
+    let operation = opcode >> 5;
+    let mode = opcode & 0x1f;
+    if matches!(mode, 0x06 | 0x0e | 0x16 | 0x1e) && !matches!(operation, 4 | 5) {
+        let (low, high) = match mode {
+            0x06 => address_direct_page(cpu, None, game),
+            0x0e => address_absolute(cpu, game),
+            0x16 => address_direct_page(cpu, Some(IndexRegister::X), game),
+            0x1e => address_absolute_indexed(cpu, IndexRegister::X, true, game),
+            _ => unreachable!(),
+        };
+        match operation {
+            0 => modify_memory(cpu, low, high, MemoryOperation::ShiftLeft, game),
+            1 => modify_memory(cpu, low, high, MemoryOperation::RotateLeft, game),
+            2 => modify_memory(cpu, low, high, MemoryOperation::ShiftRight, game),
+            3 => rotate_memory_right(cpu, low, high, game),
+            6 => modify_memory(cpu, low, high, MemoryOperation::Decrement, game),
+            7 => modify_memory(cpu, low, high, MemoryOperation::Increment, game),
+            _ => unreachable!(),
+        }
+        return true;
+    }
+    // STA has no immediate form; 0x89 keeps its distinct BIT behavior below.
+    if opcode == 0x89 {
+        return false;
+    }
+    let writing = operation == 4;
+    let (low, high) = match mode {
+        0x01 => address_direct_page_indexed_indirect(cpu, game),
+        0x03 => address_stack_relative(cpu, game),
+        0x05 => address_direct_page(cpu, None, game),
+        0x07 => address_direct_page_indirect_long(cpu, None, game),
+        0x09 => address_immediate(&mut *cpu, CpuRegister::Accumulator),
+        0x0d => address_absolute(cpu, game),
+        0x0f => address_absolute_long(cpu, None, game),
+        0x11 => address_direct_page_indirect_y(cpu, writing, game),
+        0x12 => address_direct_page_indirect(cpu, game),
+        0x13 => address_stack_relative_indirect_y(cpu, game),
+        0x15 => address_direct_page(cpu, Some(IndexRegister::X), game),
+        0x17 => address_direct_page_indirect_long(cpu, Some(IndexRegister::Y), game),
+        0x19 => address_absolute_indexed(cpu, IndexRegister::Y, writing, game),
+        0x1d => address_absolute_indexed(cpu, IndexRegister::X, writing, game),
+        0x1f => address_absolute_long(cpu, Some(IndexRegister::X), game),
+        _ => return false,
+    };
+    match operation {
+        0 => logical_accumulator(cpu, low, high, LogicOperation::Or, game),
+        1 => logical_accumulator(cpu, low, high, LogicOperation::And, game),
+        2 => logical_accumulator(cpu, low, high, LogicOperation::Xor, game),
+        3 => add_with_carry(cpu, low, high, game),
+        4 => store_register(cpu, low, high, CpuRegister::Accumulator, game),
+        5 => load_register(cpu, low, high, CpuRegister::Accumulator, game),
+        6 => compare_register(cpu, low, high, CpuRegister::Accumulator, game),
+        7 => subtract_with_carry(cpu, low, high, game),
+        _ => unreachable!(),
+    }
+    true
+}
+
 // Keep each opcode's address calculation before its memory operation.
 // Special opcodes retain their complete bodies in the same dispatch table.
 macro_rules! cpu_opcode_table {
@@ -866,9 +926,10 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             _ => {}
         }
     }
+    if execute_opcode_grid(cpu, opcode, game) {
+        return;
+    }
     cpu_opcode_table! { cpu, opcode, game;
-        0x01 => [address_direct_page_indexed_indirect(cpu, game)
-            => logical_accumulator(LogicOperation::Or)]
         0x02 => {
             fetch_byte(cpu, game);
             push_byte(cpu, (*cpu).k, game);
@@ -880,53 +941,22 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).k = 0_;
             (*cpu).pc = read_word(cpu, 0xffe4_, 0xffe5_, game);
         }
-        0x03 => [address_stack_relative(cpu, game) => logical_accumulator(LogicOperation::Or)]
         0x04 => [address_direct_page(cpu, None, game) => test_and_update_bits(true)]
-        0x05 => [address_direct_page(cpu, None, game) => logical_accumulator(LogicOperation::Or)]
-        0x06 => [address_direct_page(cpu, None, game) => modify_memory(MemoryOperation::ShiftLeft)]
-        0x07 => [address_direct_page_indirect_long(cpu, None, game)
-            => logical_accumulator(LogicOperation::Or)]
         0x08 => (push_byte(cpu, cpu_getFlags(&*cpu), game))
-        0x09 => [address_immediate(&mut *cpu, CpuRegister::Accumulator)
-            => logical_accumulator(LogicOperation::Or)]
         0x0a => (shift_accumulator_left(false, &mut *cpu))
         0x0b => (push_word(cpu, (*cpu).dp, game))
         0x0c => [address_absolute(cpu, game) => test_and_update_bits(true)]
-        0x0d => [address_absolute(cpu, game) => logical_accumulator(LogicOperation::Or)]
-        0x0e => [address_absolute(cpu, game) => modify_memory(MemoryOperation::ShiftLeft)]
-        0x0f => [address_absolute_long(cpu, None, game) => logical_accumulator(LogicOperation::Or)]
         0x10 => (branch_relative(fetch_byte(cpu, game), !(*cpu).n, &mut *cpu))
-        0x11 => [address_direct_page_indirect_y(cpu, false, game)
-            => logical_accumulator(LogicOperation::Or)]
-        0x12 => [address_direct_page_indirect(cpu, game) => logical_accumulator(LogicOperation::Or)]
-        0x13 => [address_stack_relative_indirect_y(cpu, game)
-            => logical_accumulator(LogicOperation::Or)]
         0x14 => [address_direct_page(cpu, None, game) => test_and_update_bits(false)]
-        0x15 => [address_direct_page(cpu, Some(IndexRegister::X), game)
-            => logical_accumulator(LogicOperation::Or)]
-        0x16 => [address_direct_page(cpu, Some(IndexRegister::X), game)
-            => modify_memory(MemoryOperation::ShiftLeft)]
-        0x17 => [address_direct_page_indirect_long(cpu, Some(IndexRegister::Y), game)
-            => logical_accumulator(LogicOperation::Or)]
         0x18 => ((*cpu).c = false)
-        0x19 => [address_absolute_indexed(cpu, IndexRegister::Y, false, game)
-            => logical_accumulator(LogicOperation::Or)]
         0x1a => (update_accumulator(1, &mut *cpu))
         0x1b => ((*cpu).sp = (*cpu).a)
         0x1c => [address_absolute(cpu, game) => test_and_update_bits(false)]
-        0x1d => [address_absolute_indexed(cpu, IndexRegister::X, false, game)
-            => logical_accumulator(LogicOperation::Or)]
-        0x1e => [address_absolute_indexed(cpu, IndexRegister::X, true, game)
-            => modify_memory(MemoryOperation::ShiftLeft)]
-        0x1f => [address_absolute_long(cpu, Some(IndexRegister::X), game)
-            => logical_accumulator(LogicOperation::Or)]
         0x20 => {
             let value = fetch_word(cpu, game);
             push_word(cpu, (*cpu).pc.wrapping_sub(1), game);
             (*cpu).pc = value;
         }
-        0x21 => [address_direct_page_indexed_indirect(cpu, game)
-            => logical_accumulator(LogicOperation::And)]
         0x22 => {
             let address = fetch_long_address(cpu, game);
             let target = address as u16;
@@ -936,41 +966,17 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).pc = target;
             (*cpu).k = newK;
         }
-        0x23 => [address_stack_relative(cpu, game) => logical_accumulator(LogicOperation::And)]
         0x24 => [address_direct_page(cpu, None, game) => test_accumulator_bits()]
-        0x25 => [address_direct_page(cpu, None, game) => logical_accumulator(LogicOperation::And)]
-        0x26 => [address_direct_page(cpu, None, game) => modify_memory(MemoryOperation::RotateLeft)]
-        0x27 => [address_direct_page_indirect_long(cpu, None, game)
-            => logical_accumulator(LogicOperation::And)]
         0x28 => (cpu_setFlags(pull_byte(cpu, game), &mut *cpu))
-        0x29 => [address_immediate(&mut *cpu, CpuRegister::Accumulator)
-            => logical_accumulator(LogicOperation::And)]
         0x2a => (shift_accumulator_left(true, &mut *cpu))
         0x2b => {
             let value = pull_word(cpu, game);
             load_direct_page(value, &mut *cpu);
         }
         0x2c => [address_absolute(cpu, game) => test_accumulator_bits()]
-        0x2d => [address_absolute(cpu, game) => logical_accumulator(LogicOperation::And)]
-        0x2e => [address_absolute(cpu, game) => modify_memory(MemoryOperation::RotateLeft)]
-        0x2f => [address_absolute_long(cpu, None, game) => logical_accumulator(LogicOperation::And)]
         0x30 => (branch_relative(fetch_byte(cpu, game), (*cpu).n, &mut *cpu))
-        0x31 => [address_direct_page_indirect_y(cpu, false, game)
-            => logical_accumulator(LogicOperation::And)]
-        0x32 => [address_direct_page_indirect(cpu, game)
-            => logical_accumulator(LogicOperation::And)]
-        0x33 => [address_stack_relative_indirect_y(cpu, game)
-            => logical_accumulator(LogicOperation::And)]
         0x34 => [address_direct_page(cpu, Some(IndexRegister::X), game) => test_accumulator_bits()]
-        0x35 => [address_direct_page(cpu, Some(IndexRegister::X), game)
-            => logical_accumulator(LogicOperation::And)]
-        0x36 => [address_direct_page(cpu, Some(IndexRegister::X), game)
-            => modify_memory(MemoryOperation::RotateLeft)]
-        0x37 => [address_direct_page_indirect_long(cpu, Some(IndexRegister::Y), game)
-            => logical_accumulator(LogicOperation::And)]
         0x38 => ((*cpu).c = true)
-        0x39 => [address_absolute_indexed(cpu, IndexRegister::Y, false, game)
-            => logical_accumulator(LogicOperation::And)]
         0x3a => (update_accumulator(u16::MAX, &mut *cpu))
         0x3b => {
             (*cpu).a = (*cpu).sp;
@@ -978,12 +984,6 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0x3c => [address_absolute_indexed(cpu, IndexRegister::X, false, game)
             => test_accumulator_bits()]
-        0x3d => [address_absolute_indexed(cpu, IndexRegister::X, false, game)
-            => logical_accumulator(LogicOperation::And)]
-        0x3e => [address_absolute_indexed(cpu, IndexRegister::X, true, game)
-            => modify_memory(MemoryOperation::RotateLeft)]
-        0x3f => [address_absolute_long(cpu, Some(IndexRegister::X), game)
-            => logical_accumulator(LogicOperation::And)]
         0x40 => {
             cpu_setFlags(pull_byte(cpu, game), &mut *cpu);
             (*cpu).pc = pull_word(cpu, game);
@@ -992,12 +992,9 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 (*cpu).k = pull_byte(cpu, game);
             }
         }
-        0x41 => [address_direct_page_indexed_indirect(cpu, game)
-            => logical_accumulator(LogicOperation::Xor)]
         0x42 => {
             fetch_byte(cpu, game);
         }
-        0x43 => [address_stack_relative(cpu, game) => logical_accumulator(LogicOperation::Xor)]
         0x44 => {
             let dest = fetch_byte(cpu, game);
             let src = fetch_byte(cpu, game);
@@ -1019,26 +1016,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 (*cpu).y &= 0xff;
             }
         }
-        0x45 => [address_direct_page(cpu, None, game) => logical_accumulator(LogicOperation::Xor)]
-        0x46 => [address_direct_page(cpu, None, game) => modify_memory(MemoryOperation::ShiftRight)]
-        0x47 => [address_direct_page_indirect_long(cpu, None, game)
-            => logical_accumulator(LogicOperation::Xor)]
         0x48 => (push_register(cpu, CpuRegister::Accumulator, game))
-        0x49 => [address_immediate(&mut *cpu, CpuRegister::Accumulator)
-            => logical_accumulator(LogicOperation::Xor)]
         0x4a => (shift_accumulator_right(&mut *cpu))
         0x4b => (push_byte(cpu, (*cpu).k, game))
         0x4c => ((*cpu).pc = fetch_word(cpu, game))
-        0x4d => [address_absolute(cpu, game) => logical_accumulator(LogicOperation::Xor)]
-        0x4e => [address_absolute(cpu, game) => modify_memory(MemoryOperation::ShiftRight)]
-        0x4f => [address_absolute_long(cpu, None, game) => logical_accumulator(LogicOperation::Xor)]
         0x50 => (branch_relative(fetch_byte(cpu, game), !(*cpu).v, &mut *cpu))
-        0x51 => [address_direct_page_indirect_y(cpu, false, game)
-            => logical_accumulator(LogicOperation::Xor)]
-        0x52 => [address_direct_page_indirect(cpu, game)
-            => logical_accumulator(LogicOperation::Xor)]
-        0x53 => [address_stack_relative_indirect_y(cpu, game)
-            => logical_accumulator(LogicOperation::Xor)]
         0x54 => {
             let dest_0 = fetch_byte(cpu, game);
             let src_0 = fetch_byte(cpu, game);
@@ -1060,15 +1042,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 (*cpu).y &= 0xff;
             }
         }
-        0x55 => [address_direct_page(cpu, Some(IndexRegister::X), game)
-            => logical_accumulator(LogicOperation::Xor)]
-        0x56 => [address_direct_page(cpu, Some(IndexRegister::X), game)
-            => modify_memory(MemoryOperation::ShiftRight)]
-        0x57 => [address_direct_page_indirect_long(cpu, Some(IndexRegister::Y), game)
-            => logical_accumulator(LogicOperation::Xor)]
         0x58 => ((*cpu).i = false)
-        0x59 => [address_absolute_indexed(cpu, IndexRegister::Y, false, game)
-            => logical_accumulator(LogicOperation::Xor)]
         0x5a => (push_register(cpu, CpuRegister::Y, game))
         0x5b => (load_direct_page((*cpu).a, &mut *cpu))
         0x5c => {
@@ -1086,12 +1060,6 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).k = target_bank;
             (*cpu).pc = target;
         }
-        0x5d => [address_absolute_indexed(cpu, IndexRegister::X, false, game)
-            => logical_accumulator(LogicOperation::Xor)]
-        0x5e => [address_absolute_indexed(cpu, IndexRegister::X, true, game)
-            => modify_memory(MemoryOperation::ShiftRight)]
-        0x5f => [address_absolute_long(cpu, Some(IndexRegister::X), game)
-            => logical_accumulator(LogicOperation::Xor)]
         0x60 => {
             if (*cpu).sp >= (*cpu).spBreakpoint && (*cpu).spBreakpoint != 0 {
                 let delta = (*cpu).sp - (*cpu).spBreakpoint;
@@ -1109,18 +1077,12 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
         }
-        0x61 => [address_direct_page_indexed_indirect(cpu, game) => add_with_carry()]
         0x62 => {
             let displacement = fetch_word(cpu, game) as i16;
             push_word(cpu, (*cpu).pc.wrapping_add_signed(displacement), game);
         }
-        0x63 => [address_stack_relative(cpu, game) => add_with_carry()]
         0x64 => [address_direct_page(cpu, None, game) => store_zero()]
-        0x65 => [address_direct_page(cpu, None, game) => add_with_carry()]
-        0x66 => [address_direct_page(cpu, None, game) => rotate_memory_right()]
-        0x67 => [address_direct_page_indirect_long(cpu, None, game) => add_with_carry()]
         0x68 => (pull_register(cpu, CpuRegister::Accumulator, game))
-        0x69 => [address_immediate(&mut *cpu, CpuRegister::Accumulator) => add_with_carry()]
         0x6a => {
             let carry = (*cpu).a & 1 != 0;
             if (*cpu).mf {
@@ -1152,47 +1114,26 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             let adr = fetch_word(cpu, game);
             (*cpu).pc = read_word(cpu, u32::from(adr), u32::from(adr.wrapping_add(1)), game);
         }
-        0x6d => [address_absolute(cpu, game) => add_with_carry()]
-        0x6e => [address_absolute(cpu, game) => rotate_memory_right()]
-        0x6f => [address_absolute_long(cpu, None, game) => add_with_carry()]
         0x70 => (branch_relative(fetch_byte(cpu, game), (*cpu).v, &mut *cpu))
-        0x71 => [address_direct_page_indirect_y(cpu, false, game) => add_with_carry()]
-        0x72 => [address_direct_page_indirect(cpu, game) => add_with_carry()]
-        0x73 => [address_stack_relative_indirect_y(cpu, game) => add_with_carry()]
         0x74 => [address_direct_page(cpu, Some(IndexRegister::X), game) => store_zero()]
-        0x75 => [address_direct_page(cpu, Some(IndexRegister::X), game) => add_with_carry()]
-        0x76 => [address_direct_page(cpu, Some(IndexRegister::X), game) => rotate_memory_right()]
-        0x77 => [address_direct_page_indirect_long(cpu, Some(IndexRegister::Y), game)
-            => add_with_carry()]
         0x78 => ((*cpu).i = true)
-        0x79 => [address_absolute_indexed(cpu, IndexRegister::Y, false, game) => add_with_carry()]
         0x7a => (pull_register(cpu, CpuRegister::Y, game))
         0x7b => {
             (*cpu).a = (*cpu).dp;
             set_zero_negative((*cpu).a, false, &mut *cpu);
         }
         0x7c => ((*cpu).pc = address_absolute_indexed_indirect(cpu, game))
-        0x7d => [address_absolute_indexed(cpu, IndexRegister::X, false, game) => add_with_carry()]
-        0x7e => [address_absolute_indexed(cpu, IndexRegister::X, true, game)
-            => rotate_memory_right()]
-        0x7f => [address_absolute_long(cpu, Some(IndexRegister::X), game) => add_with_carry()]
         0x80 => {
             // Relative branches start after the displacement operand.
             let displacement = fetch_byte(cpu, game) as i8;
             (*cpu).pc = (*cpu).pc.wrapping_add_signed(displacement as i16);
         }
-        0x81 => [address_direct_page_indexed_indirect(cpu, game)
-            => store_register(CpuRegister::Accumulator)]
         0x82 => {
             let displacement = fetch_word(cpu, game) as i16;
             (*cpu).pc = (*cpu).pc.wrapping_add_signed(displacement);
         }
-        0x83 => [address_stack_relative(cpu, game) => store_register(CpuRegister::Accumulator)]
         0x84 => [address_direct_page(cpu, None, game) => store_register(CpuRegister::Y)]
-        0x85 => [address_direct_page(cpu, None, game) => store_register(CpuRegister::Accumulator)]
         0x86 => [address_direct_page(cpu, None, game) => store_register(CpuRegister::X)]
-        0x87 => [address_direct_page_indirect_long(cpu, None, game)
-            => store_register(CpuRegister::Accumulator)]
         0x88 => (IndexRegister::Y.update(u16::MAX, &mut *cpu))
         0x89 => {
             let byte = (*cpu).mf;
@@ -1208,74 +1149,35 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         0x8a => (load_accumulator((*cpu).x, &mut *cpu))
         0x8b => (push_byte(cpu, (*cpu).db, game))
         0x8c => [address_absolute(cpu, game) => store_register(CpuRegister::Y)]
-        0x8d => [address_absolute(cpu, game) => store_register(CpuRegister::Accumulator)]
         0x8e => [address_absolute(cpu, game) => store_register(CpuRegister::X)]
-        0x8f => [address_absolute_long(cpu, None, game) => store_register(CpuRegister::Accumulator)]
         0x90 => (branch_relative(fetch_byte(cpu, game), !(*cpu).c, &mut *cpu))
-        0x91 => [address_direct_page_indirect_y(cpu, true, game)
-            => store_register(CpuRegister::Accumulator)]
-        0x92 => [address_direct_page_indirect(cpu, game)
-            => store_register(CpuRegister::Accumulator)]
-        0x93 => [address_stack_relative_indirect_y(cpu, game)
-            => store_register(CpuRegister::Accumulator)]
         0x94 => [address_direct_page(cpu, Some(IndexRegister::X), game)
             => store_register(CpuRegister::Y)]
-        0x95 => [address_direct_page(cpu, Some(IndexRegister::X), game)
-            => store_register(CpuRegister::Accumulator)]
         0x96 => [address_direct_page(cpu, Some(IndexRegister::Y), game)
             => store_register(CpuRegister::X)]
-        0x97 => [address_direct_page_indirect_long(cpu, Some(IndexRegister::Y), game)
-            => store_register(CpuRegister::Accumulator)]
         0x98 => (load_accumulator((*cpu).y, &mut *cpu))
-        0x99 => [address_absolute_indexed(cpu, IndexRegister::Y, true, game)
-            => store_register(CpuRegister::Accumulator)]
         0x9a => ((*cpu).sp = (*cpu).x)
         0x9b => (IndexRegister::Y.load((*cpu).x, &mut *cpu))
         0x9c => [address_absolute(cpu, game) => store_zero()]
-        0x9d => [address_absolute_indexed(cpu, IndexRegister::X, true, game)
-            => store_register(CpuRegister::Accumulator)]
         0x9e => [address_absolute_indexed(cpu, IndexRegister::X, true, game) => store_zero()]
-        0x9f => [address_absolute_long(cpu, Some(IndexRegister::X), game)
-            => store_register(CpuRegister::Accumulator)]
         0xa0 => [address_immediate(&mut *cpu, CpuRegister::Y) => load_register(CpuRegister::Y)]
-        0xa1 => [address_direct_page_indexed_indirect(cpu, game)
-            => load_register(CpuRegister::Accumulator)]
         0xa2 => [address_immediate(&mut *cpu, CpuRegister::X) => load_register(CpuRegister::X)]
-        0xa3 => [address_stack_relative(cpu, game) => load_register(CpuRegister::Accumulator)]
         0xa4 => [address_direct_page(cpu, None, game) => load_register(CpuRegister::Y)]
-        0xa5 => [address_direct_page(cpu, None, game) => load_register(CpuRegister::Accumulator)]
         0xa6 => [address_direct_page(cpu, None, game) => load_register(CpuRegister::X)]
-        0xa7 => [address_direct_page_indirect_long(cpu, None, game)
-            => load_register(CpuRegister::Accumulator)]
         0xa8 => (IndexRegister::Y.load((*cpu).a, &mut *cpu))
-        0xa9 => [address_immediate(&mut *cpu, CpuRegister::Accumulator)
-            => load_register(CpuRegister::Accumulator)]
         0xaa => (IndexRegister::X.load((*cpu).a, &mut *cpu))
         0xab => {
             let value = pull_byte(cpu, game);
             load_data_bank(value, &mut *cpu);
         }
         0xac => [address_absolute(cpu, game) => load_register(CpuRegister::Y)]
-        0xad => [address_absolute(cpu, game) => load_register(CpuRegister::Accumulator)]
         0xae => [address_absolute(cpu, game) => load_register(CpuRegister::X)]
-        0xaf => [address_absolute_long(cpu, None, game) => load_register(CpuRegister::Accumulator)]
         0xb0 => (branch_relative(fetch_byte(cpu, game), (*cpu).c, &mut *cpu))
-        0xb1 => [address_direct_page_indirect_y(cpu, false, game)
-            => load_register(CpuRegister::Accumulator)]
-        0xb2 => [address_direct_page_indirect(cpu, game) => load_register(CpuRegister::Accumulator)]
-        0xb3 => [address_stack_relative_indirect_y(cpu, game)
-            => load_register(CpuRegister::Accumulator)]
         0xb4 => [address_direct_page(cpu, Some(IndexRegister::X), game)
             => load_register(CpuRegister::Y)]
-        0xb5 => [address_direct_page(cpu, Some(IndexRegister::X), game)
-            => load_register(CpuRegister::Accumulator)]
         0xb6 => [address_direct_page(cpu, Some(IndexRegister::Y), game)
             => load_register(CpuRegister::X)]
-        0xb7 => [address_direct_page_indirect_long(cpu, Some(IndexRegister::Y), game)
-            => load_register(CpuRegister::Accumulator)]
         0xb8 => ((*cpu).v = false)
-        0xb9 => [address_absolute_indexed(cpu, IndexRegister::Y, false, game)
-            => load_register(CpuRegister::Accumulator)]
         0xba => {
             if (*cpu).xf {
                 (*cpu).x = (*cpu).sp & 0xff;
@@ -1287,52 +1189,21 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         0xbb => (IndexRegister::X.load((*cpu).y, &mut *cpu))
         0xbc => [address_absolute_indexed(cpu, IndexRegister::X, false, game)
             => load_register(CpuRegister::Y)]
-        0xbd => [address_absolute_indexed(cpu, IndexRegister::X, false, game)
-            => load_register(CpuRegister::Accumulator)]
         0xbe => [address_absolute_indexed(cpu, IndexRegister::Y, false, game)
             => load_register(CpuRegister::X)]
-        0xbf => [address_absolute_long(cpu, Some(IndexRegister::X), game)
-            => load_register(CpuRegister::Accumulator)]
         0xc0 => [address_immediate(&mut *cpu, CpuRegister::Y) => compare_register(CpuRegister::Y)]
-        0xc1 => [address_direct_page_indexed_indirect(cpu, game)
-            => compare_register(CpuRegister::Accumulator)]
         0xc2 => (update_status_bits(cpu, false, game))
-        0xc3 => [address_stack_relative(cpu, game) => compare_register(CpuRegister::Accumulator)]
         0xc4 => [address_direct_page(cpu, None, game) => compare_register(CpuRegister::Y)]
-        0xc5 => [address_direct_page(cpu, None, game) => compare_register(CpuRegister::Accumulator)]
-        0xc6 => [address_direct_page(cpu, None, game) => modify_memory(MemoryOperation::Decrement)]
-        0xc7 => [address_direct_page_indirect_long(cpu, None, game)
-            => compare_register(CpuRegister::Accumulator)]
         0xc8 => (IndexRegister::Y.update(1, &mut *cpu))
-        0xc9 => [address_immediate(&mut *cpu, CpuRegister::Accumulator)
-            => compare_register(CpuRegister::Accumulator)]
         0xca => (IndexRegister::X.update(u16::MAX, &mut *cpu))
         0xcb => ((*cpu).waiting = true)
         0xcc => [address_absolute(cpu, game) => compare_register(CpuRegister::Y)]
-        0xcd => [address_absolute(cpu, game) => compare_register(CpuRegister::Accumulator)]
-        0xce => [address_absolute(cpu, game) => modify_memory(MemoryOperation::Decrement)]
-        0xcf => [address_absolute_long(cpu, None, game)
-            => compare_register(CpuRegister::Accumulator)]
         0xd0 => (branch_relative(fetch_byte(cpu, game), !(*cpu).z, &mut *cpu))
-        0xd1 => [address_direct_page_indirect_y(cpu, false, game)
-            => compare_register(CpuRegister::Accumulator)]
-        0xd2 => [address_direct_page_indirect(cpu, game)
-            => compare_register(CpuRegister::Accumulator)]
-        0xd3 => [address_stack_relative_indirect_y(cpu, game)
-            => compare_register(CpuRegister::Accumulator)]
         0xd4 => {
             let (low, high) = address_direct_page(cpu, None, game);
             push_word(cpu, read_word(cpu, low, high, game), game);
         }
-        0xd5 => [address_direct_page(cpu, Some(IndexRegister::X), game)
-            => compare_register(CpuRegister::Accumulator)]
-        0xd6 => [address_direct_page(cpu, Some(IndexRegister::X), game)
-            => modify_memory(MemoryOperation::Decrement)]
-        0xd7 => [address_direct_page_indirect_long(cpu, Some(IndexRegister::Y), game)
-            => compare_register(CpuRegister::Accumulator)]
         0xd8 => ((*cpu).d = false)
-        0xd9 => [address_absolute_indexed(cpu, IndexRegister::Y, false, game)
-            => compare_register(CpuRegister::Accumulator)]
         0xda => (push_register(cpu, CpuRegister::X, game))
         0xdb => ((*cpu).stopped = true)
         0xdc => {
@@ -1340,31 +1211,13 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).pc = read_word(cpu, u32::from(adr), u32::from(adr.wrapping_add(1)), game);
             (*cpu).k = read_byte(cpu, u32::from(adr.wrapping_add(2)), game);
         }
-        0xdd => [address_absolute_indexed(cpu, IndexRegister::X, false, game)
-            => compare_register(CpuRegister::Accumulator)]
-        0xde => [address_absolute_indexed(cpu, IndexRegister::X, true, game)
-            => modify_memory(MemoryOperation::Decrement)]
-        0xdf => [address_absolute_long(cpu, Some(IndexRegister::X), game)
-            => compare_register(CpuRegister::Accumulator)]
         0xe0 => [address_immediate(&mut *cpu, CpuRegister::X) => compare_register(CpuRegister::X)]
-        0xe1 => [address_direct_page_indexed_indirect(cpu, game) => subtract_with_carry()]
         0xe2 => (update_status_bits(cpu, true, game))
-        0xe3 => [address_stack_relative(cpu, game) => subtract_with_carry()]
         0xe4 => [address_direct_page(cpu, None, game) => compare_register(CpuRegister::X)]
-        0xe5 => [address_direct_page(cpu, None, game) => subtract_with_carry()]
-        0xe6 => [address_direct_page(cpu, None, game) => modify_memory(MemoryOperation::Increment)]
-        0xe7 => [address_direct_page_indirect_long(cpu, None, game) => subtract_with_carry()]
         0xe8 => (IndexRegister::X.update(1, &mut *cpu))
-        0xe9 => [address_immediate(&mut *cpu, CpuRegister::Accumulator) => subtract_with_carry()]
         0xeb => (exchange_accumulator_bytes(&mut *cpu))
         0xec => [address_absolute(cpu, game) => compare_register(CpuRegister::X)]
-        0xed => [address_absolute(cpu, game) => subtract_with_carry()]
-        0xee => [address_absolute(cpu, game) => modify_memory(MemoryOperation::Increment)]
-        0xef => [address_absolute_long(cpu, None, game) => subtract_with_carry()]
         0xf0 => (branch_relative(fetch_byte(cpu, game), (*cpu).z, &mut *cpu))
-        0xf1 => [address_direct_page_indirect_y(cpu, false, game) => subtract_with_carry()]
-        0xf2 => [address_direct_page_indirect(cpu, game) => subtract_with_carry()]
-        0xf3 => [address_stack_relative_indirect_y(cpu, game) => subtract_with_carry()]
         0xf4 => {
             let w: u16 = fetch_word(cpu, game);
             if w == 0xc2ae {
@@ -1372,14 +1225,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             push_word(cpu, w, game);
         }
-        0xf5 => [address_direct_page(cpu, Some(IndexRegister::X), game) => subtract_with_carry()]
-        0xf6 => [address_direct_page(cpu, Some(IndexRegister::X), game)
-            => modify_memory(MemoryOperation::Increment)]
-        0xf7 => [address_direct_page_indirect_long(cpu, Some(IndexRegister::Y), game)
-            => subtract_with_carry()]
         0xf8 => ((*cpu).d = true)
-        0xf9 => [address_absolute_indexed(cpu, IndexRegister::Y, false, game)
-            => subtract_with_carry()]
         0xfa => (pull_register(cpu, CpuRegister::X, game))
         0xfb => (exchange_carry_emulation(&mut *cpu))
         0xfc => {
@@ -1387,11 +1233,6 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             push_word(cpu, (*cpu).pc.wrapping_sub(1), game);
             (*cpu).pc = target;
         }
-        0xfd => [address_absolute_indexed(cpu, IndexRegister::X, false, game)
-            => subtract_with_carry()]
-        0xfe => [address_absolute_indexed(cpu, IndexRegister::X, true, game)
-            => modify_memory(MemoryOperation::Increment)]
-        0xff => [address_absolute_long(cpu, Some(IndexRegister::X), game) => subtract_with_carry()]
         0xea | _ => {}
     }
 }

@@ -22,12 +22,12 @@ further, by tackling large structural changes before individual cleanup.
 Use **90,000 lines as a stretch planning checkpoint**, not a demonstrated
 forecast. This work order replaces earlier reduction and cleanup queues.
 
-Latest reconsideration: research existing clone/refactoring tools and successful
-post-transpilation reductions before selecting another small family. Findings
-and a bounded local scanner trial are in [REDUCTION_RESEARCH.md](REDUCTION_RESEARCH.md).
-The next discovery experiment is normalized/structural grouping across existing
-boundaries, then deriving and pricing common algorithms with explicit variants.
-Repeated exact scans alone are not a new approach; detector hits are not savings.
+The research-led structural/variant audit has now covered same-file and cross-file
+function bodies, callback rows and compound blocks within large routines. It
+selected the opcode-grid consolidation below, but established no new 500-line
+net candidate. [REDUCTION_RESEARCH.md](REDUCTION_RESEARCH.md) supplies the method
+background; the bounded follow-up findings are in item 2. Do not repeat these
+detector passes without a materially new scope. Detector hits are not savings.
 
 The requested parallel experiment on the original 1311d3b4 transpilation is
 complete: combined tool-assisted replacements remove **49,687 lines
@@ -234,13 +234,19 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    budget was established; no oracle execution or landed savings are claimed.
    Drafts and exact counts: TEMP sm-bindings-root-9c4daf2f/samus-cycle/REPORT.md.
 
-2. [ ] **Compare the remaining large subsystem replacements.** Start with the
-   research note's cross-cutting structural/variant audit, including same-file
-   and near-miss clones. The initial Copydetect trial is incomplete for those
-   cases and establishes no deletion budget. Use existing tools, identify the
-   common algorithm and its differences, then price whole groups before another
-   implementation. The regions and prior results below guide coverage, not
-   boundaries that candidate replacements must preserve:
+2. [ ] **Compare the remaining large subsystem replacements.** The research-led
+   follow-up uses existing AST/Pygments/Copydetect tools on 2,393 function and
+   callback bodies, normalizing names and numbers. Sparse comparison took 8.6s
+   and included same-file and cross-file near-miss islands. A separate 53.8s
+   pass covers 2,995 compound fragments inside 362 large routines, excluding
+   ancestor overlaps and already-studied function pairs. Neither establishes a
+   new 500-line net family; the strongest complete draft is the adopted 184-line
+   opcode grid. These are bounded findings, not proof that all sharing is done.
+   Reports: TEMP sm-near-miss-functions-f57e4abf,
+   sm-inner-variants-c98e8439 and sm-gameplay-variant-audit-f57e4abf.
+   Require a materially new named algorithm
+   or scope before repeating discovery. The regions and prior results below
+   guide coverage, not boundaries that candidate replacements must preserve:
 
    Enemy/projectile preflight found no credible large replacement. Complete
    Metalee/Skree bodies occupy 252 lines; B2 plus laser/claw bodies occupy about
@@ -302,7 +308,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **9,075-line** gap; parked small drafts are not
+   replacement yet funds the **8,891-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -404,6 +410,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    movie result. Lower unsafe/cast counters reflect shared declarations;
    no unsafe runtime operations disappear. Continue the structural/variant
    audit rather than repeating the completed prefix/signature census.
+
+   Complete CPU/SPC opcode-grid consolidation removes **184 lines
+   (109,074 -> 108,890)** by decoding repeated operation/address combinations.
+   All 512 opcode selections independently preserve helper arguments, order
+   and fallback behavior; all 134 existing helpers remain unchanged. The 8,192
+   compiled selector-boundary traces pass, as do release/source checks and full
+   any%/Speed Booster replays. The two added unsafe functions are shared
+   selectors; all their costs are included. These checks preserve existing
+   arithmetic/bus operations without claiming every opcode executes in movies.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -511,6 +526,14 @@ park this uncompiled draft, with no runtime claim. Reports: TEMP
 sm-timed-transitions-63b0ffe4, sm-enemy-programs-63b0ffe4 and
 sm-snapshot-map-price-f698eb50.
 
+The complete Torizo ROM-tuple projectile initialization draft covers four
+variants and removes only 42 lines at c98e8439, including the shared facing/origin
+selection. Park it without builds or runtime claims. Whole-initializer and
+macro-aware audits found no credible 500-line group. Draft/report: TEMP
+sm-eproj-init-study-c98e8439. A separate word-sign predicate census finds 1,512
+predicates on 1,655 occupied lines: only 143 continuation lines before any
+replacement costs. This does not justify another global arithmetic rewrite.
+
 When revisiting one of these exact families, consult its historical section
 with `git show ec45c573:docs/PLAN.md` and search the relevant heading/symbol.
 Temporary draft locations recorded there may no longer exist. Recheck current
@@ -567,7 +590,11 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: projectile flight over c1ebc4ca passes
+Latest full integration: opcode grids over c98e8439 pass any% **129712/0** and
+Speed Booster **148406/0**, with normal rendering, audio and comparisons.
+Independent complete selector correspondence and compiled boundary traces
+cover all opcode values; these are not claims of every opcode's movie execution.
+Earlier projectile flight over c1ebc4ca passes
 any% **129712/0** and Speed Booster **148406/0**, with normal rendering, audio
 and comparisons. Its 51,791 focused SNES comparisons exercise all 20 migrated
 numeric entries, subsequent flight and launch inheritance. Probed any%
@@ -644,13 +671,14 @@ committed baseline and budget.
 After the Japanese correction, local bindings, intro pages, enemy callback
 imports, ordered stores, PNG texture loading, beam firing, moving platforms,
 byte-partial-product sharing, INI decoding, countdown callbacks, projectile
-flight and callback entry captures, maintained Rust is **109,074**, leaving
-**9,075** to reach 99,999. Counters:
+flight, callback entry captures and opcode grids, maintained Rust is **108,890**,
+leaving **8,891** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 4429; cast lines 8107. The unrelated 83-line shader draft
+unsafe functions 4431; cast lines 8107. The unrelated 83-line shader draft
 remains excluded; working-tree counts are not the committed baseline.
-Continue item 2's structural/variant audit from the research note. The hopping
-draft remains parked; neither it nor the completed small migrations establish
-a replacement budget for the remaining gap.
+Item 2's function/compound-body variant audits are complete for their stated
+scope. The remaining gap has no established replacement budget. The hopping
+and initializer drafts remain parked; repeating the completed scans or adding
+their gross matching spans does not supply that budget.
 
 Historical details before this reset remain in **ec45c573:docs/PLAN.md**.
