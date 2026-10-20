@@ -135,5 +135,57 @@ The output should be a few priced cross-cutting replacements, with rejected
 groups explained, before selecting another small family. Do not build a new
 scanner, dashboard or permanent evidence system. No reviewed source provides
 a turnkey Rust-to-compact-game-engine converter or establishes our remaining
-9,705-line budget. The strongest practical precedent is consolidation before
+reduction budget. The strongest practical precedent is consolidation before
 cleanup; the new question is where that multiplicity still exists here.
+
+## Executed experiment on the original transpilation
+
+At the user's request, recovered **1311d3b4**, the earliest committed transpiled
+Rust with initial mechanical compile fixes: **278,936 lines / 54 files**.
+No C was regenerated. Parallel isolated studies used Copydetect, the official
+ast-grep Python bindings and tree-sitter to find and transform repeated code.
+Agents designed the shared implementations; these tools do not choose or
+prove an abstraction automatically. All drafts remain outside main.
+
+| Actual combined stage | Rust lines | Additional net deletion |
+| --- | ---: | ---: |
+| Original, unchanged by the same formatter | 278,936 | 0 |
+| Shared corpse tile algorithm, preserving 24 callbacks | 276,862 | 2,074 |
+| Shared duplicate types/constants | 261,656 | 15,206 |
+| Shared compatible foreign declarations | 260,468 | 1,188 |
+| Shared RAM and constant-ROM address expressions | 229,249 | 31,219 |
+| **Combined result** | **229,249** | **49,687 (17.8%)** |
+
+All helper, caller, import and registration costs count. The address experiment
+alone saves 31,703; combining it after algorithm sharing avoids double-counting
+484 overlapping lines. No formatting-width change contributes savings.
+
+Original and combined libraries pass optimized code generation and frontend
+metadata checks. Header passes preserve 6,888 input function definitions;
+12,692 compiler-evaluated layout/constant values agree with the original.
+Inverse expansion of 24,426 combined address calls restores the preceding
+source tokens. The unchanged extracted helpers pass 17,301,508 pointer-result
+comparisons, and the corpse algorithm passes 90,992 optimized full-RAM routine
+comparisons. These are static and constructed checks, not a full game replay
+or SNES/render/audio validation. The experiment changes no maintained gameplay.
+
+The comparison snapshot **f57e4abf**, **109,556 lines**, already shares these
+algorithms and address primitives. The address queries find zero current
+matches; selected declarations expose only 65 gross duplicate lines before
+costs. Consequently **the original saving is not additional current savings**.
+It establishes a useful early-transpilation workflow, but does not demonstrate
+that restarting would beat current code or exhaust other possible reductions.
+
+Scanner coverage also differs greatly: raw cross-file matches touch 138,426
+original lines versus 7,290 in that current snapshot; normalized AST matches
+at an 80-token threshold touch 31,748 versus 2,327. These overlapping matched
+lines include retained implementations and are not deletion budgets. Same-file
+scans were included; 35 original function bodies with parser errors were
+excluded from structural analysis. Data-flow equivalence remains outside it.
+
+Runnable sources, complete patches and reports: TEMP/sm-original-transpile-experiments/.
+The combined candidate is in combined/sm/src, its exact patch in
+combined/trial.patch, and the full results/limits in combined/REPORT.md.
+Independent studies are declarations_extern/, clone-folding/,
+algorithm-variants/ and tool-audit/. The original and current inputs were
+checked byte-for-byte against Git. No ROMs or save states were added.

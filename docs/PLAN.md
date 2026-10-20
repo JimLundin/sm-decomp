@@ -29,6 +29,15 @@ The next discovery experiment is normalized/structural grouping across existing
 boundaries, then deriving and pricing common algorithms with explicit variants.
 Repeated exact scans alone are not a new approach; detector hits are not savings.
 
+The requested parallel experiment on the original 1311d3b4 transpilation is
+complete: combined tool-assisted replacements remove **49,687 lines
+(278,936 -> 229,249)** after formatting, including all costs and overlap.
+Optimized compilation, structural correspondence and focused routine checks
+pass; no full-game/SNES replay is claimed. The compared current snapshot
+already shares these implementations, so this result supplies no new main
+deletion budget and does not establish a benefit from restarting. Details and
+isolated patches are in the research note's original-transpilation experiment.
+
 Latest user clarification: code-volume reduction is the immediate priority.
 Focus on repeated code patterns; broad system redesign is too costly unless
 it directly removes substantial repetition. Investigate efficient methods in
