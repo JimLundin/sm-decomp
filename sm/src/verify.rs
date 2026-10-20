@@ -107,9 +107,10 @@ pub fn run_args(args: &[String], game: &mut Game) -> i32 {
 
 fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     if args.len() < 2 {
-        return Err("usage: sm verify <rom> <inputs> [--frames N] [--load-sram] [--checkpoint-in PATH] [--checkpoint-out PATH] [--require-hit NAME]...".into());
+        return Err("usage: sm verify <rom> <inputs> [--frames N] [--load-sram] [--checkpoint-in PATH] [--checkpoint-out PATH] [--require-hit NAME]... [--after-hits N]".into());
     }
     let mut frame_limit = None;
+    let mut after_hits = None;
     let mut load_sram = false;
     let mut checkpoint_in = None;
     let mut checkpoint_out = None;
@@ -127,6 +128,15 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                 );
             }
             "--load-sram" if !load_sram => load_sram = true,
+            "--after-hits" if after_hits.is_none() => {
+                after_hits = Some(
+                    options
+                        .next()
+                        .ok_or("missing follow-up frame count")?
+                        .parse::<usize>()
+                        .map_err(|_| "invalid follow-up frame count")?,
+                );
+            }
             "--checkpoint-in" if checkpoint_in.is_none() => {
                 checkpoint_in = Some(options.next().ok_or("missing checkpoint input path")?);
             }
@@ -140,6 +150,9 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         }
     }
     sm::verify_probe::configure(&required_probes)?;
+    if after_hits.is_some() && required_probes.is_empty() {
+        return Err("--after-hits requires at least one --require-hit".into());
+    }
     if load_sram && (checkpoint_in.is_some() || checkpoint_out.is_some()) {
         return Err("checkpoints require the deterministic clean-SRAM boot".into());
     }
@@ -239,6 +252,8 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         let mut coverage = ReplayCoverage::default();
         // Optional console diagnostics share the normal CLI and DLL replay path.
         let trace = std::env::var_os("SM_VERIFY_TRACE").is_some();
+        let mut completed = 0;
+        let mut hit_tail_complete = after_hits.is_none();
         for (offset, &pad) in inputs[first..end].iter().enumerate() {
             let index = first + offset;
             if !required_probes.is_empty() {
@@ -253,7 +268,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             // Advance the music driver once per frame without playing audio.
             sm::rtl::RtlRenderAudio(discarded_audio.as_mut_ptr(), 534, 2, game);
             coverage.observe(game, index, trace);
-            let completed = offset + 1;
+            completed = offset + 1;
             if completed % 10_000 == 0 {
                 let failures = game.VERIFY_FAILURES;
                 eprintln!(
@@ -262,12 +277,22 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                 );
                 coverage.report_progress();
             }
+            if let Some(tail) = after_hits {
+                if sm::verify_probe::all_hit_frame().is_some_and(|frame| index - frame >= tail) {
+                    hit_tail_complete = true;
+                    eprintln!(
+                        "Required hits and {tail} follow-up frames complete: input frames {first}..{}",
+                        index + 1
+                    );
+                    break;
+                }
+            }
         }
         super::finish_verify_audio();
         let failures = game.VERIFY_FAILURES;
         coverage.report();
         println!(
-            "Verified {frames} frames: {failures} failing frames ({:.2}s)",
+            "Verified {completed} frames: {failures} failing frames ({:.2}s)",
             start.elapsed().as_secs_f64()
         );
         let probes = sm::verify_probe::report();
@@ -278,11 +303,18 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             return Ok(failures);
         }
         probes?;
+        if !hit_tail_complete {
+            return Err(
+                "required probe follow-up window did not complete within the replay frame limit"
+                    .into(),
+            );
+        }
         if std::env::var_os("SM_VERIFY_REQUIRE_CREDITS").is_some() && coverage.credits_frames() == 0
         {
             return Err("replay never entered the ending/credits state (39)".into());
         }
         if let Some(path) = checkpoint_out {
+            let end = first + completed;
             checkpoint::save(std::path::Path::new(path), game, &rom, &inputs, end)?;
             eprintln!("Saved verifier checkpoint before input frame {end}: {path}");
         }

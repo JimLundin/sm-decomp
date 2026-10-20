@@ -86,12 +86,31 @@ Then append `--require-hit morph-fade` to the segment command. Repeat the
 option for branch labels. A required probe with zero calls makes the run
 exit 2 even if all compared frames match. The report gives call counts and
 first/last input-frame indices. Labels count explicit `hit` calls; they do
-not search function names or infer execution from room coverage. Keep probes
-while iterating and checking the final changed body, then remove temporary
+not search function names or infer execution from room coverage.
+
+To stop based on execution, add `--after-hits N`. For example, this checks
+through 60 additional frames after both existing camera probes first run,
+with a 35,000-frame budget:
+
+```powershell
+python tools/verify_dll.py rom/sm.smc movies/any.inputs --cargo --frames 35000 --require-hit camera.blocks --require-hit camera.auto_x --after-hits 60
+```
+
+Every frame still receives the normal oracle/render/audio checks. Repeated
+hits do not restart the window. Choose N for the change's downstream effects;
+60 is an example, not a universal sufficient tail. Zero checks through the
+hit frame itself. A missing probe or a movie/frame limit that cuts off the
+requested tail fails the run and cannot save a checkpoint. Saved checkpoints
+use the actual stopping frame. The same options work with `--checkpoint-in`
+to skip a justified prefix; `--frames` remains a budget from that checkpoint.
+This selects the endpoint from explicit probes, not automatic Git/call-graph
+analysis. Include probes for every changed path and later effect that matters.
+
+Keep probes while iterating and checking the final changed body, then remove temporary
 probes and rerun the same segment on the clean build. Extend the segment far
-enough to observe the behavior's effects. Omit `--require-hit` after removing
-its probes. See the
-[validation strategy](../docs/PLAN.md#validation-strategy-2026-10-19) for when
+enough to observe the behavior's effects. After removing probes, omit both
+`--require-hit` and `--after-hits` and use the measured `--frames` count. See the
+[validation strategy](../docs/PLAN.md#validation-strategy-2026-10-20) for when
 full boot replays are required and the integration cadence.
 
 The DLL script builds before replaying; `--rustc` selects a compiler when it

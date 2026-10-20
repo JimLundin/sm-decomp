@@ -58,6 +58,18 @@ pub fn hit(name: &str) {
     });
 }
 
+/// First input frame by which every required probe has executed. Repeated hits
+/// do not move this boundary; an empty requirement list never satisfies it.
+pub fn all_hit_frame() -> Option<usize> {
+    PROBES.with(|slot| {
+        let probes = slot.borrow();
+        if probes.required.values().any(|hits| hits.calls == 0) {
+            return None;
+        }
+        probes.required.values().map(|hits| hits.first_frame).max()
+    })
+}
+
 pub fn report() -> Result<(), String> {
     PROBES.with(|slot| {
         let probes = slot.borrow();
@@ -82,4 +94,39 @@ pub fn report() -> Result<(), String> {
             ))
         }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn completion_requires_every_probe_and_stays_at_first_complete_frame() {
+        configure(&["later".into(), "earlier".into()]).unwrap();
+        begin_frame(1200);
+        hit("unrequested");
+        assert_eq!(all_hit_frame(), None);
+        hit("earlier");
+        assert_eq!(all_hit_frame(), None);
+        begin_frame(1207);
+        hit("later");
+        assert_eq!(all_hit_frame(), Some(1207));
+        begin_frame(1300);
+        hit("earlier");
+        hit("later");
+        assert_eq!(all_hit_frame(), Some(1207));
+    }
+
+    #[test]
+    fn configuration_discards_setup_hits_and_empty_lists_cannot_complete() {
+        configure(&["setup".into()]).unwrap();
+        hit("setup");
+        assert_eq!(all_hit_frame(), Some(0));
+        configure(&["setup".into()]).unwrap();
+        assert_eq!(all_hit_frame(), None);
+        assert!(report().is_err());
+        configure(&[]).unwrap();
+        hit("setup");
+        assert_eq!(all_hit_frame(), None);
+    }
 }

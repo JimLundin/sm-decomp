@@ -20,6 +20,83 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Validation strategy (2026-10-20)
+
+User direction: choose verification by the changed behavior and its callers,
+not the size of the movie or a habit of running any% after every edit. This
+section replaces earlier validation rules and historical per-commit recipes.
+
+1. **Select before running.** Identify changed routines, relevant branches,
+   callers, shared data and downstream effects. Choose the smallest scenario
+   that exercises them. Documentation/comment/format-only edits need applicable
+   static checks; removing demonstrably unused private code needs a reference
+   search and compiler checks. Neither needs a gameplay replay. Frontend-only
+   changes need frontend checks, since the headless movie does not call the UI.
+2. **Focused behavior changes.** Run formatting, a release build and the shortest
+   exercised oracle segment on the final source. Require explicit routine and
+   changed-branch probes with `--require-hit`; a missing hit fails verification.
+   Use `--frames` for a known endpoint, or `--after-hits N` to stop after every
+   required probe first executes plus N follow-up frames. Choose N to observe
+   the actual effects, including subsequent callbacks, frames, transitions or
+   persistent writes. Require a probe at the later effect too when available.
+   Entry hits alone do not prove branch coverage or correct behavior. Keep all
+   normal oracle comparisons, rendering and audio advancement enabled.
+3. **Skip only a justified prefix.** A compatible local checkpoint must precede
+   affected setup and calls. Inspect earlier callers and shared-state effects
+   before reusing it after an edit: runtime compatibility alone does not prove
+   the changed build reaches that state. Otherwise start from boot, with a
+   bounded endpoint when that covers the change. An uncovered routine needs
+   another route or a focused component/oracle test of its real implementation;
+   repeatedly running an unrelated green movie adds no coverage. Constructed
+   tests must state their limits and do not establish movie execution. Choose
+   arithmetic/aliasing cases for plausible failure modes rather than defaulting
+   to large unrelated sweeps. If relevant context remains uncovered, report it
+   and hold further cleanup of that behavior.
+4. **Broader regression checks.** Initialization, shared RAM access, broadly used
+   dispatch, runtime, hardware, audio, oracle and checkpoint changes need full
+   boot replay before commit when their effects span the route or are uncertain.
+   Run full any% and the broadest relevant route at subsystem-batch completion,
+   before publishing an integration, and after at most five focused behavior
+   commits or 30 minutes of accumulated behavior changes since the last full
+   check. Static-only edits do not trigger that cadence. Build once and reuse
+   it; skip shorter fixtures that are exact prefixes unless their endpoint
+   assertion differs. Full runs check interactions and history; they still need
+   changed-path checks when the movies miss the edited code.
+
+Record selected scenarios, required hits, executed frame range and result in
+the commit message, with the reason for a full replay or static-only check.
+Use source-checked builds and `sh tools/progress.sh` as usual. No new test
+registry, evidence store or coverage dashboard is needed. Commands and
+checkpoint constraints are in [movies/README.md](../movies/README.md).
+
+### Exercised stopping implemented
+
+`--after-hits N` now stops the existing verifier after all required probes
+first execute and N additional complete frames pass. It preserves every oracle,
+render and audio check, reports actual executed frames and checkpoints the
+actual endpoint. Missing hits or an incomplete tail return 2 without saving;
+comparison failures retain exit 1. Selection uses explicit probes, not an
+inferred Git dependency map. AGENTS.md now points to this strategy.
+
+The camera example passes **8385/0**, with blocks first at 8296 and auto-X
+first at 8324, followed by 60 frames. Its entire checkpoint equals a fixed-
+length replay. An **8/0** resumed check takes 0.21s and matches full-boot state.
+Zero-tail, missing-hit, frame/movie-truncated-tail, maximum-tail and five Rust
+argument rejection checks pass. A temporary native health-byte fault at the
+last tail frame, 8384, produces exactly one failure and no checkpoint; it also
+retains failure exit 1 when a required probe is missing.
+
+Normal release, formatting and progress pass. Two probe unit-test bodies pass
+through a temporary DLL; Windows denies launching Cargo's compiled test EXE.
+The default full-any% path passes **129712/0** in 142.22s on 4f0e6023 plus this
+change. The subsequently landed frontend-only binding change is reconciled
+with a release rebuild and **8385/0** in 8.59s, with an identical complete
+checkpoint, rather than another full movie. All fixtures, checkpoints and
+fault controls stay local. Rust lines increase **79** for the stopping logic
+and regression tests; other counters are unchanged by this change. This
+completes the focused verifier improvement; the broader gameplay/credits and
+reduction work remains unfinished.
+
 ## Shared input-binding tables (2026-10-20)
 
 Default keyboard bindings now build their repeating load/save/replay groups
@@ -4260,42 +4337,7 @@ places unchanged. Maintained edit to final result 449.3s. Concurrent edits
 retain separate checks; no temporary controls, probes or assets are committed.
 Full gameplay through credits and wider hardware/audio coverage remain open.
 
-## Validation strategy (2026-10-19)
-
-User priority: shorten the complete edit/build/result cycle. Replaying the
-entire any% fixture after every local edit is neither necessary nor sufficient:
-it exercises only six rooms and can miss the changed routine entirely.
-Use three levels of validation, with explicit limits on what each proves:
-
-1. During iteration, run the shortest scenario that executes the changed
-   routine and relevant branches, with the normal differential oracle,
-   rendering and audio advancement enabled. Prefer an existing verified
-   prefix; for late behavior, use a verifier checkpoint before the setup that
-   matters. Include the effect of the change (the next callback, frame, room
-   transition or persistent write), not just a function entry. Record calls
-   and the frame range. A room name or a zero-failure run alone is not evidence
-   that a function executed. If it does not execute, choose another route or
-   extend the inputs; do not repeat the same uncovered movie.
-2. Before a focused gameplay commit, run its exercised scenarios on the final
-   build, plus formatting, release build and progress. A checkpoint proves
-   behavior from its recorded state, not that the changed build reaches that
-   state from boot. Reuse across gameplay changes therefore needs review of
-   earlier effects and the exercised branches. For this substitution, start
-   before the changed behavior's relevant setup; if the checkpoint bypasses
-   earlier affected calls or prerequisites, use boot. Changes to initialization,
-   shared RAM access, dispatch with broad reach, runtime, hardware, audio,
-   oracle checks or checkpoint code require full boot replay before commit.
-   Uncertain scope also falls back to boot. Constructed tests supplement
-   ordinary input execution for arithmetic/aliasing boundaries.
-3. Run full any% and the broadest relevant gameplay route on each completed
-   subsystem batch, at most five focused commits or 30 minutes of changes
-   since the last full check, whichever comes first, and before publishing an
-   integration. Build once, replay independent routes in separate processes,
-   and do not rebuild a loaded DLL. Do not replay shorter fixtures that are
-   exact prefixes of a longer included route unless their end-state assertion differs. Attribute
-   any integration failure to the intervening small commits and repair it.
-   Full boot checks remain the regression check for history and interactions;
-   they do not replace changed-code execution evidence.
+## Verification implementation history (2026-10-19)
 
 Cargo cache isolation repair (2026-10-19): two checkouts with identical
 package identity and older source timestamps can share a target directory
@@ -23186,18 +23228,21 @@ and full boot-to-credits coverage remain incomplete.
 
 ## Definition of done for any change
 
-1. `cargo build --release` and `cargo fmt --check` pass.
+1. Applicable format/compiler checks pass; behavior changes require
+   `cargo build --release` and `cargo fmt --check`.
 2. The scenarios required by the validation strategy above have no new failing
    frames. Focused gameplay commits may use qualified exercised segments;
-   shared/runtime changes and integration batches require full boot routes.
+   broad changes and integration batches follow its full-replay requirements.
 3. `sh tools/progress.sh` numbers did not go up, or the commit says why.
-4. Every rewritten routine actually executes in the verification scenario.
-   For gameplay, demonstrate calls on movie frames that exercise the changed
-   logic and compare those frames against the oracle. For hardware or verifier
+4. Every rewritten behavior actually executes in its selected check.
+   For gameplay, prefer calls on movie frames that exercise the changed logic
+   and compare those frames against the oracle; direct component/oracle checks
+   must disclose their context and state limits. For hardware or verifier
    changes, exercise the actual changed paths and their resulting behavior.
-   A green replay with zero calls is only a general regression check; extracted
-   comparisons and source reviews are supporting evidence, not a substitute
-   for execution in context. If a routine has no demonstrated execution, its
+   A green replay with zero calls is only a general regression check. Focused
+   component/oracle tests must call the real implementation and assert its
+   effects; extracted comparisons and source reviews are supporting evidence.
+   If relevant behavior has no demonstrated execution, its
    minimal verification remains incomplete; obtain coverage before further
    cleanup of that routine. Hits establish only the paths exercised, not all
    branches or states.

@@ -184,6 +184,9 @@ def main():
                         help="save a new local verifier checkpoint after the last frame")
     parser.add_argument("--require-hit", action="append", default=[], metavar="PROBE",
                         help="require an explicit routine/branch probe to execute (repeatable)")
+    parser.add_argument("--after-hits", type=int, metavar="N",
+                        help="stop N additional frames after all required probes first execute; "
+                             "fail if the movie or --frames limit ends earlier")
     parser.add_argument("--no-build", action="store_true",
                         help="reuse target/verify-dll/sm_verify.dll if its source still matches")
     parser.add_argument("--cargo", action="store_true",
@@ -195,6 +198,11 @@ def main():
         parser.error("use cargo run --release -- verify on Linux")
     if args.frames is not None and not 1 <= args.frames <= 2**64 - 1:
         parser.error("--frames must be a positive u64")
+    if args.after_hits is not None:
+        if not 0 <= args.after_hits <= 2**64 - 1:
+            parser.error("--after-hits must be a nonnegative u64")
+        if not args.require_hit:
+            parser.error("--after-hits requires at least one --require-hit")
     root = Path(__file__).resolve().parents[1]
     started = time.perf_counter()
     source = source_hash(root)
@@ -205,6 +213,8 @@ def main():
         replay_args.extend(["--frames", str(args.frames)])
     for probe in args.require_hit:
         replay_args.extend(["--require-hit", probe])
+    if args.after_hits is not None:
+        replay_args.extend(["--after-hits", str(args.after_hits)])
     for option, path in (("--checkpoint-in", args.checkpoint_in),
                          ("--checkpoint-out", args.checkpoint_out)):
         if path is not None:
