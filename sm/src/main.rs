@@ -1117,9 +1117,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
                         )
                     });
                 }
-                256 => {
-                    running = false_0 != 0;
-                }
+                256 => running = false_0 != 0,
                 _ => {}
             }
         }
@@ -1341,15 +1339,9 @@ unsafe fn HandleCommand(j: u32, pressed: bool, game: &mut Game) {
         );
     } else {
         match j {
-            113 => {
-                RtlCheat('w' as i32 as c_char, game);
-            }
-            114 => {
-                RtlCheat('q' as i32 as c_char, game);
-            }
-            115 => {
-                game.g_other_image = !game.g_other_image;
-            }
+            113 => RtlCheat('w' as i32 as c_char, game),
+            114 => RtlCheat('q' as i32 as c_char, game),
+            115 => game.g_other_image = !game.g_other_image,
             116 => RtlClearKeyLog(game),
             117 => RtlStopReplay(game),
             118 => {
@@ -1361,38 +1353,22 @@ unsafe fn HandleCommand(j: u32, pressed: bool, game: &mut Game) {
                 g_cursor = (g_cursor == 0) as i32 as u8;
                 SDL_ShowCursor(g_cursor as i32);
             }
-            119 => {
-                RtlReset(1i32, game);
-            }
-            120 => {
-                g_paused = (g_paused == 0) as i32 as u8;
-            }
-            121 => {
-                g_paused = (g_paused == 0) as i32 as u8;
-            }
-            123 => {
-                g_replay_turbo = (g_replay_turbo == 0) as i32 as u8;
-            }
-            124 => {
-                ChangeWindowScale(1i32);
-            }
-            125 => {
-                ChangeWindowScale(-1i32);
-            }
-            126 => {
-                g_display_perf = (g_display_perf as i32 ^ 1i32) != 0;
-            }
+            119 => RtlReset(1i32, game),
+            120 => g_paused = (g_paused == 0) as i32 as u8,
+            121 => g_paused = (g_paused == 0) as i32 as u8,
+            123 => g_replay_turbo = (g_replay_turbo == 0) as i32 as u8,
+            124 => ChangeWindowScale(1i32),
+            125 => ChangeWindowScale(-1i32),
+            126 => g_display_perf = (g_display_perf as i32 ^ 1i32) != 0,
             127 => {
                 g_ppu_render_flags ^= kPpuRenderFlags_NewRenderer as i32;
                 game.g_new_ppu = g_ppu_render_flags & kPpuRenderFlags_NewRenderer as i32 != 0i32;
             }
-            128 | 129 => {
-                HandleVolumeAdjustment(if j == kKeys_VolumeUp as i32 as u32 {
-                    1i32
-                } else {
-                    -1i32
-                });
-            }
+            128 | 129 => HandleVolumeAdjustment(if j == kKeys_VolumeUp as i32 as u32 {
+                1i32
+            } else {
+                -1i32
+            }),
             _ => {
                 '_c2rust_label: {
                     __assert_fail(

@@ -1437,33 +1437,17 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                 set_ram_words! { game, 1u16; screen_fade_delay, screen_fade_counter }
                 current_block_182 = 17485376261910781866;
             }
-            1 => {
-                current_block_182 = 3156160545233843657;
-            }
-            2 => {
-                current_block_182 = 6110428972393212497;
-            }
-            3 => {
-                current_block_182 = 2371591747199196472;
-            }
-            4 => {
-                current_block_182 = 17628988452808763652;
-            }
-            5 => {
-                current_block_182 = 17952583510507278934;
-            }
-            6 => {
-                current_block_182 = 2484129932066553195;
-            }
-            _ => {
-                current_block_182 = 2222055338596505704;
-            }
+            1 => current_block_182 = 3156160545233843657,
+            2 => current_block_182 = 6110428972393212497,
+            3 => current_block_182 = 2371591747199196472,
+            4 => current_block_182 = 17628988452808763652,
+            5 => current_block_182 = 17952583510507278934,
+            6 => current_block_182 = 2484129932066553195,
+            _ => current_block_182 = 2222055338596505704,
         }
         loop {
             match current_block_182 {
-                2222055338596505704 => {
-                    break 's_645;
-                }
+                2222055338596505704 => break 's_645,
                 17628988452808763652 => {
                     let mut _coret__2: u8 = WaitForNMI_Async(game);
                     if _coret__2 != 0 {

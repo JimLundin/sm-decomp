@@ -3778,9 +3778,7 @@ pub unsafe fn Samus_HandleTransitionsB_5(game: &mut Game) {
             }
             begin_shinespark = true;
         }
-        _ => {
-            begin_shinespark = false;
-        }
+        _ => begin_shinespark = false,
     }
     if begin_shinespark {
         set_ram_word!(game.samus_anim_frame = 2u16);

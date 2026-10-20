@@ -271,15 +271,9 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
             set_ram_word!(game.bug_fix_counter = bak);
             current_block_63 = 17803482508355472374;
         }
-        2 => {
-            current_block_63 = 17803482508355472374;
-        }
-        3 => {
-            current_block_63 = 3640593987805443782;
-        }
-        _ => {
-            current_block_63 = 5330834795799507926;
-        }
+        2 => current_block_63 = 17803482508355472374,
+        3 => current_block_63 = 3640593987805443782,
+        _ => current_block_63 = 5330834795799507926,
     }
     if current_block_63 == 17803482508355472374 {
         let mut _coret_: u8 = InitializeIoDisplayLogo_Async(game);
@@ -1917,18 +1911,10 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
             LoadDestinationRoomThings(game);
             current_block_54 = 9431711618385729511;
         }
-        1 => {
-            current_block_54 = 9431711618385729511;
-        }
-        2 => {
-            current_block_54 = 4121473168792104488;
-        }
-        3 => {
-            current_block_54 = 3421737773041484705;
-        }
-        _ => {
-            current_block_54 = 7659304154607701039;
-        }
+        1 => current_block_54 = 9431711618385729511,
+        2 => current_block_54 = 4121473168792104488,
+        3 => current_block_54 = 3421737773041484705,
+        _ => current_block_54 = 7659304154607701039,
     }
     if current_block_54 == 9431711618385729511 {
         let mut _coret_: u8 = Play20FramesOfMusic_Async(game);
@@ -2002,18 +1988,12 @@ pub unsafe fn Play20FramesOfMusic_Async(game: &mut Game) -> CoroutineRet {
                 set_ram_word!(game.my_counter = 0u16);
                 current_block_9 = 8258075665625361029;
             }
-            1 => {
-                current_block_9 = 4436247046726756244;
-            }
-            _ => {
-                current_block_9 = 13536709405535804910;
-            }
+            1 => current_block_9 = 4436247046726756244,
+            _ => current_block_9 = 13536709405535804910,
         }
         loop {
             match current_block_9 {
-                13536709405535804910 => {
-                    break 's_57;
-                }
+                13536709405535804910 => break 's_57,
                 8258075665625361029 => {
                     if ram_word!(game, my_counter) != 20u16 {
                         HandleMusicQueue(game);

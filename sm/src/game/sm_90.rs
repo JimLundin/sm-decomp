@@ -2081,15 +2081,9 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
     if (ram_word!(game, equipped_items) as i32 & 0x20i32) == 0i32 {
         let mut r18: u16 = Samus_GetBottom_R18(game);
         match liquid_at_height(game, r18) {
-            LiquidAtHeight::Water => {
-                current_block = 3594490907146900115;
-            }
-            LiquidAtHeight::LavaAcid => {
-                current_block = 3594490907146900115;
-            }
-            LiquidAtHeight::None => {
-                current_block = 13183875560443969876;
-            }
+            LiquidAtHeight::Water => current_block = 3594490907146900115,
+            LiquidAtHeight::LavaAcid => current_block = 3594490907146900115,
+            LiquidAtHeight::None => current_block = 13183875560443969876,
         }
     } else {
         current_block = 13183875560443969876;
@@ -2243,9 +2237,7 @@ pub unsafe fn Samus_InitJump(game: &mut Game) {
                 v0 = 4u16;
                 use_normal_speed = false;
             }
-            LiquidAtHeight::None => {
-                use_normal_speed = true;
-            }
+            LiquidAtHeight::None => use_normal_speed = true,
         }
     }
     if use_normal_speed {
@@ -2292,9 +2284,7 @@ pub unsafe fn Samus_InitWallJump(game: &mut Game) {
                 v0 = 4u16;
                 use_normal_speed = false;
             }
-            LiquidAtHeight::None => {
-                use_normal_speed = true;
-            }
+            LiquidAtHeight::None => use_normal_speed = true,
         }
     }
     if use_normal_speed {
@@ -2337,9 +2327,7 @@ pub unsafe fn Samus_SetSpeedForKnockback_Y(game: &mut Game) {
                 v0 = 4u16;
                 use_normal_speed = false;
             }
-            LiquidAtHeight::None => {
-                use_normal_speed = true;
-            }
+            LiquidAtHeight::None => use_normal_speed = true,
         }
     } else {
         use_normal_speed = true;
@@ -2369,9 +2357,7 @@ pub unsafe fn Samus_InitBombJump(game: &mut Game) {
                 v0 = 4u16;
                 use_normal_speed = false;
             }
-            LiquidAtHeight::None => {
-                use_normal_speed = true;
-            }
+            LiquidAtHeight::None => use_normal_speed = true,
         }
     } else {
         use_normal_speed = true;

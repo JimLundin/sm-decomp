@@ -167,14 +167,12 @@ pub unsafe fn snes_readBBus(snes: *mut Snes, address: u8, game: &mut Game) -> u8
             (*snes).ramAdr &= 0x1ffff;
             value
         }
-        _ => {
-            __assert_fail(
-                b"0\0" as *const u8 as *const c_char,
-                b"src/snes/snes.c\0" as *const u8 as *const c_char,
-                197u32,
-                b"uint8_t snes_readBBus(Snes *, uint8_t)\0" as *const u8 as *const c_char,
-            );
-        }
+        _ => __assert_fail(
+            b"0\0" as *const u8 as *const c_char,
+            b"src/snes/snes.c\0" as *const u8 as *const c_char,
+            197u32,
+            b"uint8_t snes_readBBus(Snes *, uint8_t)\0" as *const u8 as *const c_char,
+        ),
     }
 }
 pub unsafe fn snes_writeBBus(snes: *mut Snes, address: u8, value: u8, game: &mut Game) {
@@ -243,18 +241,10 @@ unsafe fn snes_writeReg(snes: *mut Snes, adr: u16, val: u8, game: &mut Game) {
             }
             (*snes).ppuLatch = val & 0x80 != 0;
         }
-        0x4202 => {
-            (*snes).multiplyA = val;
-        }
-        0x4203 => {
-            (*snes).multiplyResult = u16::from((*snes).multiplyA) * u16::from(val);
-        }
-        0x4204 => {
-            (*snes).divideA = ((*snes).divideA & 0xff00) | u16::from(val);
-        }
-        0x4205 => {
-            (*snes).divideA = ((*snes).divideA & 0xff) | (u16::from(val) << 8);
-        }
+        0x4202 => (*snes).multiplyA = val,
+        0x4203 => (*snes).multiplyResult = u16::from((*snes).multiplyA) * u16::from(val),
+        0x4204 => (*snes).divideA = ((*snes).divideA & 0xff00) | u16::from(val),
+        0x4205 => (*snes).divideA = ((*snes).divideA & 0xff) | (u16::from(val) << 8),
         0x4206 => {
             if val == 0 {
                 (*snes).divideResult = 0xffff;
@@ -264,18 +254,10 @@ unsafe fn snes_writeReg(snes: *mut Snes, adr: u16, val: u8, game: &mut Game) {
                 (*snes).multiplyResult = (*snes).divideA % u16::from(val);
             }
         }
-        0x4207 => {
-            (*snes).hTimer = ((*snes).hTimer & 0x100) | u16::from(val);
-        }
-        0x4208 => {
-            (*snes).hTimer = ((*snes).hTimer & 0xff) | (u16::from(val & 1) << 8);
-        }
-        0x4209 => {
-            (*snes).vTimer = ((*snes).vTimer & 0x100) | u16::from(val);
-        }
-        0x420a => {
-            (*snes).vTimer = ((*snes).vTimer & 0xff) | (u16::from(val & 1) << 8);
-        }
+        0x4207 => (*snes).hTimer = ((*snes).hTimer & 0x100) | u16::from(val),
+        0x4208 => (*snes).hTimer = ((*snes).hTimer & 0xff) | (u16::from(val & 1) << 8),
+        0x4209 => (*snes).vTimer = ((*snes).vTimer & 0x100) | u16::from(val),
+        0x420a => (*snes).vTimer = ((*snes).vTimer & 0xff) | (u16::from(val & 1) << 8),
         0x420b => {
             if val as i32 == 2i32 {
                 let t: u32 = (((*(*snes).dma).channel[1i32 as usize].aBank as i32) << 16i32
@@ -287,12 +269,8 @@ unsafe fn snes_writeReg(snes: *mut Snes, adr: u16, val: u8, game: &mut Game) {
             dma_startDma((*snes).dma, val, false_0 != 0);
             while dma_cycle((*snes).dma, game) {}
         }
-        0x420c => {
-            dma_startDma((*snes).dma, val, true_0 != 0);
-        }
-        0x420d => {
-            (*snes).fastMem = val & 0x1 != 0;
-        }
+        0x420c => dma_startDma((*snes).dma, val, true_0 != 0),
+        0x420d => (*snes).fastMem = val & 0x1 != 0,
         _ => {}
     };
 }
@@ -307,14 +285,12 @@ pub unsafe fn snes_read(snes: *mut Snes, address: u32, game: &mut Game) -> u8 {
         match offset {
             0x0000..=0x1fff => return *(*snes).ram.add(usize::from(offset)),
             0x2100..=0x21ff => return snes_readBBus(snes, offset as u8, game),
-            0x4016 | 0x4017 => {
-                __assert_fail(
-                    b"0\0" as *const u8 as *const c_char,
-                    b"src/snes/snes.c\0" as *const u8 as *const c_char,
-                    396u32,
-                    b"uint8_t snes_read(Snes *, uint32_t)\0" as *const u8 as *const c_char,
-                );
-            }
+            0x4016 | 0x4017 => __assert_fail(
+                b"0\0" as *const u8 as *const c_char,
+                b"src/snes/snes.c\0" as *const u8 as *const c_char,
+                396u32,
+                b"uint8_t snes_read(Snes *, uint32_t)\0" as *const u8 as *const c_char,
+            ),
             0x4200..=0x421f => return snes_readReg(snes, offset),
             0x4300..=0x437f => return dma_read((*snes).dma, offset),
             _ => {}

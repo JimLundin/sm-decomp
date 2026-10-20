@@ -923,9 +923,7 @@ unsafe fn convert_image_channels<T: ImageChannel>(
                     *dest.offset(0) = *fresh12;
                     *dest.offset(3) = T::OPAQUE;
                 }
-                17 => {
-                    *dest.offset(0) = *src.offset(0);
-                }
+                17 => *dest.offset(0) = *src.offset(0),
                 19 => {
                     let ref mut fresh13 = *dest.offset(2);
                     *fresh13 = *src.offset(0);
@@ -948,14 +946,14 @@ unsafe fn convert_image_channels<T: ImageChannel>(
                     *dest.offset(3) = T::OPAQUE;
                 }
                 25 => {
-                    *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2));
+                    *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2))
                 }
                 26 => {
                     *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2));
                     *dest.offset(1) = T::OPAQUE;
                 }
                 33 => {
-                    *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2));
+                    *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2))
                 }
                 34 => {
                     *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2));
@@ -1817,33 +1815,25 @@ unsafe fn stbi__create_png_image_raw(
         k = 0i32;
         while k < filter_bytes {
             match filter {
-                0 => {
-                    *cur.offset(k as isize) = *raw.offset(k as isize);
-                }
-                1 => {
-                    *cur.offset(k as isize) = *raw.offset(k as isize);
-                }
+                0 => *cur.offset(k as isize) = *raw.offset(k as isize),
+                1 => *cur.offset(k as isize) = *raw.offset(k as isize),
                 2 => {
                     *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
                         + *prior.offset(k as isize) as i32
-                        & 255i32) as stbi_uc;
+                        & 255i32) as stbi_uc
                 }
                 3 => {
                     *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
                         + (*prior.offset(k as isize) as i32 >> 1i32)
-                        & 255i32) as stbi_uc;
+                        & 255i32) as stbi_uc
                 }
                 4 => {
                     *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
                         + stbi__paeth(0i32, *prior.offset(k as isize) as i32, 0i32)
-                        & 255i32) as stbi_uc;
+                        & 255i32) as stbi_uc
                 }
-                5 => {
-                    *cur.offset(k as isize) = *raw.offset(k as isize);
-                }
-                6 => {
-                    *cur.offset(k as isize) = *raw.offset(k as isize);
-                }
+                5 => *cur.offset(k as isize) = *raw.offset(k as isize),
+                6 => *cur.offset(k as isize) = *raw.offset(k as isize),
                 _ => {}
             }
             k += 1;
@@ -4268,41 +4258,33 @@ pub unsafe fn GlslShader_Render(
         let last_pass: bool = pass == (*gs).n_pass;
         let p: *mut GlslPass = (*gs).pass.offset(pass as isize);
         match (*p).scale_type_x as i32 {
-            3 => {
-                (*p).width = (*p).scale_x as u16;
-            }
+            3 => (*p).width = (*p).scale_x as u16,
             1 => {
                 (*p).width =
-                    ((*p.offset(-1i32 as isize)).width as i32 as c_float * (*p).scale_x) as u16;
+                    ((*p.offset(-1i32 as isize)).width as i32 as c_float * (*p).scale_x) as u16
             }
-            2 => {
-                (*p).width = (viewport_width as c_float * (*p).scale_x) as u16;
-            }
+            2 => (*p).width = (viewport_width as c_float * (*p).scale_x) as u16,
             _ => {
                 (*p).width = (if last_pass as i32 != 0 {
                     viewport_width as c_float
                 } else {
                     (*p.offset(-1i32 as isize)).width as i32 as c_float * (*p).scale_x
-                }) as u16;
+                }) as u16
             }
         }
         match (*p).scale_type_y as i32 {
-            3 => {
-                (*p).height = (*p).scale_y as u16;
-            }
+            3 => (*p).height = (*p).scale_y as u16,
             1 => {
                 (*p).height =
-                    ((*p.offset(-1i32 as isize)).height as i32 as c_float * (*p).scale_y) as u16;
+                    ((*p.offset(-1i32 as isize)).height as i32 as c_float * (*p).scale_y) as u16
             }
-            2 => {
-                (*p).height = (viewport_height as c_float * (*p).scale_y) as u16;
-            }
+            2 => (*p).height = (viewport_height as c_float * (*p).scale_y) as u16,
             _ => {
                 (*p).height = (if last_pass as i32 != 0 {
                     viewport_height as c_float
                 } else {
                     (*p.offset(-1i32 as isize)).height as i32 as c_float * (*p).scale_y
-                }) as u16;
+                }) as u16
             }
         }
         if !last_pass {

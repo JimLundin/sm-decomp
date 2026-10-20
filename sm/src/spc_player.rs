@@ -755,9 +755,7 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
             (*c).vibrato_depth_target = (*c).vib_depth;
             (*c).vibrato_fade_num_ticks = 0u8;
         }
-        229 => {
-            (*p).master_volume = ((arg as i32) << 8i32) as u16;
-        }
+        229 => (*p).master_volume = ((arg as i32) << 8i32) as u16,
         230 => {
             (*p).master_volume_fade_ticks = arg;
             let fresh13 = (*c).pattern_order_ptr_for_chan;
@@ -768,9 +766,7 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
                 arg,
             );
         }
-        231 => {
-            (*p).tempo = ((arg as i32) << 8i32) as u16;
-        }
+        231 => (*p).tempo = ((arg as i32) << 8i32) as u16,
         232 => {
             (*p).tempo_fade_num_ticks = arg;
             let fresh14 = (*c).pattern_order_ptr_for_chan;
@@ -781,12 +777,8 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
                 arg,
             );
         }
-        233 => {
-            (*p).global_transposition = arg;
-        }
-        234 => {
-            (*c).channel_transposition = arg;
-        }
+        233 => (*p).global_transposition = arg,
+        234 => (*c).channel_transposition = arg,
         235 => {
             (*c).tremolo_delay_ticks = arg;
             let fresh15 = (*c).pattern_order_ptr_for_chan;
@@ -796,12 +788,8 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
             (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
             (*c).tremolo_depth = (*p).ram[fresh16 as usize];
         }
-        236 => {
-            (*c).tremolo_depth = 0u8;
-        }
-        237 => {
-            (*c).channel_volume = ((arg as i32) << 8i32) as u16;
-        }
+        236 => (*c).tremolo_depth = 0u8,
+        237 => (*c).channel_volume = ((arg as i32) << 8i32) as u16,
         238 => {
             (*c).volume_fade_ticks = arg;
             let fresh17 = (*c).pattern_order_ptr_for_chan;
@@ -841,12 +829,8 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
             (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
             (*c).pitch_envelope_slide_value = (*p).ram[fresh21 as usize];
         }
-        243 => {
-            (*c).pitch_envelope_num_ticks = 0u8;
-        }
-        244 => {
-            (*c).fine_tune = arg;
-        }
+        243 => (*c).pitch_envelope_num_ticks = 0u8,
+        244 => (*c).fine_tune = arg,
         245 => {
             (*p).reg_EON = arg;
             let fresh22 = (*c).pattern_order_ptr_for_chan;
@@ -913,15 +897,9 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
                     + (*c).channel_transposition as i32) as u8,
             );
         }
-        250 => {
-            (*p).percussion_base_id = arg;
-        }
-        251 => {
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
-        }
-        252 => {
-            (*c).cutk = (arg as i32 + 1i32) as u8;
-        }
+        250 => (*p).percussion_base_id = arg,
+        251 => (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1),
+        252 => (*c).cutk = (arg as i32 + 1i32) as u8,
         253 => {
             (*p).fast_forward = (arg as i32 + 1i32) as u8;
             (*p).key_OFF = ((*p).key_OFF as i32 | !((*p).is_chan_on as i32)) as u8;

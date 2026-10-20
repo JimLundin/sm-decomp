@@ -594,60 +594,42 @@ pub unsafe fn Kraid_GetsBig_BreakCeilingPlatforms(game: &mut Game) {
             game,
         );
         match (*E).kraid_var_F as i32 >> 1i32 {
-            0 => {
-                SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs::new(0x6u8, 0x12u8, 0xb7b3 as VoidP),
-                    game,
-                );
-            }
-            1 => {
-                SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs::new(0xdu8, 0x12u8, 0xb7ab as VoidP),
-                    game,
-                );
-            }
-            2 => {
-                SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs::new(0x2u8, 0x12u8, 0xb7a3 as VoidP),
-                    game,
-                );
-            }
-            3 => {
-                SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs::new(0xau8, 0x12u8, 0xb7b3 as VoidP),
-                    game,
-                );
-            }
-            4 => {
-                SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs::new(0x5u8, 0x12u8, 0xb7ab as VoidP),
-                    game,
-                );
-            }
-            5 => {
-                SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs::new(0xcu8, 0x12u8, 0xb7b3 as VoidP),
-                    game,
-                );
-            }
-            6 => {
-                SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs::new(0x3u8, 0x12u8, 0xb7ab as VoidP),
-                    game,
-                );
-            }
-            7 => {
-                SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs::new(0xbu8, 0x12u8, 0xb7ab as VoidP),
-                    game,
-                );
-            }
-            8 => {
-                SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs::new(0x4u8, 0x12u8, 0xb7b3 as VoidP),
-                    game,
-                );
-            }
+            0 => SpawnHardcodedPlm(
+                SpawnHardcodedPlmArgs::new(0x6u8, 0x12u8, 0xb7b3 as VoidP),
+                game,
+            ),
+            1 => SpawnHardcodedPlm(
+                SpawnHardcodedPlmArgs::new(0xdu8, 0x12u8, 0xb7ab as VoidP),
+                game,
+            ),
+            2 => SpawnHardcodedPlm(
+                SpawnHardcodedPlmArgs::new(0x2u8, 0x12u8, 0xb7a3 as VoidP),
+                game,
+            ),
+            3 => SpawnHardcodedPlm(
+                SpawnHardcodedPlmArgs::new(0xau8, 0x12u8, 0xb7b3 as VoidP),
+                game,
+            ),
+            4 => SpawnHardcodedPlm(
+                SpawnHardcodedPlmArgs::new(0x5u8, 0x12u8, 0xb7ab as VoidP),
+                game,
+            ),
+            5 => SpawnHardcodedPlm(
+                SpawnHardcodedPlmArgs::new(0xcu8, 0x12u8, 0xb7b3 as VoidP),
+                game,
+            ),
+            6 => SpawnHardcodedPlm(
+                SpawnHardcodedPlmArgs::new(0x3u8, 0x12u8, 0xb7ab as VoidP),
+                game,
+            ),
+            7 => SpawnHardcodedPlm(
+                SpawnHardcodedPlmArgs::new(0xbu8, 0x12u8, 0xb7ab as VoidP),
+                game,
+            ),
+            8 => SpawnHardcodedPlm(
+                SpawnHardcodedPlmArgs::new(0x4u8, 0x12u8, 0xb7b3 as VoidP),
+                game,
+            ),
             _ => {}
         }
         (*E).kraid_var_F = ((*E).kraid_var_F).wrapping_add(2u16);
@@ -2023,18 +2005,12 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
                     current_block_21 = 12124785117276362961;
                 }
             }
-            1 => {
-                current_block_21 = 16936033848137449375;
-            }
-            _ => {
-                current_block_21 = 12124785117276362961;
-            }
+            1 => current_block_21 = 16936033848137449375,
+            _ => current_block_21 = 12124785117276362961,
         }
         loop {
             match current_block_21 {
-                12124785117276362961 => {
-                    break 's_100;
-                }
+                12124785117276362961 => break 's_100,
                 7351195479953500246 => {
                     if !((*(game.g_rom.offset(crate::rtl::lorom_offset(0xa7c5e7))
                         as *mut KraidSinkTable)

@@ -583,18 +583,12 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                 set_ram_word!(game.plm_id = 78u16);
                 current_block_28 = 17179679302217393232;
             }
-            1 => {
-                current_block_28 = 12780425637862113792;
-            }
-            _ => {
-                current_block_28 = 2569451025026770673;
-            }
+            1 => current_block_28 = 12780425637862113792,
+            _ => current_block_28 = 2569451025026770673,
         }
         'c_23315: loop {
             match current_block_28 {
-                2569451025026770673 => {
-                    break 's_158;
-                }
+                2569451025026770673 => break 's_158,
                 17179679302217393232 => {
                     if (ram_word!(game, plm_id) as i32 & 0x8000i32) == 0i32 {
                         if *(ram_ptr!(game, u16; 0x1c37))

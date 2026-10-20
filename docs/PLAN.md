@@ -31,6 +31,40 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Unit-valued match arms (2026-10-20): simplify 287 single-operation arms
+across 17 files, including 50 inside the existing CPU opcode table. No helper
+or runtime operation is added. Rustfmt retains braces for 16 long arms; those
+only lose the redundant statement semicolon. All exact expression roots have
+compiler unit/never types, with scalar/pointer/reference/function-item or bound
+Copy value producers. Keep 22 non-unit discarded calls, nine nontrivial/closure
+cases and one parser-misgrouped macro-plus-assignment block unchanged.
+
+Independent source inversion binds all 77 inputs, ordered expressions/types,
+218 comments and 122 original attributes; typed records preserve the attributes
+through their existing reviewed expansion. Actual unoptimized MIR agrees for
+all 51 directly transformed functions/closures (36 source functions) after only anonymous
+unit/never storage, local/block identities, empty gotos and AST-bound closure
+coordinates are normalized. All operations, calls, non-unit storage lifetimes
+and reachable control targets remain exact; no drop terminators occur in these
+bodies. Both checkpoint source literals match their 22 actual included files.
+The final source completely inverts through all three focused stages.
+Net Rust lines -542, to 129655; all other progress counters are unchanged.
+The combined batch removes 1233 lines.
+
+Next-family measurements preserve parked drafts outside maintained Rust:
+remaining promoted arithmetic is -14 formatted lines/361 sites, Clippy redundant
+annotations -39/2365 ordinary declarations, a broader raw-pointer annotation
+projection -353 without type acceptance, and the Beetom setup/movement projection
+-144 after helper/caller cost. None received candidate runtime verification or
+changed maintained Rust. Continue substantial families under the current priority.
+
+Shared projectile-collision/typed-record/unit-arm verification uses frozen
+31af2b92 composition. Formatting/check, normal release (22.59s),
+progress and full any% 129712/0 (107.73s), native exit 0, pass.
+All 77 final inputs and 461 verification pins remain fixed. Any% supplies
+core integration coverage; broader gameplay routes, frontend and global alias
+safety remain open. The complete readability goal remains unfinished.
+
 Typed record fields (2026-10-20): share consecutive identical field types
 across all 108 eligible repr(C) structs: 1209 ordered fields in 489 groups.
 Names, exact types/visibility, arrays, padding, packed/unpacked representation,

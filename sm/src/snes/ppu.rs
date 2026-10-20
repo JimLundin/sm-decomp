@@ -1642,17 +1642,17 @@ unsafe fn ppu_getVramRemap(ppu: *mut Ppu) -> u16 {
         1 => {
             return (adr as i32 & 0xff00i32
                 | (adr as i32 & 0xe0i32) >> 5i32
-                | (adr as i32 & 0x1fi32) << 3i32) as u16;
+                | (adr as i32 & 0x1fi32) << 3i32) as u16
         }
         2 => {
             return (adr as i32 & 0xfe00i32
                 | (adr as i32 & 0x1c0i32) >> 6i32
-                | (adr as i32 & 0x3fi32) << 3i32) as u16;
+                | (adr as i32 & 0x3fi32) << 3i32) as u16
         }
         3 => {
             return (adr as i32 & 0xfc00i32
                 | (adr as i32 & 0x380i32) >> 7i32
-                | (adr as i32 & 0x7fi32) << 3i32) as u16;
+                | (adr as i32 & 0x7fi32) << 3i32) as u16
         }
         _ => {}
     }
@@ -1872,17 +1872,13 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             (*ppu).m7prev = val;
             current_block_164 = 6174974146017752131;
         }
-        15 | 17 | 19 => {
-            current_block_164 = 6174974146017752131;
-        }
+        15 | 17 | 19 => current_block_164 = 6174974146017752131,
         14 => {
             (*ppu).m7matrix[7] = ((u16::from(val) << 8 | u16::from((*ppu).m7prev)) & 0x1fff) as i16;
             (*ppu).m7prev = val;
             current_block_164 = 5892776923941496671;
         }
-        16 | 18 | 20 => {
-            current_block_164 = 5892776923941496671;
-        }
+        16 | 18 | 20 => current_block_164 = 5892776923941496671,
         21 => {
             if val as i32 & 3i32 == 0i32 {
                 (*ppu).vramIncrement = 1u16;
@@ -2096,9 +2092,7 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             (*ppu).m7extBg = val & 0x40 != 0;
             current_block_164 = 16754622181974910496;
         }
-        _ => {
-            current_block_164 = 16754622181974910496;
-        }
+        _ => current_block_164 = 16754622181974910496,
     }
     match current_block_164 {
         5892776923941496671 => {

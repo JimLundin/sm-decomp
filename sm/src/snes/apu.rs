@@ -143,24 +143,16 @@ pub unsafe fn apu_cpuWrite(apu: *mut Apu, adr: u16, val: u8) {
             }
             (*apu).romReadable = val & 0x80 != 0;
         }
-        0xf2 => {
-            (*apu).dspAdr = val;
-        }
+        0xf2 => (*apu).dspAdr = val,
         0xf3 => {
             record_dsp_write(&mut (*apu).c2rust_unnamed.hist, (*apu).dspAdr, val);
             if ((*apu).dspAdr as i32) < 0x80i32 {
                 dsp_write((*apu).dsp, (*apu).dspAdr, val);
             }
         }
-        0xf4..=0xf7 => {
-            (*apu).outPorts[usize::from(adr - 0xf4)] = val;
-        }
-        0xf8..=0xf9 => {
-            (*apu).inPorts[usize::from(adr - 0xf4)] = val;
-        }
-        0xfa..=0xfc => {
-            (*apu).timer[usize::from(adr - 0xfa)].target = val;
-        }
+        0xf4..=0xf7 => (*apu).outPorts[usize::from(adr - 0xf4)] = val,
+        0xf8..=0xf9 => (*apu).inPorts[usize::from(adr - 0xf4)] = val,
+        0xfa..=0xfc => (*apu).timer[usize::from(adr - 0xfa)].target = val,
         _ => {}
     }
     (*apu).ram[usize::from(adr)] = val;

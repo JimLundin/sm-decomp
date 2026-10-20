@@ -316,21 +316,11 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                 }
                 current_block_103 = 9959648584402098530;
             }
-            1 => {
-                current_block_103 = 9959648584402098530;
-            }
-            2 => {
-                current_block_103 = 6249748917338837630;
-            }
-            3 => {
-                current_block_103 = 4453751417072702604;
-            }
-            4 => {
-                current_block_103 = 12557724779959852293;
-            }
-            _ => {
-                current_block_103 = 12705158477165241210;
-            }
+            1 => current_block_103 = 9959648584402098530,
+            2 => current_block_103 = 6249748917338837630,
+            3 => current_block_103 = 4453751417072702604,
+            4 => current_block_103 = 12557724779959852293,
+            _ => current_block_103 = 12705158477165241210,
         }
         if current_block_103 == 9959648584402098530 {
             let mut _coret_: u8 = StartGameplay_Async(game);
@@ -429,9 +419,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                     }
                     current_block_103 = 12705158477165241210;
                 }
-                12705158477165241210 => {
-                    break 's_445;
-                }
+                12705158477165241210 => break 's_445,
                 980989089337379490 => {
                     TransferEnemyTilesToVramAndInit(game);
                     current_block_103 = 6249748917338837630;
@@ -733,12 +721,8 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
                 }
             }
         }
-        1 => {
-            current_block = 12296459429166835708;
-        }
-        _ => {
-            current_block = 13472856163611868459;
-        }
+        1 => current_block = 12296459429166835708,
+        _ => current_block = 13472856163611868459,
     }
     loop {
         match current_block {
@@ -1155,15 +1139,9 @@ pub unsafe fn GameState_8_MainGameplay(game: &mut Game) -> CoroutineRet {
                 current_block_38 = 13586036798005543211;
             }
         }
-        1 => {
-            current_block_38 = 6718109325120641364;
-        }
-        2 => {
-            current_block_38 = 8001970166466707590;
-        }
-        _ => {
-            current_block_38 = 652864300344834934;
-        }
+        1 => current_block_38 = 6718109325120641364,
+        2 => current_block_38 = 8001970166466707590,
+        _ => current_block_38 = 652864300344834934,
     }
     if current_block_38 == 6718109325120641364 {
         let mut _coret_: u8 =
@@ -1838,12 +1816,8 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
             set_ram_words! { game, 1u16; screen_fade_delay, screen_fade_counter }
             run_unpause_hook = true;
         }
-        1 => {
-            run_unpause_hook = true;
-        }
-        _ => {
-            run_unpause_hook = false;
-        }
+        1 => run_unpause_hook = true,
+        _ => run_unpause_hook = false,
     }
     if run_unpause_hook {
         let mut _coret_: u8 = CallUnpauseHook_Async(Load24(ram_ptr!(game, LongPtr; 0x604)), game);
@@ -4871,21 +4845,13 @@ pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> Co
                 }
                 current_block_45 = 2370887241019905314;
             }
-            1 => {
-                current_block_45 = 16864618877125483552;
-            }
-            2 => {
-                current_block_45 = 17993885260445251066;
-            }
-            _ => {
-                current_block_45 = 6417057564578538666;
-            }
+            1 => current_block_45 = 16864618877125483552,
+            2 => current_block_45 = 17993885260445251066,
+            _ => current_block_45 = 6417057564578538666,
         }
         loop {
             match current_block_45 {
-                6417057564578538666 => {
-                    break 's_188;
-                }
+                6417057564578538666 => break 's_188,
                 2370887241019905314 => {
                     let door_transition_flag =
                         u16::from_le_bytes([game.g_ram[0x931], game.g_ram[0x932]]);

@@ -235,9 +235,7 @@ pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
         }
         match current_block {
             1528265894032410192 => {}
-            _ => {
-                return;
-            }
+            _ => return,
         }
     }
     WalkingSpacePirates_8789(game);

@@ -345,21 +345,11 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             // Bit 4 selects branch-if-clear instead of branch-if-set.
             spc_doBranch(spc, displacement, bit_set == (opcode & 0x10 == 0));
         }
-        4 | 36 | 68 => {
-            spc_logic_accumulator(spc, spc_adrDp(spc), opcode);
-        }
-        5 | 37 | 69 => {
-            spc_logic_accumulator(spc, spc_adrAbs(spc), opcode);
-        }
-        6 | 38 | 70 => {
-            spc_logic_accumulator(spc, spc_adrInd(spc), opcode);
-        }
-        7 | 39 | 71 => {
-            spc_logic_accumulator(spc, spc_adrIdx(spc), opcode);
-        }
-        8 | 40 | 72 => {
-            spc_logic_accumulator(spc, spc_adrImm(spc), opcode);
-        }
+        4 | 36 | 68 => spc_logic_accumulator(spc, spc_adrDp(spc), opcode),
+        5 | 37 | 69 => spc_logic_accumulator(spc, spc_adrAbs(spc), opcode),
+        6 | 38 | 70 => spc_logic_accumulator(spc, spc_adrInd(spc), opcode),
+        7 | 39 | 71 => spc_logic_accumulator(spc, spc_adrIdx(spc), opcode),
+        8 | 40 | 72 => spc_logic_accumulator(spc, spc_adrImm(spc), opcode),
         9 | 41 | 73 => {
             let mut src: u16 = 0u16;
             let dst: u16 = spc_adrDpDp(spc, &raw mut src);
@@ -386,15 +376,9 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
                 _ => unreachable!(),
             }
         }
-        11 => {
-            spc_shift_memory::<false, false>(spc, spc_adrDp(spc));
-        }
-        12 => {
-            spc_shift_memory::<false, false>(spc, spc_adrAbs(spc));
-        }
-        13 => {
-            spc_pushByte(spc, spc_getFlags(spc));
-        }
+        11 => spc_shift_memory::<false, false>(spc, spc_adrDp(spc)),
+        12 => spc_shift_memory::<false, false>(spc, spc_adrAbs(spc)),
+        13 => spc_pushByte(spc, spc_getFlags(spc)),
         14 => {
             let adr_3: u16 = spc_adrAbs(spc);
             let val_1: u8 = spc_read(spc, adr_3);
@@ -409,21 +393,11 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             (*spc).b = true_0 != 0;
             (*spc).pc = spc_readWord(spc, 0xffdeu16, 0xffdfu16);
         }
-        16 => {
-            spc_doBranch(spc, spc_readOpcode(spc), !(*spc).n);
-        }
-        20 | 52 | 84 => {
-            spc_logic_accumulator(spc, spc_adrDpx(spc), opcode);
-        }
-        21 | 53 | 85 => {
-            spc_logic_accumulator(spc, spc_adrAbx(spc), opcode);
-        }
-        22 | 54 | 86 => {
-            spc_logic_accumulator(spc, spc_adrAby(spc), opcode);
-        }
-        23 | 55 | 87 => {
-            spc_logic_accumulator(spc, spc_adrIdy(spc), opcode);
-        }
+        16 => spc_doBranch(spc, spc_readOpcode(spc), !(*spc).n),
+        20 | 52 | 84 => spc_logic_accumulator(spc, spc_adrDpx(spc), opcode),
+        21 | 53 | 85 => spc_logic_accumulator(spc, spc_adrAbx(spc), opcode),
+        22 | 54 | 86 => spc_logic_accumulator(spc, spc_adrAby(spc), opcode),
+        23 | 55 | 87 => spc_logic_accumulator(spc, spc_adrIdy(spc), opcode),
         24 | 56 | 88 => {
             let mut src_0: u16 = 0u16;
             let dst_0: u16 = spc_adrDpImm(spc, &raw mut src_0);
@@ -444,9 +418,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             (*spc).n = result & 0x8000 != 0;
             spc_writeWord(spc, low, high, result);
         }
-        27 => {
-            spc_shift_memory::<false, false>(spc, spc_adrDpx(spc));
-        }
+        27 => spc_shift_memory::<false, false>(spc, spc_adrDpx(spc)),
         28 => {
             let (result, carry) = spc_shift::<false, false>((*spc).a, false);
             (*spc).c = carry;
@@ -459,9 +431,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
                 .wrapping_add_signed(if opcode & 0x20 != 0 { 1 } else { -1 });
             spc_setZN(spc, (*spc).x);
         }
-        30 => {
-            spc_compare_register::<1>(spc, spc_adrAbs(spc));
-        }
+        30 => spc_compare_register::<1>(spc, spc_adrAbs(spc)),
         31 => {
             let pointer: u16 = spc_readOpcodeWord(spc);
             (*spc).pc = spc_readWord(
@@ -470,18 +440,10 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
                 (pointer as i32 + (*spc).x as i32 + 1i32 & 0xffffi32) as u16,
             );
         }
-        32 => {
-            (*spc).p = false_0 != 0;
-        }
-        43 => {
-            spc_shift_memory::<false, true>(spc, spc_adrDp(spc));
-        }
-        44 => {
-            spc_shift_memory::<false, true>(spc, spc_adrAbs(spc));
-        }
-        45 => {
-            spc_pushByte(spc, (*spc).a);
-        }
+        32 => (*spc).p = false_0 != 0,
+        43 => spc_shift_memory::<false, true>(spc, spc_adrDp(spc)),
+        44 => spc_shift_memory::<false, true>(spc, spc_adrAbs(spc)),
+        45 => spc_pushByte(spc, (*spc).a),
         46 => {
             let val_2: u8 = (spc_read(spc, spc_adrDp(spc)) as i32 ^ 0xffi32) as u8;
             let result_0: u8 = ((*spc).a as i32 + val_2 as i32 + 1i32) as u8;
@@ -492,38 +454,24 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             let displacement = spc_readOpcode(spc) as i8;
             (*spc).pc = (*spc).pc.wrapping_add(displacement as u16);
         }
-        48 => {
-            spc_doBranch(spc, spc_readOpcode(spc), (*spc).n);
-        }
-        59 => {
-            spc_shift_memory::<false, true>(spc, spc_adrDpx(spc));
-        }
+        48 => spc_doBranch(spc, spc_readOpcode(spc), (*spc).n),
+        59 => spc_shift_memory::<false, true>(spc, spc_adrDpx(spc)),
         60 => {
             let (result, carry) = spc_shift::<false, true>((*spc).a, (*spc).c);
             (*spc).a = result;
             (*spc).c = carry;
             spc_setZN(spc, (*spc).a);
         }
-        62 => {
-            spc_compare_register::<1>(spc, spc_adrDp(spc));
-        }
+        62 => spc_compare_register::<1>(spc, spc_adrDp(spc)),
         63 => {
             let dst_5: u16 = spc_readOpcodeWord(spc);
             spc_pushWord(spc, (*spc).pc);
             (*spc).pc = dst_5;
         }
-        64 => {
-            (*spc).p = true_0 != 0;
-        }
-        75 => {
-            spc_shift_memory::<true, false>(spc, spc_adrDp(spc));
-        }
-        76 => {
-            spc_shift_memory::<true, false>(spc, spc_adrAbs(spc));
-        }
-        77 => {
-            spc_pushByte(spc, (*spc).x);
-        }
+        64 => (*spc).p = true_0 != 0,
+        75 => spc_shift_memory::<true, false>(spc, spc_adrDp(spc)),
+        76 => spc_shift_memory::<true, false>(spc, spc_adrAbs(spc)),
+        77 => spc_pushByte(spc, (*spc).x),
         78 => {
             let adr_6: u16 = spc_adrAbs(spc);
             let val_3: u8 = spc_read(spc, adr_6);
@@ -536,9 +484,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             spc_pushWord(spc, (*spc).pc);
             (*spc).pc = (0xff00i32 | dst_7 as i32) as u16;
         }
-        80 => {
-            spc_doBranch(spc, spc_readOpcode(spc), !(*spc).v);
-        }
+        80 => spc_doBranch(spc, spc_readOpcode(spc), !(*spc).v),
         90 => {
             let mut low_1: u16 = 0u16;
             let high_1: u16 = spc_adrDpWord(spc, &raw mut low_1);
@@ -549,9 +495,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             (*spc).z = result_2 & 0xffffi32 == 0i32;
             (*spc).n = result_2 & 0x8000i32 != 0;
         }
-        91 => {
-            spc_shift_memory::<true, false>(spc, spc_adrDpx(spc));
-        }
+        91 => spc_shift_memory::<true, false>(spc, spc_adrDpx(spc)),
         92 => {
             let (result, carry) = spc_shift::<true, false>((*spc).a, false);
             (*spc).c = carry;
@@ -562,68 +506,34 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             (*spc).x = (*spc).a;
             spc_setZN(spc, (*spc).x);
         }
-        94 => {
-            spc_compare_register::<2>(spc, spc_adrAbs(spc));
-        }
-        95 => {
-            (*spc).pc = spc_readOpcodeWord(spc);
-        }
-        96 => {
-            (*spc).c = false_0 != 0;
-        }
-        100 => {
-            spc_compare_register::<0>(spc, spc_adrDp(spc));
-        }
-        101 => {
-            spc_compare_register::<0>(spc, spc_adrAbs(spc));
-        }
-        102 => {
-            spc_compare_register::<0>(spc, spc_adrInd(spc));
-        }
-        103 => {
-            spc_compare_register::<0>(spc, spc_adrIdx(spc));
-        }
-        104 => {
-            spc_compare_register::<0>(spc, spc_adrImm(spc));
-        }
+        94 => spc_compare_register::<2>(spc, spc_adrAbs(spc)),
+        95 => (*spc).pc = spc_readOpcodeWord(spc),
+        96 => (*spc).c = false_0 != 0,
+        100 => spc_compare_register::<0>(spc, spc_adrDp(spc)),
+        101 => spc_compare_register::<0>(spc, spc_adrAbs(spc)),
+        102 => spc_compare_register::<0>(spc, spc_adrInd(spc)),
+        103 => spc_compare_register::<0>(spc, spc_adrIdx(spc)),
+        104 => spc_compare_register::<0>(spc, spc_adrImm(spc)),
         105 => {
             let mut src_8: u16 = 0u16;
             let dst_10: u16 = spc_adrDpDp(spc, &raw mut src_8);
             spc_compare_memory(spc, dst_10, src_8);
         }
-        107 => {
-            spc_shift_memory::<true, true>(spc, spc_adrDp(spc));
-        }
-        108 => {
-            spc_shift_memory::<true, true>(spc, spc_adrAbs(spc));
-        }
-        109 => {
-            spc_pushByte(spc, (*spc).y);
-        }
+        107 => spc_shift_memory::<true, true>(spc, spc_adrDp(spc)),
+        108 => spc_shift_memory::<true, true>(spc, spc_adrAbs(spc)),
+        109 => spc_pushByte(spc, (*spc).y),
         110 => {
             let adr_8: u16 = spc_adrDp(spc);
             let result_3: u8 = (spc_read(spc, adr_8) as i32 - 1i32) as u8;
             spc_write(spc, adr_8, result_3);
             spc_doBranch(spc, spc_readOpcode(spc), result_3 as i32 != 0i32);
         }
-        111 => {
-            (*spc).pc = spc_pullWord(spc);
-        }
-        112 => {
-            spc_doBranch(spc, spc_readOpcode(spc), (*spc).v);
-        }
-        116 => {
-            spc_compare_register::<0>(spc, spc_adrDpx(spc));
-        }
-        117 => {
-            spc_compare_register::<0>(spc, spc_adrAbx(spc));
-        }
-        118 => {
-            spc_compare_register::<0>(spc, spc_adrAby(spc));
-        }
-        119 => {
-            spc_compare_register::<0>(spc, spc_adrIdy(spc));
-        }
+        111 => (*spc).pc = spc_pullWord(spc),
+        112 => spc_doBranch(spc, spc_readOpcode(spc), (*spc).v),
+        116 => spc_compare_register::<0>(spc, spc_adrDpx(spc)),
+        117 => spc_compare_register::<0>(spc, spc_adrAbx(spc)),
+        118 => spc_compare_register::<0>(spc, spc_adrAby(spc)),
+        119 => spc_compare_register::<0>(spc, spc_adrIdy(spc)),
         120 => {
             let mut src_9: u16 = 0u16;
             let dst_11: u16 = spc_adrDpImm(spc, &raw mut src_9);
@@ -649,9 +559,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             (*spc).a = (result_4 & 0xffi32) as u8;
             (*spc).y = (result_4 >> 8i32) as u8;
         }
-        123 => {
-            spc_shift_memory::<true, true>(spc, spc_adrDpx(spc));
-        }
+        123 => spc_shift_memory::<true, true>(spc, spc_adrDpx(spc)),
         124 => {
             let (result, carry) = spc_shift::<true, true>((*spc).a, (*spc).c);
             (*spc).a = result;
@@ -662,48 +570,26 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             (*spc).a = (*spc).x;
             spc_setZN(spc, (*spc).a);
         }
-        126 => {
-            spc_compare_register::<2>(spc, spc_adrDp(spc));
-        }
+        126 => spc_compare_register::<2>(spc, spc_adrDp(spc)),
         127 => {
             spc_setFlags(spc, spc_pullByte(spc));
             (*spc).pc = spc_pullWord(spc);
         }
-        128 => {
-            (*spc).c = true_0 != 0;
-        }
-        132 | 164 => {
-            spc_arithmetic_accumulator(spc, spc_adrDp(spc), opcode & 0x20 != 0);
-        }
-        133 | 165 => {
-            spc_arithmetic_accumulator(spc, spc_adrAbs(spc), opcode & 0x20 != 0);
-        }
-        134 | 166 => {
-            spc_arithmetic_accumulator(spc, spc_adrInd(spc), opcode & 0x20 != 0);
-        }
-        135 | 167 => {
-            spc_arithmetic_accumulator(spc, spc_adrIdx(spc), opcode & 0x20 != 0);
-        }
-        136 | 168 => {
-            spc_arithmetic_accumulator(spc, spc_adrImm(spc), opcode & 0x20 != 0);
-        }
+        128 => (*spc).c = true_0 != 0,
+        132 | 164 => spc_arithmetic_accumulator(spc, spc_adrDp(spc), opcode & 0x20 != 0),
+        133 | 165 => spc_arithmetic_accumulator(spc, spc_adrAbs(spc), opcode & 0x20 != 0),
+        134 | 166 => spc_arithmetic_accumulator(spc, spc_adrInd(spc), opcode & 0x20 != 0),
+        135 | 167 => spc_arithmetic_accumulator(spc, spc_adrIdx(spc), opcode & 0x20 != 0),
+        136 | 168 => spc_arithmetic_accumulator(spc, spc_adrImm(spc), opcode & 0x20 != 0),
         137 | 169 => {
             let mut src_11: u16 = 0u16;
             let dst_13: u16 = spc_adrDpDp(spc, &raw mut src_11);
             spc_arithmetic_memory(spc, dst_13, src_11, opcode & 0x20 != 0);
         }
-        139 | 171 => {
-            spc_step_memory(spc, spc_adrDp(spc), opcode & 0x20 != 0);
-        }
-        140 | 172 => {
-            spc_step_memory(spc, spc_adrAbs(spc), opcode & 0x20 != 0);
-        }
-        141 => {
-            spc_move_memory::<2>(spc, spc_adrImm(spc), false);
-        }
-        142 => {
-            spc_setFlags(spc, spc_pullByte(spc));
-        }
+        139 | 171 => spc_step_memory(spc, spc_adrDp(spc), opcode & 0x20 != 0),
+        140 | 172 => spc_step_memory(spc, spc_adrAbs(spc), opcode & 0x20 != 0),
+        141 => spc_move_memory::<2>(spc, spc_adrImm(spc), false),
+        142 => spc_setFlags(spc, spc_pullByte(spc)),
         143 => {
             let mut src_12: u16 = 0u16;
             let dst_14: u16 = spc_adrDpImm(spc, &raw mut src_12);
@@ -711,21 +597,11 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             spc_read(spc, dst_14);
             spc_write(spc, dst_14, val_4);
         }
-        144 => {
-            spc_doBranch(spc, spc_readOpcode(spc), !(*spc).c);
-        }
-        148 | 180 => {
-            spc_arithmetic_accumulator(spc, spc_adrDpx(spc), opcode & 0x20 != 0);
-        }
-        149 | 181 => {
-            spc_arithmetic_accumulator(spc, spc_adrAbx(spc), opcode & 0x20 != 0);
-        }
-        150 | 182 => {
-            spc_arithmetic_accumulator(spc, spc_adrAby(spc), opcode & 0x20 != 0);
-        }
-        151 | 183 => {
-            spc_arithmetic_accumulator(spc, spc_adrIdy(spc), opcode & 0x20 != 0);
-        }
+        144 => spc_doBranch(spc, spc_readOpcode(spc), !(*spc).c),
+        148 | 180 => spc_arithmetic_accumulator(spc, spc_adrDpx(spc), opcode & 0x20 != 0),
+        149 | 181 => spc_arithmetic_accumulator(spc, spc_adrAbx(spc), opcode & 0x20 != 0),
+        150 | 182 => spc_arithmetic_accumulator(spc, spc_adrAby(spc), opcode & 0x20 != 0),
+        151 | 183 => spc_arithmetic_accumulator(spc, spc_adrIdy(spc), opcode & 0x20 != 0),
         152 | 184 => {
             let mut src_13: u16 = 0u16;
             let dst_15: u16 = spc_adrDpImm(spc, &raw mut src_13);
@@ -751,9 +627,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             (*spc).a = (result_5 & 0xffi32) as u8;
             (*spc).y = (result_5 >> 8i32) as u8;
         }
-        155 | 187 => {
-            spc_step_memory(spc, spc_adrDpx(spc), opcode & 0x20 != 0);
-        }
+        155 | 187 => spc_step_memory(spc, spc_adrDpx(spc), opcode & 0x20 != 0),
         156 | 188 => {
             (*spc).a = (*spc)
                 .a
@@ -782,22 +656,14 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             (*spc).a = ((*spc).a as i32 >> 4i32 | ((*spc).a as i32) << 4i32) as u8;
             spc_setZN(spc, (*spc).a);
         }
-        160 => {
-            (*spc).i = true_0 != 0;
-        }
-        173 => {
-            spc_compare_register::<2>(spc, spc_adrImm(spc));
-        }
-        174 => {
-            (*spc).a = spc_pullByte(spc);
-        }
+        160 => (*spc).i = true_0 != 0,
+        173 => spc_compare_register::<2>(spc, spc_adrImm(spc)),
+        174 => (*spc).a = spc_pullByte(spc),
         175 => {
             let adr_11: u16 = spc_adrIndP(spc);
             spc_write(spc, adr_11, (*spc).a);
         }
-        176 => {
-            spc_doBranch(spc, spc_readOpcode(spc), (*spc).c);
-        }
+        176 => spc_doBranch(spc, spc_readOpcode(spc), (*spc).c),
         186 => {
             let mut low_4: u16 = 0u16;
             let high_4: u16 = spc_adrDpWord(spc, &raw mut low_4);
@@ -807,9 +673,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             (*spc).z = val_5 as i32 == 0i32;
             (*spc).n = val_5 as i32 & 0x8000i32 != 0;
         }
-        189 => {
-            (*spc).sp = (*spc).x;
-        }
+        189 => (*spc).sp = (*spc).x,
         190 => {
             if (*spc).a as i32 > 0x99i32 || !(*spc).c {
                 (*spc).a = ((*spc).a as i32 - 0x60i32) as u8;
@@ -824,66 +688,30 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             let adr_12: u16 = spc_adrIndP(spc);
             spc_move_memory::<0>(spc, adr_12, false);
         }
-        192 => {
-            (*spc).i = false_0 != 0;
-        }
-        196 | 228 => {
-            spc_move_memory::<0>(spc, spc_adrDp(spc), opcode & 0x20 == 0);
-        }
-        197 | 229 => {
-            spc_move_memory::<0>(spc, spc_adrAbs(spc), opcode & 0x20 == 0);
-        }
-        198 | 230 => {
-            spc_move_memory::<0>(spc, spc_adrInd(spc), opcode & 0x20 == 0);
-        }
-        199 | 231 => {
-            spc_move_memory::<0>(spc, spc_adrIdx(spc), opcode & 0x20 == 0);
-        }
-        200 => {
-            spc_compare_register::<1>(spc, spc_adrImm(spc));
-        }
-        201 | 233 => {
-            spc_move_memory::<1>(spc, spc_adrAbs(spc), opcode & 0x20 == 0);
-        }
-        203 | 235 => {
-            spc_move_memory::<2>(spc, spc_adrDp(spc), opcode & 0x20 == 0);
-        }
-        204 | 236 => {
-            spc_move_memory::<2>(spc, spc_adrAbs(spc), opcode & 0x20 == 0);
-        }
-        205 => {
-            spc_move_memory::<1>(spc, spc_adrImm(spc), false);
-        }
-        206 => {
-            (*spc).x = spc_pullByte(spc);
-        }
+        192 => (*spc).i = false_0 != 0,
+        196 | 228 => spc_move_memory::<0>(spc, spc_adrDp(spc), opcode & 0x20 == 0),
+        197 | 229 => spc_move_memory::<0>(spc, spc_adrAbs(spc), opcode & 0x20 == 0),
+        198 | 230 => spc_move_memory::<0>(spc, spc_adrInd(spc), opcode & 0x20 == 0),
+        199 | 231 => spc_move_memory::<0>(spc, spc_adrIdx(spc), opcode & 0x20 == 0),
+        200 => spc_compare_register::<1>(spc, spc_adrImm(spc)),
+        201 | 233 => spc_move_memory::<1>(spc, spc_adrAbs(spc), opcode & 0x20 == 0),
+        203 | 235 => spc_move_memory::<2>(spc, spc_adrDp(spc), opcode & 0x20 == 0),
+        204 | 236 => spc_move_memory::<2>(spc, spc_adrAbs(spc), opcode & 0x20 == 0),
+        205 => spc_move_memory::<1>(spc, spc_adrImm(spc), false),
+        206 => (*spc).x = spc_pullByte(spc),
         207 => {
             let result_8: u16 = ((*spc).a as i32 * (*spc).y as i32) as u16;
             (*spc).a = (result_8 as i32 & 0xffi32) as u8;
             (*spc).y = (result_8 as i32 >> 8i32) as u8;
             spc_setZN(spc, (*spc).y);
         }
-        208 => {
-            spc_doBranch(spc, spc_readOpcode(spc), !(*spc).z);
-        }
-        212 | 244 => {
-            spc_move_memory::<0>(spc, spc_adrDpx(spc), opcode & 0x20 == 0);
-        }
-        213 | 245 => {
-            spc_move_memory::<0>(spc, spc_adrAbx(spc), opcode & 0x20 == 0);
-        }
-        214 | 246 => {
-            spc_move_memory::<0>(spc, spc_adrAby(spc), opcode & 0x20 == 0);
-        }
-        215 | 247 => {
-            spc_move_memory::<0>(spc, spc_adrIdy(spc), opcode & 0x20 == 0);
-        }
-        216 | 248 => {
-            spc_move_memory::<1>(spc, spc_adrDp(spc), opcode & 0x20 == 0);
-        }
-        217 | 249 => {
-            spc_move_memory::<1>(spc, spc_adrDpy(spc), opcode & 0x20 == 0);
-        }
+        208 => spc_doBranch(spc, spc_readOpcode(spc), !(*spc).z),
+        212 | 244 => spc_move_memory::<0>(spc, spc_adrDpx(spc), opcode & 0x20 == 0),
+        213 | 245 => spc_move_memory::<0>(spc, spc_adrAbx(spc), opcode & 0x20 == 0),
+        214 | 246 => spc_move_memory::<0>(spc, spc_adrAby(spc), opcode & 0x20 == 0),
+        215 | 247 => spc_move_memory::<0>(spc, spc_adrIdy(spc), opcode & 0x20 == 0),
+        216 | 248 => spc_move_memory::<1>(spc, spc_adrDp(spc), opcode & 0x20 == 0),
+        217 | 249 => spc_move_memory::<1>(spc, spc_adrDpy(spc), opcode & 0x20 == 0),
         218 => {
             let mut low_5: u16 = 0u16;
             let high_5: u16 = spc_adrDpWord(spc, &raw mut low_5);
@@ -891,9 +719,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             spc_write(spc, low_5, (*spc).a);
             spc_write(spc, high_5, (*spc).y);
         }
-        219 | 251 => {
-            spc_move_memory::<2>(spc, spc_adrDpx(spc), opcode & 0x20 == 0);
-        }
+        219 | 251 => spc_move_memory::<2>(spc, spc_adrDpx(spc), opcode & 0x20 == 0),
         220 | 252 => {
             (*spc).y = (*spc)
                 .y
@@ -923,21 +749,11 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             (*spc).v = false_0 != 0;
             (*spc).h = false_0 != 0;
         }
-        232 => {
-            spc_move_memory::<0>(spc, spc_adrImm(spc), false);
-        }
-        237 => {
-            (*spc).c = !(*spc).c;
-        }
-        238 => {
-            (*spc).y = spc_pullByte(spc);
-        }
-        239 => {
-            (*spc).stopped = true_0 != 0;
-        }
-        240 => {
-            spc_doBranch(spc, spc_readOpcode(spc), (*spc).z);
-        }
+        232 => spc_move_memory::<0>(spc, spc_adrImm(spc), false),
+        237 => (*spc).c = !(*spc).c,
+        238 => (*spc).y = spc_pullByte(spc),
+        239 => (*spc).stopped = true_0 != 0,
+        240 => spc_doBranch(spc, spc_readOpcode(spc), (*spc).z),
         250 => {
             let mut src_18: u16 = 0u16;
             let dst_20: u16 = spc_adrDpDp(spc, &raw mut src_18);
@@ -952,9 +768,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             (*spc).y = (*spc).y.wrapping_sub(1);
             spc_doBranch(spc, spc_readOpcode(spc), (*spc).y as i32 != 0i32);
         }
-        255 => {
-            (*spc).stopped = true_0 != 0;
-        }
+        255 => (*spc).stopped = true_0 != 0,
         0 | _ => {}
     };
 }
