@@ -158,127 +158,62 @@ pub static mut g_config: Config = Config {
 };
 pub const N: i32 = 0;
 static mut kDefaultKbdControls: [u16; 130] = [0; 130];
+const fn key_name(name: &'static core::ffi::CStr, id: u32, size: u16) -> KeyNameId {
+    KeyNameId {
+        name: name.as_ptr(),
+        id: id as u16,
+        size,
+    }
+}
 static mut kKeyNameId: [KeyNameId; 24] = [
-    KeyNameId {
-        name: b"Null\0" as *const u8 as *const c_char,
-        id: kKeys_Null as i32 as u16,
-        size: 65535,
-    },
-    KeyNameId {
-        name: b"Controls\0" as *const u8 as *const c_char,
-        id: kKeys_Controls as i32 as u16,
-        size: (kKeys_Controls_Last as i32 - kKeys_Controls as i32 + 1) as u16,
-    },
-    KeyNameId {
-        name: b"Load\0" as *const u8 as *const c_char,
-        id: kKeys_Load as i32 as u16,
-        size: (kKeys_Load_Last as i32 - kKeys_Load as i32 + 1) as u16,
-    },
-    KeyNameId {
-        name: b"Save\0" as *const u8 as *const c_char,
-        id: kKeys_Save as i32 as u16,
-        size: (kKeys_Save_Last as i32 - kKeys_Save as i32 + 1) as u16,
-    },
-    KeyNameId {
-        name: b"Replay\0" as *const u8 as *const c_char,
-        id: kKeys_Replay as i32 as u16,
-        size: (kKeys_Replay_Last as i32 - kKeys_Replay as i32 + 1) as u16,
-    },
-    KeyNameId {
-        name: b"LoadRef\0" as *const u8 as *const c_char,
-        id: kKeys_LoadRef as i32 as u16,
-        size: (kKeys_LoadRef_Last as i32 - kKeys_LoadRef as i32 + 1) as u16,
-    },
-    KeyNameId {
-        name: b"ReplayRef\0" as *const u8 as *const c_char,
-        id: kKeys_ReplayRef as i32 as u16,
-        size: (kKeys_ReplayRef_Last as i32 - kKeys_ReplayRef as i32 + 1) as u16,
-    },
-    KeyNameId {
-        name: b"CheatLife\0" as *const u8 as *const c_char,
-        id: kKeys_CheatLife as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"CheatJump\0" as *const u8 as *const c_char,
-        id: kKeys_CheatJump as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"ToggleWhichFrame\0" as *const u8 as *const c_char,
-        id: kKeys_ToggleWhichFrame as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"ClearKeyLog\0" as *const u8 as *const c_char,
-        id: kKeys_ClearKeyLog as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"StopReplay\0" as *const u8 as *const c_char,
-        id: kKeys_StopReplay as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"Fullscreen\0" as *const u8 as *const c_char,
-        id: kKeys_Fullscreen as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"Reset\0" as *const u8 as *const c_char,
-        id: kKeys_Reset as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"Pause\0" as *const u8 as *const c_char,
-        id: kKeys_Pause as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"PauseDimmed\0" as *const u8 as *const c_char,
-        id: kKeys_PauseDimmed as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"Turbo\0" as *const u8 as *const c_char,
-        id: kKeys_Turbo as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"ReplayTurbo\0" as *const u8 as *const c_char,
-        id: kKeys_ReplayTurbo as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"WindowBigger\0" as *const u8 as *const c_char,
-        id: kKeys_WindowBigger as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"WindowSmaller\0" as *const u8 as *const c_char,
-        id: kKeys_WindowSmaller as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"VolumeUp\0" as *const u8 as *const c_char,
-        id: kKeys_VolumeUp as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"VolumeDown\0" as *const u8 as *const c_char,
-        id: kKeys_VolumeDown as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"DisplayPerf\0" as *const u8 as *const c_char,
-        id: kKeys_DisplayPerf as i32 as u16,
-        size: 1,
-    },
-    KeyNameId {
-        name: b"ToggleRenderer\0" as *const u8 as *const c_char,
-        id: kKeys_ToggleRenderer as i32 as u16,
-        size: 1,
-    },
+    key_name(c"Null", kKeys_Null, 65535),
+    key_name(
+        c"Controls",
+        kKeys_Controls,
+        (kKeys_Controls_Last as i32 - kKeys_Controls as i32 + 1) as u16,
+    ),
+    key_name(
+        c"Load",
+        kKeys_Load,
+        (kKeys_Load_Last as i32 - kKeys_Load as i32 + 1) as u16,
+    ),
+    key_name(
+        c"Save",
+        kKeys_Save,
+        (kKeys_Save_Last as i32 - kKeys_Save as i32 + 1) as u16,
+    ),
+    key_name(
+        c"Replay",
+        kKeys_Replay,
+        (kKeys_Replay_Last as i32 - kKeys_Replay as i32 + 1) as u16,
+    ),
+    key_name(
+        c"LoadRef",
+        kKeys_LoadRef,
+        (kKeys_LoadRef_Last as i32 - kKeys_LoadRef as i32 + 1) as u16,
+    ),
+    key_name(
+        c"ReplayRef",
+        kKeys_ReplayRef,
+        (kKeys_ReplayRef_Last as i32 - kKeys_ReplayRef as i32 + 1) as u16,
+    ),
+    key_name(c"CheatLife", kKeys_CheatLife, 1),
+    key_name(c"CheatJump", kKeys_CheatJump, 1),
+    key_name(c"ToggleWhichFrame", kKeys_ToggleWhichFrame, 1),
+    key_name(c"ClearKeyLog", kKeys_ClearKeyLog, 1),
+    key_name(c"StopReplay", kKeys_StopReplay, 1),
+    key_name(c"Fullscreen", kKeys_Fullscreen, 1),
+    key_name(c"Reset", kKeys_Reset, 1),
+    key_name(c"Pause", kKeys_Pause, 1),
+    key_name(c"PauseDimmed", kKeys_PauseDimmed, 1),
+    key_name(c"Turbo", kKeys_Turbo, 1),
+    key_name(c"ReplayTurbo", kKeys_ReplayTurbo, 1),
+    key_name(c"WindowBigger", kKeys_WindowBigger, 1),
+    key_name(c"WindowSmaller", kKeys_WindowSmaller, 1),
+    key_name(c"VolumeUp", kKeys_VolumeUp, 1),
+    key_name(c"VolumeDown", kKeys_VolumeDown, 1),
+    key_name(c"DisplayPerf", kKeys_DisplayPerf, 1),
+    key_name(c"ToggleRenderer", kKeys_ToggleRenderer, 1),
 ];
 static mut keymap_hash_first: [u16; 255] = [0; 255];
 static mut keymap_hash: *mut KeyMapHashEnt = null::<KeyMapHashEnt>() as *mut KeyMapHashEnt;

@@ -20,6 +20,46 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared key-group construction (2026-10-20)
+
+All 24 keyboard/gamepad command-group records now use one const constructor.
+It accepts a static C string, command ID and group size; record layout,
+ordering, names, IDs, original size expressions and Null's 65535-entry limit
+stay unchanged. The constructor introduces no runtime initialization or new
+table. The complete formatted change saves **65 lines**, including the helper.
+
+Frontend validation follows the current Validation strategy: no gameplay
+routine, RAM field, input movie or verifier changes. Actual original/replacement
+configuration modules pass **1752 record/parser scenarios**, covering every
+record, both mapping sections, exact/lower/upper/suffixed names, and list lengths
+0, 1, 2, 11, 12, 13, 19, 20 and 21. They compare acceptance, consumed buffers,
+override flags, complete mapping entries and chains, before and after default
+registration. These boundary checks supplement exact comparison of every
+name, ID and size; they do not enumerate the entire Null-sized input list.
+
+All 24 groups also load from real configuration files, one fresh process each,
+through the normal frontend library. Original/replacement/normal keyboard and
+gamepad lookups agree: **127104 total comparisons**. The harness checks every
+source byte embedded by the normal library against the frozen checkout.
+Source, library, harness, DLL and fixture pins remain fixed. These checks cover
+configuration semantics, not physical input devices or gameplay execution.
+
+Formatting, normal release (26.39s), frontend checks (2.07s),
+diff check and progress pass. The existing checkout-local target is reused;
+no game/host artifacts are copied between checkouts. Under the current
+frontend-only rule, no new movie replay is needed. The preceding integration
+retains any% 129712/0 and Speed Booster 148406/0; those are historical results,
+not replay claims for this commit. The newly landed exercised-stopping verifier
+is reconciled before the final build and frontend checks. The pending shader
+edit stays out of the frozen proposed commit and is preserved in the worktree.
+
+Committed Rust is **112916 lines**, leaving **12917 further lines** for
+the fixed under-100000 target. Cast-containing lines change by -24; other
+counters stay unchanged. Checks live temporarily under the bindings root's
+`keygroups/` directory and reuse its `integrated/` checkout. Earlier directory
+cleanup remains blocked by automatic policy rejection; no removal is claimed.
+The complete remaining reduction budget remains unproven.
+
 ## Validation strategy (2026-10-20)
 
 User direction: choose verification by the changed behavior and its callers,
