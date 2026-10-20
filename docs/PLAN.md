@@ -42,6 +42,13 @@ final extraction binding pass on published 939101ab dispatch composition.
 1024 ordered/full-RAM rendering comparisons also match actual-library outputs;
 9220 ordered edge cases cover empty, every single marked tile and mixed maps.
 Final-prefetch removal, wrong-blank and reordered-prefetch mutations are detected.
+Focused read instrumentation corrected during review: dereferenced method
+receivers now log the rotation carry reread on both originals and candidate.
+Only the focused DLL was rebuilt; all 1024 rendering and 9220 edge cases
+pass again. Hoisting that reread preserves final RAM but is detected as
+17 versus 16 reads of the exercised byte on both screens. Earlier focused
+artifacts remain preserved; corrected artifact pins are recorded separately.
+Completed normal release and full any% evidence is unchanged.
 
 Formatting, normal release (17.62s), progress and full any% 129712/0
 (104.68s), native exit 0, pass; all frozen source/replay/focused pins remain
