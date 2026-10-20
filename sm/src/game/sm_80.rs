@@ -1568,44 +1568,20 @@ pub unsafe fn HandleHudTilemap(game: &mut Game) {
 static kHudItemTilemapOffsets: [u16; 5] = [0x14, 0x1c, 0x22, 0x28, 0x2e];
 pub unsafe fn ToggleHudItemHighlight(a: u16, k: u16, game: &mut Game) {
     word!(game.hud_item_tilemap_palette_bits = k);
-    let mut v2: i16 = ((a) as i16).wrapping_sub(1);
+    let v2 = (a as i16).wrapping_sub(1);
     if v2 >= 0 {
-        let v3: i32 = kHudItemTilemapOffsets[v2 as usize] as i32 >> 1;
-        if word!(game.hud_tilemap[v3]) != 11279 {
-            word!(
-                game.hud_tilemap[v3] = (word!(game.hud_item_tilemap_palette_bits)
-                    | word!(game.hud_tilemap[v3]) & 0xe3ff)
-            );
-        }
-        if word!(game.hud_tilemap[(v3 + 1)]) != 11279 {
-            word!(
-                game.hud_tilemap[(v3 + 1)] = (word!(game.hud_item_tilemap_palette_bits)
-                    | word!(game.hud_tilemap[(v3 + 1)]) & 0xe3ff)
-            );
-        }
-        if word!(game.hud_tilemap[(v3 + 32)]) != 11279 {
-            word!(
-                game.hud_tilemap[(v3 + 32)] = (word!(game.hud_item_tilemap_palette_bits)
-                    | word!(game.hud_tilemap[(v3 + 32)]) & 0xe3ff)
-            );
-        }
-        if word!(game.hud_tilemap[(v3 + 33)]) != 11279 {
-            word!(
-                game.hud_tilemap[(v3 + 33)] = (word!(game.hud_item_tilemap_palette_bits)
-                    | word!(game.hud_tilemap[(v3 + 33)]) & 0xe3ff)
-            );
-        }
-        if 2 * v2 as i32 == 0 {
-            if word!(game.hud_tilemap[(v3 + 2)]) != 11279 {
+        let base = kHudItemTilemapOffsets[v2 as usize] as i32 >> 1;
+        let offsets: &[i32] = if v2 == 0 {
+            &[0, 1, 32, 33, 2, 34]
+        } else {
+            &[0, 1, 32, 33]
+        };
+        for &offset in offsets {
+            let index = base + offset;
+            if word!(game.hud_tilemap[index]) != 11279 {
                 word!(
-                    game.hud_tilemap[(v3 + 2)] = (word!(game.hud_item_tilemap_palette_bits)
-                        | word!(game.hud_tilemap[(v3 + 2)]) & 0xe3ff)
-                );
-            }
-            if word!(game.hud_tilemap[(v3 + 34)]) != 11279 {
-                word!(
-                    game.hud_tilemap[(v3 + 34)] = (word!(game.hud_item_tilemap_palette_bits)
-                        | word!(game.hud_tilemap[(v3 + 34)]) & 0xe3ff)
+                    game.hud_tilemap[index] = word!(game.hud_item_tilemap_palette_bits)
+                        | word!(game.hud_tilemap[index]) & 0xe3ff
                 );
             }
         }

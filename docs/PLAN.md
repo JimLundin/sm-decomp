@@ -20,6 +20,53 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared HUD highlight traversal (2026-10-20)
+
+ToggleHudItemHighlight now traverses each icon's tiles once, preserving the
+original offsets/order 0,1,32,33 and the missile-only tail 2,34. Blank tile
+2C0F remains untouched. Palette bits remain live reads from RAM 077C, distinct
+from the HUD words at C608. The initial palette store, signed wrapping selection,
+table bounds/panic behavior and non-palette tile bits remain unchanged.
+The complete formatted routine saves **24 lines**, with no new helper.
+
+Actual original/replacement/normal-library routines pass **8544 component
+cases**. These cover five icons, every combination of six blank/nonblank target
+tiles, eight palette masks, three tile/RAM profiles and nine selection boundaries.
+Invalid positive indices retain panic outcomes and complete partial RAM.
+The normal library also passes **8064 oracle calls** at 80:9CEA, with A as item
+and X as palette, native mode, DP 0 and SP 1FF0. Every WRAM byte agrees with
+no scratch or stack exclusions. Invalid native table indices are excluded from
+oracle calls; component comparisons do not compare CPU register outputs.
+
+All **12 temporary highlight probes** execute in the actual normal
+library during component checks. Their frame zero is the unused component clock.
+An additional HUD-queue probe and a Speed Booster boot segment exercise the
+wide icon and changed
+writes at input 48451, then 60 complete follow-up frames through 48511.
+Required movie probes are hud.highlight, hud.active, hud.wide, hud.write0,
+hud.write2, hud.write34 and hud.queued; uploads continue through the endpoint.
+It passes **48512/0**, retaining rendering, audio and all normal oracle checks.
+Narrow icons, blank preservation and boundary cases have component/oracle
+coverage rather than a new movie-branch claim.
+
+Probes are removed. Formatting, normal release (20.23s),
+the same clean component/oracle cases (0.44s) and the same
+boot segment **48512/0** (41.85s) pass, as do diff check and
+progress. Source/library/harness/ROM/input pins stay fixed and all source bytes
+embedded in the normal library are checked. Final source includes concurrent
+captured-setup commit 0a0d22b8; instrumented observations predate that static
+identity change and the HUD body remains identical. Dirty shader work is separate.
+The preceding full any% 129712/0 and Speed Booster 148406/0 remain historical
+batch checks; this focused edit uses the current validation strategy.
+
+Committed Rust is **112382 lines**, leaving **12383 further lines** to
+reach below 100000. Cast-containing lines change by -1; other counters
+are unchanged. Checks reuse the bindings root's integrated target and live
+temporarily under hud/. The complete remaining budget is still unproven.
+The preceding focused inspection found distinct Kraid collision/Phantoon phase
+contracts and wrapped/mixed-source masked loops; no larger complete replacement
+was established. These containing routines are not counted as removable code.
+
 ## Shared dispatch with captured setup (2026-10-20)
 
 Four remaining address dispatchers now reuse `address_dispatch!` with an
