@@ -20,6 +20,43 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared sprite traversal (2026-10-20)
+
+Ten OAM-writing implementations now share two traversals in sm_81.rs. The
+wrapping traversal retains X/extension/Y/tile store order, live source rereads,
+coordinate overflow and tile composition. The bounded traversal keeps its
+224-line clipping rule, writes extension bits last, and stops at the OAM limit.
+Public entry points, pointer resolution and zero-pointer guards remain.
+
+A temporary harness executes the original and replacement Rust with the actual
+word! macro and compares all RAM bytes: 675050 cases pass. It covers every
+8-bit Y-origin/offset pair in all ten entry points, OAM capacity and wrapping,
+zero and multiple sprites, coordinate/tile overflow, and overlapping source/OAM
+buffers. ROM lookup is a synthetic adapter in this harness; real lookup and
+integration are covered by the source-checked movie runs below. Windows refused
+the standalone EXE, so the same checks were compiled as a DLL and executed
+through the existing Python runtime. No test or ROM artifacts are committed.
+
+Formatting, normal release (54.77s), diff check and progress pass.
+Source-checked any% passes 129712/0 (107.30s replay), Speed Booster
+148406/0 (164.02s), native exits 0, at the same source hash. The host reuses
+the normal library. Final any% source/input/library/DLL hashes remain fixed.
+Speed Booster exercises all five required clipping modes, including 96 bounded
+offscreen calls at frames 20769..20814. Any% exercises the other four modes.
+The first any% attempt had zero failing frames but correctly failed the absent
+bounded-offscreen probe; the final run requires its four exercised modes.
+Neither movie reaches credits, and the existing route coverage is unchanged.
+Rust lines -110 to 115420; 15421 further lines must go. Cast-containing lines
+-47 to 9272. The textual unsafe-function counter rises by one to 5371: two
+shared traversals are added and two projectile wrappers share one existing
+forwarding declaration. Other progress counters are unchanged.
+
+This is an execution contribution to the reduction map, not completion of its
+budget milestone. The full remaining reduction budget is still unproven. Keep
+seeking larger algorithm families; shared sprite drawing supplies only 110
+lines of the fixed target.
+
+
 ## Ordered word transfers (2026-10-20)
 
 One shared traversal replaces 204 repeated transfer regions across 22 banks:
@@ -207,6 +244,12 @@ keep the fixed target visible instead of claiming success from small cleanups.
 
 ### Already harvested or parked
 
+- Queue-builder projection (2026-10-20): 28 selected single-entry writers
+  share cursor/field construction with byte-bank versus overlapping word-bank
+  stores explicit. The function-like macro draft saves only **32 net lines**
+  after ordinary rustfmt; it remains parked and has no crate/replay result.
+  The 63 discovered enclosing regions / 814 gross lines include larger mixed
+  algorithms, so the draft does not bound the complete VRAM workstream.
 - Script-loop discovery at `42bb4a44`: 22 disjoint loop spans containing direct
   instruction/preinstruction dispatch occupy 578 lines, including outer object
   traversal and PLM coroutine handling. This gross count does not establish a

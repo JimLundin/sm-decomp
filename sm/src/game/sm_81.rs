@@ -223,29 +223,96 @@ pub unsafe fn PackMapToSave(game: &mut Game) {
         i += 1;
     }
 }
-pub unsafe fn DrawSpritemap(db: u8, j: u16, x_r20: u16, y_r18: u16, chr_r22: u16, game: &mut Game) {
-    let mut pp = RomPtrWithBank(db, j, game);
+#[derive(Clone, Copy)]
+enum SpriteY {
+    None,
+    Inside,
+    Outside,
+}
+
+// All wrapping writers emit X, extension bits, Y, then tile data. Keep the
+// source reads between those stores: a source may overlap the OAM buffer.
+unsafe fn draw_sprites(
+    mut source: *const u8,
+    position: (u16, u16),
+    tile_word: impl Fn(u16) -> u16,
+    clip: SpriteY,
+    game: &mut Game,
+) {
+    let mut index = word!(game.oam_next_ptr) as i32;
+    let mut count = *(source as *const u16) as i32;
+    source = source.offset(2);
+    if count != 0 {
+        crate::verify_probe::hit(match clip {
+            SpriteY::None => "sprites.wrap",
+            SpriteY::Inside => "sprites.inside",
+            SpriteY::Outside => "sprites.outside",
+        });
+    }
+    while count != 0 {
+        let oam = gOamEnt(index, game);
+        let x = position.0.wrapping_add(*(source as *const u16));
+        (*oam).xcoord = x as u8;
+        word!(game.oam_ext[(index >> 5)], |old| (old as i32
+            | ((x as i32 & 0x100) >> 8 | (*(source as *const i16) < 0) as i32 * 2)
+                << 2 * (index >> 2 & 7))
+            as u16);
+        (*oam).ycoord = match clip {
+            SpriteY::None => (position.1 as u8).wrapping_add(*source.offset(2)),
+            SpriteY::Inside | SpriteY::Outside => {
+                let y = *source.offset(2) as i32 + position.1 as u8 as i32;
+                let inside = (y & 0x100 == 0) == (*source.offset(2) & 0x80 == 0);
+                if inside == matches!(clip, SpriteY::Inside) {
+                    y as u8
+                } else {
+                    0xf0
+                }
+            }
+        };
+        *(&raw mut (*oam).charnum as *mut u16) = tile_word(*(source.offset(3) as *const u16));
+        source = source.offset(5);
+        index = index + 4 & 0x1ff;
+        count -= 1;
+    }
+    word!(game.oam_next_ptr = index as u16);
+}
+
+// Bounded cinematic sprites use the 224-line clipping rule and do not wrap OAM.
+unsafe fn draw_bounded_sprites(
+    mut pp: *const u8,
+    position: (u16, u16),
+    palette: u16,
+    offscreen: bool,
+    game: &mut Game,
+) {
     let mut n: i32 = *(pp as *mut u16) as i32;
     pp = pp.offset(2);
     let mut idx: i32 = word!(game.oam_next_ptr) as i32;
+    if n != 0 && idx < 0x200 {
+        crate::verify_probe::hit(if offscreen {
+            "sprites.bounded-outside"
+        } else {
+            "sprites.bounded"
+        });
+    }
     while n != 0 && idx < 0x200 {
         let oam = gOamEnt(idx, game);
-        let mut x: i32 = x_r20 as i32 + *(pp as *mut u16) as i32;
-        let mut y: i32 = y_r18 as u8 as i32 + *pp.offset(2) as i32;
-        if if *pp.offset(2) & 0x80 == 0 {
+        let mut x: i32 = position.0 as i32 + *(pp as *mut u16) as i32;
+        let mut y: i32 = position.1 as u8 as i32 + *pp.offset(2) as i32;
+        let hidden = if *pp.offset(2) & 0x80 == 0 {
             (y >= 0xe0) as i32
         } else if y & 0x100 != 0 {
             ((y as u8) >= 0xe0) as i32
         } else {
             ((y as u8) < 0xe0) as i32
-        } != 0
-        {
+        } != 0;
+        if hidden != offscreen {
             x = 0x180;
             y = 0xe0;
         }
         (*oam).xcoord = x as u8;
         (*oam).ycoord = y as u8;
-        *(&raw mut (*oam).charnum as *mut u16) = (chr_r22 | *(pp.offset(3) as *mut u16) & 0xf1ff);
+        *(&raw mut (*oam).charnum as *mut u16) = (palette | *(pp.offset(3) as *mut u16) & 0xf1ff);
         word!(game.oam_ext[(idx >> 5)], |fresh9| (fresh9 as i32
             | ((x & 0x100) >> 8 | (*(pp as *mut i16) < 0) as i32 * 2) << 2 * (idx >> 2 & 7))
             as u16);
@@ -255,92 +322,34 @@ pub unsafe fn DrawSpritemap(db: u8, j: u16, x_r20: u16, y_r18: u16, chr_r22: u16
     }
     word!(game.oam_next_ptr = idx as u16);
 }
-pub unsafe fn DrawSpritemapOffScreen(
-    j: u16,
-    x_r20: u16,
-    y_r18: u16,
-    chr_r22: u16,
-    game: &mut Game,
-) {
-    let mut pp = RomPtr_8C(j, game);
-    let mut n: i32 = *(pp as *mut u16) as i32;
-    pp = pp.offset(2);
-    let mut idx: i32 = word!(game.oam_next_ptr) as i32;
-    while n != 0 && idx < 0x200 {
-        let oam = gOamEnt(idx, game);
-        let mut x: i32 = x_r20 as i32 + *(pp as *mut u16) as i32;
-        let mut y: i32 = y_r18 as u8 as i32 + *pp.offset(2) as i32;
-        if if *pp.offset(2) & 0x80 == 0 {
-            (y < 0xe0) as i32
-        } else if y & 0x100 != 0 {
-            ((y as u8) < 0xe0) as i32
-        } else {
-            ((y as u8) >= 0xe0) as i32
-        } != 0
-        {
-            x = 0x180;
-            y = 0xe0;
-        }
-        (*oam).xcoord = x as u8;
-        (*oam).ycoord = y as u8;
-        *(&raw mut (*oam).charnum as *mut u16) = (chr_r22 | *(pp.offset(3) as *mut u16) & 0xf1ff);
-        word!(game.oam_ext[(idx >> 5)], |fresh10| (fresh10 as i32
-            | ((x & 0x100) >> 8 | (*(pp as *mut i16) < 0) as i32 * 2) << 2 * (idx >> 2 & 7))
-            as u16);
-        idx += 4;
-        pp = pp.offset(5);
-        n -= 1;
-    }
-    word!(game.oam_next_ptr = idx as u16);
+pub unsafe fn DrawSpritemap(db: u8, j: u16, x: u16, y: u16, palette: u16, game: &mut Game) {
+    draw_bounded_sprites(RomPtrWithBank(db, j, game), (x, y), palette, false, game);
+}
+pub unsafe fn DrawSpritemapOffScreen(j: u16, x: u16, y: u16, palette: u16, game: &mut Game) {
+    draw_bounded_sprites(RomPtr_8C(j, game), (x, y), palette, true, game);
 }
 pub unsafe fn DrawMenuSpritemap(a: u16, k: u16, j: u16, chr_r3: u16, game: &mut Game) {
-    let mut pp = RomPtr_82(
+    let pp = RomPtr_82(
         crate::rtl::rom_table_word!(game, 0x82c569, a as isize),
         game,
     );
-    let mut n: i32 = *(pp as *mut u16) as i32;
-    pp = pp.offset(2);
-    let mut idx: i32 = word!(game.oam_next_ptr) as i32;
-    while n != 0 {
-        let oam = gOamEnt(idx, game);
-        let x: u16 = (k).wrapping_add(*(pp as *mut u16));
-        (*oam).xcoord = x as u8;
-        word!(game.oam_ext[(idx >> 5)], |fresh4| (fresh4 as i32
-            | ((x as i32 & 0x100) >> 8 | (*(pp as *mut i16) < 0) as i32 * 2) << 2 * (idx >> 2 & 7))
-            as u16);
-        (*oam).ycoord = ((j) as u8).wrapping_add(*pp.offset(2));
-        *(&raw mut (*oam).charnum as *mut u16) = (chr_r3 | *(pp.offset(3) as *mut u16) & 0xf1ff);
-        pp = pp.offset(5);
-        idx = idx + 4 & 0x1ff;
-        n -= 1;
-    }
-    word!(game.oam_next_ptr = idx as u16);
+    draw_sprites(
+        pp,
+        (k, j),
+        |tile| chr_r3 | tile & 0xf1ff,
+        SpriteY::None,
+        game,
+    );
 }
 pub unsafe fn DrawSamusSpritemap(a: u16, x_pos: u16, y_pos: u16, game: &mut Game) {
     if crate::rtl::rom_table_word!(game, 0x92808d, a as isize) == 0 {
         return;
     }
-    let mut pp = RomPtr_92(
+    let pp = RomPtr_92(
         crate::rtl::rom_table_word!(game, 0x92808d, a as isize),
         game,
     );
-    let mut idx: i32 = word!(game.oam_next_ptr) as i32;
-    let mut n: i32 = *(pp as *mut u16) as i32;
-    pp = pp.offset(2);
-    while n != 0 {
-        let x: u16 = (x_pos).wrapping_add(*(pp as *mut u16));
-        let v9 = gOamEnt(idx, game);
-        (*v9).xcoord = x as u8;
-        word!(game.oam_ext[(idx >> 5)], |fresh8| (fresh8 as i32
-            | ((x as i32 & 0x100) >> 8 | (*(pp as *mut i16) < 0) as i32 * 2) << 2 * (idx >> 2 & 7))
-            as u16);
-        (*v9).ycoord = ((y_pos) as u8).wrapping_add(*pp.offset(2));
-        *(&raw mut (*v9).charnum as *mut u16) = *(pp.offset(3) as *mut u16);
-        pp = pp.offset(5);
-        idx = idx + 4 & 0x1ff;
-        n -= 1;
-    }
-    word!(game.oam_next_ptr = idx as u16);
+    draw_sprites(pp, (x_pos, y_pos), |tile| tile, SpriteY::None, game);
 }
 pub unsafe fn DrawBeamGrappleSpritemap(a: u16, x_r20: u16, y_r18: u16, game: &mut Game) {
     DrawGrappleOrProjectileSpritemap(
@@ -362,28 +371,12 @@ pub unsafe fn DrawProjectileSpritemap(k: u16, x_r20: u16, y_r18: u16, game: &mut
     );
 }
 pub unsafe fn DrawGrappleOrProjectileSpritemap(
-    mut pp: *const u8,
+    pp: *const u8,
     x_r20: u16,
     y_r18: u16,
     game: &mut Game,
 ) {
-    let mut idx: i32 = word!(game.oam_next_ptr) as i32;
-    let mut n: i32 = *(pp as *mut u16) as i32;
-    pp = pp.offset(2);
-    while n != 0 {
-        let x: u16 = (x_r20).wrapping_add(*(pp as *mut u16));
-        let v4 = gOamEnt(idx, game);
-        (*v4).xcoord = x as u8;
-        word!(game.oam_ext[(idx >> 5)], |fresh5| (fresh5 as i32
-            | ((x as i32 & 0x100) >> 8 | (*(pp as *mut i16) < 0) as i32 * 2) << 2 * (idx >> 2 & 7))
-            as u16);
-        (*v4).ycoord = ((y_r18) as u8).wrapping_add(*pp.offset(2));
-        *(&raw mut (*v4).charnum as *mut u16) = *(pp.offset(3) as *mut u16);
-        pp = pp.offset(5);
-        idx = idx + 4 & 0x1ff;
-        n -= 1;
-    }
-    word!(game.oam_next_ptr = idx as u16);
+    draw_sprites(pp, (x_r20, y_r18), |tile| tile, SpriteY::None, game);
 }
 pub unsafe fn DrawSpritemapWithBaseTile(
     db: u8,
@@ -397,25 +390,14 @@ pub unsafe fn DrawSpritemapWithBaseTile(
     if j == 0 {
         return;
     }
-    let mut pp = RomPtrWithBank(db, j, game) as *mut u8;
-    let mut idx: i32 = word!(game.oam_next_ptr) as i32;
-    let mut n: i32 = *(pp as *mut u16) as i32;
-    pp = pp.offset(2);
-    while n != 0 {
-        let oam = gOamEnt(idx, game);
-        let x: u16 = (r20_x).wrapping_add(*(pp.offset(0) as *mut u16));
-        (*oam).xcoord = x as u8;
-        word!(game.oam_ext[(idx >> 5)], |fresh11| (fresh11 as i32
-            | ((x as i32 & 0x100) >> 8 | (*(pp as *mut i16) < 0) as i32 * 2) << 2 * (idx >> 2 & 7))
-            as u16);
-        (*oam).ycoord = ((r18_y) as u8).wrapping_add(*pp.offset(2));
-        *(&raw mut (*oam).charnum as *mut u16) =
-            (r3 as i32 | r0 as i32 + *(pp.offset(3) as *mut u16) as i32) as u16;
-        pp = pp.offset(5);
-        idx = idx + 4 & 0x1ff;
-        n -= 1;
-    }
-    word!(game.oam_next_ptr = idx as u16);
+    let pp = RomPtrWithBank(db, j, game) as *mut u8;
+    draw_sprites(
+        pp,
+        (r20_x, r18_y),
+        |tile| (r3 as i32 | r0 as i32 + tile as i32) as u16,
+        SpriteY::None,
+        game,
+    );
 }
 pub unsafe fn DrawSpritemapWithBaseTile2(
     db: u8,
@@ -426,30 +408,14 @@ pub unsafe fn DrawSpritemapWithBaseTile2(
     r0: u16,
     game: &mut Game,
 ) {
-    let mut pp = RomPtrWithBank(db, j, game);
-    let mut idx: i32 = word!(game.oam_next_ptr) as i32;
-    let mut n: i32 = *(pp as *mut u16) as i32;
-    pp = pp.offset(2);
-    while n != 0 {
-        let oam = gOamEnt(idx, game);
-        let x: u16 = (r20_x).wrapping_add(*(pp as *mut u16));
-        (*oam).xcoord = x as u8;
-        word!(game.oam_ext[(idx >> 5)], |fresh12| (fresh12 as i32
-            | ((x as i32 & 0x100) >> 8 | (*(pp as *mut i16) < 0) as i32 * 2) << 2 * (idx >> 2 & 7))
-            as u16);
-        let y: i32 = *pp.offset(2) as i32 + r18_y as u8 as i32;
-        (*oam).ycoord = (if (y & 0x100 == 0) as i32 == (*pp.offset(2) & 0x80 == 0) as i32 {
-            y
-        } else {
-            0xf0
-        }) as u8;
-        *(&raw mut (*oam).charnum as *mut u16) =
-            (r3 as i32 | r0 as i32 + *(pp.offset(3) as *mut u16) as i32) as u16;
-        pp = pp.offset(5);
-        idx = idx + 4 & 0x1ff;
-        n -= 1;
-    }
-    word!(game.oam_next_ptr = idx as u16);
+    let pp = RomPtrWithBank(db, j, game);
+    draw_sprites(
+        pp,
+        (r20_x, r18_y),
+        |tile| (r3 as i32 | r0 as i32 + tile as i32) as u16,
+        SpriteY::Inside,
+        game,
+    );
 }
 pub unsafe fn DrawSpritemapWithBaseTileOffscreen(
     db: u8,
@@ -460,98 +426,22 @@ pub unsafe fn DrawSpritemapWithBaseTileOffscreen(
     r0: u16,
     game: &mut Game,
 ) {
-    let mut pp = RomPtrWithBank(db, j, game);
-    let mut idx: i32 = word!(game.oam_next_ptr) as i32;
-    let mut n: i32 = *(pp as *mut u16) as i32;
-    pp = pp.offset(2);
-    while n != 0 {
-        let oam = gOamEnt(idx, game);
-        let x: i32 = r20_x as i32 + *(pp as *mut u16) as i32;
-        (*oam).xcoord = x as u8;
-        word!(game.oam_ext[(idx >> 5)], |fresh13| (fresh13 as i32
-            | ((x & 0x100) >> 8 | (*(pp as *mut i16) < 0) as i32 * 2) << 2 * (idx >> 2 & 7))
-            as u16);
-        let y: i32 = *pp.offset(2) as i32 + r18_y as u8 as i32;
-        (*oam).ycoord = (if (y & 0x100 == 0) as i32 != (*pp.offset(2) & 0x80 == 0) as i32 {
-            y
-        } else {
-            0xf0
-        }) as u8;
-        *(&raw mut (*oam).charnum as *mut u16) =
-            (r3 as i32 | r0 as i32 + *(pp.offset(3) as *mut u16) as i32) as u16;
-        pp = pp.offset(5);
-        idx = idx + 4 & 0x1ff;
-        n -= 1;
-    }
-    word!(game.oam_next_ptr = idx as u16);
+    let pp = RomPtrWithBank(db, j, game);
+    draw_sprites(
+        pp,
+        (r20_x, r18_y),
+        |tile| (r3 as i32 | r0 as i32 + tile as i32) as u16,
+        SpriteY::Outside,
+        game,
+    );
 }
-pub unsafe fn DrawEprojSpritemapWithBaseTile(
-    db: u8,
-    j: u16,
-    x_r20: u16,
-    y_r18: u16,
-    chr_r26: u16,
-    chr_r28: u16,
-    game: &mut Game,
-) {
-    let mut pp = RomPtrWithBank(db, j, game);
-    let mut idx: i32 = word!(game.oam_next_ptr) as i32;
-    let mut n: i32 = *(pp as *mut u16) as i32;
-    pp = pp.offset(2);
-    while n != 0 {
-        let oam = gOamEnt(idx, game);
-        let x: u16 = (x_r20).wrapping_add(*(pp as *mut u16));
-        (*oam).xcoord = x as u8;
-        word!(game.oam_ext[(idx >> 5)], |fresh6| (fresh6 as i32
-            | ((x as i32 & 0x100) >> 8 | (*(pp as *mut i16) < 0) as i32 * 2) << 2 * (idx >> 2 & 7))
-            as u16);
-        let y: i32 = *pp.offset(2) as i32 + y_r18 as u8 as i32;
-        (*oam).ycoord = (if (y & 0x100 == 0) as i32 == (*pp.offset(2) & 0x80 == 0) as i32 {
-            y
-        } else {
-            0xf0
-        }) as u8;
-        *(&raw mut (*oam).charnum as *mut u16) =
-            (chr_r28 as i32 | chr_r26 as i32 + *(pp.offset(3) as *mut u16) as i32) as u16;
-        idx = idx + 4 & 0x1ff;
-        pp = pp.offset(5);
-        n -= 1;
-    }
-    word!(game.oam_next_ptr = idx as u16);
-}
-pub unsafe fn DrawEprojSpritemapWithBaseTileOffscreen(
-    db: u8,
-    j: u16,
-    x_r20: u16,
-    y_r18: u16,
-    chr_r26: u16,
-    chr_r28: u16,
-    game: &mut Game,
-) {
-    let mut pp = RomPtrWithBank(db, j, game);
-    let mut idx: i32 = word!(game.oam_next_ptr) as i32;
-    let mut n: i32 = *(pp as *mut u16) as i32;
-    pp = pp.offset(2);
-    while n != 0 {
-        let oam = gOamEnt(idx, game);
-        let x: u16 = (x_r20).wrapping_add(*(pp as *mut u16));
-        (*oam).xcoord = x as u8;
-        word!(game.oam_ext[(idx >> 5)], |fresh7| (fresh7 as i32
-            | ((x as i32 & 0x100) >> 8 | (*(pp as *mut i16) < 0) as i32 * 2) << 2 * (idx >> 2 & 7))
-            as u16);
-        let y: i32 = *pp.offset(2) as i32 + y_r18 as u8 as i32;
-        (*oam).ycoord = (if (y & 0x100 == 0) as i32 != (*pp.offset(2) & 0x80 == 0) as i32 {
-            y
-        } else {
-            0xf0
-        }) as u8;
-        *(&raw mut (*oam).charnum as *mut u16) =
-            (chr_r28 as i32 | chr_r26 as i32 + *(pp.offset(3) as *mut u16) as i32) as u16;
-        idx = idx + 4 & 0x1ff;
-        pp = pp.offset(5);
-        n -= 1;
-    }
-    word!(game.oam_next_ptr = idx as u16);
+crate::forward_calls! { pub unsafe fn (
+    db: u8, j: u16, x: u16, y: u16, tile: u16, flags: u16, game: &mut Game
+);
+    DrawEprojSpritemapWithBaseTile =>
+        DrawSpritemapWithBaseTile2(db, j, x, y, flags, tile, game);
+    DrawEprojSpritemapWithBaseTileOffscreen =>
+        DrawSpritemapWithBaseTileOffscreen(db, j, x, y, flags, tile, game);
 }
 pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
     HandleFadeOut(game);
