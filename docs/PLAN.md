@@ -207,7 +207,14 @@ explicit domain migration but is not evidence of a large volume payoff.
 
    Active comparison: `samus_motion_module` is assessing complete boss phases
    and their projectile consumers. Reuse its pending findings before starting
-   an overlapping boss investigation. No implementation is active.
+   an overlapping boss investigation. The overseer is validating the intro
+   narrative-page lifecycle: four scene setups, page transitions, crossfades
+   and Japanese continuations. Its first compiled draft removes 276 lines;
+   domain-module migration and final validation remain before pricing adoption.
+   A Japanese controller route exposed an existing lost-accumulator defect in
+   four continuation spawns. Correct that first, then retire its temporary
+   helper into the complete page lifecycle. Drafts: TEMP
+   sm-bindings-root-9c4daf2f/intro-cycle/.
 
    - Enemy/projectile lifecycles across A2/A3/A8/B2/B3/86: initialization,
      state selection, movement, collision, animation and reset together.
@@ -232,7 +239,7 @@ explicit domain migration but is not evidence of a large volume payoff.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **12,266-line** gap; parked small drafts are not
+   replacement yet funds the **12,262-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Keep one active implementation per overlapping subsystem. Use a stable
@@ -405,10 +412,11 @@ Rust lines 112265. The working tree at this review also contains an unrelated
 83-line shader reduction, so `sh tools/progress.sh` reports **112182**. That
 uncommitted draft is excluded from the committed baseline and budget.
 
-This experiment review changes documentation only. Draft verification is
-recorded above and applies to those frozen sources, not a new main build.
-Diff, inventory and progress checks pass; maintained Rust and its counters
-are unchanged. Existing independent boss-phase discovery remains recorded in
-item 2; domain migration follows the clarified direction and experiment limits.
+The Japanese intro continuation correction removes four lines: maintained
+Rust is **112,261**, leaving **12,262** to reach 99,999. It adds one unsafe
+helper to preserve the allocator's successful and exhausted-slot accumulator
+results. The exercised Japanese route and 180 focused oracle cases pass;
+routine results are in the commit message. The unrelated shader draft remains
+excluded. Intro lifecycle reduction and independent boss discovery are active.
 
 Historical details before this reset remain in **ec45c573:docs/PLAN.md**.

@@ -2383,6 +2383,22 @@ pub unsafe fn SetSomeStuffForSpriteObject_18(k: u16, game: &mut Game) {
         word!(game.cinematicspr_instr_ptr[v2] = addr_off_8BCE53 as u16);
     }
 }
+// The arrow initializer leaves its palette in A for the mode-7 spawn. When
+// sprite slots are full, the allocator instead leaves slot zero's instruction.
+unsafe fn spawn_intro_japanese_continuation(object: u16, game: &mut Game) {
+    let failed = SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCE73 as u16,
+        word!(game.japanese_text_flag),
+        game,
+    ) != 0;
+    let parameter = if failed {
+        word!(game.cinematicspr_instr_ptr[0])
+    } else {
+        0x0c00
+    };
+    SpawnMode7Object(object, parameter, game);
+}
+
 pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page1(k: u16, j: u16, game: &mut Game) -> u16 {
     word!(game.cinematicbg_var1 = 0);
     if word!(game.japanese_text_flag) != 0 {
@@ -2428,12 +2444,7 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page2(
 ) -> u16 {
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
     if word!(game.japanese_text_flag) != 0 {
-        SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE73 as u16,
-            word!(game.japanese_text_flag),
-            game,
-        );
-        SpawnMode7Object(addr_kMode7ObjectDef_8BD40D as u16, 0, game);
+        spawn_intro_japanese_continuation(addr_kMode7ObjectDef_8BD40D as u16, game);
     } else {
         word!(game.cinematic_function = ((0x8baf6ci32) as u16));
     }
@@ -2550,12 +2561,7 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page3(
 ) -> u16 {
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
     if word!(game.japanese_text_flag) != 0 {
-        SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE73 as u16,
-            word!(game.japanese_text_flag),
-            game,
-        );
-        SpawnMode7Object(addr_kMode7ObjectDef_8BD419 as u16, 0, game);
+        spawn_intro_japanese_continuation(addr_kMode7ObjectDef_8BD419 as u16, game);
     } else {
         word!(game.cinematic_function = ((0x8bb0f2i32) as u16));
     }
@@ -2579,12 +2585,7 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page4(
 ) -> u16 {
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
     if word!(game.japanese_text_flag) != 0 {
-        SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE73 as u16,
-            word!(game.japanese_text_flag),
-            game,
-        );
-        SpawnMode7Object(addr_kMode7ObjectDef_8BD425 as u16, 0, game);
+        spawn_intro_japanese_continuation(addr_kMode7ObjectDef_8BD425 as u16, game);
     } else {
         word!(game.cinematic_function = ((0x8bb123i32) as u16));
     }
@@ -2646,12 +2647,7 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page5(
 ) -> u16 {
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
     if word!(game.japanese_text_flag) != 0 {
-        SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE73 as u16,
-            word!(game.japanese_text_flag),
-            game,
-        );
-        SpawnMode7Object(addr_kMode7ObjectDef_8BD431 as u16, 0, game);
+        spawn_intro_japanese_continuation(addr_kMode7ObjectDef_8BD431 as u16, game);
     } else {
         word!(game.cinematic_function = ((0x8bb1dai32) as u16));
     }
