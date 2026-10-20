@@ -247,7 +247,7 @@ explicit domain migration but is not evidence of a large volume payoff.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **11,837-line** gap; parked small drafts are not
+   replacement yet funds the **11,678-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -267,6 +267,13 @@ explicit domain migration but is not evidence of a large volume payoff.
    Booster pass; final unused-import retirement has static/compiler validation.
    This is a completed family replacement, not a forecast of the remaining gap.
    Routine results are in its commit.
+
+   Enemy callback references now use their owning modules directly, retiring
+   1,020 duplicate private imports. The complete cohort removes **159 lines
+   (111,836 -> 111,677)**, including macro support and table wrapping at the
+   existing 100-column width. Source reconstruction and compiler IR establish
+   unchanged routing and operations; release and all-target checks pass.
+   This removes declaration repetition, without changing gameplay ownership.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -444,11 +451,12 @@ exports 4; no_mangle 8; unsafe functions 5307; i32/c_int cast lines 8848;
 Rust lines 112265. The unrelated 83-line shader draft is excluded from the
 committed baseline and budget.
 
-After the Japanese correction, local-binding cohort and intro-page replacement,
-maintained Rust is **111,836**, leaving **11,837** to reach 99,999. Counters:
+After the Japanese correction, local-binding cohort, intro-page replacement
+and enemy callback imports, maintained Rust is **111,677**, leaving **11,678**
+to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
 unsafe functions 5278; cast lines 8844. The unrelated 83-line shader draft
-remains excluded; working-tree progress reports **111,753**. Intro lifecycle
+remains excluded; working-tree progress reports **111,594**. Intro lifecycle
 replacement is complete; continue item 2's remaining-responsibility comparison.
 
 Historical details before this reset remain in **ec45c573:docs/PLAN.md**.

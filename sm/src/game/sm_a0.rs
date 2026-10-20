@@ -17,300 +17,10 @@ use crate::game::sm_90::{CallSomeSamusCode, DrawSamusAndProjectiles};
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_93::DrawBombAndProjectileExplosions;
 use crate::game::sm_94::square_slope_occupied;
-use crate::game::sm_a2::{
-    BouncingGoofball_Init, BouncingGoofball_Instr_88C5, BouncingGoofball_Instr_88C6,
-    BouncingGoofball_Main, EnemyInstr_Rio_Instr_1, Enemy_GrappleReact_CancelBeam_A2,
-    Enemy_GrappleReact_KillEnemy_A2, Enemy_GrappleReact_SamusLatchesOn_A2, Enemy_NormalFrozenAI_A2,
-    Enemy_NormalShotAI_A2, Enemy_NormalTouchAI_A2, Flies_4, Flies_5, Flies_6, Flies_7, Flies_Init,
-    Flies_Main, Gripper_Init, Gripper_Main, GunshipBottom_Init, GunshipTop_10, GunshipTop_11,
-    GunshipTop_12, GunshipTop_13, GunshipTop_14, GunshipTop_15, GunshipTop_16, GunshipTop_17,
-    GunshipTop_18, GunshipTop_19, GunshipTop_20, GunshipTop_21, GunshipTop_3, GunshipTop_4,
-    GunshipTop_5, GunshipTop_6, GunshipTop_7, GunshipTop_8, GunshipTop_9, GunshipTop_Init,
-    GunshipTop_Main, HirisingSlowfalling_Init, HirisingSlowfalling_Main,
-    HorizontalShootableShutter_Init, HorizontalShootableShutter_Main,
-    HorizontalShootableShutter_Powerbomb, HorizontalShootableShutter_Shot,
-    HorizontalShootableShutter_Touch, JetPowerRipper_Init, JetPowerRipper_Main,
-    JetPowerRipper_Shot, LavaSeahorse_Func_1, LavaSeahorse_Func_2, LavaSeahorse_Func_3,
-    LavaSeahorse_Func_4, LavaSeahorse_Func_5, LavaSeahorse_Init, LavaSeahorse_Instr_E5FB,
-    LavaSeahorse_Main, LavaSeahorse_Powerbomb, LavaSeahorse_Shot, LavaSeahorse_Touch,
-    LavaquakeRocks_Init, LavaquakeRocks_Main, LowerNorfairRio_Func_1, LowerNorfairRio_Func_2,
-    LowerNorfairRio_Func_3, LowerNorfairRio_Func_4, LowerNorfairRio_Func_5, LowerNorfairRio_Func_6,
-    LowerNorfairRio_Init, LowerNorfairRio_Instr_C6D2, LowerNorfairRio_Instr_C6DD,
-    LowerNorfairRio_Instr_C6E8, LowerNorfairRio_Main, MaridiaBeybladeTurtle_Init,
-    MaridiaBeybladeTurtle_Instr_9381, MaridiaBeybladeTurtle_Instr_9412,
-    MaridiaBeybladeTurtle_Instr_9447, MaridiaBeybladeTurtle_Instr_9451,
-    MaridiaBeybladeTurtle_Instr_946B, MaridiaBeybladeTurtle_Instr_9485,
-    MaridiaBeybladeTurtle_Instr_94A1, MaridiaBeybladeTurtle_Instr_94C7,
-    MaridiaBeybladeTurtle_Instr_94D1, MaridiaBeybladeTurtle_Main, MaridiaBeybladeTurtle_Touch,
-    MaridiaLargeSnail_Func_12, MaridiaLargeSnail_Func_7, MaridiaLargeSnail_Func_8,
-    MaridiaLargeSnail_Init, MaridiaLargeSnail_Instr_CB6B, MaridiaLargeSnail_Instr_CCB3,
-    MaridiaLargeSnail_Instr_CCBE, MaridiaLargeSnail_Instr_CCC9, MaridiaLargeSnail_Main,
-    MaridiaLargeSnail_Shot, MaridiaLargeSnail_Touch, MaridiaSpikeyShell_Init,
-    MaridiaSpikeyShell_Instr_A56D, MaridiaSpikeyShell_Instr_A571, MaridiaSpikeyShell_Main,
-    MaridiaSpikeyShell_Shot, MiniCrocomire_Init, MiniCrocomire_Instr_897E,
-    MiniCrocomire_Instr_8990, MiniCrocomire_Instr_899D, MiniCrocomire_Main,
-    MiniCrocomire_PreInstr5, MiniCrocomire_PreInstr6, MiniMaridiaBeybladeTurtle_Init,
-    MiniMaridiaBeybladeTurtle_Main, MiniMaridiaBeybladeTurtle_Shot,
-    MiniMaridiaBeybladeTurtle_Touch, NorfairErraticFireball_Init, NorfairErraticFireball_Main,
-    NorfairLavajumpingEnemy_Func_1, NorfairLavajumpingEnemy_Func_2, NorfairLavajumpingEnemy_Func_3,
-    NorfairLavajumpingEnemy_Func_4, NorfairLavajumpingEnemy_Func_5, NorfairLavajumpingEnemy_Init,
-    NorfairLavajumpingEnemy_Instr_BE8E, NorfairLavajumpingEnemy_Main, NorfairRio_Func_1,
-    NorfairRio_Func_2, NorfairRio_Func_3, NorfairRio_Func_4, NorfairRio_Func_5, NorfairRio_Func_6,
-    NorfairRio_Init, NorfairRio_Instr_C1C9, NorfairRio_Instr_C1D4, NorfairRio_Instr_C1DF,
-    NorfairRio_Instr_C1EA, NorfairRio_Instr_C1F5, NorfairRio_Instr_C200, NorfairRio_Instr_C20B,
-    NorfairRio_Instr_C216, NorfairRio_Instr_C221, NorfairRio_Instr_C22C, NorfairRio_Instr_C237,
-    NorfairRio_Main, Rinka_Frozen, Rinka_Init, Rinka_Instr_B9B3, Rinka_Instr_B9BD,
-    Rinka_Instr_B9C7, Rinka_Main, Rinka_Powerbomb, Rinka_Shot, Rinka_Touch, Rio_Init, Rio_Main,
-    Ripper_Init, Ripper_Main, RisingFallingPlatform_Init, RisingFallingPlatform_Main,
-    RisingFallingPlatform_Powerbomb, RisingFallingPlatform_Shot, RisingFallingPlatform_Touch,
-    ShootableShutter_Init, ShootableShutter_Shot, SpikeShootingPlant_2, SpikeShootingPlant_3,
-    SpikeShootingPlant_Init, SpikeShootingPlant_Instr_9F2A, SpikeShootingPlant_Instr_A095,
-    SpikeShootingPlant_Instr_A0A7, SpikeShootingPlant_Main, ThinHoppingBlobs_Init,
-    ThinHoppingBlobs_Main, TimedShutter_Init, TimedShutter_Main,
-};
-use crate::game::sm_a3::{
-    sub_A3E168, Bang_Func_10, Bang_Func_11, Bang_Func_6, Bang_Func_7, Bang_Func_8, Bang_Init,
-    Bang_Instr_1, Bang_Instr_2, Bang_Main, Bang_Shot, BigEyeBugs_Init, Crab_Init, Elevator_Frozen,
-    Elevator_Init, Enemy_GrappleReact_CancelBeam_A3, Enemy_GrappleReact_KillEnemy_A3,
-    Enemy_GrappleReact_NoInteract_A3, Enemy_NormalFrozenAI_A3, Enemy_NormalShotAI_A3,
-    Enemy_NormalTouchAI_A3, FastMovingSlowSinkingPlatform_Init, FastMovingSlowSinkingPlatform_Shot,
-    FireZoomer_Func_1, FireZoomer_Func_2, FireZoomer_Func_3, FireZoomer_Init, Fireflea_Init,
-    Fireflea_Main, Fireflea_Powerbomb, Fireflea_Shot, Fireflea_Touch, MaridiaFish_Init,
-    MaridiaFish_Instr_1, MaridiaFish_Instr_2, MaridiaFish_Instr_3, MaridiaFish_Main,
-    MaridiaRefillCandy_Init, MaridiaRefillCandy_Instr_1, MaridiaRefillCandy_Instr_2,
-    MaridiaRefillCandy_Instr_3, MaridiaRefillCandy_Main, MaridiaSnail_CFB7, MaridiaSnail_CFBD,
-    MaridiaSnail_CFCE, MaridiaSnail_CFD4, MaridiaSnail_CFE5, MaridiaSnail_CFEB, MaridiaSnail_CFFC,
-    MaridiaSnail_Func_15, MaridiaSnail_Func_7, MaridiaSnail_Func_9, MaridiaSnail_Init,
-    MaridiaSnail_Instr_1, MaridiaSnail_Instr_2, MaridiaSnail_Instr_3, MaridiaSnail_Instr_4,
-    MaridiaSnail_Instr_5, MaridiaSnail_Main, MaridiaSnail_Shot, MaridiaSnail_Touch, Metalee_Init,
-    Metalee_Instr_1, Metalee_Main, Metalee_Shot, Metroid_Frozen, Metroid_Hurt, Metroid_Init,
-    Metroid_Instr_1, Metroid_Instr_2, Metroid_Main, Metroid_Powerbomb, Metroid_Shot, Metroid_Touch,
-    Mochtroid_Init, Mochtroid_Main, Mochtroid_Shot, Mochtroid_Touch, NorfairSlowFireball_Init,
-    PlatformThatFallsWithSamus_Init, PlatformThatFallsWithSamus_Instr_1,
-    PlatformThatFallsWithSamus_Instr_2, PlatformThatFallsWithSamus_Instr_3,
-    PlatformThatFallsWithSamus_Instr_4, PlatformThatFallsWithSamus_Main, Reflec_Func_1,
-    Reflec_Init, Reflec_Instr_1, Reflec_Shot, Roach_Init, Roach_Main, Sidehopper_Func_1,
-    Sidehopper_Init, Sidehopper_Instr_1, Sidehopper_Main, Skree_Init, Skree_Instr_1, Skree_Main,
-    Skree_Shot, Slug_Init, StoneZoomer_Init, StoneZoomer_Main, Waver_Init, Waver_Instr_1,
-    Waver_Main, WreckedShipOrangeZoomer_Func_1, WreckedShipOrangeZoomer_Func_2,
-    WreckedShipOrangeZoomer_Init, WreckedShipOrangeZoomer_Main, Zoomer_Instr_SetPreinstr,
-};
-use crate::game::sm_a4::{
-    CrocomireTongue_Init, CrocomireTongue_Main, Crocomire_Func_1, Crocomire_Func_92,
-    Crocomire_Func_93, Crocomire_Func_94, Crocomire_Func_95, Crocomire_Hurt, Crocomire_Init,
-    Crocomire_Instr_1, Crocomire_Instr_10, Crocomire_Instr_11, Crocomire_Instr_12,
-    Crocomire_Instr_13, Crocomire_Instr_14, Crocomire_Instr_15, Crocomire_Instr_16,
-    Crocomire_Instr_17, Crocomire_Instr_18, Crocomire_Instr_19, Crocomire_Instr_2,
-    Crocomire_Instr_20, Crocomire_Instr_21, Crocomire_Instr_22, Crocomire_Instr_23,
-    Crocomire_Instr_24, Crocomire_Instr_25, Crocomire_Instr_26, Crocomire_Instr_27,
-    Crocomire_Instr_3, Crocomire_Instr_4, Crocomire_Instr_5, Crocomire_Instr_6, Crocomire_Instr_7,
-    Crocomire_Instr_8, Crocomire_Instr_9, Crocomire_Main, Crocomire_Powerbomb,
-    Enemy_GrappleReact_SamusLatchesOn_A4, Enemy_NormalFrozenAI_A4, Enemy_NormalShotAI_A4,
-    Enemy_NormalTouchAI_A4,
-};
-use crate::game::sm_a5::{
-    Draygon_Func_36, Draygon_Hurt, Draygon_Init, Draygon_Instr_1, Draygon_Instr_10,
-    Draygon_Instr_11, Draygon_Instr_12, Draygon_Instr_13, Draygon_Instr_14, Draygon_Instr_15,
-    Draygon_Instr_16, Draygon_Instr_17, Draygon_Instr_18, Draygon_Instr_19, Draygon_Instr_2,
-    Draygon_Instr_20, Draygon_Instr_21, Draygon_Instr_22, Draygon_Instr_23, Draygon_Instr_24,
-    Draygon_Instr_25, Draygon_Instr_26, Draygon_Instr_27, Draygon_Instr_28, Draygon_Instr_29,
-    Draygon_Instr_3, Draygon_Instr_30, Draygon_Instr_4, Draygon_Instr_5, Draygon_Instr_6,
-    Draygon_Instr_7, Draygon_Instr_8, Draygon_Instr_9, Draygon_Main, Draygon_Powerbomb,
-    Draygon_Shot, Draygon_Touch, DraygonsArms_Init, DraygonsEye_Init, DraygonsEye_Main,
-    DraygonsTail_Init, Enemy_GrappleReact_CancelBeam_A5, Enemy_GrappleReact_NoInteract_A5,
-    Enemy_NormalFrozenAI_A5, Enemy_NormalShotAI_A5, Enemy_NormalTouchAI_A5, SporeSpawn_Init,
-    SporeSpawn_Main, SporeSpawn_Shot, SporeSpawn_Touch,
-};
-use crate::game::sm_a6::{
-    sub_A6DF59, Boulder_Init, Boulder_Main, CeresDoor_Init, CeresDoor_Instr_1, CeresDoor_Instr_2,
-    CeresDoor_Instr_3, CeresDoor_Instr_4, CeresDoor_Instr_5, CeresDoor_Instr_6, CeresDoor_Instr_7,
-    CeresDoor_Instr_8, CeresDoor_Main, CeresRidley_Hurt, CeresRidley_Init, CeresRidley_Main,
-    CeresSteam_Init, CeresSteam_Instr_1, CeresSteam_Instr_2, CeresSteam_Instr_3,
-    CeresSteam_Instr_4, CeresSteam_Instr_5, CeresSteam_Main, CeresSteam_Touch,
-    Enemy_GrappleReact_CancelBeam_A6, Enemy_GrappleReact_NoInteract_A6, Enemy_NormalFrozenAI_A6,
-    Enemy_NormalShotAI_A6, Enemy_NormalTouchAI_A6, FakeKraid_Init, FakeKraid_Instr_1,
-    FakeKraid_Instr_2, FakeKraid_Instr_3, FakeKraid_Instr_4, FakeKraid_Instr_5, FakeKraid_Main,
-    FakeKraid_Shot, FakeKraid_Touch, FireGeyser_Init, FireGeyser_Instr_1, FireGeyser_Instr_10,
-    FireGeyser_Instr_11, FireGeyser_Instr_12, FireGeyser_Instr_13, FireGeyser_Instr_14,
-    FireGeyser_Instr_15, FireGeyser_Instr_16, FireGeyser_Instr_17, FireGeyser_Instr_18,
-    FireGeyser_Instr_19, FireGeyser_Instr_2, FireGeyser_Instr_20, FireGeyser_Instr_21,
-    FireGeyser_Instr_22, FireGeyser_Instr_23, FireGeyser_Instr_24, FireGeyser_Instr_3,
-    FireGeyser_Instr_4, FireGeyser_Instr_5, FireGeyser_Instr_6, FireGeyser_Instr_7,
-    FireGeyser_Instr_8, FireGeyser_Instr_9, FireGeyser_Main, NuclearWaffle_Init,
-    NuclearWaffle_Main, Ridley_A2F2, Ridley_Func_2, Ridley_Hurt, Ridley_Instr_1, Ridley_Instr_10,
-    Ridley_Instr_11, Ridley_Instr_12, Ridley_Instr_13, Ridley_Instr_14, Ridley_Instr_15,
-    Ridley_Instr_16, Ridley_Instr_2, Ridley_Instr_3, Ridley_Instr_4, Ridley_Instr_5,
-    Ridley_Instr_6, Ridley_Instr_7, Ridley_Instr_8, Ridley_Instr_9, Ridley_Main, Ridley_Powerbomb,
-    Ridley_Shot, RidleysExplosion_Init, RidleysExplosion_Main, SpikeyPlatform2ndEnemy_Init,
-    SpikeyPlatform2ndEnemy_Main, SpikeyPlatform_Init, SpikeyPlatform_Main, Zebetites_Init,
-    Zebetites_Main, Zebetites_Shot, Zebetites_Touch,
-};
-use crate::game::sm_a7::{
-    Dachora_Func_11, Dachora_Func_12, Dachora_Func_2, Dachora_Func_3, Dachora_Func_4,
-    Dachora_Func_5, Dachora_Func_7, Dachora_Func_8, Dachora_Init, Dachora_Main, EnemyInstr_Call_A7,
-    Enemy_GrappleReact_CancelBeam_A7, Enemy_GrappleReact_NoInteract_A7, Enemy_NormalFrozenAI_A7,
-    Enemy_NormalPowerBombAI_SkipDeathAnim_A7, Enemy_NormalShotAI_A7, Etecoon_Func_10,
-    Etecoon_Func_11, Etecoon_Func_12, Etecoon_Func_16, Etecoon_Func_17, Etecoon_Func_18,
-    Etecoon_Func_19, Etecoon_Func_20, Etecoon_Func_21, Etecoon_Func_22, Etecoon_Func_23,
-    Etecoon_Func_24, Etecoon_Func_25, Etecoon_Func_26, Etecoon_Func_4, Etecoon_Func_5,
-    Etecoon_Func_6, Etecoon_Func_7, Etecoon_Func_8, Etecoon_Func_9, Etecoon_Init, Etecoon_Main,
-    Kraid_Arm_Shot, Kraid_Init, Kraid_Instr_1, Kraid_Instr_9, Kraid_Instr_DecYpos,
-    Kraid_Instr_IncrYpos_Shake, Kraid_Instr_MoveHimRight, Kraid_Instr_PlaySound_0x76,
-    Kraid_Instr_XposMinus3, Kraid_Instr_XposMinus3b, Kraid_Instr_XposPlus3, Kraid_Main,
-    Kraid_Touch, Kraid_Touch_ArmFoot, KraidsArm_Init, KraidsArm_Main, KraidsArm_Touch,
-    KraidsBadFingernail_Init, KraidsBadFingernail_Main, KraidsBadFingernail_Touch,
-    KraidsBottomLint_Init, KraidsBottomLint_Main, KraidsFoot_Init, KraidsFoot_Main,
-    KraidsGoodFingernail_Init, KraidsGoodFingernail_Main, KraidsGoodFingernail_Touch,
-    KraidsMiddleLint_Init, KraidsMiddleLint_Main, KraidsTopLint_Init, KraidsTopLint_Main,
-    Phantoon2_Init, Phantoon_AlmostDead, Phantoon_BecomeSolidAfterRainingFireballs,
-    Phantoon_BecomesSolidAndBodyVuln, Phantoon_CompleteSwoopAfterFatalShot, Phantoon_Dead,
-    Phantoon_DyingFadeOut, Phantoon_DyingPhantoonExplosions, Phantoon_DyingPhantoonFadeInOut,
-    Phantoon_Enraged, Phantoon_EyeFollowsSamusUntilTimerRunsOut, Phantoon_FadeInBeforeFigure8,
-    Phantoon_FadeInDuringFireballRain, Phantoon_FadeInEnragedPhantoon,
-    Phantoon_FadeOutBeforeEnrage, Phantoon_FadeOutBeforeFirstFireballRain,
-    Phantoon_FadeOutDuringFireballRain, Phantoon_FadeoutAfterEnrage, Phantoon_FadeoutWithSwoop,
-    Phantoon_FollowSamusWithEyeDuringFireballRain, Phantoon_Hurt, Phantoon_Init,
-    Phantoon_IsSwooping, Phantoon_Main, Phantoon_MoveEnragedPhantoonToTopCenter,
-    Phantoon_MoveLeftOrRightAndPickEyeOpenPatt, Phantoon_MovePhantoonInFigure8ThenOpenEye,
-    Phantoon_PickPatternForRound1, Phantoon_Shot, Phantoon_Spawn8FireballsInCircleAtStart,
-    Phantoon_SpawnFireballsBeforeFight, Phantoon_SpawnRainingFireballs, Phantoon_Touch,
-    Phantoon_WaitAfterFadeOut, Phantoon_WaitBetweenSpawningAndSpinningFireballs,
-    Phantoon_WavyDyingPhantoonAndCry, Phantoon_WavyFadeIn,
-};
-use crate::game::sm_a8::{
-    sub_A8B193, sub_A8B291, Beetom_Init, Beetom_Instr_1, Beetom_Main, Beetom_Shot, Beetom_Touch,
-    BlueBrinstarFaceBlock_Func_1, BlueBrinstarFaceBlock_Init, BlueBrinstarFaceBlock_Main,
-    BlueBrinstarFaceBlock_Shot, Enemy_GrappleReact_CancelBeam_A8, Enemy_GrappleReact_HurtSamus_A8,
-    Enemy_GrappleReact_KillEnemy_A8, Enemy_GrappleReact_NoInteract_A8,
-    Enemy_GrappleReact_SamusLatchesNoInvinc_A8, Enemy_NormalFrozenAI_A8, Enemy_NormalShotAI_A8,
-    Enemy_NormalTouchAI_A8, EvirProjectile_Init, EvirProjectile_Main, Fune_Init, Fune_Instr_1,
-    Fune_Instr_2, Fune_Instr_3, Fune_Instr_4, Fune_Instr_5, Fune_Instr_6, Fune_Instr_7, Fune_Main,
-    Kago_Init, Kago_Main, Kago_Shot, KiHunterWings_Init, KiHunterWings_Main, KiHunter_Init,
-    KiHunter_Instr_1, KiHunter_Instr_2, KiHunter_Instr_3, KiHunter_Instr_4, KiHunter_Instr_5,
-    KiHunter_Main, KiHunter_Shot, MaridiaFloater_Func_10, MaridiaFloater_Func_11,
-    MaridiaFloater_Func_12, MaridiaFloater_Func_13, MaridiaFloater_Func_3, MaridiaFloater_Func_4,
-    MaridiaFloater_Func_5, MaridiaFloater_Func_6, MaridiaFloater_Func_7, MaridiaFloater_Func_8,
-    MaridiaFloater_Func_9, MaridiaFloater_Init, MaridiaFloater_Main, MaridiaFloater_Powerbomb,
-    MaridiaFloater_Shot, MaridiaFloater_Touch, MaridiaPuffer_Init, MaridiaPuffer_Main,
-    MaridiaPuffer_Shot, MiniDraygon_Init, MiniDraygon_Instr_1, MiniDraygon_Instr_2,
-    MiniDraygon_Instr_3, MiniDraygon_Instr_4, MiniDraygon_Main, MiniDraygon_Powerbomb,
-    MiniDraygon_Shot, MiniDraygon_Touch, MorphBallEye_Func_1, MorphBallEye_Func_2,
-    MorphBallEye_Func_3, MorphBallEye_Func_4, MorphBallEye_Init, MorphBallEye_Main,
-    NorfairLavaMan_Func_10, NorfairLavaMan_Func_11, NorfairLavaMan_Func_13, NorfairLavaMan_Func_15,
-    NorfairLavaMan_Func_16, NorfairLavaMan_Func_17, NorfairLavaMan_Func_18, NorfairLavaMan_Func_6,
-    NorfairLavaMan_Func_7, NorfairLavaMan_Func_8, NorfairLavaMan_Func_9, NorfairLavaMan_Init,
-    NorfairLavaMan_Instr_1, NorfairLavaMan_Instr_10, NorfairLavaMan_Instr_11,
-    NorfairLavaMan_Instr_12, NorfairLavaMan_Instr_13, NorfairLavaMan_Instr_14,
-    NorfairLavaMan_Instr_15, NorfairLavaMan_Instr_16, NorfairLavaMan_Instr_2,
-    NorfairLavaMan_Instr_3, NorfairLavaMan_Instr_4, NorfairLavaMan_Instr_5, NorfairLavaMan_Instr_6,
-    NorfairLavaMan_Instr_7, NorfairLavaMan_Instr_8, NorfairLavaMan_Instr_9, NorfairLavaMan_Main,
-    NorfairLavaMan_Powerbomb, NorfairLavaMan_Shot, NorfairLavaMan_Touch, WalkingLavaSeahorse_Init,
-    WalkingLavaSeahorse_Instr_1, WalkingLavaSeahorse_Instr_2, WalkingLavaSeahorse_Instr_3,
-    WalkingLavaSeahorse_Instr_4, WalkingLavaSeahorse_Instr_5, WalkingLavaSeahorse_Instr_6,
-    WalkingLavaSeahorse_Main, WreckedShipGhost_Init, WreckedShipGhost_Main, WreckedShipOrbs_Init,
-    WreckedShipOrbs_Main, WreckedShipRobotDeactivated_Init, WreckedShipRobotDeactivated_Shot,
-    WreckedShipRobotDeactivated_Touch, WreckedShipRobot_Func_1, WreckedShipRobot_Init,
-    WreckedShipRobot_Instr_1, WreckedShipRobot_Instr_10, WreckedShipRobot_Instr_11,
-    WreckedShipRobot_Instr_12, WreckedShipRobot_Instr_13, WreckedShipRobot_Instr_14,
-    WreckedShipRobot_Instr_15, WreckedShipRobot_Instr_16, WreckedShipRobot_Instr_17,
-    WreckedShipRobot_Instr_18, WreckedShipRobot_Instr_2, WreckedShipRobot_Instr_3,
-    WreckedShipRobot_Instr_4, WreckedShipRobot_Instr_5, WreckedShipRobot_Instr_6,
-    WreckedShipRobot_Instr_7, WreckedShipRobot_Instr_8, WreckedShipRobot_Instr_9,
-    WreckedShipRobot_Main, WreckedShipRobot_Shot, WreckedShipSpark_Init, WreckedShipSpark_Instr_1,
-    WreckedShipSpark_Instr_2, WreckedShipSpark_Main, WreckedShipSpark_Shot, YappingMaw_Frozen,
-    YappingMaw_Init, YappingMaw_Instr_1, YappingMaw_Instr_2, YappingMaw_Instr_3,
-    YappingMaw_Instr_4, YappingMaw_Instr_5, YappingMaw_Instr_6, YappingMaw_Instr_7,
-    YappingMaw_Main, YappingMaw_Shot, YappingMaw_Touch,
-};
-use crate::game::sm_a9::{
-    sub_A9ECD0, DeadRipper_Init, DeadRipper_Powerbomb, DeadRipper_Shot, DeadSidehopper_Init,
-    DeadSidehopper_Main, DeadSidehopper_Powerbomb, DeadSidehopper_Shot, DeadSidehopper_Touch,
-    DeadSkree_Init, DeadSkree_Powerbomb, DeadSkree_Shot, DeadTorizo_Init, DeadTorizo_Main,
-    DeadTorizo_MainGfxHook, DeadTorizo_Powerbomb, DeadTorizo_Shot, DeadZoomer_Init,
-    DeadZoomer_Powerbomb, DeadZoomer_Shot, Enemy_GrappleReact_CancelBeam_A9,
-    Enemy_NormalFrozenAI_A9, MotherBrain_DrawBrainNeck_EnemyGfxDrawHook,
-    MotherBrain_Instr_Down2Right15, MotherBrain_Instr_Down4Right6,
-    MotherBrain_Instr_IncrBeamAttackPhase, MotherBrain_Instr_MoveBodyUp10Left4,
-    MotherBrain_Instr_MoveBodyUp12Right2, MotherBrain_Instr_MoveBodyUp16Left4,
-    MotherBrain_Instr_MoveDown1, MotherBrain_Instr_MoveDown10Right2,
-    MotherBrain_Instr_MoveDown12Left4, MotherBrain_Instr_MoveDown16Right2,
-    MotherBrain_Instr_MoveDown1Left3, MotherBrain_Instr_MoveDown2Right1,
-    MotherBrain_Instr_MoveDown4Right2, MotherBrain_Instr_MoveLeft2, MotherBrain_Instr_MoveRight2,
-    MotherBrain_Instr_MoveUp1, MotherBrain_Instr_MoveUp1Right3_Sfx,
-    MotherBrain_Instr_MoveUp2Left15_Sfx, MotherBrain_Instr_MoveUp2Right1,
-    MotherBrain_Instr_MoveUp4Left6, MotherBrain_Instr_SetPose_Crouched,
-    MotherBrain_Instr_SetPose_CrouchedTrans, MotherBrain_Instr_SetPose_DeathBeamMode,
-    MotherBrain_Instr_SetPose_LeaningDown, MotherBrain_Instr_SetPose_Standing,
-    MotherBrain_Instr_SetPose_Walking, MotherBrain_Instr_SpawnDeathBeamEproj,
-    MotherBrain_Instr_SpawnEprojToOffset, MotherBrain_Instr_Up2Left1_Sfx,
-    MotherBrain_Instr_Up2Left1_Sfx2, MotherBrain_Instr_Up4Left2, MotherBrainsBody_Hurt,
-    MotherBrainsBody_Init, MotherBrainsBody_Powerbomb, MotherBrainsBody_Shot,
-    MotherBrainsBrain_GfxDrawHook, MotherBrainsBrain_Hurt, MotherBrainsBrain_Init,
-    MotherBrainsBrain_Shot, MotherBrainsBrain_Touch, MotherBrainsTubesFalling_Init,
-    MotherBrainsTubesFalling_Main, ShitroidInCutscene_Init, ShitroidInCutscene_Main,
-    ShitroidInCutscene_Touch, Shitroid_Init, Shitroid_Instr_1, Shitroid_Instr_2, Shitroid_Instr_3,
-    Shitroid_Instr_4, Shitroid_Instr_5, Shitroid_Instr_6, Shitroid_Main, Shitroid_Powerbomb,
-    Shitroid_Shot, Shitroid_Touch,
-};
-use crate::game::sm_aa::{
-    sub_AAE445, ChozoStatue_Init, ChozoStatue_Main, Enemy_ClearAiPreInstr_AA,
-    Enemy_GrappleReact_CancelBeam_AA, Enemy_NormalFrozenAI_AA, Enemy_SetAiPreInstr_AA,
-    GoldTorizo_Hurt, GoldTorizo_Main, GoldTorizo_Shot, GoldTorizo_Touch, N00bTubeCracks_Init,
-    Shaktool_DCAC, Shaktool_DCD7, Shaktool_DD25, Shaktool_Hurt, Shaktool_Init, Shaktool_Instr_1,
-    Shaktool_Instr_10, Shaktool_Instr_11, Shaktool_Instr_12, Shaktool_Instr_13, Shaktool_Instr_14,
-    Shaktool_Instr_2, Shaktool_Instr_3, Shaktool_Instr_4, Shaktool_Instr_5, Shaktool_Instr_6,
-    Shaktool_Instr_7, Shaktool_Instr_8, Shaktool_Instr_9, Shaktool_PreInstr_0, Shaktool_Shot,
-    Shaktool_Touch, Torizo_D5ED, Torizo_D5F1, Torizo_Func_5, Torizo_Func_6, Torizo_Func_7,
-    Torizo_Func_8, Torizo_Hurt, Torizo_Init, Torizo_Instr_1, Torizo_Instr_10, Torizo_Instr_11,
-    Torizo_Instr_12, Torizo_Instr_13, Torizo_Instr_14, Torizo_Instr_15, Torizo_Instr_16,
-    Torizo_Instr_17, Torizo_Instr_18, Torizo_Instr_19, Torizo_Instr_2, Torizo_Instr_20,
-    Torizo_Instr_21, Torizo_Instr_22, Torizo_Instr_23, Torizo_Instr_24, Torizo_Instr_25,
-    Torizo_Instr_26, Torizo_Instr_27, Torizo_Instr_28, Torizo_Instr_29, Torizo_Instr_3,
-    Torizo_Instr_30, Torizo_Instr_31, Torizo_Instr_32, Torizo_Instr_33, Torizo_Instr_34,
-    Torizo_Instr_35, Torizo_Instr_36, Torizo_Instr_37, Torizo_Instr_38, Torizo_Instr_39,
-    Torizo_Instr_4, Torizo_Instr_40, Torizo_Instr_41, Torizo_Instr_42, Torizo_Instr_43,
-    Torizo_Instr_44, Torizo_Instr_45, Torizo_Instr_46, Torizo_Instr_47, Torizo_Instr_48,
-    Torizo_Instr_49, Torizo_Instr_5, Torizo_Instr_50, Torizo_Instr_51, Torizo_Instr_52,
-    Torizo_Instr_53, Torizo_Instr_54, Torizo_Instr_55, Torizo_Instr_56, Torizo_Instr_57,
-    Torizo_Instr_58, Torizo_Instr_59, Torizo_Instr_6, Torizo_Instr_60, Torizo_Instr_61,
-    Torizo_Instr_62, Torizo_Instr_63, Torizo_Instr_7, Torizo_Instr_8, Torizo_Instr_9, Torizo_Main,
-    Torizo_Shot, TourianEntranceStatue_Init,
-};
-use crate::game::sm_b2::{
-    Enemy_GrappleReact_CancelBeam_B2, Enemy_NormalFrozenAI_B2, NinjaSpacePirates_Init,
-    NinjaSpacePirates_Main, SpacePirates_Instr_11, SpacePirates_Instr_12, SpacePirates_Instr_13,
-    SpacePirates_Instr_14, SpacePirates_Instr_15, SpacePirates_Instr_16, SpacePirates_Instr_17,
-    SpacePirates_Instr_18, SpacePirates_Instr_19, SpacePirates_Instr_20, SpacePirates_Instr_21,
-    SpacePirates_Instr_FireLaserL, SpacePirates_Instr_FireLaserR,
-    SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft,
-    SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight, SpacePirates_Instr_PlaySfx,
-    SpacePirates_Instr_PrepareWallJumpL, SpacePirates_Instr_PrepareWallJumpR,
-    SpacePirates_Instr_RandomNewDirFaceL, SpacePirates_Instr_RandomNewDirFaceR,
-    SpacePirates_Instr_SetEnemyFunc, WalkingSpacePirates_87C8, WalkingSpacePirates_883E,
-    WalkingSpacePirates_Init, WalkingSpacePirates_Main, WalkingSpacePirates_Powerbomb,
-    WalkingSpacePirates_Shot, WalkingSpacePirates_Touch, WallSpacePirates_Init,
-    WallSpacePirates_Main,
-};
-use crate::game::sm_b3::{
-    Botwoon_Func_26, Botwoon_Func_27, Botwoon_Func_28, Botwoon_Func_29, Botwoon_Func_30,
-    Botwoon_Init, Botwoon_Instr_1, Botwoon_Instr_10, Botwoon_Instr_2, Botwoon_Instr_3,
-    Botwoon_Instr_4, Botwoon_Instr_5, Botwoon_Instr_6, Botwoon_Instr_7, Botwoon_Instr_8,
-    Botwoon_Instr_9, Botwoon_Instr_QueueSpitSfx, Botwoon_Instr_SetSpitting, Botwoon_Main,
-    Botwoon_Powerbomb, Botwoon_Shot, Botwoon_Touch, BrinstarPipeBug_Init, BrinstarPipeBug_Main,
-    BrinstarPipeBug_PreInstr_1, BrinstarPipeBug_PreInstr_2, BrinstarPipeBug_PreInstr_3,
-    BrinstarPipeBug_PreInstr_4, BrinstarPipeBug_PreInstr_5, BrinstarYellowPipeBug_Init,
-    BrinstarYellowPipeBug_Main, Enemy_ClearAiPreInstr_B3, Enemy_GrappleReact_CancelBeam_B3,
-    Enemy_GrappleReact_KillEnemy_B3, Enemy_GrappleReact_NoInteract_B3, Enemy_NormalFrozenAI_B3,
-    Enemy_NormalShotAI_B3, Enemy_NormalTouchAI_B3, Enemy_SetAiPreInstr_B3, EscapeDachora_Init,
-    EscapeDachora_Instr_1, EscapeDachora_Instr_2, EscapeDachora_Instr_3, EscapeDachora_Instr_4,
-    EscapeEtecoon_E65C, EscapeEtecoon_E670, EscapeEtecoon_E680, EscapeEtecoon_Init,
-    EscapeEtecoon_Instr_1, EscapeEtecoon_Instr_2, EscapeEtecoon_Main, NorfairPipeBug_Func_5,
-    NorfairPipeBug_Init, NorfairPipeBug_Main, UnusedSpinningTurtleEye_Init,
-    UnusedSpinningTurtleEye_Main,
-};
 use crate::game::sm_b4::{
     ClearSpriteObjects, CreateSpriteAtPos, DrawSpriteObjects, HandleSpriteObjects,
 };
+use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
@@ -666,11 +376,11 @@ crate::game::address_dispatch! {
     pub unsafe fn CallEnemyGfxDrawHook(ea: u32, game: &mut Game) => ea;
         call (game); default { Unreachable(game); };
     {
-        10518604 => [()]; 10738444 => Reflec_Func_1; 10851138 => Draygon_Func_36;
-        10920690 => Ridley_A2F2; 11042892 => [()]; 11055282 => NorfairLavaMan_Func_6;
-        11062375 => WreckedShipRobot_Func_1; 11069550 => BlueBrinstarFaceBlock_Func_1;
-        11110278 => [()]; 11110345 => MotherBrain_DrawBrainNeck_EnemyGfxDrawHook;
-        11110365 => MotherBrainsBrain_GfxDrawHook; 11129754 => DeadTorizo_MainGfxHook;
+        10518604 => [()]; 10738444 => sm_a3::Reflec_Func_1; 10851138 => sm_a5::Draygon_Func_36;
+        10920690 => sm_a6::Ridley_A2F2; 11042892 => [()]; 11055282 => sm_a8::NorfairLavaMan_Func_6;
+        11062375 => sm_a8::WreckedShipRobot_Func_1; 11069550 => sm_a8::BlueBrinstarFaceBlock_Func_1;
+        11110278 => [()]; 11110345 => sm_a9::MotherBrain_DrawBrainNeck_EnemyGfxDrawHook;
+        11110365 => sm_a9::MotherBrainsBrain_GfxDrawHook; 11129754 => sm_a9::DeadTorizo_MainGfxHook;
     }
 }
 pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
@@ -1040,198 +750,251 @@ crate::game::address_dispatch! {
     pub unsafe fn CallEnemyAi(ea: u32, game: &mut Game) => ea;
         call (game); default { Unreachable(game); };
     {
-        10649605 => Enemy_GrappleReact_SamusLatchesOn_A2;
-        10649610 => Enemy_GrappleReact_KillEnemy_A2; 10649615 => Enemy_GrappleReact_CancelBeam_A2;
-        10649635 => Enemy_NormalTouchAI_A2; 10649645 => Enemy_NormalShotAI_A2;
-        10649665 => Enemy_NormalFrozenAI_A2; 10649676 => [()]; 10651420 => BouncingGoofball_Init;
-        10651548 => BouncingGoofball_Main; 10652077 => MiniCrocomire_Init;
-        10652144 => MiniCrocomire_Main; 10653036 => MaridiaBeybladeTurtle_Init;
-        10653085 => MiniMaridiaBeybladeTurtle_Init; 10653138 => MaridiaBeybladeTurtle_Main;
-        10653998 => MiniMaridiaBeybladeTurtle_Main; 10654337 => MaridiaBeybladeTurtle_Touch;
-        10654367 => MiniMaridiaBeybladeTurtle_Touch; 10654479 => MiniMaridiaBeybladeTurtle_Shot;
-        10656319 => ThinHoppingBlobs_Init; 10656381 => ThinHoppingBlobs_Main;
-        10657608 => SpikeShootingPlant_Init; 10657715 => SpikeShootingPlant_Main;
-        10658809 => MaridiaSpikeyShell_Init; 10658942 => MaridiaSpikeyShell_Main;
-        10659193 => MaridiaSpikeyShell_Shot; 10659396 => GunshipTop_Init;
-        10659538 => GunshipBottom_Init; 10659673 => GunshipTop_Main; 10661995 => Flies_Init;
-        10662175 => Flies_Main; 10662880 => NorfairErraticFireball_Init;
-        10662927 => NorfairErraticFireball_Main; 10663280 => LavaquakeRocks_Init;
-        10663311 => LavaquakeRocks_Main; 10663426 => Rinka_Init; 10663876 => Rinka_Main;
+        10649605 => sm_a2::Enemy_GrappleReact_SamusLatchesOn_A2;
+        10649610 => sm_a2::Enemy_GrappleReact_KillEnemy_A2;
+        10649615 => sm_a2::Enemy_GrappleReact_CancelBeam_A2;
+        10649635 => sm_a2::Enemy_NormalTouchAI_A2; 10649645 => sm_a2::Enemy_NormalShotAI_A2;
+        10649665 => sm_a2::Enemy_NormalFrozenAI_A2; 10649676 => [()];
+        10651420 => sm_a2::BouncingGoofball_Init; 10651548 => sm_a2::BouncingGoofball_Main;
+        10652077 => sm_a2::MiniCrocomire_Init; 10652144 => sm_a2::MiniCrocomire_Main;
+        10653036 => sm_a2::MaridiaBeybladeTurtle_Init;
+        10653085 => sm_a2::MiniMaridiaBeybladeTurtle_Init;
+        10653138 => sm_a2::MaridiaBeybladeTurtle_Main;
+        10653998 => sm_a2::MiniMaridiaBeybladeTurtle_Main;
+        10654337 => sm_a2::MaridiaBeybladeTurtle_Touch;
+        10654367 => sm_a2::MiniMaridiaBeybladeTurtle_Touch;
+        10654479 => sm_a2::MiniMaridiaBeybladeTurtle_Shot; 10656319 => sm_a2::ThinHoppingBlobs_Init;
+        10656381 => sm_a2::ThinHoppingBlobs_Main; 10657608 => sm_a2::SpikeShootingPlant_Init;
+        10657715 => sm_a2::SpikeShootingPlant_Main; 10658809 => sm_a2::MaridiaSpikeyShell_Init;
+        10658942 => sm_a2::MaridiaSpikeyShell_Main; 10659193 => sm_a2::MaridiaSpikeyShell_Shot;
+        10659396 => sm_a2::GunshipTop_Init; 10659538 => sm_a2::GunshipBottom_Init;
+        10659673 => sm_a2::GunshipTop_Main; 10661995 => sm_a2::Flies_Init;
+        10662175 => sm_a2::Flies_Main; 10662880 => sm_a2::NorfairErraticFireball_Init;
+        10662927 => sm_a2::NorfairErraticFireball_Main; 10663280 => sm_a2::LavaquakeRocks_Init;
+        10663311 => sm_a2::LavaquakeRocks_Main; 10663426 => sm_a2::Rinka_Init;
+        10663876 => sm_a2::Rinka_Main;
         10664233 => [{
-                    Rinka_Frozen(word!(game.cur_enemy_index), game);
+                    sm_a2::Rinka_Frozen(word!(game.cur_enemy_index), game);
                 }];
-        10664263 => Rinka_Touch; 10664269 => Rinka_Shot;
+        10664263 => sm_a2::Rinka_Touch; 10664269 => sm_a2::Rinka_Shot;
         10664275 => [{
-                    Rinka_Powerbomb(word!(game.cur_enemy_index), game);
+                    sm_a2::Rinka_Powerbomb(word!(game.cur_enemy_index), game);
                 }];
-        10664909 => Rio_Init; 10664931 => Rio_Main; 10665625 => NorfairLavajumpingEnemy_Init;
-        10665682 => NorfairLavajumpingEnemy_Main; 10666562 => NorfairRio_Init;
-        10666615 => NorfairRio_Main; 10667763 => LowerNorfairRio_Init;
-        10667812 => LowerNorfairRio_Main; 10669268 => MaridiaLargeSnail_Init;
-        10669331 => MaridiaLargeSnail_Main; 10670988 => MaridiaLargeSnail_Touch;
-        10671028 => MaridiaLargeSnail_Shot; 10674038 => HirisingSlowfalling_Init;
-        10674222 => HirisingSlowfalling_Main; 10674643 => Gripper_Init; 10674721 => Gripper_Main;
-        10674968 => JetPowerRipper_Init; 10675027 => JetPowerRipper_Main;
-        10675113 => JetPowerRipper_Shot; 10675359 => Ripper_Init; 10675418 => Ripper_Main;
-        10675718 => LavaSeahorse_Init; 10675790 => LavaSeahorse_Main;
-        10676168 => LavaSeahorse_Touch; 10676174 => LavaSeahorse_Shot;
-        10676180 => LavaSeahorse_Powerbomb; 10676698 => TimedShutter_Init;
-        10676918 => TimedShutter_Main; 10677765 => RisingFallingPlatform_Init;
-        10677778 => ShootableShutter_Init; 10677969 => RisingFallingPlatform_Main;
-        10678429 => RisingFallingPlatform_Touch; 10678434 => RisingFallingPlatform_Shot;
-        10678442 => ShootableShutter_Shot; 10678454 => RisingFallingPlatform_Powerbomb;
-        10678545 => HorizontalShootableShutter_Init; 10678750 => HorizontalShootableShutter_Main;
-        10679256 => HorizontalShootableShutter_Touch; 10679310 => HorizontalShootableShutter_Shot;
-        10679322 => HorizontalShootableShutter_Powerbomb;
-        10715136 => Enemy_GrappleReact_NoInteract_A3; 10715146 => Enemy_GrappleReact_KillEnemy_A3;
-        10715151 => Enemy_GrappleReact_CancelBeam_A3; 10715171 => Enemy_NormalTouchAI_A3;
-        10715181 => Enemy_NormalShotAI_A3; 10715201 => Enemy_NormalFrozenAI_A3; 10715212 => [()];
-        10716909 => Waver_Init; 10717004 => Waver_Main; 10717536 => Metalee_Init;
-        10717561 => Metalee_Main; 10717967 => Metalee_Shot; 10718509 => Fireflea_Init;
-        10718702 => Fireflea_Main;
+        10664909 => sm_a2::Rio_Init; 10664931 => sm_a2::Rio_Main;
+        10665625 => sm_a2::NorfairLavajumpingEnemy_Init;
+        10665682 => sm_a2::NorfairLavajumpingEnemy_Main; 10666562 => sm_a2::NorfairRio_Init;
+        10666615 => sm_a2::NorfairRio_Main; 10667763 => sm_a2::LowerNorfairRio_Init;
+        10667812 => sm_a2::LowerNorfairRio_Main; 10669268 => sm_a2::MaridiaLargeSnail_Init;
+        10669331 => sm_a2::MaridiaLargeSnail_Main; 10670988 => sm_a2::MaridiaLargeSnail_Touch;
+        10671028 => sm_a2::MaridiaLargeSnail_Shot; 10674038 => sm_a2::HirisingSlowfalling_Init;
+        10674222 => sm_a2::HirisingSlowfalling_Main; 10674643 => sm_a2::Gripper_Init;
+        10674721 => sm_a2::Gripper_Main; 10674968 => sm_a2::JetPowerRipper_Init;
+        10675027 => sm_a2::JetPowerRipper_Main; 10675113 => sm_a2::JetPowerRipper_Shot;
+        10675359 => sm_a2::Ripper_Init; 10675418 => sm_a2::Ripper_Main;
+        10675718 => sm_a2::LavaSeahorse_Init; 10675790 => sm_a2::LavaSeahorse_Main;
+        10676168 => sm_a2::LavaSeahorse_Touch; 10676174 => sm_a2::LavaSeahorse_Shot;
+        10676180 => sm_a2::LavaSeahorse_Powerbomb; 10676698 => sm_a2::TimedShutter_Init;
+        10676918 => sm_a2::TimedShutter_Main; 10677765 => sm_a2::RisingFallingPlatform_Init;
+        10677778 => sm_a2::ShootableShutter_Init; 10677969 => sm_a2::RisingFallingPlatform_Main;
+        10678429 => sm_a2::RisingFallingPlatform_Touch;
+        10678434 => sm_a2::RisingFallingPlatform_Shot; 10678442 => sm_a2::ShootableShutter_Shot;
+        10678454 => sm_a2::RisingFallingPlatform_Powerbomb;
+        10678545 => sm_a2::HorizontalShootableShutter_Init;
+        10678750 => sm_a2::HorizontalShootableShutter_Main;
+        10679256 => sm_a2::HorizontalShootableShutter_Touch;
+        10679310 => sm_a2::HorizontalShootableShutter_Shot;
+        10679322 => sm_a2::HorizontalShootableShutter_Powerbomb;
+        10715136 => sm_a3::Enemy_GrappleReact_NoInteract_A3;
+        10715146 => sm_a3::Enemy_GrappleReact_KillEnemy_A3;
+        10715151 => sm_a3::Enemy_GrappleReact_CancelBeam_A3;
+        10715171 => sm_a3::Enemy_NormalTouchAI_A3; 10715181 => sm_a3::Enemy_NormalShotAI_A3;
+        10715201 => sm_a3::Enemy_NormalFrozenAI_A3; 10715212 => [()]; 10716909 => sm_a3::Waver_Init;
+        10717004 => sm_a3::Waver_Main; 10717536 => sm_a3::Metalee_Init;
+        10717561 => sm_a3::Metalee_Main; 10717967 => sm_a3::Metalee_Shot;
+        10718509 => sm_a3::Fireflea_Init; 10718702 => sm_a3::Fireflea_Main;
         10718827 => [{
-                    Fireflea_Touch(word!(game.cur_enemy_index), game);
+                    sm_a3::Fireflea_Touch(word!(game.cur_enemy_index), game);
                 }];
-        10718851 => Fireflea_Powerbomb; 10718857 => Fireflea_Shot; 10719413 => MaridiaFish_Init;
-        10719531 => MaridiaFish_Main; 10720486 => Elevator_Init; 10720554 => Elevator_Frozen;
-        10720995 => Crab_Init; 10721595 => Slug_Init; 10722463 => PlatformThatFallsWithSamus_Init;
-        10722490 => FastMovingSlowSinkingPlatform_Init; 10722582 => PlatformThatFallsWithSamus_Main;
-        10723079 => [()]; 10723080 => FastMovingSlowSinkingPlatform_Shot; 10723661 => Roach_Init;
-        10724048 => Roach_Main; 10725245 => Mochtroid_Init; 10725264 => Mochtroid_Main;
-        10725715 => Mochtroid_Touch; 10725800 => Mochtroid_Shot; 10726153 => Sidehopper_Init;
-        10726351 => Sidehopper_Main; 10728522 => MaridiaRefillCandy_Init;
-        10728572 => MaridiaRefillCandy_Main; 10729071 => NorfairSlowFireball_Init;
-        10730163 => Bang_Init; 10730277 => Bang_Main; 10731261 => Bang_Shot; 10733230 => Skree_Init;
-        10733255 => Skree_Main; 10733557 => Skree_Shot; 10735074 => MaridiaSnail_Init;
-        10735204 => MaridiaSnail_Main; 10736560 => MaridiaSnail_Touch;
-        10736745 => MaridiaSnail_Shot; 10738643 => Reflec_Init; 10738715 => [()];
-        10738716 => Reflec_Shot; 10739779 => WreckedShipOrangeZoomer_Init;
-        10739851 => WreckedShipOrangeZoomer_Main; 10740436 => BigEyeBugs_Init;
-        10741148 => FireZoomer_Init; 10741353 => StoneZoomer_Init; 10741442 => StoneZoomer_Main;
-        10742351 => Metroid_Init; 10742502 => Metroid_Frozen; 10742579 => Metroid_Hurt;
-        10742680 => Metroid_Main; 10743275 => Metroid_Touch; 10743559 => Metroid_Shot;
+        10718851 => sm_a3::Fireflea_Powerbomb; 10718857 => sm_a3::Fireflea_Shot;
+        10719413 => sm_a3::MaridiaFish_Init; 10719531 => sm_a3::MaridiaFish_Main;
+        10720486 => sm_a3::Elevator_Init; 10720554 => sm_a3::Elevator_Frozen;
+        10720995 => sm_a3::Crab_Init; 10721595 => sm_a3::Slug_Init;
+        10722463 => sm_a3::PlatformThatFallsWithSamus_Init;
+        10722490 => sm_a3::FastMovingSlowSinkingPlatform_Init;
+        10722582 => sm_a3::PlatformThatFallsWithSamus_Main; 10723079 => [()];
+        10723080 => sm_a3::FastMovingSlowSinkingPlatform_Shot; 10723661 => sm_a3::Roach_Init;
+        10724048 => sm_a3::Roach_Main; 10725245 => sm_a3::Mochtroid_Init;
+        10725264 => sm_a3::Mochtroid_Main; 10725715 => sm_a3::Mochtroid_Touch;
+        10725800 => sm_a3::Mochtroid_Shot; 10726153 => sm_a3::Sidehopper_Init;
+        10726351 => sm_a3::Sidehopper_Main; 10728522 => sm_a3::MaridiaRefillCandy_Init;
+        10728572 => sm_a3::MaridiaRefillCandy_Main; 10729071 => sm_a3::NorfairSlowFireball_Init;
+        10730163 => sm_a3::Bang_Init; 10730277 => sm_a3::Bang_Main; 10731261 => sm_a3::Bang_Shot;
+        10733230 => sm_a3::Skree_Init; 10733255 => sm_a3::Skree_Main; 10733557 => sm_a3::Skree_Shot;
+        10735074 => sm_a3::MaridiaSnail_Init; 10735204 => sm_a3::MaridiaSnail_Main;
+        10736560 => sm_a3::MaridiaSnail_Touch; 10736745 => sm_a3::MaridiaSnail_Shot;
+        10738643 => sm_a3::Reflec_Init; 10738715 => [()]; 10738716 => sm_a3::Reflec_Shot;
+        10739779 => sm_a3::WreckedShipOrangeZoomer_Init;
+        10739851 => sm_a3::WreckedShipOrangeZoomer_Main; 10740436 => sm_a3::BigEyeBugs_Init;
+        10741148 => sm_a3::FireZoomer_Init; 10741353 => sm_a3::StoneZoomer_Init;
+        10741442 => sm_a3::StoneZoomer_Main; 10742351 => sm_a3::Metroid_Init;
+        10742502 => sm_a3::Metroid_Frozen; 10742579 => sm_a3::Metroid_Hurt;
+        10742680 => sm_a3::Metroid_Main; 10743275 => sm_a3::Metroid_Touch;
+        10743559 => sm_a3::Metroid_Shot;
         10743874 => [{
-                    Metroid_Powerbomb(word!(game.cur_enemy_index), game);
+                    sm_a3::Metroid_Powerbomb(word!(game.cur_enemy_index), game);
                 }];
-        10780677 => Enemy_GrappleReact_SamusLatchesOn_A4; 10780707 => Enemy_NormalTouchAI_A4;
-        10780717 => Enemy_NormalShotAI_A4; 10780737 => Enemy_NormalFrozenAI_A4; 10780748 => [()];
-        10782343 => Crocomire_Hurt; 10783322 => Crocomire_Init; 10783748 => Crocomire_Main;
-        10795344 => [()]; 10795410 => Crocomire_Powerbomb; 10811002 => CrocomireTongue_Init;
-        10811067 => [CrocomireTongue_Main()]; 10846208 => Enemy_GrappleReact_NoInteract_A5;
-        10846223 => Enemy_GrappleReact_CancelBeam_A5; 10846243 => Enemy_NormalTouchAI_A5;
-        10846253 => Enemy_NormalShotAI_A5; 10846273 => Enemy_NormalFrozenAI_A5; 10846284 => [()];
-        10847879 => Draygon_Init; 10847996 => Draygon_Main; 10851661 => Draygon_Hurt;
-        10851818 => Draygon_Touch; 10851824 => Draygon_Shot; 10851847 => Draygon_Powerbomb;
-        10863723 => DraygonsEye_Init; 10863750 => DraygonsEye_Main; 10864025 => DraygonsTail_Init;
-        10864042 => [()]; 10864045 => DraygonsArms_Init; 10864068 => [()];
-        10873386 => SporeSpawn_Init; 10873619 => SporeSpawn_Main; 10874202 => SporeSpawn_Shot;
-        10874348 => SporeSpawn_Touch; 10874354 => [()];
-        10911744 => Enemy_GrappleReact_NoInteract_A6; 10911759 => Enemy_GrappleReact_CancelBeam_A6;
-        10911779 => Enemy_NormalTouchAI_A6; 10911789 => Enemy_NormalShotAI_A6;
-        10911809 => Enemy_NormalFrozenAI_A6; 10911820 => [()]; 10913525 => Boulder_Init;
-        10913683 => Boulder_Main; 10914607 => SpikeyPlatform_Init;
-        10914693 => SpikeyPlatform2ndEnemy_Init; 10914713 => SpikeyPlatform2ndEnemy_Main;
-        10914733 => SpikeyPlatform_Main; 10915836 => FireGeyser_Init; 10915875 => FireGeyser_Main;
-        10917060 => NuclearWaffle_Init; 10917390 => NuclearWaffle_Main; 10918488 => FakeKraid_Init;
-        10918594 => FakeKraid_Main; 10918946 => FakeKraid_Touch; 10918969 => FakeKraid_Shot;
-        10920181 => CeresRidley_Init; 10920584 => CeresRidley_Main; 10920659 => CeresRidley_Hurt;
-        10924583 => Ridley_Main; 10924682 => Ridley_Func_2; 10924695 => Ridley_Hurt;
-        10929814 => RidleysExplosion_Init; 10930388 => RidleysExplosion_Main;
-        10936202 => Ridley_Shot; 10936242 => Ridley_Powerbomb; 10940337 => CeresSteam_Init;
-        10940429 => CeresSteam_Main; 10940479 => CeresSteam_Touch; 10942149 => CeresDoor_Init;
-        10942309 => CeresDoor_Main; 10942752 => [()]; 10943346 => Zebetites_Init;
-        10943539 => Zebetites_Main; 10943911 => Zebetites_Touch; 10943916 => Zebetites_Shot;
-        10977280 => Enemy_GrappleReact_NoInteract_A7; 10977295 => Enemy_GrappleReact_CancelBeam_A7;
-        10977325 => Enemy_NormalShotAI_A7; 10977340 => Enemy_NormalPowerBombAI_SkipDeathAnim_A7;
-        10977345 => Enemy_NormalFrozenAI_A7; 10977356 => [()]; 10982543 => [()];
-        10982544 => KraidsArm_Touch; 10982559 => Kraid_Touch; 10982581 => [()];
-        10987865 => Kraid_Init; 10988355 => KraidsArm_Init; 10988392 => KraidsTopLint_Init;
-        10988444 => KraidsMiddleLint_Init; 10988490 => KraidsBottomLint_Init;
-        10988536 => KraidsFoot_Init; 10988577 => Kraid_Main; 10991549 => KraidsArm_Main;
-        10991617 => KraidsTopLint_Main; 10991629 => KraidsMiddleLint_Main;
-        10991641 => KraidsBottomLint_Main; 10992118 => KraidsFoot_Main;
-        10992847 => KraidsGoodFingernail_Touch; 10992862 => KraidsBadFingernail_Touch;
-        10992879 => KraidsGoodFingernail_Init; 10992941 => KraidsBadFingernail_Init;
-        10992946 => KraidsGoodFingernail_Main; 10992969 => KraidsBadFingernail_Main;
-        10997235 => Phantoon_Init; 10997333 => Phantoon2_Init; 10997414 => Phantoon_Main;
-        11001151 => Phantoon_Hurt; 11001237 => Phantoon_Touch; 11001242 => [()];
-        11001243 => Phantoon_Shot; 11001873 => [()]; 11004178 => Etecoon_Init;
-        11004224 => Etecoon_Main; 11007197 => Dachora_Init; 11007278 => Dachora_Main;
-        11042816 => Enemy_GrappleReact_NoInteract_A8; 11042826 => Enemy_GrappleReact_KillEnemy_A8;
-        11042831 => Enemy_GrappleReact_CancelBeam_A8;
-        11042836 => Enemy_GrappleReact_SamusLatchesNoInvinc_A8;
-        11042846 => Enemy_GrappleReact_HurtSamus_A8; 11042851 => Enemy_NormalTouchAI_A8;
-        11042861 => Enemy_NormalShotAI_A8; 11042881 => Enemy_NormalFrozenAI_A8; 11042892 => [()];
-        11044832 => MiniDraygon_Init; 11045040 => EvirProjectile_Init; 11045147 => MiniDraygon_Main;
-        11045278 => EvirProjectile_Main; 11045638 => MiniDraygon_Touch;
-        11045644 => MiniDraygon_Powerbomb; 11045650 => MiniDraygon_Shot;
-        11047000 => MorphBallEye_Init; 11047138 => MorphBallEye_Main; 11048675 => Fune_Init;
-        11048752 => Fune_Main; 11049710 => WreckedShipGhost_Init; 11049788 => WreckedShipGhost_Main;
-        11051336 => YappingMaw_Init; 11051537 => YappingMaw_Main; 11052953 => YappingMaw_Touch;
-        11052989 => YappingMaw_Shot; 11053109 => YappingMaw_Frozen; 11053894 => Kago_Init;
-        11053941 => Kago_Main; 11053955 => Kago_Shot; 11054987 => NorfairLavaMan_Init;
-        11055370 => NorfairLavaMan_Main; 11056128 => NorfairLavaMan_Powerbomb;
-        11056134 => NorfairLavaMan_Touch; 11056140 => NorfairLavaMan_Shot; 11057014 => Beetom_Init;
-        11057165 => Beetom_Main; 11058734 => Beetom_Touch; 11058860 => Beetom_Shot;
-        11059657 => MaridiaFloater_Init; 11059740 => MaridiaFloater_Main;
-        11060670 => MaridiaFloater_Touch; 11060719 => MaridiaFloater_Shot;
-        11060799 => MaridiaFloater_Powerbomb; 11062135 => WreckedShipRobot_Init;
-        11062220 => WreckedShipRobotDeactivated_Init; 11062326 => WreckedShipRobot_Main;
-        11062374 => [()]; 11063668 => WreckedShipRobotDeactivated_Touch;
-        11063693 => WreckedShipRobotDeactivated_Shot; 11063698 => WreckedShipRobot_Shot;
-        11065545 => MaridiaPuffer_Init; 11065611 => MaridiaPuffer_Main;
-        11066132 => MaridiaPuffer_Shot; 11066573 => WalkingLavaSeahorse_Init;
-        11066731 => WalkingLavaSeahorse_Main; 11068296 => WreckedShipOrbs_Init;
-        11068355 => WreckedShipOrbs_Main; 11068983 => WreckedShipSpark_Init;
-        11069070 => WreckedShipSpark_Main; 11069198 => WreckedShipSpark_Shot;
-        11069486 => BlueBrinstarFaceBlock_Init; 11069614 => BlueBrinstarFaceBlock_Main;
-        11069725 => BlueBrinstarFaceBlock_Shot; 11071880 => KiHunter_Init;
-        11072020 => KiHunterWings_Init; 11072092 => KiHunter_Main; 11072098 => KiHunterWings_Main;
-        11073281 => KiHunter_Shot; 11108367 => Enemy_GrappleReact_CancelBeam_A9;
-        11108417 => Enemy_NormalFrozenAI_A9; 11108428 => [()]; 11110023 => MotherBrainsBody_Init;
-        11110149 => MotherBrainsBrain_Init; 11110206 => MotherBrainsBody_Hurt;
-        11110279 => MotherBrainsBody_Powerbomb; 11110283 => MotherBrainsBrain_Hurt;
-        11111221 => MotherBrainsTubesFalling_Init;
+        10780677 => sm_a4::Enemy_GrappleReact_SamusLatchesOn_A4;
+        10780707 => sm_a4::Enemy_NormalTouchAI_A4; 10780717 => sm_a4::Enemy_NormalShotAI_A4;
+        10780737 => sm_a4::Enemy_NormalFrozenAI_A4; 10780748 => [()];
+        10782343 => sm_a4::Crocomire_Hurt; 10783322 => sm_a4::Crocomire_Init;
+        10783748 => sm_a4::Crocomire_Main; 10795344 => [()]; 10795410 => sm_a4::Crocomire_Powerbomb;
+        10811002 => sm_a4::CrocomireTongue_Init; 10811067 => [sm_a4::CrocomireTongue_Main()];
+        10846208 => sm_a5::Enemy_GrappleReact_NoInteract_A5;
+        10846223 => sm_a5::Enemy_GrappleReact_CancelBeam_A5;
+        10846243 => sm_a5::Enemy_NormalTouchAI_A5; 10846253 => sm_a5::Enemy_NormalShotAI_A5;
+        10846273 => sm_a5::Enemy_NormalFrozenAI_A5; 10846284 => [()];
+        10847879 => sm_a5::Draygon_Init; 10847996 => sm_a5::Draygon_Main;
+        10851661 => sm_a5::Draygon_Hurt; 10851818 => sm_a5::Draygon_Touch;
+        10851824 => sm_a5::Draygon_Shot; 10851847 => sm_a5::Draygon_Powerbomb;
+        10863723 => sm_a5::DraygonsEye_Init; 10863750 => sm_a5::DraygonsEye_Main;
+        10864025 => sm_a5::DraygonsTail_Init; 10864042 => [()];
+        10864045 => sm_a5::DraygonsArms_Init; 10864068 => [()]; 10873386 => sm_a5::SporeSpawn_Init;
+        10873619 => sm_a5::SporeSpawn_Main; 10874202 => sm_a5::SporeSpawn_Shot;
+        10874348 => sm_a5::SporeSpawn_Touch; 10874354 => [()];
+        10911744 => sm_a6::Enemy_GrappleReact_NoInteract_A6;
+        10911759 => sm_a6::Enemy_GrappleReact_CancelBeam_A6;
+        10911779 => sm_a6::Enemy_NormalTouchAI_A6; 10911789 => sm_a6::Enemy_NormalShotAI_A6;
+        10911809 => sm_a6::Enemy_NormalFrozenAI_A6; 10911820 => [()];
+        10913525 => sm_a6::Boulder_Init; 10913683 => sm_a6::Boulder_Main;
+        10914607 => sm_a6::SpikeyPlatform_Init; 10914693 => sm_a6::SpikeyPlatform2ndEnemy_Init;
+        10914713 => sm_a6::SpikeyPlatform2ndEnemy_Main; 10914733 => sm_a6::SpikeyPlatform_Main;
+        10915836 => sm_a6::FireGeyser_Init; 10915875 => sm_a6::FireGeyser_Main;
+        10917060 => sm_a6::NuclearWaffle_Init; 10917390 => sm_a6::NuclearWaffle_Main;
+        10918488 => sm_a6::FakeKraid_Init; 10918594 => sm_a6::FakeKraid_Main;
+        10918946 => sm_a6::FakeKraid_Touch; 10918969 => sm_a6::FakeKraid_Shot;
+        10920181 => sm_a6::CeresRidley_Init; 10920584 => sm_a6::CeresRidley_Main;
+        10920659 => sm_a6::CeresRidley_Hurt; 10924583 => sm_a6::Ridley_Main;
+        10924682 => sm_a6::Ridley_Func_2; 10924695 => sm_a6::Ridley_Hurt;
+        10929814 => sm_a6::RidleysExplosion_Init; 10930388 => sm_a6::RidleysExplosion_Main;
+        10936202 => sm_a6::Ridley_Shot; 10936242 => sm_a6::Ridley_Powerbomb;
+        10940337 => sm_a6::CeresSteam_Init; 10940429 => sm_a6::CeresSteam_Main;
+        10940479 => sm_a6::CeresSteam_Touch; 10942149 => sm_a6::CeresDoor_Init;
+        10942309 => sm_a6::CeresDoor_Main; 10942752 => [()]; 10943346 => sm_a6::Zebetites_Init;
+        10943539 => sm_a6::Zebetites_Main; 10943911 => sm_a6::Zebetites_Touch;
+        10943916 => sm_a6::Zebetites_Shot; 10977280 => sm_a7::Enemy_GrappleReact_NoInteract_A7;
+        10977295 => sm_a7::Enemy_GrappleReact_CancelBeam_A7;
+        10977325 => sm_a7::Enemy_NormalShotAI_A7;
+        10977340 => sm_a7::Enemy_NormalPowerBombAI_SkipDeathAnim_A7;
+        10977345 => sm_a7::Enemy_NormalFrozenAI_A7; 10977356 => [()]; 10982543 => [()];
+        10982544 => sm_a7::KraidsArm_Touch; 10982559 => sm_a7::Kraid_Touch; 10982581 => [()];
+        10987865 => sm_a7::Kraid_Init; 10988355 => sm_a7::KraidsArm_Init;
+        10988392 => sm_a7::KraidsTopLint_Init; 10988444 => sm_a7::KraidsMiddleLint_Init;
+        10988490 => sm_a7::KraidsBottomLint_Init; 10988536 => sm_a7::KraidsFoot_Init;
+        10988577 => sm_a7::Kraid_Main; 10991549 => sm_a7::KraidsArm_Main;
+        10991617 => sm_a7::KraidsTopLint_Main; 10991629 => sm_a7::KraidsMiddleLint_Main;
+        10991641 => sm_a7::KraidsBottomLint_Main; 10992118 => sm_a7::KraidsFoot_Main;
+        10992847 => sm_a7::KraidsGoodFingernail_Touch; 10992862 => sm_a7::KraidsBadFingernail_Touch;
+        10992879 => sm_a7::KraidsGoodFingernail_Init; 10992941 => sm_a7::KraidsBadFingernail_Init;
+        10992946 => sm_a7::KraidsGoodFingernail_Main; 10992969 => sm_a7::KraidsBadFingernail_Main;
+        10997235 => sm_a7::Phantoon_Init; 10997333 => sm_a7::Phantoon2_Init;
+        10997414 => sm_a7::Phantoon_Main; 11001151 => sm_a7::Phantoon_Hurt;
+        11001237 => sm_a7::Phantoon_Touch; 11001242 => [()]; 11001243 => sm_a7::Phantoon_Shot;
+        11001873 => [()]; 11004178 => sm_a7::Etecoon_Init; 11004224 => sm_a7::Etecoon_Main;
+        11007197 => sm_a7::Dachora_Init; 11007278 => sm_a7::Dachora_Main;
+        11042816 => sm_a8::Enemy_GrappleReact_NoInteract_A8;
+        11042826 => sm_a8::Enemy_GrappleReact_KillEnemy_A8;
+        11042831 => sm_a8::Enemy_GrappleReact_CancelBeam_A8;
+        11042836 => sm_a8::Enemy_GrappleReact_SamusLatchesNoInvinc_A8;
+        11042846 => sm_a8::Enemy_GrappleReact_HurtSamus_A8;
+        11042851 => sm_a8::Enemy_NormalTouchAI_A8; 11042861 => sm_a8::Enemy_NormalShotAI_A8;
+        11042881 => sm_a8::Enemy_NormalFrozenAI_A8; 11042892 => [()];
+        11044832 => sm_a8::MiniDraygon_Init; 11045040 => sm_a8::EvirProjectile_Init;
+        11045147 => sm_a8::MiniDraygon_Main; 11045278 => sm_a8::EvirProjectile_Main;
+        11045638 => sm_a8::MiniDraygon_Touch; 11045644 => sm_a8::MiniDraygon_Powerbomb;
+        11045650 => sm_a8::MiniDraygon_Shot; 11047000 => sm_a8::MorphBallEye_Init;
+        11047138 => sm_a8::MorphBallEye_Main; 11048675 => sm_a8::Fune_Init;
+        11048752 => sm_a8::Fune_Main; 11049710 => sm_a8::WreckedShipGhost_Init;
+        11049788 => sm_a8::WreckedShipGhost_Main; 11051336 => sm_a8::YappingMaw_Init;
+        11051537 => sm_a8::YappingMaw_Main; 11052953 => sm_a8::YappingMaw_Touch;
+        11052989 => sm_a8::YappingMaw_Shot; 11053109 => sm_a8::YappingMaw_Frozen;
+        11053894 => sm_a8::Kago_Init; 11053941 => sm_a8::Kago_Main; 11053955 => sm_a8::Kago_Shot;
+        11054987 => sm_a8::NorfairLavaMan_Init; 11055370 => sm_a8::NorfairLavaMan_Main;
+        11056128 => sm_a8::NorfairLavaMan_Powerbomb; 11056134 => sm_a8::NorfairLavaMan_Touch;
+        11056140 => sm_a8::NorfairLavaMan_Shot; 11057014 => sm_a8::Beetom_Init;
+        11057165 => sm_a8::Beetom_Main; 11058734 => sm_a8::Beetom_Touch;
+        11058860 => sm_a8::Beetom_Shot; 11059657 => sm_a8::MaridiaFloater_Init;
+        11059740 => sm_a8::MaridiaFloater_Main; 11060670 => sm_a8::MaridiaFloater_Touch;
+        11060719 => sm_a8::MaridiaFloater_Shot; 11060799 => sm_a8::MaridiaFloater_Powerbomb;
+        11062135 => sm_a8::WreckedShipRobot_Init;
+        11062220 => sm_a8::WreckedShipRobotDeactivated_Init;
+        11062326 => sm_a8::WreckedShipRobot_Main; 11062374 => [()];
+        11063668 => sm_a8::WreckedShipRobotDeactivated_Touch;
+        11063693 => sm_a8::WreckedShipRobotDeactivated_Shot;
+        11063698 => sm_a8::WreckedShipRobot_Shot; 11065545 => sm_a8::MaridiaPuffer_Init;
+        11065611 => sm_a8::MaridiaPuffer_Main; 11066132 => sm_a8::MaridiaPuffer_Shot;
+        11066573 => sm_a8::WalkingLavaSeahorse_Init; 11066731 => sm_a8::WalkingLavaSeahorse_Main;
+        11068296 => sm_a8::WreckedShipOrbs_Init; 11068355 => sm_a8::WreckedShipOrbs_Main;
+        11068983 => sm_a8::WreckedShipSpark_Init; 11069070 => sm_a8::WreckedShipSpark_Main;
+        11069198 => sm_a8::WreckedShipSpark_Shot; 11069486 => sm_a8::BlueBrinstarFaceBlock_Init;
+        11069614 => sm_a8::BlueBrinstarFaceBlock_Main;
+        11069725 => sm_a8::BlueBrinstarFaceBlock_Shot; 11071880 => sm_a8::KiHunter_Init;
+        11072020 => sm_a8::KiHunterWings_Init; 11072092 => sm_a8::KiHunter_Main;
+        11072098 => sm_a8::KiHunterWings_Main; 11073281 => sm_a8::KiHunter_Shot;
+        11108367 => sm_a9::Enemy_GrappleReact_CancelBeam_A9;
+        11108417 => sm_a9::Enemy_NormalFrozenAI_A9; 11108428 => [()];
+        11110023 => sm_a9::MotherBrainsBody_Init; 11110149 => sm_a9::MotherBrainsBrain_Init;
+        11110206 => sm_a9::MotherBrainsBody_Hurt; 11110279 => sm_a9::MotherBrainsBody_Powerbomb;
+        11110283 => sm_a9::MotherBrainsBrain_Hurt; 11111221 => sm_a9::MotherBrainsTubesFalling_Init;
         11111301 => [{
-                    MotherBrainsTubesFalling_Main(word!(game.cur_enemy_index), game);
+                    sm_a9::MotherBrainsTubesFalling_Main(word!(game.cur_enemy_index), game);
                 }];
-        11121923 => MotherBrainsBody_Shot; 11121927 => MotherBrainsBrain_Shot; 11122117 => [()];
-        11122118 => MotherBrainsBrain_Touch; 11126544 => ShitroidInCutscene_Init;
-        11126649 => ShitroidInCutscene_Main; 11128579 => ShitroidInCutscene_Touch;
-        11129608 => DeadTorizo_Init; 11129704 => DeadTorizo_Main; 11129898 => DeadTorizo_Powerbomb;
-        11129907 => DeadTorizo_Shot; 11130806 => DeadSidehopper_Init; 11130953 => DeadZoomer_Init;
-        11130998 => DeadRipper_Init; 11131039 => DeadSkree_Init;
-        11131084 => DeadSidehopper_Powerbomb; 11131099 => DeadSidehopper_Main;
-        11132141 => DeadZoomer_Powerbomb; 11132152 => DeadZoomer_Shot;
-        11132157 => DeadRipper_Powerbomb; 11132168 => DeadRipper_Shot;
-        11132173 => DeadSkree_Powerbomb; 11132184 => DeadSkree_Shot;
-        11132189 => DeadSidehopper_Shot; 11132228 => DeadSidehopper_Touch;
-        11136823 => Shitroid_Init; 11136954 => Shitroid_Powerbomb; 11136965 => Shitroid_Main;
-        11138953 => Shitroid_Touch; 11139138 => Shitroid_Shot;
-        11173903 => Enemy_GrappleReact_CancelBeam_AA; 11173953 => Enemy_NormalFrozenAI_AA;
-        11173964 => [()]; 11191934 => Torizo_Hurt; 11191972 => Torizo_Main; 11192447 => Torizo_Init;
-        11192695 => GoldTorizo_Touch; 11192700 => Torizo_Shot; 11195241 => GoldTorizo_Main;
-        11195322 => GoldTorizo_Hurt; 11196007 => GoldTorizo_Shot; 11196359 => [()];
-        11196360 => TourianEntranceStatue_Init; 11197603 => Shaktool_Hurt;
-        11198019 => Shaktool_Init; 11198255 => Shaktool_Touch; 11198260 => Shaktool_Shot;
-        11200278 => N00bTubeCracks_Init; 11200293 => ChozoStatue_Init; 11200423 => ChozoStatue_Main;
-        11200475 => [()]; 11200476 => [()]; 11698191 => Enemy_GrappleReact_CancelBeam_B2;
-        11698241 => Enemy_NormalFrozenAI_B2; 11698252 => [()];
-        11700071 => WalkingSpacePirates_Powerbomb; 11700076 => WalkingSpacePirates_Touch;
-        11700089 => WalkingSpacePirates_Shot; 11726751 => WallSpacePirates_Init;
-        11726893 => WallSpacePirates_Main; 11728350 => NinjaSpacePirates_Init;
-        11728546 => NinjaSpacePirates_Main; 11730178 => WalkingSpacePirates_Init;
-        11730226 => WalkingSpacePirates_Main; 11763712 => Enemy_GrappleReact_NoInteract_B3;
-        11763722 => Enemy_GrappleReact_KillEnemy_B3; 11763727 => Enemy_GrappleReact_CancelBeam_B3;
-        11763747 => Enemy_NormalTouchAI_B3; 11763757 => Enemy_NormalShotAI_B3;
-        11763777 => Enemy_NormalFrozenAI_B3; 11763788 => [()];
-        11765499 => UnusedSpinningTurtleEye_Init; 11765518 => [UnusedSpinningTurtleEye_Main()];
-        11765819 => BrinstarPipeBug_Init; 11765882 => BrinstarPipeBug_Main;
-        11766625 => NorfairPipeBug_Init; 11766686 => NorfairPipeBug_Main;
-        11767628 => BrinstarYellowPipeBug_Init; 11767726 => BrinstarYellowPipeBug_Main;
-        11769219 => Botwoon_Init; 11769448 => Botwoon_Main; 11771903 => Botwoon_Touch;
-        11771926 => Botwoon_Shot; 11771969 => Botwoon_Powerbomb; 11789909 => EscapeEtecoon_Main;
-        11790027 => EscapeEtecoon_Init; 11791077 => EscapeDachora_Init; 11791130 => [()];
+        11121923 => sm_a9::MotherBrainsBody_Shot; 11121927 => sm_a9::MotherBrainsBrain_Shot;
+        11122117 => [()]; 11122118 => sm_a9::MotherBrainsBrain_Touch;
+        11126544 => sm_a9::ShitroidInCutscene_Init; 11126649 => sm_a9::ShitroidInCutscene_Main;
+        11128579 => sm_a9::ShitroidInCutscene_Touch; 11129608 => sm_a9::DeadTorizo_Init;
+        11129704 => sm_a9::DeadTorizo_Main; 11129898 => sm_a9::DeadTorizo_Powerbomb;
+        11129907 => sm_a9::DeadTorizo_Shot; 11130806 => sm_a9::DeadSidehopper_Init;
+        11130953 => sm_a9::DeadZoomer_Init; 11130998 => sm_a9::DeadRipper_Init;
+        11131039 => sm_a9::DeadSkree_Init; 11131084 => sm_a9::DeadSidehopper_Powerbomb;
+        11131099 => sm_a9::DeadSidehopper_Main; 11132141 => sm_a9::DeadZoomer_Powerbomb;
+        11132152 => sm_a9::DeadZoomer_Shot; 11132157 => sm_a9::DeadRipper_Powerbomb;
+        11132168 => sm_a9::DeadRipper_Shot; 11132173 => sm_a9::DeadSkree_Powerbomb;
+        11132184 => sm_a9::DeadSkree_Shot; 11132189 => sm_a9::DeadSidehopper_Shot;
+        11132228 => sm_a9::DeadSidehopper_Touch; 11136823 => sm_a9::Shitroid_Init;
+        11136954 => sm_a9::Shitroid_Powerbomb; 11136965 => sm_a9::Shitroid_Main;
+        11138953 => sm_a9::Shitroid_Touch; 11139138 => sm_a9::Shitroid_Shot;
+        11173903 => sm_aa::Enemy_GrappleReact_CancelBeam_AA;
+        11173953 => sm_aa::Enemy_NormalFrozenAI_AA; 11173964 => [()];
+        11191934 => sm_aa::Torizo_Hurt; 11191972 => sm_aa::Torizo_Main;
+        11192447 => sm_aa::Torizo_Init; 11192695 => sm_aa::GoldTorizo_Touch;
+        11192700 => sm_aa::Torizo_Shot; 11195241 => sm_aa::GoldTorizo_Main;
+        11195322 => sm_aa::GoldTorizo_Hurt; 11196007 => sm_aa::GoldTorizo_Shot; 11196359 => [()];
+        11196360 => sm_aa::TourianEntranceStatue_Init; 11197603 => sm_aa::Shaktool_Hurt;
+        11198019 => sm_aa::Shaktool_Init; 11198255 => sm_aa::Shaktool_Touch;
+        11198260 => sm_aa::Shaktool_Shot; 11200278 => sm_aa::N00bTubeCracks_Init;
+        11200293 => sm_aa::ChozoStatue_Init; 11200423 => sm_aa::ChozoStatue_Main; 11200475 => [()];
+        11200476 => [()]; 11698191 => sm_b2::Enemy_GrappleReact_CancelBeam_B2;
+        11698241 => sm_b2::Enemy_NormalFrozenAI_B2; 11698252 => [()];
+        11700071 => sm_b2::WalkingSpacePirates_Powerbomb;
+        11700076 => sm_b2::WalkingSpacePirates_Touch; 11700089 => sm_b2::WalkingSpacePirates_Shot;
+        11726751 => sm_b2::WallSpacePirates_Init; 11726893 => sm_b2::WallSpacePirates_Main;
+        11728350 => sm_b2::NinjaSpacePirates_Init; 11728546 => sm_b2::NinjaSpacePirates_Main;
+        11730178 => sm_b2::WalkingSpacePirates_Init; 11730226 => sm_b2::WalkingSpacePirates_Main;
+        11763712 => sm_b3::Enemy_GrappleReact_NoInteract_B3;
+        11763722 => sm_b3::Enemy_GrappleReact_KillEnemy_B3;
+        11763727 => sm_b3::Enemy_GrappleReact_CancelBeam_B3;
+        11763747 => sm_b3::Enemy_NormalTouchAI_B3; 11763757 => sm_b3::Enemy_NormalShotAI_B3;
+        11763777 => sm_b3::Enemy_NormalFrozenAI_B3; 11763788 => [()];
+        11765499 => sm_b3::UnusedSpinningTurtleEye_Init;
+        11765518 => [sm_b3::UnusedSpinningTurtleEye_Main()];
+        11765819 => sm_b3::BrinstarPipeBug_Init; 11765882 => sm_b3::BrinstarPipeBug_Main;
+        11766625 => sm_b3::NorfairPipeBug_Init; 11766686 => sm_b3::NorfairPipeBug_Main;
+        11767628 => sm_b3::BrinstarYellowPipeBug_Init;
+        11767726 => sm_b3::BrinstarYellowPipeBug_Main; 11769219 => sm_b3::Botwoon_Init;
+        11769448 => sm_b3::Botwoon_Main; 11771903 => sm_b3::Botwoon_Touch;
+        11771926 => sm_b3::Botwoon_Shot; 11771969 => sm_b3::Botwoon_Powerbomb;
+        11789909 => sm_b3::EscapeEtecoon_Main; 11790027 => sm_b3::EscapeEtecoon_Init;
+        11791077 => sm_b3::EscapeDachora_Init; 11791130 => [()];
         10518583 | 10649655 | 10715191 | 10780727 | 10846263 | 10911799 | 10977335 | 11042871
                 | 11108407 | 11173943 | 11698231 | 11763767 => NormalEnemyPowerBombAi;
     }
@@ -1241,91 +1004,114 @@ crate::game::address_dispatch! {
         setup { let k: u16 = word!(game.cur_enemy_index); }
         call (k, game); default { Unreachable(game); };
     {
-        10518651 => [()]; 10649723 => [()]; 10652227 => MiniCrocomire_PreInstr5;
-        10652252 => MiniCrocomire_PreInstr6; 10652277 => [()]; 10657722 => SpikeShootingPlant_2;
-        10657772 => SpikeShootingPlant_3; 10657819 => [()]; 10659799 => [()];
-        10659852 => GunshipTop_3; 10660048 => GunshipTop_4; 10660162 => GunshipTop_5;
-        10660176 => GunshipTop_6; 10660231 => GunshipTop_7; 10660285 => GunshipTop_8;
-        10660431 => GunshipTop_9; 10660445 => GunshipTop_10; 10660500 => GunshipTop_11;
-        10660514 => GunshipTop_12; 10660639 => GunshipTop_13; 10660704 => GunshipTop_14;
-        10660718 => GunshipTop_15; 10660773 => GunshipTop_16; 10660807 => GunshipTop_17;
-        10660891 => GunshipTop_18; 10661079 => GunshipTop_19; 10661134 => GunshipTop_20;
-        10661165 => GunshipTop_21; 10662222 => Flies_4; 10662268 => Flies_5; 10662314 => Flies_6;
-        10662354 => Flies_7; 10665692 => NorfairLavajumpingEnemy_Func_1;
-        10665754 => NorfairLavajumpingEnemy_Func_2; 10665790 => NorfairLavajumpingEnemy_Func_3;
-        10665852 => NorfairLavajumpingEnemy_Func_4; 10665916 => NorfairLavajumpingEnemy_Func_5;
-        10666625 => NorfairRio_Func_1; 10666727 => NorfairRio_Func_2; 10666815 => NorfairRio_Func_3;
-        10666849 => NorfairRio_Func_4; 10666929 => NorfairRio_Func_5; 10667014 => NorfairRio_Func_6;
-        10667822 => LowerNorfairRio_Func_1; 10667889 => LowerNorfairRio_Func_2;
-        10667963 => LowerNorfairRio_Func_3; 10667990 => LowerNorfairRio_Func_4;
-        10668077 => LowerNorfairRio_Func_5; 10668168 => LowerNorfairRio_Func_6;
-        10669926 => MaridiaLargeSnail_Func_7; 10669993 => MaridiaLargeSnail_Func_8;
-        10675796 => LavaSeahorse_Func_1; 10675885 => LavaSeahorse_Func_2;
-        10675953 => LavaSeahorse_Func_3; 10676020 => LavaSeahorse_Func_4;
-        10676041 => LavaSeahorse_Func_5; 10676097 => [()]; 10730661 => Bang_Func_6;
-        10730689 => [Bang_Func_7(k)]; 10730693 => Bang_Func_8; 10730780 => Bang_Func_10;
-        10730796 => Bang_Func_11; 10735455 => [()]; 10736051 => MaridiaSnail_Func_15;
-        10739850 => [()]; 10739857 => WreckedShipOrangeZoomer_Func_2; 10741441 => [()];
-        10741448 => FireZoomer_Func_1; 10741637 => FireZoomer_Func_2; 10741746 => FireZoomer_Func_3;
-        10998952 => [()]; 10998953 => Phantoon_Spawn8FireballsInCircleAtStart;
-        10999022 => Phantoon_WaitBetweenSpawningAndSpinningFireballs;
-        10999048 => Phantoon_SpawnFireballsBeforeFight; 10999114 => Phantoon_WavyFadeIn;
-        10999190 => Phantoon_PickPatternForRound1;
-        10999271 => Phantoon_MovePhantoonInFigure8ThenOpenEye;
-        10999309 => Phantoon_EyeFollowsSamusUntilTimerRunsOut;
-        10999388 => Phantoon_BecomesSolidAndBodyVuln; 10999416 => Phantoon_IsSwooping;
-        10999481 => Phantoon_FadeoutWithSwoop; 10999508 => Phantoon_WaitAfterFadeOut;
-        10999522 => Phantoon_MoveLeftOrRightAndPickEyeOpenPatt;
-        10999597 => Phantoon_FadeInBeforeFigure8;
-        10999615 => Phantoon_BecomeSolidAfterRainingFireballs;
-        10999655 => Phantoon_FadeInDuringFireballRain;
-        10999688 => Phantoon_FollowSamusWithEyeDuringFireballRain;
-        10999765 => Phantoon_FadeOutDuringFireballRain; 10999799 => Phantoon_SpawnRainingFireballs;
-        10999850 => Phantoon_FadeOutBeforeFirstFireballRain;
-        10999900 => Phantoon_FadeOutBeforeEnrage;
-        10999924 => Phantoon_MoveEnragedPhantoonToTopCenter;
-        10999953 => Phantoon_FadeInEnragedPhantoon; 10999980 => Phantoon_Enraged;
-        11000086 => Phantoon_FadeoutAfterEnrage; 11000110 => Phantoon_CompleteSwoopAfterFatalShot;
-        11000136 => Phantoon_DyingPhantoonFadeInOut; 11000203 => Phantoon_DyingPhantoonExplosions;
-        11000401 => Phantoon_WavyDyingPhantoonAndCry; 11000454 => Phantoon_DyingFadeOut;
-        11000535 => Phantoon_AlmostDead; 11000637 => Phantoon_Dead; 11004335 => Etecoon_Func_4;
-        11004416 => Etecoon_Func_5; 11004471 => Etecoon_Func_6; 11004597 => Etecoon_Func_7;
-        11004674 => Etecoon_Func_8; 11004716 => Etecoon_Func_9; 11004752 => Etecoon_Func_10;
-        11004877 => Etecoon_Func_11; 11004955 => Etecoon_Func_12; 11005079 => Etecoon_Func_16;
-        11005115 => Etecoon_Func_17; 11005151 => Etecoon_Func_18; 11005193 => Etecoon_Func_19;
-        11005226 => Etecoon_Func_20; 11005268 => Etecoon_Func_21; 11005301 => Etecoon_Func_22;
-        11005383 => Etecoon_Func_23; 11005502 => Etecoon_Func_24; 11005594 => Etecoon_Func_25;
-        11005624 => Etecoon_Func_26; 11007344 => Dachora_Func_2; 11007420 => Dachora_Func_3;
-        11007469 => Dachora_Func_4; 11007582 => Dachora_Func_5; 11007887 => Dachora_Func_7;
-        11008006 => Dachora_Func_8; 11008309 => Dachora_Func_11; 11008396 => Dachora_Func_12;
-        11047153 => MorphBallEye_Func_1; 11047214 => MorphBallEye_Func_2;
-        11047264 => MorphBallEye_Func_3; 11047374 => MorphBallEye_Func_4; 11047388 => [()];
-        11055386 => NorfairLavaMan_Func_7; 11055477 => NorfairLavaMan_Func_8;
-        11055507 => sub_A8B193; 11055544 => NorfairLavaMan_Func_9;
-        11055581 => NorfairLavaMan_Func_10; 11055620 => NorfairLavaMan_Func_11;
-        11055761 => [sub_A8B291(k)]; 11055765 => [NorfairLavaMan_Func_13(game)];
-        11055885 => NorfairLavaMan_Func_15; 11055903 => NorfairLavaMan_Func_16;
-        11055958 => NorfairLavaMan_Func_17; 11056039 => NorfairLavaMan_Func_18;
-        11059843 => MaridiaFloater_Func_3; 11059878 => MaridiaFloater_Func_4;
-        11059919 => MaridiaFloater_Func_5; 11060075 => MaridiaFloater_Func_6;
-        11060193 => MaridiaFloater_Func_7; 11060329 => MaridiaFloater_Func_8;
-        11060444 => MaridiaFloater_Func_9; 11060480 => MaridiaFloater_Func_10;
-        11060509 => MaridiaFloater_Func_11; 11060584 => [()]; 11060585 => MaridiaFloater_Func_12;
-        11060639 => MaridiaFloater_Func_13; 11192670 => [()]; 11197610 => [()]; 11200422 => [()];
-        11174011 => [()]; 11763835 => [()]; 11765888 => BrinstarPipeBug_PreInstr_1;
-        11765904 => BrinstarPipeBug_PreInstr_2; 11765987 => BrinstarPipeBug_PreInstr_3;
-        11766044 => BrinstarPipeBug_PreInstr_4; 11766142 => BrinstarPipeBug_PreInstr_5;
-        11767039 => NorfairPipeBug_Func_5; 11771328 => Botwoon_Func_26; 11771517 => Botwoon_Func_27;
-        11771616 => Botwoon_Func_28; 11771700 => Botwoon_Func_29; 11771770 => Botwoon_Func_30;
-        11192146 => Torizo_Func_5; 11192360 => Torizo_Func_6; 11192364 => Torizo_Func_7;
-        11195885 => Torizo_D5ED; 11195889 => Torizo_D5F1; 11199557 => sub_AAE445;
-        11200430 => Shaktool_PreInstr_0; 11200474 => [()]; 11789916 => EscapeEtecoon_E65C;
-        11789936 => EscapeEtecoon_E670; 11789952 => EscapeEtecoon_E680; 10740072 => sub_A3E168;
-        10735456 => MaridiaSnail_Func_7; 10735526 => MaridiaSnail_Func_9;
-        10735543 => MaridiaSnail_CFB7; 10735549 => MaridiaSnail_CFBD; 10735566 => MaridiaSnail_CFCE;
-        10735572 => MaridiaSnail_CFD4; 10735589 => MaridiaSnail_CFE5; 10735595 => MaridiaSnail_CFEB;
-        10735612 => MaridiaSnail_CFFC; 11197611 => [()]; 11197612 => Shaktool_DCAC;
-        11197655 => Shaktool_DCD7; 11197733 => Shaktool_DD25;
+        10518651 => [()]; 10649723 => [()]; 10652227 => sm_a2::MiniCrocomire_PreInstr5;
+        10652252 => sm_a2::MiniCrocomire_PreInstr6; 10652277 => [()];
+        10657722 => sm_a2::SpikeShootingPlant_2; 10657772 => sm_a2::SpikeShootingPlant_3;
+        10657819 => [()]; 10659799 => [()]; 10659852 => sm_a2::GunshipTop_3;
+        10660048 => sm_a2::GunshipTop_4; 10660162 => sm_a2::GunshipTop_5;
+        10660176 => sm_a2::GunshipTop_6; 10660231 => sm_a2::GunshipTop_7;
+        10660285 => sm_a2::GunshipTop_8; 10660431 => sm_a2::GunshipTop_9;
+        10660445 => sm_a2::GunshipTop_10; 10660500 => sm_a2::GunshipTop_11;
+        10660514 => sm_a2::GunshipTop_12; 10660639 => sm_a2::GunshipTop_13;
+        10660704 => sm_a2::GunshipTop_14; 10660718 => sm_a2::GunshipTop_15;
+        10660773 => sm_a2::GunshipTop_16; 10660807 => sm_a2::GunshipTop_17;
+        10660891 => sm_a2::GunshipTop_18; 10661079 => sm_a2::GunshipTop_19;
+        10661134 => sm_a2::GunshipTop_20; 10661165 => sm_a2::GunshipTop_21;
+        10662222 => sm_a2::Flies_4; 10662268 => sm_a2::Flies_5; 10662314 => sm_a2::Flies_6;
+        10662354 => sm_a2::Flies_7; 10665692 => sm_a2::NorfairLavajumpingEnemy_Func_1;
+        10665754 => sm_a2::NorfairLavajumpingEnemy_Func_2;
+        10665790 => sm_a2::NorfairLavajumpingEnemy_Func_3;
+        10665852 => sm_a2::NorfairLavajumpingEnemy_Func_4;
+        10665916 => sm_a2::NorfairLavajumpingEnemy_Func_5; 10666625 => sm_a2::NorfairRio_Func_1;
+        10666727 => sm_a2::NorfairRio_Func_2; 10666815 => sm_a2::NorfairRio_Func_3;
+        10666849 => sm_a2::NorfairRio_Func_4; 10666929 => sm_a2::NorfairRio_Func_5;
+        10667014 => sm_a2::NorfairRio_Func_6; 10667822 => sm_a2::LowerNorfairRio_Func_1;
+        10667889 => sm_a2::LowerNorfairRio_Func_2; 10667963 => sm_a2::LowerNorfairRio_Func_3;
+        10667990 => sm_a2::LowerNorfairRio_Func_4; 10668077 => sm_a2::LowerNorfairRio_Func_5;
+        10668168 => sm_a2::LowerNorfairRio_Func_6; 10669926 => sm_a2::MaridiaLargeSnail_Func_7;
+        10669993 => sm_a2::MaridiaLargeSnail_Func_8; 10675796 => sm_a2::LavaSeahorse_Func_1;
+        10675885 => sm_a2::LavaSeahorse_Func_2; 10675953 => sm_a2::LavaSeahorse_Func_3;
+        10676020 => sm_a2::LavaSeahorse_Func_4; 10676041 => sm_a2::LavaSeahorse_Func_5;
+        10676097 => [()]; 10730661 => sm_a3::Bang_Func_6; 10730689 => [sm_a3::Bang_Func_7(k)];
+        10730693 => sm_a3::Bang_Func_8; 10730780 => sm_a3::Bang_Func_10;
+        10730796 => sm_a3::Bang_Func_11; 10735455 => [()]; 10736051 => sm_a3::MaridiaSnail_Func_15;
+        10739850 => [()]; 10739857 => sm_a3::WreckedShipOrangeZoomer_Func_2; 10741441 => [()];
+        10741448 => sm_a3::FireZoomer_Func_1; 10741637 => sm_a3::FireZoomer_Func_2;
+        10741746 => sm_a3::FireZoomer_Func_3; 10998952 => [()];
+        10998953 => sm_a7::Phantoon_Spawn8FireballsInCircleAtStart;
+        10999022 => sm_a7::Phantoon_WaitBetweenSpawningAndSpinningFireballs;
+        10999048 => sm_a7::Phantoon_SpawnFireballsBeforeFight;
+        10999114 => sm_a7::Phantoon_WavyFadeIn; 10999190 => sm_a7::Phantoon_PickPatternForRound1;
+        10999271 => sm_a7::Phantoon_MovePhantoonInFigure8ThenOpenEye;
+        10999309 => sm_a7::Phantoon_EyeFollowsSamusUntilTimerRunsOut;
+        10999388 => sm_a7::Phantoon_BecomesSolidAndBodyVuln; 10999416 => sm_a7::Phantoon_IsSwooping;
+        10999481 => sm_a7::Phantoon_FadeoutWithSwoop; 10999508 => sm_a7::Phantoon_WaitAfterFadeOut;
+        10999522 => sm_a7::Phantoon_MoveLeftOrRightAndPickEyeOpenPatt;
+        10999597 => sm_a7::Phantoon_FadeInBeforeFigure8;
+        10999615 => sm_a7::Phantoon_BecomeSolidAfterRainingFireballs;
+        10999655 => sm_a7::Phantoon_FadeInDuringFireballRain;
+        10999688 => sm_a7::Phantoon_FollowSamusWithEyeDuringFireballRain;
+        10999765 => sm_a7::Phantoon_FadeOutDuringFireballRain;
+        10999799 => sm_a7::Phantoon_SpawnRainingFireballs;
+        10999850 => sm_a7::Phantoon_FadeOutBeforeFirstFireballRain;
+        10999900 => sm_a7::Phantoon_FadeOutBeforeEnrage;
+        10999924 => sm_a7::Phantoon_MoveEnragedPhantoonToTopCenter;
+        10999953 => sm_a7::Phantoon_FadeInEnragedPhantoon; 10999980 => sm_a7::Phantoon_Enraged;
+        11000086 => sm_a7::Phantoon_FadeoutAfterEnrage;
+        11000110 => sm_a7::Phantoon_CompleteSwoopAfterFatalShot;
+        11000136 => sm_a7::Phantoon_DyingPhantoonFadeInOut;
+        11000203 => sm_a7::Phantoon_DyingPhantoonExplosions;
+        11000401 => sm_a7::Phantoon_WavyDyingPhantoonAndCry;
+        11000454 => sm_a7::Phantoon_DyingFadeOut; 11000535 => sm_a7::Phantoon_AlmostDead;
+        11000637 => sm_a7::Phantoon_Dead; 11004335 => sm_a7::Etecoon_Func_4;
+        11004416 => sm_a7::Etecoon_Func_5; 11004471 => sm_a7::Etecoon_Func_6;
+        11004597 => sm_a7::Etecoon_Func_7; 11004674 => sm_a7::Etecoon_Func_8;
+        11004716 => sm_a7::Etecoon_Func_9; 11004752 => sm_a7::Etecoon_Func_10;
+        11004877 => sm_a7::Etecoon_Func_11; 11004955 => sm_a7::Etecoon_Func_12;
+        11005079 => sm_a7::Etecoon_Func_16; 11005115 => sm_a7::Etecoon_Func_17;
+        11005151 => sm_a7::Etecoon_Func_18; 11005193 => sm_a7::Etecoon_Func_19;
+        11005226 => sm_a7::Etecoon_Func_20; 11005268 => sm_a7::Etecoon_Func_21;
+        11005301 => sm_a7::Etecoon_Func_22; 11005383 => sm_a7::Etecoon_Func_23;
+        11005502 => sm_a7::Etecoon_Func_24; 11005594 => sm_a7::Etecoon_Func_25;
+        11005624 => sm_a7::Etecoon_Func_26; 11007344 => sm_a7::Dachora_Func_2;
+        11007420 => sm_a7::Dachora_Func_3; 11007469 => sm_a7::Dachora_Func_4;
+        11007582 => sm_a7::Dachora_Func_5; 11007887 => sm_a7::Dachora_Func_7;
+        11008006 => sm_a7::Dachora_Func_8; 11008309 => sm_a7::Dachora_Func_11;
+        11008396 => sm_a7::Dachora_Func_12; 11047153 => sm_a8::MorphBallEye_Func_1;
+        11047214 => sm_a8::MorphBallEye_Func_2; 11047264 => sm_a8::MorphBallEye_Func_3;
+        11047374 => sm_a8::MorphBallEye_Func_4; 11047388 => [()];
+        11055386 => sm_a8::NorfairLavaMan_Func_7; 11055477 => sm_a8::NorfairLavaMan_Func_8;
+        11055507 => sm_a8::sub_A8B193; 11055544 => sm_a8::NorfairLavaMan_Func_9;
+        11055581 => sm_a8::NorfairLavaMan_Func_10; 11055620 => sm_a8::NorfairLavaMan_Func_11;
+        11055761 => [sm_a8::sub_A8B291(k)]; 11055765 => [sm_a8::NorfairLavaMan_Func_13(game)];
+        11055885 => sm_a8::NorfairLavaMan_Func_15; 11055903 => sm_a8::NorfairLavaMan_Func_16;
+        11055958 => sm_a8::NorfairLavaMan_Func_17; 11056039 => sm_a8::NorfairLavaMan_Func_18;
+        11059843 => sm_a8::MaridiaFloater_Func_3; 11059878 => sm_a8::MaridiaFloater_Func_4;
+        11059919 => sm_a8::MaridiaFloater_Func_5; 11060075 => sm_a8::MaridiaFloater_Func_6;
+        11060193 => sm_a8::MaridiaFloater_Func_7; 11060329 => sm_a8::MaridiaFloater_Func_8;
+        11060444 => sm_a8::MaridiaFloater_Func_9; 11060480 => sm_a8::MaridiaFloater_Func_10;
+        11060509 => sm_a8::MaridiaFloater_Func_11; 11060584 => [()];
+        11060585 => sm_a8::MaridiaFloater_Func_12; 11060639 => sm_a8::MaridiaFloater_Func_13;
+        11192670 => [()]; 11197610 => [()]; 11200422 => [()]; 11174011 => [()]; 11763835 => [()];
+        11765888 => sm_b3::BrinstarPipeBug_PreInstr_1;
+        11765904 => sm_b3::BrinstarPipeBug_PreInstr_2;
+        11765987 => sm_b3::BrinstarPipeBug_PreInstr_3;
+        11766044 => sm_b3::BrinstarPipeBug_PreInstr_4;
+        11766142 => sm_b3::BrinstarPipeBug_PreInstr_5; 11767039 => sm_b3::NorfairPipeBug_Func_5;
+        11771328 => sm_b3::Botwoon_Func_26; 11771517 => sm_b3::Botwoon_Func_27;
+        11771616 => sm_b3::Botwoon_Func_28; 11771700 => sm_b3::Botwoon_Func_29;
+        11771770 => sm_b3::Botwoon_Func_30; 11192146 => sm_aa::Torizo_Func_5;
+        11192360 => sm_aa::Torizo_Func_6; 11192364 => sm_aa::Torizo_Func_7;
+        11195885 => sm_aa::Torizo_D5ED; 11195889 => sm_aa::Torizo_D5F1;
+        11199557 => sm_aa::sub_AAE445; 11200430 => sm_aa::Shaktool_PreInstr_0; 11200474 => [()];
+        11789916 => sm_b3::EscapeEtecoon_E65C; 11789936 => sm_b3::EscapeEtecoon_E670;
+        11789952 => sm_b3::EscapeEtecoon_E680; 10740072 => sm_a3::sub_A3E168;
+        10735456 => sm_a3::MaridiaSnail_Func_7; 10735526 => sm_a3::MaridiaSnail_Func_9;
+        10735543 => sm_a3::MaridiaSnail_CFB7; 10735549 => sm_a3::MaridiaSnail_CFBD;
+        10735566 => sm_a3::MaridiaSnail_CFCE; 10735572 => sm_a3::MaridiaSnail_CFD4;
+        10735589 => sm_a3::MaridiaSnail_CFE5; 10735595 => sm_a3::MaridiaSnail_CFEB;
+        10735612 => sm_a3::MaridiaSnail_CFFC; 11197611 => [()]; 11197612 => sm_aa::Shaktool_DCAC;
+        11197655 => sm_aa::Shaktool_DCD7; 11197733 => sm_aa::Shaktool_DD25;
     }
 }
 crate::game::address_dispatch! {
@@ -1339,222 +1125,275 @@ crate::game::address_dispatch! {
         10649891 => EnemyInstr_SetTimer; 10649903 => EnemyInstr_Sleep;
         10649971 => EnemyInstr_EnableOffScreenProcessing;
         10649981 => EnemyInstr_DisableOffScreenProcessing;
-        10651845 => [BouncingGoofball_Instr_88C5(k, j)]; 10651846 => BouncingGoofball_Instr_88C6;
-        10652030 => MiniCrocomire_Instr_897E; 10652048 => MiniCrocomire_Instr_8990;
-        10652061 => MiniCrocomire_Instr_899D; 10654593 => MaridiaBeybladeTurtle_Instr_9381;
-        10654738 => MaridiaBeybladeTurtle_Instr_9412; 10654791 => MaridiaBeybladeTurtle_Instr_9447;
-        10654801 => MaridiaBeybladeTurtle_Instr_9451; 10654827 => MaridiaBeybladeTurtle_Instr_946B;
-        10654853 => MaridiaBeybladeTurtle_Instr_9485; 10654881 => MaridiaBeybladeTurtle_Instr_94A1;
-        10654919 => MaridiaBeybladeTurtle_Instr_94C7; 10654929 => MaridiaBeybladeTurtle_Instr_94D1;
-        10657578 => SpikeShootingPlant_Instr_9F2A; 10657941 => SpikeShootingPlant_Instr_A095;
-        10657959 => SpikeShootingPlant_Instr_A0A7; 10659181 => MaridiaSpikeyShell_Instr_A56D;
-        10659185 => MaridiaSpikeyShell_Instr_A571; 10664371 => Rinka_Instr_B9B3;
-        10664381 => Rinka_Instr_B9BD; 10664391 => Rinka_Instr_B9C7;
-        10664899 => EnemyInstr_Rio_Instr_1; 10665614 => NorfairLavajumpingEnemy_Instr_BE8E;
-        10666441 => NorfairRio_Instr_C1C9; 10666452 => NorfairRio_Instr_C1D4;
-        10666463 => NorfairRio_Instr_C1DF; 10666474 => NorfairRio_Instr_C1EA;
-        10666485 => NorfairRio_Instr_C1F5; 10666496 => NorfairRio_Instr_C200;
-        10666507 => NorfairRio_Instr_C20B; 10666518 => NorfairRio_Instr_C216;
-        10666529 => NorfairRio_Instr_C221; 10666540 => NorfairRio_Instr_C22C;
-        10666551 => NorfairRio_Instr_C237; 10667730 => LowerNorfairRio_Instr_C6D2;
-        10667741 => LowerNorfairRio_Instr_C6DD; 10667752 => LowerNorfairRio_Instr_C6E8;
-        10668907 => MaridiaLargeSnail_Instr_CB6B; 10669235 => MaridiaLargeSnail_Instr_CCB3;
-        10669246 => MaridiaLargeSnail_Instr_CCBE; 10669257 => MaridiaLargeSnail_Instr_CCC9;
-        10675707 => LavaSeahorse_Instr_E5FB; 10715373 => [EnemyInstr_Goto(k, j)];
-        10715439 => EnemyInstr_Sleep; 10715507 => EnemyInstr_EnableOffScreenProcessing;
-        10715517 => EnemyInstr_DisableOffScreenProcessing; 10716899 => Waver_Instr_1;
-        10717526 => Metalee_Instr_1; 10719382 => MaridiaFish_Instr_3;
-        10719392 => MaridiaFish_Instr_1; 10719402 => MaridiaFish_Instr_2;
-        10722411 => PlatformThatFallsWithSamus_Instr_3;
-        10722422 => PlatformThatFallsWithSamus_Instr_4;
-        10722433 => PlatformThatFallsWithSamus_Instr_1;
-        10722444 => PlatformThatFallsWithSamus_Instr_2; 10725992 => Sidehopper_Func_1;
-        10726142 => Sidehopper_Instr_1; 10728489 => MaridiaRefillCandy_Instr_1;
-        10728500 => MaridiaRefillCandy_Instr_2; 10728511 => MaridiaRefillCandy_Instr_3;
-        10730104 => Bang_Instr_1; 10730152 => Bang_Instr_2; 10733220 => Skree_Instr_1;
-        10734646 => MaridiaSnail_Instr_1; 10734655 => MaridiaSnail_Instr_2;
-        10734664 => MaridiaSnail_Instr_4; 10734687 => MaridiaSnail_Instr_3;
-        10734712 => MaridiaSnail_Instr_5; 10738632 => Reflec_Instr_1;
-        10739650 => WreckedShipOrangeZoomer_Func_1; 10741344 => Zoomer_Instr_SetPreinstr;
-        10742437 => Metroid_Instr_2; 10742449 => Metroid_Instr_1;
-        10780909 => [EnemyInstr_Goto(k, j)]; 10780975 => EnemyInstr_Sleep;
-        10782374 => Crocomire_Instr_1; 10782546 => Crocomire_Instr_14;
-        10783995 => Crocomire_Instr_11; 10784007 => Crocomire_Instr_7;
-        10784019 => Crocomire_Instr_19; 10784711 => Crocomire_Instr_2;
-        10784735 => Crocomire_Instr_4; 10784762 => Crocomire_Instr_3;
-        10784767 => Crocomire_Instr_15; 10784797 => Crocomire_Instr_16;
-        10784859 => Crocomire_Instr_13; 10784895 => Crocomire_Instr_18;
-        10784911 => Crocomire_Instr_12; 10784916 => Crocomire_Instr_17;
-        10787483 => Crocomire_Instr_8; 10787488 => Crocomire_Instr_6; 10787493 => Crocomire_Instr_9;
-        10787498 => Crocomire_Instr_5; 10787503 => Crocomire_Instr_20;
-        10787508 => Crocomire_Instr_21; 10787513 => Crocomire_Instr_22;
-        10787518 => Crocomire_Instr_23; 10787523 => Crocomire_Instr_24;
-        10787528 => Crocomire_Instr_10; 10787533 => Crocomire_Instr_25;
-        10787538 => Crocomire_Instr_26; 10787543 => Crocomire_Instr_27;
+        10651845 => [sm_a2::BouncingGoofball_Instr_88C5(k, j)];
+        10651846 => sm_a2::BouncingGoofball_Instr_88C6; 10652030 => sm_a2::MiniCrocomire_Instr_897E;
+        10652048 => sm_a2::MiniCrocomire_Instr_8990; 10652061 => sm_a2::MiniCrocomire_Instr_899D;
+        10654593 => sm_a2::MaridiaBeybladeTurtle_Instr_9381;
+        10654738 => sm_a2::MaridiaBeybladeTurtle_Instr_9412;
+        10654791 => sm_a2::MaridiaBeybladeTurtle_Instr_9447;
+        10654801 => sm_a2::MaridiaBeybladeTurtle_Instr_9451;
+        10654827 => sm_a2::MaridiaBeybladeTurtle_Instr_946B;
+        10654853 => sm_a2::MaridiaBeybladeTurtle_Instr_9485;
+        10654881 => sm_a2::MaridiaBeybladeTurtle_Instr_94A1;
+        10654919 => sm_a2::MaridiaBeybladeTurtle_Instr_94C7;
+        10654929 => sm_a2::MaridiaBeybladeTurtle_Instr_94D1;
+        10657578 => sm_a2::SpikeShootingPlant_Instr_9F2A;
+        10657941 => sm_a2::SpikeShootingPlant_Instr_A095;
+        10657959 => sm_a2::SpikeShootingPlant_Instr_A0A7;
+        10659181 => sm_a2::MaridiaSpikeyShell_Instr_A56D;
+        10659185 => sm_a2::MaridiaSpikeyShell_Instr_A571; 10664371 => sm_a2::Rinka_Instr_B9B3;
+        10664381 => sm_a2::Rinka_Instr_B9BD; 10664391 => sm_a2::Rinka_Instr_B9C7;
+        10664899 => sm_a2::EnemyInstr_Rio_Instr_1;
+        10665614 => sm_a2::NorfairLavajumpingEnemy_Instr_BE8E;
+        10666441 => sm_a2::NorfairRio_Instr_C1C9; 10666452 => sm_a2::NorfairRio_Instr_C1D4;
+        10666463 => sm_a2::NorfairRio_Instr_C1DF; 10666474 => sm_a2::NorfairRio_Instr_C1EA;
+        10666485 => sm_a2::NorfairRio_Instr_C1F5; 10666496 => sm_a2::NorfairRio_Instr_C200;
+        10666507 => sm_a2::NorfairRio_Instr_C20B; 10666518 => sm_a2::NorfairRio_Instr_C216;
+        10666529 => sm_a2::NorfairRio_Instr_C221; 10666540 => sm_a2::NorfairRio_Instr_C22C;
+        10666551 => sm_a2::NorfairRio_Instr_C237; 10667730 => sm_a2::LowerNorfairRio_Instr_C6D2;
+        10667741 => sm_a2::LowerNorfairRio_Instr_C6DD;
+        10667752 => sm_a2::LowerNorfairRio_Instr_C6E8;
+        10668907 => sm_a2::MaridiaLargeSnail_Instr_CB6B;
+        10669235 => sm_a2::MaridiaLargeSnail_Instr_CCB3;
+        10669246 => sm_a2::MaridiaLargeSnail_Instr_CCBE;
+        10669257 => sm_a2::MaridiaLargeSnail_Instr_CCC9; 10675707 => sm_a2::LavaSeahorse_Instr_E5FB;
+        10715373 => [EnemyInstr_Goto(k, j)]; 10715439 => EnemyInstr_Sleep;
+        10715507 => EnemyInstr_EnableOffScreenProcessing;
+        10715517 => EnemyInstr_DisableOffScreenProcessing; 10716899 => sm_a3::Waver_Instr_1;
+        10717526 => sm_a3::Metalee_Instr_1; 10719382 => sm_a3::MaridiaFish_Instr_3;
+        10719392 => sm_a3::MaridiaFish_Instr_1; 10719402 => sm_a3::MaridiaFish_Instr_2;
+        10722411 => sm_a3::PlatformThatFallsWithSamus_Instr_3;
+        10722422 => sm_a3::PlatformThatFallsWithSamus_Instr_4;
+        10722433 => sm_a3::PlatformThatFallsWithSamus_Instr_1;
+        10722444 => sm_a3::PlatformThatFallsWithSamus_Instr_2; 10725992 => sm_a3::Sidehopper_Func_1;
+        10726142 => sm_a3::Sidehopper_Instr_1; 10728489 => sm_a3::MaridiaRefillCandy_Instr_1;
+        10728500 => sm_a3::MaridiaRefillCandy_Instr_2;
+        10728511 => sm_a3::MaridiaRefillCandy_Instr_3; 10730104 => sm_a3::Bang_Instr_1;
+        10730152 => sm_a3::Bang_Instr_2; 10733220 => sm_a3::Skree_Instr_1;
+        10734646 => sm_a3::MaridiaSnail_Instr_1; 10734655 => sm_a3::MaridiaSnail_Instr_2;
+        10734664 => sm_a3::MaridiaSnail_Instr_4; 10734687 => sm_a3::MaridiaSnail_Instr_3;
+        10734712 => sm_a3::MaridiaSnail_Instr_5; 10738632 => sm_a3::Reflec_Instr_1;
+        10739650 => sm_a3::WreckedShipOrangeZoomer_Func_1;
+        10741344 => sm_a3::Zoomer_Instr_SetPreinstr; 10742437 => sm_a3::Metroid_Instr_2;
+        10742449 => sm_a3::Metroid_Instr_1; 10780909 => [EnemyInstr_Goto(k, j)];
+        10780975 => EnemyInstr_Sleep; 10782374 => sm_a4::Crocomire_Instr_1;
+        10782546 => sm_a4::Crocomire_Instr_14; 10783995 => sm_a4::Crocomire_Instr_11;
+        10784007 => sm_a4::Crocomire_Instr_7; 10784019 => sm_a4::Crocomire_Instr_19;
+        10784711 => sm_a4::Crocomire_Instr_2; 10784735 => sm_a4::Crocomire_Instr_4;
+        10784762 => sm_a4::Crocomire_Instr_3; 10784767 => sm_a4::Crocomire_Instr_15;
+        10784797 => sm_a4::Crocomire_Instr_16; 10784859 => sm_a4::Crocomire_Instr_13;
+        10784895 => sm_a4::Crocomire_Instr_18; 10784911 => sm_a4::Crocomire_Instr_12;
+        10784916 => sm_a4::Crocomire_Instr_17; 10787483 => sm_a4::Crocomire_Instr_8;
+        10787488 => sm_a4::Crocomire_Instr_6; 10787493 => sm_a4::Crocomire_Instr_9;
+        10787498 => sm_a4::Crocomire_Instr_5; 10787503 => sm_a4::Crocomire_Instr_20;
+        10787508 => sm_a4::Crocomire_Instr_21; 10787513 => sm_a4::Crocomire_Instr_22;
+        10787518 => sm_a4::Crocomire_Instr_23; 10787523 => sm_a4::Crocomire_Instr_24;
+        10787528 => sm_a4::Crocomire_Instr_10; 10787533 => sm_a4::Crocomire_Instr_25;
+        10787538 => sm_a4::Crocomire_Instr_26; 10787543 => sm_a4::Crocomire_Instr_27;
         10846332 => EnemyInstr_StopScript; 10846445 => [EnemyInstr_Goto(k, j)];
         10846480 => EnemyInstr_DecTimerAndGoto; 10846499 => EnemyInstr_SetTimer;
         10846511 => EnemyInstr_Sleep; 10846522 => EnemyInstr_WaitNframes;
-        10851549 => Draygon_Instr_1; 10852150 => Draygon_Instr_13; 10852159 => Draygon_Instr_8;
-        10852178 => Draygon_Instr_7; 10852197 => Draygon_Instr_6; 10852216 => Draygon_Instr_9;
-        10852501 => Draygon_Instr_2; 10852563 => Draygon_Instr_11; 10852591 => Draygon_Instr_5;
-        10853274 => Draygon_Instr_15; 10853514 => Draygon_Instr_17; 10853898 => Draygon_Instr_14;
-        10854231 => Draygon_Instr_16; 10854240 => Draygon_Instr_10; 10854254 => Draygon_Instr_4;
-        10854268 => Draygon_Instr_12; 10854318 => Draygon_Instr_18; 10863739 => Draygon_Instr_3;
-        10872671 => Draygon_Instr_25; 10872689 => Draygon_Instr_24; 10872877 => Draygon_Instr_21;
-        10872946 => Draygon_Instr_22; 10872956 => Draygon_Instr_27; 10872981 => Draygon_Instr_23;
-        10873009 => Draygon_Instr_30; 10873018 => Draygon_Instr_20; 10873034 => Draygon_Instr_29;
-        10873116 => Draygon_Instr_19; 10873198 => Draygon_Instr_28; 10873265 => Draygon_Instr_26;
+        10851549 => sm_a5::Draygon_Instr_1; 10852150 => sm_a5::Draygon_Instr_13;
+        10852159 => sm_a5::Draygon_Instr_8; 10852178 => sm_a5::Draygon_Instr_7;
+        10852197 => sm_a5::Draygon_Instr_6; 10852216 => sm_a5::Draygon_Instr_9;
+        10852501 => sm_a5::Draygon_Instr_2; 10852563 => sm_a5::Draygon_Instr_11;
+        10852591 => sm_a5::Draygon_Instr_5; 10853274 => sm_a5::Draygon_Instr_15;
+        10853514 => sm_a5::Draygon_Instr_17; 10853898 => sm_a5::Draygon_Instr_14;
+        10854231 => sm_a5::Draygon_Instr_16; 10854240 => sm_a5::Draygon_Instr_10;
+        10854254 => sm_a5::Draygon_Instr_4; 10854268 => sm_a5::Draygon_Instr_12;
+        10854318 => sm_a5::Draygon_Instr_18; 10863739 => sm_a5::Draygon_Instr_3;
+        10872671 => sm_a5::Draygon_Instr_25; 10872689 => sm_a5::Draygon_Instr_24;
+        10872877 => sm_a5::Draygon_Instr_21; 10872946 => sm_a5::Draygon_Instr_22;
+        10872956 => sm_a5::Draygon_Instr_27; 10872981 => sm_a5::Draygon_Instr_23;
+        10873009 => sm_a5::Draygon_Instr_30; 10873018 => sm_a5::Draygon_Instr_20;
+        10873034 => sm_a5::Draygon_Instr_29; 10873116 => sm_a5::Draygon_Instr_19;
+        10873198 => sm_a5::Draygon_Instr_28; 10873265 => sm_a5::Draygon_Instr_26;
         10911981 => [EnemyInstr_Goto(k, j)]; 10912047 => EnemyInstr_Sleep;
-        10915247 => FireGeyser_Instr_1; 10915347 => FireGeyser_Instr_2;
-        10915373 => FireGeyser_Instr_3; 10915393 => FireGeyser_Instr_4;
-        10915413 => FireGeyser_Instr_5; 10915433 => FireGeyser_Instr_6;
-        10915453 => FireGeyser_Instr_7; 10915473 => FireGeyser_Instr_8;
-        10915493 => FireGeyser_Instr_9; 10915513 => FireGeyser_Instr_10;
-        10915533 => FireGeyser_Instr_11; 10915553 => FireGeyser_Instr_12;
-        10915573 => FireGeyser_Instr_13; 10915593 => FireGeyser_Instr_14;
-        10915613 => FireGeyser_Instr_15; 10915633 => FireGeyser_Instr_16;
-        10915653 => FireGeyser_Instr_17; 10915673 => FireGeyser_Instr_18;
-        10915693 => FireGeyser_Instr_19; 10915713 => FireGeyser_Instr_20;
-        10915733 => FireGeyser_Instr_21; 10915753 => FireGeyser_Instr_22;
-        10915773 => FireGeyser_Instr_23; 10915793 => FireGeyser_Instr_24;
-        10918694 => FakeKraid_Instr_2; 10918772 => FakeKraid_Instr_1; 10918834 => FakeKraid_Instr_3;
-        10918852 => FakeKraid_Instr_4; 10918914 => FakeKraid_Instr_5; 10937534 => Ridley_Instr_5;
-        10937546 => Ridley_Instr_6; 10937554 => Ridley_Instr_10; 10937582 => Ridley_Instr_4;
-        10937592 => Ridley_Instr_3; 10937601 => Ridley_Instr_2; 10937623 => Ridley_Instr_1;
-        10937631 => Ridley_Instr_14; 10938140 => Ridley_Instr_9; 10938151 => Ridley_Instr_7;
-        10938159 => Ridley_Instr_8; 10938445 => Ridley_Instr_11; 10938628 => Ridley_Instr_12;
-        10938633 => Ridley_Instr_13; 10938729 => Ridley_Instr_15; 10938742 => Ridley_Instr_16;
-        10940701 => CeresSteam_Instr_1; 10940711 => CeresSteam_Instr_2;
-        10940725 => CeresSteam_Instr_3; 10942014 => CeresDoor_Instr_6;
-        10942058 => CeresDoor_Instr_4; 10942072 => CeresDoor_Instr_8;
-        10942091 => CeresSteam_Instr_4; 10942101 => CeresDoor_Instr_1;
-        10942111 => CeresDoor_Instr_3; 10942118 => CeresSteam_Instr_5;
-        10942128 => CeresDoor_Instr_5; 10942131 => CeresDoor_Instr_2; 10942141 => CeresDoor_Instr_7;
-        10977418 => EnemyInstr_Call_A7; 10977517 => [EnemyInstr_Goto(k, j)];
+        10915247 => sm_a6::FireGeyser_Instr_1; 10915347 => sm_a6::FireGeyser_Instr_2;
+        10915373 => sm_a6::FireGeyser_Instr_3; 10915393 => sm_a6::FireGeyser_Instr_4;
+        10915413 => sm_a6::FireGeyser_Instr_5; 10915433 => sm_a6::FireGeyser_Instr_6;
+        10915453 => sm_a6::FireGeyser_Instr_7; 10915473 => sm_a6::FireGeyser_Instr_8;
+        10915493 => sm_a6::FireGeyser_Instr_9; 10915513 => sm_a6::FireGeyser_Instr_10;
+        10915533 => sm_a6::FireGeyser_Instr_11; 10915553 => sm_a6::FireGeyser_Instr_12;
+        10915573 => sm_a6::FireGeyser_Instr_13; 10915593 => sm_a6::FireGeyser_Instr_14;
+        10915613 => sm_a6::FireGeyser_Instr_15; 10915633 => sm_a6::FireGeyser_Instr_16;
+        10915653 => sm_a6::FireGeyser_Instr_17; 10915673 => sm_a6::FireGeyser_Instr_18;
+        10915693 => sm_a6::FireGeyser_Instr_19; 10915713 => sm_a6::FireGeyser_Instr_20;
+        10915733 => sm_a6::FireGeyser_Instr_21; 10915753 => sm_a6::FireGeyser_Instr_22;
+        10915773 => sm_a6::FireGeyser_Instr_23; 10915793 => sm_a6::FireGeyser_Instr_24;
+        10918694 => sm_a6::FakeKraid_Instr_2; 10918772 => sm_a6::FakeKraid_Instr_1;
+        10918834 => sm_a6::FakeKraid_Instr_3; 10918852 => sm_a6::FakeKraid_Instr_4;
+        10918914 => sm_a6::FakeKraid_Instr_5; 10937534 => sm_a6::Ridley_Instr_5;
+        10937546 => sm_a6::Ridley_Instr_6; 10937554 => sm_a6::Ridley_Instr_10;
+        10937582 => sm_a6::Ridley_Instr_4; 10937592 => sm_a6::Ridley_Instr_3;
+        10937601 => sm_a6::Ridley_Instr_2; 10937623 => sm_a6::Ridley_Instr_1;
+        10937631 => sm_a6::Ridley_Instr_14; 10938140 => sm_a6::Ridley_Instr_9;
+        10938151 => sm_a6::Ridley_Instr_7; 10938159 => sm_a6::Ridley_Instr_8;
+        10938445 => sm_a6::Ridley_Instr_11; 10938628 => sm_a6::Ridley_Instr_12;
+        10938633 => sm_a6::Ridley_Instr_13; 10938729 => sm_a6::Ridley_Instr_15;
+        10938742 => sm_a6::Ridley_Instr_16; 10940701 => sm_a6::CeresSteam_Instr_1;
+        10940711 => sm_a6::CeresSteam_Instr_2; 10940725 => sm_a6::CeresSteam_Instr_3;
+        10942014 => sm_a6::CeresDoor_Instr_6; 10942058 => sm_a6::CeresDoor_Instr_4;
+        10942072 => sm_a6::CeresDoor_Instr_8; 10942091 => sm_a6::CeresSteam_Instr_4;
+        10942101 => sm_a6::CeresDoor_Instr_1; 10942111 => sm_a6::CeresDoor_Instr_3;
+        10942118 => sm_a6::CeresSteam_Instr_5; 10942128 => sm_a6::CeresDoor_Instr_5;
+        10942131 => sm_a6::CeresDoor_Instr_2; 10942141 => sm_a6::CeresDoor_Instr_7;
+        10977418 => sm_a7::EnemyInstr_Call_A7; 10977517 => [EnemyInstr_Goto(k, j)];
         10977552 => EnemyInstr_DecTimerAndGoto; 10977571 => EnemyInstr_SetTimer;
-        10977583 => EnemyInstr_Sleep; 10979983 => Kraid_Instr_9; 10991155 => [Kraid_Instr_1(k, j)];
-        10991158 => Kraid_Instr_DecYpos; 10991164 => Kraid_Instr_IncrYpos_Shake;
-        10991182 => Kraid_Instr_PlaySound_0x76; 10991194 => Kraid_Instr_XposMinus3;
-        10991207 => Kraid_Instr_XposMinus3b; 10991220 => Kraid_Instr_XposPlus3;
-        10991235 => Kraid_Instr_MoveHimRight; 11043053 => [EnemyInstr_Goto(k, j)];
+        10977583 => EnemyInstr_Sleep; 10979983 => sm_a7::Kraid_Instr_9;
+        10991155 => [sm_a7::Kraid_Instr_1(k, j)]; 10991158 => sm_a7::Kraid_Instr_DecYpos;
+        10991164 => sm_a7::Kraid_Instr_IncrYpos_Shake;
+        10991182 => sm_a7::Kraid_Instr_PlaySound_0x76; 10991194 => sm_a7::Kraid_Instr_XposMinus3;
+        10991207 => sm_a7::Kraid_Instr_XposMinus3b; 10991220 => sm_a7::Kraid_Instr_XposPlus3;
+        10991235 => sm_a7::Kraid_Instr_MoveHimRight; 11043053 => [EnemyInstr_Goto(k, j)];
         11043088 => EnemyInstr_DecTimerAndGoto; 11043107 => EnemyInstr_SetTimer;
         11043119 => EnemyInstr_Sleep; 11043187 => EnemyInstr_EnableOffScreenProcessing;
-        11043197 => EnemyInstr_DisableOffScreenProcessing; 11044751 => MiniDraygon_Instr_2;
-        11044763 => MiniDraygon_Instr_1; 11044790 => MiniDraygon_Instr_3;
-        11044811 => MiniDraygon_Instr_4; 11048485 => Fune_Instr_2; 11048497 => Fune_Instr_6;
-        11048522 => Fune_Instr_7; 11048547 => Fune_Instr_1; 11048572 => Fune_Instr_4;
-        11048597 => Fune_Instr_3; 11048628 => Fune_Instr_5; 11051207 => YappingMaw_Instr_2;
-        11051225 => YappingMaw_Instr_4; 11051243 => YappingMaw_Instr_5;
-        11051261 => YappingMaw_Instr_7; 11051279 => YappingMaw_Instr_3;
-        11051297 => YappingMaw_Instr_6; 11051315 => YappingMaw_Instr_1;
-        11054610 => NorfairLavaMan_Instr_1; 11054630 => NorfairLavaMan_Instr_8;
-        11054640 => NorfairLavaMan_Instr_14; 11054650 => NorfairLavaMan_Instr_2;
-        11054661 => NorfairLavaMan_Instr_7; 11054672 => NorfairLavaMan_Instr_10;
-        11054682 => NorfairLavaMan_Instr_12; 11054692 => NorfairLavaMan_Instr_9;
-        11054728 => NorfairLavaMan_Instr_11; 11054742 => NorfairLavaMan_Instr_13;
-        11054778 => NorfairLavaMan_Instr_5; 11054794 => NorfairLavaMan_Instr_15;
-        11054820 => NorfairLavaMan_Instr_4; 11054846 => NorfairLavaMan_Instr_16;
-        11054872 => NorfairLavaMan_Instr_6; 11054916 => NorfairLavaMan_Instr_3;
-        11056990 => [Beetom_Instr_1(k, j)]; 11062537 => WreckedShipRobot_Instr_4;
-        11062692 => WreckedShipRobot_Instr_9; 11062762 => WreckedShipRobot_Instr_6;
-        11062917 => WreckedShipRobot_Instr_8; 11062987 => [WreckedShipRobot_Instr_7(k, j)];
-        11062991 => WreckedShipRobot_Instr_15; 11063146 => WreckedShipRobot_Instr_18;
-        11063216 => WreckedShipRobot_Instr_16; 11063371 => WreckedShipRobot_Instr_17;
-        11063441 => WreckedShipRobot_Instr_3; 11063490 => [WreckedShipRobot_Instr_10(k, j)];
-        11063494 => WreckedShipRobot_Instr_14; 11063506 => WreckedShipRobot_Instr_2;
-        11063552 => WreckedShipRobot_Instr_13; 11063559 => WreckedShipRobot_Instr_1;
-        11063601 => WreckedShipRobot_Instr_12; 11063613 => WreckedShipRobot_Instr_5;
-        11063659 => WreckedShipRobot_Instr_11; 11067164 => WalkingLavaSeahorse_Instr_4;
-        11067187 => WalkingLavaSeahorse_Instr_3; 11067193 => WalkingLavaSeahorse_Instr_5;
-        11067199 => WalkingLavaSeahorse_Instr_6; 11067235 => WalkingLavaSeahorse_Instr_2;
-        11067249 => WalkingLavaSeahorse_Instr_1; 11068957 => WreckedShipSpark_Instr_2;
-        11068970 => WreckedShipSpark_Instr_1; 11072806 => KiHunter_Instr_1;
-        11072996 => KiHunter_Instr_2; 11073151 => KiHunter_Instr_3; 11073234 => KiHunter_Instr_4;
-        11073240 => KiHunter_Instr_5; 11108655 => EnemyInstr_Sleep;
-        11128756 => [Shitroid_Instr_1(k, j)]; 11128778 => [Shitroid_Instr_2(k, j)];
-        11136208 => sub_A9ECD0; 11139360 => [Shitroid_Instr_3(k, j)];
-        11139382 => [Shitroid_Instr_4(k, j)]; 11139472 => [Shitroid_Instr_6(k, j)];
-        11139476 => Shitroid_Instr_5; 11173995 => Enemy_SetAiPreInstr_AA;
-        11174004 => Enemy_ClearAiPreInstr_AA; 11174012 => EnemyInstr_StopScript;
-        11174125 => [EnemyInstr_Goto(k, j)]; 11174160 => EnemyInstr_DecTimerAndGoto;
-        11174179 => EnemyInstr_SetTimer; 11174191 => EnemyInstr_Sleep;
-        11174202 => EnemyInstr_WaitNframes; 11174219 => EnemyInstr_CopyToVram;
-        11186332 => Torizo_Instr_3; 11186461 => Torizo_Instr_31; 11186622 => Torizo_Instr_33;
-        11186724 => Torizo_Instr_36; 11186734 => Torizo_Instr_37; 11186744 => Torizo_Instr_35;
-        11186765 => Torizo_Instr_38; 11186801 => Torizo_Instr_6; 11188557 => Torizo_Instr_5;
-        11188561 => Torizo_Instr_9; 11190984 => [Torizo_Instr_7(k, j)]; 11190985 => Torizo_Instr_2;
-        11190993 => Torizo_Instr_8; 11191001 => Torizo_Instr_25; 11191021 => Torizo_Instr_22;
-        11191031 => Torizo_Instr_19; 11191037 => Torizo_Instr_32; 11191043 => Torizo_Instr_30;
-        11191087 => Torizo_Instr_34; 11191114 => Torizo_Instr_24; 11191131 => Torizo_Instr_12;
-        11191149 => Torizo_Instr_10; 11191159 => Torizo_Instr_11; 11191178 => Torizo_Instr_29;
-        11191200 => Torizo_Instr_1; 11191222 => Torizo_Instr_28; 11191244 => Torizo_Instr_4;
-        11191326 => Torizo_Instr_40; 11191408 => Torizo_Instr_16; 11191525 => Torizo_Instr_27;
-        11191642 => Torizo_Instr_23; 11191655 => Torizo_Instr_14; 11191691 => Torizo_Instr_15;
-        11191716 => Torizo_Instr_26; 11191755 => Torizo_Instr_18; 11191779 => Torizo_Instr_20;
-        11191794 => Torizo_Instr_44; 11191809 => Torizo_Instr_21; 11191824 => Torizo_Instr_17;
-        11191832 => Torizo_Instr_13; 11193038 => Torizo_Instr_39; 11193054 => Torizo_Instr_41;
-        11193058 => Torizo_Instr_42; 11193815 => Torizo_Instr_48; 11194601 => Torizo_Instr_57;
-        11194611 => Torizo_Instr_58; 11194747 => Torizo_Instr_59; 11194759 => Torizo_Instr_62;
-        11194855 => Torizo_Instr_63; 11195279 => Torizo_Instr_56; 11195287 => Torizo_Instr_60;
-        11195295 => Torizo_Instr_46; 11195360 => Torizo_Instr_47; 11195370 => Torizo_Instr_49;
-        11195446 => Torizo_Instr_61; 11195461 => Torizo_Instr_53; 11195508 => Torizo_Instr_55;
-        11195547 => Torizo_Instr_52; 11195578 => Torizo_Instr_50; 11195635 => Torizo_Instr_43;
-        11195645 => Torizo_Instr_51; 11195686 => Torizo_Instr_45; 11195725 => Torizo_Instr_54;
-        11196721 => Shaktool_Instr_2; 11196735 => Shaktool_Instr_3; 11196746 => Shaktool_Instr_4;
-        11196755 => Shaktool_Instr_5; 11196831 => [Shaktool_Instr_6(k, j)];
-        11196858 => Shaktool_Instr_1; 11199529 => Shaktool_Instr_9; 11199542 => Shaktool_Instr_11;
-        11199549 => Shaktool_Instr_10; 11199871 => Shaktool_Instr_8; 11199879 => Shaktool_Instr_13;
-        11199887 => Shaktool_Instr_12; 11199960 => Shaktool_Instr_7; 11200240 => Shaktool_Instr_14;
+        11043197 => EnemyInstr_DisableOffScreenProcessing; 11044751 => sm_a8::MiniDraygon_Instr_2;
+        11044763 => sm_a8::MiniDraygon_Instr_1; 11044790 => sm_a8::MiniDraygon_Instr_3;
+        11044811 => sm_a8::MiniDraygon_Instr_4; 11048485 => sm_a8::Fune_Instr_2;
+        11048497 => sm_a8::Fune_Instr_6; 11048522 => sm_a8::Fune_Instr_7;
+        11048547 => sm_a8::Fune_Instr_1; 11048572 => sm_a8::Fune_Instr_4;
+        11048597 => sm_a8::Fune_Instr_3; 11048628 => sm_a8::Fune_Instr_5;
+        11051207 => sm_a8::YappingMaw_Instr_2; 11051225 => sm_a8::YappingMaw_Instr_4;
+        11051243 => sm_a8::YappingMaw_Instr_5; 11051261 => sm_a8::YappingMaw_Instr_7;
+        11051279 => sm_a8::YappingMaw_Instr_3; 11051297 => sm_a8::YappingMaw_Instr_6;
+        11051315 => sm_a8::YappingMaw_Instr_1; 11054610 => sm_a8::NorfairLavaMan_Instr_1;
+        11054630 => sm_a8::NorfairLavaMan_Instr_8; 11054640 => sm_a8::NorfairLavaMan_Instr_14;
+        11054650 => sm_a8::NorfairLavaMan_Instr_2; 11054661 => sm_a8::NorfairLavaMan_Instr_7;
+        11054672 => sm_a8::NorfairLavaMan_Instr_10; 11054682 => sm_a8::NorfairLavaMan_Instr_12;
+        11054692 => sm_a8::NorfairLavaMan_Instr_9; 11054728 => sm_a8::NorfairLavaMan_Instr_11;
+        11054742 => sm_a8::NorfairLavaMan_Instr_13; 11054778 => sm_a8::NorfairLavaMan_Instr_5;
+        11054794 => sm_a8::NorfairLavaMan_Instr_15; 11054820 => sm_a8::NorfairLavaMan_Instr_4;
+        11054846 => sm_a8::NorfairLavaMan_Instr_16; 11054872 => sm_a8::NorfairLavaMan_Instr_6;
+        11054916 => sm_a8::NorfairLavaMan_Instr_3; 11056990 => [sm_a8::Beetom_Instr_1(k, j)];
+        11062537 => sm_a8::WreckedShipRobot_Instr_4; 11062692 => sm_a8::WreckedShipRobot_Instr_9;
+        11062762 => sm_a8::WreckedShipRobot_Instr_6; 11062917 => sm_a8::WreckedShipRobot_Instr_8;
+        11062987 => [sm_a8::WreckedShipRobot_Instr_7(k, j)];
+        11062991 => sm_a8::WreckedShipRobot_Instr_15; 11063146 => sm_a8::WreckedShipRobot_Instr_18;
+        11063216 => sm_a8::WreckedShipRobot_Instr_16; 11063371 => sm_a8::WreckedShipRobot_Instr_17;
+        11063441 => sm_a8::WreckedShipRobot_Instr_3;
+        11063490 => [sm_a8::WreckedShipRobot_Instr_10(k, j)];
+        11063494 => sm_a8::WreckedShipRobot_Instr_14; 11063506 => sm_a8::WreckedShipRobot_Instr_2;
+        11063552 => sm_a8::WreckedShipRobot_Instr_13; 11063559 => sm_a8::WreckedShipRobot_Instr_1;
+        11063601 => sm_a8::WreckedShipRobot_Instr_12; 11063613 => sm_a8::WreckedShipRobot_Instr_5;
+        11063659 => sm_a8::WreckedShipRobot_Instr_11;
+        11067164 => sm_a8::WalkingLavaSeahorse_Instr_4;
+        11067187 => sm_a8::WalkingLavaSeahorse_Instr_3;
+        11067193 => sm_a8::WalkingLavaSeahorse_Instr_5;
+        11067199 => sm_a8::WalkingLavaSeahorse_Instr_6;
+        11067235 => sm_a8::WalkingLavaSeahorse_Instr_2;
+        11067249 => sm_a8::WalkingLavaSeahorse_Instr_1; 11068957 => sm_a8::WreckedShipSpark_Instr_2;
+        11068970 => sm_a8::WreckedShipSpark_Instr_1; 11072806 => sm_a8::KiHunter_Instr_1;
+        11072996 => sm_a8::KiHunter_Instr_2; 11073151 => sm_a8::KiHunter_Instr_3;
+        11073234 => sm_a8::KiHunter_Instr_4; 11073240 => sm_a8::KiHunter_Instr_5;
+        11108655 => EnemyInstr_Sleep; 11128756 => [sm_a9::Shitroid_Instr_1(k, j)];
+        11128778 => [sm_a9::Shitroid_Instr_2(k, j)]; 11136208 => sm_a9::sub_A9ECD0;
+        11139360 => [sm_a9::Shitroid_Instr_3(k, j)]; 11139382 => [sm_a9::Shitroid_Instr_4(k, j)];
+        11139472 => [sm_a9::Shitroid_Instr_6(k, j)]; 11139476 => sm_a9::Shitroid_Instr_5;
+        11173995 => sm_aa::Enemy_SetAiPreInstr_AA; 11174004 => sm_aa::Enemy_ClearAiPreInstr_AA;
+        11174012 => EnemyInstr_StopScript; 11174125 => [EnemyInstr_Goto(k, j)];
+        11174160 => EnemyInstr_DecTimerAndGoto; 11174179 => EnemyInstr_SetTimer;
+        11174191 => EnemyInstr_Sleep; 11174202 => EnemyInstr_WaitNframes;
+        11174219 => EnemyInstr_CopyToVram; 11186332 => sm_aa::Torizo_Instr_3;
+        11186461 => sm_aa::Torizo_Instr_31; 11186622 => sm_aa::Torizo_Instr_33;
+        11186724 => sm_aa::Torizo_Instr_36; 11186734 => sm_aa::Torizo_Instr_37;
+        11186744 => sm_aa::Torizo_Instr_35; 11186765 => sm_aa::Torizo_Instr_38;
+        11186801 => sm_aa::Torizo_Instr_6; 11188557 => sm_aa::Torizo_Instr_5;
+        11188561 => sm_aa::Torizo_Instr_9; 11190984 => [sm_aa::Torizo_Instr_7(k, j)];
+        11190985 => sm_aa::Torizo_Instr_2; 11190993 => sm_aa::Torizo_Instr_8;
+        11191001 => sm_aa::Torizo_Instr_25; 11191021 => sm_aa::Torizo_Instr_22;
+        11191031 => sm_aa::Torizo_Instr_19; 11191037 => sm_aa::Torizo_Instr_32;
+        11191043 => sm_aa::Torizo_Instr_30; 11191087 => sm_aa::Torizo_Instr_34;
+        11191114 => sm_aa::Torizo_Instr_24; 11191131 => sm_aa::Torizo_Instr_12;
+        11191149 => sm_aa::Torizo_Instr_10; 11191159 => sm_aa::Torizo_Instr_11;
+        11191178 => sm_aa::Torizo_Instr_29; 11191200 => sm_aa::Torizo_Instr_1;
+        11191222 => sm_aa::Torizo_Instr_28; 11191244 => sm_aa::Torizo_Instr_4;
+        11191326 => sm_aa::Torizo_Instr_40; 11191408 => sm_aa::Torizo_Instr_16;
+        11191525 => sm_aa::Torizo_Instr_27; 11191642 => sm_aa::Torizo_Instr_23;
+        11191655 => sm_aa::Torizo_Instr_14; 11191691 => sm_aa::Torizo_Instr_15;
+        11191716 => sm_aa::Torizo_Instr_26; 11191755 => sm_aa::Torizo_Instr_18;
+        11191779 => sm_aa::Torizo_Instr_20; 11191794 => sm_aa::Torizo_Instr_44;
+        11191809 => sm_aa::Torizo_Instr_21; 11191824 => sm_aa::Torizo_Instr_17;
+        11191832 => sm_aa::Torizo_Instr_13; 11193038 => sm_aa::Torizo_Instr_39;
+        11193054 => sm_aa::Torizo_Instr_41; 11193058 => sm_aa::Torizo_Instr_42;
+        11193815 => sm_aa::Torizo_Instr_48; 11194601 => sm_aa::Torizo_Instr_57;
+        11194611 => sm_aa::Torizo_Instr_58; 11194747 => sm_aa::Torizo_Instr_59;
+        11194759 => sm_aa::Torizo_Instr_62; 11194855 => sm_aa::Torizo_Instr_63;
+        11195279 => sm_aa::Torizo_Instr_56; 11195287 => sm_aa::Torizo_Instr_60;
+        11195295 => sm_aa::Torizo_Instr_46; 11195360 => sm_aa::Torizo_Instr_47;
+        11195370 => sm_aa::Torizo_Instr_49; 11195446 => sm_aa::Torizo_Instr_61;
+        11195461 => sm_aa::Torizo_Instr_53; 11195508 => sm_aa::Torizo_Instr_55;
+        11195547 => sm_aa::Torizo_Instr_52; 11195578 => sm_aa::Torizo_Instr_50;
+        11195635 => sm_aa::Torizo_Instr_43; 11195645 => sm_aa::Torizo_Instr_51;
+        11195686 => sm_aa::Torizo_Instr_45; 11195725 => sm_aa::Torizo_Instr_54;
+        11196721 => sm_aa::Shaktool_Instr_2; 11196735 => sm_aa::Shaktool_Instr_3;
+        11196746 => sm_aa::Shaktool_Instr_4; 11196755 => sm_aa::Shaktool_Instr_5;
+        11196831 => [sm_aa::Shaktool_Instr_6(k, j)]; 11196858 => sm_aa::Shaktool_Instr_1;
+        11199529 => sm_aa::Shaktool_Instr_9; 11199542 => sm_aa::Shaktool_Instr_11;
+        11199549 => sm_aa::Shaktool_Instr_10; 11199871 => sm_aa::Shaktool_Instr_8;
+        11199879 => sm_aa::Shaktool_Instr_13; 11199887 => sm_aa::Shaktool_Instr_12;
+        11199960 => sm_aa::Shaktool_Instr_7; 11200240 => sm_aa::Shaktool_Instr_14;
         11698413 => [EnemyInstr_Goto(k, j)]; 11698448 => EnemyInstr_DecTimerAndGoto;
         11698467 => EnemyInstr_SetTimer; 11698479 => EnemyInstr_Sleep;
         11698490 => EnemyInstr_WaitNframes;
-        11726400 => SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight;
-        11726450 => SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft;
-        11726500 => SpacePirates_Instr_RandomNewDirFaceR;
-        11726524 => SpacePirates_Instr_RandomNewDirFaceL;
-        11726548 => SpacePirates_Instr_PrepareWallJumpR;
-        11726589 => SpacePirates_Instr_PrepareWallJumpL; 11726634 => SpacePirates_Instr_FireLaserL;
-        11726685 => SpacePirates_Instr_FireLaserR; 11726723 => SpacePirates_Instr_SetEnemyFunc;
-        11726739 => SpacePirates_Instr_PlaySfx; 11728182 => SpacePirates_Instr_20;
-        11728198 => SpacePirates_Instr_16; 11728228 => SpacePirates_Instr_15;
-        11728272 => SpacePirates_Instr_18; 11728342 => SpacePirates_Instr_17;
-        11729257 => SpacePirates_Instr_19; 11729469 => SpacePirates_Instr_21;
-        11730024 => SpacePirates_Instr_12; 11730064 => SpacePirates_Instr_14;
-        11730104 => SpacePirates_Instr_11; 11730120 => SpacePirates_Instr_13;
-        11763819 => Enemy_SetAiPreInstr_B3; 11763828 => Enemy_ClearAiPreInstr_B3;
+        11726400 => sm_b2::SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight;
+        11726450 => sm_b2::SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft;
+        11726500 => sm_b2::SpacePirates_Instr_RandomNewDirFaceR;
+        11726524 => sm_b2::SpacePirates_Instr_RandomNewDirFaceL;
+        11726548 => sm_b2::SpacePirates_Instr_PrepareWallJumpR;
+        11726589 => sm_b2::SpacePirates_Instr_PrepareWallJumpL;
+        11726634 => sm_b2::SpacePirates_Instr_FireLaserL;
+        11726685 => sm_b2::SpacePirates_Instr_FireLaserR;
+        11726723 => sm_b2::SpacePirates_Instr_SetEnemyFunc;
+        11726739 => sm_b2::SpacePirates_Instr_PlaySfx; 11728182 => sm_b2::SpacePirates_Instr_20;
+        11728198 => sm_b2::SpacePirates_Instr_16; 11728228 => sm_b2::SpacePirates_Instr_15;
+        11728272 => sm_b2::SpacePirates_Instr_18; 11728342 => sm_b2::SpacePirates_Instr_17;
+        11729257 => sm_b2::SpacePirates_Instr_19; 11729469 => sm_b2::SpacePirates_Instr_21;
+        11730024 => sm_b2::SpacePirates_Instr_12; 11730064 => sm_b2::SpacePirates_Instr_14;
+        11730104 => sm_b2::SpacePirates_Instr_11; 11730120 => sm_b2::SpacePirates_Instr_13;
+        11763819 => sm_b3::Enemy_SetAiPreInstr_B3; 11763828 => sm_b3::Enemy_ClearAiPreInstr_B3;
         11763949 => [EnemyInstr_Goto(k, j)]; 11763984 => EnemyInstr_DecTimerAndGoto;
-        11764003 => EnemyInstr_SetTimer; 11764015 => EnemyInstr_Sleep; 11769031 => Botwoon_Instr_1;
-        11769047 => Botwoon_Instr_2; 11769063 => Botwoon_Instr_3; 11769079 => Botwoon_Instr_4;
-        11769095 => Botwoon_Instr_5; 11769111 => Botwoon_Instr_6; 11769127 => Botwoon_Instr_7;
-        11769143 => Botwoon_Instr_8; 11769159 => Botwoon_Instr_9; 11769175 => Botwoon_Instr_10;
-        11769191 => Botwoon_Instr_SetSpitting; 11769202 => Botwoon_Instr_QueueSpitSfx;
-        11789637 => EscapeEtecoon_Instr_1; 11789840 => EscapeEtecoon_Instr_2;
-        11791016 => EscapeDachora_Instr_2; 11791032 => EscapeDachora_Instr_3;
-        11791049 => EscapeDachora_Instr_1; 11791063 => EscapeDachora_Instr_4;
-        11113910 => MotherBrain_Instr_MoveBodyUp10Left4;
-        11113920 => MotherBrain_Instr_MoveBodyUp16Left4;
-        11113930 => MotherBrain_Instr_MoveBodyUp12Right2;
-        11113950 => MotherBrain_Instr_MoveDown12Left4;
-        11113960 => MotherBrain_Instr_MoveDown16Right2;
-        11113970 => MotherBrain_Instr_MoveDown10Right2; 11113980 => MotherBrain_Instr_MoveUp2Right1;
-        11113996 => MotherBrain_Instr_MoveRight2; 11114012 => MotherBrain_Instr_MoveUp1;
-        11114018 => MotherBrain_Instr_MoveUp1Right3_Sfx; 11114040 => MotherBrain_Instr_Down2Right15;
-        11114056 => MotherBrain_Instr_Down4Right6; 11114072 => MotherBrain_Instr_Up4Left2;
-        11114088 => MotherBrain_Instr_Up2Left1_Sfx; 11114110 => MotherBrain_Instr_Up2Left1_Sfx2;
-        11114132 => MotherBrain_Instr_MoveLeft2; 11114148 => MotherBrain_Instr_MoveDown1;
-        11114154 => MotherBrain_Instr_MoveDown1Left3;
-        11114170 => MotherBrain_Instr_MoveUp2Left15_Sfx; 11114192 => MotherBrain_Instr_MoveUp4Left6;
-        11114208 => MotherBrain_Instr_MoveDown4Right2;
-        11114224 => MotherBrain_Instr_MoveDown2Right1;
-        11114240 => MotherBrain_Instr_SetPose_Standing;
-        11114248 => MotherBrain_Instr_SetPose_Walking;
-        11114256 => MotherBrain_Instr_SetPose_Crouched;
-        11114264 => MotherBrain_Instr_SetPose_CrouchedTrans;
-        11114272 => MotherBrain_Instr_SetPose_DeathBeamMode;
-        11114280 => MotherBrain_Instr_SetPose_LeaningDown;
-        11115208 => MotherBrain_Instr_SpawnEprojToOffset;
-        11115247 => MotherBrain_Instr_SpawnDeathBeamEproj;
-        11115269 => MotherBrain_Instr_IncrBeamAttackPhase;
+        11764003 => EnemyInstr_SetTimer; 11764015 => EnemyInstr_Sleep;
+        11769031 => sm_b3::Botwoon_Instr_1; 11769047 => sm_b3::Botwoon_Instr_2;
+        11769063 => sm_b3::Botwoon_Instr_3; 11769079 => sm_b3::Botwoon_Instr_4;
+        11769095 => sm_b3::Botwoon_Instr_5; 11769111 => sm_b3::Botwoon_Instr_6;
+        11769127 => sm_b3::Botwoon_Instr_7; 11769143 => sm_b3::Botwoon_Instr_8;
+        11769159 => sm_b3::Botwoon_Instr_9; 11769175 => sm_b3::Botwoon_Instr_10;
+        11769191 => sm_b3::Botwoon_Instr_SetSpitting; 11769202 => sm_b3::Botwoon_Instr_QueueSpitSfx;
+        11789637 => sm_b3::EscapeEtecoon_Instr_1; 11789840 => sm_b3::EscapeEtecoon_Instr_2;
+        11791016 => sm_b3::EscapeDachora_Instr_2; 11791032 => sm_b3::EscapeDachora_Instr_3;
+        11791049 => sm_b3::EscapeDachora_Instr_1; 11791063 => sm_b3::EscapeDachora_Instr_4;
+        11113910 => sm_a9::MotherBrain_Instr_MoveBodyUp10Left4;
+        11113920 => sm_a9::MotherBrain_Instr_MoveBodyUp16Left4;
+        11113930 => sm_a9::MotherBrain_Instr_MoveBodyUp12Right2;
+        11113950 => sm_a9::MotherBrain_Instr_MoveDown12Left4;
+        11113960 => sm_a9::MotherBrain_Instr_MoveDown16Right2;
+        11113970 => sm_a9::MotherBrain_Instr_MoveDown10Right2;
+        11113980 => sm_a9::MotherBrain_Instr_MoveUp2Right1;
+        11113996 => sm_a9::MotherBrain_Instr_MoveRight2;
+        11114012 => sm_a9::MotherBrain_Instr_MoveUp1;
+        11114018 => sm_a9::MotherBrain_Instr_MoveUp1Right3_Sfx;
+        11114040 => sm_a9::MotherBrain_Instr_Down2Right15;
+        11114056 => sm_a9::MotherBrain_Instr_Down4Right6;
+        11114072 => sm_a9::MotherBrain_Instr_Up4Left2;
+        11114088 => sm_a9::MotherBrain_Instr_Up2Left1_Sfx;
+        11114110 => sm_a9::MotherBrain_Instr_Up2Left1_Sfx2;
+        11114132 => sm_a9::MotherBrain_Instr_MoveLeft2;
+        11114148 => sm_a9::MotherBrain_Instr_MoveDown1;
+        11114154 => sm_a9::MotherBrain_Instr_MoveDown1Left3;
+        11114170 => sm_a9::MotherBrain_Instr_MoveUp2Left15_Sfx;
+        11114192 => sm_a9::MotherBrain_Instr_MoveUp4Left6;
+        11114208 => sm_a9::MotherBrain_Instr_MoveDown4Right2;
+        11114224 => sm_a9::MotherBrain_Instr_MoveDown2Right1;
+        11114240 => sm_a9::MotherBrain_Instr_SetPose_Standing;
+        11114248 => sm_a9::MotherBrain_Instr_SetPose_Walking;
+        11114256 => sm_a9::MotherBrain_Instr_SetPose_Crouched;
+        11114264 => sm_a9::MotherBrain_Instr_SetPose_CrouchedTrans;
+        11114272 => sm_a9::MotherBrain_Instr_SetPose_DeathBeamMode;
+        11114280 => sm_a9::MotherBrain_Instr_SetPose_LeaningDown;
+        11115208 => sm_a9::MotherBrain_Instr_SpawnEprojToOffset;
+        11115247 => sm_a9::MotherBrain_Instr_SpawnDeathBeamEproj;
+        11115269 => sm_a9::MotherBrain_Instr_IncrBeamAttackPhase;
     }
 }
 pub unsafe fn EnemyMain(game: &mut Game) {
@@ -2146,29 +1985,31 @@ crate::game::address_dispatch! {
     pub unsafe fn CallHitboxTouch(ea: u32, game: &mut Game) => ea;
         call (game); default { Unreachable(game); };
     {
-        10518563 => Enemy_NormalTouchAI_A0; 10670984 => MaridiaLargeSnail_Func_12;
-        10670988 => MaridiaLargeSnail_Touch; 10780707 => Enemy_NormalTouchAI_A4;
-        10795325 => Crocomire_Func_92; 10795344 => [()]; 10846284 => [()];
-        10851818 => Draygon_Touch; 10874348 => SporeSpawn_Touch; 10936153 => sub_A6DF59;
-        10940479 => CeresSteam_Touch; 10977356 => [()]; 10982539 => Kraid_Touch_ArmFoot;
-        10982544 => KraidsArm_Touch; 11001237 => Phantoon_Touch; 11122117 => [()];
-        11122118 => MotherBrainsBrain_Touch; 11192695 => GoldTorizo_Touch;
-        11700076 => WalkingSpacePirates_Touch;
+        10518563 => Enemy_NormalTouchAI_A0; 10670984 => sm_a2::MaridiaLargeSnail_Func_12;
+        10670988 => sm_a2::MaridiaLargeSnail_Touch; 10780707 => sm_a4::Enemy_NormalTouchAI_A4;
+        10795325 => sm_a4::Crocomire_Func_92; 10795344 => [()]; 10846284 => [()];
+        10851818 => sm_a5::Draygon_Touch; 10874348 => sm_a5::SporeSpawn_Touch;
+        10936153 => sm_a6::sub_A6DF59; 10940479 => sm_a6::CeresSteam_Touch; 10977356 => [()];
+        10982539 => sm_a7::Kraid_Touch_ArmFoot; 10982544 => sm_a7::KraidsArm_Touch;
+        11001237 => sm_a7::Phantoon_Touch; 11122117 => [()];
+        11122118 => sm_a9::MotherBrainsBrain_Touch; 11192695 => sm_aa::GoldTorizo_Touch;
+        11700076 => sm_b2::WalkingSpacePirates_Touch;
     }
     pub unsafe fn CallHitboxShot(ea: u32, j: u16, game: &mut Game) => ea;
         call (game); default { Unreachable(game); };
     {
-        10518573 => Enemy_NormalShotAI_A0; 10649676 => [()]; 10671028 => MaridiaLargeSnail_Shot;
-        10780717 => Enemy_NormalShotAI_A4; 10795345 => Crocomire_Func_93;
-        10795368 => Crocomire_Func_94; 10795525 => Crocomire_Func_95; 10795700 => Crocomire_Func_1;
-        10846253 => Enemy_NormalShotAI_A5; 10846278 => CreateADudShot; 10846284 => [()];
-        10851824 => Draygon_Shot; 10874202 => SporeSpawn_Shot; 10911820 => [()];
-        10936202 => Ridley_Shot; 10977356 => [()]; 10982581 => [()];
-        10982582 => [Kraid_Arm_Shot(j, game)]; 11001243 => Phantoon_Shot;
-        11121923 => MotherBrainsBody_Shot; 11121927 => MotherBrainsBrain_Shot;
-        11192700 => Torizo_Shot; 11192769 => [()]; 11192770 => Torizo_Func_8;
-        11700089 => WalkingSpacePirates_Shot; 11700168 => WalkingSpacePirates_87C8;
-        11700286 => WalkingSpacePirates_883E;
+        10518573 => Enemy_NormalShotAI_A0; 10649676 => [()];
+        10671028 => sm_a2::MaridiaLargeSnail_Shot; 10780717 => sm_a4::Enemy_NormalShotAI_A4;
+        10795345 => sm_a4::Crocomire_Func_93; 10795368 => sm_a4::Crocomire_Func_94;
+        10795525 => sm_a4::Crocomire_Func_95; 10795700 => sm_a4::Crocomire_Func_1;
+        10846253 => sm_a5::Enemy_NormalShotAI_A5; 10846278 => CreateADudShot; 10846284 => [()];
+        10851824 => sm_a5::Draygon_Shot; 10874202 => sm_a5::SporeSpawn_Shot; 10911820 => [()];
+        10936202 => sm_a6::Ridley_Shot; 10977356 => [()]; 10982581 => [()];
+        10982582 => [sm_a7::Kraid_Arm_Shot(j, game)]; 11001243 => sm_a7::Phantoon_Shot;
+        11121923 => sm_a9::MotherBrainsBody_Shot; 11121927 => sm_a9::MotherBrainsBrain_Shot;
+        11192700 => sm_aa::Torizo_Shot; 11192769 => [()]; 11192770 => sm_aa::Torizo_Func_8;
+        11700089 => sm_b2::WalkingSpacePirates_Shot; 11700168 => sm_b2::WalkingSpacePirates_87C8;
+        11700286 => sm_b2::WalkingSpacePirates_883E;
     }
 }
 pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {

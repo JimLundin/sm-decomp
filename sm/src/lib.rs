@@ -153,19 +153,19 @@ pub mod game {
     macro_rules! address_dispatch {
         ($($(#[$metadata:meta])* $visibility:vis unsafe fn $name:ident $parameters:tt $(-> $result:ty)?
             => $selector:expr; $(setup { $($setup:tt)* })? call $arguments:tt; default $fallback:expr;
-            { $($pattern:pat => $target:tt;)* })*) => {
+            { $($pattern:pat => $target:tt $(::$tail:ident)*;)* })*) => {
             $(
                 $(#[$metadata])*
                 $visibility unsafe fn $name $parameters $(-> $result)? {
                     $($($setup)*)?
                     match $selector {
-                        $($pattern => $crate::game::address_dispatch!(@call $arguments $target),)*
+                        $($pattern => $crate::game::address_dispatch!(@call $arguments $target $(::$tail)*),)*
                         _ => $fallback
                     }
                 }
             )*
         };
-        (@call ($($argument:expr),* $(,)?) $target:ident) => {
+        (@call ($($argument:expr),* $(,)?) $target:path) => {
             $target($($argument),*)
         };
         (@call $arguments:tt [$($expression:tt)*]) => {
