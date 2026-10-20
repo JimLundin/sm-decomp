@@ -72,6 +72,11 @@ Latest resource direction: finish and commit validated current work, then
 focus only on substantial reductions. Leave small follow-ups parked and keep
 resources available to the existing large experiments. Do not expand new
 standalone few-hundred-line drafts while those experiments are running.
+The subsequent resource request puts this reduction workstream on hold:
+leave its completed agents idle and launch no competing scans, builds or
+replays. Unused generated binaries and compiler expansions were removed;
+unique patches, reports, source snapshots and the main experiments remain.
+Resume reduction work when the user releases this resource hold.
 
 Keep Game ownership, byte-compatible g_ram, ROM formats and observable
 behavior, including quirks. sm/src is the source of truth; use ram_map.rs,
