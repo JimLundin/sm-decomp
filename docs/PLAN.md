@@ -60,6 +60,13 @@ not establish the substantial remaining budget. Reports are under
 `sm-multisegment-4c47d48b` and `sm-hdma-wave-price-083b1e69`; do not repeat those
 bounded studies. The under-100000 target remains unfinished.
 
+After landing, the four completed draft/review roots contain 125 files /
+36046951 bytes and have no active helper dependency. Live replay workers belong
+to the separate bindings checkout; they and current build caches are retained.
+No Git lock was present. Checked native PowerShell removal of the four roots
+was rejected by automatic approval review as **"blocked by policy"**. No files
+were deleted. This cleanup note changes no source or validation result.
+
 ## Shared occupied-file navigation (2026-10-20)
 
 File-copy source selection and file-clear selection now share the complete
