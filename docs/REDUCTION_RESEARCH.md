@@ -5,19 +5,23 @@ preserving behavior. This note records primary-source research, scanner trials
 and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
-Latest direction: start from the compact C representation to discover repeated
-game operations, and prevent translation noise from obscuring them. The user
-does not request a restart or a maintained compiler fork. An early-source
-experiment is useful when it explains expansion or exposes a shared algorithm;
-beating current main is a separate adoption question.
+Latest result: executable translation rules learned from current Rust compose
+on the complete compact original: **195,699 -> 162,136 lines (-33,563)**,
+including support and overlap, with both optimized roots compiling. A separate
+rule regenerates all 24 corpse tile callbacks as calls to the current helper:
+**793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
+current Rust's ordinary-function form exactly, and 126,720 C cases pass.
+The section "Tailored emission learned from current Rust" records the source
+lineage, runnable rules, complete-unit integration and actual limitations.
 
-Changing the C RAM boundary now prevents **32,941 generated Rust lines** across
-all 32 gameplay units. Separately, composing the tested emission cleanups gives
-a complete **195,699-line** early Rust control, down **83,237** from 278,936.
-The paired numeric control also separates the earlier **44,215-line** result:
-**38,266** lines of emission noise, followed by **5,949** from C restructuring
-under the same policy. The source-first section records checks and limits.
-These experiments have overlapping savings and different scopes; do not add them.
+Earlier implemented C game-family replacements plus native Rust door sequences
+remove **3,016 Rust lines (82,234 -> 79,218)** across 16 complete gameplay units
+and shared support under identical RAM/numeric controls. That candidate has a
+different scope and cannot be added to the latest complete-original result.
+The earlier constructor/constant-cast prototype is included in the new composed
+pipeline at its measured incremental cost. These are original-source experiments
+without a restart or maintained compiler fork; current-main adoption remains a
+separate measured change.
 
 The subsequent Cpp2Rust trial builds and executes both backends on real C;
 neither reduces source volume in the tested scopes. Its default mode does
@@ -674,6 +678,431 @@ coverage. Exact paired per-file counts and three extracted C/raw-Rust/compact-
 Rust examples are in TEMP/sm-compact-source-first/numeric-control/{REPORT.md,
 PER_FILE.md,SNIPPETS.md,RESULTS.json}. The original compact source is under
 numeric-control/compact-before/sm/src.
+
+## Implemented game patterns and deliberately written Rust
+
+The next round uses the original named C to implement repeated game behavior,
+while separate experiments compare C, automatic Rust and a deliberately written
+Rust equivalent. The user released the machine and agent capacity for this
+work. The candidates are code replacements with compiled controls and component
+checks; source discovery is not limited to the previous clone detector's shapes.
+
+### Complete game-family replacements
+
+The first ten selected experiments compose into **79,473 -> 76,900 Rust lines
+(-2,573)** across 15 complete affected gameplay units, the shared RAM helper
+and both module roots. Both sides receive the identical RAM preparation and
+numeric policy. The corresponding raw emitted pair is **94,529 -> 91,374
+(-3,155)**. These are two measurements of the same candidate, not additive
+savings. This control excludes the previously measured emission improvements.
+
+The composed responsibilities are:
+
+| Responsibility | Implemented replacement |
+| --- | --- |
+| Samus control | All 28 movement and 28 input modes, five airborne forms and shared pose-commit stages |
+| Player firing | Beam, missile, bomb and special-beam construction, slot allocation and record initialization |
+| File management menus | Complete copy/clear phases and shared three-slot rendering, including different cancellation and SRAM effects |
+| Room/block behavior | 74 door-scroll callbacks become ordered recipes; eight breakable-block variants share setup |
+| Space Pirates | Direction-aware wall, somersault, lunge, recovery and patrol algorithms |
+| Beetom | Shared walking, jumping, attachment and recoil lifecycle with explicit slot-capture differences |
+| Boss phases | Draygon's 16 paired attack phases and six directional Mother Brain beam sweeps |
+| Ridley tail | Ordered seven-joint dynamics, position accumulation, hit tests and mode transitions |
+| Enemy projectiles | Shared integration, fan/linear movement, origin handling and retirement paths |
+| Room collision | Common span, cell and strip traversal serving Samus, player projectiles and enemies |
+
+The generated cohort has **3,128 -> 2,910 function definitions**: 290 old
+names retire and 72 new names are introduced. Numeric dispatch identities
+remain represented. The pure C patch removes **2,107 physical `.c` lines**
+and **136 header lines**. Applying the projectile study's blank-line rule to
+both C sides attributes **2,096** to the replacement and 11 to pre-existing
+extra blank lines. All Rust prices already use one formatter. Headers remain
+separate from the user's original-C size ceiling.
+
+All 72 original/replacement C object builds, 64 raw/normalized Rust unit checks,
+four metadata roots and four optimized roots pass. Component checks exercise
+the actual selected routines, including persistent projectile and menu sequences,
+byte aliases and mutation of the live enemy/projectile index by dependencies.
+Some boundaries use traced stubs or synthetic ROM. These checks do not establish
+full-game equivalence of the integrated candidate. The collision checks found
+and corrected a real draft missile-return bug. Their final 106,496 cases use
+valid mapped coordinates; an earlier off-map synthetic matrix is superseded.
+
+The matched controls also reject plausible designs: Rio flight sharing saves
+nine raw Rust lines but **adds 43** after numeric normalization; the alternative
+special-beam recipe adds **28** normalized lines. They are retained as negative
+experiments and excluded from the selected patch. The earlier door-clone study
+overlaps 36 of the 74 callbacks, so this round cannot be added to that result.
+The full ordered-door alternative also covers 38 previously unshared entries.
+
+Frozen first aggregate: TEMP/sm-c-pattern-experiments/integration/combined,
+including REPORT.md, RESULTS.json, algorithms.patch, complete source snapshots,
+source hashes and per-family validation references. Individual candidate code
+and reports are under samus, player-fire, presentation, blocks, pirates,
+enemies, boss-phases, boss-motion, projectiles and collision in the same parent.
+
+Two completed extensions then add Yellow Pipe Bug's complete lifecycle and
+reuse the same room-collision algorithm for enemy projectiles. The latter
+costs 11 more normalized lines than a standalone duplicated loop, but gives
+one tested traversal shared by all four consumer classes. The final pure-C
+cohort contains 16 gameplay units plus the RAM helper and root:
+
+| Identically prepared/normalized complete cohort | Rust lines |
+| --- | ---: |
+| Original C | **82,234** |
+| Selected C algorithm replacements | 79,432 |
+| Same replacements, with deliberate native Rust door sequences | **79,218** |
+
+The pure-C replacement saves **2,802** Rust lines. The mixed C/native-Rust
+candidate saves **3,016**, including **214** beyond the pure-C output. Its
+raw formatted pair is **97,689 -> 94,044 (-3,645)**. The native table replaces
+the generated door implementation in the measured tree; both versions are not
+left counted or maintained. The pure-C patch removes 2,288 physical `.c` lines,
+or **2,277 with the blank-line control**, plus 144 separate header lines.
+
+All 72 C checks, 68 raw/normalized Rust unit checks, four metadata roots and
+the complete optimized roots pass. The unchanged original optimized builds
+are reused for the final mixed comparison. Yellow Pipe Bug adds 47,104
+four-way component cases; the projectile collision extension checks both
+standalone/shared forms against C and generated Rust. The exact native door
+adaptation passes all 6,464 cases across eight implementations. Integrated
+gameplay/SNES replay remains untested. Frozen final artifacts are under
+integration/combined-extended (C patch) and integration/combined-mixed
+(complete mixed Rust roots, counts and deliberate-door-rust.patch).
+
+### Test the Rust representation of the replacement itself
+
+The door experiment exposes a concrete C/Rust representation choice. A packed
+64-bit scroll recipe produces 2,196 lines for the full door bank; explicit C
+rows produce 2,332. A deliberately written Rust version instead returns one
+of 63 borrowed `(index, color)` slices and executes one ordered loop. Rust's
+borrowed constant slices avoid the separate C table-index/count plumbing.
+
+That complete bank is **1,980 lines**, versus **2,837** original generated
+lines: **857 removed**, and **216 fewer than the packed C2Rust candidate**.
+Combined with the selected block setup in that standalone comparison, it is
+**11,362 -> 10,326 (-1,036)**. This is a native Rust replacement, not a claim
+that C2Rust emitted it. All 74 numeric cases, nine other dispatcher branches
+and 65 retained function bodies remain; 6,464 full-RAM/return cases pass across
+seven C/Rust implementations without stubs. The complete optimized root builds.
+These counts overlap the aggregate's door change; they are not extra savings
+until composed under its identical controls. Source: blocks/native-door.patch
+and the accompanying REPORT.md.
+
+### Measure reasonable translation on complete routines
+
+The broadest completed substitution in this round targets ordinary record
+construction and named integer constants. On the **already compact complete
+original Rust**, the actual composed result is **195,699 -> 192,013 (-3,686)**:
+
+| Applied substitution | Complete Rust lines | Incremental removal |
+| --- | ---: | ---: |
+| Existing compact original control | 195,699 | - |
+| Typed constructors for repeated C-origin record literals | 193,702 | 1,997 |
+| Plus proved named-constant cast composition | **192,013** | **1,689** |
+
+The constructor pass replaces **759 literals across 11 record types**, including
+SPC transfer maps, DMA/HDMA and PLM arguments, points and collision results.
+Every constructor, declaration and caller is counted. Layout, field expressions,
+their evaluation order and the consumers remain unchanged; inverse expansion
+recovers all original record literals with zero token differences. The actual
+SPC copy-to/from-RAM routines pass 256 cases with 659 ordered transfers each.
+This is a translation experiment; current main already uses constructors for
+some of these types.
+
+The second pass handles **3,026 integer cast sites** using actual module-local
+types/values, preserving low bits or proving that an intermediate conversion
+cannot truncate. Ambiguous symbols are rejected; a global map of repeated
+generated typedef names was insufficient and was corrected before final checks.
+It changes no constant declarations or ABI. All 986,066 executed comparisons,
+including every actual selected constant and all 92 widening sites, pass.
+The complete composed optimized crate compiles. Neither count includes the
+older numeric/declaration/RAM savings or the new C algorithm aggregate.
+
+The new Draygon profile supplies a concrete threshold control: its complete
+normalized bank/helper/root is **3,088**, named-constant lowering gives **3,036**,
+and an ordinary native enum/immutable profile gives **3,034**. Forcing a generic
+constructor onto its two rows then grows it to **3,052**. Emit constructors
+where their full repeated cohort repays the helper cost, rather than applying
+one representation to every table. The four variants agree on all descriptor
+words, direction/phase lookups, discriminants and layouts, and compile optimized.
+Artifacts: TEMP/sm-c-pattern-experiments/smart-data.
+
+Two independent experiments retain exact C/automatic/normalized/handwritten
+examples and charge their complete support code:
+
+| Complete measured unit | Automatic Rust | Compact control | Deliberately written Rust |
+| --- | ---: | ---: | ---: |
+| Twelve named-memory gameplay routines, including address map/API/root | 348 | 250 using generic RAM helpers | **213** |
+| RNG plus three projectile-velocity routines, including helpers | 131 | 108 using numeric normalization | **63** |
+
+The memory experiment preserves named C lvalues through translation markers,
+then emits byte-compatible loads/stores without references into RAM or a getter
+per field. Its full-bank automatic result is **14,583**, versus **13,453** with
+generic pointer helpers: restoring names alone increases this comparison by
+1,130 lines. The handwritten 12-routine target saves 37 beyond the generic
+control. This separates a desirable naming property from an actually compact
+implementation. Six representations pass 110,592 comparisons against original
+C, plus pointer-offset, overlapping-write and evaluation-order checks. The
+complete bank compiles; full-bank runtime coverage is not claimed.
+
+The arithmetic family has 39 lines of original C routines, or 53 including
+its C support. Native Rust recovers byte extraction and 8.8 velocity advancement,
+preserving the fraction store before the position read. A reusable pass applies
+114 proved local-byte substitutions, rejecting escaping addresses, effectful
+right-hand sides and unknown types. On the complete compact snapshot it saves
+47 lines beyond the already-studied constant-index control. Integrating the
+four native routines adds 28, for **75 genuinely additional lines**, not the
+large apparent difference from raw output. Optimized full-crate compilation,
+all 65,536 RNG seeds, full-RAM cases and alias/ordering checks pass.
+
+These prototypes identify exact emitter decisions and implement substitutes;
+their measured scale determines whether a category deserves broader work.
+Retained reports and full examples: TEMP/sm-c-pattern-experiments/smart-memory
+and smart-arithmetic, each with REPORT.md and EXAMPLES.md. They do not require
+a maintained compiler fork or replacing the current implementation wholesale.
+
+The control-flow comparison supplies a useful negative control. Five complete
+Samus routines and support occupy **395 fresh C2Rust lines, 283 compact lines,
+and 247 with three deliberate Rust replacements**. A bounded executable
+value-join rule recovers six of those 36 lines; across the complete bank it
+removes **12 lines (17,871 -> 17,859)**. Fresh C2Rust already turns the examined
+forward gotos into labeled blocks, so a separate marker-to-block pass yields
+no additional compact saving. Do not attribute that compiler improvement to
+the experimental postpass. All 4,954 constructed cases pass 39,632 full-RAM
+comparisons across C and eight Rust forms, including ordered dependency effects.
+Two other bank joins have static/compiler coverage only. Full examples,
+executable rules and results: TEMP/sm-c-pattern-experiments/smart-control.
+
+## Tailored emission learned from current Rust
+
+The latest experiment treats current **38c65eba** as a source of target
+representations. Each rule traces original C (578f90b), initial generated
+Rust (1311d3b4) and current Rust, then emits the compact representation from
+the old inputs. Reproducing current sharing automatically is the intended
+result; this does not require rediscovering an algorithm or beating current
+main. The prototypes remain under TEMP/sm-tailored-from-current.
+
+### Generate an existing shared algorithm from the original effects
+
+The strongest complete example regenerates all **24 corpse tile move/copy
+callbacks** as calls to current `transfer_corpse_tiles`. The rule derives
+tile bases, row gates, limits, indexing modes and move/copy flags from the
+original C's ordered guards and memory effects. It has no lookup table of
+member names or descriptors. The existing native helper is reused and its
+complete 53 lines are charged to the output.
+
+| Complete family, including all named callbacks and numeric routing | Lines |
+| --- | ---: |
+| Original C | 793 |
+| Initial generated Rust | 2,319 |
+| Automatically emitted ordinary Rust, including shared helper | **208** |
+| Current Rust expanded to the same ordinary representation | **208** |
+
+The two 208-line forms are byte-identical. The recognizer checks 6,053 original
+functions, accepts the complete 24-member family, and derives all 21 members
+outside its three grammar examples correctly. Renaming/parameter changes
+pass; reordered writes, cached progress, different geometry, extra effects
+and unsupported declarations are rejected. This is retrospective transfer
+within a known family, not blind discovery of new domain abstractions.
+
+All **126,720 original-C cases** pass **506,880 full-RAM comparisons** against
+four Rust forms, including overlapping source/destination and aliases with
+the live progress word. The full current crate containing the generated
+callbacks compiles optimized. No external gameplay callees are stubbed in
+this family; no whole-game/SNES replay is claimed. The original Mother Brain
+typed accesses are exercised with aligned indices. Callback-macro line-wrap
+differences are excluded by comparing ordinary expanded functions. Shared
+Game/storage/layout infrastructure remains common, outside family counts.
+
+The usable translation boundary is concrete: specify a current helper's
+effect contract, recognize exactly that contract in C, derive parameters and
+emit named calls directly. Domain selection remains a human decision;
+unrecognized bodies remain available for ordinary translation. Sources,
+standalone `emit.py`, tests and complete comparison: algorithms/REPORT.md.
+
+### Reproduce the current memory interface
+
+A separate source-informed rule preserves C RAM names and emits current
+`word!`, `ram_ptr!` and `words!` access using the actual current `Game`.
+Twelve complete routines occupy **319 raw-with-Game lines versus 176 emitted
+lines**; adding both module-registration lines equally gives **321 -> 178**.
+Imports are included, with zero new helper definitions or map rows. Existing
+Game, RAM and runtime support is held identical in both full-core snapshots.
+
+All **18,432 original-C states** agree with both raw-Game and emitted-Game
+Rust on complete RAM, returns and dependency counts. Current-reference checks
+cover 16,896 cases because `ClearBossBitForCurArea` has been removed from main.
+Current boss-bit operations also write scratch byte 0x5e7, an explicit oracle
+repair in 4cf25663 absent from upstream C. The 3,072 affected comparisons model
+that specific repair; it is not smuggled into a generic translation rule or
+hidden by a RAM mask. The comparable 11 current routines occupy 114 body lines
+versus 156 emitted, exposing further arithmetic/control simplification to
+learn. Full lineage and the executable emitter: memory/LINEAGE.md and REPORT.md.
+
+### Avoid expanding auxiliary C metadata
+
+The historical `ram_map.rs` table was generated from C headers after
+transpilation; it is not C2Rust gameplay output. A new generator validates
+every row against the original C definition and emits the current `ram_vars!`
+representation: **7,042 -> 1,231 lines (-5,811)**, including the whole macro
+and its named scalar/array maps. An optimized DLL compares all **1,169 rows**
+in address, name, type, shape and sequence. The repeated alias is retained;
+four malformed/mismatched inputs are rejected. This reproduces a current
+metadata improvement and is accounted separately from game-function emission.
+Source, reproducible generator and checks: ram-metadata/REPORT.md.
+
+### Emit current shared declarations and structured control
+
+The current `typed_struct!`, `typed_constants!` and `set_fields!` forms supply
+another executable translation template. On the complete compact original
+control, the pass emits 228 C-matched structures (6,285 fields), 5,373 named
+C constants in 299 groups, and 590 ordered literal stores in 234 groups:
+**195,699 -> 189,854 (-5,845)**. All macro definitions, owner modules,
+compatibility reexports and registration are counted. Complete inverse
+expansion recovers the input tokens; all structure sizes/alignments, 6,285
+field offsets and 5,373 constant values are checked in compiled Rust. The
+complete optimized root builds.
+
+Applied after the earlier constructor/constant-cast pass, the actual composed
+output is **186,168**, or **9,531 below 195,699**. Both independent passes
+happen to retain their full measured savings in this composition; this is
+an executed combined tree and optimized build, not a sum of detector hits.
+The initial raw control separately gives 278,936 -> 267,217 from the current
+data templates. Its cast-heavy stores become eligible only after numeric
+lowering, demonstrating why pass order matters. Original named-constant
+duplicates are already shared in the compact control; merely seeing local
+enum aliases does not establish another ownership saving. Source and inverse
+passes: data-types.
+
+The control-flow rule similarly learns actual current transformations:
+two-state generated dispatch variables become Boolean decisions; eligible
+counter loops become typed ranges. The complete historical root gives
+**278,936 -> 277,585 (-1,351)** across 113 decision variables, 74 terminal-tested
+loops and 93 reused while-loop recoveries. All 106 previously identified
+current decision variables map to the same original label pairs/polarities.
+The full optimized crate and 4,348 compiled decision-trace comparisons pass;
+628 compiled terminal-loop comparisons check 4,639 sequence values and all
+74 exit values. These validate control/effect order, not complete gameplay.
+
+Fresh C2Rust already avoids the tested historical `current_block` scaffolding.
+The fresh complete Samus bank instead selects six terminal-tested and eight
+while loops: **17,871 -> 17,814 (-57)**. The pass rejects counters changed by
+the body or observed beyond the accepted scope. In particular, animated tiles'
+handler reloads its index after a callback and remains a live-index loop.
+Do not price obsolete compiler scaffolding as a fresh-translator defect.
+Exact C/initial/current/emitted examples and executable rules: control.
+
+The current primitive-type spelling is a material emission rule in its own
+right. Resolving fixed-width typedef chains and `core::ffi::c_int/c_uint`
+type nodes gives **195,699 -> 183,397 (-12,302)** on the complete compact
+original. The pass makes 100,712 proved type substitutions across all 56 files,
+preserving domain aliases, compatibility declarations, imports and ABI.
+Generic/local shadowing, unresolved providers and unsupported native types
+are excluded. Complete formatted inverse-token checks and optimized compilation
+pass, as do 32 compiled type-identity witnesses and scoped negative controls.
+It adds no helper code. Run this before macro grouping hides ordinary type
+nodes. Source and executable CLI: primitive-types/lower_primitive_types.py.
+
+The current callback representations also admit a generic emitter. On a
+separate historical native-Rust cohort it produces **140,334 -> 138,342
+(-1,992)**, including 120 lines of shared support and registration.
+It handles 118 dispatchers, 1,904 callback bodies and 95 tables with 1,039
+entries, preserving 647 external dispatch arms. Both complete optimized roots
+compile. Compiler-expanded comparison retains the same 7,310 qualified
+functions/signatures; 7,192 ordinary bodies match tokens, and the other 118
+dispatchers match selector, setup, default and complete address/target/ordered
+argument maps. All 7,231 expanded static/constant items also agree. These are
+structural correspondence checks, not execution of every gameplay callback.
+The separate complete animated-tiles runtime pilot exercises the composed
+emitter. Its support is shared with current core; the broad cohort's savings
+must not be added to another baseline without running the pass there. The
+complete numeric map contains 2,609 routes; 672 are retained across the 647
+external arms. Report and reusable `lower_tree.py`: dispatch/REPORT.md.
+
+### Compile the rules together in a complete current-engine unit
+
+The animated-tiles pilot composes source-named RAM access, native Game/call
+adaptation, current constant ownership, two safe range recoveries and callback
+emission over the complete original unit. It automatically derives Game
+parameters for all 34 functions, 70 direct calls and the 13 external owners;
+no current function bodies are copied. Unknown ownership, external static
+state, function-pointer escapes, existing Game bindings and ambiguous alias
+occurrences are rejected. This is a bounded complete-unit adapter, not a
+general whole-program ownership converter.
+
+The original C file has **273 lines**; its exact initial Git Rust file has
+**671**, fresh C2Rust emits **723**, and the final tailored module has **296**.
+The earlier 679-line independent-transpiler fixture is a different input and
+is not used for this lineage. Source-naming markers temporarily produce
+778 lines before lowering; these transport declarations are removed from
+the final output. The 296-line candidate compiles with actual current Game,
+RAM helpers, constant owners and callback macros, which remain counted in
+the complete current source snapshot.
+
+Independent runtime checks compare original C with the frozen final module:
+**5,004 cases**, all 24 callbacks, 114 persistent sequences and 20 deliberate
+live-index mutations pass. Comparisons include all RAM, returns and 3,958
+ordered dependency entry/exit RAM snapshots. Twelve external dependencies
+use disclosed traced contracts; actual ROM, those callees' complete behavior
+and full-game replay are outside this coverage. All 77 supporting current
+Rust files are byte-identical in the runtime fixture. The boss-bit scratch
+repair is outside this unit and is not silently included in the C contract.
+
+The final current-core candidate also contains the independently generated
+corpse callbacks and compiles optimized. Its physical count is 107,520 ->
+107,545: animated tiles adds 72 over the manually compact current module,
+while corpse macro formatting removes 47. The latter is explicitly excluded
+from algorithm savings; both ordinary corpse forms are 208 lines. This is
+successful automatic recovery toward current output, not a selected main
+size-reduction patch. Reports, frozen code and reproduction commands are in
+integration and animated-tiles-validation.
+
+### Measure the actual whole-original composition
+
+The sequential pipeline runs all compatible broad passes on the same complete
+compact-original control. Both endpoints use the same formatter and compile
+as optimized complete Rust libraries. The result is **195,699 -> 162,136
+lines (-33,563, 17.2%)**, across 56 input and 59 output Rust files. All shared
+owners, macros, imports, aliases and registrations remain in `sm/src` and are
+counted; no original source file is dropped.
+
+| Applied stage in this exact order | Complete lines | Incremental removal |
+| --- | ---: | ---: |
+| Existing compact original | 195,699 | - |
+| Proved native primitive types | 183,397 | 12,302 |
+| Earlier constructors and named-constant casts | 181,260 | 2,137 |
+| Current-derived structured control | 179,961 | 1,299 |
+| Current shared data/type representation | 174,104 | 5,857 |
+| Current C-derived RAM metadata representation | 168,293 | 5,811 |
+| Shared callbacks, dispatchers and tables | **162,136** | **6,157** |
+
+These are measured sequential outputs, not summed standalone results. For
+example, the earlier constructor/cast pass saves 2,137 here rather than its
+standalone 3,686; primitive lowering already handles some of that cost. The
+callback pass saves more on this earlier input than on the separate historical
+native cohort. The 5,811 metadata lines are auxiliary C-derived metadata,
+explicitly included in the total and separate from gameplay emission. The
+corpse-kernel and current-Game animated-tiles pilots use different integration
+boundaries and are not added to this whole-original total.
+
+Independent compiler-expanded verification of the actual final dispatch stage
+preserves all **7,205 qualified function signatures**, 7,087 ordinary function
+bodies, all 118 dispatcher selectors/setup/defaults/ordered route maps, and
+8,687 static/constant items. This actual cohort covers 2,031 callback bodies,
+2,715 numeric routes and 126 tables with 1,490 slots. Earlier stages retain
+their type-identity, inverse-expansion, layout and control-order checks.
+The complete composition has optimized compilation and these applicable
+structural/component proofs; no whole-game runtime replay is claimed.
+
+With the earlier 278,936 -> 195,699 preparation, the actual complete original
+output is now 162,136 rather than 278,936. This is a repeatable partial profile,
+not a claim to reproduce all current engine architecture or generate a whole
+game below 100,000 lines. The useful direction is to extend current-helper
+recognition and preserve source semantics before macro expansion, with ordinary
+translation retained for unsupported forms. No maintained compiler fork is
+needed. Frozen rules, all stage outputs, hashes, compiler results and the
+reproducer are under integration/whole-original and integration/compose_whole.py.
 
 ## Independent transpilers: executed comparisons
 

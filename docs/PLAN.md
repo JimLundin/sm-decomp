@@ -22,6 +22,54 @@ further, by tackling large structural changes before individual cleanup.
 Use **90,000 lines as a stretch planning checkpoint**, not a demonstrated
 forecast. This work order replaces earlier reduction and cleanup queues.
 
+The requested parallel **implemented original-C pattern experiments** are
+complete. The selected mixed C/native-Rust candidate removes **3,016 lines
+(82,234 -> 79,218)** across 16 gameplay units and shared support after identical
+RAM/numeric preparation. Whole-family replacements cover Samus, enemy and
+projectile behavior, menus, bosses, collisions and doors. Paired compilation
+and the documented component checks pass; integrated game replay is untested.
+This is an original-source result, not a current-main deletion budget. All
+previous resource holds remain released. Full costs, rejected alternatives
+and coverage are in [REDUCTION_RESEARCH.md](REDUCTION_RESEARCH.md).
+
+Additional user direction: compare original C, automated Rust and a deliberately
+written reasonable Rust translation, then implement smarter substitutions for
+the expanding categories. Parallel experiments cover named RAM/table lvalues,
+control-flow lowering, and fixed-width carry/word arithmetic. Compare against
+the already-normalized output as well as raw output, compile the actual
+replacements, and check exact byte behavior and ordered effects. Keep this
+translation work distinct from the continuing game-algorithm experiments.
+
+Latest clarification: use current compact Rust as the reference for tailored
+translation. Trace original C through initial generated Rust to current
+`Game`, named RAM access, shared types, callbacks and structured control flow;
+derive executable emission rules from those transformations. Test complete
+cohorts and their composition, including shared-definition and caller costs.
+Distinguish automatically reproducing reductions already present in main
+from new algorithm sharing and cases that still require manual work.
+
+The current-derived algorithm prototype regenerates all 24 corpse tile
+callbacks from original C effects: **793 C -> 2,319 initial Rust -> 208 emitted
+ordinary Rust lines**, including helper and dispatch. The output matches
+current Rust's equivalent ordinary representation exactly. All 126,720 C
+component cases pass; the complete current crate with emitted callbacks
+compiles optimized. A complete animated-tiles unit also emits automatically
+into the current engine: **273 C -> 671 initial Rust -> 296 tailored Rust**,
+with 5,004 C/generated-Rust cases passing. Current helpers and shared owners
+are retained and counted; no current-main reduction is claimed. These are
+executable emission rules, not a proposal to restart or fork a compiler.
+
+The complete compatible emission composition is **195,699 -> 162,136
+(-33,563)** after the earlier compact preparation of the 278,936-line initial
+Rust. It runs primitive types, prior constructors/constants, structured control,
+current data/type templates, RAM metadata and callback/table sharing in order.
+Both complete optimized roots compile. Every support file and stage overlap
+is counted; the separate native-game pilots are not added. Treat this as a
+reusable partial translation profile, not evidence of whole-game runtime
+equivalence or a generated under-100,000 implementation. Current-main source
+remains the production authority; use these rules to expose families before
+pricing and validating an adoption there.
+
 The user also sets the original C implementation as the Rust size ceiling.
 At the exact upstream input 578f90b, the Makefile builds **100,374 physical
 lines of C** in 52 files, including 83,657 in the 32 gameplay banks. All 54 C
@@ -139,15 +187,10 @@ and routines, with **bank-based source organization removed**. Keep bank
 addresses as ROM/dispatch data. Domain ownership and code-volume reduction
 are separate outcomes to measure; a file move alone supplies no deletion.
 
-Latest resource direction: finish and commit validated current work, then
-focus only on substantial reductions. Leave small follow-ups parked and keep
-resources available to the existing large experiments. Do not expand new
-standalone few-hundred-line drafts while those experiments are running.
-The subsequent resource request puts this reduction workstream on hold:
-leave its completed agents idle and launch no competing scans, builds or
-replays. Unused generated binaries and compiler expansions were removed;
-unique patches, reports, source snapshots and the main experiments remain.
-Resume reduction work when the user releases this resource hold.
+Latest resource direction: the user has released the machine and agent
+capacity for these parallel experiments. Focus it on substantial complete
+replacements; keep unrelated small follow-ups parked. Existing source
+snapshots, patches, reports and toolchains remain available for reuse.
 
 Keep Game ownership, byte-compatible g_ram, ROM formats and observable
 behavior, including quirks. sm/src is the source of truth; use ram_map.rs,
@@ -343,6 +386,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Require a materially new named algorithm
    or scope before repeating discovery. The regions and prior results below
    guide coverage, not boundaries that candidate replacements must preserve:
+
+   The current-derived translation experiments are complete as scoped above.
+   Reuse their executable emission passes and C effect recognizers when
+   examining another complete family; do not repeat raw expansion counts or
+   the same clone scans. Domain judgment selects the native helper contract;
+   recognition derives per-member parameters and rejects different effects.
+   Price any production adoption against current Rust and validate it under
+   item 3. The isolated 162,136-line output is a partial translation profile,
+   not a replacement implementation or an under-100,000 result.
 
    The expanded source-first C experiment is complete: sharing 35 algorithm
    groups, retiring forwarding functions, fusing 789 instruction bodies and
