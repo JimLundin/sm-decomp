@@ -6519,8 +6519,10 @@ Performance/storage oversight (2026-10-20): coordinate new heavy builds and
 replays with the active implementation owners. Report normal release time,
 verifier setup time and full replay time separately, with source, movie,
 cache and concurrent-load context. Compare matched runs before calling a
-timing change a regression or improvement. Keep all oracle checks and the
-required final any% replay; use exercised checkpoint segments for iteration.
+timing change a regression or improvement. Select static checks, exercised
+segments and full replays using the current Validation strategy above,
+including its integration cadence. Keep every oracle check enabled within
+selected replay segments and justify checkpoint prefixes and effect tails.
 Use `CARGO_INCREMENTAL=0` for disposable snapshots, registry-only dependency
 seeding and checkout-local game/host artifacts. Do not copy an entire prior
 target directory. After landing or abandoning work, retire its disposable
