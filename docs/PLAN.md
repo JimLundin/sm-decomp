@@ -2655,7 +2655,31 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `1354f34f` shares both map renderers
+Latest reviewed integration (2026-10-20): `50b89505` shares all 249 adjacent
+enemy instruction/timer field pairs across 13 callers. Independent baseline
+AST discovery finds exactly the selected family: 192 instruction-first and
+57 timer-first pairs. Reconstruction from the original receiver and value
+expressions matches all 1190100 source tokens outside the separately checked
+helper/import additions, including comments, literals and punctuation.
+All 74 frozen inputs bind to the committed
+source after Git line-ending normalization; the other 60 inputs are unchanged.
+
+Both receiver evaluations stay at their original assignment statements.
+The macro preserves both field orders, value evaluation, live rereads and
+statement boundaries without introducing a borrow, cached receiver or runtime
+helper. Independently checked helper arms emit the original two assignments.
+Removing only that helper, its comment/re-export and the 13 imports makes
+actual whole-library compiler output identical across all 10230623 bytes.
+No original whitespace, literal or punctuation is normalized in that comparison.
+
+Normal release (27.86s), formatting/check, progress and full any% pass:
+129712/0, native exit 0, 150.47s wall/127.63s replay. Review reused the owner's
+completed build/replay; all 82 source/compiler/fixture/replay pins remain stable.
+Rust lines fall 240 to 132101; all other progress counters remain unchanged.
+The movie covers six rooms and three enemy definitions with no ending/credits
+frames. Wider routes, frontend execution and alias safety remain open.
+
+Included `1354f34f` shares both map renderers
 and all four directional bound scans; `5c69507d` corrects their focused read
 instrumentation. Independent reconstruction binds all 74 committed inputs
 to the composed dispatch candidate. All 321 unselected functions remain exact,
