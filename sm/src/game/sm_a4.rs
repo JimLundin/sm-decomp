@@ -696,7 +696,7 @@ pub unsafe fn Crocomire_Func_52(game: &mut Game) {
         != 0
     {
         let v1: u16 = *((ram_ptr!(game, u16; 0x9015) as *mut u8).offset(1) as *mut u16);
-        crate::update_place! { reference fresh17 = *((ram_ptr!(game, u16; 0x9015) as *mut u8).offset(1) as *mut u16) => (*fresh17).wrapping_add(2); }
+        crate::update_place! { unaligned_word fresh17 = &raw mut (*((ram_ptr!(game, u16; 0x9015) as *mut u8).offset(1) as *mut u16)) => (u16::from_le(fresh17.read_unaligned())).wrapping_add(2); }
         SpawnEprojWithGfx(
             crate::rtl::rom_table_word!(game, 0xa49156, (v0 >> 1) as isize),
             v1,
@@ -1176,7 +1176,7 @@ pub unsafe fn Crocomire_Func_89(game: &mut Game) {
 pub unsafe fn Crocomire_9B86(game: &mut Game) {
     QueueMusic_Delayed8(6, game);
     word!(game.camera_distance_index = 0);
-    crate::update_place! { reference fresh10 = *(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) => (*fresh10) | (2u16); }
+    crate::update_place! { unaligned_word fresh10 = &raw mut (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize))) => (u16::from_le(fresh10.read_unaligned())) | (2u16); }
     QueueMusic_Delayed8(6, game);
     Crocomire_Func_87(null::<u16>(), 0xfff0, game);
     Crocomire_Func_87(null::<u16>(), 0x10, game);

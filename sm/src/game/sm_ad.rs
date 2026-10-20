@@ -420,10 +420,10 @@ pub unsafe fn EnableEarthquakeAframes(a: u16, game: &mut Game) {
 pub unsafe fn HandleMotherBrainBodyFlickering(game: &mut Game) {
     let v0 = gEnemyData(0, game);
     if (*v0).frame_counter & 1 != 0 {
-        crate::update_place! { reference fresh0 = *(ram_ptr!(game, u16; 0x69)) => (*fresh0) | (2u16); }
+        crate::update_place! { unaligned_word fresh0 = &raw mut (*(ram_ptr!(game, u16; 0x69))) => (u16::from_le(fresh0.read_unaligned())) | (2u16); }
         (*v0).properties = ((*v0).properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
     } else {
-        crate::update_place! { reference fresh1 = *(ram_ptr!(game, u16; 0x69)) => (*fresh1 & !(2)); }
+        crate::update_place! { unaligned_word fresh1 = &raw mut (*(ram_ptr!(game, u16; 0x69))) => (u16::from_le(fresh1.read_unaligned()) & !(2)); }
         (*v0).properties = ((*v0).properties) | ((kEnemyProps_Invisible) as u16);
     };
 }

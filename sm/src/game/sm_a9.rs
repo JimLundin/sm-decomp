@@ -497,7 +497,7 @@ crate::game::callback_dispatch! {
     };
     [11111697] MotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx [] {
         *(ram_ptr!(game, u16; 0x91b)) = 257;
-        crate::update_place! { reference fresh8 = *(ram_ptr!(game, u16; 0x59)) => (*fresh8) & (0xfffcu16); }
+        crate::update_place! { unaligned_word fresh8 = &raw mut (*(ram_ptr!(game, u16; 0x59))) => (u16::from_le(fresh8.read_unaligned())) & (0xfffcu16); }
         WriteColorsToPalette(
             0x142,
             0xa9,
@@ -2713,14 +2713,14 @@ pub unsafe fn MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(
         48
     } else {
         if v4 as i32 - 192i32 & 0x8000 != 0 {
-            crate::update_place! { reference fresh2 = *(ram_ptr!(game, u16; 0xafa)) => v4; }
-            word!(game.samus_prev_y_pos = *fresh2);
+            crate::update_place! { unaligned_word fresh2 = &raw mut (*(ram_ptr!(game, u16; 0xafa))) => v4; }
+            word!(game.samus_prev_y_pos = u16::from_le(fresh2.read_unaligned()));
             return 0;
         }
         192
     };
-    crate::update_place! { reference fresh3 = *(ram_ptr!(game, u16; 0xafa)) => v6; }
-    word!(game.samus_prev_y_pos = *fresh3);
+    crate::update_place! { unaligned_word fresh3 = &raw mut (*(ram_ptr!(game, u16; 0xafa))) => v6; }
+    word!(game.samus_prev_y_pos = u16::from_le(fresh3.read_unaligned()));
     word! { game, 0; samus_y_subpos, samus_prev_y_subpos }
     1
 }
@@ -4981,8 +4981,8 @@ crate::game::callback_dispatch! {
         if ((*E).var_F & 0x8000) != 0 {
             (*E).var_A = ((0xa9f180i32) as u16);
             (*E).parameter_2 = 1;
-            crate::update_place! { reference fresh14 = *(ram_ptr!(game, u16; 0xcd20)) => (*fresh14) | (0x100u16); }
-            crate::update_place! { reference fresh15 = *(ram_ptr!(game, u16; 0xcd20, 2)) => (*fresh15) | (0x100u16); }
+            crate::update_place! { unaligned_word fresh14 = &raw mut (*(ram_ptr!(game, u16; 0xcd20))) => (u16::from_le(fresh14.read_unaligned())) | (0x100u16); }
+            crate::update_place! { unaligned_word fresh15 = &raw mut (*(ram_ptr!(game, u16; 0xcd20, 2))) => (u16::from_le(fresh15.read_unaligned())) | (0x100u16); }
             SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb763 as VoidP), game);
             SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x1f, 0x3, 0xb763 as VoidP), game);
         }

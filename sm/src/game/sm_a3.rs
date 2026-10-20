@@ -499,8 +499,8 @@ pub unsafe fn Elevator_Init(game: &mut Game) {
     (*E).parameter_1 = ((*E).parameter_1).wrapping_mul(2);
     (*E).var_A = (*E).base.y_pos;
     if word!(game.elevator_status) != 2 {
-        crate::update_place! { reference fresh5 = *(ram_ptr!(game, u16; 0xe18)) => 0; }
-        word!(game.elevator_flags = *fresh5);
+        crate::update_place! { unaligned_word fresh5 = &raw mut (*(ram_ptr!(game, u16; 0xe18))) => 0; }
+        word!(game.elevator_flags = u16::from_le(fresh5.read_unaligned()));
     }
     if words!(game.elevator_status, elevator_flags) != 0 {
         (*E).base.y_pos = (*E).parameter_2;

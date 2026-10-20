@@ -418,7 +418,7 @@ crate::game::callback_dispatch! {
             (*E).base.properties = v1;
             (*Get_Draygon(0x40i32, game)).base.properties = v1;
             let v2: u16 = word!(game.area_index);
-            crate::update_place! { reference fresh3 = *(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) => (*fresh3) | (1u16); }
+            crate::update_place! { unaligned_word fresh3 = &raw mut (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize))) => (u16::from_le(fresh3.read_unaligned())) | (1u16); }
             Enemy_ItemDrop_Draygon(v2, game);
             Draygon_Func_44(game);
         }
@@ -1548,7 +1548,7 @@ pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
         word_transfers!(game, descending, 14; native(0x19b1) <- value(0));
         enemy_instruction! {[(*E0).base]; instruction = addr_kDraygon_Ilist_E77D as u16, timer = 1}
-        crate::update_place! { reference fresh5 = *(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) => (*fresh5) | (2u16); }
+        crate::update_place! { unaligned_word fresh5 = &raw mut (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize))) => (u16::from_le(fresh5.read_unaligned())) | (2u16); }
         word!(game.scrolling_finished_hook = 0);
         SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x7, 0x1e, 0xb78f as VoidP), game);
     }

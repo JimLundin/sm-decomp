@@ -2327,7 +2327,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let v2: i32 = k as i32 >> 1; };
     [8697821] PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm [] {
-        crate::update_place! { reference fresh84 [fresh85] = *(ram_ptr!(game, u16; 0x1d77)).offset(v2 as isize) => (*fresh84).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh84 [fresh85] = &raw mut (*(ram_ptr!(game, u16; 0x1d77)).offset(v2 as isize)) => (u16::from_le(fresh84.read_unaligned())).wrapping_sub(1); }
         if fresh85 == 1 {
             word! { game, 0; debug_disable_sounds, plm_header_ptr[v2] }
         }
@@ -2581,7 +2581,7 @@ crate::game::callback_dispatch! {
     game: &mut Game,
 ) -> *const u8];
     [8685375] PlmInstr_DecrementAndBranchNonzero [] {
-        crate::update_place! { reference fresh65 [fresh66] = *(ram_ptr!(game, u16; 0x1d77)).offset((k >> 1) as isize) => (*fresh65).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh65 [fresh66] = &raw mut (*(ram_ptr!(game, u16; 0x1d77)).offset((k >> 1) as isize)) => (u16::from_le(fresh65.read_unaligned())).wrapping_sub(1); }
         if fresh66 == 1 {
             plmp.offset(2)
         } else {

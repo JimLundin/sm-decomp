@@ -2108,7 +2108,7 @@ pub unsafe fn FileSelectMap_9_InitRoomSelectMap(game: &mut Game) {
     SetupMapScrollingForFileSelectMap(game);
     word!(game.map_min_y_scroll, wrapping_add(24));
     word!(game.reg_BG2VOFS = 24);
-    crate::update_place! { reference fresh31 = *(ram_ptr!(game, u16; 0x69)) => (*fresh31 & !(4)); }
+    crate::update_place! { unaligned_word fresh31 = &raw mut (*(ram_ptr!(game, u16; 0x69))) => (u16::from_le(fresh31.read_unaligned()) & !(4)); }
     word!(game.menu_index, wrapping_add(1));
     word! { game, 0;
         map_scrolling_direction, map_scrolling_speed_index,

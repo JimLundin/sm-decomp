@@ -1134,7 +1134,7 @@ crate::game::callback_dispatch! {
     [8555650] OptionsInstr_Goto [*(RomPtr_82(j, game) as *mut u16)] { };
     [8555657] OptionsInstr_8C89 [] {
         let v2: i32 = k as i32 >> 1;
-        crate::update_place! { reference fresh0 [fresh1] = *(ram_ptr!(game, u16; 0x1b2d)).offset(v2 as isize) => (*fresh0).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh0 [fresh1] = &raw mut (*(ram_ptr!(game, u16; 0x1b2d)).offset(v2 as isize)) => (u16::from_le(fresh0.read_unaligned())).wrapping_sub(1); }
         if fresh1 == 1 {
             (j).wrapping_add(2)
         } else {
@@ -1153,7 +1153,7 @@ pub unsafe fn OptionsMenuFunc2(k: u16, game: &mut Game) {
     );
     let v1: u16 = word!(game.optionsmenu_index);
     let v2: i32 = word!(game.optionsmenu_index) as i32 >> 1;
-    crate::update_place! { reference fresh119 [fresh120] = *(ram_ptr!(game, u16; 0x1b1d)).offset(v2 as isize) => (*fresh119).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh119 [fresh120] = &raw mut (*(ram_ptr!(game, u16; 0x1b1d)).offset(v2 as isize)) => (u16::from_le(fresh119.read_unaligned())).wrapping_sub(1); }
     if fresh120 == 1 {
         let mut v4: u16 = word!(game.cinematicspr_arr7[v2]);
         let mut v5 = null_mut::<u16>();

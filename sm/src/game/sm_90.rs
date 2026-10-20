@@ -3135,7 +3135,7 @@ crate::game::callback_dispatch! {
             QueueSfx1_Max6(0x24, game);
             ClearProjectile(k, game);
         } else {
-            crate::update_place! { reference fresh49 [fresh50] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh49).wrapping_sub(1); }
+            crate::update_place! { unaligned_word fresh49 [fresh50] = &raw mut (*(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize)) => (u16::from_le(fresh49.read_unaligned())).wrapping_sub(1); }
             let mut v2: bool = fresh50 == 1;
             if v2 {
                 word!(game.projectile_timers[v1] = 4);
@@ -3151,7 +3151,7 @@ crate::game::callback_dispatch! {
                     .wrapping_add((word!(game.projectile_variables[v3])) as u8,))
                     as u16
             );
-            crate::update_place! { reference fresh53 [fresh54] = *(ram_ptr!(game, u16; 0xbf0)).offset(v3 as isize) => (*fresh53).wrapping_sub(1); }
+            crate::update_place! { unaligned_word fresh53 [fresh54] = &raw mut (*(ram_ptr!(game, u16; 0xbf0)).offset(v3 as isize)) => (u16::from_le(fresh53.read_unaligned())).wrapping_sub(1); }
             v2 = fresh54 == 1;
             if v2 {
                 word!(game.projectile_bomb_pre_instructions[v3] = ((0x90cf7ai32) as u16));
@@ -3168,7 +3168,7 @@ crate::game::callback_dispatch! {
         let v1: i32 = k as i32 >> 1;
         let clear_projectile: bool = ((word!(game.projectile_dir[v1]) & 0xf0) != 0)
             || ({
-                crate::update_place! { reference fresh45 [fresh46] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh45).wrapping_sub(1); }
+                crate::update_place! { unaligned_word fresh45 [fresh46] = &raw mut (*(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize)) => (u16::from_le(fresh45.read_unaligned())).wrapping_sub(1); }
                 if fresh46 == 1 {
                     word!(game.projectile_timers[v1] = 4);
                     SpawnProjectileTrail(k, game);
@@ -3231,7 +3231,7 @@ crate::game::callback_dispatch! {
             return;
         }
         let R34: u16 = word!(game.projectile_bomb_x_speed[v1]);
-        crate::update_place! { reference fresh37 [fresh38] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh37).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh37 [fresh38] = &raw mut (*(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize)) => (u16::from_le(fresh37.read_unaligned())).wrapping_sub(1); }
         v2 = fresh38 == 1;
         if v2 {
             word!(game.projectile_timers[v1] = 4);
@@ -3287,7 +3287,7 @@ crate::game::callback_dispatch! {
             );
         } else {
             let v2: i32 = k as i32 >> 1;
-            crate::update_place! { reference fresh32 [fresh33] = *(ram_ptr!(game, u16; 0xc90)).offset(v2 as isize) => (*fresh32).wrapping_sub(1); }
+            crate::update_place! { unaligned_word fresh32 [fresh33] = &raw mut (*(ram_ptr!(game, u16; 0xc90)).offset(v2 as isize)) => (u16::from_le(fresh32.read_unaligned())).wrapping_sub(1); }
             if fresh33 == 1 {
                 word!(game.projectile_timers[v2] = 4);
                 SpawnProjectileTrail(k, game);
@@ -3308,7 +3308,7 @@ crate::game::callback_dispatch! {
         let v1: i32 = k as i32 >> 1;
         let clear_projectile: bool = ((word!(game.projectile_dir[v1]) & 0xf0) != 0)
             || ({
-                crate::update_place! { reference fresh30 [fresh31] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh30).wrapping_sub(1); }
+                crate::update_place! { unaligned_word fresh30 [fresh31] = &raw mut (*(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize)) => (u16::from_le(fresh30.read_unaligned())).wrapping_sub(1); }
                 if fresh31 == 1 {
                     word!(game.projectile_timers[v1] = 4);
                     SpawnProjectileTrail(k, game);
@@ -3638,10 +3638,10 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
             while i >= 0 {
                 let mut v7: bool =
                     *((ram_ptr!(game, u16; 0xcdc) as *mut u8).offset(i as isize) as *mut u16) == 1;
-                crate::update_place! { reference fresh17 = *((ram_ptr!(game, u16; 0xcdc) as *mut u8).offset(i as isize) as *mut u16) => (*fresh17).wrapping_sub(1); }
-                let v8: bool = (*fresh17 & 0x8000) != 0;
+                crate::update_place! { unaligned_word fresh17 = &raw mut (*((ram_ptr!(game, u16; 0xcdc) as *mut u8).offset(i as isize) as *mut u16)) => (u16::from_le(fresh17.read_unaligned())).wrapping_sub(1); }
+                let v8: bool = (u16::from_le(fresh17.read_unaligned()) & 0x8000) != 0;
                 if v7 || v8 {
-                    crate::update_place! { reference fresh20 [fresh21] = *((ram_ptr!(game, u16; 0xcd6) as *mut u8).offset(i as isize) as *mut u16) => (*fresh20).wrapping_sub(1); }
+                    crate::update_place! { unaligned_word fresh20 [fresh21] = &raw mut (*((ram_ptr!(game, u16; 0xcd6) as *mut u8).offset(i as isize) as *mut u16)) => (u16::from_le(fresh20.read_unaligned())).wrapping_sub(1); }
                     v7 = fresh21 == 1;
                     if v7 {
                         if i == 4 {
@@ -5893,8 +5893,8 @@ pub unsafe fn RunSamusMovementHandler(game: &mut Game) {
 }
 pub unsafe fn Samus_HandlePeriodicDamage(game: &mut Game) {
     if word!(game.time_is_frozen_flag) != 0 {
-        crate::update_place! { reference fresh127 = *(ram_ptr!(game, u16; 0xa4e)) => 0; }
-        word!(game.samus_periodic_damage = *fresh127);
+        crate::update_place! { unaligned_word fresh127 = &raw mut (*(ram_ptr!(game, u16; 0xa4e))) => 0; }
+        word!(game.samus_periodic_damage = u16::from_le(fresh127.read_unaligned()));
         return;
     }
     let mut t: i32 = (words!(game.samus_periodic_damage, samus_periodic_subdamage)) as i32;
@@ -5909,11 +5909,11 @@ pub unsafe fn Samus_HandlePeriodicDamage(game: &mut Game) {
     }
     words!(game.samus_health, samus_subunit_health += -t as u32);
     if (word!(game.samus_health) as i16) < 0 {
-        crate::update_place! { reference fresh128 = *(ram_ptr!(game, u16; 0xa4c)) => 0; }
-        word!(game.samus_health = *fresh128);
+        crate::update_place! { unaligned_word fresh128 = &raw mut (*(ram_ptr!(game, u16; 0xa4c))) => 0; }
+        word!(game.samus_health = u16::from_le(fresh128.read_unaligned()));
     }
-    crate::update_place! { reference fresh129 = *(ram_ptr!(game, u16; 0xa4e)) => 0; }
-    word!(game.samus_periodic_damage = *fresh129);
+    crate::update_place! { unaligned_word fresh129 = &raw mut (*(ram_ptr!(game, u16; 0xa4e))) => 0; }
+    word!(game.samus_periodic_damage = u16::from_le(fresh129.read_unaligned()));
 }
 pub unsafe fn Samus_PauseCheck(game: &mut Game) {
     if word!(game.power_bomb_flag) == 0

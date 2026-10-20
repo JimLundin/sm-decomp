@@ -62,7 +62,7 @@ crate::game::callback_dispatch! {
     };
     [8880340] AnimtilesInstr_DecrementTimerAndGoto [] {
         let v2: i32 = k as i32 >> 1;
-        crate::update_place! { reference fresh0 [fresh1] = *(ram_ptr!(game, u16; 0x1f01)).offset(v2 as isize) => (*fresh0).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh0 [fresh1] = &raw mut (*(ram_ptr!(game, u16; 0x1f01)).offset(v2 as isize)) => (u16::from_le(fresh0.read_unaligned())).wrapping_sub(1); }
         if fresh1 == 1 {
             (j).wrapping_add(2)
         } else {
@@ -71,7 +71,7 @@ crate::game::callback_dispatch! {
     };
     [8880348] AnimtilesInstr_DecrementTimerAndGotoRel [] {
         let v2: i32 = k as i32 >> 1;
-        crate::update_place! { reference fresh2 [fresh3] = *(ram_ptr!(game, u16; 0x1f01)).offset(v2 as isize) => (*fresh2).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh2 [fresh3] = &raw mut (*(ram_ptr!(game, u16; 0x1f01)).offset(v2 as isize)) => (u16::from_le(fresh2.read_unaligned())).wrapping_sub(1); }
         if fresh3 == 1 {
             (j).wrapping_add(1)
         } else {
@@ -188,7 +188,7 @@ crate::game::callback_dispatch! {
 pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {
     let v0: u16 = word!(game.animtiles_object_index);
     let v1: i32 = word!(game.animtiles_object_index) as i32 >> 1;
-    crate::update_place! { reference fresh6 [fresh7] = *(ram_ptr!(game, u16; 0x1f19)).offset(v1 as isize) => (*fresh6).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh6 [fresh7] = &raw mut (*(ram_ptr!(game, u16; 0x1f19)).offset(v1 as isize)) => (u16::from_le(fresh6.read_unaligned())).wrapping_sub(1); }
     if fresh7 == 1 {
         let mut v3: u16 = word!(game.animtiles_instr_list_ptrs[v1]);
         let mut v5: u16 = 0;

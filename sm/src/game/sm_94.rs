@@ -2467,7 +2467,7 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
     let mut n: i32 = (word!(game.grapple_beam_length) as i32 / 8 & 0xf) - 1i32;
     let mut q: i32 = 15;
     do_until! { (n < 0);
-        crate::update_place! { reference fresh17 [fresh18] = *(ram_ptr!(game, u16; 0xd42)).offset(q as isize) => (*fresh17).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh17 [fresh18] = &raw mut (*(ram_ptr!(game, u16; 0xd42)).offset(q as isize)) => (u16::from_le(fresh17.read_unaligned())).wrapping_sub(1); }
         if fresh18 == 1 {
             let mut v9 = null::<u16>();
             let mut i: i32 = word!(game.grapple_segment_anim_instr_ptrs[q]) as i32;

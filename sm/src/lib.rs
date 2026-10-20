@@ -54,6 +54,14 @@ macro_rules! update_place {
         let mut $old $(: $type)? = $place;
         $place = $value;
     };
+
+    // RAM words may start at odd byte addresses. Capture once without a reference;
+    // keep old-value loads and RHS temporaries in caller order through the store.
+    (unaligned_word $destination:ident $([$old:ident])? = $pointer:expr => $value:expr;) => {
+        let $destination: *mut u16 = $pointer;
+        $(let $old = u16::from_le($destination.read_unaligned());)?
+        $crate::ram_map::write_word($value, $destination);
+    };
 }
 
 // Each instruction row declares Name [result] { effects }; [] keeps a full body.

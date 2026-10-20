@@ -537,7 +537,7 @@ crate::game::callback_dispatch! {
         word! {game; samus_x_pos = 128; samus_x_subpos = 0; }
         let amt: i32 = (*(ram_ptr!(game, u16; 0x7e1, 4)) as i16 as i32) << 8;
         let mut v0: u16 = ((amt as u32).wrapping_add(*(ram_ptr!(game, u32; 0x7e1))) >> 16) as u16;
-        crate::update_place! { reference fresh13 = *(ram_ptr!(game, u16; 0x7e1)) => (*fresh13 as i32 + amt) as u16; }
+        crate::update_place! { unaligned_word fresh13 = &raw mut (*(ram_ptr!(game, u16; 0x7e1))) => (u16::from_le(fresh13.read_unaligned()) as i32 + amt) as u16; }
         *(ram_ptr!(game, u16; 0x7e1, 2)) = v0;
         Samus_MoveDown_NoSolidColl(amt, game);
         if ((*(ram_ptr!(game, u16; 0x7e1, 6)) as i32
@@ -545,7 +545,7 @@ crate::game::callback_dispatch! {
             + 3616) as u16)
             < 0x1c41
         {
-            crate::update_place! { reference fresh14 = *(ram_ptr!(game, u16; 0x7e1, 4)) => (*fresh14).wrapping_add(*(ram_ptr!(game, u16; 0x7e1, 6))); }
+            crate::update_place! { unaligned_word fresh14 = &raw mut (*(ram_ptr!(game, u16; 0x7e1, 4))) => (u16::from_le(fresh14.read_unaligned())).wrapping_add(*(ram_ptr!(game, u16; 0x7e1, 6))); }
         }
     };
     [9430303] RoomCode_CeresElevatorShaft_ [] {
@@ -554,7 +554,7 @@ crate::game::callback_dispatch! {
     [9430309] RoomCode_SpawnCeresFallingDebris [] {
         if word!(game.ceres_status) != 0
             && {
-                crate::update_place! { reference fresh12 = *(ram_ptr!(game, u16; 0x7e1)) => (*fresh12).wrapping_sub(1); }
+                crate::update_place! { unaligned_word fresh12 = &raw mut (*(ram_ptr!(game, u16; 0x7e1))) => (u16::from_le(fresh12.read_unaligned())).wrapping_sub(1); }
                 *(ram_ptr!(game, i16; 0x7e1)) < 0
             }
         {

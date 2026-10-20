@@ -3107,7 +3107,7 @@ pub unsafe fn Phantoon_Dead(k: u16, game: &mut Game) {
             (*E1).base.properties = v4;
             (*Get_Phantoon(0x80i32, game)).base.properties = v4;
             (*Get_Phantoon(0xc0i32, game)).base.properties = v4;
-            crate::update_place! { reference fresh23 = *(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) => (*fresh23) | (1u16); }
+            crate::update_place! { unaligned_word fresh23 = &raw mut (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize))) => (u16::from_le(fresh23.read_unaligned())) | (1u16); }
             SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0, 0x6, 0xb78b as VoidP), game);
             QueueMusic_Delayed8(3, game);
         }

@@ -378,13 +378,13 @@ unsafe fn Smult16x16(r38: u16, r40: u16) -> u32 {
     t
 }
 pub unsafe fn HandleMode7TransformationMatrix(game: &mut Game) {
-    crate::update_place! { reference fresh152 = *(ram_ptr!(game, u16; 0x78)) => (Smult16x16(
+    crate::update_place! { unaligned_word fresh152 = &raw mut (*(ram_ptr!(game, u16; 0x78))) => (Smult16x16(
         kSinCosTable8bit_Sext[((((word!(game.cinematic_var5)) as u8).wrapping_add(64))
             as i32
             + 64) as usize] as u16,
         word!(game.cinematic_var6),
     ) >> 8) as u16; }
-    word!(game.reg_M7D = *fresh152);
+    word!(game.reg_M7D = u16::from_le(fresh152.read_unaligned()));
     let v1: u16 = (Smult16x16(
         kSinCosTable8bit_Sext[(word!(game.cinematic_var5) as u8 as i32 + 64) as usize] as u16,
         word!(game.cinematic_var6),
@@ -1088,7 +1088,7 @@ pub unsafe fn ProcessCinematicSpriteInstructionList(k: u16, game: &mut Game) {
     );
     let v1: u16 = word!(game.cinematic_obj_index);
     let v2: i32 = word!(game.cinematic_obj_index) as i32 >> 1;
-    crate::update_place! { reference fresh22 [fresh23] = *(ram_ptr!(game, u16; 0x1b5d)).offset(v2 as isize) => (*fresh22).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh22 [fresh23] = &raw mut (*(ram_ptr!(game, u16; 0x1b5d)).offset(v2 as isize)) => (u16::from_le(fresh22.read_unaligned())).wrapping_sub(1); }
     if fresh23 == 1 {
         let mut v4: u16 = word!(game.cinematicspr_instr_ptr[v2]);
         execute_cinematic_commands!(v6, RomPtr_8B, v4, game, CallCinematicSprInstr, v1);
@@ -1138,7 +1138,7 @@ pub unsafe fn ProcessMode7ObjectInstructions(k: u16, game: &mut Game) {
     );
     let v1: u16 = word!(game.mode7_cur_index);
     let v2: i32 = word!(game.mode7_cur_index) as i32 >> 1;
-    crate::update_place! { reference fresh19 [fresh20] = *(ram_ptr!(game, u16; 0x19a9)).offset(v2 as isize) => (*fresh19).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh19 [fresh20] = &raw mut (*(ram_ptr!(game, u16; 0x19a9)).offset(v2 as isize)) => (u16::from_le(fresh19.read_unaligned())).wrapping_sub(1); }
     if fresh20 == 1 {
         let mut v4: u16 = word!(game.mode7_obj_instr_ptr[v2]);
         execute_cinematic_commands!(v6, RomPtr_8B, v4, game, CallMode7Instr, v1);
@@ -1217,7 +1217,7 @@ pub unsafe fn ProcessCinematicBgObjectsInstrs(k: u16, game: &mut Game) {
     );
     let v1: u16 = word!(game.cinematicbg_var2);
     let v2: i32 = word!(game.cinematicbg_var2) as i32 >> 1;
-    crate::update_place! { reference fresh158 [fresh159] = *(ram_ptr!(game, u16; 0x19dd)).offset(v2 as isize) => (*fresh158).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh158 [fresh159] = &raw mut (*(ram_ptr!(game, u16; 0x19dd)).offset(v2 as isize)) => (u16::from_le(fresh158.read_unaligned())).wrapping_sub(1); }
     if fresh159 == 1 {
         let mut v4: u16 = word!(game.cinematicbg_instr_ptr[v2]);
         execute_cinematic_commands!(v6, RomPtr_8C, v4, game, CallCinematicBgInstr, v1);
@@ -1295,7 +1295,7 @@ pub unsafe fn HandleTextGlowObjects(game: &mut Game) {
 pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
     let v0: u16 = word!(game.cinematic_var19);
     let v1: i32 = word!(game.cinematic_var19) as i32 >> 1;
-    crate::update_place! { reference fresh153 [fresh154] = *(ram_ptr!(game, u16; 0x1a03)).offset((v1 + 2) as isize) => (*fresh153).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh153 [fresh154] = &raw mut (*(ram_ptr!(game, u16; 0x1a03)).offset((v1 + 2) as isize)) => (u16::from_le(fresh153.read_unaligned())).wrapping_sub(1); }
     if fresh154 == 1 {
         let R28: u16 =
             *((ram_ptr!(game, u16; 0x1a37) as *mut u8).offset(v0 as i32 as isize) as *mut u16);
@@ -1341,9 +1341,9 @@ pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
             *((ram_ptr!(game, u16; 0x19f7) as *mut u8)
                 .offset(word!(game.cinematic_var19) as i32 as isize) as *mut u16) = 0;
         } else {
-            crate::update_place! { reference fresh155 = *((ram_ptr!(game, u16; 0x1a37) as *mut u8)
+            crate::update_place! { unaligned_word fresh155 = &raw mut (*((ram_ptr!(game, u16; 0x1a37) as *mut u8)
             .offset(word!(game.cinematic_var19) as i32 as isize)
-            as *mut u16) => (*fresh155).wrapping_add(1024); }
+            as *mut u16)) => (u16::from_le(fresh155.read_unaligned())).wrapping_add(1024); }
             *(ram_ptr!(game, u16; 0x1a03)).offset(((v6 as i32 >> 1) + 2) as isize) = 5;
         }
     }
@@ -1903,7 +1903,7 @@ pub unsafe fn CinematicFunction_Intro_Func127(game: &mut Game) {
             crate::rtl::rom_table_word!(game, 0x8be9cf, ((8 * v1 as i32 >> 1) + 3) as isize);
         if v3 != 0 {
             *(v2 as *mut u16).offset(5) = v3;
-            crate::update_place! { reference fresh93 = *(v2 as *mut u16) => (*fresh93) | (0x8000u16); }
+            crate::update_place! { unaligned_word fresh93 = &raw mut (*(v2 as *mut u16)) => (u16::from_le(fresh93.read_unaligned())) | (0x8000u16); }
         } else {
             *(v2 as *mut u16).offset(5) = 32;
         }
@@ -1934,14 +1934,14 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
             } else {
                 let v4: i32 = 8 * *(v3 as *mut u16) as u8 as i32 >> 1;
                 if (*(v3 as *mut u16) as i32 & 0xff00) - 1024i32 & 0x8000 != 0 {
-                    crate::update_place! { reference fresh164 = *(v3 as *mut u16).offset(6) => (*fresh164).wrapping_add(crate::rtl::rom_table_word!(
+                    crate::update_place! { unaligned_word fresh164 = &raw mut (*(v3 as *mut u16).offset(6)) => (u16::from_le(fresh164.read_unaligned())).wrapping_add(crate::rtl::rom_table_word!(
                         game,
                         0x8be9cf,
                         v4 as isize
                     )); }
                     v5 = *(v3.offset(14) as *mut u16) as i16;
                 } else {
-                    crate::update_place! { reference fresh165 = *(v3 as *mut u16).offset(6) => (*fresh165 as i32
+                    crate::update_place! { unaligned_word fresh165 = &raw mut (*(v3 as *mut u16).offset(6)) => (u16::from_le(fresh165.read_unaligned()) as i32
                     + (crate::rtl::rom_table_word!(game, 0x8be9cf, v4 as isize) as i32
                         + crate::rtl::rom_table_word!(game, 0x8be9cf, v4 as isize) as i32))
                     as u16; }
@@ -1957,14 +1957,14 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
                 let mut v8: i16 = *(v3.offset(4) as *mut u16) as i16;
                 let mut v9: bool = u16::overflowing_add(r20, v8 as u16).1;
                 *(v3 as *mut u16).offset(2) = (r20).wrapping_add((v8) as u16);
-                crate::update_place! { reference fresh166 = *(v3 as *mut u16).offset(1) => (*fresh166 as i32 + (r18 as i32 + v9 as i32)) as u16; }
+                crate::update_place! { unaligned_word fresh166 = &raw mut (*(v3 as *mut u16).offset(1)) => (u16::from_le(fresh166.read_unaligned()) as i32 + (r18 as i32 + v9 as i32)) as u16; }
                 let mut v24: u16 = *(v3.offset(14) as *mut u16);
                 r18 = byte!(v24; 1) as i8 as u16;
                 r20 = ((v24 as i32) << 8 & 0xff00) as u16;
                 let mut v12: i16 = *(v3.offset(8) as *mut u16) as i16;
                 v9 = u16::overflowing_add(r20, v12 as u16).1;
                 *(v3 as *mut u16).offset(4) = (r20).wrapping_add((v12) as u16);
-                crate::update_place! { reference fresh167 = *(v3 as *mut u16).offset(3) => (*fresh167 as i32 + (r18 as i32 + v9 as i32)) as u16; }
+                crate::update_place! { unaligned_word fresh167 = &raw mut (*(v3 as *mut u16).offset(3)) => (u16::from_le(fresh167.read_unaligned()) as i32 + (r18 as i32 + v9 as i32)) as u16; }
             }
             v0 = (v0).wrapping_add(16);
         }
@@ -3359,7 +3359,7 @@ crate::game::callback_dispatch! {
     [9147580] CinematicSprInstr_Goto [*(RomPtr_8B(j, game) as *mut u16)] { };
     [9147587] CinematicSprInstr_DecTimerGoto [] {
         let v2: i32 = k as i32 >> 1;
-        crate::update_place! { reference fresh26 [fresh27] = *(ram_ptr!(game, u16; 0x1b7d)).offset(v2 as isize) => (*fresh26).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh26 [fresh27] = &raw mut (*(ram_ptr!(game, u16; 0x1b7d)).offset(v2 as isize)) => (u16::from_le(fresh26.read_unaligned())).wrapping_sub(1); }
         if fresh27 == 1 {
             (j).wrapping_add(2)
         } else {
@@ -3368,7 +3368,7 @@ crate::game::callback_dispatch! {
     };
     [9147597] CinematicSprInstr_DecTimerGotoRel [] {
         let v2: i32 = k as i32 >> 1;
-        crate::update_place! { reference fresh24 [fresh25] = *(ram_ptr!(game, u16; 0x1b7d)).offset(v2 as isize) => (*fresh24).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh24 [fresh25] = &raw mut (*(ram_ptr!(game, u16; 0x1b7d)).offset(v2 as isize)) => (u16::from_le(fresh24.read_unaligned())).wrapping_sub(1); }
         if fresh25 == 1 {
             (j).wrapping_add(1)
         } else {
@@ -4811,7 +4811,7 @@ crate::game::callback_dispatch! {
     [9147782] Mode7Instr_Goto [*(RomPtr_8B(j, game) as *mut u16)] { };
     [9147789] Mode7Instr_DecTimerAndGoto [] {
         let v2: i32 = k as i32 >> 1;
-        crate::update_place! { reference fresh0 [fresh1] = *(ram_ptr!(game, u16; 0x19ad)).offset(v2 as isize) => (*fresh0).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh0 [fresh1] = &raw mut (*(ram_ptr!(game, u16; 0x19ad)).offset(v2 as isize)) => (u16::from_le(fresh0.read_unaligned())).wrapping_sub(1); }
         if fresh1 == 1 {
             (j).wrapping_add(2)
         } else {

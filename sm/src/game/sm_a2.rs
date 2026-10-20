@@ -1957,7 +1957,7 @@ pub unsafe fn GunshipTop_13(k: u16, game: &mut Game) {
         return;
     }
     if rv != 2 {
-        crate::update_place! { reference fresh3 = *(ram_ptr!(game, u16; 0xd8f8)) => (*fresh3) | (1u16); }
+        crate::update_place! { unaligned_word fresh3 = &raw mut (*(ram_ptr!(game, u16; 0xd8f8))) => (u16::from_le(fresh3.read_unaligned())) | (1u16); }
         word!(game.load_station_index = 0);
         SaveToSram(word!(game.selected_save_slot), game);
     }
@@ -1999,7 +1999,7 @@ crate::prefixed_callbacks! {
             word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
             word!(game.frame_handler_beta = ((0x90e725i32) as u16));
             word!(game.loading_game_state = kLoadingGameState_5_Main as u16);
-            crate::update_place! { reference fresh11 = *(ram_ptr!(game, u16; 0xd8f8)) => (*fresh11) | (1u16); }
+            crate::update_place! { unaligned_word fresh11 = &raw mut (*(ram_ptr!(game, u16; 0xd8f8))) => (u16::from_le(fresh11.read_unaligned())) | (1u16); }
             word!(game.load_station_index = 0);
             SaveToSram(word!(game.selected_save_slot), game);
         }

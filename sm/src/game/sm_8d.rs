@@ -78,7 +78,7 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
         game,
     );
     let mut v1: u16 = word!(game.palettefx_index);
-    crate::update_place! { reference fresh2 [fresh3] = *(ram_ptr!(game, u16; 0x1ecd)).offset((v1 >> 1) as isize) => (*fresh2).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh2 [fresh3] = &raw mut (*(ram_ptr!(game, u16; 0x1ecd)).offset((v1 >> 1) as isize)) => (u16::from_le(fresh2.read_unaligned())).wrapping_sub(1); }
     if fresh3 != 1 {
         return;
     }
@@ -228,7 +228,7 @@ crate::game::callback_dispatch! {
     [9291321] PalInstr_DecTimerGoto [MakePairU16(v4.k, v4.j)] {
         let mut v4: PairU16 = PairU16 { k: 0, j: 0 };
         let v2: i32 = k as i32 >> 1;
-        crate::update_place! { reference fresh4 [fresh5] = *(ram_ptr!(game, u16; 0x1edd)).offset(v2 as isize) => (*fresh4).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh4 [fresh5] = &raw mut (*(ram_ptr!(game, u16; 0x1edd)).offset(v2 as isize)) => (u16::from_le(fresh4.read_unaligned())).wrapping_sub(1); }
         if fresh5 == 1 {
             return MakePairU16(k, (j).wrapping_add(2));
         }

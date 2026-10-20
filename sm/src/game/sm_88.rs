@@ -502,7 +502,7 @@ pub unsafe fn HdmaobjInstructionHandler(k: u8, game: &mut Game) {
         k as u16,
         game,
     );
-    crate::update_place! { reference fresh59 [fresh60] = *(ram_ptr!(game, u16; 0x18e4)).offset(kh as isize) => (*fresh59).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh59 [fresh60] = &raw mut (*(ram_ptr!(game, u16; 0x18e4)).offset(kh as isize)) => (u16::from_le(fresh59.read_unaligned())).wrapping_sub(1); }
     if fresh60 == 1 {
         let base = RomBankBase(
             *(ram_ptr!(game, u16; 0x18c0) as *mut u8)
@@ -585,7 +585,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8) -> *const
 }
 pub unsafe fn HdmaobjInstr_DecrementAndGoto(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
     let v2: i32 = k as i32 >> 1;
-    crate::update_place! { reference fresh63 [fresh64] = *(ram_ptr!(game, u16; 0x1908)).offset(v2 as isize) => (*fresh63).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh63 [fresh64] = &raw mut (*(ram_ptr!(game, u16; 0x1908)).offset(v2 as isize)) => (u16::from_le(fresh63.read_unaligned())).wrapping_sub(1); }
     if fresh64 == 1 {
         hdp.offset(2)
     } else {
@@ -598,7 +598,7 @@ pub unsafe fn HdmaobjInstr_DecrementAndGotoRel(
     game: &mut Game,
 ) -> *const u8 {
     let v2: i32 = k as i32 >> 1;
-    crate::update_place! { reference fresh61 [fresh62] = *(ram_ptr!(game, u16; 0x1908)).offset(v2 as isize) => (*fresh61).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh61 [fresh62] = &raw mut (*(ram_ptr!(game, u16; 0x1908)).offset(v2 as isize)) => (u16::from_le(fresh61.read_unaligned())).wrapping_sub(1); }
     if fresh62 == 1 {
         hdp.offset(1)
     } else {
@@ -1079,7 +1079,7 @@ pub unsafe fn HdmaobjPreInstr_BG3Xscroll(k: u16, game: &mut Game) {
         }
     } else {
         let v3: i32 = k as i32 >> 1;
-        crate::update_place! { reference fresh104 [fresh105] = *(ram_ptr!(game, u16; 0x1920)).offset(v3 as isize) => (*fresh104).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh104 [fresh105] = &raw mut (*(ram_ptr!(game, u16; 0x1920)).offset(v3 as isize)) => (u16::from_le(fresh104.read_unaligned())).wrapping_sub(1); }
         if fresh105 == 1 {
             word! {game; hdma_object_B[v3] = 6;
             hdma_object_A[v3] = (word!(game.hdma_object_A[v3]) as i32 + 2 & 0x1f) as u16; }
@@ -1524,7 +1524,7 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(k: u16, game: &mut Game) {
         *(ram_ptr!(game, u16; 0x9c00, 2)) = v4 as u16;
         if word!(game.fx_type) == 2 && (word!(game.lava_acid_y_pos) & 0x8000) == 0 {
             let v5: i32 = word!(game.hdma_object_index) as u8 as i32 >> 1;
-            crate::update_place! { reference fresh101 [fresh102] = *(ram_ptr!(game, u16; 0x192c)).offset(v5 as isize) => (*fresh101).wrapping_sub(1); }
+            crate::update_place! { unaligned_word fresh101 [fresh102] = &raw mut (*(ram_ptr!(game, u16; 0x192c)).offset(v5 as isize)) => (u16::from_le(fresh101.read_unaligned())).wrapping_sub(1); }
             if fresh102 == 1 {
                 word!(game.hdma_object_C[v5] = 112);
                 QueueSfx2_Max6(
@@ -1590,7 +1590,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func2(v0: u16, game: &mut Game) {
         game,
     );
     let v1: i32 = v0 as i32 >> 1;
-    crate::update_place! { reference fresh54 [fresh55] = *(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize) => (*fresh54).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh54 [fresh55] = &raw mut (*(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize)) => (u16::from_le(fresh54.read_unaligned())).wrapping_sub(1); }
     if fresh55 == 1 {
         word!(game.hdma_object_B[v1] = 6);
         word!(game.hdma_object_A[v1] = (word!(game.hdma_object_A[v1]) as i32 - 2i32 & 0x1e) as u16);
@@ -1616,7 +1616,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(v0: u16, game: &mut Game) {
         game,
     );
     let v1: i32 = v0 as i32 >> 1;
-    crate::update_place! { reference fresh56 [fresh57] = *(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize) => (*fresh56).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh56 [fresh57] = &raw mut (*(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize)) => (u16::from_le(fresh56.read_unaligned())).wrapping_sub(1); }
     if fresh57 == 1 {
         word!(game.hdma_object_B[v1] = 4);
         word!(game.hdma_object_A[v1] = (word!(game.hdma_object_A[v1]) as i32 - 2i32 & 0x1e) as u16);
@@ -1688,7 +1688,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(k: u16, game: &mut Game) {
     let r20: u16 = (word!(game.layer1_x_pos)).wrapping_add(
         (byte!(@pointer (ram_ptr!(game, u16; 0x192c)).offset(v5 as isize); 1) as i8) as u16,
     );
-    crate::update_place! { reference fresh98 [fresh99] = *(ram_ptr!(game, u16; 0x1920)).offset(v5 as isize) => (*fresh98).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh98 [fresh99] = &raw mut (*(ram_ptr!(game, u16; 0x1920)).offset(v5 as isize)) => (u16::from_le(fresh98.read_unaligned())).wrapping_sub(1); }
     if fresh99 == 1 {
         word!(game.hdma_object_B[v5] = 10);
         word!(game.hdma_object_A[v5] = (word!(game.hdma_object_A[v5]) as i32 + 2 & 0x1e) as u16);
@@ -1747,7 +1747,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll(k: u16, game: &mut Game) {
 }
 pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func2(k: u16, game: &mut Game) {
     let v1: i32 = k as u8 as i32 >> 1;
-    crate::update_place! { reference fresh96 [fresh97] = *(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize) => (*fresh96).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh96 [fresh97] = &raw mut (*(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize)) => (u16::from_le(fresh96.read_unaligned())).wrapping_sub(1); }
     if fresh97 == 1 {
         word!(game.hdma_object_B[v1] = 6);
         word!(game.hdma_object_A[v1] = (word!(game.hdma_object_A[v1]) as i32 + 2 & 0x1e) as u16);
@@ -2509,7 +2509,7 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
             r30 = 64;
         }
         let v2: i32 = v0 as i32 >> 1;
-        crate::update_place! { reference fresh79 [fresh80] = *(ram_ptr!(game, u16; 0x1920)).offset(v2 as isize) => (*fresh79).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh79 [fresh80] = &raw mut (*(ram_ptr!(game, u16; 0x1920)).offset(v2 as isize)) => (u16::from_le(fresh79.read_unaligned())).wrapping_sub(1); }
         if fresh80 == 1 {
             word!(game.hdma_object_B[v2] = 1);
             word!(

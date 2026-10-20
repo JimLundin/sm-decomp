@@ -2387,11 +2387,11 @@ crate::game::callback_dispatch! {
         let E = Get_MotherBrain(0, game);
         set_fields! {[(*E)], 0; var_23, var_25}
         word!(game.eproj_gfx_idx[v1] = 1024);
-        crate::update_place! { reference fresh8 = *(ram_ptr!(game, u16; 0x1a4b)).offset(v1 as isize) => ((*E).base.x_pos as i32 + 64) as u16; }
-        (*E).var_24 = *fresh8;
+        crate::update_place! { unaligned_word fresh8 = &raw mut (*(ram_ptr!(game, u16; 0x1a4b)).offset(v1 as isize)) => ((*E).base.x_pos as i32 + 64) as u16; }
+        (*E).var_24 = u16::from_le(fresh8.read_unaligned());
         let x: u16 = (word!(game.samus_x_pos) as i32 - (*E).var_24 as i32) as u16;
-        crate::update_place! { reference fresh9 = *(ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize) => ((*E).base.y_pos as i32 - 48i32) as u16; }
-        (*E).var_26 = *fresh9;
+        crate::update_place! { unaligned_word fresh9 = &raw mut (*(ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize)) => ((*E).base.y_pos as i32 - 48i32) as u16; }
+        (*E).var_26 = u16::from_le(fresh9.read_unaligned());
         let y: u16 = (word!(game.samus_y_pos) as i32 - (*E).var_26 as i32) as u16;
         let r18: i32 = -(CalculateAngleFromXY(x, y, game) as i32 + 0x80i32) as u8 as i32;
         (*E).var_29 = r18 as u16;
@@ -2885,8 +2885,8 @@ crate::game::callback_dispatch! {
             eproj_x_vel[v2] = 256; }
     };
     [8838285] EprojInit_Spores [] {
-        crate::update_place! { reference fresh4 = *(ram_ptr!(game, u16; 0x1a4b)).offset(v2 as isize) => game.eproj_spawn_pt.x; }
-        word! {game; eproj_F[v2] = *fresh4; eproj_y_pos[v2] = game.eproj_spawn_pt.y;
+        crate::update_place! { unaligned_word fresh4 = &raw mut (*(ram_ptr!(game, u16; 0x1a4b)).offset(v2 as isize)) => game.eproj_spawn_pt.x; }
+        word! {game; eproj_F[v2] = u16::from_le(fresh4.read_unaligned()); eproj_y_pos[v2] = game.eproj_spawn_pt.y;
             eproj_gfx_idx[v2] = 512; }
     };
     [8838870] EprojInit_NamiFuneFireball [] {
@@ -3601,7 +3601,7 @@ crate::game::callback_dispatch! {
             SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xc, game);
         } else {
             let v1: i32 = k as i32 >> 1;
-            crate::update_place! { reference fresh88 [fresh89] = *(ram_ptr!(game, u16; 0x1ab7)).offset(v1 as isize) => (*fresh88).wrapping_sub(1); }
+            crate::update_place! { unaligned_word fresh88 [fresh89] = &raw mut (*(ram_ptr!(game, u16; 0x1ab7)).offset(v1 as isize)) => (u16::from_le(fresh88.read_unaligned())).wrapping_sub(1); }
             let mut v2: bool = fresh89 == 1;
             if v2 {
                 Eproj_SetXvelRandom(k, game);
@@ -3615,7 +3615,7 @@ crate::game::callback_dispatch! {
                 word!(game.eproj_instr_timers[v3] = 1);
             }
             let v4: i32 = k as i32 >> 1;
-            crate::update_place! { reference fresh92 [fresh93] = *(ram_ptr!(game, u16; 0x1adb)).offset(v4 as isize) => (*fresh92).wrapping_sub(1); }
+            crate::update_place! { unaligned_word fresh92 [fresh93] = &raw mut (*(ram_ptr!(game, u16; 0x1adb)).offset(v4 as isize)) => (u16::from_le(fresh92.read_unaligned())).wrapping_sub(1); }
             v2 = fresh93 == 1;
             if v2 {
                 Eproj_SetYvelRandom(k, game);
@@ -5030,7 +5030,7 @@ crate::game::callback_dispatch! {
     };
     [8815054] EprojInstr_DecTimerAndGotoRelIfNonZero [] {
         let v2: i32 = k as i32 >> 1;
-        crate::update_place! { reference fresh46 [fresh47] = *(ram_ptr!(game, u16; 0x19df)).offset(v2 as isize) => (*fresh46).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh46 [fresh47] = &raw mut (*(ram_ptr!(game, u16; 0x19df)).offset(v2 as isize)) => (u16::from_le(fresh46.read_unaligned())).wrapping_sub(1); }
         if fresh47 == 1 {
             epjp.offset(1)
         } else {

@@ -330,7 +330,7 @@ pub unsafe fn SaveExploredMapTilesToSaved(game: &mut Game) {
         v1 = (v1).wrapping_add(2);
     }
     if word!(game.has_area_map) != 0 {
-        crate::update_place! { reference fresh88 = *(ram_ptr!(game, u16; 0xd908, word!(game.area_index) as isize)) => (*fresh88) | (0xffu16); }
+        crate::update_place! { unaligned_word fresh88 = &raw mut (*(ram_ptr!(game, u16; 0xd908, word!(game.area_index) as isize))) => (u16::from_le(fresh88.read_unaligned())) | (0xffu16); }
     }
 }
 pub unsafe fn InitializeCpuIoRegs(game: &mut Game) {
@@ -685,7 +685,7 @@ pub unsafe fn HasQueuedMusic(game: &mut Game) -> u8 {
     1
 }
 pub unsafe fn HandleMusicQueue(game: &mut Game) {
-    crate::update_place! { reference fresh74 [fresh75] = *(ram_ptr!(game, u16; 0x63f)) => (*fresh74).wrapping_sub(1); }
+    crate::update_place! { unaligned_word fresh74 [fresh75] = &raw mut (*(ram_ptr!(game, u16; 0x63f))) => (u16::from_le(fresh74.read_unaligned())).wrapping_sub(1); }
     let v0: bool = fresh75 == 1;
     if (word!(game.music_timer) & 0x8000) == 0 {
         if !v0 {
@@ -1069,7 +1069,7 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
                         word! { game, 0; joypad1_lastkeys, joypad1_newkeys }
                     }
                     if (word!(game.joypad_dbg_2) & 0x80) != 0 {
-                        crate::update_place! { reference fresh82 = *(ram_ptr!(game, u16; 0x84)) => (*fresh82) ^ (0x30u16); }
+                        crate::update_place! { unaligned_word fresh82 = &raw mut (*(ram_ptr!(game, u16; 0x84))) => (u16::from_le(fresh82.read_unaligned())) ^ (0x30u16); }
                     }
                     if (word!(game.joypad_dbg_2) & 0x8000) != 0 {
                         let v2: bool = (!(word!(game.joypad_dbg_flags)) & 0x8000) != 0;
@@ -1185,7 +1185,7 @@ pub unsafe fn IrqHandler_0_Nothing(game: &mut Game) {
     IrqHandler_SetResult(a, 0, 0, game);
 }
 pub unsafe fn IrqHandler_2_DisableIRQ(game: &mut Game) {
-    crate::update_place! { reference fresh76 = *(ram_ptr!(game, u16; 0x84)) => (*fresh76 & !(0x30)); }
+    crate::update_place! { unaligned_word fresh76 = &raw mut (*(ram_ptr!(game, u16; 0x84))) => (u16::from_le(fresh76.read_unaligned()) & !(0x30)); }
     IrqHandler_SetResult(0, 0, 0, game);
 }
 pub unsafe fn IrqHandler_4_Main_BeginHudDraw(game: &mut Game) {
@@ -1293,17 +1293,17 @@ pub unsafe fn EnableIrqInterrupts(game: &mut Game) {
     crate::rtl::register_writes! { game;
         word(VTIMEL as u16, 0); word(HTIMEL as u16, 152);
     }
-    crate::update_place! { reference fresh64 = *(ram_ptr!(game, u16; 0x84)) => (*fresh64) | (0x30u16); }
+    crate::update_place! { unaligned_word fresh64 = &raw mut (*(ram_ptr!(game, u16; 0x84))) => (u16::from_le(fresh64.read_unaligned())) | (0x30u16); }
 }
 pub unsafe fn EnableIrqInterruptsNow(game: &mut Game) {
     crate::rtl::register_writes! { game;
         word(VTIMEL as u16, 0); word(HTIMEL as u16, 152);
     }
-    crate::update_place! { reference fresh65 = *(ram_ptr!(game, u16; 0x84)) => (*fresh65) | (0x30u16); }
+    crate::update_place! { unaligned_word fresh65 = &raw mut (*(ram_ptr!(game, u16; 0x84))) => (u16::from_le(fresh65.read_unaligned())) | (0x30u16); }
     WriteReg(NMITIMEN as u16, *ram_ptr!(game; 0x84), game);
 }
 pub unsafe fn DisableIrqInterrupts(game: &mut Game) {
-    crate::update_place! { reference fresh41 = *(ram_ptr!(game, u16; 0x84)) => (*fresh41 & !(0x30)); }
+    crate::update_place! { unaligned_word fresh41 = &raw mut (*(ram_ptr!(game, u16; 0x84))) => (u16::from_le(fresh41.read_unaligned()) & !(0x30)); }
 }
 static kIrqHandlers: [Func_V; 14] = [
     IrqHandler_0_Nothing,
@@ -2735,11 +2735,11 @@ pub unsafe fn LoadFromLoadStation(game: &mut Game) {
         game,
     ) as *mut LoadStationList;
     word! {game; room_ptr = (*L).room_ptr_; door_def_ptr = (*L).door_ptr; }
-    crate::update_place! { reference fresh77 = *(ram_ptr!(game, u16; 0x911)) => (*L).screen_x_pos; }
-    word!(game.bg1_x_offset = *fresh77);
-    crate::update_place! { reference fresh78 = *(ram_ptr!(game, u16; 0x915)) => (*L).screen_y_pos; }
+    crate::update_place! { unaligned_word fresh77 = &raw mut (*(ram_ptr!(game, u16; 0x911))) => (*L).screen_x_pos; }
+    word!(game.bg1_x_offset = u16::from_le(fresh77.read_unaligned()));
+    crate::update_place! { unaligned_word fresh78 = &raw mut (*(ram_ptr!(game, u16; 0x915))) => (*L).screen_y_pos; }
     word! { game;
-        bg1_y_offset = *fresh78;
+        bg1_y_offset = u16::from_le(fresh78.read_unaligned());
         samus_y_pos = (word!(game.layer1_y_pos)).wrapping_add((*L).samus_y_offset);
         samus_prev_y_pos = word!(game.samus_y_pos);
         samus_x_pos = (word!(game.layer1_x_pos) as i32 + 128 + (*L).samus_x_offset as i32) as u16;

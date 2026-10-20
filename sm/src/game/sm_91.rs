@@ -2239,8 +2239,8 @@ pub unsafe fn Samus_HandleCrystalFlashPals(game: &mut Game) -> u8 {
             }
             word!(game.special_samus_palette_frame = v0);
         }
-        crate::update_place! { reference fresh15 = *(ram_ptr!(game, u16; 0xdf2)) => (*fresh15).wrapping_sub(1); }
-        let v1: bool = (*fresh15 as i16) < 0;
+        crate::update_place! { unaligned_word fresh15 = &raw mut (*(ram_ptr!(game, u16; 0xdf2))) => (u16::from_le(fresh15.read_unaligned())).wrapping_sub(1); }
+        let v1: bool = (u16::from_le(fresh15.read_unaligned()) as i16) < 0;
         if *(ram_ptr!(game, u16; 0xdf2)) == 0 || v1 {
             *(ram_ptr!(game, u16; 0xdf2)) =
                 *((&raw mut (*(rom_ptr!(game, SamusCrystalFlashPalTable; 0x91dc00))).timer

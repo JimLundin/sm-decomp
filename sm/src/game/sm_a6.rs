@@ -2456,8 +2456,8 @@ crate::game::callback_dispatch! {
             if word!(game.tilemap_stuff[8]) == 0
                 || {
                     v1 = (word!(game.tilemap_stuff[8])).wrapping_sub(1);
-                    crate::update_place! { reference fresh14 = *(ram_ptr!(game, u16; 0x2000)).offset(8) => v1; }
-                    *fresh14 != 0
+                    crate::update_place! { unaligned_word fresh14 = &raw mut (*(ram_ptr!(game, u16; 0x2000)).offset(8)) => v1; }
+                    u16::from_le(fresh14.read_unaligned()) != 0
                 }
             {
                 word!(game.tilemap_stuff[10] = v1);

@@ -145,7 +145,7 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word!(game.game_state = 32);
         }
-        crate::update_place! { reference fresh0 = *(ram_ptr!(game, u16; 0x7e1, 2)) => (*fresh0).wrapping_sub(1); }
+        crate::update_place! { unaligned_word fresh0 = &raw mut (*(ram_ptr!(game, u16; 0x7e1, 2))) => (u16::from_le(fresh0.read_unaligned())).wrapping_sub(1); }
         if *(ram_ptr!(game, i16; 0x7e1, 2)) < 0 {
             let v0: i32 = ((6u16).wrapping_mul(*(ram_ptr!(game, u16; 0x7e1)))) as i32 >> 1;
             *(ram_ptr!(game, u16; 0x7e1, 2)) =
