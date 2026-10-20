@@ -128,6 +128,23 @@ complete behavior is represented, rather than repeat those searches.
 2. [ ] **Compare the remaining large subsystem replacements.** Inspect in
    this order, using the same complete-replacement test as item 1:
 
+   Enemy/projectile preflight found no credible large replacement. Complete
+   Metalee/Skree bodies occupy 252 lines; B2 plus laser/claw bodies occupy about
+   996 before retaining distinct wall, ninja and walking behavior. Rio, linked
+   flyers, crawlers, pipe bugs, hoppers and ordinary projectiles retain distinct
+   lifecycle contracts after existing sharing. No draft or saving is claimed.
+
+   Presentation preflight likewise found no candidate to price across title/
+   cinematic exits, file-map and pause flows, Power Bomb/Crystal Flash, suit
+   pickups and door presentation. Shared geometry, drawing, transfer and beam
+   phases are already extracted; remaining ordered state effects differ.
+   A broad scene profile would transcribe arbitrary callbacks and statements.
+   Both bounded studies advance discovery without claiming exhaustive limits.
+
+   Active comparison: `samus_motion_module` is assessing complete boss phases
+   and their projectile consumers. Reuse its pending findings before starting
+   an overlapping boss investigation. No implementation is active.
+
    - Enemy/projectile lifecycles across A2/A3/A8/B2/B3/86: initialization,
      state selection, movement, collision, animation and reset together.
      Classify real differences before choosing shared algorithms and data.
@@ -195,6 +212,9 @@ may overlap landed work and are not a current reduction budget.
   import bindings and five unreferenced Bang helpers. Static/compiler/release
   checks pass; hold it for item 4, outside the active volume budget. Local draft:
   TEMP sm-bindings-root-9c4daf2f/unused/.
+- Grapple angular sweep: a 126-line draft passes 6,574 original/replacement
+  comparisons and 6,574 oracle cases plus 254 follow-up calls. It remains
+  unlanded and parked as a standalone fragment; no movie execution is claimed.
 - Renderer unification and PNG library substitution remain parked: previously
   assessed alternatives did not preserve the existing contracts.
 
