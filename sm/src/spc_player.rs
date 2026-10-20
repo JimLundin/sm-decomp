@@ -497,13 +497,9 @@ unsafe fn Dsp_Write(p: *mut SpcPlayer, mut reg: u8, value: u8) {
     }
 }
 unsafe fn Not_Implemented() {
-    '_c2rust_label: {
-        __assert_fail(
-            b"0\0" as *const u8 as *const c_char,
-            b"src/spc_player.c\0" as *const u8 as *const c_char,
-            383u32,
-            b"void Not_Implemented(void)\0" as *const u8 as *const c_char,
-        );
+    crate::native_assertion! {
+        '_c2rust_label;
+        b"0\0", b"src/spc_player.c\0", 383u32, b"void Not_Implemented(void)\0"
     };
     printf(b"Not Implemented\n\0" as *const u8 as *const c_char);
 }
@@ -2134,27 +2130,15 @@ pub unsafe fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer) {
     }
 }
 pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
-    '_c2rust_label: {
-        if (*p).timer_cycles as i32 <= 64i32 {
-        } else {
-            __assert_fail(
-                b"p->timer_cycles <= 64\0" as *const u8 as *const c_char,
-                b"src/spc_player.c\0" as *const u8 as *const c_char,
-                1550u32,
-                b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: (*p).timer_cycles as i32 <= 64i32;
+        b"p->timer_cycles <= 64\0", b"src/spc_player.c\0", 1550u32,
+        b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0"
     };
-    '_c2rust_label_0: {
-        if (*(*p).dsp).sampleOffset as i32 <= 534i32 {
-        } else {
-            __assert_fail(
-                b"p->dsp->sampleOffset <= 534\0" as *const u8 as *const c_char,
-                b"src/spc_player.c\0" as *const u8 as *const c_char,
-                1552u32,
-                b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label_0: (*(*p).dsp).sampleOffset as i32 <= 534i32;
+        b"p->dsp->sampleOffset <= 534\0", b"src/spc_player.c\0", 1552u32,
+        b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0"
     };
     loop {
         if (*p).timer_cycles as i32 >= 64i32 {

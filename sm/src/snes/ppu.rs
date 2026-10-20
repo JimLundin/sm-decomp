@@ -829,13 +829,9 @@ unsafe fn PpuDrawBackgrounds(ppu: *mut Ppu, y: i32, sub: bool) {
             PpuDrawSprites(ppu, y as u32, sub as u32, true_0 != 0);
         }
         if (*ppu).mosaicEnabled as i32 & (1i32) << 0i32 != 0 {
-            '_c2rust_label: {
-                __assert_fail(
-                    b"0\0" as *const u8 as *const c_char,
-                    b"src/snes/ppu.c\0" as *const u8 as *const c_char,
-                    679u32,
-                    __ASSERT_FUNCTION.as_ptr(),
-                );
+            crate::native_assertion! {
+                '_c2rust_label;
+                b"0\0", b"src/snes/ppu.c\0", 679u32, pointer __ASSERT_FUNCTION.as_ptr()
             };
         } else {
             PpuDrawBackground_4bpp(
@@ -848,13 +844,9 @@ unsafe fn PpuDrawBackgrounds(ppu: *mut Ppu, y: i32, sub: bool) {
             );
         }
         if (*ppu).mosaicEnabled as i32 & (1i32) << 1i32 != 0 {
-            '_c2rust_label_0: {
-                __assert_fail(
-                    b"0\0" as *const u8 as *const c_char,
-                    b"src/snes/ppu.c\0" as *const u8 as *const c_char,
-                    684u32,
-                    __ASSERT_FUNCTION.as_ptr(),
-                );
+            crate::native_assertion! {
+                '_c2rust_label_0;
+                b"0\0", b"src/snes/ppu.c\0", 684u32, pointer __ASSERT_FUNCTION.as_ptr()
             };
         } else {
             PpuDrawBackground_4bpp(
@@ -867,13 +859,9 @@ unsafe fn PpuDrawBackgrounds(ppu: *mut Ppu, y: i32, sub: bool) {
             );
         }
         if (*ppu).mosaicEnabled as i32 & (1i32) << 2i32 != 0 {
-            '_c2rust_label_1: {
-                __assert_fail(
-                    b"0\0" as *const u8 as *const c_char,
-                    b"src/snes/ppu.c\0" as *const u8 as *const c_char,
-                    689u32,
-                    __ASSERT_FUNCTION.as_ptr(),
-                );
+            crate::native_assertion! {
+                '_c2rust_label_1;
+                b"0\0", b"src/snes/ppu.c\0", 689u32, pointer __ASSERT_FUNCTION.as_ptr()
             };
         } else {
             PpuDrawBackground_2bpp(

@@ -1370,13 +1370,9 @@ unsafe fn HandleCommand(j: u32, pressed: bool, game: &mut Game) {
                 -1i32
             }),
             _ => {
-                '_c2rust_label: {
-                    __assert_fail(
-                        b"0\0" as *const u8 as *const c_char,
-                        b"src/main.c\0" as *const u8 as *const c_char,
-                        686u32,
-                        b"void HandleCommand(uint32, _Bool)\0" as *const u8 as *const c_char,
-                    );
+                sm::native_assertion! {
+                    '_c2rust_label;
+                    b"0\0", b"src/main.c\0", 686u32, b"void HandleCommand(uint32, _Bool)\0"
                 };
             }
         }

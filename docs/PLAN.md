@@ -31,6 +31,32 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Native assertion wrappers (2026-10-20): one caller-side macro shares all
+64 existing failure sites across 16 callers: 40 labeled conditions, 18 labeled
+unconditional failures and six direct calls, including two CPU opcode bodies.
+Original labels, conditions, statement boundaries, argument order, diagnostic
+bytes/line numbers and pointer casts remain exact. All caller C ABI bindings
+are retained, including main's Windows-local failure function and non-Windows
+foreign import. Seven function-name pointer expressions stay on the failure
+path. No runtime helper, borrow or release-disabled assertion is introduced.
+
+Independent complete-source reconstruction and caller-binding review pass.
+The final composition includes reviewed Ridley 9696bdbe and retains the two
+new direct-expression SNES arms. Fresh whole-compiler captures match all
+10150568 core and 10445642 frontend-library bytes after removing only the
+exact 969-byte macro/comment/export. Main retains all 213650 bytes outside its
+one checkpoint fingerprint literal; each literal binds its 22 included files.
+No whitespace or punctuation normalization is used.
+
+Formatting/check, progress, normal release (30.09s) and full any%
+129712/0 (124.74s replay, 124.87s wall), native exit 0, pass on the final Ridley/assertion composition.
+All 77 final inputs and 134 verification pins remain fixed. The earlier build exhausted disk while writing
+incremental bitcode; its source/logs remain preserved. The final normal build
+and verifier host disable only incremental caching and share one local target.
+Rust lines -330, to 129176; all other progress counters are unchanged.
+Any% supplies core integration coverage; broader routes, frontend and global
+alias safety remain open. Continue substantial families toward the full goal.
+
 Next-family measurements (2026-10-20): three isolated runtime drafts remain
 parked under substantial-family priority. All eight timed-shutter opening/
 closing stages save only 17 formatted lines after named modes and endpoint

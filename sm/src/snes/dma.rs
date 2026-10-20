@@ -95,12 +95,10 @@ pub unsafe fn dma_read(dma: *mut Dma, address: u16) -> u8 {
         10 => channel.repCount,
         11 | 15 => channel.unusedByte,
         _ => {
-            __assert_fail(
-                b"0\0" as *const u8 as *const c_char,
-                b"src/snes/dma.c\0" as *const u8 as *const c_char,
-                118u32,
-                __ASSERT_FUNCTION.as_ptr(),
-            );
+            crate::native_assertion! {
+                @failure
+                b"0\0", b"src/snes/dma.c\0", 118u32, pointer __ASSERT_FUNCTION.as_ptr()
+            };
         }
     }
 }

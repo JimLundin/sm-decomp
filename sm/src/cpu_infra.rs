@@ -124,16 +124,9 @@ crate::ram_map::ram_pointer_functions! {
 }
 
 pub unsafe fn Call(addr: u32, game: &mut Game) {
-    '_c2rust_label: {
-        if addr & 0x8000u32 != 0 {
-        } else {
-            __assert_fail(
-                b"addr & 0x8000\0" as *const u8 as *const c_char,
-                b"src/sm_cpu_infra.c\0" as *const u8 as *const c_char,
-                54u32,
-                b"void Call(uint32)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: addr & 0x8000u32 != 0;
+        b"addr & 0x8000\0", b"src/sm_cpu_infra.c\0", 54u32, b"void Call(uint32)\0"
     };
     RunAsmCode(addr, 0u16, 0u16, 0u16, 0i32, game);
 }
@@ -387,13 +380,9 @@ pub unsafe fn CpuOpcodeHook(addr: u32, game: &mut Game) -> i32 {
     if i_0 >= 0i32 {
         return i_0;
     }
-    '_c2rust_label: {
-        __assert_fail(
-            b"0\0" as *const u8 as *const c_char,
-            b"src/sm_cpu_infra.c\0" as *const u8 as *const c_char,
-            455u32,
-            b"int CpuOpcodeHook(uint32)\0" as *const u8 as *const c_char,
-        );
+    crate::native_assertion! {
+        '_c2rust_label;
+        b"0\0", b"src/sm_cpu_infra.c\0", 455u32, b"int CpuOpcodeHook(uint32)\0"
     };
     0i32
 }
@@ -403,13 +392,9 @@ pub unsafe fn HookedFunctionRts(is_long: i32, game: &mut Game) -> bool {
         game.g_calling_asm_from_c = false_0 != 0;
         return false_0 != 0;
     }
-    '_c2rust_label: {
-        __assert_fail(
-            b"0\0" as *const u8 as *const c_char,
-            b"src/sm_cpu_infra.c\0" as *const u8 as *const c_char,
-            465u32,
-            b"_Bool HookedFunctionRts(int)\0" as *const u8 as *const c_char,
-        );
+    crate::native_assertion! {
+        '_c2rust_label;
+        b"0\0", b"src/sm_cpu_infra.c\0", 465u32, b"_Bool HookedFunctionRts(int)\0"
     };
     false_0 != 0
 }
@@ -1706,13 +1691,9 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
     game.g_snes
 }
 pub unsafe fn DebugGameOverMenu() {
-    '_c2rust_label: {
-        __assert_fail(
-            b"0\0" as *const u8 as *const c_char,
-            b"src/sm_cpu_infra.c\0" as *const u8 as *const c_char,
-            914u32,
-            b"void DebugGameOverMenu(void)\0" as *const u8 as *const c_char,
-        );
+    crate::native_assertion! {
+        '_c2rust_label;
+        b"0\0", b"src/sm_cpu_infra.c\0", 914u32, b"void DebugGameOverMenu(void)\0"
     };
 }
 pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {

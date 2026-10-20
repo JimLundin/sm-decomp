@@ -113,16 +113,9 @@ pub const __ASSERT_FUNCTION: [c_char; 28] =
     unsafe { transmute::<[u8; 28], [c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0") };
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
-    '_c2rust_label: {
-        if addr < 0x2000u16 {
-        } else {
-            __assert_fail(
-                b"addr < 0x2000\0" as *const u8 as *const c_char,
-                b"src/sm_rtl.h\0" as *const u8 as *const c_char,
-                51u32,
-                __ASSERT_FUNCTION.as_ptr(),
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: addr < 0x2000u16;
+        b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51u32, pointer __ASSERT_FUNCTION.as_ptr()
     };
     ram_ptr!(game; addr as i32 as isize)
 }
@@ -1556,16 +1549,10 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
             break;
         }
     }
-    '_c2rust_label: {
-        if ((ram_word!(game, layer1_y_pos) as i32 >> 12i32) as u16) == 0u16 {
-        } else {
-            __assert_fail(
-                b"(uint16)(layer1_y_pos >> 12) == 0\0" as *const u8 as *const c_char,
-                b"src/sm_91.c\0" as *const u8 as *const c_char,
-                921u32,
-                __ASSERT_FUNCTION.as_ptr(),
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: ((ram_word!(game, layer1_y_pos) as i32 >> 12i32) as u16) == 0u16;
+        b"(uint16)(layer1_y_pos >> 12) == 0\0", b"src/sm_91.c\0", 921u32,
+        pointer __ASSERT_FUNCTION.as_ptr()
     };
     let mut r34: u16 = (Mult8x8(
         (ram_word!(game, layer1_y_pos) as i32 >> 4i32) as u8,

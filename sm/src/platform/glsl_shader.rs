@@ -461,19 +461,11 @@ unsafe fn stbi__load_and_postprocess_8bit(
     if result.is_null() {
         return null_mut::<c_uchar>();
     }
-    '_c2rust_label: {
-        if ri.bits_per_channel == 8i32 || ri.bits_per_channel == 16i32 {
-        } else {
-            __assert_fail(
-                b"ri.bits_per_channel == 8 || ri.bits_per_channel == 16\0" as *const u8
-                    as *const c_char,
-                b"./third_party/stb/stb_image.h\0" as *const u8
-                    as *const c_char,
-                1249u32,
-                b"unsigned char *stbi__load_and_postprocess_8bit(stbi__context *, int *, int *, int *, int)\0"
-                    as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: ri.bits_per_channel == 8i32 || ri.bits_per_channel == 16i32;
+        b"ri.bits_per_channel == 8 || ri.bits_per_channel == 16\0",
+        b"./third_party/stb/stb_image.h\0", 1249u32,
+        b"unsigned char *stbi__load_and_postprocess_8bit(stbi__context *, int *, int *, int *, int)\0"
     };
     if ri.bits_per_channel != 8i32 {
         result = stbi__convert_16_to_8(
@@ -511,19 +503,11 @@ unsafe fn stbi__load_and_postprocess_16bit(
     if result.is_null() {
         return null_mut::<stbi__uint16>();
     }
-    '_c2rust_label: {
-        if ri.bits_per_channel == 8i32 || ri.bits_per_channel == 16i32 {
-        } else {
-            __assert_fail(
-                b"ri.bits_per_channel == 8 || ri.bits_per_channel == 16\0" as *const u8
-                    as *const c_char,
-                b"./third_party/stb/stb_image.h\0" as *const u8
-                    as *const c_char,
-                1275u32,
-                b"stbi__uint16 *stbi__load_and_postprocess_16bit(stbi__context *, int *, int *, int *, int)\0"
-                    as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: ri.bits_per_channel == 8i32 || ri.bits_per_channel == 16i32;
+        b"ri.bits_per_channel == 8 || ri.bits_per_channel == 16\0",
+        b"./third_party/stb/stb_image.h\0", 1275u32,
+        b"stbi__uint16 *stbi__load_and_postprocess_16bit(stbi__context *, int *, int *, int *, int)\0"
     };
     if ri.bits_per_channel != 16i32 {
         result = stbi__convert_8_to_16(
@@ -985,19 +969,10 @@ unsafe fn stbi__convert_format(
     if req_comp == img_n {
         return data;
     }
-    '_c2rust_label: {
-        if req_comp >= 1i32 && req_comp <= 4i32 {
-        } else {
-            __assert_fail(
-                b"req_comp >= 1 && req_comp <= 4\0" as *const u8
-                    as *const c_char,
-                b"./third_party/stb/stb_image.h\0" as *const u8
-                    as *const c_char,
-                1741u32,
-                b"unsigned char *stbi__convert_format(unsigned char *, int, int, unsigned int, unsigned int)\0"
-                    as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: req_comp >= 1i32 && req_comp <= 4i32;
+        b"req_comp >= 1 && req_comp <= 4\0", b"./third_party/stb/stb_image.h\0", 1741u32,
+        b"unsigned char *stbi__convert_format(unsigned char *, int, int, unsigned int, unsigned int)\0"
     };
     let mut good: *mut c_uchar =
         stbi__malloc_mad3(req_comp, x as i32, y as i32, 0i32) as *mut c_uchar;
@@ -1006,15 +981,10 @@ unsafe fn stbi__convert_format(
         return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar;
     }
     if !convert_image_channels(data, good, img_n, req_comp, x, y) {
-        '_c2rust_label_0: {
-            __assert_fail(
-            b"0\0" as *const u8 as *const c_char,
-            b"./third_party/stb/stb_image.h\0" as *const u8
-                as *const c_char,
-            1770u32,
+        crate::native_assertion! {
+            '_c2rust_label_0;
+            b"0\0", b"./third_party/stb/stb_image.h\0", 1770u32,
             b"unsigned char *stbi__convert_format(unsigned char *, int, int, unsigned int, unsigned int)\0"
-                as *const u8 as *const c_char,
-        );
         };
         free(data as *mut c_void);
         free(good as *mut c_void);
@@ -1033,19 +1003,10 @@ unsafe fn stbi__convert_format16(
     if req_comp == img_n {
         return data;
     }
-    '_c2rust_label: {
-        if req_comp >= 1i32 && req_comp <= 4i32 {
-        } else {
-            __assert_fail(
-                b"req_comp >= 1 && req_comp <= 4\0" as *const u8
-                    as *const c_char,
-                b"./third_party/stb/stb_image.h\0" as *const u8
-                    as *const c_char,
-                1798u32,
-                b"stbi__uint16 *stbi__convert_format16(stbi__uint16 *, int, int, unsigned int, unsigned int)\0"
-                    as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: req_comp >= 1i32 && req_comp <= 4i32;
+        b"req_comp >= 1 && req_comp <= 4\0", b"./third_party/stb/stb_image.h\0", 1798u32,
+        b"stbi__uint16 *stbi__convert_format16(stbi__uint16 *, int, int, unsigned int, unsigned int)\0"
     };
     let mut good: *mut stbi__uint16 = stbi__malloc(
         (req_comp as u32)
@@ -1059,15 +1020,10 @@ unsafe fn stbi__convert_format16(
             as *mut stbi__uint16;
     }
     if !convert_image_channels(data, good, img_n, req_comp, x, y) {
-        '_c2rust_label_0: {
-            __assert_fail(
-            b"0\0" as *const u8 as *const c_char,
-            b"./third_party/stb/stb_image.h\0" as *const u8
-                as *const c_char,
-            1827u32,
+        crate::native_assertion! {
+            '_c2rust_label_0;
+            b"0\0", b"./third_party/stb/stb_image.h\0", 1827u32,
             b"stbi__uint16 *stbi__convert_format16(stbi__uint16 *, int, int, unsigned int, unsigned int)\0"
-                as *const u8 as *const c_char,
-        );
         };
         free(data as *mut c_void);
         free(good as *mut c_void);
@@ -1128,16 +1084,10 @@ unsafe fn stbi__bitreverse16(mut n: i32) -> i32 {
     n
 }
 unsafe fn stbi__bit_reverse(v: i32, bits: i32) -> i32 {
-    '_c2rust_label: {
-        if bits <= 16i32 {
-        } else {
-            __assert_fail(
-                b"bits <= 16\0" as *const u8 as *const c_char,
-                b"./third_party/stb/stb_image.h\0" as *const u8 as *const c_char,
-                4061u32,
-                b"int stbi__bit_reverse(int, int)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: bits <= 16i32;
+        b"bits <= 16\0", b"./third_party/stb/stb_image.h\0", 4061u32,
+        b"int stbi__bit_reverse(int, int)\0"
     };
     stbi__bitreverse16(v) >> 16i32 - bits
 }
@@ -1756,19 +1706,10 @@ unsafe fn stbi__create_png_image_raw(
     let output_bytes: i32 = out_n * bytes;
     let mut filter_bytes: i32 = img_n * bytes;
     let mut width: i32 = x as i32;
-    '_c2rust_label: {
-        if out_n == (*s).img_n || out_n == (*s).img_n + 1i32 {
-        } else {
-            __assert_fail(
-                b"out_n == s->img_n || out_n == s->img_n+1\0" as *const u8
-                    as *const c_char,
-                b"./third_party/stb/stb_image.h\0" as *const u8
-                    as *const c_char,
-                4607u32,
-                b"int stbi__create_png_image_raw(stbi__png *, stbi_uc *, stbi__uint32, int, stbi__uint32, stbi__uint32, int, int)\0"
-                    as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: out_n == (*s).img_n || out_n == (*s).img_n + 1i32;
+        b"out_n == s->img_n || out_n == s->img_n+1\0", b"./third_party/stb/stb_image.h\0", 4607u32,
+        b"int stbi__create_png_image_raw(stbi__png *, stbi_uc *, stbi__uint32, int, stbi__uint32, stbi__uint32, int, int)\0"
     };
     (*a).out = stbi__malloc_mad3(x as i32, y as i32, output_bytes, 0i32) as *mut stbi_uc;
     if (*a).out.is_null() {
@@ -1932,18 +1873,10 @@ unsafe fn stbi__create_png_image_raw(
             }
             raw = raw.offset(nk as isize);
         } else {
-            '_c2rust_label_0: {
-                if img_n + 1i32 == out_n {
-                } else {
-                    __assert_fail(
-                        b"img_n+1 == out_n\0" as *const u8 as *const c_char,
-                        b"./third_party/stb/stb_image.h\0" as *const u8
-                            as *const c_char,
-                        4691u32,
-                        b"int stbi__create_png_image_raw(stbi__png *, stbi_uc *, stbi__uint32, int, stbi__uint32, stbi__uint32, int, int)\0"
-                            as *const u8 as *const c_char,
-                    );
-                }
+            crate::native_assertion! {
+                '_c2rust_label_0: img_n + 1i32 == out_n;
+                b"img_n+1 == out_n\0", b"./third_party/stb/stb_image.h\0", 4691u32,
+                b"int stbi__create_png_image_raw(stbi__png *, stbi_uc *, stbi__uint32, int, stbi__uint32, stbi__uint32, int, int)\0"
             };
             match filter {
                 0 => {
@@ -2233,18 +2166,10 @@ unsafe fn stbi__create_png_image_raw(
                         q -= 1;
                     }
                 } else {
-                    '_c2rust_label_1: {
-                        if img_n == 3i32 {
-                        } else {
-                            __assert_fail(
-                                b"img_n == 3\0" as *const u8 as *const c_char,
-                                b"./third_party/stb/stb_image.h\0" as *const u8
-                                    as *const c_char,
-                                4780u32,
-                                b"int stbi__create_png_image_raw(stbi__png *, stbi_uc *, stbi__uint32, int, stbi__uint32, stbi__uint32, int, int)\0"
-                                    as *const u8 as *const c_char,
-                            );
-                        }
+                    crate::native_assertion! {
+                        '_c2rust_label_1: img_n == 3i32;
+                        b"img_n == 3\0", b"./third_party/stb/stb_image.h\0", 4780u32,
+                        b"int stbi__create_png_image_raw(stbi__png *, stbi_uc *, stbi__uint32, int, stbi__uint32, stbi__uint32, int, int)\0"
                     };
                     q = x.wrapping_sub(1 as stbi__uint32) as i32;
                     while q >= 0i32 {
@@ -2378,17 +2303,10 @@ unsafe fn stbi__compute_transparency(z: *mut stbi__png, tc: *mut stbi_uc, out_n:
     let mut i: stbi__uint32 = 0;
     let pixel_count: stbi__uint32 = (*s).img_x.wrapping_mul((*s).img_y);
     let mut p: *mut stbi_uc = (*z).out;
-    '_c2rust_label: {
-        if out_n == 2i32 || out_n == 4i32 {
-        } else {
-            __assert_fail(
-                b"out_n == 2 || out_n == 4\0" as *const u8 as *const c_char,
-                b"./third_party/stb/stb_image.h\0" as *const u8 as *const c_char,
-                4859u32,
-                b"int stbi__compute_transparency(stbi__png *, stbi_uc *, int)\0" as *const u8
-                    as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: out_n == 2i32 || out_n == 4i32;
+        b"out_n == 2 || out_n == 4\0", b"./third_party/stb/stb_image.h\0", 4859u32,
+        b"int stbi__compute_transparency(stbi__png *, stbi_uc *, int)\0"
     };
     if out_n == 2i32 {
         i = 0 as stbi__uint32;
@@ -2425,17 +2343,10 @@ unsafe fn stbi__compute_transparency16(
     let mut i: stbi__uint32 = 0;
     let pixel_count: stbi__uint32 = (*s).img_x.wrapping_mul((*s).img_y);
     let mut p: *mut stbi__uint16 = (*z).out as *mut stbi__uint16;
-    '_c2rust_label: {
-        if out_n == 2i32 || out_n == 4i32 {
-        } else {
-            __assert_fail(
-                b"out_n == 2 || out_n == 4\0" as *const u8 as *const c_char,
-                b"./third_party/stb/stb_image.h\0" as *const u8 as *const c_char,
-                4884u32,
-                b"int stbi__compute_transparency16(stbi__png *, stbi__uint16 *, int)\0" as *const u8
-                    as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: out_n == 2i32 || out_n == 4i32;
+        b"out_n == 2 || out_n == 4\0", b"./third_party/stb/stb_image.h\0", 4884u32,
+        b"int stbi__compute_transparency16(stbi__png *, stbi__uint16 *, int)\0"
     };
     if out_n == 2i32 {
         i = 0 as stbi__uint32;
@@ -2527,16 +2438,10 @@ unsafe fn stbi__de_iphone(z: *mut stbi__png) {
             i = i.wrapping_add(1);
         }
     } else {
-        '_c2rust_label: {
-            if (*s).img_out_n == 4i32 {
-            } else {
-                __assert_fail(
-                    b"s->img_out_n == 4\0" as *const u8 as *const c_char,
-                    b"./third_party/stb/stb_image.h\0" as *const u8 as *const c_char,
-                    4992u32,
-                    b"void stbi__de_iphone(stbi__png *)\0" as *const u8 as *const c_char,
-                );
-            }
+        crate::native_assertion! {
+            '_c2rust_label: (*s).img_out_n == 4i32;
+            b"s->img_out_n == 4\0", b"./third_party/stb/stb_image.h\0", 4992u32,
+            b"void stbi__de_iphone(stbi__png *)\0"
         };
         if stbi__unpremultiply_on_load_global != 0 {
             i = 0 as stbi__uint32;
@@ -4075,17 +3980,10 @@ unsafe fn RenderCtx_SetTexture(ctx: *mut RenderCtx, textureu: i32, texture_id: u
 }
 unsafe fn RenderCtx_SetTexCoords(ctx: *mut RenderCtx, tex_coord: i32, offset: usize) {
     if tex_coord >= 0i32 {
-        '_c2rust_label: {
-            if (*ctx).num_vaos < kMaxVaosInRenderCtx as i32 as u32 {
-            } else {
-                __assert_fail(
-                    b"ctx->num_vaos < kMaxVaosInRenderCtx\0" as *const u8 as *const c_char,
-                    b"src/glsl_shader.c\0" as *const u8 as *const c_char,
-                    467u32,
-                    b"void RenderCtx_SetTexCoords(RenderCtx *, int, uintptr_t)\0" as *const u8
-                        as *const c_char,
-                );
-            }
+        crate::native_assertion! {
+            '_c2rust_label: (*ctx).num_vaos < kMaxVaosInRenderCtx as i32 as u32;
+            b"ctx->num_vaos < kMaxVaosInRenderCtx\0", b"src/glsl_shader.c\0", 467u32,
+            b"void RenderCtx_SetTexCoords(RenderCtx *, int, uintptr_t)\0"
         };
         let fresh54 = (*ctx).num_vaos;
         (*ctx).num_vaos = (*ctx).num_vaos.wrapping_add(1);
@@ -4172,17 +4070,10 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
     while i < (*gs).max_prev_frame {
         let t: *mut GlTextureWithSize = (&raw mut (*gs).prev_frame as *mut GlTextureWithSize)
             .offset(((*gs).frame_count.wrapping_sub(1u32).wrapping_sub(i as u32) & 7u32) as isize);
-        '_c2rust_label: {
-            if (*t).gl_texture != 0u32 {
-            } else {
-                __assert_fail(
-                    b"t->gl_texture != 0\0" as *const u8 as *const c_char,
-                    b"src/glsl_shader.c\0" as *const u8 as *const c_char,
-                    504u32,
-                    b"void GlslShader_SetShaderVars(GlslShader *, RenderCtx *, int)\0" as *const u8
-                        as *const c_char,
-                );
-            }
+        crate::native_assertion! {
+            '_c2rust_label: (*t).gl_texture != 0u32;
+            b"t->gl_texture != 0\0", b"src/glsl_shader.c\0", 504u32,
+            b"void GlslShader_SetShaderVars(GlslShader *, RenderCtx *, int)\0"
         };
         if (*t).width != 0 {
             RenderCtx_SetGlslTextureUniform(
@@ -4427,18 +4318,10 @@ pub unsafe fn GlslShader_Render(
         let load_pos: *mut GlTextureWithSize = (&raw mut (*gs).prev_frame
             as *mut GlTextureWithSize)
             .offset(((*gs).frame_count.wrapping_sub((*gs).max_prev_frame as u32) & 7u32) as isize);
-        '_c2rust_label: {
-            if (*store_pos).gl_texture == 0u32 {
-            } else {
-                __assert_fail(
-                    b"store_pos->gl_texture == 0\0" as *const u8
-                        as *const c_char,
-                    b"src/glsl_shader.c\0" as *const u8 as *const c_char,
-                    609u32,
-                    b"void GlslShader_Render(GlslShader *, GlTextureWithSize *, int, int, int, int)\0"
-                        as *const u8 as *const c_char,
-                );
-            }
+        crate::native_assertion! {
+            '_c2rust_label: (*store_pos).gl_texture == 0u32;
+            b"store_pos->gl_texture == 0\0", b"src/glsl_shader.c\0", 609u32,
+            b"void GlslShader_Render(GlslShader *, GlTextureWithSize *, int, int, int, int)\0"
         };
         *store_pos = *tex;
         *tex = *load_pos;

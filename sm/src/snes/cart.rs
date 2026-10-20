@@ -64,13 +64,10 @@ pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: *mut u8, romSize: i32
 pub unsafe fn cart_read(cart: *mut Cart, bank: u8, adr: u16, game: &mut Game) -> u8 {
     match (*cart).type_0 {
         0 => {
-            '_c2rust_label: {
-                __assert_fail(
-                    b"0\0" as *const u8 as *const c_char,
-                    b"src/snes/cart.c\0" as *const u8 as *const c_char,
-                    57u32,
-                    b"uint8_t cart_read(Cart *, uint8_t, uint16_t)\0" as *const u8 as *const c_char,
-                );
+            crate::native_assertion! {
+                '_c2rust_label;
+                b"0\0", b"src/snes/cart.c\0", 57u32,
+                b"uint8_t cart_read(Cart *, uint8_t, uint16_t)\0"
             };
             return (*(*cart).snes).openBus;
         }
@@ -78,13 +75,9 @@ pub unsafe fn cart_read(cart: *mut Cart, bank: u8, adr: u16, game: &mut Game) ->
         2 => return cart_readHirom(cart, bank, adr),
         _ => {}
     }
-    '_c2rust_label_0: {
-        __assert_fail(
-            b"0\0" as *const u8 as *const c_char,
-            b"src/snes/cart.c\0" as *const u8 as *const c_char,
-            62u32,
-            b"uint8_t cart_read(Cart *, uint8_t, uint16_t)\0" as *const u8 as *const c_char,
-        );
+    crate::native_assertion! {
+        '_c2rust_label_0;
+        b"0\0", b"src/snes/cart.c\0", 62u32, b"uint8_t cart_read(Cart *, uint8_t, uint16_t)\0"
     };
     (*(*cart).snes).openBus
 }
@@ -158,13 +151,9 @@ unsafe fn cart_readHirom(cart: *mut Cart, mut bank: u8, adr: u16) -> u8 {
                 & (*cart).romSize.wrapping_sub(1u32)) as isize,
         );
     }
-    '_c2rust_label: {
-        __assert_fail(
-            b"0\0" as *const u8 as *const c_char,
-            b"src/snes/cart.c\0" as *const u8 as *const c_char,
-            109u32,
-            b"uint8_t cart_readHirom(Cart *, uint8_t, uint16_t)\0" as *const u8 as *const c_char,
-        );
+    crate::native_assertion! {
+        '_c2rust_label;
+        b"0\0", b"src/snes/cart.c\0", 109u32, b"uint8_t cart_readHirom(Cart *, uint8_t, uint16_t)\0"
     };
     (*(*cart).snes).openBus
 }

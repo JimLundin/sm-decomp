@@ -27,6 +27,40 @@ macro_rules! typed_struct {
 }
 pub(crate) use typed_struct;
 
+// Preserve each original assertion scope and the caller's C failure binding.
+#[macro_export]
+macro_rules! native_assertion {
+    ($label:lifetime: $condition:expr; $($diagnostic:tt)*) => {
+        $label: {
+            if $condition {
+            } else {
+                $crate::native_assertion!(@failure $($diagnostic)*);
+            }
+        }
+    };
+    ($label:lifetime; $($diagnostic:tt)*) => {
+        $label: {
+            $crate::native_assertion!(@failure $($diagnostic)*);
+        }
+    };
+    (@failure $assertion:literal, $file:literal, $line:expr, $function:literal $(,)?) => {
+        __assert_fail(
+            $assertion as *const u8 as *const c_char,
+            $file as *const u8 as *const c_char,
+            $line,
+            $function as *const u8 as *const c_char,
+        )
+    };
+    (@failure $assertion:literal, $file:literal, $line:expr, pointer $function:expr $(,)?) => {
+        __assert_fail(
+            $assertion as *const u8 as *const c_char,
+            $file as *const u8 as *const c_char,
+            $line,
+            $function,
+        )
+    };
+}
+
 // Emit repeated literal field stores without hoisting the receiver or value.
 macro_rules! set_fields {
     ($receiver:tt, $value:expr; $($field:ident),+ $(,)?) => {

@@ -169,16 +169,9 @@ crate::game::constants::typed_constants! { i32;
 }
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
-    '_c2rust_label: {
-        if addr < 0x2000u16 {
-        } else {
-            __assert_fail(
-                b"addr < 0x2000\0" as *const u8 as *const c_char,
-                b"src/sm_rtl.h\0" as *const u8 as *const c_char,
-                51u32,
-                __ASSERT_FUNCTION.as_ptr(),
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: addr < 0x2000u16;
+        b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51u32, pointer __ASSERT_FUNCTION.as_ptr()
     };
     ram_ptr!(game; addr as i32 as isize)
 }

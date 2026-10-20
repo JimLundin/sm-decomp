@@ -141,16 +141,9 @@ crate::game::constants::typed_constants! { i32;
 }
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
-    '_c2rust_label: {
-        if addr < 0x2000u16 {
-        } else {
-            __assert_fail(
-                b"addr < 0x2000\0" as *const u8 as *const c_char,
-                b"src/sm_rtl.h\0" as *const u8 as *const c_char,
-                51u32,
-                b"uint8 *RomPtr_RAM(uint16_t)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: addr < 0x2000u16;
+        b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51u32, b"uint8 *RomPtr_RAM(uint16_t)\0"
     };
     ram_ptr!(game; addr as i32 as isize)
 }
@@ -3005,16 +2998,9 @@ pub unsafe fn SetSomeStuffForSpriteObject_7(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     let v3: i32 =
         2i32 * *((ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize) as *mut u8).offset(0) as i32;
-    '_c2rust_label: {
-        if (v3 + 1i32) < 12i32 {
-        } else {
-            __assert_fail(
-                b"v3 + 1 < 12\0" as *const u8 as *const c_char,
-                b"src/sm_8b.c\0" as *const u8 as *const c_char,
-                2389u32,
-                b"void SetSomeStuffForSpriteObject_7(uint16)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: (v3 + 1i32) < 12i32;
+        b"v3 + 1 < 12\0", b"src/sm_8b.c\0", 2389u32, b"void SetSomeStuffForSpriteObject_7(uint16)\0"
     };
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
@@ -3024,16 +3010,9 @@ pub unsafe fn SetSomeStuffForSpriteObject_7(k: u16, game: &mut Game) {
     );
     let v6: i32 = 2i32
         * *((ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize) as *mut u8).offset(1isize) as i32;
-    '_c2rust_label_0: {
-        if (v6 + 1i32) < 82i32 {
-        } else {
-            __assert_fail(
-                b"v6 + 1 < 82\0" as *const u8 as *const c_char,
-                b"src/sm_8b.c\0" as *const u8 as *const c_char,
-                2392u32,
-                b"void SetSomeStuffForSpriteObject_7(uint16)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label_0: (v6 + 1i32) < 82i32;
+        b"v6 + 1 < 82\0", b"src/sm_8b.c\0", 2392u32, b"void SetSomeStuffForSpriteObject_7(uint16)\0"
     };
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
@@ -3082,16 +3061,9 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     let v3: i32 =
         2i32 * *((ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize) as *mut u8).offset(0) as i32;
-    '_c2rust_label: {
-        if (v3 + 1i32) < 10i32 {
-        } else {
-            __assert_fail(
-                b"v3 + 1 < 10\0" as *const u8 as *const c_char,
-                b"src/sm_8b.c\0" as *const u8 as *const c_char,
-                2442u32,
-                b"void SetSomeStuffForSpriteObject_9(uint16)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: (v3 + 1i32) < 10i32;
+        b"v3 + 1 < 10\0", b"src/sm_8b.c\0", 2442u32, b"void SetSomeStuffForSpriteObject_9(uint16)\0"
     };
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
@@ -3102,16 +3074,10 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(k: u16, game: &mut Game) {
     if (ram_word!(game, cinematicspr_goto_timer[v1]) as i32 & 1i32) != 0i32 {
         let v12: i32 = 2i32
             * *((ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize) as *mut u8).offset(1isize) as i32;
-        '_c2rust_label_0: {
-            if (v12 + 1i32) < 124i32 {
-            } else {
-                __assert_fail(
-                    b"v12 + 1 < 124\0" as *const u8 as *const c_char,
-                    b"src/sm_8b.c\0" as *const u8 as *const c_char,
-                    2446u32,
-                    b"void SetSomeStuffForSpriteObject_9(uint16)\0" as *const u8 as *const c_char,
-                );
-            }
+        crate::native_assertion! {
+            '_c2rust_label_0: (v12 + 1i32) < 124i32;
+            b"v12 + 1 < 124\0", b"src/sm_8b.c\0", 2446u32,
+            b"void SetSomeStuffForSpriteObject_9(uint16)\0"
         };
         AddToHiLo(
             (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
@@ -3122,16 +3088,10 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(k: u16, game: &mut Game) {
     } else {
         let v6: i32 = 2i32
             * *((ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize) as *mut u8).offset(1isize) as i32;
-        '_c2rust_label_1: {
-            if (v6 + 1i32) < 138i32 {
-            } else {
-                __assert_fail(
-                    b"v6 + 1 < 138\0" as *const u8 as *const c_char,
-                    b"src/sm_8b.c\0" as *const u8 as *const c_char,
-                    2450u32,
-                    b"void SetSomeStuffForSpriteObject_9(uint16)\0" as *const u8 as *const c_char,
-                );
-            }
+        crate::native_assertion! {
+            '_c2rust_label_1: (v6 + 1i32) < 138i32;
+            b"v6 + 1 < 138\0", b"src/sm_8b.c\0", 2450u32,
+            b"void SetSomeStuffForSpriteObject_9(uint16)\0"
         };
         AddToHiLo(
             (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),

@@ -167,12 +167,10 @@ pub unsafe fn snes_readBBus(snes: *mut Snes, address: u8, game: &mut Game) -> u8
             (*snes).ramAdr &= 0x1ffff;
             value
         }
-        _ => __assert_fail(
-            b"0\0" as *const u8 as *const c_char,
-            b"src/snes/snes.c\0" as *const u8 as *const c_char,
-            197u32,
-            b"uint8_t snes_readBBus(Snes *, uint8_t)\0" as *const u8 as *const c_char,
-        ),
+        _ => crate::native_assertion! {
+            @failure
+            b"0\0", b"src/snes/snes.c\0", 197u32, b"uint8_t snes_readBBus(Snes *, uint8_t)\0"
+        },
     }
 }
 pub unsafe fn snes_writeBBus(snes: *mut Snes, address: u8, value: u8, game: &mut Game) {
@@ -285,12 +283,10 @@ pub unsafe fn snes_read(snes: *mut Snes, address: u32, game: &mut Game) -> u8 {
         match offset {
             0x0000..=0x1fff => return *(*snes).ram.add(usize::from(offset)),
             0x2100..=0x21ff => return snes_readBBus(snes, offset as u8, game),
-            0x4016 | 0x4017 => __assert_fail(
-                b"0\0" as *const u8 as *const c_char,
-                b"src/snes/snes.c\0" as *const u8 as *const c_char,
-                396u32,
-                b"uint8_t snes_read(Snes *, uint32_t)\0" as *const u8 as *const c_char,
-            ),
+            0x4016 | 0x4017 => crate::native_assertion! {
+                @failure
+                b"0\0", b"src/snes/snes.c\0", 396u32, b"uint8_t snes_read(Snes *, uint32_t)\0"
+            },
             0x4200..=0x421f => return snes_readReg(snes, offset),
             0x4300..=0x437f => return dma_read((*snes).dma, offset),
             _ => {}

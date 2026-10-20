@@ -370,16 +370,9 @@ pub use crate::types::Point32;
 pub const NULL: *mut c_void = null_mut::<c_void>();
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
-    '_c2rust_label: {
-        if addr < 0x2000u16 {
-        } else {
-            __assert_fail(
-                b"addr < 0x2000\0" as *const u8 as *const c_char,
-                b"src/sm_rtl.h\0" as *const u8 as *const c_char,
-                51u32,
-                b"uint8 *RomPtr_RAM(uint16_t)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: addr < 0x2000u16;
+        b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51u32, b"uint8 *RomPtr_RAM(uint16_t)\0"
     };
     ram_ptr!(game; addr as i32 as isize)
 }
@@ -2706,14 +2699,10 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
                 );
                 set_ram_word!(game.samus_invincibility_timer = 96u16);
                 set_ram_word!(game.samus_knockback_timer = 5u16);
-                '_c2rust_label: {
-                    __assert_fail(
-                        b"0\0" as *const u8 as *const c_char,
-                        b"src/sm_a0.c\0" as *const u8 as *const c_char,
-                        2048u32,
-                        b"void SamusProjectileInteractionHandler(void)\0" as *const u8
-                            as *const c_char,
-                    );
+                crate::native_assertion! {
+                    '_c2rust_label;
+                    b"0\0", b"src/sm_a0.c\0", 2048u32,
+                    b"void SamusProjectileInteractionHandler(void)\0"
                 };
                 let mut v0: u16 = 0u16;
                 set_ram_word!(
@@ -4501,12 +4490,11 @@ pub unsafe fn ProcessEnemyInstructions(game: &mut Game) {
         return;
     }
     if game.enemy_instructions(index).current_instruction() & 0x8000 == 0 {
-        __assert_fail(
-            b"E->current_instruction & 0x8000\0" as *const u8 as *const c_char,
-            b"src/sm_a0.c\0" as *const u8 as *const c_char,
-            3399u32,
-            b"void ProcessEnemyInstructions(void)\0" as *const u8 as *const c_char,
-        );
+        crate::native_assertion! {
+            @failure
+            b"E->current_instruction & 0x8000\0", b"src/sm_a0.c\0", 3399u32,
+            b"void ProcessEnemyInstructions(void)\0"
+        };
     }
     let base_ptr = RomBankBase(game.enemy_instructions(index).bank(), game);
     let mut pc = base_ptr.add(usize::from(

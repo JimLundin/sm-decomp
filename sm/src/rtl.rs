@@ -129,16 +129,10 @@ unsafe fn RtlSynchronizeWholeState(game: &mut Game) {
 }
 unsafe fn RtlSyncMemoryRegion(ptr: *mut c_void, n: size_t, game: &mut Game) {
     let data: *mut u8 = ptr as *mut u8;
-    '_c2rust_label: {
-        if data >= &raw mut game.g_ram as *mut u8 && data < ram_ptr!(game; 0x20000) {
-        } else {
-            __assert_fail(
-                b"data >= g_ram && data < g_ram + 0x20000\0" as *const u8 as *const c_char,
-                b"src/sm_rtl.c\0" as *const u8 as *const c_char,
-                38u32,
-                b"void RtlSyncMemoryRegion(void *, size_t)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: data >= &raw mut game.g_ram as *mut u8 && data < ram_ptr!(game; 0x20000);
+        b"data >= g_ram && data < g_ram + 0x20000\0", b"src/sm_rtl.c\0", 38u32,
+        b"void RtlSyncMemoryRegion(void *, size_t)\0"
     };
     if !game.g_rtl_memory_ptr.is_null() {
         memcpy(
@@ -162,16 +156,10 @@ pub unsafe fn saveFunc(ctx_in: *mut c_void, data: *mut c_void, data_size: size_t
 }
 pub unsafe fn loadFunc(ctx: *mut c_void, data: *mut c_void, data_size: size_t, game: &mut Game) {
     let st: *mut LoadFuncState = ctx as *mut LoadFuncState;
-    '_c2rust_label: {
-        if (*st).pend.offset_from((*st).p) as c_long as size_t >= data_size {
-        } else {
-            __assert_fail(
-                b"(size_t)(st->pend - st->p) >= data_size\0" as *const u8 as *const c_char,
-                b"src/sm_rtl.c\0" as *const u8 as *const c_char,
-                59u32,
-                b"void loadFunc(void *, void *, size_t)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: (*st).pend.offset_from((*st).p) as c_long as size_t >= data_size;
+        b"(size_t)(st->pend - st->p) >= data_size\0", b"src/sm_rtl.c\0", 59u32,
+        b"void loadFunc(void *, void *, size_t)\0"
     };
     memcpy(data, (*st).p as *const c_void, data_size);
     (*st).p = (*st).p.offset(data_size as isize);
@@ -254,17 +242,10 @@ pub unsafe fn StateRecorder_RecordPatchByte(
     value: *const u8,
     num: i32,
 ) {
-    '_c2rust_label: {
-        if addr < 0x20000u32 {
-        } else {
-            __assert_fail(
-                b"addr < 0x20000\0" as *const u8 as *const c_char,
-                b"src/sm_rtl.c\0" as *const u8 as *const c_char,
-                133u32,
-                b"void StateRecorder_RecordPatchByte(StateRecorder *, uint32, const uint8 *, int)\0"
-                    as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: addr < 0x20000u32;
+        b"addr < 0x20000\0", b"src/sm_rtl.c\0", 133u32,
+        b"void StateRecorder_RecordPatchByte(StateRecorder *, uint32, const uint8 *, int)\0"
     };
     let lb: size_t = (*sr).log.size;
     let lq: i32 = if num - 1i32 <= 3i32 { num - 1i32 } else { 3i32 };
@@ -338,14 +319,10 @@ pub unsafe fn StateRecorder_Load(
             (8 as size_t).wrapping_mul(size_of::<u32>() as size_t),
         );
     } else {
-        '_c2rust_label: {
-            __assert_fail(
-                b"0\0" as *const u8 as *const c_char,
-                b"src/sm_rtl.c\0" as *const u8 as *const c_char,
-                195u32,
-                b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0" as *const u8
-                    as *const c_char,
-            );
+        crate::native_assertion! {
+            '_c2rust_label;
+            b"0\0", b"src/sm_rtl.c\0", 195u32,
+            b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0"
         };
     }
     (*sr).total_frames = hdr[1i32 as usize];
@@ -382,17 +359,10 @@ pub unsafe fn StateRecorder_Load(
                 &raw mut state as *mut c_void,
                 game,
             );
-            '_c2rust_label_0: {
-                if state.p == state.pend {
-                } else {
-                    __assert_fail(
-                        b"state.p == state.pend\0" as *const u8 as *const c_char,
-                        b"src/sm_rtl.c\0" as *const u8 as *const c_char,
-                        219u32,
-                        b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0" as *const u8
-                            as *const c_char,
-                    );
-                }
+            crate::native_assertion! {
+                '_c2rust_label_0: state.p == state.pend;
+                b"state.p == state.pend\0", b"src/sm_rtl.c\0", 219u32,
+                b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0"
             };
         } else {
             RtlReset(2i32, game);
@@ -410,17 +380,10 @@ pub unsafe fn StateRecorder_Load(
         (*sr).replay_pos = (*sr).replay_pos_last_complete;
         (*sr).replay_frame_counter = hdr[8i32 as usize];
         (*sr).replay_mode = (*sr).replay_frame_counter != 0u32;
-        '_c2rust_label_1: {
-            if hdr[6i32 as usize] == 275493u32 {
-            } else {
-                __assert_fail(
-                    b"hdr[6] == 275493\0" as *const u8 as *const c_char,
-                    b"src/sm_rtl.c\0" as *const u8 as *const c_char,
-                    232u32,
-                    b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0" as *const u8
-                        as *const c_char,
-                );
-            }
+        crate::native_assertion! {
+            '_c2rust_label_1: hdr[6i32 as usize] == 275493u32;
+            b"hdr[6] == 275493\0", b"src/sm_rtl.c\0", 232u32,
+            b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0"
         };
         let mut arr: ByteArray = ByteArray {
             data: null_mut::<u8>(),
@@ -439,17 +402,10 @@ pub unsafe fn StateRecorder_Load(
             game,
         );
         ByteArray_Destroy(&raw mut arr);
-        '_c2rust_label_2: {
-            if state_0.p == state_0.pend {
-            } else {
-                __assert_fail(
-                    b"state.p == state.pend\0" as *const u8 as *const c_char,
-                    b"src/sm_rtl.c\0" as *const u8 as *const c_char,
-                    240u32,
-                    b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0" as *const u8
-                        as *const c_char,
-                );
-            }
+        crate::native_assertion! {
+            '_c2rust_label_2: state_0.p == state_0.pend;
+            b"state.p == state.pend\0", b"src/sm_rtl.c\0", 240u32,
+            b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0"
         };
         if is_old {
             RtlClearKeyLog(game);
@@ -509,21 +465,12 @@ pub unsafe fn StateRecorder_Save(
         &raw mut arr as *mut c_void,
         game,
     );
-    '_c2rust_label: {
-        if (*sr).base_snapshot.size == 0 as size_t
+    crate::native_assertion! {
+        '_c2rust_label: (*sr).base_snapshot.size == 0 as size_t
             || (*sr).base_snapshot.size == arr.size
-            || (*sr).base_snapshot.size == 8192 as size_t
-        {
-        } else {
-            __assert_fail(
-                b"sr->base_snapshot.size == 0 || sr->base_snapshot.size == arr.size || sr->base_snapshot.size == 8192\0"
-                    as *const u8 as *const c_char,
-                b"src/sm_rtl.c\0" as *const u8 as *const c_char,
-                260u32,
-                b"void StateRecorder_Save(StateRecorder *, FILE *, _Bool)\0" as *const u8
-                    as *const c_char,
-            );
-        }
+            || (*sr).base_snapshot.size == 8192 as size_t;
+        b"sr->base_snapshot.size == 0 || sr->base_snapshot.size == arr.size || sr->base_snapshot.size == 8192\0",
+        b"src/sm_rtl.c\0", 260u32, b"void StateRecorder_Save(StateRecorder *, FILE *, _Bool)\0"
     };
     hdr[0i32 as usize] = 2u32;
     hdr[1i32 as usize] = (*sr).total_frames;
@@ -649,17 +596,10 @@ pub unsafe fn StateRecorder_ClearKeyLog(sr: *mut StateRecorder, game: &mut Game)
     (*sr).frames_since_last = 0u32;
 }
 pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &mut Game) -> u16 {
-    '_c2rust_label: {
-        if (*sr).replay_mode {
-        } else {
-            __assert_fail(
-                b"sr->replay_mode\0" as *const u8 as *const c_char,
-                b"src/sm_rtl.c\0" as *const u8 as *const c_char,
-                322u32,
-                b"uint16 StateRecorder_ReadNextReplayState(StateRecorder *)\0" as *const u8
-                    as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: (*sr).replay_mode;
+        b"sr->replay_mode\0", b"src/sm_rtl.c\0", 322u32,
+        b"uint16 StateRecorder_ReadNextReplayState(StateRecorder *)\0"
     };
     while (*sr).frames_since_last >= (*sr).replay_next_cmd_at {
         let mut replay_pos: i32 = (*sr).replay_pos as i32;
@@ -705,14 +645,10 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                     }
                 }
             } else {
-                '_c2rust_label_0: {
-                    __assert_fail(
-                        b"0\0" as *const u8 as *const c_char,
-                        b"src/sm_rtl.c\0" as *const u8 as *const c_char,
-                        344u32,
-                        b"uint16 StateRecorder_ReadNextReplayState(StateRecorder *)\0" as *const u8
-                            as *const c_char,
-                    );
+                crate::native_assertion! {
+                    '_c2rust_label_0;
+                    b"0\0", b"src/sm_rtl.c\0", 344u32,
+                    b"uint16 StateRecorder_ReadNextReplayState(StateRecorder *)\0"
                 };
             }
         }
@@ -926,13 +862,9 @@ pub unsafe fn Load24(src: *const LongPtr) -> u32 {
 }
 pub unsafe fn Unreachable(game: &mut Game) -> bool {
     printf(b"Unreachable!\n\0" as *const u8 as *const c_char);
-    '_c2rust_label: {
-        __assert_fail(
-            b"0\0" as *const u8 as *const c_char,
-            b"src/sm_rtl.c\0" as *const u8 as *const c_char,
-            512u32,
-            b"_Bool Unreachable(void)\0" as *const u8 as *const c_char,
-        );
+    crate::native_assertion! {
+        '_c2rust_label;
+        b"0\0", b"src/sm_rtl.c\0", 512u32, b"_Bool Unreachable(void)\0"
     };
     game.g_ram[0x1ffffi32 as usize] = 1u8;
     false_0 != 0
@@ -1052,16 +984,10 @@ pub unsafe fn WriteRegWord(reg: u16, value: u16, game: &mut Game) {
 }
 
 pub unsafe fn RtlApuWrite(adr: u32, val: u8, game: &mut Game) {
-    '_c2rust_label: {
-        if adr >= APUI00 as i32 as u32 && adr <= APUI03 as i32 as u32 {
-        } else {
-            __assert_fail(
-                b"adr >= APUI00 && adr <= APUI03\0" as *const u8 as *const c_char,
-                b"src/sm_rtl.c\0" as *const u8 as *const c_char,
-                571u32,
-                b"void RtlApuWrite(uint32, uint8)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: adr >= APUI00 as i32 as u32 && adr <= APUI03 as i32 as u32;
+        b"adr >= APUI00 && adr <= APUI03\0", b"src/sm_rtl.c\0", 571u32,
+        b"void RtlApuWrite(uint32, uint8)\0"
     };
     if ram_word!(game, is_uploading_apu) != 0 {
         snes_catchupApu(game.g_snes, game);
@@ -1230,16 +1156,9 @@ unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands
     }
 }
 pub unsafe fn RtlRenderAudio(audio_buffer: *mut i16, samples: i32, channels: i32, game: &mut Game) {
-    '_c2rust_label: {
-        if channels == 2i32 {
-        } else {
-            __assert_fail(
-                b"channels == 2\0" as *const u8 as *const c_char,
-                b"src/sm_rtl.c\0" as *const u8 as *const c_char,
-                679u32,
-                b"void RtlRenderAudio(int16 *, int, int)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: channels == 2i32;
+        b"channels == 2\0", b"src/sm_rtl.c\0", 679u32, b"void RtlRenderAudio(int16 *, int, int)\0"
     };
     RtlApuLock();
     RtlPopApuState_Locked(game);

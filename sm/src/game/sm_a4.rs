@@ -1459,16 +1459,10 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
             return 0u16;
         }
     }
-    '_c2rust_label: {
-        if ram_word!(game, croco_cur_vline_idx) <= 48u16 {
-        } else {
-            __assert_fail(
-                b"croco_cur_vline_idx <= 48\0" as *const u8 as *const c_char,
-                b"src/sm_a4.c\0" as *const u8 as *const c_char,
-                1215u32,
-                b"uint16 Crocomire_Func_67(void)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: ram_word!(game, croco_cur_vline_idx) <= 48u16;
+        b"croco_cur_vline_idx <= 48\0", b"src/sm_a4.c\0", 1215u32,
+        b"uint16 Crocomire_Func_67(void)\0"
     };
     let vline_idx: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa49697)) as *mut u8)
         .offset(ram_word!(game, croco_cur_vline_idx) as isize) as i32;

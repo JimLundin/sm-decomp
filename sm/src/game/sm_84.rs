@@ -59,16 +59,9 @@ crate::game::constants::typed_constants! { i32;
 }
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
-    '_c2rust_label: {
-        if addr < 0x2000u16 {
-        } else {
-            __assert_fail(
-                b"addr < 0x2000\0" as *const u8 as *const c_char,
-                b"src/sm_rtl.h\0" as *const u8 as *const c_char,
-                51u32,
-                b"uint8 *RomPtr_RAM(uint16_t)\0" as *const u8 as *const c_char,
-            );
-        }
+    crate::native_assertion! {
+        '_c2rust_label: addr < 0x2000u16;
+        b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51u32, b"uint8 *RomPtr_RAM(uint16_t)\0"
     };
     ram_ptr!(game; addr as i32 as isize)
 }
@@ -706,16 +699,9 @@ unsafe fn RomPtr_84orRAM(addr: u16, game: &mut Game) -> *mut u8 {
     if addr as i32 & 0x8000i32 != 0 {
         RomPtr((0x840000u32) | ((addr) as u32), game) as *mut u8
     } else {
-        '_c2rust_label: {
-            if addr < 0x2000u16 {
-            } else {
-                __assert_fail(
-                    b"addr < 0x2000\0" as *const u8 as *const c_char,
-                    b"src/sm_84.c\0" as *const u8 as *const c_char,
-                    265u32,
-                    b"uint8 *RomPtr_84orRAM(uint16_t)\0" as *const u8 as *const c_char,
-                );
-            }
+        crate::native_assertion! {
+            '_c2rust_label: addr < 0x2000u16;
+            b"addr < 0x2000\0", b"src/sm_84.c\0", 265u32, b"uint8 *RomPtr_84orRAM(uint16_t)\0"
         };
         RomPtr_RAM(addr, game)
     }
@@ -2099,13 +2085,9 @@ fn retain_plm_block_bits(j: u16, mask: u16, game: &mut Game) {
     update_level_block_bits(usize::from(block_index >> 1), mask, 0, game);
 }
 pub unsafe fn UNUSED_sub_84B3E3(j: u16) -> u8 {
-    '_c2rust_label: {
-        __assert_fail(
-            b"0\0" as *const u8 as *const c_char,
-            b"src/sm_84.c\0" as *const u8 as *const c_char,
-            1370u32,
-            b"uint8 UNUSED_sub_84B3E3(uint16)\0" as *const u8 as *const c_char,
-        );
+    crate::native_assertion! {
+        '_c2rust_label;
+        b"0\0", b"src/sm_84.c\0", 1370u32, b"uint8 UNUSED_sub_84B3E3(uint16)\0"
     };
     0u8
 }

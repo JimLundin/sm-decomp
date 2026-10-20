@@ -1099,12 +1099,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             if (*cpu).sp >= (*cpu).spBreakpoint && (*cpu).spBreakpoint != 0 {
                 let delta = (*cpu).sp - (*cpu).spBreakpoint;
                 if delta != 0 && delta != 2 {
-                    __assert_fail(
-                        b"delta == 0 || delta == 2\0" as *const u8 as *const c_char,
-                        b"src/snes/cpu.c\0" as *const u8 as *const c_char,
-                        1386u32,
-                        b"void cpu_doOpcode(Cpu *, uint8_t)\0" as *const u8 as *const c_char,
-                    );
+                    crate::native_assertion! {
+                        @failure
+                        b"delta == 0 || delta == 2\0", b"src/snes/cpu.c\0", 1386u32,
+                        b"void cpu_doOpcode(Cpu *, uint8_t)\0"
+                    };
                 }
                 (*cpu).spBreakpoint = 0;
                 if HookedFunctionRts(i32::from(delta == 2), game) {
@@ -1138,12 +1137,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         0x6b => {
             if (*cpu).sp >= (*cpu).spBreakpoint && (*cpu).spBreakpoint != 0 {
                 if (*cpu).sp != (*cpu).spBreakpoint {
-                    __assert_fail(
-                        b"cpu->sp == cpu->spBreakpoint\0" as *const u8 as *const c_char,
-                        b"src/snes/cpu.c\0" as *const u8 as *const c_char,
-                        1464u32,
-                        b"void cpu_doOpcode(Cpu *, uint8_t)\0" as *const u8 as *const c_char,
-                    );
+                    crate::native_assertion! {
+                        @failure
+                        b"cpu->sp == cpu->spBreakpoint\0", b"src/snes/cpu.c\0", 1464u32,
+                        b"void cpu_doOpcode(Cpu *, uint8_t)\0"
+                    };
                 }
                 (*cpu).spBreakpoint = 0;
                 if HookedFunctionRts(0, game) {
