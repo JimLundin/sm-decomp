@@ -240,6 +240,38 @@ flowchart LR
    still any% 129712/0 and Speed Booster 148406/0 from the sprite commit.
    Stop this discovery pass under the one-hour rule; the target stays open.
 
+   Supplementary repeated-pattern pricing on frozen `42bb4a44` also remains
+   parked. Whole-function templates allowing different fields, array bases,
+   locals, constants and callees cover 159 groups / 374 functions / 4680 gross
+   lines. The full formatted positive subset (56 groups / 127 functions)
+   saves **445 net lines**, including 1283 helper lines and both registrations.
+   A broader nested-window draft initially saves 1227 lines at 268 disjoint
+   sites, but review finds return-value loss at eight sites and abstractions
+   that mix unrelated stores or incidental calls. That draft is rejected.
+   The separately named, formatted subset retains 36 recognizable algorithms
+   at 90 sites and saves **548 net lines**, including definitions and callers.
+   Extending that semantic review to 90 groups keeps 80 positive groups at
+   179 sites and saves **808 net lines** in a separately frozen third draft.
+   Neither named draft has compilation, expansion-proof or replay results.
+   All these subsets overlap; their savings must not be added. They do not
+   establish the complete budget needed for the fixed target.
+
+   Palette pricing yields only 35 net lines across three disjoint native-helper
+   drafts. Script discovery covers 807 bodies / 4889 gross lines and 20
+   engine-containing functions / 1003 gross lines, with overlap. Motion and
+   condition studies preserve the distinct clamping, callback, byte-lane and
+   live-read contracts; no large complete replacement was established. These
+   searches do not exhaust semantic sharing. The TEMP reports are under
+   `sm-algorithm-cohort-relaxed-42bb4a44`,
+   `sm-nested-antiunify-42bb4a44-named-v2` and `-v3`,
+   `sm-palette-algorithms-42bb4a44`, `script-command-families`,
+   `sm-motion-arithmetic-20261020` and `sm-gameplay-conditions`.
+   This supplementary pass changes no maintained Rust; 115420 lines and the
+   latest source-checked movie results remain unchanged. Further discovery
+   needs a distinct, concrete source lead rather than another pass over these
+   same symbol-normalized cohorts or a claim that containing-code size is
+   removable. Stop this investigation with the 15421-line gap still open.
+
 2. **Resolve coverage before changing each algorithm.** Use existing normal-input
    routes and explicit required routine/branch hits. Extend inputs where no route
    reaches the family. Any% currently covers six rooms; Speed Booster covers
