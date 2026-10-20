@@ -132,22 +132,20 @@ fn WriteMessageBoxTilemapRow(mut word: u16, tiles: &[u16], game: &mut Game) {
         word = word.wrapping_add(1);
     }
 }
-unsafe fn WriteLargeMessageBoxTilemap(game: &mut Game) {
-    WriteMessageBoxTilemapRow(0, &kLargeMsgBoxTopBottomBorderTilemap, game);
-    let end = WriteMessageTilemap(game);
-    WriteMessageBoxTilemapRow(end, &kLargeMsgBoxTopBottomBorderTilemap, game);
-}
-unsafe fn WriteSmallMessageBoxTilemap(game: &mut Game) {
-    WriteMessageBoxTilemapRow(0, &kSmallMsgBoxTopBottomBorderTilemap, game);
-    let end = WriteMessageTilemap(game);
-    WriteMessageBoxTilemapRow(end, &kSmallMsgBoxTopBottomBorderTilemap, game);
-}
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     unsafe fn CallMsgBoxDraw(ea: u32, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
-        8749658 => WriteLargeMessageBoxTilemap; 8749705 => WriteSmallMessageBoxTilemap;
-    }
+    call (game); default { Unreachable(game); };
+    @functions [unsafe fn (game: &mut Game)];
+    [8749658] WriteLargeMessageBoxTilemap [] {
+        WriteMessageBoxTilemapRow(0, &kLargeMsgBoxTopBottomBorderTilemap, game);
+        let end = WriteMessageTilemap(game);
+        WriteMessageBoxTilemapRow(end, &kLargeMsgBoxTopBottomBorderTilemap, game);
+    };
+    [8749705] WriteSmallMessageBoxTilemap [] {
+        WriteMessageBoxTilemapRow(0, &kSmallMsgBoxTopBottomBorderTilemap, game);
+        let end = WriteMessageTilemap(game);
+        WriteMessageBoxTilemapRow(end, &kSmallMsgBoxTopBottomBorderTilemap, game);
+    };
 }
 fn MsgBoxMakeHdmaTable(game: &mut Game) {
     let radius = u16::from_le_bytes([game.g_ram[0x5a2], game.g_ram[0x5a3]]);
@@ -212,26 +210,21 @@ unsafe fn DrawSpecialButtonAndSetupPpuForLargeMessageBox(a: u16, game: &mut Game
         .copy_from_slice(&kTileNumbersForButtonLetters[letter].to_le_bytes());
     SetupPpuForActiveMessageBox(416, game);
 }
-unsafe fn DrawShootButtonAndSetupPpuForLargeMessageBox(game: &mut Game) {
-    let button = u16::from_le_bytes([game.g_ram[0x9b2], game.g_ram[0x9b3]]);
-    DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
-}
-unsafe fn DrawRunButtonAndSetupPpuForLargeMessageBox(game: &mut Game) {
-    let button = u16::from_le_bytes([game.g_ram[0x9b6], game.g_ram[0x9b7]]);
-    DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
-}
-crate::forward_calls! { unsafe fn (game: &mut Game);
-    SetupPpuForSmallMessageBox => SetupPpuForActiveMessageBox(448, game);
-    SetupPpuForLargeMessageBox => SetupPpuForActiveMessageBox(416, game);
-}
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     unsafe fn CallMsgBoxModify(ea: u32, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
-        8750021 => DrawShootButtonAndSetupPpuForLargeMessageBox;
-        8750028 => DrawRunButtonAndSetupPpuForLargeMessageBox;
-        8750134 => SetupPpuForSmallMessageBox; 8750145 => SetupPpuForLargeMessageBox;
-    }
+    call (game); default { Unreachable(game); };
+    @functions [unsafe fn (game: &mut Game)];
+    [8750021] DrawShootButtonAndSetupPpuForLargeMessageBox [] {
+        let button = u16::from_le_bytes([game.g_ram[0x9b2], game.g_ram[0x9b3]]);
+        DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
+    };
+    [8750028] DrawRunButtonAndSetupPpuForLargeMessageBox [] {
+        let button = u16::from_le_bytes([game.g_ram[0x9b6], game.g_ram[0x9b7]]);
+        DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
+    };
+    @forward [unsafe fn (game: &mut Game)];
+    [8750134] SetupPpuForSmallMessageBox => SetupPpuForActiveMessageBox(448, game);
+    [8750145] SetupPpuForLargeMessageBox => SetupPpuForActiveMessageBox(416, game);
 }
 unsafe fn InitializeMessageBox(game: &mut Game) {
     let index = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize - 1;

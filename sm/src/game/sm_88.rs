@@ -551,15 +551,29 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mu
         word!(game.hdma_object_pre_instructions[(k >> 1)] = addr_locret_88858A as u16);
     };
 }
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     pub unsafe fn CallHdmaobjInstrFunc(ea: u32, k: u16, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
+    call (game); default { Unreachable(game); };
+    @functions [pub unsafe fn (game: &mut Game)];
+    [8972135] InitializeRainbowBeam [] {
+        *ram_ptr!(game; 0x74, 0) = 32;
+        *ram_ptr!(game; 0x74, 1) = 71;
+        *ram_ptr!(game; 0x74, 2) = 0x8f;
+        word!(game.fx_layer_blending_config_c = 36);
+        *ram_ptr!(game; 0x9c00, 0) = 100;
+        *(ram_ptr!(game, u16; 0x9c00, 1)) = -25344i32 as u16;
+        *(ram_ptr!(game, u16; 0x9c00, 3)) = 0;
+        word!(game.hdma_table_2[0] = 0);
+        word!(game.hdma_table_2[1] = -32736i32 as u16);
+        word!(game.hdma_table_2[2] = 0);
+        MotherBrain_CalculateRainbowBeamHdma(game);
+    };
+    @external {
         8948500 => explosion_window::begin_pre_flash; 8948530 => explosion_window::begin_prescaled_pre_flash;
         8948537 => explosion_window::begin_explosion; 8948551 => explosion_window::begin_prescaled_explosion;
         8948558 => [explosion_window::finish_power_bomb(k, game)]; 8954596 => explosion_window::begin_crystal_flash;
         8954633 => explosion_window::begin_explosion; 8954647 => [explosion_window::finish_crystal_flash(k, game)];
-        8970129 => [()]; 8970130 => [()]; 8972070 => [()]; 8972135 => InitializeRainbowBeam;
+        8970129 => [()]; 8970130 => [()]; 8972070 => [()];
         9554681 => [Xray_SetupStage1_FreezeTimeBackup(k, game)];
         9554716 => Xray_SetupStage2_ReadBg1_2ndScreen;
         9554775 => Xray_SetupStage3_ReadBg1_1stScreen; 9554830 => Xray_SetupStage4;
@@ -1449,39 +1463,51 @@ macro_rules! start_liquid_motion_toward_target {
     };
 }
 
-pub unsafe fn FxRisingFunction_LavaAcid(game: &mut Game) {
-    if word!(game.fx_y_vel) != 0 {
-        start_liquid_motion_toward_target!(game, 0x88b367i32);
-    }
-}
-pub unsafe fn FxRisingFunction_LavaAcid_WaitToRise(game: &mut Game) {
-    HandleEarthquakeSoundEffect(game);
-    word!(game.earthquake_type = 21);
-    word!(game.earthquake_timer, |fresh44| (fresh44) | (0x20u16));
-    if word!(game.fx_timer, wrapping_sub(1), reread) == 0 {
-        word!(game.fx_rising_function_bank_88 = ((0x88b382i32) as u16));
-    }
-}
-pub unsafe fn FxRisingFunction_LavaAcid_Raising(game: &mut Game) {
-    HandleEarthquakeSoundEffect(game);
-    word!(game.earthquake_type = 21);
-    word!(game.earthquake_timer, |fresh42| (fresh42) | (0x20u16));
-    if RaiseOrLowerFx(game) & 1 != 0 {
-        word!(game.fx_y_vel = 0);
-        word!(game.fx_rising_function_bank_88 = ((0x88b343i32) as u16));
-    }
-}
 crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
     HdmaobjInstr_B3A9 [hdp] { word!(game.hdma_object_C[(k >> 1)] = 112); };
 }
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     pub unsafe fn CallFxRisingFunc(ea: u32, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
-        8958787 => FxRisingFunction_LavaAcid; 8958823 => FxRisingFunction_LavaAcid_WaitToRise;
-        8958850 => FxRisingFunction_LavaAcid_Raising; 8963112 => FxRisingFunction_C428_WaterNormal;
-        8963148 => FxRisingFunction_WaterWaitToRise; 8963160 => FxRisingFunction_WaterRising;
-    }
+    call (game); default { Unreachable(game); };
+    @functions [pub unsafe fn (game: &mut Game)];
+    [8958787] FxRisingFunction_LavaAcid [] {
+        if word!(game.fx_y_vel) != 0 {
+            start_liquid_motion_toward_target!(game, 0x88b367i32);
+        }
+    };
+    [8958823] FxRisingFunction_LavaAcid_WaitToRise [] {
+        HandleEarthquakeSoundEffect(game);
+        word!(game.earthquake_type = 21);
+        word!(game.earthquake_timer, |fresh44| (fresh44) | (0x20u16));
+        if word!(game.fx_timer, wrapping_sub(1), reread) == 0 {
+            word!(game.fx_rising_function_bank_88 = ((0x88b382i32) as u16));
+        }
+    };
+    [8958850] FxRisingFunction_LavaAcid_Raising [] {
+        HandleEarthquakeSoundEffect(game);
+        word!(game.earthquake_type = 21);
+        word!(game.earthquake_timer, |fresh42| (fresh42) | (0x20u16));
+        if RaiseOrLowerFx(game) & 1 != 0 {
+            word!(game.fx_y_vel = 0);
+            word!(game.fx_rising_function_bank_88 = ((0x88b343i32) as u16));
+        }
+    };
+    [8963112] FxRisingFunction_C428_WaterNormal [] {
+        if word!(game.fx_y_vel) != 0 {
+            start_liquid_motion_toward_target!(game, 0x88c44ci32);
+        }
+    };
+    [8963148] FxRisingFunction_WaterWaitToRise [] {
+        if word!(game.fx_timer, wrapping_sub(1), reread) == 0 {
+            word!(game.fx_rising_function_bank_88 = ((0x88c458i32) as u16));
+        }
+    };
+    [8963160] FxRisingFunction_WaterRising [] {
+        if RaiseOrLowerFx(game) & 1 != 0 {
+            word!(game.fx_rising_function_bank_88 = ((0x88c428i32) as u16));
+            word!(game.fx_y_vel = 0);
+        }
+    };
 }
 static kLavaSoundEffects: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
 pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(k: u16, game: &mut Game) {
@@ -1640,22 +1666,6 @@ pub unsafe fn FxTypeFunc_6_Water(game: &mut Game) {
         SpawnHdmaObject(0x88, &raw const unk_88C41F as *const c_void, game);
     }
     SpawnBG3ScrollHdmaObject(game);
-}
-pub unsafe fn FxRisingFunction_C428_WaterNormal(game: &mut Game) {
-    if word!(game.fx_y_vel) != 0 {
-        start_liquid_motion_toward_target!(game, 0x88c44ci32);
-    }
-}
-pub unsafe fn FxRisingFunction_WaterWaitToRise(game: &mut Game) {
-    if word!(game.fx_timer, wrapping_sub(1), reread) == 0 {
-        word!(game.fx_rising_function_bank_88 = ((0x88c458i32) as u16));
-    }
-}
-pub unsafe fn FxRisingFunction_WaterRising(game: &mut Game) {
-    if RaiseOrLowerFx(game) & 1 != 0 {
-        word!(game.fx_rising_function_bank_88 = ((0x88c428i32) as u16));
-        word!(game.fx_y_vel = 0);
-    }
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
     HdmaobjInstr_SetFlagB_Copy2 [hdp] { word!(game.hdma_object_B[(k >> 1)] = 1); };
@@ -2601,19 +2611,6 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game) -> u16;
         SpawnHdmaObject(0x88, &raw const unk_88E722 as *const c_void, game);
     SpawnMotherBrainRainbowBeamHdma =>
         SpawnHdmaObject(0x88, &raw const unk_88E74C as *const c_void, game);
-}
-pub unsafe fn InitializeRainbowBeam(game: &mut Game) {
-    *ram_ptr!(game; 0x74, 0) = 32;
-    *ram_ptr!(game; 0x74, 1) = 71;
-    *ram_ptr!(game; 0x74, 2) = 0x8f;
-    word!(game.fx_layer_blending_config_c = 36);
-    *ram_ptr!(game; 0x9c00, 0) = 100;
-    *(ram_ptr!(game, u16; 0x9c00, 1)) = -25344i32 as u16;
-    *(ram_ptr!(game, u16; 0x9c00, 3)) = 0;
-    word!(game.hdma_table_2[0] = 0);
-    word!(game.hdma_table_2[1] = -32736i32 as u16);
-    word!(game.hdma_table_2[2] = 0);
-    MotherBrain_CalculateRainbowBeamHdma(game);
 }
 pub unsafe fn HdmaobjPreInstr_E7BC(k: u16, game: &mut Game) {
     if word!(game.game_state) == 19 {

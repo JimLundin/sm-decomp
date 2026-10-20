@@ -206,12 +206,12 @@ pub unsafe fn ProjectileInsts_GetValue(k: u16, game: &mut Game) -> u16 {
     };
     (*get_ProjectileInstr((ip + delta) as u16, game)).field_6
 }
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     pub unsafe fn CallProj93Instr(ea: u32, j: u16, k: u16, game: &mut Game) -> u16 => ea;
-        call (j, k, game); default Unreachable(game) as u16;
-    {
-        9667119 => Proj93Instr_Delete; 9667129 => Proj93Instr_Goto;
-    }
+    call (j, k, game); default Unreachable(game) as u16;
+    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
+    [9667119] Proj93Instr_Delete [0] { ClearProjectile(k, game); };
+    [9667129] Proj93Instr_Goto [*(RomPtr_93(j, game) as *mut u16)] { };
 }
 pub unsafe fn RunProjectileInstructions(game: &mut Game) {
     let mut PI = null_mut::<ProjectileInstr>();
@@ -241,10 +241,6 @@ pub unsafe fn RunProjectileInstructions(game: &mut Game) {
         word!(game.projectile_y_radius[v1] = (*PI).y_radius as u16);
         word!(game.projectile_bomb_instruction_ptr[v1] = (v3).wrapping_add(8));
     }
-}
-crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16;
-    Proj93Instr_Delete [0] { ClearProjectile(k, game); };
-    Proj93Instr_Goto [*(RomPtr_93(j, game) as *mut u16)] { };
 }
 pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
     let mut v0: u16 = 8;

@@ -215,6 +215,58 @@ pub mod game {
     }
     pub(crate) use address_dispatch;
 
+    // A callback's optional address feeds its dispatcher while preserving named functions.
+    macro_rules! callback_dispatch {
+        (
+            $(#[$metadata:meta])* $visibility:vis unsafe fn $name:ident $parameters:tt $(-> $result:ty)?
+            => $selector:expr; $(setup { $($setup:tt)* })? call $arguments:tt; default $fallback:expr;
+            $(
+                @functions [$($header:tt)*]; $(@prefix {$($prefix:tt)*};)?
+                $($([$pattern:pat])? $callback:ident $tail:tt $body:tt;)*
+            )*
+            $(
+                @forward [$($forward_header:tt)*];
+                $($([$forward_pattern:pat])? $forward_callback:ident => $forward_call:expr;)*
+            )*
+            $(
+                @countdown [$($count_header:tt)*]; before $before:tt when $condition:expr;
+                $($([$count_pattern:pat])? $count_callback:ident $effects:tt
+                    $(else $otherwise:tt)? $(after $after:tt)?;)*
+            )*
+            $(@external {$($external_pattern:pat => $target:tt $(::$path_tail:ident)*;)*})?
+        ) => {
+            $(
+                $crate::instruction_callbacks! {
+                    $($header)*; @prefix {$($($prefix)*)?};
+                    $($callback $tail $body;)*
+                }
+            )*
+            $(
+                $crate::forward_calls! {
+                    $($forward_header)*; $($forward_callback => $forward_call;)*
+                }
+            )*
+            $(
+                $crate::game::countdown_callbacks! {
+                    $($count_header)*; before $before when $condition;
+                    $($count_callback $effects $(else $otherwise)? $(after $after)?;)*
+                }
+            )*
+            $(#[$metadata])*
+            $visibility unsafe fn $name $parameters $(-> $result)? {
+                $($($setup)*)?
+                match $selector {
+                    $($($($pattern => $crate::game::address_dispatch!(@call $arguments $callback),)?)*)*
+                    $($($($forward_pattern => $crate::game::address_dispatch!(@call $arguments $forward_callback),)?)*)*
+                    $($($($count_pattern => $crate::game::address_dispatch!(@call $arguments $count_callback),)?)*)*
+                    $($($external_pattern => $crate::game::address_dispatch!(@call $arguments $target $(::$path_tail)*),)*)?
+                    _ => $fallback
+                }
+            }
+        };
+    }
+    pub(crate) use callback_dispatch;
+
     // Keep both field assignments in their original statement/evaluation order.
     macro_rules! enemy_instruction {
         ([$($enemy:tt)*]; instruction = $instruction:expr, timer = $timer:expr) => {

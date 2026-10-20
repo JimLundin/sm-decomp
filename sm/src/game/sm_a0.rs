@@ -235,85 +235,8 @@ crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
 }
-crate::forward_calls! { pub unsafe fn (game: &mut Game);
-    Enemy_GrappleReact_NoInteract_A0 => SwitchEnemyAiToMainAi(game);
-    Enemy_GrappleReact_SamusLatchesOn_A0 => SamusLatchesOnWithGrapple(game);
-    Enemy_GrappleReact_KillEnemy_A0 => EnemyGrappleDeath(game);
-    Enemy_GrappleReact_CancelBeam_A0 => Enemy_SwitchToFrozenAi(game);
-    Enemy_GrappleReact_SamusLatchesNoInvinc_A0 => SamusLatchesOnWithGrappleNoInvinc(game);
-    Enemy_GrappleReact_SamusLatchesParalyze_A0 => SamusLatchesOnWithGrappleParalyze(game);
-    Enemy_GrappleReact_HurtSamus_A0 => SamusHurtFromGrapple(game);
-    Enemy_NormalTouchAI_A0 => NormalEnemyTouchAi(game);
-    Enemy_NormalTouchAI_SkipDeathAnim_A0 => NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
-    Enemy_NormalShotAI_A0 => NormalEnemyShotAi(game);
-    Enemy_NormalShotAI_SkipSomeParts_A0 => NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-    Enemy_NormalPowerBombAI_A0 => NormalEnemyPowerBombAi(game);
-    Enemy_NormalPowerBombAI_SkipDeathAnim_A0 => NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
-    Enemy_NormalFrozenAI => NormalEnemyFrozenAI(game);
-    CreateADudShot => CreateDudShot(game);
-}
-pub fn EnemyInstr_StopScript(k: u16, _jp: *const u16, game: &mut Game) -> *const u16 {
-    let properties = game.enemy_instructions(k).properties() | kEnemyProps_Deleted as u16;
-    game.enemy_instructions(k).set_properties(properties);
-    core::ptr::null()
-}
 pub unsafe fn EnemyInstr_Goto(_k: u16, jp: *const u16) -> *const u16 {
     *jp as usize as *const u16
-}
-crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
-    EnemyInstr_DecTimerAndGoto [] {
-        let timer = game.enemy_instructions(k).timer();
-        let decremented = game.enemy_instructions(k).timer().wrapping_sub(1);
-        game.enemy_instructions(k).set_timer(decremented);
-        if timer == 1 {
-            jp.add(1)
-        } else {
-            EnemyInstr_Goto(k, jp)
-        }
-    };
-    EnemyInstr_SetTimer [jp.add(1)] { game.enemy_instructions(k).set_timer(*jp); };
-    EnemyInstr_Sleep [core::ptr::null()] {
-        let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
-        let instruction = (jp as *const u8).sub(2).offset_from(base_ptr) as u16;
-        game.enemy_instructions(k)
-            .set_current_instruction(instruction);
-    };
-    EnemyInstr_WaitNframes [core::ptr::null()] {
-        let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
-        game.enemy_instructions(k).set_instruction_timer(*jp);
-        let instruction = (jp as *const u8).add(2).offset_from(base_ptr) as u16;
-        game.enemy_instructions(k)
-            .set_current_instruction(instruction);
-    };
-}
-pub unsafe fn EnemyInstr_CopyToVram(_k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let tail = game.vram_write_queue_tail();
-    let cursor = game.vram_write_queue_tail();
-    let source = jp as *const u8;
-    let word = (source as *const u16).read_unaligned();
-    game.write_vram_queue_word(cursor, 0, word);
-    let word = (source.add(2) as *const u16).read_unaligned();
-    game.write_vram_queue_word(cursor, 2, word);
-    let word = (source.add(3) as *const u16).read_unaligned();
-    game.write_vram_queue_word(cursor, 3, word);
-    let word = (source.add(5) as *const u16).read_unaligned();
-    game.write_vram_queue_word(cursor, 5, word);
-    game.set_vram_write_queue_tail(tail.wrapping_add(7));
-    (jp as usize).wrapping_add(7) as *const u16
-}
-pub fn EnemyInstr_EnableOffScreenProcessing(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let properties = game.enemy_instructions(k).properties() | 0x800;
-    game.enemy_instructions(k).set_properties(properties);
-    jp
-}
-pub fn EnemyInstr_DisableOffScreenProcessing(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let properties = game.enemy_instructions(k).properties() & !0x800;
-    game.enemy_instructions(k).set_properties(properties);
-    jp
 }
 static kRoomShakes: [u16; 144] = [
     1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0,
@@ -743,10 +666,19 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
             .offset((word!(game.interactive_enemy_indexes_write_ptr) >> 1) as isize) = -1i32 as u16;
     };
 }
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     pub unsafe fn CallEnemyAi(ea: u32, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
+    call (game); default { Unreachable(game); };
+    @functions [pub unsafe fn (game: &mut Game)];
+    [10518583 | 10649655 | 10715191 | 10780727 | 10846263 | 10911799 | 10977335 | 11042871
+                | 11108407 | 11173943 | 11698231 | 11763767] NormalEnemyPowerBombAi [] {
+        NormalEnemyPowerBombAiSkipDeathAnim(game);
+        if (*gEnemyData(word!(game.cur_enemy_index) as i32, game)).health == 0 {
+            (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).cause_of_death = 3;
+            EnemyDeathAnimation(word!(game.cur_enemy_index), 0, game);
+        }
+    };
+    @external {
         10649605 => sm_a2::Enemy_GrappleReact_SamusLatchesOn_A2;
         10649610 => sm_a2::Enemy_GrappleReact_KillEnemy_A2;
         10649615 => sm_a2::Enemy_GrappleReact_CancelBeam_A2;
@@ -996,8 +928,6 @@ crate::game::address_dispatch! {
         11771926 => sm_b3::Botwoon_Shot; 11771969 => sm_b3::Botwoon_Powerbomb;
         11789909 => sm_b3::EscapeEtecoon_Main; 11790027 => sm_b3::EscapeEtecoon_Init;
         11791077 => sm_b3::EscapeDachora_Init; 11791130 => [()];
-        10518583 | 10649655 | 10715191 | 10780727 | 10846263 | 10911799 | 10977335 | 11042871
-                | 11108407 | 11173943 | 11698231 | 11763767 => NormalEnemyPowerBombAi;
     }
 }
 crate::game::address_dispatch! {
@@ -1115,17 +1045,80 @@ crate::game::address_dispatch! {
         11197655 => sm_aa::Shaktool_DCD7; 11197733 => sm_aa::Shaktool_DD25;
     }
 }
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     pub unsafe fn CallEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 => ea;
-        call (k, j, game); default {
+    call (k, j, game); default {
             Unreachable(game);
             null::<u16>()
         };
-    {
-        10649837 => [EnemyInstr_Goto(k, j)]; 10649872 => EnemyInstr_DecTimerAndGoto;
-        10649891 => EnemyInstr_SetTimer; 10649903 => EnemyInstr_Sleep;
-        10649971 => EnemyInstr_EnableOffScreenProcessing;
-        10649981 => EnemyInstr_DisableOffScreenProcessing;
+    @functions [pub fn (k: u16, _jp: *const u16, game: &mut Game) -> *const u16];
+    [10846332 | 11174012] EnemyInstr_StopScript [] {
+        let properties = game.enemy_instructions(k).properties() | kEnemyProps_Deleted as u16;
+        game.enemy_instructions(k).set_properties(properties);
+        core::ptr::null()
+    };
+    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    [10649872 | 10846480 | 10977552 | 11043088 | 11174160 | 11698448 | 11763984]
+    EnemyInstr_DecTimerAndGoto [] {
+        let timer = game.enemy_instructions(k).timer();
+        let decremented = game.enemy_instructions(k).timer().wrapping_sub(1);
+        game.enemy_instructions(k).set_timer(decremented);
+        if timer == 1 {
+            jp.add(1)
+        } else {
+            EnemyInstr_Goto(k, jp)
+        }
+    };
+    [10649891 | 10846499 | 10977571 | 11043107 | 11174179 | 11698467 | 11764003]
+    EnemyInstr_SetTimer [jp.add(1)] { game.enemy_instructions(k).set_timer(*jp); };
+    [10649903 | 10715439 | 10780975 | 10846511 | 10912047 | 10977583 | 11043119 | 11108655 | 11174191 | 11698479 | 11764015]
+    EnemyInstr_Sleep [core::ptr::null()] {
+        let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
+        let instruction = (jp as *const u8).sub(2).offset_from(base_ptr) as u16;
+        game.enemy_instructions(k)
+            .set_current_instruction(instruction);
+    };
+    [10846522 | 11174202 | 11698490] EnemyInstr_WaitNframes [core::ptr::null()] {
+        let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
+        game.enemy_instructions(k).set_instruction_timer(*jp);
+        let instruction = (jp as *const u8).add(2).offset_from(base_ptr) as u16;
+        game.enemy_instructions(k)
+            .set_current_instruction(instruction);
+    };
+    @functions [pub unsafe fn (_k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    [11174219] EnemyInstr_CopyToVram [] {
+        let tail = game.vram_write_queue_tail();
+        let cursor = game.vram_write_queue_tail();
+        let source = jp as *const u8;
+        let word = (source as *const u16).read_unaligned();
+        game.write_vram_queue_word(cursor, 0, word);
+        let word = (source.add(2) as *const u16).read_unaligned();
+        game.write_vram_queue_word(cursor, 2, word);
+        let word = (source.add(3) as *const u16).read_unaligned();
+        game.write_vram_queue_word(cursor, 3, word);
+        let word = (source.add(5) as *const u16).read_unaligned();
+        game.write_vram_queue_word(cursor, 5, word);
+        game.set_vram_write_queue_tail(tail.wrapping_add(7));
+        (jp as usize).wrapping_add(7) as *const u16
+    };
+    @functions [pub fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    [10649971 | 10715507 | 11043187] EnemyInstr_EnableOffScreenProcessing [] {
+        let properties = game.enemy_instructions(k).properties() | 0x800;
+        game.enemy_instructions(k).set_properties(properties);
+        jp
+    };
+    @functions [pub fn (
+    k: u16,
+    jp: *const u16,
+    game: &mut Game,
+) -> *const u16];
+    [10649981 | 10715517 | 11043197] EnemyInstr_DisableOffScreenProcessing [] {
+        let properties = game.enemy_instructions(k).properties() & !0x800;
+        game.enemy_instructions(k).set_properties(properties);
+        jp
+    };
+    @external {
+        10649837 => [EnemyInstr_Goto(k, j)];
         10651845 => [sm_a2::BouncingGoofball_Instr_88C5(k, j)];
         10651846 => sm_a2::BouncingGoofball_Instr_88C6; 10652030 => sm_a2::MiniCrocomire_Instr_897E;
         10652048 => sm_a2::MiniCrocomire_Instr_8990; 10652061 => sm_a2::MiniCrocomire_Instr_899D;
@@ -1158,9 +1151,8 @@ crate::game::address_dispatch! {
         10669235 => sm_a2::MaridiaLargeSnail_Instr_CCB3;
         10669246 => sm_a2::MaridiaLargeSnail_Instr_CCBE;
         10669257 => sm_a2::MaridiaLargeSnail_Instr_CCC9; 10675707 => sm_a2::LavaSeahorse_Instr_E5FB;
-        10715373 => [EnemyInstr_Goto(k, j)]; 10715439 => EnemyInstr_Sleep;
-        10715507 => EnemyInstr_EnableOffScreenProcessing;
-        10715517 => EnemyInstr_DisableOffScreenProcessing; 10716899 => sm_a3::Waver_Instr_1;
+        10715373 => [EnemyInstr_Goto(k, j)];
+        10716899 => sm_a3::Waver_Instr_1;
         10717526 => sm_a3::Metalee_Instr_1; 10719382 => sm_a3::MaridiaFish_Instr_3;
         10719392 => sm_a3::MaridiaFish_Instr_1; 10719402 => sm_a3::MaridiaFish_Instr_2;
         10722411 => sm_a3::PlatformThatFallsWithSamus_Instr_3;
@@ -1177,7 +1169,7 @@ crate::game::address_dispatch! {
         10739650 => sm_a3::WreckedShipOrangeZoomer_Func_1;
         10741344 => sm_a3::Zoomer_Instr_SetPreinstr; 10742437 => sm_a3::Metroid_Instr_2;
         10742449 => sm_a3::Metroid_Instr_1; 10780909 => [EnemyInstr_Goto(k, j)];
-        10780975 => EnemyInstr_Sleep; 10782374 => sm_a4::Crocomire_Instr_1;
+        10782374 => sm_a4::Crocomire_Instr_1;
         10782546 => sm_a4::Crocomire_Instr_14; 10783995 => sm_a4::Crocomire_Instr_11;
         10784007 => sm_a4::Crocomire_Instr_7; 10784019 => sm_a4::Crocomire_Instr_19;
         10784711 => sm_a4::Crocomire_Instr_2; 10784735 => sm_a4::Crocomire_Instr_4;
@@ -1191,9 +1183,7 @@ crate::game::address_dispatch! {
         10787518 => sm_a4::Crocomire_Instr_23; 10787523 => sm_a4::Crocomire_Instr_24;
         10787528 => sm_a4::Crocomire_Instr_10; 10787533 => sm_a4::Crocomire_Instr_25;
         10787538 => sm_a4::Crocomire_Instr_26; 10787543 => sm_a4::Crocomire_Instr_27;
-        10846332 => EnemyInstr_StopScript; 10846445 => [EnemyInstr_Goto(k, j)];
-        10846480 => EnemyInstr_DecTimerAndGoto; 10846499 => EnemyInstr_SetTimer;
-        10846511 => EnemyInstr_Sleep; 10846522 => EnemyInstr_WaitNframes;
+        10846445 => [EnemyInstr_Goto(k, j)];
         10851549 => sm_a5::Draygon_Instr_1; 10852150 => sm_a5::Draygon_Instr_13;
         10852159 => sm_a5::Draygon_Instr_8; 10852178 => sm_a5::Draygon_Instr_7;
         10852197 => sm_a5::Draygon_Instr_6; 10852216 => sm_a5::Draygon_Instr_9;
@@ -1209,7 +1199,7 @@ crate::game::address_dispatch! {
         10873009 => sm_a5::Draygon_Instr_30; 10873018 => sm_a5::Draygon_Instr_20;
         10873034 => sm_a5::Draygon_Instr_29; 10873116 => sm_a5::Draygon_Instr_19;
         10873198 => sm_a5::Draygon_Instr_28; 10873265 => sm_a5::Draygon_Instr_26;
-        10911981 => [EnemyInstr_Goto(k, j)]; 10912047 => EnemyInstr_Sleep;
+        10911981 => [EnemyInstr_Goto(k, j)];
         10915247 => sm_a6::FireGeyser_Instr_1; 10915347 => sm_a6::FireGeyser_Instr_2;
         10915373 => sm_a6::FireGeyser_Instr_3; 10915393 => sm_a6::FireGeyser_Instr_4;
         10915413 => sm_a6::FireGeyser_Instr_5; 10915433 => sm_a6::FireGeyser_Instr_6;
@@ -1240,16 +1230,13 @@ crate::game::address_dispatch! {
         10942118 => sm_a6::CeresSteam_Instr_5; 10942128 => sm_a6::CeresDoor_Instr_5;
         10942131 => sm_a6::CeresDoor_Instr_2; 10942141 => sm_a6::CeresDoor_Instr_7;
         10977418 => sm_a7::EnemyInstr_Call_A7; 10977517 => [EnemyInstr_Goto(k, j)];
-        10977552 => EnemyInstr_DecTimerAndGoto; 10977571 => EnemyInstr_SetTimer;
-        10977583 => EnemyInstr_Sleep; 10979983 => sm_a7::Kraid_Instr_9;
+        10979983 => sm_a7::Kraid_Instr_9;
         10991155 => [sm_a7::Kraid_Instr_1(k, j)]; 10991158 => sm_a7::Kraid_Instr_DecYpos;
         10991164 => sm_a7::Kraid_Instr_IncrYpos_Shake;
         10991182 => sm_a7::Kraid_Instr_PlaySound_0x76; 10991194 => sm_a7::Kraid_Instr_XposMinus3;
         10991207 => sm_a7::Kraid_Instr_XposMinus3b; 10991220 => sm_a7::Kraid_Instr_XposPlus3;
         10991235 => sm_a7::Kraid_Instr_MoveHimRight; 11043053 => [EnemyInstr_Goto(k, j)];
-        11043088 => EnemyInstr_DecTimerAndGoto; 11043107 => EnemyInstr_SetTimer;
-        11043119 => EnemyInstr_Sleep; 11043187 => EnemyInstr_EnableOffScreenProcessing;
-        11043197 => EnemyInstr_DisableOffScreenProcessing; 11044751 => sm_a8::MiniDraygon_Instr_2;
+        11044751 => sm_a8::MiniDraygon_Instr_2;
         11044763 => sm_a8::MiniDraygon_Instr_1; 11044790 => sm_a8::MiniDraygon_Instr_3;
         11044811 => sm_a8::MiniDraygon_Instr_4; 11048485 => sm_a8::Fune_Instr_2;
         11048497 => sm_a8::Fune_Instr_6; 11048522 => sm_a8::Fune_Instr_7;
@@ -1287,15 +1274,13 @@ crate::game::address_dispatch! {
         11068970 => sm_a8::WreckedShipSpark_Instr_1; 11072806 => sm_a8::KiHunter_Instr_1;
         11072996 => sm_a8::KiHunter_Instr_2; 11073151 => sm_a8::KiHunter_Instr_3;
         11073234 => sm_a8::KiHunter_Instr_4; 11073240 => sm_a8::KiHunter_Instr_5;
-        11108655 => EnemyInstr_Sleep; 11128756 => [sm_a9::Shitroid_Instr_1(k, j)];
+        11128756 => [sm_a9::Shitroid_Instr_1(k, j)];
         11128778 => [sm_a9::Shitroid_Instr_2(k, j)]; 11136208 => sm_a9::sub_A9ECD0;
         11139360 => [sm_a9::Shitroid_Instr_3(k, j)]; 11139382 => [sm_a9::Shitroid_Instr_4(k, j)];
         11139472 => [sm_a9::Shitroid_Instr_6(k, j)]; 11139476 => sm_a9::Shitroid_Instr_5;
         11173995 => sm_aa::Enemy_SetAiPreInstr_AA; 11174004 => sm_aa::Enemy_ClearAiPreInstr_AA;
-        11174012 => EnemyInstr_StopScript; 11174125 => [EnemyInstr_Goto(k, j)];
-        11174160 => EnemyInstr_DecTimerAndGoto; 11174179 => EnemyInstr_SetTimer;
-        11174191 => EnemyInstr_Sleep; 11174202 => EnemyInstr_WaitNframes;
-        11174219 => EnemyInstr_CopyToVram; 11186332 => sm_aa::Torizo_Instr_3;
+        11174125 => [EnemyInstr_Goto(k, j)];
+        11186332 => sm_aa::Torizo_Instr_3;
         11186461 => sm_aa::Torizo_Instr_31; 11186622 => sm_aa::Torizo_Instr_33;
         11186724 => sm_aa::Torizo_Instr_36; 11186734 => sm_aa::Torizo_Instr_37;
         11186744 => sm_aa::Torizo_Instr_35; 11186765 => sm_aa::Torizo_Instr_38;
@@ -1334,9 +1319,7 @@ crate::game::address_dispatch! {
         11199549 => sm_aa::Shaktool_Instr_10; 11199871 => sm_aa::Shaktool_Instr_8;
         11199879 => sm_aa::Shaktool_Instr_13; 11199887 => sm_aa::Shaktool_Instr_12;
         11199960 => sm_aa::Shaktool_Instr_7; 11200240 => sm_aa::Shaktool_Instr_14;
-        11698413 => [EnemyInstr_Goto(k, j)]; 11698448 => EnemyInstr_DecTimerAndGoto;
-        11698467 => EnemyInstr_SetTimer; 11698479 => EnemyInstr_Sleep;
-        11698490 => EnemyInstr_WaitNframes;
+        11698413 => [EnemyInstr_Goto(k, j)];
         11726400 => sm_b2::SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight;
         11726450 => sm_b2::SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft;
         11726500 => sm_b2::SpacePirates_Instr_RandomNewDirFaceR;
@@ -1353,8 +1336,7 @@ crate::game::address_dispatch! {
         11730024 => sm_b2::SpacePirates_Instr_12; 11730064 => sm_b2::SpacePirates_Instr_14;
         11730104 => sm_b2::SpacePirates_Instr_11; 11730120 => sm_b2::SpacePirates_Instr_13;
         11763819 => sm_b3::Enemy_SetAiPreInstr_B3; 11763828 => sm_b3::Enemy_ClearAiPreInstr_B3;
-        11763949 => [EnemyInstr_Goto(k, j)]; 11763984 => EnemyInstr_DecTimerAndGoto;
-        11764003 => EnemyInstr_SetTimer; 11764015 => EnemyInstr_Sleep;
+        11763949 => [EnemyInstr_Goto(k, j)];
         11769031 => sm_b3::Botwoon_Instr_1; 11769047 => sm_b3::Botwoon_Instr_2;
         11769063 => sm_b3::Botwoon_Instr_3; 11769079 => sm_b3::Botwoon_Instr_4;
         11769095 => sm_b3::Botwoon_Instr_5; 11769111 => sm_b3::Botwoon_Instr_6;
@@ -1990,14 +1972,32 @@ crate::game::address_dispatch! {
         11122118 => sm_a9::MotherBrainsBrain_Touch; 11192695 => sm_aa::GoldTorizo_Touch;
         11700076 => sm_b2::WalkingSpacePirates_Touch;
     }
+}
+crate::game::callback_dispatch! {
     pub unsafe fn CallHitboxShot(ea: u32, j: u16, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
-        10518573 => Enemy_NormalShotAI_A0; 10649676 => [()];
+    call (game); default { Unreachable(game); };
+    @forward [pub unsafe fn (game: &mut Game)];
+    Enemy_GrappleReact_NoInteract_A0 => SwitchEnemyAiToMainAi(game);
+    Enemy_GrappleReact_SamusLatchesOn_A0 => SamusLatchesOnWithGrapple(game);
+    Enemy_GrappleReact_KillEnemy_A0 => EnemyGrappleDeath(game);
+    Enemy_GrappleReact_CancelBeam_A0 => Enemy_SwitchToFrozenAi(game);
+    Enemy_GrappleReact_SamusLatchesNoInvinc_A0 => SamusLatchesOnWithGrappleNoInvinc(game);
+    Enemy_GrappleReact_SamusLatchesParalyze_A0 => SamusLatchesOnWithGrappleParalyze(game);
+    Enemy_GrappleReact_HurtSamus_A0 => SamusHurtFromGrapple(game);
+    Enemy_NormalTouchAI_A0 => NormalEnemyTouchAi(game);
+    Enemy_NormalTouchAI_SkipDeathAnim_A0 => NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+    [10518573] Enemy_NormalShotAI_A0 => NormalEnemyShotAi(game);
+    Enemy_NormalShotAI_SkipSomeParts_A0 => NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+    Enemy_NormalPowerBombAI_A0 => NormalEnemyPowerBombAi(game);
+    Enemy_NormalPowerBombAI_SkipDeathAnim_A0 => NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
+    Enemy_NormalFrozenAI => NormalEnemyFrozenAI(game);
+    [10846278] CreateADudShot => CreateDudShot(game);
+    @external {
+        10649676 => [()];
         10671028 => sm_a2::MaridiaLargeSnail_Shot; 10780717 => sm_a4::Enemy_NormalShotAI_A4;
         10795345 => sm_a4::Crocomire_Func_93; 10795368 => sm_a4::Crocomire_Func_94;
         10795525 => sm_a4::Crocomire_Func_95; 10795700 => sm_a4::Crocomire_Func_1;
-        10846253 => sm_a5::Enemy_NormalShotAI_A5; 10846278 => CreateADudShot; 10846284 => [()];
+        10846253 => sm_a5::Enemy_NormalShotAI_A5; 10846284 => [()];
         10851824 => sm_a5::Draygon_Shot; 10874202 => sm_a5::SporeSpawn_Shot; 10911820 => [()];
         10936202 => sm_a6::Ridley_Shot; 10977356 => [()]; 10982581 => [()];
         10982582 => [sm_a7::Kraid_Arm_Shot(j, game)]; 11001243 => sm_a7::Phantoon_Shot;
@@ -2595,13 +2595,6 @@ crate::prefixed_callbacks! {
             }
         }
     };
-}
-pub unsafe fn NormalEnemyPowerBombAi(game: &mut Game) {
-    NormalEnemyPowerBombAiSkipDeathAnim(game);
-    if (*gEnemyData(word!(game.cur_enemy_index) as i32, game)).health == 0 {
-        (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).cause_of_death = 3;
-        EnemyDeathAnimation(word!(game.cur_enemy_index), 0, game);
-    }
 }
 pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game: &mut Game) {
     NormalEnemyPowerBombAiSkipDeathAnim(game);

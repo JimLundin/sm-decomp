@@ -157,35 +157,10 @@ pub unsafe fn Metalee_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const
     (*Get_Metalee(word!(game.cur_enemy_index) as i32, game)).var_E = 1;
     jp
 }
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     pub unsafe fn CallMetaleeFunc(ea: u32, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
-        10717575 => Metalee_Func_1;
-        10717652 => [{
-                    Metalee_Func_3(word!(game.cur_enemy_index), game);
-                }];
-        10717683 => Metalee_Func_4; 10717788 => Metalee_Func_5;
-    }
-}
-pub unsafe fn Metalee_Func_2(k: u16, game: &mut Game) {
-    let E = Get_Metalee(k as i32, game);
-    let div: u16 =
-        SnesDivide((word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos), 24) as u8 as u16;
-    (*E).var_F = (div).wrapping_add(4);
-}
-pub unsafe fn Metalee_Func_3(k: u16, game: &mut Game) {
-    let E = Get_Metalee(k as i32, game);
-    if (*E).var_E != 0 {
-        (*E).var_E = 0;
-        (*E).var_C = (*E).var_C.wrapping_add(1);
-        Metalee_Func_6(game);
-        (*E).var_B = ((0xa389f3i32) as u16);
-        QueueSfx2_Max6(0x5b, game);
-    }
-}
-crate::prefixed_callbacks! {
-    pub unsafe fn (game: &mut Game);
+    call (game); default { Unreachable(game); };
+    @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_Metalee(word!(game.cur_enemy_index) as i32, game); };
     Metalee_Init [] {
         set_fields! {[(*E)], 0; var_C, var_D, var_E}
@@ -195,7 +170,7 @@ crate::prefixed_callbacks! {
     Metalee_Main [] {
         CallMetaleeFunc((((*E).var_B) as u32) | (0xa30000u32), game);
     };
-    Metalee_Func_1 [] {
+    [10717575] Metalee_Func_1 [] {
         if abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos))) < 0x48 {
             Metalee_Func_2(word!(game.cur_enemy_index), game);
             (*E).var_C = (*E).var_C.wrapping_add(1);
@@ -203,7 +178,7 @@ crate::prefixed_callbacks! {
             (*E).var_B = ((0xa389d4i32) as u16);
         }
     };
-    Metalee_Func_4 [] {
+    [10717683] Metalee_Func_4 [] {
         (*E).var_A = 21;
         let v1: u16 = ((*E).base.properties) | (3u16);
         (*E).base.properties = v1;
@@ -229,7 +204,7 @@ crate::prefixed_callbacks! {
                 }) as u16;
         };
     };
-    Metalee_Func_5 [] {
+    [10717788] Metalee_Func_5 [] {
         crate::update_place! { previous fresh8 = (*E).var_A => (*E).var_A.wrapping_sub(1); }
         if fresh8 == 1 {
             (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).vram_tiles_index =
@@ -280,6 +255,27 @@ crate::prefixed_callbacks! {
             set_fields! {[(*E).base], 0; vram_tiles_index, palette_index}
         }
     };
+    @external {
+        10717652 => [{
+                    Metalee_Func_3(word!(game.cur_enemy_index), game);
+                }];
+    }
+}
+pub unsafe fn Metalee_Func_2(k: u16, game: &mut Game) {
+    let E = Get_Metalee(k as i32, game);
+    let div: u16 =
+        SnesDivide((word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos), 24) as u8 as u16;
+    (*E).var_F = (div).wrapping_add(4);
+}
+pub unsafe fn Metalee_Func_3(k: u16, game: &mut Game) {
+    let E = Get_Metalee(k as i32, game);
+    if (*E).var_E != 0 {
+        (*E).var_E = 0;
+        (*E).var_C = (*E).var_C.wrapping_add(1);
+        Metalee_Func_6(game);
+        (*E).var_B = ((0xa389f3i32) as u16);
+        QueueSfx2_Max6(0x5b, game);
+    }
 }
 pub unsafe fn Fireflea_Init(game: &mut Game) {
     let E = Get_FireFlea(word!(game.cur_enemy_index) as i32, game);
@@ -423,16 +419,10 @@ macro_rules! advance_maridia_fish_sine_motion {
     };
 }
 
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     pub unsafe fn CallMaridiaFishFunc(ea: u32, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
-        10719538 => MaridiaFish_Func_1; 10719659 => MaridiaFish_Func_2;
-        10719780 => MaridiaFish_Func_3; 10719830 => MaridiaFish_Func_4;
-    }
-}
-crate::prefixed_callbacks! {
-    pub unsafe fn (game: &mut Game);
+    call (game); default { Unreachable(game); };
+    @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_MaridiaFish(word!(game.cur_enemy_index) as i32, game); };
     MaridiaFish_Init [] {
         (*E).base.current_instruction = addr_kMaridiaFish_Ilist_902A as u16;
@@ -451,7 +441,7 @@ crate::prefixed_callbacks! {
         set_fields! {[(*E)], 0; var_F, var_01}
         (*E).var_03 = SineMult8bit((*E).var_F, (*E).var_00, game);
     };
-    MaridiaFish_Func_1 [] {
+    [10719538] MaridiaFish_Func_1 [] {
         if Enemy_MoveRight_IgnoreSlopes(
             word!(game.cur_enemy_index),
             (words!((*E), var_E, var_D)) as i32,
@@ -467,7 +457,7 @@ crate::prefixed_callbacks! {
         }
         (*E).var_03 = (*E).var_04;
     };
-    MaridiaFish_Func_2 [] {
+    [10719659] MaridiaFish_Func_2 [] {
         if Enemy_MoveRight_IgnoreSlopes(
             word!(game.cur_enemy_index),
             (words!((*E), var_C, var_B)) as i32,
@@ -483,7 +473,7 @@ crate::prefixed_callbacks! {
         }
         (*E).var_03 = (*E).var_04;
     };
-    MaridiaFish_Func_3 [] {
+    [10719780] MaridiaFish_Func_3 [] {
         if (*E).var_01 != 0 {
             (*E).var_01 = 0;
             (*E).var_A = ((0xa391abi32) as u16);
@@ -493,7 +483,7 @@ crate::prefixed_callbacks! {
             (*E).base.current_instruction = addr_kMaridiaFish_Ilist_9060 as u16;
         }
     };
-    MaridiaFish_Func_4 [] {
+    [10719830] MaridiaFish_Func_4 [] {
         if (*E).var_01 != 0 {
             (*E).var_01 = 0;
             (*E).var_A = ((0xa39132i32) as u16);
@@ -872,98 +862,70 @@ macro_rules! set_roach_trigonometric_velocity {
     };
 }
 
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     pub unsafe fn CallRoachFunc(ea: u32, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
-        10724055 => Roach_Func_9; 10724097 => Roach_Func_10; 10724107 => Roach_Func_11;
-        10724117 => Roach_Func_12; 10724133 => Roach_Func_13; 10724155 => Roach_Func_14;
-        10724171 => Roach_Func_15; 10724224 => Roach_Func_16; 10724359 => Roach_Func_19;
-        10724366 => Roach_Func_20; 10724416 => Roach_Func_21; 10724423 => Roach_Func_22;
-        10724430 => Roach_Func_23; 10724450 => Roach_Func_24; 10724470 => Roach_Func_25;
-        10724534 => Roach_Func_26; 10724592 => Roach_Func_27;
-    }
-}
-pub unsafe fn Roach_Func_10(game: &mut Game) {
-    (*Get_Roach(word!(game.cur_enemy_index) as i32, game)).var_B = ((0xa3a407i32) as u16);
-}
-pub unsafe fn Roach_Func_11(game: &mut Game) {
-    (*Get_Roach(word!(game.cur_enemy_index) as i32, game)).var_B = ((0xa3a40ei32) as u16);
-}
-pub unsafe fn Roach_Func_12(game: &mut Game) {
-    word!(game.random_number = 11);
-    (*Get_Roach(word!(game.cur_enemy_index) as i32, game)).var_B = ((0xa3a4f0i32) as u16);
-}
-pub unsafe fn Roach_Func_15(game: &mut Game) {
-    let v1: u8 = (64u8)
-        .wrapping_sub((CalculateAngleOfSamusFromEnemy(word!(game.cur_enemy_index), game)) as u8);
-    let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_C = v1 as u16;
-    Roach_Func_18(word!(game.cur_enemy_index), game);
-    Roach_Func_17(word!(game.cur_enemy_index), game);
-    (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
-    Roach_Func_1(game);
-    (*E).var_B = ((0xa3a440i32) as u16);
-}
-pub unsafe fn Roach_Func_16(game: &mut Game) {
-    let v1: u16 = (64 - CalculateAngleOfSamusFromEnemy(word!(game.cur_enemy_index), game) as i32
-        + 0x80) as u8 as u16;
-    let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_C = v1;
-    Roach_Func_18(word!(game.cur_enemy_index), game);
-    Roach_Func_17(word!(game.cur_enemy_index), game);
-    (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
-    Roach_Func_1(game);
-    (*E).var_B = ((0xa3a447i32) as u16);
-}
-pub unsafe fn Roach_Func_19(game: &mut Game) {
-    Roach_Func_29(word!(game.cur_enemy_index), game);
-}
-crate::forward_calls! { pub unsafe fn (game: &mut Game);
-    Roach_Func_21 => Roach_Func_32(word!(game.cur_enemy_index), game);
-    Roach_Func_22 => Roach_Func_32(word!(game.cur_enemy_index), game);
-}
-crate::game::countdown_callbacks! {
-    pub unsafe fn (game: &mut Game);
-    before {
+    call (game); default { Unreachable(game); };
+    @functions [pub unsafe fn (game: &mut Game)];
+    [10724097] Roach_Func_10 [] {
+        (*Get_Roach(word!(game.cur_enemy_index) as i32, game)).var_B = ((0xa3a407i32) as u16);
+    };
+    [10724107] Roach_Func_11 [] {
+        (*Get_Roach(word!(game.cur_enemy_index) as i32, game)).var_B = ((0xa3a40ei32) as u16);
+    };
+    [10724117] Roach_Func_12 [] {
+        word!(game.random_number = 11);
+        (*Get_Roach(word!(game.cur_enemy_index) as i32, game)).var_B = ((0xa3a4f0i32) as u16);
+    };
+    [10724171] Roach_Func_15 [] {
+        let v1: u8 = (64u8).wrapping_sub(
+            (CalculateAngleOfSamusFromEnemy(word!(game.cur_enemy_index), game)) as u8,
+        );
         let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_F = (*E).var_F.wrapping_sub(1);
-    } when ((*E).var_F & 0x8000) != 0;
-    Roach_Func_23 {
-        (*E).var_B = ((0xa3a2d7i32) as u16);
-    } else {
+        (*E).var_C = v1 as u16;
+        Roach_Func_18(word!(game.cur_enemy_index), game);
+        Roach_Func_17(word!(game.cur_enemy_index), game);
+        (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
+        Roach_Func_1(game);
+        (*E).var_B = ((0xa3a440i32) as u16);
+    };
+    [10724224] Roach_Func_16 [] {
+        let v1: u16 = (64
+            - CalculateAngleOfSamusFromEnemy(word!(game.cur_enemy_index), game) as i32
+            + 0x80) as u8 as u16;
+        let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
+        (*E).var_C = v1;
+        Roach_Func_18(word!(game.cur_enemy_index), game);
+        Roach_Func_17(word!(game.cur_enemy_index), game);
+        (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
+        Roach_Func_1(game);
+        (*E).var_B = ((0xa3a447i32) as u16);
+    };
+    [10724359] Roach_Func_19 [] {
         Roach_Func_29(word!(game.cur_enemy_index), game);
-    } after { ; };
-    Roach_Func_24 {
-        (*E).var_B = ((0xa3a4f0i32) as u16);
-    } else {
-        Roach_Func_33(word!(game.cur_enemy_index), game);
-    } after { ; };
-}
-pub unsafe fn Roach_Func_26(game: &mut Game) {
-    let v1: u8 = ((NextRandom(game)) as u8).wrapping_sub(64);
-    let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_C = ((*E).var_C).wrapping_add((v1) as u16);
-    Roach_Func_18(word!(game.cur_enemy_index), game);
-    Roach_Func_17(word!(game.cur_enemy_index), game);
-    (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
-    Roach_Func_1(game);
-    (*E).var_F = 32;
-    (*E).var_B = ((0xa3a476i32) as u16);
-}
-pub unsafe fn Roach_Func_27(game: &mut Game) {
-    let v1: u8 = ((NextRandom(game)) as u8).wrapping_sub(64);
-    let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_C = ((*E).var_C).wrapping_add((v1) as u16);
-    Roach_Func_18(word!(game.cur_enemy_index), game);
-    Roach_Func_17(word!(game.cur_enemy_index), game);
-    (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
-    Roach_Func_1(game);
-    (*E).var_F = 32;
-    (*E).var_B = ((0xa3a462i32) as u16);
-}
-crate::prefixed_callbacks! {
-    pub unsafe fn (game: &mut Game);
+    };
+    [10724534] Roach_Func_26 [] {
+        let v1: u8 = ((NextRandom(game)) as u8).wrapping_sub(64);
+        let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
+        (*E).var_C = ((*E).var_C).wrapping_add((v1) as u16);
+        Roach_Func_18(word!(game.cur_enemy_index), game);
+        Roach_Func_17(word!(game.cur_enemy_index), game);
+        (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
+        Roach_Func_1(game);
+        (*E).var_F = 32;
+        (*E).var_B = ((0xa3a476i32) as u16);
+    };
+    [10724592] Roach_Func_27 [] {
+        let v1: u8 = ((NextRandom(game)) as u8).wrapping_sub(64);
+        let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
+        (*E).var_C = ((*E).var_C).wrapping_add((v1) as u16);
+        Roach_Func_18(word!(game.cur_enemy_index), game);
+        Roach_Func_17(word!(game.cur_enemy_index), game);
+        (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
+        Roach_Func_1(game);
+        (*E).var_F = 32;
+        (*E).var_B = ((0xa3a462i32) as u16);
+    };
+    @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_Roach(word!(game.cur_enemy_index) as i32, game); };
     Roach_Func_1 [] {
         let roach_var_24: u16 = (*E).var_24;
@@ -988,7 +950,7 @@ crate::prefixed_callbacks! {
     Roach_Main [] {
         CallRoachFunc((((*E).var_B) as u32) | (0xa30000u32), game);
     };
-    Roach_Func_9 [] {
+    [10724055] Roach_Func_9 [] {
         if IsSamusWithinEnemy_X(
             word!(game.cur_enemy_index),
             byte!((*E).parameter_2; 0) as u16,
@@ -1007,16 +969,16 @@ crate::prefixed_callbacks! {
             );
         }
     };
-    Roach_Func_13 [] {
+    [10724133] Roach_Func_13 [] {
         (*E).var_A = 512;
         word!(game.random_number = 11);
         (*E).var_B = ((0xa3a4b6i32) as u16);
     };
-    Roach_Func_14 [] {
+    [10724155] Roach_Func_14 [] {
         (*E).var_F = 32;
         (*E).var_B = ((0xa3a44ei32) as u16);
     };
-    Roach_Func_20 [] {
+    [10724366] Roach_Func_20 [] {
         if ((*E).base.frame_counter & 0x10) != 0 {
             (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_22 >> 1) as isize);
             Roach_Func_1(game);
@@ -1027,7 +989,7 @@ crate::prefixed_callbacks! {
             Roach_Func_30(word!(game.cur_enemy_index), game);
         };
     };
-    Roach_Func_25 [] {
+    [10724470] Roach_Func_25 [] {
         (*E).var_A = (*E).var_A.wrapping_sub(1);
         let mut v2: bool = ((*E).var_A & 0x8000) != 0;
         if !v2 {
@@ -1058,6 +1020,25 @@ crate::prefixed_callbacks! {
         (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, (v1 >> 1) as isize);
         Roach_Func_1(game);
     };
+    @forward [pub unsafe fn (game: &mut Game)];
+    [10724416] Roach_Func_21 => Roach_Func_32(word!(game.cur_enemy_index), game);
+    [10724423] Roach_Func_22 => Roach_Func_32(word!(game.cur_enemy_index), game);
+    @countdown [pub unsafe fn (game: &mut Game)];
+    before {
+        let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+    }
+    when ((*E).var_F & 0x8000) != 0;
+    [10724430] Roach_Func_23 {
+        (*E).var_B = ((0xa3a2d7i32) as u16);
+    } else {
+        Roach_Func_29(word!(game.cur_enemy_index), game);
+    } after { ; };
+    [10724450] Roach_Func_24 {
+        (*E).var_B = ((0xa3a4f0i32) as u16);
+    } else {
+        Roach_Func_33(word!(game.cur_enemy_index), game);
+    } after { ; };
 }
 crate::prefixed_callbacks! {
     pub unsafe fn (k: u16, game: &mut Game);
@@ -1359,24 +1340,27 @@ pub unsafe fn Sidehopper_Func_4(k: u16, game: &mut Game) {
         crate::rtl::rom_table_word!(game, 0xa3aae2, (NextRandom(game) as i32 & 1) as isize);
     (*Get_Sidehopper(k as i32, game)).var_B = v1;
 }
-pub unsafe fn Sidehopper_Func_14(game: &mut Game) {
-    if (*Get_Sidehopper(word!(game.cur_enemy_index) as i32, game)).var_03 != 0 {
-        Sidehopper_Func_20(game);
-    } else {
-        Sidehopper_Func_19(game);
-    };
-}
 pub use self::Sidehopper_Func_14 as Sidehopper_Func_15;
-pub unsafe fn Sidehopper_Func_16(game: &mut Game) {
-    if (*Get_Sidehopper(word!(game.cur_enemy_index) as i32, game)).var_03 != 0 {
-        Sidehopper_Func_22(game);
-    } else {
-        Sidehopper_Func_21(game);
-    };
-}
 pub use self::Sidehopper_Func_16 as Sidehopper_Func_17;
-crate::prefixed_callbacks! {
-    pub unsafe fn (game: &mut Game);
+crate::game::callback_dispatch! {
+    unsafe fn CallSidehopperFunc(ea: u32, game: &mut Game) => ea;
+    call (game); default { Unreachable(game); };
+    @functions [pub unsafe fn (game: &mut Game)];
+    [10726670] Sidehopper_Func_14 [] {
+        if (*Get_Sidehopper(word!(game.cur_enemy_index) as i32, game)).var_03 != 0 {
+            Sidehopper_Func_20(game);
+        } else {
+            Sidehopper_Func_19(game);
+        };
+    };
+    [10726706] Sidehopper_Func_16 [] {
+        if (*Get_Sidehopper(word!(game.cur_enemy_index) as i32, game)).var_03 != 0 {
+            Sidehopper_Func_22(game);
+        } else {
+            Sidehopper_Func_21(game);
+        };
+    };
+    @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_Sidehopper(word!(game.cur_enemy_index) as i32, game); };
     Sidehopper_Func_3 [] {
         enemy_instruction! {[(*E).base]; instruction = (*E).var_00, timer = 1}
@@ -1385,7 +1369,7 @@ crate::prefixed_callbacks! {
     Sidehopper_Main [] {
         CallSidehopperFunc((((*E).var_B) as u32) | (0xa30000u32), game);
     };
-    Sidehopper_Func_5 [] {
+    [10726374] Sidehopper_Func_5 [] {
         let v1: i32 = (*E).var_05 as i32 >> 1;
         (*E).var_E = crate::rtl::rom_table_word!(game, 0xa3aae6, v1 as isize);
         (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3aaea, v1 as isize);
@@ -1395,7 +1379,7 @@ crate::prefixed_callbacks! {
             (*E).var_B = ((0xa3ac56i32) as u16);
         }
     };
-    Sidehopper_Func_6 [] {
+    [10726419] Sidehopper_Func_6 [] {
         let v1: i32 = (*E).var_05 as i32 >> 1;
         (*E).var_E = crate::rtl::rom_table_word!(game, 0xa3aaf2, v1 as isize);
         (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3aaf6, v1 as isize);
@@ -1405,41 +1389,41 @@ crate::prefixed_callbacks! {
             (*E).var_B = ((0xa3ac56i32) as u16);
         }
     };
-    Sidehopper_Func_7 [] {
+    [10726464] Sidehopper_Func_7 [] {
         (*E).var_B = ((0xa3ac6ci32) as u16);
         if (GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) & 0x8000) == 0 {
             (*E).var_B = ((0xa3ac8fi32) as u16);
         }
     };
-    Sidehopper_Func_8 [] {
+    [10726486] Sidehopper_Func_8 [] {
         (*E).var_B = ((0xa3aca8i32) as u16);
         if (GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) & 0x8000) == 0 {
             (*E).var_B = ((0xa3accbi32) as u16);
         }
     };
-    Sidehopper_Func_9 [] {
+    [10726508] Sidehopper_Func_9 [] {
         (*E).var_D = -((*E).var_D as i32) as u16;
         (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa3aad2, ((*E).var_06 >> 1) as isize);
         Sidehopper_Func_3(game);
         (*E).var_B = ((0xa3ad0ei32) as u16);
     };
-    Sidehopper_Func_10 [] {
+    [10726543] Sidehopper_Func_10 [] {
         (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa3aad2, ((*E).var_06 >> 1) as isize);
         Sidehopper_Func_3(game);
         (*E).var_B = ((0xa3ad20i32) as u16);
     };
-    Sidehopper_Func_11 [] {
+    [10726568] Sidehopper_Func_11 [] {
         (*E).var_D = -((*E).var_D as i32) as u16;
         (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa3aada, ((*E).var_06 >> 1) as isize);
         Sidehopper_Func_3(game);
         (*E).var_B = ((0xa3ad32i32) as u16);
     };
-    Sidehopper_Func_12 [] {
+    [10726603] Sidehopper_Func_12 [] {
         (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa3aada, ((*E).var_06 >> 1) as isize);
         Sidehopper_Func_3(game);
         (*E).var_B = ((0xa3ad44i32) as u16);
     };
-    Sidehopper_Func_13 [] {
+    [10726628] Sidehopper_Func_13 [] {
         (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa3aac2, ((*E).var_06 >> 1) as isize);
         if (*E).parameter_1 != 0 {
             (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa3aaca, ((*E).var_06 >> 1) as isize);
@@ -1447,27 +1431,18 @@ crate::prefixed_callbacks! {
         Sidehopper_Func_3(game);
         (*E).var_B = ((0xa3ad56i32) as u16);
     };
-    Sidehopper_Func_18 [] {
+    [10726742] Sidehopper_Func_18 [] {
         if (*E).var_04 != 0 {
             (*E).var_04 = 0;
             (*E).var_B = ((0xa3abd6i32) as u16);
         }
     };
-}
-crate::game::address_dispatch! {
-    unsafe fn CallSidehopperFunc(ea: u32, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
+    @external {
         10726358 => [{
                     Sidehopper_Func_4(word!(game.cur_enemy_index), game);
                 }];
-        10726374 => Sidehopper_Func_5; 10726419 => Sidehopper_Func_6; 10726464 => Sidehopper_Func_7;
-        10726486 => Sidehopper_Func_8; 10726508 => Sidehopper_Func_9;
-        10726543 => Sidehopper_Func_10; 10726568 => Sidehopper_Func_11;
-        10726603 => Sidehopper_Func_12; 10726628 => Sidehopper_Func_13;
-        10726670 => Sidehopper_Func_14; 10726688 => Sidehopper_Func_15;
-        10726706 => Sidehopper_Func_16; 10726724 => Sidehopper_Func_17;
-        10726742 => Sidehopper_Func_18;
+        10726688 => Sidehopper_Func_15;
+        10726724 => Sidehopper_Func_17;
     }
 }
 // Sidehoppers keep separate SNES state entry points for floor and ceiling hops.
@@ -1548,12 +1523,48 @@ pub unsafe fn MaridiaRefillCandy_Init(game: &mut Game) {
     (*E).var_B = (*E).base.x_pos;
     (*E).var_C = (*E).base.y_pos;
 }
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     pub unsafe fn CallMaridiaRefillCandyFunc(ea: u32, k: u16, game: &mut Game) => ea;
-        call (k, game); default { Unreachable(game); };
-    {
-        10728578 => [MaridiaRefillCandy_Func_1(game)]; 10728616 => MaridiaRefillCandy_Func_2;
-        10728662 => MaridiaRefillCandy_Func_3;
+    call (k, game); default { Unreachable(game); };
+    @functions [pub unsafe fn (k: u16, game: &mut Game)];
+    [10728616] MaridiaRefillCandy_Func_2 [] {
+        let E = Get_MaridiaRefillCandy(k as i32, game);
+        (*E).base.properties =
+            ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
+        if (GetSamusEnemyDelta_Y(k, game) & 0x8000) != 0 {
+            words!((*E).base, y_pos, y_subpos += -0x8000i32 as u32);
+        } else {
+            (*E).var_D = (*E).var_D.wrapping_sub(1);
+            MaridiaRefillCandy_Func_4(game);
+            (*E).var_F = 0;
+            (*E).parameter_1 = ((0xa3b4d6i32) as u16);
+        };
+    };
+    [10728662] MaridiaRefillCandy_Func_3 [] {
+        let E = Get_MaridiaRefillCandy(k as i32, game);
+        let v2: i32 = (*E).var_00 as i32 >> 1;
+        let v: i32 = (words!((
+            crate::rtl::rom_table_word!(game, 0xa3b415, v2 as isize),
+            crate::rtl::rom_table_word!(game, 0xa3b415, (v2 + 1) as isize)
+        ))) as i32;
+        words!(
+            (*E).base,
+            x_pos,
+            x_subpos += (if (*E).var_D != 0 { v } else { -v }) as u32
+        );
+        if CheckIfEnemyIsOnScreen(game) == 0 {
+            MaridiaRefillCandy_Func_4(game);
+            return;
+        }
+        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
+        (*E).base.x_pos = (*E).var_B;
+        (*E).base.y_pos = (*E).var_C;
+        (*E).var_D = 0;
+        MaridiaRefillCandy_Func_4(game);
+        (*E).parameter_1 = ((0xa3b482i32) as u16);
+    };
+    @external {
+        10728578 => [MaridiaRefillCandy_Func_1(game)];
     }
 }
 pub unsafe fn MaridiaRefillCandy_Main(game: &mut Game) {
@@ -1575,41 +1586,6 @@ pub unsafe fn MaridiaRefillCandy_Func_1(game: &mut Game) {
         MaridiaRefillCandy_Func_4(game);
         (*E).parameter_1 = ((0xa3b4a8i32) as u16);
     }
-}
-pub unsafe fn MaridiaRefillCandy_Func_2(k: u16, game: &mut Game) {
-    let E = Get_MaridiaRefillCandy(k as i32, game);
-    (*E).base.properties = ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
-    if (GetSamusEnemyDelta_Y(k, game) & 0x8000) != 0 {
-        words!((*E).base, y_pos, y_subpos += -0x8000i32 as u32);
-    } else {
-        (*E).var_D = (*E).var_D.wrapping_sub(1);
-        MaridiaRefillCandy_Func_4(game);
-        (*E).var_F = 0;
-        (*E).parameter_1 = ((0xa3b4d6i32) as u16);
-    };
-}
-pub unsafe fn MaridiaRefillCandy_Func_3(k: u16, game: &mut Game) {
-    let E = Get_MaridiaRefillCandy(k as i32, game);
-    let v2: i32 = (*E).var_00 as i32 >> 1;
-    let v: i32 = (words!((
-        crate::rtl::rom_table_word!(game, 0xa3b415, v2 as isize),
-        crate::rtl::rom_table_word!(game, 0xa3b415, (v2 + 1) as isize)
-    ))) as i32;
-    words!(
-        (*E).base,
-        x_pos,
-        x_subpos += (if (*E).var_D != 0 { v } else { -v }) as u32
-    );
-    if CheckIfEnemyIsOnScreen(game) == 0 {
-        MaridiaRefillCandy_Func_4(game);
-        return;
-    }
-    (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
-    (*E).base.x_pos = (*E).var_B;
-    (*E).base.y_pos = (*E).var_C;
-    (*E).var_D = 0;
-    MaridiaRefillCandy_Func_4(game);
-    (*E).parameter_1 = ((0xa3b482i32) as u16);
 }
 pub unsafe fn MaridiaRefillCandy_Func_4(game: &mut Game) {
     let E = Get_MaridiaRefillCandy(word!(game.cur_enemy_index) as i32, game);
@@ -1873,29 +1849,10 @@ pub unsafe fn Skree_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u
     (*Get_Skree(word!(game.cur_enemy_index) as i32, game)).var_E = 1;
     jp
 }
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     pub unsafe fn CallSkreeFunc(ea: u32, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
-        10733269 => Skree_Func_1;
-        10733303 => [{
-                    Skree_Func_2(word!(game.cur_enemy_index), game);
-                }];
-        10733334 => Skree_Func_3; 10733439 => Skree_Func_4;
-    }
-}
-pub unsafe fn Skree_Func_2(k: u16, game: &mut Game) {
-    let E = Get_Skree(k as i32, game);
-    if (*E).var_E != 0 {
-        (*E).var_E = 0;
-        (*E).var_C = (*E).var_C.wrapping_add(1);
-        Skree_Func_5(game);
-        (*E).var_B = ((0xa3c716i32) as u16);
-        QueueSfx2_Max6(0x5b, game);
-    }
-}
-crate::prefixed_callbacks! {
-    pub unsafe fn (game: &mut Game);
+    call (game); default { Unreachable(game); };
+    @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_Skree(word!(game.cur_enemy_index) as i32, game); };
     Skree_Init [] {
         set_fields! {[(*E)], 0; var_C, var_D, var_E}
@@ -1905,14 +1862,14 @@ crate::prefixed_callbacks! {
     Skree_Main [] {
         CallSkreeFunc((((*E).var_B) as u32) | (0xa30000u32), game);
     };
-    Skree_Func_1 [] {
+    [10733269] Skree_Func_1 [] {
         if abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos))) < 0x30 {
             (*E).var_C = (*E).var_C.wrapping_add(1);
             Skree_Func_5(game);
             (*E).var_B = ((0xa3c6f7i32) as u16);
         }
     };
-    Skree_Func_3 [] {
+    [10733334] Skree_Func_3 [] {
         (*E).var_A = 21;
         let v1: u16 = ((*E).base.properties) | (3u16);
         (*E).base.properties = v1;
@@ -1931,7 +1888,7 @@ crate::prefixed_callbacks! {
                 }) as u16;
         };
     };
-    Skree_Func_4 [] {
+    [10733439] Skree_Func_4 [] {
         crate::update_place! { previous fresh18 = (*E).var_A => (*E).var_A.wrapping_sub(1); }
         if fresh18 == 1 {
             (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).vram_tiles_index =
@@ -1963,6 +1920,21 @@ crate::prefixed_callbacks! {
             (*E).base.timer = 0;
         }
     };
+    @external {
+        10733303 => [{
+                    Skree_Func_2(word!(game.cur_enemy_index), game);
+                }];
+    }
+}
+pub unsafe fn Skree_Func_2(k: u16, game: &mut Game) {
+    let E = Get_Skree(k as i32, game);
+    if (*E).var_E != 0 {
+        (*E).var_E = 0;
+        (*E).var_C = (*E).var_C.wrapping_add(1);
+        Skree_Func_5(game);
+        (*E).var_B = ((0xa3c716i32) as u16);
+        QueueSfx2_Max6(0x5b, game);
+    }
 }
 pub unsafe fn Skree_Shot(game: &mut Game) {
     Enemy_NormalShotAI_SkipSomeParts_A3(game);

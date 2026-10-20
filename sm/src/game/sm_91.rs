@@ -383,23 +383,91 @@ pub unsafe fn DemoObjectInputHandler(game: &mut Game) {
         game.set_demo_input_prev_new(game.demo_input_new());
     }
 }
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     pub unsafe fn CallDemoPreInstr(address: u32, game: &mut Game) => address;
-        call (game); default { Unreachable(game); };
-    {
-        0x9183bf => [()]; 0x91864f => DemoPreInstr_864F; 0x91866a => DemoPreInstr_866A;
-        0x918a9b => DemoPreInstr_CheckLeaveDemo; 0x918ab0 => DemoPreInstr_8AB0;
+    call (game); default { Unreachable(game); };
+    @functions [pub unsafe fn (game: &mut Game)];
+    [0x91864f] DemoPreInstr_864F [] {
+        if word!(game.samus_x_pos) as i32 - 178i32 & 0x8000 != 0 {
+            word!(game.demo_input_pre_instr = ((0x91866ai32) as u16));
+            word!(game.demo_input_instr_ptr = 0x8623);
+            word!(game.demo_input_instr_timer = 1);
+        }
+    };
+    [0x91866a] DemoPreInstr_866A [] {
+        if word!(game.eproj_x_pos[0]) == 0 {
+            word!(game.demo_input_pre_instr = ((0x9183bfi32) as u16));
+            word!(game.demo_input_instr_ptr = addr_off_91864B as u16);
+            word!(game.demo_input_instr_timer = 1);
+        }
+    };
+    [0x918a9b] DemoPreInstr_CheckLeaveDemo [] {
+        if word!(game.game_state) as i32 == kGameState_44_TransitionFromDemo as i32 {
+            word!(game.demo_input_instr_ptr = addr_kDemoInstrs_LeaveDemo as u16);
+            word!(game.demo_input_instr_timer = 1);
+        }
+    };
+    @functions [pub fn (game: &mut Game)];
+    [0x918ab0] DemoPreInstr_8AB0 [] {
+        if game.samus_movement_type() != kMovementType_1A_GrabbedByDraygon as u8 {
+            game.set_demo_input_pre_instr(fnDemoPreInstr_CheckLeaveDemo as u16);
+            game.set_demo_input_instr_ptr(addr_stru_919346 as u16);
+            game.set_demo_input_instr_timer(1);
+        }
+    };
+    @external {
+        0x9183bf => [()];
     }
 }
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     pub unsafe fn CallDemoInstr(address: u32, k: u16, j: u16, game: &mut Game) -> u16 => address;
-        call (k, j, game); default Unreachable(game) as u16;
-    {
-        0x918427 => DemoInstr_Finish; 0x918434 => DemoInstr_SetPreInstr;
-        0x91843f => DemoInstr_ClearPreInstr; 0x918448 => DemoInstr_Goto;
-        0x91844f => DemoInstr_DecTimerAndGoto; 0x918459 => DemoInstr_SetTimer;
-        0x9185fc => DemoInstr_Func2; 0x918682 => DemoInstr_Disable; 0x918739 => DemoInstr_Func3;
-    }
+    call (k, j, game); default Unreachable(game) as u16;
+    @functions [pub fn (_k: u16, _j: u16, game: &mut Game) -> u16];
+    [0x918427] DemoInstr_Finish [] {
+        game.set_demo_input_instr_ptr(0);
+        game.set_demo_input(0);
+        game.set_demo_input_new(0);
+        0
+    };
+    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
+    [0x918434] DemoInstr_SetPreInstr [(j).wrapping_add(2)] {
+        word!(game.demo_input_pre_instr = *(RomPtr_91(j, game) as *mut u16));
+    };
+    [0x91843f] DemoInstr_ClearPreInstr [j] { word!(game.demo_input_pre_instr = 0x8447); };
+    [0x918448] DemoInstr_Goto [*(RomPtr_91(j, game) as *mut u16)] { };
+    [0x91844f] DemoInstr_DecTimerAndGoto [] {
+        if word!(game.demo_timer_counter, wrapping_sub(1), reread) != 0 {
+            DemoInstr_Goto(k, j, game)
+        } else {
+            (j).wrapping_add(2)
+        }
+    };
+    [0x918459] DemoInstr_SetTimer [(j).wrapping_add(2)] {
+        word!(game.demo_timer_counter = *(RomPtr_91(j, game) as *mut u16));
+    };
+    [0x9185fc] DemoInstr_Func2 [j] {
+        word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
+        word!(game.frame_handler_beta = ((0x90e725i32) as u16));
+        DisableDemoInput(game);
+    };
+    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
+    [0x918682] DemoInstr_Disable [j] {
+        word!(game.frame_handler_alfa = ((0x90e8cdi32) as u16));
+        word!(game.frame_handler_beta = ((0x90e8cdi32) as u16));
+        DisableDemoInput(game);
+    };
+    [0x918739] DemoInstr_Func3 [j] {
+        word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
+        word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
+        SamusFunc_F433(game);
+        Samus_SetAnimationFrameIfPoseChanged(game);
+        word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
+        *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
+        word!(game.samus_prev_pose = word!(game.samus_pose));
+        *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+        DisableDemoInput(game);
+        word!(game.samus_input_handler = ((0x90e90ei32) as u16));
+    };
 }
 pub unsafe fn ProcessDemoInputObject(game: &mut Game) {
     CallDemoPreInstr(0x910000 | u32::from(game.demo_input_pre_instr()), game);
@@ -434,67 +502,6 @@ pub unsafe fn ProcessDemoInputObject(game: &mut Game) {
         game.set_demo_input_new(game.read_rom_word(record_address, 4));
         game.set_demo_input_instr_ptr(instruction_ptr.wrapping_add(6));
     }
-}
-pub fn DemoInstr_Finish(_k: u16, _j: u16, game: &mut Game) -> u16 {
-    game.set_demo_input_instr_ptr(0);
-    game.set_demo_input(0);
-    game.set_demo_input_new(0);
-    0
-}
-crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16;
-    DemoInstr_SetPreInstr [(j).wrapping_add(2)] {
-        word!(game.demo_input_pre_instr = *(RomPtr_91(j, game) as *mut u16));
-    };
-    DemoInstr_ClearPreInstr [j] { word!(game.demo_input_pre_instr = 0x8447); };
-    DemoInstr_Goto [*(RomPtr_91(j, game) as *mut u16)] { };
-    DemoInstr_DecTimerAndGoto [] {
-        if word!(game.demo_timer_counter, wrapping_sub(1), reread) != 0 {
-            DemoInstr_Goto(k, j, game)
-        } else {
-            (j).wrapping_add(2)
-        }
-    };
-    DemoInstr_SetTimer [(j).wrapping_add(2)] {
-        word!(game.demo_timer_counter = *(RomPtr_91(j, game) as *mut u16));
-    };
-    DemoInstr_Func2 [j] {
-        word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
-        word!(game.frame_handler_beta = ((0x90e725i32) as u16));
-        DisableDemoInput(game);
-    };
-}
-pub unsafe fn DemoPreInstr_864F(game: &mut Game) {
-    if word!(game.samus_x_pos) as i32 - 178i32 & 0x8000 != 0 {
-        word!(game.demo_input_pre_instr = ((0x91866ai32) as u16));
-        word!(game.demo_input_instr_ptr = 0x8623);
-        word!(game.demo_input_instr_timer = 1);
-    }
-}
-pub unsafe fn DemoPreInstr_866A(game: &mut Game) {
-    if word!(game.eproj_x_pos[0]) == 0 {
-        word!(game.demo_input_pre_instr = ((0x9183bfi32) as u16));
-        word!(game.demo_input_instr_ptr = addr_off_91864B as u16);
-        word!(game.demo_input_instr_timer = 1);
-    }
-}
-crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16;
-    DemoInstr_Disable [j] {
-        word!(game.frame_handler_alfa = ((0x90e8cdi32) as u16));
-        word!(game.frame_handler_beta = ((0x90e8cdi32) as u16));
-        DisableDemoInput(game);
-    };
-    DemoInstr_Func3 [j] {
-        word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
-        word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
-        SamusFunc_F433(game);
-        Samus_SetAnimationFrameIfPoseChanged(game);
-        word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-        *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-        word!(game.samus_prev_pose = word!(game.samus_pose));
-        *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
-        DisableDemoInput(game);
-        word!(game.samus_input_handler = ((0x90e90ei32) as u16));
-    };
 }
 static kDemoSetFuncPtrs_0: [Option<Func_V>; 6] = callback_table! { unsafe Func_V;
     DemoSetFunc_0, DemoSetFunc_1, DemoSetFunc_1, DemoSetFunc_2, DemoSetFunc_1, DemoSetFunc_3,
@@ -630,19 +637,6 @@ pub unsafe fn DemoSetFunc_6(game: &mut Game) {
     word!(game.samus_pose = kPose_CA_FaceL_Shinespark_Horiz as u16);
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
-}
-pub unsafe fn DemoPreInstr_CheckLeaveDemo(game: &mut Game) {
-    if word!(game.game_state) as i32 == kGameState_44_TransitionFromDemo as i32 {
-        word!(game.demo_input_instr_ptr = addr_kDemoInstrs_LeaveDemo as u16);
-        word!(game.demo_input_instr_timer = 1);
-    }
-}
-pub fn DemoPreInstr_8AB0(game: &mut Game) {
-    if game.samus_movement_type() != kMovementType_1A_GrabbedByDraygon as u8 {
-        game.set_demo_input_pre_instr(fnDemoPreInstr_CheckLeaveDemo as u16);
-        game.set_demo_input_instr_ptr(addr_stru_919346 as u16);
-        game.set_demo_input_instr_timer(1);
-    }
 }
 unsafe fn XrayFillUp(dest: *mut u16, fill_with: u16, mut v1: u16) {
     loop {
@@ -1583,25 +1577,12 @@ unsafe fn Xray_CombinedMove(dst_r22: u16, r36: u16, which_dir: bool, game: &mut 
         }
     }
 }
-unsafe fn Xray_Func7(dst_r22: u16, jp: *const u8, game: &mut Game) {
-    Xray_Func12(dst_r22, jp.offset(2), game);
-}
-unsafe fn Xray_Func8(dst_r22: u16, jp: *const u8, game: &mut Game) {
-    if word!(game.area_index) == 1 {
-        Xray_Func12(dst_r22, jp.offset(2), game);
-    }
-}
 unsafe fn Xray_Func9(r18: u16, dst_r22: u16, jp: *const u8, game: &mut Game) {
     Xray_Func12(dst_r22, jp.offset(2), game);
     if r18 != 1 {
         Xray_Func14(dst_r22, jp.offset(4), game);
     }
 }
-unsafe fn Xray_Func10(dst_r22: u16, jp: *const u8, game: &mut Game) {
-    Xray_Func12(dst_r22, jp.offset(2), game);
-    Xray_Func15(dst_r22, jp.offset(2), game);
-}
-
 macro_rules! xray_place_block_tiles {
     (
         $game:ident, $tile_index:ident, $bottom_right_offset:literal, $byte_offset:ident,
@@ -1642,18 +1623,31 @@ unsafe fn Xray_Func11(r18: u16, dst_r22: u16, jp: *const u8, game: &mut Game) {
         xray_place_block_tiles!(game, v5, 99, dst_r22, 98, 67, top_right, 66, top_left);
     }
 }
-crate::game::address_dispatch! {
+crate::game::callback_dispatch! {
     unsafe fn CallXrayFunc(ea: u32, jp: *const u8, r18: u16, r22: u16, r36: u16, game: &mut Game) => ea;
-        call (r22, jp, game); default { Unreachable(game); };
-    {
+    call (r22, jp, game); default { Unreachable(game); };
+    @functions [unsafe fn (dst_r22: u16, jp: *const u8, game: &mut Game)];
+    [9555766] Xray_Func7 [] {
+        Xray_Func12(dst_r22, jp.offset(2), game);
+    };
+    [9555774] Xray_Func8 [] {
+        if word!(game.area_index) == 1 {
+            Xray_Func12(dst_r22, jp.offset(2), game);
+        }
+    };
+    [9555810] Xray_Func10 [] {
+        Xray_Func12(dst_r22, jp.offset(2), game);
+        Xray_Func15(dst_r22, jp.offset(2), game);
+    };
+    @external {
         9555577 => [{
                     Xray_CombinedMove(r22, r36, true_0 != 0, game);
                 }];
         9555643 => [{
                     Xray_CombinedMove(r22, r36, false_0 != 0, game);
                 }];
-        9555766 => Xray_Func7; 9555774 => Xray_Func8; 9555790 => [Xray_Func9(r18, r22, jp, game)];
-        9555810 => Xray_Func10; 9555823 => [Xray_Func11(r18, r22, jp, game)];
+        9555790 => [Xray_Func9(r18, r22, jp, game)];
+        9555823 => [Xray_Func11(r18, r22, jp, game)];
     }
 }
 pub unsafe fn Xray_SetupStage4_Func3(r18: u16, r22: u16, r36: u16, game: &mut Game) {

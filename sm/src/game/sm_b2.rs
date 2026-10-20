@@ -293,21 +293,7 @@ pub unsafe fn WallSpacePirates_Init(game: &mut Game) {
     };
     (*E).base.x_pos = v3;
 }
-crate::game::address_dispatch! {
-    pub unsafe fn CallSpacePiratesEnemyFunc(ea: u32, k: u16, game: &mut Game) => ea;
-        call (k, game); default { Unreachable(game); };
-    {
-        11698251 => [()]; 11726900 => SpacePirates_Func_1; 11726927 => [()];
-        11726928 => SpacePirates_Func_2; 11727048 => SpacePirates_Func_3; 11727075 => [()];
-        11730506 => [()]; 11727076 => SpacePirates_Func_4; 11728553 => SpacePirates_Func_5;
-        11728612 => SpacePirates_Func_6; 11728919 => SpacePirates_Func_11;
-        11728972 => SpacePirates_Func_12; 11729040 => SpacePirates_Func_13;
-        11729093 => SpacePirates_Func_14; 11729161 => SpacePirates_Func_15;
-        11729285 => SpacePirates_F985; 11729345 => SpacePirates_F9C1; 11729429 => SpacePirates_FA15;
-        11729497 => SpacePirates_FA59; 11729557 => SpacePirates_FA95; 11729641 => SpacePirates_FAE9;
-        11730244 => [WalkingSpacePirates_FD44(game)]; 11730382 => [WalkingSpacePirates_FDCE(game)];
-    }
-}
+
 pub unsafe fn WallSpacePirates_Main(game: &mut Game) {
     let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
     CallSpacePiratesEnemyFunc(
@@ -315,54 +301,6 @@ pub unsafe fn WallSpacePirates_Main(game: &mut Game) {
         word!(game.cur_enemy_index),
         game,
     );
-}
-pub unsafe fn SpacePirates_Func_1(k: u16, game: &mut Game) {
-    if IsSamusWithinEnemy_Y(word!(game.cur_enemy_index), 0x20, game) != 0 {
-        let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
-        enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_ED80 as u16, timer = 1}
-    }
-}
-pub unsafe fn SpacePirates_Func_2(k: u16, game: &mut Game) {
-    let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
-    (*E).base.x_pos =
-        ((*E).var_D).wrapping_add(SineMult8bit((*E).var_F, ((*E).parameter_2 >> 1), game));
-    (*E).base.y_pos =
-        ((*E).var_E).wrapping_sub(CosineMult8bit((*E).var_F, ((*E).parameter_2 >> 2), game));
-    let v1: u16 = ((byte!((*E).var_F; 0)).wrapping_sub(byte!((*E).var_22; 0))) as u16;
-    (*E).var_F = v1;
-    if v1 == (*E).var_20 {
-        enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_EDA4 as u16, timer = 1}
-        let mut v2: u16 = if ((*E).base.x_pos as i32 & 0xf) - 11i32 & 0x8000 != 0 {
-            ((*E).base.x_pos) & (0xfff8u16)
-        } else {
-            (((*E).base.x_pos as i32 & 0xfff0) + 16) as u16
-        };
-        (*E).base.x_pos = v2;
-    }
-}
-pub unsafe fn SpacePirates_Func_3(k: u16, game: &mut Game) {
-    if IsSamusWithinEnemy_Y(word!(game.cur_enemy_index), 0x20, game) != 0 {
-        let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
-        enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_ECC0 as u16, timer = 1}
-    }
-}
-pub unsafe fn SpacePirates_Func_4(k: u16, game: &mut Game) {
-    let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
-    (*E).base.x_pos =
-        ((*E).var_D).wrapping_add(SineMult8bit((*E).var_F, ((*E).parameter_2 >> 1), game));
-    (*E).base.y_pos =
-        ((*E).var_E).wrapping_sub(CosineMult8bit((*E).var_F, ((*E).parameter_2 >> 2), game));
-    let v1: u16 = ((byte!((*E).var_22; 0)).wrapping_add(byte!((*E).var_F; 0))) as u16;
-    (*E).var_F = v1;
-    if v1 == (*E).var_21 {
-        enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_ECE4 as u16, timer = 1}
-        let mut v2: u16 = if ((*E).base.x_pos as i32 & 0xf) - 11i32 & 0x8000 != 0 {
-            ((*E).base.x_pos) & (0xfff8u16)
-        } else {
-            (((*E).base.x_pos as i32 & 0xfff0) + 16) as u16
-        };
-        (*E).base.x_pos = v2;
-    }
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     SpacePirates_Instr_20 [jp.offset(1)] {
@@ -397,31 +335,6 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
             }) as u16;
     };
     SpacePirates_Instr_17 [jp] { (*Get_SpacePirates(k as i32, game)).var_00 = 0; };
-}
-pub unsafe fn SpacePirates_Func_5(k: u16, game: &mut Game) {
-    let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
-    if ((abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)))) as i16).wrapping_sub(128)
-        >= 0
-    {
-        SpacePirates_Func_8(game);
-    } else {
-        (*E).base.current_instruction =
-            (if (*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32 & 0x8000 != 0 {
-                addr_kSpacePirates_Ilist_F420 as i32
-            } else {
-                addr_kSpacePirates_Ilist_F22E as i32
-            }) as u16;
-        (*E).var_C = (*E).base.current_instruction;
-        (*E).base.instruction_timer = 1;
-    };
-}
-pub unsafe fn SpacePirates_Func_6(k: u16, game: &mut Game) {
-    if SpacePirates_Func_8(game) == 0
-        && SpacePirates_Func_10(game) == 0
-        && SpacePirates_Func_9(game) == 0
-    {
-        SpacePirates_Func_7(k, game);
-    }
 }
 pub unsafe fn SpacePirates_Func_8(game: &mut Game) -> u16 {
     let mut v0: u16 = 8;
@@ -478,11 +391,6 @@ pub unsafe fn SpacePirates_Func_10(game: &mut Game) -> u16 {
     }) as u16, timer = 1}
     1
 }
-pub unsafe fn SpacePirates_Func_15(k: u16, game: &mut Game) {
-    if SpacePirates_Func_8(game) == 0 && SpacePirates_Func_10(game) == 0 {
-        SpacePirates_Func_16(game);
-    }
-}
 pub unsafe fn SpacePirates_Instr_19(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E = Get_SpacePirates(k as i32, game);
     (*E).var_00 = 1536;
@@ -519,27 +427,116 @@ macro_rules! finish_space_pirate_vertical_jump {
     };
 }
 
-pub unsafe fn SpacePirates_F9C1(k: u16, game: &mut Game) {
-    let mut v2: i16 = 0;
-    let E = Get_SpacePirates(k as i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(5);
-    finish_space_pirate_vertical_jump!(k, E, game, v2, 0xb2fa15i32, addr_kSpacePirates_Ilist_F2B2);
-}
-pub unsafe fn SpacePirates_Instr_21(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_SpacePirates(k as i32, game);
-    (*E).var_00 = 1536;
-    (*E).var_03 =
-        ((*E).var_E as i32 + ((((*E).var_D).wrapping_sub((*E).var_E)) as i32 >> 1)) as u16;
-    jp
-}
-pub unsafe fn SpacePirates_FA95(k: u16, game: &mut Game) {
-    let mut v2: i16 = 0;
-    let E = Get_SpacePirates(k as i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(5);
-    finish_space_pirate_vertical_jump!(k, E, game, v2, 0xb2fae9i32, addr_kSpacePirates_Ilist_F4A4);
-}
-crate::prefixed_callbacks! {
-    pub unsafe fn (k: u16, game: &mut Game);
+crate::game::callback_dispatch! {
+    pub unsafe fn CallSpacePiratesEnemyFunc(ea: u32, k: u16, game: &mut Game) => ea;
+    call (k, game); default { Unreachable(game); };
+    @functions [pub unsafe fn (k: u16, game: &mut Game)];
+    [11726900] SpacePirates_Func_1 [] {
+        if IsSamusWithinEnemy_Y(word!(game.cur_enemy_index), 0x20, game) != 0 {
+            let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
+            enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_ED80 as u16, timer = 1}
+        }
+    };
+    [11726928] SpacePirates_Func_2 [] {
+        let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
+        (*E).base.x_pos =
+            ((*E).var_D).wrapping_add(SineMult8bit((*E).var_F, ((*E).parameter_2 >> 1), game));
+        (*E).base.y_pos =
+            ((*E).var_E).wrapping_sub(CosineMult8bit((*E).var_F, ((*E).parameter_2 >> 2), game));
+        let v1: u16 = ((byte!((*E).var_F; 0)).wrapping_sub(byte!((*E).var_22; 0))) as u16;
+        (*E).var_F = v1;
+        if v1 == (*E).var_20 {
+            enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_EDA4 as u16, timer = 1}
+            let mut v2: u16 = if ((*E).base.x_pos as i32 & 0xf) - 11i32 & 0x8000 != 0 {
+                ((*E).base.x_pos) & (0xfff8u16)
+            } else {
+                (((*E).base.x_pos as i32 & 0xfff0) + 16) as u16
+            };
+            (*E).base.x_pos = v2;
+        }
+    };
+    [11727048] SpacePirates_Func_3 [] {
+        if IsSamusWithinEnemy_Y(word!(game.cur_enemy_index), 0x20, game) != 0 {
+            let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
+            enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_ECC0 as u16, timer = 1}
+        }
+    };
+    [11727076] SpacePirates_Func_4 [] {
+        let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
+        (*E).base.x_pos =
+            ((*E).var_D).wrapping_add(SineMult8bit((*E).var_F, ((*E).parameter_2 >> 1), game));
+        (*E).base.y_pos =
+            ((*E).var_E).wrapping_sub(CosineMult8bit((*E).var_F, ((*E).parameter_2 >> 2), game));
+        let v1: u16 = ((byte!((*E).var_22; 0)).wrapping_add(byte!((*E).var_F; 0))) as u16;
+        (*E).var_F = v1;
+        if v1 == (*E).var_21 {
+            enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_ECE4 as u16, timer = 1}
+            let mut v2: u16 = if ((*E).base.x_pos as i32 & 0xf) - 11i32 & 0x8000 != 0 {
+                ((*E).base.x_pos) & (0xfff8u16)
+            } else {
+                (((*E).base.x_pos as i32 & 0xfff0) + 16) as u16
+            };
+            (*E).base.x_pos = v2;
+        }
+    };
+    [11728553] SpacePirates_Func_5 [] {
+        let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
+        if ((abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)))) as i16)
+            .wrapping_sub(128)
+            >= 0
+        {
+            SpacePirates_Func_8(game);
+        } else {
+            (*E).base.current_instruction =
+                (if (*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32 & 0x8000 != 0 {
+                    addr_kSpacePirates_Ilist_F420 as i32
+                } else {
+                    addr_kSpacePirates_Ilist_F22E as i32
+                }) as u16;
+            (*E).var_C = (*E).base.current_instruction;
+            (*E).base.instruction_timer = 1;
+        };
+    };
+    [11728612] SpacePirates_Func_6 [] {
+        if SpacePirates_Func_8(game) == 0
+            && SpacePirates_Func_10(game) == 0
+            && SpacePirates_Func_9(game) == 0
+        {
+            SpacePirates_Func_7(k, game);
+        }
+    };
+    [11729161] SpacePirates_Func_15 [] {
+        if SpacePirates_Func_8(game) == 0 && SpacePirates_Func_10(game) == 0 {
+            SpacePirates_Func_16(game);
+        }
+    };
+    [11729345] SpacePirates_F9C1 [] {
+        let mut v2: i16 = 0;
+        let E = Get_SpacePirates(k as i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(5);
+        finish_space_pirate_vertical_jump!(
+            k,
+            E,
+            game,
+            v2,
+            0xb2fa15i32,
+            addr_kSpacePirates_Ilist_F2B2
+        );
+    };
+    [11729557] SpacePirates_FA95 [] {
+        let mut v2: i16 = 0;
+        let E = Get_SpacePirates(k as i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(5);
+        finish_space_pirate_vertical_jump!(
+            k,
+            E,
+            game,
+            v2,
+            0xb2fae9i32,
+            addr_kSpacePirates_Ilist_F4A4
+        );
+    };
+    @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let E = Get_SpacePirates(k as i32, game); };
     SpacePirates_Func_7 [] {
         if ((*E).base.frame_counter & 0x3f) == 0 {
@@ -557,7 +554,7 @@ crate::prefixed_callbacks! {
             (*E).base.instruction_timer = 1;
         }
     };
-    SpacePirates_Func_11 [] {
+    [11728919] SpacePirates_Func_11 [] {
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub((byte!((*E).var_00; 1)) as u16);
         (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
         (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
@@ -566,7 +563,7 @@ crate::prefixed_callbacks! {
             (*E).var_A = ((0xb2f84ci32) as u16);
         }
     };
-    SpacePirates_Func_12 [] {
+    [11728972] SpacePirates_Func_12 [] {
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub((byte!((*E).var_00; 1)) as u16);
         (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
         (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
@@ -579,7 +576,7 @@ crate::prefixed_callbacks! {
             SpacePirates_FB11(k, game);
         }
     };
-    SpacePirates_Func_13 [] {
+    [11729040] SpacePirates_Func_13 [] {
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_add((byte!((*E).var_00; 1)) as u16);
         (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
         (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
@@ -588,7 +585,7 @@ crate::prefixed_callbacks! {
             (*E).var_A = ((0xb2f8c5i32) as u16);
         }
     };
-    SpacePirates_Func_14 [] {
+    [11729093] SpacePirates_Func_14 [] {
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_add((byte!((*E).var_00; 1)) as u16);
         (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
         (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
@@ -601,7 +598,7 @@ crate::prefixed_callbacks! {
             SpacePirates_FB11(k, game);
         }
     };
-    SpacePirates_F985 [] {
+    [11729285] SpacePirates_F985 [] {
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub((byte!((*E).var_00; 1)) as u16);
         let mut v2: i16 = (((*E).var_00) as i16).wrapping_sub(64);
         (*E).var_00 = v2 as u16;
@@ -611,7 +608,7 @@ crate::prefixed_callbacks! {
             (*E).var_00 = 1536;
         }
     };
-    SpacePirates_FA15 [] {
+    [11729429] SpacePirates_FA15 [] {
         let v2: u16 = ((*E).base.x_pos).wrapping_sub(2);
         (*E).base.x_pos = v2;
         if ((v2) as i16).wrapping_sub(((*E).var_E) as i16) < 0 {
@@ -620,7 +617,7 @@ crate::prefixed_callbacks! {
             (*E).var_A = ((0xb2804bi32) as u16);
         }
     };
-    SpacePirates_FA59 [] {
+    [11729497] SpacePirates_FA59 [] {
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub((byte!((*E).var_00; 1)) as u16);
         let mut v2: i16 = (((*E).var_00) as i16).wrapping_sub(64);
         (*E).var_00 = v2 as u16;
@@ -630,7 +627,7 @@ crate::prefixed_callbacks! {
             (*E).var_00 = 1536;
         }
     };
-    SpacePirates_FAE9 [] {
+    [11729641] SpacePirates_FAE9 [] {
         let v2: u16 = ((*E).base.x_pos).wrapping_add(2);
         (*E).base.x_pos = v2;
         if ((v2) as i16).wrapping_sub(((*E).var_F) as i16) >= 0 {
@@ -655,6 +652,19 @@ crate::prefixed_callbacks! {
             game,
         );
     };
+    @external {
+        11698251 => [()]; 11726927 => [()];
+        11727075 => [()];
+        11730506 => [()];
+        11730244 => [WalkingSpacePirates_FD44(game)]; 11730382 => [WalkingSpacePirates_FDCE(game)];
+    }
+}
+pub unsafe fn SpacePirates_Instr_21(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
+    let E = Get_SpacePirates(k as i32, game);
+    (*E).var_00 = 1536;
+    (*E).var_03 =
+        ((*E).var_E as i32 + ((((*E).var_D).wrapping_sub((*E).var_E)) as i32 >> 1)) as u16;
+    jp
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     SpacePirates_Instr_12 [jp.offset(1)] {

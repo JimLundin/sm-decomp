@@ -68,6 +68,11 @@ and routines, with **bank-based source organization removed**. Keep bank
 addresses as ROM/dispatch data. Domain ownership and code-volume reduction
 are separate outcomes to measure; a file move alone supplies no deletion.
 
+Latest resource direction: finish and commit validated current work, then
+focus only on substantial reductions. Leave small follow-ups parked and keep
+resources available to the existing large experiments. Do not expand new
+standalone few-hundred-line drafts while those experiments are running.
+
 Keep Game ownership, byte-compatible g_ram, ROM formats and observable
 behavior, including quirks. sm/src is the source of truth; use ram_map.rs,
 the oracle and https://patrickjohnston.org/bank/ when meaning is unclear.
@@ -346,7 +351,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **8,434-line** gap; parked small drafts are not
+   replacement yet funds the **7,521-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -474,6 +479,16 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Formatting, release/source checks and full any%/Speed Booster replays pass.
    Unvisited gameplay bodies rely on that static/control equivalence; the
    movies do not establish execution of all 132 loops.
+
+   Complete callback/dispatch declaration sharing removes **913 lines
+   (108,433 -> 107,520)** across 114 dispatchers and 1,925 named functions,
+   including 52 support lines. One declaration supplies the function and its
+   numeric route, retiring 1,752 separate registration arms. Independent source
+   reconstruction and compiler expansion preserve all 7,012 named definitions
+   and complete dispatch mappings, including defaults and argument order.
+   Formatting, normal release/source checks and both full replays pass.
+   Existing forwarding, prefix and countdown representations remain shared;
+   body indentation/wrapping costs and every retained exception are included.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -607,6 +622,14 @@ sm-context-casts-d914d9aa. A dynamic-bound/retained-counter range
 follow-up finds roughly 100 gross scaffold lines before replacement costs,
 not another multi-hundred-line candidate. TEMP sm-indexed-ranges-dynamic-preflight.
 
+The separate cross-file callback draft covers EnemyAi/PreInstr/Instr with
+owner-local routing and saves **346 additional lines** over the local sharing.
+Park it under the latest resource direction: formatting/price only, without
+compiler, equivalence or runtime validation. TEMP sm-unified-callbacks-crossfile-v4.
+A macro-aware graph of 6,729 functions/callbacks and 1,274 globals found no
+large disconnected component; new candidates occupy only 48 source lines.
+No deletion is claimed. TEMP sm-dead-components-d914d9aa.
+
 When revisiting one of these exact families, consult its historical section
 with `git show ec45c573:docs/PLAN.md` and search the relevant heading/symbol.
 Temporary draft locations recorded there may no longer exist. Recheck current
@@ -663,7 +686,11 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: indexed loops over 58db72cb (same source as d914d9aa)
+Latest full integration: callback/dispatch sharing over ecf93788 passes any%
+**129712/0** and Speed Booster **148406/0**, with normal rendering, audio and
+comparisons. Independent complete function/route correspondence covers the
+unvisited callbacks; no claim of movie execution for every callback is made.
+Earlier indexed loops over 58db72cb (same source as d914d9aa)
 pass any% **129712/0** and Speed Booster **148406/0**, with normal rendering,
 audio and comparisons. Independent checks cover all 132 control sequences
 and unchanged bodies; these are not claims of movie execution for every loop.
@@ -754,10 +781,13 @@ committed baseline and budget.
 After the Japanese correction, local bindings, intro pages, enemy callback
 imports, ordered stores, PNG texture loading, beam firing, moving platforms,
 byte-partial-product sharing, INI decoding, countdown callbacks, projectile
-flight, callback entry captures, opcode grids, blast windows and indexed loops,
-maintained Rust is **108,433**, leaving **8,434** to reach 99,999. Counters:
+flight, callback entry captures, opcode grids, blast windows, indexed loops and
+combined callback/dispatch declarations, maintained Rust is **107,520**, leaving
+**7,521** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 4433; cast lines 8086. The unrelated 83-line shader draft
+unsafe functions 3665; cast lines 8096. Shared declarations lower the unsafe
+source count; ten additional cast lines come from normal body reflow, with
+unchanged cast operations. The unrelated 83-line shader draft
 remains excluded; working-tree counts are not the committed baseline.
 Item 2's function/compound-body variant audits are complete for their stated
 scope. The remaining gap has no established replacement budget. The hopping
