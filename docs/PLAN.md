@@ -2809,7 +2809,58 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `6a050845` shares 220 adjacent
+Latest reviewed integration (2026-10-20): `1a70f534`, `c5561eb6` and
+`5e909d71` share projectile collision implementations, consecutive record
+field types and unit-valued match arms. All 77 committed inputs at each
+stage match the frozen verified trees after Git line-ending normalization.
+Independent complete composition inversion binds all 70 Rust files and
+1180011 final source tokens to the three separately reviewed changes.
+
+Collision review preserves the 15 original declarations' captured/live
+reads, byte/full-word widths, callback effects, occupancy tests, termination,
+wave results, overlapping stores and two separate landing ROM reads.
+Independent corrected focused reruns pass 8192 traversal cases, another
+8192 live-position mutation cases, 12288 multistep shot cases, 40960 shot
+square cases, 12288 enemy square/landing cases and 73728 aligned context
+alias cases. Existing controls detect stride, step, terminal-read,
+cached-position, landing-sentinel and ROM-reread changes.
+
+Review corrected three comparison-model defects: context representation,
+value-before-destination stores and cur_block_index's address (0xDC4).
+Fresh actual-library inputs bind all 73 files per side plus exactly one
+shim in each selected bank. The first comparison script still loaded older
+DLLs; its result is superseded. The corrected script changes only the DLL
+directory and separate result path, and passes 17920 cases against the fresh
+libraries. All 174 corrected comparison pins remain fixed. Stack-context
+and immutable-table read order remains source-reviewed; these comparisons
+do not establish complete alias safety.
+
+The 108 typed records preserve 1209 fields in 489 consecutive groups,
+including names, types, visibility, order, padding, attributes and comments.
+Independent core/frontend compiler comparisons retain all 10213774 and
+10509005 original bytes after removing only the 397 added helper bytes.
+Every final macro invocation inverts exactly to the collision stage.
+
+The 287 match arms preserve exact patterns and expressions, including 50
+CPU-table arms. Every selected compiler expression root has unit/never type;
+nontrivial temporaries and non-unit discarded results remain excluded.
+Review caught and excluded one parser-misgrouped macro-plus-assignment block.
+Rustfmt retains braces in 16 long arms; these only lose a semicolon.
+Independent final MIR comparison passes all 51 functions/closures after
+the reviewed unit-storage, identity and empty-goto normalization. All other
+operations and lifetimes remain exact. Both checkpoint literals match all
+22 included source files, with 642779/637734-byte payloads.
+
+Formatting/check, normal release (22.59s), progress and the single shared
+full any% replay pass: 129712/0, native exit 0, 107.73s wall/107.58s replay.
+All 461 verification pins remain fixed. Review reused the authoritative
+build/replay. Rust lines fall 1233 to 129655; cast lines fall 195 to 13193.
+Unsafe-function definitions rise 14 to 6264 for shared helpers/methods;
+other counters are unchanged. The movie covers six rooms and three enemy
+definitions with zero ending/credits frames. Broader gameplay, frontend,
+hardware/audio coverage and global alias safety remain open.
+
+Included field-store integration (2026-10-20): `6a050845` shares 220 adjacent
 literal field-store runs, comprising 559 assignments across 24 callers and
 23 literal spellings. Independent discovery from the final baseline AST
 finds exactly those runs. Complete source projection matches all 1184694
