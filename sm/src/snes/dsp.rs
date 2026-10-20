@@ -48,6 +48,11 @@ static gaussValues: [u16; 512] = [
     0x514, 0x514, 0x515, 0x516, 0x516, 0x517, 0x517, 0x517, 0x518, 0x518, 0x518, 0x518, 0x518,
     0x519, 0x519,
 ];
+// The DSP clamps signed samples at each original mixing/decoding boundary.
+fn saturate_sample(value: i32) -> i32 {
+    value.clamp(i16::MIN as i32, i16::MAX as i32)
+}
+
 pub unsafe fn dsp_init(ram: *mut u8) -> *mut Dsp {
     let dsp: *mut Dsp = malloc(size_of::<Dsp>() as size_t) as *mut Dsp;
     (*dsp).apu_ram = ram;
@@ -158,38 +163,14 @@ pub unsafe fn dsp_cycle(dsp: *mut Dsp) {
         totalR += (*dsp).channel[i as usize].sampleOut as i32
             * (*dsp).channel[i as usize].volumeR as i32
             >> 6i32;
-        totalL = if totalL < -0x8000i32 {
-            -0x8000i32
-        } else if totalL > 0x7fffi32 {
-            0x7fffi32
-        } else {
-            totalL
-        };
-        totalR = if totalR < -0x8000i32 {
-            -0x8000i32
-        } else if totalR > 0x7fffi32 {
-            0x7fffi32
-        } else {
-            totalR
-        };
+        totalL = saturate_sample(totalL);
+        totalR = saturate_sample(totalR);
         i += 1;
     }
     totalL = totalL * (*dsp).masterVolumeL as i32 >> 7i32;
     totalR = totalR * (*dsp).masterVolumeR as i32 >> 7i32;
-    totalL = if totalL < -0x8000i32 {
-        -0x8000i32
-    } else if totalL > 0x7fffi32 {
-        0x7fffi32
-    } else {
-        totalL
-    };
-    totalR = if totalR < -0x8000i32 {
-        -0x8000i32
-    } else if totalR > 0x7fffi32 {
-        0x7fffi32
-    } else {
-        totalR
-    };
+    totalL = saturate_sample(totalL);
+    totalR = saturate_sample(totalR);
     dsp_handleEcho(dsp, &raw mut totalL, &raw mut totalR);
     if (*dsp).mute {
         totalL = 0i32;
@@ -241,36 +222,12 @@ unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
         }
         i += 1;
     }
-    sumL = if sumL < -0x8000i32 {
-        -0x8000i32
-    } else if sumL > 0x7fffi32 {
-        0x7fffi32
-    } else {
-        sumL
-    };
-    sumR = if sumR < -0x8000i32 {
-        -0x8000i32
-    } else if sumR > 0x7fffi32 {
-        0x7fffi32
-    } else {
-        sumR
-    };
+    sumL = saturate_sample(sumL);
+    sumR = saturate_sample(sumR);
     let outL: i32 = *outputL + (sumL * (*dsp).echoVolumeL as i32 >> 7i32);
     let outR: i32 = *outputR + (sumR * (*dsp).echoVolumeR as i32 >> 7i32);
-    *outputL = if outL < -0x8000i32 {
-        -0x8000i32
-    } else if outL > 0x7fffi32 {
-        0x7fffi32
-    } else {
-        outL
-    };
-    *outputR = if outR < -0x8000i32 {
-        -0x8000i32
-    } else if outR > 0x7fffi32 {
-        0x7fffi32
-    } else {
-        outR
-    };
+    *outputL = saturate_sample(outL);
+    *outputR = saturate_sample(outR);
     let mut inL: i32 = 0i32;
     let mut inR: i32 = 0i32;
     let mut i_0: i32 = 0i32;
@@ -282,39 +239,15 @@ unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
             inR += (*dsp).channel[i_0 as usize].sampleOut as i32
                 * (*dsp).channel[i_0 as usize].volumeR as i32
                 >> 6i32;
-            inL = if inL < -0x8000i32 {
-                -0x8000i32
-            } else if inL > 0x7fffi32 {
-                0x7fffi32
-            } else {
-                inL
-            };
-            inR = if inR < -0x8000i32 {
-                -0x8000i32
-            } else if inR > 0x7fffi32 {
-                0x7fffi32
-            } else {
-                inR
-            };
+            inL = saturate_sample(inL);
+            inR = saturate_sample(inR);
         }
         i_0 += 1;
     }
     inL += sumL * (*dsp).feedbackVolume as i32 >> 7i32;
     inR += sumR * (*dsp).feedbackVolume as i32 >> 7i32;
-    inL = if inL < -0x8000i32 {
-        -0x8000i32
-    } else if inL > 0x7fffi32 {
-        0x7fffi32
-    } else {
-        inL
-    };
-    inR = if inR < -0x8000i32 {
-        -0x8000i32
-    } else if inR > 0x7fffi32 {
-        0x7fffi32
-    } else {
-        inR
-    };
+    inL = saturate_sample(inL);
+    inR = saturate_sample(inR);
     inL &= 0xfffei32;
     inR &= 0xfffei32;
     if (*dsp).echoWrites {
@@ -485,13 +418,7 @@ unsafe fn dsp_getSample(dsp: *mut Dsp, ch: i32, sampleNum: i32, offset: i32) -> 
     out += gaussValues[(0x100i32 + offset) as usize] as i32 * olds as i32 >> 10i32;
     out = (out & 0xffffi32) as i16 as i32;
     out += gaussValues[offset as usize] as i32 * news as i32 >> 10i32;
-    out = if out < -0x8000i32 {
-        -0x8000i32
-    } else if out > 0x7fffi32 {
-        0x7fffi32
-    } else {
-        out
-    };
+    out = saturate_sample(out);
     (out >> 1i32) as i16
 }
 unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
@@ -557,13 +484,7 @@ unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
             3 => s += 2i32 * old + (13i32 * -old >> 6i32) - older + (3i32 * older >> 4i32),
             _ => {}
         }
-        s = if s < -0x8000i32 {
-            -0x8000i32
-        } else if s > 0x7fffi32 {
-            0x7fffi32
-        } else {
-            s
-        };
+        s = saturate_sample(s);
         s = ((s & 0x7fffi32) << 1i32) as i16 as i32 >> 1i32;
         older = old;
         old = s;
