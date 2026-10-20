@@ -16,6 +16,7 @@
 
 /// Gameplay, one module per original ROM bank (`sm_80` = bank $80, ...).
 pub mod game {
+    pub(crate) mod callback_tables;
     // Declare address tables with the same calls and unreachable fallback.
     macro_rules! address_dispatch {
         ($($visibility:vis unsafe fn $name:ident($($argument:ident: $argument_type:ty),* $(,)?)

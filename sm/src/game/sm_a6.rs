@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
@@ -3870,18 +3871,9 @@ pub unsafe fn RidleysExplosion_Func_2(game: &mut Game) {
     SpawnEnemy(0xa6u8, addr_stru_A6CA37 as u16, game);
 }
 pub fn locret_A6CB20(game: &mut Game) {}
-static off_A6CB21: [Option<Func_V>; 9] = unsafe {
-    [
-        Some(locret_A6CB20 as unsafe fn(&mut Game) -> ()),
-        Some(Ridley_CBC0 as unsafe fn(&mut Game) -> ()),
-        Some(Ridley_Func_71 as unsafe fn(&mut Game) -> ()),
-        Some(Ridley_Func_72 as unsafe fn(&mut Game) -> ()),
-        Some(Ridley_CBC7 as unsafe fn(&mut Game) -> ()),
-        Some(Ridley_CBCE as unsafe fn(&mut Game) -> ()),
-        Some(Ridley_Func_73 as unsafe fn(&mut Game) -> ()),
-        Some(Ridley_Func_74 as unsafe fn(&mut Game) -> ()),
-        Some(Ridley_CBD5 as unsafe fn(&mut Game) -> ()),
-    ]
+static off_A6CB21: [Option<Func_V>; 9] = callback_table! { unsafe Func_V;
+    locret_A6CB20, Ridley_CBC0, Ridley_Func_71, Ridley_Func_72, Ridley_CBC7, Ridley_CBCE,
+    Ridley_Func_73, Ridley_Func_74, Ridley_CBD5,
 };
 pub unsafe fn Ridley_Func_70(game: &mut Game) {
     Ridley_Func_91(game);

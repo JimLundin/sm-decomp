@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::enemy_properties::*;
 use crate::game::enemy_layouts::enemy_layout;
@@ -4434,12 +4435,8 @@ pub unsafe fn Etecoon_Func_11(k: u16, game: &mut Game) {
         (*E).etecoon_var_B = g_word_A7E902;
     }
 }
-static funcs_A2A79: [Option<Func_Y_V>; 3] = unsafe {
-    [
-        Some(Etecoon_Func_13 as unsafe fn(u16, &mut Game) -> ()),
-        Some(Etecoon_Func_14 as unsafe fn(u16, &mut Game) -> ()),
-        Some(Etecoon_Func_15 as unsafe fn(u16, &mut Game) -> ()),
-    ]
+static funcs_A2A79: [Option<Func_Y_V>; 3] = callback_table! { unsafe Func_Y_V;
+    Etecoon_Func_13, Etecoon_Func_14, Etecoon_Func_15,
 };
 pub unsafe fn Etecoon_Func_12(k: u16, game: &mut Game) {
     let E: *mut Enemy_Etecoon = Get_Etecoon(k as i32, game);

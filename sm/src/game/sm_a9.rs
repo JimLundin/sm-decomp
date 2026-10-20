@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_a6::*;
@@ -3105,13 +3106,9 @@ pub unsafe fn MotherBomb_FiringLaser_FinishAttack(game: &mut Game) {
         MotherBrain_Body_Phase2_Thinking(game);
     }
 }
-static off_A9B887: [Option<Func_V>; 4] = unsafe {
-    [
-        Some(MotherBomb_FiringDeathBeam_0 as unsafe fn(&mut Game) -> ()),
-        Some(MotherBomb_FiringDeathBeam_1 as unsafe fn(&mut Game) -> ()),
-        Some(MotherBomb_FiringDeathBeam_2 as unsafe fn(&mut Game) -> ()),
-        Some(MotherBomb_FiringDeathBeam_3 as unsafe fn(&mut Game) -> ()),
-    ]
+static off_A9B887: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+    MotherBomb_FiringDeathBeam_0, MotherBomb_FiringDeathBeam_1, MotherBomb_FiringDeathBeam_2,
+    MotherBomb_FiringDeathBeam_3,
 };
 pub unsafe fn MotherBomb_FiringDeathBeam(game: &mut Game) {
     let v0: i32 = (*Get_MotherBrain(0i32, game)).mbn_var_17 as i32;

@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::buttons::*;
 pub use crate::game::constants::game_states::*;
@@ -1827,16 +1828,10 @@ pub unsafe fn DrawTwoHudDigits(addr: u32, a: u16, k: u16, game: &mut Game) {
         ) as *mut u16)
     );
 }
-static kTimerProcessFuncs: [Option<Func_U8>; 7] = unsafe {
-    [
-        Some(ProcessTimer_Empty as unsafe fn(&mut Game) -> u8),
-        Some(ProcessTimer_CeresStart as unsafe fn(&mut Game) -> u8),
-        Some(ProcessTimer_MotherBrainStart as unsafe fn(&mut Game) -> u8),
-        Some(ProcessTimer_InitialDelay as unsafe fn(&mut Game) -> u8),
-        Some(ProcessTimer_MovementDelayed as unsafe fn(&mut Game) -> u8),
-        Some(ProcessTimer_MovingIntoPlace as unsafe fn(&mut Game) -> u8),
-        Some(ProcessTimer_Decrement as unsafe fn(&mut Game) -> u8),
-    ]
+static kTimerProcessFuncs: [Option<Func_U8>; 7] = callback_table! { unsafe Func_U8;
+    ProcessTimer_Empty, ProcessTimer_CeresStart, ProcessTimer_MotherBrainStart,
+    ProcessTimer_InitialDelay, ProcessTimer_MovementDelayed, ProcessTimer_MovingIntoPlace,
+    ProcessTimer_Decrement,
 };
 pub unsafe fn ProcessTimer(game: &mut Game) -> u8 {
     kTimerProcessFuncs[ram_word!(game, timer_status) as u8 as usize]
@@ -2905,13 +2900,9 @@ pub unsafe fn FixDoorsMovingUp(game: &mut Game) {
     update_ram_word!(game.previous_layer2_y_block, wrapping_add(1));
     DoorTransition_Up(game);
 }
-static kDoorTransitionSetupFuncs: [Option<Func_V>; 4] = unsafe {
-    [
-        Some(DoorTransitionScrollingSetup_Right as unsafe fn(&mut Game) -> ()),
-        Some(DoorTransitionScrollingSetup_Left as unsafe fn(&mut Game) -> ()),
-        Some(DoorTransitionScrollingSetup_Down as unsafe fn(&mut Game) -> ()),
-        Some(DoorTransitionScrollingSetup_Up as unsafe fn(&mut Game) -> ()),
-    ]
+static kDoorTransitionSetupFuncs: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+    DoorTransitionScrollingSetup_Right, DoorTransitionScrollingSetup_Left,
+    DoorTransitionScrollingSetup_Down, DoorTransitionScrollingSetup_Up,
 };
 pub unsafe fn DoorTransitionScrollingSetup(game: &mut Game) {
     set_ram_word!(game.layer1_x_pos = ram_word!(game, door_destination_x_pos));
@@ -2995,13 +2986,8 @@ pub unsafe fn UpdateBgScrollOffsets(game: &mut Game) {
             (ram_word!(game, reg_BG2VOFS)).wrapping_sub(ram_word!(game, layer1_y_pos))
     );
 }
-static kDoorTransitionFuncs: [Option<Func_U8>; 4] = unsafe {
-    [
-        Some(DoorTransition_Right as unsafe fn(&mut Game) -> u8),
-        Some(DoorTransition_Left as unsafe fn(&mut Game) -> u8),
-        Some(DoorTransition_Down as unsafe fn(&mut Game) -> u8),
-        Some(DoorTransition_Up as unsafe fn(&mut Game) -> u8),
-    ]
+static kDoorTransitionFuncs: [Option<Func_U8>; 4] = callback_table! { unsafe Func_U8;
+    DoorTransition_Right, DoorTransition_Left, DoorTransition_Down, DoorTransition_Up,
 };
 pub unsafe fn Irq_FollowDoorTransition(game: &mut Game) {
     if kDoorTransitionFuncs[(ram_word!(game, door_direction) as i32 & 3i32) as usize]

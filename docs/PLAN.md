@@ -31,6 +31,27 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Callback tables (2026-10-20): all 95 existing Option-function arrays use one
+initializer macro, retaining their native static declarations, lengths and
+1039 ordered slots: 1020 explicit function casts, 18 None entries and the
+one existing transmute. The 12 existing callback aliases resolve to their
+exact original signatures. All 93 unsafe and both plain initializer scopes
+remain intact, including the two earlier-cleaned tables found by broader AST
+matching. No new runtime operation or unsafe-operation reduction is claimed.
+
+Independent complete-source review and actual whole-library compiler expansion
+pass. After removing the helper/imports and resolving the exact cast aliases,
+all 2228487 tokens match, including the original transmute and unsafe blocks.
+Net Rust lines -821, to 137298; other progress counters are unchanged.
+
+Final composition includes 33abebc9 CPU opcodes and committed string tables.
+Normal release (30.14s), formatting/check, progress and full
+any% 129712/0 (134.33s), native exit 0, pass. All 76 source,
+configuration and host inputs match the candidate; all 82 replay pins remain
+stable. Any% supplies integration regression coverage; no broader callback
+route coverage is claimed. Continue substantial shared implementations;
+broader readability and boot-to-credits remain open.
+
 CPU opcode table (2026-10-20): one private macro shares all 177 repeated
 address-resolution and memory-operation arms. All 255 outer patterns retain
 their order, including 78 special cases and the fallback. Opcode hooks,

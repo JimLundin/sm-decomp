@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_82::*;
 pub use crate::game::constants::buttons::*;
 pub use crate::game::constants::game_states::*;
@@ -781,17 +782,10 @@ pub unsafe fn GameOverMenu_5_Continue(game: &mut Game) {
     set_ram_word!(game.file_select_map_area_index = 0u16);
     RestorePalettesAndIoAfterDebugGameover(game);
 }
-static kGameOverMenuFuncs: [Option<Func_V>; 8] = unsafe {
-    [
-        Some(GameOverMenu_0_FadeOutConfigGfx as unsafe fn(&mut Game) -> ()),
-        Some(GameOverMenu_1_Init as unsafe fn(&mut Game) -> ()),
-        Some(GameOverMenu_2_PlayMusic as unsafe fn(&mut Game) -> ()),
-        Some(GameOverMenu_3_FadeIn as unsafe fn(&mut Game) -> ()),
-        Some(GameOverMenu_4_Main as unsafe fn(&mut Game) -> ()),
-        Some(GameOverMenu_5_FadeOutToGameMap as unsafe fn(&mut Game) -> ()),
-        Some(GameOverMenu_6_LoadGameMapView as unsafe fn(&mut Game) -> ()),
-        Some(GameOverMenu_7_FadeOutToSoftReset as unsafe fn(&mut Game) -> ()),
-    ]
+static kGameOverMenuFuncs: [Option<Func_V>; 8] = callback_table! { unsafe Func_V;
+    GameOverMenu_0_FadeOutConfigGfx, GameOverMenu_1_Init, GameOverMenu_2_PlayMusic,
+    GameOverMenu_3_FadeIn, GameOverMenu_4_Main, GameOverMenu_5_FadeOutToGameMap,
+    GameOverMenu_6_LoadGameMapView, GameOverMenu_7_FadeOutToSoftReset,
 };
 pub unsafe fn GameOverMenu(game: &mut Game) {
     kGameOverMenuFuncs[ram_word!(game, menu_index) as usize].expect("non-null function pointer")(
@@ -919,43 +913,21 @@ pub unsafe fn GameOverMenu_2_PlayMusic(game: &mut Game) {
         QueueMusic_Delayed8(4u16, game);
     }
 }
-static kFileSelectMenuFuncs: [Option<Func_V>; 34] = unsafe {
-    [
-        Some(FileSelectMenu_0_FadeOutConfigGfx as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_1_LoadFileSelectMenuBG2 as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_2_InitMain as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_3_FadeInToMain as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_4_Main as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_5_FadeOutFromMain as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_6_FileCopyInit as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_7_FadeInFromMain as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_8 as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_9_InitializeSelectDest as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_10_FileCopySelectDest as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_11_InitializeConfirm as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_12_FileCopyConfirm as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_13_FileCopyDoIt as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_14_CopyCompleted as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_15_FadeOutToMain as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_16 as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_17_FadeInToMain as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_18 as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_5_FadeOutFromMain as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_20_FileClearInit as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_7_FadeInFromMain as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_22_FileClearSelectSlot as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_23_FileClearInitConfirm as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_24_FileClearConfirm as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_25_FileClearDoClear as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_26_ClearCompleted as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_15_FadeOutToMain as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_16 as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_17_FadeInToMain as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_30 as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_31_TurnSamusHelmet as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_32_FadeOutToOptions as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMenu_33_FadeOutToTitle as unsafe fn(&mut Game) -> ()),
-    ]
+static kFileSelectMenuFuncs: [Option<Func_V>; 34] = callback_table! { unsafe Func_V;
+    FileSelectMenu_0_FadeOutConfigGfx, FileSelectMenu_1_LoadFileSelectMenuBG2,
+    FileSelectMenu_2_InitMain, FileSelectMenu_3_FadeInToMain, FileSelectMenu_4_Main,
+    FileSelectMenu_5_FadeOutFromMain, FileSelectMenu_6_FileCopyInit,
+    FileSelectMenu_7_FadeInFromMain, FileSelectMenu_8, FileSelectMenu_9_InitializeSelectDest,
+    FileSelectMenu_10_FileCopySelectDest, FileSelectMenu_11_InitializeConfirm,
+    FileSelectMenu_12_FileCopyConfirm, FileSelectMenu_13_FileCopyDoIt,
+    FileSelectMenu_14_CopyCompleted, FileSelectMenu_15_FadeOutToMain, FileSelectMenu_16,
+    FileSelectMenu_17_FadeInToMain, FileSelectMenu_18, FileSelectMenu_5_FadeOutFromMain,
+    FileSelectMenu_20_FileClearInit, FileSelectMenu_7_FadeInFromMain,
+    FileSelectMenu_22_FileClearSelectSlot, FileSelectMenu_23_FileClearInitConfirm,
+    FileSelectMenu_24_FileClearConfirm, FileSelectMenu_25_FileClearDoClear,
+    FileSelectMenu_26_ClearCompleted, FileSelectMenu_15_FadeOutToMain, FileSelectMenu_16,
+    FileSelectMenu_17_FadeInToMain, FileSelectMenu_30, FileSelectMenu_31_TurnSamusHelmet,
+    FileSelectMenu_32_FadeOutToOptions, FileSelectMenu_33_FadeOutToTitle,
 };
 pub unsafe fn FileSelectMenu(game: &mut Game) {
     kFileSelectMenuFuncs[ram_word!(game, menu_index) as usize].expect("non-null function pointer")(
@@ -1810,32 +1782,17 @@ pub unsafe fn DrawFileSelectSlotSamusHelmet(k: u16, game: &mut Game) {
         game,
     );
 }
-static kFileSelectMapFuncs: [Option<Func_V>; 23] = unsafe {
-    [
-        Some(FileSelectMap_0 as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_1 as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_2_LoadAreaSelectForegroundTilemap as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_3_LoadAreaSelectBackgroundTilemap as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_4_SetupExpandingSquareTransition as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_5_ExpandingSquare as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_6_AreaSelectMap as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_7_PrepExpandSquareTransToRoomMap as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_8_ExpandSquareTransToRoomSelectMap as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_9_InitRoomSelectMap as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_10_RoomSelectMap as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_11 as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_11 as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_13 as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_14 as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_15_ClearTileMap as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_16_LoadPalettes as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_2_LoadAreaSelectForegroundTilemap as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_18 as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_4_SetupExpandingSquareTransition as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_20_SetupExpandingSquare as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_21_MoveExpandingSquare as unsafe fn(&mut Game) -> ()),
-        Some(FileSelectMap_22 as unsafe fn(&mut Game) -> ()),
-    ]
+static kFileSelectMapFuncs: [Option<Func_V>; 23] = callback_table! { unsafe Func_V;
+    FileSelectMap_0, FileSelectMap_1, FileSelectMap_2_LoadAreaSelectForegroundTilemap,
+    FileSelectMap_3_LoadAreaSelectBackgroundTilemap,
+    FileSelectMap_4_SetupExpandingSquareTransition, FileSelectMap_5_ExpandingSquare,
+    FileSelectMap_6_AreaSelectMap, FileSelectMap_7_PrepExpandSquareTransToRoomMap,
+    FileSelectMap_8_ExpandSquareTransToRoomSelectMap, FileSelectMap_9_InitRoomSelectMap,
+    FileSelectMap_10_RoomSelectMap, FileSelectMap_11, FileSelectMap_11, FileSelectMap_13,
+    FileSelectMap_14, FileSelectMap_15_ClearTileMap, FileSelectMap_16_LoadPalettes,
+    FileSelectMap_2_LoadAreaSelectForegroundTilemap, FileSelectMap_18,
+    FileSelectMap_4_SetupExpandingSquareTransition, FileSelectMap_20_SetupExpandingSquare,
+    FileSelectMap_21_MoveExpandingSquare, FileSelectMap_22,
 };
 pub unsafe fn FileSelectMap(game: &mut Game) {
     kFileSelectMapFuncs[ram_word!(game, menu_index) as usize].expect("non-null function pointer")(

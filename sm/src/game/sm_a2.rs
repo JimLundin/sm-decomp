@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::buttons::*;
@@ -2378,16 +2379,9 @@ pub unsafe fn SpikeShootingPlant_Instr_A0A7(k: u16, jp: *const u16, game: &mut G
     );
     jp.offset(1)
 }
-static off_A2A3D3: [Option<Func_V>; 7] = unsafe {
-    [
-        Some(MaridiaSpikeyShell_1 as unsafe fn(&mut Game) -> ()),
-        Some(MaridiaSpikeyShell_2 as unsafe fn(&mut Game) -> ()),
-        Some(MaridiaSpikeyShell_3 as unsafe fn(&mut Game) -> ()),
-        Some(MaridiaSpikeyShell_4 as unsafe fn(&mut Game) -> ()),
-        Some(MaridiaSpikeyShell_5 as unsafe fn(&mut Game) -> ()),
-        Some(MaridiaSpikeyShell_6 as unsafe fn(&mut Game) -> ()),
-        Some(MaridiaSpikeyShell_7 as unsafe fn(&mut Game) -> ()),
-    ]
+static off_A2A3D3: [Option<Func_V>; 7] = callback_table! { unsafe Func_V;
+    MaridiaSpikeyShell_1, MaridiaSpikeyShell_2, MaridiaSpikeyShell_3, MaridiaSpikeyShell_4,
+    MaridiaSpikeyShell_5, MaridiaSpikeyShell_6, MaridiaSpikeyShell_7,
 };
 pub unsafe fn MaridiaSpikeyShell_Init(game: &mut Game) {
     let E: *mut Enemy_MaridiaSpikeyShell =
@@ -5037,14 +5031,9 @@ pub unsafe fn TimedShutter_Func_4(k: u16, game: &mut Game) {
     };
 }
 pub fn TimedShutter_Func_Null(game: &mut Game) {}
-static off_A2EB1A: [Option<Func_V>; 5] = unsafe {
-    [
-        Some(TimedShutter_Func_6 as unsafe fn(&mut Game) -> ()),
-        Some(TimedShutter_Func_7 as unsafe fn(&mut Game) -> ()),
-        Some(TimedShutter_Func_8 as unsafe fn(&mut Game) -> ()),
-        Some(TimedShutter_Func_9 as unsafe fn(&mut Game) -> ()),
-        Some(TimedShutter_Func_Null as unsafe fn(&mut Game) -> ()),
-    ]
+static off_A2EB1A: [Option<Func_V>; 5] = callback_table! { unsafe Func_V;
+    TimedShutter_Func_6, TimedShutter_Func_7, TimedShutter_Func_8, TimedShutter_Func_9,
+    TimedShutter_Func_Null,
 };
 pub unsafe fn TimedShutter_Func_5(k: u16, game: &mut Game) {
     let v1: i32 = (*Get_TimedShutter(k as i32, game)).tsr_var_F as i32;
@@ -5113,14 +5102,9 @@ pub unsafe fn TimedShutter_Func_9(game: &mut Game) {
     }
 }
 pub fn TimedShutter_Func_Null2(game: &mut Game) {}
-static off_A2EC3A: [Option<Func_V>; 5] = unsafe {
-    [
-        Some(TimedShutter_Func_11 as unsafe fn(&mut Game) -> ()),
-        Some(TimedShutter_Func_12 as unsafe fn(&mut Game) -> ()),
-        Some(TimedShutter_Func_13 as unsafe fn(&mut Game) -> ()),
-        Some(TimedShutter_Func_14 as unsafe fn(&mut Game) -> ()),
-        Some(TimedShutter_Func_Null2 as unsafe fn(&mut Game) -> ()),
-    ]
+static off_A2EC3A: [Option<Func_V>; 5] = callback_table! { unsafe Func_V;
+    TimedShutter_Func_11, TimedShutter_Func_12, TimedShutter_Func_13, TimedShutter_Func_14,
+    TimedShutter_Func_Null2,
 };
 pub unsafe fn TimedShutter_Func_10(k: u16, game: &mut Game) {
     let E: *mut Enemy_TimedShutter = Get_TimedShutter(k as i32, game);
@@ -5292,14 +5276,9 @@ pub unsafe fn RisingFallingPlatform_Main(game: &mut Game) {
         RisingFallingPlatform_Powerbomb(game);
     }
 }
-static off_A2EDFB: [Option<Func_V>; 5] = unsafe {
-    [
-        Some(RisingFallingPlatform_Func_3 as unsafe fn(&mut Game) -> ()),
-        Some(RisingFallingPlatform_Func_4 as unsafe fn(&mut Game) -> ()),
-        Some(RisingFallingPlatform_Func_5 as unsafe fn(&mut Game) -> ()),
-        Some(RisingFallingPlatform_Func_6 as unsafe fn(&mut Game) -> ()),
-        Some(RisingFallingPlatform_Func_6 as unsafe fn(&mut Game) -> ()),
-    ]
+static off_A2EDFB: [Option<Func_V>; 5] = callback_table! { unsafe Func_V;
+    RisingFallingPlatform_Func_3, RisingFallingPlatform_Func_4, RisingFallingPlatform_Func_5,
+    RisingFallingPlatform_Func_6, RisingFallingPlatform_Func_6,
 };
 pub unsafe fn RisingFallingPlatform_Func_2(game: &mut Game) {
     let v0: i32 = (*Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as i32, game))
@@ -5533,14 +5512,10 @@ pub unsafe fn HorizontalShootableShutter_Main(game: &mut Game) {
     (*E).rfpm_var_15 = ram_word!(game, samus_x_pos);
     (*E).rfpm_var_16 = ram_word!(game, samus_x_subpos);
 }
-static off_A2F107: [Option<Func_V>; 5] = unsafe {
-    [
-        Some(HorizontalShootableShutter_Func_3 as unsafe fn(&mut Game) -> ()),
-        Some(HorizontalShootableShutter_Func_4 as unsafe fn(&mut Game) -> ()),
-        Some(HorizontalShootableShutter_Func_5 as unsafe fn(&mut Game) -> ()),
-        Some(HorizontalShootableShutter_Func_6 as unsafe fn(&mut Game) -> ()),
-        Some(HorizontalShootableShutter_Func_6 as unsafe fn(&mut Game) -> ()),
-    ]
+static off_A2F107: [Option<Func_V>; 5] = callback_table! { unsafe Func_V;
+    HorizontalShootableShutter_Func_3, HorizontalShootableShutter_Func_4,
+    HorizontalShootableShutter_Func_5, HorizontalShootableShutter_Func_6,
+    HorizontalShootableShutter_Func_6,
 };
 pub unsafe fn HorizontalShootableShutter_Func_2(game: &mut Game) {
     let v0: i32 = (*Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as i32, game))

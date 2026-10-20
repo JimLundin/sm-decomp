@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::game_states::*;
 use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_88::{
@@ -66,32 +67,12 @@ pub unsafe fn LoadFxEntry(v0: u16, game: &mut Game) {
     };
 }
 pub fn nullsub_106(game: &mut Game) {}
-static kFxTypeFuncPtrs: [Option<Func_V>; 23] = unsafe {
-    [
-        Some(nullsub_106 as unsafe fn(&mut Game) -> ()),
-        Some(FxTypeFunc_2_Lava as unsafe fn(&mut Game) -> ()),
-        Some(FxTypeFunc_4_Acid as unsafe fn(&mut Game) -> ()),
-        Some(FxTypeFunc_6_Water as unsafe fn(&mut Game) -> ()),
-        Some(FxTypeFunc_8_Spores as unsafe fn(&mut Game) -> ()),
-        Some(FxTypeFunc_A_Rain as unsafe fn(&mut Game) -> ()),
-        Some(FxTypeFunc_C as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_106 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_106 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_106 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_106 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_106 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_106 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_106 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_106 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_106 as unsafe fn(&mut Game) -> ()),
-        Some(FxTypeFunc_20 as unsafe fn(&mut Game) -> ()),
-        Some(FxTypeFunc_22_ScrollingSky as unsafe fn(&mut Game) -> ()),
-        Some(FxTypeFunc_24 as unsafe fn(&mut Game) -> ()),
-        Some(FxTypeFunc_26_TourianEntranceStatue as unsafe fn(&mut Game) -> ()),
-        Some(FxTypeFunc_28_CeresRidley as unsafe fn(&mut Game) -> ()),
-        Some(FxTypeFunc_CeresElevator as unsafe fn(&mut Game) -> ()),
-        Some(FxTypeFunc_2C_Haze as unsafe fn(&mut Game) -> ()),
-    ]
+static kFxTypeFuncPtrs: [Option<Func_V>; 23] = callback_table! { unsafe Func_V;
+    nullsub_106, FxTypeFunc_2_Lava, FxTypeFunc_4_Acid, FxTypeFunc_6_Water, FxTypeFunc_8_Spores,
+    FxTypeFunc_A_Rain, FxTypeFunc_C, nullsub_106, nullsub_106, nullsub_106, nullsub_106,
+    nullsub_106, nullsub_106, nullsub_106, nullsub_106, nullsub_106, FxTypeFunc_20,
+    FxTypeFunc_22_ScrollingSky, FxTypeFunc_24, FxTypeFunc_26_TourianEntranceStatue,
+    FxTypeFunc_28_CeresRidley, FxTypeFunc_CeresElevator, FxTypeFunc_2C_Haze,
 };
 pub unsafe fn LoadFXHeader(game: &mut Game) {
     let mut entry_ptr: u16 = ram_word!(game, room_layer3_asm_ptr);

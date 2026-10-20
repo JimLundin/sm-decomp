@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a4::*;
 pub use crate::game::constants::enemy_properties::*;
@@ -103,30 +104,12 @@ pub unsafe fn Crocomire_Hurt(game: &mut Game) {
     Crocomire_Func_27(ram_word!(game, cur_enemy_index), game);
     Crocomire_Func_31(game);
 }
-static off_A486B3: [Option<CrocomireFunc>; 21] = unsafe {
-    [
-        Some(Crocomire_Func_2 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_3 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_4 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_5 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_7 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_8 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_9 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_10 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_11 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_13 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_14 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_15 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_16 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_17 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_18 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_21 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_22 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_23 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_24 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_25 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-        Some(Crocomire_Func_26 as unsafe fn(u16, *const u16, &mut Game) -> *const u16),
-    ]
+static off_A486B3: [Option<CrocomireFunc>; 21] = callback_table! { unsafe CrocomireFunc;
+    Crocomire_Func_2, Crocomire_Func_3, Crocomire_Func_4, Crocomire_Func_5, Crocomire_Func_7,
+    Crocomire_Func_8, Crocomire_Func_9, Crocomire_Func_10, Crocomire_Func_11, Crocomire_Func_13,
+    Crocomire_Func_14, Crocomire_Func_15, Crocomire_Func_16, Crocomire_Func_17,
+    Crocomire_Func_18, Crocomire_Func_21, Crocomire_Func_22, Crocomire_Func_23,
+    Crocomire_Func_24, Crocomire_Func_25, Crocomire_Func_26,
 };
 pub unsafe fn Crocomire_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let crocom_var_C: u16 =
@@ -583,54 +566,17 @@ pub unsafe fn Crocomire_8BA4(game: &mut Game) {
     }
 }
 pub fn nullsub_305(game: &mut Game) {}
-static off_A48C14: [Option<Func_V>; 45] = unsafe {
-    [
-        Some(Crocomire_Func_28 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_52 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_36 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_92CE as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_54 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_36 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_92CE as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_54 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_57 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_60 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_62 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_929E as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_64 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_65 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_66 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_51 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_8D47 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_929E as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_51 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_8D47 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_929E as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_51 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_59 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_60 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_62 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_63 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_56 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_9506 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_65 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_66 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_49 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_68 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_70 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_71 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_72 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_73 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_88 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_9B65 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_90 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_89 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_9B86 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_305 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_91 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_29 as unsafe fn(&mut Game) -> ()),
-        Some(Crocomire_Func_69 as unsafe fn(&mut Game) -> ()),
-    ]
+static off_A48C14: [Option<Func_V>; 45] = callback_table! { unsafe Func_V;
+    Crocomire_Func_28, Crocomire_Func_52, Crocomire_Func_36, Crocomire_92CE, Crocomire_Func_54,
+    Crocomire_Func_36, Crocomire_92CE, Crocomire_Func_54, Crocomire_Func_57, Crocomire_Func_60,
+    Crocomire_Func_62, Crocomire_929E, Crocomire_Func_64, Crocomire_Func_65, Crocomire_Func_66,
+    Crocomire_Func_51, Crocomire_8D47, Crocomire_929E, Crocomire_Func_51, Crocomire_8D47,
+    Crocomire_929E, Crocomire_Func_51, Crocomire_Func_59, Crocomire_Func_60, Crocomire_Func_62,
+    Crocomire_Func_63, Crocomire_Func_56, Crocomire_9506, Crocomire_Func_65, Crocomire_Func_66,
+    Crocomire_Func_49, Crocomire_Func_68, Crocomire_Func_70, Crocomire_Func_71,
+    Crocomire_Func_72, Crocomire_Func_73, Crocomire_Func_88, Crocomire_9B65, Crocomire_Func_90,
+    Crocomire_Func_89, Crocomire_9B86, nullsub_305, Crocomire_Func_91, Crocomire_Func_29,
+    Crocomire_Func_69,
 };
 pub unsafe fn Crocomire_Main(game: &mut Game) {
     let v0: i32 = (*Get_Crocomire(0i32, game)).crocom_var_A as i32 >> 1i32;

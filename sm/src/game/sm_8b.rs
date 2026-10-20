@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_91::*;
@@ -2493,13 +2494,9 @@ pub unsafe fn HandleCinematicsTransitions_3(game: &mut Game) {
         set_ram_word!(game.cinematic_function = ((0x8b9f29i32) as u16));
     }
 }
-static off_8B9A7B: [Option<Func_V>; 4] = unsafe {
-    [
-        None,
-        Some(HandleCinematicsTransitions_1 as unsafe fn(&mut Game) -> ()),
-        Some(HandleCinematicsTransitions_2 as unsafe fn(&mut Game) -> ()),
-        Some(HandleCinematicsTransitions_3 as unsafe fn(&mut Game) -> ()),
-    ]
+static off_8B9A7B: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+    None, HandleCinematicsTransitions_1, HandleCinematicsTransitions_2,
+    HandleCinematicsTransitions_3,
 };
 pub unsafe fn HandleCinematicsTransitions(game: &mut Game) {
     if ram_word!(game, cinematic_var18) != 0 {

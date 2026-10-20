@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
@@ -633,37 +634,15 @@ unsafe fn Samus_HandleAnimDelay(game: &mut Game) {
     game.set_samus_anim_frame_timer(frame_buffer.wrapping_add(u16::from(delay)));
 }
 
-static kSamusIsBottomDrawnFuncs: [Option<Func_U8>; 28] = unsafe {
-    [
-        Some(SamusBottomDrawn_0_Standing as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_3_SpinJump as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_4 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_4 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_4 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_4 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_A_Knockback as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1 as unsafe fn(&mut Game) -> u8),
-        Some(UNUSED_SamusBottomDrawn_D as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_F_Transitions as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_4 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_4 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_4 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_14_WallJump as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_19_DamageBoost as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1 as unsafe fn(&mut Game) -> u8),
-        Some(SamusBottomDrawn_1B as unsafe fn(&mut Game) -> u8),
-    ]
+static kSamusIsBottomDrawnFuncs: [Option<Func_U8>; 28] = callback_table! { unsafe Func_U8;
+    SamusBottomDrawn_0_Standing, SamusBottomDrawn_1, SamusBottomDrawn_1,
+    SamusBottomDrawn_3_SpinJump, SamusBottomDrawn_4, SamusBottomDrawn_1, SamusBottomDrawn_1,
+    SamusBottomDrawn_4, SamusBottomDrawn_4, SamusBottomDrawn_4, SamusBottomDrawn_A_Knockback,
+    SamusBottomDrawn_1, SamusBottomDrawn_1, UNUSED_SamusBottomDrawn_D, SamusBottomDrawn_1,
+    SamusBottomDrawn_F_Transitions, SamusBottomDrawn_1, SamusBottomDrawn_4, SamusBottomDrawn_4,
+    SamusBottomDrawn_4, SamusBottomDrawn_14_WallJump, SamusBottomDrawn_1, SamusBottomDrawn_1,
+    SamusBottomDrawn_1, SamusBottomDrawn_1, SamusBottomDrawn_19_DamageBoost, SamusBottomDrawn_1,
+    SamusBottomDrawn_1B,
 };
 pub unsafe fn Samus_Draw(game: &mut Game) {
     let knockback_timer = u16::from_le_bytes([game.g_ram[0x18aa], game.g_ram[0x18ab]]);
@@ -1032,17 +1011,10 @@ pub unsafe fn Samus_DrawWhenNotAnimatingOrDying(game: &mut Game) {
     }
     SetSamusTilesDefsForCurAnim(game);
 }
-static kAtmosphericTypeFuncs: [Option<FuncXY_V>; 8] = unsafe {
-    [
-        None,
-        Some(AtmosphericTypeFunc_1_FootstepSplash as unsafe fn(u16, u16, &mut Game) -> ()),
-        Some(AtmosphericTypeFunc_1_FootstepSplash as unsafe fn(u16, u16, &mut Game) -> ()),
-        Some(AtmosphericTypeFunc_3_DivingSplash as unsafe fn(u16, u16, &mut Game) -> ()),
-        Some(AtmosphericTypeFunc_4_LavaSurfaceDmg as unsafe fn(u16, u16, &mut Game) -> ()),
-        Some(AtmosphericTypeFunc_5_Bubbles as unsafe fn(u16, u16, &mut Game) -> ()),
-        Some(AtmosphericTypeFunc_67_Dust as unsafe fn(u16, u16, &mut Game) -> ()),
-        Some(AtmosphericTypeFunc_67_Dust as unsafe fn(u16, u16, &mut Game) -> ()),
-    ]
+static kAtmosphericTypeFuncs: [Option<FuncXY_V>; 8] = callback_table! { unsafe FuncXY_V;
+    None, AtmosphericTypeFunc_1_FootstepSplash, AtmosphericTypeFunc_1_FootstepSplash,
+    AtmosphericTypeFunc_3_DivingSplash, AtmosphericTypeFunc_4_LavaSurfaceDmg,
+    AtmosphericTypeFunc_5_Bubbles, AtmosphericTypeFunc_67_Dust, AtmosphericTypeFunc_67_Dust,
 };
 pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
     let mut v4: i16 = 0;
@@ -1206,36 +1178,22 @@ pub unsafe fn AtmosphericTypeFunc_5_Bubbles(k: u16, j: u16, game: &mut Game) {
         .offset(0) as u16;
     AtmosphericTypeFunc_Common(j, (r18).wrapping_add(390u16), game);
 }
-static kSamus_CalcSpritemapPos: [Option<Func_Y_To_PairU16>; 28] = [
-    Some(Samus_CalcSpritemapPos_Standing as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Crouch as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe fn(u16, &mut Game) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Special as unsafe fn(u16, &mut Game) -> PairU16),
-];
+static kSamus_CalcSpritemapPos: [Option<Func_Y_To_PairU16>; 28] = callback_table! { Func_Y_To_PairU16;
+    Samus_CalcSpritemapPos_Standing, Samus_CalcSpritemapPos_Default,
+    Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Default,
+    Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Default,
+    Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Default,
+    Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Default,
+    Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Default,
+    Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Default,
+    Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Crouch,
+    Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Default,
+    Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Default,
+    Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Default,
+    Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Default,
+    Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Default,
+    Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Special,
+};
 pub unsafe fn Samus_CalcSpritemapPos(k: u16, game: &mut Game) -> PairU16 {
     let mut v1: PairU16 = PairU16 { k: 0, j: 0 };
     if (ram_word!(game, ceres_status) as i32 & 0x8000i32) == 0i32 {
@@ -2700,36 +2658,21 @@ pub unsafe fn Samus_WallJumpCheck(amt: i32, game: &mut Game) -> u8 {
 pub unsafe fn Samus_Movement_07_Unused(game: &mut Game) {
     set_ram_word!(game.input_to_pose_calc = 0u16);
 }
-static kSamusMovementHandlers: [Option<HandlerFunc>; 28] = [
-    Some(Samus_Movement_00_Standing as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_01_Running as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_02_NormalJumping as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_03_SpinJumping as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_04_MorphBallOnGround as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_05_Crouching as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_06_Falling as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_07_Unused as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_08_MorphBallFalling as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_09_Unused as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_0A_KnockbackOrCrystalFlashEnding as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_0B_Unused as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_0C_Unused as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_0D_Unused as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_0E_TurningAroundOnGround as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_0F_CrouchingEtcTransition as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_10_Moonwalking as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_11_SpringBallOnGround as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_12_SpringBallInAir as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_13_SpringBallFalling as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_14_WallJumping as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_15_RanIntoWall as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_16_Grappling as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_17_TurningAroundJumping as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_18_TurningAroundFalling as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_19_DamageBoost as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_1A_GrabbedByDraygon as unsafe fn(&mut Game) -> ()),
-    Some(Samus_Movement_1B_ShinesparkEtc as unsafe fn(&mut Game) -> ()),
-];
+static kSamusMovementHandlers: [Option<HandlerFunc>; 28] = callback_table! { HandlerFunc;
+    Samus_Movement_00_Standing, Samus_Movement_01_Running, Samus_Movement_02_NormalJumping,
+    Samus_Movement_03_SpinJumping, Samus_Movement_04_MorphBallOnGround,
+    Samus_Movement_05_Crouching, Samus_Movement_06_Falling, Samus_Movement_07_Unused,
+    Samus_Movement_08_MorphBallFalling, Samus_Movement_09_Unused,
+    Samus_Movement_0A_KnockbackOrCrystalFlashEnding, Samus_Movement_0B_Unused,
+    Samus_Movement_0C_Unused, Samus_Movement_0D_Unused, Samus_Movement_0E_TurningAroundOnGround,
+    Samus_Movement_0F_CrouchingEtcTransition, Samus_Movement_10_Moonwalking,
+    Samus_Movement_11_SpringBallOnGround, Samus_Movement_12_SpringBallInAir,
+    Samus_Movement_13_SpringBallFalling, Samus_Movement_14_WallJumping,
+    Samus_Movement_15_RanIntoWall, Samus_Movement_16_Grappling,
+    Samus_Movement_17_TurningAroundJumping, Samus_Movement_18_TurningAroundFalling,
+    Samus_Movement_19_DamageBoost, Samus_Movement_1A_GrabbedByDraygon,
+    Samus_Movement_1B_ShinesparkEtc,
+};
 pub unsafe fn Samus_MovementHandler_Normal(game: &mut Game) {
     if ram_word!(game, time_is_frozen_flag) == 0 {
         kSamusMovementHandlers[*ram_ptr!(game; 0xa1f) as usize].expect("non-null function pointer")(
@@ -2947,21 +2890,10 @@ pub unsafe fn Samus_Movement_0C_Unused(game: &mut Game) {
 }
 pub fn Samus_Movement_0D_Unused(game: &mut Game) {}
 pub fn nullsub_13(game: &mut Game) {}
-static kSamusCrouchingEtcFuncs: [Option<HandlerFunc>; 12] = unsafe {
-    [
-        Some(nullsub_13 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_13 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_13 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_13 as unsafe fn(&mut Game) -> ()),
-        Some(SamusCrouchingEtcFunc as unsafe fn(&mut Game) -> ()),
-        Some(SamusCrouchingEtcFunc as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_13 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_13 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_13 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_13 as unsafe fn(&mut Game) -> ()),
-        Some(SamusCrouchingEtcFunc as unsafe fn(&mut Game) -> ()),
-        Some(SamusCrouchingEtcFunc as unsafe fn(&mut Game) -> ()),
-    ]
+static kSamusCrouchingEtcFuncs: [Option<HandlerFunc>; 12] = callback_table! { unsafe HandlerFunc;
+    nullsub_13, nullsub_13, nullsub_13, nullsub_13, SamusCrouchingEtcFunc,
+    SamusCrouchingEtcFunc, nullsub_13, nullsub_13, nullsub_13, nullsub_13,
+    SamusCrouchingEtcFunc, SamusCrouchingEtcFunc,
 };
 pub unsafe fn Samus_Movement_0F_CrouchingEtcTransition(game: &mut Game) {
     let current_block: u64;
@@ -3702,19 +3634,10 @@ pub unsafe fn HandleProjectile(game: &mut Game) {
 }
 static kDirToVelMult16_X: [i16; 10] = [0, 16, 16, 16, 0, 0, -16, -16, -16, 0];
 static kDirToVelMult16_Y: [i16; 10] = [-16, -16, 0, 16, 16, 16, 16, 0, -16, -16];
-static kProjPreInstr_Beam_Funcs: [Option<Func_Y_V>; 10] = unsafe {
-    [
-        Some(ProjPreInstr_Dir0459 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Dir1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Dir27 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Dir1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Dir0459 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Dir0459 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Dir1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Dir27 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Dir1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Dir0459 as unsafe fn(u16, &mut Game) -> ()),
-    ]
+static kProjPreInstr_Beam_Funcs: [Option<Func_Y_V>; 10] = callback_table! { unsafe Func_Y_V;
+    ProjPreInstr_Dir0459, ProjPreInstr_Dir1368, ProjPreInstr_Dir27, ProjPreInstr_Dir1368,
+    ProjPreInstr_Dir0459, ProjPreInstr_Dir0459, ProjPreInstr_Dir1368, ProjPreInstr_Dir27,
+    ProjPreInstr_Dir1368, ProjPreInstr_Dir0459,
 };
 pub unsafe fn ProjPreInstr_Beam_NoWaveBeam(mut k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
@@ -3756,19 +3679,11 @@ pub unsafe fn ProjPreInstr_Dir1368(k: u16, game: &mut Game) {
 pub unsafe fn ProjPreInstr_Dir27(k: u16, game: &mut Game) {
     BlockCollNoWaveBeamHoriz(ram_word!(game, projectile_index), game);
 }
-static kProjPreInstr_Missile_Funcs: [Option<Func_Y_V>; 10] = unsafe {
-    [
-        Some(ProjPreInstr_Missile_Func0459 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Missile_Func1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Missile_Func27 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Missile_Func1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Missile_Func0459 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Missile_Func0459 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Missile_Func1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Missile_Func27 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Missile_Func1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_Missile_Func0459 as unsafe fn(u16, &mut Game) -> ()),
-    ]
+static kProjPreInstr_Missile_Funcs: [Option<Func_Y_V>; 10] = callback_table! { unsafe Func_Y_V;
+    ProjPreInstr_Missile_Func0459, ProjPreInstr_Missile_Func1368, ProjPreInstr_Missile_Func27,
+    ProjPreInstr_Missile_Func1368, ProjPreInstr_Missile_Func0459, ProjPreInstr_Missile_Func0459,
+    ProjPreInstr_Missile_Func1368, ProjPreInstr_Missile_Func27, ProjPreInstr_Missile_Func1368,
+    ProjPreInstr_Missile_Func0459,
 };
 pub unsafe fn ProjPreInstr_Missile(mut k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
@@ -3812,19 +3727,12 @@ pub unsafe fn ProjPreInstr_Missile_Func1368(k: u16, game: &mut Game) {
 pub unsafe fn ProjPreInstr_Missile_Func27(k: u16, game: &mut Game) {
     BlockCollMissileHoriz(ram_word!(game, projectile_index), game);
 }
-static kProjPreInstr_SuperMissile_Funcs: [Option<Func_Y_V>; 10] = unsafe {
-    [
-        Some(ProjPreInstr_SuperMissile_Func0459 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func27 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func0459 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func0459 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func27 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func0459 as unsafe fn(u16, &mut Game) -> ()),
-    ]
+static kProjPreInstr_SuperMissile_Funcs: [Option<Func_Y_V>; 10] = callback_table! { unsafe Func_Y_V;
+    ProjPreInstr_SuperMissile_Func0459, ProjPreInstr_SuperMissile_Func1368,
+    ProjPreInstr_SuperMissile_Func27, ProjPreInstr_SuperMissile_Func1368,
+    ProjPreInstr_SuperMissile_Func0459, ProjPreInstr_SuperMissile_Func0459,
+    ProjPreInstr_SuperMissile_Func1368, ProjPreInstr_SuperMissile_Func27,
+    ProjPreInstr_SuperMissile_Func1368, ProjPreInstr_SuperMissile_Func0459,
 };
 pub unsafe fn ProjPreInstr_SuperMissile(mut k: u16, game: &mut Game) {
     let mut v3: i16 = 0;
@@ -3937,19 +3845,12 @@ pub unsafe fn ProjPreInstr_BeamOrIceWave(k: u16, game: &mut Game) {
         }
     };
 }
-static kProjPreInstr_WavePlasmaEtcFuncs: [Option<Func_Y_V>; 10] = unsafe {
-    [
-        Some(ProjPreInstr_WavePlasmaEtc_0459 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_27 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_0459 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_0459 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_27 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_1368 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_0459 as unsafe fn(u16, &mut Game) -> ()),
-    ]
+static kProjPreInstr_WavePlasmaEtcFuncs: [Option<Func_Y_V>; 10] = callback_table! { unsafe Func_Y_V;
+    ProjPreInstr_WavePlasmaEtc_0459, ProjPreInstr_WavePlasmaEtc_1368,
+    ProjPreInstr_WavePlasmaEtc_27, ProjPreInstr_WavePlasmaEtc_1368,
+    ProjPreInstr_WavePlasmaEtc_0459, ProjPreInstr_WavePlasmaEtc_0459,
+    ProjPreInstr_WavePlasmaEtc_1368, ProjPreInstr_WavePlasmaEtc_27,
+    ProjPreInstr_WavePlasmaEtc_1368, ProjPreInstr_WavePlasmaEtc_0459,
 };
 pub unsafe fn ProjPreInstr_Wave_Shared(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
@@ -5066,19 +4967,11 @@ pub unsafe fn FireHyperBeam(game: &mut Game) {
         }
     }
 }
-static kCheckBeamCollByDir: [Option<Func_V>; 10] = unsafe {
-    [
-        Some(CheckBeamCollByDir_0459 as unsafe fn(&mut Game) -> ()),
-        Some(CheckBeamCollByDir_1368 as unsafe fn(&mut Game) -> ()),
-        Some(CheckBeamCollByDir_2 as unsafe fn(&mut Game) -> ()),
-        Some(CheckBeamCollByDir_1368 as unsafe fn(&mut Game) -> ()),
-        Some(CheckBeamCollByDir_0459 as unsafe fn(&mut Game) -> ()),
-        Some(CheckBeamCollByDir_0459 as unsafe fn(&mut Game) -> ()),
-        Some(CheckBeamCollByDir_1368 as unsafe fn(&mut Game) -> ()),
-        Some(CheckBeamCollByDir_7 as unsafe fn(&mut Game) -> ()),
-        Some(CheckBeamCollByDir_1368 as unsafe fn(&mut Game) -> ()),
-        Some(CheckBeamCollByDir_0459 as unsafe fn(&mut Game) -> ()),
-    ]
+static kCheckBeamCollByDir: [Option<Func_V>; 10] = callback_table! { unsafe Func_V;
+    CheckBeamCollByDir_0459, CheckBeamCollByDir_1368, CheckBeamCollByDir_2,
+    CheckBeamCollByDir_1368, CheckBeamCollByDir_0459, CheckBeamCollByDir_0459,
+    CheckBeamCollByDir_1368, CheckBeamCollByDir_7, CheckBeamCollByDir_1368,
+    CheckBeamCollByDir_0459,
 };
 pub unsafe fn CheckBeamCollByDir(k: u16, game: &mut Game) {
     kCheckBeamCollByDir
@@ -5103,19 +4996,11 @@ pub unsafe fn CheckBeamCollByDir_7(game: &mut Game) {
         .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) = -1i32 as u16;
     BlockCollNoWaveBeamHoriz(v0, game);
 }
-static kWaveBeam_CheckColl_Funcs: [Option<Func_V>; 10] = unsafe {
-    [
-        Some(WaveBeam_CheckColl_0459 as unsafe fn(&mut Game) -> ()),
-        Some(WaveBeam_CheckColl_1368 as unsafe fn(&mut Game) -> ()),
-        Some(WaveBeam_CheckColl_2 as unsafe fn(&mut Game) -> ()),
-        Some(WaveBeam_CheckColl_1368 as unsafe fn(&mut Game) -> ()),
-        Some(WaveBeam_CheckColl_0459 as unsafe fn(&mut Game) -> ()),
-        Some(WaveBeam_CheckColl_0459 as unsafe fn(&mut Game) -> ()),
-        Some(WaveBeam_CheckColl_1368 as unsafe fn(&mut Game) -> ()),
-        Some(WaveBeam_CheckColl_7 as unsafe fn(&mut Game) -> ()),
-        Some(WaveBeam_CheckColl_1368 as unsafe fn(&mut Game) -> ()),
-        Some(WaveBeam_CheckColl_0459 as unsafe fn(&mut Game) -> ()),
-    ]
+static kWaveBeam_CheckColl_Funcs: [Option<Func_V>; 10] = callback_table! { unsafe Func_V;
+    WaveBeam_CheckColl_0459, WaveBeam_CheckColl_1368, WaveBeam_CheckColl_2,
+    WaveBeam_CheckColl_1368, WaveBeam_CheckColl_0459, WaveBeam_CheckColl_0459,
+    WaveBeam_CheckColl_1368, WaveBeam_CheckColl_7, WaveBeam_CheckColl_1368,
+    WaveBeam_CheckColl_0459,
 };
 pub unsafe fn WaveBeam_CheckColl(k: u16, game: &mut Game) {
     kWaveBeam_CheckColl_Funcs
@@ -5448,15 +5333,9 @@ pub unsafe fn PowerBomb_Func3(game: &mut Game) {
         ClearProjectile(ram_word!(game, projectile_index), game);
     }
 }
-static kRunSwitchedToHudHandler: [Option<Func_U8>; 6] = unsafe {
-    [
-        Some(SwitchToHudHandler_Nothing as unsafe fn(&mut Game) -> u8),
-        Some(SwitchToHudHandler_Missiles as unsafe fn(&mut Game) -> u8),
-        Some(SwitchToHudHandler_SuperMissiles as unsafe fn(&mut Game) -> u8),
-        Some(SwitchToHudHandler_PowerBombs as unsafe fn(&mut Game) -> u8),
-        Some(SwitchToHudHandler_Grapple as unsafe fn(&mut Game) -> u8),
-        Some(SwitchToHudHandler_Xray as unsafe fn(&mut Game) -> u8),
-    ]
+static kRunSwitchedToHudHandler: [Option<Func_U8>; 6] = callback_table! { unsafe Func_U8;
+    SwitchToHudHandler_Nothing, SwitchToHudHandler_Missiles, SwitchToHudHandler_SuperMissiles,
+    SwitchToHudHandler_PowerBombs, SwitchToHudHandler_Grapple, SwitchToHudHandler_Xray,
 };
 pub unsafe fn HandleSwitchingHudSelection(game: &mut Game) {
     let mut current_block: u64;
@@ -5744,21 +5623,10 @@ pub unsafe fn Projectile_SinLookup(j: u16, a: u16) -> Point16U {
     Point16U { x: v2, y: v4 }
 }
 static kCostOfSbaInPowerBombs: [u16; 12] = [0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0];
-static kFireSbaFuncs: [Option<Func_V_A>; 12] = unsafe {
-    [
-        Some(FireSba_ClearCarry as unsafe fn(&mut Game) -> u8),
-        Some(FireSba_FireWave as unsafe fn(&mut Game) -> u8),
-        Some(FireSba_FireIce as unsafe fn(&mut Game) -> u8),
-        Some(FireSba_ClearCarry as unsafe fn(&mut Game) -> u8),
-        Some(FireSba_FireSpazer as unsafe fn(&mut Game) -> u8),
-        Some(FireSba_ClearCarry as unsafe fn(&mut Game) -> u8),
-        Some(FireSba_ClearCarry as unsafe fn(&mut Game) -> u8),
-        Some(FireSba_ClearCarry as unsafe fn(&mut Game) -> u8),
-        Some(FireSba_FirePlasma as unsafe fn(&mut Game) -> u8),
-        Some(FireSba_ClearCarry as unsafe fn(&mut Game) -> u8),
-        Some(FireSba_ClearCarry as unsafe fn(&mut Game) -> u8),
-        Some(FireSba_ClearCarry as unsafe fn(&mut Game) -> u8),
-    ]
+static kFireSbaFuncs: [Option<Func_V_A>; 12] = callback_table! { unsafe Func_V_A;
+    FireSba_ClearCarry, FireSba_FireWave, FireSba_FireIce, FireSba_ClearCarry,
+    FireSba_FireSpazer, FireSba_ClearCarry, FireSba_ClearCarry, FireSba_ClearCarry,
+    FireSba_FirePlasma, FireSba_ClearCarry, FireSba_ClearCarry, FireSba_ClearCarry,
 };
 pub unsafe fn FireSba(game: &mut Game) -> u8 {
     let mut v2: i16 = 0;
@@ -6262,12 +6130,9 @@ pub unsafe fn Samus_EndSuperJump(game: &mut Game) -> u8 {
     QueueSfx3_Max6(0x10u16, game);
     1u8
 }
-static kSamus_MoveHandler_ShinesparkCrash: [Option<Func_V>; 3] = unsafe {
-    [
-        Some(Samus_MoveHandler_ShinesparkCrash_0 as unsafe fn(&mut Game) -> ()),
-        Some(Samus_MoveHandler_ShinesparkCrash_1 as unsafe fn(&mut Game) -> ()),
-        Some(Samus_MoveHandler_ShinesparkCrash_2 as unsafe fn(&mut Game) -> ()),
-    ]
+static kSamus_MoveHandler_ShinesparkCrash: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
+    Samus_MoveHandler_ShinesparkCrash_0, Samus_MoveHandler_ShinesparkCrash_1,
+    Samus_MoveHandler_ShinesparkCrash_2,
 };
 pub unsafe fn Samus_MoveHandler_ShinesparkCrash(game: &mut Game) {
     set_ram_word!(game.samus_shine_timer = 15u16);
@@ -6533,12 +6398,9 @@ pub unsafe fn SamusMoveHandler_CrystalFlashStart(game: &mut Game) {
         SpawnCrystalFlashHdmaObjs(game);
     }
 }
-static kSamusMoveHandler_CrystalFlashMainFuncs: [Option<Func_V>; 3] = unsafe {
-    [
-        Some(SamusMoveHandler_CrystalFlashMain_0 as unsafe fn(&mut Game) -> ()),
-        Some(SamusMoveHandler_CrystalFlashMain_1 as unsafe fn(&mut Game) -> ()),
-        Some(SamusMoveHandler_CrystalFlashMain_2 as unsafe fn(&mut Game) -> ()),
-    ]
+static kSamusMoveHandler_CrystalFlashMainFuncs: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
+    SamusMoveHandler_CrystalFlashMain_0, SamusMoveHandler_CrystalFlashMain_1,
+    SamusMoveHandler_CrystalFlashMain_2,
 };
 pub unsafe fn SamusMoveHandler_CrystalFlashMain(game: &mut Game) {
     kSamusMoveHandler_CrystalFlashMainFuncs[ram_word!(game, which_item_to_pickup) as usize]
@@ -6863,20 +6725,13 @@ pub unsafe fn BombSpread(game: &mut Game) {
         set_ram_word!(game.flare_counter = 0u16);
     }
 }
-static kProjPreInstr_SpazerSba_FuncsB: [Option<Func_SpazerSba_V>; 3] = unsafe {
-    [
-        Some(ProjPreInstr_SpazerSba_FuncB_0 as unsafe fn(u16, u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SpazerSba_FuncB_1 as unsafe fn(u16, u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SpazerSba_FuncB_2 as unsafe fn(u16, u16, &mut Game) -> ()),
-    ]
+static kProjPreInstr_SpazerSba_FuncsB: [Option<Func_SpazerSba_V>; 3] = callback_table! { unsafe Func_SpazerSba_V;
+    ProjPreInstr_SpazerSba_FuncB_0, ProjPreInstr_SpazerSba_FuncB_1,
+    ProjPreInstr_SpazerSba_FuncB_2,
 };
-static kProjPreInstr_SpazerSba_FuncsA: [Option<Func_Y_V>; 4] = unsafe {
-    [
-        Some(ProjPreInstr_SpazerSba_FuncA_0 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SpazerSba_FuncA_1 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SpazerSba_FuncA_2 as unsafe fn(u16, &mut Game) -> ()),
-        Some(ProjPreInstr_SpazerSba_FuncA_3 as unsafe fn(u16, &mut Game) -> ()),
-    ]
+static kProjPreInstr_SpazerSba_FuncsA: [Option<Func_Y_V>; 4] = callback_table! { unsafe Func_Y_V;
+    ProjPreInstr_SpazerSba_FuncA_0, ProjPreInstr_SpazerSba_FuncA_1,
+    ProjPreInstr_SpazerSba_FuncA_2, ProjPreInstr_SpazerSba_FuncA_3,
 };
 pub unsafe fn ProjPreInstr_SpazerSba(mut k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
@@ -7042,37 +6897,18 @@ pub unsafe fn ProjPreInstr_EndOfSpazerSba(mut k: u16, game: &mut Game) {
         ClearProjectile(k, game);
     };
 }
-static kHandleHudSpecificBehaviorAndProjs: [Option<Func_V>; 28] = unsafe {
-    [
-        Some(HudSelectionHandler_Normal as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_Normal as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_Normal as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_JumpEtc as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_Normal as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_Normal as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_JumpEtc as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_Grappling as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_Grappling as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_JumpEtc as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_TurningAround as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_CrouchEtcTrans as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_Normal as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_JumpEtc as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_Normal as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_Grappling as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_TurningAround as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_TurningAround as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_JumpEtc as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_GrabbedByDraygon as unsafe fn(&mut Game) -> ()),
-        Some(HudSelectionHandler_JumpEtc as unsafe fn(&mut Game) -> ()),
-    ]
+static kHandleHudSpecificBehaviorAndProjs: [Option<Func_V>; 28] = callback_table! { unsafe Func_V;
+    HudSelectionHandler_Normal, HudSelectionHandler_Normal, HudSelectionHandler_Normal,
+    HudSelectionHandler_JumpEtc, HudSelectionHandler_MorphBall, HudSelectionHandler_Normal,
+    HudSelectionHandler_Normal, HudSelectionHandler_MorphBall, HudSelectionHandler_MorphBall,
+    HudSelectionHandler_MorphBall, HudSelectionHandler_JumpEtc, HudSelectionHandler_Grappling,
+    HudSelectionHandler_Grappling, HudSelectionHandler_JumpEtc,
+    HudSelectionHandler_TurningAround, HudSelectionHandler_CrouchEtcTrans,
+    HudSelectionHandler_Normal, HudSelectionHandler_MorphBall, HudSelectionHandler_MorphBall,
+    HudSelectionHandler_MorphBall, HudSelectionHandler_JumpEtc, HudSelectionHandler_Normal,
+    HudSelectionHandler_Grappling, HudSelectionHandler_TurningAround,
+    HudSelectionHandler_TurningAround, HudSelectionHandler_JumpEtc,
+    HudSelectionHandler_GrabbedByDraygon, HudSelectionHandler_JumpEtc,
 };
 pub unsafe fn Samus_HandleHudSpecificBehaviorAndProjs(game: &mut Game) {
     if ram_word!(game, samus_pose) as i32 == kPose_00_FaceF_Powersuit as i32
@@ -7089,16 +6925,10 @@ pub unsafe fn Samus_HandleHudSpecificBehaviorAndProjs(game: &mut Game) {
     }
 }
 pub unsafe fn HudSelectionHandler_Normal(game: &mut Game) {
-    static kHudSelectionHandler_Normal: [Option<Func_V>; 7] = unsafe {
-        [
-            Some(HudSelectionHandler_NothingOrPowerBombs as unsafe fn(&mut Game) -> ()),
-            Some(HudSelectionHandler_MissilesOrSuperMissiles as unsafe fn(&mut Game) -> ()),
-            Some(HudSelectionHandler_MissilesOrSuperMissiles as unsafe fn(&mut Game) -> ()),
-            Some(HudSelectionHandler_NothingOrPowerBombs as unsafe fn(&mut Game) -> ()),
-            Some(HudSelectionHandler_Grappling as unsafe fn(&mut Game) -> ()),
-            Some(HudSelectionHandler_Xray as unsafe fn(&mut Game) -> ()),
-            Some(HudSelectionHandler_TurningAround as unsafe fn(&mut Game) -> ()),
-        ]
+    static kHudSelectionHandler_Normal: [Option<Func_V>; 7] = callback_table! { unsafe Func_V;
+        HudSelectionHandler_NothingOrPowerBombs, HudSelectionHandler_MissilesOrSuperMissiles,
+        HudSelectionHandler_MissilesOrSuperMissiles, HudSelectionHandler_NothingOrPowerBombs,
+        HudSelectionHandler_Grappling, HudSelectionHandler_Xray, HudSelectionHandler_TurningAround,
     };
     let mut v0: u16 = 0;
     if ram_word!(game, grapple_beam_function) as i32 == 0x9bc4f0i32 & 0xffffi32 {
@@ -7170,37 +7000,17 @@ pub unsafe fn HudSelectionHandler_GrabbedByDraygon(game: &mut Game) {
         HudSelectionHandler_Normal(game);
     };
 }
-static kSamusHitInterrupts: [Option<Func_U8>; 28] = unsafe {
-    [
-        Some(Samus_HitInterrupt_Stand as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Stand as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Stand as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Stand as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Ball as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Stand as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Falling as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Unused as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Ball as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Ball as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_KnockbackGrapple as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Turning as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Turning as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Stand as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Turning as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Turning as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Stand as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Ball as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Ball as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Ball as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Stand as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Stand as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_KnockbackGrapple as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Turning as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Turning as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Turning as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Turning as unsafe fn(&mut Game) -> u8),
-        Some(Samus_HitInterrupt_Shinespark as unsafe fn(&mut Game) -> u8),
-    ]
+static kSamusHitInterrupts: [Option<Func_U8>; 28] = callback_table! { unsafe Func_U8;
+    Samus_HitInterrupt_Stand, Samus_HitInterrupt_Stand, Samus_HitInterrupt_Stand,
+    Samus_HitInterrupt_Stand, Samus_HitInterrupt_Ball, Samus_HitInterrupt_Stand,
+    Samus_HitInterrupt_Falling, Samus_HitInterrupt_Unused, Samus_HitInterrupt_Ball,
+    Samus_HitInterrupt_Ball, Samus_HitInterrupt_KnockbackGrapple, Samus_HitInterrupt_Turning,
+    Samus_HitInterrupt_Turning, Samus_HitInterrupt_Stand, Samus_HitInterrupt_Turning,
+    Samus_HitInterrupt_Turning, Samus_HitInterrupt_Stand, Samus_HitInterrupt_Ball,
+    Samus_HitInterrupt_Ball, Samus_HitInterrupt_Ball, Samus_HitInterrupt_Stand,
+    Samus_HitInterrupt_Stand, Samus_HitInterrupt_KnockbackGrapple, Samus_HitInterrupt_Turning,
+    Samus_HitInterrupt_Turning, Samus_HitInterrupt_Turning, Samus_HitInterrupt_Turning,
+    Samus_HitInterrupt_Shinespark,
 };
 pub unsafe fn Samus_HitInterruption(game: &mut Game) {
     if ram_word!(game, samus_knockback_timer) != 0 {
@@ -7288,15 +7098,10 @@ pub unsafe fn Samus_HitInterrupt_Unused(game: &mut Game) -> u8 {
     }
     1u8
 }
-static kSamus_MoveHandler_Knockback: [Option<Func_V>; 6] = unsafe {
-    [
-        Some(Samus_MoveHandler_Knockback_0 as unsafe fn(&mut Game) -> ()),
-        Some(Samus_MoveHandler_Knockback_Up as unsafe fn(&mut Game) -> ()),
-        Some(Samus_MoveHandler_Knockback_Up as unsafe fn(&mut Game) -> ()),
-        Some(Samus_MoveHandler_Knockback_3 as unsafe fn(&mut Game) -> ()),
-        Some(Samus_MoveHandler_Knockback_Down as unsafe fn(&mut Game) -> ()),
-        Some(Samus_MoveHandler_Knockback_Down as unsafe fn(&mut Game) -> ()),
-    ]
+static kSamus_MoveHandler_Knockback: [Option<Func_V>; 6] = callback_table! { unsafe Func_V;
+    Samus_MoveHandler_Knockback_0, Samus_MoveHandler_Knockback_Up,
+    Samus_MoveHandler_Knockback_Up, Samus_MoveHandler_Knockback_3,
+    Samus_MoveHandler_Knockback_Down, Samus_MoveHandler_Knockback_Down,
 };
 pub unsafe fn Samus_MoveHandler_Knockback(game: &mut Game) {
     kSamus_MoveHandler_Knockback[ram_word!(game, knockback_dir) as usize]
@@ -7336,37 +7141,13 @@ pub unsafe fn Samus_ClearMoveVars(game: &mut Game) {
         Samus_AlignBottomWithPrevPose(game);
     }
 }
-static kSetupBombJump: [Option<Func_U8>; 28] = unsafe {
-    [
-        Some(SetupBombJump_StandCrouch as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_1 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_2 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_2 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_4 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_StandCrouch as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_1 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_4 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_4 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_4 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_4 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_1 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_1 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_1 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_2 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_2 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_1 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_4 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_4 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_4 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_1 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_1 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_1 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_2 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_2 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_2 as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_1A as unsafe fn(&mut Game) -> u8),
-        Some(SetupBombJump_1A as unsafe fn(&mut Game) -> u8),
-    ]
+static kSetupBombJump: [Option<Func_U8>; 28] = callback_table! { unsafe Func_U8;
+    SetupBombJump_StandCrouch, SetupBombJump_1, SetupBombJump_2, SetupBombJump_2,
+    SetupBombJump_4, SetupBombJump_StandCrouch, SetupBombJump_1, SetupBombJump_4,
+    SetupBombJump_4, SetupBombJump_4, SetupBombJump_4, SetupBombJump_1, SetupBombJump_1,
+    SetupBombJump_1, SetupBombJump_2, SetupBombJump_2, SetupBombJump_1, SetupBombJump_4,
+    SetupBombJump_4, SetupBombJump_4, SetupBombJump_1, SetupBombJump_1, SetupBombJump_1,
+    SetupBombJump_2, SetupBombJump_2, SetupBombJump_2, SetupBombJump_1A, SetupBombJump_1A,
 };
 pub unsafe fn SetupBombJump(game: &mut Game) {
     if *(ram_ptr!(game, u16; 0xa56) as *mut u8).offset(1isize) == 0
@@ -7410,13 +7191,9 @@ pub unsafe fn Samus_MoveHandler_BombJumpStart(game: &mut Game) {
     set_ram_word!(game.samus_movement_handler = ((0x90e032i32) as u16));
     set_ram_word!(game.input_to_pose_calc = 0u16);
 }
-static kSamus_MoveHandler_BombJumpMain: [Option<Func_V>; 4] = unsafe {
-    [
-        Some(Samus_MoveHandler_Knockback_0 as unsafe fn(&mut Game) -> ()),
-        Some(Samus_HorizontalBombJump as unsafe fn(&mut Game) -> ()),
-        Some(Samus_VerticalBombJump as unsafe fn(&mut Game) -> ()),
-        Some(Samus_HorizontalBombJump as unsafe fn(&mut Game) -> ()),
-    ]
+static kSamus_MoveHandler_BombJumpMain: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+    Samus_MoveHandler_Knockback_0, Samus_HorizontalBombJump, Samus_VerticalBombJump,
+    Samus_HorizontalBombJump,
 };
 pub unsafe fn Samus_MoveHandler_BombJumpMain(game: &mut Game) {
     if ram_word!(game, bomb_jump_dir) != 0 {
@@ -7553,12 +7330,8 @@ pub unsafe fn Samus_PushOutOfRidleysWay(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_Func4(game: &mut Game) {
-    static off_90E1F7: [Option<Func_V>; 3] = unsafe {
-        [
-            None,
-            Some(Samus_Func5 as unsafe fn(&mut Game) -> ()),
-            Some(Samus_Func6 as unsafe fn(&mut Game) -> ()),
-        ]
+    static off_90E1F7: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
+        None, Samus_Func5, Samus_Func6,
     };
     if ram_word!(game, samus_new_pose) as i32 == kPose_4F_FaceL_Dmgboost as i32
         || ram_word!(game, samus_new_pose) as i32 == kPose_50_FaceR_Dmgboost as i32
@@ -8391,17 +8164,10 @@ pub unsafe fn UNUSEDsub_90ED6C(game: &mut Game) {
     set_ram_word!(game.samus_power_bombs = ram_word!(game, game_time_seconds));
     set_ram_word!(game.samus_max_power_bombs = ram_word!(game, game_time_seconds));
 }
-static kSamus_FootstepGraphics: [Option<Func_V>; 8] = unsafe {
-    [
-        Some(Samus_FootstepGraphics_Crateria as unsafe fn(&mut Game) -> ()),
-        Some(Samus_FootstepGraphics_1 as unsafe fn(&mut Game) -> ()),
-        Some(Samus_FootstepGraphics_1 as unsafe fn(&mut Game) -> ()),
-        Some(Samus_FootstepGraphics_1 as unsafe fn(&mut Game) -> ()),
-        Some(Samus_FootstepGraphics_Maridia as unsafe fn(&mut Game) -> ()),
-        Some(Samus_FootstepGraphics_1 as unsafe fn(&mut Game) -> ()),
-        Some(Samus_FootstepGraphics_1 as unsafe fn(&mut Game) -> ()),
-        Some(Samus_FootstepGraphics_1 as unsafe fn(&mut Game) -> ()),
-    ]
+static kSamus_FootstepGraphics: [Option<Func_V>; 8] = callback_table! { unsafe Func_V;
+    Samus_FootstepGraphics_Crateria, Samus_FootstepGraphics_1, Samus_FootstepGraphics_1,
+    Samus_FootstepGraphics_1, Samus_FootstepGraphics_Maridia, Samus_FootstepGraphics_1,
+    Samus_FootstepGraphics_1, Samus_FootstepGraphics_1,
 };
 pub unsafe fn Samus_FootstepGraphics(game: &mut Game) {
     kSamus_FootstepGraphics[ram_word!(game, area_index) as usize]
@@ -8592,41 +8358,18 @@ pub unsafe fn Samus_MoveHandler_F072(game: &mut Game) {
         set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
     }
 }
-static kSamusCodeHandlers: [Option<Func_U8>; 32] = unsafe {
-    [
-        Some(SamusCode_00_LockSamus as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_01_UnlockSamus as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_02_ReachCeresElevator as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_03 as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_04 as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_05_SetupDrained as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_06_LockToStation as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_07_SetupForElevator as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_08_SetupForCeresStart as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_08_SetupForZebesStart as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_0A_ClearDrawHandler as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_0B_DrawHandlerDefault as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_0C_UnlockFromMapStation as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_0D_IsGrappleActive as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_0E as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_0F_EnableTimerHandling as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_10 as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_11_SetupForDeath as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_12_SetSuperPaletteFlag1 as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_12_SetSuperPaletteFlag0 as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_14 as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_15_CalledBySuitAcquision as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_16 as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_17_DisableRainbowSamusAndStandUp as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_18 as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_17_FreezeDrainedSamus as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_1A as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_1B_CheckedLockSamus as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_1C as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_1D_ClearSoundInDoor as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_1E as unsafe fn(&mut Game) -> u8),
-        Some(SamusCode_1F as unsafe fn(&mut Game) -> u8),
-    ]
+static kSamusCodeHandlers: [Option<Func_U8>; 32] = callback_table! { unsafe Func_U8;
+    SamusCode_00_LockSamus, SamusCode_01_UnlockSamus, SamusCode_02_ReachCeresElevator,
+    SamusCode_03, SamusCode_04, SamusCode_05_SetupDrained, SamusCode_06_LockToStation,
+    SamusCode_07_SetupForElevator, SamusCode_08_SetupForCeresStart,
+    SamusCode_08_SetupForZebesStart, SamusCode_0A_ClearDrawHandler,
+    SamusCode_0B_DrawHandlerDefault, SamusCode_0C_UnlockFromMapStation,
+    SamusCode_0D_IsGrappleActive, SamusCode_0E, SamusCode_0F_EnableTimerHandling, SamusCode_10,
+    SamusCode_11_SetupForDeath, SamusCode_12_SetSuperPaletteFlag1,
+    SamusCode_12_SetSuperPaletteFlag0, SamusCode_14, SamusCode_15_CalledBySuitAcquision,
+    SamusCode_16, SamusCode_17_DisableRainbowSamusAndStandUp, SamusCode_18,
+    SamusCode_17_FreezeDrainedSamus, SamusCode_1A, SamusCode_1B_CheckedLockSamus, SamusCode_1C,
+    SamusCode_1D_ClearSoundInDoor, SamusCode_1E, SamusCode_1F,
 };
 pub unsafe fn CallSomeSamusCode(a: u16, game: &mut Game) -> u16 {
     let code: u16 = kSamusCodeHandlers[(a as i32 & 0x1fi32) as usize]

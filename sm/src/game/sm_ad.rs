@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::enemy_properties::*;
 use crate::game::sm_80::QueueSfx2_Max6;
@@ -26,25 +27,11 @@ crate::ram_map::ram_pointer_functions! {
     Get_MotherBrain(o: i32) -> Enemy_MotherBrain = [0xf78, o as isize];
 }
 pub fn nullsub_341(game: &mut Game) {}
-static funcs_BE56D: [Option<Func_V>; 16] = unsafe {
-    [
-        Some(MotherBrain_CalcHdma_Down as unsafe fn(&mut Game) -> ()),
-        Some(MotherBrain_CalcHdma_BeamAimedRight2 as unsafe fn(&mut Game) -> ()),
-        None,
-        None,
-        None,
-        Some(MotherBrain_CalcHdma_BeamAimedUp as unsafe fn(&mut Game) -> ()),
-        Some(MotherBrain_CalcHdma_BeamAimedUp as unsafe fn(&mut Game) -> ()),
-        None,
-        None,
-        None,
-        Some(MotherBrain_CalcHdma_BeamAimedUp as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_341 as unsafe fn(&mut Game) -> ()),
-        Some(MotherBrain_CalcHdma_Down as unsafe fn(&mut Game) -> ()),
-        None,
-        None,
-        Some(MotherBrain_CalcHdma_Down as unsafe fn(&mut Game) -> ()),
-    ]
+static funcs_BE56D: [Option<Func_V>; 16] = callback_table! { unsafe Func_V;
+    MotherBrain_CalcHdma_Down, MotherBrain_CalcHdma_BeamAimedRight2, None, None, None,
+    MotherBrain_CalcHdma_BeamAimedUp, MotherBrain_CalcHdma_BeamAimedUp, None, None, None,
+    MotherBrain_CalcHdma_BeamAimedUp, nullsub_341, MotherBrain_CalcHdma_Down, None, None,
+    MotherBrain_CalcHdma_Down,
 };
 pub unsafe fn MotherBrain_CalcHdma(game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
@@ -148,13 +135,9 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, ga
         }
     }
 }
-static off_ADE024: [Option<Func_CalcHdma>; 4] = unsafe {
-    [
-        Some(MotherBrain_CalcHdma_Up_UpRight as unsafe fn(u16, u16, &mut Game) -> ()),
-        Some(MotherBrain_CalcHdma_Up_Up as unsafe fn(u16, u16, &mut Game) -> ()),
-        None,
-        Some(MotherBrain_CalcHdma_Up_UpLeft as unsafe fn(u16, u16, &mut Game) -> ()),
-    ]
+static off_ADE024: [Option<Func_CalcHdma>; 4] = callback_table! { unsafe Func_CalcHdma;
+    MotherBrain_CalcHdma_Up_UpRight, MotherBrain_CalcHdma_Up_Up, None,
+    MotherBrain_CalcHdma_Up_UpLeft,
 };
 pub unsafe fn MotherBrain_CalcHdma_BeamAimedUp(game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
@@ -319,13 +302,9 @@ pub unsafe fn MotherBrain_CalcHdma_Up_UpLeft(mut r22: u16, mut r24: u16, game: &
         }
     }
 }
-static g_off_ADE20E: [Option<Func_CalcHdma>; 4] = unsafe {
-    [
-        Some(MotherBrain_CalcHdma_Down_DownRight as unsafe fn(u16, u16, &mut Game) -> ()),
-        None,
-        Some(MotherBrain_CalcHdma_Down_Down as unsafe fn(u16, u16, &mut Game) -> ()),
-        Some(MotherBrain_CalcHdma_Down_DownLeft as unsafe fn(u16, u16, &mut Game) -> ()),
-    ]
+static g_off_ADE20E: [Option<Func_CalcHdma>; 4] = callback_table! { unsafe Func_CalcHdma;
+    MotherBrain_CalcHdma_Down_DownRight, None, MotherBrain_CalcHdma_Down_Down,
+    MotherBrain_CalcHdma_Down_DownLeft,
 };
 pub unsafe fn MotherBrain_CalcHdma_Down(game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);

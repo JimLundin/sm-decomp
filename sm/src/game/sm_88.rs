@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
 pub use crate::game::constants::bank_8f::*;
@@ -396,36 +397,13 @@ pub unsafe fn LayerBlendPowerBombFunc_6(game: &mut Game) {
     *ram_ptr!(game; 0x69) = 19u8;
     *ram_ptr!(game; 0x6b) = 4u8;
 }
-static kLayerBlendFuncTable: [Option<Func_Y_Y>; 27] = unsafe {
-    [
-        Some(nullsub_9 as unsafe fn(u16, &mut Game) -> u16),
-        Some(nullsub_9 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_4_PhantoonIntro as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_6 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_8 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_A as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_C as unsafe fn(u16, &mut Game) -> u16),
-        Some(nullsub_10 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_10 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_10 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_14 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_16 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_18 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_1A as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_1C as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_18 as unsafe fn(u16, &mut Game) -> u16),
-        Some(nullsub_11 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_14 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_24 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_26 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_28 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_2A as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_2C as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_2E as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_18 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_32 as unsafe fn(u16, &mut Game) -> u16),
-        Some(LayerBlendFunc_34 as unsafe fn(u16, &mut Game) -> u16),
-    ]
+static kLayerBlendFuncTable: [Option<Func_Y_Y>; 27] = callback_table! { unsafe Func_Y_Y;
+    nullsub_9, nullsub_9, LayerBlendFunc_4_PhantoonIntro, LayerBlendFunc_6, LayerBlendFunc_8,
+    LayerBlendFunc_A, LayerBlendFunc_C, nullsub_10, LayerBlendFunc_10, LayerBlendFunc_10,
+    LayerBlendFunc_14, LayerBlendFunc_16, LayerBlendFunc_18, LayerBlendFunc_1A,
+    LayerBlendFunc_1C, LayerBlendFunc_18, nullsub_11, LayerBlendFunc_14, LayerBlendFunc_24,
+    LayerBlendFunc_26, LayerBlendFunc_28, LayerBlendFunc_2A, LayerBlendFunc_2C,
+    LayerBlendFunc_2E, LayerBlendFunc_18, LayerBlendFunc_32, LayerBlendFunc_34,
 };
 pub unsafe fn LayerBlendingHandler(game: &mut Game) {
     let mut v0: u16 = 0u16;
@@ -448,13 +426,9 @@ pub unsafe fn LayerBlendingHandler(game: &mut Game) {
         HandleLayerBlendingPowerBomb(v0, game);
     };
 }
-static kLayerBlendPowerBombFuncs: [Option<Func_V>; 4] = unsafe {
-    [
-        Some(LayerBlendPowerBombFunc_0 as unsafe fn(&mut Game) -> ()),
-        Some(LayerBlendPowerBombFunc_0 as unsafe fn(&mut Game) -> ()),
-        Some(LayerBlendPowerBombFunc_4 as unsafe fn(&mut Game) -> ()),
-        Some(LayerBlendPowerBombFunc_6 as unsafe fn(&mut Game) -> ()),
-    ]
+static kLayerBlendPowerBombFuncs: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+    LayerBlendPowerBombFunc_0, LayerBlendPowerBombFunc_0, LayerBlendPowerBombFunc_4,
+    LayerBlendPowerBombFunc_6,
 };
 pub unsafe fn HandleLayerBlendingPowerBomb(mut j: u16, game: &mut Game) {
     if ram_word!(game, room_ptr) as i32 == addr_kRoom_a66a as i32 {
@@ -1190,15 +1164,10 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc5_DeactivateBeam(k: u16, game: &mut Game) 
         }
     }
 }
-static kHdmaobjPreInstr_XrayFuncs: [Option<Func_Y_V>; 6] = unsafe {
-    [
-        Some(HdmaobjPreInstr_XrayFunc0_NoBeam as unsafe fn(u16, &mut Game) -> ()),
-        Some(HdmaobjPreInstr_XrayFunc1_BeamWidening as unsafe fn(u16, &mut Game) -> ()),
-        Some(HdmaobjPreInstr_XrayFunc2_FullBeam as unsafe fn(u16, &mut Game) -> ()),
-        Some(HdmaobjPreInstr_XrayFunc3_DeactivateBeam as unsafe fn(u16, &mut Game) -> ()),
-        Some(HdmaobjPreInstr_XrayFunc4_DeactivateBeam as unsafe fn(u16, &mut Game) -> ()),
-        Some(HdmaobjPreInstr_XrayFunc5_DeactivateBeam as unsafe fn(u16, &mut Game) -> ()),
-    ]
+static kHdmaobjPreInstr_XrayFuncs: [Option<Func_Y_V>; 6] = callback_table! { unsafe Func_Y_V;
+    HdmaobjPreInstr_XrayFunc0_NoBeam, HdmaobjPreInstr_XrayFunc1_BeamWidening,
+    HdmaobjPreInstr_XrayFunc2_FullBeam, HdmaobjPreInstr_XrayFunc3_DeactivateBeam,
+    HdmaobjPreInstr_XrayFunc4_DeactivateBeam, HdmaobjPreInstr_XrayFunc5_DeactivateBeam,
 };
 pub unsafe fn HdmaobjPreInstr_Xray(k: u16, game: &mut Game) {
     let mut v1: i16 = 0;
@@ -3347,16 +3316,10 @@ pub unsafe fn HdmaobjPreInstr_DF94(v0: u16, game: &mut Game) {
         set_ram_word!(game.hdma_object_instruction_list_pointers[v3] = addr_word_88DF71 as u16);
     };
 }
-static off_88E04E: [Option<Func_U8>; 7] = unsafe {
-    [
-        Some(VariaSuitPickup_0_LightBeamAppears as unsafe fn(&mut Game) -> u8),
-        Some(VariaSuitPickup_1 as unsafe fn(&mut Game) -> u8),
-        Some(VariaSuitPickup_2_LightBeamWidens as unsafe fn(&mut Game) -> u8),
-        Some(VariaSuitPickup_3 as unsafe fn(&mut Game) -> u8),
-        Some(VariaSuitPickup_4_LightBeamShrinks as unsafe fn(&mut Game) -> u8),
-        Some(VariaSuitPickup_5_LightBeamDissipates as unsafe fn(&mut Game) -> u8),
-        Some(VariaSuitPickup_6 as unsafe fn(&mut Game) -> u8),
-    ]
+static off_88E04E: [Option<Func_U8>; 7] = callback_table! { unsafe Func_U8;
+    VariaSuitPickup_0_LightBeamAppears, VariaSuitPickup_1, VariaSuitPickup_2_LightBeamWidens,
+    VariaSuitPickup_3, VariaSuitPickup_4_LightBeamShrinks,
+    VariaSuitPickup_5_LightBeamDissipates, VariaSuitPickup_6,
 };
 pub unsafe fn HdmaobjPreInstr_VariaSuitPickup(k: u16, game: &mut Game) {
     if off_88E04E[ram_word!(game, substate) as usize].expect("non-null function pointer")(game)
@@ -3370,16 +3333,10 @@ pub unsafe fn HdmaobjPreInstr_VariaSuitPickup(k: u16, game: &mut Game) {
         set_ram_word!(game.fx_layer_blending_config_c = 18u16);
     }
 }
-static off_88E084: [Option<Func_U8>; 7] = unsafe {
-    [
-        Some(VariaSuitPickup_0_LightBeamAppears as unsafe fn(&mut Game) -> u8),
-        Some(VariaSuitPickup_1 as unsafe fn(&mut Game) -> u8),
-        Some(VariaSuitPickup_2_LightBeamWidens as unsafe fn(&mut Game) -> u8),
-        Some(GravitySuitPickup_3 as unsafe fn(&mut Game) -> u8),
-        Some(VariaSuitPickup_4_LightBeamShrinks as unsafe fn(&mut Game) -> u8),
-        Some(VariaSuitPickup_5_LightBeamDissipates as unsafe fn(&mut Game) -> u8),
-        Some(GravitySuitPickup_6 as unsafe fn(&mut Game) -> u8),
-    ]
+static off_88E084: [Option<Func_U8>; 7] = callback_table! { unsafe Func_U8;
+    VariaSuitPickup_0_LightBeamAppears, VariaSuitPickup_1, VariaSuitPickup_2_LightBeamWidens,
+    GravitySuitPickup_3, VariaSuitPickup_4_LightBeamShrinks,
+    VariaSuitPickup_5_LightBeamDissipates, GravitySuitPickup_6,
 };
 pub unsafe fn HdmaobjPreInstr_GravitySuitPickup(k: u16, game: &mut Game) {
     if off_88E084[ram_word!(game, substate) as usize].expect("non-null function pointer")(game)

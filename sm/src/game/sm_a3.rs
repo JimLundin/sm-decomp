@@ -1,4 +1,5 @@
 use crate::cpu_infra::Call;
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_b4::*;
 pub use crate::game::constants::enemy_properties::*;
@@ -939,13 +940,8 @@ pub unsafe fn Elevator_Init(game: &mut Game) {
         Elevator_Func_4(game);
     }
 }
-static off_A39540: [Option<Func_V>; 4] = unsafe {
-    [
-        Some(Elevator_Func_1 as unsafe fn(&mut Game) -> ()),
-        Some(Elevator_Func_2 as unsafe fn(&mut Game) -> ()),
-        Some(Elevator_Func_3 as unsafe fn(&mut Game) -> ()),
-        Some(Elevator_Func3b as unsafe fn(&mut Game) -> ()),
-    ]
+static off_A39540: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+    Elevator_Func_1, Elevator_Func_2, Elevator_Func_3, Elevator_Func3b,
 };
 pub unsafe fn Elevator_Frozen(game: &mut Game) {
     if ram_word!(game, door_transition_flag_elevator_zebetites) == 0
@@ -1151,17 +1147,11 @@ pub unsafe fn PlatformThatFalls_Init(k: u16, j: u16, game: &mut Game) {
     (*E).ptfwss_var_F = 0u16;
     (*E).ptfwss_var_05 = *(&raw mut (*E).ptfwss_parameter_2 as *mut u8).offset(1isize) as u16;
 }
-static off_A39C97: [Option<Func_V>; 2] = unsafe {
-    [
-        Some(PlatformThatFallsWithSamus_Func_1 as unsafe fn(&mut Game) -> ()),
-        Some(PlatformThatFallsWithSamus_Func_2 as unsafe fn(&mut Game) -> ()),
-    ]
+static off_A39C97: [Option<Func_V>; 2] = callback_table! { unsafe Func_V;
+    PlatformThatFallsWithSamus_Func_1, PlatformThatFallsWithSamus_Func_2,
 };
-static off_A39C9B: [Option<Func_V>; 2] = unsafe {
-    [
-        Some(PlatformThatFallsWithSamus_Func_3 as unsafe fn(&mut Game) -> ()),
-        Some(PlatformThatFallsWithSamus_Func_4 as unsafe fn(&mut Game) -> ()),
-    ]
+static off_A39C9B: [Option<Func_V>; 2] = callback_table! { unsafe Func_V;
+    PlatformThatFallsWithSamus_Func_3, PlatformThatFallsWithSamus_Func_4,
 };
 pub unsafe fn PlatformThatFallsWithSamus_Main(game: &mut Game) {
     let E: *mut Enemy_PlatformThatFallsWithSamus =
@@ -1779,12 +1769,8 @@ pub unsafe fn Mochtroid_Init(game: &mut Game) {
     );
     (*E).mochtr_var_F = 0u16;
 }
-static off_A3A7A4: [Option<Func_V>; 3] = unsafe {
-    [
-        Some(Mochtroid_Func_1 as unsafe fn(&mut Game) -> ()),
-        Some(Mochtroid_Func_3 as unsafe fn(&mut Game) -> ()),
-        Some(Mochtroid_Func_2 as unsafe fn(&mut Game) -> ()),
-    ]
+static off_A3A7A4: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
+    Mochtroid_Func_1, Mochtroid_Func_3, Mochtroid_Func_2,
 };
 pub unsafe fn Mochtroid_Main(game: &mut Game) {
     let v0: u16 = (2u16)
@@ -3932,13 +3918,8 @@ pub unsafe fn Metroid_Hurt(game: &mut Game) {
         );
     };
 }
-static off_A3EC09: [Option<Func_Y_V>; 4] = unsafe {
-    [
-        Some(Metroid_Func_1 as unsafe fn(u16, &mut Game) -> ()),
-        Some(Metroid_Func_2 as unsafe fn(u16, &mut Game) -> ()),
-        Some(Metroid_Func_3 as unsafe fn(u16, &mut Game) -> ()),
-        Some(Metroid_Func_4 as unsafe fn(u16, &mut Game) -> ()),
-    ]
+static off_A3EC09: [Option<Func_Y_V>; 4] = callback_table! { unsafe Func_Y_V;
+    Metroid_Func_1, Metroid_Func_2, Metroid_Func_3, Metroid_Func_4,
 };
 pub unsafe fn Metroid_Main(game: &mut Game) {
     let E: *mut Enemy_Metroid = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);

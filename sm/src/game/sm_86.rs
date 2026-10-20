@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a0::*;
 use crate::game::sm_80::{
@@ -5824,19 +5825,17 @@ pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2(k: u16, game: &m
     EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k, game);
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k, game);
 }
-static kEprojPreInstr_SpikeShootingPlantSpikes: [Option<Func_Y_V>; 10] = unsafe {
-    [
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1 as unsafe fn(u16, &mut Game) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1 as unsafe fn(u16, &mut Game) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2 as unsafe fn(u16, &mut Game) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1 as unsafe fn(u16, &mut Game) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2 as unsafe fn(u16, &mut Game) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2 as unsafe fn(u16, &mut Game) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1 as unsafe fn(u16, &mut Game) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1 as unsafe fn(u16, &mut Game) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2 as unsafe fn(u16, &mut Game) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2 as unsafe fn(u16, &mut Game) -> ()),
-    ]
+static kEprojPreInstr_SpikeShootingPlantSpikes: [Option<Func_Y_V>; 10] = callback_table! { unsafe Func_Y_V;
+    EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1,
+    EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1,
+    EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2,
+    EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1,
+    EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2,
+    EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2,
+    EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1,
+    EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1,
+    EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2,
+    EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2,
 };
 pub fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1(k: u16, game: &mut Game) {
     if EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(k, game) != 0 {
@@ -6656,16 +6655,9 @@ unsafe fn EprojInit_EnemyDeathExplosion(j: u16, game: &mut Game) {
         EprojStateMut(&mut game.g_ram).start_instruction(v2 as usize, instruction);
     }
 }
-static off_86F0AD: [Option<Func_V>; 7] = unsafe {
-    [
-        None,
-        Some(Eproj_Pickup_SmallHealth as unsafe fn(&mut Game) -> ()),
-        Some(Eproj_Pickup_BigHealth as unsafe fn(&mut Game) -> ()),
-        Some(Eproj_Pickup_PowerBombs as unsafe fn(&mut Game) -> ()),
-        Some(Eproj_Pickup_Missiles as unsafe fn(&mut Game) -> ()),
-        Some(Eproj_Pickup_SuperMissiles as unsafe fn(&mut Game) -> ()),
-        None,
-    ]
+static off_86F0AD: [Option<Func_V>; 7] = callback_table! { unsafe Func_V;
+    None, Eproj_Pickup_SmallHealth, Eproj_Pickup_BigHealth, Eproj_Pickup_PowerBombs,
+    Eproj_Pickup_Missiles, Eproj_Pickup_SuperMissiles, None,
 };
 pub unsafe fn EprojPreInstr_Pickup(k: u16, game: &mut Game) {
     let mut v2: u16 = 0;

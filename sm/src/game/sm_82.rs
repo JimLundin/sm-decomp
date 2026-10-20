@@ -1,4 +1,5 @@
 use crate::cpu_infra::DebugGameOverMenu;
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_82::*;
 pub use crate::game::constants::bank_8f::*;
@@ -1004,54 +1005,25 @@ pub unsafe fn DemoRoom_SetKraidFunctionTimer(game: &mut Game) {
 pub unsafe fn DemoRoom_SetBrinstarBossBits(game: &mut Game) {
     *ram_ptr!(game; 0xd828, 1) = 1u8;
 }
-static kGameStateFuncs: [Option<Func_V_Coroutine>; 45] = unsafe {
-    [
-        Some(GameState_0_Reset_Async as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_1_OpeningCinematic as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_2_GameOptionsMenu as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_3_Null as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_4_FileSelectMenus as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_5_FileSelectMap as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(InitAndLoadGameData_Async as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_7_MainGameplayFadeIn as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_8_MainGameplay as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_9_HitDoorBlock as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_10_LoadingNextRoom_Async as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_11_LoadingNextRoom_Async as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_12_Pausing_Darkening_Async as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_13_Pausing_Async as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_14_Paused_Async as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_15_Paused_Async as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_16_Unpausing_Async as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_17_Unpausing_Async as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_18_Unpausing as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_19_SamusNoHealth as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_20_SamusNoHealth_BlackOut as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_21_SamusNoHealth as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_22_SamusNoHealth_Dying as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_23_SamusNoHealth_Flashing as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_24_SamusNoHealth_Explosion as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_25_SamusNoHealth_BlackOut as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_26_GameOverMenu as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_27_ReserveTanksAuto as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_28_Unused as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_29_DebugGameOverMenu as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_37_CeresGoesBoomWithSamus as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(InitAndLoadGameData_Async as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_32_MadeItToCeresElevator as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_33_BlackoutFromCeres as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_37_CeresGoesBoomWithSamus as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_35_TimeUp as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_36_WhitingOutFromTimeUp as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_37_CeresGoesBoomWithSamus as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_38_SamusEscapesFromZebes as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_39_EndingAndCredits as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(InitAndLoadGameData_Async as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_41_TransitionToDemo as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_42_PlayingDemo_Async as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_43_TransitionFromDemo as unsafe fn(&mut Game) -> CoroutineRet),
-        Some(GameState_44_TransitionFromDemo as unsafe fn(&mut Game) -> CoroutineRet),
-    ]
+static kGameStateFuncs: [Option<Func_V_Coroutine>; 45] = callback_table! { unsafe Func_V_Coroutine;
+    GameState_0_Reset_Async, GameState_1_OpeningCinematic, GameState_2_GameOptionsMenu,
+    GameState_3_Null, GameState_4_FileSelectMenus, GameState_5_FileSelectMap,
+    InitAndLoadGameData_Async, GameState_7_MainGameplayFadeIn, GameState_8_MainGameplay,
+    GameState_9_HitDoorBlock, GameState_10_LoadingNextRoom_Async,
+    GameState_11_LoadingNextRoom_Async, GameState_12_Pausing_Darkening_Async,
+    GameState_13_Pausing_Async, GameState_14_Paused_Async, GameState_15_Paused_Async,
+    GameState_16_Unpausing_Async, GameState_17_Unpausing_Async, GameState_18_Unpausing,
+    GameState_19_SamusNoHealth, GameState_20_SamusNoHealth_BlackOut, GameState_21_SamusNoHealth,
+    GameState_22_SamusNoHealth_Dying, GameState_23_SamusNoHealth_Flashing,
+    GameState_24_SamusNoHealth_Explosion, GameState_25_SamusNoHealth_BlackOut,
+    GameState_26_GameOverMenu, GameState_27_ReserveTanksAuto, GameState_28_Unused,
+    GameState_29_DebugGameOverMenu, GameState_37_CeresGoesBoomWithSamus,
+    InitAndLoadGameData_Async, GameState_32_MadeItToCeresElevator,
+    GameState_33_BlackoutFromCeres, GameState_37_CeresGoesBoomWithSamus, GameState_35_TimeUp,
+    GameState_36_WhitingOutFromTimeUp, GameState_37_CeresGoesBoomWithSamus,
+    GameState_38_SamusEscapesFromZebes, GameState_39_EndingAndCredits,
+    InitAndLoadGameData_Async, GameState_41_TransitionToDemo, GameState_42_PlayingDemo_Async,
+    GameState_43_TransitionFromDemo, GameState_44_TransitionFromDemo,
 };
 pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
     let current_block: u64;
@@ -1138,14 +1110,9 @@ pub unsafe fn GameState_5_FileSelectMap(game: &mut Game) -> CoroutineRet {
     FileSelectMap(game);
     kCoroutineNone as CoroutineRet
 }
-static kSfxHandlers: [Option<Func_Y_V>; 5] = unsafe {
-    [
-        Some(SfxHandlers_0_SendToApu as unsafe fn(u16, &mut Game) -> ()),
-        Some(SfxHandlers_1_WaitForAck as unsafe fn(u16, &mut Game) -> ()),
-        Some(SfxHandlers_2_ClearRequest as unsafe fn(u16, &mut Game) -> ()),
-        Some(SfxHandlers_3_WaitForAck as unsafe fn(u16, &mut Game) -> ()),
-        Some(SfxHandlers_4_Reset as unsafe fn(u16, &mut Game) -> ()),
-    ]
+static kSfxHandlers: [Option<Func_Y_V>; 5] = callback_table! { unsafe Func_Y_V;
+    SfxHandlers_0_SendToApu, SfxHandlers_1_WaitForAck, SfxHandlers_2_ClearRequest,
+    SfxHandlers_3_WaitForAck, SfxHandlers_4_Reset,
 };
 pub unsafe fn HandleSoundEffects(game: &mut Game) {
     if ((ram_word!(game, sound_handler_downtime)) as i8).wrapping_sub(1i8) >= 0i8 {
@@ -1792,17 +1759,10 @@ pub unsafe fn GameState_15_Paused_Async(game: &mut Game) -> CoroutineRet {
     HandlePauseScreenPaletteAnimation(game);
     kCoroutineNone as CoroutineRet
 }
-static kPauseMenuFuncs: [Option<Func_V>; 8] = unsafe {
-    [
-        Some(PauseMenu_0_MapScreen as unsafe fn(&mut Game) -> ()),
-        Some(PauseMenu_1_EquipmentScreen as unsafe fn(&mut Game) -> ()),
-        Some(PauseMenu_2 as unsafe fn(&mut Game) -> ()),
-        Some(PauseMenu_3_MapToEquipment_Load as unsafe fn(&mut Game) -> ()),
-        Some(PauseMenu_4_MapToEquipment_FadeIn as unsafe fn(&mut Game) -> ()),
-        Some(PauseMenu_5 as unsafe fn(&mut Game) -> ()),
-        Some(PauseMenu_6_EquipmentToMap_Load as unsafe fn(&mut Game) -> ()),
-        Some(PauseMenu_7_EquipmentToMap_FadeIn as unsafe fn(&mut Game) -> ()),
-    ]
+static kPauseMenuFuncs: [Option<Func_V>; 8] = callback_table! { unsafe Func_V;
+    PauseMenu_0_MapScreen, PauseMenu_1_EquipmentScreen, PauseMenu_2,
+    PauseMenu_3_MapToEquipment_Load, PauseMenu_4_MapToEquipment_FadeIn, PauseMenu_5,
+    PauseMenu_6_EquipmentToMap_Load, PauseMenu_7_EquipmentToMap_FadeIn,
 };
 pub unsafe fn MainPauseRoutine(game: &mut Game) {
     kPauseMenuFuncs[ram_word!(game, menu_index) as usize].expect("non-null function pointer")(game);
@@ -1911,14 +1871,9 @@ pub unsafe fn PauseMenu_4_MapToEquipment_FadeIn(game: &mut Game) {
         set_ram_word!(game.menu_index = v0);
     }
 }
-static kMapScrollingFuncs: [Option<Func_V>; 5] = unsafe {
-    [
-        Some(MapScrolling_0_None as unsafe fn(&mut Game) -> ()),
-        Some(MapScrolling_1_Left as unsafe fn(&mut Game) -> ()),
-        Some(MapScrolling_2_Right as unsafe fn(&mut Game) -> ()),
-        Some(MapScrolling_3_Up as unsafe fn(&mut Game) -> ()),
-        Some(MapScrolling_4_Down as unsafe fn(&mut Game) -> ()),
-    ]
+static kMapScrollingFuncs: [Option<Func_V>; 5] = callback_table! { unsafe Func_V;
+    MapScrolling_0_None, MapScrolling_1_Left, MapScrolling_2_Right, MapScrolling_3_Up,
+    MapScrolling_4_Down,
 };
 pub unsafe fn MapScrolling(game: &mut Game) {
     kMapScrollingFuncs[ram_word!(game, map_scrolling_direction) as usize]
@@ -3088,13 +3043,9 @@ pub unsafe fn EquipmentScreenTransferBG1Tilemap(game: &mut Game) {
     WriteReg(MDMAEN as u16, 2u8, game);
     set_ram_word!(game.reg_BG1VOFS = 0u16);
 }
-static kEquipmentScreenCategories: [Option<Func_V>; 4] = unsafe {
-    [
-        Some(EquipmentScreenCategory_Tanks as unsafe fn(&mut Game) -> ()),
-        Some(EquipmentScreenCategory_Weapons as unsafe fn(&mut Game) -> ()),
-        Some(EquipmentScreenCategory_Suit as unsafe fn(&mut Game) -> ()),
-        Some(EquipmentScreenCategory_Boots as unsafe fn(&mut Game) -> ()),
-    ]
+static kEquipmentScreenCategories: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+    EquipmentScreenCategory_Tanks, EquipmentScreenCategory_Weapons,
+    EquipmentScreenCategory_Suit, EquipmentScreenCategory_Boots,
 };
 pub unsafe fn EquipmentScreenMain(game: &mut Game) {
     kEquipmentScreenCategories[ram_word!(game, pausemenu_equipment_category_item) as u8 as usize]
@@ -3103,11 +3054,8 @@ pub unsafe fn EquipmentScreenMain(game: &mut Game) {
     EquipmentScreenDisplayReserveTankAmount(game);
     WriteSamusWireframeTilemapAndQueue(game);
 }
-static kEquipmentScreenCategory_TanksFuncs: [Option<Func_V>; 2] = unsafe {
-    [
-        Some(EquipmentScreenCategory_Tanks_0 as unsafe fn(&mut Game) -> ()),
-        Some(EquipmentScreenCategory_Tanks_1 as unsafe fn(&mut Game) -> ()),
-    ]
+static kEquipmentScreenCategory_TanksFuncs: [Option<Func_V>; 2] = callback_table! { unsafe Func_V;
+    EquipmentScreenCategory_Tanks_0, EquipmentScreenCategory_Tanks_1,
 };
 pub unsafe fn EquipmentScreenCategory_Tanks(game: &mut Game) {
     kEquipmentScreenCategory_TanksFuncs
@@ -3143,11 +3091,8 @@ pub unsafe fn EquipmentScreenHandleDpad(game: &mut Game) {
         }
     }
 }
-static kEquipmentScreenGlowingArrowFuncs: [Option<Func_V>; 2] = unsafe {
-    [
-        Some(EquipmentScreenGlowingArrowAnimated as unsafe fn(&mut Game) -> ()),
-        Some(EquipmentScreenGlowingArrowSolidOn as unsafe fn(&mut Game) -> ()),
-    ]
+static kEquipmentScreenGlowingArrowFuncs: [Option<Func_V>; 2] = callback_table! { unsafe Func_V;
+    EquipmentScreenGlowingArrowAnimated, EquipmentScreenGlowingArrowSolidOn,
 };
 pub unsafe fn EquipmentScreenGlowingArrow(game: &mut Game) {
     if ram_word!(game, pausemenu_equipment_category_item) as u8 != 0 {
@@ -5615,22 +5560,12 @@ pub unsafe fn CheckIfColoredDoorCapSpawned(game: &mut Game) -> u8 {
     set_ram_word!(game.plm_instr_list_ptrs[v5] = (*get_PlmHeader_Size6(v8, game)).instr_list_2_ptr);
     1u8
 }
-static kLoadLibraryBackgroundFuncs: [Option<Func_Y_Y>; 8] = unsafe {
-    [
-        Some(LoadLibraryBackgroundFunc_0_DONE as unsafe fn(u16, &mut Game) -> u16),
-        Some(LoadLibraryBackgroundFunc_2_TransferToVram as unsafe fn(u16, &mut Game) -> u16),
-        Some(LoadLibraryBackgroundFunc_4_Decompress as unsafe fn(u16, &mut Game) -> u16),
-        Some(LoadLibraryBackgroundFunc_6_ClearFxTilemap as unsafe fn(u16, &mut Game) -> u16),
-        Some(
-            LoadLibraryBackgroundFunc_8_TransferToVramAndSetBg3 as unsafe fn(u16, &mut Game) -> u16,
-        ),
-        Some(LoadLibraryBackgroundFunc_A_ClearBG2Tilemap as unsafe fn(u16, &mut Game) -> u16),
-        Some(LoadLibraryBackgroundFunc_C_ClearKraidLayer2 as unsafe fn(u16, &mut Game) -> u16),
-        Some(
-            LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram
-                as unsafe fn(u16, &mut Game) -> u16,
-        ),
-    ]
+static kLoadLibraryBackgroundFuncs: [Option<Func_Y_Y>; 8] = callback_table! { unsafe Func_Y_Y;
+    LoadLibraryBackgroundFunc_0_DONE, LoadLibraryBackgroundFunc_2_TransferToVram,
+    LoadLibraryBackgroundFunc_4_Decompress, LoadLibraryBackgroundFunc_6_ClearFxTilemap,
+    LoadLibraryBackgroundFunc_8_TransferToVramAndSetBg3,
+    LoadLibraryBackgroundFunc_A_ClearBG2Tilemap, LoadLibraryBackgroundFunc_C_ClearKraidLayer2,
+    LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram,
 };
 pub unsafe fn LoadLibraryBackground(game: &mut Game) {
     let mut bg_data_ptr: u16 = 0;
@@ -5822,22 +5757,14 @@ pub unsafe fn CreatePlmsExecuteDoorAsmRoomSetup(game: &mut Game) {
         set_ram_word!(game.elevator_status = 2u16);
     }
 }
-static kGameOptionsMenuFuncs: [Option<Func_V>; 13] = unsafe {
-    [
-        Some(GameOptionsMenuFunc_0 as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenu_1_LoadingOptionsScreen as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenu_2_FadeInOptionsScreen as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenu_3_OptionsScreen as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenu_4_StartGame as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenu_5_DissolveOutScreen as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenu_6_DissolveInScreen as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenu_7_ControllerSettings as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenu_8_SpecialSettings as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenu_9_ScrollControllerSettingsDown as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenu_A_ScrollControllerSettingsUp as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenu_B_TransitionBackToFileSelect as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenu_C_FadeOutOptionsScreenToStart as unsafe fn(&mut Game) -> ()),
-    ]
+static kGameOptionsMenuFuncs: [Option<Func_V>; 13] = callback_table! { unsafe Func_V;
+    GameOptionsMenuFunc_0, GameOptionsMenu_1_LoadingOptionsScreen,
+    GameOptionsMenu_2_FadeInOptionsScreen, GameOptionsMenu_3_OptionsScreen,
+    GameOptionsMenu_4_StartGame, GameOptionsMenu_5_DissolveOutScreen,
+    GameOptionsMenu_6_DissolveInScreen, GameOptionsMenu_7_ControllerSettings,
+    GameOptionsMenu_8_SpecialSettings, GameOptionsMenu_9_ScrollControllerSettingsDown,
+    GameOptionsMenu_A_ScrollControllerSettingsUp, GameOptionsMenu_B_TransitionBackToFileSelect,
+    GameOptionsMenu_C_FadeOutOptionsScreenToStart,
 };
 pub unsafe fn GameState_2_GameOptionsMenu(game: &mut Game) -> CoroutineRet {
     kGameOptionsMenuFuncs[ram_word!(game, game_options_screen_index) as usize]
@@ -5954,14 +5881,10 @@ pub unsafe fn OptionsMenuFunc5(a: u16, mut k: u16, mut j: u16, game: &mut Game) 
         }
     }
 }
-static kGameOptionsMenuItemFuncs: [Option<Func_V>; 5] = unsafe {
-    [
-        Some(GameOptionsMenuItemFunc_0 as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenuItemFunc_2_ToggleJapanese as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenuItemFunc_2_ToggleJapanese as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenuItemFunc_4 as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenuItemFunc_4 as unsafe fn(&mut Game) -> ()),
-    ]
+static kGameOptionsMenuItemFuncs: [Option<Func_V>; 5] = callback_table! { unsafe Func_V;
+    GameOptionsMenuItemFunc_0, GameOptionsMenuItemFunc_2_ToggleJapanese,
+    GameOptionsMenuItemFunc_2_ToggleJapanese, GameOptionsMenuItemFunc_4,
+    GameOptionsMenuItemFunc_4,
 };
 pub unsafe fn GameOptionsMenu_3_OptionsScreen(game: &mut Game) {
     if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32 {
@@ -6165,12 +6088,9 @@ pub unsafe fn GameOptionsMenu_6_DissolveInScreen(game: &mut Game) {
         }
     }
 }
-static kGameOptionsMenuSpecialSettings: [Option<Func_V>; 3] = unsafe {
-    [
-        Some(GameOptionsMenuSpecialSettings_0 as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenuSpecialSettings_0 as unsafe fn(&mut Game) -> ()),
-        Some(GameOptionsMenuSpecialSettings_2 as unsafe fn(&mut Game) -> ()),
-    ]
+static kGameOptionsMenuSpecialSettings: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
+    GameOptionsMenuSpecialSettings_0, GameOptionsMenuSpecialSettings_0,
+    GameOptionsMenuSpecialSettings_2,
 };
 pub unsafe fn GameOptionsMenu_8_SpecialSettings(game: &mut Game) {
     if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32 {
@@ -6313,18 +6233,10 @@ pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
         }
     } else if ram_word!(game, joypad1_newkeys) != 0 {
         QueueSfx1_Max6(0x38u16, game);
-        static kOptionsMenuControllerFuncs: [Option<Func_V>; 9] = unsafe {
-            [
-                Some(OptionsMenuControllerFunc_0 as unsafe fn(&mut Game) -> ()),
-                Some(OptionsMenuControllerFunc_0 as unsafe fn(&mut Game) -> ()),
-                Some(OptionsMenuControllerFunc_0 as unsafe fn(&mut Game) -> ()),
-                Some(OptionsMenuControllerFunc_0 as unsafe fn(&mut Game) -> ()),
-                Some(OptionsMenuControllerFunc_0 as unsafe fn(&mut Game) -> ()),
-                Some(OptionsMenuControllerFunc_0 as unsafe fn(&mut Game) -> ()),
-                Some(OptionsMenuControllerFunc_0 as unsafe fn(&mut Game) -> ()),
-                Some(OptionsMenuControllerFunc_7 as unsafe fn(&mut Game) -> ()),
-                Some(OptionsMenuControllerFunc_8 as unsafe fn(&mut Game) -> ()),
-            ]
+        static kOptionsMenuControllerFuncs: [Option<Func_V>; 9] = callback_table! { unsafe Func_V;
+            OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_0,
+            OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_0,
+            OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_7, OptionsMenuControllerFunc_8,
         };
         kOptionsMenuControllerFuncs[ram_word!(game, menu_option_index) as usize]
             .expect("non-null function pointer")(game);

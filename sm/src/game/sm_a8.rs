@@ -1,3 +1,4 @@
+use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::enemy_properties::*;
 use crate::game::enemy_layouts::enemy_layout;
@@ -2189,12 +2190,8 @@ pub unsafe fn NorfairLavaMan_Instr_3(k: u16, jp: *const u16, game: &mut Game) ->
     (*Get_NorfairLavaMan(ram_word!(game, cur_enemy_index) as i32, game)).nlmn_var_04 = 256u16;
     jp
 }
-static g_off_A8AF4F: [Option<Func_V>; 3] = unsafe {
-    [
-        Some(NorfairLavaMan_Func_1 as unsafe fn(&mut Game) -> ()),
-        Some(NorfairLavaMan_Func_2 as unsafe fn(&mut Game) -> ()),
-        Some(NorfairLavaMan_Func_3 as unsafe fn(&mut Game) -> ()),
-    ]
+static g_off_A8AF4F: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
+    NorfairLavaMan_Func_1, NorfairLavaMan_Func_2, NorfairLavaMan_Func_3,
 };
 pub unsafe fn NorfairLavaMan_Init(game: &mut Game) {
     let v0: u16 = (2u16).wrapping_mul(
