@@ -192,6 +192,7 @@ pub mod game {
     pub(crate) mod enemy_layouts;
     pub(crate) mod enemy_ram;
     pub(crate) mod intro_pages;
+    pub(crate) mod moving_platforms;
     pub mod sm_80;
     pub mod sm_81;
     pub mod sm_82;

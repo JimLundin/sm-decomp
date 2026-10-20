@@ -174,6 +174,27 @@ These domain moves remain parked during the immediate volume pass. Preserve
 their useful phase/dependency findings when a replacement needs them, but
 prioritize deleting repeated implementation over adopting relocation controls.
 
+Four subsequent experiments at 7617b682 change the representation itself.
+Their formatted net savings include replacement code, callers and source
+registration; only moving platforms is adopted below.
+
+| Replacement | Net deletion | Validation and disposition |
+| --- | ---: | --- |
+| Moving platforms and shutters: shared triggers, travel, waits and growth stages | 192 | 16,414 full-RAM comparisons; final integration below |
+| Mother Brain: 124 typed encounter steps, shared delay gates and continuations | 318 | 2,208 comparisons cover 69 steps; park pending remaining coverage and independent module costs |
+| Crawlers and Snail: shared surface movement and native lifecycle routing | 144 | 6,528 full-RAM comparisons; park before movie integration |
+| Configuration/input: native collections and shared option parsing | 165 | Frontend-library compilation only; park before runtime validation |
+
+Component comparisons use actual optimized original/replacement Rust, not a
+SNES oracle. Mother Brain remains a child of sm_a9, so its saving does not price
+complete bank removal; 55 steps and real encounter history remain untested.
+The experiments establish useful local deletion, not a forecast for the gap.
+Price complete repeated algorithms before spending on broad runtime checks;
+continue discovery beyond these scopes instead of multiplying their savings.
+Drafts and reports remain under TEMP: sm-mechanism-lifecycle-7617b682,
+sm-motherbrain-sequence-7617b682, sm-native-crawlers-7617b682 and
+sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
+
 ## Work order
 
 1. [x] **Test Samus domain alternatives.** The concrete domain experiments
@@ -257,7 +278,7 @@ prioritize deleting repeated implementation over adopting relocation controls.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **10,231-line** gap; parked small drafts are not
+   replacement yet funds the **10,039-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -307,6 +328,14 @@ prioritize deleting repeated implementation over adopting relocation controls.
    cover exceptional firing and subsequent projectile calls; full any% and
    Speed Booster pass on the clean release. Hyper coverage is constructed,
    not an endgame movie. This domain migration does not fund the remaining gap.
+
+   Complete moving-platform/shutter ownership removes **192 lines
+   (110,230 -> 110,038)**: 650 old lines become a 448-line module plus ten
+   caller/registration lines. Named phases share triggers, travel, waits and
+   timed growth while preserving carrying, pushing and shot differences.
+   All 16,414 constructed full-RAM comparisons pass, including persistent
+   updates and wrapping boundaries. Full integration and observed branch
+   limits are below. This retires about 30% of the old family, not a full bank.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -455,9 +484,14 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full subsystem integration: the beam-firing replacement over 7617b682
-passes any% **129712/0** and Speed Booster **148406/0**, with normal rendering,
-audio and comparisons. Its 20,420 focused SNES comparisons cover 5,780 input/
+Latest full subsystem integration: moving platforms over 63b0ffe4, including
+beam firing, passes any% **129712/0** and Speed Booster **148406/0**, with normal rendering,
+audio and comparisons. Platform probes cover timed initialization, triggering,
+closing and stage advancement. Required opening/carry and non-timed movement/
+activation probes have zero hits: those coverage checks fail despite zero
+differing frames. Those paths have constructed old/new Rust comparisons,
+not movie/SNES coverage; hold further cleanup until that context is covered.
+Beam firing's 20,420 focused SNES comparisons cover 5,780 input/
 firing cases and 14,640 subsequent projectile calls. The earlier intro-page
 checks include Japanese **7570/0** and 233 marker/inactive-input oracle cases.
 
@@ -519,10 +553,10 @@ Rust lines 112265. The unrelated 83-line shader draft is excluded from the
 committed baseline and budget.
 
 After the Japanese correction, local bindings, intro pages, enemy callback
-imports, ordered stores, PNG texture loading and beam firing, maintained Rust
-is **110,230**, leaving **10,231** to reach 99,999. Counters:
+imports, ordered stores, PNG texture loading, beam firing and moving platforms,
+maintained Rust is **110,038**, leaving **10,039** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 5234; cast lines 8739. The unrelated 83-line shader draft
+unsafe functions 5191; cast lines 8679. The unrelated 83-line shader draft
 remains excluded; working-tree counts are not the committed baseline.
 Continue item 2's remaining-responsibility comparison. The complete hopping
 draft remains parked; neither it nor the completed small migrations establish
