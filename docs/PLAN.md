@@ -59,8 +59,15 @@ timed enemy phases save 118 lines at 128 sites; combat flash/freeze setup saves
 7 lines at seven sites; six multi-local tuple branch trees add 9 lines; PLM's
 shared final tile loop saves 28 lines. These are measured drafts, not landed
 reductions. Do not repeat those studies or count their containing functions
-as savings. Next concrete discovery examines complete orbit/angle-to-position
-motion sequences, preserving phase truncation, live reads and callback order.
+as savings. The subsequent complete orbit drafts also remain parked: the
+mirrored wall-pirate pair saves two lines and six Draygon sine-flight steps
+save fifteen, including shared code. Other consumers retain differing phase,
+radius, mapping and callback contracts. No new substantial family is established.
+
+After commit 4f0e6023, the three completed ROM-pointer TEMP roots above contain
+553 files / 383928226 bytes and have no live processes or helper dependencies.
+Checked native PowerShell deletion was rejected as "blocked by policy"; all
+three remain. Current main build caches and retained route inputs are untouched.
 
 ## Shared sound-effect channels (2026-10-20)
 
