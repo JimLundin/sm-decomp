@@ -20,6 +20,46 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared scrolling tile-buffer construction (2026-10-20)
+
+The level/background row and column builders now share their source lookup,
+VRAM parameters and tile traversal using the existing ScrollingDmaLayout.
+Column and row sizes retain their opposite store order. Row construction
+rereads the background-size word after storing its first destination; column
+construction retains its captured size. The 16/17-block counts, 64/68-byte
+halves, quadrant order, word-wrapped offsets, Mode 7 guard and live column
+stride remain explicit. Complete formatted source shrinks **60 lines**,
+including the helper, retained entries and four execution probes.
+
+Actual original/replacement Rust comparisons pass **524288 cases** using
+Game, RAM accessors and TileTables::draw_block. Complete RAM agrees across
+all word-sized widths and parameter offsets, varied VRAM coordinates and
+background sizes, Mode 7 flags and overlapping parameters/source/tile tables/
+destination buffers. The captured source is controlled to keep wrapped
+strides inside allocated RAM. This is a finite x86-64 comparison retaining
+legacy unaligned word accesses, not a general aliasing or all-state proof.
+Structural reconstruction binds both original bodies and the complete
+replacement helper to the tested source.
+
+The initial source-checked Speed prefix passes **35000/0** and requires all
+four layer/layout combinations before the native comparisons. Formatting,
+all-target release check, normal release (20.53s frozen; 24.11s main), diff
+check and progress pass. The exact proposed commit source passes full any%
+**129712/0** and Speed Booster **148406/0**, native exits 0, in
+126.24s/160.42s. Speed requires all four probes. Source/input/library/DLL
+pins stay fixed and the host reuses the normal library. Main's separate
+uncommitted shader composition passes its normal-build embedded-source check;
+the committed source is matched against the complete frozen replay source.
+Existing route and credits limitations remain.
+
+Committed Rust is **113448 lines**, leaving **13449 further lines** for the
+fixed under-100000 target. Unsafe functions change by +1 for the shared
+builder, cast-containing lines by -26 and raw offsets by -4; other counters
+stay unchanged.
+Temporary drafts and checks are under `%TEMP%/sm-scroll-tiles-root-50be971e`.
+The complete remaining reduction budget remains unfinished. The nearby
+Mother Brain beam-edge variants are already shared and provide no new budget.
+
 ## Shared camera scroll-grid calculations (2026-10-20)
 
 The two autoscroll and four triggered-scroll routines now share their scroll-

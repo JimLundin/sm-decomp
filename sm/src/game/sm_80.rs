@@ -2340,171 +2340,111 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
     UploadBackgroundDataColumn => UpdateLevelOrBackgroundDataColumn(0x1c, game);
     UploadLevelDataColumn => UpdateLevelOrBackgroundDataColumn(0, game);
 }
-pub unsafe fn UpdateLevelOrBackgroundDataColumn(k: u16, game: &mut Game) {
+unsafe fn build_scrolling_tilemap(k: u16, layout: ScrollingDmaLayout, game: &mut Game) {
+    use crate::ram_map::word_arrays;
     if word!(game.irq_enable_mode7) != 0 {
         return;
     }
-    let mut prod: u16 = Mult8x8(
+    let row = matches!(layout, ScrollingDmaLayout::Row);
+    crate::verify_probe::hit(match (row, k != 0) {
+        (false, false) => "scroll_tiles.column.bg1",
+        (false, true) => "scroll_tiles.column.bg2",
+        (true, false) => "scroll_tiles.row.bg1",
+        (true, true) => "scroll_tiles.row.bg2",
+    });
+    let product = Mult8x8(
         word!(game.blocks_to_update_y_block) as u8,
         word!(game.room_width_in_blocks) as u8,
     );
-    let v1: u16 = word!(game.blocks_to_update_x_block);
-    let mut v2: u16 = (2 * (prod as i32 + v1 as i32) + 2) as u16;
+    let mut source_offset = product
+        .wrapping_add(word!(game.blocks_to_update_x_block))
+        .wrapping_mul(2)
+        .wrapping_add(2);
     if k != 0 {
-        v2 = (v2).wrapping_add(0x9600);
+        source_offset = source_offset.wrapping_add(0x9600);
     }
-    let r54 = ram_ptr!(game; 0x10000, v2 as i32 as isize) as *const u16;
-    let v3: u16 = (4 * word!(game.vram_blocks_to_update_y_block) as i32 & 0x3c) as u16;
-    *((ram_ptr!(game, u16; 0x958) as *mut u8).offset(k as i32 as isize) as *mut u16) = v3;
-    *((ram_ptr!(game, u16; 0x956) as *mut u8).offset(k as i32 as isize) as *mut u16) =
-        ((v3 as i32 ^ 0x3f) + 1) as u16;
-    prod = Mult8x8(
-        ((word!(game.vram_blocks_to_update_y_block)) as u8) & (0xfu8),
-        0x40,
-    );
-    let var935: u16 = (word!(game.vram_blocks_to_update_x_block)) & (0x1fu16);
-    let v4: u16 = (2u16).wrapping_mul(var935);
-    let var933: u16 = (prod).wrapping_add(v4);
-    let mut v5: u16 = addr_unk_605000 as u16;
-    if var935 >= 0x10 {
-        v5 = addr_unk_6053E0 as u16;
+    let source = ram_ptr!(game, u16; 0x10000, source_offset as isize);
+    let parameters = ram_ptr!(game, u16; if row { 0x964 } else { 0x956 }, k as isize);
+    // Columns store the wrapped size first; rows store the unwrapped size first.
+    if row {
+        let within_screen = word!(game.vram_blocks_to_update_x_block) & 15;
+        *parameters = 4 * (16 - within_screen);
+        *parameters.add(1) = 4 * (within_screen + 1);
+    } else {
+        let wrapped = 4 * (word!(game.vram_blocks_to_update_y_block) & 15);
+        *parameters.add(1) = wrapped;
+        *parameters = (wrapped ^ 0x3f) + 1;
     }
+    let tile_row = Mult8x8(word!(game.vram_blocks_to_update_y_block) as u8 & 15, 0x40);
+    let tile_column = word!(game.vram_blocks_to_update_x_block) & 31;
+    let origin = tile_row.wrapping_add(2 * tile_column);
+    let mut screen = if tile_column >= 16 {
+        addr_unk_6053E0 as u16
+    } else {
+        addr_unk_605000 as u16
+    };
     if k != 0 {
-        v5 = (v5).wrapping_sub(word!(game.size_of_bg2));
+        screen = screen.wrapping_sub(word!(game.size_of_bg2));
     }
-    let mut var937: u16 = v5;
-    *((ram_ptr!(game, u16; 0x95a) as *mut u8).offset(k as i32 as isize) as *mut u16) =
-        (var933).wrapping_add(v5);
-    *((ram_ptr!(game, u16; 0x95c) as *mut u8).offset(k as i32 as isize) as *mut u16) =
-        (var935 as i32 + var935 as i32 + var937 as i32) as u16;
-    let mut v6: u16 = (ram_ptr!(game, u16; 0xc8c8) as *mut u8)
-        .offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
-    let mut v7: u16 = 0;
-    if k != 0 {
-        v6 = ram_ptr!(game; 0xc9d0).offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
-        v7 = 264;
-    }
-    let v8: u16 = (*((ram_ptr!(game, u16; 0x956) as *mut u8).offset(k as i32 as isize)
-        as *mut u16))
-        .wrapping_add(v6);
-    *((ram_ptr!(game, u16; 0x95e) as *mut u8).offset(k as i32 as isize) as *mut u16) = v8;
-    *((ram_ptr!(game, u16; 0x960) as *mut u8).offset(k as i32 as isize) as *mut u16) =
-        (v8).wrapping_add(64);
-    var937 = v7;
-    let t2: u16 = k;
-    let mut v9: u16 = 0;
-    for _ in 0u16..16u16 {
-        let var93B: u16 = *r54.offset((v9 >> 1) as isize);
-        let v17: u16 = v9;
-        let v11: u16 = var937;
-        let tile_index = (var937 >> 1) as usize;
-        let ram = (&raw mut game.g_ram).cast::<u8>();
-        let first = ram
-            .add(crate::ram_map::word_arrays::bg1_column_update_tilemap_left_halves)
-            .cast::<u16>()
-            .add(tile_index);
-        let second = ram
-            .add(crate::ram_map::word_arrays::bg1_column_update_tilemap_right_halves)
-            .cast::<u16>()
-            .add(tile_index);
+    *parameters.add(2) = origin.wrapping_add(screen);
+    *parameters.add(3) = if row {
+        let mut wrapped_screen = if tile_column >= 16 {
+            addr_unk_605000 as u16
+        } else {
+            addr_unk_605400 as u16
+        };
+        if k != 0 {
+            wrapped_screen = wrapped_screen.wrapping_sub(word!(game.size_of_bg2));
+        }
+        tile_row.wrapping_add(wrapped_screen)
+    } else {
+        (2 * tile_column).wrapping_add(screen)
+    };
+    let buffer_base = if row {
+        word_arrays::bg1_column_update_tilemap_top_halves
+    } else {
+        word_arrays::bg1_column_update_tilemap_left_halves
+    };
+    let buffer = buffer_base + if k != 0 { 264 } else { 0 };
+    let half_bytes = if row { 68 } else { 64 };
+    let wrapped_source = (*parameters).wrapping_add(buffer as u16);
+    *parameters.add(4) = wrapped_source;
+    *parameters.add(5) = wrapped_source.wrapping_add(half_bytes);
+    let mut source_delta = 0u16;
+    for block_index in 0..if row { 17 } else { 16 } {
+        let block = *source.add((source_delta >> 1) as usize);
+        let first = ram_ptr!(game, u16; buffer as isize).add(2 * block_index);
+        let second = first.add(usize::from(half_bytes / 2));
+        let destinations = if row {
+            [first, first.add(1), second, second.add(1)]
+        } else {
+            [first, second, first.add(1), second.add(1)]
+        };
         TileTables::draw_block(
-            ram.add(0xa000).cast(),
-            var93B,
-            [first, second, first.add(1), second.add(1)],
+            ram_ptr!(game; 0xa000).cast(),
+            block,
+            destinations,
             TileDrawOrder::Rows,
         );
-        var937 = (v11).wrapping_add(4);
-        v9 = (word!(game.room_width_in_blocks) as i32 * 2 + v17 as i32) as u16;
+        // The column stride is reread after drawing each block.
+        source_delta = source_delta.wrapping_add(if row {
+            2
+        } else {
+            word!(game.room_width_in_blocks).wrapping_mul(2)
+        });
     }
-    crate::update_place! { reference fresh7 = *((ram_ptr!(game, u16; 0x962) as *mut u8).offset(t2 as i32 as isize) as *mut u16) => (*fresh7).wrapping_add(1); }
+    *parameters.add(6) = (*parameters.add(6)).wrapping_add(1);
+}
+
+pub unsafe fn UpdateLevelOrBackgroundDataColumn(k: u16, game: &mut Game) {
+    build_scrolling_tilemap(k, ScrollingDmaLayout::Column, game);
 }
 crate::forward_calls! { pub unsafe fn (game: &mut Game);
     UpdateBackgroundDataRow => UpdateLevelOrBackgroundDataRow(0x1c, game);
     UpdateLevelDataRow => UpdateLevelOrBackgroundDataRow(0, game);
 }
 pub unsafe fn UpdateLevelOrBackgroundDataRow(v0: u16, game: &mut Game) {
-    if word!(game.irq_enable_mode7) != 0 {
-        return;
-    }
-    let mut prod: u16 = Mult8x8(
-        word!(game.blocks_to_update_y_block) as u8,
-        word!(game.room_width_in_blocks) as u8,
-    );
-    let v1: u16 = word!(game.blocks_to_update_x_block);
-    let mut v2: u16 = (2 * (prod as i32 + v1 as i32) + 2) as u16;
-    if v0 != 0 {
-        v2 = (v2).wrapping_sub(27136);
-    }
-    let r54 = ram_ptr!(game; 0x10000, v2 as i32 as isize) as *const u16;
-    let mut var933: u16 = (word!(game.vram_blocks_to_update_x_block)) & (0xfu16);
-    *((ram_ptr!(game, u16; 0x964) as *mut u8).offset(v0 as i32 as isize) as *mut u16) =
-        (4 * (16 - var933 as i32)) as u16;
-    *((ram_ptr!(game, u16; 0x966) as *mut u8).offset(v0 as i32 as isize) as *mut u16) =
-        (4 * (var933 as i32 + 1)) as u16;
-    prod = Mult8x8(
-        ((word!(game.vram_blocks_to_update_y_block)) as u8) & (0xfu8),
-        0x40,
-    );
-    let var935: u16 = (word!(game.vram_blocks_to_update_x_block)) & (0x1fu16);
-    let v3: u16 = (2u16).wrapping_mul(var935);
-    var933 = (prod).wrapping_add(v3);
-    let mut var937: u16 = addr_unk_605400 as u16;
-    let mut v4: u16 = addr_unk_605000 as u16;
-    if var935 >= 0x10 {
-        var937 = addr_unk_605000 as u16;
-        v4 = addr_unk_6053E0 as u16;
-    }
-    if v0 != 0 {
-        v4 = (v4).wrapping_sub(word!(game.size_of_bg2));
-    }
-    *((ram_ptr!(game, u16; 0x968) as *mut u8).offset(v0 as i32 as isize) as *mut u16) =
-        (var933).wrapping_add(v4);
-    let mut v5: u16 = var937;
-    if v0 != 0 {
-        v5 = (var937).wrapping_sub(word!(game.size_of_bg2));
-    }
-    *((ram_ptr!(game, u16; 0x96a) as *mut u8).offset(v0 as i32 as isize) as *mut u16) =
-        (prod).wrapping_add(v5);
-    let mut v6: u16 = (ram_ptr!(game, u16; 0xc948) as *mut u8)
-        .offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
-    let mut v7: u16 = 0;
-    if v0 != 0 {
-        v6 = ram_ptr!(game; 0xca50).offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
-        v7 = 264;
-    }
-    let v8: u16 = (*((ram_ptr!(game, u16; 0x964) as *mut u8).offset(v0 as i32 as isize)
-        as *mut u16))
-        .wrapping_add(v6);
-    *((ram_ptr!(game, u16; 0x96c) as *mut u8).offset(v0 as i32 as isize) as *mut u16) = v8;
-    *((ram_ptr!(game, u16; 0x96e) as *mut u8).offset(v0 as i32 as isize) as *mut u16) =
-        (v8).wrapping_add(68);
-    var937 = v7;
-    let t2: u16 = v0;
-    let mut v9: u16 = 0;
-    for _ in 0u16..17u16 {
-        let var93B: u16 = *r54.offset((v9 >> 1) as isize);
-        let v17: u16 = v9;
-        let v11: u16 = var937;
-        let tile_index = (var937 >> 1) as usize;
-        let ram = (&raw mut game.g_ram).cast::<u8>();
-        let first = ram
-            .add(crate::ram_map::word_arrays::bg1_column_update_tilemap_top_halves)
-            .cast::<u16>()
-            .add(tile_index);
-        let second = ram
-            .add(crate::ram_map::word_arrays::bg1_column_update_tilemap_bottom_halves)
-            .cast::<u16>()
-            .add(tile_index);
-        TileTables::draw_block(
-            ram.add(0xa000).cast(),
-            var93B,
-            [first, first.add(1), second, second.add(1)],
-            TileDrawOrder::Rows,
-        );
-        var937 = (v11).wrapping_add(4);
-        v9 = (v17).wrapping_add(2);
-    }
-    crate::update_place! { reference fresh6 = *((ram_ptr!(game, u16; 0x970) as *mut u8).offset(t2 as i32 as isize) as *mut u16) => (*fresh6).wrapping_add(1); }
+    build_scrolling_tilemap(v0, ScrollingDmaLayout::Row, game);
 }
 pub unsafe fn FixDoorsMovingUp(game: &mut Game) {
     word!(game.door_transition_frame_counter = 0);
