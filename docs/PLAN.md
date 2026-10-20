@@ -20,6 +20,56 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared file-copy rows (2026-10-20)
+
+The three file-copy/clear display modes share one ordered traversal, and the
+three slot entries share one row drawer. SRAM loads still precede each slot's
+palette decision; occupancy stays live across health/time calls. Source and
+destination reads retain confirmation short-circuiting. Labels, tile positions,
+destination-screen setup and final VRAM queue writes remain unchanged.
+The formatted complete change removes **47 lines**, including both helpers,
+the three-mode enum and retained public entries. The removed intermediate
+palette-zero store cannot affect occupancy: RAM 0F96 and 0954 are distinct,
+with no intervening call, and the same final palette precedes drawing.
+
+Actual original/replacement/normal-library routines pass **1632 component
+cases**, comparing full WRAM/SRAM and ordered real calls with their arguments
+and palettes. Cases cover three modes, eight occupancy masks, all 16 source/
+destination combinations 0..3, four save/render/queue profiles, and all three
+individual row entries. Real SRAM loading exercises primary and backup valid
+checksums, corrupt records (including clearing), and inconsistent occupancy.
+Health covers 0/99/799/1499 with up to 14 tanks; time includes 0, 9, 10 and 99
+hours. Real health/time/tilemap routines and queue effects execute.
+
+The same **1632 oracle entries** pass at bank 81 addresses 95BE, 9799, 9922,
+960F, 963F and 966F from the bank log. Full SRAM and WRAM agree except arithmetic
+scratch 0000..004F and the stack bytes actually traversed. Calls use native CPU
+mode, DP 0 and SP 1FF0; they do not compare CPU register outputs or constitute
+movie execution. All **22 temporary routine/branch/effect probes** execute in
+the normal library, including confirmation short-circuit and later row/queue
+writes. Their frame zero is the unused component probe clock. Probes are removed
+and the clean source passes the same checks. Source/library/harness/ROM pins
+and every source byte embedded in the normal library are checked.
+
+Formatting, normal release (19.19s), clean component/oracle
+checks (1.60s), diff check and progress pass. This menu batch's
+integration runs pass full any% **129712/0** (inputs 0..129711,
+116.17s) and Speed Booster **148406/0** (0..148405,
+147.32s), with rendering/audio and normal oracle comparisons.
+The build includes concurrent door-scroll commit 1edfb7b3. The initial replay
+was stopped when that commit landed, then rebuilt and restarted; no completed
+result is claimed for the stopped run. Probe observations predate that static
+identity change; selected row bodies remain identical. Dirty shader work is
+preserved separately. Movies check interactions; the component calls cover
+these menu paths.
+
+Committed Rust is **112547 lines**, leaving **12548 further lines** to
+reach below 100000. Unsafe-function count changes by +0; shared helpers balance
+retained-entry signature sharing. Cast-containing lines change by +0; other
+counters stay unchanged. Temporary checks are in the bindings root's rows/
+directory; the existing integrated/ target is reused. The complete remaining
+reduction budget is still unproven; the goal remains active.
+
 ## Shared door-scroll declarations (2026-10-20)
 
 All 63 literal door-scroll callbacks in bank 8F now share one declaration
@@ -117,14 +167,8 @@ Checked native PowerShell deletion of `navigation/` was rejected as "blocked
 by policy"; its completed scripts, DLL and logs remain. The integration target
 is retained as the current build cache. No cleanup is falsely credited.
 
-Next distinct draft shares the three file-copy row-display modes and their
-three per-slot drawing entries. Complete formatted source saves **47 lines**
-including helpers, enum and retained entries, before temporary probes. It is
-not compiled or behaviorally/oracle validated and is not counted as landed.
-Review the removed intermediate palette-zero store against the distinct
-occupancy word, and exercise real SRAM loading, health/time drawing, palette
-selection, short-circuit reads and VRAM queue writes. Draft/pricing files:
-`%TEMP%/sm-bindings-root-9c4daf2f/file-rows-next.rs` and `price-file-rows.py`.
+The 47-line file-row draft is now completed in the Shared file-copy rows
+entry above, with component/oracle and full integration checks.
 
 ## Remove zero pointer offsets (2026-10-20)
 

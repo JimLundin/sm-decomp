@@ -725,52 +725,47 @@ pub unsafe fn ClearMenuTilemap(game: &mut Game) {
 pub unsafe fn LoadMenuExitTilemap(game: &mut Game) {
     LoadMenuTilemap(0x688, addr_kMenuTilemap_Exit as u16, game);
 }
-pub unsafe fn DrawFileCopySaveFileInfo(game: &mut Game) {
-    LoadFromSram_(0, game);
-    (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
-    if (word!(game.nonempty_save_slots) & 1) == 0 {
-        (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 1024;
+#[derive(Clone, Copy)]
+enum FileRowEmphasis {
+    Occupied,
+    Destination,
+    Confirmation,
+}
+unsafe fn draw_file_copy_rows(emphasis: FileRowEmphasis, game: &mut Game) {
+    for slot in 0..3u16 {
+        LoadFromSram_(slot, game);
+        let dim = match emphasis {
+            FileRowEmphasis::Occupied => word!(game.nonempty_save_slots) & (1 << slot) == 0,
+            FileRowEmphasis::Destination => word!(game.eproj_id[16]) == slot,
+            FileRowEmphasis::Confirmation => {
+                word!(game.eproj_id[16]) != slot && word!(game.eproj_id[17]) != slot
+            }
+        };
+        (*ram_ptr!(game, EnemyData; 0xf78)).palette_index = if dim { 1024 } else { 0 };
+        draw_file_copy_row(slot, game);
     }
-    DrawFileCopySaveSlotAInfo(game);
-    LoadFromSram_(1, game);
-    (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
-    if (word!(game.nonempty_save_slots) & 2) == 0 {
-        (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 1024;
-    }
-    DrawFileCopySaveSlotBInfo(game);
-    LoadFromSram_(2, game);
-    (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
-    if (word!(game.nonempty_save_slots) & 4) == 0 {
-        (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 1024;
-    }
-    DrawFileCopySaveSlotCInfo(game);
     QueueTransferOfMenuTilemapToVramBG1(game);
 }
-pub unsafe fn DrawFileCopySaveSlotAInfo(game: &mut Game) {
-    DrawFileSelectionHealth(
-        ((word!(game.nonempty_save_slots) & 1) == 0) as u16,
-        0x218,
-        game,
-    );
-    DrawFileSelectionTime(
-        ((word!(game.nonempty_save_slots) & 1) == 0) as u16,
-        0x272,
-        game,
-    );
-    LoadMenuTilemap(0x234, addr_kMenuTilemap_TIME as u16, game);
-    LoadMenuTilemap(0x208, addr_kMenuTilemap_SamusA as u16, game);
+unsafe fn draw_file_copy_row(slot: u16, game: &mut Game) {
+    let mask = 1 << slot;
+    let base = (slot + 2) << 8;
+    DrawFileSelectionHealth(!word!(game.nonempty_save_slots) & mask, base + 0x18, game);
+    DrawFileSelectionTime(!word!(game.nonempty_save_slots) & mask, base + 0x72, game);
+    LoadMenuTilemap(base + 0x34, addr_kMenuTilemap_TIME as u16, game);
+    let label = [
+        addr_kMenuTilemap_SamusA,
+        addr_kMenuTilemap_SamusB,
+        addr_kMenuTilemap_SamusC,
+    ][slot as usize];
+    LoadMenuTilemap(base + 8, label as u16, game);
 }
-pub unsafe fn DrawFileCopySaveSlotBInfo(game: &mut Game) {
-    DrawFileSelectionHealth((!(word!(game.nonempty_save_slots)) & 2), 0x318, game);
-    DrawFileSelectionTime((!(word!(game.nonempty_save_slots)) & 2), 0x372, game);
-    LoadMenuTilemap(0x334, addr_kMenuTilemap_TIME as u16, game);
-    LoadMenuTilemap(0x308, addr_kMenuTilemap_SamusB as u16, game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    DrawFileCopySaveSlotAInfo => draw_file_copy_row(0, game);
+    DrawFileCopySaveSlotBInfo => draw_file_copy_row(1, game);
+    DrawFileCopySaveSlotCInfo => draw_file_copy_row(2, game);
 }
-pub unsafe fn DrawFileCopySaveSlotCInfo(game: &mut Game) {
-    DrawFileSelectionHealth((!(word!(game.nonempty_save_slots)) & 4), 0x418, game);
-    DrawFileSelectionTime((!(word!(game.nonempty_save_slots)) & 4), 0x472, game);
-    LoadMenuTilemap(0x434, addr_kMenuTilemap_TIME as u16, game);
-    LoadMenuTilemap(0x408, addr_kMenuTilemap_SamusC as u16, game);
+pub unsafe fn DrawFileCopySaveFileInfo(game: &mut Game) {
+    draw_file_copy_rows(FileRowEmphasis::Occupied, game);
 }
 pub unsafe fn QueueTransferOfMenuTilemapToVramBG1(game: &mut Game) {
     let v0: u16 = word!(game.vram_write_queue_tail);
@@ -866,28 +861,7 @@ pub unsafe fn DrawFileCopySelectDestinationSaveFileInfo(game: &mut Game) {
     (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[944i32 as usize] =
         (word!(game.eproj_id[16])).wrapping_add(8298);
     LoadMenuExitTilemap(game);
-    LoadFromSram_(0, game);
-    let mut v0: u16 = 1024;
-    if word!(game.eproj_id[16]) != 0 {
-        v0 = 0;
-    }
-    (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = v0;
-    DrawFileCopySaveSlotAInfo(game);
-    LoadFromSram_(1, game);
-    let mut v1: u16 = 1024;
-    if word!(game.eproj_id[16]) != 1 {
-        v1 = 0;
-    }
-    (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = v1;
-    DrawFileCopySaveSlotBInfo(game);
-    LoadFromSram_(2, game);
-    let mut v2: u16 = 1024;
-    if word!(game.eproj_id[16]) != 2 {
-        v2 = 0;
-    }
-    (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = v2;
-    DrawFileCopySaveSlotCInfo(game);
-    QueueTransferOfMenuTilemapToVramBG1(game);
+    draw_file_copy_rows(FileRowEmphasis::Destination, game);
 }
 pub unsafe fn FileSelectMenu_10_FileCopySelectDest(game: &mut Game) {
     static kFileCopySelectDest_MissileY: [u16; 4] = [72, 104, 136, 212];
@@ -968,28 +942,7 @@ pub unsafe fn DrawFileCopyClearConfirmation(game: &mut Game) {
     DrawFileCopyConfirmationSaveFileInfo(game);
 }
 pub unsafe fn DrawFileCopyConfirmationSaveFileInfo(game: &mut Game) {
-    LoadFromSram_(0, game);
-    let mut v0: i32 = 0;
-    if word!(game.eproj_id[16]) != 0 && word!(game.eproj_id[17]) != 0 {
-        v0 = 1024;
-    }
-    (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = v0 as u16;
-    DrawFileCopySaveSlotAInfo(game);
-    LoadFromSram_(1, game);
-    let mut v1: i32 = 0;
-    if word!(game.eproj_id[16]) != 1 && word!(game.eproj_id[17]) != 1 {
-        v1 = 1024;
-    }
-    (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = v1 as u16;
-    DrawFileCopySaveSlotBInfo(game);
-    LoadFromSram_(2, game);
-    let mut v2: i32 = 0;
-    if word!(game.eproj_id[16]) != 2 && word!(game.eproj_id[17]) != 2 {
-        v2 = 1024;
-    }
-    (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = v2 as u16;
-    DrawFileCopySaveSlotCInfo(game);
-    QueueTransferOfMenuTilemapToVramBG1(game);
+    draw_file_copy_rows(FileRowEmphasis::Confirmation, game);
 }
 pub unsafe fn FileSelectMenu_12_FileCopyConfirm(game: &mut Game) {
     DrawBorderAroundDataCopyMode(game);
