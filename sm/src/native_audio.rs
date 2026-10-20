@@ -49,7 +49,7 @@ pub(crate) unsafe fn upload(mut source: u32, game: &mut Game) {
             }
         }
     }
-    let mut token = 0xccu8;
+    let mut token = 0xcc;
     loop {
         let mut count = word(game, source);
         advance(&mut source, 2, game);

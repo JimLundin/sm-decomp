@@ -94,7 +94,7 @@ pub unsafe fn dma_read(dma: *mut Dma, address: u16) -> u8 {
         _ => {
             crate::native_assertion! {
                 @failure
-                b"0\0", b"src/snes/dma.c\0", 118u32, pointer __ASSERT_FUNCTION.as_ptr()
+                b"0\0", b"src/snes/dma.c\0", 118, pointer __ASSERT_FUNCTION.as_ptr()
             };
         }
     }
@@ -129,7 +129,7 @@ pub unsafe fn dma_doDma(dma: *mut Dma, game: &mut Game) {
         (*dma).dmaTimer = (*dma).dmaTimer.wrapping_sub(2);
         return;
     }
-    let mut i = 0usize;
+    let mut i = 0;
     while i < 8 {
         if (*dma).channel[i].dmaActive {
             break;
@@ -147,7 +147,7 @@ pub unsafe fn dma_doDma(dma: *mut Dma, game: &mut Game) {
     {
         printf(
             b"Warning! DMA from addr 0x%x\n\0" as *const u8 as *const c_char,
-            ((*dma).channel[i].aBank as i32) << 16i32 | (*dma).channel[i].aAdr as i32,
+            ((*dma).channel[i].aBank as i32) << 16 | (*dma).channel[i].aAdr as i32,
         );
         game.g_fail = true_0 != 0;
     }
@@ -194,22 +194,22 @@ unsafe fn hdma_load_indirect_address(dma: *mut Dma, channel: usize, game: &mut G
     (*dma).hdmaTimer = (*dma).hdmaTimer.wrapping_add(16);
 }
 pub unsafe fn dma_initHdma(dma: *mut Dma, game: &mut Game) {
-    (*dma).hdmaTimer = 0u16;
+    (*dma).hdmaTimer = 0;
     let mut hdmaHappened: bool = false_0 != 0;
     let mut keep_channel_active: bool;
-    let mut i: i32 = 0i32;
-    while i < 8i32 {
+    let mut i: i32 = 0;
+    while i < 8 {
         keep_channel_active = if (*dma).channel[i as usize].hdmaActive {
             hdmaHappened = true_0 != 0;
             (*dma).channel[i as usize].dmaActive = false_0 != 0;
-            (*dma).channel[i as usize].offIndex = 0u8;
+            (*dma).channel[i as usize].offIndex = 0;
             (*dma).channel[i as usize].tableAdr = (*dma).channel[i as usize].aAdr;
             (*dma).channel[i as usize].repCount = hdma_read_table_byte(dma, i as usize, game);
-            if (*dma).channel[i as usize].repCount as i32 == 0i32 {
+            if (*dma).channel[i as usize].repCount as i32 == 0 {
                 (*dma).channel[i as usize].terminated = true_0 != 0;
                 false
             } else {
-                (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8i32) as u16;
+                (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8) as u16;
                 if (*dma).channel[i as usize].indirect {
                     hdma_load_indirect_address(dma, i as usize, game);
                 }
@@ -226,25 +226,25 @@ pub unsafe fn dma_initHdma(dma: *mut Dma, game: &mut Game) {
         i += 1;
     }
     if hdmaHappened {
-        (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 16i32) as u16;
+        (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 16) as u16;
     }
 }
 pub unsafe fn dma_doHdma(dma: *mut Dma, game: &mut Game) {
-    (*dma).hdmaTimer = 0u16;
+    (*dma).hdmaTimer = 0;
     let mut hdmaHappened: bool = false_0 != 0;
-    let mut i: i32 = 0i32;
-    while i < 8i32 {
+    let mut i: i32 = 0;
+    while i < 8 {
         if (*dma).channel[i as usize].hdmaActive as i32 != 0
             && !(*dma).channel[i as usize].terminated
         {
             hdmaHappened = true_0 != 0;
             (*dma).channel[i as usize].dmaActive = false_0 != 0;
-            (*dma).channel[i as usize].offIndex = 0u8;
-            (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8i32) as u16;
+            (*dma).channel[i as usize].offIndex = 0;
+            (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8) as u16;
             if (*dma).channel[i as usize].doTransfer {
-                let mut j: i32 = 0i32;
+                let mut j: i32 = 0;
                 while j < transferLength[(*dma).channel[i as usize].mode as usize] {
-                    (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8i32) as u16;
+                    (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8) as u16;
                     if (*dma).channel[i as usize].indirect {
                         crate::update_place! { previous fresh4 = (*dma).channel[i as usize].size => (*dma).channel[i as usize].size.wrapping_add(1); }
                         dma_transferByte(
@@ -281,7 +281,7 @@ pub unsafe fn dma_doHdma(dma: *mut Dma, game: &mut Game) {
                 if (*dma).channel[i as usize].indirect {
                     hdma_load_indirect_address(dma, i as usize, game);
                 }
-                if (*dma).channel[i as usize].repCount as i32 == 0i32 {
+                if (*dma).channel[i as usize].repCount as i32 == 0 {
                     (*dma).channel[i as usize].terminated = true_0 != 0;
                 }
                 (*dma).channel[i as usize].doTransfer = true_0 != 0;
@@ -290,7 +290,7 @@ pub unsafe fn dma_doHdma(dma: *mut Dma, game: &mut Game) {
         i += 1;
     }
     if hdmaHappened {
-        (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 16i32) as u16;
+        (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 16) as u16;
     }
 }
 unsafe fn dma_transferByte(

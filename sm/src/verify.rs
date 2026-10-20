@@ -235,7 +235,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         }
         // Initialization and checkpoint loading are setup, not segment hits.
         sm::verify_probe::configure(&required_probes)?;
-        let mut discarded_audio = [0i16; 534 * 2];
+        let mut discarded_audio = [0; 534 * 2];
         let mut coverage = ReplayCoverage::default();
         // Optional console diagnostics share the normal CLI and DLL replay path.
         let trace = std::env::var_os("SM_VERIFY_TRACE").is_some();

@@ -14,11 +14,11 @@ pub const NULL: *mut c_void = null_mut::<c_void>();
 pub unsafe fn cart_init(snes: *mut Snes) -> *mut Cart {
     let cart = malloc(size_of::<Cart>() as size_t) as *mut Cart;
     (*cart).snes = snes;
-    (*cart).type_0 = 0u8;
+    (*cart).type_0 = 0;
     (*cart).rom = null_mut::<u8>();
-    (*cart).romSize = 0u32;
+    (*cart).romSize = 0;
     (*cart).ram = null_mut::<u8>();
-    (*cart).ramSize = 0u32;
+    (*cart).ramSize = 0;
     cart
 }
 pub unsafe fn cart_reset(cart: *mut Cart) {}
@@ -45,9 +45,9 @@ pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: *mut u8, romSize: i32
     }
     (*cart).rom = malloc(romSize as size_t) as *mut u8;
     (*cart).romSize = romSize as u32;
-    if ramSize > 0i32 {
+    if ramSize > 0 {
         (*cart).ram = malloc(ramSize as size_t) as *mut u8;
-        memset((*cart).ram as *mut c_void, 0i32, ramSize as size_t);
+        memset((*cart).ram as *mut c_void, 0, ramSize as size_t);
     } else {
         (*cart).ram = null_mut::<u8>();
     }
@@ -63,7 +63,7 @@ pub unsafe fn cart_read(cart: *mut Cart, bank: u8, adr: u16, game: &mut Game) ->
         0 => {
             crate::native_assertion! {
                 '_c2rust_label;
-                b"0\0", b"src/snes/cart.c\0", 57u32,
+                b"0\0", b"src/snes/cart.c\0", 57,
                 b"uint8_t cart_read(Cart *, uint8_t, uint16_t)\0"
             };
             return (*(*cart).snes).openBus;
@@ -74,7 +74,7 @@ pub unsafe fn cart_read(cart: *mut Cart, bank: u8, adr: u16, game: &mut Game) ->
     }
     crate::native_assertion! {
         '_c2rust_label_0;
-        b"0\0", b"src/snes/cart.c\0", 62u32, b"uint8_t cart_read(Cart *, uint8_t, uint16_t)\0"
+        b"0\0", b"src/snes/cart.c\0", 62, b"uint8_t cart_read(Cart *, uint8_t, uint16_t)\0"
     };
     (*(*cart).snes).openBus
 }
@@ -100,7 +100,7 @@ unsafe fn cart_readLorom(cart: *mut Cart, mut bank: u8, adr: u16, game: &mut Gam
     }
     printf(
         b"While trying to read from 0x%x\n\0" as *const u8 as *const c_char,
-        (bank as i32) << 16i32 | adr as i32,
+        (bank as i32) << 16 | adr as i32,
     );
     let snes = &*(*cart).snes;
     let cpu = &*snes.cpu;
@@ -113,7 +113,7 @@ unsafe fn cart_readLorom(cart: *mut Cart, mut bank: u8, adr: u16, game: &mut Gam
         "CPU flags: N={} V={} M={} X={} D={} I={} Z={} C={} E={}",
         cpu.n, cpu.v, cpu.mf, cpu.xf, cpu.d, cpu.i, cpu.z, cpu.c, cpu.e,
     );
-    let mut direct_page = [0u8; 13];
+    let mut direct_page = [0; 13];
     for (index, value) in direct_page.iter_mut().enumerate() {
         let address = cpu.dp.wrapping_add(0x44 + index as u16);
         *value = *snes.ram.add(usize::from(address));
@@ -132,38 +132,32 @@ unsafe fn cart_writeLorom(cart: *mut Cart, bank: u8, address: u16, value: u8) {
 }
 unsafe fn cart_readHirom(cart: *mut Cart, mut bank: u8, adr: u16) -> u8 {
     bank = (bank & 0x7f);
-    if (bank as i32) < 0x40i32
-        && adr as i32 >= 0x6000i32
-        && (adr as i32) < 0x8000i32
-        && (*cart).ramSize > 0u32
+    if (bank as i32) < 0x40 && adr as i32 >= 0x6000 && (adr as i32) < 0x8000 && (*cart).ramSize > 0
     {
         return *(*cart).ram.offset(
-            (((bank as i32 & 0x3fi32) << 13i32 | adr as i32 & 0x1fffi32) as u32
-                & (*cart).ramSize.wrapping_sub(1u32)) as isize,
+            (((bank as i32 & 0x3f) << 13 | adr as i32 & 0x1fff) as u32
+                & (*cart).ramSize.wrapping_sub(1)) as isize,
         );
     }
-    if adr as i32 >= 0x8000i32 || bank as i32 >= 0x40i32 {
+    if adr as i32 >= 0x8000 || bank as i32 >= 0x40 {
         return *(*cart).rom.offset(
-            (((bank as i32 & 0x3fi32) << 16i32 | adr as i32) as u32
-                & (*cart).romSize.wrapping_sub(1u32)) as isize,
+            (((bank as i32 & 0x3f) << 16 | adr as i32) as u32 & (*cart).romSize.wrapping_sub(1))
+                as isize,
         );
     }
     crate::native_assertion! {
         '_c2rust_label;
-        b"0\0", b"src/snes/cart.c\0", 109u32, b"uint8_t cart_readHirom(Cart *, uint8_t, uint16_t)\0"
+        b"0\0", b"src/snes/cart.c\0", 109, b"uint8_t cart_readHirom(Cart *, uint8_t, uint16_t)\0"
     };
     (*(*cart).snes).openBus
 }
 unsafe fn cart_writeHirom(cart: *mut Cart, mut bank: u8, adr: u16, val: u8) {
     bank = (bank & 0x7f);
-    if (bank as i32) < 0x40i32
-        && adr as i32 >= 0x6000i32
-        && (adr as i32) < 0x8000i32
-        && (*cart).ramSize > 0u32
+    if (bank as i32) < 0x40 && adr as i32 >= 0x6000 && (adr as i32) < 0x8000 && (*cart).ramSize > 0
     {
         *(*cart).ram.offset(
-            (((bank as i32 & 0x3fi32) << 13i32 | adr as i32 & 0x1fffi32) as u32
-                & (*cart).ramSize.wrapping_sub(1u32)) as isize,
+            (((bank as i32 & 0x3f) << 13 | adr as i32 & 0x1fff) as u32
+                & (*cart).ramSize.wrapping_sub(1)) as isize,
         ) = val;
     }
 }

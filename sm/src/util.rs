@@ -41,7 +41,7 @@ pub unsafe fn NextDelim(s: *mut *mut c_char, sep: i32) -> *mut c_char {
 }
 #[inline]
 unsafe fn ToLower(a: i32) -> i32 {
-    a + (a >= 'A' as i32 && a <= 'Z' as i32) as i32 * 32i32
+    a + (a >= 'A' as i32 && a <= 'Z' as i32) as i32 * 32
 }
 pub unsafe fn StringEqualsNoCase(mut a: *const c_char, mut b: *const c_char) -> bool {
     loop {
@@ -52,7 +52,7 @@ pub unsafe fn StringEqualsNoCase(mut a: *const c_char, mut b: *const c_char) -> 
         if aa != bb {
             return false_0 != 0;
         }
-        if aa == 0i32 {
+        if aa == 0 {
             return true_0 != 0;
         }
     }
@@ -61,7 +61,7 @@ pub unsafe fn StringStartsWithNoCase(mut a: *const c_char, mut b: *const c_char)
     loop {
         let aa: i32 = ToLower(*a as i32);
         let bb: i32 = ToLower(*b as i32);
-        if bb == 0i32 {
+        if bb == 0 {
             return a;
         }
         if aa != bb {
@@ -83,7 +83,7 @@ pub unsafe fn ReadWholeFile(name: *const c_char, length: *mut size_t) -> *mut u8
     if buffer.is_null() {
         Die(b"malloc failed\0" as *const u8 as *const c_char);
     }
-    *buffer.offset(size as isize) = 0u8;
+    *buffer.offset(size as isize) = 0;
     if fread(buffer as *mut c_void, 1 as size_t, size, f) as size_t != size {
         Die(b"fread failed\0" as *const u8 as *const c_char);
     }

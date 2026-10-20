@@ -138,7 +138,7 @@ pub unsafe fn apu_cpuWrite(apu: *mut Apu, adr: u16, val: u8) {
         0xf2 => (*apu).dspAdr = val,
         0xf3 => {
             record_dsp_write(&mut (*apu).c2rust_unnamed.hist, (*apu).dspAdr, val);
-            if ((*apu).dspAdr as i32) < 0x80i32 {
+            if ((*apu).dspAdr as i32) < 0x80 {
                 dsp_write((*apu).dsp, (*apu).dspAdr, val);
             }
         }

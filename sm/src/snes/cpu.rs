@@ -785,11 +785,11 @@ unsafe fn test_and_update_bits(cpu: *mut Cpu, low: u32, high: u32, set: bool, ga
 }
 
 pub unsafe fn DumpCpuHistory(game: &mut Game) {
-    let mut i: i32 = 0i32;
-    while i < 8i32 {
+    let mut i: i32 = 0;
+    while i < 8 {
         printf(
             b"PC history: 0x%x\n\0" as *const u8 as *const c_char,
-            game.pc_hist[(game.pc_hist_ctr.wrapping_add(i as u32) & 7_u32) as usize],
+            game.pc_hist[(game.pc_hist_ctr.wrapping_add(i as u32) & 7_) as usize],
         );
         i += 1;
     }
@@ -876,8 +876,8 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
             (*cpu).i = true;
             (*cpu).d = false;
-            (*cpu).k = 0_u8;
-            (*cpu).pc = read_word(cpu, 0xffe4_u32, 0xffe5_u32, game);
+            (*cpu).k = 0_;
+            (*cpu).pc = read_word(cpu, 0xffe4_, 0xffe5_, game);
         }
         0x03 => [address_stack_relative(cpu, game) => logical_accumulator(LogicOperation::Or)]
         0x04 => [address_direct_page(cpu, None, game) => test_and_update_bits(true)]
@@ -1077,7 +1077,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             if target_bank == 0x80 && target == 0x8573 {
                 printf(
                     b"Current PC = 0x%x\n\0" as *const u8 as *const c_char,
-                    ((*cpu).k as i32) << 16i32 | (*cpu).pc as i32,
+                    ((*cpu).k as i32) << 16 | (*cpu).pc as i32,
                 );
                 DumpCpuHistory(game);
                 Die(b"The game has crashed!\n\0" as *const u8 as *const c_char);
@@ -1097,7 +1097,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 if delta != 0 && delta != 2 {
                     crate::native_assertion! {
                         @failure
-                        b"delta == 0 || delta == 2\0", b"src/snes/cpu.c\0", 1386u32,
+                        b"delta == 0 || delta == 2\0", b"src/snes/cpu.c\0", 1386,
                         b"void cpu_doOpcode(Cpu *, uint8_t)\0"
                     };
                 }
@@ -1135,7 +1135,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 if (*cpu).sp != (*cpu).spBreakpoint {
                     crate::native_assertion! {
                         @failure
-                        b"cpu->sp == cpu->spBreakpoint\0", b"src/snes/cpu.c\0", 1464u32,
+                        b"cpu->sp == cpu->spBreakpoint\0", b"src/snes/cpu.c\0", 1464,
                         b"void cpu_doOpcode(Cpu *, uint8_t)\0"
                     };
                 }

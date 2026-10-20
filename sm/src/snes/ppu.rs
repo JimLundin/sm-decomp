@@ -205,8 +205,8 @@ fn update_brightness_tables(brightness: u8, normal: &mut [u8; 63], half: &mut [u
     normal[32..].fill(maximum);
 }
 pub unsafe fn ppu_runLine(ppu: *mut Ppu, line: i32, game: &mut Game) {
-    if line == 0i32 {
-        (*ppu).mosaicStartLine = 1u8;
+    if line == 0 {
+        (*ppu).mosaicStartLine = 1;
         (*ppu).rangeOver = false_0 != 0;
         (*ppu).timeOver = false_0 != 0;
         (*ppu).evenFrame = !(*ppu).evenFrame;
@@ -228,11 +228,11 @@ pub unsafe fn ppu_runLine(ppu: *mut Ppu, line: i32, game: &mut Game) {
         if game.g_new_ppu && !((*ppu).mode == 7 && (*ppu).m7extBg) && !mosaic {
             PpuDrawWholeLine(ppu, line as u32);
         } else {
-            if (*ppu).mode as i32 == 7i32 {
+            if (*ppu).mode as i32 == 7 {
                 ppu_calculateMode7Starts(ppu, line);
             }
-            let mut x: i32 = 0i32;
-            while x < 256i32 {
+            let mut x: i32 = 0;
+            while x < 256 {
                 ppu_handlePixel(ppu, x, line);
                 x += 1;
             }
@@ -254,14 +254,14 @@ unsafe fn PpuWindows_Clear(win: *mut PpuWindows, ppu: *mut Ppu, layer: u32) {
     } else {
         0i32
     } as i16;
-    (*win).edges[1i32 as usize] = (256i32
-        + (if layer != 2u32 {
+    (*win).edges[1i32 as usize] = (256
+        + (if layer != 2 {
             (*ppu).extraRightCur as i32
         } else {
-            0i32
+            0
         })) as i16;
-    (*win).nr = 1u8;
-    (*win).bits = 0u8;
+    (*win).nr = 1;
+    (*win).bits = 0;
 }
 // Each window covers consecutive intervals between its two boundary edges.
 fn ppu_window_bits(edges: &[i16; 6], left: &u8, right: &u8) -> u8 {
@@ -273,16 +273,16 @@ fn ppu_window_bits(edges: &[i16; 6], left: &u8, right: &u8) -> u8 {
     while edges[end as usize] != *right as i16 + 1 {
         end = end.wrapping_add(1);
     }
-    (((1i32 << end.wrapping_sub(start)) - 1) << start) as u8
+    (((1 << end.wrapping_sub(start)) - 1) << start) as u8
 }
 unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: u32) {
-    let winflags: u32 = (*ppu).windowsel >> layer.wrapping_mul(4u32);
-    let mut nr: u32 = 1u32;
-    let window_right: i32 = 256i32
-        + (if layer != 2u32 {
+    let winflags: u32 = (*ppu).windowsel >> layer.wrapping_mul(4);
+    let mut nr: u32 = 1;
+    let window_right: i32 = 256
+        + (if layer != 2 {
             (*ppu).extraRightCur as i32
         } else {
-            0i32
+            0
         });
     (*win).edges[0i32 as usize] = -if layer != 2u32 {
         (*ppu).extraLeftCur as i32
@@ -300,8 +300,8 @@ unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: u32) {
             nr = nr.wrapping_add(1);
             (*win).edges[nr as usize] = window_right as i16;
         }
-        if ((*ppu).window1right as i32 + 1i32) < window_right {
-            (*win).edges[nr as usize] = ((*ppu).window1right as i32 + 1i32) as i16;
+        if ((*ppu).window1right as i32 + 1) < window_right {
+            (*win).edges[nr as usize] = ((*ppu).window1right as i32 + 1) as i16;
             nr = nr.wrapping_add(1);
             (*win).edges[nr as usize] = window_right as i16;
         }
@@ -309,7 +309,7 @@ unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: u32) {
     let w2_ena: bool = winflags & kWindow2Enabled as i32 as u32 != 0
         && (*ppu).window2left as i32 <= (*ppu).window2right as i32;
     if w2_ena {
-        let mut i: u32 = 0u32;
+        let mut i: u32 = 0;
         while i <= nr && {
             t = (*ppu).window2left as i32;
             t != (*win).edges[i as usize] as i32
@@ -318,7 +318,7 @@ unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: u32) {
                 crate::update_place! { previous fresh0 = nr => nr.wrapping_add(1); }
                 j = fresh0;
                 while j >= i {
-                    (*win).edges[j.wrapping_add(1u32) as usize] = (*win).edges[j as usize];
+                    (*win).edges[j.wrapping_add(1) as usize] = (*win).edges[j as usize];
                     j = j.wrapping_sub(1);
                 }
                 (*win).edges[i as usize] = t as i16;
@@ -328,14 +328,14 @@ unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: u32) {
             }
         }
         while i <= nr && {
-            t = (*ppu).window2right as i32 + 1i32;
+            t = (*ppu).window2right as i32 + 1;
             t != (*win).edges[i as usize] as i32
         } {
             if t < (*win).edges[i as usize] as i32 {
                 crate::update_place! { previous fresh1 = nr => nr.wrapping_add(1); }
                 j = fresh1;
                 while j >= i {
-                    (*win).edges[j.wrapping_add(1u32) as usize] = (*win).edges[j as usize];
+                    (*win).edges[j.wrapping_add(1) as usize] = (*win).edges[j as usize];
                     j = j.wrapping_sub(1);
                 }
                 (*win).edges[i as usize] = t as i16;
@@ -346,8 +346,8 @@ unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: u32) {
         }
     }
     (*win).nr = nr as u8;
-    let mut w1_bits: u8 = 0u8;
-    let mut w2_bits: u8 = 0u8;
+    let mut w1_bits: u8 = 0;
+    let mut w2_bits: u8 = 0;
     if w1_ena {
         w1_bits = ppu_window_bits(&(*win).edges, &(*ppu).window1left, &(*ppu).window1right);
     }
@@ -374,30 +374,29 @@ unsafe fn ppu_background_row(
     layer: u32,
 ) -> ([*const u16; 2], i32, i32) {
     y = y.wrapping_add((*bglayer).vScroll as u32);
-    let mut sc_offs: i32 =
-        ((*bglayer).tilemapAdr as u32).wrapping_add((y >> 3i32 & 0x1fu32) << 5i32) as i32;
-    if y & 0x100u32 != 0 && (*bglayer).tilemapHigher as i32 != 0 {
+    let mut sc_offs: i32 = ((*bglayer).tilemapAdr as u32).wrapping_add((y >> 3 & 0x1f) << 5) as i32;
+    if y & 0x100 != 0 && (*bglayer).tilemapHigher as i32 != 0 {
         sc_offs += if (*bglayer).tilemapWider as i32 != 0 {
-            0x800i32
+            0x800
         } else {
-            0x400i32
+            0x400
         };
     }
     let tps: [*const u16; 2] = [
-        (&raw mut (*ppu).vram as *mut u16).offset((sc_offs & 0x7fffi32) as isize) as *const u16,
+        (&raw mut (*ppu).vram as *mut u16).offset((sc_offs & 0x7fff) as isize) as *const u16,
         (&raw mut (*ppu).vram as *mut u16).offset(
             (sc_offs
                 + (if (*bglayer).tilemapWider as i32 != 0 {
-                    0x400i32
+                    0x400
                 } else {
-                    0i32
+                    0
                 })
-                & 0x7fffi32) as isize,
+                & 0x7fff) as isize,
         ) as *const u16,
     ];
     let tileadr: i32 = (*ppu).bgLayer[layer as usize].tileAdr as i32;
-    let tileadr1: i32 = ((tileadr + 7i32) as u32).wrapping_sub(y & 0x7u32) as i32;
-    let tileadr0: i32 = (tileadr as u32).wrapping_add(y & 0x7u32) as i32;
+    let tileadr1: i32 = ((tileadr + 7i32) as u32).wrapping_sub(y & 0x7) as i32;
+    let tileadr0: i32 = (tileadr as u32).wrapping_add(y & 0x7) as i32;
     (tps, tileadr0, tileadr1)
 }
 // Gather one bit from each packed plane byte into the palette index.
@@ -518,11 +517,11 @@ unsafe fn ppu_draw_planar_background<const PLANES: u32, const PALETTE_SHIFT: u32
             .data as *mut PpuZbufType)
                 .offset(win.edges[windex as usize] as i32 as isize)
                 .offset(kPpuExtraLeftRight as i32 as isize);
-            let mut tp = tps[(x >> 8i32 & 1u32) as usize].offset((x >> 3i32 & 0x1fu32) as isize);
+            let mut tp = tps[(x >> 8i32 & 1u32) as usize].offset((x >> 3 & 0x1f) as isize);
             let mut tp_last = tps[(x >> 8i32 & 1u32) as usize].offset(31);
-            let mut tp_next = tps[(x >> 8i32 & 1u32 ^ 1u32) as usize];
-            if x & 7u32 != 0 {
-                let mut curw: i32 = IntMin((8u32).wrapping_sub(x & 7u32) as i32, w as i32);
+            let mut tp_next = tps[(x >> 8 & 1 ^ 1) as usize];
+            if x & 7 != 0 {
+                let mut curw: i32 = IntMin((8u32).wrapping_sub(x & 7) as i32, w as i32);
                 w = w.wrapping_sub(curw as u32);
                 let tile: u32 = *tp as u32;
                 if tp != tp_last {
@@ -535,16 +534,16 @@ unsafe fn ppu_draw_planar_background<const PLANES: u32, const PALETTE_SHIFT: u32
                 let (mut z, mut bits) =
                     ppu_load_tile_row::<PLANES>(ppu, tile, tileadr0, tileadr1, zhi, zlo);
                 if bits != 0 {
-                    z = (z as u32).wrapping_add((tile & 0x1c00u32) >> PALETTE_SHIFT as i32)
+                    z = (z as u32).wrapping_add((tile & 0x1c00) >> PALETTE_SHIFT as i32)
                         as PpuZbufType as PpuZbufType;
-                    if tile & 0x4000u32 != 0 {
-                        bits >>= x & 7u32;
+                    if tile & 0x4000 != 0 {
+                        bits >>= x & 7;
                         x = x.wrapping_add(curw as u32);
                         (bits, dstz, pixel) =
                             ppu_draw_partial_tile::<PLANES>(dstz, bits, z, curw as u32, true);
                         curw = 0;
                     } else {
-                        bits <<= x & 7u32;
+                        bits <<= x & 7;
                         x = x.wrapping_add(curw as u32);
                         (bits, dstz, pixel) =
                             ppu_draw_partial_tile::<PLANES>(dstz, bits, z, curw as u32, false);
@@ -554,7 +553,7 @@ unsafe fn ppu_draw_planar_background<const PLANES: u32, const PALETTE_SHIFT: u32
                     dstz = dstz.offset(curw as isize);
                 }
             }
-            while w >= 8u32 {
+            while w >= 8 {
                 let tile_0: u32 = *tp as u32;
                 if tp != tp_last {
                     tp = tp.offset(1);
@@ -566,21 +565,21 @@ unsafe fn ppu_draw_planar_background<const PLANES: u32, const PALETTE_SHIFT: u32
                 let (mut z_0, bits_0) =
                     ppu_load_tile_row::<PLANES>(ppu, tile_0, tileadr0, tileadr1, zhi, zlo);
                 if bits_0 != 0 {
-                    z_0 = (z_0 as u32).wrapping_add((tile_0 & 0x1c00u32) >> PALETTE_SHIFT as i32)
+                    z_0 = (z_0 as u32).wrapping_add((tile_0 & 0x1c00) >> PALETTE_SHIFT as i32)
                         as PpuZbufType as PpuZbufType;
                     pixel = ppu_draw_full_tile::<PLANES>(dstz, bits_0, z_0, tile_0 & 0x4000 != 0);
                 }
                 dstz = dstz.offset(8);
-                w = w.wrapping_sub(8u32);
+                w = w.wrapping_sub(8);
             }
             if w != 0 {
                 let tile_1: u32 = *tp as u32;
                 let (mut z_1, mut bits_1) =
                     ppu_load_tile_row::<PLANES>(ppu, tile_1, tileadr0, tileadr1, zhi, zlo);
                 if bits_1 != 0 {
-                    z_1 = (z_1 as u32).wrapping_add((tile_1 & 0x1c00u32) >> PALETTE_SHIFT as i32)
+                    z_1 = (z_1 as u32).wrapping_add((tile_1 & 0x1c00) >> PALETTE_SHIFT as i32)
                         as PpuZbufType as PpuZbufType;
-                    if tile_1 & 0x4000u32 != 0 {
+                    if tile_1 & 0x4000 != 0 {
                         (bits_1, dstz, pixel) =
                             ppu_draw_partial_tile::<PLANES>(dstz, bits_1, z_1, w as u32, true);
                         w = 0;
@@ -661,7 +660,7 @@ unsafe fn ppu_mode7_sample(
     ((*ppu).vram[(u32::from(tile) * 64 + (y >> 8 & 7) * 8 + (x >> 8 & 7)) as usize] >> 8) as u8
 }
 unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZbufType) {
-    let layer: i32 = 0i32;
+    let layer: i32 = 0;
     if (*ppu).screenEnabled[sub as usize] as i32 & (1i32) << layer == 0 {
         return;
     }
@@ -672,7 +671,7 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZb
         (*ppu).m7matrix[4],
         (*ppu).m7matrix[5],
     );
-    let mosaic_enabled: bool = (*ppu).mosaicEnabled as i32 & (1i32) << 0i32 != 0;
+    let mosaic_enabled: bool = (*ppu).mosaicEnabled as i32 & (1i32) << 0 != 0;
     if mosaic_enabled {
         y = (*ppu).mosaicModulo[y as usize] as u32;
     }
@@ -684,11 +683,11 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZb
     let m7startX: u32 = (((*ppu).m7matrix[0i32 as usize] as i32 * clippedH & !(63i32)) as u32)
         .wrapping_add(((*ppu).m7matrix[1i32 as usize] as u32).wrapping_mul(ry) & !(63i32) as u32)
         .wrapping_add(((*ppu).m7matrix[1i32 as usize] as i32 * clippedV & !(63i32)) as u32)
-        .wrapping_add((xCenter << 8i32) as u32);
+        .wrapping_add((xCenter << 8) as u32);
     let m7startY: u32 = (((*ppu).m7matrix[2i32 as usize] as i32 * clippedH & !(63i32)) as u32)
         .wrapping_add(((*ppu).m7matrix[3i32 as usize] as u32).wrapping_mul(ry) & !(63i32) as u32)
         .wrapping_add(((*ppu).m7matrix[3i32 as usize] as i32 * clippedV & !(63i32)) as u32)
-        .wrapping_add((yCenter << 8i32) as u32);
+        .wrapping_add((yCenter << 8) as u32);
     let mut windex: size_t = 0 as size_t;
     while windex < win.nr as size_t {
         if (win.bits as i32 & (1i32) << windex == 0) {
@@ -705,7 +704,7 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZb
                 .offset(x2 as isize)
                 .offset(kPpuExtraLeftRight as i32 as isize);
             let rx: u32 = (if (*ppu).m7xFlip as i32 != 0 {
-                255i32 - x
+                255 - x
             } else {
                 x
             }) as u32;
@@ -724,9 +723,9 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZb
                 (*ppu).m7matrix[2i32 as usize] as i32
             }) as u32;
             let outside_value: u32 = if (*ppu).m7largeField as i32 != 0 {
-                0x3ffffu32
+                0x3ffff
             } else {
-                0xffffffffu32
+                0xffffffff
             };
             let char_fill: bool = (*ppu).m7charFill;
             if mosaic_enabled {
@@ -736,7 +735,7 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZb
                     w = IntMin(w, dstz_end.offset_from(dstz) as c_long as i32);
                     let pixel = ppu_mode7_sample(ppu, xpos, ypos, outside_value, char_fill);
                     if pixel != 0 {
-                        let mut i: i32 = 0i32;
+                        let mut i: i32 = 0;
                         loop {
                             *dstz.offset(i as isize) = (pixel as i32 + z as i32) as PpuZbufType;
                             i += 1;
@@ -772,7 +771,7 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZb
     }
 }
 unsafe fn PpuDrawSprites(ppu: *mut Ppu, y: u32, sub: u32, clear_backdrop: bool) {
-    let layer: i32 = 4i32;
+    let layer: i32 = 4;
     if (*ppu).screenEnabled[sub as usize] as i32 & (1i32) << layer == 0 {
         return;
     }
@@ -814,51 +813,51 @@ unsafe fn PpuDrawSprites(ppu: *mut Ppu, y: u32, sub: u32, clear_backdrop: bool) 
     }
 }
 unsafe fn PpuDrawBackgrounds(ppu: *mut Ppu, y: i32, sub: bool) {
-    if (*ppu).mode as i32 == 1i32 {
+    if (*ppu).mode as i32 == 1 {
         if (*ppu).lineHasSprites {
             PpuDrawSprites(ppu, y as u32, sub as u32, true_0 != 0);
         }
-        if (*ppu).mosaicEnabled as i32 & (1i32) << 0i32 != 0 {
+        if (*ppu).mosaicEnabled as i32 & (1i32) << 0 != 0 {
             crate::native_assertion! {
                 '_c2rust_label;
-                b"0\0", b"src/snes/ppu.c\0", 679u32, pointer __ASSERT_FUNCTION.as_ptr()
+                b"0\0", b"src/snes/ppu.c\0", 679, pointer __ASSERT_FUNCTION.as_ptr()
             };
         } else {
             PpuDrawBackground_4bpp(
                 ppu,
                 y as u32,
                 sub,
-                0u32,
+                0,
                 0xc000 as PpuZbufType,
                 0x8000 as PpuZbufType,
             );
         }
-        if (*ppu).mosaicEnabled as i32 & (1i32) << 1i32 != 0 {
+        if (*ppu).mosaicEnabled as i32 & (1i32) << 1 != 0 {
             crate::native_assertion! {
                 '_c2rust_label_0;
-                b"0\0", b"src/snes/ppu.c\0", 684u32, pointer __ASSERT_FUNCTION.as_ptr()
+                b"0\0", b"src/snes/ppu.c\0", 684, pointer __ASSERT_FUNCTION.as_ptr()
             };
         } else {
             PpuDrawBackground_4bpp(
                 ppu,
                 y as u32,
                 sub,
-                1u32,
+                1,
                 0xb100 as PpuZbufType,
                 0x7100 as PpuZbufType,
             );
         }
-        if (*ppu).mosaicEnabled as i32 & (1i32) << 2i32 != 0 {
+        if (*ppu).mosaicEnabled as i32 & (1i32) << 2 != 0 {
             crate::native_assertion! {
                 '_c2rust_label_1;
-                b"0\0", b"src/snes/ppu.c\0", 689u32, pointer __ASSERT_FUNCTION.as_ptr()
+                b"0\0", b"src/snes/ppu.c\0", 689, pointer __ASSERT_FUNCTION.as_ptr()
             };
         } else {
             PpuDrawBackground_2bpp(
                 ppu,
                 y as u32,
                 sub,
-                2u32,
+                2,
                 0xf200 as PpuZbufType,
                 0x1200 as PpuZbufType,
             );
@@ -876,61 +875,54 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
             .renderBuffer
             .offset((y).wrapping_sub(1u32).wrapping_mul((*ppu).renderPitch) as isize);
         let n: size_t = (size_of::<u32>() as size_t)
-            .wrapping_mul((256i32 + (*ppu).extraLeftRight as i32 * 2i32) as size_t);
-        memset(dst as *mut c_void, 0i32, n);
+            .wrapping_mul((256 + (*ppu).extraLeftRight as i32 * 2) as size_t);
+        memset(dst as *mut c_void, 0, n);
         return;
     }
     ClearBackdrop(&mut (*ppu).bgBuffers[0]);
     PpuDrawBackgrounds(ppu, y as i32, false_0 != 0);
-    let mut math_enabled: u32 = 0u32;
-    let mut i: i32 = 0i32;
-    while i < 6i32 {
+    let mut math_enabled: u32 = 0;
+    let mut i: i32 = 0;
+    while i < 6 {
         math_enabled |= (((*ppu).mathEnabled[i as usize] as i32) << i) as u32;
         i += 1;
     }
     let mut rendered_subscreen: bool = false_0 != 0;
-    if (*ppu).preventMathMode as i32 != 3i32 && (*ppu).addSubscreen as i32 != 0 && math_enabled != 0
-    {
+    if (*ppu).preventMathMode as i32 != 3 && (*ppu).addSubscreen as i32 != 0 && math_enabled != 0 {
         ClearBackdrop(&mut (*ppu).bgBuffers[1]);
-        if (*ppu).screenEnabled[1i32 as usize] as i32 != 0i32 {
+        if (*ppu).screenEnabled[1i32 as usize] as i32 != 0 {
             PpuDrawBackgrounds(ppu, y as i32, true_0 != 0);
             rendered_subscreen = true_0 != 0;
         }
     }
     let mut cwin: PpuWindows = PpuWindows::EMPTY;
-    PpuWindows_Calc(&raw mut cwin, ppu, 5u32);
+    PpuWindows_Calc(&raw mut cwin, ppu, 5);
     static kCwBitsMod: [u8; 8] = [0, 0xff, 0xff, 0, 0xff, 0, 0xff, 0];
     let mut cw_clip_math: u32 = (cwin.bits as i32 & kCwBitsMod[(*ppu).clipMode as usize] as i32
-        ^ kCwBitsMod[((*ppu).clipMode as i32 + 4i32) as usize] as i32
+        ^ kCwBitsMod[((*ppu).clipMode as i32 + 4) as usize] as i32
         | (cwin.bits as i32 & kCwBitsMod[(*ppu).preventMathMode as usize] as i32
-            ^ kCwBitsMod[((*ppu).preventMathMode as i32 + 4i32) as usize] as i32)
-            << 8i32) as u32;
+            ^ kCwBitsMod[((*ppu).preventMathMode as i32 + 4) as usize] as i32)
+            << 8) as u32;
     let mut dst_0 = (*ppu)
         .renderBuffer
         .offset((y).wrapping_sub(1u32).wrapping_mul((*ppu).renderPitch) as isize)
         as *mut u32;
     crate::update_place! { previous dst_org = dst_0 => dst_0.offset(((*ppu).extraLeftRight as i32 - (*ppu).extraLeftCur as i32) as isize); }
-    let mut windex: u32 = 0u32;
+    let mut windex: u32 = 0;
     loop {
         let left: u32 = (cwin.edges[windex as usize] as i32 + kPpuExtraLeftRight as i32) as u32;
-        let right: u32 = (cwin.edges[windex.wrapping_add(1u32) as usize] as i32
-            + kPpuExtraLeftRight as i32) as u32;
-        let clip_color_mask: u32 = (if cw_clip_math & 1u32 != 0 {
-            0x1fi32
-        } else {
-            0i32
-        }) as u32;
-        let mut math_enabled_cur: u32 = if cw_clip_math & 0x100u32 != 0 {
+        let right: u32 =
+            (cwin.edges[windex.wrapping_add(1) as usize] as i32 + kPpuExtraLeftRight as i32) as u32;
+        let clip_color_mask: u32 = (if cw_clip_math & 1 != 0 { 0x1f } else { 0 }) as u32;
+        let mut math_enabled_cur: u32 = if cw_clip_math & 0x100 != 0 {
             math_enabled
         } else {
-            0u32
+            0
         };
         let fixed_color: u32 = ((*ppu).fixedColorR as i32
-            | ((*ppu).fixedColorG as i32) << 5i32
-            | ((*ppu).fixedColorB as i32) << 10i32) as u32;
-        if math_enabled_cur == 0u32
-            || fixed_color == 0u32 && !(*ppu).halfColor && !rendered_subscreen
-        {
+            | ((*ppu).fixedColorG as i32) << 5
+            | ((*ppu).fixedColorB as i32) << 10) as u32;
+        if math_enabled_cur == 0 || fixed_color == 0 && !(*ppu).halfColor && !rendered_subscreen {
             // The original do-loop emits one pixel even for an empty span.
             let count = if right > left {
                 (right - left) as usize
@@ -980,7 +972,7 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
             );
             dst_0 = dst_0.add(count);
         }
-        cw_clip_math >>= 1i32;
+        cw_clip_math >>= 1;
         windex = windex.wrapping_add(1);
         if (windex >= cwin.nr as u32) {
             break;
@@ -988,34 +980,34 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
     }
 }
 unsafe fn ppu_handlePixel(ppu: *mut Ppu, x: i32, y: i32) {
-    let mut r: i32 = 0i32;
-    let mut r2: i32 = 0i32;
-    let mut g: i32 = 0i32;
-    let mut g2: i32 = 0i32;
-    let mut b: i32 = 0i32;
-    let mut b2: i32 = 0i32;
+    let mut r: i32 = 0;
+    let mut r2: i32 = 0;
+    let mut g: i32 = 0;
+    let mut g2: i32 = 0;
+    let mut b: i32 = 0;
+    let mut b2: i32 = 0;
     if !(*ppu).forcedBlank {
         let mainLayer: i32 =
             ppu_getPixel(ppu, x, y, false_0 != 0, &raw mut r, &raw mut g, &raw mut b);
-        let colorWindowState: bool = ppu_getWindowState(ppu, 5i32, x);
-        if (*ppu).clipMode as i32 == 3i32
-            || (*ppu).clipMode as i32 == 2i32 && colorWindowState as i32 != 0
-            || (*ppu).clipMode as i32 == 1i32 && !colorWindowState
+        let colorWindowState: bool = ppu_getWindowState(ppu, 5, x);
+        if (*ppu).clipMode as i32 == 3
+            || (*ppu).clipMode as i32 == 2 && colorWindowState as i32 != 0
+            || (*ppu).clipMode as i32 == 1 && !colorWindowState
         {
-            r = 0i32;
-            g = 0i32;
-            b = 0i32;
+            r = 0;
+            g = 0;
+            b = 0;
         }
-        let mut secondLayer: i32 = 5i32;
-        let mathEnabled: bool = mainLayer < 6i32
+        let mut secondLayer: i32 = 5;
+        let mathEnabled: bool = mainLayer < 6
             && (*ppu).mathEnabled[mainLayer as usize] as i32 != 0
-            && !((*ppu).preventMathMode as i32 == 3i32
-                || (*ppu).preventMathMode as i32 == 2i32 && colorWindowState as i32 != 0
-                || (*ppu).preventMathMode as i32 == 1i32 && !colorWindowState);
+            && !((*ppu).preventMathMode as i32 == 3
+                || (*ppu).preventMathMode as i32 == 2 && colorWindowState as i32 != 0
+                || (*ppu).preventMathMode as i32 == 1 && !colorWindowState);
         if mathEnabled as i32 != 0 && (*ppu).addSubscreen as i32 != 0
             || (*ppu).pseudoHires as i32 != 0
-            || (*ppu).mode as i32 == 5i32
-            || (*ppu).mode as i32 == 6i32
+            || (*ppu).mode as i32 == 5
+            || (*ppu).mode as i32 == 6
         {
             secondLayer = ppu_getPixel(
                 ppu,
@@ -1029,66 +1021,63 @@ unsafe fn ppu_handlePixel(ppu: *mut Ppu, x: i32, y: i32) {
         }
         if mathEnabled {
             if (*ppu).subtractColor {
-                r -= if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5i32 {
+                r -= if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5 {
                     r2
                 } else {
                     (*ppu).fixedColorR as i32
                 };
-                g -= if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5i32 {
+                g -= if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5 {
                     g2
                 } else {
                     (*ppu).fixedColorG as i32
                 };
-                b -= if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5i32 {
+                b -= if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5 {
                     b2
                 } else {
                     (*ppu).fixedColorB as i32
                 };
             } else {
-                r += if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5i32 {
+                r += if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5 {
                     r2
                 } else {
                     (*ppu).fixedColorR as i32
                 };
-                g += if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5i32 {
+                g += if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5 {
                     g2
                 } else {
                     (*ppu).fixedColorG as i32
                 };
-                b += if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5i32 {
+                b += if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5 {
                     b2
                 } else {
                     (*ppu).fixedColorB as i32
                 };
             }
-            if (*ppu).halfColor as i32 != 0 && (secondLayer != 5i32 || !(*ppu).addSubscreen) {
-                r >>= 1i32;
-                g >>= 1i32;
-                b >>= 1i32;
+            if (*ppu).halfColor as i32 != 0 && (secondLayer != 5 || !(*ppu).addSubscreen) {
+                r >>= 1;
+                g >>= 1;
+                b >>= 1;
             }
-            if r > 31i32 {
-                r = 31i32;
+            if r > 31 {
+                r = 31;
             }
-            if g > 31i32 {
-                g = 31i32;
+            if g > 31 {
+                g = 31;
             }
-            if b > 31i32 {
-                b = 31i32;
+            if b > 31 {
+                b = 31;
             }
-            if r < 0i32 {
-                r = 0i32;
+            if r < 0 {
+                r = 0;
             }
-            if g < 0i32 {
-                g = 0i32;
+            if g < 0 {
+                g = 0;
             }
-            if b < 0i32 {
-                b = 0i32;
+            if b < 0 {
+                b = 0;
             }
         }
-        if !((*ppu).pseudoHires as i32 != 0
-            || (*ppu).mode as i32 == 5i32
-            || (*ppu).mode as i32 == 6i32)
-        {
+        if !((*ppu).pseudoHires as i32 != 0 || (*ppu).mode as i32 == 5 || (*ppu).mode as i32 == 6) {
             r2 = r;
             g2 = g;
             b2 = b;
@@ -1098,12 +1087,12 @@ unsafe fn ppu_handlePixel(ppu: *mut Ppu, x: i32, y: i32) {
     let pixelBuffer = (*ppu).renderBuffer.offset(
         (row as u32)
             .wrapping_mul((*ppu).renderPitch)
-            .wrapping_add(((x + (*ppu).extraLeftRight as i32) * 4i32) as u32) as isize,
+            .wrapping_add(((x + (*ppu).extraLeftRight as i32) * 4) as u32) as isize,
     );
-    *pixelBuffer.offset(0) = ((b << 3i32 | b >> 2i32) * (*ppu).brightness as i32 / 15i32) as u8;
-    *pixelBuffer.offset(1) = ((g << 3i32 | g >> 2i32) * (*ppu).brightness as i32 / 15i32) as u8;
-    *pixelBuffer.offset(2) = ((r << 3i32 | r >> 2i32) * (*ppu).brightness as i32 / 15i32) as u8;
-    *pixelBuffer.offset(3) = 0u8;
+    *pixelBuffer.offset(0) = ((b << 3 | b >> 2) * (*ppu).brightness as i32 / 15) as u8;
+    *pixelBuffer.offset(1) = ((g << 3 | g >> 2) * (*ppu).brightness as i32 / 15) as u8;
+    *pixelBuffer.offset(2) = ((r << 3 | r >> 2) * (*ppu).brightness as i32 / 15) as u8;
+    *pixelBuffer.offset(3) = 0;
 }
 unsafe fn ppu_getPixel(
     ppu: *mut Ppu,
@@ -1114,19 +1103,19 @@ unsafe fn ppu_getPixel(
     g: *mut i32,
     b: *mut i32,
 ) -> i32 {
-    let mut actMode: i32 = if (*ppu).mode as i32 == 1i32 && (*ppu).bg3priority as i32 != 0 {
-        8i32
+    let mut actMode: i32 = if (*ppu).mode as i32 == 1 && (*ppu).bg3priority as i32 != 0 {
+        8
     } else {
         (*ppu).mode as i32
     };
-    actMode = if (*ppu).mode as i32 == 7i32 && (*ppu).m7extBg as i32 != 0 {
-        9i32
+    actMode = if (*ppu).mode as i32 == 7 && (*ppu).m7extBg as i32 != 0 {
+        9
     } else {
         actMode
     };
-    let mut layer: i32 = 5i32;
-    let mut pixel: i32 = 0i32;
-    let mut i: i32 = 0i32;
+    let mut layer: i32 = 5;
+    let mut pixel: i32 = 0;
+    let mut i: i32 = 0;
     while i < layerCountPerMode[actMode as usize] {
         let curLayer: i32 = layersPerMode[actMode as usize][i as usize];
         let curPriority: i32 = prioritysPerMode[actMode as usize][i as usize];
@@ -1141,65 +1130,63 @@ unsafe fn ppu_getPixel(
                     || !ppu_getWindowState(ppu, curLayer, x));
         }
         if layerActive {
-            if curLayer < 4i32 {
+            if curLayer < 4 {
                 let mut lx: i32 = x;
                 let mut ly: i32 = y;
                 if (*ppu).bgLayer[curLayer as usize].mosaicEnabled as i32 != 0
-                    && (*ppu).mosaicSize as i32 > 1i32
+                    && (*ppu).mosaicSize as i32 > 1
                 {
                     lx -= lx % (*ppu).mosaicSize as i32;
                     ly -= (ly - (*ppu).mosaicStartLine as i32) % (*ppu).mosaicSize as i32;
                 }
-                if (*ppu).mode as i32 == 7i32 {
+                if (*ppu).mode as i32 == 7 {
                     pixel = ppu_getPixelForMode7(ppu, lx, curLayer, curPriority != 0);
                 } else {
                     lx += (*ppu).bgLayer[curLayer as usize].hScroll as i32;
-                    if (*ppu).mode as i32 == 5i32 || (*ppu).mode as i32 == 6i32 {
-                        lx *= 2i32;
+                    if (*ppu).mode as i32 == 5 || (*ppu).mode as i32 == 6 {
+                        lx *= 2;
                         lx += if sub as i32 != 0
                             || (*ppu).bgLayer[curLayer as usize].mosaicEnabled as i32 != 0
                         {
-                            0i32
+                            0
                         } else {
-                            1i32
+                            1
                         };
                         if (*ppu).interlace {
-                            ly *= 2i32;
+                            ly *= 2;
                             ly += if (*ppu).evenFrame as i32 != 0
                                 || (*ppu).bgLayer[curLayer as usize].mosaicEnabled as i32 != 0
                             {
-                                0i32
+                                0
                             } else {
-                                1i32
+                                1
                             };
                         }
                     }
                     ly += (*ppu).bgLayer[curLayer as usize].vScroll as i32;
-                    if (*ppu).mode as i32 == 2i32
-                        || (*ppu).mode as i32 == 4i32
-                        || (*ppu).mode as i32 == 6i32
+                    if (*ppu).mode as i32 == 2 || (*ppu).mode as i32 == 4 || (*ppu).mode as i32 == 6
                     {
                         ppu_handleOPT(ppu, curLayer, &raw mut lx, &raw mut ly);
                     }
                     pixel = ppu_getPixelForBgLayer(
                         ppu,
-                        lx & 0x3ffi32,
-                        ly & 0x3ffi32,
+                        lx & 0x3ff,
+                        ly & 0x3ff,
                         curLayer,
                         curPriority != 0,
                     );
                 }
             } else {
-                pixel = 0i32;
-                if (*ppu).objBuffer.data[(x + kPpuExtraLeftRight as i32) as usize] as i32 >> 12i32
-                    == curPriority * 4i32 + 2i32
+                pixel = 0;
+                if (*ppu).objBuffer.data[(x + kPpuExtraLeftRight as i32) as usize] as i32 >> 12
+                    == curPriority * 4 + 2
                 {
                     pixel = (*ppu).objBuffer.data[(x + kPpuExtraLeftRight as i32) as usize] as i32
-                        & 0xffi32;
+                        & 0xff;
                 }
             }
         }
-        if pixel > 0i32 {
+        if pixel > 0 {
             layer = curLayer;
             break;
         } else {
@@ -1207,186 +1194,179 @@ unsafe fn ppu_getPixel(
         }
     }
     if (*ppu).directColor as i32 != 0
-        && layer < 4i32
-        && bitDepthsPerMode[actMode as usize][layer as usize] == 8i32
+        && layer < 4
+        && bitDepthsPerMode[actMode as usize][layer as usize] == 8
     {
-        *r = (pixel & 0x7i32) << 2i32 | (pixel & 0x100i32) >> 7i32;
-        *g = (pixel & 0x38i32) >> 1i32 | (pixel & 0x200i32) >> 8i32;
-        *b = (pixel & 0xc0i32) >> 3i32 | (pixel & 0x400i32) >> 8i32;
+        *r = (pixel & 0x7) << 2 | (pixel & 0x100) >> 7;
+        *g = (pixel & 0x38) >> 1 | (pixel & 0x200) >> 8;
+        *b = (pixel & 0xc0) >> 3 | (pixel & 0x400) >> 8;
     } else {
-        let color: u16 = (*ppu).cgram[(pixel & 0xffi32) as usize];
-        *r = color as i32 & 0x1fi32;
-        *g = color as i32 >> 5i32 & 0x1fi32;
-        *b = color as i32 >> 10i32 & 0x1fi32;
+        let color: u16 = (*ppu).cgram[(pixel & 0xff) as usize];
+        *r = color as i32 & 0x1f;
+        *g = color as i32 >> 5 & 0x1f;
+        *b = color as i32 >> 10 & 0x1f;
     }
-    if layer == 4i32 && pixel < 0xc0i32 {
-        layer = 6i32;
+    if layer == 4 && pixel < 0xc0 {
+        layer = 6;
     }
     layer
 }
 unsafe fn ppu_handleOPT(ppu: *mut Ppu, layer: i32, lx: *mut i32, ly: *mut i32) {
     let x: i32 = *lx;
     let y: i32 = *ly;
-    let mut column: i32 = 0i32;
-    if (*ppu).mode as i32 == 6i32 {
-        column =
-            x - (x & 0xfi32) - ((*ppu).bgLayer[layer as usize].hScroll as i32 * 2i32 & 0xfff0i32)
-                >> 4i32;
+    let mut column: i32 = 0;
+    if (*ppu).mode as i32 == 6 {
+        column = x - (x & 0xf) - ((*ppu).bgLayer[layer as usize].hScroll as i32 * 2 & 0xfff0) >> 4;
     } else {
-        column =
-            x - (x & 0x7i32) - ((*ppu).bgLayer[layer as usize].hScroll as i32 & 0xfff8i32) >> 3i32;
+        column = x - (x & 0x7) - ((*ppu).bgLayer[layer as usize].hScroll as i32 & 0xfff8) >> 3;
     }
-    if column > 0i32 {
-        let valid: i32 = if layer == 0i32 { 0x2000i32 } else { 0x4000i32 };
-        let mut hOffset: u16 = ppu_getOffsetValue(ppu, column - 1i32, 0i32);
-        let mut vOffset: u16 = 0u16;
-        if (*ppu).mode as i32 == 4i32 {
+    if column > 0 {
+        let valid: i32 = if layer == 0 { 0x2000 } else { 0x4000 };
+        let mut hOffset: u16 = ppu_getOffsetValue(ppu, column - 1i32, 0);
+        let mut vOffset: u16 = 0;
+        if (*ppu).mode as i32 == 4 {
             if hOffset & 0x8000 != 0 {
                 vOffset = hOffset;
-                hOffset = 0u16;
+                hOffset = 0;
             }
         } else {
-            vOffset = ppu_getOffsetValue(ppu, column - 1i32, 1i32);
+            vOffset = ppu_getOffsetValue(ppu, column - 1i32, 1);
         }
-        if (*ppu).mode as i32 == 6i32 {
+        if (*ppu).mode as i32 == 6 {
             if hOffset as i32 & valid != 0 {
-                *lx = ((hOffset as i32 & 0x3f8i32) + column * 8i32) * 2i32 | x & 0xfi32;
+                *lx = ((hOffset as i32 & 0x3f8) + column * 8) * 2 | x & 0xf;
             }
         } else if hOffset as i32 & valid != 0 {
-            *lx = (hOffset as i32 & 0x3f8i32) + column * 8i32 | x & 0x7i32;
+            *lx = (hOffset as i32 & 0x3f8) + column * 8 | x & 0x7;
         }
         if vOffset as i32 & valid != 0 {
-            *ly = (vOffset as i32 & 0x3ffi32) + (y - (*ppu).bgLayer[layer as usize].vScroll as i32);
+            *ly = (vOffset as i32 & 0x3ff) + (y - (*ppu).bgLayer[layer as usize].vScroll as i32);
         }
     }
 }
 unsafe fn ppu_getOffsetValue(ppu: *mut Ppu, col: i32, row: i32) -> u16 {
-    let x: i32 = col * 8i32 + (*ppu).bgLayer[2i32 as usize].hScroll as i32;
-    let y: i32 = row * 8i32 + (*ppu).bgLayer[2i32 as usize].vScroll as i32;
+    let x: i32 = col * 8 + (*ppu).bgLayer[2i32 as usize].hScroll as i32;
+    let y: i32 = row * 8 + (*ppu).bgLayer[2i32 as usize].vScroll as i32;
     let tileBits: i32 = if (*ppu).bgLayer[2i32 as usize].bigTiles as i32 != 0 {
-        4i32
+        4
     } else {
-        3i32
+        3
     };
     let tileHighBit: i32 = if (*ppu).bgLayer[2i32 as usize].bigTiles as i32 != 0 {
-        0x200i32
+        0x200
     } else {
-        0x100i32
+        0x100
     };
     let mut tilemapAdr: u16 = ((*ppu).bgLayer[2i32 as usize].tilemapAdr as i32
-        + ((y >> tileBits & 0x1fi32) << 5i32 | x >> tileBits & 0x1fi32))
+        + ((y >> tileBits & 0x1f) << 5 | x >> tileBits & 0x1f))
         as u16;
     if x & tileHighBit != 0 && (*ppu).bgLayer[2i32 as usize].tilemapWider as i32 != 0 {
-        tilemapAdr = (tilemapAdr as i32 + 0x400i32) as u16;
+        tilemapAdr = (tilemapAdr as i32 + 0x400) as u16;
     }
     if y & tileHighBit != 0 && (*ppu).bgLayer[2i32 as usize].tilemapHigher as i32 != 0 {
         tilemapAdr = (tilemapAdr as i32
             + if (*ppu).bgLayer[2i32 as usize].tilemapWider as i32 != 0 {
-                0x800i32
+                0x800
             } else {
-                0x400i32
+                0x400
             }) as u16;
     }
-    (*ppu).vram[(tilemapAdr as i32 & 0x7fffi32) as usize]
+    (*ppu).vram[(tilemapAdr as i32 & 0x7fff) as usize]
 }
 unsafe fn ppu_getPixelForBgLayer(ppu: *mut Ppu, x: i32, y: i32, layer: i32, priority: bool) -> i32 {
     let wideTiles: bool = (*ppu).bgLayer[layer as usize].bigTiles as i32 != 0
-        || (*ppu).mode as i32 == 5i32
-        || (*ppu).mode as i32 == 6i32;
-    let tileBitsX: i32 = if wideTiles as i32 != 0 { 4i32 } else { 3i32 };
-    let tileHighBitX: i32 = if wideTiles as i32 != 0 {
-        0x200i32
-    } else {
-        0x100i32
-    };
+        || (*ppu).mode as i32 == 5
+        || (*ppu).mode as i32 == 6;
+    let tileBitsX: i32 = if wideTiles as i32 != 0 { 4 } else { 3 };
+    let tileHighBitX: i32 = if wideTiles as i32 != 0 { 0x200 } else { 0x100 };
     let tileBitsY: i32 = if (*ppu).bgLayer[layer as usize].bigTiles as i32 != 0 {
-        4i32
+        4
     } else {
-        3i32
+        3
     };
     let tileHighBitY: i32 = if (*ppu).bgLayer[layer as usize].bigTiles as i32 != 0 {
-        0x200i32
+        0x200
     } else {
-        0x100i32
+        0x100
     };
     let mut tilemapAdr: u16 = ((*ppu).bgLayer[layer as usize].tilemapAdr as i32
-        + ((y >> tileBitsY & 0x1fi32) << 5i32 | x >> tileBitsX & 0x1fi32))
+        + ((y >> tileBitsY & 0x1f) << 5 | x >> tileBitsX & 0x1f))
         as u16;
     if x & tileHighBitX != 0 && (*ppu).bgLayer[layer as usize].tilemapWider as i32 != 0 {
-        tilemapAdr = (tilemapAdr as i32 + 0x400i32) as u16;
+        tilemapAdr = (tilemapAdr as i32 + 0x400) as u16;
     }
     if y & tileHighBitY != 0 && (*ppu).bgLayer[layer as usize].tilemapHigher as i32 != 0 {
         tilemapAdr = (tilemapAdr as i32
             + if (*ppu).bgLayer[layer as usize].tilemapWider as i32 != 0 {
-                0x800i32
+                0x800
             } else {
-                0x400i32
+                0x400
             }) as u16;
     }
-    let tile: u16 = (*ppu).vram[(tilemapAdr as i32 & 0x7fffi32) as usize];
+    let tile: u16 = (*ppu).vram[(tilemapAdr as i32 & 0x7fff) as usize];
     if (tile & 0x2000 != 0) as i32 != priority as i32 {
-        return 0i32;
+        return 0;
     }
-    let mut paletteNum: i32 = (tile as i32 & 0x1c00i32) >> 10i32;
+    let mut paletteNum: i32 = (tile as i32 & 0x1c00) >> 10;
     let row: i32 = if tile & 0x8000 != 0 {
-        7i32 - (y & 0x7i32)
+        7 - (y & 0x7)
     } else {
-        y & 0x7i32
+        y & 0x7
     };
     let col: i32 = if tile & 0x4000 != 0 {
-        x & 0x7i32
+        x & 0x7
     } else {
-        7i32 - (x & 0x7i32)
+        7 - (x & 0x7)
     };
-    let mut tileNum: i32 = tile as i32 & 0x3ffi32;
-    if wideTiles && (x & 8i32 != 0) as i32 ^ (tile & 0x4000 != 0) as i32 != 0 {
-        tileNum += 1i32;
+    let mut tileNum: i32 = tile as i32 & 0x3ff;
+    if wideTiles && (x & 8 != 0) as i32 ^ (tile & 0x4000 != 0) as i32 != 0 {
+        tileNum += 1;
     }
     if (*ppu).bgLayer[layer as usize].bigTiles
-        && (y & 8i32 != 0) as i32 ^ (tile & 0x8000 != 0) as i32 != 0
+        && (y & 8 != 0) as i32 ^ (tile & 0x8000 != 0) as i32 != 0
     {
-        tileNum += 0x10i32;
+        tileNum += 0x10;
     }
     let bitDepth: i32 = bitDepthsPerMode[(*ppu).mode as usize][layer as usize];
-    if (*ppu).mode as i32 == 0i32 {
-        paletteNum += 8i32 * layer;
+    if (*ppu).mode as i32 == 0 {
+        paletteNum += 8 * layer;
     }
-    let mut paletteSize: i32 = 4i32;
+    let mut paletteSize: i32 = 4;
     let plane1: u16 = (*ppu).vram[((*ppu).bgLayer[layer as usize].tileAdr as i32
-        + (tileNum & 0x3ffi32) * 4i32 * bitDepth
+        + (tileNum & 0x3ff) * 4 * bitDepth
         + row
-        & 0x7fffi32) as usize];
-    let mut pixel: i32 = plane1 as i32 >> col & 1i32;
-    pixel |= (plane1 as i32 >> 8i32 + col & 1i32) << 1i32;
-    if bitDepth > 2i32 {
-        paletteSize = 16i32;
+        & 0x7fff) as usize];
+    let mut pixel: i32 = plane1 as i32 >> col & 1;
+    pixel |= (plane1 as i32 >> 8 + col & 1) << 1;
+    if bitDepth > 2 {
+        paletteSize = 16;
         let plane2: u16 = (*ppu).vram[((*ppu).bgLayer[layer as usize].tileAdr as i32
-            + (tileNum & 0x3ffi32) * 4i32 * bitDepth
-            + 8i32
+            + (tileNum & 0x3ff) * 4 * bitDepth
+            + 8
             + row
-            & 0x7fffi32) as usize];
-        pixel |= (plane2 as i32 >> col & 1i32) << 2i32;
-        pixel |= (plane2 as i32 >> 8i32 + col & 1i32) << 3i32;
+            & 0x7fff) as usize];
+        pixel |= (plane2 as i32 >> col & 1) << 2;
+        pixel |= (plane2 as i32 >> 8 + col & 1) << 3;
     }
-    if bitDepth > 4i32 {
-        paletteSize = 256i32;
+    if bitDepth > 4 {
+        paletteSize = 256;
         let plane3: u16 = (*ppu).vram[((*ppu).bgLayer[layer as usize].tileAdr as i32
-            + (tileNum & 0x3ffi32) * 4i32 * bitDepth
-            + 16i32
+            + (tileNum & 0x3ff) * 4 * bitDepth
+            + 16
             + row
-            & 0x7fffi32) as usize];
-        pixel |= (plane3 as i32 >> col & 1i32) << 4i32;
-        pixel |= (plane3 as i32 >> 8i32 + col & 1i32) << 5i32;
+            & 0x7fff) as usize];
+        pixel |= (plane3 as i32 >> col & 1) << 4;
+        pixel |= (plane3 as i32 >> 8 + col & 1) << 5;
         let plane4: u16 = (*ppu).vram[((*ppu).bgLayer[layer as usize].tileAdr as i32
-            + (tileNum & 0x3ffi32) * 4i32 * bitDepth
-            + 24i32
+            + (tileNum & 0x3ff) * 4 * bitDepth
+            + 24
             + row
-            & 0x7fffi32) as usize];
-        pixel |= (plane4 as i32 >> col & 1i32) << 6i32;
-        pixel |= (plane4 as i32 >> 8i32 + col & 1i32) << 7i32;
+            & 0x7fff) as usize];
+        pixel |= (plane4 as i32 >> col & 1) << 6;
+        pixel |= (plane4 as i32 >> 8 + col & 1) << 7;
     }
-    if pixel == 0i32 {
-        0i32
+    if pixel == 0 {
+        0
     } else {
         paletteSize * paletteNum + pixel
     }
@@ -1398,53 +1378,52 @@ unsafe fn ppu_calculateMode7Starts(ppu: *mut Ppu, mut y: i32) {
         (*ppu).m7matrix[4],
         (*ppu).m7matrix[5],
     );
-    if (*ppu).bgLayer[0i32 as usize].mosaicEnabled as i32 != 0 && (*ppu).mosaicSize as i32 > 1i32 {
+    if (*ppu).bgLayer[0i32 as usize].mosaicEnabled as i32 != 0 && (*ppu).mosaicSize as i32 > 1 {
         y -= (y - (*ppu).mosaicStartLine as i32) % (*ppu).mosaicSize as i32;
     }
     let ry: u8 = (if (*ppu).m7yFlip as i32 != 0 {
-        255i32 - y
+        255 - y
     } else {
         y
     }) as u8;
     (*ppu).m7startX = (((*ppu).m7matrix[0i32 as usize] as i32 * clippedH & !(63i32))
         + ((*ppu).m7matrix[1i32 as usize] as i32 * ry as i32 & !(63i32))
         + ((*ppu).m7matrix[1i32 as usize] as i32 * clippedV & !(63i32))
-        + (xCenter << 8i32));
+        + (xCenter << 8));
     (*ppu).m7startY = (((*ppu).m7matrix[2i32 as usize] as i32 * clippedH & !(63i32))
         + ((*ppu).m7matrix[3i32 as usize] as i32 * ry as i32 & !(63i32))
         + ((*ppu).m7matrix[3i32 as usize] as i32 * clippedV & !(63i32))
-        + (yCenter << 8i32));
+        + (yCenter << 8));
 }
 unsafe fn ppu_getPixelForMode7(ppu: *mut Ppu, x: i32, layer: i32, priority: bool) -> i32 {
     let rx: u8 = (if (*ppu).m7xFlip as i32 != 0 {
-        255i32 - x
+        255 - x
     } else {
         x
     }) as u8;
-    let mut xPos: i32 = (*ppu).m7startX + (*ppu).m7matrix[0i32 as usize] as i32 * rx as i32 >> 8i32;
-    let mut yPos: i32 = (*ppu).m7startY + (*ppu).m7matrix[2i32 as usize] as i32 * rx as i32 >> 8i32;
-    let mut outsideMap: bool = xPos < 0i32 || xPos >= 1024i32 || yPos < 0i32 || yPos >= 1024i32;
-    xPos &= 0x3ffi32;
-    yPos &= 0x3ffi32;
+    let mut xPos: i32 = (*ppu).m7startX + (*ppu).m7matrix[0i32 as usize] as i32 * rx as i32 >> 8;
+    let mut yPos: i32 = (*ppu).m7startY + (*ppu).m7matrix[2i32 as usize] as i32 * rx as i32 >> 8;
+    let mut outsideMap: bool = xPos < 0 || xPos >= 1024 || yPos < 0 || yPos >= 1024;
+    xPos &= 0x3ff;
+    yPos &= 0x3ff;
     if !(*ppu).m7largeField {
         outsideMap = false_0 != 0;
     }
     let tile: u8 = (if outsideMap as i32 != 0 {
-        0i32
+        0
     } else {
-        (*ppu).vram[((yPos >> 3i32) * 128i32 + (xPos >> 3i32)) as usize] as i32 & 0xffi32
+        (*ppu).vram[((yPos >> 3) * 128 + (xPos >> 3)) as usize] as i32 & 0xff
     }) as u8;
     let pixel: u8 = (if outsideMap as i32 != 0 && !(*ppu).m7charFill {
-        0i32
+        0
     } else {
-        (*ppu).vram[(tile as i32 * 64i32 + (yPos & 7i32) * 8i32 + (xPos & 7i32)) as usize] as i32
-            >> 8i32
+        (*ppu).vram[(tile as i32 * 64 + (yPos & 7) * 8 + (xPos & 7)) as usize] as i32 >> 8
     }) as u8;
-    if layer == 1i32 {
+    if layer == 1 {
         if (pixel & 0x80 != 0) as i32 != priority as i32 {
-            return 0i32;
+            return 0;
         }
-        return pixel as i32 & 0x7fi32;
+        return pixel as i32 & 0x7f;
     }
     pixel as i32
 }
@@ -1493,90 +1472,81 @@ unsafe fn ppu_getWindowState(ppu: *mut Ppu, layer: i32, x: i32) -> bool {
 }
 unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
     let mut index: u8 = (if (*ppu).objPriority as i32 != 0 {
-        (*ppu).oamAdr as i32 & 0xfei32
+        (*ppu).oamAdr as i32 & 0xfe
     } else {
-        0i32
+        0
     }) as u8;
-    let mut spritesFound: i32 = 0i32;
-    let mut tilesFound: i32 = 0i32;
-    let mut i: i32 = 0i32;
-    while i < 128i32 {
+    let mut spritesFound: i32 = 0;
+    let mut tilesFound: i32 = 0;
+    let mut i: i32 = 0;
+    while i < 128 {
         let y: u8 = ((*ppu).oam[index as usize] >> 8) as u8;
         let mut row: u8 = (line - y as i32) as u8;
-        let spriteSize: i32 =
-            spriteSizes[(*ppu).objSize as usize][((*ppu).highOam[(index >> 3) as usize] as i32
-                >> (index as i32 & 7i32) + 1i32
-                & 1i32) as usize];
+        let spriteSize: i32 = spriteSizes[(*ppu).objSize as usize]
+            [((*ppu).highOam[(index >> 3) as usize] as i32 >> (index as i32 & 7) + 1 & 1) as usize];
         let spriteHeight: i32 = if (*ppu).objInterlace as i32 != 0 {
-            spriteSize / 2i32
+            spriteSize / 2
         } else {
             spriteSize
         };
         if (row as i32) < spriteHeight {
-            let mut x: i32 = (*ppu).oam[index as usize] as i32 & 0xffi32;
-            x |= ((*ppu).highOam[(index >> 3) as usize] as i32 >> (index as i32 & 7i32) & 1i32)
-                << 8i32;
-            if x > 255i32 {
-                x -= 512i32;
+            let mut x: i32 = (*ppu).oam[index as usize] as i32 & 0xff;
+            x |= ((*ppu).highOam[(index >> 3) as usize] as i32 >> (index as i32 & 7) & 1) << 8;
+            if x > 255 {
+                x -= 512;
             }
             if x > -spriteSize {
                 spritesFound += 1;
-                if spritesFound > 32i32 {
+                if spritesFound > 32 {
                     (*ppu).rangeOver = true_0 != 0;
                     break;
                 } else {
                     if (*ppu).objInterlace {
-                        row = (row as i32 * 2i32
-                            + (if (*ppu).evenFrame as i32 != 0 {
-                                0i32
-                            } else {
-                                1i32
-                            })) as u8;
+                        row = (row as i32 * 2 + (if (*ppu).evenFrame as i32 != 0 { 0 } else { 1 }))
+                            as u8;
                     }
-                    let oam1: i32 = (*ppu).oam[(index as i32 + 1i32) as usize] as i32;
-                    let tile: i32 = oam1 & 0xffi32;
-                    let objAdr: i32 = if oam1 & 0x100i32 != 0 {
+                    let oam1: i32 = (*ppu).oam[(index as i32 + 1) as usize] as i32;
+                    let tile: i32 = oam1 & 0xff;
+                    let objAdr: i32 = if oam1 & 0x100 != 0 {
                         (*ppu).objTileAdr2 as i32
                     } else {
                         (*ppu).objTileAdr1 as i32
                     };
-                    let palette: i32 = (oam1 & 0xe00i32) >> 9i32;
-                    let hFlipped: bool = oam1 & 0x4000i32 != 0;
-                    if oam1 & 0x8000i32 != 0 {
+                    let palette: i32 = (oam1 & 0xe00) >> 9;
+                    let hFlipped: bool = oam1 & 0x4000 != 0;
+                    if oam1 & 0x8000 != 0 {
                         row = (spriteSize - 1i32 - row as i32) as u8;
                     }
-                    let paletteBase: i32 = 0x80i32 + 16i32 * ((oam1 & 0xe00i32) >> 9i32);
-                    let prio: i32 = (((oam1 & 0x3000i32) >> 12i32) * 4i32 + 2i32) * 16i32
-                        + 4i32
-                        + (if oam1 & 0x800i32 == 0i32 { 2i32 } else { 0i32 });
-                    let z: PpuZbufType = (paletteBase + (prio << 8i32)) as PpuZbufType;
-                    let mut col: i32 = 0i32;
+                    let paletteBase: i32 = 0x80 + 16 * ((oam1 & 0xe00) >> 9);
+                    let prio: i32 = (((oam1 & 0x3000) >> 12) * 4 + 2) * 16
+                        + 4
+                        + (if oam1 & 0x800 == 0 { 2 } else { 0 });
+                    let z: PpuZbufType = (paletteBase + (prio << 8)) as PpuZbufType;
+                    let mut col: i32 = 0;
                     while col < spriteSize {
-                        if col + x > -8i32 && col + x < 256i32 {
+                        if col + x > -8i32 && col + x < 256 {
                             tilesFound += 1;
-                            if tilesFound > 34i32 {
+                            if tilesFound > 34 {
                                 (*ppu).timeOver = true_0 != 0;
                                 break;
                             } else {
-                                let usedCol: i32 = if oam1 & 0x4000i32 != 0 {
+                                let usedCol: i32 = if oam1 & 0x4000 != 0 {
                                     spriteSize - 1i32 - col
                                 } else {
                                     col
                                 };
-                                let usedTile: i32 =
-                                    ((oam1 & 0xffi32) >> 4i32) + (row as i32 >> 3i32) << 4i32
-                                        | (oam1 & 0xfi32) + (usedCol >> 3i32) & 0xfi32;
+                                let usedTile: i32 = ((oam1 & 0xff) >> 4) + (row as i32 >> 3) << 4
+                                    | (oam1 & 0xf) + (usedCol >> 3) & 0xf;
                                 let addr = (&raw mut (*ppu).vram as *mut u16).offset(
-                                    (objAdr + usedTile * 16i32 + (row as i32 & 0x7i32) & 0x7fffi32)
-                                        as isize,
+                                    (objAdr + usedTile * 16 + (row as i32 & 0x7) & 0x7fff) as isize,
                                 );
                                 let plane: u32 = (*addr.offset(0) as i32
-                                    | (*addr.offset(8) as i32) << 16i32)
+                                    | (*addr.offset(8) as i32) << 16)
                                     as u32;
                                 let px_left: i32 =
-                                    IntMax(-(col + x + kPpuExtraLeftRight as i32), 0i32);
+                                    IntMax(-(col + x + kPpuExtraLeftRight as i32), 0);
                                 let px_right: i32 =
-                                    IntMin(256i32 + kPpuExtraLeftRight as i32 - (col + x), 8i32);
+                                    IntMin(256 + kPpuExtraLeftRight as i32 - (col + x), 8);
                                 let dst = (&raw mut (*ppu).objBuffer.data as *mut PpuZbufType)
                                     .offset(col as isize)
                                     .offset(x as isize)
@@ -1596,37 +1566,34 @@ unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
                                 }
                             }
                         }
-                        col += 8i32;
+                        col += 8;
                     }
-                    if tilesFound > 34i32 {
+                    if tilesFound > 34 {
                         break;
                     }
                 }
             }
         }
-        index = (index as i32 + 2i32) as u8;
+        index = (index as i32 + 2) as u8;
         i += 1;
     }
-    tilesFound != 0i32
+    tilesFound != 0
 }
 unsafe fn ppu_getVramRemap(ppu: *mut Ppu) -> u16 {
     let adr: u16 = (*ppu).vramPointer;
     match (*ppu).vramRemapMode as i32 {
         0 => return adr,
         1 => {
-            return (adr as i32 & 0xff00i32
-                | (adr as i32 & 0xe0i32) >> 5i32
-                | (adr as i32 & 0x1fi32) << 3i32) as u16
+            return (adr as i32 & 0xff00 | (adr as i32 & 0xe0) >> 5 | (adr as i32 & 0x1f) << 3)
+                as u16
         }
         2 => {
-            return (adr as i32 & 0xfe00i32
-                | (adr as i32 & 0x1c0i32) >> 6i32
-                | (adr as i32 & 0x3fi32) << 3i32) as u16
+            return (adr as i32 & 0xfe00 | (adr as i32 & 0x1c0) >> 6 | (adr as i32 & 0x3f) << 3)
+                as u16
         }
         3 => {
-            return (adr as i32 & 0xfc00i32
-                | (adr as i32 & 0x380i32) >> 7i32
-                | (adr as i32 & 0x7fi32) << 3i32) as u16
+            return (adr as i32 & 0xfc00 | (adr as i32 & 0x380) >> 7 | (adr as i32 & 0x7f) << 3)
+                as u16
         }
         _ => {}
     }
@@ -1639,24 +1606,24 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
         }
         52 | 53 | 54 => {
             let result: i32 = (*ppu).m7matrix[0i32 as usize] as i32
-                * ((*ppu).m7matrix[1i32 as usize] as i32 >> 8i32);
-            (*ppu).ppu1openBus = (result >> 8i32 * (adr as i32 - 0x34i32) & 0xffi32) as u8;
+                * ((*ppu).m7matrix[1i32 as usize] as i32 >> 8);
+            (*ppu).ppu1openBus = (result >> 8 * (adr as i32 - 0x34i32) & 0xff) as u8;
             (*ppu).ppu1openBus
         }
         55 => {
-            (*ppu).hCount = ((*(*ppu).snes).hPos as i32 / 4i32) as u16;
+            (*ppu).hCount = ((*(*ppu).snes).hPos as i32 / 4) as u16;
             (*ppu).vCount = (*(*ppu).snes).vPos;
             (*ppu).countersLatched = true_0 != 0;
             (*(*ppu).snes).openBus
         }
         56 => {
-            let mut ret: u8 = 0u8;
+            let mut ret: u8 = 0;
             if (*ppu).oamInHigh {
-                ret = (*ppu).highOam[(((*ppu).oamAdr as i32 & 0xfi32) << 1i32
-                    | (*ppu).oamSecondWrite as i32) as usize];
+                ret = (*ppu).highOam
+                    [(((*ppu).oamAdr as i32 & 0xf) << 1 | (*ppu).oamSecondWrite as i32) as usize];
                 if (*ppu).oamSecondWrite {
                     (*ppu).oamAdr = (*ppu).oamAdr.wrapping_add(1);
-                    if (*ppu).oamAdr as i32 == 0i32 {
+                    if (*ppu).oamAdr as i32 == 0 {
                         (*ppu).oamInHigh = false_0 != 0;
                     }
                 }
@@ -1665,7 +1632,7 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
             } else {
                 crate::update_place! { previous fresh2 = (*ppu).oamAdr => (*ppu).oamAdr.wrapping_add(1); }
                 ret = ((*ppu).oam[fresh2 as usize] >> 8) as u8;
-                if (*ppu).oamAdr as i32 == 0i32 {
+                if (*ppu).oamAdr as i32 == 0 {
                     (*ppu).oamInHigh = true_0 != 0;
                 }
             }
@@ -1677,7 +1644,7 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
             let val: u16 = (*ppu).vramReadBuffer;
             if !(*ppu).vramIncrementOnHigh {
                 (*ppu).vramReadBuffer =
-                    (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fffi32) as usize];
+                    (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff) as usize];
                 (*ppu).vramPointer =
                     ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as u16;
             }
@@ -1688,7 +1655,7 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
             let val_0: u16 = (*ppu).vramReadBuffer;
             if (*ppu).vramIncrementOnHigh {
                 (*ppu).vramReadBuffer =
-                    (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fffi32) as usize];
+                    (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff) as usize];
                 (*ppu).vramPointer =
                     ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as u16;
             }
@@ -1696,23 +1663,22 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
             (val_0 >> 8) as u8
         }
         59 => {
-            let mut ret_0: u8 = 0u8;
+            let mut ret_0: u8 = 0;
             if !(*ppu).cgramSecondWrite {
                 ret_0 = ((*ppu).cgram[(*ppu).cgramPointer as usize] as u8 & 0xff);
             } else {
                 crate::update_place! { previous fresh3 = (*ppu).cgramPointer => (*ppu).cgramPointer.wrapping_add(1); }
-                ret_0 = ((*ppu).cgram[fresh3 as usize] as i32 >> 8i32 & 0x7fi32
-                    | (*ppu).ppu2openBus as i32 & 0x80i32) as u8;
+                ret_0 = ((*ppu).cgram[fresh3 as usize] as i32 >> 8 & 0x7f
+                    | (*ppu).ppu2openBus as i32 & 0x80) as u8;
             }
             (*ppu).cgramSecondWrite = !(*ppu).cgramSecondWrite;
             (*ppu).ppu2openBus = ret_0;
             ret_0
         }
         60 => {
-            let mut val_1: u8 = 0u8;
+            let mut val_1: u8 = 0;
             if (*ppu).hCountSecond {
-                val_1 = ((*ppu).hCount as i32 >> 8i32 & 1i32 | (*ppu).ppu2openBus as i32 & 0xfei32)
-                    as u8;
+                val_1 = ((*ppu).hCount as i32 >> 8 & 1 | (*ppu).ppu2openBus as i32 & 0xfe) as u8;
             } else {
                 val_1 = ((*ppu).hCount as u8 & 0xff);
             }
@@ -1721,10 +1687,9 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
             val_1
         }
         61 => {
-            let mut val_2: u8 = 0u8;
+            let mut val_2: u8 = 0;
             if (*ppu).vCountSecond {
-                val_2 = ((*ppu).vCount as i32 >> 8i32 & 1i32 | (*ppu).ppu2openBus as i32 & 0xfei32)
-                    as u8;
+                val_2 = ((*ppu).vCount as i32 >> 8 & 1 | (*ppu).ppu2openBus as i32 & 0xfe) as u8;
             } else {
                 val_2 = ((*ppu).vCount as u8 & 0xff);
             }
@@ -1733,18 +1698,18 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
             val_2
         }
         62 => {
-            let mut val_3: u8 = 0x1u8;
+            let mut val_3: u8 = 0x1;
             val_3 = (val_3 | (*ppu).ppu1openBus & 0x10);
-            val_3 = (val_3 as i32 | ((*ppu).rangeOver as i32) << 6i32) as u8;
-            val_3 = (val_3 as i32 | ((*ppu).timeOver as i32) << 7i32) as u8;
+            val_3 = (val_3 as i32 | ((*ppu).rangeOver as i32) << 6) as u8;
+            val_3 = (val_3 as i32 | ((*ppu).timeOver as i32) << 7) as u8;
             (*ppu).ppu1openBus = val_3;
             val_3
         }
         63 => {
-            let mut val_4: u8 = 0x3u8;
+            let mut val_4: u8 = 0x3;
             val_4 = (val_4 | (*ppu).ppu2openBus & 0x20);
-            val_4 = (val_4 as i32 | ((*ppu).countersLatched as i32) << 6i32) as u8;
-            val_4 = (val_4 as i32 | ((*ppu).evenFrame as i32) << 7i32) as u8;
+            val_4 = (val_4 as i32 | ((*ppu).countersLatched as i32) << 6) as u8;
+            val_4 = (val_4 as i32 | ((*ppu).evenFrame as i32) << 7) as u8;
             (*ppu).countersLatched = false_0 != 0;
             (*ppu).hCountSecond = false_0 != 0;
             (*ppu).vCountSecond = false_0 != 0;
@@ -1764,9 +1729,9 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
         }
         1 => {
             (*ppu).objSize = (val >> 5);
-            (*ppu).objTileAdr1 = ((val as i32 & 7i32) << 13i32) as u16;
+            (*ppu).objTileAdr1 = ((val as i32 & 7) << 13) as u16;
             (*ppu).objTileAdr2 =
-                ((*ppu).objTileAdr1 as i32 + (((val as i32 & 0x18i32) + 8i32) << 9i32)) as u16;
+                ((*ppu).objTileAdr1 as i32 + (((val as i32 & 0x18) + 8) << 9)) as u16;
             current_block_164 = 16754622181974910496;
         }
         2 => {
@@ -1786,11 +1751,12 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
         }
         4 => {
             if (*ppu).oamInHigh {
-                (*ppu).highOam[(((*ppu).oamAdr as i32 & 0xfi32) << 1i32
-                    | (*ppu).oamSecondWrite as i32) as usize] = val;
+                (*ppu).highOam
+                    [(((*ppu).oamAdr as i32 & 0xf) << 1 | (*ppu).oamSecondWrite as i32) as usize] =
+                    val;
                 if (*ppu).oamSecondWrite {
                     (*ppu).oamAdr = (*ppu).oamAdr.wrapping_add(1);
-                    if (*ppu).oamAdr as i32 == 0i32 {
+                    if (*ppu).oamAdr as i32 == 0 {
                         (*ppu).oamInHigh = false_0 != 0;
                     }
                 }
@@ -1798,9 +1764,8 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
                 (*ppu).oamBuffer = val;
             } else {
                 crate::update_place! { previous fresh4 = (*ppu).oamAdr => (*ppu).oamAdr.wrapping_add(1); }
-                (*ppu).oam[fresh4 as usize] =
-                    ((val as i32) << 8i32 | (*ppu).oamBuffer as i32) as u16;
-                if (*ppu).oamAdr as i32 == 0i32 {
+                (*ppu).oam[fresh4 as usize] = ((val as i32) << 8 | (*ppu).oamBuffer as i32) as u16;
+                if (*ppu).oamAdr as i32 == 0 {
                     (*ppu).oamInHigh = true_0 != 0;
                 }
             }
@@ -1821,8 +1786,8 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             (*ppu).bgLayer[1i32 as usize].mosaicEnabled = val & 0x2 != 0;
             (*ppu).bgLayer[2i32 as usize].mosaicEnabled = val & 0x4 != 0;
             (*ppu).bgLayer[3i32 as usize].mosaicEnabled = val & 0x8 != 0;
-            (*ppu).mosaicSize = ((val as i32 >> 4i32) + 1i32) as u8;
-            (*ppu).mosaicStartLine = 0u8;
+            (*ppu).mosaicSize = ((val as i32 >> 4) + 1) as u8;
+            (*ppu).mosaicStartLine = 0;
             current_block_164 = 16754622181974910496;
         }
         7 | 8 | 9 | 10 => {
@@ -1852,33 +1817,30 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
         16 | 18 | 20 => current_block_164 = 5892776923941496671,
         21 => {
             if val & 3 == 0 {
-                (*ppu).vramIncrement = 1u16;
+                (*ppu).vramIncrement = 1;
             } else if val & 3 == 1 {
-                (*ppu).vramIncrement = 32u16;
+                (*ppu).vramIncrement = 32;
             } else {
-                (*ppu).vramIncrement = 128u16;
+                (*ppu).vramIncrement = 128;
             }
-            (*ppu).vramRemapMode = ((val as i32 & 0xci32) >> 2i32) as u8;
+            (*ppu).vramRemapMode = ((val as i32 & 0xc) >> 2) as u8;
             (*ppu).vramIncrementOnHigh = val & 0x80 != 0;
             current_block_164 = 16754622181974910496;
         }
         22 => {
             (*ppu).vramPointer = ((*ppu).vramPointer & 0xff00 | val as u16);
-            (*ppu).vramReadBuffer =
-                (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fffi32) as usize];
+            (*ppu).vramReadBuffer = (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff) as usize];
             current_block_164 = 16754622181974910496;
         }
         23 => {
-            (*ppu).vramPointer =
-                ((*ppu).vramPointer as i32 & 0xffi32 | (val as i32) << 8i32) as u16;
-            (*ppu).vramReadBuffer =
-                (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fffi32) as usize];
+            (*ppu).vramPointer = ((*ppu).vramPointer as i32 & 0xff | (val as i32) << 8) as u16;
+            (*ppu).vramReadBuffer = (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff) as usize];
             current_block_164 = 16754622181974910496;
         }
         24 => {
             let vramAdr: u16 = ppu_getVramRemap(ppu);
-            (*ppu).vram[(vramAdr as i32 & 0x7fffi32) as usize] =
-                ((*ppu).vram[(vramAdr as i32 & 0x7fffi32) as usize] & 0xff00 | val as u16);
+            (*ppu).vram[(vramAdr as i32 & 0x7fff) as usize] =
+                ((*ppu).vram[(vramAdr as i32 & 0x7fff) as usize] & 0xff00 | val as u16);
             if !(*ppu).vramIncrementOnHigh {
                 (*ppu).vramPointer =
                     ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as u16;
@@ -1887,9 +1849,9 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
         }
         25 => {
             let vramAdr_0: u16 = ppu_getVramRemap(ppu);
-            (*ppu).vram[(vramAdr_0 as i32 & 0x7fffi32) as usize] =
-                ((*ppu).vram[(vramAdr_0 as i32 & 0x7fffi32) as usize] as i32 & 0xffi32
-                    | (val as i32) << 8i32) as u16;
+            (*ppu).vram[(vramAdr_0 as i32 & 0x7fff) as usize] =
+                ((*ppu).vram[(vramAdr_0 as i32 & 0x7fff) as usize] as i32 & 0xff
+                    | (val as i32) << 8) as u16;
             if (*ppu).vramIncrementOnHigh {
                 (*ppu).vramPointer =
                     ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as u16;
@@ -1926,20 +1888,20 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             } else {
                 crate::update_place! { previous fresh5 = (*ppu).cgramPointer => (*ppu).cgramPointer.wrapping_add(1); }
                 (*ppu).cgram[fresh5 as usize] =
-                    ((val as i32) << 8i32 | (*ppu).cgramBuffer as i32) as u16;
+                    ((val as i32) << 8 | (*ppu).cgramBuffer as i32) as u16;
             }
             (*ppu).cgramSecondWrite = !(*ppu).cgramSecondWrite;
             current_block_164 = 16754622181974910496;
         }
         35 | 36 | 37 => {
-            if adr as i32 == 0x23i32 {
+            if adr as i32 == 0x23 {
                 (*ppu).windowsel = (*ppu).windowsel & !(0xffi32) as u32 | val as u32;
-            } else if adr as i32 == 0x24i32 {
+            } else if adr as i32 == 0x24 {
                 (*ppu).windowsel =
-                    (*ppu).windowsel & !(0xff00i32) as u32 | ((val as i32) << 8i32) as u32;
-            } else if adr as i32 == 0x25i32 {
+                    (*ppu).windowsel & !(0xff00i32) as u32 | ((val as i32) << 8) as u32;
+            } else if adr as i32 == 0x25 {
                 (*ppu).windowsel =
-                    (*ppu).windowsel & !(0xff0000i32) as u32 | ((val as i32) << 16i32) as u32;
+                    (*ppu).windowsel & !(0xff0000i32) as u32 | ((val as i32) << 16) as u32;
             }
             (*ppu).windowLayer[((adr as i32 - 0x23i32) * 2i32) as usize].window1inversed =
                 val & 0x1 != 0;
@@ -1977,14 +1939,14 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
         }
         42 => {
             (*ppu).windowLayer[0i32 as usize].maskLogic = (val & 0x3);
-            (*ppu).windowLayer[1i32 as usize].maskLogic = (val as i32 >> 2i32 & 0x3i32) as u8;
-            (*ppu).windowLayer[2i32 as usize].maskLogic = (val as i32 >> 4i32 & 0x3i32) as u8;
-            (*ppu).windowLayer[3i32 as usize].maskLogic = (val as i32 >> 6i32 & 0x3i32) as u8;
+            (*ppu).windowLayer[1i32 as usize].maskLogic = (val as i32 >> 2 & 0x3) as u8;
+            (*ppu).windowLayer[2i32 as usize].maskLogic = (val as i32 >> 4 & 0x3) as u8;
+            (*ppu).windowLayer[3i32 as usize].maskLogic = (val as i32 >> 6 & 0x3) as u8;
             current_block_164 = 16754622181974910496;
         }
         43 => {
             (*ppu).windowLayer[4i32 as usize].maskLogic = (val & 0x3);
-            (*ppu).windowLayer[5i32 as usize].maskLogic = (val as i32 >> 2i32 & 0x3i32) as u8;
+            (*ppu).windowLayer[5i32 as usize].maskLogic = (val as i32 >> 2 & 0x3) as u8;
             current_block_164 = 16754622181974910496;
         }
         44 => {
@@ -2080,7 +2042,7 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
     };
 }
 pub fn PpuGetCurrentRenderScale(ppu: *mut Ppu, render_flags: u32) -> i32 {
-    1i32
+    1
 }
 
 fn draw_palette_span(

@@ -90,6 +90,26 @@ The unused-function closure below completes that root/reference review.
 Further thousand-line reductions remain open; the remaining unused-data
 census (177 raw lines) is below the current priority and stays parked.
 
+Redundant integer suffixes (2026-10-20): remove 25912 suffixes across 53
+files where the compiler retains the original integer type. Keep inference
+anchors, negative-expression guards and literals without a bound compiler
+type. Values, radix, operators, evaluation order and RAM layout stay exact;
+no helper or runtime operation is added.
+
+Restoring every selected suffix reconstructs the complete original source
+after formatting. Compiler comparison covers 777853 expression kinds/types
+across the library, frontend and verifier; only the precisely bound embedded
+source-array lengths change. All selected literal types match. Maintained
+source exactly matches the reviewed candidate; both newer plan-only commits
+are preserved. Formatting, all-target feature checks, normal release (20.57s), diff
+check and progress pass. Full any% 129712/0 (125.11s wall) and Speed Booster
+148406/0 (141.40s wall), native exits 0, pass with fixed source/input/artifact
+bytes; the host reuses the normal library. Rust lines -1218 to 118800.
+Cast-containing lines -59 to 9616 reflect reflow; every cast remains and other
+counters are unchanged. Replays retain existing route coverage, without
+establishing execution of every edited routine or frontend path. Further
+thousand-line reductions and broader ownership/route work remain open.
+
 Shared instruction declarations (2026-10-20): 655 callbacks in 161 adjacent
 families share signatures and 12 repeated setup prefixes through one macro.
 Each declaration lists its effects and continuation; 43 control-flow bodies

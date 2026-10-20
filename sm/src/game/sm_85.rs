@@ -174,15 +174,15 @@ fn MsgBoxMakeHdmaTable(game: &mut Game) {
 unsafe fn SetupMessageBoxBg3YscrollHdma(game: &mut Game) {
     game.g_ram[0x3380..0x3387].copy_from_slice(&[0xff, 0x00, 0x30, 0xe1, 0xfe, 0x30, 0x00]);
     crate::rtl::register_writes! { game;
-        byte(DMAP6 as u16, 0x42u8); byte(BBAD6 as u16, 0x12u8);
-        byte(A1T6L as u16, 0x80u8); byte(DAS6L as u16, 0x80u8);
-        byte(A1T6H as u16, 0x33u8); byte(DAS6H as u16, 0x33u8);
-        byte(A1B6 as u16, 0x7eu8); byte(DAS60 as u16, 0x7eu8);
-        byte(A2A6L as u16, 0u8); byte(A2A6H as u16, 0u8);
-        byte(NTRL6 as u16, 0u8);
+        byte(DMAP6 as u16, 0x42); byte(BBAD6 as u16, 0x12);
+        byte(A1T6L as u16, 0x80); byte(DAS6L as u16, 0x80);
+        byte(A1T6H as u16, 0x33); byte(DAS6H as u16, 0x33);
+        byte(A1B6 as u16, 0x7e); byte(DAS60 as u16, 0x7e);
+        byte(A2A6L as u16, 0); byte(A2A6H as u16, 0);
+        byte(NTRL6 as u16, 0);
     }
     MsgBoxMakeHdmaTable(game);
-    WriteReg(HDMAEN as u16, 0x40u8, game);
+    WriteReg(HDMAEN as u16, 0x40, game);
 }
 unsafe fn SetupPpuForActiveMessageBox(r52: u16, game: &mut Game) {
     SetupMessageBoxBg3YscrollHdma(game);
@@ -223,8 +223,8 @@ unsafe fn DrawRunButtonAndSetupPpuForLargeMessageBox(game: &mut Game) {
     DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
 }
 crate::forward_calls! { unsafe fn (game: &mut Game);
-    SetupPpuForSmallMessageBox => SetupPpuForActiveMessageBox(448u16, game);
-    SetupPpuForLargeMessageBox => SetupPpuForActiveMessageBox(416u16, game);
+    SetupPpuForSmallMessageBox => SetupPpuForActiveMessageBox(448, game);
+    SetupPpuForLargeMessageBox => SetupPpuForActiveMessageBox(416, game);
 }
 crate::game::address_dispatch! {
     unsafe fn CallMsgBoxModify(ea: u32, game: &mut Game) => ea;
@@ -267,11 +267,11 @@ unsafe fn ToggleSaveConfirmationSelection(game: &mut Game) {
     let row = if selection == 2 { 64 } else { 32 };
     WriteMessageBoxTilemapRow(128, &kSaveConfirmationSelectionTilemap[row..row + 32], game);
     crate::rtl::register_writes! { game;
-        word(VMADDL as u16, addr_unk_6059A0 as u16); word(DMAP1 as u16, 0x1801u16);
-        word(A1T1L as u16, 0x3200); word(A1B1 as u16, 0x7eu16);
-        word(DAS1L as u16, 0x180u16); word(DAS10 as u16, 0u16);
-        word(A2A1H as u16, 0u16); byte(VMAIN as u16, 0x80u8);
-        byte(MDMAEN as u16, 2u8);
+        word(VMADDL as u16, addr_unk_6059A0 as u16); word(DMAP1 as u16, 0x1801);
+        word(A1T1L as u16, 0x3200); word(A1B1 as u16, 0x7e);
+        word(DAS1L as u16, 0x180); word(DAS10 as u16, 0);
+        word(A2A1H as u16, 0); byte(VMAIN as u16, 0x80);
+        byte(MDMAEN as u16, 2);
     }
 }
 unsafe fn RestorePpuForMessageBox(game: &mut Game) {

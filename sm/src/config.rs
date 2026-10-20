@@ -124,9 +124,9 @@ crate::typed_struct! {
 pub type C2RustUnnamed_4 = u32;
 #[inline]
 unsafe fn atoi(mut __nptr: *const c_char) -> i32 {
-    strtol(__nptr, NULL as *mut *mut c_char, 10i32) as i32
+    strtol(__nptr, NULL as *mut *mut c_char, 10) as i32
 }
-pub const SDLK_SCANCODE_MASK: i32 = (1i32) << 30i32;
+pub const SDLK_SCANCODE_MASK: i32 = (1i32) << 30;
 pub static mut g_config: Config = Config {
     window_width: 0,
     window_height: 0,
@@ -162,122 +162,122 @@ static mut kKeyNameId: [KeyNameId; 24] = [
     KeyNameId {
         name: b"Null\0" as *const u8 as *const c_char,
         id: kKeys_Null as i32 as u16,
-        size: 65535u16,
+        size: 65535,
     },
     KeyNameId {
         name: b"Controls\0" as *const u8 as *const c_char,
         id: kKeys_Controls as i32 as u16,
-        size: (kKeys_Controls_Last as i32 - kKeys_Controls as i32 + 1i32) as u16,
+        size: (kKeys_Controls_Last as i32 - kKeys_Controls as i32 + 1) as u16,
     },
     KeyNameId {
         name: b"Load\0" as *const u8 as *const c_char,
         id: kKeys_Load as i32 as u16,
-        size: (kKeys_Load_Last as i32 - kKeys_Load as i32 + 1i32) as u16,
+        size: (kKeys_Load_Last as i32 - kKeys_Load as i32 + 1) as u16,
     },
     KeyNameId {
         name: b"Save\0" as *const u8 as *const c_char,
         id: kKeys_Save as i32 as u16,
-        size: (kKeys_Save_Last as i32 - kKeys_Save as i32 + 1i32) as u16,
+        size: (kKeys_Save_Last as i32 - kKeys_Save as i32 + 1) as u16,
     },
     KeyNameId {
         name: b"Replay\0" as *const u8 as *const c_char,
         id: kKeys_Replay as i32 as u16,
-        size: (kKeys_Replay_Last as i32 - kKeys_Replay as i32 + 1i32) as u16,
+        size: (kKeys_Replay_Last as i32 - kKeys_Replay as i32 + 1) as u16,
     },
     KeyNameId {
         name: b"LoadRef\0" as *const u8 as *const c_char,
         id: kKeys_LoadRef as i32 as u16,
-        size: (kKeys_LoadRef_Last as i32 - kKeys_LoadRef as i32 + 1i32) as u16,
+        size: (kKeys_LoadRef_Last as i32 - kKeys_LoadRef as i32 + 1) as u16,
     },
     KeyNameId {
         name: b"ReplayRef\0" as *const u8 as *const c_char,
         id: kKeys_ReplayRef as i32 as u16,
-        size: (kKeys_ReplayRef_Last as i32 - kKeys_ReplayRef as i32 + 1i32) as u16,
+        size: (kKeys_ReplayRef_Last as i32 - kKeys_ReplayRef as i32 + 1) as u16,
     },
     KeyNameId {
         name: b"CheatLife\0" as *const u8 as *const c_char,
         id: kKeys_CheatLife as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"CheatJump\0" as *const u8 as *const c_char,
         id: kKeys_CheatJump as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"ToggleWhichFrame\0" as *const u8 as *const c_char,
         id: kKeys_ToggleWhichFrame as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"ClearKeyLog\0" as *const u8 as *const c_char,
         id: kKeys_ClearKeyLog as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"StopReplay\0" as *const u8 as *const c_char,
         id: kKeys_StopReplay as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"Fullscreen\0" as *const u8 as *const c_char,
         id: kKeys_Fullscreen as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"Reset\0" as *const u8 as *const c_char,
         id: kKeys_Reset as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"Pause\0" as *const u8 as *const c_char,
         id: kKeys_Pause as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"PauseDimmed\0" as *const u8 as *const c_char,
         id: kKeys_PauseDimmed as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"Turbo\0" as *const u8 as *const c_char,
         id: kKeys_Turbo as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"ReplayTurbo\0" as *const u8 as *const c_char,
         id: kKeys_ReplayTurbo as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"WindowBigger\0" as *const u8 as *const c_char,
         id: kKeys_WindowBigger as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"WindowSmaller\0" as *const u8 as *const c_char,
         id: kKeys_WindowSmaller as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"VolumeUp\0" as *const u8 as *const c_char,
         id: kKeys_VolumeUp as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"VolumeDown\0" as *const u8 as *const c_char,
         id: kKeys_VolumeDown as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"DisplayPerf\0" as *const u8 as *const c_char,
         id: kKeys_DisplayPerf as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
     KeyNameId {
         name: b"ToggleRenderer\0" as *const u8 as *const c_char,
         id: kKeys_ToggleRenderer as i32 as u16,
-        size: 1u16,
+        size: 1,
     },
 ];
 static mut keymap_hash_first: [u16; 255] = [0; 255];
@@ -285,14 +285,13 @@ static mut keymap_hash: *mut KeyMapHashEnt = null::<KeyMapHashEnt>() as *mut Key
 static mut keymap_hash_size: i32 = 0;
 static mut has_keynameid: [bool; 24] = [false; 24];
 unsafe fn KeyMapHash_Add(key: u16, cmd: u16) -> bool {
-    if keymap_hash_size & 0xffi32 == 0i32 {
-        if keymap_hash_size > 10000i32 {
+    if keymap_hash_size & 0xff == 0 {
+        if keymap_hash_size > 10000 {
             Die(b"Too many keys\0" as *const u8 as *const c_char);
         }
         keymap_hash = realloc(
             keymap_hash as *mut c_void,
-            (size_of::<KeyMapHashEnt>() as size_t)
-                .wrapping_mul((keymap_hash_size + 256i32) as size_t),
+            (size_of::<KeyMapHashEnt>() as size_t).wrapping_mul((keymap_hash_size + 256) as size_t),
         ) as *mut KeyMapHashEnt;
     }
     crate::update_place! { previous fresh1 = keymap_hash_size => keymap_hash_size + 1; }
@@ -300,8 +299,8 @@ unsafe fn KeyMapHash_Add(key: u16, cmd: u16) -> bool {
     let ent = keymap_hash.offset(i as isize);
     (*ent).key = key;
     (*ent).cmd = cmd;
-    (*ent).next = 0u16;
-    let j: i32 = (key as u32).wrapping_rem(255u32) as i32;
+    (*ent).next = 0;
+    let j: i32 = (key as u32).wrapping_rem(255) as i32;
     let mut cur = (&raw mut keymap_hash_first as *mut u16).offset(j as isize);
     while *cur != 0 {
         let ent_0 = keymap_hash.offset((*cur as i32 - 1i32) as isize);
@@ -310,11 +309,11 @@ unsafe fn KeyMapHash_Add(key: u16, cmd: u16) -> bool {
         }
         cur = &raw mut (*ent_0).next;
     }
-    *cur = (i + 1i32) as u16;
+    *cur = (i + 1) as u16;
     true_0 != 0
 }
 unsafe fn KeyMapHash_Find(key: u16) -> i32 {
-    let mut i: i32 = keymap_hash_first[(key as i32 % 255i32) as usize] as i32;
+    let mut i: i32 = keymap_hash_first[(key as i32 % 255) as usize] as i32;
     while i != 0 {
         let ent = keymap_hash.offset((i - 1i32) as isize);
         if (*ent).key as i32 == key as i32 {
@@ -322,7 +321,7 @@ unsafe fn KeyMapHash_Find(key: u16) -> i32 {
         }
         i = (*ent).next as i32;
     }
-    0i32
+    0
 }
 // Pack SDL's low nine key bits and scancode marker into the key-map format.
 // Modifier bits and each caller's validation remain separate.
@@ -330,35 +329,35 @@ const fn encode_keycode(code: SDL_Keycode) -> i32 {
     let scancode = if code & SDLK_SCANCODE_MASK != 0 {
         kKeyMod_ScanCode as i32
     } else {
-        0i32
+        0
     };
     scancode | (code & (kKeyMod_ScanCode as i32 - 1i32))
 }
 
 pub unsafe fn FindCmdForSdlKey(code: SDL_Keycode, mod_0: SDL_Keymod) -> i32 {
     if code & !(SDLK_SCANCODE_MASK as SDL_Keycode | 0x1ff as SDL_Keycode) != 0 {
-        return 0i32;
+        return 0;
     }
-    let mut key: i32 = 0i32;
+    let mut key: i32 = 0;
     if code != SDLK_LALT as i32 as SDL_Keycode && code != SDLK_RALT as i32 as SDL_Keycode {
         key |= if mod_0 & KMOD_ALT as i32 as u32 != 0 {
             kKeyMod_Alt as i32
         } else {
-            0i32
+            0
         };
     }
     if code != SDLK_LCTRL as i32 as SDL_Keycode && code != SDLK_RCTRL as i32 as SDL_Keycode {
         key |= if mod_0 & KMOD_CTRL as i32 as u32 != 0 {
             kKeyMod_Ctrl as i32
         } else {
-            0i32
+            0
         };
     }
     if code != SDLK_LSHIFT as i32 as SDL_Keycode && code != SDLK_RSHIFT as i32 as SDL_Keycode {
         key |= if mod_0 & KMOD_SHIFT as i32 as u32 != 0 {
             kKeyMod_Shift as i32
         } else {
-            0i32
+            0
         };
     }
     key |= encode_keycode(code);
@@ -366,13 +365,13 @@ pub unsafe fn FindCmdForSdlKey(code: SDL_Keycode, mod_0: SDL_Keymod) -> i32 {
 }
 unsafe fn ParseKeyArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
     let mut s = null_mut::<c_char>();
-    let mut i: i32 = 0i32;
+    let mut i: i32 = 0;
     while i < size && {
         s = NextDelim(&raw mut value, ',' as i32);
         !s.is_null()
     } {
-        if (*s as i32 != 0i32) {
-            let mut key_with_mod: i32 = 0i32;
+        if (*s as i32 != 0) {
+            let mut key_with_mod: i32 = 0;
             loop {
                 if !StringStartsWithNoCase(s, b"Shift+\0" as *const u8 as *const c_char).is_null() {
                     key_with_mod |= kKeyMod_Shift as i32;
@@ -410,7 +409,7 @@ unsafe fn ParseKeyArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
             }
         }
         i += 1;
-        cmd += (cmd != 0i32) as i32;
+        cmd += (cmd != 0) as i32;
     }
 }
 static mut joymap_first: [u16; 17] = [0; 17];
@@ -418,21 +417,21 @@ static mut joymap_ents: *mut GamepadMapEnt = null::<GamepadMapEnt>() as *mut Gam
 static mut joymap_size: i32 = 0;
 static mut has_joypad_controls: bool = false;
 unsafe fn CountBits32(mut n: u32) -> i32 {
-    let mut count: i32 = 0i32;
-    while n != 0u32 {
-        n &= n.wrapping_sub(1u32);
+    let mut count: i32 = 0;
+    while n != 0 {
+        n &= n.wrapping_sub(1);
         count += 1;
     }
     count
 }
 unsafe fn GamepadMap_Add(button: i32, modifiers: u32, cmd: u16) {
-    if joymap_size & 0xffi32 == 0i32 {
-        if joymap_size > 1000i32 {
+    if joymap_size & 0xff == 0 {
+        if joymap_size > 1000 {
             Die(b"Too many joypad keys\0" as *const u8 as *const c_char);
         }
         joymap_ents = realloc(
             joymap_ents as *mut c_void,
-            (size_of::<GamepadMapEnt>() as size_t).wrapping_mul((joymap_size + 64i32) as size_t),
+            (size_of::<GamepadMapEnt>() as size_t).wrapping_mul((joymap_size + 64) as size_t),
         ) as *mut GamepadMapEnt;
         if joymap_ents.is_null() {
             Die(b"realloc failure\0" as *const u8 as *const c_char);
@@ -451,18 +450,18 @@ unsafe fn GamepadMap_Add(button: i32, modifiers: u32, cmd: u16) {
     (*ent).modifiers = modifiers;
     (*ent).cmd = cmd;
     (*ent).next = *p;
-    *p = (i + 1i32) as u16;
+    *p = (i + 1) as u16;
 }
 pub unsafe fn FindCmdForGamepadButton(button: i32, modifiers: u32) -> i32 {
     let mut e: i32 = joymap_first[button as usize] as i32;
-    while e != 0i32 {
+    while e != 0 {
         let mut ent = joymap_ents.offset((e - 1i32) as isize);
         if modifiers & (*ent).modifiers == (*ent).modifiers {
             return (*ent).cmd as i32;
         }
         e = (*ent).next as i32;
     }
-    0i32
+    0
 }
 unsafe fn ParseGamepadButtonName(value: *mut *const c_char) -> i32 {
     let s = *value;
@@ -538,13 +537,13 @@ static mut kDefaultGamepadCmds: [u8; 12] = [
 ];
 unsafe fn ParseGamepadArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
     let mut s = null_mut::<c_char>();
-    let mut i: i32 = 0i32;
+    let mut i: i32 = 0;
     while i < size && {
         s = NextDelim(&raw mut value, ',' as i32);
         !s.is_null()
     } {
-        if (*s as i32 != 0i32) {
-            let mut modifiers: u32 = 0u32;
+        if (*s as i32 != 0) {
+            let mut modifiers: u32 = 0;
             let mut ss: *const c_char = s;
             loop {
                 let button: i32 = ParseGamepadButtonName(&raw mut ss);
@@ -556,7 +555,7 @@ unsafe fn ParseGamepadArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
                         ss = ss.offset(1);
                         modifiers |= ((1i32) << button) as u32;
                         continue;
-                    } else if *ss as i32 == 0i32 {
+                    } else if *ss as i32 == 0 {
                         GamepadMap_Add(button, modifiers, cmd as u16);
                         break;
                     }
@@ -570,18 +569,18 @@ unsafe fn ParseGamepadArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
             }
         }
         i += 1;
-        cmd += (cmd != 0i32) as i32;
+        cmd += (cmd != 0) as i32;
     }
 }
 unsafe fn RegisterDefaultKeys() {
-    let mut i: i32 = 1i32;
+    let mut i: i32 = 1;
     while (i as usize)
         < (size_of::<[KeyNameId; 24]>() as usize).wrapping_div(size_of::<KeyNameId>() as usize)
     {
         if !has_keynameid[i as usize] {
             let size: i32 = kKeyNameId[i as usize].size as i32;
             let mut k: i32 = kKeyNameId[i as usize].id as i32;
-            let mut j: i32 = 0i32;
+            let mut j: i32 = 0;
             while j < size {
                 KeyMapHash_Add(kDefaultKbdControls[k as usize], k as u16);
                 j += 1;
@@ -591,13 +590,13 @@ unsafe fn RegisterDefaultKeys() {
         i += 1;
     }
     if !has_joypad_controls {
-        let mut i_0: i32 = 0i32;
+        let mut i_0: i32 = 0;
         while (i_0 as usize)
             < (size_of::<[u8; 12]>() as usize).wrapping_div(size_of::<u8>() as usize)
         {
             GamepadMap_Add(
                 kDefaultGamepadCmds[i_0 as usize] as i32,
-                0u32,
+                0,
                 (kKeys_Controls as i32 + i_0) as u16,
             );
             i_0 += 1;
@@ -606,31 +605,31 @@ unsafe fn RegisterDefaultKeys() {
 }
 unsafe fn GetIniSection(s: *const c_char) -> i32 {
     if StringEqualsNoCase(s, b"[KeyMap]\0" as *const u8 as *const c_char) {
-        return 0i32;
+        return 0;
     }
     if StringEqualsNoCase(s, b"[Graphics]\0" as *const u8 as *const c_char) {
-        return 1i32;
+        return 1;
     }
     if StringEqualsNoCase(s, b"[Sound]\0" as *const u8 as *const c_char) {
-        return 2i32;
+        return 2;
     }
     if StringEqualsNoCase(s, b"[General]\0" as *const u8 as *const c_char) {
-        return 3i32;
+        return 3;
     }
     if StringEqualsNoCase(s, b"[Features]\0" as *const u8 as *const c_char) {
-        return 4i32;
+        return 4;
     }
     if StringEqualsNoCase(s, b"[GamepadMap]\0" as *const u8 as *const c_char) {
-        return 5i32;
+        return 5;
     }
     -1i32
 }
 pub unsafe fn ParseBool(mut value: *const c_char, result: *mut bool) -> bool {
     let mut rv: bool = false_0 != 0;
     crate::update_place! { previous fresh2 = value => value.offset(1); }
-    match *fresh2 as i32 | 32i32 {
+    match *fresh2 as i32 | 32 {
         48 => {
-            if (*value as i32 != 0i32) {
+            if (*value as i32 != 0) {
                 return false_0 != 0;
             }
         }
@@ -645,7 +644,7 @@ pub unsafe fn ParseBool(mut value: *const c_char, result: *mut bool) -> bool {
             }
         }
         111 => {
-            rv = *value as i32 | 32i32 == 'n' as i32;
+            rv = *value as i32 | 32 == 'n' as i32;
             if !StringEqualsNoCase(
                 value,
                 if rv as i32 != 0 {
@@ -659,7 +658,7 @@ pub unsafe fn ParseBool(mut value: *const c_char, result: *mut bool) -> bool {
         }
         49 => {
             rv = true_0 != 0;
-            if (*value as i32 != 0i32) {
+            if (*value as i32 != 0) {
                 return false_0 != 0;
             }
         }
@@ -684,8 +683,8 @@ pub unsafe fn ParseBool(mut value: *const c_char, result: *mut bool) -> bool {
     rv
 }
 unsafe fn HandleIniConfig(section: i32, key: *const c_char, mut value: *mut c_char) -> bool {
-    if section == 0i32 {
-        let mut i: i32 = 0i32;
+    if section == 0 {
+        let mut i: i32 = 0;
         while (i as usize)
             < (size_of::<[KeyNameId; 24]>() as usize).wrapping_div(size_of::<KeyNameId>() as usize)
         {
@@ -700,13 +699,13 @@ unsafe fn HandleIniConfig(section: i32, key: *const c_char, mut value: *mut c_ch
             }
             i += 1;
         }
-    } else if section == 5i32 {
-        let mut i_0: i32 = 0i32;
+    } else if section == 5 {
+        let mut i_0: i32 = 0;
         while (i_0 as usize)
             < (size_of::<[KeyNameId; 24]>() as usize).wrapping_div(size_of::<KeyNameId>() as usize)
         {
             if StringEqualsNoCase(key, kKeyNameId[i_0 as usize].name) {
-                if i_0 == 1i32 {
+                if i_0 == 1 {
                     has_joypad_controls = true_0 != 0;
                 }
                 ParseGamepadArray(
@@ -718,11 +717,11 @@ unsafe fn HandleIniConfig(section: i32, key: *const c_char, mut value: *mut c_ch
             }
             i_0 += 1;
         }
-    } else if section == 1i32 {
+    } else if section == 1 {
         if StringEqualsNoCase(key, b"WindowSize\0" as *const u8 as *const c_char) {
             let mut s = null_mut::<c_char>();
             if StringEqualsNoCase(value, b"Auto\0" as *const u8 as *const c_char) {
-                set_fields! {[g_config], 0i32; window_width, window_height}
+                set_fields! {[g_config], 0; window_width, window_height}
                 return true_0 != 0;
             }
             loop {
@@ -730,7 +729,7 @@ unsafe fn HandleIniConfig(section: i32, key: *const c_char, mut value: *mut c_ch
                 if s.is_null() {
                     break;
                 }
-                if g_config.window_width == 0i32 {
+                if g_config.window_width == 0 {
                     g_config.window_width = atoi(s);
                 } else {
                     g_config.window_height = atoi(s);
@@ -744,10 +743,10 @@ unsafe fn HandleIniConfig(section: i32, key: *const c_char, mut value: *mut c_ch
         } else if StringEqualsNoCase(key, b"IgnoreAspectRatio\0" as *const u8 as *const c_char) {
             return ParseBool(value, &raw mut g_config.ignore_aspect_ratio);
         } else if StringEqualsNoCase(key, b"Fullscreen\0" as *const u8 as *const c_char) {
-            g_config.fullscreen = strtol(value, NULL_0 as *mut *mut c_char, 10i32) as u8;
+            g_config.fullscreen = strtol(value, NULL_0 as *mut *mut c_char, 10) as u8;
             return true_0 != 0;
         } else if StringEqualsNoCase(key, b"WindowScale\0" as *const u8 as *const c_char) {
-            g_config.window_scale = strtol(value, NULL_0 as *mut *mut c_char, 10i32) as u8;
+            g_config.window_scale = strtol(value, NULL_0 as *mut *mut c_char, 10) as u8;
             return true_0 != 0;
         } else if StringEqualsNoCase(key, b"OutputMethod\0" as *const u8 as *const c_char) {
             g_config.output_method =
@@ -780,17 +779,17 @@ unsafe fn HandleIniConfig(section: i32, key: *const c_char, mut value: *mut c_ch
             };
             return true_0 != 0;
         }
-    } else if section == 2i32 {
+    } else if section == 2 {
         if StringEqualsNoCase(key, b"EnableAudio\0" as *const u8 as *const c_char) {
             return ParseBool(value, &raw mut g_config.enable_audio);
         } else if StringEqualsNoCase(key, b"AudioFreq\0" as *const u8 as *const c_char) {
-            g_config.audio_freq = strtol(value, NULL_0 as *mut *mut c_char, 10i32) as u16;
+            g_config.audio_freq = strtol(value, NULL_0 as *mut *mut c_char, 10) as u16;
             return true_0 != 0;
         } else if StringEqualsNoCase(key, b"AudioChannels\0" as *const u8 as *const c_char) {
-            g_config.audio_channels = strtol(value, NULL_0 as *mut *mut c_char, 10i32) as u8;
+            g_config.audio_channels = strtol(value, NULL_0 as *mut *mut c_char, 10) as u8;
             return true_0 != 0;
         } else if StringEqualsNoCase(key, b"AudioSamples\0" as *const u8 as *const c_char) {
-            g_config.audio_samples = strtol(value, NULL_0 as *mut *mut c_char, 10i32) as u16;
+            g_config.audio_samples = strtol(value, NULL_0 as *mut *mut c_char, 10) as u16;
             return true_0 != 0;
         } else if StringEqualsNoCase(key, b"EnableMSU\0" as *const u8 as *const c_char) {
             if StringEqualsNoCase(value, b"opuz\0" as *const u8 as *const c_char) {
@@ -813,9 +812,9 @@ unsafe fn HandleIniConfig(section: i32, key: *const c_char, mut value: *mut c_ch
         } else if StringEqualsNoCase(key, b"ResumeMSU\0" as *const u8 as *const c_char) {
             return ParseBool(value, &raw mut g_config.resume_msu);
         }
-    } else if section == 3i32 {
+    } else if section == 3 {
         if StringEqualsNoCase(key, b"Autosave\0" as *const u8 as *const c_char) {
-            g_config.autosave = strtol(value, NULL_0 as *mut *mut c_char, 10i32) != 0;
+            g_config.autosave = strtol(value, NULL_0 as *mut *mut c_char, 10) != 0;
             return true_0 != 0;
         } else if StringEqualsNoCase(key, b"DisplayPerfInTitle\0" as *const u8 as *const c_char) {
             return ParseBool(value, &raw mut g_config.display_perf_title);
@@ -823,7 +822,7 @@ unsafe fn HandleIniConfig(section: i32, key: *const c_char, mut value: *mut c_ch
             return ParseBool(value, &raw mut g_config.disable_frame_delay);
         }
     } else {
-        section == 4i32;
+        section == 4;
     }
     false_0 != 0
 }
@@ -835,16 +834,16 @@ unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
     }
     let mut section: i32 = -2i32;
     g_config.memory_buffer = filedata;
-    let mut lineno: i32 = 1i32;
+    let mut lineno: i32 = 1;
     loop {
         p = NextLineStripComments(&raw mut filedata);
         if p.is_null() {
             break;
         }
-        if (*p as i32 != 0i32) {
+        if (*p as i32 != 0) {
             if *p as i32 == '[' as i32 {
                 section = GetIniSection(p);
-                if section < 0i32 {
+                if section < 0 {
                     fprintf(
                         stderr,
                         b"%s:%d: Invalid .ini section %s\n\0" as *const u8 as *const c_char,
@@ -859,7 +858,7 @@ unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
                 let mut tt = p.offset(8);
                 let new_filename =
                     ReplaceFilenameWithNewPath(filename, NextPossiblyQuotedString(&raw mut tt));
-                if depth > 10i32 || !ParseOneConfigFile(new_filename, depth + 1i32) {
+                if depth > 10 || !ParseOneConfigFile(new_filename, depth + 1) {
                     fprintf(
                         stderr,
                         b"Warning: Unable to read %s\n\0" as *const u8 as *const c_char,
@@ -883,7 +882,7 @@ unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
                         filename,
                         lineno,
                     );
-                } else if section >= 0i32 && !HandleIniConfig(section, p, v) {
+                } else if section >= 0 && !HandleIniConfig(section, p, v) {
                     fprintf(
                         stderr,
                         b"%s:%d: Can't parse '%s'\n\0" as *const u8 as *const c_char,
@@ -899,14 +898,13 @@ unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
     true_0 != 0
 }
 pub unsafe fn ParseConfigFile(mut filename: *const c_char) {
-    g_config.msuvolume = 100u8;
-    if !filename.is_null()
-        || !ParseOneConfigFile(b"sm.user.ini\0" as *const u8 as *const c_char, 0i32)
+    g_config.msuvolume = 100;
+    if !filename.is_null() || !ParseOneConfigFile(b"sm.user.ini\0" as *const u8 as *const c_char, 0)
     {
         if filename.is_null() {
             filename = b"sm.ini\0" as *const u8 as *const c_char;
         }
-        if !ParseOneConfigFile(filename, 0i32) {
+        if !ParseOneConfigFile(filename, 0) {
             fprintf(
                 stderr,
                 b"Warning: Unable to read config file %s\n\0" as *const u8 as *const c_char,

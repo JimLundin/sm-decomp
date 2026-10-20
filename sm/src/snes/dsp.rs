@@ -61,79 +61,79 @@ pub unsafe fn dsp_init(ram: *mut u8) -> *mut Dsp {
 pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     memset(
         &raw mut (*dsp).ram as *mut u8 as *mut c_void,
-        0i32,
+        0,
         size_of::<[u8; 128]>() as size_t,
     );
-    (*dsp).ram[0x7ci32 as usize] = 0xffu8;
-    let mut i: i32 = 0i32;
-    while i < 8i32 {
-        set_fields! {[(*dsp).channel[i as usize]], 0u16; pitch, pitchCounter}
+    (*dsp).ram[0x7ci32 as usize] = 0xff;
+    let mut i: i32 = 0;
+    while i < 8 {
+        set_fields! {[(*dsp).channel[i as usize]], 0; pitch, pitchCounter}
         (*dsp).channel[i as usize].pitchModulation = false_0 != 0;
         memset(
             &raw mut (*(&raw mut (*dsp).channel as *mut DspChannel).offset(i as isize)).decodeBuffer
                 as *mut i16 as *mut c_void,
-            0i32,
+            0,
             size_of::<[i16; 19]>() as size_t,
         );
-        (*dsp).channel[i as usize].srcn = 0u8;
-        (*dsp).channel[i as usize].decodeOffset = 0u16;
-        (*dsp).channel[i as usize].previousFlags = 0u8;
-        set_fields! {[(*dsp).channel[i as usize]], 0i16; old, older}
+        (*dsp).channel[i as usize].srcn = 0;
+        (*dsp).channel[i as usize].decodeOffset = 0;
+        (*dsp).channel[i as usize].previousFlags = 0;
+        set_fields! {[(*dsp).channel[i as usize]], 0; old, older}
         (*dsp).channel[i as usize].useNoise = false_0 != 0;
         memset(
             &raw mut (*(&raw mut (*dsp).channel as *mut DspChannel).offset(i as isize)).adsrRates
                 as *mut u16 as *mut c_void,
-            0i32,
+            0,
             size_of::<[u16; 4]>() as size_t,
         );
-        (*dsp).channel[i as usize].rateCounter = 0u16;
-        (*dsp).channel[i as usize].adsrState = 0u8;
-        (*dsp).channel[i as usize].sustainLevel = 0u16;
+        (*dsp).channel[i as usize].rateCounter = 0;
+        (*dsp).channel[i as usize].adsrState = 0;
+        (*dsp).channel[i as usize].sustainLevel = 0;
         (*dsp).channel[i as usize].useGain = false_0 != 0;
-        (*dsp).channel[i as usize].gainMode = 0u8;
+        (*dsp).channel[i as usize].gainMode = 0;
         (*dsp).channel[i as usize].directGain = false_0 != 0;
-        set_fields! {[(*dsp).channel[i as usize]], 0u16; gainValue, gain}
+        set_fields! {[(*dsp).channel[i as usize]], 0; gainValue, gain}
         (*dsp).channel[i as usize].keyOn = false_0 != 0;
         (*dsp).channel[i as usize].keyOff = false_0 != 0;
-        (*dsp).channel[i as usize].sampleOut = 0i16;
-        set_fields! {[(*dsp).channel[i as usize]], 0i8; volumeL, volumeR}
+        (*dsp).channel[i as usize].sampleOut = 0;
+        set_fields! {[(*dsp).channel[i as usize]], 0; volumeL, volumeR}
         (*dsp).channel[i as usize].echoEnable = false_0 != 0;
         i += 1;
     }
-    (*dsp).dirPage = 0u16;
+    (*dsp).dirPage = 0;
     (*dsp).evenCycle = false_0 != 0;
     (*dsp).mute = true_0 != 0;
     (*dsp).reset = true_0 != 0;
-    set_fields! {[(*dsp)], 0i8; masterVolumeL, masterVolumeR}
+    set_fields! {[(*dsp)], 0; masterVolumeL, masterVolumeR}
     (*dsp).noiseSample = -0x4000i16;
-    set_fields! {[(*dsp)], 0u16; noiseRate, noiseCounter}
+    set_fields! {[(*dsp)], 0; noiseRate, noiseCounter}
     (*dsp).echoWrites = false_0 != 0;
-    set_fields! {[(*dsp)], 0i8; echoVolumeL, echoVolumeR, feedbackVolume}
-    (*dsp).echoBufferAdr = 0u16;
-    set_fields! {[(*dsp)], 1u16; echoDelay, echoRemain}
-    (*dsp).echoBufferIndex = 0u16;
-    (*dsp).firBufferIndex = 0u8;
+    set_fields! {[(*dsp)], 0; echoVolumeL, echoVolumeR, feedbackVolume}
+    (*dsp).echoBufferAdr = 0;
+    set_fields! {[(*dsp)], 1; echoDelay, echoRemain}
+    (*dsp).echoBufferIndex = 0;
+    (*dsp).firBufferIndex = 0;
     memset(
         &raw mut (*dsp).firValues as *mut i8 as *mut c_void,
-        0i32,
+        0,
         size_of::<[i8; 8]>() as size_t,
     );
     memset(
         &raw mut (*dsp).firBufferL as *mut i16 as *mut c_void,
-        0i32,
+        0,
         size_of::<[i16; 8]>() as size_t,
     );
     memset(
         &raw mut (*dsp).firBufferR as *mut i16 as *mut c_void,
-        0i32,
+        0,
         size_of::<[i16; 8]>() as size_t,
     );
     memset(
         &raw mut (*dsp).sampleBuffer as *mut i16 as *mut c_void,
-        0i32,
+        0,
         size_of::<[i16; 1068]>() as size_t,
     );
-    (*dsp).sampleOffset = 0u16;
+    (*dsp).sampleOffset = 0;
 }
 pub unsafe fn dsp_saveload(
     dsp: *mut Dsp,
@@ -149,186 +149,168 @@ pub unsafe fn dsp_saveload(
     );
 }
 pub unsafe fn dsp_cycle(dsp: *mut Dsp) {
-    let mut totalL: i32 = 0i32;
-    let mut totalR: i32 = 0i32;
-    let mut i: i32 = 0i32;
-    while i < 8i32 {
+    let mut totalL: i32 = 0;
+    let mut totalR: i32 = 0;
+    let mut i: i32 = 0;
+    while i < 8 {
         dsp_cycleChannel(dsp, i);
         totalL += (*dsp).channel[i as usize].sampleOut as i32
             * (*dsp).channel[i as usize].volumeL as i32
-            >> 6i32;
+            >> 6;
         totalR += (*dsp).channel[i as usize].sampleOut as i32
             * (*dsp).channel[i as usize].volumeR as i32
-            >> 6i32;
+            >> 6;
         totalL = saturate_sample(totalL);
         totalR = saturate_sample(totalR);
         i += 1;
     }
-    totalL = totalL * (*dsp).masterVolumeL as i32 >> 7i32;
-    totalR = totalR * (*dsp).masterVolumeR as i32 >> 7i32;
+    totalL = totalL * (*dsp).masterVolumeL as i32 >> 7;
+    totalR = totalR * (*dsp).masterVolumeR as i32 >> 7;
     totalL = saturate_sample(totalL);
     totalR = saturate_sample(totalR);
     dsp_handleEcho(dsp, &raw mut totalL, &raw mut totalR);
     if (*dsp).mute {
-        totalL = 0i32;
-        totalR = 0i32;
+        totalL = 0;
+        totalR = 0;
     }
     dsp_handleNoise(dsp);
-    if ((*dsp).sampleOffset as i32) < 534i32 {
-        (*dsp).sampleBuffer[((*dsp).sampleOffset as i32 * 2i32) as usize] = totalL as i16;
-        (*dsp).sampleBuffer[((*dsp).sampleOffset as i32 * 2i32 + 1i32) as usize] = totalR as i16;
+    if ((*dsp).sampleOffset as i32) < 534 {
+        (*dsp).sampleBuffer[((*dsp).sampleOffset as i32 * 2) as usize] = totalL as i16;
+        (*dsp).sampleBuffer[((*dsp).sampleOffset as i32 * 2 + 1) as usize] = totalR as i16;
         (*dsp).sampleOffset = (*dsp).sampleOffset.wrapping_add(1);
     }
     (*dsp).evenCycle = !(*dsp).evenCycle;
 }
 unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
-    let adr: u16 = ((*dsp).echoBufferAdr as i32 + (*dsp).echoBufferIndex as i32 * 4i32) as u16;
+    let adr: u16 = ((*dsp).echoBufferAdr as i32 + (*dsp).echoBufferIndex as i32 * 4) as u16;
     (*dsp).firBufferL[(*dsp).firBufferIndex as usize] = (*(*dsp).apu_ram.offset(adr as isize)
         as i32
-        + ((*(*dsp)
-            .apu_ram
-            .offset((adr as i32 + 1i32 & 0xffffi32) as isize) as i32)
-            << 8i32)) as i16;
+        + ((*(*dsp).apu_ram.offset((adr as i32 + 1 & 0xffff) as isize) as i32) << 8))
+        as i16;
     (*dsp).firBufferL[(*dsp).firBufferIndex as usize] =
         ((*dsp).firBufferL[(*dsp).firBufferIndex as usize] >> 1);
-    (*dsp).firBufferR[(*dsp).firBufferIndex as usize] = (*(*dsp)
-        .apu_ram
-        .offset((adr as i32 + 2i32 & 0xffffi32) as isize)
-        as i32
-        + ((*(*dsp)
-            .apu_ram
-            .offset((adr as i32 + 3i32 & 0xffffi32) as isize) as i32)
-            << 8i32)) as i16;
+    (*dsp).firBufferR[(*dsp).firBufferIndex as usize] =
+        (*(*dsp).apu_ram.offset((adr as i32 + 2 & 0xffff) as isize) as i32
+            + ((*(*dsp).apu_ram.offset((adr as i32 + 3 & 0xffff) as isize) as i32) << 8))
+            as i16;
     (*dsp).firBufferR[(*dsp).firBufferIndex as usize] =
         ((*dsp).firBufferR[(*dsp).firBufferIndex as usize] >> 1);
-    let mut sumL: i32 = 0i32;
-    let mut sumR: i32 = 0i32;
-    let mut i: i32 = 0i32;
-    while i < 8i32 {
-        sumL += (*dsp).firBufferL[((*dsp).firBufferIndex as i32 + i + 1i32 & 0x7i32) as usize]
-            as i32
+    let mut sumL: i32 = 0;
+    let mut sumR: i32 = 0;
+    let mut i: i32 = 0;
+    while i < 8 {
+        sumL += (*dsp).firBufferL[((*dsp).firBufferIndex as i32 + i + 1 & 0x7) as usize] as i32
             * (*dsp).firValues[i as usize] as i32
-            >> 6i32;
-        sumR += (*dsp).firBufferR[((*dsp).firBufferIndex as i32 + i + 1i32 & 0x7i32) as usize]
-            as i32
+            >> 6;
+        sumR += (*dsp).firBufferR[((*dsp).firBufferIndex as i32 + i + 1 & 0x7) as usize] as i32
             * (*dsp).firValues[i as usize] as i32
-            >> 6i32;
-        if i == 6i32 {
-            sumL = (sumL & 0xffffi32) as i16 as i32;
-            sumR = (sumR & 0xffffi32) as i16 as i32;
+            >> 6;
+        if i == 6 {
+            sumL = (sumL & 0xffff) as i16 as i32;
+            sumR = (sumR & 0xffff) as i16 as i32;
         }
         i += 1;
     }
     sumL = saturate_sample(sumL);
     sumR = saturate_sample(sumR);
-    let outL: i32 = *outputL + (sumL * (*dsp).echoVolumeL as i32 >> 7i32);
-    let outR: i32 = *outputR + (sumR * (*dsp).echoVolumeR as i32 >> 7i32);
+    let outL: i32 = *outputL + (sumL * (*dsp).echoVolumeL as i32 >> 7);
+    let outR: i32 = *outputR + (sumR * (*dsp).echoVolumeR as i32 >> 7);
     *outputL = saturate_sample(outL);
     *outputR = saturate_sample(outR);
-    let mut inL: i32 = 0i32;
-    let mut inR: i32 = 0i32;
-    let mut i_0: i32 = 0i32;
-    while i_0 < 8i32 {
+    let mut inL: i32 = 0;
+    let mut inR: i32 = 0;
+    let mut i_0: i32 = 0;
+    while i_0 < 8 {
         if (*dsp).channel[i_0 as usize].echoEnable {
             inL += (*dsp).channel[i_0 as usize].sampleOut as i32
                 * (*dsp).channel[i_0 as usize].volumeL as i32
-                >> 6i32;
+                >> 6;
             inR += (*dsp).channel[i_0 as usize].sampleOut as i32
                 * (*dsp).channel[i_0 as usize].volumeR as i32
-                >> 6i32;
+                >> 6;
             inL = saturate_sample(inL);
             inR = saturate_sample(inR);
         }
         i_0 += 1;
     }
-    inL += sumL * (*dsp).feedbackVolume as i32 >> 7i32;
-    inR += sumR * (*dsp).feedbackVolume as i32 >> 7i32;
+    inL += sumL * (*dsp).feedbackVolume as i32 >> 7;
+    inR += sumR * (*dsp).feedbackVolume as i32 >> 7;
     inL = saturate_sample(inL);
     inR = saturate_sample(inR);
-    inL &= 0xfffei32;
-    inR &= 0xfffei32;
+    inL &= 0xfffe;
+    inR &= 0xfffe;
     if (*dsp).echoWrites {
-        *(*dsp).apu_ram.offset(adr as isize) = (inL & 0xffi32) as u8;
-        *(*dsp)
-            .apu_ram
-            .offset((adr as i32 + 1i32 & 0xffffi32) as isize) = (inL >> 8i32) as u8;
-        *(*dsp)
-            .apu_ram
-            .offset((adr as i32 + 2i32 & 0xffffi32) as isize) = (inR & 0xffi32) as u8;
-        *(*dsp)
-            .apu_ram
-            .offset((adr as i32 + 3i32 & 0xffffi32) as isize) = (inR >> 8i32) as u8;
+        *(*dsp).apu_ram.offset(adr as isize) = (inL & 0xff) as u8;
+        *(*dsp).apu_ram.offset((adr as i32 + 1 & 0xffff) as isize) = (inL >> 8) as u8;
+        *(*dsp).apu_ram.offset((adr as i32 + 2 & 0xffff) as isize) = (inR & 0xff) as u8;
+        *(*dsp).apu_ram.offset((adr as i32 + 3 & 0xffff) as isize) = (inR >> 8) as u8;
     }
     (*dsp).firBufferIndex = (*dsp).firBufferIndex.wrapping_add(1);
     (*dsp).firBufferIndex = ((*dsp).firBufferIndex & 7);
     (*dsp).echoBufferIndex = (*dsp).echoBufferIndex.wrapping_add(1);
     (*dsp).echoRemain = (*dsp).echoRemain.wrapping_sub(1);
-    if (*dsp).echoRemain as i32 == 0i32 {
+    if (*dsp).echoRemain as i32 == 0 {
         (*dsp).echoRemain = (*dsp).echoDelay;
-        (*dsp).echoBufferIndex = 0u16;
+        (*dsp).echoBufferIndex = 0;
     }
 }
 unsafe fn dsp_cycleChannel(dsp: *mut Dsp, ch: i32) {
     let mut pitch: u16 = (*dsp).channel[ch as usize].pitch;
-    if ch > 0i32 && (*dsp).channel[ch as usize].pitchModulation as i32 != 0 {
-        let factor: i32 =
-            ((*dsp).channel[(ch - 1i32) as usize].sampleOut as i32 >> 4i32) + 0x400i32;
-        pitch = (pitch as i32 * factor >> 10i32) as u16;
-        if pitch as i32 > 0x3fffi32 {
-            pitch = 0x3fffu16;
+    if ch > 0 && (*dsp).channel[ch as usize].pitchModulation as i32 != 0 {
+        let factor: i32 = ((*dsp).channel[(ch - 1i32) as usize].sampleOut as i32 >> 4) + 0x400;
+        pitch = (pitch as i32 * factor >> 10) as u16;
+        if pitch as i32 > 0x3fff {
+            pitch = 0x3fff;
         }
     }
     let newCounter: i32 = (*dsp).channel[ch as usize].pitchCounter as i32 + pitch as i32;
-    if newCounter > 0xffffi32 {
+    if newCounter > 0xffff {
         dsp_decodeBrr(dsp, ch);
     }
     (*dsp).channel[ch as usize].pitchCounter = newCounter as u16;
-    let mut sample: i16 = 0i16;
+    let mut sample: i16 = 0;
     if (*dsp).channel[ch as usize].useNoise {
         sample = (*dsp).noiseSample;
     } else {
         sample = dsp_getSample(
             dsp,
             ch,
-            (*dsp).channel[ch as usize].pitchCounter as i32 >> 12i32,
-            (*dsp).channel[ch as usize].pitchCounter as i32 >> 4i32 & 0xffi32,
+            (*dsp).channel[ch as usize].pitchCounter as i32 >> 12,
+            (*dsp).channel[ch as usize].pitchCounter as i32 >> 4 & 0xff,
         );
     }
     if (*dsp).reset {
-        (*dsp).channel[ch as usize].adsrState = 4u8;
-        (*dsp).channel[ch as usize].gain = 0u16;
+        (*dsp).channel[ch as usize].adsrState = 4;
+        (*dsp).channel[ch as usize].gain = 0;
     }
-    let doingDirectGain: bool = (*dsp).channel[ch as usize].adsrState as i32 != 4i32
+    let doingDirectGain: bool = (*dsp).channel[ch as usize].adsrState as i32 != 4
         && (*dsp).channel[ch as usize].useGain as i32 != 0
         && (*dsp).channel[ch as usize].directGain as i32 != 0;
-    let rate: u16 = (if (*dsp).channel[ch as usize].adsrState as i32 == 4i32 {
-        0i32
+    let rate: u16 = (if (*dsp).channel[ch as usize].adsrState as i32 == 4 {
+        0
     } else {
         (*dsp).channel[ch as usize].adsrRates[(*dsp).channel[ch as usize].adsrState as usize] as i32
     }) as u16;
-    if (*dsp).channel[ch as usize].adsrState as i32 != 4i32
-        && !doingDirectGain
-        && rate as i32 != 0i32
-    {
+    if (*dsp).channel[ch as usize].adsrState as i32 != 4 && !doingDirectGain && rate as i32 != 0 {
         (*dsp).channel[ch as usize].rateCounter =
             (*dsp).channel[ch as usize].rateCounter.wrapping_add(1);
     }
-    if (*dsp).channel[ch as usize].adsrState as i32 == 4i32
+    if (*dsp).channel[ch as usize].adsrState as i32 == 4
         || !doingDirectGain
             && (*dsp).channel[ch as usize].rateCounter as i32 >= rate as i32
-            && rate as i32 != 0i32
+            && rate as i32 != 0
     {
-        if (*dsp).channel[ch as usize].adsrState as i32 != 4i32 {
-            (*dsp).channel[ch as usize].rateCounter = 0u16;
+        if (*dsp).channel[ch as usize].adsrState as i32 != 4 {
+            (*dsp).channel[ch as usize].rateCounter = 0;
         }
         dsp_handleGain(dsp, ch);
     }
     if doingDirectGain {
         (*dsp).channel[ch as usize].gain = (*dsp).channel[ch as usize].gainValue;
     }
-    (*dsp).ram[(ch << 4i32 | 8i32) as usize] = ((*dsp).channel[ch as usize].gain >> 4) as u8;
-    sample = (sample as i32 * (*dsp).channel[ch as usize].gain as i32 >> 11i32) as i16;
-    (*dsp).ram[(ch << 4i32 | 9i32) as usize] = (sample >> 7) as u8;
+    (*dsp).ram[(ch << 4 | 8) as usize] = ((*dsp).channel[ch as usize].gain >> 4) as u8;
+    sample = (sample as i32 * (*dsp).channel[ch as usize].gain as i32 >> 11) as i16;
+    (*dsp).ram[(ch << 4 | 9) as usize] = (sample >> 7) as u8;
     (*dsp).channel[ch as usize].sampleOut = sample;
 }
 unsafe fn dsp_handleGain(dsp: *mut Dsp, ch: i32) {
@@ -337,59 +319,59 @@ unsafe fn dsp_handleGain(dsp: *mut Dsp, ch: i32) {
             let rate: u16 = (*dsp).channel[ch as usize].adsrRates
                 [(*dsp).channel[ch as usize].adsrState as usize];
             (*dsp).channel[ch as usize].gain = ((*dsp).channel[ch as usize].gain as i32
-                + if rate as i32 == 1i32 { 1024i32 } else { 32i32 })
+                + if rate as i32 == 1 { 1024 } else { 32 })
                 as u16;
-            if (*dsp).channel[ch as usize].gain as i32 >= 0x7e0i32 {
-                (*dsp).channel[ch as usize].adsrState = 1u8;
+            if (*dsp).channel[ch as usize].gain as i32 >= 0x7e0 {
+                (*dsp).channel[ch as usize].adsrState = 1;
             }
-            if (*dsp).channel[ch as usize].gain as i32 > 0x7ffi32 {
-                (*dsp).channel[ch as usize].gain = 0x7ffu16;
+            if (*dsp).channel[ch as usize].gain as i32 > 0x7ff {
+                (*dsp).channel[ch as usize].gain = 0x7ff;
             }
         }
         1 => {
             (*dsp).channel[ch as usize].gain = ((*dsp).channel[ch as usize].gain as i32
-                - (((*dsp).channel[ch as usize].gain as i32 - 1i32 >> 8i32) + 1i32))
+                - (((*dsp).channel[ch as usize].gain as i32 - 1i32 >> 8) + 1))
                 as u16;
             if ((*dsp).channel[ch as usize].gain as i32)
                 < (*dsp).channel[ch as usize].sustainLevel as i32
             {
-                (*dsp).channel[ch as usize].adsrState = 2u8;
+                (*dsp).channel[ch as usize].adsrState = 2;
             }
         }
         2 => {
             (*dsp).channel[ch as usize].gain = ((*dsp).channel[ch as usize].gain as i32
-                - (((*dsp).channel[ch as usize].gain as i32 - 1i32 >> 8i32) + 1i32))
+                - (((*dsp).channel[ch as usize].gain as i32 - 1i32 >> 8) + 1))
                 as u16
         }
         3 => match (*dsp).channel[ch as usize].gainMode as i32 {
             0 => {
                 (*dsp).channel[ch as usize].gain =
                     ((*dsp).channel[ch as usize].gain as i32 - 32i32) as u16;
-                if (*dsp).channel[ch as usize].gain as i32 > 0x7ffi32 {
-                    (*dsp).channel[ch as usize].gain = 0u16;
+                if (*dsp).channel[ch as usize].gain as i32 > 0x7ff {
+                    (*dsp).channel[ch as usize].gain = 0;
                 }
             }
             1 => {
                 (*dsp).channel[ch as usize].gain = ((*dsp).channel[ch as usize].gain as i32
-                    - (((*dsp).channel[ch as usize].gain as i32 - 1i32 >> 8i32) + 1i32))
+                    - (((*dsp).channel[ch as usize].gain as i32 - 1i32 >> 8) + 1))
                     as u16
             }
             2 => {
                 (*dsp).channel[ch as usize].gain =
-                    ((*dsp).channel[ch as usize].gain as i32 + 32i32) as u16;
-                if (*dsp).channel[ch as usize].gain as i32 > 0x7ffi32 {
-                    (*dsp).channel[ch as usize].gain = 0x7ffu16;
+                    ((*dsp).channel[ch as usize].gain as i32 + 32) as u16;
+                if (*dsp).channel[ch as usize].gain as i32 > 0x7ff {
+                    (*dsp).channel[ch as usize].gain = 0x7ff;
                 }
             }
             3 => {
                 (*dsp).channel[ch as usize].gain = ((*dsp).channel[ch as usize].gain as i32
-                    + if ((*dsp).channel[ch as usize].gain as i32) < 0x600i32 {
-                        32i32
+                    + if ((*dsp).channel[ch as usize].gain as i32) < 0x600 {
+                        32
                     } else {
-                        8i32
+                        8
                     }) as u16;
-                if (*dsp).channel[ch as usize].gain as i32 > 0x7ffi32 {
-                    (*dsp).channel[ch as usize].gain = 0x7ffu16;
+                if (*dsp).channel[ch as usize].gain as i32 > 0x7ff {
+                    (*dsp).channel[ch as usize].gain = 0x7ff;
                 }
             }
             _ => {}
@@ -397,25 +379,25 @@ unsafe fn dsp_handleGain(dsp: *mut Dsp, ch: i32) {
         4 => {
             (*dsp).channel[ch as usize].gain =
                 ((*dsp).channel[ch as usize].gain as i32 - 8i32) as u16;
-            if (*dsp).channel[ch as usize].gain as i32 > 0x7ffi32 {
-                (*dsp).channel[ch as usize].gain = 0u16;
+            if (*dsp).channel[ch as usize].gain as i32 > 0x7ff {
+                (*dsp).channel[ch as usize].gain = 0;
             }
         }
         _ => {}
     };
 }
 unsafe fn dsp_getSample(dsp: *mut Dsp, ch: i32, sampleNum: i32, offset: i32) -> i16 {
-    let news: i16 = (*dsp).channel[ch as usize].decodeBuffer[(sampleNum + 3i32) as usize];
-    let olds: i16 = (*dsp).channel[ch as usize].decodeBuffer[(sampleNum + 2i32) as usize];
-    let olders: i16 = (*dsp).channel[ch as usize].decodeBuffer[(sampleNum + 1i32) as usize];
+    let news: i16 = (*dsp).channel[ch as usize].decodeBuffer[(sampleNum + 3) as usize];
+    let olds: i16 = (*dsp).channel[ch as usize].decodeBuffer[(sampleNum + 2) as usize];
+    let olders: i16 = (*dsp).channel[ch as usize].decodeBuffer[(sampleNum + 1) as usize];
     let oldests: i16 = (*dsp).channel[ch as usize].decodeBuffer[sampleNum as usize];
-    let mut out: i32 = gaussValues[(0xffi32 - offset) as usize] as i32 * oldests as i32 >> 10i32;
-    out += gaussValues[(0x1ffi32 - offset) as usize] as i32 * olders as i32 >> 10i32;
-    out += gaussValues[(0x100i32 + offset) as usize] as i32 * olds as i32 >> 10i32;
-    out = (out & 0xffffi32) as i16 as i32;
-    out += gaussValues[offset as usize] as i32 * news as i32 >> 10i32;
+    let mut out: i32 = gaussValues[(0xff - offset) as usize] as i32 * oldests as i32 >> 10;
+    out += gaussValues[(0x1ff - offset) as usize] as i32 * olders as i32 >> 10;
+    out += gaussValues[(0x100 + offset) as usize] as i32 * olds as i32 >> 10;
+    out = (out & 0xffff) as i16 as i32;
+    out += gaussValues[offset as usize] as i32 * news as i32 >> 10;
     out = saturate_sample(out);
-    (out >> 1i32) as i16
+    (out >> 1) as i16
 }
 unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
     (*dsp).channel[ch as usize].decodeBuffer[0i32 as usize] =
@@ -424,84 +406,84 @@ unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
         (*dsp).channel[ch as usize].decodeBuffer[17i32 as usize];
     (*dsp).channel[ch as usize].decodeBuffer[2i32 as usize] =
         (*dsp).channel[ch as usize].decodeBuffer[18i32 as usize];
-    if (*dsp).channel[ch as usize].previousFlags as i32 == 1i32
-        || (*dsp).channel[ch as usize].previousFlags as i32 == 3i32
+    if (*dsp).channel[ch as usize].previousFlags as i32 == 1
+        || (*dsp).channel[ch as usize].previousFlags as i32 == 3
     {
         let samplePointer: u16 =
-            ((*dsp).dirPage as i32 + 4i32 * (*dsp).channel[ch as usize].srcn as i32) as u16;
+            ((*dsp).dirPage as i32 + 4 * (*dsp).channel[ch as usize].srcn as i32) as u16;
         (*dsp).channel[ch as usize].decodeOffset = *(*dsp)
             .apu_ram
-            .offset((samplePointer as i32 + 2i32 & 0xffffi32) as isize)
+            .offset((samplePointer as i32 + 2 & 0xffff) as isize)
             as u16;
         (*dsp).channel[ch as usize].decodeOffset = ((*dsp).channel[ch as usize].decodeOffset as i32
             | (*(*dsp)
                 .apu_ram
-                .offset((samplePointer as i32 + 3i32 & 0xffffi32) as isize) as i32)
-                << 8i32) as u16;
-        if (*dsp).channel[ch as usize].previousFlags as i32 == 1i32 {
-            (*dsp).channel[ch as usize].adsrState = 4u8;
-            (*dsp).channel[ch as usize].gain = 0u16;
+                .offset((samplePointer as i32 + 3 & 0xffff) as isize) as i32)
+                << 8) as u16;
+        if (*dsp).channel[ch as usize].previousFlags as i32 == 1 {
+            (*dsp).channel[ch as usize].adsrState = 4;
+            (*dsp).channel[ch as usize].gain = 0;
         }
         (*dsp).ram[0x7ci32 as usize] = ((*dsp).ram[0x7ci32 as usize] as i32 | (1i32) << ch) as u8;
     }
     crate::update_place! { previous fresh0 = (*dsp).channel[ch as usize].decodeOffset => (*dsp).channel[ch as usize].decodeOffset.wrapping_add(1); }
     let header: u8 = *(*dsp).apu_ram.offset(fresh0 as isize);
-    let shift: i32 = header as i32 >> 4i32;
-    let filter: i32 = (header as i32 & 0xci32) >> 2i32;
+    let shift: i32 = header as i32 >> 4;
+    let filter: i32 = (header as i32 & 0xc) >> 2;
     (*dsp).channel[ch as usize].previousFlags = (header & 0x3);
-    let mut curByte: u8 = 0u8;
+    let mut curByte: u8 = 0;
     let mut old: i32 = (*dsp).channel[ch as usize].old as i32;
     let mut older: i32 = (*dsp).channel[ch as usize].older as i32;
-    let mut i: i32 = 0i32;
-    while i < 16i32 {
-        let mut s: i32 = 0i32;
-        if i & 1i32 != 0 {
-            s = curByte as i32 & 0xfi32;
+    let mut i: i32 = 0;
+    while i < 16 {
+        let mut s: i32 = 0;
+        if i & 1 != 0 {
+            s = curByte as i32 & 0xf;
         } else {
             crate::update_place! { previous fresh1 = (*dsp).channel[ch as usize].decodeOffset => (*dsp).channel[ch as usize].decodeOffset.wrapping_add(1); }
             curByte = *(*dsp).apu_ram.offset(fresh1 as isize);
-            s = curByte as i32 >> 4i32;
+            s = curByte as i32 >> 4;
         }
-        if s > 7i32 {
-            s -= 16i32;
+        if s > 7 {
+            s -= 16;
         }
-        if shift <= 0xci32 {
-            s = s << shift >> 1i32;
+        if shift <= 0xc {
+            s = s << shift >> 1;
         } else {
-            s = (s >> 3i32) << 12i32;
+            s = (s >> 3) << 12;
         }
         match filter {
-            1 => s += old + (-old >> 4i32),
-            2 => s += 2i32 * old + (3i32 * -old >> 5i32) - older + (older >> 4i32),
-            3 => s += 2i32 * old + (13i32 * -old >> 6i32) - older + (3i32 * older >> 4i32),
+            1 => s += old + (-old >> 4),
+            2 => s += 2 * old + (3 * -old >> 5) - older + (older >> 4),
+            3 => s += 2 * old + (13 * -old >> 6) - older + (3 * older >> 4),
             _ => {}
         }
         s = saturate_sample(s);
-        s = ((s & 0x7fffi32) << 1i32) as i16 as i32 >> 1i32;
+        s = ((s & 0x7fff) << 1) as i16 as i32 >> 1;
         older = old;
         old = s;
-        (*dsp).channel[ch as usize].decodeBuffer[(i + 3i32) as usize] = s as i16;
+        (*dsp).channel[ch as usize].decodeBuffer[(i + 3) as usize] = s as i16;
         i += 1;
     }
     (*dsp).channel[ch as usize].older = older as i16;
     (*dsp).channel[ch as usize].old = old as i16;
 }
 unsafe fn dsp_handleNoise(dsp: *mut Dsp) {
-    if (*dsp).noiseRate as i32 != 0i32 {
+    if (*dsp).noiseRate as i32 != 0 {
         (*dsp).noiseCounter = (*dsp).noiseCounter.wrapping_add(1);
     }
-    if (*dsp).noiseCounter as i32 >= (*dsp).noiseRate as i32 && (*dsp).noiseRate as i32 != 0i32 {
-        let bit: i32 = (*dsp).noiseSample as i32 & 1i32 ^ (*dsp).noiseSample as i32 >> 1i32 & 1i32;
-        (*dsp).noiseSample = ((*dsp).noiseSample as i32 >> 1i32 & 0x3fffi32 | bit << 14i32) as i16;
-        (*dsp).noiseSample = ((((*dsp).noiseSample as i32 & 0x7fffi32) << 1i32) as i16 >> 1);
-        (*dsp).noiseCounter = 0u16;
+    if (*dsp).noiseCounter as i32 >= (*dsp).noiseRate as i32 && (*dsp).noiseRate as i32 != 0 {
+        let bit: i32 = (*dsp).noiseSample as i32 & 1 ^ (*dsp).noiseSample as i32 >> 1 & 1;
+        (*dsp).noiseSample = ((*dsp).noiseSample as i32 >> 1 & 0x3fff | bit << 14) as i16;
+        (*dsp).noiseSample = ((((*dsp).noiseSample as i32 & 0x7fff) << 1) as i16 >> 1);
+        (*dsp).noiseCounter = 0;
     }
 }
 pub unsafe fn dsp_read(dsp: *mut Dsp, adr: u8) -> u8 {
     (*dsp).ram[adr as usize]
 }
 pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
-    let ch: i32 = adr as i32 >> 4i32;
+    let ch: i32 = adr as i32 >> 4;
     match adr as i32 {
         0 | 16 | 32 | 48 | 64 | 80 | 96 | 112 => (*dsp).channel[ch as usize].volumeL = val as i8,
         1 | 17 | 33 | 49 | 65 | 81 | 97 | 113 => (*dsp).channel[ch as usize].volumeR = val as i8,
@@ -510,32 +492,32 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
                 ((*dsp).channel[ch as usize].pitch & 0x3f00 | val as u16)
         }
         3 | 19 | 35 | 51 | 67 | 83 | 99 | 115 => {
-            (*dsp).channel[ch as usize].pitch =
-                (((*dsp).channel[ch as usize].pitch as i32 & 0xffi32 | (val as i32) << 8i32)
-                    & 0x3fffi32) as u16
+            (*dsp).channel[ch as usize].pitch = (((*dsp).channel[ch as usize].pitch as i32 & 0xff
+                | (val as i32) << 8)
+                & 0x3fff) as u16
         }
         4 | 20 | 36 | 52 | 68 | 84 | 100 | 116 => (*dsp).channel[ch as usize].srcn = val,
         5 | 21 | 37 | 53 | 69 | 85 | 101 | 117 => {
             (*dsp).channel[ch as usize].adsrRates[0i32 as usize] =
-                rateValues[((val as i32 & 0xfi32) * 2i32 + 1i32) as usize] as u16;
+                rateValues[((val as i32 & 0xf) * 2 + 1) as usize] as u16;
             (*dsp).channel[ch as usize].adsrRates[1i32 as usize] =
-                rateValues[(((val as i32 & 0x70i32) >> 4i32) * 2i32 + 16i32) as usize] as u16;
+                rateValues[(((val as i32 & 0x70) >> 4) * 2 + 16) as usize] as u16;
             (*dsp).channel[ch as usize].useGain = val & 0x80 == 0;
         }
         6 | 22 | 38 | 54 | 70 | 86 | 102 | 118 => {
             (*dsp).channel[ch as usize].adsrRates[2i32 as usize] =
-                rateValues[(val as i32 & 0x1fi32) as usize] as u16;
+                rateValues[(val as i32 & 0x1f) as usize] as u16;
             (*dsp).channel[ch as usize].sustainLevel =
-                ((((val as i32 & 0xe0i32) >> 5i32) + 1i32) * 0x100i32) as u16;
+                ((((val as i32 & 0xe0) >> 5) + 1) * 0x100) as u16;
         }
         7 | 23 | 39 | 55 | 71 | 87 | 103 | 119 => {
             (*dsp).channel[ch as usize].directGain = val & 0x80 == 0;
             if val & 0x80 != 0 {
-                (*dsp).channel[ch as usize].gainMode = ((val as i32 & 0x60i32) >> 5i32) as u8;
+                (*dsp).channel[ch as usize].gainMode = ((val as i32 & 0x60) >> 5) as u8;
                 (*dsp).channel[ch as usize].adsrRates[3i32 as usize] =
-                    rateValues[(val as i32 & 0x1fi32) as usize] as u16;
+                    rateValues[(val as i32 & 0x1f) as usize] as u16;
             } else {
-                (*dsp).channel[ch as usize].gainValue = ((val as i32 & 0x7fi32) * 16i32) as u16;
+                (*dsp).channel[ch as usize].gainValue = ((val as i32 & 0x7f) * 16) as u16;
             }
         }
         12 => (*dsp).masterVolumeL = val as i8,
@@ -543,14 +525,14 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
         44 => (*dsp).echoVolumeL = val as i8,
         60 => (*dsp).echoVolumeR = val as i8,
         76 => {
-            let mut ch_0: i32 = 0i32;
-            while ch_0 < 8i32 {
+            let mut ch_0: i32 = 0;
+            while ch_0 < 8 {
                 (*dsp).channel[ch_0 as usize].keyOn = val as i32 & (1i32) << ch_0 != 0;
                 if (*dsp).channel[ch_0 as usize].keyOn {
                     (*dsp).channel[ch_0 as usize].keyOn = false_0 != 0;
-                    (*dsp).channel[ch_0 as usize].previousFlags = 0u8;
+                    (*dsp).channel[ch_0 as usize].previousFlags = 0;
                     let samplePointer: u16 = ((*dsp).dirPage as i32
-                        + 4i32 * (*dsp).channel[ch_0 as usize].srcn as i32)
+                        + 4 * (*dsp).channel[ch_0 as usize].srcn as i32)
                         as u16;
                     (*dsp).channel[ch_0 as usize].decodeOffset =
                         *(*dsp).apu_ram.offset(samplePointer as isize) as u16;
@@ -558,33 +540,33 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
                         ((*dsp).channel[ch_0 as usize].decodeOffset as i32
                             | (*(*dsp)
                                 .apu_ram
-                                .offset((samplePointer as i32 + 1i32 & 0xffffi32) as isize)
+                                .offset((samplePointer as i32 + 1 & 0xffff) as isize)
                                 as i32)
-                                << 8i32) as u16;
+                                << 8) as u16;
                     memset(
                         &raw mut (*(&raw mut (*dsp).channel as *mut DspChannel)
                             .offset(ch_0 as isize))
                         .decodeBuffer as *mut i16 as *mut c_void,
-                        0i32,
+                        0,
                         size_of::<[i16; 19]>() as size_t,
                     );
-                    (*dsp).channel[ch_0 as usize].gain = 0u16;
+                    (*dsp).channel[ch_0 as usize].gain = 0;
                     (*dsp).channel[ch_0 as usize].adsrState =
                         (if (*dsp).channel[ch_0 as usize].useGain as i32 != 0 {
-                            3i32
+                            3
                         } else {
-                            0i32
+                            0
                         }) as u8;
                 }
                 ch_0 += 1;
             }
         }
         92 => {
-            let mut ch_1: i32 = 0i32;
-            while ch_1 < 8i32 {
+            let mut ch_1: i32 = 0;
+            while ch_1 < 8 {
                 (*dsp).channel[ch_1 as usize].keyOff = val as i32 & (1i32) << ch_1 != 0;
                 if (*dsp).channel[ch_1 as usize].keyOff {
-                    (*dsp).channel[ch_1 as usize].adsrState = 4u8;
+                    (*dsp).channel[ch_1 as usize].adsrState = 4;
                 }
                 ch_1 += 1;
             }
@@ -593,37 +575,37 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
             (*dsp).reset = val & 0x80 != 0;
             (*dsp).mute = val & 0x40 != 0;
             (*dsp).echoWrites = val & 0x20 == 0;
-            (*dsp).noiseRate = rateValues[(val as i32 & 0x1fi32) as usize] as u16;
+            (*dsp).noiseRate = rateValues[(val as i32 & 0x1f) as usize] as u16;
         }
-        124 => val = 0u8,
+        124 => val = 0,
         13 => (*dsp).feedbackVolume = val as i8,
         45 => {
-            let mut i: i32 = 0i32;
-            while i < 8i32 {
+            let mut i: i32 = 0;
+            while i < 8 {
                 (*dsp).channel[i as usize].pitchModulation = val as i32 & (1i32) << i != 0;
                 i += 1;
             }
         }
         61 => {
-            let mut i_0: i32 = 0i32;
-            while i_0 < 8i32 {
+            let mut i_0: i32 = 0;
+            while i_0 < 8 {
                 (*dsp).channel[i_0 as usize].useNoise = val as i32 & (1i32) << i_0 != 0;
                 i_0 += 1;
             }
         }
         77 => {
-            let mut i_1: i32 = 0i32;
-            while i_1 < 8i32 {
+            let mut i_1: i32 = 0;
+            while i_1 < 8 {
                 (*dsp).channel[i_1 as usize].echoEnable = val as i32 & (1i32) << i_1 != 0;
                 i_1 += 1;
             }
         }
-        93 => (*dsp).dirPage = ((val as i32) << 8i32) as u16,
-        109 => (*dsp).echoBufferAdr = ((val as i32) << 8i32) as u16,
+        93 => (*dsp).dirPage = ((val as i32) << 8) as u16,
+        109 => (*dsp).echoBufferAdr = ((val as i32) << 8) as u16,
         125 => {
-            (*dsp).echoDelay = ((val as i32 & 0xfi32) * 512i32) as u16;
-            if (*dsp).echoDelay as i32 == 0i32 {
-                (*dsp).echoDelay = 1u16;
+            (*dsp).echoDelay = ((val as i32 & 0xf) * 512) as u16;
+            if (*dsp).echoDelay as i32 == 0 {
+                (*dsp).echoDelay = 1;
             }
         }
         15 | 31 | 47 | 63 | 79 | 95 | 111 | 127 => (*dsp).firValues[ch as usize] = val as i8,
@@ -634,14 +616,13 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
 pub unsafe fn dsp_getSamples(dsp: *mut Dsp, sampleData: *mut i16, samplesPerFrame: i32) {
     let adder: c_double = 534.0f64 / samplesPerFrame as c_double;
     let mut location: c_double = 0.0f64;
-    let mut i: i32 = 0i32;
+    let mut i: i32 = 0;
     while i < samplesPerFrame {
-        *sampleData.offset((i * 2i32) as isize) =
-            (*dsp).sampleBuffer[(location as i32 * 2i32) as usize];
-        *sampleData.offset((i * 2i32 + 1i32) as isize) =
-            (*dsp).sampleBuffer[(location as i32 * 2i32 + 1i32) as usize];
+        *sampleData.offset((i * 2) as isize) = (*dsp).sampleBuffer[(location as i32 * 2) as usize];
+        *sampleData.offset((i * 2 + 1) as isize) =
+            (*dsp).sampleBuffer[(location as i32 * 2 + 1) as usize];
         location += adder;
         i += 1;
     }
-    (*dsp).sampleOffset = 0u16;
+    (*dsp).sampleOffset = 0;
 }

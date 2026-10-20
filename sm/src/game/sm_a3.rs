@@ -153,12 +153,12 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
     Enemy_NormalFrozenAI_A3 => NormalEnemyFrozenAI(game);
 }
 pub unsafe fn Metalee_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_Metalee(ram_word!(game, cur_enemy_index) as i32, game)).var_E = 1u16;
+    (*Get_Metalee(ram_word!(game, cur_enemy_index) as i32, game)).var_E = 1;
     jp
 }
 pub unsafe fn Metalee_Init(game: &mut Game) {
     let E = Get_Metalee(ram_word!(game, cur_enemy_index) as i32, game);
-    set_fields! {[(*E)], 0u16; var_C, var_D, var_E}
+    set_fields! {[(*E)], 0; var_C, var_D, var_E}
     (*E).base.current_instruction = addr_kMetalee_Ilist_8910 as u16;
     (*E).var_B = ((0xa38987i32) as u16);
 }
@@ -179,7 +179,7 @@ pub unsafe fn Metalee_Main(game: &mut Game) {
 }
 pub unsafe fn Metalee_Func_1(game: &mut Game) {
     let E = Get_Metalee(ram_word!(game, cur_enemy_index) as i32, game);
-    if abs16(((*E).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos))) < 0x48u16 {
+    if abs16(((*E).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos))) < 0x48 {
         Metalee_Func_2(ram_word!(game, cur_enemy_index), game);
         (*E).var_C = (*E).var_C.wrapping_add(1);
         Metalee_Func_6(game);
@@ -190,60 +190,59 @@ pub unsafe fn Metalee_Func_2(k: u16, game: &mut Game) {
     let E = Get_Metalee(k as i32, game);
     let div: u16 = SnesDivide(
         (ram_word!(game, samus_y_pos)).wrapping_sub((*E).base.y_pos),
-        24u8,
+        24,
     ) as u8 as u16;
-    (*E).var_F = (div).wrapping_add(4u16);
+    (*E).var_F = (div).wrapping_add(4);
 }
 pub unsafe fn Metalee_Func_3(k: u16, game: &mut Game) {
     let E = Get_Metalee(k as i32, game);
     if (*E).var_E != 0 {
-        (*E).var_E = 0u16;
+        (*E).var_E = 0;
         (*E).var_C = (*E).var_C.wrapping_add(1);
         Metalee_Func_6(game);
         (*E).var_B = ((0xa389f3i32) as u16);
-        QueueSfx2_Max6(0x5bu16, game);
+        QueueSfx2_Max6(0x5b, game);
     }
 }
 pub unsafe fn Metalee_Func_4(game: &mut Game) {
     let E = Get_Metalee(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).var_A = 21u16;
+    (*E).var_A = 21;
     let v1: u16 = ((*E).base.properties) | (3u16);
     (*E).base.properties = v1;
     if EnemyFunc_BF8A(
         ram_word!(game, cur_enemy_index),
         v1,
-        ((*E).var_F as i16 as i32) << 16i32,
+        ((*E).var_F as i16 as i32) << 16,
         game,
     ) & 1
         != 0
     {
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.timer = 0u16;
+        (*E).base.instruction_timer = 1;
+        (*E).base.timer = 0;
         (*E).var_B = ((0xa38a5ci32) as u16);
-        QueueSfx2_Max6(0x5cu16, game);
+        QueueSfx2_Max6(0x5c, game);
     } else {
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_add((*E).var_F);
         (*E).base.x_pos = ((*E).base.x_pos as i32
-            + if (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16)
-                >= 0i16
+            + if (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) >= 0
             {
                 -2i32
             } else {
-                2i32
+                2
             }) as u16;
     };
 }
 pub unsafe fn Metalee_Func_5(game: &mut Game) {
     let E = Get_Metalee(ram_word!(game, cur_enemy_index) as i32, game);
     crate::update_place! { previous fresh8 = (*E).var_A => (*E).var_A.wrapping_sub(1); }
-    if fresh8 == 1u16 {
+    if fresh8 == 1 {
         (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).vram_tiles_index =
             ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
-        (*E).base.palette_index = 2560u16;
-        (*E).base.vram_tiles_index = 0u16;
+        (*E).base.palette_index = 2560;
+        (*E).base.vram_tiles_index = 0;
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
     } else {
-        if (*E).var_A == 8u16 {
+        if (*E).var_A == 8 {
             let v2: u16 = ram_word!(game, cur_enemy_index);
             let mut parameter = SpawnEprojWithGfx(8, v2, addr_stru_868BFA as u16, game);
             parameter = SpawnEprojWithGfx(parameter, v2, addr_stru_868C08 as u16, game);
@@ -258,8 +257,8 @@ pub unsafe fn Metalee_Func_6(game: &mut Game) {
     let metalee_var_C: u16 = (*E).var_C;
     if metalee_var_C != (*E).var_D {
         (*E).var_D = metalee_var_C;
-        enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3894e, metalee_var_C as isize), timer = 1u16}
-        (*E).base.timer = 0u16;
+        enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3894e, metalee_var_C as isize), timer = 1}
+        (*E).base.timer = 0;
     }
 }
 pub unsafe fn Metalee_Shot(game: &mut Game) {
@@ -281,10 +280,10 @@ pub unsafe fn Metalee_Shot(game: &mut Game) {
             addr_stru_868BFA as u16,
             game,
         );
-        SpawnEprojWithGfx(0u16, v2, addr_stru_868C08 as u16, game);
-        SpawnEprojWithGfx(0u16, v2, addr_stru_868C16 as u16, game);
-        SpawnEprojWithGfx(0u16, v2, addr_stru_868C24 as u16, game);
-        set_fields! {[(*E).base], 0u16; vram_tiles_index, palette_index}
+        SpawnEprojWithGfx(0, v2, addr_stru_868C08 as u16, game);
+        SpawnEprojWithGfx(0, v2, addr_stru_868C16 as u16, game);
+        SpawnEprojWithGfx(0, v2, addr_stru_868C24 as u16, game);
+        set_fields! {[(*E).base], 0; vram_tiles_index, palette_index}
     }
 }
 pub unsafe fn Fireflea_Init(game: &mut Game) {
@@ -309,19 +308,19 @@ pub unsafe fn Fireflea_Func_1(k: u16, game: &mut Game) {
 }
 pub unsafe fn Fireflea_Func_2(k: u16, game: &mut Game) {
     let E = Get_FireFlea(k as i32, game);
-    (*E).var_D = ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize) as i32) << 8i32) as u16;
+    (*E).var_D = ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1) as i32) << 8) as u16;
 }
 pub unsafe fn Fireflea_Func_3(k: u16, game: &mut Game) {
     let E = Get_FireFlea(k as i32, game);
     let mut v2: u16 =
         (8u16).wrapping_mul((*(&raw mut (*E).parameter_2 as *mut u8).offset(0)) as u16);
     if ((*E).parameter_1 & 1) == 0 {
-        v2 = (v2).wrapping_add(4u16);
+        v2 = (v2).wrapping_add(4);
     }
     (*E).var_02 = v2;
-    let v3: i32 = v2 as i32 >> 1i32;
+    let v3: i32 = v2 as i32 >> 1;
     (*E).var_B = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
-    (*E).var_A = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1i32) as isize);
+    (*E).var_A = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize);
 }
 pub unsafe fn Fireflea_Func_4(k: u16, game: &mut Game) {
     let E = Get_FireFlea(k as i32, game);
@@ -344,38 +343,38 @@ pub unsafe fn Fireflea_Main(game: &mut Game) {
     let E = Get_FireFlea(ram_word!(game, cur_enemy_index) as i32, game);
     if ((*E).parameter_1 & 2) != 0 {
         (*E).base.x_pos = ((*E).var_E).wrapping_add(CosineMult8bit(
-            *(&raw mut (*E).var_D as *mut u8).offset(1isize) as u16,
+            *(&raw mut (*E).var_D as *mut u8).offset(1) as u16,
             (*E).var_C,
             game,
         ));
         (*E).base.y_pos = ((*E).var_F).wrapping_add(SineMult8bit(
-            *(&raw mut (*E).var_D as *mut u8).offset(1isize) as u16,
+            *(&raw mut (*E).var_D as *mut u8).offset(1) as u16,
             (*E).var_C,
             game,
         ));
         (*E).var_D =
             ((*E).var_D).wrapping_add(*((&raw mut (*E).var_A as *mut u8).offset(1) as *mut u16));
     } else {
-        let v2: i32 = (*E).var_02 as i32 >> 1i32;
+        let v2: i32 = (*E).var_02 as i32 >> 1;
         AddToHiLo(
             &raw mut (*E).base.y_pos,
             &raw mut (*E).base.y_subpos,
-            (crate::rtl::rom_table_word!(game, 0xa28187, v2 as isize) as u32) << 16i32
-                | crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 1i32) as isize) as u32,
+            (crate::rtl::rom_table_word!(game, 0xa28187, v2 as isize) as u32) << 16
+                | crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 1) as isize) as u32,
         );
-        if (((*E).base.y_pos) as i16).wrapping_sub(((*E).var_00) as i16) < 0i16
-            || (((*E).base.y_pos) as i16).wrapping_sub(((*E).var_01) as i16) >= 0i16
+        if (((*E).base.y_pos) as i16).wrapping_sub(((*E).var_00) as i16) < 0
+            || (((*E).base.y_pos) as i16).wrapping_sub(((*E).var_01) as i16) >= 0
         {
             (*E).var_02 = ((*E).var_02) ^ (4u16);
         }
     };
 }
 pub unsafe fn Fireflea_Touch(k: u16, game: &mut Game) {
-    let v1: u16 = 0u16;
+    let v1: u16 = 0;
     Enemy_NormalTouchAI_A3(game);
     EnemyDeathAnimation(k, v1, game);
-    if ram_word!(game, fireflea_darkness_level) as i32 - 12i32 & 0x8000i32 != 0 {
-        update_ram_word!(game.fireflea_darkness_level, wrapping_add(2u16));
+    if ram_word!(game, fireflea_darkness_level) as i32 - 12i32 & 0x8000 != 0 {
+        update_ram_word!(game.fireflea_darkness_level, wrapping_add(2));
     }
 }
 pub unsafe fn Fireflea_Powerbomb(game: &mut Game) {
@@ -391,68 +390,68 @@ pub unsafe fn Fireflea_Common(game: &mut Game) {
         .base
         .health
         == 0
-        && ram_word!(game, fireflea_darkness_level) as i32 - 12i32 & 0x8000i32 != 0
+        && ram_word!(game, fireflea_darkness_level) as i32 - 12i32 & 0x8000 != 0
     {
-        update_ram_word!(game.fireflea_darkness_level, wrapping_add(2u16));
+        update_ram_word!(game.fireflea_darkness_level, wrapping_add(2));
     }
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     MaridiaFish_Instr_3 [jp] {
         (*Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game))
             .base
-            .layer = 6u16;
+            .layer = 6;
     };
     MaridiaFish_Instr_1 [jp] {
         (*Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game))
             .base
-            .layer = 2u16;
+            .layer = 2;
     };
     MaridiaFish_Instr_2 [jp] {
-        (*Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game)).var_01 = 1u16;
+        (*Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game)).var_01 = 1;
     };
 }
 pub unsafe fn MaridiaFish_Init(game: &mut Game) {
     let E = Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.current_instruction = addr_kMaridiaFish_Ilist_902A as u16;
     (*E).var_A = ((0xa39132i32) as u16);
-    if *(&raw mut (*E).parameter_1 as *mut u8).offset(1isize) == 0 {
+    if *(&raw mut (*E).parameter_1 as *mut u8).offset(1) == 0 {
         (*E).base.current_instruction = addr_kMaridiaFish_Ilist_9060 as u16;
         (*E).var_A = ((0xa391abi32) as u16);
     }
-    let v1: i32 = 8i32 * *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as i32 >> 1i32;
+    let v1: i32 = 8 * *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as i32 >> 1;
     (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, v1 as isize);
-    (*E).var_B = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 1i32) as isize);
-    (*E).var_E = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 2i32) as isize);
-    (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 3i32) as isize);
+    (*E).var_B = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 1) as isize);
+    (*E).var_E = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 2) as isize);
+    (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 3) as isize);
     (*E).var_00 = *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as u16;
-    (*E).var_02 = *(&raw mut (*E).parameter_2 as *mut u8).offset(1isize) as u16;
-    set_fields! {[(*E)], 0u16; var_F, var_01}
+    (*E).var_02 = *(&raw mut (*E).parameter_2 as *mut u8).offset(1) as u16;
+    set_fields! {[(*E)], 0; var_F, var_01}
     (*E).var_03 = SineMult8bit((*E).var_F, (*E).var_00, game);
 }
 pub unsafe fn MaridiaFish_Func_1(game: &mut Game) {
     let E = Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game);
     if Enemy_MoveRight_IgnoreSlopes(
         ram_word!(game, cur_enemy_index),
-        (((*E).var_E as u32) << 16i32 | (*E).var_D as u32) as i32,
+        (((*E).var_E as u32) << 16 | (*E).var_D as u32) as i32,
         game,
     ) != 0
     {
         (*E).var_A = ((0xa39224i32) as u16);
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.timer = 0u16;
+        (*E).base.instruction_timer = 1;
+        (*E).base.timer = 0;
         (*E).base.current_instruction = addr_kMaridiaFish_Ilist_903C as u16;
     } else {
         let v2: u16 = SineMult8bit((*E).var_F, (*E).var_00, game);
         (*E).var_04 = v2;
         if Enemy_MoveDown(
             ram_word!(game, cur_enemy_index),
-            ((((v2) as i16).wrapping_sub(((*E).var_03) as i16)) as i32) << 16i32,
+            ((((v2) as i16).wrapping_sub(((*E).var_03) as i16)) as i32) << 16,
             game,
         ) != 0
         {
             (*E).var_A = ((0xa39224i32) as u16);
-            (*E).base.instruction_timer = 1u16;
-            (*E).base.timer = 0u16;
+            (*E).base.instruction_timer = 1;
+            (*E).base.timer = 0;
             (*E).base.current_instruction = addr_kMaridiaFish_Ilist_903C as u16;
         } else {
             (*E).var_F = ((*(&raw mut (*E).var_02 as *mut u8).offset(0))
@@ -465,26 +464,26 @@ pub unsafe fn MaridiaFish_Func_2(game: &mut Game) {
     let E = Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game);
     if Enemy_MoveRight_IgnoreSlopes(
         ram_word!(game, cur_enemy_index),
-        (((*E).var_C as u32) << 16i32 | (*E).var_B as u32) as i32,
+        (((*E).var_C as u32) << 16 | (*E).var_B as u32) as i32,
         game,
     ) != 0
     {
         (*E).var_A = ((0xa39256i32) as u16);
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.timer = 0u16;
+        (*E).base.instruction_timer = 1;
+        (*E).base.timer = 0;
         (*E).base.current_instruction = addr_kMaridiaFish_Ilist_9072 as u16;
     } else {
         let v2: u16 = SineMult8bit((*E).var_F, (*E).var_00, game);
         (*E).var_04 = v2;
         if Enemy_MoveDown(
             ram_word!(game, cur_enemy_index),
-            ((((v2) as i16).wrapping_sub(((*E).var_03) as i16)) as i32) << 16i32,
+            ((((v2) as i16).wrapping_sub(((*E).var_03) as i16)) as i32) << 16,
             game,
         ) != 0
         {
             (*E).var_A = ((0xa39256i32) as u16);
-            (*E).base.instruction_timer = 1u16;
-            (*E).base.timer = 0u16;
+            (*E).base.instruction_timer = 1;
+            (*E).base.timer = 0;
             (*E).base.current_instruction = addr_kMaridiaFish_Ilist_9072 as u16;
         } else {
             (*E).var_F = ((*(&raw mut (*E).var_02 as *mut u8).offset(0))
@@ -496,22 +495,22 @@ pub unsafe fn MaridiaFish_Func_2(game: &mut Game) {
 pub unsafe fn MaridiaFish_Func_3(game: &mut Game) {
     let E = Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).var_01 != 0 {
-        (*E).var_01 = 0u16;
+        (*E).var_01 = 0;
         (*E).var_A = ((0xa391abi32) as u16);
         (*E).var_02 = -((*E).var_02 as i32) as u16;
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.timer = 0u16;
+        (*E).base.instruction_timer = 1;
+        (*E).base.timer = 0;
         (*E).base.current_instruction = addr_kMaridiaFish_Ilist_9060 as u16;
     }
 }
 pub unsafe fn MaridiaFish_Func_4(game: &mut Game) {
     let E = Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).var_01 != 0 {
-        (*E).var_01 = 0u16;
+        (*E).var_01 = 0;
         (*E).var_A = ((0xa39132i32) as u16);
         (*E).var_02 = -((*E).var_02 as i32) as u16;
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.timer = 0u16;
+        (*E).base.instruction_timer = 1;
+        (*E).base.timer = 0;
         (*E).base.current_instruction = addr_kMaridiaFish_Ilist_902A as u16;
     }
 }
@@ -530,17 +529,16 @@ pub unsafe fn MaridiaFish_Main(game: &mut Game) {
 pub unsafe fn Elevator_Init(game: &mut Game) {
     let E = Get_Elevator(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A3 as u16;
-    (*E).base.instruction_timer = 1u16;
-    (*E).base.timer = 0u16;
+    (*E).base.instruction_timer = 1;
+    (*E).base.timer = 0;
     (*E).base.current_instruction = addr_kElevator_Ilist_94D6 as u16;
-    (*E).parameter_1 = ((*E).parameter_1).wrapping_mul(2u16);
+    (*E).parameter_1 = ((*E).parameter_1).wrapping_mul(2);
     (*E).var_A = (*E).base.y_pos;
-    if ram_word!(game, elevator_status) != 2u16 {
-        crate::update_place! { reference fresh5 = *(ram_ptr!(game, u16; 0xe18)) => 0u16; }
+    if ram_word!(game, elevator_status) != 2 {
+        crate::update_place! { reference fresh5 = *(ram_ptr!(game, u16; 0xe18)) => 0; }
         set_ram_word!(game.elevator_flags = *fresh5);
     }
-    if (ram_word!(game, elevator_status) as u32) << 16i32 | ram_word!(game, elevator_flags) as u32
-        != 0
+    if (ram_word!(game, elevator_status) as u32) << 16 | ram_word!(game, elevator_flags) as u32 != 0
     {
         (*E).base.y_pos = (*E).parameter_2;
         Elevator_Func_4(game);
@@ -551,8 +549,7 @@ static off_A39540: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
 };
 pub unsafe fn Elevator_Frozen(game: &mut Game) {
     if ram_word!(game, door_transition_flag_elevator_zebetites) == 0
-        && (ram_word!(game, elevator_status) as u32) << 16i32
-            | ram_word!(game, elevator_flags) as u32
+        && (ram_word!(game, elevator_status) as u32) << 16 | ram_word!(game, elevator_flags) as u32
             != 0
     {
         off_A39540[ram_word!(game, elevator_status) as usize].expect("non-null function pointer")(
@@ -568,31 +565,31 @@ pub unsafe fn Elevator_Func_1(game: &mut Game) {
     ) & ram_word!(game, joypad1_newkeys))
         != 0
     {
-        QueueSfx3_Max6(0xbu16, game);
-        QueueSfx1_Max6(0x32u16, game);
-        CallSomeSamusCode(7u16, game);
+        QueueSfx3_Max6(0xb, game);
+        QueueSfx1_Max6(0x32, game);
+        CallSomeSamusCode(7, game);
         ResetProjectileData(game);
         Elevator_Func_4(game);
         update_ram_word!(game.elevator_status, wrapping_add(1));
     } else {
-        set_ram_word!(game.elevator_flags = 0u16);
+        set_ram_word!(game.elevator_flags = 0);
     };
 }
 pub unsafe fn Elevator_Func_2(game: &mut Game) {
     let E = Get_Elevator(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).parameter_1 != 0 {
-        set_ram_word!(game.elevator_direction = 0x8000u16);
+        set_ram_word!(game.elevator_direction = 0x8000);
         AddToHiLo(
             &raw mut (*E).base.y_pos,
             &raw mut (*E).base.y_subpos,
             -0x18000i32 as u32,
         );
     } else {
-        set_ram_word!(game.elevator_direction = 0u16);
+        set_ram_word!(game.elevator_direction = 0);
         AddToHiLo(
             &raw mut (*E).base.y_pos,
             &raw mut (*E).base.y_subpos,
-            0x18000u32,
+            0x18000,
         );
     }
     Elevator_Func_4(game);
@@ -607,7 +604,7 @@ pub unsafe fn Elevator_Func3b(game: &mut Game) {
         AddToHiLo(
             &raw mut (*E).base.y_pos,
             &raw mut (*E).base.y_subpos,
-            0x18000u32,
+            0x18000,
         );
         if (*E).base.y_pos < (*E).var_A {
             Elevator_Func_4(game);
@@ -624,36 +621,36 @@ pub unsafe fn Elevator_Func3b(game: &mut Game) {
             return;
         }
     }
-    set_ram_words! { game, 0u16; elevator_status, elevator_flags }
-    QueueSfx3_Max6(0x25u16, game);
+    set_ram_words! { game, 0; elevator_status, elevator_flags }
+    QueueSfx3_Max6(0x25, game);
     (*E).base.y_pos = (*E).var_A;
-    CallSomeSamusCode(0xbu16, game);
+    CallSomeSamusCode(0xb, game);
     Elevator_Func_4(game);
 }
 pub unsafe fn Elevator_Func_4(game: &mut Game) {
     let E = Get_Elevator(ram_word!(game, cur_enemy_index) as i32, game);
-    set_ram_word!(game.samus_y_pos = ((*E).base.y_pos).wrapping_sub(26u16));
-    set_ram_word!(game.samus_y_subpos = 0u16);
+    set_ram_word!(game.samus_y_pos = ((*E).base.y_pos).wrapping_sub(26));
+    set_ram_word!(game.samus_y_subpos = 0);
     set_ram_word!(game.samus_x_pos = (*E).base.x_pos);
-    set_ram_words! { game, 0u16; samus_y_speed, samus_y_subspeed }
+    set_ram_words! { game, 0; samus_y_speed, samus_y_subspeed }
 }
 pub unsafe fn Crab_Init(game: &mut Game) {
     let v1 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    (*v1).parameter_2 = 8u16;
+    (*v1).parameter_2 = 8;
     (*v1).current_instruction = crate::rtl::rom_table_word!(
         game,
         0xa396db,
-        ((*v1).current_instruction as i32 & 3i32) as isize
+        ((*v1).current_instruction as i32 & 3) as isize
     );
     StoneZoomer_E67A(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn Slug_Init(game: &mut Game) {
     let v1 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    (*v1).parameter_2 = 10u16;
+    (*v1).parameter_2 = 10;
     (*v1).current_instruction = crate::rtl::rom_table_word!(
         game,
         0xa3992b,
-        ((*v1).current_instruction as i32 & 3i32) as isize
+        ((*v1).current_instruction as i32 & 3) as isize
     );
     StoneZoomer_E67A(ram_word!(game, cur_enemy_index), game);
 }
@@ -663,16 +660,16 @@ crate::instruction_callbacks! { pub unsafe fn (
     game: &mut Game,
 ) -> *const u16;
     PlatformThatFallsWithSamus_Instr_3 [jp] {
-        (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 0u16;
+        (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 0;
     };
     PlatformThatFallsWithSamus_Instr_4 [jp] {
-        (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 1u16;
+        (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 1;
     };
     PlatformThatFallsWithSamus_Instr_1 [jp] {
-        (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 0u16;
+        (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 0;
     };
     PlatformThatFallsWithSamus_Instr_2 [jp] {
-        (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 1u16;
+        (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 1;
     };
 }
 pub unsafe fn PlatformThatFallsWithSamus_Init(game: &mut Game) {
@@ -715,15 +712,15 @@ pub unsafe fn FastMovingSlowSinkingPlatform_Init(game: &mut Game) {
 pub unsafe fn PlatformThatFalls_Init(k: u16, j: u16, game: &mut Game) {
     let E = Get_PlatformThatFallsWithSamus(k as i32, game);
     (*E).base.current_instruction = j;
-    let v3: i32 = 8i32 * *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as i32 >> 1i32;
+    let v3: i32 = 8 * *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as i32 >> 1;
     (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
-    (*E).var_B = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1i32) as isize);
-    (*E).var_E = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2i32) as isize);
-    (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3i32) as isize);
-    set_fields! {[(*E)], 0u16; var_00, var_03, var_04}
-    (*E).var_A = ((*E).base.y_pos).wrapping_add(1u16);
-    (*E).var_F = 0u16;
-    (*E).var_05 = *(&raw mut (*E).parameter_2 as *mut u8).offset(1isize) as u16;
+    (*E).var_B = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize);
+    (*E).var_E = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize);
+    (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3) as isize);
+    set_fields! {[(*E)], 0; var_00, var_03, var_04}
+    (*E).var_A = ((*E).base.y_pos).wrapping_add(1);
+    (*E).var_F = 0;
+    (*E).var_05 = *(&raw mut (*E).parameter_2 as *mut u8).offset(1) as u16;
 }
 static off_A39C97: [Option<Func_V>; 2] = callback_table! { unsafe Func_V;
     PlatformThatFallsWithSamus_Func_1, PlatformThatFallsWithSamus_Func_2,
@@ -733,16 +730,16 @@ static off_A39C9B: [Option<Func_V>; 2] = callback_table! { unsafe Func_V;
 };
 pub unsafe fn PlatformThatFallsWithSamus_Main(game: &mut Game) {
     let E = Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).var_00 = 0u16;
+    (*E).var_00 = 0;
     if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-        (*E).var_00 = 1u16;
+        (*E).var_00 = 1;
     }
     off_A39C97[(*E).var_02 as usize].expect("non-null function pointer")(game);
     let v3: i32 = (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game))
         .var_00 as i32;
     off_A39C9B[v3 as usize].expect("non-null function pointer")(game);
     if (*E).var_00 != (*E).var_06 {
-        (*E).var_F = 0u16;
+        (*E).var_F = 0;
     }
     (*E).var_06 = (*E).var_00;
 }
@@ -751,11 +748,11 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_1(game: &mut Game) {
     (*E).var_01 = (*E).base.x_pos;
     if Enemy_MoveRight_IgnoreSlopes(
         ram_word!(game, cur_enemy_index),
-        (((*E).var_E as u32) << 16i32 | (*E).var_D as u32) as i32,
+        (((*E).var_E as u32) << 16 | (*E).var_D as u32) as i32,
         game,
     ) != 0
     {
-        (*E).var_02 = 1u16;
+        (*E).var_02 = 1;
         PlatformThatFallsWithSamus_Func_8(game);
     }
 }
@@ -764,61 +761,60 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_2(game: &mut Game) {
     (*E).var_01 = (*E).base.x_pos;
     if Enemy_MoveRight_IgnoreSlopes(
         ram_word!(game, cur_enemy_index),
-        (((*E).var_C as u32) << 16i32 | (*E).var_B as u32) as i32,
+        (((*E).var_C as u32) << 16 | (*E).var_B as u32) as i32,
         game,
     ) != 0
     {
-        (*E).var_02 = 0u16;
+        (*E).var_02 = 0;
         PlatformThatFallsWithSamus_Func_7(game);
     }
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_3(game: &mut Game) {
     let E = Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game);
-    let stop_platform: bool = ((((*E).base.y_pos) as i16).wrapping_sub(((*E).var_A) as i16) < 0i16)
+    let stop_platform: bool = ((((*E).base.y_pos) as i16).wrapping_sub(((*E).var_A) as i16) < 0)
         || ({
             PlatformThatFallsWithSamus_Func_9(game);
             let mut ptfwss_var_05: u16 = 0;
             (*E).var_F = (*E).var_F.wrapping_add(1);
             ptfwss_var_05 = (*E).var_F;
-            if ((ptfwss_var_05) as i16).wrapping_sub(((*E).var_05) as i16) >= 0i16 {
+            if ((ptfwss_var_05) as i16).wrapping_sub(((*E).var_05) as i16) >= 0 {
                 ptfwss_var_05 = (*E).var_05;
                 (*E).var_F = ptfwss_var_05;
             }
             let mut v3: i32 = 0;
-            v3 = 8i32 * ptfwss_var_05 as i32 >> 1i32;
+            v3 = 8 * ptfwss_var_05 as i32 >> 1;
             (Enemy_MoveDown(
                 ram_word!(game, cur_enemy_index),
-                ((crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 3i32) as isize) as u32)
-                    << 16i32
-                    | crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 2i32) as isize) as u32)
+                ((crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 3) as isize) as u32) << 16
+                    | crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 2) as isize) as u32)
                     as i32,
                 game,
             ) != 0)
         });
     if stop_platform {
-        (*E).var_F = 0u16;
+        (*E).var_F = 0;
         PlatformThatFallsWithSamus_Func_10(game);
     };
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_4(game: &mut Game) {
     let E = Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).var_F = (*E).var_F.wrapping_add(1);
-    if (((*E).var_F) as i16).wrapping_sub(((*E).var_05) as i16) >= 0i16 {
+    if (((*E).var_F) as i16).wrapping_sub(((*E).var_05) as i16) >= 0 {
         (*E).var_F = (*E).var_05;
     }
     update_ram_word!(game.extra_samus_x_displacement, |fresh13| (fresh13 as i32
         + ((*E).base.x_pos as i32 - (*E).var_01 as i32))
         as u16);
     (*E).var_01 = (*E).base.y_pos;
-    let v2: i32 = 8i32 * (*E).var_F as i32 >> 1i32;
+    let v2: i32 = 8 * (*E).var_F as i32 >> 1;
     if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
-        ((crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 1i32) as isize) as u32) << 16i32
+        ((crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 1) as isize) as u32) << 16
             | crate::rtl::rom_table_word!(game, 0xa2838f, v2 as isize) as u32) as i32,
         game,
     ) != 0
     {
-        (*E).var_F = 0u16;
+        (*E).var_F = 0;
         PlatformThatFallsWithSamus_Func_10(game);
     }
     update_ram_word!(game.extra_samus_y_displacement, |fresh14| (fresh14 as i32
@@ -831,8 +827,8 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_5(game: &mut Game) {
     if ((*E).var_1F & 0x8000) != 0 {
         v0 = addr_kPlatformThatFallsWithSamus_Ilist_9BBB as u16;
     }
-    enemy_instruction! {[(*E).base]; instruction = v0, timer = 1u16}
-    (*E).base.timer = 0u16;
+    enemy_instruction! {[(*E).base]; instruction = v0, timer = 1}
+    (*E).base.timer = 0;
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_6(game: &mut Game) {
     let E = Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game);
@@ -840,8 +836,8 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_6(game: &mut Game) {
     if ((*E).var_1F & 0x8000) != 0 {
         v0 = addr_kPlatformThatFallsWithSamus_Ilist_9BD1 as u16;
     }
-    enemy_instruction! {[(*E).base]; instruction = v0, timer = 1u16}
-    (*E).base.timer = 0u16;
+    enemy_instruction! {[(*E).base]; instruction = v0, timer = 1}
+    (*E).base.timer = 0;
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_7(game: &mut Game) {
     let E = Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game);
@@ -849,8 +845,8 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_7(game: &mut Game) {
     if ((*E).var_1F & 0x8000) != 0 {
         v0 = addr_kPlatformThatFallsWithSamus_Ilist_9BE7 as u16;
     }
-    enemy_instruction! {[(*E).base]; instruction = v0, timer = 1u16}
-    (*E).base.timer = 0u16;
+    enemy_instruction! {[(*E).base]; instruction = v0, timer = 1}
+    (*E).base.timer = 0;
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_8(game: &mut Game) {
     let E = Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game);
@@ -858,32 +854,32 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_8(game: &mut Game) {
     if ((*E).var_1F & 0x8000) != 0 {
         v0 = addr_kPlatformThatFallsWithSamus_Ilist_9BFD as u16;
     }
-    enemy_instruction! {[(*E).base]; instruction = v0, timer = 1u16}
-    (*E).base.timer = 0u16;
+    enemy_instruction! {[(*E).base]; instruction = v0, timer = 1}
+    (*E).base.timer = 0;
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_9(game: &mut Game) {
     let E = Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).var_03 == 0 {
-        (*E).var_03 = 1u16;
+        (*E).var_03 = 1;
         if (*E).var_02 != 0 {
             PlatformThatFallsWithSamus_Func_6(game);
         } else {
             PlatformThatFallsWithSamus_Func_5(game);
         }
     }
-    (*E).var_04 = 0u16;
+    (*E).var_04 = 0;
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_10(game: &mut Game) {
     let E = Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).var_04 == 0 {
-        (*E).var_04 = 1u16;
+        (*E).var_04 = 1;
         if (*E).var_02 != 0 {
             PlatformThatFallsWithSamus_Func_8(game);
         } else {
             PlatformThatFallsWithSamus_Func_7(game);
         }
     }
-    (*E).var_03 = 0u16;
+    (*E).var_03 = 0;
 }
 pub unsafe fn FastMovingSlowSinkingPlatform_Shot(game: &mut Game) {
     Enemy_NormalShotAI_A3(game);
@@ -901,13 +897,13 @@ pub unsafe fn Roach_Func_1(game: &mut Game) {
     let roach_var_24: u16 = (*E).var_24;
     if roach_var_24 != (*E).var_25 {
         (*E).var_25 = roach_var_24;
-        enemy_instruction! {[(*E).base]; instruction = roach_var_24, timer = 1u16}
-        (*E).base.timer = 0u16;
+        enemy_instruction! {[(*E).base]; instruction = roach_var_24, timer = 1}
+        (*E).base.timer = 0;
     }
 }
 pub unsafe fn Roach_Init(game: &mut Game) {
     let E = Get_Roach(ram_word!(game, cur_enemy_index) as i32, game);
-    set_fields! {[(*E)], 0u16; var_25, var_24}
+    set_fields! {[(*E)], 0; var_25, var_24}
     Roach_Func_2(ram_word!(game, cur_enemy_index), game);
     Roach_Func_4(ram_word!(game, cur_enemy_index), game);
     Roach_Func_5(ram_word!(game, cur_enemy_index), game);
@@ -921,7 +917,7 @@ pub unsafe fn Roach_Init(game: &mut Game) {
 pub unsafe fn Roach_Func_2(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
     let pt: Point32 = ConvertAngleToXy(
-        *(&raw mut (*E).parameter_1 as *mut u8).offset(1isize) as u16,
+        *(&raw mut (*E).parameter_1 as *mut u8).offset(1) as u16,
         *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
         game,
     );
@@ -934,7 +930,7 @@ pub unsafe fn Roach_Func_4(k: u16, game: &mut Game) {
         &raw mut (*E).var_05,
         &raw mut (*E).var_04,
         CosineMult8bitFull(
-            ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_sub(32u8)) as u16,
+            ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_sub(32)) as u16,
             *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
             game,
         ),
@@ -943,7 +939,7 @@ pub unsafe fn Roach_Func_4(k: u16, game: &mut Game) {
         &raw mut (*E).var_07,
         &raw mut (*E).var_06,
         SineMult8bitFull(
-            ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_sub(32u8)) as u16,
+            ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_sub(32)) as u16,
             *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
             game,
         ),
@@ -955,7 +951,7 @@ pub unsafe fn Roach_Func_5(k: u16, game: &mut Game) {
         &raw mut (*E).var_09,
         &raw mut (*E).var_08,
         CosineMult8bitFull(
-            ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_add(32u8)) as u16,
+            ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_add(32)) as u16,
             *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
             game,
         ),
@@ -964,7 +960,7 @@ pub unsafe fn Roach_Func_5(k: u16, game: &mut Game) {
         &raw mut (*E).var_0B,
         &raw mut (*E).var_0A,
         SineMult8bitFull(
-            ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_add(32u8)) as u16,
+            ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_add(32)) as u16,
             *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
             game,
         ),
@@ -972,22 +968,21 @@ pub unsafe fn Roach_Func_5(k: u16, game: &mut Game) {
 }
 pub unsafe fn Roach_Func_6(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
-    (*E).var_20 = (2i32
-        * (((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_sub(48u8)) as i32
-            >> 5i32)) as u16;
+    (*E).var_20 = (2
+        * (((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_sub(48)) as i32 >> 5))
+        as u16;
 }
 pub unsafe fn Roach_Func_7(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
-    (*E).var_21 = (2i32
-        * (((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_sub(80u8)) as i32
-            >> 5i32)) as u16;
+    (*E).var_21 = (2
+        * (((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_sub(80)) as i32 >> 5))
+        as u16;
 }
 pub unsafe fn Roach_Func_8(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
-    (*E).var_22 = (2i32
-        * ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize) as i32 - 48i32 + 32i32) as u8
-            as i32
-            >> 5i32)) as u16;
+    (*E).var_22 = (2
+        * ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1) as i32 - 48i32 + 32) as u8 as i32
+            >> 5)) as u16;
 }
 crate::game::address_dispatch! {
     pub unsafe fn CallRoachFunc(ea: u32, game: &mut Game) => ea;
@@ -1021,7 +1016,7 @@ pub unsafe fn Roach_Func_9(game: &mut Game) {
         (*E).var_B = crate::rtl::rom_table_word!(
             game,
             0xa3a121,
-            *(&raw mut (*E).parameter_2 as *mut u8).offset(1isize) as isize
+            *(&raw mut (*E).parameter_2 as *mut u8).offset(1) as isize
         );
     }
 }
@@ -1032,18 +1027,18 @@ pub unsafe fn Roach_Func_11(game: &mut Game) {
     (*Get_Roach(ram_word!(game, cur_enemy_index) as i32, game)).var_B = ((0xa3a40ei32) as u16);
 }
 pub unsafe fn Roach_Func_12(game: &mut Game) {
-    set_ram_word!(game.random_number = 11u16);
+    set_ram_word!(game.random_number = 11);
     (*Get_Roach(ram_word!(game, cur_enemy_index) as i32, game)).var_B = ((0xa3a4f0i32) as u16);
 }
 pub unsafe fn Roach_Func_13(game: &mut Game) {
     let E = Get_Roach(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).var_A = 512u16;
-    set_ram_word!(game.random_number = 11u16);
+    (*E).var_A = 512;
+    set_ram_word!(game.random_number = 11);
     (*E).var_B = ((0xa3a4b6i32) as u16);
 }
 pub unsafe fn Roach_Func_14(game: &mut Game) {
     let E = Get_Roach(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).var_F = 32u16;
+    (*E).var_F = 32;
     (*E).var_B = ((0xa3a44ei32) as u16);
 }
 pub unsafe fn Roach_Func_15(game: &mut Game) {
@@ -1059,9 +1054,9 @@ pub unsafe fn Roach_Func_15(game: &mut Game) {
     (*E).var_B = ((0xa3a440i32) as u16);
 }
 pub unsafe fn Roach_Func_16(game: &mut Game) {
-    let v1: u16 = (64i32
+    let v1: u16 = (64
         - CalculateAngleOfSamusFromEnemy(ram_word!(game, cur_enemy_index), game) as i32
-        + 0x80i32) as u8 as u16;
+        + 0x80) as u8 as u16;
     let E = Get_Roach(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).var_C = v1;
     Roach_Func_18(ram_word!(game, cur_enemy_index), game);
@@ -1072,7 +1067,7 @@ pub unsafe fn Roach_Func_16(game: &mut Game) {
 }
 pub unsafe fn Roach_Func_17(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
-    (*E).var_23 = (2i32 * (((((*E).var_C) as u8).wrapping_sub(48u8)) as i32 >> 5i32)) as u16;
+    (*E).var_23 = (2 * (((((*E).var_C) as u8).wrapping_sub(48)) as i32 >> 5)) as u16;
 }
 pub unsafe fn Roach_Func_18(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
@@ -1141,9 +1136,9 @@ pub unsafe fn Roach_Func_25(game: &mut Game) {
         v2 = ((*E).var_F & 0x8000) != 0;
         if !v2 {
             let v3: u16 = Abs16(((*E).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos)));
-            if v3 as i32 - 96i32 & 0x8000i32 == 0 {
+            if v3 as i32 - 96i32 & 0x8000 == 0 {
                 let v4: u16 = Abs16(((*E).base.y_pos).wrapping_sub(ram_word!(game, samus_y_pos)));
-                if v4 as i32 - 96i32 & 0x8000i32 == 0 {
+                if v4 as i32 - 96i32 & 0x8000 == 0 {
                     Roach_Func_28(game);
                 }
             }
@@ -1155,25 +1150,25 @@ pub unsafe fn Roach_Func_25(game: &mut Game) {
     Roach_Func_32(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn Roach_Func_26(game: &mut Game) {
-    let v1: u8 = ((NextRandom(game)) as u8).wrapping_sub(64u8);
+    let v1: u8 = ((NextRandom(game)) as u8).wrapping_sub(64);
     let E = Get_Roach(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).var_C = ((*E).var_C).wrapping_add((v1) as u16);
     Roach_Func_18(ram_word!(game, cur_enemy_index), game);
     Roach_Func_17(ram_word!(game, cur_enemy_index), game);
     (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
     Roach_Func_1(game);
-    (*E).var_F = 32u16;
+    (*E).var_F = 32;
     (*E).var_B = ((0xa3a476i32) as u16);
 }
 pub unsafe fn Roach_Func_27(game: &mut Game) {
-    let v1: u8 = ((NextRandom(game)) as u8).wrapping_sub(64u8);
+    let v1: u8 = ((NextRandom(game)) as u8).wrapping_sub(64);
     let E = Get_Roach(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).var_C = ((*E).var_C).wrapping_add((v1) as u16);
     Roach_Func_18(ram_word!(game, cur_enemy_index), game);
     Roach_Func_17(ram_word!(game, cur_enemy_index), game);
     (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
     Roach_Func_1(game);
-    (*E).var_F = 32u16;
+    (*E).var_F = 32;
     (*E).var_B = ((0xa3a462i32) as u16);
 }
 pub unsafe fn Roach_Func_28(game: &mut Game) {
@@ -1182,19 +1177,19 @@ pub unsafe fn Roach_Func_28(game: &mut Game) {
     (*E).var_0C = -((*E).var_0C as i32) as u16;
     (*E).var_0F = -((*E).var_0F as i32) as u16;
     (*E).var_0E = -((*E).var_0E as i32) as u16;
-    let v1: u16 = ((*E).var_23 as i32 + 4i32 & 7i32) as u16;
+    let v1: u16 = ((*E).var_23 as i32 + 4 & 7) as u16;
     (*E).var_23 = v1;
     (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, (v1 >> 1) as isize);
     Roach_Func_1(game);
 }
 pub unsafe fn Roach_Func_29(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
-    let varE20: u16 = *(&raw mut (*E).parameter_1 as *mut u8).offset(1isize) as u16;
+    let varE20: u16 = *(&raw mut (*E).parameter_1 as *mut u8).offset(1) as u16;
     EnemyFunc_B691(
         varE20,
         Point32 {
-            x: ((*E).var_01 as u32) << 16i32 | (*E).var_00 as u32,
-            y: ((*E).var_03 as u32) << 16i32 | (*E).var_02 as u32,
+            x: ((*E).var_01 as u32) << 16 | (*E).var_00 as u32,
+            y: ((*E).var_03 as u32) << 16 | (*E).var_02 as u32,
         },
         game,
     );
@@ -1204,12 +1199,12 @@ pub unsafe fn Roach_Func_30(k: u16, game: &mut Game) {
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
-        ((*E).var_05 as u32) << 16i32 | (*E).var_04 as u32,
+        ((*E).var_05 as u32) << 16 | (*E).var_04 as u32,
     );
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
-        ((*E).var_07 as u32) << 16i32 | (*E).var_06 as u32,
+        ((*E).var_07 as u32) << 16 | (*E).var_06 as u32,
     );
 }
 pub unsafe fn Roach_Func_31(k: u16, game: &mut Game) {
@@ -1217,12 +1212,12 @@ pub unsafe fn Roach_Func_31(k: u16, game: &mut Game) {
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
-        ((*E).var_09 as u32) << 16i32 | (*E).var_08 as u32,
+        ((*E).var_09 as u32) << 16 | (*E).var_08 as u32,
     );
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
-        ((*E).var_0B as u32) << 16i32 | (*E).var_0A as u32,
+        ((*E).var_0B as u32) << 16 | (*E).var_0A as u32,
     );
 }
 pub unsafe fn Roach_Func_32(k: u16, game: &mut Game) {
@@ -1230,26 +1225,26 @@ pub unsafe fn Roach_Func_32(k: u16, game: &mut Game) {
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
-        ((*E).var_0D as u32) << 16i32 | (*E).var_0C as u32,
+        ((*E).var_0D as u32) << 16 | (*E).var_0C as u32,
     );
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
-        ((*E).var_0F as u32) << 16i32 | (*E).var_0E as u32,
+        ((*E).var_0F as u32) << 16 | (*E).var_0E as u32,
     );
 }
 pub unsafe fn Roach_Func_33(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
     if Enemy_MoveRight_IgnoreSlopes(
         k,
-        (((*E).var_0D as u32) << 16i32 | (*E).var_0C as u32) as i32,
+        (((*E).var_0D as u32) << 16 | (*E).var_0C as u32) as i32,
         game,
     ) != 0
     {
         (*E).var_B = ((0xa3a2d7i32) as u16);
     } else if Enemy_MoveDown(
         k,
-        (((*E).var_0F as u32) << 16i32 | (*E).var_0E as u32) as i32,
+        (((*E).var_0F as u32) << 16 | (*E).var_0E as u32) as i32,
         game,
     ) != 0
     {
@@ -1258,13 +1253,13 @@ pub unsafe fn Roach_Func_33(k: u16, game: &mut Game) {
 }
 pub unsafe fn Mochtroid_Init(game: &mut Game) {
     let E = Get_Mochtroid(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.layer = 2u16;
+    (*E).base.layer = 2;
     Mochtroid_Func_4(
         ram_word!(game, cur_enemy_index),
         addr_kMochtroid_Ilist_A745 as u16,
         game,
     );
-    (*E).var_F = 0u16;
+    (*E).var_F = 0;
 }
 static off_A3A7A4: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
     Mochtroid_Func_1, Mochtroid_Func_3, Mochtroid_Func_2,
@@ -1272,7 +1267,7 @@ static off_A3A7A4: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
 pub unsafe fn Mochtroid_Main(game: &mut Game) {
     let v0: u16 =
         (2u16).wrapping_mul((*Get_Mochtroid(ram_word!(game, cur_enemy_index) as i32, game)).var_F);
-    (*Get_Mochtroid(ram_word!(game, cur_enemy_index) as i32, game)).var_F = 0u16;
+    (*Get_Mochtroid(ram_word!(game, cur_enemy_index) as i32, game)).var_F = 0;
     off_A3A7A4[(v0 >> 1) as usize].expect("non-null function pointer")(game);
 }
 pub unsafe fn Mochtroid_Func_1(game: &mut Game) {
@@ -1282,63 +1277,63 @@ pub unsafe fn Mochtroid_Func_1(game: &mut Game) {
     let mut t: i32 = ((((((*E).base.y_pos) as i16)
         .wrapping_sub((ram_word!(game, samus_y_pos)) as i16))
         >> 2) as i32)
-        << 8i32;
+        << 8;
     AddToHiLo(&raw mut (*E).var_D, &raw mut (*E).var_C, -t as u32);
 
-    let update_vertical_speed: bool = if ((*E).var_D as i16) < 0i16 {
-        ((*E).var_D < 0xfffdu16)
+    let update_vertical_speed: bool = if ((*E).var_D as i16) < 0 {
+        ((*E).var_D < 0xfffd)
             && ({
                 v5 = -3i16;
                 true
             })
     } else {
-        ((*E).var_D >= 3u16)
+        ((*E).var_D >= 3)
             && ({
-                v5 = 3i16;
+                v5 = 3;
                 true
             })
     };
     if update_vertical_speed {
         (*E).var_D = v5 as u16;
-        (*E).var_C = 0u16;
+        (*E).var_C = 0;
     }
     if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
-        (((*E).var_D as u32) << 16i32 | (*E).var_C as u32) as i32,
+        (((*E).var_D as u32) << 16 | (*E).var_C as u32) as i32,
         game,
     ) != 0
     {
-        set_fields! {[(*E)], 0u16; var_C, var_D}
+        set_fields! {[(*E)], 0; var_C, var_D}
     }
     t = ((((((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16)) >> 2)
         as i32)
-        << 8i32;
+        << 8;
     AddToHiLo(&raw mut (*E).var_B, &raw mut (*E).var_A, -t as u32);
 
-    let update_horizontal_speed: bool = if ((*E).var_B as i16) < 0i16 {
-        ((*E).var_B < 0xfffdu16)
+    let update_horizontal_speed: bool = if ((*E).var_B as i16) < 0 {
+        ((*E).var_B < 0xfffd)
             && ({
                 v10 = -3i16;
                 true
             })
     } else {
-        ((*E).var_B >= 3u16)
+        ((*E).var_B >= 3)
             && ({
-                v10 = 3i16;
+                v10 = 3;
                 true
             })
     };
     if update_horizontal_speed {
         (*E).var_B = v10 as u16;
-        (*E).var_A = 0u16;
+        (*E).var_A = 0;
     }
     if Enemy_MoveRight_IgnoreSlopes(
         ram_word!(game, cur_enemy_index),
-        (((*E).var_B as u32) << 16i32 | (*E).var_A as u32) as i32,
+        (((*E).var_B as u32) << 16 | (*E).var_A as u32) as i32,
         game,
     ) != 0
     {
-        set_fields! {[(*E)], 0u16; var_A, var_B}
+        set_fields! {[(*E)], 0; var_A, var_B}
     }
     Mochtroid_Func_4(
         ram_word!(game, cur_enemy_index),
@@ -1348,13 +1343,13 @@ pub unsafe fn Mochtroid_Func_1(game: &mut Game) {
 }
 pub unsafe fn Mochtroid_Func_2(game: &mut Game) {
     let E = Get_Mochtroid(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: i32 = ((*E).var_E as i32 & 6i32) >> 1i32;
+    let v2: i32 = ((*E).var_E as i32 & 6) >> 1;
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add((g_word_A3A76D[v2 as usize]) as u16);
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_add((g_word_A3A775[v2 as usize]) as u16);
-    set_fields! {[(*E)], 0u16; var_A, var_B, var_C, var_D}
+    set_fields! {[(*E)], 0; var_A, var_B, var_C, var_D}
     crate::update_place! { previous fresh12 = (*E).var_E => (*E).var_E.wrapping_sub(1); }
-    if fresh12 == 1u16 {
-        (*E).var_F = 0u16;
+    if fresh12 == 1 {
+        (*E).var_F = 0;
     }
     Mochtroid_Func_4(
         ram_word!(game, cur_enemy_index),
@@ -1366,32 +1361,32 @@ pub unsafe fn Mochtroid_Func_3(game: &mut Game) {
     let E = Get_Mochtroid(ram_word!(game, cur_enemy_index) as i32, game);
     let x_pos: u16 = (*E).base.x_pos;
     if x_pos == ram_word!(game, samus_x_pos) {
-        set_fields! {[(*E)], 0u16; var_A, var_B}
-    } else if ((x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) >= 0i16 {
-        (*E).var_A = 0u16;
+        set_fields! {[(*E)], 0; var_A, var_B}
+    } else if ((x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) >= 0 {
+        (*E).var_A = 0;
         (*E).var_B = -1i32 as u16;
     } else {
-        (*E).var_A = 0u16;
-        (*E).var_B = 1u16;
+        (*E).var_A = 0;
+        (*E).var_B = 1;
     }
     Enemy_MoveRight_IgnoreSlopes(
         ram_word!(game, cur_enemy_index),
-        (((*E).var_B as u32) << 16i32 | (*E).var_A as u32) as i32,
+        (((*E).var_B as u32) << 16 | (*E).var_A as u32) as i32,
         game,
     );
     let y_pos: u16 = (*E).base.y_pos;
     if y_pos == ram_word!(game, samus_y_pos) {
-        set_fields! {[(*E)], 0u16; var_C, var_D}
-    } else if ((y_pos) as i16).wrapping_sub((ram_word!(game, samus_y_pos)) as i16) >= 0i16 {
-        (*E).var_C = 0u16;
+        set_fields! {[(*E)], 0; var_C, var_D}
+    } else if ((y_pos) as i16).wrapping_sub((ram_word!(game, samus_y_pos)) as i16) >= 0 {
+        (*E).var_C = 0;
         (*E).var_D = -1i32 as u16;
     } else {
-        (*E).var_C = 0u16;
-        (*E).var_D = 1u16;
+        (*E).var_C = 0;
+        (*E).var_D = 1;
     }
     Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
-        (((*E).var_D as u32) << 16i32 | (*E).var_C as u32) as i32,
+        (((*E).var_D as u32) << 16 | (*E).var_C as u32) as i32,
         game,
     );
 }
@@ -1399,13 +1394,13 @@ pub unsafe fn Mochtroid_Func_4(k: u16, a: u16, game: &mut Game) {
     let E = Get_Mochtroid(k as i32, game);
     if a != (*E).var_01 {
         (*E).var_01 = a;
-        enemy_instruction! {[(*E).base]; instruction = a, timer = 1u16}
-        (*E).base.timer = 0u16;
+        enemy_instruction! {[(*E).base]; instruction = a, timer = 1}
+        (*E).base.timer = 0;
     }
 }
 pub unsafe fn Mochtroid_Touch(game: &mut Game) {
     let E = Get_Mochtroid(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).var_F = 1u16;
+    (*E).var_F = 1;
     Mochtroid_Func_4(
         ram_word!(game, cur_enemy_index),
         addr_kMochtroid_Ilist_A759 as u16,
@@ -1415,19 +1410,19 @@ pub unsafe fn Mochtroid_Touch(game: &mut Game) {
     let apply_touch_damage: bool = (ram_word!(game, samus_contact_damage_index) != 0)
         || ({
             if (ram_word!(game, random_enemy_counter) & 7) == 7
-                && ram_word!(game, samus_health) as i32 - 30i32 & 0x8000i32 == 0
+                && ram_word!(game, samus_health) as i32 - 30i32 & 0x8000 == 0
             {
-                QueueSfx3_Max6(0x2du16, game);
+                QueueSfx3_Max6(0x2d, game);
             }
-            ((*E).var_20 as i32 - 80i32 & 0x8000i32 == 0)
+            ((*E).var_20 as i32 - 80i32 & 0x8000 == 0)
                 && ({
-                    (*E).var_20 = 0u16;
+                    (*E).var_20 = 0;
                     true
                 })
         });
     if apply_touch_damage {
         Enemy_NormalTouchAI_A3(game);
-        set_ram_words! { game, 0u16; samus_invincibility_timer, samus_knockback_timer }
+        set_ram_words! { game, 0; samus_invincibility_timer, samus_knockback_timer }
     };
 }
 pub unsafe fn Mochtroid_Shot(game: &mut Game) {
@@ -1436,14 +1431,14 @@ pub unsafe fn Mochtroid_Shot(game: &mut Game) {
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     Sidehopper_Func_1 [jp.offset(1)] { QueueSfx2_Max3(*jp, game); };
     Sidehopper_Instr_1 [jp] {
-        (*Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game)).var_04 = 1u16;
+        (*Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game)).var_04 = 1;
     };
 }
 pub unsafe fn Sidehopper_Init(game: &mut Game) {
-    set_ram_word!(game.random_number = 37u16);
+    set_ram_word!(game.random_number = 37);
     NextRandom(game);
     let E = Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game);
-    set_fields! {[(*E)], 0u16; var_03, var_04, var_05}
+    set_fields! {[(*E)], 0; var_03, var_04, var_05}
     let v2: u16 = (2u16).wrapping_mul((*get_EnemyDef_A2((*E).base.enemy_ptr, game)).field_2A);
     (*E).var_06 = v2;
     let mut v4: u16 = 0;
@@ -1455,15 +1450,15 @@ pub unsafe fn Sidehopper_Init(game: &mut Game) {
     (*E).var_00 = v4;
     Sidehopper_Func_3(game);
     if (*get_EnemyDef_A2((*E).base.enemy_ptr, game)).field_2A != 0 {
-        (*E).var_05 = 2u16;
+        (*E).var_05 = 2;
     }
-    let v6: i32 = (*E).var_05 as i32 >> 1i32;
+    let v6: i32 = (*E).var_05 as i32 >> 1;
     (*E).var_01 = Sidehopper_Func_2(
         crate::rtl::rom_table_word!(game, 0xa3aaee, v6 as isize),
         crate::rtl::rom_table_word!(game, 0xa3aae6, v6 as isize),
         game,
     );
-    let v8: i32 = (*E).var_05 as i32 >> 1i32;
+    let v8: i32 = (*E).var_05 as i32 >> 1;
     (*E).var_02 = Sidehopper_Func_2(
         crate::rtl::rom_table_word!(game, 0xa3aafa, v8 as isize),
         crate::rtl::rom_table_word!(game, 0xa3aaf2, v8 as isize),
@@ -1472,8 +1467,8 @@ pub unsafe fn Sidehopper_Init(game: &mut Game) {
     (*E).var_B = ((0xa3abd6i32) as u16);
 }
 pub unsafe fn Sidehopper_Func_2(r22: u16, r24: u16, game: &mut Game) -> u16 {
-    let mut r18: u16 = 0u16;
-    let mut r20: u16 = 0u16;
+    let mut r18: u16 = 0;
+    let mut r20: u16 = 0;
     loop {
         r18 = (r18).wrapping_add(r24);
         r20 = (r20).wrapping_add(
@@ -1481,7 +1476,7 @@ pub unsafe fn Sidehopper_Func_2(r22: u16, r24: u16, game: &mut Game) -> u16 {
                 .offset((8i32 * r18 as i32) as isize)
                 .offset(1) as *mut u16),
         );
-        if (r20 as i32 - r22 as i32 & 0x8000i32 == 0) {
+        if (r20 as i32 - r22 as i32 & 0x8000 == 0) {
             break;
         }
     }
@@ -1489,8 +1484,8 @@ pub unsafe fn Sidehopper_Func_2(r22: u16, r24: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn Sidehopper_Func_3(game: &mut Game) {
     let E = Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game);
-    enemy_instruction! {[(*E).base]; instruction = (*E).var_00, timer = 1u16}
-    (*E).base.timer = 0u16;
+    enemy_instruction! {[(*E).base]; instruction = (*E).var_00, timer = 1}
+    (*E).base.timer = 0;
 }
 pub unsafe fn Sidehopper_Main(game: &mut Game) {
     let E = Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1498,12 +1493,12 @@ pub unsafe fn Sidehopper_Main(game: &mut Game) {
 }
 pub unsafe fn Sidehopper_Func_4(k: u16, game: &mut Game) {
     let v1: u16 =
-        crate::rtl::rom_table_word!(game, 0xa3aae2, (NextRandom(game) as i32 & 1i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xa3aae2, (NextRandom(game) as i32 & 1) as isize);
     (*Get_Sidehopper(k as i32, game)).var_B = v1;
 }
 pub unsafe fn Sidehopper_Func_5(game: &mut Game) {
     let E = Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game);
-    let v1: i32 = (*E).var_05 as i32 >> 1i32;
+    let v1: i32 = (*E).var_05 as i32 >> 1;
     (*E).var_E = crate::rtl::rom_table_word!(game, 0xa3aae6, v1 as isize);
     (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3aaea, v1 as isize);
     (*E).var_C = (*E).var_01;
@@ -1514,7 +1509,7 @@ pub unsafe fn Sidehopper_Func_5(game: &mut Game) {
 }
 pub unsafe fn Sidehopper_Func_6(game: &mut Game) {
     let E = Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game);
-    let v1: i32 = (*E).var_05 as i32 >> 1i32;
+    let v1: i32 = (*E).var_05 as i32 >> 1;
     (*E).var_E = crate::rtl::rom_table_word!(game, 0xa3aaf2, v1 as isize);
     (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3aaf6, v1 as isize);
     (*E).var_C = (*E).var_02;
@@ -1603,7 +1598,7 @@ pub unsafe fn Sidehopper_Func_17(game: &mut Game) {
 pub unsafe fn Sidehopper_Func_18(game: &mut Game) {
     let E = Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).var_04 != 0 {
-        (*E).var_04 = 0u16;
+        (*E).var_04 = 0;
         (*E).var_B = ((0xa3abd6i32) as u16);
     }
 }
@@ -1625,135 +1620,133 @@ crate::game::address_dispatch! {
 }
 pub unsafe fn Sidehopper_Func_19(game: &mut Game) {
     let E = Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: i32 = 8i32 * (*E).var_C as i32 >> 1i32;
+    let v2: i32 = 8 * (*E).var_C as i32 >> 1;
     if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
-        ((crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 3i32) as isize) as u32) << 16i32
-            | crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 2i32) as isize) as u32)
-            as i32,
+        ((crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 3) as isize) as u32) << 16
+            | crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 2) as isize) as u32) as i32,
         game,
     ) != 0
     {
         (*E).var_D = -((*E).var_D as i32) as u16;
-        (*E).var_03 = 1u16;
+        (*E).var_03 = 1;
     } else if Enemy_MoveRight_IgnoreSlopes(
         ram_word!(game, cur_enemy_index),
-        ((*E).var_D as i16 as i32) << 16i32,
+        ((*E).var_D as i16 as i32) << 16,
         game,
     ) != 0
     {
         (*E).var_D = -((*E).var_D as i32) as u16;
-        (*E).var_03 = 1u16;
+        (*E).var_03 = 1;
     } else {
         let v3: i16 = (((*E).var_C) as i16).wrapping_sub(((*E).var_E) as i16);
         (*E).var_C = v3 as u16;
-        if v3 < 0i16 {
-            (*E).var_03 = 1u16;
-            (*E).var_C = 0u16;
+        if v3 < 0 {
+            (*E).var_03 = 1;
+            (*E).var_C = 0;
         }
     };
 }
 pub unsafe fn Sidehopper_Func_20(game: &mut Game) {
     let E = Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: i32 = 8i32 * (*E).var_C as i32 >> 1i32;
+    let v2: i32 = 8 * (*E).var_C as i32 >> 1;
     if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
-        ((crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 1i32) as isize) as u32) << 16i32
+        ((crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 1) as isize) as u32) << 16
             | crate::rtl::rom_table_word!(game, 0xa2838f, v2 as isize) as u32) as i32,
         game,
     ) != 0
     {
-        (*E).var_03 = 0u16;
+        (*E).var_03 = 0;
         (*E).var_B = ((0xa3ace4i32) as u16);
     } else {
         if Enemy_MoveRight_IgnoreSlopes(
             ram_word!(game, cur_enemy_index),
-            ((*E).var_D as i16 as i32) << 16i32,
+            ((*E).var_D as i16 as i32) << 16,
             game,
         ) != 0
         {
             (*E).var_D = -((*E).var_D as i32) as u16;
         }
         let mut v3: i16 = (((*E).var_E) as i16).wrapping_add(((*E).var_C) as i16);
-        if v3 as i32 - 64i32 & 0x8000i32 == 0 {
-            v3 = 64i16;
+        if v3 as i32 - 64i32 & 0x8000 == 0 {
+            v3 = 64;
         }
         (*E).var_C = v3 as u16;
     };
 }
 pub unsafe fn Sidehopper_Func_21(game: &mut Game) {
     let E = Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: i32 = 8i32 * (*E).var_C as i32 >> 1i32;
+    let v2: i32 = 8 * (*E).var_C as i32 >> 1;
     if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
-        ((crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 1i32) as isize) as u32) << 16i32
+        ((crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 1) as isize) as u32) << 16
             | crate::rtl::rom_table_word!(game, 0xa2838f, v2 as isize) as u32) as i32,
         game,
     ) != 0
     {
         (*E).var_D = -((*E).var_D as i32) as u16;
-        (*E).var_03 = 1u16;
+        (*E).var_03 = 1;
     } else if Enemy_MoveRight_IgnoreSlopes(
         ram_word!(game, cur_enemy_index),
-        ((*E).var_D as i16 as i32) << 16i32,
+        ((*E).var_D as i16 as i32) << 16,
         game,
     ) != 0
     {
         (*E).var_D = -((*E).var_D as i32) as u16;
-        (*E).var_03 = 1u16;
+        (*E).var_03 = 1;
     } else {
         let v3: i16 = (((*E).var_C) as i16).wrapping_sub(((*E).var_E) as i16);
         (*E).var_C = v3 as u16;
-        if v3 < 0i16 {
-            (*E).var_03 = 1u16;
-            (*E).var_C = 0u16;
+        if v3 < 0 {
+            (*E).var_03 = 1;
+            (*E).var_C = 0;
         }
     };
 }
 pub unsafe fn Sidehopper_Func_22(game: &mut Game) {
     let E = Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: i32 = 8i32 * (*E).var_C as i32 >> 1i32;
+    let v2: i32 = 8 * (*E).var_C as i32 >> 1;
     if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
-        ((crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 3i32) as isize) as u32) << 16i32
-            | crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 2i32) as isize) as u32)
-            as i32,
+        ((crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 3) as isize) as u32) << 16
+            | crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 2) as isize) as u32) as i32,
         game,
     ) != 0
     {
-        (*E).var_03 = 0u16;
+        (*E).var_03 = 0;
         (*E).var_B = ((0xa3ace4i32) as u16);
     } else {
         if Enemy_MoveRight_IgnoreSlopes(
             ram_word!(game, cur_enemy_index),
-            ((*E).var_D as i16 as i32) << 16i32,
+            ((*E).var_D as i16 as i32) << 16,
             game,
         ) != 0
         {
             (*E).var_D = -((*E).var_D as i32) as u16;
         }
         let mut v3: i16 = (((*E).var_E) as i16).wrapping_add(((*E).var_C) as i16);
-        if v3 as i32 - 64i32 & 0x8000i32 == 0 {
-            v3 = 64i16;
+        if v3 as i32 - 64i32 & 0x8000 == 0 {
+            v3 = 64;
         }
         (*E).var_C = v3 as u16;
     };
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     MaridiaRefillCandy_Instr_1 [jp] {
-        (*Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game)).var_00 = 4u16;
+        (*Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game)).var_00 = 4;
     };
     MaridiaRefillCandy_Instr_2 [jp] {
-        (*Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game)).var_00 = 8u16;
+        (*Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game)).var_00 = 8;
     };
     MaridiaRefillCandy_Instr_3 [jp] {
-        (*Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game)).var_00 = 12u16;
+        (*Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game)).var_00 = 12;
     };
 }
 pub unsafe fn MaridiaRefillCandy_Init(game: &mut Game) {
     let E = Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).parameter_1 = ((0xa3b482i32) as u16);
-    set_fields! {[(*E)], 0u16; var_D, var_E, var_00}
+    set_fields! {[(*E)], 0; var_D, var_E, var_00}
     (*E).base.current_instruction = addr_kMaridiaRefillCandy_Ilist_B3C1 as u16;
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
     (*E).var_B = (*E).base.x_pos;
@@ -1776,10 +1769,10 @@ pub unsafe fn MaridiaRefillCandy_Main(game: &mut Game) {
     );
 }
 pub unsafe fn MaridiaRefillCandy_Func_1(game: &mut Game) {
-    if IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), 0x80u16, game) != 0 {
-        let mut v1: i16 = 1i16;
+    if IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), 0x80, game) != 0 {
+        let mut v1: i16 = 1;
         if (GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) & 0x8000) == 0 {
-            v1 = 3i16;
+            v1 = 3;
         }
         let E = Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game);
         (*E).var_D = v1 as u16;
@@ -1799,20 +1792,20 @@ pub unsafe fn MaridiaRefillCandy_Func_2(k: u16, game: &mut Game) {
     } else {
         (*E).var_D = (*E).var_D.wrapping_sub(1);
         MaridiaRefillCandy_Func_4(game);
-        (*E).var_F = 0u16;
+        (*E).var_F = 0;
         (*E).parameter_1 = ((0xa3b4d6i32) as u16);
     };
 }
 pub unsafe fn MaridiaRefillCandy_Func_3(k: u16, game: &mut Game) {
     let E = Get_MaridiaRefillCandy(k as i32, game);
-    let v2: i32 = (*E).var_00 as i32 >> 1i32;
-    let v: i32 = ((crate::rtl::rom_table_word!(game, 0xa3b415, v2 as isize) as u32) << 16i32
-        | crate::rtl::rom_table_word!(game, 0xa3b415, (v2 + 1i32) as isize) as u32)
+    let v2: i32 = (*E).var_00 as i32 >> 1;
+    let v: i32 = ((crate::rtl::rom_table_word!(game, 0xa3b415, v2 as isize) as u32) << 16
+        | crate::rtl::rom_table_word!(game, 0xa3b415, (v2 + 1) as isize) as u32)
         as i32;
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
-        (if (*E).var_D != 0u16 { v } else { -v }) as u32,
+        (if (*E).var_D != 0 { v } else { -v }) as u32,
     );
     if CheckIfEnemyIsOnScreen(game) == 0 {
         MaridiaRefillCandy_Func_4(game);
@@ -1821,7 +1814,7 @@ pub unsafe fn MaridiaRefillCandy_Func_3(k: u16, game: &mut Game) {
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
     (*E).base.x_pos = (*E).var_B;
     (*E).base.y_pos = (*E).var_C;
-    (*E).var_D = 0u16;
+    (*E).var_D = 0;
     MaridiaRefillCandy_Func_4(game);
     (*E).parameter_1 = ((0xa3b482i32) as u16);
 }
@@ -1830,38 +1823,38 @@ pub unsafe fn MaridiaRefillCandy_Func_4(game: &mut Game) {
     let mrcy_var_D: u16 = (*E).var_D;
     if mrcy_var_D != (*E).var_E {
         (*E).var_E = mrcy_var_D;
-        enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3b40d, mrcy_var_D as isize), timer = 1u16}
-        (*E).base.timer = 0u16;
+        enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3b40d, mrcy_var_D as isize), timer = 1}
+        (*E).base.timer = 0;
     }
 }
 pub unsafe fn NorfairSlowFireball_Init(game: &mut Game) {
     let v1 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    (*v1).parameter_2 = 6u16;
+    (*v1).parameter_2 = 6;
     (*v1).current_instruction =
-        crate::rtl::rom_table_word!(game, 0xa3b667, ((*v1).properties as i32 & 3i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xa3b667, ((*v1).properties as i32 & 3) as isize);
     StoneZoomer_E67A(ram_word!(game, cur_enemy_index), game);
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
-    Bang_Instr_1 [jp] { QueueSfx2_Max6(0x56u16, game); };
-    Bang_Instr_2 [jp] { (*Get_Bang(ram_word!(game, cur_enemy_index) as i32, game)).var_22 = 1u16; };
+    Bang_Instr_1 [jp] { QueueSfx2_Max6(0x56, game); };
+    Bang_Instr_2 [jp] { (*Get_Bang(ram_word!(game, cur_enemy_index) as i32, game)).var_22 = 1; };
 }
 pub unsafe fn Bang_Init(game: &mut Game) {
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).var_B = (*E).base.palette_index;
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_BlockPlasmaBeam) as u16);
     (*E).var_F = ((0xa3bca5i32) as u16);
-    (*E).var_00 = 16u16;
-    set_fields! {[(*E)], 0u16; var_01, var_02, var_20, var_21, var_22}
+    (*E).var_00 = 16;
+    set_fields! {[(*E)], 0; var_01, var_02, var_20, var_21, var_22}
     (*E).var_0B = crate::rtl::rom_table_word!(
         game,
         0xa3ba84,
         *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as isize
     );
-    let v1: i32 = 2i32 * *(&raw mut (*E).parameter_2 as *mut u8).offset(1isize) as i32;
+    let v1: i32 = 2 * *(&raw mut (*E).parameter_2 as *mut u8).offset(1) as i32;
     let v2: u16 = crate::rtl::rom_table_word!(game, 0xa3bc6a, v1 as isize);
     (*E).var_0C = v2;
     (*E).var_0D = v2;
-    (*E).var_0E = crate::rtl::rom_table_word!(game, 0xa3bc6a, (v1 + 1i32) as isize);
+    (*E).var_0E = crate::rtl::rom_table_word!(game, 0xa3bc6a, (v1 + 1) as isize);
     if (*E).base.current_instruction == 0 {
         (*E).var_F = ((0xa3bcc1i32) as u16);
     }
@@ -1873,7 +1866,7 @@ pub unsafe fn Bang_Main(game: &mut Game) {
 }
 pub unsafe fn Bang_Func_1(game: &mut Game) {
     let v0: u16 = ((*Get_Bang(ram_word!(game, cur_enemy_index) as i32 + 64i32, game)).var_20)
-        .wrapping_add(10u16);
+        .wrapping_add(10);
     (*Get_Bang(ram_word!(game, cur_enemy_index) as i32, game)).var_20 = v0;
     Bang_Func_18(game);
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1881,7 +1874,7 @@ pub unsafe fn Bang_Func_1(game: &mut Game) {
 }
 pub unsafe fn Bang_Func_2(game: &mut Game) {
     let v0: u16 = ((*Get_Bang(ram_word!(game, cur_enemy_index) as i32 + 1984i32, game)).var_00)
-        .wrapping_add(20u16);
+        .wrapping_add(20);
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).var_20 = v0;
     Bang_Func_18(game);
@@ -1891,32 +1884,32 @@ pub unsafe fn Bang_Func_3(game: &mut Game) {
     Bang_Func_5(game);
     let E0 = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
     let x_pos: u16 = (*E0).base.x_pos;
-    let v3: i32 = ram_word!(game, cur_enemy_index) as i32 >> 1i32;
-    set_ram_word!(game.enemy_drawing_queue[(v3 + 91i32)] = x_pos);
-    let E1 = Get_Bang(ram_word!(game, cur_enemy_index) as i32 + 64i32, game);
+    let v3: i32 = ram_word!(game, cur_enemy_index) as i32 >> 1;
+    set_ram_word!(game.enemy_drawing_queue[(v3 + 91)] = x_pos);
+    let E1 = Get_Bang(ram_word!(game, cur_enemy_index) as i32 + 64, game);
     (*E1).base.x_pos = x_pos;
     let y_pos: u16 = (*E0).base.y_pos;
-    set_ram_word!(game.enemy_drawing_queue[(v3 + 93i32)] = y_pos);
+    set_ram_word!(game.enemy_drawing_queue[(v3 + 93)] = y_pos);
     (*E1).base.y_pos = y_pos;
     let mut bang_var_B: i16 = (*E0).var_B as i16;
     if ((*E0).var_20 & 1) != 0 {
-        bang_var_B = 3072i16;
+        bang_var_B = 3072;
     }
     (*E0).base.palette_index = bang_var_B as u16;
     Bang_Func_18(game);
     if (*E0).var_22 != 0 {
-        (*E0).var_22 = 0u16;
-        if (*E0).var_20 == 9u16 {
-            (*E0).base.invincibility_timer = 16u16;
+        (*E0).var_22 = 0;
+        if (*E0).var_20 == 9 {
+            (*E0).base.invincibility_timer = 16;
             (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
             let v7: u16 = DetermineDirectionOfSamusFromEnemy(game);
             let v8: u16 = Bang_Func_4(v7, game);
             EnemyDeathAnimation(ram_word!(game, cur_enemy_index), v8, game);
             let v9: u16 = ram_word!(game, cur_enemy_index);
-            let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32 + 64i32, game);
+            let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32 + 64, game);
             (*E).base.properties = ((*E).base.properties) | (0x200u16);
             update_ram_word!(
-                game.enemy_drawing_queue[((v9 as i32 >> 1i32) + 97i32)],
+                game.enemy_drawing_queue[((v9 as i32 >> 1) + 97)],
                 |fresh1| (fresh1) | (0x200u16)
             );
         } else {
@@ -1926,15 +1919,15 @@ pub unsafe fn Bang_Func_3(game: &mut Game) {
     }
 }
 pub unsafe fn Bang_Func_4(a: u16, game: &mut Game) -> u16 {
-    if ram_word!(game, projectile_counter) as i32 - 5i32 & 0x8000i32 == 0 {
-        return 1u16;
+    if ram_word!(game, projectile_counter) as i32 - 5i32 & 0x8000 == 0 {
+        return 1;
     }
-    let mut i: i32 = 0i32;
-    while ram_word!(game, projectile_damage[(i >> 1i32)]) != 0 {
-        i += 2i32;
+    let mut i: i32 = 0;
+    while ram_word!(game, projectile_damage[(i >> 1)]) != 0 {
+        i += 2;
     }
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
-    let v3: i32 = i >> 1i32;
+    let v3: i32 = i >> 1;
     set_ram_word!(game.projectile_x_pos[v3] = (*E).base.x_pos);
     set_ram_word!(game.projectile_y_pos[v3] = (*E).base.y_pos);
     set_ram_word!(game.projectile_dir[v3] = a);
@@ -1946,11 +1939,11 @@ pub unsafe fn Bang_Func_4(a: u16, game: &mut Game) -> u16 {
         crate::rtl::rom_table_word!(
             game,
             0xa3bc4a,
-            (ram_word!(game, projectile_type[v3]) as i32 & 0xfi32) as isize
+            (ram_word!(game, projectile_type[v3]) as i32 & 0xf) as isize
         ),
         game,
     );
-    0u16
+    0
 }
 pub unsafe fn Bang_Func_5(game: &mut Game) {
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1958,30 +1951,30 @@ pub unsafe fn Bang_Func_5(game: &mut Game) {
 }
 pub unsafe fn Bang_Func_6(k: u16, game: &mut Game) {
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
-    let v1: u16 = ((*E).var_00).wrapping_sub(1u16);
+    let v1: u16 = ((*E).var_00).wrapping_sub(1);
     (*E).var_00 = v1;
     if v1 == 0 {
-        (*E).var_00 = 16u16;
+        (*E).var_00 = 16;
         (*E).var_F = ((0xa3bcc5i32) as u16);
     }
 }
 pub fn Bang_Func_7(k: u16) {}
 pub unsafe fn Bang_Func_8(k: u16, game: &mut Game) {
     let v1: u8 = ((CalculateAngleOfSamusFromEnemy(ram_word!(game, cur_enemy_index), game)) as u8)
-        .wrapping_sub(64u8);
+        .wrapping_sub(64);
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).var_01 = v1 as u16;
     (*E).var_F = ((0xa3bd1ci32) as u16);
-    set_fields! {[(*E)], 0u16; var_07, var_08, var_09, var_0A}
+    set_fields! {[(*E)], 0; var_07, var_08, var_09, var_0A}
 }
 pub unsafe fn Bang_Func_9(game: &mut Game) {
     let v1: u8 = ((CalculateAngleOfSamusFromEnemy(ram_word!(game, cur_enemy_index), game)) as u8)
-        .wrapping_sub(64u8);
+        .wrapping_sub(64);
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).var_02 = v1 as u16;
     let v3: u16 = SignExtend8(((v1) as u16).wrapping_sub((*E).var_01));
     let v4: u16 = Abs16(v3);
-    if v4 as i32 - 48i32 & 0x8000i32 == 0 {
+    if v4 as i32 - 48i32 & 0x8000 == 0 {
         (*E).var_F = ((0xa3bd2ci32) as u16);
     }
 }
@@ -1996,29 +1989,29 @@ pub unsafe fn Bang_Func_11(k: u16, game: &mut Game) {
     Bang_Func_15(game);
     Bang_Func_13(game);
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
-    if (*E).var_0A != 0u16 || ((*E).var_09 as i16) <= 0i16 {
+    if (*E).var_0A != 0 || ((*E).var_09 as i16) <= 0 {
         (*E).var_F = ((0xa3bca5i32) as u16);
     }
 }
 pub unsafe fn Bang_Func_12(game: &mut Game) {
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
-    let v1: i16 = (((*E).var_0C) as i16).wrapping_sub(1i16);
+    let v1: i16 = (((*E).var_0C) as i16).wrapping_sub(1);
     (*E).var_0C = v1 as u16;
-    if v1 < 0i16 {
+    if v1 < 0 {
         (*E).var_0C = (*E).var_0D;
-        if (((*E).var_0A) as i16).wrapping_sub(((*E).var_0B) as i16) < 0i16 {
-            (*E).var_09 = ((*E).var_09).wrapping_add(22u16);
+        if (((*E).var_0A) as i16).wrapping_sub(((*E).var_0B) as i16) < 0 {
+            (*E).var_09 = ((*E).var_09).wrapping_add(22);
             (*E).var_0A = ((*E).var_0A).wrapping_add((*E).var_09);
         }
     }
 }
 pub unsafe fn Bang_Func_13(game: &mut Game) {
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
-    let v1: i16 = (((*E).var_0C) as i16).wrapping_sub(1i16);
+    let v1: i16 = (((*E).var_0C) as i16).wrapping_sub(1);
     (*E).var_0C = v1 as u16;
-    if v1 < 0i16 {
+    if v1 < 0 {
         (*E).var_0C = (*E).var_0E;
-        (*E).var_09 = ((*E).var_09).wrapping_sub(22u16);
+        (*E).var_09 = ((*E).var_09).wrapping_sub(22);
         (*E).var_0A = ((*E).var_0A).wrapping_sub((*E).var_09);
     }
 }
@@ -2027,45 +2020,45 @@ pub unsafe fn Bang_Func_14(game: &mut Game) {
     let r18: u16 = crate::rtl::rom_table_word!(
         game,
         0xa0b1c3,
-        ((((*E).var_01) as u8).wrapping_add(64u8)) as isize
+        ((((*E).var_01) as u8).wrapping_add(64)) as isize
     );
     if (r18 & 0x8000) != 0 {
-        (*E).var_07 = 1u16;
+        (*E).var_07 = 1;
     }
-    let mut t: u32 = ((Abs16(r18) as i32 >> 8i32) * (*E).var_0A as i32) as u32;
+    let mut t: u32 = ((Abs16(r18) as i32 >> 8) * (*E).var_0A as i32) as u32;
     if (*E).var_07 != 0 {
         t = -(t as i32) as u32;
     }
     t = t.wrapping_add((*E).base.x_subpos as u32);
     (*E).base.x_subpos = t as u16;
-    (*E).base.x_pos = (*E).base.x_pos.wrapping_add((t >> 16i32) as u16);
+    (*E).base.x_pos = (*E).base.x_pos.wrapping_add((t >> 16) as u16);
 }
 pub unsafe fn Bang_Func_15(game: &mut Game) {
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
     let r18: u16 = crate::rtl::rom_table_word!(game, 0xa0b1c3, (*E).var_01 as u8 as isize);
     if (r18 & 0x8000) != 0 {
-        (*E).var_08 = 1u16;
+        (*E).var_08 = 1;
     }
-    let mut t: u32 = ((Abs16(r18) as i32 >> 8i32) * (*E).var_0A as i32) as u32;
+    let mut t: u32 = ((Abs16(r18) as i32 >> 8) * (*E).var_0A as i32) as u32;
     if (*E).var_08 != 0 {
         t = -(t as i32) as u32;
     }
     t = t.wrapping_add((*E).base.y_subpos as u32);
     (*E).base.y_subpos = t as u16;
-    (*E).base.y_pos = (*E).base.y_pos.wrapping_add((t >> 16i32) as u16);
+    (*E).base.y_pos = (*E).base.y_pos.wrapping_add((t >> 16) as u16);
 }
 pub unsafe fn Bang_Func_18(game: &mut Game) {
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
     let bang_var_20: u16 = (*E).var_20;
     if bang_var_20 != (*E).var_21 {
         (*E).var_21 = bang_var_20;
-        enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3b722, bang_var_20 as isize), timer = 1u16}
-        (*E).base.timer = 0u16;
+        enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3b722, bang_var_20 as isize), timer = 1}
+        (*E).base.timer = 0;
     }
 }
 pub unsafe fn Bang_Shot(game: &mut Game) {
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
-    if (*E).var_F != 0xbcc1u16 {
+    if (*E).var_F != 0xbcc1 {
         (*E).var_01 = crate::rtl::rom_table_word!(
             game,
             0xa3ba94,
@@ -2073,31 +2066,31 @@ pub unsafe fn Bang_Shot(game: &mut Game) {
                 game,
                 projectile_dir[ram_word!(game, collision_detection_index)]
             ) as i32
-                & 0xfi32) as isize,
+                & 0xf) as isize,
         );
         (*E).var_F = ((0xa3bd2ci32) as u16);
-        set_fields! {[(*E)], 0u16; var_07, var_08}
-        (*E).var_09 = 256u16;
-        (*E).var_0A = 1536u16;
+        set_fields! {[(*E)], 0; var_07, var_08}
+        (*E).var_09 = 256;
+        (*E).var_0A = 1536;
     }
-    if (*E).var_20 != 9u16 {
+    if (*E).var_20 != 9 {
         (*E).var_20 = (*E).var_20.wrapping_add(1);
         Bang_Func_18(game);
         let v1: i32 = ram_word!(game, collision_detection_index) as i32;
         (*E).var_E = ((*E).var_E).wrapping_add(ram_word!(game, projectile_damage[v1]));
         update_ram_word!(game.projectile_dir[v1], |fresh2| (fresh2) | (0x10u16));
-        if (*E).var_20 == 9u16 {
-            (*E).var_D = 1u16;
+        if (*E).var_20 == 9 {
+            (*E).var_D = 1;
         }
     }
 }
 pub unsafe fn Skree_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_Skree(ram_word!(game, cur_enemy_index) as i32, game)).var_E = 1u16;
+    (*Get_Skree(ram_word!(game, cur_enemy_index) as i32, game)).var_E = 1;
     jp
 }
 pub unsafe fn Skree_Init(game: &mut Game) {
     let E = Get_Skree(ram_word!(game, cur_enemy_index) as i32, game);
-    set_fields! {[(*E)], 0u16; var_C, var_D, var_E}
+    set_fields! {[(*E)], 0; var_C, var_D, var_E}
     (*E).base.current_instruction = addr_kSkree_Ilist_C65E as u16;
     (*E).var_B = ((0xa3c6d5i32) as u16);
 }
@@ -2118,7 +2111,7 @@ pub unsafe fn Skree_Main(game: &mut Game) {
 }
 pub unsafe fn Skree_Func_1(game: &mut Game) {
     let E = Get_Skree(ram_word!(game, cur_enemy_index) as i32, game);
-    if abs16(((*E).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos))) < 0x30u16 {
+    if abs16(((*E).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos))) < 0x30 {
         (*E).var_C = (*E).var_C.wrapping_add(1);
         Skree_Func_5(game);
         (*E).var_B = ((0xa3c6f7i32) as u16);
@@ -2127,56 +2120,55 @@ pub unsafe fn Skree_Func_1(game: &mut Game) {
 pub unsafe fn Skree_Func_2(k: u16, game: &mut Game) {
     let E = Get_Skree(k as i32, game);
     if (*E).var_E != 0 {
-        (*E).var_E = 0u16;
+        (*E).var_E = 0;
         (*E).var_C = (*E).var_C.wrapping_add(1);
         Skree_Func_5(game);
         (*E).var_B = ((0xa3c716i32) as u16);
-        QueueSfx2_Max6(0x5bu16, game);
+        QueueSfx2_Max6(0x5b, game);
     }
 }
 pub unsafe fn Skree_Func_3(game: &mut Game) {
     let E = Get_Skree(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).var_A = 21u16;
+    (*E).var_A = 21;
     let v1: u16 = ((*E).base.properties) | (3u16);
     (*E).base.properties = v1;
     if EnemyFunc_BF8A(
         ram_word!(game, cur_enemy_index),
         v1,
-        (6i16 as i32) << 16i32,
+        (6i16 as i32) << 16,
         game,
     ) & 1
         != 0
     {
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.timer = 0u16;
+        (*E).base.instruction_timer = 1;
+        (*E).base.timer = 0;
         (*E).var_B = ((0xa3c77fi32) as u16);
-        QueueSfx2_Max6(0x5cu16, game);
+        QueueSfx2_Max6(0x5c, game);
     } else {
-        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(6u16);
+        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(6);
         (*E).base.x_pos = ((*E).base.x_pos as i32
-            + if (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16)
-                >= 0i16
+            + if (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) >= 0
             {
                 -1i32
             } else {
-                1i32
+                1
             }) as u16;
     };
 }
 pub unsafe fn Skree_Func_4(game: &mut Game) {
     let E = Get_Skree(ram_word!(game, cur_enemy_index) as i32, game);
     crate::update_place! { previous fresh18 = (*E).var_A => (*E).var_A.wrapping_sub(1); }
-    if fresh18 == 1u16 {
+    if fresh18 == 1 {
         (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).vram_tiles_index =
             ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
-        (*E).base.palette_index = 2560u16;
-        (*E).base.vram_tiles_index = 0u16;
+        (*E).base.palette_index = 2560;
+        (*E).base.vram_tiles_index = 0;
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
     } else {
-        if (*E).var_A == 8u16 {
+        if (*E).var_A == 8 {
             let v2: u16 = ram_word!(game, cur_enemy_index);
             let mut parameter = SpawnEprojWithGfx(
-                8u16,
+                8,
                 ram_word!(game, cur_enemy_index),
                 addr_stru_868BC2 as u16,
                 game,
@@ -2193,8 +2185,8 @@ pub unsafe fn Skree_Func_5(game: &mut Game) {
     let skree_var_C: u16 = (*E).var_C;
     if skree_var_C != (*E).var_D {
         (*E).var_D = skree_var_C;
-        enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3c69c, skree_var_C as isize), timer = 1u16}
-        (*E).base.timer = 0u16;
+        enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3c69c, skree_var_C as isize), timer = 1}
+        (*E).base.timer = 0;
     }
 }
 pub unsafe fn Skree_Shot(game: &mut Game) {
@@ -2211,14 +2203,14 @@ pub unsafe fn Skree_Shot(game: &mut Game) {
         parameter = SpawnEprojWithGfx(parameter, v1, addr_stru_868BD0 as u16, game);
         parameter = SpawnEprojWithGfx(parameter, v1, addr_stru_868BDE as u16, game);
         SpawnEprojWithGfx(parameter, v1, addr_stru_868BEC as u16, game);
-        let mut v5: u16 = 2u16;
+        let mut v5: u16 = 2;
         if (ram_word!(
             game,
             projectile_type[ram_word!(game, collision_detection_index)]
         ) & 0xf00)
             != 512
         {
-            v5 = 0u16;
+            v5 = 0;
         }
         EnemyDeathAnimation(
             (2u16).wrapping_mul(ram_word!(game, collision_detection_index)),
@@ -2237,7 +2229,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
             as *mut MaridiaSnailData2)
             .offset(0))
         .field_6 as *mut u8)
-            .offset((8i32 * (*E).var_07 as i32) as isize) as *mut u16);
+            .offset((8 * (*E).var_07 as i32) as isize) as *mut u16);
     };
     MaridiaSnail_Instr_3 [jp.offset(2)] {
         let E = Get_MaridiaSnail(k as i32, game);
@@ -2246,7 +2238,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     };
 }
 pub unsafe fn MaridiaSnail_Instr_5(k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
-    if (*Get_MaridiaSnail(k as i32, game)).var_08 == 2u16 || (NextRandom(game) & 1) != 0 {
+    if (*Get_MaridiaSnail(k as i32, game)).var_08 == 2 || (NextRandom(game) & 1) != 0 {
         jp = jp.offset(-(3i32 as isize));
     }
     jp
@@ -2255,7 +2247,7 @@ pub unsafe fn MaridiaSnail_Init(game: &mut Game) {
     let E = Get_MaridiaSnail(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).var_F = ((0xa3cf5fi32) as u16);
     (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A3 as u16;
-    (*E).base.instruction_timer = 1u16;
+    (*E).base.instruction_timer = 1;
     crate::update_place! { previous current_instruction: u16 = (*E).base.current_instruction => (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
         as *mut MaridiaSnailData2)
         .offset(current_instruction as isize))
@@ -2272,20 +2264,20 @@ pub unsafe fn MaridiaSnail_Init(game: &mut Game) {
         as *mut MaridiaSnailData2)
         .offset(current_instruction as isize))
     .field_6;
-    (*E).var_08 = 0u16;
+    (*E).var_08 = 0;
     (*E).var_06 = (*E).parameter_1;
     MaridiaSnail_Func_2(
         ram_word!(game, cur_enemy_index),
-        (current_instruction).wrapping_mul(8u16),
+        (current_instruction).wrapping_mul(8),
         game,
     );
 }
 pub unsafe fn MaridiaSnail_Func_2(k: u16, j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1i32;
+    let v2: i32 = j as i32 >> 1;
     let r18: u16 = crate::rtl::rom_table_word!(game, 0xa3cd82, v2 as isize);
-    let r20: u16 = crate::rtl::rom_table_word!(game, 0xa3cd82, (v2 + 1i32) as isize);
-    let r22: u16 = crate::rtl::rom_table_word!(game, 0xa3cd82, (v2 + 2i32) as isize);
-    let r24: u16 = crate::rtl::rom_table_word!(game, 0xa3cd82, (v2 + 3i32) as isize);
+    let r20: u16 = crate::rtl::rom_table_word!(game, 0xa3cd82, (v2 + 1) as isize);
+    let r22: u16 = crate::rtl::rom_table_word!(game, 0xa3cd82, (v2 + 2) as isize);
+    let r24: u16 = crate::rtl::rom_table_word!(game, 0xa3cd82, (v2 + 3) as isize);
     let E = Get_MaridiaSnail(k as i32, game);
     (*E).var_A = (r20 as i32
         + (r18 as i32
@@ -2309,11 +2301,11 @@ pub unsafe fn MaridiaSnail_Main(game: &mut Game) {
 }
 pub unsafe fn MaridiaSnail_Func_4(k: u16, game: &mut Game) {
     let msl_var_08: u16 = (*Get_MaridiaSnail(k as i32, game)).var_08;
-    if msl_var_08 != 3u16
-        && msl_var_08 != 4u16
-        && msl_var_08 != 5u16
-        && ram_word!(game, earthquake_timer) == 30u16
-        && ram_word!(game, earthquake_type) == 20u16
+    if msl_var_08 != 3
+        && msl_var_08 != 4
+        && msl_var_08 != 5
+        && ram_word!(game, earthquake_timer) == 30
+        && ram_word!(game, earthquake_type) == 20
     {
         MaridiaSnail_Func_14(k, game);
     }
@@ -2322,46 +2314,46 @@ pub unsafe fn MaridiaSnail_Func_5(k: u16, game: &mut Game) {
     let skip_instruction_change: bool;
     let E = Get_MaridiaSnail(k as i32, game);
     let msl_var_08: u16 = (*E).var_08;
-    if msl_var_08 != 1u16 && msl_var_08 != 3u16 && msl_var_08 != 4u16 && msl_var_08 != 5u16 {
-        if (*E).base.y_pos as i32 - ram_word!(game, samus_y_pos) as i32 + 96i32 & 0x8000i32 == 0 {
+    if msl_var_08 != 1 && msl_var_08 != 3 && msl_var_08 != 4 && msl_var_08 != 5 {
+        if (*E).base.y_pos as i32 - ram_word!(game, samus_y_pos) as i32 + 96 & 0x8000 == 0 {
             skip_instruction_change = if (((*E).base.x_pos) as i16)
                 .wrapping_sub((ram_word!(game, samus_x_pos)) as i16)
-                < 0i16
+                < 0
             {
-                (*ram_ptr!(game; 0xa1e) != 4u8)
+                (*ram_ptr!(game; 0xa1e) != 4)
             } else {
-                (*ram_ptr!(game; 0xa1e) != 8u8)
+                (*ram_ptr!(game; 0xa1e) != 8)
             };
             if skip_instruction_change {
             } else {
-                if (*E).var_08 == 2u16 {
+                if (*E).var_08 == 2 {
                     return;
                 }
-                if (*E).var_D as i32 != 0xa3cf5fi32 & 0xffffi32 {
+                if (*E).var_D as i32 != 0xa3cf5f & 0xffff {
                     (*E).base.current_instruction = (*E).var_D;
                     (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A3 as u16;
-                    (*E).base.instruction_timer = 1u16;
-                    (*E).base.timer = 0u16;
-                    (*E).var_08 = 2u16;
+                    (*E).base.instruction_timer = 1;
+                    (*E).base.timer = 0;
+                    (*E).var_08 = 2;
                     return;
                 }
             }
         }
-        (*E).var_08 = 0u16;
+        (*E).var_08 = 0;
     }
 }
 pub unsafe fn MaridiaSnail_Func_6(k: u16, game: &mut Game) {
     let keep_properties: bool;
     let E = Get_MaridiaSnail(k as i32, game);
-    if ((*E).var_F as i32 != 0xa3d1b3i32 & 0xffffi32) {
-        keep_properties = if (*E).var_08 == 1u16 {
-            (ram_word!(game, samus_has_momentum_flag) != 0u16
-                || (*E).var_F as i32 != 0xa3cf5fi32 & 0xffffi32)
+    if ((*E).var_F as i32 != 0xa3d1b3 & 0xffff) {
+        keep_properties = if (*E).var_08 == 1 {
+            (ram_word!(game, samus_has_momentum_flag) != 0
+                || (*E).var_F as i32 != 0xa3cf5f & 0xffff)
         } else {
             !(ram_word!(game, samus_has_momentum_flag) == 0)
                 || ({
                     let msl_var_08: u16 = (*E).var_08;
-                    !(msl_var_08 == 2u16 || msl_var_08 != 3u16 && msl_var_08 != 5u16)
+                    !(msl_var_08 == 2 || msl_var_08 != 3 && msl_var_08 != 5)
                 })
         };
         if keep_properties {
@@ -2373,23 +2365,23 @@ pub unsafe fn MaridiaSnail_Func_6(k: u16, game: &mut Game) {
     (*E).base.properties = ((*E).base.properties) & (0x7fffu16);
 }
 unsafe fn Shift8AddMagn(a: i16, s: i32) -> u32 {
-    let mut r: i32 = (a as i32) << 8i32;
-    r = r + if r < 0i32 { -(s << 16i32) } else { s << 16i32 };
+    let mut r: i32 = (a as i32) << 8;
+    r = r + if r < 0 { -(s << 16i32) } else { s << 16 };
     r as u32
 }
 pub unsafe fn MaridiaSnail_Func_7(k: u16, game: &mut Game) {
     let E = Get_MaridiaSnail(k as i32, game);
-    if (*E).var_07 >= 4u16 {
-        if EnemyFunc_BC76(k, Shift8AddMagn((*E).var_B as i16, 7i32) as i32, game) != 0 {
+    if (*E).var_07 >= 4 {
+        if EnemyFunc_BC76(k, Shift8AddMagn((*E).var_B as i16, 7) as i32, game) != 0 {
             return;
         }
-    } else if EnemyFunc_BBBF(k, Shift8AddMagn((*E).var_A as i16, 7i32) as i32, game) != 0 {
+    } else if EnemyFunc_BBBF(k, Shift8AddMagn((*E).var_A as i16, 7) as i32, game) != 0 {
         return;
     }
     MaridiaSnail_Func_14(k, game);
 }
 pub unsafe fn MaridiaSnail_Func_9(k: u16, game: &mut Game) {
-    let v1: u16 = (if (*Get_MaridiaSnail(k as i32, game)).var_05 != 0u16 {
+    let v1: u16 = (if (*Get_MaridiaSnail(k as i32, game)).var_05 != 0 {
         addr_stru_A3CD22 as i32
     } else {
         addr_stru_A3CCE2 as i32
@@ -2400,7 +2392,7 @@ pub unsafe fn MaridiaSnail_CFB7(k: u16, game: &mut Game) {
     MaridiaSnail_D002(k, RomPtr_A3(addr_stru_A3CCEA as u16, game), game);
 }
 pub unsafe fn MaridiaSnail_CFBD(k: u16, game: &mut Game) {
-    let v1: u16 = (if (*Get_MaridiaSnail(k as i32, game)).var_05 != 0u16 {
+    let v1: u16 = (if (*Get_MaridiaSnail(k as i32, game)).var_05 != 0 {
         addr_stru_A3CD2A as i32
     } else {
         addr_stru_A3CCF2 as i32
@@ -2411,7 +2403,7 @@ pub unsafe fn MaridiaSnail_CFCE(k: u16, game: &mut Game) {
     MaridiaSnail_D002(k, RomPtr_A3(addr_stru_A3CCFA as u16, game), game);
 }
 pub unsafe fn MaridiaSnail_CFD4(k: u16, game: &mut Game) {
-    let v1: u16 = (if (*Get_MaridiaSnail(k as i32, game)).var_05 != 0u16 {
+    let v1: u16 = (if (*Get_MaridiaSnail(k as i32, game)).var_05 != 0 {
         addr_stru_A3CD32 as i32
     } else {
         addr_stru_A3CD02 as i32
@@ -2436,21 +2428,20 @@ pub unsafe fn MaridiaSnail_CFFC(k: u16, game: &mut Game) {
 pub unsafe fn MaridiaSnail_D002(k: u16, j: *const u8, game: &mut Game) {
     MaridiaSnail_Func_10(k, j, game);
     let E = Get_MaridiaSnail(k as i32, game);
-    let rv: u8 =
-        Enemy_MoveRight_ProcessSlopes(k, Shift8AddMagn((*E).var_A as i16, 1i32) as i32, game);
+    let rv: u8 = Enemy_MoveRight_ProcessSlopes(k, Shift8AddMagn((*E).var_A as i16, 1) as i32, game);
     MaridiaSnail_Func_11(k, j, game);
     if rv != 0 {
-        (*E).var_E = 0u16;
+        (*E).var_E = 0;
         let carry: u8 = EnemyFunc_C8AD(k, game);
         MaridiaSnail_Func_12(k, carry as u16, game);
-        if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8i32, game) != 0 {
+        if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) != 0 {
             (*E).var_A = -((*E).var_A as i32) as u16;
             MaridiaSnail_Func_13(k, *(j.offset(6) as *mut u16), game);
         }
     } else {
-        let v7: u16 = ((*E).var_E).wrapping_add(1u16);
+        let v7: u16 = ((*E).var_E).wrapping_add(1);
         (*E).var_E = v7;
-        if v7 as i32 - 4i32 & 0x8000i32 != 0 {
+        if v7 as i32 - 4i32 & 0x8000 != 0 {
             (*E).var_B = -((*E).var_B as i32) as u16;
             MaridiaSnail_Func_13(k, *(j.offset(4) as *mut u16), game);
         } else {
@@ -2461,11 +2452,11 @@ pub unsafe fn MaridiaSnail_D002(k: u16, j: *const u8, game: &mut Game) {
 pub unsafe fn MaridiaSnail_D07E(k: u16, j: *const u8, game: &mut Game) {
     MaridiaSnail_Func_10(k, j, game);
     let E = Get_MaridiaSnail(k as i32, game);
-    let rv: u8 = Enemy_MoveDown(k, Shift8AddMagn((*E).var_B as i16, 1i32) as i32, game);
+    let rv: u8 = Enemy_MoveDown(k, Shift8AddMagn((*E).var_B as i16, 1) as i32, game);
     MaridiaSnail_Func_11(k, j, game);
     if rv != 0 {
-        (*E).var_E = 0u16;
-        if Enemy_MoveRight_ProcessSlopes(k, ((*E).var_A as i16 as i32) << 8i32, game) != 0 {
+        (*E).var_E = 0;
+        if Enemy_MoveRight_ProcessSlopes(k, ((*E).var_A as i16 as i32) << 8, game) != 0 {
             (*E).var_B = -((*E).var_B as i32) as u16;
             MaridiaSnail_Func_13(k, *(j.offset(6) as *mut u16), game);
         } else {
@@ -2473,9 +2464,9 @@ pub unsafe fn MaridiaSnail_D07E(k: u16, j: *const u8, game: &mut Game) {
             MaridiaSnail_Func_12(k, carry as u16, game);
         }
     } else {
-        let v7: u16 = ((*E).var_E).wrapping_add(1u16);
+        let v7: u16 = ((*E).var_E).wrapping_add(1);
         (*E).var_E = v7;
-        if v7 as i32 - 4i32 & 0x8000i32 != 0 {
+        if v7 as i32 - 4i32 & 0x8000 != 0 {
             (*E).var_A = -((*E).var_A as i32) as u16;
             MaridiaSnail_Func_13(k, *(j.offset(4) as *mut u16), game);
         } else {
@@ -2496,103 +2487,103 @@ pub unsafe fn MaridiaSnail_Func_11(k: u16, j: *const u8, game: &mut Game) {
 pub unsafe fn MaridiaSnail_Func_12(k: u16, carry: u16, game: &mut Game) {
     let E = Get_MaridiaSnail(k as i32, game);
     if carry == 0 {
-        if ((*E).var_04).wrapping_add(1u16) >= 0x10u16 {
-            (*E).var_05 = 0u16;
+        if ((*E).var_04).wrapping_add(1) >= 0x10 {
+            (*E).var_05 = 0;
         } else {
             (*E).var_04 = (*E).var_04.wrapping_add(1);
         }
     } else {
-        (*E).var_05 = 1u16;
-        (*E).var_04 = 0u16;
+        (*E).var_05 = 1;
+        (*E).var_04 = 0;
     };
 }
 pub unsafe fn MaridiaSnail_Func_13(k: u16, a: u16, game: &mut Game) {
     let E = Get_MaridiaSnail(k as i32, game);
-    enemy_instruction! {[(*E).base]; instruction = a, timer = 1u16}
-    (*E).var_05 = 1u16;
-    (*E).var_04 = 0u16;
+    enemy_instruction! {[(*E).base]; instruction = a, timer = 1}
+    (*E).var_05 = 1;
+    (*E).var_04 = 0;
 }
 pub unsafe fn MaridiaSnail_Func_14(k: u16, game: &mut Game) {
     let E = Get_MaridiaSnail(k as i32, game);
-    if (*E).var_08 != 3u16 {
-        (*E).var_08 = 3u16;
+    if (*E).var_08 != 3 {
+        (*E).var_08 = 3;
         (*E).var_F = ((0xa3d1b3i32) as u16);
-        let v2: i32 = 2i32 * (*E).var_C as i32;
+        let v2: i32 = 2 * (*E).var_C as i32;
         (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xa3d1ab, v2 as isize);
-        (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3d1ab, (v2 + 1i32) as isize);
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.timer = 0u16;
-        set_fields! {[(*E)], 0u16; var_02, var_03, var_00, var_01}
+        (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3d1ab, (v2 + 1) as isize);
+        (*E).base.instruction_timer = 1;
+        (*E).base.timer = 0;
+        set_fields! {[(*E)], 0; var_02, var_03, var_00, var_01}
     }
 }
 pub unsafe fn MaridiaSnail_Func_15(k: u16, game: &mut Game) {
     let E = Get_MaridiaSnail(k as i32, game);
-    if (*E).var_08 != 3u16 {
+    if (*E).var_08 != 3 {
         if Enemy_MoveRight_IgnoreSlopes(
             k,
-            (((*E).var_03 as u32) << 16i32 | (*E).var_02 as u32) as i32,
+            (((*E).var_03 as u32) << 16 | (*E).var_02 as u32) as i32,
             game,
         ) != 0
         {
             (*E).var_02 = -((*E).var_02 as i32) as u16;
             (*E).var_03 = -((*E).var_03 as i32) as u16;
-            (*E).var_20 = 1u16;
-            QueueSfx2_Max3(0x70u16, game);
+            (*E).var_20 = 1;
+            QueueSfx2_Max3(0x70, game);
         } else {
             let mut delta: u32 = 0;
             if ((*E).var_03 & 0x8000) != 0 {
-                delta = 4096u32;
+                delta = 4096;
             } else {
                 delta = -4096i32 as u32;
             }
             let t: u32 = (((*E).var_03 as u32) << 16i32 | (*E).var_02 as u32).wrapping_add(delta);
             (*E).var_02 = t as u16;
-            if t >> 16i32 != 0 {
-                (*E).var_03 = (t >> 16i32) as u16;
+            if t >> 16 != 0 {
+                (*E).var_03 = (t >> 16) as u16;
             }
         }
     }
     if Enemy_MoveDown(
         k,
-        (((*E).var_01 as u32) << 16i32 | (*E).var_00 as u32) as i32,
+        (((*E).var_01 as u32) << 16 | (*E).var_00 as u32) as i32,
         game,
     ) != 0
     {
         let msl_var_01: i16 = (*E).var_01 as i16;
-        if msl_var_01 >= 0i16 && msl_var_01 as i32 - 3i32 & 0x8000i32 != 0 {
-            set_fields! {[(*E)], 0u16; var_03, var_02, var_01, var_00, var_E, var_04}
-            (*E).var_05 = 1u16;
-            if (*E).var_08 == 3u16 {
-                (*E).var_08 = 0u16;
+        if msl_var_01 >= 0 && msl_var_01 as i32 - 3i32 & 0x8000 != 0 {
+            set_fields! {[(*E)], 0; var_03, var_02, var_01, var_00, var_E, var_04}
+            (*E).var_05 = 1;
+            if (*E).var_08 == 3 {
+                (*E).var_08 = 0;
             } else {
-                (*E).var_08 = 1u16;
-                (*E).parameter_1 = 8u16;
+                (*E).var_08 = 1;
+                (*E).parameter_1 = 8;
                 MaridiaSnail_Func_18(k, game);
                 MaridiaSnail_Func_16(k, game);
             }
             (*E).base.properties = ((*E).var_C | (*E).base.properties & !(3));
             StoneZoomer_E67A(k, game);
             (*E).var_F = ((0xa3cf5fi32) as u16);
-            enemy_instruction! {[(*E).base]; instruction = (*E).var_D, timer = 1u16}
-            (*E).base.timer = 0u16;
+            enemy_instruction! {[(*E).base]; instruction = (*E).var_D, timer = 1}
+            (*E).base.timer = 0;
         } else {
             (*E).var_00 = -((*E).var_00 as i32) as u16;
             (*E).var_01 = -((*E).var_01 as i32) as u16;
-            (*E).var_20 = 0u16;
+            (*E).var_20 = 0;
         }
     } else {
-        let t_0: u32 = (((*E).var_01 as u32) << 16i32 | (*E).var_00 as u32).wrapping_add(0x2000u32);
+        let t_0: u32 = (((*E).var_01 as u32) << 16i32 | (*E).var_00 as u32).wrapping_add(0x2000);
         (*E).var_00 = t_0 as u16;
-        if (t_0 >> 16i32).wrapping_sub(4u32) & 0x8000u32 != 0 {
-            (*E).var_01 = (t_0 >> 16i32) as u16;
+        if (t_0 >> 16i32).wrapping_sub(4) & 0x8000 != 0 {
+            (*E).var_01 = (t_0 >> 16) as u16;
         }
     };
 }
 pub unsafe fn MaridiaSnail_Func_16(k: u16, game: &mut Game) {
     let E = Get_MaridiaSnail(k as i32, game);
-    let v2: i32 = ((4u16).wrapping_mul((*E).var_C)) as i32 >> 1i32;
+    let v2: i32 = ((4u16).wrapping_mul((*E).var_C)) as i32 >> 1;
     (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xa3d30d, v2 as isize);
-    (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3d30d, (v2 + 1i32) as isize);
+    (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3d30d, (v2 + 1) as isize);
 }
 pub unsafe fn MaridiaSnail_Func_18(k: u16, game: &mut Game) -> u8 {
     let E = Get_MaridiaSnail(k as i32, game);
@@ -2600,20 +2591,20 @@ pub unsafe fn MaridiaSnail_Func_18(k: u16, game: &mut Game) -> u8 {
         ((if (*E).base.x_pos >= ram_word!(game, samus_x_pos) {
             MaridiaSnail_Func_19(k, game) as i32
         } else {
-            0i32
+            0
         }) as u8)
     } else {
         ((if (*E).base.x_pos < ram_word!(game, samus_x_pos) {
             MaridiaSnail_Func_19(k, game) as i32
         } else {
-            0i32
+            0
         }) as u8)
     }
 }
 pub unsafe fn MaridiaSnail_Func_19(k: u16, game: &mut Game) -> u8 {
     let E = Get_MaridiaSnail(k as i32, game);
-    if (*E).var_08 == 2u16 || (*E).var_F == 0xcf5fu16 {
-        return 0u8;
+    if (*E).var_08 == 2 || (*E).var_F == 0xcf5f {
+        return 0;
     }
     let v2: u16 = crate::rtl::rom_table_word!(game, 0xa3cdc2, (*E).var_07 as isize);
     (*E).var_07 = v2;
@@ -2622,94 +2613,94 @@ pub unsafe fn MaridiaSnail_Func_19(k: u16, game: &mut Game) -> u8 {
             as *mut MaridiaSnailData2)
             .offset(0))
         .field_0 as *mut u8)
-            .offset((8i32 * v2 as i32) as isize) as *mut VoidP);
+            .offset((8 * v2 as i32) as isize) as *mut VoidP);
     (*E).base.properties = (*((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
         as *mut MaridiaSnailData2)
         .offset(0))
     .field_2 as *mut u8)
-        .offset((8i32 * v2 as i32) as isize) as *mut u16)
+        .offset((8 * v2 as i32) as isize) as *mut u16)
         | (*E).base.properties & !(3));
     (*E).var_D = *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
         as *mut MaridiaSnailData2)
         .offset(0))
     .field_4 as *mut u8)
-        .offset((8i32 * v2 as i32) as isize) as *mut VoidP);
+        .offset((8 * v2 as i32) as isize) as *mut VoidP);
     (*E).var_C = *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
         as *mut MaridiaSnailData2)
         .offset(0))
     .field_6 as *mut u8)
-        .offset((8i32 * v2 as i32) as isize) as *mut u16);
+        .offset((8 * v2 as i32) as isize) as *mut u16);
     MaridiaSnail_Func_2(k, (8u16).wrapping_mul(v2), game);
     MaridiaSnail_Func_3(k, game);
-    (*E).var_05 = 1u16;
-    (*E).var_04 = 0u16;
-    1u8
+    (*E).var_05 = 1;
+    (*E).var_04 = 0;
+    1
 }
 pub unsafe fn MaridiaSnail_Touch(game: &mut Game) {
     let E = Get_MaridiaSnail(ram_word!(game, cur_enemy_index) as i32, game);
-    if ((*E).var_08 != 1u16
-        || (*E).var_F == 0xcf5fu16
+    if ((*E).var_08 != 1
+        || (*E).var_F == 0xcf5f
         || MaridiaSnail_Func_20(ram_word!(game, cur_enemy_index), game) & 1 == 0)
-        && ((*E).var_F == 0xd1b3u16 || ram_word!(game, samus_has_momentum_flag) != 0u16)
+        && ((*E).var_F == 0xd1b3 || ram_word!(game, samus_has_momentum_flag) != 0)
     {
         MaridiaSnail_Func_22(ram_word!(game, cur_enemy_index), game);
-        if (*E).var_F == 0xd1b3u16 {
-            QueueSfx2_Max3(0x70u16, game);
+        if (*E).var_F == 0xd1b3 {
+            QueueSfx2_Max3(0x70, game);
         }
-    } else if (*E).var_F != 0xcf5fu16 && (*E).var_08 != 4u16 && (*E).var_08 != 3u16 {
+    } else if (*E).var_F != 0xcf5f && (*E).var_08 != 4 && (*E).var_08 != 3 {
         Enemy_NormalTouchAI_A3(game);
         (*E).parameter_1 = (*E).var_06;
         if (*E).var_08 != 0 {
             MaridiaSnail_Func_19(ram_word!(game, cur_enemy_index), game);
         }
-        (*E).var_08 = 0u16;
+        (*E).var_08 = 0;
     }
 }
 pub unsafe fn MaridiaSnail_Func_20(k: u16, game: &mut Game) -> u8 {
     let r20: u16 = ((*Get_MaridiaSnail(k as i32, game)).var_C) & (1u16);
-    if (((ram_word!(game, joypad1_lastkeys)) & (0x300u16)) as i32 >> 8i32) == 1i32 {
+    if (((ram_word!(game, joypad1_lastkeys)) & (0x300u16)) as i32 >> 8) == 1 {
         if r20 != 0 {
-            return 0u8;
+            return 0;
         }
     } else if r20 == 0 {
-        return 0u8;
+        return 0;
     }
-    1u8
+    1
 }
 pub unsafe fn MaridiaSnail_Shot(game: &mut Game) {
     let v0: u16 = (ram_word!(
         game,
         projectile_type[ram_word!(game, collision_detection_index)]
     )) & (0xff00u16);
-    if v0 == 768u16 || v0 == 1280u16 {
+    if v0 == 768 || v0 == 1280 {
         Enemy_NormalShotAI_A3(game);
     } else {
         let msl_var_08: u16 =
             (*Get_MaridiaSnail(ram_word!(game, cur_enemy_index) as i32, game)).var_08;
-        if msl_var_08 != 3u16 && msl_var_08 != 4u16 {
+        if msl_var_08 != 3 && msl_var_08 != 4 {
             MaridiaSnail_Func_23(ram_word!(game, cur_enemy_index), game);
         }
-        QueueSfx2_Max3(0x70u16, game);
+        QueueSfx2_Max3(0x70, game);
     };
 }
 pub unsafe fn MaridiaSnail_Func_22(k: u16, game: &mut Game) {
     let E = Get_MaridiaSnail(k as i32, game);
-    (*E).var_08 = 4u16;
+    (*E).var_08 = 4;
     (*E).var_F = ((0xa3d1b3i32) as u16);
-    let v2: i32 = ((4u16).wrapping_mul((*E).var_C)) as i32 >> 1i32;
+    let v2: i32 = ((4u16).wrapping_mul((*E).var_C)) as i32 >> 1;
     (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xa3d50f, v2 as isize);
-    (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3d50f, (v2 + 1i32) as isize);
-    (*E).base.instruction_timer = 1u16;
-    (*E).base.timer = 0u16;
+    (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3d50f, (v2 + 1) as isize);
+    (*E).base.instruction_timer = 1;
+    (*E).base.timer = 0;
     (*E).var_02 = ram_word!(game, absolute_moved_last_frame_x_fract);
     let mut v3: u16 = ram_word!(game, absolute_moved_last_frame_x);
     (*E).var_03 = ram_word!(game, absolute_moved_last_frame_x);
-    if v3 >= 0x10u16 {
-        v3 = 15u16;
+    if v3 >= 0x10 {
+        v3 = 15;
     }
-    let v4: i32 = ((4u16).wrapping_mul(v3)) as i32 >> 1i32;
+    let v4: i32 = ((4u16).wrapping_mul(v3)) as i32 >> 1;
     (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa3d517, v4 as isize);
-    (*E).var_01 = crate::rtl::rom_table_word!(game, 0xa3d517, (v4 + 1i32) as isize);
+    (*E).var_01 = crate::rtl::rom_table_word!(game, 0xa3d517, (v4 + 1) as isize);
     if (*ram_ptr!(game; 0xa1e) & 4) != 0 {
         (*E).var_02 = -((*E).var_02 as i32) as u16;
         (*E).var_03 = -((*E).var_03 as i32) as u16;
@@ -2717,18 +2708,18 @@ pub unsafe fn MaridiaSnail_Func_22(k: u16, game: &mut Game) {
 }
 pub unsafe fn MaridiaSnail_Func_23(k: u16, game: &mut Game) {
     let E = Get_MaridiaSnail(k as i32, game);
-    (*E).var_08 = 5u16;
+    (*E).var_08 = 5;
     (*E).var_F = ((0xa3d1b3i32) as u16);
-    let v2: i32 = ((4u16).wrapping_mul((*E).var_C)) as i32 >> 1i32;
+    let v2: i32 = ((4u16).wrapping_mul((*E).var_C)) as i32 >> 1;
     (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xa3d5a4, v2 as isize);
-    (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3d5a4, (v2 + 1i32) as isize);
-    (*E).base.instruction_timer = 1u16;
-    (*E).base.timer = 0u16;
+    (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3d5a4, (v2 + 1) as isize);
+    (*E).base.instruction_timer = 1;
+    (*E).base.timer = 0;
     (*E).var_01 = -1i32 as u16;
-    (*E).var_03 = (if *ram_ptr!(game; 0xa1e) == 4u8 {
+    (*E).var_03 = (if *ram_ptr!(game; 0xa1e) == 4 {
         -1i32
     } else {
-        1i32
+        1
     }) as u16;
 }
 pub unsafe fn Reflec_Func_1(game: &mut Game) {
@@ -2739,20 +2730,20 @@ pub unsafe fn Reflec_Func_1(game: &mut Game) {
             reread
         ) == 0
     } {
-        set_ram_word!(game.variables_for_enemy_graphics_drawn_hook[2] = 16u16);
+        set_ram_word!(game.variables_for_enemy_graphics_drawn_hook[2] = 16);
         let mut v0: u16 = ram_word!(game, variables_for_enemy_graphics_drawn_hook[0]);
         let mut v1: u16 =
             (8u16).wrapping_mul(ram_word!(game, variables_for_enemy_graphics_drawn_hook[1]));
-        for _ in 0i32..4i32 {
-            *(ram_ptr!(game, u16; 0xc000)).offset(((v0 as i32 >> 1i32) + 137i32) as isize) =
+        for _ in 0..4 {
+            *(ram_ptr!(game, u16; 0xc000)).offset(((v0 as i32 >> 1) + 137) as isize) =
                 crate::rtl::rom_table_word!(game, 0xa3dabc, (v1 >> 1) as isize);
-            v1 = (v1).wrapping_add(2u16);
-            v0 = (v0).wrapping_add(2u16);
+            v1 = (v1).wrapping_add(2);
+            v0 = (v0).wrapping_add(2);
         }
         set_ram_word!(
             game.variables_for_enemy_graphics_drawn_hook[1] =
-                (*((ram_ptr!(game, u16; 0x1794)).offset(1) as *mut u8).offset(0) as i32 + 1i32
-                    & 7i32) as u16
+                (*((ram_ptr!(game, u16; 0x1794)).offset(1) as *mut u8).offset(0) as i32 + 1 & 7)
+                    as u16
         );
     }
 }
@@ -2765,23 +2756,22 @@ pub unsafe fn Reflec_Init(game: &mut Game) {
     (*E).base.current_instruction =
         crate::rtl::rom_table_word!(game, 0xa3dc0b, (*E).parameter_1 as isize);
     (*(ram_ptr!(game, LongPtr; 0x178c))).addr = ((0xa3db0ci32) as u16);
-    *(&raw mut (*(ram_ptr!(game, LongPtr; 0x178c))).bank as *mut u16) = 163u16;
+    *(&raw mut (*(ram_ptr!(game, LongPtr; 0x178c))).bank as *mut u16) = 163;
     set_ram_word!(
         game.variables_for_enemy_graphics_drawn_hook[0] =
-            ((16i32 * (*E).base.palette_index as i32 & 0xff00i32) >> 8i32) as u16
+            ((16 * (*E).base.palette_index as i32 & 0xff00) >> 8) as u16
     );
-    set_ram_word!(game.variables_for_enemy_graphics_drawn_hook[2] = 16u16);
+    set_ram_word!(game.variables_for_enemy_graphics_drawn_hook[2] = 16);
 }
 pub unsafe fn Reflec_Shot(game: &mut Game) {
     let v0: u16 = (2u16).wrapping_mul(ram_word!(game, collision_detection_index));
     let EK = Get_Reflec(ram_word!(game, cur_enemy_index) as i32, game);
-    (*EK).base.invincibility_timer = 10u16;
-    let v2: u16 = (32i32 * (*EK).parameter_2 as i32
-        + 2i32 * (ram_word!(game, projectile_dir[(v0 >> 1)]) as i32 & 0xfi32))
-        as u16;
+    (*EK).base.invincibility_timer = 10;
+    let v2: u16 = (32 * (*EK).parameter_2 as i32
+        + 2 * (ram_word!(game, projectile_dir[(v0 >> 1)]) as i32 & 0xf)) as u16;
     let varE32: u16 = v2;
-    let v3: i32 = v2 as i32 >> 1i32;
-    if crate::rtl::rom_table_word!(game, 0xa3dcae, v3 as isize) == 0x8000u16 {
+    let v3: i32 = v2 as i32 >> 1;
+    if crate::rtl::rom_table_word!(game, 0xa3dcae, v3 as isize) == 0x8000 {
         update_ram_word!(game.projectile_dir[(v0 >> 1)], |fresh16| (fresh16)
             | (0x10u16));
         printf(b"Possible bug. What is X?\n\0" as *const u8 as *const c_char);
@@ -2789,21 +2779,21 @@ pub unsafe fn Reflec_Shot(game: &mut Game) {
         if (*ET).base.health != 0 {
             Enemy_NormalShotAI_SkipSomeParts_A3(game);
             if (*ET).base.health == 0 {
-                enemy_instruction! {[(*ET).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3dca6, (*ET).parameter_2 as isize), timer = 1u16}
-                (*ET).base.timer = 0u16;
+                enemy_instruction! {[(*ET).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3dca6, (*ET).parameter_2 as isize), timer = 1}
+                (*ET).base.timer = 0;
             }
         }
     } else {
         let mut v4: i16 = crate::rtl::rom_table_word!(game, 0xa3dcae, v3 as isize) as i16;
-        if v4 < 0i16 {
+        if v4 < 0 {
             v4 = -(crate::rtl::rom_table_word!(game, 0xa3dcae, (varE32 >> 1) as isize) as i32)
                 as i16;
         }
-        let v5: i32 = v0 as i32 >> 1i32;
+        let v5: i32 = v0 as i32 >> 1;
         set_ram_word!(game.projectile_dir[v5] = v4 as u16);
         update_ram_word!(game.projectile_type[v5], |fresh17| (fresh17 & !(0x8000)));
         ProjectileReflection(v0, game);
-        QueueSfx2_Max6(0x57u16, game);
+        QueueSfx2_Max6(0x57, game);
     };
 }
 pub unsafe fn WreckedShipOrangeZoomer_Func_1(
@@ -2819,7 +2809,7 @@ pub unsafe fn WreckedShipOrangeZoomer_Init(game: &mut Game) {
     (*E).base.current_instruction = crate::rtl::rom_table_word!(
         game,
         0xa3e03b,
-        ((*E).base.current_instruction as i32 & 3i32) as isize
+        ((*E).base.current_instruction as i32 & 3) as isize
     );
     (*E).var_F = addr_locret_A3E08A as u16;
     let v1: u16 = crate::rtl::rom_table_word!(game, 0xa3e5f0, (*E).parameter_1 as isize);
@@ -2840,23 +2830,23 @@ pub unsafe fn WreckedShipOrangeZoomer_Main(game: &mut Game) {
 pub unsafe fn WreckedShipOrangeZoomer_Func_2(k: u16, game: &mut Game) {
     let mut v7: i16 = 0;
     let E = Get_WreckedShipOrangeZoomer(k as i32, game);
-    if ram_word!(game, earthquake_timer) == 30u16 && ram_word!(game, earthquake_type) == 20u16 {
+    if ram_word!(game, earthquake_timer) == 30 && ram_word!(game, earthquake_type) == 20 {
         (*E).var_03 = (*E).var_F;
         (*E).var_F = ((0xa3e785i32) as u16);
     }
-    if Enemy_MoveRight_ProcessSlopes(k, Shift8AddMagn((*E).var_A as i16, 1i32) as i32, game) != 0 {
-        (*E).var_04 = 0u16;
+    if Enemy_MoveRight_ProcessSlopes(k, Shift8AddMagn((*E).var_A as i16, 1) as i32, game) != 0 {
+        (*E).var_04 = 0;
         EnemyFunc_C8AD(k, game);
-        if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8i32, game) == 0 {
+        if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) == 0 {
             let negate_displacement: bool = if ((ram_word!(game, samus_y_pos)) as i16)
                 .wrapping_sub(((*E).base.y_pos) as i16)
-                >= 0i16
+                >= 0
             {
                 v7 = (*E).var_B as i16;
-                (v7 < 0i16)
+                (v7 < 0)
             } else {
                 v7 = (*E).var_B as i16;
-                (v7 >= 0i16)
+                (v7 >= 0)
             };
             if negate_displacement {
                 v7 = -(v7 as i32) as i16;
@@ -2869,17 +2859,17 @@ pub unsafe fn WreckedShipOrangeZoomer_Func_2(k: u16, game: &mut Game) {
         if ((*E).var_B & 0x8000) != 0 {
             v9 = addr_kWreckedShipOrangeZoomer_Ilist_E003 as u16;
         }
-        enemy_instruction! {[(*E).base]; instruction = v9, timer = 1u16}
+        enemy_instruction! {[(*E).base]; instruction = v9, timer = 1}
     } else {
-        let v11: u16 = ((*E).var_04).wrapping_add(1u16);
+        let v11: u16 = ((*E).var_04).wrapping_add(1);
         (*E).var_04 = v11;
-        if v11 as i32 - 4i32 & 0x8000i32 != 0 {
+        if v11 as i32 - 4i32 & 0x8000 != 0 {
             (*E).var_B = -((*E).var_B as i32) as u16;
             let mut v12: u16 = addr_kWreckedShipOrangeZoomer_Ilist_E01F as u16;
             if ((*E).var_B & 0x8000) != 0 {
                 v12 = addr_kWreckedShipOrangeZoomer_Ilist_E003 as u16;
             }
-            enemy_instruction! {[(*E).base]; instruction = v12, timer = 1u16}
+            enemy_instruction! {[(*E).base]; instruction = v12, timer = 1}
         } else {
             (*E).var_03 = (*E).var_F;
             (*E).var_F = ((0xa3e785i32) as u16);
@@ -2889,24 +2879,22 @@ pub unsafe fn WreckedShipOrangeZoomer_Func_2(k: u16, game: &mut Game) {
 pub unsafe fn sub_A3E168(k: u16, game: &mut Game) {
     let mut v7: i16 = 0;
     let E = Get_WreckedShipOrangeZoomer(k as i32, game);
-    if ram_word!(game, earthquake_timer) == 30u16 && ram_word!(game, earthquake_type) == 20u16 {
+    if ram_word!(game, earthquake_timer) == 30 && ram_word!(game, earthquake_type) == 20 {
         (*E).var_03 = (*E).var_F;
         (*E).var_F = ((0xa3e785i32) as u16);
     }
-    if Enemy_MoveDown(k, Shift8AddMagn((*E).var_B as i16, 1i32) as i32, game) != 0 {
-        (*E).var_04 = 0u16;
-        if Enemy_MoveRight_ProcessSlopes(k, ((*E).var_A as i16 as i32) << 8i32, game) == 0 {
+    if Enemy_MoveDown(k, Shift8AddMagn((*E).var_B as i16, 1) as i32, game) != 0 {
+        (*E).var_04 = 0;
+        if Enemy_MoveRight_ProcessSlopes(k, ((*E).var_A as i16 as i32) << 8, game) == 0 {
             EnemyFunc_C8AD(k, game);
-            if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16)
-                >= 0i16
-            {
+            if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) >= 0 {
                 v7 = (*E).var_A as i16;
-                if v7 < 0i16 {
+                if v7 < 0 {
                     v7 = -(v7 as i32) as i16;
                 }
             } else {
                 v7 = (*E).var_A as i16;
-                if v7 >= 0i16 {
+                if v7 >= 0 {
                     v7 = -(v7 as i32) as i16;
                 }
             }
@@ -2918,17 +2906,17 @@ pub unsafe fn sub_A3E168(k: u16, game: &mut Game) {
         if ((*E).var_A & 0x8000) != 0 {
             v9 = addr_kWreckedShipOrangeZoomer_Ilist_DFCB as u16;
         }
-        enemy_instruction! {[(*E).base]; instruction = v9, timer = 1u16}
+        enemy_instruction! {[(*E).base]; instruction = v9, timer = 1}
     } else {
-        let v11: u16 = ((*E).var_04).wrapping_add(1u16);
+        let v11: u16 = ((*E).var_04).wrapping_add(1);
         (*E).var_04 = v11;
-        if v11 as i32 - 4i32 & 0x8000i32 != 0 {
+        if v11 as i32 - 4i32 & 0x8000 != 0 {
             (*E).var_A = -((*E).var_A as i32) as u16;
             let mut v12: u16 = addr_kWreckedShipOrangeZoomer_Ilist_DFE7 as u16;
             if ((*E).var_A & 0x8000) != 0 {
                 v12 = addr_kWreckedShipOrangeZoomer_Ilist_DFCB as u16;
             }
-            enemy_instruction! {[(*E).base]; instruction = v12, timer = 1u16}
+            enemy_instruction! {[(*E).base]; instruction = v12, timer = 1}
         } else {
             (*E).var_03 = (*E).var_F;
             (*E).var_F = ((0xa3e785i32) as u16);
@@ -2940,7 +2928,7 @@ pub unsafe fn BigEyeBugs_Init(game: &mut Game) {
     (*v1).current_instruction = crate::rtl::rom_table_word!(
         game,
         0xa3e2cc,
-        ((*v1).current_instruction as i32 & 3i32) as isize
+        ((*v1).current_instruction as i32 & 3) as isize
     );
     StoneZoomer_E67A(ram_word!(game, cur_enemy_index), game);
 }
@@ -2949,7 +2937,7 @@ pub unsafe fn FireZoomer_Init(game: &mut Game) {
     (*E).base.current_instruction = crate::rtl::rom_table_word!(
         game,
         0xa3e2cc,
-        ((*E).base.current_instruction as i32 & 3i32) as isize
+        ((*E).base.current_instruction as i32 & 3) as isize
     );
     StoneZoomer_E67A(ram_word!(game, cur_enemy_index), game);
 }
@@ -2962,16 +2950,16 @@ pub unsafe fn StoneZoomer_Init(game: &mut Game) {
     (*E).base.current_instruction = crate::rtl::rom_table_word!(
         game,
         0xa3e2cc,
-        ((*E).base.current_instruction as i32 & 3i32) as isize
+        ((*E).base.current_instruction as i32 & 3) as isize
     );
     StoneZoomer_E67A(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn StoneZoomer_E67A(k: u16, game: &mut Game) {
     let E = Get_StoneZoomer(k as i32, game);
     (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A3 as u16;
-    (*E).base.instruction_timer = 1u16;
+    (*E).base.instruction_timer = 1;
     (*E).var_F = ((0xa3e6c1i32) as u16);
-    if (*E).parameter_1 != 255u16 {
+    if (*E).parameter_1 != 255 {
         let v2: u16 = crate::rtl::rom_table_word!(game, 0xa3e5f0, (*E).parameter_1 as isize);
         (*E).var_A = v2;
         (*E).var_B = v2;
@@ -2990,14 +2978,14 @@ pub unsafe fn StoneZoomer_Main(game: &mut Game) {
 }
 pub unsafe fn FireZoomer_Func_1(k: u16, game: &mut Game) {
     let E = Get_FireZoomer(k as i32, game);
-    if ram_word!(game, earthquake_timer) == 30u16 && ram_word!(game, earthquake_type) == 20u16 {
+    if ram_word!(game, earthquake_timer) == 30 && ram_word!(game, earthquake_type) == 20 {
         (*E).var_03 = (*E).var_F;
         (*E).var_F = ((0xa3e785i32) as u16);
     }
-    if Enemy_MoveRight_IgnoreSlopes(k, Shift8AddMagn((*E).var_A as i16, 1i32) as i32, game) != 0 {
-        (*E).var_04 = 0u16;
+    if Enemy_MoveRight_IgnoreSlopes(k, Shift8AddMagn((*E).var_A as i16, 1) as i32, game) != 0 {
+        (*E).var_04 = 0;
         EnemyFunc_C8AD(k, game);
-        if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8i32, game) != 0 {
+        if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) != 0 {
             (*E).var_A = -((*E).var_A as i32) as u16;
             let fzr_parameter_2: u16 = (*E).parameter_2;
             let mut v7: u16 = 0;
@@ -3006,12 +2994,12 @@ pub unsafe fn FireZoomer_Func_1(k: u16, game: &mut Game) {
             } else {
                 v7 = crate::rtl::rom_table_word!(game, 0xa3e630, (fzr_parameter_2 >> 1) as isize);
             }
-            enemy_instruction! {[(*E).base]; instruction = v7, timer = 1u16}
+            enemy_instruction! {[(*E).base]; instruction = v7, timer = 1}
         }
     } else {
-        let v8: u16 = ((*E).var_04).wrapping_add(1u16);
+        let v8: u16 = ((*E).var_04).wrapping_add(1);
         (*E).var_04 = v8;
-        if v8 as i32 - 4i32 & 0x8000i32 != 0 {
+        if v8 as i32 - 4i32 & 0x8000 != 0 {
             (*E).var_B = -((*E).var_B as i32) as u16;
             let v9: u16 = (*E).parameter_2;
             let mut v10: u16 = 0;
@@ -3020,7 +3008,7 @@ pub unsafe fn FireZoomer_Func_1(k: u16, game: &mut Game) {
             } else {
                 v10 = crate::rtl::rom_table_word!(game, 0xa3e630, (v9 >> 1) as isize);
             }
-            enemy_instruction! {[(*E).base]; instruction = v10, timer = 1u16}
+            enemy_instruction! {[(*E).base]; instruction = v10, timer = 1}
         } else {
             (*E).var_03 = (*E).var_F;
             (*E).var_F = ((0xa3e785i32) as u16);
@@ -3031,18 +3019,18 @@ pub unsafe fn FireZoomer_Func_2(k: u16, game: &mut Game) {
     let E = Get_FireZoomer(k as i32, game);
     if Enemy_MoveDown(
         k,
-        (((*E).var_02 as u32) << 16i32 | (*E).var_01 as u32) as i32,
+        (((*E).var_02 as u32) << 16 | (*E).var_01 as u32) as i32,
         game,
     ) != 0
     {
-        if (*E).parameter_1 == 255u16 {
-            set_fields! {[(*E)], 128u16; var_A, var_B}
+        if (*E).parameter_1 == 255 {
+            set_fields! {[(*E)], 128; var_A, var_B}
         }
-        set_fields! {[(*E)], 0u16; var_01, var_02, var_04}
+        set_fields! {[(*E)], 0; var_01, var_02, var_04}
         (*E).var_F = (*E).var_03;
     } else {
-        if (*E).var_02 as i32 - 4i32 & 0x8000i32 != 0 {
-            AddToHiLo(&raw mut (*E).var_02, &raw mut (*E).var_01, 0x8000u32);
+        if (*E).var_02 as i32 - 4i32 & 0x8000 != 0 {
+            AddToHiLo(&raw mut (*E).var_02, &raw mut (*E).var_01, 0x8000);
         }
         if (*E).var_01 == 0 && (*E).var_02 == 0 {
             (*E).var_F = ((0xa3e6c8i32) as u16);
@@ -3051,12 +3039,12 @@ pub unsafe fn FireZoomer_Func_2(k: u16, game: &mut Game) {
 }
 pub unsafe fn FireZoomer_Func_3(k: u16, game: &mut Game) {
     let E = Get_FireZoomer(k as i32, game);
-    if ram_word!(game, earthquake_timer) == 30u16 && ram_word!(game, earthquake_type) == 20u16 {
+    if ram_word!(game, earthquake_timer) == 30 && ram_word!(game, earthquake_type) == 20 {
         (*E).var_03 = (*E).var_F;
         (*E).var_F = ((0xa3e785i32) as u16);
     }
-    if Enemy_MoveDown(k, Shift8AddMagn((*E).var_B as i16, 1i32) as i32, game) != 0 {
-        (*E).var_04 = 0u16;
+    if Enemy_MoveDown(k, Shift8AddMagn((*E).var_B as i16, 1) as i32, game) != 0 {
+        (*E).var_04 = 0;
         let amt: i32 = FireZoomer_E8A5(k, game);
         if Enemy_MoveRight_IgnoreSlopes(k, amt, game) != 0 {
             (*E).var_B = -((*E).var_B as i32) as u16;
@@ -3067,14 +3055,14 @@ pub unsafe fn FireZoomer_Func_3(k: u16, game: &mut Game) {
             } else {
                 v6 = crate::rtl::rom_table_word!(game, 0xa3e648, (fzr_parameter_2 >> 1) as isize);
             }
-            enemy_instruction! {[(*E).base]; instruction = v6, timer = 1u16}
+            enemy_instruction! {[(*E).base]; instruction = v6, timer = 1}
         } else {
             EnemyFunc_C8AD(k, game);
         }
     } else {
-        let v7: u16 = ((*E).var_04).wrapping_add(1u16);
+        let v7: u16 = ((*E).var_04).wrapping_add(1);
         (*E).var_04 = v7;
-        if v7 as i32 - 4i32 & 0x8000i32 != 0 {
+        if v7 as i32 - 4i32 & 0x8000 != 0 {
             (*E).var_A = -((*E).var_A as i32) as u16;
             let v8: u16 = (*E).parameter_2;
             let mut v9: u16 = 0;
@@ -3083,7 +3071,7 @@ pub unsafe fn FireZoomer_Func_3(k: u16, game: &mut Game) {
             } else {
                 v9 = crate::rtl::rom_table_word!(game, 0xa3e648, (v8 >> 1) as isize);
             }
-            enemy_instruction! {[(*E).base]; instruction = v9, timer = 1u16}
+            enemy_instruction! {[(*E).base]; instruction = v9, timer = 1}
         } else {
             (*E).var_03 = (*E).var_F;
             (*E).var_F = ((0xa3e785i32) as u16);
@@ -3105,18 +3093,17 @@ pub unsafe fn FireZoomer_E8A5(k: u16, game: &mut Game) -> i32 {
         let v1: u16 = crate::rtl::rom_table_word!(
             game,
             0xa3e931,
-            ((4i32
-                * (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32
-                    & 0x1fi32)) as u16
+            ((4 * (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32
+                & 0x1f)) as u16
                 >> 1) as isize,
         );
-        if ((*E).var_A as i16) >= 0i16 {
+        if ((*E).var_A as i16) >= 0 {
             Multiply16x16((*E).var_A, v1, game) as i32
         } else {
             -(Multiply16x16(-((*E).var_A as i32) as u16, v1, game) as i32)
         }
     } else {
-        ((*E).var_A as i16 as i32) << 8i32
+        ((*E).var_A as i16 as i32) << 8
     }
 }
 pub unsafe fn Metroid_Init(game: &mut Game) {
@@ -3125,23 +3112,23 @@ pub unsafe fn Metroid_Init(game: &mut Game) {
     (*E).var_00 = CreateSpriteAtPos(
         (*E).base.x_pos,
         (*E).base.y_pos,
-        50u16,
+        50,
         ((*E).base.vram_tiles_index) | ((*E).base.palette_index),
         game,
     );
     (*E).var_01 = CreateSpriteAtPos(
         (*E).base.x_pos,
         (*E).base.y_pos,
-        52u16,
+        52,
         ((*E).base.vram_tiles_index) | ((*E).base.palette_index),
         game,
     );
-    (*E).var_02 = 0u16;
+    (*E).var_02 = 0;
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
-    Metroid_Instr_2 [jp] { QueueSfx2_Max6(0x50u16, game); };
+    Metroid_Instr_2 [jp] { QueueSfx2_Max6(0x50, game); };
     Metroid_Instr_1 [jp] {
-        let v2: i32 = NextRandom(game) as i32 & 7i32;
+        let v2: i32 = NextRandom(game) as i32 & 7;
         QueueSfx2_Max6(
             crate::rtl::rom_table_word!(game, 0xa3ead6, v2 as isize),
             game,
@@ -3153,31 +3140,31 @@ pub unsafe fn Metroid_Frozen(game: &mut Game) {
     let E = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).var_E != 0 {
         (*E).var_E = (*E).var_E.wrapping_sub(1);
-        (*E).base.flash_timer = 2u16;
+        (*E).base.flash_timer = 2;
     }
-    let v1: i32 = (*E).var_00 as i32 >> 1i32;
-    set_ram_word!(game.sprite_palettes[v1] = 3072u16);
-    set_ram_word!(game.sprite_disable_flag[v1] = 1u16);
+    let v1: i32 = (*E).var_00 as i32 >> 1;
+    set_ram_word!(game.sprite_palettes[v1] = 3072);
+    set_ram_word!(game.sprite_disable_flag[v1] = 1);
     set_ram_word!(game.sprite_instr_list_ptrs[v1] = addr_kSpriteObject_Ilist_C3BA as u16);
-    let v2: i32 = (*E).var_01 as i32 >> 1i32;
-    set_ram_word!(game.sprite_palettes[v2] = 3072u16);
-    set_ram_word!(game.sprite_disable_flag[v2] = 1u16);
+    let v2: i32 = (*E).var_01 as i32 >> 1;
+    set_ram_word!(game.sprite_palettes[v2] = 3072);
+    set_ram_word!(game.sprite_disable_flag[v2] = 1);
     set_ram_word!(game.sprite_instr_list_ptrs[v2] = addr_kSpriteObject_Ilist_C4B6 as u16);
 }
 pub unsafe fn Metroid_Hurt(game: &mut Game) {
     let E = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);
     if ((*E).base.flash_timer & 2) != 0 {
         let r18: u16 = (*E).base.palette_index;
-        let v1: i32 = (*E).var_00 as i32 >> 1i32;
+        let v1: i32 = (*E).var_00 as i32 >> 1;
         set_ram_word!(
             game.sprite_palettes[v1] = (r18 | ram_word!(game, sprite_palettes[v1]) & 0xf1ff)
         );
-        let v2: i32 = (*E).var_01 as i32 >> 1i32;
+        let v2: i32 = (*E).var_01 as i32 >> 1;
         set_ram_word!(
             game.sprite_palettes[v2] = (r18 | ram_word!(game, sprite_palettes[v2]) & 0xf1ff)
         );
     } else {
-        let v3: i32 = (*E).var_00 as i32 >> 1i32;
+        let v3: i32 = (*E).var_00 as i32 >> 1;
         update_ram_word!(game.sprite_palettes[v3], |fresh10| (fresh10) & (0xf1ffu16));
         let metroid_var_01: u16 = (*E).var_01;
         update_ram_word!(
@@ -3192,20 +3179,20 @@ static off_A3EC09: [Option<Func_Y_V>; 4] = callback_table! { unsafe Func_Y_V;
 pub unsafe fn Metroid_Main(game: &mut Game) {
     let E = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);
     off_A3EC09[(*E).var_F as usize].expect("non-null function pointer")(
-        (ram_word!(game, samus_y_pos)).wrapping_sub(8u16),
+        (ram_word!(game, samus_y_pos)).wrapping_sub(8),
         game,
     );
     let r24: u16 = ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
-    let v2: i32 = (*E).var_00 as i32 >> 1i32;
+    let v2: i32 = (*E).var_00 as i32 >> 1;
     set_ram_word!(game.sprite_x_pos[v2] = (*E).base.x_pos);
     set_ram_word!(game.sprite_y_pos[v2] = (*E).base.y_pos);
     set_ram_word!(game.sprite_palettes[v2] = r24);
-    set_ram_word!(game.sprite_disable_flag[v2] = 0u16);
-    let v4: i32 = (*E).var_01 as i32 >> 1i32;
+    set_ram_word!(game.sprite_disable_flag[v2] = 0);
+    let v4: i32 = (*E).var_01 as i32 >> 1;
     set_ram_word!(game.sprite_x_pos[v4] = (*E).base.x_pos);
     set_ram_word!(game.sprite_y_pos[v4] = (*E).base.y_pos);
     set_ram_word!(game.sprite_palettes[v4] = r24);
-    set_ram_word!(game.sprite_disable_flag[v4] = 0u16);
+    set_ram_word!(game.sprite_disable_flag[v4] = 0);
 }
 pub unsafe fn Metroid_Func_1(varE32: u16, game: &mut Game) {
     let mut current_block: u64;
@@ -3213,73 +3200,73 @@ pub unsafe fn Metroid_Func_1(varE32: u16, game: &mut Game) {
     let mut v9: i16 = 0;
     let E = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);
     let mut t: i32 =
-        ((((((*E).base.y_pos) as i16).wrapping_sub((varE32) as i16)) >> 2) as i32) << 8i32;
+        ((((((*E).base.y_pos) as i16).wrapping_sub((varE32) as i16)) >> 2) as i32) << 8;
     let mut r18: u16 = t as u16;
-    let mut r20: u16 = (t >> 16i32) as u16;
+    let mut r20: u16 = (t >> 16) as u16;
     let metroid_var_C: u16 = (*E).var_C;
     let mut v2: bool = metroid_var_C < r18;
     (*E).var_C = (metroid_var_C).wrapping_sub(r18);
     let mut v3: i16 = ((*E).var_D as i32 - (v2 as i32 + r20 as i32)) as i16;
     (*E).var_D = v3 as u16;
-    if v3 < 0i16 {
-        if (v3 as u16) >= 0xfffdu16 {
+    if v3 < 0 {
+        if (v3 as u16) >= 0xfffd {
             current_block = 3810685344454692134;
         } else {
             v4 = -3i16;
             current_block = 2868539653012386629;
         }
-    } else if (v3 as u16) < 3u16 {
+    } else if (v3 as u16) < 3 {
         current_block = 3810685344454692134;
     } else {
-        v4 = 3i16;
+        v4 = 3;
         current_block = 2868539653012386629;
     }
     if current_block == 2868539653012386629 {
         (*E).var_D = v4 as u16;
-        (*E).var_C = 0u16;
+        (*E).var_C = 0;
     }
     if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
-        (((*E).var_D as u32) << 16i32 | (*E).var_C as u32) as i32,
+        (((*E).var_D as u32) << 16 | (*E).var_C as u32) as i32,
         game,
     ) != 0
     {
-        set_fields! {[(*E)], 0u16; var_C, var_D}
+        set_fields! {[(*E)], 0; var_C, var_D}
     }
     t = ((((((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16)) >> 2)
         as i32)
-        << 8i32;
+        << 8;
     r18 = t as u16;
-    r20 = (t >> 16i32) as u16;
+    r20 = (t >> 16) as u16;
     let metroid_var_A: u16 = (*E).var_A;
     v2 = metroid_var_A < r18;
     (*E).var_A = (metroid_var_A).wrapping_sub(r18);
     let mut v8: i16 = ((*E).var_B as i32 - (v2 as i32 + r20 as i32)) as i16;
     (*E).var_B = v8 as u16;
-    if v8 < 0i16 {
-        if (v8 as u16) >= 0xfffdu16 {
+    if v8 < 0 {
+        if (v8 as u16) >= 0xfffd {
             current_block = 8759308886461481507;
         } else {
             v9 = -3i16;
             current_block = 17478428563724192186;
         }
-    } else if (v8 as u16) < 3u16 {
+    } else if (v8 as u16) < 3 {
         current_block = 8759308886461481507;
     } else {
-        v9 = 3i16;
+        v9 = 3;
         current_block = 17478428563724192186;
     }
     if current_block == 17478428563724192186 {
         (*E).var_B = v9 as u16;
-        (*E).var_A = 0u16;
+        (*E).var_A = 0;
     }
     if Enemy_MoveRight_IgnoreSlopes(
         ram_word!(game, cur_enemy_index),
-        (((*E).var_B as u32) << 16i32 | (*E).var_A as u32) as i32,
+        (((*E).var_B as u32) << 16 | (*E).var_A as u32) as i32,
         game,
     ) != 0
     {
-        set_fields! {[(*E)], 0u16; var_A, var_B}
+        set_fields! {[(*E)], 0; var_A, var_B}
     }
 }
 pub unsafe fn Metroid_Func_2(varE32: u16, game: &mut Game) {
@@ -3288,153 +3275,151 @@ pub unsafe fn Metroid_Func_2(varE32: u16, game: &mut Game) {
     let mut v5: i16 = 0;
     let mut v2: u16 = 0;
     let mut v6: u16 = 0;
-    let mut r18: u16 = 0u16;
+    let mut r18: u16 = 0;
     let E = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);
     *(&raw mut v1 as *mut u8).offset(0) = (((varE32).wrapping_sub((*E).base.y_pos)) >> 8) as u8;
-    *(&raw mut v1 as *mut u8).offset(1isize) =
+    *(&raw mut v1 as *mut u8).offset(1) =
         ((varE32) as u8).wrapping_sub(*(&raw mut (*E).base.y_pos as *mut u8).offset(0));
     let mut r20: u16 = ((((v1) as u16) & (0xff00u16)) >> 3);
     if (r20 & 0x1000) != 0 {
         r20 = (r20) | (0xe000u16);
     }
     if (r20 & 0x8000) != 0 {
-        if r20 >= 0xfffdu16 {
+        if r20 >= 0xfffd {
             current_block = 12681381661298955615;
         } else {
             v2 = -3i32 as u16;
             current_block = 2868539653012386629;
         }
-    } else if r20 < 3u16 {
+    } else if r20 < 3 {
         current_block = 12681381661298955615;
     } else {
-        v2 = 3u16;
+        v2 = 3;
         current_block = 2868539653012386629;
     }
     if current_block == 2868539653012386629 {
         r20 = v2;
-        r18 = 0u16;
+        r18 = 0;
     }
     (*E).var_C = r18;
     (*E).var_D = r20;
     if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
-        ((r20 as u32) << 16i32 | r18 as u32) as i32,
+        ((r20 as u32) << 16 | r18 as u32) as i32,
         game,
     ) != 0
     {
-        set_fields! {[(*E)], 0u16; var_C, var_D}
+        set_fields! {[(*E)], 0; var_C, var_D}
     }
-    r18 = 0u16;
-    r20 = 0u16;
+    r18 = 0;
+    r20 = 0;
     *(&raw mut v5 as *mut u8).offset(0) =
         (((ram_word!(game, samus_x_pos)).wrapping_sub((*E).base.x_pos)) >> 8) as u8;
-    *(&raw mut v5 as *mut u8).offset(1isize) = ((ram_word!(game, samus_x_pos)) as u8)
+    *(&raw mut v5 as *mut u8).offset(1) = ((ram_word!(game, samus_x_pos)) as u8)
         .wrapping_sub(*(&raw mut (*E).base.x_pos as *mut u8).offset(0));
     r20 = ((((v5) as u16) & (0xff00u16)) >> 3);
     if (r20 & 0x1000) != 0 {
         r20 = (r20) | (0xe000u16);
     }
     if (r20 & 0x8000) != 0 {
-        if r20 >= 0xfffdu16 {
+        if r20 >= 0xfffd {
             current_block = 8114601772576486457;
         } else {
             v6 = -3i32 as u16;
             current_block = 18386322304582297246;
         }
-    } else if r20 < 3u16 {
+    } else if r20 < 3 {
         current_block = 8114601772576486457;
     } else {
-        v6 = 3u16;
+        v6 = 3;
         current_block = 18386322304582297246;
     }
     if current_block == 18386322304582297246 {
         r20 = v6;
-        r18 = 0u16;
+        r18 = 0;
     }
     (*E).var_A = r18;
     (*E).var_B = r20;
     if Enemy_MoveRight_IgnoreSlopes(
         ram_word!(game, cur_enemy_index),
-        ((r20 as u32) << 16i32 | r18 as u32) as i32,
+        ((r20 as u32) << 16 | r18 as u32) as i32,
         game,
     ) != 0
     {
-        set_fields! {[(*E)], 0u16; var_A, var_B}
+        set_fields! {[(*E)], 0; var_A, var_B}
     }
 }
 pub unsafe fn Metroid_Func_3(varE32: u16, game: &mut Game) {
     let E = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_pos = ram_word!(game, samus_x_pos);
     (*E).base.y_pos = varE32;
-    set_fields! {[(*E)], 0u16; var_A, var_B, var_C, var_D}
+    set_fields! {[(*E)], 0; var_A, var_B, var_C, var_D}
 }
 pub unsafe fn Metroid_Func_4(varE32: u16, game: &mut Game) {
     let E = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);
-    let v1: i32 = (*E).var_E as i32 & 3i32;
+    let v1: i32 = (*E).var_E as i32 & 3;
     (*E).base.x_pos =
         ((*E).base.x_pos).wrapping_add(crate::rtl::rom_table_word!(game, 0xa3ea3f, v1 as isize));
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(crate::rtl::rom_table_word!(
         game,
         0xa3ea3f,
-        (v1 + 4i32) as isize
+        (v1 + 4) as isize
     ));
-    set_fields! {[(*E)], 0u16; var_A, var_B, var_C, var_D}
+    set_fields! {[(*E)], 0; var_A, var_B, var_C, var_D}
     crate::update_place! { previous fresh9 = (*E).var_E => (*E).var_E.wrapping_sub(1); }
-    if fresh9 == 1u16 {
-        (*E).var_F = 0u16;
-        enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1u16}
+    if fresh9 == 1 {
+        (*E).var_F = 0;
+        enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1}
     }
 }
 pub unsafe fn Metroid_Touch(game: &mut Game) {
     let E = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);
-    let varE32: u16 = (ram_word!(game, samus_y_pos)).wrapping_sub(8u16);
+    let varE32: u16 = (ram_word!(game, samus_y_pos)).wrapping_sub(8);
     if ram_word!(game, samus_contact_damage_index) != 0 {
-        if (*E).var_F != 2u16 {
-            set_fields! {[(*E)], 0u16; var_A, var_C}
+        if (*E).var_F != 2 {
+            set_fields! {[(*E)], 0; var_A, var_C}
             let v2: i16 =
                 (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16);
-            (*E).var_B = (if v2 < 0i16 { -256i32 } else { 0i32 }) as u16;
-            *((&raw mut (*E).var_A as *mut u8).offset(1) as *mut u16) =
-                ((v2 as i32) << 6i32) as u16;
+            (*E).var_B = (if v2 < 0 { -256i32 } else { 0 }) as u16;
+            *((&raw mut (*E).var_A as *mut u8).offset(1) as *mut u16) = ((v2 as i32) << 6) as u16;
             let v4: i16 = (((*E).base.y_pos) as i16).wrapping_sub((varE32) as i16);
-            (*E).var_D = (if v4 < 0i16 { -256i32 } else { 0i32 }) as u16;
-            *((&raw mut (*E).var_C as *mut u8).offset(1) as *mut u16) =
-                ((v4 as i32) << 6i32) as u16;
-            (*E).var_F = 0u16;
-            enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1u16}
+            (*E).var_D = (if v4 < 0 { -256i32 } else { 0 }) as u16;
+            *((&raw mut (*E).var_C as *mut u8).offset(1) as *mut u16) = ((v4 as i32) << 6) as u16;
+            (*E).var_F = 0;
+            enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1}
         }
     } else {
         let v5: u16 = ram_word!(game, cur_enemy_index);
-        if (*E).var_F != 3u16 {
+        if (*E).var_F != 3 {
             if (ram_word!(game, random_enemy_counter) & 7) == 7
-                && ram_word!(game, samus_health) as i32 - 30i32 & 0x8000i32 == 0
+                && ram_word!(game, samus_health) as i32 - 30i32 & 0x8000 == 0
             {
-                QueueSfx3_Max6(0x2du16, game);
+                QueueSfx3_Max6(0x2d, game);
             }
             Metroid_Func_5(v5, game);
         }
-        if (*E).var_F < 2u16 {
-            let mut v7: u16 = 1u16;
-            if abs16(((*E).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos))) < 8u16
-                && abs16(((*E).base.y_pos).wrapping_sub(varE32)) < 8u16
+        if (*E).var_F < 2 {
+            let mut v7: u16 = 1;
+            if abs16(((*E).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos))) < 8
+                && abs16(((*E).base.y_pos).wrapping_sub(varE32)) < 8
             {
-                v7 = 2u16;
-                CallSomeSamusCode(0x12u16, game);
+                v7 = 2;
+                CallSomeSamusCode(0x12, game);
             }
             (*E).var_F = v7;
-            if v7 == 2u16 {
-                enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_EA25 as u16, timer = 1u16}
+            if v7 == 2 {
+                enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_EA25 as u16, timer = 1}
             }
         }
     };
 }
 pub unsafe fn Metroid_Func_5(k: u16, game: &mut Game) {
     let mut v1: u16 = 0;
-    let varE32: u16 = (ram_word!(game, samus_y_pos)).wrapping_sub(8u16);
+    let varE32: u16 = (ram_word!(game, samus_y_pos)).wrapping_sub(8);
     if (ram_word!(game, equipped_items) & 0x20) != 0 {
-        v1 = 12288u16;
+        v1 = 12288;
     } else if ram_word!(game, equipped_items) & 1 != 0 {
-        v1 = 24576u16;
+        v1 = 24576;
     } else {
         v1 = -16384i32 as u16;
     }
@@ -3444,7 +3429,7 @@ pub unsafe fn Metroid_Func_5(k: u16, game: &mut Game) {
     let v4: bool = metroid_var_02 < r18;
     (*E).var_02 = (metroid_var_02).wrapping_sub(r18);
     if v4 {
-        Samus_DealDamage(1u16, game);
+        Samus_DealDamage(1, game);
     }
 }
 pub unsafe fn Metroid_Shot(game: &mut Game) {
@@ -3452,70 +3437,70 @@ pub unsafe fn Metroid_Shot(game: &mut Game) {
     let E = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).base.frozen_timer != 0 {
         let v3: u16 = (ram_word!(game, projectile_type[(v0 >> 1)])) & (0xf00u16);
-        if v3 == 256u16 || v3 == 512u16 {
+        if v3 == 256 || v3 == 512 {
             set_ram_word!(game.special_death_item_drop_x_origin_pos = (*E).base.x_pos);
             set_ram_word!(game.special_death_item_drop_y_origin_pos = (*E).base.y_pos);
             Enemy_NormalShotAI_SkipSomeParts_A3(game);
             if (*E).base.health == 0 {
-                (*E).var_B = 0u16;
-                EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 4u16, game);
-                CallSomeSamusCode(0x13u16, game);
-                *(ram_ptr!(game, u16; 0xef78)).offset(((*E).var_00 >> 1) as isize) = 0u16;
+                (*E).var_B = 0;
+                EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 4, game);
+                CallSomeSamusCode(0x13, game);
+                *(ram_ptr!(game, u16; 0xef78)).offset(((*E).var_00 >> 1) as isize) = 0;
                 let metroid_var_01: u16 = (*E).var_01;
-                *(ram_ptr!(game, u16; 0xef78)).offset((metroid_var_01 >> 1) as isize) = 0u16;
+                *(ram_ptr!(game, u16; 0xef78)).offset((metroid_var_01 >> 1) as isize) = 0;
                 Enemy_ItemDrop_Metroid(metroid_var_01, game);
             }
         }
-    } else if (*E).var_F == 2u16 {
+    } else if (*E).var_F == 2 {
         if (ram_word!(game, projectile_type[(v0 >> 1)]) & 0xf00) == 1280 {
-            (*E).var_E = 4u16;
-            (*E).var_F = 3u16;
-            enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1u16}
-            CallSomeSamusCode(0x13u16, game);
+            (*E).var_E = 4;
+            (*E).var_F = 3;
+            enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1}
+            CallSomeSamusCode(0x13, game);
         }
     } else {
-        set_fields! {[(*E)], 0u16; var_A, var_C}
+        set_fields! {[(*E)], 0; var_A, var_C}
         let v7: i16 =
             (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, projectile_x_pos[0])) as i16);
-        (*E).var_B = (if v7 < 0i16 { -256i32 } else { 0i32 }) as u16;
+        (*E).var_B = (if v7 < 0 { -256i32 } else { 0 }) as u16;
         *((&raw mut (*E).var_A as *mut u8).offset(1) as *mut u16) =
             (32u16).wrapping_mul((v7) as u16);
         let v9: i16 =
             (((*E).base.y_pos) as i16).wrapping_sub((ram_word!(game, projectile_y_pos[0])) as i16);
-        (*E).var_D = (if v9 < 0i16 { -256i32 } else { 0i32 }) as u16;
+        (*E).var_D = (if v9 < 0 { -256i32 } else { 0 }) as u16;
         *((&raw mut (*E).var_C as *mut u8).offset(1) as *mut u16) =
             (32u16).wrapping_mul((v9) as u16);
-        (*E).var_F = 0u16;
-        enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1u16}
+        (*E).var_F = 0;
+        enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1}
         let v10: i32 = ram_word!(game, collision_detection_index) as i32;
         if (ram_word!(game, projectile_type[v10]) & 2) != 0 {
-            QueueSfx3_Max6(0xau16, game);
+            QueueSfx3_Max6(0xa, game);
             let r18: u16 = ram_word!(game, projectile_damage[v10]);
-            (*E).base.flash_timer = 4u16;
+            (*E).base.flash_timer = 4;
             let metroid_parameter_2: u16 = (*E).parameter_2;
             let mut v13: bool = metroid_parameter_2 < r18;
             let v12: u16 = (metroid_parameter_2).wrapping_sub(r18);
             v13 = !v13;
             if v12 == 0 || !v13 {
-                (*E).parameter_2 = 0u16;
-                (*E).base.frozen_timer = 400u16;
+                (*E).parameter_2 = 0;
+                (*E).base.frozen_timer = 400;
                 (*E).base.ai_handler_bits = ((*E).base.ai_handler_bits) | (4u16);
                 return;
             }
             (*E).parameter_2 = v12;
         }
-        QueueSfx2_Max6(0x5au16, game);
+        QueueSfx2_Max6(0x5a, game);
     };
 }
 pub unsafe fn Metroid_Powerbomb(k: u16, game: &mut Game) {
     NormalEnemyPowerBombAi(game);
     if (*Get_Metroid(k as i32, game)).base.health == 0 {
-        CallSomeSamusCode(0x13u16, game);
+        CallSomeSamusCode(0x13, game);
         *(ram_ptr!(game, u16; 0xef78)).offset(
             ((*Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game)).var_00 >> 1) as isize,
-        ) = 0u16;
+        ) = 0;
         *(ram_ptr!(game, u16; 0xef78)).offset(
             ((*Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game)).var_01 >> 1) as isize,
-        ) = 0u16;
+        ) = 0;
     }
 }

@@ -117,7 +117,7 @@ pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 #[inline]
 unsafe fn get_ProjectileInstr(a: u16, game: &mut Game) -> *mut ProjectileInstr {
-    RomPtr((0x930000i32 | a as i32) as u32, game) as *mut ProjectileInstr
+    RomPtr((0x930000 | a as i32) as u32, game) as *mut ProjectileInstr
 }
 crate::ram_map::ram_pointer_functions! {
     Get_Botwoon(o: i32) -> Enemy_Botwoon = [0xf78, o as isize];
@@ -125,10 +125,10 @@ crate::ram_map::ram_pointer_functions! {
 
 pub unsafe fn Call(addr: u32, game: &mut Game) {
     crate::native_assertion! {
-        '_c2rust_label: addr & 0x8000u32 != 0;
-        b"addr & 0x8000\0", b"src/sm_cpu_infra.c\0", 54u32, b"void Call(uint32)\0"
+        '_c2rust_label: addr & 0x8000 != 0;
+        b"addr & 0x8000\0", b"src/sm_cpu_infra.c\0", 54, b"void Call(uint32)\0"
     };
-    RunAsmCode(addr, 0u16, 0u16, 0u16, 0i32, game);
+    RunAsmCode(addr, 0, 0, 0, 0, game);
 }
 pub unsafe fn SnesRomPtr(v: u32, game: &mut Game) -> *mut u8 {
     RomPtr(v, game) as *mut u8
@@ -139,12 +139,12 @@ pub unsafe fn FixBugHook(addr: u32, game: &mut Game) -> bool {
             let rombyte = SnesRomPtr(addr, game);
             crate::update_place! { previous fresh0 = game.hookcnt => game.hookcnt.wrapping_add(1); }
             game.hook_fixbug_orgbyte[fresh0 as usize] = *rombyte;
-            *rombyte = 0u8;
+            *rombyte = 0;
             return false_0 != 0;
         }
         2 => {
             if addr == game.hookadr {
-                game.hookmode = 3u32;
+                game.hookmode = 3;
                 return true_0 != 0;
             }
             game.hookcnt = game.hookcnt.wrapping_add(1);
@@ -178,157 +178,156 @@ static kPatchedCarrys: [u32; 155] = [
 pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
     game.hookmode = mode;
     game.hookadr = addr;
-    game.hookcnt = 0u32;
-    if FixBugHook(0x86ef35u32, game) {
+    game.hookcnt = 0;
+    if FixBugHook(0x86ef35, game) {
         (*game.g_cpu).x = (*game.g_cpu).y;
-    } else if FixBugHook(0x86ef45u32, game) {
-        (*game.g_cpu).z = (*game.g_cpu).a as i32 == 0i32;
-    } else if FixBugHook(0x818ab8u32, game) {
-        if (*game.g_cpu).y as i32 == 0i32 {
-            (*game.g_cpu).pc = 0x8b1fu16;
+    } else if FixBugHook(0x86ef45, game) {
+        (*game.g_cpu).z = (*game.g_cpu).a as i32 == 0;
+    } else if FixBugHook(0x818ab8, game) {
+        if (*game.g_cpu).y as i32 == 0 {
+            (*game.g_cpu).pc = 0x8b1f;
         }
-    } else if FixBugHook(0xa794bau32, game) {
+    } else if FixBugHook(0xa794ba, game) {
         (*game.g_cpu).y = (*game.g_cpu).x;
-    } else if FixBugHook(0xa7b968u32, game) {
+    } else if FixBugHook(0xa7b968, game) {
         (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
-    } else if FixBugHook(0xa7b963u32, game) {
+    } else if FixBugHook(0xa7b963, game) {
         (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
-    } else if FixBugHook(0xa496c8u32, game) {
-        (*game.g_cpu).a = 0u16;
-    } else if FixBugHook(0x9085aau32, game) {
+    } else if FixBugHook(0xa496c8, game) {
+        (*game.g_cpu).a = 0;
+    } else if FixBugHook(0x9085aa, game) {
         (*game.g_cpu).a = ram_word!(game, speed_boost_counter);
-    } else if FixBugHook(0xa29044u32, game) as i32 != 0 || FixBugHook(0xa2905du32, game) as i32 != 0
-    {
-        (*game.g_cpu).c = (*game.g_cpu).a as i32 == 0i32;
-    } else if FixBugHook(0xa29051u32, game) {
+    } else if FixBugHook(0xa29044, game) as i32 != 0 || FixBugHook(0xa2905d, game) as i32 != 0 {
+        (*game.g_cpu).c = (*game.g_cpu).a as i32 == 0;
+    } else if FixBugHook(0xa29051, game) {
         (*game.g_cpu).a = (*game.g_cpu).a.wrapping_sub(1);
-    } else if FixBugHook(0xa5931cu32, game) {
+    } else if FixBugHook(0xa5931c, game) {
         (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
-    } else if FixBugHook(0x80ada4u32, game) {
+    } else if FixBugHook(0x80ada4, game) {
         (*game.g_cpu).a = ram_word!(game, layer2_y_pos);
-    } else if FixBugHook(0x80add9u32, game) {
+    } else if FixBugHook(0x80add9, game) {
         (*game.g_cpu).a = ram_word!(game, layer2_y_pos);
-    } else if FixBugHook(0x80ad4du32, game) {
+    } else if FixBugHook(0x80ad4d, game) {
         (*game.g_cpu).a = ram_word!(game, layer2_x_pos);
-    } else if FixBugHook(0x80ad77u32, game) {
+    } else if FixBugHook(0x80ad77, game) {
         (*game.g_cpu).a = ram_word!(game, layer2_x_pos);
-    } else if FixBugHook(0x9381dbu32, game) {
+    } else if FixBugHook(0x9381db, game) {
         let k: i32 = (*game.g_cpu).x as i32;
-        let ip: i32 = ram_word!(game, projectile_bomb_instruction_ptr[(k >> 1i32)]) as i32;
-        let delta: i32 = if ram_word!(game, projectile_bomb_instruction_timers[(k >> 1i32)]) as i32
-            == 1i32
+        let ip: i32 = ram_word!(game, projectile_bomb_instruction_ptr[(k >> 1)]) as i32;
+        let delta: i32 = if ram_word!(game, projectile_bomb_instruction_timers[(k >> 1)]) as i32
+            == 1
             && (*get_ProjectileInstr(ip as u16, game)).timer & 0x8000 == 0
         {
-            0i32
+            0
         } else {
             -8i32
         };
-        (*game.g_cpu).a = ((*game.g_cpu).a as i32 + (8i32 + delta)) as u16;
-    } else if FixBugHook(0x86b701u32, game) {
+        (*game.g_cpu).a = ((*game.g_cpu).a as i32 + (8 + delta)) as u16;
+    } else if FixBugHook(0x86b701, game) {
         (*game.g_cpu).x = (*game.g_cpu).y;
-    } else if FixBugHook(0x8fc1b0u32, game) {
+    } else if FixBugHook(0x8fc1b0, game) {
         (*game.g_cpu).x = (*game.g_cpu).a;
-    } else if !FixBugHook(0x80804fu32, game) {
-        if FixBugHook(0x829325u32, game) {
-            (*game.g_cpu).db = 0x82u8;
-        } else if FixBugHook(0x848acdu32, game) {
-            (*game.g_cpu).a = 0u16;
-        } else if FixBugHook(0xa7ceb2u32, game) {
+    } else if !FixBugHook(0x80804f, game) {
+        if FixBugHook(0x829325, game) {
+            (*game.g_cpu).db = 0x82;
+        } else if FixBugHook(0x848acd, game) {
+            (*game.g_cpu).a = 0;
+        } else if FixBugHook(0xa7ceb2, game) {
             (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
-        } else if FixBugHook(0x91cd44u32, game) {
-            if (*game.g_cpu).x as i32 == 0i32 {
-                (*game.g_cpu).pc = 0xcd52u16;
+        } else if FixBugHook(0x91cd44, game) {
+            if (*game.g_cpu).x as i32 == 0 {
+                (*game.g_cpu).pc = 0xcd52;
             }
-        } else if FixBugHook(0x82afd3u32, game) {
-            if ram_word!(game, pausemenu_equipment_category_item) as u8 as i32 != 1i32 {
-                return 0x82afd9u32;
+        } else if FixBugHook(0x82afd3, game) {
+            if ram_word!(game, pausemenu_equipment_category_item) as u8 as i32 != 1 {
+                return 0x82afd9;
             }
-        } else if FixBugHook(0x82b0cdu32, game) {
-            if ram_word!(game, pausemenu_equipment_category_item) as u8 as i32 != 2i32 {
-                return 0x82afd9u32;
+        } else if FixBugHook(0x82b0cd, game) {
+            if ram_word!(game, pausemenu_equipment_category_item) as u8 as i32 != 2 {
+                return 0x82afd9;
             }
-        } else if FixBugHook(0x82b15bu32, game) {
-            if ram_word!(game, pausemenu_equipment_category_item) as u8 as i32 != 3i32 {
-                return 0x82afd9u32;
+        } else if FixBugHook(0x82b15b, game) {
+            if ram_word!(game, pausemenu_equipment_category_item) as u8 as i32 != 3 {
+                return 0x82afd9;
             }
-        } else if FixBugHook(0xa2d38cu32, game) {
+        } else if FixBugHook(0xa2d38c, game) {
             (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
-        } else if FixBugHook(0xa4970fu32, game) {
+        } else if FixBugHook(0xa4970f, game) {
             (*game.g_cpu).a = ((*game.g_cpu).a & 0xff);
             (*game.g_cpu).y = ((*game.g_cpu).x & 0x7);
-        } else if FixBugHook(0xa496e0u32, game) {
-            if (*game.g_cpu).x as i32 > 48i32 {
+        } else if FixBugHook(0xa496e0, game) {
+            if (*game.g_cpu).x as i32 > 48 {
                 set_ram_word!(game.croco_cur_vline_idx = (*game.g_cpu).x);
-                (*game.g_cpu).mf = 0i32 != 0;
-                return 0xa497ceu32;
+                (*game.g_cpu).mf = 0 != 0;
+                return 0xa497ce;
             }
-        } else if FixBugHook(0x91da89u32, game) {
-            if ram_word!(game, special_samus_palette_frame) as i32 > 6i32 {
-                set_ram_word!(game.special_samus_palette_frame = 6u16);
+        } else if FixBugHook(0x91da89, game) {
+            if ram_word!(game, special_samus_palette_frame) as i32 > 6 {
+                set_ram_word!(game.special_samus_palette_frame = 6);
             }
-        } else if FixBugHook(0x828d56u32, game) {
-            WriteReg(VMAIN as i32 as u16, 0x80u8, game);
-        } else if FixBugHook(0x88afcfu32, game) {
+        } else if FixBugHook(0x828d56, game) {
+            WriteReg(VMAIN as i32 as u16, 0x80, game);
+        } else if FixBugHook(0x88afcf, game) {
             if (*game.g_cpu).a & 0x8000 != 0 {
-                (*game.g_cpu).a = 0u16;
+                (*game.g_cpu).a = 0;
             }
-        } else if FixBugHook(0x88aff2u32, game) {
-            if ((*game.g_cpu).a as i32) < 256i32 {
-                (*game.g_cpu).a = 256u16;
+        } else if FixBugHook(0x88aff2, game) {
+            if ((*game.g_cpu).a as i32) < 256 {
+                (*game.g_cpu).a = 256;
             }
-        } else if FixBugHook(0x8189bdu32, game) {
-            if (*game.g_cpu).y as i32 == 0i32 {
-                return 0x818a35u32;
+        } else if FixBugHook(0x8189bd, game) {
+            if (*game.g_cpu).y as i32 == 0 {
+                return 0x818a35;
             }
-        } else if FixBugHook(0xa29bc1u32, game) {
-            (*game.g_cpu).a = 1u16;
-        } else if FixBugHook(0x82e910u32, game) {
-            *(ram_ptr!(game, u16; 22)) = 0u16;
-        } else if FixBugHook(0x90a4c8u32, game) {
-            *(ram_ptr!(game, u16; 18)) = 0u16;
-        } else if FixBugHook(0xa99f60u32, game) {
-            *(ram_ptr!(game, u16; 22)) = 1u16;
-        } else if FixBugHook(0x94a85bu32, game) {
-            memset(ram_ptr!(game, c_void; 0xd82), 0i32, 8 as size_t);
-        } else if FixBugHook(0xa0a35cu32, game) {
+        } else if FixBugHook(0xa29bc1, game) {
+            (*game.g_cpu).a = 1;
+        } else if FixBugHook(0x82e910, game) {
+            *(ram_ptr!(game, u16; 22)) = 0;
+        } else if FixBugHook(0x90a4c8, game) {
+            *(ram_ptr!(game, u16; 18)) = 0;
+        } else if FixBugHook(0xa99f60, game) {
+            *(ram_ptr!(game, u16; 22)) = 1;
+        } else if FixBugHook(0x94a85b, game) {
+            memset(ram_ptr!(game, c_void; 0xd82), 0, 8 as size_t);
+        } else if FixBugHook(0xa0a35c, game) {
             set_ram_word!(
                 game.REMOVED_R18 = *(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(
                     (size_of::<u16>() as usize)
                         .wrapping_div(size_of::<u8>() as usize)
-                        .wrapping_sub(1_usize) as isize,
+                        .wrapping_sub(1_) as isize,
                 ) as u16
             );
             set_ram_word!(
                 game.REMOVED_R20 = (ram_word!(game, REMOVED_R18) as i32
-                    + (ram_word!(game, REMOVED_R18) as i32 >> 1i32)
-                    >> 1i32) as u16
+                    + (ram_word!(game, REMOVED_R18) as i32 >> 1)
+                    >> 1) as u16
             );
-        } else if FixBugHook(0xa7b049u32, game) {
-            (*game.g_cpu).x = 0u16;
-        } else if FixBugHook(0xa5a018u32, game) {
-            set_ram_word!(game.REMOVED_varE24 = 0u16);
-        } else if FixBugHook(0xb39ddbu32, game) {
+        } else if FixBugHook(0xa7b049, game) {
+            (*game.g_cpu).x = 0;
+        } else if FixBugHook(0xa5a018, game) {
+            set_ram_word!(game.REMOVED_varE24 = 0);
+        } else if FixBugHook(0xb39ddb, game) {
             let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
             set_ram_word!(game.REMOVED_R18 = ((*E).base.x_pos as i32 - (*E).var_56 as i32) as u16);
             set_ram_word!(game.REMOVED_R20 = ((*E).base.y_pos as i32 - (*E).var_57 as i32) as u16);
-        } else if FixBugHook(0xb39e13u32, game) {
+        } else if FixBugHook(0xb39e13, game) {
             let E_0 = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
             (*E_0).var_45 = ((*E_0).var_45 as i32
-                + (ram_word!(game, REMOVED_R22) as i32 - (*E_0).var_45 as i32) as i8 as i32 * 3i32
-                    / 4i32) as u8 as u16;
+                + (ram_word!(game, REMOVED_R22) as i32 - (*E_0).var_45 as i32) as i8 as i32 * 3 / 4)
+                as u8 as u16;
             set_ram_word!(game.REMOVED_R22 = (*E_0).var_45);
         }
     }
-    0u32
+    0
 }
 pub unsafe fn RunPatchBugHook(addr: u32, game: &mut Game) -> i32 {
-    let new_pc: u32 = PatchBugs(2u32, addr, game);
-    if game.hookmode == 3u32 {
-        if new_pc == 0u32 {
+    let new_pc: u32 = PatchBugs(2, addr, game);
+    if game.hookmode == 3 {
+        if new_pc == 0 {
             return game.hook_fixbug_orgbyte[game.hookcnt as usize] as i32;
         } else {
-            (*game.g_cpu).k = (new_pc >> 16i32) as u8;
-            (*game.g_cpu).pc = (new_pc & 0xffffu32).wrapping_add(1u32) as u16;
+            (*game.g_cpu).k = (new_pc >> 16) as u8;
+            (*game.g_cpu).pc = (new_pc & 0xffffu32).wrapping_add(1) as u16;
             return *SnesRomPtr(new_pc, game) as i32;
         }
     }
@@ -343,14 +342,14 @@ pub unsafe fn CpuOpcodeHook(addr: u32, game: &mut Game) -> i32 {
         i = i.wrapping_add(1);
     }
     let i_0: i32 = RunPatchBugHook(addr, game);
-    if i_0 >= 0i32 {
+    if i_0 >= 0 {
         return i_0;
     }
     crate::native_assertion! {
         '_c2rust_label;
-        b"0\0", b"src/sm_cpu_infra.c\0", 455u32, b"int CpuOpcodeHook(uint32)\0"
+        b"0\0", b"src/sm_cpu_infra.c\0", 455, b"int CpuOpcodeHook(uint32)\0"
     };
-    0i32
+    0
 }
 pub unsafe fn HookedFunctionRts(is_long: i32, game: &mut Game) -> bool {
     if game.g_calling_asm_from_c {
@@ -360,7 +359,7 @@ pub unsafe fn HookedFunctionRts(is_long: i32, game: &mut Game) -> bool {
     }
     crate::native_assertion! {
         '_c2rust_label;
-        b"0\0", b"src/sm_cpu_infra.c\0", 465u32, b"_Bool HookedFunctionRts(int)\0"
+        b"0\0", b"src/sm_cpu_infra.c\0", 465, b"_Bool HookedFunctionRts(int)\0"
     };
     false_0 != 0
 }
@@ -711,12 +710,12 @@ unsafe fn VerifySnapshotsEq(
             b"@%d: Memory compare failed (mine != theirs, prev):\n\0" as *const u8 as *const c_char,
             game.snes_frame_counter,
         );
-        let mut j: i32 = 0i32;
+        let mut j: i32 = 0;
         let mut i: size_t = 0 as size_t;
         while i < 0x20000i32 as size_t {
             if (*a).ram[i as usize] as i32 != (*b).ram[i as usize] as i32 {
                 j += 1;
-                if j < 256i32 {
+                if j < 256 {
                     if (i & 1 as size_t == 0 as size_t || i < 0x10000i32 as size_t)
                         && (*a).ram[i.wrapping_add(1 as size_t) as usize] as i32
                             != (*b).ram[i.wrapping_add(1 as size_t) as usize] as i32
@@ -769,12 +768,12 @@ unsafe fn VerifySnapshotsEq(
             b"@%d: SRAM compare failed (mine != theirs, prev):\n\0" as *const u8 as *const c_char,
             game.snes_frame_counter,
         );
-        let mut j_0: i32 = 0i32;
+        let mut j_0: i32 = 0;
         let mut i_0: size_t = 0 as size_t;
         while i_0 < 0x2000 as size_t {
             if (*a).sram[i_0 as usize] as i32 != (*b).sram[i_0 as usize] as i32 {
                 j_0 += 1;
-                if j_0 < 128i32 {
+                if j_0 < 128 {
                     if i_0 & 1 as size_t == 0 as size_t
                         && (*a).sram[i_0.wrapping_add(1 as size_t) as usize] as i32
                             != (*b).sram[i_0.wrapping_add(1 as size_t) as usize] as i32
@@ -1213,21 +1212,21 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
     let org_b: u8 = (*game.g_cpu).db;
     let org_dp: u16 = (*game.g_cpu).dp;
     printf(b"RunAsmCode!\n\0" as *const u8 as *const c_char);
-    game.g_ram[0x1ffffi32 as usize] = 1u8;
+    game.g_ram[0x1ffffi32 as usize] = 1;
     let dc: bool = (*game.g_snes).debug_cycles;
-    (*game.g_cpu).db = (pc >> 16i32) as u8;
+    (*game.g_cpu).db = (pc >> 16) as u8;
     (*game.g_cpu).a = a;
     (*game.g_cpu).x = x;
     (*game.g_cpu).y = y;
     (*game.g_cpu).spBreakpoint = (*game.g_cpu).sp;
-    (*game.g_cpu).k = (pc >> 16i32) as u8;
-    (*game.g_cpu).pc = (pc & 0xffffu32) as u16;
-    (*game.g_cpu).mf = flags & 1i32 != 0;
-    (*game.g_cpu).xf = (flags & 2i32) >> 1i32 != 0;
+    (*game.g_cpu).k = (pc >> 16) as u8;
+    (*game.g_cpu).pc = (pc & 0xffff) as u16;
+    (*game.g_cpu).mf = flags & 1 != 0;
+    (*game.g_cpu).xf = (flags & 2) >> 1 != 0;
     game.g_calling_asm_from_c = true_0 != 0;
     while game.g_calling_asm_from_c {
         let pc_0: u32 =
-            (((*(*game.g_snes).cpu).k as i32) << 16i32 | (*(*game.g_snes).cpu).pc as i32) as u32;
+            (((*(*game.g_snes).cpu).k as i32) << 16 | (*(*game.g_snes).cpu).pc as i32) as u32;
         if (*game.g_snes).debug_cycles {
             let mut line: [c_char; 80] = [0; 80];
             getProcessorStateCpu(game.g_snes, &raw mut line as *mut c_char, game);
@@ -1238,9 +1237,9 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
         while (*(*game.g_snes).dma).dmaBusy {
             dma_doDma((*game.g_snes).dma, game);
         }
-        if flags & 1i32 != 0 {
-            let mut i: i32 = 0i32;
-            while i < 10i32 {
+        if flags & 1 != 0 {
+            let mut i: i32 = 0;
+            while i < 10 {
                 apu_cycle((*game.g_snes).apu, game);
                 i += 1;
             }
@@ -1272,14 +1271,14 @@ pub unsafe fn PatchBytes(addr: u32, bytes: &[u8], game: &mut Game) {
     }
 }
 pub unsafe fn FixupCarry(addr: u32, game: &mut Game) {
-    *SnesRomPtr(addr, game) = 0u8;
+    *SnesRomPtr(addr, game) = 0;
 }
 
 pub unsafe fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
     game.currently_installed_bug_fix_counter = ram_word!(game, bug_fix_counter);
-    PatchBytes(0x8584a3u32, &[0x20, 0x50, 0x96, 0x60], game);
+    PatchBytes(0x8584a3, &[0x20, 0x50, 0x96, 0x60], game);
     PatchBytes(
-        0x859650u32,
+        0x859650,
         &[
             0x20,
             0x36,
@@ -1291,10 +1290,10 @@ pub unsafe fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
             0xc2,
             0x30,
             0xa5,
-            (if (ram_word!(game, bug_fix_counter) as i32) < 1i32 {
-                0x8fi32
+            (if (ram_word!(game, bug_fix_counter) as i32) < 1 {
+                0x8f
             } else {
-                0x8bi32
+                0x8b
             }) as u8,
             0xf0,
             0xf3,
@@ -1302,7 +1301,7 @@ pub unsafe fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
         ],
         game,
     );
-    PatchBytes(0x8584ccu32, &[0x18, 0x18], game);
+    PatchBytes(0x8584cc, &[0x18, 0x18], game);
 }
 pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
     game.g_snes = snes_init(&raw mut game.g_ram as *mut u8);
@@ -1320,123 +1319,119 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
         None,
         game,
     );
-    *ram_ptr!(game; 0x611) = 1u8;
-    PatchBytes(0x82896bu32, &[0x20, 0xf, 0xf7], game);
-    PatchBytes(0x82f70fu32, &[0x7c, 0x81, 0x89], game);
-    PatchBytes(0x8ba362u32, &[0x5f, 0xf7], game);
-    PatchBytes(0x8bf760u32, &[0xc2, 0x20, 0x4c, 0x67, 0xa3], game);
-    PatchBytes(0x8584b2u32, &[0xa, 0xa], game);
+    *ram_ptr!(game; 0x611) = 1;
+    PatchBytes(0x82896b, &[0x20, 0xf, 0xf7], game);
+    PatchBytes(0x82f70f, &[0x7c, 0x81, 0x89], game);
+    PatchBytes(0x8ba362, &[0x5f, 0xf7], game);
+    PatchBytes(0x8bf760, &[0xc2, 0x20, 0x4c, 0x67, 0xa3], game);
+    PatchBytes(0x8584b2, &[0xa, 0xa], game);
     PatchBytes(
-        0x84efd3u32,
+        0x84efd3,
         &[0xc0, 0, 0, 0xf0, 0x3, 0x20, 0x64, 0x87, 0x60],
         game,
     );
-    PatchBytes(0x848243u32, &[0xd3, 0xef], game);
-    PatchBytes(0x86f4a6u32, &[0xac, 0x91, 0x19, 0x4c, 0x76, 0x86], game);
-    PatchBytes(0x8685bdu32, &[0xa6, 0xf4], game);
+    PatchBytes(0x848243, &[0xd3, 0xef], game);
+    PatchBytes(0x86f4a6, &[0xac, 0x91, 0x19, 0x4c, 0x76, 0x86], game);
+    PatchBytes(0x8685bd, &[0xa6, 0xf4], game);
     PatchBytes(
-        0x82f713u32,
+        0x82f713,
         &[
             0xc2, 0x30, 0x22, 0x59, 0x94, 0x80, 0x20, 0x48, 0x89, 0x22, 0x38, 0x83, 0x80, 0x4c,
             0x13, 0xf7,
         ],
         game,
     );
-    PatchBytes(0x828944u32, &[0x58, 0x4c, 0x13, 0xf7], game);
-    PatchBytes(0x82897au32, &[0x28, 0x60], game);
+    PatchBytes(0x828944, &[0x58, 0x4c, 0x13, 0xf7], game);
+    PatchBytes(0x82897a, &[0x28, 0x60], game);
+    PatchBytes(0x80945c, &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18], game);
     PatchBytes(
-        0x80945cu32,
-        &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
-        game,
-    );
-    PatchBytes(
-        0xa8b237u32,
+        0xa8b237,
         &[0xbc, 0xaa, 0xf, 0xc9, 0x6c, 0, 0x10, 0x1a],
         game,
     );
-    PatchBytes(0xa2904bu32, &[0x49, 0xff, 0xff, 0x69, 0, 0], game);
-    PatchBytes(0xa29065u32, &[0x49, 0xff, 0xff, 0x69, 0, 0], game);
-    PatchBytes(0xa0896fu32, &[0x6b], game);
-    PatchBytes(0xa98c12u32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x8085f6u32, &[0x60], game);
+    PatchBytes(0xa2904b, &[0x49, 0xff, 0xff, 0x69, 0, 0], game);
+    PatchBytes(0xa29065, &[0x49, 0xff, 0xff, 0x69, 0, 0], game);
+    PatchBytes(0xa0896f, &[0x6b], game);
+    PatchBytes(0xa98c12, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8085f6, &[0x60], game);
     PatchBytes(
-        0x80843cu32,
+        0x80843c,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
     PatchBytes(
-        0x808475u32,
+        0x808475,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
     PatchBytes(
-        0x808525u32,
+        0x808525,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    PatchBytes(0x8882a1u32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x828533u32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x80837bu32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x80838eu32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x82df6cu32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x80d000u32, &[0x20, 0x32, 0x96, 0x6b], game);
-    PatchBytes(0x82e02cu32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
-    PatchBytes(0x82e06bu32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
-    PatchBytes(0x82e50du32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
-    PatchBytes(0x82e609u32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
-    PatchBytes(0x82e526u32, &[0x22, 0x4, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x8882a1, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x828533, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x80837b, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x80838e, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x82df6c, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x80d000, &[0x20, 0x32, 0x96, 0x6b], game);
+    PatchBytes(0x82e02c, &[0x22, 0, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x82e06b, &[0x22, 0, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x82e50d, &[0x22, 0, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x82e609, &[0x22, 0, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x82e526, &[0x22, 0x4, 0xd0, 0x80, 0x18], game);
     PatchBytes(
-        0x80d004u32,
+        0x80d004,
         &[0x22, 0x38, 0x83, 0x80, 0xad, 0x31, 0x9, 0x10, 0xf7, 0x6b],
         game,
     );
-    PatchBytes(0x82e540u32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x8bc11eu32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x8bd487u32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x858148u32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x8581b2u32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x82e540, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x8bc11e, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x8bd487, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x858148, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8581b2, &[0x18, 0x18, 0x18], game);
     PatchBytes(
-        0x8581eau32,
+        0x8581ea,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    PatchBytes(0x858203u32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x858203, &[0x18, 0x18, 0x18], game);
     PatchBytes(
-        0x858236u32,
+        0x858236,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
     PatchBytes(
-        0x8582b8u32,
+        0x8582b8,
         &[
             0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
         ],
         game,
     );
-    PatchBytes(0x858321u32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x858321, &[0x18, 0x18, 0x18], game);
     PatchBytes(
-        0x85835au32,
+        0x85835a,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    PatchBytes(0x858532u32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x858532, &[0x18, 0x18, 0x18], game);
     PatchBytes(
-        0x85856bu32,
+        0x85856b,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    PatchBytes(0x858096u32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x8580b4u32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x8580dcu32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x8580f2u32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x85861cu32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x858651u32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x858692u32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x858696u32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x859660u32, &[0x8, 0xc2, 0x30, 0x4c, 0xa9, 0x85], game);
-    PatchBytes(0x8583bau32, &[0x20, 0x60, 0x96], game);
+    PatchBytes(0x858096, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8580b4, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8580dc, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8580f2, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x85861c, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x858651, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x858692, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x858696, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x859660, &[0x8, 0xc2, 0x30, 0x4c, 0xa9, 0x85], game);
+    PatchBytes(0x8583ba, &[0x20, 0x60, 0x96], game);
     PatchBytes(
-        0x859670u32,
+        0x859670,
         &[
             0x22, 0x81, 0x96, 0x85, 0xc9, 0xff, 0xff, 0xd0, 0x4, 0x5c, 0x5f, 0xab, 0xa2, 0x5c,
             0x26, 0xab, 0xa2,
@@ -1444,81 +1439,77 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
         game,
     );
     PatchBytes(
-        0x859681u32,
+        0x859681,
         &[
             0xcd, 0x1f, 0x1c, 0xd0, 0x8, 0x9c, 0x1f, 0x1c, 0xad, 0xf9, 0x5, 0x6b, 0xff, 0x8d, 0xc8,
             0xd, 0xa9, 0xff, 0xff, 0x6b,
         ],
         game,
     );
-    PatchBytes(0xa2ab22u32, &[0x5c, 0x70, 0x96, 0x85], game);
+    PatchBytes(0xa2ab22, &[0x5c, 0x70, 0x96, 0x85], game);
     PatchBytes(
-        0x8596a0u32,
+        0x8596a0,
         &[
             0x22, 0xd4, 0x8f, 0xa0, 0xad, 0xc8, 0xd, 0xf0, 0x7, 0x22, 0x95, 0x96, 0x85, 0x9c, 0xc8,
             0xd, 0x6b,
         ],
         game,
     );
-    PatchBytes(0x828b65u32, &[0x22, 0xa0, 0x96, 0x85], game);
+    PatchBytes(0x828b65, &[0x22, 0xa0, 0x96, 0x85], game);
     PatchBytes(
-        0x8596c0u32,
+        0x8596c0,
         &[0x20, 0x89, 0x85, 0xa9, 0x1c, 0, 0x8d, 0x1f, 0x1c, 0x60],
         game,
     );
-    PatchBytes(0x8580e5u32, &[0x20, 0xc0, 0x96], game);
+    PatchBytes(0x8580e5, &[0x20, 0xc0, 0x96], game);
     PatchBytes(
-        0x84efdcu32,
+        0x84efdc,
         &[
             0xad, 0xc8, 0xd, 0xf0, 0x11, 0x98, 0x9d, 0x27, 0x1d, 0xad, 0xc8, 0xd, 0x22, 0x95, 0x96,
             0x85, 0x9c, 0xc8, 0xd, 0xbc, 0x27, 0x1d, 0x4c, 0xee, 0x85,
         ],
         game,
     );
-    PatchBytes(0x8485f7u32, &[0xf4, 0xdb, 0xef], game);
+    PatchBytes(0x8485f7, &[0xf4, 0xdb, 0xef], game);
     PatchBytes(
-        0x859695u32,
+        0x859695,
         &[0x8, 0x8b, 0xda, 0x5a, 0x5c, 0x84, 0x80, 0x85],
         game,
     );
-    PatchBytes(0x858080u32, &[0x8d, 0xc8, 0xd, 0x6b], game);
+    PatchBytes(0x858080, &[0x8d, 0xc8, 0xd, 0x6b], game);
     PatchBytes(
-        0x84f000u32,
+        0x84f000,
         &[
             0x22, 0x81, 0x96, 0x85, 0xc9, 0xff, 0xff, 0xf0, 0x4, 0x5c, 0xfa, 0x8c, 0x84, 0x7a,
             0xfa, 0x88, 0x88, 0x60,
         ],
         game,
     );
-    PatchBytes(0x848cf6u32, &[0x5c, 0, 0xf0, 0x84], game);
-    PatchBytes(
-        0x81f000u32,
-        &[0xa9, 0xff, 0xff, 0x8d, 0x98, 0x9, 0x60],
-        game,
-    );
-    PatchBytes(0x819027u32, &[0x5c, 0, 0xf0, 0x81], game);
-    PatchBytes(0x819112u32, &[0x5c, 0, 0xf0, 0x81], game);
-    PatchBytes(0x8194e9u32, &[0x5c, 0, 0xf0, 0x81], game);
-    PatchBytes(0x8095e1u32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x848cf6, &[0x5c, 0, 0xf0, 0x84], game);
+    PatchBytes(0x81f000, &[0xa9, 0xff, 0xff, 0x8d, 0x98, 0x9, 0x60], game);
+    PatchBytes(0x819027, &[0x5c, 0, 0xf0, 0x81], game);
+    PatchBytes(0x819112, &[0x5c, 0, 0xf0, 0x81], game);
+    PatchBytes(0x8194e9, &[0x5c, 0, 0xf0, 0x81], game);
+    PatchBytes(0x8095e1, &[0x18, 0x18, 0x18, 0x18], game);
     if game.g_use_my_apu_code {
-        PatchBytes(0x808028u32, &[0x60], game);
+        PatchBytes(0x808028, &[0x60], game);
     }
-    PatchBytes(0x828a59u32, &[0x18, 0x18, 0x18, 0x80], game);
-    PatchBytes(0x828a72u32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x828a80u32, &[0x18, 0x18, 0x18, 0x80], game);
-    PatchBytes(0x828a67u32, &[0x6], game);
-    PatchBytes(0x82831eu32, &[0, 0x2e], game);
-    PatchBytes(0x91c234u32, &[0xa5, 0x25], game);
-    PatchBytes(0x809af3u32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x828a59, &[0x18, 0x18, 0x18, 0x80], game);
+    PatchBytes(0x828a72, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x828a80, &[0x18, 0x18, 0x18, 0x80], game);
+    PatchBytes(0x828a67, &[0x6], game);
+    PatchBytes(0x82831e, &[0, 0x2e], game);
+    PatchBytes(0x91c234, &[0xa5, 0x25], game);
+    PatchBytes(0x809af3, &[0x18, 0x18, 0x18, 0x18], game);
     PatchBytes(
-        0xa7ff82u32,
+        0xa7ff82,
         &[
             0xa5, 0x12, 0x48, 0xa5, 0x14, 0x48, 0xa5, 0x16, 0x48, 0x22, 0xa7, 0xa6, 0xa0, 0x68,
             0x85, 0x16, 0x68, 0x85, 0x14, 0x68, 0x85, 0x12, 0x6b,
         ],
         game,
     );
-    PatchBytes(0xa7b03au32, &[0x22, 0x82, 0xff, 0xa7], game);
+    PatchBytes(0xa7b03a, &[0x22, 0x82, 0xff, 0xa7], game);
     RtlUpdateSnesPatchForBugfix(game);
     let mut i: size_t = 0 as size_t;
     while i != (size_of::<[u32; 155]>() as usize).wrapping_div(size_of::<u32>() as usize) {
@@ -1534,13 +1525,13 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
         }
         i = i.wrapping_add(1);
     }
-    PatchBugs(1u32, 0u32, game);
+    PatchBugs(1, 0, game);
     game.g_snes
 }
 pub unsafe fn DebugGameOverMenu() {
     crate::native_assertion! {
         '_c2rust_label;
-        b"0\0", b"src/sm_cpu_infra.c\0", 914u32, b"void DebugGameOverMenu(void)\0"
+        b"0\0", b"src/sm_cpu_infra.c\0", 914, b"void DebugGameOverMenu(void)\0"
     };
 }
 pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
@@ -1552,7 +1543,7 @@ pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
         }
         cpu_runOpcode(game.g_cpu, game);
         let addr: u32 =
-            (((*(*game.g_snes).cpu).k as i32) << 16i32 | (*(*game.g_snes).cpu).pc as i32) as u32;
+            (((*(*game.g_snes).cpu).k as i32) << 16 | (*(*game.g_snes).cpu).pc as i32) as u32;
         if addr == pc1 || addr == pc2 {
             return addr;
         }
@@ -1565,13 +1556,13 @@ pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
         RunCpuUntilPC(0x808460, 0x808460, game);
         (*cpu).pc = 0x8462;
     }
-    RunCpuUntilPC(0x808343u32, 0x85813cu32, game);
+    RunCpuUntilPC(0x808343, 0x85813c, game);
     (*(*game.g_snes).cpu).nmiWanted = true_0 != 0;
-    RunCpuUntilPC(0x80834au32, 0x858142u32, game);
+    RunCpuUntilPC(0x80834a, 0x858142, game);
     set_ram_word!(game.bug_fix_counter = bug_fix_bak);
 }
 pub unsafe fn DrawFrameToPpu(game: &mut Game) {
-    (*game.g_snes).vPos = 0u16;
+    (*game.g_snes).vPos = 0;
     (*game.g_snes).hPos = (*game.g_snes).vPos;
     while !(*(*game.g_snes).cpu).nmiWanted {
         // No CPU or APU advances between these calls. Only scanline start,
@@ -1592,7 +1583,7 @@ pub unsafe fn SaveBugSnapshot(game: &mut Game) {
     if game.VERIFY_ACTIVE {
         return;
     }
-    if !game.g_debug_flag && game.g_got_mismatch_count == 0i32 {
+    if !game.g_debug_flag && game.g_got_mismatch_count == 0 {
         let mut buffer: [c_char; 64] = [0; 64];
         snprintf(
             &raw mut buffer as *mut c_char,
@@ -1602,7 +1593,7 @@ pub unsafe fn SaveBugSnapshot(game: &mut Game) {
         );
         RtlSaveSnapshot(&raw mut buffer as *mut c_char, true_0 != 0, game);
     }
-    game.g_got_mismatch_count = 5i32 * 60i32;
+    game.g_got_mismatch_count = 5 * 60;
 }
 // Set only by the single-threaded headless runner. The interactive oracle
 // retains its existing recovery and snapshot behaviour.
@@ -1659,7 +1650,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         game.g_snapshot_before.player.restore(game.g_spc_player);
         game.g_snapshot_theirs.apu_upload_count = 0;
         game.g_snapshot_theirs.apu_startup_upload = false;
-        (*game.g_snes).runningWhichVersion = 1u8;
+        (*game.g_snes).runningWhichVersion = 1;
         RunOneFrameOfGame_Emulated(game);
         DrawFrameToPpu(game);
         MakeSnapshot(
@@ -1676,7 +1667,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         game.g_snapshot_mine.apu_startup_upload = false;
         (*game.g_snes).ppu = (*game.g_snes).my_ppu;
         RestoreSnapshot(&game.g_snapshot_before, &mut *game.g_snes, &mut *game.g_cpu);
-        (*game.g_snes).runningWhichVersion = 2u8;
+        (*game.g_snes).runningWhichVersion = 2;
         RunOneFrameOfGame(game);
         DrawFrameToPpu(game);
         let queue_mine = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
@@ -1686,7 +1677,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             &*game.g_cpu,
             game.g_spc_player,
         );
-        (*game.g_snes).runningWhichVersion = 0xffu8;
+        (*game.g_snes).runningWhichVersion = 0xff;
         VerifySnapshotsEq(
             &raw mut game.g_snapshot_mine,
             &raw mut game.g_snapshot_theirs,
@@ -1790,11 +1781,11 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
     } else {
         (*game.g_snes).snes_ppu
     };
-    (*game.g_snes).runningWhichVersion = 0u8;
-    if ram_word!(game, game_state) as i32 == 0xffffi32 {
-        (*(*game.g_snes).cpu).k = 0x80u8;
-        (*(*game.g_snes).cpu).pc = 0x8459u16;
-        *ram_ptr!(game; 0x611) = 3u8;
+    (*game.g_snes).runningWhichVersion = 0;
+    if ram_word!(game, game_state) as i32 == 0xffff {
+        (*(*game.g_snes).cpu).k = 0x80;
+        (*(*game.g_snes).cpu).pc = 0x8459;
+        *ram_ptr!(game; 0x611) = 3;
     }
     if ram_word!(game, menu_index) & 0xff00 != 0 {
         printf(b"MENU INDEX TOO BIG!\n\0" as *const u8 as *const c_char);
@@ -1811,10 +1802,10 @@ pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
         RunOneFrameOfGame_Emulated(game);
         DrawFrameToPpu(game);
     } else if game.g_runmode as i32 == RM_MINE as i32 {
-        (*game.g_snes).runningWhichVersion = 0xffu8;
+        (*game.g_snes).runningWhichVersion = 0xff;
         RunOneFrameOfGame(game);
         DrawFrameToPpu(game);
-        (*game.g_snes).runningWhichVersion = 0u8;
+        (*game.g_snes).runningWhichVersion = 0;
     } else {
         RunOneFrameOfGame_Both(game);
     };
