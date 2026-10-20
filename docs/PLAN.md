@@ -90,6 +90,13 @@ The unused-function closure below completes that root/reference review.
 Further thousand-line reductions remain open; the remaining unused-data
 census (177 raw lines) is below the current priority and stays parked.
 
+Residual unused-import draft (2026-10-20): an independent 183-function
+assessment overlaps 178 removals already committed in 7299f73b. Its remaining
+five Bang helpers and 569 unused import bindings save 331 formatted Rust
+lines. Keep that draft outside the repository under the volume priority;
+no additional gameplay changes are applied. The committed cleanup's source,
+inputs and artifacts still match its passing any% and Speed Booster records.
+
 Unused function families (2026-10-20): remove the complete audited closure
 of 180 unreferenced functions across 39 files. This includes 49 unused copied
 image-loader APIs and eight cleanup routines called only by unused snes_free.
