@@ -20,6 +20,57 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared motion routines (2026-10-20)
+
+Sidehopper/Beetom hopping and seventeen Samus movement entries now share
+their repeated calculations through named native helpers. Existing entries,
+SNES state addresses and RAM layout remain. Floor/ceiling motion, captured
+versus live enemy slots, collision/store order, jump liquid/equipment reads,
+leftward negations and zero-displacement calls retain their original variants.
+The complete formatted reduction is **278 lines**, including helpers and probes:
+189 in A3/A8 and 89 in 90/91. No general state engine is introduced.
+
+Coverage discovery found eleven unexecuted variants in the complete drafts.
+Thin Blob changes, Beetom descent 23/27 and release 32, springball ground/bounce
+and grapple release remain original. Their paired release, grounded-ball and
+bounce implementations are also restored where sharing would become single-use.
+The larger drafts remain temporary; synthetic comparisons do not fill their
+gameplay coverage gaps. The shared height routine has two public aliases and
+one implementation probe. All **39 retained probe labels** execute on Speed.
+
+Independent review binds the retained bodies/helpers and restored originals.
+Actual original/partial Rust comparisons pass **135168** hopping cases and
+**3476480** Samus cases, including the restored controls. They compare RAM,
+returns and ordered callback observations using synthetic external callbacks;
+these are finite native comparisons, not a general aliasing or all-state proof.
+Formatting, frontend metadata, normal release (42.94s), diff check and progress
+pass. Source-checked any% passes **129712/0** and extended Speed Booster/equipment
+**150383/0**, native exits 0, with required hits; command times are 150.37s and
+198.33s. Source/input/library/DLL pins remain fixed. Existing credits limits remain.
+
+An unrelated shader edit invalidated the earlier shared-checkout final replay
+despite zero failing frames. The successful runs use the exact frozen source
+and normal-build DLL, matching the original host stamp and embedded library
+bytes. The proposed commit source is checked against that frozen composition;
+the unrelated shader work stays unstaged. No Git reservation is used.
+
+Committed Rust falls from 113937 to **113659**, leaving **13660 further lines**
+for the fixed under-100000 target. Unsafe functions fall four to 5367 and
+cast-containing lines fall 41 to 9063; other counters stay unchanged.
+The complete remaining reduction budget is still unproven.
+
+Delegated efficiency work rejects complete shared-store and shared-callback
+decision drafts: ordinary formatting adds 174 and 34 lines respectively.
+Countdown and intro-text families save only 127 and 35 lines; redundant initial
+temporary values save 21. These remain parked without further validation.
+Next discovery must use a distinct concrete family, price all helpers/callers,
+and discover routine hits before expensive per-variant comparisons. During
+concurrent editing, freeze reconciled source and the checked normal DLL before
+replay. Do not repeat the rejected scans or count their gross spans as savings.
+Temporary work is under `%TEMP%/sm-hop-samus-composed-64146b6c`,
+`sm-hop-covered-64146b6c`, `sm-samus-actions-validation-e72ca2cd` and
+`sm-branch-families-64146b6c`.
+
 ## Shared square-slope occupancy (2026-10-20)
 
 Enemy, enemy-projectile and Samus-projectile square-slope handlers now share

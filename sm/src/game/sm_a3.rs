@@ -1370,27 +1370,21 @@ pub unsafe fn Sidehopper_Init(game: &mut Game) {
     (*E).var_B = ((0xa3abd6i32) as u16);
 }
 
-macro_rules! find_jump_frame_for_height {
-    ($frame:ident, $frame_step:ident, $game:ident, $target_height:ident) => {
-        let mut $frame: u16 = 0;
-        let mut r20: u16 = 0;
-        loop {
-            $frame = ($frame).wrapping_add($frame_step);
-            r20 = (r20).wrapping_add(
-                *(($game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *mut u16 as *mut u8)
-                    .offset((8i32 * $frame as i32) as isize)
-                    .offset(1) as *mut u16),
-            );
-            if (r20 as i32 - $target_height as i32 & 0x8000 == 0) {
-                break;
-            }
-        }
-    };
-}
-pub(crate) use find_jump_frame_for_height;
-
 pub unsafe fn Sidehopper_Func_2(r22: u16, r24: u16, game: &mut Game) -> u16 {
-    find_jump_frame_for_height!(r18, r24, game, r22);
+    crate::verify_probe::hit("hop.Sidehopper_Func_2");
+    let mut r18: u16 = 0;
+    let mut r20: u16 = 0;
+    loop {
+        r18 = (r18).wrapping_add(r24);
+        r20 = (r20).wrapping_add(
+            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *mut u16 as *mut u8)
+                .offset((8i32 * r18 as i32) as isize)
+                .offset(1) as *mut u16),
+        );
+        if (r20 as i32 - r22 as i32 & 0x8000 == 0) {
+            break;
+        }
+    }
     r18
 }
 pub unsafe fn Sidehopper_Func_3(game: &mut Game) {
@@ -1517,88 +1511,40 @@ crate::game::address_dispatch! {
         10726742 => Sidehopper_Func_18;
     }
 }
-pub unsafe fn Sidehopper_Func_19(game: &mut Game) {
+// Sidehoppers keep separate SNES state entry points for floor and ceiling hops.
+unsafe fn step_sidehopper_jump<const FALLING: bool, const CEILING: bool>(game: &mut Game) {
     let E = Get_Sidehopper(word!(game.cur_enemy_index) as i32, game);
-    let v2: i32 = 8 * (*E).var_C as i32 >> 1;
+    let index: i32 = (8 * (*E).var_C as i32 >> 1) + if FALLING == CEILING { 2 } else { 0 };
     if Enemy_MoveDown(
         word!(game.cur_enemy_index),
-        (words!((
-            crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 3) as isize),
-            crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 2) as isize)
-        ))) as i32,
+        words!((
+            crate::rtl::rom_table_word!(game, 0xa2838f, (index + 1) as isize),
+            crate::rtl::rom_table_word!(game, 0xa2838f, index as isize)
+        )) as i32,
         game,
     ) != 0
     {
-        (*E).var_D = -((*E).var_D as i32) as u16;
-        (*E).var_03 = 1;
-    } else if Enemy_MoveRight_IgnoreSlopes(
-        word!(game.cur_enemy_index),
-        ((*E).var_D as i16 as i32) << 16,
-        game,
-    ) != 0
-    {
-        (*E).var_D = -((*E).var_D as i32) as u16;
-        (*E).var_03 = 1;
-    } else {
-        let v3: i16 = (((*E).var_C) as i16).wrapping_sub(((*E).var_E) as i16);
-        (*E).var_C = v3 as u16;
-        if v3 < 0 {
+        if FALLING {
+            (*E).var_03 = 0;
+            (*E).var_B = ((0xa3ace4i32) as u16);
+        } else {
+            (*E).var_D = -((*E).var_D as i32) as u16;
             (*E).var_03 = 1;
-            (*E).var_C = 0;
         }
-    };
-}
-
-macro_rules! advance_sidehopper_rebound {
-    ($game:ident, $enemy:ident) => {
+    } else if FALLING {
         if Enemy_MoveRight_IgnoreSlopes(
-            word!($game.cur_enemy_index),
-            ((*$enemy).var_D as i16 as i32) << 16,
-            $game,
+            word!(game.cur_enemy_index),
+            ((*E).var_D as i16 as i32) << 16,
+            game,
         ) != 0
         {
-            (*$enemy).var_D = -((*$enemy).var_D as i32) as u16;
+            (*E).var_D = -((*E).var_D as i32) as u16;
         }
-        let mut v3: i16 = (((*$enemy).var_E) as i16).wrapping_add(((*$enemy).var_C) as i16);
-        if v3 as i32 - 64i32 & 0x8000 == 0 {
-            v3 = 64;
+        let mut next: i16 = ((*E).var_E as i16).wrapping_add((*E).var_C as i16);
+        if next as i32 - 64i32 & 0x8000 == 0 {
+            next = 64;
         }
-        (*$enemy).var_C = v3 as u16;
-    };
-}
-
-pub unsafe fn Sidehopper_Func_20(game: &mut Game) {
-    let E = Get_Sidehopper(word!(game.cur_enemy_index) as i32, game);
-    let v2: i32 = 8 * (*E).var_C as i32 >> 1;
-    if Enemy_MoveDown(
-        word!(game.cur_enemy_index),
-        (words!((
-            crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 1) as isize),
-            crate::rtl::rom_table_word!(game, 0xa2838f, v2 as isize)
-        ))) as i32,
-        game,
-    ) != 0
-    {
-        (*E).var_03 = 0;
-        (*E).var_B = ((0xa3ace4i32) as u16);
-    } else {
-        advance_sidehopper_rebound!(game, E);
-    };
-}
-pub unsafe fn Sidehopper_Func_21(game: &mut Game) {
-    let E = Get_Sidehopper(word!(game.cur_enemy_index) as i32, game);
-    let v2: i32 = 8 * (*E).var_C as i32 >> 1;
-    if Enemy_MoveDown(
-        word!(game.cur_enemy_index),
-        (words!((
-            crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 1) as isize),
-            crate::rtl::rom_table_word!(game, 0xa2838f, v2 as isize)
-        ))) as i32,
-        game,
-    ) != 0
-    {
-        (*E).var_D = -((*E).var_D as i32) as u16;
-        (*E).var_03 = 1;
+        (*E).var_C = next as u16;
     } else if Enemy_MoveRight_IgnoreSlopes(
         word!(game.cur_enemy_index),
         ((*E).var_D as i16 as i32) << 16,
@@ -1608,32 +1554,21 @@ pub unsafe fn Sidehopper_Func_21(game: &mut Game) {
         (*E).var_D = -((*E).var_D as i32) as u16;
         (*E).var_03 = 1;
     } else {
-        let v3: i16 = (((*E).var_C) as i16).wrapping_sub(((*E).var_E) as i16);
-        (*E).var_C = v3 as u16;
-        if v3 < 0 {
+        let next = ((*E).var_C as i16).wrapping_sub((*E).var_E as i16);
+        (*E).var_C = next as u16;
+        if next < 0 {
             (*E).var_03 = 1;
             (*E).var_C = 0;
         }
-    };
+    }
 }
-pub unsafe fn Sidehopper_Func_22(game: &mut Game) {
-    let E = Get_Sidehopper(word!(game.cur_enemy_index) as i32, game);
-    let v2: i32 = 8 * (*E).var_C as i32 >> 1;
-    if Enemy_MoveDown(
-        word!(game.cur_enemy_index),
-        (words!((
-            crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 3) as isize),
-            crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 2) as isize)
-        ))) as i32,
-        game,
-    ) != 0
-    {
-        (*E).var_03 = 0;
-        (*E).var_B = ((0xa3ace4i32) as u16);
-    } else {
-        advance_sidehopper_rebound!(game, E);
-    };
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Sidehopper_Func_19 => { crate::verify_probe::hit("hop.Sidehopper_Func_19"); step_sidehopper_jump::<false, false>(game) };
+    Sidehopper_Func_20 => { crate::verify_probe::hit("hop.Sidehopper_Func_20"); step_sidehopper_jump::<true, false>(game) };
+    Sidehopper_Func_21 => { crate::verify_probe::hit("hop.Sidehopper_Func_21"); step_sidehopper_jump::<false, true>(game) };
+    Sidehopper_Func_22 => { crate::verify_probe::hit("hop.Sidehopper_Func_22"); step_sidehopper_jump::<true, true>(game) };
 }
+
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     MaridiaRefillCandy_Instr_1 [jp] {
         (*Get_MaridiaRefillCandy(word!(game.cur_enemy_index) as i32, game)).var_00 = 4;

@@ -1949,10 +1949,8 @@ pub unsafe fn Beetom_Init(game: &mut Game) {
     Beetom_Func_1(game);
     (*E).var_C = ((0xa8b814i32) as u16);
 }
-pub unsafe fn Beetom_Func_2(r22: u16, r24: u16, game: &mut Game) -> u16 {
-    crate::game::sm_a3::find_jump_frame_for_height!(r18, r24, game, r22);
-    r18
-}
+pub use crate::game::sm_a3::Sidehopper_Func_2 as Beetom_Func_2;
+
 pub unsafe fn Beetom_Func_3(game: &mut Game) {
     if IsSamusWithinEnemy_X(word!(game.cur_enemy_index), 0x60, game) != 0 {
         (*Get_Beetom(word!(game.cur_enemy_index) as i32, game)).var_C = ((0xa8b90fi32) as u16);
@@ -1987,38 +1985,21 @@ pub unsafe fn Beetom_Func_7(game: &mut Game) {
     (*E).var_00 = addr_kBeetom_Ilist_B6F2 as u16;
     Beetom_Func_1(game);
 }
-pub unsafe fn Beetom_Func_8(game: &mut Game) {
+unsafe fn begin_beetom_hop(high: bool, state: u16, animation: u16, game: &mut Game) {
     let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_B = (*E).var_02;
-    (*E).var_C = ((0xa8ba84i32) as u16);
+    (*E).var_B = if high { (*E).var_03 } else { (*E).var_02 };
+    (*E).var_C = state;
     (*E).var_05 = 0;
-    (*E).var_00 = addr_kBeetom_Ilist_B6AC as u16;
+    (*E).var_00 = animation;
     Beetom_Func_1(game);
 }
-pub unsafe fn Beetom_Func_9(game: &mut Game) {
-    let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_B = (*E).var_02;
-    (*E).var_C = ((0xa8bab7i32) as u16);
-    (*E).var_05 = 0;
-    (*E).var_00 = addr_kBeetom_Ilist_B708 as u16;
-    Beetom_Func_1(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Beetom_Func_8 => { crate::verify_probe::hit("hop.Beetom_Func_8"); begin_beetom_hop(false, 0xba84, addr_kBeetom_Ilist_B6AC as u16, game) };
+    Beetom_Func_9 => { crate::verify_probe::hit("hop.Beetom_Func_9"); begin_beetom_hop(false, 0xbab7, addr_kBeetom_Ilist_B708 as u16, game) };
+    Beetom_Func_10 => { crate::verify_probe::hit("hop.Beetom_Func_10"); begin_beetom_hop(true, 0xbb55, addr_kBeetom_Ilist_B6AC as u16, game) };
+    Beetom_Func_11 => { crate::verify_probe::hit("hop.Beetom_Func_11"); begin_beetom_hop(true, 0xbb88, addr_kBeetom_Ilist_B708 as u16, game) };
 }
-pub unsafe fn Beetom_Func_10(game: &mut Game) {
-    let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_B = (*E).var_03;
-    (*E).var_C = ((0xa8bb55i32) as u16);
-    (*E).var_05 = 0;
-    (*E).var_00 = addr_kBeetom_Ilist_B6AC as u16;
-    Beetom_Func_1(game);
-}
-pub unsafe fn Beetom_Func_11(game: &mut Game) {
-    let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_B = (*E).var_03;
-    (*E).var_C = ((0xa8bb88i32) as u16);
-    (*E).var_05 = 0;
-    (*E).var_00 = addr_kBeetom_Ilist_B708 as u16;
-    Beetom_Func_1(game);
-}
+
 pub unsafe fn Beetom_Func_12(game: &mut Game) {
     let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
     (*E).var_B = (*E).var_04;
@@ -2067,73 +2048,37 @@ pub unsafe fn Beetom_Func_17(game: &mut Game) {
         (*E).var_C = ((0xa8b814i32) as u16);
     }
 }
-pub unsafe fn Beetom_Func_18(game: &mut Game) {
+unsafe fn walk_beetom<const LEFT: bool>(game: &mut Game) {
     let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
     (*E).var_D = (*E).var_D.wrapping_sub(1);
     if ((*E).var_D & 0x8000) != 0 {
         (*E).var_D = 64;
         (*E).var_C = ((0xa8b814i32) as u16);
     } else {
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(8);
+        (*E).base.x_pos = (*E).base.x_pos.wrapping_add(if LEFT { 0xfff8 } else { 8 });
         if Enemy_MoveDown(word!(game.cur_enemy_index), (1i16 as i32) << 16, game) != 0 {
-            (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(8);
-            if Enemy_MoveRight_IgnoreSlopes(word!(game.cur_enemy_index), -16384i32, game) != 0 {
-                (*E).var_C = ((0xa8b873i32) as u16);
+            (*E).base.x_pos = (*E).base.x_pos.wrapping_add(if LEFT { 8 } else { 0xfff8 });
+            if Enemy_MoveRight_IgnoreSlopes(
+                word!(game.cur_enemy_index),
+                if LEFT { -16384 } else { 16384 },
+                game,
+            ) != 0
+            {
+                (*E).var_C = if LEFT { 0xb873 } else { 0xb85f };
             }
         } else {
-            (*E).var_C = ((0xa8b873i32) as u16);
+            (*E).var_C = if LEFT { 0xb873 } else { 0xb85f };
             (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
-            (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(8);
+            (*E).base.x_pos = (*E).base.x_pos.wrapping_add(if LEFT { 8 } else { 0xfff8 });
         }
-    };
+    }
 }
-pub unsafe fn Beetom_Func_19(game: &mut Game) {
-    let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_D = (*E).var_D.wrapping_sub(1);
-    if ((*E).var_D & 0x8000) != 0 {
-        (*E).var_D = 64;
-        (*E).var_C = ((0xa8b814i32) as u16);
-    } else {
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(8);
-        if Enemy_MoveDown(word!(game.cur_enemy_index), (1i16 as i32) << 16, game) != 0 {
-            (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(8);
-            if Enemy_MoveRight_IgnoreSlopes(word!(game.cur_enemy_index), 0x4000, game) != 0 {
-                (*E).var_C = ((0xa8b85fi32) as u16);
-            }
-        } else {
-            (*E).var_C = ((0xa8b85fi32) as u16);
-            (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
-            (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(8);
-        }
-    };
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Beetom_Func_18 => { crate::verify_probe::hit("hop.Beetom_Func_18"); walk_beetom::<true>(game) };
+    Beetom_Func_19 => { crate::verify_probe::hit("hop.Beetom_Func_19"); walk_beetom::<false>(game) };
 }
 
-macro_rules! advance_beetom_jump_ascent {
-    ($enemy_index:ident, $game:ident, $frame_step:literal) => {
-        let E = Get_Beetom($enemy_index as i32, $game);
-        let v2: i32 = 8 * (*E).var_B as i32 >> 1;
-        if Enemy_MoveDown(
-            $enemy_index,
-            *($game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-                .offset((v2 + 2 >> 1) as isize) as i32,
-            $game,
-        ) != 0
-        {
-            (*E).var_C = ((0xa8b97ai32) as u16);
-        } else {
-            (*E).var_B = ((*E).var_B).wrapping_sub($frame_step);
-            if (*E).var_B & 0x8000 != 0 {
-                (*E).var_B = 0;
-                (*E).var_05 = 1;
-            }
-        }
-    };
-}
-
-pub unsafe fn Beetom_Func_22(k: u16, game: &mut Game) {
-    advance_beetom_jump_ascent!(k, game, 4);
-}
-
+// Preserve the captured-value versus post-store-read variants of phase tests.
 macro_rules! advance_beetom_jump_descent {
     ($enemy_index:ident, $game:ident, $frame_step:literal) => {
         let E = Get_Beetom($enemy_index as i32, $game);
@@ -2158,133 +2103,77 @@ macro_rules! advance_beetom_jump_descent {
 pub unsafe fn Beetom_Func_23(k: u16, game: &mut Game) {
     advance_beetom_jump_descent!(k, game, 4);
 }
-pub unsafe fn Beetom_Func_20(game: &mut Game) {
-    let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
-    if (*E).var_05 != 0 {
-        Beetom_Func_23(word!(game.cur_enemy_index), game);
-    } else {
-        Beetom_Func_22(word!(game.cur_enemy_index), game);
-    }
-    if Enemy_MoveRight_IgnoreSlopes(word!(game.cur_enemy_index), -16384i32, game) != 0 {
-        (*E).var_09 = ((*E).var_09) ^ (1u16);
-        (*E).var_C = ((0xa8b97ai32) as u16);
-    }
-}
-pub unsafe fn Beetom_Func_21(game: &mut Game) {
-    let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
-    if (*E).var_05 != 0 {
-        Beetom_Func_23(word!(game.cur_enemy_index), game);
-    } else {
-        Beetom_Func_22(word!(game.cur_enemy_index), game);
-    }
-    if Enemy_MoveRight_IgnoreSlopes(word!(game.cur_enemy_index), 0x4000, game) != 0 {
-        (*E).var_09 = ((*E).var_09) ^ (1u16);
-        (*E).var_C = ((0xa8b97ai32) as u16);
-    }
-}
-pub unsafe fn Beetom_Func_26(k: u16, game: &mut Game) {
-    advance_beetom_jump_ascent!(k, game, 5);
-}
 pub unsafe fn Beetom_Func_27(k: u16, game: &mut Game) {
     advance_beetom_jump_descent!(k, game, 5);
 }
-pub unsafe fn Beetom_Func_24(game: &mut Game) {
-    let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
-    if (*E).var_05 != 0 {
-        Beetom_Func_27(word!(game.cur_enemy_index), game);
-    } else {
-        Beetom_Func_26(word!(game.cur_enemy_index), game);
-    }
-    if Enemy_MoveRight_IgnoreSlopes(word!(game.cur_enemy_index), -16384i32, game) != 0 {
-        (*E).var_09 = ((*E).var_09) ^ (1u16);
-        (*E).var_C = ((0xa8b97ai32) as u16);
-    }
-}
-pub unsafe fn Beetom_Func_25(game: &mut Game) {
-    let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
-    if (*E).var_05 != 0 {
-        Beetom_Func_27(word!(game.cur_enemy_index), game);
-    } else {
-        Beetom_Func_26(word!(game.cur_enemy_index), game);
-    }
-    if Enemy_MoveRight_IgnoreSlopes(word!(game.cur_enemy_index), 0x4000, game) != 0 {
-        (*E).var_09 = ((*E).var_09) ^ (1u16);
-        (*E).var_C = ((0xa8b97ai32) as u16);
-    }
-}
-pub unsafe fn Beetom_Func_30(k: u16, game: &mut Game) {
+
+unsafe fn advance_beetom_jump<const FALLING: bool, const STEP: u16, const CAPTURED: bool>(
+    k: u16,
+    game: &mut Game,
+) -> *mut Enemy_Beetom {
     let E = Get_Beetom(k as i32, game);
-    let v2: i32 = 8 * (*E).var_B as i32 >> 1;
+    let index: i32 = 8 * (*E).var_B as i32 >> 1;
+    let index = (index + if FALLING { 0 } else { 2 }) >> 1;
     if Enemy_MoveDown(
         k,
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v2 + 2 >> 1) as isize) as i32,
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32).offset(index as isize)
+            as i32,
         game,
     ) != 0
     {
-        (*E).var_C = ((0xa8b97ai32) as u16);
+        (*E).var_C = if FALLING { 0xb814 } else { 0xb97a };
     } else {
-        let v3: i16 = (((*E).var_B) as i16).wrapping_sub(5);
-        (*E).var_B = v3 as u16;
-        if v3 < 0 {
+        let next = if FALLING {
+            (*E).var_B.wrapping_add(STEP)
+        } else {
+            (*E).var_B.wrapping_sub(STEP)
+        };
+        (*E).var_B = next;
+        let tested = if CAPTURED { next } else { (*E).var_B };
+        if FALLING {
+            if tested as i32 - 64i32 & 0x8000 == 0 {
+                (*E).var_B = 64;
+            }
+        } else if tested & 0x8000 != 0 {
             (*E).var_B = 0;
             (*E).var_05 = 1;
         }
-    };
+    }
+    E
 }
-pub unsafe fn Beetom_Func_31(k: u16, game: &mut Game) {
-    let E = Get_Beetom(k as i32, game);
-    let v2: i32 = 8 * (*E).var_B as i32 >> 1;
-    if Enemy_MoveDown(
-        k,
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v2 >> 1) as isize) as i32,
-        game,
-    ) != 0
-    {
-        (*E).var_C = ((0xa8b814i32) as u16);
-    } else {
-        let v3: u16 = ((*E).var_B).wrapping_add(3);
-        (*E).var_B = v3;
-        if v3 as i32 - 64i32 & 0x8000 == 0 {
-            (*E).var_B = 64;
-        }
-    };
+crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game);
+    Beetom_Func_22 => { crate::verify_probe::hit("hop.Beetom_Func_22"); advance_beetom_jump::<false, 4, false>(k, game) };
+    Beetom_Func_26 => { crate::verify_probe::hit("hop.Beetom_Func_26"); advance_beetom_jump::<false, 5, false>(k, game) };
+    Beetom_Func_30 => { crate::verify_probe::hit("hop.Beetom_Func_30"); advance_beetom_jump::<false, 5, true>(k, game) };
+    Beetom_Func_31 => { crate::verify_probe::hit("hop.Beetom_Func_31"); advance_beetom_jump::<true, 3, true>(k, game) };
 }
-pub unsafe fn Beetom_Func_28(game: &mut Game) {
+
+unsafe fn move_beetom_hop(
+    rise: unsafe fn(u16, &mut Game),
+    fall: unsafe fn(u16, &mut Game),
+    horizontal: i32,
+    game: &mut Game,
+) {
     let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
     if (*E).var_05 != 0 {
-        Beetom_Func_31(word!(game.cur_enemy_index), game);
+        fall(word!(game.cur_enemy_index), game);
     } else {
-        Beetom_Func_30(word!(game.cur_enemy_index), game);
+        rise(word!(game.cur_enemy_index), game);
     }
-    if Enemy_MoveRight_IgnoreSlopes(
-        word!(game.cur_enemy_index),
-        (words!((-3i32, 0u16))) as i32,
-        game,
-    ) != 0
-    {
+    if Enemy_MoveRight_IgnoreSlopes(word!(game.cur_enemy_index), horizontal, game) != 0 {
         (*E).var_09 = ((*E).var_09) ^ (1u16);
         (*E).var_C = ((0xa8b97ai32) as u16);
     }
 }
-pub unsafe fn Beetom_Func_29(game: &mut Game) {
-    let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
-    if (*E).var_05 != 0 {
-        Beetom_Func_31(word!(game.cur_enemy_index), game);
-    } else {
-        Beetom_Func_30(word!(game.cur_enemy_index), game);
-    }
-    if Enemy_MoveRight_IgnoreSlopes(
-        word!(game.cur_enemy_index),
-        ((3u32) << 16 | 0u16 as u32) as i32,
-        game,
-    ) != 0
-    {
-        (*E).var_09 = ((*E).var_09) ^ (1u16);
-        (*E).var_C = ((0xa8b97ai32) as u16);
-    }
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Beetom_Func_20 => { crate::verify_probe::hit("hop.Beetom_Func_20"); move_beetom_hop(Beetom_Func_22, Beetom_Func_23, -16384, game) };
+    Beetom_Func_21 => { crate::verify_probe::hit("hop.Beetom_Func_21"); move_beetom_hop(Beetom_Func_22, Beetom_Func_23, 16384, game) };
+    Beetom_Func_24 => { crate::verify_probe::hit("hop.Beetom_Func_24"); move_beetom_hop(Beetom_Func_26, Beetom_Func_27, -16384, game) };
+    Beetom_Func_25 => { crate::verify_probe::hit("hop.Beetom_Func_25"); move_beetom_hop(Beetom_Func_26, Beetom_Func_27, 16384, game) };
+    Beetom_Func_28 => { crate::verify_probe::hit("hop.Beetom_Func_28"); move_beetom_hop(Beetom_Func_30, Beetom_Func_31, -196608, game) };
+    Beetom_Func_29 => { crate::verify_probe::hit("hop.Beetom_Func_29"); move_beetom_hop(Beetom_Func_30, Beetom_Func_31, 196608, game) };
 }
+
 pub unsafe fn Beetom_Func_34(game: &mut Game) {
     let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
     if word!(game.joypad1_lastkeys) != (*E).var_F {
@@ -2340,6 +2229,7 @@ pub unsafe fn Beetom_Func_33(game: &mut Game) {
         (*E).var_C = ((0xa8b9a2i32) as u16);
     };
 }
+
 pub unsafe fn Beetom_Func_35(game: &mut Game) {
     if Enemy_MoveDown(
         word!(game.cur_enemy_index),
@@ -2356,29 +2246,15 @@ pub unsafe fn Beetom_Func_35(game: &mut Game) {
     }
 }
 pub unsafe fn Beetom_Func_37(k: u16, game: &mut Game) {
-    let E = Get_Beetom(k as i32, game);
-    let v2: i32 = 8 * (*E).var_B as i32 >> 1;
-    if Enemy_MoveDown(
-        k,
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v2 >> 1) as isize) as i32,
-        game,
-    ) != 0
-    {
-        (*E).var_C = ((0xa8b814i32) as u16);
-    } else {
-        let v3: u16 = ((*E).var_B).wrapping_add(1);
-        (*E).var_B = v3;
-        if v3 as i32 - 64i32 & 0x8000 == 0 {
-            (*E).var_B = 64;
-        }
-    }
+    crate::verify_probe::hit("hop.Beetom_Func_37");
+    let E = advance_beetom_jump::<true, 1, true>(k, game);
     let v4: u16 = (if (*E).var_09 != 0 { -2i32 } else { 2 }) as u16;
     if Enemy_MoveRight_IgnoreSlopes(k, (words!((v4, 0u16))) as i32, game) != 0 {
         (*E).var_09 = ((*E).var_09) ^ (1u16);
         (*E).var_C = ((0xa8b97ai32) as u16);
     }
 }
+
 pub unsafe fn Beetom_Func_36(game: &mut Game) {
     Beetom_Func_37(word!(game.cur_enemy_index), game);
 }

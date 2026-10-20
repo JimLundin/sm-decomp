@@ -3720,6 +3720,25 @@ pub unsafe fn Samus_HandleTransitionsA_5_1_0(game: &mut Game) -> u8 {
 }
 static g_word_909EB5: u16 = 1;
 static g_word_909EB7: u16 = 0;
+
+unsafe fn turn_samus_in_air(pose_table: u32, game: &mut Game) -> u8 {
+    word!(
+        game.samus_pose = *(game.g_rom.offset(crate::rtl::lorom_offset(pose_table)) as *mut u8)
+            .offset(
+                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
+                    .offset(word!(game.samus_prev_pose) as isize))
+                .direction_shots_fired as isize,
+            ) as u16
+    );
+    words!(
+        game.samus_x_base_speed,
+        samus_x_base_subspeed += words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed)
+    );
+    words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
+    word!(game.samus_x_accel_mode = 1);
+    1
+}
+
 pub unsafe fn Samus_MorphBallBounceNoSpringballTrans(game: &mut Game) -> u8 {
     let mut v0: i16 = (2i16).wrapping_mul((word!(game.used_for_ball_bounce_on_landing)) as i16);
     if 2 * word!(game.used_for_ball_bounce_on_landing) as i32 != 0 {
@@ -4215,37 +4234,13 @@ pub unsafe fn SamusFunc_F468_TurningAroundOnGround(game: &mut Game) -> u8 {
     1
 }
 
-macro_rules! turn_samus_in_air_and_merge_speed {
-    ($game:ident, $pose_table:literal) => {
-        word!(
-            $game.samus_pose =
-                *($game.g_rom.offset(crate::rtl::lorom_offset($pose_table)) as *mut u8).offset(
-                    (*($game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-                        as *mut SamusPoseParams)
-                        .offset(word!($game.samus_prev_pose) as isize))
-                    .direction_shots_fired as isize,
-                ) as u16
-        );
-        words!(
-            $game.samus_x_base_speed,
-            samus_x_base_subspeed +=
-                words!($game.samus_x_extra_run_speed, samus_x_extra_run_subspeed)
-        );
-        words!(
-            $game.samus_x_extra_run_speed,
-            samus_x_extra_run_subspeed = 0
-        );
-        word!($game.samus_x_accel_mode = 1);
-    };
-}
-
 pub unsafe fn SamusFunc_F468_TurnAroundJumping(game: &mut Game) -> u8 {
-    turn_samus_in_air_and_merge_speed!(game, 0x91f9d6);
-    1
+    crate::verify_probe::hit("samus.turn.jumping");
+    turn_samus_in_air(0x91f9d6, game)
 }
 pub unsafe fn SamusFunc_F468_TurnAroundFalling(game: &mut Game) -> u8 {
-    turn_samus_in_air_and_merge_speed!(game, 0x91f9e0);
-    1
+    crate::verify_probe::hit("samus.turn.falling");
+    turn_samus_in_air(0x91f9e0, game)
 }
 pub unsafe fn SamusFunc_F468_MorphBall(game: &mut Game) -> u8 {
     if *ram_ptr!(game; 0xa23) as i32 == kMovementType_04_MorphBallOnGround as i32
