@@ -6,8 +6,8 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Latest frozen result: executable translation rules learned from current Rust
-produce **116,791 lines**, down **9,011** from the previous 125,802 checkpoint
-and **162,145** from the initial 278,936-line Rust. All emitted support and
+produce **113,161 lines**, down **12,641** from the previous 125,802 checkpoint
+and **165,775** from the initial 278,936-line Rust. All emitted support and
 overlap are counted. Complete optimized library and actual frontend metadata
 compilation pass, along with the documented component checks. A separate
 zero-volume stage repairs an inherited C2Rust packed-record defect and passes
@@ -1251,8 +1251,8 @@ domain modules remain untested by this trial.
 
 ### Follow current Rust back to reusable emission rules
 
-The next actual composition reaches **116,791 lines in 63 Rust files**,
-removing another **9,011** from the frozen 125,802-line control. It uses the
+The next actual composition reaches **113,161 lines in 64 Rust files**,
+removing another **12,641** from the frozen 125,802-line control. It uses the
 current implementation to identify compact operations, then recognizes their
 original C/generated-Rust forms and derives replacements. It does not copy
 complete current gameplay bodies into a supposedly automatic result.
@@ -1274,12 +1274,21 @@ complete current gameplay bodies into a supposedly automatic result.
 | Sound command/process family | 118,774 | 134 |
 | Ordered register writes | 118,237 | 537 |
 | Byte lanes and split-word field operations | 116,791 | 1,446 |
-| Original packed VRAM record repair | **116,791** | **0** |
+| Original packed VRAM record repair | 116,791 | 0 |
+| Map rendering, labels and equipment navigation | 116,360 | 431 |
+| Power Bomb / Crystal Flash window family | 115,980 | 380 |
+| Reset and fixed-array initialization | 115,347 | 633 |
+| Scalar initialization at the first defining assignment | 114,563 | 784 |
+| Ordered enemy instruction/timer writes | 114,403 | 160 |
+| Native assertion emission | 113,901 | 502 |
+| Consecutive same-value RAM stores | **113,161** | **740** |
 
 The register stage's standalone 570 and byte-field stage's standalone 1,565
 are not added: their actual marginal savings are 537 and 1,446 after earlier
 families have changed the source. The C-family stage also rejects two families
 that increase volume. Its 1,511 includes downstream type/forwarding/tile overlap.
+Later scalar initialization saves 784 here versus 841 alone, and enemy write
+pairs save 160 versus 235 alone. The latest seven-stage batch removes 3,630.
 
 A concrete translation rule is C's `HIBYTE(field)`: generated Rust expands
 this into a raw-pointer cast, two `size_of` calls, division, subtraction and
@@ -1315,16 +1324,38 @@ byte-only OamEnt. Both complete corrected builds pass. This fixes a concrete
 compiler defect; it supplies no reduction credit or whole-game proof.
 
 Frozen outputs, stage-specific commands, rule hashes and checks are in
-`TEMP/sm-tailored-next/integration/phase5` through `phase8`; the final corrected
-source is `phase8/30-packed-records`. The nine-line dependency manifest and the
+`TEMP/sm-tailored-next/integration/phase5` through `phase9-tail`; the final
+corrected source is `phase9-tail/37-ram-store-groups`. The nine-line dependency manifest and the
 external GL generator's separately disclosed 21,338 lines remain. Invoked local
 Python rules, validators and orchestration add 3,820 unique lines across phases
-5-7, totaling 7,731 with the previous 3,911; this excludes external compiler/parser
+5-7; phases 8-9 add 3,089, totaling 10,820 with the previous 3,911. This excludes
+external compiler/parser
 packages and owner-only fixtures not invoked by integration. These are separately
 counted experiment tools, not emitted engine source. The maintained
 107,520-line implementation and unrelated shader draft are unchanged. Continue
-with the complete remaining policies; 116,791 is a partial
+with the complete remaining policies; 113,161 is a partial
 result, not completion of the under-100,000 goal.
+
+The final batch passes full library/frontend compilation and all checks on
+its actual preceding inputs. Map/menu sharing passes 12,862 comparisons using
+the corrected real packed type, not a harness-only repair. The explosion-window
+family passes 13,036 C/before/after cases and retains all 17 numeric routes;
+its 38 rejection controls and outside-function/storage correspondence pass.
+Its validator was versioned to handle rustfmt moving the new module declaration
+alphabetically; emitted source did not change, and the earlier failed log remains.
+Reset checks compare complete structure bytes, including padding and guards,
+and ordered CPU/SPC reads. Scalar initialization has full-function scope/type
+correspondence, primitive/drop/loop controls and an actual music-queue comparison.
+Assertions compare actual expanded library and frontend syntax while retaining
+diagnostic pointer identities. RAM grouping compares complete macro expansion
+and adversarial full-RAM effects, including RHS-before-index order, aliases and
+temporary destruction. These are component and syntax proofs, not full replay.
+
+The larger uncomposed source experiments are the earlier native instruction
+executors (789 handlers) and C word-operation recipes. The selected 16-unit
+C-algorithm stage did not include these. Their composition is now assigned;
+current callback sharing and numeric emission may consume much of the earlier
+benefit. Reuse the frozen candidates and measure actual remaining savings.
 
 ## Independent transpilers: executed comparisons
 
