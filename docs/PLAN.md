@@ -154,6 +154,28 @@ pass over these same clone/representation families. No maintained Rust changes
 in this discovery pass. All 81 source/input/artifact pins still match the
 preceding any% 129712/0 and Speed Booster 148406/0 results; no replay rerun.
 
+Broader-module assessment (2026-10-20): block collision across banks A0,
+86 and 94 contains 148 ordinary functions / 3029 function lines. Seven edge
+loops total 118 lines, square-slope routines 369, and non-square/alignment
+routines 436: 923 gross lines before any replacement/caller cost. Extension
+retries already share Game::react_to_block at 11 callers. Distinct movement
+commit, PLM, damage and grapple behavior prevents treating the full region as
+removable duplication; no thousand-line module projection is established.
+
+The embedded PNG decoder has one texture-loading consumer and a larger gross
+size, but the assessed dependencies are not drop-in replacements. The Rust
+stb_image_rust 2.27.2 port supplies incorrect allocation layouts to realloc/
+dealloc; png 0.18.1 rejects the CgBI critical chunk accepted by the current
+parser. Preserve existing decoding quirks; no dependency or decoder change.
+
+Completion audit of this volume-reduction push: b7298e7a (-2071), 94f19f21
+(-1696), 7299f73b (-1603) and d0bb9069 (-1009) are all on main and total 6379
+net removed Rust lines, including helpers/callers. Current source is 120018
+lines and all 81 final source/input/artifact pins match the recorded normal
+release and full any% 129712/0 / Speed Booster 148406/0. The requested larger
+reductions and efficiency investigation are delivered. Broader phase-3
+readability/ownership work and additional optional reductions remain open.
+
 Residual unused-import draft (2026-10-20): an independent 183-function
 assessment overlaps 178 removals already committed in 7299f73b. Its remaining
 five Bang helpers and 569 unused import bindings save 331 formatted Rust
