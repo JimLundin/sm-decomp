@@ -1476,12 +1476,89 @@ from the committed 106,189 and its reduction budget.
 These rules remove no bank module. The adopted source needs another
 **6,190 lines** removed to reach 99,999; it does not establish that remaining
 budget. The historical-source pipeline and maintained-source reductions are
-separate comparisons, not additive savings. The next experiment tests finite
-typed instruction operations and retained exceptional handlers against current
-Rust; it differs from the rejected fusion of whole handlers into match arms.
-Artifacts are under
+separate comparisons, not additive savings. The subsequent finite instruction
+operation experiment is now complete, as recorded below. Adoption artifacts are under
 `TEMP/sm-tailored-next/current-record-writes`, `current-ram-writes`,
 `current-composed`, `record-writes`, `unaligned-current` and `adoption-final`.
+
+### Price new representations against the compact engine
+
+The next implemented experiments all use the repaired **106,189-line** current
+root. These are complete separate prices; overlaps prevent adding their savings.
+
+| Actual replacement | Complete lines | Change | Decision |
+| --- | ---: | ---: | --- |
+| Typed instruction operations, data and executor | 106,740 | +551 | Reject |
+| Boss/presentation finite state programs | 106,831 | +642 | Reject |
+| Callback address constants owned by dispatch rows | 106,127 | -62 | Park |
+| Same-type constant declaration grouping | 106,095 | -94 | Park |
+| Actual combination of the two constant changes | 106,079 | -110 | Park |
+| Residual typed/byte RAM pointer chains | 106,083 | -106 | Park |
+| Ordinary internal macro imports | 106,142 | -47 | Park |
+| Infix word arithmetic with ordinary operands | 106,115 | -74 | Reject: tokens/text grow |
+| Infix word arithmetic with named RAM operands | 106,069 | -120 | Park |
+
+The instruction prototype replaces 340 handlers with complete ordered effects,
+operand/destination data and separate pointer/offset/pair return contracts.
+Its 1,377-line table/runner includes 204 support lines and 1,173 table lines;
+direct/shared exceptions, imports, routing hooks and registration are counted.
+It adds 299 tokens under its disclosed lexical counter, although LF-normalized
+source bytes fall by 13,528. An earlier raw-byte increase mixed LF and CRLF and
+is superseded by that normalized figure. The negative physical-line result
+rejects the design before compilation or runtime checks. Its numeric place
+data would also need descriptive names and their costs before any adoption.
+This tests an actual finite operation representation, distinct from the older
+experiment that merely fused whole handlers into match arms.
+
+The distinct non-instruction runner replaces 98 complete callbacks across 12
+boss/presentation dispatchers and retains 306 other phases. It executes 39
+exact underflow waits, 179 ordered word effects, 137 native actions and two
+word gates, with all retained callback identities and caller costs. Its
+155-line shared runner is charged. The complete result adds 642 lines, 2,963
+tokens and 12,989 spelling bytes. Final complete library/frontend compilation,
+formatting and numeric routing checks pass; it is rejected before runtime work.
+The old Mother Brain prototype's 318-line saving is unavailable after current
+callback/prefix/countdown sharing; it is not additional missing budget.
+
+Constant ownership covers 48 same-module address/function pairs. The complete
+ownership and combined library/frontend builds pass; inverse source checks
+retain all 1,123 constants. After grouping, ownership removes only another
+16 lines while adding 265 tokens and 519 bytes. It is not a substantial new
+source reduction. No gameplay replay was needed or claimed for this price.
+
+The pointer rule removes casts to byte pointers and back using the existing
+`ram_ptr!` byte-offset grammar: 173 replacements across 26 files, including
+71 macro-body sites and eight macro templates. It preserves sequential offset
+expressions, their units and order; typed offsets before the byte cast remain
+outside the rule. The complete candidate also removes 2,132 tokens and 4,271
+spelling bytes, with zero support cost. Thirteen matcher controls and the full
+fixed-point source audit pass; broad compilation/replay is deferred because of
+the small price. Its report traces the actual C flare-animation timer store
+through original generated Rust, maintained Rust and emitted output.
+
+Internal imports remove repeated paths at 1,670 sites across 52 files, including
+62 added import rows. This removes 5,151 parser tokens and 16,032 spelling bytes
+but only 47 lines; many statements already occupy one line. This is an actual
+formatted, uncompiled price, with no macro-resolution or behavior proof.
+Token counts use each experiment's documented counter and are not aggregated
+across different lexers.
+
+The arithmetic trial changes representation rather than repeating the older
+nested `add16`/`sub16` helper experiment. A small infix grammar retains the
+explicit binary tree and conventional operators; the second form also uses
+confirmed RAM names directly, with parenthesized external Rust operands.
+The complete cohort contains 932 roots: 472 signed deltas and 460 low-word
+projections, counting 13 overlaps once. Ordinary operands remove 74 lines but
+add 2,591 tokens and 1,373 spelling bytes. Named operands remove 120 lines,
+810 tokens and 3,978 spelling bytes, including all macro support. Both remain
+formatted pricing drafts without compilation or behavior proof. The named
+form is parked because its complete saving is small.
+
+None of these trials changes main or retires a bank. They establish no new
+substantial adoption or demonstrated route through the remaining 6,190 lines.
+Reports and source candidates are under `TEMP/sm-tailored-next/instruction-data`,
+`finite-state-programs`, `address-ownership`, `ram-pointer-chains`,
+`internal-imports` and `infix-word-math`.
 
 ## Independent transpilers: executed comparisons
 

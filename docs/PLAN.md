@@ -453,12 +453,31 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    item 3. The isolated 110,009-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
 
-   Next: price a finite typed instruction-data replacement using the existing
-   original-C/current-Rust lineage. Unlike the rejected executor fusion, this
-   shares complete store, flag, arithmetic, sound and operand-consumption
-   operations; complex handlers remain explicit exceptions. Count all tables,
-   execution, routing and retained wrappers before expanding validation. This
-   is a new representation experiment, not another clone scan or a forecast.
+   The new finite typed instruction-data experiment also fails its complete
+   price: **106,189 -> 106,740 (+551)** for 340 handlers, including all tables,
+   execution, routing and retained exceptions. It shares complete operations
+   rather than concatenating bodies, but their metadata costs outweigh the
+   remaining compact callbacks. Reject without builds or behavior claims.
+   Named destination metadata would cost still more; the numeric draft is not
+   a naming-complete architecture. TEMP: sm-tailored-next/instruction-data.
+
+   The distinct non-instruction state-program price also grows the complete
+   source: **106,189 -> 106,831 (+642)** across 98 replaced callbacks and 306
+   retained phases in 12 boss/presentation dispatchers. The shared runner
+   covers exact waits, ordered word effects, native calls and transitions;
+   all support and callback identity costs count. Complete builds, formatting
+   and numeric routing checks pass; reject without runtime work.
+   An infix arithmetic grammar prices 932 roots: ordinary operands save 74
+   lines while growing tokens/text; named RAM operands save 120 lines and
+   shrink tokens/text. Park the named version before broad validation.
+   Reports: TEMP sm-tailored-next/finite-state-programs and infix-word-math.
+
+   These completed representation trials establish no new substantial adoption
+   or path through the remaining 6,190-line gap. Stop these scoped studies.
+   The next discovery must name a materially different complete game algorithm
+   and an actual replacement; another generic operation runner, spelling pass
+   or repeat of the covered detectors is not the next item. Current-derived
+   translation recovery remains demonstrated separately at 110,009 lines.
 
    The expanded source-first C experiment is complete: sharing 35 algorithm
    groups, retiring forwarding functions, fusing 789 instruction bodies and
@@ -825,6 +844,21 @@ original transpilation, but its adaptation at 65c7fc36 saves only **19 lines**
 across 1,375 sites, including parsed macro invocation bodies. The complete
 formatted snapshot is 107,520 -> 107,501; it has no compiler or behavior proof.
 Park it without further validation. TEMP sm-literal-adoption-65c7fc36.
+
+Further complete current-source prices at 106,189 remain small:
+
+- Callback address constants combined with existing dispatch ownership save
+  62 lines; grouping repeated constant declarations alone saves 94; the actual
+  combination saves 110. Ownership after grouping increases tokens and text.
+  Complete builds and source checks pass; park without runtime work.
+- Residual typed/byte RAM pointer chains save 106 lines across 173 replacements,
+  including macro bodies/templates, with no new support. Matcher guards and a
+  source audit pass; park before broad compilation or replay.
+- Ordinary internal macro imports remove 5,151 parser tokens and 16,032 spelling
+  bytes but only 47 lines, including imports. Park this uncompiled price.
+
+These are separate, overlapping controls, not an adoption budget. Reports:
+TEMP sm-tailored-next/address-ownership, ram-pointer-chains and internal-imports.
 
 When revisiting one of these exact families, consult its historical section
 with `git show ec45c573:docs/PLAN.md` and search the relevant heading/symbol.
