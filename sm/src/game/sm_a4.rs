@@ -1565,9 +1565,7 @@ pub unsafe fn Crocomire_9BB3(game: &mut Game) {
     (*E).var_A = (*E).var_A.wrapping_add(1);
     (*E).var_A = (*E).var_A.wrapping_add(1);
 }
-pub unsafe fn Crocomire_Func_91(game: &mut Game) {
-    Crocomire_9BB3(game);
-}
+pub use self::Crocomire_Func_89 as Crocomire_Func_91;
 pub unsafe fn Crocomire_Func_92(game: &mut Game) {
     NormalEnemyTouchAi(game);
     let E = Get_Crocomire(0, game);
@@ -1684,19 +1682,7 @@ pub unsafe fn Crocomire_Func_95(game: &mut Game) {
     (*E).base.flash_timer = ((*E).base.flash_timer).wrapping_add(14);
     (*E).base.ai_handler_bits = ((*E).base.ai_handler_bits) | (2u16);
 }
-pub unsafe fn Crocomire_Func_1(game: &mut Game) {
-    let v0: i32 = word!(game.collision_detection_index) as i32;
-    game.eproj_spawn_pt = Point16U {
-        x: word!(game.projectile_x_pos[v0]),
-        y: word!(game.projectile_y_pos[v0]),
-    };
-    let v1: u16 = (if (word!(game.projectile_type[v0]) & 0x200) == 0 {
-        6
-    } else {
-        29
-    }) as u16;
-    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, v1, game);
-}
+pub use self::Crocomire_Func_94 as Crocomire_Func_1;
 pub unsafe fn CrocomireTongue_Init(game: &mut Game) {
     let E = Get_Crocomire(word!(game.cur_enemy_index) as i32, game);
     if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 2) != 0 {

@@ -3961,14 +3961,7 @@ pub unsafe fn KiHunter_Main(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn KiHunterWings_Main(game: &mut Game) {
-    let E = Get_KiHunter(word!(game.cur_enemy_index) as i32, game);
-    CallKiHunterFunc(
-        (((*E).var_A) as u32) | (0xa80000u32),
-        word!(game.cur_enemy_index),
-        game,
-    );
-}
+pub use self::KiHunter_Main as KiHunterWings_Main;
 pub unsafe fn KiHunter_Func_1(k: u16, game: &mut Game) {
     let mut v4: i16 = 0;
     let E = Get_KiHunter(k as i32, game);

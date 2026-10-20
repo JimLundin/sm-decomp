@@ -1929,12 +1929,7 @@ pub unsafe fn CinematicFunc_Func2(game: &mut Game) {
     }
     MaybeSkipCinematics(game);
 }
-pub unsafe fn CinematicSpriteInit_1(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1;
-    word!(game.cinematicbg_arr7[v1] = 129);
-    word!(game.cinematicbg_arr8[v1] = 112);
-    word!(game.cinematicbg_arr9[v1] = 512);
-}
+pub use self::CinematicSpriteInit_0 as CinematicSpriteInit_1;
 pub unsafe fn CinematicSprInstr_9D5D(k: u16, j: u16, game: &mut Game) -> u16 {
     *ram_ptr!(game; 0x69) = 17;
     word!(game.cinematic_function = ((0x8b9d90i32) as u16));
@@ -1965,12 +1960,7 @@ pub unsafe fn CinematicFunc_Func4(game: &mut Game) {
     }
     MaybeSkipCinematics(game);
 }
-pub unsafe fn CinematicSpriteInit_2(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1;
-    word!(game.cinematicbg_arr7[v1] = 129);
-    word!(game.cinematicbg_arr8[v1] = 112);
-    word!(game.cinematicbg_arr9[v1] = 512);
-}
+pub use self::CinematicSpriteInit_0 as CinematicSpriteInit_2;
 pub unsafe fn CinematicSprInstr_9DD6(k: u16, j: u16, game: &mut Game) -> u16 {
     *ram_ptr!(game; 0x69) = 17;
     word!(game.cinematic_function = ((0x8b9e12i32) as u16));
@@ -2002,12 +1992,7 @@ pub unsafe fn CinematicFunc_Func5(game: &mut Game) {
     }
     MaybeSkipCinematics(game);
 }
-pub unsafe fn CinematicSpriteInit_3(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1;
-    word!(game.cinematicbg_arr7[v1] = 129);
-    word!(game.cinematicbg_arr8[v1] = 112);
-    word!(game.cinematicbg_arr9[v1] = 512);
-}
+pub use self::CinematicSpriteInit_0 as CinematicSpriteInit_3;
 pub unsafe fn CinematicSprInstr_Func8(k: u16, j: u16, game: &mut Game) -> u16 {
     *ram_ptr!(game; 0x69) = 17;
     word!(game.cinematic_function = ((0x8b9e8bi32) as u16));
@@ -3388,10 +3373,7 @@ pub unsafe fn CinematicFunction_Intro_Func32(k: u16, j: u16, game: &mut Game) ->
     TransferJapaneseTextTilesToVram(game);
     j
 }
-pub unsafe fn EnableCinematicBgTilemapUpdates__(k: u16, j: u16, game: &mut Game) -> u16 {
-    EnableCinematicBgTilemapUpdates(game);
-    j
-}
+pub use self::EnableCinematicBgTilemapUpdates__0 as EnableCinematicBgTilemapUpdates__;
 pub unsafe fn CinematicFunction_Intro_Func34(game: &mut Game) {
     HandleFadeOut(game);
     if *ram_ptr!(game; 0x51) == 0x80 {
@@ -3622,12 +3604,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) 
         SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCF21 as u16, 3, game);
     };
 }
-pub unsafe fn CinematicFunction_Intro_Func49(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1;
-    word!(game.cinematicbg_arr7[v1] = 112);
-    word!(game.cinematicbg_arr8[v1] = 155);
-    word!(game.cinematicbg_arr9[v1] = 3584);
-}
+pub use self::SetSomeStuffForSpriteObject_3 as CinematicFunction_Intro_Func49;
 pub unsafe fn CinematicFunction_Intro_Func50(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1;
     if word!(game.cinematicspr_instr_ptr[(v1 + 1)]) as i32 + 0x3487 & 0x8000 == 0 {

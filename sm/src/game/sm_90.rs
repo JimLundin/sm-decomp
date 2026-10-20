@@ -1592,14 +1592,7 @@ pub unsafe fn Samus_CheckAndMoveY(game: &mut Game) -> u8 {
     Samus_MoveY_WithSpeedCalc(game);
     1
 }
-pub unsafe fn Samus_MoveY_Simple_(game: &mut Game) -> u8 {
-    if word!(game.samus_y_dir) == 0 {
-        return 0;
-    }
-    Samus_CheckStartFalling(game);
-    Samus_MoveY_WithSpeedCalc(game);
-    1
-}
+pub use self::Samus_CheckAndMoveY as Samus_MoveY_Simple_;
 pub unsafe fn Samus_Move_NoBaseSpeed_X(game: &mut Game) {
     Samus_MoveX(0, game);
 }
@@ -2650,12 +2643,8 @@ pub unsafe fn Samus_Movement_0A_KnockbackOrCrystalFlashEnding(game: &mut Game) {
     word!(game.input_to_pose_calc = 0);
     Samus_Move_NoSpeedCalc_Y(game);
 }
-pub unsafe fn Samus_Movement_0B_Unused(game: &mut Game) {
-    word!(game.input_to_pose_calc = 0);
-}
-pub unsafe fn Samus_Movement_0C_Unused(game: &mut Game) {
-    word!(game.input_to_pose_calc = 0);
-}
+pub use self::Samus_Movement_07_Unused as Samus_Movement_0B_Unused;
+pub use self::Samus_Movement_07_Unused as Samus_Movement_0C_Unused;
 pub fn Samus_Movement_0D_Unused(game: &mut Game) {}
 pub fn nullsub_13(game: &mut Game) {}
 static kSamusCrouchingEtcFuncs: [Option<HandlerFunc>; 12] = callback_table! { unsafe HandlerFunc;
@@ -2734,22 +2723,7 @@ pub unsafe fn Samus_Movement_12_SpringBallInAir(game: &mut Game) {
         Samus_JumpingMovement(game);
     };
 }
-pub unsafe fn Samus_Movement_13_SpringBallFalling(game: &mut Game) {
-    if word!(game.joypad1_lastkeys) as i32 & (kButton_Left as i32 | kButton_Right as i32) == 0
-        && word!(game.samus_x_accel_mode) == 0
-    {
-        Samus_CancelSpeedBoost(game);
-        word! { game, 0;
-            samus_x_extra_run_speed, samus_x_extra_run_subspeed, samus_x_base_speed,
-            samus_x_base_subspeed, samus_x_accel_mode,
-        }
-    }
-    if word!(game.used_for_ball_bounce_on_landing) != 0 {
-        Samus_MorphedBouncingMovement(game);
-    } else {
-        Samus_MorphedFallingMovement(game);
-    };
-}
+pub use self::Samus_Movement_08_MorphBallFalling as Samus_Movement_13_SpringBallFalling;
 pub unsafe fn Samus_Movement_14_WallJumping(game: &mut Game) {
     if word!(game.samus_anim_frame) as i32 - 23i32 & 0x8000 != 0 {
         if word!(game.samus_anim_frame) as i32 - 3i32 & 0x8000 == 0
@@ -2786,25 +2760,10 @@ pub unsafe fn Samus_Movement_17_TurningAroundJumping(game: &mut Game) {
         samus_x_extra_run_speed, samus_x_extra_run_subspeed, input_to_pose_calc,
     }
 }
-pub unsafe fn Samus_Movement_18_TurningAroundFalling(game: &mut Game) {
-    Samus_HandleMovement_X(game);
-    if Samus_CheckAndMoveY(game) & 1 == 0 {
-        Samus_Move_NoSpeedCalc_Y(game);
-    }
-    Samus_CancelSpeedBoost(game);
-    word! { game, 0;
-        samus_x_extra_run_speed, samus_x_extra_run_subspeed, input_to_pose_calc,
-    }
-}
-pub unsafe fn Samus_Movement_19_DamageBoost(game: &mut Game) {
-    Samus_JumpingMovement(game);
-}
-pub unsafe fn Samus_Movement_1A_GrabbedByDraygon(game: &mut Game) {
-    word!(game.input_to_pose_calc = 0);
-}
-pub unsafe fn Samus_Movement_1B_ShinesparkEtc(game: &mut Game) {
-    word!(game.input_to_pose_calc = 0);
-}
+pub use self::Samus_Movement_02_NormalJumping as Samus_Movement_19_DamageBoost;
+pub use self::Samus_Movement_07_Unused as Samus_Movement_1A_GrabbedByDraygon;
+pub use self::Samus_Movement_07_Unused as Samus_Movement_1B_ShinesparkEtc;
+pub use self::Samus_Movement_17_TurningAroundJumping as Samus_Movement_18_TurningAroundFalling;
 static kShr0x80: [u8; 8] = [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1];
 static kShr0xFc00: [u16; 8] = [0xfc00, 0x7e00, 0x3f00, 0x1f80, 0xfc0, 0x7e0, 0x3f0, 0x1f8];
 unsafe fn MarkMapTileAsExplored(r18: u16, r24: u16, game: &mut Game) {
@@ -6513,10 +6472,7 @@ pub unsafe fn SetupBombJump_1(game: &mut Game) -> u8 {
     }
     1
 }
-pub unsafe fn SetupBombJump_4(game: &mut Game) -> u8 {
-    word!(game.samus_new_pose_interrupted = word!(game.samus_pose));
-    1
-}
+pub use self::Samus_HitInterrupt_Ball as SetupBombJump_4;
 pub unsafe fn SetupBombJump_2(game: &mut Game) -> u8 {
     word!(game.samus_input_handler = ((0x90e913i32) as u16));
     SetupBombJump_1A(game)
@@ -6688,17 +6644,7 @@ pub unsafe fn Samus_Func5(game: &mut Game) {
         Samus_BombJumpFallingYMovement_(game);
     };
 }
-pub unsafe fn Samus_Func6(game: &mut Game) {
-    Samus_BombJumpFallingXMovement_(game);
-    if word!(game.samus_collision_flag) != 0 {
-        word!(game.samus_movement_handler = ((0x90a337i32) as u16));
-        word!(game.frame_handler_gamma = ((0x90e0e6i32) as u16));
-        word!(game.samus_var62 = 0);
-        Samus_ClearMoveVars(game);
-    } else {
-        Samus_BombJumpFallingYMovement_(game);
-    };
-}
+pub use self::Samus_Func5 as Samus_Func6;
 pub unsafe fn Samus_GrabbedByDraygonFrameHandler(game: &mut Game) {
     if word!(game.grapple_beam_function) as i32 == 0x9bc77e & 0xffff {
         word!(game.samus_new_pose = -1i32 as u16);
@@ -7186,9 +7132,7 @@ pub unsafe fn Samus_LowHealthCheck_(game: &mut Game) {
         QueueSfx3_Max6(1, game);
     }
 }
-pub unsafe fn Samus_LowHealthCheck_0(game: &mut Game) {
-    Samus_LowHealthCheck_(game);
-}
+pub use self::Samus_LowHealthCheck as Samus_LowHealthCheck_0;
 pub unsafe fn Samus_JumpCheck(game: &mut Game) {
     if (word!(game.button_config_jump_a) & word!(game.joypad1_lastkeys)) != 0
         && (word!(game.button_config_jump_a) & word!(game.joypad1_input_samusfilter)) != 0
@@ -7606,12 +7550,7 @@ pub unsafe fn SamusCode_03(game: &mut Game) -> u8 {
     Samus_UpdatePreviousPose(game);
     1
 }
-pub unsafe fn SamusCode_04_06_Common(game: &mut Game) -> u8 {
-    word!(game.flare_counter = 0);
-    ClearFlareAnimationState(game);
-    Samus_LoadSuitPalette(game);
-    0
-}
+pub use self::SwitchToHudHandler_Nothing as SamusCode_04_06_Common;
 pub unsafe fn SamusCode_04(game: &mut Game) -> u8 {
     word!(game.samus_charge_palette_index = 0);
     SamusCode_04_06_Common(game)

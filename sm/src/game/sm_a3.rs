@@ -1562,13 +1562,7 @@ pub unsafe fn Sidehopper_Func_14(game: &mut Game) {
         Sidehopper_Func_19(game);
     };
 }
-pub unsafe fn Sidehopper_Func_15(game: &mut Game) {
-    if (*Get_Sidehopper(word!(game.cur_enemy_index) as i32, game)).var_03 != 0 {
-        Sidehopper_Func_20(game);
-    } else {
-        Sidehopper_Func_19(game);
-    };
-}
+pub use self::Sidehopper_Func_14 as Sidehopper_Func_15;
 pub unsafe fn Sidehopper_Func_16(game: &mut Game) {
     if (*Get_Sidehopper(word!(game.cur_enemy_index) as i32, game)).var_03 != 0 {
         Sidehopper_Func_22(game);
@@ -1576,13 +1570,7 @@ pub unsafe fn Sidehopper_Func_16(game: &mut Game) {
         Sidehopper_Func_21(game);
     };
 }
-pub unsafe fn Sidehopper_Func_17(game: &mut Game) {
-    if (*Get_Sidehopper(word!(game.cur_enemy_index) as i32, game)).var_03 != 0 {
-        Sidehopper_Func_22(game);
-    } else {
-        Sidehopper_Func_21(game);
-    };
-}
+pub use self::Sidehopper_Func_16 as Sidehopper_Func_17;
 pub unsafe fn Sidehopper_Func_18(game: &mut Game) {
     let E = Get_Sidehopper(word!(game.cur_enemy_index) as i32, game);
     if (*E).var_04 != 0 {

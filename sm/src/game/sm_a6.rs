@@ -429,12 +429,7 @@ pub unsafe fn SpikeyPlatform2ndEnemy_Init(game: &mut Game) {
     (*v1).x_pos = word!(game.enemy_drawing_queue[(v0 + 91)]);
     (*v1).y_pos = (word!(game.enemy_drawing_queue[(v0 + 93)])).wrapping_add(12);
 }
-pub unsafe fn SpikeyPlatform2ndEnemy_Main(game: &mut Game) {
-    let v0: i32 = word!(game.cur_enemy_index) as i32 >> 1;
-    let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    (*v1).x_pos = word!(game.enemy_drawing_queue[(v0 + 91)]);
-    (*v1).y_pos = (word!(game.enemy_drawing_queue[(v0 + 93)])).wrapping_add(12);
-}
+pub use self::SpikeyPlatform2ndEnemy_Init as SpikeyPlatform2ndEnemy_Main;
 crate::game::address_dispatch! {
     pub unsafe fn CallSpikeyPlatformFunc(ea: u32, k: u16, game: &mut Game) => ea;
         call (game); default { Unreachable(game); };

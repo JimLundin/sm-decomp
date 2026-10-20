@@ -978,18 +978,13 @@ pub unsafe fn Torizo_Func_9(k: u16, game: &mut Game) {
         enemy_instruction! {[(*E).base]; instruction = (*E).base.current_instruction.wrapping_add(1), timer = 1}
     }
 }
-pub unsafe fn Torizo_Func_10(k: u16, game: &mut Game) {
-    Torizo_C620(k, game);
-    Torizo_C643(k, game);
-}
+pub use self::Torizo_Func_3 as Torizo_Func_10;
 pub unsafe fn Torizo_D5E6(k: u16, game: &mut Game) {
     Torizo_C620(k, game);
     let E = Get_Torizo(k as i32, game);
     CallEnemyPreInstr((((*E).var_F) as u32) | (0xaa0000u32), game);
 }
-pub unsafe fn Torizo_D5ED(k: u16, game: &mut Game) {
-    Torizo_C643(k, game);
-}
+pub use self::Torizo_Func_6 as Torizo_D5ED;
 pub unsafe fn Torizo_D5F1(k: u16, game: &mut Game) {
     let E = Get_Torizo(k as i32, game);
     let torizo_var_03: u16 = (*E).var_03;
@@ -1173,9 +1168,7 @@ pub unsafe fn Shaktool_D956(k: u16, jp: *const u16, a: u16, game: &mut Game) -> 
     );
     jp
 }
-pub fn Shaktool_Instr_6(k: u16, jp: *const u16) -> *const u16 {
-    jp
-}
+pub use self::Torizo_Instr_7 as Shaktool_Instr_6;
 pub unsafe fn Shaktool_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let shakt_var_E: u16 = (*Get_Shaktool(k as i32, game)).var_E;
     (*Get_Shaktool(shakt_var_E as i32, game)).var_F =

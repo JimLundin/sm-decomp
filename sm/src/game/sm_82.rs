@@ -4975,10 +4975,7 @@ pub unsafe fn LoadLibraryBackgroundFunc_A_ClearBG2Tilemap(j: u16, game: &mut Gam
     ClearBG2Tilemap(game);
     j
 }
-pub unsafe fn LoadLibraryBackgroundFunc_C_ClearKraidLayer2(j: u16, game: &mut Game) -> u16 {
-    ClearBG2Tilemap(game);
-    j
-}
+pub use self::LoadLibraryBackgroundFunc_A_ClearBG2Tilemap as LoadLibraryBackgroundFunc_C_ClearKraidLayer2;
 pub unsafe fn LoadLibraryBackgroundFunc_8_TransferToVramAndSetBg3(
     mut j: u16,
     game: &mut Game,
@@ -5602,10 +5599,7 @@ pub unsafe fn sub_82F35B(j: u16, game: &mut Game) {
     *(ram_ptr!(game, u16; 0x1a93)).offset(((j as i32 >> 1) + 13) as isize) = 128;
     sub_82F369(j, game);
 }
-pub unsafe fn sub_82F363(j: u16, game: &mut Game) {
-    *(ram_ptr!(game, u16; 0x1a93)).offset(((j as i32 >> 1) + 13) as isize) = 128;
-    sub_82F369(j, game);
-}
+pub use self::sub_82F35B as sub_82F363;
 pub unsafe fn sub_82F369(j: u16, game: &mut Game) {
     let v1: i32 = j as i32 >> 1;
     word!(game.eproj_x_vel[(v1 + 3)] = 16);

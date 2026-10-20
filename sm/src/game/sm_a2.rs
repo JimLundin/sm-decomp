@@ -3313,14 +3313,7 @@ pub unsafe fn LowerNorfairRio_Func_6(k: u16, game: &mut Game) {
         (*E).var_F = ((0xa2c771i32) as u16);
     }
 }
-pub unsafe fn LowerNorfairRio_Func_7(a: u16, game: &mut Game) {
-    let E = Get_NorfairRio(word!(game.cur_enemy_index) as i32, game);
-    if a != (*E).var_00 {
-        (*E).var_00 = a;
-        enemy_instruction! {[(*E).base]; instruction = a, timer = 1}
-        (*E).base.timer = 0;
-    }
-}
+pub use self::NorfairRio_Func_7 as LowerNorfairRio_Func_7;
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     MaridiaLargeSnail_Instr_CB6B [jp] { QueueSfx2_Max6(0xe, game); };
     MaridiaLargeSnail_Instr_CCB3 [jp] {

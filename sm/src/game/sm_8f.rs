@@ -131,9 +131,7 @@ pub unsafe fn DoorCode_Scroll_17_Blue(game: &mut Game) {
 pub unsafe fn DoorCode_Scroll_4_Blue(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 4) = 1;
 }
-pub unsafe fn DoorCode_Scroll_6_Green(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 6) = 2;
-}
+pub use self::DoorCode_Scroll6_Green as DoorCode_Scroll_6_Green;
 pub unsafe fn DoorCode_Scroll_3_Green(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 3) = 2;
 }
@@ -171,9 +169,7 @@ pub unsafe fn DoorCode_SetScroll_8(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 36) = 2;
     *ram_ptr!(game; 0xcd20, 37) = 2;
 }
-pub unsafe fn DoorCode_SetScroll_9(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 2) = 1;
-}
+pub use self::DoorCode_Scroll_2_Blue as DoorCode_SetScroll_9;
 pub unsafe fn DoorCode_SetScroll_10(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 0) = 2;
 }
@@ -208,9 +204,7 @@ pub unsafe fn DoorCode_SetScroll_18(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 15) = 2;
     *ram_ptr!(game; 0xcd20, 18) = 2;
 }
-pub unsafe fn DoorCode_SetScroll_19(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 6) = 2;
-}
+pub use self::DoorCode_Scroll6_Green as DoorCode_SetScroll_19;
 pub unsafe fn DoorCode_SetScroll_20(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 0) = 2;
     *ram_ptr!(game; 0xcd20, 1) = 1;
@@ -277,9 +271,7 @@ pub unsafe fn DoorCode_SetScroll_35(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 2) = 0;
     *ram_ptr!(game; 0xcd20, 3) = 0;
 }
-pub unsafe fn DoorCode_SetScroll_36(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 0) = 2;
-}
+pub use self::DoorCode_SetScroll_10 as DoorCode_SetScroll_36;
 pub unsafe fn DoorCode_SetScroll_37(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 0) = 1;
     *ram_ptr!(game; 0xcd20, 1) = 1;
@@ -289,9 +281,7 @@ pub unsafe fn DoorCode_SetScroll_38(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 0) = 1;
     *ram_ptr!(game; 0xcd20, 3) = 0;
 }
-pub unsafe fn DoorCode_SetScroll_39(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 0) = 1;
-}
+pub use self::DoorCode_Scroll0_Blue as DoorCode_SetScroll_39;
 pub unsafe fn DoorCode_SetScroll_40(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 0) = 1;
     *ram_ptr!(game; 0xcd20, 1) = 0;
@@ -446,9 +436,7 @@ pub unsafe fn DoorCode_StartWreckedSkipTreadmill_East(game: &mut Game) {
 pub unsafe fn DoorCode_SetScroll_44(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 1) = 1;
 }
-pub unsafe fn DoorCode_SetScroll_45(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 0) = 2;
-}
+pub use self::DoorCode_SetScroll_10 as DoorCode_SetScroll_45;
 pub unsafe fn DoorCode_SetScroll_46(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 3) = 0;
     *ram_ptr!(game; 0xcd20, 4) = 1;
@@ -514,10 +502,7 @@ pub unsafe fn DoorCode_SetScroll_50(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 10) = 0;
     *ram_ptr!(game; 0xcd20, 11) = 1;
 }
-pub unsafe fn DoorCode_SetScroll_53(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 0) = 0;
-    *ram_ptr!(game; 0xcd20, 4) = 1;
-}
+pub use self::DoorCode_SetScroll_14 as DoorCode_SetScroll_53;
 pub unsafe fn DoorCode_SetScroll_54(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 0) = 0;
     *ram_ptr!(game; 0xcd20, 1) = 1;
@@ -531,15 +516,11 @@ pub unsafe fn DoorCode_SetScroll_56(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 2) = 0;
     *ram_ptr!(game; 0xcd20, 1) = 1;
 }
-pub unsafe fn DoorCode_SetScroll_57(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 1) = 1;
-}
+pub use self::DoorCode_SetScroll_44 as DoorCode_SetScroll_57;
 pub unsafe fn DoorCode_SetScroll_58(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 6) = 1;
 }
-pub unsafe fn DoorCode_SetScroll_59(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 4) = 0;
-}
+pub use self::DoorCode_SetScroll_7 as DoorCode_SetScroll_59;
 pub unsafe fn DoorCode_SetScroll_61(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 4) = 0;
     *ram_ptr!(game; 0xcd20, 7) = 0;
@@ -548,14 +529,8 @@ pub unsafe fn DoorCode_SetScroll_62(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 2) = 0;
     *ram_ptr!(game; 0xcd20, 1) = 1;
 }
-pub unsafe fn DoorCode_SetScroll_63(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 0) = 2;
-    *ram_ptr!(game; 0xcd20, 2) = 2;
-}
-pub unsafe fn DoorCode_SetScroll_64(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 0) = 2;
-    *ram_ptr!(game; 0xcd20, 1) = 2;
-}
+pub use self::DoorCode_SetScroll_16 as DoorCode_SetScroll_64;
+pub use self::DoorCode_SetScroll_28 as DoorCode_SetScroll_63;
 pub unsafe fn DoorCode_SetScroll_65(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 24) = 1;
     *ram_ptr!(game; 0xcd20, 25) = 0;

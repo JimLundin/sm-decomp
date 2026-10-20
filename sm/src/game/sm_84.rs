@@ -1856,9 +1856,7 @@ pub fn PlmSetup_B737_SubmergingQuicksand(_j: u16, game: &mut Game) -> u8 {
     game.g_ram[0xb34..0xb36].fill(0);
     0
 }
-pub fn PlmSetup_B73B_B73F_SandFalls(_j: u16) -> u8 {
-    0
-}
+pub use self::PlmSetup_ReturnCarryClear as PlmSetup_B73B_B73F_SandFalls;
 pub unsafe fn PlmSetup_ClearShitroidInvisibleWall(j: u16, game: &mut Game) -> u8 {
     let mut v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
     for _ in 0i16..10i16 {
@@ -2988,10 +2986,7 @@ pub unsafe fn PlmSetup_D708_LowerNorfairChozoBlockUnused(j: u16, game: &mut Game
     );
     0
 }
-pub unsafe fn PlmSetup_D70C_NoobTube(j: u16, game: &mut Game) -> u8 {
-    WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[(j >> 1)]), 0x8044, game);
-    0
-}
+pub use self::PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused as PlmSetup_D70C_NoobTube;
 pub unsafe fn PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet(k: u16, game: &mut Game) {
     let v2: i32 = k as i32 >> 1;
     let idx: i32 = PrepareBitAccess(word!(game.plm_room_arguments[v2]), game) as i32;
@@ -3166,17 +3161,7 @@ crate::instruction_callbacks! { pub unsafe fn (
         WriteLevelDataBlockTypeAndBts((v4).wrapping_add(2), 0xa003, game);
     };
 }
-pub unsafe fn PlmInstr_DamageDraygonTurret2(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    SetPlmVarPtr(k, 1, game);
-    let v2: u16 = word!(game.plm_block_indices[(k >> 1)]);
-    WriteLevelDataBlockTypeAndBts(v2, 0xa003, game);
-    WriteLevelDataBlockTypeAndBts(
-        (word!(game.room_width_in_blocks) as i32 * 2 + v2 as i32) as u16,
-        0xa003,
-        game,
-    );
-    plmp
-}
+pub use self::PlmInstr_DamageDraygonTurret as PlmInstr_DamageDraygonTurret2;
 crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
@@ -3226,19 +3211,7 @@ pub unsafe fn PlmSetup_DraygonCannonFacingDiagonalRight(j: u16, game: &mut Game)
     WriteLevelDataBlockTypeAndBts((v3).wrapping_add(2), 0xd0ff, game);
     0
 }
-pub unsafe fn PlmSetup_DraygonCannonFacingLeft(j: u16, game: &mut Game) -> u8 {
-    let v1: i32 = j as i32 >> 1;
-    word!(game.plm_variable[v1] = word!(game.plm_room_arguments[v1]));
-    word!(game.plm_room_arguments[v1] = 0);
-    let v2: u16 = word!(game.plm_block_indices[v1]);
-    WriteLevelDataBlockTypeAndBts(v2, 0xc044, game);
-    WriteLevelDataBlockTypeAndBts(
-        (word!(game.room_width_in_blocks) as i32 * 2 + v2 as i32) as u16,
-        0xd0ff,
-        game,
-    );
-    0
-}
+pub use self::PlmSetup_DraygonCannonFacingRight as PlmSetup_DraygonCannonFacingLeft;
 pub unsafe fn PlmSetup_DraygonCannonFacingDiagonalLeft(j: u16, game: &mut Game) -> u8 {
     let v1: i32 = j as i32 >> 1;
     word!(game.plm_variable[v1] = word!(game.plm_room_arguments[v1]));

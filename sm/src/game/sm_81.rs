@@ -2011,10 +2011,7 @@ pub unsafe fn FileSelectMap_18(game: &mut Game) {
     word!(game.menu_index, wrapping_add(1));
     LoadAreaSelectBackgroundTilemap(word!(game.area_index), game);
 }
-pub unsafe fn FileSelectMap_3_LoadAreaSelectBackgroundTilemap(game: &mut Game) {
-    word!(game.menu_index, wrapping_add(1));
-    LoadAreaSelectBackgroundTilemap(word!(game.area_index), game);
-}
+pub use self::FileSelectMap_18 as FileSelectMap_3_LoadAreaSelectBackgroundTilemap;
 pub unsafe fn LoadAreaSelectBackgroundTilemap(j: u16, game: &mut Game) {
     let v1: u16 = word!(game.vram_write_queue_tail);
     let v2 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);

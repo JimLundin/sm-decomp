@@ -3101,13 +3101,8 @@ pub unsafe fn Samus_HandleTransFromBlockColl_3(game: &mut Game) {
     word!(game.samus_new_pose = word!(game.samus_pose));
     word!(game.samus_momentum_routine_index = 5);
 }
-pub unsafe fn Samus_HandleTransFromBlockColl_4(game: &mut Game) {
-    word!(game.samus_new_pose = word!(game.samus_pose));
-    word!(game.samus_momentum_routine_index = 5);
-}
-pub fn nullsub_18_U8(game: &mut Game) -> u8 {
-    0
-}
+pub use self::nullsub_164 as nullsub_18_U8;
+pub use self::Samus_HandleTransFromBlockColl_3 as Samus_HandleTransFromBlockColl_4;
 static off_91E951: [Option<Func_U8>; 6] = callback_table! { unsafe Func_U8;
     Samus_HandleTransFromBlockColl_1_0, Samus_HandleTransFromBlockColl_1_1,
     Samus_HandleTransFromBlockColl_1_2, Samus_HandleTransFromBlockColl_1_3, nullsub_18_U8,
@@ -3496,12 +3491,8 @@ pub unsafe fn Samus_HandleTransitionsB_1(game: &mut Game) {
     word! { game, 0; bomb_jump_dir, samus_contact_damage_index }
     word!(game.samus_hurt_flash_counter = 1);
 }
-pub fn Samus_HandleTransitionsB_1_10(game: &mut Game) -> u8 {
-    0
-}
-pub fn Samus_HandleTransitionsB_1_11(game: &mut Game) -> u8 {
-    0
-}
+pub use self::nullsub_164 as Samus_HandleTransitionsB_1_10;
+pub use self::nullsub_164 as Samus_HandleTransitionsB_1_11;
 pub unsafe fn Samus_HandleTransitionsB_1_6(game: &mut Game) -> u8 {
     if word!(game.frame_handler_gamma) as i32 == 0x90e41b & 0xffff {
         0
@@ -3690,9 +3681,7 @@ pub unsafe fn Samus_HandleTransitionsA_5_2(game: &mut Game) {
     word!(game.UNUSED_word_7E0A18 = 0);
 }
 pub fn sub_91EFC3(game: &mut Game) {}
-pub fn sub_91EFC3_rv(game: &mut Game) -> u8 {
-    0
-}
+pub use self::nullsub_164 as sub_91EFC3_rv;
 static kSamus_HandleTransitionsA_5_1: [Option<Func_U8>; 6] = callback_table! { unsafe Func_U8;
     Samus_HandleTransitionsA_5_1_0, Samus_MorphBallBounceNoSpringballTrans,
     Samus_HandleTransitionsA_5_1_2, Samus_MorphBallBounceSpringballTrans, sub_91EFC3_rv,
@@ -4043,9 +4032,7 @@ pub unsafe fn SamusFunc_F468(game: &mut Game) {
         }
     }
 }
-pub fn SamusFunc_F468_Unused(game: &mut Game) -> u8 {
-    0
-}
+pub use self::nullsub_164 as SamusFunc_F468_Unused;
 pub unsafe fn SamusFunc_F468_Standing(game: &mut Game) -> u8 {
     if ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
         .offset(word!(game.samus_pose) as isize))
@@ -4305,9 +4292,7 @@ pub unsafe fn Samus_CrouchTrans(game: &mut Game) -> u8 {
     }
     0
 }
-pub fn Samus_StandOrUnmorphTrans(game: &mut Game) -> u8 {
-    0
-}
+pub use self::nullsub_164 as Samus_StandOrUnmorphTrans;
 pub unsafe fn Samus_MorphTrans(game: &mut Game) -> u8 {
     if (word!(game.equipped_items) & 4) != 0 {
         if *ram_ptr!(game; 0xa23) as i32 == kMovementType_03_SpinJumping as i32 {
@@ -4781,12 +4766,8 @@ pub unsafe fn HandleCollDueToChangedPose(game: &mut Game) {
         word!(game.samus_pose = word!(game.samus_prev_pose));
     }
 }
-pub fn HandleCollDueToChangedPose_Solid_NoColl(game: &mut Game) -> u8 {
-    0
-}
-pub fn HandleCollDueToChangedPose_Solid_CollBoth(game: &mut Game) -> u8 {
-    0
-}
+pub use self::nullsub_164 as HandleCollDueToChangedPose_Solid_NoColl;
+pub use self::nullsub_164 as HandleCollDueToChangedPose_Solid_CollBoth;
 pub unsafe fn HandleCollDueToChangedPose_Solid_CollAbove(game: &mut Game) -> u8 {
     let v1: u16 = word!(game.samus_y_radius);
     word!(

@@ -4839,24 +4839,8 @@ pub unsafe fn DeadZoomer_Rotting(k: u16, game: &mut Game) {
     let dms_var_53: u16 = (*Get_DeadMonsters(word!(game.cur_enemy_index) as i32, game)).var_53;
     ProcessCorpseRottingVramTransfers(dms_var_53, game);
 }
-pub unsafe fn DeadRipper_Rotting(k: u16, game: &mut Game) {
-    let v1: u8 = ProcessCorpseRotting(k, game);
-    if v1 & 1 == 0 {
-        (*Get_DeadMonsters(word!(game.cur_enemy_index) as i32, game)).var_A =
-            ((0xa9da63i32) as u16);
-    }
-    let dms_var_53: u16 = (*Get_DeadMonsters(word!(game.cur_enemy_index) as i32, game)).var_53;
-    ProcessCorpseRottingVramTransfers(dms_var_53, game);
-}
-pub unsafe fn DeadSkree_Rotting(k: u16, game: &mut Game) {
-    let v1: u8 = ProcessCorpseRotting(k, game);
-    if v1 & 1 == 0 {
-        (*Get_DeadMonsters(word!(game.cur_enemy_index) as i32, game)).var_A =
-            ((0xa9da63i32) as u16);
-    }
-    let dms_var_53: u16 = (*Get_DeadMonsters(word!(game.cur_enemy_index) as i32, game)).var_53;
-    ProcessCorpseRottingVramTransfers(dms_var_53, game);
-}
+pub use self::DeadZoomer_Rotting as DeadRipper_Rotting;
+pub use self::DeadZoomer_Rotting as DeadSkree_Rotting;
 pub unsafe fn ProcessCorpseRotting(k: u16, game: &mut Game) -> u8 {
     let EK = Get_DeadMonsters(k as i32, game);
     let mut E0 = Get_DeadMonsters(0, game);

@@ -123,9 +123,7 @@ pub unsafe fn LayerBlendFunc_C(j: u16, game: &mut Game) -> u16 {
     *ram_ptr!(game; 0x71) = -94i32 as u8;
     j
 }
-pub fn nullsub_10(j: u16, game: &mut Game) -> u16 {
-    j
-}
+pub use self::nullsub_9 as nullsub_10;
 pub unsafe fn LayerBlendFunc_10(j: u16, game: &mut Game) -> u16 {
     *ram_ptr!(game; 0x61) = 2;
     *ram_ptr!(game; 0x62) = 32;
@@ -165,9 +163,7 @@ pub unsafe fn LayerBlendFunc_18(mut j: u16, game: &mut Game) -> u16 {
     }
     j
 }
-pub fn nullsub_11(j: u16, game: &mut Game) -> u16 {
-    j
-}
+pub use self::nullsub_9 as nullsub_11;
 pub unsafe fn LayerBlendFunc_26(j: u16, game: &mut Game) -> u16 {
     *ram_ptr!(game; 0x71) = 119;
     j
@@ -196,10 +192,7 @@ pub unsafe fn LayerBlendFunc_2C(j: u16, game: &mut Game) -> u16 {
     *ram_ptr!(game; 0x6e) = 0;
     j
 }
-pub unsafe fn LayerBlendFunc_2E(j: u16, game: &mut Game) -> u16 {
-    *ram_ptr!(game; 0x71) = -77i32 as u8;
-    j
-}
+pub use self::LayerBlendFunc_14 as LayerBlendFunc_2E;
 pub unsafe fn LayerBlendFunc_32(j: u16, game: &mut Game) -> u16 {
     *ram_ptr!(game; 0x6b) = 68;
     *ram_ptr!(game; 0x71) = -78i32 as u8;
@@ -1513,10 +1506,7 @@ pub unsafe fn CrystalFlashSetupPart1(game: &mut Game) {
     word!(game.power_bomb_pre_explosion_radius_speed = kPowerBombPreExplosionRadiusSpeed);
     QueueSfx1_Max6(1, game);
 }
-pub unsafe fn CrystalFlashSetupPart2(game: &mut Game) {
-    word!(game.power_bomb_explosion_radius = 1024);
-    word!(game.power_bomb_pre_explosion_radius_speed = kPowerBombExplosionRadiusSpeed);
-}
+pub use self::Hdmaobj_ExplodeYellow as CrystalFlashSetupPart2;
 pub unsafe fn CrystalFlashCleanup(k: u16, game: &mut Game) {
     let v0: u16 = k;
     word! { game, 0; power_bomb_flag, power_bomb_explosion_status }
@@ -1968,11 +1958,7 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2Xscroll(k: u16, game: &mut Game) {
         HdmaobjPreInstr_SkyLandBG2XscrollInner(k, game);
     }
 }
-pub unsafe fn HdmaobjPreInstr_SkyLandBG2Xscroll2(k: u16, game: &mut Game) {
-    if word!(game.time_is_frozen_flag) == 0 {
-        HdmaobjPreInstr_SkyLandBG2XscrollInner(k, game);
-    }
-}
+pub use self::HdmaobjPreInstr_SkyLandBG2Xscroll as HdmaobjPreInstr_SkyLandBG2Xscroll2;
 pub unsafe fn RoomMainAsm_ScrollingSky(src: *const u16, game: &mut Game) {
     if word!(game.time_is_frozen_flag) != 0 {
         *(ram_ptr!(game, u16; 0x9f00, 0)) = 0;

@@ -2645,9 +2645,7 @@ pub unsafe fn SamusLatchesOnWithGrappleParalyze(game: &mut Game) {
     (*E).ai_handler_bits = 0;
     (*E).extra_properties = ((*E).extra_properties) | (1u16);
 }
-pub unsafe fn SamusHurtFromGrapple(game: &mut Game) {
-    (*gEnemyData(word!(game.cur_enemy_index) as i32, game)).ai_handler_bits = 4;
-}
+pub use self::Enemy_SwitchToFrozenAi as SamusHurtFromGrapple;
 pub unsafe fn EnemySamusCollHandler(game: &mut Game) {
     let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
     word!(game.enemy_processing_stage = 9);

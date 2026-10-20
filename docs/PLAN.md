@@ -72,16 +72,36 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
-Volume priority (user direction, 2026-10-20): target net reductions on the
-scale of thousands of lines, including all helpers and caller changes.
-Defer isolated hundred-line batches. Measure complete repeated families and
-unused declaration chains before implementation; preserve runtime behavior.
+Volume priority (user direction, 2026-10-20): reduce maintained sm/src Rust
+below 100000 lines. The current 117475 lines require at least 17476 further
+lines removed, including all helpers and caller changes. Prioritize complete
+repeated families and substantial reductions, while taking productive focused
+smaller changes toward this aggregate target. Preserve runtime behavior and
+readability; formatting compression does not satisfy the reduction goal.
 The 90-method word-accessor draft (-195 lines) is parked outside the repository.
+
+Identical same-module functions (2026-10-20): 71 duplicate public functions
+across 18 gameplay modules now alias their existing identical implementations.
+All public paths and numeric SNES dispatch addresses remain. Signatures,
+primitive results, RAM operations and callee bindings are identical within
+each module. Attribute-bearing functions and cross-module matches are excluded.
+References are direct calls, imports and callback-table entries; no native
+address/type identity observer or tool reference was found for the aliases.
+
+Exact source-span/signature/body matching and retained-token reconstruction
+pass, accounting for rustfmt sorting adjacent aliases. Formatting, normal
+release (22.20s), diff check and progress pass. Full any% 129712/0 (150.56s)
+and Speed Booster 148406/0 (187.55s), native exits 0, pass with fixed source,
+inputs and artifacts and the launcher's embedded-library source check.
+Rust lines -304 to 117171, unsafe functions -59 to 5367 and cast-containing
+lines -42 to 9496; other counters unchanged. At least 17172 further lines
+must be removed to meet the fixed target; existing route coverage remains.
 
 Reduction throughput (subagent investigation, 2026-10-20): rank complete
 structural families by formatted net savings before extensive validation.
 The shared enemy layouts below beat the remaining individual clone pairs
-(largest measured pair: 68 lines). Keep sub-thousand-line families parked.
+(largest measured pair: 68 lines). Earlier per-family thousand-line parking
+rules below are superseded by the fixed aggregate target above.
 Use one explicit transformation map per family, distinguishing field names
 from local variables; check compiler layouts/operations where applicable.
 Freeze the reviewed source before the normal build and full required replays.

@@ -1514,11 +1514,7 @@ pub unsafe fn EprojPreInstr_96C0(k: u16, game: &mut Game) {
         word!(game.eproj_id[(k >> 1)] = 0);
     }
 }
-pub unsafe fn EprojPreInstr_96CE(k: u16, game: &mut Game) {
-    if EprojBlockCollisition_Vertical(k, game) & 1 != 0 {
-        word!(game.eproj_id[(k >> 1)] = 0);
-    }
-}
+pub use self::EprojPreInstr_96C0 as EprojPreInstr_96CE;
 crate::instruction_callbacks! { pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8;
     EprojInstr_95BA [epjp] {
         EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
@@ -3827,9 +3823,7 @@ pub unsafe fn BlueRingContactExplosion(k: u16, game: &mut Game) {
     QueueSfx3_Max6(0x13, game);
     sub_86C42E(k, game);
 }
-pub unsafe fn sub_86C42E(k: u16, game: &mut Game) {
-    word!(game.eproj_gfx_idx[(k >> 1)] = 0);
-}
+pub use self::sub_869DA5 as sub_86C42E;
 unsafe fn EprojInit_MotherBrainBomb(j: u16, game: &mut Game) {
     *(ram_ptr!(game, u16; 0x1a27) as *mut u8).offset(j as i32 as isize) =
         word!(game.cinematic_var8) as u8;
@@ -4867,23 +4861,8 @@ pub unsafe fn EprojPreInstr_DBF2_MoveX1(k: u16, game: &mut Game) {
         ((word!(game.eproj_y_vel[v1]) as i16 as i32) << 8) as u32,
     );
 }
-pub unsafe fn EprojPreInstr_DBF2_MoveX2(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    AddToHiLo(
-        (ram_ptr!(game, u16; 0x1a4b)).offset(v1 as isize),
-        (ram_ptr!(game, u16; 0x1a27)).offset(v1 as isize),
-        ((word!(game.eproj_x_vel[v1]) as i16 as i32) << 8) as u32,
-    );
-}
-pub unsafe fn EprojPreInstrHelper_DBF2_Func2(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1;
-    (((word!(game.eproj_x_pos[v1]) as i32 - word!(game.layer1_x_pos) as i32) as i16) < 0
-        || ((word!(game.layer1_x_pos) as i32 + 256 - word!(game.eproj_x_pos[v1]) as i32) as i16)
-            < 0
-        || ((word!(game.eproj_y_pos[v1]) as i32 - word!(game.layer1_y_pos) as i32) as i16) < 0
-        || ((word!(game.layer1_y_pos) as i32 + 256 - word!(game.eproj_y_pos[v1]) as i32) as i16)
-            < 0) as u16
-}
+pub use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as EprojPreInstrHelper_DBF2_Func2;
+pub use self::Eproj_NorfairLavaquakeRocks_Func3 as EprojPreInstr_DBF2_MoveX2;
 crate::instruction_callbacks! { pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8;
     EprojInstr_DC5A [epjp] { word!(game.eproj_properties[(k >> 1)] = 12288); };
     EprojInstr_SpawnEnemyDrops_0 [epjp] {
@@ -5067,36 +5046,14 @@ pub unsafe fn sub_86E049(v0: u16, game: &mut Game) {
     );
     sub_86E0A4(v0, game);
 }
-pub unsafe fn Eproj_LavaThrownByLavaman_MoveX1(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    AddToHiLo(
-        (ram_ptr!(game, u16; 0x1a4b)).offset(v1 as isize),
-        (ram_ptr!(game, u16; 0x1a27)).offset(v1 as isize),
-        ((word!(game.eproj_y_vel[v1]) as i16 as i32) << 8) as u32,
-    );
-}
-pub unsafe fn Eproj_LavaThrownByLavaman_MoveX2(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    AddToHiLo(
-        (ram_ptr!(game, u16; 0x1a4b)).offset(v1 as isize),
-        (ram_ptr!(game, u16; 0x1a27)).offset(v1 as isize),
-        ((word!(game.eproj_x_vel[v1]) as i16 as i32) << 8) as u32,
-    );
-}
+pub use self::EprojPreInstr_DBF2_MoveX1 as Eproj_LavaThrownByLavaman_MoveX1;
+pub use self::Eproj_NorfairLavaquakeRocks_Func3 as Eproj_LavaThrownByLavaman_MoveX2;
 pub unsafe fn sub_86E0A4(v0: u16, game: &mut Game) {
     if sub_86E0B0(v0, game) != 0 {
         word!(game.eproj_id[(v0 >> 1)] = 0);
     }
 }
-pub unsafe fn sub_86E0B0(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1;
-    (((word!(game.eproj_x_pos[v1]) as i32 - word!(game.layer1_x_pos) as i32) as i16) < 0
-        || ((word!(game.layer1_x_pos) as i32 + 256 - word!(game.eproj_x_pos[v1]) as i32) as i16)
-            < 0
-        || ((word!(game.eproj_y_pos[v1]) as i32 - word!(game.layer1_y_pos) as i32) as i16) < 0
-        || ((word!(game.layer1_y_pos) as i32 + 256 - word!(game.eproj_y_pos[v1]) as i32) as i16)
-            < 0) as u16
-}
+pub use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as sub_86E0B0;
 unsafe fn EprojInit_DustCloudOrExplosion(v0: u16, game: &mut Game) {
     let v1: i32 = v0 as i32 >> 1;
     word!(
@@ -5401,15 +5358,7 @@ pub unsafe fn sub_86EC0C(k: u16, game: &mut Game) {
         word!(game.eproj_id[(k >> 1)] = 0);
     }
 }
-pub unsafe fn sub_86EC18(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1;
-    (((word!(game.eproj_x_pos[v1]) as i32 - word!(game.layer1_x_pos) as i32) as i16) < 0
-        || ((word!(game.layer1_x_pos) as i32 + 256 - word!(game.eproj_x_pos[v1]) as i32) as i16)
-            < 0
-        || ((word!(game.eproj_y_pos[v1]) as i32 - word!(game.layer1_y_pos) as i32) as i16) < 0
-        || ((word!(game.layer1_y_pos) as i32 + 256 - word!(game.eproj_y_pos[v1]) as i32) as i16)
-            < 0) as u16
-}
+pub use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as sub_86EC18;
 unsafe fn EprojInit_YappingMawsBody(j: u16, game: &mut Game) {
     let enemy_index = game.cur_enemy_index();
     let v3: i32 = j as i32 >> 1;

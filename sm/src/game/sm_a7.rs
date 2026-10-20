@@ -1513,12 +1513,7 @@ pub unsafe fn KraidsGoodFingernail_Touch(game: &mut Game) {
     NormalEnemyTouchAi(game);
     EnemyDeathAnimation(word!(game.cur_enemy_index), v0, game);
 }
-pub unsafe fn KraidsBadFingernail_Touch(game: &mut Game) {
-    let v0: u16 = 0;
-    printf(b"X undefined\n\0" as *const u8 as *const c_char);
-    NormalEnemyTouchAi(game);
-    EnemyDeathAnimation(word!(game.cur_enemy_index), v0, game);
-}
+pub use self::KraidsGoodFingernail_Touch as KraidsBadFingernail_Touch;
 pub unsafe fn KraidFingernailInit(k: u16, game: &mut Game) {
     let palette_index: u16 = (*Get_Kraid(0i32, game)).base.palette_index;
     let E = Get_Kraid(k as i32, game);
