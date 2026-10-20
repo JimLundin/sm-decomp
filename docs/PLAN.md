@@ -70,6 +70,21 @@ counters stay unchanged. Temporary checks are in the bindings root's rows/
 directory; the existing integrated/ target is reused. The complete remaining
 reduction budget is still unproven; the goal remains active.
 
+After af8c1745, all owned build/check/replay handles are terminal. No matching
+compiler/Python process or Git lock remains. Checked native PowerShell removal
+of the completed rows/ directory was rejected by automatic approval review as
+"blocked by policy". Its 34 disposable files / 21438076 bytes remain; no cleanup
+is credited. The integrated target remains the current build cache.
+
+Adjacent main-file display study: the complete FileSelectMenu_16 slot-loading
+and drawing traversal saves only **9 formatted lines** with no new helper. It
+preserves first-row palette timing, SRAM load/occupancy rotation, live health/
+time flags and row offsets. This draft has formatting/pricing only, no compiler
+or behavior validation, and is parked because it supplies little reduction.
+Do not count it toward the target or repeat the study. Draft and pricing are
+at the bindings root's main-file-rows-next.rs and main-file-rows-price.json.
+The remaining **12548-line** budget still needs a substantial concrete family.
+
 ## Shared door-scroll declarations (2026-10-20)
 
 All 63 literal door-scroll callbacks in bank 8F now share one declaration
