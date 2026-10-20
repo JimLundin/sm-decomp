@@ -229,14 +229,6 @@ unsafe fn atof(mut __nptr: *const c_char) -> c_double {
 pub const EOF: i32 = -1i32;
 pub const SEEK_SET: i32 = 0;
 pub const SEEK_CUR: i32 = 1;
-unsafe fn stbi__start_mem(s: *mut stbi__context, buffer: *const stbi_uc, len: i32) {
-    (*s).io.read = None;
-    set_fields! {[(*s)], 0i32; read_from_callbacks, callback_already_read}
-    (*s).img_buffer_original = buffer as *mut stbi_uc;
-    (*s).img_buffer = (*s).img_buffer_original;
-    (*s).img_buffer_original_end = (buffer as *mut stbi_uc).offset(len as isize);
-    (*s).img_buffer_end = (*s).img_buffer_original_end;
-}
 unsafe fn stbi__start_callbacks(
     s: *mut stbi__context,
     c: *mut stbi_io_callbacks,
@@ -285,9 +277,6 @@ unsafe fn stbi__rewind(s: *mut stbi__context) {
     (*s).img_buffer_end = (*s).img_buffer_original_end;
 }
 static mut stbi__g_failure_reason: *const c_char = null::<c_char>();
-pub unsafe fn stbi_failure_reason() -> *const c_char {
-    stbi__g_failure_reason
-}
 unsafe fn stbi__malloc(size: size_t) -> *mut c_void {
     malloc(size)
 }
@@ -314,12 +303,6 @@ unsafe fn stbi__mad3sizes_valid(a: i32, b: i32, c: i32, add: i32) -> i32 {
         && stbi__mul2sizes_valid(a * b, c) != 0
         && stbi__addsizes_valid(a * b * c, add) != 0) as i32
 }
-unsafe fn stbi__mad4sizes_valid(a: i32, b: i32, c: i32, d: i32, add: i32) -> i32 {
-    (stbi__mul2sizes_valid(a, b) != 0
-        && stbi__mul2sizes_valid(a * b, c) != 0
-        && stbi__mul2sizes_valid(a * b * c, d) != 0
-        && stbi__addsizes_valid(a * b * c * d, add) != 0) as i32
-}
 unsafe fn stbi__malloc_mad2(a: i32, b: i32, add: i32) -> *mut c_void {
     if stbi__mad2sizes_valid(a, b, add) == 0 {
         return NULL_0;
@@ -332,19 +315,7 @@ unsafe fn stbi__malloc_mad3(a: i32, b: i32, c: i32, add: i32) -> *mut c_void {
     }
     stbi__malloc((a * b * c + add) as size_t)
 }
-unsafe fn stbi__malloc_mad4(a: i32, b: i32, c: i32, d: i32, add: i32) -> *mut c_void {
-    if stbi__mad4sizes_valid(a, b, c, d, add) == 0 {
-        return NULL_0;
-    }
-    stbi__malloc((a * b * c * d + add) as size_t)
-}
-pub unsafe fn stbi_image_free(retval_from_stbi_load: *mut c_void) {
-    free(retval_from_stbi_load);
-}
 static mut stbi__vertically_flip_on_load_global: i32 = 0i32;
-pub unsafe fn stbi_set_flip_vertically_on_load(flag_true_if_should_flip: i32) {
-    stbi__vertically_flip_on_load_global = flag_true_if_should_flip;
-}
 unsafe fn stbi__load_main(
     s: *mut stbi__context,
     x: *mut i32,
@@ -386,28 +357,6 @@ unsafe fn stbi__convert_16_to_8(
     }
     free(orig as *mut c_void);
     reduced
-}
-unsafe fn stbi__convert_8_to_16(
-    orig: *mut stbi_uc,
-    w: i32,
-    h: i32,
-    channels: i32,
-) -> *mut stbi__uint16 {
-    let img_len: i32 = w * h * channels;
-    let mut enlarged = stbi__malloc((img_len * 2i32) as size_t) as *mut stbi__uint16;
-    if enlarged.is_null() {
-        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar
-            as *mut stbi__uint16;
-    }
-    let mut i: i32 = 0i32;
-    while i < img_len {
-        *enlarged.offset(i as isize) = (((*orig.offset(i as isize) as i32) << 8i32)
-            + *orig.offset(i as isize) as i32)
-            as stbi__uint16;
-        i += 1;
-    }
-    free(orig as *mut c_void);
-    enlarged
 }
 unsafe fn stbi__vertical_flip(image: *mut c_void, w: i32, h: i32, bytes_per_pixel: i32) {
     let bytes_per_row: size_t = (w as size_t).wrapping_mul(bytes_per_pixel as size_t);
@@ -485,48 +434,6 @@ unsafe fn stbi__load_and_postprocess_8bit(
     }
     result as *mut c_uchar
 }
-unsafe fn stbi__load_and_postprocess_16bit(
-    s: *mut stbi__context,
-    x: *mut i32,
-    y: *mut i32,
-    comp: *mut i32,
-    req_comp: i32,
-) -> *mut stbi__uint16 {
-    let mut ri: stbi__result_info = stbi__result_info {
-        bits_per_channel: 0,
-        num_channels: 0,
-        channel_order: 0,
-    };
-    let mut result = stbi__load_main(s, x, y, comp, req_comp, &raw mut ri, 16i32);
-    if result.is_null() {
-        return null_mut::<stbi__uint16>();
-    }
-    crate::native_assertion! {
-        '_c2rust_label: ri.bits_per_channel == 8i32 || ri.bits_per_channel == 16i32;
-        b"ri.bits_per_channel == 8 || ri.bits_per_channel == 16\0",
-        b"./third_party/stb/stb_image.h\0", 1275u32,
-        b"stbi__uint16 *stbi__load_and_postprocess_16bit(stbi__context *, int *, int *, int *, int)\0"
-    };
-    if ri.bits_per_channel != 16i32 {
-        result = stbi__convert_8_to_16(
-            result as *mut stbi_uc,
-            *x,
-            *y,
-            if req_comp == 0i32 { *comp } else { req_comp },
-        ) as *mut c_void;
-        ri.bits_per_channel = 16i32;
-    }
-    if stbi__vertically_flip_on_load_global != 0 {
-        let channels: i32 = if req_comp != 0 { req_comp } else { *comp };
-        stbi__vertical_flip(
-            result,
-            *x,
-            *y,
-            (channels as usize).wrapping_mul(size_of::<stbi__uint16>() as usize) as i32,
-        );
-    }
-    result as *mut stbi__uint16
-}
 unsafe fn stbi__fopen(filename: *const c_char, mode: *const c_char) -> *mut FILE {
     let mut f = fopen(filename, mode) as *mut FILE;
     f
@@ -566,193 +473,10 @@ pub unsafe fn stbi_load_from_file(
     }
     result as *mut stbi_uc
 }
-pub unsafe fn stbi_load_from_file_16(
-    f: *mut FILE,
-    x: *mut i32,
-    y: *mut i32,
-    comp: *mut i32,
-    req_comp: i32,
-) -> *mut stbi_us {
-    let mut result = null_mut::<stbi__uint16>();
-    let mut s: stbi__context = stbi__context::EMPTY;
-    stbi__start_file(&raw mut s, f);
-    result = stbi__load_and_postprocess_16bit(&raw mut s, x, y, comp, req_comp);
-    if !result.is_null() {
-        fseek(
-            f,
-            -(s.img_buffer_end.offset_from(s.img_buffer) as c_long as i32) as c_long,
-            SEEK_CUR,
-        );
-    }
-    result as *mut stbi_us
-}
-pub unsafe fn stbi_load_16(
-    filename: *const c_char,
-    x: *mut i32,
-    y: *mut i32,
-    comp: *mut i32,
-    req_comp: i32,
-) -> *mut stbi_us {
-    let f = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
-    if f.is_null() {
-        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar as *mut stbi_us;
-    }
-    let mut result = stbi_load_from_file_16(f, x, y, comp, req_comp) as *mut stbi__uint16;
-    fclose(f);
-    result as *mut stbi_us
-}
-pub unsafe fn stbi_load_16_from_memory(
-    buffer: *const stbi_uc,
-    len: i32,
-    x: *mut i32,
-    y: *mut i32,
-    channels_in_file: *mut i32,
-    desired_channels: i32,
-) -> *mut stbi_us {
-    let mut s: stbi__context = stbi__context::EMPTY;
-    stbi__start_mem(&raw mut s, buffer, len);
-    stbi__load_and_postprocess_16bit(&raw mut s, x, y, channels_in_file, desired_channels)
-        as *mut stbi_us
-}
-pub unsafe fn stbi_load_16_from_callbacks(
-    clbk: *const stbi_io_callbacks,
-    user: *mut c_void,
-    x: *mut i32,
-    y: *mut i32,
-    channels_in_file: *mut i32,
-    desired_channels: i32,
-) -> *mut stbi_us {
-    let mut s: stbi__context = stbi__context::EMPTY;
-    stbi__start_callbacks(&raw mut s, clbk as *mut stbi_io_callbacks, user);
-    stbi__load_and_postprocess_16bit(&raw mut s, x, y, channels_in_file, desired_channels)
-        as *mut stbi_us
-}
-pub unsafe fn stbi_load_from_memory(
-    buffer: *const stbi_uc,
-    len: i32,
-    x: *mut i32,
-    y: *mut i32,
-    comp: *mut i32,
-    req_comp: i32,
-) -> *mut stbi_uc {
-    let mut s: stbi__context = stbi__context::EMPTY;
-    stbi__start_mem(&raw mut s, buffer, len);
-    stbi__load_and_postprocess_8bit(&raw mut s, x, y, comp, req_comp) as *mut stbi_uc
-}
-pub unsafe fn stbi_load_from_callbacks(
-    clbk: *const stbi_io_callbacks,
-    user: *mut c_void,
-    x: *mut i32,
-    y: *mut i32,
-    comp: *mut i32,
-    req_comp: i32,
-) -> *mut stbi_uc {
-    let mut s: stbi__context = stbi__context::EMPTY;
-    stbi__start_callbacks(&raw mut s, clbk as *mut stbi_io_callbacks, user);
-    stbi__load_and_postprocess_8bit(&raw mut s, x, y, comp, req_comp) as *mut stbi_uc
-}
-unsafe fn stbi__loadf_main(
-    s: *mut stbi__context,
-    x: *mut i32,
-    y: *mut i32,
-    comp: *mut i32,
-    req_comp: i32,
-) -> *mut c_float {
-    let mut data = stbi__load_and_postprocess_8bit(s, x, y, comp, req_comp);
-    if !data.is_null() {
-        return stbi__ldr_to_hdr(
-            data as *mut stbi_uc,
-            *x,
-            *y,
-            if req_comp != 0 { req_comp } else { *comp },
-        );
-    }
-    ((if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_float)
-}
-pub unsafe fn stbi_loadf_from_memory(
-    buffer: *const stbi_uc,
-    len: i32,
-    x: *mut i32,
-    y: *mut i32,
-    comp: *mut i32,
-    req_comp: i32,
-) -> *mut c_float {
-    let mut s: stbi__context = stbi__context::EMPTY;
-    stbi__start_mem(&raw mut s, buffer, len);
-    stbi__loadf_main(&raw mut s, x, y, comp, req_comp)
-}
-pub unsafe fn stbi_loadf_from_callbacks(
-    clbk: *const stbi_io_callbacks,
-    user: *mut c_void,
-    x: *mut i32,
-    y: *mut i32,
-    comp: *mut i32,
-    req_comp: i32,
-) -> *mut c_float {
-    let mut s: stbi__context = stbi__context::EMPTY;
-    stbi__start_callbacks(&raw mut s, clbk as *mut stbi_io_callbacks, user);
-    stbi__loadf_main(&raw mut s, x, y, comp, req_comp)
-}
-pub unsafe fn stbi_loadf(
-    filename: *const c_char,
-    x: *mut i32,
-    y: *mut i32,
-    comp: *mut i32,
-    req_comp: i32,
-) -> *mut c_float {
-    let f = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
-    if f.is_null() {
-        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_float;
-    }
-    let mut result = stbi_loadf_from_file(f, x, y, comp, req_comp);
-    fclose(f);
-    result
-}
-pub unsafe fn stbi_loadf_from_file(
-    f: *mut FILE,
-    x: *mut i32,
-    y: *mut i32,
-    comp: *mut i32,
-    req_comp: i32,
-) -> *mut c_float {
-    let mut s: stbi__context = stbi__context::EMPTY;
-    stbi__start_file(&raw mut s, f);
-    stbi__loadf_main(&raw mut s, x, y, comp, req_comp)
-}
-pub fn stbi_is_hdr_from_memory(buffer: *const stbi_uc, len: i32) -> i32 {
-    0i32
-}
-pub unsafe fn stbi_is_hdr(filename: *const c_char) -> i32 {
-    let f = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
-    let mut result: i32 = 0i32;
-    if !f.is_null() {
-        result = stbi_is_hdr_from_file(f);
-        fclose(f);
-    }
-    result
-}
-pub fn stbi_is_hdr_from_file(f: *mut FILE) -> i32 {
-    0i32
-}
-pub fn stbi_is_hdr_from_callbacks(clbk: *const stbi_io_callbacks, user: *mut c_void) -> i32 {
-    0i32
-}
 static mut stbi__l2h_scale: c_float = 1.0f32;
 static mut stbi__l2h_gamma: c_float = 2.2f32;
-pub unsafe fn stbi_ldr_to_hdr_gamma(gamma: c_float) {
-    stbi__l2h_gamma = gamma;
-}
-pub unsafe fn stbi_ldr_to_hdr_scale(scale: c_float) {
-    stbi__l2h_scale = scale;
-}
 static mut stbi__h2l_scale_i: c_float = 1.0f32;
 static mut stbi__h2l_gamma_i: c_float = 1.0f32 / 2.2f32;
-pub unsafe fn stbi_hdr_to_ldr_gamma(gamma: c_float) {
-    stbi__h2l_gamma_i = 1i32 as c_float / gamma;
-}
-pub unsafe fn stbi_hdr_to_ldr_scale(scale: c_float) {
-    stbi__h2l_scale_i = 1i32 as c_float / scale;
-}
 unsafe fn stbi__refill_buffer(s: *mut stbi__context) {
     let n: i32 = (*s).io.read.expect("non-null function pointer")(
         (*s).io_user_data,
@@ -1018,46 +742,6 @@ unsafe fn stbi__convert_format16(
     }
     free(data as *mut c_void);
     good
-}
-unsafe fn stbi__ldr_to_hdr(data: *mut stbi_uc, x: i32, y: i32, comp: i32) -> *mut c_float {
-    let mut n: i32 = 0;
-    if data.is_null() {
-        return null_mut::<c_float>();
-    }
-    let mut output =
-        stbi__malloc_mad4(x, y, comp, size_of::<c_float>() as i32, 0i32) as *mut c_float;
-    if output.is_null() {
-        free(data as *mut c_void);
-        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_float;
-    }
-    if comp & 1i32 != 0 {
-        n = comp;
-    } else {
-        n = comp - 1i32;
-    }
-    let mut i: i32 = 0i32;
-    while i < x * y {
-        let mut k: i32 = 0i32;
-        while k < n {
-            *output.offset((i * comp + k) as isize) = (pow(
-                (*data.offset((i * comp + k) as isize) as i32 as c_float / 255.0f32) as c_double,
-                stbi__l2h_gamma as c_double,
-            ) * stbi__l2h_scale as c_double)
-                as c_float;
-            k += 1;
-        }
-        i += 1;
-    }
-    if n < comp {
-        i = 0i32;
-        while i < x * y {
-            *output.offset((i * comp + n) as isize) =
-                *data.offset((i * comp + n) as isize) as i32 as c_float / 255.0f32;
-            i += 1;
-        }
-    }
-    free(data as *mut c_void);
-    output
 }
 pub const STBI__ZFAST_BITS: i32 = 9;
 pub const STBI__ZFAST_MASK: i32 = ((1i32) << STBI__ZFAST_BITS) - 1i32;
@@ -1543,21 +1227,6 @@ unsafe fn stbi__do_zlib(
     (*a).z_expandable = exp;
     stbi__parse_zlib(a, parse_header)
 }
-pub unsafe fn stbi_zlib_decode_malloc_guesssize(
-    buffer: *const c_char,
-    len: i32,
-    initial_size: i32,
-    outlen: *mut i32,
-) -> *mut c_char {
-    stbi_zlib_decode_malloc_guesssize_headerflag(buffer, len, initial_size, outlen, 1)
-}
-pub unsafe fn stbi_zlib_decode_malloc(
-    buffer: *const c_char,
-    len: i32,
-    outlen: *mut i32,
-) -> *mut c_char {
-    stbi_zlib_decode_malloc_guesssize(buffer, len, 16384i32, outlen)
-}
 pub unsafe fn stbi_zlib_decode_malloc_guesssize_headerflag(
     buffer: *const c_char,
     len: i32,
@@ -1581,45 +1250,6 @@ pub unsafe fn stbi_zlib_decode_malloc_guesssize_headerflag(
         free(a.zout_start as *mut c_void);
         null_mut::<c_char>()
     }
-}
-unsafe fn decode_zlib_buffer(
-    output: *mut c_char,
-    output_len: i32,
-    input: *const c_char,
-    input_len: i32,
-    parse_header: i32,
-) -> i32 {
-    let mut state = stbi__zbuf::EMPTY;
-    state.zbuffer = input as *mut stbi_uc;
-    state.zbuffer_end = (input as *mut stbi_uc).offset(input_len as isize);
-    if stbi__do_zlib(&raw mut state, output, output_len, 0, parse_header) != 0 {
-        state.zout.offset_from(state.zout_start) as c_long as i32
-    } else {
-        -1
-    }
-}
-pub unsafe fn stbi_zlib_decode_buffer(
-    obuffer: *mut c_char,
-    olen: i32,
-    ibuffer: *const c_char,
-    ilen: i32,
-) -> i32 {
-    decode_zlib_buffer(obuffer, olen, ibuffer, ilen, 1)
-}
-pub unsafe fn stbi_zlib_decode_noheader_malloc(
-    buffer: *const c_char,
-    len: i32,
-    outlen: *mut i32,
-) -> *mut c_char {
-    stbi_zlib_decode_malloc_guesssize_headerflag(buffer, len, 16384, outlen, 0)
-}
-pub unsafe fn stbi_zlib_decode_noheader_buffer(
-    obuffer: *mut c_char,
-    olen: i32,
-    ibuffer: *const c_char,
-    ilen: i32,
-) -> i32 {
-    decode_zlib_buffer(obuffer, olen, ibuffer, ilen, 0)
 }
 unsafe fn stbi__get_chunk_header(s: *mut stbi__context) -> stbi__pngchunk {
     let mut c: stbi__pngchunk = stbi__pngchunk {
@@ -2148,12 +1778,6 @@ unsafe fn stbi__expand_png_palette(
 }
 static mut stbi__unpremultiply_on_load_global: i32 = 0i32;
 static mut stbi__de_iphone_flag_global: i32 = 0i32;
-pub unsafe fn stbi_set_unpremultiply_on_load(flag_true_if_should_unpremultiply: i32) {
-    stbi__unpremultiply_on_load_global = flag_true_if_should_unpremultiply;
-}
-pub unsafe fn stbi_convert_iphone_png_to_rgb(flag_true_if_should_convert: i32) {
-    stbi__de_iphone_flag_global = flag_true_if_should_convert;
-}
 unsafe fn stbi__de_iphone(z: *mut stbi__png) {
     let s = (*z).s;
     let mut i: stbi__uint32 = 0;
@@ -2615,125 +2239,6 @@ unsafe fn stbi__png_test(s: *mut stbi__context) -> i32 {
     let mut r: i32 = stbi__check_png_header(s);
     stbi__rewind(s);
     r
-}
-unsafe fn stbi__png_info_raw(p: *mut stbi__png, x: *mut i32, y: *mut i32, comp: *mut i32) -> i32 {
-    if stbi__parse_png_file(p, STBI__SCAN_header as i32, 0i32) == 0 {
-        stbi__rewind((*p).s);
-        return 0i32;
-    }
-    if !x.is_null() {
-        *x = (*(*p).s).img_x as i32;
-    }
-    if !y.is_null() {
-        *y = (*(*p).s).img_y as i32;
-    }
-    if !comp.is_null() {
-        *comp = (*(*p).s).img_n;
-    }
-    1i32
-}
-unsafe fn stbi__png_info(s: *mut stbi__context, x: *mut i32, y: *mut i32, comp: *mut i32) -> i32 {
-    let mut p: stbi__png = stbi__png::EMPTY;
-    p.s = s;
-    stbi__png_info_raw(&raw mut p, x, y, comp)
-}
-unsafe fn stbi__png_is16(s: *mut stbi__context) -> i32 {
-    let mut p: stbi__png = stbi__png::EMPTY;
-    p.s = s;
-    if stbi__png_info_raw(
-        &raw mut p,
-        null_mut::<i32>(),
-        null_mut::<i32>(),
-        null_mut::<i32>(),
-    ) == 0
-    {
-        return 0i32;
-    }
-    if p.depth != 16i32 {
-        stbi__rewind(p.s);
-        return 0i32;
-    }
-    1i32
-}
-unsafe fn stbi__info_main(s: *mut stbi__context, x: *mut i32, y: *mut i32, comp: *mut i32) -> i32 {
-    if stbi__png_info(s, x, y, comp) != 0 {
-        return 1i32;
-    }
-    0i32
-}
-unsafe fn stbi__is_16_main(s: *mut stbi__context) -> i32 {
-    if stbi__png_is16(s) != 0 {
-        return 1i32;
-    }
-    0i32
-}
-pub unsafe fn stbi_info(filename: *const c_char, x: *mut i32, y: *mut i32, comp: *mut i32) -> i32 {
-    let f = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
-    if f.is_null() {
-        return 0i32;
-    }
-    let mut result: i32 = stbi_info_from_file(f, x, y, comp);
-    fclose(f);
-    result
-}
-pub unsafe fn stbi_info_from_file(f: *mut FILE, x: *mut i32, y: *mut i32, comp: *mut i32) -> i32 {
-    let mut r: i32 = 0;
-    let mut s: stbi__context = stbi__context::EMPTY;
-    let pos: c_long = ftell(f);
-    stbi__start_file(&raw mut s, f);
-    r = stbi__info_main(&raw mut s, x, y, comp);
-    fseek(f, pos, SEEK_SET);
-    r
-}
-pub unsafe fn stbi_is_16_bit(filename: *const c_char) -> i32 {
-    let f = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
-    if f.is_null() {
-        return 0i32;
-    }
-    let mut result: i32 = stbi_is_16_bit_from_file(f);
-    fclose(f);
-    result
-}
-pub unsafe fn stbi_is_16_bit_from_file(f: *mut FILE) -> i32 {
-    let mut r: i32 = 0;
-    let mut s: stbi__context = stbi__context::EMPTY;
-    let pos: c_long = ftell(f);
-    stbi__start_file(&raw mut s, f);
-    r = stbi__is_16_main(&raw mut s);
-    fseek(f, pos, SEEK_SET);
-    r
-}
-pub unsafe fn stbi_info_from_memory(
-    buffer: *const stbi_uc,
-    len: i32,
-    x: *mut i32,
-    y: *mut i32,
-    comp: *mut i32,
-) -> i32 {
-    let mut s: stbi__context = stbi__context::EMPTY;
-    stbi__start_mem(&raw mut s, buffer, len);
-    stbi__info_main(&raw mut s, x, y, comp)
-}
-pub unsafe fn stbi_info_from_callbacks(
-    c: *const stbi_io_callbacks,
-    user: *mut c_void,
-    x: *mut i32,
-    y: *mut i32,
-    comp: *mut i32,
-) -> i32 {
-    let mut s: stbi__context = stbi__context::EMPTY;
-    stbi__start_callbacks(&raw mut s, c as *mut stbi_io_callbacks, user);
-    stbi__info_main(&raw mut s, x, y, comp)
-}
-pub unsafe fn stbi_is_16_bit_from_memory(buffer: *const stbi_uc, len: i32) -> i32 {
-    let mut s: stbi__context = stbi__context::EMPTY;
-    stbi__start_mem(&raw mut s, buffer, len);
-    stbi__is_16_main(&raw mut s)
-}
-pub unsafe fn stbi_is_16_bit_from_callbacks(c: *const stbi_io_callbacks, user: *mut c_void) -> i32 {
-    let mut s: stbi__context = stbi__context::EMPTY;
-    stbi__start_callbacks(&raw mut s, c as *mut stbi_io_callbacks, user);
-    stbi__is_16_main(&raw mut s)
 }
 pub const STBI_MAX_DIMENSIONS: i32 = 4096;
 pub const NULL: *mut c_void = null_mut::<c_void>();

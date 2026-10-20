@@ -57,12 +57,6 @@ pub unsafe fn PlaySamusFanfare(game: &mut Game) -> u8 {
         1u8
     }
 }
-pub unsafe fn Unused_SamusTileViewer(game: &mut Game) {
-    DrawSamusSpritemap(0x182u16, 0x40u16, 0x40u16, game);
-    DrawSamusSpritemap(0x183u16, 0xc0u16, 0x40u16, game);
-    DrawSamusSpritemap(0x184u16, 0x80u16, 0x60u16, game);
-    DrawSamusSpritemap(0x185u16, 0x80u16, 0x50u16, game);
-}
 pub unsafe fn DrawSamusSuitExploding(game: &mut Game) {
     let r18: u16 = (if *ram_ptr!(game; 0xa1e) == 4u8 {
         ram_word!(game, g_word_7E0DE4) as i32 + 2085i32

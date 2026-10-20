@@ -1227,9 +1227,6 @@ pub unsafe fn CheckBannedDraygonGrappleDirs(a: u16, game: &mut Game) -> u16 {
     }
     1u16
 }
-pub fn ClearCarry_12() -> u8 {
-    0u8
-}
 pub unsafe fn GrappleBeamFunc_Firing(game: &mut Game) {
     if (ram_word!(game, button_config_shoot_x) & ram_word!(game, joypad1_lastkeys)) == 0 {
         set_ram_word!(game.grapple_beam_function = ((0x9bc856i32) as u16));

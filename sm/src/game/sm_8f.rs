@@ -250,10 +250,6 @@ pub unsafe fn DoorCode_SetScroll_25(game: &mut Game) {
 pub unsafe fn DoorCode_SetScroll_26(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 10) = 2u8;
 }
-pub unsafe fn DoorCode_SetScroll_27(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 0) = 1u8;
-    *ram_ptr!(game; 0xcd20, 2) = 0u8;
-}
 pub unsafe fn DoorCode_SetScroll_28(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 0) = 2u8;
     *ram_ptr!(game; 0xcd20, 2) = 2u8;
@@ -542,13 +538,6 @@ pub unsafe fn DoorCode_SetScroll_50(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 10) = 0u8;
     *ram_ptr!(game; 0xcd20, 11) = 1u8;
 }
-pub unsafe fn UNUSED_DoorCode_SetScroll_51(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 17) = 0u8;
-    *ram_ptr!(game; 0xcd20, 16) = 1u8;
-}
-pub unsafe fn UNUSED_DoorCode_SetScroll_52(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 4) = 2u8;
-}
 pub unsafe fn DoorCode_SetScroll_53(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 0) = 0u8;
     *ram_ptr!(game; 0xcd20, 4) = 1u8;
@@ -574,9 +563,6 @@ pub unsafe fn DoorCode_SetScroll_58(game: &mut Game) {
 }
 pub unsafe fn DoorCode_SetScroll_59(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 4) = 0u8;
-}
-pub unsafe fn DoorCode_SetScroll_60(game: &mut Game) {
-    *ram_ptr!(game; 0xcd20, 1) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_61(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 4) = 0u8;

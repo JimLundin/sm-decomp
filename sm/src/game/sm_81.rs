@@ -617,12 +617,6 @@ pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
-pub unsafe fn GameOverMenu_24_FadeIn(game: &mut Game) {
-    HandleFadeIn(game);
-    if (*ram_ptr!(game; 0x51) & 0xf) == 15 {
-        update_ram_word!(game.menu_index, wrapping_add(1));
-    }
-}
 pub unsafe fn MapVramForMenu(game: &mut Game) {
     *ram_ptr!(game; 0x6b) = 0u8;
     *ram_ptr!(game; 0x52) = 3u8;
@@ -676,69 +670,6 @@ pub unsafe fn LoadMenuPalettes(game: &mut Game) {
             break;
         }
     }
-}
-pub unsafe fn GameOverMenu_3_Main(game: &mut Game) {
-    if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Select as i32) != 0i32
-        || (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32
-        || (ram_word!(game, joypad1_newkeys) as i32 & kButton_Down as i32) != 0i32
-    {
-        update_ram_word!(game.file_select_map_area_index, |fresh91| (fresh91)
-            ^ (1u16));
-    } else if (ram_word!(game, joypad1_newkeys)
-        & (kButton_B as i32 | kButton_Start as i32 | kButton_A as i32) as u16)
-        != 0
-    {
-        if ram_word!(game, file_select_map_area_index) != 0 {
-            update_ram_word!(game.menu_index, wrapping_add(1));
-        } else {
-            SaveToSram(ram_word!(game, selected_save_slot), game);
-            SoftReset(game);
-        }
-        return;
-    }
-    let mut v0: i16 = 30720i16;
-    if ram_word!(game, file_select_map_area_index) != 0 {
-        v0 = -30720i16;
-    }
-    let mut v1: i16 = (v0) | (0x28i16);
-    let v3 = gOamEnt(ram_word!(game, oam_next_ptr) as i32, game);
-    *(&raw mut (*v3).xcoord as *mut u16) = v1 as u16;
-    *(&raw mut (*v3).charnum as *mut u16) = 182u16;
-    update_ram_word!(game.oam_next_ptr, wrapping_add(4u16));
-}
-pub unsafe fn RestorePalettesAndIoAfterDebugGameover(game: &mut Game) {
-    let mut v0: i32 = 0i32;
-    loop {
-        set_ram_word!(
-            game.palette_buffer[v0] =
-                (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[(v0 + 384i32) as usize]
-        );
-        v0 += 1;
-        if (((v0 * 2i32 - 512i32) as i16) >= 0i16) {
-            break;
-        }
-    }
-    let mut v1: i32 = 0i32;
-    loop {
-        *(ram_ptr!(game, u16; 0x51, (v1 * 2i32) as isize)) =
-            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[(v1 + 640i32) as usize];
-        v1 += 1;
-        if (((v1 * 2i32 - 54i32) as i16) >= 0i16) {
-            break;
-        }
-    }
-}
-pub unsafe fn GameOverMenu_5_Continue(game: &mut Game) {
-    crate::rtl::register_writes! { game;
-        byte(VMADDL as u16, 0u8); byte(VMADDH as u16, 0x40u8);
-        byte(VMAIN as u16, 0x80u8);
-    }
-    static unk_819093: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ab200, 0x2000);
-    SetupDmaTransfer(&raw const unk_819093 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    set_ram_word!(game.game_state = 16u16);
-    set_ram_word!(game.file_select_map_area_index = 0u16);
-    RestorePalettesAndIoAfterDebugGameover(game);
 }
 static kGameOverMenuFuncs: [Option<Func_V>; 8] = callback_table! { unsafe Func_V;
     GameOverMenu_0_FadeOutConfigGfx, GameOverMenu_1_Init, GameOverMenu_2_PlayMusic,
@@ -997,9 +928,6 @@ pub unsafe fn FileSelectMenu_Func1(game: &mut Game) {
     SetInitialFileCopyMenuSelection(game);
     SetFileCopyMenuSelectionMissilePosition(game);
     set_ram_words! { game, 0u16; eproj_id[16], eproj_id[17] }
-}
-pub unsafe fn sub_819591(game: &mut Game) {
-    SetInitialFileCopyMenuSelection(game);
 }
 pub unsafe fn SetInitialFileCopyMenuSelection(game: &mut Game) {
     let mut v0: i32 = ram_word!(game, nonempty_save_slots) as i32;
@@ -2124,9 +2052,6 @@ pub unsafe fn FileSelectMap_1(game: &mut Game) {
         *ram_ptr!(game; 0x69) = 2u8;
     }
 }
-pub unsafe fn sub_81A3D1(k: u16, game: &mut Game) {
-    LoadActiveAreaMapForegroundColors(k, game);
-}
 static kActiveAreaMapForegroundColors: [u16; 6] = [0, 0xa, 0x10, 0x16, 0x24, 0x2a];
 static kInactiveAreaMapForegroundColors: [u16; 6] = [0x30, 0x3a, 0x40, 0x46, 0x54, 0x5a];
 crate::forward_calls! { pub unsafe fn (v0: u16, game: &mut Game);
@@ -2867,9 +2792,6 @@ pub unsafe fn FileSelectMap_10_RoomSelectMap(game: &mut Game) {
         update_ram_word!(game.menu_index, wrapping_add(1));
         QueueSfx1_Max6(0x38u16, game);
     }
-}
-pub unsafe fn sub_81AEC8(game: &mut Game) {
-    HandleFileSelectMapScrollArrows(game);
 }
 pub unsafe fn HandleFileSelectMapScrollArrows(game: &mut Game) {
     if ram_word!(game, map_min_x_scroll) as i32 - 24i32 - ram_word!(game, reg_BG1HOFS) as i32

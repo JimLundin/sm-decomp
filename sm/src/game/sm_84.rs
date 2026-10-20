@@ -129,22 +129,8 @@ pub unsafe fn LoadRoomPlmGfx(game: &mut Game) {
 pub unsafe fn ClearSoundsWhenGoingThroughDoor(game: &mut Game) {
     CallSomeSamusCode(0x1du16, game);
 }
-pub unsafe fn UNUSED_sub_848258(game: &mut Game) {
-    if ((*ram_ptr!(game; 0xa1f) as i32) << 8i32) == 768i32
-        || ((*ram_ptr!(game; 0xa1f) as i32) << 8i32) == 5120i32
-    {
-        QueueSfx1_Max15(0x32u16, game);
-    }
-}
 pub unsafe fn PlaySpinJumpSoundIfSpinJumping(game: &mut Game) {
     CallSomeSamusCode(0x1cu16, game);
-}
-pub unsafe fn UNUSED_sub_848278(game: &mut Game) {
-    if ((*ram_ptr!(game; 0xa1f) as i32) << 8i32) == 768i32
-        || ((*ram_ptr!(game; 0xa1f) as i32) << 8i32) == 5120i32
-    {
-        QueueSfx1_Max15(0x30u16, game);
-    }
 }
 pub unsafe fn CalculatePlmBlockCoords(k: u16, game: &mut Game) {
     let block_index_addr = 0x1c87 + usize::from(k >> 1) * 2; // plm_block_indices
@@ -334,7 +320,6 @@ pub unsafe fn SpawnRoomPLM(k: u16, game: &mut Game) {
         game,
     );
 }
-pub fn PlmPreInstr_Empty2() {}
 /// Prepare a PLM slot at the current collision block and invoke its setup.
 ///
 /// # Safety

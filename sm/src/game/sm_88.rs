@@ -2114,46 +2114,6 @@ pub unsafe fn HdmaobjPreInstr_FirefleaBG3XScroll(k: u16, game: &mut Game) {
         *ram_ptr!(game; 0x74, 0) = ((v2) as u8) | (0x20u8);
     }
 }
-pub unsafe fn ExpandingContractingHdmaEffect(game: &mut Game) {
-    if update_ram_word!(game.set_to_e0_by_scrolling_sky, wrapping_add(1), reread) as i32 - 4i32
-        & 0x8000i32
-        == 0
-    {
-        set_ram_word!(game.set_to_e0_by_scrolling_sky = 0u16);
-        if ram_word!(game, UNUSED_hdma_contracting_flag) != 0 {
-            update_ram_word!(game.message_box_animation_y_radius, wrapping_sub(1024u16));
-            if ram_word!(game, message_box_animation_y_radius) as i32 - 0x2000i32 & 0x8000i32 != 0 {
-                set_ram_word!(game.message_box_animation_y_radius = 0x2000u16);
-                set_ram_word!(game.UNUSED_hdma_contracting_flag = 0u16);
-            }
-        } else {
-            update_ram_word!(game.message_box_animation_y_radius, wrapping_add(1024u16));
-            if ram_word!(game, message_box_animation_y_radius) as i32 + 0x8000i32 & 0x8000i32 == 0 {
-                update_ram_word!(game.UNUSED_hdma_contracting_flag, wrapping_add(1));
-            }
-        }
-        set_ram_words! { game, 128u16; message_box_animation_y0, message_box_animation_y1 }
-        set_ram_words! { game, 127u16; message_box_animation_y2, message_box_animation_y3 }
-    }
-    let mut v0: u16 = (2u16).wrapping_mul(ram_word!(game, message_box_animation_y0));
-    let mut v1: u16 = (2u16).wrapping_mul(ram_word!(game, message_box_animation_y2));
-    let mut r18: u16 = 0u16;
-    for _ in 0u16..32u16 {
-        *(ram_ptr!(game, u16; 0x9c00, v0 as isize)) = (ram_word!(game, message_box_animation_y1))
-            .wrapping_sub(ram_word!(game, message_box_animation_y0));
-        *(ram_ptr!(game, u16; 0x9c00, v1 as isize)) = (ram_word!(game, message_box_animation_y3))
-            .wrapping_sub(ram_word!(game, message_box_animation_y2));
-        r18 = (r18).wrapping_add(ram_word!(game, message_box_animation_y_radius));
-        if Unreachable(game) {
-            update_ram_word!(game.message_box_animation_y1, wrapping_add(1));
-            update_ram_word!(game.message_box_animation_y3, wrapping_sub(1));
-        }
-        update_ram_word!(game.message_box_animation_y0, wrapping_add(1));
-        update_ram_word!(game.message_box_animation_y2, wrapping_sub(1));
-        v1 = (v1).wrapping_sub(2u16);
-        v0 = (v0).wrapping_add(2u16);
-    }
-}
 static g_word_88B256: [u16; 17] = [
     0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
 ];

@@ -2544,20 +2544,6 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
         1u8
     }
 }
-pub unsafe fn BlockFunc_AEE3(game: &mut Game) -> u8 {
-    if ((ram_word!(game, grapple_beam_unkD26) ^ ram_word!(game, grapple_beam_end_angle16)) & 0x8000)
-        != 0
-    {
-        set_ram_word!(game.grapple_beam_unkD38 = 0u16);
-        1u8
-    } else {
-        if update_ram_word!(game.grapple_beam_unkD38, wrapping_add(1), reread) == 32u16 {
-            set_ram_word!(game.grapple_beam_function = ((0x9bc8c5i32) as u16));
-        }
-        set_ram_words! { game, 0u16; grapple_beam_unkD26, grapple_beam_unkD2E }
-        1u8
-    }
-}
 pub unsafe fn GrappleFunc_AF87(game: &mut Game) {
     let mut i: i32 = 30i32;
     while i >= 0i32 {

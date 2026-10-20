@@ -168,9 +168,6 @@ pub unsafe fn snes_loadRom(
     free(newData as *mut c_void);
     true_0 != 0
 }
-pub unsafe fn snes_setSamples(snes: *mut Snes, sampleData: *mut i16, samplesPerFrame: i32) {
-    dsp_getSamples((*(*snes).apu).dsp, sampleData, samplesPerFrame);
-}
 unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut CartHeader) {
     let mut i: i32 = 0i32;
     while i < 21i32 {

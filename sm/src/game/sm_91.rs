@@ -506,18 +506,6 @@ pub unsafe fn DemoInstr_Disable(k: u16, j: u16, game: &mut Game) -> u16 {
     DisableDemoInput(game);
     j
 }
-pub unsafe fn UNUSED_DemoInstr_Func4(game: &mut Game) {
-    set_ram_word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
-    set_ram_word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
-    set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
-    *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-    set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
-    *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
-    DisableDemoInput(game);
-    set_ram_word!(game.samus_input_handler = ((0x90e90ei32) as u16));
-}
 pub unsafe fn DemoInstr_Func3(k: u16, j: u16, game: &mut Game) -> u16 {
     set_ram_word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
     set_ram_word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
@@ -4511,14 +4499,6 @@ pub unsafe fn SamusFunc_F468_Moonwalking(game: &mut Game) -> u8 {
 }
 pub unsafe fn SamusFunc_F468_DamageBoost(game: &mut Game) -> u8 {
     SamusFunc_F468_DamageBoost_(game)
-}
-pub unsafe fn MaybeUnused_sub_91F8B0(game: &mut Game) -> u8 {
-    if *ram_ptr!(game; 0xa1e) == 4u8 {
-        set_ram_word!(game.samus_pose = kPose_54_FaceL_Knockback as u16);
-    } else {
-        set_ram_word!(game.samus_pose = kPose_53_FaceR_Knockback as u16);
-    }
-    1u8
 }
 pub unsafe fn SamusFunc_F468_DamageBoost_(game: &mut Game) -> u8 {
     set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));

@@ -30,9 +30,6 @@ pub unsafe fn dma_init(snes: *mut Snes) -> *mut Dma {
     (*dma).snes = snes;
     dma
 }
-pub unsafe fn dma_free(dma: *mut Dma) {
-    free(dma as *mut c_void);
-}
 pub unsafe fn dma_reset(dma: *mut Dma) {
     for i in 0..8 {
         (*dma).channel[i].bAdr = 0xff;

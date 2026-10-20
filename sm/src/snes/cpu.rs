@@ -30,9 +30,6 @@ pub unsafe fn cpu_init(mem: *mut c_void, memType: i32) -> *mut Cpu {
     (*cpu).memType = memType as u8;
     cpu
 }
-pub unsafe fn cpu_free(cpu: *mut Cpu) {
-    free(cpu as *mut c_void);
-}
 fn finish_reset(cpu: &mut Cpu) {
     set_fields! {[cpu], 0; dp, k, db}
     cpu.c = false;

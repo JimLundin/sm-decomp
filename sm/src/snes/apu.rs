@@ -1,10 +1,8 @@
 use crate::c_library::{free, malloc, memset, puts};
 use crate::game_state::Game;
 use crate::set_fields;
-use crate::snes::dsp::{
-    dsp_cycle, dsp_free, dsp_init, dsp_read, dsp_reset, dsp_saveload, dsp_write,
-};
-use crate::snes::spc::{spc_free, spc_init, spc_reset, spc_runOpcode, spc_saveload};
+use crate::snes::dsp::{dsp_cycle, dsp_init, dsp_read, dsp_reset, dsp_saveload, dsp_write};
+use crate::snes::spc::{spc_init, spc_reset, spc_runOpcode, spc_saveload};
 use crate::tracing::getProcessorStateSpc;
 pub use crate::types::{
     size_t, Apu, ApuHistory as C2RustUnnamed, Dsp, DspChannel, DspRegWriteHistory, SaveLoadFunc,
@@ -26,11 +24,6 @@ pub unsafe fn apu_init() -> *mut Apu {
     (*apu).spc = spc_init(apu);
     (*apu).dsp = dsp_init(&raw mut (*apu).ram as *mut u8);
     apu
-}
-pub unsafe fn apu_free(apu: *mut Apu) {
-    spc_free((*apu).spc);
-    dsp_free((*apu).dsp);
-    free(apu as *mut c_void);
 }
 pub unsafe fn apu_reset(apu: *mut Apu) {
     (*apu).romReadable = true;

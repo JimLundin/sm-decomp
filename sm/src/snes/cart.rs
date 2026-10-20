@@ -21,9 +21,6 @@ pub unsafe fn cart_init(snes: *mut Snes) -> *mut Cart {
     (*cart).ramSize = 0u32;
     cart
 }
-pub unsafe fn cart_free(cart: *mut Cart) {
-    free(cart as *mut c_void);
-}
 pub unsafe fn cart_reset(cart: *mut Cart) {}
 pub unsafe fn cart_saveload(
     cart: *mut Cart,

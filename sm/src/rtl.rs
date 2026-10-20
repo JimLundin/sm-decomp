@@ -284,12 +284,6 @@ pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
         StateRecorder_Init(&raw mut game.state_recorder);
     }
 }
-pub unsafe fn GetFileSize(f: *mut FILE) -> i32 {
-    fseek(f, 0 as c_long, SEEK_END);
-    let r: i32 = ftell(f) as i32;
-    fseek(f, 0 as c_long, SEEK_SET);
-    r
-}
 pub unsafe fn StateRecorder_Load(
     sr: *mut StateRecorder,
     f: *mut FILE,

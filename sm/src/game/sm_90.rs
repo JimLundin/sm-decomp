@@ -3862,17 +3862,6 @@ pub unsafe fn SuperMissileBlockCollDetect_Y(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Projectile_Func4(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1i32;
-    if *(ram_ptr!(game, u16; 0xc7c) as *mut u8)
-        .offset(k as i32 as isize)
-        .offset(1)
-        != 0
-        && (ram_word!(game, projectile_type[v1]) & 0xf00) == 2048
-    {
-        ClearProjectile(ram_word!(game, projectile_variables[v1]) as u8 as u16, game);
-    }
-}
 pub unsafe fn SuperMissileBlockCollDetect_X(game: &mut Game) {
     let v0: i32 = ram_word!(game, projectile_index) as i32 >> 1i32;
     if (ram_word!(game, projectile_type[v0]) & 0xf00) == 512
@@ -5903,43 +5892,6 @@ pub unsafe fn ProjPreInstr_SpeedEcho(k: u16, game: &mut Game) {
         ClearProjectile(k, game);
     }
 }
-pub unsafe fn Grapple_Func1(game: &mut Game) {
-    let mut v0: bool = false;
-    if (ram_word!(game, button_config_shoot_x) & ram_word!(game, joypad1_lastkeys)) != 0
-        && {
-            v0 = ((ram_word!(game, grapple_walljump_timer)) as i16).wrapping_sub(1i16) < 0i16;
-            update_ram_word!(game.grapple_walljump_timer, wrapping_sub(1));
-            ram_word!(game, grapple_walljump_timer) != 0u16
-        }
-        && !v0
-    {
-        if (ram_word!(game, grapple_beam_length_delta) & 0x8000) == 0 {
-            update_ram_word!(
-                game.grapple_beam_length,
-                wrapping_add(ram_word!(game, grapple_beam_length_delta))
-            );
-            if ram_word!(game, grapple_beam_length) as i32 - 96i32 & 0x8000i32 == 0 {
-                set_ram_word!(game.grapple_beam_length_delta = -16i32 as u16);
-            }
-        }
-        let pt: Point16U = Projectile_SinLookup(
-            *(ram_ptr!(game, u16; 0xcfa) as *mut u8).offset(1isize) as u16,
-            ram_word!(game, grapple_beam_length),
-        );
-        set_ram_word!(
-            game.grapple_beam_end_x_pos =
-                (pt.x).wrapping_add(ram_word!(game, x_pos_of_start_of_grapple_beam))
-        );
-        set_ram_word!(
-            game.grapple_beam_end_y_pos =
-                (pt.y).wrapping_add(ram_word!(game, y_pos_of_start_of_grapple_beam))
-        );
-        update_ram_word!(game.grapple_beam_end_angle16, wrapping_add(2048u16));
-        GrappleBeamFunc_BF1B(game);
-    } else {
-        set_ram_word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
-    };
-}
 pub unsafe fn Hdmaobj_CrystalFlash(game: &mut Game) -> u8 {
     let mut v1: SamusPose = kPose_00_FaceF_Powersuit;
     if ram_word!(game, game_state) as i32 - 40i32 & 0x8000i32 != 0
@@ -7031,11 +6983,6 @@ pub unsafe fn Samus_Func7(game: &mut Game) {
         set_ram_word!(game.samus_special_transgfx_index = 0u16);
     }
 }
-pub unsafe fn Samus_Func8(game: &mut Game) {
-    set_ram_words! { game, 0u16; samus_y_subspeed, samus_y_speed }
-    set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
-    set_ram_word!(game.frame_handler_gamma = ((0x90e90ei32) as u16));
-}
 pub unsafe fn Samus_Func9(game: &mut Game) {
     if ram_word!(game, samus_y_speed) as i32 - 5i32 & 0x8000i32 != 0 {
         AddToHiLo(
@@ -7224,22 +7171,6 @@ pub unsafe fn Samus_FrameHandlerBeta_Func17(game: &mut Game) {
     Samus_HandlePeriodicDamage(game);
     Samus_PauseCheck(game);
     Samus_LowHealthCheck_(game);
-}
-pub unsafe fn HandleDemoRecorder_1(game: &mut Game) {
-    if (ram_word!(game, joypad2_new_keys) & 0x8000) == 0 {
-        if ram_word!(game, debug_flag) == 0 && (ram_word!(game, joypad2_new_keys) & 0x80) != 0 {
-            DisableEprojs(game);
-            set_ram_word!(game.time_is_frozen_flag = 1u16);
-            set_ram_word!(game.frame_handler_alfa = ((0x90e8cdi32) as u16));
-            set_ram_word!(game.frame_handler_beta = ((0x90e7d2i32) as u16));
-        }
-    } else if ram_word!(game, debug_flag) != 0 {
-        set_ram_word!(game.samus_draw_handler = ((0x90e90ei32) as u16));
-        set_ram_word!(game.debug_flag = 0u16);
-    } else {
-        set_ram_word!(game.debug_flag = 1u16);
-        set_ram_word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
-    };
 }
 pub unsafe fn HandleDemoRecorder_3(game: &mut Game) {
     if (ram_word!(game, joypad2_new_keys) & 0x80) != 0 {
@@ -7600,12 +7531,6 @@ pub unsafe fn Samus_DrawHandler_EndOfShinespark(game: &mut Game) {
         i -= 2i32;
     }
 }
-pub unsafe fn Samus_DrawManyEchoes(game: &mut Game) {
-    SamusDrawHandler_Default(game);
-    for _ in (0i32..=2i32).step_by(2) {
-        Samus_DrawEchoes(game);
-    }
-}
 pub unsafe fn SamusDisplayHandler_UsingElevator(game: &mut Game) {
     if (ram_word!(game, nmi_frame_counter_word) & 1) == 0 {
         SamusDisplayHandler_SamusReceivedFatal(game);
@@ -7650,39 +7575,9 @@ pub unsafe fn Samus_UpdateSuitPaletteIndex(game: &mut Game) {
         set_ram_word!(game.samus_suit_palette_index = 0u16);
     };
 }
-pub unsafe fn MoveSamusWithControlPad(game: &mut Game) {
-    if (ram_word!(game, joypad1_lastkeys) & 0x800) != 0 {
-        Samus_MoveUp((-4i16 as i32) << 16i32, game);
-    }
-    if (ram_word!(game, joypad1_lastkeys) & 0x400) != 0 {
-        Samus_MoveDown((4i16 as i32) << 16i32, game);
-    }
-    if (ram_word!(game, joypad1_lastkeys) & 0x200) != 0 {
-        Samus_MoveLeft((-4i16 as i32) << 16i32, game);
-    }
-    if (ram_word!(game, joypad1_lastkeys) & 0x100) != 0 {
-        Samus_MoveRight((4i16 as i32) << 16i32, game);
-    }
-}
 static byte_90ED50: [u8; 28] = [
     0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
-pub unsafe fn SwappedAmmoRoutine(game: &mut Game) {
-    if byte_90ED50[*ram_ptr!(game; 0xa1f) as usize] != 0 {
-        set_ram_word!(game.samus_missiles = (ram_word!(game, samus_x_pos) >> 4));
-        set_ram_word!(game.samus_max_missiles = (ram_word!(game, samus_x_pos) >> 4));
-        set_ram_word!(game.samus_super_missiles = (ram_word!(game, samus_y_pos) >> 4));
-        set_ram_word!(game.samus_max_super_missiles = (ram_word!(game, samus_y_pos) >> 4));
-    }
-}
-pub unsafe fn UNUSEDsub_90ED6C(game: &mut Game) {
-    set_ram_word!(game.samus_missiles = ram_word!(game, game_time_hours));
-    set_ram_word!(game.samus_max_missiles = ram_word!(game, game_time_hours));
-    set_ram_word!(game.samus_super_missiles = ram_word!(game, game_time_minutes));
-    set_ram_word!(game.samus_max_super_missiles = ram_word!(game, game_time_minutes));
-    set_ram_word!(game.samus_power_bombs = ram_word!(game, game_time_seconds));
-    set_ram_word!(game.samus_max_power_bombs = ram_word!(game, game_time_seconds));
-}
 static kSamus_FootstepGraphics: [Option<Func_V>; 8] = callback_table! { unsafe Func_V;
     Samus_FootstepGraphics_Crateria, Samus_FootstepGraphics_1, Samus_FootstepGraphics_1,
     Samus_FootstepGraphics_1, Samus_FootstepGraphics_Maridia, Samus_FootstepGraphics_1,
@@ -7902,9 +7797,6 @@ pub unsafe fn Samus_UpdatePreviousPose(game: &mut Game) {
     *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
     set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
     *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
-}
-pub fn ClearCarry() -> u8 {
-    0u8
 }
 pub unsafe fn SamusCode_00_LockSamus(game: &mut Game) -> u8 {
     set_ram_word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
@@ -8242,16 +8134,6 @@ pub unsafe fn SamusCode_1F(game: &mut Game) -> u8 {
         LoadProjectilePalette(ram_word!(game, equipped_beams), game);
         set_ram_word!(game.grapple_beam_function = -15120i32 as u16);
         set_ram_word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
-    }
-    0u8
-}
-pub unsafe fn Samus_Func26(game: &mut Game) -> u8 {
-    if *ram_ptr!(game; 0xa1f) as i32 != kMovementType_03_SpinJumping as i32
-        && *ram_ptr!(game; 0xa1f) as i32 != kMovementType_14_WallJumping as i32
-        && (ram_word!(game, button_config_shoot_x) & ram_word!(game, joypad1_lastkeys)) != 0
-        && ram_word!(game, flare_counter) as i32 - 16i32 & 0x8000i32 == 0
-    {
-        QueueSfx1_Max9(0x41u16, game);
     }
     0u8
 }

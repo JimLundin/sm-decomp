@@ -86,8 +86,27 @@ Use one explicit transformation map per family, distinguishing field names
 from local variables; check compiler layouts/operations where applicable.
 Freeze the reviewed source before the normal build and full required replays.
 Keep discovery in temporary drafts so it cannot invalidate verification.
-The preliminary unreachable-function closure needs a complete root/reference
-review before removal; further thousand-line reductions remain open.
+The unused-function closure below completes that root/reference review.
+Further thousand-line reductions remain open; the remaining unused-data
+census (177 raw lines) is below the current priority and stays parked.
+
+Unused function families (2026-10-20): remove the complete audited closure
+of 180 unreferenced functions across 39 files. This includes 49 unused copied
+image-loader APIs and eight cleanup routines called only by unused snes_free.
+Keep the GLSL stbi_load path and every surviving gameplay/hardware operation.
+Discount import-only roots, account for function-import aliases, and retain
+all callback/macro/ABI/tool roots. No function-name synthesis, external native
+symbol lookup, destructor registration or maintained consumer reaches this set.
+
+All 6015 retained free functions match their original source bytes; the other
+source tokens match after eight removed import leaves and import formatting.
+The current source matches the reviewed draft byte-for-byte. Formatting/check,
+normal frontend release (22.98s), source-checked headless host (2.25s) and
+progress pass. Full any% 129712/0 (122.35s wall) and Speed Booster 148406/0
+(154.80s wall), native exits 0, pass with fixed source/input/artifact bytes.
+Rust lines -1603 to 121027; unsafe functions -153 to 5915; cast-containing
+lines -105 to 9694; other counters unchanged. Reachability and source checks
+justify the removal; the replays do not establish coverage of unused routines.
 
 Shared enemy layouts (2026-10-20): 94 overlays now alias six shared repr(C)
 layouts, retaining their enemy type names and exact field order/types/padding.

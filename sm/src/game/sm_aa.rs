@@ -618,12 +618,6 @@ pub unsafe fn Torizo_Main(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn Torizo_Func_2(k: u16, game: &mut Game) {
-    Torizo_C643(k, game);
-    if sub_82DAF7(0x600u16, game) & 1 == 0 {
-        (*Get_Torizo(k as i32, game)).var_E = ((0xaac6abi32) as u16);
-    }
-}
 pub unsafe fn Torizo_Func_3(k: u16, game: &mut Game) {
     Torizo_C620(k, game);
     Torizo_C643(k, game);
@@ -1268,11 +1262,6 @@ pub unsafe fn Shaktool_D956(k: u16, jp: *const u16, a: u16, game: &mut Game) -> 
 pub fn Shaktool_Instr_6(k: u16, jp: *const u16) -> *const u16 {
     jp
 }
-pub unsafe fn Shaktool_Func_2(k: u16, game: &mut Game) {
-    SpawnEprojWithGfx(0u16, k, addr_kEproj_ShaktoolAttackFrontCircle as u16, game);
-    SpawnEprojWithGfx(0u16, k, addr_kEproj_ShaktoolAttackMiddleCircle as u16, game);
-    SpawnEprojWithGfx(0u16, k, addr_kEproj_ShaktoolAttackBackCircle as u16, game);
-}
 pub unsafe fn Shaktool_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let shakt_var_E: u16 = (*Get_Shaktool(k as i32, game)).var_E;
     (*Get_Shaktool(shakt_var_E as i32, game)).var_F =
@@ -1290,18 +1279,6 @@ pub unsafe fn Shaktool_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *cons
     (*Get_Shaktool(shakt_var_E as i32 + 384i32, game)).var_F =
         crate::rtl::rom_table_word!(game, 0xaadedb, 6);
     jp
-}
-pub unsafe fn Shaktool_DAE5(mut k: u16, game: &mut Game) {
-    if (NextRandom(game) & 0x8431) == 0 {
-        let mut i: i32 = 12i32;
-        while i >= 0i32 {
-            let E = Get_Shaktool(k as i32, game);
-            (*E).var_F = ((0xaadcaai32) as u16);
-            enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xaadf21, (i >> 1i32) as isize), timer = 1u16}
-            k = (k).wrapping_sub(64u16);
-            i -= 2i32;
-        }
-    }
 }
 pub unsafe fn Shaktool_DB0E(k: u16, a: u16, game: &mut Game) {
     let shakt_var_E: u16 = (*Get_Shaktool(k as i32, game)).var_E;

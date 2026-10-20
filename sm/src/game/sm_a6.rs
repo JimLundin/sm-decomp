@@ -404,16 +404,6 @@ pub unsafe fn Boulder_Func_7(j: u16, game: &mut Game) {
             | crate::rtl::rom_table_word!(game, 0xa2838f, v3 as isize) as u32,
     );
 }
-pub unsafe fn Boulder_Func_8(j: u16, game: &mut Game) {
-    let E = Get_Boulder(ram_word!(game, cur_enemy_index) as i32, game);
-    let v3: i32 = j as i32 >> 1i32;
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1i32) as isize) as u32) << 16i32
-            | crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize) as u32,
-    );
-}
 pub unsafe fn Boulder_Func_9(j: u16, game: &mut Game) {
     let E = Get_Boulder(ram_word!(game, cur_enemy_index) as i32, game);
     let v3: i32 = j as i32 >> 1i32;
@@ -1106,13 +1096,6 @@ pub unsafe fn FakeKraid_InstrHelper_45(k: u16, j: u16, a: u16, game: &mut Game) 
 pub unsafe fn FakeKraid_Instr_5(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     FakeKraid_InstrHelper_45(k, 8u16, 4u16, game);
     jp
-}
-pub unsafe fn sub_A69C0B(game: &mut Game) {
-    let v0 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    set_ram_word!(game.special_death_item_drop_x_origin_pos = (*v0).x_pos);
-    set_ram_word!(game.special_death_item_drop_y_origin_pos = (*v0).y_pos);
-    NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
-    FakeKraid_9C50(game);
 }
 pub unsafe fn FakeKraid_Touch(game: &mut Game) {
     let E = Get_FakeKraid(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1823,12 +1806,6 @@ pub unsafe fn Ridley_Main(game: &mut Game) {
         }
     }
     Ridley_Func_100(game);
-}
-pub unsafe fn Ridley_Func_1(game: &mut Game) {
-    let E = Get_Ridley(0i32, game);
-    if (*E).var_1B | (*E).var_1E == 0 && Ridley_Func_26(4u16, 4u16, game) & 1 != 0 {
-        Ridley_Func_37(game);
-    }
 }
 pub unsafe fn Ridley_Func_2(game: &mut Game) {
     let E = Get_Ridley(0i32, game);
@@ -2900,15 +2877,6 @@ pub unsafe fn Ridley_Func_59(game: &mut Game) {
     (*v2).src.addr = *(v1.offset(2) as *mut u16);
     (*v2).vram_dst = *(v1.offset(5) as *mut u16);
     set_ram_word!(game.vram_write_queue_tail = (v0).wrapping_add(7u16));
-}
-pub unsafe fn Ridley_Func_60(game: &mut Game) {
-    let E = Get_Ridley(0i32, game);
-    let mut v1: i16 = (((*E).var_39) as i16).wrapping_add(1i16);
-    if (*E).var_39 as i32 - 31i32 & 0x8000i32 == 0 {
-        v1 = -31i16;
-    }
-    (*E).var_39 = v1 as u16;
-    set_ram_word!(game.palette_buffer[11] = (abs16((*E).var_39)) & (0x1fu16));
 }
 pub unsafe fn Ridley_Func_61(game: &mut Game) {
     if ram_word!(game, door_transition_flag_enemies) | ram_word!(game, palette_change_num) == 0
@@ -4012,16 +3980,6 @@ pub unsafe fn Ridley_Func_96(game: &mut Game) {
         v1 = (v1).wrapping_add(20u16);
     }
 }
-pub unsafe fn Ridley_Func_97(game: &mut Game) -> u8 {
-    ((ram_word!(game, tilemap_stuff[76])
-        & (ram_word!(game, tilemap_stuff[66])
-            & ram_word!(game, tilemap_stuff[56])
-            & ram_word!(game, tilemap_stuff[46])
-            & ram_word!(game, tilemap_stuff[36])
-            & ram_word!(game, tilemap_stuff[26])
-            & ram_word!(game, tilemap_stuff[16])))
-        != 0) as u8
-}
 pub unsafe fn Ridley_Func_98(game: &mut Game) {
     let enemy_ptr: u16 = (*Get_Ridley(ram_word!(game, cur_enemy_index) as i32, game))
         .base
@@ -4675,18 +4633,6 @@ pub unsafe fn Ridley_Func_122(rect: Rect16U, game: &mut Game) -> u16 {
     update_ram_word!(game.projectile_dir[v8], |fresh2| (fresh2) | (0x10u16));
     result
 }
-pub unsafe fn Ridley_Func_123(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1i32;
-    let mut v2: u16 = 0;
-    if (ram_word!(game, projectile_dir[v1]) & 0xf) == 7 {
-        v2 = 1u16;
-    } else if (ram_word!(game, projectile_dir[v1]) & 0xf) == 2 {
-        v2 = 8u16;
-    } else {
-        v2 = 5u16;
-    }
-    set_ram_word!(game.projectile_dir[v1] = v2);
-}
 pub unsafe fn Ridley_Func_124(rect: Rect16U, game: &mut Game) -> u8 {
     let v0: u16 = abs16((ram_word!(game, samus_x_pos)).wrapping_sub(rect.x));
     let mut v1: bool = v0 < ram_word!(game, samus_x_radius);
@@ -4759,30 +4705,6 @@ pub unsafe fn Ridley_Func_127(game: &mut Game) {
                 .wrapping_sub((ram_word!(game, tilemap_stuff[82])) as i16,)
                 >= 0i16) as u16
         );
-    }
-}
-pub unsafe fn Ridley_Func_128(game: &mut Game) {
-    let E = Get_Ridley(ram_word!(game, cur_enemy_index) as i32, game);
-    let mut r18: u16 = -(CalculateAngleFromXY(
-        (ram_word!(game, projectile_x_pos[0])).wrapping_sub((*E).base.x_pos),
-        (ram_word!(game, projectile_y_pos[0])).wrapping_sub((*E).base.y_pos),
-        game,
-    ) as i32) as u8 as u16;
-    let mut v1: u16 = (4u16).wrapping_mul(ram_word!(
-        game,
-        projectile_damage[ram_word!(game, collision_detection_index)]
-    ));
-    if v1 >= 0x300u16 {
-        v1 = 768u16;
-    }
-    let a: u16 = v1;
-    r18 = Math_MultBySin(v1, r18);
-    if (((*E).var_B ^ r18) & 0x8000) != 0 {
-        (*E).var_B = ((*E).var_B).wrapping_add(r18);
-    }
-    r18 = Math_MultByCos(a, r18);
-    if (((*E).var_C ^ r18) & 0x8000) != 0 {
-        (*E).var_C = ((*E).var_C).wrapping_add(r18);
     }
 }
 pub unsafe fn Ridley_Func_129(game: &mut Game) {
@@ -4889,16 +4811,6 @@ pub unsafe fn Ridley_Instr_8(k: u16, jp: *const u16, game: &mut Game) -> *const 
     (*Get_Ridley(0i32, game)).var_10 = 2u16;
     Ridley_Func_96(game);
     jp
-}
-pub unsafe fn Ridley_Func_131(k: u16, game: &mut Game) {
-    Ridley_Func_132(k, 0u16, game);
-    Ridley_Func_132(k, 1u16, game);
-    Ridley_Func_132(k, 2u16, game);
-    Ridley_Func_132(k, 3u16, game);
-}
-pub unsafe fn Ridley_Func_132(k: u16, a: u16, game: &mut Game) {
-    (*Get_Ridley(0i32, game)).parameter_1 = a;
-    SpawnEprojWithGfx(a, k, addr_stru_869634 as u16, game);
 }
 pub unsafe fn Ridley_Instr_11(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let current_block: u64;

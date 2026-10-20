@@ -423,7 +423,6 @@ pub unsafe fn NorfairPipeBug_Func_11(game: &mut Game) {
             | crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 1i32) as isize) as u32,
     );
 }
-pub fn sub_B38E56() {}
 pub unsafe fn NorfairPipeBug_Func_12(game: &mut Game) {
     let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).var_C = (*E).var_C.wrapping_add(1);
@@ -793,20 +792,6 @@ pub unsafe fn Botwoon_Main(game: &mut Game) {
     );
     Botwoon_HealthBasedPalHandling(game);
 }
-pub unsafe fn Botwoon_Func_1(k: u16, game: &mut Game) {
-    let E = Get_Botwoon(k as i32, game);
-    if (crate::rtl::rom_table_word!(game, 0xb39675, (*E).var_3F as isize) & NextRandom(game)) == 0 {
-        (*E).var_2E = 1u16;
-    }
-}
-pub unsafe fn Botwoon_Func_2(game: &mut Game) {
-    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    if (*E).var_2F == 0 && (*E).var_2E != 0u16 && (*E).var_33 == 0 && (*E).var_21 == 0 {
-        (*E).var_F = ((0xb39e7di32) as u16);
-        (*E).var_21 = 24u16;
-    }
-    (*E).var_2E = 0u16;
-}
 pub unsafe fn Botwoon_Func_3(game: &mut Game) {
     let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).var_2F != 0 && (*E).var_3E != 0 {
@@ -819,18 +804,6 @@ pub unsafe fn Botwoon_Func_3(game: &mut Game) {
 pub unsafe fn Botwoon_Func_4(game: &mut Game) {
     let E = Get_Botwoon(0i32, game);
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-}
-pub unsafe fn Botwoon_Func_5(game: &mut Game) {
-    let mut v0: u16 = 34u16;
-    loop {
-        update_ram_word!(game.eproj_properties[(v0 >> 1)], |fresh4| (fresh4)
-            | (0x2000u16));
-        set_ram_word!(game.eproj_flags[(v0 >> 1)] = 2u16);
-        v0 = (v0).wrapping_sub(2u16);
-        if (((v0) as i16).wrapping_sub(10i16) < 0i16) {
-            break;
-        }
-    }
 }
 pub unsafe fn Botwoon_HealthBasedPalHandling(game: &mut Game) {
     let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);

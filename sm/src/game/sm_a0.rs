@@ -539,17 +539,6 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
     Enemy_NormalFrozenAI => NormalEnemyFrozenAI(game);
     CreateADudShot => CreateDudShot(game);
 }
-pub fn func_nullsub_169() {}
-pub fn func_nullsub_170() {}
-pub unsafe fn EnemyInstr_SetAiPreInstr(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    game.enemy_instructions(k).set_ai_preinstr(*jp);
-    jp.add(1)
-}
-pub fn EnemyInstr_ClearAiPreInstr(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    game.enemy_instructions(k).set_ai_preinstr(0x807b);
-    jp
-}
-pub fn func_nullsub_171() {}
 pub fn EnemyInstr_StopScript(k: u16, _jp: *const u16, game: &mut Game) -> *const u16 {
     let properties = game.enemy_instructions(k).properties() | kEnemyProps_Deleted as u16;
     game.enemy_instructions(k).set_properties(properties);
@@ -557,9 +546,6 @@ pub fn EnemyInstr_StopScript(k: u16, _jp: *const u16, game: &mut Game) -> *const
 }
 pub unsafe fn EnemyInstr_Goto(_k: u16, jp: *const u16) -> *const u16 {
     *jp as usize as *const u16
-}
-pub unsafe fn EnemyInstr_GotoRel(_k: u16, jp: *const u16) -> *const u16 {
-    (jp as *const u8).offset(isize::from(*(jp as *const i8))) as *const u16
 }
 pub unsafe fn EnemyInstr_DecTimerAndGoto(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let timer = game.enemy_instructions(k).timer();
@@ -571,21 +557,8 @@ pub unsafe fn EnemyInstr_DecTimerAndGoto(k: u16, jp: *const u16, game: &mut Game
         EnemyInstr_Goto(k, jp)
     }
 }
-pub unsafe fn EnemyInstr_DecTimerAndGotoRel(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let timer = game.enemy_instructions(k).timer_low();
-    let decremented = game.enemy_instructions(k).timer_low().wrapping_sub(1);
-    game.enemy_instructions(k).set_timer_low(decremented);
-    if timer == 1 {
-        (jp as *const u8).add(1) as *const u16
-    } else {
-        EnemyInstr_GotoRel(k, jp)
-    }
-}
 pub unsafe fn EnemyInstr_SetTimer(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     game.enemy_instructions(k).set_timer(*jp);
-    jp.add(1)
-}
-pub unsafe fn EnemyInstr_Skip2bytes(_k: u16, jp: *const u16) -> *const u16 {
     jp.add(1)
 }
 pub unsafe fn EnemyInstr_Sleep(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -2146,7 +2119,6 @@ pub unsafe fn EnemyCollisionHandler(game: &mut Game) {
         EnemySamusCollHandler(game);
     };
 }
-pub fn func_nullsub_4() {}
 pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
     set_ram_word!(game.enemy_processing_stage = 10u16);
     if ram_word!(game, flag_disable_projectile_interaction) != 0 {
@@ -3597,14 +3569,8 @@ pub fn SignExtend8(a: u16) -> u16 {
         a
     }
 }
-pub fn Mult32(a: u16) -> u16 {
-    a.wrapping_mul(32)
-}
 pub fn Abs16(a: u16) -> u16 {
     (a as i16).wrapping_abs() as u16
-}
-pub fn SubtractThenAbs16(k: u16, j: u16) -> u16 {
-    Abs16(j.wrapping_sub(k))
 }
 fn SineMult8bitInner(amplitude: u16, phase: u16, game: &Game) -> u32 {
     let sample = game.read_rom_byte(0xa0b143, usize::from(phase & 0x7f));
@@ -3761,10 +3727,6 @@ crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game);
 }
 pub fn CompareDistToSamus_X(k: u16, a: u16, game: &mut Game) -> u8 {
     let delta = GetSamusEnemyDelta_X(k, game);
-    u8::from(Abs16(delta) >= a)
-}
-pub fn CompareDistToSamus_Y(k: u16, a: u16, game: &mut Game) -> u8 {
-    let delta = GetSamusEnemyDelta_Y(k, game);
     u8::from(Abs16(delta) >= a)
 }
 pub fn EnemyFunc_BBBF(k: u16, amt: i32, game: &mut Game) -> u8 {

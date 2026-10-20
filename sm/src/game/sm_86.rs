@@ -2636,25 +2636,6 @@ pub unsafe fn EprojPreInstr_A977(k: u16, game: &mut Game) {
         set_ram_word!(game.eproj_pre_instr[v1] = 0xa918u16);
     };
 }
-pub unsafe fn sub_86A91A(v0: u16, game: &mut Game) {
-    let v1: i32 = v0 as i32 >> 1i32;
-    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
-    if (ram_word!(game, joypad2_last) & 0x100) != 0 {
-        set_ram_word!(game.eproj_x_vel[v1] = 256u16);
-    }
-    if (ram_word!(game, joypad2_last) & 0x200) != 0 {
-        set_ram_word!(game.eproj_x_vel[v1] = -256i32 as u16);
-    }
-    EprojBlockCollisition_Horiz(v0, game);
-    set_ram_word!(game.eproj_y_vel[v1] = 0u16);
-    if (ram_word!(game, joypad2_last) & 0x400) != 0 {
-        set_ram_word!(game.eproj_y_vel[v1] = 256u16);
-    }
-    if (ram_word!(game, joypad2_last) & 0x800) != 0 {
-        set_ram_word!(game.eproj_y_vel[v1] = -256i32 as u16);
-    }
-    EprojBlockCollisition_Vertical(v0, game);
-}
 unsafe fn EprojInit_AB07(j: u16, game: &mut Game) {
     let mut v1: u16 = ram_word!(game, vram_write_queue_tail);
     let v2 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
@@ -5237,14 +5218,6 @@ unsafe fn EprojInit_SporeSpawnStalk(j: u16, game: &mut Game) {
     );
     set_ram_word!(game.eproj_x_pos[v1] = (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).x_pos);
 }
-pub unsafe fn sub_86DCC3(v0: u16, game: &mut Game) {
-    let v1: i32 = v0 as i32 >> 1i32;
-    set_ram_word!(
-        game.eproj_y_pos[v1] =
-            ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).y_pos as i32 - 96i32) as u16
-    );
-    set_ram_word!(game.eproj_x_pos[v1] = (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).x_pos);
-}
 static kEprojInit_SporeSpawners_X: [i16; 4] = [0x20i16, 0x60i16, 0xa0i16, 0xe0i16];
 unsafe fn EprojInit_SporeSpawners(j: u16, game: &mut Game) {
     let v1: i32 = j as i32 >> 1i32;
@@ -5353,14 +5326,6 @@ pub unsafe fn Eproj_NamiFuneFireball_After(v0: u16, game: &mut Game) {
     if EprojPreInstrHelper_DBF2_Func2(v0, game) != 0 {
         set_ram_word!(game.eproj_id[(v0 >> 1)] = 0u16);
     }
-}
-pub unsafe fn sub_86DFA0(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1i32;
-    (((ram_word!(game, eproj_x_pos[v1]) as i32 - ram_word!(game, layer1_x_pos) as i32) as i16)
-        < 0i16
-        || ((ram_word!(game, layer1_x_pos) as i32 + 256i32
-            - ram_word!(game, eproj_x_pos[v1]) as i32) as i16)
-            < 0i16) as u16
 }
 pub unsafe fn EprojInstr_DFEA(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     let v1: i32 = k as i32 >> 1i32;

@@ -115,9 +115,6 @@ pub unsafe fn ppu_init(snes: *mut Snes) -> *mut Ppu {
     (*ppu).snes = snes;
     ppu
 }
-pub unsafe fn ppu_free(ppu: *mut Ppu) {
-    free(ppu as *mut c_void);
-}
 pub unsafe fn ppu_copy(ppu: *mut Ppu, ppu_src: *mut Ppu) {
     let snes = (*ppu).snes;
     let pitch: size_t = (*ppu).renderPitch as size_t;

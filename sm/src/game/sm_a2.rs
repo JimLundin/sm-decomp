@@ -1056,15 +1056,6 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Func4(k: u16, game: &mut Game) {
         Enemy_MoveDown(k, ((*E).var_04 as i16 as i32) << 16i32, game);
     };
 }
-pub unsafe fn MiniMaridiaBeybladeTurtle_Func5(k: u16, game: &mut Game) {
-    let mut v1: u16 = addr_kMaridiaBeybladeTurtle_Ilist_8B80 as u16;
-    let E = Get_MiniMaridiaBeybladeTurtle(k as i32, game);
-    if ((*E).var_E & 0x8000) == 0 {
-        v1 = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as u16;
-    }
-    enemy_instruction! {[(*E).base]; instruction = v1, timer = 1u16}
-    (*E).var_A = ((0xa29142i32) as u16);
-}
 pub unsafe fn MiniMaridiaBeybladeTurtle_Func6(k: u16, game: &mut Game) {
     if CheckIfEnemyTouchesSamus(k, game) != 0 {
         let mut v1: u16 = addr_kMaridiaBeybladeTurtle_Ilist_8B80 as u16;
@@ -1975,19 +1966,6 @@ pub unsafe fn GunshipTop_1(k: u16, game: &mut Game) {
         (*E0).var_C = ((*E0).var_C as i32 + 1i32 & 3i32) as u16;
     }
 }
-pub unsafe fn GunshipTop_2(k: u16, game: &mut Game) {
-    update_ram_word!(game.samus_y_pos, wrapping_sub(8u16));
-    let E2 = Get_GunshipTop(k as i32 + 128i32, game);
-    (*E2).base.y_pos = ((*E2).base.y_pos).wrapping_sub(8u16);
-    let E1 = Get_GunshipTop(k as i32 + 64i32, game);
-    (*E1).base.y_pos = ((*E1).base.y_pos).wrapping_sub(8u16);
-    let E0 = Get_GunshipTop(k as i32, game);
-    let v4: u16 = ((*E0).base.y_pos).wrapping_sub(8u16);
-    (*E0).base.y_pos = v4;
-    if v4 as i32 - 128i32 & 0x8000i32 != 0 {
-        (*E0).var_F = ((0xa2a80ci32) as u16);
-    }
-}
 pub unsafe fn GunshipTop_3(k: u16, game: &mut Game) {
     let E = Get_GunshipTop(k as i32, game);
     if (*E).base.y_pos as i32 - 768i32 & 0x8000i32 != 0 {
@@ -2837,15 +2815,6 @@ pub unsafe fn Rinka_6(k: u16, game: &mut Game) {
         (*E0).var_1E = v3 as u16;
     }
 }
-pub unsafe fn Rinka_7(k: u16, game: &mut Game) {
-    let E = Get_Rinka(k as i32, game);
-    if ram_word!(game, random_enemy_counter) & 3 == (*E).parameter_1 {
-        (*E).base.properties =
-            ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16;
-    } else {
-        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-    };
-}
 pub unsafe fn Rinka_8(k: u16, game: &mut Game) {
     let E = Get_Rinka(k as i32, game);
     if (*E).parameter_1 != 0 {
@@ -2929,14 +2898,6 @@ pub unsafe fn Rinka_B960(k: u16, game: &mut Game) {
         } else {
             RinkasDeathAnimation(0u16, game);
         }
-    }
-}
-pub unsafe fn Rinka_Instr_B9A2(k: u16, j: u16, game: &mut Game) -> u16 {
-    let E = Get_Rinka(0i32, game);
-    if (*E).var_1E as i32 - 3i32 & 0x8000i32 != 0 {
-        (j).wrapping_add(2u16)
-    } else {
-        *(RomPtr_A2(j, game) as *mut u16)
     }
 }
 pub unsafe fn Rinka_Instr_B9B3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -3703,9 +3664,6 @@ pub unsafe fn MaridiaLargeSnail_Func_8(k: u16, game: &mut Game) {
         (*E).var_F = ((0xa2cf66i32) as u16);
     };
 }
-pub unsafe fn MaridiaLargeSnail_Func_9(game: &mut Game) {
-    QueueSfx2_Max6(0x63u16, game);
-}
 pub unsafe fn MaridiaLargeSnail_Func_10(k: u16, game: &mut Game) {
     let E = Get_MaridiaLargeSnail(k as i32, game);
     let mlsl_var_00: u16 = (*E).var_00;
@@ -3927,20 +3885,6 @@ pub unsafe fn Gripper_Func_2(k: u16, game: &mut Game) -> u8 {
     (((*E).var_D & 0x8000) == 0
         && (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_B) as i16) >= 0i16) as u8
 }
-pub unsafe fn Gripper_Func_3(game: &mut Game) {
-    Enemy_NormalFrozenAI_A2(game);
-}
-pub unsafe fn Gripper_Func_4(game: &mut Game) {
-    NormalEnemyShotAi(game);
-    let E = Get_Gripper(ram_word!(game, cur_enemy_index) as i32, game);
-    if (*E).base.frozen_timer != 0 {
-        let mut v1: u16 = addr_kGripper_Sprmap_E43F as u16;
-        if ((*E).var_D & 0x8000) == 0 {
-            v1 = addr_kGripper_Sprmap_E44B as u16;
-        }
-        (*E).base.spritemap_pointer = v1;
-    }
-}
 pub unsafe fn JetPowerRipper_Init(game: &mut Game) {
     let mut v0: u16 = addr_kRipper_Ilist_E2E0 as u16;
     let E = Get_JetPowerRipper(ram_word!(game, cur_enemy_index) as i32, game);
@@ -3983,9 +3927,6 @@ pub unsafe fn JetPowerRipper_Main(game: &mut Game) {
         enemy_instruction! {[(*E).base]; instruction = v3 as u16, timer = 1u16}
         (*E).base.timer = 0u16;
     }
-}
-pub unsafe fn Ripper_Func_1(game: &mut Game) {
-    Enemy_NormalFrozenAI_A2(game);
 }
 pub unsafe fn JetPowerRipper_Shot(game: &mut Game) {
     NormalEnemyShotAi(game);
@@ -4401,7 +4342,6 @@ pub unsafe fn TimedShutter_Func_14(game: &mut Game) {
         (*E).var_F = (*E).var_F.wrapping_add(1);
     }
 }
-pub fn TimedShutter_Func_15() {}
 pub unsafe fn RisingFallingPlatform_Init(game: &mut Game) {
     RisingFallingPlatform_Func_1(ram_word!(game, cur_enemy_index), game);
     (*Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as i32, game))

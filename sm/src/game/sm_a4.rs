@@ -272,19 +272,6 @@ pub unsafe fn Crocomire_Func_18(k: u16, jp: *const u16, game: &mut Game) -> *con
     (*E).var_C = 30u16;
     result
 }
-pub unsafe fn Crocomire_Func_19(k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
-    jp = Crocomire_Func_2(ram_word!(game, cur_enemy_index), jp, game);
-    let E = Get_Crocomire(0i32, game);
-    if (*E).var_D == 0 || {
-        let mut v2: bool = (*E).var_D == 1u16;
-        (*E).var_D = (*E).var_D.wrapping_sub(1);
-        v2 as i32 != 0
-    } {
-        jp = Crocomire_Func_20(ram_word!(game, cur_enemy_index), game);
-        (*E).var_C = 32u16;
-    }
-    jp
-}
 pub unsafe fn Crocomire_Func_20(k: u16, game: &mut Game) -> *const u16 {
     (*Get_Crocomire(k as i32, game)).var_C = 20u16;
     let E = Get_Crocomire(0i32, game);
@@ -1218,9 +1205,6 @@ pub unsafe fn Crocomire_Func_60(game: &mut Game) {
         *(ram_ptr!(game, u16; 0x69c, j as u16 as isize)) = 0u16;
         j -= 2i32;
     }
-}
-pub unsafe fn Crocomire_Func_61(game: &mut Game) {
-    Crocomire_Func_62(game);
 }
 pub unsafe fn Crocomire_Func_62(game: &mut Game) {
     let mut v2 = null_mut::<VramWriteEntry>();

@@ -13,7 +13,4 @@ pub unsafe fn input_init(snes: *mut Snes) -> *mut Input {
     (*input).currentState = 0u16;
     input
 }
-pub unsafe fn input_free(input: *mut Input) {
-    free(input as *mut c_void);
-}
 pub unsafe fn input_reset(input: *mut Input) {}

@@ -439,9 +439,6 @@ pub unsafe fn SpacePirates_Instr_16(k: u16, jp: *const u16, game: &mut Game) -> 
     QueueSfx2_Max6(*jp.offset(0), game);
     jp.offset(1)
 }
-pub unsafe fn sub_B2F554(game: &mut Game) {
-    (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).instruction_timer = 1u16;
-}
 pub unsafe fn SpacePirates_Instr_15(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
     game.eproj_spawn_rect = Rect16U {
@@ -468,16 +465,6 @@ pub unsafe fn SpacePirates_Instr_18(k: u16, jp: *const u16, game: &mut Game) -> 
             addr_kSpacePirates_Ilist_F22E as i32
         }) as u16;
     (*E).var_C as usize as *const u16
-}
-pub unsafe fn sub_B2F5B3(game: &mut Game) {
-    let v0 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    (*v0).instruction_timer = 1u16;
-    (*v0).ai_var_C =
-        (if ((*v0).x_pos as i32 - ram_word!(game, samus_x_pos) as i32 & 0x8000i32) != 0i32 {
-            addr_kSpacePirates_Ilist_F51A as i32
-        } else {
-            addr_kSpacePirates_Ilist_F32E as i32
-        }) as u16;
 }
 pub unsafe fn SpacePirates_Instr_17(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     (*Get_SpacePirates(k as i32, game)).var_00 = 0u16;

@@ -1664,11 +1664,6 @@ pub unsafe fn NorfairLavaMan_Instr_6(k: u16, jp: *const u16, game: &mut Game) ->
     (*E).base.y_pos = ((*E).var_13).wrapping_sub(4u16);
     jp
 }
-pub unsafe fn sub_A8AF32(game: &mut Game) {
-    let E = Get_NorfairLavaMan(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.x_pos = (*E).var_12;
-    (*E).base.y_pos = (*E).var_13;
-}
 pub unsafe fn NorfairLavaMan_Instr_3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     (*Get_NorfairLavaMan(ram_word!(game, cur_enemy_index) as i32, game)).var_04 = 256u16;
     jp
@@ -3640,11 +3635,6 @@ pub unsafe fn sub_A8DDDE(k: u16, game: &mut Game) {
     }
     enemy_instruction! {[(*v1)]; instruction = v2, timer = 1u16}
 }
-pub unsafe fn WalkingLavaSeahorse_Func_5(k: u16, game: &mut Game) {
-    let E = Get_WalkingLavaSeahorse(k as i32, game);
-    set_fields! {[(*E)], 0u16; var_B, var_C}
-    sub_A8DDDE(k, game);
-}
 pub unsafe fn WalkingLavaSeahorse_Func_6(k: u16, game: &mut Game) {
     let E = Get_WalkingLavaSeahorse(k as i32, game);
     if Enemy_MoveDown(
@@ -3794,9 +3784,6 @@ pub unsafe fn WalkingLavaSeahorse_Instr_1(
         EnemyFunc_C8AD(ram_word!(game, cur_enemy_index), game);
     }
     jp
-}
-pub unsafe fn WalkingLavaSeahorse_Func_10(game: &mut Game) {
-    NormalEnemyShotAi(game);
 }
 pub unsafe fn WreckedShipOrbs_Init(game: &mut Game) {
     let E = Get_WreckedShipOrbs(ram_word!(game, cur_enemy_index) as i32, game);

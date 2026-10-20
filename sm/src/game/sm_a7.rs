@@ -285,9 +285,6 @@ pub unsafe fn Kraid_Arm_Shot(j: u16, game: &mut Game) {
     update_ram_word!(game.projectile_dir[(j >> 1)], |fresh16| (fresh16)
         | (0x10u16));
 }
-pub unsafe fn sub_A7A92A(game: &mut Game) {
-    Kraid_CheckIfDead(game);
-}
 pub unsafe fn Kraid_CheckIfDead(game: &mut Game) -> u16 {
     ((*(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) & 1) != 0) as u16
 }

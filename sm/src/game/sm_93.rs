@@ -312,32 +312,6 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
     Samus_DrawShinesparkCrashEchoProjectiles(game);
     HandleProjectileTrails(game);
 }
-pub unsafe fn sub_9382FD(game: &mut Game) {
-    let mut v0: u16 = 8u16;
-    set_ram_word!(game.projectile_index = 8u16);
-    loop {
-        let v1: i32 = v0 as i32 >> 1i32;
-        if ram_word!(game, projectile_bomb_instruction_ptr[v1]) != 0 {
-            let r20: u16 =
-                (ram_word!(game, projectile_x_pos[v1])).wrapping_sub(ram_word!(game, layer1_x_pos));
-            let r18: u16 = (ram_word!(game, projectile_y_pos[v1]) as i32
-                - 8i32
-                - ram_word!(game, layer1_y_pos) as i32) as u16;
-            if ((r18 & 0xff00) == 0)
-                && (ram_word!(game, projectile_spritemap_pointers[v1]) & 0x8000) != 0
-            {
-                DrawProjectileSpritemap(v0, r20, r18, game);
-            }
-            v0 = ram_word!(game, projectile_index);
-        }
-        v0 = (v0).wrapping_sub(2u16);
-        set_ram_word!(game.projectile_index = v0);
-        if ((v0 & 0x8000) != 0) {
-            break;
-        }
-    }
-    HandleProjectileTrails(game);
-}
 pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
     let mut current_block: u64;
     let mut v0: u16 = 18u16;

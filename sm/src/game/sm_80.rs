@@ -143,9 +143,6 @@ pub unsafe fn SetBossBitForCurArea(a: u16, game: &mut Game) {
     game.g_ram[0x5e7] = a as u8; // The ROM stores the mask with an 8-bit accumulator.
     crate::update_place! { reference fresh91 = *ram_ptr!(game; 0xd828, ram_word!(game, area_index) as isize) => (*fresh91) | ((a) as u8); }
 }
-pub unsafe fn ClearBossBitForCurArea(a: u16, game: &mut Game) {
-    crate::update_place! { reference fresh19 = *ram_ptr!(game; 0xd828, ram_word!(game, area_index) as isize) => (*fresh19 & !(a as u8)); }
-}
 pub unsafe fn CheckBossBitForCurArea(a: u16, game: &mut Game) -> u8 {
     game.g_ram[0x5e7] = a as u8; // The ROM stores the mask with an 8-bit accumulator.
     ((a & *ram_ptr!(game; 0xd828, ram_word!(game, area_index) as isize) as u16) != 0) as u8
@@ -836,10 +833,6 @@ crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
     QueueSfx1_Max1 => queue_sfx(0, sound as u8, 1, game);
     QueueSfx1_Max6 => queue_sfx(0, sound as u8, 6, game);
 }
-pub fn QueueSfx1_Internal(packed: u16, game: &mut Game) {
-    let [max_queued, sound] = packed.to_le_bytes();
-    queue_sfx(0, sound, max_queued, game);
-}
 crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
     QueueSfx2_Max15 => queue_sfx(1, sound as u8, 15, game);
     QueueSfx2_Max9 => queue_sfx(1, sound as u8, 9, game);
@@ -847,20 +840,12 @@ crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
     QueueSfx2_Max1 => queue_sfx(1, sound as u8, 1, game);
     QueueSfx2_Max6 => queue_sfx(1, sound as u8, 6, game);
 }
-pub fn QueueSfx2_Internal(packed: u16, game: &mut Game) {
-    let [max_queued, sound] = packed.to_le_bytes();
-    queue_sfx(1, sound, max_queued, game);
-}
 crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
     QueueSfx3_Max15 => queue_sfx(2, sound as u8, 15, game);
     QueueSfx3_Max9 => queue_sfx(2, sound as u8, 9, game);
     QueueSfx3_Max3 => queue_sfx(2, sound as u8, 3, game);
     QueueSfx3_Max1 => queue_sfx(2, sound as u8, 1, game);
     QueueSfx3_Max6 => queue_sfx(2, sound as u8, 6, game);
-}
-pub fn QueueSfx3_Internal(packed: u16, game: &mut Game) {
-    let [max_queued, sound] = packed.to_le_bytes();
-    queue_sfx(2, sound, max_queued, game);
 }
 pub unsafe fn SetupDmaTransfer(p: *const c_void, game: &mut Game) {
     let s = p as *const StartDmaCopy;
@@ -2902,24 +2887,6 @@ pub unsafe fn DoorTransition_Up(game: &mut Game) -> u8 {
     }
     set_ram_word!(game.door_transition_frame_counter = (v6).wrapping_add(1u16));
     (v6 == 56u16) as u8
-}
-pub unsafe fn ConfigureMode7RotationMatrix(game: &mut Game) {
-    if ram_word!(game, irq_enable_mode7) != 0 && (ram_word!(game, nmi_frame_counter_word) & 7) == 0
-    {
-        set_ram_word!(
-            game.reg_M7B = kSinCosTable8bit_Sext
-                [(ram_word!(game, mode7_rotation_angle) as u8 as i32 + 64i32) as usize]
-                as u16
-        );
-        set_ram_word!(game.reg_M7C = -(ram_word!(game, reg_M7B) as i32) as u16);
-        set_ram_word!(
-            game.reg_M7A = kSinCosTable8bit_Sext[((((ram_word!(game, mode7_rotation_angle)) as u8)
-                .wrapping_add(64u8)) as i32
-                + 64i32) as usize] as u16
-        );
-        set_ram_word!(game.reg_M7D = ram_word!(game, reg_M7A));
-        update_ram_word!(game.mode7_rotation_angle, wrapping_add(1));
-    }
 }
 
 unsafe fn DecompNextByte(game: &mut Game) -> u8 {

@@ -2813,9 +2813,6 @@ pub unsafe fn MotherBrain_AimBeam(game: &mut Game) {
     ) as i32
         + 0x80i32) as u8 as u16;
 }
-pub unsafe fn MotherBrain_CalculateRainbowBeamHdma_(game: &mut Game) {
-    MotherBrain_CalculateRainbowBeamHdma(game);
-}
 pub unsafe fn MotherBrain_MoveSamusTowardsWallDueToBeam(game: &mut Game) -> u8 {
     let v0: u8 = MotherBrain_MoveSamusHorizTowardsWall(0x1000u16, game);
     if v0 == 0 {

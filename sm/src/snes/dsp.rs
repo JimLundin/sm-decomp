@@ -58,9 +58,6 @@ pub unsafe fn dsp_init(ram: *mut u8) -> *mut Dsp {
     (*dsp).apu_ram = ram;
     dsp
 }
-pub unsafe fn dsp_free(dsp: *mut Dsp) {
-    free(dsp as *mut c_void);
-}
 pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     memset(
         &raw mut (*dsp).ram as *mut u8 as *mut c_void,

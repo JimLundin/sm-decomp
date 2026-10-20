@@ -648,7 +648,6 @@ pub unsafe fn Crab_Init(game: &mut Game) {
     );
     StoneZoomer_E67A(ram_word!(game, cur_enemy_index), game);
 }
-pub fn Crab_Func_1() {}
 pub unsafe fn Slug_Init(game: &mut Game) {
     let v1 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     (*v1).parameter_2 = 10u16;
@@ -659,7 +658,6 @@ pub unsafe fn Slug_Init(game: &mut Game) {
     );
     StoneZoomer_E67A(ram_word!(game, cur_enemy_index), game);
 }
-pub fn Slug_Func_1() {}
 pub unsafe fn PlatformThatFallsWithSamus_Instr_3(
     k: u16,
     jp: *const u16,
@@ -944,27 +942,6 @@ pub unsafe fn Roach_Func_2(k: u16, game: &mut Game) {
     );
     SetHiLo(&raw mut (*E).var_01, &raw mut (*E).var_00, pt.x);
     SetHiLo(&raw mut (*E).var_03, &raw mut (*E).var_02, pt.y);
-}
-pub unsafe fn Roach_Func_3(k: u16, game: &mut Game) {
-    let E = Get_Roach(k as i32, game);
-    SetHiLo(
-        &raw mut (*E).var_01,
-        &raw mut (*E).var_00,
-        CosineMult8bitFull(
-            *(&raw mut (*E).parameter_1 as *mut u8).offset(1isize) as u16,
-            *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
-            game,
-        ),
-    );
-    SetHiLo(
-        &raw mut (*E).var_03,
-        &raw mut (*E).var_02,
-        SineMult8bitFull(
-            *(&raw mut (*E).parameter_1 as *mut u8).offset(1isize) as u16,
-            *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
-            game,
-        ),
-    );
 }
 pub unsafe fn Roach_Func_4(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
@@ -1875,21 +1852,12 @@ pub unsafe fn MaridiaRefillCandy_Func_4(game: &mut Game) {
         (*E).base.timer = 0u16;
     }
 }
-pub fn MaridiaRefillCandy_Func_5() {}
-pub fn MaridiaRefillCandy_Func_6() {}
 pub unsafe fn NorfairSlowFireball_Init(game: &mut Game) {
     let v1 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     (*v1).parameter_2 = 6u16;
     (*v1).current_instruction =
         crate::rtl::rom_table_word!(game, 0xa3b667, ((*v1).properties as i32 & 3i32) as isize);
     StoneZoomer_E67A(ram_word!(game, cur_enemy_index), game);
-}
-pub unsafe fn NorfairSlowFireball_Func_1(game: &mut Game) {
-    let current_instruction: u16 =
-        (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).current_instruction;
-    if current_instruction != 0 {
-        Unreachable(game);
-    }
 }
 pub unsafe fn Bang_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     QueueSfx2_Max6(0x56u16, game);
@@ -2311,9 +2279,6 @@ pub unsafe fn MaridiaSnail_Instr_5(k: u16, mut jp: *const u16, game: &mut Game) 
     }
     jp
 }
-pub unsafe fn MaridiaSnail_Func_1(k: u16, game: &mut Game) {
-    MaridiaSnail_Func_17(k, game);
-}
 pub unsafe fn MaridiaSnail_Init(game: &mut Game) {
     let E = Get_MaridiaSnail(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).var_F = ((0xa3cf5fi32) as u16);
@@ -2657,28 +2622,6 @@ pub unsafe fn MaridiaSnail_Func_16(k: u16, game: &mut Game) {
     (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xa3d30d, v2 as isize);
     (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3d30d, (v2 + 1i32) as isize);
 }
-pub unsafe fn MaridiaSnail_Func_17(k: u16, game: &mut Game) -> u8 {
-    let E = Get_MaridiaSnail(k as i32, game);
-    if (*E).var_05 != 0 {
-        return 0u8;
-    }
-    if (*E).var_07 >= 4u16 {
-        return (MaridiaSnail_Func_18(k, game)) & (1u8);
-    }
-    if ((*E).var_07 & 1) != 0 {
-        ((if (*E).base.y_pos >= ram_word!(game, samus_y_pos) {
-            MaridiaSnail_Func_19(k, game) as i32
-        } else {
-            0i32
-        }) as u8)
-    } else {
-        ((if (*E).base.y_pos < ram_word!(game, samus_y_pos) {
-            MaridiaSnail_Func_19(k, game) as i32
-        } else {
-            0i32
-        }) as u8)
-    }
-}
 pub unsafe fn MaridiaSnail_Func_18(k: u16, game: &mut Game) -> u8 {
     let E = Get_MaridiaSnail(k as i32, game);
     if (*E).var_C != 0 {
@@ -2760,12 +2703,6 @@ pub unsafe fn MaridiaSnail_Func_20(k: u16, game: &mut Game) -> u8 {
         return 0u8;
     }
     1u8
-}
-pub unsafe fn MaridiaSnail_Func_21(k: u16, game: &mut Game) -> u8 {
-    if ((*Get_MaridiaSnail(k as i32, game)).var_A & 0x8000) != 0 {
-        return (*ram_ptr!(game; 0xa1e) == 8u8) as u8;
-    }
-    (*ram_ptr!(game; 0xa1e) == 4u8) as u8
 }
 pub unsafe fn MaridiaSnail_Shot(game: &mut Game) {
     let v0: u16 = (ram_word!(

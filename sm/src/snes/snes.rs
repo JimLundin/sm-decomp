@@ -2,17 +2,17 @@ use crate::c_library::{__assert_fail, free, malloc, memset, printf};
 use crate::game_state::Game;
 use crate::rtl::RtlApuWrite;
 use crate::set_fields;
-use crate::snes::apu::{apu_cycle, apu_free, apu_init, apu_reset, apu_saveload};
-use crate::snes::cart::{cart_free, cart_init, cart_read, cart_reset, cart_saveload, cart_write};
-use crate::snes::cpu::{cpu_free, cpu_init, cpu_reset, cpu_saveload};
+use crate::snes::apu::{apu_cycle, apu_init, apu_reset, apu_saveload};
+use crate::snes::cart::{cart_init, cart_read, cart_reset, cart_saveload, cart_write};
+use crate::snes::cpu::{cpu_init, cpu_reset, cpu_saveload};
 use crate::snes::dma::{
-    dma_cycle, dma_doHdma, dma_free, dma_init, dma_initHdma, dma_read, dma_reset, dma_saveload,
-    dma_startDma, dma_write,
+    dma_cycle, dma_doHdma, dma_init, dma_initHdma, dma_read, dma_reset, dma_saveload, dma_startDma,
+    dma_write,
 };
-use crate::snes::input::{input_free, input_init, input_reset};
+use crate::snes::input::{input_init, input_reset};
 use crate::snes::ppu::{
-    ppu_checkOverscan, ppu_free, ppu_handleVblank, ppu_init, ppu_read, ppu_reset, ppu_runLine,
-    ppu_saveload, ppu_write,
+    ppu_checkOverscan, ppu_handleVblank, ppu_init, ppu_read, ppu_reset, ppu_runLine, ppu_saveload,
+    ppu_write,
 };
 pub use crate::types::{
     size_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
@@ -43,16 +43,6 @@ pub unsafe fn snes_init(ram: *mut u8) -> *mut Snes {
     (*snes).input1 = input_init(snes);
     (*snes).input2 = input_init(snes);
     snes
-}
-pub unsafe fn snes_free(snes: *mut Snes) {
-    cpu_free((*snes).cpu);
-    apu_free((*snes).apu);
-    dma_free((*snes).dma);
-    ppu_free((*snes).ppu);
-    cart_free((*snes).cart);
-    input_free((*snes).input1);
-    input_free((*snes).input2);
-    free(snes as *mut c_void);
 }
 pub unsafe fn snes_saveload(
     snes: *mut Snes,
@@ -291,27 +281,6 @@ pub unsafe fn snes_read(snes: *mut Snes, address: u32, game: &mut Game) -> u8 {
         }
     }
     cart_read((*snes).cart, bank, offset, game)
-}
-pub unsafe fn LogWrite(snes: *mut Snes, adr: u32, val: u8, game: &mut Game) {
-    printf(
-        b"@%d: Write to 0x%x = 0x%.2x: 0x%x: r18=0x%x: r20=0x%x: a = 0x%x, x = 0x%x, y = 0x%x, c = %d\n\0"
-            as *const u8 as *const c_char,
-        game.snes_frame_counter,
-        adr,
-        val as i32,
-        ((*(*snes).cpu).k as i32) << 16i32
-            | (*(*snes).cpu).pc as i32,
-        *(*snes).ram.offset(0x12) as i32
-            | (*(*snes).ram.offset(0x13)
-                as i32) << 8i32,
-        *(*snes).ram.offset(0x14) as i32
-            | (*(*snes).ram.offset(0x15)
-                as i32) << 8i32,
-        (*(*snes).cpu).a as i32,
-        (*(*snes).cpu).x as i32,
-        (*(*snes).cpu).y as i32,
-        (*(*snes).cpu).c as i32,
-    );
 }
 pub unsafe fn snes_write(snes: *mut Snes, address: u32, value: u8, game: &mut Game) {
     let bank = (address >> 16) as u8;

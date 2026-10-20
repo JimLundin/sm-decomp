@@ -2282,53 +2282,6 @@ pub unsafe fn ClearPauseMenuData(game: &mut Game) {
         UNUSED_word_7E075B, UNUSED_word_7E075D, UNUSED_word_7E075F, UNUSED_word_7E0761,
     }
 }
-pub fn sub_82A425() {}
-pub unsafe fn sub_82A42A(game: &mut Game) {
-    let start_spin_jump: bool = if ram_word!(game, samus_pose) as i32
-        == kPose_81_FaceR_Screwattack as i32
-        || ram_word!(game, samus_pose) as i32 == kPose_82_FaceL_Screwattack as i32
-    {
-        if (ram_word!(game, equipped_items) & 8) != 0 {
-            return;
-        }
-        true
-    } else {
-        ((ram_word!(game, samus_pose) as i32 == kPose_1B_FaceR_SpaceJump as i32
-            || ram_word!(game, samus_pose) as i32 == kPose_1C_FaceL_SpaceJump as i32)
-            && (ram_word!(game, equipped_items) & 0x20) == 0)
-    };
-    if start_spin_jump {
-        if *ram_ptr!(game; 0xa1e) == 4u8 {
-            set_ram_word!(game.samus_pose = kPose_1A_FaceL_SpinJump as u16);
-        } else {
-            set_ram_word!(game.samus_pose = kPose_19_FaceR_SpinJump as u16);
-        }
-        SamusFunc_F433(game);
-        Samus_SetAnimationFrameIfPoseChanged(game);
-    };
-}
-pub unsafe fn sub_82A47B(game: &mut Game) {
-    if (ram_word!(game, equipped_items) & 4) == 0 {
-        if *ram_ptr!(game; 0xa1e) == 4u8 {
-            set_ram_word!(game.samus_pose = kPose_41_FaceL_Morphball_Ground as u16);
-        } else {
-            set_ram_word!(game.samus_pose = kPose_1D_FaceR_Morphball_Ground as u16);
-        }
-        SamusFunc_F433(game);
-        Samus_SetAnimationFrameIfPoseChanged(game);
-    }
-}
-pub unsafe fn sub_82A4A9(game: &mut Game) {
-    if (ram_word!(game, equipped_items) & 2) != 0 {
-        if *ram_ptr!(game; 0xa1e) == 4u8 {
-            set_ram_word!(game.samus_pose = kPose_7A_FaceL_Springball_Ground as u16);
-        } else {
-            set_ram_word!(game.samus_pose = kPose_79_FaceR_Springball_Ground as u16);
-        }
-        SamusFunc_F433(game);
-        Samus_SetAnimationFrameIfPoseChanged(game);
-    }
-}
 pub unsafe fn HandlePauseScreenLR(game: &mut Game) {
     HandlePauseScreenLrInput(game);
     DrawLrHighlight(game);
@@ -3374,16 +3327,6 @@ pub unsafe fn DrawPauseMenuDuringFadeIn(game: &mut Game) {
         DisplayMapElevatorDestinations(game);
     };
 }
-pub unsafe fn UNKNOWN_sub_82B650(game: &mut Game) {
-    if ram_word!(game, pausemenu_button_label_mode) != 0 {
-        DisplayMapElevatorDestinations(game);
-        MapScreenDrawSamusPositionIndicator(game);
-        DrawMapIcons(game);
-    } else {
-        EquipmentScreenDrawItemSelector(game);
-        EquipmentScreenDisplayReserveTankAmount(game);
-    };
-}
 static kMap_Criteria_SavePoints: [u16; 16] = [
     0xd8, 0x28, 0x90, 0x38, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe,
     0xfffe, 0xfffe, 0xfffe,
@@ -3606,9 +3549,6 @@ pub unsafe fn DrawMapScrollArrowAndCheckToScroll(db: u8, k: u16, game: &mut Game
     {
         set_ram_word!(game.map_scrolling_direction = *(v2.offset(8) as *mut u16));
     }
-}
-pub unsafe fn sub_82B932(game: &mut Game) {
-    HandleMapScrollArrows(game);
 }
 pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
     if ram_word!(game, map_min_x_scroll) as i32 - 24i32 - ram_word!(game, reg_BG1HOFS) as i32
@@ -5840,13 +5780,6 @@ pub unsafe fn OptionsPreInstr_F3A0(k: u16, game: &mut Game) {
 }
 pub unsafe fn OptionsPreInstr_F3E2(k: u16, game: &mut Game) {
     if ram_word!(game, game_options_screen_index) == 6u16 && *ram_ptr!(game; 0x51) == 0x80u8 {
-        let v1: i32 = k as i32 >> 1i32;
-        set_ram_word!(game.eproj_E[(v1 + 15i32)] = 1u16);
-        set_ram_word!(game.eproj_y_vel[(v1 + 17i32)] = -2890i32 as u16);
-    }
-}
-pub unsafe fn sub_82F404(k: u16, game: &mut Game) {
-    if ram_word!(game, game_options_screen_index) == 1u16 {
         let v1: i32 = k as i32 >> 1i32;
         set_ram_word!(game.eproj_E[(v1 + 15i32)] = 1u16);
         set_ram_word!(game.eproj_y_vel[(v1 + 17i32)] = -2890i32 as u16);

@@ -32,9 +32,6 @@ pub unsafe fn spc_init(apu: *mut Apu) -> *mut Spc {
     (*spc).apu = apu;
     spc
 }
-pub unsafe fn spc_free(spc: *mut Spc) {
-    free(spc as *mut c_void);
-}
 pub unsafe fn spc_reset(spc: *mut Spc) {
     set_fields! {[(*spc)], 0u8; a, x, y, sp}
     (*spc).pc =

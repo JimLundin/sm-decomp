@@ -133,31 +133,6 @@ pub unsafe fn Call(addr: u32, game: &mut Game) {
 pub unsafe fn SnesRomPtr(v: u32, game: &mut Game) -> *mut u8 {
     RomPtr(v, game) as *mut u8
 }
-pub unsafe fn ProcessHook(v: u32, game: &mut Game) -> bool {
-    let rombyte = SnesRomPtr(v, game);
-    match game.hookmode {
-        0 => {
-            crate::update_place! { previous fresh2 = game.hookcnt => game.hookcnt.wrapping_add(1); }
-            *rombyte = game.hook_orgbyte[fresh2 as usize];
-            return false_0 != 0;
-        }
-        1 => {
-            crate::update_place! { previous fresh3 = game.hookcnt => game.hookcnt.wrapping_add(1); }
-            game.hook_orgbyte[fresh3 as usize] = *rombyte;
-            *rombyte = 0u8;
-            return false_0 != 0;
-        }
-        2 => {
-            if v == game.hookadr {
-                game.hookmode = 3u32;
-                return true_0 != 0;
-            }
-            return false_0 != 0;
-        }
-        _ => {}
-    }
-    false_0 != 0
-}
 pub unsafe fn FixBugHook(addr: u32, game: &mut Game) -> bool {
     match game.hookmode {
         1 => {
