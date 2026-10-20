@@ -53,6 +53,29 @@ transpilation, not whether a restart beats current main. Keep maintained Rust
 as the implementation and measure actual paired C2Rust output, including
 shared helpers and registration. Do not infer whole-game savings from a pilot.
 
+The expanded experiment now measures **44,215 fewer generated Rust lines
+(229,348 -> 185,133, 19.3%)** across all 32 gameplay banks, CPU infrastructure
+and SPC player, including replacement helpers. It composes shared C algorithms
+and instruction executors with a proved numeric-emission postpass, using one
+formatter. On the original complete 54-file crate, numeric emission alone
+removes **35,000 lines**; composing it with shared declarations and native
+gameplay calls gives **278,936 -> 219,709 (-59,227)**. The two combined results
+use different inputs/scopes and overlap; do not add them or the older 49,687.
+Final optimized Rust libraries compile; structural,
+constant, arithmetic and focused C/generated-Rust comparisons pass within the
+documented coverage. Neither result is a current-main deletion or full-game
+replay. Source inspection identifies concrete C2Rust emitter changes; source
+patches remain unbuilt. Details are in REDUCTION_RESEARCH.md.
+
+The requested independent-transpiler trial also ran Corrode, CRUST and Sonder.
+Corrode removes **312 lines (1,035 -> 723)** on two disjoint real algorithm
+units with passing component comparisons, but changes an actual packed game
+structure from 11 to 12 bytes. On a complete sm_87 bank, both outputs compile:
+**679 -> 627**, a smaller **52-line (7.7%)** gain, without bank runtime checks.
+CRUST/Sonder fail the tested real inputs.
+Corrode is a useful emission comparator, not an unchanged replacement across
+the project; do not extrapolate these bounded counts to the whole game.
+
 Latest user clarification: code-volume reduction is the immediate priority.
 Focus on repeated code patterns; broad system redesign is too costly unless
 it directly removes substantial repetition. Investigate efficient methods in
@@ -273,19 +296,17 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    or scope before repeating discovery. The regions and prior results below
    guide coverage, not boundaries that candidate replacements must preserve:
 
-   The source-first C experiment now demonstrates two shared algorithms across
-   complete translation units: slope geometry across five gameplay consumers
-   removes **644 generated Rust lines**, and scrolling/tile streaming removes
-   **519**, including all helper/registration costs. Actual C2Rust controls,
-   compiler checks and constructed C/generated-Rust comparisons pass. Three
-   distinct slope sampling contracts must remain explicit. A layout-only
-   control grows code; sharing the algorithm produces the deletion. These are
-   isolated experimental savings, not current-main deletions or full-game
-   replay proof. A separate complete 394-site high-byte/high-word preprocessing
-   trial across 30 C files removes **570 generated lines (0.25%)**, including
-   helper/registration. It overlaps those algorithms and is not additive; this
-   representation change alone is not a large reduction route. Details, C
-   baseline and patches: REDUCTION_RESEARCH.md.
+   The expanded source-first C experiment is complete: sharing 35 algorithm
+   groups, retiring forwarding functions, fusing 789 instruction bodies and
+   changing 2,381 word-arithmetic occurrences removes **7,227 generated lines**
+   from its raw C2Rust cohort. The actual composed numeric-emission candidate
+   removes **44,215** under the same final formatter, as scoped above. Earlier
+   slope/scrolling and partial-access studies remain in REDUCTION_RESEARCH.md;
+   their overlapping standalone counts are not added. Optimized compilation
+   and the documented component comparisons establish a useful translator
+   profile, not a current-main deletion budget or full-game equivalence. Use
+   these complete-family replacements and emitter findings for subsequent
+   adoption decisions; keep unrelated small reduction work parked.
 
    A separate normalized/aligned audit of 1,331 bodies at least 20 lines long
    produced three complete prices: enemy collision sweeps **-38**, room loading

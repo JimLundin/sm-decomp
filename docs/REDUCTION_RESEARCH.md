@@ -5,6 +5,16 @@ preserving behavior. This note records primary-source research, scanner trials
 and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
+Latest result: the broader original-C changes plus a tested numeric emission
+pass reduce the complete measured gameplay/support cohort from **229,348 to
+185,133 lines (-44,215, 19.3%)**, under one formatter. The original complete
+54-file Rust crate independently loses **35,000 lines** from numeric emission
+alone, or **59,227 (278,936 -> 219,709)** when composed with shared declarations
+and native gameplay calls. These overlapping candidates are generated-code
+experiments, not current-main deletions. The
+final sections distinguish algorithm sharing, emitter policy and independently
+tested alternative transpilers.
+
 ## A directly relevant successful migration
 
 **rav1d is a useful precedent.** Its [deduplication issue #26](https://github.com/memorysafety/rav1d/issues/26)
@@ -339,3 +349,287 @@ algorithm, then translate both versions and price the complete result. This
 produces domain seams such as slope geometry and tile streaming. It is a useful
 step toward descriptive engine modules; it does not by itself retire entire
 banks or establish the remaining whole-game reduction budget.
+
+## Broader C transformations and a tailored emission profile
+
+The expanded experiment treats complete instruction systems and all eligible
+clone groups together. It then tests C2Rust's emission policy separately. The
+scope is the original public C revision already identified above; experiments
+remain isolated from maintained Rust.
+
+### Whole-cohort C transformations
+
+| Complete responsibility | Actual standalone Rust removal | Scope |
+| --- | ---: | --- |
+| Shared algorithm groups and retired forwarding functions | 2,200 | 35 groups / 165 routines; 143 wrappers retired, 171 callers changed; 18 units |
+| Enemy instruction execution | 1,522 | 419 handlers fused into native opcode executors; seven genuine wrappers retained; 12 units |
+| PLM and enemy-projectile instruction execution | 866 | 200 handlers retired behind 201 existing opcode entries; two units |
+| Presentation instruction execution | 356 | 170 handlers in seven animation, HDMA, palette and cinematic dispatchers; four units |
+| Word arithmetic representation | 2,373 | 2,381 typed countdown, signed-comparison, sign-mask and pair-construction occurrences; 32 units plus helper |
+
+These standalone numbers overlap. Applying the transformations in sequence to
+the original C, retranslating the result and charging all helpers/declarations/
+module registrations gives **229,295 -> 222,068: 7,227 net Rust lines removed**.
+The cohort contains all **32 gameplay banks**, CPU infrastructure and SPC
+player; the result adds one math module. It excludes the remaining frontend
+and SNES backend units and is not a whole-project total.
+
+All 69 original/replacement C object builds and Rust metadata builds pass,
+as do both complete module roots. The immutable composed C input was checked
+throughout translation. C2Rust version, source/options, raw outputs and exact
+per-file counts are retained. No standalone saving was added to the combined
+number without rerunning the composed source.
+
+Validation covers all 165 clone instantiations and all 789 fused instruction
+bodies structurally. Executed component checks include 10,560 clone cases,
+18,112 enemy-script cases, 33,792 PLM/projectile cases and 5,394 presentation
+cases, comparing complete RAM and relevant returns/call traces. The arithmetic
+study checks 1,114,112 primitive cases and 9,984 states across 39 real gameplay
+routines in both native C and generated Rust. Runtime script coverage is
+partial: 236 changed enemy handlers, 88 PLM/projectile opcodes and every 174
+presentation opcode entry; other paths have the stated structural checks.
+Some unchanged external callees are instrumented. These are not full-game,
+SNES, rendered-frame or audio comparisons.
+
+This broader experiment also rejected alternatives on measured evidence.
+PLM/projectile declarative action rows remove only 342 lines after generated
+table/type costs, less than the 866-line native dispatcher. Packed rows improve
+that count but expose an enum ABI mismatch and add C complexity. CFG-option
+trials offer no substantial reduction, and one option emits an invalid label.
+Changing all 15 coroutine macros to explicit resume labels saves only 50 lines.
+Those are controls, not selected reduction workstreams.
+
+### The emission policy accounts for substantial expansion
+
+Inspected C2Rust v0.22.1 at
+[`e9ccd715597f7d63e8635629f4450e040a230118`](https://github.com/immunant/c2rust/tree/e9ccd715597f7d63e8635629f4450e040a230118).
+Its [`mk_int_lit`](https://github.com/immunant/c2rust/blob/e9ccd715597f7d63e8635629f4450e040a230118/c2rust-transpile/src/translator/literals.rs#L12-L25)
+constructs an unsuffixed literal and then casts it to its target type. Its
+[`compound-assignment emitter`](https://github.com/immunant/c2rust/blob/e9ccd715597f7d63e8635629f4450e040a230118/c2rust-transpile/src/translator/operators.rs#L200-L283)
+widens an operand to Clang's compute type, calculates, then narrows it again.
+Some of this generated syntax can be replaced with shorter equivalent typed
+operations; it is not independent gameplay logic.
+
+The runnable prototype applies these policies to actual emitted Rust:
+
+```rust
+// Examples, only when operand and result types are proved:
+0 as uint16                         // becomes 0u16
+65535 as i16                        // becomes (-1i16)
+(a as i32 - b as i32) as u16        // becomes a.wrapping_sub(b), for u16 operands
+```
+
+It proves types from aliases, declarations, fields and expression structure,
+skips unknown/mixed cases, preserves operand evaluation order and does not
+rewrite arbitrary multiplication, shifts or division. This is an executable
+**emission postpass prototype**, not a claim that a modified C2Rust binary was
+built. The source study supplies conservative, unbuilt emitter patches as
+implementation entry points; they do not alone reproduce every tested rewrite.
+
+| Original complete 54-file generated crate | Rust lines | Cast AST nodes |
+| --- | ---: | ---: |
+| Original, unchanged by the same formatter | 278,936 | 253,611 |
+| Proved promotion/arithmetic normalization | 275,526 | 233,877 |
+| Plus equivalent typed integer literals | **243,936** | **145,534** |
+
+The **35,000-line** result comprises **3,410** from promotion/arithmetic
+normalization and **31,590** from literal emission. The latter eliminates
+88,343 cast expressions. It reduces transpiler verbosity; it does not mean
+31,590 lines of independent game behavior were deleted. No format-width
+change, helper outside the counted tree or removed validation contributes.
+
+Applied to the fresh composed C output, the same policy produces:
+
+| Measured gameplay/support cohort, one formatter | Rust lines |
+| --- | ---: |
+| Unchanged original C translated and formatted | **229,348** |
+| Composed C changes translated and formatted | 222,073 |
+| Plus promotion/arithmetic normalization | 219,781 |
+| Plus typed literal emission | **185,133** |
+
+The combined result is **44,215 lines removed (19.3%)**, including the new
+helper and module root. It is counted directly, not computed by adding the
+whole-original 35,000 to the C experiment. Original and fresh scopes differ.
+For exact provenance, the prior toolchain formatter produced 229,295 and
+222,068 before/after C changes; applying the final identical formatter adds
+53 and five lines respectively. Raw-baseline deletion is 44,162. The table
+above uses the same formatter on both sides and gives no credit for changing
+formatting rules.
+
+Both final numeric candidates pass complete optimized Rust library code
+generation. Every distinct rewritten constant has a compiler-evaluated
+equality assertion: **9,040 original** and **8,430 fresh** values/types.
+Arithmetic checks pass **4,325,376 operand pairs** plus **262,144 ordered
+side-effect sequences**. These establish the stated typed identities and
+compiled output; complete-game linking/replay remains outside this experiment.
+
+A separate loop/local emission pass removes 428 lines across the original
+crate: 303 dead initialization merges and 96 bounded loops. Optimized library
+and frontend compiler checks and 672 iteration-trace comparisons pass. It is
+not included in the combined table. The larger priority is the measured
+numeric policy and complete C responsibility replacements.
+
+### Native internal calls and shared declarations
+
+A separate complete-gameplay emission experiment resolves internal calls to
+their owning Rust modules and emits ordinary Rust function/callback types.
+It converts **6,300 functions across all 32 gameplay modules**, including four
+shared callback aliases, and removes **5,617 export attributes**. Real hardware
+and frontend C interfaces remain at their existing boundaries. This changes
+how internal routines are emitted and connected; it does not remove banks or
+claim a new gameplay architecture.
+
+Starting from the previously measured shared-declaration baseline, the complete
+formatted crate goes **262,542 -> 254,713: 7,829 fewer lines**. Owner imports
+account for 1,018 and native calls/export removal for 6,811, including normal
+formatter wrapping effects. That price is incremental to the old declaration
+deduplication, not another claim for its 16,394 lines.
+
+Directly composing these policies with the original numeric candidate gives:
+
+| Whole original generated crate, composed in sequence | Rust lines |
+| --- | ---: |
+| Original | 278,936 |
+| Numeric policy | 243,936 |
+| Shared type declarations | 228,736 |
+| Shared foreign declarations | 227,548 |
+| Calls imported from owning Rust modules | 226,530 |
+| Native gameplay function/callback types and exports | **219,709** |
+
+This is **59,227 fewer lines**, measured on the complete generated source.
+The final two stages contribute 7,839 in this order, ten more than standalone
+because the numeric pass changes formatting. Both native candidates pass full
+optimized Rust library code generation and frontend metadata checks. This
+whole-original experiment and
+the fresh-C 44,215-line experiment have different scopes and overlapping
+transformations; neither can be added to the other or the earlier 49,687-line
+original-transpilation experiment. No current-main saving is established.
+
+An executable DLL witness links the complete standalone owner-import and
+native-call libraries and invokes nine real gameplay routines through typed optional function
+pointers. **196,608 primitive cases** and **1,024 mixed callback cases**, the
+latter comparing all 128 KiB RAM, produce identical 135,008,256-byte result
+streams. Host stubs abort if called and none execute. This checks selected
+calling-convention and callback behavior; it does not exercise all converted
+routines or full-game linking/history. No ROM, movie or SNES replay claim.
+Artifacts: TEMP/sm-transpiler-tailoring/native-emission/REPORT.md, its staged
+candidate trees, compile logs, composition scripts and callback witness.
+
+### A concrete C2Rust layout defect
+
+The source investigation also found a correctness issue: with a forward
+declaration before a pragma-packed definition, C2Rust emits a seven-byte
+`VramWriteEntry` as an eight-byte Rust structure. Executed field-offset checks
+show C destination offset 5 versus Rust offset 6, although the translated
+`offsetof` constant still says 5. Adding an explicit packed attribute to the C
+definition, or omitting the forward declaration, produces the correct 7/5
+layout. Both input alternatives were actually translated, compiled and checked.
+
+The [`AST exporter`](https://github.com/immunant/c2rust/blob/e9ccd715597f7d63e8635629f4450e040a230118/c2rust-ast-exporter/src/AstExporter.cpp#L2203-L2297)
+reads record layout from the definition but pragma alignment from the canonical
+forward declaration. The fix should obtain both from the definition. A source
+patch applies cleanly but has not been built; the explicit C attribute is the
+verified workaround. This fixes behavior and earns no size-reduction credit.
+
+Other documented seams include temporary references for complex lvalues,
+synthetic zero initialization, internal C linkage and macro expansion. The
+generic function-macro option is not usable as a compactness switch: tested
+full-bank output contains undefined Rust macros and untranslated C argument
+tokens. The [option's own source](https://github.com/immunant/c2rust/blob/e9ccd715597f7d63e8635629f4450e040a230118/c2rust-transpile/src/lib.rs#L48-L61)
+describes its incomplete support.
+
+Artifacts: TEMP/sm-large-c-experiments/combined/TRANSLATION_REPORT.md and its
+`final/src` and `transpiled` trees; per-family reports under that experiment's
+siblings. TEMP/sm-transpiler-tailoring/numeric-emission/REPORT.md contains the
+final whole-original and fresh sources, exact patches and repeatable commands.
+The sibling `source-study/REPORT.md` links each emission decision to pinned
+upstream source and includes both unbuilt translator patches. Only public C
+and nonsecret experimental code were sent to Compiler Explorer; ROM data,
+save states, test buffers and private current source stayed local.
+
+## Independent transpilers: executed comparisons
+
+Three independent translators were built from pinned source and run locally
+against public original C. This answers whether another translator can produce
+smaller useful Rust without inferring quality from its advertised features.
+
+| Translator | Actual trial | Result |
+| --- | --- | --- |
+| [Corrode](https://github.com/jameysharp/corrode/tree/34053342c2f1ca04f23ad94d67057f14e74d9fb9) | Built with GHC 8.0.2; original entry runs through `runghc` | Smaller compiling Rust for scrolling DMA, tile streaming and complete sm_87; component comparisons pass, packed game layout fails |
+| [CRUST](https://github.com/NishanthSpShetty/crust/tree/3d621dd2b92eb78d8927ad54c63c9f42706ac921) | Built; tested raw/preprocessed sm_87, util and scrolling units | Raw bank becomes unsupported-include/comment output that fails Rust parsing; util and preprocessed units panic |
+| [Sonder](https://github.com/azaleacolburn/sonder/tree/24300112860b6f236c57cda3711a0d08a2ca627f) | Built; tested the same three raw and three preprocessed units | Repeated lexer messages until timeout; no Rust output |
+
+Windows denies execution of the freshly built executables. Corrode therefore
+uses its unchanged Haskell entry through the interpreter; small DLL adapters
+invoke CRUST/Sonder's unchanged tokenizer/parser/converter. Adapters provide
+input/output and panic capture, without implementing translation. Logs separate
+host/harness failures from the observed translator failures.
+
+### Corrode produces materially smaller code on compatible inputs
+
+The real public C units are the same extracted complete algorithm units used
+in the C2Rust experiment. Counts include emitted declarations and use the same
+rustfmt with its default 100-column width. Neither output needs extra runtime
+support for these units; the common external test harness is excluded equally.
+
+| Complete algorithm unit | C2Rust 0.22.1 | Corrode | Fewer lines |
+| --- | ---: | ---: | ---: |
+| Original horizontal/vertical scrolling DMA | 443 | 256 | 187 |
+| Original row/column tile streaming | 592 | 467 | 125 |
+| Shared row/column tile algorithm, alternative to the previous row | 344 | 277 | 67 |
+
+The two disjoint original units total **1,035 -> 723: 312 fewer lines (30.1%)**.
+The shared-algorithm alternative is not additive. Corrode's generated units
+compile without source fixes after formatting. Scrolling passes **6,250 cases**
+against original C and C2Rust, comparing all 128 KiB RAM and **358,220 ordered
+register writes**. Tile streaming passes **3,076 cases across six binaries**:
+original/replacement C, C2Rust and Corrode, checking all RAM, both layers/axes,
+all four flips, wrapping positions and Mode 7 skipping. These are component
+comparisons with recorded register writes, not actual PPU/DMA, ROM or full-game
+history. No whole-bank reduction is inferred.
+
+A further **complete sm_87 bank** trial supplies both translators the identical
+8,147-line preprocessed public C input: **679 C2Rust lines -> 627 Corrode lines,
+52 fewer (7.7%)**. Both outputs compile and contain the same 34 function names.
+Corrode's smaller declaration prefix offsets longer generated function bodies;
+the 30.1% result above does not generalize even to this tested bank. Full-bank
+runtime behavior remains untested.
+
+Corrode also has a concrete correctness blocker. Its
+[declaration handling](https://github.com/jameysharp/corrode/blob/34053342c2f1ca04f23ad94d67057f14e74d9fb9/src/Language/Rust/Corrode/C.md)
+leaves attributes unprocessed. Translating the actual pragma-packed
+`DebugDoorDef` from the original header gives **12 bytes / field offset 10**,
+where the original C gives **11 bytes / offset 9**. Both compile; executed
+measurement functions expose the difference. A global switch requires fixing
+packing and checking actual layouts/accesses, not just compiling the output.
+Initial full sm_87/util attempts stop at standard-header extern declarations,
+using both TinyCC and GHC/MinGW preprocessing. For the complete sm_87 trial
+above, project-header amalgamation and public Clang 18 Linux preprocessing
+resolve that input obstacle; the translator itself is unchanged. The packed
+layout failure still prevents an unchanged project-wide rollout.
+
+### Other available approaches, not executed here
+
+[Cpp2Rust](https://github.com/Cpp2Rust/cpp2rust) is a separate Clang-based
+translator with a [PLDI 2026 paper](https://web.ist.utl.pt/nuno.lopes/pubs/cpp2rust-pldi26.pdf).
+Its documented build needs Clang 23 development libraries and CMake/Ninja;
+no release asset or Compiler Explorer instance was available. Its default
+backend uses checked reference-counted pointers through `libcc2rs`; it also
+offers `--model=unsafe`. A useful trial must include that support code and test
+RAM/pointer compatibility. It is the next deterministic candidate, not a
+demonstrated replacement from this experiment.
+
+[Intel Labs IDEAS](https://github.com/IntelLabs/IDEAS#use-with-locally-hosted-models)
+can translate raw C through an LLM and supports a local vLLM endpoint. It is
+not paid-key-only, but needs a configured model service and its documented
+Ubuntu/CMake/Clang workflow. [Yale PROCTOR's translation harness](https://github.com/Yale-PROCTOR/llm_translation)
+also has raw-C and C2Rust-cleanup modes with build/test feedback; its documented
+providers need API credentials. Neither pipeline was run. Both require a
+separate migration/equivalence experiment rather than a compiler substitution.
+
+Decision: use Corrode as an independent comparison of emission rules on
+compatible units. Prioritize the already measured C2Rust numeric policy and
+complete C algorithm sharing; the tested Corrode layout defect blocks an
+unchanged project-wide rollout. CRUST/Sonder do not justify further production
+trials on these results. Artifacts, source/input/output hashes, commands and
+primary-source findings: TEMP/sm-transpiler-tailoring/alternatives/REPORT.md.
