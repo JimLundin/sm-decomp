@@ -2577,7 +2577,32 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `52817319` shares all 83 SDL
+Latest reviewed integration (2026-10-20): `fd1c8abb` shares the six Mother
+Brain upward/downward beam builders through one private rasterizer and named
+direction enum. Independent reconstruction binds all 74 committed source,
+Cargo and verifier inputs to the final candidate. All six original bodies
+match their Git base; all 19 unselected functions and surrounding tokens
+remain exact after removing the helper, enum and its checked Copy derive.
+
+The generated comparison host reconstructs byte-for-byte. Independent rerun
+of its existing DLL passes 7296 ordered-read/write/full-backing comparisons,
+7230 actual-library cases within the derived RAM bounds, and 1048576 add/sub
+saturation cases. The corrected instrumentation records both forms of the
+post-fill row reread. Hoisted-reread, wrong-sentinel and reversed-ROM-read
+controls are detected. Initial stores, byte-angle lookup order, negation,
+saturation, upward trailers and after-write loop termination remain exact.
+DownLeft alone retains the zero sentinel. Wrapped rows use enlarged synthetic
+backing; the actual-library checks stay within the 128 KiB allocation.
+
+Review reused the normal release (12.98s) and full any% result: 129712/0,
+native exit 0, 125.88s wall/107.51s replay. All 85 verification pins remain
+fixed through the independent focused rerun. Rust lines fall 163 to 133653;
+cast lines fall 18 and the private helper adds one unsafe function. Other
+progress counters are unchanged. Synthetic angles and ROM values are sampled;
+the movie has no Mother Brain or ending/credits coverage. Broader gameplay,
+frontend execution and alias safety remain open.
+
+Included `52817319` shares all 83 SDL
 key-code conversions through one pure const function: 81 default entries
 and the runtime lookup/parser forms. Independent source reconstruction binds
 all 77 committed inputs to the frozen candidate; all 14 unselected config
