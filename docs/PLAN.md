@@ -2902,7 +2902,33 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `0abab3c1` shares all 64 native
+Latest reviewed integration (2026-10-20): `54af58df` shares PNG filter-byte
+reconstruction across all three row paths and unpacking for depths 1/2/4.
+Independent full-file inversion restores the original source exactly;
+the clean assertion composition and all 77 committed inputs match the frozen
+candidate. The two helpers preserve raw/neighbor read order, value-before-
+destination stores, packed-byte rereads across overlap and partial-tail
+pointer/count state. Existing memcpy, validation, alpha and endian paths stay
+intact. No whole-buffer reference is introduced.
+
+The focused decoder and all three control hosts regenerate byte-exactly from
+their bound source; shared types, tables and actual decoder libraries match.
+Independent reruns pass 52418 raw-decoder comparisons, 52320 expected-pixel
+checks and 10992322 ordered events, plus 460800 overlap cases and 6297600
+events. Cached-byte and reversed-read controls both fail as intended. Reviewed
+actual release-library checks pass 8928 public API cases across memory/file/
+callback inputs and byte/16-bit/float outputs.
+
+Formatting/check, normal release (23.51s), progress and full any% pass:
+129712/0, native exit 0, 131.78s wall/131.66s replay. Review reused the
+authoritative release/replay; all 127 verification pins remain fixed.
+Rust lines fall 242 to 128934 and cast-containing lines fall 49. Two private
+helpers raise unsafe-function definitions by two; other counters are unchanged.
+Any% covers six rooms and three enemy definitions with zero credits frames.
+Broader routes, frontend/hardware/audio coverage and global alias safety remain
+open. In-progress verification-pipeline edits are outside this published review.
+
+Included native assertion integration (2026-10-20): `0abab3c1` shares all 64 native
 assertion wrappers across 16 callers, including two CPU opcode-table calls.
 The 40 conditional, 18 unconditional and six direct-failure sites retain
 their exact labels, conditions, diagnostic strings, line numbers, pointer
