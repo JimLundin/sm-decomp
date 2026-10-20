@@ -67,6 +67,12 @@ The preceding focused inspection found distinct Kraid collision/Phantoon phase
 contracts and wrapped/mixed-source masked loops; no larger complete replacement
 was established. These containing routines are not counted as removable code.
 
+After 2941c9a9, all owned HUD build/check/replay handles are terminal. The
+live check found no matching compiler/Python process or Git lock. Checked
+native PowerShell removal of hud/ was rejected by automatic approval review
+as "blocked by policy". Its 33 files / 21917021 bytes remain; no cleanup is
+credited. The integrated target remains the current build cache.
+
 ## Shared dispatch with captured setup (2026-10-20)
 
 Four remaining address dispatchers now reuse `address_dispatch!` with an
