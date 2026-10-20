@@ -3076,7 +3076,46 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `c21297dc` includes the DSP sample
+Latest reviewed integration (2026-10-20): `02347c9d` uses native u8/u16
+bitwise operations in 2276 expressions across 41 files, on Bang prerequisite
+`1d83d967`. All 78 committed inputs match the final frozen source. Independent
+classification reproduces all selections/exclusions; 6575 exact edits and
+normal rustfmt reconstruct every candidate file. No removed cast span contains
+comments. Comparisons retain known high bits and truncations retain low bits;
+arithmetic, shifts and unsupported operand types remain excluded.
+
+Independent bit-vector reruns prove all selected expressions for every operand
+bit pattern, preserving 2573 ordered operand occurrences. Wrong-high-bit and
+wrong-mask controls fail. Actual library/frontend compiler captures bind all
+2276 result types and 2566 operands; seven scalar RAM reads bind to the unchanged
+u16::from_le macro arm. Two frontend static-place span ambiguities resolve to
+actual u8 binary inputs. All 11 nested expression pairs retain u16 types.
+Macro call evaluation/store ordering and all macro definitions remain unchanged.
+
+The final composition differs from the earlier typed snapshot only in the two
+Bang coordinate RHSs. Complete input comparison and unchanged selected source,
+line spans, contexts and types establish reuse of the original compiler facts;
+39 shifted byte spans are bound explicitly. All 140 final source, proof, type,
+movie, ROM and binary pins remain unchanged. Independent inspection of the
+actual cached DLL passes its host stamp and all compiled-library source bytes.
+
+Formatting/check, progress, normal release (20.55s) and the shared host (1.98s)
+pass; the host reuses the release library's exact hash and timestamp. Reused
+authoritative replays pass any% 129712/0 (122.85s replay/123.08s wall) and
+Speed Booster 148406/0 (158.94s replay/159.17s wall), native exits 0. Rust lines
+fall 576 to 128340; cast-containing lines fall 2348; other counters are unchanged.
+Speed Booster visits 55 rooms and 53 enemy definitions; neither route reaches
+credits. Full gameplay, frontend behavior, hardware/audio and alias ownership
+remain open.
+
+The included Bang prerequisite also passes independent complete-file inversion
+and 77 committed-input bindings. The actual compiled test library matches its
+source and passes 49152 ROM position/fraction/sticky-direction comparisons.
+Omitted-position, omitted-carry and cleared-sticky-direction controls fail;
+100 unique final/focused/actual pins remain unchanged. These index-zero checks
+do not establish full RAM, scratch/stack or native Bang dispatch ownership.
+
+Included DSP integration (2026-10-20): `c21297dc` includes the DSP sample
 saturation change. The merged `dbb38a4d` and `7d9fd911` have identical DSP
 source; the merge also preserves the local plan entry. All 77 frozen source
 inputs match the committed integration. Independent complete-file inversion
