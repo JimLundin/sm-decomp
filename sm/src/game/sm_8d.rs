@@ -199,16 +199,15 @@ pub unsafe fn PalPreInstr_SamusInHeat(k: u16, game: &mut Game) {
     if word!(game.samus_in_heat_palfx_index) != word!(game.samus_in_heat_palettefx_prev_index) {
         word!(game.samus_in_heat_palettefx_prev_index = word!(game.samus_in_heat_palfx_index));
         let v2: u16 = (2u16).wrapping_mul(word!(game.samus_in_heat_palfx_index));
-        let mut v4: u16 = 0;
         let v3: i32 = k as i32 >> 1;
         word!(game.palettefx_instr_timers[v3] = 1);
-        if (word!(game.equipped_items) & 0x20) != 0 {
-            v4 = addr_off_8DE3E0 as u16;
+        let mut v4: u16 = if (word!(game.equipped_items) & 0x20) != 0 {
+            addr_off_8DE3E0 as u16
         } else if (word!(game.equipped_items) & 1) != 0 {
-            v4 = addr_off_8DE400 as u16;
+            addr_off_8DE400 as u16
         } else {
-            v4 = addr_off_8DE420 as u16;
-        }
+            addr_off_8DE420 as u16
+        };
         word!(
             game.palettefx_instr_list_ptrs[v3] =
                 *((RomPtr_8D as unsafe fn(u16, &mut Game) -> *const u8)(v4, game)
@@ -217,14 +216,13 @@ pub unsafe fn PalPreInstr_SamusInHeat(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn PalInit_F761_Norfair1(k: u16, j: u16, game: &mut Game) {
-    let mut v2: u16 = 0;
-    if (word!(game.equipped_items) & 0x20) != 0 {
-        v2 = addr_off_8DE8B6 as u16;
+    let mut v2: u16 = if (word!(game.equipped_items) & 0x20) != 0 {
+        addr_off_8DE8B6 as u16
     } else if (word!(game.equipped_items) & 1) != 0 {
-        v2 = addr_off_8DE68A as u16;
+        addr_off_8DE68A as u16
     } else {
-        v2 = addr_kPalfxInstrList_E45E as u16;
-    }
+        addr_kPalfxInstrList_E45E as u16
+    };
     word!(game.palettefx_instr_list_ptrs[(j >> 1)] = v2);
 }
 pub unsafe fn PalPreInstr_SwitchIfYpos(k: u16, game: &mut Game) {

@@ -631,10 +631,9 @@ pub unsafe fn SamusBottomDrawn_4(game: &mut Game) -> u8 {
     0
 }
 pub unsafe fn SamusBottomDrawn_0_Standing(game: &mut Game) -> u8 {
-    let mut v1 = null_mut::<OamEnt>();
     if word!(game.samus_pose) as i32 == kPose_00_FaceF_Powersuit as i32 {
         let v0: u16 = word!(game.oam_next_ptr);
-        v1 = gOamEnt(word!(game.oam_next_ptr) as i32, game);
+        let mut v1: *mut OamEnt = gOamEnt(word!(game.oam_next_ptr) as i32, game);
         *(&raw mut (*v1).xcoord as *mut u16) =
             (word!(game.samus_x_pos) as i32 - 7i32 - word!(game.layer1_x_pos) as i32) as u16;
         *(&raw mut (*v1).ycoord as *mut u16) =
@@ -673,12 +672,11 @@ pub fn SamusBottomDrawn_A_Knockback(game: &mut Game) -> u8 {
     0
 }
 pub unsafe fn SamusBottomDrawn_F_Transitions(game: &mut Game) -> u8 {
-    let draw_bottom: bool;
     if word!(game.samus_pose) as i32 - kPose_F1_FaceR_CrouchTrans_AimU as i32 & 0x8000 == 0 {
         return 1;
     }
     if word!(game.samus_pose) as i32 - 219i32 & 0x8000 == 0 {
-        draw_bottom = if word!(game.samus_pose) as i32 - 221i32 & 0x8000 != 0 {
+        let draw_bottom: bool = if word!(game.samus_pose) as i32 - 221i32 & 0x8000 != 0 {
             (word!(game.samus_anim_frame) != 0)
         } else {
             (word!(game.samus_anim_frame) != 2)
@@ -750,7 +748,6 @@ pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
         }
         return;
     }
-    let mut skip_echo: bool;
     let mut i: i32 = 2;
     while i >= 0 {
         let v1: i32 = i >> 1;
@@ -765,7 +762,7 @@ pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
                 }
                 word!(game.speed_echo_ypos[v1] = v3);
             }
-            skip_echo = if (word!(game.speed_echo_xspeed[v1]) & 0x8000) != 0 {
+            let mut skip_echo: bool = if (word!(game.speed_echo_xspeed[v1]) & 0x8000) != 0 {
                 let v5: u16 = (word!(game.speed_echo_xspeed[v1]))
                     .wrapping_add(word!(game.speed_echo_xpos[v1]));
                 word!(game.speed_echo_xpos[v1] = v5);
@@ -939,7 +936,6 @@ static kAtmosphericTypeFuncs: [Option<FuncXY_V>; 8] = callback_table! { unsafe F
     AtmosphericTypeFunc_5_Bubbles, AtmosphericTypeFunc_67_Dust, AtmosphericTypeFunc_67_Dust,
 };
 pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
-    let mut skip_effect: bool;
     let mut i: i32 = 6;
     while i >= 0 {
         let v1: i32 = i >> 1;
@@ -949,7 +945,7 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
             let v3: u16 = (2u16).wrapping_mul((byte!(v2; 1)) as u16);
             let mut v4: i16 = ((word!(game.atmospheric_gfx_anim_timer[v1])) as i16).wrapping_sub(1);
             word!(game.atmospheric_gfx_anim_timer[v1] = v4 as u16);
-            skip_effect = if v4 != 0 {
+            let mut skip_effect: bool = if v4 != 0 {
                 (v4 < 0)
                     && ((v4 != (0x8000i32 as i16))
                         || ({
@@ -997,7 +993,6 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
     }
 }
 pub unsafe fn AtmosphericTypeFunc_1_FootstepSplash(k: u16, j: u16, game: &mut Game) {
-    let mut v5 = null_mut::<OamEnt>();
     let v2: i32 = j as i32 >> 1;
     let r18: u16 = (2u16)
         .wrapping_mul((byte!(@pointer (ram_ptr!(game, u16; 0xaec)).offset(v2 as isize); 0)) as u16);
@@ -1010,7 +1005,7 @@ pub unsafe fn AtmosphericTypeFunc_1_FootstepSplash(k: u16, j: u16, game: &mut Ga
             & 0x8000
             != 0
     {
-        v5 = gOamEnt(word!(game.oam_next_ptr) as i32, game);
+        let mut v5: *mut OamEnt = gOamEnt(word!(game.oam_next_ptr) as i32, game);
         (*v5).xcoord = v4 as u8;
         let mut v6: i16 = (word!(game.atmospheric_gfx_y_pos[v2]) as i32
             - word!(game.layer1_y_pos) as i32
@@ -1056,12 +1051,11 @@ pub unsafe fn AtmosphericTypeFunc_3_DivingSplash(k: u16, j: u16, game: &mut Game
 }
 pub unsafe fn AtmosphericTypeFunc_4_LavaSurfaceDmg(k: u16, j: u16, game: &mut Game) {
     let v2: i32 = j as i32 >> 1;
-    let mut v3: u16 = 0;
-    if (j & 4) != 0 {
-        v3 = (word!(game.atmospheric_gfx_x_pos[v2])).wrapping_sub(1);
+    let mut v3: u16 = if (j & 4) != 0 {
+        (word!(game.atmospheric_gfx_x_pos[v2])).wrapping_sub(1)
     } else {
-        v3 = (word!(game.atmospheric_gfx_x_pos[v2])).wrapping_add(1);
-    }
+        (word!(game.atmospheric_gfx_x_pos[v2])).wrapping_add(1)
+    };
     word!(game.atmospheric_gfx_x_pos[v2] = v3);
     word!(game.atmospheric_gfx_y_pos[(j >> 1)], wrapping_sub(1));
     AtmosphericTypeFunc_1_FootstepSplash(k, j, game);
@@ -1197,20 +1191,19 @@ pub unsafe fn Samus_CalcSpritemapPos_Special(j: u16, game: &mut Game) -> PairU16
         7, 5, -8, -8, -8, -8, -8, -5, 4, 4, 4, 4, 0, 0, 4, -3, -5, 0, 0, 4, -3, -5, -3, 4, 0, 0, 4,
         0, 0, 4, 0, 0,
     ];
-    let mut v2: i32 = 0;
     let mut v1: i32 = j as i32 >> 1;
-    if v1 == kPose_E8_FaceR_Drained_CrouchFalling as i32
+    let mut v2: i32 = if v1 == kPose_E8_FaceR_Drained_CrouchFalling as i32
         || v1 == kPose_E9_FaceL_Drained_CrouchFalling as i32
     {
-        v2 = byte_908DEF[word!(game.samus_anim_frame) as usize] as i32;
+        byte_908DEF[word!(game.samus_anim_frame) as usize] as i32
     } else {
         if v1 != kPose_EA_FaceR_Drained_Stand as i32 && v1 != kPose_EB_FaceL_Drained_Stand as i32
             || ((word!(game.samus_anim_frame)) as i16).wrapping_sub(5) < 0
         {
             return Samus_CalcSpritemapPos_Default(j, game);
         }
-        v2 = -3i32;
-    }
+        -3i32
+    };
     word!(
         game.samus_spritemap_y_pos =
             (v2 + word!(game.samus_y_pos) as i32 - word!(game.layer1_y_pos) as i32) as u16
@@ -1749,8 +1742,7 @@ pub unsafe fn MainScrollingRoutine(game: &mut Game) {
     let mut current_block: u64;
     if word!(game.slow_grabble_scrolling_flag) != 0 {
         if ((word!(game.samus_x_pos) & 0x8000) == 0) {
-            let mut v0: u16 = 0;
-            v0 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos));
+            let mut v0: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos));
             if word!(game.samus_x_pos) < word!(game.layer1_x_pos) {
                 current_block = 8565863539623487812;
             } else if v0 >= 0xa0 {
@@ -2373,7 +2365,6 @@ pub unsafe fn Samus_Movement_02_NormalJumping(game: &mut Game) {
     Samus_JumpingMovement(game);
 }
 pub unsafe fn Samus_Movement_03_SpinJumping(game: &mut Game) {
-    let skip_jump_restart: bool;
     static kSamusPhys_JumpMinYVelAir: u16 = 0x280;
     static kSamusPhys_JumpMaxYVelAir: u16 = 0x500;
     static kSamusPhys_JumpMinYVelWater: u16 = 0x80;
@@ -2387,7 +2378,7 @@ pub unsafe fn Samus_Movement_03_SpinJumping(game: &mut Game) {
     }
     if r18 == 0 {
         if (word!(game.equipped_items) & 0x200) != 0 && (word!(game.samus_y_dir) == 2) {
-            skip_jump_restart = if word!(game.liquid_physics_type) != 0 {
+            let skip_jump_restart: bool = if word!(game.liquid_physics_type) != 0 {
                 (((*((ram_ptr!(game, u16; 0xb2c) as *mut u8).offset(1) as *mut u16)) as i16)
                     .wrapping_sub((kSamusPhys_JumpMinYVelWater) as i16)
                     < 0
@@ -2768,18 +2759,17 @@ pub unsafe fn UpdateMinimapInside(
     game: &mut Game,
 ) {
     let mut v0: u16 = 0;
-    let mut v1: i16 = 0;
     let mut v5: i16 = 0;
     let mut v7: i16 = 0;
     let mut v8: i16 = 0;
     byte!(v0; 0) = (((r34).wrapping_add(r22)) >> 8) as u8;
     byte!(v0; 1) = ((r34) as u8).wrapping_add((r22) as u8);
     let t: u16 = (r18 as i32 + (v0 as i32 >> 3)) as u16;
-    if r34 != 0 && (t as i32 & 0x1f) - 2i32 & 0x8000 != 0 {
-        v1 = ((t) as i16).wrapping_sub(1026);
+    let mut v1: i16 = if r34 != 0 && (t as i32 & 0x1f) - 2i32 & 0x8000 != 0 {
+        ((t) as i16).wrapping_sub(1026)
     } else {
-        v1 = ((t) as i16).wrapping_sub(34);
-    }
+        ((t) as i16).wrapping_sub(34)
+    };
     let mut v2: u16 = (2u16).wrapping_mul((v1) as u16);
     let r0 = RomPtr(
         Load24((rom_ptr!(game, LongPtr; 0x82964a)).offset(word!(game.area_index) as isize)),
@@ -3360,15 +3350,14 @@ pub unsafe fn SetInitialProjectileSpeed(r20: u16, game: &mut Game) {
     let v0: i32 = r20 as i32 >> 1;
     let v1: u16 = (4 * (word!(game.projectile_type[v0]) as i32 & 0xf)) as u16;
     let v2: u16 = (2 * (word!(game.projectile_dir[v0]) as i32 & 0xf)) as u16;
-    let mut r22: u16 = 0;
-    if v2 == 0 || v2 == 4 || v2 == 8 || v2 == 10 || v2 == 14 || v2 == 18 {
-        r22 = kInitializeProjectileSpeed_XY_Diag[(v1 >> 1) as usize];
+    let mut r22: u16 = if v2 == 0 || v2 == 4 || v2 == 8 || v2 == 10 || v2 == 14 || v2 == 18 {
+        kInitializeProjectileSpeed_XY_Diag[(v1 >> 1) as usize]
     } else {
         if v2 != 2 && v2 != 6 && v2 != 12 && v2 != 16 {
             Unreachable(game);
         }
-        r22 = kInitializeProjectileSpeed_XY_Diag[((v1 as i32 >> 1) + 1) as usize];
-    }
+        kInitializeProjectileSpeed_XY_Diag[((v1 as i32 >> 1) + 1) as usize]
+    };
     InitializeProjectileSpeed(r20, r22, game);
 }
 pub unsafe fn InitializeProjectileSpeedOfType(r20: u16, game: &mut Game) {
@@ -3600,17 +3589,16 @@ pub unsafe fn ProjInstr_MoveLeftProjectileTrailUp(j: u16, game: &mut Game) {
     word!(game.projectiletrail_left_y_pos[(j >> 1)], wrapping_sub(1));
 }
 pub unsafe fn SpawnProjectileTrail(k: u16, game: &mut Game) {
-    let mut v2: i16 = 0;
     let mut v1: u16 = word!(game.projectile_type[(k >> 1)]);
-    if (v1 & 0xf00) != 0 {
+    let mut v2: i16 = if (v1 & 0xf00) != 0 {
         let v3: u16 = ((byte!(v1; 1)) as u16) & (0xfu16);
         if v3 >= 3 {
             return;
         }
-        v2 = ((v3) as i16).wrapping_add(31);
+        ((v3) as i16).wrapping_add(31)
     } else {
-        v2 = ((word!(game.projectile_type[(k >> 1)])) as i16) & (0x3fi16);
-    }
+        ((word!(game.projectile_type[(k >> 1)])) as i16) & (0x3fi16)
+    };
     let mut v4: u16 = 34;
     while word!(game.projectiletrail_left_instr_timer[(v4 >> 1)]) != 0 {
         v4 = (v4).wrapping_sub(2);
@@ -3750,7 +3738,6 @@ pub unsafe fn HandleProjectileTrails(game: &mut Game) {
     }
 }
 pub unsafe fn HudSelectionHandler_NothingOrPowerBombs(game: &mut Game) {
-    let fire_uncharged: bool;
     word!(game.prev_beam_charge_counter = word!(game.flare_counter));
     if word!(game.hyper_beam_flag) != 0 || (word!(game.equipped_beams) & 0x1000) == 0 {
         if (word!(game.button_config_shoot_x) & word!(game.joypad1_lastkeys)) != 0 {
@@ -3758,13 +3745,13 @@ pub unsafe fn HudSelectionHandler_NothingOrPowerBombs(game: &mut Game) {
         }
         return;
     }
-    if word!(game.new_projectile_direction_changed_pose) != 0 {
-        fire_uncharged = (word!(game.flare_counter) as i32 - 60i32 & 0x8000 != 0);
+    let fire_uncharged: bool = if word!(game.new_projectile_direction_changed_pose) != 0 {
+        (word!(game.flare_counter) as i32 - 60i32 & 0x8000 != 0)
     } else if (word!(game.button_config_shoot_x) & word!(game.joypad1_lastkeys)) == 0 {
         if word!(game.flare_counter) == 0 {
             return;
         }
-        fire_uncharged = (word!(game.flare_counter) as i32 - 60i32 & 0x8000 != 0);
+        (word!(game.flare_counter) as i32 - 60i32 & 0x8000 != 0)
     } else {
         if word!(game.flare_counter) as i32 - 120i32 & 0x8000 != 0 {
             if word!(game.flare_counter, wrapping_add(1), reread) == 1 {
@@ -3777,7 +3764,7 @@ pub unsafe fn HudSelectionHandler_NothingOrPowerBombs(game: &mut Game) {
             Samus_LoadSuitPalette(game);
         }
         return;
-    }
+    };
     if fire_uncharged {
         word!(game.flare_counter = 0);
         ClearFlareAnimationState(game);
@@ -3839,8 +3826,7 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
                 );
                 !((v6 & 1) == 0)
             } else {
-                let mut v5: u16 = 0;
-                v5 = word!(game.projectile_type[v2]);
+                let mut v5: u16 = word!(game.projectile_type[v2]);
                 word!(
                     game.cooldown_timer =
                         kBeamAutoFireCooldowns[(v5 as i32 & 0x3f) as usize] as u16
@@ -3848,8 +3834,7 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
                 !((v5 & 1) == 0)
             };
             if initialize_projectile {
-                let mut v4: i32 = 0;
-                v4 = v1 as i32 >> 1;
+                let mut v4: i32 = v1 as i32 >> 1;
                 word! { game, 0;
                     projectile_bomb_x_speed[v4], projectile_bomb_y_speed[v4],
                 }
@@ -4118,14 +4103,13 @@ static kProjectileOriginOffsets2_Y: [i16; 10] = [-32, -22, -3, 6, 25, 25, 6, -3,
 pub unsafe fn DrawFlareAnimationComponent(k: u16, game: &mut Game) {
     static word_93A225: [u16; 3] = [0, 0x1e, 0x24];
     static word_93A22B: [u16; 3] = [0, 0x2a, 0x30];
-    let mut v1: u16 = 0;
     let mut r20: u16 = 0;
     let mut r18: u16 = byte!(@pointer ram_ptr!(game, u16; 0xcd6); k as i32 as isize) as u16;
-    if *ram_ptr!(game; 0xa1e) == 4 {
-        v1 = word_93A22B[(k >> 1) as usize];
+    let mut v1: u16 = if *ram_ptr!(game; 0xa1e) == 4 {
+        word_93A22B[(k >> 1) as usize]
     } else {
-        v1 = word_93A225[(k >> 1) as usize];
-    }
+        word_93A225[(k >> 1) as usize]
+    };
     let r22: u16 = (r18).wrapping_add(v1);
     let r24: u16 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
         .offset(word!(game.samus_pose) as isize))
@@ -4141,20 +4125,19 @@ pub unsafe fn DrawFlareAnimationComponent(k: u16, game: &mut Game) {
             Samus_CalcPos_Mode7(game);
         }
         let v4: i32 = v3 as i32 >> 1;
-        let mut v5: u16 = 0;
-        if *ram_ptr!(game; 0xa1f) == 1 {
+        let mut v5: u16 = if *ram_ptr!(game; 0xa1f) == 1 {
             r20 = (word!(game.samus_x_pos) as i32 + kProjectileOriginOffsets2_X[v4 as usize] as i32
                 - word!(game.layer1_x_pos) as i32) as u16;
-            v5 = (word!(game.samus_y_pos) as i32 + kProjectileOriginOffsets2_Y[v4 as usize] as i32
+            (word!(game.samus_y_pos) as i32 + kProjectileOriginOffsets2_Y[v4 as usize] as i32
                 - r24 as i32
-                - word!(game.layer1_y_pos) as i32) as u16;
+                - word!(game.layer1_y_pos) as i32) as u16
         } else {
             r20 = (word!(game.samus_x_pos) as i32 + kProjectileOriginOffsets_X[v4 as usize] as i32
                 - word!(game.layer1_x_pos) as i32) as u16;
-            v5 = (word!(game.samus_y_pos) as i32 + kProjectileOriginOffsets_Y[v4 as usize] as i32
+            (word!(game.samus_y_pos) as i32 + kProjectileOriginOffsets_Y[v4 as usize] as i32
                 - r24 as i32
-                - word!(game.layer1_y_pos) as i32) as u16;
-        }
+                - word!(game.layer1_y_pos) as i32) as u16
+        };
         r18 = v5;
         if (v5 & 0xff00) == 0 {
             DrawBeamGrappleSpritemap(r22, r20, r18, game);
@@ -4781,27 +4764,25 @@ unsafe fn Projectile_SinLookup_Inner(k: u16, r24: u16) -> u16 {
     (r18).wrapping_add(prod)
 }
 pub unsafe fn Projectile_SinLookup(j: u16, a: u16) -> Point16U {
-    let mut v2: u16 = 0;
-    let mut v4: u16 = 0;
     let r24: u16 = a;
     let r26: u16 = j;
-    if j as i32 - 128i32 & 0x8000 != 0 {
-        v2 = Projectile_SinLookup_Inner((2u16).wrapping_mul(j), r24);
+    let mut v2: u16 = if j as i32 - 128i32 & 0x8000 != 0 {
+        Projectile_SinLookup_Inner((2u16).wrapping_mul(j), r24)
     } else {
-        v2 = -(Projectile_SinLookup_Inner(
+        -(Projectile_SinLookup_Inner(
             (2u16).wrapping_mul((((j) as u8).wrapping_add(0x80u8)) as u16),
             r24,
-        ) as i32) as u16;
-    }
+        ) as i32) as u16
+    };
     let v3: i16 = (((r26) as u8).wrapping_sub(64)) as i16;
-    if v3 as i32 - 128i32 & 0x8000 != 0 {
-        v4 = Projectile_SinLookup_Inner((2u16).wrapping_mul((v3) as u16), r24);
+    let mut v4: u16 = if v3 as i32 - 128i32 & 0x8000 != 0 {
+        Projectile_SinLookup_Inner((2u16).wrapping_mul((v3) as u16), r24)
     } else {
-        v4 = -(Projectile_SinLookup_Inner(
+        -(Projectile_SinLookup_Inner(
             (2u16).wrapping_mul((((v3) as u8).wrapping_add(0x80u8)) as u16),
             r24,
-        ) as i32) as u16;
-    }
+        ) as i32) as u16
+    };
     Point16U { x: v2, y: v4 }
 }
 static kCostOfSbaInPowerBombs: [u16; 12] = [0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0];
@@ -5012,8 +4993,7 @@ pub unsafe fn ProjPreInstr_IceSba2(mut k: u16, game: &mut Game) {
                 SpawnProjectileTrail(k, game);
                 k = word!(game.projectile_index);
             }
-            let mut v3: i32 = 0;
-            v3 = k as i32 >> 1;
+            let mut v3: i32 = k as i32 >> 1;
             pt = Projectile_SinLookup(
                 word!(game.projectile_variables[v3]),
                 word!(game.projectile_bomb_x_speed[v3]),
@@ -5908,10 +5888,8 @@ pub unsafe fn ProjPreInstr_EndOfSpazerSba(mut k: u16, game: &mut Game) {
                 SpawnProjectileTrail(k, game);
                 k = word!(game.projectile_index);
             }
-            let mut v3: i32 = 0;
-            v3 = k as i32 >> 1;
-            let mut v4: u16 = 0;
-            v4 = (word!(game.projectile_y_pos[v3])).wrapping_add(8);
+            let mut v3: i32 = k as i32 >> 1;
+            let mut v4: u16 = (word!(game.projectile_y_pos[v3])).wrapping_add(8);
             word!(game.projectile_y_pos[v3] = v4);
             (v4 as i32 - word!(game.layer1_y_pos) as i32 - 248i32 & 0x8000 == 0)
                 || ({
@@ -5957,16 +5935,15 @@ pub unsafe fn HudSelectionHandler_Normal(game: &mut Game) {
         HudSelectionHandler_MissilesOrSuperMissiles, HudSelectionHandler_NothingOrPowerBombs,
         HudSelectionHandler_Grappling, HudSelectionHandler_Xray, HudSelectionHandler_TurningAround,
     };
-    let mut v0: u16 = 0;
-    if word!(game.grapple_beam_function) as i32 == 0x9bc4f0 & 0xffff {
+    let mut v0: u16 = if word!(game.grapple_beam_function) as i32 == 0x9bc4f0 & 0xffff {
         if word!(game.time_is_frozen_flag) != 0 {
-            v0 = 10;
+            10
         } else {
-            v0 = (2u16).wrapping_mul(word!(game.hud_item_index));
+            (2u16).wrapping_mul(word!(game.hud_item_index))
         }
     } else {
-        v0 = 8;
-    }
+        8
+    };
     kHudSelectionHandler_Normal[(v0 >> 1) as usize].expect("non-null function pointer")(game);
 }
 pub unsafe fn HudSelectionHandler_Grappling(game: &mut Game) {
@@ -7020,11 +6997,11 @@ pub unsafe fn Samus_FootstepGraphics(game: &mut Game) {
 }
 static byte_90EDC9: [u8; 16] = [1, 0, 0, 0, 0, 2, 0, 4, 0, 4, 4, 4, 4, 0, 4, 0];
 pub unsafe fn Samus_FootstepGraphics_Crateria(game: &mut Game) {
-    let use_default_footsteps: bool;
     if !(word!(game.cinematic_function) != 0
         || ((word!(game.room_index)) as i16).wrapping_sub(16) >= 0)
     {
-        use_default_footsteps = if (byte_90EDC9[word!(game.room_index) as usize] & 1) == 0 {
+        let use_default_footsteps: bool = if (byte_90EDC9[word!(game.room_index) as usize] & 1) == 0
+        {
             if (byte_90EDC9[word!(game.room_index) as usize] & 2) != 0 {
                 !(word!(game.samus_y_pos) as i32 - 944i32 & 0x8000 == 0)
             } else {

@@ -170,14 +170,13 @@ pub unsafe fn WalkingSpacePirates_883E(game: &mut Game) {
     (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
         .base
         .invincibility_timer = 10;
-    let mut v2: u16 = 0;
-    if (word!(game.projectile_dir[v1]) & 0xf) == 7 {
-        v2 = 1;
+    let mut v2: u16 = if (word!(game.projectile_dir[v1]) & 0xf) == 7 {
+        1
     } else if (word!(game.projectile_dir[v1]) & 0xf) == 2 {
-        v2 = 8;
+        8
     } else {
-        v2 = 5;
-    }
+        5
+    };
     word!(game.projectile_dir[v1] = v2);
     ProjectileReflection(v0, game);
     QueueSfx2_Max6(0x66, game);
@@ -304,12 +303,11 @@ pub unsafe fn WallSpacePirates_Init(game: &mut Game) {
         v2 = ((0xb2f0c8i32) as u16);
     }
     (*E).var_A = v2;
-    let mut v3: u16 = 0;
-    if ((*E).base.x_pos as i32 & 0xf) - 11i32 & 0x8000 != 0 {
-        v3 = ((*E).base.x_pos) & (0xfff8u16);
+    let mut v3: u16 = if ((*E).base.x_pos as i32 & 0xf) - 11i32 & 0x8000 != 0 {
+        ((*E).base.x_pos) & (0xfff8u16)
     } else {
-        v3 = (((*E).base.x_pos as i32 & 0xfff0) + 16) as u16;
-    }
+        (((*E).base.x_pos as i32 & 0xfff0) + 16) as u16
+    };
     (*E).base.x_pos = v3;
 }
 crate::game::address_dispatch! {
@@ -351,12 +349,11 @@ pub unsafe fn SpacePirates_Func_2(k: u16, game: &mut Game) {
     (*E).var_F = v1;
     if v1 == (*E).var_20 {
         enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_EDA4 as u16, timer = 1}
-        let mut v2: u16 = 0;
-        if ((*E).base.x_pos as i32 & 0xf) - 11i32 & 0x8000 != 0 {
-            v2 = ((*E).base.x_pos) & (0xfff8u16);
+        let mut v2: u16 = if ((*E).base.x_pos as i32 & 0xf) - 11i32 & 0x8000 != 0 {
+            ((*E).base.x_pos) & (0xfff8u16)
         } else {
-            v2 = (((*E).base.x_pos as i32 & 0xfff0) + 16) as u16;
-        }
+            (((*E).base.x_pos as i32 & 0xfff0) + 16) as u16
+        };
         (*E).base.x_pos = v2;
     }
 }
@@ -376,12 +373,11 @@ pub unsafe fn SpacePirates_Func_4(k: u16, game: &mut Game) {
     (*E).var_F = v1;
     if v1 == (*E).var_21 {
         enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_ECE4 as u16, timer = 1}
-        let mut v2: u16 = 0;
-        if ((*E).base.x_pos as i32 & 0xf) - 11i32 & 0x8000 != 0 {
-            v2 = ((*E).base.x_pos) & (0xfff8u16);
+        let mut v2: u16 = if ((*E).base.x_pos as i32 & 0xf) - 11i32 & 0x8000 != 0 {
+            ((*E).base.x_pos) & (0xfff8u16)
         } else {
-            v2 = (((*E).base.x_pos as i32 & 0xfff0) + 16) as u16;
-        }
+            (((*E).base.x_pos as i32 & 0xfff0) + 16) as u16
+        };
         (*E).base.x_pos = v2;
     }
 }

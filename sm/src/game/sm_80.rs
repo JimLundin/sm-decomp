@@ -1229,12 +1229,11 @@ pub unsafe fn IrqHandler_8_StartOfDoor_BeginHud(game: &mut Game) {
     IrqHandler_SetResult(10, 31, 152, game);
 }
 pub unsafe fn IrqHandler_10_StartOfDoor_EndHud(game: &mut Game) {
-    let mut v0: u8 = 0;
-    if ((word!(game.previous_cre_bitset) | word!(game.cre_bitset)) & 1) != 0 {
-        v0 = 16;
+    let mut v0: u8 = if ((word!(game.previous_cre_bitset) | word!(game.cre_bitset)) & 1) != 0 {
+        16
     } else {
-        v0 = 17;
-    }
+        17
+    };
     WriteReg(TM as u16, v0, game);
     let a: u16 = word!(game.irqhandler_next_handler);
     word!(game.irqhandler_next_handler = 0);
@@ -1266,12 +1265,12 @@ pub unsafe fn IrqHandler_16_VerticalDoor_BeginHud(game: &mut Game) {
 
 macro_rules! finish_door_hud_irq {
     ($game:ident) => {
-        let mut v0: u8 = 0;
-        if ((word!($game.previous_cre_bitset) | word!($game.cre_bitset)) & 1) != 0 {
-            v0 = 16;
+        let mut v0: u8 = if ((word!($game.previous_cre_bitset) | word!($game.cre_bitset)) & 1) != 0
+        {
+            16
         } else {
-            v0 = 17;
-        }
+            17
+        };
         crate::rtl::register_writes! { $game;
             byte(TM as u16, v0); byte(CGWSEL as u16, 0);
             byte(CGADSUB as u16, 0);

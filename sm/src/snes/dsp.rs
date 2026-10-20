@@ -268,17 +268,16 @@ unsafe fn dsp_cycleChannel(dsp: *mut Dsp, ch: i32) {
         dsp_decodeBrr(dsp, ch);
     }
     (*dsp).channel[ch as usize].pitchCounter = newCounter as u16;
-    let mut sample: i16 = 0;
-    if (*dsp).channel[ch as usize].useNoise {
-        sample = (*dsp).noiseSample;
+    let mut sample: i16 = if (*dsp).channel[ch as usize].useNoise {
+        (*dsp).noiseSample
     } else {
-        sample = dsp_getSample(
+        dsp_getSample(
             dsp,
             ch,
             (*dsp).channel[ch as usize].pitchCounter as i32 >> 12,
             (*dsp).channel[ch as usize].pitchCounter as i32 >> 4 & 0xff,
-        );
-    }
+        )
+    };
     if (*dsp).reset {
         (*dsp).channel[ch as usize].adsrState = 4;
         (*dsp).channel[ch as usize].gain = 0;
@@ -436,14 +435,13 @@ unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
     let mut older: i32 = (*dsp).channel[ch as usize].older as i32;
     let mut i: i32 = 0;
     while i < 16 {
-        let mut s: i32 = 0;
-        if i & 1 != 0 {
-            s = curByte as i32 & 0xf;
+        let mut s: i32 = if i & 1 != 0 {
+            curByte as i32 & 0xf
         } else {
             crate::update_place! { previous fresh1 = (*dsp).channel[ch as usize].decodeOffset => (*dsp).channel[ch as usize].decodeOffset.wrapping_add(1); }
             curByte = *(*dsp).apu_ram.offset(fresh1 as isize);
-            s = curByte as i32 >> 4;
-        }
+            curByte as i32 >> 4
+        };
         if s > 7 {
             s -= 16;
         }

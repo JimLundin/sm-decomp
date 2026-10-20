@@ -799,13 +799,11 @@ pub unsafe fn WreckedShipGhost_Func_3(k: u16, game: &mut Game) {
     let wsgt_var_B: u16 = (*E).var_B;
     let make_visible: bool = (wsgt_var_B == 0)
         || ({
-            let mut v3: u16 = 0;
-            v3 = (wsgt_var_B).wrapping_sub(1);
+            let mut v3: u16 = (wsgt_var_B).wrapping_sub(1);
             (*E).var_B = v3;
             (v3 == 0)
                 && ({
-                    let mut wsgt_var_C: u16 = 0;
-                    wsgt_var_C = (*E).var_C;
+                    let mut wsgt_var_C: u16 = (*E).var_C;
                     let mut v5: i16 = g_word_A89ACC[(wsgt_var_C >> 1) as usize] as i16;
                     if v5 < 0 {
                         set_fields! {[(*E)], 0; var_B, var_C}
@@ -911,8 +909,7 @@ pub unsafe fn WreckedShipGhost_Func_7(k: u16, game: &mut Game) {
             true
         }
     } else {
-        let mut v3: u16 = 0;
-        v3 = ((*E).var_0D).wrapping_sub(1);
+        let mut v3: u16 = ((*E).var_0D).wrapping_sub(1);
         (*E).var_0D = v3;
         !(v3 == 0)
             || ({
@@ -957,12 +954,11 @@ pub unsafe fn WreckedShipGhost_Func_8(game: &mut Game) -> u16 {
                 let mut r18: u16 = (word!(game.target_palettes[v4])) & (0x1fu16);
                 let v5: u16 = (word!(game.palette_buffer[v4])) & (0x1fu16);
                 if v5 != r18 {
-                    let mut v6: u16 = 0;
-                    if ((v5) as i16).wrapping_sub((r18) as i16) >= 0 {
-                        v6 = (v5).wrapping_sub(1);
+                    let mut v6: u16 = if ((v5) as i16).wrapping_sub((r18) as i16) >= 0 {
+                        (v5).wrapping_sub(1)
                     } else {
-                        v6 = (v5).wrapping_add(1);
-                    }
+                        (v5).wrapping_add(1)
+                    };
                     r18 = v6;
                     word!(game.palette_buffer[v4] = (v6 | word!(game.palette_buffer[v4]) & 0xffe0));
                     v0 = v0.wrapping_add(1);
@@ -970,24 +966,22 @@ pub unsafe fn WreckedShipGhost_Func_8(game: &mut Game) -> u16 {
                 r18 = (word!(game.target_palettes[v4])) & (0x3e0u16);
                 let v7: u16 = (word!(game.palette_buffer[v4])) & (0x3e0u16);
                 if v7 != r18 {
-                    let mut v8: u16 = 0;
-                    if ((v7) as i16).wrapping_sub((r18) as i16) >= 0 {
-                        v8 = (v7).wrapping_sub(32);
+                    let mut v8: u16 = if ((v7) as i16).wrapping_sub((r18) as i16) >= 0 {
+                        (v7).wrapping_sub(32)
                     } else {
-                        v8 = (v7).wrapping_add(32);
-                    }
+                        (v7).wrapping_add(32)
+                    };
                     word!(game.palette_buffer[v4] = (v8 | word!(game.palette_buffer[v4]) & 0xfc1f));
                     v0 = v0.wrapping_add(1);
                 }
                 r18 = (word!(game.target_palettes[v4])) & (0x7c00u16);
                 let v9: u16 = (word!(game.palette_buffer[v4])) & (0x7c00u16);
                 if v9 != r18 {
-                    let mut v10: u16 = 0;
-                    if ((v9) as i16).wrapping_sub((r18) as i16) >= 0 {
-                        v10 = (v9).wrapping_sub(1024);
+                    let mut v10: u16 = if ((v9) as i16).wrapping_sub((r18) as i16) >= 0 {
+                        (v9).wrapping_sub(1024)
                     } else {
-                        v10 = (v9).wrapping_add(1024);
-                    }
+                        (v9).wrapping_add(1024)
+                    };
                     r18 = v10;
                     word!(
                         game.palette_buffer[v4] = (v10 | word!(game.palette_buffer[v4]) & 0x83ff)
@@ -2454,8 +2448,7 @@ pub unsafe fn MaridiaFloater_Func_6(k: u16, game: &mut Game) {
     let move_down: bool = (!v2 && !v3)
         || ({
             (*E).var_D = 5;
-            let mut v4: i32 = 0;
-            v4 = k as i32 >> 1;
+            let mut v4: i32 = k as i32 >> 1;
             let v5: u16 = (g_word_A8C1A1[(*E).var_C as usize])
                 .wrapping_add(word!(game.enemy_drawing_queue_sizes[v4]));
             word!(game.enemy_drawing_queue[(v4 + 91)] = v5);
@@ -2517,10 +2510,8 @@ pub unsafe fn MaridiaFloater_Func_8(k: u16, game: &mut Game) {
     let move_down: bool = (!v2 && !v3)
         || ({
             (*E).var_D = 5;
-            let mut v4: i32 = 0;
-            v4 = k as i32 >> 1;
-            let mut v5: u16 = 0;
-            v5 = (g_word_A8C1A1[(*E).var_C as usize])
+            let mut v4: i32 = k as i32 >> 1;
+            let mut v5: u16 = (g_word_A8C1A1[(*E).var_C as usize])
                 .wrapping_add(word!(game.enemy_drawing_queue_sizes[v4]));
             word!(game.enemy_drawing_queue[(v4 + 91)] = v5);
             (*E).base.x_pos = v5;
@@ -3014,19 +3005,18 @@ pub unsafe fn WreckedShipRobot_Shot(game: &mut Game) {
         NormalEnemyShotAi(game);
         let E = Get_WreckedShipRobot(word!(game.cur_enemy_index) as i32, game);
         if (*E).base.health != 0 {
-            let mut v1: u16 = 0;
-            if ((*E).var_A & 0x8000) != 0 {
+            let mut v1: u16 = if ((*E).var_A & 0x8000) != 0 {
                 if ((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) >= 0 {
-                    v1 = addr_kWreckedShipRobot_Ilist_C833 as u16;
+                    addr_kWreckedShipRobot_Ilist_C833 as u16
                 } else {
-                    v1 = addr_kWreckedShipRobot_Ilist_C7BB as u16;
+                    addr_kWreckedShipRobot_Ilist_C7BB as u16
                 }
             } else if ((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) < 0
             {
-                v1 = addr_kWreckedShipRobot_Ilist_CA7D as u16;
+                addr_kWreckedShipRobot_Ilist_CA7D as u16
             } else {
-                v1 = addr_kWreckedShipRobot_Ilist_CA01 as u16;
-            }
+                addr_kWreckedShipRobot_Ilist_CA01 as u16
+            };
             enemy_instruction! {[(*E).base]; instruction = v1, timer = 1}
             (*E).var_B = ((*E).var_B).wrapping_add(64);
         }
@@ -3732,8 +3722,7 @@ pub unsafe fn KiHunter_Func_1(k: u16, game: &mut Game) {
         && word!(game.samus_y_pos) as i32 - (*E).base.y_pos as i32 - 32i32 & 0x8000 == 0
     {
         let r24: u16 = (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos);
-        let mut v9: u16 = 0;
-        if (r18 & 0x8000) != 0 {
+        let mut v9: u16 = if (r18 & 0x8000) != 0 {
             (*E).var_00 = -2i32 as u16;
             set_fields! {[(*E)], 0; var_02, var_03}
             (*E).var_04 = -1i32 as u16;
@@ -3741,7 +3730,7 @@ pub unsafe fn KiHunter_Func_1(k: u16, game: &mut Game) {
             (*E).var_05 = -8192i32 as u16;
             (*E).var_F = 255;
             (*E).var_0E = 240;
-            v9 = 0;
+            0
         } else {
             (*E).var_00 = 2;
             set_fields! {[(*E)], 0; var_02, var_03, var_04}
@@ -3749,8 +3738,8 @@ pub unsafe fn KiHunter_Func_1(k: u16, game: &mut Game) {
             (*E).var_F = 128;
             (*E).var_07 = 1;
             (*E).var_0E = 144;
-            v9 = 4;
-        }
+            4
+        };
         let v10: i32 = v9 as i32 >> 1;
         (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xa8f3b0, v10 as isize);
         let E1_0 = Get_KiHunter(k as i32 + 64, game);

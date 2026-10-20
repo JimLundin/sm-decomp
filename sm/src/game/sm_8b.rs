@@ -475,17 +475,16 @@ pub unsafe fn ProcessCinematicBgObject(v0: u16, r18: u16, game: &mut Game) {
     );
 }
 pub unsafe fn ProcessCinematicBgObject_DrawChar(k: u16, j: u16, r18: u16, game: &mut Game) {
-    let mut v3: i16 = 0;
     word!(game.cinematicbg_var1 = (word!(game.cinematicbg_var1) == 0) as u16);
     SpawnTextGlowObject(j, r18, game);
     let v2 = RomPtr_8C(word!(game.cinematicbg_instr_ptr[(k >> 1)]), game);
-    if *(v2 as *mut i16).offset(3) < 0 {
+    let mut v3: i16 = if *(v2 as *mut i16).offset(3) < 0 {
         word!(game.cinematicbg_arr7[15] = 8);
-        v3 = (8 * (*v2.offset(3) as i32 + 2)) as i16;
+        (8 * (*v2.offset(3) as i32 + 2)) as i16
     } else {
         word!(game.cinematicbg_arr7[15] = (8u16).wrapping_mul((*v2.offset(8)) as u16));
-        v3 = (8i16).wrapping_mul((*v2.offset(9)) as i16);
-    }
+        (8i16).wrapping_mul((*v2.offset(9)) as i16)
+    };
     word!(game.cinematicbg_arr8[15] = ((v3) as u16).wrapping_sub(8));
     if *(v2.offset(4) as *mut u16) != 0xd67d && word!(game.cinematicbg_var1) != 0 {
         QueueSfx3_Max6(0xd, game);

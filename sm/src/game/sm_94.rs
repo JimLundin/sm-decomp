@@ -1292,7 +1292,6 @@ macro_rules! prepare_bomb_block_collision {
 }
 
 pub unsafe fn BombOrPowerBomb_Func1(v0: u16, game: &mut Game) {
-    let mut v3: i16 = 0;
     let temp_collision_DD2: u16 = BlockFunc_9C73(v0, game);
     let v1: i32 = v0 as i32 >> 1;
     let mut v2: i16 = word!(game.projectile_x_pos[v1]) as i16;
@@ -1300,7 +1299,7 @@ pub unsafe fn BombOrPowerBomb_Func1(v0: u16, game: &mut Game) {
         let r26: u16 = word!(game.projectile_x_pos[v1]);
         if ((byte!(v2; 1isize)) as i16).wrapping_sub((word!(game.room_width_in_scrolls)) as i16) < 0
         {
-            v3 = word!(game.projectile_y_pos[v1]) as i16;
+            let mut v3: i16 = word!(game.projectile_y_pos[v1]) as i16;
             if v3 >= 0 {
                 let R28: u16 = word!(game.projectile_y_pos[v1]);
                 if ((byte!(v3; 1isize)) as i16)
@@ -2068,40 +2067,38 @@ unsafe fn BlockFunc_A957(tmpD82: u16, tmpD84: u16, game: &mut Game) {
     }
     let v4: i32 = v0 as i32 >> 1;
     let mut v5: i16 = kSinCosTable8bit_Sext[(v4 + 64) as usize];
-    let mut v6: u16 = 0;
-    let mut v8: u16 = 0;
-    if v5 < 0 {
+    let mut v6: u16 = if v5 < 0 {
         if v5 == -256i16 {
-            v6 = (word!(game.grapple_beam_end_x_pos)).wrapping_sub(tmpD84);
+            (word!(game.grapple_beam_end_x_pos)).wrapping_sub(tmpD84)
         } else {
             let prod: u16 = Mult8x8(tmpD84 as u8, -(v5 as i8 as i32) as u8);
-            v6 = (word!(game.grapple_beam_end_x_pos) as i32 - (prod as i32 >> 8)) as u16;
+            (word!(game.grapple_beam_end_x_pos) as i32 - (prod as i32 >> 8)) as u16
         }
     } else if v5 == 256 {
-        v6 = (tmpD84).wrapping_add(word!(game.grapple_beam_end_x_pos));
+        (tmpD84).wrapping_add(word!(game.grapple_beam_end_x_pos))
     } else {
         let prod_0: u16 = Mult8x8(
             tmpD84 as u8,
             kSinCosTable8bit_Sext[(v4 + 64) as usize] as u8,
         );
-        v6 = (word!(game.grapple_beam_end_x_pos) as i32 + (prod_0 as i32 >> 8)) as u16;
-    }
+        (word!(game.grapple_beam_end_x_pos) as i32 + (prod_0 as i32 >> 8)) as u16
+    };
     word!(game.grapple_beam_grapple_start_x = v6);
     word!(game.grapple_beam_grapple_start_block_x = (v6 >> 4) as u8 as u16);
     let mut v7: i16 = kSinCosTable8bit_Sext[v4 as usize];
-    if v7 < 0 {
+    let mut v8: u16 = if v7 < 0 {
         if v7 == -256i16 {
-            v8 = (word!(game.grapple_beam_end_y_pos)).wrapping_sub(tmpD84);
+            (word!(game.grapple_beam_end_y_pos)).wrapping_sub(tmpD84)
         } else {
             let prod_1: u16 = Mult8x8(tmpD84 as u8, -(v7 as i32) as u8);
-            v8 = (word!(game.grapple_beam_end_y_pos) as i32 - (prod_1 as i32 >> 8)) as u16;
+            (word!(game.grapple_beam_end_y_pos) as i32 - (prod_1 as i32 >> 8)) as u16
         }
     } else if v7 == 256 {
-        v8 = (tmpD84).wrapping_add(word!(game.grapple_beam_end_y_pos));
+        (tmpD84).wrapping_add(word!(game.grapple_beam_end_y_pos))
     } else {
         let prod_2: u16 = Mult8x8(tmpD84 as u8, kSinCosTable8bit_Sext[v4 as usize] as u8);
-        v8 = (word!(game.grapple_beam_end_y_pos) as i32 + (prod_2 as i32 >> 8)) as u16;
-    }
+        (word!(game.grapple_beam_end_y_pos) as i32 + (prod_2 as i32 >> 8)) as u16
+    };
     word!(game.grapple_beam_grapple_start_y = v8);
     word!(game.grapple_beam_grapple_start_block_y = (v8 >> 4) as u8 as u16);
 }
@@ -2264,8 +2261,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
         grapple_beam_tmpD88 = (2
             * (((word!(game.grapple_beam_end_angle16)).wrapping_add(prod16)) as i32 >> 8))
             as u16;
-        let mut v2: u16 = 0;
-        v2 = (2u16).wrapping_mul((*ram_ptr!(game; 0xcfb)) as u16);
+        let mut v2: u16 = (2u16).wrapping_mul((*ram_ptr!(game; 0xcfb)) as u16);
         if v2 != grapple_beam_tmpD88 {
             loop {
                 grapple_beam_tmpD86 = v2;
@@ -2338,8 +2334,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
         grapple_beam_tmpD88 = (2
             * (((word!(game.grapple_beam_end_angle16)).wrapping_sub(prod16)) as i32 >> 8))
             as u16;
-        let mut v5: u16 = 0;
-        v5 = (2u16).wrapping_mul((*ram_ptr!(game; 0xcfb)) as u16);
+        let mut v5: u16 = (2u16).wrapping_mul((*ram_ptr!(game; 0xcfb)) as u16);
         if v5 == grapple_beam_tmpD88 {
             current_block = 5091811861639934416;
         } else {

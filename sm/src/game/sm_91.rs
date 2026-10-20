@@ -1769,10 +1769,10 @@ pub unsafe fn CanXrayShowBlocks(game: &mut Game) -> bool {
     true_0 != 0
 }
 pub unsafe fn Xray_SetupStage6(game: &mut Game) {
-    let mut v1 = null_mut::<VramWriteEntry>();
     if CanXrayShowBlocks(game) {
         let v0: u16 = word!(game.vram_write_queue_tail);
-        v1 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
+        let mut v1: *mut VramWriteEntry =
+            gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
         (*v1).size = 2048;
         (*v1).src.addr = (ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
             .offset_from(&raw mut game.g_ram as *mut u8) as c_long
@@ -1783,10 +1783,10 @@ pub unsafe fn Xray_SetupStage6(game: &mut Game) {
     }
 }
 pub unsafe fn Xray_SetupStage7(game: &mut Game) {
-    let mut v1 = null_mut::<VramWriteEntry>();
     if CanXrayShowBlocks(game) {
         let v0: u16 = word!(game.vram_write_queue_tail);
-        v1 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
+        let mut v1: *mut VramWriteEntry =
+            gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
         (*v1).size = 2048;
         (*v1).src.addr = 0x4800 as VoidP;
         *(&raw mut (*v1).src.bank as *mut u16) = 126;
@@ -1976,20 +1976,19 @@ pub unsafe fn HandleBeamChargePalettes(game: &mut Game) -> u8 {
         && word!(game.flare_counter) != 0
         && word!(game.flare_counter) as i32 - 60i32 & 0x8000 == 0
     {
-        let mut R36: u16 = 0;
-        if word!(game.samus_contact_damage_index) == 4 {
-            R36 = crate::rtl::rom_table_word!(
+        let mut R36: u16 = if word!(game.samus_contact_damage_index) == 4 {
+            crate::rtl::rom_table_word!(
                 game,
                 0x91d7ff,
                 (word!(game.samus_suit_palette_index) >> 1) as isize
-            );
+            )
         } else {
-            R36 = crate::rtl::rom_table_word!(
+            crate::rtl::rom_table_word!(
                 game,
                 0x91d7d5,
                 (word!(game.samus_suit_palette_index) >> 1) as isize
-            );
-        }
+            )
+        };
         CopyToSamusSuitPalette(
             *(RomPtr_91(
                 (R36).wrapping_add(word!(game.samus_charge_palette_index)),
@@ -2131,36 +2130,36 @@ pub unsafe fn HandleMiscSamusPalette(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_HandleScrewAttackSpeedBoostingPals(game: &mut Game) -> u8 {
-    let current_block: u64;
     if (word!(game.samus_suit_palette_index) & 4) == 0 {
         let r20: u16 = Samus_GetTop_R20(game);
         if liquid_at_height(game, r20) != LiquidAtHeight::None {
             return 1;
         }
     }
-    if *ram_ptr!(game; 0xa1f) as i32 == kMovementType_03_SpinJumping as i32 {
+    let current_block: u64 = if *ram_ptr!(game; 0xa1f) as i32 == kMovementType_03_SpinJumping as i32
+    {
         if (word!(game.equipped_items) & 8) == 0 {
-            current_block = 14068947459426067103;
+            14068947459426067103
         } else if word!(game.samus_anim_frame) != 0 {
             if word!(game.samus_anim_frame) as i32 - 27i32 & 0x8000 == 0 {
                 return 0;
             }
-            current_block = 8831408221741692167;
+            8831408221741692167
         } else {
-            current_block = 7431622773599773796;
+            7431622773599773796
         }
     } else if *ram_ptr!(game; 0xa1f) as i32 == kMovementType_14_WallJumping as i32 {
         if (word!(game.equipped_items) & 8) == 0 {
             return 1;
         }
         if word!(game.samus_anim_frame) as i32 - 3i32 & 0x8000 == 0 {
-            current_block = 8831408221741692167;
+            8831408221741692167
         } else {
-            current_block = 7431622773599773796;
+            7431622773599773796
         }
     } else {
-        current_block = 14068947459426067103;
-    }
+        14068947459426067103
+    };
     match current_block {
         8831408221741692167 => {
             let R36: u16 = crate::rtl::rom_table_word!(
@@ -3592,22 +3591,22 @@ pub unsafe fn HandleLandingGraphics_Ceres(game: &mut Game) {
 }
 static g_byte_91F0F3: [u8; 17] = [1, 0, 0, 0, 0, 2, 0, 4, 0, 4, 4, 4, 4, 0, 4, 0, 0];
 pub unsafe fn HandleLandingGraphics_Crateria(game: &mut Game) {
-    let use_default_landing: bool;
     if (word!(game.cinematic_function) == 0) {
         if word!(game.room_index) == 28 {
             HandleLandingGraphics_Norfair(game);
             return;
         }
         if (((word!(game.room_index)) as i16).wrapping_sub(16) < 0) {
-            use_default_landing = if (g_byte_91F0F3[word!(game.room_index) as usize] & 1) == 0 {
-                if (g_byte_91F0F3[word!(game.room_index) as usize] & 2) != 0 {
-                    !(word!(game.samus_y_pos) as i32 - 944i32 & 0x8000 == 0)
+            let use_default_landing: bool =
+                if (g_byte_91F0F3[word!(game.room_index) as usize] & 1) == 0 {
+                    if (g_byte_91F0F3[word!(game.room_index) as usize] & 2) != 0 {
+                        !(word!(game.samus_y_pos) as i32 - 944i32 & 0x8000 == 0)
+                    } else {
+                        !((g_byte_91F0F3[word!(game.room_index) as usize] & 4) != 0)
+                    }
                 } else {
-                    !((g_byte_91F0F3[word!(game.room_index) as usize] & 4) != 0)
-                }
-            } else {
-                (word!(game.fx_type) != 10)
-            };
+                    (word!(game.fx_type) != 10)
+                };
             if use_default_landing {
             } else {
                 HandleLandingGraphics_Maridia(game);
@@ -4250,22 +4249,21 @@ pub unsafe fn SamusFunc_F468_Shinespark(game: &mut Game) -> u8 {
 static kSamusPhys_AnimDelayInWater: u16 = 3;
 static kSamusPhys_AnimDelayInAcid: u16 = 2;
 pub unsafe fn Samus_SetAnimationFrameIfPoseChanged(game: &mut Game) {
-    let mut t: u16 = 0;
-    if (word!(game.equipped_items) & 0x20) != 0 {
-        t = word!(game.samus_x_speed_divisor);
+    let mut t: u16 = if (word!(game.equipped_items) & 0x20) != 0 {
+        word!(game.samus_x_speed_divisor)
     } else {
         let r: u16 = (word!(game.samus_y_pos) as i32
             + (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(word!(game.samus_pose) as isize))
                 .y_radius as i32
             - 1i32) as u16;
-        t = match liquid_at_height(game, r) {
+        match liquid_at_height(game, r) {
             LiquidAtHeight::Water => kSamusPhys_AnimDelayInWater,
             LiquidAtHeight::LavaAcid => kSamusPhys_AnimDelayInAcid,
             LiquidAtHeight::None => {
                 word!(game.samus_x_speed_divisor)
             }
-        };
-    }
+        }
+    };
     if (word!(game.samus_anim_frame_skip) & 0x8000) == 0
         && word!(game.samus_pose) != word!(game.samus_prev_pose)
     {

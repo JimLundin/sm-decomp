@@ -559,19 +559,18 @@ unsafe fn WriteVolumeToDsp(p: *mut SpcPlayer, c: *mut Channel, mut volume: u16) 
     let mut i: i32 = 0;
     while i < 2 {
         let j: i32 = volume as i32 >> 8;
-        let mut t: u8 = 0;
-        if j >= 21 {
-            t = ((*p).ram[(j + 0x1e1d) as usize] as i32
+        let mut t: u8 = if j >= 21 {
+            ((*p).ram[(j + 0x1e1d) as usize] as i32
                 + (((*p).ram[(j + 0x1e1d + 1) as usize] as i32
                     - (*p).ram[(j + 0x1e1d) as usize] as i32)
                     * volume as u8 as i32
-                    >> 8)) as u8;
+                    >> 8)) as u8
         } else {
-            t = (kVolumeTable[j as usize] as i32
+            (kVolumeTable[j as usize] as i32
                 + ((kVolumeTable[(j + 1) as usize] as i32 - kVolumeTable[j as usize] as i32)
                     * volume as u8 as i32
-                    >> 8)) as u8;
-        }
+                    >> 8)) as u8
+        };
         t = (t as i32 * (*c).final_volume as i32 >> 8) as u8;
         if ((*c).pan_flag_with_phase_invert as i32) << i & 0x80 != 0 {
             t = -(t as i32) as u8;
@@ -1076,7 +1075,6 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
     if a as i32 == 0xf0 {
         (*p).key_OFF = ((*p).key_OFF | !((*p).is_chan_on));
     } else {
-        let mut read_toplevel_word: bool;
         if !(a as i32 != 0xf1
             && a as i32 != 255
             && a as i32 != (*p).port_to_snes[0i32 as usize] as i32)
@@ -1084,7 +1082,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
             if (*p).port_to_snes[0i32 as usize] as i32 == 0 {
                 return;
             }
-            read_toplevel_word = !((*p).counter_sf0c as i32 == 0)
+            let mut read_toplevel_word: bool = !((*p).counter_sf0c as i32 == 0)
                 && ({
                     (*p).counter_sf0c = (*p).counter_sf0c.wrapping_sub(1);
                     if (*p).counter_sf0c as i32 != 0 {

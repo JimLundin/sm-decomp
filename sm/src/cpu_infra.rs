@@ -1136,8 +1136,7 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
 }
 unsafe fn loadRom(name: *const c_char, snes: *mut Snes, game: &mut Game) -> bool {
     let mut length: size_t = 0 as size_t;
-    let mut file = null_mut::<u8>();
-    file = ReadWholeFile(name, &raw mut length);
+    let mut file: *mut u8 = ReadWholeFile(name, &raw mut length);
     if file.is_null() {
         puts(b"Failed to read file\0" as *const u8 as *const c_char);
         return false_0 != 0;

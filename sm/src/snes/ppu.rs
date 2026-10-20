@@ -1214,12 +1214,11 @@ unsafe fn ppu_getPixel(
 unsafe fn ppu_handleOPT(ppu: *mut Ppu, layer: i32, lx: *mut i32, ly: *mut i32) {
     let x: i32 = *lx;
     let y: i32 = *ly;
-    let mut column: i32 = 0;
-    if (*ppu).mode as i32 == 6 {
-        column = x - (x & 0xf) - ((*ppu).bgLayer[layer as usize].hScroll as i32 * 2 & 0xfff0) >> 4;
+    let mut column: i32 = if (*ppu).mode as i32 == 6 {
+        x - (x & 0xf) - ((*ppu).bgLayer[layer as usize].hScroll as i32 * 2 & 0xfff0) >> 4
     } else {
-        column = x - (x & 0x7) - ((*ppu).bgLayer[layer as usize].hScroll as i32 & 0xfff8) >> 3;
-    }
+        x - (x & 0x7) - ((*ppu).bgLayer[layer as usize].hScroll as i32 & 0xfff8) >> 3
+    };
     if column > 0 {
         let valid: i32 = if layer == 0 { 0x2000 } else { 0x4000 };
         let mut hOffset: u16 = ppu_getOffsetValue(ppu, column - 1i32, 0);
@@ -1662,36 +1661,33 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
             (val_0 >> 8) as u8
         }
         59 => {
-            let mut ret_0: u8 = 0;
-            if !(*ppu).cgramSecondWrite {
-                ret_0 = ((*ppu).cgram[(*ppu).cgramPointer as usize] as u8 & 0xff);
+            let mut ret_0: u8 = if !(*ppu).cgramSecondWrite {
+                ((*ppu).cgram[(*ppu).cgramPointer as usize] as u8 & 0xff)
             } else {
                 crate::update_place! { previous fresh3 = (*ppu).cgramPointer => (*ppu).cgramPointer.wrapping_add(1); }
-                ret_0 = ((*ppu).cgram[fresh3 as usize] as i32 >> 8 & 0x7f
-                    | (*ppu).ppu2openBus as i32 & 0x80) as u8;
-            }
+                ((*ppu).cgram[fresh3 as usize] as i32 >> 8 & 0x7f
+                    | (*ppu).ppu2openBus as i32 & 0x80) as u8
+            };
             (*ppu).cgramSecondWrite = !(*ppu).cgramSecondWrite;
             (*ppu).ppu2openBus = ret_0;
             ret_0
         }
         60 => {
-            let mut val_1: u8 = 0;
-            if (*ppu).hCountSecond {
-                val_1 = ((*ppu).hCount as i32 >> 8 & 1 | (*ppu).ppu2openBus as i32 & 0xfe) as u8;
+            let mut val_1: u8 = if (*ppu).hCountSecond {
+                ((*ppu).hCount as i32 >> 8 & 1 | (*ppu).ppu2openBus as i32 & 0xfe) as u8
             } else {
-                val_1 = ((*ppu).hCount as u8 & 0xff);
-            }
+                ((*ppu).hCount as u8 & 0xff)
+            };
             (*ppu).hCountSecond = !(*ppu).hCountSecond;
             (*ppu).ppu2openBus = val_1;
             val_1
         }
         61 => {
-            let mut val_2: u8 = 0;
-            if (*ppu).vCountSecond {
-                val_2 = ((*ppu).vCount as i32 >> 8 & 1 | (*ppu).ppu2openBus as i32 & 0xfe) as u8;
+            let mut val_2: u8 = if (*ppu).vCountSecond {
+                ((*ppu).vCount as i32 >> 8 & 1 | (*ppu).ppu2openBus as i32 & 0xfe) as u8
             } else {
-                val_2 = ((*ppu).vCount as u8 & 0xff);
-            }
+                ((*ppu).vCount as u8 & 0xff)
+            };
             (*ppu).vCountSecond = !(*ppu).vCountSecond;
             (*ppu).ppu2openBus = val_2;
             val_2

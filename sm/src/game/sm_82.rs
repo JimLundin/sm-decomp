@@ -1822,18 +1822,17 @@ crate::forward_calls! { unsafe fn (r0: *const u8) -> u16;
     DetermineBottommostMapColumn => find_map_edge(r0, MapEdge::Bottom);
 }
 pub unsafe fn DetermineMapScrollLimits(game: &mut Game) {
-    let mut r6 = null::<u8>();
-    if word!(game.has_area_map) != 0 {
-        r6 = RomPtr_82(
+    let mut r6: *const u8 = if word!(game.has_area_map) != 0 {
+        RomPtr_82(
             *(RomPtr_82(
                 (addr_kPauseMenuMapData as i32 + 2 * word!(game.area_index) as i32) as u16,
                 game,
             ) as *mut u16),
             game,
-        );
+        )
     } else {
-        r6 = ram_ptr!(game; 0x7f7);
-    }
+        ram_ptr!(game; 0x7f7)
+    };
     word!(game.map_min_x_scroll = (DetermineLeftmostMapColumn(r6)).wrapping_mul(8));
     if word!(game.area_index) == 4 {
         word!(game.map_min_x_scroll, wrapping_sub(24));
@@ -3161,12 +3160,11 @@ pub unsafe fn DrawBossMapIcons(a: u16, k: u16, game: &mut Game) {
         return;
     }
     let mut v4 = RomPtr_82(t as u16, game) as *const u16;
-    let mut advance_boss_bit: bool;
     loop {
         if *v4 == 0xffff {
             return;
         }
-        advance_boss_bit = !(*v4 != 0xfffe)
+        let mut advance_boss_bit: bool = !(*v4 != 0xfffe)
             || ({
                 let v5: i32 = bits & 1;
                 bits >>= 1;
@@ -3659,12 +3657,12 @@ pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn RefillHealthFromReserveTanks(game: &mut Game) -> u8 {
-    let refill_in_progress: bool;
     if word!(game.samus_reserve_health) != 0 {
         if (word!(game.nmi_frame_counter_word) & 7) == 0 {
             QueueSfx3_Max3(0x2d, game);
         }
-        refill_in_progress = if ((word!(game.samus_health, wrapping_add(1), reread)) as i16)
+        let refill_in_progress: bool = if ((word!(game.samus_health, wrapping_add(1), reread))
+            as i16)
             .wrapping_sub((word!(game.samus_max_health)) as i16)
             >= 0
         {
@@ -3877,7 +3875,6 @@ pub unsafe fn EnsureSamusDrawnEachFrame(game: &mut Game) {
     }
 }
 pub unsafe fn LoadEnemyGfxToVram(game: &mut Game) {
-    let mut ED = null_mut::<EnemyDef>();
     let mut dst: u16 = 0x7000;
     let mut v0: u16 = word!(game.room_enemy_tilesets_ptr);
     if word!(game.room_enemy_tilesets_ptr) != 0 {
@@ -3887,7 +3884,7 @@ pub unsafe fn LoadEnemyGfxToVram(game: &mut Game) {
             if enemy_def == 0xffff {
                 break;
             }
-            ED = get_EnemyDef_A2(enemy_def, game);
+            let mut ED: *mut EnemyDef = get_EnemyDef_A2(enemy_def, game);
             let mut vram_update_size: u16 = 0;
             let mut vram_update_dst: u16 = 0;
             if ((*ED).tile_data_size & 0x8000) != 0 {
@@ -4200,7 +4197,6 @@ static kUpdateBackgroundCommands: [Func_Y_Y; 8] = [
 ];
 pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> CoroutineRet {
     crate::verify_probe::hit("coroutine.door");
-    let mut bg_data_ptr: u16 = 0;
     let resume = game.coroutine_state_1();
     if resume == 0 {
         LoadEnemyGfxToVram(game);
@@ -4228,7 +4224,7 @@ pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> Co
                 game,
             );
         }
-        bg_data_ptr = game.read_rom_word(
+        let mut bg_data_ptr: u16 = game.read_rom_word(
             0x8f0000 | u32::from(game.roomdefroomstate_ptr()),
             core::mem::offset_of!(RoomDefRoomstate, bg_data_ptr),
         );

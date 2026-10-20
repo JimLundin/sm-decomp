@@ -87,8 +87,7 @@ unsafe fn get_PlmHeader_Size4(a: u16, game: &mut Game) -> *mut PlmHeader_Size4 {
     RomPtr((0x840000u32) | ((a) as u32), game) as *mut PlmHeader_Size4
 }
 pub unsafe fn SetGoldenTorizoPalette(mut a: u16, game: &mut Game) {
-    let mut v1: i16 = 0;
-    v1 = ((byte!(a; 1)) as i16) & (0x78i16);
+    let mut v1: i16 = ((byte!(a; 1)) as i16) & (0x78i16);
     if (v1 as u16 & 0x40) != 0 {
         v1 = 56;
     }
@@ -1128,8 +1127,7 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
                 break;
             }
             v35 = k;
-            let mut v24: u16 = 0;
-            v24 = word!(game.vram_write_queue_tail);
+            let mut v24: u16 = word!(game.vram_write_queue_tail);
             if !(((word!(game.vram_write_queue_tail)) as i16).wrapping_sub(240) < 0
                 && (((512u16).wrapping_sub(word!(game.plm_draw_tilemap_index))) as i32 >> 3)
                     - r20 as i32
@@ -1156,11 +1154,9 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
             r18 = (r18).wrapping_mul(2);
             r3 = (r18 as i32 + v1 as i32 + 2) as u16;
             let mut v26: u16 = 0;
-            v26 = 0;
             loop {
                 x = *(RomPtr_84orRAM(r3, game) as *mut u16);
-                let mut v29: u16 = 0;
-                v29 = (v26).wrapping_add(2);
+                let mut v29: u16 = (v26).wrapping_add(2);
                 TileTables::draw_block(
                     (&raw const game.g_ram).cast::<u8>().add(0xa000).cast(),
                     x,
@@ -1913,12 +1909,7 @@ pub unsafe fn PlmSetup_MotherBrainRoomEscapeDoor(j: u16, game: &mut Game) -> u8 
     0
 }
 pub unsafe fn PlmSetup_B7EB_EnableSoundsIn32Frames(j: u16, game: &mut Game) -> u8 {
-    let mut v1: u16 = 0;
-    if word!(game.area_index) == 6 {
-        v1 = 32;
-    } else {
-        v1 = 240;
-    }
+    let mut v1: u16 = if word!(game.area_index) == 6 { 32 } else { 240 };
     let v2: i32 = j as i32 >> 1;
     word!(game.plm_timers[v2] = v1);
     word!(game.plm_pre_instrs[v2] = ((0x84b7ddi32) as u16));
@@ -2369,8 +2360,7 @@ crate::forward_calls! { pub unsafe fn (j: u16, game: &mut Game) -> u8;
 pub unsafe fn sub_84C64C(j: u16, a: u16, game: &mut Game) -> u8 {
     find_plm_at_block!(found_plm, v2, a, game);
     if found_plm {
-        let mut v3: i32 = 0;
-        v3 = v2 as i32 >> 1;
+        let mut v3: i32 = v2 as i32 >> 1;
         if word!(game.plm_timers[v3]) == 0 {
             word!(game.plm_timers[v3], wrapping_add(1));
         }

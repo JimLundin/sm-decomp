@@ -742,15 +742,13 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_3(game: &mut Game) {
     let stop_platform: bool = ((((*E).base.y_pos) as i16).wrapping_sub(((*E).var_A) as i16) < 0)
         || ({
             PlatformThatFallsWithSamus_Func_9(game);
-            let mut ptfwss_var_05: u16 = 0;
             (*E).var_F = (*E).var_F.wrapping_add(1);
-            ptfwss_var_05 = (*E).var_F;
+            let mut ptfwss_var_05: u16 = (*E).var_F;
             if ((ptfwss_var_05) as i16).wrapping_sub(((*E).var_05) as i16) >= 0 {
                 ptfwss_var_05 = (*E).var_05;
                 (*E).var_F = ptfwss_var_05;
             }
-            let mut v3: i32 = 0;
-            v3 = 8 * ptfwss_var_05 as i32 >> 1;
+            let mut v3: i32 = 8 * ptfwss_var_05 as i32 >> 1;
             (Enemy_MoveDown(
                 word!(game.cur_enemy_index),
                 (words!((
@@ -1345,12 +1343,11 @@ pub unsafe fn Sidehopper_Init(game: &mut Game) {
     set_fields! {[(*E)], 0; var_03, var_04, var_05}
     let v2: u16 = (2u16).wrapping_mul((*get_EnemyDef_A2((*E).base.enemy_ptr, game)).field_2A);
     (*E).var_06 = v2;
-    let mut v4: u16 = 0;
-    if (*E).parameter_1 != 0 {
-        v4 = crate::rtl::rom_table_word!(game, 0xa3aaca, ((*E).var_06 >> 1) as isize);
+    let mut v4: u16 = if (*E).parameter_1 != 0 {
+        crate::rtl::rom_table_word!(game, 0xa3aaca, ((*E).var_06 >> 1) as isize)
     } else {
-        v4 = crate::rtl::rom_table_word!(game, 0xa3aac2, ((*E).var_06 >> 1) as isize);
-    }
+        crate::rtl::rom_table_word!(game, 0xa3aac2, ((*E).var_06 >> 1) as isize)
+    };
     (*E).var_00 = v4;
     Sidehopper_Func_3(game);
     if (*get_EnemyDef_A2((*E).base.enemy_ptr, game)).field_2A != 0 {
@@ -2125,12 +2122,11 @@ pub unsafe fn MaridiaSnail_Func_4(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn MaridiaSnail_Func_5(k: u16, game: &mut Game) {
-    let skip_instruction_change: bool;
     let E = Get_MaridiaSnail(k as i32, game);
     let msl_var_08: u16 = (*E).var_08;
     if msl_var_08 != 1 && msl_var_08 != 3 && msl_var_08 != 4 && msl_var_08 != 5 {
         if (*E).base.y_pos as i32 - word!(game.samus_y_pos) as i32 + 96 & 0x8000 == 0 {
-            skip_instruction_change =
+            let skip_instruction_change: bool =
                 if (((*E).base.x_pos) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0 {
                     (*ram_ptr!(game; 0xa1e) != 4)
                 } else {
@@ -2155,10 +2151,9 @@ pub unsafe fn MaridiaSnail_Func_5(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn MaridiaSnail_Func_6(k: u16, game: &mut Game) {
-    let keep_properties: bool;
     let E = Get_MaridiaSnail(k as i32, game);
     if ((*E).var_F as i32 != 0xa3d1b3 & 0xffff) {
-        keep_properties = if (*E).var_08 == 1 {
+        let keep_properties: bool = if (*E).var_08 == 1 {
             (word!(game.samus_has_momentum_flag) != 0 || (*E).var_F as i32 != 0xa3cf5f & 0xffff)
         } else {
             !(word!(game.samus_has_momentum_flag) == 0)
@@ -2225,12 +2220,11 @@ pub unsafe fn MaridiaSnail_CFE5(k: u16, game: &mut Game) {
     MaridiaSnail_D002(k, RomPtr_A3(addr_stru_A3CD0A as u16, game), game);
 }
 pub unsafe fn MaridiaSnail_CFEB(k: u16, game: &mut Game) {
-    let mut v1: u16 = 0;
-    if (*Get_MaridiaSnail(k as i32, game)).var_05 != 0 {
-        v1 = addr_stru_A3CD3A as u16;
+    let mut v1: u16 = if (*Get_MaridiaSnail(k as i32, game)).var_05 != 0 {
+        addr_stru_A3CD3A as u16
     } else {
-        v1 = addr_stru_A3CD12 as u16;
-    }
+        addr_stru_A3CD12 as u16
+    };
     MaridiaSnail_D07E(k, RomPtr_A3(v1, game), game);
 }
 pub unsafe fn MaridiaSnail_CFFC(k: u16, game: &mut Game) {
@@ -2336,12 +2330,11 @@ pub unsafe fn MaridiaSnail_Func_15(k: u16, game: &mut Game) {
             (*E).var_20 = 1;
             QueueSfx2_Max3(0x70, game);
         } else {
-            let mut delta: u32 = 0;
-            if ((*E).var_03 & 0x8000) != 0 {
-                delta = 4096;
+            let mut delta: u32 = if ((*E).var_03 & 0x8000) != 0 {
+                4096
             } else {
-                delta = -4096i32 as u32;
-            }
+                -4096i32 as u32
+            };
             let t: u32 = (words!((*E), var_03, var_02)).wrapping_add(delta);
             (*E).var_02 = t as u16;
             if t >> 16 != 0 {
@@ -2772,12 +2765,11 @@ pub unsafe fn FireZoomer_Func_1(k: u16, game: &mut Game) {
         if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) != 0 {
             (*E).var_A = -((*E).var_A as i32) as u16;
             let fzr_parameter_2: u16 = (*E).parameter_2;
-            let mut v7: u16 = 0;
-            if ((*E).var_B & 0x8000) == 0 {
-                v7 = crate::rtl::rom_table_word!(game, 0xa3e63c, (fzr_parameter_2 >> 1) as isize);
+            let mut v7: u16 = if ((*E).var_B & 0x8000) == 0 {
+                crate::rtl::rom_table_word!(game, 0xa3e63c, (fzr_parameter_2 >> 1) as isize)
             } else {
-                v7 = crate::rtl::rom_table_word!(game, 0xa3e630, (fzr_parameter_2 >> 1) as isize);
-            }
+                crate::rtl::rom_table_word!(game, 0xa3e630, (fzr_parameter_2 >> 1) as isize)
+            };
             enemy_instruction! {[(*E).base]; instruction = v7, timer = 1}
         }
     } else {
@@ -2786,12 +2778,11 @@ pub unsafe fn FireZoomer_Func_1(k: u16, game: &mut Game) {
         if v8 as i32 - 4i32 & 0x8000 != 0 {
             (*E).var_B = -((*E).var_B as i32) as u16;
             let v9: u16 = (*E).parameter_2;
-            let mut v10: u16 = 0;
-            if ((*E).var_B & 0x8000) == 0 {
-                v10 = crate::rtl::rom_table_word!(game, 0xa3e63c, (v9 >> 1) as isize);
+            let mut v10: u16 = if ((*E).var_B & 0x8000) == 0 {
+                crate::rtl::rom_table_word!(game, 0xa3e63c, (v9 >> 1) as isize)
             } else {
-                v10 = crate::rtl::rom_table_word!(game, 0xa3e630, (v9 >> 1) as isize);
-            }
+                crate::rtl::rom_table_word!(game, 0xa3e630, (v9 >> 1) as isize)
+            };
             enemy_instruction! {[(*E).base]; instruction = v10, timer = 1}
         } else {
             (*E).var_03 = (*E).var_F;
@@ -2828,12 +2819,11 @@ pub unsafe fn FireZoomer_Func_3(k: u16, game: &mut Game) {
         if Enemy_MoveRight_IgnoreSlopes(k, amt, game) != 0 {
             (*E).var_B = -((*E).var_B as i32) as u16;
             let fzr_parameter_2: u16 = (*E).parameter_2;
-            let mut v6: u16 = 0;
-            if ((*E).var_A & 0x8000) == 0 {
-                v6 = crate::rtl::rom_table_word!(game, 0xa3e654, (fzr_parameter_2 >> 1) as isize);
+            let mut v6: u16 = if ((*E).var_A & 0x8000) == 0 {
+                crate::rtl::rom_table_word!(game, 0xa3e654, (fzr_parameter_2 >> 1) as isize)
             } else {
-                v6 = crate::rtl::rom_table_word!(game, 0xa3e648, (fzr_parameter_2 >> 1) as isize);
-            }
+                crate::rtl::rom_table_word!(game, 0xa3e648, (fzr_parameter_2 >> 1) as isize)
+            };
             enemy_instruction! {[(*E).base]; instruction = v6, timer = 1}
         } else {
             EnemyFunc_C8AD(k, game);
@@ -2844,12 +2834,11 @@ pub unsafe fn FireZoomer_Func_3(k: u16, game: &mut Game) {
         if v7 as i32 - 4i32 & 0x8000 != 0 {
             (*E).var_A = -((*E).var_A as i32) as u16;
             let v8: u16 = (*E).parameter_2;
-            let mut v9: u16 = 0;
-            if ((*E).var_A & 0x8000) == 0 {
-                v9 = crate::rtl::rom_table_word!(game, 0xa3e654, (v8 >> 1) as isize);
+            let mut v9: u16 = if ((*E).var_A & 0x8000) == 0 {
+                crate::rtl::rom_table_word!(game, 0xa3e654, (v8 >> 1) as isize)
             } else {
-                v9 = crate::rtl::rom_table_word!(game, 0xa3e648, (v8 >> 1) as isize);
-            }
+                crate::rtl::rom_table_word!(game, 0xa3e648, (v8 >> 1) as isize)
+            };
             enemy_instruction! {[(*E).base]; instruction = v9, timer = 1}
         } else {
             (*E).var_03 = (*E).var_F;
@@ -3128,15 +3117,14 @@ pub unsafe fn Metroid_Touch(game: &mut Game) {
     };
 }
 pub unsafe fn Metroid_Func_5(k: u16, game: &mut Game) {
-    let mut v1: u16 = 0;
     let varE32: u16 = (word!(game.samus_y_pos)).wrapping_sub(8);
-    if (word!(game.equipped_items) & 0x20) != 0 {
-        v1 = 12288;
+    let mut v1: u16 = if (word!(game.equipped_items) & 0x20) != 0 {
+        12288
     } else if word!(game.equipped_items) & 1 != 0 {
-        v1 = 24576;
+        24576
     } else {
-        v1 = -16384i32 as u16;
-    }
+        -16384i32 as u16
+    };
     let r18: u16 = v1;
     let E = Get_Metroid(k as i32, game);
     let metroid_var_02: u16 = (*E).var_02;

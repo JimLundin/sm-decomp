@@ -1184,11 +1184,10 @@ pub unsafe fn FileSelectMenu_25_FileClearDoClear(game: &mut Game) {
 pub unsafe fn FileSelectMenu_26_ClearCompleted(game: &mut Game) {
     DrawBorderAroundDataClearMode(game);
     if word!(game.joypad1_newkeys) != 0 {
-        let use_first_slot: bool;
         QueueSfx1_Max6(0x37, game);
         word!(game.menu_index, wrapping_add(1));
         if (LoadFromSram(0, game) != 0) {
-            use_first_slot = if LoadFromSram(1, game) != 0 {
+            let use_first_slot: bool = if LoadFromSram(1, game) != 0 {
                 (LoadFromSram(2, game) != 0)
                     || ({
                         word!(game.selected_save_slot = 2);
@@ -1466,7 +1465,6 @@ pub unsafe fn DrawFileSelectionTime(a: u16, k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
-    let selection_unchanged: bool;
     let mut v1: u16 = 0;
     let mut v2: u16 = 0;
     DrawBorderAroundSamusData(game);
@@ -1475,50 +1473,51 @@ pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
     DrawFileSelectSlotSamusHelmet(6, game);
     DrawFileSelectSlotSamusHelmet(8, game);
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) == 0 {
-        selection_unchanged = if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
-            if word!(game.nonempty_save_slots) != 0 {
-                v1 = (word!(game.selected_save_slot)).wrapping_sub(1);
-                if ((word!(game.selected_save_slot)) as i16).wrapping_sub(1) < 0 {
-                    v1 = 5;
-                }
-            } else {
-                v1 = (word!(game.selected_save_slot)).wrapping_sub(1);
-                if ((word!(game.selected_save_slot)) as i16).wrapping_sub(1) >= 0 {
-                    if word!(game.selected_save_slot) as i32 - 5i32 & 0x8000 == 0 {
-                        v1 = 2;
+        let selection_unchanged: bool =
+            if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
+                if word!(game.nonempty_save_slots) != 0 {
+                    v1 = (word!(game.selected_save_slot)).wrapping_sub(1);
+                    if ((word!(game.selected_save_slot)) as i16).wrapping_sub(1) < 0 {
+                        v1 = 5;
                     }
                 } else {
-                    v1 = 5;
-                }
-            }
-            word!(game.selected_save_slot = v1);
-            false
-        } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) == 0 {
-            if (word!(game.joypad1_newkeys) as i32 & kButton_B as i32) != 0 {
-                QueueSfx1_Max6(0x37, game);
-                word!(game.menu_index = 33);
-                QueueSfx1_Max6(0x37, game);
-            }
-            true
-        } else {
-            if word!(game.nonempty_save_slots) != 0 {
-                v2 = (word!(game.selected_save_slot)).wrapping_add(1);
-                if word!(game.selected_save_slot) as i32 - 5i32 & 0x8000 == 0 {
-                    v2 = 0;
-                }
-            } else {
-                v2 = (word!(game.selected_save_slot)).wrapping_add(1);
-                if word!(game.selected_save_slot) as i32 - 2i32 & 0x8000 == 0 {
-                    if word!(game.selected_save_slot) as i32 - 5i32 & 0x8000 != 0 {
-                        v2 = 5;
+                    v1 = (word!(game.selected_save_slot)).wrapping_sub(1);
+                    if ((word!(game.selected_save_slot)) as i16).wrapping_sub(1) >= 0 {
+                        if word!(game.selected_save_slot) as i32 - 5i32 & 0x8000 == 0 {
+                            v1 = 2;
+                        }
                     } else {
-                        v2 = 0;
+                        v1 = 5;
                     }
                 }
-            }
-            word!(game.selected_save_slot = v2);
-            false
-        };
+                word!(game.selected_save_slot = v1);
+                false
+            } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) == 0 {
+                if (word!(game.joypad1_newkeys) as i32 & kButton_B as i32) != 0 {
+                    QueueSfx1_Max6(0x37, game);
+                    word!(game.menu_index = 33);
+                    QueueSfx1_Max6(0x37, game);
+                }
+                true
+            } else {
+                if word!(game.nonempty_save_slots) != 0 {
+                    v2 = (word!(game.selected_save_slot)).wrapping_add(1);
+                    if word!(game.selected_save_slot) as i32 - 5i32 & 0x8000 == 0 {
+                        v2 = 0;
+                    }
+                } else {
+                    v2 = (word!(game.selected_save_slot)).wrapping_add(1);
+                    if word!(game.selected_save_slot) as i32 - 2i32 & 0x8000 == 0 {
+                        if word!(game.selected_save_slot) as i32 - 5i32 & 0x8000 != 0 {
+                            v2 = 5;
+                        } else {
+                            v2 = 0;
+                        }
+                    }
+                }
+                word!(game.selected_save_slot = v2);
+                false
+            };
         if !(selection_unchanged) {
             QueueSfx1_Max6(0x37, game);
         }

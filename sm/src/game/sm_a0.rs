@@ -2730,20 +2730,19 @@ pub unsafe fn NormalEnemyTouchAiSkipDeathAnim(game: &mut Game) {
         return;
     }
     let mut r20: u16 = (word!(game.samus_contact_damage_index)).wrapping_add(15);
-    let mut r22: u16 = 0;
-    if word!(game.samus_contact_damage_index) == 1 {
-        r22 = 500;
+    let mut r22: u16 = if word!(game.samus_contact_damage_index) == 1 {
+        500
     } else if word!(game.samus_contact_damage_index) == 2 {
-        r22 = 300;
+        300
     } else if word!(game.samus_contact_damage_index) == 3 {
-        r22 = 2000;
+        2000
     } else {
         r20 = r20.wrapping_add(1);
         if word!(game.samus_contact_damage_index) == 4 {
             CallSomeSamusCode(4, game);
         }
-        r22 = 200;
-    }
+        200
+    };
     let vp: u16 = (if (*ED).vulnerability_ptr != 0 {
         (*ED).vulnerability_ptr as i32
     } else {
@@ -2855,7 +2854,6 @@ pub unsafe fn EnemyFunc_A6B4_UsedBySporeSpawn(game: &mut Game) {
     }
 }
 pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
-    let apply_damage: bool;
     let mut varE2E: u16 = 0;
     let mut varE32: u16 = 0;
     let v0: i32 = word!(game.collision_detection_index) as i32;
@@ -2867,9 +2865,9 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
         vulnerability_ptr = addr_stru_B4EC1C as u16;
     }
     let r20: u16 = vulnerability_ptr;
-    if (r18 & 0xf00) != 0 {
+    let apply_damage: bool = if (r18 & 0xf00) != 0 {
         let mut v5: i16 = ((r18) as i16) & (0xf00i16);
-        apply_damage = if (r18 & 0xf00) == 256 || v5 == 512 {
+        if (r18 & 0xf00) == 256 || v5 == 512 {
             let mut v6: i16 = ((r18 as i32 & 0xf00) >> 8) as i16;
             varE32 = (((*get_Vulnerability((r20).wrapping_add((v6) as u16), game)).plasma_ice_wave)
                 as u16)
@@ -2884,7 +2882,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
                     varE32 = (((*get_Vulnerability(r20, game)).power_bomb) as u16) & (0x7fu16);
                     true
                 })
-        };
+        }
     } else {
         word!(
             game.last_enemy_power =
@@ -2892,7 +2890,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
         );
         varE32 = (word!(game.last_enemy_power)) & (0x7fu16);
         if word!(game.last_enemy_power) != 255 {
-            apply_damage = !((r18 & 0x10) != 0)
+            !((r18 & 0x10) != 0)
                 || ({
                     let charged_beam: u8 = (*get_Vulnerability(r20, game)).charged_beam;
                     !(charged_beam == 255)
@@ -2904,7 +2902,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
                                     true
                                 })
                         })
-                });
+                })
         } else {
             let v8 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
             if (*v8).frozen_timer == 0 {
@@ -2919,7 +2917,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
             (*v8).invincibility_timer = 10;
             return varE2E;
         }
-    }
+    };
     if apply_damage {
         let mut ttt: u32 = ((pd >> 1) as u32).wrapping_mul(varE32 as u32);
         let mut r42: u16 = ttt as u16;

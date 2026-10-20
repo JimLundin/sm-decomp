@@ -21,6 +21,11 @@ further, by tackling large structural changes before individual cleanup.
 Use **90,000 lines as a stretch planning checkpoint**, not a demonstrated
 forecast. This work order replaces earlier reduction and cleanup queues.
 
+Latest volume direction: prioritize repeated implementation patterns across
+the existing source. A whole-system redesign is not a prerequisite for a
+reduction. Price complete repeated families, including their replacement
+costs, and reject negative drafts before spending time on runtime checks.
+
 User clarification: the long-term structure is descriptive gameplay modules
 and routines, with **bank-based source organization removed**. Keep bank
 addresses as ROM/dispatch data. Domain ownership and code-volume reduction
@@ -205,9 +210,12 @@ explicit domain migration but is not evidence of a large volume payoff.
    A broad scene profile would transcribe arbitrary callbacks and statements.
    Both bounded studies advance discovery without claiming exhaustive limits.
 
-   Active comparison: `samus_motion_module` is assessing complete boss phases
-   and their projectile consumers. Reuse its pending findings before starting
-   an overlapping boss investigation. The overseer is validating the intro
+   Boss preflight found no credible roughly 1,000-line replacement across the
+   examined Torizo, Crocomire, Ridley, Spore Spawn and Mother Brain phases and
+   their projectile consumers. Existing algorithms are already shared; the
+   remaining phase contracts differ. This is bounded evidence, not exhaustion.
+
+   The overseer is validating the intro
    narrative-page lifecycle: four scene setups, page transitions, crossfades
    and Japanese continuations. Its first compiled draft removes 276 lines;
    domain-module migration and final validation remain before pricing adoption.
@@ -229,7 +237,8 @@ explicit domain migration but is not evidence of a large volume payoff.
    Rank complete candidates by net deletion, implementation/check cost and
    coverage availability. Examine broader opportunities before spending time
    on lower-volume engine, PLM, frontend or hardware refinements. Small edits
-   may serve a selected replacement; independent cleanup waits until item 4.
+   may serve a selected replacement. Complete repeated-pattern cohorts can
+   proceed through item 3; isolated naming/unsafe cleanup waits until item 4.
    Reopen a parked study only when the proposed representation or scope is
    materially different, and state that difference before starting.
 
@@ -239,8 +248,17 @@ explicit domain migration but is not evidence of a large volume payoff.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **12,262-line** gap; parked small drafts are not
+   replacement yet funds the **12,070-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Complete local-binding cohort: **207 bindings across 31 files**, placing
+   declarations at their first value or binding an exhaustive branch result,
+   removes **192 lines (112,261 -> 112,069)** with no new helpers. Scalar/raw
+   pointer types, calculations, branch exits and effect order are preserved.
+   Source reconstruction and independent scope/macro review, headless compiler,
+   normal release and compiled-source checks pass. Static-only validation;
+   no new movie result is claimed. This is useful landed repetition cleanup,
+   but does not establish the desired multi-thousand-line replacement.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -290,6 +308,14 @@ may overlap landed work and are not a current reduction budget.
   unlanded and parked as a standalone fragment; no movie execution is claimed.
 - Renderer unification and PNG library substitution remain parked: previously
   assessed alternatives did not preserve the existing contracts.
+- Single-use local inlining: 318 order-safe scalar candidates across 38 files
+  grow by 86 formatted lines with ordinary inference, or 181 with explicit
+  type constraints. Reject both; no compilation or behavior claim. Branch
+  prefix/middle sharing across 72 files exposes only 72 gross repeated lines;
+  residual audio families have no credible 150-line net budget. These bounded
+  studies do not justify repeating the same scans. TEMP reports/drafts:
+  sm-single-use-8d654c29, sm-branch-prefixes-8d654c29,
+  sm-audio-repetition-8d654c29 and sm-dead-initializers-8d654c29.
 
 When revisiting one of these exact families, consult its historical section
 with `git show ec45c573:docs/PLAN.md` and search the relevant heading/symbol.
@@ -412,11 +438,12 @@ Rust lines 112265. The working tree at this review also contains an unrelated
 83-line shader reduction, so `sh tools/progress.sh` reports **112182**. That
 uncommitted draft is excluded from the committed baseline and budget.
 
-The Japanese intro continuation correction removes four lines: maintained
-Rust is **112,261**, leaving **12,262** to reach 99,999. It adds one unsafe
-helper to preserve the allocator's successful and exhausted-slot accumulator
-results. The exercised Japanese route and 180 focused oracle cases pass;
-routine results are in the commit message. The unrelated shader draft remains
-excluded. Intro lifecycle reduction and independent boss discovery are active.
+After the Japanese intro correction and the 192-line local-binding cohort,
+maintained Rust is **112,069**, leaving **12,070** to reach 99,999. Counters:
+raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
+unsafe functions 5308; cast lines 8848. The local-binding cohort changes only
+the Rust line count. The unrelated 83-line shader draft remains excluded;
+working-tree progress reports **111,986**. Intro lifecycle reduction remains
+active in its separate owner; boss and repeated-pattern preflights are complete.
 
 Historical details before this reset remain in **ec45c573:docs/PLAN.md**.

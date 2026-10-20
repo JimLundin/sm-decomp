@@ -157,12 +157,12 @@ pub unsafe fn Draygon_Main(game: &mut Game) {
     (*E3).base.y_pos = y_pos;
 }
 pub unsafe fn Draygon_Func_1(game: &mut Game) {
-    let mut v2 = null_mut::<VramWriteEntry>();
     Draygon_Func_3(game);
     let E = Get_Draygon(0, game);
     if (*E).var_B as i32 - 256i32 & 0x8000 != 0 {
         if (*E).var_B == 0 {
-            v2 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
+            let mut v2: *mut VramWriteEntry =
+                gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
             (*v2).size = 1536;
             (*v2).src.addr = -27648i32 as VoidP;
             *(&raw mut (*v2).src.bank as *mut u16) = 177;
@@ -609,7 +609,6 @@ pub unsafe fn Draygon_Func_24(k: u16, game: &mut Game) {
 }
 pub unsafe fn Draygon_Func_25(k: u16, game: &mut Game) {
     let E = Get_Draygon(0, game);
-    let mut v6: u16 = 0;
     if (word!(game.samus_grapple_flags) & 1) != 0 {
         (*E).base.flash_timer =
             (((*get_EnemyDef_A2((*E).base.enemy_ptr, game)).hurt_ai_time) as u16).wrapping_add(8);
@@ -631,7 +630,7 @@ pub unsafe fn Draygon_Func_25(k: u16, game: &mut Game) {
         words!((*E), var_05, var_09 += 0x2000);
         if (*E).var_05 as i32 - 160i32 & 0x8000 == 0
             || {
-                v6 = ((*E).var_0B).wrapping_sub(1);
+                let mut v6: u16 = ((*E).var_0B).wrapping_sub(1);
                 (*E).var_0B = v6;
                 (*E).var_08 = ((byte!((*E).var_08; 0)).wrapping_add(byte!(v6; 1))) as u16;
                 crate::update_place! { previous mut draygon_var_0A: u16 = (*E).var_0A => (draygon_var_0A).wrapping_sub(0x4000); }
@@ -1473,11 +1472,10 @@ pub unsafe fn SporeSpawn_Func_4(game: &mut Game) {
 pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
     let E = Get_SporeSpawn(0, game);
     let v1: u16 = ((*E).base.x_pos).wrapping_sub((*E).var_04);
-    let mut v2: u16 = 0;
     let mut r18: u16 = 0;
     let mut r20: u16 = 0;
     let mut r22: u16 = 0;
-    if (v1 & 0x8000) == 0 {
+    let mut v2: u16 = if (v1 & 0x8000) == 0 {
         r18 = (v1 >> 1);
         r20 = (v1 >> 2);
         r22 = ((v1 as i32 >> 1) + (v1 as i32 >> 2)) as u16;
@@ -1486,7 +1484,7 @@ pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
         (*E).var_20 = word!(game.eproj_x_pos[15]);
         word!(game.eproj_x_pos[16] = ((*E).var_04).wrapping_add(r18));
         (*E).var_21 = word!(game.eproj_x_pos[16]);
-        v2 = ((*E).var_04).wrapping_add(r22);
+        ((*E).var_04).wrapping_add(r22)
     } else {
         r18 = ((((*E).var_04).wrapping_sub((*E).base.x_pos)) >> 1);
         r20 = (-(v1 as i32) as u16 >> 2);
@@ -1496,13 +1494,12 @@ pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
         (*E).var_20 = word!(game.eproj_x_pos[15]);
         word!(game.eproj_x_pos[16] = ((*E).var_04).wrapping_sub(r18));
         (*E).var_21 = word!(game.eproj_x_pos[16]);
-        v2 = ((*E).var_04).wrapping_sub(r22);
-    }
+        ((*E).var_04).wrapping_sub(r22)
+    };
     word!(game.eproj_x_pos[17] = v2);
     (*E).var_22 = v2;
     let v3: u16 = ((*E).base.y_pos as i32 - 40i32 - (*E).var_05 as i32) as u16;
-    let mut v4: u16 = 0;
-    if (v3 & 0x8000) == 0 {
+    let mut v4: u16 = if (v3 & 0x8000) == 0 {
         r18 = (v3 >> 1);
         r20 = (v3 >> 2);
         r22 = ((v3 as i32 >> 1) + (v3 as i32 >> 2)) as u16;
@@ -1511,7 +1508,7 @@ pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
         (*E).var_23 = word!(game.eproj_y_pos[15]);
         word!(game.eproj_y_pos[16] = ((*E).var_05).wrapping_add(r18));
         (*E).var_24 = word!(game.eproj_y_pos[16]);
-        v4 = ((*E).var_05).wrapping_add(r22);
+        ((*E).var_05).wrapping_add(r22)
     } else {
         r18 = (((*E).var_05 as i32 - ((*E).base.y_pos as i32 - 40i32)) as u16 >> 1);
         r20 = (-(v3 as i32) as u16 >> 2);
@@ -1521,8 +1518,8 @@ pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
         (*E).var_23 = word!(game.eproj_y_pos[15]);
         word!(game.eproj_y_pos[16] = ((*E).var_05).wrapping_sub(r18));
         (*E).var_24 = word!(game.eproj_y_pos[16]);
-        v4 = ((*E).var_05).wrapping_sub(r22);
-    }
+        ((*E).var_05).wrapping_sub(r22)
+    };
     word!(game.eproj_y_pos[17] = v4);
     (*E).var_25 = v4;
 }

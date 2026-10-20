@@ -44,14 +44,13 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
         return;
     }
     word!(game.sprite_object_index = 62);
-    let mut skip_instruction: bool;
     loop {
         let mut v0: i32 = word!(game.sprite_object_index) as i32 >> 1;
         if !(word!(game.sprite_instr_list_ptrs[v0]) == 0
             || (word!(game.sprite_disable_flag[v0]) & 1) != 0)
         {
             let mut v1: u16 = word!(game.sprite_instr_timer[v0]);
-            skip_instruction = !(v1 & 0x8000 != 0)
+            let mut skip_instruction: bool = !(v1 & 0x8000 != 0)
                 && ({
                     word!(game.sprite_instr_timer[v0] = (v1).wrapping_sub(1));
                     !(v1 == 1)

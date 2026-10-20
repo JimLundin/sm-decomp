@@ -124,12 +124,11 @@ pub unsafe fn BrinstarPipeBug_PreInstr_2(k: u16, game: &mut Game) {
             (*PipeBug).base.properties =
                 ((*PipeBug).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
             (*PipeBug).base.timer = 0;
-            let mut v4: u16 = 0;
-            if ((*PipeBug).var_A & 0x8000) != 0 {
-                v4 = 0;
+            let mut v4: u16 = if ((*PipeBug).var_A & 0x8000) != 0 {
+                0
             } else {
-                v4 = 2;
-            }
+                2
+            };
             (*PipeBug).var_E = v4;
             BrinstarPipeBug_Func_1(game);
         }
@@ -1083,19 +1082,18 @@ pub unsafe fn Botwoon_Func_25(game: &mut Game) {
             r24 = 256;
         }
         let mut x: u16 = 0;
-        let mut y: u16 = 0;
-        if n == 24 {
+        let mut y: u16 = if n == 24 {
             let v4: i32 = botwoo_var_00 as i32 >> 1;
             x = ((*E).base.x_pos).wrapping_sub(word!(game.eproj_x_pos[v4]));
-            y = ((*E).base.y_pos).wrapping_sub(word!(game.eproj_y_pos[v4]));
+            ((*E).base.y_pos).wrapping_sub(word!(game.eproj_y_pos[v4]))
         } else {
             if n == 0 {
                 r24 = (r24).wrapping_add(512);
             }
             let v2: i32 = botwoo_var_00 as i32 >> 1;
             x = (word!(game.eproj_x_pos[(v2 + 1)])).wrapping_sub(word!(game.eproj_x_pos[v2]));
-            y = (word!(game.eproj_y_pos[(v2 + 1)])).wrapping_sub(word!(game.eproj_y_pos[v2]));
-        }
+            (word!(game.eproj_y_pos[(v2 + 1)])).wrapping_sub(word!(game.eproj_y_pos[v2]))
+        };
         word!(
             game.eproj_E[(botwoo_var_00 >> 1)] =
                 (2 * (((r24).wrapping_add(CalculateAngleFromXY(x, y, game))) as i32 >> 5)) as u16
@@ -1112,11 +1110,10 @@ pub unsafe fn Botwoon_Func_26(k: u16, game: &mut Game) {
     let y: u16 = ((*E).base.y_pos).wrapping_sub((*E).var_57);
     let r22: u16 = CalculateAngleFromXY(x, y, game);
     if x != 0 || y != 0 {
-        let mut v1: u16 = 0;
-        if (*E).var_33 != 0 {
+        let mut v1: u16 = if (*E).var_33 != 0 {
             (*E).base.layer = 7;
             (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-            v1 = addr_kBotwoon_Ilist_9389 as u16;
+            addr_kBotwoon_Ilist_9389 as u16
         } else {
             (*E).base.layer = 2;
             (*E).base.properties =
@@ -1124,8 +1121,8 @@ pub unsafe fn Botwoon_Func_26(k: u16, game: &mut Game) {
             (*E).var_45 = ((*E).var_45 as i32
                 + (((r22) as i8).wrapping_sub(((*E).var_45) as i8)) as i32 * 3 / 4)
                 as u8 as u16;
-            v1 = crate::rtl::rom_table_word!(game, 0xb3946b, ((*E).var_45 >> 5) as isize);
-        }
+            crate::rtl::rom_table_word!(game, 0xb3946b, ((*E).var_45 >> 5) as isize)
+        };
         if v1 != (*E).var_3B {
             (*E).base.current_instruction = v1;
             (*E).var_3B = v1;

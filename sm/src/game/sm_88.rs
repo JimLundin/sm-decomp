@@ -798,18 +798,16 @@ pub unsafe fn MoveXrayDown(game: &mut Game) {
     }
 }
 pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
-    let mut v0: i16 = 0;
-    if *ram_ptr!(game; 0xa1e) == 4 {
-        v0 = (word!(game.samus_x_pos) as i32 - word!(game.layer1_x_pos) as i32 - 3i32) as i16;
+    let mut v0: i16 = if *ram_ptr!(game; 0xa1e) == 4 {
+        (word!(game.samus_x_pos) as i32 - word!(game.layer1_x_pos) as i32 - 3i32) as i16
     } else {
-        v0 = (word!(game.samus_x_pos) as i32 - word!(game.layer1_x_pos) as i32 + 3) as i16;
-    }
-    let mut v1: u16 = 0;
-    if *ram_ptr!(game; 0xa1f) == 5 {
-        v1 = (word!(game.samus_y_pos) as i32 - word!(game.layer1_y_pos) as i32 - 12i32) as u16;
+        (word!(game.samus_x_pos) as i32 - word!(game.layer1_x_pos) as i32 + 3) as i16
+    };
+    let mut v1: u16 = if *ram_ptr!(game; 0xa1f) == 5 {
+        (word!(game.samus_y_pos) as i32 - word!(game.layer1_y_pos) as i32 - 12i32) as u16
     } else {
-        v1 = (word!(game.samus_y_pos) as i32 - word!(game.layer1_y_pos) as i32 - 16i32) as u16;
-    }
+        (word!(game.samus_y_pos) as i32 - word!(game.layer1_y_pos) as i32 - 16i32) as u16
+    };
 
     let skip_xray_table: bool = if v0 < 0 {
         !(*ram_ptr!(game; 0xa1e) != 4)
@@ -844,7 +842,6 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
     word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(255));
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(k: u16, game: &mut Game) {
-    let mut v4 = null_mut::<VramWriteEntry>();
     mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001);
     *((ram_ptr!(game, u16; 0xa8a) as *mut u8).offset(1) as *mut u16) = 0;
     word! { game, 0;
@@ -868,7 +865,8 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(k: u16, game: &mut Game) 
         byte!(@pointer ram_ptr!(game, u16; 0x192c); word!(game.hdma_object_index) as i32 as isize);
     let v3: u16 = word!(game.vram_write_queue_tail);
     if ((word!(game.vram_write_queue_tail)) as i16).wrapping_sub(240) < 0 {
-        v4 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
+        let mut v4: *mut VramWriteEntry =
+            gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
         (*v4).size = 2048;
         (*v4).src.addr = ((ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
             .offset_from(&raw mut game.g_ram as *mut u8) as c_long
@@ -880,7 +878,6 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(k: u16, game: &mut Game) 
     }
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc4_DeactivateBeam(k: u16, game: &mut Game) {
-    let mut v3 = null_mut::<VramWriteEntry>();
     let mut v1: i16 = 4096;
     if word!(game.fx_type) != 36 {
         v1 = 0x2000;
@@ -892,7 +889,8 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc4_DeactivateBeam(k: u16, game: &mut Game) 
         | ((v1) as u16));
     let v2: u16 = word!(game.vram_write_queue_tail);
     if ((word!(game.vram_write_queue_tail)) as i16).wrapping_sub(240) < 0 {
-        v3 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
+        let mut v3: *mut VramWriteEntry =
+            gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
         (*v3).size = 2048;
         (*v3).src.addr = ((ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
             .offset_from(&raw mut game.g_ram as *mut u8) as c_long
@@ -1638,12 +1636,11 @@ unsafe fn SetupSomeHdmaTablesBG3(
             return v0;
         }
     }
-    let mut v3: u16 = 0;
-    if r18 as i32 - 1248i32 & 0x8000 != 0 {
-        v3 = (r18) & (0xfu16);
+    let mut v3: u16 = if r18 as i32 - 1248i32 & 0x8000 != 0 {
+        (r18) & (0xfu16)
     } else {
-        v3 = (r18) & (0x1fu16);
-    }
+        (r18) & (0x1fu16)
+    };
     let R22_: u16 = v3;
     *(ram_ptr!(game, u16; 0x9c00, 3)) =
         (*((RomPtr_88 as unsafe fn(u16, &mut Game) -> *const u8)(r3, game).offset(v2 as isize)
@@ -3139,20 +3136,16 @@ pub unsafe fn sub_88E487(v0: u16, r22: u16, game: &mut Game) {
     SpawnHdmaObject(0x88, &raw const unk_88E4A0 as *const c_void, game);
 }
 pub unsafe fn HdmaobjInstr_E4BD(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    let mut v2: u32 = 0;
-    let mut v3: u32 = 0;
-    let mut v4: u32 = 0;
-    let mut v5: u32 = 0;
     (*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 =
         (*(ram_ptr!(game, EnemyData; 0xf78)).offset(2)).parameter_1;
     if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(2)).parameter_1 & 1) != 0 {
         word! { game, 192; kraid_unk9000, g_word_7E9006 }
-        v4 = 12620032i32 as u32;
+        let mut v4: u32 = 12620032i32 as u32;
         *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(1) as *mut u16) =
             *(&raw mut v4 as *mut u16).offset(1);
         *((ram_ptr!(game, u16; 0x9000) as *mut u8).offset(1) as *mut u16) = v4 as u16;
         word!(game.g_word_7E9004 = -28288i32 as u16);
-        v5 = 12620032i32 as u32;
+        let mut v5: u32 = 12620032i32 as u32;
         *((ram_ptr!(game, u16; 0x9008) as *mut u8).offset(1) as *mut u16) =
             *(&raw mut v5 as *mut u16).offset(1);
         *((ram_ptr!(game, u16; 0x9006) as *mut u8).offset(1) as *mut u16) = v5 as u16;
@@ -3163,11 +3156,11 @@ pub unsafe fn HdmaobjInstr_E4BD(k: u16, hdp: *const u8, game: &mut Game) -> *con
             kraid_unk9000, g_word_7E9006, g_word_7E900C, g_word_7E900F, g_word_7E9012,
             g_word_7E9015,
         }
-        v2 = 10522880i32 as u32;
+        let mut v2: u32 = 10522880i32 as u32;
         *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(1) as *mut u16) =
             *(&raw mut v2 as *mut u16).offset(1);
         *((ram_ptr!(game, u16; 0x9000) as *mut u8).offset(1) as *mut u16) = v2 as u16;
-        v3 = 10522880i32 as u32;
+        let mut v3: u32 = 10522880i32 as u32;
         *((ram_ptr!(game, u16; 0x9008) as *mut u8).offset(1) as *mut u16) =
             *(&raw mut v3 as *mut u16).offset(1);
         *((ram_ptr!(game, u16; 0x9006) as *mut u8).offset(1) as *mut u16) = v3 as u16;
