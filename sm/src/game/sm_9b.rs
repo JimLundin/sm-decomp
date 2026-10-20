@@ -129,7 +129,7 @@ pub unsafe fn ProjectileTrail_Func5(k: u16, j: u16, game: &mut Game) {
             + 2i32 * (ram_word!(game, projectile_dir[v3]) as i32 & 0xfi32)) as u16;
     }
     let v6: u16 = (*(RomPtr_9B(v5, game) as *mut u16) as i32 + 4i32 * R22 as i32) as u16;
-    let p: *const u8 = RomPtr_9B(v6, game);
+    let p = RomPtr_9B(v6, game);
     let v7: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.projectiletrail_left_y_pos[v7] =
@@ -212,7 +212,7 @@ pub unsafe fn HandleSamusDeathSequence(game: &mut Game) -> u16 {
     }
 }
 pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
-    let v0: *const u16 = RomPtr_9B(
+    let v0 = RomPtr_9B(
         crate::rtl::rom_table_word!(
             game,
             0x9bb5c8,
@@ -244,7 +244,7 @@ pub unsafe fn CopyPalettesForSamusDeath(v0: u16, game: &mut Game) {
         0x9bb6d2,
         (ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize
     ) as i32;
-    let v1: *const u16 = RomPtr_9B((r20 + v0 as i32) as u16, game) as *const u16;
+    let v1 = RomPtr_9B((r20 + v0 as i32) as u16, game) as *const u16;
     memcpy(
         (ram_ptr!(game, u16; 0xc000)).offset(192) as *mut c_void,
         RomPtr_9B(*v1, game) as *const c_void,

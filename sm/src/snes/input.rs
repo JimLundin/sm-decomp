@@ -7,7 +7,7 @@ pub use crate::types::{
 use ::core::ffi::c_void;
 use ::core::mem::size_of;
 pub unsafe fn input_init(snes: *mut Snes) -> *mut Input {
-    let input: *mut Input = malloc(size_of::<Input>() as size_t) as *mut Input;
+    let input = malloc(size_of::<Input>() as size_t) as *mut Input;
     (*input).snes = snes;
     (*input).type_0 = 1u8;
     (*input).currentState = 0u16;

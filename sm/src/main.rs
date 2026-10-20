@@ -566,7 +566,7 @@ pub unsafe fn RtlDrawPpuFrame(
     render_flags: u32,
     game: &mut Game,
 ) {
-    let ppu_pixels: *mut u8 = if game.g_other_image as i32 != 0 {
+    let ppu_pixels = if game.g_other_image as i32 != 0 {
         &raw mut g_my_pixels as *mut u8
     } else {
         &raw mut g_pixels as *mut u8
@@ -584,7 +584,7 @@ pub unsafe fn RtlDrawPpuFrame(
 }
 unsafe fn DrawPpuFrameWithPerf(game: &mut Game) {
     let render_scale: i32 = PpuGetCurrentRenderScale((*game.g_snes).ppu, g_ppu_render_flags as u32);
-    let mut pixel_buffer: *mut u8 = null_mut::<u8>();
+    let mut pixel_buffer = null_mut::<u8>();
     let mut pitch: i32 = 0i32;
     g_renderer_funcs
         .BeginDraw
@@ -728,7 +728,7 @@ unsafe fn SdlRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
                 as *const c_char,
         );
     }
-    let renderer: *mut SDL_Renderer = SDL_CreateRenderer(
+    let renderer = SDL_CreateRenderer(
         g_window,
         -1i32,
         (if g_config.output_method as i32 == kOutputMethod_SDLSoftware as i32 {
@@ -832,7 +832,7 @@ static mut kSdlRendererFuncs: RendererFuncs = RendererFuncs {
 unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -> i32 {
     argc -= 1;
     argv = argv.offset(1);
-    let mut config_file: *const c_char = null::<c_char>();
+    let mut config_file = null::<c_char>();
     if argc >= 2i32 && strcmp(*argv.offset(0), b"--config\0" as *const u8 as *const c_char) == 0i32
     {
         config_file = *argv.offset(1);
@@ -901,12 +901,12 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
     } else {
         g_renderer_funcs = kSdlRendererFuncs;
     }
-    let filename: *const c_char = if !(*argv.offset(0)).is_null() {
+    let filename = if !(*argv.offset(0)).is_null() {
         *argv.offset(0) as *const c_char
     } else {
         b"sm.smc\0" as *const u8 as *const c_char
     };
-    let snes: *mut Snes = owner.with(|game| SnesInit(filename, game));
+    let snes = owner.with(|game| SnesInit(filename, game));
     if snes.is_null() {
         let mut buf: [c_char; 256] = [0; 256];
         snprintf(
@@ -918,7 +918,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
         Die(&raw mut buf as *mut c_char);
         return 1i32;
     }
-    let window: *mut SDL_Window = SDL_CreateWindow(
+    let window = SDL_CreateWindow(
         &raw const kWindowTitle as *const c_char,
         SDL_WINDOWPOS_UNDEFINED as i32,
         SDL_WINDOWPOS_UNDEFINED as i32,
@@ -1199,7 +1199,7 @@ unsafe fn RenderDigit(mut dst: *mut u8, pitch: size_t, digit: i32, color: u32, b
         0x18, 0xc, 0xc, 0xc, 0xc, 0x3e, 0x63, 0x63, 0x63, 0x3e, 0x63, 0x63, 0x63, 0x63, 0x3e, 0x3e,
         0x63, 0x63, 0x63, 0x7e, 0x60, 0x60, 0x60, 0x30, 0x1e,
     ];
-    let mut p: *const u8 = (&raw const kFont as *const u8).offset((digit * 10i32) as isize);
+    let mut p = (&raw const kFont as *const u8).offset((digit * 10i32) as isize);
     if !big {
         let mut y: i32 = 0i32;
         while y < 10i32 {
@@ -1245,7 +1245,7 @@ unsafe fn RenderDigit(mut dst: *mut u8, pitch: size_t, digit: i32, color: u32, b
 }
 unsafe fn RenderNumber(dst: *mut u8, pitch: size_t, n: i32, big: u8) {
     let mut buf: [c_char; 32] = [0; 32];
-    let mut s: *mut c_char = null_mut::<c_char>();
+    let mut s = null_mut::<c_char>();
     sprintf(
         &raw mut buf as *mut c_char,
         b"%d\0" as *const u8 as *const c_char,
@@ -1380,7 +1380,7 @@ unsafe fn HandleInput(keyCode: i32, keyMod: i32, pressed: bool, game: &mut Game)
 }
 unsafe fn OpenOneGamepad(i: i32) {
     if SDL_IsGameController(i) as u64 != 0 {
-        let controller: *mut SDL_GameController = SDL_GameControllerOpen(i);
+        let controller = SDL_GameControllerOpen(i);
         if controller.is_null() {
             fprintf(
                 stderr,
@@ -1521,7 +1521,7 @@ unsafe fn SwitchDirectory() {
             b"/sm.ini\0" as *const u8 as *const c_char as *const c_void,
             8 as size_t,
         );
-        let f: *mut FILE = fopen(
+        let f = fopen(
             &raw mut buf as *mut c_char,
             b"rb\0" as *const u8 as *const c_char,
         ) as *mut FILE;

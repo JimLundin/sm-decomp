@@ -875,7 +875,7 @@ pub unsafe fn ProcessCinematicBgObject_DrawChar(k: u16, j: u16, r18: u16, game: 
     let mut v3: i16 = 0;
     set_ram_word!(game.cinematicbg_var1 = (ram_word!(game, cinematicbg_var1) == 0u16) as u16);
     SpawnTextGlowObject(j, r18, game);
-    let v2: *const u8 = RomPtr_8C(
+    let v2 = RomPtr_8C(
         ram_word!(game, cinematicbg_instr_ptr[(k as i32 >> 1i32)]),
         game,
     );
@@ -901,7 +901,7 @@ pub unsafe fn ProcessCinematicBgObject_DrawToTextTilemap(
     let jorg: u16 = j;
     let mut offs: u16 = CinematicGetTilemapOffsetForTile(r18);
     let mut r22: u16 = offs;
-    let v3: *const u8 = RomPtr_8C(j, game);
+    let v3 = RomPtr_8C(j, game);
     let mut m: u16 = *v3.offset(2) as u16;
     let morg: u16 = m;
     let mut n: u16 = *v3.offset(3) as u16;
@@ -937,7 +937,7 @@ pub unsafe fn ProcessCinematicBgObject_DrawToBgTilemap(
     let jorg: u16 = j;
     let mut offs: u16 = CinematicGetTilemapOffsetForTile(r18);
     let mut r22: u16 = offs;
-    let v3: *const u8 = RomPtr_8C(j, game);
+    let v3 = RomPtr_8C(j, game);
     let mut m: u16 = *v3.offset(2) as u16;
     let morg: u16 = m;
     let mut n: i32 = *v3.offset(3) as i32;
@@ -968,7 +968,7 @@ pub unsafe fn CinematicGetTilemapOffsetForTile(mut r18: u16) -> u16 {
 }
 pub unsafe fn ProcessCinematicBgObject_Unk1(k: u16, j: u16, r18: u16, game: &mut Game) {
     let mut r22: u16 = Mult0x80Add(r18);
-    let v2: *const u8 = RomPtr_8C(j, game);
+    let v2 = RomPtr_8C(j, game);
     let r18x: u16 = *v2.offset(2) as u16;
     let mut n: u16 = *v2.offset(3) as u16;
     let mut v3: u16 = (j).wrapping_add(4u16);
@@ -998,7 +998,7 @@ pub unsafe fn ProcessCinematicBgObject_Unk1(k: u16, j: u16, r18: u16, game: &mut
 }
 pub unsafe fn ProcessCinematicBgObject_Unk2(k: u16, j: u16, r18: u16, game: &mut Game) {
     let mut r22: u16 = Mult0x80Add(r18);
-    let v2: *const u8 = RomPtr_8C(j, game);
+    let v2 = RomPtr_8C(j, game);
     let mut n: i32 = *v2.offset(2) as i32;
     let r20: u16 = *v2.offset(3) as u16;
     let mut v3: u16 = (j).wrapping_add(4u16);
@@ -1178,11 +1178,10 @@ pub unsafe fn ComposeFadingPalettes(game: &mut Game) {
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func20(j: u16, game: &mut Game) {
-    let mut tt: *mut u16 = RomPtr_8B(j, game) as *mut u16;
+    let mut tt = RomPtr_8B(j, game) as *mut u16;
     let mut v2: u16 = *tt.offset(0);
     let mut r18: i32 = *tt.offset(1) as i32;
-    let dst: *mut u16 =
-        &raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).intro_japanese_text_tiles as *mut u16;
+    let dst = &raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).intro_japanese_text_tiles as *mut u16;
     loop {
         memcpy(
             dst.offset((v2 as i32 >> 1i32) as isize) as *mut c_void,
@@ -1572,7 +1571,7 @@ pub unsafe fn SpawnCinematicSpriteObjectToR18(j: u16, r18: u16, game: &mut Game)
     SpawnCimenaticSpriteObjectInner(j, r18, game)
 }
 pub unsafe fn SpawnCimenaticSpriteObjectInner(k: u16, j: u16, game: &mut Game) -> u8 {
-    let v2: *const u8 = RomPtr_8B(k, game);
+    let v2 = RomPtr_8B(k, game);
     let v3: i32 = j as i32 >> 1i32;
     set_ram_word!(game.cinematicspr_preinstr_func[v3] = *(v2.offset(2) as *mut u16));
     set_ram_word!(game.cinematicspr_instr_ptr[v3] = *(v2.offset(4) as *mut u16));
@@ -1618,7 +1617,7 @@ pub unsafe fn ProcessCinematicSpriteInstructionList(k: u16, game: &mut Game) {
         let mut v4: u16 = ram_word!(game, cinematicspr_instr_ptr[v2]);
         let mut v6: u16 = 0;
         loop {
-            let v5: *const u16 = RomPtr_8B(v4, game) as *const u16;
+            let v5 = RomPtr_8B(v4, game) as *const u16;
             v6 = *v5;
             if (*v5 & 0x8000) == 0 {
                 break;
@@ -1704,7 +1703,7 @@ pub unsafe fn SpawnMode7Object(j: u16, a: u16, game: &mut Game) -> u8 {
             return 1u8;
         }
     }
-    let mut Mode7ObjectDef: *mut Mode7ObjectDef = get_Mode7ObjectDef(j, game);
+    let mut Mode7ObjectDef = get_Mode7ObjectDef(j, game);
     let v6: i32 = v3 as i32 >> 1i32;
     set_ram_word!(game.mode7_obj_preinstr_func[v6] = (*Mode7ObjectDef).field_2);
     set_ram_word!(game.mode7_obj_instr_ptr[v6] = (*Mode7ObjectDef).field_4);
@@ -1743,7 +1742,7 @@ pub unsafe fn ProcessMode7ObjectInstructions(k: u16, game: &mut Game) {
         let mut v4: u16 = ram_word!(game, mode7_obj_instr_ptr[v2]);
         let mut v6: u16 = 0;
         loop {
-            let v5: *const u16 = RomPtr_8B(v4, game) as *const u16;
+            let v5 = RomPtr_8B(v4, game) as *const u16;
             v6 = *v5;
             if (*v5 & 0x8000) == 0 {
                 break;
@@ -1759,7 +1758,7 @@ pub unsafe fn ProcessMode7ObjectInstructions(k: u16, game: &mut Game) {
             }
         }
         set_ram_word!(game.mode7_obj_instr_timer[(v1 as i32 >> 1i32)] = v6);
-        let v7: *const u8 = RomPtr_8B(v4, game);
+        let v7 = RomPtr_8B(v4, game);
         QueueMode7Transfers(0x8bu8, *(v7.offset(2) as *mut u16), game);
         set_ram_word!(game.mode7_obj_instr_ptr[(v1 as i32 >> 1i32)] = (v4).wrapping_add(4u16));
     }
@@ -1845,7 +1844,7 @@ pub unsafe fn SpawnCinematicBgObject(j: u16, a: u16, game: &mut Game) -> u8 {
             return 1u8;
         }
     }
-    let v5: *const u8 = RomPtr_8B(j, game);
+    let v5 = RomPtr_8B(j, game);
     let v6: i32 = v3 as i32 >> 1i32;
     set_ram_word!(game.cinematicbg_preinstr[v6] = *(v5.offset(2) as *mut u16));
     set_ram_word!(game.cinematicbg_instr_ptr[v6] = *(v5.offset(4) as *mut u16));
@@ -1886,7 +1885,7 @@ pub unsafe fn ProcessCinematicBgObjectsInstrs(k: u16, game: &mut Game) {
         let mut v4: u16 = ram_word!(game, cinematicbg_instr_ptr[v2]);
         let mut v6: u16 = 0;
         loop {
-            let v5: *const u16 = RomPtr_8C(v4, game) as *const u16;
+            let v5 = RomPtr_8C(v4, game) as *const u16;
             v6 = *v5;
             if (*v5 & 0x8000) == 0 {
                 break;
@@ -1903,7 +1902,7 @@ pub unsafe fn ProcessCinematicBgObjectsInstrs(k: u16, game: &mut Game) {
         }
         let v7: i32 = v1 as i32 >> 1i32;
         set_ram_word!(game.cinematicbg_instr_timer[v7] = v6);
-        let v8: *const u8 = RomPtr_8C(v4, game);
+        let v8 = RomPtr_8C(v4, game);
         set_ram_word!(game.cinematicbg_arr1[v7] = *(v8.offset(4) as *mut u16));
         ProcessCinematicBgObject(v1, *(v8.offset(2) as *mut u16), game);
         set_ram_word!(game.cinematicbg_instr_ptr[v7] = (v4).wrapping_add(6u16));
@@ -2013,7 +2012,7 @@ pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
                 0x40u8,
             ) as i32) as u16;
         let mut v4: u16 = r22;
-        let v5: *const u8 = RomPtr_8C(v3, game);
+        let v5 = RomPtr_8C(v3, game);
         let mut n: i32 = *v5.offset(2) as i32;
         let norg: i32 = n;
         let mut m: i32 = *v5.offset(3) as i32;
@@ -2082,7 +2081,7 @@ pub unsafe fn CinematicFunction_Intro_Func128(a: u16, game: &mut Game) {
     }
 }
 pub unsafe fn CreditsObject_Init(j: u16, game: &mut Game) {
-    let v1: *const u8 = RomPtr_8B(j, game);
+    let v1 = RomPtr_8B(j, game);
     set_ram_word!(game.cinematic_var24 = *(v1.offset(2) as *mut u16));
     set_ram_word!(game.cinematic_var21 = *(v1.offset(4) as *mut u16));
     set_ram_word!(game.cinematic_var22 = 1u16);
@@ -2115,7 +2114,7 @@ pub unsafe fn CreditsObject_ProcessOne(game: &mut Game) {
         set_ram_word!(game.eproj_pre_instr[0] = ram_word!(game, cinematic_var10));
         let mut i: i32 = ram_word!(game, cinematic_var21) as i32;
         loop {
-            let v2: *const u16 = RomPtr_8C(i as u16, game) as *const u16;
+            let v2 = RomPtr_8C(i as u16, game) as *const u16;
             let v3: u16 = *v2;
             if (*v2 & 0x8000) == 0 {
                 break;
@@ -2136,7 +2135,7 @@ pub unsafe fn CreditsObject_ProcessOne(game: &mut Game) {
 }
 pub unsafe fn CreditsObject_Func1(j: u16, game: &mut Game) {
     let mut RegWord: u16 = Mult8x8(ram_word!(game, cinematic_var26) as u8, 0x40u8);
-    let mut src: *const u16 = ram_ptr!(game; 0x10000, *(RomPtr_8C(j, game) as *mut u16).offset(1) as i32 as isize)
+    let mut src = ram_ptr!(game; 0x10000, *(RomPtr_8C(j, game) as *mut u16).offset(1) as i32 as isize)
         as *const u16;
     for _ in 0i32..=31i32 {
         let fresh6 = src;
@@ -6143,7 +6142,7 @@ pub unsafe fn CalcItemPercentageCount(k: u16, instrp: u16, game: &mut Game) -> u
     let mut v0: u16 = 4u16;
     let mut r18: u16 = 0u16;
     loop {
-        let v1: *const u16 = RomPtr_RAM(
+        let v1 = RomPtr_RAM(
             crate::rtl::rom_table_word!(game, 0x8be70d, v0 as isize),
             game,
         ) as *const u16;
@@ -6246,7 +6245,7 @@ pub unsafe fn CinematicFunction_Intro_Func127(game: &mut Game) {
     let mut v1: i16 = 0i16;
     loop {
         let mut v4: i16 = v1;
-        let v2: *mut u8 = RomPtr_RAM(v0, game);
+        let v2 = RomPtr_RAM(v0, game);
         *(v2 as *mut u16) = v1 as u16;
         *(v2 as *mut u16).offset(6) = 0u16;
         *(v2 as *mut u16).offset(7) = 0u16;
@@ -6275,14 +6274,14 @@ pub unsafe fn CinematicFunction_Intro_Func127(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
     let mut v5: i16 = 0;
-    let mut v18: *mut OamEnt = null_mut::<OamEnt>();
+    let mut v18 = null_mut::<OamEnt>();
     let mut v19: i16 = 0;
     if ram_word!(game, eproj_pre_instr[1]) != 0 {
         let mut v0: u16 = 0xe0cu16;
         for _ in 0i32..40i32 {
-            let v3: *mut u8 = RomPtr_RAM(v0, game);
+            let v3 = RomPtr_RAM(v0, game);
             if *(v3 as *mut i16) < 0i16 {
-                let v1: *mut u8 = v3;
+                let v1 = v3;
                 let mut v2: i16 = ((*(v1.offset(10) as *mut u16)) as i16).wrapping_sub(1i16);
                 *(v1 as *mut u16).offset(5) = v2 as u16;
                 if v2 < 0i16 {
@@ -6334,8 +6333,8 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
         let mut v13: u16 = ram_word!(game, oam_next_ptr);
         let mut v14: u16 = 3596u16;
         for _ in 0i32..40i32 {
-            let v15: *mut u8 = RomPtr_RAM(v14, game);
-            let v16: *mut u8 = v15;
+            let v15 = RomPtr_RAM(v14, game);
+            let v16 = v15;
             if *(v15 as *mut i16) >= 0i16 {
                 let mut v17: i16 = *(v15.offset(2) as *mut u16) as i16;
                 if *v15.offset(3) != 0u8
@@ -6348,7 +6347,7 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
                     }
                     || (v19 as i32 - 4i32 & 0xff00i32) != 0i32
                 {
-                    let v21: *mut u8 = v15;
+                    let v21 = v15;
                     *(v21 as *mut u16).offset(5) = 32u16;
                     *(v21 as *mut u16).offset(1) = 128u16;
                     *(v21 as *mut u16).offset(3) = 128u16;

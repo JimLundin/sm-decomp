@@ -25,7 +25,7 @@ pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 
 pub unsafe fn snes_init(ram: *mut u8) -> *mut Snes {
-    let snes: *mut Snes = malloc(size_of::<Snes>() as size_t) as *mut Snes;
+    let snes = malloc(size_of::<Snes>() as size_t) as *mut Snes;
     core::ptr::write_bytes(snes, 0, 1);
     (*snes).ram = ram;
     (*snes).debug_cycles = false_0 != 0;

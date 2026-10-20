@@ -366,7 +366,7 @@ pub unsafe fn LoadXrayBlocks(game: &mut Game) {
             i = k as i32;
             if (ram_word!(game, bitmask) & v2) == 0 {
                 CalculatePlmBlockCoords(k, game);
-                let v3: *const u8 = RomPtr_84(
+                let v3 = RomPtr_84(
                     crate::rtl::rom_table_word!(
                         game,
                         0x84839d,
@@ -386,11 +386,9 @@ pub unsafe fn LoadXrayBlocks(game: &mut Game) {
         }
         i -= 2i32;
     }
-    let RS: *mut RoomDefRoomstate =
-        get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
+    let RS = get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
     if (*RS).xray_special_casing_ptr != 0 {
-        let mut p: *const XraySpecialCasing =
-            RomPtr_8F((*RS).xray_special_casing_ptr, game) as *const XraySpecialCasing;
+        let mut p = RomPtr_8F((*RS).xray_special_casing_ptr, game) as *const XraySpecialCasing;
         while (*p).x_block != 0u8 || (*p).y_block != 0u8 {
             LoadBlockToXrayTilemap(
                 (*p).level_data_block,
@@ -426,7 +424,7 @@ unsafe fn spawn_hardcoded_plm(
     displacement: *mut i32,
     game: &mut Game,
 ) {
-    let pp: *mut SpawnHardcodedPlmArgs = &raw mut p;
+    let pp = &raw mut p;
     let mut v1: u16 = 78u16;
     while ram_word!(game, plm_header_ptr[(v1 as i32 >> 1i32)]) != 0 {
         v1 = (v1).wrapping_sub(2u16);
@@ -563,8 +561,8 @@ pub unsafe fn SpawnPLMWithCollision(header: u16, displacement: *mut i32, game: &
 pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
     let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x613);
     's_158: {
-        let mut base: *const u8 = null::<u8>();
-        let mut v5: *const u8 = null::<u8>();
+        let mut base = null::<u8>();
+        let mut v5 = null::<u8>();
         let mut current_block_28: u64;
         match *_state_variable_ as i32 {
             0 => {
@@ -1171,7 +1169,7 @@ pub unsafe fn PlmInstr_ProcessSolidScrollUpdate(
     game: &mut Game,
 ) -> *const u8 {
     set_ram_word!(game.plm_variable[(k as i32 >> 1i32)] = 0u16);
-    let mut v5: *const u8 = RomPtr_8F(
+    let mut v5 = RomPtr_8F(
         ram_word!(game, plm_room_arguments[(k as i32 >> 1i32)]),
         game,
     );
@@ -1343,7 +1341,7 @@ unsafe fn PartiallyQueueVramForSingleScreenPlm(
     r28: u16,
     game: &mut Game,
 ) {
-    let ent: *mut VramWriteEntry = gVramWriteEntry(k as i32, game);
+    let ent = gVramWriteEntry(k as i32, game);
     (*ent).vram_dst = (r28) | (a);
     let size: u16 = (4u16).wrapping_mul(r20);
     let base: VoidP = (ram_word!(game, plm_draw_tilemap_index)).wrapping_add(0xc6c8u16);
@@ -1397,8 +1395,8 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
     let mut x: u16 = ram_word!(game, plm_x_block);
     let mut y: u16 = ram_word!(game, plm_y_block);
     let mut r3: u16 = 0;
-    let mut r0: *mut u16 = null_mut::<u16>();
-    let mut r6: *mut u16 = null_mut::<u16>();
+    let mut r0 = null_mut::<u16>();
+    let mut r6 = null_mut::<u16>();
     '_LABEL_2: loop {
         let mut r26: u16 = (ram_word!(game, layer1_y_pos) as i32 >> 4i32) as u16;
         if (ram_word!(game, layer1_y_pos) as i32 >> 4i32) + 15i32 - y as i32 & 0x8000i32 != 0 {
@@ -1466,7 +1464,7 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
                 0x8000u16,
                 game,
             );
-            let mut v25: *mut VramWriteEntry = gVramWriteEntry(v24 as i32, game);
+            let mut v25 = gVramWriteEntry(v24 as i32, game);
             (*v25.offset(1)).vram_dst = ((*v25.offset(0)).vram_dst).wrapping_add(1u16);
             r0 = ram_ptr!(game, u16; (*v25.offset(0)).src.addr as i32 as isize);
             r6 = ram_ptr!(game, u16; (*v25.offset(1)).src.addr as i32 as isize);
@@ -1569,7 +1567,7 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
                     return;
                 }
                 let v9: u16 = (2i32 * (32i32 - R34 as i32)) as u16;
-                let mut v10: *mut VramWriteEntry = gVramWriteEntry(v3 as i32, game);
+                let mut v10 = gVramWriteEntry(v3 as i32, game);
                 (*v10).size = v9;
                 (*v10.offset(2)).size = v9;
                 (*v10.offset(0)).vram_dst = a;
@@ -1597,7 +1595,7 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
                 set_ram_word!(game.vram_write_queue_tail = (v3).wrapping_add(28u16));
             } else {
                 PartiallyQueueVramForSingleScreenPlm(a, v3, r20, 0u16, game);
-                let mut v15: *mut VramWriteEntry = gVramWriteEntry(v3 as i32, game);
+                let mut v15 = gVramWriteEntry(v3 as i32, game);
                 (*v15.offset(1)).vram_dst = ((*v15.offset(0)).vram_dst).wrapping_add(32u16);
                 r0 = ram_ptr!(game, u16; (*v15.offset(0)).src.addr as i32 as isize);
                 r6 = ram_ptr!(game, u16; (*v15.offset(1)).src.addr as i32 as isize);

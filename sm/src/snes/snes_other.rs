@@ -135,7 +135,7 @@ pub unsafe fn snes_loadRom(
     while (length > newLength) {
         newLength *= 2i32;
     }
-    let newData: *mut u8 = malloc(newLength as size_t) as *mut u8;
+    let newData = malloc(newLength as size_t) as *mut u8;
     memcpy(
         newData as *mut c_void,
         data as *const c_void,

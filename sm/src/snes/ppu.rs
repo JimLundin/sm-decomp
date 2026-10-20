@@ -109,7 +109,7 @@ static spriteSizes: [[i32; 2]; 8] = [
     [16, 32],
 ];
 pub unsafe fn ppu_init(snes: *mut Snes) -> *mut Ppu {
-    let ppu: *mut Ppu = malloc(size_of::<Ppu>() as size_t) as *mut Ppu;
+    let ppu = malloc(size_of::<Ppu>() as size_t) as *mut Ppu;
     (*ppu).renderBuffer = core::ptr::null_mut();
     (*ppu).renderPitch = 0;
     (*ppu).snes = snes;
@@ -119,9 +119,9 @@ pub unsafe fn ppu_free(ppu: *mut Ppu) {
     free(ppu as *mut c_void);
 }
 pub unsafe fn ppu_copy(ppu: *mut Ppu, ppu_src: *mut Ppu) {
-    let snes: *mut Snes = (*ppu).snes;
+    let snes = (*ppu).snes;
     let pitch: size_t = (*ppu).renderPitch as size_t;
-    let renderBuffer: *mut u8 = (*ppu).renderBuffer;
+    let renderBuffer = (*ppu).renderBuffer;
     memcpy(
         ppu as *mut c_void,
         ppu_src as *const c_void,
@@ -509,7 +509,7 @@ unsafe fn ppu_draw_planar_background<const PLANES: u32, const PALETTE_SHIFT: u32
         return;
     }
     let win = ppu_windows_for_layer(ppu, sub as usize, layer);
-    let bglayer: *mut BgLayer = (&raw mut (*ppu).bgLayer as *mut BgLayer).offset(layer as isize);
+    let bglayer = (&raw mut (*ppu).bgLayer as *mut BgLayer).offset(layer as isize);
     let (tps, tileadr0, tileadr1) = ppu_background_row(ppu, bglayer, y, layer);
     let mut pixel: i32 = 0;
     let mut windex: size_t = 0 as size_t;
@@ -518,16 +518,14 @@ unsafe fn ppu_draw_planar_background<const PLANES: u32, const PALETTE_SHIFT: u32
             let mut x: u32 = (win.edges[windex as usize] as i32 + (*bglayer).hScroll as i32) as u32;
             let mut w: u32 = (win.edges[windex.wrapping_add(1 as size_t) as usize] as i32
                 - win.edges[windex as usize] as i32) as u32;
-            let mut dstz: *mut PpuZbufType = (&raw mut (*(&raw mut (*ppu).bgBuffers
-                as *mut PpuPixelPrioBufs)
+            let mut dstz = (&raw mut (*(&raw mut (*ppu).bgBuffers as *mut PpuPixelPrioBufs)
                 .offset(sub as isize))
             .data as *mut PpuZbufType)
                 .offset(win.edges[windex as usize] as i32 as isize)
                 .offset(kPpuExtraLeftRight as i32 as isize);
-            let mut tp: *const u16 =
-                tps[(x >> 8i32 & 1u32) as usize].offset((x >> 3i32 & 0x1fu32) as isize);
-            let mut tp_last: *const u16 = tps[(x >> 8i32 & 1u32) as usize].offset(31);
-            let mut tp_next: *const u16 = tps[(x >> 8i32 & 1u32 ^ 1u32) as usize];
+            let mut tp = tps[(x >> 8i32 & 1u32) as usize].offset((x >> 3i32 & 0x1fu32) as isize);
+            let mut tp_last = tps[(x >> 8i32 & 1u32) as usize].offset(31);
+            let mut tp_next = tps[(x >> 8i32 & 1u32 ^ 1u32) as usize];
             if x & 7u32 != 0 {
                 let mut curw: i32 = IntMin((8u32).wrapping_sub(x & 7u32) as i32, w as i32);
                 w = w.wrapping_sub(curw as u32);
@@ -701,14 +699,12 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZb
         if (win.bits as i32 & (1i32) << windex == 0) {
             let x: i32 = win.edges[windex as usize] as i32;
             let x2: i32 = win.edges[windex.wrapping_add(1 as size_t) as usize] as i32;
-            let mut dstz: *mut PpuZbufType = (&raw mut (*(&raw mut (*ppu).bgBuffers
-                as *mut PpuPixelPrioBufs)
+            let mut dstz = (&raw mut (*(&raw mut (*ppu).bgBuffers as *mut PpuPixelPrioBufs)
                 .offset(sub as isize))
             .data as *mut PpuZbufType)
                 .offset(x as isize)
                 .offset(kPpuExtraLeftRight as i32 as isize);
-            let dstz_end: *mut PpuZbufType = (&raw mut (*(&raw mut (*ppu).bgBuffers
-                as *mut PpuPixelPrioBufs)
+            let dstz_end = (&raw mut (*(&raw mut (*ppu).bgBuffers as *mut PpuPixelPrioBufs)
                 .offset(sub as isize))
             .data as *mut PpuZbufType)
                 .offset(x2 as isize)
@@ -791,11 +787,10 @@ unsafe fn PpuDrawSprites(ppu: *mut Ppu, y: u32, sub: u32, clear_backdrop: bool) 
         if (win.bits as i32 & (1i32) << windex == 0) {
             let left: i32 = win.edges[windex as usize] as i32;
             let mut width: i32 = win.edges[windex.wrapping_add(1 as size_t) as usize] as i32 - left;
-            let mut src: *mut PpuZbufType = (&raw mut (*ppu).objBuffer.data as *mut PpuZbufType)
+            let mut src = (&raw mut (*ppu).objBuffer.data as *mut PpuZbufType)
                 .offset(left as isize)
                 .offset(kPpuExtraLeftRight as i32 as isize);
-            let mut dst: *mut PpuZbufType = (&raw mut (*(&raw mut (*ppu).bgBuffers
-                as *mut PpuPixelPrioBufs)
+            let mut dst = (&raw mut (*(&raw mut (*ppu).bgBuffers as *mut PpuPixelPrioBufs)
                 .offset(sub as isize))
             .data as *mut PpuZbufType)
                 .offset(left as isize)
@@ -882,7 +877,7 @@ unsafe fn PpuDrawBackgrounds(ppu: *mut Ppu, y: i32, sub: bool) {
 }
 unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
     if (*ppu).forcedBlank {
-        let dst: *mut u8 = (*ppu)
+        let dst = (*ppu)
             .renderBuffer
             .offset((y).wrapping_sub(1u32).wrapping_mul((*ppu).renderPitch) as isize);
         let n: size_t = (size_of::<u32>() as size_t)
@@ -915,11 +910,11 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
         | (cwin.bits as i32 & kCwBitsMod[(*ppu).preventMathMode as usize] as i32
             ^ kCwBitsMod[((*ppu).preventMathMode as i32 + 4i32) as usize] as i32)
             << 8i32) as u32;
-    let mut dst_0: *mut u32 = (*ppu)
+    let mut dst_0 = (*ppu)
         .renderBuffer
         .offset((y).wrapping_sub(1u32).wrapping_mul((*ppu).renderPitch) as isize)
         as *mut u32;
-    let dst_org: *mut u32 = dst_0;
+    let dst_org = dst_0;
     dst_0 = dst_0.offset(((*ppu).extraLeftRight as i32 - (*ppu).extraLeftCur as i32) as isize);
     let mut windex: u32 = 0u32;
     loop {
@@ -1106,7 +1101,7 @@ unsafe fn ppu_handlePixel(ppu: *mut Ppu, x: i32, y: i32) {
         }
     }
     let row: i32 = y - 1i32;
-    let pixelBuffer: *mut u8 = (*ppu).renderBuffer.offset(
+    let pixelBuffer = (*ppu).renderBuffer.offset(
         (row as u32)
             .wrapping_mul((*ppu).renderPitch)
             .wrapping_add(((x + (*ppu).extraLeftRight as i32) * 4i32) as u32) as isize,
@@ -1579,7 +1574,7 @@ unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
                                 let usedTile: i32 =
                                     ((oam1 & 0xffi32) >> 4i32) + (row as i32 >> 3i32) << 4i32
                                         | (oam1 & 0xfi32) + (usedCol >> 3i32) & 0xfi32;
-                                let addr: *mut u16 = (&raw mut (*ppu).vram as *mut u16).offset(
+                                let addr = (&raw mut (*ppu).vram as *mut u16).offset(
                                     (objAdr + usedTile * 16i32 + (row as i32 & 0x7i32) & 0x7fffi32)
                                         as isize,
                                 );
@@ -1590,8 +1585,7 @@ unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
                                     IntMax(-(col + x + kPpuExtraLeftRight as i32), 0i32);
                                 let px_right: i32 =
                                     IntMin(256i32 + kPpuExtraLeftRight as i32 - (col + x), 8i32);
-                                let dst: *mut PpuZbufType = (&raw mut (*ppu).objBuffer.data
-                                    as *mut PpuZbufType)
+                                let dst = (&raw mut (*ppu).objBuffer.data as *mut PpuZbufType)
                                     .offset(col as isize)
                                     .offset(x as isize)
                                     .offset(px_left as isize)

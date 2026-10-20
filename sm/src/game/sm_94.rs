@@ -1363,14 +1363,14 @@ unsafe fn sub_949D5D(ci: *mut CollInfo, game: &mut Game) -> u8 {
 unsafe fn BlockBombedReact_Special(ci: *mut CollInfo, game: &mut Game) -> u8 {
     let v0: u8 = *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize);
     if (v0 & 0x80) != 0 {
-        let kBlockBombedReact_Region_Plm: *mut u16 = RomPtr_94(0x9e44u16, game) as *mut u16;
+        let kBlockBombedReact_Region_Plm = RomPtr_94(0x9e44u16, game) as *mut u16;
         let v2: *const u16 = RomPtr_94(
             *kBlockBombedReact_Region_Plm.offset(ram_word!(game, area_index) as isize),
             game,
         ) as *mut u16;
         SpawnPLM(*v2.offset((v0 as i32 & 0x7fi32) as isize), game);
     } else {
-        let kBlockBombedReact_Special_Plm: *mut u16 = RomPtr_94(0x9da4u16, game) as *mut u16;
+        let kBlockBombedReact_Special_Plm = RomPtr_94(0x9da4u16, game) as *mut u16;
         SpawnPLM(*kBlockBombedReact_Special_Plm.offset(v0 as isize), game);
     }
     1u8
@@ -1390,9 +1390,9 @@ unsafe fn BlockReact_ShootableAir(ci: *mut CollInfo, game: &mut Game) -> u8 {
 unsafe fn BlockReact_Shootable(ci: *mut CollInfo, game: &mut Game) -> u8 {
     let v0: u8 = *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize);
     if (v0 & 0x80) != 0 {
-        let kBlockShotBombGrappleReaction_ShootableBlock_RegionPlm: *mut u16 =
+        let kBlockShotBombGrappleReaction_ShootableBlock_RegionPlm =
             RomPtr_94(0x9fc6u16, game) as *mut u16;
-        let v2: *mut u16 = RomPtr_94(
+        let v2 = RomPtr_94(
             *kBlockShotBombGrappleReaction_ShootableBlock_RegionPlm
                 .offset(ram_word!(game, area_index) as isize),
             game,
@@ -1409,8 +1409,7 @@ unsafe fn BlockReact_Shootable(ci: *mut CollInfo, game: &mut Game) -> u8 {
     1u8
 }
 unsafe fn BlockReact_BombableAir(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    let kBlockShotBombGrappleReact_BombableBlockPlm: *mut u16 =
-        RomPtr_94(0xa012u16, game) as *mut u16;
+    let kBlockShotBombGrappleReact_BombableBlockPlm = RomPtr_94(0xa012u16, game) as *mut u16;
     let v0: u8 = *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize);
     if (v0 & 0x80) == 0 {
         SpawnPLM(
@@ -1421,8 +1420,7 @@ unsafe fn BlockReact_BombableAir(ci: *mut CollInfo, game: &mut Game) -> u8 {
     0u8
 }
 unsafe fn BlockReact_BombableBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    let kBlockShotBombGrappleReact_BombableBlockPlm: *mut u16 =
-        RomPtr_94(0xa012u16, game) as *mut u16;
+    let kBlockShotBombGrappleReact_BombableBlockPlm = RomPtr_94(0xa012u16, game) as *mut u16;
     let v0: u8 = *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize);
     if (v0 & 0x80) == 0 {
         SpawnPLM(
@@ -2630,7 +2628,7 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
         let fresh18 = *fresh17;
         *fresh17 = (*fresh17).wrapping_sub(1);
         if fresh18 == 1u16 {
-            let mut v9: *const u16 = null::<u16>();
+            let mut v9 = null::<u16>();
             let mut i: i32 = ram_word!(game, grapple_segment_anim_instr_ptrs[q]) as i32;
             loop {
                 v9 = RomPtr_94(i as u16, game) as *const u16;
@@ -2678,7 +2676,7 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
 }
 unsafe fn DrawGrappleOams(x_r20: u16, y_r24: u16, chr_r38: u16, game: &mut Game) {
     let v1: u16 = ram_word!(game, oam_next_ptr);
-    let v2: *mut OamEnt = gOamEnt(ram_word!(game, oam_next_ptr) as i32, game);
+    let v2 = gOamEnt(ram_word!(game, oam_next_ptr) as i32, game);
     (*v2).xcoord = x_r20 as u8;
     (*v2).ycoord = y_r24 as u8;
     *(&raw mut (*v2).charnum as *mut u16) = chr_r38;
@@ -2686,7 +2684,7 @@ unsafe fn DrawGrappleOams(x_r20: u16, y_r24: u16, chr_r38: u16, game: &mut Game)
 }
 unsafe fn DrawGrappleOams3(game: &mut Game) {
     let idx: u16 = ram_word!(game, oam_next_ptr);
-    let v2: *mut OamEnt = gOamEnt(idx as i32, game);
+    let v2 = gOamEnt(idx as i32, game);
     let x: u16 = (ram_word!(game, grapple_beam_end_x_pos) as i32
         - ram_word!(game, layer1_x_pos) as i32
         - 4i32) as u16;

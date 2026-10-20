@@ -36,8 +36,8 @@ static funcs_BE56D: [Option<Func_V>; 16] = callback_table! { unsafe Func_V;
     MotherBrain_CalcHdma_Down,
 };
 pub unsafe fn MotherBrain_CalcHdma(game: &mut Game) {
-    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
+    let E = Get_MotherBrain(0i32, game);
+    let E1 = Get_MotherBrain(0x40i32, game);
     let mut r18: u16 =
         (*(&raw mut (*E).mbn_var_33 as *mut u8).offset(1isize) as i32 >> 1i32) as u16;
     (*E).mbn_var_3A = ((*E).mbn_var_31).wrapping_sub(r18);
@@ -55,7 +55,7 @@ pub unsafe fn MotherBrain_CalcHdma(game: &mut Game) {
     funcs_BE56D[i as usize].expect("non-null function pointer")(game);
 }
 pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight2(game: &mut Game) {
-    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
+    let E = Get_MotherBrain(0i32, game);
     MotherBrain_CalcHdma_BeamAimedRight((*E).mbn_var_3C, (*E).mbn_var_3E, game);
     *(ram_ptr!(game, u16; 0x9c00)) = 16u16;
     *(ram_ptr!(game, u16; 0x9c00, 1)) = -25600i32 as u16;
@@ -69,7 +69,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight2(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, game: &mut Game) {
     set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
-    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
+    let E = Get_MotherBrain(0i32, game);
     let r18: u16 = crate::rtl::rom_table_word!(
         game,
         0x91c9d4,
@@ -81,12 +81,12 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, ga
         *(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as isize
     );
     let mut mbn_var_3F: u16 = (*E).mbn_var_3F;
-    let mut v2: *mut u16 = (ram_ptr!(game, u16; 0x9d00))
+    let mut v2 = (ram_ptr!(game, u16; 0x9d00))
         .offset((mbn_var_3F as i32 - 32i32) as isize)
         .offset(1);
     *v2.offset(1) = 255u16;
     *v2.offset(2) = 255u16;
-    let v8: *mut u16 = v2;
+    let v8 = v2;
     loop {
         let mut v4: u16 = (r20).wrapping_add(r24);
         if u16::overflowing_add(r20, r24).1 {
@@ -110,7 +110,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, ga
             break;
         }
     }
-    let mut v5: *mut u16 = v8.offset(1);
+    let mut v5 = v8.offset(1);
     let mut var_3F: u16 = (*gRam8000_Default(0i32, game)).var_3F;
     loop {
         let mut v7: u16 = (r18).wrapping_add(r22);
@@ -141,7 +141,7 @@ static off_ADE024: [Option<Func_CalcHdma>; 4] = callback_table! { unsafe Func_Ca
     MotherBrain_CalcHdma_Up_UpLeft,
 };
 pub unsafe fn MotherBrain_CalcHdma_BeamAimedUp(game: &mut Game) {
-    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
+    let E = Get_MotherBrain(0i32, game);
     off_ADE024
         [((*E).mbn_var_3A as i32 >> 6i32 & 2i32 | (*E).mbn_var_3B as i32 >> 7i32 & 1i32) as usize]
         .expect("non-null function pointer")((*E).mbn_var_3C, (*E).mbn_var_3E, game);
@@ -283,7 +283,7 @@ static g_off_ADE20E: [Option<Func_CalcHdma>; 4] = callback_table! { unsafe Func_
     MotherBrain_CalcHdma_Down_DownLeft,
 };
 pub unsafe fn MotherBrain_CalcHdma_Down(game: &mut Game) {
-    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
+    let E = Get_MotherBrain(0i32, game);
     g_off_ADE20E
         [((*E).mbn_var_3A as i32 >> 6i32 & 2i32 | (*E).mbn_var_3B as i32 >> 7i32 & 1i32) as usize]
         .expect("non-null function pointer")((*E).mbn_var_3C, (*E).mbn_var_3E, game);
@@ -463,7 +463,7 @@ pub unsafe fn EnableEarthquakeAframes(a: u16, game: &mut Game) {
     QueueSfx2_Max6(0x25u16, game);
 }
 pub unsafe fn HandleMotherBrainBodyFlickering(game: &mut Game) {
-    let v0: *mut EnemyData = gEnemyData(0i32, game);
+    let v0 = gEnemyData(0i32, game);
     if (*v0).frame_counter & 1 != 0 {
         let ref mut fresh0 = *(ram_ptr!(game, u16; 0x69));
         *fresh0 = (*fresh0) | (2u16);

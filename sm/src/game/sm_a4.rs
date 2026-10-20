@@ -118,7 +118,7 @@ pub unsafe fn Crocomire_Func_3(k: u16, jp: *const u16, game: &mut Game) -> *cons
     addr_kCrocomire_Ilist_BBCE as i32 as usize as *const u16
 }
 pub unsafe fn Crocomire_Func_4(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let v1: u16 = abs16(((*E).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos)));
     if v1 as i32 - 224i32 & 0x8000i32 != 0 {
         (*E).crocom_var_B = ((*E).crocom_var_B) | (0x8000u16);
@@ -128,7 +128,7 @@ pub unsafe fn Crocomire_Func_4(k: u16, jp: *const u16, game: &mut Game) -> *cons
     jp
 }
 pub unsafe fn Crocomire_Func_5(k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if ((*E).crocom_var_B & 0x800) != 0 && {
         (*E).crocom_var_B = ((*E).crocom_var_B & !(0x800));
         (*E).crocom_var_D != 0u16
@@ -149,7 +149,7 @@ pub unsafe fn Crocomire_Func_5(k: u16, mut jp: *const u16, game: &mut Game) -> *
 }
 pub unsafe fn Crocomire_Instr_14(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     if (ram_word!(game, random_number) as i32 & 0xfffi32) - 1024i32 & 0x8000i32 != 0 {
-        let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+        let E = Get_Crocomire(0i32, game);
         (*E).crocom_var_C = 8u16;
         (*E).crocom_var_F = 0u16;
         return addr_kCrocomire_Ilist_BB36 as i32 as usize as *const u16;
@@ -157,7 +157,7 @@ pub unsafe fn Crocomire_Instr_14(k: u16, jp: *const u16, game: &mut Game) -> *co
     jp
 }
 pub unsafe fn Crocomire_Func_7(k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let crocom_var_B: u16 = (*E).crocom_var_B;
     if (crocom_var_B & 0x800) != 0 {
         (*E).crocom_var_B = (crocom_var_B) & (0xf7ffu16);
@@ -182,7 +182,7 @@ pub unsafe fn Crocomire_Func_7(k: u16, mut jp: *const u16, game: &mut Game) -> *
     jp
 }
 pub unsafe fn Crocomire_Func_8(k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let crocom_var_B: u16 = (*E).crocom_var_B;
     if (crocom_var_B & 0x800) != 0 {
         (*E).crocom_var_B = (crocom_var_B) & (0xf7ffu16);
@@ -192,7 +192,7 @@ pub unsafe fn Crocomire_Func_8(k: u16, mut jp: *const u16, game: &mut Game) -> *
     jp
 }
 pub unsafe fn Crocomire_Func_9(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let crocom_var_D: u16 = (*E).crocom_var_D;
     if crocom_var_D != 0u16 && {
         let mut v2: u16 = (crocom_var_D).wrapping_sub(1u16);
@@ -207,7 +207,7 @@ pub unsafe fn Crocomire_Func_9(k: u16, jp: *const u16, game: &mut Game) -> *cons
     }
 }
 pub unsafe fn Crocomire_Func_10(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if (((*E).base.x_pos) as i16).wrapping_sub((g_word_A486A2) as i16) >= 0i16 {
         (*E).crocom_var_C = 6u16;
         return addr_kCrocomire_Ilist_BBCE as i32 as usize as *const u16;
@@ -219,12 +219,12 @@ pub unsafe fn Crocomire_Func_11(k: u16, jp: *const u16, game: &mut Game) -> *con
     addr_kCrocomire_Ilist_BD2A as i32 as usize as *const u16
 }
 pub unsafe fn Crocomire_Func_12(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     (*E).crocom_var_B = ((*E).crocom_var_B & !(0x400));
     addr_kCrocomire_Ilist_BCD8 as i32 as usize as *const u16
 }
 pub unsafe fn Crocomire_Func_13(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if ((*E).crocom_var_B & 0x800) != 0 {
         (*E).crocom_var_B = ((*E).crocom_var_B & !(0x800));
         (*E).crocom_var_C = 20u16;
@@ -239,7 +239,7 @@ pub unsafe fn Crocomire_Func_13(k: u16, jp: *const u16, game: &mut Game) -> *con
     jp
 }
 pub unsafe fn Crocomire_Func_14(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if ((*E).crocom_var_B & 0x800) != 0 {
         (*E).crocom_var_B = ((*E).crocom_var_B & !(0x800));
         (*E).crocom_var_C = 12u16;
@@ -254,7 +254,7 @@ pub unsafe fn Crocomire_Func_14(k: u16, jp: *const u16, game: &mut Game) -> *con
     jp
 }
 pub unsafe fn Crocomire_Func_15(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if ((*E).crocom_var_B & 0x800) != 0 {
         (*E).crocom_var_B = ((*E).crocom_var_B & !(0x800));
         (*E).crocom_var_C = 12u16;
@@ -269,7 +269,7 @@ pub unsafe fn Crocomire_Func_15(k: u16, jp: *const u16, game: &mut Game) -> *con
     jp
 }
 pub unsafe fn Crocomire_Func_16(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let v1: u16 = ((*E).crocom_var_D).wrapping_sub(1u16);
     (*E).crocom_var_D = v1;
     if v1 as i32 - 2i32 & 0x8000i32 != 0 {
@@ -280,7 +280,7 @@ pub unsafe fn Crocomire_Func_16(k: u16, jp: *const u16, game: &mut Game) -> *con
     jp
 }
 pub unsafe fn Crocomire_Func_17(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let crocom_var_B: u16 = (*E).crocom_var_B;
     if (crocom_var_B & 0x800) != 0 {
         (*E).crocom_var_B = (crocom_var_B & 0x1f00 | 0xa000);
@@ -295,8 +295,8 @@ pub unsafe fn Crocomire_Func_17(k: u16, jp: *const u16, game: &mut Game) -> *con
     jp
 }
 pub unsafe fn Crocomire_Func_18(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let result: *const u16 = Crocomire_Func_2(ram_word!(game, cur_enemy_index), jp, game);
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let result = Crocomire_Func_2(ram_word!(game, cur_enemy_index), jp, game);
+    let E = Get_Crocomire(0i32, game);
     (*E).crocom_var_B = ((*E).crocom_var_B) | (0x200u16);
     (*E).crocom_var_D = 32u16;
     (*E).crocom_var_C = 30u16;
@@ -304,7 +304,7 @@ pub unsafe fn Crocomire_Func_18(k: u16, jp: *const u16, game: &mut Game) -> *con
 }
 pub unsafe fn Crocomire_Func_19(k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
     jp = Crocomire_Func_2(ram_word!(game, cur_enemy_index), jp, game);
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if (*E).crocom_var_D == 0 || {
         let mut v2: bool = (*E).crocom_var_D == 1u16;
         (*E).crocom_var_D = (*E).crocom_var_D.wrapping_sub(1);
@@ -317,12 +317,12 @@ pub unsafe fn Crocomire_Func_19(k: u16, mut jp: *const u16, game: &mut Game) -> 
 }
 pub unsafe fn Crocomire_Func_20(k: u16, game: &mut Game) -> *const u16 {
     (*Get_Crocomire(k as i32, game)).crocom_var_C = 20u16;
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     (*E).crocom_var_B = (*E).crocom_var_B;
     addr_kCrocomire_Ilist_BAEA as i32 as usize as *const u16
 }
 pub unsafe fn Crocomire_Func_21(k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if ((*E).crocom_var_B & 0x100) != 0 {
         jp = Crocomire_Func_2(ram_word!(game, cur_enemy_index), jp, game);
         (*E).crocom_var_D = 16u16;
@@ -336,7 +336,7 @@ pub unsafe fn Crocomire_Func_21(k: u16, mut jp: *const u16, game: &mut Game) -> 
 pub unsafe fn Crocomire_Func_22(mut k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
     k = ram_word!(game, cur_enemy_index);
     jp = Crocomire_Func_2(k, jp, game);
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if (*E).crocom_var_D == 0 {
         (*E).crocom_var_B = ((*E).crocom_var_B) | (0x2000u16);
         jp = Crocomire_Func_3(k, jp, game);
@@ -346,7 +346,7 @@ pub unsafe fn Crocomire_Func_22(mut k: u16, mut jp: *const u16, game: &mut Game)
 }
 pub unsafe fn Crocomire_Func_23(mut k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
     k = ram_word!(game, cur_enemy_index);
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if (*E).base.x_pos as i32 - 672i32 & 0x8000i32 != 0 {
         jp = Crocomire_Func_3(k, jp, game);
         (*E).crocom_var_C = 36u16;
@@ -367,7 +367,7 @@ pub unsafe fn Crocomire_Func_23(mut k: u16, mut jp: *const u16, game: &mut Game)
 }
 pub unsafe fn Crocomire_Func_24(mut k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
     k = ram_word!(game, cur_enemy_index);
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if (*E).crocom_var_D == 0 || {
         let mut v2: bool = (*E).crocom_var_D == 1u16;
         (*E).crocom_var_D = (*E).crocom_var_D.wrapping_sub(1);
@@ -386,7 +386,7 @@ pub unsafe fn Crocomire_Func_24(mut k: u16, mut jp: *const u16, game: &mut Game)
 }
 pub unsafe fn Crocomire_Func_25(mut k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
     k = ram_word!(game, cur_enemy_index);
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let crocom_var_B: u16 = (*E).crocom_var_B;
     if (crocom_var_B & 0x2000) == 0 {
         (*E).crocom_var_B = (crocom_var_B) & (0xfcffu16);
@@ -396,7 +396,7 @@ pub unsafe fn Crocomire_Func_25(mut k: u16, mut jp: *const u16, game: &mut Game)
     jp
 }
 pub unsafe fn Crocomire_Func_26(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if (*E).crocom_var_D != 0 {
         let crocom_var_B: u16 = (*E).crocom_var_B;
         if (crocom_var_B & 0x4000) != 0 {
@@ -416,7 +416,7 @@ pub unsafe fn Crocomire_Func_26(k: u16, jp: *const u16, game: &mut Game) -> *con
     jp
 }
 pub unsafe fn Crocomire_Init(game: &mut Game) {
-    let mut v7: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
+    let mut v7 = null_mut::<VramWriteEntry>();
     set_ram_word!(game.boss_id = 6u16);
     let mut v0: u16 = 0u16;
     loop {
@@ -430,7 +430,7 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
         *(ram_ptr!(game, u16; 0xcd20)) = 257u16;
         *(ram_ptr!(game, u16; 0xcd20, 2)) = 257u16;
         set_ram_word!(game.croco_target_0688 = 0u16);
-        let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+        let E = Get_Crocomire(0i32, game);
         (*E).base.properties = ((*E).base.properties & 0x7bff | 0x400);
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0x20u8, 0x3u8, 0xb753 as VoidP),
@@ -460,8 +460,7 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
     } else {
         DisableMinimapAndMarkBossRoomAsExplored(game);
         set_ram_word!(game.croco_word_7E069A = 0u16);
-        let E_0: *mut Enemy_Crocomire =
-            Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+        let E_0 = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
         set_fields! {[(*E_0)], 0u16; crocom_var_A, crocom_var_E}
         *(ram_ptr!(game, u16; 0xcd20)) = 0u16;
         let mut i: i32 = 32i32;
@@ -512,9 +511,8 @@ pub unsafe fn Crocomire_Func_27(k: u16, game: &mut Game) {
     Crocomire_8BA4(game);
 }
 pub unsafe fn Crocomire_8BA4(game: &mut Game) {
-    let E0: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
-    let E1: *mut Enemy_Crocomire =
-        Get_Crocomire(ram_word!(game, cur_enemy_index) as i32 + 64i32, game);
+    let E0 = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+    let E1 = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32 + 64i32, game);
     (*E1).base.x_pos = ((*E1).crocom_var_A).wrapping_add((*E0).base.x_pos);
     (*E1).base.y_pos = (*E0).base.y_pos;
     let x_pos: u16 = (*E0).base.x_pos;
@@ -569,7 +567,7 @@ pub unsafe fn Crocomire_Func_29(game: &mut Game) {
     set_ram_words! { game, 0u16; reg_BG2HOFS, reg_BG2VOFS }
 }
 pub unsafe fn Crocomire_Func_30(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if (*E).crocom_var_A == 0
         && (((*E).base.x_pos as i32
             - (*E).base.x_width as i32
@@ -621,7 +619,7 @@ pub unsafe fn Crocomire_Instr_19(k: u16, jp: *const u16, game: &mut Game) -> *co
     jp
 }
 pub unsafe fn Crocomire_Func_35(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let crocom_var_20: u16 = (*E).crocom_var_20;
     if crocom_var_20 != 0 {
         let v2: u16 = (crocom_var_20).wrapping_sub(1u16);
@@ -638,7 +636,7 @@ pub unsafe fn Crocomire_Func_36(game: &mut Game) {
     Crocomire_8D47(game);
 }
 pub unsafe fn Crocomire_8D47(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let crocom_var_D: u16 = (*E).crocom_var_D;
     if crocom_var_D != 0 {
         (*E).crocom_var_D = (crocom_var_D).wrapping_sub(1u16);
@@ -649,7 +647,7 @@ pub unsafe fn Crocomire_8D47(game: &mut Game) {
     };
 }
 pub unsafe fn Crocomire_Func_37(game: &mut Game) {
-    let E0: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E0 = Get_Crocomire(0i32, game);
     if (*E0).base.x_pos as i32 - 1536i32 & 0x8000i32 != 0 {
         set_ram_words! { game, 0u16; kraid_unk9000, g_word_7E9002, g_word_7E9006, g_word_7E900A }
     } else if (*E0).base.x_pos as i32 - 1552i32 & 0x8000i32 != 0 {
@@ -702,8 +700,7 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
             (*E0).crocom_var_20 = 1u16;
             set_ram_word!(game.g_word_7E9018 = 1u16);
             let v3: u16 = ram_word!(game, cur_enemy_index);
-            let EK: *mut Enemy_Crocomire =
-                Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+            let EK = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
             (*EK).crocom_var_A = ((*EK).crocom_var_A).wrapping_add(2u16);
             (*Get_Crocomire(0i32, game)).crocom_var_00 = 2u16;
             (*Get_Crocomire(0x40i32, game)).crocom_var_00 = 2u16;
@@ -725,8 +722,7 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
             );
             enemy_instruction! {[(*EK).base]; instruction = addr_kCrocomire_Ilist_BFB0 as u16, timer = 1u16}
             (*EK).base.properties = ((*EK).base.properties) | ((kEnemyProps_Tangible) as u16);
-            let E1: *mut Enemy_Crocomire =
-                Get_Crocomire(ram_word!(game, cur_enemy_index) as i32 + 64i32, game);
+            let E1 = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32 + 64i32, game);
             enemy_instruction! {[(*E1).base]; timer = 0x7fffu16, instruction = addr_kCrocomire_Ilist_BF62 as u16}
             let fresh11 = &raw mut (*Get_Crocomire(0x40i32, game)).base.properties;
             fresh11.write_unaligned((fresh11.read_unaligned()) | (0x100u16));
@@ -866,7 +862,7 @@ pub unsafe fn Crocomire_Instr_16(k: u16, jp: *const u16, game: &mut Game) -> *co
     }
 }
 pub unsafe fn Crocomire_Instr_13(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if (((*E).base.x_pos as i32
         - (*E).base.x_width as i32
         - 260i32
@@ -897,7 +893,7 @@ pub unsafe fn Crocomire_Func_49(game: &mut Game) {
     Crocomire_Func_50(game);
     Crocomire_Func_53(game);
     Crocomire_Func_55(game);
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if (*E).crocom_var_A == 62u16 {
         QueueMusic_Delayed8(6u16, game);
         (*E).crocom_var_A = 88u16;
@@ -914,7 +910,7 @@ pub unsafe fn Crocomire_Func_49(game: &mut Game) {
     }
 }
 pub unsafe fn Crocomire_Func_50(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let y_pos: u16 = (*E).base.y_pos;
     let mut v2: u16 = addr_kCrocomire_Ilist_BF7E as u16;
     if y_pos as i32 - 280i32 & 0x8000i32 != 0 {
@@ -930,7 +926,7 @@ pub unsafe fn Crocomire_Func_50(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_51(game: &mut Game) {
     Crocomire_Func_53(game);
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let y_pos: u16 = (*E).base.y_pos;
     let mut v2: u16 = addr_kCrocomire_Ilist_BF64 as u16;
     if y_pos as i32 - 280i32 & 0x8000i32 != 0 {
@@ -986,10 +982,10 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
     let mut v9: i8 = 0;
     let mut crocom_var_E_high: i8 = 0;
     Crocomire_Func_58(game);
-    let E0: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E0 = Get_Crocomire(0i32, game);
     (*E0).crocom_var_B = ((*E0).crocom_var_B & !(0x800));
     Crocomire_Func_27(ram_word!(game, cur_enemy_index), game);
-    let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).base.y_pos as i32 - 280i32 & 0x8000i32 != 0 {
         let mut v3: u16 =
             (8i32 * (ram_word!(game, reg_BG2VOFS) as i32 + 288i32 & 0xfff8i32)) as u16;
@@ -1046,7 +1042,7 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
     };
 }
 pub unsafe fn Crocomire_Func_56(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     let y_pos: u16 = (*E).base.y_pos;
     let mut v2: u16 = addr_kCrocomire_Ilist_BF7E as u16;
     if y_pos as i32 - 280i32 & 0x8000i32 != 0 {
@@ -1064,7 +1060,7 @@ pub unsafe fn Crocomire_Func_56(game: &mut Game) {
 }
 pub unsafe fn Crocomire_929E(game: &mut Game) {
     Crocomire_Func_53(game);
-    let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     let y_pos: u16 = (*E).base.y_pos;
     let mut v2: u16 = addr_kCrocomire_Ilist_BF64 as u16;
     if y_pos as i32 - 280i32 & 0x8000i32 != 0 {
@@ -1087,13 +1083,13 @@ pub unsafe fn Crocomire_92CE(game: &mut Game) {
 pub unsafe fn Crocomire_92D8(game: &mut Game) {
     let mut v6: i8 = 0;
     Crocomire_Func_58(game);
-    let EK: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+    let EK = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     if (*EK).base.y_pos as i32 - 218i32 & 0x8000i32 != 0 {
         (*EK).crocom_var_A = (*EK).crocom_var_A.wrapping_add(1);
         (*EK).crocom_var_A = (*EK).crocom_var_A.wrapping_add(1);
     } else {
         Crocomire_Func_27(ram_word!(game, cur_enemy_index), game);
-        let E0: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+        let E0 = Get_Crocomire(0i32, game);
         let mut v3: i16 = (((*E0).crocom_var_D) as i16).wrapping_add(256i16);
         if (*E0).crocom_var_D as i32 - 7680i32 & 0x8000i32 == 0 {
             v3 = 7936i16;
@@ -1125,13 +1121,12 @@ pub unsafe fn Crocomire_92D8(game: &mut Game) {
 pub unsafe fn Crocomire_Func_57(game: &mut Game) {
     *ram_ptr!(game; 0x68c) = 48u8;
     set_ram_word!(game.croco_target_0688 = 48u16);
-    let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_BF64 as u16, timer = 1u16}
     set_ram_word!(game.nmi_flag_bg2_enemy_vram_transfer = 1u16);
-    let E1: *mut Enemy_Crocomire =
-        Get_Crocomire(ram_word!(game, cur_enemy_index) as i32 + 64i32, game);
+    let E1 = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32 + 64i32, game);
     enemy_instruction! {[(*E1).base]; instruction = addr_kCrocomire_Ilist_BF98 as u16, timer = 1u16}
     (*E1).base.properties = ((*E1).base.properties & 0xd2ff | 0x2c00);
     (*E1).base.x_pos = (*E).base.x_pos;
@@ -1161,8 +1156,7 @@ pub unsafe fn Crocomire_Func_57(game: &mut Game) {
 }
 pub unsafe fn Crocomire_93BE(k: u16, game: &mut Game) {
     let v2: u16 = ram_word!(game, vram_write_queue_tail);
-    let mut v3: *mut VramWriteEntry =
-        gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+    let mut v3 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v3).size = k;
     (*v3).src.addr = 0x2000 as VoidP;
     *(&raw mut (*v3).src.bank as *mut u16) = 126u16;
@@ -1179,7 +1173,7 @@ pub unsafe fn Crocomire_Func_58(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_59(game: &mut Game) {
     Crocomire_Func_58(game);
-    let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     (*E).base.instruction_timer = 1u16;
@@ -1209,7 +1203,7 @@ pub unsafe fn Crocomire_Func_59(game: &mut Game) {
     Crocomire_93BE((i + 1024i32) as u16, game);
 }
 pub unsafe fn Crocomire_Func_60(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).crocom_var_A = ((*E).crocom_var_A).wrapping_add(2u16);
     set_ram_word!(game.g_word_7E0692 = 256u16);
     set_ram_word!(game.croco_cur_vline_idx = 0u16);
@@ -1271,14 +1265,14 @@ pub unsafe fn Crocomire_Func_61(game: &mut Game) {
     Crocomire_Func_62(game);
 }
 pub unsafe fn Crocomire_Func_62(game: &mut Game) {
-    let mut v2: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
+    let mut v2 = null_mut::<VramWriteEntry>();
     let v0: u16 = ram_word!(game, g_word_7E068A);
     let v1: u16 = ram_word!(game, vram_write_queue_tail);
     if *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16 as *mut u8)
         .offset(ram_word!(game, g_word_7E068A) as i32 as isize) as *mut u16)
         == 0xffffu16
     {
-        let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+        let E = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
         (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
         (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
         set_ram_word!(game.g_word_7E068A = 0u16);
@@ -1320,10 +1314,10 @@ pub unsafe fn Crocomire_950F(game: &mut Game) {
             break;
         }
     }
-    let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
-    let mut v4: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let mut v4 = Get_Crocomire(0i32, game);
     (*Get_Crocomire(0x80i32, game)).crocom_var_D = (*v4).base.x_pos;
     *(ram_ptr!(game, u16; 0xcae0)) = 255u16;
     *(ram_ptr!(game, u16; 0xcae0, 1)) = -13584i32 as u16;
@@ -1333,15 +1327,15 @@ pub unsafe fn Crocomire_950F(game: &mut Game) {
     (*v4).crocom_var_1F = SpawnHdmaObject(0xa4u8, &raw const unk_A49559 as *const c_void, game);
 }
 pub unsafe fn Crocomire_Func_63(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).crocom_var_A = ((*E).crocom_var_A).wrapping_add(2u16);
 }
 pub unsafe fn Crocomire_Func_65(game: &mut Game) {
     let skip_tilemap_update: bool;
     Crocomire_Func_53(game);
-    let E0: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
-    let E1: *mut Enemy_Crocomire = Get_Crocomire(0x40i32, game);
-    let E2: *mut Enemy_Crocomire = Get_Crocomire(0x80i32, game);
+    let E0 = Get_Crocomire(0i32, game);
+    let E1 = Get_Crocomire(0x40i32, game);
+    let E2 = Get_Crocomire(0x80i32, game);
     let mut crocom_var_D: u16 = (*E2).crocom_var_D;
     (*E1).crocom_var_D = (*E1).crocom_var_D.wrapping_sub(1);
     if ((*E1).crocom_var_D & 2) != 0 {
@@ -1401,7 +1395,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
             return;
         }
     }
-    let EK: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+    let EK = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     (*EK).crocom_var_A = ((*EK).crocom_var_A).wrapping_add(2u16);
     let mut i: i32 = ram_word!(game, croco_word_7E069A) as i32;
     while *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16 as *mut u8)
@@ -1414,7 +1408,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
     set_ram_word!(game.hdma_object_channels_bitmask[((*E0).crocom_var_1F as i32 >> 1i32)] = 0u16);
 }
 pub unsafe fn Crocomire_Func_66(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     set_fields! {[(*E)], 0u16; crocom_var_E, crocom_var_F}
     (*E).crocom_var_D = 2048u16;
     let mut i: i32 = 4094i32;
@@ -1423,8 +1417,7 @@ pub unsafe fn Crocomire_Func_66(game: &mut Game) {
         i -= 2i32;
     }
     let v2: u16 = ram_word!(game, vram_write_queue_tail);
-    let mut v3: *mut VramWriteEntry =
-        gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+    let mut v3 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v3).size = 2048u16;
     (*v3).src.addr = 0x2000 as VoidP;
     *(&raw mut (*v3).src.bank as *mut u16) = 126u16;
@@ -1498,8 +1491,7 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
         }
         set_ram_word!(game.g_word_7E068A = 0u16);
     }
-    let v9: *mut VramWriteEntry =
-        gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+    let v9 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v9).size = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16 as *mut u8)
         .offset(v7 as i32 as isize) as *mut u16);
     (*v9).src.addr = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bcb)) as *mut u16
@@ -1524,10 +1516,10 @@ pub unsafe fn Crocomire_Func_68(game: &mut Game) {
             game,
         );
         set_ram_word!(game.camera_distance_index = 6u16);
-        let E0: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+        let E0 = Get_Crocomire(0i32, game);
         (*E0).base.properties =
             ((*E0).base.properties as i32 & 0x7bffi32 | kEnemyProps_Tangible as i32) as u16;
-        let E1: *mut Enemy_Crocomire = Get_Crocomire(0x40i32, game);
+        let E1 = Get_Crocomire(0x40i32, game);
         (*E1).base.properties = ((*E1).base.properties) | (0x500u16);
         (*E0).crocom_var_D = 4u16;
         (*E1).crocom_var_D = 0u16;
@@ -1539,7 +1531,7 @@ pub unsafe fn Crocomire_Func_68(game: &mut Game) {
     }
 }
 pub unsafe fn Crocomire_Func_69(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let v1: u16 = ((*E).base.x_pos).wrapping_sub(2u16);
     (*E).base.x_pos = v1;
     if v1 as i32 - 480i32 & 0x8000i32 != 0 {
@@ -1551,10 +1543,10 @@ pub unsafe fn Crocomire_Func_69(game: &mut Game) {
     };
 }
 pub unsafe fn Crocomire_Func_70(game: &mut Game) {
-    let E0: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
-    let E1: *mut Enemy_Crocomire = Get_Crocomire(0x40i32, game);
-    let E2: *mut Enemy_Crocomire = Get_Crocomire(0x80i32, game);
-    let E3: *mut Enemy_Crocomire = Get_Crocomire(0xc0i32, game);
+    let E0 = Get_Crocomire(0i32, game);
+    let E1 = Get_Crocomire(0x40i32, game);
+    let E2 = Get_Crocomire(0x80i32, game);
+    let E3 = Get_Crocomire(0xc0i32, game);
     if crate::rtl::rom_table_word!(game, 0xa498ca, ((*E0).crocom_var_D as i32 >> 1i32) as isize)
         == 0x8080u16
     {
@@ -1611,8 +1603,8 @@ pub unsafe fn Crocomire_Func_70(game: &mut Game) {
     };
 }
 pub unsafe fn Crocomire_Func_71(game: &mut Game) {
-    let mut v6: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let mut v6 = null_mut::<VramWriteEntry>();
+    let E = Get_Crocomire(0i32, game);
     let crocom_var_D: u16 = (*E).crocom_var_D;
     if crocom_var_D != 0 {
         (*E).crocom_var_D = (crocom_var_D).wrapping_sub(1u16);
@@ -1673,7 +1665,7 @@ pub unsafe fn Crocomire_Func_71(game: &mut Game) {
     };
 }
 pub unsafe fn Crocomire_Func_72(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if (*E).base.x_pos as i32 - 224i32 & 0x8000i32 != 0 {
         let mut t: u32 = (((*E).crocom_var_F as u32) << 16i32 | (*E).crocom_var_E as u32)
             .wrapping_add(0x8000u32);
@@ -1683,7 +1675,7 @@ pub unsafe fn Crocomire_Func_72(game: &mut Game) {
         SetHiLo(&raw mut (*E).crocom_var_F, &raw mut (*E).crocom_var_E, t);
         AddToHiLo(&raw mut (*E).base.x_pos, &raw mut (*E).base.x_subpos, t);
     }
-    let E2: *mut Enemy_Crocomire = Get_Crocomire(0x80i32, game);
+    let E2 = Get_Crocomire(0x80i32, game);
     if (*E2).crocom_var_D != 0u16 && {
         let fresh19 = (*E2).crocom_var_D;
         (*E2).crocom_var_D = (*E2).crocom_var_D.wrapping_sub(1);
@@ -1695,7 +1687,7 @@ pub unsafe fn Crocomire_Func_72(game: &mut Game) {
     }
 }
 pub unsafe fn Crocomire_Func_73(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let mut t: u32 =
         (((*E).crocom_var_F as u32) << 16i32 | (*E).crocom_var_E as u32).wrapping_add(2048u32);
     if (t >> 16i32).wrapping_sub(5u32) & 0x8000u32 == 0 {
@@ -1731,7 +1723,7 @@ crate::forward_calls! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) 
     Crocomire_Instr_27 => Crocomire_Func_87(jp, 0x40u16, game);
 }
 pub unsafe fn Crocomire_Func_87(jp: *const u16, a: u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     game.eproj_spawn_pt = Point16U {
         x: (a as i32 + (*E).base.x_pos as i32 + (ram_word!(game, random_number) as i32 & 7i32))
             as u16,
@@ -1741,7 +1733,7 @@ pub unsafe fn Crocomire_Func_87(jp: *const u16, a: u16, game: &mut Game) -> *con
     jp
 }
 pub unsafe fn Crocomire_Func_88(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if (*E).base.current_instruction as i32 + 0x1e3ai32 & 0x8000i32 != 0 {
         let mut t: u32 =
             (((*E).crocom_var_F as u32) << 16i32 | (*E).crocom_var_E as u32).wrapping_add(4096u32);
@@ -1776,7 +1768,7 @@ pub unsafe fn Crocomire_Func_89(game: &mut Game) {
     Crocomire_9BB3(game);
 }
 pub unsafe fn Crocomire_Func_90(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if (*E).base.current_instruction as i32 + 0x1e3ai32 & 0x8000i32 == 0 {
         Crocomire_9BB3(game);
     }
@@ -1792,7 +1784,7 @@ pub unsafe fn Crocomire_9B86(game: &mut Game) {
     Crocomire_9BB3(game);
 }
 pub unsafe fn Crocomire_9BB3(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
 }
@@ -1801,12 +1793,12 @@ pub unsafe fn Crocomire_Func_91(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_92(game: &mut Game) {
     NormalEnemyTouchAi(game);
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     (*E).crocom_var_B = ((*E).crocom_var_B) | (0x4000u16);
     set_ram_word!(game.extra_samus_x_displacement = -4i32 as u16);
 }
 pub unsafe fn Crocomire_Func_93(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     let mut v1: u16 = ((*E).crocom_var_B) & (0xfu16);
     if v1 as i32 - 15i32 & 0x8000i32 != 0 {
         v1 = v1.wrapping_add(1);
@@ -1827,7 +1819,7 @@ pub unsafe fn Crocomire_Func_94(game: &mut Game) {
     SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, v1, game);
 }
 pub unsafe fn Crocomire_Powerbomb(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     if (*E).crocom_var_A == 0 && g_word_A4869E != 0 {
         (*E).crocom_var_D = g_word_A4869E;
         if (*E).crocom_var_C != 24u16 {
@@ -1857,13 +1849,13 @@ pub unsafe fn Crocomire_Powerbomb(game: &mut Game) {
                 v3 = addr_kCrocomire_Ilist_BDB6 as u16;
                 break;
             }
-            let E0: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+            let E0 = Get_Crocomire(0i32, game);
             enemy_instruction! {[(*E0).base]; instruction = v3, timer = 1u16}
         }
     }
 }
 pub unsafe fn Crocomire_Func_95(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
+    let E = Get_Crocomire(0i32, game);
     (*E).base.invincibility_timer = 0u16;
     let advance_animation: bool = ((((*E).base.x_pos as i32
         - (*E).base.x_width as i32
@@ -1932,7 +1924,7 @@ pub unsafe fn Crocomire_Func_1(game: &mut Game) {
     SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, v1, game);
 }
 pub unsafe fn CrocomireTongue_Init(game: &mut Game) {
-    let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     if (*(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) & 2) != 0 {
         (*E).base.properties = ((*E).base.properties & 0xdcff | 0x300);
     } else {

@@ -496,9 +496,10 @@ pub fn ClearOamExt(game: &mut Game) {
     game.g_ram[0x570..0x590].fill(0);
 }
 pub unsafe fn QueueMode7Transfers(db: u8, k: u16, game: &mut Game) {
-    let mut p: *const u8 = RomPtrWithBank(db, k, game);
-    let mut dst: *mut u8 = (ram_ptr!(game, Mode7VramWriteQueue; 0x2d0) as *mut u8)
-        .offset(ram_word!(game, mode7_vram_write_queue_tail) as i32 as isize);
+    let mut p = RomPtrWithBank(db, k, game);
+    let mut dst =
+        (ram_ptr!(game, Mode7VramWriteQueue; 0x2d0) as *mut u8)
+            .offset(ram_word!(game, mode7_vram_write_queue_tail) as i32 as isize);
     loop {
         let f: i32 = *(p as *mut u8) as i32;
         if f & 0x80i32 != 0 {
@@ -538,7 +539,7 @@ pub unsafe fn NMI_ProcessMode7QueueInner(mut p: *const u8, game: &mut Game) {
                 break;
             }
             WriteReg(DMAP1 as u16, (v2) & (0x1fu8), game);
-            let v5: *mut Mode7CgvmWriteQueue = p as *mut Mode7CgvmWriteQueue;
+            let v5 = p as *mut Mode7CgvmWriteQueue;
             crate::rtl::register_writes! { game;
                 word(A1T1L as u16, (*v5).src_addr.addr); byte(A1B1 as u16, (*v5).src_addr.bank);
                 word(DAS1L as u16, (*v5).count);
@@ -873,7 +874,7 @@ pub fn QueueSfx3_Internal(packed: u16, game: &mut Game) {
     queue_sfx(2, sound, max_queued, game);
 }
 pub unsafe fn SetupDmaTransfer(p: *const c_void, game: &mut Game) {
-    let s: *const StartDmaCopy = p as *const StartDmaCopy;
+    let s = p as *const StartDmaCopy;
     let v2: i32 = (*s).chan as i32 * 16i32;
     crate::rtl::register_writes! { game;
         word((v2 + DMAP0 as i32) as SnesRegs as u16,
@@ -1496,8 +1497,7 @@ static kEnergyTankIconTilemapOffsets: [u16; 14] = [
 ];
 pub unsafe fn HandleHudTilemap(game: &mut Game) {
     if ram_word!(game, reserve_health_mode) == 1u16 {
-        let mut v1: *const u16 =
-            RomPtr_80(addr_kHudTilemaps_AutoReserve as u16, game) as *const u16;
+        let mut v1 = RomPtr_80(addr_kHudTilemaps_AutoReserve as u16, game) as *const u16;
         if ram_word!(game, samus_reserve_health) == 0 {
             v1 = v1.offset(6);
         }
@@ -1996,8 +1996,7 @@ pub unsafe fn QueueClearingOfFxTilemap(game: &mut Game) {
         i -= 2i32;
     }
     let v1: u16 = ram_word!(game, vram_write_queue_tail);
-    let v2: *mut VramWriteEntry =
-        gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+    let v2 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v2).size = 3840u16;
     (*v2).src.addr = (ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
@@ -2541,7 +2540,7 @@ pub unsafe fn UpdateLevelOrBackgroundDataColumn(k: u16, game: &mut Game) {
     if k != 0 {
         v2 = (v2).wrapping_add(0x9600u16);
     }
-    let r54: *const u16 = ram_ptr!(game; 0x10000, v2 as i32 as isize) as *const u16;
+    let r54 = ram_ptr!(game; 0x10000, v2 as i32 as isize) as *const u16;
     let v3: u16 = (4i32 * ram_word!(game, vram_blocks_to_update_y_block) as i32 & 0x3ci32) as u16;
     *((ram_ptr!(game, u16; 0x958) as *mut u8).offset(k as i32 as isize) as *mut u16) = v3;
     *((ram_ptr!(game, u16; 0x956) as *mut u8).offset(k as i32 as isize) as *mut u16) =
@@ -2625,7 +2624,7 @@ pub unsafe fn UpdateLevelOrBackgroundDataRow(v0: u16, game: &mut Game) {
     if v0 != 0 {
         v2 = (v2).wrapping_sub(27136u16);
     }
-    let r54: *const u16 = ram_ptr!(game; 0x10000, v2 as i32 as isize) as *const u16;
+    let r54 = ram_ptr!(game; 0x10000, v2 as i32 as isize) as *const u16;
     let mut var933: u16 = (ram_word!(game, vram_blocks_to_update_x_block)) & (0xfu16);
     *((ram_ptr!(game, u16; 0x964) as *mut u8).offset(v0 as i32 as isize) as *mut u16) =
         (4i32 * (16i32 - var933 as i32)) as u16;
@@ -3129,7 +3128,7 @@ pub unsafe fn LoadFromLoadStation(game: &mut Game) {
     *(ram_ptr!(game, u16; 0x5f7) as *mut u8).offset(0) = 0u8;
 }
 pub unsafe fn SetElevatorsAsUsed(game: &mut Game) {
-    let v0: *const u8 = RomPtr_80(
+    let v0 = RomPtr_80(
         (crate::rtl::rom_table_word!(game, 0x80cd46, ram_word!(game, area_index) as isize) as i32
             + 4i32
                 * ((ram_word!(game, elevator_door_properties_orientation) as i32 & 0xfi32) - 1i32))

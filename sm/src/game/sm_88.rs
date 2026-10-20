@@ -599,13 +599,13 @@ pub unsafe fn HdmaobjInstructionHandler(k: u8, game: &mut Game) {
     let fresh60 = *fresh59;
     *fresh59 = (*fresh59).wrapping_sub(1);
     if fresh60 == 1u16 {
-        let base: *const u8 = RomBankBase(
+        let base = RomBankBase(
             *(ram_ptr!(game, u16; 0x18c0) as *mut u8)
                 .offset(k as i32 as isize)
                 .offset(1),
             game,
         );
-        let mut p: *const u8 =
+        let mut p =
             base.offset(ram_word!(game, hdma_object_instruction_list_pointers[kh]) as i32 as isize);
         while *(p as *mut u16) & 0x8000 != 0 {
             p = CallHdmaobjInstr(
@@ -749,7 +749,7 @@ pub unsafe fn HdmaobjInstr_SetIndirectHdmaDataBank(
     hdp.offset(1)
 }
 pub unsafe fn HdmaobjInstr_Sleep(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    let base: *const u8 = RomBankBase(
+    let base = RomBankBase(
         *(ram_ptr!(game, u16; 0x18c0) as *mut u8)
             .offset(k as i32 as isize)
             .offset(1),
@@ -976,7 +976,7 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
     }
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(k: u16, game: &mut Game) {
-    let mut v4: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
+    let mut v4 = null_mut::<VramWriteEntry>();
     mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001u32);
     *((ram_ptr!(game, u16; 0xa8a) as *mut u8).offset(1) as *mut u16) = 0u16;
     set_ram_words! { game, 0u16;
@@ -1012,7 +1012,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(k: u16, game: &mut Game) 
     }
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc4_DeactivateBeam(k: u16, game: &mut Game) {
-    let mut v3: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
+    let mut v3 = null_mut::<VramWriteEntry>();
     let mut v1: i16 = 4096i16;
     if ram_word!(game, fx_type) != 36u16 {
         v1 = 0x2000i16;
@@ -1494,7 +1494,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(k: u16, game: &mut
         return;
     }
     calculate_explosion_hdma_table_pointers(k, false, game);
-    let v1: *const u8 = RomPtr_88(
+    let v1 = RomPtr_88(
         ram_word!(game, pre_scaled_power_bomb_explosion_shape_def_ptr),
         game,
     );
@@ -1596,7 +1596,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(k: u16, game: 
         return;
     }
     calculate_explosion_hdma_table_pointers(k, true, game);
-    let v1: *const u8 = RomPtr_88(
+    let v1 = RomPtr_88(
         ram_word!(game, pre_scaled_power_bomb_explosion_shape_def_ptr),
         game,
     );
@@ -2130,8 +2130,7 @@ pub unsafe fn RoomMainAsm_ScrollingSky(src: *const u16, game: &mut Game) {
     } else {
         set_ram_word!(game.reg_BG2VOFS = ram_word!(game, layer1_y_pos));
         let v0: u16 = ram_word!(game, vram_write_queue_tail);
-        let v1: *mut VramWriteEntry =
-            gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+        let v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
         (*v1.offset(0)).size = 64u16;
         (*v1.offset(1)).size = 64u16;
         (*v1.offset(2)).size = 64u16;

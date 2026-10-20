@@ -26,7 +26,7 @@ static bAdrOffsets: [[i32; 4]; 8] = [
 ];
 static transferLength: [i32; 8] = [1, 2, 2, 4, 4, 4, 2, 4];
 pub unsafe fn dma_init(snes: *mut Snes) -> *mut Dma {
-    let dma: *mut Dma = malloc(size_of::<Dma>() as size_t) as *mut Dma;
+    let dma = malloc(size_of::<Dma>() as size_t) as *mut Dma;
     (*dma).snes = snes;
     dma
 }

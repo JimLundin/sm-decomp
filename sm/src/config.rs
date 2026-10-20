@@ -332,14 +332,14 @@ unsafe fn KeyMapHash_Add(key: u16, cmd: u16) -> bool {
     let fresh1 = keymap_hash_size;
     keymap_hash_size = keymap_hash_size + 1;
     let i: i32 = fresh1;
-    let ent: *mut KeyMapHashEnt = keymap_hash.offset(i as isize);
+    let ent = keymap_hash.offset(i as isize);
     (*ent).key = key;
     (*ent).cmd = cmd;
     (*ent).next = 0u16;
     let j: i32 = (key as u32).wrapping_rem(255u32) as i32;
-    let mut cur: *mut u16 = (&raw mut keymap_hash_first as *mut u16).offset(j as isize);
+    let mut cur = (&raw mut keymap_hash_first as *mut u16).offset(j as isize);
     while *cur != 0 {
-        let ent_0: *mut KeyMapHashEnt = keymap_hash.offset((*cur as i32 - 1i32) as isize);
+        let ent_0 = keymap_hash.offset((*cur as i32 - 1i32) as isize);
         if (*ent_0).key as i32 == key as i32 {
             return false_0 != 0;
         }
@@ -351,7 +351,7 @@ unsafe fn KeyMapHash_Add(key: u16, cmd: u16) -> bool {
 unsafe fn KeyMapHash_Find(key: u16) -> i32 {
     let mut i: i32 = keymap_hash_first[(key as i32 % 255i32) as usize] as i32;
     while i != 0 {
-        let ent: *mut KeyMapHashEnt = keymap_hash.offset((i - 1i32) as isize);
+        let ent = keymap_hash.offset((i - 1i32) as isize);
         if (*ent).key as i32 == key as i32 {
             return (*ent).cmd as i32;
         }
@@ -400,7 +400,7 @@ pub unsafe fn FindCmdForSdlKey(code: SDL_Keycode, mod_0: SDL_Keymod) -> i32 {
     KeyMapHash_Find(key as u16)
 }
 unsafe fn ParseKeyArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
-    let mut s: *mut c_char = null_mut::<c_char>();
+    let mut s = null_mut::<c_char>();
     let mut i: i32 = 0i32;
     while i < size && {
         s = NextDelim(&raw mut value, ',' as i32);
@@ -473,7 +473,7 @@ unsafe fn GamepadMap_Add(button: i32, modifiers: u32, cmd: u16) {
             Die(b"realloc failure\0" as *const u8 as *const c_char);
         }
     }
-    let mut p: *mut u16 = (&raw mut joymap_first as *mut u16).offset(button as isize);
+    let mut p = (&raw mut joymap_first as *mut u16).offset(button as isize);
     let cb: i32 = CountBits32(modifiers);
     while *p as i32 != 0
         && cb < CountBits32((*joymap_ents.offset((*p as i32 - 1i32) as isize)).modifiers)
@@ -483,7 +483,7 @@ unsafe fn GamepadMap_Add(button: i32, modifiers: u32, cmd: u16) {
     let fresh0 = joymap_size;
     joymap_size = joymap_size + 1;
     let i: i32 = fresh0;
-    let ent: *mut GamepadMapEnt = joymap_ents.offset(i as isize);
+    let ent = joymap_ents.offset(i as isize);
     (*ent).modifiers = modifiers;
     (*ent).cmd = cmd;
     (*ent).next = *p;
@@ -492,7 +492,7 @@ unsafe fn GamepadMap_Add(button: i32, modifiers: u32, cmd: u16) {
 pub unsafe fn FindCmdForGamepadButton(button: i32, modifiers: u32) -> i32 {
     let mut e: i32 = joymap_first[button as usize] as i32;
     while e != 0i32 {
-        let mut ent: *mut GamepadMapEnt = joymap_ents.offset((e - 1i32) as isize);
+        let mut ent = joymap_ents.offset((e - 1i32) as isize);
         if modifiers & (*ent).modifiers == (*ent).modifiers {
             return (*ent).cmd as i32;
         }
@@ -501,7 +501,7 @@ pub unsafe fn FindCmdForGamepadButton(button: i32, modifiers: u32) -> i32 {
     0i32
 }
 unsafe fn ParseGamepadButtonName(value: *mut *const c_char) -> i32 {
-    let s: *const c_char = *value;
+    let s = *value;
     static mut kGamepadKeyNames: [*const c_char; 19] = [
         b"Back\0" as *const u8 as *const c_char,
         b"Guide\0" as *const u8 as *const c_char,
@@ -549,7 +549,7 @@ unsafe fn ParseGamepadButtonName(value: *mut *const c_char) -> i32 {
         != (size_of::<[*const c_char; 19]>() as usize)
             .wrapping_div(size_of::<*const c_char>() as usize)
     {
-        let r: *const c_char = StringStartsWithNoCase(s, kGamepadKeyNames[i as usize]);
+        let r = StringStartsWithNoCase(s, kGamepadKeyNames[i as usize]);
         if !r.is_null() {
             *value = r;
             return kGamepadKeyIds[i as usize] as i32;
@@ -573,7 +573,7 @@ static mut kDefaultGamepadCmds: [u8; 12] = [
     kGamepadBtn_R1 as u8,
 ];
 unsafe fn ParseGamepadArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
-    let mut s: *mut c_char = null_mut::<c_char>();
+    let mut s = null_mut::<c_char>();
     let mut i: i32 = 0i32;
     while i < size && {
         s = NextDelim(&raw mut value, ',' as i32);
@@ -757,7 +757,7 @@ unsafe fn HandleIniConfig(section: i32, key: *const c_char, mut value: *mut c_ch
         }
     } else if section == 1i32 {
         if StringEqualsNoCase(key, b"WindowSize\0" as *const u8 as *const c_char) {
-            let mut s: *mut c_char = null_mut::<c_char>();
+            let mut s = null_mut::<c_char>();
             if StringEqualsNoCase(value, b"Auto\0" as *const u8 as *const c_char) {
                 set_fields! {[g_config], 0i32; window_width, window_height}
                 return true_0 != 0;
@@ -865,8 +865,8 @@ unsafe fn HandleIniConfig(section: i32, key: *const c_char, mut value: *mut c_ch
     false_0 != 0
 }
 unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
-    let mut filedata: *mut c_char = ReadWholeFile(filename, null_mut::<size_t>()) as *mut c_char;
-    let mut p: *mut c_char = null_mut::<c_char>();
+    let mut filedata = ReadWholeFile(filename, null_mut::<size_t>()) as *mut c_char;
+    let mut p = null_mut::<c_char>();
     if filedata.is_null() {
         return false_0 != 0;
     }
@@ -893,8 +893,8 @@ unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
             } else if *p as i32 == '!' as i32
                 && !SkipPrefix(p.offset(1), b"include \0" as *const u8 as *const c_char).is_null()
             {
-                let mut tt: *mut c_char = p.offset(8);
-                let new_filename: *mut c_char =
+                let mut tt = p.offset(8);
+                let new_filename =
                     ReplaceFilenameWithNewPath(filename, NextPossiblyQuotedString(&raw mut tt));
                 if depth > 10i32 || !ParseOneConfigFile(new_filename, depth + 1i32) {
                     fprintf(
@@ -912,7 +912,7 @@ unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
                     lineno,
                 );
             } else {
-                let v: *mut c_char = SplitKeyValue(p);
+                let v = SplitKeyValue(p);
                 if v.is_null() {
                     fprintf(
                         stderr,

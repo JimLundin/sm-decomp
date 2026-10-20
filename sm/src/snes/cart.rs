@@ -12,7 +12,7 @@ use ::core::mem::size_of;
 use ::core::ptr::null_mut;
 pub const NULL: *mut c_void = null_mut::<c_void>();
 pub unsafe fn cart_init(snes: *mut Snes) -> *mut Cart {
-    let cart: *mut Cart = malloc(size_of::<Cart>() as size_t) as *mut Cart;
+    let cart = malloc(size_of::<Cart>() as size_t) as *mut Cart;
     (*cart).snes = snes;
     (*cart).type_0 = 0u8;
     (*cart).rom = null_mut::<u8>();

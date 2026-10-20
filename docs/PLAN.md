@@ -119,6 +119,22 @@ to 128340; i32 cast-containing lines -2348. Other progress counters are unchange
 These proofs cover the selected integer expressions; the movies provide
 integration coverage. Broader routes, frontend and alias ownership remain open.
 
+Redundant raw-pointer local annotations (2026-10-20): remove2529 initialized
+pointer annotations across49 files, preserving2345 mutable and184 const
+pointer types. Complete source reconstruction retains every initializer,
+binding, comment and ordered token except the selected annotation. Core and
+frontend compiler THIR confirms exactly one identical pointer type at every
+selected initializer. Retain36 annotations for coercions or unresolved macro
+spans; no mut-to-const coercion, pointee type or pointer operation changes.
+The first draft's gamepad coercion error and type differences are preserved.
+
+Rust lines -352 to127513; all other progress counters unchanged. Formatting/check
+and fresh source-local normal release20.97s pass with registry dependencies
+seeded only; verifier host reuses that exact library. Full any129712/0,
+nativeexit0 (100.36s replay/100.56s wall), passes with all137 pins fixed.
+No bespoke runtime harness or broader ownership/route claim. Complete SPC
+command/process measurement saves only60 lines and remains parked in TEMP.
+
 Bang native ownership assessment (2026-10-20): Bang_Main remains the sole
 maintained gameplay Call into the emulated 65816. The bank A3 log names the
 three parameter-selected entries BB2B/BB4A/BB66 as electricity/shell/core;

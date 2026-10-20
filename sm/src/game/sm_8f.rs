@@ -815,11 +815,11 @@ pub unsafe fn RoomDefStateSelect_TourianBoss01(k: u16, game: &mut Game) -> u16 {
     if CheckBossBitForCurArea(1u16, game) & 1 == 0 {
         return (k).wrapping_add(2u16);
     }
-    let v1: *const u16 = RomPtr_8F(k, game) as *const u16;
+    let v1 = RomPtr_8F(k, game) as *const u16;
     RoomDefStateSelect_Finish(*v1, game)
 }
 pub unsafe fn RoomDefStateSelect_IsEventSet(k: u16, game: &mut Game) -> u16 {
-    let v1: *const u8 = RomPtr_8F(k, game);
+    let v1 = RomPtr_8F(k, game);
     if CheckEventHappened(*v1 as u16, game) != 0 {
         RoomDefStateSelect_Finish(*(v1.offset(1) as *mut u16), game)
     } else {
@@ -827,7 +827,7 @@ pub unsafe fn RoomDefStateSelect_IsEventSet(k: u16, game: &mut Game) -> u16 {
     }
 }
 pub unsafe fn RoomDefStateSelect_IsBossDead(k: u16, game: &mut Game) -> u16 {
-    let v1: *const u8 = RomPtr_8F(k, game);
+    let v1 = RomPtr_8F(k, game);
     if CheckBossBitForCurArea(*v1 as u16, game) & 1 != 0 {
         RoomDefStateSelect_Finish(*(v1.offset(1) as *mut u16), game)
     } else {
@@ -838,14 +838,14 @@ pub unsafe fn RoomDefStateSelect_MorphBallMissiles(k: u16, game: &mut Game) -> u
     if (ram_word!(game, collected_items) & 4) == 0 || ram_word!(game, samus_max_missiles) == 0 {
         return (k).wrapping_add(2u16);
     }
-    let v1: *const u16 = RomPtr_8F(k, game) as *const u16;
+    let v1 = RomPtr_8F(k, game) as *const u16;
     RoomDefStateSelect_Finish(*v1, game)
 }
 pub unsafe fn RoomDefStateSelect_PowerBombs(k: u16, game: &mut Game) -> u16 {
     if ram_word!(game, samus_max_power_bombs) == 0 {
         return (k).wrapping_add(2u16);
     }
-    let v1: *const u16 = RomPtr_8F(k, game) as *const u16;
+    let v1 = RomPtr_8F(k, game) as *const u16;
     RoomDefStateSelect_Finish(*v1, game)
 }
 crate::game::address_dispatch! {
@@ -867,8 +867,7 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn RunRoomSetupCode(game: &mut Game) {
-    let mut RoomDefRoomstate: *mut RoomDefRoomstate =
-        get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
+    let mut RoomDefRoomstate = get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
     if (*RoomDefRoomstate).room_setup_code != 0 {
         CallRoomSetupCode(
             (((*RoomDefRoomstate).room_setup_code) as u32) | (0x8f0000u32),
@@ -924,7 +923,7 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn RunDoorSetupCode(game: &mut Game) {
-    let DD: *mut DoorDef = get_DoorDef(ram_word!(game, door_def_ptr), game);
+    let DD = get_DoorDef(ram_word!(game, door_def_ptr), game);
     if (*DD).door_setup_code != 0 {
         CallDoorDefSetupCode((((*DD).door_setup_code) as u32) | (0x8f0000u32), game);
     }

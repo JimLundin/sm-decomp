@@ -142,13 +142,13 @@ pub unsafe fn Enemy_ClearAiPreInstr_B3(k: u16, jp: *const u16, game: &mut Game) 
     jp
 }
 pub unsafe fn UnusedSpinningTurtleEye_Init(game: &mut Game) {
-    let v0: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
+    let v0 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     (*v0).properties = ((*v0).properties) | ((kEnemyProps_DisableSamusColl) as u16);
     (*v0).current_instruction = addr_kUnusedSpinningTurtleEye_Ilist_86A7 as u16;
 }
 pub fn UnusedSpinningTurtleEye_Main() {}
 pub unsafe fn BrinstarPipeBug_Init(game: &mut Game) {
-    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     (*PipeBug).pbg_var_B = (*PipeBug).base.x_pos;
     let y_pos: u16 = (*PipeBug).base.y_pos;
     (*PipeBug).pbg_var_C = y_pos;
@@ -162,7 +162,7 @@ pub unsafe fn BrinstarPipeBug_Init(game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarPipeBug_Main(game: &mut Game) {
-    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     CallEnemyPreInstr((((*PipeBug).pbg_var_F) as u32) | (0xb30000u32), game);
 }
 pub unsafe fn BrinstarPipeBug_PreInstr_1(k: u16, game: &mut Game) {
@@ -174,7 +174,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_1(k: u16, game: &mut Game) {
 pub unsafe fn BrinstarPipeBug_PreInstr_2(k: u16, game: &mut Game) {
     let mut SamusEnemyDelta_Y: i16 = GetSamusEnemyDelta_Y(k, game) as i16;
     if SamusEnemyDelta_Y < 0i16 && SamusEnemyDelta_Y as i32 + 96i32 & 0x8000i32 == 0 {
-        let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
+        let PipeBug = Get_PipeBug(k as i32, game);
         let a: u16 = GetSamusEnemyDelta_X(k, game);
         (*PipeBug).pbg_var_A = ((*PipeBug).pbg_var_A & 0x7fff | a & 0x8000);
         if abs16(((*PipeBug).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos))) < 0x40u16 {
@@ -194,7 +194,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_2(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarPipeBug_PreInstr_3(k: u16, game: &mut Game) {
-    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
+    let PipeBug = Get_PipeBug(k as i32, game);
     let fresh7 = (*PipeBug).base.y_subpos;
     (*PipeBug).base.y_subpos = (*PipeBug).base.y_subpos.wrapping_sub(1);
     let v2: bool = fresh7 != 0u16;
@@ -208,7 +208,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_3(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarPipeBug_PreInstr_4(k: u16, game: &mut Game) {
-    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
+    let PipeBug = Get_PipeBug(k as i32, game);
     if ((*PipeBug).pbg_var_A & 0x8000) == 0 {
         (*PipeBug).base.x_subpos = (*PipeBug).base.x_subpos;
         (*PipeBug).base.x_pos = ((*PipeBug).base.x_pos).wrapping_add(2u16);
@@ -231,7 +231,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_4(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarPipeBug_PreInstr_5(k: u16, game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
+    let E = Get_PipeBug(k as i32, game);
     let fresh8 = (*E).pbg_var_D;
     (*E).pbg_var_D = (*E).pbg_var_D.wrapping_sub(1);
     if fresh8 == 1u16 {
@@ -239,7 +239,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_5(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarPipeBug_Func_1(game: &mut Game) {
-    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     let pbg_var_E: u16 = (*PipeBug).pbg_var_E;
     if pbg_var_E != (*PipeBug).pbg_var_01 {
         (*PipeBug).pbg_var_01 = pbg_var_E;
@@ -252,7 +252,7 @@ pub unsafe fn BrinstarPipeBug_Func_1(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Init(game: &mut Game) {
-    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     (*PipeBug).pbg_var_D = (*PipeBug).base.x_pos;
     (*PipeBug).pbg_var_E = (*PipeBug).base.y_pos;
     (*PipeBug).base.properties = ((*PipeBug).base.properties) | ((kEnemyProps_Invisible) as u16);
@@ -282,7 +282,7 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn NorfairPipeBug_Main(game: &mut Game) {
-    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     CallBugInstr(
         (((*PipeBug).pbg_var_A) as u32) | (0xb30000u32),
         ram_word!(game, cur_enemy_index),
@@ -292,8 +292,7 @@ pub unsafe fn NorfairPipeBug_Main(game: &mut Game) {
 }
 pub unsafe fn NorfairPipeBug_8BA8(game: &mut Game) {
     if CheckIfEnemyIsOnScreen(game) != 0 {
-        let PipeBug: *mut Enemy_PipeBug =
-            Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+        let PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
         (*PipeBug).base.properties =
             ((*PipeBug).base.properties) | ((kEnemyProps_Invisible) as u16);
         (*PipeBug).pbg_var_A = ((0xb38bcdi32) as u16);
@@ -324,7 +323,7 @@ pub unsafe fn NorfairPipeBug_Func_1(game: &mut Game) {
 }
 pub unsafe fn NorfairPipeBug_Func_2(game: &mut Game) {
     let k: i32 = ram_word!(game, cur_enemy_index) as i32;
-    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     if IsSamusWithinEnemy_X(
         ram_word!(game, cur_enemy_index),
         *(&raw mut (*PipeBug).pbg_parameter_2 as *mut u8).offset(0) as u16,
@@ -379,7 +378,7 @@ pub unsafe fn NorfairPipeBug_Func_3(k: u16, game: &mut Game) {
     (*Get_PipeBug(k as i32 + 256i32, game)).pbg_var_F = ((0xb38dd2i32) as u16);
 }
 pub unsafe fn NorfairPipeBug_Func_4(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.properties = ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
     AddToHiLo(
         &raw mut (*E).base.y_pos,
@@ -400,12 +399,12 @@ pub unsafe fn NorfairPipeBug_Func_4(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Func_5(k: u16, game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).pbg_var_C = (*E).pbg_var_C.wrapping_add(1);
     (*E).pbg_var_A = ((0xb38e5ai32) as u16);
 }
 pub unsafe fn NorfairPipeBug_Func_6(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).pbg_var_C = (*E).pbg_var_C.wrapping_add(1);
     AddToHiLo(
         &raw mut (*E).base.y_pos,
@@ -420,7 +419,7 @@ pub unsafe fn NorfairPipeBug_Func_6(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Func_7(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).pbg_var_C = (*E).pbg_var_C.wrapping_add(1);
     AddToHiLo(
         &raw mut (*E).base.y_pos,
@@ -435,7 +434,7 @@ pub unsafe fn NorfairPipeBug_Func_7(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Func_8(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).pbg_var_C = (*E).pbg_var_C.wrapping_add(1);
     AddToHiLo(
         &raw mut (*E).base.y_pos,
@@ -450,7 +449,7 @@ pub unsafe fn NorfairPipeBug_Func_8(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Func_9(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).pbg_var_C = (*E).pbg_var_C.wrapping_add(1);
     AddToHiLo(
         &raw mut (*E).base.y_pos,
@@ -465,7 +464,7 @@ pub unsafe fn NorfairPipeBug_Func_9(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Func_10(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     let v2: i32 = (*E).pbg_var_B as i32 >> 1i32;
     AddToHiLo(
         &raw mut (*E).base.x_pos,
@@ -475,7 +474,7 @@ pub unsafe fn NorfairPipeBug_Func_10(game: &mut Game) {
     );
 }
 pub unsafe fn NorfairPipeBug_Func_11(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     let v2: i32 = (*E).pbg_var_B as i32 >> 1i32;
     AddToHiLo(
         &raw mut (*E).base.x_pos,
@@ -486,7 +485,7 @@ pub unsafe fn NorfairPipeBug_Func_11(game: &mut Game) {
 }
 pub fn sub_B38E56() {}
 pub unsafe fn NorfairPipeBug_Func_12(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).pbg_var_C = (*E).pbg_var_C.wrapping_add(1);
     if (((*E).pbg_var_C) as i16).wrapping_sub(((*E).pbg_var_02) as i16) >= 0i16 {
         (*E).pbg_var_C = 0u16;
@@ -501,7 +500,7 @@ pub unsafe fn NorfairPipeBug_Func_12(game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarYellowPipeBug_Init(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).pbg_var_07 = (*E).base.x_pos;
     (*E).pbg_var_08 = (*E).base.y_pos;
     set_fields! {[(*E).base], 0u16; x_subpos, y_subpos}
@@ -520,7 +519,7 @@ pub unsafe fn BrinstarYellowPipeBug_Init(game: &mut Game) {
     (*E).pbg_var_06 = 0u16;
 }
 pub unsafe fn BrinstarYellowPipeBug_Main(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     CallBugInstr(
         (((*E).pbg_var_A) as u32) | (0xb30000u32),
         ram_word!(game, cur_enemy_index),
@@ -528,7 +527,7 @@ pub unsafe fn BrinstarYellowPipeBug_Main(game: &mut Game) {
     );
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_1(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
 
     let samus_in_x_range: bool = if (*E).pbg_parameter_1 != 0 {
         let mut SamusEnemyDelta_X: i16 =
@@ -548,7 +547,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_1(game: &mut Game) {
     };
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_2(k: u16, game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
+    let E = Get_PipeBug(k as i32, game);
     let v2: u16 = ((*E).pbg_var_20).wrapping_sub(1u16);
     (*E).pbg_var_20 = v2;
     if v2 == 0 {
@@ -563,7 +562,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_2(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_3(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     BrinstarYellowPipeBug_Func_4(ram_word!(game, cur_enemy_index), game);
     if CheckIfEnemyIsOnScreen(game) != 0 {
         (*E).base.x_pos = (*E).pbg_var_07;
@@ -586,7 +585,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_3(game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_4(k: u16, game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
+    let E = Get_PipeBug(k as i32, game);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
@@ -594,7 +593,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_4(k: u16, game: &mut Game) {
     );
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_5(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     BrinstarYellowPipeBug_Func_6(ram_word!(game, cur_enemy_index), game);
     if CheckIfEnemyIsOnScreen(game) != 0 {
         (*E).base.x_pos = (*E).pbg_var_07;
@@ -617,7 +616,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_5(game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_6(k: u16, game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
+    let E = Get_PipeBug(k as i32, game);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
@@ -625,7 +624,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_6(k: u16, game: &mut Game) {
     );
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_7(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     if CheckIfEnemyIsOnScreen(game) != 0 {
         (*E).base.x_pos = (*E).pbg_var_07;
         (*E).base.y_pos = (*E).pbg_var_08;
@@ -653,7 +652,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_7(game: &mut Game) {
     };
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_8(game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     if CheckIfEnemyIsOnScreen(game) != 0 {
         (*E).base.x_pos = (*E).pbg_var_07;
         (*E).base.y_pos = (*E).pbg_var_08;
@@ -681,7 +680,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_8(game: &mut Game) {
     };
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_9(k: u16, game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
+    let E = Get_PipeBug(k as i32, game);
     (*E).pbg_var_E = (*E).pbg_var_E.wrapping_add(1);
     let v3: i32 = 8i32 * (*E).pbg_var_E as i32 >> 1i32;
     AddToHiLo(
@@ -692,7 +691,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_9(k: u16, game: &mut Game) {
     );
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_10(k: u16, game: &mut Game) {
-    let E: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
+    let E = Get_PipeBug(k as i32, game);
     (*E).pbg_var_E = (*E).pbg_var_E.wrapping_sub(1);
     if ((*E).pbg_var_E & 0x8000) != 0 {
         set_fields! {[(*E)], 0u16; pbg_var_E, pbg_var_F}
@@ -707,57 +706,57 @@ pub unsafe fn BrinstarYellowPipeBug_Func_10(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn Botwoon_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_width = 8u16;
     (*E).base.y_height = 16u16;
     jp
 }
 pub unsafe fn Botwoon_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     set_fields! {[(*E).base], 12u16; x_width, y_height}
     jp
 }
 pub unsafe fn Botwoon_Instr_3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_width = 16u16;
     (*E).base.y_height = 8u16;
     jp
 }
 pub unsafe fn Botwoon_Instr_4(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     set_fields! {[(*E).base], 12u16; x_width, y_height}
     jp
 }
 pub unsafe fn Botwoon_Instr_5(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_width = 8u16;
     (*E).base.y_height = 16u16;
     jp
 }
 pub unsafe fn Botwoon_Instr_6(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_width = 8u16;
     (*E).base.y_height = 16u16;
     jp
 }
 pub unsafe fn Botwoon_Instr_7(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     set_fields! {[(*E).base], 12u16; x_width, y_height}
     jp
 }
 pub unsafe fn Botwoon_Instr_8(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_width = 16u16;
     (*E).base.y_height = 8u16;
     jp
 }
 pub unsafe fn Botwoon_Instr_9(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     set_fields! {[(*E).base], 12u16; x_width, y_height}
     jp
 }
 pub unsafe fn Botwoon_Instr_10(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_width = 8u16;
     (*E).base.y_height = 16u16;
     jp
@@ -774,7 +773,7 @@ pub unsafe fn Botwoon_QueueExplosionSfx(game: &mut Game) {
     QueueSfx2_Max6(0x24u16, game);
 }
 pub unsafe fn Botwoon_Init(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*ram_ptr!(game; 0xd828, 4) & 2) != 0 {
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0xfu8, 0x4u8, 0xb797 as VoidP),
@@ -846,7 +845,7 @@ crate::game::address_dispatch! {
 }
 pub unsafe fn Botwoon_Main(game: &mut Game) {
     Botwoon_Func_3(game);
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     CallBotwoonFuncVarD(
         (((*E).botwoon_var_D) as u32) | (0xb30000u32),
         ram_word!(game, cur_enemy_index),
@@ -855,7 +854,7 @@ pub unsafe fn Botwoon_Main(game: &mut Game) {
     Botwoon_HealthBasedPalHandling(game);
 }
 pub unsafe fn Botwoon_Func_1(k: u16, game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(k as i32, game);
+    let E = Get_Botwoon(k as i32, game);
     if (crate::rtl::rom_table_word!(game, 0xb39675, (*E).botwoon_var_3F as isize)
         & NextRandom(game))
         == 0
@@ -864,7 +863,7 @@ pub unsafe fn Botwoon_Func_1(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_2(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).botwoon_var_2F == 0
         && (*E).botwoon_var_2E != 0u16
         && (*E).botwoon_var_33 == 0
@@ -876,7 +875,7 @@ pub unsafe fn Botwoon_Func_2(game: &mut Game) {
     (*E).botwoon_var_2E = 0u16;
 }
 pub unsafe fn Botwoon_Func_3(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).botwoon_var_2F != 0 && (*E).botwoon_var_3E != 0 {
         (*E).botwoon_var_30 = 1u16;
         (*E).botwoon_var_D = ((0xb39a46i32) as u16);
@@ -885,7 +884,7 @@ pub unsafe fn Botwoon_Func_3(game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_4(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(0i32, game);
+    let E = Get_Botwoon(0i32, game);
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
 }
 pub unsafe fn Botwoon_Func_5(game: &mut Game) {
@@ -903,7 +902,7 @@ pub unsafe fn Botwoon_Func_5(game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_HealthBasedPalHandling(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).botwoon_var_4F != 16u16
         && (((*E).base.health) as i16).wrapping_sub(
             (crate::rtl::rom_table_word!(
@@ -932,7 +931,7 @@ pub unsafe fn Botwoon_HealthBasedPalHandling(game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_6(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     let v1: u16 = ((*E).botwoon_var_20).wrapping_sub(1u16);
     (*E).botwoon_var_20 = v1;
     if v1 == 0 {
@@ -940,7 +939,7 @@ pub unsafe fn Botwoon_Func_6(game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_7(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).botwoon_var_3C != 0 {
         (*E).botwoon_var_3C = 0u16;
         let mut r18: u8 = 0u8;
@@ -967,7 +966,7 @@ pub unsafe fn Botwoon_Func_7(game: &mut Game) {
     };
 }
 pub unsafe fn Botwoon_Func_8(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).botwoon_var_D = ((0xb399a4i32) as u16);
     (*E).botwoon_var_E = ((0xb3e250i32) as u16);
     (*E).botwoon_var_21 = 0u16;
@@ -976,7 +975,7 @@ pub unsafe fn Botwoon_Func_8(game: &mut Game) {
     Botwoon_Func_10(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn Botwoon_Func_9(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).botwoon_var_D = ((0xb399e4i32) as u16);
     (*E).botwoon_var_F = ((0xb39e7di32) as u16);
     (*E).botwoon_var_21 = 48u16;
@@ -984,7 +983,7 @@ pub unsafe fn Botwoon_Func_9(game: &mut Game) {
 }
 pub unsafe fn Botwoon_Func_10(k: u16, game: &mut Game) {
     Botwoon_Func_11(k, game);
-    let E: *mut Enemy_Botwoon = Get_Botwoon(k as i32, game);
+    let E = Get_Botwoon(k as i32, game);
     let r18: u16 = (if (*E).botwoon_var_33 != 0u16 {
         128i32
     } else {
@@ -995,7 +994,7 @@ pub unsafe fn Botwoon_Func_10(k: u16, game: &mut Game) {
         + 4i32 * (*E).botwoon_var_37 as i32) as u16;
 }
 pub unsafe fn Botwoon_Func_11(k: u16, game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(k as i32, game);
+    let E = Get_Botwoon(k as i32, game);
     if (*E).botwoon_var_33 == 0 {
         (*E).botwoon_var_3F = 0u16;
         let mut health: i16 = (*E).base.health as i16;
@@ -1012,7 +1011,7 @@ pub unsafe fn Botwoon_Func_11(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_12(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).botwoon_var_3C != 0 {
         (*E).botwoon_var_3C = 0u16;
         (*E).botwoon_var_D = ((0xb3989di32) as u16);
@@ -1030,7 +1029,7 @@ pub unsafe fn Botwoon_Func_12(game: &mut Game) {
     };
 }
 pub unsafe fn Botwoon_Func_13(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).botwoon_var_21 != 0 {
         (*E).botwoon_var_2E = 0u16;
         CallEnemyPreInstr((((*E).botwoon_var_F) as u32) | (0xb30000u32), game);
@@ -1054,7 +1053,7 @@ pub unsafe fn Botwoon_Func_13(game: &mut Game) {
     };
 }
 pub unsafe fn Botwoon_Func_14(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     let v1: u16 = ((*E).botwoon_var_22).wrapping_add(1u16);
     (*E).botwoon_var_22 = v1;
     if v1 as i32 - 256i32 & 0x8000i32 == 0 {
@@ -1062,7 +1061,7 @@ pub unsafe fn Botwoon_Func_14(game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_15(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     let v2: i32 = 8i32 * *(&raw mut (*E).botwoon_var_28 as *mut u8).offset(1isize) as i32 >> 1i32;
     AddToHiLo(
         &raw mut (*E).base.y_pos,
@@ -1085,7 +1084,7 @@ pub unsafe fn Botwoon_Func_15(game: &mut Game) {
     };
 }
 pub unsafe fn Botwoon_Func_16(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).botwoon_var_5F != 0 {
         (*E).botwoon_var_D = ((0xb39af9i32) as u16);
         Botwoon_Func_17(ram_word!(game, cur_enemy_index), game);
@@ -1097,11 +1096,11 @@ pub unsafe fn Botwoon_Func_17(k: u16, game: &mut Game) {
         game,
     );
     Enemy_ItemDrop_Botwoon(k, game);
-    let E: *mut Enemy_Botwoon = Get_Botwoon(k as i32, game);
+    let E = Get_Botwoon(k as i32, game);
     set_fields! {[(*E)], 0u16; botwoon_var_23, botwoon_var_24, botwoon_var_25}
 }
 pub unsafe fn Botwoon_Func_18(k: u16, game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(k as i32, game);
+    let E = Get_Botwoon(k as i32, game);
     if (*E).botwoon_var_23 as i32 - 192i32 & 0x8000i32 != 0 {
         if (*E).botwoon_var_23 as i32 - 64i32 & 0x8000i32 == 0 {
             let v2: i16 = (((*E).botwoon_var_24) as i16).wrapping_sub(1i16);
@@ -1137,7 +1136,7 @@ pub unsafe fn Botwoon_Func_18(k: u16, game: &mut Game) {
 pub unsafe fn Botwoon_Func_19(game: &mut Game) {
     let pt: Point16U = Botwoon_Func_20(ram_word!(game, cur_enemy_index), game);
     let v1: u16 = CalculateAngleFromXY(pt.x, pt.y, game);
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).botwoon_var_39 = v1;
     (*E).botwoon_var_3A = ((64u8).wrapping_sub((v1) as u8)) as u16;
     if (*E).botwoon_var_33 == (*E).botwoon_var_34 {
@@ -1148,7 +1147,7 @@ pub unsafe fn Botwoon_Func_19(game: &mut Game) {
     };
 }
 pub unsafe fn Botwoon_Func_20(k: u16, game: &mut Game) -> Point16U {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(k as i32, game);
+    let E = Get_Botwoon(k as i32, game);
     let v2: i32 = (*E).botwoon_var_37 as i32 >> 1i32;
     let v3: u16 = (crate::rtl::rom_table_word!(game, 0xb3949b, v2 as isize) as i32 + 4i32
         - (*E).base.x_pos as i32) as u16;
@@ -1173,12 +1172,12 @@ pub unsafe fn Botwoon_Func_20(k: u16, game: &mut Game) -> Point16U {
     Point16U { x: r18, y: r20 }
 }
 pub unsafe fn Botwoon_Func_21(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     let pt: Point32 = ConvertAngleToXy((*E).botwoon_var_3A, (*E).botwoon_var_38, game);
     EnemyFunc_B691((*E).botwoon_var_3A, pt, game);
 }
 pub unsafe fn Botwoon_Func_22(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     let botwoon_var_B: u16 = (*E).botwoon_var_B;
     *((ram_ptr!(game, u16; 0x9000) as *mut u8).offset(botwoon_var_B as i32 as isize) as *mut u16) =
         (*E).base.x_pos;
@@ -1186,11 +1185,11 @@ pub unsafe fn Botwoon_Func_22(game: &mut Game) {
         (*E).base.y_pos;
 }
 pub unsafe fn Botwoon_Func_23(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     let mut r18: u16 = ((*E).botwoon_var_B as i32 - (*E).botwoon_var_C as i32 & 0x3ffi32) as u16;
     let mut n: i32 = 24i32;
     loop {
-        let ET: *mut Enemy_Botwoon = Get_Botwoon(n, game);
+        let ET = Get_Botwoon(n, game);
         let botwoo_var_00: u16 = (*ET).botwoon_var_00;
         if (*E).botwoon_var_36 == r18 {
             let v2: u16 = n as u16;
@@ -1236,15 +1235,15 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_24(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).botwoon_var_B = ((*E).botwoon_var_B as i32 + 4i32 & 0x3ffi32) as u16;
 }
 pub unsafe fn Botwoon_Func_25(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     let mut n: i32 = 24i32;
     loop {
         let mut r24: u16 = 0u16;
-        let ERR: *mut Enemy_Botwoon = Get_Botwoon(n, game);
+        let ERR = Get_Botwoon(n, game);
         let botwoo_var_00: u16 = (*ERR).botwoon_var_00;
         if (*ERR).botwoon_var_10 != 0 {
             r24 = 256u16;
@@ -1277,7 +1276,7 @@ pub unsafe fn Botwoon_Func_25(game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_26(k: u16, game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     let x: u16 = ((*E).base.x_pos).wrapping_sub((*E).botwoon_var_56);
     let y: u16 = ((*E).base.y_pos).wrapping_sub((*E).botwoon_var_57);
     let r22: u16 = CalculateAngleFromXY(x, y, game);
@@ -1317,7 +1316,7 @@ pub unsafe fn Botwoon_Func_26(k: u16, game: &mut Game) {
     (*E).botwoon_var_51 = (*E).base.y_pos;
 }
 pub unsafe fn Botwoon_Func_27(k: u16, game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.layer = 2u16;
     let v2: u16 = CalculateAngleOfSamusFromEnemy(ram_word!(game, cur_enemy_index), game);
     (*E).botwoon_var_3D = v2;
@@ -1338,7 +1337,7 @@ pub unsafe fn Botwoon_Func_27(k: u16, game: &mut Game) {
     CallEnemyPreInstr((((*E).botwoon_var_F) as u32) | (0xb30000u32), game);
 }
 pub unsafe fn Botwoon_Func_28(k: u16, game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).botwoon_var_5A != 0 {
         *ram_ptr!(game; 0x60b) = (((*E).botwoon_var_3D) as u8).wrapping_sub(32u8);
         let varE32: u16 = g_word_B39E77[(*E).botwoon_var_3F as usize] as u16;
@@ -1357,7 +1356,7 @@ pub unsafe fn Botwoon_Func_28(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_29(k: u16, game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     *ram_ptr!(game; 0x60b) = (((*E).botwoon_var_3D) as u8).wrapping_sub(16u8);
     let varE32: u16 = g_word_B39E77[(*E).botwoon_var_3F as usize] as u16;
     for _ in 0i32..3i32 {
@@ -1374,7 +1373,7 @@ pub unsafe fn Botwoon_Func_29(k: u16, game: &mut Game) {
         ((0xb39f7ai32) as u16);
 }
 pub unsafe fn Botwoon_Func_30(k: u16, game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(k as i32, game);
+    let E = Get_Botwoon(k as i32, game);
     let v2: i16 = (((*E).botwoon_var_21) as i16).wrapping_sub(1i16);
     (*E).botwoon_var_21 = v2 as u16;
     if v2 < 0i16 {
@@ -1383,7 +1382,7 @@ pub unsafe fn Botwoon_Func_30(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_31(k: u16, game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*Get_Botwoon(k as i32, game)).botwoon_var_35 == 0 {
         let mut n: i32 = 24i32;
         loop {
@@ -1418,14 +1417,14 @@ pub unsafe fn Botwoon_Func_31(k: u16, game: &mut Game) {
 }
 pub unsafe fn Botwoon_Touch(game: &mut Game) {
     Enemy_NormalTouchAI_SkipDeathAnim_B3(game);
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).base.health == 0 {
         (*E).botwoon_var_2F = 1u16;
         Botwoon_Func_4(game);
     }
 }
 pub unsafe fn Botwoon_Shot(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).botwoon_var_4C = (*E).base.health;
     Enemy_NormalShotAI_SkipSomeParts_B3(game);
     if (*E).base.health == 0 {
@@ -1435,17 +1434,17 @@ pub unsafe fn Botwoon_Shot(game: &mut Game) {
 }
 pub unsafe fn Botwoon_Powerbomb(game: &mut Game) {
     Enemy_NormalPowerBombAI_SkipDeathAnim_B3(game);
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).base.health == 0 {
         (*E).botwoon_var_2F = 1u16;
         Botwoon_Func_4(game);
     }
 }
 pub unsafe fn Botwoon_Func_32(game: &mut Game) {
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).botwoon_var_E = addr_loc_B3E28C as u16;
     (*E).botwoon_var_3C = 0u16;
-    let v1: *const u8 = RomPtr_B3(
+    let v1 = RomPtr_B3(
         ((*E).botwoon_var_40 as i32 + addr_stru_B3E150 as i32) as u16,
         game,
     );
@@ -1461,7 +1460,7 @@ pub unsafe fn Botwoon_Func_32(game: &mut Game) {
 pub unsafe fn Botwoon_Func_33(game: &mut Game) {
     let mut x: u16 = 0u16;
     let mut y: u16 = 0u16;
-    let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     let mut n: i32 = (*E).botwoon_var_38 as i32;
     let step: i32 = if ((*E).botwoon_var_44 & 0x8000) == 0 {
         2i32
@@ -1469,7 +1468,7 @@ pub unsafe fn Botwoon_Func_33(game: &mut Game) {
         -2i32
     };
     loop {
-        let v6: *const u8 = RomPtr_B3((*E).botwoon_var_42, game);
+        let v6 = RomPtr_B3((*E).botwoon_var_42, game);
         let v7: u16 = SignExtend8(*v6 as u16);
         let mut v8: u16 = 0;
         if v7 == 0xff80u16 || {
@@ -1503,17 +1502,16 @@ pub unsafe fn EscapeEtecoon_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> 
     }
 }
 pub unsafe fn EscapeEtecoon_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(k as i32, game);
+    let E = Get_EscapeEtecoon(k as i32, game);
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp.offset(0));
     jp.offset(1)
 }
 pub unsafe fn EscapeEtecoon_Main(game: &mut Game) {
-    let E: *mut Enemy_EscapeEtecoon =
-        Get_EscapeEtecoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_EscapeEtecoon(ram_word!(game, cur_enemy_index) as i32, game);
     CallEnemyPreInstr((((*E).een_var_F) as u32) | (0xb30000u32), game);
 }
 pub unsafe fn EscapeEtecoon_E65C(k: u16, game: &mut Game) {
-    let E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(k as i32, game);
+    let E = Get_EscapeEtecoon(k as i32, game);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
@@ -1528,7 +1526,7 @@ pub unsafe fn EscapeEtecoon_E670(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn EscapeEtecoon_E680(k: u16, game: &mut Game) {
-    let E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(k as i32, game);
+    let E = Get_EscapeEtecoon(k as i32, game);
     if Enemy_MoveRight_IgnoreSlopes(k, ((*E).een_var_A as i16 as i32) << 8i32, game) != 0 {
         (*E).base.instruction_timer = 1u16;
         let v3: bool = (-((*E).een_var_A as i32) & 0x8000i32) != 0i32;
@@ -1545,8 +1543,7 @@ pub unsafe fn EscapeEtecoon_E680(k: u16, game: &mut Game) {
     Enemy_MoveDown(k, (1i16 as i32) << 16i32, game);
 }
 pub unsafe fn EscapeEtecoon_Init(game: &mut Game) {
-    let E: *mut Enemy_EscapeEtecoon =
-        Get_EscapeEtecoon(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_EscapeEtecoon(ram_word!(game, cur_enemy_index) as i32, game);
     if CheckEventHappened(0xfu16, game) != 0 {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
     } else {
@@ -1578,20 +1575,17 @@ pub unsafe fn EscapeDachora_Instr_3(k: u16, jp: *const u16, game: &mut Game) -> 
     }
 }
 pub unsafe fn EscapeDachora_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_EscapeDachora =
-        Get_EscapeDachora(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_EscapeDachora(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(6u16);
     jp
 }
 pub unsafe fn EscapeDachora_Instr_4(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E: *mut Enemy_EscapeDachora =
-        Get_EscapeDachora(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_EscapeDachora(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(6u16);
     jp
 }
 pub unsafe fn EscapeDachora_Init(game: &mut Game) {
-    let E: *mut Enemy_EscapeDachora =
-        Get_EscapeDachora(ram_word!(game, cur_enemy_index) as i32, game);
+    let E = Get_EscapeDachora(ram_word!(game, cur_enemy_index) as i32, game);
     if CheckEventHappened(0xfu16, game) != 0 {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
     } else {

@@ -259,7 +259,7 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
 pub unsafe fn Samus_LookupTransitionTable(game: &mut Game) {
     if ram_word!(game, joypad1_lastkeys) != 0 {
         let pair: Pair_R18_R20 = TranslateCustomControllerBindingsToDefault(game);
-        let mut pe: *mut PoseEntry = get_PoseEntry(
+        let mut pe = get_PoseEntry(
             crate::rtl::rom_table_word!(game, 0x919ee2, ram_word!(game, samus_pose) as isize),
             game,
         );
@@ -1606,7 +1606,7 @@ unsafe fn Xray_GetXrayedBlock(k: u16, game: &mut Game) -> *const u8 {
             break;
         }
         if value == r40 {
-            let mut p: *const u8 = RomPtr_91(
+            let mut p = RomPtr_91(
                 (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91d2d6)) as *mut XrayBlockData)
                     .offset(i as isize))
                 .addr,
@@ -1632,9 +1632,8 @@ pub unsafe fn Xray_SetupStage4_Func2(dst_r22: u16, r34: u16, game: &mut Game) {
     if r34 == 0u16 {
         return;
     }
-    let jp: *const u8 = Xray_GetXrayedBlock((r34).wrapping_sub(1u16), game);
-    let dst: *mut u16 = (&raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps as *mut u16
-        as *mut u8)
+    let jp = Xray_GetXrayedBlock((r34).wrapping_sub(1u16), game);
+    let dst = (&raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps as *mut u16 as *mut u8)
         .offset(dst_r22 as i32 as isize) as *mut u16;
     if jp.is_null() {
         return;
@@ -1643,16 +1642,14 @@ pub unsafe fn Xray_SetupStage4_Func2(dst_r22: u16, r34: u16, game: &mut Game) {
         if *(jp as *mut u16) as i32 != 0x91cf6fi32 & 0xffffi32 {
             return;
         }
-        let src: *mut TileTable = (&raw mut (*(ram_ptr!(game, TileTables; 0xa000))).tables
-            as *mut TileTable)
+        let src = (&raw mut (*(ram_ptr!(game, TileTables; 0xa000))).tables as *mut TileTable)
             .offset(*(jp.offset(8) as *mut u16) as i32 as isize);
         *dst.offset(64) = (*src).top_left;
         *dst.offset(65) = (*src).top_right;
         *dst.offset(96) = (*src).bottom_left;
         *dst.offset(97) = (*src).bottom_right;
     }
-    let src_0: *mut TileTable = (&raw mut (*(ram_ptr!(game, TileTables; 0xa000))).tables
-        as *mut TileTable)
+    let src_0 = (&raw mut (*(ram_ptr!(game, TileTables; 0xa000))).tables as *mut TileTable)
         .offset(*(jp.offset(4) as *mut u16) as i32 as isize);
     *dst.offset(0) = (*src_0).top_left;
     *dst.offset(1) = (*src_0).top_right;
@@ -1665,7 +1662,7 @@ unsafe fn Xray_CombinedMove(dst_r22: u16, r36: u16, which_dir: bool, game: &mut 
     let mut r48: u16 = (ram_word!(game, level_data[r36])) & (0xf000u16);
     let mut step: i32 = *ram_ptr!(game; 0x16402, r36 as isize) as i8 as i32;
     if step != 0 {
-        let mut variable: *mut u16 = if which_dir { &raw mut y } else { &raw mut x };
+        let mut variable = if which_dir { &raw mut y } else { &raw mut x };
         loop {
             if ((*variable as i32 + step) as i16) < 0i16 {
                 Xray_Func13(dst_r22, 0xffu16, game);
@@ -1691,7 +1688,7 @@ unsafe fn Xray_CombinedMove(dst_r22: u16, r36: u16, which_dir: bool, game: &mut 
         .value
         == r48
     {
-        let mut t: *mut u16 = RomPtr_91(
+        let mut t = RomPtr_91(
             (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91d2d6)) as *mut XrayBlockData)
                 .offset(1))
             .addr,
@@ -1771,7 +1768,7 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn Xray_SetupStage4_Func3(r18: u16, r22: u16, r36: u16, game: &mut Game) {
-    let jp: *const u8 = Xray_GetXrayedBlock(r36, game);
+    let jp = Xray_GetXrayedBlock(r36, game);
     if !jp.is_null() {
         CallXrayFunc(
             ((*(jp as *mut u16)) as u32) | (0x910000u32),
@@ -1932,7 +1929,7 @@ pub unsafe fn CanXrayShowBlocks(game: &mut Game) -> bool {
     true_0 != 0
 }
 pub unsafe fn Xray_SetupStage6(game: &mut Game) {
-    let mut v1: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
+    let mut v1 = null_mut::<VramWriteEntry>();
     if CanXrayShowBlocks(game) {
         let v0: u16 = ram_word!(game, vram_write_queue_tail);
         v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
@@ -1946,7 +1943,7 @@ pub unsafe fn Xray_SetupStage6(game: &mut Game) {
     }
 }
 pub unsafe fn Xray_SetupStage7(game: &mut Game) {
-    let mut v1: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
+    let mut v1 = null_mut::<VramWriteEntry>();
     if CanXrayShowBlocks(game) {
         let v0: u16 = ram_word!(game, vram_write_queue_tail);
         v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);

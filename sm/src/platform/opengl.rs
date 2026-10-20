@@ -154,7 +154,7 @@ unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool 
         3_usize.wrapping_mul(size_of::<c_float>() as usize) as *mut c_void,
     );
     gl::EnableVertexAttribArray(1 as GLuint);
-    let mut vs_code: *const GLchar = b"#version 330 core\nlayout(location = 0) in vec3 aPos; layout(location = 1) in vec2 aTexCoord; out vec2 TexCoord; void main(void) { gl_Position = vec4(aPos, 1.0); TexCoord = vec2(aTexCoord.x, aTexCoord.y); }\0"
+    let mut vs_code = b"#version 330 core\nlayout(location = 0) in vec3 aPos; layout(location = 1) in vec2 aTexCoord; out vec2 TexCoord; void main(void) { gl_Position = vec4(aPos, 1.0); TexCoord = vec2(aTexCoord.x, aTexCoord.y); }\0"
         as *const u8 as *const GLchar;
     let vs: u32 = gl::CreateShader(GL_VERTEX_SHADER as GLenum) as u32;
     gl::ShaderSource(
@@ -179,7 +179,7 @@ unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool 
             &raw mut infolog as *mut c_char,
         );
     }
-    let mut fs_code: *const GLchar = b"#version 330 core\nout vec4 FragColor; in vec2 TexCoord; uniform sampler2D texture1; void main(void) { FragColor = texture(texture1, TexCoord); }\0"
+    let mut fs_code = b"#version 330 core\nout vec4 FragColor; in vec2 TexCoord; uniform sampler2D texture1; void main(void) { FragColor = texture(texture1, TexCoord); }\0"
         as *const u8 as *const GLchar;
     let fs: u32 = gl::CreateShader(GL_FRAGMENT_SHADER as GLenum) as u32;
     gl::ShaderSource(

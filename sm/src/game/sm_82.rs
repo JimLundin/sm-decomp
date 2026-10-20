@@ -810,7 +810,7 @@ pub unsafe fn CheckForNextDemo(game: &mut Game) {
 }
 pub unsafe fn LoadDemoRoomData(game: &mut Game) {
     set_ram_word!(game.door_def_ptr = 0u16);
-    let mut drd: *mut DemoRoomData = get_DemoRoomData(
+    let mut drd = get_DemoRoomData(
         (18i32 * ram_word!(game, demo_scene) as i32
             + crate::rtl::rom_table_word!(game, 0x82876c, ram_word!(game, demo_set) as isize)
                 as i32) as u16,
@@ -1194,7 +1194,7 @@ pub unsafe fn CreateOptionsMenuObject_(a: u16, j: u16, game: &mut Game) -> u8 {
             return 1u8;
         }
     }
-    let v5: *const u8 = RomPtr_82(j, game);
+    let v5 = RomPtr_82(j, game);
     let v6: i32 = v3 as i32 >> 1i32;
     set_ram_word!(game.optionsmenu_arr1[v6] = *(v5.offset(2) as *mut u16));
     set_ram_word!(game.cinematicspr_arr7[v6] = *(v5.offset(4) as *mut u16));
@@ -1248,7 +1248,7 @@ pub unsafe fn OptionsMenuFunc2(k: u16, game: &mut Game) {
     *fresh119 = (*fresh119).wrapping_sub(1);
     if fresh120 == 1u16 {
         let mut v4: u16 = ram_word!(game, cinematicspr_arr7[v2]);
-        let mut v5: *mut u16 = null_mut::<u16>();
+        let mut v5 = null_mut::<u16>();
         loop {
             v5 = RomPtr_82(v4, game) as *mut u16;
             if (*v5.offset(0) & 0x8000) == 0 {
@@ -1837,22 +1837,22 @@ unsafe fn render_map_tilemap(screen: MapScreen, game: &mut Game) {
     if ram_word!(game, area_index) as i32 - 7i32 & 0x8000i32 == 0 {
         v0 = 0u16;
     }
-    let r0: *const u16 = RomPtr(
+    let r0 = RomPtr(
         Load24(
             (game.g_rom.offset(crate::rtl::lorom_offset(0x82964a)) as *mut LongPtr)
                 .offset(v0 as isize),
         ),
         game,
     ) as *const u16;
-    let r3: *mut u16 = match screen {
+    let r3 = match screen {
         MapScreen::Pause => ram_ptr!(game, Ram4000; 0x4000) as *mut u16,
         MapScreen::FileSelect => ram_ptr!(game, Ram3000; 0x3000) as *mut u16,
     };
-    let mut r6: *const u16 = RomPtr_82(
+    let mut r6 = RomPtr_82(
         crate::rtl::rom_table_word!(game, 0x829717, v0 as isize),
         game,
     ) as *const u16;
-    let mut r9: *const u16 = ram_ptr!(game; 0x7f7) as *const u16;
+    let mut r9 = ram_ptr!(game; 0x7f7) as *const u16;
     if *ram_ptr!(game; 0xd908, ram_word!(game, area_index) as isize) != 0 {
         let mut mapped = u16::swap_bytes(*r6);
         r6 = r6.offset(1);
@@ -2008,8 +2008,7 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
     set_ram_word!(game.reg_BG1VOFS = -40i32 as u16);
     render_map_tilemap(MapScreen::FileSelect, game);
     let v16: u16 = ram_word!(game, vram_write_queue_tail);
-    let v17: *mut VramWriteEntry =
-        gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+    let v17 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v17).size = 4096u16;
     (*v17).src.addr = (ram_ptr!(game, Ram3000; 0x3000) as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
@@ -2018,7 +2017,7 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
     set_ram_word!(game.vram_write_queue_tail = (v16).wrapping_add(7u16));
 }
 pub unsafe fn DrawRoomSelectMapAreaLabel(dst: *mut u16, game: &mut Game) {
-    let v2: *const u16 = RomPtr_82(
+    let v2 = RomPtr_82(
         crate::rtl::rom_table_word!(game, 0x82965f, ram_word!(game, area_index) as isize),
         game,
     ) as *const u16;
@@ -2078,7 +2077,7 @@ crate::forward_calls! { unsafe fn (r0: *const u8) -> u16;
     DetermineBottommostMapColumn => find_map_edge(r0, MapEdge::Bottom);
 }
 pub unsafe fn DetermineMapScrollLimits(game: &mut Game) {
-    let mut r6: *const u8 = null::<u8>();
+    let mut r6 = null::<u8>();
     if ram_word!(game, has_area_map) != 0 {
         r6 = RomPtr_82(
             *(RomPtr_82(
@@ -2505,19 +2504,19 @@ pub unsafe fn UpdatePauseMenuLRStartVramTilemap(game: &mut Game) {
 }
 pub unsafe fn DrawPauseScreenSpriteAnim(a: u16, input_k: u16, input_j: u16, game: &mut Game) {
     let t: i32 = a as i32 - 1i32;
-    let v8: *mut u16 = RomPtr_RAM(
+    let v8 = RomPtr_RAM(
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0c4))
             as *mut PauseScreenSpriteAnimationData))
             .arr[t as usize],
         game,
     ) as *mut u16;
-    let v5: *mut u16 = RomPtr_RAM(
+    let v5 = RomPtr_RAM(
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0b2))
             as *mut PauseScreenSpriteAnimationData))
             .arr[t as usize],
         game,
     ) as *mut u16;
-    let v3: *const u8 = RomPtr_82(
+    let v3 = RomPtr_82(
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0e8))
             as *mut PauseScreenSpriteAnimationData))
             .arr[t as usize],
@@ -2542,7 +2541,7 @@ pub unsafe fn DrawPauseScreenSpriteAnim(a: u16, input_k: u16, input_j: u16, game
                 .arr[t as usize],
             game,
         ) as i32;
-    let v11: *const u8 = RomPtr_82(
+    let v11 = RomPtr_82(
         (r26 + crate::rtl::rom_table_word!(game, 0x82c1e4, t as isize) as i32) as u16,
         game,
     );
@@ -2601,7 +2600,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
         if ram_word!(game, reserve_health_mode) != 1u16 {
             v0 = addr_kEquipmentScreenTilemap_MANUAL as i32 as VoidP;
         }
-        let table: *mut u16 = RomPtr_82(v0, game) as *mut u16;
+        let table = RomPtr_82(v0, game) as *mut u16;
         let mut i: i32 = 0i32;
         while i < 4i32 {
             (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap[(i + 327i32) as usize] =
@@ -2875,7 +2874,7 @@ pub unsafe fn EquipmentScreenHudReserveAutoTilemap_On_BUGGY(game: &mut Game) {
     if ram_word!(game, samus_reserve_health) == 0 {
         v0 = -26217i32 as u16;
     }
-    let v1: *const u16 = RomPtr_82(v0, game) as *const u16;
+    let v1 = RomPtr_82(v0, game) as *const u16;
     set_ram_word!(game.hud_tilemap[8] = *v1);
     set_ram_word!(game.hud_tilemap[9] = *v1.offset(1));
     set_ram_word!(game.hud_tilemap[40] = *v1.offset(2));
@@ -3104,7 +3103,7 @@ pub unsafe fn WriteSamusWireframeTilemap(game: &mut Game) {
     {
         i = (i).wrapping_add(2u16);
     }
-    let mut src: *const u16 = RomPtr_82(
+    let mut src = RomPtr_82(
         crate::rtl::rom_table_word!(game, 0x82b25f, (i as i32 >> 1i32) as isize),
         game,
     ) as *const u16;
@@ -3128,7 +3127,7 @@ pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
         | ((ram_word!(game, collected_items)) | (ram_word!(game, collected_beams)))
         != 0
     {
-        let t: *mut u16 = RomPtr_82(
+        let t = RomPtr_82(
             (crate::rtl::rom_table_word!(
                 game,
                 0x82c18e,
@@ -3389,7 +3388,7 @@ pub unsafe fn EquipmentScreenCategory_ButtonResponse(r24: u16, game: &mut Game) 
                     + item * 2i32) as u16,
                 game,
             ) as *mut u16) as i32 as isize,);
-        let var: *mut u16 = RomPtr_RAM(
+        let var = RomPtr_RAM(
             crate::rtl::rom_table_word!(game, 0x82c03c, category as isize),
             game,
         ) as *mut u16;
@@ -3564,7 +3563,7 @@ pub unsafe fn DrawSimpleMapIcons(a: u16, k: u16, r3: u16, game: &mut Game) {
 }
 pub unsafe fn DrawMapIconsOfType(mut a: u16, r34: u16, mut r36: u16, r3: u16, game: &mut Game) {
     loop {
-        let v2: *const u16 = RomPtr_82(a, game) as *const u16;
+        let v2 = RomPtr_82(a, game) as *const u16;
         if (*v2 & 0x8000) != 0 {
             break;
         }
@@ -3603,7 +3602,7 @@ pub unsafe fn DrawBossMapIcons(a: u16, k: u16, game: &mut Game) {
     if t == 0i32 {
         return;
     }
-    let mut v4: *const u16 = RomPtr_82(t as u16, game) as *const u16;
+    let mut v4 = RomPtr_82(t as u16, game) as *const u16;
     let mut advance_boss_bit: bool;
     loop {
         if *v4.offset(0) == 0xffffu16 {
@@ -3650,9 +3649,9 @@ pub unsafe fn DrawBossMapIcons(a: u16, k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn DrawMapScrollArrowAndCheckToScroll(db: u8, k: u16, game: &mut Game) {
-    let v1: *const u16 = RomPtrWithBank(db, k, game) as *const u16;
+    let v1 = RomPtrWithBank(db, k, game) as *const u16;
     DrawPauseScreenSpriteAnim(*v1.offset(2), *v1, *v1.offset(1), game);
-    let v2: *const u8 = RomPtrWithBank(db, k, game);
+    let v2 = RomPtrWithBank(db, k, game);
     if (ram_word!(game, joypad1_lastkeys) & *(v2.offset(6) as *mut u16)) != 0
         && ram_word!(game, map_scrolling_direction) == 0
     {
@@ -3812,7 +3811,7 @@ pub unsafe fn DisplayMapElevatorDestinations(game: &mut Game) {
             crate::rtl::rom_table_word!(game, 0x82c74d, ram_word!(game, area_index) as isize)
                 as i32;
         loop {
-            let v1: *const u8 = RomPtr_82(i as u16, game);
+            let v1 = RomPtr_82(i as u16, game);
             if *(v1 as *mut u16) == 0xffffu16 {
                 break;
             }
@@ -3850,7 +3849,7 @@ pub unsafe fn sub_82BB7F(a: u16, game: &mut Game) {
         (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).current_instruction;
     (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).instruction_timer = (a).wrapping_sub(1u16);
     if a == 1u16 {
-        let v2: *const u8 = RomPtr_82(
+        let v2 = RomPtr_82(
             (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).current_instruction,
             game,
         );
@@ -3887,7 +3886,7 @@ pub unsafe fn DrawBabyMetroid(k: u16, game: &mut Game) {
         );
         i += 2i32;
     }
-    let v3: *const u8 = RomPtr_82(k, game);
+    let v3 = RomPtr_82(k, game);
     DrawMenuSpritemap(*(v3.offset(2) as *mut u16), 0x7cu16, 0x50u16, 2048u16, game);
     DrawMenuSpritemap(0x64u16, 0x7cu16, 0x50u16, 2560u16, game);
 }
@@ -4399,7 +4398,7 @@ pub unsafe fn EnsureSamusDrawnEachFrame(game: &mut Game) {
     }
 }
 pub unsafe fn LoadEnemyGfxToVram(game: &mut Game) {
-    let mut ED: *mut EnemyDef = null_mut::<EnemyDef>();
+    let mut ED = null_mut::<EnemyDef>();
     let mut dst: u16 = 0x7000u16;
     let mut v0: u16 = ram_word!(game, room_enemy_tilesets_ptr);
     if ram_word!(game, room_enemy_tilesets_ptr) != 0 {
@@ -5035,8 +5034,7 @@ pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
             game,
         );
     }
-    let RD: *mut RoomDefRoomstate =
-        get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
+    let RD = get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
     let mut rdf_scroll_ptr: i16 = (*RD).rdf_scroll_ptr as i16;
     if rdf_scroll_ptr >= 0i16 {
         let scrollval: u16 = (*RD).rdf_scroll_ptr;
@@ -5087,7 +5085,7 @@ pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
 }
 pub unsafe fn SpawnDoorClosingPLM(game: &mut Game) {
     if CheckIfColoredDoorCapSpawned(game) == 0 {
-        let v0: *const u16 = RomPtr_8F(
+        let v0 = RomPtr_8F(
             (2i32 * ram_word!(game, door_direction) as i32 + addr_kDoorClosingPlmIds as i32) as u16,
             game,
         ) as *const u16;
@@ -5106,7 +5104,7 @@ pub unsafe fn SpawnDoorClosingPLM(game: &mut Game) {
     }
 }
 pub unsafe fn CheckIfColoredDoorCapSpawned(game: &mut Game) -> u8 {
-    let DD: *mut DoorDef = get_DoorDef(ram_word!(game, door_def_ptr), game);
+    let DD = get_DoorDef(ram_word!(game, door_def_ptr), game);
     let v2: u16 = (2i32
         * (Mult8x8((*DD).y_pos_plm, ram_word!(game, room_width_in_blocks) as u8) as i32
             + (*DD).x_pos_plm as i32)) as u16;
@@ -5182,7 +5180,7 @@ pub unsafe fn LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram(
     }
 }
 pub unsafe fn LoadLibraryBackgroundFunc_2_TransferToVram(j: u16, game: &mut Game) -> u16 {
-    let LoadBg_28: *mut u16 = RomPtr_8F(j, game) as *mut u16;
+    let LoadBg_28 = RomPtr_8F(j, game) as *mut u16;
     crate::rtl::register_writes! { game;
         word(VMADDL as u16,
         *((LoadBg_28 as *mut u8).offset(3) as *mut u16),); word(DMAP1 as u16, 0x1801u16);
@@ -5194,7 +5192,7 @@ pub unsafe fn LoadLibraryBackgroundFunc_2_TransferToVram(j: u16, game: &mut Game
     (j).wrapping_add(7u16)
 }
 pub unsafe fn LoadLibraryBackgroundFunc_4_Decompress(j: u16, game: &mut Game) -> u16 {
-    let p: *const u8 = RomPtr_8F(j, game);
+    let p = RomPtr_8F(j, game);
     DecompressToMem(
         Load24(p as *mut LongPtr),
         ram_ptr!(game; *(p.offset(3) as *mut u16) as i32 as isize),
@@ -5265,8 +5263,7 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
             game,
         );
     }
-    let RD: *mut RoomDefRoomstate =
-        get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
+    let RD = get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
     let mut rdf_scroll_ptr: i16 = (*RD).rdf_scroll_ptr as i16;
     if rdf_scroll_ptr >= 0i16 {
         let r18: u16 = (*RD).rdf_scroll_ptr;
@@ -5305,8 +5302,7 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
     };
 }
 pub unsafe fn CreatePlmsExecuteDoorAsmRoomSetup(game: &mut Game) {
-    let mut RoomDefRoomstate: *mut RoomDefRoomstate =
-        get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
+    let mut RoomDefRoomstate = get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
     if (*RoomDefRoomstate).room_plm_header_ptr != 0 {
         let mut i: i32 = (*RoomDefRoomstate).room_plm_header_ptr as i32;
         while (*get_RoomPlmEntry(i as u16, game)).plm_header_ptr_ != 0 {
@@ -5660,7 +5656,7 @@ pub unsafe fn GameOptionsMenu_8_SpecialSettings(game: &mut Game) {
     };
 }
 pub unsafe fn GameOptionsMenuSpecialSettings_0(game: &mut Game) {
-    let v0: *mut u8 = RomPtr_RAM(
+    let v0 = RomPtr_RAM(
         crate::rtl::rom_table_word!(game, 0x82f0ae, ram_word!(game, menu_option_index) as isize),
         game,
     );
@@ -5836,7 +5832,7 @@ pub unsafe fn OptionsPreInstr_F2A9(v0: u16, game: &mut Game) {
         let v2: i32 = ram_word!(game, game_options_screen_index) as i32;
         let v3: u16 = crate::rtl::rom_table_word!(game, 0x82f2ed, v2 as isize);
         if v3 != 0 {
-            let v4: *const u16 = RomPtr_82(
+            let v4 = RomPtr_82(
                 (v3 as i32 + 4i32 * ram_word!(game, menu_option_index) as i32) as u16,
                 game,
             ) as *const u16;
@@ -6011,7 +6007,7 @@ pub unsafe fn OptionsMenuFunc6(game: &mut Game) {
         let mut v4: u16 = v0;
         let v1: i32 = v0 as i32 >> 1i32;
         let v2: u16 = crate::rtl::rom_table_word!(game, 0x82f639, v1 as isize);
-        let v3: *const u16 = RomPtr_82(
+        let v3 = RomPtr_82(
             crate::rtl::rom_table_word!(
                 game,
                 0x82f647,

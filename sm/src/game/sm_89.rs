@@ -32,7 +32,7 @@ unsafe fn get_FxDef(a: u16, game: &mut Game) -> *mut FxDef {
     RomPtr((0x830000u32) | ((a) as u32), game) as *mut FxDef
 }
 pub unsafe fn LoadFxEntry(v0: u16, game: &mut Game) {
-    let FD: *mut FxDef = get_FxDef(
+    let FD = get_FxDef(
         (ram_word!(game, room_layer3_asm_ptr) as i32 + 16i32 * (v0 as i32 & 7i32)) as u16,
         game,
     );
@@ -86,7 +86,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         }
         entry_ptr = (entry_ptr).wrapping_add(16u16);
     }
-    let FD: *mut FxDef = get_FxDef(entry_ptr, game);
+    let FD = get_FxDef(entry_ptr, game);
     set_ram_word!(game.fx_base_y_pos = (*FD).base_y_pos);
     set_ram_word!(game.fx_target_y_pos = (*FD).target_y_pos);
     set_ram_word!(game.fx_y_vel = (*FD).y_vel);
@@ -122,7 +122,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     }
     if (*FD).palette_fx_bitset != 0 {
         let mut bits: i32 = (*FD).palette_fx_bitset as i32;
-        let v11: *const u8 = RomPtr_83(
+        let v11 = RomPtr_83(
             crate::rtl::rom_table_word!(game, 0x83ac46, ram_word!(game, area_index) as isize),
             game,
         );
@@ -137,7 +137,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     }
     if (*FD).animtiles_bitset != 0 {
         let mut bits_0: i32 = (*FD).animtiles_bitset as i32;
-        let v14: *const u8 = RomPtr_83(
+        let v14 = RomPtr_83(
             crate::rtl::rom_table_word!(game, 0x83ac56, ram_word!(game, area_index) as isize),
             game,
         );

@@ -28,7 +28,7 @@ unsafe fn spc_write(spc: *mut Spc, adr: u16, val: u8) {
     apu_cpuWrite((*spc).apu, adr, val);
 }
 pub unsafe fn spc_init(apu: *mut Apu) -> *mut Spc {
-    let spc: *mut Spc = malloc(size_of::<Spc>() as size_t) as *mut Spc;
+    let spc = malloc(size_of::<Spc>() as size_t) as *mut Spc;
     (*spc).apu = apu;
     spc
 }

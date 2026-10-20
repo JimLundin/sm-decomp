@@ -76,7 +76,7 @@ pub unsafe fn SpawnPalfxObject(j: u16, game: &mut Game) {
     set_ram_word!(game.palettefx_instr_list_ptrs[v2] = (*get_PalFxDef(j, game)).instrs);
     set_ram_word!(game.palettefx_instr_timers[v2] = 1u16);
     set_ram_word!(game.palettefx_timers[v2] = 0u16);
-    let mut PalFxDef: *mut PalFxDef = get_PalFxDef(j, game);
+    let mut PalFxDef = get_PalFxDef(j, game);
     CallPalfxFunc(
         (((*PalFxDef).func) as u32) | (0x8d0000u32),
         -1i32 as u16,
@@ -114,7 +114,7 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
     let mut j: u16 = ram_word!(game, palettefx_instr_list_ptrs[(v1 as i32 >> 1i32)]);
     let mut v6: u16 = 0;
     loop {
-        let p: *const u16 = RomPtr_8D(j, game) as *const u16;
+        let p = RomPtr_8D(j, game) as *const u16;
         v6 = *p;
         if (*p & 0x8000) == 0 {
             break;
@@ -137,7 +137,7 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
     let mut v11: u16 = 0;
     loop {
         loop {
-            let mut v10: *const u8 = RomPtr_8D(j, game);
+            let mut v10 = RomPtr_8D(j, game);
             v11 = *(v10.offset(2) as *mut u16);
             if v11 & 0x8000 != 0 {
                 break;
@@ -207,22 +207,22 @@ pub unsafe fn PalInstr_SetColorIndex(k: u16, j: u16, game: &mut Game) -> PairU16
     MakePairU16(k, (j).wrapping_add(2u16))
 }
 pub unsafe fn PalInstr_QueueMusic(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    let v2: *const u8 = RomPtr_8D(j, game);
+    let v2 = RomPtr_8D(j, game);
     QueueMusic_Delayed8(*v2 as u16, game);
     MakePairU16(k, (j).wrapping_add(1u16))
 }
 pub unsafe fn PalInstr_QueueSfx1(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    let v2: *const u16 = RomPtr_8D(j, game) as *const u16;
+    let v2 = RomPtr_8D(j, game) as *const u16;
     QueueSfx1_Max6(*v2, game);
     MakePairU16(k, (j).wrapping_add(1u16))
 }
 pub unsafe fn PalInstr_QueueSfx2(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    let v2: *const u16 = RomPtr_8D(j, game) as *const u16;
+    let v2 = RomPtr_8D(j, game) as *const u16;
     QueueSfx2_Max6(*v2, game);
     MakePairU16(k, (j).wrapping_add(1u16))
 }
 pub unsafe fn PalInstr_QueueSfx3(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    let v2: *const u16 = RomPtr_8D(j, game) as *const u16;
+    let v2 = RomPtr_8D(j, game) as *const u16;
     QueueSfx3_Max6(*v2, game);
     MakePairU16(k, (j).wrapping_add(1u16))
 }

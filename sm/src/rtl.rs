@@ -128,7 +128,7 @@ unsafe fn RtlSynchronizeWholeState(game: &mut Game) {
     }
 }
 unsafe fn RtlSyncMemoryRegion(ptr: *mut c_void, n: size_t, game: &mut Game) {
-    let data: *mut u8 = ptr as *mut u8;
+    let data = ptr as *mut u8;
     crate::native_assertion! {
         '_c2rust_label: data >= &raw mut game.g_ram as *mut u8 && data < ram_ptr!(game; 0x20000);
         b"data >= g_ram && data < g_ram + 0x20000\0", b"src/sm_rtl.c\0", 38u32,
@@ -155,7 +155,7 @@ pub unsafe fn saveFunc(ctx_in: *mut c_void, data: *mut c_void, data_size: size_t
     ByteArray_AppendData(ctx_in as *mut ByteArray, data as *mut u8, data_size);
 }
 pub unsafe fn loadFunc(ctx: *mut c_void, data: *mut c_void, data_size: size_t, game: &mut Game) {
-    let st: *mut LoadFuncState = ctx as *mut LoadFuncState;
+    let st = ctx as *mut LoadFuncState;
     crate::native_assertion! {
         '_c2rust_label: (*st).pend.offset_from((*st).p) as c_long as size_t >= data_size;
         b"(size_t)(st->pend - st->p) >= data_size\0", b"src/sm_rtl.c\0", 59u32,
@@ -750,7 +750,7 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
     is_replay
 }
 pub unsafe fn RtlSaveSnapshot(filename: *const c_char, saving_with_bug: bool, game: &mut Game) {
-    let f: *mut FILE = fopen(filename, b"wb\0" as *const u8 as *const c_char) as *mut FILE;
+    let f = fopen(filename, b"wb\0" as *const u8 as *const c_char) as *mut FILE;
     RtlApuLock();
     RtlSaveMusicStateToRam_Locked(game, true);
     StateRecorder_Save(&raw mut game.state_recorder, f, saving_with_bug, game);
@@ -796,7 +796,7 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
         slot,
     );
     if cmd != kSaveLoad_Save as i32 {
-        let f: *mut FILE = fopen(
+        let f = fopen(
             &raw mut name as *mut c_char,
             b"rb\0" as *const u8 as *const c_char,
         ) as *mut FILE;
@@ -1017,10 +1017,10 @@ pub unsafe fn RtlPushApuState(game: &mut Game) {
         }
         let fresh2 = game.g_apu_write_ent_pos;
         game.g_apu_write_ent_pos = game.g_apu_write_ent_pos.wrapping_add(1);
-        let w0: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt)
+        let w0 = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt)
             .offset((fresh2 as i32 & kApuMaxQueueSize as i32 - 1i32) as isize);
         if game.g_apu_queue_size as i32 == kApuMaxQueueSize as i32 {
-            let w1: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
+            let w1 = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
                 (game.g_apu_write_ent_pos as i32 & kApuMaxQueueSize as i32 - 1i32) as isize,
             );
             let mut i: i32 = 0i32;
@@ -1048,7 +1048,7 @@ unsafe fn RtlPopApuState_Locked(game: &mut Game) {
     if ram_word!(game, is_uploading_apu) != 0 {
         return;
     }
-    let input_ports: *mut u8 = if game.g_use_my_apu_code as i32 != 0 {
+    let input_ports = if game.g_use_my_apu_code as i32 != 0 {
         &raw mut (*game.g_spc_player).input_ports as *mut u8
     } else {
         &raw mut (*(*game.g_snes).apu).inPorts as *mut u8
@@ -1056,7 +1056,7 @@ unsafe fn RtlPopApuState_Locked(game: &mut Game) {
     if game.g_apu_queue_size as i32 != 0i32 {
         let fresh1 = game.g_apu_queue_size;
         game.g_apu_queue_size = game.g_apu_queue_size.wrapping_sub(1);
-        let w: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
+        let w = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
             (game.g_apu_write_ent_pos as i32 - fresh1 as i32 & kApuMaxQueueSize as i32 - 1i32)
                 as isize,
         );
@@ -1121,14 +1121,14 @@ unsafe fn RtlRestoreMusicAfterLoad_Locked(is_reset: bool, game: &mut Game) {
 }
 unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands: bool) {
     if game.g_use_my_apu_code {
-        let spc_player: *mut SpcPlayer = game.g_spc_player;
+        let spc_player = game.g_spc_player;
         let mut i: i32 = if include_queued_commands {
             game.g_apu_queue_size as i32
         } else {
             0
         };
         while i != 0 {
-            let we: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
+            let we = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
                 (game.g_apu_write_ent_pos as i32 - i & kApuMaxQueueSize as i32 - 1i32) as isize,
             );
             let mut j: i32 = 0i32;
@@ -1211,7 +1211,7 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
     }
 }
 pub unsafe fn RtlReadSram(game: &mut Game) {
-    let f: *mut FILE = fopen(
+    let f = fopen(
         b"saves/sm.srm\0" as *const u8 as *const c_char,
         b"rb\0" as *const u8 as *const c_char,
     ) as *mut FILE;
@@ -1241,7 +1241,7 @@ pub unsafe fn RtlWriteSram(game: &mut Game) {
         b"saves/sm.srm\0" as *const u8 as *const c_char,
         b"saves/sm.srm.bak\0" as *const u8 as *const c_char,
     );
-    let f: *mut FILE = fopen(
+    let f = fopen(
         b"saves/sm.srm\0" as *const u8 as *const c_char,
         b"wb\0" as *const u8 as *const c_char,
     ) as *mut FILE;

@@ -21,7 +21,7 @@ pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
     let v0: u16 = (4i32 * ram_word!(game, samus_anim_frame) as i32
         + crate::rtl::rom_table_word!(game, 0x92d94e, ram_word!(game, samus_pose) as isize) as i32)
         as u16;
-    let AD: *mut SamusTileAnimationDefs = get_SamusTileAnimationDefs(v0, game);
+    let AD = get_SamusTileAnimationDefs(v0, game);
     set_ram_word!(
         game.nmi_copy_samus_top_half_src = (7i32 * (*AD).top_half_pos as i32
             + crate::rtl::rom_table_word!(game, 0x92d91e, (*AD).top_half_idx as isize) as i32)

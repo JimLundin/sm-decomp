@@ -200,12 +200,12 @@ pub unsafe fn UnpackMapFromSave(game: &mut Game) {
     while i_0 < 6i32 {
         let mut n: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x818131)) as *mut u8)
             .offset(i_0 as isize) as i32;
-        let mut r0: *const u8 = RomPtr_81(
+        let mut r0 = RomPtr_81(
             crate::rtl::rom_table_word!(game, 0x8182d6, i_0 as isize),
             game,
         );
         let mut v3: i32 = crate::rtl::rom_table_word!(game, 0x818138, i_0 as isize) as i32;
-        let unpacked: *mut u8 = ram_ptr!(game, u16; 0xcd52) as *mut u8;
+        let unpacked = ram_ptr!(game, u16; 0xcd52) as *mut u8;
         loop {
             let fresh2 = r0;
             r0 = r0.offset(1);
@@ -226,12 +226,12 @@ pub unsafe fn PackMapToSave(game: &mut Game) {
     while i < 6i32 {
         let mut n: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x818131)) as *mut u8)
             .offset(i as isize) as i32;
-        let mut r0: *const u8 = RomPtr_81(
+        let mut r0 = RomPtr_81(
             crate::rtl::rom_table_word!(game, 0x8182d6, i as isize),
             game,
         );
         let mut v1: i32 = crate::rtl::rom_table_word!(game, 0x818138, i as isize) as i32;
-        let unpacked: *mut u8 = ram_ptr!(game, u16; 0xcd52) as *mut u8;
+        let unpacked = ram_ptr!(game, u16; 0xcd52) as *mut u8;
         loop {
             let fresh95 = r0;
             r0 = r0.offset(1);
@@ -248,12 +248,12 @@ pub unsafe fn PackMapToSave(game: &mut Game) {
     }
 }
 pub unsafe fn DrawSpritemap(db: u8, j: u16, x_r20: u16, y_r18: u16, chr_r22: u16, game: &mut Game) {
-    let mut pp: *const u8 = RomPtrWithBank(db, j, game);
+    let mut pp = RomPtrWithBank(db, j, game);
     let mut n: i32 = *(pp as *mut u16) as i32;
     pp = pp.offset(2);
     let mut idx: i32 = ram_word!(game, oam_next_ptr) as i32;
     while n != 0i32 && idx < 0x200i32 {
-        let oam: *mut OamEnt = gOamEnt(idx, game);
+        let oam = gOamEnt(idx, game);
         let mut x: i32 = x_r20 as i32 + *(pp as *mut u16) as i32;
         let mut y: i32 = y_r18 as u8 as i32 + *pp.offset(2) as i32;
         if if *pp.offset(2) & 0x80 == 0 {
@@ -287,12 +287,12 @@ pub unsafe fn DrawSpritemapOffScreen(
     chr_r22: u16,
     game: &mut Game,
 ) {
-    let mut pp: *const u8 = RomPtr_8C(j, game);
+    let mut pp = RomPtr_8C(j, game);
     let mut n: i32 = *(pp as *mut u16) as i32;
     pp = pp.offset(2);
     let mut idx: i32 = ram_word!(game, oam_next_ptr) as i32;
     while n != 0i32 && idx < 0x200i32 {
-        let oam: *mut OamEnt = gOamEnt(idx, game);
+        let oam = gOamEnt(idx, game);
         let mut x: i32 = x_r20 as i32 + *(pp as *mut u16) as i32;
         let mut y: i32 = y_r18 as u8 as i32 + *pp.offset(2) as i32;
         if if *pp.offset(2) & 0x80 == 0 {
@@ -320,7 +320,7 @@ pub unsafe fn DrawSpritemapOffScreen(
     set_ram_word!(game.oam_next_ptr = idx as u16);
 }
 pub unsafe fn DrawMenuSpritemap(a: u16, k: u16, j: u16, chr_r3: u16, game: &mut Game) {
-    let mut pp: *const u8 = RomPtr_82(
+    let mut pp = RomPtr_82(
         crate::rtl::rom_table_word!(game, 0x82c569, a as isize),
         game,
     );
@@ -328,7 +328,7 @@ pub unsafe fn DrawMenuSpritemap(a: u16, k: u16, j: u16, chr_r3: u16, game: &mut 
     pp = pp.offset(2);
     let mut idx: i32 = ram_word!(game, oam_next_ptr) as i32;
     while n != 0i32 {
-        let oam: *mut OamEnt = gOamEnt(idx, game);
+        let oam = gOamEnt(idx, game);
         let x: u16 = (k).wrapping_add(*(pp as *mut u16));
         (*oam).xcoord = x as u8;
         update_ram_word!(game.oam_ext[(idx >> 5i32)], |fresh4| (fresh4 as i32
@@ -347,7 +347,7 @@ pub unsafe fn DrawSamusSpritemap(a: u16, x_pos: u16, y_pos: u16, game: &mut Game
     if crate::rtl::rom_table_word!(game, 0x92808d, a as isize) == 0u16 {
         return;
     }
-    let mut pp: *const u8 = RomPtr_92(
+    let mut pp = RomPtr_92(
         crate::rtl::rom_table_word!(game, 0x92808d, a as isize),
         game,
     );
@@ -356,7 +356,7 @@ pub unsafe fn DrawSamusSpritemap(a: u16, x_pos: u16, y_pos: u16, game: &mut Game
     pp = pp.offset(2);
     while n != 0i32 {
         let x: u16 = (x_pos).wrapping_add(*(pp as *mut u16));
-        let v9: *mut OamEnt = gOamEnt(idx, game);
+        let v9 = gOamEnt(idx, game);
         (*v9).xcoord = x as u8;
         update_ram_word!(game.oam_ext[(idx >> 5i32)], |fresh8| (fresh8 as i32
             | ((x as i32 & 0x100i32) >> 8i32 | (*(pp as *mut i16) < 0i16) as i32 * 2i32)
@@ -403,7 +403,7 @@ pub unsafe fn DrawGrappleOrProjectileSpritemap(
     pp = pp.offset(2);
     while n != 0i32 {
         let x: u16 = (x_r20).wrapping_add(*(pp as *mut u16));
-        let v4: *mut OamEnt = gOamEnt(idx, game);
+        let v4 = gOamEnt(idx, game);
         (*v4).xcoord = x as u8;
         update_ram_word!(game.oam_ext[(idx >> 5i32)], |fresh5| (fresh5 as i32
             | ((x as i32 & 0x100i32) >> 8i32 | (*(pp as *mut i16) < 0i16) as i32 * 2i32)
@@ -429,12 +429,12 @@ pub unsafe fn DrawSpritemapWithBaseTile(
     if j == 0u16 {
         return;
     }
-    let mut pp: *mut u8 = RomPtrWithBank(db, j, game) as *mut u8;
+    let mut pp = RomPtrWithBank(db, j, game) as *mut u8;
     let mut idx: i32 = ram_word!(game, oam_next_ptr) as i32;
     let mut n: i32 = *(pp as *mut u16) as i32;
     pp = pp.offset(2);
     while n != 0i32 {
-        let oam: *mut OamEnt = gOamEnt(idx, game);
+        let oam = gOamEnt(idx, game);
         let x: u16 = (r20_x).wrapping_add(*(pp.offset(0) as *mut u16));
         (*oam).xcoord = x as u8;
         update_ram_word!(game.oam_ext[(idx >> 5i32)], |fresh11| (fresh11 as i32
@@ -459,12 +459,12 @@ pub unsafe fn DrawSpritemapWithBaseTile2(
     r0: u16,
     game: &mut Game,
 ) {
-    let mut pp: *const u8 = RomPtrWithBank(db, j, game);
+    let mut pp = RomPtrWithBank(db, j, game);
     let mut idx: i32 = ram_word!(game, oam_next_ptr) as i32;
     let mut n: i32 = *(pp as *mut u16) as i32;
     pp = pp.offset(2);
     while n != 0i32 {
-        let oam: *mut OamEnt = gOamEnt(idx, game);
+        let oam = gOamEnt(idx, game);
         let x: u16 = (r20_x).wrapping_add(*(pp as *mut u16));
         (*oam).xcoord = x as u8;
         update_ram_word!(game.oam_ext[(idx >> 5i32)], |fresh12| (fresh12 as i32
@@ -494,12 +494,12 @@ pub unsafe fn DrawSpritemapWithBaseTileOffscreen(
     r0: u16,
     game: &mut Game,
 ) {
-    let mut pp: *const u8 = RomPtrWithBank(db, j, game);
+    let mut pp = RomPtrWithBank(db, j, game);
     let mut idx: i32 = ram_word!(game, oam_next_ptr) as i32;
     let mut n: i32 = *(pp as *mut u16) as i32;
     pp = pp.offset(2);
     while n != 0i32 {
-        let oam: *mut OamEnt = gOamEnt(idx, game);
+        let oam = gOamEnt(idx, game);
         let x: i32 = r20_x as i32 + *(pp as *mut u16) as i32;
         (*oam).xcoord = x as u8;
         update_ram_word!(game.oam_ext[(idx >> 5i32)], |fresh13| (fresh13 as i32
@@ -529,12 +529,12 @@ pub unsafe fn DrawEprojSpritemapWithBaseTile(
     chr_r28: u16,
     game: &mut Game,
 ) {
-    let mut pp: *const u8 = RomPtrWithBank(db, j, game);
+    let mut pp = RomPtrWithBank(db, j, game);
     let mut idx: i32 = ram_word!(game, oam_next_ptr) as i32;
     let mut n: i32 = *(pp as *mut u16) as i32;
     pp = pp.offset(2);
     while n != 0i32 {
-        let oam: *mut OamEnt = gOamEnt(idx, game);
+        let oam = gOamEnt(idx, game);
         let x: u16 = (x_r20).wrapping_add(*(pp as *mut u16));
         (*oam).xcoord = x as u8;
         update_ram_word!(game.oam_ext[(idx >> 5i32)], |fresh6| (fresh6 as i32
@@ -564,12 +564,12 @@ pub unsafe fn DrawEprojSpritemapWithBaseTileOffscreen(
     chr_r28: u16,
     game: &mut Game,
 ) {
-    let mut pp: *const u8 = RomPtrWithBank(db, j, game);
+    let mut pp = RomPtrWithBank(db, j, game);
     let mut idx: i32 = ram_word!(game, oam_next_ptr) as i32;
     let mut n: i32 = *(pp as *mut u16) as i32;
     pp = pp.offset(2);
     while n != 0i32 {
-        let oam: *mut OamEnt = gOamEnt(idx, game);
+        let oam = gOamEnt(idx, game);
         let x: u16 = (x_r20).wrapping_add(*(pp as *mut u16));
         (*oam).xcoord = x as u8;
         update_ram_word!(game.oam_ext[(idx >> 5i32)], |fresh7| (fresh7 as i32
@@ -709,7 +709,7 @@ pub unsafe fn GameOverMenu_3_Main(game: &mut Game) {
         v0 = -30720i16;
     }
     let mut v1: i16 = (v0) | (0x28i16);
-    let v3: *mut OamEnt = gOamEnt(ram_word!(game, oam_next_ptr) as i32, game);
+    let v3 = gOamEnt(ram_word!(game, oam_next_ptr) as i32, game);
     *(&raw mut (*v3).xcoord as *mut u16) = v1 as u16;
     *(&raw mut (*v3).charnum as *mut u16) = 182u16;
     update_ram_word!(game.oam_next_ptr, wrapping_add(4u16));
@@ -838,8 +838,7 @@ pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
         }
     }
     let v1: i32 = ram_word!(game, vram_write_queue_tail) as i32;
-    let v2: *mut VramWriteEntry =
-        gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+    let v2 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v2).size = 2048u16;
     (*v2).src.addr = (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
@@ -1099,8 +1098,7 @@ pub unsafe fn DrawFileCopySaveSlotCInfo(game: &mut Game) {
 }
 pub unsafe fn QueueTransferOfMenuTilemapToVramBG1(game: &mut Game) {
     let v0: u16 = ram_word!(game, vram_write_queue_tail);
-    let v1: *mut VramWriteEntry =
-        gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+    let v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v1).size = 2048u16;
     (*v1).src.addr = (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
@@ -1766,8 +1764,7 @@ pub unsafe fn FileSelectMenu_1_LoadFileSelectMenuBG2(game: &mut Game) {
         i -= 1;
     }
     let v1: u16 = ram_word!(game, vram_write_queue_tail);
-    let mut v2: *mut VramWriteEntry =
-        gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+    let mut v2 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v2).size = 2048u16;
     (*v2).src.addr = (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
@@ -2085,8 +2082,7 @@ pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
 pub unsafe fn FileSelectMap_0(game: &mut Game) {
     ClearMenuTilemap(game);
     let v0: u16 = ram_word!(game, vram_write_queue_tail);
-    let mut v1: *mut VramWriteEntry =
-        gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+    let mut v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v1).size = 2048u16;
     (*v1).src.addr = (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
@@ -2175,8 +2171,7 @@ pub unsafe fn LoadAreaMapForegroundColors(mut j: u16, game: &mut Game) {
 }
 pub unsafe fn FileSelectMap_2_LoadAreaSelectForegroundTilemap(game: &mut Game) {
     let v0: u16 = ram_word!(game, vram_write_queue_tail);
-    let mut v1: *mut VramWriteEntry =
-        gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+    let mut v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v1).size = 2048u16;
     (*v1).src.addr = addr_kAreaSelectForegroundTilemap as i32 as VoidP;
     *(&raw mut (*v1).src.bank as *mut u16) = 129u16;
@@ -2195,8 +2190,7 @@ pub unsafe fn FileSelectMap_3_LoadAreaSelectBackgroundTilemap(game: &mut Game) {
 }
 pub unsafe fn LoadAreaSelectBackgroundTilemap(j: u16, game: &mut Game) {
     let v1: u16 = ram_word!(game, vram_write_queue_tail);
-    let v2: *mut VramWriteEntry =
-        gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+    let v2 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v2).size = 2048u16;
     (*v2).src.addr =
         (8i32 * 256i32 * j as i32 + addr_kAreaSelectBackgroundTilemaps as i32) as VoidP;
@@ -2326,8 +2320,7 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
             }
         }
         let v4: u16 = ram_word!(game, vram_write_queue_tail);
-        let mut v5: *mut VramWriteEntry =
-            gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+        let mut v5 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
         (*v5).size = 2048u16;
         (*v5).src.addr = (ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
             .offset_from(&raw mut game.g_ram as *mut u8) as c_long
@@ -2460,7 +2453,7 @@ pub unsafe fn SelectFileSelectMapArea(game: &mut Game) {
     let mut q: u16 =
         *(ram_ptr!(game, u16; 0xd8f8, (2i32 * ram_word!(game, area_index) as i32) as isize));
     let mut v0: u16 = 0u16;
-    let r0: *const u16 = RomPtr_82(
+    let r0 = RomPtr_82(
         *(RomPtr_82(
             (addr_kMapIconDataPointers as i32 + 64i32 + 2i32 * ram_word!(game, area_index) as i32)
                 as u16,
@@ -2550,7 +2543,7 @@ pub unsafe fn DrawAreaSelectMapLabels(game: &mut Game) {
         }) as u16;
         let v1: u16 = (2u16).wrapping_mul(kFileSelectMap_AreaIndexes[i as usize]);
         let mut r36: u16 = *(ram_ptr!(game, u16; 0xd8f8, v1 as isize));
-        let mut v2: *const u16 = RomPtr_82(
+        let mut v2 = RomPtr_82(
             *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c7cb))
                 as *mut MapIconDataPointers)
                 .offset(4))
@@ -2606,8 +2599,7 @@ pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
         game,
     );
     let v0: u16 = ram_word!(game, vram_write_queue_tail);
-    let v1: *mut VramWriteEntry =
-        gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+    let v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v1).size = 512u16;
     (*v1).src.addr = (ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
@@ -2758,7 +2750,7 @@ pub unsafe fn FileSelectMap_9_InitRoomSelectMap(game: &mut Game) {
     LoadFromLoadStation(game);
     DisableHdmaObjects(game);
     WaitUntilEndOfVblankAndClearHdma(game);
-    let RoomDefHeader: *mut RoomDefHeader = get_RoomDefHeader(ram_word!(game, room_ptr), game);
+    let RoomDefHeader = get_RoomDefHeader(ram_word!(game, room_ptr), game);
     *(ram_ptr!(game, u16; 0x79f) as *mut u8).offset(0) = (*RoomDefHeader).area_index_;
     *(ram_ptr!(game, u16; 0x7a1) as *mut u8).offset(0) = (*RoomDefHeader).x_coordinate_on_map;
     *(ram_ptr!(game, u16; 0x7a3) as *mut u8).offset(0) = (*RoomDefHeader).y_coordinate_on_map;
@@ -2794,7 +2786,7 @@ pub unsafe fn FileSelectMap_10_RoomSelectMap(game: &mut Game) {
                 break;
             }
         }
-        let r0: *const u16 = RomPtr_82(
+        let r0 = RomPtr_82(
             *(RomPtr_82(
                 (addr_kMapIconDataPointers as i32
                     + 64i32
@@ -2971,8 +2963,7 @@ pub unsafe fn FileSelectMap_15_ClearTileMap(game: &mut Game) {
         i -= 2i32;
     }
     let v1: u16 = ram_word!(game, vram_write_queue_tail);
-    let v2: *mut VramWriteEntry =
-        gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
+    let v2 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v2).size = 2048u16;
     (*v2).src.addr = (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
         as *mut u8)

@@ -54,7 +54,7 @@ fn saturate_sample(value: i32) -> i32 {
 }
 
 pub unsafe fn dsp_init(ram: *mut u8) -> *mut Dsp {
-    let dsp: *mut Dsp = malloc(size_of::<Dsp>() as size_t) as *mut Dsp;
+    let dsp = malloc(size_of::<Dsp>() as size_t) as *mut Dsp;
     (*dsp).apu_ram = ram;
     dsp
 }

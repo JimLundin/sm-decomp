@@ -23,12 +23,12 @@ pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 pub const SEEK_END: i32 = 2;
 pub unsafe fn NextDelim(s: *mut *mut c_char, sep: i32) -> *mut c_char {
-    let mut r: *mut c_char = *s;
+    let mut r = *s;
     if !r.is_null() {
         while *r.offset(0) as i32 == ' ' as i32 || *r.offset(0) as i32 == '\t' as i32 {
             r = r.offset(1);
         }
-        let mut t: *mut c_char = strchr(r, sep);
+        let mut t = strchr(r, sep);
         *s = if !t.is_null() {
             let fresh0 = t;
             t = t.offset(1);
@@ -75,14 +75,14 @@ pub unsafe fn StringStartsWithNoCase(mut a: *const c_char, mut b: *const c_char)
     }
 }
 pub unsafe fn ReadWholeFile(name: *const c_char, length: *mut size_t) -> *mut u8 {
-    let f: *mut FILE = fopen(name, b"rb\0" as *const u8 as *const c_char) as *mut FILE;
+    let f = fopen(name, b"rb\0" as *const u8 as *const c_char) as *mut FILE;
     if f.is_null() {
         return null_mut::<u8>();
     }
     fseek(f, 0 as c_long, SEEK_END);
     let size: size_t = ftell(f) as size_t;
     rewind(f);
-    let buffer: *mut u8 = malloc(size.wrapping_add(1 as size_t)) as *mut u8;
+    let buffer = malloc(size.wrapping_add(1 as size_t)) as *mut u8;
     if buffer.is_null() {
         Die(b"malloc failed\0" as *const u8 as *const c_char);
     }
@@ -97,11 +97,11 @@ pub unsafe fn ReadWholeFile(name: *const c_char, length: *mut size_t) -> *mut u8
     buffer
 }
 pub unsafe fn NextLineStripComments(s: *mut *mut c_char) -> *mut c_char {
-    let mut p: *mut c_char = *s;
+    let mut p = *s;
     if p.is_null() {
         return null_mut::<c_char>();
     }
-    let mut eol: *mut c_char = strchr(p, '\n' as i32);
+    let mut eol = strchr(p, '\n' as i32);
     *s = if !eol.is_null() {
         eol.offset(1)
     } else {
@@ -112,7 +112,7 @@ pub unsafe fn NextLineStripComments(s: *mut *mut c_char) -> *mut c_char {
     } else {
         p.offset(strlen(p) as isize)
     };
-    let comment: *mut c_char = memchr(
+    let comment = memchr(
         p as *const c_void,
         '#' as i32,
         eol.offset_from(p) as c_long as size_t,
@@ -132,8 +132,8 @@ pub unsafe fn NextLineStripComments(s: *mut *mut c_char) -> *mut c_char {
     p
 }
 pub unsafe fn NextPossiblyQuotedString(s: *mut *mut c_char) -> *mut c_char {
-    let mut r: *mut c_char = *s;
-    let mut t: *mut c_char = null_mut::<c_char>();
+    let mut r = *s;
+    let mut t = null_mut::<c_char>();
     while *r as i32 == ' ' as i32 || *r as i32 == '\t' as i32 {
         r = r.offset(1);
     }
@@ -172,7 +172,7 @@ pub unsafe fn ReplaceFilenameWithNewPath(
     {
         olen = olen.wrapping_sub(1);
     }
-    let result: *mut c_char = malloc(olen.wrapping_add(nlen)) as *mut c_char;
+    let result = malloc(olen.wrapping_add(nlen)) as *mut c_char;
     memcpy(result as *mut c_void, old_path as *const c_void, olen);
     memcpy(
         result.offset(olen as isize) as *mut c_void,
@@ -182,11 +182,11 @@ pub unsafe fn ReplaceFilenameWithNewPath(
     result
 }
 pub unsafe fn SplitKeyValue(p: *mut c_char) -> *mut c_char {
-    let equals: *mut c_char = strchr(p, '=' as i32);
+    let equals = strchr(p, '=' as i32);
     if equals.is_null() {
         return null_mut::<c_char>();
     }
-    let mut kr: *mut c_char = equals;
+    let mut kr = equals;
     while kr > p
         && (*kr.offset(-1i32 as isize) as i32 == ' ' as i32
             || *kr.offset(-1i32 as isize) as i32 == '\t' as i32)
@@ -194,7 +194,7 @@ pub unsafe fn SplitKeyValue(p: *mut c_char) -> *mut c_char {
         kr = kr.offset(-1);
     }
     *kr = 0 as c_char;
-    let mut v: *mut c_char = equals.offset(1);
+    let mut v = equals.offset(1);
     while *v.offset(0) as i32 == ' ' as i32 || *v.offset(0) as i32 == '\t' as i32 {
         v = v.offset(1);
     }
@@ -211,8 +211,8 @@ pub unsafe fn SkipPrefix(mut big: *const c_char, mut little: *const c_char) -> *
     big
 }
 pub unsafe fn StrSet(rv: *mut *mut c_char, s: *const c_char) {
-    let news: *mut c_char = strdup(s);
-    let old: *mut c_char = *rv;
+    let news = strdup(s);
+    let old = *rv;
     *rv = news;
     free(old as *mut c_void);
 }
@@ -228,7 +228,7 @@ pub unsafe fn ByteArray_Resize(arr: *mut ByteArray, new_size: size_t) {
         } else {
             new_size
         };
-        let data: *mut u8 = realloc((*arr).data as *mut c_void, (*arr).capacity) as *mut u8;
+        let data = realloc((*arr).data as *mut c_void, (*arr).capacity) as *mut u8;
         if data.is_null() {
             Die(b"memory allocation failed\0" as *const u8 as *const c_char);
         }
@@ -236,7 +236,7 @@ pub unsafe fn ByteArray_Resize(arr: *mut ByteArray, new_size: size_t) {
     }
 }
 pub unsafe fn ByteArray_Destroy(arr: *mut ByteArray) {
-    let data: *mut c_void = (*arr).data as *mut c_void;
+    let data = (*arr).data as *mut c_void;
     (*arr).data = null_mut::<u8>();
     free(data);
 }

@@ -53,7 +53,7 @@ pub unsafe fn SpawnAnimtiles(j: u16, game: &mut Game) {
     let v2: i32 = v1 as i32 >> 1i32;
     set_ram_word!(game.animtiles_ids[v2] = v0);
     set_ram_word!(game.animtiles_timers[v2] = 0u16);
-    let v3: *const u16 = RomPtr_87(v0, game) as *const u16;
+    let v3 = RomPtr_87(v0, game) as *const u16;
     set_ram_word!(game.animtiles_instr_list_ptrs[v2] = *v3);
     set_ram_word!(game.animtiles_src_ptr[v2] = 0u16);
     set_ram_word!(game.animtiles_sizes[v2] = *v3.offset(1));
@@ -105,7 +105,7 @@ pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {
         let mut v3: u16 = ram_word!(game, animtiles_instr_list_ptrs[v1]);
         let mut v5: u16 = 0;
         loop {
-            let v4: *const u16 = RomPtr_87(v3, game) as *const u16;
+            let v4 = RomPtr_87(v3, game) as *const u16;
             v5 = *v4;
             if (*v4 & 0x8000) == 0 {
                 break;
@@ -165,27 +165,27 @@ pub unsafe fn AnimtilesInstr_SetTimer(k: u16, j: u16, game: &mut Game) -> u16 {
     (j).wrapping_add(1u16)
 }
 pub unsafe fn AnimtilesInstr_QueueMusic(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: *const u8 = RomPtr_87(j, game);
+    let v2 = RomPtr_87(j, game);
     QueueMusic_Delayed8(*v2 as u16, game);
     (j).wrapping_add(1u16)
 }
 pub unsafe fn AnimtilesInstr_QueueSfx1(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: *const u8 = RomPtr_87(j, game);
+    let v2 = RomPtr_87(j, game);
     QueueSfx1_Max6(*v2 as u16, game);
     (j).wrapping_add(1u16)
 }
 pub unsafe fn AnimtilesInstr_QueueSfx2(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: *const u8 = RomPtr_87(j, game);
+    let v2 = RomPtr_87(j, game);
     QueueSfx2_Max6(*v2 as u16, game);
     (j).wrapping_add(1u16)
 }
 pub unsafe fn AnimtilesInstr_QueueSfx3(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: *const u8 = RomPtr_87(j, game);
+    let v2 = RomPtr_87(j, game);
     QueueSfx3_Max6(*v2 as u16, game);
     (j).wrapping_add(1u16)
 }
 pub unsafe fn AnimtilesInstr_GotoIfBossBitSet(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: *const u8 = RomPtr_87(j, game);
+    let v2 = RomPtr_87(j, game);
     let v3: u16 = (j).wrapping_add(1u16);
     if CheckBossBitForCurArea(*(v2 as *mut u16) as u8 as u16, game) & 1 != 0 {
         AnimtilesInstr_Goto(k, v3, game)
@@ -194,12 +194,12 @@ pub unsafe fn AnimtilesInstr_GotoIfBossBitSet(k: u16, j: u16, game: &mut Game) -
     }
 }
 pub unsafe fn AnimtilesInstr_SetBossBit(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: *const u8 = RomPtr_87(j, game);
+    let v2 = RomPtr_87(j, game);
     SetBossBitForCurArea(*v2 as u16, game);
     (j).wrapping_add(1u16)
 }
 pub unsafe fn AnimtilesInstr_GotoIfEventHappened(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: *const u16 = RomPtr_87(j, game) as *const u16;
+    let v2 = RomPtr_87(j, game) as *const u16;
     let v3: u16 = (j).wrapping_add(2u16);
     if CheckEventHappened(*v2, game) & 1 != 0 {
         AnimtilesInstr_Goto(k, v3, game)
@@ -208,7 +208,7 @@ pub unsafe fn AnimtilesInstr_GotoIfEventHappened(k: u16, j: u16, game: &mut Game
     }
 }
 pub unsafe fn AnimtilesInstr_SetEventHappened(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: *const u16 = RomPtr_87(j, game) as *const u16;
+    let v2 = RomPtr_87(j, game) as *const u16;
     SetEventHappened(*v2, game);
     (j).wrapping_add(2u16)
 }
@@ -228,7 +228,7 @@ pub unsafe fn AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet(
     j
 }
 pub unsafe fn AnimtilesInstr_GotoIfBossBitSetInArea(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: *const u8 = RomPtr_87(j, game);
+    let v2 = RomPtr_87(j, game);
     let v3: u16 = (j).wrapping_add(2u16);
     if (*v2 & *ram_ptr!(game; 0xd828, *v2.offset(1) as isize)) != 0 {
         AnimtilesInstr_Goto(k, v3, game)
@@ -237,12 +237,12 @@ pub unsafe fn AnimtilesInstr_GotoIfBossBitSetInArea(k: u16, j: u16, game: &mut G
     }
 }
 pub unsafe fn AnimtilesInstr_SpawnTourianStatueEyeGlow(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: *const u16 = RomPtr_87(j, game) as *const u16;
+    let v2 = RomPtr_87(j, game) as *const u16;
     SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueEyeGlow as u16, *v2, game);
     (j).wrapping_add(2u16)
 }
 pub unsafe fn AnimtilesInstr_SpawnTourianStatueSoul(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: *const u16 = RomPtr_87(j, game) as *const u16;
+    let v2 = RomPtr_87(j, game) as *const u16;
     SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueSoul as u16, *v2, game);
     (j).wrapping_add(2u16)
 }
@@ -271,7 +271,7 @@ pub unsafe fn AnimtilesInstr_Clear3PaletteColors(k: u16, j: u16, game: &mut Game
     (j).wrapping_add(2u16)
 }
 pub unsafe fn AnimtilesInstr_SpawnPalfxObj(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: *const u16 = RomPtr_87(j, game) as *const u16;
+    let v2 = RomPtr_87(j, game) as *const u16;
     SpawnPalfxObject(*v2, game);
     (j).wrapping_add(2u16)
 }

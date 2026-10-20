@@ -134,7 +134,7 @@ pub unsafe fn SnesRomPtr(v: u32, game: &mut Game) -> *mut u8 {
     RomPtr(v, game) as *mut u8
 }
 pub unsafe fn ProcessHook(v: u32, game: &mut Game) -> bool {
-    let rombyte: *mut u8 = SnesRomPtr(v, game);
+    let rombyte = SnesRomPtr(v, game);
     match game.hookmode {
         0 => {
             let fresh2 = game.hookcnt;
@@ -163,7 +163,7 @@ pub unsafe fn ProcessHook(v: u32, game: &mut Game) -> bool {
 pub unsafe fn FixBugHook(addr: u32, game: &mut Game) -> bool {
     match game.hookmode {
         1 => {
-            let rombyte: *mut u8 = SnesRomPtr(addr, game);
+            let rombyte = SnesRomPtr(addr, game);
             let fresh0 = game.hookcnt;
             game.hookcnt = game.hookcnt.wrapping_add(1);
             game.hook_fixbug_orgbyte[fresh0 as usize] = *rombyte;
@@ -336,7 +336,7 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
         } else if FixBugHook(0xa5a018u32, game) {
             set_ram_word!(game.REMOVED_varE24 = 0u16);
         } else if FixBugHook(0xb39ddbu32, game) {
-            let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+            let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
             set_ram_word!(
                 game.REMOVED_R18 = ((*E).base.x_pos as i32 - (*E).botwoon_var_56 as i32) as u16
             );
@@ -344,8 +344,7 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
                 game.REMOVED_R20 = ((*E).base.y_pos as i32 - (*E).botwoon_var_57 as i32) as u16
             );
         } else if FixBugHook(0xb39e13u32, game) {
-            let E_0: *mut Enemy_Botwoon =
-                Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
+            let E_0 = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
             (*E_0).botwoon_var_45 = ((*E_0).botwoon_var_45 as i32
                 + (ram_word!(game, REMOVED_R22) as i32 - (*E_0).botwoon_var_45 as i32) as i8 as i32
                     * 3i32
@@ -1408,7 +1407,7 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
 }
 unsafe fn loadRom(name: *const c_char, snes: *mut Snes, game: &mut Game) -> bool {
     let mut length: size_t = 0 as size_t;
-    let mut file: *mut u8 = null_mut::<u8>();
+    let mut file = null_mut::<u8>();
     file = ReadWholeFile(name, &raw mut length);
     if file.is_null() {
         puts(b"Failed to read file\0" as *const u8 as *const c_char);

@@ -24,7 +24,7 @@ unsafe fn write_byte(cpu: *mut Cpu, adr: u32, val: u8, game: &mut Game) {
     snes_cpuWrite((*cpu).mem as *mut Snes, adr, val, game);
 }
 pub unsafe fn cpu_init(mem: *mut c_void, memType: i32) -> *mut Cpu {
-    let cpu: *mut Cpu = malloc(size_of::<Cpu>()) as *mut Cpu;
+    let cpu = malloc(size_of::<Cpu>()) as *mut Cpu;
     memset(cpu as *mut c_void, 0, size_of::<Cpu>());
     (*cpu).mem = mem;
     (*cpu).memType = memType as u8;

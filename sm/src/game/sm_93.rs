@@ -61,21 +61,21 @@ pub unsafe fn InitializeProjectile(k: u16, game: &mut Game) {
             (ram_word!(game, projectile_type[v1]) as i32 & 0xfi32) as isize
         );
     }
-    let PD: *mut ProjectileDataTable = get_ProjectileDataTable(v3, game);
+    let PD = get_ProjectileDataTable(v3, game);
     if (*PD).damage & 0x8000 != 0 {
         InvalidInterrupt_Crash(game);
     }
     set_ram_word!(game.projectile_damage[v1] = (*PD).damage);
     let v7: u16 = (*PD).instr_ptrs[r18 as usize];
     set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = v7);
-    let v8: *const u8 = RomPtr_93(v7, game);
+    let v8 = RomPtr_93(v7, game);
     set_ram_word!(game.projectile_x_radius[v1] = *v8.offset(4) as u16);
     set_ram_word!(game.projectile_y_radius[v1] = *v8.offset(5) as u16);
     set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1u16);
 }
 pub unsafe fn InitializeInstrForSuperMissile(v0: u16, game: &mut Game) {
     let v1: i32 = v0 as i32 >> 1i32;
-    let v3: *const u8 = RomPtr_93(
+    let v3 = RomPtr_93(
         crate::rtl::rom_table_word!(
             game,
             0x93842b,
@@ -94,7 +94,7 @@ pub unsafe fn InitializeInstrForSuperMissile(v0: u16, game: &mut Game) {
 }
 pub unsafe fn InitializeInstrForMissile(v0: u16, game: &mut Game) {
     let v1: i32 = v0 as i32 >> 1i32;
-    let v3: *const u8 = RomPtr_93(
+    let v3 = RomPtr_93(
         crate::rtl::rom_table_word!(
             game,
             0x9383f1,
@@ -171,7 +171,7 @@ pub unsafe fn InitializeBombExplosion(k: u16, game: &mut Game) {
 pub unsafe fn InitializeShinesparkEchoOrSpazerSba(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     let r18: i32 = ram_word!(game, projectile_dir[v1]) as i32 & 0xfi32;
-    let PD: *mut ProjectileDataTable = get_ProjectileDataTable(
+    let PD = get_ProjectileDataTable(
         crate::rtl::rom_table_word!(
             game,
             0x938403,
@@ -189,7 +189,7 @@ pub unsafe fn InitializeShinesparkEchoOrSpazerSba(k: u16, game: &mut Game) {
 }
 pub unsafe fn InitializeSbaProjectile(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
-    let v2: *const u8 = RomPtr_93(
+    let v2 = RomPtr_93(
         crate::rtl::rom_table_word!(
             game,
             0x938413,
@@ -225,7 +225,7 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn RunProjectileInstructions(game: &mut Game) {
-    let mut PI: *mut ProjectileInstr = null_mut::<ProjectileInstr>();
+    let mut PI = null_mut::<ProjectileInstr>();
     let v0: u16 = ram_word!(game, projectile_index);
     let v1: i32 = ram_word!(game, projectile_index) as i32 >> 1i32;
     let ref mut fresh0 = *(ram_ptr!(game, u16; 0xc54)).offset(v1 as isize);

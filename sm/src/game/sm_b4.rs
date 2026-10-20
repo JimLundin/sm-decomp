@@ -119,8 +119,7 @@ pub unsafe fn DrawSpriteObjects(game: &mut Game) {
                 if y >= 0i16 && y as i32 - 272i32 & 0x8000i32 != 0 {
                     let r3: u16 = (ram_word!(game, sprite_palettes[v1])) & (0xe00u16);
                     let r0: u16 = (ram_word!(game, sprite_palettes[v1])) & (0x1ffu16);
-                    let v3: *const u8 =
-                        RomPtr_B4(ram_word!(game, sprite_instr_list_ptrs[v1]), game);
+                    let v3 = RomPtr_B4(ram_word!(game, sprite_instr_list_ptrs[v1]), game);
                     DrawSpritemapWithBaseTile(
                         0xb4u8,
                         *(v3.offset(2) as *mut u16),
