@@ -290,7 +290,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **9,705-line** gap; parked small drafts are not
+   replacement yet funds the **9,557-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -373,6 +373,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    normal release and compiled-source checks pass. This is static equivalence,
    with no new movie result. Lower unsafe/cast counters reflect shared source
    declarations, not removal of unsafe runtime operations.
+
+   Complete beam/missile flight ownership removes **148 lines
+   (109,704 -> 109,556)**, including the 331-line module and every caller/import.
+   Shared direction routing, trail timing, acceleration and launch axes retire
+   28 bank entry points while preserving all 35 numeric dispatch addresses.
+   All 51,791 focused SNES comparisons pass, including 180 sustained-flight
+   scenarios and inherited launch motion. All 15 requested component probes
+   execute; focused movies and clean full integration pass as recorded below.
+   The remaining projectile instruction, drawing and firing owners are separate.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -536,10 +545,14 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: byte-partial-product sharing over 092be7bd passes
+Latest full integration: projectile flight over c1ebc4ca passes
 any% **129712/0** and Speed Booster **148406/0**, with normal rendering, audio
-and comparisons. Its changed arithmetic has independent actual-function
-coverage; these replays do not establish execution of the changed HDMA paths.
+and comparisons. Its 51,791 focused SNES comparisons exercise all 20 migrated
+numeric entries, subsequent flight and launch inheritance. Probed any%
+**11113/0** and Speed Booster **10934/0** cover the selected demo/Ceres branches
+plus 120 follow-up frames. Exotic beam/super-missile paths have constructed
+coverage; no endgame execution is claimed. Earlier byte-product checks have
+independent actual-function coverage, without proven changed HDMA execution.
 Earlier platform probes cover timed initialization, triggering,
 closing and stage advancement. Required opening/carry and non-timed movement/
 activation probes have zero hits: those coverage checks fail despite zero
@@ -608,12 +621,12 @@ committed baseline and budget.
 
 After the Japanese correction, local bindings, intro pages, enemy callback
 imports, ordered stores, PNG texture loading, beam firing, moving platforms,
-byte-partial-product sharing, INI decoding and countdown callbacks, maintained
-Rust is **109,704**, leaving **9,705** to reach 99,999. Counters:
+byte-partial-product sharing, INI decoding, countdown callbacks and projectile
+flight, maintained Rust is **109,556**, leaving **9,557** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 5118; cast lines 8633. The unrelated 83-line shader draft
+unsafe functions 5102; cast lines 8621. The unrelated 83-line shader draft
 remains excluded; working-tree counts are not the committed baseline.
-Continue item 2's remaining-responsibility comparison. The complete hopping
+Continue item 2's structural/variant audit from the research note. The hopping
 draft remains parked; neither it nor the completed small migrations establish
 a replacement budget for the remaining gap.
 

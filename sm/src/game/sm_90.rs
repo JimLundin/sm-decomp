@@ -8,6 +8,7 @@ pub use crate::game::constants::buttons::*;
 pub use crate::game::constants::game_states::*;
 pub use crate::game::constants::samus_movement::*;
 pub use crate::game::constants::samus_poses::*;
+use crate::game::projectile_flight::{self, Flight};
 use crate::game::sm_80::{
     CheckEventHappened, DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
     HandleScrollingWhenTriggeringScrollDown, HandleScrollingWhenTriggeringScrollLeft,
@@ -32,8 +33,8 @@ use crate::game::sm_91::{
 use crate::game::sm_92::{PlaySamusFanfare, SetSamusTilesDefsForCurAnim};
 use crate::game::sm_93::{
     DrawPlayerExplosions2, InitializeBombExplosion, InitializeInstrForMissile,
-    InitializeInstrForSuperMissile, InitializeProjectile, InitializeSbaProjectile,
-    InitializeShinesparkEchoOrSpazerSba, KillProjectileInner, RunProjectileInstructions,
+    InitializeProjectile, InitializeSbaProjectile, InitializeShinesparkEchoOrSpazerSba,
+    KillProjectileInner, RunProjectileInstructions,
 };
 use crate::game::sm_94::{
     scale_sine_word, BlockCollMissileHoriz, BlockCollMissileVert, BlockCollNoWaveBeamHoriz,
@@ -3012,17 +3013,29 @@ crate::game::address_dispatch! {
     pub unsafe fn CallProjPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
         call (k, game); default { Unreachable(game); };
     {
-        9482601 => [()]; 9481971 => ProjPreInstr_Beam_NoWaveBeam; 9482058 => ProjPreInstr_Dir0459;
-        9482066 => ProjPreInstr_Dir1368; 9482080 => ProjPreInstr_Dir27;
-        9482088 => ProjPreInstr_Missile; 9482183 => ProjPreInstr_Missile_Func0459;
-        9482191 => ProjPreInstr_Missile_Func1368; 9482205 => ProjPreInstr_Missile_Func27;
-        9482213 => ProjPreInstr_SuperMissile; 9482311 => ProjPreInstr_SuperMissile_Func0459;
-        9482322 => ProjPreInstr_SuperMissile_Func1368; 9482346 => ProjPreInstr_SuperMissile_Func27;
-        9482357 => ProjPreInstr_Func1; 9482393 => ProjPreInstr_Bomb;
-        9482414 => ProjPreInstr_PowerBomb; 9482435 => ProjPreInstr_WavePlasmaEtc;
-        9482468 => ProjPreInstr_BeamOrIceWave; 9482499 => ProjPreInstr_Wave_Shared;
-        9482555 => ProjPreInstr_WavePlasmaEtc_0459; 9482563 => ProjPreInstr_WavePlasmaEtc_1368;
-        9482577 => ProjPreInstr_WavePlasmaEtc_27; 9482585 => ProjPreInstr_HyperBeam;
+        9482601 => [()];
+        9481971 => [projectile_flight::update(k, Flight::NonWave, 4, game)];
+        9482058 => [projectile_flight::collide(2, Flight::NonWave, game)];
+        9482066 => [projectile_flight::collide(3, Flight::NonWave, game)];
+        9482080 => [projectile_flight::collide(1, Flight::NonWave, game)];
+        9482088 => [projectile_flight::update(k, Flight::Missile, 4, game)];
+        9482183 => [projectile_flight::collide(2, Flight::Missile, game)];
+        9482191 => [projectile_flight::collide(3, Flight::Missile, game)];
+        9482205 => [projectile_flight::collide(1, Flight::Missile, game)];
+        9482213 => [projectile_flight::update(k, Flight::SuperMissile, 2, game)];
+        9482311 => [projectile_flight::collide(2, Flight::SuperMissile, game)];
+        9482322 => [projectile_flight::collide(3, Flight::SuperMissile, game)];
+        9482346 => [projectile_flight::collide(1, Flight::SuperMissile, game)];
+        9482357 => [projectile_flight::update_extension(k, game)];
+        9482393 => ProjPreInstr_Bomb;
+        9482414 => ProjPreInstr_PowerBomb;
+        9482435 => [projectile_flight::update(k, Flight::Wave, 4, game)];
+        9482468 => [projectile_flight::update(k, Flight::Wave, 3, game)];
+        9482499 => [projectile_flight::advance(k, Flight::Wave, game)];
+        9482555 => [projectile_flight::collide(2, Flight::Wave, game)];
+        9482563 => [projectile_flight::collide(3, Flight::Wave, game)];
+        9482577 => [projectile_flight::collide(1, Flight::Wave, game)];
+        9482585 => [projectile_flight::update(k, Flight::Wave, 0, game)];
         9490185 => ProjPreInstr_IceSba; 9490298 => ProjPreInstr_IceSba2;
         9491666 => ProjPreInstr_SpeedEcho; 9492371 => ProjPreInstr_PlasmaSba;
         9492449 => ProjPreInstr_PlasmaSbaFunc_0; 9492474 => ProjPreInstr_PlasmaSbaFunc_1;
@@ -3049,158 +3062,6 @@ pub unsafe fn HandleProjectile(game: &mut Game) {
         word!(game.projectile_index = i as u16);
     }
 }
-static kDirToVelMult16_X: [i16; 10] = [0, 16, 16, 16, 0, 0, -16, -16, -16, 0];
-static kDirToVelMult16_Y: [i16; 10] = [-16, -16, 0, 16, 16, 16, 16, 0, -16, -16];
-static kProjPreInstr_Beam_Funcs: [Option<Func_Y_V>; 10] = callback_table! { unsafe Func_Y_V;
-    ProjPreInstr_Dir0459, ProjPreInstr_Dir1368, ProjPreInstr_Dir27, ProjPreInstr_Dir1368,
-    ProjPreInstr_Dir0459, ProjPreInstr_Dir0459, ProjPreInstr_Dir1368, ProjPreInstr_Dir27,
-    ProjPreInstr_Dir1368, ProjPreInstr_Dir0459,
-};
-
-macro_rules! advance_projectile_trail_and_velocity {
-    (
-        $previous_timer:ident, $game:ident, $slot:ident, $projectile_index:ident,
-        $direction_index:ident, $velocity_index:ident $(,)?
-    ) => {
-        if $previous_timer == 1 {
-            word!($game.projectile_timers[$slot] = 4);
-            SpawnProjectileTrail($projectile_index, $game);
-            $projectile_index = word!($game.projectile_index);
-        }
-        let v3: i32 = $projectile_index as i32 >> 1;
-        let $direction_index: u16 = (2 * (word!($game.projectile_dir[v3]) as i32 & 0xf)) as u16;
-        let $velocity_index: i32 = $direction_index as i32 >> 1;
-        word!(
-            $game.projectile_bomb_x_speed[v3],
-            wrapping_add((kDirToVelMult16_X[$velocity_index as usize]) as u16)
-        );
-        word!(
-            $game.projectile_bomb_y_speed[v3],
-            wrapping_add((kDirToVelMult16_Y[$velocity_index as usize]) as u16)
-        );
-    };
-}
-
-pub unsafe fn ProjPreInstr_Beam_NoWaveBeam(mut k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    if (word!(game.projectile_dir[v1]) & 0xf0) != 0 {
-        ClearProjectile(k, game);
-    } else {
-        crate::update_place! { reference fresh72 [fresh73] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh72).wrapping_sub(1); }
-        advance_projectile_trail_and_velocity!(fresh73, game, v1, k, v4, v5);
-        kProjPreInstr_Beam_Funcs[v5 as usize].expect("non-null function pointer")(v4, game);
-        DeleteProjectileIfFarOffScreen(game);
-    };
-}
-pub unsafe fn ProjPreInstr_Dir0459(k: u16, game: &mut Game) {
-    BlockCollNoWaveBeamVert(word!(game.projectile_index), game);
-}
-pub unsafe fn ProjPreInstr_Dir1368(k: u16, game: &mut Game) {
-    let v1: u16 = word!(game.projectile_index);
-    if BlockCollNoWaveBeamHoriz(word!(game.projectile_index), game) & 1 == 0 {
-        BlockCollNoWaveBeamVert(v1, game);
-    }
-}
-pub unsafe fn ProjPreInstr_Dir27(k: u16, game: &mut Game) {
-    BlockCollNoWaveBeamHoriz(word!(game.projectile_index), game);
-}
-static kProjPreInstr_Missile_Funcs: [Option<Func_Y_V>; 10] = callback_table! { unsafe Func_Y_V;
-    ProjPreInstr_Missile_Func0459, ProjPreInstr_Missile_Func1368, ProjPreInstr_Missile_Func27,
-    ProjPreInstr_Missile_Func1368, ProjPreInstr_Missile_Func0459, ProjPreInstr_Missile_Func0459,
-    ProjPreInstr_Missile_Func1368, ProjPreInstr_Missile_Func27, ProjPreInstr_Missile_Func1368,
-    ProjPreInstr_Missile_Func0459,
-};
-pub unsafe fn ProjPreInstr_Missile(mut k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    if (word!(game.projectile_dir[v1]) & 0xf0) != 0 {
-        ClearProjectile(k, game);
-    } else {
-        crate::update_place! { reference fresh68 [fresh69] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh68).wrapping_sub(1); }
-        advance_projectile_trail_and_velocity!(fresh69, game, v1, k, v4, v5);
-        Missile_Func1(k, game);
-        kProjPreInstr_Missile_Funcs[(v4 >> 1) as usize].expect("non-null function pointer")(
-            v4, game,
-        );
-        DeleteProjectileIfFarOffScreen(game);
-    };
-}
-pub unsafe fn ProjPreInstr_Missile_Func0459(k: u16, game: &mut Game) {
-    BlockCollMissileVert(word!(game.projectile_index), game);
-}
-pub unsafe fn ProjPreInstr_Missile_Func1368(k: u16, game: &mut Game) {
-    let v1: u16 = word!(game.projectile_index);
-    if BlockCollMissileHoriz(word!(game.projectile_index), game) == 0 {
-        BlockCollMissileVert(v1, game);
-    }
-}
-pub unsafe fn ProjPreInstr_Missile_Func27(k: u16, game: &mut Game) {
-    BlockCollMissileHoriz(word!(game.projectile_index), game);
-}
-static kProjPreInstr_SuperMissile_Funcs: [Option<Func_Y_V>; 10] = callback_table! { unsafe Func_Y_V;
-    ProjPreInstr_SuperMissile_Func0459, ProjPreInstr_SuperMissile_Func1368,
-    ProjPreInstr_SuperMissile_Func27, ProjPreInstr_SuperMissile_Func1368,
-    ProjPreInstr_SuperMissile_Func0459, ProjPreInstr_SuperMissile_Func0459,
-    ProjPreInstr_SuperMissile_Func1368, ProjPreInstr_SuperMissile_Func27,
-    ProjPreInstr_SuperMissile_Func1368, ProjPreInstr_SuperMissile_Func0459,
-};
-pub unsafe fn ProjPreInstr_SuperMissile(mut k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    if (word!(game.projectile_dir[v1]) & 0xf0) != 0 {
-        ClearProjectile(k, game);
-    } else {
-        crate::update_place! { reference fresh62 [fresh63] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh62).wrapping_sub(1); }
-        if fresh63 == 1 {
-            word!(game.projectile_timers[v1] = 2);
-            SpawnProjectileTrail(k, game);
-            k = word!(game.projectile_index);
-        }
-        let mut v3: i16 = ((word!(game.projectile_dir[(k >> 1)])) as i16) & (0xfi16);
-        Missile_Func1(k, game);
-        kProjPreInstr_SuperMissile_Funcs[v3 as usize].expect("non-null function pointer")(
-            v3 as u16, game,
-        );
-        if (DeleteProjectileIfFarOffScreen(game) & 1 == 0) {
-            return;
-        }
-    }
-    let mut i: i32 = 8;
-    while i >= 0 {
-        if (word!(game.projectile_type[(i >> 1)]) & 0xfff) == 512 {
-            ClearProjectile(i as u16, game);
-        }
-        i -= 2;
-    }
-}
-pub unsafe fn ProjPreInstr_SuperMissile_Func0459(k: u16, game: &mut Game) {
-    BlockCollMissileVert(word!(game.projectile_index), game);
-    SuperMissileBlockCollDetect_Y(game);
-}
-pub unsafe fn ProjPreInstr_SuperMissile_Func1368(k: u16, game: &mut Game) {
-    let v1: u16 = word!(game.projectile_index);
-    if BlockCollMissileHoriz(word!(game.projectile_index), game) != 0 {
-        SuperMissileBlockCollDetect_X(game);
-    } else {
-        SuperMissileBlockCollDetect_X(game);
-        BlockCollMissileVert(v1, game);
-        SuperMissileBlockCollDetect_Y(game);
-    };
-}
-pub unsafe fn ProjPreInstr_SuperMissile_Func27(k: u16, game: &mut Game) {
-    BlockCollMissileHoriz(word!(game.projectile_index), game);
-    SuperMissileBlockCollDetect_X(game);
-}
-pub unsafe fn ProjPreInstr_Func1(k: u16, game: &mut Game) {
-    if (word!(game.projectile_dir[(k >> 1)]) & 0xf0) != 0 {
-        ClearProjectile(k, game);
-        let mut i: i32 = 8;
-        while i >= 0 {
-            if (word!(game.projectile_type[(i >> 1)]) & 0xfff) == 512 {
-                ClearProjectile(i as u16, game);
-            }
-            i -= 2;
-        }
-    }
-}
 pub unsafe fn ProjPreInstr_Bomb(k: u16, game: &mut Game) {
     if (word!(game.projectile_dir[(k >> 1)]) & 0xf0) != 0 {
         ClearProjectile(k, game);
@@ -3218,327 +3079,6 @@ pub unsafe fn ProjPreInstr_PowerBomb(k: u16, game: &mut Game) {
     };
 }
 
-macro_rules! advance_wave_beam_and_spawn_trail {
-    (
-        $projectile_index:ident, $game:ident, $timer_reference:ident, $previous_timer:ident,
-        $trail_interval:literal $(,)?
-    ) => {
-        let v1: i32 = $projectile_index as i32 >> 1;
-        if (word!($game.projectile_dir[v1]) & 0xf0) != 0 {
-            ClearProjectile($projectile_index, $game);
-        } else {
-            crate::update_place! {
-                reference $timer_reference [$previous_timer] =
-                    *(ram_ptr!($game, u16; 0xc90)).offset(v1 as isize)
-                    => (*$timer_reference).wrapping_sub(1);
-            }
-            if $previous_timer == 1 {
-                word!($game.projectile_timers[v1] = $trail_interval);
-                SpawnProjectileTrail($projectile_index, $game);
-                ProjPreInstr_Wave_Shared(word!($game.projectile_index), $game);
-            } else {
-                ProjPreInstr_Wave_Shared($projectile_index, $game);
-            }
-        }
-    };
-}
-
-pub unsafe fn ProjPreInstr_WavePlasmaEtc(k: u16, game: &mut Game) {
-    advance_wave_beam_and_spawn_trail!(k, game, fresh59, fresh60, 4);
-}
-pub unsafe fn ProjPreInstr_BeamOrIceWave(k: u16, game: &mut Game) {
-    advance_wave_beam_and_spawn_trail!(k, game, fresh57, fresh58, 3);
-}
-static kProjPreInstr_WavePlasmaEtcFuncs: [Option<Func_Y_V>; 10] = callback_table! { unsafe Func_Y_V;
-    ProjPreInstr_WavePlasmaEtc_0459, ProjPreInstr_WavePlasmaEtc_1368,
-    ProjPreInstr_WavePlasmaEtc_27, ProjPreInstr_WavePlasmaEtc_1368,
-    ProjPreInstr_WavePlasmaEtc_0459, ProjPreInstr_WavePlasmaEtc_0459,
-    ProjPreInstr_WavePlasmaEtc_1368, ProjPreInstr_WavePlasmaEtc_27,
-    ProjPreInstr_WavePlasmaEtc_1368, ProjPreInstr_WavePlasmaEtc_0459,
-};
-pub unsafe fn ProjPreInstr_Wave_Shared(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    let v2: u16 = (2 * (word!(game.projectile_dir[v1]) as i32 & 0xf)) as u16;
-    let v3: i32 = v2 as i32 >> 1;
-    word!(
-        game.projectile_bomb_x_speed[v1],
-        wrapping_add((kDirToVelMult16_X[v3 as usize]) as u16)
-    );
-    word!(
-        game.projectile_bomb_y_speed[v1],
-        wrapping_add((kDirToVelMult16_Y[v3 as usize]) as u16)
-    );
-    kProjPreInstr_WavePlasmaEtcFuncs[v3 as usize].expect("non-null function pointer")(v2, game);
-    DeleteProjectileIfFarOffScreen(game);
-}
-pub unsafe fn ProjPreInstr_WavePlasmaEtc_0459(k: u16, game: &mut Game) {
-    BlockCollWaveBeamVert(word!(game.projectile_index), game);
-}
-pub unsafe fn ProjPreInstr_WavePlasmaEtc_1368(k: u16, game: &mut Game) {
-    let v1: u16 = word!(game.projectile_index);
-    if BlockCollWaveBeamHoriz(word!(game.projectile_index), game) & 1 == 0 {
-        BlockCollWaveBeamVert(v1, game);
-    }
-}
-pub unsafe fn ProjPreInstr_WavePlasmaEtc_27(k: u16, game: &mut Game) {
-    BlockCollWaveBeamHoriz(word!(game.projectile_index), game);
-}
-pub unsafe fn ProjPreInstr_HyperBeam(k: u16, game: &mut Game) {
-    if (word!(game.projectile_dir[(k >> 1)]) & 0xf0) != 0 {
-        ClearProjectile(k, game);
-    } else {
-        ProjPreInstr_Wave_Shared(k, game);
-    };
-}
-pub unsafe fn DeleteProjectileIfFarOffScreen(game: &mut Game) -> u8 {
-    let mut v0: i16 = ((*(ram_ptr!(game, u16; 0xb64))
-        .offset((word!(game.projectile_index) >> 1) as isize)) as i16)
-        .wrapping_sub((word!(game.layer1_x_pos)) as i16);
-    if v0 as i32 + 64 & 0x8000 == 0 && v0 as i32 - 320i32 & 0x8000 != 0 {
-        let mut v2: i16 = ((*(ram_ptr!(game, u16; 0xb78))
-            .offset((word!(game.projectile_index) >> 1) as isize))
-            as i16)
-            .wrapping_sub((word!(game.layer1_y_pos)) as i16);
-        if v2 as i32 + 64 & 0x8000 == 0 && v2 as i32 - 320i32 & 0x8000 != 0 {
-            return 0;
-        }
-    }
-    ClearProjectile(word!(game.projectile_index), game);
-    1
-}
-static kInitializeProjectileSpeed_XY_Diag: [u16; 24] = [
-    0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400,
-    0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab,
-];
-pub unsafe fn SetInitialProjectileSpeed(r20: u16, game: &mut Game) {
-    let v0: i32 = r20 as i32 >> 1;
-    let v1: u16 = (4 * (word!(game.projectile_type[v0]) as i32 & 0xf)) as u16;
-    let v2: u16 = (2 * (word!(game.projectile_dir[v0]) as i32 & 0xf)) as u16;
-    let mut r22: u16 = if v2 == 0 || v2 == 4 || v2 == 8 || v2 == 10 || v2 == 14 || v2 == 18 {
-        kInitializeProjectileSpeed_XY_Diag[(v1 >> 1) as usize]
-    } else {
-        if v2 != 2 && v2 != 6 && v2 != 12 && v2 != 16 {
-            Unreachable(game);
-        }
-        kInitializeProjectileSpeed_XY_Diag[((v1 as i32 >> 1) + 1) as usize]
-    };
-    InitializeProjectileSpeed(r20, r22, game);
-}
-pub unsafe fn InitializeProjectileSpeedOfType(r20: u16, game: &mut Game) {
-    InitializeProjectileSpeed(r20, 0, game);
-}
-pub unsafe fn InitializeProjectileSpeed(k: u16, r22: u16, game: &mut Game) {
-    let mut r18: u16 = 0;
-    let kh: i32 = k as i32 >> 1;
-    word! { game, 0; projectile_bomb_x_subpos[kh], projectile_bomb_y_subpos[kh] }
-    match 2 * (word!(game.projectile_dir[kh]) as i32 & 0xf) {
-        0 | 18 => {
-            if word!(game.projectile_init_speed_samus_moved_up) as u8 != 0 {
-                r18 = (*((ram_ptr!(game, u16; 0xdb0) as *mut u8).offset(1) as *mut u16) as i32 >> 2
-                    | 0xc000) as u16;
-            } else {
-                r18 = 0;
-            }
-            word!(game.projectile_bomb_y_speed[kh] = (r18).wrapping_sub(r22));
-            word!(game.projectile_bomb_x_speed[kh] = 0);
-        }
-        2 => {
-            if word!(game.projectile_init_speed_samus_moved_up) as u8 != 0 {
-                r18 = (*((ram_ptr!(game, u16; 0xdb0) as *mut u8).offset(1) as *mut u16) as i32 >> 2
-                    | 0xc000) as u16;
-            } else {
-                r18 = 0;
-            }
-            word!(game.projectile_bomb_y_speed[kh] = (r18).wrapping_sub(r22));
-            word!(
-                game.projectile_bomb_x_speed[kh] = (*((ram_ptr!(game, u16; 0xdac) as *mut u8)
-                    .offset(1) as *mut u16))
-                    .wrapping_add(r22)
-            );
-        }
-        4 => {
-            word!(game.projectile_bomb_y_speed[kh] = 0);
-            word!(
-                game.projectile_bomb_x_speed[kh] = (*((ram_ptr!(game, u16; 0xdac) as *mut u8)
-                    .offset(1) as *mut u16))
-                    .wrapping_add(r22)
-            );
-        }
-        6 => {
-            word! { game;
-                projectile_bomb_y_speed[kh] = (*((ram_ptr!(game, u16; 0xdb4) as *mut u8).offset(1)
-                    as *mut u16))
-                    .wrapping_add(r22);
-                projectile_bomb_x_speed[kh] = (*((ram_ptr!(game, u16; 0xdac) as *mut u8).offset(1)
-                    as *mut u16))
-                    .wrapping_add(r22);
-            }
-        }
-        8 | 10 => {
-            word!(
-                game.projectile_bomb_y_speed[kh] = (*((ram_ptr!(game, u16; 0xdb4) as *mut u8)
-                    .offset(1) as *mut u16))
-                    .wrapping_add(r22)
-            );
-            word!(game.projectile_bomb_x_speed[kh] = 0);
-        }
-        12 => {
-            word! { game;
-                projectile_bomb_y_speed[kh] = (*((ram_ptr!(game, u16; 0xdb4) as *mut u8).offset(1)
-                    as *mut u16))
-                    .wrapping_add(r22);
-                projectile_bomb_x_speed[kh] = (*((ram_ptr!(game, u16; 0xda8) as *mut u8).offset(1)
-                    as *mut u16))
-                    .wrapping_sub(r22);
-            }
-        }
-        14 => {
-            word!(game.projectile_bomb_y_speed[kh] = 0);
-            word!(
-                game.projectile_bomb_x_speed[kh] = (*((ram_ptr!(game, u16; 0xda8) as *mut u8)
-                    .offset(1) as *mut u16))
-                    .wrapping_sub(r22)
-            );
-        }
-        16 => {
-            if word!(game.projectile_init_speed_samus_moved_up) as u8 != 0 {
-                r18 = (*((ram_ptr!(game, u16; 0xdb0) as *mut u8).offset(1) as *mut u16) as i32 >> 2
-                    | 0xc000) as u16;
-            } else {
-                r18 = 0;
-            }
-            word!(game.projectile_bomb_y_speed[kh] = (r18).wrapping_sub(r22));
-            word!(
-                game.projectile_bomb_x_speed[kh] = (*((ram_ptr!(game, u16; 0xda8) as *mut u8)
-                    .offset(1) as *mut u16))
-                    .wrapping_sub(r22)
-            );
-        }
-        _ => {
-            Unreachable(game);
-        }
-    };
-}
-pub unsafe fn Missile_Func1(k: u16, game: &mut Game) {
-    static word_90C301: u16 = 0x100;
-    let mut v3: u16 = 0;
-    let v1: i32 = k as i32 >> 1;
-    if (word!(game.projectile_variables[v1]) & 0xff00) != 0 {
-        if (word!(game.projectile_type[v1]) & 0x200) != 0 {
-            v3 = addr_kSuperMissileAccelerations2 as u16;
-        } else {
-            v3 = addr_kSuperMissileAccelerations as u16;
-        }
-        let v4 = RomPtr_90(
-            (v3 as i32 + 4 * (word!(game.projectile_dir[v1]) as i32 & 0xf)) as u16,
-            game,
-        );
-        word!(
-            game.projectile_bomb_x_speed[v1],
-            wrapping_add(*(v4 as *mut u16))
-        );
-        word!(
-            game.projectile_bomb_y_speed[v1],
-            wrapping_add(*(v4.offset(2) as *mut u16))
-        );
-    } else {
-        let v2: u16 = (word_90C301).wrapping_add(word!(game.projectile_variables[v1]));
-        word!(game.projectile_variables[v1] = v2);
-        if (v2 & 0xff00) != 0 {
-            InitializeProjectileSpeed(k, word!(game.projectile_variables[v1]), game);
-            if (word!(game.projectile_type[v1]) & 0x200) != 0 {
-                Missile_Func2(game);
-            }
-        }
-    };
-}
-
-macro_rules! super_missile_extension_collision {
-    (
-        $game:ident, $projectile_slot:ident, $speed_field:ident, $position_field:ident,
-        $collide_axis:path, $position_ram:literal $(,)?
-    ) => {
-        if (word!($game.projectile_type[$projectile_slot]) & 0xf00) == 512
-            || (word!($game.projectile_type[$projectile_slot]) & 0xf00) == 2048
-        {
-            let v5: u8 = word!($game.projectile_variables[$projectile_slot]) as u8;
-            if *(ram_ptr!($game, u16; 0xc7c) as *mut u8)
-                .offset(word!($game.projectile_index) as i32 as isize)
-                .offset(1)
-                != 0
-            {
-                let v1: u16 = (abs16(word!($game.$speed_field[$projectile_slot])))
-                    & (0xff00u16);
-                if v1 as i32 - 2816i32 & 0x8000 != 0 {
-                    let v4: i32 = word!($game.projectile_index) as i32 >> 1;
-                    if (word!($game.projectile_type[v4]) & 0xf00) != 2048 {
-                        word!(
-                            $game.$position_field[(v5 >> 1)] =
-                                word!($game.$position_field[v4])
-                        );
-                        return;
-                    }
-                } else {
-                    let r18: u16 = ((v1 as i32 >> 8) - 10i32) as u16;
-                    if (word!($game.$speed_field[$projectile_slot]) & 0x8000) == 0 {
-                        let v6: u16 = word!($game.projectile_index);
-                        word!(
-                            $game.$position_field[(v5 >> 1)] =
-                                (word!($game.$position_field[$projectile_slot]))
-                                    .wrapping_sub(r18)
-                        );
-                        word!($game.projectile_index = v5 as u16);
-                        $collide_axis(v5 as u16, $game);
-                        word!($game.projectile_index = v6);
-                        if (word!($game.projectile_type[(v6 >> 1)]) & 0xf00) == 2048 {
-                            ClearProjectile(v5 as u16, $game);
-                        }
-                        return;
-                    }
-                    let v7: u16 = word!($game.projectile_index);
-                    word!(
-                        $game.$position_field[(v5 >> 1)] =
-                            (r18).wrapping_add(
-                                *(ram_ptr!($game, u16; $position_ram)).offset(
-                                    (word!($game.projectile_index) >> 1) as isize,
-                                ),
-                            )
-                    );
-                    word!($game.projectile_index = v5 as u16);
-                    $collide_axis(v5 as u16, $game);
-                    word!($game.projectile_index = v7);
-                    if (word!($game.projectile_type[(v7 >> 1)]) & 0xf00) != 2048 {
-                        return;
-                    }
-                }
-                ClearProjectile(v5 as u16, $game);
-            }
-        }
-    };
-}
-
-pub unsafe fn SuperMissileBlockCollDetect_Y(game: &mut Game) {
-    let v0: i32 = word!(game.projectile_index) as i32 >> 1;
-    super_missile_extension_collision!(
-        game,
-        v0,
-        projectile_bomb_y_speed,
-        projectile_y_pos,
-        BlockCollMissileVert,
-        0xb78
-    );
-}
-pub unsafe fn SuperMissileBlockCollDetect_X(game: &mut Game) {
-    let v0: i32 = word!(game.projectile_index) as i32 >> 1;
-    super_missile_extension_collision!(
-        game,
-        v0,
-        projectile_bomb_x_speed,
-        projectile_x_pos,
-        BlockCollMissileHoriz,
-        0xb64
-    );
-}
 pub unsafe fn ProjInstr_MoveLeftProjectileTrailDown(j: u16, game: &mut Game) {
     word!(game.projectiletrail_left_y_pos[(j >> 1)], wrapping_add(1));
 }
@@ -3982,7 +3522,7 @@ pub unsafe fn ProjectileReflection(r20: u16, game: &mut Game) {
         word!(game.projectile_bomb_pre_instructions[v3] = ((0x90afe5i32) as u16));
         word!(game.projectile_variables[v3] = 240);
     } else {
-        SetInitialProjectileSpeed(r20, game);
+        projectile_flight::initialize_beam_speed(r20, game);
         InitializeProjectile(v0, game);
         word!(
             game.projectile_bomb_pre_instructions[v1] =
@@ -4032,7 +3572,7 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
         if word!(game.cinematic_function) == 0 {
             QueueSfx1_Max6(kNonBeamProjectile_Sfx[(v4 >> 1) as usize], game);
         }
-        InitializeProjectileSpeedOfType(r20, game);
+        projectile_flight::initialize_speed(r20, 0, game);
         InitializeProjectile(r20, game);
         let mut v7: u16 = word!(game.projectile_type[v1]);
         if (v7 & 0x200) != 0 {
@@ -4058,31 +3598,6 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
         }
         word!(game.hud_item_index = 0);
     }
-}
-pub unsafe fn Missile_Func2(game: &mut Game) {
-    let mut v0: u16 = 0;
-    while word!(game.projectile_damage[(v0 >> 1)]) != 0 {
-        v0 = (v0).wrapping_add(2);
-        if ((v0) as i16).wrapping_sub(10) >= 0 {
-            return;
-        }
-    }
-    let r20: u16 = v0;
-    let v1: i32 = v0 as i32 >> 1;
-    word!(game.projectile_type[v1], |fresh66| (fresh66) | (0x8200u16));
-    let v2: i32 = word!(game.projectile_index) as i32 >> 1;
-    word!(game.projectile_x_pos[v1] = word!(game.projectile_x_pos[v2]));
-    word!(game.projectile_y_pos[v1] = word!(game.projectile_y_pos[v2]));
-    word!(game.projectile_dir[v1] = word!(game.projectile_dir[v2]));
-    InitProjectilePositionDirection(r20, game);
-    InitializeInstrForSuperMissile(v0, game);
-    word!(game.projectile_bomb_pre_instructions[v1] = ((0x90b075i32) as u16));
-    *(ram_ptr!(game, u16; 0xc7c)).offset((word!(game.projectile_index) >> 1) as isize) = (v0 as i32
-        + (*(ram_ptr!(game, u16; 0xc7c)).offset((word!(game.projectile_index) >> 1) as isize)
-            as i32
-            & 0xff00))
-        as u16;
-    word!(game.projectile_counter, wrapping_add(1));
 }
 pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
     if (word!(game.button_config_shoot_x) & word!(game.joypad1_lastkeys)) != 0 {

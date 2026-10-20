@@ -1,9 +1,10 @@
 //! Beam charge input and the complete uncharged, charged and hyper firing sequence.
+use crate::game::projectile_flight;
 use crate::game::sm_80::QueueSfx1_Max15;
 use crate::game::sm_90::{
     fnProjPreInstr_BeamOrIceWave, fnProjPreInstr_Beam_NoWaveBeam, fnProjPreInstr_WavePlasmaEtc,
     kFireChargedBeam_Funcs, kProjectileCooldown_Uncharged, CheckBeamCollByDir, FireSba,
-    InitProjectilePositionDirection, SetInitialProjectileSpeed, WaveBeam_CheckColl,
+    InitProjectilePositionDirection, WaveBeam_CheckColl,
 };
 use crate::game::sm_91::Samus_LoadSuitPalette;
 use crate::game::sm_93::InitializeProjectile;
@@ -105,7 +106,7 @@ unsafe fn fire(charged: bool, game: &mut Game) {
                 let slot = word!(game.projectile_index) as i32 >> 1;
                 word!(game.projectile_damage[slot] = 1000);
                 word!(game.projectile_bomb_pre_instructions[slot] = ((0x90b159i32) as u16));
-                SetInitialProjectileSpeed(projectile, game);
+                projectile_flight::initialize_beam_speed(projectile, game);
                 word!(game.cooldown_timer = 21);
                 word!(game.charged_shot_glow_timer = -32748i32 as u16);
                 word!(game.flare_animation_frame = 29);
@@ -151,7 +152,7 @@ unsafe fn fire(charged: bool, game: &mut Game) {
                             [(word!(game.projectile_type[(projectile >> 1)]) as i32 & 0xf)
                                 as usize]
                     );
-                    SetInitialProjectileSpeed(projectile, game);
+                    projectile_flight::initialize_beam_speed(projectile, game);
                 }
                 if charged {
                     word!(game.charged_shot_glow_timer = 4);
