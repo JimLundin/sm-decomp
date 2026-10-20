@@ -5,15 +5,16 @@ preserving behavior. This note records primary-source research, scanner trials
 and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
-Latest frozen result: executable translation rules learned from current Rust
-produce **113,161 lines**, down **12,641** from the previous 125,802 checkpoint
-and **165,775** from the initial 278,936-line Rust. All emitted support and
-overlap are counted. Complete optimized library and actual frontend metadata
-compilation pass, along with the documented component checks. A separate
-zero-volume stage repairs an inherited C2Rust packed-record defect and passes
-the actual queue comparisons; this is not whole-game correctness or an
-under-100,000 result.
-Maintained Rust remains 107,520 committed lines. A separate
+Executable translation rules learned from current Rust now produce a
+**110,009-line** historical-source composition. The current-source batch has
+landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
+8,460 fewer token-spelling bytes, including the eight-line alignment repair.
+All emitted support and overlap are counted. Complete builds, the documented
+correspondence/component checks and both full boot replay routes pass for the
+adopted source. Neither count is below 100,000, and their savings are not added.
+The historical pipeline also fixes concrete packing and unaligned-reference
+defects; correctness costs are charged separately from code reduction.
+Maintained Rust needs another **6,190 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -1351,11 +1352,136 @@ diagnostic pointer identities. RAM grouping compares complete macro expansion
 and adversarial full-RAM effects, including RHS-before-index order, aliases and
 temporary destruction. These are component and syntax proofs, not full replay.
 
-The larger uncomposed source experiments are the earlier native instruction
-executors (789 handlers) and C word-operation recipes. The selected 16-unit
-C-algorithm stage did not include these. Their composition is now assigned;
-current callback sharing and numeric emission may consume much of the earlier
-benefit. Reuse the frozen candidates and measure actual remaining savings.
+The earlier native instruction executors are now composed against the actual
+113,161-line input. The combined enemy/PLM/projectile/presentation replacement
+**adds 809 lines**, despite its old standalone reduction. Reject it. The
+enemy-only alternative removes 217, with 466 opcode mappings, 407 bodies,
+seven retained direct-call wrappers and 19,712 original-C/actual-Rust component
+cases checked. Park it behind larger opportunities. The old 2,744-line
+standalone saving is not missing budget. C word-operation recipes likewise
+overlap prior numeric policies; their remaining countdown/comparison cohort
+removes only 266 lines on its separate phase10 control. Integration must also
+repair its inherited odd-address reference behavior before accepting it.
+
+### Require less code, not only fewer lines
+
+The next frozen historical-source composition measures the complete marginal
+cost of the remaining current-guided families:
+
+| Actual sequential stage | Complete Rust lines | Change |
+| --- | ---: | ---: |
+| Previous composition | 113,161 | — |
+| Introduction page family | 112,970 | -191 |
+| Moving platforms and shutters | 112,680 | -290 |
+| Shared enemy getter prefixes | 112,446 | -234 |
+| Control emission policy | 111,542 | -904 |
+| Unaligned RAM update repair | 111,597 | +55 |
+| Remaining original-C clone families | 111,311 | -286 |
+| Safe countdown expressions | 111,146 | -165 |
+| Typed word comparisons | 111,046 | -100 |
+| Selected computed field writes | 110,953 | -93 |
+| Computed named-RAM writes | 110,509 | -444 |
+| Improved terminal-loop grammar | 110,509 | 0 |
+| Ordinary standard-library imports | **110,009** | **-500** |
+
+All actual stage checks and complete optimized library/frontend builds pass.
+The getter cohort contains 47 groups / 391 functions after composition.
+The clone cohort covers 18 groups / 84 routines, removes five unused wrappers
+and redirects eight calls; 5,376 original-C/before/after cases pass. The 66-file
+output and reports are under `integration/phase10` through `phase14`.
+
+The alignment fix covers 228 RAM captures, including 89 odd literal-base
+addresses. It replaces invalid `&mut u16` formation with raw pointers,
+unaligned loads and ordered stores. The actual music queue now passes debug
+execution at address 1599; 66,400 original-C cases and debug/release effect
+checks pass. Its **55 lines, 4,230 tokens and 14,540 text bytes are a correctness
+cost**, not a reduction. The earlier packing fix remains in the composition.
+This historical candidate has no full-game replay result. The final 110,009
+includes every safe word/store/import pass on its actual preceding input.
+The complete composition removes 52,127 lines, 560,317 tokens and 1,516,811
+code-text bytes from the 162,136-line frozen control, so its overall gain is
+not merely formatting. The final import stage's paired complete builds pass;
+optimized compiler-operation correspondence covers 1,109,529 library and
+69,650 frontend lines. Reused successful build artifacts are identified in
+`phase14/RESULTS.json`; compilation is not deferred or inferred from an earlier
+source. Remaining strict gap: 10,010 lines. Local invoked Python experiment
+rules/validators/orchestration total 14,700 lines across 163 files; the separate
+nine-line Cargo manifest and external GL dependency costs remain disclosed.
+
+The follow-up experiments compare physical lines, noncomment syntax tokens
+and token-spelling bytes. All helpers and imports count. This is a guard
+against making progress appear larger by packing unrelated statements into
+macro rows; it supplements the required physical-line count.
+
+The broad computed-field experiment demonstrates the problem. On current
+Rust it removes **982 lines but adds 8,301 bytes of code text**; on the
+historical phase10 control it removes 634 lines but adds 31 tokens and 6,328
+bytes. Repeating `crate::set_fields!` outweighs the short receiver expressions.
+Reject those broad variants as volume strategies, despite passing compiler
+and exact-expansion checks. The selected field policy admits only groups that
+remove both tokens and text, then charges the shared macro arm: **299 lines,
+1,800 tokens and 1,788 bytes** removed on its separate current-source control.
+
+The named-RAM rule has a stronger result: **576 lines, 5,040 tokens and 10,080
+bytes** removed from current Rust across 472 groups / 1,312 stores, with no
+new support. It reuses the existing ordered-write form, preserving every
+value and index evaluation at its original store. Complete library/frontend
+builds and compiler-expanded correspondence pass across 7,097 functions;
+the checker independently verifies the source bytes embedded by the verifier.
+This is new current-source applicability, unlike reproducing reductions
+already present in main. It is notation sharing, not algorithm removal.
+
+The first terminal-loop notation similarly removed 465 current lines while
+adding 200 tokens and 1,376 bytes, including its helper. Removing qualification
+still added 263 bytes. Those spellings are parked as volume changes. A revised
+`do_until! { guard; body }` rule names its terminal-check semantics directly
+and removes the redundant delimiters/keyword; its measured complete current
+cohort removes 465 lines, 438 tokens and 537 bytes. Exact body scope, control
+transfer and temporary lifetime checks are required before composition.
+
+The reduction-only current composition is **107,520 → 106,181 (-1,339)**,
+removing **7,265 tokens and 12,393 token-spelling bytes**, including support.
+It applies the revised 159 terminal loops, 114 selected field groups / 584
+stores, then 472 RAM groups / 1,312 stores. Restoring the exact committed shader
+excludes its one-line saving and preserves the user's unrelated draft.
+Both complete frontend-enabled builds, formatting and independent expanded
+library/frontend correspondence pass: 7,097 library functions, 84 frontend
+functions and independently checked embedded source/cache payloads. Source
+hash for that reduction-only snapshot:
+`265a6c5dc4f9f690bc030ea1244fa9d9dcf4ae7e5fd5ab4390b7b4ae83face14`.
+
+The separately verified current alignment repair adds eight lines, giving the
+adopted **106,189-line** result: **1,331 fewer lines, 6,104 fewer tokens and
+8,460 fewer token-spelling bytes**. It changes 83 captured RAM words to raw
+unaligned accesses, preserving all 124 reads and 83 writes. The inherited
+reference form aborts in debug in the actual music queue at odd address 1599.
+The repaired function passes 66,400 original-C cases / 132,800 complete-RAM
+comparisons. Ordered-effect checks pass 458,756 cases in each debug/release
+build, including aliasing, rereads and temporary destruction. This correctness
+cost remains explicit; these component checks do not establish every path's
+movie execution or eliminate every unrelated unsafe access.
+
+All four changes are committed on main: terminal loops `f9c75bc8`, selected
+field writes `7a661f38`, named RAM writes `c556eb9d`, and alignment repair
+`dc5d2f08`. Final optimized frontend-enabled library/frontend checks pass.
+The final source matches `TEMP/sm-tailored-next/adoption-final` byte-for-byte,
+including the preserved, uncommitted shader draft. Full boot any% passes
+**129,712 frames / zero failures** (109.09 replay seconds); Speed Booster
+passes **148,406 / zero** (140.81 seconds). Both retain normal rendering,
+audio and comparisons; neither reaches credits. The final verifier source
+hash is `f99e3783a9321629fab062c4161ba2e21bd5486ca0020cba2955b23037f33cc5`.
+The shader draft accounts for the working count of 106,106 and is excluded
+from the committed 106,189 and its reduction budget.
+
+These rules remove no bank module. The adopted source needs another
+**6,190 lines** removed to reach 99,999; it does not establish that remaining
+budget. The historical-source pipeline and maintained-source reductions are
+separate comparisons, not additive savings. The next experiment tests finite
+typed instruction operations and retained exceptional handlers against current
+Rust; it differs from the rejected fusion of whole handlers into match arms.
+Artifacts are under
+`TEMP/sm-tailored-next/current-record-writes`, `current-ram-writes`,
+`current-composed`, `record-writes`, `unaligned-current` and `adoption-final`.
 
 ## Independent transpilers: executed comparisons
 

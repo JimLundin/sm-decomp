@@ -25,12 +25,16 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A successful partial
 profile or pilot does not finish this goal. The latest frozen composition
-now produces **162,136 -> 113,161 (-48,975)**, with complete optimized library
+now produces **162,136 -> 110,009 (-52,127)**, with complete optimized library
 and actual frontend metadata compilation passing. The latest stages remove
-**12,641** from the previous 125,802 checkpoint, including the selected C
+**15,793** from the previous 125,802 checkpoint, including the selected C
 algorithm families, shared enemy layouts, CPU/SPC grids, dispatchers, register
 writes, byte/split-word places, initialization/transfer families, map menus,
-explosion windows, assertion emission and ordered RAM-store groups. All local
+explosion windows, assertion emission, ordered RAM-store groups, introduction
+pages, moving platforms, getter prefixes, residual clone families, safe word
+updates, selective computed stores and ordinary standard-library imports. The
+complete profile also removes 560,317 tokens and 1,516,811 code-text bytes
+from its 162,136-line control. All local
 support and overlaps are counted; external GL dependency code is disclosed
 separately. No new main deletion or whole-game replay is claimed.
 Map component checks exposed the original C2Rust VramWriteEntry packing defect
@@ -38,11 +42,11 @@ again: destination offset 6 instead of 5. A separate zero-volume stage now
 repairs it; 65,536 complete-buffer stores and 8,192 actual NMI consumer cases
 match C, and both complete builds pass. The uncorrected control is preserved.
 These bounded checks do not establish whole-game correctness. Next are the
-remaining control-flow policies and complete current-guided families. Also
-compose the earlier 789 instruction-handler and C word-operation experiments:
-the newer 16-unit algorithm composition did not include those candidates.
-Measure their remaining benefit after current callback/numeric policies; their
-old standalone savings are not additive.
+remaining complete current-guided families and their actual composition.
+The earlier 789-handler executor trial now grows 809 lines on the composed
+input; reject it. Its enemy-only subset saves 217 and remains parked. The
+remaining C word-operation rules save about 265 on their separate repaired
+control; their old standalone savings are not additive.
 Numeric, comparison, entity-access and initialization trials
 on current source save only 31, 69, 152 and 13 lines on their separate inputs;
 park these as volume priorities. Moving functions into associated Game
@@ -75,6 +79,31 @@ derive executable emission rules from those transformations. Test complete
 cohorts and their composition, including shared-definition and caller costs.
 Distinguish automatically reproducing reductions already present in main
 from new algorithm sharing and cases that still require manual work.
+
+The current-source composition has landed in four focused commits:
+**107,520 -> 106,189 (-1,331)**, including 159 terminal loops, 114 selected
+field groups, 472 named-RAM write groups and the alignment repair below.
+It also removes 6,104 noncomment tokens and 8,460 token-spelling bytes,
+including all support and the repair. Complete frontend-enabled builds,
+formatting and compiler-expanded library/frontend correspondence pass.
+Final full boot any% **129712/0** and Speed Booster **148406/0** pass with
+normal rendering, audio and comparisons. Neither route reaches credits.
+Broad field and earlier loop spellings that reduced lines while increasing
+text were rejected; retain this token/text check against line packing.
+The unrelated shader draft is preserved and excluded from the committed
+count. Another **6,190 lines** are needed to reach 99,999; no remaining
+deletion budget or bank retirement is established by these rules.
+
+Component checks also found an inherited unaligned RAM reference in the
+music queue and related update captures. The historical repair changes 228
+captures, costs 55 lines and passes debug/release C/Rust checks. Correctness
+costs count explicitly; no reduction credit is claimed. Apply its safe raw
+pointer semantics before countdown rules, which must not reintroduce the
+same reference. The corresponding current repair covers 83 captures and
+costs eight lines, included above. Independent expanded correspondence
+preserves 124 reads and 83 writes. Actual music-queue checks pass 66,400 C
+cases / 132,800 full-RAM comparisons, alongside debug/release effect checks.
+The final adopted source matches the replayed snapshot byte-for-byte.
 
 The current-derived algorithm prototype regenerates all 24 corpse tile
 callbacks from original C effects: **793 C -> 2,319 initial Rust -> 208 emitted
@@ -421,8 +450,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the same clone scans. Domain judgment selects the native helper contract;
    recognition derives per-member parameters and rejects different effects.
    Price any production adoption against current Rust and validate it under
-   item 3. The isolated 162,136-line output is a partial translation profile,
+   item 3. The isolated 110,009-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
+
+   Next: price a finite typed instruction-data replacement using the existing
+   original-C/current-Rust lineage. Unlike the rejected executor fusion, this
+   shares complete store, flag, arithmetic, sound and operand-consumption
+   operations; complex handlers remain explicit exceptions. Count all tables,
+   execution, routing and retained wrappers before expanding validation. This
+   is a new representation experiment, not another clone scan or a forecast.
 
    The expanded source-first C experiment is complete: sharing 35 algorithm
    groups, retiring forwarding functions, fusing 789 instruction bodies and
@@ -505,7 +541,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **7,521-line** gap; parked small drafts are not
+   replacement yet funds the **6,190-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -846,7 +882,14 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: callback/dispatch sharing over ecf93788 passes any%
+Latest full integration: terminal loops, selected field/RAM store groups and
+the 83-capture unaligned RAM repair through dc5d2f08 pass full boot any%
+**129712/0** and Speed Booster **148406/0**, with normal rendering, audio and
+comparisons. The final source matches the replayed snapshot. Complete expanded
+library/frontend correspondence covers unchanged operations; loop lifetime
+checks and C/music-queue/ordered-effect components cover the selected semantics.
+These do not establish movie execution of every changed path or credits.
+Earlier callback/dispatch sharing over ecf93788 passes any%
 **129712/0** and Speed Booster **148406/0**, with normal rendering, audio and
 comparisons. Independent complete function/route correspondence covers the
 unvisited callbacks; no claim of movie execution for every callback is made.
@@ -942,8 +985,9 @@ After the Japanese correction, local bindings, intro pages, enemy callback
 imports, ordered stores, PNG texture loading, beam firing, moving platforms,
 byte-partial-product sharing, INI decoding, countdown callbacks, projectile
 flight, callback entry captures, opcode grids, blast windows, indexed loops and
-combined callback/dispatch declarations, maintained Rust is **107,520**, leaving
-**7,521** to reach 99,999. Counters:
+combined callback/dispatch declarations, terminal loops, selected field/RAM
+store groups and the unaligned RAM repair, maintained Rust is **106,189**,
+leaving **6,190** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
 unsafe functions 3665; cast lines 8096. Shared declarations lower the unsafe
 source count; ten additional cast lines come from normal body reflow, with
