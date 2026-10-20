@@ -34,11 +34,7 @@ pub unsafe fn DisablePaletteFx(game: &mut Game) {
         & !(0x8000)));
 }
 pub unsafe fn ClearPaletteFXObjects(game: &mut Game) {
-    let mut i: i32 = 14;
-    while i >= 0 {
-        word!(game.palettefx_ids[(i >> 1)] = 0);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 8; le(palettefx_ids, 7) <- value(0));
 }
 pub unsafe fn SpawnPalfxObject(j: u16, game: &mut Game) {
     let mut v1: u16 = 14;

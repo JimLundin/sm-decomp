@@ -184,14 +184,10 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
     };
     Torizo_Instr_35 [jp] {
-        let mut i: i32 = 30;
-        while i >= 0 {
-            let v3: i32 = i >> 1;
-            word! { game, 0;
-                target_palettes[(v3 + 160)], target_palettes[(v3 + 144)],
-            }
-            i -= 2;
-        }
+        word_transfers!(game, descending, 16;
+            le(target_palettes, 175) <- value(0),
+            le(target_palettes, 159) <- value(0),
+        );
     };
     Torizo_Instr_38 [jp] {
         SetBossBitForCurArea(4, game);
@@ -236,49 +232,34 @@ pub unsafe fn Torizo_C22D(k: u16, game: &mut Game) {
     (*E).base.instruction_timer = 1;
 }
 pub unsafe fn Torizo_C250(game: &mut Game) {
-    let mut i: i32 = 30;
-    while i >= 0 {
-        let v1: i32 = i >> 1;
-        word!(game.target_palettes[(v1 + 160)] = kTorizo_Palettes_3[v1 as usize]);
-        word!(game.target_palettes[(v1 + 144)] = kTorizo_Palettes_2[v1 as usize]);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 16;
+        le(target_palettes, 175) <- table(kTorizo_Palettes_3, 15),
+        le(target_palettes, 159) <- table(kTorizo_Palettes_2, 15),
+    );
 }
 pub unsafe fn Torizo_C268(game: &mut Game) {
-    let mut i: i32 = 30;
-    while i >= 0 {
-        let v1: i32 = i >> 1;
-        word!(game.target_palettes[(v1 + 160)] = kTorizo_Palettes_5[v1 as usize]);
-        word!(game.target_palettes[(v1 + 144)] = kTorizo_Palettes_4[v1 as usize]);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 16;
+        le(target_palettes, 175) <- table(kTorizo_Palettes_5, 15),
+        le(target_palettes, 159) <- table(kTorizo_Palettes_4, 15),
+    );
 }
 pub unsafe fn Torizo_C280(game: &mut Game) {
-    let mut i: i32 = 30;
-    while i >= 0 {
-        let v1: i32 = i >> 1;
-        word!(game.target_palettes[(v1 + 160)] = kTorizo_Palettes_7[v1 as usize]);
-        word!(game.target_palettes[(v1 + 144)] = kTorizo_Palettes_6[v1 as usize]);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 16;
+        le(target_palettes, 175) <- table(kTorizo_Palettes_7, 15),
+        le(target_palettes, 159) <- table(kTorizo_Palettes_6, 15),
+    );
 }
 pub unsafe fn Torizo_C298(game: &mut Game) {
-    let mut i: i32 = 30;
-    while i >= 0 {
-        let v1: i32 = i >> 1;
-        word!(game.target_palettes[(v1 + 160)] = kTorizo_Palettes_10[v1 as usize]);
-        word!(game.target_palettes[(v1 + 144)] = kTorizo_Palettes_8[v1 as usize]);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 16;
+        le(target_palettes, 175) <- table(kTorizo_Palettes_10, 15),
+        le(target_palettes, 159) <- table(kTorizo_Palettes_8, 15),
+    );
 }
 pub unsafe fn Torizo_C2B0(game: &mut Game) {
-    let mut i: i32 = 30;
-    while i >= 0 {
-        let v1: i32 = i >> 1;
-        word!(game.palette_buffer[(v1 + 160)] = kTorizo_Palettes_5[v1 as usize]);
-        word!(game.palette_buffer[(v1 + 144)] = kTorizo_Palettes_4[v1 as usize]);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 16;
+        le(palette_buffer, 175) <- table(kTorizo_Palettes_5, 15),
+        le(palette_buffer, 159) <- table(kTorizo_Palettes_4, 15),
+    );
 }
 pub fn Torizo_Instr_7(k: u16, jp: *const u16) -> *const u16 {
     jp
@@ -539,14 +520,10 @@ pub unsafe fn Torizo_Hurt(game: &mut Game) {
         & 1
         != 0
     {
-        let mut i: i32 = 30;
-        while i >= 0 {
-            let v2: i32 = i >> 1;
-            word! { game, 0x7fff;
-                palette_buffer[(v2 + 160)], palette_buffer[(v2 + 144)],
-            }
-            i -= 2;
-        }
+        word_transfers!(game, descending, 16;
+            le(palette_buffer, 175) <- value(0x7fff),
+            le(palette_buffer, 159) <- value(0x7fff),
+        );
     } else {
         Torizo_C2B0(game);
     };
@@ -712,13 +689,10 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
         (*E).base.y_pos = g_word_AAC963[v2 as usize] as u16;
         (*E).var_A = 0;
         (*E).var_B = 256;
-        let mut i: i32 = 30;
-        while i >= 0 {
-            let v4: i32 = i >> 1;
-            word!(game.target_palettes[(v4 + 240)] = kTorizo_Palettes_1[v4 as usize]);
-            word!(game.target_palettes[(v4 + 176)] = kTorizo_Palette[v4 as usize]);
-            i -= 2;
-        }
+        word_transfers!(game, descending, 16;
+            le(target_palettes, 255) <- table(kTorizo_Palettes_1, 15),
+            le(target_palettes, 191) <- table(kTorizo_Palette, 15),
+        );
         if word!(game.area_index) != 0 {
             Torizo_C280(game);
             if word!(game.joypad1_lastkeys) == 0xc0c0 {
@@ -833,14 +807,10 @@ pub unsafe fn Torizo_Func_11(k: u16, game: &mut Game) {
 pub unsafe fn GoldTorizo_Hurt(game: &mut Game) {
     Torizo_C620(word!(game.cur_enemy_index), game);
     if (*gEnemyData(word!(game.cur_enemy_index) as i32, game)).flash_timer & 1 != 0 {
-        let mut i: i32 = 30;
-        while i >= 0 {
-            let v2: i32 = i >> 1;
-            word! { game, 0x7fff;
-                palette_buffer[(v2 + 160)], palette_buffer[(v2 + 144)],
-            }
-            i -= 2;
-        }
+        word_transfers!(game, descending, 16;
+            le(palette_buffer, 175) <- value(0x7fff),
+            le(palette_buffer, 159) <- value(0x7fff),
+        );
     } else {
         Torizo_Func_11(word!(game.cur_enemy_index), game);
     };
@@ -1115,19 +1085,10 @@ pub unsafe fn TourianEntranceStatue_Init(game: &mut Game) {
         SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueRidley as u16, 0, game);
         SpawnEprojWithRoomGfx(addr_kEproj_TourianStatuePhantoon as u16, 0, game);
     }
-    let mut i: i32 = 30;
-    while i >= 0 {
-        let v5: i32 = i >> 1;
-        word!(
-            game.target_palettes[(v5 + 240)] =
-                crate::rtl::rom_table_word!(game, 0xaad785, v5 as isize)
-        );
-        word!(
-            game.target_palettes[(v5 + 160)] =
-                crate::rtl::rom_table_word!(game, 0xaad765, v5 as isize)
-        );
-        i -= 2;
-    }
+    word_transfers!(game, descending, 16;
+        le(target_palettes, 255) <- rom(0xaad785, 15),
+        le(target_palettes, 175) <- rom(0xaad765, 15),
+    );
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     @prefix { let E = Get_Shaktool(k as i32, game); };
@@ -1580,14 +1541,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     };
 }
 pub unsafe fn N00bTubeCracks_Init(game: &mut Game) {
-    let mut i: i32 = 62;
-    while i >= 0 {
-        word!(
-            game.target_palettes[((i >> 1) + 144)] =
-                crate::rtl::rom_table_word!(game, 0xaae2dd, (i >> 1) as isize)
-        );
-        i -= 2;
-    }
+    word_transfers!(game, descending, 32; le(target_palettes, 175) <- rom(0xaae2dd, 31));
 }
 pub unsafe fn ChozoStatue_Init(game: &mut Game) {
     let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
@@ -1606,13 +1560,10 @@ pub unsafe fn ChozoStatue_Init(game: &mut Game) {
     if parameter_2 != 0 {
         sub_AAE784(game);
     } else {
-        let mut i: i32 = 30;
-        while i >= 0 {
-            let v3: i32 = i >> 1;
-            word!(game.target_palettes[(v3 + 160)] = kChozoStatue_Palettes[v3 as usize] as u16);
-            word!(game.target_palettes[(v3 + 144)] = kChozoStatue_Palette[v3 as usize]);
-            i -= 2;
-        }
+        word_transfers!(game, descending, 16;
+            le(target_palettes, 175) <- table(kChozoStatue_Palettes, 15),
+            le(target_palettes, 159) <- table(kChozoStatue_Palette, 15),
+        );
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0x4a, 0x17, 0xd6ee as VoidP),
             game,
@@ -1624,13 +1575,10 @@ pub unsafe fn ChozoStatue_Init(game: &mut Game) {
     };
 }
 pub unsafe fn sub_AAE784(game: &mut Game) {
-    let mut i: i32 = 30;
-    while i >= 0 {
-        let v1: i32 = i >> 1;
-        word!(game.target_palettes[(v1 + 160)] = kChozoStatue_Palettes3[v1 as usize] as u16);
-        word!(game.target_palettes[(v1 + 144)] = kChozoStatue_Palettes2[v1 as usize] as u16);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 16;
+        le(target_palettes, 175) <- table(kChozoStatue_Palettes3, 15),
+        le(target_palettes, 159) <- table(kChozoStatue_Palettes2, 15),
+    );
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xc, 0x1d, 0xd6d6 as VoidP), game);
 }
 pub unsafe fn ChozoStatue_Main(game: &mut Game) {

@@ -486,12 +486,7 @@ pub unsafe fn MorphBallEye_Init(game: &mut Game) {
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_add((g_word_A890D2[v1 as usize]) as u16);
         (*E).var_F = ((0xa891dci32) as u16);
         (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xa890da, v1 as isize);
-        let mut i: i32 = 510;
-        while i >= 0 {
-            *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(i as u16 as i32 as isize)
-                as *mut u16) = 255;
-            i -= 2;
-        }
+        word_transfers!(game, descending, 256; native(0x92fe) <- value(255));
     } else {
         (*E).var_F = ((0xa890f1i32) as u16);
         if ((*E).parameter_1 & 1) != 0 {

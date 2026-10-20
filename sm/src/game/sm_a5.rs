@@ -93,19 +93,8 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
     Enemy_NormalFrozenAI_A5 => NormalEnemyFrozenAI(game);
 }
 pub unsafe fn Draygon_Init(game: &mut Game) {
-    let mut i: i32 = 48;
-    while i >= 0 {
-        word!(
-            game.target_palettes[((i >> 1) + 144)] =
-                crate::rtl::rom_table_word!(game, 0xa5a217, (i >> 1) as isize)
-        );
-        i -= 2;
-    }
-    let mut j: u16 = 4094;
-    while (j & 0x8000) == 0 {
-        word!(game.tilemap_stuff[(j >> 1)] = 824);
-        j = (j).wrapping_sub(2);
-    }
+    word_transfers!(game, descending, 25; le(target_palettes, 168) <- rom(0xa5a217, 24));
+    word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(824));
     (*Get_Draygon(word!(game.cur_enemy_index) as i32, game))
         .base
         .palette_index = 0xe00;
@@ -1153,11 +1142,7 @@ pub unsafe fn Draygon_Func_42(varE24: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Draygon_Func_43(game: &mut Game) {
-    let mut i: i32 = 62;
-    while i >= 0 {
-        word!(game.sprite_instr_list_ptrs[(i >> 1)] = 0);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 32; le(sprite_instr_list_ptrs, 31) <- value(0));
     let mut v2: u16 = 20;
     for _ in 0i16..=2i16 {
         let v3: i32 = v2 as i32 >> 1;
@@ -1183,11 +1168,7 @@ pub unsafe fn Draygon_Func_43(game: &mut Game) {
     }
 }
 pub unsafe fn Draygon_Func_44(game: &mut Game) {
-    let mut i: i32 = 62;
-    while i >= 0 {
-        word!(game.sprite_instr_list_ptrs[(i >> 1)] = 0);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 32; le(sprite_instr_list_ptrs, 31) <- value(0));
 }
 pub unsafe fn Draygon_Func_45(game: &mut Game) {
     CreateSpriteAtPos(16, 384, 59, 0xe00, game);
@@ -1357,57 +1338,27 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     };
     Draygon_Instr_29 [jp.offset(1)] {
         let v2: u16 = *jp.offset(0);
-        let mut i: i32 = 0;
-        while i != 32 {
-            word!(
-                game.palette_buffer[((i >> 1) + 144)] =
-                    crate::rtl::rom_table_word!(game, 0xa5e3f9, (v2 as i32 + i >> 1) as isize)
-            );
-            i += 2;
-        }
-        let mut i_0: i32 = 0;
-        while i_0 != 32 {
-            word!(
-                game.palette_buffer[((i_0 >> 1) + 64)] =
-                    crate::rtl::rom_table_word!(game, 0xa5e4f9, (v2 as i32 + i_0 >> 1) as isize)
-            );
-            i_0 += 2;
-        }
-        let mut i_1: i32 = 0;
-        while i_1 != 32 {
-            word!(
-                game.palette_buffer[((i_1 >> 1) + 112)] =
-                    crate::rtl::rom_table_word!(game, 0xa5e5d9, (v2 as i32 + i_1 >> 1) as isize)
-            );
-            i_1 += 2;
-        }
+        word_transfers!(game, ascending, 16;
+            le(palette_buffer, 144) <- rom(0xa5e3f9, (v2 as i32 >> 1)),
+        );
+        word_transfers!(game, ascending, 16;
+            le(palette_buffer, 64) <- rom(0xa5e4f9, (v2 as i32 >> 1)),
+        );
+        word_transfers!(game, ascending, 16;
+            le(palette_buffer, 112) <- rom(0xa5e5d9, (v2 as i32 >> 1)),
+        );
     };
     Draygon_Instr_19 [jp.offset(1)] {
         let v2: u16 = *jp.offset(0);
-        let mut i: i32 = 0;
-        while i != 32 {
-            word!(
-                game.target_palettes[((i >> 1) + 144)] =
-                    crate::rtl::rom_table_word!(game, 0xa5e3f9, (v2 as i32 + i >> 1) as isize)
-            );
-            i += 2;
-        }
-        let mut i_0: i32 = 0;
-        while i_0 != 32 {
-            word!(
-                game.target_palettes[((i_0 >> 1) + 64)] =
-                    crate::rtl::rom_table_word!(game, 0xa5e4f9, (v2 as i32 + i_0 >> 1) as isize)
-            );
-            i_0 += 2;
-        }
-        let mut i_1: i32 = 0;
-        while i_1 != 32 {
-            word!(
-                game.target_palettes[((i_1 >> 1) + 112)] =
-                    crate::rtl::rom_table_word!(game, 0xa5e5d9, (v2 as i32 + i_1 >> 1) as isize)
-            );
-            i_1 += 2;
-        }
+        word_transfers!(game, ascending, 16;
+            le(target_palettes, 144) <- rom(0xa5e3f9, (v2 as i32 >> 1)),
+        );
+        word_transfers!(game, ascending, 16;
+            le(target_palettes, 64) <- rom(0xa5e4f9, (v2 as i32 >> 1)),
+        );
+        word_transfers!(game, ascending, 16;
+            le(target_palettes, 112) <- rom(0xa5e5d9, (v2 as i32 >> 1)),
+        );
     };
     Draygon_Instr_28 [jp] {
         NextRandom(game);
@@ -1442,16 +1393,7 @@ pub unsafe fn sub_A5E9F5(game: &mut Game) {
     }
 }
 pub unsafe fn SporeSpawn_Init(game: &mut Game) {
-    let mut v0: u16 = 0;
-    let mut i: i32 = 0;
-    while i != 32 {
-        word!(
-            game.target_palettes[((i >> 1) + 240)] =
-                crate::rtl::rom_table_word!(game, 0xa5e359, (v0 >> 1) as isize)
-        );
-        v0 = (v0).wrapping_add(2);
-        i += 2;
-    }
+    word_transfers!(game, ascending, 16; le(target_palettes, 240) <- rom(0xa5e359, 0));
     SpawnEprojWithGfx(
         0,
         word!(game.cur_enemy_index),
@@ -1694,12 +1636,7 @@ pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
         (*E0).var_0E = 0;
         set_fields! {[(*E).base], 0; invincibility_timer, flash_timer, ai_handler_bits}
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-        let mut i: i32 = 26;
-        while i >= 0 {
-            *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(i as u16 as i32 as isize)
-                as *mut u16) = 0;
-            i -= 2;
-        }
+        word_transfers!(game, descending, 14; native(0x19b1) <- value(0));
         enemy_instruction! {[(*E0).base]; instruction = addr_kDraygon_Ilist_E77D as u16, timer = 1}
         crate::update_place! { reference fresh5 = *(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) => (*fresh5) | (2u16); }
         word!(game.scrolling_finished_hook = 0);

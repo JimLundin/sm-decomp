@@ -1929,11 +1929,7 @@ pub unsafe fn VariaSuitPickup(game: &mut Game) {
         suit_pickup_light_beam_pos,
     }
     word!(game.suit_pickup_light_beam_widening_speed = 256);
-    let mut i: i32 = 510;
-    while i >= 0 {
-        word!(game.hdma_table_1[(i >> 1)] = 255);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(255));
     if *ram_ptr!(game; 0xa1f) == 3 || *ram_ptr!(game; 0xa1f) == 20 {
         QueueSfx1_Max9(0x32, game);
     }
@@ -1967,11 +1963,7 @@ pub unsafe fn GravitySuitPickup(game: &mut Game) {
         suit_pickup_light_beam_pos,
     }
     word!(game.suit_pickup_light_beam_widening_speed = 256);
-    let mut i: i32 = 510;
-    while i >= 0 {
-        word!(game.hdma_table_1[(i >> 1)] = 255);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(255));
     if *ram_ptr!(game; 0xa1f) as i32 == kMovementType_03_SpinJumping as i32
         || *ram_ptr!(game; 0xa1f) as i32 == kMovementType_14_WallJumping as i32
     {
@@ -2060,11 +2052,7 @@ pub unsafe fn HandleBeamChargePalettes(game: &mut Game) -> u8 {
             return 0;
         }
         if word!(game.charged_shot_glow_timer, wrapping_sub(1), reread) != 0 {
-            let mut i: i32 = 28;
-            while i >= 0 {
-                *(ram_ptr!(game, u16; 0xc000)).offset(((i >> 1) + 193) as isize) = 1023;
-                i -= 2;
-            }
+            word_transfers!(game, descending, 15; native(0xc19e) <- value(1023));
             0
         } else {
             1
@@ -2746,11 +2734,7 @@ pub unsafe fn Xray_Initialize(game: &mut Game) -> u8 {
     }
     word!(game.time_is_frozen_flag = 1);
     word!(game.samus_special_transgfx_index = 5);
-    let mut i: i32 = 510;
-    while i >= 0 {
-        word!(game.hdma_table_1[(i >> 1)] = 255);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(255));
     DisableEprojs(game);
     DisablePLMs(game);
     DisableAnimtiles(game);

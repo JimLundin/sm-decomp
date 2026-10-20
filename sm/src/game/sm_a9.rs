@@ -288,11 +288,7 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
     Enemy_NormalFrozenAI_A9 => NormalEnemyFrozenAI(game);
 }
 pub unsafe fn MotherBrainsBody_Init(game: &mut Game) {
-    let mut i: i32 = 4094;
-    while i >= 0 {
-        word!(game.tilemap_stuff[(i >> 1)] = 824);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(824));
     MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_9C13 as u16, game);
     let E = Get_MotherBrain(0, game);
     (*E).base.vram_tiles_index = 0;
@@ -1614,14 +1610,7 @@ pub unsafe fn MotherBrain_Phase3_Death_3(game: &mut Game) {
     if ((*E).var_F & 0x8000) != 0 {
         let E1 = Get_MotherBrain(0x40, game);
         set_fields! {[(*E1)], 0; var_32, var_33, var_12, var_14, var_10, var_11}
-        let mut i: i32 = 28;
-        while i >= 0 {
-            word!(
-                game.palette_buffer[((i >> 1) + 241)] =
-                    word!(game.palette_buffer[((i >> 1) + 145)])
-            );
-            i -= 2;
-        }
+        word_transfers!(game, descending, 15; le(palette_buffer, 255) <- le(palette_buffer, 159));
         MotherBrain_HealthBasedPaletteHandling(game);
         (*E).var_0D = 3584;
         set_fields! {[(*E1)], 0; var_E, var_F}
@@ -1651,11 +1640,7 @@ pub unsafe fn MotherBrain_Phase3_Death_5(game: &mut Game) {
         (*E).var_37 = v2;
         if MotherBrain_FadePalToBlack((v2).wrapping_sub(1), game) & 1 != 0 {
             word!(game.enemy_bg2_tilemap_size = 710);
-            let mut i: i32 = 710;
-            while i >= 0 {
-                word!(game.tilemap_stuff[(i >> 1)] = 824);
-                i -= 2;
-            }
+            word_transfers!(game, descending, 356; le(tilemap_stuff, 355) <- value(824));
             word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
             (*E).base.properties = ((*E).base.properties & 0xdeff | 0x100);
             (*E).base.extra_properties = 0;
@@ -4336,11 +4321,7 @@ pub unsafe fn WriteColorsToTargetPalette(db: u8, mut k: u16, mut j: u16, a: u16,
     }
 }
 pub unsafe fn DeadTorizo_Init(game: &mut Game) {
-    let mut i: i32 = 4094;
-    while i >= 0 {
-        word!(game.tilemap_stuff[(i >> 1)] = 0);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(0));
     let E = Get_DeadTorizo(0, game);
     (*E).var_A = ((0xa9d3adi32) as u16);
     (*E).base.properties = ((*E).base.properties) | (0xa000u16);
@@ -5337,11 +5318,7 @@ pub unsafe fn Shitroid_Func_2(k: u16, rect: Rect16U, game: &mut Game) -> u8 {
     v3 as u8
 }
 pub unsafe fn Shitroid_Init(game: &mut Game) {
-    let mut i: i32 = 4094;
-    while i >= 0 {
-        word!(game.tilemap_stuff[(i >> 1)] = 0);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(0));
     let E = Get_Shitroid(word!(game.cur_enemy_index) as i32, game);
     (*E).base.properties = ((*E).base.properties as i32
         | (kEnemyProps_DisableSamusColl as i32 | kEnemyProps_BlockPlasmaBeam as i32))

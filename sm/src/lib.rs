@@ -144,6 +144,9 @@ macro_rules! set_fields {
 pub(crate) use set_fields;
 
 /// Gameplay, one module per original ROM bank (`sm_80` = bank $80, ...).
+#[macro_use]
+mod word_transfers;
+
 pub mod game {
     pub(crate) mod callback_tables;
     // Declare address tables with the same calls and unreachable fallback.

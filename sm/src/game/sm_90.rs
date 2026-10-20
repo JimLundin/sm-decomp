@@ -2736,17 +2736,11 @@ unsafe fn MarkMapTileAsExplored(r18: u16, r24: u16, game: &mut Game) {
 }
 pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
     word!(game.debug_disable_minimap = 1);
-    let mut v0: u16 = 0;
-    loop {
-        let v1: i32 = v0 as i32 >> 1;
-        word! { game, 11295;
-            hud_tilemap[(v1 + 26)], hud_tilemap[(v1 + 58)], hud_tilemap[(v1 + 90)],
-        }
-        v0 = (v0).wrapping_add(2);
-        if (((v0) as i16).wrapping_sub(10) >= 0) {
-            break;
-        }
-    }
+    word_transfers!(game, ascending, 5;
+        le(hud_tilemap, 26) <- value(11295),
+        le(hud_tilemap, 58) <- value(11295),
+        le(hud_tilemap, 90) <- value(11295),
+    );
     let mut v2: u16 = 5;
     while word!(game.boss_id)
         != (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90a83a))
@@ -3063,22 +3057,23 @@ pub unsafe fn LoadProjectilePalette(a: u16, game: &mut Game) {
     }
 }
 pub unsafe fn ResetProjectileData(game: &mut Game) {
-    let mut v0: u16 = 0;
-    loop {
-        let v1: i32 = v0 as i32 >> 1;
-        word! { game, 0;
-            projectile_timers[v1], projectile_x_pos[v1], projectile_y_pos[v1], projectile_dir[v1],
-            projectile_bomb_x_speed[v1], projectile_bomb_y_speed[v1], projectile_x_radius[v1],
-            projectile_y_radius[v1], projectile_type[v1], projectile_damage[v1],
-            projectile_bomb_instruction_ptr[v1], projectile_bomb_instruction_timers[v1],
-            projectile_variables[v1], projectile_spritemap_pointers[v1],
-        }
-        word!(game.projectile_bomb_pre_instructions[v1] = ((0x90b169i32) as u16));
-        v0 = (v0).wrapping_add(2);
-        if (((v0) as i16).wrapping_sub(20) >= 0) {
-            break;
-        }
-    }
+    word_transfers!(game, ascending, 10;
+        le(projectile_timers, 0) <- value(0),
+        le(projectile_x_pos, 0) <- value(0),
+        le(projectile_y_pos, 0) <- value(0),
+        le(projectile_dir, 0) <- value(0),
+        le(projectile_bomb_x_speed, 0) <- value(0),
+        le(projectile_bomb_y_speed, 0) <- value(0),
+        le(projectile_x_radius, 0) <- value(0),
+        le(projectile_y_radius, 0) <- value(0),
+        le(projectile_type, 0) <- value(0),
+        le(projectile_damage, 0) <- value(0),
+        le(projectile_bomb_instruction_ptr, 0) <- value(0),
+        le(projectile_bomb_instruction_timers, 0) <- value(0),
+        le(projectile_variables, 0) <- value(0),
+        le(projectile_spritemap_pointers, 0) <- value(0),
+        le(projectile_bomb_pre_instructions, 0) <- value(((0x90b169i32) as u16)),
+    );
     word! { game, 0; bomb_counter, cooldown_timer, projectile_counter, power_bomb_flag }
     if word!(game.hud_auto_cancel_flag) != 0 {
         word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
@@ -6516,11 +6511,7 @@ pub unsafe fn Samus_Func2(game: &mut Game) {
 pub unsafe fn Samus_Func3(game: &mut Game) {
     if ProcessTimer(game) & 1 != 0 {
         word!(game.game_state = kGameState_35_TimeUp as u16);
-        let mut i: i32 = 510;
-        while i >= 0 {
-            word!(game.target_palettes[(i >> 1)] = 0x7fff);
-            i -= 2;
-        }
+        word_transfers!(game, descending, 256; le(target_palettes, 255) <- value(0x7fff));
         word!(game.frame_handler_gamma = ((0x90e114i32) as u16));
         DisablePaletteFx(game);
     }

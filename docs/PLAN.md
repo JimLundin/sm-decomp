@@ -20,6 +20,34 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Ordered word transfers (2026-10-20)
+
+One shared traversal replaces 204 repeated transfer regions across 22 banks:
+202 complete loops and two unrolled row/pattern copies. Endpoints retain native,
+native-unaligned and little-endian word access. Each lane reads then writes
+before the next lane; directions, interleaving, source rereads and surviving
+counter values remain explicit. Endpoint construction uses caller-side raw
+pointers without a new Game/RAM borrow. Four safe-context fills stay unchanged.
+
+Complete formatted-source reconstruction, all-target release checks, static
+table element/bounds checks and compiler-evaluated actual overlay layouts pass.
+Review corrected ROM-read alignment and pointer mutability. The affine census
+checks 84474 modeled iterations; it is not an original-Rust equivalence proof.
+An earlier 208-fragment draft reported 13312 comparisons/zero differences, but
+its exact artifacts were not frozen. Final 204-fragment boundary and overlap
+harnesses compile; Windows denied execution. Do not present the earlier run
+as execution of the final candidate or claim complete route/branch coverage.
+
+Formatting, normal release (32.15s), progress and diff check pass. Source-checked
+any% passes 129712/0 (139.03s wall), Speed Booster 148406/0 (170.20s), native
+exits 0; all source/input/library/DLL pins remain fixed and the host reuses the
+normal library. The new library file is included in verify_source.rs.
+Rust lines -1021 to 115530, raw-offset counter -3 to 35, cast lines -95 to 9319.
+Unsafe functions +3 account for the shared read/write/traversal implementations;
+other counters are unchanged. At least 15531 more lines must go to reach the
+fixed under-100000 target. Continue large recurring families; the target and
+the complete remaining reduction budget are still unfinished.
+
 ## Reduction map (2026-10-20)
 
 Reduce volume first, then refine the smaller implementation. Keep the current

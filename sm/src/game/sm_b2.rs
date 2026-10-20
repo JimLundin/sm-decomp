@@ -475,14 +475,7 @@ pub unsafe fn NinjaSpacePirates_Init(game: &mut Game) {
     (*E).base.x_pos = sps_var_E;
     (*E).var_A = ((0xb2804bi32) as u16);
     (*E).var_08 = (*E).base.y_pos;
-    let mut v6: u16 = 0;
-    let mut v7: u16 = 0;
-    for _ in 0..=15 {
-        *(ram_ptr!(game, u16; 0xc200)).offset(((v7 as i32 >> 1) + 240) as isize) =
-            crate::rtl::rom_table_word!(game, 0xb28727, (v6 >> 1) as isize);
-        v6 = (v6).wrapping_add(2);
-        v7 = (v7).wrapping_add(2);
-    }
+    word_transfers!(game, ascending, 16; native(0xc3e0) <- rom(0xb28727, 0));
 }
 pub unsafe fn NinjaSpacePirates_Main(game: &mut Game) {
     let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);

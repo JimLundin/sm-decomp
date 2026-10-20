@@ -337,11 +337,7 @@ pub unsafe fn WaitUntilEndOfVblankAndClearHdma(game: &mut Game) {
 }
 pub unsafe fn sub_8882AC(game: &mut Game) {
     *ram_ptr!(game; 0x85) = 0;
-    let mut i: i32 = 10;
-    while i >= 0 {
-        word!(game.hdma_object_channels_bitmask[(i >> 1)] = 0);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 6; le(hdma_object_channels_bitmask, 5) <- value(0));
 }
 pub unsafe fn InitializeSpecialEffectsForNewRoom(game: &mut Game) {
     word! { game, 0; earthquake_sfx_index, earthquake_sfx_timer }
@@ -844,11 +840,7 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
         );
         return;
     }
-    let mut i: i32 = 510;
-    while i >= 0 {
-        word!(game.hdma_table_1[(i >> 1)] = 255);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(255));
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(k: u16, game: &mut Game) {
     let mut v4 = null_mut::<VramWriteEntry>();
@@ -938,11 +930,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc5_DeactivateBeam(k: u16, game: &mut Game) 
             *ram_ptr!(game; 0x74, 1) = 64;
             *ram_ptr!(game; 0x74, 0) = 32;
         }
-        let mut i: i32 = 510 / 2;
-        while i >= 0 {
-            word!(game.hdma_table_1[i] = 0xff);
-            i -= 1;
-        }
+        word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(0xff));
         if word!(game.samus_auto_cancel_hud_item_index) != 0 {
             word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
         }
@@ -2267,13 +2255,8 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func1(v0: u16, game: &mut Game) {
     );
     let mut v1: u8 = 30;
     let v2: u16 = (word!(game.reg_BG2VOFS)) & (0x1ffu16);
-    loop {
-        word!(game.g_word_7E9C46[(v1 >> 1)] = v2);
-        v1 = (v1).wrapping_sub(2);
-        if ((v1 & 0x80) != 0) {
-            break;
-        }
-    }
+    word_transfers!(game, descending, 16; le(g_word_7E9C46, 15) <- value(v2));
+    v1 = 254;
 }
 pub unsafe fn Handle_LavaAcidBG2YScroll_Func2(v0: u16, game: &mut Game) {
     WriteReg(
@@ -2488,13 +2471,8 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func2(k: u16, game: &mut Game) {
 pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func1(k: u16, game: &mut Game) {
     let mut v1: u8 = 30;
     let v2: u16 = word!(game.reg_BG2HOFS);
-    loop {
-        *(ram_ptr!(game, u16; 0x9c46)).offset(((v1 as i32 >> 1) + 1) as isize) = v2;
-        v1 = (v1).wrapping_sub(2);
-        if ((v1 & 0x80) != 0) {
-            break;
-        }
-    }
+    word_transfers!(game, descending, 16; native(0x9c66) <- value(v2));
+    v1 = 254;
 }
 pub unsafe fn SpawnBG3ScrollHdmaObject(game: &mut Game) {
     static unk_88D869: SpawnHdmaObject_Args =

@@ -1035,11 +1035,7 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
                 | kEnemyProps_Deleted as i32
                 | kEnemyProps_Invisible as i32)) as u16;
     } else {
-        let mut i: i32 = 4094;
-        while i >= 0 {
-            word!(game.tilemap_stuff[(i >> 1)] = 0);
-            i -= 2;
-        }
+        word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(0));
         DisableMinimapAndMarkBossRoomAsExplored(game);
         set_fields! {[(*E)], 0; parameter_1, parameter_2}
         Ridley_Func_99(addr_kRidley_Ilist_E538 as u16, game);
@@ -1068,14 +1064,10 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
             (*E).var_10 = 2;
             (*E).var_1C = 120;
             WriteColorsToTargetPalette(0xa6, 0x140, addr_word_A6E1CF as u16, 0x20, game);
-            let mut v3: u16 = 0;
-            for _ in 0i16..15i16 {
-                let v5: i32 = v3 as i32 >> 1;
-                word! { game, 0;
-                    target_palettes[(v5 + 113)], target_palettes[(v5 + 241)],
-                }
-                v3 = (v3).wrapping_add(2);
-            }
+            word_transfers!(game, ascending, 15;
+                le(target_palettes, 113) <- value(0),
+                le(target_palettes, 241) <- value(0),
+            );
         } else {
             (*E).base.properties = ((*E).base.properties as i32
                 | (kEnemyProps_BlockPlasmaBeam as i32 | kEnemyProps_Tangible as i32))
@@ -1093,11 +1085,7 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
             (*E).var_22 = 40;
             (*E).var_23 = 224;
             WriteColorsToTargetPalette(0xa6, 0x140, addr_word_A6E16F as u16, 0x20, game);
-            let mut v7: u16 = 482;
-            for _ in 0i16..15i16 {
-                word!(game.target_palettes[(v7 >> 1)] = 0);
-                v7 = (v7).wrapping_add(2);
-            }
+            word_transfers!(game, ascending, 15; le(target_palettes, 241) <- value(0));
             (*E).var_03 = addr_kBabyMetroid_Ilist_BF31 as u16;
             (*E).var_04 = 1;
             (*gRam8800_Default(0i32, game)).var_40 = ((0xa6be9ci32) as u16);

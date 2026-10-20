@@ -87,14 +87,7 @@ pub unsafe fn SoftReset(game: &mut Game) {
 pub unsafe fn SaveToSram(a: u16, game: &mut Game) {
     let mut r20: u16 = 0;
     let r18: u16 = (2 * (a as i32 & 3)) as u16;
-    let mut i: i32 = 94;
-    while i >= 0 {
-        word!(
-            game.player_data_saved[(i >> 1)] =
-                *((ram_ptr!(game, u16; 0x9a2) as *mut u8).offset(i as isize) as *mut u16)
-        );
-        i -= 2;
-    }
+    word_transfers!(game, descending, 48; le(player_data_saved, 47) <- native(0xa00));
     let mut v3: u16 = (word!(game.area_index)).wrapping_mul(256);
     let mut v4: u16 = 0;
     loop {
@@ -153,12 +146,7 @@ pub unsafe fn LoadFromSram(a: u16, game: &mut Game) -> u8 {
         || r20 == *(game.g_sram.offset(0x1ff0) as *mut u16).offset(v4 as isize)
             && r20 ^ 0xffff == *(game.g_sram.offset(0x1ff8) as *mut u16).offset(v4 as isize)
     {
-        let mut i: i32 = 94;
-        while i >= 0 {
-            *((ram_ptr!(game, u16; 0x9a2) as *mut u8).offset(i as isize) as *mut u16) =
-                word!(game.player_data_saved[(i >> 1)]);
-            i -= 2;
-        }
+        word_transfers!(game, descending, 48; native(0xa00) <- le(player_data_saved, 47));
         UnpackMapFromSave(game);
         word!(game.load_station_index = word!(game.sram_save_station_index));
         word!(game.area_index = word!(game.sram_area_index));
@@ -187,11 +175,7 @@ pub unsafe fn LoadFromSram(a: u16, game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn UnpackMapFromSave(game: &mut Game) {
-    let mut i: i32 = 1792;
-    while i >= 0 {
-        word!(game.explored_map_tiles_saved[(i >> 1)] = 0);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 897; le(explored_map_tiles_saved, 896) <- value(0));
     let mut i_0: i32 = 0;
     while i_0 < 6 {
         let mut n: i32 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x818131)); i_0 as isize)
@@ -576,25 +560,8 @@ pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
         QueueSfx3_Max6(1, game);
         DisableHdmaObjects(game);
         WaitUntilEndOfVblankAndClearHdma(game);
-        let mut v0: u16 = 0;
-        loop {
-            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
-                [(v0 as i32 + 384) as usize] = word!(game.palette_buffer[v0]);
-            v0 = v0.wrapping_add(1);
-            if (((v0 as i32 * 2 - 512i32) as i16) >= 0) {
-                break;
-            }
-        }
-        let mut v1: u16 = 0;
-        loop {
-            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
-                [(v1 as i32 + 640) as usize] =
-                *(ram_ptr!(game, u16; 0x51, (v1 as i32 * 2) as isize));
-            v1 = v1.wrapping_add(1);
-            if (((v1 as i32 * 2 - 54i32) as i16) >= 0) {
-                break;
-            }
-        }
+        word_transfers!(game, ascending, 256; pause_map(384) <- le(palette_buffer, 0));
+        word_transfers!(game, ascending, 27; pause_map(640) <- native(0x51));
         MapVramForMenu(game);
         LoadInitialMenuTiles(game);
         word! { game, 0;
@@ -642,19 +609,10 @@ pub unsafe fn LoadInitialMenuTiles(game: &mut Game) {
     WriteReg(MDMAEN as u16, 2, game);
 }
 pub unsafe fn LoadMenuPalettes(game: &mut Game) {
-    let mut v0: u16 = 0;
-    loop {
-        let v1: i32 = v0 as i32 >> 1;
-        word!(game.palette_buffer[v1] = crate::rtl::rom_table_word!(game, 0x8ee400, v1 as isize));
-        word!(
-            game.palette_buffer[(v1 + 1)] =
-                crate::rtl::rom_table_word!(game, 0x8ee400, (v1 + 1) as isize)
-        );
-        v0 = (v0).wrapping_add(4);
-        if (((v0) as i16).wrapping_sub(512) >= 0) {
-            break;
-        }
-    }
+    word_transfers!(game, (4), 128;
+        le(palette_buffer, 0) <- rom(0x8ee400, 0),
+        le(palette_buffer, 1) <- rom(0x8ee400, 1),
+    );
 }
 static kGameOverMenuFuncs: [Option<Func_V>; 8] = callback_table! { unsafe Func_V;
     GameOverMenu_0_FadeOutConfigGfx, GameOverMenu_1_Init, GameOverMenu_2_PlayMusic,
@@ -734,15 +692,7 @@ pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
     QueueMusic_Delayed8(0xff03, game);
     word!(game.cinematic_var5 = 1);
     word!(game.eproj_id[0] = 0);
-    let mut v0: i32 = 0;
-    loop {
-        *(&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8 as *mut u16)
-            .offset(v0 as isize) = 15;
-        v0 += 1;
-        if (((v0 * 2 - 2048i32) as i16) >= 0) {
-            break;
-        }
-    }
+    word_transfers!(game, ascending, 1024; native(0x3600) <- value(15));
     let v1: i32 = word!(game.vram_write_queue_tail) as i32;
     let v2 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
     (*v2).size = 2048;
@@ -818,19 +768,10 @@ pub unsafe fn FileSelectMenu_0_FadeOutConfigGfx(game: &mut Game) {
     LoadFileSelectPalettes(game);
 }
 pub unsafe fn LoadFileSelectPalettes(game: &mut Game) {
-    let mut v0: i32 = 0;
-    loop {
-        let v1: i32 = v0 >> 1;
-        word!(game.palette_buffer[v1] = crate::rtl::rom_table_word!(game, 0x8ee400, v1 as isize));
-        word!(
-            game.palette_buffer[(v1 + 1)] =
-                crate::rtl::rom_table_word!(game, 0x8ee400, (v1 + 1) as isize)
-        );
-        v0 += 4;
-        if (((v0 - 512i32) as i16) >= 0) {
-            break;
-        }
-    }
+    word_transfers!(game, (4), 128;
+        le(palette_buffer, 0) <- rom(0x8ee400, 0),
+        le(palette_buffer, 1) <- rom(0x8ee400, 1),
+    );
 }
 pub unsafe fn FileSelectMenu_32_FadeOutToOptions(game: &mut Game) {
     DrawMenuSelectionMissile(game);
@@ -840,14 +781,7 @@ pub unsafe fn FileSelectMenu_32_FadeOutToOptions(game: &mut Game) {
     if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
         word!(game.game_state = kGameState_2_GameOptionsMenu as u16);
         word!(game.menu_index = 0);
-        let mut v0: i32 = 0;
-        loop {
-            *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(v0 as isize) as *mut u16) = 0;
-            v0 += 2;
-            if (((v0 - 48i32) as i16) >= 0) {
-                break;
-            }
-        }
+        word_transfers!(game, ascending, 24; native(0x198d) <- value(0));
     }
 }
 pub unsafe fn FileSelectMenu_33_FadeOutToTitle(game: &mut Game) {
@@ -917,13 +851,7 @@ pub unsafe fn SetInitialFileCopyMenuSelection(game: &mut Game) {
     word!(game.eproj_id[15] = v1 as u16);
 }
 pub unsafe fn ClearMenuTilemap(game: &mut Game) {
-    let mut i: i32 = 2046;
-    while i >= 0 {
-        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
-            .offset(768) as *mut u8)
-            .offset(i as u16 as i32 as isize) as *mut u16) = 15;
-        i -= 2;
-    }
+    word_transfers!(game, descending, 1024; native(0x3dfe) <- value(15));
 }
 pub unsafe fn LoadMenuExitTilemap(game: &mut Game) {
     LoadMenuTilemap(0x688, addr_kMenuTilemap_Exit as u16, game);
@@ -1177,18 +1105,7 @@ pub unsafe fn DrawFileCopyClearConfirmation(game: &mut Game) {
     LoadMenuTilemap(0x514, addr_kMenuTilemap_IsThisOk as u16, game);
     (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0;
     LoadMenuTilemap(0x59c, addr_kMenuTilemap_Yes as u16, game);
-    let mut v0: i32 = 832;
-    loop {
-        // Menu rows live in the full $3600..$3dff RAM tilemap.
-        *((&raw mut game.g_ram as *mut u8)
-            .add(0x3600)
-            .cast::<u16>()
-            .add(v0 as usize)) = 15;
-        v0 += 1;
-        if (((v0 * 2 - 1728i32) as i16) >= 0) {
-            break;
-        }
-    }
+    word_transfers!(game, ascending, 32; native(0x3c80) <- value(15));
     (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0;
     LoadMenuTilemap(0x65c, addr_kMenuTilemap_No as u16, game);
     DrawFileCopyConfirmationSaveFileInfo(game);
@@ -1255,15 +1172,7 @@ pub unsafe fn HandleFileCopyArrowPalette(game: &mut Game) {
         if word!(game.cinematic_var6, wrapping_sub(1), reread) == 0 {
             word!(game.cinematic_var6 = 4);
             let v0: u16 = word!(game.palette_buffer[145]);
-            let mut v1: u16 = 0;
-            loop {
-                *(ram_ptr!(game, u16; 0xc000)).offset(((v1 as i32 >> 1) + 145) as isize) =
-                    *(ram_ptr!(game, u16; 0xc000)).offset(((v1 as i32 >> 1) + 146) as isize);
-                v1 = (v1).wrapping_add(2);
-                if (((v1) as i16).wrapping_sub(12) >= 0) {
-                    break;
-                }
-            }
+            word_transfers!(game, ascending, 6; native(0xc122) <- native(0xc124));
             word!(game.palette_buffer[151] = v0);
         }
     }
@@ -1294,18 +1203,7 @@ pub unsafe fn FileSelectMenu_13_FileCopyDoIt(game: &mut Game) {
     *(game.g_sram.offset((2 * v4 + 0x1ff8) as isize) as *mut u16) = v9 as u16;
     *(game.g_sram.offset((2 * v4 + 0x1ff0) as isize) as *mut u16) = v10 as u16;
     word!(game.menu_index, wrapping_add(1));
-    let mut v5: i32 = 640;
-    loop {
-        // Menu rows live in the full $3600..$3dff RAM tilemap.
-        *((&raw mut game.g_ram as *mut u8)
-            .add(0x3600)
-            .cast::<u16>()
-            .add(v5 as usize)) = 15;
-        v5 += 1;
-        if (((v5 * 2 - 1856i32) as i16) >= 0) {
-            break;
-        }
-    }
+    word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
     word!(game.nonempty_save_slots, |fresh62| (fresh62)
         | (kBitShl_16bit[word!(game.eproj_id[17]) as usize]));
     let mut v6: i32 = ((4 * word!(game.eproj_id[17]) as i32 + 9) << 6) + 24;
@@ -1498,18 +1396,7 @@ pub unsafe fn FileSelectMenu_25_FileClearDoClear(game: &mut Game) {
     LoadFromSram(word!(game.eproj_id[16]), game);
     word!(game.area_index = word!(game.eproj_id[16]));
     LoadMirrorOfExploredMapTiles(game);
-    let mut v3: u16 = 640;
-    loop {
-        // File-clear rows share the full menu tilemap at $3600.
-        *((&raw mut game.g_ram as *mut u8)
-            .add(0x3600)
-            .cast::<u16>()
-            .add(v3 as usize)) = 15;
-        v3 = v3.wrapping_add(1);
-        if (((v3 as i32 * 2 - 1856i32) as i16) >= 0) {
-            break;
-        }
-    }
+    word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
     word!(game.nonempty_save_slots, |fresh51| (fresh51)
         & (kBitShl_Not[word!(game.eproj_id[16]) as usize]));
     (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0;
@@ -1624,11 +1511,7 @@ pub unsafe fn FileSelectMap_22(game: &mut Game) {
 pub unsafe fn FileSelectMenu_1_LoadFileSelectMenuBG2(game: &mut Game) {
     // This menu spans $3600..$3dff, beyond the pause-map union field.
     let menu_tilemap = (&raw mut game.g_ram as *mut u8).add(0x3600).cast::<u16>();
-    let mut i: i32 = 1023;
-    while i >= 0 {
-        *menu_tilemap.add(i as usize) = crate::rtl::rom_table_word!(game, 0x8edc00, i as isize);
-        i -= 1;
-    }
+    word_transfers!(game, descending, 1024; native(0x3dfe) <- rom(0x8edc00, 1023));
     let v1: u16 = word!(game.vram_write_queue_tail);
     let mut v2 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
     (*v2).size = 2048;
@@ -1657,13 +1540,7 @@ pub unsafe fn FileSelectMenu_2_InitMain(game: &mut Game) {
     FileSelectMenu_16(game);
 }
 pub unsafe fn FileSelectMenu_16(game: &mut Game) {
-    let mut i: i32 = 2046;
-    while i >= 0 {
-        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
-            .offset(768) as *mut u8)
-            .offset(i as u16 as i32 as isize) as *mut u16) = 15;
-        i -= 2;
-    }
+    word_transfers!(game, descending, 1024; native(0x3dfe) <- value(15));
     word!(game.nonempty_save_slots = -1i32 as u16);
     (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0;
     LoadMenuTilemap(0x56, addr_kMenuTilemap_SamusData as u16, game);
@@ -1927,14 +1804,7 @@ pub unsafe fn FileSelectMap_0(game: &mut Game) {
     word!(game.vram_write_queue_tail = (v0).wrapping_add(7));
     word!(game.palette_change_num = 0);
     LoadFileSelectPalettes(game);
-    let mut v2: u16 = 0;
-    loop {
-        word!(game.target_palettes[(v2 >> 1)] = word!(game.palette_buffer[(v2 >> 1)]));
-        v2 = (v2).wrapping_add(2);
-        if (((v2) as i16).wrapping_sub(64) >= 0) {
-            break;
-        }
-    }
+    word_transfers!(game, ascending, 32; le(target_palettes, 0) <- le(palette_buffer, 0));
     word! { game, 0; target_palettes[14], target_palettes[30] }
     word!(game.menu_index, wrapping_add(1));
 }
@@ -2109,37 +1979,16 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
         word!(game.reg_BG2VOFS = 24);
         word!(game.pausemenu_palette_animation_timer = 1);
         let mut v1: u16 = 0;
-        loop {
-            (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[v1 as usize] =
-                crate::rtl::rom_table_word!(game, 0xb6e000, v1 as isize);
-            v1 = v1.wrapping_add(1);
-            if (((v1 as i32 * 2 - 1600i32) as i16) >= 0) {
-                break;
-            }
-        }
-        loop {
-            crate::update_place! { previous fresh37 = v1 => v1.wrapping_add(1); }
-            (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[fresh37 as usize] = 10241;
-            if (((v1 as i32 * 2 - 2048i32) as i16) >= 0) {
-                break;
-            }
-        }
+        word_transfers!(game, ascending, 800; xray(0) <- rom(0xb6e000, 0));
+        v1 = 800;
+        word_transfers!(game, ascending, 224; xray(800) <- value(10241));
+        v1 = 1024;
         DrawRoomSelectMapAreaLabel(
             (&raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).bg2_room_select_map_tilemap as *mut u16)
                 .offset(170),
             game,
         );
-        let mut v2: u16 = 320;
-        let mut v3: u16 = 959;
-        loop {
-            crate::update_place! { previous fresh38 = v3 => v3.wrapping_sub(1); }
-            (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[fresh38 as usize] =
-                crate::rtl::rom_table_word!(game, 0x81b14b, (v2 >> 1) as isize);
-            v2 = (v2).wrapping_sub(2);
-            if (v2 == 0) {
-                break;
-            }
-        }
+        word_transfers!(game, descending, 160; xray(959) <- rom(0x81b14b, 160));
         let v4: u16 = word!(game.vram_write_queue_tail);
         let mut v5 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
         (*v5).size = 2048;
@@ -2735,13 +2584,7 @@ pub unsafe fn FileSelectMap_14(game: &mut Game) {
 }
 pub unsafe fn FileSelectMap_15_ClearTileMap(game: &mut Game) {
     *ram_ptr!(game; 0x69) = 18;
-    let mut i: i32 = 2046;
-    while i >= 0 {
-        *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
-            as *mut u8)
-            .offset(i as u16 as i32 as isize) as *mut u16) = 15;
-        i -= 2;
-    }
+    word_transfers!(game, descending, 1024; native(0x37fe) <- value(15));
     let v1: u16 = word!(game.vram_write_queue_tail);
     let v2 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
     (*v2).size = 2048;
@@ -2921,40 +2764,25 @@ pub unsafe fn NewSaveFile(game: &mut Game) {
     }
     word! { game, 1; debug_flag, UNUSED_word_7E09E8 }
     let mut v0: u16 = 0;
-    loop {
-        let v1: i32 = v0 as i32 >> 1;
-        *(ram_ptr!(game, u16; 0xd830, v0 as isize)) = 0;
-        *(ram_ptr!(game, u16; 0xd870, v0 as isize)) = 0;
-        *(ram_ptr!(game, u16; 0xd870, v0 as isize)) = 0;
-        *(ram_ptr!(game, u16; 0xd8b0, v0 as isize)) = 0;
-        word!(game.UNUSED_word_7ED8F0[v1] = 0);
-        *(ram_ptr!(game, u16; 0xd908, v0 as isize)) = 0;
-        *(ram_ptr!(game, u16; 0xd8f8, v0 as isize)) = 0;
-        *(ram_ptr!(game, u16; 0xd8f8, (v0 as i32 + 8) as isize)) = 0;
-        v0 = (v0).wrapping_add(2);
-        if (((v0) as i16).wrapping_sub(8) >= 0) {
-            break;
-        }
-    }
-    loop {
-        let v2: i32 = v0 as i32 >> 1;
-        *(ram_ptr!(game, u16; 0xd830, v0 as isize)) = 0;
-        *(ram_ptr!(game, u16; 0xd870, v0 as isize)) = 0;
-        *(ram_ptr!(game, u16; 0xd870, v0 as isize)) = 0;
-        *(ram_ptr!(game, u16; 0xd8b0, v0 as isize)) = 0;
-        v0 = (v0).wrapping_add(2);
-        if (((v0) as i16).wrapping_sub(64) >= 0) {
-            break;
-        }
-    }
-    let mut v3: u16 = 0;
-    loop {
-        word!(game.explored_map_tiles_saved[(v3 >> 1)] = 0);
-        v3 = (v3).wrapping_add(2);
-        if (((v3) as i16).wrapping_sub(1792) >= 0) {
-            break;
-        }
-    }
+    word_transfers!(game, ascending, 4;
+        native(0xd830) <- value(0),
+        native(0xd870) <- value(0),
+        native(0xd870) <- value(0),
+        native(0xd8b0) <- value(0),
+        le(UNUSED_word_7ED8F0, 0) <- value(0),
+        native(0xd908) <- value(0),
+        native(0xd8f8) <- value(0),
+        native(0xd900) <- value(0),
+    );
+    v0 = 8;
+    word_transfers!(game, ascending, 28;
+        native(0xd838) <- value(0),
+        native(0xd878) <- value(0),
+        native(0xd878) <- value(0),
+        native(0xd8b8) <- value(0),
+    );
+    v0 = 64;
+    word_transfers!(game, ascending, 896; le(explored_map_tiles_saved, 0) <- value(0));
 }
 pub unsafe fn FileSelectClearRestOfMenuTilemapRow(mut v0: u16, game: &mut Game) {
     let mut n: i32 = 32 - ((v0 as i32 & 0x3f) >> 1);

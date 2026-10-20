@@ -297,24 +297,8 @@ pub unsafe fn Kraid_Init(game: &mut Game) {
     (*(ram_ptr!(game, LongPtr; 0x604))).addr = ((0xa7c24ei32) as u16);
     (*(ram_ptr!(game, LongPtr; 0x601))).addr = ((0xa7c325i32) as u16);
     if Kraid_CheckIfDead(game) != 0 {
-        let mut v0: u16 = 192;
-        let mut v1: u16 = 0;
-        loop {
-            word!(
-                game.target_palettes[(v0 >> 1)] =
-                    crate::rtl::rom_table_word!(game, 0xa786c7, (v1 >> 1) as isize)
-            );
-            v0 = (v0).wrapping_add(2);
-            v1 = (v1).wrapping_add(2);
-            if (((v1) as i16).wrapping_sub(32) >= 0) {
-                break;
-            }
-        }
-        let mut i: i32 = 2046;
-        while i >= 0 {
-            word!(game.tilemap_stuff[(i >> 1)] = 824);
-            i -= 2;
-        }
+        word_transfers!(game, ascending, 16; le(target_palettes, 96) <- rom(0xa786c7, 0));
+        word_transfers!(game, descending, 1024; le(tilemap_stuff, 1023) <- value(824));
         let E = Get_Kraid(0, game);
         (*E).field_4 = 0;
         let v4: u16 = word!(game.vram_write_queue_tail);
@@ -363,21 +347,9 @@ pub unsafe fn Kraid_Init(game: &mut Game) {
         (*E_0).kraid_next = ((0xa7c86bi32) as u16);
         (*E_0).kraid_var_C = 64;
         DisableMinimapAndMarkBossRoomAsExplored(game);
-        let mut j: u16 = 62;
-        while (j & 0x8000) == 0 {
-            *(ram_ptr!(game, u16; 0x2000)).offset(((j as i32 >> 1) + 2016) as isize) = 824;
-            j = (j).wrapping_sub(2);
-        }
+        word_transfers!(game, descending, 32; native(0x2ffe) <- value(824));
         word!(game.earthquake_type = 5);
-        let mut v14: u16 = 0;
-        loop {
-            *(ram_ptr!(game, u16; 0xc200)).offset(((v14 as i32 >> 1) + 176) as isize) =
-                crate::rtl::rom_table_word!(game, 0xa7aaa6, (v14 >> 1) as isize);
-            v14 = (v14).wrapping_add(2);
-            if (((v14) as i16).wrapping_sub(32) >= 0) {
-                break;
-            }
-        }
+        word_transfers!(game, ascending, 16; native(0xc360) <- rom(0xa7aaa6, 0));
     };
 }
 pub unsafe fn Kraid_SetupGfxWithTilePrioClear(r18: u16, game: &mut Game) {
@@ -553,19 +525,7 @@ pub unsafe fn Kraid_GetsBig_FinishUpdateBg2Tilemap(game: &mut Game) {
     Kraid_UpdateBG2TilemapBottomHalf(game);
 }
 pub unsafe fn Kraid_DrawRoomBg(game: &mut Game) {
-    let mut v0: u16 = 192;
-    let mut v1: u16 = 0;
-    loop {
-        word!(
-            game.target_palettes[(v0 >> 1)] =
-                crate::rtl::rom_table_word!(game, 0xa786c7, (v1 >> 1) as isize)
-        );
-        v0 = (v0).wrapping_add(2);
-        v1 = (v1).wrapping_add(2);
-        if (((v1) as i16).wrapping_sub(32) >= 0) {
-            break;
-        }
-    }
+    word_transfers!(game, ascending, 16; le(target_palettes, 96) <- rom(0xa786c7, 0));
     word!(game.palette_change_num = 0);
     let v2: u16 = word!(game.vram_write_queue_tail);
     let mut v3 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
@@ -1914,22 +1874,8 @@ pub unsafe fn PauseHook_Kraid(game: &mut Game) {
 pub unsafe fn Kraid_Death_Init(game: &mut Game) {
     let E0 = Get_Kraid(0, game);
     if (*E0).kraid_hurt_frame == 0 {
-        let mut v0: u16 = 192;
-        loop {
-            word!(game.target_palettes[(v0 >> 1)] = 0);
-            v0 = (v0).wrapping_add(2);
-            if (((v0) as i16).wrapping_sub(224) >= 0) {
-                break;
-            }
-        }
-        let mut i: i32 = 30;
-        while i >= 0 {
-            word!(
-                game.palette_buffer[((i >> 1) + 112)] =
-                    crate::rtl::rom_table_word!(game, 0xa7b4f3, (i >> 1) as isize)
-            );
-            i -= 2;
-        }
+        word_transfers!(game, ascending, 16; le(target_palettes, 96) <- value(0));
+        word_transfers!(game, descending, 16; le(palette_buffer, 127) <- rom(0xa7b4f3, 15));
         let E1 = Get_Kraid(0x40, game);
         enemy_instruction! {[(*E1).base]; instruction = addr_kKraid_Ilist_8AF0 as u16, timer = 1}
         (*E0).kraid_var_A = ((0xa7c3f9i32) as u16);
@@ -1965,15 +1911,7 @@ pub unsafe fn Kraid_Death_Fadeout(game: &mut Game) {
         (*E).kraid_var_A = ((0xa7c4a4i32) as u16);
         set_fields! {[(*E)], 1; kraid_hurt_frame_timer, kraid_hurt_frame}
         Kraid_Palette_Handling(game);
-        let mut v1: u16 = 0;
-        loop {
-            (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[v1 as usize] = 0;
-            (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[(v1 as i32 + 1) as usize] = 0;
-            v1 = (v1).wrapping_add(2);
-            if (((v1 as i32 * 2 - 512i32) as i16) >= 0) {
-                break;
-            }
-        }
+        word_transfers!(game, (4), 128; xray(0) <- value(0), xray(1) <- value(0));
         let v2: u16 = word!(game.vram_write_queue_tail);
         let mut v3 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
         (*v3).size = 512;
@@ -2161,11 +2099,7 @@ crate::game::address_dispatch! {
 }
 pub unsafe fn Kraid_FadeInBg_ClearBg2TilemapTopHalf(game: &mut Game) {
     *ram_ptr!(game; 0x59) = 72;
-    let mut i: i32 = 2046;
-    while i >= 0 {
-        word!(game.tilemap_stuff[(i >> 1)] = 824);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 1024; le(tilemap_stuff, 1023) <- value(824));
     let v1: u16 = word!(game.vram_write_queue_tail);
     let mut v2 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
     (*v2).size = 1024;
@@ -2427,22 +2361,9 @@ pub unsafe fn CallKraidFunc(ea: u32, game: &mut Game) {
     }
 }
 pub unsafe fn Phantoon_Init(game: &mut Game) {
-    let mut i: i32 = 4094;
-    while i >= 0 {
-        word!(game.tilemap_stuff[(i >> 1)] = 824);
-        i -= 2;
-    }
-    let mut j: i16 = 2046;
-    while j >= 0 {
-        *((ram_ptr!(game, u16; 0x9000) as *mut u8).offset(j as u16 as i32 as isize) as *mut u16) =
-            0;
-        j = (j).wrapping_sub(2);
-    }
-    let mut k: u16 = 30;
-    while (k & 0x8000) == 0 {
-        *(ram_ptr!(game, u16; 0xc200)).offset(((k as i32 >> 1) + 112) as isize) = 0;
-        k = (k).wrapping_sub(2);
-    }
+    word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(824));
+    word_transfers!(game, descending, 1024; native(0x97fe) <- value(0));
+    word_transfers!(game, descending, 16; native(0xc2fe) <- value(0));
     word!(game.enemy_bg2_tilemap_size = 864);
     DisableMinimapAndMarkBossRoomAsExplored(game);
     let E = Get_Phantoon(word!(game.cur_enemy_index) as i32, game);
@@ -3405,11 +3326,7 @@ pub unsafe fn Phantoon_AlmostDead(k: u16, game: &mut Game) {
     let E0 = Get_Phantoon(0, game);
     (*E0).base.x_pos = 384;
     (*E0).base.y_pos = 128;
-    let mut i: i32 = 1022;
-    while i >= 0 {
-        word!(game.tilemap_stuff[(i >> 1)] = 824);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 512; le(tilemap_stuff, 511) <- value(824));
     let mut v5: u16 = word!(game.vram_write_queue_tail);
     (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 1024;
     v5 = (v5).wrapping_add(2);
@@ -3616,11 +3533,7 @@ pub unsafe fn Phantoon_Hurt(game: &mut Game) {
             .parameter_2; 1)
                 == 0
             {
-                let mut i: i32 = 30;
-                while i >= 0 {
-                    *(ram_ptr!(game, u16; 0xc000)).offset(((i >> 1) + 112) as isize) = 0x7fff;
-                    i -= 2;
-                }
+                word_transfers!(game, descending, 16; native(0xc0fe) <- value(0x7fff));
                 let E3_0 = Get_Phantoon(0x80, game);
                 (*E3_0).parameter_2 = ((*E3_0).parameter_2) | (0x100u16);
             }

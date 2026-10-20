@@ -952,12 +952,10 @@ pub unsafe fn PlmInstr_ClearMusicQueueAndQueueTrack(
     k: u16,
     game: &mut Game,
 ) -> *const u8 {
-    let mut i: i32 = 14;
-    while i >= 0 {
-        let v3: i32 = i >> 1;
-        word! { game, 0; music_queue_track[v3], music_queue_delay[v3] }
-        i -= 2;
-    }
+    word_transfers!(game, descending, 8;
+        le(music_queue_track, 7) <- value(0),
+        le(music_queue_delay, 7) <- value(0),
+    );
     word!(game.music_queue_read_pos = word!(game.music_queue_write_pos));
     word! { game, 0; music_timer, music_entry }
     QueueMusic_Delayed8(*plmp.offset(0) as u16, game);

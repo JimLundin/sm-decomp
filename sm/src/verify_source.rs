@@ -103,4 +103,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/verify_source.rs",
         include_bytes!("verify_source.rs"),
     ),
+    (
+        "sm/src/word_transfers.rs",
+        include_bytes!("word_transfers.rs"),
+    ),
 ];

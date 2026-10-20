@@ -1358,11 +1358,7 @@ pub unsafe fn InitializeHud(game: &mut Game) {
     static unk_809A8F: StartDmaCopy = StartDmaCopy::vram_words(1, 0x80988b, 0x40);
     SetupDmaTransfer(&raw const unk_809A8F as *const c_void, game);
     WriteReg(MDMAEN as u16, 2, game);
-    let mut i: i32 = 0;
-    while i != 192 {
-        word!(game.hud_tilemap[(i >> 1)] = kHudTilemaps_Row1to3[(i >> 1) as usize]);
-        i += 2;
-    }
+    word_transfers!(game, ascending, 96; le(hud_tilemap, 0) <- table(kHudTilemaps_Row1to3, 0));
     if (word!(game.equipped_items) & 0x8000) != 0 {
         AddXrayToHudTilemap(game);
     }
@@ -1885,12 +1881,7 @@ pub unsafe fn DisplayViewablePartOfRoom(game: &mut Game) {
     }
 }
 pub unsafe fn QueueClearingOfFxTilemap(game: &mut Game) {
-    let mut i: i32 = 3838;
-    while i >= 0 {
-        *((&raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps as *mut u16 as *mut u8)
-            .offset(i as u16 as i32 as isize) as *mut u16) = 6222;
-        i -= 2;
-    }
+    word_transfers!(game, descending, 1920; native(0x4efe) <- value(6222));
     let v1: u16 = word!(game.vram_write_queue_tail);
     let v2 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
     (*v2).size = 3840;

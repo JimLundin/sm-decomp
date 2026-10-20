@@ -2480,19 +2480,16 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn GrappleFunc_AF87(game: &mut Game) {
-    let mut i: i32 = 30;
-    while i >= 0 {
-        let v1: i32 = i >> 1;
-        word!(game.grapple_segment_anim_instr_ptrs[v1] = addr_word_94B197 as u16);
-        word!(game.grapple_segment_anim_instr_timers[(v1 + 15)] = addr_word_94B193 as u16);
-        word!(game.grapple_segment_anim_instr_timers[(v1 + 14)] = addr_word_94B18F as u16);
-        word!(game.grapple_segment_anim_instr_timers[(v1 + 13)] = addr_word_94B18B as u16);
-        word!(game.grapple_segment_anim_instr_timers[v1] = 1);
-        *((ram_ptr!(game, u16; 0xd40) as *mut u8).offset(i as isize) as *mut u16) = 1;
-        *((ram_ptr!(game, u16; 0xd3e) as *mut u8).offset(i as isize) as *mut u16) = 1;
-        *((ram_ptr!(game, u16; 0xd3c) as *mut u8).offset(i as isize) as *mut u16) = 1;
-        i -= 8;
-    }
+    word_transfers!(game, (-8), 4;
+        le(grapple_segment_anim_instr_ptrs, 15) <- value(addr_word_94B197 as u16),
+        le(grapple_segment_anim_instr_timers, 30) <- value(addr_word_94B193 as u16),
+        le(grapple_segment_anim_instr_timers, 29) <- value(addr_word_94B18F as u16),
+        le(grapple_segment_anim_instr_timers, 28) <- value(addr_word_94B18B as u16),
+        le(grapple_segment_anim_instr_timers, 15) <- value(1),
+        native(0xd5e) <- value(1),
+        native(0xd5c) <- value(1),
+        native(0xd5a) <- value(1),
+    );
 }
 unsafe fn GrappleInstr_Goto(j: u16, game: &mut Game) -> u16 {
     *(RomPtr_94(j, game) as *mut u16)

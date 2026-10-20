@@ -763,16 +763,8 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
     word! { game, 0;
         num_enemies_in_room, num_enemies_killed_in_room, flag_process_all_enemies,
     }
-    let mut i: i32 = 286;
-    while i >= 0 {
-        word!(game.eproj_flags[(i >> 1)] = 0);
-        i -= 2;
-    }
-    let mut j: i32 = 34;
-    while j >= 0 {
-        word!(game.eproj_killed_enemy_index[(j >> 1)] = -1i32 as u16);
-        j -= 2;
-    }
+    word_transfers!(game, descending, 144; le(eproj_flags, 143) <- value(0));
+    word_transfers!(game, descending, 18; le(eproj_killed_enemy_index, 17) <- value(-1i32 as u16));
     let mut v4: u16 = word!(game.room_enemy_population_ptr);
     if (*get_EnemyPopulation(0xa1u8, word!(game.room_enemy_population_ptr), game)).enemy_ptr
         == 0xffff

@@ -20,11 +20,7 @@ pub unsafe fn DisableAnimtiles(game: &mut Game) {
     word!(game.animtiles_enable_flag, |fresh8| (fresh8 & !(0x8000)));
 }
 pub unsafe fn ClearAnimtiles(game: &mut Game) {
-    let mut i: i32 = 10;
-    while i >= 0 {
-        word!(game.animtiles_ids[(i >> 1)] = 0);
-        i -= 2;
-    }
+    word_transfers!(game, descending, 6; le(animtiles_ids, 5) <- value(0));
 }
 pub unsafe fn SpawnAnimtiles(j: u16, game: &mut Game) {
     let v0: u16 = j;

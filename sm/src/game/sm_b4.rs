@@ -124,12 +124,5 @@ pub unsafe fn DrawSpriteObjects(game: &mut Game) {
     }
 }
 pub unsafe fn ClearSpriteObjects(game: &mut Game) {
-    let mut v0: i32 = 1022;
-    loop {
-        word!(game.sprite_instr_list_ptrs[(v0 >> 1)] = 0);
-        v0 -= 2;
-        if (v0 == 0) {
-            break;
-        }
-    }
+    word_transfers!(game, descending, 511; le(sprite_instr_list_ptrs, 511) <- value(0));
 }

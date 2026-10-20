@@ -68,9 +68,7 @@ unsafe fn InitializePpuForMessageBoxes(game: &mut Game) {
     }
 }
 unsafe fn ClearMessageBoxBg3Tilemap(game: &mut Game) {
-    for tile in game.g_ram[0x3800..0x3f00].chunks_exact_mut(2) {
-        tile.copy_from_slice(&14u16.to_le_bytes());
-    }
+    word_transfers!(game, ascending, 896; little(0x3800) <- value(14));
     crate::rtl::register_writes! { game;
         word(VMADDL as u16, addr_unk_605880 as u16); word(DMAP1 as u16, 0x1801);
         word(A1T1L as u16, 0x3800); word(A1B1 as u16, 0x7e);
