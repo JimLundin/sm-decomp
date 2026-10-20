@@ -143,59 +143,40 @@ crate::forward_calls! { pub unsafe fn (k: u16, j: u16) -> PairU16;
     PalInstr_ColorPlus9 => MakePairU16((k).wrapping_add(18u16), (j).wrapping_add(2u16));
     PalInstr_ColorPlus15 => MakePairU16((k).wrapping_add(30u16), (j).wrapping_add(2u16));
 }
-pub unsafe fn PalInstr_Delete(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    set_ram_word!(game.palettefx_ids[(k >> 1)] = 0u16);
-    MakePairU16(k, 0u16)
+crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) -> PairU16;
+    PalInstr_Delete [MakePairU16(k, 0u16)] { set_ram_word!(game.palettefx_ids[(k >> 1)] = 0u16); };
+    PalInstr_SetPreInstr [MakePairU16(k, (j).wrapping_add(2u16))] {
+        set_ram_word!(game.palettefx_pre_instr[(k >> 1)] = *(RomPtr_8D(j, game) as *mut u16));
+    };
+    PalInstr_ClearPreInstr [MakePairU16(k, j)] {
+        set_ram_word!(game.palettefx_pre_instr[(k >> 1)] = addr_locret_8DC5E3 as u16);
+    };
+    PalInstr_Goto [MakePairU16(k, v2)] { let v2: u16 = *(RomPtr_8D(j, game) as *mut u16); };
+    PalInstr_DecTimerGoto [MakePairU16(v4.k, v4.j)] {
+        let mut v4: PairU16 = PairU16 { k: 0, j: 0 };
+        let v2: i32 = k as i32 >> 1i32;
+        crate::update_place! { reference fresh4 [fresh5] = *(ram_ptr!(game, u16; 0x1edd)).offset(v2 as isize) => (*fresh4).wrapping_sub(1); }
+        if fresh5 == 1u16 {
+            return MakePairU16(k, (j).wrapping_add(2u16));
+        }
+        v4 = PalInstr_Goto(k, j, game);
+    };
+    PalInstr_SetTimer [MakePairU16(k, (j).wrapping_add(1u16))] {
+        *(ram_ptr!(game, u16; 0x1edd) as *mut u8).offset(k as i32 as isize) = *RomPtr_8D(j, game);
+    };
+    PalInstr_SetColorIndex [MakePairU16(k, (j).wrapping_add(2u16))] {
+        set_ram_word!(game.palettefx_color_indexes[(k >> 1)] = *(RomPtr_8D(j, game) as *mut u16));
+    };
+    PalInstr_QueueMusic [MakePairU16(k, (j).wrapping_add(1u16))] {
+        let v2 = RomPtr_8D(j, game);
+        QueueMusic_Delayed8(*v2 as u16, game);
+    };
 }
-pub unsafe fn PalInstr_SetPreInstr(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    set_ram_word!(game.palettefx_pre_instr[(k >> 1)] = *(RomPtr_8D(j, game) as *mut u16));
-    MakePairU16(k, (j).wrapping_add(2u16))
-}
-pub unsafe fn PalInstr_ClearPreInstr(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    set_ram_word!(game.palettefx_pre_instr[(k >> 1)] = addr_locret_8DC5E3 as u16);
-    MakePairU16(k, j)
-}
-pub unsafe fn PalInstr_Goto(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    let v2: u16 = *(RomPtr_8D(j, game) as *mut u16);
-    MakePairU16(k, v2)
-}
-pub unsafe fn PalInstr_DecTimerGoto(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    let mut v4: PairU16 = PairU16 { k: 0, j: 0 };
-    let v2: i32 = k as i32 >> 1i32;
-    crate::update_place! { reference fresh4 [fresh5] = *(ram_ptr!(game, u16; 0x1edd)).offset(v2 as isize) => (*fresh4).wrapping_sub(1); }
-    if fresh5 == 1u16 {
-        return MakePairU16(k, (j).wrapping_add(2u16));
-    }
-    v4 = PalInstr_Goto(k, j, game);
-    MakePairU16(v4.k, v4.j)
-}
-pub unsafe fn PalInstr_SetTimer(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    *(ram_ptr!(game, u16; 0x1edd) as *mut u8).offset(k as i32 as isize) = *RomPtr_8D(j, game);
-    MakePairU16(k, (j).wrapping_add(1u16))
-}
-pub unsafe fn PalInstr_SetColorIndex(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    set_ram_word!(game.palettefx_color_indexes[(k >> 1)] = *(RomPtr_8D(j, game) as *mut u16));
-    MakePairU16(k, (j).wrapping_add(2u16))
-}
-pub unsafe fn PalInstr_QueueMusic(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    let v2 = RomPtr_8D(j, game);
-    QueueMusic_Delayed8(*v2 as u16, game);
-    MakePairU16(k, (j).wrapping_add(1u16))
-}
-pub unsafe fn PalInstr_QueueSfx1(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    let v2 = RomPtr_8D(j, game) as *const u16;
-    QueueSfx1_Max6(*v2, game);
-    MakePairU16(k, (j).wrapping_add(1u16))
-}
-pub unsafe fn PalInstr_QueueSfx2(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    let v2 = RomPtr_8D(j, game) as *const u16;
-    QueueSfx2_Max6(*v2, game);
-    MakePairU16(k, (j).wrapping_add(1u16))
-}
-pub unsafe fn PalInstr_QueueSfx3(k: u16, j: u16, game: &mut Game) -> PairU16 {
-    let v2 = RomPtr_8D(j, game) as *const u16;
-    QueueSfx3_Max6(*v2, game);
-    MakePairU16(k, (j).wrapping_add(1u16))
+crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) -> PairU16;
+    @prefix { let v2 = RomPtr_8D(j, game) as *const u16; };
+    PalInstr_QueueSfx1 [MakePairU16(k, (j).wrapping_add(1u16))] {  QueueSfx1_Max6(*v2, game); };
+    PalInstr_QueueSfx2 [MakePairU16(k, (j).wrapping_add(1u16))] {  QueueSfx2_Max6(*v2, game); };
+    PalInstr_QueueSfx3 [MakePairU16(k, (j).wrapping_add(1u16))] {  QueueSfx3_Max6(*v2, game); };
 }
 pub unsafe fn PalInit_E1BC(k: u16, j: u16, game: &mut Game) {
     set_ram_word!(game.palettefx_pre_instr[(j >> 1)] = ((0x8de20bi32) as u16));

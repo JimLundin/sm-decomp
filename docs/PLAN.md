@@ -90,6 +90,34 @@ The unused-function closure below completes that root/reference review.
 Further thousand-line reductions remain open; the remaining unused-data
 census (177 raw lines) is below the current priority and stays parked.
 
+Shared instruction declarations (2026-10-20): 655 callbacks in 161 adjacent
+families share signatures and 12 repeated setup prefixes through one macro.
+Each declaration lists its effects and continuation; 43 control-flow bodies
+stay intact. All 652 unsafe and three safe functions retain their names,
+visibility, parameters, operations, scopes and ordering. No RAM layout changes.
+
+Compiler expansion retains all 9131680 remaining core bytes after removing
+only the new helper/export/comments and binding both 67-file source payloads.
+Source-span/adjacency checks and the normal build complement the parser census;
+the temporary draft's matcher and brace-macro parsing errors are corrected.
+Maintained source exactly matches the reviewed, formatted candidate.
+
+Formatting, normal frontend release (34.19s), source-checked host (6.72s),
+diff check and progress pass. Full any% 129712/0 (166.80s wall) and Speed
+Booster 148406/0 (199.61s wall), native exits 0, pass with fixed source/input/
+artifact bytes. Rust lines -1009 to 120018. Textual unsafe-function count
+-489 to 5426 reflects signature sharing; all functions remain. Cast-containing
+lines -19 to 9675 reflect shared setup; other counters unchanged. The movies
+retain existing route coverage and do not establish execution of every callback.
+
+Reduction-throughput follow-up: compile a measured family before extensive
+validation; parser estimates alone missed a brace-macro statement boundary.
+Keep ordinary indentation and count all helper/caller costs. Park terminal
+loop (768 gross lines), indexed-loop (849 optimistic gross lines) and small
+non-instruction setup (884 total source lines) surveys below the target.
+Next search: complete duplicated algorithms or data representations; no
+additional thousand-line candidate is demonstrated by these surveys.
+
 Residual unused-import draft (2026-10-20): an independent 183-function
 assessment overlaps 178 removals already committed in 7299f73b. Its remaining
 five Bang helpers and 569 unused import bindings save 331 formatted Rust

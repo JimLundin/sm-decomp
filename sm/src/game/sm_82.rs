@@ -1238,38 +1238,33 @@ pub unsafe fn OptionsMenuFunc2(k: u16, game: &mut Game) {
         set_ram_word!(game.cinematicspr_arr7[v7] = (v4).wrapping_add(4u16));
     }
 }
-pub unsafe fn OptionsInstr_Destroy(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: i32 = k as i32 >> 1i32;
-    set_ram_words! { game, 0u16; cinematicbg_arr8[v2], cinematicspr_arr7[v2] }
-    0u16
-}
-pub unsafe fn OptionsInstr_8C64(k: u16, j: u16, game: &mut Game) -> u16 {
-    set_ram_word!(game.cinematicspr_arr7[(k >> 1)] = (j).wrapping_sub(2u16));
-    0u16
-}
-pub unsafe fn OptionsInstr_SetPreInstr(k: u16, j: u16, game: &mut Game) -> u16 {
-    set_ram_word!(game.optionsmenu_arr1[(k >> 1)] = *(RomPtr_82(j, game) as *mut u16));
-    (j).wrapping_add(2u16)
-}
-pub unsafe fn OptionsInstr_8C79(k: u16, j: u16, game: &mut Game) -> u16 {
-    set_ram_word!(game.optionsmenu_arr1[(k >> 1)] = ((0x828c81i32) as u16));
-    j
-}
-pub unsafe fn OptionsInstr_Goto(k: u16, j: u16, game: &mut Game) -> u16 {
-    *(RomPtr_82(j, game) as *mut u16)
-}
-pub unsafe fn OptionsInstr_8C89(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: i32 = k as i32 >> 1i32;
-    crate::update_place! { reference fresh0 [fresh1] = *(ram_ptr!(game, u16; 0x1b2d)).offset(v2 as isize) => (*fresh0).wrapping_sub(1); }
-    if fresh1 == 1u16 {
-        (j).wrapping_add(2u16)
-    } else {
-        OptionsInstr_Goto(k, j, game)
-    }
-}
-pub unsafe fn OptionsInstr_8C93(k: u16, j: u16, game: &mut Game) -> u16 {
-    set_ram_word!(game.optionsmenu_arr5[(k >> 1)] = *(RomPtr_82(j, game) as *mut u16));
-    (j).wrapping_add(2u16)
+crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16;
+    OptionsInstr_Destroy [0u16] {
+        let v2: i32 = k as i32 >> 1i32;
+        set_ram_words! { game, 0u16; cinematicbg_arr8[v2], cinematicspr_arr7[v2] }
+    };
+    OptionsInstr_8C64 [0u16] {
+        set_ram_word!(game.cinematicspr_arr7[(k >> 1)] = (j).wrapping_sub(2u16));
+    };
+    OptionsInstr_SetPreInstr [(j).wrapping_add(2u16)] {
+        set_ram_word!(game.optionsmenu_arr1[(k >> 1)] = *(RomPtr_82(j, game) as *mut u16));
+    };
+    OptionsInstr_8C79 [j] {
+        set_ram_word!(game.optionsmenu_arr1[(k >> 1)] = ((0x828c81i32) as u16));
+    };
+    OptionsInstr_Goto [*(RomPtr_82(j, game) as *mut u16)] { };
+    OptionsInstr_8C89 [] {
+        let v2: i32 = k as i32 >> 1i32;
+        crate::update_place! { reference fresh0 [fresh1] = *(ram_ptr!(game, u16; 0x1b2d)).offset(v2 as isize) => (*fresh0).wrapping_sub(1); }
+        if fresh1 == 1u16 {
+            (j).wrapping_add(2u16)
+        } else {
+            OptionsInstr_Goto(k, j, game)
+        }
+    };
+    OptionsInstr_8C93 [(j).wrapping_add(2u16)] {
+        set_ram_word!(game.optionsmenu_arr5[(k >> 1)] = *(RomPtr_82(j, game) as *mut u16));
+    };
 }
 pub unsafe fn DrawOptionsMenuSpritemaps(game: &mut Game) {
     let mut i: i32 = 14i32;

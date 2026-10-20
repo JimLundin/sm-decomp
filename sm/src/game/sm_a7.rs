@@ -1087,51 +1087,44 @@ pub unsafe fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
 pub fn Kraid_Instr_1(k: u16, jp: *const u16) -> *const u16 {
     jp
 }
-pub unsafe fn Kraid_Instr_DecYpos(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Kraid(0i32, game);
-    (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
-    jp
-}
-pub unsafe fn Kraid_Instr_IncrYpos_Shake(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Kraid(0i32, game);
-    (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
-    set_ram_word!(game.earthquake_type = 1u16);
-    set_ram_word!(game.earthquake_timer = 10u16);
-    jp
-}
-pub unsafe fn Kraid_Instr_PlaySound_0x76(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    QueueSfx2_Max6(0x76u16, game);
-    jp
-}
-pub unsafe fn Kraid_Instr_XposMinus3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Kraid(0i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(g_word_A7A91C);
-    jp
-}
-pub unsafe fn Kraid_Instr_XposMinus3b(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Kraid(0i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(g_word_A7A91C);
-    jp
-}
-pub unsafe fn Kraid_Instr_XposPlus3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Kraid(0i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(g_word_A7A920);
-    jp
-}
-pub unsafe fn Kraid_Instr_MoveHimRight(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Kraid(0i32, game);
-    if ((*E).base.x_pos as i32 - 320i32 & 0x8000i32 != 0 || {
-        let mut v3: u16 = ((*E).kraid_target_x).wrapping_sub(1u16);
-        (*E).kraid_target_x = v3;
-        (*E).kraid_target_x == 0u16
-    }) && Enemy_MoveRight_IgnoreSlopes(0u16, (g_word_A7A922 as i16 as i32) << 16i32, game) != 0
-    {
-        set_ram_word!(game.earthquake_type = 0u16);
-        set_ram_word!(game.earthquake_timer = 7u16);
-        let x_pos: u16 = (*Get_Kraid(0i32, game)).base.x_pos;
-        (*Get_Kraid(0x140i32, game)).base.x_pos = x_pos;
-    }
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    Kraid_Instr_DecYpos [jp] {
+        let E = Get_Kraid(0i32, game);
+        (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
+    };
+    Kraid_Instr_IncrYpos_Shake [jp] {
+        let E = Get_Kraid(0i32, game);
+        (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
+        set_ram_word!(game.earthquake_type = 1u16);
+        set_ram_word!(game.earthquake_timer = 10u16);
+    };
+    Kraid_Instr_PlaySound_0x76 [jp] { QueueSfx2_Max6(0x76u16, game); };
+    Kraid_Instr_XposMinus3 [jp] {
+        let E = Get_Kraid(0i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(g_word_A7A91C);
+    };
+    Kraid_Instr_XposMinus3b [jp] {
+        let E = Get_Kraid(0i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(g_word_A7A91C);
+    };
+    Kraid_Instr_XposPlus3 [jp] {
+        let E = Get_Kraid(0i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(g_word_A7A920);
+    };
+    Kraid_Instr_MoveHimRight [jp] {
+        let E = Get_Kraid(0i32, game);
+        if ((*E).base.x_pos as i32 - 320i32 & 0x8000i32 != 0 || {
+            let mut v3: u16 = ((*E).kraid_target_x).wrapping_sub(1u16);
+            (*E).kraid_target_x = v3;
+            (*E).kraid_target_x == 0u16
+        }) && Enemy_MoveRight_IgnoreSlopes(0u16, (g_word_A7A922 as i16 as i32) << 16i32, game) != 0
+        {
+            set_ram_word!(game.earthquake_type = 0u16);
+            set_ram_word!(game.earthquake_timer = 7u16);
+            let x_pos: u16 = (*Get_Kraid(0i32, game)).base.x_pos;
+            (*Get_Kraid(0x140i32, game)).base.x_pos = x_pos;
+        }
+    };
 }
 pub unsafe fn Kraid_InitEyeGlowing(game: &mut Game) {
     let E = Get_Kraid(0i32, game);

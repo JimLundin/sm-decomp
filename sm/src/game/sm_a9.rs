@@ -1369,375 +1369,241 @@ pub unsafe fn MotherBrain_FootstepEffect(game: &mut Game) {
         printf(b"Write to rom!\n\0" as *const u8 as *const c_char);
     }
 }
-pub unsafe fn MotherBrain_Instr_MoveBodyUp10Left4(
+crate::instruction_callbacks! { pub unsafe fn (
     k: u16,
     jp: *const u16,
     game: &mut Game,
-) -> *const u16 {
-    MotherBrain_MoveBodyDownScrollLeft(4u16, 0xfff6u16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveBodyUp16Left4(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    MotherBrain_MoveBodyDownScrollLeft(4u16, 0xfff0u16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveBodyUp12Right2(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    MotherBrain_MoveBodyDownScrollLeft(0xfffeu16, 0xfff4u16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveDown12Left4(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    MotherBrain_MoveBodyDownScrollLeft(4u16, 0xcu16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveDown16Right2(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    MotherBrain_MoveBodyDownScrollLeft(0xfffeu16, 0x10u16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveDown10Right2(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    MotherBrain_MoveBodyDownScrollLeft(0xfffeu16, 0xau16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveUp2Right1(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = (*E).base.x_pos.wrapping_add(1);
-    MotherBrain_MoveBodyDown(0xfffeu16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveRight2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(2u16);
-    MotherBrain_MoveBodyDown(0u16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveUp1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    MotherBrain_MoveBodyDown(1u16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveUp1Right3_Sfx(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    MotherBrain_FootstepEffect(game);
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(3u16);
-    MotherBrain_MoveBodyDown(1u16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_Down2Right15(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(15u16);
-    MotherBrain_MoveBodyDown(0xfffeu16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_Down4Right6(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(6u16);
-    MotherBrain_MoveBodyDown(0xfffcu16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_Up4Left2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(2u16);
-    MotherBrain_MoveBodyDown(4u16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_Up2Left1_Sfx(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    MotherBrain_FootstepEffect(game);
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = (*E).base.x_pos.wrapping_sub(1);
-    MotherBrain_MoveBodyDown(2u16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_Up2Left1_Sfx2(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    MotherBrain_FootstepEffect(game);
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = (*E).base.x_pos.wrapping_sub(1);
-    MotherBrain_MoveBodyDown(2u16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveLeft2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(2u16);
-    MotherBrain_MoveBodyDown(0u16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveDown1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    MotherBrain_MoveBodyDown(0xffffu16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveDown1Left3(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(3u16);
-    MotherBrain_MoveBodyDown(0xffffu16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveUp2Left15_Sfx(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    MotherBrain_FootstepEffect(game);
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(15u16);
-    MotherBrain_MoveBodyDown(2u16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveUp4Left6(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(6u16);
-    MotherBrain_MoveBodyDown(4u16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveDown4Right2(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(2u16);
-    MotherBrain_MoveBodyDown(0xfffcu16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_MoveDown2Right1(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let E = Get_MotherBrain(0i32, game);
-    (*E).base.x_pos = (*E).base.x_pos.wrapping_add(1);
-    MotherBrain_MoveBodyDown(0xfffeu16, game);
-    jp
-}
-pub unsafe fn MotherBrain_Instr_SetPose_Standing(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    (*Get_MotherBrain(0i32, game)).var_02 = 0u16;
-    jp
-}
-pub unsafe fn MotherBrain_Instr_SetPose_Walking(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    (*Get_MotherBrain(0i32, game)).var_02 = 1u16;
-    jp
-}
-pub unsafe fn MotherBrain_Instr_SetPose_Crouched(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    (*Get_MotherBrain(0i32, game)).var_02 = 3u16;
-    jp
-}
-pub unsafe fn MotherBrain_Instr_SetPose_CrouchedTrans(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    (*Get_MotherBrain(0i32, game)).var_02 = 2u16;
-    jp
-}
-pub unsafe fn MotherBrain_Instr_SetPose_DeathBeamMode(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    (*Get_MotherBrain(0i32, game)).var_02 = 4u16;
-    jp
-}
-pub unsafe fn MotherBrain_Instr_SetPose_LeaningDown(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    (*Get_MotherBrain(0i32, game)).var_02 = 6u16;
-    jp
-}
-pub unsafe fn MotherBrain_Instr_SpawnEprojToOffset(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let E = Get_MotherBrain(0i32, game);
-    game.eproj_spawn_pt = Point16U {
-        x: (((*E).base.x_pos).wrapping_add(*jp.offset(0))),
-        y: (((*E).base.y_pos).wrapping_add(*jp.offset(1))),
+) -> *const u16;
+    MotherBrain_Instr_MoveBodyUp10Left4 [jp] {
+        MotherBrain_MoveBodyDownScrollLeft(4u16, 0xfff6u16, game);
     };
-    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, *jp.offset(2), game);
-    jp.offset(3)
+    MotherBrain_Instr_MoveBodyUp16Left4 [jp] {
+        MotherBrain_MoveBodyDownScrollLeft(4u16, 0xfff0u16, game);
+    };
+    MotherBrain_Instr_MoveBodyUp12Right2 [jp] {
+        MotherBrain_MoveBodyDownScrollLeft(0xfffeu16, 0xfff4u16, game);
+    };
+    MotherBrain_Instr_MoveDown12Left4 [jp] {
+        MotherBrain_MoveBodyDownScrollLeft(4u16, 0xcu16, game);
+    };
+    MotherBrain_Instr_MoveDown16Right2 [jp] {
+        MotherBrain_MoveBodyDownScrollLeft(0xfffeu16, 0x10u16, game);
+    };
+    MotherBrain_Instr_MoveDown10Right2 [jp] {
+        MotherBrain_MoveBodyDownScrollLeft(0xfffeu16, 0xau16, game);
+    };
+    MotherBrain_Instr_MoveUp2Right1 [jp] {
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = (*E).base.x_pos.wrapping_add(1);
+        MotherBrain_MoveBodyDown(0xfffeu16, game);
+    };
 }
-pub unsafe fn MotherBrain_Instr_SpawnDeathBeamEproj(
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    MotherBrain_Instr_MoveRight2 [jp] {
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(2u16);
+        MotherBrain_MoveBodyDown(0u16, game);
+    };
+    MotherBrain_Instr_MoveUp1 [jp] { MotherBrain_MoveBodyDown(1u16, game); };
+}
+crate::instruction_callbacks! { pub unsafe fn (
     k: u16,
     jp: *const u16,
     game: &mut Game,
-) -> *const u16 {
-    QueueSfx2_Max6(0x63u16, game);
-    SpawnEprojWithGfx(
-        0u16,
-        0x40u16,
-        addr_kEproj_MotherBrainDeathBeamCharging as u16,
-        game,
-    );
-    jp
+) -> *const u16;
+    MotherBrain_Instr_MoveUp1Right3_Sfx [jp] {
+        MotherBrain_FootstepEffect(game);
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(3u16);
+        MotherBrain_MoveBodyDown(1u16, game);
+    };
+    MotherBrain_Instr_Down2Right15 [jp] {
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(15u16);
+        MotherBrain_MoveBodyDown(0xfffeu16, game);
+    };
 }
-pub unsafe fn MotherBrain_Instr_IncrBeamAttackPhase(
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    MotherBrain_Instr_Down4Right6 [jp] {
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(6u16);
+        MotherBrain_MoveBodyDown(0xfffcu16, game);
+    };
+    MotherBrain_Instr_Up4Left2 [jp] {
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(2u16);
+        MotherBrain_MoveBodyDown(4u16, game);
+    };
+}
+crate::instruction_callbacks! { pub unsafe fn (
     k: u16,
     jp: *const u16,
     game: &mut Game,
-) -> *const u16 {
-    let E = Get_MotherBrain(0i32, game);
-    (*E).var_17 = (*E).var_17.wrapping_add(1);
-    jp
+) -> *const u16;
+    MotherBrain_Instr_Up2Left1_Sfx [jp] {
+        MotherBrain_FootstepEffect(game);
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = (*E).base.x_pos.wrapping_sub(1);
+        MotherBrain_MoveBodyDown(2u16, game);
+    };
+    MotherBrain_Instr_Up2Left1_Sfx2 [jp] {
+        MotherBrain_FootstepEffect(game);
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = (*E).base.x_pos.wrapping_sub(1);
+        MotherBrain_MoveBodyDown(2u16, game);
+    };
 }
-pub unsafe fn MotherBrain_Instr_Goto(k: u16, game: &mut Game) -> u16 {
-    *(RomPtr_A9(k, game) as *mut u16)
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    MotherBrain_Instr_MoveLeft2 [jp] {
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(2u16);
+        MotherBrain_MoveBodyDown(0u16, game);
+    };
+    MotherBrain_Instr_MoveDown1 [jp] { MotherBrain_MoveBodyDown(0xffffu16, game); };
 }
-pub unsafe fn MotherBrain_Instr_EnableNeckMovementGoto(k: u16, game: &mut Game) -> u16 {
-    (*Get_MotherBrain(0x40i32, game)).var_31 = 1u16;
-    *(RomPtr_A9(k, game) as *mut u16)
+crate::instruction_callbacks! { pub unsafe fn (
+    k: u16,
+    jp: *const u16,
+    game: &mut Game,
+) -> *const u16;
+    MotherBrain_Instr_MoveDown1Left3 [jp] {
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(3u16);
+        MotherBrain_MoveBodyDown(0xffffu16, game);
+    };
+    MotherBrain_Instr_MoveUp2Left15_Sfx [jp] {
+        MotherBrain_FootstepEffect(game);
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(15u16);
+        MotherBrain_MoveBodyDown(2u16, game);
+    };
+    MotherBrain_Instr_MoveUp4Left6 [jp] {
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(6u16);
+        MotherBrain_MoveBodyDown(4u16, game);
+    };
+    MotherBrain_Instr_MoveDown4Right2 [jp] {
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(2u16);
+        MotherBrain_MoveBodyDown(0xfffcu16, game);
+    };
+    MotherBrain_Instr_MoveDown2Right1 [jp] {
+        let E = Get_MotherBrain(0i32, game);
+        (*E).base.x_pos = (*E).base.x_pos.wrapping_add(1);
+        MotherBrain_MoveBodyDown(0xfffeu16, game);
+    };
+    MotherBrain_Instr_SetPose_Standing [jp] { (*Get_MotherBrain(0i32, game)).var_02 = 0u16; };
+    MotherBrain_Instr_SetPose_Walking [jp] { (*Get_MotherBrain(0i32, game)).var_02 = 1u16; };
+    MotherBrain_Instr_SetPose_Crouched [jp] { (*Get_MotherBrain(0i32, game)).var_02 = 3u16; };
+    MotherBrain_Instr_SetPose_CrouchedTrans [jp] { (*Get_MotherBrain(0i32, game)).var_02 = 2u16; };
+    MotherBrain_Instr_SetPose_DeathBeamMode [jp] { (*Get_MotherBrain(0i32, game)).var_02 = 4u16; };
+    MotherBrain_Instr_SetPose_LeaningDown [jp] { (*Get_MotherBrain(0i32, game)).var_02 = 6u16; };
+    MotherBrain_Instr_SpawnEprojToOffset [jp.offset(3)] {
+        let E = Get_MotherBrain(0i32, game);
+        game.eproj_spawn_pt = Point16U {
+            x: (((*E).base.x_pos).wrapping_add(*jp.offset(0))),
+            y: (((*E).base.y_pos).wrapping_add(*jp.offset(1))),
+        };
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, *jp.offset(2), game);
+    };
+    MotherBrain_Instr_SpawnDeathBeamEproj [jp] {
+        QueueSfx2_Max6(0x63u16, game);
+        SpawnEprojWithGfx(
+            0u16,
+            0x40u16,
+            addr_kEproj_MotherBrainDeathBeamCharging as u16,
+            game,
+        );
+    };
+    MotherBrain_Instr_IncrBeamAttackPhase [jp] {
+        let E = Get_MotherBrain(0i32, game);
+        (*E).var_17 = (*E).var_17.wrapping_add(1);
+    };
 }
-pub unsafe fn MotherBrain_Instr_DisableNeckMovement(k: u16, game: &mut Game) -> u16 {
-    (*Get_MotherBrain(0x40i32, game)).var_31 = 0u16;
-    k
+crate::instruction_callbacks! { pub unsafe fn (k: u16, game: &mut Game) -> u16;
+    MotherBrain_Instr_Goto [*(RomPtr_A9(k, game) as *mut u16)] { };
+    MotherBrain_Instr_EnableNeckMovementGoto [*(RomPtr_A9(k, game) as *mut u16)] {
+        (*Get_MotherBrain(0x40i32, game)).var_31 = 1u16;
+    };
+    MotherBrain_Instr_DisableNeckMovement [k] { (*Get_MotherBrain(0x40i32, game)).var_31 = 0u16; };
 }
-pub unsafe fn MotherBrain_Instr_QueueSfx2(k: u16, game: &mut Game) -> u16 {
-    let v2 = RomPtr_A9(k, game) as *const u16;
-    QueueSfx2_Max6(*v2, game);
-    (k).wrapping_add(2u16)
+crate::instruction_callbacks! { pub unsafe fn (k: u16, game: &mut Game) -> u16;
+    @prefix { let v2 = RomPtr_A9(k, game) as *const u16; };
+    MotherBrain_Instr_QueueSfx2 [(k).wrapping_add(2u16)] {  QueueSfx2_Max6(*v2, game); };
+    MotherBrain_Instr_QueueSfx3 [(k).wrapping_add(2u16)] {  QueueSfx3_Max6(*v2, game); };
 }
-pub unsafe fn MotherBrain_Instr_QueueSfx3(k: u16, game: &mut Game) -> u16 {
-    let v2 = RomPtr_A9(k, game) as *const u16;
-    QueueSfx3_Max6(*v2, game);
-    (k).wrapping_add(2u16)
-}
-pub unsafe fn MotherBrain_Instr_SpawnDroolEproj(k: u16, game: &mut Game) -> u16 {
-    let E = Get_MotherBrain(0x40i32, game);
-    if (*E).var_12 != 0 {
-        let mut v2: u16 = ((*E).var_13).wrapping_add(1u16);
-        if (*E).var_13 as i32 - 5i32 & 0x8000i32 == 0 {
-            v2 = 0u16;
+crate::instruction_callbacks! { pub unsafe fn (k: u16, game: &mut Game) -> u16;
+    MotherBrain_Instr_SpawnDroolEproj [k] {
+        let E = Get_MotherBrain(0x40i32, game);
+        if (*E).var_12 != 0 {
+            let mut v2: u16 = ((*E).var_13).wrapping_add(1u16);
+            if (*E).var_13 as i32 - 5i32 & 0x8000i32 == 0 {
+                v2 = 0u16;
+            }
+            (*E).var_13 = v2;
+            let v3: u16 = (if (*E).var_34 as i32 - 128i32 & 0x8000i32 != 0 {
+                addr_kEproj_MotherBrainDrool as i32
+            } else {
+                addr_kEproj_MotherBrainDyingDrool as i32
+            }) as u16;
+            SpawnEprojWithRoomGfx(v3, (*E).var_13, game);
         }
-        (*E).var_13 = v2;
-        let v3: u16 = (if (*E).var_34 as i32 - 128i32 & 0x8000i32 != 0 {
-            addr_kEproj_MotherBrainDrool as i32
-        } else {
-            addr_kEproj_MotherBrainDyingDrool as i32
-        }) as u16;
-        SpawnEprojWithRoomGfx(v3, (*E).var_13, game);
-    }
-    k
-}
-pub unsafe fn MotherBrain_Instr_SpawnPurpleBreath(k: u16, game: &mut Game) -> u16 {
-    SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainPurpleBreathBig as u16, 0u16, game);
-    k
-}
-pub unsafe fn MotherBrain_Instr_SetMainShakeTimer50(k: u16, game: &mut Game) -> u16 {
-    (*Get_MotherBrain(0x40i32, game)).var_00 = 50u16;
-    k
-}
-pub unsafe fn MotherBrain_Instr_GotoEitherOr(k: u16, game: &mut Game) -> u16 {
-    let result: u16 = addr_stru_A99C5F as u16;
-    if (ram_word!(game, random_number) & 0xfff) >= 0xfe0 {
-        return addr_stru_A99C47 as u16;
-    }
-    result
-}
-pub unsafe fn MotherBrain_Instr_MaybeGoto(k: u16, game: &mut Game) -> u16 {
-    if ram_word!(game, random_number) < 0xf000u16 {
-        return addr_stru_A99C9F as u16;
-    }
-    k
-}
-pub unsafe fn MotherBrain_Instr_MaybeGoto2(k: u16, game: &mut Game) -> u16 {
-    if (ram_word!(game, random_number) & 0xfff) < 0xec0 {
-        return MotherBrain_Instr_Goto2(k);
-    }
-    k
-}
-pub unsafe fn MotherBrain_Instr_QueueShitroidAttackSfx(k: u16, game: &mut Game) -> u16 {
-    if (*Get_MotherBrain(0i32, game)).var_13 != 11u16 {
-        QueueSfx2_Max6(g_word_A99E0F[0i32 as usize], game);
-    }
-    k
+    };
+    MotherBrain_Instr_SpawnPurpleBreath [k] {
+        SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainPurpleBreathBig as u16, 0u16, game);
+    };
+    MotherBrain_Instr_SetMainShakeTimer50 [k] { (*Get_MotherBrain(0x40i32, game)).var_00 = 50u16; };
+    MotherBrain_Instr_GotoEitherOr [result] {
+        let result: u16 = addr_stru_A99C5F as u16;
+        if (ram_word!(game, random_number) & 0xfff) >= 0xfe0 {
+            return addr_stru_A99C47 as u16;
+        }
+    };
+    MotherBrain_Instr_MaybeGoto [k] {
+        if ram_word!(game, random_number) < 0xf000u16 {
+            return addr_stru_A99C9F as u16;
+        }
+    };
+    MotherBrain_Instr_MaybeGoto2 [k] {
+        if (ram_word!(game, random_number) & 0xfff) < 0xec0 {
+            return MotherBrain_Instr_Goto2(k);
+        }
+    };
+    MotherBrain_Instr_QueueShitroidAttackSfx [k] {
+        if (*Get_MotherBrain(0i32, game)).var_13 != 11u16 {
+            QueueSfx2_Max6(g_word_A99E0F[0i32 as usize], game);
+        }
+    };
 }
 pub unsafe fn MotherBrain_Instr_Goto2(k: u16) -> u16 {
     addr_stru_A99CD1 as u16
 }
-pub unsafe fn MotherBrain_Instr_SpawnBlueRingEproj(k: u16, game: &mut Game) -> u16 {
-    let E = Get_MotherBrain(0i32, game);
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_MotherBrainBlueRingLasers as u16,
-        (*E).var_1A,
-        game,
-    );
-    k
-}
-pub unsafe fn MotherBrain_Instr_AimRingsAtShitroid(k: u16, game: &mut Game) -> u16 {
-    let E = Get_MotherBrain(0x40i32, game);
-    let E1 = Get_MotherBrain((*E).var_0A as i32, game);
-    MotherBrain_Instr_AimRings(
-        ((*E1).base.x_pos as i32 - (*E).base.x_pos as i32 - 10i32) as u16,
-        ((*E1).base.y_pos as i32 - (*E).base.y_pos as i32 - 16i32) as u16,
-        game,
-    );
-    k
-}
-pub unsafe fn MotherBrain_Instr_AimRingsAtSamus(k: u16, game: &mut Game) -> u16 {
-    let E = Get_MotherBrain(0x40i32, game);
-    MotherBrain_Instr_AimRings(
-        (ram_word!(game, samus_x_pos) as i32 - (*E).base.x_pos as i32 - 10i32) as u16,
-        (ram_word!(game, samus_y_pos) as i32 - (*E).base.y_pos as i32 - 16i32) as u16,
-        game,
-    );
-    k
+crate::instruction_callbacks! { pub unsafe fn (k: u16, game: &mut Game) -> u16;
+    MotherBrain_Instr_SpawnBlueRingEproj [k] {
+        let E = Get_MotherBrain(0i32, game);
+        SpawnEprojWithRoomGfx(
+            addr_kEproj_MotherBrainBlueRingLasers as u16,
+            (*E).var_1A,
+            game,
+        );
+    };
+    MotherBrain_Instr_AimRingsAtShitroid [k] {
+        let E = Get_MotherBrain(0x40i32, game);
+        let E1 = Get_MotherBrain((*E).var_0A as i32, game);
+        MotherBrain_Instr_AimRings(
+            ((*E1).base.x_pos as i32 - (*E).base.x_pos as i32 - 10i32) as u16,
+            ((*E1).base.y_pos as i32 - (*E).base.y_pos as i32 - 16i32) as u16,
+            game,
+        );
+    };
+    MotherBrain_Instr_AimRingsAtSamus [k] {
+        let E = Get_MotherBrain(0x40i32, game);
+        MotherBrain_Instr_AimRings(
+            (ram_word!(game, samus_x_pos) as i32 - (*E).base.x_pos as i32 - 10i32) as u16,
+            (ram_word!(game, samus_y_pos) as i32 - (*E).base.y_pos as i32 - 16i32) as u16,
+            game,
+        );
+    };
 }
 pub unsafe fn MotherBrain_Instr_AimRings(x: u16, y: u16, game: &mut Game) {
     let mut v0: u16 = -(CalculateAngleFromXY(x, y, game) as i32 + 0x80i32) as u8 as u16;
@@ -1755,48 +1621,42 @@ pub unsafe fn MotherBrain_Instr_AimRings(x: u16, y: u16, game: &mut Game) {
     }
     (*Get_MotherBrain(0i32, game)).var_1A = v0;
 }
-pub unsafe fn MotherBrain_Instr_IncrShitroidAttackCtr(k: u16, game: &mut Game) -> u16 {
-    let E = Get_MotherBrain(0i32, game);
-    let mut v3: i16 = (((*E).var_13) as i16).wrapping_add(1i16);
-    if (v3 as u16) >= 0xcu16 {
-        v3 = 12i16;
-    }
-    (*E).var_13 = v3 as u16;
-    k
-}
-pub unsafe fn MotherBrain_Instr_SetShitroidAttackCtr0(k: u16, game: &mut Game) -> u16 {
-    (*Get_MotherBrain(0i32, game)).var_13 = 0u16;
-    k
-}
-pub unsafe fn MotherBrain_Instr_SpawnBombEproj(k: u16, game: &mut Game) -> u16 {
-    let v2 = RomPtr_A9(k, game) as *const u16;
-    SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainBomb as u16, *v2, game);
-    (k).wrapping_add(2u16)
-}
-pub unsafe fn MotherBrain_Instr_SpawnLaserEproj(k: u16, game: &mut Game) -> u16 {
-    let E = Get_MotherBrain(0x40i32, game);
-    (*E).var_31 = 0u16;
-    game.eproj_spawn_r22 = 1u16;
-    game.eproj_spawn_pt = Point16U {
-        x: (((*E).base.x_pos).wrapping_add(16u16)),
-        y: (((*E).base.y_pos).wrapping_add(4u16)),
+crate::instruction_callbacks! { pub unsafe fn (k: u16, game: &mut Game) -> u16;
+    MotherBrain_Instr_IncrShitroidAttackCtr [k] {
+        let E = Get_MotherBrain(0i32, game);
+        let mut v3: i16 = (((*E).var_13) as i16).wrapping_add(1i16);
+        if (v3 as u16) >= 0xcu16 {
+            v3 = 12i16;
+        }
+        (*E).var_13 = v3 as u16;
     };
-    SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 1u16, game);
-    k
-}
-pub unsafe fn MotherBrain_Instr_SpawnRainbowEproj(k: u16, game: &mut Game) -> u16 {
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_MotherBrainRainbowBeamCharging as u16,
-        0u16,
-        game,
-    );
-    k
-}
-pub unsafe fn MotherBrain_Instr_SetupFxForRainbowBeam(k: u16, game: &mut Game) -> u16 {
-    (*Get_MotherBrain(0x40i32, game)).var_14 = 0u16;
-    MotherBrain_SetupBrainPalForLaser(game);
-    QueueSfx2_Max6(0x7fu16, game);
-    k
+    MotherBrain_Instr_SetShitroidAttackCtr0 [k] { (*Get_MotherBrain(0i32, game)).var_13 = 0u16; };
+    MotherBrain_Instr_SpawnBombEproj [(k).wrapping_add(2u16)] {
+        let v2 = RomPtr_A9(k, game) as *const u16;
+        SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainBomb as u16, *v2, game);
+    };
+    MotherBrain_Instr_SpawnLaserEproj [k] {
+        let E = Get_MotherBrain(0x40i32, game);
+        (*E).var_31 = 0u16;
+        game.eproj_spawn_r22 = 1u16;
+        game.eproj_spawn_pt = Point16U {
+            x: (((*E).base.x_pos).wrapping_add(16u16)),
+            y: (((*E).base.y_pos).wrapping_add(4u16)),
+        };
+        SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 1u16, game);
+    };
+    MotherBrain_Instr_SpawnRainbowEproj [k] {
+        SpawnEprojWithRoomGfx(
+            addr_kEproj_MotherBrainRainbowBeamCharging as u16,
+            0u16,
+            game,
+        );
+    };
+    MotherBrain_Instr_SetupFxForRainbowBeam [k] {
+        (*Get_MotherBrain(0x40i32, game)).var_14 = 0u16;
+        MotherBrain_SetupBrainPalForLaser(game);
+        QueueSfx2_Max6(0x7fu16, game);
+    };
 }
 pub unsafe fn MotherBrain_Phase3_Death_0(game: &mut Game) {
     let E = Get_MotherBrain(0i32, game);
@@ -4442,11 +4302,9 @@ pub unsafe fn ShitroidInCutscene_UpdateSpeedAndAngle(
     (*E).var_B = Math_MultBySin((*E).var_0B, r18);
     (*E).var_C = Math_MultByCos((*E).var_0B, r18);
 }
-pub unsafe fn Shitroid_Instr_1(k: u16, jp: *const u16) -> *const u16 {
-    addr_kShitroid_Ilist_CFA2 as i32 as usize as *const u16
-}
-pub unsafe fn Shitroid_Instr_2(k: u16, jp: *const u16) -> *const u16 {
-    addr_kShitroid_Ilist_CFB8 as i32 as usize as *const u16
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16) -> *const u16;
+    Shitroid_Instr_1 [addr_kShitroid_Ilist_CFA2 as i32 as usize as *const u16] { };
+    Shitroid_Instr_2 [addr_kShitroid_Ilist_CFB8 as i32 as usize as *const u16] { };
 }
 pub unsafe fn MotherBrain_Pal_ProcessInvincibility(game: &mut Game) {
     if (*Get_MotherBrain(0i32, game)).var_00 == 4u16 {
@@ -6387,14 +6245,10 @@ pub unsafe fn Shitroid_Shot(game: &mut Game) {
         (*E).var_C = ((*E).var_C).wrapping_add(Math_MultByCos(v1, r18));
     }
 }
-pub unsafe fn Shitroid_Instr_3(k: u16, jp: *const u16) -> *const u16 {
-    addr_kShitroid_Ilist_F90E as i32 as usize as *const u16
-}
-pub unsafe fn Shitroid_Instr_4(k: u16, jp: *const u16) -> *const u16 {
-    addr_kShitroid_Ilist_F924 as i32 as usize as *const u16
-}
-pub unsafe fn Shitroid_Instr_6(k: u16, jp: *const u16) -> *const u16 {
-    addr_kShitroid_Ilist_F93A as i32 as usize as *const u16
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16) -> *const u16;
+    Shitroid_Instr_3 [addr_kShitroid_Ilist_F90E as i32 as usize as *const u16] { };
+    Shitroid_Instr_4 [addr_kShitroid_Ilist_F924 as i32 as usize as *const u16] { };
+    Shitroid_Instr_6 [addr_kShitroid_Ilist_F93A as i32 as usize as *const u16] { };
 }
 pub unsafe fn Shitroid_Instr_5(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     if (ram_word!(game, random_number) & 0x8000) == 0 {

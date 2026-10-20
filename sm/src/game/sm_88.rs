@@ -548,18 +548,17 @@ pub unsafe fn HdmaobjInstructionHandler(k: u8, game: &mut Game) {
         );
     }
 }
-pub unsafe fn HdmaobjInstr_Delete(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.hdma_object_channels_bitmask[(k >> 1)] = 0u16);
-    null::<u8>()
-}
-pub unsafe fn HdmaobjInstr_SetPreInstr(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.hdma_object_pre_instructions[(k >> 1)] = *(hdp as *mut u16));
-    *(ram_ptr!(game, u16; 0x18fc) as *mut u8).offset(k as i32 as isize) = *hdp.offset(2);
-    hdp.offset(3)
-}
-pub unsafe fn HdmaobjInstr_ClearPreInstr(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.hdma_object_pre_instructions[(k >> 1)] = addr_locret_88858A as u16);
-    hdp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
+    HdmaobjInstr_Delete [null::<u8>()] {
+        set_ram_word!(game.hdma_object_channels_bitmask[(k >> 1)] = 0u16);
+    };
+    HdmaobjInstr_SetPreInstr [hdp.offset(3)] {
+        set_ram_word!(game.hdma_object_pre_instructions[(k >> 1)] = *(hdp as *mut u16));
+        *(ram_ptr!(game, u16; 0x18fc) as *mut u8).offset(k as i32 as isize) = *hdp.offset(2);
+    };
+    HdmaobjInstr_ClearPreInstr [hdp] {
+        set_ram_word!(game.hdma_object_pre_instructions[(k >> 1)] = addr_locret_88858A as u16);
+    };
 }
 crate::game::address_dispatch! {
     pub unsafe fn CallHdmaobjInstrFunc(ea: u32, k: u16, game: &mut Game) => ea;
@@ -581,11 +580,9 @@ pub unsafe fn HdmaobjInstr_CallFarFunc(k: u16, hdp: *const u8, game: &mut Game) 
     CallHdmaobjInstrFunc(Load24(hdp as *mut LongPtr), k, game);
     hdp.offset(3)
 }
-pub unsafe fn HdmaobjInstr_Goto(k: u16, hdp: *const u8) -> *const u8 {
-    *(hdp as *mut u16) as usize as *const u8
-}
-pub unsafe fn HdmaobjInstr_GotoRel(k: u16, hdp: *const u8) -> *const u8 {
-    hdp.offset(*hdp as i8 as i32 as isize)
+crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8) -> *const u8;
+    HdmaobjInstr_Goto [*(hdp as *mut u16) as usize as *const u8] { };
+    HdmaobjInstr_GotoRel [hdp.offset(*hdp as i8 as i32 as isize)] { };
 }
 pub unsafe fn HdmaobjInstr_DecrementAndGoto(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
     let v2: i32 = k as i32 >> 1i32;
@@ -609,40 +606,37 @@ pub unsafe fn HdmaobjInstr_DecrementAndGotoRel(
         hdp.offset(*hdp as i8 as i32 as isize)
     }
 }
-pub unsafe fn HdmaobjInstr_SetTimer(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    *(ram_ptr!(game, u16; 0x1908) as *mut u8).offset(k as i32 as isize) = *hdp;
-    hdp.offset(1)
-}
-pub unsafe fn HdmaobjInstr_SetHdmaControl(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    WriteReg(
-        (*((ram_ptr!(game, u16; 0x18c0)).offset((k >> 1) as isize) as *mut u8).offset(0) as i32
-            + DMAP0 as i32) as SnesRegs as u16,
-        *hdp,
-        game,
-    );
-    hdp.offset(1)
-}
-pub unsafe fn HdmaobjInstr_SetHdmaTarget(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    WriteReg(
-        (*((ram_ptr!(game, u16; 0x18c0)).offset((k >> 1) as isize) as *mut u8).offset(0) as i32
-            + BBAD0 as i32) as SnesRegs as u16,
-        *hdp,
-        game,
-    );
-    hdp.offset(1)
-}
-pub unsafe fn HdmaobjInstr_SetHdmaTablePtr(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.hdma_object_table_pointers[(k >> 1)] = *(hdp as *mut u16));
-    hdp.offset(2)
-}
-pub unsafe fn HdmaobjInstr_SetHdmaTableBank(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    WriteReg(
-        (*((ram_ptr!(game, u16; 0x18c0)).offset((k >> 1) as isize) as *mut u8).offset(0) as i32
-            + A1B0 as i32) as SnesRegs as u16,
-        *hdp,
-        game,
-    );
-    hdp.offset(1)
+crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
+    HdmaobjInstr_SetTimer [hdp.offset(1)] {
+        *(ram_ptr!(game, u16; 0x1908) as *mut u8).offset(k as i32 as isize) = *hdp;
+    };
+    HdmaobjInstr_SetHdmaControl [hdp.offset(1)] {
+        WriteReg(
+            (*((ram_ptr!(game, u16; 0x18c0)).offset((k >> 1) as isize) as *mut u8).offset(0) as i32
+                + DMAP0 as i32) as SnesRegs as u16,
+            *hdp,
+            game,
+        );
+    };
+    HdmaobjInstr_SetHdmaTarget [hdp.offset(1)] {
+        WriteReg(
+            (*((ram_ptr!(game, u16; 0x18c0)).offset((k >> 1) as isize) as *mut u8).offset(0) as i32
+                + BBAD0 as i32) as SnesRegs as u16,
+            *hdp,
+            game,
+        );
+    };
+    HdmaobjInstr_SetHdmaTablePtr [hdp.offset(2)] {
+        set_ram_word!(game.hdma_object_table_pointers[(k >> 1)] = *(hdp as *mut u16));
+    };
+    HdmaobjInstr_SetHdmaTableBank [hdp.offset(1)] {
+        WriteReg(
+            (*((ram_ptr!(game, u16; 0x18c0)).offset((k >> 1) as isize) as *mut u8).offset(0) as i32
+                + A1B0 as i32) as SnesRegs as u16,
+            *hdp,
+            game,
+        );
+    };
 }
 pub unsafe fn HdmaobjInstr_SetIndirectHdmaDataBank(
     k: u16,
@@ -1765,9 +1759,8 @@ pub unsafe fn HdmaobjPreInstr_FxType22_BG3Yscroll(mut k: u16, game: &mut Game) {
     );
     *(ram_ptr!(game, u16; 0x9c00, k as isize)) = 0u16;
 }
-pub unsafe fn HdmaobjInstr_SetFlagB(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.hdma_object_B[(k >> 1)] = 1u16);
-    hdp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
+    HdmaobjInstr_SetFlagB [hdp] { set_ram_word!(game.hdma_object_B[(k >> 1)] = 1u16); };
 }
 static g_word_88C46E: [i16; 16] = [0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0];
 pub unsafe fn HdmaobjPreInstr_BG3Xscroll(k: u16, game: &mut Game) {
@@ -2228,9 +2221,8 @@ pub unsafe fn FxRisingFunction_LavaAcid_Raising(game: &mut Game) {
         set_ram_word!(game.fx_rising_function_bank_88 = ((0x88b343i32) as u16));
     }
 }
-pub unsafe fn HdmaobjInstr_B3A9(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.hdma_object_C[(k >> 1)] = 112u16);
-    hdp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
+    HdmaobjInstr_B3A9 [hdp] { set_ram_word!(game.hdma_object_C[(k >> 1)] = 112u16); };
 }
 crate::game::address_dispatch! {
     pub unsafe fn CallFxRisingFunc(ea: u32, game: &mut Game) => ea;
@@ -2327,9 +2319,8 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(k: u16, game: &mut Game) {
     } else {
     }
 }
-pub unsafe fn HdmaobjInstr_SetFlagB_Copy(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.hdma_object_B[(k >> 1)] = 1u16);
-    hdp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
+    HdmaobjInstr_SetFlagB_Copy [hdp] { set_ram_word!(game.hdma_object_B[(k >> 1)] = 1u16); };
 }
 pub unsafe fn HdmaobjPreInstr_LavaAcidBG2YScroll(k: u16, game: &mut Game) {
     set_ram_word!(game.g_word_7E9C44 = ram_word!(game, reg_BG2VOFS));
@@ -2464,9 +2455,8 @@ pub unsafe fn FxRisingFunction_WaterRising(game: &mut Game) {
         set_ram_word!(game.fx_y_vel = 0u16);
     }
 }
-pub unsafe fn HdmaobjInstr_SetFlagB_Copy2(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.hdma_object_B[(k >> 1)] = 1u16);
-    hdp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
+    HdmaobjInstr_SetFlagB_Copy2 [hdp] { set_ram_word!(game.hdma_object_B[(k >> 1)] = 1u16); };
 }
 crate::game::address_dispatch! {
     pub unsafe fn CallFxRisingFunction(ea: u32, game: &mut Game) => ea;
@@ -2547,9 +2537,8 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(k: u16, game: &mut Game) {
             (3i32 * ((v9 as i32 ^ 0x1ffi32) + 1i32 & 0x3ffi32) + 0xc645i32) as u16
     );
 }
-pub unsafe fn HdmaobjInstr_SetFlagB_Copy3(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.hdma_object_B[(k >> 1)] = 1u16);
-    hdp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
+    HdmaobjInstr_SetFlagB_Copy3 [hdp] { set_ram_word!(game.hdma_object_B[(k >> 1)] = 1u16); };
 }
 pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll(k: u16, game: &mut Game) {
     set_ram_word!(game.g_word_7E9C44 = ram_word!(game, reg_BG2HOFS));
@@ -2633,9 +2622,8 @@ pub unsafe fn FxTypeFunc_CeresElevator(game: &mut Game) {
         SpawnHdmaObject_Args::new(0x40u8, 0x5u8, 0xd939 as VoidP);
     SpawnHdmaObject(0x88u8, &raw const unk_88D92C as *const c_void, game);
 }
-pub unsafe fn HdmaobjInstr_SetVideoMode1(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.hdma_data_table_in_ceres = 9u16);
-    hdp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
+    HdmaobjInstr_SetVideoMode1 [hdp] { set_ram_word!(game.hdma_data_table_in_ceres = 9u16); };
 }
 pub unsafe fn FxTypeFunc_A_Rain(game: &mut Game) {
     static unk_88D95C: SpawnHdmaObject_Args =

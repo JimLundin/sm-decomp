@@ -491,28 +491,23 @@ fn set_goofball_animation(index: u16, instruction: u16, game: &mut Game) {
 pub fn BouncingGoofball_Instr_88C5(_k: u16, jp: *const u16) -> *const u16 {
     jp
 }
-pub unsafe fn BouncingGoofball_Instr_88C6(_k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let index = game.cur_enemy_index();
-    let offset = 0xf78 + usize::from(index) + core::mem::offset_of!(Enemy_BouncingGoofball, var_02);
-    game.g_ram[offset..offset + 2].copy_from_slice(&0u16.to_le_bytes());
-    QueueSfx2_Max6(0xe, game);
-    jp
+crate::instruction_callbacks! { pub unsafe fn (_k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    BouncingGoofball_Instr_88C6 [jp] {
+        let index = game.cur_enemy_index();
+        let offset = 0xf78 + usize::from(index) + core::mem::offset_of!(Enemy_BouncingGoofball, var_02);
+        game.g_ram[offset..offset + 2].copy_from_slice(&0u16.to_le_bytes());
+        QueueSfx2_Max6(0xe, game);
+    };
+    MiniCrocomire_Instr_897E [jp.add(1)] {
+        let parameter = *jp;
+        let index = game.cur_enemy_index();
+        SpawnEprojWithGfx(parameter, index, addr_Eproj_DBF2 as u16, game);
+    };
 }
-pub unsafe fn MiniCrocomire_Instr_897E(_k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let parameter = *jp;
-    let index = game.cur_enemy_index();
-    SpawnEprojWithGfx(parameter, index, addr_Eproj_DBF2 as u16, game);
-    jp.add(1)
-}
-pub fn MiniCrocomire_Instr_8990(_k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let index = game.cur_enemy_index();
-    set_mini_crocomire_preinstruction(index, 0x8a43, 0, game);
-    jp
-}
-pub fn MiniCrocomire_Instr_899D(_k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let index = game.cur_enemy_index();
-    set_mini_crocomire_preinstruction(index, 0x8a5c, 1, game);
-    jp
+crate::instruction_callbacks! { pub fn (_k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    @prefix { let index = game.cur_enemy_index(); };
+    MiniCrocomire_Instr_8990 [jp] {  set_mini_crocomire_preinstruction(index, 0x8a43, 0, game); };
+    MiniCrocomire_Instr_899D [jp] {  set_mini_crocomire_preinstruction(index, 0x8a5c, 1, game); };
 }
 fn set_mini_crocomire_preinstruction(index: u16, preinstruction: u16, state: u16, game: &mut Game) {
     let base = 0xf78 + usize::from(index);
@@ -1162,162 +1157,121 @@ pub unsafe fn MaridiaBeybladeTurtle_Func4(game: &mut Game) {
         NormalEnemyTouchAi(game);
     }
 }
-pub unsafe fn MaridiaBeybladeTurtle_Instr_9381(
+crate::instruction_callbacks! { pub unsafe fn (
     k: u16,
     jp: *const u16,
     game: &mut Game,
-) -> *const u16 {
-    let mut R48: u16 = 0u16;
-    if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-        update_ram_word!(
-            game.extra_samus_x_displacement,
-            wrapping_add(
-                (*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game)).var_E
-            )
-        );
-        R48 = 1u16;
-    }
-    let E = Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game);
-    crate::update_place! { previous R50: u16 = (*E).base.y_pos => (*E).var_D; }
-    Enemy_MoveRight_IgnoreSlopes(
-        ram_word!(game, cur_enemy_index),
-        ((*E).var_E as i16 as i32) << 16i32,
-        game,
-    );
-    if (*Get_MaridiaBeybladeTurtle((*E).var_B as i32, game)).var_A == 0x8e0au16 {
-        let x_pos: u16 = (*Get_MaridiaBeybladeTurtle((*E).var_B as i32, game))
-            .base
-            .x_pos;
-        let xd: u16 = (x_pos).wrapping_sub((*E).base.x_pos);
-        let mut v7: u16 = abs16(xd);
-        let mut v8: u16 = 0;
-        if v7 as i32 - 24i32 & 0x8000i32 != 0 {
-            if xd & 0x8000 != 0 {
-                v7 = (v7).wrapping_add(24u16);
-            }
-            v8 = g_word_A28E80[v7 as usize] as u16;
-        } else {
-            v8 = 1u16;
+) -> *const u16;
+    MaridiaBeybladeTurtle_Instr_9381 [jp] {
+        let mut R48: u16 = 0u16;
+        if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
+            update_ram_word!(
+                game.extra_samus_x_displacement,
+                wrapping_add(
+                    (*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game)).var_E
+                )
+            );
+            R48 = 1u16;
         }
-        Enemy_MoveDown(
+        let E = Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game);
+        crate::update_place! { previous R50: u16 = (*E).base.y_pos => (*E).var_D; }
+        Enemy_MoveRight_IgnoreSlopes(
             ram_word!(game, cur_enemy_index),
-            (v8 as i16 as i32) << 16i32,
+            ((*E).var_E as i16 as i32) << 16i32,
             game,
         );
-        if R48 != 0 {
-            update_ram_word!(game.extra_samus_y_displacement, |fresh1| (fresh1 as i32
-                + ((*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game))
-                    .base
-                    .y_pos as i32
-                    - R50 as i32))
-                as u16);
+        if (*Get_MaridiaBeybladeTurtle((*E).var_B as i32, game)).var_A == 0x8e0au16 {
+            let x_pos: u16 = (*Get_MaridiaBeybladeTurtle((*E).var_B as i32, game))
+                .base
+                .x_pos;
+            let xd: u16 = (x_pos).wrapping_sub((*E).base.x_pos);
+            let mut v7: u16 = abs16(xd);
+            let mut v8: u16 = 0;
+            if v7 as i32 - 24i32 & 0x8000i32 != 0 {
+                if xd & 0x8000 != 0 {
+                    v7 = (v7).wrapping_add(24u16);
+                }
+                v8 = g_word_A28E80[v7 as usize] as u16;
+            } else {
+                v8 = 1u16;
+            }
+            Enemy_MoveDown(
+                ram_word!(game, cur_enemy_index),
+                (v8 as i16 as i32) << 16i32,
+                game,
+            );
+            if R48 != 0 {
+                update_ram_word!(game.extra_samus_y_displacement, |fresh1| (fresh1 as i32
+                    + ((*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game))
+                        .base
+                        .y_pos as i32
+                        - R50 as i32))
+                    as u16);
+            }
         }
-    }
-    jp
-}
-pub unsafe fn MaridiaBeybladeTurtle_Instr_9412(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let mut v4: i16 = 0;
-    let E = Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game);
-    let xd: u16 = ((*E).var_C).wrapping_sub((*E).base.x_pos);
-    if ((abs16(xd)) as i16).wrapping_sub((g_word_A28D50) as i16) >= 0i16 {
-        if xd & 0x8000 == 0 {
-            v4 = 1i16;
-        } else {
-            v4 = -1i16;
+    };
+    MaridiaBeybladeTurtle_Instr_9412 [addr_kMaridiaBeybladeTurtle_Ilist_8C72 as i32 as usize as *const u16] {
+        let mut v4: i16 = 0;
+        let E = Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game);
+        let xd: u16 = ((*E).var_C).wrapping_sub((*E).base.x_pos);
+        if ((abs16(xd)) as i16).wrapping_sub((g_word_A28D50) as i16) >= 0i16 {
+            if xd & 0x8000 == 0 {
+                v4 = 1i16;
+            } else {
+                v4 = -1i16;
+            }
+            (*E).var_E = v4 as u16;
         }
-        (*E).var_E = v4 as u16;
-    }
-    if ((*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game)).var_E & 0x8000)
-        != 0
-    {
-        return addr_kMaridiaBeybladeTurtle_Ilist_8B80 as i32 as usize as *const u16;
-    }
-    addr_kMaridiaBeybladeTurtle_Ilist_8C72 as i32 as usize as *const u16
-}
-pub unsafe fn MaridiaBeybladeTurtle_Instr_9447(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    (*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game)).var_A =
-        ((0xa28f3fi32) as u16);
-    jp
-}
-pub unsafe fn MaridiaBeybladeTurtle_Instr_9451(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let E = Get_MaridiaTurtle(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).var_A = ((0xa28f8di32) as u16);
-    (*E).var_E = -1i32 as u16;
-    (*E).var_00 = 16u16;
-    addr_kMaridiaBeybladeTurtle_Ilist_8C02 as i32 as usize as *const u16
-}
-pub unsafe fn MaridiaBeybladeTurtle_Instr_946B(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let E = Get_MaridiaTurtle(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).var_A = ((0xa28f8di32) as u16);
-    (*E).var_E = 1u16;
-    (*E).var_00 = 16u16;
-    addr_kMaridiaBeybladeTurtle_Ilist_8C02 as i32 as usize as *const u16
-}
-pub unsafe fn MaridiaBeybladeTurtle_Instr_9485(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-        if ((*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game)).var_E
-            & 0x8000)
-            == 0
+        if ((*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game)).var_E & 0x8000)
+            != 0
         {
-            return addr_kMaridiaBeybladeTurtle_Ilist_8D40 as i32 as usize as *const u16;
-        } else {
-            return addr_kMaridiaBeybladeTurtle_Ilist_8C62 as i32 as usize as *const u16;
+            return addr_kMaridiaBeybladeTurtle_Ilist_8B80 as i32 as usize as *const u16;
         }
-    }
-    jp
-}
-pub unsafe fn MaridiaBeybladeTurtle_Instr_94A1(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let E = Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game);
-    if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-        (*E).var_A = ((0xa2925ei32) as u16);
-    } else {
-        (*E).var_A = ((0xa29142i32) as u16);
-    }
-    if ((*E).var_E & 0x8000) == 0 {
-        return addr_kMaridiaBeybladeTurtle_Ilist_8C72 as i32 as usize as *const u16;
-    }
-    addr_kMaridiaBeybladeTurtle_Ilist_8B80 as i32 as usize as *const u16
-}
-pub unsafe fn MaridiaBeybladeTurtle_Instr_94C7(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let E = Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).var_A = ((0xa29239i32) as u16);
-    jp
-}
-pub unsafe fn MaridiaBeybladeTurtle_Instr_94D1(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    QueueSfx2_Max6(0x3au16, game);
-    jp
+    };
+    MaridiaBeybladeTurtle_Instr_9447 [jp] {
+        (*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game)).var_A =
+            ((0xa28f3fi32) as u16);
+    };
+    MaridiaBeybladeTurtle_Instr_9451 [addr_kMaridiaBeybladeTurtle_Ilist_8C02 as i32 as usize as *const u16] {
+        let E = Get_MaridiaTurtle(ram_word!(game, cur_enemy_index) as i32, game);
+        (*E).var_A = ((0xa28f8di32) as u16);
+        (*E).var_E = -1i32 as u16;
+        (*E).var_00 = 16u16;
+    };
+    MaridiaBeybladeTurtle_Instr_946B [addr_kMaridiaBeybladeTurtle_Ilist_8C02 as i32 as usize as *const u16] {
+        let E = Get_MaridiaTurtle(ram_word!(game, cur_enemy_index) as i32, game);
+        (*E).var_A = ((0xa28f8di32) as u16);
+        (*E).var_E = 1u16;
+        (*E).var_00 = 16u16;
+    };
+    MaridiaBeybladeTurtle_Instr_9485 [jp] {
+        if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
+            if ((*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game)).var_E
+                & 0x8000)
+                == 0
+            {
+                return addr_kMaridiaBeybladeTurtle_Ilist_8D40 as i32 as usize as *const u16;
+            } else {
+                return addr_kMaridiaBeybladeTurtle_Ilist_8C62 as i32 as usize as *const u16;
+            }
+        }
+    };
+    MaridiaBeybladeTurtle_Instr_94A1 [addr_kMaridiaBeybladeTurtle_Ilist_8B80 as i32 as usize as *const u16] {
+        let E = Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game);
+        if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
+            (*E).var_A = ((0xa2925ei32) as u16);
+        } else {
+            (*E).var_A = ((0xa29142i32) as u16);
+        }
+        if ((*E).var_E & 0x8000) == 0 {
+            return addr_kMaridiaBeybladeTurtle_Ilist_8C72 as i32 as usize as *const u16;
+        }
+    };
+    MaridiaBeybladeTurtle_Instr_94C7 [jp] {
+        let E = Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game);
+        (*E).var_A = ((0xa29239i32) as u16);
+    };
+    MaridiaBeybladeTurtle_Instr_94D1 [jp] { QueueSfx2_Max6(0x3au16, game); };
 }
 pub unsafe fn ThinHoppingBlobs_Init(game: &mut Game) {
     let E = Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1631,9 +1585,8 @@ pub unsafe fn ThinHoppingBlobs_Func16(game: &mut Game) {
         sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99D5 as u16, game);
     }
 }
-pub unsafe fn SpikeShootingPlant_Instr_9F2A(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    QueueSfx2_Max6(0x34u16, game);
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    SpikeShootingPlant_Instr_9F2A [jp] { QueueSfx2_Max6(0x34u16, game); };
 }
 pub unsafe fn SpikeShootingPlant_Init(game: &mut Game) {
     let E = Get_SpikeShootingPlant(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1724,22 +1677,22 @@ pub unsafe fn SpikeShootingPlant_8(game: &mut Game) {
     enemy_instruction! {[(*E).base]; instruction = addr_kSpikeShootingPlant_Ilist_9F00 as u16, timer = 1u16}
     (*E).base.timer = 0u16;
 }
-pub unsafe fn SpikeShootingPlant_Instr_A095(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_SpikeShootingPlant(k as i32, game);
-    (*E).var_F = ((0xa29fbai32) as u16);
-    if (*E).var_E != 0 {
-        (*E).var_F = ((0xa29feci32) as u16);
-    }
-    jp
-}
-pub unsafe fn SpikeShootingPlant_Instr_A0A7(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    SpawnEprojWithGfx(
-        *jp,
-        ram_word!(game, cur_enemy_index),
-        addr_kEproj_SpikeShootingPlantSpikes as u16,
-        game,
-    );
-    jp.offset(1)
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    SpikeShootingPlant_Instr_A095 [jp] {
+        let E = Get_SpikeShootingPlant(k as i32, game);
+        (*E).var_F = ((0xa29fbai32) as u16);
+        if (*E).var_E != 0 {
+            (*E).var_F = ((0xa29feci32) as u16);
+        }
+    };
+    SpikeShootingPlant_Instr_A0A7 [jp.offset(1)] {
+        SpawnEprojWithGfx(
+            *jp,
+            ram_word!(game, cur_enemy_index),
+            addr_kEproj_SpikeShootingPlantSpikes as u16,
+            game,
+        );
+    };
 }
 static off_A2A3D3: [Option<Func_V>; 7] = callback_table! { unsafe Func_V;
     MaridiaSpikeyShell_1, MaridiaSpikeyShell_2, MaridiaSpikeyShell_3, MaridiaSpikeyShell_4,
@@ -1855,13 +1808,9 @@ pub unsafe fn MaridiaSpikeyShell_8(k: u16, game: &mut Game) {
         (*E).var_E = 3u16;
     }
 }
-pub unsafe fn MaridiaSpikeyShell_Instr_A56D(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_MaridiaSpikeyShell(k as i32, game)).var_E = 0u16;
-    jp
-}
-pub unsafe fn MaridiaSpikeyShell_Instr_A571(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_MaridiaSpikeyShell(k as i32, game)).var_E = 1u16;
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    MaridiaSpikeyShell_Instr_A56D [jp] { (*Get_MaridiaSpikeyShell(k as i32, game)).var_E = 0u16; };
+    MaridiaSpikeyShell_Instr_A571 [jp] { (*Get_MaridiaSpikeyShell(k as i32, game)).var_E = 1u16; };
 }
 pub unsafe fn MaridiaSpikeyShell_Shot(game: &mut Game) {
     let E = Get_MaridiaSpikeyShell(ram_word!(game, cur_enemy_index) as i32, game);
@@ -2900,34 +2849,32 @@ pub unsafe fn Rinka_B960(k: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn Rinka_Instr_B9B3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Rinka(k as i32, game);
-    (*E).base.properties = ((*E).base.properties as i32
-        | (kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
-        as u16;
-    jp
-}
-pub unsafe fn Rinka_Instr_B9BD(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Rinka(k as i32, game);
-    (*E).base.properties = ((*E).base.properties as i32
-        | (kEnemyProps_ProcessedOffscreen as i32
-            | kEnemyProps_Tangible as i32
-            | kEnemyProps_Invisible as i32)) as u16;
-    jp
-}
-pub unsafe fn Rinka_Instr_B9C7(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Rinka(k as i32, game);
-    (*E).base.properties = ((*E).base.properties as i32
-        & !(kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
-        as u16;
-    (*E).var_A = ((0xa2b7dfi32) as u16);
-    let E0 = Get_Rinka(0i32, game);
-    (*E0).var_1E = (*E0).var_1E.wrapping_add(1);
-    jp
-}
-pub unsafe fn EnemyInstr_Rio_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_Rio(ram_word!(game, cur_enemy_index) as i32, game)).var_E = 1u16;
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    Rinka_Instr_B9B3 [jp] {
+        let E = Get_Rinka(k as i32, game);
+        (*E).base.properties = ((*E).base.properties as i32
+            | (kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
+            as u16;
+    };
+    Rinka_Instr_B9BD [jp] {
+        let E = Get_Rinka(k as i32, game);
+        (*E).base.properties = ((*E).base.properties as i32
+            | (kEnemyProps_ProcessedOffscreen as i32
+                | kEnemyProps_Tangible as i32
+                | kEnemyProps_Invisible as i32)) as u16;
+    };
+    Rinka_Instr_B9C7 [jp] {
+        let E = Get_Rinka(k as i32, game);
+        (*E).base.properties = ((*E).base.properties as i32
+            & !(kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
+            as u16;
+        (*E).var_A = ((0xa2b7dfi32) as u16);
+        let E0 = Get_Rinka(0i32, game);
+        (*E0).var_1E = (*E0).var_1E.wrapping_add(1);
+    };
+    EnemyInstr_Rio_Instr_1 [jp] {
+        (*Get_Rio(ram_word!(game, cur_enemy_index) as i32, game)).var_E = 1u16;
+    };
 }
 pub unsafe fn Rio_Init(game: &mut Game) {
     let E = Get_Rio(ram_word!(game, cur_enemy_index) as i32, game);
@@ -3144,49 +3091,40 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_6(a: u16, game: &mut Game) {
         (*E).base.timer = 0u16;
     }
 }
-pub unsafe fn NorfairRio_Instr_C1C9(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_01 = 1u16;
-    jp
-}
-pub unsafe fn NorfairRio_Instr_C1D4(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 8u16;
-    jp
-}
-pub unsafe fn NorfairRio_Instr_C1DF(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 8u16;
-    jp
-}
-pub unsafe fn NorfairRio_Instr_C1EA(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 12u16;
-    jp
-}
-pub unsafe fn NorfairRio_Instr_C1F5(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = -12i32 as u16;
-    jp
-}
-pub unsafe fn NorfairRio_Instr_C200(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 4u16;
-    jp
-}
-pub unsafe fn NorfairRio_Instr_C20B(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 0u16;
-    jp
-}
-pub unsafe fn NorfairRio_Instr_C216(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = -4i32 as u16;
-    jp
-}
-pub unsafe fn NorfairRio_Instr_C221(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = -12i32 as u16;
-    jp
-}
-pub unsafe fn NorfairRio_Instr_C22C(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = -16i32 as u16;
-    jp
-}
-pub unsafe fn NorfairRio_Instr_C237(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 12u16;
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    NorfairRio_Instr_C1C9 [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_01 = 1u16;
+    };
+    NorfairRio_Instr_C1D4 [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 8u16;
+    };
+    NorfairRio_Instr_C1DF [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 8u16;
+    };
+    NorfairRio_Instr_C1EA [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 12u16;
+    };
+    NorfairRio_Instr_C1F5 [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = -12i32 as u16;
+    };
+    NorfairRio_Instr_C200 [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 4u16;
+    };
+    NorfairRio_Instr_C20B [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 0u16;
+    };
+    NorfairRio_Instr_C216 [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = -4i32 as u16;
+    };
+    NorfairRio_Instr_C221 [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = -12i32 as u16;
+    };
+    NorfairRio_Instr_C22C [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = -16i32 as u16;
+    };
+    NorfairRio_Instr_C237 [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 12u16;
+    };
 }
 pub unsafe fn NorfairRio_Init(game: &mut Game) {
     let E = Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game);
@@ -3307,17 +3245,16 @@ pub unsafe fn NorfairRio_Func_7(a: u16, game: &mut Game) {
         (*E).base.timer = 0u16;
     }
 }
-pub unsafe fn LowerNorfairRio_Instr_C6D2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_01 = 1u16;
-    jp
-}
-pub unsafe fn LowerNorfairRio_Instr_C6DD(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 0u16;
-    jp
-}
-pub unsafe fn LowerNorfairRio_Instr_C6E8(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 1u16;
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    LowerNorfairRio_Instr_C6D2 [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_01 = 1u16;
+    };
+    LowerNorfairRio_Instr_C6DD [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 0u16;
+    };
+    LowerNorfairRio_Instr_C6E8 [jp] {
+        (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 1u16;
+    };
 }
 pub unsafe fn LowerNorfairRio_Init(game: &mut Game) {
     let E = Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game);
@@ -3429,21 +3366,17 @@ pub unsafe fn LowerNorfairRio_Func_7(a: u16, game: &mut Game) {
         (*E).base.timer = 0u16;
     }
 }
-pub unsafe fn MaridiaLargeSnail_Instr_CB6B(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    QueueSfx2_Max6(0xeu16, game);
-    jp
-}
-pub unsafe fn MaridiaLargeSnail_Instr_CCB3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 1u16;
-    jp
-}
-pub unsafe fn MaridiaLargeSnail_Instr_CCBE(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as i32, game)).var_03 = 1u16;
-    jp
-}
-pub unsafe fn MaridiaLargeSnail_Instr_CCC9(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as i32, game)).var_03 = 0u16;
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    MaridiaLargeSnail_Instr_CB6B [jp] { QueueSfx2_Max6(0xeu16, game); };
+    MaridiaLargeSnail_Instr_CCB3 [jp] {
+        (*Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 1u16;
+    };
+    MaridiaLargeSnail_Instr_CCBE [jp] {
+        (*Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as i32, game)).var_03 = 1u16;
+    };
+    MaridiaLargeSnail_Instr_CCC9 [jp] {
+        (*Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as i32, game)).var_03 = 0u16;
+    };
 }
 pub unsafe fn MaridiaLargeSnail_Init(game: &mut Game) {
     let E = Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as i32, game);

@@ -249,12 +249,9 @@ pub unsafe fn RunProjectileInstructions(game: &mut Game) {
         set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = (v3).wrapping_add(8u16));
     }
 }
-pub unsafe fn Proj93Instr_Delete(k: u16, j: u16, game: &mut Game) -> u16 {
-    ClearProjectile(k, game);
-    0u16
-}
-pub unsafe fn Proj93Instr_Goto(k: u16, j: u16, game: &mut Game) -> u16 {
-    *(RomPtr_93(j, game) as *mut u16)
+crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16;
+    Proj93Instr_Delete [0u16] { ClearProjectile(k, game); };
+    Proj93Instr_Goto [*(RomPtr_93(j, game) as *mut u16)] { };
 }
 pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
     let mut skip_explosion_draw: bool;

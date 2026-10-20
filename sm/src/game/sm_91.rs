@@ -458,33 +458,27 @@ pub fn DemoInstr_Finish(_k: u16, _j: u16, game: &mut Game) -> u16 {
     game.set_demo_input_new(0);
     0
 }
-pub unsafe fn DemoInstr_SetPreInstr(k: u16, j: u16, game: &mut Game) -> u16 {
-    set_ram_word!(game.demo_input_pre_instr = *(RomPtr_91(j, game) as *mut u16));
-    (j).wrapping_add(2u16)
-}
-pub unsafe fn DemoInstr_ClearPreInstr(k: u16, j: u16, game: &mut Game) -> u16 {
-    set_ram_word!(game.demo_input_pre_instr = 0x8447u16);
-    j
-}
-pub unsafe fn DemoInstr_Goto(k: u16, j: u16, game: &mut Game) -> u16 {
-    *(RomPtr_91(j, game) as *mut u16)
-}
-pub unsafe fn DemoInstr_DecTimerAndGoto(k: u16, j: u16, game: &mut Game) -> u16 {
-    if update_ram_word!(game.demo_timer_counter, wrapping_sub(1), reread) != 0 {
-        DemoInstr_Goto(k, j, game)
-    } else {
-        (j).wrapping_add(2u16)
-    }
-}
-pub unsafe fn DemoInstr_SetTimer(k: u16, j: u16, game: &mut Game) -> u16 {
-    set_ram_word!(game.demo_timer_counter = *(RomPtr_91(j, game) as *mut u16));
-    (j).wrapping_add(2u16)
-}
-pub unsafe fn DemoInstr_Func2(k: u16, j: u16, game: &mut Game) -> u16 {
-    set_ram_word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
-    set_ram_word!(game.frame_handler_beta = ((0x90e725i32) as u16));
-    DisableDemoInput(game);
-    j
+crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16;
+    DemoInstr_SetPreInstr [(j).wrapping_add(2u16)] {
+        set_ram_word!(game.demo_input_pre_instr = *(RomPtr_91(j, game) as *mut u16));
+    };
+    DemoInstr_ClearPreInstr [j] { set_ram_word!(game.demo_input_pre_instr = 0x8447u16); };
+    DemoInstr_Goto [*(RomPtr_91(j, game) as *mut u16)] { };
+    DemoInstr_DecTimerAndGoto [] {
+        if update_ram_word!(game.demo_timer_counter, wrapping_sub(1), reread) != 0 {
+            DemoInstr_Goto(k, j, game)
+        } else {
+            (j).wrapping_add(2u16)
+        }
+    };
+    DemoInstr_SetTimer [(j).wrapping_add(2u16)] {
+        set_ram_word!(game.demo_timer_counter = *(RomPtr_91(j, game) as *mut u16));
+    };
+    DemoInstr_Func2 [j] {
+        set_ram_word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
+        set_ram_word!(game.frame_handler_beta = ((0x90e725i32) as u16));
+        DisableDemoInput(game);
+    };
 }
 pub unsafe fn DemoPreInstr_864F(game: &mut Game) {
     if ram_word!(game, samus_x_pos) as i32 - 178i32 & 0x8000i32 != 0 {
@@ -500,24 +494,24 @@ pub unsafe fn DemoPreInstr_866A(game: &mut Game) {
         set_ram_word!(game.demo_input_instr_timer = 1u16);
     }
 }
-pub unsafe fn DemoInstr_Disable(k: u16, j: u16, game: &mut Game) -> u16 {
-    set_ram_word!(game.frame_handler_alfa = ((0x90e8cdi32) as u16));
-    set_ram_word!(game.frame_handler_beta = ((0x90e8cdi32) as u16));
-    DisableDemoInput(game);
-    j
-}
-pub unsafe fn DemoInstr_Func3(k: u16, j: u16, game: &mut Game) -> u16 {
-    set_ram_word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
-    set_ram_word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
-    set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
-    *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-    set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
-    *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
-    DisableDemoInput(game);
-    set_ram_word!(game.samus_input_handler = ((0x90e90ei32) as u16));
-    j
+crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16;
+    DemoInstr_Disable [j] {
+        set_ram_word!(game.frame_handler_alfa = ((0x90e8cdi32) as u16));
+        set_ram_word!(game.frame_handler_beta = ((0x90e8cdi32) as u16));
+        DisableDemoInput(game);
+    };
+    DemoInstr_Func3 [j] {
+        set_ram_word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
+        set_ram_word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
+        SamusFunc_F433(game);
+        Samus_SetAnimationFrameIfPoseChanged(game);
+        set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
+        *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
+        set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
+        *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+        DisableDemoInput(game);
+        set_ram_word!(game.samus_input_handler = ((0x90e90ei32) as u16));
+    };
 }
 static kDemoSetFuncPtrs_0: [Option<Func_V>; 6] = callback_table! { unsafe Func_V;
     DemoSetFunc_0, DemoSetFunc_1, DemoSetFunc_1, DemoSetFunc_2, DemoSetFunc_1, DemoSetFunc_3,

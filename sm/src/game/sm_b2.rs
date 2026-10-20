@@ -201,118 +201,96 @@ pub unsafe fn WalkingSpacePirates_883E(game: &mut Game) {
     ProjectileReflection(v0, game);
     QueueSfx2_Max6(0x66u16, game);
 }
-pub unsafe fn SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight(
+crate::instruction_callbacks! { pub unsafe fn (
     k: u16,
     jp: *const u16,
     game: &mut Game,
-) -> *const u16 {
-    if Enemy_MoveDown(
-        ram_word!(game, cur_enemy_index),
-        (*jp.offset(0) as i16 as i32) << 16i32,
-        game,
-    ) == 0
-    {
-        return jp.offset(1);
-    }
-    let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).var_C = ((*E).var_C) ^ (1u16);
-    if (*E).var_C != 0 {
-        return addr_off_B2ECEC as i32 as usize as *const u16;
-    }
-    addr_kSpacePirates_Ilist_ED36 as i32 as usize as *const u16
-}
-pub unsafe fn SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    if Enemy_MoveDown(
-        ram_word!(game, cur_enemy_index),
-        (*jp.offset(0) as i16 as i32) << 16i32,
-        game,
-    ) == 0
-    {
-        return jp.offset(1);
-    }
-    let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).var_C = ((*E).var_C) ^ (1u16);
-    if (*E).var_C != 0 {
-        return addr_kSpacePirates_Ilist_EDF6 as i32 as usize as *const u16;
-    }
-    addr_off_B2EDAC as i32 as usize as *const u16
-}
-pub unsafe fn SpacePirates_Instr_RandomNewDirFaceR(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let result: u16 = addr_kSpacePirates_Ilist_ED36 as u16;
-    let v4: u16 = (NextRandom(game)) & (1u16);
-    (*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game)).var_C = v4;
-    if v4 != 0 {
-        return addr_off_B2ECEC as i32 as usize as *const u16;
-    }
-    result as usize as *const u16
-}
-pub unsafe fn SpacePirates_Instr_RandomNewDirFaceL(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let result: u16 = addr_off_B2EDAC as u16;
-    let v4: u16 = (NextRandom(game)) & (1u16);
-    (*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game)).var_C = v4;
-    if v4 != 0 {
-        return addr_kSpacePirates_Ilist_EDF6 as i32 as usize as *const u16;
-    }
-    result as usize as *const u16
-}
-pub unsafe fn SpacePirates_Instr_PrepareWallJumpR(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).var_B = ((*E).base.x_pos).wrapping_add((*E).parameter_2);
-    (*E).var_D = ((*E).base.x_pos as i32 + ((*E).parameter_2 as i32 >> 1i32)) as u16;
-    (*E).var_E = (*E).base.y_pos;
-    (*E).var_F = 64u16;
-    jp
-}
-pub unsafe fn SpacePirates_Instr_PrepareWallJumpL(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).var_B = ((*E).base.x_pos).wrapping_sub((*E).parameter_2);
-    (*E).var_D = ((*E).base.x_pos as i32 - ((*E).parameter_2 as i32 >> 1i32)) as u16;
-    (*E).var_E = (*E).base.y_pos;
-    (*E).var_F = 192u16;
-    jp
-}
-pub unsafe fn SpacePirates_Instr_FireLaserL(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    set_ram_word!(
-        game.cinematic_var8 = *(RomPtr_A0((*E).base.enemy_ptr, game) as *mut u16).offset(3)
-    );
-    game.eproj_spawn_pt = Point16U {
-        x: (((*E).base.x_pos).wrapping_sub(24u16)),
-        y: (((*E).base.y_pos).wrapping_sub(16u16)),
+) -> *const u16;
+    @prefix {
+        if Enemy_MoveDown(
+            ram_word!(game, cur_enemy_index),
+            (*jp.offset(0) as i16 as i32) << 16i32,
+            game,
+        ) == 0
+        {
+            return jp.offset(1);
+        }
     };
-    game.eproj_spawn_r22 = 0u16;
-    SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 0u16, game);
-    jp
-}
-pub unsafe fn SpacePirates_Instr_FireLaserR(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    game.eproj_spawn_pt = Point16U {
-        x: (((*E).base.x_pos).wrapping_add(24u16)),
-        y: (((*E).base.y_pos).wrapping_sub(16u16)),
+    SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight [addr_kSpacePirates_Ilist_ED36 as i32 as usize as *const u16] {
+
+        let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
+        (*E).var_C = ((*E).var_C) ^ (1u16);
+        if (*E).var_C != 0 {
+            return addr_off_B2ECEC as i32 as usize as *const u16;
+        }
     };
-    game.eproj_spawn_r22 = 1u16;
-    SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 1u16, game);
-    jp
+    SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft [addr_off_B2EDAC as i32 as usize as *const u16] {
+
+        let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
+        (*E).var_C = ((*E).var_C) ^ (1u16);
+        if (*E).var_C != 0 {
+            return addr_kSpacePirates_Ilist_EDF6 as i32 as usize as *const u16;
+        }
+    };
+}
+crate::instruction_callbacks! { pub unsafe fn (
+    k: u16,
+    jp: *const u16,
+    game: &mut Game,
+) -> *const u16;
+    SpacePirates_Instr_RandomNewDirFaceR [result as usize as *const u16] {
+        let result: u16 = addr_kSpacePirates_Ilist_ED36 as u16;
+        let v4: u16 = (NextRandom(game)) & (1u16);
+        (*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game)).var_C = v4;
+        if v4 != 0 {
+            return addr_off_B2ECEC as i32 as usize as *const u16;
+        }
+    };
+    SpacePirates_Instr_RandomNewDirFaceL [result as usize as *const u16] {
+        let result: u16 = addr_off_B2EDAC as u16;
+        let v4: u16 = (NextRandom(game)) & (1u16);
+        (*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game)).var_C = v4;
+        if v4 != 0 {
+            return addr_kSpacePirates_Ilist_EDF6 as i32 as usize as *const u16;
+        }
+    };
+    SpacePirates_Instr_PrepareWallJumpR [jp] {
+        let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
+        (*E).var_B = ((*E).base.x_pos).wrapping_add((*E).parameter_2);
+        (*E).var_D = ((*E).base.x_pos as i32 + ((*E).parameter_2 as i32 >> 1i32)) as u16;
+        (*E).var_E = (*E).base.y_pos;
+        (*E).var_F = 64u16;
+    };
+    SpacePirates_Instr_PrepareWallJumpL [jp] {
+        let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
+        (*E).var_B = ((*E).base.x_pos).wrapping_sub((*E).parameter_2);
+        (*E).var_D = ((*E).base.x_pos as i32 - ((*E).parameter_2 as i32 >> 1i32)) as u16;
+        (*E).var_E = (*E).base.y_pos;
+        (*E).var_F = 192u16;
+    };
+}
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    SpacePirates_Instr_FireLaserL [jp] {
+        let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
+        set_ram_word!(
+            game.cinematic_var8 = *(RomPtr_A0((*E).base.enemy_ptr, game) as *mut u16).offset(3)
+        );
+        game.eproj_spawn_pt = Point16U {
+            x: (((*E).base.x_pos).wrapping_sub(24u16)),
+            y: (((*E).base.y_pos).wrapping_sub(16u16)),
+        };
+        game.eproj_spawn_r22 = 0u16;
+        SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 0u16, game);
+    };
+    SpacePirates_Instr_FireLaserR [jp] {
+        let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
+        game.eproj_spawn_pt = Point16U {
+            x: (((*E).base.x_pos).wrapping_add(24u16)),
+            y: (((*E).base.y_pos).wrapping_sub(16u16)),
+        };
+        game.eproj_spawn_r22 = 1u16;
+        SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 1u16, game);
+    };
 }
 pub unsafe fn SpacePirates_Instr_SetEnemyFunc(
     k: u16,
@@ -322,9 +300,8 @@ pub unsafe fn SpacePirates_Instr_SetEnemyFunc(
     (*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game)).var_A = *jp.offset(0);
     jp.offset(1)
 }
-pub unsafe fn SpacePirates_Instr_PlaySfx(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    QueueSfx2_Max6(0x66u16, game);
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    SpacePirates_Instr_PlaySfx [jp] { QueueSfx2_Max6(0x66u16, game); };
 }
 pub unsafe fn WallSpacePirates_Init(game: &mut Game) {
     let mut v0: u16 = addr_kSpacePirates_Ilist_ED36 as u16;
@@ -429,46 +406,39 @@ pub unsafe fn SpacePirates_Func_4(k: u16, game: &mut Game) {
         (*E).base.x_pos = v2;
     }
 }
-pub unsafe fn SpacePirates_Instr_20(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game))
-        .base
-        .palette_index = *jp.offset(0);
-    jp.offset(1)
-}
-pub unsafe fn SpacePirates_Instr_16(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    QueueSfx2_Max6(*jp.offset(0), game);
-    jp.offset(1)
-}
-pub unsafe fn SpacePirates_Instr_15(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    game.eproj_spawn_rect = Rect16U {
-        x: (*E).base.x_pos,
-        y: (*E).base.y_pos,
-        w: *jp.offset(1),
-        h: *jp.offset(2),
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    SpacePirates_Instr_20 [jp.offset(1)] {
+        (*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game))
+            .base
+            .palette_index = *jp.offset(0);
     };
-    SpawnEprojWithGfx(
-        *jp.offset(0),
-        ram_word!(game, cur_enemy_index),
-        addr_kEproj_PirateClaw as u16,
-        game,
-    );
-    jp.offset(3)
-}
-pub unsafe fn SpacePirates_Instr_18(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.instruction_timer = 1u16;
-    (*E).var_C =
-        (if ((*E).base.x_pos as i32 - ram_word!(game, samus_x_pos) as i32 & 0x8000i32) != 0i32 {
-            addr_kSpacePirates_Ilist_F420 as i32
-        } else {
-            addr_kSpacePirates_Ilist_F22E as i32
-        }) as u16;
-    (*E).var_C as usize as *const u16
-}
-pub unsafe fn SpacePirates_Instr_17(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_SpacePirates(k as i32, game)).var_00 = 0u16;
-    jp
+    SpacePirates_Instr_16 [jp.offset(1)] { QueueSfx2_Max6(*jp.offset(0), game); };
+    SpacePirates_Instr_15 [jp.offset(3)] {
+        let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
+        game.eproj_spawn_rect = Rect16U {
+            x: (*E).base.x_pos,
+            y: (*E).base.y_pos,
+            w: *jp.offset(1),
+            h: *jp.offset(2),
+        };
+        SpawnEprojWithGfx(
+            *jp.offset(0),
+            ram_word!(game, cur_enemy_index),
+            addr_kEproj_PirateClaw as u16,
+            game,
+        );
+    };
+    SpacePirates_Instr_18 [(*E).var_C as usize as *const u16] {
+        let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
+        (*E).base.instruction_timer = 1u16;
+        (*E).var_C =
+            (if ((*E).base.x_pos as i32 - ram_word!(game, samus_x_pos) as i32 & 0x8000i32) != 0i32 {
+                addr_kSpacePirates_Ilist_F420 as i32
+            } else {
+                addr_kSpacePirates_Ilist_F22E as i32
+            }) as u16;
+    };
+    SpacePirates_Instr_17 [jp] { (*Get_SpacePirates(k as i32, game)).var_00 = 0u16; };
 }
 pub unsafe fn NinjaSpacePirates_Init(game: &mut Game) {
     let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
@@ -827,52 +797,51 @@ pub unsafe fn SpacePirates_FB11(k: u16, game: &mut Game) {
         game,
     );
 }
-pub unsafe fn SpacePirates_Instr_12(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    game.eproj_spawn_pt = Point16U {
-        x: (((*E).base.x_pos).wrapping_sub(24u16)),
-        y: (((*E).base.y_pos).wrapping_sub(*jp.offset(0))),
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    SpacePirates_Instr_12 [jp.offset(1)] {
+        let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
+        game.eproj_spawn_pt = Point16U {
+            x: (((*E).base.x_pos).wrapping_sub(24u16)),
+            y: (((*E).base.y_pos).wrapping_sub(*jp.offset(0))),
+        };
+        game.eproj_spawn_r22 = 0u16;
+        SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 0u16, game);
     };
-    game.eproj_spawn_r22 = 0u16;
-    SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 0u16, game);
-    jp.offset(1)
-}
-pub unsafe fn SpacePirates_Instr_14(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    game.eproj_spawn_pt = Point16U {
-        x: (((*E).base.x_pos).wrapping_add(24u16)),
-        y: (((*E).base.y_pos).wrapping_sub(*jp.offset(0))),
+    SpacePirates_Instr_14 [jp.offset(1)] {
+        let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
+        game.eproj_spawn_pt = Point16U {
+            x: (((*E).base.x_pos).wrapping_add(24u16)),
+            y: (((*E).base.y_pos).wrapping_sub(*jp.offset(0))),
+        };
+        game.eproj_spawn_r22 = 1u16;
+        SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 1u16, game);
     };
-    game.eproj_spawn_r22 = 1u16;
-    SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 1u16, game);
-    jp.offset(1)
-}
-pub unsafe fn SpacePirates_Instr_11(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game)).var_A = *jp.offset(0);
-    jp.offset(1)
-}
-pub unsafe fn SpacePirates_Instr_13(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x10u16, game) != 0 {
-        if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
-            ((*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game))
-                .base
-                .x_pos) as i16,
-        ) >= 0i16
-        {
-            return addr_kSpacePirates_Ilist_FC0E as i32 as usize as *const u16;
+    SpacePirates_Instr_11 [jp.offset(1)] {
+        (*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game)).var_A = *jp.offset(0);
+    };
+    SpacePirates_Instr_13 [] {
+        if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x10u16, game) != 0 {
+            if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
+                ((*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game))
+                    .base
+                    .x_pos) as i16,
+            ) >= 0i16
+            {
+                return addr_kSpacePirates_Ilist_FC0E as i32 as usize as *const u16;
+            }
+            addr_kSpacePirates_Ilist_FB8C as i32 as usize as *const u16
+        } else {
+            if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
+                ((*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game))
+                    .base
+                    .x_pos) as i16,
+            ) >= 0i16
+            {
+                return addr_kSpacePirates_Ilist_FB64 as i32 as usize as *const u16;
+            }
+            addr_kSpacePirates_Ilist_FBE6 as i32 as usize as *const u16
         }
-        addr_kSpacePirates_Ilist_FB8C as i32 as usize as *const u16
-    } else {
-        if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
-            ((*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game))
-                .base
-                .x_pos) as i16,
-        ) >= 0i16
-        {
-            return addr_kSpacePirates_Ilist_FB64 as i32 as usize as *const u16;
-        }
-        addr_kSpacePirates_Ilist_FBE6 as i32 as usize as *const u16
-    }
+    };
 }
 pub unsafe fn WalkingSpacePirates_Init(game: &mut Game) {
     let mut v0: u16 = addr_kSpacePirates_Ilist_FB64 as u16;

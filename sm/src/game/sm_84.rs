@@ -646,165 +646,138 @@ pub unsafe fn PlmInstr_CopyFromRamToVram(plmp: *const u8, _k: u16, game: &mut Ga
     game.g_ram[0x330..0x332].copy_from_slice(&queue_tail.wrapping_add(7).to_le_bytes());
     plmp.add(7)
 }
-pub unsafe fn PlmInstr_GotoIfBossBitSet(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    if CheckBossBitForCurArea(*plmp.offset(0) as u16, game) != 0 {
-        PlmInstr_Goto(plmp.offset(1), k)
-    } else {
-        plmp.offset(3)
-    }
-}
-pub unsafe fn PlmInstr_GotoIfEventSet(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    if CheckEventHappened(*(plmp as *mut u16), game) != 0 {
-        PlmInstr_Goto(plmp.offset(2), k)
-    } else {
-        plmp.offset(4)
-    }
-}
-pub unsafe fn PlmInstr_SetEvent(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    SetEventHappened(*(plmp as *mut u16), game);
-    plmp.offset(2)
-}
-pub unsafe fn PlmInstr_GotoIfChozoSet(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    let v3: u16 = ram_word!(game, plm_room_arguments[(k >> 1)]);
-    let idx: i32 = PrepareBitAccess(v3, game) as i32;
-    if v3 & 0x8000 == 0
-        && (ram_word!(game, bitmask) & *ram_ptr!(game; 0xd830, idx as isize) as u16) != 0
-    {
-        PlmInstr_Goto(plmp, k)
-    } else {
-        plmp.offset(2)
-    }
-}
-pub unsafe fn PlmInstr_SetRoomChozoBit(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    let v3: u16 = ram_word!(game, plm_room_arguments[(k >> 1)]);
-    if v3 & 0x8000 == 0 {
-        let idx: i32 = PrepareBitAccess(v3, game) as i32;
-        crate::update_place! { reference fresh64 = *ram_ptr!(game; 0xd830, idx as isize) => (*fresh64) | ((ram_word!(game, bitmask)) as u8); }
-    }
-    plmp
-}
-pub unsafe fn PlmInstr_GotoIfItemBitSet(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    let index = usize::from(k >> 1) * 2;
-    let v2 = u16::from_le_bytes([game.g_ram[0x1dc7 + index], game.g_ram[0x1dc8 + index]]);
-    let byte_index = usize::from(PrepareBitAccess(v2, game));
-    if v2 & 0x8000 == 0 {
-        let bitmask = u16::from_le_bytes([game.g_ram[0x5e7], game.g_ram[0x5e8]]);
-        if bitmask & u16::from(game.g_ram[0xd870 + byte_index]) != 0 {
-            return PlmInstr_Goto(plmp, k);
+crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
+    PlmInstr_GotoIfBossBitSet [] {
+        if CheckBossBitForCurArea(*plmp.offset(0) as u16, game) != 0 {
+            PlmInstr_Goto(plmp.offset(1), k)
+        } else {
+            plmp.offset(3)
         }
-    }
-    plmp.offset(2)
-}
-pub unsafe fn PlmInstr_SetItemBit(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    let index = usize::from(k >> 1) * 2;
-    let v2 = u16::from_le_bytes([game.g_ram[0x1dc7 + index], game.g_ram[0x1dc8 + index]]);
-    if v2 & 0x8000 == 0 {
-        let byte_index = usize::from(PrepareBitAccess(v2, game));
-        let bitmask = u16::from_le_bytes([game.g_ram[0x5e7], game.g_ram[0x5e8]]);
-        game.g_ram[0xd870 + byte_index] |= bitmask as u8;
-    }
-    plmp
-}
-pub unsafe fn PlmInstr_PickupBeamAndShowMessage(
-    plmp: *const u8,
-    _k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    let beam = u16::from_le_bytes([*plmp, *plmp.add(1)]);
-    let read_word = |game: &Game, offset: usize| {
-        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
     };
-    game.set_collected_beams(read_word(game, 0x9a8) | beam);
-    game.set_equipped_beams(read_word(game, 0x9a6) | beam);
-    // Spazer and Plasma are mutually exclusive; retain both ordered masks.
-    game.set_equipped_beams(read_word(game, 0x9a6) & !((beam << 1) & 8));
-    game.set_equipped_beams(read_word(game, 0x9a6) & !((beam >> 1) & 4));
-    UpdateBeamTilesAndPalette(game);
-    PlayRoomMusicTrackAfterAFrames(0x168, game);
-    let message = u16::from(*plmp.add(2));
-    DisplayMessageBox(message, game);
-    plmp.add(3)
+    PlmInstr_GotoIfEventSet [] {
+        if CheckEventHappened(*(plmp as *mut u16), game) != 0 {
+            PlmInstr_Goto(plmp.offset(2), k)
+        } else {
+            plmp.offset(4)
+        }
+    };
+    PlmInstr_SetEvent [plmp.offset(2)] { SetEventHappened(*(plmp as *mut u16), game); };
+    PlmInstr_GotoIfChozoSet [] {
+        let v3: u16 = ram_word!(game, plm_room_arguments[(k >> 1)]);
+        let idx: i32 = PrepareBitAccess(v3, game) as i32;
+        if v3 & 0x8000 == 0
+            && (ram_word!(game, bitmask) & *ram_ptr!(game; 0xd830, idx as isize) as u16) != 0
+        {
+            PlmInstr_Goto(plmp, k)
+        } else {
+            plmp.offset(2)
+        }
+    };
+    PlmInstr_SetRoomChozoBit [plmp] {
+        let v3: u16 = ram_word!(game, plm_room_arguments[(k >> 1)]);
+        if v3 & 0x8000 == 0 {
+            let idx: i32 = PrepareBitAccess(v3, game) as i32;
+            crate::update_place! { reference fresh64 = *ram_ptr!(game; 0xd830, idx as isize) => (*fresh64) | ((ram_word!(game, bitmask)) as u8); }
+        }
+    };
+    PlmInstr_GotoIfItemBitSet [plmp.offset(2)] {
+        let index = usize::from(k >> 1) * 2;
+        let v2 = u16::from_le_bytes([game.g_ram[0x1dc7 + index], game.g_ram[0x1dc8 + index]]);
+        let byte_index = usize::from(PrepareBitAccess(v2, game));
+        if v2 & 0x8000 == 0 {
+            let bitmask = u16::from_le_bytes([game.g_ram[0x5e7], game.g_ram[0x5e8]]);
+            if bitmask & u16::from(game.g_ram[0xd870 + byte_index]) != 0 {
+                return PlmInstr_Goto(plmp, k);
+            }
+        }
+    };
+    PlmInstr_SetItemBit [plmp] {
+        let index = usize::from(k >> 1) * 2;
+        let v2 = u16::from_le_bytes([game.g_ram[0x1dc7 + index], game.g_ram[0x1dc8 + index]]);
+        if v2 & 0x8000 == 0 {
+            let byte_index = usize::from(PrepareBitAccess(v2, game));
+            let bitmask = u16::from_le_bytes([game.g_ram[0x5e7], game.g_ram[0x5e8]]);
+            game.g_ram[0xd870 + byte_index] |= bitmask as u8;
+        }
+    };
 }
-pub unsafe fn PlmInstr_PickupEquipmentAndShowMessage(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     _k: u16,
     game: &mut Game,
-) -> *const u8 {
-    let equipment = (plmp as *const u16).read_unaligned();
-    let equipped = u16::from_le_bytes([game.g_ram[0x9a2], game.g_ram[0x9a3]]);
-    game.set_equipped_items(equipped | equipment);
-    game.set_collected_items(game.collected_items() | equipment);
-    PlayRoomMusicTrackAfterAFrames(0x168, game);
-    let message = u16::from(*plmp.add(2));
-    DisplayMessageBox(message, game);
-    plmp.add(3)
+) -> *const u8;
+    PlmInstr_PickupBeamAndShowMessage [plmp.add(3)] {
+        let beam = u16::from_le_bytes([*plmp, *plmp.add(1)]);
+        let read_word = |game: &Game, offset: usize| {
+            u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+        };
+        game.set_collected_beams(read_word(game, 0x9a8) | beam);
+        game.set_equipped_beams(read_word(game, 0x9a6) | beam);
+        // Spazer and Plasma are mutually exclusive; retain both ordered masks.
+        game.set_equipped_beams(read_word(game, 0x9a6) & !((beam << 1) & 8));
+        game.set_equipped_beams(read_word(game, 0x9a6) & !((beam >> 1) & 4));
+        UpdateBeamTilesAndPalette(game);
+        PlayRoomMusicTrackAfterAFrames(0x168, game);
+        let message = u16::from(*plmp.add(2));
+        DisplayMessageBox(message, game);
+    };
+    PlmInstr_PickupEquipmentAndShowMessage [plmp.add(3)] {
+        let equipment = (plmp as *const u16).read_unaligned();
+        let equipped = u16::from_le_bytes([game.g_ram[0x9a2], game.g_ram[0x9a3]]);
+        game.set_equipped_items(equipped | equipment);
+        game.set_collected_items(game.collected_items() | equipment);
+        PlayRoomMusicTrackAfterAFrames(0x168, game);
+        let message = u16::from(*plmp.add(2));
+        DisplayMessageBox(message, game);
+    };
 }
-pub unsafe fn PlmInstr_PickupEquipmentAddGrappleShowMessage(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    let t: u16 = *(plmp as *mut u16);
-    update_ram_word!(game.equipped_items, |fresh55| (fresh55) | (t));
-    update_ram_word!(game.collected_items, |fresh56| (fresh56) | (t));
-    AddGrappleToHudTilemap(game);
-    PlayRoomMusicTrackAfterAFrames(0x168u16, game);
-    DisplayMessageBox(5u16, game);
-    plmp.offset(2)
-}
-pub unsafe fn PlmInstr_PickupEquipmentAddXrayShowMessage(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    let t: u16 = *(plmp as *mut u16);
-    update_ram_word!(game.equipped_items, |fresh53| (fresh53) | (t));
-    update_ram_word!(game.collected_items, |fresh54| (fresh54) | (t));
-    AddXrayToHudTilemap(game);
-    PlayRoomMusicTrackAfterAFrames(0x168u16, game);
-    DisplayMessageBox(6u16, game);
-    plmp.offset(2)
-}
-pub unsafe fn PlmInstr_CollectHealthEnergyTank(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    let amount = (plmp as *const u16).read_unaligned();
-    game.set_samus_max_health(game.samus_max_health().wrapping_add(amount));
-    game.set_samus_health(game.samus_max_health());
-    PlayRoomMusicTrackAfterAFrames(0x168, game);
-    DisplayMessageBox(1, game);
-    plmp.add(2)
-}
-pub unsafe fn PlmInstr_CollectHealthReserveTank(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    update_ram_word!(
-        game.samus_max_reserve_health,
-        wrapping_add(*(plmp as *mut u16))
-    );
-    if ram_word!(game, reserve_health_mode) == 0 {
-        update_ram_word!(game.reserve_health_mode, wrapping_add(1));
-    }
-    PlayRoomMusicTrackAfterAFrames(0x168u16, game);
-    DisplayMessageBox(0x19u16, game);
-    plmp.offset(2)
-}
-pub unsafe fn PlmInstr_CollectAmmoMissileTank(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    let t = *(plmp as *const u16);
-    game.set_samus_max_missiles(game.samus_max_missiles().wrapping_add(t));
-    game.set_samus_missiles(game.samus_missiles().wrapping_add(t));
-    AddMissilesToHudTilemap(game);
-    PlayRoomMusicTrackAfterAFrames(0x168u16, game);
-    DisplayMessageBox(2u16, game);
-    plmp.offset(2)
+) -> *const u8;
+    PlmInstr_PickupEquipmentAddGrappleShowMessage [plmp.offset(2)] {
+        let t: u16 = *(plmp as *mut u16);
+        update_ram_word!(game.equipped_items, |fresh55| (fresh55) | (t));
+        update_ram_word!(game.collected_items, |fresh56| (fresh56) | (t));
+        AddGrappleToHudTilemap(game);
+        PlayRoomMusicTrackAfterAFrames(0x168u16, game);
+        DisplayMessageBox(5u16, game);
+    };
+    PlmInstr_PickupEquipmentAddXrayShowMessage [plmp.offset(2)] {
+        let t: u16 = *(plmp as *mut u16);
+        update_ram_word!(game.equipped_items, |fresh53| (fresh53) | (t));
+        update_ram_word!(game.collected_items, |fresh54| (fresh54) | (t));
+        AddXrayToHudTilemap(game);
+        PlayRoomMusicTrackAfterAFrames(0x168u16, game);
+        DisplayMessageBox(6u16, game);
+    };
+    PlmInstr_CollectHealthEnergyTank [plmp.add(2)] {
+        let amount = (plmp as *const u16).read_unaligned();
+        game.set_samus_max_health(game.samus_max_health().wrapping_add(amount));
+        game.set_samus_health(game.samus_max_health());
+        PlayRoomMusicTrackAfterAFrames(0x168, game);
+        DisplayMessageBox(1, game);
+    };
+    PlmInstr_CollectHealthReserveTank [plmp.offset(2)] {
+        update_ram_word!(
+            game.samus_max_reserve_health,
+            wrapping_add(*(plmp as *mut u16))
+        );
+        if ram_word!(game, reserve_health_mode) == 0 {
+            update_ram_word!(game.reserve_health_mode, wrapping_add(1));
+        }
+        PlayRoomMusicTrackAfterAFrames(0x168u16, game);
+        DisplayMessageBox(0x19u16, game);
+    };
+    PlmInstr_CollectAmmoMissileTank [plmp.offset(2)] {
+        let t = *(plmp as *const u16);
+        game.set_samus_max_missiles(game.samus_max_missiles().wrapping_add(t));
+        game.set_samus_missiles(game.samus_missiles().wrapping_add(t));
+        AddMissilesToHudTilemap(game);
+        PlayRoomMusicTrackAfterAFrames(0x168u16, game);
+        DisplayMessageBox(2u16, game);
+    };
 }
 pub unsafe fn PlmInstr_CollectAmmoSuperMissileTank(
     plmp: *const u8,
@@ -832,18 +805,18 @@ pub unsafe fn PlmInstr_CollectAmmoPowerBombTank(
     DisplayMessageBox(4u16, game);
     plmp.offset(2)
 }
-pub unsafe fn PlmInstr_SetLinkReg(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    let link = (plmp as *const u16).read_unaligned();
-    let offset = 0xdebc + usize::from(k >> 1) * 2; // plm_instruction_list_link_reg
-    game.g_ram[offset..offset + 2].copy_from_slice(&link.to_le_bytes());
-    plmp.add(2)
-}
-pub unsafe fn PlmInstr_Call(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    let return_address = (plmp.offset_from(RomBankBase(0x84, game)) as u16).wrapping_add(2);
-    let offset = 0xdebc + usize::from(k >> 1) * 2; // plm_instruction_list_link_reg
-    game.g_ram[offset..offset + 2].copy_from_slice(&return_address.to_le_bytes());
-    let target = (plmp as *const u16).read_unaligned();
-    usize::from(target) as *const u8
+crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
+    PlmInstr_SetLinkReg [plmp.add(2)] {
+        let link = (plmp as *const u16).read_unaligned();
+        let offset = 0xdebc + usize::from(k >> 1) * 2; // plm_instruction_list_link_reg
+        game.g_ram[offset..offset + 2].copy_from_slice(&link.to_le_bytes());
+    };
+    PlmInstr_Call [usize::from(target) as *const u8] {
+        let return_address = (plmp.offset_from(RomBankBase(0x84, game)) as u16).wrapping_add(2);
+        let offset = 0xdebc + usize::from(k >> 1) * 2; // plm_instruction_list_link_reg
+        game.g_ram[offset..offset + 2].copy_from_slice(&return_address.to_le_bytes());
+        let target = (plmp as *const u16).read_unaligned();
+    };
 }
 pub fn PlmInstr_Return(_plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
     let offset = 0xdebc + usize::from(k >> 1) * 2; // plm_instruction_list_link_reg
@@ -866,126 +839,118 @@ pub unsafe fn PlmInstr_GotoIfDoorBitSet(plmp: *const u8, k: u16, game: &mut Game
     }
     plmp.add(2)
 }
-pub unsafe fn PlmInstr_IncrementDoorHitCounterAndJGE(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    let index = usize::from(k >> 1) * 2;
-    let read_word = |game: &Game, offset: usize| {
-        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+) -> *const u8;
+    PlmInstr_IncrementDoorHitCounterAndJGE [PlmInstr_Goto(plmp.add(1), k)] {
+        let index = usize::from(k >> 1) * 2;
+        let read_word = |game: &Game, offset: usize| {
+            u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+        };
+        let write_word = |game: &mut Game, offset: usize, value: u16| {
+            game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+        };
+        let hits = read_word(game, 0xdf0c + index).wrapping_add(1); // plm_variables
+        write_word(game, 0xdf0c + index, hits);
+        if (hits as u8) < *plmp {
+            return plmp.add(3);
+        }
+        let argument = read_word(game, 0x1dc7 + index); // plm_room_arguments
+        if argument & 0x8000 == 0 {
+            let bit_index = usize::from(PrepareBitAccess(argument, game));
+            let mask = read_word(game, 0x5e7); // bitmask
+            let door = 0xd8b0 + bit_index; // opened_door_bit_array
+            game.g_ram[door] |= mask as u8;
+            // Preserve the original word read, including the following bit-array byte.
+            let marked_argument = read_word(game, door) | 0x8000;
+            write_word(game, 0x1dc7 + index, marked_argument);
+        }
+        write_word(game, 0x1cd7 + index, addr_PlmPreInstr_Empty4 as u16);
     };
-    let write_word = |game: &mut Game, offset: usize, value: u16| {
-        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    PlmInstr_IncrementArgumentAndJGE [] {
+        let v2: u8 =
+            (*(ram_ptr!(game, u16; 0x1dc7) as *mut u8).offset(k as i32 as isize)).wrapping_add(1u8);
+        if v2 >= *plmp.offset(0) {
+            let v4: i32 = k as i32 >> 1i32;
+            set_ram_word!(game.plm_room_arguments[v4] = -1i32 as u16);
+            set_ram_word!(game.plm_pre_instrs[v4] = addr_locret_848AE0 as u16);
+            PlmInstr_Goto(plmp.offset(1), k)
+        } else {
+            set_ram_word!(game.plm_room_arguments[(k >> 1)] = v2 as u16);
+            plmp.offset(3)
+        }
     };
-    let hits = read_word(game, 0xdf0c + index).wrapping_add(1); // plm_variables
-    write_word(game, 0xdf0c + index, hits);
-    if (hits as u8) < *plmp {
-        return plmp.add(3);
-    }
-    let argument = read_word(game, 0x1dc7 + index); // plm_room_arguments
-    if argument & 0x8000 == 0 {
-        let bit_index = usize::from(PrepareBitAccess(argument, game));
-        let mask = read_word(game, 0x5e7); // bitmask
-        let door = 0xd8b0 + bit_index; // opened_door_bit_array
-        game.g_ram[door] |= mask as u8;
-        // Preserve the original word read, including the following bit-array byte.
-        let marked_argument = read_word(game, door) | 0x8000;
-        write_word(game, 0x1dc7 + index, marked_argument);
-    }
-    write_word(game, 0x1cd7 + index, addr_PlmPreInstr_Empty4 as u16);
-    PlmInstr_Goto(plmp.add(1), k)
 }
-pub unsafe fn PlmInstr_IncrementArgumentAndJGE(
+crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
+    PlmInstr_SetBTS [plmp.add(1)] {
+        let bts = *plmp;
+        let index_addr = 0x1c87 + usize::from(k >> 1) * 2; // plm_block_indices
+        let block_index = u16::from_le_bytes([game.g_ram[index_addr], game.g_ram[index_addr + 1]]) >> 1;
+        game.g_ram[0x16402 + usize::from(block_index)] = bts;
+    };
+    PlmInstr_DrawPlmBlock [null::<u8>()] {
+        let index = usize::from(k >> 1) * 2;
+        let read_word = |game: &Game, offset: usize| {
+            u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+        };
+        let write_word = |game: &mut Game, offset: usize, value: u16| {
+            game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+        };
+        let block = read_word(game, 0x1e17 + index); // plm_variable
+        let block_index = read_word(game, 0x1c87 + index);
+        write_word(game, 0x10002 + usize::from(block_index >> 1) * 2, block);
+        write_word(game, 0x1e69, block);
+        write_word(game, 0x1e67, 1);
+        write_word(game, 0x1e6b, 0);
+        write_word(game, 0xde1c + index, 1); // plm_instruction_timer
+        write_word(game, 0xde6c + index, 0x1e67); // plm_instruction_draw_ptr
+        let instruction = plmp.offset_from(RomBankBase(0x84, game)) as u16;
+        write_word(game, 0x1d27 + index, instruction); // plm_instr_list_ptrs
+        ProcessPlmDrawInstruction(k, game);
+        let v4: u16 = ram_word!(game, plm_id);
+        CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
+        DrawPlm(v4, game);
+    };
+}
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    let v2: u8 =
-        (*(ram_ptr!(game, u16; 0x1dc7) as *mut u8).offset(k as i32 as isize)).wrapping_add(1u8);
-    if v2 >= *plmp.offset(0) {
-        let v4: i32 = k as i32 >> 1i32;
-        set_ram_word!(game.plm_room_arguments[v4] = -1i32 as u16);
-        set_ram_word!(game.plm_pre_instrs[v4] = addr_locret_848AE0 as u16);
-        PlmInstr_Goto(plmp.offset(1), k)
-    } else {
-        set_ram_word!(game.plm_room_arguments[(k >> 1)] = v2 as u16);
-        plmp.offset(3)
-    }
-}
-pub unsafe fn PlmInstr_SetBTS(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    let bts = *plmp;
-    let index_addr = 0x1c87 + usize::from(k >> 1) * 2; // plm_block_indices
-    let block_index = u16::from_le_bytes([game.g_ram[index_addr], game.g_ram[index_addr + 1]]) >> 1;
-    game.g_ram[0x16402 + usize::from(block_index)] = bts;
-    plmp.add(1)
-}
-pub unsafe fn PlmInstr_DrawPlmBlock(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    let index = usize::from(k >> 1) * 2;
-    let read_word = |game: &Game, offset: usize| {
-        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+) -> *const u8;
+    PlmInstr_ProcessAirScrollUpdate [plmp] {
+        let index = usize::from(k >> 1) * 2;
+        let read_word = |game: &Game, offset: usize| {
+            u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+        };
+        let write_word = |game: &mut Game, offset: usize, value: u16| {
+            game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+        };
+        write_word(game, 0x1e17 + index, 0); // plm_variable
+        let argument = read_word(game, 0x1dc7 + index); // plm_room_arguments
+        let mut entries = RomPtr_8F(argument, game);
+        while *entries & 0x80 == 0 {
+            let value = *entries.add(1);
+            game.g_ram[0xcd20 + usize::from(*entries)] = value; // scrolls
+            entries = entries.add(2);
+        }
+        let block_index = read_word(game, 0x1c87 + index); // plm_block_indices
+        update_level_block_bits(usize::from(block_index >> 1), 0x0fff, 0x3000, game);
     };
-    let write_word = |game: &mut Game, offset: usize, value: u16| {
-        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    PlmInstr_ProcessSolidScrollUpdate [plmp] {
+        set_ram_word!(game.plm_variable[(k >> 1)] = 0u16);
+        let mut v5 = RomPtr_8F(ram_word!(game, plm_room_arguments[(k >> 1)]), game);
+        while (*v5.offset(0) & 0x80 == 0) {
+            *ram_ptr!(game; 0xcd20, *v5.offset(0) as isize) = *v5.offset(1);
+            v5 = v5.offset(2);
+        }
+        let v7: i32 = ram_word!(game, plm_block_indices[(k >> 1)]) as i32 >> 1i32;
+        set_ram_word!(game.level_data[v7] = (ram_word!(game, level_data[v7]) & 0xfff | 0xb000));
     };
-    let block = read_word(game, 0x1e17 + index); // plm_variable
-    let block_index = read_word(game, 0x1c87 + index);
-    write_word(game, 0x10002 + usize::from(block_index >> 1) * 2, block);
-    write_word(game, 0x1e69, block);
-    write_word(game, 0x1e67, 1);
-    write_word(game, 0x1e6b, 0);
-    write_word(game, 0xde1c + index, 1); // plm_instruction_timer
-    write_word(game, 0xde6c + index, 0x1e67); // plm_instruction_draw_ptr
-    let instruction = plmp.offset_from(RomBankBase(0x84, game)) as u16;
-    write_word(game, 0x1d27 + index, instruction); // plm_instr_list_ptrs
-    ProcessPlmDrawInstruction(k, game);
-    let v4: u16 = ram_word!(game, plm_id);
-    CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
-    DrawPlm(v4, game);
-    null::<u8>()
 }
-pub unsafe fn PlmInstr_ProcessAirScrollUpdate(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    let index = usize::from(k >> 1) * 2;
-    let read_word = |game: &Game, offset: usize| {
-        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
-    };
-    let write_word = |game: &mut Game, offset: usize, value: u16| {
-        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
-    };
-    write_word(game, 0x1e17 + index, 0); // plm_variable
-    let argument = read_word(game, 0x1dc7 + index); // plm_room_arguments
-    let mut entries = RomPtr_8F(argument, game);
-    while *entries & 0x80 == 0 {
-        let value = *entries.add(1);
-        game.g_ram[0xcd20 + usize::from(*entries)] = value; // scrolls
-        entries = entries.add(2);
-    }
-    let block_index = read_word(game, 0x1c87 + index); // plm_block_indices
-    update_level_block_bits(usize::from(block_index >> 1), 0x0fff, 0x3000, game);
-    plmp
-}
-pub unsafe fn PlmInstr_ProcessSolidScrollUpdate(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    set_ram_word!(game.plm_variable[(k >> 1)] = 0u16);
-    let mut v5 = RomPtr_8F(ram_word!(game, plm_room_arguments[(k >> 1)]), game);
-    while (*v5.offset(0) & 0x80 == 0) {
-        *ram_ptr!(game; 0xcd20, *v5.offset(0) as isize) = *v5.offset(1);
-        v5 = v5.offset(2);
-    }
-    let v7: i32 = ram_word!(game, plm_block_indices[(k >> 1)]) as i32 >> 1i32;
-    set_ram_word!(game.level_data[v7] = (ram_word!(game, level_data[v7]) & 0xfff | 0xb000));
-    plmp
-}
-pub unsafe fn PlmInstr_QueueMusic(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueMusic_Delayed8(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
+crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
+    PlmInstr_QueueMusic [plmp.offset(1)] { QueueMusic_Delayed8(*plmp.offset(0) as u16, game); };
 }
 pub unsafe fn PlmInstr_ClearMusicQueueAndQueueTrack(
     plmp: *const u8,
@@ -1003,65 +968,22 @@ pub unsafe fn PlmInstr_ClearMusicQueueAndQueueTrack(
     QueueMusic_Delayed8(*plmp.offset(0) as u16, game);
     plmp.offset(1)
 }
-pub unsafe fn PlmInstr_QueueSfx1_Max6(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx1_Max6(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx2_Max6(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx2_Max6(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx3_Max6(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx3_Max6(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx1_Max15(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx1_Max15(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx2_Max15(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx2_Max15(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx3_Max15(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx3_Max15(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx1_Max3(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx1_Max3(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx2_Max3(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx2_Max3(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx_Max3(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx3_Max3(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx1_Max9(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx1_Max9(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx2_Max9(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx2_Max9(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx3_Max9(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx3_Max9(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx1_Max1(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx1_Max1(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx2_Max1(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx2_Max1(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
-}
-pub unsafe fn PlmInstr_QueueSfx3_Max1(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueSfx3_Max1(*plmp.offset(0) as u16, game);
-    plmp.offset(1)
+crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
+    PlmInstr_QueueSfx1_Max6 [plmp.offset(1)] { QueueSfx1_Max6(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx2_Max6 [plmp.offset(1)] { QueueSfx2_Max6(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx3_Max6 [plmp.offset(1)] { QueueSfx3_Max6(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx1_Max15 [plmp.offset(1)] { QueueSfx1_Max15(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx2_Max15 [plmp.offset(1)] { QueueSfx2_Max15(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx3_Max15 [plmp.offset(1)] { QueueSfx3_Max15(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx1_Max3 [plmp.offset(1)] { QueueSfx1_Max3(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx2_Max3 [plmp.offset(1)] { QueueSfx2_Max3(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx_Max3 [plmp.offset(1)] { QueueSfx3_Max3(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx1_Max9 [plmp.offset(1)] { QueueSfx1_Max9(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx2_Max9 [plmp.offset(1)] { QueueSfx2_Max9(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx3_Max9 [plmp.offset(1)] { QueueSfx3_Max9(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx1_Max1 [plmp.offset(1)] { QueueSfx1_Max1(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx2_Max1 [plmp.offset(1)] { QueueSfx2_Max1(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx3_Max1 [plmp.offset(1)] { QueueSfx3_Max1(*plmp.offset(0) as u16, game); };
 }
 pub unsafe fn PlmInstr_ActivateMapStation(plmp: *const u8, _k: u16, game: &mut Game) -> *const u8 {
     // map_station_byte_array; word OR with 00FF preserves the neighboring byte.
@@ -1071,52 +993,43 @@ pub unsafe fn PlmInstr_ActivateMapStation(plmp: *const u8, _k: u16, game: &mut G
     game.set_has_area_map(1);
     plmp
 }
-pub unsafe fn PlmInstr_ActivateEnergyStation(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    if ram_word!(game, samus_max_health) != ram_word!(game, samus_health) {
-        DisplayMessageBox(0x15u16, game);
-        set_ram_word!(game.samus_health = ram_word!(game, samus_max_health));
-    }
-    CallSomeSamusCode(1u16, game);
-    plmp
-}
-pub unsafe fn PlmInstr_ActivateMissileStation(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    if ram_word!(game, samus_max_missiles) != ram_word!(game, samus_missiles) {
-        DisplayMessageBox(0x16u16, game);
-        set_ram_word!(game.samus_missiles = ram_word!(game, samus_max_missiles));
-    }
-    CallSomeSamusCode(1u16, game);
-    plmp
-}
-pub unsafe fn PlmInstr_ActivateSaveStationAndGotoIfNo(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    let r: i32 = DisplayMessageBox_Poll(23u16, game);
-    if r < 0i32 {
-        return plmp.offset(-(2i32 as isize));
-    }
-    if r == 2i32 {
-        return *(plmp as *mut u16) as usize as *const u8;
-    }
-    SpawnEprojWithRoomGfx(addr_kEproj_SaveStationElectricity as u16, 0u16, game);
-    set_ram_word!(
-        game.load_station_index = (*(ram_ptr!(game, u16; 0x1dc7))
-            .offset((ram_word!(game, plm_id) >> 1) as isize,))
-            & (7u16)
-    );
-    PrepareBitAccess(ram_word!(game, load_station_index), game);
-    crate::update_place! { reference fresh40 = *ram_ptr!(game; 0xd8f8, (2i32 * ram_word!(game, area_index) as i32) as isize) => (*fresh40) | ((ram_word!(game, bitmask)) as u8); }
-    SaveToSram(ram_word!(game, selected_save_slot), game);
-    plmp.offset(2)
+) -> *const u8;
+    PlmInstr_ActivateEnergyStation [plmp] {
+        if ram_word!(game, samus_max_health) != ram_word!(game, samus_health) {
+            DisplayMessageBox(0x15u16, game);
+            set_ram_word!(game.samus_health = ram_word!(game, samus_max_health));
+        }
+        CallSomeSamusCode(1u16, game);
+    };
+    PlmInstr_ActivateMissileStation [plmp] {
+        if ram_word!(game, samus_max_missiles) != ram_word!(game, samus_missiles) {
+            DisplayMessageBox(0x16u16, game);
+            set_ram_word!(game.samus_missiles = ram_word!(game, samus_max_missiles));
+        }
+        CallSomeSamusCode(1u16, game);
+    };
+    PlmInstr_ActivateSaveStationAndGotoIfNo [plmp.offset(2)] {
+        let r: i32 = DisplayMessageBox_Poll(23u16, game);
+        if r < 0i32 {
+            return plmp.offset(-(2i32 as isize));
+        }
+        if r == 2i32 {
+            return *(plmp as *mut u16) as usize as *const u8;
+        }
+        SpawnEprojWithRoomGfx(addr_kEproj_SaveStationElectricity as u16, 0u16, game);
+        set_ram_word!(
+            game.load_station_index = (*(ram_ptr!(game, u16; 0x1dc7))
+                .offset((ram_word!(game, plm_id) >> 1) as isize,))
+                & (7u16)
+        );
+        PrepareBitAccess(ram_word!(game, load_station_index), game);
+        crate::update_place! { reference fresh40 = *ram_ptr!(game; 0xd8f8, (2i32 * ram_word!(game, area_index) as i32) as isize) => (*fresh40) | ((ram_word!(game, bitmask)) as u8); }
+        SaveToSram(ram_word!(game, selected_save_slot), game);
+    };
 }
 pub unsafe fn PlmInstr_GotoIfSamusNear(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
     CalculatePlmBlockCoords(k, game);
@@ -1457,9 +1370,8 @@ pub unsafe fn PlmSetup_CrumbleBotwoonWall(j: u16, game: &mut Game) -> u8 {
     set_ram_word!(game.plm_instruction_timer[(j >> 1)] = 64u16);
     0u8
 }
-pub unsafe fn PlmInstr_Scroll_0_1_Blue(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    *(ram_ptr!(game, u16; 0xcd20)) = 257u16;
-    plmp
+crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
+    PlmInstr_Scroll_0_1_Blue [plmp] { *(ram_ptr!(game, u16; 0xcd20)) = 257u16; };
 }
 pub unsafe fn PlmInstr_MovePlmDownOneBlock_0(
     plmp: *const u8,
@@ -1482,40 +1394,29 @@ pub unsafe fn PlmPreInstr_PositionSamusAndInvincible(k: u16, game: &mut Game) {
     update_ram_word!(game.samus_invincibility_timer, |fresh69| (fresh69)
         | (0x10u16));
 }
-pub unsafe fn PlmInstr_DealDamage_2(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    update_ram_word!(game.samus_periodic_damage, wrapping_add(2u16));
-    plmp
+crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
+    PlmInstr_DealDamage_2 [plmp] {
+        update_ram_word!(game.samus_periodic_damage, wrapping_add(2u16));
+    };
+    PlmInstr_GiveInvincibility [plmp] { set_ram_word!(game.samus_invincibility_timer = 48u16); };
 }
-pub unsafe fn PlmInstr_GiveInvincibility(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.samus_invincibility_timer = 48u16);
-    plmp
-}
-pub unsafe fn PlmInstr_Draw0x38FramesOfRightTreadmill(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    WriteRowOfLevelDataBlockAndBTS(k, 0x30ffu16, 0x8u16, 0x38u16, game);
-    plmp
-}
-pub unsafe fn PlmInstr_Draw0x38FramesOfLeftTreadmill(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    WriteRowOfLevelDataBlockAndBTS(k, 0x30ffu16, 0x9u16, 0x38u16, game);
-    plmp
-}
-pub unsafe fn PlmInstr_GotoIfSamusHealthFull(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    if ram_word!(game, samus_max_health) != ram_word!(game, samus_health) {
-        return plmp.offset(2);
-    }
-    CallSomeSamusCode(1u16, game);
-    *(plmp as *mut u16) as usize as *const u8
+) -> *const u8;
+    PlmInstr_Draw0x38FramesOfRightTreadmill [plmp] {
+        WriteRowOfLevelDataBlockAndBTS(k, 0x30ffu16, 0x8u16, 0x38u16, game);
+    };
+    PlmInstr_Draw0x38FramesOfLeftTreadmill [plmp] {
+        WriteRowOfLevelDataBlockAndBTS(k, 0x30ffu16, 0x9u16, 0x38u16, game);
+    };
+    PlmInstr_GotoIfSamusHealthFull [*(plmp as *mut u16) as usize as *const u8] {
+        if ram_word!(game, samus_max_health) != ram_word!(game, samus_health) {
+            return plmp.offset(2);
+        }
+        CallSomeSamusCode(1u16, game);
+    };
 }
 pub unsafe fn PlmInstr_GotoIfMissilesFull(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
     if ram_word!(game, samus_max_missiles) != ram_word!(game, samus_missiles) {
@@ -1524,33 +1425,22 @@ pub unsafe fn PlmInstr_GotoIfMissilesFull(plmp: *const u8, k: u16, game: &mut Ga
     CallSomeSamusCode(1u16, game);
     *(plmp as *mut u16) as usize as *const u8
 }
-pub unsafe fn PlmInstr_PlaceSamusOnSaveStation(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    set_ram_word!(
-        game.samus_x_pos = (ram_word!(game, samus_x_pos) as i32 + 8i32 & 0xfff0i32) as u16
-    );
-    MakeSamusFaceForward(game);
-    plmp
-}
-pub unsafe fn PlmInstr_DisplayGameSavedMessageBox(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    DisplayMessageBox(0x18u16, game);
-    plmp
-}
-pub unsafe fn PlmInstr_EnableMovementAndSetSaveStationUsed(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    CallSomeSamusCode(1u16, game);
-    set_ram_word!(game.save_station_lockout_flag = 1u16);
-    plmp
+) -> *const u8;
+    PlmInstr_PlaceSamusOnSaveStation [plmp] {
+        set_ram_word!(
+            game.samus_x_pos = (ram_word!(game, samus_x_pos) as i32 + 8i32 & 0xfff0i32) as u16
+        );
+        MakeSamusFaceForward(game);
+    };
+    PlmInstr_DisplayGameSavedMessageBox [plmp] { DisplayMessageBox(0x18u16, game); };
+    PlmInstr_EnableMovementAndSetSaveStationUsed [plmp] {
+        CallSomeSamusCode(1u16, game);
+        set_ram_word!(game.save_station_lockout_flag = 1u16);
+    };
 }
 pub unsafe fn PlmSetup_SetrupWreckedShipEntrance(j: u16, game: &mut Game) -> u8 {
     let mut v1: u16 = ram_word!(game, plm_block_indices[(j >> 1)]);
@@ -2195,13 +2085,12 @@ pub unsafe fn PlmSetup_B9C1_CrittersEscapeBlock(j: u16, game: &mut Game) -> u8 {
     }
     0u8
 }
-pub unsafe fn PlmInstr_SetCrittersEscapedEvent(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    SetEventHappened(0xfu16, game);
-    plmp
+) -> *const u8;
+    PlmInstr_SetCrittersEscapedEvent [plmp] { SetEventHappened(0xfu16, game); };
 }
 pub unsafe fn PlmSetup_B9ED_CrittersEscapeBlock(j: u16, game: &mut Game) -> u8 {
     let v1: u16 = ram_word!(game, plm_block_indices[(j >> 1)]);
@@ -2289,27 +2178,24 @@ pub unsafe fn PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm(k: u16, game: &mut G
         set_ram_word!(game.plm_pre_instrs[v1] = addr_locret_84BBDC as u16);
     }
 }
-pub unsafe fn PlmInstr_ClearTrigger(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.plm_timers[(k >> 1)] = 0u16);
-    plmp
-}
-pub unsafe fn PlmInstr_SpawnEproj(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    SpawnEprojWithRoomGfx(*(plmp as *mut u16), 0u16, game);
-    plmp.offset(2)
-}
-pub unsafe fn PlmInstr_WakeEprojAtPlmPos(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    let v2: u16 = ram_word!(game, plm_block_indices[(k >> 1)]);
-    let mut i: i32 = 34i32;
-    while i >= 0i32 {
-        if v2 == ram_word!(game, eproj_E[(i >> 1i32)]) {
-            break;
+crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
+    PlmInstr_ClearTrigger [plmp] { set_ram_word!(game.plm_timers[(k >> 1)] = 0u16); };
+    PlmInstr_SpawnEproj [plmp.offset(2)] {
+        SpawnEprojWithRoomGfx(*(plmp as *mut u16), 0u16, game);
+    };
+    PlmInstr_WakeEprojAtPlmPos [plmp.offset(2)] {
+        let v2: u16 = ram_word!(game, plm_block_indices[(k >> 1)]);
+        let mut i: i32 = 34i32;
+        while i >= 0i32 {
+            if v2 == ram_word!(game, eproj_E[(i >> 1i32)]) {
+                break;
+            }
+            i -= 2i32;
         }
-        i -= 2i32;
-    }
-    let v4: i32 = i >> 1i32;
-    set_ram_word!(game.eproj_instr_timers[v4] = 1u16);
-    update_ram_word!(game.eproj_instr_list_ptr[v4], wrapping_add(2u16));
-    plmp.offset(2)
+        let v4: i32 = i >> 1i32;
+        set_ram_word!(game.eproj_instr_timers[v4] = 1u16);
+        update_ram_word!(game.eproj_instr_list_ptr[v4], wrapping_add(2u16));
+    };
 }
 pub unsafe fn PlmPreInstr_GoToLinkInstrIfShot(k: u16, game: &mut Game) {
     let v2: i32 = k as i32 >> 1i32;
@@ -2930,9 +2816,8 @@ pub unsafe fn PlmSetup_D138(j: u16, game: &mut Game) -> u8 {
     );
     0u8
 }
-pub unsafe fn PlmInstr_FxBaseYPos_0x2D2(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.fx_base_y_pos = 722u16);
-    plmp
+crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
+    PlmInstr_FxBaseYPos_0x2D2 [plmp] { set_ram_word!(game.fx_base_y_pos = 722u16); };
 }
 pub unsafe fn PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed(k: u16, game: &mut Game) {
     let prod: u16 = (8u16).wrapping_mul((ram_word!(game, room_width_in_blocks) as u8) as u16);
@@ -3013,27 +2898,22 @@ pub unsafe fn PlmInstr_SpawnTorizoStatueBreaking(
     SpawnEprojWithRoomGfx(0xa993u16, *(plmp as *mut u16), game);
     plmp.offset(2)
 }
-pub unsafe fn PlmInstr_QueueSong1MusicTrack(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    QueueMusic_Delayed8(6u16, game);
-    plmp
+crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
+    PlmInstr_QueueSong1MusicTrack [plmp] { QueueMusic_Delayed8(6u16, game); };
 }
-pub unsafe fn PlmInstr_TransferWreckedShipChozoSpikesToSlopes(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    WriteLevelDataBlockTypeAndBts(0x1608u16, 0x1012u16, game);
-    WriteLevelDataBlockTypeAndBts(0x160au16, 0x1013u16, game);
-    plmp
-}
-pub unsafe fn PlmInstr_TransferWreckedShipSlopesToChozoSpikes(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    WriteLevelDataBlockTypeAndBts(0x1608u16, 0xa000u16, game);
-    WriteLevelDataBlockTypeAndBts(0x160au16, 0xa000u16, game);
-    plmp
+) -> *const u8;
+    PlmInstr_TransferWreckedShipChozoSpikesToSlopes [plmp] {
+        WriteLevelDataBlockTypeAndBts(0x1608u16, 0x1012u16, game);
+        WriteLevelDataBlockTypeAndBts(0x160au16, 0x1013u16, game);
+    };
+    PlmInstr_TransferWreckedShipSlopesToChozoSpikes [plmp] {
+        WriteLevelDataBlockTypeAndBts(0x1608u16, 0xa000u16, game);
+        WriteLevelDataBlockTypeAndBts(0x160au16, 0xa000u16, game);
+    };
 }
 pub unsafe fn PlmPreInstr_WakeOnKeyPress(k: u16, game: &mut Game) {
     if (ram_word!(game, joypad1_newkeys)
@@ -3055,13 +2935,12 @@ pub unsafe fn PlmInstr_EnableWaterPhysics(plmp: *const u8, k: u16, game: &mut Ga
     update_ram_word!(game.fx_liquid_options, |fresh34| (fresh34 & !(4)));
     plmp
 }
-pub unsafe fn PlmInstr_SpawnN00bTubeCrackEproj(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    SpawnEprojWithRoomGfx(0xd904u16, 0u16, game);
-    plmp
+) -> *const u8;
+    PlmInstr_SpawnN00bTubeCrackEproj [plmp] { SpawnEprojWithRoomGfx(0xd904u16, 0u16, game); };
 }
 pub unsafe fn PlmInstr_DiagonalEarthquake(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
     set_ram_word!(game.earthquake_type = 11u16);
@@ -3091,13 +2970,9 @@ pub unsafe fn PlmInstr_Spawn10shardsAnd6n00bs(
     SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeReleasedAirBubbles as u16, 0xau16, game);
     plmp
 }
-pub unsafe fn PlmInstr_DisableSamusControls(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    CallSomeSamusCode(0u16, game);
-    plmp
-}
-pub unsafe fn PlmInstr_EnableSamusControls(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    CallSomeSamusCode(1u16, game);
-    plmp
+crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
+    PlmInstr_DisableSamusControls [plmp] { CallSomeSamusCode(0u16, game); };
+    PlmInstr_EnableSamusControls [plmp] { CallSomeSamusCode(1u16, game); };
 }
 pub unsafe fn PlmSetup_MotherBrainGlass(j: u16, game: &mut Game) -> u8 {
     let v1: i32 = j as i32 >> 1i32;
@@ -3202,69 +3077,56 @@ pub unsafe fn PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet(k: u16, game: &mut Game
         set_ram_word!(game.plm_instruction_timer[v3] = 1u16);
     }
 }
-pub unsafe fn PlmInstr_ShootEyeDoorProjectileWithProjectileArg(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_EyeDoorProjectile as u16,
-        *(plmp as *mut u16),
-        game,
-    );
-    QueueSfx2_Max6(0x4cu16, game);
-    plmp.offset(2)
-}
-pub unsafe fn PlmInstr_SpawnEyeDoorSweatEproj(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    SpawnEprojWithRoomGfx(addr_kEproj_EyeDoorSweat as u16, *(plmp as *mut u16), game);
-    plmp.offset(2)
+) -> *const u8;
+    PlmInstr_ShootEyeDoorProjectileWithProjectileArg [plmp.offset(2)] {
+        SpawnEprojWithRoomGfx(
+            addr_kEproj_EyeDoorProjectile as u16,
+            *(plmp as *mut u16),
+            game,
+        );
+        QueueSfx2_Max6(0x4cu16, game);
+    };
+    PlmInstr_SpawnEyeDoorSweatEproj [plmp.offset(2)] {
+        SpawnEprojWithRoomGfx(addr_kEproj_EyeDoorSweat as u16, *(plmp as *mut u16), game);
+    };
 }
 pub unsafe fn PlmInstr_SpawnTwoEyeDoorSmoke(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
     SpawnEprojWithRoomGfx(0xe517u16, 0x30au16, game);
     SpawnEprojWithRoomGfx(0xe517u16, 0x30au16, game);
     plmp
 }
-pub unsafe fn PlmInstr_SpawnEyeDoorSmokeProjectile(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    SpawnEprojWithRoomGfx(addr_kEproj_EyeDoorSmoke as u16, 0xbu16, game);
-    plmp
-}
-pub unsafe fn PlmInstr_MoveUpAndMakeBlueDoorFacingRight(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    let v2: i32 = k as i32 >> 1i32;
-    let blk: u16 = update_ram_word!(
-        game.plm_block_indices[v2],
-        |fresh33| (fresh33 as i32 - ram_word!(game, room_width_in_blocks) as i32 * 2i32) as u16,
-        reread
-    );
-    WriteLevelDataBlockTypeAndBts(blk, 0xc041u16, game);
-    sub_84D7EF(blk, game);
-    plmp
-}
-pub unsafe fn PlmInstr_MoveUpAndMakeBlueDoorFacingLeft(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    let v2: i32 = k as i32 >> 1i32;
-    let blk: u16 = update_ram_word!(
-        game.plm_block_indices[v2],
-        |fresh32| (fresh32 as i32 - ram_word!(game, room_width_in_blocks) as i32 * 2i32) as u16,
-        reread
-    );
-    WriteLevelDataBlockTypeAndBts(blk, 0xc040u16, game);
-    sub_84D7EF(blk, game);
-    plmp
+) -> *const u8;
+    PlmInstr_SpawnEyeDoorSmokeProjectile [plmp] {
+        SpawnEprojWithRoomGfx(addr_kEproj_EyeDoorSmoke as u16, 0xbu16, game);
+    };
+    PlmInstr_MoveUpAndMakeBlueDoorFacingRight [plmp] {
+        let v2: i32 = k as i32 >> 1i32;
+        let blk: u16 = update_ram_word!(
+            game.plm_block_indices[v2],
+            |fresh33| (fresh33 as i32 - ram_word!(game, room_width_in_blocks) as i32 * 2i32) as u16,
+            reread
+        );
+        WriteLevelDataBlockTypeAndBts(blk, 0xc041u16, game);
+        sub_84D7EF(blk, game);
+    };
+    PlmInstr_MoveUpAndMakeBlueDoorFacingLeft [plmp] {
+        let v2: i32 = k as i32 >> 1i32;
+        let blk: u16 = update_ram_word!(
+            game.plm_block_indices[v2],
+            |fresh32| (fresh32 as i32 - ram_word!(game, room_width_in_blocks) as i32 * 2i32) as u16,
+            reread
+        );
+        WriteLevelDataBlockTypeAndBts(blk, 0xc040u16, game);
+        sub_84D7EF(blk, game);
+    };
 }
 pub unsafe fn sub_84D7EF(k: u16, game: &mut Game) {
     let v1: u16 = (ram_word!(game, room_width_in_blocks) as i32 * 2i32 + k as i32) as u16;
@@ -3368,34 +3230,30 @@ pub unsafe fn PlmInstr_DamageDraygonTurret(plmp: *const u8, k: u16, game: &mut G
     );
     plmp
 }
-pub unsafe fn PlmInstr_DamageDraygonTurretFacingDownRight(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    SetPlmVarPtr(k, 1u16, game);
-    let v2: u16 = ram_word!(game, plm_block_indices[(k >> 1)]);
-    WriteLevelDataBlockTypeAndBts(v2, 0xa003u16, game);
-    WriteLevelDataBlockTypeAndBts((v2).wrapping_add(2u16), 0xa003u16, game);
-    let v3: u16 = *(ram_ptr!(game, u16; 0x1c87)).offset((ram_word!(game, plm_id) >> 1) as isize);
-    let v4: u16 = (ram_word!(game, room_width_in_blocks) as i32 * 2i32 + v3 as i32) as u16;
-    WriteLevelDataBlockTypeAndBts(v4, 0xa003u16, game);
-    WriteLevelDataBlockTypeAndBts((v4).wrapping_add(2u16), 0u16, game);
-    plmp
-}
-pub unsafe fn PlmInstr_DamageDraygonTurretFacingUpRight(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    SetPlmVarPtr(k, 1u16, game);
-    let v2: u16 = ram_word!(game, plm_block_indices[(k >> 1)]);
-    WriteLevelDataBlockTypeAndBts(v2, 0xa003u16, game);
-    WriteLevelDataBlockTypeAndBts((v2).wrapping_add(2u16), 0u16, game);
-    let v4: u16 = (ram_word!(game, room_width_in_blocks) as i32 * 2i32 + v2 as i32) as u16;
-    WriteLevelDataBlockTypeAndBts(v4, 0xa003u16, game);
-    WriteLevelDataBlockTypeAndBts((v4).wrapping_add(2u16), 0xa003u16, game);
-    plmp
+) -> *const u8;
+    PlmInstr_DamageDraygonTurretFacingDownRight [plmp] {
+        SetPlmVarPtr(k, 1u16, game);
+        let v2: u16 = ram_word!(game, plm_block_indices[(k >> 1)]);
+        WriteLevelDataBlockTypeAndBts(v2, 0xa003u16, game);
+        WriteLevelDataBlockTypeAndBts((v2).wrapping_add(2u16), 0xa003u16, game);
+        let v3: u16 = *(ram_ptr!(game, u16; 0x1c87)).offset((ram_word!(game, plm_id) >> 1) as isize);
+        let v4: u16 = (ram_word!(game, room_width_in_blocks) as i32 * 2i32 + v3 as i32) as u16;
+        WriteLevelDataBlockTypeAndBts(v4, 0xa003u16, game);
+        WriteLevelDataBlockTypeAndBts((v4).wrapping_add(2u16), 0u16, game);
+    };
+    PlmInstr_DamageDraygonTurretFacingUpRight [plmp] {
+        SetPlmVarPtr(k, 1u16, game);
+        let v2: u16 = ram_word!(game, plm_block_indices[(k >> 1)]);
+        WriteLevelDataBlockTypeAndBts(v2, 0xa003u16, game);
+        WriteLevelDataBlockTypeAndBts((v2).wrapping_add(2u16), 0u16, game);
+        let v4: u16 = (ram_word!(game, room_width_in_blocks) as i32 * 2i32 + v2 as i32) as u16;
+        WriteLevelDataBlockTypeAndBts(v4, 0xa003u16, game);
+        WriteLevelDataBlockTypeAndBts((v4).wrapping_add(2u16), 0xa003u16, game);
+    };
 }
 pub unsafe fn PlmInstr_DamageDraygonTurret2(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
     SetPlmVarPtr(k, 1u16, game);
@@ -3408,33 +3266,29 @@ pub unsafe fn PlmInstr_DamageDraygonTurret2(plmp: *const u8, k: u16, game: &mut 
     );
     plmp
 }
-pub unsafe fn PlmInstr_DamageDraygonTurretFacingDownLeft(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    SetPlmVarPtr(k, 1u16, game);
-    let v2: u16 = ram_word!(game, plm_block_indices[(k >> 1)]);
-    WriteLevelDataBlockTypeAndBts(v2, 0xa003u16, game);
-    WriteLevelDataBlockTypeAndBts((v2).wrapping_sub(2u16), 0xa003u16, game);
-    let v4: u16 = (ram_word!(game, room_width_in_blocks) as i32 * 2i32 + v2 as i32) as u16;
-    WriteLevelDataBlockTypeAndBts(v4, 0xa003u16, game);
-    WriteLevelDataBlockTypeAndBts((v4).wrapping_sub(2u16), 0u16, game);
-    plmp
-}
-pub unsafe fn PlmInstr_DamageDraygonTurretFacingUpLeft(
-    plmp: *const u8,
-    k: u16,
-    game: &mut Game,
-) -> *const u8 {
-    SetPlmVarPtr(k, 1u16, game);
-    let v2: u16 = ram_word!(game, plm_block_indices[(k >> 1)]);
-    WriteLevelDataBlockTypeAndBts(v2, 0xa003u16, game);
-    WriteLevelDataBlockTypeAndBts((v2).wrapping_sub(2u16), 0u16, game);
-    let v4: u16 = (v2 as i32 + ram_word!(game, room_width_in_blocks) as i32 * 2i32) as u16;
-    WriteLevelDataBlockTypeAndBts(v4, 0xa003u16, game);
-    WriteLevelDataBlockTypeAndBts((v4).wrapping_sub(2u16), 0xa003u16, game);
-    plmp
+) -> *const u8;
+    PlmInstr_DamageDraygonTurretFacingDownLeft [plmp] {
+        SetPlmVarPtr(k, 1u16, game);
+        let v2: u16 = ram_word!(game, plm_block_indices[(k >> 1)]);
+        WriteLevelDataBlockTypeAndBts(v2, 0xa003u16, game);
+        WriteLevelDataBlockTypeAndBts((v2).wrapping_sub(2u16), 0xa003u16, game);
+        let v4: u16 = (ram_word!(game, room_width_in_blocks) as i32 * 2i32 + v2 as i32) as u16;
+        WriteLevelDataBlockTypeAndBts(v4, 0xa003u16, game);
+        WriteLevelDataBlockTypeAndBts((v4).wrapping_sub(2u16), 0u16, game);
+    };
+    PlmInstr_DamageDraygonTurretFacingUpLeft [plmp] {
+        SetPlmVarPtr(k, 1u16, game);
+        let v2: u16 = ram_word!(game, plm_block_indices[(k >> 1)]);
+        WriteLevelDataBlockTypeAndBts(v2, 0xa003u16, game);
+        WriteLevelDataBlockTypeAndBts((v2).wrapping_sub(2u16), 0u16, game);
+        let v4: u16 = (v2 as i32 + ram_word!(game, room_width_in_blocks) as i32 * 2i32) as u16;
+        WriteLevelDataBlockTypeAndBts(v4, 0xa003u16, game);
+        WriteLevelDataBlockTypeAndBts((v4).wrapping_sub(2u16), 0xa003u16, game);
+    };
 }
 pub unsafe fn PlmSetup_DraygonCannonFacingRight(j: u16, game: &mut Game) -> u8 {
     let v1: i32 = j as i32 >> 1i32;
@@ -3512,45 +3366,42 @@ pub unsafe fn PlmPreInstr_WakeIfTriggered(k: u16, game: &mut Game) {
         set_ram_word!(game.plm_instruction_timer[v1] = 1u16);
     }
 }
-pub unsafe fn PlmInstr_DrawItemFrame_Common(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    let v2: i32 = k as i32 >> 1i32;
-    set_ram_word!(game.plm_instruction_timer[v2] = 4u16);
-    set_ram_word!(
-        game.plm_instr_list_ptrs[v2] = plmp.offset_from(RomBankBase(0x84u8, game)) as c_long as u16
-    );
-    ProcessPlmDrawInstruction(k, game);
-    let v3: u16 = ram_word!(game, plm_id);
-    CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
-    DrawPlm(v3, game);
-    null::<u8>()
+crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
+    PlmInstr_DrawItemFrame_Common [null::<u8>()] {
+        let v2: i32 = k as i32 >> 1i32;
+        set_ram_word!(game.plm_instruction_timer[v2] = 4u16);
+        set_ram_word!(
+            game.plm_instr_list_ptrs[v2] = plmp.offset_from(RomBankBase(0x84u8, game)) as c_long as u16
+        );
+        ProcessPlmDrawInstruction(k, game);
+        let v3: u16 = ram_word!(game, plm_id);
+        CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
+        DrawPlm(v3, game);
+    };
+    PlmInstr_DrawItemFrame0 [PlmInstr_DrawItemFrame_Common(plmp, k, game)] {
+        set_ram_word!(
+            game.plm_instruction_draw_ptr[(k >> 1)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0x84e05f)) as *mut u16)
+                    .offset((ram_word!(game, plm_variables[(k >> 1)]) >> 1) as isize,)
+        );
+    };
+    PlmInstr_DrawItemFrame1 [PlmInstr_DrawItemFrame_Common(plmp, k, game)] {
+        set_ram_word!(
+            game.plm_instruction_draw_ptr[(k >> 1)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0x84e077)) as *mut u16)
+                    .offset((ram_word!(game, plm_variables[(k >> 1)]) >> 1) as isize,)
+        );
+    };
 }
-pub unsafe fn PlmInstr_DrawItemFrame0(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    set_ram_word!(
-        game.plm_instruction_draw_ptr[(k >> 1)] =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x84e05f)) as *mut u16)
-                .offset((ram_word!(game, plm_variables[(k >> 1)]) >> 1) as isize,)
-    );
-    PlmInstr_DrawItemFrame_Common(plmp, k, game)
-}
-pub unsafe fn PlmInstr_DrawItemFrame1(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    set_ram_word!(
-        game.plm_instruction_draw_ptr[(k >> 1)] =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x84e077)) as *mut u16)
-                .offset((ram_word!(game, plm_variables[(k >> 1)]) >> 1) as isize,)
-    );
-    PlmInstr_DrawItemFrame_Common(plmp, k, game)
-}
-pub unsafe fn PlmInstr_ClearChargeBeamCounter(
+crate::instruction_callbacks! { pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
-) -> *const u8 {
-    set_ram_word!(game.flare_counter = 0u16);
-    plmp
+) -> *const u8;
+    PlmInstr_ClearChargeBeamCounter [plmp] { set_ram_word!(game.flare_counter = 0u16); };
 }
-pub unsafe fn PlmInstr_E63B(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.fx_y_vel = -32i32 as u16);
-    plmp
+crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
+    PlmInstr_E63B [plmp] { set_ram_word!(game.fx_y_vel = -32i32 as u16); };
 }
 crate::forward_calls! { pub unsafe fn (j: u16, game: &mut Game) -> u8;
     sub_84EE4D => sub_84EE5F(j, 8u16, game);

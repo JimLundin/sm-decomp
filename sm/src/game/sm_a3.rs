@@ -396,21 +396,20 @@ pub unsafe fn Fireflea_Common(game: &mut Game) {
         update_ram_word!(game.fireflea_darkness_level, wrapping_add(2u16));
     }
 }
-pub unsafe fn MaridiaFish_Instr_3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game))
-        .base
-        .layer = 6u16;
-    jp
-}
-pub unsafe fn MaridiaFish_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game))
-        .base
-        .layer = 2u16;
-    jp
-}
-pub unsafe fn MaridiaFish_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game)).var_01 = 1u16;
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    MaridiaFish_Instr_3 [jp] {
+        (*Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game))
+            .base
+            .layer = 6u16;
+    };
+    MaridiaFish_Instr_1 [jp] {
+        (*Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game))
+            .base
+            .layer = 2u16;
+    };
+    MaridiaFish_Instr_2 [jp] {
+        (*Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game)).var_01 = 1u16;
+    };
 }
 pub unsafe fn MaridiaFish_Init(game: &mut Game) {
     let E = Get_MaridiaFish(ram_word!(game, cur_enemy_index) as i32, game);
@@ -658,37 +657,23 @@ pub unsafe fn Slug_Init(game: &mut Game) {
     );
     StoneZoomer_E67A(ram_word!(game, cur_enemy_index), game);
 }
-pub unsafe fn PlatformThatFallsWithSamus_Instr_3(
+crate::instruction_callbacks! { pub unsafe fn (
     k: u16,
     jp: *const u16,
     game: &mut Game,
-) -> *const u16 {
-    (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 0u16;
-    jp
-}
-pub unsafe fn PlatformThatFallsWithSamus_Instr_4(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 1u16;
-    jp
-}
-pub unsafe fn PlatformThatFallsWithSamus_Instr_1(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 0u16;
-    jp
-}
-pub unsafe fn PlatformThatFallsWithSamus_Instr_2(
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16 {
-    (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 1u16;
-    jp
+) -> *const u16;
+    PlatformThatFallsWithSamus_Instr_3 [jp] {
+        (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 0u16;
+    };
+    PlatformThatFallsWithSamus_Instr_4 [jp] {
+        (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 1u16;
+    };
+    PlatformThatFallsWithSamus_Instr_1 [jp] {
+        (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 0u16;
+    };
+    PlatformThatFallsWithSamus_Instr_2 [jp] {
+        (*Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game)).var_02 = 1u16;
+    };
 }
 pub unsafe fn PlatformThatFallsWithSamus_Init(game: &mut Game) {
     let E = Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1448,13 +1433,11 @@ pub unsafe fn Mochtroid_Touch(game: &mut Game) {
 pub unsafe fn Mochtroid_Shot(game: &mut Game) {
     Enemy_NormalShotAI_A3(game);
 }
-pub unsafe fn Sidehopper_Func_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    QueueSfx2_Max3(*jp, game);
-    jp.offset(1)
-}
-pub unsafe fn Sidehopper_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game)).var_04 = 1u16;
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    Sidehopper_Func_1 [jp.offset(1)] { QueueSfx2_Max3(*jp, game); };
+    Sidehopper_Instr_1 [jp] {
+        (*Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game)).var_04 = 1u16;
+    };
 }
 pub unsafe fn Sidehopper_Init(game: &mut Game) {
     set_ram_word!(game.random_number = 37u16);
@@ -1756,17 +1739,16 @@ pub unsafe fn Sidehopper_Func_22(game: &mut Game) {
         (*E).var_C = v3 as u16;
     };
 }
-pub unsafe fn MaridiaRefillCandy_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game)).var_00 = 4u16;
-    jp
-}
-pub unsafe fn MaridiaRefillCandy_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game)).var_00 = 8u16;
-    jp
-}
-pub unsafe fn MaridiaRefillCandy_Instr_3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game)).var_00 = 12u16;
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    MaridiaRefillCandy_Instr_1 [jp] {
+        (*Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game)).var_00 = 4u16;
+    };
+    MaridiaRefillCandy_Instr_2 [jp] {
+        (*Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game)).var_00 = 8u16;
+    };
+    MaridiaRefillCandy_Instr_3 [jp] {
+        (*Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game)).var_00 = 12u16;
+    };
 }
 pub unsafe fn MaridiaRefillCandy_Init(game: &mut Game) {
     let E = Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1859,13 +1841,9 @@ pub unsafe fn NorfairSlowFireball_Init(game: &mut Game) {
         crate::rtl::rom_table_word!(game, 0xa3b667, ((*v1).properties as i32 & 3i32) as isize);
     StoneZoomer_E67A(ram_word!(game, cur_enemy_index), game);
 }
-pub unsafe fn Bang_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    QueueSfx2_Max6(0x56u16, game);
-    jp
-}
-pub unsafe fn Bang_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_Bang(ram_word!(game, cur_enemy_index) as i32, game)).var_22 = 1u16;
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    Bang_Instr_1 [jp] { QueueSfx2_Max6(0x56u16, game); };
+    Bang_Instr_2 [jp] { (*Get_Bang(ram_word!(game, cur_enemy_index) as i32, game)).var_22 = 1u16; };
 }
 pub unsafe fn Bang_Init(game: &mut Game) {
     let E = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
@@ -2249,29 +2227,23 @@ pub unsafe fn Skree_Shot(game: &mut Game) {
         );
     }
 }
-pub unsafe fn MaridiaSnail_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_MaridiaSnail(k as i32, game)).var_F = *jp;
-    jp.offset(1)
-}
-pub unsafe fn MaridiaSnail_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_MaridiaSnail(k as i32, game)).var_D = *jp;
-    jp.offset(1)
-}
-pub unsafe fn MaridiaSnail_Instr_4(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_MaridiaSnail(k as i32, game);
-    (*E).var_07 = *jp.offset(0);
-    (*E).var_C = *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
-        as *mut MaridiaSnailData2)
-        .offset(0))
-    .field_6 as *mut u8)
-        .offset((8i32 * (*E).var_07 as i32) as isize) as *mut u16);
-    jp.offset(1)
-}
-pub unsafe fn MaridiaSnail_Instr_3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_MaridiaSnail(k as i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp.offset(0));
-    (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(*jp.offset(1));
-    jp.offset(2)
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    MaridiaSnail_Instr_1 [jp.offset(1)] { (*Get_MaridiaSnail(k as i32, game)).var_F = *jp; };
+    MaridiaSnail_Instr_2 [jp.offset(1)] { (*Get_MaridiaSnail(k as i32, game)).var_D = *jp; };
+    MaridiaSnail_Instr_4 [jp.offset(1)] {
+        let E = Get_MaridiaSnail(k as i32, game);
+        (*E).var_07 = *jp.offset(0);
+        (*E).var_C = *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
+            as *mut MaridiaSnailData2)
+            .offset(0))
+        .field_6 as *mut u8)
+            .offset((8i32 * (*E).var_07 as i32) as isize) as *mut u16);
+    };
+    MaridiaSnail_Instr_3 [jp.offset(2)] {
+        let E = Get_MaridiaSnail(k as i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp.offset(0));
+        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(*jp.offset(1));
+    };
 }
 pub unsafe fn MaridiaSnail_Instr_5(k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
     if (*Get_MaridiaSnail(k as i32, game)).var_08 == 2u16 || (NextRandom(game) & 1) != 0 {
@@ -2784,9 +2756,8 @@ pub unsafe fn Reflec_Func_1(game: &mut Game) {
         );
     }
 }
-pub unsafe fn Reflec_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_Reflec(k as i32, game)).parameter_2 = *jp.offset(0);
-    jp.offset(1)
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    Reflec_Instr_1 [jp.offset(1)] { (*Get_Reflec(k as i32, game)).parameter_2 = *jp.offset(0); };
 }
 pub unsafe fn Reflec_Init(game: &mut Game) {
     let E = Get_Reflec(ram_word!(game, cur_enemy_index) as i32, game);
@@ -3167,17 +3138,15 @@ pub unsafe fn Metroid_Init(game: &mut Game) {
     );
     (*E).var_02 = 0u16;
 }
-pub unsafe fn Metroid_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    QueueSfx2_Max6(0x50u16, game);
-    jp
-}
-pub unsafe fn Metroid_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let v2: i32 = NextRandom(game) as i32 & 7i32;
-    QueueSfx2_Max6(
-        crate::rtl::rom_table_word!(game, 0xa3ead6, v2 as isize),
-        game,
-    );
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    Metroid_Instr_2 [jp] { QueueSfx2_Max6(0x50u16, game); };
+    Metroid_Instr_1 [jp] {
+        let v2: i32 = NextRandom(game) as i32 & 7i32;
+        QueueSfx2_Max6(
+            crate::rtl::rom_table_word!(game, 0xa3ead6, v2 as isize),
+            game,
+        );
+    };
 }
 pub unsafe fn Metroid_Frozen(game: &mut Game) {
     Enemy_NormalFrozenAI_A3(game);

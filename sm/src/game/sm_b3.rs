@@ -75,13 +75,13 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
     Enemy_NormalPowerBombAI_SkipDeathAnim_B3 => NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
     Enemy_NormalFrozenAI_B3 => NormalEnemyFrozenAI(game);
 }
-pub unsafe fn Enemy_SetAiPreInstr_B3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*gEnemyData(k as i32, game)).ai_preinstr = *jp.offset(0);
-    jp.offset(1)
-}
-pub unsafe fn Enemy_ClearAiPreInstr_B3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*gEnemyData(k as i32, game)).ai_preinstr = ((0xb3807bi32) as u16);
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    Enemy_SetAiPreInstr_B3 [jp.offset(1)] {
+        (*gEnemyData(k as i32, game)).ai_preinstr = *jp.offset(0);
+    };
+    Enemy_ClearAiPreInstr_B3 [jp] {
+        (*gEnemyData(k as i32, game)).ai_preinstr = ((0xb3807bi32) as u16);
+    };
 }
 pub unsafe fn UnusedSpinningTurtleEye_Init(game: &mut Game) {
     let v0 = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
@@ -644,69 +644,24 @@ pub unsafe fn BrinstarYellowPipeBug_Func_10(k: u16, game: &mut Game) {
         );
     };
 }
-pub unsafe fn Botwoon_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.x_width = 8u16;
-    (*E).base.y_height = 16u16;
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    @prefix { let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game); };
+    Botwoon_Instr_1 [jp] {  (*E).base.x_width = 8u16; (*E).base.y_height = 16u16; };
+    Botwoon_Instr_2 [jp] {  set_fields! {[(*E).base], 12u16; x_width, y_height} };
+    Botwoon_Instr_3 [jp] {  (*E).base.x_width = 16u16; (*E).base.y_height = 8u16; };
+    Botwoon_Instr_4 [jp] {  set_fields! {[(*E).base], 12u16; x_width, y_height} };
+    Botwoon_Instr_5 [jp] {  (*E).base.x_width = 8u16; (*E).base.y_height = 16u16; };
+    Botwoon_Instr_6 [jp] {  (*E).base.x_width = 8u16; (*E).base.y_height = 16u16; };
+    Botwoon_Instr_7 [jp] {  set_fields! {[(*E).base], 12u16; x_width, y_height} };
+    Botwoon_Instr_8 [jp] {  (*E).base.x_width = 16u16; (*E).base.y_height = 8u16; };
+    Botwoon_Instr_9 [jp] {  set_fields! {[(*E).base], 12u16; x_width, y_height} };
+    Botwoon_Instr_10 [jp] {  (*E).base.x_width = 8u16; (*E).base.y_height = 16u16; };
 }
-pub unsafe fn Botwoon_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    set_fields! {[(*E).base], 12u16; x_width, y_height}
-    jp
-}
-pub unsafe fn Botwoon_Instr_3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.x_width = 16u16;
-    (*E).base.y_height = 8u16;
-    jp
-}
-pub unsafe fn Botwoon_Instr_4(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    set_fields! {[(*E).base], 12u16; x_width, y_height}
-    jp
-}
-pub unsafe fn Botwoon_Instr_5(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.x_width = 8u16;
-    (*E).base.y_height = 16u16;
-    jp
-}
-pub unsafe fn Botwoon_Instr_6(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.x_width = 8u16;
-    (*E).base.y_height = 16u16;
-    jp
-}
-pub unsafe fn Botwoon_Instr_7(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    set_fields! {[(*E).base], 12u16; x_width, y_height}
-    jp
-}
-pub unsafe fn Botwoon_Instr_8(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.x_width = 16u16;
-    (*E).base.y_height = 8u16;
-    jp
-}
-pub unsafe fn Botwoon_Instr_9(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    set_fields! {[(*E).base], 12u16; x_width, y_height}
-    jp
-}
-pub unsafe fn Botwoon_Instr_10(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.x_width = 8u16;
-    (*E).base.y_height = 16u16;
-    jp
-}
-pub unsafe fn Botwoon_Instr_SetSpitting(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game)).var_5A = 1u16;
-    jp
-}
-pub unsafe fn Botwoon_Instr_QueueSpitSfx(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    QueueSfx2_Max6(0x7cu16, game);
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    Botwoon_Instr_SetSpitting [jp] {
+        (*Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game)).var_5A = 1u16;
+    };
+    Botwoon_Instr_QueueSpitSfx [jp] { QueueSfx2_Max6(0x7cu16, game); };
 }
 pub unsafe fn Botwoon_QueueExplosionSfx(game: &mut Game) {
     QueueSfx2_Max6(0x24u16, game);
@@ -1376,17 +1331,18 @@ pub unsafe fn Botwoon_Func_33(game: &mut Game) {
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(x);
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(y);
 }
-pub unsafe fn EscapeEtecoon_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    if ram_word!(game, lava_acid_y_pos) >= 0xceu16 {
-        jp.offset(1)
-    } else {
-        *jp.offset(0) as usize as *const u16
-    }
-}
-pub unsafe fn EscapeEtecoon_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_EscapeEtecoon(k as i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp.offset(0));
-    jp.offset(1)
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    EscapeEtecoon_Instr_1 [] {
+        if ram_word!(game, lava_acid_y_pos) >= 0xceu16 {
+            jp.offset(1)
+        } else {
+            *jp.offset(0) as usize as *const u16
+        }
+    };
+    EscapeEtecoon_Instr_2 [jp.offset(1)] {
+        let E = Get_EscapeEtecoon(k as i32, game);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp.offset(0));
+    };
 }
 pub unsafe fn EscapeEtecoon_Main(game: &mut Game) {
     let E = Get_EscapeEtecoon(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1442,29 +1398,26 @@ pub unsafe fn EscapeEtecoon_Init(game: &mut Game) {
         (*E).var_A = crate::rtl::rom_table_word!(game, 0xb3e730, v3 as isize);
     };
 }
-pub unsafe fn EscapeDachora_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    if ram_word!(game, lava_acid_y_pos) >= 0xceu16 {
-        jp.offset(1)
-    } else {
-        *jp.offset(0) as usize as *const u16
-    }
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    EscapeDachora_Instr_2 [] {
+        if ram_word!(game, lava_acid_y_pos) >= 0xceu16 {
+            jp.offset(1)
+        } else {
+            *jp.offset(0) as usize as *const u16
+        }
+    };
+    EscapeDachora_Instr_3 [] {
+        if CheckEventHappened(0xfu16, game) != 0 {
+            *jp.offset(0) as usize as *const u16
+        } else {
+            jp.offset(1)
+        }
+    };
 }
-pub unsafe fn EscapeDachora_Instr_3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    if CheckEventHappened(0xfu16, game) != 0 {
-        *jp.offset(0) as usize as *const u16
-    } else {
-        jp.offset(1)
-    }
-}
-pub unsafe fn EscapeDachora_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_EscapeDachora(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(6u16);
-    jp
-}
-pub unsafe fn EscapeDachora_Instr_4(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let E = Get_EscapeDachora(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(6u16);
-    jp
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    @prefix { let E = Get_EscapeDachora(ram_word!(game, cur_enemy_index) as i32, game); };
+    EscapeDachora_Instr_1 [jp] {  (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(6u16); };
+    EscapeDachora_Instr_4 [jp] {  (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(6u16); };
 }
 pub unsafe fn EscapeDachora_Init(game: &mut Game) {
     let E = Get_EscapeDachora(ram_word!(game, cur_enemy_index) as i32, game);

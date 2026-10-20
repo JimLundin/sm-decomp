@@ -547,34 +547,31 @@ pub fn EnemyInstr_StopScript(k: u16, _jp: *const u16, game: &mut Game) -> *const
 pub unsafe fn EnemyInstr_Goto(_k: u16, jp: *const u16) -> *const u16 {
     *jp as usize as *const u16
 }
-pub unsafe fn EnemyInstr_DecTimerAndGoto(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let timer = game.enemy_instructions(k).timer();
-    let decremented = game.enemy_instructions(k).timer().wrapping_sub(1);
-    game.enemy_instructions(k).set_timer(decremented);
-    if timer == 1 {
-        jp.add(1)
-    } else {
-        EnemyInstr_Goto(k, jp)
-    }
-}
-pub unsafe fn EnemyInstr_SetTimer(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    game.enemy_instructions(k).set_timer(*jp);
-    jp.add(1)
-}
-pub unsafe fn EnemyInstr_Sleep(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
-    let instruction = (jp as *const u8).sub(2).offset_from(base_ptr) as u16;
-    game.enemy_instructions(k)
-        .set_current_instruction(instruction);
-    core::ptr::null()
-}
-pub unsafe fn EnemyInstr_WaitNframes(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
-    game.enemy_instructions(k).set_instruction_timer(*jp);
-    let instruction = (jp as *const u8).add(2).offset_from(base_ptr) as u16;
-    game.enemy_instructions(k)
-        .set_current_instruction(instruction);
-    core::ptr::null()
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    EnemyInstr_DecTimerAndGoto [] {
+        let timer = game.enemy_instructions(k).timer();
+        let decremented = game.enemy_instructions(k).timer().wrapping_sub(1);
+        game.enemy_instructions(k).set_timer(decremented);
+        if timer == 1 {
+            jp.add(1)
+        } else {
+            EnemyInstr_Goto(k, jp)
+        }
+    };
+    EnemyInstr_SetTimer [jp.add(1)] { game.enemy_instructions(k).set_timer(*jp); };
+    EnemyInstr_Sleep [core::ptr::null()] {
+        let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
+        let instruction = (jp as *const u8).sub(2).offset_from(base_ptr) as u16;
+        game.enemy_instructions(k)
+            .set_current_instruction(instruction);
+    };
+    EnemyInstr_WaitNframes [core::ptr::null()] {
+        let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
+        game.enemy_instructions(k).set_instruction_timer(*jp);
+        let instruction = (jp as *const u8).add(2).offset_from(base_ptr) as u16;
+        game.enemy_instructions(k)
+            .set_current_instruction(instruction);
+    };
 }
 pub unsafe fn EnemyInstr_CopyToVram(_k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let tail = game.vram_write_queue_tail();
