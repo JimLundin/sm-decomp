@@ -1,8 +1,9 @@
 # Plan
 
-Goal: Super Metroid as a readable, maintained Rust program that plays from
-boot to credits, with emulated SNES hardware for video and audio. Map Rando
-support comes after vanilla.
+Goal: a compact Super Metroid game engine with descriptive gameplay routines,
+playing from boot to credits. SNES emulation remains the current video/audio
+backend and verification oracle; it is not the long-term engine architecture.
+Map Rando support comes after vanilla.
 
 Git concurrency (user direction, 2026-10-19): agents must not manually
 reserve or hold Git locks, including index.lock and branch ref locks.
@@ -21,10 +22,12 @@ further, by tackling large structural changes before individual cleanup.
 Use **90,000 lines as a stretch planning checkpoint**, not a demonstrated
 forecast. This work order replaces earlier reduction and cleanup queues.
 
-Latest volume direction: prioritize repeated implementation patterns across
-the existing source. A whole-system redesign is not a prerequisite for a
-reduction. Price complete repeated families, including their replacement
-costs, and reject negative drafts before spending time on runtime checks.
+Latest user clarification: code-volume reduction is the immediate priority.
+Re-architecture, shared lifecycle engines and declarative behavior sequences
+are justified when they replace substantial implementation. Price complete
+families, including their replacement costs, before runtime checks. Previous
+module-move experiments do not test the payoff of changing the algorithms or
+their representation. Do not use their small savings as a lower-bound claim.
 
 User clarification: the long-term structure is descriptive gameplay modules
 and routines, with **bank-based source organization removed**. Keep bank
@@ -47,9 +50,10 @@ keep an old Rust entry point only where a real caller or identity contract
 needs it. Use ordinary functions, enums and typed data where they simplify
 the whole algorithm. Migrate one complete responsibility at a time, redirect
 real callers, and remove its old bank implementation. Remaining banks are
-temporary homes for unmigrated responsibilities. Avoid permanent bank facades,
-a universal state engine or a new interpreter. Descriptive domain ownership
-does not have to wait until the source count is below 100,000.
+temporary homes for unmigrated responsibilities. A shared engine must serve
+concrete repeated behavior and reduce the complete maintained implementation;
+an interpreter or data table is neither automatically disallowed nor a saving
+by itself. Keep meaningful gameplay names and avoid permanent bank facades.
 
 Small preparatory changes, including temporary line-count increases, are
 allowed when attached to a concrete replacement with named consumers and
@@ -166,13 +170,9 @@ experiments parked as volume workstreams; use their domain design when the
 relevant subsystem is migrated. Continue the independent large-reduction
 comparison below without extrapolating savings from these pilots.
 
-For the next architectural batch, use the concrete motion/pose split as the
-starting candidate and preserve its existing input/movement/pose phases.
-Complete the exceptional-path checks before adopting its algorithm changes;
-the relocation control provides a smaller behavioral step. Extend the same
-ownership approach to individual enemy lifecycles and menus/sprites/save data.
-Evaluate each whole responsibility; a small net saving is acceptable for an
-explicit domain migration but is not evidence of a large volume payoff.
+These domain moves remain parked during the immediate volume pass. Preserve
+their useful phase/dependency findings when a replacement needs them, but
+prioritize deleting repeated implementation over adopting relocation controls.
 
 ## Work order
 
@@ -374,6 +374,30 @@ Further syntax preflight at b64a0470 found no substantial unpriced cohort:
 computed-result/store pairs occupy 844 gross lines before replacement costs.
 Pointer, timer, null-guard and string-cast envelopes provide no credible
 thousand-line replacement. These bounds do not exhaust algorithmic sharing.
+
+Further complete-cohort pricing at 7617b682 excludes these repeats:
+
+- Index-only Eproj/PLM/HDMA slot methods: 958 replacements, 253 locals and
+  86 methods across nine callers add **668 formatted lines**. This differs
+  from accessor-declaration drafts but also fails the volume test.
+- Field-aware word arithmetic: 135 expressions across 16 banks remove only
+  **39 net lines**, including helper/documentation costs. Park this notation.
+- PPU kernel sharing is already landed. The surveyed 1,417 gross function
+  lines include existing shared kernels and required renderer differences;
+  they are not removable duplication.
+- Remaining callback signatures expose 313 gross header lines and at most
+  **255 net lines** after optimistic minimum grouping costs, before real
+  formatting and ordering costs. This cohort has no large volume payoff.
+- Multibox collision bodies occupy 219 lines and normal counterparts 117;
+  traversal, count widths, edge rules, gating and effect order differ.
+  Residual comparable PLM/scrolling tile loops total roughly 60 lines after
+  existing tile sharing. Neither preflight establishes a large replacement.
+
+These studies changed no maintained source and ran no runtime checks.
+Drafts/reports: TEMP sm-slot-index-price-7617b682,
+sm-word-arithmetic-7617b682, sm-ppu-kernels-7617b682 and
+sm-signature-headers-7617b682. Continue discovery beyond these bounded
+cohorts; they do not exhaust possible algorithmic reductions.
 
 When revisiting one of these exact families, consult its historical section
 with `git show ec45c573:docs/PLAN.md` and search the relevant heading/symbol.
