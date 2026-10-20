@@ -783,8 +783,37 @@ pub unsafe fn QueueTransferOfMenuTilemapToVramBG1(game: &mut Game) {
     word!(game.vram_write_queue_tail = (v0).wrapping_add(7));
 }
 static kBitShl: [u8; 3] = [1, 2, 4];
+// Search toward the pressed direction without wrapping through the exit row.
+unsafe fn next_occupied_file_slot(game: &mut Game) -> Option<u8> {
+    let up = if word!(game.joypad1_newkeys) as i32 & kButton_Up as i32 != 0 {
+        true
+    } else if word!(game.joypad1_newkeys) as i32 & kButton_Down as i32 != 0 {
+        false
+    } else {
+        return None;
+    };
+    let mut slot = word!(game.eproj_id[15]) as u8;
+    loop {
+        if up {
+            slot = slot.wrapping_sub(1);
+            if slot & 0x80 != 0 {
+                return None;
+            }
+        } else {
+            slot = slot.wrapping_add(1);
+            if (slot as i8).wrapping_sub(4) >= 0 {
+                return None;
+            }
+            if slot == 3 {
+                return Some(slot);
+            }
+        }
+        if kBitShl[slot as usize] as u16 & word!(game.nonempty_save_slots) != 0 {
+            return Some(slot);
+        }
+    }
+}
 pub unsafe fn FileSelectMenu_8(game: &mut Game) {
-    let mut v0: u8 = 0;
     DrawBorderAroundDataCopyMode(game);
     DrawMenuSelectionMissile(game);
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
@@ -799,38 +828,8 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
         word!(game.menu_index, wrapping_add(7));
         QueueSfx1_Max6(0x37, game);
     } else {
-        let selection_unchanged: bool;
-        if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
-            v0 = word!(game.eproj_id[15]) as u8;
-            loop {
-                v0 = v0.wrapping_sub(1);
-                if ((v0 & 0x80) != 0) {
-                    selection_unchanged = true;
-                    break;
-                }
-                if (kBitShl[v0 as usize] as u16 & word!(game.nonempty_save_slots)) != 0 {
-                    selection_unchanged = false;
-                    break;
-                }
-            }
-        } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
-            v0 = word!(game.eproj_id[15]) as u8;
-            loop {
-                v0 = v0.wrapping_add(1);
-                if (((v0) as i8).wrapping_sub(4) >= 0) {
-                    selection_unchanged = true;
-                    break;
-                }
-                if v0 == 3 || (kBitShl[v0 as usize] as u16 & word!(game.nonempty_save_slots)) != 0 {
-                    selection_unchanged = false;
-                    break;
-                }
-            }
-        } else {
-            selection_unchanged = true;
-        }
-        if selection_unchanged {
-        } else {
+        let selection = next_occupied_file_slot(game);
+        if let Some(v0) = selection {
             byte!(@pointer (ram_ptr!(game, u16; 0x1997)).offset(15); 0) = v0;
             QueueSfx1_Max6(0x37, game);
             SetFileCopyMenuSelectionMissilePosition(game);
@@ -1119,9 +1118,7 @@ pub unsafe fn InitFileSelectMenuFileClear(game: &mut Game) {
     SetFileClearMenuMissilePos(game);
 }
 pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
-    static kBitShl_: [u8; 3] = [1, 2, 4];
     let mut v0: u16 = 0;
-    let mut v1: u8 = 0;
     DrawBorderAroundDataClearMode(game);
     DrawMenuSelectionMissile(game);
     byte!(v0; 1) = byte!(@pointer ram_ptr!(game, u16; 0x8f); 1);
@@ -1133,39 +1130,8 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
             return;
         }
     } else if ((word!(game.joypad1_newkeys) & 0x8000) == 0) {
-        let selection_unchanged: bool;
-        if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
-            v1 = word!(game.eproj_id[15]) as u8;
-            loop {
-                v1 = v1.wrapping_sub(1);
-                if ((v1 & 0x80) != 0) {
-                    selection_unchanged = true;
-                    break;
-                }
-                if (kBitShl_[v1 as usize] as u16 & word!(game.nonempty_save_slots)) != 0 {
-                    selection_unchanged = false;
-                    break;
-                }
-            }
-        } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
-            v1 = word!(game.eproj_id[15]) as u8;
-            loop {
-                v1 = v1.wrapping_add(1);
-                if (((v1) as i8).wrapping_sub(4) >= 0) {
-                    selection_unchanged = true;
-                    break;
-                }
-                if v1 == 3 || (kBitShl_[v1 as usize] as u16 & word!(game.nonempty_save_slots)) != 0
-                {
-                    selection_unchanged = false;
-                    break;
-                }
-            }
-        } else {
-            selection_unchanged = true;
-        }
-        if selection_unchanged {
-        } else {
+        let selection = next_occupied_file_slot(game);
+        if let Some(v1) = selection {
             byte!(@pointer (ram_ptr!(game, u16; 0x1997)).offset(15); 0) = v1;
             byte!(v0; 0) = 55;
             QueueSfx1_Max6(v0, game);

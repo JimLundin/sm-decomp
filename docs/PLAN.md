@@ -20,6 +20,51 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared occupied-file navigation (2026-10-20)
+
+File-copy source selection and file-clear selection now share the complete
+occupied-slot search. Existing handlers retain drawing, confirmation/cancel,
+sound and missile-position work. Up wins over down; the search keeps signed
+byte bounds, the exit row, live occupied-slot reads and byte-only selection
+stores. Clear mode retains its inherited sound-argument high byte. The final
+formatted source removes **34 lines**, including the helper and both callers.
+
+Actual original/replacement/normal-library handlers pass **8264 cases**. They
+exercise real ROM drawing, OAM writes, missile animation/position and sound
+queues, comparing full RAM and ordered calls including full sound arguments.
+Cases cover all 32 combinations of Start/A/B/Up/Down, four valid selections,
+eight occupancy masks, four animation/OAM/sound profiles, and invalid byte/word
+selection boundaries with partial RAM and panic outcomes. Actual normal-library
+source bytes and all source/library/harness/ROM pins are checked.
+
+The normal library also matches **2048 actual oracle entries** at 81:96C2 and
+81:9B64, identified in the bank 81 log. These cover the valid input/selection/
+occupancy combinations. WRAM comparison includes OAM, selection, transitions
+and sound queues; only arithmetic scratch 0000..004F and the stack bytes
+actually traversed in that call are excluded. The calls use native CPU mode,
+DP 0 and SP 1FF0. They do not compare CPU register outputs, advance complete
+frames/audio, demonstrate a normal-input movie route, or prove every RAM state.
+
+All **11 temporary routine/branch/effect probes** execute in the actual library
+during component checks. Their printed frame zero is the component harness's
+unused probe clock, not movie execution. Probes are then removed and the clean
+build passes the same native/oracle cases. The landed zero-offset change is
+reconciled into the final build/checks; the earlier probe observations predate
+that identity change. The selected handler and helper bodies remain the same.
+
+Formatting, normal release (20.26s), clean component/oracle checks
+(0.43s), diff check and progress pass. Validation follows the focused
+component/oracle rule for these menu paths; no unrelated movie replay is
+claimed. The preceding full any% 129712/0 and Speed Booster 148406/0 remain
+historical integration checks. The pending shader edit stays separate.
+
+Committed Rust is **112752 lines**, leaving **12753 further lines** to
+reach below 100000. Unsafe functions increase by one for the shared search;
+cast-containing lines change by -2; other counters stay unchanged.
+Disposable checks are under the bindings root's `navigation/` directory;
+its existing `integrated/` target is reused without copying game/host artifacts.
+The complete remaining reduction budget is still unproven.
+
 ## Remove zero pointer offsets (2026-10-20)
 
 Remove all 514 literal `.offset(0)` operations across 32 source files. Complete
