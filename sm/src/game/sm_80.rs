@@ -3034,109 +3034,133 @@ unsafe fn DecompNextByte(game: &mut Game) -> u8 {
     }
     b
 }
-pub unsafe fn DecompressToMem(src: u32, decompress_dst: *mut u8, game: &mut Game) {
-    game.decompress_src = src;
-    let mut src_pos: i32 = 0;
-    let mut dst_pos: i32 = 0i32;
+// Command decoding is shared; destinations retain their own byte/write protocol.
+trait DecompressionOutput {
+    fn start(&self) -> i32;
+    unsafe fn read(&self, position: i32, game: *mut Game) -> u8;
+    unsafe fn write(&self, position: i32, value: u8, back_reference: bool, game: *mut Game);
+}
+struct DecompressionMemory(*mut u8);
+impl DecompressionOutput for DecompressionMemory {
+    fn start(&self) -> i32 {
+        0
+    }
+    unsafe fn read(&self, position: i32, _game: *mut Game) -> u8 {
+        *self.0.offset(position as isize)
+    }
+    unsafe fn write(&self, position: i32, value: u8, _back_reference: bool, _game: *mut Game) {
+        *self.0.offset(position as isize) = value;
+    }
+}
+struct DecompressionVram(u16);
+impl DecompressionOutput for DecompressionVram {
+    fn start(&self) -> i32 {
+        self.0 as i32
+    }
+    unsafe fn read(&self, position: i32, game: *mut Game) -> u8 {
+        ReadPpuByte(position as u16, &mut *game)
+    }
+    unsafe fn write(&self, position: i32, value: u8, back_reference: bool, game: *mut Game) {
+        if back_reference {
+            WriteRegWord(VMADDL as u16, (position >> 1) as u16, &mut *game);
+        }
+        WriteReg((VMDATAL as i32 + (position & 1)) as u16, value, &mut *game);
+    }
+}
+unsafe fn decompress<O: DecompressionOutput>(src: u32, output: O, game: *mut Game) {
+    (*game).decompress_src = src;
+    let mut destination = output.start();
     loop {
-        let mut len: i32 = 0;
-        let mut cmd: u8 = 0;
-        let mut b: u8 = DecompNextByte(game);
-        if b == 0xffu8 {
+        let header = DecompNextByte(&mut *game);
+        if header == 0xff {
             break;
         }
-        if (b as i32 & 0xe0i32) == 0xe0i32 {
-            cmd = (8i32 * b as i32 & 0xe0i32) as u8;
-            len = ((b as i32 & 3i32) << 8i32 | DecompNextByte(game) as i32) + 1i32;
+        let (command, mut remaining) = if header & 0xe0 == 0xe0 {
+            (
+                (8i32 * header as i32 & 0xe0) as u8,
+                ((header as i32 & 3) << 8 | DecompNextByte(&mut *game) as i32) + 1,
+            )
         } else {
-            cmd = (b) & (0xe0u8);
-            len = (b as i32 & 0x1fi32) + 1i32;
-        }
-        if cmd as i32 & 0x80i32 != 0 {
-            let want_xor: u8 = (if cmd as i32 & 0x20i32 != 0 {
-                0xffi32
+            (header & 0xe0, (header as i32 & 0x1f) + 1)
+        };
+        if command & 0x80 != 0 {
+            let xor = if command & 0x20 != 0 { 0xff } else { 0 };
+            let mut source = if command >= 0xc0 {
+                destination - DecompNextByte(&mut *game) as i32
             } else {
-                0i32
-            }) as u8;
-            if cmd >= 0xc0u8 {
-                src_pos = dst_pos - DecompNextByte(game) as i32;
-            } else {
-                src_pos = DecompNextByte(game) as i32;
-                src_pos += DecompNextByte(game) as i32 * 256i32;
-            }
+                let low = DecompNextByte(&mut *game) as i32;
+                low + DecompNextByte(&mut *game) as i32 * 256 + output.start()
+            };
             loop {
-                let fresh23 = src_pos;
-                src_pos = src_pos + 1;
-                b = (*decompress_dst.offset(fresh23 as isize)) ^ (want_xor);
-                let fresh24 = dst_pos;
-                dst_pos = dst_pos + 1;
-                *decompress_dst.offset(fresh24 as isize) = b;
-                len -= 1;
-                if (len == 0) {
+                let value = output.read(source, game) ^ xor;
+                source += 1;
+                output.write(destination, value, true, game);
+                destination += 1;
+                remaining -= 1;
+                if remaining == 0 {
                     break;
                 }
             }
         } else {
-            match cmd as i32 {
-                32 => {
-                    b = DecompNextByte(game);
+            match command {
+                0x20 => {
+                    let value = DecompNextByte(&mut *game);
                     loop {
-                        let fresh25 = dst_pos;
-                        dst_pos = dst_pos + 1;
-                        *decompress_dst.offset(fresh25 as isize) = b;
-                        len -= 1;
-                        if (len == 0) {
+                        output.write(destination, value, false, game);
+                        destination += 1;
+                        remaining -= 1;
+                        if remaining == 0 {
                             break;
                         }
                     }
                 }
-                64 => {
-                    b = DecompNextByte(game);
-                    let b2: u8 = DecompNextByte(game);
+                0x40 => {
+                    let first = DecompNextByte(&mut *game);
+                    let second = DecompNextByte(&mut *game);
                     loop {
-                        let fresh26 = dst_pos;
-                        dst_pos = dst_pos + 1;
-                        *decompress_dst.offset(fresh26 as isize) = b;
-                        len -= 1;
-                        if len == 0 {
+                        output.write(destination, first, false, game);
+                        destination += 1;
+                        remaining -= 1;
+                        if remaining == 0 {
                             break;
                         }
-                        let fresh27 = dst_pos;
-                        dst_pos = dst_pos + 1;
-                        *decompress_dst.offset(fresh27 as isize) = b2;
-                        len -= 1;
-                        if (len == 0) {
+                        output.write(destination, second, false, game);
+                        destination += 1;
+                        remaining -= 1;
+                        if remaining == 0 {
                             break;
                         }
                     }
                 }
-                96 => {
-                    b = DecompNextByte(game);
+                0x60 => {
+                    let mut value = DecompNextByte(&mut *game);
                     loop {
-                        let fresh28 = b;
-                        b = b.wrapping_add(1);
-                        let fresh29 = dst_pos;
-                        dst_pos = dst_pos + 1;
-                        *decompress_dst.offset(fresh29 as isize) = fresh28;
-                        len -= 1;
-                        if (len == 0) {
+                        let previous = value;
+                        value = value.wrapping_add(1);
+                        output.write(destination, previous, false, game);
+                        destination += 1;
+                        remaining -= 1;
+                        if remaining == 0 {
                             break;
                         }
                     }
                 }
                 _ => loop {
-                    b = DecompNextByte(game);
-                    let fresh30 = dst_pos;
-                    dst_pos = dst_pos + 1;
-                    *decompress_dst.offset(fresh30 as isize) = b;
-                    len -= 1;
-                    if (len == 0) {
+                    let value = DecompNextByte(&mut *game);
+                    output.write(destination, value, false, game);
+                    destination += 1;
+                    remaining -= 1;
+                    if remaining == 0 {
                         break;
                     }
                 },
             }
         }
     }
+}
+
+pub unsafe fn DecompressToMem(src: u32, decompress_dst: *mut u8, game: &mut Game) {
+    decompress(src, DecompressionMemory(decompress_dst), &raw mut *game);
 }
 unsafe fn ReadPpuByte(addr: u16, game: &mut Game) -> u8 {
     WriteRegWord(VMADDL as u16, (addr as i32 >> 1i32) as u16, game);
@@ -3149,112 +3173,7 @@ unsafe fn ReadPpuByte(addr: u16, game: &mut Game) -> u8 {
     }) as u8)
 }
 pub unsafe fn DecompressToVRAM(src: u32, dst_addr: u16, game: &mut Game) {
-    game.decompress_src = src;
-    let mut src_pos: i32 = 0;
-    let mut dst_pos: i32 = dst_addr as i32;
-    loop {
-        let mut len: i32 = 0;
-        let mut b: u8 = DecompNextByte(game);
-        let mut cmd: u8 = 0;
-        if b == 0xffu8 {
-            break;
-        }
-        if (b as i32 & 0xe0i32) == 0xe0i32 {
-            cmd = (8i32 * b as i32 & 0xe0i32) as u8;
-            len = ((b as i32 & 3i32) << 8i32 | DecompNextByte(game) as i32) + 1i32;
-        } else {
-            cmd = (b) & (0xe0u8);
-            len = (b as i32 & 0x1fi32) + 1i32;
-        }
-        if cmd as i32 & 0x80i32 != 0 {
-            let want_xor: u8 = (if cmd as i32 & 0x20i32 != 0 {
-                0xffi32
-            } else {
-                0i32
-            }) as u8;
-            if cmd >= 0xc0u8 {
-                src_pos = dst_pos - DecompNextByte(game) as i32;
-            } else {
-                src_pos = DecompNextByte(game) as i32;
-                src_pos += DecompNextByte(game) as i32 * 256i32;
-                src_pos += dst_addr as i32;
-            }
-            loop {
-                let fresh32 = src_pos;
-                src_pos = src_pos + 1;
-                b = (ReadPpuByte(fresh32 as u16, game)) ^ (want_xor);
-                WriteRegWord(VMADDL as u16, (dst_pos >> 1i32) as u16, game);
-                let fresh33 = dst_pos;
-                dst_pos = dst_pos + 1;
-                WriteReg((VMDATAL as i32 + (fresh33 & 1i32)) as u16, b, game);
-                len -= 1;
-                if (len == 0) {
-                    break;
-                }
-            }
-        } else {
-            match cmd as i32 {
-                32 => {
-                    b = DecompNextByte(game);
-                    loop {
-                        let fresh34 = dst_pos;
-                        dst_pos = dst_pos + 1;
-                        WriteReg((VMDATAL as i32 + (fresh34 & 1i32)) as u16, b, game);
-                        len -= 1;
-                        if (len == 0) {
-                            break;
-                        }
-                    }
-                }
-                64 => {
-                    b = DecompNextByte(game);
-                    let b2: u8 = DecompNextByte(game);
-                    loop {
-                        let fresh35 = dst_pos;
-                        dst_pos = dst_pos + 1;
-                        WriteReg((VMDATAL as i32 + (fresh35 & 1i32)) as u16, b, game);
-                        len -= 1;
-                        if len == 0 {
-                            break;
-                        }
-                        let fresh36 = dst_pos;
-                        dst_pos = dst_pos + 1;
-                        WriteReg((VMDATAL as i32 + (fresh36 & 1i32)) as u16, b2, game);
-                        len -= 1;
-                        if (len == 0) {
-                            break;
-                        }
-                    }
-                }
-                96 => {
-                    b = DecompNextByte(game);
-                    loop {
-                        let fresh37 = dst_pos;
-                        dst_pos = dst_pos + 1;
-                        let fresh38 = b;
-                        b = b.wrapping_add(1);
-                        WriteReg((VMDATAL as i32 + (fresh37 & 1i32)) as u16, fresh38, game);
-                        len -= 1;
-                        if (len == 0) {
-                            break;
-                        }
-                    }
-                }
-                _ => loop {
-                    b = DecompNextByte(game);
-                    let fresh39 = dst_pos;
-                    dst_pos = dst_pos + 1;
-                    let fresh40 = b;
-                    b = b.wrapping_add(1);
-                    WriteReg((VMDATAL as i32 + (fresh39 & 1i32)) as u16, fresh40, game);
-                    len -= 1;
-                    if (len == 0) {
-                        break;
-                    }
-                },
-            }
-        }
-    }
+    decompress(src, DecompressionVram(dst_addr), &raw mut *game);
 }
 pub unsafe fn LoadFromLoadStation(game: &mut Game) {
     set_ram_word!(game.save_station_lockout_flag = 1u16);

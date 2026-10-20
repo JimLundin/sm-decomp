@@ -31,6 +31,35 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Shared decompression (2026-10-20): RAM and VRAM outputs now share the complete
+command decoder. Two private output implementations retain raw byte RAM
+accesses and the original VRAM register protocol. ROM bank rollover,
+short/extended lengths, relative/absolute source bases, XOR, overlapping
+back-references, odd destinations, word-fill prefetch and incrementing bytes
+remain exact. The shared decoder and output interface take raw Game pointers;
+only original ROM/PPU/register calls reborrow Game. No broader RAM reference,
+range guard or new runtime policy is introduced.
+
+Independent complete-file inversion retains both original byte/PPU helpers.
+The exactly regenerated host passes 12096 ordered/full-state cases: 4032 RAM
+and 8064 VRAM cases, including generated mixed streams and explicit command/
+length endpoints. Four controls detect omitted XOR, missing absolute VRAM base,
+omitted back-reference address writes and reversed word-fill read order.
+This verifies synthetic ROM/RAM/register behavior, not complete actual PPU or
+alias safety. The original outer-reference draft is superseded by the reviewed
+raw-pointer source; earlier captures remain preserved.
+
+Rust lines -81 and i32 cast lines -20. Unsafe definition count +7 accounts for
+the shared decoder, trait declarations and two implementations; runtime unsafe
+loads/stores are consolidated, not removed. Other progress counters unchanged.
+Final PNG/verifier/decompression composition passes formatting/check, normal
+release 23.99s and progress. One source-local release library is reused by the
+verifier host. Full any%129712/0 (128.86s replay/129.39s wall) and Speed148406/0
+(161.07s replay/161.59s wall), native exits0, pass with all input pins stable.
+All earlier source/host authorities remain preserved; final raw source supersedes
+its outer-reference draft. These shared runs supply broader integration coverage.
+Broader gameplay routes, frontend, hardware/audio and alias ownership remain open.
+
 PNG row reconstruction (2026-10-20): share all seven filter modes across
 first-byte, contiguous-row and inserted-alpha paths, plus the 1/2/4-bit
 packed-pixel expansion. Raw/neighbor read order, per-store packed-byte
