@@ -1798,16 +1798,10 @@ pub unsafe fn PlmInstr_EnableMovementAndSetSaveStationUsed(
     plmp
 }
 pub unsafe fn PlmSetup_SetrupWreckedShipEntrance(j: u16, game: &mut Game) -> u8 {
-    let mut v2: i16 = 0;
     let mut v1: u16 = ram_word!(game, plm_block_indices[(j as i32 >> 1i32)]);
-    v2 = 56i16;
-    loop {
+    for _ in 0i16..56i16 {
         set_ram_word!(game.level_data[(v1 as i32 >> 1i32)] = 255u16);
         v1 = (v1).wrapping_add(2u16);
-        v2 -= 1;
-        if (v2 == 0) {
-            break;
-        }
     }
     0u8
 }
@@ -2265,35 +2259,23 @@ pub fn PlmSetup_B73B_B73F_SandFalls(_j: u16) -> u8 {
     0
 }
 pub unsafe fn PlmSetup_ClearShitroidInvisibleWall(j: u16, game: &mut Game) -> u8 {
-    let mut v2: i16 = 0;
     let mut v1: u16 = ram_word!(game, plm_block_indices[(j as i32 >> 1i32)]);
-    v2 = 10i16;
-    loop {
+    for _ in 0i16..10i16 {
         update_ram_word!(game.level_data[(v1 as i32 >> 1i32)], |fresh10| (fresh10)
             & (0xfffu16));
         v1 = (v1 as i32 + ram_word!(game, room_width_in_blocks) as i32 * 2i32) as u16;
-        v2 -= 1;
-        if (v2 == 0) {
-            break;
-        }
     }
     0u8
 }
 pub unsafe fn PlmSetup_B767_ClearShitroidInvisibleWall(j: u16, game: &mut Game) -> u8 {
-    let mut v2: i16 = 0;
     let mut v1: u16 = ram_word!(game, plm_block_indices[(j as i32 >> 1i32)]);
-    v2 = 10i16;
-    loop {
+    for _ in 0i16..10i16 {
         set_ram_word!(
             game.level_data[(v1 as i32 >> 1i32)] =
                 (ram_word!(game, level_data[(v1 as i32 >> 1i32)]) as i32 & 0xfffi32 | 0x8000i32)
                     as u16
         );
         v1 = (v1 as i32 + ram_word!(game, room_width_in_blocks) as i32 * 2i32) as u16;
-        v2 -= 1;
-        if (v2 == 0) {
-            break;
-        }
     }
     0u8
 }

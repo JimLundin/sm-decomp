@@ -7895,10 +7895,8 @@ pub unsafe fn Samus_DrawHandler_EndOfShinespark(game: &mut Game) {
 }
 pub unsafe fn Samus_DrawManyEchoes(game: &mut Game) {
     SamusDrawHandler_Default(game);
-    let mut i: i32 = 2i32;
-    while i >= 0i32 {
+    for _ in (0i32..=2i32).step_by(2) {
         Samus_DrawEchoes(game);
-        i -= 2i32;
     }
 }
 pub unsafe fn SamusDisplayHandler_UsingElevator(game: &mut Game) {

@@ -363,10 +363,8 @@ pub unsafe fn Torizo_Instr_32(k: u16, jp: *const u16, game: &mut Game) -> *const
 }
 pub unsafe fn Torizo_Instr_30(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let a: u16 = *jp.offset(0);
-    let mut i: i32 = 5i32;
-    while i >= 0i32 {
+    for _ in 0i32..=5i32 {
         SpawnEprojWithRoomGfx(addr_kEproj_BombTorizoLowHealthExplode as u16, a, game);
-        i -= 1;
     }
     let E: *mut Enemy_Torizo = Get_Torizo(k as i32, game);
     (*E).base.current_instruction = (jp.offset(1) as *mut u8)

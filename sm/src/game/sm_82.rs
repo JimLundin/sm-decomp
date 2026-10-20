@@ -287,10 +287,6 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
-    let mut v0: i16 = 0;
-    let mut v2: i16 = 0;
-    let mut v4: i16 = 0;
-    let mut v7: i16 = 0;
     let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x612);
     's_445: {
         let mut current_block_103: u64;
@@ -350,16 +346,11 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                 return _coret_;
             }
             InitializeHud(game);
-            v0 = 32i16;
             let mut v1: u16 = 0u16;
-            loop {
+            for _ in (0i16..32i16).step_by(2) {
                 *(ram_ptr!(game, u16; 0xc200)).offset(((v1 as i32 >> 1i32) + 192i32) as isize) =
                     *(ram_ptr!(game, u16; 0xc000)).offset(((v1 as i32 >> 1i32) + 192i32) as isize);
                 v1 = (v1).wrapping_add(2u16);
-                v0 = (v0).wrapping_sub(2i16);
-                if (v0 == 0) {
-                    break;
-                }
             }
             set_ram_words! { game, 1u16; screen_fade_delay, screen_fade_counter }
             EnableNMI(game);
@@ -403,16 +394,11 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         continue;
                     }
                     update_ram_word!(game.game_state, wrapping_add(1));
-                    v2 = 512i16;
                     let mut v3: u16 = 0u16;
-                    loop {
+                    for _ in (0i16..512i16).step_by(2) {
                         *(ram_ptr!(game, u16; 0xc000)).offset((v3 as i32 >> 1i32) as isize) =
                             ram_word!(game, target_palettes[(v3 as i32 >> 1i32)]);
                         v3 = (v3).wrapping_add(2u16);
-                        v2 = (v2).wrapping_sub(2i16);
-                        if (v2 == 0) {
-                            break;
-                        }
                     }
                     current_block_103 = 12705158477165241210;
                 }
@@ -442,16 +428,11 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                     .demo_code_ptr;
                     CallDemoRoomDataFunc(((r18) as u32) | (0x820000u32), game);
                     update_ram_word!(game.game_state, wrapping_add(1));
-                    v7 = 512i16;
                     let mut v8: u16 = 0u16;
-                    loop {
+                    for _ in (0i16..512i16).step_by(2) {
                         *(ram_ptr!(game, u16; 0xc000)).offset((v8 as i32 >> 1i32) as isize) =
                             ram_word!(game, target_palettes[(v8 as i32 >> 1i32)]);
                         v8 = (v8).wrapping_add(2u16);
-                        v7 = (v7).wrapping_sub(2i16);
-                        if (v7 == 0) {
-                            break;
-                        }
                     }
                     current_block_103 = 12705158477165241210;
                 }
@@ -480,16 +461,11 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         continue;
                     }
                     set_ram_word!(game.game_state = kGameState_7_MainGameplayFadeIn as u16);
-                    v4 = 512i16;
                     let mut v5: u16 = 0u16;
-                    loop {
+                    for _ in (0i16..512i16).step_by(2) {
                         *(ram_ptr!(game, u16; 0xc000)).offset((v5 as i32 >> 1i32) as isize) =
                             ram_word!(game, target_palettes[(v5 as i32 >> 1i32)]);
                         v5 = (v5).wrapping_add(2u16);
-                        v4 = (v4).wrapping_sub(2i16);
-                        if (v4 == 0) {
-                            break;
-                        }
                     }
                     if ram_word!(game, loading_game_state) as i32
                         == kLoadingGameState_1F_StartingAtCeres as i32
@@ -561,19 +537,13 @@ pub unsafe fn InitPpuForGameplay(game: &mut Game) {
     );
 }
 pub unsafe fn LoadInitialPalette(game: &mut Game) {
-    let mut v0: i16 = 0;
-    v0 = 512i16;
     let mut v1: u16 = 0u16;
-    loop {
+    for _ in (0i16..512i16).step_by(2) {
         set_ram_word!(
             game.palette_buffer[(v1 as i32 >> 1i32)] =
                 crate::rtl::rom_table_word!(game, 0x9a8000, (v1 as i32 >> 1i32) as isize)
         );
         v1 = (v1).wrapping_add(2u16);
-        v0 = (v0).wrapping_sub(2i16);
-        if (v0 == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps(game: &mut Game) {
@@ -1555,25 +1525,15 @@ pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
     WriteReg(MDMAEN as u16, 2u8, game);
     let mut v0: u16 = addr_kDummySamusWireframeTilemap as u16;
     let mut v1: u16 = 236u16;
-    let mut m: i32 = 17i32;
-    loop {
-        let mut n: i32 = 8i32;
-        loop {
+    for _ in 0i32..17i32 {
+        for _ in 0i32..8i32 {
             let fresh92 = v1;
             v1 = v1.wrapping_add(1);
             (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[fresh92 as usize] =
                 *(RomPtr_82(v0, game) as *mut u16);
             v0 = (v0).wrapping_add(2u16);
-            n -= 1;
-            if (n == 0) {
-                break;
-            }
         }
         v1 = (v1).wrapping_add(8u16);
-        m -= 1;
-        if (m == 0) {
-            break;
-        }
     }
     WriteSamusWireframeTilemap(game);
     LoadEqupmentScreenReserveHealthTilemap(game);
@@ -1593,31 +1553,19 @@ pub unsafe fn LoadEqupmentScreenReserveHealthTilemap(game: &mut Game) {
     }
 }
 pub unsafe fn BackupGameplayPalettesAndLoadForPause(game: &mut Game) {
-    let mut v0: i16 = 0;
-    let mut v2: i16 = 0;
-    v0 = 512i16;
     let mut v1: u16 = 0u16;
-    loop {
+    for _ in (0i16..512i16).step_by(2) {
         (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
             [(v1 as i32 + 384i32) as usize] = ram_word!(game, palette_buffer[v1]);
         v1 = v1.wrapping_add(1);
-        v0 = (v0).wrapping_sub(2i16);
-        if (v0 == 0) {
-            break;
-        }
     }
-    v2 = 512i16;
     let mut v3: u16 = 0u16;
-    loop {
+    for _ in (0i16..512i16).step_by(2) {
         set_ram_word!(
             game.palette_buffer[(v3 as i32 >> 1i32)] =
                 crate::rtl::rom_table_word!(game, 0xb6f000, (v3 as i32 >> 1i32) as isize)
         );
         v3 = (v3).wrapping_add(2u16);
-        v2 = (v2).wrapping_sub(2i16);
-        if (v2 == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn ContinueInitPauseMenu(game: &mut Game) {
@@ -2386,19 +2334,13 @@ pub unsafe fn ClearSamusBeamTiles(game: &mut Game) {
     WriteReg(MDMAEN as u16, 2u8, game);
 }
 pub unsafe fn ContinueInitGameplayResume(game: &mut Game) {
-    let mut v0: i16 = 0;
-    v0 = 512i16;
     let mut v1: u16 = 0u16;
-    loop {
+    for _ in (0i16..512i16).step_by(2) {
         set_ram_word!(
             game.palette_buffer[v1] = (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
                 [(v1 as i32 + 384i32) as usize]
         );
         v1 = v1.wrapping_add(1);
-        v0 = (v0).wrapping_sub(2i16);
-        if (v0 == 0) {
-            break;
-        }
     }
     SetupPpuForGameplayResume(game);
     CalculateBgScrolls_Unpause(game);
@@ -2970,8 +2912,6 @@ pub unsafe fn EquipmentScreenEnergyArrowGlow_Off(game: &mut Game) {
 static kEquipmentScreenTilemap_MANUAL: [u16; 4] = [0x3d46, 0x3d47, 0x3d48, 0x3d49];
 static kEquipmentScreenTilemap_AUTO: [u16; 4] = [0x3d56, 0x3d57, 0x3d58, 0x3d59];
 pub unsafe fn EquipmentScreenCategory_Tanks_0(game: &mut Game) {
-    let mut v0: i16 = 0;
-    let mut v2: i16 = 0;
     if (ram_word!(game, joypad1_newkeys) as i32 & kButton_A as i32) != 0i32
         && ram_word!(game, samus_max_reserve_health) != 0u16
     {
@@ -2979,9 +2919,8 @@ pub unsafe fn EquipmentScreenCategory_Tanks_0(game: &mut Game) {
         if ram_word!(game, reserve_health_mode) == 1u16 {
             set_ram_word!(game.reserve_health_mode = 2u16);
             EquipmentScreenHudReserveAutoTilemap_Off(game);
-            v0 = 8i16;
             let mut v1: u16 = 0u16;
-            loop {
+            for _ in (0i16..8i16).step_by(2) {
                 (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap
                     [(v1 as i32 + 327i32) as usize] = (kEquipmentScreenTilemap_MANUAL[v1 as usize]
                     as i32
@@ -2989,17 +2928,12 @@ pub unsafe fn EquipmentScreenCategory_Tanks_0(game: &mut Game) {
                         [(v1 as i32 + 327i32) as usize] as i32
                         & 0xfc00i32) as u16;
                 v1 = v1.wrapping_add(1);
-                v0 = (v0).wrapping_sub(2i16);
-                if (v0 == 0) {
-                    break;
-                }
             }
         } else {
             set_ram_word!(game.reserve_health_mode = 1u16);
             EquipmentScreenHudReserveAutoTilemap_On_BUGGY(game);
-            v2 = 8i16;
             let mut v3: u16 = 0u16;
-            loop {
+            for _ in (0i16..8i16).step_by(2) {
                 (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap
                     [(v3 as i32 + 327i32) as usize] = (kEquipmentScreenTilemap_AUTO[v3 as usize]
                     as i32
@@ -3007,10 +2941,6 @@ pub unsafe fn EquipmentScreenCategory_Tanks_0(game: &mut Game) {
                         [(v3 as i32 + 327i32) as usize] as i32
                         & 0xfc00i32) as u16;
                 v3 = v3.wrapping_add(1);
-                v2 = (v2).wrapping_sub(2i16);
-                if (v2 == 0) {
-                    break;
-                }
             }
         }
     }
@@ -3260,29 +3190,19 @@ pub unsafe fn WriteSamusWireframeTilemap(game: &mut Game) {
         crate::rtl::rom_table_word!(game, 0x82b25f, (i as i32 >> 1i32) as isize),
         game,
     ) as *const u16;
-    let mut m: i32 = 17i32;
     let v1: u16 = 0u16;
     let mut v2: u16 = 472u16;
-    loop {
+    for _ in 0i32..17i32 {
         let v3: u16 = v2;
-        let mut n: i32 = 8i32;
-        loop {
+        for _ in 0i32..8i32 {
             let fresh64 = src;
             src = src.offset(1);
             *((&raw mut (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap as *mut u16
                 as *mut u8)
                 .offset(v2 as i32 as isize) as *mut u16) = *fresh64;
             v2 = (v2).wrapping_add(2u16);
-            n -= 1;
-            if (n == 0) {
-                break;
-            }
         }
         v2 = (v3).wrapping_add(64u16);
-        m -= 1;
-        if (m == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
@@ -6296,8 +6216,7 @@ pub unsafe fn OptionsMenuControllerFunc_0(game: &mut Game) {
         v1 = 0u16;
     }
     let mut v2: u16 = v1;
-    let mut i: i32 = 5i32;
-    while i >= 0i32 {
+    for _ in 0i32..=5i32 {
         if *(ram_ptr!(game, u16; 0x1b23)).offset(((v2 as i32 >> 1i32) + 13i32) as isize) == r18 {
             break;
         }
@@ -6305,7 +6224,6 @@ pub unsafe fn OptionsMenuControllerFunc_0(game: &mut Game) {
         if ((v2) as i16).wrapping_sub(14i16) >= 0i16 {
             v2 = 0u16;
         }
-        i -= 1;
     }
     let v4: i32 = ram_word!(game, menu_option_index) as i32;
     let r20: u16 = ram_word!(game, eproj_F[(v4 + 13i32)]);

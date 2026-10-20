@@ -2277,8 +2277,7 @@ pub unsafe fn ExpandingContractingHdmaEffect(game: &mut Game) {
     let mut v0: u16 = (2u16).wrapping_mul(ram_word!(game, message_box_animation_y0));
     let mut v1: u16 = (2u16).wrapping_mul(ram_word!(game, message_box_animation_y2));
     let mut r18: u16 = 0u16;
-    let mut r20: u16 = 32u16;
-    loop {
+    for _ in 0u16..32u16 {
         *(ram_ptr!(game, u16; 0x9c00, v0 as isize)) = (ram_word!(game, message_box_animation_y1))
             .wrapping_sub(ram_word!(game, message_box_animation_y0));
         *(ram_ptr!(game, u16; 0x9c00, v1 as isize)) = (ram_word!(game, message_box_animation_y3))
@@ -2292,10 +2291,6 @@ pub unsafe fn ExpandingContractingHdmaEffect(game: &mut Game) {
         update_ram_word!(game.message_box_animation_y2, wrapping_sub(1));
         v1 = (v1).wrapping_sub(2u16);
         v0 = (v0).wrapping_add(2u16);
-        r20 = r20.wrapping_sub(1);
-        if (r20 == 0) {
-            break;
-        }
     }
 }
 static g_word_88B256: [u16; 17] = [
@@ -2578,8 +2573,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func2(v0: u16, game: &mut Game) {
     }
     let mut v3: u8 = *(ram_ptr!(game, u16; 0x1914) as *mut u8).offset(v0 as i32 as isize);
     let mut v4: u8 = 30u8;
-    let mut n: i32 = 15i32;
-    loop {
+    for _ in 0i32..=15i32 {
         set_ram_word!(
             game.g_word_7E9C46[(v4 as i32 >> 1i32)] =
                 (crate::rtl::rom_table_word!(game, 0x88b589, (v3 as i32 >> 1i32) as isize) as i32
@@ -2588,10 +2582,6 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func2(v0: u16, game: &mut Game) {
         );
         v3 = (v3 as i32 - 2i32 & 0x1ei32) as u8;
         v4 = (v4 as i32 - 2i32 & 0x1ei32) as u8;
-        n -= 1;
-        if (n < 0i32) {
-            break;
-        }
     }
 }
 pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(v0: u16, game: &mut Game) {
@@ -2618,8 +2608,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(v0: u16, game: &mut Game) {
         & 0x1ei32) as u8;
     let mut v4: u8 =
         (2i32 * (ram_word!(game, reg_BG2VOFS) as i32 & 0xfi32) + 30i32 & 0x1ei32) as u8;
-    let mut n: i32 = 15i32;
-    loop {
+    for _ in 0i32..=15i32 {
         set_ram_word!(
             game.g_word_7E9C46[(v4 as i32 >> 1i32)] =
                 (crate::rtl::rom_table_word!(game, 0x88b60a, (v3 as i32 >> 1i32) as isize) as i32
@@ -2628,10 +2617,6 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(v0: u16, game: &mut Game) {
         );
         v4 = (v4 as i32 - 2i32 & 0x1ei32) as u8;
         v3 = (v3 as i32 - 2i32 & 0x1ei32) as u8;
-        n -= 1;
-        if (n < 0i32) {
-            break;
-        }
     }
 }
 static unk_88C40F: SpawnHdmaObject_Args =
@@ -2807,17 +2792,12 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func2(k: u16, game: &mut Game) {
         & 0x1ei32) as u8;
     let mut v4: u8 =
         (2i32 * (ram_word!(game, reg_BG2VOFS) as i32 & 0xfi32) + 30i32 & 0x1ei32) as u8;
-    let mut n: i32 = 15i32;
-    loop {
+    for _ in 0i32..=15i32 {
         *(ram_ptr!(game, u16; 0x9c46)).offset(((v4 as i32 >> 1i32) + 1i32) as isize) =
             ((g_word_88C46E[(v3 as i32 >> 1i32) as usize]) as u16)
                 .wrapping_add(ram_word!(game, reg_BG2HOFS));
         v4 = (v4 as i32 - 2i32 & 0x1ei32) as u8;
         v3 = (v3 as i32 - 2i32 & 0x1ei32) as u8;
-        n -= 1;
-        if (n < 0i32) {
-            break;
-        }
     }
 }
 pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func1(k: u16, game: &mut Game) {

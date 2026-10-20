@@ -1008,14 +1008,9 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
     if (*E).base.y_pos as i32 - 280i32 & 0x8000i32 != 0 {
         let mut v3: u16 =
             (8i32 * (ram_word!(game, reg_BG2VOFS) as i32 + 288i32 & 0xfff8i32)) as u16;
-        let mut m: i32 = 32i32;
-        loop {
+        for _ in 0i32..32i32 {
             set_ram_word!(game.tilemap_stuff[(v3 as i32 >> 1i32)] = 824u16);
             v3 = (v3).wrapping_add(2u16);
-            m -= 1;
-            if (m == 0) {
-                break;
-            }
         }
         set_ram_word!(game.nmi_flag_bg2_enemy_vram_transfer = 1u16);
         (*E0).base.extra_properties = ((*E0).base.extra_properties as i32 & !(0x8000i32)) as u16;
@@ -1698,18 +1693,13 @@ pub unsafe fn Crocomire_Func_71(game: &mut Game) {
         }
         ClearEprojs(game);
         let v8: u16 = 8u16;
-        let mut n: i32 = 8i32;
-        loop {
+        for _ in 0i32..8i32 {
             SpawnEprojWithGfx(
                 v8,
                 ram_word!(game, cur_enemy_index),
                 addr_kEproj_CrocomireSpikeWallPieces as u16,
                 game,
             );
-            n -= 1;
-            if (n == 0) {
-                break;
-            }
         }
         QueueSfx2_Max6(0x30u16, game);
         Crocomire_9BB3(game);

@@ -2832,9 +2832,8 @@ pub unsafe fn Phantoon_Func_6(k: u16, a: u16, game: &mut Game) {
     let mut v3: i16 = 0;
     v2 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7cfc2)) as *mut u8).offset(a as isize)
         as i16;
-    let mut n: i32 = 7i32;
     let mut r20: i32 = 16i32;
-    loop {
+    for _ in 0i32..=7i32 {
         v3 = v2;
         let fresh25 = v2;
         v2 = v2 + 1;
@@ -2848,10 +2847,6 @@ pub unsafe fn Phantoon_Func_6(k: u16, a: u16, game: &mut Game) {
             v2 = 0i16;
         }
         r20 += 16i32;
-        n -= 1;
-        if (n < 0i32) {
-            break;
-        }
     }
 }
 pub unsafe fn Phantoon_Func_7(k: u16, game: &mut Game) {

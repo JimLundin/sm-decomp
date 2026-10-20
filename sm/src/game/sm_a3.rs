@@ -3321,16 +3321,11 @@ pub unsafe fn Reflec_Func_1(game: &mut Game) {
         let mut v0: u16 = ram_word!(game, variables_for_enemy_graphics_drawn_hook[0]);
         let mut v1: u16 =
             (8u16).wrapping_mul(ram_word!(game, variables_for_enemy_graphics_drawn_hook[1]));
-        let mut n: i32 = 4i32;
-        loop {
+        for _ in 0i32..4i32 {
             *(ram_ptr!(game, u16; 0xc000)).offset(((v0 as i32 >> 1i32) + 137i32) as isize) =
                 crate::rtl::rom_table_word!(game, 0xa3dabc, (v1 as i32 >> 1i32) as isize);
             v1 = (v1).wrapping_add(2u16);
             v0 = (v0).wrapping_add(2u16);
-            n -= 1;
-            if (n == 0) {
-                break;
-            }
         }
         set_ram_word!(
             game.variables_for_enemy_graphics_drawn_hook[1] =

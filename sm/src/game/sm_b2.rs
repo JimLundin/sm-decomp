@@ -632,16 +632,11 @@ pub unsafe fn NinjaSpacePirates_Init(game: &mut Game) {
     (*E).sps_var_08 = (*E).base.y_pos;
     let mut v6: u16 = 0u16;
     let mut v7: u16 = 0u16;
-    let mut n: i32 = 15i32;
-    loop {
+    for _ in 0i32..=15i32 {
         *(ram_ptr!(game, u16; 0xc200)).offset(((v7 as i32 >> 1i32) + 240i32) as isize) =
             crate::rtl::rom_table_word!(game, 0xb28727, (v6 as i32 >> 1i32) as isize);
         v6 = (v6).wrapping_add(2u16);
         v7 = (v7).wrapping_add(2u16);
-        n -= 1;
-        if (n < 0i32) {
-            break;
-        }
     }
 }
 pub unsafe fn NinjaSpacePirates_Main(game: &mut Game) {

@@ -1523,11 +1523,10 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
     let mut r22: u16 = 0u16;
     let mut m: i32 = 16i32;
     loop {
-        let mut n: i32 = 16i32;
         let mut r26: u16 = (r24) & (0x7e0u16);
         let mut r28: u16 = (r24) & (0x1fu16);
         let mut r30: u16 = 0u16;
-        loop {
+        for _ in 0i32..16i32 {
             if r30 as i32 + r28 as i32 - 32i32 & 0x8000i32 == 0 {
                 r26 = (r26 as i32 + 1024i32 & 0x7e0i32) as u16;
                 r28 = 0u16;
@@ -1555,10 +1554,6 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
                 .offset(r22 as i32 as isize) as *mut u16) = v11;
             r22 = (r22).wrapping_add(4u16);
             r30 = (r30).wrapping_add(2u16);
-            n -= 1;
-            if (n == 0) {
-                break;
-            }
         }
         Xray_SetupStage4_Func1(r22, r26, r28, r30, game);
         r24 = ((r24 as i32 & 0x400i32) + (r24 as i32 + 64i32 & 0x3ffi32)) as u16;

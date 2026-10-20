@@ -31,6 +31,31 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Literal counted loops (2026-10-20): replace all 55 eligible pure-counter
+loops in 45 functions/17 files with typed for ranges. The 42 zero-exit loops
+retain their exact iteration counts; the 13 positive-literal sign-exit forms
+retain inclusive ends. All 11 step-two cases, two nested pairs and the one
+retained early-break body keep their original control targets and effect order.
+Counters with extra reads, runtime bounds, escaping references or unsupported
+control flow remain unchanged. No helper, allocation or borrowed bound is added.
+
+Independent complete source/binding review and 372 extracted control/effect
+comparisons pass; all 224 mutations are detected (end, inclusivity, deletion,
+step and order). Inverting the already-reviewed 249 instruction-pair macro
+uses reconstructs the exact reviewed loop candidate, binding those controls
+to this final composition. These checks establish loop-control equivalence,
+not new gameplay-route coverage. Net Rust lines -284, to 131817; every other
+progress counter is unchanged. This commit uses the shared final run below.
+
+Shared counted-loop/local-initializer verification includes reviewed
+50b89505 instruction/timer pairs and map rendering. Formatting/check, progress,
+normal release (25.77s) and full any% 129712/0
+(125.81s), native exit 0, pass. All 77 final inputs and
+109 recorded verification pins remain fixed. The initial build ran out
+of disk space; the same candidate succeeded after completed caches were
+compressed with their contents verified unchanged. Any% supplies core
+integration coverage; broader routes, frontend and alias safety remain open.
+
 Next prepared family (2026-10-20): isolated literal field-store candidate
 covers all 220 adjacent same-receiver/same-integer-literal runs, 559 stores
 across 24 gameplay/hardware/frontend callers and 23 literal spellings.

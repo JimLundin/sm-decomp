@@ -1111,14 +1111,9 @@ pub unsafe fn WreckedShipGhost_Init(game: &mut Game) {
     (*E).wsgt_var_B = (g_word_A89AA4).wrapping_add(160u16);
     let v2: u16 = u16::swap_bytes((*E).base.palette_index);
     let mut v3: u16 = (16i32 * v2 as i32 + 256i32) as u16;
-    let mut n: i32 = 16i32;
-    loop {
+    for _ in 0i32..=16i32 {
         set_ram_word!(game.target_palettes[(v3 as i32 >> 1i32)] = 0u16);
         v3 = (v3).wrapping_add(2u16);
-        n -= 1;
-        if (n < 0i32) {
-            break;
-        }
     }
 }
 crate::game::address_dispatch! {
@@ -1145,19 +1140,14 @@ pub unsafe fn WreckedShipGhost_Func_1(k: u16, game: &mut Game) {
         Get_WreckedShipGhost(ram_word!(game, cur_enemy_index) as i32, game);
     let v3: u16 = u16::swap_bytes((*E).base.palette_index);
     let mut v4: u16 = (16i32 * v3 as i32 + 256i32) as u16;
-    let mut n: i32 = 16i32;
     let mut v1: i32 = 16i32;
-    loop {
+    for _ in 0i32..16i32 {
         let v5: i32 = v4 as i32 >> 1i32;
         if (ram_word!(game, palette_buffer[v5]) as i32 & 0x1fi32) - 31i32 & 0x8000i32 != 0 {
             update_ram_word!(game.palette_buffer[v5], wrapping_add(1057u16));
             v1 -= 1;
         }
         v4 = (v4).wrapping_add(2u16);
-        n -= 1;
-        if (n == 0) {
-            break;
-        }
     }
     if ((v1 - 16i32) as i16) >= 0i16 {
         (*E).wsgt_var_A = ((0xa89badi32) as u16);
@@ -1270,14 +1260,9 @@ pub unsafe fn WreckedShipGhost_Func_5(k: u16, game: &mut Game) {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
         let t: i32 = u16::swap_bytes((*E).base.palette_index) as i32;
         let mut v9: u16 = (16i32 * t + 256i32) as u16;
-        let mut n: i32 = 16i32;
-        loop {
+        for _ in 0i32..=16i32 {
             set_ram_word!(game.target_palettes[(v9 as i32 >> 1i32)] = 0x7fffu16);
             v9 = (v9).wrapping_add(2u16);
-            n -= 1;
-            if ((n & 0x8000i32) != 0i32) {
-                break;
-            }
         }
     }
 }
@@ -4547,16 +4532,11 @@ pub unsafe fn BlueBrinstarFaceBlock_Func_1(game: &mut Game) {
         let mut v0: u16 = ram_word!(game, variables_for_enemy_graphics_drawn_hook[0]);
         let mut v1: u16 =
             (8u16).wrapping_mul(ram_word!(game, variables_for_enemy_graphics_drawn_hook[1]));
-        let mut n: i32 = 4i32;
-        loop {
+        for _ in 0i32..4i32 {
             *(ram_ptr!(game, u16; 0xc000)).offset(((v0 as i32 >> 1i32) + 137i32) as isize) =
                 crate::rtl::rom_table_word!(game, 0xa8e7cc, (v1 as i32 >> 1i32) as isize);
             v1 = (v1).wrapping_add(2u16);
             v0 = (v0).wrapping_add(2u16);
-            n -= 1;
-            if (n == 0) {
-                break;
-            }
         }
         set_ram_word!(
             game.variables_for_enemy_graphics_drawn_hook[1] =

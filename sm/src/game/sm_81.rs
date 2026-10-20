@@ -2194,18 +2194,13 @@ pub unsafe fn LoadAreaMapForegroundColors(mut j: u16, game: &mut Game) {
         let v4: u16 = j;
         let mut v2: u16 = crate::rtl::rom_table_word!(game, 0x81a4e6, (v1 + 1i32) as isize);
         let mut v3: u16 = crate::rtl::rom_table_word!(game, 0x81a4e6, v1 as isize);
-        let mut n: i32 = 5i32;
-        loop {
+        for _ in 0i32..5i32 {
             set_ram_word!(
                 game.palette_buffer[(v2 as i32 >> 1i32)] =
                     crate::rtl::rom_table_word!(game, 0x81a40e, (v3 as i32 >> 1i32) as isize)
             );
             v2 = (v2).wrapping_add(2u16);
             v3 = (v3).wrapping_add(2u16);
-            n -= 1;
-            if (n == 0) {
-                break;
-            }
         }
         j = (v4).wrapping_add(4u16);
     }

@@ -2683,8 +2683,7 @@ pub unsafe fn UpdateLevelOrBackgroundDataColumn(k: u16, game: &mut Game) {
     var937 = v7;
     let t2: u16 = k;
     let mut v9: u16 = 0u16;
-    let mut var939: u16 = 16u16;
-    loop {
+    for _ in 0u16..16u16 {
         let var93B: u16 = *r54.offset((v9 as i32 >> 1i32) as isize);
         let v17: u16 = v9;
         let v11: u16 = var937;
@@ -2706,10 +2705,6 @@ pub unsafe fn UpdateLevelOrBackgroundDataColumn(k: u16, game: &mut Game) {
         );
         var937 = (v11).wrapping_add(4u16);
         v9 = (ram_word!(game, room_width_in_blocks) as i32 * 2i32 + v17 as i32) as u16;
-        var939 = var939.wrapping_sub(1);
-        if (var939 == 0) {
-            break;
-        }
     }
     let ref mut fresh7 =
         *((ram_ptr!(game, u16; 0x962) as *mut u8).offset(t2 as i32 as isize) as *mut u16);
@@ -2780,8 +2775,7 @@ pub unsafe fn UpdateLevelOrBackgroundDataRow(v0: u16, game: &mut Game) {
     var937 = v7;
     let t2: u16 = v0;
     let mut v9: u16 = 0u16;
-    let mut var939: u16 = 17u16;
-    loop {
+    for _ in 0u16..17u16 {
         let var93B: u16 = *r54.offset((v9 as i32 >> 1i32) as isize);
         let v17: u16 = v9;
         let v11: u16 = var937;
@@ -2803,10 +2797,6 @@ pub unsafe fn UpdateLevelOrBackgroundDataRow(v0: u16, game: &mut Game) {
         );
         var937 = (v11).wrapping_add(4u16);
         v9 = (v17).wrapping_add(2u16);
-        var939 = var939.wrapping_sub(1);
-        if (var939 == 0) {
-            break;
-        }
     }
     let ref mut fresh6 =
         *((ram_ptr!(game, u16; 0x970) as *mut u8).offset(t2 as i32 as isize) as *mut u16);

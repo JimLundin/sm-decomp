@@ -1161,17 +1161,12 @@ pub unsafe fn Botwoon_Func_18(k: u16, game: &mut Game) {
             (*E).botwoon_var_25 = v3 as u16;
             if v3 < 0i16 {
                 (*E).botwoon_var_25 = 4u16;
-                let mut n: i32 = 2i32;
-                loop {
+                for _ in 0i32..2i32 {
                     let x_0: u16 = ((NextRandom(game) as i32 & 0x3fi32) + 224i32) as u16;
                     let y_0: u16 = ((*Get_Botwoon(k as i32, game)).botwoon_var_23 as i32
                         + ((NextRandom(game) as i32 & 0x1fi32) - 8i32))
                         as u16;
                     CreateSpriteAtPos(x_0, y_0, 9u16, 2560u16, game);
-                    n -= 1;
-                    if (n == 0) {
-                        break;
-                    }
                 }
             }
         }
@@ -1390,9 +1385,8 @@ pub unsafe fn Botwoon_Func_28(k: u16, game: &mut Game) {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).botwoon_var_5A != 0 {
         *ram_ptr!(game; 0x60b) = (((*E).botwoon_var_3D) as u8).wrapping_sub(32u8);
-        let mut n: i32 = 5i32;
         let varE32: u16 = g_word_B39E77[(*E).botwoon_var_3F as usize] as u16;
-        loop {
+        for _ in 0i32..5i32 {
             SpawnEprojWithGfx(
                 varE32,
                 ram_word!(game, cur_enemy_index),
@@ -1401,10 +1395,6 @@ pub unsafe fn Botwoon_Func_28(k: u16, game: &mut Game) {
             );
             let ref mut fresh2 = *ram_ptr!(game; 0x60b);
             *fresh2 = (*fresh2).wrapping_add(16u8);
-            n -= 1;
-            if (n == 0) {
-                break;
-            }
         }
         (*E).botwoon_var_5A = 0u16;
         (*E).botwoon_var_F = ((0xb39f7ai32) as u16);
@@ -1413,9 +1403,8 @@ pub unsafe fn Botwoon_Func_28(k: u16, game: &mut Game) {
 pub unsafe fn Botwoon_Func_29(k: u16, game: &mut Game) {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     *ram_ptr!(game; 0x60b) = (((*E).botwoon_var_3D) as u8).wrapping_sub(16u8);
-    let mut n: i32 = 3i32;
     let varE32: u16 = g_word_B39E77[(*E).botwoon_var_3F as usize] as u16;
-    loop {
+    for _ in 0i32..3i32 {
         SpawnEprojWithGfx(
             varE32,
             ram_word!(game, cur_enemy_index),
@@ -1424,10 +1413,6 @@ pub unsafe fn Botwoon_Func_29(k: u16, game: &mut Game) {
         );
         let ref mut fresh3 = *ram_ptr!(game; 0x60b);
         *fresh3 = (*fresh3).wrapping_add(16u8);
-        n -= 1;
-        if (n == 0) {
-            break;
-        }
     }
     (*Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game)).botwoon_var_F =
         ((0xb39f7ai32) as u16);

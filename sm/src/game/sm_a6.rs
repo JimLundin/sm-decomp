@@ -1485,8 +1485,6 @@ pub unsafe fn FakeKraid_9C50(game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_Init(game: &mut Game) {
-    let mut v4: i16 = 0;
-    let mut v8: i16 = 0;
     let E: *mut Enemy_CeresRidley = Get_CeresRidley(0i32, game);
     if (*ram_ptr!(game; 0xd828, ram_word!(game, area_index) as isize) as i32 & 1i32) != 0i32 {
         (*E).base.properties = ((*E).base.properties as i32
@@ -1531,17 +1529,12 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
             (*E).cry_var_1C = 120u16;
             WriteColorsToTargetPalette(0xa6u8, 0x140u16, addr_word_A6E1CF as u16, 0x20u16, game);
             let mut v3: u16 = 0u16;
-            v4 = 15i16;
-            loop {
+            for _ in 0i16..15i16 {
                 let v5: i32 = v3 as i32 >> 1i32;
                 set_ram_words! { game, 0u16;
                     target_palettes[(v5 + 113i32)], target_palettes[(v5 + 241i32)],
                 }
                 v3 = (v3).wrapping_add(2u16);
-                v4 -= 1;
-                if (v4 == 0) {
-                    break;
-                }
             }
         } else {
             (*E).base.properties = ((*E).base.properties as i32
@@ -1563,14 +1556,9 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
             (*E).cry_var_23 = 224u16;
             WriteColorsToTargetPalette(0xa6u8, 0x140u16, addr_word_A6E16F as u16, 0x20u16, game);
             let mut v7: u16 = 482u16;
-            v8 = 15i16;
-            loop {
+            for _ in 0i16..15i16 {
                 set_ram_word!(game.target_palettes[(v7 as i32 >> 1i32)] = 0u16);
                 v7 = (v7).wrapping_add(2u16);
-                v8 -= 1;
-                if (v8 == 0) {
-                    break;
-                }
             }
             (*E).cry_var_03 = addr_kBabyMetroid_Ilist_BF31 as u16;
             (*E).cry_var_04 = 1u16;
@@ -4580,15 +4568,10 @@ pub unsafe fn Ridley_Func_92(game: &mut Game) {
 pub unsafe fn Ridley_Func_93(j: u16, k: u16, game: &mut Game) {
     let mut dst: *mut u16 = ram_ptr!(game, u16; j as i32 as isize);
     let mut src: *const u16 = RomPtr_A6(k, game) as *const u16;
-    let mut v3: i32 = 7i32;
-    loop {
+    for _ in 0i32..7i32 {
         *dst = *src;
         dst = dst.offset(10);
         src = src.offset(1);
-        v3 -= 1;
-        if (v3 == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn Ridley_Func_94(game: &mut Game) {
@@ -4607,11 +4590,9 @@ pub unsafe fn Ridley_Func_D3DC(a: u16, game: &mut Game) {
     set_ram_word!(game.tilemap_stuff[76] = a);
 }
 pub unsafe fn Ridley_Func_96(game: &mut Game) {
-    let mut v0: i16 = 0;
     Ridley_Func_93(0x2026u16, addr_word_A6D37C as u16, game);
-    v0 = 7i16;
     let mut v1: u16 = 0u16;
-    loop {
+    for _ in 0i16..7i16 {
         let v2: i32 = v1 as i32 >> 1i32;
         set_ram_word!(
             game.tilemap_stuff[(v2 + 21i32)] =
@@ -4620,10 +4601,6 @@ pub unsafe fn Ridley_Func_96(game: &mut Game) {
         update_ram_word!(game.tilemap_stuff[(v2 + 18i32)], |fresh3| (fresh3)
             | (0x8000u16));
         v1 = (v1).wrapping_add(20u16);
-        v0 -= 1;
-        if (v0 == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn Ridley_Func_97(game: &mut Game) -> u8 {

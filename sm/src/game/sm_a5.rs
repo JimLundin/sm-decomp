@@ -1483,16 +1483,13 @@ pub unsafe fn Draygon_Func_42(varE24: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Draygon_Func_43(game: &mut Game) {
-    let mut v1: i16 = 0;
-    let mut j: i16 = 0;
     let mut i: i32 = 62i32;
     while i >= 0i32 {
         set_ram_word!(game.sprite_instr_list_ptrs[(i >> 1i32)] = 0u16);
         i -= 2i32;
     }
-    v1 = 2i16;
     let mut v2: u16 = 20u16;
-    loop {
+    for _ in 0i16..=2i16 {
         let v3: i32 = v2 as i32 >> 1i32;
         CreateSpriteAtPos(
             crate::rtl::rom_table_word!(game, 0xa5a1c7, v3 as isize),
@@ -1502,13 +1499,8 @@ pub unsafe fn Draygon_Func_43(game: &mut Game) {
             game,
         );
         v2 = (v2).wrapping_sub(4u16);
-        v1 -= 1;
-        if (v1 < 0i16) {
-            break;
-        }
     }
-    j = 2i16;
-    while j >= 0i16 {
+    for _ in 0i16..=2i16 {
         let v5: i32 = v2 as i32 >> 1i32;
         CreateSpriteAtPos(
             crate::rtl::rom_table_word!(game, 0xa5a1c7, v5 as isize),
@@ -1518,7 +1510,6 @@ pub unsafe fn Draygon_Func_43(game: &mut Game) {
             game,
         );
         v2 = (v2).wrapping_sub(4u16);
-        j -= 1;
     }
 }
 pub unsafe fn Draygon_Func_44(game: &mut Game) {
