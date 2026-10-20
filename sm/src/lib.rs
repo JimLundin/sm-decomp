@@ -19,16 +19,24 @@ pub mod game {
     pub(crate) mod callback_tables;
     // Declare address tables with the same calls and unreachable fallback.
     macro_rules! address_dispatch {
-        ($($visibility:vis unsafe fn $name:ident($($argument:ident: $argument_type:ty),* $(,)?)
-            $(-> $result:ty)? => $selector:ident, $game:ident { $($arms:tt)* })*) => {
+        ($($(#[$metadata:meta])* $visibility:vis unsafe fn $name:ident $parameters:tt $(-> $result:ty)?
+            => $selector:expr; call $arguments:tt; default $fallback:expr;
+            { $($pattern:pat => $target:tt;)* })*) => {
             $(
-                $visibility unsafe fn $name($($argument: $argument_type),*) $(-> $result)? {
+                $(#[$metadata])*
+                $visibility unsafe fn $name $parameters $(-> $result)? {
                     match $selector {
-                        $($arms)*
-                        _ => { Unreachable($game); }
+                        $($pattern => $crate::game::address_dispatch!(@call $arguments $target),)*
+                        _ => $fallback
                     }
                 }
             )*
+        };
+        (@call ($($argument:expr),* $(,)?) $target:ident) => {
+            $target($($argument),*)
+        };
+        (@call $arguments:tt [$($expression:tt)*]) => {
+            $($expression)*
         };
     }
     pub(crate) use address_dispatch;

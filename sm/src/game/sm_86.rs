@@ -629,10 +629,12 @@ pub fn EprojInstr_ClearPreInstr(k: u16, epjp: *const u8, game: &mut Game) -> *co
     epjp
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallEprojFunc(ea: u32, k: u32, game: &mut Game) => ea, game {
-        8833019 => {
-            SpawnMotherBrainDeathBeam(k as u16, game);
-        }
+    pub unsafe fn CallEprojFunc(ea: u32, k: u32, game: &mut Game) => ea;
+        call (); default { Unreachable(game); };
+    {
+        8833019 => [{
+                    SpawnMotherBrainDeathBeam(k as u16, game);
+                }];
     }
 }
 pub unsafe fn EprojInstr_CallFunc(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
@@ -4000,9 +4002,10 @@ unsafe fn EprojInit_NorfairLavaquakeRocks(j: u16, game: &mut Game) {
     set_ram_word!(game.eproj_y_subpos[v1] = (*v2).y_subpos);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallNorfairLavaquakeRocksFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        8829974 => Eproj_NorfairLavaquakeRocks_Func1(k, game),
-        8830095 => Eproj_NorfairLavaquakeRocks_Func2(k, game),
+    pub unsafe fn CallNorfairLavaquakeRocksFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        8829974 => Eproj_NorfairLavaquakeRocks_Func1; 8830095 => Eproj_NorfairLavaquakeRocks_Func2;
     }
 }
 pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(k: u16, game: &mut Game) -> u16 {
@@ -4988,9 +4991,11 @@ unsafe fn EprojInit_MotherBrainTubeFalling(j: u16, game: &mut Game) {
     set_ram_word!(game.eproj_E[v1] = (0x86cbeai32 & 0xffffi32) as u16);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallMotherBrainTubeFallingFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        8834026 => MotherBrainTubeFallingFunc_GenerateExplosion(k, game),
-        8834056 => MotherBrainTubeFallingFunc_Falling(k, game),
+    pub unsafe fn CallMotherBrainTubeFallingFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        8834026 => MotherBrainTubeFallingFunc_GenerateExplosion;
+        8834056 => MotherBrainTubeFallingFunc_Falling;
     }
 }
 pub unsafe fn EprojPreInstr_MotherBrainTubeFalling(k: u16, game: &mut Game) {
@@ -5895,9 +5900,10 @@ unsafe fn EprojInit_NamiFuneFireball_MoveX2(k: u16, game: &mut Game) {
     );
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallNamiFuneFireballFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        8838976 => EprojInit_NamiFuneFireball_MoveX1(k, game),
-        8839018 => EprojInit_NamiFuneFireball_MoveX2(k, game),
+    pub unsafe fn CallNamiFuneFireballFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        8838976 => EprojInit_NamiFuneFireball_MoveX1; 8839018 => EprojInit_NamiFuneFireball_MoveX2;
     }
 }
 pub unsafe fn EprojPreInstr_NamiFuneFireball(v0: u16, game: &mut Game) {
@@ -5947,9 +5953,10 @@ unsafe fn EprojInit_LavaThrownByLavaman(j: u16, game: &mut Game) {
     set_ram_word!(game.eproj_x_vel[v2] = 768u16);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallLavamanFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        8839248 => Eproj_LavaThrownByLavaman_MoveX1(k, game),
-        8839290 => Eproj_LavaThrownByLavaman_MoveX2(k, game),
+    pub unsafe fn CallLavamanFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        8839248 => Eproj_LavaThrownByLavaman_MoveX1; 8839290 => Eproj_LavaThrownByLavaman_MoveX2;
     }
 }
 pub unsafe fn sub_86E049(v0: u16, game: &mut Game) {
@@ -6201,12 +6208,12 @@ unsafe fn EprojInit_BotwoonsBody(j: u16, game: &mut Game) {
     (*Ex).kraid.kraid_healths_4ths[0i32 as usize] = 1u16;
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallBotwoonEprojFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        8841880 => Eproj_BotwoonsBody_Main(k, game),
-        8841972 => Eproj_BotwonsBodyFunction_Dying(k, game),
-        8841988 => Eproj_BotwonsBodyFunction_Dying2(k, game),
-        8842015 => Eproj_BotwonsBodyFunction_DyingFalling(k, game),
-        8842131 => (),
+    pub unsafe fn CallBotwoonEprojFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        8841880 => Eproj_BotwoonsBody_Main; 8841972 => Eproj_BotwonsBodyFunction_Dying;
+        8841988 => Eproj_BotwonsBodyFunction_Dying2;
+        8842015 => Eproj_BotwonsBodyFunction_DyingFalling; 8842131 => [()];
     }
 }
 pub unsafe fn EprojPreInstr_BotwoonsBody(k: u16, game: &mut Game) {
@@ -6810,381 +6817,240 @@ pub unsafe fn EprojPreInstr_Sparks(k: u16, game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    unsafe fn CallEprojInit(ea: u32, j: u16, game: &mut Game) => ea, game {
-        8817209 => Eproj_Init_0x8aaf(j, game),
-        8817357 => {
-            init_skree_particle(j, 6, 320, -769, game);
-        }
-        8817393 => {
-            init_skree_particle(j, 6, 96, -1025, game);
-        }
-        8817429 => {
-            init_skree_particle(j, -6, -320, -769, game);
-        }
-        8817465 => {
-            init_skree_particle(j, -6, -96, -1025, game);
-        }
-        8817924 => EprojInit_DraygonsGunk(j, game),
-        8817984 => EprojInit_DraygonsWallTurretProjs(j, game),
-        8818723 => EprojInit_CrocomireProjectile(j, game),
-        8818895 => EprojInit_CrocomireSpikeWallPieces(j, game),
-        8819334 => EprojInit_CrocomireBridgeCrumbling(j, game),
-        8819533 => EprojInit_9634(j, game),
-        8819658 => EprojInit_9642_RidleysFireball(j, game),
-        8819839 => EprojInit_9660_FireballExplosion(j, game),
-        8819872 => EprojInit_9688(j, game),
-        8819892 => EprojInit_9696(j, game),
-        8819912 => EprojInit_966C(j, game),
-        8819932 => EprojInit_967A(j, game),
-        8820444 => EprojInit_9734_CeresFallingDebris(j, game),
-        8820772 => EprojInit_PhantoonDestroyableFireballs(j, game),
-        8821050 => EprojInit_PhantoonStartingFireballs(j, game),
-        8821923 => EprojInit_RocksKraidSpits(j, game),
-        8821976 => EprojInit_RocksFallingKraidCeiling(j, game),
-        8822028 => EprojInit_RocksWhenKraidRises(j, game),
-        8822252 => EprojInit_MiniKraidSpit(j, game),
-        8822342 => EprojInit_MiniKraidSpikesLeft(j, game),
-        8822347 => EprojInit_MiniKraidSpikesRight(j, game),
-        8822450 => EprojInit_WalkingLavaSeahorseFireball(j, game),
-        8822793 => EprojInit_PirateMotherBrainLaser(j, game),
-        8822936 => EprojInit_PirateClaw(j, game),
-        8823457 => EprojInit_A379(j, game),
-        8823534 => EprojInit_CeresElevatorPad(j, game),
-        8823579 => EprojInit_CeresElevatorPlatform(j, game),
-        8823715 => EprojPreInstr_PrePhantomRoom(j, game),
-        8824275 => EprojInit_BombTorizoLowHealthDrool(j, game),
-        8824413 => EprojInit_BombTorizoLowHealthInitialDrool(j, game),
-        8824519 => EprojInit_A977(j, game),
-        8824566 => EprojInit_BombTorizoExplosiveSwipe(j, game),
-        8824676 => EprojInit_BombTorizoStatueBreaking(j, game),
-        8824859 => EprojInit_BombTorizoLowHealthExplode(j, game),
-        8824945 => EprojInit_BombTorizoDeathExplosion(j, game),
-        8825405 => EprojInit_AB07(j, game),
-        8825835 => EprojInit_BombTorizosChozoOrbs(j, game),
-        8825980 => EprojInit_GoldenTorizosChozoOrbs(j, game),
-        8826389 => EprojInit_TorizoSonicBoom(j, game),
-        8826620 => EprojInit_WreckedShipChozoSpikeFootsteps(j, game),
-        8826691 => EprojInit_TourianStatueDustClouds(j, game),
-        8826704 => EprojInit_TourianLandingDustCloudsRightFoot(j, game),
-        8826829 => EprojInit_TorizoLandingDustCloudLeftFoot(j, game),
-        8826881 => EprojInit_GoldenTorizoEgg(j, game),
-        8827342 => EprojInit_GoldenTorizoSuperMissile(j, game),
-        8827688 => EprojInit_GoldenTorizoEyeBeam(j, game),
-        8828061 => EprojInit_TourianEscapeShaftFakeWallExplode(j, game),
-        8828143 => EprojInit_LavaSeahorseFireball(j, game),
-        8828461 => EprojInit_EyeDoorProjectile(j, game),
-        8828547 => EprojInit_EyeDoorSweat(j, game),
-        8829050 => EprojInit_TourianStatueUnlockingParticleWaterSplash(j, game),
-        8829070 => EprojInit_TourianStatueEyeGlow(j, game),
-        8829109 => EprojInit_TourianStatueUnlockingParticle(j, game),
-        8829160 => EprojIni_TourianStatueUnlockingParticleTail(j, game),
-        8829176 => EprojInit_TourianStatueSoul(j, game),
-        8829246 => EprojInit_TourianStatueBaseDecoration(j, game),
-        8829265 => EprojInit_TourianStatueRidley(j, game),
-        8829284 => EprojInit_TourianStatuePhantoon(j, game),
-        8829744 => sub_86BB30(j, game),
-        8829842 => EprojInit_NuclearWaffleBody(j, game),
-        8829915 => EprojInit_NorfairLavaquakeRocks(j, game),
-        8830364 => EprojInit_ShaktoolAttackMiddleBackCircle(j, game),
-        8830370 => EprojInit_BDA2(j, game),
-        8830543 => EprojInit_MotherBrainRoomTurrets(j, game),
-        8830809 => EprojInit_MotherBrainRoomTurretBullets(j, game),
-        8831731 => Eproj_MotherBrainsBlueRingLasers(j, game),
-        8832130 => EprojInit_MotherBrainBomb(j, game),
-        8832517 => sub_86C605(j, game),
-        8832644 => EprojInit_MotherBrainDeathBeemFired(j, game),
-        8833034 => EprojInit_MotherBrainRainbowBeam(j, game),
-        8833091 => EprojInit_MotherBrainsDrool(j, game),
-        8833269 => EprojInit_MotherBrainsDeathExplosion(j, game),
-        8833327 => EprojInit_MotherBrainsRainbowBeamExplosion(j, game),
-        8833377 => EprojInit_MotherBrainEscapeDoorParticles(j, game),
-        8833642 => EprojInit_MotherBrainPurpleBreathBig(j, game),
-        8833667 => EprojInit_MotherBrainPurpleBreathSmall(j, game),
-        8833782 => EprojInit_TimeBombSetJapaneseText(j, game),
-        8833993 => EprojInit_MotherBrainTubeFalling(j, game),
-        8834501 => EprojInit_MotherBrainGlassShatteringShard(j, game),
-        8834669 => EprojInit_MotherBrainGlassShatteringSparkle(j, game),
-        8834960 => EprojInit_KiHunterAcidSpitLeft(j, game),
-        8834982 => EprojInit_KiHunterAcidSpitRight(j, game),
-        8835208 => EprojInit_KagosBugs(j, game),
-        8835642 => EprojInit_MaridiaFloatersSpikes(j, game),
-        8835852 => EprojInit_WreckedShipRobotLaserDown(j, game),
-        8835886 => EprojInit_WreckedShipRobotLaserHorizontal(j, game),
-        8835905 => EprojInit_WreckedShipRobotLaserUp(j, game),
-        8836773 => EprojInit_N00bTubeCrack(j, game),
-        8836809 => EprojInit_N00bTubeShards(j, game),
-        8836980 => EprojInit_N00bTubeReleasedAirBubbles(j, game),
-        8837522 => sub_86D992(j, game),
-        8837912 => EprojInit_DBF2(j, game),
-        8838285 => EprojInit_Spores(j, game),
-        8838307 => EprojInit_SporeSpawnStalk(j, game),
-        8838356 => EprojInit_SporeSpawners(j, game),
-        8838870 => EprojInit_NamiFuneFireball(j, game),
-        8839168 => EprojInit_LavaThrownByLavaman(j, game),
-        8840296 => EprojInit_DustCloudOrExplosion(j, game),
-        8840358 => EprojInit_EyeDoorSmoke(j, game),
-        8840656 => EprojInit_SpawnedShotGate(j, game),
-        8840661 => EprojInit_ClosedDownwardsShotGate(j, game),
-        8840666 => EprojInit_ClosedUpwardsShotGate(j, game),
-        8840877 => EprojInit_SaveStationElectricity(j, game),
-        8841777 => EprojInit_BotwoonsBody(j, game),
-        8842182 => EprojInit_BotwoonsSpit(j, game),
-        8842338 => EprojInit_YappingMawsBody(j, game),
-        8843049 => EprojInit_F337(j, game),
-        8843145 => EprojInit_EnemyDeathExplosion(j, game),
-        8844177 => EprojInit_Sparks(j, game),
+    unsafe fn CallEprojInit(ea: u32, j: u16, game: &mut Game) => ea;
+        call (j, game); default { Unreachable(game); };
+    {
+        8817209 => Eproj_Init_0x8aaf;
+        8817357 => [{
+                    init_skree_particle(j, 6, 320, -769, game);
+                }];
+        8817393 => [{
+                    init_skree_particle(j, 6, 96, -1025, game);
+                }];
+        8817429 => [{
+                    init_skree_particle(j, -6, -320, -769, game);
+                }];
+        8817465 => [{
+                    init_skree_particle(j, -6, -96, -1025, game);
+                }];
+        8817924 => EprojInit_DraygonsGunk; 8817984 => EprojInit_DraygonsWallTurretProjs;
+        8818723 => EprojInit_CrocomireProjectile; 8818895 => EprojInit_CrocomireSpikeWallPieces;
+        8819334 => EprojInit_CrocomireBridgeCrumbling; 8819533 => EprojInit_9634;
+        8819658 => EprojInit_9642_RidleysFireball; 8819839 => EprojInit_9660_FireballExplosion;
+        8819872 => EprojInit_9688; 8819892 => EprojInit_9696; 8819912 => EprojInit_966C;
+        8819932 => EprojInit_967A; 8820444 => EprojInit_9734_CeresFallingDebris;
+        8820772 => EprojInit_PhantoonDestroyableFireballs;
+        8821050 => EprojInit_PhantoonStartingFireballs; 8821923 => EprojInit_RocksKraidSpits;
+        8821976 => EprojInit_RocksFallingKraidCeiling; 8822028 => EprojInit_RocksWhenKraidRises;
+        8822252 => EprojInit_MiniKraidSpit; 8822342 => EprojInit_MiniKraidSpikesLeft;
+        8822347 => EprojInit_MiniKraidSpikesRight; 8822450 => EprojInit_WalkingLavaSeahorseFireball;
+        8822793 => EprojInit_PirateMotherBrainLaser; 8822936 => EprojInit_PirateClaw;
+        8823457 => EprojInit_A379; 8823534 => EprojInit_CeresElevatorPad;
+        8823579 => EprojInit_CeresElevatorPlatform; 8823715 => EprojPreInstr_PrePhantomRoom;
+        8824275 => EprojInit_BombTorizoLowHealthDrool;
+        8824413 => EprojInit_BombTorizoLowHealthInitialDrool; 8824519 => EprojInit_A977;
+        8824566 => EprojInit_BombTorizoExplosiveSwipe;
+        8824676 => EprojInit_BombTorizoStatueBreaking;
+        8824859 => EprojInit_BombTorizoLowHealthExplode;
+        8824945 => EprojInit_BombTorizoDeathExplosion; 8825405 => EprojInit_AB07;
+        8825835 => EprojInit_BombTorizosChozoOrbs; 8825980 => EprojInit_GoldenTorizosChozoOrbs;
+        8826389 => EprojInit_TorizoSonicBoom; 8826620 => EprojInit_WreckedShipChozoSpikeFootsteps;
+        8826691 => EprojInit_TourianStatueDustClouds;
+        8826704 => EprojInit_TourianLandingDustCloudsRightFoot;
+        8826829 => EprojInit_TorizoLandingDustCloudLeftFoot; 8826881 => EprojInit_GoldenTorizoEgg;
+        8827342 => EprojInit_GoldenTorizoSuperMissile; 8827688 => EprojInit_GoldenTorizoEyeBeam;
+        8828061 => EprojInit_TourianEscapeShaftFakeWallExplode;
+        8828143 => EprojInit_LavaSeahorseFireball; 8828461 => EprojInit_EyeDoorProjectile;
+        8828547 => EprojInit_EyeDoorSweat;
+        8829050 => EprojInit_TourianStatueUnlockingParticleWaterSplash;
+        8829070 => EprojInit_TourianStatueEyeGlow;
+        8829109 => EprojInit_TourianStatueUnlockingParticle;
+        8829160 => EprojIni_TourianStatueUnlockingParticleTail;
+        8829176 => EprojInit_TourianStatueSoul; 8829246 => EprojInit_TourianStatueBaseDecoration;
+        8829265 => EprojInit_TourianStatueRidley; 8829284 => EprojInit_TourianStatuePhantoon;
+        8829744 => sub_86BB30; 8829842 => EprojInit_NuclearWaffleBody;
+        8829915 => EprojInit_NorfairLavaquakeRocks;
+        8830364 => EprojInit_ShaktoolAttackMiddleBackCircle; 8830370 => EprojInit_BDA2;
+        8830543 => EprojInit_MotherBrainRoomTurrets;
+        8830809 => EprojInit_MotherBrainRoomTurretBullets;
+        8831731 => Eproj_MotherBrainsBlueRingLasers; 8832130 => EprojInit_MotherBrainBomb;
+        8832517 => sub_86C605; 8832644 => EprojInit_MotherBrainDeathBeemFired;
+        8833034 => EprojInit_MotherBrainRainbowBeam; 8833091 => EprojInit_MotherBrainsDrool;
+        8833269 => EprojInit_MotherBrainsDeathExplosion;
+        8833327 => EprojInit_MotherBrainsRainbowBeamExplosion;
+        8833377 => EprojInit_MotherBrainEscapeDoorParticles;
+        8833642 => EprojInit_MotherBrainPurpleBreathBig;
+        8833667 => EprojInit_MotherBrainPurpleBreathSmall;
+        8833782 => EprojInit_TimeBombSetJapaneseText; 8833993 => EprojInit_MotherBrainTubeFalling;
+        8834501 => EprojInit_MotherBrainGlassShatteringShard;
+        8834669 => EprojInit_MotherBrainGlassShatteringSparkle;
+        8834960 => EprojInit_KiHunterAcidSpitLeft; 8834982 => EprojInit_KiHunterAcidSpitRight;
+        8835208 => EprojInit_KagosBugs; 8835642 => EprojInit_MaridiaFloatersSpikes;
+        8835852 => EprojInit_WreckedShipRobotLaserDown;
+        8835886 => EprojInit_WreckedShipRobotLaserHorizontal;
+        8835905 => EprojInit_WreckedShipRobotLaserUp; 8836773 => EprojInit_N00bTubeCrack;
+        8836809 => EprojInit_N00bTubeShards; 8836980 => EprojInit_N00bTubeReleasedAirBubbles;
+        8837522 => sub_86D992; 8837912 => EprojInit_DBF2; 8838285 => EprojInit_Spores;
+        8838307 => EprojInit_SporeSpawnStalk; 8838356 => EprojInit_SporeSpawners;
+        8838870 => EprojInit_NamiFuneFireball; 8839168 => EprojInit_LavaThrownByLavaman;
+        8840296 => EprojInit_DustCloudOrExplosion; 8840358 => EprojInit_EyeDoorSmoke;
+        8840656 => EprojInit_SpawnedShotGate; 8840661 => EprojInit_ClosedDownwardsShotGate;
+        8840666 => EprojInit_ClosedUpwardsShotGate; 8840877 => EprojInit_SaveStationElectricity;
+        8841777 => EprojInit_BotwoonsBody; 8842182 => EprojInit_BotwoonsSpit;
+        8842338 => EprojInit_YappingMawsBody; 8843049 => EprojInit_F337;
+        8843145 => EprojInit_EnemyDeathExplosion; 8844177 => EprojInit_Sparks;
     }
-    unsafe fn CallEprojPreInstr(ea: u32, k: u16, game: &mut Game) => ea, game {
-        8825112 => (),
-        8814960 => (),
-        8815867 => (),
-        8817277 => Eproj_PreInit_0x8aaf(k, game),
-        8817501 => Eproj_PreInstr_SkreeParticle(k, game),
-        8818004 => (),
-        8818122 => EprojPreInstr_8DCA(k, game),
-        8818175 => EprojPreInstr_DraygonsTurret_8DFF(k, game),
-        8818191 => EprojPreInstr_DraygonsGunk_8E0F(k, game),
-        8818795 => EprojPreInstr_CrocomireProjectile(k, game),
-        8818867 => sub_8690B3(k, game),
-        8818965 => EprojPreInstr_CrocomireSpikeWallPieces(k, game),
-        8819386 => EprojPreInstr_CrocomireBridgeCrumbling(k, game),
-        8819602 => EprojPreInstr_9634(k, game),
-        8819726 => EprojPreInstr_9642_RidleysFireball(k, game),
-        8819980 => (),
-        8819981 => EprojPreInstr_966C(k, game),
-        8820002 => EprojPreInstr_9688(k, game),
-        8820023 => EprojPreInstr_96A4(k, game),
-        8820032 => EprojPreInstr_96C0(k, game),
-        8820041 => EprojPreInstr_96CE(k, game),
-        8820481 => EprojPreInstr_9734_CeresFallingDebris(k, game),
-        8821121 => EprojPreInstr_PhantoonStartingFireballs(k, game),
-        8821183 => EprojPreInstr_PhantoonStartingFireballs2(k, game),
-        8821249 => EprojPreInstr_PhantoonStartingFireballs3(k, game),
-        8821316 => (),
-        8821317 => EprojPreInstr_PhantoonDestroyableFireballs(k, game),
-        8821396 => EprojPreInstr_PhantoonDestroyableFireballs_2(k, game),
-        8821466 => EprojPreInstr_PhantoonDestroyableFireballs_3(k, game),
-        8821545 => EprojPreInstr_PhantoonStartingFireballsB(k, game),
-        8821569 => EprojPreInstr_PhantoonStartingFireballsB_2(k, game),
-        8822102 => EprojPreInstr_KraidRocks(k, game),
-        8822153 => EprojPreInstr_RocksFallingKraidCeiling(k, game),
-        8822181 => sub_869DA5(k, game),
-        8822302 => EprojPreInit_MiniKraidSpit(k, game),
-        8822403 => EprojPreInstr_MiniKraidSpikes(k, game),
-        8822527 => EprojPreInstr_WalkingLavaSeahorseFireball(k, game),
-        8822875 => (),
-        8822876 => EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k, game),
-        8822906 => EprojPreInstr_PirateMotherBrainLaser_MoveRight(k, game),
-        8822993 => EprojPreInstr_PirateClawThrownLeft(k, game),
-        8823076 => EprojPreInstr_PirateClawThrownRight(k, game),
-        8823591 => (),
-        8823592 => EprojPreInstr_CeresElevatorPad(k, game),
-        8823652 => EprojPreInstr_CeresElevatorPlatform(k, game),
-        8823715 => EprojPreInstr_PrePhantomRoom(k, game),
-        8824967 => sub_86A887(k, game),
-        8825071 => EprojPreInstr_A977(k, game),
-        8825113 => (),
-        8825484 => EprojPreInstr_AB07(k, game),
-        8826029 => EprojPreInstr_BombTorizosChozoOrbs(k, game),
-        8826106 => EprojPreInstr_GoldenTorizosChozoOrbs(k, game),
-        8826476 => EprojPreInstr_TorizoSonicBoom(k, game),
-        8826947 => EprojPreInstr_GoldenTorizoEgg(k, game),
-        8827065 => sub_86B0B9(k, game),
-        8827101 => sub_86B0DD(k, game),
-        8827405 => EprojPreInstr_GoldenTorizoSuperMissile(k, game),
-        8827447 => EprojPreInstr_B237(k, game),
-        8827786 => EprojPreInstr_GoldenTorizoEyeBeam(k, game),
-        8828080 => (),
-        8828213 => sub_86B535(k, game),
-        8828601 => EprojPreInstr_EyeDoorProjectile(k, game),
-        8828692 => EprojPreInstr_EyeDoorSweat(k, game),
-        8829303 => EprojPreInstr_TourianStatueUnlockingParticleWaterSplash(k, game),
-        8829314 => EprojPreInstr_TourianStatueUnlockingParticle(k, game),
-        8829437 => EprojPreInstr_TourianStatueSoul(k, game),
-        8829495 => EprojPreInstr_TourianStatueStuff(k, game),
-        8829506 => EprojPreInstr_BA42(k, game),
-        8829775 => (),
-        8829894 => (),
-        8829967 => EprojPreInstr_NorfairLavaquakeRocks(k, game),
-        8830238 => EprojPreInstr_NorfairLavaquakeRocks_Inner(k, game),
-        8830250 => {
-            EprojPreInstr_NorfairLavaquakeRocks_Inner2(k, game);
-        }
-        8830467 => EprojInit_ShaktoolAttackFrontCircle(k, game),
-        8830482 => EprojPreInstr_BE12(k, game),
-        8830943 => EprojPreInstr_MotherBrainRoomTurrets(k, game),
-        8831200 => EprojPreInstr_MotherBrainRoomTurretBullets(k, game),
-        8831797 => Eproj_MoveToBlueRingSpawnPosition(k, game),
-        8832200 => EprojPreInstr_MotherBrainBomb(k, game),
-        8833044 => EprojPreInstr_MotherBrainRainbowBeam(k, game),
-        8833101 => EprojPreInstr_C84D(k, game),
-        8833158 => EprojInit_MotherBrainsDrool_Falling(k, game),
-        8833300 => EprojPreInit_MotherBrainsDeathExplosion_0(k, game),
-        8833356 => EprojPreInstr_MotherBrainsRainbowBeamExplosion(k, game),
-        8833490 => EprojPreInstr_MotherBrainsExplodedDoorParticles(k, game),
-        8833699 => (),
-        8833786 => EprojPreInstr_TimeBombSetJapaneseText(k, game),
-        8834023 => EprojPreInstr_MotherBrainTubeFalling(k, game),
-        8834715 => EprojPreInstr_MotherBrainGlassShatteringShard(k, game),
-        8835029 => sub_86CFD5(k, game),
-        8835046 => sub_86CFE6(k, game),
-        8835063 => (),
-        8835064 => sub_86CFF8(k, game),
-        8835251 => EprojPreInstr_KagosBugs_Func1(k, game),
-        8835274 => EprojPreInstr_KagosBugs(k, game),
-        8835307 => (),
-        8835308 => EprojPreInstr_D0EC(k, game),
-        8835368 => EprojPreInstr_D128(k, game),
-        8835556 => EprojPreInstr_KagosBugs_Func2(k, game),
-        8835683 => EprojPreInstr_MaridiaFloatersSpikes(k, game),
-        8836031 => EprojPreInstr_WreckedShipRobotLaser(k, game),
-        8837055 => sub_86D7BF(k, game),
-        8837086 => sub_86D7DE(k, game),
-        8837117 => EprojPreInstr_N00bTubeShards(k, game),
-        8837181 => sub_86D83D(k, game),
-        8837279 => sub_86D89F(k, game),
-        8837343 => sub_86D8DF(k, game),
-        8837595 => EprojPreInstr_SpikeShootingPlantSpikes(k, game),
-        8837606 => EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, game),
-        8837648 => EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k, game),
-        8837690 => EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k, game),
-        8837732 => EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k, game),
-        8837774 => EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1(k, game),
-        8837779 => EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2(k, game),
-        8837784 => EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1(k, game),
-        8837789 => EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2(k, game),
-        8837794 => EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1(k, game),
-        8837802 => EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2(k, game),
-        8837810 => EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1(k, game),
-        8837818 => EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2(k, game),
-        8837979 => EprojPreInstr_DBF2(k, game),
-        8837986 => EprojPreInstr_DBF2_MoveX1(k, game),
-        8838028 => EprojPreInstr_DBF2_MoveX2(k, game),
-        8838070 => EprojPreInstr_DBF2_Func1(k, game),
-        8838382 => EprojPreInstr_Spores(k, game),
-        8838468 => (),
-        8838470 => EprojPreInstr_SporeSpawners(k, game),
-        8838969 => EprojPreInstr_NamiFuneFireball(k, game),
-        8839241 => sub_86E049(k, game),
-        8840446 => EprojPreInstr_DustCloudOrExplosion(k, game),
-        8840456 => (),
-        8840708 => (),
-        8840709 => EprojPreInstr_E605(k, game),
-        8840913 => (),
-        8841856 => EprojPreInstr_BotwoonsBody(k, game),
-        8842245 => EprojPreInstr_BotwoonsSpit(k, game),
-        8842388 => (),
-        8843231 => (),
-        8843232 => EprojPreInstr_Pickup(k, game),
-        8844272 => EprojPreInstr_Sparks(k, game),
-        8832877 => (),
+    unsafe fn CallEprojPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        8825112 => [()]; 8814960 => [()]; 8815867 => [()]; 8817277 => Eproj_PreInit_0x8aaf;
+        8817501 => Eproj_PreInstr_SkreeParticle; 8818004 => [()]; 8818122 => EprojPreInstr_8DCA;
+        8818175 => EprojPreInstr_DraygonsTurret_8DFF; 8818191 => EprojPreInstr_DraygonsGunk_8E0F;
+        8818795 => EprojPreInstr_CrocomireProjectile; 8818867 => sub_8690B3;
+        8818965 => EprojPreInstr_CrocomireSpikeWallPieces;
+        8819386 => EprojPreInstr_CrocomireBridgeCrumbling; 8819602 => EprojPreInstr_9634;
+        8819726 => EprojPreInstr_9642_RidleysFireball; 8819980 => [()];
+        8819981 => EprojPreInstr_966C; 8820002 => EprojPreInstr_9688; 8820023 => EprojPreInstr_96A4;
+        8820032 => EprojPreInstr_96C0; 8820041 => EprojPreInstr_96CE;
+        8820481 => EprojPreInstr_9734_CeresFallingDebris;
+        8821121 => EprojPreInstr_PhantoonStartingFireballs;
+        8821183 => EprojPreInstr_PhantoonStartingFireballs2;
+        8821249 => EprojPreInstr_PhantoonStartingFireballs3; 8821316 => [()];
+        8821317 => EprojPreInstr_PhantoonDestroyableFireballs;
+        8821396 => EprojPreInstr_PhantoonDestroyableFireballs_2;
+        8821466 => EprojPreInstr_PhantoonDestroyableFireballs_3;
+        8821545 => EprojPreInstr_PhantoonStartingFireballsB;
+        8821569 => EprojPreInstr_PhantoonStartingFireballsB_2; 8822102 => EprojPreInstr_KraidRocks;
+        8822153 => EprojPreInstr_RocksFallingKraidCeiling; 8822181 => sub_869DA5;
+        8822302 => EprojPreInit_MiniKraidSpit; 8822403 => EprojPreInstr_MiniKraidSpikes;
+        8822527 => EprojPreInstr_WalkingLavaSeahorseFireball; 8822875 => [()];
+        8822876 => EprojPreInstr_PirateMotherBrainLaser_MoveLeft;
+        8822906 => EprojPreInstr_PirateMotherBrainLaser_MoveRight;
+        8822993 => EprojPreInstr_PirateClawThrownLeft;
+        8823076 => EprojPreInstr_PirateClawThrownRight; 8823591 => [()];
+        8823592 => EprojPreInstr_CeresElevatorPad; 8823652 => EprojPreInstr_CeresElevatorPlatform;
+        8823715 => EprojPreInstr_PrePhantomRoom; 8824967 => sub_86A887;
+        8825071 => EprojPreInstr_A977; 8825113 => [()]; 8825484 => EprojPreInstr_AB07;
+        8826029 => EprojPreInstr_BombTorizosChozoOrbs;
+        8826106 => EprojPreInstr_GoldenTorizosChozoOrbs; 8826476 => EprojPreInstr_TorizoSonicBoom;
+        8826947 => EprojPreInstr_GoldenTorizoEgg; 8827065 => sub_86B0B9; 8827101 => sub_86B0DD;
+        8827405 => EprojPreInstr_GoldenTorizoSuperMissile; 8827447 => EprojPreInstr_B237;
+        8827786 => EprojPreInstr_GoldenTorizoEyeBeam; 8828080 => [()]; 8828213 => sub_86B535;
+        8828601 => EprojPreInstr_EyeDoorProjectile; 8828692 => EprojPreInstr_EyeDoorSweat;
+        8829303 => EprojPreInstr_TourianStatueUnlockingParticleWaterSplash;
+        8829314 => EprojPreInstr_TourianStatueUnlockingParticle;
+        8829437 => EprojPreInstr_TourianStatueSoul; 8829495 => EprojPreInstr_TourianStatueStuff;
+        8829506 => EprojPreInstr_BA42; 8829775 => [()]; 8829894 => [()];
+        8829967 => EprojPreInstr_NorfairLavaquakeRocks;
+        8830238 => EprojPreInstr_NorfairLavaquakeRocks_Inner;
+        8830250 => [{
+                    EprojPreInstr_NorfairLavaquakeRocks_Inner2(k, game);
+                }];
+        8830467 => EprojInit_ShaktoolAttackFrontCircle; 8830482 => EprojPreInstr_BE12;
+        8830943 => EprojPreInstr_MotherBrainRoomTurrets;
+        8831200 => EprojPreInstr_MotherBrainRoomTurretBullets;
+        8831797 => Eproj_MoveToBlueRingSpawnPosition; 8832200 => EprojPreInstr_MotherBrainBomb;
+        8833044 => EprojPreInstr_MotherBrainRainbowBeam; 8833101 => EprojPreInstr_C84D;
+        8833158 => EprojInit_MotherBrainsDrool_Falling;
+        8833300 => EprojPreInit_MotherBrainsDeathExplosion_0;
+        8833356 => EprojPreInstr_MotherBrainsRainbowBeamExplosion;
+        8833490 => EprojPreInstr_MotherBrainsExplodedDoorParticles; 8833699 => [()];
+        8833786 => EprojPreInstr_TimeBombSetJapaneseText;
+        8834023 => EprojPreInstr_MotherBrainTubeFalling;
+        8834715 => EprojPreInstr_MotherBrainGlassShatteringShard; 8835029 => sub_86CFD5;
+        8835046 => sub_86CFE6; 8835063 => [()]; 8835064 => sub_86CFF8;
+        8835251 => EprojPreInstr_KagosBugs_Func1; 8835274 => EprojPreInstr_KagosBugs;
+        8835307 => [()]; 8835308 => EprojPreInstr_D0EC; 8835368 => EprojPreInstr_D128;
+        8835556 => EprojPreInstr_KagosBugs_Func2; 8835683 => EprojPreInstr_MaridiaFloatersSpikes;
+        8836031 => EprojPreInstr_WreckedShipRobotLaser; 8837055 => sub_86D7BF;
+        8837086 => sub_86D7DE; 8837117 => EprojPreInstr_N00bTubeShards; 8837181 => sub_86D83D;
+        8837279 => sub_86D89F; 8837343 => sub_86D8DF;
+        8837595 => EprojPreInstr_SpikeShootingPlantSpikes;
+        8837606 => EprojPreInstr_SpikeShootingPlantSpikes_MoveY1;
+        8837648 => EprojPreInstr_SpikeShootingPlantSpikes_MoveY2;
+        8837690 => EprojPreInstr_SpikeShootingPlantSpikes_MoveX1;
+        8837732 => EprojPreInstr_SpikeShootingPlantSpikes_MoveX2;
+        8837774 => EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1;
+        8837779 => EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2;
+        8837784 => EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1;
+        8837789 => EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2;
+        8837794 => EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1;
+        8837802 => EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2;
+        8837810 => EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1;
+        8837818 => EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2; 8837979 => EprojPreInstr_DBF2;
+        8837986 => EprojPreInstr_DBF2_MoveX1; 8838028 => EprojPreInstr_DBF2_MoveX2;
+        8838070 => EprojPreInstr_DBF2_Func1; 8838382 => EprojPreInstr_Spores; 8838468 => [()];
+        8838470 => EprojPreInstr_SporeSpawners; 8838969 => EprojPreInstr_NamiFuneFireball;
+        8839241 => sub_86E049; 8840446 => EprojPreInstr_DustCloudOrExplosion; 8840456 => [()];
+        8840708 => [()]; 8840709 => EprojPreInstr_E605; 8840913 => [()];
+        8841856 => EprojPreInstr_BotwoonsBody; 8842245 => EprojPreInstr_BotwoonsSpit;
+        8842388 => [()]; 8843231 => [()]; 8843232 => EprojPreInstr_Pickup;
+        8844272 => EprojPreInstr_Sparks; 8832877 => [()];
     }
 }
-unsafe fn CallEprojInstr(ea: u32, k: u16, j: *const u8, game: &mut Game) -> *const u8 {
-    match ea {
-        8814932 => EprojInstr_Delete(k, j, game),
-        8814937 => EprojInstr_Sleep(k, j, game),
-        8814945 => EprojInstr_SetPreInstr_(k, j, game),
-        8814954 => EprojInstr_ClearPreInstr(k, j, game),
-        8814961 => EprojInstr_CallFunc(k, j, game),
-        8815019 => EprojInstr_Goto(k, j),
-        8815024 => EprojInstr_GotoRel(k, j),
-        8815046 => EprojInstr_DecTimerAndGotoIfNonZero(k, j, game),
-        8815054 => EprojInstr_DecTimerAndGotoRelIfNonZero(k, j, game),
-        8815061 => EprojInstr_SetTimer(k, j, game),
-        8815071 => EprojInstr_MoveRandomlyWithinRadius(k, j, game),
-        8815152 => EprojInstr_SetProjectileProperties(k, j, game),
-        8815164 => EprojInstr_ClearProjectileProperties(k, j, game),
-        8815176 => EprojInstr_EnableCollisionWithSamusProj(k, j, game),
-        8815186 => EprojInstr_DisableCollisionWithSamusProj(k, j, game),
-        8815196 => EprojInstr_DisableCollisionWithSamus(k, j, game),
-        8815206 => EprojInstr_EnableCollisionWithSamus(k, j, game),
-        8815216 => EprojInstr_SetToNotDieOnContact(k, j, game),
-        8815226 => EprojInstr_SetToDieOnContact(k, j, game),
-        8815236 => EprojInstr_SetLowPriority(k, j, game),
-        8815246 => EprojInstr_SetHighPriority(k, j, game),
-        8815256 => EprojInstr_SetXyRadius(k, j, game),
-        8815265 => EprojInstr_SetXyRadiusZero(k, j, game),
-        8815269 => EprojInstr_CalculateDirectionTowardsSamus(k, j, game),
-        8815317 => EprojInstr_WriteColorsToPalette(k, j, game),
-        8815357 => EprojInstr_QueueMusic(k, j, game),
-        8815369 => EprojInstr_QueueSfx1_Max6(k, j, game),
-        8815378 => EprojInstr_QueueSfx2_Max6(k, j, game),
-        8815387 => EprojInstr_QueueSfx3_Max6(k, j, game),
-        8815396 => EprojInstr_QueueSfx1_Max15(k, j, game),
-        8815405 => EprojInstr_QueueSfx2_Max15(k, j, game),
-        8815414 => EprojInstr_QueueSfx3_Max15(k, j, game),
-        8815423 => EprojInstr_QueueSfx1_Max3(k, j, game),
-        8815432 => EprojInstr_QueueSfx2_Max3(k, j, game),
-        8815441 => EprojInstr_QueueSfx3_Max3(k, j, game),
-        8815450 => EprojInstr_QueueSfx1_Max9(k, j, game),
-        8815459 => EprojInstr_QueueSfx2_Max9(k, j, game),
-        8815468 => EprojInstr_QueueSfx3_Max9(k, j, game),
-        8815477 => EprojInstr_QueueSfx1_Max1(k, j, game),
-        8815486 => EprojInstr_QueueSfx2_Max1(k, j, game),
-        8815495 => EprojInstr_QueueSfx3_Max1(k, j, game),
-        8817768 => EprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops(k, j, game),
-        8818073 => EprojInstr_868D99(k, j, game),
-        8819829 => EprojInstr_DisableCollisionsWithSamus(k, j, game),
-        8820154 => EprojInstr_95BA(k, j, game),
-        8820205 => EprojInstr_95ED(k, j, game),
-        8820256 => EprojInstr_9620(k, j, game),
-        8820750 => EprojInstr_980E(k, j, game),
-        8822864 => EprojInstr_SetPreInstrAndRun(k, j, game),
-        8823894 => EprojInstr_GotoWithProbability25(k, j, game),
-        8825738 => EprojInstr_SpawnEnemyDrops(k, j, game),
-        8826258 => EprojInstr_GotoDependingOnXDirection(k, j, game),
-        8826678 => EprojInstr_ResetXYpos1(k, j, game),
-        8826770 => EprojInstr_MoveY_Minus4(k, j, game),
-        8827497 => EprojInstr_SetVelTowardsSamus1(k, j, game),
-        8827506 => EprojInstr_SetVelTowardsSamus2(k, j, game),
-        8827832 => EprojInstr_GotoIfFunc1(k, j, game),
-        8827958 => EprojInstr_ResetXYpos2(k, j, game),
-        8828906 => EprojInstr_SpawnTourianStatueUnlockingParticle(k, j, game),
-        8828917 => EprojInstr_Earthquake(k, j, game),
-        8828952 => EprojInstr_SpawnTourianStatueUnlockingParticleTail(k, j, game),
-        8828993 => EprojInstr_AddToYpos(k, j, game),
-        8831347 => EprojInstr_SwitchJump(k, j, game),
-        8831412 => EprojInstr_UserPalette0(k, j, game),
-        8833232 => EprojInstr_Add12ToY(k, j, game),
-        8833774 => EprojInstr_MotherBrainPurpleBreathIsActive(k, j, game),
-        8835420 => EprojInstr_D15C(k, j, game),
-        8835510 => EprojInstr_D1B6(k, j, game),
-        8835527 => EprojInstr_D1C7(k, j, game),
-        8835534 => EprojInstr_D1CE(k, j, game),
-        8836577 => EprojInstr_AssignNewN00bTubeShardVelocity(k, j, game),
-        8836594 => EprojInstr_SetN00bTubeShardX(k, j, game),
-        8836650 => EprojInstr_D62A(k, j, game),
-        8836762 => EprojInstr_SetXvelRandom(k, j, game),
-        8838234 => EprojInstr_DC5A(k, j, game),
-        8838241 => EprojInstr_SpawnEnemyDrops_0(k, j, game),
-        8838263 => EprojInstr_SpawnSporesEproj(k, j, game),
-        8839146 => EprojInstr_DFEA(k, j, game),
-        8840499 => EprojInstr_SetYVel(k, j, game),
-        8842467 => EprojInstr_ECE3(k, j, game),
-        8842519 => EprojInstr_ED17(k, j, game),
-        8842891 => EprojInstr_QueueSfx2_9(k, j, game),
-        8842903 => EprojInstr_QueueSfx2_24(k, j, game),
-        8842915 => EprojInstr_QueueSfx2_B(k, j, game),
-        8842927 => EprojInstr_EEAF(k, j, game),
-        8843024 => EprojInstr_HandleRespawningEnemy(k, j, game),
-        8817910 => EprojInstr_SetPreInstrA(k, j, game),
-        8817917 => EprojInstr_SetPreInstrB(k, j, game),
-        8822906 => {
-            EprojPreInstr_PirateMotherBrainLaser_MoveRight(k, game);
-            j
-        }
-        8822876 => {
-            EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k, game);
-            j
-        }
-        8823742 => EprojInstr_A3BE(k, j, game),
-        8819312 => EprojInstr_9270(k, j, game),
-        8815070 => j,
-        8827198 => sub_86B13E(k, j, game),
-        _ => {
+crate::game::address_dispatch! {
+    unsafe fn CallEprojInstr(ea: u32, k: u16, j: *const u8, game: &mut Game) -> *const u8 => ea;
+        call (k, j, game); default {
             Unreachable(game);
             null::<u8>()
-        }
+        };
+    {
+        8814932 => EprojInstr_Delete; 8814937 => EprojInstr_Sleep;
+        8814945 => EprojInstr_SetPreInstr_; 8814954 => EprojInstr_ClearPreInstr;
+        8814961 => EprojInstr_CallFunc; 8815019 => [EprojInstr_Goto(k, j)];
+        8815024 => [EprojInstr_GotoRel(k, j)]; 8815046 => EprojInstr_DecTimerAndGotoIfNonZero;
+        8815054 => EprojInstr_DecTimerAndGotoRelIfNonZero; 8815061 => EprojInstr_SetTimer;
+        8815071 => EprojInstr_MoveRandomlyWithinRadius;
+        8815152 => EprojInstr_SetProjectileProperties;
+        8815164 => EprojInstr_ClearProjectileProperties;
+        8815176 => EprojInstr_EnableCollisionWithSamusProj;
+        8815186 => EprojInstr_DisableCollisionWithSamusProj;
+        8815196 => EprojInstr_DisableCollisionWithSamus;
+        8815206 => EprojInstr_EnableCollisionWithSamus; 8815216 => EprojInstr_SetToNotDieOnContact;
+        8815226 => EprojInstr_SetToDieOnContact; 8815236 => EprojInstr_SetLowPriority;
+        8815246 => EprojInstr_SetHighPriority; 8815256 => EprojInstr_SetXyRadius;
+        8815265 => EprojInstr_SetXyRadiusZero; 8815269 => EprojInstr_CalculateDirectionTowardsSamus;
+        8815317 => EprojInstr_WriteColorsToPalette; 8815357 => EprojInstr_QueueMusic;
+        8815369 => EprojInstr_QueueSfx1_Max6; 8815378 => EprojInstr_QueueSfx2_Max6;
+        8815387 => EprojInstr_QueueSfx3_Max6; 8815396 => EprojInstr_QueueSfx1_Max15;
+        8815405 => EprojInstr_QueueSfx2_Max15; 8815414 => EprojInstr_QueueSfx3_Max15;
+        8815423 => EprojInstr_QueueSfx1_Max3; 8815432 => EprojInstr_QueueSfx2_Max3;
+        8815441 => EprojInstr_QueueSfx3_Max3; 8815450 => EprojInstr_QueueSfx1_Max9;
+        8815459 => EprojInstr_QueueSfx2_Max9; 8815468 => EprojInstr_QueueSfx3_Max9;
+        8815477 => EprojInstr_QueueSfx1_Max1; 8815486 => EprojInstr_QueueSfx2_Max1;
+        8815495 => EprojInstr_QueueSfx3_Max1;
+        8817768 => EprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops; 8818073 => EprojInstr_868D99;
+        8819829 => EprojInstr_DisableCollisionsWithSamus; 8820154 => EprojInstr_95BA;
+        8820205 => EprojInstr_95ED; 8820256 => EprojInstr_9620; 8820750 => EprojInstr_980E;
+        8822864 => EprojInstr_SetPreInstrAndRun; 8823894 => EprojInstr_GotoWithProbability25;
+        8825738 => EprojInstr_SpawnEnemyDrops; 8826258 => EprojInstr_GotoDependingOnXDirection;
+        8826678 => EprojInstr_ResetXYpos1; 8826770 => EprojInstr_MoveY_Minus4;
+        8827497 => EprojInstr_SetVelTowardsSamus1; 8827506 => EprojInstr_SetVelTowardsSamus2;
+        8827832 => EprojInstr_GotoIfFunc1; 8827958 => EprojInstr_ResetXYpos2;
+        8828906 => EprojInstr_SpawnTourianStatueUnlockingParticle; 8828917 => EprojInstr_Earthquake;
+        8828952 => EprojInstr_SpawnTourianStatueUnlockingParticleTail;
+        8828993 => EprojInstr_AddToYpos; 8831347 => EprojInstr_SwitchJump;
+        8831412 => EprojInstr_UserPalette0; 8833232 => EprojInstr_Add12ToY;
+        8833774 => EprojInstr_MotherBrainPurpleBreathIsActive; 8835420 => EprojInstr_D15C;
+        8835510 => EprojInstr_D1B6; 8835527 => EprojInstr_D1C7; 8835534 => EprojInstr_D1CE;
+        8836577 => EprojInstr_AssignNewN00bTubeShardVelocity;
+        8836594 => EprojInstr_SetN00bTubeShardX; 8836650 => EprojInstr_D62A;
+        8836762 => EprojInstr_SetXvelRandom; 8838234 => EprojInstr_DC5A;
+        8838241 => EprojInstr_SpawnEnemyDrops_0; 8838263 => EprojInstr_SpawnSporesEproj;
+        8839146 => EprojInstr_DFEA; 8840499 => EprojInstr_SetYVel; 8842467 => EprojInstr_ECE3;
+        8842519 => EprojInstr_ED17; 8842891 => EprojInstr_QueueSfx2_9;
+        8842903 => EprojInstr_QueueSfx2_24; 8842915 => EprojInstr_QueueSfx2_B;
+        8842927 => EprojInstr_EEAF; 8843024 => EprojInstr_HandleRespawningEnemy;
+        8817910 => EprojInstr_SetPreInstrA; 8817917 => EprojInstr_SetPreInstrB;
+        8822906 => [{
+                    EprojPreInstr_PirateMotherBrainLaser_MoveRight(k, game);
+                    j
+                }];
+        8822876 => [{
+                    EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k, game);
+                    j
+                }];
+        8823742 => EprojInstr_A3BE; 8819312 => EprojInstr_9270; 8815070 => [j];
+        8827198 => sub_86B13E;
     }
 }

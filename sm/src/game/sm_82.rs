@@ -277,12 +277,12 @@ crate::game::constants::typed_constants! { i32;
     fnlocret_828C81 = 0x828c81,
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallDemoRoomDataFunc(ea: u32, game: &mut Game) => ea, game {
-        8554778 => DemoRoom_ChargeBeamRoomScroll21(game),
-        8554788 => (),
-        8554789 => DemoRoom_SetBG2TilemapBase(game),
-        8554795 => DemoRoom_SetKraidFunctionTimer(game),
-        8554802 => DemoRoom_SetBrinstarBossBits(game),
+    pub unsafe fn CallDemoRoomDataFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        8554778 => DemoRoom_ChargeBeamRoomScroll21; 8554788 => [()];
+        8554789 => DemoRoom_SetBG2TilemapBase; 8554795 => DemoRoom_SetKraidFunctionTimer;
+        8554802 => DemoRoom_SetBrinstarBossBits;
     }
 }
 pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
@@ -1255,13 +1255,11 @@ pub unsafe fn DeleteAllOptionsMenuObjects_(game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallOptionsEntryFunc(ea: u32, j: u16, game: &mut Game) => ea, game {
-        8581782 => sub_82F296(j, game),
-        8581963 => sub_82F34B(j, game),
-        8581971 => sub_82F353(j, game),
-        8581979 => sub_82F35B(j, game),
-        8581987 => sub_82F363(j, game),
-        8582169 => sub_82F419(j, game),
+    pub unsafe fn CallOptionsEntryFunc(ea: u32, j: u16, game: &mut Game) => ea;
+        call (j, game); default { Unreachable(game); };
+    {
+        8581782 => sub_82F296; 8581963 => sub_82F34B; 8581971 => sub_82F353; 8581979 => sub_82F35B;
+        8581987 => sub_82F363; 8582169 => sub_82F419;
     }
 }
 pub unsafe fn CreateOptionsMenuObject_(a: u16, j: u16, game: &mut Game) -> u8 {
@@ -1297,25 +1295,21 @@ pub unsafe fn OptionsMenuFunc1(game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallOptionsPreInstr(ea: u32, k: u16, game: &mut Game) => ea, game {
-        8555536 => OptionsPreInstr_nullsub_57(k),
-        8581801 => OptionsPreInstr_F2A9(k, game),
-        8582006 => OptionsPreInstr_F376(k, game),
-        8582048 => OptionsPreInstr_F3A0(k, game),
-        8582114 => OptionsPreInstr_F3E2(k, game),
-        8582188 => OptionsPreInstr_F42C(k, game),
+    pub unsafe fn CallOptionsPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        8555536 => [OptionsPreInstr_nullsub_57(k)]; 8581801 => OptionsPreInstr_F2A9;
+        8582006 => OptionsPreInstr_F376; 8582048 => OptionsPreInstr_F3A0;
+        8582114 => OptionsPreInstr_F3E2; 8582188 => OptionsPreInstr_F42C;
     }
 }
-pub unsafe fn CallOptionsInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 {
-    match ea {
-        8555610 => OptionsInstr_Destroy(k, j, game),
-        8555620 => OptionsInstr_8C64(k, j, game),
-        8555630 => OptionsInstr_SetPreInstr(k, j, game),
-        8555641 => OptionsInstr_8C79(k, j, game),
-        8555650 => OptionsInstr_Goto(k, j, game),
-        8555657 => OptionsInstr_8C89(k, j, game),
-        8555667 => OptionsInstr_8C93(k, j, game),
-        _ => Unreachable(game) as u16,
+crate::game::address_dispatch! {
+    pub unsafe fn CallOptionsInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 => ea;
+        call (k, j, game); default Unreachable(game) as u16;
+    {
+        8555610 => OptionsInstr_Destroy; 8555620 => OptionsInstr_8C64;
+        8555630 => OptionsInstr_SetPreInstr; 8555641 => OptionsInstr_8C79;
+        8555650 => OptionsInstr_Goto; 8555657 => OptionsInstr_8C89; 8555667 => OptionsInstr_8C93;
     }
 }
 pub unsafe fn OptionsMenuFunc2(k: u16, game: &mut Game) {
@@ -1420,24 +1414,22 @@ pub unsafe fn GameState_12_Pausing_Darkening_Async(game: &mut Game) -> Coroutine
     kCoroutineNone as CoroutineRet
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallPauseHook(ea: u32, game: &mut Game) => ea, game {
-        8946657 => (),
-        9423094 => PauseHook_DraygonRoom(game),
-        10994469 => PauseHook_Kraid(game),
+    pub unsafe fn CallPauseHook(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        8946657 => [()]; 9423094 => PauseHook_DraygonRoom; 10994469 => PauseHook_Kraid;
     }
 }
-pub unsafe fn CallUnpauseHook_Async(ea: u32, game: &mut Game) -> CoroutineRet {
-    match ea {
-        8946657 => kCoroutineNone as CoroutineRet,
-        9423100 => UnpauseHook_DraygonRoom(game),
-        10994171 => UnpauseHook_Kraid_IsDead(game),
-        10994254 => UnpauseHook_Kraid_IsAlive(game),
-        10994336 => Kraid_UnpauseHook_IsSinking(game),
-        11110243 => MotherBrainsBody_UnpauseHook(game),
-        _ => {
+crate::game::address_dispatch! {
+    pub unsafe fn CallUnpauseHook_Async(ea: u32, game: &mut Game) -> CoroutineRet => ea;
+        call (game); default {
             Unreachable(game);
             kCoroutineNone as CoroutineRet
-        }
+        };
+    {
+        8946657 => [kCoroutineNone as CoroutineRet]; 9423100 => UnpauseHook_DraygonRoom;
+        10994171 => UnpauseHook_Kraid_IsDead; 10994254 => UnpauseHook_Kraid_IsAlive;
+        10994336 => Kraid_UnpauseHook_IsSinking; 11110243 => MotherBrainsBody_UnpauseHook;
     }
 }
 pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
@@ -4120,10 +4112,11 @@ pub unsafe fn HandleGameOverBabyMetroid(game: &mut Game) {
     };
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallBabyMetroidPlaySfx(ea: u32, game: &mut Game) => ea, game {
-        8567820 => BabyMetroidPlaySfx0x23(game),
-        8567829 => BabyMetroidPlaySfx0x26(game),
-        8567838 => BabyMetroidPlaySfx0x27(game),
+    pub unsafe fn CallBabyMetroidPlaySfx(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        8567820 => BabyMetroidPlaySfx0x23; 8567829 => BabyMetroidPlaySfx0x26;
+        8567838 => BabyMetroidPlaySfx0x27;
     }
 }
 pub unsafe fn sub_82BB7F(a: u16, game: &mut Game) {
@@ -4782,24 +4775,23 @@ pub unsafe fn LoadColorsForSpritesBeamsAndEnemies(game: &mut Game) {
         k = (k).wrapping_sub(2u16);
     }
 }
-pub unsafe fn CallDoorTransitionFunction_Async(ea: u32, game: &mut Game) -> CoroutineRet {
-    match ea {
-        8577405 => DoorTransitionFunction_HandleElevator(game),
-        8577439 => DoorTransitionFunction_Wait48frames(game),
-        8577694 => DoorTransitionFunction_WaitForSoundsToFinish(game),
-        8577755 => DoorTransitionFunction_FadeOutScreen(game),
-        8577783 => DoorTransitionFunction_LoadDoorHeaderEtc(game),
-        8577808 => DoorTransitionFunction_ScrollScreenToAlignment(game),
-        8577875 => DoorTransitionFunction_FixDoorsMovingUp(game),
-        8577902 => DoorTransitionFunction_SetupNewRoom(game),
-        8577934 => DoorTransitionFunction_SetupScrolling(game),
-        8577984 => DoorTransitionFunction_PlaceSamusLoadTiles(game),
-        8578217 => DoorTransitionFunction_LoadMoreThings_Async(game),
-        8578649 => DoorTransition_C_HandleAnimTiles(game),
-        8578660 => DoorTransition_WaitForMusicToClear(game),
-        8578722 => DoorTransition_HandleTransition(game),
-        8578871 => DoorTransition_FadeInScreenAndFinish(game),
-        _ => Unreachable(game) as CoroutineRet,
+crate::game::address_dispatch! {
+    pub unsafe fn CallDoorTransitionFunction_Async(ea: u32, game: &mut Game) -> CoroutineRet => ea;
+        call (game); default Unreachable(game) as CoroutineRet;
+    {
+        8577405 => DoorTransitionFunction_HandleElevator;
+        8577439 => DoorTransitionFunction_Wait48frames;
+        8577694 => DoorTransitionFunction_WaitForSoundsToFinish;
+        8577755 => DoorTransitionFunction_FadeOutScreen;
+        8577783 => DoorTransitionFunction_LoadDoorHeaderEtc;
+        8577808 => DoorTransitionFunction_ScrollScreenToAlignment;
+        8577875 => DoorTransitionFunction_FixDoorsMovingUp;
+        8577902 => DoorTransitionFunction_SetupNewRoom;
+        8577934 => DoorTransitionFunction_SetupScrolling;
+        8577984 => DoorTransitionFunction_PlaceSamusLoadTiles;
+        8578217 => DoorTransitionFunction_LoadMoreThings_Async;
+        8578649 => DoorTransition_C_HandleAnimTiles; 8578660 => DoorTransition_WaitForMusicToClear;
+        8578722 => DoorTransition_HandleTransition; 8578871 => DoorTransition_FadeInScreenAndFinish;
     }
 }
 pub unsafe fn GameState_9_HitDoorBlock(game: &mut Game) -> CoroutineRet {

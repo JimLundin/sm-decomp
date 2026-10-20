@@ -218,11 +218,11 @@ pub unsafe fn ProjectileInsts_GetValue(k: u16, game: &mut Game) -> u16 {
     };
     (*get_ProjectileInstr((ip + delta) as u16, game)).field_6
 }
-pub unsafe fn CallProj93Instr(ea: u32, j: u16, k: u16, game: &mut Game) -> u16 {
-    match ea {
-        9667119 => Proj93Instr_Delete(j, k, game),
-        9667129 => Proj93Instr_Goto(j, k, game),
-        _ => Unreachable(game) as u16,
+crate::game::address_dispatch! {
+    pub unsafe fn CallProj93Instr(ea: u32, j: u16, k: u16, game: &mut Game) -> u16 => ea;
+        call (j, k, game); default Unreachable(game) as u16;
+    {
+        9667119 => Proj93Instr_Delete; 9667129 => Proj93Instr_Goto;
     }
 }
 pub unsafe fn RunProjectileInstructions(game: &mut Game) {

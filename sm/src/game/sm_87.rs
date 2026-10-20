@@ -76,33 +76,26 @@ pub unsafe fn AnimtilesHandler(game: &mut Game) {
         }
     }
 }
-pub unsafe fn CallAnimtilesInstr(ea: u32, j: u16, k: u16, game: &mut Game) -> u16 {
-    match ea {
-        8880306 => AnimtilesInstr_Delete(j, k, game),
-        8880311 => AnimtilesInstr_Goto(j, k, game),
-        8880316 => AnimtilesInstr_GotoRel(j, k, game),
-        8880340 => AnimtilesInstr_DecrementTimerAndGoto(j, k, game),
-        8880348 => AnimtilesInstr_DecrementTimerAndGotoRel(j, k, game),
-        8880355 => AnimtilesInstr_SetTimer(j, k, game),
-        8880368 => AnimtilesInstr_QueueMusic(j, k, game),
-        8880380 => AnimtilesInstr_QueueSfx1(j, k, game),
-        8880392 => AnimtilesInstr_QueueSfx2(j, k, game),
-        8880404 => AnimtilesInstr_QueueSfx3(j, k, game),
-        8880416 => AnimtilesInstr_GotoIfBossBitSet(j, k, game),
-        8880435 => AnimtilesInstr_SetBossBit(j, k, game),
-        8880447 => AnimtilesInstr_GotoIfEventHappened(j, k, game),
-        8880464 => AnimtilesInstr_SetEventHappened(j, k, game),
-        8880570 => AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet(j, k, game),
-        8880899 => AnimtilesInstr_GotoIfBossBitSetInArea(j, k, game),
-        8880928 => AnimtilesInstr_SpawnTourianStatueEyeGlow(j, k, game),
-        8880943 => AnimtilesInstr_SpawnTourianStatueSoul(j, k, game),
-        8880958 => AnimtilesInstr_GotoIfTourianStatueBusy(j, k, game),
-        8880969 => AnimtilesInstr_TourianStatueSetState(j, k, game),
-        8880978 => AnimtilesInstr_TourianStatueClearState(j, k, game),
-        8880987 => AnimtilesInstr_Clear3PaletteColors(j, k, game),
-        8881010 => AnimtilesInstr_SpawnPalfxObj(j, k, game),
-        8881023 => AnimtilesInstr_Write8PaletteColors(j, k, game),
-        _ => Unreachable(game) as u16,
+crate::game::address_dispatch! {
+    pub unsafe fn CallAnimtilesInstr(ea: u32, j: u16, k: u16, game: &mut Game) -> u16 => ea;
+        call (j, k, game); default Unreachable(game) as u16;
+    {
+        8880306 => AnimtilesInstr_Delete; 8880311 => AnimtilesInstr_Goto;
+        8880316 => AnimtilesInstr_GotoRel; 8880340 => AnimtilesInstr_DecrementTimerAndGoto;
+        8880348 => AnimtilesInstr_DecrementTimerAndGotoRel; 8880355 => AnimtilesInstr_SetTimer;
+        8880368 => AnimtilesInstr_QueueMusic; 8880380 => AnimtilesInstr_QueueSfx1;
+        8880392 => AnimtilesInstr_QueueSfx2; 8880404 => AnimtilesInstr_QueueSfx3;
+        8880416 => AnimtilesInstr_GotoIfBossBitSet; 8880435 => AnimtilesInstr_SetBossBit;
+        8880447 => AnimtilesInstr_GotoIfEventHappened; 8880464 => AnimtilesInstr_SetEventHappened;
+        8880570 => AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet;
+        8880899 => AnimtilesInstr_GotoIfBossBitSetInArea;
+        8880928 => AnimtilesInstr_SpawnTourianStatueEyeGlow;
+        8880943 => AnimtilesInstr_SpawnTourianStatueSoul;
+        8880958 => AnimtilesInstr_GotoIfTourianStatueBusy;
+        8880969 => AnimtilesInstr_TourianStatueSetState;
+        8880978 => AnimtilesInstr_TourianStatueClearState;
+        8880987 => AnimtilesInstr_Clear3PaletteColors; 8881010 => AnimtilesInstr_SpawnPalfxObj;
+        8881023 => AnimtilesInstr_Write8PaletteColors;
     }
 }
 pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {

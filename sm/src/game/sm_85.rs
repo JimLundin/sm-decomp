@@ -150,9 +150,10 @@ unsafe fn WriteSmallMessageBoxTilemap(game: &mut Game) {
     WriteMessageBoxTilemapRow(end, &kSmallMsgBoxTopBottomBorderTilemap, game);
 }
 crate::game::address_dispatch! {
-    unsafe fn CallMsgBoxDraw(ea: u32, game: &mut Game) => ea, game {
-        8749658 => WriteLargeMessageBoxTilemap(game),
-        8749705 => WriteSmallMessageBoxTilemap(game),
+    unsafe fn CallMsgBoxDraw(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        8749658 => WriteLargeMessageBoxTilemap; 8749705 => WriteSmallMessageBoxTilemap;
     }
 }
 fn MsgBoxMakeHdmaTable(game: &mut Game) {
@@ -233,11 +234,12 @@ unsafe fn SetupPpuForLargeMessageBox(game: &mut Game) {
     SetupPpuForActiveMessageBox(416u16, game);
 }
 crate::game::address_dispatch! {
-    unsafe fn CallMsgBoxModify(ea: u32, game: &mut Game) => ea, game {
-        8750021 => DrawShootButtonAndSetupPpuForLargeMessageBox(game),
-        8750028 => DrawRunButtonAndSetupPpuForLargeMessageBox(game),
-        8750134 => SetupPpuForSmallMessageBox(game),
-        8750145 => SetupPpuForLargeMessageBox(game),
+    unsafe fn CallMsgBoxModify(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        8750021 => DrawShootButtonAndSetupPpuForLargeMessageBox;
+        8750028 => DrawRunButtonAndSetupPpuForLargeMessageBox;
+        8750134 => SetupPpuForSmallMessageBox; 8750145 => SetupPpuForLargeMessageBox;
     }
 }
 unsafe fn InitializeMessageBox(game: &mut Game) {

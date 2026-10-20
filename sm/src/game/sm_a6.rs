@@ -510,13 +510,11 @@ pub unsafe fn Boulder_Init(game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallBoulderFunc(ea: u32, game: &mut Game) => ea, game {
-        10913690 => Boulder_Func_1(game),
-        10913773 => Boulder_Func_2(game),
-        10913842 => Boulder_Func_3(game),
-        10913931 => Boulder_Func_4(game),
-        10914114 => Boulder_Func_5(game),
-        10914300 => Boulder_Func_6(),
+    pub unsafe fn CallBoulderFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10913690 => Boulder_Func_1; 10913773 => Boulder_Func_2; 10913842 => Boulder_Func_3;
+        10913931 => Boulder_Func_4; 10914114 => Boulder_Func_5; 10914300 => [Boulder_Func_6()];
     }
 }
 pub unsafe fn Boulder_Main(game: &mut Game) {
@@ -750,11 +748,11 @@ pub unsafe fn SpikeyPlatform2ndEnemy_Main(game: &mut Game) {
     (*v1).y_pos = (ram_word!(game, enemy_drawing_queue[(v0 + 93i32)])).wrapping_add(12u16);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallSpikeyPlatformFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        10914740 => SpikeyPlatform_Func_1(game),
-        10914780 => SpikeyPlatform_Func_2(game),
-        10914890 => SpikeyPlatform_Func_3(k, game),
-        10914909 => SpikeyPlatform_Func_4(game),
+    pub unsafe fn CallSpikeyPlatformFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10914740 => SpikeyPlatform_Func_1; 10914780 => SpikeyPlatform_Func_2;
+        10914890 => [SpikeyPlatform_Func_3(k, game)]; 10914909 => SpikeyPlatform_Func_4;
     }
 }
 pub unsafe fn SpikeyPlatform_Main(game: &mut Game) {
@@ -979,9 +977,10 @@ pub unsafe fn FireGeyser_Init(game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallFireGeyserFunc(ea: u32, game: &mut Game) => ea, game {
-        10915887 => FireGeyser_Func_1(game),
-        10915938 => FireGeyser_Func_2(game),
+    pub unsafe fn CallFireGeyserFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10915887 => FireGeyser_Func_1; 10915938 => FireGeyser_Func_2;
     }
 }
 pub unsafe fn FireGeyser_Main(game: &mut Game) {
@@ -1086,9 +1085,10 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallNuclearWaffleFunc(ea: u32, game: &mut Game) => ea, game {
-        10917397 => NuclearWaffle_Func_1(game),
-        10917506 => NuclearWaffle_Func_2(game),
+    pub unsafe fn CallNuclearWaffleFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10917397 => NuclearWaffle_Func_1; 10917506 => NuclearWaffle_Func_2;
     }
 }
 pub unsafe fn NuclearWaffle_Main(game: &mut Game) {
@@ -1580,69 +1580,34 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
     };
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallRidleyFunc(ea: u32, game: &mut Game) => ea, game {
-        10920788 => CeresRidley_Func_2(game),
-        10920795 => CeresRidley_Func_3(game),
-        10920823 => CeresRidley_A377(game),
-        10920841 => CeresRidley_Func_4(game),
-        10920927 => CeresRidley_Func_5(game),
-        10921045 => CeresRidley_Func_6(game),
-        10921080 => CeresRidley_Func_7(game),
-        10921647 => CeresRidley_Func_9(game),
-        10921672 => CeresRidley_Func_10(game),
-        10921704 => CeresRidley_Func_11(game),
-        10921858 => CeresRidley_Func_13(game),
-        10921977 => CeresRidley_A7F9(game),
-        10922044 => CeresRidley_Func_14(game),
-        10922062 => CeresRidley_Func_15(game),
-        10922125 => CeresRidley_Func_16(game),
-        10922148 => CeresRidley_Func_17(game),
-        10922196 => CeresRidley_Func_18(game),
-        10922232 => CeresRidley_Func_19(game),
-        10922275 => CeresRidley_Func_20(game),
-        10922311 => CeresRidley_Func_21(game),
-        10922353 => CeresRidley_Func_22(game),
-        10922400 => CeresRidley_Func_23(game),
-        10922513 => CeresRidley_Func_24(game),
-        10922575 => (),
-        10922576 => CeresRidley_Func_26(game),
-        10924787 => Ridley_Func_3(game),
-        10924833 => Ridley_Func_3b(game),
-        10925036 => Ridley_Func_5(game),
-        10925048 => Ridley_Func_6(game),
-        10925121 => Ridley_Func_8(game),
-        10925141 => Ridley_B455(game),
-        10925203 => Ridley_Func_9(game),
-        10925265 => Ridley_Func_10(game),
-        10925334 => Ridley_Func_11(game),
-        10925396 => Ridley_Func_12(game),
-        10925460 => Ridley_Func_13(game),
-        10925508 => Ridley_Func_14(game),
-        10925541 => Ridley_Func_15(game),
-        10925587 => Ridley_Func_16(game),
-        10925735 => Ridley_Func_19(game),
-        10925789 => Ridley_Func_20(game),
-        10925838 => Ridley_Func_21(game),
-        10926009 => Ridley_Func_22(game),
-        10926775 => Ridley_Func_33(game),
-        10926991 => Ridley_Func_33b(game),
-        10927044 => Ridley_Func_34(game),
-        10927089 => Ridley_Func_35(game),
-        10927150 => Ridley_Func_36(game),
-        10927438 => Ridley_Func_43(game),
-        10927514 => Ridley_Func_44(game),
-        10927548 => Ridley_Func_45(game),
-        10927602 => Ridley_Func_46(game),
-        10927619 => Ridley_Func_47(game),
-        10928206 => Ridley_Func_54(game),
-        10929464 => Ridley_Func_63(game),
-        10929470 => Ridley_C53E(game),
-        10929489 => Ridley_C551(game),
-        10929544 => Ridley_Func_64(game),
-        10929576 => Ridley_Func_65(game),
-        10929608 => Ridley_Func_66(game),
-        10929626 => Ridley_Func_67(game),
-        10929664 => (),
+    pub unsafe fn CallRidleyFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10920788 => CeresRidley_Func_2; 10920795 => CeresRidley_Func_3;
+        10920823 => CeresRidley_A377; 10920841 => CeresRidley_Func_4;
+        10920927 => CeresRidley_Func_5; 10921045 => CeresRidley_Func_6;
+        10921080 => CeresRidley_Func_7; 10921647 => CeresRidley_Func_9;
+        10921672 => CeresRidley_Func_10; 10921704 => CeresRidley_Func_11;
+        10921858 => CeresRidley_Func_13; 10921977 => CeresRidley_A7F9;
+        10922044 => CeresRidley_Func_14; 10922062 => CeresRidley_Func_15;
+        10922125 => CeresRidley_Func_16; 10922148 => CeresRidley_Func_17;
+        10922196 => CeresRidley_Func_18; 10922232 => CeresRidley_Func_19;
+        10922275 => CeresRidley_Func_20; 10922311 => CeresRidley_Func_21;
+        10922353 => CeresRidley_Func_22; 10922400 => CeresRidley_Func_23;
+        10922513 => CeresRidley_Func_24; 10922575 => [()]; 10922576 => CeresRidley_Func_26;
+        10924787 => Ridley_Func_3; 10924833 => Ridley_Func_3b; 10925036 => Ridley_Func_5;
+        10925048 => Ridley_Func_6; 10925121 => Ridley_Func_8; 10925141 => Ridley_B455;
+        10925203 => Ridley_Func_9; 10925265 => Ridley_Func_10; 10925334 => Ridley_Func_11;
+        10925396 => Ridley_Func_12; 10925460 => Ridley_Func_13; 10925508 => Ridley_Func_14;
+        10925541 => Ridley_Func_15; 10925587 => Ridley_Func_16; 10925735 => Ridley_Func_19;
+        10925789 => Ridley_Func_20; 10925838 => Ridley_Func_21; 10926009 => Ridley_Func_22;
+        10926775 => Ridley_Func_33; 10926991 => Ridley_Func_33b; 10927044 => Ridley_Func_34;
+        10927089 => Ridley_Func_35; 10927150 => Ridley_Func_36; 10927438 => Ridley_Func_43;
+        10927514 => Ridley_Func_44; 10927548 => Ridley_Func_45; 10927602 => Ridley_Func_46;
+        10927619 => Ridley_Func_47; 10928206 => Ridley_Func_54; 10929464 => Ridley_Func_63;
+        10929470 => Ridley_C53E; 10929489 => Ridley_C551; 10929544 => Ridley_Func_64;
+        10929576 => Ridley_Func_65; 10929608 => Ridley_Func_66; 10929626 => Ridley_Func_67;
+        10929664 => [()];
     }
 }
 pub unsafe fn CeresRidley_Main(game: &mut Game) {
@@ -3157,12 +3122,11 @@ pub unsafe fn Ridley_Func_48(rect: Rect16U, game: &mut Game) -> u8 {
     result
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallRidleyFunc_var40(ea: u32, game: &mut Game) => ea, game {
-        10927772 => Ridley_Func_50(game),
-        10927795 => Ridley_Func_51(game),
-        10927818 => Ridley_Func_52(game),
-        10927836 => Ridley_Func_53(game),
-        10927897 => (),
+    pub unsafe fn CallRidleyFunc_var40(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10927772 => Ridley_Func_50; 10927795 => Ridley_Func_51; 10927818 => Ridley_Func_52;
+        10927836 => Ridley_Func_53; 10927897 => [()];
     }
 }
 pub unsafe fn Ridley_Func_49(game: &mut Game) {
@@ -5243,13 +5207,12 @@ pub unsafe fn sub_A6DB2A(game: &mut Game) {
 pub unsafe fn sub_A6DBC2(j: u16, x: u16, y: u16, game: &mut Game) {
     sub_A6DC13(j, x, y, (*Get_Ridley(0i32, game)).ridley_var_0C, game);
 }
-pub unsafe fn CallBabyMetroidInstr(ea: u32, k: u16, game: &mut Game) -> u16 {
-    match ea {
-        10928073 => BabyMetroid_Instr_2(k, game),
-        10928097 => BabyMetroid_Instr_3(k, game),
-        10928114 => BabyMetroid_Instr_1(k, game),
-        10928120 => BabyMetroid_Goto(k, game),
-        _ => Unreachable(game) as u16,
+crate::game::address_dispatch! {
+    pub unsafe fn CallBabyMetroidInstr(ea: u32, k: u16, game: &mut Game) -> u16 => ea;
+        call (k, game); default Unreachable(game) as u16;
+    {
+        10928073 => BabyMetroid_Instr_2; 10928097 => BabyMetroid_Instr_3;
+        10928114 => BabyMetroid_Instr_1; 10928120 => BabyMetroid_Goto;
     }
 }
 unsafe fn BabyMetroid_DBCB_DoubleRetEx(a: u16, game: &mut Game) -> i32 {
@@ -5700,9 +5663,10 @@ pub unsafe fn CeresSteam_Init(game: &mut Game) {
     (*E).csm_var_A = crate::rtl::rom_table_word!(game, 0xa6f001, v1 as isize);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallCeresSteamFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        10940404 => (),
-        10940441 => CeresSteam_Func_1(k, game),
+    pub unsafe fn CallCeresSteamFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        10940404 => [()]; 10940441 => CeresSteam_Func_1;
     }
 }
 pub unsafe fn CeresSteam_Main(game: &mut Game) {
@@ -6016,10 +5980,11 @@ pub unsafe fn Zebetites_Init(game: &mut Game) {
     };
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallZebetitesFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        10943553 => Zebetites_Func_1(k, game),
-        10943579 => Zebetites_Func_2(k, game),
-        10943591 => Zebetites_Func_3(game),
+    pub unsafe fn CallZebetitesFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        10943553 => Zebetites_Func_1; 10943579 => Zebetites_Func_2;
+        10943591 => [Zebetites_Func_3(game)];
     }
 }
 pub unsafe fn Zebetites_Main(game: &mut Game) {

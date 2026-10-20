@@ -476,26 +476,21 @@ pub unsafe fn DemoObjectInputHandler(game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallDemoPreInstr(address: u32, game: &mut Game) => address, game {
-        0x9183bf => (),
-        0x91864f => DemoPreInstr_864F(game),
-        0x91866a => DemoPreInstr_866A(game),
-        0x918a9b => DemoPreInstr_CheckLeaveDemo(game),
-        0x918ab0 => DemoPreInstr_8AB0(game),
+    pub unsafe fn CallDemoPreInstr(address: u32, game: &mut Game) => address;
+        call (game); default { Unreachable(game); };
+    {
+        0x9183bf => [()]; 0x91864f => DemoPreInstr_864F; 0x91866a => DemoPreInstr_866A;
+        0x918a9b => DemoPreInstr_CheckLeaveDemo; 0x918ab0 => DemoPreInstr_8AB0;
     }
 }
-pub unsafe fn CallDemoInstr(address: u32, k: u16, j: u16, game: &mut Game) -> u16 {
-    match address {
-        0x918427 => DemoInstr_Finish(k, j, game),
-        0x918434 => DemoInstr_SetPreInstr(k, j, game),
-        0x91843f => DemoInstr_ClearPreInstr(k, j, game),
-        0x918448 => DemoInstr_Goto(k, j, game),
-        0x91844f => DemoInstr_DecTimerAndGoto(k, j, game),
-        0x918459 => DemoInstr_SetTimer(k, j, game),
-        0x9185fc => DemoInstr_Func2(k, j, game),
-        0x918682 => DemoInstr_Disable(k, j, game),
-        0x918739 => DemoInstr_Func3(k, j, game),
-        _ => Unreachable(game) as u16,
+crate::game::address_dispatch! {
+    pub unsafe fn CallDemoInstr(address: u32, k: u16, j: u16, game: &mut Game) -> u16 => address;
+        call (k, j, game); default Unreachable(game) as u16;
+    {
+        0x918427 => DemoInstr_Finish; 0x918434 => DemoInstr_SetPreInstr;
+        0x91843f => DemoInstr_ClearPreInstr; 0x918448 => DemoInstr_Goto;
+        0x91844f => DemoInstr_DecTimerAndGoto; 0x918459 => DemoInstr_SetTimer;
+        0x9185fc => DemoInstr_Func2; 0x918682 => DemoInstr_Disable; 0x918739 => DemoInstr_Func3;
     }
 }
 pub unsafe fn ProcessDemoInputObject(game: &mut Game) {
@@ -1830,18 +1825,17 @@ unsafe fn Xray_Func11(r18: u16, dst_r22: u16, jp: *const u8, game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    unsafe fn CallXrayFunc(ea: u32, jp: *const u8, r18: u16, r22: u16, r36: u16, game: &mut Game) => ea, game {
-        9555577 => {
-            Xray_CombinedMove(r22, r36, true_0 != 0, game);
-        }
-        9555643 => {
-            Xray_CombinedMove(r22, r36, false_0 != 0, game);
-        }
-        9555766 => Xray_Func7(r22, jp, game),
-        9555774 => Xray_Func8(r22, jp, game),
-        9555790 => Xray_Func9(r18, r22, jp, game),
-        9555810 => Xray_Func10(r22, jp, game),
-        9555823 => Xray_Func11(r18, r22, jp, game),
+    unsafe fn CallXrayFunc(ea: u32, jp: *const u8, r18: u16, r22: u16, r36: u16, game: &mut Game) => ea;
+        call (r22, jp, game); default { Unreachable(game); };
+    {
+        9555577 => [{
+                    Xray_CombinedMove(r22, r36, true_0 != 0, game);
+                }];
+        9555643 => [{
+                    Xray_CombinedMove(r22, r36, false_0 != 0, game);
+                }];
+        9555766 => Xray_Func7; 9555774 => Xray_Func8; 9555790 => [Xray_Func9(r18, r22, jp, game)];
+        9555810 => Xray_Func10; 9555823 => [Xray_Func11(r18, r22, jp, game)];
     }
 }
 pub unsafe fn Xray_SetupStage4_Func3(r18: u16, r22: u16, r36: u16, game: &mut Game) {

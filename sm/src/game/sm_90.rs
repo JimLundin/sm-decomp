@@ -1857,8 +1857,10 @@ pub unsafe fn Samus_HandleMovement_DrainedCrouching(game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallScrollingFinishedHook(ea: u32, game: &mut Game) => ea, game {
-        9475465 => Samus_ScrollFinishedHook_SporeSpawnFight(game),
+    pub unsafe fn CallScrollingFinishedHook(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        9475465 => Samus_ScrollFinishedHook_SporeSpawnFight;
     }
 }
 pub unsafe fn MainScrollingRoutine(game: &mut Game) {
@@ -3499,42 +3501,26 @@ pub unsafe fn KillProjectile(k: u16, game: &mut Game) {
     );
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallProjPreInstr(ea: u32, k: u16, game: &mut Game) => ea, game {
-        9482601 => (),
-        9481971 => ProjPreInstr_Beam_NoWaveBeam(k, game),
-        9482058 => ProjPreInstr_Dir0459(k, game),
-        9482066 => ProjPreInstr_Dir1368(k, game),
-        9482080 => ProjPreInstr_Dir27(k, game),
-        9482088 => ProjPreInstr_Missile(k, game),
-        9482183 => ProjPreInstr_Missile_Func0459(k, game),
-        9482191 => ProjPreInstr_Missile_Func1368(k, game),
-        9482205 => ProjPreInstr_Missile_Func27(k, game),
-        9482213 => ProjPreInstr_SuperMissile(k, game),
-        9482311 => ProjPreInstr_SuperMissile_Func0459(k, game),
-        9482322 => ProjPreInstr_SuperMissile_Func1368(k, game),
-        9482346 => ProjPreInstr_SuperMissile_Func27(k, game),
-        9482357 => ProjPreInstr_Func1(k, game),
-        9482393 => ProjPreInstr_Bomb(k, game),
-        9482414 => ProjPreInstr_PowerBomb(k, game),
-        9482435 => ProjPreInstr_WavePlasmaEtc(k, game),
-        9482468 => ProjPreInstr_BeamOrIceWave(k, game),
-        9482499 => ProjPreInstr_Wave_Shared(k, game),
-        9482555 => ProjPreInstr_WavePlasmaEtc_0459(k, game),
-        9482563 => ProjPreInstr_WavePlasmaEtc_1368(k, game),
-        9482577 => ProjPreInstr_WavePlasmaEtc_27(k, game),
-        9482585 => ProjPreInstr_HyperBeam(k, game),
-        9490185 => ProjPreInstr_IceSba(k, game),
-        9490298 => ProjPreInstr_IceSba2(k, game),
-        9491666 => ProjPreInstr_SpeedEcho(k, game),
-        9492371 => ProjPreInstr_PlasmaSba(k, game),
-        9492449 => ProjPreInstr_PlasmaSbaFunc_0(k, game),
-        9492474 => ProjPreInstr_PlasmaSbaFunc_1(k, game),
-        9492499 => ProjPreInstr_PlasmaSbaFunc_2(k, game),
-        9492727 => ProjPreInstr_SpreadBomb(k, game),
-        9493000 => ProjPreInstr_WaveSba(k, game),
-        9493254 => ProjPreInstr_SpazerSba(k, game),
-        9493660 => ProjPreInstr_EndOfSpazerSba(k, game),
-        9498579 => ProjPreInstr_UnknownProj8027(k, game),
+    pub unsafe fn CallProjPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        9482601 => [()]; 9481971 => ProjPreInstr_Beam_NoWaveBeam; 9482058 => ProjPreInstr_Dir0459;
+        9482066 => ProjPreInstr_Dir1368; 9482080 => ProjPreInstr_Dir27;
+        9482088 => ProjPreInstr_Missile; 9482183 => ProjPreInstr_Missile_Func0459;
+        9482191 => ProjPreInstr_Missile_Func1368; 9482205 => ProjPreInstr_Missile_Func27;
+        9482213 => ProjPreInstr_SuperMissile; 9482311 => ProjPreInstr_SuperMissile_Func0459;
+        9482322 => ProjPreInstr_SuperMissile_Func1368; 9482346 => ProjPreInstr_SuperMissile_Func27;
+        9482357 => ProjPreInstr_Func1; 9482393 => ProjPreInstr_Bomb;
+        9482414 => ProjPreInstr_PowerBomb; 9482435 => ProjPreInstr_WavePlasmaEtc;
+        9482468 => ProjPreInstr_BeamOrIceWave; 9482499 => ProjPreInstr_Wave_Shared;
+        9482555 => ProjPreInstr_WavePlasmaEtc_0459; 9482563 => ProjPreInstr_WavePlasmaEtc_1368;
+        9482577 => ProjPreInstr_WavePlasmaEtc_27; 9482585 => ProjPreInstr_HyperBeam;
+        9490185 => ProjPreInstr_IceSba; 9490298 => ProjPreInstr_IceSba2;
+        9491666 => ProjPreInstr_SpeedEcho; 9492371 => ProjPreInstr_PlasmaSba;
+        9492449 => ProjPreInstr_PlasmaSbaFunc_0; 9492474 => ProjPreInstr_PlasmaSbaFunc_1;
+        9492499 => ProjPreInstr_PlasmaSbaFunc_2; 9492727 => ProjPreInstr_SpreadBomb;
+        9493000 => ProjPreInstr_WaveSba; 9493254 => ProjPreInstr_SpazerSba;
+        9493660 => ProjPreInstr_EndOfSpazerSba; 9498579 => ProjPreInstr_UnknownProj8027;
     }
 }
 pub unsafe fn HandleProjectile(game: &mut Game) {
@@ -4163,10 +4149,12 @@ pub unsafe fn SpawnProjectileTrail(k: u16, game: &mut Game) {
     ProjectileTrail_Func5(ram_word!(game, projectile_index), v4, game);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallProjInstr(ea: u32, j: u16, game: &mut Game) => ea, game {
-        9483557 => ProjInstr_MoveLeftProjectileTrailDown(j, game),
-        9483655 => ProjInstr_MoveRightProjectileTrailDown(j, game),
-        9483699 => ProjInstr_MoveLeftProjectileTrailUp(j, game),
+    pub unsafe fn CallProjInstr(ea: u32, j: u16, game: &mut Game) => ea;
+        call (j, game); default { Unreachable(game); };
+    {
+        9483557 => ProjInstr_MoveLeftProjectileTrailDown;
+        9483655 => ProjInstr_MoveRightProjectileTrailDown;
+        9483699 => ProjInstr_MoveLeftProjectileTrailUp;
     }
 }
 pub unsafe fn HandleProjectileTrails(game: &mut Game) {
@@ -7098,18 +7086,13 @@ pub unsafe fn Samus_MoveHandler_BombJumpFunc1(game: &mut Game) {
     set_ram_word!(game.bomb_jump_dir = 0u16);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallFrameHandlerGamma(ea: u32, game: &mut Game) => ea, game {
-        9494683 => Samus_Func1(game),
-        9494725 => Samus_Func2(game),
-        9494758 => Samus_Func3(game),
-        9494804 => DrawTimer_(game),
-        9494830 => Samus_PushOutOfRidleysWay(game),
-        9494984 => Samus_Func4(game),
-        9495201 => Samus_GrabbedByDraygonFrameHandler(game),
-        9495422 => (),
-        9495459 => Samus_Func7(game),
-        9495579 => Samus_Func9(game),
-        9496846 => (),
+    pub unsafe fn CallFrameHandlerGamma(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        9494683 => Samus_Func1; 9494725 => Samus_Func2; 9494758 => Samus_Func3;
+        9494804 => DrawTimer_; 9494830 => Samus_PushOutOfRidleysWay; 9494984 => Samus_Func4;
+        9495201 => Samus_GrabbedByDraygonFrameHandler; 9495422 => [()]; 9495459 => Samus_Func7;
+        9495579 => Samus_Func9; 9496846 => [()];
     }
 }
 pub unsafe fn RunFrameHandlerGamma(game: &mut Game) {
@@ -7437,11 +7420,11 @@ pub unsafe fn Samus_MoveDown_SetPoseCalcInput(game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallFrameHandlerAlfa(ea: u32, game: &mut Game) => ea, game {
-        9496213 => Samus_FrameHandlerAlfa_Func11(game),
-        9496265 => Samus_FrameHandlerAlfa_Func12(game),
-        9496339 => Samus_FrameHandlerAlfa_Func13(game),
-        9496781 => (),
+    pub unsafe fn CallFrameHandlerAlfa(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        9496213 => Samus_FrameHandlerAlfa_Func11; 9496265 => Samus_FrameHandlerAlfa_Func12;
+        9496339 => Samus_FrameHandlerAlfa_Func13; 9496781 => [()];
     }
 }
 pub unsafe fn HandleControllerInputForGamePhysics(game: &mut Game) {
@@ -7493,19 +7476,14 @@ pub unsafe fn Samus_FrameHandlerAlfa_Func13(game: &mut Game) {
     Samus_Func10(game);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallFrameHandlerBeta(ea: u32, game: &mut Game) => ea, game {
-        9496357 => Samus_FrameHandlerBeta_Func17(game),
-        9496530 => HandleDemoRecorder_3(game),
-        9496565 => Samus_FrameHandlerBeta_Func14(game),
-        9496627 => Samus_Func15(game),
-        9496682 => Samus_Func16(game),
-        9496746 => Samus_Func18(game),
-        9496781 => (),
-        9496790 => (),
-        9496793 => (),
-        9496796 => SetContactDamageIndexAndUpdateMinimap(game),
-        9496812 => Samus_Func19(game),
-        9496834 => Samus_LowHealthCheck(game),
+    pub unsafe fn CallFrameHandlerBeta(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        9496357 => Samus_FrameHandlerBeta_Func17; 9496530 => HandleDemoRecorder_3;
+        9496565 => Samus_FrameHandlerBeta_Func14; 9496627 => Samus_Func15; 9496682 => Samus_Func16;
+        9496746 => Samus_Func18; 9496781 => [()]; 9496790 => [()]; 9496793 => [()];
+        9496796 => SetContactDamageIndexAndUpdateMinimap; 9496812 => Samus_Func19;
+        9496834 => Samus_LowHealthCheck;
     }
 }
 pub unsafe fn HandleSamusMovementAndPause(game: &mut Game) {
@@ -7627,12 +7605,11 @@ pub unsafe fn Samus_LowHealthCheck(game: &mut Game) {
     Samus_LowHealthCheck_(game);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallSamusInputHandler(ea: u32, game: &mut Game) => ea, game {
-        9496846 => (),
-        9496851 => Samus_InputHandler_E913(game),
-        9496856 => Samus_Func20_(game),
-        9496861 => Samus_InputHandler_E91D(game),
-        9496870 => HandleAutoJumpHack(game),
+    pub unsafe fn CallSamusInputHandler(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        9496846 => [()]; 9496851 => Samus_InputHandler_E913; 9496856 => Samus_Func20_;
+        9496861 => Samus_InputHandler_E91D; 9496870 => HandleAutoJumpHack;
     }
 }
 pub unsafe fn Samus_CallInputHandler(game: &mut Game) {
@@ -7665,35 +7642,28 @@ pub unsafe fn HandleAutoJumpHack(game: &mut Game) {
     set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallSamusMovementHandler(ea: u32, game: &mut Game) => ea, game {
-        9475182 => Samus_MoveHandler_ReleaseFromGrapple(game),
-        9475275 => Samus_HandleMovement_DrainedCrouching(game),
-        9478967 => Samus_MovementHandler_Normal(game),
-        9490536 => Samus_MoveHandlerShinesparkWindup(game),
-        9490603 => Samus_MoveHandlerVerticalShinespark(game),
-        9490647 => Samus_MoveHandler_Shinespark_Diag(game),
-        9490694 => Samus_MoveHandler_Shinespark_Horiz(game),
-        9491270 => Samus_MoveHandler_ShinesparkCrash(game),
-        9491331 => Samus_MoveHandler_ShinesparkCrash_0(game),
-        9491350 => Samus_MoveHandler_ShinesparkCrash_1(game),
-        9491404 => Samus_MoveHandler_ShinesparkCrash_2(game),
-        9491443 => Samus_MoveHandler_ShinesparkCrashEchoCircle(game),
-        9491469 => Samus_MoveHandler_ShinesparkCrashFinish(game),
-        9492088 => SamusMoveHandler_CrystalFlashStart(game),
-        9492174 => SamusMoveHandler_CrystalFlashMain(game),
-        9492315 => kSamusMoveHandler_CrystalFlashFinish(game),
-        9494328 => Samus_MoveHandler_Knockback(game),
-        9494352 => Samus_MoveHandler_Knockback_0(game),
-        9494355 => Samus_MoveHandler_Knockback_Up(game),
-        9494365 => Samus_MoveHandler_Knockback_3(game),
-        9494372 => Samus_MoveHandler_Knockback_Down(game),
-        9494565 => Samus_MoveHandler_BombJumpStart(game),
-        9494578 => Samus_MoveHandler_BombJumpMain(game),
-        9494653 => Samus_MoveHandler_BombJumpFunc1(game),
-        9496846 => (),
-        9496911 => SamusMovementType_Xray(game),
-        9498699 => Samus_Func25_ShineSpark(game),
-        9498738 => Samus_MoveHandler_F072(game),
+    pub unsafe fn CallSamusMovementHandler(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        9475182 => Samus_MoveHandler_ReleaseFromGrapple;
+        9475275 => Samus_HandleMovement_DrainedCrouching; 9478967 => Samus_MovementHandler_Normal;
+        9490536 => Samus_MoveHandlerShinesparkWindup;
+        9490603 => Samus_MoveHandlerVerticalShinespark;
+        9490647 => Samus_MoveHandler_Shinespark_Diag; 9490694 => Samus_MoveHandler_Shinespark_Horiz;
+        9491270 => Samus_MoveHandler_ShinesparkCrash;
+        9491331 => Samus_MoveHandler_ShinesparkCrash_0;
+        9491350 => Samus_MoveHandler_ShinesparkCrash_1;
+        9491404 => Samus_MoveHandler_ShinesparkCrash_2;
+        9491443 => Samus_MoveHandler_ShinesparkCrashEchoCircle;
+        9491469 => Samus_MoveHandler_ShinesparkCrashFinish;
+        9492088 => SamusMoveHandler_CrystalFlashStart; 9492174 => SamusMoveHandler_CrystalFlashMain;
+        9492315 => kSamusMoveHandler_CrystalFlashFinish; 9494328 => Samus_MoveHandler_Knockback;
+        9494352 => Samus_MoveHandler_Knockback_0; 9494355 => Samus_MoveHandler_Knockback_Up;
+        9494365 => Samus_MoveHandler_Knockback_3; 9494372 => Samus_MoveHandler_Knockback_Down;
+        9494565 => Samus_MoveHandler_BombJumpStart; 9494578 => Samus_MoveHandler_BombJumpMain;
+        9494653 => Samus_MoveHandler_BombJumpFunc1; 9496846 => [()];
+        9496911 => SamusMovementType_Xray; 9498699 => Samus_Func25_ShineSpark;
+        9498738 => Samus_MoveHandler_F072;
     }
 }
 pub unsafe fn RunSamusMovementHandler(game: &mut Game) {
@@ -7839,13 +7809,12 @@ pub unsafe fn DrawSamusAndProjectiles(game: &mut Game) {
     Samus_ShootCheck(game);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallSamusDrawHandler(ea: u32, game: &mut Game) => ea, game {
-        9497426 => SamusDrawHandler_Default(game),
-        9497478 => sub_90EB86(game),
-        9496846 | 9497586 => (),
-        9497587 => Samus_DrawHandler_EndOfShinespark(game),
-        9497620 => SamusDisplayHandler_UsingElevator(game),
-        9497629 => SamusDisplayHandler_SamusReceivedFatal(game),
+    pub unsafe fn CallSamusDrawHandler(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        9497426 => SamusDrawHandler_Default; 9497478 => sub_90EB86; 9496846 | 9497586 => [()];
+        9497587 => Samus_DrawHandler_EndOfShinespark; 9497620 => SamusDisplayHandler_UsingElevator;
+        9497629 => SamusDisplayHandler_SamusReceivedFatal;
     }
 }
 pub unsafe fn SamusDrawSprites(game: &mut Game) {

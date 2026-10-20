@@ -646,14 +646,12 @@ pub unsafe fn Torizo_Hurt(game: &mut Game) {
     };
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallTorizoFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        11191979 => (),
-        11191999 => Torizo_Func_3(k, game),
-        11192006 => Torizo_Func_4(k, game),
-        11192063 => Torizo_Func_1(k, game),
-        11195842 => Torizo_Func_9(k, game),
-        11195871 => Torizo_Func_10(k, game),
-        11195878 => Torizo_D5E6(k, game),
+    pub unsafe fn CallTorizoFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        11191979 => [()]; 11191999 => Torizo_Func_3; 11192006 => Torizo_Func_4;
+        11192063 => Torizo_Func_1; 11195842 => Torizo_Func_9; 11195871 => Torizo_Func_10;
+        11195878 => Torizo_D5E6;
     }
 }
 pub unsafe fn Torizo_Main(game: &mut Game) {

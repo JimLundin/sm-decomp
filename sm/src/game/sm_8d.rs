@@ -338,49 +338,38 @@ pub unsafe fn PalInit_F779_Brinstar8(k: u16, j: u16, game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallPalFxPreInstr(ea: u32, k: u16, game: &mut Game) => ea, game {
-        9291046 => PalPreInstr_nullsub_129(k),
-        9298443 => PalPreInstr_E1BC(k, game),
-        9298656 => PalPreInstr_CheckEnemy0Health(k, game),
-        9298809 => PalPreInstr_SamusInHeat(k, game),
-        9301701 => PalPreInstr_DeletePalfxIfMinibossDead(k, game),
-        9301081 => PalPreInstr_SwitchIfYpos(k, game),
-        9301380 => PalPreInstr_SwitchIfYpos2(k, game),
-        9303585 => PalPreInstr_F621(k, game),
-    }
-}
-pub unsafe fn CallPalInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> PairU16 {
-    match ea {
-        9291157 => PalInstr_Wait(k, j, game),
-        9291161 => PalInstr_ColorPlus2(k, j),
-        9291170 => PalInstr_ColorPlus3(k, j),
-        9291179 => PalInstr_ColorPlus4(k, j),
-        9291188 => PalInstr_ColorPlus8(k, j),
-        9291197 => PalInstr_ColorPlus9(k, j),
-        9291206 => PalInstr_ColorPlus15(k, j),
-        9291215 => PalInstr_Delete(k, j, game),
-        9291220 => PalInstr_SetPreInstr(k, j, game),
-        9291229 => PalInstr_ClearPreInstr(k, j, game),
-        9291294 => PalInstr_Goto(k, j, game),
-        9291321 => PalInstr_DecTimerGoto(k, j, game),
-        9291336 => PalInstr_SetTimer(k, j, game),
-        9291349 => PalInstr_SetColorIndex(k, j, game),
-        9291358 => PalInstr_QueueMusic(k, j, game),
-        9291370 => PalInstr_QueueSfx1(k, j, game),
-        9291379 => PalInstr_QueueSfx2(k, j, game),
-        9291388 => PalInstr_QueueSfx3(k, j, game),
-        9302470 => PalInstr_SetPalfxIndex(k, j, game),
-        _ => {
-            Unreachable(game);
-            PairU16 { k: 0u16, j: 0u16 }
-        }
+    pub unsafe fn CallPalFxPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        9291046 => [PalPreInstr_nullsub_129(k)]; 9298443 => PalPreInstr_E1BC;
+        9298656 => PalPreInstr_CheckEnemy0Health; 9298809 => PalPreInstr_SamusInHeat;
+        9301701 => PalPreInstr_DeletePalfxIfMinibossDead; 9301081 => PalPreInstr_SwitchIfYpos;
+        9301380 => PalPreInstr_SwitchIfYpos2; 9303585 => PalPreInstr_F621;
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallPalfxFunc(ea: u32, k: u16, j: u16, game: &mut Game) => ea, game {
-        9291397 => (),
-        9298436 => PalInit_E1BC(k, j, game),
-        9299008 => PalInit_F761_Norfair1(k, j, game),
-        9303856 => PalInit_F779_Brinstar8(k, j, game),
+    pub unsafe fn CallPalInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> PairU16 => ea;
+        call (k, j, game); default {
+            Unreachable(game);
+            PairU16 { k: 0u16, j: 0u16 }
+        };
+    {
+        9291157 => PalInstr_Wait; 9291161 => [PalInstr_ColorPlus2(k, j)];
+        9291170 => [PalInstr_ColorPlus3(k, j)]; 9291179 => [PalInstr_ColorPlus4(k, j)];
+        9291188 => [PalInstr_ColorPlus8(k, j)]; 9291197 => [PalInstr_ColorPlus9(k, j)];
+        9291206 => [PalInstr_ColorPlus15(k, j)]; 9291215 => PalInstr_Delete;
+        9291220 => PalInstr_SetPreInstr; 9291229 => PalInstr_ClearPreInstr;
+        9291294 => PalInstr_Goto; 9291321 => PalInstr_DecTimerGoto; 9291336 => PalInstr_SetTimer;
+        9291349 => PalInstr_SetColorIndex; 9291358 => PalInstr_QueueMusic;
+        9291370 => PalInstr_QueueSfx1; 9291379 => PalInstr_QueueSfx2; 9291388 => PalInstr_QueueSfx3;
+        9302470 => PalInstr_SetPalfxIndex;
+    }
+}
+crate::game::address_dispatch! {
+    pub unsafe fn CallPalfxFunc(ea: u32, k: u16, j: u16, game: &mut Game) => ea;
+        call (k, j, game); default { Unreachable(game); };
+    {
+        9291397 => [()]; 9298436 => PalInit_E1BC; 9299008 => PalInit_F761_Norfair1;
+        9303856 => PalInit_F779_Brinstar8;
     }
 }

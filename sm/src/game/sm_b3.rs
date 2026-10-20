@@ -283,26 +283,20 @@ pub unsafe fn NorfairPipeBug_Init(game: &mut Game) {
     (*PipeBug).pbg_var_A = ((0xb38bcdi32) as u16);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallBugInstr(ea: u32, k: u16, game: &mut Game) => ea, game {
-        11766733 => NorfairPipeBug_Func_1(game),
-        11766783 => NorfairPipeBug_Func_2(game),
-        11766950 => NorfairPipeBug_Func_4(game),
-        11767039 => NorfairPipeBug_Func_5(k, game),
-        11767052 => NorfairPipeBug_Func_6(game),
-        11767118 => NorfairPipeBug_Func_7(game),
-        11767184 => NorfairPipeBug_Func_8(game),
-        11767250 => NorfairPipeBug_Func_9(game),
-        11767316 => NorfairPipeBug_Func_10(game),
-        11767349 => NorfairPipeBug_Func_11(game),
-        11767386 => NorfairPipeBug_Func_12(game),
-        11767733 => BrinstarYellowPipeBug_Func_1(game),
-        11767797 => {
-            BrinstarYellowPipeBug_Func_2(ram_word!(game, cur_enemy_index), game);
-        }
-        11767848 => BrinstarYellowPipeBug_Func_3(game),
-        11767997 => BrinstarYellowPipeBug_Func_5(game),
-        11768154 => BrinstarYellowPipeBug_Func_7(game),
-        11768280 => BrinstarYellowPipeBug_Func_8(game),
+    pub unsafe fn CallBugInstr(ea: u32, k: u16, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        11766733 => NorfairPipeBug_Func_1; 11766783 => NorfairPipeBug_Func_2;
+        11766950 => NorfairPipeBug_Func_4; 11767039 => [NorfairPipeBug_Func_5(k, game)];
+        11767052 => NorfairPipeBug_Func_6; 11767118 => NorfairPipeBug_Func_7;
+        11767184 => NorfairPipeBug_Func_8; 11767250 => NorfairPipeBug_Func_9;
+        11767316 => NorfairPipeBug_Func_10; 11767349 => NorfairPipeBug_Func_11;
+        11767386 => NorfairPipeBug_Func_12; 11767733 => BrinstarYellowPipeBug_Func_1;
+        11767797 => [{
+                    BrinstarYellowPipeBug_Func_2(ram_word!(game, cur_enemy_index), game);
+                }];
+        11767848 => BrinstarYellowPipeBug_Func_3; 11767997 => BrinstarYellowPipeBug_Func_5;
+        11768154 => BrinstarYellowPipeBug_Func_7; 11768280 => BrinstarYellowPipeBug_Func_8;
     }
 }
 pub unsafe fn NorfairPipeBug_Main(game: &mut Game) {
@@ -875,20 +869,17 @@ pub unsafe fn Botwoon_Init(game: &mut Game) {
     };
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallBotwoonFuncVarD(ea: u32, k: u16, game: &mut Game) => ea, game {
-        11769976 => Botwoon_Func_6(game),
-        11770013 => Botwoon_Func_7(game),
-        11770276 => Botwoon_Func_12(game),
-        11770340 => Botwoon_Func_13(game),
-        11770438 => Botwoon_Func_14(game),
-        11770462 => Botwoon_Func_15(game),
-        11770570 => Botwoon_Func_16(game),
-        11770617 => Botwoon_Func_18(k, game),
+    pub unsafe fn CallBotwoonFuncVarD(ea: u32, k: u16, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        11769976 => Botwoon_Func_6; 11770013 => Botwoon_Func_7; 11770276 => Botwoon_Func_12;
+        11770340 => Botwoon_Func_13; 11770438 => Botwoon_Func_14; 11770462 => Botwoon_Func_15;
+        11770570 => Botwoon_Func_16; 11770617 => [Botwoon_Func_18(k, game)];
     }
-    pub unsafe fn CallBotwoonFuncVarE(ea: u32, game: &mut Game) => ea, game {
-        11770807 => Botwoon_Func_19(game),
-        11788880 => Botwoon_Func_32(game),
-        11788940 => Botwoon_Func_33(game),
+    pub unsafe fn CallBotwoonFuncVarE(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        11770807 => Botwoon_Func_19; 11788880 => Botwoon_Func_32; 11788940 => Botwoon_Func_33;
     }
 }
 pub unsafe fn Botwoon_Main(game: &mut Game) {

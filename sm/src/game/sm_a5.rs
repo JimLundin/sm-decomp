@@ -236,45 +236,25 @@ pub unsafe fn Draygon_Init(game: &mut Game) {
     DisableMinimapAndMarkBossRoomAsExplored(game);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallDraygonFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        10846283 => (),
-        10848027 => Draygon_Func_1(game),
-        10848139 => Draygon_Func_2(game),
-        10848244 => Draygon_Func_4(game),
-        10848433 => Draygon_Func_6(game),
-        10848546 => Draygon_Func_8(game),
-        10848593 => Draygon_Func_9(game),
-        10848691 => Draygon_Func_10(game),
-        10848768 => Draygon_Func_11(game),
-        10848848 => Draygon_Func_12(game),
-        10848912 => Draygon_Func_13(game),
-        10849034 => Draygon_Func_14(game),
-        10849106 => Draygon_Func_15(game),
-        10849198 => Draygon_Func_16(game),
-        10849331 => Draygon_Func_17(k, game),
-        10849422 => Draygon_Func_18(game),
-        10849492 => Draygon_Func_19(game),
-        10849584 => Draygon_Func_20(game),
-        10849714 => Draygon_Func_21(k, game),
-        10849817 => Draygon_Func_22(game),
-        10850064 => Draygon_Func_23(game),
-        10850078 => Draygon_Func_24(k, game),
-        10850262 => Draygon_Func_25(k, game),
-        10850516 => Draygon_Func_26(k, game),
-        10850565 => Draygon_Func_27(k, game),
-        10850596 => Draygon_Func_28(k, game),
-        10850600 => Draygon_Func_29(game),
-        10850644 => Draygon_Func_30(game),
-        10850693 => Draygon_Func_31(game),
-        10850964 => Draygon_Func_32(game),
-        10850987 => Draygon_Func_33(game),
-        10863757 => Draygon_Func_48(k, game),
-        10863891 => Draygon_Func_49(k, game),
-        10873626 => (),
-        10873627 => SporeSpawn_Func_1(game),
-        10873682 => SporeSpawn_Func_2(k, game),
-        10873755 => SporeSpawn_Func_3(game),
-        10873838 => SporeSpawn_Func_4(game),
+    pub unsafe fn CallDraygonFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10846283 => [()]; 10848027 => Draygon_Func_1; 10848139 => Draygon_Func_2;
+        10848244 => Draygon_Func_4; 10848433 => Draygon_Func_6; 10848546 => Draygon_Func_8;
+        10848593 => Draygon_Func_9; 10848691 => Draygon_Func_10; 10848768 => Draygon_Func_11;
+        10848848 => Draygon_Func_12; 10848912 => Draygon_Func_13; 10849034 => Draygon_Func_14;
+        10849106 => Draygon_Func_15; 10849198 => Draygon_Func_16;
+        10849331 => [Draygon_Func_17(k, game)]; 10849422 => Draygon_Func_18;
+        10849492 => Draygon_Func_19; 10849584 => Draygon_Func_20;
+        10849714 => [Draygon_Func_21(k, game)]; 10849817 => Draygon_Func_22;
+        10850064 => Draygon_Func_23; 10850078 => [Draygon_Func_24(k, game)];
+        10850262 => [Draygon_Func_25(k, game)]; 10850516 => [Draygon_Func_26(k, game)];
+        10850565 => [Draygon_Func_27(k, game)]; 10850596 => [Draygon_Func_28(k, game)];
+        10850600 => Draygon_Func_29; 10850644 => Draygon_Func_30; 10850693 => Draygon_Func_31;
+        10850964 => Draygon_Func_32; 10850987 => Draygon_Func_33;
+        10863757 => [Draygon_Func_48(k, game)]; 10863891 => [Draygon_Func_49(k, game)];
+        10873626 => [()]; 10873627 => SporeSpawn_Func_1; 10873682 => [SporeSpawn_Func_2(k, game)];
+        10873755 => SporeSpawn_Func_3; 10873838 => SporeSpawn_Func_4;
     }
 }
 pub unsafe fn Draygon_Main(game: &mut Game) {
@@ -1942,14 +1922,14 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
     };
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallSporeSpawnFunc(ea: u32, game: &mut Game) => ea, game {
-        10873626 => (),
-        10873627 => SporeSpawn_Func_1(game),
-        10873682 => {
-            SporeSpawn_Func_2(ram_word!(game, cur_enemy_index), game);
-        }
-        10873755 => SporeSpawn_Func_3(game),
-        10873838 => SporeSpawn_Func_4(game),
+    pub unsafe fn CallSporeSpawnFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10873626 => [()]; 10873627 => SporeSpawn_Func_1;
+        10873682 => [{
+                    SporeSpawn_Func_2(ram_word!(game, cur_enemy_index), game);
+                }];
+        10873755 => SporeSpawn_Func_3; 10873838 => SporeSpawn_Func_4;
     }
 }
 pub unsafe fn SporeSpawn_Main(game: &mut Game) {

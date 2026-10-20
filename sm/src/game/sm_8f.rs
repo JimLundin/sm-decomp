@@ -793,15 +793,13 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
     set_ram_word!(game.earthquake_type = *(ram_ptr!(game, u16; 0x7e1, 2)));
     RoomCode_GenRandomExplodes_4th(game);
 }
-pub unsafe fn CallRoomDefStateSelect(ea: u32, k: u16, game: &mut Game) -> u16 {
-    match ea {
-        9430502 => RoomDefStateSelect_Finish(k, game),
-        9430527 => RoomDefStateSelect_TourianBoss01(k, game),
-        9430546 => RoomDefStateSelect_IsEventSet(k, game),
-        9430569 => RoomDefStateSelect_IsBossDead(k, game),
-        9430610 => RoomDefStateSelect_MorphBallMissiles(k, game),
-        9430633 => RoomDefStateSelect_PowerBombs(k, game),
-        _ => Unreachable(game) as u16,
+crate::game::address_dispatch! {
+    pub unsafe fn CallRoomDefStateSelect(ea: u32, k: u16, game: &mut Game) -> u16 => ea;
+        call (k, game); default Unreachable(game) as u16;
+    {
+        9430502 => RoomDefStateSelect_Finish; 9430527 => RoomDefStateSelect_TourianBoss01;
+        9430546 => RoomDefStateSelect_IsEventSet; 9430569 => RoomDefStateSelect_IsBossDead;
+        9430610 => RoomDefStateSelect_MorphBallMissiles; 9430633 => RoomDefStateSelect_PowerBombs;
     }
 }
 pub unsafe fn HandleRoomDefStateSelect(k: u16, game: &mut Game) {
@@ -862,27 +860,21 @@ pub unsafe fn RoomDefStateSelect_PowerBombs(k: u16, game: &mut Game) -> u16 {
     RoomDefStateSelect_Finish(*v1, game)
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallRoomSetupCode(ea: u32, game: &mut Game) => ea, game {
-        9408916 => RoomSetup_AfterSavingAnimals(game),
-        9408937 => RoomSetup_AutoDestroyWallAfterEscape(game),
-        9408946 => RoomSetup_TurnWallIntoShotblocks(game),
-        9408957 => RoomSetup_ShakeDuringEscape(game),
-        9408969 => RoomSetup_ScrollingSkyLand(game),
-        9408974 => RoomSetup_ScrollingSkyOcean(game),
-        9408983 => RoomSetup_RunStatueUnlockAnims(game),
-        9423048 => RoomCode_8FC8C8(game),
-        9423059 => RoomCode_SetupShaktoolRoomPlm(game),
-        9423069 => RoomCode_SetPauseCodeForDraygon(game),
-        9423114 => RoomCode_SetCollectedMap(game),
+    pub unsafe fn CallRoomSetupCode(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        9408916 => RoomSetup_AfterSavingAnimals; 9408937 => RoomSetup_AutoDestroyWallAfterEscape;
+        9408946 => RoomSetup_TurnWallIntoShotblocks; 9408957 => RoomSetup_ShakeDuringEscape;
+        9408969 => RoomSetup_ScrollingSkyLand; 9408974 => RoomSetup_ScrollingSkyOcean;
+        9408983 => RoomSetup_RunStatueUnlockAnims; 9423048 => RoomCode_8FC8C8;
+        9423059 => RoomCode_SetupShaktoolRoomPlm; 9423069 => RoomCode_SetPauseCodeForDraygon;
+        9423114 => RoomCode_SetCollectedMap;
         9408955 | 9408956 | 9408979 | 9408980 | 9408981 | 9408982 | 9409012 | 9409013 | 9409014
-        | 9409015 | 9423047 | 9423056 | 9423057 | 9423058 | 9423068 | 9423134 => (),
-        9423135 => RoomCode_SetZebesTimebombEvent(game),
-        9423155 => RoomCode_SetLightHorizRoomShake(game),
-        9423174 => RoomCode_SetMediumHorizRoomShake(game),
-        9423187 => RoomCode_Escape4_SetMediumHorizRoomShake(game),
-        9423214 => RoomCode_SetCeresDoorSolid(game),
-        9423222 => RoomCode_CeresColorMathHdma(game),
-        9423227 => RoomCode_CeresColorMathHdma_BgBase(game),
+                | 9409015 | 9423047 | 9423056 | 9423057 | 9423058 | 9423068 | 9423134 => [()];
+        9423135 => RoomCode_SetZebesTimebombEvent; 9423155 => RoomCode_SetLightHorizRoomShake;
+        9423174 => RoomCode_SetMediumHorizRoomShake;
+        9423187 => RoomCode_Escape4_SetMediumHorizRoomShake; 9423214 => RoomCode_SetCeresDoorSolid;
+        9423222 => RoomCode_CeresColorMathHdma; 9423227 => RoomCode_CeresColorMathHdma_BgBase;
     }
 }
 pub unsafe fn RunRoomSetupCode(game: &mut Game) {
@@ -896,89 +888,50 @@ pub unsafe fn RunRoomSetupCode(game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallDoorDefSetupCode(ea: u32, game: &mut Game) => ea, game {
-        9419121 => DoorCode_StartWreckedShipTreadmillWest(game),
-        9419137 => DoorCode_Scroll6_Green(game),
-        9419148 => DoorCode_Scroll0_Blue(game),
-        9419159 => DoorCode_Scroll13_Blue(game),
-        9419170 => DoorCode_Scroll_4Blue_8Green(game),
-        9419187 => DoorCode_Scroll_8toB_Red(game),
-        9419210 => DoorCode_Scroll_LotsRed(game),
-        9419249 => DoorCode_Scroll_1_4_Green(game),
-        9419264 => DoorCode_Scroll_2_Blue(game),
-        9419275 => DoorCode_Scroll_17_Blue(game),
-        9419286 => DoorCode_Scroll_4_Blue(game),
-        9419297 => DoorCode_Scroll_6_Green(game),
-        9419308 => DoorCode_Scroll_3_Green(game),
-        9420039 => DoorCode_SetScroll_0(game),
-        9420054 => DoorCode_SetScroll_1(game),
-        9420069 => DoorCode_SetScroll_2(game),
-        9420080 => DoorCode_SetScroll_3(game),
-        9420095 => DoorCode_SetScroll_4(game),
-        9420112 => DoorCode_SetScroll_5(game),
-        9420123 => DoorCode_SetScroll_6(game),
-        9420140 => DoorCode_SetScroll_7(game),
-        9420151 => DoorCode_SetScroll_8(game),
-        9420170 => DoorCode_SetScroll_9(game),
-        9420181 => DoorCode_SetScroll_10(game),
-        9420192 => DoorCode_SetScroll_11(game),
-        9420207 => DoorCode_SetScroll_12(game),
-        9420224 => DoorCode_SetScroll_13(game),
-        9420241 => DoorCode_SetScroll_14(game),
-        9420258 => DoorCode_SetScroll_15(game),
-        9420273 => DoorCode_SetScroll_16(game),
-        9420288 => DoorCode_SetScroll_17(game),
-        9420299 => DoorCode_SetScroll_18(game),
-        9420314 => DoorCode_SetScroll_19(game),
-        9420325 => DoorCode_SetScroll_20(game),
-        9420342 => DoorCode_SetScroll_21(game),
-        9420702 => DoorCode_SetScroll_22(game),
-        9420731 => DoorCode_SetScroll_23(game),
-        9420762 => DoorCode_SetScroll_24(game),
-        9420777 => DoorCode_SetScroll_25(game),
-        9420794 => DoorCode_SetScroll_26(game),
-        9420822 => DoorCode_SetScroll_28(game),
-        9420837 => DoorCode_SetScroll_29(game),
-        9420858 => DoorCode_SetScroll_30(game),
-        9420875 => DoorCode_SetScroll_31(game),
-        9420886 => DoorCode_SetScroll_32(game),
-        9420903 => DoorCode_SetScroll_33(game),
-        9420920 => DoorCode_SetScroll_34(game),
-        9420937 => DoorCode_SetScroll_35(game),
-        9420962 => DoorCode_SetScroll_36(game),
-        9420973 => DoorCode_SetScroll_37(game),
-        9420994 => DoorCode_SetScroll_38(game),
-        9421011 => DoorCode_SetScroll_39(game),
-        9421022 => DoorCode_SetScroll_40(game),
-        9421039 => DoorCode_SetScroll_41(game),
-        9421050 => DoorCode_SetScroll_42(game),
-        9421067 => DoorCode_SetScroll_43(game),
-        9429464 => DoorCode_StartWreckedSkipTreadmill_East(game),
-        9429480 => DoorCode_SetScroll_44(game),
-        9429491 => DoorCode_SetScroll_45(game),
-        9429502 => DoorCode_SetScroll_46(game),
-        9429519 => DoorCode_SetScroll_47(game),
-        9429530 => DoorCode_SetScroll_48(game),
-        9429545 => DoorCode_SetScroll_49(game),
-        9429612 => DoorCode_SetupElevatubeFromSouth(game),
-        9429649 => DoorCode_SetupElevatubeFromNorth(game),
-        9429761 => DoorCode_ResetElevatubeNorthExit(game),
-        9429769 => DoorCode_ResetElevatubeSouthExit(game),
-        9429784 => DoorCode_SetScroll_50(game),
-        9429829 => DoorCode_SetScroll_53(game),
-        9429846 => DoorCode_SetScroll_54(game),
-        9429863 => DoorCode_SetScroll_55(game),
-        9429880 => DoorCode_SetScroll_56(game),
-        9429901 => DoorCode_SetScroll_57(game),
-        9429912 => DoorCode_SetScroll_58(game),
-        9429923 => DoorCode_SetScroll_59(game),
-        9429945 => DoorCode_SetScroll_61(game),
-        9429960 => DoorCode_SetScroll_62(game),
-        9429977 => DoorCode_SetScroll_63(game),
-        9430208 => DoorCode_SetScroll_64(game),
-        9430223 => DoorCode_SetScroll_65(game),
-        9430240 => DoorCode_CeresElevatorShaft(game),
-        9430291 => DoorCode_CeresElevatorShaft_2(game),
+    pub unsafe fn CallDoorDefSetupCode(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        9419121 => DoorCode_StartWreckedShipTreadmillWest; 9419137 => DoorCode_Scroll6_Green;
+        9419148 => DoorCode_Scroll0_Blue; 9419159 => DoorCode_Scroll13_Blue;
+        9419170 => DoorCode_Scroll_4Blue_8Green; 9419187 => DoorCode_Scroll_8toB_Red;
+        9419210 => DoorCode_Scroll_LotsRed; 9419249 => DoorCode_Scroll_1_4_Green;
+        9419264 => DoorCode_Scroll_2_Blue; 9419275 => DoorCode_Scroll_17_Blue;
+        9419286 => DoorCode_Scroll_4_Blue; 9419297 => DoorCode_Scroll_6_Green;
+        9419308 => DoorCode_Scroll_3_Green; 9420039 => DoorCode_SetScroll_0;
+        9420054 => DoorCode_SetScroll_1; 9420069 => DoorCode_SetScroll_2;
+        9420080 => DoorCode_SetScroll_3; 9420095 => DoorCode_SetScroll_4;
+        9420112 => DoorCode_SetScroll_5; 9420123 => DoorCode_SetScroll_6;
+        9420140 => DoorCode_SetScroll_7; 9420151 => DoorCode_SetScroll_8;
+        9420170 => DoorCode_SetScroll_9; 9420181 => DoorCode_SetScroll_10;
+        9420192 => DoorCode_SetScroll_11; 9420207 => DoorCode_SetScroll_12;
+        9420224 => DoorCode_SetScroll_13; 9420241 => DoorCode_SetScroll_14;
+        9420258 => DoorCode_SetScroll_15; 9420273 => DoorCode_SetScroll_16;
+        9420288 => DoorCode_SetScroll_17; 9420299 => DoorCode_SetScroll_18;
+        9420314 => DoorCode_SetScroll_19; 9420325 => DoorCode_SetScroll_20;
+        9420342 => DoorCode_SetScroll_21; 9420702 => DoorCode_SetScroll_22;
+        9420731 => DoorCode_SetScroll_23; 9420762 => DoorCode_SetScroll_24;
+        9420777 => DoorCode_SetScroll_25; 9420794 => DoorCode_SetScroll_26;
+        9420822 => DoorCode_SetScroll_28; 9420837 => DoorCode_SetScroll_29;
+        9420858 => DoorCode_SetScroll_30; 9420875 => DoorCode_SetScroll_31;
+        9420886 => DoorCode_SetScroll_32; 9420903 => DoorCode_SetScroll_33;
+        9420920 => DoorCode_SetScroll_34; 9420937 => DoorCode_SetScroll_35;
+        9420962 => DoorCode_SetScroll_36; 9420973 => DoorCode_SetScroll_37;
+        9420994 => DoorCode_SetScroll_38; 9421011 => DoorCode_SetScroll_39;
+        9421022 => DoorCode_SetScroll_40; 9421039 => DoorCode_SetScroll_41;
+        9421050 => DoorCode_SetScroll_42; 9421067 => DoorCode_SetScroll_43;
+        9429464 => DoorCode_StartWreckedSkipTreadmill_East; 9429480 => DoorCode_SetScroll_44;
+        9429491 => DoorCode_SetScroll_45; 9429502 => DoorCode_SetScroll_46;
+        9429519 => DoorCode_SetScroll_47; 9429530 => DoorCode_SetScroll_48;
+        9429545 => DoorCode_SetScroll_49; 9429612 => DoorCode_SetupElevatubeFromSouth;
+        9429649 => DoorCode_SetupElevatubeFromNorth; 9429761 => DoorCode_ResetElevatubeNorthExit;
+        9429769 => DoorCode_ResetElevatubeSouthExit; 9429784 => DoorCode_SetScroll_50;
+        9429829 => DoorCode_SetScroll_53; 9429846 => DoorCode_SetScroll_54;
+        9429863 => DoorCode_SetScroll_55; 9429880 => DoorCode_SetScroll_56;
+        9429901 => DoorCode_SetScroll_57; 9429912 => DoorCode_SetScroll_58;
+        9429923 => DoorCode_SetScroll_59; 9429945 => DoorCode_SetScroll_61;
+        9429960 => DoorCode_SetScroll_62; 9429977 => DoorCode_SetScroll_63;
+        9430208 => DoorCode_SetScroll_64; 9430223 => DoorCode_SetScroll_65;
+        9430240 => DoorCode_CeresElevatorShaft; 9430291 => DoorCode_CeresElevatorShaft_2;
     }
 }
 pub unsafe fn RunDoorSetupCode(game: &mut Game) {
@@ -1052,22 +1005,17 @@ pub unsafe fn RoomCode_RidleyRoomShaking(game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallRoomCode(ea: u32, game: &mut Game) => ea, game {
-        9421078 => RoomCode_ScrollingSkyLand_(game),
-        9421083 => RoomCode_ScrollingSkyOcean_(game),
-        9421088 => RoomCode_ScrollingSkyLand_Shakes(game),
-        9421092 => RoomCode_ExplodeShakes(game),
-        9421286 => RoomCode_ScrollRightDachora(game),
-        9429686 => RoomCode_Elevatube(game),
-        9430303 => RoomCode_CeresElevatorShaft_(game),
-        9430308 => (),
-        9430309 => RoomCode_SpawnCeresFallingDebris(game),
-        9430385 => RoomCode_HandleCeresRidleyGetaway(game),
-        9430396 => RoomCode_ShakeScreenHorizDiag(game),
-        9430432 => RoomCode_GenRandomExplodes_4th(game),
-        9430436 => RoomCode_ShakeScreenHorizDiagStrong(game),
-        9431245 => RoomCode_CrocomireShaking(game),
-        9431376 => RoomCode_RidleyRoomShaking(game),
+    pub unsafe fn CallRoomCode(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        9421078 => RoomCode_ScrollingSkyLand_; 9421083 => RoomCode_ScrollingSkyOcean_;
+        9421088 => RoomCode_ScrollingSkyLand_Shakes; 9421092 => RoomCode_ExplodeShakes;
+        9421286 => RoomCode_ScrollRightDachora; 9429686 => RoomCode_Elevatube;
+        9430303 => RoomCode_CeresElevatorShaft_; 9430308 => [()];
+        9430309 => RoomCode_SpawnCeresFallingDebris; 9430385 => RoomCode_HandleCeresRidleyGetaway;
+        9430396 => RoomCode_ShakeScreenHorizDiag; 9430432 => RoomCode_GenRandomExplodes_4th;
+        9430436 => RoomCode_ShakeScreenHorizDiagStrong; 9431245 => RoomCode_CrocomireShaking;
+        9431376 => RoomCode_RidleyRoomShaking;
     }
 }
 pub unsafe fn RunRoomMainCode(game: &mut Game) {

@@ -1203,23 +1203,18 @@ pub fn MiniMaridiaBeybladeTurtle_Init(game: &mut Game) {
         .set_current_instruction(instruction);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallMaridiaBeybladeTurtleFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        0xa28dd8 => MaridiaBeybladeTurtle_Func1(k, game),
-        0xa28e0a => MaridiaBeybladeTurtle_Func2(k, game),
-        0xa28ee0 => MaridiaBeybladeTurtle_Func3(k, game),
-        0xa28f3f => MaridiaBeybladeTurtle_Func5(k, game),
-        0xa28f8d => MaridiaBeybladeTurtle_Func7(k, game),
-        0xa28feb => MaridiaBeybladeTurtle_Func8(k, game),
-        0xa29083 => MaridiaBeybladeTurtle_Func9(k, game),
-        0xa290cc => MaridiaBeybladeTurtle_Func10(k, game),
-        0xa290e1 => MaridiaBeybladeTurtle_Func11(k, game),
-        0xa28e09 => {}
-        0xa29142 => MiniMaridiaBeybladeTurtle_Func1(k, game),
-        0xa2916e => MiniMaridiaBeybladeTurtle_Func2(k, game),
-        0xa29198 => MiniMaridiaBeybladeTurtle_Func3(k, game),
-        0xa291f8 => MiniMaridiaBeybladeTurtle_Func4(k, game),
-        0xa29239 => MiniMaridiaBeybladeTurtle_Func6(k, game),
-        0xa2925e => MiniMaridiaBeybladeTurtle_Func7(game),
+    pub unsafe fn CallMaridiaBeybladeTurtleFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        0xa28dd8 => MaridiaBeybladeTurtle_Func1; 0xa28e0a => MaridiaBeybladeTurtle_Func2;
+        0xa28ee0 => MaridiaBeybladeTurtle_Func3; 0xa28f3f => MaridiaBeybladeTurtle_Func5;
+        0xa28f8d => MaridiaBeybladeTurtle_Func7; 0xa28feb => MaridiaBeybladeTurtle_Func8;
+        0xa29083 => MaridiaBeybladeTurtle_Func9; 0xa290cc => MaridiaBeybladeTurtle_Func10;
+        0xa290e1 => MaridiaBeybladeTurtle_Func11; 0xa28e09 => [{}];
+        0xa29142 => MiniMaridiaBeybladeTurtle_Func1; 0xa2916e => MiniMaridiaBeybladeTurtle_Func2;
+        0xa29198 => MiniMaridiaBeybladeTurtle_Func3; 0xa291f8 => MiniMaridiaBeybladeTurtle_Func4;
+        0xa29239 => MiniMaridiaBeybladeTurtle_Func6;
+        0xa2925e => [MiniMaridiaBeybladeTurtle_Func7(game)];
     }
 }
 
@@ -1861,11 +1856,13 @@ pub unsafe fn sub_A29A6C(a: u16, game: &mut Game) {
     (*v1).timer = 0u16;
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallThinHoppingBlobs(ea: u32, game: &mut Game) => ea, game {
-        10656613 => {
-            ThinHoppingBlobs_Func6(ram_word!(game, cur_enemy_index), game);
-        }
-        10656641 => ThinHoppingBlobs_Func7(game),
+    pub unsafe fn CallThinHoppingBlobs(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10656613 => [{
+                    ThinHoppingBlobs_Func6(ram_word!(game, cur_enemy_index), game);
+                }];
+        10656641 => ThinHoppingBlobs_Func7;
     }
 }
 pub unsafe fn ThinHoppingBlobs_Main(game: &mut Game) {
@@ -1969,13 +1966,12 @@ pub unsafe fn ThinHoppingBlobs_Func6(k: u16, game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallThinHoppingBlobsVarE(ea: u32, game: &mut Game) => ea, game {
-        10657035 => ThinHoppingBlobs_Func11(game),
-        10657067 => ThinHoppingBlobs_Func12(game),
-        10657099 => ThinHoppingBlobs_Func13(game),
-        10657131 => ThinHoppingBlobs_Func14(game),
-        10657176 => ThinHoppingBlobs_Func15(game),
-        10657229 => ThinHoppingBlobs_Func16(game),
+    pub unsafe fn CallThinHoppingBlobsVarE(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10657035 => ThinHoppingBlobs_Func11; 10657067 => ThinHoppingBlobs_Func12;
+        10657099 => ThinHoppingBlobs_Func13; 10657131 => ThinHoppingBlobs_Func14;
+        10657176 => ThinHoppingBlobs_Func15; 10657229 => ThinHoppingBlobs_Func16;
     }
 }
 pub unsafe fn ThinHoppingBlobs_Func7(game: &mut Game) {
@@ -3143,10 +3139,10 @@ pub unsafe fn LavaquakeRocks_Init(game: &mut Game) {
     set_ram_word!(game.random_number = 17u16);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallLavaQuakeRocksFunc(ea: u32, game: &mut Game) => ea, game {
-        10663318 => LavaquakeRocks_1(game),
-        10663346 => LavaquakeRocks_2(game),
-        10663402 => LavaquakeRocks_3(game),
+    pub unsafe fn CallLavaQuakeRocksFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10663318 => LavaquakeRocks_1; 10663346 => LavaquakeRocks_2; 10663402 => LavaquakeRocks_3;
     }
 }
 pub unsafe fn LavaquakeRocks_Main(game: &mut Game) {
@@ -3343,11 +3339,10 @@ pub unsafe fn Rinka_2(k: u16, game: &mut Game) -> u16 {
     crate::rtl::rom_table_word!(game, 0xa2b75b, ((v1 as i32 >> 1i32) + 2i32) as isize)
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallRinkaFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        10663903 => Rinka_3(k, game),
-        10664004 => Rinka_4(k, game),
-        10664018 => Rinka_5(k, game),
-        10664027 => Rinka_B85B(k, game),
+    pub unsafe fn CallRinkaFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        10663903 => Rinka_3; 10664004 => Rinka_4; 10664018 => Rinka_5; 10664027 => Rinka_B85B;
     }
 }
 pub unsafe fn Rinka_Main(game: &mut Game) {
@@ -4119,10 +4114,11 @@ pub unsafe fn MaridiaLargeSnail_Init(game: &mut Game) {
     (*E).mlsl_var_F = ((0xa2cf66i32) as u16);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallMaridiaLargeSnailFunc(ea: u32, game: &mut Game) => ea, game {
-        10669542 => MaridiaLargeSnail_Func_4(game),
-        10669611 => MaridiaLargeSnail_Func_5(game),
-        10669888 => MaridiaLargeSnail_Func_6(game),
+    pub unsafe fn CallMaridiaLargeSnailFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10669542 => MaridiaLargeSnail_Func_4; 10669611 => MaridiaLargeSnail_Func_5;
+        10669888 => MaridiaLargeSnail_Func_6;
     }
 }
 pub unsafe fn MaridiaLargeSnail_Main(game: &mut Game) {
@@ -4441,11 +4437,11 @@ pub unsafe fn HirisingSlowfalling_Func_3(a: u16, game: &mut Game) {
     (*E).base.timer = 0u16;
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallHirisingSlowfalling(ea: u32, game: &mut Game) => ea, game {
-        10674229 => HirisingSlowfalling_Func_4(game),
-        10674255 => HirisingSlowfalling_Func_5(game),
-        10674282 => HirisingSlowfalling_Func_6(game),
-        10674381 => HirisingSlowfalling_Func_7(game),
+    pub unsafe fn CallHirisingSlowfalling(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10674229 => HirisingSlowfalling_Func_4; 10674255 => HirisingSlowfalling_Func_5;
+        10674282 => HirisingSlowfalling_Func_6; 10674381 => HirisingSlowfalling_Func_7;
     }
 }
 pub unsafe fn HirisingSlowfalling_Main(game: &mut Game) {
@@ -4893,13 +4889,12 @@ pub unsafe fn TimedShutter_Init(game: &mut Game) {
     (*E).tsr_var_01 = crate::rtl::rom_table_word!(game, 0xa2ea56, (v5 + 1i32) as isize);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallTimedShutterFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        10676925 => TimedShutter_Func_1(k, game),
-        10676945 => TimedShutter_Func_2(k, game),
-        10676967 => TimedShutter_Func_3(k, game),
-        10676989 => TimedShutter_Func_4(k, game),
-        10677009 => TimedShutter_Func_5(k, game),
-        10677267 => TimedShutter_Func_10(k, game),
+    pub unsafe fn CallTimedShutterFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        10676925 => TimedShutter_Func_1; 10676945 => TimedShutter_Func_2;
+        10676967 => TimedShutter_Func_3; 10676989 => TimedShutter_Func_4;
+        10677009 => TimedShutter_Func_5; 10677267 => TimedShutter_Func_10;
     }
 }
 pub unsafe fn TimedShutter_Main(game: &mut Game) {
@@ -5152,21 +5147,20 @@ pub unsafe fn RisingFallingPlatform_Func_1(k: u16, game: &mut Game) {
     (*E).rfpm_var_0A = 0u16;
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallRisingFallingPlatformFunc(ea: u32, game: &mut Game) => ea, game {
-        10678025 => RisingFallingPlatform_Func_2(game),
-        10678056 => RisingFallingPlatform_Func_4(game),
-        10678120 => RisingFallingPlatform_Func_9(game),
-        10678228 => RisingFallingPlatform_Func_10(game),
-        10678336 => RisingFallingPlatform_Func_11(game),
-        10678386 => RisingFallingPlatform_Func_12(game),
-        10678425 => RisingFallingPlatform_Func_13(),
-        10678820 => HorizontalShootableShutter_Func_2(game),
-        10678851 => HorizontalShootableShutter_Func_4(game),
-        10678898 => HorizontalShootableShutter_Func_8(game),
-        10679012 => HorizontalShootableShutter_Func_9(game),
-        10679180 => HorizontalShootableShutter_Func_12(game),
-        10679216 => HorizontalShootableShutter_Func_13(game),
-        10679252 => HorizontalShootableShutter_Func_14(),
+    pub unsafe fn CallRisingFallingPlatformFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        10678025 => RisingFallingPlatform_Func_2; 10678056 => RisingFallingPlatform_Func_4;
+        10678120 => RisingFallingPlatform_Func_9; 10678228 => RisingFallingPlatform_Func_10;
+        10678336 => RisingFallingPlatform_Func_11; 10678386 => RisingFallingPlatform_Func_12;
+        10678425 => [RisingFallingPlatform_Func_13()];
+        10678820 => HorizontalShootableShutter_Func_2;
+        10678851 => HorizontalShootableShutter_Func_4;
+        10678898 => HorizontalShootableShutter_Func_8;
+        10679012 => HorizontalShootableShutter_Func_9;
+        10679180 => HorizontalShootableShutter_Func_12;
+        10679216 => HorizontalShootableShutter_Func_13;
+        10679252 => [HorizontalShootableShutter_Func_14()];
     }
 }
 pub unsafe fn RisingFallingPlatform_Main(game: &mut Game) {

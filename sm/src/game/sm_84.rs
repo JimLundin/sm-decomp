@@ -782,9 +782,10 @@ pub fn PlmInstr_ClearPreInstr(plmp: *const u8, k: u16, game: &mut Game) -> *cons
     plmp
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallPlmInstrFunc(ea: u32, game: &mut Game) => ea, game {
-        9557220 => VariaSuitPickup(game),
-        9557434 => GravitySuitPickup(game),
+    pub unsafe fn CallPlmInstrFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        9557220 => VariaSuitPickup; 9557434 => GravitySuitPickup;
     }
 }
 pub unsafe fn PlmInstr_CallFunction(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
@@ -3963,304 +3964,206 @@ pub unsafe fn sub_84EEAB(v0: u16, game: &mut Game) -> u8 {
     }
     0u8
 }
+crate::game::address_dispatch! {
 /// Dispatch setup with the active collision displacement, or null outside collision.
 /// `setup_a` preserves the spawner accumulator for setup routines that consume it.
 ///
 /// # Safety
 /// Legacy setup callbacks require initialized runtime state. A non-null
 /// `displacement` must remain live and writable throughout the setup call.
-pub unsafe fn CallPlmHeaderFunc(
+    pub unsafe fn CallPlmHeaderFunc(
     ea: u32,
     j: u16,
     displacement: *mut i32,
     setup_a: u16,
     game: &mut Game,
-) -> u8 {
-    match ea {
-        8694567 | 8696783 | 8698095 | 8698618 | 8705782 | 8705783 | 8704398 => 0u8,
-        8694568 => PlmSetup_CrumbleBotwoonWall(j, game),
-        8695882 => PlmSetup_SetrupWreckedShipEntrance(j, game),
-        8696028 => PlmSetup_BTS_Brinstar_0x80_Floorplant(j, game),
-        8696083 => PlmSetup_BTS_Brinstar_0x81_Ceilingplant(j, game),
-        8696203 => PlmSetup_B6D3_MapStation(j, game),
-        8696264 => PlmSetup_Bts47_MapStationRightAccess(j, game),
-        8696304 => PlmSetup_Bts4_MapStationLeftAccess(j, game),
-        8696349 => PlmSetup_PlmB6DF_EnergyStation(j, game),
-        8696389 => PlmSetup_PlmB6EB_EnergyStation(j, game),
-        8696429 => PlmSetup_B6E3_EnergyStationRightAccess(j, game),
-        8696477 => PlmSetup_B6E7_EnergyStationLeftAccess(j, game),
-        8696528 => PlmSetup_B6EF_MissileStationRightAccess(j, game),
-        8696576 => PlmSetup_B6F3_MissileStationLeftAccess(j, game),
-        8696634 => PlmSetup_B638_Rightwards_Extension(j, game),
-        8696645 => PlmSetup_B63F_Leftwards_Extension(j, game),
-        8696656 => PlmSetup_B643_Downwards_Extension(j, game),
-        8696667 => PlmSetup_B647_Upwards_Extension(j, game),
-        8696689 => PlmSetup_B703_ScrollPLM(j, game),
-        8696706 => PlmSetup_B707_SolidScrollPLM(j, game),
-        8696723 => PlmSetup_B6FF_ScrollBlockTouch(j, game),
-        8696769 => PlmSetup_DeactivatePlm(j, game),
-        8696784 => PlmSetup_ReturnCarryClear(j),
-        8696786 => PlmSetup_ReturnCarrySet(j),
-        8696788 => PlmSetup_D094_EnemyBreakableBlock(j, game),
-        8696803 => UNUSED_sub_84B3E3(j),
-        8696811 => PlmSetup_B70F_IcePhysics(j, game),
-        8696840 => PlmSetup_QuicksandSurface(j, game),
-        8696983 => PlmSetup_B71F_SubmergingQuicksand(j, game),
-        8697000 => PlmSetup_B723_SandfallsSlow(j, game),
-        8697014 => PlmSetup_B727_SandFallsFast(j, game),
-        8697028 => PlmSetup_QuicksandSurfaceB(j, displacement, game),
-        8697153 => PlmSetup_B737_SubmergingQuicksand(j, game),
-        8697167 => PlmSetup_B73B_B73F_SandFalls(j),
-        8697169 => PlmSetup_ClearShitroidInvisibleWall(j, game),
-        8697199 => PlmSetup_B767_ClearShitroidInvisibleWall(j, game),
-        8697232 => PlmSetup_B76B_SaveStationTrigger(j, game),
-        8697326 => PlmSetup_B76F_SaveStation(j, game),
-        8697336 => PlmSetup_MotherBrainRoomEscapeDoor(j, game),
-        8697795 => PlmSetup_B7EB_EnableSoundsIn32Frames(j, game),
-        8698012 => PlmSetup_SpeedBoosterEscape(j, game),
-        8698076 => PlmSetup_ShaktoolsRoom(j, game),
-        8698220 => PlmSetup_B974(j),
-        8698232 => PlmSetup_B9C1_CrittersEscapeBlock(j, game),
-        8698309 => PlmSetup_B9ED_CrittersEscapeBlock(j, game),
-        8698353 => sub_84B9F1(j, game),
-        8698633 => PlmSetup_BB30_CrateriaMainstreetEscape(j, game),
-        8701261 => PlmSetup_C806_LeftGreenGateTrigger(j, game),
-        8701292 => PlmSetup_C80A_RightGreenGateTrigger(j, game),
-        8701323 => PlmSetup_C80E_LeftRedGateTrigger(j, game),
-        8701359 => PlmSetup_C812_RightRedGateTrigger(j, game),
-        8701395 => PlmSetup_C81E_LeftYellowGateTrigger(j, game),
-        8701425 => PlmSetup_C822_RightYellowGateTrigger(j, game),
-        8701456 => PlmSetup_C816_LeftBlueGateTrigger(j, game),
-        8701479 => PlmSetup_C81A_RightBlueGateTrigger(j, game),
-        8701630 => PlmSetup_C82A_DownwardsClosedGate(j, setup_a, game),
-        8701643 => PlmSetup_C832_UpwardsClosedGate(j, game),
-        8701656 => PlmSetup_C826_DownwardsOpenGate(j, game),
-        8701660 => PlmSetup_C82E_UpwardsOpenGate(j, game),
-        8701664 => PlmSetup_C836_DownwardsGateShootblock(j, game),
-        8701754 => PlmSetup_C73A_UpwardsGateShootblock(j, game),
-        8701844 => PlmSetup_C794_GreyDoor(j, game),
-        8701873 => PlmSetup_Door_Colored(j, game),
-        8701883 => PlmSetup_Door_Blue(j, game),
-        8701922 => PlmSetup_Door_Strange(j, game),
-        8703426 => PlmSetup_D028_D02C_Unused(j, game),
-        8703466 => PlmSetup_RespawningSpeedBoostBlock(j, game),
-        8703543 => PlmSetup_RespawningCrumbleBlock(j, game),
-        8703595 => PlmSetup_RespawningShotBlock(j, game),
-        8703619 => PlmSetup_RespawningBombBlock(j, game),
-        8703706 => PlmSetup_RespawningBombBlock2(j, game),
-        8703790 => PlmSetup_RespawningPowerBombBlock(j, game),
-        8703847 => PlmSetup_D08C_SuperMissileBlockRespawning(j, game),
-        8703904 => PlmSetup_D08C_CrumbleBlock(j, game),
-        8703925 => PlmSetup_D0DC_BreakableGrappleBlock(j, game),
-        8703949 => PlmSetup_D0D8_SetVFlag(j),
-        8703953 => PlmSetup_D0D8_ClearVflag(j),
-        8703957 => PlmSetup_D0E8_GiveSamusDamage(j, game),
-        8704264 => PlmSetup_D113_LowerNorfairChozoRoomPlug(j, game),
-        8704279 => PlmSetup_D127(j, game),
-        8704299 => PlmSetup_D138(j, game),
-        8704399 => PlmSetup_D6DA_LowerNorfairChozoHandTrigger(j, displacement, game),
-        8705526 => PlmSetup_MotherBrainGlass(j, game),
-        8705542 => PlmSetup_DeletePlmIfAreaTorizoDead(j, game),
-        8705558 => PlmSetup_MakeBllockChozoHandTrigger(j, game),
-        8705568 => PlmSetup_D6F2_WreckedShipChozoHandTrigger(j, displacement, game),
-        8705663 => PlmSetup_D700_MakePlmAirBlock_Unused(j, game),
-        8705673 => PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused(j, game),
-        8705683 => PlmSetup_D708_LowerNorfairChozoBlockUnused(j, game),
-        8705740 => PlmSetup_D70C_NoobTube(j, game),
-        8706700 => PlmSetup_EyeDoorEye(j, game),
-        8706745 => PlmSetup_EyeDoor(j, game),
-        8706846 => PlmSetup_SetMetroidRequiredClearState(j, game),
-        8707732 => PlmSetup_DraygonCannonFacingRight(j, game),
-        8707769 => PlmSetup_DraygonCannonFacingDiagonalRight(j, game),
-        8707824 => PlmSetup_DraygonCannonFacingLeft(j, game),
-        8707861 => PlmSetup_DraygonCannonFacingDiagonalLeft(j, game),
-        8707916 => PlmSetup_DraygonCannon(j, game),
-        8711757 => sub_84EE4D(j, game),
-        8711762 => sub_84EE52(j, game),
-        8711767 => sub_84EE57(j, game),
-        8711772 => sub_84EE5C(j, game),
-        8711780 => sub_84EE64(j, game),
-        8711799 => sub_84EE77(j, game),
-        8711804 => sub_84EE7C(j, game),
-        8711809 => sub_84EE81(j, game),
-        8711814 => sub_84EE86(j, game),
-        8711822 => sub_84EE8E(j, game),
-        8711851 => sub_84EEAB(j, game),
-        _ => Unreachable(game) as u8,
+) -> u8 => ea;
+        call (j, game); default Unreachable(game) as u8;
+    {
+        8694567 | 8696783 | 8698095 | 8698618 | 8705782 | 8705783 | 8704398 => [0u8];
+        8694568 => PlmSetup_CrumbleBotwoonWall; 8695882 => PlmSetup_SetrupWreckedShipEntrance;
+        8696028 => PlmSetup_BTS_Brinstar_0x80_Floorplant;
+        8696083 => PlmSetup_BTS_Brinstar_0x81_Ceilingplant; 8696203 => PlmSetup_B6D3_MapStation;
+        8696264 => PlmSetup_Bts47_MapStationRightAccess;
+        8696304 => PlmSetup_Bts4_MapStationLeftAccess; 8696349 => PlmSetup_PlmB6DF_EnergyStation;
+        8696389 => PlmSetup_PlmB6EB_EnergyStation;
+        8696429 => PlmSetup_B6E3_EnergyStationRightAccess;
+        8696477 => PlmSetup_B6E7_EnergyStationLeftAccess;
+        8696528 => PlmSetup_B6EF_MissileStationRightAccess;
+        8696576 => PlmSetup_B6F3_MissileStationLeftAccess;
+        8696634 => PlmSetup_B638_Rightwards_Extension; 8696645 => PlmSetup_B63F_Leftwards_Extension;
+        8696656 => PlmSetup_B643_Downwards_Extension; 8696667 => PlmSetup_B647_Upwards_Extension;
+        8696689 => PlmSetup_B703_ScrollPLM; 8696706 => PlmSetup_B707_SolidScrollPLM;
+        8696723 => PlmSetup_B6FF_ScrollBlockTouch; 8696769 => PlmSetup_DeactivatePlm;
+        8696784 => [PlmSetup_ReturnCarryClear(j)]; 8696786 => [PlmSetup_ReturnCarrySet(j)];
+        8696788 => PlmSetup_D094_EnemyBreakableBlock; 8696803 => [UNUSED_sub_84B3E3(j)];
+        8696811 => PlmSetup_B70F_IcePhysics; 8696840 => PlmSetup_QuicksandSurface;
+        8696983 => PlmSetup_B71F_SubmergingQuicksand; 8697000 => PlmSetup_B723_SandfallsSlow;
+        8697014 => PlmSetup_B727_SandFallsFast;
+        8697028 => [PlmSetup_QuicksandSurfaceB(j, displacement, game)];
+        8697153 => PlmSetup_B737_SubmergingQuicksand; 8697167 => [PlmSetup_B73B_B73F_SandFalls(j)];
+        8697169 => PlmSetup_ClearShitroidInvisibleWall;
+        8697199 => PlmSetup_B767_ClearShitroidInvisibleWall;
+        8697232 => PlmSetup_B76B_SaveStationTrigger; 8697326 => PlmSetup_B76F_SaveStation;
+        8697336 => PlmSetup_MotherBrainRoomEscapeDoor;
+        8697795 => PlmSetup_B7EB_EnableSoundsIn32Frames; 8698012 => PlmSetup_SpeedBoosterEscape;
+        8698076 => PlmSetup_ShaktoolsRoom; 8698220 => [PlmSetup_B974(j)];
+        8698232 => PlmSetup_B9C1_CrittersEscapeBlock; 8698309 => PlmSetup_B9ED_CrittersEscapeBlock;
+        8698353 => sub_84B9F1; 8698633 => PlmSetup_BB30_CrateriaMainstreetEscape;
+        8701261 => PlmSetup_C806_LeftGreenGateTrigger;
+        8701292 => PlmSetup_C80A_RightGreenGateTrigger; 8701323 => PlmSetup_C80E_LeftRedGateTrigger;
+        8701359 => PlmSetup_C812_RightRedGateTrigger;
+        8701395 => PlmSetup_C81E_LeftYellowGateTrigger;
+        8701425 => PlmSetup_C822_RightYellowGateTrigger;
+        8701456 => PlmSetup_C816_LeftBlueGateTrigger; 8701479 => PlmSetup_C81A_RightBlueGateTrigger;
+        8701630 => [PlmSetup_C82A_DownwardsClosedGate(j, setup_a, game)];
+        8701643 => PlmSetup_C832_UpwardsClosedGate; 8701656 => PlmSetup_C826_DownwardsOpenGate;
+        8701660 => PlmSetup_C82E_UpwardsOpenGate; 8701664 => PlmSetup_C836_DownwardsGateShootblock;
+        8701754 => PlmSetup_C73A_UpwardsGateShootblock; 8701844 => PlmSetup_C794_GreyDoor;
+        8701873 => PlmSetup_Door_Colored; 8701883 => PlmSetup_Door_Blue;
+        8701922 => PlmSetup_Door_Strange; 8703426 => PlmSetup_D028_D02C_Unused;
+        8703466 => PlmSetup_RespawningSpeedBoostBlock; 8703543 => PlmSetup_RespawningCrumbleBlock;
+        8703595 => PlmSetup_RespawningShotBlock; 8703619 => PlmSetup_RespawningBombBlock;
+        8703706 => PlmSetup_RespawningBombBlock2; 8703790 => PlmSetup_RespawningPowerBombBlock;
+        8703847 => PlmSetup_D08C_SuperMissileBlockRespawning; 8703904 => PlmSetup_D08C_CrumbleBlock;
+        8703925 => PlmSetup_D0DC_BreakableGrappleBlock; 8703949 => [PlmSetup_D0D8_SetVFlag(j)];
+        8703953 => [PlmSetup_D0D8_ClearVflag(j)]; 8703957 => PlmSetup_D0E8_GiveSamusDamage;
+        8704264 => PlmSetup_D113_LowerNorfairChozoRoomPlug; 8704279 => PlmSetup_D127;
+        8704299 => PlmSetup_D138;
+        8704399 => [PlmSetup_D6DA_LowerNorfairChozoHandTrigger(j, displacement, game)];
+        8705526 => PlmSetup_MotherBrainGlass; 8705542 => PlmSetup_DeletePlmIfAreaTorizoDead;
+        8705558 => PlmSetup_MakeBllockChozoHandTrigger;
+        8705568 => [PlmSetup_D6F2_WreckedShipChozoHandTrigger(j, displacement, game)];
+        8705663 => PlmSetup_D700_MakePlmAirBlock_Unused;
+        8705673 => PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused;
+        8705683 => PlmSetup_D708_LowerNorfairChozoBlockUnused; 8705740 => PlmSetup_D70C_NoobTube;
+        8706700 => PlmSetup_EyeDoorEye; 8706745 => PlmSetup_EyeDoor;
+        8706846 => PlmSetup_SetMetroidRequiredClearState;
+        8707732 => PlmSetup_DraygonCannonFacingRight;
+        8707769 => PlmSetup_DraygonCannonFacingDiagonalRight;
+        8707824 => PlmSetup_DraygonCannonFacingLeft;
+        8707861 => PlmSetup_DraygonCannonFacingDiagonalLeft; 8707916 => PlmSetup_DraygonCannon;
+        8711757 => sub_84EE4D; 8711762 => sub_84EE52; 8711767 => sub_84EE57; 8711772 => sub_84EE5C;
+        8711780 => sub_84EE64; 8711799 => sub_84EE77; 8711804 => sub_84EE7C; 8711809 => sub_84EE81;
+        8711814 => sub_84EE86; 8711822 => sub_84EE8E; 8711851 => sub_84EEAB;
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallPlmPreInstr(ea: u32, k: u16, game: &mut Game) => ea, game {
-        8684649 => (),
-        8708008 => (),
-        8685264 => (),
-        8684774 => (),
-        8684861 => (),
-        8686246 => (),
-        8698787 => (),
-        8704854 => (),
-        8698618 => (),
-        8696028 => {
-            PlmSetup_BTS_Brinstar_0x80_Floorplant(k, game);
-        }
-        8696083 => {
-            PlmSetup_BTS_Brinstar_0x81_Ceilingplant(k, game);
-        }
-        8697821 => PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm(k, game),
-        8697839 => PlmPreInstr_WakeAndLavaIfBoosterCollected(k, game),
-        8697898 => PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft(k, game),
-        8697926 => PlmPreInstr_AdvanceLavaSamusMovesLeft(k, game),
-        8698032 => PlmPreInstr_ShaktoolsRoom(k, game),
-        8698151 => PlmPreInstr_OldTourianEscapeShaftEscape(k, game),
-        8698184 => PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft(k, game),
-        8698706 => PlmPreInstr_WakePlmIfTriggered(k, game),
-        8698731 => PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm(k, game),
-        8698788 => PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm(k, game),
-        8704348 => PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed(k, game),
-        8704486 => PlmPreInstr_IncrementRoomArgIfShotBySuperMissile(k, game),
-        8704827 => PlmPreInstr_WakePlmIfSamusHasBombs(k, game),
-        8705875 => PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet(k, game),
-        8706916 => PlmPreInstr_GotoLinkIfShotWithSuperMissile(k, game),
-        8707977 => PlmPreInstr_GotoLinkIfTriggered(k, game),
-        8708070 => PlmPreInstr_WakeIfTriggered(k, game),
-        8699151 => PlmPreInstr_GoToLinkInstrIfShot(k, game),
-        8699174 => PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb(k, game),
-        8699216 => PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile(k, game),
-        8699272 => PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile(k, game),
-        8699314 => PlmPreInstr_GoToLinkInstruction(k, game),
-        8699420 => PlmPreInstr_PlayDudSound(k, game),
-        8699348 => PlmPreInstr_GotoLinkIfBoss1Dead(k, game),
-        8699363 => PlmPreInstr_GotoLinkIfMiniBossDead(k, game),
-        8699378 => PlmPreInstr_GotoLinkIfTorizoDead(k, game),
-        8699393 => PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk(k, game),
-        8699423 => PlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing(k, game),
-        8699440 => PlmPreInstr_GotoLinkIfCrittersEscaped(k, game),
-        8694921 => PlmPreInstr_PositionSamusAndInvincible(k, game),
-        8705215 => PlmPreInstr_WakeOnKeyPress(k, game),
-        8698730 => (),
+    pub unsafe fn CallPlmPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        8684649 => [()]; 8708008 => [()]; 8685264 => [()]; 8684774 => [()]; 8684861 => [()];
+        8686246 => [()]; 8698787 => [()]; 8704854 => [()]; 8698618 => [()];
+        8696028 => [{
+                    PlmSetup_BTS_Brinstar_0x80_Floorplant(k, game);
+                }];
+        8696083 => [{
+                    PlmSetup_BTS_Brinstar_0x81_Ceilingplant(k, game);
+                }];
+        8697821 => PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm;
+        8697839 => PlmPreInstr_WakeAndLavaIfBoosterCollected;
+        8697898 => PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft;
+        8697926 => PlmPreInstr_AdvanceLavaSamusMovesLeft; 8698032 => PlmPreInstr_ShaktoolsRoom;
+        8698151 => PlmPreInstr_OldTourianEscapeShaftEscape;
+        8698184 => PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft;
+        8698706 => PlmPreInstr_WakePlmIfTriggered;
+        8698731 => PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm;
+        8698788 => PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm;
+        8704348 => PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed;
+        8704486 => PlmPreInstr_IncrementRoomArgIfShotBySuperMissile;
+        8704827 => PlmPreInstr_WakePlmIfSamusHasBombs;
+        8705875 => PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet;
+        8706916 => PlmPreInstr_GotoLinkIfShotWithSuperMissile;
+        8707977 => PlmPreInstr_GotoLinkIfTriggered; 8708070 => PlmPreInstr_WakeIfTriggered;
+        8699151 => PlmPreInstr_GoToLinkInstrIfShot;
+        8699174 => PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb;
+        8699216 => PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile;
+        8699272 => PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile;
+        8699314 => PlmPreInstr_GoToLinkInstruction; 8699420 => PlmPreInstr_PlayDudSound;
+        8699348 => PlmPreInstr_GotoLinkIfBoss1Dead; 8699363 => PlmPreInstr_GotoLinkIfMiniBossDead;
+        8699378 => PlmPreInstr_GotoLinkIfTorizoDead;
+        8699393 => PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk;
+        8699423 => PlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing;
+        8699440 => PlmPreInstr_GotoLinkIfCrittersEscaped;
+        8694921 => PlmPreInstr_PositionSamusAndInvincible; 8705215 => PlmPreInstr_WakeOnKeyPress;
+        8698730 => [()];
         8706773 | 8706774 | 8706775 | 8706776 | 8706777 | 8706778 | 8706779 | 8706780 | 8706781
-        | 8686304 => (),
-        8706782 => PlmPreInstr_SetMetroidsClearState_Ev0x10(k, game),
-        8706798 => PlmPreInstr_SetMetroidsClearState_Ev0x11(k, game),
-        8706814 => PlmPreInstr_SetMetroidsClearState_Ev0x12(k, game),
-        8706830 => PlmPreInstr_SetMetroidsClearState_Ev0x13(k, game),
+                | 8686304 => [()];
+        8706782 => PlmPreInstr_SetMetroidsClearState_Ev0x10;
+        8706798 => PlmPreInstr_SetMetroidsClearState_Ev0x11;
+        8706814 => PlmPreInstr_SetMetroidsClearState_Ev0x12;
+        8706830 => PlmPreInstr_SetMetroidsClearState_Ev0x13;
     }
 }
-pub unsafe fn CallPlmInstr(ea: u32, j: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    match ea {
-        8685236 => PlmInstr_Sleep(j, k, game),
-        8685244 => PlmInstr_Delete(j, k, game),
-        8685249 => PlmInstr_PreInstr(j, k, game),
-        8685258 => PlmInstr_ClearPreInstr(j, k, game),
-        8685323 => PlmInstr_CallFunction(j, k, game),
-        8685348 => PlmInstr_Goto(j, k),
-        8685375 => PlmInstr_DecrementAndBranchNonzero(j, k, game),
-        8685390 => PlmInstr_SetTimer(j, k, game),
-        8685412 => PlmInstr_LoadItemPlmGfx(j, k, game),
-        8685541 => PlmInstr_CopyFromRamToVram(j, k, game),
-        8685582 => PlmInstr_GotoIfBossBitSet(j, k, game),
-        8685613 => PlmInstr_GotoIfEventSet(j, k, game),
-        8685630 => PlmInstr_SetEvent(j, k, game),
-        8685640 => PlmInstr_GotoIfChozoSet(j, k, game),
-        8685669 => PlmInstr_SetRoomChozoBit(j, k, game),
-        8685692 => PlmInstr_GotoIfItemBitSet(j, k, game),
-        8685721 => PlmInstr_SetItemBit(j, k, game),
-        8685744 => PlmInstr_PickupBeamAndShowMessage(j, k, game),
-        8685811 => PlmInstr_PickupEquipmentAndShowMessage(j, k, game),
-        8685850 => PlmInstr_PickupEquipmentAddGrappleShowMessage(j, k, game),
-        8685889 => PlmInstr_PickupEquipmentAddXrayShowMessage(j, k, game),
-        8685928 => PlmInstr_CollectHealthEnergyTank(j, k, game),
-        8685958 => PlmInstr_CollectHealthReserveTank(j, k, game),
-        8685993 => PlmInstr_CollectAmmoMissileTank(j, k, game),
-        8686034 => PlmInstr_CollectAmmoSuperMissileTank(j, k, game),
-        8686075 => PlmInstr_CollectAmmoPowerBombTank(j, k, game),
-        8686116 => PlmInstr_SetLinkReg(j, k, game),
-        8686126 => PlmInstr_Call(j, k, game),
-        8686138 => PlmInstr_Return(j, k, game),
-        8686194 => PlmInstr_GotoIfDoorBitSet(j, k, game),
-        8686225 => PlmInstr_IncrementDoorHitCounterAndJGE(j, k, game),
-        8686285 => PlmInstr_IncrementArgumentAndJGE(j, k, game),
-        8686321 => PlmInstr_SetBTS(j, k, game),
-        8686341 => PlmInstr_DrawPlmBlock(j, k, game),
-        8686359 => PlmInstr_DrawPlmBlock(j, k, game),
-        8686421 => PlmInstr_ProcessAirScrollUpdate(j, k, game),
-        8686483 => PlmInstr_ProcessSolidScrollUpdate(j, k, game),
-        8686545 => PlmInstr_QueueMusic(j, k, game),
-        8686557 => PlmInstr_ClearMusicQueueAndQueueTrack(j, k, game),
-        8686599 => PlmInstr_QueueSfx1_Max6(j, k, game),
-        8686608 => PlmInstr_QueueSfx2_Max6(j, k, game),
-        8686617 => PlmInstr_QueueSfx3_Max6(j, k, game),
-        8686626 => PlmInstr_QueueSfx1_Max15(j, k, game),
-        8686635 => PlmInstr_QueueSfx2_Max15(j, k, game),
-        8686644 => PlmInstr_QueueSfx3_Max15(j, k, game),
-        8686653 => PlmInstr_QueueSfx1_Max3(j, k, game),
-        8686662 => PlmInstr_QueueSfx2_Max3(j, k, game),
-        8686671 => PlmInstr_QueueSfx_Max3(j, k, game),
-        8686680 => PlmInstr_QueueSfx1_Max9(j, k, game),
-        8686689 => PlmInstr_QueueSfx2_Max9(j, k, game),
-        8686698 => PlmInstr_QueueSfx3_Max9(j, k, game),
-        8686707 => PlmInstr_QueueSfx1_Max1(j, k, game),
-        8686716 => PlmInstr_QueueSfx2_Max1(j, k, game),
-        8686725 => PlmInstr_QueueSfx3_Max1(j, k, game),
-        8686735 => PlmInstr_ActivateMapStation(j, k, game),
-        8686767 => PlmInstr_ActivateEnergyStation(j, k, game),
-        8686800 => PlmInstr_ActivateMissileStation(j, k, game),
-        8686833 => PlmInstr_ActivateSaveStationAndGotoIfNo(j, k, game),
-        8686913 => PlmInstr_GotoIfSamusNear(j, k, game),
-        8694528 => PlmInstr_MovePlmDownOneBlock(j, k, game),
-        8694609 => PlmInstr_Scroll_0_1_Blue(j, k, game),
-        8694617 => PlmInstr_MovePlmDownOneBlock_0(j, k, game),
-        8694941 => PlmInstr_DealDamage_2(j, k, game),
-        8694961 => PlmInstr_GiveInvincibility(j, k, game),
-        8695107 => PlmInstr_Draw0x38FramesOfRightTreadmill(j, k, game),
-        8695128 => PlmInstr_Draw0x38FramesOfLeftTreadmill(j, k, game),
-        8695349 => PlmInstr_GotoIfSamusHealthFull(j, k, game),
-        8695487 => PlmInstr_GotoIfMissilesFull(j, k, game),
-        8695822 => PlmInstr_PlaceSamusOnSaveStation(j, k, game),
-        8695844 => PlmInstr_DisplayGameSavedMessageBox(j, k, game),
-        8695856 => PlmInstr_EnableMovementAndSetSaveStationUsed(j, k, game),
-        8698297 => PlmInstr_SetCrittersEscapedEvent(j, k, game),
-        8698479 => PlmInstr_JumpIfSamusHasNoBombs(j, k, game),
-        8698661 => PlmInstr_MovePlmRight4Blocks(j, k, game),
-        8698845 => PlmInstr_ClearTrigger(j, k, game),
-        8698849 => PlmInstr_SpawnEproj(j, k, game),
-        8698864 => PlmInstr_WakeEprojAtPlmPos(j, k, game),
-        8699455 => PlmInstr_SetGreyDoorPreInstr(j, k, game),
-        8704341 => PlmInstr_FxBaseYPos_0x2D2(j, k, game),
-        8704761 => PlmInstr_GotoIfRoomArgLess(j, k, game),
-        8704779 => PlmInstr_SpawnFourMotherBrainGlass(j, k, game),
-        8704855 => PlmInstr_SpawnTorizoStatueBreaking(j, k, game),
-        8704967 => PlmInstr_QueueSong1MusicTrack(j, k, game),
-        8704983 => PlmInstr_TransferWreckedShipChozoSpikesToSlopes(j, k, game),
-        8705012 => PlmInstr_TransferWreckedShipSlopesToChozoSpikes(j, k, game),
-        8705317 => PlmInstr_EnableWaterPhysics(j, k, game),
-        8705324 => PlmInstr_SpawnN00bTubeCrackEproj(j, k, game),
-        8705334 => PlmInstr_DiagonalEarthquake(j, k, game),
-        8705347 => PlmInstr_Spawn10shardsAnd6n00bs(j, k, game),
-        8705914 => PlmInstr_ShootEyeDoorProjectileWithProjectileArg(j, k, game),
-        8705936 => PlmInstr_SpawnEyeDoorSweatEproj(j, k, game),
-        8705951 => PlmInstr_SpawnTwoEyeDoorSmoke(j, k, game),
-        8705974 => PlmInstr_SpawnEyeDoorSmokeProjectile(j, k, game),
-        8705987 => PlmInstr_MoveUpAndMakeBlueDoorFacingRight(j, k, game),
-        8706010 => PlmInstr_MoveUpAndMakeBlueDoorFacingLeft(j, k, game),
-        8706958 => PlmInstr_DamageDraygonTurret(j, k, game),
-        8707000 => PlmInstr_DamageDraygonTurretFacingDownRight(j, k, game),
-        8707063 => PlmInstr_DamageDraygonTurretFacingUpRight(j, k, game),
-        8707126 => PlmInstr_DamageDraygonTurret2(j, k, game),
-        8707168 => PlmInstr_DamageDraygonTurretFacingDownLeft(j, k, game),
-        8707231 => PlmInstr_DamageDraygonTurretFacingUpLeft(j, k, game),
-        8708175 => PlmInstr_DrawItemFrame0(j, k, game),
-        8708199 => PlmInstr_DrawItemFrame1(j, k, game),
-        8708223 => PlmInstr_DrawItemFrame_Common(j, k, game),
-        8708765 => PlmInstr_ClearChargeBeamCounter(j, k, game),
-        8694742 => PlmInstr_ABD6(j, k, game),
-        8709691 => PlmInstr_E63B(j, k, game),
-        8703379 => PlmInstr_SetBtsTo1(j, k, game),
-        8705510 => PlmInstr_DisableSamusControls(j, k, game),
-        8705518 => PlmInstr_EnableSamusControls(j, k, game),
-        _ => {
+crate::game::address_dispatch! {
+    pub unsafe fn CallPlmInstr(ea: u32, j: *const u8, k: u16, game: &mut Game) -> *const u8 => ea;
+        call (j, k, game); default {
             Unreachable(game);
             null::<u8>()
-        }
+        };
+    {
+        8685236 => PlmInstr_Sleep; 8685244 => PlmInstr_Delete; 8685249 => PlmInstr_PreInstr;
+        8685258 => PlmInstr_ClearPreInstr; 8685323 => PlmInstr_CallFunction;
+        8685348 => [PlmInstr_Goto(j, k)]; 8685375 => PlmInstr_DecrementAndBranchNonzero;
+        8685390 => PlmInstr_SetTimer; 8685412 => PlmInstr_LoadItemPlmGfx;
+        8685541 => PlmInstr_CopyFromRamToVram; 8685582 => PlmInstr_GotoIfBossBitSet;
+        8685613 => PlmInstr_GotoIfEventSet; 8685630 => PlmInstr_SetEvent;
+        8685640 => PlmInstr_GotoIfChozoSet; 8685669 => PlmInstr_SetRoomChozoBit;
+        8685692 => PlmInstr_GotoIfItemBitSet; 8685721 => PlmInstr_SetItemBit;
+        8685744 => PlmInstr_PickupBeamAndShowMessage;
+        8685811 => PlmInstr_PickupEquipmentAndShowMessage;
+        8685850 => PlmInstr_PickupEquipmentAddGrappleShowMessage;
+        8685889 => PlmInstr_PickupEquipmentAddXrayShowMessage;
+        8685928 => PlmInstr_CollectHealthEnergyTank; 8685958 => PlmInstr_CollectHealthReserveTank;
+        8685993 => PlmInstr_CollectAmmoMissileTank; 8686034 => PlmInstr_CollectAmmoSuperMissileTank;
+        8686075 => PlmInstr_CollectAmmoPowerBombTank; 8686116 => PlmInstr_SetLinkReg;
+        8686126 => PlmInstr_Call; 8686138 => PlmInstr_Return; 8686194 => PlmInstr_GotoIfDoorBitSet;
+        8686225 => PlmInstr_IncrementDoorHitCounterAndJGE;
+        8686285 => PlmInstr_IncrementArgumentAndJGE; 8686321 => PlmInstr_SetBTS;
+        8686341 => PlmInstr_DrawPlmBlock; 8686359 => PlmInstr_DrawPlmBlock;
+        8686421 => PlmInstr_ProcessAirScrollUpdate; 8686483 => PlmInstr_ProcessSolidScrollUpdate;
+        8686545 => PlmInstr_QueueMusic; 8686557 => PlmInstr_ClearMusicQueueAndQueueTrack;
+        8686599 => PlmInstr_QueueSfx1_Max6; 8686608 => PlmInstr_QueueSfx2_Max6;
+        8686617 => PlmInstr_QueueSfx3_Max6; 8686626 => PlmInstr_QueueSfx1_Max15;
+        8686635 => PlmInstr_QueueSfx2_Max15; 8686644 => PlmInstr_QueueSfx3_Max15;
+        8686653 => PlmInstr_QueueSfx1_Max3; 8686662 => PlmInstr_QueueSfx2_Max3;
+        8686671 => PlmInstr_QueueSfx_Max3; 8686680 => PlmInstr_QueueSfx1_Max9;
+        8686689 => PlmInstr_QueueSfx2_Max9; 8686698 => PlmInstr_QueueSfx3_Max9;
+        8686707 => PlmInstr_QueueSfx1_Max1; 8686716 => PlmInstr_QueueSfx2_Max1;
+        8686725 => PlmInstr_QueueSfx3_Max1; 8686735 => PlmInstr_ActivateMapStation;
+        8686767 => PlmInstr_ActivateEnergyStation; 8686800 => PlmInstr_ActivateMissileStation;
+        8686833 => PlmInstr_ActivateSaveStationAndGotoIfNo; 8686913 => PlmInstr_GotoIfSamusNear;
+        8694528 => PlmInstr_MovePlmDownOneBlock; 8694609 => PlmInstr_Scroll_0_1_Blue;
+        8694617 => PlmInstr_MovePlmDownOneBlock_0; 8694941 => PlmInstr_DealDamage_2;
+        8694961 => PlmInstr_GiveInvincibility; 8695107 => PlmInstr_Draw0x38FramesOfRightTreadmill;
+        8695128 => PlmInstr_Draw0x38FramesOfLeftTreadmill;
+        8695349 => PlmInstr_GotoIfSamusHealthFull; 8695487 => PlmInstr_GotoIfMissilesFull;
+        8695822 => PlmInstr_PlaceSamusOnSaveStation; 8695844 => PlmInstr_DisplayGameSavedMessageBox;
+        8695856 => PlmInstr_EnableMovementAndSetSaveStationUsed;
+        8698297 => PlmInstr_SetCrittersEscapedEvent; 8698479 => PlmInstr_JumpIfSamusHasNoBombs;
+        8698661 => PlmInstr_MovePlmRight4Blocks; 8698845 => PlmInstr_ClearTrigger;
+        8698849 => PlmInstr_SpawnEproj; 8698864 => PlmInstr_WakeEprojAtPlmPos;
+        8699455 => PlmInstr_SetGreyDoorPreInstr; 8704341 => PlmInstr_FxBaseYPos_0x2D2;
+        8704761 => PlmInstr_GotoIfRoomArgLess; 8704779 => PlmInstr_SpawnFourMotherBrainGlass;
+        8704855 => PlmInstr_SpawnTorizoStatueBreaking; 8704967 => PlmInstr_QueueSong1MusicTrack;
+        8704983 => PlmInstr_TransferWreckedShipChozoSpikesToSlopes;
+        8705012 => PlmInstr_TransferWreckedShipSlopesToChozoSpikes;
+        8705317 => PlmInstr_EnableWaterPhysics; 8705324 => PlmInstr_SpawnN00bTubeCrackEproj;
+        8705334 => PlmInstr_DiagonalEarthquake; 8705347 => PlmInstr_Spawn10shardsAnd6n00bs;
+        8705914 => PlmInstr_ShootEyeDoorProjectileWithProjectileArg;
+        8705936 => PlmInstr_SpawnEyeDoorSweatEproj; 8705951 => PlmInstr_SpawnTwoEyeDoorSmoke;
+        8705974 => PlmInstr_SpawnEyeDoorSmokeProjectile;
+        8705987 => PlmInstr_MoveUpAndMakeBlueDoorFacingRight;
+        8706010 => PlmInstr_MoveUpAndMakeBlueDoorFacingLeft;
+        8706958 => PlmInstr_DamageDraygonTurret;
+        8707000 => PlmInstr_DamageDraygonTurretFacingDownRight;
+        8707063 => PlmInstr_DamageDraygonTurretFacingUpRight;
+        8707126 => PlmInstr_DamageDraygonTurret2;
+        8707168 => PlmInstr_DamageDraygonTurretFacingDownLeft;
+        8707231 => PlmInstr_DamageDraygonTurretFacingUpLeft; 8708175 => PlmInstr_DrawItemFrame0;
+        8708199 => PlmInstr_DrawItemFrame1; 8708223 => PlmInstr_DrawItemFrame_Common;
+        8708765 => PlmInstr_ClearChargeBeamCounter; 8694742 => PlmInstr_ABD6;
+        8709691 => PlmInstr_E63B; 8703379 => PlmInstr_SetBtsTo1;
+        8705510 => PlmInstr_DisableSamusControls; 8705518 => PlmInstr_EnableSamusControls;
     }
 }

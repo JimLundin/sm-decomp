@@ -657,11 +657,11 @@ pub unsafe fn MiniDraygon_Func_3(game: &mut Game) {
     (*E).base.y_pos = (ram_word!(game, enemy_drawing_queue[(v0 + 61i32)])).wrapping_add(18u16);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallMiniDraygonFunc(ea: u32, game: &mut Game) => ea, game {
-        11045154 => MiniDraygon_Func_4(game),
-        11045428 => MiniDraygon_Func_8(game),
-        11045435 => MiniDraygon_Func_9(game),
-        11045496 => MiniDraygon_Func_10(game),
+    pub unsafe fn CallMiniDraygonFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        11045154 => MiniDraygon_Func_4; 11045428 => MiniDraygon_Func_8;
+        11045435 => MiniDraygon_Func_9; 11045496 => MiniDraygon_Func_10;
     }
 }
 pub unsafe fn MiniDraygon_Main(game: &mut Game) {
@@ -1052,11 +1052,10 @@ pub unsafe fn Fune_Init(game: &mut Game) {
     (*E).fune_var_E = 0u16;
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallFuneFunc(ea: u32, game: &mut Game) => ea, game {
-        11048759 => Fune_Func_1(game),
-        11048796 => Fune_Func_2(game),
-        11048846 => (),
-        11048847 => (),
+    pub unsafe fn CallFuneFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        11048759 => Fune_Func_1; 11048796 => Fune_Func_2; 11048846 => [()]; 11048847 => [()];
     }
 }
 pub unsafe fn Fune_Main(game: &mut Game) {
@@ -1122,13 +1121,12 @@ pub unsafe fn WreckedShipGhost_Init(game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallWreckedShipGhost(ea: u32, k: u16, game: &mut Game) => ea, game {
-        11049794 => WreckedShipGhost_Func_1(k, game),
-        11049901 => WreckedShipGhost_Func_2(k, game),
-        11050089 => WreckedShipGhost_Func_4(k, game),
-        11050122 => WreckedShipGhost_Func_5(k, game),
-        11050259 => WreckedShipGhost_Func_6(k, game),
-        11050294 => WreckedShipGhost_Func_7(k, game),
+    pub unsafe fn CallWreckedShipGhost(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        11049794 => WreckedShipGhost_Func_1; 11049901 => WreckedShipGhost_Func_2;
+        11050089 => WreckedShipGhost_Func_4; 11050122 => WreckedShipGhost_Func_5;
+        11050259 => WreckedShipGhost_Func_6; 11050294 => WreckedShipGhost_Func_7;
     }
 }
 pub unsafe fn WreckedShipGhost_Main(game: &mut Game) {
@@ -1544,11 +1542,11 @@ pub unsafe fn YappingMaw_Init(game: &mut Game) {
     );
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallYappingMawFunc(ea: u32, game: &mut Game) => ea, game {
-        11051573 => YappingMaw_Func_1(game),
-        11051660 => YappingMaw_Func_2(game),
-        11052101 => YappingMaw_Func_8(game),
-        11052682 => YappingMaw_Func_11(game),
+    pub unsafe fn CallYappingMawFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        11051573 => YappingMaw_Func_1; 11051660 => YappingMaw_Func_2; 11052101 => YappingMaw_Func_8;
+        11052682 => YappingMaw_Func_11;
     }
 }
 pub unsafe fn YappingMaw_Main(game: &mut Game) {
@@ -1926,9 +1924,10 @@ pub unsafe fn Kago_Init(game: &mut Game) {
     (*E).kago_var_04 = (*E).kago_parameter_1;
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallKagoFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        11053947 => Kago_Func_1(k, game),
-        11053953 => (),
+    pub unsafe fn CallKagoFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        11053947 => Kago_Func_1; 11053953 => [()];
     }
 }
 pub unsafe fn Kago_Main(game: &mut Game) {
@@ -3011,34 +3010,18 @@ pub unsafe fn Beetom_Func_36(game: &mut Game) {
     Beetom_Func_37(ram_word!(game, cur_enemy_index), game);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallBeetomFunc(ea: u32, game: &mut Game) => ea, game {
-        11057172 => Beetom_Func_3(game),
-        11057199 => Beetom_Func_4(game),
-        11057231 => Beetom_Func_5(game),
-        11057247 => Beetom_Func_6(game),
-        11057267 => Beetom_Func_7(game),
-        11057287 => Beetom_Func_8(game),
-        11057321 => Beetom_Func_9(game),
-        11057355 => Beetom_Func_10(game),
-        11057389 => Beetom_Func_11(game),
-        11057423 => Beetom_Func_12(game),
-        11057490 => Beetom_Func_13(game),
-        11057510 => Beetom_Func_14(game),
-        11057530 => Beetom_Func_15(game),
-        11057570 => Beetom_Func_16(game),
-        11057586 => Beetom_Func_17(game),
-        11057601 => Beetom_Func_18(game),
-        11057700 => Beetom_Func_19(game),
-        11057796 => Beetom_Func_20(game),
-        11057847 => Beetom_Func_21(game),
-        11058005 => Beetom_Func_24(game),
-        11058056 => Beetom_Func_25(game),
-        11058214 => Beetom_Func_28(game),
-        11058266 => Beetom_Func_29(game),
-        11058424 => Beetom_Func_32(game),
-        11058498 => Beetom_Func_33(game),
-        11058589 => Beetom_Func_35(game),
-        11058629 => Beetom_Func_36(game),
+    pub unsafe fn CallBeetomFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        11057172 => Beetom_Func_3; 11057199 => Beetom_Func_4; 11057231 => Beetom_Func_5;
+        11057247 => Beetom_Func_6; 11057267 => Beetom_Func_7; 11057287 => Beetom_Func_8;
+        11057321 => Beetom_Func_9; 11057355 => Beetom_Func_10; 11057389 => Beetom_Func_11;
+        11057423 => Beetom_Func_12; 11057490 => Beetom_Func_13; 11057510 => Beetom_Func_14;
+        11057530 => Beetom_Func_15; 11057570 => Beetom_Func_16; 11057586 => Beetom_Func_17;
+        11057601 => Beetom_Func_18; 11057700 => Beetom_Func_19; 11057796 => Beetom_Func_20;
+        11057847 => Beetom_Func_21; 11058005 => Beetom_Func_24; 11058056 => Beetom_Func_25;
+        11058214 => Beetom_Func_28; 11058266 => Beetom_Func_29; 11058424 => Beetom_Func_32;
+        11058498 => Beetom_Func_33; 11058589 => Beetom_Func_35; 11058629 => Beetom_Func_36;
     }
 }
 pub unsafe fn Beetom_Main(game: &mut Game) {
@@ -3931,11 +3914,11 @@ pub unsafe fn MaridiaPuffer_Init(game: &mut Game) {
     (*E).mpr_var_00 = g_word_A8D885[(*E).mpr_parameter_2 as usize] as u16;
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallMaridiaPuffer(ea: u32, game: &mut Game) => ea, game {
-        11065643 => MaridiaPuffer_Func_1(game),
-        11065664 => MaridiaPuffer_Func_2(game),
-        11065699 => MaridiaPuffer_Func_3(game),
-        11065724 => MaridiaPuffer_Func_4(game),
+    pub unsafe fn CallMaridiaPuffer(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        11065643 => MaridiaPuffer_Func_1; 11065664 => MaridiaPuffer_Func_2;
+        11065699 => MaridiaPuffer_Func_3; 11065724 => MaridiaPuffer_Func_4;
     }
 }
 pub unsafe fn MaridiaPuffer_Main(game: &mut Game) {
@@ -4131,14 +4114,13 @@ pub unsafe fn WalkingLavaSeahorse_Func_2(k: u16, game: &mut Game) -> u16 {
     (*E).wlse_var_B
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallWalkingLavaSeahorseFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        11067084 => (),
-        11066737 => WalkingLavaSeahorse_Func_3(k, game),
-        11066822 => WalkingLavaSeahorse_Func_4(k, game),
-        11066885 => WalkingLavaSeahorse_Func_6(k, game),
-        11066955 => WalkingLavaSeahorse_Func_7(k, game),
-        11067085 => WalkingLavaSeahorse_Func_8(k, game),
-        11067116 => WalkingLavaSeahorse_Func_9(k, game),
+    pub unsafe fn CallWalkingLavaSeahorseFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        11067084 => [()]; 11066737 => WalkingLavaSeahorse_Func_3;
+        11066822 => WalkingLavaSeahorse_Func_4; 11066885 => WalkingLavaSeahorse_Func_6;
+        11066955 => WalkingLavaSeahorse_Func_7; 11067085 => WalkingLavaSeahorse_Func_8;
+        11067116 => WalkingLavaSeahorse_Func_9;
     }
 }
 pub unsafe fn WalkingLavaSeahorse_Main(game: &mut Game) {
@@ -4377,13 +4359,15 @@ pub unsafe fn WreckedShipOrbs_Init(game: &mut Game) {
     (*E).wsos_var_02 = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 3i32) as isize);
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallWreckedShipOrbsA(ea: u32, game: &mut Game) => ea, game {
-        11068421 => WreckedShipOrbs_Func_3(game),
-        11068452 => WreckedShipOrbs_Func_4(game),
+    pub unsafe fn CallWreckedShipOrbsA(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        11068421 => WreckedShipOrbs_Func_3; 11068452 => WreckedShipOrbs_Func_4;
     }
-    pub unsafe fn CallWreckedShipOrbsB(ea: u32, game: &mut Game) => ea, game {
-        11068483 => WreckedShipOrbs_Func_5(game),
-        11068514 => WreckedShipOrbs_Func_6(game),
+    pub unsafe fn CallWreckedShipOrbsB(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        11068483 => WreckedShipOrbs_Func_5; 11068514 => WreckedShipOrbs_Func_6;
     }
 }
 pub unsafe fn WreckedShipOrbs_Main(game: &mut Game) {
@@ -4489,11 +4473,11 @@ pub unsafe fn WreckedShipSpark_Init(game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallWreckedShipSpark(ea: u32, k: u16, game: &mut Game) => ea, game {
-        11069077 => WreckedShipSpark_Func_1(k, game),
-        11069111 => WreckedShipSpark_Func_2(k, game),
-        11069148 => WreckedShipSpark_Func_3(k, game),
-        11069076 => (),
+    pub unsafe fn CallWreckedShipSpark(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        11069077 => WreckedShipSpark_Func_1; 11069111 => WreckedShipSpark_Func_2;
+        11069148 => WreckedShipSpark_Func_3; 11069076 => [()];
     }
 }
 pub unsafe fn WreckedShipSpark_Main(game: &mut Game) {
@@ -4675,18 +4659,13 @@ pub unsafe fn KiHunterWings_Init(game: &mut Game) {
     }
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallKiHunterFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
-        11072104 => KiHunter_Func_1(k, game),
-        11072440 => KiHunter_Func_2(k, game),
-        11072749 => KiHunter_Func_3(k, game),
-        11072858 => KiHunter_Func_4(k, game),
-        11072907 => KiHunter_Func_5(k, game),
-        11073008 => KiHunter_Func_6(k, game),
-        11073163 => KiHunter_Func_7(k, game),
-        11073203 => KiHunter_Func_8(k, game),
-        11073267 => KiHunter_Func_9(k, game),
-        11073487 => KiHunter_Func_10(k, game),
-        11072995 => (),
+    pub unsafe fn CallKiHunterFunc(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        11072104 => KiHunter_Func_1; 11072440 => KiHunter_Func_2; 11072749 => KiHunter_Func_3;
+        11072858 => KiHunter_Func_4; 11072907 => KiHunter_Func_5; 11073008 => KiHunter_Func_6;
+        11073163 => KiHunter_Func_7; 11073203 => KiHunter_Func_8; 11073267 => KiHunter_Func_9;
+        11073487 => KiHunter_Func_10; 11072995 => [()];
     }
 }
 pub unsafe fn KiHunter_Main(game: &mut Game) {
@@ -5085,9 +5064,10 @@ pub unsafe fn KiHunter_Shot(game: &mut Game) {
     };
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallKiHunterBFunc(ea: u32, game: &mut Game) => ea, game {
-        11073499 => KiHunter_Func_11(game),
-        11073709 => KiHunter_Func_14(game),
+    pub unsafe fn CallKiHunterBFunc(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        11073499 => KiHunter_Func_11; 11073709 => KiHunter_Func_14;
     }
 }
 pub unsafe fn KiHunter_Func_10(k: u16, game: &mut Game) {

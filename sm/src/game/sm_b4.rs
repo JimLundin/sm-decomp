@@ -37,10 +37,11 @@ pub unsafe fn CreateSpriteAtPos(
     v0 as u16
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallSpriteObjectInstr(ea: u32, game: &mut Game) => ea, game {
-        11844848 => SpriteObject_Instr_RepeatLast(game),
-        11844871 => SpriteObject_Instr_Terminate(game),
-        11844882 => SpriteObject_Instr_Goto(game),
+    pub unsafe fn CallSpriteObjectInstr(ea: u32, game: &mut Game) => ea;
+        call (game); default { Unreachable(game); };
+    {
+        11844848 => SpriteObject_Instr_RepeatLast; 11844871 => SpriteObject_Instr_Terminate;
+        11844882 => SpriteObject_Instr_Goto;
     }
 }
 pub unsafe fn HandleSpriteObjects(game: &mut Game) {

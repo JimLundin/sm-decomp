@@ -31,6 +31,31 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Address-dispatch shared arguments (2026-10-20): one declaration macro now
+shares callback arguments across all 114 existing address tables and 19
+ordinary dispatch functions, including pointer/value-returning dispatchers.
+All 3126 ordered branches retain their exact selectors, patterns, signatures,
+fallthrough behavior and return types; 2860 callbacks use shared arguments
+and 266 exceptional expressions retain their original tokens and scopes.
+The six-line CallPlmHeaderFunc Safety documentation reaches the emitted
+function through metadata forwarding. Five other sole-match functions keep
+their distinct fallback or nonrepeating bodies.
+
+Independent complete-source reconstruction passes all 77 inputs. Actual
+whole-library compiler output matches all 10234257 bytes after removing only
+the old/new helper definitions and normalizing six independently checked
+doc-attribute spellings to their original rustdoc payloads. All 294 ordered
+gameplay comments and 151 attributes remain unchanged. No runtime helper,
+evaluation-order change, borrow or unsafe-operation reduction is introduced.
+
+Frozen source includes the reviewed beam/key composition. Formatting/check,
+normal release (22.85s), progress and full any% 129712/0
+(107.32s), native exit 0, pass. All 77 committed inputs and
+93 verification pins remain fixed. Net Rust lines -1208, to 132445;
+all other progress counters are unchanged. Any% supplies core integration
+regression coverage; equivalent expansion supplies whole-family preservation.
+Broader gameplay/frontend/alias work and the readability goal remain open.
+
 Next-family assessment (2026-10-20): preserved two isolated compiler-passing
 candidates without changing maintained Rust: all three SPC command/process
 pairs measure only -93 formatted lines; all 42 ordered cinematic x/y/palette
