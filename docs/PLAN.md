@@ -72,6 +72,23 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Snapshot RAM normalization (2026-10-20): all 34 comparison-exception copies
+now use one safe byte-slice helper and an ordered list of source/range pairs.
+The eight oracle-source and 26 Rust-source copies retain every boundary and
+direction. The arrays are disjoint fields of Game; no Game borrow or callback
+crosses the helper. No comparison mask, recovery or diagnostic changes.
+Complete-source inversion, CST call census and 1024 full two-buffer comparisons
+pass; wrong direction, wider/shorter range and missing-copy controls fail.
+Observed any% 1000/0 compares the original and new copies on every frame,
+with 1000 helper calls and 26000/8000 directional hits at inputs 0..999.
+Faults at $0051/$0050 retain respectively one failure at frame 200/zero failures.
+Formatting, normal release (39.49s), progress and final-source any% 129712/0
+(115.87s wall) pass. Speed Booster 148406/0 (156.57s) precedes only the
+ownership-comment correction. Hosts reuse the exact normal library; source,
+artifacts and inputs stay fixed during each run. Rust lines -119 to 126607;
+68 raw offset calls disappear, with all other progress counters unchanged.
+Existing masks, broader route coverage and global ownership remain open.
+
 Native-width fixed right shifts (2026-10-20): simplify all 1030 eligible
 expressions across 38 files: 565 final casts and 465 RAM array indices,
 including nested existing macro arguments. The compiler binds 968 u16,

@@ -412,6 +412,56 @@ fn brightness_cache_is_valid(ppu: &Ppu) -> bool {
             .enumerate()
             .all(|(i, value)| *value == scaled(i / 2))
 }
+// Preserve the existing comparison exceptions in their original copy order.
+// These ranges belong to disjoint snapshot RAM fields, not live RAM.
+fn normalize_snapshot_ram(mine: &mut [u8; 0x20000], theirs: &mut [u8; 0x20000]) {
+    enum Source {
+        Mine,
+        Theirs,
+    }
+    use Source::{Mine, Theirs};
+    for (source, range) in [
+        (Theirs, 0x0000..0x0051),
+        (Theirs, 0x1f5b..0x2000),
+        (Theirs, 0x00ad..0x00b1),
+        (Theirs, 0x05ed..0x05f5),
+        (Theirs, 0x05bc..0x05c5),
+        (Mine, 0x060b..0x0611),
+        (Mine, 0x0611..0x0617),
+        (Theirs, 0x0641..0x0643),
+        (Mine, 0x077e..0x0783),
+        (Mine, 0x078f..0x0791),
+        (Mine, 0x07b7..0x07b9),
+        (Mine, 0x0933..0x093d),
+        (Theirs, 0x0b24..0x0b28),
+        (Mine, 0x0d1e..0x0d20),
+        (Mine, 0x0d82..0x0d8a),
+        (Mine, 0x0d9c..0x0d9e),
+        (Mine, 0x0dd2..0x0dd8),
+        (Mine, 0x0d8a..0x0d90),
+        (Mine, 0x0e20..0x0e46),
+        (Mine, 0x0e54..0x0e56),
+        (Mine, 0x0e02..0x0e04),
+        (Mine, 0x0e4a..0x0e4c),
+        (Mine, 0x0e56..0x0e5a),
+        (Mine, 0x1784..0x178c),
+        (Mine, 0x1790..0x1794),
+        (Mine, 0x17a8..0x17ac),
+        (Mine, 0x1834..0x183c),
+        (Mine, 0x184a..0x185c),
+        (Mine, 0x186e..0x1886),
+        (Mine, 0x18a6..0x18a8),
+        (Mine, 0x189a..0x18a6),
+        (Theirs, 0x1966..0x196c),
+        (Mine, 0xef74..0xef78),
+        (Mine, 0xf37a..0xf380),
+    ] {
+        match source {
+            Mine => theirs[range.clone()].copy_from_slice(&mine[range]),
+            Theirs => mine[range.clone()].copy_from_slice(&theirs[range]),
+        }
+    }
+}
 unsafe fn VerifySnapshotsEq(
     b: *mut Snapshot,
     a: *mut Snapshot,
@@ -678,176 +728,7 @@ unsafe fn VerifySnapshotsEq(
             }
         }
     }
-    memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0) as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0) as *const c_void,
-        0x51 as size_t,
-    );
-    memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x1f5b) as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x1f5b) as *const c_void,
-        (0x100i32 - 0x5bi32) as size_t,
-    );
-    memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0xad) as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0xad) as *const c_void,
-        4 as size_t,
-    );
-    memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x5ed) as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x5ed) as *const c_void,
-        8 as size_t,
-    );
-    memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x5bc) as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x5bc) as *const c_void,
-        9 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x60b) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x60b) as *const c_void,
-        6 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x611) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x611) as *const c_void,
-        6 as size_t,
-    );
-    memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x641) as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x641) as *const c_void,
-        2 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x77e) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x77e) as *const c_void,
-        5 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x78f) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x78f) as *const c_void,
-        2 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x7b7) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x7b7) as *const c_void,
-        2 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x933) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x933) as *const c_void,
-        10 as size_t,
-    );
-    memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0xb24) as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0xb24) as *const c_void,
-        4 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xd1e) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xd1e) as *const c_void,
-        2 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xd82) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xd82) as *const c_void,
-        8 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xd9c) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xd9c) as *const c_void,
-        2 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xdd2) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xdd2) as *const c_void,
-        6 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xd8a) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xd8a) as *const c_void,
-        6 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe20) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe20) as *const c_void,
-        (0xe46i32 - 0xe20i32) as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe54) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe54) as *const c_void,
-        2 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe02) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe02) as *const c_void,
-        2 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe4a) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe4a) as *const c_void,
-        2 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe56) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe56) as *const c_void,
-        4 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x1784) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x1784) as *const c_void,
-        8 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x1790) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x1790) as *const c_void,
-        4 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x17a8) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x17a8) as *const c_void,
-        4 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x1834) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x1834) as *const c_void,
-        8 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x184a) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x184a) as *const c_void,
-        18 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x186e) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x186e) as *const c_void,
-        (16i32 + 8i32) as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x18a6) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x18a6) as *const c_void,
-        2 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x189a) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x189a) as *const c_void,
-        12 as size_t,
-    );
-    memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x1966) as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x1966) as *const c_void,
-        6 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xef74) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xef74) as *const c_void,
-        4 as size_t,
-    );
-    memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xf37a) as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xf37a) as *const c_void,
-        6 as size_t,
-    );
+    normalize_snapshot_ram(&mut (*b).ram, &mut (*a).ram);
     if memcmp(
         &raw mut (*b).ram as *mut u8 as *const c_void,
         &raw mut (*a).ram as *mut u8 as *const c_void,
