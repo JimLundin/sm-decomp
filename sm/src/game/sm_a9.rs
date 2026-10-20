@@ -26,7 +26,10 @@ use crate::game::sm_a0::{
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SpawnEnemy,
     SuitDamageDivision,
 };
-use crate::game::sm_a6::{HandleTypewriterText_Ext, Ridley_Func_98, SetupZebesEscapeTypewriter};
+use crate::game::sm_a6::{
+    homing_velocity, HandleTypewriterText_Ext, HomingReversal, Ridley_Func_98,
+    SetupZebesEscapeTypewriter,
+};
 use crate::game::sm_ad::{
     EnableEarthquakeAframes, HandleMotherBrainBodyFlickering, MotherBrain_CalcHdma,
     MotherBrain_FadeFromGray_Drained, MotherBrain_FadeFromGray_FakeDeath,
@@ -5683,42 +5686,19 @@ pub unsafe fn Shitroid_GraduallyAccelerateTowardsPt(
     r26: u16,
     game: &mut Game,
 ) {
-    let r24: u16 = g_byte_A9F56A[j as usize] as u16;
-    Shitroid_GraduallyAccelerateHoriz(k, r18, r24, r26, game);
+    crate::verify_probe::hit("homing.metroid");
+    let divisor = g_byte_A9F56A[j as usize];
+    Shitroid_GraduallyAccelerateHoriz(k, r18, divisor as u16, r26, game);
     let E = Get_Shitroid(k as i32, game);
-    let mut v3: i16 = (((*E).base.y_pos) as i16).wrapping_sub((r20) as i16);
-    if v3 != 0 {
-        if v3 >= 0 {
-            let mut RegWord: u16 = SnesDivide(v3 as u16, r24 as u8);
-            if RegWord == 0 {
-                RegWord = 1;
-            }
-            let r22: u16 = RegWord;
-            let mut shitr_var_C: i16 = (*E).var_C as i16;
-            if shitr_var_C >= 0 {
-                shitr_var_C = (shitr_var_C as i32 - 8i32 - r22 as i32) as i16;
-            }
-            let mut v9: i16 = (shitr_var_C).wrapping_sub((r22) as i16);
-            if v9 as i32 + 1280 & 0x8000 != 0 {
-                v9 = -1280i16;
-            }
-            (*E).var_C = v9 as u16;
-        } else {
-            let mut v4: u16 = SnesDivide((r20).wrapping_sub((*E).base.y_pos), r24 as u8);
-            if v4 == 0 {
-                v4 = 1;
-            }
-            let r22_0: u16 = v4;
-            let mut v5: i16 = (*E).var_C as i16;
-            if v5 < 0 {
-                v5 = (v5 as i32 + (r22_0 as i32 + 8)) as i16;
-            }
-            let mut v6: i16 = ((r22_0) as i16).wrapping_add(v5);
-            if v6 as i32 - 1280i32 & 0x8000 == 0 {
-                v6 = 1280;
-            }
-            (*E).var_C = v6 as u16;
-        }
+    let distance = ((*E).base.y_pos as i16).wrapping_sub(r20 as i16);
+    if distance != 0 {
+        (*E).var_C = homing_velocity(
+            distance,
+            (*E).var_C,
+            divisor as u8,
+            HomingReversal::ExtraForce(8),
+            1280,
+        );
     }
 }
 crate::forward_calls! { pub unsafe fn ( k: u16, j: u16, r18: u16, r20: u16, game: &mut Game, );
@@ -5738,53 +5718,24 @@ pub unsafe fn Shitroid_GraduallyAccelerateHoriz(
     r26: u16,
     game: &mut Game,
 ) {
-    let mut v5: i8 = 0;
     let E = Get_Shitroid(k as i32, game);
-    let mut v2: i16 = (((*E).base.x_pos) as i16).wrapping_sub((r18) as i16);
-    if v2 != 0 {
-        if v2 >= 0 {
-            let mut RegWord: u16 = SnesDivide(v2 as u16, r24 as u8);
-            if RegWord == 0 {
-                RegWord = 1;
-            }
-            let r22: u16 = RegWord;
-            let mut shitr_var_B: i16 = (*E).var_B as i16;
-            if shitr_var_B >= 0 {
-                let v13: u16 = (*E).var_B;
-                v5 = ((Shitroid_CheckIfOnScreen(k, game)) as i8) & (1i8);
-                let mut v10: u16 = v13;
-                if v5 != 0 {
-                    v10 = (v13).wrapping_sub(r26);
-                }
-                shitr_var_B = (v10 as i32 - 8i32 - r22 as i32) as i16;
-            }
-            let mut v11: i16 = (shitr_var_B).wrapping_sub((r22) as i16);
-            if v11 as i32 + 2048 & 0x8000 != 0 {
-                v11 = -2048i16;
-            }
-            (*E).var_B = v11 as u16;
+    let distance = ((*E).base.x_pos as i16).wrapping_sub(r18 as i16);
+    if distance != 0 {
+        // Capture velocity before the screen check, as in both original branches.
+        let velocity = (*E).var_B;
+        let reversing = (velocity as i16 >= 0) == (distance > 0);
+        let force = if reversing && Shitroid_CheckIfOnScreen(k, game) & 1 != 0 {
+            r26.wrapping_add(8)
         } else {
-            let mut v3: u16 = SnesDivide((r18).wrapping_sub((*E).base.x_pos), r24 as u8);
-            if v3 == 0 {
-                v3 = 1;
-            }
-            let r22_0: u16 = v3;
-            let mut v4: i16 = (*E).var_B as i16;
-            if v4 < 0 {
-                let v12: u16 = (*E).var_B;
-                v5 = ((Shitroid_CheckIfOnScreen(k, game)) as i8) & (1i8);
-                let mut v6: u16 = v12;
-                if v5 != 0 {
-                    v6 = (r26).wrapping_add(v12);
-                }
-                v4 = (r22_0 as i32 + v6 as i32 + 8) as i16;
-            }
-            let mut v7: i16 = ((r22_0) as i16).wrapping_add(v4);
-            if v7 as i32 - 2048i32 & 0x8000 == 0 {
-                v7 = 2048;
-            }
-            (*E).var_B = v7 as u16;
-        }
+            8
+        };
+        (*E).var_B = homing_velocity(
+            distance,
+            velocity,
+            r24 as u8,
+            HomingReversal::ExtraForce(force),
+            2048,
+        );
     }
 }
 pub unsafe fn Shitroid_CheckIfOnScreen(k: u16, game: &mut Game) -> u8 {

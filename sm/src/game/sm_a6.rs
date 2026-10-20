@@ -3775,160 +3775,101 @@ pub unsafe fn Ridley_Func_104_0(k: u16, j: u16, r18: u16, r20: u16, game: &mut G
     Ridley_Func_104(k, j, 0, r18, r20, game);
 }
 
-macro_rules! accelerate_ridley_negative_axis {
-    ($distance:ident, $divisor:ident, $enemy:ident, $velocity_field:ident, $acceleration:ident) => {
-        let mut RegWord: u16 = SnesDivide($distance as u16, $divisor as u8);
-        if RegWord == 0 {
-            RegWord = 1;
+pub(super) enum HomingReversal {
+    ExtraForce(u16),
+    DoubleStep,
+}
+
+// Distance, acceleration and the limit tests wrap at sixteen bits. In
+// particular, the limit is a signed-difference test, not an ordinary clamp.
+pub(super) unsafe fn homing_velocity(
+    distance: i16,
+    mut velocity: u16,
+    divisor: u8,
+    reversal: HomingReversal,
+    limit: u16,
+) -> u16 {
+    let step = SnesDivide(distance.unsigned_abs(), divisor).max(1);
+    let reversing = (velocity as i16 >= 0) == (distance > 0);
+    let extra = if reversing {
+        match reversal {
+            HomingReversal::ExtraForce(force) => step.wrapping_add(force),
+            HomingReversal::DoubleStep => step.wrapping_mul(2),
         }
-        let r22: u16 = RegWord;
-        let mut ridley_var_C: i16 = (*$enemy).$velocity_field as i16;
-        let v14: bool = 0u8 != 0u8;
-        if ridley_var_C >= 0 {
-            let mut v15: u16 = ((ridley_var_C) as u16).wrapping_sub($acceleration);
-            v15 = (v15).wrapping_sub(8);
-            let v16: u16 = r22;
-            ridley_var_C = ((v15) as i16).wrapping_sub((v16) as i16);
-        }
-        let mut v17: i16 = (ridley_var_C).wrapping_sub((r22) as i16);
-        if v17 as i32 + 1280 & 0x8000 != 0 {
-            v17 = -1280i16;
-        }
-        (*$enemy).$velocity_field = v17 as u16;
+    } else {
+        0
     };
+    if distance > 0 {
+        velocity = velocity.wrapping_sub(extra).wrapping_sub(step);
+        if velocity.wrapping_add(limit) & 0x8000 != 0 {
+            velocity = 0u16.wrapping_sub(limit);
+        }
+    } else {
+        velocity = velocity.wrapping_add(extra).wrapping_add(step);
+        if velocity.wrapping_sub(limit) & 0x8000 == 0 {
+            velocity = limit;
+        }
+    }
+    velocity
 }
 
 pub unsafe fn Ridley_Func_104(k: u16, j: u16, a: u16, r18: u16, r20: u16, game: &mut Game) {
-    let R26: u16 = a;
-    let r24: u16 = g_byte_A6D61F[j as usize] as u16;
-    Ridley_Func_105(k, r18, r24, a, game);
+    crate::verify_probe::hit("homing.ridley.extra");
+    let divisor = g_byte_A6D61F[j as usize];
+    Ridley_Func_105(k, r18, u16::from(divisor), a, game);
     let E = Get_Ridley(k as i32, game);
-    let mut v4: i16 = (((*E).base.y_pos) as i16).wrapping_sub((r20) as i16);
-    if v4 != 0 {
-        if v4 >= 0 {
-            accelerate_ridley_negative_axis!(v4, r24, E, var_C, R26);
-        } else {
-            let mut v5: u16 = SnesDivide((r20).wrapping_sub((*E).base.y_pos), r24 as u8);
-            if v5 == 0 {
-                v5 = 1;
-            }
-            let r22_0: u16 = v5;
-            let mut v6: i16 = (*E).var_C as i16;
-            let v7: bool = 0u8 != 0u8;
-            if v6 < 0 {
-                let mut v8: i16 = ((R26) as i16).wrapping_add(v6);
-                v8 = (v8).wrapping_add(8);
-                let mut v9: i16 = v8;
-                v6 = ((r22_0) as i16).wrapping_add(v9);
-            }
-            let mut v11: i16 = ((r22_0) as i16).wrapping_add(v6);
-            if v11 as i32 - 1280i32 & 0x8000 == 0 {
-                v11 = 1280;
-            }
-            (*E).var_C = v11 as u16;
-        }
+    let distance = ((*E).base.y_pos as i16).wrapping_sub(r20 as i16);
+    if distance != 0 {
+        (*E).var_C = homing_velocity(
+            distance,
+            (*E).var_C,
+            divisor as u8,
+            HomingReversal::ExtraForce(a.wrapping_add(8)),
+            1280,
+        );
     }
 }
 pub unsafe fn Ridley_Func_105(k: u16, r18: u16, r24: u16, r26: u16, game: &mut Game) {
     let E = Get_Ridley(k as i32, game);
-    let mut v2: i16 = (((*E).base.x_pos) as i16).wrapping_sub((r18) as i16);
-    if v2 != 0 {
-        if v2 >= 0 {
-            accelerate_ridley_negative_axis!(v2, r24, E, var_B, r26);
-        } else {
-            let mut v3: u16 = SnesDivide((r18).wrapping_sub((*E).base.x_pos), r24 as u8);
-            if v3 == 0 {
-                v3 = 1;
-            }
-            let r22_0: u16 = v3;
-            let mut v4: i16 = (*E).var_B as i16;
-            if v4 < 0 {
-                let mut v6: i16 = ((r26) as i16).wrapping_add(v4);
-                v6 = (v6).wrapping_add(8);
-                let mut v7: i16 = v6;
-                v4 = ((r22_0) as i16).wrapping_add(v7);
-            }
-            let mut v9: i16 = ((r22_0) as i16).wrapping_add(v4);
-            if v9 as i32 - 1280i32 & 0x8000 == 0 {
-                v9 = 1280;
-            }
-            (*E).var_B = v9 as u16;
-        }
+    let distance = ((*E).base.x_pos as i16).wrapping_sub(r18 as i16);
+    if distance != 0 {
+        (*E).var_B = homing_velocity(
+            distance,
+            (*E).var_B,
+            r24 as u8,
+            HomingReversal::ExtraForce(r26.wrapping_add(8)),
+            1280,
+        );
     }
 }
 pub unsafe fn Ridley_Func_106(k: u16, j: u16, r18: u16, r20: u16, game: &mut Game) {
-    let r24: u16 = g_byte_A6D712[j as usize] as u16;
-    Ridley_Func_107(k, r18, r24, game);
+    crate::verify_probe::hit("homing.ridley.double");
+    let divisor = g_byte_A6D712[j as usize];
+    Ridley_Func_107(k, r18, u16::from(divisor), game);
     let E = Get_Ridley(k as i32, game);
-    let mut v3: i16 = (((*E).base.y_pos) as i16).wrapping_sub((r20) as i16);
-    if v3 != 0 {
-        if v3 >= 0 {
-            let mut RegWord: u16 = SnesDivide(v3 as u16, r24 as u8);
-            if RegWord == 0 {
-                RegWord = 1;
-            }
-            let r22: u16 = RegWord;
-            let mut ridley_var_C: i16 = (*E).var_C as i16;
-            if ridley_var_C >= 0 {
-                ridley_var_C = (ridley_var_C as i32 - r22 as i32 - r22 as i32) as i16;
-            }
-            let mut v9: i16 = (ridley_var_C).wrapping_sub((r22) as i16);
-            if v9 as i32 + 1280 & 0x8000 != 0 {
-                v9 = -1280i16;
-            }
-            (*E).var_C = v9 as u16;
-        } else {
-            let mut v4: u16 = SnesDivide((r20).wrapping_sub((*E).base.y_pos), r24 as u8);
-            if v4 == 0 {
-                v4 = 1;
-            }
-            let r22_0: u16 = v4;
-            let mut v5: i16 = (*E).var_C as i16;
-            if v5 < 0 {
-                v5 = (v5 as i32 + (r22_0 as i32 + r22_0 as i32)) as i16;
-            }
-            let mut v6: i16 = ((r22_0) as i16).wrapping_add(v5);
-            if v6 as i32 - 1280i32 & 0x8000 == 0 {
-                v6 = 1280;
-            }
-            (*E).var_C = v6 as u16;
-        }
+    let distance = ((*E).base.y_pos as i16).wrapping_sub(r20 as i16);
+    if distance != 0 {
+        (*E).var_C = homing_velocity(
+            distance,
+            (*E).var_C,
+            divisor as u8,
+            HomingReversal::DoubleStep,
+            1280,
+        );
     }
 }
 pub unsafe fn Ridley_Func_107(k: u16, r18: u16, r24: u16, game: &mut Game) {
     let E = Get_Ridley(k as i32, game);
-    let v2: i16 = (((*E).base.x_pos) as i16).wrapping_sub((r18) as i16);
-    if v2 == 0 {
-        return;
+    let distance = ((*E).base.x_pos as i16).wrapping_sub(r18 as i16);
+    if distance != 0 {
+        (*E).var_B = homing_velocity(
+            distance,
+            (*E).var_B,
+            r24 as u8,
+            HomingReversal::DoubleStep,
+            1280,
+        );
     }
-    if v2 >= 0 {
-        let mut RegWord: u16 = SnesDivide(v2 as u16, r24 as u8);
-        RegWord = (if RegWord != 0 { RegWord as i32 } else { 1 }) as u16;
-        let r22: u16 = RegWord;
-        let mut s: i16 = (*E).var_B as i16;
-        if s >= 0 {
-            s = (s as i32 - 2i32 * RegWord as i32) as i16;
-        }
-        s = (s).wrapping_sub((RegWord) as i16);
-        (*E).var_B = (if s as i32 + 1280 & 0x8000 != 0 {
-            -1280i32
-        } else {
-            s as i32
-        }) as u16;
-    } else {
-        let v3: u16 = SnesDivide((r18).wrapping_sub((*E).base.x_pos), r24 as u8);
-        let r22_0: u16 = (if v3 != 0 { v3 as i32 } else { 1 }) as u16;
-        let mut s_0: i16 = (*E).var_B as i16;
-        if s_0 < 0 {
-            s_0 = (s_0 as i32 + 2 * r22_0 as i32) as i16;
-        }
-        s_0 = (s_0).wrapping_add((r22_0) as i16);
-        (*E).var_B = (if s_0 as i32 - 1280i32 & 0x8000 == 0 {
-            1280
-        } else {
-            s_0 as i32
-        }) as u16;
-    };
 }
 
 macro_rules! steer_enemy_speed_and_angle {

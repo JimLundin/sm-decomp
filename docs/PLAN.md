@@ -20,6 +20,60 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared homing acceleration (2026-10-20)
+
+Six Ridley/Ceres Ridley/endgame Metroid routines now share their signed
+distance, division, reversal and velocity-limit calculations. Callers retain
+zero-distance guards, ordered X/Y updates and the two inertia tables. Extra
+reversal force versus a doubled step remains explicit, as do the 1280/2048
+limits and the Metroid's conditional screen check with captured velocity.
+Limit comparisons retain their wrapping signed-difference behavior. Complete
+formatted source shrinks **108 lines**, including the helper, enum and probes.
+
+Actual original/replacement Rust comparisons pass **1572864 cases**, using
+Game, RAM accessors and the real screen check. All word-sized velocity values,
+zero/signed-boundary distances, divisor truncation/zero, reversal forces,
+screen positions and invalid table-index panic outcomes are represented.
+Complete RAM agrees. The checked production files match the final composition.
+
+Independent controlled calls to the existing patched SNES oracle pass
+**49152 comparisons**: 8192 each at A6:D526, D5A9, D62F, D6A6 and A9:F46B,
+F4E6. Entry points and parameter conventions come from the
+[A6 bank log](https://patrickjohnston.org/bank/A6#fD526) and
+[A9 bank log](https://patrickjohnston.org/bank/A9#fF46B). These execute the
+actual emulated instructions with the usual SnesInit patches. RAM agrees
+except for the documented arithmetic scratch words $16..$19 and CPU stack
+$100..$1FF, which native routines do not reproduce. No other RAM is excluded.
+These component checks cover the numerical variants; they do not claim an
+endgame route or compare CPU registers and arithmetic-unit side effects.
+
+Formatting, all-target draft check, normal release (24.02s in main), diff
+check and progress pass. Committed source matches the frozen independent
+composition. Source-checked any% passes **129712/0** and Speed Booster
+**148406/0**, native exits 0; full command times are 126.34s and
+159.56s. Both hit Ceres Ridley homing (2902/344 calls). The other
+homing variants have the direct oracle coverage above, not movie hits.
+Initial runs had zero failing frames but correctly rejected missing probe
+requirements. Source/input/library/DLL pins stay fixed and the host reuses
+the normal library. The separate composition including the pending shader
+edit also passes both full routes; its normal main library passes the
+embedded-source check. Only the two homing files and this plan are committed.
+
+Committed Rust is **113551 lines**, leaving **13552 further lines** for the fixed
+under-100000 target. This change adds one unsafe function for the shared
+SnesDivide caller and removes 23 cast-containing lines; other counters stay
+unchanged. Uncommitted changes are excluded from this count. The complete
+remaining reduction budget is still unfinished. Temporary drafts/comparisons
+are under `%TEMP%/sm-homing-root-64146b6c`.
+
+A separate ordinary-source survey finds only ten terminal exit/else sites,
+four nested guards and fourteen common tails (19 gross tail lines); larger
+gameplay table declarations total 422 gross lines. No substantial draft is
+justified by those narrow surveys; do not count their spans as net savings.
+The next concrete source lead is bank 80's camera scroll-grid calculations
+and six autoscroll/triggered-scroll routines. Their X/Y limits and lookups
+differ; this is unpriced search territory, not a claimed reduction budget.
+
 ## Shared motion routines (2026-10-20)
 
 Sidehopper/Beetom hopping and seventeen Samus movement entries now share
