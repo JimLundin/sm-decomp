@@ -2723,7 +2723,46 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `50b89505` shares all 249 adjacent
+Latest reviewed integration (2026-10-20): `ebfc9250` converts 55 literal
+counted loops and `635b8d6f` moves 702 local declarations to first assignment.
+All 77 committed inputs at each stage match the frozen loop and final trees.
+Independent reconstruction matches all 1186054 final source tokens and
+19544 raw macro nodes. Inverting the 249 previously reviewed instruction
+macros reproduces the complete earlier loop candidate across all 70 Rust
+files, binding the existing control proof to the committed composition.
+
+The 42 zero-exit and 13 sign-exit loops preserve primitive widths, iteration
+counts, all 11 step-two cases, both nested pairs and the single retained early
+break. Removed counters have no body/later reads or escaping references.
+Independent rerun of the existing focused DLL passes 372 comparisons and
+detects all 224 end/inclusivity/step/effect-deletion/order mutations. Its opaque
+body effects check control and statement scheduling, not gameplay semantics.
+
+The 297 same-block and 405 nested initializer moves retain exact types,
+mutability, assignment RHSs and remaining statement order. Their discarded
+zero/null values are primitive integers, Booleans or raw pointers; all reads
+remain dominated by the first assignment. The loop change already removed
+21 preliminary initializer targets. No observable destructor or address escape
+is moved, and no borrowed temporary gains an extended lifetime.
+
+Independent actual frontend compiler reconstruction passes all 421 affected
+functions and the complete library/main streams, including comments and
+punctuation: 2106038 and 27667 tokens. All 201 const and 37 mutable raw RAM
+borrows bind to the existing Game parameter without local pattern shadowing.
+The two checkpoint source literals are separately reconstructed from their
+exact 22 included files before comparison. Source comments, attributes and
+macro spellings remain intact; no broader RAM borrow or layout change is added.
+
+The shared final composition passes formatting/check, normal release
+(25.77s wall), progress and full any%: 129712/0, native exit 0,
+125.81s wall/125.51s replay. Review reused this build/replay; all 109 recorded
+verification pins and independent reconstruction pins remain stable. The
+initial disk-full build is not counted as a pass. The reviewed composition
+removes 909 Rust lines to 131192; all other counters are unchanged. Six rooms
+and three enemy definitions are covered, with no ending/credits frames.
+Broader gameplay, frontend execution and alias safety remain open.
+
+Included `50b89505` shares all 249 adjacent
 enemy instruction/timer field pairs across 13 callers. Independent baseline
 AST discovery finds exactly the selected family: 192 instruction-first and
 57 timer-first pairs. Reconstruction from the original receiver and value
