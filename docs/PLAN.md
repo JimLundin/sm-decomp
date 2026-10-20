@@ -20,6 +20,46 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared door-scroll declarations (2026-10-20)
+
+All 63 literal door-scroll callbacks in bank 8F now share one declaration
+macro. Its 13 contiguous groups retain every function name, public/unsafe
+signature, alias and declaration position, and all 130 byte stores in their
+original order. Cell indices and color values stay literal, including the
+existing red value in the callback named `Scroll_4Blue_8Green`. The complete
+formatted file shrinks **158 lines**, including the macro, from 864 to 706.
+No runtime helper, loop, extra borrow or RAM-layout change is introduced.
+
+Independent parsing/inversion reconstructs the entire original file exactly;
+all 63 separately compiler-expanded bodies match using the production pointer
+macro. Actual full frontend-library expansions also agree over **10317298
+normalized bytes**. Only the new macro declaration, inter-token whitespace and
+the single changed, decoded/file-bound 8F source payload are excluded. Other
+embedded-source payloads remain compared unchanged. This unchanged operation
+stream uses current static validation; no new gameplay replay is claimed.
+
+Formatting, normal release (22.76s frozen; 22.64s main), compiled-source checks
+(5.50s frozen; 2.44s main), diff check and progress pass. The existing frozen
+checkout/build cache is refreshed from 083b1e69; no game artifacts are copied
+between checkouts. Final source/dependency pins stay fixed and the foreign
+shader edit remains outside this commit. Committed Rust becomes **112594
+lines**, leaving **12595 further lines** for below 100000. The textual unsafe-
+function counter falls 62 to 5307 through signature sharing; all functions and
+their safety remain. Other counters are unchanged. Draft/review roots are
+`sm-door-scrolls-4c47d48b` and `sm-door-scroll-review-083b1e69` in TEMP.
+
+Two new full-family studies remain parked after formatting/pricing only:
+Yapping Maw's transforms, corrections and segment publication save **26 lines**;
+Mother Brain's five neck coordinate pairs save **zero** including shared code.
+Botwoon, Ridley's major tail algorithms and grapple already traverse segments.
+The complete E567/ECB6 HDMA sine-wave pair saves **59 lines**, including both
+handlers/helper and the necessary parameter reread between fill and reflection.
+Other sky/liquid/cinematic routines have distinct clipping, table or traversal
+contracts. These drafts have no compiler, behavior or oracle validation and do
+not establish the substantial remaining budget. Reports are under
+`sm-multisegment-4c47d48b` and `sm-hdma-wave-price-083b1e69`; do not repeat those
+bounded studies. The under-100000 target remains unfinished.
+
 ## Shared occupied-file navigation (2026-10-20)
 
 File-copy source selection and file-clear selection now share the complete
