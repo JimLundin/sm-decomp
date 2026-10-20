@@ -161,8 +161,7 @@ pub unsafe fn snes_readBBus(snes: *mut Snes, address: u8, game: &mut Game) -> u8
             (*(*snes).apu).outPorts[usize::from(address & 3)]
         }
         0x80 => {
-            let address = (*snes).ramAdr;
-            (*snes).ramAdr = (*snes).ramAdr.wrapping_add(1);
+            crate::update_place! { previous address = (*snes).ramAdr => (*snes).ramAdr.wrapping_add(1); }
             let value = *(*snes).ram.offset(address as isize);
             (*snes).ramAdr &= 0x1ffff;
             value
@@ -178,8 +177,7 @@ pub unsafe fn snes_writeBBus(snes: *mut Snes, address: u8, value: u8, game: &mut
         0x00..=0x3f => ppu_write((*snes).ppu, address, value),
         0x40..=0x7f => RtlApuWrite(0x2100 + u32::from(address), value, game),
         0x80 => {
-            let address = (*snes).ramAdr;
-            (*snes).ramAdr = (*snes).ramAdr.wrapping_add(1);
+            crate::update_place! { previous address = (*snes).ramAdr => (*snes).ramAdr.wrapping_add(1); }
             *(*snes).ram.offset(address as isize) = value;
             (*snes).ramAdr &= 0x1ffff;
         }

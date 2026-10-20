@@ -1300,8 +1300,7 @@ pub unsafe fn FakeKraid_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *con
     if (*E).fkd_var_E != 0 {
         (*E).fkd_var_E = (*E).fkd_var_E.wrapping_sub(1);
     }
-    let fresh1 = (*E).fkd_var_D;
-    (*E).fkd_var_D = (*E).fkd_var_D.wrapping_sub(1);
+    crate::update_place! { previous fresh1 = (*E).fkd_var_D => (*E).fkd_var_D.wrapping_sub(1); }
     let reverse_direction: bool = if fresh1 == 1u16 {
         (*E).fkd_var_D = ((ram_word!(game, random_number) as i32 & 3i32) + 7i32) as u16;
         true
@@ -1966,8 +1965,7 @@ pub unsafe fn HandleCeresRidleyGetawayCutscene(game: &mut Game) {
 }
 pub unsafe fn CeresRidley_Func_28(game: &mut Game) {
     let E = Get_CeresRidley(0i32, game);
-    let cry_var_33: u16 = (*E).cry_var_33;
-    (*E).cry_var_33 = (cry_var_33).wrapping_add(2u16);
+    crate::update_place! { previous cry_var_33: u16 = (*E).cry_var_33 => (cry_var_33).wrapping_add(2u16); }
     if cry_var_33 == 0 {
         QueueSfx2_Max6(0x4eu16, game);
     }
@@ -3136,8 +3134,7 @@ pub unsafe fn Ridley_C09F(game: &mut Game) {
 pub unsafe fn Ridley_Func_56(game: &mut Game) {
     Ridley_Func_61(game);
     let E = Get_Ridley(0i32, game);
-    let fresh16 = (*E).ridley_var_E;
-    (*E).ridley_var_E = (*E).ridley_var_E.wrapping_sub(1);
+    crate::update_place! { previous fresh16 = (*E).ridley_var_E => (*E).ridley_var_E.wrapping_sub(1); }
     if fresh16 == 1u16 {
         (*E).ridley_var_3B = -15280i32 as u16;
         set_fields! {[(*E)], 0u16; ridley_var_3C, ridley_var_3D, ridley_var_3E, ridley_var_3F}
@@ -3152,8 +3149,7 @@ pub unsafe fn Ridley_Func_56(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_57(game: &mut Game) {
     let E = Get_Ridley(0i32, game);
-    let fresh15 = (*E).ridley_var_E;
-    (*E).ridley_var_E = (*E).ridley_var_E.wrapping_sub(1);
+    crate::update_place! { previous fresh15 = (*E).ridley_var_E => (*E).ridley_var_E.wrapping_sub(1); }
     if fresh15 == 1u16 {
         (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
         (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
@@ -3721,8 +3717,7 @@ pub unsafe fn Ridley_CBDC(game: &mut Game) {
     loop {
         Ridley_Func_88(v1, game);
         v1 = (v1).wrapping_add(20u16);
-        let fresh11 = v0;
-        v0 = v0.wrapping_sub(1);
+        crate::update_place! { previous fresh11 = v0 => v0.wrapping_sub(1); }
         if (fresh11 == 1u16) {
             break;
         }
@@ -3860,12 +3855,13 @@ pub unsafe fn Ridley_Func_83(game: &mut Game) {
         set_ram_word!(game.tilemap_stuff[13] = -1i32 as u16);
         set_ram_word!(game.tilemap_stuff[14] = -1i32 as u16);
         let mut v1: u16 = ram_word!(game, tilemap_stuff[8]);
-        if ram_word!(game, tilemap_stuff[8]) == 0 || {
-            v1 = (ram_word!(game, tilemap_stuff[8])).wrapping_sub(1u16);
-            let ref mut fresh14 = *(ram_ptr!(game, u16; 0x2000)).offset(8);
-            *fresh14 = v1;
-            *fresh14 != 0u16
-        } {
+        if ram_word!(game, tilemap_stuff[8]) == 0
+            || {
+                v1 = (ram_word!(game, tilemap_stuff[8])).wrapping_sub(1u16);
+                crate::update_place! { reference fresh14 = *(ram_ptr!(game, u16; 0x2000)).offset(8) => v1; }
+                *fresh14 != 0u16
+            }
+        {
             set_ram_word!(game.tilemap_stuff[10] = v1);
         } else {
             set_ram_word!(game.tilemap_stuff[16] = 0x8000u16);
@@ -5336,8 +5332,7 @@ pub unsafe fn CeresSteam_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *co
 }
 pub unsafe fn CeresSteam_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E = Get_CeresSteam(k as i32, game);
-    let fresh0 = (*E).csm_var_D;
-    (*E).csm_var_D = (*E).csm_var_D.wrapping_sub(1);
+    crate::update_place! { previous fresh0 = (*E).csm_var_D => (*E).csm_var_D.wrapping_sub(1); }
     if fresh0 != 1u16 {
         return *jp.offset(0) as usize as *const u16;
     }

@@ -14,6 +14,24 @@
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
 
+// Emit place updates in caller scope, preserving the original capture and stores.
+#[macro_export]
+macro_rules! update_place {
+    (reference $destination:ident $([$old:ident])? = $place:expr => $value:expr;) => {
+        let ref mut $destination = $place;
+        $(let $old = *$destination;)?
+        *$destination = $value;
+    };
+    (previous $old:ident $(: $type:ty)? = $place:expr => $value:expr;) => {
+        let $old $(: $type)? = $place;
+        $place = $value;
+    };
+    (previous mut $old:ident $(: $type:ty)? = $place:expr => $value:expr;) => {
+        let mut $old $(: $type)? = $place;
+        $place = $value;
+    };
+}
+
 // Declare forwarding wrappers with their original signatures and call order.
 // Unit wrappers retain a statement; value-returning wrappers retain a tail call.
 #[macro_export]

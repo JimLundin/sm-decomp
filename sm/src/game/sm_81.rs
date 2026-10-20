@@ -113,8 +113,7 @@ pub unsafe fn SaveToSram(a: u16, game: &mut Game) {
     let mut v5: u16 = crate::rtl::rom_table_word!(game, 0x81812b, (r18 >> 1) as isize);
     let mut v6: *mut u16 = ram_ptr!(game, u16; 0xd7c0);
     loop {
-        let fresh94 = v6;
-        v6 = v6.offset(1);
+        crate::update_place! { previous fresh94 = v6 => v6.offset(1); }
         let mut v7: u16 = *fresh94;
         *(game.g_sram.offset((2i32 * (v5 as i32 >> 1i32)) as isize) as *mut u16) = v7;
         r20 = (r20).wrapping_add(v7);
@@ -140,8 +139,7 @@ pub unsafe fn LoadFromSram(a: u16, game: &mut Game) -> u8 {
     let mut v2: *mut u16 = ram_ptr!(game, u16; 0xd7c0);
     loop {
         let v3: u16 = *(game.g_sram.offset(0) as *mut u16).offset((v1 >> 1) as isize);
-        let fresh1 = v2;
-        v2 = v2.offset(1);
+        crate::update_place! { previous fresh1 = v2 => v2.offset(1); }
         *fresh1 = v3;
         r20 = (r20).wrapping_add(v3);
         v1 = (v1).wrapping_add(2u16);
@@ -205,11 +203,9 @@ pub unsafe fn UnpackMapFromSave(game: &mut Game) {
         let mut v3: i32 = crate::rtl::rom_table_word!(game, 0x818138, i_0 as isize) as i32;
         let unpacked = ram_ptr!(game, u16; 0xcd52) as *mut u8;
         loop {
-            let fresh2 = r0;
-            r0 = r0.offset(1);
+            crate::update_place! { previous fresh2 = r0 => r0.offset(1); }
             let v4: u16 = (i_0 * 256i32 + *fresh2 as i32) as u16;
-            let fresh3 = v3;
-            v3 = v3 + 1;
+            crate::update_place! { previous fresh3 = v3 => v3 + 1; }
             *unpacked.offset(v4 as isize) = *ram_ptr!(game; 0xd91c, fresh3 as isize);
             n -= 1;
             if (n == 0) {
@@ -231,11 +227,9 @@ pub unsafe fn PackMapToSave(game: &mut Game) {
         let mut v1: i32 = crate::rtl::rom_table_word!(game, 0x818138, i as isize) as i32;
         let unpacked = ram_ptr!(game, u16; 0xcd52) as *mut u8;
         loop {
-            let fresh95 = r0;
-            r0 = r0.offset(1);
+            crate::update_place! { previous fresh95 = r0 => r0.offset(1); }
             let v3: i32 = i * 256i32 + *fresh95 as i32;
-            let fresh96 = v1;
-            v1 = v1 + 1;
+            crate::update_place! { previous fresh96 = v1 => v1 + 1; }
             *ram_ptr!(game; 0xd91c, fresh96 as isize) = *unpacked.offset(v3 as isize);
             n -= 1;
             if (n == 0) {
@@ -2271,8 +2265,7 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
     {
         *(ram_ptr!(game, u16; 0x727) as *mut u8).offset(0) =
             ((ram_word!(game, menu_index)) as u8).wrapping_add(1u8);
-        let ref mut fresh36 = *ram_ptr!(game; 0x69);
-        *fresh36 = (*fresh36 & !(2));
+        crate::update_place! { reference fresh36 = *ram_ptr!(game; 0x69) => (*fresh36 & !(2)); }
         *ram_ptr!(game; 0x6c) = 0u8;
         *ram_ptr!(game; 0x6d) = 0u8;
         set_ram_word!(game.reg_BG2VOFS = 24u16);
@@ -2287,8 +2280,7 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
             }
         }
         loop {
-            let fresh37 = v1;
-            v1 = v1.wrapping_add(1);
+            crate::update_place! { previous fresh37 = v1 => v1.wrapping_add(1); }
             (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[fresh37 as usize] = 10241u16;
             if (((v1 as i32 * 2i32 - 2048i32) as i16) >= 0i16) {
                 break;
@@ -2302,8 +2294,7 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
         let mut v2: u16 = 320u16;
         let mut v3: u16 = 959u16;
         loop {
-            let fresh38 = v3;
-            v3 = v3.wrapping_sub(1);
+            crate::update_place! { previous fresh38 = v3 => v3.wrapping_sub(1); }
             (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[fresh38 as usize] =
                 crate::rtl::rom_table_word!(game, 0x81b14b, (v2 >> 1) as isize);
             v2 = (v2).wrapping_sub(2u16);
@@ -2321,15 +2312,11 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
         (*v5).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfci32) << 8i32) as u16;
         set_ram_word!(game.vram_write_queue_tail = (v4).wrapping_add(7u16));
     } else {
-        let ref mut fresh39 =
-            (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_0;
-        *fresh39 = (*fresh39).wrapping_sub(kExpandingSquareTransitionSpeed);
+        crate::update_place! { reference fresh39 = (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_0 => (*fresh39).wrapping_sub(kExpandingSquareTransitionSpeed); }
         (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_0 = v0;
         (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_0 = v0;
         (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_0 = v0;
-        let ref mut fresh40 =
-            (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0;
-        *fresh40 = (*fresh40).wrapping_add(kExpandingSquareTransitionSpeed);
+        crate::update_place! { reference fresh40 = (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0 => (*fresh40).wrapping_add(kExpandingSquareTransitionSpeed); }
         (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(2)).field_0 =
             (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0;
         (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1)).field_0 =
@@ -2749,8 +2736,7 @@ pub unsafe fn FileSelectMap_9_InitRoomSelectMap(game: &mut Game) {
     SetupMapScrollingForFileSelectMap(game);
     update_ram_word!(game.map_min_y_scroll, wrapping_add(24u16));
     set_ram_word!(game.reg_BG2VOFS = 24u16);
-    let ref mut fresh31 = *(ram_ptr!(game, u16; 0x69));
-    *fresh31 = (*fresh31 & !(4));
+    crate::update_place! { reference fresh31 = *(ram_ptr!(game, u16; 0x69)) => (*fresh31 & !(4)); }
     update_ram_word!(game.menu_index, wrapping_add(1));
     set_ram_words! { game, 0u16;
         map_scrolling_direction, map_scrolling_speed_index,
@@ -2968,8 +2954,7 @@ pub unsafe fn FileSelectMap_16_LoadPalettes(game: &mut Game) {
     let mut v0: i16 = 0i16;
     loop {
         let mut v1: i16 = v0;
-        let fresh19 = v0;
-        v0 = v0 + 1;
+        crate::update_place! { previous fresh19 = v0 => v0 + 1; }
         LoadInactiveAreaMapForegroundColors(fresh19 as u16, game);
         if ((v1).wrapping_sub(5i16) >= 0i16) {
             break;

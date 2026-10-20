@@ -13,6 +13,7 @@ use ::core::ptr::{null, null_mut};
 use ::sm as _;
 use sm::game_state::{Game, GameOwner};
 use sm::sdl_constants;
+use sm::update_place;
 mod verify;
 pub use sdl2_sys::{
     SDL_AudioDeviceEvent, SDL_AudioSpec, SDL_CloseAudioDevice, SDL_CommonEvent,
@@ -1203,8 +1204,7 @@ unsafe fn RenderDigit(mut dst: *mut u8, pitch: size_t, digit: i32, color: u32, b
     if !big {
         let mut y: i32 = 0i32;
         while y < 10i32 {
-            let fresh0 = p;
-            p = p.offset(1);
+            crate::update_place! { previous fresh0 = p => p.offset(1); }
             let mut v: i32 = *fresh0 as i32;
             let mut x: i32 = 0i32;
             while v != 0 {
@@ -1220,18 +1220,14 @@ unsafe fn RenderDigit(mut dst: *mut u8, pitch: size_t, digit: i32, color: u32, b
     } else {
         let mut y_0: i32 = 0i32;
         while y_0 < 10i32 {
-            let fresh1 = p;
-            p = p.offset(1);
+            crate::update_place! { previous fresh1 = p => p.offset(1); }
             let mut v_0: i32 = *fresh1 as i32;
             let mut x_0: i32 = 0i32;
             while v_0 != 0 {
                 if v_0 & 1i32 != 0 {
-                    let ref mut fresh2 = *(dst as *mut u32).offset((x_0 * 2i32) as isize);
-                    *fresh2 = color;
+                    crate::update_place! { reference fresh2 = *(dst as *mut u32).offset((x_0 * 2i32) as isize) => color; }
                     *(dst as *mut u32).offset((x_0 * 2i32 + 1i32) as isize) = *fresh2;
-                    let ref mut fresh3 =
-                        *(dst.offset(pitch as isize) as *mut u32).offset((x_0 * 2i32) as isize);
-                    *fresh3 = color;
+                    crate::update_place! { reference fresh3 = *(dst.offset(pitch as isize) as *mut u32).offset((x_0 * 2i32) as isize) => color; }
                     *(dst.offset(pitch as isize) as *mut u32)
                         .offset((x_0 * 2i32 + 1i32) as isize) = *fresh3;
                 }

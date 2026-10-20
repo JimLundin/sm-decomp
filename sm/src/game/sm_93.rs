@@ -227,9 +227,7 @@ pub unsafe fn RunProjectileInstructions(game: &mut Game) {
     let mut PI = null_mut::<ProjectileInstr>();
     let v0: u16 = ram_word!(game, projectile_index);
     let v1: i32 = ram_word!(game, projectile_index) as i32 >> 1i32;
-    let ref mut fresh0 = *(ram_ptr!(game, u16; 0xc54)).offset(v1 as isize);
-    let fresh1 = *fresh0;
-    *fresh0 = (*fresh0).wrapping_sub(1);
+    crate::update_place! { reference fresh0 [fresh1] = *(ram_ptr!(game, u16; 0xc54)).offset(v1 as isize) => (*fresh0).wrapping_sub(1); }
     if fresh1 == 1u16 {
         let mut v3: u16 = ram_word!(game, projectile_bomb_instruction_ptr[v1]);
         loop {

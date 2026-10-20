@@ -612,8 +612,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                 let mut nb: i32 = 1i32 + ((*sr).replay_cmd as i32 >> 2i32 & 3i32);
                 if nb == 4i32 {
                     loop {
-                        let fresh3 = replay_pos;
-                        replay_pos = replay_pos + 1;
+                        crate::update_place! { previous fresh3 = replay_pos => replay_pos + 1; }
                         let mut t: u8 = *(*sr).log.data.offset(fresh3 as isize);
                         nb += t as i32;
                         if (t as i32 != 255i32) {
@@ -622,15 +621,12 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                     }
                 }
                 let mut addr: u32 = (((*sr).replay_cmd as i32 >> 1i32 & 1i32) << 16i32) as u32;
-                let fresh4 = replay_pos;
-                replay_pos = replay_pos + 1;
+                crate::update_place! { previous fresh4 = replay_pos => replay_pos + 1; }
                 addr |= ((*(*sr).log.data.offset(fresh4 as isize) as i32) << 8i32) as u32;
-                let fresh5 = replay_pos;
-                replay_pos = replay_pos + 1;
+                crate::update_place! { previous fresh5 = replay_pos => replay_pos + 1; }
                 addr |= *(*sr).log.data.offset(fresh5 as isize) as u32;
                 loop {
-                    let fresh6 = replay_pos;
-                    replay_pos = replay_pos + 1;
+                    crate::update_place! { previous fresh6 = replay_pos => replay_pos + 1; }
                     game.g_ram[(addr & 0x1ffffu32) as usize] =
                         *(*sr).log.data.offset(fresh6 as isize);
                     RtlSyncMemoryRegion(
@@ -658,8 +654,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
             (*sr).replay_next_cmd_at = 0xffffffffu32 as u32;
             break;
         } else {
-            let fresh7 = replay_pos;
-            replay_pos = replay_pos + 1;
+            crate::update_place! { previous fresh7 = replay_pos => replay_pos + 1; }
             let cmd: u8 = *(*sr).log.data.offset(fresh7 as isize);
             let mask: i32 = if (cmd as i32) < 0xc0i32 {
                 0xfi32
@@ -669,8 +664,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
             let mut frames: i32 = cmd as i32 & mask;
             if frames == mask {
                 loop {
-                    let fresh8 = replay_pos;
-                    replay_pos = replay_pos + 1;
+                    crate::update_place! { previous fresh8 = replay_pos => replay_pos + 1; }
                     let mut t_0: u8 = *(*sr).log.data.offset(fresh8 as isize);
                     frames += t_0 as i32;
                     if (t_0 as i32 != 255i32) {
@@ -1011,8 +1005,7 @@ pub unsafe fn RtlPushApuState(game: &mut Game) {
             }
             game.g_apu_time_since_empty = game.g_apu_time_since_empty.wrapping_add(1);
         }
-        let fresh2 = game.g_apu_write_ent_pos;
-        game.g_apu_write_ent_pos = game.g_apu_write_ent_pos.wrapping_add(1);
+        crate::update_place! { previous fresh2 = game.g_apu_write_ent_pos => game.g_apu_write_ent_pos.wrapping_add(1); }
         let w0 = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt)
             .offset((fresh2 as i32 & kApuMaxQueueSize as i32 - 1i32) as isize);
         if game.g_apu_queue_size as i32 == kApuMaxQueueSize as i32 {
@@ -1050,8 +1043,7 @@ unsafe fn RtlPopApuState_Locked(game: &mut Game) {
         &raw mut (*(*game.g_snes).apu).inPorts as *mut u8
     };
     if game.g_apu_queue_size as i32 != 0i32 {
-        let fresh1 = game.g_apu_queue_size;
-        game.g_apu_queue_size = game.g_apu_queue_size.wrapping_sub(1);
+        crate::update_place! { previous fresh1 = game.g_apu_queue_size => game.g_apu_queue_size.wrapping_sub(1); }
         let w = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
             (game.g_apu_write_ent_pos as i32 - fresh1 as i32 & kApuMaxQueueSize as i32 - 1i32)
                 as isize,

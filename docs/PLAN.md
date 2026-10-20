@@ -142,6 +142,25 @@ to 128340; i32 cast-containing lines -2348. Other progress counters are unchange
 These proofs cover the selected integer expressions; the movies provide
 integration coverage. Broader routes, frontend and alias ownership remain open.
 
+Caller-scoped place updates (2026-10-20): consolidate all 183 captured-reference
+updates and 181 adjacent old-value/update pairs across 41 callers. One macro
+emits the original bindings and assignments in caller scope. Optional old values,
+mutability, type annotations, place evaluation, RHS order and retained reference
+lifetimes remain exact; no runtime helper or whole-Game borrow is introduced.
+
+Complete source inversion passes all 364 sites. Actual library expansion retains
+all 2079962 tokens after removing only the helper and independently binding all
+67 source payloads. Main retains all 29335 tokens after its one import and exact
+22-file checkpoint payload are bound. Comments/punctuation remain exact apart
+from checkout newline encoding. No broader alias-safety claim.
+
+Formatting/check, fresh registry-only normal release22.25s and full any129712/0,
+nativeexit0 (150.40s replay/150.64s wall), pass. Host2.25s reuses the normal
+library's exact hash/mtime; all106 run pins stable. Rust lines -406 to126726;
+cast-containing lines -3 from joining statements, other counters unchanged.
+The 607 complete-body instruction declarations save only5 lines and remain parked.
+Continue substantial complete families; credits/frontend/ownership remain open.
+
 Redundant raw-pointer local annotations (2026-10-20): remove2529 initialized
 pointer annotations across49 files, preserving2345 mutable and184 const
 pointer types. Complete source reconstruction retains every initializer,

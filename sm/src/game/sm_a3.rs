@@ -566,8 +566,7 @@ pub unsafe fn Metalee_Func_4(game: &mut Game) {
 }
 pub unsafe fn Metalee_Func_5(game: &mut Game) {
     let E = Get_Metalee(ram_word!(game, cur_enemy_index) as i32, game);
-    let fresh8 = (*E).metalee_var_A;
-    (*E).metalee_var_A = (*E).metalee_var_A.wrapping_sub(1);
+    crate::update_place! { previous fresh8 = (*E).metalee_var_A => (*E).metalee_var_A.wrapping_sub(1); }
     if fresh8 == 1u16 {
         (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).vram_tiles_index =
             ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
@@ -872,8 +871,7 @@ pub unsafe fn Elevator_Init(game: &mut Game) {
     (*E).elevat_parameter_1 = ((*E).elevat_parameter_1).wrapping_mul(2u16);
     (*E).elevat_var_A = (*E).base.y_pos;
     if ram_word!(game, elevator_status) != 2u16 {
-        let ref mut fresh5 = *(ram_ptr!(game, u16; 0xe18));
-        *fresh5 = 0u16;
+        crate::update_place! { reference fresh5 = *(ram_ptr!(game, u16; 0xe18)) => 0u16; }
         set_ram_word!(game.elevator_flags = *fresh5);
     }
     if (ram_word!(game, elevator_status) as u32) << 16i32 | ram_word!(game, elevator_flags) as u32
@@ -1757,8 +1755,7 @@ pub unsafe fn Mochtroid_Func_2(game: &mut Game) {
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add((g_word_A3A76D[v2 as usize]) as u16);
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_add((g_word_A3A775[v2 as usize]) as u16);
     set_fields! {[(*E)], 0u16; mochtr_var_A, mochtr_var_B, mochtr_var_C, mochtr_var_D}
-    let fresh12 = (*E).mochtr_var_E;
-    (*E).mochtr_var_E = (*E).mochtr_var_E.wrapping_sub(1);
+    crate::update_place! { previous fresh12 = (*E).mochtr_var_E => (*E).mochtr_var_E.wrapping_sub(1); }
     if fresh12 == 1u16 {
         (*E).mochtr_var_F = 0u16;
     }
@@ -2594,8 +2591,7 @@ pub unsafe fn Skree_Func_3(game: &mut Game) {
 }
 pub unsafe fn Skree_Func_4(game: &mut Game) {
     let E = Get_Skree(ram_word!(game, cur_enemy_index) as i32, game);
-    let fresh18 = (*E).skree_var_A;
-    (*E).skree_var_A = (*E).skree_var_A.wrapping_sub(1);
+    crate::update_place! { previous fresh18 = (*E).skree_var_A => (*E).skree_var_A.wrapping_sub(1); }
     if fresh18 == 1u16 {
         (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).vram_tiles_index =
             ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
@@ -2695,11 +2691,10 @@ pub unsafe fn MaridiaSnail_Init(game: &mut Game) {
     (*E).msl_var_F = ((0xa3cf5fi32) as u16);
     (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A3 as u16;
     (*E).base.instruction_timer = 1u16;
-    let current_instruction: u16 = (*E).base.current_instruction;
-    (*E).base.current_instruction = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
+    crate::update_place! { previous current_instruction: u16 = (*E).base.current_instruction => (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
         as *mut MaridiaSnailData2)
         .offset(current_instruction as isize))
-    .field_0;
+    .field_0; }
     (*E).base.properties = ((*E).base.properties)
         | ((*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42)) as *mut MaridiaSnailData2)
             .offset(current_instruction as isize))
@@ -3859,8 +3854,7 @@ pub unsafe fn Metroid_Func_4(varE32: u16, game: &mut Game) {
         (v1 + 4i32) as isize
     ));
     set_fields! {[(*E)], 0u16; metroid_var_A, metroid_var_B, metroid_var_C, metroid_var_D}
-    let fresh9 = (*E).metroid_var_E;
-    (*E).metroid_var_E = (*E).metroid_var_E.wrapping_sub(1);
+    crate::update_place! { previous fresh9 = (*E).metroid_var_E => (*E).metroid_var_E.wrapping_sub(1); }
     if fresh9 == 1u16 {
         (*E).metroid_var_F = 0u16;
         enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1u16}

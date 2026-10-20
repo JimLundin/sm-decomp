@@ -92,8 +92,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, ga
             break;
         }
         r24 = (r24).wrapping_add(r20);
-        let fresh11 = v2;
-        v2 = v2.offset(-1);
+        crate::update_place! { previous fresh11 = v2 => v2.offset(-1); }
         *fresh11 = ((*(&raw mut v4 as *mut u8).offset(1isize)) as u16) | (0xff00u16);
         mbn_var_3F = mbn_var_3F.wrapping_sub(1);
         if (mbn_var_3F == 32u16) {
@@ -101,8 +100,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, ga
         }
     }
     loop {
-        let fresh12 = v2;
-        v2 = v2.offset(-1);
+        crate::update_place! { previous fresh12 = v2 => v2.offset(-1); }
         *fresh12 = 255u16;
         mbn_var_3F = mbn_var_3F.wrapping_sub(1);
         if (mbn_var_3F == 32u16) {
@@ -117,8 +115,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, ga
             break;
         }
         r22 = (r22).wrapping_add(r18);
-        let fresh13 = v5;
-        v5 = v5.offset(1);
+        crate::update_place! { previous fresh13 = v5 => v5.offset(1); }
         *fresh13 = ((*(&raw mut v7 as *mut u8).offset(1isize)) as u16) | (0xff00u16);
         var_3F = var_3F.wrapping_add(1);
         if var_3F == 232u16 {
@@ -126,8 +123,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, ga
         }
     }
     loop {
-        let fresh14 = v5;
-        v5 = v5.offset(1);
+        crate::update_place! { previous fresh14 = v5 => v5.offset(1); }
         *fresh14 = 255u16;
         var_3F = var_3F.wrapping_add(1);
         if (var_3F == 232u16) {
@@ -220,8 +216,7 @@ unsafe fn mother_brain_beam_edges(
         let mut remaining = row.wrapping_sub(32);
         let mut dst = ram_ptr!(game, u16; 0x9d00).offset(2);
         loop {
-            let current = dst;
-            dst = dst.offset(1);
+            crate::update_place! { previous current = dst => dst.offset(1); }
             *current = 255;
             remaining = remaining.wrapping_sub(1);
             if remaining == 0 {
@@ -255,8 +250,7 @@ unsafe fn mother_brain_beam_edges(
         if packed == if zero_sentinel { 0 } else { 0xffff } {
             packed = 255;
         }
-        let current = dst;
-        dst = dst.offset(if down { 1 } else { -1 });
+        crate::update_place! { previous current = dst => dst.offset(if down { 1 } else { -1 }); }
         *current = packed;
         row = if down {
             row.wrapping_add(1)
@@ -464,12 +458,10 @@ pub unsafe fn EnableEarthquakeAframes(a: u16, game: &mut Game) {
 pub unsafe fn HandleMotherBrainBodyFlickering(game: &mut Game) {
     let v0 = gEnemyData(0i32, game);
     if (*v0).frame_counter & 1 != 0 {
-        let ref mut fresh0 = *(ram_ptr!(game, u16; 0x69));
-        *fresh0 = (*fresh0) | (2u16);
+        crate::update_place! { reference fresh0 = *(ram_ptr!(game, u16; 0x69)) => (*fresh0) | (2u16); }
         (*v0).properties = ((*v0).properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
     } else {
-        let ref mut fresh1 = *(ram_ptr!(game, u16; 0x69));
-        *fresh1 = (*fresh1 & !(2));
+        crate::update_place! { reference fresh1 = *(ram_ptr!(game, u16; 0x69)) => (*fresh1 & !(2)); }
         (*v0).properties = ((*v0).properties) | ((kEnemyProps_Invisible) as u16);
     };
 }

@@ -154,8 +154,7 @@ pub unsafe fn dma_doDma(dma: *mut Dma, game: &mut Game) {
         );
         game.g_fail = true_0 != 0;
     }
-    let fresh0 = (*dma).channel[i].offIndex;
-    (*dma).channel[i].offIndex = (*dma).channel[i].offIndex.wrapping_add(1);
+    crate::update_place! { previous fresh0 = (*dma).channel[i].offIndex => (*dma).channel[i].offIndex.wrapping_add(1); }
     dma_transferByte(
         dma,
         (*dma).channel[i].aAdr,
@@ -184,8 +183,7 @@ pub unsafe fn dma_doDma(dma: *mut Dma, game: &mut Game) {
 }
 // Advance the table pointer before the bus read, as HDMA does for every byte.
 unsafe fn hdma_read_table_byte(dma: *mut Dma, channel: usize, game: &mut Game) -> u8 {
-    let address = (*dma).channel[channel].tableAdr;
-    (*dma).channel[channel].tableAdr = address.wrapping_add(1);
+    crate::update_place! { previous address = (*dma).channel[channel].tableAdr => address.wrapping_add(1); }
     snes_read(
         (*dma).snes,
         (u32::from((*dma).channel[channel].aBank) << 16) | u32::from(address),
@@ -251,9 +249,7 @@ pub unsafe fn dma_doHdma(dma: *mut Dma, game: &mut Game) {
                 while j < transferLength[(*dma).channel[i as usize].mode as usize] {
                     (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8i32) as u16;
                     if (*dma).channel[i as usize].indirect {
-                        let fresh4 = (*dma).channel[i as usize].size;
-                        (*dma).channel[i as usize].size =
-                            (*dma).channel[i as usize].size.wrapping_add(1);
+                        crate::update_place! { previous fresh4 = (*dma).channel[i as usize].size => (*dma).channel[i as usize].size.wrapping_add(1); }
                         dma_transferByte(
                             dma,
                             fresh4,
@@ -265,9 +261,7 @@ pub unsafe fn dma_doHdma(dma: *mut Dma, game: &mut Game) {
                             game,
                         );
                     } else {
-                        let fresh5 = (*dma).channel[i as usize].tableAdr;
-                        (*dma).channel[i as usize].tableAdr =
-                            (*dma).channel[i as usize].tableAdr.wrapping_add(1);
+                        crate::update_place! { previous fresh5 = (*dma).channel[i as usize].tableAdr => (*dma).channel[i as usize].tableAdr.wrapping_add(1); }
                         dma_transferByte(
                             dma,
                             fresh5,

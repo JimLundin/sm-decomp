@@ -329,8 +329,7 @@ unsafe fn KeyMapHash_Add(key: u16, cmd: u16) -> bool {
                 .wrapping_mul((keymap_hash_size + 256i32) as size_t),
         ) as *mut KeyMapHashEnt;
     }
-    let fresh1 = keymap_hash_size;
-    keymap_hash_size = keymap_hash_size + 1;
+    crate::update_place! { previous fresh1 = keymap_hash_size => keymap_hash_size + 1; }
     let i: i32 = fresh1;
     let ent = keymap_hash.offset(i as isize);
     (*ent).key = key;
@@ -480,8 +479,7 @@ unsafe fn GamepadMap_Add(button: i32, modifiers: u32, cmd: u16) {
     {
         p = &raw mut (*joymap_ents.offset((*p as i32 - 1i32) as isize)).next;
     }
-    let fresh0 = joymap_size;
-    joymap_size = joymap_size + 1;
+    crate::update_place! { previous fresh0 = joymap_size => joymap_size + 1; }
     let i: i32 = fresh0;
     let ent = joymap_ents.offset(i as isize);
     (*ent).modifiers = modifiers;
@@ -663,8 +661,7 @@ unsafe fn GetIniSection(s: *const c_char) -> i32 {
 }
 pub unsafe fn ParseBool(mut value: *const c_char, result: *mut bool) -> bool {
     let mut rv: bool = false_0 != 0;
-    let fresh2 = value;
-    value = value.offset(1);
+    crate::update_place! { previous fresh2 = value => value.offset(1); }
     match *fresh2 as i32 | 32i32 {
         48 => {
             if (*value as i32 != 0i32) {

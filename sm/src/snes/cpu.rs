@@ -94,8 +94,7 @@ pub unsafe fn cpu_runOpcode(cpu: *mut Cpu, game: &mut Game) -> i32 {
     i32::from((*cpu).cyclesUsed)
 }
 fn next_program_address(cpu: &mut Cpu) -> u32 {
-    let pc = cpu.pc;
-    cpu.pc = cpu.pc.wrapping_add(1);
+    crate::update_place! { previous pc = cpu.pc => cpu.pc.wrapping_add(1); }
     u32::from(cpu.k) << 16 | u32::from(pc)
 }
 unsafe fn fetch_byte(cpu: *mut Cpu, game: &mut Game) -> u8 {

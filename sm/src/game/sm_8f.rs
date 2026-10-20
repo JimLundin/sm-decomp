@@ -593,8 +593,7 @@ pub unsafe fn RoomCode_Elevatube(game: &mut Game) {
     set_ram_word!(game.samus_x_subpos = 0u16);
     let amt: i32 = (*(ram_ptr!(game, u16; 0x7e1, 4)) as i16 as i32) << 8i32;
     let mut v0: u16 = ((amt as u32).wrapping_add(*(ram_ptr!(game, u32; 0x7e1))) >> 16i32) as u16;
-    let ref mut fresh13 = *(ram_ptr!(game, u16; 0x7e1));
-    *fresh13 = (*fresh13 as i32 + amt) as u16;
+    crate::update_place! { reference fresh13 = *(ram_ptr!(game, u16; 0x7e1)) => (*fresh13 as i32 + amt) as u16; }
     *(ram_ptr!(game, u16; 0x7e1, 2)) = v0;
     Samus_MoveDown_NoSolidColl(amt, game);
     if ((*(ram_ptr!(game, u16; 0x7e1, 6)) as i32
@@ -602,8 +601,7 @@ pub unsafe fn RoomCode_Elevatube(game: &mut Game) {
         + 3616i32) as u16)
         < 0x1c41u16
     {
-        let ref mut fresh14 = *(ram_ptr!(game, u16; 0x7e1, 4));
-        *fresh14 = (*fresh14).wrapping_add(*(ram_ptr!(game, u16; 0x7e1, 6)));
+        crate::update_place! { reference fresh14 = *(ram_ptr!(game, u16; 0x7e1, 4)) => (*fresh14).wrapping_add(*(ram_ptr!(game, u16; 0x7e1, 6))); }
     }
 }
 pub unsafe fn DoorCode_ResetElevatubeNorthExit(game: &mut Game) {
@@ -701,11 +699,12 @@ static kRoomCode_SpawnCeresFallingDebris_Tab: [u16; 16] = [
     0x190,
 ];
 pub unsafe fn RoomCode_SpawnCeresFallingDebris(game: &mut Game) {
-    if ram_word!(game, ceres_status) != 0u16 && {
-        let ref mut fresh12 = *(ram_ptr!(game, u16; 0x7e1));
-        *fresh12 = (*fresh12).wrapping_sub(1);
-        *(ram_ptr!(game, i16; 0x7e1)) < 0i16
-    } {
+    if ram_word!(game, ceres_status) != 0u16
+        && {
+            crate::update_place! { reference fresh12 = *(ram_ptr!(game, u16; 0x7e1)) => (*fresh12).wrapping_sub(1); }
+            *(ram_ptr!(game, i16; 0x7e1)) < 0i16
+        }
+    {
         *ram_ptr!(game; 0x7e1, 0) = 8u8;
         *ram_ptr!(game; 0x7e1, 1) = 0u8;
         let v0: u16 = (if ram_word!(game, random_number) & 0x8000 != 0 {
@@ -730,8 +729,7 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiag(game: &mut Game) {
     let mut v0: u16 = 0;
 
     let update_earthquake: bool = if *(ram_ptr!(game, u16; 0x7e1)) != 0 {
-        let ref mut fresh11 = *(ram_ptr!(game, u16; 0x7e1));
-        *fresh11 = (*fresh11).wrapping_sub(1);
+        crate::update_place! { reference fresh11 = *(ram_ptr!(game, u16; 0x7e1)) => (*fresh11).wrapping_sub(1); }
         (*fresh11 == 0)
             && ({
                 v0 = 18u16;
@@ -757,8 +755,7 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
     let mut v0: i16 = 0;
 
     let update_earthquake: bool = if *(ram_ptr!(game, u16; 0x7e1)) != 0 {
-        let ref mut fresh10 = *(ram_ptr!(game, u16; 0x7e1));
-        *fresh10 = (*fresh10).wrapping_sub(1);
+        crate::update_place! { reference fresh10 = *(ram_ptr!(game, u16; 0x7e1)) => (*fresh10).wrapping_sub(1); }
         (*fresh10 == 0)
             && ({
                 v0 = 21i16;

@@ -98,9 +98,7 @@ crate::game::address_dispatch! {
 pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {
     let v0: u16 = ram_word!(game, animtiles_object_index);
     let v1: i32 = ram_word!(game, animtiles_object_index) as i32 >> 1i32;
-    let ref mut fresh6 = *(ram_ptr!(game, u16; 0x1f19)).offset(v1 as isize);
-    let fresh7 = *fresh6;
-    *fresh6 = (*fresh6).wrapping_sub(1);
+    crate::update_place! { reference fresh6 [fresh7] = *(ram_ptr!(game, u16; 0x1f19)).offset(v1 as isize) => (*fresh6).wrapping_sub(1); }
     if fresh7 == 1u16 {
         let mut v3: u16 = ram_word!(game, animtiles_instr_list_ptrs[v1]);
         let mut v5: u16 = 0;
@@ -140,9 +138,7 @@ pub unsafe fn AnimtilesInstr_GotoRel(k: u16, j: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn AnimtilesInstr_DecrementTimerAndGoto(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh0 = *(ram_ptr!(game, u16; 0x1f01)).offset(v2 as isize);
-    let fresh1 = *fresh0;
-    *fresh0 = (*fresh0).wrapping_sub(1);
+    crate::update_place! { reference fresh0 [fresh1] = *(ram_ptr!(game, u16; 0x1f01)).offset(v2 as isize) => (*fresh0).wrapping_sub(1); }
     if fresh1 == 1u16 {
         (j).wrapping_add(2u16)
     } else {
@@ -151,9 +147,7 @@ pub unsafe fn AnimtilesInstr_DecrementTimerAndGoto(k: u16, j: u16, game: &mut Ga
 }
 pub unsafe fn AnimtilesInstr_DecrementTimerAndGotoRel(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh2 = *(ram_ptr!(game, u16; 0x1f01)).offset(v2 as isize);
-    let fresh3 = *fresh2;
-    *fresh2 = (*fresh2).wrapping_sub(1);
+    crate::update_place! { reference fresh2 [fresh3] = *(ram_ptr!(game, u16; 0x1f01)).offset(v2 as isize) => (*fresh2).wrapping_sub(1); }
     if fresh3 == 1u16 {
         (j).wrapping_add(1u16)
     } else {

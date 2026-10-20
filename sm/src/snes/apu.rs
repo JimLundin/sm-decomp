@@ -102,8 +102,7 @@ pub unsafe fn apu_cpuRead(apu: *mut Apu, adr: u16) -> u8 {
         0xf4..=0xf9 => return (*apu).inPorts[usize::from(adr - 0xf4)],
         0xfd..=0xff => {
             let timer = &mut (*apu).timer[usize::from(adr - 0xfd)];
-            let value = timer.counter;
-            timer.counter = 0;
+            crate::update_place! { previous value = timer.counter => 0; }
             return value;
         }
         _ => {}

@@ -776,9 +776,7 @@ pub unsafe fn PlmInstr_DecrementAndBranchNonzero(
     k: u16,
     game: &mut Game,
 ) -> *const u8 {
-    let ref mut fresh65 = *(ram_ptr!(game, u16; 0x1d77)).offset((k >> 1) as isize);
-    let fresh66 = *fresh65;
-    *fresh65 = (*fresh65).wrapping_sub(1);
+    crate::update_place! { reference fresh65 [fresh66] = *(ram_ptr!(game, u16; 0x1d77)).offset((k >> 1) as isize) => (*fresh65).wrapping_sub(1); }
     if fresh66 == 1u16 {
         plmp.offset(2)
     } else {
@@ -870,8 +868,7 @@ pub unsafe fn PlmInstr_SetRoomChozoBit(plmp: *const u8, k: u16, game: &mut Game)
     let v3: u16 = ram_word!(game, plm_room_arguments[(k >> 1)]);
     if v3 & 0x8000 == 0 {
         let idx: i32 = PrepareBitAccess(v3, game) as i32;
-        let ref mut fresh64 = *ram_ptr!(game; 0xd830, idx as isize);
-        *fresh64 = (*fresh64) | ((ram_word!(game, bitmask)) as u8);
+        crate::update_place! { reference fresh64 = *ram_ptr!(game; 0xd830, idx as isize) => (*fresh64) | ((ram_word!(game, bitmask)) as u8); }
     }
     plmp
 }
@@ -1306,9 +1303,7 @@ pub unsafe fn PlmInstr_ActivateSaveStationAndGotoIfNo(
             & (7u16)
     );
     PrepareBitAccess(ram_word!(game, load_station_index), game);
-    let ref mut fresh40 =
-        *ram_ptr!(game; 0xd8f8, (2i32 * ram_word!(game, area_index) as i32) as isize);
-    *fresh40 = (*fresh40) | ((ram_word!(game, bitmask)) as u8);
+    crate::update_place! { reference fresh40 = *ram_ptr!(game; 0xd8f8, (2i32 * ram_word!(game, area_index) as i32) as isize) => (*fresh40) | ((ram_word!(game, bitmask)) as u8); }
     SaveToSram(ram_word!(game, selected_save_slot), game);
     plmp.offset(2)
 }
@@ -2275,9 +2270,7 @@ pub unsafe fn PlmSetup_B7EB_EnableSoundsIn32Frames(j: u16, game: &mut Game) -> u
 }
 pub unsafe fn PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm(k: u16, game: &mut Game) {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh84 = *(ram_ptr!(game, u16; 0x1d77)).offset(v2 as isize);
-    let fresh85 = *fresh84;
-    *fresh84 = (*fresh84).wrapping_sub(1);
+    crate::update_place! { reference fresh84 [fresh85] = *(ram_ptr!(game, u16; 0x1d77)).offset(v2 as isize) => (*fresh84).wrapping_sub(1); }
     if fresh85 == 1u16 {
         set_ram_words! { game, 0u16; debug_disable_sounds, plm_header_ptr[v2] }
     }

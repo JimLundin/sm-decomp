@@ -342,8 +342,7 @@ pub unsafe fn Draygon_Func_5(game: &mut Game) {
             break;
         }
         varE24 = (varE24).wrapping_sub((*(&raw mut varE22 as *mut u8).offset(1isize)) as u16);
-        let fresh4 = varE26;
-        varE26 = varE26.wrapping_add(1);
+        crate::update_place! { previous fresh4 = varE26 => varE26.wrapping_add(1); }
         *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(fresh4 as i32 as isize) as *mut u16) = v1;
         varE26 = (varE26).wrapping_add(2u16);
         varE26 = varE26.wrapping_add(1);
@@ -837,20 +836,21 @@ pub unsafe fn Draygon_Func_25(k: u16, game: &mut Game) {
             &raw mut (*E).draygon_var_09,
             0x2000u32,
         );
-        if (*E).draygon_var_05 as i32 - 160i32 & 0x8000i32 == 0 || {
-            v6 = ((*E).draygon_var_0B).wrapping_sub(1u16);
-            (*E).draygon_var_0B = v6;
-            (*E).draygon_var_08 = ((*(&raw mut (*E).draygon_var_08 as *mut u8).offset(0))
-                .wrapping_add(*(&raw mut v6 as *mut u8).offset(1isize)))
-                as u16;
-            let mut draygon_var_0A: u16 = (*E).draygon_var_0A;
-            (*E).draygon_var_0A = (draygon_var_0A).wrapping_sub(0x4000u16);
-            let mut v8: u16 = ((((*E).draygon_var_07 as u32) << 16i32 | draygon_var_0A as u32)
-                .wrapping_sub(0x4000u32)
-                >> 16i32) as u16;
-            (*E).draygon_var_07 = v8;
-            v8 as i32 - 64i32 & 0x8000i32 != 0
-        } {
+        if (*E).draygon_var_05 as i32 - 160i32 & 0x8000i32 == 0
+            || {
+                v6 = ((*E).draygon_var_0B).wrapping_sub(1u16);
+                (*E).draygon_var_0B = v6;
+                (*E).draygon_var_08 = ((*(&raw mut (*E).draygon_var_08 as *mut u8).offset(0))
+                    .wrapping_add(*(&raw mut v6 as *mut u8).offset(1isize)))
+                    as u16;
+                crate::update_place! { previous mut draygon_var_0A: u16 = (*E).draygon_var_0A => (draygon_var_0A).wrapping_sub(0x4000u16); }
+                let mut v8: u16 = ((((*E).draygon_var_07 as u32) << 16i32 | draygon_var_0A as u32)
+                    .wrapping_sub(0x4000u32)
+                    >> 16i32) as u16;
+                (*E).draygon_var_07 = v8;
+                v8 as i32 - 64i32 & 0x8000i32 != 0
+            }
+        {
             (*E).draygon_var_A = ((0xa59105i32) as u16);
         } else {
             Draygon_Func_40(k, game);
@@ -995,8 +995,7 @@ pub unsafe fn Draygon_Func_33(game: &mut Game) {
         (*E).base.properties = v1;
         (*Get_Draygon(0x40i32, game)).base.properties = v1;
         let v2: u16 = ram_word!(game, area_index);
-        let ref mut fresh3 = *(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize));
-        *fresh3 = (*fresh3) | (1u16);
+        crate::update_place! { reference fresh3 = *(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) => (*fresh3) | (1u16); }
         Enemy_ItemDrop_Draygon(v2, game);
         Draygon_Func_44(game);
     }
@@ -2062,8 +2061,7 @@ pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
             i -= 2i32;
         }
         enemy_instruction! {[(*E0).base]; instruction = addr_kDraygon_Ilist_E77D as u16, timer = 1u16}
-        let ref mut fresh5 = *(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize));
-        *fresh5 = (*fresh5) | (2u16);
+        crate::update_place! { reference fresh5 = *(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) => (*fresh5) | (2u16); }
         set_ram_word!(game.scrolling_finished_hook = 0u16);
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0x7u8, 0x1eu8, 0xb78f as VoidP),

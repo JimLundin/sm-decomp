@@ -30,8 +30,7 @@ pub unsafe fn NextDelim(s: *mut *mut c_char, sep: i32) -> *mut c_char {
         }
         let mut t = strchr(r, sep);
         *s = if !t.is_null() {
-            let fresh0 = t;
-            t = t.offset(1);
+            crate::update_place! { previous fresh0 = t => t.offset(1); }
             *fresh0 = 0 as c_char;
             t
         } else {
@@ -46,11 +45,9 @@ unsafe fn ToLower(a: i32) -> i32 {
 }
 pub unsafe fn StringEqualsNoCase(mut a: *const c_char, mut b: *const c_char) -> bool {
     loop {
-        let fresh2 = a;
-        a = a.offset(1);
+        crate::update_place! { previous fresh2 = a => a.offset(1); }
         let aa: i32 = ToLower(*fresh2 as i32);
-        let fresh3 = b;
-        b = b.offset(1);
+        crate::update_place! { previous fresh3 = b => b.offset(1); }
         let bb: i32 = ToLower(*fresh3 as i32);
         if aa != bb {
             return false_0 != 0;
@@ -150,8 +147,7 @@ pub unsafe fn NextPossiblyQuotedString(s: *mut *mut c_char) -> *mut c_char {
         }
     }
     if *t != 0 {
-        let fresh1 = t;
-        t = t.offset(1);
+        crate::update_place! { previous fresh1 = t => t.offset(1); }
         *fresh1 = 0 as c_char;
     }
     while *t as i32 == ' ' as i32 || *t as i32 == '\t' as i32 {

@@ -1392,14 +1392,11 @@ pub unsafe fn Shaktool_DB59(k: u16, game: &mut Game) {
     let v14 = Get_Shaktool(shakto_var_E as i32, game);
     (*v12).base.x_subpos = (*v14).base.x_subpos;
     (*v14).base.x_subpos = x_subpos;
-    let mut y_subpos: u16 = (*v12).base.y_subpos;
-    (*v12).base.y_subpos = (*v14).base.y_subpos;
+    crate::update_place! { previous mut y_subpos: u16 = (*v12).base.y_subpos => (*v14).base.y_subpos; }
     (*v14).base.y_subpos = y_subpos;
-    let mut x_pos: u16 = (*v12).base.x_pos;
-    (*v12).base.x_pos = (*v14).base.x_pos;
+    crate::update_place! { previous mut x_pos: u16 = (*v12).base.x_pos => (*v14).base.x_pos; }
     (*v14).base.x_pos = x_pos;
-    let mut y_pos: u16 = (*v12).base.y_pos;
-    (*v12).base.y_pos = (*v14).base.y_pos;
+    crate::update_place! { previous mut y_pos: u16 = (*v12).base.y_pos => (*v14).base.y_pos; }
     (*v14).base.y_pos = y_pos;
     (*Get_Shaktool(shakto_var_E as i32 + 64i32, game))
         .base
@@ -1506,8 +1503,7 @@ pub unsafe fn Shaktool_DCD7(k: u16, game: &mut Game) {
         + ((((*Get_Shaktool(k as i32 + 64i32, game)).shakt_var_B).wrapping_sub(r18)) as i32
             >> 1i32)) as i16;
     if ((*E).shakt_var_D & 0x8000) != 0 {
-        let ref mut fresh2 = *(&raw mut v2 as *mut u8).offset(1isize);
-        *fresh2 = (*fresh2) ^ (0x80u8);
+        crate::update_place! { reference fresh2 = *(&raw mut v2 as *mut u8).offset(1isize) => (*fresh2) ^ (0x80u8); }
     }
     let v3: u16 = (*(&raw mut v2 as *mut u8).offset(1isize) as i32 + 8i32 & 0xe0i32) as u16;
     *(&raw mut (*E).shakt_var_D as *mut u8).offset(0) = v3 as u8;
@@ -1523,8 +1519,7 @@ pub unsafe fn Shaktool_DD25(mut k: u16, game: &mut Game) {
     let x_pos: u16 = (*E).base.x_pos;
     Shaktool_DCAC(k, game);
     let v12: u16 = (*E).base.y_pos;
-    let v11: u16 = (*E).base.x_pos;
-    (*E).base.x_pos = x_pos;
+    crate::update_place! { previous v11: u16 = (*E).base.x_pos => x_pos; }
     (*E).base.y_pos = y_pos;
     if Enemy_MoveRight_IgnoreSlopes(
         k,

@@ -1664,8 +1664,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_9381(
         R48 = 1u16;
     }
     let E = Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game);
-    let R50: u16 = (*E).base.y_pos;
-    (*E).base.y_pos = (*E).mbte_var_D;
+    crate::update_place! { previous R50: u16 = (*E).base.y_pos => (*E).mbte_var_D; }
     Enemy_MoveRight_IgnoreSlopes(
         ram_word!(game, cur_enemy_index),
         ((*E).mbte_var_E as i16 as i32) << 16i32,
@@ -2331,8 +2330,7 @@ pub unsafe fn MaridiaSpikeyShell_6(game: &mut Game) {
 pub unsafe fn MaridiaSpikeyShell_7(game: &mut Game) {
     let E = Get_MaridiaSpikeyShell(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
-    let fresh29 = (*E).mssl_var_F;
-    (*E).mssl_var_F = (*E).mssl_var_F.wrapping_sub(1);
+    crate::update_place! { previous fresh29 = (*E).mssl_var_F => (*E).mssl_var_F.wrapping_sub(1); }
     if fresh29 == 1u16 {
         (*E).mssl_var_E =
             ((*(ram_ptr!(game, u16; 0x5e5) as *mut u8).offset(1isize)) as u16) & (1u16);
@@ -2594,8 +2592,7 @@ pub unsafe fn GunshipTop_7(k: u16, game: &mut Game) {
         set_ram_word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
         set_ram_word!(game.frame_handler_beta = ((0x90e725i32) as u16));
         set_ram_word!(game.loading_game_state = kLoadingGameState_5_Main as u16);
-        let ref mut fresh11 = *(ram_ptr!(game, u16; 0xd8f8));
-        *fresh11 = (*fresh11) | (1u16);
+        crate::update_place! { reference fresh11 = *(ram_ptr!(game, u16; 0xd8f8)) => (*fresh11) | (1u16); }
         set_ram_word!(game.load_station_index = 0u16);
         SaveToSram(ram_word!(game, selected_save_slot), game);
     }
@@ -2702,8 +2699,7 @@ pub unsafe fn GunshipTop_13(k: u16, game: &mut Game) {
         return;
     }
     if rv != 2i32 {
-        let ref mut fresh3 = *(ram_ptr!(game, u16; 0xd8f8));
-        *fresh3 = (*fresh3) | (1u16);
+        crate::update_place! { reference fresh3 = *(ram_ptr!(game, u16; 0xd8f8)) => (*fresh3) | (1u16); }
         set_ram_word!(game.load_station_index = 0u16);
         SaveToSram(ram_word!(game, selected_save_slot), game);
     }
@@ -2758,8 +2754,7 @@ pub unsafe fn GunshipTop_17(k: u16, game: &mut Game) {
     (*gVramWriteEntry(v2 as i32, game)).size =
         crate::rtl::rom_table_word!(game, 0xa2ac07, v3 as isize);
     v2 = (v2).wrapping_add(2u16);
-    let fresh5 = v2;
-    v2 = v2.wrapping_add(1);
+    crate::update_place! { previous fresh5 = v2 => v2.wrapping_add(1); }
     *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
         fresh5 as i32,
         game,
@@ -4564,17 +4559,13 @@ pub unsafe fn LavaSeahorse_Func_1(k: u16, game: &mut Game) {
         let t: u16 = GetSamusEnemyDelta_X(k, game);
         (*E).lse_var_A = ((*E).lse_var_A & 0x7fff | t & 0x8000);
         if ((*E).lse_var_A & 0x8000) != 0 {
-            let ref mut fresh16 = *(&raw mut (*E).lse_var_00 as *mut u8).offset(0);
-            *fresh16 = (*fresh16 & !(1));
+            crate::update_place! { reference fresh16 = *(&raw mut (*E).lse_var_00 as *mut u8).offset(0) => (*fresh16 & !(1)); }
             let E1 = Get_LavaSeahorse(k as i32 + 64i32, game);
-            let ref mut fresh17 = *(&raw mut (*E1).lse_var_00 as *mut u8).offset(0);
-            *fresh17 = (*fresh17 & !(1));
+            crate::update_place! { reference fresh17 = *(&raw mut (*E1).lse_var_00 as *mut u8).offset(0) => (*fresh17 & !(1)); }
         } else {
-            let ref mut fresh18 = *(&raw mut (*E).lse_var_00 as *mut u8).offset(0);
-            *fresh18 = (*fresh18) | (1u8);
+            crate::update_place! { reference fresh18 = *(&raw mut (*E).lse_var_00 as *mut u8).offset(0) => (*fresh18) | (1u8); }
             let E1_0 = Get_LavaSeahorse(k as i32 + 64i32, game);
-            let ref mut fresh19 = *(&raw mut (*E1_0).lse_var_00 as *mut u8).offset(0);
-            *fresh19 = (*fresh19) | (1u8);
+            crate::update_place! { reference fresh19 = *(&raw mut (*E1_0).lse_var_00 as *mut u8).offset(0) => (*fresh19) | (1u8); }
         }
         LavaSeahorse_Func_6(game);
         LavaSeahorse_Func_7(game);
@@ -4600,8 +4591,7 @@ pub unsafe fn LavaSeahorse_Func_3(k: u16, game: &mut Game) {
         (*E).lse_var_01 = -1i32 as u16;
         SpawnEprojWithGfx(0xffffu16, k, addr_kEproj_LavaSeahorseFireball as u16, game);
         QueueSfx2_Max6(0x61u16, game);
-        let fresh20 = (*E).lse_var_D;
-        (*E).lse_var_D = (*E).lse_var_D.wrapping_sub(1);
+        crate::update_place! { previous fresh20 = (*E).lse_var_D => (*E).lse_var_D.wrapping_sub(1); }
         if fresh20 == 1u16 {
             (*E).lse_var_00 = ((*E).lse_var_00).wrapping_sub(4u16);
             (*E).lse_var_D = 96u16;
@@ -4611,8 +4601,7 @@ pub unsafe fn LavaSeahorse_Func_3(k: u16, game: &mut Game) {
 }
 pub unsafe fn LavaSeahorse_Func_4(k: u16, game: &mut Game) {
     let E = Get_LavaSeahorse(k as i32, game);
-    let fresh21 = (*E).lse_var_D;
-    (*E).lse_var_D = (*E).lse_var_D.wrapping_sub(1);
+    crate::update_place! { previous fresh21 = (*E).lse_var_D => (*E).lse_var_D.wrapping_sub(1); }
     if fresh21 == 1u16 {
         (*E).lse_var_D = 48u16;
         (*E).lse_var_F = ((0xa2e749i32) as u16);
@@ -5002,8 +4991,7 @@ pub unsafe fn RisingFallingPlatform_Func_2(game: &mut Game) {
 }
 pub unsafe fn RisingFallingPlatform_Func_3(game: &mut Game) {
     let E = Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as i32, game);
-    let fresh15 = (*E).rfpm_var_B;
-    (*E).rfpm_var_B = (*E).rfpm_var_B.wrapping_sub(1);
+    crate::update_place! { previous fresh15 = (*E).rfpm_var_B => (*E).rfpm_var_B.wrapping_sub(1); }
     if fresh15 == 1u16 {
         (*E).rfpm_var_B = (*E).rfpm_var_06;
         RisingFallingPlatform_Func_7(ram_word!(game, cur_enemy_index), game);
@@ -5227,8 +5215,7 @@ pub unsafe fn HorizontalShootableShutter_Func_2(game: &mut Game) {
 }
 pub unsafe fn HorizontalShootableShutter_Func_3(game: &mut Game) {
     let E = Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as i32, game);
-    let fresh14 = (*E).rfpm_var_B;
-    (*E).rfpm_var_B = (*E).rfpm_var_B.wrapping_sub(1);
+    crate::update_place! { previous fresh14 = (*E).rfpm_var_B => (*E).rfpm_var_B.wrapping_sub(1); }
     if fresh14 == 1u16 {
         (*E).rfpm_var_B = (*E).rfpm_var_06;
         HorizontalShootableShutter_Func_7(ram_word!(game, cur_enemy_index), game);

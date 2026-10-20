@@ -570,8 +570,7 @@ pub unsafe fn HdmaObjectHandler(game: &mut Game) {
             set_ram_word!(game.hdma_object_index = i as u16);
             let mut v1: i8 = *(ram_ptr!(game, u16; 0x18b4) as *mut u8).offset(i as isize) as i8;
             if v1 != 0 {
-                let ref mut fresh58 = *ram_ptr!(game; 0x85);
-                *fresh58 = (*fresh58) | ((v1) as u8);
+                crate::update_place! { reference fresh58 = *ram_ptr!(game; 0x85) => (*fresh58) | ((v1) as u8); }
                 HdmaobjInstructionHandler(i as u8, game);
                 i = ram_word!(game, hdma_object_index) as i32;
             }
@@ -591,9 +590,7 @@ pub unsafe fn HdmaobjInstructionHandler(k: u8, game: &mut Game) {
         k as u16,
         game,
     );
-    let ref mut fresh59 = *(ram_ptr!(game, u16; 0x18e4)).offset(kh as isize);
-    let fresh60 = *fresh59;
-    *fresh59 = (*fresh59).wrapping_sub(1);
+    crate::update_place! { reference fresh59 [fresh60] = *(ram_ptr!(game, u16; 0x18e4)).offset(kh as isize) => (*fresh59).wrapping_sub(1); }
     if fresh60 == 1u16 {
         let base = RomBankBase(
             *(ram_ptr!(game, u16; 0x18c0) as *mut u8)
@@ -666,9 +663,7 @@ pub unsafe fn HdmaobjInstr_GotoRel(k: u16, hdp: *const u8) -> *const u8 {
 }
 pub unsafe fn HdmaobjInstr_DecrementAndGoto(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh63 = *(ram_ptr!(game, u16; 0x1908)).offset(v2 as isize);
-    let fresh64 = *fresh63;
-    *fresh63 = (*fresh63).wrapping_sub(1);
+    crate::update_place! { reference fresh63 [fresh64] = *(ram_ptr!(game, u16; 0x1908)).offset(v2 as isize) => (*fresh63).wrapping_sub(1); }
     if fresh64 == 1u16 {
         hdp.offset(2)
     } else {
@@ -681,9 +676,7 @@ pub unsafe fn HdmaobjInstr_DecrementAndGotoRel(
     game: &mut Game,
 ) -> *const u8 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh61 = *(ram_ptr!(game, u16; 0x1908)).offset(v2 as isize);
-    let fresh62 = *fresh61;
-    *fresh61 = (*fresh61).wrapping_sub(1);
+    crate::update_place! { reference fresh61 [fresh62] = *(ram_ptr!(game, u16; 0x1908)).offset(v2 as isize) => (*fresh61).wrapping_sub(1); }
     if fresh62 == 1u16 {
         hdp.offset(1)
     } else {
@@ -1149,10 +1142,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(k: u16, game: &m
     if (ram_word!(game, power_bomb_explosion_status) & 0x8000) != 0 {
         let v1: i32 = k as u8 as i32 >> 1i32;
         if (update_ram_word!(game.hdma_object_timers[v1], wrapping_sub(1), reread) & 0x8000) != 0 {
-            let ref mut fresh126 =
-                *(ram_ptr!(game, u16; 0x1938) as *mut u8).offset(k as u8 as i32 as isize);
-            let fresh127 = *fresh126;
-            *fresh126 = (*fresh126).wrapping_sub(1);
+            crate::update_place! { reference fresh126 [fresh127] = *(ram_ptr!(game, u16; 0x1938) as *mut u8).offset(k as u8 as i32 as isize) => (*fresh126).wrapping_sub(1); }
             if fresh127 == 1u8 {
                 set_ram_word!(game.hdma_object_instruction_timers[v1] = 1u16);
                 update_ram_word!(
@@ -1877,9 +1867,7 @@ pub unsafe fn HdmaobjPreInstr_BG3Xscroll(k: u16, game: &mut Game) {
         }
     } else {
         let v3: i32 = k as i32 >> 1i32;
-        let ref mut fresh104 = *(ram_ptr!(game, u16; 0x1920)).offset(v3 as isize);
-        let fresh105 = *fresh104;
-        *fresh104 = (*fresh104).wrapping_sub(1);
+        crate::update_place! { reference fresh104 [fresh105] = *(ram_ptr!(game, u16; 0x1920)).offset(v3 as isize) => (*fresh104).wrapping_sub(1); }
         if fresh105 == 1u16 {
             set_ram_word!(game.hdma_object_B[v3] = 6u16);
             set_ram_word!(
@@ -1982,10 +1970,8 @@ pub unsafe fn HdmaFunc_A786(k: u16, mut r18: u16, r20: u16, r22: u16, game: &mut
 static unk_88A7EF: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42u8, 0xfu8, 0xad76 as VoidP);
 static unk_88A80B: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42u8, 0xfu8, 0xad89 as VoidP);
 pub unsafe fn FxTypeFunc_20(game: &mut Game) {
-    let ref mut fresh47 = *ram_ptr!(game; 0x91b);
-    *fresh47 = (*fresh47) | (1u8);
-    let ref mut fresh48 = *ram_ptr!(game; 0x91c);
-    *fresh48 = (*fresh48) | (1u8);
+    crate::update_place! { reference fresh47 = *ram_ptr!(game; 0x91b) => (*fresh47) | (1u8); }
+    crate::update_place! { reference fresh48 = *ram_ptr!(game; 0x91c) => (*fresh48) | (1u8); }
     SpawnHdmaObject(0x88u8, &raw const unk_88A7EF as *const c_void, game);
     set_ram_word!(game.set_to_e0_by_scrolling_sky = 224u16);
     set_ram_word!(game.UNUSED_word_7E059C = 0u16);
@@ -2421,9 +2407,7 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(k: u16, game: &mut Game) {
         *(ram_ptr!(game, u16; 0x9c00, 2)) = v4 as u16;
         if ram_word!(game, fx_type) == 2u16 && (ram_word!(game, lava_acid_y_pos) & 0x8000) == 0 {
             let v5: i32 = ram_word!(game, hdma_object_index) as u8 as i32 >> 1i32;
-            let ref mut fresh101 = *(ram_ptr!(game, u16; 0x192c)).offset(v5 as isize);
-            let fresh102 = *fresh101;
-            *fresh101 = (*fresh101).wrapping_sub(1);
+            crate::update_place! { reference fresh101 [fresh102] = *(ram_ptr!(game, u16; 0x192c)).offset(v5 as isize) => (*fresh101).wrapping_sub(1); }
             if fresh102 == 1u16 {
                 set_ram_word!(game.hdma_object_C[v5] = 112u16);
                 QueueSfx2_Max6(
@@ -2501,9 +2485,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func2(v0: u16, game: &mut Game) {
         game,
     );
     let v1: i32 = v0 as i32 >> 1i32;
-    let ref mut fresh54 = *(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize);
-    let fresh55 = *fresh54;
-    *fresh54 = (*fresh54).wrapping_sub(1);
+    crate::update_place! { reference fresh54 [fresh55] = *(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize) => (*fresh54).wrapping_sub(1); }
     if fresh55 == 1u16 {
         set_ram_word!(game.hdma_object_B[v1] = 6u16);
         set_ram_word!(
@@ -2532,9 +2514,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(v0: u16, game: &mut Game) {
         game,
     );
     let v1: i32 = v0 as i32 >> 1i32;
-    let ref mut fresh56 = *(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize);
-    let fresh57 = *fresh56;
-    *fresh56 = (*fresh56).wrapping_sub(1);
+    crate::update_place! { reference fresh56 [fresh57] = *(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize) => (*fresh56).wrapping_sub(1); }
     if fresh57 == 1u16 {
         set_ram_word!(game.hdma_object_B[v1] = 4u16);
         set_ram_word!(
@@ -2646,9 +2626,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(k: u16, game: &mut Game) {
         (*((ram_ptr!(game, u16; 0x192c)).offset(v5 as isize) as *mut u8).offset(1isize) as i8)
             as u16,
     );
-    let ref mut fresh98 = *(ram_ptr!(game, u16; 0x1920)).offset(v5 as isize);
-    let fresh99 = *fresh98;
-    *fresh98 = (*fresh98).wrapping_sub(1);
+    crate::update_place! { reference fresh98 [fresh99] = *(ram_ptr!(game, u16; 0x1920)).offset(v5 as isize) => (*fresh98).wrapping_sub(1); }
     if fresh99 == 1u16 {
         set_ram_word!(game.hdma_object_B[v5] = 10u16);
         set_ram_word!(
@@ -2716,9 +2694,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll(k: u16, game: &mut Game) {
 }
 pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func2(k: u16, game: &mut Game) {
     let v1: i32 = k as u8 as i32 >> 1i32;
-    let ref mut fresh96 = *(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize);
-    let fresh97 = *fresh96;
-    *fresh96 = (*fresh96).wrapping_sub(1);
+    crate::update_place! { reference fresh96 [fresh97] = *(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize) => (*fresh96).wrapping_sub(1); }
     if fresh97 == 1u16 {
         set_ram_word!(game.hdma_object_B[v1] = 6u16);
         set_ram_word!(
@@ -3205,8 +3181,7 @@ pub unsafe fn VariaSuitPickup_1(game: &mut Game) -> u8 {
     *(ram_ptr!(game, u16; 0xdee) as *mut u8).offset(0) =
         ((ram_word!(game, suit_pickup_light_beam_pos)) as u8)
             .wrapping_sub(*(ram_ptr!(game, u16; 0xddc) as *mut u8).offset(1isize));
-    let ref mut fresh17 = *(ram_ptr!(game, u16; 0xdee) as *mut u8).offset(1isize);
-    *fresh17 = (*fresh17).wrapping_add(*(ram_ptr!(game, u16; 0xddc) as *mut u8).offset(1isize));
+    crate::update_place! { reference fresh17 = *(ram_ptr!(game, u16; 0xdee) as *mut u8).offset(1isize) => (*fresh17).wrapping_add(*(ram_ptr!(game, u16; 0xddc) as *mut u8).offset(1isize)); }
     let mut i: i32 = 510i32;
     while i >= 0i32 {
         set_ram_word!(game.hdma_table_1[(i >> 1i32)] = ram_word!(game, suit_pickup_light_beam_pos));
@@ -3359,8 +3334,7 @@ pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> u8 {
 pub unsafe fn VariaSuitPickup_5_LightBeamDissipates(game: &mut Game) -> u8 {
     *(ram_ptr!(game, u16; 0xdee) as *mut u8).offset(0) =
         ((ram_word!(game, suit_pickup_light_beam_pos)) as u8).wrapping_add(8u8);
-    let ref mut fresh28 = *(ram_ptr!(game, u16; 0xdee) as *mut u8).offset(1isize);
-    *fresh28 = (*fresh28).wrapping_sub(8u8);
+    crate::update_place! { reference fresh28 = *(ram_ptr!(game, u16; 0xdee) as *mut u8).offset(1isize) => (*fresh28).wrapping_sub(8u8); }
     set_ram_word!(game.hdma_table_1[128] = ram_word!(game, suit_pickup_light_beam_pos));
     if ram_word!(game, suit_pickup_light_beam_pos) as u8 as i32 - 112i32 & 0x8000i32 == 0 {
         update_ram_word!(game.substate, wrapping_add(1));
@@ -3395,22 +3369,19 @@ pub unsafe fn GravitySuitPickup_6(game: &mut Game) -> u8 {
 }
 pub unsafe fn AdvanceSuitPickupColorMathSubscreenToWhite(game: &mut Game) -> u8 {
     if *ram_ptr!(game; 0xdf0) != 63u8 {
-        let ref mut fresh0 = *ram_ptr!(game; 0xdf0);
-        *fresh0 = (*fresh0).wrapping_add(2u8);
+        crate::update_place! { reference fresh0 = *ram_ptr!(game; 0xdf0) => (*fresh0).wrapping_add(2u8); }
         if *ram_ptr!(game; 0xdf0) as i32 - 64i32 & 0x80i32 == 0 {
             *ram_ptr!(game; 0xdf0) = 63u8;
         }
     }
     if *ram_ptr!(game; 0xdf1) != 95u8 {
-        let ref mut fresh1 = *ram_ptr!(game; 0xdf1);
-        *fresh1 = (*fresh1).wrapping_add(2u8);
+        crate::update_place! { reference fresh1 = *ram_ptr!(game; 0xdf1) => (*fresh1).wrapping_add(2u8); }
         if *ram_ptr!(game; 0xdf1) as i32 - 96i32 & 0x80i32 == 0 {
             *ram_ptr!(game; 0xdf1) = 95u8;
         }
     }
     if *ram_ptr!(game; 0xdf2) != 0x9fu8 {
-        let ref mut fresh2 = *ram_ptr!(game; 0xdf2);
-        *fresh2 = (*fresh2).wrapping_add(2u8);
+        crate::update_place! { reference fresh2 = *ram_ptr!(game; 0xdf2) => (*fresh2).wrapping_add(2u8); }
         if *ram_ptr!(game; 0xdf2) as i32 + 96i32 & 0x80i32 == 0 {
             *ram_ptr!(game; 0xdf2) = -97i32 as u8;
         }
@@ -3419,16 +3390,13 @@ pub unsafe fn AdvanceSuitPickupColorMathSubscreenToWhite(game: &mut Game) -> u8 
 }
 pub unsafe fn AdvanceSuitPickupColorMathToOrange(game: &mut Game) -> u8 {
     if *ram_ptr!(game; 0xdf0) != 63u8 {
-        let ref mut fresh6 = *ram_ptr!(game; 0xdf0);
-        *fresh6 = (*fresh6).wrapping_sub(1);
+        crate::update_place! { reference fresh6 = *ram_ptr!(game; 0xdf0) => (*fresh6).wrapping_sub(1); }
     }
     if *ram_ptr!(game; 0xdf1) != 77u8 {
-        let ref mut fresh7 = *ram_ptr!(game; 0xdf1);
-        *fresh7 = (*fresh7).wrapping_sub(1);
+        crate::update_place! { reference fresh7 = *ram_ptr!(game; 0xdf1) => (*fresh7).wrapping_sub(1); }
     }
     if *ram_ptr!(game; 0xdf2) != 0x83u8 {
-        let ref mut fresh8 = *ram_ptr!(game; 0xdf2);
-        *fresh8 = (*fresh8).wrapping_sub(1);
+        crate::update_place! { reference fresh8 = *ram_ptr!(game; 0xdf2) => (*fresh8).wrapping_sub(1); }
     }
     1u8
 }
@@ -3462,16 +3430,13 @@ pub unsafe fn GravitySuitPickup_3(game: &mut Game) -> u8 {
 }
 pub unsafe fn AdvanceSuitPickupColorMathToBlue(game: &mut Game) -> u8 {
     if *ram_ptr!(game; 0xdf0) != 48u8 {
-        let ref mut fresh3 = *ram_ptr!(game; 0xdf0);
-        *fresh3 = (*fresh3).wrapping_sub(1);
+        crate::update_place! { reference fresh3 = *ram_ptr!(game; 0xdf0) => (*fresh3).wrapping_sub(1); }
     }
     if *ram_ptr!(game; 0xdf1) != 73u8 {
-        let ref mut fresh4 = *ram_ptr!(game; 0xdf1);
-        *fresh4 = (*fresh4).wrapping_sub(1);
+        crate::update_place! { reference fresh4 = *ram_ptr!(game; 0xdf1) => (*fresh4).wrapping_sub(1); }
     }
     if *ram_ptr!(game; 0xdf2) != 0x90u8 {
-        let ref mut fresh5 = *ram_ptr!(game; 0xdf2);
-        *fresh5 = (*fresh5).wrapping_sub(1);
+        crate::update_place! { reference fresh5 = *ram_ptr!(game; 0xdf2) => (*fresh5).wrapping_sub(1); }
     }
     1u8
 }
@@ -3565,9 +3530,7 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
             r30 = 64u16;
         }
         let v2: i32 = v0 as i32 >> 1i32;
-        let ref mut fresh79 = *(ram_ptr!(game, u16; 0x1920)).offset(v2 as isize);
-        let fresh80 = *fresh79;
-        *fresh79 = (*fresh79).wrapping_sub(1);
+        crate::update_place! { reference fresh79 [fresh80] = *(ram_ptr!(game, u16; 0x1920)).offset(v2 as isize) => (*fresh79).wrapping_sub(1); }
         if fresh80 == 1u16 {
             set_ram_word!(game.hdma_object_B[v2] = 1u16);
             set_ram_word!(

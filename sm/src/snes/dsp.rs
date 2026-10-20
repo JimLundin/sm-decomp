@@ -447,9 +447,7 @@ unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
         }
         (*dsp).ram[0x7ci32 as usize] = ((*dsp).ram[0x7ci32 as usize] as i32 | (1i32) << ch) as u8;
     }
-    let fresh0 = (*dsp).channel[ch as usize].decodeOffset;
-    (*dsp).channel[ch as usize].decodeOffset =
-        (*dsp).channel[ch as usize].decodeOffset.wrapping_add(1);
+    crate::update_place! { previous fresh0 = (*dsp).channel[ch as usize].decodeOffset => (*dsp).channel[ch as usize].decodeOffset.wrapping_add(1); }
     let header: u8 = *(*dsp).apu_ram.offset(fresh0 as isize);
     let shift: i32 = header as i32 >> 4i32;
     let filter: i32 = (header as i32 & 0xci32) >> 2i32;
@@ -463,9 +461,7 @@ unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
         if i & 1i32 != 0 {
             s = curByte as i32 & 0xfi32;
         } else {
-            let fresh1 = (*dsp).channel[ch as usize].decodeOffset;
-            (*dsp).channel[ch as usize].decodeOffset =
-                (*dsp).channel[ch as usize].decodeOffset.wrapping_add(1);
+            crate::update_place! { previous fresh1 = (*dsp).channel[ch as usize].decodeOffset => (*dsp).channel[ch as usize].decodeOffset.wrapping_add(1); }
             curByte = *(*dsp).apu_ram.offset(fresh1 as isize);
             s = curByte as i32 >> 4i32;
         }

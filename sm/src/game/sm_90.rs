@@ -2962,11 +2962,9 @@ unsafe fn MarkMapTileAsExplored(r18: u16, r24: u16, game: &mut Game) {
     let R22: u16 = (ram_word!(game, room_y_coordinate_on_map) as i32
         + ((r24 as i32 & 0xff00i32) >> 8i32)
         + 1i32) as u16;
-    let ref mut fresh13 =
-        *ram_ptr!(game; 0x7f7, (r20 as i32 + 4i32 * (R34 as i32 + R22 as i32)) as u16 as isize);
-    *fresh13 = (*fresh13)
-        | (kShr0x80
-            [(ram_word!(game, room_x_coordinate_on_map) as i32 + v0 as i32 & 7i32) as usize]);
+    crate::update_place! { reference fresh13 = *ram_ptr!(game; 0x7f7, (r20 as i32 + 4i32 * (R34 as i32 + R22 as i32)) as u16 as isize) => (*fresh13)
+    | (kShr0x80
+        [(ram_word!(game, room_x_coordinate_on_map) as i32 + v0 as i32 & 7i32) as usize]); }
 }
 pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
     set_ram_word!(game.debug_disable_minimap = 1u16);
@@ -3027,10 +3025,9 @@ pub unsafe fn UpdateMinimap(game: &mut Game) {
         + ((ram_word!(game, samus_y_pos) as i32 & 0xff00i32) >> 8i32)
         + 1i32) as u16;
     let v2: u16 = (r20 as i32 + 4i32 * (r34 as i32 + r22 as i32)) as u16;
-    let ref mut fresh98 = *ram_ptr!(game; 0x7f7, v2 as isize);
-    *fresh98 = (*fresh98)
-        | (kShr0x80
-            [(ram_word!(game, room_x_coordinate_on_map) as i32 + v0 as i32 & 7i32) as usize]);
+    crate::update_place! { reference fresh98 = *ram_ptr!(game; 0x7f7, v2 as isize) => (*fresh98)
+    | (kShr0x80
+        [(ram_word!(game, room_x_coordinate_on_map) as i32 + v0 as i32 & 7i32) as usize]); }
     let r32: u16 = v1;
     let r30: u16 = v2;
     let mut v3: u16 = (v2).wrapping_sub(4u16);
@@ -3053,8 +3050,7 @@ pub unsafe fn UpdateMinimap(game: &mut Game) {
         crate::rtl::rom_table_word!(game, 0x829717, ram_word!(game, area_index) as isize),
         game,
     );
-    let r15 = r9;
-    r9 = r9.offset(v3 as i32 as isize);
+    crate::update_place! { previous r15 = r9 => r9.offset(v3 as i32 as isize); }
     let mut r38: u16 = u16::swap_bytes(*(r9 as *mut u16));
     r9 = r9.offset(4);
     let mut r40: u16 = u16::swap_bytes(*(r9 as *mut u16));
@@ -3192,9 +3188,7 @@ pub unsafe fn UpdateMinimapInside(
                 game.hud_tilemap[(v6 + 58i32)] = (*r3.offset((v2 >> 1) as isize) & 0xc3ff | 0x2800)
             );
             if n == 3i32 && (ram_word!(game, hud_tilemap[(v6 + 58i32)]) & 0x1ff) == 40 {
-                let ref mut fresh99 =
-                    *(ram_ptr!(game, u16; 0x7f3) as *mut u8).offset(r30 as i32 as isize);
-                *fresh99 = (*fresh99) | (kShr0x80[r32 as usize]);
+                crate::update_place! { reference fresh99 = *(ram_ptr!(game, u16; 0x7f3) as *mut u8).offset(r30 as i32 as isize) => (*fresh99) | (kShr0x80[r32 as usize]); }
             }
         }
         v4 = r42 as i32 >> 15i32 != 0;
@@ -3272,8 +3266,7 @@ pub unsafe fn UpdateBeamTilesAndPalette(game: &mut Game) {
     (*gVramWriteEntry(v1 as i32, game)).size =
         crate::rtl::rom_table_word!(game, 0x90c3b1, (v0 >> 1) as isize);
     v1 = (v1).wrapping_add(2u16);
-    let fresh155 = v1;
-    v1 = v1.wrapping_add(1);
+    crate::update_place! { previous fresh155 = v1 => v1.wrapping_add(1); }
     *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
         fresh155 as i32,
         game,
@@ -3487,9 +3480,7 @@ pub unsafe fn ProjPreInstr_Beam_NoWaveBeam(mut k: u16, game: &mut Game) {
     if (ram_word!(game, projectile_dir[v1]) & 0xf0) != 0 {
         ClearProjectile(k, game);
     } else {
-        let ref mut fresh72 = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize);
-        let fresh73 = *fresh72;
-        *fresh72 = (*fresh72).wrapping_sub(1);
+        crate::update_place! { reference fresh72 [fresh73] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh72).wrapping_sub(1); }
         if fresh73 == 1u16 {
             set_ram_word!(game.projectile_timers[v1] = 4u16);
             SpawnProjectileTrail(k, game);
@@ -3533,9 +3524,7 @@ pub unsafe fn ProjPreInstr_Missile(mut k: u16, game: &mut Game) {
     if (ram_word!(game, projectile_dir[v1]) & 0xf0) != 0 {
         ClearProjectile(k, game);
     } else {
-        let ref mut fresh68 = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize);
-        let fresh69 = *fresh68;
-        *fresh68 = (*fresh68).wrapping_sub(1);
+        crate::update_place! { reference fresh68 [fresh69] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh68).wrapping_sub(1); }
         if fresh69 == 1u16 {
             set_ram_word!(game.projectile_timers[v1] = 4u16);
             SpawnProjectileTrail(k, game);
@@ -3583,9 +3572,7 @@ pub unsafe fn ProjPreInstr_SuperMissile(mut k: u16, game: &mut Game) {
     if (ram_word!(game, projectile_dir[v1]) & 0xf0) != 0 {
         ClearProjectile(k, game);
     } else {
-        let ref mut fresh62 = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize);
-        let fresh63 = *fresh62;
-        *fresh62 = (*fresh62).wrapping_sub(1);
+        crate::update_place! { reference fresh62 [fresh63] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh62).wrapping_sub(1); }
         if fresh63 == 1u16 {
             set_ram_word!(game.projectile_timers[v1] = 2u16);
             SpawnProjectileTrail(k, game);
@@ -3659,9 +3646,7 @@ pub unsafe fn ProjPreInstr_WavePlasmaEtc(k: u16, game: &mut Game) {
     if (ram_word!(game, projectile_dir[v1]) & 0xf0) != 0 {
         ClearProjectile(k, game);
     } else {
-        let ref mut fresh59 = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize);
-        let fresh60 = *fresh59;
-        *fresh59 = (*fresh59).wrapping_sub(1);
+        crate::update_place! { reference fresh59 [fresh60] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh59).wrapping_sub(1); }
         if fresh60 == 1u16 {
             set_ram_word!(game.projectile_timers[v1] = 4u16);
             SpawnProjectileTrail(k, game);
@@ -3676,9 +3661,7 @@ pub unsafe fn ProjPreInstr_BeamOrIceWave(k: u16, game: &mut Game) {
     if (ram_word!(game, projectile_dir[v1]) & 0xf0) != 0 {
         ClearProjectile(k, game);
     } else {
-        let ref mut fresh57 = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize);
-        let fresh58 = *fresh57;
-        *fresh57 = (*fresh57).wrapping_sub(1);
+        crate::update_place! { reference fresh57 [fresh58] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh57).wrapping_sub(1); }
         if fresh58 == 1u16 {
             set_ram_word!(game.projectile_timers[v1] = 3u16);
             SpawnProjectileTrail(k, game);
@@ -4538,15 +4521,10 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
                 let mut v7: bool = *((ram_ptr!(game, u16; 0xcdc) as *mut u8).offset(i as isize)
                     as *mut u16)
                     == 1u16;
-                let ref mut fresh17 =
-                    *((ram_ptr!(game, u16; 0xcdc) as *mut u8).offset(i as isize) as *mut u16);
-                *fresh17 = (*fresh17).wrapping_sub(1);
+                crate::update_place! { reference fresh17 = *((ram_ptr!(game, u16; 0xcdc) as *mut u8).offset(i as isize) as *mut u16) => (*fresh17).wrapping_sub(1); }
                 let v8: bool = (*fresh17 & 0x8000) != 0;
                 if v7 || v8 {
-                    let ref mut fresh20 =
-                        *((ram_ptr!(game, u16; 0xcd6) as *mut u8).offset(i as isize) as *mut u16);
-                    let fresh21 = *fresh20;
-                    *fresh20 = (*fresh20).wrapping_sub(1);
+                    crate::update_place! { reference fresh20 [fresh21] = *((ram_ptr!(game, u16; 0xcd6) as *mut u8).offset(i as isize) as *mut u16) => (*fresh20).wrapping_sub(1); }
                     v7 = fresh21 == 1u16;
                     if v7 {
                         if i == 4i32 {
@@ -5318,8 +5296,7 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
         let v15: u16 = *(RomPtr_90(v13, game) as *mut u16);
         (*gVramWriteEntry(v14 as i32, game)).size = v15;
         v14 = (v14).wrapping_add(2u16);
-        let fresh15 = v14;
-        v14 = v14.wrapping_add(1);
+        crate::update_place! { previous fresh15 = v14 => v14.wrapping_add(1); }
         *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
             fresh15 as i32,
             game,
@@ -5550,9 +5527,7 @@ pub unsafe fn ProjPreInstr_IceSba(mut k: u16, game: &mut Game) {
         QueueSfx1_Max6(0x24u16, game);
         ClearProjectile(k, game);
     } else {
-        let ref mut fresh49 = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize);
-        let fresh50 = *fresh49;
-        *fresh49 = (*fresh49).wrapping_sub(1);
+        crate::update_place! { reference fresh49 [fresh50] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh49).wrapping_sub(1); }
         let mut v2: bool = fresh50 == 1u16;
         if v2 {
             set_ram_word!(game.projectile_timers[v1] = 4u16);
@@ -5572,9 +5547,7 @@ pub unsafe fn ProjPreInstr_IceSba(mut k: u16, game: &mut Game) {
                 .wrapping_add((ram_word!(game, projectile_variables[v3])) as u8,))
                 as u16
         );
-        let ref mut fresh53 = *(ram_ptr!(game, u16; 0xbf0)).offset(v3 as isize);
-        let fresh54 = *fresh53;
-        *fresh53 = (*fresh53).wrapping_sub(1);
+        crate::update_place! { reference fresh53 [fresh54] = *(ram_ptr!(game, u16; 0xbf0)).offset(v3 as isize) => (*fresh53).wrapping_sub(1); }
         v2 = fresh54 == 1u16;
         if v2 {
             set_ram_word!(game.projectile_bomb_pre_instructions[v3] = ((0x90cf7ai32) as u16));
@@ -5592,9 +5565,7 @@ pub unsafe fn ProjPreInstr_IceSba2(mut k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     let clear_projectile: bool = ((ram_word!(game, projectile_dir[v1]) & 0xf0) != 0)
         || ({
-            let ref mut fresh45 = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize);
-            let fresh46 = *fresh45;
-            *fresh45 = (*fresh45).wrapping_sub(1);
+            crate::update_place! { reference fresh45 [fresh46] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh45).wrapping_sub(1); }
             if fresh46 == 1u16 {
                 set_ram_word!(game.projectile_timers[v1] = 4u16);
                 SpawnProjectileTrail(k, game);
@@ -6348,9 +6319,7 @@ pub unsafe fn ProjPreInstr_WaveSba(mut k: u16, game: &mut Game) {
         return;
     }
     let R34: u16 = ram_word!(game, projectile_bomb_x_speed[v1]);
-    let ref mut fresh37 = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize);
-    let fresh38 = *fresh37;
-    *fresh37 = (*fresh37).wrapping_sub(1);
+    crate::update_place! { reference fresh37 [fresh38] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh37).wrapping_sub(1); }
     v2 = fresh38 == 1u16;
     if v2 {
         set_ram_word!(game.projectile_timers[v1] = 4u16);
@@ -6450,9 +6419,7 @@ pub unsafe fn ProjPreInstr_SpazerSba(mut k: u16, game: &mut Game) {
         kProjPreInstr_SpazerSba_FuncsA[v1 as usize].expect("non-null function pointer")(k, game);
     } else {
         let v2: i32 = k as i32 >> 1i32;
-        let ref mut fresh32 = *(ram_ptr!(game, u16; 0xc90)).offset(v2 as isize);
-        let fresh33 = *fresh32;
-        *fresh32 = (*fresh32).wrapping_sub(1);
+        crate::update_place! { reference fresh32 [fresh33] = *(ram_ptr!(game, u16; 0xc90)).offset(v2 as isize) => (*fresh32).wrapping_sub(1); }
         if fresh33 == 1u16 {
             set_ram_word!(game.projectile_timers[v2] = 4u16);
             SpawnProjectileTrail(k, game);
@@ -6576,9 +6543,7 @@ pub unsafe fn ProjPreInstr_EndOfSpazerSba(mut k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     let clear_projectile: bool = ((ram_word!(game, projectile_dir[v1]) & 0xf0) != 0)
         || ({
-            let ref mut fresh30 = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize);
-            let fresh31 = *fresh30;
-            *fresh30 = (*fresh30).wrapping_sub(1);
+            crate::update_place! { reference fresh30 [fresh31] = *(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize) => (*fresh30).wrapping_sub(1); }
             if fresh31 == 1u16 {
                 set_ram_word!(game.projectile_timers[v1] = 4u16);
                 SpawnProjectileTrail(k, game);
@@ -7524,8 +7489,7 @@ pub unsafe fn SamusMovementType_Xray(game: &mut Game) {
 }
 pub unsafe fn Samus_HandlePeriodicDamage(game: &mut Game) {
     if ram_word!(game, time_is_frozen_flag) != 0 {
-        let ref mut fresh127 = *(ram_ptr!(game, u16; 0xa4e));
-        *fresh127 = 0u16;
+        crate::update_place! { reference fresh127 = *(ram_ptr!(game, u16; 0xa4e)) => 0u16; }
         set_ram_word!(game.samus_periodic_damage = *fresh127);
         return;
     }
@@ -7546,12 +7510,10 @@ pub unsafe fn Samus_HandlePeriodicDamage(game: &mut Game) {
         -t as u32,
     );
     if (ram_word!(game, samus_health) as i16) < 0i16 {
-        let ref mut fresh128 = *(ram_ptr!(game, u16; 0xa4c));
-        *fresh128 = 0u16;
+        crate::update_place! { reference fresh128 = *(ram_ptr!(game, u16; 0xa4c)) => 0u16; }
         set_ram_word!(game.samus_health = *fresh128);
     }
-    let ref mut fresh129 = *(ram_ptr!(game, u16; 0xa4e));
-    *fresh129 = 0u16;
+    crate::update_place! { reference fresh129 = *(ram_ptr!(game, u16; 0xa4e)) => 0u16; }
     set_ram_word!(game.samus_periodic_damage = *fresh129);
 }
 pub unsafe fn Samus_PauseCheck(game: &mut Game) {

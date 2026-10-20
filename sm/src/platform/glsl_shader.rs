@@ -773,14 +773,12 @@ unsafe fn stbi__refill_buffer(s: *mut stbi__context) {
 }
 unsafe fn stbi__get8(s: *mut stbi__context) -> stbi_uc {
     if (*s).img_buffer < (*s).img_buffer_end {
-        let fresh17 = (*s).img_buffer;
-        (*s).img_buffer = (*s).img_buffer.offset(1);
+        crate::update_place! { previous fresh17 = (*s).img_buffer => (*s).img_buffer.offset(1); }
         return *fresh17;
     }
     if (*s).read_from_callbacks != 0 {
         stbi__refill_buffer(s);
-        let fresh18 = (*s).img_buffer;
-        (*s).img_buffer = (*s).img_buffer.offset(1);
+        crate::update_place! { previous fresh18 = (*s).img_buffer => (*s).img_buffer.offset(1); }
         return *fresh18;
     }
     0 as stbi_uc
@@ -890,33 +888,25 @@ unsafe fn convert_image_channels<T: ImageChannel>(
                     *dest.offset(1) = T::OPAQUE;
                 }
                 11 => {
-                    let ref mut fresh9 = *dest.offset(2);
-                    *fresh9 = *src.offset(0);
-                    let ref mut fresh10 = *dest.offset(1);
-                    *fresh10 = *fresh9;
+                    crate::update_place! { reference fresh9 = *dest.offset(2) => *src.offset(0); }
+                    crate::update_place! { reference fresh10 = *dest.offset(1) => *fresh9; }
                     *dest.offset(0) = *fresh10;
                 }
                 12 => {
-                    let ref mut fresh11 = *dest.offset(2);
-                    *fresh11 = *src.offset(0);
-                    let ref mut fresh12 = *dest.offset(1);
-                    *fresh12 = *fresh11;
+                    crate::update_place! { reference fresh11 = *dest.offset(2) => *src.offset(0); }
+                    crate::update_place! { reference fresh12 = *dest.offset(1) => *fresh11; }
                     *dest.offset(0) = *fresh12;
                     *dest.offset(3) = T::OPAQUE;
                 }
                 17 => *dest.offset(0) = *src.offset(0),
                 19 => {
-                    let ref mut fresh13 = *dest.offset(2);
-                    *fresh13 = *src.offset(0);
-                    let ref mut fresh14 = *dest.offset(1);
-                    *fresh14 = *fresh13;
+                    crate::update_place! { reference fresh13 = *dest.offset(2) => *src.offset(0); }
+                    crate::update_place! { reference fresh14 = *dest.offset(1) => *fresh13; }
                     *dest.offset(0) = *fresh14;
                 }
                 20 => {
-                    let ref mut fresh15 = *dest.offset(2);
-                    *fresh15 = *src.offset(0);
-                    let ref mut fresh16 = *dest.offset(1);
-                    *fresh16 = *fresh15;
+                    crate::update_place! { reference fresh15 = *dest.offset(2) => *src.offset(0); }
+                    crate::update_place! { reference fresh16 = *dest.offset(1) => *fresh15; }
                     *dest.offset(0) = *fresh16;
                     *dest.offset(3) = *src.offset(1);
                 }
@@ -1159,8 +1149,7 @@ unsafe fn stbi__zget8(z: *mut stbi__zbuf) -> stbi_uc {
     ((if stbi__zeof(z) != 0 {
         0i32
     } else {
-        let fresh49 = (*z).zbuffer;
-        (*z).zbuffer = (*z).zbuffer.offset(1);
+        crate::update_place! { previous fresh49 = (*z).zbuffer => (*z).zbuffer.offset(1); }
         *fresh49 as i32
     }) as stbi_uc)
 }
@@ -1280,8 +1269,7 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
                 }
                 zout = (*a).zout;
             }
-            let fresh45 = zout;
-            zout = zout.offset(1);
+            crate::update_place! { previous fresh45 = zout => zout.offset(1); }
             *fresh45 = z as c_char;
         } else {
             if z == 256i32 {
@@ -1317,8 +1305,7 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
                 let v: stbi_uc = *p;
                 if len != 0 {
                     loop {
-                        let fresh46 = zout;
-                        zout = zout.offset(1);
+                        crate::update_place! { previous fresh46 = zout => zout.offset(1); }
                         *fresh46 = v as c_char;
                         len -= 1;
                         if (len == 0) {
@@ -1328,10 +1315,8 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
                 }
             } else if len != 0 {
                 loop {
-                    let fresh47 = p;
-                    p = p.offset(1);
-                    let fresh48 = zout;
-                    zout = zout.offset(1);
+                    crate::update_place! { previous fresh47 = p => p.offset(1); }
+                    crate::update_place! { previous fresh48 = zout => zout.offset(1); }
                     *fresh48 = *fresh47 as c_char;
                     len -= 1;
                     if (len == 0) {
@@ -1379,8 +1364,7 @@ unsafe fn stbi__compute_huffman_codes(a: *mut stbi__zbuf) -> i32 {
             return 0i32;
         }
         if c < 16i32 {
-            let fresh50 = n;
-            n = n + 1;
+            crate::update_place! { previous fresh50 = n => n + 1; }
             lencodes[fresh50 as usize] = c as stbi_uc;
         } else {
             let mut fill: stbi_uc = 0 as stbi_uc;
@@ -1436,8 +1420,7 @@ unsafe fn stbi__parse_uncompressed_block(a: *mut stbi__zbuf) -> i32 {
     }
     let mut k: i32 = 0i32;
     while (*a).num_bits > 0i32 {
-        let fresh51 = k;
-        k = k + 1;
+        crate::update_place! { previous fresh51 = k => k + 1; }
         header[fresh51 as usize] = ((*a).code_buffer & 255 as stbi__uint32) as stbi_uc;
         (*a).code_buffer >>= 8i32;
         (*a).num_bits -= 8i32;
@@ -1446,8 +1429,7 @@ unsafe fn stbi__parse_uncompressed_block(a: *mut stbi__zbuf) -> i32 {
         return 0i32;
     }
     while k < 4i32 {
-        let fresh52 = k;
-        k = k + 1;
+        crate::update_place! { previous fresh52 = k => k + 1; }
         header[fresh52 as usize] = stbi__zget8(a);
     }
     let mut len: i32 = header[1i32 as usize] as i32 * 256i32 + header[0i32 as usize] as i32;
@@ -1723,8 +1705,7 @@ unsafe fn unpack_png_low_depth(
     let mask = (1i32 << depth) - 1;
     while remaining >= pixels_per_byte {
         for pixel in 0..pixels_per_byte {
-            let destination = output;
-            output = output.offset(1);
+            crate::update_place! { previous destination = output => output.offset(1); }
             *destination =
                 (scale as i32 * (*input as i32 >> (8 - depth * (pixel + 1)) & mask)) as u8;
         }
@@ -1732,8 +1713,7 @@ unsafe fn unpack_png_low_depth(
         input = input.offset(1);
     }
     for pixel in 0..remaining {
-        let destination = output;
-        output = output.offset(1);
+        crate::update_place! { previous destination = output => output.offset(1); }
         *destination = (scale as i32 * (*input as i32 >> (8 - depth * (pixel + 1)) & mask)) as u8;
     }
     (output, input, remaining)
@@ -1786,8 +1766,7 @@ unsafe fn stbi__create_png_image_raw(
     let mut j: stbi__uint32 = 0 as stbi__uint32;
     while j < y {
         let mut cur = (*a).out.offset(stride.wrapping_mul(j) as isize);
-        let fresh19 = raw;
-        raw = raw.offset(1);
+        crate::update_place! { previous fresh19 = raw => raw.offset(1); }
         let mut filter: i32 = *fresh19 as i32;
         if filter > 4i32 {
             return 0i32;
@@ -3213,8 +3192,7 @@ unsafe fn GlslPass_Compile(p: *mut GlslPass, type_0: u32, data: *const u8, size:
             (size_of::<[c_char; 14]>() as usize).wrapping_sub(1_usize) as GLint;
     } else {
         while skip < size && {
-            let fresh53 = skip;
-            skip = skip.wrapping_add(1);
+            crate::update_place! { previous fresh53 = skip => skip.wrapping_add(1); }
             *data.offset(fresh53 as isize) as i32 != '\n' as i32
         } {}
         strings[0i32 as usize] = data as *mut c_char;
@@ -3457,8 +3435,7 @@ pub unsafe fn GlslShader_CreateFromFile(mut filename: *const c_char) -> *mut Gls
     }
     if IsGlslFilename(filename) {
         GlslShader_InitializePasses(gs, 1i32);
-        let ref mut fresh0 = (*(*gs).pass.offset(1)).filename;
-        *fresh0 = strdup(filename);
+        crate::update_place! { reference fresh0 = (*(*gs).pass.offset(1)).filename => strdup(filename); }
         filename = b"\0" as *const u8 as *const c_char;
         current_block = 1394248824506584008;
     } else if !GlslShader_ReadPresetFile(gs, filename) {
@@ -3721,8 +3698,7 @@ unsafe fn RenderCtx_SetTexture(ctx: *mut RenderCtx, textureu: i32, texture_id: u
     if textureu >= 0i32 {
         gl::ActiveTexture((GL_TEXTURE0 as GLenum).wrapping_add((*ctx).texture_unit as GLenum));
         gl::BindTexture(GL_TEXTURE_2D as GLenum, texture_id as GLuint);
-        let fresh55 = (*ctx).texture_unit;
-        (*ctx).texture_unit = (*ctx).texture_unit.wrapping_add(1);
+        crate::update_place! { previous fresh55 = (*ctx).texture_unit => (*ctx).texture_unit.wrapping_add(1); }
         gl::Uniform1i(textureu as GLint, fresh55 as GLint);
     }
 }
@@ -3733,8 +3709,7 @@ unsafe fn RenderCtx_SetTexCoords(ctx: *mut RenderCtx, tex_coord: i32, offset: us
             b"ctx->num_vaos < kMaxVaosInRenderCtx\0", b"src/glsl_shader.c\0", 467u32,
             b"void RenderCtx_SetTexCoords(RenderCtx *, int, uintptr_t)\0"
         };
-        let fresh54 = (*ctx).num_vaos;
-        (*ctx).num_vaos = (*ctx).num_vaos.wrapping_add(1);
+        crate::update_place! { previous fresh54 = (*ctx).num_vaos => (*ctx).num_vaos.wrapping_add(1); }
         (*ctx).vaos[fresh54 as usize] = tex_coord as u32;
         gl::VertexAttribPointer(
             tex_coord as GLuint,

@@ -685,14 +685,11 @@ unsafe fn PitchSlideToNote_Check(p: *mut SpcPlayer, c: *mut Channel) {
         return;
     }
     (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
-    let fresh3 = (*c).pattern_order_ptr_for_chan;
-    (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+    crate::update_place! { previous fresh3 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
     (*c).pitch_slide_delay_left = (*p).ram[fresh3 as usize];
-    let fresh4 = (*c).pattern_order_ptr_for_chan;
-    (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+    crate::update_place! { previous fresh4 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
     (*c).pitch_slide_length = (*p).ram[fresh4 as usize];
-    let fresh5 = (*c).pattern_order_ptr_for_chan;
-    (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+    crate::update_place! { previous fresh5 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
     ComputePitchAdd(
         c,
         ((*p).ram[fresh5 as usize] as i32
@@ -705,8 +702,7 @@ static kEffectByteLength: [u8; 31] = [
 ];
 unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
     let arg: u8 = (if kEffectByteLength[(effect as i32 - 0xe0i32) as usize] as i32 != 0 {
-        let fresh9 = (*c).pattern_order_ptr_for_chan;
-        (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+        crate::update_place! { previous fresh9 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
         (*p).ram[fresh9 as usize] as i32
     } else {
         0i32
@@ -719,8 +715,7 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
         }
         226 => {
             (*c).pan_num_ticks = arg;
-            let fresh10 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh10 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*c).pan_target_value = (*p).ram[fresh10 as usize];
             (*c).pan_add_per_tick = SpcDivHelper(
                 (*c).pan_target_value as i32 - ((*c).pan_value as i32 >> 8i32),
@@ -729,11 +724,9 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
         }
         227 => {
             (*c).vibrato_delay_ticks = arg;
-            let fresh11 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh11 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*c).vibrato_rate = (*p).ram[fresh11 as usize];
-            let fresh12 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh12 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*c).vib_depth = (*p).ram[fresh12 as usize];
             (*c).vibrato_depth_target = (*c).vib_depth;
             (*c).vibrato_fade_num_ticks = 0u8;
@@ -746,8 +739,7 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
         229 => (*p).master_volume = ((arg as i32) << 8i32) as u16,
         230 => {
             (*p).master_volume_fade_ticks = arg;
-            let fresh13 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh13 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*p).master_volume_fade_target = (*p).ram[fresh13 as usize];
             (*p).master_volume_fade_add_per_tick = SpcDivHelper(
                 (*p).master_volume_fade_target as i32 - ((*p).master_volume as i32 >> 8i32),
@@ -757,8 +749,7 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
         231 => (*p).tempo = ((arg as i32) << 8i32) as u16,
         232 => {
             (*p).tempo_fade_num_ticks = arg;
-            let fresh14 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh14 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*p).tempo_fade_final = (*p).ram[fresh14 as usize];
             (*p).tempo_fade_add = SpcDivHelper(
                 (*p).tempo_fade_final as i32 - ((*p).tempo as i32 >> 8i32),
@@ -769,19 +760,16 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
         234 => (*c).channel_transposition = arg,
         235 => {
             (*c).tremolo_delay_ticks = arg;
-            let fresh15 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh15 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*c).tremolo_rate = (*p).ram[fresh15 as usize];
-            let fresh16 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh16 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*c).tremolo_depth = (*p).ram[fresh16 as usize];
         }
         236 => (*c).tremolo_depth = 0u8,
         237 => (*c).channel_volume = ((arg as i32) << 8i32) as u16,
         238 => {
             (*c).volume_fade_ticks = arg;
-            let fresh17 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh17 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*c).volume_fade_target = (*p).ram[fresh17 as usize];
             (*c).volume_fade_addpertick = SpcDivHelper(
                 (*c).volume_fade_target as i32 - ((*c).channel_volume as i32 >> 8i32),
@@ -789,12 +777,10 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
             );
         }
         239 => {
-            let fresh18 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh18 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*c).pattern_start_ptr =
                 (((*p).ram[fresh18 as usize] as i32) << 8i32 | arg as i32) as u16;
-            let fresh19 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh19 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*c).subroutine_num_loops = (*p).ram[fresh19 as usize];
             (*c).saved_pattern_ptr = (*c).pattern_order_ptr_for_chan;
             (*c).pattern_order_ptr_for_chan = (*c).pattern_start_ptr;
@@ -810,22 +796,18 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
         241 | 242 => {
             (*c).pitch_envelope_direction = (effect as i32 == 0xf1i32) as i32 as u8;
             (*c).pitch_envelope_delay = arg;
-            let fresh20 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh20 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*c).pitch_envelope_num_ticks = (*p).ram[fresh20 as usize];
-            let fresh21 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh21 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*c).pitch_envelope_slide_value = (*p).ram[fresh21 as usize];
         }
         243 => (*c).pitch_envelope_num_ticks = 0u8,
         244 => (*c).fine_tune = arg,
         245 => {
             (*p).reg_EON = arg;
-            let fresh22 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh22 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*p).echo_volume_left = (((*p).ram[fresh22 as usize] as i32) << 8i32) as u16;
-            let fresh23 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh23 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*p).echo_volume_right = (((*p).ram[fresh23 as usize] as i32) << 8i32) as u16;
             (*p).reg_FLG = ((*p).reg_FLG & !(0x20));
         }
@@ -839,28 +821,23 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
                 -13, -7, 52, 51, 0, -39, -27, 1, -4, -21,
             ];
             SetupEchoParameter_EDL(p, arg);
-            let fresh24 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh24 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*p).reg_EFB = (*p).ram[fresh24 as usize];
-            let fresh25 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh25 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             let mut ep = (&raw const kEchoFirParameters as *const i8)
                 .offset(((*p).ram[fresh25 as usize] as i32 * 8i32) as isize);
             let mut i: i32 = 0i32;
             while i < 8i32 {
-                let fresh26 = ep;
-                ep = ep.offset(1);
+                crate::update_place! { previous fresh26 = ep => ep.offset(1); }
                 Dsp_Write(p, (FIR0 as i32 + i * 16i32) as u8, *fresh26 as u8);
                 i += 1;
             }
         }
         248 => {
             (*p).echo_volume_fade_ticks = arg;
-            let fresh27 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh27 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*p).echo_volume_fade_target_left = (*p).ram[fresh27 as usize];
-            let fresh28 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh28 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*p).echo_volume_fade_target_right = (*p).ram[fresh28 as usize];
             (*p).echo_volume_fade_add_left = SpcDivHelper(
                 (*p).echo_volume_fade_target_left as i32 - ((*p).echo_volume_left as i32 >> 8i32),
@@ -873,11 +850,9 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
         }
         249 => {
             (*c).pitch_slide_delay_left = arg;
-            let fresh29 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh29 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             (*c).pitch_slide_length = (*p).ram[fresh29 as usize];
-            let fresh30 = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+            crate::update_place! { previous fresh30 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             ComputePitchAdd(
                 c,
                 ((*p).ram[fresh30 as usize] as i32
@@ -903,8 +878,7 @@ unsafe fn WantWriteKof(p: *mut SpcPlayer, c: *mut Channel) -> bool {
     let mut loops: i32 = (*c).subroutine_num_loops as i32;
     let mut ptr: i32 = (*c).pattern_order_ptr_for_chan as i32;
     loop {
-        let fresh7 = ptr;
-        ptr = ptr + 1;
+        crate::update_place! { previous fresh7 = ptr => ptr + 1; }
         let mut cmd: u8 = (*p).ram[fresh7 as usize];
         if cmd as i32 == 0i32 {
             if loops == 0i32 {
@@ -918,8 +892,7 @@ unsafe fn WantWriteKof(p: *mut SpcPlayer, c: *mut Channel) -> bool {
             };
         } else {
             while cmd & 0x80 == 0 {
-                let fresh8 = ptr;
-                ptr = ptr + 1;
+                crate::update_place! { previous fresh8 = ptr => ptr + 1; }
                 cmd = (*p).ram[fresh8 as usize];
             }
             if cmd as i32 == 0xc8i32 {
@@ -1045,8 +1018,7 @@ unsafe fn HandleNoteTick(p: *mut SpcPlayer, c: *mut Channel) {
             if (*c).vibrato_change_count as i32 == (*c).vibrato_fade_num_ticks as i32 {
                 (*c).vib_depth = (*c).vibrato_depth_target;
             } else {
-                let fresh6 = (*c).vibrato_change_count;
-                (*c).vibrato_change_count = (*c).vibrato_change_count.wrapping_add(1);
+                crate::update_place! { previous fresh6 = (*c).vibrato_change_count => (*c).vibrato_change_count.wrapping_add(1); }
                 (*c).vib_depth = ((if fresh6 as i32 == 0i32 {
                     0i32
                 } else {
@@ -1201,9 +1173,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                             (*c).note_ticks_left = (*c).note_ticks_left.wrapping_sub(1);
                             if (*c).note_ticks_left == 0 {
                                 loop {
-                                    let fresh0 = (*c).pattern_order_ptr_for_chan;
-                                    (*c).pattern_order_ptr_for_chan =
-                                        (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+                                    crate::update_place! { previous fresh0 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
                                     let mut cmd: u8 = (*p).ram[fresh0 as usize];
                                     if cmd as i32 == 0i32 {
                                         if (*c).subroutine_num_loops == 0 {
@@ -1227,18 +1197,14 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                                             static kNoteGateOffPct: [u8; 8] =
                                                 [50, 101, 127, 152, 178, 203, 229, 252];
                                             (*c).note_length = cmd;
-                                            let fresh1 = (*c).pattern_order_ptr_for_chan;
-                                            (*c).pattern_order_ptr_for_chan =
-                                                (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+                                            crate::update_place! { previous fresh1 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
                                             cmd = (*p).ram[fresh1 as usize];
                                             if cmd & 0x80 == 0 {
                                                 (*c).note_gate_off_fixedpt = kNoteGateOffPct
                                                     [(cmd as i32 >> 4i32 & 7i32) as usize];
                                                 (*c).channel_volume_master =
                                                     kNoteVol[(cmd as i32 & 0xfi32) as usize];
-                                                let fresh2 = (*c).pattern_order_ptr_for_chan;
-                                                (*c).pattern_order_ptr_for_chan =
-                                                    (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+                                                crate::update_place! { previous fresh2 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
                                                 cmd = (*p).ram[fresh2 as usize];
                                             }
                                         }
@@ -1716,8 +1682,7 @@ pub unsafe fn Sfx3_HandleCmdFromSnes(p: *mut SpcPlayer) {
     };
 }
 pub unsafe fn SfxChan_GetByte(p: *mut SpcPlayer, s: *mut SfxChan) -> u8 {
-    let fresh31 = (*s).ptr_idx;
-    (*s).ptr_idx = (*s).ptr_idx.wrapping_add(1);
+    crate::update_place! { previous fresh31 = (*s).ptr_idx => (*s).ptr_idx.wrapping_add(1); }
     (*p).ram[((*s).ptr as i32 + fresh31 as i32) as usize]
 }
 pub unsafe fn Sfx_RunChan(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) {
@@ -2150,10 +2115,8 @@ pub unsafe fn SpcPlayer_Upload(p: *mut SpcPlayer, mut data: *const u8) {
         let mut target: i32 = *(data.offset(2) as *mut u16) as i32;
         data = data.offset(4);
         loop {
-            let fresh32 = data;
-            data = data.offset(1);
-            let fresh33 = target;
-            target = target + 1;
+            crate::update_place! { previous fresh32 = data => data.offset(1); }
+            crate::update_place! { previous fresh33 = target => target + 1; }
             (*p).ram[(fresh33 & 0xffffi32) as usize] = *fresh32;
             numbytes -= 1;
             if (numbytes == 0) {

@@ -756,13 +756,12 @@ unsafe fn Smult16x16(r38: u16, r40: u16) -> u32 {
     t
 }
 pub unsafe fn HandleMode7TransformationMatrix(game: &mut Game) {
-    let ref mut fresh152 = *(ram_ptr!(game, u16; 0x78));
-    *fresh152 = (Smult16x16(
+    crate::update_place! { reference fresh152 = *(ram_ptr!(game, u16; 0x78)) => (Smult16x16(
         kSinCosTable8bit_Sext[((((ram_word!(game, cinematic_var5)) as u8).wrapping_add(64u8))
             as i32
             + 64i32) as usize] as u16,
         ram_word!(game, cinematic_var6),
-    ) >> 8i32) as u16;
+    ) >> 8i32) as u16; }
     set_ram_word!(game.reg_M7D = *fresh152);
     let v1: u16 = (Smult16x16(
         kSinCosTable8bit_Sext[(ram_word!(game, cinematic_var5) as u8 as i32 + 64i32) as usize]
@@ -795,8 +794,7 @@ pub unsafe fn UpdateCinematicBgTilemap(game: &mut Game) {
         v0 = (v0).wrapping_add(2u16);
         (*gVramWriteEntry(v0 as i32, game)).size = 12288u16;
         v0 = (v0).wrapping_add(2u16);
-        let fresh157 = v0;
-        v0 = v0.wrapping_add(1);
+        crate::update_place! { previous fresh157 = v0 => v0.wrapping_add(1); }
         *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
             fresh157 as i32,
             game,
@@ -817,8 +815,7 @@ pub unsafe fn UpdateSamusEyesTilemap(game: &mut Game) {
             as c_long
             + 832 as c_long) as u16;
         v0 = (v0).wrapping_add(2u16);
-        let fresh156 = v0;
-        v0 = v0.wrapping_add(1);
+        crate::update_place! { previous fresh156 = v0 => v0.wrapping_add(1); }
         *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
             fresh156 as i32,
             game,
@@ -838,8 +835,7 @@ pub unsafe fn CinematicUpdateSomeBg(game: &mut Game) {
             .offset_from(&raw mut game.g_ram as *mut u8)
             as c_long as u16;
         v0 = (v0).wrapping_add(2u16);
-        let fresh4 = v0;
-        v0 = v0.wrapping_add(1);
+        crate::update_place! { previous fresh4 = v0 => v0.wrapping_add(1); }
         *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
             fresh4 as i32,
             game,
@@ -1204,8 +1200,7 @@ pub unsafe fn TransferJapaneseTextTilesToVram(game: &mut Game) {
     v0 = (v0).wrapping_add(2u16);
     (*gVramWriteEntry(v0 as i32, game)).size = 0x4000u16;
     v0 = (v0).wrapping_add(2u16);
-    let fresh21 = v0;
-    v0 = v0.wrapping_add(1);
+    crate::update_place! { previous fresh21 = v0 => v0.wrapping_add(1); }
     *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
         fresh21 as i32,
         game,
@@ -1263,8 +1258,7 @@ pub unsafe fn MoveUnusedSpritesOffScreen(game: &mut Game) {
     }
     let j: i32 = ram_word!(game, oam_next_ptr) as i32 >> 2i32;
     let mut i: i32 = ram_word!(game, oam_next_ptr) as i32 >> 5i32;
-    let fresh11 = i;
-    i = i + 1;
+    crate::update_place! { previous fresh11 = i => i + 1; }
     update_ram_word!(game.oam_ext[fresh11], |fresh12| (fresh12)
         | (kMoveUnusedSpritesMasks[(j & 7i32) as usize]));
     while i < 16i32 {
@@ -1603,9 +1597,7 @@ pub unsafe fn ProcessCinematicSpriteInstructionList(k: u16, game: &mut Game) {
     );
     let v1: u16 = ram_word!(game, cinematic_obj_index);
     let v2: i32 = ram_word!(game, cinematic_obj_index) as i32 >> 1i32;
-    let ref mut fresh22 = *(ram_ptr!(game, u16; 0x1b5d)).offset(v2 as isize);
-    let fresh23 = *fresh22;
-    *fresh22 = (*fresh22).wrapping_sub(1);
+    crate::update_place! { reference fresh22 [fresh23] = *(ram_ptr!(game, u16; 0x1b5d)).offset(v2 as isize) => (*fresh22).wrapping_sub(1); }
     if fresh23 == 1u16 {
         let mut v4: u16 = ram_word!(game, cinematicspr_instr_ptr[v2]);
         let mut v6: u16 = 0;
@@ -1658,9 +1650,7 @@ pub unsafe fn CinematicSprInstr_Goto(k: u16, j: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn CinematicSprInstr_DecTimerGoto(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh26 = *(ram_ptr!(game, u16; 0x1b7d)).offset(v2 as isize);
-    let fresh27 = *fresh26;
-    *fresh26 = (*fresh26).wrapping_sub(1);
+    crate::update_place! { reference fresh26 [fresh27] = *(ram_ptr!(game, u16; 0x1b7d)).offset(v2 as isize) => (*fresh26).wrapping_sub(1); }
     if fresh27 == 1u16 {
         (j).wrapping_add(2u16)
     } else {
@@ -1669,9 +1659,7 @@ pub unsafe fn CinematicSprInstr_DecTimerGoto(k: u16, j: u16, game: &mut Game) ->
 }
 pub unsafe fn CinematicSprInstr_DecTimerGotoRel(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh24 = *(ram_ptr!(game, u16; 0x1b7d)).offset(v2 as isize);
-    let fresh25 = *fresh24;
-    *fresh24 = (*fresh24).wrapping_sub(1);
+    crate::update_place! { reference fresh24 [fresh25] = *(ram_ptr!(game, u16; 0x1b7d)).offset(v2 as isize) => (*fresh24).wrapping_sub(1); }
     if fresh25 == 1u16 {
         (j).wrapping_add(1u16)
     } else {
@@ -1724,9 +1712,7 @@ pub unsafe fn ProcessMode7ObjectInstructions(k: u16, game: &mut Game) {
     );
     let v1: u16 = ram_word!(game, mode7_cur_index);
     let v2: i32 = ram_word!(game, mode7_cur_index) as i32 >> 1i32;
-    let ref mut fresh19 = *(ram_ptr!(game, u16; 0x19a9)).offset(v2 as isize);
-    let fresh20 = *fresh19;
-    *fresh19 = (*fresh19).wrapping_sub(1);
+    crate::update_place! { reference fresh19 [fresh20] = *(ram_ptr!(game, u16; 0x19a9)).offset(v2 as isize) => (*fresh19).wrapping_sub(1); }
     if fresh20 == 1u16 {
         let mut v4: u16 = ram_word!(game, mode7_obj_instr_ptr[v2]);
         let mut v6: u16 = 0;
@@ -1769,9 +1755,7 @@ pub unsafe fn Mode7Instr_Goto(k: u16, j: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn Mode7Instr_DecTimerAndGoto(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh0 = *(ram_ptr!(game, u16; 0x19ad)).offset(v2 as isize);
-    let fresh1 = *fresh0;
-    *fresh0 = (*fresh0).wrapping_sub(1);
+    crate::update_place! { reference fresh0 [fresh1] = *(ram_ptr!(game, u16; 0x19ad)).offset(v2 as isize) => (*fresh0).wrapping_sub(1); }
     if fresh1 == 1u16 {
         (j).wrapping_add(2u16)
     } else {
@@ -1863,9 +1847,7 @@ pub unsafe fn ProcessCinematicBgObjectsInstrs(k: u16, game: &mut Game) {
     );
     let v1: u16 = ram_word!(game, cinematicbg_var2);
     let v2: i32 = ram_word!(game, cinematicbg_var2) as i32 >> 1i32;
-    let ref mut fresh158 = *(ram_ptr!(game, u16; 0x19dd)).offset(v2 as isize);
-    let fresh159 = *fresh158;
-    *fresh158 = (*fresh158).wrapping_sub(1);
+    crate::update_place! { reference fresh158 [fresh159] = *(ram_ptr!(game, u16; 0x19dd)).offset(v2 as isize) => (*fresh158).wrapping_sub(1); }
     if fresh159 == 1u16 {
         let mut v4: u16 = ram_word!(game, cinematicbg_instr_ptr[v2]);
         let mut v6: u16 = 0;
@@ -1981,9 +1963,7 @@ pub unsafe fn HandleTextGlowObjects(game: &mut Game) {
 pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
     let v0: u16 = ram_word!(game, cinematic_var19);
     let v1: i32 = ram_word!(game, cinematic_var19) as i32 >> 1i32;
-    let ref mut fresh153 = *(ram_ptr!(game, u16; 0x1a03)).offset((v1 + 2i32) as isize);
-    let fresh154 = *fresh153;
-    *fresh153 = (*fresh153).wrapping_sub(1);
+    crate::update_place! { reference fresh153 [fresh154] = *(ram_ptr!(game, u16; 0x1a03)).offset((v1 + 2i32) as isize) => (*fresh153).wrapping_sub(1); }
     if fresh154 == 1u16 {
         let R28: u16 =
             *((ram_ptr!(game, u16; 0x1a37) as *mut u8).offset(v0 as i32 as isize) as *mut u16);
@@ -2034,11 +2014,9 @@ pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
                 .offset(ram_word!(game, cinematic_var19) as i32 as isize)
                 as *mut u16) = 0u16;
         } else {
-            let ref mut fresh155 =
-                *((ram_ptr!(game, u16; 0x1a37) as *mut u8)
-                    .offset(ram_word!(game, cinematic_var19) as i32 as isize)
-                    as *mut u16);
-            *fresh155 = (*fresh155).wrapping_add(1024u16);
+            crate::update_place! { reference fresh155 = *((ram_ptr!(game, u16; 0x1a37) as *mut u8)
+            .offset(ram_word!(game, cinematic_var19) as i32 as isize)
+            as *mut u16) => (*fresh155).wrapping_add(1024u16); }
             *(ram_ptr!(game, u16; 0x1a03)).offset(((v6 as i32 >> 1i32) + 2i32) as isize) = 5u16;
         }
     }
@@ -2123,8 +2101,7 @@ pub unsafe fn CreditsObject_Func1(j: u16, game: &mut Game) {
     let mut src = ram_ptr!(game; 0x10000, *(RomPtr_8C(j, game) as *mut u16).offset(1) as i32 as isize)
         as *const u16;
     for _ in 0i32..=31i32 {
-        let fresh6 = src;
-        src = src.offset(1);
+        crate::update_place! { previous fresh6 = src => src.offset(1); }
         *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
             as *mut u8)
             .offset(RegWord as i32 as isize) as *mut u16) = *fresh6;
@@ -2759,8 +2736,7 @@ pub unsafe fn CinematicFunction_Intro_DrawInitJpn(game: &mut Game) {
             v0 = (v0).wrapping_add(2u16);
             (*gVramWriteEntry(v0 as i32, game)).size = 12288u16;
             v0 = (v0).wrapping_add(2u16);
-            let fresh146 = v0;
-            v0 = v0.wrapping_add(1);
+            crate::update_place! { previous fresh146 = v0 => v0.wrapping_add(1); }
             *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
                 fresh146 as i32,
                 game,
@@ -2865,8 +2841,7 @@ pub unsafe fn CinematicFunc_Intro_WaitForFadeinSleep(game: &mut Game) {
 pub unsafe fn ClearEnglishTextTilemap(game: &mut Game) {
     let mut v0: u16 = 128u16;
     loop {
-        let fresh5 = v0;
-        v0 = v0.wrapping_add(1);
+        crate::update_place! { previous fresh5 = v0 => v0.wrapping_add(1); }
         (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[fresh5 as usize] = 47u16;
         if (((v0 as i32 * 2i32 - 1536i32) as i16) >= 0i16) {
             break;
@@ -3527,8 +3502,7 @@ pub unsafe fn CinematicFunction_Intro_XfadeGameplayFade(game: &mut Game) {
         *ram_ptr!(game; 0x6f) = 0u8;
         let mut v0: u16 = 128u16;
         loop {
-            let fresh134 = v0;
-            v0 = v0.wrapping_add(1);
+            crate::update_place! { previous fresh134 = v0 => v0.wrapping_add(1); }
             (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[fresh134 as usize] = 47u16;
             if (((v0 as i32 * 2i32 - 1536i32) as i16) >= 0i16) {
                 break;
@@ -3556,8 +3530,7 @@ pub unsafe fn CinematicFunction_Intro_XfadeScientistFade(game: &mut Game) {
         *ram_ptr!(game; 0x6f) = 0u8;
         let mut v0: u16 = 128u16;
         loop {
-            let fresh132 = v0;
-            v0 = v0.wrapping_add(1);
+            crate::update_place! { previous fresh132 = v0 => v0.wrapping_add(1); }
             (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[fresh132 as usize] = 47u16;
             if (((v0 as i32 * 2i32 - 1536i32) as i16) >= 0i16) {
                 break;
@@ -3862,11 +3835,9 @@ pub unsafe fn EnableCinematicBgTilemapUpdates__(k: u16, j: u16, game: &mut Game)
 }
 pub unsafe fn CinematicFunction_Intro_Func33(game: &mut Game) {
     if (ram_word!(game, nmi_frame_counter_word) & 1) != 0 {
-        let ref mut fresh169 = *ram_ptr!(game; 0x69);
-        *fresh169 = (*fresh169 & !(2));
+        crate::update_place! { reference fresh169 = *ram_ptr!(game; 0x69) => (*fresh169 & !(2)); }
     } else {
-        let ref mut fresh170 = *ram_ptr!(game; 0x69);
-        *fresh170 = (*fresh170) | (2u8);
+        crate::update_place! { reference fresh170 = *ram_ptr!(game; 0x69) => (*fresh170) | (2u8); }
     };
 }
 pub unsafe fn CinematicFunction_Intro_Func34(game: &mut Game) {
@@ -4442,18 +4413,15 @@ pub unsafe fn CinematicFunction_Intro_Func66(k: u16, game: &mut Game) {
     );
 }
 pub unsafe fn CinematicFunction_Intro_Func67(game: &mut Game) {
-    let ref mut fresh123 = *ram_ptr!(game; 0x74, 0);
-    *fresh123 = (*fresh123).wrapping_sub(1);
+    crate::update_place! { reference fresh123 = *ram_ptr!(game; 0x74, 0) => (*fresh123).wrapping_sub(1); }
     if *fresh123 as i32 - 32i32 & 0x80i32 != 0 {
         *ram_ptr!(game; 0x74, 0) = 32u8;
     }
-    let ref mut fresh124 = *ram_ptr!(game; 0x74, 1);
-    *fresh124 = (*fresh124).wrapping_sub(1);
+    crate::update_place! { reference fresh124 = *ram_ptr!(game; 0x74, 1) => (*fresh124).wrapping_sub(1); }
     if *fresh124 as i32 - 64i32 & 0x80i32 != 0 {
         *ram_ptr!(game; 0x74, 1) = 64u8;
     }
-    let ref mut fresh125 = *ram_ptr!(game; 0x74, 2);
-    *fresh125 = (*fresh125).wrapping_sub(1);
+    crate::update_place! { reference fresh125 = *ram_ptr!(game; 0x74, 2) => (*fresh125).wrapping_sub(1); }
     if *fresh125 as i32 + 0x80i32 & 0x80i32 != 0 {
         *ram_ptr!(game; 0x74, 2) = 0x80u8;
     }
@@ -4908,8 +4876,7 @@ pub unsafe fn CinematicFunction_Intro_Func86(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func87(game: &mut Game) {
     if (ram_word!(game, cinematic_var12) & 3) == 0 {
-        let ref mut fresh116 = *ram_ptr!(game; 0x57);
-        *fresh116 = (*fresh116).wrapping_sub(16u8);
+        crate::update_place! { reference fresh116 = *ram_ptr!(game; 0x57) => (*fresh116).wrapping_sub(16u8); }
     }
     HandleFadeIn(game);
     if *ram_ptr!(game; 0x51) == 15u8 {
@@ -4919,8 +4886,7 @@ pub unsafe fn CinematicFunction_Intro_Func87(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func88(game: &mut Game) {
     if (ram_word!(game, cinematic_var12) & 3) == 0 {
-        let ref mut fresh115 = *ram_ptr!(game; 0x57);
-        *fresh115 = (*fresh115).wrapping_sub(16u8);
+        crate::update_place! { reference fresh115 = *ram_ptr!(game; 0x57) => (*fresh115).wrapping_sub(16u8); }
         if (*ram_ptr!(game; 0x57) & 0xf0) == 0 {
             *ram_ptr!(game; 0x55) = 7u8;
             *ram_ptr!(game; 0x5f) = 0x80u8;
@@ -5536,18 +5502,15 @@ pub unsafe fn CinematicFunction_Intro_Func120(game: &mut Game) {
 pub unsafe fn CinematicFunction_Intro_Func122(game: &mut Game) {
     let v0: bool = (update_ram_word!(game.cinematic_var4, wrapping_sub(1), reread) & 0x8000) != 0;
     if ram_word!(game, cinematic_var4) == 0 || v0 {
-        let ref mut fresh97 = *ram_ptr!(game; 0x74, 0);
-        *fresh97 = (*fresh97).wrapping_sub(1);
+        crate::update_place! { reference fresh97 = *ram_ptr!(game; 0x74, 0) => (*fresh97).wrapping_sub(1); }
         if *fresh97 as i32 - 32i32 & 0x80i32 != 0 {
             *ram_ptr!(game; 0x74, 0) = 32u8;
         }
-        let ref mut fresh98 = *ram_ptr!(game; 0x74, 1);
-        *fresh98 = (*fresh98).wrapping_sub(1);
+        crate::update_place! { reference fresh98 = *ram_ptr!(game; 0x74, 1) => (*fresh98).wrapping_sub(1); }
         if *fresh98 as i32 - 64i32 & 0x80i32 != 0 {
             *ram_ptr!(game; 0x74, 1) = 64u8;
         }
-        let ref mut fresh99 = *ram_ptr!(game; 0x74, 2);
-        *fresh99 = (*fresh99).wrapping_sub(1);
+        crate::update_place! { reference fresh99 = *ram_ptr!(game; 0x74, 2) => (*fresh99).wrapping_sub(1); }
         if *fresh99 as i32 + 0x80i32 & 0x80i32 != 0 {
             *ram_ptr!(game; 0x74, 2) = 0x80u8;
         }
@@ -5999,8 +5962,7 @@ pub unsafe fn CinematicFunction_Intro_Func142(game: &mut Game) {
         (*gVramWriteEntry(v1 as i32, game)).size =
             crate::rtl::rom_table_word!(game, 0x8be45a, (v2 + 1i32) as isize);
         v1 = (v1).wrapping_add(2u16);
-        let fresh75 = v1;
-        v1 = v1.wrapping_add(1);
+        crate::update_place! { previous fresh75 = v1 => v1.wrapping_add(1); }
         *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
             fresh75 as i32,
             game,
@@ -6057,18 +6019,15 @@ pub unsafe fn CinematicFunction_Intro_Func141(game: &mut Game) {
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func143(game: &mut Game) {
-    let ref mut fresh69 = *ram_ptr!(game; 0x74, 0);
-    *fresh69 = (*fresh69).wrapping_sub(1);
+    crate::update_place! { reference fresh69 = *ram_ptr!(game; 0x74, 0) => (*fresh69).wrapping_sub(1); }
     if *fresh69 as i32 - 32i32 & 0x80i32 != 0 {
         *ram_ptr!(game; 0x74, 0) = 32u8;
     }
-    let ref mut fresh70 = *ram_ptr!(game; 0x74, 1);
-    *fresh70 = (*fresh70).wrapping_sub(1);
+    crate::update_place! { reference fresh70 = *ram_ptr!(game; 0x74, 1) => (*fresh70).wrapping_sub(1); }
     if *fresh70 as i32 - 64i32 & 0x80i32 != 0 {
         *ram_ptr!(game; 0x74, 1) = 64u8;
     }
-    let ref mut fresh71 = *ram_ptr!(game; 0x74, 2);
-    *fresh71 = (*fresh71).wrapping_sub(1);
+    crate::update_place! { reference fresh71 = *ram_ptr!(game; 0x74, 2) => (*fresh71).wrapping_sub(1); }
     if *fresh71 as i32 + 0x80i32 & 0x80i32 != 0 {
         *ram_ptr!(game; 0x74, 2) = 0x80u8;
     }
@@ -6241,8 +6200,7 @@ pub unsafe fn CinematicFunction_Intro_Func127(game: &mut Game) {
         );
         if v3 != 0 {
             *(v2 as *mut u16).offset(5) = v3;
-            let ref mut fresh93 = *(v2 as *mut u16);
-            *fresh93 = (*fresh93) | (0x8000u16);
+            crate::update_place! { reference fresh93 = *(v2 as *mut u16) => (*fresh93) | (0x8000u16); }
         } else {
             *(v2 as *mut u16).offset(5) = 32u16;
         }
@@ -6276,19 +6234,17 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
             } else {
                 let v4: i32 = 8i32 * *(v3 as *mut u16) as u8 as i32 >> 1i32;
                 if (*(v3 as *mut u16) as i32 & 0xff00i32) - 1024i32 & 0x8000i32 != 0 {
-                    let ref mut fresh164 = *(v3 as *mut u16).offset(6);
-                    *fresh164 = (*fresh164).wrapping_add(crate::rtl::rom_table_word!(
+                    crate::update_place! { reference fresh164 = *(v3 as *mut u16).offset(6) => (*fresh164).wrapping_add(crate::rtl::rom_table_word!(
                         game,
                         0x8be9cf,
                         v4 as isize
-                    ));
+                    )); }
                     v5 = *(v3.offset(14) as *mut u16) as i16;
                 } else {
-                    let ref mut fresh165 = *(v3 as *mut u16).offset(6);
-                    *fresh165 = (*fresh165 as i32
-                        + (crate::rtl::rom_table_word!(game, 0x8be9cf, v4 as isize) as i32
-                            + crate::rtl::rom_table_word!(game, 0x8be9cf, v4 as isize) as i32))
-                        as u16;
+                    crate::update_place! { reference fresh165 = *(v3 as *mut u16).offset(6) => (*fresh165 as i32
+                    + (crate::rtl::rom_table_word!(game, 0x8be9cf, v4 as isize) as i32
+                        + crate::rtl::rom_table_word!(game, 0x8be9cf, v4 as isize) as i32))
+                    as u16; }
                     v5 = ((crate::rtl::rom_table_word!(game, 0x8be9cf, (v4 + 1i32) as isize))
                         as i16)
                         .wrapping_add((*(v3 as *mut u16).offset(7)) as i16);
@@ -6302,16 +6258,14 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
                 let mut v8: i16 = *(v3.offset(4) as *mut u16) as i16;
                 let mut v9: bool = u16::overflowing_add(r20, v8 as u16).1;
                 *(v3 as *mut u16).offset(2) = (r20).wrapping_add((v8) as u16);
-                let ref mut fresh166 = *(v3 as *mut u16).offset(1);
-                *fresh166 = (*fresh166 as i32 + (r18 as i32 + v9 as i32)) as u16;
+                crate::update_place! { reference fresh166 = *(v3 as *mut u16).offset(1) => (*fresh166 as i32 + (r18 as i32 + v9 as i32)) as u16; }
                 let mut v24: u16 = *(v3.offset(14) as *mut u16);
                 r18 = *(&raw mut v24 as *mut u8).offset(1isize) as i8 as u16;
                 r20 = ((v24 as i32) << 8i32 & 0xff00i32) as u16;
                 let mut v12: i16 = *(v3.offset(8) as *mut u16) as i16;
                 v9 = u16::overflowing_add(r20, v12 as u16).1;
                 *(v3 as *mut u16).offset(4) = (r20).wrapping_add((v12) as u16);
-                let ref mut fresh167 = *(v3 as *mut u16).offset(3);
-                *fresh167 = (*fresh167 as i32 + (r18 as i32 + v9 as i32)) as u16;
+                crate::update_place! { reference fresh167 = *(v3 as *mut u16).offset(3) => (*fresh167 as i32 + (r18 as i32 + v9 as i32)) as u16; }
             }
             v0 = (v0).wrapping_add(16u16);
         }
@@ -6901,8 +6855,7 @@ pub unsafe fn CinematicFunction_Intro_Func216(game: &mut Game) {
         (*gVramWriteEntry(v1 as i32, game)).size =
             crate::rtl::rom_table_word!(game, 0x8bf6b8, v2 as isize);
         v1 = (v1).wrapping_add(2u16);
-        let fresh28 = v1;
-        v1 = v1.wrapping_add(1);
+        crate::update_place! { previous fresh28 = v1 => v1.wrapping_add(1); }
         *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
             fresh28 as i32,
             game,

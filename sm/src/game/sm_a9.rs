@@ -1206,8 +1206,7 @@ pub unsafe fn MotherBrainBody_FakeDeath_Ascent_5_DrawBG1RowCD(game: &mut Game) {
 }
 pub unsafe fn MotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx(game: &mut Game) {
     *(ram_ptr!(game, u16; 0x91b)) = 257u16;
-    let ref mut fresh8 = *(ram_ptr!(game, u16; 0x59));
-    *fresh8 = (*fresh8) & (0xfffcu16);
+    crate::update_place! { reference fresh8 = *(ram_ptr!(game, u16; 0x59)) => (*fresh8) & (0xfffcu16); }
     WriteColorsToPalette(
         0x142u16,
         0xa9u8,
@@ -2797,8 +2796,7 @@ pub unsafe fn MotherBrain_Phase2_DecideAttackStrategy_DoubleRet(game: &mut Game)
 }
 pub unsafe fn MotherBrain_Phase2_Attack_Cooldown(game: &mut Game) {
     let E = Get_MotherBrain(0i32, game);
-    let fresh9 = (*E).mbn_parameter_1;
-    (*E).mbn_parameter_1 = (*E).mbn_parameter_1.wrapping_sub(1);
+    crate::update_place! { previous fresh9 = (*E).mbn_parameter_1 => (*E).mbn_parameter_1.wrapping_sub(1); }
     if fresh9 == 1u16 {
         (*E).mbn_var_18 = (*E).mbn_var_18.wrapping_add(1);
     }
@@ -3216,15 +3214,13 @@ pub unsafe fn MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(
         v6 = 48u16;
     } else {
         if v4 as i32 - 192i32 & 0x8000i32 != 0 {
-            let ref mut fresh2 = *(ram_ptr!(game, u16; 0xafa));
-            *fresh2 = v4;
+            crate::update_place! { reference fresh2 = *(ram_ptr!(game, u16; 0xafa)) => v4; }
             set_ram_word!(game.samus_prev_y_pos = *fresh2);
             return 0u8;
         }
         v6 = 192u16;
     }
-    let ref mut fresh3 = *(ram_ptr!(game, u16; 0xafa));
-    *fresh3 = v6;
+    crate::update_place! { reference fresh3 = *(ram_ptr!(game, u16; 0xafa)) => v6; }
     set_ram_word!(game.samus_prev_y_pos = *fresh3);
     set_ram_words! { game, 0u16; samus_y_subpos, samus_prev_y_subpos }
     1u8
@@ -4624,8 +4620,7 @@ pub unsafe fn SamusRainbowPaletteFunc_ActivateWhenEnemyLow(k: u16, game: &mut Ga
 }
 pub unsafe fn SamusRainbowPaletteFunc_GraduallySlowDown(game: &mut Game) {
     let E = Get_ShitdroidInCutscene(0x40i32, game);
-    let sice_var_1D: u16 = (*E).sice_var_1D;
-    (*E).sice_var_1D = (sice_var_1D).wrapping_add(768u16);
+    crate::update_place! { previous sice_var_1D: u16 = (*E).sice_var_1D => (sice_var_1D).wrapping_add(768u16); }
     if sice_var_1D >= 0xfd00u16 {
         let mut v2: u16 = (ram_word!(game, special_samus_palette_frame)).wrapping_add(1u16);
         if ram_word!(game, special_samus_palette_frame) as i32 - 9i32 & 0x8000i32 == 0 {
@@ -5633,8 +5628,7 @@ pub unsafe fn InitializeEnemyCorpseRotting(k: u16, j: u16, game: &mut Game) {
     (*E).dms_var_5A = (*(RomPtr_A9(v4, game) as *mut u16).offset(1)).wrapping_sub(12u16);
     let v5 = v2 as *mut u16;
     let mut v6: u16 = *v5.offset(4);
-    let fresh5 = v6;
-    v6 = v6.wrapping_sub(1);
+    crate::update_place! { previous fresh5 = v6 => v6.wrapping_sub(1); }
     (*E).dms_var_57 = fresh5;
     (*E).dms_var_58 = v6;
     (*E).dms_var_59 = (v6).wrapping_sub(1u16);
@@ -6185,8 +6179,7 @@ pub unsafe fn Shitroid_Func_10(k: u16, game: &mut Game) {
     let E1 = Get_Shitroid(k as i32 + 64i32, game);
     (*E).base.x_pos = ((*E1).base.x_pos).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
     (*E).base.y_pos = ((*E1).base.y_pos as i32 + g_word_A993C3[v2 as usize] as i32 - 32i32) as u16;
-    let fresh13 = (*E).shitr_var_F;
-    (*E).shitr_var_F = (*E).shitr_var_F.wrapping_sub(1);
+    crate::update_place! { previous fresh13 = (*E).shitr_var_F => (*E).shitr_var_F.wrapping_sub(1); }
     if fresh13 == 1u16 {
         (*E).shitr_var_A = ((0xa9f125i32) as u16);
         enemy_instruction! {[(*E).base]; instruction = addr_kShitroid_Ilist_F906 as u16, timer = 1u16}
@@ -6208,10 +6201,8 @@ pub unsafe fn Shitroid_Func_12(k: u16, game: &mut Game) {
     if ((*E).shitr_var_F & 0x8000) != 0 {
         (*E).shitr_var_A = ((0xa9f180i32) as u16);
         (*E).shitr_parameter_2 = 1u16;
-        let ref mut fresh14 = *(ram_ptr!(game, u16; 0xcd20));
-        *fresh14 = (*fresh14) | (0x100u16);
-        let ref mut fresh15 = *(ram_ptr!(game, u16; 0xcd20, 2));
-        *fresh15 = (*fresh15) | (0x100u16);
+        crate::update_place! { reference fresh14 = *(ram_ptr!(game, u16; 0xcd20)) => (*fresh14) | (0x100u16); }
+        crate::update_place! { reference fresh15 = *(ram_ptr!(game, u16; 0xcd20, 2)) => (*fresh15) | (0x100u16); }
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0x30u8, 0x3u8, 0xb763 as VoidP),
             game,

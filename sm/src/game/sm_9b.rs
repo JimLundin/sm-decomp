@@ -266,8 +266,7 @@ pub unsafe fn QueueTransferOfSamusDeathSequence(v0: u16, game: &mut Game) {
     let v2: i32 = v0 as i32 >> 1i32;
     (*gVramWriteEntry(v1 as i32, game)).size = g_word_9BB7BF[v2 as usize];
     v1 = (v1).wrapping_add(2u16);
-    let fresh7 = v1;
-    v1 = v1.wrapping_add(1);
+    crate::update_place! { previous fresh7 = v1 => v1.wrapping_add(1); }
     *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
         fresh7 as i32,
         game,
@@ -954,8 +953,7 @@ pub unsafe fn UpdateGrappleBeamTiles(game: &mut Game) {
     v0 = (v0).wrapping_add(2u16);
     (*gVramWriteEntry(v0 as i32, game)).size = ram_word!(game, grapple_point_anim_ptr);
     v0 = (v0).wrapping_add(2u16);
-    let fresh27 = v0;
-    v0 = v0.wrapping_add(1);
+    crate::update_place! { previous fresh27 = v0 => v0.wrapping_add(1); }
     *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
         fresh27 as i32,
         game,
@@ -971,8 +969,7 @@ pub unsafe fn UpdateGrappleBeamTiles(game: &mut Game) {
     (*gVramWriteEntry(v0 as i32, game)).size =
         crate::rtl::rom_table_word!(game, 0x9bc346, (v1 >> 1) as isize);
     v0 = (v0).wrapping_add(2u16);
-    let fresh28 = v0;
-    v0 = v0.wrapping_add(1);
+    crate::update_place! { previous fresh28 = v0 => v0.wrapping_add(1); }
     *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
         fresh28 as i32,
         game,

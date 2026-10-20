@@ -141,12 +141,10 @@ pub fn PrepareBitAccess(a: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn SetBossBitForCurArea(a: u16, game: &mut Game) {
     game.g_ram[0x5e7] = a as u8; // The ROM stores the mask with an 8-bit accumulator.
-    let ref mut fresh91 = *ram_ptr!(game; 0xd828, ram_word!(game, area_index) as isize);
-    *fresh91 = (*fresh91) | ((a) as u8);
+    crate::update_place! { reference fresh91 = *ram_ptr!(game; 0xd828, ram_word!(game, area_index) as isize) => (*fresh91) | ((a) as u8); }
 }
 pub unsafe fn ClearBossBitForCurArea(a: u16, game: &mut Game) {
-    let ref mut fresh19 = *ram_ptr!(game; 0xd828, ram_word!(game, area_index) as isize);
-    *fresh19 = (*fresh19 & !(a as u8));
+    crate::update_place! { reference fresh19 = *ram_ptr!(game; 0xd828, ram_word!(game, area_index) as isize) => (*fresh19 & !(a as u8)); }
 }
 pub unsafe fn CheckBossBitForCurArea(a: u16, game: &mut Game) -> u8 {
     game.g_ram[0x5e7] = a as u8; // The ROM stores the mask with an 8-bit accumulator.
@@ -154,13 +152,11 @@ pub unsafe fn CheckBossBitForCurArea(a: u16, game: &mut Game) -> u8 {
 }
 pub unsafe fn SetEventHappened(a: u16, game: &mut Game) {
     let v1: u16 = PrepareBitAccess(a, game);
-    let ref mut fresh94 = *ram_ptr!(game; 0xd820, v1 as isize);
-    *fresh94 = (*fresh94) | ((ram_word!(game, bitmask)) as u8);
+    crate::update_place! { reference fresh94 = *ram_ptr!(game; 0xd820, v1 as isize) => (*fresh94) | ((ram_word!(game, bitmask)) as u8); }
 }
 pub unsafe fn ClearEventHappened(v0: u16, game: &mut Game) {
     let v1: u16 = PrepareBitAccess(v0, game);
-    let ref mut fresh20 = *ram_ptr!(game; 0xd820, v1 as isize);
-    *fresh20 = (*fresh20 & !(ram_word!(game, bitmask) as u8));
+    crate::update_place! { reference fresh20 = *ram_ptr!(game; 0xd820, v1 as isize) => (*fresh20 & !(ram_word!(game, bitmask) as u8)); }
 }
 pub unsafe fn CheckEventHappened(a: u16, game: &mut Game) -> u16 {
     let idx: u16 = PrepareBitAccess(a, game);
@@ -229,17 +225,14 @@ pub unsafe fn DisableNMI(game: &mut Game) {
     *ram_ptr!(game; 0x84) = v0;
 }
 pub unsafe fn ScreenOff(game: &mut Game) {
-    let ref mut fresh89 = *ram_ptr!(game; 0x51);
-    *fresh89 = (*fresh89) | (0x80u8);
+    crate::update_place! { reference fresh89 = *ram_ptr!(game; 0x51) => (*fresh89) | (0x80u8); }
 }
 pub unsafe fn ScreenOn(game: &mut Game) {
-    let ref mut fresh90 = *ram_ptr!(game; 0x51);
-    *fresh90 = (*fresh90 & !(0x80));
+    crate::update_place! { reference fresh90 = *ram_ptr!(game; 0x51) => (*fresh90 & !(0x80)); }
 }
 pub unsafe fn memset7E(mut k: *mut u16, a: u16, mut j: u16) {
     loop {
-        let fresh99 = k;
-        k = k.offset(1);
+        crate::update_place! { previous fresh99 = k => k.offset(1); }
         *fresh99 = a;
         j = (j).wrapping_sub(2u16);
         if (j == 0) {
@@ -366,8 +359,7 @@ pub unsafe fn SaveExploredMapTilesToSaved(game: &mut Game) {
         }
     }
     if ram_word!(game, has_area_map) != 0 {
-        let ref mut fresh88 = *(ram_ptr!(game, u16; 0xd908, ram_word!(game, area_index) as isize));
-        *fresh88 = (*fresh88) | (0xffu16);
+        crate::update_place! { reference fresh88 = *(ram_ptr!(game, u16; 0xd908, ram_word!(game, area_index) as isize)) => (*fresh88) | (0xffu16); }
     }
 }
 pub unsafe fn InitializeCpuIoRegs(game: &mut Game) {
@@ -724,9 +716,7 @@ pub unsafe fn HasQueuedMusic(game: &mut Game) -> u8 {
     1u8
 }
 pub unsafe fn HandleMusicQueue(game: &mut Game) {
-    let ref mut fresh74 = *(ram_ptr!(game, u16; 0x63f));
-    let fresh75 = *fresh74;
-    *fresh74 = (*fresh74).wrapping_sub(1);
+    crate::update_place! { reference fresh74 [fresh75] = *(ram_ptr!(game, u16; 0x63f)) => (*fresh74).wrapping_sub(1); }
     let v0: bool = fresh75 == 1u16;
     if (ram_word!(game, music_timer) & 0x8000) == 0 {
         if !v0 {
@@ -1073,8 +1063,7 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
                         set_ram_words! { game, 0u16; joypad1_lastkeys, joypad1_newkeys }
                     }
                     if (ram_word!(game, joypad_dbg_2) & 0x80) != 0 {
-                        let ref mut fresh82 = *(ram_ptr!(game, u16; 0x84));
-                        *fresh82 = (*fresh82) ^ (0x30u16);
+                        crate::update_place! { reference fresh82 = *(ram_ptr!(game, u16; 0x84)) => (*fresh82) ^ (0x30u16); }
                     }
                     if (ram_word!(game, joypad_dbg_2) & 0x8000) != 0 {
                         let v2: bool = (!(ram_word!(game, joypad_dbg_flags)) & 0x8000) != 0;
@@ -1202,8 +1191,7 @@ pub unsafe fn IrqHandler_0_Nothing(game: &mut Game) {
     IrqHandler_SetResult(a, 0u16, 0u16, game);
 }
 pub unsafe fn IrqHandler_2_DisableIRQ(game: &mut Game) {
-    let ref mut fresh76 = *(ram_ptr!(game, u16; 0x84));
-    *fresh76 = (*fresh76 & !(0x30));
+    crate::update_place! { reference fresh76 = *(ram_ptr!(game, u16; 0x84)) => (*fresh76 & !(0x30)); }
     IrqHandler_SetResult(0u16, 0u16, 0u16, game);
 }
 pub unsafe fn IrqHandler_4_Main_BeginHudDraw(game: &mut Game) {
@@ -1342,20 +1330,17 @@ pub unsafe fn EnableIrqInterrupts(game: &mut Game) {
     crate::rtl::register_writes! { game;
         word(VTIMEL as u16, 0u16); word(HTIMEL as u16, 152u16);
     }
-    let ref mut fresh64 = *(ram_ptr!(game, u16; 0x84));
-    *fresh64 = (*fresh64) | (0x30u16);
+    crate::update_place! { reference fresh64 = *(ram_ptr!(game, u16; 0x84)) => (*fresh64) | (0x30u16); }
 }
 pub unsafe fn EnableIrqInterruptsNow(game: &mut Game) {
     crate::rtl::register_writes! { game;
         word(VTIMEL as u16, 0u16); word(HTIMEL as u16, 152u16);
     }
-    let ref mut fresh65 = *(ram_ptr!(game, u16; 0x84));
-    *fresh65 = (*fresh65) | (0x30u16);
+    crate::update_place! { reference fresh65 = *(ram_ptr!(game, u16; 0x84)) => (*fresh65) | (0x30u16); }
     WriteReg(NMITIMEN as u16, *ram_ptr!(game; 0x84), game);
 }
 pub unsafe fn DisableIrqInterrupts(game: &mut Game) {
-    let ref mut fresh41 = *(ram_ptr!(game, u16; 0x84));
-    *fresh41 = (*fresh41 & !(0x30));
+    crate::update_place! { reference fresh41 = *(ram_ptr!(game, u16; 0x84)) => (*fresh41 & !(0x30)); }
 }
 static kIrqHandlers: [Func_V; 14] = [
     IrqHandler_0_Nothing,
@@ -1598,8 +1583,7 @@ pub unsafe fn HandleHudTilemap(game: &mut Game) {
         .offset_from(&raw mut game.g_ram as *mut u8)
         as c_long as u16;
     v5 = (v5).wrapping_add(2u16);
-    let fresh71 = v5;
-    v5 = v5.wrapping_add(1);
+    crate::update_place! { previous fresh71 = v5 => v5.wrapping_add(1); }
     (*gVramWriteEntry(fresh71 as i32, game)).size = 126u16;
     (*gVramWriteEntry(v5 as i32, game)).size = addr_unk_605820 as u16;
     set_ram_word!(game.vram_write_queue_tail = (v5).wrapping_add(2u16));
@@ -2597,9 +2581,7 @@ pub unsafe fn UpdateLevelOrBackgroundDataColumn(k: u16, game: &mut Game) {
         var937 = (v11).wrapping_add(4u16);
         v9 = (ram_word!(game, room_width_in_blocks) as i32 * 2i32 + v17 as i32) as u16;
     }
-    let ref mut fresh7 =
-        *((ram_ptr!(game, u16; 0x962) as *mut u8).offset(t2 as i32 as isize) as *mut u16);
-    *fresh7 = (*fresh7).wrapping_add(1);
+    crate::update_place! { reference fresh7 = *((ram_ptr!(game, u16; 0x962) as *mut u8).offset(t2 as i32 as isize) as *mut u16) => (*fresh7).wrapping_add(1); }
 }
 crate::forward_calls! { pub unsafe fn (game: &mut Game);
     UpdateBackgroundDataRow => UpdateLevelOrBackgroundDataRow(0x1cu16, game);
@@ -2687,9 +2669,7 @@ pub unsafe fn UpdateLevelOrBackgroundDataRow(v0: u16, game: &mut Game) {
         var937 = (v11).wrapping_add(4u16);
         v9 = (v17).wrapping_add(2u16);
     }
-    let ref mut fresh6 =
-        *((ram_ptr!(game, u16; 0x970) as *mut u8).offset(t2 as i32 as isize) as *mut u16);
-    *fresh6 = (*fresh6).wrapping_add(1);
+    crate::update_place! { reference fresh6 = *((ram_ptr!(game, u16; 0x970) as *mut u8).offset(t2 as i32 as isize) as *mut u16) => (*fresh6).wrapping_add(1); }
 }
 pub unsafe fn FixDoorsMovingUp(game: &mut Game) {
     set_ram_word!(game.door_transition_frame_counter = 0u16);
@@ -2944,8 +2924,7 @@ pub unsafe fn ConfigureMode7RotationMatrix(game: &mut Game) {
 
 unsafe fn DecompNextByte(game: &mut Game) -> u8 {
     let b: u8 = *RomPtr(game.decompress_src, game);
-    let fresh31 = game.decompress_src;
-    game.decompress_src = game.decompress_src.wrapping_add(1);
+    crate::update_place! { previous fresh31 = game.decompress_src => game.decompress_src.wrapping_add(1); }
     if (fresh31 & 0xffffu32) == 0xffffu32 {
         game.decompress_src = game.decompress_src.wrapping_add(0x8000u32);
     }
@@ -3052,8 +3031,7 @@ unsafe fn decompress<O: DecompressionOutput>(src: u32, output: O, game: *mut Gam
                 0x60 => {
                     let mut value = DecompNextByte(&mut *game);
                     loop {
-                        let previous = value;
-                        value = value.wrapping_add(1);
+                        crate::update_place! { previous previous = value => value.wrapping_add(1); }
                         output.write(destination, previous, false, game);
                         destination += 1;
                         remaining -= 1;
@@ -3101,11 +3079,9 @@ pub unsafe fn LoadFromLoadStation(game: &mut Game) {
     ) as *mut LoadStationList;
     set_ram_word!(game.room_ptr = (*L).room_ptr_);
     set_ram_word!(game.door_def_ptr = (*L).door_ptr);
-    let ref mut fresh77 = *(ram_ptr!(game, u16; 0x911));
-    *fresh77 = (*L).screen_x_pos;
+    crate::update_place! { reference fresh77 = *(ram_ptr!(game, u16; 0x911)) => (*L).screen_x_pos; }
     set_ram_word!(game.bg1_x_offset = *fresh77);
-    let ref mut fresh78 = *(ram_ptr!(game, u16; 0x915));
-    *fresh78 = (*L).screen_y_pos;
+    crate::update_place! { reference fresh78 = *(ram_ptr!(game, u16; 0x915)) => (*L).screen_y_pos; }
     set_ram_word!(game.bg1_y_offset = *fresh78);
     set_ram_word!(
         game.samus_y_pos = (ram_word!(game, layer1_y_pos)).wrapping_add((*L).samus_y_offset)
@@ -3129,8 +3105,6 @@ pub unsafe fn SetElevatorsAsUsed(game: &mut Game) {
             as u16,
         game,
     );
-    let ref mut fresh92 = *ram_ptr!(game; 0xd8f8, *v0.offset(0) as isize);
-    *fresh92 = (*fresh92) | (*v0.offset(1));
-    let ref mut fresh93 = *ram_ptr!(game; 0xd8f8, *v0.offset(2) as isize);
-    *fresh93 = (*fresh93) | (*v0.offset(3));
+    crate::update_place! { reference fresh92 = *ram_ptr!(game; 0xd8f8, *v0.offset(0) as isize) => (*fresh92) | (*v0.offset(1)); }
+    crate::update_place! { reference fresh93 = *ram_ptr!(game; 0xd8f8, *v0.offset(2) as isize) => (*fresh93) | (*v0.offset(3)); }
 }

@@ -195,8 +195,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_2(k: u16, game: &mut Game) {
 }
 pub unsafe fn BrinstarPipeBug_PreInstr_3(k: u16, game: &mut Game) {
     let PipeBug = Get_PipeBug(k as i32, game);
-    let fresh7 = (*PipeBug).base.y_subpos;
-    (*PipeBug).base.y_subpos = (*PipeBug).base.y_subpos.wrapping_sub(1);
+    crate::update_place! { previous fresh7 = (*PipeBug).base.y_subpos => (*PipeBug).base.y_subpos.wrapping_sub(1); }
     let v2: bool = fresh7 != 0u16;
     (*PipeBug).base.y_pos = ((*PipeBug).base.y_pos as i32 + (v2 as i32 - 2i32)) as u16;
     if (((*PipeBug).pbg_var_00) as i16).wrapping_sub(((*PipeBug).base.y_pos) as i16) >= 0i16
@@ -232,8 +231,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_4(k: u16, game: &mut Game) {
 }
 pub unsafe fn BrinstarPipeBug_PreInstr_5(k: u16, game: &mut Game) {
     let E = Get_PipeBug(k as i32, game);
-    let fresh8 = (*E).pbg_var_D;
-    (*E).pbg_var_D = (*E).pbg_var_D.wrapping_sub(1);
+    crate::update_place! { previous fresh8 = (*E).pbg_var_D => (*E).pbg_var_D.wrapping_sub(1); }
     if fresh8 == 1u16 {
         (*E).pbg_var_F = ((0xb38890i32) as u16);
     }
@@ -910,8 +908,7 @@ pub unsafe fn Botwoon_HealthBasedPalHandling(game: &mut Game) {
         let mut r18: u16 = (16u16).wrapping_mul((*E).botwoon_var_4F);
         let mut r20: u16 = (*E).botwoon_var_4E;
         loop {
-            let fresh5 = r18;
-            r18 = r18.wrapping_add(1);
+            crate::update_place! { previous fresh5 = r18 => r18.wrapping_add(1); }
             set_ram_word!(
                 game.palette_buffer[(r20 >> 1)] =
                     crate::rtl::rom_table_word!(game, 0xb3971b, (fresh5 >> 1) as isize)
@@ -1337,8 +1334,7 @@ pub unsafe fn Botwoon_Func_28(k: u16, game: &mut Game) {
                 addr_kEproj_BotwoonsSpit as u16,
                 game,
             );
-            let ref mut fresh2 = *ram_ptr!(game; 0x60b);
-            *fresh2 = (*fresh2).wrapping_add(16u8);
+            crate::update_place! { reference fresh2 = *ram_ptr!(game; 0x60b) => (*fresh2).wrapping_add(16u8); }
         }
         (*E).botwoon_var_5A = 0u16;
         (*E).botwoon_var_F = ((0xb39f7ai32) as u16);
@@ -1355,8 +1351,7 @@ pub unsafe fn Botwoon_Func_29(k: u16, game: &mut Game) {
             addr_kEproj_BotwoonsSpit as u16,
             game,
         );
-        let ref mut fresh3 = *ram_ptr!(game; 0x60b);
-        *fresh3 = (*fresh3).wrapping_add(16u8);
+        crate::update_place! { reference fresh3 = *ram_ptr!(game; 0x60b) => (*fresh3).wrapping_add(16u8); }
     }
     (*Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game)).botwoon_var_F =
         ((0xb39f7ai32) as u16);

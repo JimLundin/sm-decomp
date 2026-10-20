@@ -3757,8 +3757,7 @@ pub unsafe fn MaridiaPuffer_Main(game: &mut Game) {
 }
 pub unsafe fn MaridiaPuffer_Func_1(game: &mut Game) {
     let E = Get_MaridiaPuffer(ram_word!(game, cur_enemy_index) as i32, game);
-    let fresh7 = (*E).mpr_var_E;
-    (*E).mpr_var_E = (*E).mpr_var_E.wrapping_sub(1);
+    crate::update_place! { previous fresh7 = (*E).mpr_var_E => (*E).mpr_var_E.wrapping_sub(1); }
     if fresh7 == 1u16 {
         (*E).mpr_var_E = 16u16;
         (*E).mpr_var_A = ((0xa8d940i32) as u16);
@@ -3837,8 +3836,7 @@ pub unsafe fn MaridiaPuffer_Func_7(game: &mut Game) {
 }
 pub unsafe fn MaridiaPuffer_Func_8(k: u16, game: &mut Game) {
     let E = Get_MaridiaPuffer(k as i32, game);
-    let fresh8 = (*E).mpr_var_F;
-    (*E).mpr_var_F = (*E).mpr_var_F.wrapping_sub(1);
+    crate::update_place! { previous fresh8 = (*E).mpr_var_F => (*E).mpr_var_F.wrapping_sub(1); }
     if fresh8 == 1u16 {
         (*E).mpr_var_F = (*E).mpr_var_05;
         (*E).mpr_var_B = ((*E).mpr_var_B).wrapping_add((*E).mpr_var_C);
@@ -3847,8 +3845,7 @@ pub unsafe fn MaridiaPuffer_Func_8(k: u16, game: &mut Game) {
 }
 pub unsafe fn MaridiaPuffer_Func_9(k: u16, game: &mut Game) {
     let E = Get_MaridiaPuffer(k as i32, game);
-    let fresh9 = (*E).mpr_var_F;
-    (*E).mpr_var_F = (*E).mpr_var_F.wrapping_sub(1);
+    crate::update_place! { previous fresh9 = (*E).mpr_var_F => (*E).mpr_var_F.wrapping_sub(1); }
     if fresh9 == 1u16 {
         (*E).mpr_var_F = (*E).mpr_var_06;
         (*E).mpr_var_B = ((*E).mpr_var_B).wrapping_sub((*E).mpr_var_C);

@@ -927,12 +927,9 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
             })
     };
     if begin_frame {
-        let ref mut fresh149 = *ram_ptr!(game; 0x615);
-        *fresh149 = 0u8;
-        let ref mut fresh150 = *ram_ptr!(game; 0x614);
-        *fresh150 = *fresh149;
-        let ref mut fresh151 = *ram_ptr!(game; 0x613);
-        *fresh151 = *fresh150;
+        crate::update_place! { reference fresh149 = *ram_ptr!(game; 0x615) => 0u8; }
+        crate::update_place! { reference fresh150 = *ram_ptr!(game; 0x614) => *fresh149; }
+        crate::update_place! { reference fresh151 = *ram_ptr!(game; 0x613) => *fresh150; }
         *ram_ptr!(game; 0x612) = *fresh151;
         ReadJoypadInputs(game);
         HdmaObjectHandler(game);
@@ -1024,24 +1021,19 @@ pub unsafe fn SfxHandlers_0_SendToApu(j: u16, game: &mut Game) {
         RtlApuWrite((j as i32 + APUI01 as i32) as SnesRegs, v3, game);
         *ram_ptr!(game; 0x64d, j as isize) = v3;
         *ram_ptr!(game; 0x643, j as isize) = (v2 as i32 + 1i32 & 0xfi32) as u8;
-        let ref mut fresh134 = *ram_ptr!(game; 0x649, j as isize);
-        *fresh134 = (*fresh134).wrapping_add(1);
+        crate::update_place! { reference fresh134 = *ram_ptr!(game; 0x649, j as isize) => (*fresh134).wrapping_add(1); }
     }
 }
 pub unsafe fn SfxHandlers_1_WaitForAck(j: u16, game: &mut Game) {
     let v1: u8 = *ram_ptr!(game; 0x64d, j as isize);
-    let ref mut fresh138 = *ram_ptr!(game; 0x649, j as isize);
-    *fresh138 = (*fresh138).wrapping_add(1);
+    crate::update_place! { reference fresh138 = *ram_ptr!(game; 0x649, j as isize) => (*fresh138).wrapping_add(1); }
     *ram_ptr!(game; 0x650, j as isize) = 6u8;
 }
 pub unsafe fn SfxHandlers_2_ClearRequest(j: u16, game: &mut Game) {
-    let ref mut fresh135 = *ram_ptr!(game; 0x650, j as isize);
-    let fresh136 = *fresh135;
-    *fresh135 = (*fresh135).wrapping_sub(1);
+    crate::update_place! { reference fresh135 [fresh136] = *ram_ptr!(game; 0x650, j as isize) => (*fresh135).wrapping_sub(1); }
     if fresh136 == 1u8 {
         *ram_ptr!(game; 0x64d, j as isize) = 0u8;
-        let ref mut fresh137 = *ram_ptr!(game; 0x649, j as isize);
-        *fresh137 = (*fresh137).wrapping_add(1);
+        crate::update_place! { reference fresh137 = *ram_ptr!(game; 0x649, j as isize) => (*fresh137).wrapping_add(1); }
     }
 }
 pub unsafe fn SfxHandlers_3_WaitForAck(j: u16, game: &mut Game) {
@@ -1050,9 +1042,7 @@ pub unsafe fn SfxHandlers_3_WaitForAck(j: u16, game: &mut Game) {
     SfxHandlers_0_SendToApu(j, game);
 }
 pub unsafe fn SfxHandlers_4_Reset(j: u16, game: &mut Game) {
-    let ref mut fresh132 = *ram_ptr!(game; 0x650, j as isize);
-    let fresh133 = *fresh132;
-    *fresh132 = (*fresh132).wrapping_sub(1);
+    crate::update_place! { reference fresh132 [fresh133] = *ram_ptr!(game; 0x650, j as isize) => (*fresh132).wrapping_sub(1); }
     if fresh133 == 1u8 {
         *ram_ptr!(game; 0x649, j as isize) = 0u8;
     }
@@ -1243,9 +1233,7 @@ pub unsafe fn OptionsMenuFunc2(k: u16, game: &mut Game) {
     );
     let v1: u16 = ram_word!(game, optionsmenu_index);
     let v2: i32 = ram_word!(game, optionsmenu_index) as i32 >> 1i32;
-    let ref mut fresh119 = *(ram_ptr!(game, u16; 0x1b1d)).offset(v2 as isize);
-    let fresh120 = *fresh119;
-    *fresh119 = (*fresh119).wrapping_sub(1);
+    crate::update_place! { reference fresh119 [fresh120] = *(ram_ptr!(game, u16; 0x1b1d)).offset(v2 as isize) => (*fresh119).wrapping_sub(1); }
     if fresh120 == 1u16 {
         let mut v4: u16 = ram_word!(game, cinematicspr_arr7[v2]);
         let mut v5 = null_mut::<u16>();
@@ -1292,9 +1280,7 @@ pub unsafe fn OptionsInstr_Goto(k: u16, j: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn OptionsInstr_8C89(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh0 = *(ram_ptr!(game, u16; 0x1b2d)).offset(v2 as isize);
-    let fresh1 = *fresh0;
-    *fresh0 = (*fresh0).wrapping_sub(1);
+    crate::update_place! { reference fresh0 [fresh1] = *(ram_ptr!(game, u16; 0x1b2d)).offset(v2 as isize) => (*fresh0).wrapping_sub(1); }
     if fresh1 == 1u16 {
         (j).wrapping_add(2u16)
     } else {
@@ -1479,8 +1465,7 @@ pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
     let mut v1: u16 = 236u16;
     for _ in 0i32..17i32 {
         for _ in 0i32..8i32 {
-            let fresh92 = v1;
-            v1 = v1.wrapping_add(1);
+            crate::update_place! { previous fresh92 = v1 => v1.wrapping_add(1); }
             (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[fresh92 as usize] =
                 *(RomPtr_82(v0, game) as *mut u16);
             v0 = (v0).wrapping_add(2u16);
@@ -2101,12 +2086,9 @@ pub unsafe fn SetupPpuForPauseMenu(game: &mut Game) {
         mirror(BG3SC as u16, 0x58, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
         mirror(TM as u16, 0x17, 0x69, false); mirror(MOSAIC as u16, 0, 0x57, false);
     }
-    let ref mut fresh24 = *ram_ptr!(game; 0x74, 0);
-    *fresh24 = (*fresh24) & (0xe0u8);
-    let ref mut fresh25 = *ram_ptr!(game; 0x74, 1);
-    *fresh25 = (*fresh25) & (0xe0u8);
-    let ref mut fresh26 = *ram_ptr!(game; 0x74, 2);
-    *fresh26 = (*fresh26) & (0xe0u8);
+    crate::update_place! { reference fresh24 = *ram_ptr!(game; 0x74, 0) => (*fresh24) & (0xe0u8); }
+    crate::update_place! { reference fresh25 = *ram_ptr!(game; 0x74, 1) => (*fresh25) & (0xe0u8); }
+    crate::update_place! { reference fresh26 = *ram_ptr!(game; 0x74, 2) => (*fresh26) & (0xe0u8); }
     *ram_ptr!(game; 0x71) = 0u8;
 }
 pub unsafe fn ResetPauseMenuAnimations(game: &mut Game) {
@@ -2482,8 +2464,7 @@ pub unsafe fn UpdatePauseMenuLRStartVramTilemap(game: &mut Game) {
     v0 = (v0).wrapping_add(2u16);
     (*gVramWriteEntry(v0 as i32, game)).size = 0x3640u16;
     v0 = (v0).wrapping_add(2u16);
-    let fresh23 = v0;
-    v0 = v0.wrapping_add(1);
+    crate::update_place! { previous fresh23 = v0 => v0.wrapping_add(1); }
     *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
         fresh23 as i32,
         game,
@@ -3075,8 +3056,7 @@ pub unsafe fn WriteSamusWireframeTilemapAndQueue(game: &mut Game) {
         as c_long
         + 256 as c_long) as u16;
     v0 = (v0).wrapping_add(2u16);
-    let fresh63 = v0;
-    v0 = v0.wrapping_add(1);
+    crate::update_place! { previous fresh63 = v0 => v0.wrapping_add(1); }
     *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
         fresh63 as i32,
         game,
@@ -3102,8 +3082,7 @@ pub unsafe fn WriteSamusWireframeTilemap(game: &mut Game) {
     for _ in 0i32..17i32 {
         let v3: u16 = v2;
         for _ in 0i32..8i32 {
-            let fresh64 = src;
-            src = src.offset(1);
+            crate::update_place! { previous fresh64 = src => src.offset(1); }
             *((&raw mut (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap as *mut u16
                 as *mut u8)
                 .offset(v2 as i32 as isize) as *mut u16) = *fresh64;
@@ -5038,8 +5017,7 @@ pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
             }
             let mut v11: i8 = 0i8;
             loop {
-                let fresh145 = v9;
-                v9 = v9.wrapping_add(1);
+                crate::update_place! { previous fresh145 = v9 => v9.wrapping_add(1); }
                 *ram_ptr!(game; 0xcd20, fresh145 as isize) = v8;
                 v11 += 1;
                 if (v11 as i32 == ram_word!(game, room_width_in_scrolls) as u8 as i32) {
@@ -5268,8 +5246,7 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
             let mut v12: i8 = v10;
             let mut v11: i8 = 0i8;
             loop {
-                let fresh35 = v9;
-                v9 = v9.wrapping_add(1);
+                crate::update_place! { previous fresh35 = v9 => v9.wrapping_add(1); }
                 *ram_ptr!(game; 0xcd20, fresh35 as isize) = v8;
                 v11 += 1;
                 if (v11 as i32 == ram_word!(game, room_width_in_scrolls) as u8 as i32) {
@@ -5399,8 +5376,7 @@ pub unsafe fn OptionsMenu_AddToVramQueue(game: &mut Game) {
     v0 = (v0).wrapping_add(2u16);
     (*gVramWriteEntry(v0 as i32, game)).size = 12288u16;
     v0 = (v0).wrapping_add(2u16);
-    let fresh118 = v0;
-    v0 = v0.wrapping_add(1);
+    crate::update_place! { previous fresh118 = v0 => v0.wrapping_add(1); }
     *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
         fresh118 as i32,
         game,
@@ -5528,8 +5504,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
     let mut v1: u16 = 0;
     HandleFadeOut(game);
     if *ram_ptr!(game; 0x57) != 0xf3u8 {
-        let ref mut fresh70 = *ram_ptr!(game; 0x57);
-        *fresh70 = (*fresh70).wrapping_add(16u8);
+        crate::update_place! { reference fresh70 = *ram_ptr!(game; 0x57) => (*fresh70).wrapping_add(16u8); }
     }
     if *ram_ptr!(game; 0x51) == 0x80u8 {
         EnableNMI(game);
@@ -5596,8 +5571,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
 pub unsafe fn GameOptionsMenu_6_DissolveInScreen(game: &mut Game) {
     HandleFadeIn(game);
     if *ram_ptr!(game; 0x57) != 3u8 {
-        let ref mut fresh72 = *ram_ptr!(game; 0x57);
-        *fresh72 = (*fresh72).wrapping_sub(16u8);
+        crate::update_place! { reference fresh72 = *ram_ptr!(game; 0x57) => (*fresh72).wrapping_sub(16u8); }
     }
     if *ram_ptr!(game; 0x51) == 15u8 {
         *ram_ptr!(game; 0x57) = 0u8;

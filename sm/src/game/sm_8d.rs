@@ -105,9 +105,7 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
         game,
     );
     let mut v1: u16 = ram_word!(game, palettefx_index);
-    let ref mut fresh2 = *(ram_ptr!(game, u16; 0x1ecd)).offset((v1 >> 1) as isize);
-    let fresh3 = *fresh2;
-    *fresh2 = (*fresh2).wrapping_sub(1);
+    crate::update_place! { reference fresh2 [fresh3] = *(ram_ptr!(game, u16; 0x1ecd)).offset((v1 >> 1) as isize) => (*fresh2).wrapping_sub(1); }
     if fresh3 != 1u16 {
         return;
     }
@@ -186,9 +184,7 @@ pub unsafe fn PalInstr_Goto(k: u16, j: u16, game: &mut Game) -> PairU16 {
 pub unsafe fn PalInstr_DecTimerGoto(k: u16, j: u16, game: &mut Game) -> PairU16 {
     let mut v4: PairU16 = PairU16 { k: 0, j: 0 };
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh4 = *(ram_ptr!(game, u16; 0x1edd)).offset(v2 as isize);
-    let fresh5 = *fresh4;
-    *fresh4 = (*fresh4).wrapping_sub(1);
+    crate::update_place! { reference fresh4 [fresh5] = *(ram_ptr!(game, u16; 0x1edd)).offset(v2 as isize) => (*fresh4).wrapping_sub(1); }
     if fresh5 == 1u16 {
         return MakePairU16(k, (j).wrapping_add(2u16));
     }

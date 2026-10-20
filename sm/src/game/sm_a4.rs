@@ -945,8 +945,7 @@ pub unsafe fn Crocomire_Func_52(game: &mut Game) {
         != 0
     {
         let v1: u16 = *((ram_ptr!(game, u16; 0x9015) as *mut u8).offset(1) as *mut u16);
-        let ref mut fresh17 = *((ram_ptr!(game, u16; 0x9015) as *mut u8).offset(1) as *mut u16);
-        *fresh17 = (*fresh17).wrapping_add(2u16);
+        crate::update_place! { reference fresh17 = *((ram_ptr!(game, u16; 0x9015) as *mut u8).offset(1) as *mut u16) => (*fresh17).wrapping_add(2u16); }
         SpawnEprojWithGfx(
             crate::rtl::rom_table_word!(game, 0xa49156, (v0 >> 1) as isize),
             v1,
@@ -1005,8 +1004,7 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
         *(&raw mut (*E).crocom_var_D as *mut u8).offset(1isize) = v7 as u8;
         let mut v8: bool =
             u8::overflowing_add(*(&raw mut (*E).crocom_var_E as *mut u8).offset(0), v7 as u8).1;
-        let ref mut fresh13 = *(&raw mut (*E).crocom_var_E as *mut u8).offset(0);
-        *fresh13 = (*fresh13).wrapping_add((v7) as u8);
+        crate::update_place! { reference fresh13 = *(&raw mut (*E).crocom_var_E as *mut u8).offset(0) => (*fresh13).wrapping_add((v7) as u8); }
         v9 = ((v8) as i8)
             .wrapping_add((*(&raw mut (*E).crocom_var_E as *mut u8).offset(1isize)) as i8);
         if v9 as i32 - 3i32 & 0x80i32 == 0 {
@@ -1019,8 +1017,7 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
             crocom_var_E as u8,
         )
         .1;
-        let ref mut fresh14 = *(&raw mut (*E).crocom_var_F as *mut u8).offset(1isize);
-        *fresh14 = (*fresh14).wrapping_add((crocom_var_E) as u8);
+        crate::update_place! { reference fresh14 = *(&raw mut (*E).crocom_var_F as *mut u8).offset(1isize) => (*fresh14).wrapping_add((crocom_var_E) as u8); }
         crocom_var_E_high = *(&raw mut (*E).crocom_var_E as *mut u8).offset(1isize) as i8;
         let v13: bool = v8;
         v8 = u8::overflowing_add(v8 as u8, crocom_var_E_high as u8).1;
@@ -1029,10 +1026,8 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
             | u8::overflowing_add(*(&raw mut (*E).base.y_pos as *mut u8).offset(0), v12 as u8).1
                 as i32)
             != 0;
-        let ref mut fresh15 = *(&raw mut (*E).base.y_pos as *mut u8).offset(0);
-        *fresh15 = (*fresh15).wrapping_add((v12) as u8);
-        let ref mut fresh16 = *(&raw mut (*E).base.y_pos as *mut u8).offset(1isize);
-        *fresh16 = (*fresh16).wrapping_add((v8) as u8);
+        crate::update_place! { reference fresh15 = *(&raw mut (*E).base.y_pos as *mut u8).offset(0) => (*fresh15).wrapping_add((v12) as u8); }
+        crate::update_place! { reference fresh16 = *(&raw mut (*E).base.y_pos as *mut u8).offset(1isize) => (*fresh16).wrapping_add((v8) as u8); }
     } else {
         (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
         (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
@@ -1112,8 +1107,7 @@ pub unsafe fn Crocomire_92D8(game: &mut Game) {
         let v9: u8 =
             ((v5) as u8).wrapping_add(*(&raw mut (*E0).crocom_var_E as *mut u8).offset(1isize));
         *(&raw mut (*E0).base.y_pos as *mut u8).offset(0) = (y_pos).wrapping_sub(v9);
-        let ref mut fresh7 = *(&raw mut (*E0).base.y_pos as *mut u8).offset(1isize);
-        *fresh7 = (*fresh7).wrapping_sub((y_pos < v9) as u8);
+        crate::update_place! { reference fresh7 = *(&raw mut (*E0).base.y_pos as *mut u8).offset(1isize) => (*fresh7).wrapping_sub((y_pos < v9) as u8); }
     };
 }
 pub unsafe fn Crocomire_Func_57(game: &mut Game) {
@@ -1454,23 +1448,14 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
     loop {
         let q: i32 = *ram_ptr!(game; 0x69c, vline_idx as isize) as i32;
         let j: i32 = 2i32 * (q & 7i32) + ((q & !(7i32)) << 6i32) + 4i32 * (vline_idx & !(7i32));
-        let ref mut fresh1 =
-            (*(ram_ptr!(game, Ram4000; 0x4000))).backups.field_0[(j + 0i32) as usize];
-        *fresh1 = (*fresh1) & (mask);
-        let ref mut fresh2 =
-            (*(ram_ptr!(game, Ram4000; 0x4000))).backups.field_0[(j + 1i32) as usize];
-        *fresh2 = (*fresh2) & (mask);
-        let ref mut fresh3 =
-            (*(ram_ptr!(game, Ram4000; 0x4000))).backups.field_0[(j + 16i32) as usize];
-        *fresh3 = (*fresh3) & (mask);
-        let ref mut fresh4 =
-            (*(ram_ptr!(game, Ram4000; 0x4000))).backups.field_0[(j + 17i32) as usize];
-        *fresh4 = (*fresh4) & (mask);
+        crate::update_place! { reference fresh1 = (*(ram_ptr!(game, Ram4000; 0x4000))).backups.field_0[(j + 0i32) as usize] => (*fresh1) & (mask); }
+        crate::update_place! { reference fresh2 = (*(ram_ptr!(game, Ram4000; 0x4000))).backups.field_0[(j + 1i32) as usize] => (*fresh2) & (mask); }
+        crate::update_place! { reference fresh3 = (*(ram_ptr!(game, Ram4000; 0x4000))).backups.field_0[(j + 16i32) as usize] => (*fresh3) & (mask); }
+        crate::update_place! { reference fresh4 = (*(ram_ptr!(game, Ram4000; 0x4000))).backups.field_0[(j + 17i32) as usize] => (*fresh4) & (mask); }
         if *ram_ptr!(game; 0x69c, vline_idx as isize) == 48u8 {
             break;
         }
-        let ref mut fresh5 = *ram_ptr!(game; 0x69c, vline_idx as isize);
-        *fresh5 = (*fresh5).wrapping_add(1);
+        crate::update_place! { reference fresh5 = *ram_ptr!(game; 0x69c, vline_idx as isize) => (*fresh5).wrapping_add(1); }
         n -= 1;
         if (n == 0) {
             break;
@@ -1669,11 +1654,12 @@ pub unsafe fn Crocomire_Func_72(game: &mut Game) {
         AddToHiLo(&raw mut (*E).base.x_pos, &raw mut (*E).base.x_subpos, t);
     }
     let E2 = Get_Crocomire(0x80i32, game);
-    if (*E2).crocom_var_D != 0u16 && {
-        let fresh19 = (*E2).crocom_var_D;
-        (*E2).crocom_var_D = (*E2).crocom_var_D.wrapping_sub(1);
-        fresh19 == 1u16
-    } {
+    if (*E2).crocom_var_D != 0u16
+        && {
+            crate::update_place! { previous fresh19 = (*E2).crocom_var_D => (*E2).crocom_var_D.wrapping_sub(1); }
+            fresh19 == 1u16
+        }
+    {
         (*E).crocom_var_E = 0u16;
         enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E14A as u16, timer = 1u16}
         Crocomire_9BB3(game);
@@ -1769,8 +1755,7 @@ pub unsafe fn Crocomire_Func_90(game: &mut Game) {
 pub unsafe fn Crocomire_9B86(game: &mut Game) {
     QueueMusic_Delayed8(6u16, game);
     set_ram_word!(game.camera_distance_index = 0u16);
-    let ref mut fresh10 = *(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize));
-    *fresh10 = (*fresh10) | (2u16);
+    crate::update_place! { reference fresh10 = *(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) => (*fresh10) | (2u16); }
     QueueMusic_Delayed8(6u16, game);
     Crocomire_Func_87(null::<u16>(), 0xfff0u16, game);
     Crocomire_Func_87(null::<u16>(), 0x10u16, game);

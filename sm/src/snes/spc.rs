@@ -74,8 +74,7 @@ pub unsafe fn spc_runOpcode(spc: *mut Spc) -> i32 {
     (*spc).cyclesUsed as i32
 }
 unsafe fn spc_readOpcode(spc: *mut Spc) -> u8 {
-    let fresh0 = (*spc).pc;
-    (*spc).pc = (*spc).pc.wrapping_add(1);
+    crate::update_place! { previous fresh0 = (*spc).pc => (*spc).pc.wrapping_add(1); }
     spc_read(spc, fresh0)
 }
 unsafe fn spc_readOpcodeWord(spc: *mut Spc) -> u16 {
@@ -158,8 +157,7 @@ unsafe fn spc_adrIdx(spc: *mut Spc) -> u16 {
     )
 }
 unsafe fn spc_adrImm(spc: *mut Spc) -> u16 {
-    let fresh1 = (*spc).pc;
-    (*spc).pc = (*spc).pc.wrapping_add(1);
+    crate::update_place! { previous fresh1 = (*spc).pc => (*spc).pc.wrapping_add(1); }
     fresh1
 }
 unsafe fn spc_adrDpx(spc: *mut Spc) -> u16 {
@@ -188,8 +186,7 @@ unsafe fn spc_adrDpDp(spc: *mut Spc, src: *mut u16) -> u16 {
     (spc_readOpcode(spc) as i32 | ((*spc).p as i32) << 8i32) as u16
 }
 unsafe fn spc_adrDpImm(spc: *mut Spc, src: *mut u16) -> u16 {
-    let fresh3 = (*spc).pc;
-    (*spc).pc = (*spc).pc.wrapping_add(1);
+    crate::update_place! { previous fresh3 = (*spc).pc => (*spc).pc.wrapping_add(1); }
     *src = fresh3;
     (spc_readOpcode(spc) as i32 | ((*spc).p as i32) << 8i32) as u16
 }
@@ -208,8 +205,7 @@ unsafe fn spc_adrDpWord(spc: *mut Spc, low: *mut u16) -> u16 {
     (adr as i32 + 1i32 & 0xffi32 | ((*spc).p as i32) << 8i32) as u16
 }
 unsafe fn spc_adrIndP(spc: *mut Spc) -> u16 {
-    let fresh2 = (*spc).x;
-    (*spc).x = (*spc).x.wrapping_add(1);
+    crate::update_place! { previous fresh2 = (*spc).x => (*spc).x.wrapping_add(1); }
     (fresh2 as i32 | ((*spc).p as i32) << 8i32) as u16
 }
 // OR, AND and EOR share addressing forms; opcode bits 5..6 select the logic.

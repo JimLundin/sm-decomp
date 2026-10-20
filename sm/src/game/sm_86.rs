@@ -629,9 +629,7 @@ pub unsafe fn EprojInstr_DecTimerAndGotoRelIfNonZero(
     game: &mut Game,
 ) -> *const u8 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh46 = *(ram_ptr!(game, u16; 0x19df)).offset(v2 as isize);
-    let fresh47 = *fresh46;
-    *fresh46 = (*fresh46).wrapping_sub(1);
+    crate::update_place! { reference fresh46 [fresh47] = *(ram_ptr!(game, u16; 0x19df)).offset(v2 as isize) => (*fresh46).wrapping_sub(1); }
     if fresh47 == 1u16 {
         epjp.offset(1)
     } else {
@@ -1572,8 +1570,7 @@ pub unsafe fn EprojPreInstr_CrocomireSpikeWallPieces(k: u16, game: &mut Game) {
         v3 as u8,
     )
     .1;
-    let ref mut fresh138 = *(ram_ptr!(game, u16; 0x1ab7) as *mut u8).offset(k as i32 as isize);
-    *fresh138 = (*fresh138 as i32 + v3 as i32) as u8;
+    crate::update_place! { reference fresh138 = *(ram_ptr!(game, u16; 0x1ab7) as *mut u8).offset(k as i32 as isize) => (*fresh138 as i32 + v3 as i32) as u8; }
     let mut v5: u8 = (v4 as i32
         + *(ram_ptr!(game, u16; 0x1ab7) as *mut u8)
             .offset(k as i32 as isize)
@@ -1592,10 +1589,9 @@ pub unsafe fn EprojPreInstr_CrocomireSpikeWallPieces(k: u16, game: &mut Game) {
         v6 as u8,
     )
     .1;
-    let ref mut fresh139 = *(ram_ptr!(game, u16; 0x1a27) as *mut u8)
-        .offset(k as i32 as isize)
-        .offset(1);
-    *fresh139 = (*fresh139 as i32 + v6 as i32) as u8;
+    crate::update_place! { reference fresh139 = *(ram_ptr!(game, u16; 0x1a27) as *mut u8)
+    .offset(k as i32 as isize)
+    .offset(1) => (*fresh139 as i32 + v6 as i32) as u8; }
     let mut v7: i8 = *(ram_ptr!(game, u16; 0x1ab7) as *mut u8)
         .offset(k as i32 as isize)
         .offset(1) as i8;
@@ -1609,12 +1605,10 @@ pub unsafe fn EprojPreInstr_CrocomireSpikeWallPieces(k: u16, game: &mut Game) {
         )
         .1 as i32)
         != 0;
-    let ref mut fresh140 = *(ram_ptr!(game, u16; 0x1a4b) as *mut u8).offset(k as i32 as isize);
-    *fresh140 = (*fresh140 as i32 + v8 as i32) as u8;
-    let ref mut fresh141 = *(ram_ptr!(game, u16; 0x1a4b) as *mut u8)
-        .offset(k as i32 as isize)
-        .offset(1);
-    *fresh141 = (*fresh141 as i32 + v4 as i32) as u8;
+    crate::update_place! { reference fresh140 = *(ram_ptr!(game, u16; 0x1a4b) as *mut u8).offset(k as i32 as isize) => (*fresh140 as i32 + v8 as i32) as u8; }
+    crate::update_place! { reference fresh141 = *(ram_ptr!(game, u16; 0x1a4b) as *mut u8)
+    .offset(k as i32 as isize)
+    .offset(1) => (*fresh141 as i32 + v4 as i32) as u8; }
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1adb)).offset(v1 as isize),
         (ram_ptr!(game, u16; 0x1b23)).offset(v1 as isize),
@@ -3965,9 +3959,7 @@ pub unsafe fn EprojPreInstr_MotherBrainRoomTurrets(k: u16, game: &mut Game) {
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xcu16, game);
     } else {
         let v1: i32 = k as i32 >> 1i32;
-        let ref mut fresh88 = *(ram_ptr!(game, u16; 0x1ab7)).offset(v1 as isize);
-        let fresh89 = *fresh88;
-        *fresh88 = (*fresh88).wrapping_sub(1);
+        crate::update_place! { reference fresh88 [fresh89] = *(ram_ptr!(game, u16; 0x1ab7)).offset(v1 as isize) => (*fresh88).wrapping_sub(1); }
         let mut v2: bool = fresh89 == 1u16;
         if v2 {
             Eproj_SetXvelRandom(k, game);
@@ -3983,9 +3975,7 @@ pub unsafe fn EprojPreInstr_MotherBrainRoomTurrets(k: u16, game: &mut Game) {
             set_ram_word!(game.eproj_instr_timers[v3] = 1u16);
         }
         let v4: i32 = k as i32 >> 1i32;
-        let ref mut fresh92 = *(ram_ptr!(game, u16; 0x1adb)).offset(v4 as isize);
-        let fresh93 = *fresh92;
-        *fresh92 = (*fresh92).wrapping_sub(1);
+        crate::update_place! { reference fresh92 [fresh93] = *(ram_ptr!(game, u16; 0x1adb)).offset(v4 as isize) => (*fresh92).wrapping_sub(1); }
         v2 = fresh93 == 1u16;
         if v2 {
             Eproj_SetYvelRandom(k, game);
@@ -4009,8 +3999,7 @@ pub unsafe fn Eproj_MotherBrainRoomTurretBullets_Func2(v0: u16, game: &mut Game)
         *(ram_ptr!(game, u16; 0x1a6f) as *mut u8)
             .offset(v0 as i32 as isize)
             .offset(1) = v1 as u8;
-        let ref mut fresh94 = *(ram_ptr!(game, u16; 0x1a6f) as *mut u8).offset(v0 as i32 as isize);
-        *fresh94 = (*fresh94 as i32 + v1 as i32) as u8;
+        crate::update_place! { reference fresh94 = *(ram_ptr!(game, u16; 0x1a6f) as *mut u8).offset(v0 as i32 as isize) => (*fresh94 as i32 + v1 as i32) as u8; }
     };
 }
 pub unsafe fn Eproj_SetXvelRandom(v0: u16, game: &mut Game) {
@@ -4426,12 +4415,10 @@ pub unsafe fn sub_86C605(j: u16, game: &mut Game) {
     let E = Get_MotherBrain(0i32, game);
     set_fields! {[(*E)], 0u16; mbn_var_23, mbn_var_25}
     set_ram_word!(game.eproj_gfx_idx[v1] = 1024u16);
-    let ref mut fresh8 = *(ram_ptr!(game, u16; 0x1a4b)).offset(v1 as isize);
-    *fresh8 = ((*E).base.x_pos as i32 + 64i32) as u16;
+    crate::update_place! { reference fresh8 = *(ram_ptr!(game, u16; 0x1a4b)).offset(v1 as isize) => ((*E).base.x_pos as i32 + 64i32) as u16; }
     (*E).mbn_var_24 = *fresh8;
     let x: u16 = (ram_word!(game, samus_x_pos) as i32 - (*E).mbn_var_24 as i32) as u16;
-    let ref mut fresh9 = *(ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize);
-    *fresh9 = ((*E).base.y_pos as i32 - 48i32) as u16;
+    crate::update_place! { reference fresh9 = *(ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize) => ((*E).base.y_pos as i32 - 48i32) as u16; }
     (*E).mbn_var_26 = *fresh9;
     let y: u16 = (ram_word!(game, samus_y_pos) as i32 - (*E).mbn_var_26 as i32) as u16;
     let r18: i32 = -(CalculateAngleFromXY(x, y, game) as i32 + 0x80i32) as u8 as i32;
@@ -5480,8 +5467,7 @@ pub unsafe fn EprojInstr_SpawnSporesEproj(k: u16, epjp: *const u8, game: &mut Ga
 }
 unsafe fn EprojInit_Spores(j: u16, game: &mut Game) {
     let v2: i32 = j as i32 >> 1i32;
-    let ref mut fresh4 = *(ram_ptr!(game, u16; 0x1a4b)).offset(v2 as isize);
-    *fresh4 = game.eproj_spawn_pt.x;
+    crate::update_place! { reference fresh4 = *(ram_ptr!(game, u16; 0x1a4b)).offset(v2 as isize) => game.eproj_spawn_pt.x; }
     set_ram_word!(game.eproj_F[v2] = *fresh4);
     set_ram_word!(game.eproj_y_pos[v2] = game.eproj_spawn_pt.y);
     set_ram_word!(game.eproj_gfx_idx[v2] = 512u16);

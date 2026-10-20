@@ -1532,8 +1532,7 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
                 break;
             }
         }
-        let v12: u16 = r22;
-        r22 = (r22).wrapping_add(1984u16);
+        crate::update_place! { previous v12: u16 = r22 => (r22).wrapping_add(1984u16); }
         Xray_SetupStage4_Func3(0u16, r22, r36, game);
         r22 = (v12).wrapping_add(64u16);
         r34 = (r34).wrapping_add(ram_word!(game, room_width_in_blocks));
@@ -2487,8 +2486,7 @@ pub unsafe fn Samus_HandleCrystalFlashPals(game: &mut Game) -> u8 {
             }
             set_ram_word!(game.special_samus_palette_frame = v0);
         }
-        let ref mut fresh15 = *(ram_ptr!(game, u16; 0xdf2));
-        *fresh15 = (*fresh15).wrapping_sub(1);
+        crate::update_place! { reference fresh15 = *(ram_ptr!(game, u16; 0xdf2)) => (*fresh15).wrapping_sub(1); }
         let v1: bool = (*fresh15 as i16) < 0i16;
         if *(ram_ptr!(game, u16; 0xdf2)) == 0 || v1 {
             *(ram_ptr!(game, u16; 0xdf2)) =

@@ -318,8 +318,7 @@ unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: u32) {
             t != (*win).edges[i as usize] as i32
         } {
             if t < (*win).edges[i as usize] as i32 {
-                let fresh0 = nr;
-                nr = nr.wrapping_add(1);
+                crate::update_place! { previous fresh0 = nr => nr.wrapping_add(1); }
                 j = fresh0;
                 while j >= i {
                     (*win).edges[j.wrapping_add(1u32) as usize] = (*win).edges[j as usize];
@@ -336,8 +335,7 @@ unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: u32) {
             t != (*win).edges[i as usize] as i32
         } {
             if t < (*win).edges[i as usize] as i32 {
-                let fresh1 = nr;
-                nr = nr.wrapping_add(1);
+                crate::update_place! { previous fresh1 = nr => nr.wrapping_add(1); }
                 j = fresh1;
                 while j >= i {
                     (*win).edges[j.wrapping_add(1u32) as usize] = (*win).edges[j as usize];
@@ -914,8 +912,7 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
         .renderBuffer
         .offset((y).wrapping_sub(1u32).wrapping_mul((*ppu).renderPitch) as isize)
         as *mut u32;
-    let dst_org = dst_0;
-    dst_0 = dst_0.offset(((*ppu).extraLeftRight as i32 - (*ppu).extraLeftCur as i32) as isize);
+    crate::update_place! { previous dst_org = dst_0 => dst_0.offset(((*ppu).extraLeftRight as i32 - (*ppu).extraLeftCur as i32) as isize); }
     let mut windex: u32 = 0u32;
     loop {
         let left: u32 = (cwin.edges[windex as usize] as i32 + kPpuExtraLeftRight as i32) as u32;
@@ -1669,8 +1666,7 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
             } else if !(*ppu).oamSecondWrite {
                 ret = ((*ppu).oam[(*ppu).oamAdr as usize] as u8 & 0xff);
             } else {
-                let fresh2 = (*ppu).oamAdr;
-                (*ppu).oamAdr = (*ppu).oamAdr.wrapping_add(1);
+                crate::update_place! { previous fresh2 = (*ppu).oamAdr => (*ppu).oamAdr.wrapping_add(1); }
                 ret = ((*ppu).oam[fresh2 as usize] >> 8) as u8;
                 if (*ppu).oamAdr as i32 == 0i32 {
                     (*ppu).oamInHigh = true_0 != 0;
@@ -1707,8 +1703,7 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
             if !(*ppu).cgramSecondWrite {
                 ret_0 = ((*ppu).cgram[(*ppu).cgramPointer as usize] as u8 & 0xff);
             } else {
-                let fresh3 = (*ppu).cgramPointer;
-                (*ppu).cgramPointer = (*ppu).cgramPointer.wrapping_add(1);
+                crate::update_place! { previous fresh3 = (*ppu).cgramPointer => (*ppu).cgramPointer.wrapping_add(1); }
                 ret_0 = ((*ppu).cgram[fresh3 as usize] as i32 >> 8i32 & 0x7fi32
                     | (*ppu).ppu2openBus as i32 & 0x80i32) as u8;
             }
@@ -1805,8 +1800,7 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             } else if !(*ppu).oamSecondWrite {
                 (*ppu).oamBuffer = val;
             } else {
-                let fresh4 = (*ppu).oamAdr;
-                (*ppu).oamAdr = (*ppu).oamAdr.wrapping_add(1);
+                crate::update_place! { previous fresh4 = (*ppu).oamAdr => (*ppu).oamAdr.wrapping_add(1); }
                 (*ppu).oam[fresh4 as usize] =
                     ((val as i32) << 8i32 | (*ppu).oamBuffer as i32) as u16;
                 if (*ppu).oamAdr as i32 == 0i32 {
@@ -1933,8 +1927,7 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             if !(*ppu).cgramSecondWrite {
                 (*ppu).cgramBuffer = val;
             } else {
-                let fresh5 = (*ppu).cgramPointer;
-                (*ppu).cgramPointer = (*ppu).cgramPointer.wrapping_add(1);
+                crate::update_place! { previous fresh5 = (*ppu).cgramPointer => (*ppu).cgramPointer.wrapping_add(1); }
                 (*ppu).cgram[fresh5 as usize] =
                     ((val as i32) << 8i32 | (*ppu).cgramBuffer as i32) as u16;
             }

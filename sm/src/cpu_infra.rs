@@ -137,14 +137,12 @@ pub unsafe fn ProcessHook(v: u32, game: &mut Game) -> bool {
     let rombyte = SnesRomPtr(v, game);
     match game.hookmode {
         0 => {
-            let fresh2 = game.hookcnt;
-            game.hookcnt = game.hookcnt.wrapping_add(1);
+            crate::update_place! { previous fresh2 = game.hookcnt => game.hookcnt.wrapping_add(1); }
             *rombyte = game.hook_orgbyte[fresh2 as usize];
             return false_0 != 0;
         }
         1 => {
-            let fresh3 = game.hookcnt;
-            game.hookcnt = game.hookcnt.wrapping_add(1);
+            crate::update_place! { previous fresh3 = game.hookcnt => game.hookcnt.wrapping_add(1); }
             game.hook_orgbyte[fresh3 as usize] = *rombyte;
             *rombyte = 0u8;
             return false_0 != 0;
@@ -164,8 +162,7 @@ pub unsafe fn FixBugHook(addr: u32, game: &mut Game) -> bool {
     match game.hookmode {
         1 => {
             let rombyte = SnesRomPtr(addr, game);
-            let fresh0 = game.hookcnt;
-            game.hookcnt = game.hookcnt.wrapping_add(1);
+            crate::update_place! { previous fresh0 = game.hookcnt => game.hookcnt.wrapping_add(1); }
             game.hook_fixbug_orgbyte[fresh0 as usize] = *rombyte;
             *rombyte = 0u8;
             return false_0 != 0;

@@ -164,8 +164,7 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
             set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
             set_ram_word!(game.game_state = 32u16);
         }
-        let ref mut fresh0 = *(ram_ptr!(game, u16; 0x7e1, 2));
-        *fresh0 = (*fresh0).wrapping_sub(1);
+        crate::update_place! { reference fresh0 = *(ram_ptr!(game, u16; 0x7e1, 2)) => (*fresh0).wrapping_sub(1); }
         if *(ram_ptr!(game, i16; 0x7e1, 2)) < 0i16 {
             let v0: i32 = ((6u16).wrapping_mul(*(ram_ptr!(game, u16; 0x7e1)))) as i32 >> 1i32;
             *(ram_ptr!(game, u16; 0x7e1, 2)) =

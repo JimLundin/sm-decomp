@@ -788,8 +788,7 @@ pub unsafe fn Kraid_ProcessKraidInstr(game: &mut Game) -> u16 {
     let E = Get_Kraid(0i32, game);
     let result: u16 = (*E).kraid_var_C;
     if result != 0 {
-        let fresh1 = (*E).kraid_var_C;
-        (*E).kraid_var_C = (*E).kraid_var_C.wrapping_sub(1);
+        crate::update_place! { previous fresh1 = (*E).kraid_var_C => (*E).kraid_var_C.wrapping_sub(1); }
         if fresh1 == 1u16 {
             return Kraid_ExecuteInstr(game);
         }
@@ -827,8 +826,7 @@ pub unsafe fn Kraid_ExecuteInstr(game: &mut Game) -> u16 {
                 v5 = (v5).wrapping_add(2u16);
                 (*gVramWriteEntry(v5 as i32, game)).size = v4;
                 v5 = (v5).wrapping_add(2u16);
-                let fresh0 = v5;
-                v5 = v5.wrapping_add(1);
+                crate::update_place! { previous fresh0 = v5 => v5.wrapping_add(1); }
                 *(&raw mut (*(gVramWriteEntry
                     as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
                     fresh0 as i32,
@@ -1347,8 +1345,7 @@ pub unsafe fn KraidLint_ChargeLint(k: u16, game: &mut Game) {
     (*E).palette_index = v1 as u16;
     (*E).x_pos = ((*E).ai_var_C as i32 + (*gEnemyData(0i32, game)).x_pos as i32
         - (*E).ai_var_B as i32) as u16;
-    let fresh5 = (*E).ai_preinstr;
-    (*E).ai_preinstr = (*E).ai_preinstr.wrapping_sub(1);
+    crate::update_place! { previous fresh5 = (*E).ai_preinstr => (*E).ai_preinstr.wrapping_sub(1); }
     if fresh5 == 1u16 {
         (*E).ai_var_A = ((0xa7b89bi32) as u16);
         QueueSfx3_Max6(0x1fu16, game);
@@ -1392,11 +1389,12 @@ pub unsafe fn KraidFingernail_WaitForLintXpos(k: u16, game: &mut Game) {
 }
 pub unsafe fn KraidEnemy_HandleFunctionTimer(k: u16, game: &mut Game) {
     let E = Get_Kraid(k as i32, game);
-    if (*E).kraid_var_F != 0u16 && {
-        let fresh6 = (*E).kraid_var_F;
-        (*E).kraid_var_F = (*E).kraid_var_F.wrapping_sub(1);
-        fresh6 == 1u16
-    } {
+    if (*E).kraid_var_F != 0u16
+        && {
+            crate::update_place! { previous fresh6 = (*E).kraid_var_F => (*E).kraid_var_F.wrapping_sub(1); }
+            fresh6 == 1u16
+        }
+    {
         (*E).kraid_var_A = (*E).kraid_next;
     }
 }
@@ -1409,8 +1407,7 @@ pub unsafe fn Kraid_AlignEnemyToKraid(k: u16, game: &mut Game) {
 pub unsafe fn KraidEnemy_DecrementEnemyFunctionTimer(game: &mut Game) {
     let E = Get_Kraid(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).kraid_var_F != 0 {
-        let fresh8 = (*E).kraid_var_F;
-        (*E).kraid_var_F = (*E).kraid_var_F.wrapping_sub(1);
+        crate::update_place! { previous fresh8 = (*E).kraid_var_F => (*E).kraid_var_F.wrapping_sub(1); }
         if fresh8 == 1u16 {
             (*E).kraid_var_A = (*E).kraid_next;
             enemy_instruction! {[(*E).base]; instruction = addr_kKraid_Ilist_8887 as u16, timer = 1u16}
@@ -2741,8 +2738,7 @@ pub unsafe fn Phantoon_Func_6(k: u16, a: u16, game: &mut Game) {
     let mut r20: i32 = 16i32;
     for _ in 0i32..=7i32 {
         let mut v3: i16 = v2;
-        let fresh25 = v2;
-        v2 = v2 + 1;
+        crate::update_place! { previous fresh25 = v2 => v2 + 1; }
         SpawnEprojWithGfx(
             (r20 | fresh25 as i32 | 0x400i32) as u16,
             k,
@@ -3438,8 +3434,7 @@ pub unsafe fn Phantoon_Enraged(k: u16, game: &mut Game) {
             let mut v5: i16 = 15i16;
             loop {
                 let mut v8: i16 = v5;
-                let fresh24 = v5;
-                v5 = v5 - 1;
+                crate::update_place! { previous fresh24 = v5 => v5 - 1; }
                 SpawnEprojWithGfx(
                     ((fresh24) as u16) | (0x200u16),
                     k,
@@ -3617,8 +3612,7 @@ pub unsafe fn Phantoon_AlmostDead(k: u16, game: &mut Game) {
     v5 = (v5).wrapping_add(2u16);
     (*gVramWriteEntry(v5 as i32, game)).size = 0x2000u16;
     v5 = (v5).wrapping_add(2u16);
-    let fresh19 = v5;
-    v5 = v5.wrapping_add(1);
+    crate::update_place! { previous fresh19 = v5 => v5.wrapping_add(1); }
     *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
         fresh19 as i32,
         game,
@@ -3636,8 +3630,7 @@ pub unsafe fn Phantoon_Dead(k: u16, game: &mut Game) {
         let E1 = Get_Phantoon(0x40i32, game);
         (*E1).phant_var_D = 12u16;
         if Phantoon_Func_9(game) & 1 != 0 {
-            let ref mut fresh22 = *ram_ptr!(game; 0x69);
-            *fresh22 = (*fresh22) | (2u8);
+            crate::update_place! { reference fresh22 = *ram_ptr!(game; 0x69) => (*fresh22) | (2u8); }
             Enemy_ItemDrop_Phantoon(k, game);
             let E0 = Get_Phantoon(0i32, game);
             let v4: u16 = ((*E0).base.properties) | ((kEnemyProps_Deleted) as u16);
@@ -3645,9 +3638,7 @@ pub unsafe fn Phantoon_Dead(k: u16, game: &mut Game) {
             (*E1).base.properties = v4;
             (*Get_Phantoon(0x80i32, game)).base.properties = v4;
             (*Get_Phantoon(0xc0i32, game)).base.properties = v4;
-            let ref mut fresh23 =
-                *(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize));
-            *fresh23 = (*fresh23) | (1u16);
+            crate::update_place! { reference fresh23 = *(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) => (*fresh23) | (1u16); }
             SpawnHardcodedPlm(
                 SpawnHardcodedPlmArgs::new(0u8, 0x6u8, 0xb78b as VoidP),
                 game,
@@ -4410,8 +4401,7 @@ pub unsafe fn Dachora_Func_2(k: u16, game: &mut Game) {
 }
 pub unsafe fn Dachora_Func_3(k: u16, game: &mut Game) {
     let E = Get_Dachora(k as i32, game);
-    let fresh2 = (*E).dachor_var_A;
-    (*E).dachor_var_A = (*E).dachor_var_A.wrapping_sub(1);
+    crate::update_place! { previous fresh2 = (*E).dachor_var_A => (*E).dachor_var_A.wrapping_sub(1); }
     if fresh2 == 1u16 {
         if (*E).dachor_parameter_1 != 0 {
             (*E).base.current_instruction = addr_kDachora_Ilist_F407 as u16;
@@ -4509,8 +4499,7 @@ pub unsafe fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
 pub unsafe fn Dachora_Func_7(k: u16, game: &mut Game) {
     Dachora_Func_10(k, game);
     let E = Get_Dachora(k as i32, game);
-    let fresh3 = (*E).dachor_var_A;
-    (*E).dachor_var_A = (*E).dachor_var_A.wrapping_sub(1);
+    crate::update_place! { previous fresh3 = (*E).dachor_var_A => (*E).dachor_var_A.wrapping_sub(1); }
     if fresh3 == 1u16 {
         enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2u16), timer = 1u16}
         (*E).dachor_var_F = ((0xa7f806i32) as u16);
