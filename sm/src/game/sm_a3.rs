@@ -2525,7 +2525,7 @@ pub unsafe fn Bang_Func_14(game: &mut Game) {
     }
     t = t.wrapping_add((*E).base.x_subpos as u32);
     (*E).base.x_subpos = t as u16;
-    (*E).base.x_pos = (t >> 16i32) as u16;
+    (*E).base.x_pos = (*E).base.x_pos.wrapping_add((t >> 16i32) as u16);
 }
 pub unsafe fn Bang_Func_15(game: &mut Game) {
     let E: *mut Enemy_Bang = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
@@ -2539,7 +2539,7 @@ pub unsafe fn Bang_Func_15(game: &mut Game) {
     }
     t = t.wrapping_add((*E).base.y_subpos as u32);
     (*E).base.y_subpos = t as u16;
-    (*E).base.y_pos = (t >> 16i32) as u16;
+    (*E).base.y_pos = (*E).base.y_pos.wrapping_add((t >> 16i32) as u16);
 }
 pub unsafe fn Bang_Func_18(game: &mut Game) {
     let E: *mut Enemy_Bang = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);

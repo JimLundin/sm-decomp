@@ -100,6 +100,28 @@ the oracle, then remove its CPU dependency with actual exercised coverage.
 Only temporary source-bound wrappers were compiled; existing release/replays
 remain preserved. No maintained Rust,ROM-derived artifact or residue change.
 
+Bang integer-position prerequisite (2026-10-20): both native movement
+helpers now add the current integer coordinate after storing the updated
+fraction. The 16-bit addition wraps and retains fractional carry; sticky
+left/up flags remain sticky. ROM lookup, absolute-value truncation, signed
+delta and low-store-before-high-reread order stay exact. Bang_Main still uses
+the ROM path while complete native core/callback/scratch semantics remain open.
+
+Source-extracted and fresh normal-library wrappers each pass 49152 actual-ROM
+coordinate/fraction/flag comparisons across both axes, 256 angles, four integer
+positions, three fractions, four speeds and both sticky-flag states. Omitted
+position, omitted carry and cleared-sticky controls all fail. Complete-file
+inversion changes only the two integer-position RHS expressions. These checks
+do not claim complete RAM/stack/hardware equivalence or gameplay execution.
+
+Formatting/check and normal release22.89s pass. An incomplete registry SDL
+seed failed missing bindings; rebuilding its script was deniedOS5. Both logs
+and caches are preserved; registry-only SDL reseeding enabled the fresh local
+game/frontend build. No imported game artifacts. Full any%129712/0,
+nativeexit0 (121.29s replay/123.92s wall), passes with all77 inputs fixed.
+Progress counters unchanged. No ROM-derived files or temporary harnesses are
+committed. Next: continue complete native Bang ownership against the oracle.
+
 DSP signed-sample saturation (2026-10-20): all 14 identical signed16-bit
 clamps share one safe saturate_sample operation. Channel-by-channel mixing,
 master-volume output, FIR sums/feedback, Gaussian interpolation and BRR retain
