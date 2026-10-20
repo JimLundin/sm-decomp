@@ -20,6 +20,184 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Reduction map (2026-10-20)
+
+Reduce volume first, then refine the smaller implementation. Keep the current
+bank modules, Game ownership and byte-compatible g_ram. The reduction target
+is **under 100,000 maintained Rust lines in sm/src**. At `51c0e735`, the 71
+Rust files contain **116,551 lines**: at least **16,552 net lines (14.2%)**
+must still go, counting every replacement helper, declaration and caller.
+
+This is the current reduction work order. Older "next" suggestions and source
+sizes below are historical where superseded here or by current source. The
+map is delivered; the reduction target remains unfinished. No complete,
+measured set of remaining candidates yet accounts for the 16,552-line gap.
+The first implementation milestone is to establish that set, beginning with
+the recurring gameplay algorithms below. File size is search territory, not
+an estimate of removable code.
+
+### Where the volume is
+
+Physical Rust lines, including comments and blanks, using the same boundary
+as `sh tools/progress.sh`. These rows partition all 116,551 lines without
+overlap. Bank numbers below refer to `sm/src/game/sm_XX.rs`.
+
+| Area | Files / boundaries | Lines |
+| --- | --- | ---: |
+| Bosses and endgame | A4, A5, A6, A7, A9, AA, AD | 21,175 |
+| Rooms, menus, HUD and effects | 80, 81, 82, 85, 87, 88, 89, 8F | 17,429 |
+| Samus and player projectiles | 90, 91, 92, 93, 94, 9B | 17,237 |
+| Ordinary enemy behaviours | A2, A3, A8, B2, B3, waver | 14,776 |
+| Cinematics | 8B, 8D | 6,797 |
+| Enemy projectiles | 86 | 6,010 |
+| Enemy engine and sprites | A0, B4 | 4,438 |
+| PLMs (room objects and block scripts) | 84 | 3,543 |
+| Shared gameplay declarations | constants, callback_tables, enemy_layouts, enemy_ram | 985 |
+| Hardware and audio | snes/*, spc_player, native_audio | 8,645 |
+| Frontend and configuration | platform/*, main, config | 6,396 |
+| Runtime, RAM and shared types | rtl, ram_map, game_state, types, lib, host, c_library, util | 5,388 |
+| Oracle, snapshots and diagnostics | cpu_infra, audio_snapshot, tracing, verify*, verify/checkpoint | 3,732 |
+| **Total** | **71 Rust files** | **116,551** |
+
+Gameplay is 92,390 lines (79.3%). Bosses, rooms/UI/effects, Samus and ordinary
+enemies alone contain 70,617 lines. That is the main search area. Hardware,
+the oracle and the frontend stay in the denominator; removing checks or moving
+code outside sm/src would not meet the intended reduction.
+
+### Workstreams, in discovery order
+
+1. **Repeated enemy/projectile behaviour cycles.** Follow complete algorithms:
+   select a direction, set animation/state, advance motion, react to collision,
+   then wait or transition. Search A2/A3/A8/B2/B3 and 86 first, following related
+   variants into boss banks. Share the common algorithm with explicit parameters
+   and small variant-specific tails, retaining the existing entry points and
+   numeric state addresses. Useful starting examples are `Sidehopper_Func_5`
+   through `_22`, the Beetom movement family, Thin Hopping Blobs and enemy
+   projectile preinstructions. These are leads into the wider family, not
+   permission to revive the parked Beetom-only draft. Captured versus live
+   enemy slots, callback order, signed gates and collision side effects are
+   the important differences to classify. Broader routes are needed for
+   variants outside current movie coverage.
+2. **Repeated Samus action algorithms.** Compare whole jump/fall/bounce,
+   knockback, directional movement and pose-transition families across
+   90/91/94/9B. Start at `Samus_InitJump`, `Samus_InitWallJump`,
+   `Samus_SetSpeedForKnockback_Y` and `Samus_InitBombJump`, then their update
+   paths. Share repeated speed selection, integration and transition decisions
+   where the actual operations agree. Keep liquid, suit, input, grapple and
+   slope differences explicit. The existing block-collision survey and the
+   small previous-position pair do not price this larger workstream. Gameplay
+   inputs must exercise each selected action and its resulting transition.
+3. **Repeated visual update and transfer algorithms.** Inspect tile traversal,
+   palette stepping, VRAM queue construction and screen-transition sequences
+   across 80/81/82/84/88/8B/8D and boss code. Prefer one traversal with ordered
+   parameters/segments where the bodies repeat; preserve per-stage decisions.
+   `CinematicFunction_Intro_Func21` through `_32` show repeated text/transfer
+   sequences with different input gates and transition tails. This workstream
+   concerns those algorithms, not the parked cinematic initializer rows.
+   Preserve row gates, live reads, overlap, byte-lane writes and queue order.
+   Title/menu, gameplay effects and endgame each need their own exercised route.
+4. **Repeated script execution and state progression.** Compare the substantive
+   loops in `PlmHandler_Async` (84), `EprojRunOne` (86), cinematic object
+   processing (8B), palette FX (8D) and enemy instruction execution (A0).
+   Look for shared fetch/execute/advance or wait/transition algorithms after
+   separating pointer-based and bank-relative instruction formats. Signature,
+   callback-table and dispatch declaration sharing is already implemented.
+   Do not create a new interpreter, universal state engine or callback DSL;
+   retain separate loops when their contracts differ. This is a secondary
+   opportunity until a complete formatted draft demonstrates worthwhile savings.
+
+These workstreams overlap source regions. Count a removed span once and assign
+the full shared-helper cost once. Rank implementation candidates by measured
+net deletion across complete families, then verification/implementation cost.
+Discovery order is not a promise that the first workstream saves the most.
+
+Current-source checks explain why broader families matter:
+
+| Observed subset | Current gross size | What it establishes |
+| --- | ---: | --- |
+| Ordinary functions containing direct Enemy_MoveDown/Right calls | 106 functions / 3,014 lines | Motion participates in many larger behaviours; the containing bodies are not all duplication. |
+| Direct consumers of jumping tables A2:838F / A0:CBC7 | 35 functions / 861 lines across six banks | Sharing this table algorithm alone cannot provide a multi-thousand-line cut. |
+| Ordinary EprojPreInstr_* functions in 86 | 92 functions / 1,474 lines | Include initialization, related state handlers and variant tails in the wider assessment. |
+| Ordinary gameplay functions named with Palette or Fade | 124 functions / 1,833 lines | Palette naming alone does not identify a sufficiently large removable family. |
+
+These are discovery counts of ordinary source functions, including their
+signatures, not compiler-expanded macro functions or a bound on semantic
+sharing. They overlap, omit differently spelled equivalents and are not net
+savings. Do not add them into a reduction forecast.
+
+### Sequence and checkpoints
+
+```mermaid
+flowchart LR
+    A[116551 lines] --> B[Map complete recurring algorithms]
+    B --> C[Format and compile full family drafts]
+    C --> D[Measure net savings and resolve overlaps]
+    D --> E[Exercise changed paths and verify]
+    E --> F[Land one shared algorithm per commit]
+    F --> G{Below 100000 lines?}
+    G -- No --> B
+    G -- Yes --> H[Refine interfaces, names and ownership]
+```
+
+1. **Establish the reduction budget.** For each candidate, identify all eligible
+   implementations and real variants, draft the full replacement in a temporary
+   location, format and compile it, and measure old lines minus retained callers
+   and new shared code. Start with workstream 1. Seek multi-thousand-line family
+   reductions; collect disjoint measured savings covering at least 16,552 lines
+   before claiming that the under-100,000 route is demonstrated. A small sample
+   or extrapolated percentage does not establish that budget. Useful proven
+   families can land while the rest of the budget is being established.
+2. **Resolve coverage before changing each algorithm.** Use existing normal-input
+   routes and explicit required routine/branch hits. Extend inputs where no route
+   reaches the family. Any% currently covers six rooms; Speed Booster covers
+   55 rooms and 53 enemy definitions. Neither reaches credits. Boss/endgame
+   opportunities therefore have a coverage dependency, not an automatic green
+   light from the existing zero-failure replays. Boundary comparisons supplement
+   the exercised oracle checks for wrapping, aliasing and access order.
+3. **Land and recount.** Follow the validation strategy below: `cargo fmt`,
+   `cargo build --release`, exercised checks, full any% and the broadest relevant
+   boot route for shared changes/subsystem integration, then
+   `sh tools/progress.sh`. Freeze source during verification and use the source-
+   checked launcher. Recheck HEAD and commit one coherent family to main with
+   its verify result. Recalculate the remaining gap after every accepted batch.
+4. **Begin refinement after the volume pass.** Under 100,000 lines must come from
+   shared or eliminated maintained implementations with preserved behaviour and
+   readable callers. Then resume naming, interfaces, ownership/unsafe reduction,
+   remaining native Bang AI and boot-to-credits work. Map Rando follows vanilla.
+
+If a draft is too small, rejects necessary variants or makes callers harder to
+read, record its measured scope and move to the next broader candidate. If
+stuck on one item for over an hour, record findings here and stop as instructed.
+If measured candidates cannot cover the gap, report the uncovered remainder;
+keep the fixed target visible instead of claiming success from small cleanups.
+
+### Already harvested or parked
+
+- Shared RAM/word/byte interfaces, enemy layouts, metadata, instruction
+  declarations, forwarding wrappers, address dispatch, exact aliases and
+  audited unused-function removal are already in current source. Their old
+  savings cannot fund the remaining target a second time.
+- The old pending 1,712-line corpse tile-row survey is superseded by source:
+  `transfer_corpse_tiles` plus its 24 move/copy declarations now occupy 128
+  lines in [sm_a9.rs](../sm/src/game/sm_a9.rs). `initialize_corpse_tiles` also
+  already shares initialization. Use these as examples of completed algorithm
+  consolidation, not remaining work.
+- Keep the cinematic initializer, current-enemy accessor, terminal/indexed-loop,
+  tiny clone/import/data and parenthesis drafts parked. The historical
+  Beetom-only projection saves 144 lines, not a major remaining family.
+- Keep renderer unification and PNG dependency substitution parked: the two
+  PPUs have different mode behaviour, and assessed image libraries did not
+  preserve the current decoder's contracts. Verification performance work
+  improves iteration cost but supplies no assumed source-reduction budget.
+
+Map verification: all 13 inventory rows independently recount to the current
+71 files and 116,551 lines; the corpse-family size and 24 declarations match
+source. Formatting/check, normal release (23.21s), diff check and progress
+pass. Fresh source-checked any% passes 129712/0 (104.78s replay, 111.63s total),
+native exit 0. This is a plan-only change; maintained Rust and all progress
+counters are unchanged. No new reduction or additional gameplay coverage is
+claimed by this mapping pass.
+
 Verifier source freshness (2026-10-20): ongoing pipeline work must measure
 the complete edit/build/result cycle and establish execution of changed code.
 The Windows launcher now rejects stale or unstamped cached DLLs and source
