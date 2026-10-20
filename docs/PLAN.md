@@ -3004,7 +3004,33 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `d6211956` binds cached verification
+Latest reviewed integration (2026-10-20): `c21297dc` includes the DSP sample
+saturation change. The merged `dbb38a4d` and `7d9fd911` have identical DSP
+source; the merge also preserves the local plan entry. All 77 frozen source
+inputs match the committed integration. Independent complete-file inversion
+restores all 14 original signed16-bit clamps exactly. The safe scalar helper
+retains each per-channel, master-volume, echo, interpolation and BRR clamp
+position, along with every surrounding shift/truncation and memory operation.
+
+The complete original/candidate module harness regenerates byte-exactly using
+the frozen Dsp/DspChannel fields and existing macros. State comparison ignores
+only the two buffers' different allocation addresses, without reading padding.
+Independent reruns pass 4245504 state/output comparisons and 262149 arithmetic
+inputs. Wrapping, a 32766 ceiling and a missing per-channel clamp are each
+detected by their exact single-mutation controls. The active mixing setup
+corrects the earlier muted/reset test's failure to exercise that last control.
+All 86 final pins and 17 focused pins remain unchanged.
+
+Formatting/check, progress, normal release (22.57s) and full any% pass:
+129712/0, native exit 0, 105.20s replay/107.39s wall. Review reused the
+authoritative release/replay. Rust lines fall 79; explicit signed bounds add
+one cast-containing line, with unsafe/raw/FFI counters unchanged. These local
+DSP comparisons do not establish ROM-driver audio equality or complete alias
+safety. The Speed Booster pass below applies to the preceding integration;
+the DSP change has no new Speed Booster replay. Broader gameplay, frontend,
+hardware/audio coverage and ownership remain open.
+
+Included verifier/decompression integration (2026-10-20): `d6211956` binds cached verification
 to compiled game-library source and includes shared decompression `71d03889`
 plus reviewed PNG `54af58df`. Independent inspection binds all 76 Rust/launcher/
 manifest inputs to the commit, accounting only for checkout CRLF conversion
@@ -3038,8 +3064,7 @@ The latter visits 55 rooms and 53 enemy definitions; neither reaches credits.
 Combined Rust count is 128995: decompression -81, verifier source checks +142.
 Seven added unsafe-function declarations and two verifier exports explain
 the increased unsafe-function/export counts. Broader routes, frontend/audio/
-hardware coverage and ownership remain open. Later DSP saturation changes
-remain outside this review.
+hardware coverage and ownership remain open.
 
 Included PNG integration (2026-10-20): `54af58df` shares PNG filter-byte
 reconstruction across all three row paths and unpacking for depths 1/2/4.
