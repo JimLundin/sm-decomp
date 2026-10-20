@@ -630,6 +630,12 @@ A macro-aware graph of 6,729 functions/callbacks and 1,274 globals found no
 large disconnected component; new candidates occupy only 48 source lines.
 No deletion is claimed. TEMP sm-dead-components-d914d9aa.
 
+The existing typed-literal emission experiment saves 35,000 lines on the
+original transpilation, but its adaptation at 65c7fc36 saves only **19 lines**
+across 1,375 sites, including parsed macro invocation bodies. The complete
+formatted snapshot is 107,520 -> 107,501; it has no compiler or behavior proof.
+Park it without further validation. TEMP sm-literal-adoption-65c7fc36.
+
 When revisiting one of these exact families, consult its historical section
 with `git show ec45c573:docs/PLAN.md` and search the relevant heading/symbol.
 Temporary draft locations recorded there may no longer exist. Recheck current
