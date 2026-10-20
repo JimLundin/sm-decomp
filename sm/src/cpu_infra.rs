@@ -3,6 +3,7 @@ use crate::game::sm_82::RunOneFrameOfGame;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::words;
 pub use crate::snes::registers::*;
 use crate::types::SpcPlayer;
 use ::core::ffi::{c_char, c_void};
@@ -1224,8 +1225,7 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
     (*game.g_cpu).xf = (flags & 2) >> 1 != 0;
     game.g_calling_asm_from_c = true_0 != 0;
     while game.g_calling_asm_from_c {
-        let pc_0: u32 =
-            (((*(*game.g_snes).cpu).k as i32) << 16 | (*(*game.g_snes).cpu).pc as i32) as u32;
+        let pc_0: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
         if (*game.g_snes).debug_cycles {
             let mut line: [c_char; 80] = [0; 80];
             getProcessorStateCpu(game.g_snes, &raw mut line as *mut c_char, game);
@@ -1541,8 +1541,7 @@ pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
             puts(&raw mut line as *mut c_char);
         }
         cpu_runOpcode(game.g_cpu, game);
-        let addr: u32 =
-            (((*(*game.g_snes).cpu).k as i32) << 16 | (*(*game.g_snes).cpu).pc as i32) as u32;
+        let addr: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
         if addr == pc1 || addr == pc2 {
             return addr;
         }

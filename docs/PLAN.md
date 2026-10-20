@@ -72,8 +72,33 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Split-word access (2026-10-20, explicitly approved focused reduction): one
+caller-side words! macro shares 302 assemblies and 247 updates across 27 callers.
+The 248 unsigned and 54 signed assemblies retain their exact casts and high-
+before-low evaluation. The 108 named-RAM and 139 shared-field updates retain
+pointer/value evaluation and the unchanged helpers' low-before-high accesses,
+including unaligned and overlapping words. Unusual raw-pointer calls remain
+ordinary calls; no whole-Game borrow, temporary block or RAM layout change.
+
+Complete formatted-source reconstruction and core/frontend/library/host compiler
+structure comparison pass. All embedded source payloads are bound byte-for-byte;
+only reviewed grouping parentheses, fixed shift suffixes, resolved helper paths
+and checked address constants are normalized. Normal rustfmt handles the new
+call syntax; earlier estimates from unwrapped macro calls are superseded.
+
+Final composition includes 09f4560a aliases and 6d9dc664 byte access. Formatting,
+all-target feature checks, normal release (26.37s), diff check and progress pass.
+Any% 129712/0 (169.63s) and Speed Booster 148406/0
+(199.73s), native exits 0, pass with fixed source/input/artifact
+bytes and normal-library reuse. An earlier draft replay was correctly rejected
+after a temporary projection changed its source; no passing result is claimed
+for that attempt. Rust lines -411 to 116551; cast-containing lines -67 to 9414
+reflect shared syntax/reflow, with all casts retained and other counters unchanged.
+Existing movie coverage is unchanged; 16552 further lines are needed for the
+aggregate target. Continue the large repeated-family priority below.
+
 Volume priority (user direction, 2026-10-20): reduce maintained sm/src Rust
-below 100000 lines. The current 116962 lines require at least 16963 further
+below 100000 lines. The current 116551 lines require at least 16552 further
 lines removed, including all helpers and caller changes. The user's latest
 correction rejects incremental small examples as the strategy: select whole
 subsystem replacements with credible multi-thousand-line net reductions.

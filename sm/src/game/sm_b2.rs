@@ -17,6 +17,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::words;
 use crate::rtl::{RomPtr, Unreachable};
 use ::core::ptr::null_mut;
 
@@ -682,7 +683,7 @@ pub unsafe fn SpacePirates_F9C1(k: u16, game: &mut Game) {
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(5);
     if Enemy_MoveDown(
         k,
-        ((byte!((*E).var_00; 1) as u32) << 16 | byte!((*E).var_00; 0) as u16 as u32) as i32,
+        (words!((byte!((*E).var_00; 1), byte!((*E).var_00; 0) as u16))) as i32,
         game,
     ) != 0
         || {
@@ -732,7 +733,7 @@ pub unsafe fn SpacePirates_FA95(k: u16, game: &mut Game) {
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(5);
     if Enemy_MoveDown(
         k,
-        ((byte!((*E).var_00; 1) as u32) << 16 | byte!((*E).var_00; 0) as u16 as u32) as i32,
+        (words!((byte!((*E).var_00; 1), byte!((*E).var_00; 0) as u16))) as i32,
         game,
     ) != 0
         || {

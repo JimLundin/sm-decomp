@@ -27,6 +27,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::words;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{MakePairU16, RomPtr, SnesDivide, Unreachable, WriteReg};
 use crate::set_fields;
@@ -1236,10 +1237,10 @@ pub unsafe fn KraidLint_ChargeLint(k: u16, game: &mut Game) {
 }
 pub unsafe fn KraidLint_FireLint(k: u16, game: &mut Game) {
     let E = Get_Kraid(k as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        -((g_word_A7A928 as i32) << 16i32 | g_word_A7A926 as i32) as u32,
+    words!(
+        (*E).base,
+        x_pos,
+        x_subpos += -(words!(i32, (g_word_A7A928, g_word_A7A926))) as u32
     );
     if (*E).base.x_pos as i32 - 56i32 & 0x8000 != 0 {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
@@ -1252,10 +1253,9 @@ pub unsafe fn KraidLint_FireLint(k: u16, game: &mut Game) {
         (*E).kraid_var_B = 0;
     }
     if CheckIfEnemyTouchesSamus(k, game) != 0 {
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xb58),
-            ram_ptr!(game, u16; 0xb56),
-            -((g_word_A7A928 as i32) << 16i32 | g_word_A7A926 as i32) as u32,
+        words!(
+            game.extra_samus_x_displacement,
+            extra_samus_x_subdisplacement += -(words!(i32, (g_word_A7A928, g_word_A7A926))) as u32
         );
         if word!(game.extra_samus_x_displacement) as i32 + 16 & 0x8000 != 0 {
             word!(game.extra_samus_x_displacement = -16i32 as u16);
@@ -1622,12 +1622,7 @@ pub unsafe fn KraidsFingernail_Init(game: &mut Game) {
 }
 pub unsafe fn KraidsFingernail_Fire(k: u16, game: &mut Game) {
     let v1 = gEnemyData(k as i32, game);
-    if Enemy_MoveRight_IgnoreSlopes(
-        k,
-        (((*v1).ai_var_C as u32) << 16 | (*v1).ai_var_B as u32) as i32,
-        game,
-    ) != 0
-    {
+    if Enemy_MoveRight_IgnoreSlopes(k, (words!((*v1), ai_var_C, ai_var_B)) as i32, game) != 0 {
         (*v1).ai_var_B = -((*v1).ai_var_B as i32) as u16;
         (*v1).ai_var_C = -((*v1).ai_var_C as i32) as u16;
     } else {
@@ -1656,16 +1651,11 @@ pub unsafe fn KraidsFingernail_Fire(k: u16, game: &mut Game) {
         }
     }
     let v5 = gEnemyData(k as i32, game);
-    if Enemy_MoveDown(
-        k,
-        (((*v5).ai_var_E as u32) << 16 | (*v5).ai_var_D as u32) as i32,
-        game,
-    ) != 0
-    {
-        SetHiLo(
-            &raw mut (*v5).ai_var_E,
-            &raw mut (*v5).ai_var_D,
-            -(((*v5).ai_var_E as i32) << 16i32 | (*v5).ai_var_D as i32) as u32,
+    if Enemy_MoveDown(k, (words!((*v5), ai_var_E, ai_var_D)) as i32, game) != 0 {
+        words!(
+            (*v5),
+            ai_var_E,
+            ai_var_D = -(words!(i32, (*v5), ai_var_E, ai_var_D)) as u32
         );
     }
 }
@@ -2336,11 +2326,7 @@ pub unsafe fn Kraid_Raise_Handler(game: &mut Game) {
         } else {
             1
         }) as u16;
-    AddToHiLo(
-        &raw mut (*E0).base.y_pos,
-        &raw mut (*E0).base.y_subpos,
-        -0x8000i32 as u32,
-    );
+    words!((*E0).base, y_pos, y_subpos += -0x8000i32 as u32);
     if (*E0).base.y_pos as i32 - 457i32 & 0x8000 != 0 {
         (*E0).base.x_pos = 176;
         let E5 = Get_Kraid(0x140, game);
@@ -2698,21 +2684,17 @@ pub unsafe fn Phantoon_AdjustSpeedLeftSideClockwise(game: &mut Game) {
     let phant_var_D: u16 = (*E).var_D;
     if phant_var_D != 0 {
         if (phant_var_D & 1) != 0 {
-            AddToHiLo(
-                &raw mut (*E).var_C,
-                &raw mut (*E).var_B,
-                (g_word_A7CD79 as u32) << 16 | g_word_A7CD77 as u32,
-            );
+            words!((*E), var_C, var_B += words!((g_word_A7CD79, g_word_A7CD77)));
             if (((*E).var_C) as i16).wrapping_sub((g_word_A7CD7D) as i16) >= 0 {
                 (*E).var_C = g_word_A7CD7D;
                 (*E).var_B = 0;
                 (*E).var_D = (*E).var_D.wrapping_add(1);
             }
         } else {
-            AddToHiLo(
-                &raw mut (*E).var_C,
-                &raw mut (*E).var_B,
-                -((g_word_A7CD79 as i32) << 16i32 | g_word_A7CD77 as i32) as u32,
+            words!(
+                (*E),
+                var_C,
+                var_B += -(words!(i32, (g_word_A7CD79, g_word_A7CD77))) as u32
             );
             if (*E).var_C == g_word_A7CD7F
                 || (((*E).var_C) as i16).wrapping_sub((g_word_A7CD7F) as i16) < 0
@@ -2722,11 +2704,7 @@ pub unsafe fn Phantoon_AdjustSpeedLeftSideClockwise(game: &mut Game) {
             }
         }
     } else {
-        AddToHiLo(
-            &raw mut (*E).var_C,
-            &raw mut (*E).var_B,
-            (g_word_A7CD75 as u32) << 16 | g_word_A7CD73 as u32,
-        );
+        words!((*E), var_C, var_B += words!((g_word_A7CD75, g_word_A7CD73)));
         if (((*E).var_C) as i16).wrapping_sub((g_word_A7CD7B) as i16) >= 0 {
             (*E).var_C = (g_word_A7CD7B).wrapping_sub(1);
             (*E).var_B = 0;
@@ -2739,10 +2717,10 @@ pub unsafe fn Phantoon_AdjustSpeedRightSideClockwise(game: &mut Game) {
     let phant_var_D: u16 = (*E).var_D;
     if phant_var_D != 0 {
         if (phant_var_D & 1) != 0 {
-            AddToHiLo(
-                &raw mut (*E).var_C,
-                &raw mut (*E).var_B,
-                -((g_word_A7CD87 as i32) << 16i32 | g_word_A7CD85 as i32) as u32,
+            words!(
+                (*E),
+                var_C,
+                var_B += -(words!(i32, (g_word_A7CD87, g_word_A7CD85))) as u32
             );
             if (*E).var_C == g_word_A7CD8B
                 || (((*E).var_C) as i16).wrapping_sub((g_word_A7CD8B) as i16) < 0
@@ -2752,21 +2730,17 @@ pub unsafe fn Phantoon_AdjustSpeedRightSideClockwise(game: &mut Game) {
                 (*E).var_D = (*E).var_D.wrapping_add(1);
             }
         } else {
-            AddToHiLo(
-                &raw mut (*E).var_C,
-                &raw mut (*E).var_B,
-                (g_word_A7CD87 as u32) << 16 | g_word_A7CD85 as u32,
-            );
+            words!((*E), var_C, var_B += words!((g_word_A7CD87, g_word_A7CD85)));
             if (((*E).var_C) as i16).wrapping_sub((g_word_A7CD8D) as i16) >= 0 {
                 (*E).var_C = g_word_A7CD8D;
                 set_fields! {[(*E)], 0; var_B, var_D}
             }
         }
     } else {
-        AddToHiLo(
-            &raw mut (*E).var_C,
-            &raw mut (*E).var_B,
-            -((g_word_A7CD83 as i32) << 16i32 | g_word_A7CD81 as i32) as u32,
+        words!(
+            (*E),
+            var_C,
+            var_B += -(words!(i32, (g_word_A7CD83, g_word_A7CD81))) as u32
         );
         if (*E).var_C == g_word_A7CD89
             || (((*E).var_C) as i16).wrapping_sub((g_word_A7CD89) as i16) < 0
@@ -2835,10 +2809,10 @@ pub unsafe fn Phantoon_MoveInSwoopingPattern(k: u16, game: &mut Game) {
     } else if (*E2).var_C as i32 - 2048i32 & 0x8000 != 0 {
         (*E2).var_C = ((*E2).var_C).wrapping_add(32);
     }
-    AddToHiLo(
-        &raw mut (*E0).base.x_pos,
-        &raw mut (*E0).base.x_subpos,
-        (((*E2).var_C as i16 as i32) << 8) as u32,
+    words!(
+        (*E0).base,
+        x_pos,
+        x_subpos += (((*E2).var_C as i16 as i32) << 8) as u32
     );
     if (*E0).base.x_pos as i32 + 64 & 0x8000 != 0 {
         (*E0).base.x_pos = -64i32 as u16;
@@ -2857,10 +2831,10 @@ pub unsafe fn Phantoon_MoveInSwoopingPattern(k: u16, game: &mut Game) {
     } else if (*E2).var_D as i32 - 1536i32 & 0x8000 != 0 {
         (*E2).var_D = ((*E2).var_D).wrapping_add(64);
     }
-    AddToHiLo(
-        &raw mut (*E0).base.y_pos,
-        &raw mut (*E0).base.y_subpos,
-        (((*E2).var_D as i16 as i32) << 8) as u32,
+    words!(
+        (*E0).base,
+        y_pos,
+        y_subpos += (((*E2).var_D as i16 as i32) << 8) as u32
     );
     if (*E0).base.y_pos as i32 - 64i32 & 0x8000 != 0 {
         (*E0).base.y_pos = 64;
@@ -2980,11 +2954,7 @@ pub unsafe fn Phantoon_SpawnFireballsBeforeFight(k: u16, game: &mut Game) {
 }
 pub unsafe fn Phantoon_WavyFadeIn(k: u16, game: &mut Game) {
     Phantoon_FadeIn(0xc, game);
-    if Phantoon_Func_3(
-        ((g_word_A7CD9D as u32) << 16 | g_word_A7CD9B as u32) as i32,
-        game,
-    ) != 0
-    {
+    if Phantoon_Func_3((words!((g_word_A7CD9D, g_word_A7CD9B))) as i32, game) != 0 {
         let E = Get_Phantoon(k as i32, game);
         (*E).var_F = ((0xa7d596i32) as u16);
         (*Get_Phantoon(0xc0i32, game)).parameter_1 = 1;
@@ -3403,10 +3373,7 @@ pub unsafe fn Phantoon_WavyDyingPhantoonAndCry(k: u16, game: &mut Game) {
     QueueSfx2_Max6(0x7e, game);
 }
 pub unsafe fn Phantoon_DyingFadeOut(k: u16, game: &mut Game) {
-    Phantoon_Func_3(
-        ((g_word_A7CDA1 as u32) << 16 | g_word_A7CD9F as u32) as i32,
-        game,
-    );
+    Phantoon_Func_3((words!((g_word_A7CDA1, g_word_A7CD9F))) as i32, game);
     let E = Get_Phantoon(0x40, game);
     if (*E).var_C == 0xffff {
         Phantoon_FadeOut(0xc, game);
@@ -3799,20 +3766,16 @@ pub unsafe fn Etecoon_Func_1(k: u16, game: &mut Game) {
 }
 pub unsafe fn Etecoon_Func_2(k: u16, game: &mut Game) -> u8 {
     let E = Get_Etecoon(k as i32, game);
-    Enemy_MoveRight_IgnoreSlopes(
-        k,
-        (((*E).var_C as u32) << 16 | (*E).var_D as u32) as i32,
-        game,
-    )
+    Enemy_MoveRight_IgnoreSlopes(k, (words!((*E), var_C, var_D)) as i32, game)
 }
 pub unsafe fn Etecoon_Func_3(k: u16, game: &mut Game) -> u8 {
     let E = Get_Etecoon(k as i32, game);
-    let amt: i32 = (((*E).var_A as u32) << 16 | (*E).var_B as u32) as i32;
+    let amt: i32 = (words!((*E), var_A, var_B)) as i32;
     if (*E).var_A as i32 - 5i32 & 0x8000 != 0 {
-        AddToHiLo(
-            &raw mut (*E).var_A,
-            &raw mut (*E).var_B,
-            (word!(game.samus_y_accel) as u32) << 16 | word!(game.samus_y_subaccel) as u32,
+        words!(
+            (*E),
+            var_A,
+            var_B += words!(game.samus_y_accel, samus_y_subaccel)
         );
     }
     Enemy_MoveDown(k, amt, game)
@@ -4298,17 +4261,13 @@ pub unsafe fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
     {
         (*E).var_A = g_word_A7F4D5;
         (*E).var_B = g_word_A7F4D7;
-        return ((g_word_A7F4D5 as u32) << 16 | g_word_A7F4D7 as u32) as i32;
+        return (words!((g_word_A7F4D5, g_word_A7F4D7))) as i32;
     }
-    AddToHiLo(
-        &raw mut (*E).var_A,
-        &raw mut (*E).var_B,
-        (g_word_A7F4D9 as u32) << 16 | g_word_A7F4DB as u32,
-    );
+    words!((*E), var_A, var_B += words!((g_word_A7F4D9, g_word_A7F4DB)));
     if ((*E).var_A == 4 || (*E).var_A == 8) && (*E).var_B == 0 {
         (*E).base.current_instruction = ((*E).base.current_instruction).wrapping_add(28);
     }
-    (((*E).var_A as u32) << 16 | (*E).var_B as u32) as i32
+    (words!((*E), var_A, var_B)) as i32
 }
 pub unsafe fn Dachora_Func_7(k: u16, game: &mut Game) {
     Dachora_Func_10(k, game);
@@ -4370,21 +4329,17 @@ pub unsafe fn Dachora_Func_8(k: u16, game: &mut Game) {
     Dachora_Func_10(k, game);
     Dachora_Func_9(k, game);
     let E = Get_Dachora(k as i32, game);
-    AddToHiLo(
-        &raw mut (*E).var_C,
-        &raw mut (*E).var_D,
-        (word!(game.samus_y_accel) as u32) << 16 | word!(game.samus_y_subaccel) as u32,
+    words!(
+        (*E),
+        var_C,
+        var_D += words!(game.samus_y_accel, samus_y_subaccel)
     );
-    AddToHiLo(
-        &raw mut (*E).var_A,
-        &raw mut (*E).var_B,
-        ((*E).var_C as u32) << 16 | (*E).var_D as u32,
-    );
+    words!((*E), var_A, var_B += words!((*E), var_C, var_D));
     let mut v6: u16 = (*E).var_A;
     if v6 as i32 - 15i32 & 0x8000 == 0 {
         v6 = 15;
     }
-    let amt: i32 = ((v6 as u32) << 16 | (*E).var_B as u32) as i32;
+    let amt: i32 = (words!((v6, (*E).var_B))) as i32;
     if Enemy_MoveDown(k, -amt, game) != 0 {
         if (*E).parameter_1 != 0 {
             (*E).base.current_instruction = addr_kDachora_Ilist_F3FF as u16;
@@ -4455,12 +4410,12 @@ pub unsafe fn Dachora_Func_10(k: u16, game: &mut Game) {
 }
 pub unsafe fn Dachora_Func_11(k: u16, game: &mut Game) {
     let E = Get_Dachora(k as i32, game);
-    AddToHiLo(
-        &raw mut (*E).var_A,
-        &raw mut (*E).var_B,
-        (word!(game.samus_y_accel) as u32) << 16 | word!(game.samus_y_subaccel) as u32,
+    words!(
+        (*E),
+        var_A,
+        var_B += words!(game.samus_y_accel, samus_y_subaccel)
     );
-    let mut amt: i32 = (((*E).var_A as u32) << 16 | (*E).var_B as u32) as i32;
+    let mut amt: i32 = (words!((*E), var_A, var_B)) as i32;
     if (amt >> 16) - 10i32 & 0x8000 == 0 {
         amt = (10i16 as i32) << 16;
     }

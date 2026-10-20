@@ -3,6 +3,7 @@ use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max6, Qu
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::words;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{MakePairU16, RomPtr, Unreachable};
 use ::core::ptr::{null, null_mut};
@@ -191,10 +192,9 @@ pub unsafe fn PalPreInstr_CheckEnemy0Health(k: u16, game: &mut Game) {
 }
 pub unsafe fn PalPreInstr_SamusInHeat(k: u16, game: &mut Game) {
     if (word!(game.equipped_items) & 0x21) == 0 {
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xa50),
-            ram_ptr!(game, u16; 0xa4e),
-            0x4000,
+        words!(
+            game.samus_periodic_damage,
+            samus_periodic_subdamage += 0x4000
         );
         if (word!(game.nmi_frame_counter_word) & 7) == 0 && word!(game.samus_health) > 0x46 {
             QueueSfx3_Max6(0x2d, game);

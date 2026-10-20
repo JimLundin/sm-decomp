@@ -24,6 +24,7 @@ use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::words;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
 use crate::set_fields;
@@ -249,7 +250,7 @@ pub unsafe fn Draygon_Func_5(game: &mut Game) {
         (varE26 >> 2) as u32,
         ((Abs16(((*E).var_00).wrapping_sub(word!(game.samus_x_pos))) as i32) << 16) as u32,
     );
-    SetHiLo(&raw mut (*E).var_D, &raw mut (*E).var_E, t);
+    words!((*E), var_D, var_E = t);
     let v6: u16 = varE26;
     *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(varE26 as i32 as isize) as *mut u16) =
         (*E).base.y_pos;
@@ -271,11 +272,7 @@ pub unsafe fn Draygon_Func_6(game: &mut Game) {
         as *mut u16);
     (*E).var_B = ((*E).var_B).wrapping_sub(4);
     if (*E).var_B != 0 {
-        AddToHiLo(
-            &raw mut (*E).base.x_pos,
-            &raw mut (*E).base.x_subpos,
-            ((*E).var_D as u32) << 16 | (*E).var_E as u32,
-        );
+        words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
     } else {
         (*E).var_A = ((0xa58922i32) as u16);
     };
@@ -287,7 +284,7 @@ pub unsafe fn Draygon_Func_8(game: &mut Game) {
         ((*E).var_C >> 2) as u32,
         ((672 - (*E).base.x_pos as i32) << 16) as u32,
     );
-    SetHiLo(&raw mut (*E).var_D, &raw mut (*E).var_E, t);
+    words!((*E), var_D, var_E = t);
     (*E).var_A = ((0xa58951i32) as u16);
 }
 pub unsafe fn Draygon_Func_9(game: &mut Game) {
@@ -311,11 +308,7 @@ pub unsafe fn Draygon_Func_9(game: &mut Game) {
             (*E).var_A = ((0xa58c8ei32) as u16);
         }
     } else {
-        AddToHiLo(
-            &raw mut (*E).base.x_pos,
-            &raw mut (*E).base.x_subpos,
-            ((*E).var_D as u32) << 16 | (*E).var_E as u32,
-        );
+        words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
     };
 }
 pub unsafe fn Draygon_Func_10(game: &mut Game) {
@@ -327,7 +320,7 @@ pub unsafe fn Draygon_Func_10(game: &mut Game) {
         (varE26 >> 2) as u32,
         ((Abs16(((*E).var_02).wrapping_sub(word!(game.samus_x_pos))) as i32) << 16) as u32,
     );
-    SetHiLo(&raw mut (*E).var_D, &raw mut (*E).var_E, t);
+    words!((*E), var_D, var_E = t);
     (*E).var_A = ((0xa58a00i32) as u16);
     enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_97BB as u16, timer = 1}
     (*E).var_20 = 0;
@@ -348,10 +341,10 @@ pub unsafe fn Draygon_Func_11(game: &mut Game) {
         as *mut u16);
     (*E).var_B = ((*E).var_B).wrapping_sub(4);
     if (*E).var_B != 0 {
-        AddToHiLo(
-            &raw mut (*E).base.x_pos,
-            &raw mut (*E).base.x_subpos,
-            -(((*E).var_D as i32) << 16i32 | (*E).var_E as i32) as u32,
+        words!(
+            (*E).base,
+            x_pos,
+            x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
         );
     } else {
         (*E).var_A = ((0xa58a50i32) as u16);
@@ -393,10 +386,10 @@ pub unsafe fn Draygon_Func_13(game: &mut Game) {
             (*E).base.x_pos = (*E).var_00;
         }
     } else {
-        AddToHiLo(
-            &raw mut (*E).base.x_pos,
-            &raw mut (*E).base.x_subpos,
-            -(((*E).var_D as i32) << 16i32 | (*E).var_E as i32) as u32,
+        words!(
+            (*E).base,
+            x_pos,
+            x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
         );
     };
 }
@@ -425,11 +418,7 @@ pub unsafe fn Draygon_Func_15(game: &mut Game) {
     } else {
         (*E).base.y_pos = (CosineMult8bit((*E).var_0D, 32u16, game)).wrapping_add(384);
         (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-        AddToHiLo(
-            &raw mut (*E).base.x_pos,
-            &raw mut (*E).base.x_subpos,
-            ((*E).var_D as u32) << 16 | (*E).var_E as u32,
-        );
+        words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
     };
 }
 pub unsafe fn Draygon_Func_16(game: &mut Game) {
@@ -454,11 +443,7 @@ pub unsafe fn Draygon_Func_16(game: &mut Game) {
         if current_block == 6483416627284290920 {
             (*E).base.y_pos = (CosineMult8bit((*E).var_0D, 32u16, game)).wrapping_add(384);
             (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-            AddToHiLo(
-                &raw mut (*E).base.x_pos,
-                &raw mut (*E).base.x_subpos,
-                ((*E).var_D as u32) << 16 | (*E).var_E as u32,
-            );
+            words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
             if ((*E).base.x_pos as i16) >= 0 && (*E).base.x_pos as i32 - 672i32 & 0x8000 == 0 {
                 current_block = 11361156962102030361;
             } else {
@@ -485,11 +470,7 @@ pub unsafe fn Draygon_Func_17(k: u16, game: &mut Game) {
     let E = Get_Draygon(0, game);
     (*E).base.y_pos = (CosineMult8bit((*E).var_0D, 32u16, game)).wrapping_add(384);
     (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        ((*E).var_D as u32) << 16 | (*E).var_E as u32,
-    );
+    words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
     if ((*E).base.x_pos as i16) >= 0 && (*E).base.x_pos as i32 - 672i32 & 0x8000 == 0 {
         (*E).var_A = ((0xa589b3i32) as u16);
         (*E).base.x_pos = 592;
@@ -521,10 +502,10 @@ pub unsafe fn Draygon_Func_19(game: &mut Game) {
     } else {
         (*E).base.y_pos = (CosineMult8bit((*E).var_0D, 32u16, game)).wrapping_add(384);
         (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-        AddToHiLo(
-            &raw mut (*E).base.x_pos,
-            &raw mut (*E).base.x_subpos,
-            -(((*E).var_D as i32) << 16i32 | (*E).var_E as i32) as u32,
+        words!(
+            (*E).base,
+            x_pos,
+            x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
         );
     };
 }
@@ -549,10 +530,10 @@ pub unsafe fn Draygon_Func_20(game: &mut Game) {
         if current_block == 6873731126896040597 {
             (*E).base.y_pos = (CosineMult8bit((*E).var_0D, 32u16, game)).wrapping_add(384);
             (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-            AddToHiLo(
-                &raw mut (*E).base.x_pos,
-                &raw mut (*E).base.x_subpos,
-                -(((*E).var_D as i32) << 16i32 | (*E).var_E as i32) as u32,
+            words!(
+                (*E).base,
+                x_pos,
+                x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
             );
             if (*E).base.x_pos < 0 && (*E).base.x_pos as i32 + 80 & 0x8000 != 0 {
                 current_block = 17278387905106781498;
@@ -583,10 +564,10 @@ pub unsafe fn Draygon_Func_21(k: u16, game: &mut Game) {
     } else {
         (*E).base.y_pos = (CosineMult8bit((*E).var_0D, 32u16, game)).wrapping_add(384);
         (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-        AddToHiLo(
-            &raw mut (*E).base.x_pos,
-            &raw mut (*E).base.x_subpos,
-            -(((*E).var_D as i32) << 16i32 | (*E).var_E as i32) as u32,
+        words!(
+            (*E).base,
+            x_pos,
+            x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
         );
         if ((*E).base.x_pos as i16) < 0 && (*E).base.x_pos as i32 + 80 & 0x8000 != 0 {
             (*E).var_A = ((0xa587f4i32) as u16);
@@ -702,16 +683,15 @@ pub unsafe fn Draygon_Func_25(k: u16, game: &mut Game) {
             let y: u16 = ((*E).base.y_pos).wrapping_sub(16);
             CreateSpriteAtPos(x, y, 61, 0, game);
         }
-        AddToHiLo(&raw mut (*E).var_05, &raw mut (*E).var_09, 0x2000);
+        words!((*E), var_05, var_09 += 0x2000);
         if (*E).var_05 as i32 - 160i32 & 0x8000 == 0
             || {
                 v6 = ((*E).var_0B).wrapping_sub(1);
                 (*E).var_0B = v6;
                 (*E).var_08 = ((byte!((*E).var_08; 0)).wrapping_add(byte!(v6; 1))) as u16;
                 crate::update_place! { previous mut draygon_var_0A: u16 = (*E).var_0A => (draygon_var_0A).wrapping_sub(0x4000); }
-                let mut v8: u16 = ((((*E).var_07 as u32) << 16i32 | draygon_var_0A as u32)
-                    .wrapping_sub(0x4000)
-                    >> 16) as u16;
+                let mut v8: u16 =
+                    ((words!(((*E).var_07, draygon_var_0A))).wrapping_sub(0x4000) >> 16) as u16;
                 (*E).var_07 = v8;
                 v8 as i32 - 64i32 & 0x8000 != 0
             }
@@ -1587,8 +1567,8 @@ pub unsafe fn SporeSpawn_Func_4(game: &mut Game) {
     EnemyFunc_B691(
         varE20,
         Point32 {
-            x: ((*E).var_28 as u32) << 16 | (*E).var_29 as u32,
-            y: ((*E).var_2A as u32) << 16 | (*E).var_2B as u32,
+            x: words!((*E), var_28, var_29),
+            y: words!((*E), var_2A, var_2B),
         },
         game,
     );

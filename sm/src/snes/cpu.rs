@@ -2,6 +2,7 @@ use crate::c_library::{__assert_fail, free, malloc, memset, printf};
 use crate::cpu_infra::{CpuOpcodeHook, HookedFunctionRts};
 use crate::game_state::Game;
 use crate::host::Die;
+use crate::rtl::words;
 use crate::set_fields;
 use crate::snes::snes::{snes_cpuRead, snes_cpuWrite};
 use crate::types::{Cpu, SaveLoadFunc, Snes};
@@ -1077,7 +1078,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             if target_bank == 0x80 && target == 0x8573 {
                 printf(
                     b"Current PC = 0x%x\n\0" as *const u8 as *const c_char,
-                    ((*cpu).k as i32) << 16 | (*cpu).pc as i32,
+                    words!(i32, (*cpu), k, pc),
                 );
                 DumpCpuHistory(game);
                 Die(b"The game has crashed!\n\0" as *const u8 as *const c_char);

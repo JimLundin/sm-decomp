@@ -1,4 +1,5 @@
 use crate::game_state::Game;
+use crate::rtl::words;
 use crate::set_fields;
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::{size_of, transmute};
@@ -147,7 +148,7 @@ pub unsafe fn dma_doDma(dma: *mut Dma, game: &mut Game) {
     {
         printf(
             b"Warning! DMA from addr 0x%x\n\0" as *const u8 as *const c_char,
-            ((*dma).channel[i].aBank as i32) << 16 | (*dma).channel[i].aAdr as i32,
+            words!(i32, (*dma).channel[i], aBank, aAdr),
         );
         game.g_fail = true_0 != 0;
     }

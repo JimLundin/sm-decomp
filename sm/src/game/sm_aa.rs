@@ -25,6 +25,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::words;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
 use crate::set_fields;
@@ -1156,15 +1157,15 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
 pub unsafe fn Shaktool_D956(k: u16, jp: *const u16, a: u16, game: &mut Game) -> *const u16 {
     let E = Get_Shaktool(k as i32, game);
     let v3: i32 = a as u8 as i32;
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        ((kSinCosTable8bit_Sext[(v3 + 64) as usize] as i32) << 8) as u32,
+    words!(
+        (*E).base,
+        x_pos,
+        x_subpos += ((kSinCosTable8bit_Sext[(v3 + 64) as usize] as i32) << 8) as u32
     );
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        ((kSinCosTable8bit_Sext[v3 as usize] as i32) << 8) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += ((kSinCosTable8bit_Sext[v3 as usize] as i32) << 8) as u32
     );
     jp
 }
@@ -1292,23 +1293,25 @@ pub unsafe fn Shaktool_DC2A(k: u16, game: &mut Game) {
     let E = Get_Shaktool(k as i32, game);
     let v3: i32 = byte!((*E).var_B; 1) as i32;
     let v5: i32 = k as i32 >> 1;
-    SetHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        (((crate::rtl::rom_table_word!(game, 0xaae0bd, v3 as isize) as i16 as i32) << 8i32) as u32)
-            .wrapping_add(
-                (word!(game.enemy_drawing_queue[(v5 + 91)]) as u32) << 16
-                    | word!(game.enemy_drawing_queue[(v5 + 92)]) as u32,
-            ),
+    words!(
+        (*E).base,
+        x_pos,
+        x_subpos = (((crate::rtl::rom_table_word!(game, 0xaae0bd, v3 as isize) as i16 as i32)
+            << 8i32) as u32)
+            .wrapping_add(words!((
+                word!(game.enemy_drawing_queue[(v5 + 91)]),
+                word!(game.enemy_drawing_queue[(v5 + 92)])
+            )),)
     );
-    SetHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        (((crate::rtl::rom_table_word!(game, 0xaae03d, v3 as isize) as i16 as i32) << 8i32) as u32)
-            .wrapping_add(
-                (word!(game.enemy_drawing_queue[(v5 + 93)]) as u32) << 16
-                    | word!(game.enemy_drawing_queue[(v5 + 94)]) as u32,
-            ),
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos = (((crate::rtl::rom_table_word!(game, 0xaae03d, v3 as isize) as i16 as i32)
+            << 8i32) as u32)
+            .wrapping_add(words!((
+                word!(game.enemy_drawing_queue[(v5 + 93)]),
+                word!(game.enemy_drawing_queue[(v5 + 94)])
+            )),)
     );
 }
 pub unsafe fn Shaktool_DC6F(k: u16, game: &mut Game) {

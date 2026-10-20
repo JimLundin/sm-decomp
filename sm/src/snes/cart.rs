@@ -1,6 +1,7 @@
 use crate::c_library::{__assert_fail, free, malloc, memcpy, memset, printf};
 use crate::game_state::Game;
 use crate::host::Die;
+use crate::rtl::words;
 use crate::snes::cpu::DumpCpuHistory;
 pub use crate::types::{
     size_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
@@ -100,7 +101,7 @@ unsafe fn cart_readLorom(cart: *mut Cart, mut bank: u8, adr: u16, game: &mut Gam
     }
     printf(
         b"While trying to read from 0x%x\n\0" as *const u8 as *const c_char,
-        (bank as i32) << 16 | adr as i32,
+        words!(i32, (bank, adr)),
     );
     let snes = &*(*cart).snes;
     let cpu = &*snes.cpu;

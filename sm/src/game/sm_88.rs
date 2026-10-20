@@ -24,6 +24,7 @@ use crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::words;
 use crate::rtl::{mov24, Load24, Mult8x8, RomPtr, Unreachable, WriteReg, WriteRegWord};
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::set_fields;
@@ -503,8 +504,13 @@ pub unsafe fn HdmaObjectHandler(game: &mut Game) {
 pub unsafe fn HdmaobjInstructionHandler(k: u8, game: &mut Game) {
     let kh: i32 = k as i32 >> 1;
     CallHdmaobjPreInstr(
-        ((word!(game.hdma_object_pre_instruction_bank[kh]) as i32) << 16
-            | word!(game.hdma_object_pre_instructions[kh]) as i32) as u32,
+        (words!(
+            i32,
+            (
+                word!(game.hdma_object_pre_instruction_bank[kh]),
+                word!(game.hdma_object_pre_instructions[kh])
+            )
+        )) as u32,
         k as u16,
         game,
     );
@@ -662,9 +668,8 @@ pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> u8 {
     }
     let r24_r22: u32 = ((word!(game.fx_y_vel) as i16 as i32) << 8) as u32;
     if (word!(game.fx_y_vel) & 0x8000) == 0 {
-        let mut v2: u16 = (r24_r22.wrapping_add(
-            (word!(game.fx_base_y_pos) as u32) << 16 | word!(game.fx_base_y_subpos) as u32,
-        ) >> 16) as u16;
+        let mut v2: u16 =
+            (r24_r22.wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos)) >> 16) as u16;
         word!(
             game.fx_base_y_subpos,
             |fresh13| (fresh13 as u32).wrapping_add(r24_r22) as u16
@@ -681,9 +686,8 @@ pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> u8 {
             1
         }
     } else {
-        let mut v0: u16 = (r24_r22.wrapping_add(
-            (word!(game.fx_base_y_pos) as u32) << 16 | word!(game.fx_base_y_subpos) as u32,
-        ) >> 16) as u16;
+        let mut v0: u16 =
+            (r24_r22.wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos)) >> 16) as u16;
         word!(
             game.fx_base_y_subpos,
             |fresh14| (fresh14 as u32).wrapping_add(r24_r22) as u16
@@ -709,12 +713,10 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc0_NoBeam(k: u16, game: &mut Game) {
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc1_BeamWidening(k: u16, game: &mut Game) {
     if (word!(game.button_config_run_b) & word!(game.joypad1_lastkeys)) != 0 {
-        AddToHiLo(ram_ptr!(game, u16; 0xa7c), ram_ptr!(game, u16; 0xa7e), 2048);
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xa84),
-            ram_ptr!(game, u16; 0xa86),
-            (word!(game.demo_input_instr_timer) as u32) << 16
-                | word!(game.demo_input_instr_ptr) as u32,
+        words!(game.demo_input_instr_timer, demo_input_instr_ptr += 2048);
+        words!(
+            game.demo_input,
+            demo_input_new += words!(game.demo_input_instr_timer, demo_input_instr_ptr)
         );
         if word!(game.demo_input) as i32 - 11i32 & 0x8000 == 0 {
             word!(game.demo_input_new = 0);
@@ -758,9 +760,8 @@ pub unsafe fn MoveXrayUp(game: &mut Game) {
     } else if (word!(game.demo_input) as i32 + word!(game.xray_angle) as i32) != 256
         && (((word!(game.demo_input) as i32 + word!(game.xray_angle) as i32 - 256i32) as i16) >= 0
             || {
-                let mut v1: i16 = (((word!(game.demo_input) as u32) << 16i32
-                    | word!(game.xray_angle) as u32)
-                    .wrapping_add((word!(game.xray_angle) as u32) << 16 | 1u16 as u32)
+                let mut v1: i16 = ((words!(game.demo_input, xray_angle))
+                    .wrapping_add(words!((word!(game.xray_angle), 1u16)))
                     >> 16) as i16;
                 word!(game.xray_angle, wrapping_add(1));
                 v1 != 256 && (v1).wrapping_sub(256) >= 0
@@ -775,9 +776,8 @@ pub unsafe fn MoveXrayDown(game: &mut Game) {
             && (((word!(game.demo_input) as i32 + word!(game.xray_angle) as i32 - 128i32) as i16)
                 >= 0
                 || {
-                    let mut v0: i16 = (((word!(game.demo_input) as u32) << 16i32
-                        | word!(game.xray_angle) as u32)
-                        .wrapping_add((word!(game.xray_angle) as u32) << 16 | 1u16 as u32)
+                    let mut v0: i16 = ((words!(game.demo_input, xray_angle))
+                        .wrapping_add(words!((word!(game.xray_angle), 1u16)))
                         >> 16) as i16;
                     word!(game.xray_angle, wrapping_add(1));
                     v0 != 128 && (v0).wrapping_sub(128) >= 0
@@ -1868,13 +1868,14 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(k: u16, game: &mut Game) {
         AddToHiLo(
             v3.offset(1),
             v3.offset(0),
-            ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *mut HdmaScrollEntry)
-                .offset(v1 as isize))
-            .scroll_speed as u32)
-                << 16
-                | (*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *mut HdmaScrollEntry)
+            words!((
+                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *mut HdmaScrollEntry)
                     .offset(v1 as isize))
-                .scroll_subspeed as u32,
+                .scroll_speed,
+                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *mut HdmaScrollEntry)
+                    .offset(v1 as isize))
+                .scroll_subspeed
+            )),
         );
         v1 = v1.wrapping_add(1);
         if (v1 as i32 * 8 - 184i32 & 0x8000 == 0) {
@@ -2176,22 +2177,16 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(k: u16, game: &mut Game) {
             game,
         );
         FxHandleTide(game);
-        SetHiLo(
-            ram_ptr!(game, u16; 0x1962),
-            ram_ptr!(game, u16; 0x1960),
-            ((word!(game.fx_y_offset) as u32) << 16i32 | word!(game.fx_y_suboffset) as u32)
-                .wrapping_add(
-                    (word!(game.fx_base_y_pos) as u32) << 16 | word!(game.fx_base_y_subpos) as u32,
-                ),
+        words!(
+            game.lava_acid_y_pos,
+            lava_acid_y_subpos = (words!(game.fx_y_offset, fx_y_suboffset))
+                .wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos),)
         );
         word!(game.bg3_xpos = word!(game.reg_BG1HOFS));
         *(ram_ptr!(game, u16; 0x9c00)) = 0;
         word!(game.bg3_ypos = 0);
-        let mut v2: i16 = (((word!(game.fx_y_offset) as u32) << 16i32
-            | word!(game.fx_y_suboffset) as u32)
-            .wrapping_add(
-                (word!(game.fx_base_y_pos) as u32) << 16 | word!(game.fx_base_y_subpos) as u32,
-            )
+        let mut v2: i16 = ((words!(game.fx_y_offset, fx_y_suboffset))
+            .wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos))
             >> 16) as i16;
         if v2 >= 0 {
             let mut v3: i16 = (v2).wrapping_sub((word!(game.layer1_y_pos)) as i16);
@@ -2394,13 +2389,10 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(k: u16, game: &mut Game) {
         game,
     );
     FxHandleTide(game);
-    SetHiLo(
-        ram_ptr!(game, u16; 0x195e),
-        ram_ptr!(game, u16; 0x195c),
-        ((word!(game.fx_y_offset) as u32) << 16i32 | word!(game.fx_y_suboffset) as u32)
-            .wrapping_add(
-                (word!(game.fx_base_y_pos) as u32) << 16 | word!(game.fx_base_y_subpos) as u32,
-            ),
+    words!(
+        game.fx_y_pos,
+        fx_y_subpos = (words!(game.fx_y_offset, fx_y_suboffset))
+            .wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos),)
     );
     let v3: i16 = ((word!(game.fx_y_pos)) as i16).wrapping_sub((word!(game.layer1_y_pos)) as i16);
     if (word!(game.fx_y_pos) as i16) < 0 {

@@ -9,6 +9,7 @@ use crate::game::sm_a0::CalculateAngleFromXY;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::words;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
 use crate::set_fields;
@@ -2006,35 +2007,27 @@ pub unsafe fn BlockCollGrappleBeam(game: &mut Game) -> u8 {
     let mut result: u8 = 0;
     let mut i: i32 = 0;
     while i < 4 {
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xd10),
-            ram_ptr!(game, u16; 0xd0e),
-            grapple_vel_x as u32,
+        words!(
+            game.grapple_beam_end_x_offset,
+            grapple_beam_end_x_suboffset += grapple_vel_x as u32
         );
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xd14),
-            ram_ptr!(game, u16; 0xd12),
-            grapple_vel_y as u32,
+        words!(
+            game.grapple_beam_end_y_offset,
+            grapple_beam_end_y_suboffset += grapple_vel_y as u32
         );
-        SetHiLo(
-            ram_ptr!(game, u16; 0xd08),
-            ram_ptr!(game, u16; 0xd06),
-            ((word!(game.grapple_beam_end_x_offset) as u32) << 16i32
-                | word!(game.grapple_beam_end_x_suboffset) as u32)
-                .wrapping_add(
-                    (word!(game.samus_x_pos) as u32) << 16i32 | word!(game.samus_x_subpos) as u32,
-                )
-                .wrapping_add(((word!(game.grapple_beam_origin_x_offset) as i32) << 16) as u32),
+        words!(
+            game.grapple_beam_end_x_pos,
+            grapple_beam_end_x_subpos =
+                (words!(game.grapple_beam_end_x_offset, grapple_beam_end_x_suboffset))
+                    .wrapping_add(words!(game.samus_x_pos, samus_x_subpos),)
+                    .wrapping_add(((word!(game.grapple_beam_origin_x_offset) as i32) << 16) as u32)
         );
-        SetHiLo(
-            ram_ptr!(game, u16; 0xd0c),
-            ram_ptr!(game, u16; 0xd0a),
-            ((word!(game.grapple_beam_end_y_offset) as u32) << 16i32
-                | word!(game.grapple_beam_end_y_suboffset) as u32)
-                .wrapping_add(
-                    (word!(game.samus_y_pos) as u32) << 16i32 | word!(game.samus_y_subpos) as u32,
-                )
-                .wrapping_add(((word!(game.grapple_beam_origin_y_offset) as i32) << 16) as u32),
+        words!(
+            game.grapple_beam_end_y_pos,
+            grapple_beam_end_y_subpos =
+                (words!(game.grapple_beam_end_y_offset, grapple_beam_end_y_suboffset))
+                    .wrapping_add(words!(game.samus_y_pos, samus_y_subpos),)
+                    .wrapping_add(((word!(game.grapple_beam_origin_y_offset) as i32) << 16) as u32)
         );
         result = BlockReactGrapple(game);
         if (result & 0x40) != 0 && (result & 1) != 0 {
@@ -2198,7 +2191,7 @@ unsafe fn BlockReact_AA64_SpikeAir(ci: *mut CollInfo, game: &mut Game) -> u8 {
     if v0 >= 0 {
         let v: u32 = ((g_word_94AAF7[v0 as usize] as i16 as i32) << 16) as u32;
         if v != 0 {
-            AddToHiLo(ram_ptr!(game, u16; 0xa50), ram_ptr!(game, u16; 0xa4e), v);
+            words!(game.samus_periodic_damage, samus_periodic_subdamage += v);
             word!(game.samus_invincibility_timer = 60);
             word!(game.samus_knockback_timer = 10);
         }
@@ -2214,7 +2207,7 @@ unsafe fn BlockReact_AA64_SpikeBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
     if v0 >= 0 {
         let v: u32 = ((g_word_94AB70[v0 as usize] as i16 as i32) << 16) as u32;
         if v != 0 {
-            AddToHiLo(ram_ptr!(game, u16; 0xa50), ram_ptr!(game, u16; 0xa4e), v);
+            words!(game.samus_periodic_damage, samus_periodic_subdamage += v);
             word!(game.samus_invincibility_timer = 60);
             word!(game.samus_knockback_timer = 10);
         }

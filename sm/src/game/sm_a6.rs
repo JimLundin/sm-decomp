@@ -38,6 +38,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::words;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{mov24, Mult8x8, RomPtr, SnesDivide, Unreachable};
 use crate::set_fields;
@@ -384,21 +385,25 @@ pub fn Boulder_Func_6() {}
 pub unsafe fn Boulder_Func_7(j: u16, game: &mut Game) {
     let E = Get_Boulder(word!(game.cur_enemy_index) as i32, game);
     let v3: i32 = j as i32 >> 1;
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 1) as isize) as u32) << 16
-            | crate::rtl::rom_table_word!(game, 0xa2838f, v3 as isize) as u32,
+    words!(
+        (*E).base,
+        x_pos,
+        x_subpos += words!((
+            crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 1) as isize),
+            crate::rtl::rom_table_word!(game, 0xa2838f, v3 as isize)
+        ))
     );
 }
 pub unsafe fn Boulder_Func_9(j: u16, game: &mut Game) {
     let E = Get_Boulder(word!(game.cur_enemy_index) as i32, game);
     let v3: i32 = j as i32 >> 1;
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 1) as isize) as u32) << 16
-            | crate::rtl::rom_table_word!(game, 0xa2838f, v3 as isize) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += words!((
+            crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 1) as isize),
+            crate::rtl::rom_table_word!(game, 0xa2838f, v3 as isize)
+        ))
     );
 }
 pub unsafe fn SpikeyPlatform_Init(game: &mut Game) {
@@ -452,11 +457,13 @@ pub unsafe fn SpikeyPlatform_Func_2(game: &mut Game) {
     let E = Get_SpikeyPlatform(word!(game.cur_enemy_index) as i32, game);
     (*E).var_01 = (*E).base.y_pos;
     let v1: i32 = (*E).var_02 as i32 >> 1;
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa28187, v1 as isize) as u32) << 16
-            | crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 1) as isize) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += words!((
+            crate::rtl::rom_table_word!(game, 0xa28187, v1 as isize),
+            crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 1) as isize)
+        ))
     );
     if (((*E).base.y_pos) as i16).wrapping_sub(((*E).var_D) as i16) >= 0 {
         (*E).var_03 = 64;
@@ -486,11 +493,7 @@ pub unsafe fn SpikeyPlatform_Func_3(k: u16, game: &mut Game) {
 pub unsafe fn SpikeyPlatform_Func_4(game: &mut Game) {
     let E = Get_SpikeyPlatform(word!(game.cur_enemy_index) as i32, game);
     (*E).var_01 = (*E).base.y_pos;
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        -0x8000i32 as u32,
-    );
+    words!((*E).base, y_pos, y_subpos += -0x8000i32 as u32);
     if (((*E).base.y_pos) as i16).wrapping_sub(((*E).var_C) as i16) < 0 {
         (*E).var_A = ((0xa68bb4i32) as u16);
         (*E).base.y_pos = (*E).var_C;
@@ -726,11 +729,7 @@ pub unsafe fn NuclearWaffle_Func_2(game: &mut Game) {
     (*E).base.y_pos = ((*E).var_27).wrapping_add(SineMult8bit(v5, (*E).var_D, game));
     NuclearWaffle_Func_3(varE32, game);
     NuclearWaffle_Func_4(varE32, game);
-    AddToHiLo(
-        &raw mut (*E).var_21,
-        &raw mut (*E).var_20,
-        ((*E).var_25 as u32) << 16 | (*E).var_24 as u32,
-    );
+    words!((*E), var_21, var_20 += words!((*E), var_25, var_24));
 }
 pub unsafe fn NuclearWaffle_Func_3(varE32: u16, game: &mut Game) {
     let E = Get_NuclearWaffle(word!(game.cur_enemy_index) as i32, game);

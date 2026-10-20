@@ -314,6 +314,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::words;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, Unreachable};
 use crate::set_fields;
 pub use crate::types::{size_t, EnemyData, LongPtr, PairU16, Point16U, VoidP, VramWriteEntry};
@@ -401,11 +402,11 @@ unsafe fn get_Vulnerability(a: u16, game: &mut Game) -> *mut Vulnerability {
 }
 #[inline]
 unsafe fn get_ExtendedSpriteMap(db: u8, a: u16, game: &mut Game) -> *mut ExtendedSpriteMap {
-    RomPtr(((db as i32) << 16 | a as i32) as u32, game) as *mut ExtendedSpriteMap
+    RomPtr((words!(i32, (db, a))) as u32, game) as *mut ExtendedSpriteMap
 }
 #[inline]
 unsafe fn get_EnemyPopulation(db: u8, a: u16, game: &mut Game) -> *mut EnemyPopulation {
-    RomPtr(((db as i32) << 16 | a as i32) as u32, game) as *mut EnemyPopulation
+    RomPtr((words!(i32, (db, a))) as u32, game) as *mut EnemyPopulation
 }
 crate::game::constants::typed_constants! { i32;
     fnEprojPreInstr_nullsub_83 = 0x8684fb, fnGrappleBeam_Func2 = 0x9bc8c5,
@@ -806,10 +807,7 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
         (*E).frame_counter = 0;
         RecordEnemySpawnData(v5, game);
         word!(game.cur_enemy_index = v5);
-        CallEnemyAi(
-            (((*ED).bank as i32) << 16 | (*ED).ai_init as i32) as u32,
-            game,
-        );
+        CallEnemyAi((words!(i32, (*ED), bank, ai_init)) as u32, game);
         (*E).spritemap_pointer = 0;
         if ((*E).properties & 0x2000) != 0 {
             let mut v12: u16 = addr_kSpritemap_Nothing_A4 as u16;
@@ -1748,12 +1746,17 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                         }
                     }
                     CallEnemyAi(
-                        (((*E).bank as i32) << 16
-                            | (*get_EnemyDef_A2(
-                                ((*E).enemy_ptr as i32 + 2i32 * v6 as i32) as u16,
-                                game,
-                            ))
-                            .main_ai as i32) as u32,
+                        (words!(
+                            i32,
+                            (
+                                (*E).bank,
+                                (*get_EnemyDef_A2(
+                                    ((*E).enemy_ptr as i32 + 2i32 * v6 as i32) as u16,
+                                    game,
+                                ))
+                                .main_ai
+                            )
+                        )) as u32,
                         game,
                     );
                     current_block_39 = 5447921980315815038;
@@ -1761,7 +1764,7 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                     let mut ED = get_EnemyDef_A2((*E).enemy_ptr, game);
                     if (*ED).time_is_frozen_ai != 0 {
                         CallEnemyAi(
-                            (((*E).bank as i32) << 16 | (*ED).time_is_frozen_ai as i32) as u32,
+                            (words!(i32, ((*E).bank, (*ED).time_is_frozen_ai))) as u32,
                             game,
                         );
                         current_block_39 = 5447921980315815038;
@@ -1925,10 +1928,7 @@ pub unsafe fn SpawnEnemy(db: u8, k: u16, game: &mut Game) -> u16 {
             RecordEnemySpawnData(new_enemy_index, game);
             word!(game.cur_enemy_index = new_enemy_index);
             if (*ED).ai_init & 0x8000 != 0 {
-                CallEnemyAi(
-                    (((*ED).bank as i32) << 16 | (*ED).ai_init as i32) as u32,
-                    game,
-                );
+                CallEnemyAi((words!(i32, (*ED), bank, ai_init)) as u32, game);
             }
             if ((*E).properties & 0x2000) != 0 {
                 (*E).spritemap_pointer = addr_kSpritemap_Nothing_A0 as u16;
@@ -2352,10 +2352,7 @@ pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {
                 && (((*hb).bottom as i32 + coll_y_pos as i32 - samus_top_border_coll as i32) as i16)
                     >= 0
             {
-                CallHitboxTouch(
-                    (((*E).bank as i32) << 16 | (*hb).func_ptr as i32) as u32,
-                    game,
-                );
+                CallHitboxTouch((words!(i32, ((*E).bank, (*hb).func_ptr))) as u32, game);
                 return;
             }
             m -= 1;
@@ -2439,7 +2436,7 @@ pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
                         }
                         word!(game.collision_detection_index = pidx as u16);
                         CallHitboxShot(
-                            (((*E).bank as i32) << 16 | (*hb).func_ptrA as i32) as u32,
+                            (words!(i32, ((*E).bank, (*hb).func_ptrA))) as u32,
                             (pidx * 2) as u16,
                             game,
                         );
@@ -2513,7 +2510,7 @@ pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
                             word!(game.projectile_dir[pidx], |fresh24| (fresh24) | (0x10u16));
                             word!(game.collision_detection_index = pidx as u16);
                             CallHitboxShot(
-                                (((*E).bank as i32) << 16 | (*hb).func_ptrA as i32) as u32,
+                                (words!(i32, ((*E).bank, (*hb).func_ptrA))) as u32,
                                 (pidx * 2) as u16,
                                 game,
                             );
@@ -2625,8 +2622,10 @@ pub unsafe fn SamusLatchesOnWithGrappleNoInvinc(game: &mut Game) {
         (*E).ai_handler_bits = 4;
     } else {
         CallEnemyAi(
-            (((*E).bank as i32) << 16 | (*get_EnemyDef_A2((*E).enemy_ptr, game)).main_ai as i32)
-                as u32,
+            (words!(
+                i32,
+                ((*E).bank, (*get_EnemyDef_A2((*E).enemy_ptr, game)).main_ai)
+            )) as u32,
             game,
         );
         (*E).ai_handler_bits = 0;
@@ -2675,10 +2674,7 @@ pub unsafe fn EnemySamusCollHandler(game: &mut Game) {
             < (*E).y_height as i32
         && ((*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32 || (*E).frozen_timer == 0)
     {
-        CallEnemyAi(
-            (((*E).bank as i32) << 16 | (*ED).touch_ai as i32) as u32,
-            game,
-        );
+        CallEnemyAi((words!(i32, ((*E).bank, (*ED).touch_ai))) as u32, game);
     }
 }
 pub unsafe fn EprojCollHandler(game: &mut Game) {
@@ -2717,9 +2713,10 @@ pub unsafe fn EprojCollHandler(game: &mut Game) {
                 }
                 word!(game.collision_detection_index = pidx as u16);
                 CallEnemyAi(
-                    (((*E).bank as i32) << 16
-                        | (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai as i32)
-                        as u32,
+                    (words!(
+                        i32,
+                        ((*E).bank, (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai)
+                    )) as u32,
                     game,
                 );
                 return;
@@ -2754,8 +2751,10 @@ pub unsafe fn EnemyBombCollHandler(game: &mut Game) {
             word!(game.collision_detection_index = pidx as u16);
             word!(game.projectile_dir[pidx], |fresh23| (fresh23) | (0x10u16));
             CallEnemyAi(
-                (((*E).bank as i32) << 16 | (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai as i32)
-                    as u32,
+                (words!(
+                    i32,
+                    ((*E).bank, (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai)
+                )) as u32,
                 game,
             );
             return;
@@ -2795,7 +2794,7 @@ pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
                 } else {
                     0xa08037 & 0xffff
                 }) as u16;
-                CallEnemyAi((((*E).bank as i32) << 16 | func as i32) as u32, game);
+                CallEnemyAi((words!(i32, ((*E).bank, func))) as u32, game);
                 (*E).properties = ((*E).properties) | (0x800u16);
             }
         }

@@ -5,6 +5,7 @@ pub use crate::game::constants::game_states::*;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::words;
 use crate::rtl::AddToHiLo;
 pub use crate::snes::registers::*;
 use crate::types::TileDrawOrder;
@@ -2625,11 +2626,12 @@ pub unsafe fn Irq_FollowDoorTransition(game: &mut Game) {
 }
 pub unsafe fn DoorTransition_Right(game: &mut Game) -> u8 {
     let v2: u16 = word!(game.door_transition_frame_counter);
-    AddToHiLo(
-        ram_ptr!(game, u16; 0xaf6),
-        ram_ptr!(game, u16; 0xaf8),
-        (word!(game.samus_door_transition_speed) as u32) << 16
-            | word!(game.samus_door_transition_subspeed) as u32,
+    words!(
+        game.samus_x_pos,
+        samus_x_subpos += words!(
+            game.samus_door_transition_speed,
+            samus_door_transition_subspeed
+        )
     );
     word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
     word!(game.layer1_x_pos, wrapping_add(4));
@@ -2644,11 +2646,13 @@ pub unsafe fn DoorTransition_Right(game: &mut Game) -> u8 {
 }
 pub unsafe fn DoorTransition_Left(game: &mut Game) -> u8 {
     let v2: u16 = word!(game.door_transition_frame_counter);
-    AddToHiLo(
-        ram_ptr!(game, u16; 0xaf6),
-        ram_ptr!(game, u16; 0xaf8),
-        -((word!(game.samus_door_transition_speed) as i32) << 16i32
-            | word!(game.samus_door_transition_subspeed) as i32) as u32,
+    words!(
+        game.samus_x_pos,
+        samus_x_subpos += -(words!(
+            i32,
+            game.samus_door_transition_speed,
+            samus_door_transition_subspeed
+        )) as u32
     );
     word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
     word!(game.layer1_x_pos, wrapping_sub(4));
@@ -2661,11 +2665,12 @@ pub unsafe fn DoorTransition_Down(game: &mut Game) -> u8 {
     let v6: u16 = word!(game.door_transition_frame_counter);
     if word!(game.door_transition_frame_counter) != 0 {
         if word!(game.door_transition_frame_counter) < 0x39 {
-            AddToHiLo(
-                ram_ptr!(game, u16; 0xafa),
-                ram_ptr!(game, u16; 0xafc),
-                (word!(game.samus_door_transition_speed) as u32) << 16
-                    | word!(game.samus_door_transition_subspeed) as u32,
+            words!(
+                game.samus_y_pos,
+                samus_y_subpos += words!(
+                    game.samus_door_transition_speed,
+                    samus_door_transition_subspeed
+                )
             );
             word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
             word!(game.layer1_y_pos, wrapping_add(4));
@@ -2699,11 +2704,13 @@ pub unsafe fn DoorTransition_Down(game: &mut Game) -> u8 {
 pub unsafe fn DoorTransition_Up(game: &mut Game) -> u8 {
     let v6: u16 = word!(game.door_transition_frame_counter);
     if word!(game.door_transition_frame_counter) != 0 {
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xafa),
-            ram_ptr!(game, u16; 0xafc),
-            -((word!(game.samus_door_transition_speed) as i32) << 16i32
-                | word!(game.samus_door_transition_subspeed) as i32) as u32,
+        words!(
+            game.samus_y_pos,
+            samus_y_subpos += -(words!(
+                i32,
+                game.samus_door_transition_speed,
+                samus_door_transition_subspeed
+            )) as u32
         );
         word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
         word!(game.layer1_y_pos, wrapping_sub(4));

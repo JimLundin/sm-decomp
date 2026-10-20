@@ -21,6 +21,7 @@ use crate::game::sm_88::{
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::words;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{RomPtr, RtlWriteSram, Unreachable, WriteReg};
 pub use crate::snes::registers::*;
@@ -2517,35 +2518,30 @@ pub unsafe fn FileSelectMap_8_ExpandSquareTransToRoomSelectMap(game: &mut Game) 
     DrawAreaSelectMapLabels(game);
 }
 pub unsafe fn HandleRoomSelectMapExpandingSquareTrans(game: &mut Game) -> u16 {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x9e32),
-        ram_ptr!(game, u16; 0x9e30),
-        (word!(game.expand_sq_left_vel) as u32) << 16 | word!(game.expand_sq_left_subvel) as u32,
+    words!(
+        game.expand_sq_left_pos,
+        expand_sq_left_subpos += words!(game.expand_sq_left_vel, expand_sq_left_subvel)
     );
     if word!(game.expand_sq_left_pos) as i32 - 1i32 & 0x8000 != 0 {
         word!(game.expand_sq_left_pos = 1);
     }
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x9e36),
-        ram_ptr!(game, u16; 0x9e34),
-        (word!(game.expand_sq_right_vel) as u32) << 16 | word!(game.expand_sq_right_subvel) as u32,
+    words!(
+        game.expand_sq_right_pos,
+        expand_sq_right_subpos += words!(game.expand_sq_right_vel, expand_sq_right_subvel)
     );
     if word!(game.expand_sq_right_pos) as i32 - 256i32 & 0x8000 == 0 {
         word!(game.expand_sq_right_pos = 255);
     }
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x9e3a),
-        ram_ptr!(game, u16; 0x9e38),
-        (word!(game.expand_sq_top_vel) as u32) << 16 | word!(game.expand_sq_top_subvel) as u32,
+    words!(
+        game.expand_sq_top_pos,
+        expand_sq_top_subpos += words!(game.expand_sq_top_vel, expand_sq_top_subvel)
     );
     if word!(game.expand_sq_top_pos) as i32 - 1i32 & 0x8000 != 0 {
         word!(game.expand_sq_top_pos = 1);
     }
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x9e3e),
-        ram_ptr!(game, u16; 0x9e3c),
-        (word!(game.expand_sq_bottom_vel) as u32) << 16
-            | word!(game.expand_sq_bottom_subvel) as u32,
+    words!(
+        game.expand_sq_bottom_pos,
+        expand_sq_bottom_subpos += words!(game.expand_sq_bottom_vel, expand_sq_bottom_subvel)
     );
     if word!(game.expand_sq_bottom_pos) as i32 - 224i32 & 0x8000 == 0 {
         word!(game.expand_sq_bottom_pos = 224);
@@ -2872,29 +2868,24 @@ pub unsafe fn FileSelectMap_20_SetupExpandingSquare(game: &mut Game) {
     word! { game, 0; reg_BG1VOFS, reg_BG1HOFS }
 }
 pub unsafe fn FileSelectMap_21_MoveExpandingSquare(game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x9e32),
-        ram_ptr!(game, u16; 0x9e30),
-        -((word!(game.expand_sq_left_vel) as i32) << 16i32
-            | word!(game.expand_sq_left_subvel) as i32) as u32,
+    words!(
+        game.expand_sq_left_pos,
+        expand_sq_left_subpos +=
+            -(words!(i32, game.expand_sq_left_vel, expand_sq_left_subvel)) as u32
     );
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x9e36),
-        ram_ptr!(game, u16; 0x9e34),
-        -((word!(game.expand_sq_right_vel) as i32) << 16i32
-            | word!(game.expand_sq_right_subvel) as i32) as u32,
+    words!(
+        game.expand_sq_right_pos,
+        expand_sq_right_subpos +=
+            -(words!(i32, game.expand_sq_right_vel, expand_sq_right_subvel)) as u32
     );
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x9e3a),
-        ram_ptr!(game, u16; 0x9e38),
-        -((word!(game.expand_sq_top_vel) as i32) << 16i32 | word!(game.expand_sq_top_subvel) as i32)
-            as u32,
+    words!(
+        game.expand_sq_top_pos,
+        expand_sq_top_subpos += -(words!(i32, game.expand_sq_top_vel, expand_sq_top_subvel)) as u32
     );
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x9e3e),
-        ram_ptr!(game, u16; 0x9e3c),
-        -((word!(game.expand_sq_bottom_vel) as i32) << 16i32
-            | word!(game.expand_sq_bottom_subvel) as i32) as u32,
+    words!(
+        game.expand_sq_bottom_pos,
+        expand_sq_bottom_subpos +=
+            -(words!(i32, game.expand_sq_bottom_vel, expand_sq_bottom_subvel)) as u32
     );
     SetupRoomSelectMapExpandingSquareTransHDMA(game);
     DrawAreaSelectMapLabels(game);

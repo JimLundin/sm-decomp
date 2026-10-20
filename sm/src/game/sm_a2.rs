@@ -35,6 +35,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::words;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, Unreachable};
 use crate::set_fields;
@@ -856,10 +857,9 @@ pub unsafe fn MaridiaBeybladeTurtle_Func6(k: u16, game: &mut Game) {
     if CheckIfEnemyTouchesSamus(k, game) != 0 {
         let E = Get_MaridiaTurtle(k as i32, game);
         (*E).var_A = ((0xa29083i32) as u16);
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xb58),
-            ram_ptr!(game, u16; 0xb56),
-            -(((*E).var_E as i32) << 16i32 | (*E).var_03 as i32) as u32,
+        words!(
+            game.extra_samus_x_displacement,
+            extra_samus_x_subdisplacement += -(words!(i32, (*E), var_E, var_03)) as u32
         );
         if word!(game.extra_samus_x_displacement) as i32 + 16 & 0x8000 != 0 {
             word!(game.extra_samus_x_displacement = -16i32 as u16);
@@ -894,32 +894,23 @@ pub unsafe fn MaridiaBeybladeTurtle_Func7(k: u16, game: &mut Game) {
 pub unsafe fn MaridiaBeybladeTurtle_Func8(k: u16, game: &mut Game) {
     MaridiaBeybladeTurtle_Func4(game);
     let E = Get_MaridiaTurtle(k as i32, game);
-    if Enemy_MoveRight_IgnoreSlopes(
-        k,
-        (((*E).var_E as u32) << 16 | (*E).var_03 as u32) as i32,
-        game,
-    ) != 0
-    {
-        SetHiLo(
-            &raw mut (*E).var_E,
-            &raw mut (*E).var_03,
-            -(((*E).var_E as i32) << 16i32 | (*E).var_03 as i32) as u32,
+    if Enemy_MoveRight_IgnoreSlopes(k, (words!((*E), var_E, var_03)) as i32, game) != 0 {
+        words!(
+            (*E),
+            var_E,
+            var_03 = -(words!(i32, (*E), var_E, var_03)) as u32
         );
-        SetHiLo(
-            &raw mut (*E).var_02,
-            &raw mut (*E).var_01,
-            -(((*E).var_02 as i32) << 16i32 | (*E).var_01 as i32) as u32,
+        words!(
+            (*E),
+            var_02,
+            var_01 = -(words!(i32, (*E), var_02, var_01)) as u32
         );
         word!(game.earthquake_type = 0);
         word!(game.earthquake_timer = 16);
         QueueSfx2_Max6(0x1b, game);
     } else {
         MaridiaBeybladeTurtle_Func6(k, game);
-        AddToHiLo(
-            &raw mut (*E).var_E,
-            &raw mut (*E).var_03,
-            ((*E).var_02 as u32) << 16 | (*E).var_01 as u32,
-        );
+        words!((*E), var_E, var_03 += words!((*E), var_02, var_01));
         if ((abs16((*E).var_E)) as i16).wrapping_sub((g_word_A28D5E) as i16) >= 0 {
             (*E).var_E = (if ((*E).var_E & 0x8000) != 0 {
                 -(g_word_A28D5E as i32)
@@ -960,7 +951,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Func11(k: u16, game: &mut Game) {
     MaridiaBeybladeTurtle_Func4(game);
     let E = Get_MaridiaTurtle(k as i32, game);
     if (((*Get_MaridiaTurtle(0i32, game)).var_04) as i16).wrapping_sub((g_word_A28D66) as i16) < 0 {
-        AddToHiLo(&raw mut (*E).var_04, &raw mut (*E).var_07, 0x2000);
+        words!((*E), var_04, var_07 += 0x2000);
     }
     if Enemy_MoveDown(k, ((*E).var_04 as i16 as i32) << 16, game) != 0 {
         enemy_instruction! {[(*E).base]; instruction = (if ((*E).var_E & 0x8000) == 0 {
@@ -1039,8 +1030,7 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Func3(k: u16, game: &mut Game) {
 }
 pub unsafe fn MiniMaridiaBeybladeTurtle_Func4(k: u16, game: &mut Game) {
     let E = Get_MiniMaridiaTurtle(k as i32, game);
-    if Enemy_MoveRight_IgnoreSlopes(k, (((*E).var_E as u32) << 16 | 0u16 as u32) as i32, game) != 0
-    {
+    if Enemy_MoveRight_IgnoreSlopes(k, (words!(((*E).var_E, 0u16))) as i32, game) != 0 {
         (*E).var_E = -((*E).var_E as i32) as u16;
     } else {
         Enemy_MoveDown(k, ((*E).var_04 as i16 as i32) << 16, game);
@@ -1098,14 +1088,14 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Touch(game: &mut Game) {
                 .wrapping_sub((word!(game.samus_x_radius)) as u32))
                 << 16i32
                 | word!(game.samus_x_pos) as u32)
-                .wrapping_sub(((*E).base.x_width as u32) << 16 | word!(game.samus_x_radius) as u32)
+                .wrapping_sub(words!(((*E).base.x_width, word!(game.samus_x_radius))))
                 >> 16) as u16;
         }
         (*E).base.x_pos = v3;
         (*E).var_A = ((0xa29142i32) as u16);
         Enemy_MoveRight_IgnoreSlopes(
             word!(game.cur_enemy_index),
-            (((*E).var_E as u32) << 16 | 0u16 as u32) as i32,
+            (words!(((*E).var_E, 0u16))) as i32,
             game,
         );
         MaridiaBeybladeTurtle_Func21(game);
@@ -1553,7 +1543,7 @@ pub unsafe fn ThinHoppingBlobs_Func15(game: &mut Game) {
         << 8) as u16;
     if Enemy_MoveDown(
         word!(game.cur_enemy_index),
-        ((R20 as u32) << 16 | R18 as u32) as i32,
+        (words!((R20, R18))) as i32,
         game,
     ) != 0
     {
@@ -1603,11 +1593,7 @@ pub unsafe fn SpikeShootingPlant_Main(game: &mut Game) {
 }
 pub unsafe fn SpikeShootingPlant_2(k: u16, game: &mut Game) {
     let E = Get_SpikeShootingPlant(word!(game.cur_enemy_index) as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        ((*E).var_D as u32) << 16 | (*E).var_C as u32,
-    );
+    words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_C));
     if (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_00) as i16) < 0 {
         (*E).var_F = ((0xa29feci32) as u16);
         (*E).var_E = 1;
@@ -1616,11 +1602,7 @@ pub unsafe fn SpikeShootingPlant_2(k: u16, game: &mut Game) {
 }
 pub unsafe fn SpikeShootingPlant_3(k: u16, game: &mut Game) {
     let E = Get_SpikeShootingPlant(word!(game.cur_enemy_index) as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        ((*E).var_B as u32) << 16 | (*E).var_A as u32,
-    );
+    words!((*E).base, x_pos, x_subpos += words!((*E), var_B, var_A));
     if (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_01) as i16) >= 0 {
         (*E).var_F = ((0xa29fbai32) as u16);
         (*E).var_E = 0;
@@ -1731,11 +1713,7 @@ pub unsafe fn MaridiaSpikeyShell_2(game: &mut Game) {
 }
 pub unsafe fn MaridiaSpikeyShell_3(game: &mut Game) {
     let E = Get_MaridiaSpikeyShell(word!(game.cur_enemy_index) as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        ((*E).var_D as u32) << 16 | (*E).var_C as u32,
-    );
+    words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_C));
     if (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_01) as i16) < 0 {
         (*E).var_E = (*E).var_E.wrapping_sub(1);
     }
@@ -1743,11 +1721,7 @@ pub unsafe fn MaridiaSpikeyShell_3(game: &mut Game) {
 }
 pub unsafe fn MaridiaSpikeyShell_4(game: &mut Game) {
     let E = Get_MaridiaSpikeyShell(word!(game.cur_enemy_index) as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        ((*E).var_B as u32) << 16 | (*E).var_A as u32,
-    );
+    words!((*E).base, x_pos, x_subpos += words!((*E), var_B, var_A));
     if (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_02) as i16) >= 0 {
         (*E).var_E = 0;
     }
@@ -1901,51 +1875,19 @@ pub unsafe fn GunshipTop_1(k: u16, game: &mut Game) {
 pub unsafe fn GunshipTop_3(k: u16, game: &mut Game) {
     let E = Get_GunshipTop(k as i32, game);
     if (*E).base.y_pos as i32 - 768i32 & 0x8000 != 0 {
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xafa),
-            ram_ptr!(game, u16; 0xafc),
-            0x48000,
-        );
+        words!(game.samus_y_pos, samus_y_subpos += 0x48000);
         let v3 = Get_GunshipTop(k as i32 + 128, game);
-        AddToHiLo(
-            &raw mut (*v3).base.y_pos,
-            &raw mut (*v3).base.y_subpos,
-            0x48000,
-        );
+        words!((*v3).base, y_pos, y_subpos += 0x48000);
         let v5 = Get_GunshipTop(k as i32 + 64, game);
-        AddToHiLo(
-            &raw mut (*v5).base.y_pos,
-            &raw mut (*v5).base.y_subpos,
-            0x48000,
-        );
-        AddToHiLo(
-            &raw mut (*E).base.y_pos,
-            &raw mut (*E).base.y_subpos,
-            0x48000,
-        );
+        words!((*v5).base, y_pos, y_subpos += 0x48000);
+        words!((*E).base, y_pos, y_subpos += 0x48000);
     } else {
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xafa),
-            ram_ptr!(game, u16; 0xafc),
-            0x28000,
-        );
+        words!(game.samus_y_pos, samus_y_subpos += 0x28000);
         let v8 = Get_GunshipTop(k as i32 + 128, game);
-        AddToHiLo(
-            &raw mut (*v8).base.y_pos,
-            &raw mut (*v8).base.y_subpos,
-            0x28000,
-        );
+        words!((*v8).base, y_pos, y_subpos += 0x28000);
         let v10 = Get_GunshipTop(k as i32 + 64, game);
-        AddToHiLo(
-            &raw mut (*v10).base.y_pos,
-            &raw mut (*v10).base.y_subpos,
-            0x28000,
-        );
-        AddToHiLo(
-            &raw mut (*E).base.y_pos,
-            &raw mut (*E).base.y_subpos,
-            0x28000,
-        );
+        words!((*v10).base, y_pos, y_subpos += 0x28000);
+        words!((*E).base, y_pos, y_subpos += 0x28000);
         if (*E).base.y_pos as i32 - 1119i32 & 0x8000 == 0 {
             (*E).base.y_pos = 1119;
             (*v10).base.y_pos = 1159;
@@ -2259,8 +2201,10 @@ pub unsafe fn GunshipTop_21(k: u16, game: &mut Game) {
     if (v3 as i32 & 0xff00) - 2560i32 & 0x8000 == 0 {
         (*E).var_F = 2304;
     }
-    let v6: u32 = ((word!(game.samus_y_pos) as u32) << 16i32 | word!(game.samus_y_subpos) as u32)
-        .wrapping_sub((((*E).var_F >> 8) as u32) << 16 | (((*E).var_F as i32) << 8) as u16 as u32);
+    let v6: u32 = (words!(game.samus_y_pos, samus_y_subpos)).wrapping_sub(words!((
+        ((*E).var_F >> 8),
+        (((*E).var_F as i32) << 8) as u16
+    )));
     word!(game.samus_y_subpos = v6 as u16);
     word!(game.samus_y_pos = (v6 >> 16) as u16);
     let v5: u16 = (word!(game.samus_y_pos)).wrapping_sub(17);
@@ -2416,7 +2360,7 @@ pub unsafe fn NorfairErraticFireball_Main(game: &mut Game) {
     }
     if Enemy_MoveRight_IgnoreSlopes(
         word!(game.cur_enemy_index),
-        (((*E).var_C as u32) << 16 | (*E).var_D as u32) as i32,
+        (words!((*E), var_C, var_D)) as i32,
         game,
     ) != 0
     {
@@ -2428,7 +2372,7 @@ pub unsafe fn NorfairErraticFireball_Main(game: &mut Game) {
         }
         if Enemy_MoveDown(
             word!(game.cur_enemy_index),
-            (((*E).var_E as u32) << 16 | (*E).var_F as u32) as i32,
+            (words!((*E), var_E, var_F)) as i32,
             game,
         ) != 0
         {
@@ -3444,7 +3388,7 @@ pub unsafe fn MaridiaLargeSnail_Func_5(game: &mut Game) {
             }
             if Enemy_MoveRight_SlopesAsWalls(
                 word!(game.cur_enemy_index),
-                ((r20 as u32) << 16 | r18 as u32) as i32,
+                (words!((r20, r18))) as i32,
                 game,
             ) != 0
             {
@@ -3590,10 +3534,10 @@ pub unsafe fn HirisingSlowfalling_Func_2(k: u16, r18: u16, game: &mut Game) {
     loop {
         r24 = (r24).wrapping_add(512);
         let v1: i32 = 4 * (r24 as i32 >> 8);
-        v = v.wrapping_add(
-            (crate::rtl::rom_table_word!(game, 0xa2838f, (v1 + 1) as isize) as u32) << 16
-                | crate::rtl::rom_table_word!(game, 0xa2838f, v1 as isize) as u32,
-        );
+        v = v.wrapping_add(words!((
+            crate::rtl::rom_table_word!(game, 0xa2838f, (v1 + 1) as isize),
+            crate::rtl::rom_table_word!(game, 0xa2838f, v1 as isize)
+        )));
         if ((v >> 16i32).wrapping_sub(r18 as u32) & 0x8000 == 0) {
             break;
         }
@@ -3636,11 +3580,13 @@ pub unsafe fn HirisingSlowfalling_Func_5(game: &mut Game) {
 pub unsafe fn HirisingSlowfalling_Func_6(game: &mut Game) {
     let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
     let v2: i32 = 4 * byte!((*E).var_B; 1) as i32;
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 3) as isize) as u32) << 16
-            | crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 2) as isize) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += words!((
+            crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 3) as isize),
+            crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 2) as isize)
+        ))
     );
     let v5: i16 = (((*E).var_B) as i16).wrapping_sub(512);
     (*E).var_B = v5 as u16;
@@ -3706,7 +3652,7 @@ pub unsafe fn Gripper_Main(game: &mut Game) {
     let E = Get_Gripper(word!(game.cur_enemy_index) as i32, game);
     if Enemy_MoveRight_IgnoreSlopes(
         word!(game.cur_enemy_index),
-        (((*E).var_D as u32) << 16 | (*E).var_C as u32) as i32,
+        (words!((*E), var_D, var_C)) as i32,
         game,
     ) != 0
         || Gripper_Func_1(word!(game.cur_enemy_index), game) & 1 != 0
@@ -3762,7 +3708,7 @@ pub unsafe fn JetPowerRipper_Main(game: &mut Game) {
     let E = Get_JetPowerRipper(word!(game.cur_enemy_index) as i32, game);
     if Enemy_MoveRight_IgnoreSlopes(
         word!(game.cur_enemy_index),
-        (((*E).var_D as u32) << 16 | (*E).var_C as u32) as i32,
+        (words!((*E), var_D, var_C)) as i32,
         game,
     ) != 0
     {
@@ -3816,7 +3762,7 @@ pub unsafe fn Ripper_Main(game: &mut Game) {
     let E = Get_Ripper(word!(game.cur_enemy_index) as i32, game);
     if Enemy_MoveRight_IgnoreSlopes(
         word!(game.cur_enemy_index),
-        (((*E).var_D as u32) << 16 | (*E).var_C as u32) as i32,
+        (words!((*E), var_D, var_C)) as i32,
         game,
     ) != 0
     {
@@ -4064,11 +4010,7 @@ pub unsafe fn TimedShutter_Func_5(k: u16, game: &mut Game) {
 }
 pub unsafe fn TimedShutter_Func_6(game: &mut Game) {
     let E = Get_TimedShutter(word!(game.cur_enemy_index) as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        ((*E).var_00 as u32) << 16 | (*E).var_01 as u32,
-    );
+    words!((*E).base, y_pos, y_subpos += words!((*E), var_00, var_01));
     if (((*E).var_B as i32 + 16 - (*E).base.y_pos as i32) as i16) < 0 {
         (*E).base.y_pos = ((*E).var_B).wrapping_add(9);
         (*E).var_F = (*E).var_F.wrapping_add(1);
@@ -4078,11 +4020,7 @@ pub unsafe fn TimedShutter_Func_6(game: &mut Game) {
 }
 pub unsafe fn TimedShutter_Func_7(game: &mut Game) {
     let E = Get_TimedShutter(word!(game.cur_enemy_index) as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        ((*E).var_00 as u32) << 16 | (*E).var_01 as u32,
-    );
+    words!((*E).base, y_pos, y_subpos += words!((*E), var_00, var_01));
     if (((*E).var_C as i32 + 16 - (*E).base.y_pos as i32) as i16) < 0 {
         (*E).base.y_pos = ((*E).var_C).wrapping_add(9);
         (*E).var_F = (*E).var_F.wrapping_add(1);
@@ -4092,11 +4030,7 @@ pub unsafe fn TimedShutter_Func_7(game: &mut Game) {
 }
 pub unsafe fn TimedShutter_Func_8(game: &mut Game) {
     let E = Get_TimedShutter(word!(game.cur_enemy_index) as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        ((*E).var_00 as u32) << 16 | (*E).var_01 as u32,
-    );
+    words!((*E).base, y_pos, y_subpos += words!((*E), var_00, var_01));
     if (((*E).var_D as i32 + 16 - (*E).base.y_pos as i32) as i16) < 0 {
         (*E).base.y_pos = ((*E).var_D).wrapping_add(9);
         (*E).var_F = (*E).var_F.wrapping_add(1);
@@ -4106,11 +4040,7 @@ pub unsafe fn TimedShutter_Func_8(game: &mut Game) {
 }
 pub unsafe fn TimedShutter_Func_9(game: &mut Game) {
     let E = Get_TimedShutter(word!(game.cur_enemy_index) as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        ((*E).var_00 as u32) << 16 | (*E).var_01 as u32,
-    );
+    words!((*E).base, y_pos, y_subpos += words!((*E), var_00, var_01));
     let v3: u16 = ((*E).var_E).wrapping_add(16);
     if ((v3) as i16).wrapping_sub(((*E).base.y_pos) as i16) < 0 {
         (*E).base.y_pos = v3;
@@ -4136,10 +4066,10 @@ pub unsafe fn TimedShutter_Func_10(k: u16, game: &mut Game) {
 }
 pub unsafe fn TimedShutter_Func_11(game: &mut Game) {
     let E = Get_TimedShutter(word!(game.cur_enemy_index) as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        -(((*E).var_00 as i32) << 16i32 | (*E).var_01 as i32) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += -(words!(i32, (*E), var_00, var_01)) as u32
     );
     let v3: i16 = (((*E).var_B) as i16).wrapping_sub(16);
     if (v3).wrapping_sub(((*E).base.y_pos) as i16) >= 0 {
@@ -4151,10 +4081,10 @@ pub unsafe fn TimedShutter_Func_11(game: &mut Game) {
 }
 pub unsafe fn TimedShutter_Func_12(game: &mut Game) {
     let E = Get_TimedShutter(word!(game.cur_enemy_index) as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        -(((*E).var_00 as i32) << 16i32 | (*E).var_01 as i32) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += -(words!(i32, (*E), var_00, var_01)) as u32
     );
     let v3: i16 = (((*E).var_C) as i16).wrapping_sub(16);
     if (v3).wrapping_sub(((*E).base.y_pos) as i16) >= 0 {
@@ -4166,10 +4096,10 @@ pub unsafe fn TimedShutter_Func_12(game: &mut Game) {
 }
 pub unsafe fn TimedShutter_Func_13(game: &mut Game) {
     let E = Get_TimedShutter(word!(game.cur_enemy_index) as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        -(((*E).var_00 as i32) << 16i32 | (*E).var_01 as i32) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += -(words!(i32, (*E), var_00, var_01)) as u32
     );
     let v3: i16 = (((*E).var_D) as i16).wrapping_sub(16);
     if (v3).wrapping_sub(((*E).base.y_pos) as i16) >= 0 {
@@ -4181,10 +4111,10 @@ pub unsafe fn TimedShutter_Func_13(game: &mut Game) {
 }
 pub unsafe fn TimedShutter_Func_14(game: &mut Game) {
     let E = Get_TimedShutter(word!(game.cur_enemy_index) as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        -(((*E).var_00 as i32) << 16i32 | (*E).var_01 as i32) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += -(words!(i32, (*E), var_00, var_01)) as u32
     );
     let v3: u16 = ((*E).var_E).wrapping_sub(16);
     if ((v3) as i16).wrapping_sub(((*E).base.y_pos) as i16) >= 0 {
@@ -4324,11 +4254,7 @@ pub unsafe fn RisingFallingPlatform_Func_9(game: &mut Game) {
     if CheckIfEnemyTouchesSamus(word!(game.cur_enemy_index), game) != 0 {
         (*E).var_0A = 1;
     }
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        ((*E).var_F as u32) << 16 | (*E).var_E as u32,
-    );
+    words!((*E).base, y_pos, y_subpos += words!((*E), var_F, var_E));
     if (*E).var_0A != 0 {
         word!(game.extra_samus_y_displacement = ((*E).base.y_pos).wrapping_sub((*E).var_0E));
     }
@@ -4348,11 +4274,7 @@ pub unsafe fn RisingFallingPlatform_Func_10(game: &mut Game) {
     if CheckIfEnemyTouchesSamus(word!(game.cur_enemy_index), game) != 0 {
         (*E).var_0A = 1;
     }
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        ((*E).var_D as u32) << 16 | (*E).var_C as u32,
-    );
+    words!((*E).base, y_pos, y_subpos += words!((*E), var_D, var_C));
     if (*E).var_0A != 0 {
         word!(game.extra_samus_y_displacement = ((*E).base.y_pos).wrapping_sub((*E).var_0E));
     }
@@ -4533,11 +4455,7 @@ pub unsafe fn HorizontalShootableShutter_Func_8(game: &mut Game) {
     {
         (*E).var_13 = 1;
     }
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        ((*E).var_F as u32) << 16 | (*E).var_E as u32,
-    );
+    words!((*E).base, x_pos, x_subpos += words!((*E), var_F, var_E));
     if (*E).var_13 != 0 {
         word!(game.extra_samus_x_subdisplacement = (*E).var_E);
         word!(game.extra_samus_x_displacement = (*E).var_F);
@@ -4561,11 +4479,7 @@ pub unsafe fn HorizontalShootableShutter_Func_9(game: &mut Game) {
     {
         (*E).var_13 = 1;
     }
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        ((*E).var_D as u32) << 16 | (*E).var_C as u32,
-    );
+    words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_C));
     if (*E).var_13 != 0 {
         word!(game.extra_samus_x_subdisplacement = (*E).var_C);
         word!(game.extra_samus_x_displacement = (*E).var_D);

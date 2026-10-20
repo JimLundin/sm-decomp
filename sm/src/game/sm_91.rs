@@ -30,6 +30,7 @@ use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::words;
 use crate::rtl::{mov24, Mult8x8, RomPtr, Unreachable};
 use crate::rtl::{AddToHiLo, SetHiLo};
 pub use crate::types::{
@@ -1921,7 +1922,7 @@ pub unsafe fn VariaSuitPickup(game: &mut Game) {
     *ram_ptr!(game; 0xdf2) = 0x80;
     *ram_ptr!(game; 0xdf3) = 0;
     Samus_CancelSpeedBoost(game);
-    SetHiLo(ram_ptr!(game, u16; 0xb42), ram_ptr!(game, u16; 0xb44), 0);
+    words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
     word! { game, 0;
         samus_x_base_speed, samus_x_base_subspeed, samus_y_subspeed, samus_y_speed, samus_y_dir,
         used_for_ball_bounce_on_landing, samus_x_accel_mode, elevator_status, substate,
@@ -1959,7 +1960,7 @@ pub unsafe fn GravitySuitPickup(game: &mut Game) {
     *ram_ptr!(game; 0xdf2) = -112i32 as u8;
     *ram_ptr!(game; 0xdf3) = 1;
     Samus_CancelSpeedBoost(game);
-    SetHiLo(ram_ptr!(game, u16; 0xb42), ram_ptr!(game, u16; 0xb44), 0);
+    words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
     word! { game, 0;
         samus_x_base_speed, samus_x_base_subspeed, samus_y_subspeed, samus_y_speed, samus_y_dir,
         used_for_ball_bounce_on_landing, samus_x_accel_mode, elevator_status, substate,
@@ -2829,7 +2830,7 @@ pub unsafe fn MakeSamusFaceForward(game: &mut Game) {
         samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
     }
     CallSomeSamusCode(0x1f, game);
-    SetHiLo(ram_ptr!(game, u16; 0xb42), ram_ptr!(game, u16; 0xb44), 0);
+    words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
     word! { game, 0;
         samus_x_base_speed, samus_x_base_subspeed, samus_y_subspeed, samus_y_speed, samus_y_dir,
         used_for_ball_bounce_on_landing, samus_x_accel_mode, flare_counter, flare_animation_frame,
@@ -3403,15 +3404,14 @@ pub unsafe fn Samus_HandleTransitions(game: &mut Game) {
 }
 pub unsafe fn Samus_HandleTransitionsA_1(game: &mut Game) {
     if word!(game.samus_x_base_speed) != 0 || word!(game.samus_x_base_subspeed) != 0 {
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xb46),
-            ram_ptr!(game, u16; 0xb48),
-            (word!(game.samus_x_extra_run_speed) as u32) << 16
-                | word!(game.samus_x_extra_run_subspeed) as u32,
+        words!(
+            game.samus_x_base_speed,
+            samus_x_base_subspeed +=
+                words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed)
         );
         word!(game.samus_x_accel_mode = 2);
         Samus_CancelSpeedBoost(game);
-        SetHiLo(ram_ptr!(game, u16; 0xb42), ram_ptr!(game, u16; 0xb44), 0);
+        words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
         SamusFunc_EC80(game);
     } else {
         Samus_HandleTransitionsA_2(game);
@@ -3423,7 +3423,7 @@ pub unsafe fn Samus_HandleTransitionsA_6(game: &mut Game) {
 }
 pub unsafe fn Samus_HandleTransitionsA_8(game: &mut Game) {
     Samus_CancelSpeedBoost(game);
-    SetHiLo(ram_ptr!(game, u16; 0xb42), ram_ptr!(game, u16; 0xb44), 0);
+    words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
     SamusFunc_EC80(game);
 }
 pub unsafe fn Samus_HandleTransitionsA_2(game: &mut Game) {
@@ -3624,7 +3624,7 @@ pub unsafe fn Samus_HandleTransitionsB_9(game: &mut Game) {
     word! { game, 0;
         samus_x_base_speed, samus_x_base_subspeed, samus_y_subspeed, samus_y_speed,
     }
-    SetHiLo(ram_ptr!(game, u16; 0xb42), ram_ptr!(game, u16; 0xb44), 0);
+    words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
 }
 pub unsafe fn Samus_HandleTransitionsB_10(game: &mut Game) {
     GrappleBeamFunc_BEEB(game);
@@ -3653,7 +3653,7 @@ pub unsafe fn Samus_HandleTransitionsB_9B(game: &mut Game) {
     word! { game, 0;
         samus_x_base_speed, samus_x_base_subspeed, samus_y_subspeed, samus_y_speed,
     }
-    SetHiLo(ram_ptr!(game, u16; 0xb42), ram_ptr!(game, u16; 0xb44), 0);
+    words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
 }
 pub fn nullsub_23(game: &mut Game) {}
 static kSamus_HandleTransitionsA_5: [Option<Func_V>; 7] = callback_table! { unsafe Func_V;
@@ -4184,14 +4184,13 @@ pub unsafe fn SamusFunc_F468_SpinJump(game: &mut Game) -> u8 {
         }
         if current_block == 12119026790781926931 {
         } else {
-            AddToHiLo(
-                ram_ptr!(game, u16; 0xb46),
-                ram_ptr!(game, u16; 0xb48),
-                (word!(game.samus_x_extra_run_speed) as u32) << 16
-                    | word!(game.samus_x_extra_run_subspeed) as u32,
+            words!(
+                game.samus_x_base_speed,
+                samus_x_base_subspeed +=
+                    words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed)
             );
             Samus_CancelSpeedBoost(game);
-            SetHiLo(ram_ptr!(game, u16; 0xb42), ram_ptr!(game, u16; 0xb44), 0);
+            words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
             word!(game.samus_x_accel_mode = 1);
         }
     }
@@ -4390,13 +4389,11 @@ pub unsafe fn SamusFunc_F468_TurningAroundOnGround(game: &mut Game) -> u8 {
             );
         }
     }
-    AddToHiLo(
-        ram_ptr!(game, u16; 0xb46),
-        ram_ptr!(game, u16; 0xb48),
-        (word!(game.samus_x_extra_run_speed) as u32) << 16
-            | word!(game.samus_x_extra_run_subspeed) as u32,
+    words!(
+        game.samus_x_base_speed,
+        samus_x_base_subspeed += words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed)
     );
-    SetHiLo(ram_ptr!(game, u16; 0xb42), ram_ptr!(game, u16; 0xb44), 0);
+    words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
     word!(game.samus_x_accel_mode = 1);
     1
 }
@@ -4409,13 +4406,11 @@ pub unsafe fn SamusFunc_F468_TurnAroundJumping(game: &mut Game) -> u8 {
                 .direction_shots_fired as isize,
             ) as u16
     );
-    AddToHiLo(
-        ram_ptr!(game, u16; 0xb46),
-        ram_ptr!(game, u16; 0xb48),
-        (word!(game.samus_x_extra_run_speed) as u32) << 16
-            | word!(game.samus_x_extra_run_subspeed) as u32,
+    words!(
+        game.samus_x_base_speed,
+        samus_x_base_subspeed += words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed)
     );
-    SetHiLo(ram_ptr!(game, u16; 0xb42), ram_ptr!(game, u16; 0xb44), 0);
+    words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
     word!(game.samus_x_accel_mode = 1);
     1
 }
@@ -4428,13 +4423,11 @@ pub unsafe fn SamusFunc_F468_TurnAroundFalling(game: &mut Game) -> u8 {
                 .direction_shots_fired as isize,
             ) as u16
     );
-    AddToHiLo(
-        ram_ptr!(game, u16; 0xb46),
-        ram_ptr!(game, u16; 0xb48),
-        (word!(game.samus_x_extra_run_speed) as u32) << 16
-            | word!(game.samus_x_extra_run_subspeed) as u32,
+    words!(
+        game.samus_x_base_speed,
+        samus_x_base_subspeed += words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed)
     );
-    SetHiLo(ram_ptr!(game, u16; 0xb42), ram_ptr!(game, u16; 0xb44), 0);
+    words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
     word!(game.samus_x_accel_mode = 1);
     1
 }
@@ -4457,14 +4450,13 @@ pub unsafe fn SamusFunc_FA0A(game: &mut Game) {
         (*ram_ptr!(game; 0xa1e) == 8)
     };
     if apply_extra_run_speed {
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xb46),
-            ram_ptr!(game, u16; 0xb48),
-            (word!(game.samus_x_extra_run_speed) as u32) << 16
-                | word!(game.samus_x_extra_run_subspeed) as u32,
+        words!(
+            game.samus_x_base_speed,
+            samus_x_base_subspeed +=
+                words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed)
         );
         Samus_CancelSpeedBoost(game);
-        SetHiLo(ram_ptr!(game, u16; 0xb42), ram_ptr!(game, u16; 0xb44), 0);
+        words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
         word!(game.samus_x_accel_mode = 1);
     };
 }

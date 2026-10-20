@@ -1,3 +1,52 @@
+// Split-word assembly evaluates high then low. The i32 form retains signed
+// casts, including sign extension of the low operand. Repeated receivers and
+// operands are evaluated separately. Set/add keep pointer-before-value order
+// and the helpers' low-before-high writes, including unaligned/overlapping words.
+macro_rules! words {
+    ($game:ident.$hi:ident, $lo:ident += $value:expr $(,)?) => {
+        $crate::rtl::AddToHiLo(
+            $crate::ram_map::ram_ptr!($game, u16; $crate::ram_map::words::$hi as isize),
+            $crate::ram_map::ram_ptr!($game, u16; $crate::ram_map::words::$lo as isize),
+            $value,
+        )
+    };
+    ($game:ident.$hi:ident, $lo:ident = $value:expr $(,)?) => {
+        $crate::rtl::SetHiLo(
+            $crate::ram_map::ram_ptr!($game, u16; $crate::ram_map::words::$hi as isize),
+            $crate::ram_map::ram_ptr!($game, u16; $crate::ram_map::words::$lo as isize),
+            $value,
+        )
+    };
+    ($base:expr, $hi:ident, $lo:ident += $value:expr $(,)?) => {
+        $crate::rtl::AddToHiLo(&raw mut ($base).$hi, &raw mut ($base).$lo, $value)
+    };
+    ($base:expr, $hi:ident, $lo:ident = $value:expr $(,)?) => {
+        $crate::rtl::SetHiLo(&raw mut ($base).$hi, &raw mut ($base).$lo, $value)
+    };
+    (i32, $game:ident.$hi:ident, $lo:ident $(,)?) => {
+        $crate::rtl::words!(@join i32; $crate::ram_map::word!($game.$hi), $crate::ram_map::word!($game.$lo))
+    };
+    ($game:ident.$hi:ident, $lo:ident $(,)?) => {
+        $crate::rtl::words!(@join u32; $crate::ram_map::word!($game.$hi), $crate::ram_map::word!($game.$lo))
+    };
+    (i32, $base:expr, $hi:ident, $lo:ident $(,)?) => {
+        $crate::rtl::words!(@join i32; ($base).$hi, ($base).$lo)
+    };
+    ($base:expr, $hi:ident, $lo:ident $(,)?) => {
+        $crate::rtl::words!(@join u32; ($base).$hi, ($base).$lo)
+    };
+    (i32, ($hi:expr, $lo:expr $(,)?) $(,)?) => {
+        $crate::rtl::words!(@join i32; $hi, $lo)
+    };
+    (($hi:expr, $lo:expr $(,)?) $(,)?) => {
+        $crate::rtl::words!(@join u32; $hi, $lo)
+    };
+    (@join $ty:ty; $hi:expr, $lo:expr) => {
+        (($hi as $ty) << 16i32) | ($lo as $ty)
+    };
+}
+pub(crate) use words;
+
 /// Apply an ordered register sequence without pre-evaluating later values.
 macro_rules! register_writes {
     ($game:ident; $($kind:ident($($argument:tt)*);)*) => {

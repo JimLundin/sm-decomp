@@ -50,6 +50,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::words;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Load24, MakePairU16, Mult8x8, RomPtr, Unreachable};
 pub use crate::types::{
@@ -318,11 +319,12 @@ pub unsafe fn Samus_Animate_LavaFx(game: &mut Game) {
             {
                 QueueSfx3_Max3(0x2d, game);
             }
-            AddToHiLo(
-                ram_ptr!(game, u16; 0xa50),
-                ram_ptr!(game, u16; 0xa4e),
-                (kSamusPhys_LavaDamagePerFrame as u32) << 16
-                    | kSamusPhys_LavaSubdamagePerFrame as u32,
+            words!(
+                game.samus_periodic_damage,
+                samus_periodic_subdamage += words!((
+                    kSamusPhys_LavaDamagePerFrame,
+                    kSamusPhys_LavaSubdamagePerFrame
+                ))
             );
             Samus_Animate_SubmergedLavaAcid(game);
         }
@@ -342,10 +344,12 @@ pub unsafe fn Samus_Animate_AcidFx(game: &mut Game) {
         {
             QueueSfx3_Max3(0x2d, game);
         }
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xa50),
-            ram_ptr!(game, u16; 0xa4e),
-            (kSamusPhys_AcidDamagePerFrame as u32) << 16 | kSamusPhys_AcidSubdamagePerFrame as u32,
+        words!(
+            game.samus_periodic_damage,
+            samus_periodic_subdamage += words!((
+                kSamusPhys_AcidDamagePerFrame,
+                kSamusPhys_AcidSubdamagePerFrame
+            ))
         );
         Samus_Animate_SubmergedLavaAcid(game);
     } else {
@@ -1355,16 +1359,12 @@ pub unsafe fn Samus_BombJumpFallingXMovement_(game: &mut Game) {
 }
 pub unsafe fn Samus_BombJumpFallingYMovement_(game: &mut Game) {
     if word!(game.samus_y_speed) as i32 - 5i32 & 0x8000 != 0 {
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xb2e),
-            ram_ptr!(game, u16; 0xb2c),
-            (word!(game.samus_y_accel) as u32) << 16 | word!(game.samus_y_subaccel) as u32,
+        words!(
+            game.samus_y_speed,
+            samus_y_subspeed += words!(game.samus_y_accel, samus_y_subaccel)
         );
     }
-    Samus_MoveDown(
-        ((word!(game.samus_y_speed) as u32) << 16 | word!(game.samus_y_subspeed) as u32) as i32,
-        game,
-    );
+    Samus_MoveDown((words!(game.samus_y_speed, samus_y_subspeed)) as i32, game);
 }
 pub unsafe fn Samus_JumpingMovement(game: &mut Game) {
     Samus_HandleExtraRunspeedX(game);
@@ -1459,31 +1459,27 @@ pub unsafe fn Samus_CheckStartFalling(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_MoveY_WithSpeedCalc(game: &mut Game) {
-    let mut amt: i32 =
-        ((word!(game.samus_y_speed) as u32) << 16 | word!(game.samus_y_subspeed) as u32) as i32;
+    let mut amt: i32 = (words!(game.samus_y_speed, samus_y_subspeed)) as i32;
     if word!(game.samus_y_dir) == 2 {
         if word!(game.samus_y_speed) != 5 {
-            AddToHiLo(
-                ram_ptr!(game, u16; 0xb2e),
-                ram_ptr!(game, u16; 0xb2c),
-                (word!(game.samus_y_accel) as u32) << 16 | word!(game.samus_y_subaccel) as u32,
+            words!(
+                game.samus_y_speed,
+                samus_y_subspeed += words!(game.samus_y_accel, samus_y_subaccel)
             );
         }
     } else {
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xb2e),
-            ram_ptr!(game, u16; 0xb2c),
-            -((word!(game.samus_y_accel) as i32) << 16i32 | word!(game.samus_y_subaccel) as i32)
-                as u32,
+        words!(
+            game.samus_y_speed,
+            samus_y_subspeed += -(words!(i32, game.samus_y_accel, samus_y_subaccel)) as u32
         );
     }
     if word!(game.samus_y_dir) != 2 {
         amt = -amt;
     }
-    amt = (amt as u32).wrapping_add(
-        (word!(game.extra_samus_y_displacement) as u32) << 16
-            | word!(game.extra_samus_y_subdisplacement) as u32,
-    ) as i32;
+    amt = (amt as u32).wrapping_add(words!(
+        game.extra_samus_y_displacement,
+        extra_samus_y_subdisplacement
+    )) as i32;
     if amt < 0 {
         Samus_MoveUp(amt, game);
     } else {
@@ -1542,9 +1538,10 @@ pub unsafe fn Samus_MorphedBouncingMovement(game: &mut Game) {
         {
             word!(game.samus_y_dir = 2);
             word! { game, 0; samus_y_subspeed, samus_y_speed }
-            let amt: i32 = ((word!(game.extra_samus_y_displacement) as u32) << 16
-                | word!(game.extra_samus_y_subdisplacement) as u32)
-                as i32;
+            let amt: i32 = (words!(
+                game.extra_samus_y_displacement,
+                extra_samus_y_subdisplacement
+            )) as i32;
             if amt < 0 {
                 Samus_MoveUp(amt, game);
             } else {
@@ -1557,12 +1554,13 @@ pub unsafe fn Samus_MorphedBouncingMovement(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_Move_NoSpeedCalc_Y(game: &mut Game) {
-    let mut amt: i32 = ((word!(game.extra_samus_y_displacement) as u32) << 16
-        | word!(game.extra_samus_y_subdisplacement) as u32) as i32;
+    let mut amt: i32 = (words!(
+        game.extra_samus_y_displacement,
+        extra_samus_y_subdisplacement
+    )) as i32;
     if amt == 0 {
         if word!(game.samus_pos_adjusted_by_slope_flag) == 0 {
-            amt = ((word!(game.samus_total_x_speed) as u32) << 16
-                | word!(game.samus_total_x_subspeed) as u32) as i32;
+            amt = (words!(game.samus_total_x_speed, samus_total_x_subspeed)) as i32;
         }
         Samus_MoveDown(amt + ((1i16 as i32) << 16), game);
     } else if amt < 0 {
@@ -1572,8 +1570,10 @@ pub unsafe fn Samus_Move_NoSpeedCalc_Y(game: &mut Game) {
     };
 }
 pub unsafe fn Samus_MoveExtraY(game: &mut Game) {
-    let amt: i32 = ((word!(game.extra_samus_y_displacement) as u32) << 16
-        | word!(game.extra_samus_y_subdisplacement) as u32) as i32;
+    let amt: i32 = (words!(
+        game.extra_samus_y_displacement,
+        extra_samus_y_subdisplacement
+    )) as i32;
     if amt != 0 {
         if amt < 0 {
             Samus_MoveUp(amt, game);
@@ -1605,10 +1605,9 @@ pub unsafe fn Samus_MoveLeft(mut amt: i32, game: &mut Game) {
         Samus_AlignYPosSlope(game);
     } else {
         amt = Samus_MoveRight_NoSolidColl(-amt, game);
-        SetHiLo(
-            ram_ptr!(game, u16; 0xdaa),
-            ram_ptr!(game, u16; 0xdac),
-            amt as u32,
+        words!(
+            game.projectile_init_speed_samus_moved_left,
+            projectile_init_speed_samus_moved_left_fract = amt as u32
         );
         if (word!(game.samus_collision_direction) & 1) != 0 {
             word!(game.samus_collision_flag = 0);
@@ -1627,10 +1626,9 @@ pub unsafe fn Samus_MoveRight(mut amt: i32, game: &mut Game) {
         Samus_AlignYPosSlope(game);
     } else {
         amt = Samus_MoveRight_NoSolidColl(amt, game);
-        SetHiLo(
-            ram_ptr!(game, u16; 0xdae),
-            ram_ptr!(game, u16; 0xdb0),
-            amt as u32,
+        words!(
+            game.projectile_init_speed_samus_moved_right,
+            projectile_init_speed_samus_moved_right_fract = amt as u32
         );
         if (word!(game.samus_collision_direction) & 1) == 0 {
             word!(game.samus_collision_flag = 0);
@@ -1649,10 +1647,9 @@ pub unsafe fn Samus_MoveUp(mut amt: i32, game: &mut Game) {
         Samus_MoveUp_NoColl(amt, game);
     } else {
         amt = Samus_MoveDown_NoSolidColl(-amt, game);
-        SetHiLo(
-            ram_ptr!(game, u16; 0xdb2),
-            ram_ptr!(game, u16; 0xdb4),
-            amt as u32,
+        words!(
+            game.projectile_init_speed_samus_moved_up,
+            projectile_init_speed_samus_moved_up_fract = amt as u32
         );
         Samus_MoveUp_SetPoseCalcInput(game);
     };
@@ -1803,19 +1800,22 @@ pub unsafe fn Samus_HandleScroll_X(game: &mut Game) {
         if ((word!(game.ideal_layer1_xpos)) as i16).wrapping_sub((word!(game.layer1_x_pos)) as i16)
             < 0
         {
-            AddToHiLo(
-                ram_ptr!(game, u16; 0x911),
-                ram_ptr!(game, u16; 0x90f),
-                -((word!(game.absolute_moved_last_frame_x) as i32) << 16i32
-                    | word!(game.absolute_moved_last_frame_x_fract) as i32) as u32,
+            words!(
+                game.layer1_x_pos,
+                layer1_x_subpos += -(words!(
+                    i32,
+                    game.absolute_moved_last_frame_x,
+                    absolute_moved_last_frame_x_fract
+                )) as u32
             );
             HandleScrollingWhenTriggeringScrollLeft(game);
         } else {
-            AddToHiLo(
-                ram_ptr!(game, u16; 0x911),
-                ram_ptr!(game, u16; 0x90f),
-                (word!(game.absolute_moved_last_frame_x) as u32) << 16
-                    | word!(game.absolute_moved_last_frame_x_fract) as u32,
+            words!(
+                game.layer1_x_pos,
+                layer1_x_subpos += words!(
+                    game.absolute_moved_last_frame_x,
+                    absolute_moved_last_frame_x_fract
+                )
             );
             HandleScrollingWhenTriggeringScrollRight(game);
         }
@@ -1841,20 +1841,22 @@ pub unsafe fn Samus_HandleScroll_Y(game: &mut Game) {
                 .wrapping_sub((word!(game.layer1_y_pos)) as i16)
                 < 0
             {
-                AddToHiLo(
-                    ram_ptr!(game, u16; 0x915),
-                    ram_ptr!(game, u16; 0x913),
-                    -((word!(game.absolute_moved_last_frame_y) as i32) << 16i32
-                        | word!(game.absolute_moved_last_frame_y_fract) as i32)
-                        as u32,
+                words!(
+                    game.layer1_y_pos,
+                    layer1_y_subpos += -(words!(
+                        i32,
+                        game.absolute_moved_last_frame_y,
+                        absolute_moved_last_frame_y_fract
+                    )) as u32
                 );
                 HandleScrollingWhenTriggeringScrollUp(game);
             } else {
-                AddToHiLo(
-                    ram_ptr!(game, u16; 0x915),
-                    ram_ptr!(game, u16; 0x913),
-                    (word!(game.absolute_moved_last_frame_y) as u32) << 16
-                        | word!(game.absolute_moved_last_frame_y_fract) as u32,
+                words!(
+                    game.layer1_y_pos,
+                    layer1_y_subpos += words!(
+                        game.absolute_moved_last_frame_y,
+                        absolute_moved_last_frame_y_fract
+                    )
                 );
                 HandleScrollingWhenTriggeringScrollDown(game);
             }
@@ -1863,51 +1865,37 @@ pub unsafe fn Samus_HandleScroll_Y(game: &mut Game) {
 }
 pub unsafe fn Samus_CalcDistanceMoved_X(game: &mut Game) {
     if ((word!(game.samus_x_pos)) as i16).wrapping_sub((word!(game.samus_prev_x_pos)) as i16) >= 0 {
-        SetHiLo(
-            ram_ptr!(game, u16; 0xda2),
-            ram_ptr!(game, u16; 0xda4),
-            ((word!(game.samus_x_pos) as u32) << 16i32 | word!(game.samus_x_subpos) as u32)
-                .wrapping_sub(
-                    (word!(game.samus_prev_x_pos) as u32) << 16i32
-                        | word!(game.samus_prev_x_subpos) as u32,
-                )
-                .wrapping_add(((1i32) << 16) as u32),
+        words!(
+            game.absolute_moved_last_frame_x,
+            absolute_moved_last_frame_x_fract = (words!(game.samus_x_pos, samus_x_subpos))
+                .wrapping_sub(words!(game.samus_prev_x_pos, samus_prev_x_subpos),)
+                .wrapping_add(((1i32) << 16) as u32)
         );
     } else {
-        SetHiLo(
-            ram_ptr!(game, u16; 0xda2),
-            ram_ptr!(game, u16; 0xda4),
-            ((word!(game.samus_prev_x_pos) as u32) << 16i32
-                | word!(game.samus_prev_x_subpos) as u32)
-                .wrapping_sub(
-                    (word!(game.samus_x_pos) as u32) << 16i32 | word!(game.samus_x_subpos) as u32,
-                )
-                .wrapping_add(((1i32) << 16) as u32),
+        words!(
+            game.absolute_moved_last_frame_x,
+            absolute_moved_last_frame_x_fract =
+                (words!(game.samus_prev_x_pos, samus_prev_x_subpos))
+                    .wrapping_sub(words!(game.samus_x_pos, samus_x_subpos),)
+                    .wrapping_add(((1i32) << 16) as u32)
         );
     };
 }
 pub unsafe fn Samus_CalcDistanceMoved_Y(game: &mut Game) {
     if ((word!(game.samus_y_pos)) as i16).wrapping_sub((word!(game.samus_prev_y_pos)) as i16) >= 0 {
-        SetHiLo(
-            ram_ptr!(game, u16; 0xda6),
-            ram_ptr!(game, u16; 0xda8),
-            ((word!(game.samus_y_pos) as u32) << 16i32 | word!(game.samus_y_subpos) as u32)
-                .wrapping_sub(
-                    (word!(game.samus_prev_y_pos) as u32) << 16i32
-                        | word!(game.samus_prev_y_subpos) as u32,
-                )
-                .wrapping_add(((1i32) << 16) as u32),
+        words!(
+            game.absolute_moved_last_frame_y,
+            absolute_moved_last_frame_y_fract = (words!(game.samus_y_pos, samus_y_subpos))
+                .wrapping_sub(words!(game.samus_prev_y_pos, samus_prev_y_subpos),)
+                .wrapping_add(((1i32) << 16) as u32)
         );
     } else {
-        SetHiLo(
-            ram_ptr!(game, u16; 0xda6),
-            ram_ptr!(game, u16; 0xda8),
-            ((word!(game.samus_prev_y_pos) as u32) << 16i32
-                | word!(game.samus_prev_y_subpos) as u32)
-                .wrapping_sub(
-                    (word!(game.samus_y_pos) as u32) << 16i32 | word!(game.samus_y_subpos) as u32,
-                )
-                .wrapping_add(((1i32) << 16) as u32),
+        words!(
+            game.absolute_moved_last_frame_y,
+            absolute_moved_last_frame_y_fract =
+                (words!(game.samus_prev_y_pos, samus_prev_y_subpos))
+                    .wrapping_sub(words!(game.samus_y_pos, samus_y_subpos),)
+                    .wrapping_add(((1i32) << 16) as u32)
         );
     };
 }
@@ -1991,11 +1979,12 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
             }
             if current_block == 7368539786447134940 {
             } else {
-                AddToHiLo(
-                    ram_ptr!(game, u16; 0xb42),
-                    ram_ptr!(game, u16; 0xb44),
-                    (kSamus_HandleExtraRunspeedX_Tab0[0i32 as usize] as u32) << 16
-                        | kSamus_HandleExtraRunspeedX_Tab1[0i32 as usize] as u32,
+                words!(
+                    game.samus_x_extra_run_speed,
+                    samus_x_extra_run_subspeed += words!((
+                        kSamus_HandleExtraRunspeedX_Tab0[0i32 as usize],
+                        kSamus_HandleExtraRunspeedX_Tab1[0i32 as usize]
+                    ))
                 );
                 current_block = 7368539786447134940;
             }
@@ -2009,51 +1998,31 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_MoveRight_NoColl(amt: i32, game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0xaf6),
-        ram_ptr!(game, u16; 0xaf8),
-        amt as u32,
-    );
-    SetHiLo(
-        ram_ptr!(game, u16; 0xdae),
-        ram_ptr!(game, u16; 0xdb0),
-        amt as u32,
+    words!(game.samus_x_pos, samus_x_subpos += amt as u32);
+    words!(
+        game.projectile_init_speed_samus_moved_right,
+        projectile_init_speed_samus_moved_right_fract = amt as u32
     );
 }
 pub unsafe fn Samus_MoveLeft_NoColl(amt: i32, game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0xaf6),
-        ram_ptr!(game, u16; 0xaf8),
-        -amt as u32,
-    );
-    SetHiLo(
-        ram_ptr!(game, u16; 0xdaa),
-        ram_ptr!(game, u16; 0xdac),
-        -amt as u32,
+    words!(game.samus_x_pos, samus_x_subpos += -amt as u32);
+    words!(
+        game.projectile_init_speed_samus_moved_left,
+        projectile_init_speed_samus_moved_left_fract = -amt as u32
     );
 }
 pub unsafe fn Samus_MoveDown_NoColl(amt: i32, game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0xafa),
-        ram_ptr!(game, u16; 0xafc),
-        amt as u32,
-    );
-    SetHiLo(
-        ram_ptr!(game, u16; 0xdb6),
-        ram_ptr!(game, u16; 0xdb8),
-        amt as u32,
+    words!(game.samus_y_pos, samus_y_subpos += amt as u32);
+    words!(
+        game.projectile_init_speed_samus_moved_down,
+        projectile_init_speed_samus_moved_down_fract = amt as u32
     );
 }
 pub unsafe fn Samus_MoveUp_NoColl(amt: i32, game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0xafa),
-        ram_ptr!(game, u16; 0xafc),
-        -amt as u32,
-    );
-    SetHiLo(
-        ram_ptr!(game, u16; 0xdb2),
-        ram_ptr!(game, u16; 0xdb4),
-        -amt as u32,
+    words!(game.samus_y_pos, samus_y_subpos += -amt as u32);
+    words!(
+        game.projectile_init_speed_samus_moved_up,
+        projectile_init_speed_samus_moved_up_fract = -amt as u32
     );
 }
 pub unsafe fn Samus_InitJump(game: &mut Game) {
@@ -2222,15 +2191,16 @@ pub unsafe fn Samus_CalcBaseSpeed_X(k: u16, game: &mut Game) -> i32 {
     let sste = get_SamusSpeedTableEntry(k, game);
     if word!(game.samus_x_accel_mode) != 0 {
         let delta: i32 = (if *ram_ptr!(game; 0xb4c) != 0 {
-            ((Mult8x8(*ram_ptr!(game; 0xb4c), (*sste).decel as u8) >> 8) as u32) << 16
-                | Mult8x8(*ram_ptr!(game; 0xb4c), byte!((*sste).decel_sub; 1)) as u32
+            words!((
+                (Mult8x8(*ram_ptr!(game; 0xb4c), (*sste).decel as u8) >> 8),
+                Mult8x8(*ram_ptr!(game; 0xb4c), byte!((*sste).decel_sub; 1))
+            ))
         } else {
-            ((*sste).decel as u32) << 16 | (*sste).decel_sub as u32
+            words!((*sste), decel, decel_sub)
         }) as i32;
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xb46),
-            ram_ptr!(game, u16; 0xb48),
-            -delta as u32,
+        words!(
+            game.samus_x_base_speed,
+            samus_x_base_subspeed += -delta as u32
         );
         if (word!(game.samus_x_base_speed) as i16) < 0 {
             word! { game, 0;
@@ -2238,10 +2208,9 @@ pub unsafe fn Samus_CalcBaseSpeed_X(k: u16, game: &mut Game) -> i32 {
             }
         }
     } else {
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xb46),
-            ram_ptr!(game, u16; 0xb48),
-            ((*sste).accel as u32) << 16 | (*sste).accel_sub as u32,
+        words!(
+            game.samus_x_base_speed,
+            samus_x_base_subspeed += words!((*sste), accel, accel_sub)
         );
         if IsGreaterThanQuirked(
             word!(game.samus_x_base_speed),
@@ -2253,23 +2222,23 @@ pub unsafe fn Samus_CalcBaseSpeed_X(k: u16, game: &mut Game) -> i32 {
             word!(game.samus_x_base_subspeed = (*sste).max_speed_sub);
         }
     }
-    ((word!(game.samus_x_base_speed) as u32) << 16 | word!(game.samus_x_base_subspeed) as u32)
-        as i32
+    (words!(game.samus_x_base_speed, samus_x_base_subspeed)) as i32
 }
 unsafe fn Samus_CalcBaseSpeed_NoDecel_X(k: u16, game: &mut Game) -> Pair_Bool_Amt {
     let sste = get_SamusSpeedTableEntry(k, game);
     let mut rv: bool = false_0 != 0;
     if (word!(game.samus_x_accel_mode) & 1) != 0 {
         let delta: i32 = (if *ram_ptr!(game; 0xb4c) != 0 {
-            ((Mult8x8(*ram_ptr!(game; 0xb4c), (*sste).decel as u8) >> 8) as u32) << 16
-                | Mult8x8(*ram_ptr!(game; 0xb4c), byte!((*sste).decel_sub; 1)) as u32
+            words!((
+                (Mult8x8(*ram_ptr!(game; 0xb4c), (*sste).decel as u8) >> 8),
+                Mult8x8(*ram_ptr!(game; 0xb4c), byte!((*sste).decel_sub; 1))
+            ))
         } else {
-            ((*sste).decel as u32) << 16 | (*sste).decel_sub as u32
+            words!((*sste), decel, decel_sub)
         }) as i32;
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xb46),
-            ram_ptr!(game, u16; 0xb48),
-            -delta as u32,
+        words!(
+            game.samus_x_base_speed,
+            samus_x_base_subspeed += -delta as u32
         );
         if (word!(game.samus_x_base_speed) as i16) < 0 {
             word! { game, 0;
@@ -2277,10 +2246,9 @@ unsafe fn Samus_CalcBaseSpeed_NoDecel_X(k: u16, game: &mut Game) -> Pair_Bool_Am
             }
         }
     } else {
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xb46),
-            ram_ptr!(game, u16; 0xb48),
-            ((*sste).accel as u32) << 16 | (*sste).accel_sub as u32,
+        words!(
+            game.samus_x_base_speed,
+            samus_x_base_subspeed += words!((*sste), accel, accel_sub)
         );
         if IsGreaterThanQuirked(
             word!(game.samus_x_base_speed),
@@ -2295,8 +2263,7 @@ unsafe fn Samus_CalcBaseSpeed_NoDecel_X(k: u16, game: &mut Game) -> Pair_Bool_Am
     }
     Pair_Bool_Amt {
         flag: rv,
-        amt: ((word!(game.samus_x_base_speed) as u32) << 16
-            | word!(game.samus_x_base_subspeed) as u32) as i32,
+        amt: (words!(game.samus_x_base_speed, samus_x_base_subspeed)) as i32,
     }
 }
 pub unsafe fn Samus_DetermineSpeedTableEntryPtr_X(game: &mut Game) -> u16 {
@@ -5414,16 +5381,14 @@ unsafe fn Samus_ClampSpeedHi(mut amt: i32, val: i32) -> u32 {
 }
 pub unsafe fn Samus_ShinesparkMove_X(game: &mut Game) {
     word!(game.samus_shine_timer = 15);
-    AddToHiLo(
-        ram_ptr!(game, u16; 0xb42),
-        ram_ptr!(game, u16; 0xb44),
-        (word!(game.samus_y_accel) as u32) << 16 | word!(game.samus_y_subaccel) as u32,
+    words!(
+        game.samus_x_extra_run_speed,
+        samus_x_extra_run_subspeed += words!(game.samus_y_accel, samus_y_subaccel)
     );
     if word!(game.samus_x_extra_run_speed) as i32 - 15i32 & 0x8000 == 0 {
-        SetHiLo(
-            ram_ptr!(game, u16; 0xb42),
-            ram_ptr!(game, u16; 0xb44),
-            ((15i16 as i32) << 16) as u32,
+        words!(
+            game.samus_x_extra_run_speed,
+            samus_x_extra_run_subspeed = ((15i16 as i32) << 16) as u32
         );
     }
     let mut amt: i32 = 0;
@@ -5464,24 +5429,20 @@ pub unsafe fn Samus_ShinesparkMove_X(game: &mut Game) {
 }
 pub unsafe fn Samus_ShinesparkMove_Y(game: &mut Game) {
     word!(game.samus_shine_timer = 15);
-    AddToHiLo(
-        ram_ptr!(game, u16; 0xdec),
-        ram_ptr!(game, u16; 0xdee),
-        (word!(game.samus_y_accel) as u32) << 16 | word!(game.samus_y_subaccel) as u32,
+    words!(
+        game.substate,
+        suit_pickup_light_beam_pos += words!(game.samus_y_accel, samus_y_subaccel)
     );
-    AddToHiLo(
-        ram_ptr!(game, u16; 0xb2e),
-        ram_ptr!(game, u16; 0xb2c),
-        (word!(game.substate) as u32) << 16 | word!(game.suit_pickup_light_beam_pos) as u32,
+    words!(
+        game.samus_y_speed,
+        samus_y_subspeed += words!(game.substate, suit_pickup_light_beam_pos)
     );
-    let mut amt: i32 = Samus_ClampSpeedHi(
-        ((word!(game.samus_y_speed) as u32) << 16 | word!(game.samus_y_subspeed) as u32) as i32,
-        14,
-    ) as i32;
-    amt = (amt as u32).wrapping_sub(
-        (word!(game.extra_samus_y_displacement) as u32) << 16
-            | word!(game.extra_samus_y_subdisplacement) as u32,
-    ) as i32;
+    let mut amt: i32 =
+        Samus_ClampSpeedHi((words!(game.samus_y_speed, samus_y_subspeed)) as i32, 14) as i32;
+    amt = (amt as u32).wrapping_sub(words!(
+        game.extra_samus_y_displacement,
+        extra_samus_y_subdisplacement
+    )) as i32;
     word!(game.samus_collision_direction = 2);
     let cres: CheckEnemyColl_Result =
         Samus_CheckSolidEnemyColl(Samus_ClampSpeedHi(amt, 15) as i32, game);
@@ -5885,20 +5846,27 @@ pub unsafe fn ProjPreInstr_SpreadBomb(k: u16, game: &mut Game) {
         AddToHiLo(
             (ram_ptr!(game, u16; 0xbf0)).offset(v1 as isize),
             (ram_ptr!(game, u16; 0xc90)).offset(v1 as isize),
-            (word!(game.samus_y_accel) as u32) << 16 | word!(game.samus_y_subaccel) as u32,
+            words!(game.samus_y_accel, samus_y_subaccel),
         );
         AddToHiLo(
             (ram_ptr!(game, u16; 0xb78)).offset(v1 as isize),
             (ram_ptr!(game, u16; 0xba0)).offset(v1 as isize),
-            (word!(game.projectile_bomb_y_speed[v1]) as u32) << 16
-                | word!(game.projectile_timers[v1]) as u32,
+            words!((
+                word!(game.projectile_bomb_y_speed[v1]),
+                word!(game.projectile_timers[v1])
+            )),
         );
         if BlockCollSpreadBomb(k, game) & 1 != 0 {
             AddToHiLo(
                 (ram_ptr!(game, u16; 0xb78)).offset(v1 as isize),
                 (ram_ptr!(game, u16; 0xba0)).offset(v1 as isize),
-                -((word!(game.projectile_bomb_y_speed[v1]) as i32) << 16i32
-                    | word!(game.projectile_timers[v1]) as i32) as u32,
+                -(words!(
+                    i32,
+                    (
+                        word!(game.projectile_bomb_y_speed[v1]),
+                        word!(game.projectile_timers[v1])
+                    )
+                )) as u32,
             );
             if (word!(game.projectile_bomb_y_speed[v1]) & 0x8000) != 0 {
                 word! { game, 0; projectile_bomb_y_speed[v1], projectile_y_radius[v1] }
@@ -6722,10 +6690,9 @@ pub unsafe fn Samus_Func7(game: &mut Game) {
 }
 pub unsafe fn Samus_Func9(game: &mut Game) {
     if word!(game.samus_y_speed) as i32 - 5i32 & 0x8000 != 0 {
-        AddToHiLo(
-            ram_ptr!(game, u16; 0xb2e),
-            ram_ptr!(game, u16; 0xb2c),
-            (word!(game.samus_y_accel) as u32) << 16 | word!(game.samus_y_subaccel) as u32,
+        words!(
+            game.samus_y_speed,
+            samus_y_subspeed += words!(game.samus_y_accel, samus_y_subaccel)
         );
     }
     if (word!(game.samus_pose) as i32 == kPose_29_FaceR_Fall as i32
@@ -6749,36 +6716,38 @@ unsafe fn Samus_ClampSpeed(amt: i32) -> i32 {
     } else if v0 as i32 - 16i32 & 0x8000 == 0 {
         r18 = 15;
     }
-    (r18 as i32) << 16 | r20 as i32
+    words!(i32, (r18, r20))
 }
 pub unsafe fn Samus_CalcDisplacementMoveLeft(mut amt: i32, game: &mut Game) -> i32 {
     amt = Samus_CalcSpeed_X(amt as u32, game) as i32;
     word!(game.samus_collision_direction = 0);
-    amt = ((word!(game.extra_samus_x_displacement) as u32) << 16i32
-        | word!(game.extra_samus_x_subdisplacement) as u32)
-        .wrapping_sub(amt as u32) as i32;
+    amt = (words!(
+        game.extra_samus_x_displacement,
+        extra_samus_x_subdisplacement
+    ))
+    .wrapping_sub(amt as u32) as i32;
     Samus_ClampSpeed(amt)
 }
 pub unsafe fn Samus_CalcDisplacementMoveRight(mut amt: i32, game: &mut Game) -> i32 {
     amt = Samus_CalcSpeed_X(amt as u32, game) as i32;
     word!(game.samus_collision_direction = 1);
-    amt = (amt as u32).wrapping_add(
-        (word!(game.extra_samus_x_displacement) as u32) << 16
-            | word!(game.extra_samus_x_subdisplacement) as u32,
-    ) as i32;
+    amt = (amt as u32).wrapping_add(words!(
+        game.extra_samus_x_displacement,
+        extra_samus_x_subdisplacement
+    )) as i32;
     Samus_ClampSpeed(amt)
 }
 pub unsafe fn Samus_CalcSpeed_X(mut amt: u32, game: &mut Game) -> u32 {
-    amt = amt.wrapping_add(
-        (word!(game.samus_x_extra_run_speed) as u32) << 16
-            | word!(game.samus_x_extra_run_subspeed) as u32,
-    );
+    amt = amt.wrapping_add(words!(
+        game.samus_x_extra_run_speed,
+        samus_x_extra_run_subspeed
+    ));
     amt >>= if word!(game.samus_x_speed_divisor) <= 4 {
         word!(game.samus_x_speed_divisor) as i32
     } else {
         4
     };
-    SetHiLo(ram_ptr!(game, u16; 0xdbc), ram_ptr!(game, u16; 0xdbe), amt);
+    words!(game.samus_total_x_speed, samus_total_x_subspeed = amt);
     amt
 }
 pub unsafe fn Samus_ClearXSpeedIfColl(game: &mut Game) {
@@ -7072,8 +7041,7 @@ pub unsafe fn Samus_HandlePeriodicDamage(game: &mut Game) {
         word!(game.samus_periodic_damage = *fresh127);
         return;
     }
-    let mut t: i32 = ((word!(game.samus_periodic_damage) as u32) << 16
-        | word!(game.samus_periodic_subdamage) as u32) as i32;
+    let mut t: i32 = (words!(game.samus_periodic_damage, samus_periodic_subdamage)) as i32;
     if t < 0 {
         InvalidInterrupt_Crash(game);
         return;
@@ -7083,11 +7051,7 @@ pub unsafe fn Samus_HandlePeriodicDamage(game: &mut Game) {
     } else if (word!(game.equipped_items) & 1) != 0 {
         t = t >> 1 & 0xffff00;
     }
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x9c2),
-        ram_ptr!(game, u16; 0xa4c),
-        -t as u32,
-    );
+    words!(game.samus_health, samus_subunit_health += -t as u32);
     if (word!(game.samus_health) as i16) < 0 {
         crate::update_place! { reference fresh128 = *(ram_ptr!(game, u16; 0xa4c)) => 0; }
         word!(game.samus_health = *fresh128);

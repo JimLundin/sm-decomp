@@ -18,6 +18,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::words;
 use crate::rtl::RomPtr;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::set_fields;
@@ -1446,12 +1447,12 @@ pub unsafe fn Crocomire_Func_71(game: &mut Game) {
 pub unsafe fn Crocomire_Func_72(game: &mut Game) {
     let E = Get_Crocomire(0, game);
     if (*E).base.x_pos as i32 - 224i32 & 0x8000 != 0 {
-        let mut t: u32 = (((*E).var_F as u32) << 16i32 | (*E).var_E as u32).wrapping_add(0x8000);
+        let mut t: u32 = (words!((*E), var_F, var_E)).wrapping_add(0x8000);
         if (t >> 16i32).wrapping_sub(2) & 0x8000 == 0 {
             t = t & 0xffff | ((2i32) << 16) as u32;
         }
-        SetHiLo(&raw mut (*E).var_F, &raw mut (*E).var_E, t);
-        AddToHiLo(&raw mut (*E).base.x_pos, &raw mut (*E).base.x_subpos, t);
+        words!((*E), var_F, var_E = t);
+        words!((*E).base, x_pos, x_subpos += t);
     }
     let E2 = Get_Crocomire(0x80, game);
     if (*E2).var_D != 0 && {
@@ -1465,17 +1466,13 @@ pub unsafe fn Crocomire_Func_72(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_73(game: &mut Game) {
     let E = Get_Crocomire(0, game);
-    let mut t: u32 = (((*E).var_F as u32) << 16i32 | (*E).var_E as u32).wrapping_add(2048);
+    let mut t: u32 = (words!((*E), var_F, var_E)).wrapping_add(2048);
     if (t >> 16i32).wrapping_sub(5) & 0x8000 == 0 {
         t = t & 0xffff | ((5i32) << 16) as u32;
     }
-    SetHiLo(&raw mut (*E).var_F, &raw mut (*E).var_E, t);
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        0xe000,
-    );
-    AddToHiLo(&raw mut (*E).base.x_pos, &raw mut (*E).base.x_subpos, t);
+    words!((*E), var_F, var_E = t);
+    words!((*E).base, y_pos, y_subpos += 0xe000);
+    words!((*E).base, x_pos, x_subpos += t);
     if (*E).base.x_pos as i32 - 576i32 & 0x8000 == 0 {
         QueueSfx2_Max6(0x25, game);
         (*Get_Crocomire(0x40i32, game)).base.palette_index = (*E).base.palette_index;
@@ -1510,11 +1507,11 @@ pub unsafe fn Crocomire_Func_87(jp: *const u16, a: u16, game: &mut Game) -> *con
 pub unsafe fn Crocomire_Func_88(game: &mut Game) {
     let E = Get_Crocomire(0, game);
     if (*E).base.current_instruction as i32 + 0x1e3a & 0x8000 != 0 {
-        let mut t: u32 = (((*E).var_F as u32) << 16i32 | (*E).var_E as u32).wrapping_add(4096);
+        let mut t: u32 = (words!((*E), var_F, var_E)).wrapping_add(4096);
         if (t >> 16i32).wrapping_sub(6) & 0x8000 == 0 {
             t = t & 0xffff | ((6i32) << 16) as u32;
         }
-        SetHiLo(&raw mut (*E).var_F, &raw mut (*E).var_E, t);
+        words!((*E), var_F, var_E = t);
     } else {
         enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E1CC as u16, timer = 1}
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(64);

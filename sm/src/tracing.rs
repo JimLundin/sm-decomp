@@ -1,5 +1,6 @@
 use crate::c_library::sprintf;
 use crate::game_state::Game;
+use crate::rtl::words;
 use crate::snes::apu::apu_cpuRead;
 use crate::snes::snes::snes_read;
 pub use crate::types::{
@@ -353,8 +354,10 @@ unsafe fn getDisassemblyCpu(snes: *mut Snes, line: *mut c_char, game: &mut Game)
     let byte: u8 = snes_read(snes, adr.wrapping_add(1) & 0xffffff, game);
     let byte2: u8 = snes_read(snes, adr.wrapping_add(2) & 0xffffff, game);
     let word: u16 = ((byte2 as i32) << 8 | byte as i32) as u16;
-    let longv: u32 =
-        ((snes_read(snes, adr.wrapping_add(3) & 0xffffff, game) as i32) << 16 | word as i32) as u32;
+    let longv: u32 = (words!(
+        i32,
+        (snes_read(snes, adr.wrapping_add(3) & 0xffffff, game), word)
+    )) as u32;
     let rel: u16 = ((*(*snes).cpu).pc as i32 + 2 + byte as i8 as i32) as u16;
     let rell: u16 = ((*(*snes).cpu).pc as i32 + 3 + word as i16 as i32) as u16;
     match opcodeType[opcode as usize] {

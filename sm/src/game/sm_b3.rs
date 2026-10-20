@@ -20,6 +20,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::words;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{RomPtr, Unreachable};
 use crate::set_fields;
@@ -315,11 +316,13 @@ pub unsafe fn NorfairPipeBug_Func_3(k: u16, game: &mut Game) {
 pub unsafe fn NorfairPipeBug_Func_4(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
     (*E).base.properties = ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa28187, 66) as u32) << 16
-            | crate::rtl::rom_table_word!(game, 0xa28187, 67) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += words!((
+            crate::rtl::rom_table_word!(game, 0xa28187, 66),
+            crate::rtl::rom_table_word!(game, 0xa28187, 67)
+        ))
     );
     if (((*E).base.y_pos) as i16).wrapping_sub((word!(game.samus_y_pos)) as i16) < 0 {
         (*E).var_A = (*E).var_F;
@@ -341,11 +344,13 @@ pub unsafe fn NorfairPipeBug_Func_5(k: u16, game: &mut Game) {
 pub unsafe fn NorfairPipeBug_Func_6(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
     (*E).var_C = (*E).var_C.wrapping_add(1);
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa28187, 66) as u32) << 16
-            | crate::rtl::rom_table_word!(game, 0xa28187, 67) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += words!((
+            crate::rtl::rom_table_word!(game, 0xa28187, 66),
+            crate::rtl::rom_table_word!(game, 0xa28187, 67)
+        ))
     );
     if (((*E).base.y_pos as i32 + 16 - (*E).var_01 as i32) as i16) < 0 {
         (*E).base.y_pos = ((*E).var_01).wrapping_sub(16);
@@ -356,11 +361,13 @@ pub unsafe fn NorfairPipeBug_Func_6(game: &mut Game) {
 pub unsafe fn NorfairPipeBug_Func_7(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
     (*E).var_C = (*E).var_C.wrapping_add(1);
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa28187, 66) as u32) << 16
-            | crate::rtl::rom_table_word!(game, 0xa28187, 67) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += words!((
+            crate::rtl::rom_table_word!(game, 0xa28187, 66),
+            crate::rtl::rom_table_word!(game, 0xa28187, 67)
+        ))
     );
     if (((*E).base.y_pos as i32 + 32 - (*E).var_01 as i32) as i16) < 0 {
         (*E).base.y_pos = ((*E).var_01).wrapping_sub(32);
@@ -371,11 +378,13 @@ pub unsafe fn NorfairPipeBug_Func_7(game: &mut Game) {
 pub unsafe fn NorfairPipeBug_Func_8(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
     (*E).var_C = (*E).var_C.wrapping_add(1);
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa28187, 64) as u32) << 16
-            | crate::rtl::rom_table_word!(game, 0xa28187, 65) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += words!((
+            crate::rtl::rom_table_word!(game, 0xa28187, 64),
+            crate::rtl::rom_table_word!(game, 0xa28187, 65)
+        ))
     );
     if (((*E).base.y_pos as i32 - 16i32 - (*E).var_01 as i32) as i16) >= 0 {
         (*E).base.y_pos = ((*E).var_01).wrapping_add(16);
@@ -386,11 +395,13 @@ pub unsafe fn NorfairPipeBug_Func_8(game: &mut Game) {
 pub unsafe fn NorfairPipeBug_Func_9(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
     (*E).var_C = (*E).var_C.wrapping_add(1);
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa28187, 64) as u32) << 16
-            | crate::rtl::rom_table_word!(game, 0xa28187, 65) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += words!((
+            crate::rtl::rom_table_word!(game, 0xa28187, 64),
+            crate::rtl::rom_table_word!(game, 0xa28187, 65)
+        ))
     );
     if (((*E).base.y_pos as i32 - 32i32 - (*E).var_01 as i32) as i16) >= 0 {
         (*E).base.y_pos = ((*E).var_01).wrapping_add(32);
@@ -401,21 +412,25 @@ pub unsafe fn NorfairPipeBug_Func_9(game: &mut Game) {
 pub unsafe fn NorfairPipeBug_Func_10(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
     let v2: i32 = (*E).var_B as i32 >> 1;
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 2) as isize) as u32) << 16
-            | crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 3) as isize) as u32,
+    words!(
+        (*E).base,
+        x_pos,
+        x_subpos += words!((
+            crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 2) as isize),
+            crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 3) as isize)
+        ))
     );
 }
 pub unsafe fn NorfairPipeBug_Func_11(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
     let v2: i32 = (*E).var_B as i32 >> 1;
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa28187, v2 as isize) as u32) << 16
-            | crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 1) as isize) as u32,
+    words!(
+        (*E).base,
+        x_pos,
+        x_subpos += words!((
+            crate::rtl::rom_table_word!(game, 0xa28187, v2 as isize),
+            crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 1) as isize)
+        ))
     );
 }
 pub unsafe fn NorfairPipeBug_Func_12(game: &mut Game) {
@@ -518,11 +533,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_3(game: &mut Game) {
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_4(k: u16, game: &mut Game) {
     let E = Get_PipeBug(k as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        ((*E).var_03 as u32) << 16 | (*E).var_02 as u32,
-    );
+    words!((*E).base, x_pos, x_subpos += words!((*E), var_03, var_02));
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_5(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
@@ -549,11 +560,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_5(game: &mut Game) {
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_6(k: u16, game: &mut Game) {
     let E = Get_PipeBug(k as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        ((*E).var_01 as u32) << 16 | (*E).var_00 as u32,
-    );
+    words!((*E).base, x_pos, x_subpos += words!((*E), var_01, var_00));
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_7(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
@@ -615,11 +622,13 @@ pub unsafe fn BrinstarYellowPipeBug_Func_9(k: u16, game: &mut Game) {
     let E = Get_PipeBug(k as i32, game);
     (*E).var_E = (*E).var_E.wrapping_add(1);
     let v3: i32 = 8 * (*E).var_E as i32 >> 1;
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 3) as isize) as u32) << 16
-            | crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 2) as isize) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += words!((
+            crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 3) as isize),
+            crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 2) as isize)
+        ))
     );
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_10(k: u16, game: &mut Game) {
@@ -629,11 +638,13 @@ pub unsafe fn BrinstarYellowPipeBug_Func_10(k: u16, game: &mut Game) {
         set_fields! {[(*E)], 0; var_E, var_F}
     } else {
         let v4: i32 = 8 * (*E).var_E as i32 >> 1;
-        AddToHiLo(
-            &raw mut (*E).base.y_pos,
-            &raw mut (*E).base.y_subpos,
-            (crate::rtl::rom_table_word!(game, 0xa2838f, (v4 + 1) as isize) as u32) << 16
-                | crate::rtl::rom_table_word!(game, 0xa2838f, v4 as isize) as u32,
+        words!(
+            (*E).base,
+            y_pos,
+            y_subpos += words!((
+                crate::rtl::rom_table_word!(game, 0xa2838f, (v4 + 1) as isize),
+                crate::rtl::rom_table_word!(game, 0xa2838f, v4 as isize)
+            ))
         );
     };
 }
@@ -901,11 +912,13 @@ pub unsafe fn Botwoon_Func_14(game: &mut Game) {
 pub unsafe fn Botwoon_Func_15(game: &mut Game) {
     let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game);
     let v2: i32 = 8 * byte!((*E).var_28; 1) as i32 >> 1;
-    AddToHiLo(
-        &raw mut (*E).base.y_pos,
-        &raw mut (*E).base.y_subpos,
-        (crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 1) as isize) as u32) << 16
-            | crate::rtl::rom_table_word!(game, 0xa2838f, v2 as isize) as u32,
+    words!(
+        (*E).base,
+        y_pos,
+        y_subpos += words!((
+            crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 1) as isize),
+            crate::rtl::rom_table_word!(game, 0xa2838f, v2 as isize)
+        ))
     );
     if (*E).base.y_pos as i32 - 200i32 & 0x8000 != 0 {
         (*E).var_28 = ((*E).var_28).wrapping_add(192);
@@ -1332,11 +1345,7 @@ pub unsafe fn EscapeEtecoon_Main(game: &mut Game) {
 }
 pub unsafe fn EscapeEtecoon_E65C(k: u16, game: &mut Game) {
     let E = Get_EscapeEtecoon(k as i32, game);
-    AddToHiLo(
-        &raw mut (*E).base.x_pos,
-        &raw mut (*E).base.x_subpos,
-        0x38000,
-    );
+    words!((*E).base, x_pos, x_subpos += 0x38000);
 }
 pub unsafe fn EscapeEtecoon_E670(k: u16, game: &mut Game) {
     if CheckEventHappened(0xf, game) != 0 {

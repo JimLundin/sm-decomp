@@ -25,6 +25,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::words;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
 use crate::set_fields;
@@ -1264,7 +1265,7 @@ pub unsafe fn EprojPreInstr_CrocomireSpikeWallPieces(k: u16, game: &mut Game) {
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize),
         (ram_ptr!(game, u16; 0x1a6f)).offset(v1 as isize),
-        (word!(game.eproj_y_vel[v1]) as u32) << 16 | word!(game.eproj_F[v1]) as u32,
+        words!((word!(game.eproj_y_vel[v1]), word!(game.eproj_F[v1]))),
     );
     if word!(game.eproj_y_pos[v1]) >= 0xa8 {
         word!(game.eproj_id[v1] = 0);
@@ -5163,28 +5164,26 @@ pub unsafe fn Eproj_FuncE73E_MoveXY(k: u16, game: &mut Game) {
         AddToHiLo(
             (ram_ptr!(game, u16; 0x1a4b)).offset(v1 as isize),
             (ram_ptr!(game, u16; 0x1a27)).offset(v1 as isize),
-            -((word!(game.eproj_x_vel[v1]) as i32) << 16i32 | word!(game.eproj_E[v1]) as i32)
-                as u32,
+            -(words!(i32, (word!(game.eproj_x_vel[v1]), word!(game.eproj_E[v1])))) as u32,
         );
     } else {
         AddToHiLo(
             (ram_ptr!(game, u16; 0x1a4b)).offset(v1 as isize),
             (ram_ptr!(game, u16; 0x1a27)).offset(v1 as isize),
-            (word!(game.eproj_x_vel[v1]) as u32) << 16 | word!(game.eproj_E[v1]) as u32,
+            words!((word!(game.eproj_x_vel[v1]), word!(game.eproj_E[v1]))),
         );
     }
     if (word!(game.g_word_7E97DC[v1]) as i32 + 128 & 0x80) != 0 {
         AddToHiLo(
             (ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize),
             (ram_ptr!(game, u16; 0x1a6f)).offset(v1 as isize),
-            -((word!(game.eproj_y_vel[v1]) as i32) << 16i32 | word!(game.eproj_F[v1]) as i32)
-                as u32,
+            -(words!(i32, (word!(game.eproj_y_vel[v1]), word!(game.eproj_F[v1])))) as u32,
         );
     } else {
         AddToHiLo(
             (ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize),
             (ram_ptr!(game, u16; 0x1a6f)).offset(v1 as isize),
-            (word!(game.eproj_y_vel[v1]) as u32) << 16 | word!(game.eproj_F[v1]) as u32,
+            words!((word!(game.eproj_y_vel[v1]), word!(game.eproj_F[v1]))),
         );
     };
 }
@@ -5700,10 +5699,7 @@ pub unsafe fn RespawnEnemy(v0: u16, game: &mut Game) {
     (*E).health = (*Edef).health;
     (*E).layer = (*Edef).layer as u16;
     *(&raw mut (*E).bank as *mut u16) = *(&raw mut (*Edef).bank as *mut u16);
-    CallEnemyAi(
-        (((*Edef).bank as i32) << 16 | (*Edef).ai_init as i32) as u32,
-        game,
-    );
+    CallEnemyAi((words!(i32, (*Edef), bank, ai_init)) as u32, game);
 }
 unsafe fn EprojInit_Sparks(j: u16, game: &mut Game) {
     static word_86F3D4: [u16; 14] = [
@@ -5757,12 +5753,12 @@ pub unsafe fn EprojPreInstr_Sparks(k: u16, game: &mut Game) {
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize),
         (ram_ptr!(game, u16; 0x1a6f)).offset(v1 as isize),
-        (word!(game.eproj_y_vel[v1]) as u32) << 16 | word!(game.eproj_x_vel[v1]) as u32,
+        words!((word!(game.eproj_y_vel[v1]), word!(game.eproj_x_vel[v1]))),
     );
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a4b)).offset(v1 as isize),
         (ram_ptr!(game, u16; 0x1a27)).offset(v1 as isize),
-        (word!(game.eproj_F[v1]) as u32) << 16 | word!(game.eproj_E[v1]) as u32,
+        words!((word!(game.eproj_F[v1]), word!(game.eproj_E[v1]))),
     );
     if (*ram_ptr!(game; 0x5b5) & 3) == 0 {
         CreateSpriteAtPos(

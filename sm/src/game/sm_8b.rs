@@ -34,6 +34,7 @@ use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::words;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{Mult8x8, RomPtr, SnesDivide, Unreachable, WriteReg, WriteRegWord};
 pub use crate::snes::registers::*;
@@ -1661,11 +1662,7 @@ pub unsafe fn CreditsObject_ProcessOne(game: &mut Game) {
         0,
         game,
     );
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1997),
-        ram_ptr!(game, u16; 0x1995),
-        0x8000,
-    );
+    words!(game.cinematic_var10, cinematic_var9 += 0x8000);
     if word!(game.cinematic_var10) as i32 - word!(game.eproj_pre_instr[0]) as i32 - 8i32 & 0x8000
         == 0
     {
@@ -1909,10 +1906,9 @@ pub unsafe fn CinematicSprInstr_9CE1(k: u16, j: u16, game: &mut Game) -> u16 {
     j
 }
 pub unsafe fn CinematicFunc_Func2(game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1993),
-        ram_ptr!(game, u16; 0x1991),
-        (word!(game.g_word_7E199B) as u32) << 16 | word!(game.g_word_7E1999) as u32,
+    words!(
+        game.cinematic_var8,
+        cinematic_var7 += words!(game.g_word_7E199B, g_word_7E1999)
     );
     if word!(game.cinematic_var8) as i32 + 7 & 0x8000 != 0 {
         *ram_ptr!(game; 0x69) = 16;
@@ -1940,10 +1936,9 @@ pub unsafe fn CinematicSprInstr_9D5D(k: u16, j: u16, game: &mut Game) -> u16 {
     j
 }
 pub unsafe fn CinematicFunc_Func4(game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1993),
-        ram_ptr!(game, u16; 0x1991),
-        (word!(game.g_word_7E199B) as u32) << 16 | word!(game.g_word_7E1999) as u32,
+    words!(
+        game.cinematic_var8,
+        cinematic_var7 += words!(game.g_word_7E199B, g_word_7E1999)
     );
     if word!(game.cinematic_var8) as i32 + 176 & 0x8000 != 0 {
         *ram_ptr!(game; 0x69) = 16;
@@ -1972,10 +1967,9 @@ pub unsafe fn CinematicSprInstr_9DD6(k: u16, j: u16, game: &mut Game) -> u16 {
     j
 }
 pub unsafe fn CinematicFunc_Func5(game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1997),
-        ram_ptr!(game, u16; 0x1995),
-        (word!(game.g_word_7E199F) as u32) << 16 | word!(game.g_word_7E199D) as u32,
+    words!(
+        game.cinematic_var10,
+        cinematic_var9 += words!(game.g_word_7E199F, g_word_7E199D)
     );
     if word!(game.cinematic_var10) as i32 - 163i32 & 0x8000 == 0 {
         *ram_ptr!(game; 0x69) = 16;
@@ -2510,8 +2504,10 @@ pub unsafe fn SetSomeStuffForSpriteObject_7(k: u16, game: &mut Game) {
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
         (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-        (kSetSomeStuffForSpriteObject_7_Tab0[v3 as usize] as u32) << 16
-            | kSetSomeStuffForSpriteObject_7_Tab0[(v3 + 1) as usize] as u16 as u32,
+        words!((
+            kSetSomeStuffForSpriteObject_7_Tab0[v3 as usize],
+            kSetSomeStuffForSpriteObject_7_Tab0[(v3 + 1) as usize] as u16
+        )),
     );
     let v6: i32 = 2 * byte!(@pointer (ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize); 1) as i32;
     crate::native_assertion! {
@@ -2521,8 +2517,10 @@ pub unsafe fn SetSomeStuffForSpriteObject_7(k: u16, game: &mut Game) {
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
         (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-        (kSetSomeStuffForSpriteObject_7_Tab1[v6 as usize] as u32) << 16
-            | kSetSomeStuffForSpriteObject_7_Tab1[(v6 + 1) as usize] as u32,
+        words!((
+            kSetSomeStuffForSpriteObject_7_Tab1[v6 as usize],
+            kSetSomeStuffForSpriteObject_7_Tab1[(v6 + 1) as usize]
+        )),
     );
     if word!(game.cinematicbg_arr8[v1]) as i32 - 168i32 & 0x8000 != 0 {
         word!(game.cinematicspr_goto_timer[v1], wrapping_add(256));
@@ -2571,8 +2569,10 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(k: u16, game: &mut Game) {
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
         (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-        (kSetSomeStuffForSpriteObject_9_Tab0[v3 as usize] as u32) << 16
-            | kSetSomeStuffForSpriteObject_9_Tab0[(v3 + 1) as usize] as u16 as u32,
+        words!((
+            kSetSomeStuffForSpriteObject_9_Tab0[v3 as usize],
+            kSetSomeStuffForSpriteObject_9_Tab0[(v3 + 1) as usize] as u16
+        )),
     );
     if (word!(game.cinematicspr_goto_timer[v1]) & 1) != 0 {
         let v12: i32 =
@@ -2585,8 +2585,10 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(k: u16, game: &mut Game) {
         AddToHiLo(
             (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
             (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-            (kSetSomeStuffForSpriteObject_9_Tab2[v12 as usize] as u32) << 16
-                | kSetSomeStuffForSpriteObject_9_Tab2[(v12 + 1) as usize] as u16 as u32,
+            words!((
+                kSetSomeStuffForSpriteObject_9_Tab2[v12 as usize],
+                kSetSomeStuffForSpriteObject_9_Tab2[(v12 + 1) as usize] as u16
+            )),
         );
     } else {
         let v6: i32 =
@@ -2599,8 +2601,10 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(k: u16, game: &mut Game) {
         AddToHiLo(
             (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
             (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-            (kSetSomeStuffForSpriteObject_9_Tab1[v6 as usize] as u32) << 16
-                | kSetSomeStuffForSpriteObject_9_Tab1[(v6 + 1) as usize] as u16 as u32,
+            words!((
+                kSetSomeStuffForSpriteObject_9_Tab1[v6 as usize],
+                kSetSomeStuffForSpriteObject_9_Tab1[(v6 + 1) as usize] as u16
+            )),
         );
     }
     if word!(game.cinematicbg_arr8[v1]) as i32 - 168i32 & 0x8000 == 0 {
@@ -3528,7 +3532,7 @@ pub unsafe fn CinematicFunction_Intro_Func45(k: u16, game: &mut Game) {
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
         (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-        (kCinematicFunction_Intro_Func45_Tab0[v2 as usize] as u32) << 16 | 0x8000u16 as u32,
+        words!((kCinematicFunction_Intro_Func45_Tab0[v2 as usize], 0x8000u16)),
     );
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
@@ -3846,16 +3850,8 @@ pub unsafe fn CinematicFunction_Intro_Func58(k: u16, game: &mut Game) {
             (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
             d as u32,
         );
-        AddToHiLo(
-            ram_ptr!(game, u16; 0x1993),
-            ram_ptr!(game, u16; 0x1991),
-            d as u32,
-        );
-        AddToHiLo(
-            ram_ptr!(game, u16; 0x1997),
-            ram_ptr!(game, u16; 0x1995),
-            d as u32,
-        );
+        words!(game.cinematic_var8, cinematic_var7 += d as u32);
+        words!(game.cinematic_var10, cinematic_var9 += d as u32);
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func59(j: u16, game: &mut Game) {
@@ -3936,11 +3932,7 @@ pub unsafe fn CinematicFunction_Intro_Func67(game: &mut Game) {
     if *fresh125 as i32 + 0x80 & 0x80 != 0 {
         *ram_ptr!(game; 0x74, 2) = 0x80;
     }
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1993),
-        ram_ptr!(game, u16; 0x1991),
-        -0x2000i32 as u32,
-    );
+    words!(game.cinematic_var8, cinematic_var7 += -0x2000i32 as u32);
     if word!(game.cinematic_var6) as i32 - 3072i32 & 0x8000 != 0 {
         word!(game.cinematic_var6, wrapping_add(16));
     } else if word!(game.cinematic_var6) as i32 - 0x2000i32 & 0x8000 != 0 {
@@ -4100,16 +4092,8 @@ pub unsafe fn CinematicFunction_Intro_Func74(game: &mut Game) {
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func75(game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1997),
-        ram_ptr!(game, u16; 0x1995),
-        4096,
-    );
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1993),
-        ram_ptr!(game, u16; 0x1991),
-        -0x4000i32 as u32,
-    );
+    words!(game.cinematic_var10, cinematic_var9 += 4096);
+    words!(game.cinematic_var8, cinematic_var7 += -0x4000i32 as u32);
     word!(game.cinematic_var6, wrapping_add(1));
     HandleFadeIn(game);
     if *ram_ptr!(game; 0x51) == 15 {
@@ -4120,16 +4104,8 @@ pub unsafe fn CinematicFunction_Intro_Func75(game: &mut Game) {
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func76(game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1997),
-        ram_ptr!(game, u16; 0x1995),
-        4096,
-    );
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1993),
-        ram_ptr!(game, u16; 0x1991),
-        -0x4000i32 as u32,
-    );
+    words!(game.cinematic_var10, cinematic_var9 += 4096);
+    words!(game.cinematic_var8, cinematic_var7 += -0x4000i32 as u32);
     if word!(game.cinematic_var6) as i32 - 640i32 & 0x8000 != 0 {
         word!(game.cinematic_var6, wrapping_add(1));
     } else {
@@ -4543,16 +4519,8 @@ pub unsafe fn CinematicFunction_Intro_Func104(j: u16, game: &mut Game) {
     word!(game.cinematicbg_arr9[v1] = 0);
 }
 pub unsafe fn CinematicFunction_Intro_Func105(game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1997),
-        ram_ptr!(game, u16; 0x1995),
-        0x2000,
-    );
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1993),
-        ram_ptr!(game, u16; 0x1991),
-        -0x8000i32 as u32,
-    );
+    words!(game.cinematic_var10, cinematic_var9 += 0x2000);
+    words!(game.cinematic_var8, cinematic_var7 += -0x8000i32 as u32);
     if word!(game.cinematic_var6) as i32 - 1152i32 & 0x8000 != 0 {
         word!(game.cinematic_var6, wrapping_add(4));
     } else {
@@ -4560,16 +4528,8 @@ pub unsafe fn CinematicFunction_Intro_Func105(game: &mut Game) {
     };
 }
 pub unsafe fn CinematicFunction_Intro_Func106(game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1997),
-        ram_ptr!(game, u16; 0x1995),
-        0x2000,
-    );
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1993),
-        ram_ptr!(game, u16; 0x1991),
-        -0x8000i32 as u32,
-    );
+    words!(game.cinematic_var10, cinematic_var9 += 0x2000);
+    words!(game.cinematic_var8, cinematic_var7 += -0x8000i32 as u32);
     if word!(game.cinematic_var8) as i32 + 128 & 0x8000 != 0 {
         word!(game.cinematic_function = ((0x8bca85i32) as u16));
     } else {
@@ -4582,16 +4542,8 @@ pub unsafe fn CinematicFunction_Intro_Func106(game: &mut Game) {
     };
 }
 pub unsafe fn CinematicFunction_Intro_Func107(game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1997),
-        ram_ptr!(game, u16; 0x1995),
-        0x2000,
-    );
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1993),
-        ram_ptr!(game, u16; 0x1991),
-        0x2000,
-    );
+    words!(game.cinematic_var10, cinematic_var9 += 0x2000);
+    words!(game.cinematic_var8, cinematic_var7 += 0x2000);
     if word!(game.cinematic_var6) as i32 - 0x2000i32 & 0x8000 != 0 {
         word!(game.cinematic_var6, wrapping_add(32));
     } else {
@@ -5010,11 +4962,12 @@ pub unsafe fn CinematicFunction_Intro_Func121(game: &mut Game) {
     }
     word!(game.cinematic_var5 = (((word!(game.cinematic_var5)) as u8).wrapping_sub(4)) as u16);
     let v0: i32 = 2 * word!(game.cinematic_var14) as i32;
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1993),
-        ram_ptr!(game, u16; 0x1991),
-        (kCinematicFunction_Intro_Func121_Tab0[v0 as usize] as u32) << 16
-            | kCinematicFunction_Intro_Func121_Tab0[(v0 + 1) as usize] as u32,
+    words!(
+        game.cinematic_var8,
+        cinematic_var7 += words!((
+            kCinematicFunction_Intro_Func121_Tab0[v0 as usize],
+            kCinematicFunction_Intro_Func121_Tab0[(v0 + 1) as usize]
+        ))
     );
     word!(game.cinematic_var14 = (word!(game.cinematic_var14) as i32 + 1 & 0xf) as u16);
     word!(game.cinematic_var6, wrapping_sub(8));
@@ -5033,11 +4986,12 @@ pub unsafe fn CinematicFunction_Intro_Func123(game: &mut Game) {
         word!(game.cinematic_var5 = (((word!(game.cinematic_var5)) as u8).wrapping_sub(1)) as u16);
     }
     let v0: i32 = 2 * word!(game.cinematic_var14) as i32;
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1993),
-        ram_ptr!(game, u16; 0x1991),
-        (kCinematicFunction_Intro_Func123_Tab0[v0 as usize] as u32) << 16
-            | kCinematicFunction_Intro_Func123_Tab0[(v0 + 1) as usize] as u32,
+    words!(
+        game.cinematic_var8,
+        cinematic_var7 += words!((
+            kCinematicFunction_Intro_Func123_Tab0[v0 as usize],
+            kCinematicFunction_Intro_Func123_Tab0[(v0 + 1) as usize]
+        ))
     );
     word!(game.cinematic_var14 = (word!(game.cinematic_var14) as i32 + 1 & 7) as u16);
     word!(game.cinematic_var6, wrapping_sub(2));
@@ -5056,15 +5010,10 @@ static g_word_8BDE43: [u16; 16] = [
 ];
 pub unsafe fn CinematicFunction_Intro_Func124(game: &mut Game) {
     CinematicFunction_Intro_Func122(game);
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1a4b),
-        ram_ptr!(game, u16; 0x1a4d),
-        -256i32 as u32,
-    );
-    AddToHiLo(
-        ram_ptr!(game, u16; 0x1993),
-        ram_ptr!(game, u16; 0x1991),
-        (word!(game.cinematic_var13) as u32) << 16 | word!(game.cinematic_var14) as u32,
+    words!(game.cinematic_var13, cinematic_var14 += -256i32 as u32);
+    words!(
+        game.cinematic_var8,
+        cinematic_var7 += words!(game.cinematic_var13, cinematic_var14)
     );
     if word!(game.cinematic_var6) as i32 - 384i32 & 0x8000 != 0
         && (word!(game.cinematic_var12) & 3) == 0
@@ -6057,8 +6006,10 @@ pub unsafe fn CinematicFunction_Intro_Func189(k: u16, game: &mut Game) {
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
         (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-        (word!(game.cinematicspr_goto_timer[v1]) as u32) << 16
-            | word!(game.cinematicspr_arr7[v1]) as u32,
+        words!((
+            word!(game.cinematicspr_goto_timer[v1]),
+            word!(game.cinematicspr_arr7[v1])
+        )),
     );
     CinematicFunction_Intro_Func189b(k, game);
 }
@@ -6250,16 +6201,12 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) 
     };
 }
 pub unsafe fn CinematicFunction_Intro_Func210_EndingSamusFall(k: u16, game: &mut Game) {
-    AddToHiLo(
-        ram_ptr!(game, u16; 0xb2e),
-        ram_ptr!(game, u16; 0xb2c),
-        0x3800,
-    );
+    words!(game.samus_y_speed, samus_y_subspeed += 0x3800);
     let v1: i32 = k as i32 >> 1;
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
         (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-        (word!(game.samus_y_speed) as u32) << 16 | word!(game.samus_y_subspeed) as u32,
+        words!(game.samus_y_speed, samus_y_subspeed),
     );
 }
 pub unsafe fn CinematicFunction_Intro_Func216(game: &mut Game) {

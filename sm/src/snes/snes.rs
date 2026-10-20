@@ -1,5 +1,6 @@
 use crate::c_library::{__assert_fail, free, malloc, memset, printf};
 use crate::game_state::Game;
+use crate::rtl::words;
 use crate::rtl::RtlApuWrite;
 use crate::set_fields;
 use crate::snes::apu::{apu_cycle, apu_init, apu_reset, apu_saveload};
@@ -246,9 +247,8 @@ unsafe fn snes_writeReg(snes: *mut Snes, adr: u16, val: u8, game: &mut Game) {
         0x420a => (*snes).vTimer = ((*snes).vTimer & 0xff) | (u16::from(val & 1) << 8),
         0x420b => {
             if val as i32 == 2 {
-                let t: u32 = (((*(*snes).dma).channel[1i32 as usize].aBank as i32) << 16
-                    | (*(*snes).dma).channel[1i32 as usize].aAdr as i32)
-                    as u32;
+                let t: u32 =
+                    (words!(i32, (*(*snes).dma).channel[1i32 as usize], aBank, aAdr)) as u32;
                 let data: i32 = snes_read(snes, t, game) as i32
                     | (snes_read(snes, t.wrapping_add(1), game) as i32) << 8;
             }

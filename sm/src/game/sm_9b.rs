@@ -25,6 +25,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::words;
 use crate::rtl::SetHiLo;
 use crate::rtl::{RomPtr, Unreachable};
 pub use crate::types::{size_t, LongPtr, PairU16, Point16U, SamusPose, VoidP, VramWriteEntry};
@@ -1390,17 +1391,15 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
         let mut v2: i16 = kSinCosTable8bit_Sext
             [(byte!(@pointer ram_ptr!(game, u16; 0xcfa); 1) as i32 + 64) as usize];
         if v2 >= 0 {
-            SetHiLo(
-                ram_ptr!(game, u16; 0xb2e),
-                ram_ptr!(game, u16; 0xb2c),
-                Multiply16x16(v2 as u16, v0, game),
+            words!(
+                game.samus_y_speed,
+                samus_y_subspeed = Multiply16x16(v2 as u16, v0, game)
             );
             word!(game.samus_y_dir = 2);
         } else {
-            SetHiLo(
-                ram_ptr!(game, u16; 0xb2e),
-                ram_ptr!(game, u16; 0xb2c),
-                Multiply16x16(-(v2 as i32) as u16, v0, game),
+            words!(
+                game.samus_y_speed,
+                samus_y_subspeed = Multiply16x16(-(v2 as i32) as u16, v0, game)
             );
             word!(game.samus_y_dir = 1);
         }
@@ -1409,17 +1408,15 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
         let mut v1: i16 = kSinCosTable8bit_Sext
             [(byte!(@pointer ram_ptr!(game, u16; 0xcfa); 1) as i32 + 64) as usize];
         if v1 < 0 {
-            SetHiLo(
-                ram_ptr!(game, u16; 0xb2e),
-                ram_ptr!(game, u16; 0xb2c),
-                Multiply16x16(-(v1 as i32) as u16, v0, game),
+            words!(
+                game.samus_y_speed,
+                samus_y_subspeed = Multiply16x16(-(v1 as i32) as u16, v0, game)
             );
             word!(game.samus_y_dir = 2);
         } else {
-            SetHiLo(
-                ram_ptr!(game, u16; 0xb2e),
-                ram_ptr!(game, u16; 0xb2c),
-                Multiply16x16(v1 as u16, v0, game),
+            words!(
+                game.samus_y_speed,
+                samus_y_subspeed = Multiply16x16(v1 as u16, v0, game)
             );
             word!(game.samus_y_dir = 1);
         }
@@ -1432,10 +1429,9 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
             [(((*ram_ptr!(game; 0xcfb)).wrapping_sub((r18) as u8)) as i32 + 64) as usize]
             as u16,
     );
-    SetHiLo(
-        ram_ptr!(game, u16; 0xb46),
-        ram_ptr!(game, u16; 0xb48),
-        Multiply16x16(v3, v0, game),
+    words!(
+        game.samus_x_base_speed,
+        samus_x_base_subspeed = Multiply16x16(v3, v0, game)
     );
 }
 pub unsafe fn GrappleBeamFunc_ReleaseFromSwing(game: &mut Game) {
