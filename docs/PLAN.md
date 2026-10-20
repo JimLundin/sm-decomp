@@ -72,6 +72,34 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Bang native ownership assessment (2026-10-20): Bang_Main remains the sole
+maintained gameplay Call into the emulated 65816. The bank A3 log names the
+three parameter-selected entries BB2B/BB4A/BB66 as electricity/shell/core;
+the existing Bang_Func_1/2/3 handlers represent those modes. No native dispatch
+is integrated: exact behavior needs more than replacing this call.
+
+A direct wrapper linked to the already-built, source-bound dbb38a4d library
+compares both maintained movement helpers with actual ROM A3:BDB9/BE1C.
+All 6144 cases cover 256 angles, 4 integer positions and 3 fractional positions on
+both axes, speed 0x1234, clear direction flags, index 0, native CPU, DP 0 and SP 1ff0.
+Fractional results match, but4608 integer positions differ. In every case the
+ROM high word equals initial position plus the Rust helper's high word,wrapping
+at 16 bits: Bang_Func_14/15 omit the original high-position addition. Those
+helpers are behind the currently unused native core path; Bang_Main still
+executes the ROM, so this assessment changes no gameplay.
+
+The earlier 768 inactive-movement electricity/shell/core cases match all RAM
+outside explicitly reported stack/bridge differences. Expanded 3840 mode cases
+show additional scratch, stack and active-movement differences. RunAsmCode
+sets RAM 1ffff and leaves return-stack bytes; a plain Rust call loses them.
+An initial invalid SP 1fff return and uninitialized core movement pointer were
+corrected before these comparisons; failed probe logs remain preserved.
+Do not waive differences or claim native ownership, alias safety or route hits.
+Next: resolve complete native Bang movement, callback and scratch semantics against
+the oracle, then remove its CPU dependency with actual exercised coverage.
+Only temporary source-bound wrappers were compiled; existing release/replays
+remain preserved. No maintained Rust,ROM-derived artifact or residue change.
+
 DSP signed-sample saturation (2026-10-20): all 14 identical signed16-bit
 clamps share one safe saturate_sample operation. Channel-by-channel mixing,
 master-volume output, FIR sums/feedback, Gaussian interpolation and BRR retain
