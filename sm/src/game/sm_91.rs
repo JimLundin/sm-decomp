@@ -1,3 +1,4 @@
+use crate::c_library::{__assert_fail, memcpy};
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_8f::*;
@@ -31,23 +32,13 @@ use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{mov24, Mult8x8, RomPtr, Unreachable};
 use crate::rtl::{AddToHiLo, SetHiLo};
-use ::core::ffi::{c_char, c_long, c_void};
-use ::core::mem::transmute;
-use ::core::ptr::{null, null_mut};
-extern "C" {
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-
-}
 pub use crate::types::{
     size_t, Func_U8, Func_V, LongPtr, SamusPose, SpawnHdmaObject_Args, VoidP, VramWriteEntry,
 };
 pub use crate::types::{SamusMovementType, SamusPoseParams};
+use ::core::ffi::{c_char, c_long, c_void};
+use ::core::mem::transmute;
+use ::core::ptr::{null, null_mut};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct DemoInputObject {

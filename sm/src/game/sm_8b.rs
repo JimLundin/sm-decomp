@@ -1,3 +1,4 @@
+use crate::c_library::{__assert_fail, memcpy, memset};
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_8d::*;
@@ -36,22 +37,11 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::AddToHiLo;
 use crate::rtl::{Mult8x8, RomPtr, SnesDivide, Unreachable, WriteReg, WriteRegWord};
 pub use crate::snes::registers::*;
-use ::core::ffi::{c_char, c_long, c_void};
-use ::core::ptr::null_mut;
-extern "C" {
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
-
-}
 pub use crate::types::{
     size_t, CoroutineRet, Func_V, LongPtr, OamEnt, Point16U, SnesRegs, VoidP, VramWriteEntry,
 };
+use ::core::ffi::{c_char, c_long, c_void};
+use ::core::ptr::null_mut;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct Mode7ObjectDef {

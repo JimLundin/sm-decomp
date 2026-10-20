@@ -1,22 +1,16 @@
+use crate::c_library::{free, malloc, memset, puts};
 use crate::game_state::Game;
 use crate::snes::dsp::{
     dsp_cycle, dsp_free, dsp_init, dsp_read, dsp_reset, dsp_saveload, dsp_write,
 };
 use crate::snes::spc::{spc_free, spc_init, spc_reset, spc_runOpcode, spc_saveload};
 use crate::tracing::getProcessorStateSpc;
-use ::core::ffi::{c_char, c_void};
-use ::core::mem::size_of;
-extern "C" {
-    fn puts(__s: *const c_char) -> i32;
-    fn malloc(__size: size_t) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
-
-}
 pub use crate::types::{
     size_t, Apu, ApuHistory as C2RustUnnamed, Dsp, DspChannel, DspRegWriteHistory, SaveLoadFunc,
     Spc, Timer,
 };
+use ::core::ffi::{c_char, c_void};
+use ::core::mem::size_of;
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 static bootRom: [u8; 64] = [

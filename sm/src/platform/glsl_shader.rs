@@ -1,5 +1,16 @@
+#[cfg_attr(unix, link(name = "m"))]
+use crate::c_library::pow;
+use crate::c_library::{
+    __assert_fail, abs, calloc, fclose, feof, ferror, fgetc, fopen, fprintf, fread, free, fseek,
+    ftell, malloc, memcmp, memcpy, memset, realloc, snprintf, stderr, strcmp, strdup, strlen,
+    strtod, strtol, strtoul, ungetc,
+};
 use crate::config::{g_config, ParseBool};
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
+pub use crate::types::{
+    __off64_t, __off_t, ptrdiff_t, size_t, GLboolean, GLchar, GLenum, GLfloat, GLint, GLsizei,
+    GLsizeiptr, GLuint,
+};
 use crate::util::{
     ByteArray_AppendData, ByteArray_Destroy, NextDelim, NextLineStripComments,
     NextPossiblyQuotedString, ReadWholeFile, ReplaceFilenameWithNewPath, SkipPrefix, SplitKeyValue,
@@ -8,51 +19,6 @@ use crate::util::{
 use ::core::ffi::{c_char, c_double, c_float, c_long, c_uchar, c_ulong, c_void};
 use ::core::mem::{size_of, transmute};
 use ::core::ptr::{null, null_mut};
-extern "C" {
-
-    fn strtod(__nptr: *const c_char, __endptr: *mut *mut c_char) -> c_double;
-    fn strtol(__nptr: *const c_char, __endptr: *mut *mut c_char, __base: i32) -> c_long;
-    fn strtoul(__nptr: *const c_char, __endptr: *mut *mut c_char, __base: i32) -> c_ulong;
-    fn malloc(__size: size_t) -> *mut c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut c_void;
-    fn realloc(__ptr: *mut c_void, __size: size_t) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-    fn abs(__x: i32) -> i32;
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-
-    static mut stderr: *mut FILE;
-    fn fclose(__stream: *mut FILE) -> i32;
-    fn fopen(__filename: *const c_char, __modes: *const c_char) -> *mut FILE;
-    fn fprintf(__stream: *mut FILE, __format: *const c_char, ...) -> i32;
-    fn snprintf(__s: *mut c_char, __maxlen: size_t, __format: *const c_char, ...) -> i32;
-    fn fgetc(__stream: *mut FILE) -> i32;
-    fn ungetc(__c: i32, __stream: *mut FILE) -> i32;
-    fn fread(__ptr: *mut c_void, __size: size_t, __n: size_t, __stream: *mut FILE) -> c_ulong;
-    fn fseek(__stream: *mut FILE, __off: c_long, __whence: i32) -> i32;
-    fn ftell(__stream: *mut FILE) -> c_long;
-    fn feof(__stream: *mut FILE) -> i32;
-    fn ferror(__stream: *mut FILE) -> i32;
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
-    fn memcmp(__s1: *const c_void, __s2: *const c_void, __n: size_t) -> i32;
-    fn strcmp(__s1: *const c_char, __s2: *const c_char) -> i32;
-    fn strdup(__s: *const c_char) -> *mut c_char;
-    fn strlen(__s: *const c_char) -> size_t;
-
-}
-#[cfg_attr(unix, link(name = "m"))]
-extern "C" {
-    fn pow(__x: c_double, __y: c_double) -> c_double;
-}
-pub use crate::types::{
-    __off64_t, __off_t, ptrdiff_t, size_t, GLboolean, GLchar, GLenum, GLfloat, GLint, GLsizei,
-    GLsizeiptr, GLuint,
-};
 pub type C2RustUnnamed = u32;
 pub const kGlslMaxTextures: C2RustUnnamed = 10;
 pub const kGlslMaxPasses: C2RustUnnamed = 20;

@@ -1,6 +1,10 @@
+use crate::c_library::{fprintf, free, realloc, stderr, strtol};
 use crate::host::Die;
 use crate::sdl_constants;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
+pub use crate::types::{
+    _IO_lock_t, __off64_t, __off_t, size_t, SDL_Keycode, Sint32, _IO_FILE, FILE,
+};
 use crate::util::{
     NextDelim, NextLineStripComments, NextPossiblyQuotedString, ReadWholeFile,
     ReplaceFilenameWithNewPath, SkipPrefix, SplitKeyValue, StringEqualsNoCase,
@@ -11,18 +15,6 @@ use ::core::mem::size_of;
 use ::core::ptr::{null, null_mut};
 pub use sdl2_sys::{
     SDL_GameController, SDL_GetKeyFromName, SDL_Renderer, SDL_SysWMmsg, SDL_Texture, SDL_mutex,
-};
-extern "C" {
-
-    fn strtol(__nptr: *const c_char, __endptr: *mut *mut c_char, __base: i32) -> c_long;
-    fn realloc(__ptr: *mut c_void, __size: size_t) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-    static mut stderr: *mut FILE;
-    fn fprintf(__stream: *mut FILE, __format: *const c_char, ...) -> i32;
-
-}
-pub use crate::types::{
-    _IO_lock_t, __off64_t, __off_t, size_t, SDL_Keycode, Sint32, _IO_FILE, FILE,
 };
 pub type C2RustUnnamed = u32;
 sdl_constants! {

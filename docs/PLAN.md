@@ -31,6 +31,24 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+C-library boundary (2026-10-20): one module shares all 172 repeated
+native declarations across 37 foreign blocks in 36 callers, retaining 42
+original symbol names and exact ABI signatures. The two distinct Windows
+__acrt_iob_func declarations and both main platform guards remain intact.
+FILE, time_t and native C widths stay unchanged; size_t is exactly usize.
+Independent complete source/ABI and executable-expansion reviews pass,
+including unchanged bindings for rustfmt-reordered imports.
+Net Rust lines -260, to 135165; foreign blocks fall from 39 to 3.
+No runtime unsafe operation is removed. The interrupted standalone replay
+supplies no full-pass evidence; this commit uses the shared final run.
+
+Shared C-library/RAM/control verification on the register/numeric composition
+passes normal release (22.72s), formatting/check, progress and
+full any% 129712/0 (105.19s), native exit 0. All 77 final
+source/config/host inputs and 102 replay/proof pins remain fixed. This is
+combined verification for all three focused commits. Any% provides core
+integration coverage; broader routes, alias safety and boot-to-credits remain open.
+
 Register-write sequences (2026-10-20): a caller-side macro shares all
 121 consecutive groups of two or more direct byte, word and mirrored writes
 in gameplay: 778 operations across eight caller files. The other 121 isolated

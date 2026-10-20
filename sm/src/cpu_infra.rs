@@ -9,6 +9,9 @@ use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
 use ::core::ptr::null_mut;
 
+use crate::c_library::{
+    __assert_fail, fprintf, free, memcmp, memcpy, memset, printf, puts, snprintf, stderr, time,
+};
 use crate::rtl::{RomPtr, RtlSaveSnapshot, RtlSetupEmuCallbacks, WriteReg};
 use crate::snes::apu::apu_cycle;
 use crate::snes::cpu::{cpu_getFlags, cpu_runOpcode, cpu_setFlags};
@@ -17,27 +20,6 @@ use crate::snes::snes::{snes_handle_pos_stuff, snes_init};
 use crate::snes::snes_other::snes_loadRom;
 use crate::tracing::getProcessorStateCpu;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
-use crate::util::ReadWholeFile;
-extern "C" {
-
-    fn free(__ptr: *mut c_void);
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-    static mut stderr: *mut FILE;
-    fn fprintf(__stream: *mut FILE, __format: *const c_char, ...) -> i32;
-    fn printf(__format: *const c_char, ...) -> i32;
-    fn snprintf(__s: *mut c_char, __maxlen: size_t, __format: *const c_char, ...) -> i32;
-    fn puts(__s: *const c_char) -> i32;
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
-    fn memcmp(__s1: *const c_void, __s2: *const c_void, __n: size_t) -> i32;
-
-    fn time(__timer: *mut time_t) -> time_t;
-}
 pub use crate::types::{
     _IO_lock_t, __off64_t, __off_t, __time_t, size_t, time_t, Apu, ApuHistory as C2RustUnnamed,
     BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel, DspRegWriteHistory, EnemyBase,
@@ -45,6 +27,7 @@ pub use crate::types::{
     WindowLayer, _IO_FILE, FILE,
 };
 pub use crate::types::{ProjectileInstr, SyncAllFunc};
+use crate::util::ReadWholeFile;
 // Explicit state previously included by the oversized OAM memory copy.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct SpriteSnapshot {

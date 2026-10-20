@@ -1,3 +1,4 @@
+use crate::c_library::{memcpy, printf};
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::enemy_properties::*;
@@ -28,19 +29,14 @@ use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{MakePairU16, RomPtr, SnesDivide, Unreachable, WriteReg};
 pub use crate::snes::registers::*;
-use ::core::ffi::{c_char, c_void};
-use ::core::ptr::{null, null_mut};
-extern "C" {
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn printf(__format: *const c_char, ...) -> i32;
-
-}
 pub use crate::types::{
     size_t, CoroutineRet, Func_Y_V, LongPtr, PairU16, Point16U, SnesRegs, VoidP, VramWriteEntry,
 };
 pub use crate::types::{
     EnemyBase, EnemyData, EnemyProps, ExtendedSpriteMap, Hitbox, SpawnHdmaObject_Args,
 };
+use ::core::ffi::{c_char, c_void};
+use ::core::ptr::{null, null_mut};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct SpriteDrawInstr {

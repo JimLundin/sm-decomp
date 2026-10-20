@@ -2,19 +2,8 @@ use crate::game_state::Game;
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::{size_of, transmute};
 
+use crate::c_library::{__assert_fail, free, malloc, printf};
 use crate::snes::snes::{snes_read, snes_readBBus, snes_write, snes_writeBBus};
-extern "C" {
-    fn printf(__format: *const c_char, ...) -> i32;
-    fn malloc(__size: size_t) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-
-}
 pub use crate::types::{
     size_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
     DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, SaveLoadFunc, Snes, Spc,

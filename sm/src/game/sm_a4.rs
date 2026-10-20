@@ -1,3 +1,4 @@
+use crate::c_library::__assert_fail;
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a4::*;
@@ -19,17 +20,6 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::RomPtr;
 use crate::rtl::{AddToHiLo, SetHiLo};
-use ::core::ffi::{c_char, c_long, c_void};
-use ::core::ptr::{null, null_mut};
-extern "C" {
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-
-}
 pub use crate::types::Consts_A4;
 pub use crate::types::SpawnHardcodedPlmArgs;
 pub use crate::types::{Consts_86, Ram4000, Ram4000_Backups};
@@ -37,6 +27,8 @@ pub use crate::types::{
     EnemyBase, EnemyData, EnemyProps, Func_V, LongPtr, Point16U, SpawnHdmaObject_Args, VoidP,
     VramWriteEntry,
 };
+use ::core::ffi::{c_char, c_long, c_void};
+use ::core::ptr::{null, null_mut};
 enemy_layout! {
     Enemy_Crocomire {
         base: EnemyBase,

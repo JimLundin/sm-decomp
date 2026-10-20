@@ -1,3 +1,4 @@
+use crate::c_library::{__assert_fail, free, malloc, memset, printf};
 use crate::game_state::Game;
 use crate::rtl::RtlApuWrite;
 use crate::snes::apu::{apu_cycle, apu_free, apu_init, apu_reset, apu_saveload};
@@ -12,26 +13,13 @@ use crate::snes::ppu::{
     ppu_checkOverscan, ppu_free, ppu_handleVblank, ppu_init, ppu_read, ppu_reset, ppu_runLine,
     ppu_saveload, ppu_write,
 };
-use ::core::ffi::{c_char, c_void};
-use ::core::mem::size_of;
-extern "C" {
-    fn printf(__format: *const c_char, ...) -> i32;
-    fn malloc(__size: size_t) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-
-}
 pub use crate::types::{
     size_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
     DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, SaveLoadFunc, Snes, Spc,
     Timer, WindowLayer,
 };
+use ::core::ffi::{c_char, c_void};
+use ::core::mem::size_of;
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 

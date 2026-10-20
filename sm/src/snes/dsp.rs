@@ -1,12 +1,8 @@
+use crate::c_library::{free, malloc, memset};
 use crate::game_state::Game;
+pub use crate::types::{size_t, Dsp, DspChannel, SaveLoadFunc};
 use ::core::ffi::{c_double, c_void};
 use ::core::mem::size_of;
-extern "C" {
-    fn malloc(__size: size_t) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
-}
-pub use crate::types::{size_t, Dsp, DspChannel, SaveLoadFunc};
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 static rateValues: [i32; 32] = [

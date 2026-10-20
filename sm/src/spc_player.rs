@@ -1,23 +1,11 @@
+use crate::c_library::{__assert_fail, malloc, memcpy, memset, printf};
 use crate::snes::dsp::{dsp_cycle, dsp_init, dsp_reset, dsp_write};
-use ::core::ffi::{c_char, c_void};
-use ::core::mem::size_of;
-use ::core::ptr::null_mut;
-extern "C" {
-    fn malloc(__size: size_t) -> *mut c_void;
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-    fn printf(__format: *const c_char, ...) -> i32;
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
-
-}
 pub use crate::types::{
     size_t, Channel, Dsp, DspChannel, DspRegWriteHistory, SfxChan, SfxRegs, SpcPlayer,
 };
+use ::core::ffi::{c_char, c_void};
+use ::core::mem::size_of;
+use ::core::ptr::null_mut;
 pub const EVOLL: DspReg = 44;
 pub const EVOLR: DspReg = 60;
 pub const EFB: DspReg = 13;

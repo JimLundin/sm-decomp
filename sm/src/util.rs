@@ -1,24 +1,11 @@
+use crate::c_library::{
+    fclose, fopen, fread, free, fseek, ftell, malloc, memchr, memcpy, realloc, rewind, strchr,
+    strdup, strlen,
+};
 use crate::host::Die;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
 use ::core::ffi::{c_char, c_long, c_ulong, c_void};
 use ::core::ptr::{null, null_mut};
-extern "C" {
-
-    fn malloc(__size: size_t) -> *mut c_void;
-    fn realloc(__ptr: *mut c_void, __size: size_t) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-    fn fclose(__stream: *mut FILE) -> i32;
-    fn fopen(__filename: *const c_char, __modes: *const c_char) -> *mut FILE;
-    fn fread(__ptr: *mut c_void, __size: size_t, __n: size_t, __stream: *mut FILE) -> c_ulong;
-    fn fseek(__stream: *mut FILE, __off: c_long, __whence: i32) -> i32;
-    fn ftell(__stream: *mut FILE) -> c_long;
-    fn rewind(__stream: *mut FILE);
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn memchr(__s: *const c_void, __c: i32, __n: size_t) -> *mut c_void;
-    fn strdup(__s: *const c_char) -> *mut c_char;
-    fn strchr(__s: *const c_char, __c: i32) -> *mut c_char;
-    fn strlen(__s: *const c_char) -> size_t;
-}
 pub type __builtin_va_list = [__va_list_tag; 1];
 #[derive(Copy, Clone)]
 #[repr(C)]

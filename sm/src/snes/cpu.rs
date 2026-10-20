@@ -1,24 +1,11 @@
+use crate::c_library::{__assert_fail, free, malloc, memset, printf};
 use crate::cpu_infra::{CpuOpcodeHook, HookedFunctionRts};
 use crate::game_state::Game;
 use crate::host::Die;
 use crate::snes::snes::{snes_cpuRead, snes_cpuWrite};
+use crate::types::{Cpu, SaveLoadFunc, Snes};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
-extern "C" {
-    fn printf(__format: *const c_char, ...) -> i32;
-    fn malloc(__size: usize) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-    fn memset(__s: *mut c_void, __c: i32, __n: usize) -> *mut c_void;
-
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-
-}
-use crate::types::{Cpu, SaveLoadFunc, Snes};
 static CYCLES_PER_OPCODE: [u8; 256] = [
     7, 6, 7, 4, 5, 3, 5, 6, 3, 2, 2, 4, 6, 4, 6, 5, 2, 5, 5, 7, 5, 4, 6, 6, 2, 4, 2, 2, 6, 4, 7, 5,
     6, 6, 8, 4, 3, 3, 5, 6, 4, 2, 2, 5, 4, 4, 6, 5, 2, 5, 5, 7, 4, 4, 6, 6, 2, 4, 2, 2, 4, 4, 7, 5,

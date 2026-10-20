@@ -1,28 +1,15 @@
+use crate::c_library::{__assert_fail, free, malloc, memcpy, memset, printf};
 use crate::game_state::Game;
 use crate::host::Die;
 use crate::snes::cpu::DumpCpuHistory;
-use ::core::ffi::{c_char, c_void};
-use ::core::mem::size_of;
-use ::core::ptr::null_mut;
-extern "C" {
-    fn printf(__format: *const c_char, ...) -> i32;
-    fn malloc(__size: size_t) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-
-}
 pub use crate::types::{
     size_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
     DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, SaveLoadFunc, Snes, Spc,
     Timer, WindowLayer,
 };
+use ::core::ffi::{c_char, c_void};
+use ::core::mem::size_of;
+use ::core::ptr::null_mut;
 pub const NULL: *mut c_void = null_mut::<c_void>();
 pub unsafe fn cart_init(snes: *mut Snes) -> *mut Cart {
     let cart: *mut Cart = malloc(size_of::<Cart>() as size_t) as *mut Cart;

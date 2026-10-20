@@ -38,6 +38,10 @@ pub(crate) unsafe fn read_rom_table_word(table: *const u16, index: isize) -> u16
     table.offset(index).read_unaligned()
 }
 
+use crate::c_library::{
+    __assert_fail, fclose, fopen, fprintf, fread, fseek, ftell, fwrite, memcpy, memset, printf,
+    rename, sprintf, stderr,
+};
 use crate::cpu_infra::RtlUpdateSnesPatchForBugfix;
 use crate::game_state::Game;
 use crate::host::{Die, RtlApuLock, RtlApuUnlock};
@@ -52,34 +56,11 @@ use crate::spc_player::{
     SpcPlayer_Initialize, SpcPlayer_Upload,
 };
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
-use crate::util::{
-    ByteArray_AppendByte, ByteArray_AppendData, ByteArray_Destroy, ByteArray_Resize,
-};
-extern "C" {
-
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
-    static mut stderr: *mut FILE;
-    fn rename(__old: *const c_char, __new: *const c_char) -> i32;
-    fn fclose(__stream: *mut FILE) -> i32;
-    fn fopen(__filename: *const c_char, __modes: *const c_char) -> *mut FILE;
-    fn fprintf(__stream: *mut FILE, __format: *const c_char, ...) -> i32;
-    fn printf(__format: *const c_char, ...) -> i32;
-    fn sprintf(__s: *mut c_char, __format: *const c_char, ...) -> i32;
-    fn fread(__ptr: *mut c_void, __size: size_t, __n: size_t, __stream: *mut FILE) -> c_ulong;
-    fn fwrite(__ptr: *const c_void, __size: size_t, __n: size_t, __s: *mut FILE) -> c_ulong;
-    fn fseek(__stream: *mut FILE, __off: c_long, __whence: i32) -> i32;
-    fn ftell(__stream: *mut FILE) -> c_long;
-
-}
 pub use crate::types::{
     _IO_lock_t, __off64_t, __off_t, size_t, LongPtr, PairU16, VoidP, _IO_FILE, FILE,
+};
+use crate::util::{
+    ByteArray_AppendByte, ByteArray_AppendData, ByteArray_Destroy, ByteArray_Resize,
 };
 #[derive(Copy, Clone)]
 #[repr(C)]

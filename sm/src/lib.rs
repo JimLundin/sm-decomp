@@ -96,6 +96,8 @@ pub mod platform {
 }
 
 pub(crate) mod audio_snapshot;
+#[doc(hidden)]
+pub mod c_library;
 /// Config file parsing.
 #[cfg(all(not(sm_verify_dll), feature = "frontend"))]
 pub mod config;

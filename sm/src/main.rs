@@ -37,6 +37,12 @@ pub use sdl2_sys::{
     SDL_TextInputEvent, SDL_Texture, SDL_TouchFingerEvent, SDL_UnlockMutex, SDL_UnlockTexture,
     SDL_UserEvent, SDL_WindowEvent, SDL_bool, SDL_memset, SDL_mutex,
 };
+#[cfg(not(windows))]
+use sm::c_library::{__assert_fail, stderr};
+use sm::c_library::{
+    chdir, exit, fclose, fopen, fprintf, free, getcwd, malloc, memcpy, mkdir, printf, snprintf,
+    sprintf, strcmp, strlen,
+};
 use sm::config::{g_config, FindCmdForGamepadButton, FindCmdForSdlKey, ParseConfigFile};
 use sm::cpu_infra::SnesInit;
 use sm::host::{Die, Warning};
@@ -48,35 +54,6 @@ use sm::rtl::{
 use sm::snes::ppu::{PpuBeginDrawing, PpuGetCurrentRenderScale};
 use sm::spc_player::{SpcPlayer_Create, SpcPlayer_Initialize};
 pub use sm::types::{_IO_codecvt, _IO_marker, _IO_wide_data, SDL_Window};
-extern "C" {
-
-    #[cfg(not(windows))]
-    static mut stderr: *mut FILE;
-    fn fclose(__stream: *mut FILE) -> i32;
-    fn fopen(__filename: *const c_char, __modes: *const c_char) -> *mut FILE;
-    fn fprintf(__stream: *mut FILE, __format: *const c_char, ...) -> i32;
-    fn printf(__format: *const c_char, ...) -> i32;
-    fn sprintf(__s: *mut c_char, __format: *const c_char, ...) -> i32;
-    fn snprintf(__s: *mut c_char, __maxlen: size_t, __format: *const c_char, ...) -> i32;
-    fn malloc(__size: size_t) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-    fn exit(__status: i32) -> !;
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn strcmp(__s1: *const c_char, __s2: *const c_char) -> i32;
-    fn strlen(__s: *const c_char) -> size_t;
-    fn mkdir(__path: *const c_char, __mode: __mode_t) -> i32;
-    fn chdir(__path: *const c_char) -> i32;
-    fn getcwd(__buf: *mut c_char, __size: size_t) -> *mut c_char;
-
-    #[cfg(not(windows))]
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-
-}
 pub use sm::types::{_IO_lock_t, __mode_t, __off64_t, __off_t, size_t, _IO_FILE, FILE};
 sdl_constants! {
     SDL_bool: SDL_bool;

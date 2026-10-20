@@ -1,3 +1,4 @@
+use crate::c_library::printf;
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::enemy_properties::*;
@@ -9,14 +10,10 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::set_ram_word;
 use crate::rtl::RomPtr;
-use ::core::ffi::c_char;
-extern "C" {
-    fn printf(__format: *const c_char, ...) -> i32;
-
-}
 pub use crate::types::Consts_86;
 pub use crate::types::Consts_AD;
 pub use crate::types::{EnemyBase, EnemyData, EnemyProps, Func_V, Point16U, VoidP};
+use ::core::ffi::c_char;
 crate::game::constants::typed_constants! { Consts_AD;
     addr_kTurnOffLightsForShitroidDeath = 61999,
 }

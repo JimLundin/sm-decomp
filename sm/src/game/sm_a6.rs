@@ -1,3 +1,4 @@
+use crate::c_library::printf;
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
@@ -39,12 +40,6 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{mov24, Mult8x8, RomPtr, SnesDivide, Unreachable};
-use ::core::ffi::{c_char, c_long};
-use ::core::ptr::{null, null_mut};
-extern "C" {
-    fn printf(__format: *const c_char, ...) -> i32;
-
-}
 pub use crate::types::Consts_A6;
 pub use crate::types::Consts_A9;
 pub use crate::types::{Consts_86, ExtraEnemyRam7800, ExtraEnemyRam8000, Ram7800_Kraid};
@@ -52,6 +47,8 @@ pub use crate::types::{
     EnemyBase, EnemyData, EnemyProps, EnemySpawnData, Func_V, LongPtr, OamEnt, PairU16, Point16U,
     Rect16U, VoidP, VramWriteEntry,
 };
+use ::core::ffi::{c_char, c_long};
+use ::core::ptr::{null, null_mut};
 enemy_layout! {
     Enemy_Ridley {
         base: EnemyBase,

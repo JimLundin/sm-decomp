@@ -1,22 +1,15 @@
+use crate::c_library::{free, malloc, memcpy, memset, printf};
 use crate::game_state::Game;
 use crate::snes::cart::cart_load;
 use crate::snes::dsp::dsp_getSamples;
 use crate::snes::snes::snes_reset;
-use ::core::ffi::{c_char, c_void};
-use ::core::mem::size_of;
-extern "C" {
-    fn printf(__format: *const c_char, ...) -> i32;
-    fn malloc(__size: size_t) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
-
-}
 pub use crate::types::{
     size_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
     DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, Spc, Timer,
     WindowLayer,
 };
+use ::core::ffi::{c_char, c_void};
+use ::core::mem::size_of;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct CartHeader {

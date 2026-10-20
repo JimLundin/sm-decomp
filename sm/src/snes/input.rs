@@ -1,14 +1,11 @@
-use ::core::ffi::c_void;
-use ::core::mem::size_of;
-extern "C" {
-    fn malloc(__size: size_t) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-}
+use crate::c_library::{free, malloc};
 pub use crate::types::{
     size_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
     DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, Spc, Timer,
     WindowLayer,
 };
+use ::core::ffi::c_void;
+use ::core::mem::size_of;
 pub unsafe fn input_init(snes: *mut Snes) -> *mut Input {
     let input: *mut Input = malloc(size_of::<Input>() as size_t) as *mut Input;
     (*input).snes = snes;

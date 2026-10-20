@@ -1,3 +1,4 @@
+use crate::c_library::{memcpy, memset};
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_82::*;
 pub use crate::game::constants::buttons::*;
@@ -22,17 +23,12 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::AddToHiLo;
 use crate::rtl::{RomPtr, RtlWriteSram, Unreachable, WriteReg};
 pub use crate::snes::registers::*;
-use ::core::ffi::{c_long, c_void};
-use ::core::ptr::null_mut;
-extern "C" {
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
-
-}
 pub use crate::types::Buttons;
 pub use crate::types::{size_t, Func_V, LongPtr, OamEnt, SnesRegs, VoidP, VramWriteEntry};
 pub use crate::types::{EnemyData, GameState, RoomDefHeader, SpawnHdmaObject_Args};
 pub use crate::types::{ExpandingSquareTransitionHdma, MapIconDataPointers, StartDmaCopy};
+use ::core::ffi::{c_long, c_void};
+use ::core::ptr::null_mut;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct ExpandingSquareVels {

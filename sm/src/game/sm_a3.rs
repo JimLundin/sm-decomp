@@ -1,3 +1,4 @@
+use crate::c_library::printf;
 use crate::cpu_infra::Call;
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
@@ -29,14 +30,10 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, SnesDivide, Unreachable};
-use ::core::ffi::c_char;
-extern "C" {
-    fn printf(__format: *const c_char, ...) -> i32;
-
-}
 pub use crate::types::{
     EnemyBase, EnemyData, EnemyProps, EnemySpawnData, Func_V, Func_Y_V, LongPtr, VoidP,
 };
+use ::core::ffi::c_char;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct MaridiaSnailData2 {

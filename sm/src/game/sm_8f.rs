@@ -1,3 +1,4 @@
+use crate::c_library::strcpy;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
 use crate::game::sm_80::{
@@ -20,14 +21,10 @@ use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{mov24, Mult8x8, RomPtr, Unreachable, WriteReg};
 pub use crate::snes::registers::*;
-use ::core::ffi::c_char;
-use ::core::ptr::null_mut;
-extern "C" {
-    fn strcpy(__dest: *mut c_char, __src: *const c_char) -> *mut c_char;
-
-}
 pub use crate::types::EnemyData;
 pub use crate::types::{CoroutineRet, LongPtr, SnesRegs, VoidP};
+use ::core::ffi::c_char;
+use ::core::ptr::null_mut;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct RoomDefStateSelect_E6E5_Finish {

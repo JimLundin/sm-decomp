@@ -27,17 +27,8 @@ use crate::types::TileDrawOrder;
 use ::core::ffi::{c_char, c_long, c_void};
 use ::core::ptr::{null, null_mut};
 
+use crate::c_library::{__assert_fail, printf};
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
-extern "C" {
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-    fn printf(__format: *const c_char, ...) -> i32;
-
-}
 pub use crate::types::{CoroutineRet, Func_Y_V, LongPtr, VoidP, VramWriteEntry};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]

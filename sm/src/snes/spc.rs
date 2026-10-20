@@ -1,16 +1,12 @@
+use crate::c_library::{free, malloc};
 use crate::game_state::Game;
 use crate::snes::apu::{apu_cpuRead, apu_cpuWrite};
-use ::core::ffi::c_void;
-use ::core::mem::size_of;
-extern "C" {
-    fn malloc(__size: size_t) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-
-}
 pub use crate::types::{
     size_t, Apu, ApuHistory as C2RustUnnamed, Dsp, DspChannel, DspRegWriteHistory, SaveLoadFunc,
     Spc, Timer,
 };
+use ::core::ffi::c_void;
+use ::core::mem::size_of;
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 static cyclesPerOpcode: [i32; 256] = [

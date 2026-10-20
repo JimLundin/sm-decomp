@@ -1,9 +1,14 @@
+use crate::c_library::{fprintf, free, malloc, printf, stderr};
 use crate::config::g_config;
 use crate::game_state::Game;
 use crate::host::Die;
 use crate::platform::glsl_shader::{GlslShader_CreateFromFile, GlslShader_Render};
 use crate::sdl_constants;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data, SDL_Window};
+pub use crate::types::{
+    _IO_lock_t, __off64_t, __off_t, ptrdiff_t, size_t, GLbitfield, GLboolean, GLchar, GLenum,
+    GLfloat, GLint, GLsizei, GLsizeiptr, GLuint, SDL_GLContext, _IO_FILE, FILE, GLDEBUGPROC,
+};
 use ::core::ffi::{c_char, c_float, c_void};
 use ::core::mem::size_of;
 use ::core::ptr::{null, null_mut};
@@ -11,19 +16,6 @@ pub use sdl2_sys::{
     SDL_GL_CreateContext, SDL_GL_GetDrawableSize, SDL_GL_SetAttribute, SDL_GL_SetSwapInterval,
     SDL_GL_SwapWindow, SDL_GLattr, SDL_GameController, SDL_Renderer, SDL_SysWMmsg, SDL_Texture,
     SDL_mutex,
-};
-extern "C" {
-
-    static mut stderr: *mut FILE;
-    fn fprintf(__stream: *mut FILE, __format: *const c_char, ...) -> i32;
-    fn printf(__format: *const c_char, ...) -> i32;
-    fn malloc(__size: size_t) -> *mut c_void;
-    fn free(__ptr: *mut c_void);
-
-}
-pub use crate::types::{
-    _IO_lock_t, __off64_t, __off_t, ptrdiff_t, size_t, GLbitfield, GLboolean, GLchar, GLenum,
-    GLfloat, GLint, GLsizei, GLsizeiptr, GLuint, SDL_GLContext, _IO_FILE, FILE, GLDEBUGPROC,
 };
 sdl_constants! {
     SDL_GLattr: SDL_GLattr;

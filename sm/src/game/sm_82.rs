@@ -1,3 +1,4 @@
+use crate::c_library::{__assert_fail, memcpy, printf};
 use crate::cpu_infra::DebugGameOverMenu;
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_60::*;
@@ -80,25 +81,14 @@ use crate::rtl::{
     Load24, Mult8x8, RomPtr, RtlApuWrite, SnesDivide, Unreachable, WriteReg, WriteRegWord,
 };
 pub use crate::snes::registers::*;
-use ::core::ffi::{c_char, c_long, c_void};
-use ::core::mem::transmute;
-use ::core::ptr::{null, null_mut};
-extern "C" {
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn printf(__format: *const c_char, ...) -> i32;
-
-}
 pub use crate::types::RoomPlmEntry;
 pub use crate::types::{
     size_t, CoroutineRet, Func_V, Func_V_Coroutine, Func_Y_V, Func_Y_Y, LongPtr, SnesRegs, VoidP,
     VramWriteEntry,
 };
+use ::core::ffi::{c_char, c_long, c_void};
+use ::core::mem::transmute;
+use ::core::ptr::{null, null_mut};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct PlmHeader_Size6 {

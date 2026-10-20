@@ -1,3 +1,4 @@
+use crate::c_library::printf;
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
@@ -39,12 +40,6 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{mov24, MemCpy, ReadRegWord, RomPtr, SnesDivide, Unreachable, WriteReg};
 pub use crate::snes::registers::*;
-use ::core::ffi::{c_char, c_long};
-use ::core::ptr::null_mut;
-extern "C" {
-    fn printf(__format: *const c_char, ...) -> i32;
-
-}
 pub use crate::types::Consts_8D;
 pub use crate::types::Consts_A6;
 pub use crate::types::Consts_A9;
@@ -54,6 +49,8 @@ pub use crate::types::{
     CoroutineRet, Func_V, LongPtr, OamEnt, Point16U, Rect16U, SnesRegs, VoidP, VramWriteEntry,
 };
 pub use crate::types::{EnemyBase, EnemyData, EnemyProps};
+use ::core::ffi::{c_char, c_long};
+use ::core::ptr::null_mut;
 crate::game::constants::typed_constants! { Consts_B7;
     addr_kMotherBrain_Misc_TileData = 52736, addr_kDeadMonsters_TileData = 49152,
     addr_kDeadTorizo_TileData = 43008,

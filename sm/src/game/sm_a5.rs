@@ -1,3 +1,4 @@
+use crate::c_library::{memcpy, printf};
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::enemy_properties::*;
 use crate::game::enemy_layouts::enemy_layout;
@@ -25,18 +26,13 @@ use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
-use ::core::ffi::{c_char, c_void};
-use ::core::ptr::null_mut;
-extern "C" {
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn printf(__format: *const c_char, ...) -> i32;
-
-}
 pub use crate::types::Consts_A5;
 pub use crate::types::{
     size_t, EnemyBase, EnemyData, EnemyProps, LongPtr, Point16U, VoidP, VramWriteEntry,
 };
 pub use crate::types::{Consts_86, EnemyDef};
+use ::core::ffi::{c_char, c_void};
+use ::core::ptr::null_mut;
 crate::game::constants::typed_constants! { Consts_A5;
     addr_kDraygon_Ilist_E77D = 59261, addr_stru_A5E729 = 59177,
     addr_kDraygon_Ilist_E6D5 = 59093, addr_kDraygon_Ilist_E6C7 = 59079,

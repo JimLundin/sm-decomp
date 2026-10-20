@@ -1,3 +1,4 @@
+use crate::c_library::{__assert_fail, memcpy, memset};
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a0::*;
@@ -314,22 +315,11 @@ use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, Unreachable};
-use ::core::ffi::{c_char, c_void};
-use ::core::ptr::{null, null_mut};
-extern "C" {
-    fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: u32,
-        __function: *const c_char,
-    ) -> !;
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
-
-}
 pub use crate::types::{size_t, EnemyData, LongPtr, PairU16, Point16U, VoidP, VramWriteEntry};
 pub use crate::types::{EnemyDef, EnemySpawnData, Vulnerability};
 pub use crate::types::{EnemyProps, EprojDef, ExtendedSpriteMap, Hitbox};
+use ::core::ffi::{c_char, c_void};
+use ::core::ptr::{null, null_mut};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct EnemyPopulation {

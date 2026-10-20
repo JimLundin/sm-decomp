@@ -11,6 +11,7 @@ use crate::types::TileDrawOrder;
 use ::core::ffi::{c_char, c_long, c_void};
 use ::core::mem::size_of;
 
+use crate::c_library::{memcmp, memcpy, memset, printf};
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{
     LoadCRETilesTilesetTilesAndPalette, LoadColorsForSpritesBeamsAndEnemies,
@@ -31,13 +32,6 @@ use crate::rtl::{
     Load24, Mult8x8, ReadRegWord, RomPtr, RtlApuUpload, RtlApuWrite, RtlWriteSram, SnesDivide,
     SnesModulus, Unreachable, WriteReg, WriteRegWord,
 };
-extern "C" {
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
-    fn memcmp(__s1: *const c_void, __s2: *const c_void, __n: size_t) -> i32;
-    fn printf(__format: *const c_char, ...) -> i32;
-
-}
 pub use crate::types::{
     size_t, CoroutineRet, Func_U8, Func_V, LongPtr, OamEnt, SnesRegs, VoidP, VramWriteEntry,
 };

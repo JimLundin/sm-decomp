@@ -1,3 +1,4 @@
+use crate::c_library::printf;
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::enemy_properties::*;
@@ -25,16 +26,12 @@ use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, Unreachable, WriteReg};
 pub use crate::snes::registers::*;
-use ::core::ffi::c_char;
-use ::core::ptr::null_mut;
-extern "C" {
-    fn printf(__format: *const c_char, ...) -> i32;
-
-}
 pub use crate::types::Consts_86;
 pub use crate::types::Consts_A8;
 pub use crate::types::{EnemyBase, EnemyData, EnemyProps, EnemySpawnData};
 pub use crate::types::{Func_V, LongPtr, PairU16, Point16U, SnesRegs, VoidP, VramWriteEntry};
+use ::core::ffi::c_char;
+use ::core::ptr::null_mut;
 crate::game::constants::typed_constants! { Consts_A8;
     addr_locret_A8F5E3 = 62947, addr_kKiHunter_Ilist_EB10 = 60176,
     addr_kKiHunter_Ilist_EAF2 = 60146, addr_kKiHunter_Ilist_EADA = 60122,

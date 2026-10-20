@@ -1,3 +1,4 @@
+use crate::c_library::memcpy;
 pub use crate::game::constants::bank_9b::*;
 pub use crate::game::constants::buttons::*;
 pub use crate::game::constants::samus_movement::*;
@@ -26,13 +27,9 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::SetHiLo;
 use crate::rtl::{RomPtr, Unreachable};
-use ::core::ffi::c_void;
-extern "C" {
-    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-
-}
 pub use crate::types::{size_t, LongPtr, PairU16, Point16U, SamusPose, VoidP, VramWriteEntry};
 pub use crate::types::{SamusMovementType, SamusPoseParams};
+use ::core::ffi::c_void;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct GrappleBeamSpecialAngles {

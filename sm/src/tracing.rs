@@ -1,18 +1,15 @@
+use crate::c_library::sprintf;
 use crate::game_state::Game;
 use crate::snes::apu::apu_cpuRead;
 use crate::snes::snes::snes_read;
-use ::core::ffi::{c_char, c_void};
-use ::core::mem::transmute;
-use ::core::ptr::{null, null_mut};
-extern "C" {
-    fn sprintf(__s: *mut c_char, __format: *const c_char, ...) -> i32;
-
-}
 pub use crate::types::{
     Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
     DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, Spc, Timer,
     WindowLayer,
 };
+use ::core::ffi::{c_char, c_void};
+use ::core::mem::transmute;
+use ::core::ptr::{null, null_mut};
 pub const NULL: *mut c_void = null_mut::<c_void>();
 static opcodeNames: crate::types::ImmutableCStringPointers<256> = crate::types::immutable_c_strings! {
     b"brk          \0", b"ora ($%02x,x)  \0", b"cop #$%02x     \0", b"ora $%02x,s    \0",
