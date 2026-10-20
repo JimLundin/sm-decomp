@@ -21,6 +21,11 @@ further, by tackling large structural changes before individual cleanup.
 Use **90,000 lines as a stretch planning checkpoint**, not a demonstrated
 forecast. This work order replaces earlier reduction and cleanup queues.
 
+User clarification: the long-term structure is descriptive gameplay modules
+and routines, with **bank-based source organization removed**. Keep bank
+addresses as ROM/dispatch data. Domain ownership and code-volume reduction
+are separate outcomes to measure; a file move alone supplies no deletion.
+
 Keep Game ownership, byte-compatible g_ram, ROM formats and observable
 behavior, including quirks. sm/src is the source of truth; use ram_map.rs,
 the oracle and https://patrickjohnston.org/bank/ when meaning is unclear.
@@ -35,8 +40,11 @@ Internal function boundaries and redundant wrappers may change after checking
 all callers and callback references. Preserve numeric dispatch behavior;
 keep an old Rust entry point only where a real caller or identity contract
 needs it. Use ordinary functions, enums and typed data where they simplify
-the whole algorithm. Existing bank files can remain; a repository-wide
-reorganization, universal state engine or new interpreter is not required.
+the whole algorithm. Migrate one complete responsibility at a time, redirect
+real callers, and remove its old bank implementation. Remaining banks are
+temporary homes for unmigrated responsibilities. Avoid permanent bank facades,
+a universal state engine or a new interpreter. Descriptive domain ownership
+does not have to wait until the source count is below 100,000.
 
 Small preparatory changes, including temporary line-count increases, are
 allowed when attached to a concrete replacement with named consumers and
@@ -86,34 +94,90 @@ are already in the baseline. Repeated clone scans and signature macros now
 have diminishing measured returns. The next experiment must change how a
 complete behavior is represented, rather than repeat those searches.
 
+## Domain experiments (2026-10-20)
+
+Five independent compiled experiments start from 7d1af86e, whose maintained
+Rust matches ec45c573. Counts include all new modules, imports, callers and
+source registrations, after formatting. These are alternative drafts, not
+landed savings; the three Samus alternatives overlap and cannot be added.
+
+| Experiment | Complete measured scope | Whole sm/src | Net change |
+| --- | --- | ---: | ---: |
+| Samus motion/pose modules | 3,167 moved lines; input, movement, jump setup and pose progression | 112,237 | -28 |
+| Typed Samus profiles | 14 air/ball routines and macros, including ground/landing/reset | 112,195 | -70 |
+| Samus frame phases | 2,355 moved lines; input/frame/pose routing and real callers | 112,226 | -39 |
+| Roach lifecycle | 33 functions plus two forwarding rows; all 17 phases | 112,236 | -29 |
+| Menus, sprites and save data | Entire sm_81 removed; 120 ordinary routines moved | 112,306 | +41 |
+
+Relocation controls grow by 65 lines for motion/pose, 42 for frame phases and
+23 for Roach. Consolidation recovers that overhead but produces small net
+reductions. No experiment establishes a 1,000-line replacement or a route
+covering the 12,266-line gap. These results reject that forecast for the tested
+designs; they do not prove that larger reductions elsewhere are impossible.
+
+The useful architectural result is explicit ownership. Prefer ordinary named
+domain routines; the profile pilot concentrates several exceptional branches
+for only 70 lines. Samus needs separate prepare_frame and finish_frame seams:
+enemy/projectile work and a possible message-box suspension occur between
+them. Retain out-of-band grapple, demo, X-ray and cinematic entry points where
+real callers need them. Roach has a true initialize/update interface. Menus
+has three update entries, with private state handlers. The menu experiment
+retires a complete bank; the Samus experiments still depend on unmigrated
+physics/collision code and do not retire all Samus banks.
+
+All drafts pass formatting and core compiler checks. The motion/pose,
+frame-phase and bank-removal drafts each pass clean, source-checked optimized
+any% **129712/0** and Speed Booster **148406/0** replays. Motion/pose's seven
+required probes cover normal input/movement/pose, both spin branches and both
+grounded-ball branches; frame phases have five exercised normal-control probes.
+Demo, X-ray, grapple, Spring Ball and unusual transition coverage remains
+limited to the stated static checks where those paths were not observed.
+
+The bank-removal draft preserves all 120 ordinary function bodies under its
+explicit name/visibility mapping and passes frontend-library metadata checks.
+Its probes exercise menus, sprites and SRAM loading/saving; map selection has
+zero hits, correctly failing that requested coverage requirement. The clean
+full replays and source correspondence do not establish map-branch execution.
+Fresh frontend Cargo dependency build scripts hit Windows OS error 5; the
+gameplay checks use the existing optimized core/DLL verifier instead.
+
+Roach passes **14,172 full-RAM comparisons** between actual optimized original/
+replacement cores, including 21 persistent 600-update sequences. This is
+constructed Rust differential coverage, not SNES-oracle or movie execution.
+Typed profiles pass an exercised Speed Booster segment **46360/0**, covering
+all five motion entries plus 120 follow-up frames; Spring Ball landing and
+other exceptional branches remain unproven. None of the routes reaches credits.
+
+Runnable draft roots under TEMP, in table order: sm-samus-minimal-clean-20261020,
+sm-samus-profiles-20261020, sm-samus-common-20261020, sm-roach-domain-1cb6fb50,
+and sm-domain-menu-7d1af86e/candidate. The menu experiment's parent directory
+contains REPORT.md and trial.patch; the patch applies to main without changing
+the unrelated shader work. Experiments remain outside maintained source.
+
+Decision: extend domain ownership across coherent subsystems for readability,
+while pricing actual algorithm deletion separately. Resolve each draft's
+remaining coverage and dependency surface before landing it. Keep these
+experiments parked as volume workstreams; use their domain design when the
+relevant subsystem is migrated. Continue the independent large-reduction
+comparison below without extrapolating savings from these pilots.
+
+For the next architectural batch, use the concrete motion/pose split as the
+starting candidate and preserve its existing input/movement/pose phases.
+Complete the exceptional-path checks before adopting its algorithm changes;
+the relocation control provides a smaller behavioral step. Extend the same
+ownership approach to individual enemy lifecycles and menus/sprites/save data.
+Evaluate each whole responsibility; a small net saving is acceptable for an
+explicit domain migration but is not evidence of a large volume payoff.
+
 ## Work order
 
-1. [x] **Price a complete Samus movement/pose replacement.** Start with
-   Samus_MovementHandler_Normal and its movement table in 90, then follow
-   Samus_InputHandler, Samus_HandleTransitions and block-collision transitions
-   in 91 into the movement/collision routines in 94. Include state entry,
-   per-frame movement, pose selection and reset paths. Follow grapple and
-   projectile interactions where the actual callers require them. This is
-   wider than the parked 22-entry jump/movement draft described below.
-
-   Compare two concrete designs: consolidated domain functions with explicit
-   state-specific tails, and shared algorithms selected by ordinary typed
-   movement profiles. Keep liquid/suit rules, collision calls, captured/live
-   RAM reads and transition order explicit. Avoid a flag combination for
-   every old function or a table that merely transcribes all old statements.
-   Pilot the designs on related jumping/falling/ball states plus an exceptional
-   path before expanding the better design to every eligible consumer.
-
-   Finish this item with exact replacement spans, retained exceptions, complete
-   formatted and compiled old/new counts, required checks and a decision to
-   implement or reject. Target a replacement saving roughly 1,000+ lines;
-   this is an experiment objective, not a predicted saving or a per-commit
-   minimum. A pilot alone does not establish the full replacement's savings.
-   A worthwhile measured candidate goes directly to item 3; otherwise continue
-   discovery in item 2. Repeat that choice after each completed replacement.
-   If it only yields another small extraction, record the reason in one short
-   paragraph and advance to item 2. Do not spend an iteration landing its
-   incidental small cleanups. If stuck for an hour, record findings and stop.
+1. [x] **Test Samus domain alternatives.** The concrete domain experiments
+   above reject the proposed large volume payoff and establish useful named
+   interfaces. Keep measured scope and unvisited behavior explicit. Subsequent
+   candidates need complete formatted/compiled replacement counts, including
+   retained exceptions and caller costs, before implementation expands. If a
+   candidate produces only a small extraction, record its result and advance
+   discovery; if stuck for an hour, record findings and stop.
 
    Pilot decision: reject this representation and advance to item 2. Consolidated
    domain functions remove **77 formatted lines**; ordinary typed profiles remove
@@ -167,8 +231,9 @@ complete behavior is represented, rather than repeat those searches.
    remaining gap is not a prerequisite for useful implementation. At each
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
-   Keep measured drafts separate from landed savings; the currently proven
-   remaining budget is **zero**, not 12,266. Update it as drafts are completed.
+   Keep measured drafts separate from landed savings. No selected large
+   replacement yet funds the **12,266-line** gap; parked small drafts are not
+   an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -177,8 +242,9 @@ complete behavior is represented, rather than repeat those searches.
    below, including its full-replay cadence. Continue choosing the strongest
    complete replacement until below 100,000; then reassess the path to 90,000.
 
-4. [ ] **Refine the smaller implementation.** Resume local naming, ownership,
-   unsafe removal and small duplication cleanup after the volume pass.
+4. [ ] **Refine the smaller implementation.** Resume isolated local naming,
+   unsafe removal and small duplication cleanup after the volume pass. Whole
+   domain migrations follow the user clarification above and can precede it.
    Boot-to-credits coverage, remaining native Bang AI ownership, ROM bug-patch
    review and Map Rando remain later project milestones. Correctness defects
    and coverage needed by an active replacement take priority when encountered.
@@ -339,9 +405,10 @@ Rust lines 112265. The working tree at this review also contains an unrelated
 83-line shader reduction, so `sh tools/progress.sh` reports **112182**. That
 uncommitted draft is excluded from the committed baseline and budget.
 
-The Samus pilot decision changes documentation only. Both formatted pilots pass
-all-target release compiler checks; no gameplay validation is claimed. Diff and
-progress checks pass. Maintained Rust and its counters remain unchanged; the
-active work is now item 2, beginning with enemy/projectile lifecycles.
+This experiment review changes documentation only. Draft verification is
+recorded above and applies to those frozen sources, not a new main build.
+Diff, inventory and progress checks pass; maintained Rust and its counters
+are unchanged. Existing independent boss-phase discovery remains recorded in
+item 2; domain migration follows the clarified direction and experiment limits.
 
 Historical details before this reset remain in **ec45c573:docs/PLAN.md**.
