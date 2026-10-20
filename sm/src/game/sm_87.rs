@@ -233,14 +233,12 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) 
             0x3800, 0x7f58, 0x6ed5, 0x5a71, 0x49ee, 0x356a, 0x24e7, 0x1083,
         ];
         let mut v2: u16 = *(RomPtr_87(j, game) as *mut u16);
-        let mut i: i32 = 0;
-        while i != 16 {
+        for i in (0i32..16).step_by(2) {
             word!(
                 game.target_palettes[(v2 >> 1)] =
                     kAnimtilesInstr_Write8PaletteColors[(i >> 1) as usize]
             );
             v2 = (v2).wrapping_add(2);
-            i += 2;
         }
     };
 }

@@ -1142,8 +1142,7 @@ crate::prefixed_callbacks! {
     };
     Botwoon_Func_23 [] {
         let mut r18: u16 = ((*E).var_B as i32 - (*E).var_C as i32 & 0x3ff) as u16;
-        let mut n: i32 = 24;
-        loop {
+        for n in (0i32..=24).rev().step_by(2) {
             let ET = Get_Botwoon(n, game);
             let botwoo_var_00: u16 = (*ET).var_00;
             if (*E).var_36 == r18 {
@@ -1179,18 +1178,13 @@ crate::prefixed_callbacks! {
                     *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(r18 as i32 as isize) as *mut u16);
             }
             r18 = (r18 as i32 - (*E).var_C as i32 & 0x3ff) as u16;
-            n -= 2;
-            if ((n & 0x8000) != 0) {
-                break;
-            }
         }
     };
     Botwoon_Func_24 [] {
         (*E).var_B = ((*E).var_B as i32 + 4 & 0x3ff) as u16;
     };
     Botwoon_Func_25 [] {
-        let mut n: i32 = 24;
-        loop {
+        for n in (0i32..=24).rev().step_by(2) {
             let mut r24: u16 = 0;
             let ERR = Get_Botwoon(n, game);
             let botwoo_var_00: u16 = (*ERR).var_00;
@@ -1214,10 +1208,6 @@ crate::prefixed_callbacks! {
                 game.eproj_E[(botwoo_var_00 >> 1)] =
                     (2 * (((r24).wrapping_add(CalculateAngleFromXY(x, y, game))) as i32 >> 5)) as u16
             );
-            n -= 2;
-            if (n < 0) {
-                break;
-            }
         }
     };
     Botwoon_Shot [] {

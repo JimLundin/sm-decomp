@@ -317,30 +317,20 @@ pub unsafe fn InvalidInterrupt_Crash(game: &mut Game) {
 }
 pub unsafe fn LoadMirrorOfExploredMapTiles(game: &mut Game) {
     let mut v1: u16 = u16::swap_bytes(word!(game.area_index));
-    let mut v2: u16 = 0;
-    loop {
+    for v2 in (0u16..256).step_by(2) {
         *(ram_ptr!(game, u16; 0x7f7, v2 as isize)) =
             word!(game.explored_map_tiles_saved[(v1 >> 1)]);
         v1 = (v1).wrapping_add(2);
-        v2 = (v2).wrapping_add(2);
-        if (((v2) as i16).wrapping_sub(256) >= 0) {
-            break;
-        }
     }
     word!(game.has_area_map = *ram_ptr!(game; 0xd908, word!(game.area_index) as isize) as u16);
 }
 pub unsafe fn SaveExploredMapTilesToSaved(game: &mut Game) {
     let mut v1: u16 = u16::swap_bytes(word!(game.area_index));
-    let mut v2: u16 = 0;
-    loop {
+    for v2 in (0u16..256).step_by(2) {
         word!(
             game.explored_map_tiles_saved[(v1 >> 1)] = *(ram_ptr!(game, u16; 0x7f7, v2 as isize))
         );
         v1 = (v1).wrapping_add(2);
-        v2 = (v2).wrapping_add(2);
-        if (((v2) as i16).wrapping_sub(256) >= 0) {
-            break;
-        }
     }
     if word!(game.has_area_map) != 0 {
         crate::update_place! { reference fresh88 = *(ram_ptr!(game, u16; 0xd908, word!(game.area_index) as isize)) => (*fresh88) | (0xffu16); }
@@ -1469,9 +1459,8 @@ pub unsafe fn HandleHudTilemap(game: &mut Game) {
         word!(game.samus_prev_health = word!(game.samus_health));
         let mut r20: u16 = SnesDivide(word!(game.samus_health), 100);
         let r18: u16 = SnesModulus(word!(game.samus_health), 100);
-        let mut v2: i32 = 0;
         let mut n: i32 = SnesDivide(word!(game.samus_max_health), 100) as i32 + 1;
-        loop {
+        for v2 in (0i32..28).step_by(2) {
             n -= 1;
             if n == 0 {
                 break;
@@ -1483,10 +1472,6 @@ pub unsafe fn HandleHudTilemap(game: &mut Game) {
             }
             *(ram_ptr!(game, u16; 0xc608))
                 .offset((kEnergyTankIconTilemapOffsets[(v2 >> 1) as usize] >> 1) as isize) = v3;
-            v2 += 2;
-            if (((v2 - 28i32) as i16) >= 0) {
-                break;
-            }
         }
         DrawTwoHudDigits(addrl_kDigitTilesetsHealth, r18, 0x8c, game);
     }

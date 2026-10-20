@@ -317,16 +317,11 @@ pub unsafe fn Kraid_Init(game: &mut Game) {
         *(ram_ptr!(game, u16; 0xcd20, 2)) = 1;
         let E_0 = Get_Kraid(0, game);
         (*E_0).kraid_min_y_pos_eject = 324;
-        let mut v7: u16 = 0;
         let mut v8: u16 = ((*E_0).base.health >> 3);
         let r18: u16 = v8;
-        loop {
+        for v7 in (0u16..16).step_by(2) {
             (*Get_Kraid(v7 as i32, game)).kraid_healths_8ths[0i32 as usize] = v8;
             v8 = (v8).wrapping_add(r18);
-            v7 = (v7).wrapping_add(2);
-            if (((v7) as i16).wrapping_sub(16) >= 0) {
-                break;
-            }
         }
         Kraid_SetupGfxWithTilePrioClear(0xdfff, game);
         let v10: u16 = ((*E_0).base.health >> 2);
@@ -356,25 +351,15 @@ pub unsafe fn Kraid_SetupGfxWithTilePrioClear(r18: u16, game: &mut Game) {
     DecompressToMem(0xb9fe3e, ram_ptr!(game; 0x2000), game);
     let E = Get_Kraid(0, game);
     set_fields! {[(*E)], 0; kraid_hurt_frame, kraid_hurt_frame_timer}
-    let mut v1: u16 = 0;
-    loop {
+    for v1 in (0u16..1536).step_by(2) {
         *(ram_ptr!(game, u16; 0x2000)).offset(((v1 as i32 >> 1) + 1024) as isize) =
             (word!(game.tilemap_stuff[(v1 >> 1)])) & (0xdfffu16);
-        v1 = (v1).wrapping_add(2);
-        if (((v1) as i16).wrapping_sub(1536) >= 0) {
-            break;
-        }
     }
-    let mut v2: u16 = 0;
-    loop {
+    for v2 in 0u16..1024 {
         word!(
             game.tilemap_stuff[v2] =
                 (r18) & ((*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[v2 as usize])
         );
-        v2 = v2.wrapping_add(1);
-        if (((v2 as i32 * 2 - 2048i32) as i16) >= 0) {
-            break;
-        }
     }
 }
 pub unsafe fn KraidsArm_Init(game: &mut Game) {
@@ -492,14 +477,9 @@ pub unsafe fn Kraid_GetsBig_BreakCeilingPlatforms(game: &mut Game) {
     }
 }
 pub unsafe fn Kraid_GetsBig_SetBG2TilemapPrioBits(game: &mut Game) {
-    let mut v0: u16 = 0;
-    loop {
+    for v0 in (0u16..4096).step_by(2) {
         word!(game.tilemap_stuff[(v0 >> 1)], |fresh11| (fresh11)
             | (0x2000u16));
-        v0 = (v0).wrapping_add(2);
-        if (((v0) as i16).wrapping_sub(4096) >= 0) {
-            break;
-        }
     }
     let E = Get_Kraid(0x40, game);
     (*E).base.properties = ((*E).base.properties & !(0x400));
@@ -740,14 +720,9 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
             (*E).kraid_mouth_flags = 0;
             (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
             Kraid_SetupGfxWithTilePrioClear(!(0x2000i32) as u16, game);
-            let mut v12: u16 = 0;
-            loop {
+            for v12 in (0u16..384).step_by(64) {
                 let EL = Get_Kraid(v12 as i32, game);
                 (*EL).base.properties = ((*EL).base.properties) | ((kEnemyProps_Tangible) as u16);
-                v12 = (v12).wrapping_add(64);
-                if (((v12) as i16).wrapping_sub(384) >= 0) {
-                    break;
-                }
             }
             if (*E).kraid_var_B as i32 + 0x68f2 & 0x8000 != 0 {
                 (*E).kraid_var_B = ((*E).kraid_var_B).wrapping_add(60);
@@ -802,8 +777,7 @@ pub unsafe fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
         }
         v0 = (16 * (v2 as i32 + 2)) as u16;
     }
-    let mut v4: u16 = 0;
-    loop {
+    for v4 in (0u16..32).step_by(2) {
         let v5: i32 = v0 as i32 >> 1;
         let v6: i32 = v4 as i32 >> 1;
         word! { game;
@@ -811,10 +785,6 @@ pub unsafe fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
             palette_buffer[(v6 + 240)] = crate::rtl::rom_table_word!(game, 0xa7b513, v5 as isize);
         }
         v0 = (v0).wrapping_add(2);
-        v4 = (v4).wrapping_add(2);
-        if (((v4) as i16).wrapping_sub(32) >= 0) {
-            break;
-        }
     }
 }
 pub fn Kraid_Instr_1(k: u16, jp: *const u16) -> *const u16 {
@@ -861,9 +831,8 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
 }
 pub unsafe fn Kraid_Shot_GlowHisEye(game: &mut Game) {
     Kraid_ProcessKraidInstr(game);
-    let mut v0: u16 = 226;
     let mut v1: i16 = 0;
-    loop {
+    for v0 in (226u16..232).step_by(2) {
         let v2: i32 = v0 as i32 >> 1;
         let mut v3: u16 = ((word!(game.palette_buffer[v2]) as i32 & 0x1f) + 1) as u16;
         if (word!(game.palette_buffer[v2]) as i32 & 0x1f) - 30i32 & 0x8000 == 0 {
@@ -876,10 +845,6 @@ pub unsafe fn Kraid_Shot_GlowHisEye(game: &mut Game) {
             v4 = 992;
         }
         word!(game.palette_buffer[v2] = (v4 | v3 | word!(game.palette_buffer[v2]) & 0xfc00));
-        v0 = (v0).wrapping_add(2);
-        if (((v0) as i16).wrapping_sub(232) >= 0) {
-            break;
-        }
     }
     if (v1).wrapping_sub(6) >= 0 {
         (*Get_Kraid(0i32, game)).kraid_var_A = ((0xa7b73di32) as u16);
@@ -2356,15 +2321,13 @@ pub unsafe fn Phantoon_Func_4(k: u16, game: &mut Game) {
     QueueSfx3_Max6(0x1d, game);
 }
 pub unsafe fn Phantoon_Func_5(k: u16, game: &mut Game) {
-    let mut i: i32 = 7;
-    while i >= 0 {
+    for i in (0i32..=7).rev() {
         SpawnEprojWithGfx(
             (i | 0x600) as u16,
             k,
             addr_kEproj_DestroyableFireballs as u16,
             game,
         );
-        i -= 1;
     }
     QueueSfx3_Max6(0x28, game);
 }
@@ -2665,15 +2628,10 @@ pub unsafe fn Phantoon_StartDeathSequence(k: u16, game: &mut Game) {
     let E1 = Get_Phantoon(0x40, game);
     set_fields! {[(*E1)], 0; var_C, var_F}
     Phantoon_ChangeEyeSpriteBasedOnSamusDist(game);
-    let mut v3: i16 = 510;
     let v4: u16 = word!(game.reg_BG2HOFS);
-    loop {
+    for v3 in (0i16..=510).rev().step_by(2) {
         *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(v3 as u16 as i32 as isize) as *mut u16) =
             v4;
-        v3 = (v3).wrapping_sub(2);
-        if (v3 < 0) {
-            break;
-        }
     }
     word!(game.phantom_related_layer_flag, |fresh29| (fresh29)
         | (0x4000u16));
@@ -2909,15 +2867,13 @@ pub unsafe fn Phantoon_Enraged(k: u16, game: &mut Game) {
                 }
             }
         } else {
-            let mut i: i32 = 6;
-            while i >= 0 {
+            for i in (0i32..=6).rev() {
                 SpawnEprojWithGfx(
                     (i | 0x200) as u16,
                     k,
                     addr_kEproj_DestroyableFireballs as u16,
                     game,
                 );
-                i -= 1;
             }
         }
         QueueSfx3_Max6(0x29, game);
@@ -3199,8 +3155,7 @@ pub unsafe fn Phantoon_Dead(k: u16, game: &mut Game) {
 pub unsafe fn Phantoon_Func_8(game: &mut Game) -> u8 {
     let E = Get_Phantoon(0x40, game);
     if ((*E).var_D).wrapping_add(1) >= (*E).var_E {
-        let mut i: i32 = 0;
-        while i < 0x20 {
+        for i in (0i32..32).step_by(2) {
             word!(
                 game.palette_buffer[((i >> 1) + 112)] =
                     Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
@@ -3210,7 +3165,6 @@ pub unsafe fn Phantoon_Func_8(game: &mut Game) -> u8 {
                         game,
                     )
             );
-            i += 2;
         }
         (*E).var_E = (*E).var_E.wrapping_add(1);
         0
@@ -3223,19 +3177,13 @@ pub unsafe fn Phantoon_SetColorBasedOnHp(game: &mut Game) -> u8 {
     let mut Entry: PairU16 = PairU16 { k: 0, j: 0 };
     let E = Get_Phantoon(0x40, game);
     if ((*E).var_D).wrapping_add(1) >= (*E).var_E {
-        let mut v2: u16 = 0;
-        loop {
-            let mut v7: u16 = v2;
+        for v2 in (0u16..32).step_by(2) {
             Entry = Phantoon_SetColorBasedOnHp_FindEntry(v2, game);
             let j: u16 = Entry.j;
             let v5: u16 =
                 *(ram_ptr!(game, u16; 0xc000)).offset(((Entry.k as i32 >> 1) + 112) as isize);
-            *(ram_ptr!(game, u16; 0xc000)).offset(((v7 as i32 >> 1) + 112) as isize) =
+            *(ram_ptr!(game, u16; 0xc000)).offset(((v2 as i32 >> 1) + 112) as isize) =
                 Phantoon_Func_10_CalculateNthTransitionColorFromXtoY((*E).var_E, v5, j, game);
-            v2 = (v7).wrapping_add(2);
-            if ((v7).wrapping_add(2) >= 0x20) {
-                break;
-            }
         }
         (*E).var_E = (*E).var_E.wrapping_add(1);
         0
@@ -3270,8 +3218,7 @@ pub unsafe fn Phantoon_SetColorBasedOnHp_FindEntry(k: u16, game: &mut Game) -> P
 pub unsafe fn Phantoon_Func_9(game: &mut Game) -> u8 {
     let E = Get_Phantoon(0x40, game);
     if ((*E).var_D).wrapping_add(1) >= (*E).var_E {
-        let mut i: i32 = 0;
-        while i < 0xe0 {
+        for i in (0i32..224).step_by(2) {
             word!(
                 game.palette_buffer[(i >> 1)] =
                     Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
@@ -3281,7 +3228,6 @@ pub unsafe fn Phantoon_Func_9(game: &mut Game) -> u8 {
                         game,
                     )
             );
-            i += 2;
         }
         (*E).var_E = (*E).var_E.wrapping_add(1);
         0

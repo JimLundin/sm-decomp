@@ -1032,12 +1032,10 @@ pub unsafe fn AddNintentoLogoToOam(game: &mut Game) {
 }
 pub unsafe fn SpawnCinematicSpriteObject(j: u16, a: u16, game: &mut Game) -> u8 {
     word!(game.cinematic_spawn_param = a);
-    let mut i: i32 = 30;
-    while i >= 0 {
+    for i in (0i32..=30).rev().step_by(2) {
         if word!(game.cinematicspr_instr_ptr[(i >> 1)]) == 0 {
             return SpawnCimenaticSpriteObjectInner(j, i as u16, game);
         }
-        i -= 2;
     }
     1
 }
@@ -3771,19 +3769,15 @@ pub unsafe fn CinematicFunction_Intro_Func144(game: &mut Game) {
     let v0: i32 = ((4u16).wrapping_mul(word!(game.cinematic_var4))) as i32 >> 1;
     let v5: u16 = crate::rtl::rom_table_word!(game, 0x8be5e7, (v0 + 1) as isize);
     let mut v1: u16 = crate::rtl::rom_table_word!(game, 0x8be5e7, v0 as isize);
-    let mut i: i32 = 30;
-    while i >= 0 {
+    for i in (0i32..=30).rev().step_by(2) {
         word!(game.palette_buffer[((i >> 1) + 16)] = *(RomPtr_8C(v1, game) as *mut u16));
         v1 = (v1).wrapping_sub(2);
-        i -= 2;
     }
     let mut v3: u16 = v5;
-    let mut j: u16 = 30;
-    while (j & 0x8000) == 0 {
+    for j in (0u16..=30).rev().step_by(2) {
         *(ram_ptr!(game, u16; 0xc000)).offset(((j as i32 >> 1) + 240) as isize) =
             *(RomPtr_8C(v3, game) as *mut u16);
         v3 = (v3).wrapping_sub(2);
-        j = (j).wrapping_sub(2);
     }
     if word!(game.cinematic_var4, wrapping_add(1), reread) as i32 - 16i32 & 0x8000 == 0 {
         word!(game.cinematic_function = ((0x8be7bai32) as u16));
@@ -3792,9 +3786,8 @@ pub unsafe fn CinematicFunction_Intro_Func144(game: &mut Game) {
     }
 }
 pub unsafe fn CalcItemPercentageCount(k: u16, instrp: u16, game: &mut Game) -> u16 {
-    let mut v0: u16 = 4;
     let mut r18: u16 = 0;
-    loop {
+    for v0 in (0u16..=4).rev() {
         let v1 = RomPtr_RAM(
             crate::rtl::rom_table_word!(game, 0x8be70d, v0 as isize),
             game,
@@ -3803,30 +3796,22 @@ pub unsafe fn CalcItemPercentageCount(k: u16, instrp: u16, game: &mut Game) -> u
             *v1,
             crate::rtl::rom_table_word!(game, 0x8be717, v0 as isize) as u8,
         ));
-        v0 = v0.wrapping_sub(1);
-        if ((v0 & 0x8000) != 0) {
-            break;
-        }
     }
-    let mut i: i32 = 20;
-    while i >= 0 {
+    for i in (0i32..=20).rev().step_by(2) {
         if (crate::rtl::rom_table_word!(game, 0x8be721, (i >> 1) as isize)
             & word!(game.collected_items))
             != 0
         {
             r18 = r18.wrapping_add(1);
         }
-        i -= 2;
     }
-    let mut j: u16 = 8;
-    while (j & 0x8000) == 0 {
+    for j in (0u16..=8).rev().step_by(2) {
         if (crate::rtl::rom_table_word!(game, 0x8be737, (j >> 1) as isize)
             & word!(game.collected_beams))
             != 0
         {
             r18 = r18.wrapping_add(1);
         }
-        j = (j).wrapping_sub(2);
     }
     let RegWord: u16 = (r18 as i32 / 10) as u16;
     let r22: u16 = (r18 as i32 % 10) as u16;

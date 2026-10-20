@@ -556,8 +556,7 @@ unsafe fn WriteVolumeToDsp(p: *mut SpcPlayer, c: *mut Channel, mut volume: u16) 
     if (*p).is_chan_on & (*p).cur_chan_bit != 0 {
         return;
     }
-    let mut i: i32 = 0;
-    while i < 2 {
+    for i in 0i32..2 {
         let j: i32 = volume as i32 >> 8;
         let mut t: u8 = if j >= 21 {
             ((*p).ram[(j + 0x1e1d) as usize] as i32
@@ -577,7 +576,6 @@ unsafe fn WriteVolumeToDsp(p: *mut SpcPlayer, c: *mut Channel, mut volume: u16) 
         }
         Dsp_Write(p, (V0VOLL as i32 + i + (*c).index as i32 * 16) as u8, t);
         volume = (0x1400 - volume as i32) as u16;
-        i += 1;
     }
 }
 unsafe fn WritePitchInner(p: *mut SpcPlayer, c: *mut Channel, pitch: u16) {
@@ -818,11 +816,9 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
             crate::update_place! { previous fresh25 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
             let mut ep = (&raw const kEchoFirParameters as *const i8)
                 .offset(((*p).ram[fresh25 as usize] as i32 * 8) as isize);
-            let mut i: i32 = 0;
-            while i < 8 {
+            for i in 0i32..8 {
                 crate::update_place! { previous fresh26 = ep => ep.offset(1); }
                 Dsp_Write(p, (FIR0 as i32 + i * 16) as u8, *fresh26 as u8);
-                i += 1;
             }
         }
         248 => {
@@ -1097,12 +1093,10 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                         as *mut u16) as i32;
                     (*p).music_ptr_toplevel = ((*p).music_ptr_toplevel as i32 + 2) as u16;
                     if t >> 8 != 0 {
-                        let mut i: i32 = 0;
-                        while i < 8 {
+                        for i in 0i32..8 {
                             (*p).channel[i as usize].pattern_order_ptr_for_chan =
                                 *((&raw mut (*p).ram as *mut u8).offset(t as isize) as *mut u16);
                             t += 2;
-                            i += 1;
                         }
                         c = &raw mut (*p).channel as *mut Channel;
                         (*p).cur_chan_bit = 1;
@@ -1402,10 +1396,8 @@ unsafe fn Vector_Reset_Spc(p: *mut SpcPlayer) {
         0x7f as size_t,
     );
     SpcPlayer_CopyVariablesFromRam(p);
-    let mut i: i32 = 0;
-    while i < 8 {
+    for i in 0i32..8 {
         (*p).channel[i as usize].index = i as u8;
-        i += 1;
     }
     SetupEchoParameter_EDL(p, 1);
     (*p).reg_FLG = ((*p).reg_FLG | 0x20);
@@ -1771,10 +1763,8 @@ pub unsafe fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer) {
         );
         m_0 = m_0.offset(1);
     }
-    let mut i_0: i32 = 0;
-    while i_0 < 8 {
+    for i_0 in 0i32..8 {
         (*p).channel[i_0 as usize].index = i_0 as u8;
-        i_0 += 1;
     }
 }
 pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {

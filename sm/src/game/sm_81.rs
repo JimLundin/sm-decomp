@@ -178,8 +178,7 @@ pub unsafe fn LoadFromSram(a: u16, game: &mut Game) -> u8 {
 }
 pub unsafe fn UnpackMapFromSave(game: &mut Game) {
     word_transfers!(game, descending, 897; le(explored_map_tiles_saved, 896) <- value(0));
-    let mut i_0: i32 = 0;
-    while i_0 < 6 {
+    for i_0 in 0i32..6 {
         let mut n: i32 = byte!(@pointer rom_ptr!(game; 0x818131); i_0 as isize) as i32;
         let mut r0 = RomPtr_81(
             crate::rtl::rom_table_word!(game, 0x8182d6, i_0 as isize),
@@ -197,12 +196,10 @@ pub unsafe fn UnpackMapFromSave(game: &mut Game) {
                 break;
             }
         }
-        i_0 += 1;
     }
 }
 pub unsafe fn PackMapToSave(game: &mut Game) {
-    let mut i: i32 = 0;
-    while i < 6 {
+    for i in 0i32..6 {
         let mut n: i32 = byte!(@pointer rom_ptr!(game; 0x818131); i as isize) as i32;
         let mut r0 = RomPtr_81(
             crate::rtl::rom_table_word!(game, 0x8182d6, i as isize),
@@ -220,7 +217,6 @@ pub unsafe fn PackMapToSave(game: &mut Game) {
                 break;
             }
         }
-        i += 1;
     }
 }
 #[derive(Clone, Copy)]
@@ -1953,8 +1949,7 @@ pub unsafe fn DrawAreaSelectMapLabels(game: &mut Game) {
         r3,
         game,
     );
-    let mut i: i32 = 0;
-    while i < 6 {
+    for i in 0i32..6 {
         r3 = (if i == word!(game.file_select_map_area_index) as i32 {
             0
         } else {
@@ -1994,7 +1989,6 @@ pub unsafe fn DrawAreaSelectMapLabels(game: &mut Game) {
             );
             break;
         }
-        i += 1;
     }
 }
 static kRoomSelectMapExpandingSquareTimers: [u16; 6] = [0x33, 0x35, 0x2d, 0x33, 0x33, 0x22];

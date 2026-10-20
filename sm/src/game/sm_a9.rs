@@ -322,14 +322,8 @@ pub unsafe fn MotherBrainsBody_Init(game: &mut Game) {
     (*E1).var_A = ((0xa987d0i32) as u16);
     (*E).var_A = ((0xa987e1i32) as u16);
     LoadFxEntry(1, game);
-    let mut v3: u16 = 0;
-    loop {
-        let mut v4: u16 = v3;
+    for v3 in 0u16..12 {
         SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainRoomTurrets as u16, v3, game);
-        v3 = (v4).wrapping_add(1);
-        if ((v4).wrapping_add(1) >= 0xc) {
-            break;
-        }
     }
 }
 pub unsafe fn MotherBrainsBrain_Init(game: &mut Game) {
@@ -428,15 +422,10 @@ pub unsafe fn MotherBrainBody_FakeDeath_Descent_6(game: &mut Game) {
     MotherBrain_HandleFakeDeathExplosions(game);
 }
 pub unsafe fn MotherBrainBody_0_Wait(game: &mut Game) {
-    let mut v0: u16 = 0;
     let mut v1: i16 = 0;
-    loop {
+    for v0 in (0u16..36).step_by(2) {
         if *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(v0 as i32 as isize) as *mut u16) == 0 {
             v1 += 1;
-        }
-        v0 = (v0).wrapping_add(2);
-        if (((v0) as i16).wrapping_sub(36) >= 0) {
-            break;
         }
     }
     if (v1).wrapping_sub(4) >= 0 {
@@ -1418,14 +1407,8 @@ pub unsafe fn MotherBrain_Phase3_Death_21_KeepEarthquakeGoing(game: &mut Game) {
     }
 }
 pub unsafe fn MotherBrain_ExplodeEscapeDoor(game: &mut Game) {
-    let mut v0: u16 = 0;
-    loop {
-        let mut v1: u16 = v0;
+    for v0 in 0u16..8 {
         SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainExplodedEscapeDoor as u16, v0, game);
-        v0 = (v1).wrapping_add(1);
-        if ((v1).wrapping_add(1) >= 8) {
-            break;
-        }
     }
 }
 pub unsafe fn MotherBrain_SamusCollDetect(game: &mut Game) {
@@ -3278,14 +3261,12 @@ pub unsafe fn MotherBrain_Pal_ProcessInvincibility(game: &mut Game) {
     if (*Get_MotherBrain(0i32, game)).var_00 == 4 {
         let flash_timer: u16 = (*Get_MotherBrain(0x40i32, game)).base.flash_timer;
         if flash_timer as i32 >> 1 != 0 && flash_timer & 1 == 0 {
-            let mut i: i32 = 28;
-            while i >= 0 {
+            for i in (0i32..=28).rev().step_by(2) {
                 let v2: i32 = i >> 1;
                 let v3: u16 = word!(game.palette_buffer[(v2 + 129)]);
                 word!(game.palette_buffer[(v2 + 145)] = v3);
                 word!(game.palette_buffer[(v2 + 177)] = v3);
                 word!(game.palette_buffer[(v2 + 65)] = v3);
-                i -= 2;
             }
         }
     }

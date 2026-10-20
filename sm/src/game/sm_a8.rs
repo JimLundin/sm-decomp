@@ -748,14 +748,9 @@ pub unsafe fn WreckedShipGhost_Func_1(k: u16, game: &mut Game) {
         (*E).var_A = ((0xa89badi32) as u16);
         let v7: u16 = u16::swap_bytes((*E).base.palette_index);
         let mut v8: u16 = (16 * v7 as i32 + 256) as u16;
-        let mut v9: u16 = 0;
-        loop {
+        for v9 in (0u16..32).step_by(2) {
             word!(game.target_palettes[(v8 >> 1)] = kWreckedShipGhost_Palette[(v9 >> 1) as usize]);
             v8 = (v8).wrapping_add(2);
-            v9 = (v9).wrapping_add(2);
-            if (((v9) as i16).wrapping_sub(32) >= 0) {
-                break;
-            }
         }
     }
 }
@@ -2293,10 +2288,8 @@ pub unsafe fn MaridiaFloater_Main(game: &mut Game) {
     CallEnemyPreInstr((((*E).var_F) as u32) | (0xa80000u32), game);
 }
 pub unsafe fn MaridiaFloater_Func_1(k: u16, game: &mut Game) {
-    let mut i: i32 = 7;
-    while i >= 0 {
+    for i in (0i32..=7).rev() {
         SpawnEprojWithGfx(i as u16, k, addr_kEproj_MaridiaFloatersSpikes as u16, game);
-        i -= 1;
     }
 }
 pub unsafe fn MaridiaFloater_Func_2(k: u16, game: &mut Game) {

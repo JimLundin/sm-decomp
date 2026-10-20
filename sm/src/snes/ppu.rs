@@ -231,10 +231,8 @@ pub unsafe fn ppu_runLine(ppu: *mut Ppu, line: i32, game: &mut Game) {
             if (*ppu).mode as i32 == 7 {
                 ppu_calculateMode7Starts(ppu, line);
             }
-            let mut x: i32 = 0;
-            while x < 256 {
+            for x in 0i32..256 {
                 ppu_handlePixel(ppu, x, line);
-                x += 1;
             }
         }
     };
@@ -882,10 +880,8 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
     ClearBackdrop(&mut (*ppu).bgBuffers[0]);
     PpuDrawBackgrounds(ppu, y as i32, false_0 != 0);
     let mut math_enabled: u32 = 0;
-    let mut i: i32 = 0;
-    while i < 6 {
+    for i in 0i32..6 {
         math_enabled |= (((*ppu).mathEnabled[i as usize] as i32) << i) as u32;
-        i += 1;
     }
     let mut rendered_subscreen: bool = false_0 != 0;
     if (*ppu).preventMathMode as i32 != 3 && (*ppu).addSubscreen as i32 != 0 && math_enabled != 0 {

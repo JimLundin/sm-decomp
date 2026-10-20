@@ -713,9 +713,8 @@ unsafe fn VerifySnapshotsEq(
             b"@%d: VRAM compare failed (mine != theirs, prev):\n\0" as *const u8 as *const c_char,
             game.snes_frame_counter,
         );
-        let mut i_1: size_t = 0 as size_t;
         let mut j_1: size_t = 0 as size_t;
-        while i_1 < 0x8000 as size_t {
+        for i_1 in 0usize..32768 {
             if (*a).vram[i_1 as usize] as i32 != (*b).vram[i_1 as usize] as i32 {
                 fprintf(
                     stderr,
@@ -731,7 +730,6 @@ unsafe fn VerifySnapshotsEq(
                     break;
                 }
             }
-            i_1 = i_1.wrapping_add(1);
         }
     }
     if (*b).oam != (*a).oam || (*b).high_oam != (*a).high_oam {

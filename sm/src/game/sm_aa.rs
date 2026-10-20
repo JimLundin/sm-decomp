@@ -1310,14 +1310,12 @@ pub unsafe fn Shaktool_DD25(mut k: u16, game: &mut Game) {
             ((v7) as u16).wrapping_add(0x4000)
         };
         Shaktool_DB27(k, v8, game);
-        let mut i: i32 = 12;
-        while i >= 0 {
+        for i in (0i32..=12).rev().step_by(2) {
             Shaktool_DC07(k, game);
             let EK = Get_Shaktool(k as i32, game);
             (*EK).var_F = ((0xaadcaai32) as u16);
             enemy_instruction! {[(*EK).base]; instruction = crate::rtl::rom_table_word!(game, 0xaadf13, (i >> 1) as isize), timer = 1}
             k = (k).wrapping_sub(64);
-            i -= 2;
         }
     } else {
         (*E).base.x_pos = v11;

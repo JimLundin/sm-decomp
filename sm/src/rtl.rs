@@ -275,12 +275,10 @@ pub unsafe fn StateRecorder_Record(sr: *mut StateRecorder, inputs: u16) {
     let diff: u16 = (inputs ^ (*sr).last_inputs);
     if diff as i32 != 0 {
         (*sr).last_inputs = inputs;
-        let mut i: i32 = 0;
-        while i < 12 {
+        for i in 0i32..12 {
             if diff as i32 >> i & 1 != 0 {
                 StateRecorder_RecordCmd(sr, (i << 4) as u8);
             }
-            i += 1;
         }
     }
     (*sr).frames_since_last = (*sr).frames_since_last.wrapping_add(1);
@@ -607,12 +605,10 @@ pub unsafe fn StateRecorder_ClearKeyLog(sr: *mut StateRecorder, game: &mut Game)
     );
     (*sr).frames_since_last = 0;
     if (*sr).last_inputs != 0 {
-        let mut i: i32 = 0;
-        while i < 12 {
+        for i in 0i32..12 {
             if (*sr).last_inputs as i32 >> i & 1 != 0 {
                 StateRecorder_RecordCmd(sr, (i << 4) as u8);
             }
-            i += 1;
         }
     }
     if (*sr).replay_mode {
@@ -1051,12 +1047,10 @@ pub unsafe fn RtlPushApuState(game: &mut Game) {
             let w1 = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
                 (game.g_apu_write_ent_pos as i32 & kApuMaxQueueSize as i32 - 1i32) as isize,
             );
-            let mut i: i32 = 0;
-            while i < 4 {
+            for i in 0i32..4 {
                 if (*w1).ports[i as usize] as i32 == 255 {
                     (*w1).ports[i as usize] = (*w0).ports[i as usize];
                 }
-                i += 1;
             }
         } else {
             game.g_apu_queue_size = game.g_apu_queue_size.wrapping_add(1);
@@ -1087,12 +1081,10 @@ unsafe fn RtlPopApuState_Locked(game: &mut Game) {
             (game.g_apu_write_ent_pos as i32 - fresh1 as i32 & kApuMaxQueueSize as i32 - 1i32)
                 as isize,
         );
-        let mut i: i32 = 0;
-        while i != 4 {
+        for i in 0i32..4 {
             if (*w).ports[i as usize] as i32 != 255 {
                 *input_ports.offset(i as isize) = (*w).ports[i as usize];
             }
-            i += 1;
         }
     }
 }
@@ -1158,12 +1150,10 @@ unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands
             let we = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
                 (game.g_apu_write_ent_pos as i32 - i & kApuMaxQueueSize as i32 - 1i32) as isize,
             );
-            let mut j: i32 = 0;
-            while j < 4 {
+            for j in 0i32..4 {
                 if (*we).ports[j as usize] as i32 != 255 {
                     (*spc_player).input_ports[j as usize] = (*we).ports[j as usize];
                 }
-                j += 1;
             }
             i -= 1;
         }

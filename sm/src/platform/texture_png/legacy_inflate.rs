@@ -94,16 +94,13 @@ unsafe fn stbi__zbuild_huffman(z: *mut stbi__zhuffman, sizelist: *const stbi_uc,
         i += 1;
     }
     sizes[0i32 as usize] = 0;
-    i = 1;
-    while i < 16 {
+    for i in 1i32..16 {
         if sizes[i as usize] > (1i32) << i {
             return 0;
         }
-        i += 1;
     }
     let mut code: i32 = 0;
-    i = 1;
-    while i < 16 {
+    for i in 1i32..16 {
         next_code[i as usize] = code;
         (*z).firstcode[i as usize] = code as stbi__uint16;
         (*z).firstsymbol[i as usize] = k as stbi__uint16;
@@ -114,7 +111,6 @@ unsafe fn stbi__zbuild_huffman(z: *mut stbi__zhuffman, sizelist: *const stbi_uc,
         (*z).maxcode[i as usize] = code << 16 - i;
         code <<= 1;
         k += sizes[i as usize];
-        i += 1;
     }
     (*z).maxcode[16i32 as usize] = 0x10000;
     i = 0;

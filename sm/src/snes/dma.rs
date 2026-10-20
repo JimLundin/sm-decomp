@@ -197,8 +197,7 @@ unsafe fn hdma_load_indirect_address(dma: *mut Dma, channel: usize, game: &mut G
 pub unsafe fn dma_initHdma(dma: *mut Dma, game: &mut Game) {
     (*dma).hdmaTimer = 0;
     let mut hdmaHappened: bool = false_0 != 0;
-    let mut i: i32 = 0;
-    while i < 8 {
+    for i in 0i32..8 {
         let mut keep_channel_active: bool = if (*dma).channel[i as usize].hdmaActive {
             hdmaHappened = true_0 != 0;
             (*dma).channel[i as usize].dmaActive = false_0 != 0;
@@ -223,7 +222,6 @@ pub unsafe fn dma_initHdma(dma: *mut Dma, game: &mut Game) {
         if keep_channel_active {
             (*dma).channel[i as usize].terminated = false_0 != 0;
         }
-        i += 1;
     }
     if hdmaHappened {
         (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 16) as u16;

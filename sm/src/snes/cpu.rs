@@ -786,13 +786,11 @@ unsafe fn test_and_update_bits(cpu: *mut Cpu, low: u32, high: u32, set: bool, ga
 }
 
 pub unsafe fn DumpCpuHistory(game: &mut Game) {
-    let mut i: i32 = 0;
-    while i < 8 {
+    for i in 0i32..8 {
         printf(
             b"PC history: 0x%x\n\0" as *const u8 as *const c_char,
             game.pc_hist[(game.pc_hist_ctr.wrapping_add(i as u32) & 7_) as usize],
         );
-        i += 1;
     }
 }
 fn shift_accumulator_left(rotate: bool, cpu: &mut Cpu) {

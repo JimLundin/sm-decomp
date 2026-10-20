@@ -742,8 +742,7 @@ pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
         }
         return;
     }
-    let mut i: i32 = 2;
-    while i >= 0 {
+    for i in (0i32..=2).rev().step_by(2) {
         let v1: i32 = i >> 1;
         if (word!(game.speed_echo_xpos[v1]) != 0) {
             let v2: u16 = word!(game.speed_echo_ypos[v1]);
@@ -779,7 +778,6 @@ pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
                 Samus_DrawEcho(i as u16, game);
             }
         }
-        i -= 2;
     }
     if word!(game.speed_echo_xpos[1]) == 0 && word!(game.speed_echo_xpos[0]) == 0 {
         word!(game.speed_echoes_index = 0);
@@ -930,8 +928,7 @@ static kAtmosphericTypeFuncs: [Option<FuncXY_V>; 8] = callback_table! { unsafe F
     AtmosphericTypeFunc_5_Bubbles, AtmosphericTypeFunc_67_Dust, AtmosphericTypeFunc_67_Dust,
 };
 pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
-    let mut i: i32 = 6;
-    while i >= 0 {
+    for i in (0i32..=6).rev().step_by(2) {
         let v1: i32 = i >> 1;
         let mut v2: u16 = word!(game.atmospheric_gfx_frame_and_type[v1]);
         if (v2 != 0) {
@@ -983,7 +980,6 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
                 );
             }
         }
-        i -= 2;
     }
 }
 pub unsafe fn AtmosphericTypeFunc_1_FootstepSplash(k: u16, j: u16, game: &mut Game) {
@@ -2753,9 +2749,8 @@ pub unsafe fn UpdateMinimapInside(
     ) as *const u16;
     let r3 = r0.offset(32);
     let r6 = r0.offset(64);
-    let mut n: i32 = 5;
     let mut v3: u16 = 0;
-    loop {
+    for n in (1i32..=5).rev() {
         let mut v4: bool = r38 as i32 >> 15 != 0;
         r38 = (r38).wrapping_mul(2);
         if !v4 || {
@@ -2806,10 +2801,6 @@ pub unsafe fn UpdateMinimapInside(
         v2 = (v2).wrapping_add(2);
         if (v2 & 0x3f) == 0 {
             v2 = (v2).wrapping_add(1984);
-        }
-        n -= 1;
-        if (n == 0) {
-            break;
         }
     }
     if (*ram_ptr!(game; 0x5b5) & 8) == 0 {
@@ -2866,30 +2857,20 @@ pub unsafe fn WriteBeamPalette_A(a: u16, game: &mut Game) {
 }
 pub unsafe fn WriteBeamPalette_Y(j: u16, game: &mut Game) {
     let r0: u16 = crate::rtl::rom_table_word!(game, 0x90c3c9, (j >> 1) as isize);
-    let mut v1: u16 = 0;
     let mut v2: u16 = 0;
-    loop {
+    for v1 in (0u16..32).step_by(2) {
         *(ram_ptr!(game, u16; 0xc000)).offset(((v2 as i32 >> 1) + 224) as isize) =
             *(RomPtr_90((r0).wrapping_add(v1), game) as *mut u16);
         v2 = (v2).wrapping_add(2);
-        v1 = (v1).wrapping_add(2);
-        if (((v1) as i16).wrapping_sub(32) >= 0) {
-            break;
-        }
     }
 }
 pub unsafe fn LoadProjectilePalette(a: u16, game: &mut Game) {
     let r0: u16 = crate::rtl::rom_table_word!(game, 0x90c3c9, (a as i32 & 0xfff) as isize);
-    let mut v1: u16 = 0;
     let mut v2: u16 = 0;
-    loop {
+    for v1 in (0u16..32).step_by(2) {
         *(ram_ptr!(game, u16; 0xc000)).offset(((v2 as i32 >> 1) + 224) as isize) =
             *(RomPtr_90((r0).wrapping_add(v1), game) as *mut u16);
         v2 = (v2).wrapping_add(2);
-        v1 = (v1).wrapping_add(2);
-        if (((v1) as i16).wrapping_sub(32) >= 0) {
-            break;
-        }
     }
 }
 pub unsafe fn ResetProjectileData(game: &mut Game) {
@@ -4027,8 +4008,7 @@ pub fn FireSba_ClearCarry(game: &mut Game) -> u8 {
 pub unsafe fn FireSba_FireWave(game: &mut Game) -> u8 {
     static kFireSba_FireWave_X: [i16; 4] = [128, 128, -128, -128];
     static kFireSba_FireWave_Y: [i16; 4] = [128, -128, -128, 128];
-    let mut i: i32 = 6;
-    while i >= 0 {
+    for i in (0i32..=6).rev().step_by(2) {
         let v1: i32 = i >> 1;
         word!(game.projectile_timers[v1] = 4);
         word!(game.projectile_type[v1] = (word!(game.equipped_beams) & 0x100f | 0x8010));
@@ -4046,7 +4026,6 @@ pub unsafe fn FireSba_FireWave(game: &mut Game) -> u8 {
                 ((kFireSba_FireWave_Y[v1 as usize]) as u16).wrapping_add(word!(game.samus_y_pos));
         }
         InitializeSbaProjectile(i as u16, game);
-        i -= 2;
     }
     word!(game.projectile_counter = 4);
     word!(
@@ -4066,8 +4045,7 @@ pub unsafe fn FireSba_FireIce(game: &mut Game) -> u8 {
     {
         return 0;
     }
-    let mut i: i32 = 6;
-    while i >= 0 {
+    for i in (0i32..=6).rev().step_by(2) {
         let v2: i32 = i >> 1;
         word!(game.projectile_timers[v2] = 4);
         word!(game.projectile_type[v2] = (word!(game.equipped_beams) & 0x100f | 0x8010));
@@ -4076,7 +4054,6 @@ pub unsafe fn FireSba_FireIce(game: &mut Game) -> u8 {
         word!(game.projectile_variables[v2] = kIcePlasmaSbaProjectileOriginAngles[v2 as usize]);
         word!(game.projectile_bomb_y_speed[v2] = 600);
         InitializeProjectile(i as u16, game);
-        i -= 2;
     }
     word!(game.projectile_counter = 4);
     word!(
@@ -4095,8 +4072,7 @@ pub unsafe fn FireSba_FireIce(game: &mut Game) -> u8 {
 pub unsafe fn FireSba_FireSpazer(game: &mut Game) -> u8 {
     static kFireSpazer_Timer: [i16; 4] = [0, 0, 4, 4];
     static kFireSpazer_Yspeed: [i16; 4] = [4, -4, 4, -4];
-    let mut i: i32 = 6;
-    while i >= 0 {
+    for i in (0i32..=6).rev().step_by(2) {
         let v1: i32 = i >> 1;
         word!(game.projectile_timers[v1] = kFireSpazer_Timer[v1 as usize] as u16);
         word!(game.projectile_dir[v1] = 5);
@@ -4114,7 +4090,6 @@ pub unsafe fn FireSba_FireSpazer(game: &mut Game) -> u8 {
             word!(game.projectile_type[(i >> 1)] = (word!(game.equipped_beams) & 0x100f | 0x8010));
             InitializeSbaProjectile(i as u16, game);
         }
-        i -= 2;
     }
     word!(game.projectile_counter = 4);
     word!(
@@ -4132,8 +4107,7 @@ pub unsafe fn FireSba_FirePlasma(game: &mut Game) -> u8 {
     if word!(game.projectile_bomb_pre_instructions[0]) as i32 == 0x90d793 & 0xffff {
         return 0;
     }
-    let mut i: i32 = 6;
-    while i >= 0 {
+    for i in (0i32..=6).rev().step_by(2) {
         let v2: i32 = i >> 1;
         word!(game.projectile_type[v2] = (word!(game.equipped_beams) & 0x100f | 0x8010));
         word!(game.projectile_dir[v2] = 0);
@@ -4142,7 +4116,6 @@ pub unsafe fn FireSba_FirePlasma(game: &mut Game) -> u8 {
         word!(game.projectile_bomb_x_speed[v2] = 40);
         word!(game.projectile_bomb_y_speed[v2] = 0);
         InitializeSbaProjectile(i as u16, game);
-        i -= 2;
     }
     word!(game.projectile_counter = 4);
     word!(
@@ -4444,8 +4417,7 @@ pub unsafe fn Samus_MoveHandler_ShinesparkCrash(game: &mut Game) {
     word!(game.samus_shine_timer = 15);
     kSamus_MoveHandler_ShinesparkCrash[byte!(@pointer ram_ptr!(game, u16; 0xaae); 1isize) as usize]
         .expect("non-null function pointer")(game);
-    let mut i: i32 = 2;
-    while i >= 0 {
+    for i in (0i32..=2).rev().step_by(2) {
         let v1: i32 = i >> 1;
         let pt: Point16U = Projectile_SinLookup(
             word!(game.speed_echo_xspeed[v1]),
@@ -4453,7 +4425,6 @@ pub unsafe fn Samus_MoveHandler_ShinesparkCrash(game: &mut Game) {
         );
         word!(game.speed_echo_xpos[v1] = (pt.x).wrapping_add(word!(game.samus_x_pos)));
         word!(game.speed_echo_ypos[v1] = (pt.y).wrapping_add(word!(game.samus_y_pos)));
-        i -= 2;
     }
 }
 pub unsafe fn Samus_MoveHandler_ShinesparkCrash_0(game: &mut Game) {
@@ -4922,8 +4893,7 @@ pub unsafe fn ProjPreInstr_WaveSba(mut k: u16, game: &mut Game) {
 }
 pub unsafe fn BombSpread(game: &mut Game) {
     if word!(game.bomb_functions[0]) as i32 != 0x90d8f7 & 0xffff {
-        let mut v0: u16 = 10;
-        loop {
+        for v0 in (10u16..20).step_by(2) {
             let v1: i32 = v0 as i32 >> 1;
             word!(game.projectile_type[v1] = -31488i32 as u16);
             word!(game.projectile_dir[v1] = 0);
@@ -4942,10 +4912,6 @@ pub unsafe fn BombSpread(game: &mut Game) {
             word!(game.projectile_bomb_y_speed[v1] = v3);
             word!(game.projectile_unk_A[v1] = v3);
             word!(game.projectile_variables[v1] = kBombSpread_Tab0[v2 as usize]);
-            v0 = (v0).wrapping_add(2);
-            if (((v0) as i16).wrapping_sub(20) >= 0) {
-                break;
-            }
         }
         word!(game.bomb_counter = 5);
         word!(
@@ -6138,10 +6104,8 @@ pub unsafe fn sub_90EB86(game: &mut Game) {
 }
 pub unsafe fn Samus_DrawHandler_EndOfShinespark(game: &mut Game) {
     Samus_Draw(game);
-    let mut i: i32 = 2;
-    while i >= 0 {
+    for i in (0i32..=2).rev().step_by(2) {
         Samus_DrawShinesparkCrashEchoes(i as u16, game);
-        i -= 2;
     }
 }
 pub unsafe fn SamusDisplayHandler_UsingElevator(game: &mut Game) {

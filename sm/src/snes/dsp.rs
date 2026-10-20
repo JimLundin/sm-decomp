@@ -65,8 +65,7 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
         size_of::<[u8; 128]>() as size_t,
     );
     (*dsp).ram[0x7ci32 as usize] = 0xff;
-    let mut i: i32 = 0;
-    while i < 8 {
+    for i in 0i32..8 {
         set_fields! {[(*dsp).channel[i as usize]], 0; pitch, pitchCounter}
         (*dsp).channel[i as usize].pitchModulation = false_0 != 0;
         memset(
@@ -98,7 +97,6 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
         (*dsp).channel[i as usize].sampleOut = 0;
         set_fields! {[(*dsp).channel[i as usize]], 0; volumeL, volumeR}
         (*dsp).channel[i as usize].echoEnable = false_0 != 0;
-        i += 1;
     }
     (*dsp).dirPage = 0;
     (*dsp).evenCycle = false_0 != 0;
@@ -151,8 +149,7 @@ pub unsafe fn dsp_saveload(
 pub unsafe fn dsp_cycle(dsp: *mut Dsp) {
     let mut totalL: i32 = 0;
     let mut totalR: i32 = 0;
-    let mut i: i32 = 0;
-    while i < 8 {
+    for i in 0i32..8 {
         dsp_cycleChannel(dsp, i);
         totalL += (*dsp).channel[i as usize].sampleOut as i32
             * (*dsp).channel[i as usize].volumeL as i32
@@ -162,7 +159,6 @@ pub unsafe fn dsp_cycle(dsp: *mut Dsp) {
             >> 6;
         totalL = saturate_sample(totalL);
         totalR = saturate_sample(totalR);
-        i += 1;
     }
     totalL = totalL * (*dsp).masterVolumeL as i32 >> 7;
     totalR = totalR * (*dsp).masterVolumeR as i32 >> 7;
@@ -197,8 +193,7 @@ unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
         ((*dsp).firBufferR[(*dsp).firBufferIndex as usize] >> 1);
     let mut sumL: i32 = 0;
     let mut sumR: i32 = 0;
-    let mut i: i32 = 0;
-    while i < 8 {
+    for i in 0i32..8 {
         sumL += (*dsp).firBufferL[((*dsp).firBufferIndex as i32 + i + 1 & 0x7) as usize] as i32
             * (*dsp).firValues[i as usize] as i32
             >> 6;
@@ -209,7 +204,6 @@ unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
             sumL = (sumL & 0xffff) as i16 as i32;
             sumR = (sumR & 0xffff) as i16 as i32;
         }
-        i += 1;
     }
     sumL = saturate_sample(sumL);
     sumR = saturate_sample(sumR);
@@ -219,8 +213,7 @@ unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
     *outputR = saturate_sample(outR);
     let mut inL: i32 = 0;
     let mut inR: i32 = 0;
-    let mut i_0: i32 = 0;
-    while i_0 < 8 {
+    for i_0 in 0i32..8 {
         if (*dsp).channel[i_0 as usize].echoEnable {
             inL += (*dsp).channel[i_0 as usize].sampleOut as i32
                 * (*dsp).channel[i_0 as usize].volumeL as i32
@@ -231,7 +224,6 @@ unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
             inL = saturate_sample(inL);
             inR = saturate_sample(inR);
         }
-        i_0 += 1;
     }
     inL += sumL * (*dsp).feedbackVolume as i32 >> 7;
     inR += sumR * (*dsp).feedbackVolume as i32 >> 7;
@@ -433,8 +425,7 @@ unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
     let mut curByte: u8 = 0;
     let mut old: i32 = (*dsp).channel[ch as usize].old as i32;
     let mut older: i32 = (*dsp).channel[ch as usize].older as i32;
-    let mut i: i32 = 0;
-    while i < 16 {
+    for i in 0i32..16 {
         let mut s: i32 = if i & 1 != 0 {
             curByte as i32 & 0xf
         } else {
@@ -461,7 +452,6 @@ unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
         older = old;
         old = s;
         (*dsp).channel[ch as usize].decodeBuffer[(i + 3) as usize] = s as i16;
-        i += 1;
     }
     (*dsp).channel[ch as usize].older = older as i16;
     (*dsp).channel[ch as usize].old = old as i16;
@@ -523,8 +513,7 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
         44 => (*dsp).echoVolumeL = val as i8,
         60 => (*dsp).echoVolumeR = val as i8,
         76 => {
-            let mut ch_0: i32 = 0;
-            while ch_0 < 8 {
+            for ch_0 in 0i32..8 {
                 (*dsp).channel[ch_0 as usize].keyOn = val as i32 & (1i32) << ch_0 != 0;
                 if (*dsp).channel[ch_0 as usize].keyOn {
                     (*dsp).channel[ch_0 as usize].keyOn = false_0 != 0;
@@ -556,17 +545,14 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
                             0
                         }) as u8;
                 }
-                ch_0 += 1;
             }
         }
         92 => {
-            let mut ch_1: i32 = 0;
-            while ch_1 < 8 {
+            for ch_1 in 0i32..8 {
                 (*dsp).channel[ch_1 as usize].keyOff = val as i32 & (1i32) << ch_1 != 0;
                 if (*dsp).channel[ch_1 as usize].keyOff {
                     (*dsp).channel[ch_1 as usize].adsrState = 4;
                 }
-                ch_1 += 1;
             }
         }
         108 => {
@@ -578,24 +564,18 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
         124 => val = 0,
         13 => (*dsp).feedbackVolume = val as i8,
         45 => {
-            let mut i: i32 = 0;
-            while i < 8 {
+            for i in 0i32..8 {
                 (*dsp).channel[i as usize].pitchModulation = val as i32 & (1i32) << i != 0;
-                i += 1;
             }
         }
         61 => {
-            let mut i_0: i32 = 0;
-            while i_0 < 8 {
+            for i_0 in 0i32..8 {
                 (*dsp).channel[i_0 as usize].useNoise = val as i32 & (1i32) << i_0 != 0;
-                i_0 += 1;
             }
         }
         77 => {
-            let mut i_1: i32 = 0;
-            while i_1 < 8 {
+            for i_1 in 0i32..8 {
                 (*dsp).channel[i_1 as usize].echoEnable = val as i32 & (1i32) << i_1 != 0;
-                i_1 += 1;
             }
         }
         93 => (*dsp).dirPage = ((val as i32) << 8) as u16,

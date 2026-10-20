@@ -1421,16 +1421,11 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
     m = 16;
     loop {
         Xray_SetupStage4_Func2(r22, r34, game);
-        let mut n_0: i32 = 16;
         let mut r36: u16 = r34;
-        loop {
+        for n_0 in (1i32..=16).rev() {
             Xray_SetupStage4_Func3(n_0 as u16, r22, r36, game);
             r22 = (r22).wrapping_add(4);
             r36 = (r36).wrapping_add(1);
-            n_0 -= 1;
-            if (n_0 == 0) {
-                break;
-            }
         }
         crate::update_place! { previous v12: u16 = r22 => (r22).wrapping_add(1984); }
         Xray_SetupStage4_Func3(0, r22, r36, game);

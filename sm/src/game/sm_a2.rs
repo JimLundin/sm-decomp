@@ -2416,8 +2416,7 @@ pub unsafe fn Rinka_1(k: u16, game: &mut Game) {
         v2 = Rinka_2(k, game);
         (*gRam8000_Default(v2 as i32, game).offset(31)).var_3F & 1 != 0
     } {
-        let mut v3: u16 = 0;
-        loop {
+        for v3 in (0u16..66).step_by(6) {
             let v4: i32 = v3 as i32 >> 1;
             let x: u16 = crate::rtl::rom_table_word!(game, 0xa2b75b, v4 as isize);
             let y: u16 = crate::rtl::rom_table_word!(game, 0xa2b75b, (v4 + 1) as isize);
@@ -2441,10 +2440,6 @@ pub unsafe fn Rinka_1(k: u16, game: &mut Game) {
                 (*gRam8000_Default(v9 as i32, game).offset(31)).var_3F = -1i32 as u16;
                 (*E).var_D = v9;
                 return;
-            }
-            v3 = (v3).wrapping_add(6);
-            if (((v3) as i16).wrapping_sub(66) >= 0) {
-                break;
             }
         }
         let mut v10: u16 = 0;

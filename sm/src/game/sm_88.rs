@@ -350,8 +350,7 @@ pub unsafe fn InitializeSpecialEffectsForNewRoom(game: &mut Game) {
         word!(game.earthquake_sfx_timer = -1i32 as u16);
     }
     word!(game.debug_disable_minimap = 0);
-    let mut i: i32 = 32;
-    while i != 0x80 {
+    for i in (32i32..128).step_by(16) {
         crate::rtl::register_writes! { game;
             byte((i + 17152) as SnesRegs as u16, 0); byte((i + 17153) as SnesRegs as u16, 0x13);
             byte((i + 17154) as SnesRegs as u16, 0); byte((i + 17155) as SnesRegs as u16, 0);
@@ -359,7 +358,6 @@ pub unsafe fn InitializeSpecialEffectsForNewRoom(game: &mut Game) {
             byte((i + 17158) as SnesRegs as u16, 0); byte((i + 17160) as SnesRegs as u16, 0);
             byte((i + 17161) as SnesRegs as u16, 0);
         }
-        i += 16;
     }
     word!(game.fx_y_subpos = 0);
     word!(game.fx_y_pos = -1i32 as u16);
@@ -1088,14 +1086,12 @@ pub unsafe fn HdmaobjPreInstr_BG3Xscroll(k: u16, game: &mut Game) {
             );
         }
         let mut v5: u16 = word!(game.hdma_object_A[v3]);
-        let mut i: i32 = 30;
-        while i >= 0 {
+        for i in (0i32..=30).rev().step_by(2) {
             word!(
                 game.g_word_7E9E80[(v5 >> 1)] = ((g_word_88C46E[(i >> 1) as usize]) as u16)
                     .wrapping_add(word!(game.reg_BG1HOFS))
             );
             v5 = (v5 as i32 - 2i32 & 0x1f) as u16;
-            i -= 2;
         }
     }
     *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_0 as *mut u16) = 0;
@@ -1200,8 +1196,7 @@ pub unsafe fn DamageSamusInTopRow(game: &mut Game) {
 pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(k: u16, game: &mut Game) {
     let mut r24: u16 = 0;
     *ram_ptr!(game; 0x59) = 74;
-    let mut v1: u16 = 0;
-    loop {
+    for v1 in 0u16..23 {
         let v3: *mut u16 = ram_ptr!(game, u16; (*(rom_ptr!(game, HdmaScrollEntry; 0x88aec1))
                 .offset(v1 as isize))
             .hdma_data_table_entry as isize,);
@@ -1213,19 +1208,14 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(k: u16, game: &mut Game) {
                 (*(rom_ptr!(game, HdmaScrollEntry; 0x88aec1)).offset(v1 as isize)).scroll_subspeed
             )),
         );
-        v1 = v1.wrapping_add(1);
-        if (v1 as i32 * 8 - 184i32 & 0x8000 == 0) {
-            break;
-        }
     }
     word! { game, 0; scrolling_sky_bg2_hdma_data[44], scrolling_sky_bg2_hdma_data[45] }
     *(ram_ptr!(game, u16; 0x9f00)) = 31;
     *(ram_ptr!(game, u16; 0x9f00, 1)) = 1438;
     let mut r18: u16 = (word!(game.layer1_y_pos)).wrapping_add(32);
     let r20: u16 = (word!(game.layer1_y_pos)).wrapping_add(224);
-    let mut v5: u16 = 0;
     let mut v6: u16 = 3;
-    loop {
+    for v5 in 0u16..23 {
         while ((r18) as i16).wrapping_sub(
             ((*(rom_ptr!(game, HdmaScrollEntry; 0x88aec1)).offset(v5 as isize)).top_pos) as i16,
         ) >= 0
@@ -1259,10 +1249,6 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(k: u16, game: &mut Game) {
                 *(ram_ptr!(game, u16; 0x9f00, (v6 as i32 + 3) as isize)) = 0;
                 return;
             }
-        }
-        v5 = v5.wrapping_add(1);
-        if (v5 as i32 * 8 - 184i32 & 0x8000 == 0) {
-            break;
         }
     }
     let mut i: u16 = (1535u16).wrapping_sub(r18);
@@ -1718,12 +1704,10 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(k: u16, game: &mut Game) {
         word!(game.hdma_object_A[v5] = (word!(game.hdma_object_A[v5]) as i32 + 2 & 0x1e) as u16);
     }
     let mut v7: u8 = word!(game.hdma_object_A[v5]) as u8;
-    let mut i: i32 = 30;
-    while (i & 0x80) == 0 {
+    for i in (0i32..=30).rev().step_by(2) {
         *(ram_ptr!(game, u16; 0x9c00, (v7 as i32 + 4) as isize)) =
             ((g_word_88C46E[(i >> 1i32) as usize]) as u16).wrapping_add(r20);
         v7 = (v7 as i32 - 2i32 & 0x1e) as u8;
-        i -= 2;
     }
     if (word!(game.fx_liquid_options) & 1) != 0 {
         word!(game.hdma_object_C[(k >> 1)], wrapping_add(64));
@@ -2067,8 +2051,7 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(k: u16, game: &mut
         let v3: u8 = k as u8;
         let r20: u8 = byte!(@pointer ram_ptr!(game, u16; 0x1920); k as u8 as i32 as isize);
         let mut v1: i8 = byte!(@pointer ram_ptr!(game, u16; 0x1914); k as u8 as i32 as isize) as i8;
-        let mut i: i32 = 15;
-        while i >= 0 {
+        for i in (0i32..=15).rev() {
             let r18: u8 = v1 as u8;
             byte!(@pointer ram_ptr!(game, u16; 0x9d00); i as u8 as i32 as isize) =
                 (r20) | ((v1) as u8);
@@ -2076,7 +2059,6 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(k: u16, game: &mut
             if ((r18) as i8).wrapping_sub(1) < 0 {
                 v1 = 0;
             }
-            i -= 1;
         }
         word!(game.hdma_object_A[(v3 >> 1)], wrapping_add(1));
     };
@@ -2099,8 +2081,7 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(k: u16, game: &mu
         let v3: u8 = k as u8;
         let r20: u8 = byte!(@pointer ram_ptr!(game, u16; 0x1920); k as u8 as i32 as isize);
         let mut v1: i8 = byte!(@pointer ram_ptr!(game, u16; 0x1914); k as u8 as i32 as isize) as i8;
-        let mut i: i32 = 15;
-        while i >= 0 {
+        for i in (0i32..=15).rev() {
             let r18: u8 = v1 as u8;
             byte!(@pointer ram_ptr!(game, u16; 0x9d00); i as u8 as i32 as isize) =
                 (r20) | ((v1) as u8);
@@ -2108,7 +2089,6 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(k: u16, game: &mu
             if ((r18) as i8).wrapping_sub(1) < 0 {
                 v1 = 0;
             }
-            i -= 1;
         }
         word!(game.hdma_object_A[(v3 >> 1)], wrapping_sub(1));
     }
@@ -2226,10 +2206,8 @@ pub unsafe fn VariaSuitPickup_1(game: &mut Game) -> u8 {
         as u8)
         .wrapping_sub(byte!(@pointer ram_ptr!(game, u16; 0xddc); 1));
     crate::update_place! { reference fresh17 = *(ram_ptr!(game, u16; 0xdee) as *mut u8).offset(1) => (*fresh17).wrapping_add(*(ram_ptr!(game, u16; 0xddc) as *mut u8).offset(1)); }
-    let mut i: i32 = 510;
-    while i >= 0 {
+    for i in (0i32..=510).rev().step_by(2) {
         word!(game.hdma_table_1[(i >> 1)] = word!(game.suit_pickup_light_beam_pos));
-        i -= 2;
     }
     if word!(game.suit_pickup_light_beam_pos) as u8 as i32 - 97i32 & 0x8000 != 0 {
         word!(game.substate, wrapping_add(1));
@@ -2593,22 +2571,18 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
             }
         }
         if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 & 1) != 0 {
-            let mut i: i32 = 126;
-            while i >= 0 {
+            for i in (0i32..=126).rev().step_by(2) {
                 *((ram_ptr!(game, u16; 0x9180) as *mut u8).offset(i as isize) as *mut u16) =
                     (word!(game.reg_BG2HOFS) as i32 + word!(game.reg_BG2HOFS) as i32
                         - *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(i as isize) as *mut u16)
                             as i32) as u16;
-                i -= 2;
             }
         } else {
-            let mut j: u16 = 62;
-            while (j & 0x8000) == 0 {
+            for j in (0u16..=62).rev().step_by(2) {
                 *((ram_ptr!(game, u16; 0x9140) as *mut u8).offset(j as i32 as isize) as *mut u16) =
                     (word!(game.reg_BG2HOFS) as i32 + word!(game.reg_BG2HOFS) as i32
                         - *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(j as i32 as isize)
                             as *mut u16) as i32) as u16;
-                j = (j).wrapping_sub(2);
             }
         }
     } else {
@@ -2943,14 +2917,12 @@ pub unsafe fn HdmaobjPreInstr_ECB6(k: u16, game: &mut Game) {
                 break;
             }
         }
-        let mut i: i32 = 126;
-        while i >= 0 {
+        for i in (0i32..=126).rev().step_by(2) {
             word!(
                 game.hdma_table_1[((i >> 1) + 64)] =
                     (word!(game.reg_BG3HOFS) as i32 + word!(game.reg_BG3HOFS) as i32
                         - word!(game.hdma_table_1[(i >> 1)]) as i32) as u16
             );
-            i -= 2;
         }
     } else {
         let v2: i32 = word!(game.hdma_object_index) as i32 >> 1;

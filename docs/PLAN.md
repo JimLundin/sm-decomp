@@ -346,7 +346,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **8,801-line** gap; parked small drafts are not
+   replacement yet funds the **8,434-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -466,6 +466,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    additional unsafe functions are shared phase helpers. Ceres exercises every
    Power Bomb phase and cleanup; Crystal Flash has constructed SNES coverage.
 
+   Complete indexed-loop recovery removes **367 lines (108,800 -> 108,433)**
+   across 132 loops in 113 functions / 29 files, with no new helpers. Typed
+   ranges replace repeated counter setup, updates and termination tests.
+   Independent source/body correspondence and compiled control comparisons
+   match every visited index and normal termination, with unchanged early exits.
+   Formatting, release/source checks and full any%/Speed Booster replays pass.
+   Unvisited gameplay bodies rely on that static/control equivalence; the
+   movies do not establish execution of all 132 loops.
+
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
    globally and land coherent stages; do not force every individual call site
@@ -580,6 +589,24 @@ sm-eproj-init-study-c98e8439. A separate word-sign predicate census finds 1,512
 predicates on 1,655 occupied lines: only 143 continuation lines before any
 replacement costs. This does not justify another global arithmetic rewrite.
 
+Further complete-cohort representation prices close three new syntax studies:
+
+- Low-word arithmetic: 640 selected expressions grow **153 lines** with
+  ordinary generic helpers and **161** with expression macros. Both include
+  support/import costs. Reject without builds; conservative type/range
+  selection is not an independently verified semantic proof.
+- Exhaustive branch assignments: 254 roots / 573 stores grow **134 lines**;
+  the pure-store subset grows **82**. Independent recount agrees. Temporary
+  lifetime equivalence remains unproven; reject without builds.
+- Native-width comparison/bitmask expressions and redundant cast chains:
+  939 replacements save only **99 lines**. Park this uncompiled draft.
+
+These prices use ordinary formatting and no new expression DSL. Reports:
+TEMP sm-low-word-expressions-ddba5db2, sm-control-scaffold-price-20261020 and
+sm-context-casts-d914d9aa. A dynamic-bound/retained-counter range
+follow-up finds roughly 100 gross scaffold lines before replacement costs,
+not another multi-hundred-line candidate. TEMP sm-indexed-ranges-dynamic-preflight.
+
 When revisiting one of these exact families, consult its historical section
 with `git show ec45c573:docs/PLAN.md` and search the relevant heading/symbol.
 Temporary draft locations recorded there may no longer exist. Recheck current
@@ -636,7 +663,11 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: blast windows over ddba5db2 pass any% **129712/0** and
+Latest full integration: indexed loops over 58db72cb (same source as d914d9aa)
+pass any% **129712/0** and Speed Booster **148406/0**, with normal rendering,
+audio and comparisons. Independent checks cover all 132 control sequences
+and unchanged bodies; these are not claims of movie execution for every loop.
+Earlier blast windows over ddba5db2 pass any% **129712/0** and
 Speed Booster **148406/0**, with normal rendering, audio and comparisons.
 The focused Ceres run passes **42819/0**, exercising all 11 required Power Bomb
 phase/transition/cleanup probes plus 180 follow-up frames. All 15 component
@@ -723,10 +754,10 @@ committed baseline and budget.
 After the Japanese correction, local bindings, intro pages, enemy callback
 imports, ordered stores, PNG texture loading, beam firing, moving platforms,
 byte-partial-product sharing, INI decoding, countdown callbacks, projectile
-flight, callback entry captures, opcode grids and blast windows, maintained
-Rust is **108,800**, leaving **8,801** to reach 99,999. Counters:
+flight, callback entry captures, opcode grids, blast windows and indexed loops,
+maintained Rust is **108,433**, leaving **8,434** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 4433; cast lines 8089. The unrelated 83-line shader draft
+unsafe functions 4433; cast lines 8086. The unrelated 83-line shader draft
 remains excluded; working-tree counts are not the committed baseline.
 Item 2's function/compound-body variant audits are complete for their stated
 scope. The remaining gap has no established replacement budget. The hopping

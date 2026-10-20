@@ -73,10 +73,8 @@ pub unsafe fn snes_loadRom(
         0,
         size_of::<[CartHeader; 4]>() as size_t,
     );
-    let mut i: i32 = 0;
-    while i < 4 {
+    for i in 0i32..4 {
         headers[i as usize].score = -50i16;
-        i += 1;
     }
     if length >= 0x8000 {
         readHeader(data, length, 0x7fc0, (&raw mut headers as *mut CartHeader));
@@ -107,13 +105,11 @@ pub unsafe fn snes_loadRom(
     }
     let mut max: i32 = 0;
     let mut used: i32 = 0;
-    let mut i_0: i32 = 0;
-    while i_0 < 4 {
+    for i_0 in 0i32..4 {
         if headers[i_0 as usize].score as i32 > max {
             max = headers[i_0 as usize].score as i32;
             used = i_0;
         }
-        i_0 += 1;
     }
     if used & 1 != 0 {
         data = data.offset(0x200);
@@ -164,15 +160,13 @@ pub unsafe fn snes_loadRom(
     true_0 != 0
 }
 unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut CartHeader) {
-    let mut i: i32 = 0;
-    while i < 21 {
+    for i in 0i32..21 {
         let ch: u8 = *data.offset((location + i) as isize);
         if ch as i32 >= 0x20 && (ch as i32) < 0x7f {
             (*header).name[i as usize] = ch as c_char;
         } else {
             (*header).name[i as usize] = '.' as i32 as c_char;
         }
-        i += 1;
     }
     (*header).name[21i32 as usize] = 0 as c_char;
     (*header).speed = (*data.offset((location + 0x15) as isize) >> 4);
@@ -192,26 +186,22 @@ unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut C
     (*header).headerVersion = 1;
     if (*header).maker as i32 == 0x33 {
         (*header).headerVersion = 3;
-        let mut i_0: i32 = 0;
-        while i_0 < 2 {
+        for i_0 in 0i32..2 {
             let ch_0: u8 = *data.offset((location - 0x10i32 + i_0) as isize);
             if ch_0 as i32 >= 0x20 && (ch_0 as i32) < 0x7f {
                 (*header).makerCode[i_0 as usize] = ch_0 as c_char;
             } else {
                 (*header).makerCode[i_0 as usize] = '.' as i32 as c_char;
             }
-            i_0 += 1;
         }
         (*header).makerCode[2i32 as usize] = 0 as c_char;
-        let mut i_1: i32 = 0;
-        while i_1 < 4 {
+        for i_1 in 0i32..4 {
             let ch_1: u8 = *data.offset((location - 0xei32 + i_1) as isize);
             if ch_1 as i32 >= 0x20 && (ch_1 as i32) < 0x7f {
                 (*header).gameCode[i_1 as usize] = ch_1 as c_char;
             } else {
                 (*header).gameCode[i_1 as usize] = '.' as i32 as c_char;
             }
-            i_1 += 1;
         }
         (*header).gameCode[4i32 as usize] = 0 as c_char;
         (*header).flashSize =

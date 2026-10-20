@@ -405,15 +405,13 @@ pub unsafe fn RtlDrawPpuFrame(
     } else {
         &raw mut g_pixels as *mut u8
     };
-    let mut y: size_t = 0 as size_t;
-    while y < 240 as size_t {
+    for y in 0usize..240 {
         memcpy(
             (pixel_buffer).offset(y.wrapping_mul(pitch) as isize) as *mut c_void,
             ppu_pixels.offset(y.wrapping_mul(256 as size_t).wrapping_mul(4 as size_t) as isize)
                 as *const c_void,
             (256 * 4) as size_t,
         );
-        y = y.wrapping_add(1);
     }
 }
 unsafe fn DrawPpuFrameWithPerf(game: &mut Game) {

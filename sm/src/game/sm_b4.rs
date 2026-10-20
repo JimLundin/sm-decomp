@@ -95,8 +95,7 @@ pub unsafe fn SpriteObject_Instr_Goto(game: &mut Game) {
         *(RomPtr_B4(v2, game) as *mut u16);
 }
 pub unsafe fn DrawSpriteObjects(game: &mut Game) {
-    let mut i: i32 = 62;
-    while i >= 0 {
+    for i in (0i32..=62).rev().step_by(2) {
         let v1: i32 = i >> 1;
         if word!(game.sprite_instr_list_ptrs[v1]) != 0 {
             let x: u16 = (word!(game.sprite_x_pos[v1])).wrapping_sub(word!(game.layer1_x_pos));
@@ -119,7 +118,6 @@ pub unsafe fn DrawSpriteObjects(game: &mut Game) {
                 }
             }
         }
-        i -= 2;
     }
 }
 pub unsafe fn ClearSpriteObjects(game: &mut Game) {

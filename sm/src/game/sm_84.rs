@@ -92,8 +92,7 @@ pub unsafe fn SetGoldenTorizoPalette(mut a: u16, game: &mut Game) {
         v1 = 56;
     }
     let mut v2: u16 = (4 * v1 as i32 | 0x1e) as u16;
-    let mut i: i32 = 30;
-    while i >= 0 {
+    for i in (0i32..=30).rev().step_by(2) {
         let v4: i32 = v2 as i32 >> 1;
         let v5: i32 = i >> 1;
         word! { game;
@@ -101,23 +100,17 @@ pub unsafe fn SetGoldenTorizoPalette(mut a: u16, game: &mut Game) {
             palette_buffer[(v5 + 144)] = crate::rtl::rom_table_word!(game, 0x848032, v4 as isize);
         }
         v2 = (v2).wrapping_sub(2);
-        i -= 2;
     }
 }
 pub unsafe fn LoadRoomPlmGfx(game: &mut Game) {
     word!(game.plm_item_gfx_index = 0);
-    let mut v0: i32 = 0;
-    loop {
+    for v0 in (0i32..8).step_by(2) {
         if word!(game.plm_item_gfx_ptrs[(v0 >> 1)]) != 0 {
             PlmInstr_LoadItemPlmGfx(
                 RomPtr_84(word!(game.plm_item_gfx_ptrs[(v0 >> 1)]), game),
                 v0 as u16,
                 game,
             );
-        }
-        v0 += 2;
-        if (v0 == 8) {
-            break;
         }
     }
 }

@@ -388,8 +388,7 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
     DrawSpriteObjects(game);
     DrawBombAndProjectileExplosions(game);
     DrawEprojsWithPriority(EprojPriority::Low, game);
-    let mut phase_varE32: u16 = 0;
-    while phase_varE32 != 8 {
+    for phase_varE32 in 0u16..8 {
         if phase_varE32 == 3 {
             DrawSamusAndProjectiles(game);
         } else if phase_varE32 == 6 {
@@ -413,7 +412,6 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
                 }
             }
         }
-        phase_varE32 = phase_varE32.wrapping_add(1);
     }
     CallEnemyGfxDrawHook(Load24(ram_ptr!(game, LongPtr; 0x178c)), game);
 }
@@ -556,11 +554,9 @@ pub unsafe fn LoadEnemyGfxIndexes(k: u16, j: u16, game: &mut Game) {
     }
 }
 pub unsafe fn LoadEnemyTileData(game: &mut Game) {
-    let mut i: i32 = 510;
-    while i >= 0 {
+    for i in (0i32..=510).rev().step_by(2) {
         (*gEnemySpawnData(i, game)).some_flag =
             crate::rtl::rom_table_word!(game, 0x9ad200, ((i >> 1) + 3072) as isize);
-        i -= 2;
     }
     if word!(game.enemy_tile_load_data_write_pos) != 0 {
         let mut v1: u16 = 0;
@@ -1876,8 +1872,7 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
     if word!(game.samus_invincibility_timer) != 0 || word!(game.samus_contact_damage_index) != 0 {
         return;
     }
-    let mut i: i32 = 17;
-    while i >= 0 {
+    for i in (0i32..=17).rev() {
         if word!(game.eproj_id[i]) != 0
             && (word!(game.eproj_properties[i]) & 0x2000) == 0
             && word!(game.eproj_radius[i]) != 0
@@ -1898,7 +1893,6 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
                 HandleEprojCollWithSamus((i * 2) as u16, game);
             }
         }
-        i -= 1;
     }
 }
 pub unsafe fn HandleEprojCollWithSamus(k: u16, game: &mut Game) {
@@ -1933,11 +1927,9 @@ pub unsafe fn EprojProjCollDet(game: &mut Game) {
     if word!(game.projectile_counter) == 0 {
         return;
     }
-    let mut i: i32 = 17;
-    while i >= 0 {
+    for i in (0i32..=17).rev() {
         if !(word!(game.eproj_id[i]) == 0 || (word!(game.eproj_properties[i]) & 0x8000) == 0) {
-            let mut j: i32 = 0;
-            while j < 5 {
+            for j in 0i32..5 {
                 if word!(game.eproj_flags[i]) == 2 {
                     break;
                 }
@@ -1953,10 +1945,8 @@ pub unsafe fn EprojProjCollDet(game: &mut Game) {
                 {
                     HandleEprojCollWithProj((i * 2) as u16, (j * 2) as u16, game);
                 }
-                j += 1;
             }
         }
-        i -= 1;
     }
 }
 pub unsafe fn HandleEprojCollWithProj(k: u16, j: u16, game: &mut Game) {
@@ -2255,8 +2245,7 @@ crate::prefixed_callbacks! {
         {
             return;
         }
-        let mut pidx: i32 = 0;
-        while pidx < 5 {
+        for pidx in 0i32..5 {
             let v4: u16 = word!(game.projectile_type[pidx]);
             if v4 != 0
                 && (v4 & 0xf00) != 768
@@ -2320,7 +2309,6 @@ crate::prefixed_callbacks! {
                     ES = ES.offset(1);
                 }
             }
-            pidx += 1;
         }
     };
     EnemyBombCollHandler_Multibox [] {
@@ -2338,8 +2326,7 @@ crate::prefixed_callbacks! {
         {
             return;
         }
-        let mut pidx: i32 = 5;
-        while pidx != 10 {
+        for pidx in 5i32..10 {
             if (word!(game.projectile_x_pos[pidx]) != 0) {
                 let v4: u16 = word!(game.projectile_type[pidx]);
                 if v4 != 0 && (v4 & 0xf00) == 1280 && word!(game.projectile_variables[pidx]) == 0 {
@@ -2394,7 +2381,6 @@ crate::prefixed_callbacks! {
                     }
                 }
             }
-            pidx += 1;
         }
     };
     SwitchEnemyAiToMainAi [] {
@@ -2485,8 +2471,7 @@ crate::prefixed_callbacks! {
         {
             return;
         }
-        let mut pidx: i32 = 0;
-        while pidx < 5 {
+        for pidx in 0i32..5 {
             let j: u16 = word!(game.projectile_type[pidx]);
             if j != 0
                 && (j & 0xf00) != 768
@@ -2516,7 +2501,6 @@ crate::prefixed_callbacks! {
                     return;
                 }
             }
-            pidx += 1;
         }
     };
     EnemyBombCollHandler [] {
@@ -2528,8 +2512,7 @@ crate::prefixed_callbacks! {
         {
             return;
         }
-        let mut pidx: i32 = 5;
-        while pidx < 10 {
+        for pidx in 5i32..10 {
             if !(word!(game.projectile_type[pidx]) == 0
                 || word!(game.projectile_variables[pidx]) != 0
                 || (word!(game.projectile_type[pidx]) & 0xf00) != 1280
@@ -2552,7 +2535,6 @@ crate::prefixed_callbacks! {
                 );
                 return;
             }
-            pidx += 1;
         }
     };
     NormalEnemyTouchAiSkipDeathAnim [] {

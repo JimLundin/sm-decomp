@@ -656,14 +656,12 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
         == 0
     {
         let mut v3: u16 = (4u16).wrapping_mul((*Get_Draygon(0i32, game)).var_0E);
-        let mut i: i32 = 0;
-        while i != 8 {
+        for i in (0i32..8).step_by(2) {
             word!(
                 game.palette_buffer[((i >> 1) + 89)] =
                     crate::rtl::rom_table_word!(game, 0xa596af, (v3 >> 1) as isize)
             );
             v3 = (v3).wrapping_add(2);
-            i += 2;
         }
     }
     let mut v5: u16 = addr_kDraygon_Palette as u16;
@@ -951,12 +949,10 @@ crate::prefixed_callbacks! {
         if i != (*E).var_0E as i32 {
             (*E).var_0E = i as u16;
             let mut v2: u16 = (4u16).wrapping_mul((*E).var_0E);
-            let mut j: u16 = 0;
-            while j != 8 {
+            for j in (0u16..8).step_by(2) {
                 *(ram_ptr!(game, u16; 0xc000)).offset(((j as i32 >> 1) + 89) as isize) =
                     crate::rtl::rom_table_word!(game, 0xa596af, (v2 >> 1) as isize);
                 v2 = (v2).wrapping_add(2);
-                j = (j).wrapping_add(2);
             }
         }
     };
@@ -1048,8 +1044,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
 }
 pub unsafe fn Draygon_Func_42(varE24: u16, game: &mut Game) {
     let mut v0: u16 = 62;
-    let mut i: i32 = 20;
-    while i >= 0 {
+    for i in (0i32..=20).rev().step_by(4) {
         let v2: i32 = i >> 1;
         let v3: i32 = v0 as i32 >> 1;
         if (crate::rtl::rom_table_word!(game, 0xa5a1df, v2 as isize) as i32 + 64 & 0x80) != 0 {
@@ -1081,7 +1076,6 @@ pub unsafe fn Draygon_Func_42(varE24: u16, game: &mut Game) {
             );
         }
         v0 = (v0).wrapping_sub(2);
-        i -= 4;
     }
 }
 pub unsafe fn Draygon_Func_43(game: &mut Game) {
@@ -1120,8 +1114,7 @@ pub unsafe fn Draygon_Func_45(game: &mut Game) {
     CreateSpriteAtPos(16, 384, 59, 0xe00, game);
 }
 pub unsafe fn Draygon_Func_46(game: &mut Game) {
-    let mut v0: u16 = 62;
-    loop {
+    for v0 in (56u16..=62).rev().step_by(2) {
         let v1: u16 = ((*Get_Draygon(0i32, game)).var_46).wrapping_add(
             crate::rtl::rom_table_word!(game, 0xa5a19f, (((v0).wrapping_sub(56)) >> 1) as isize),
         );
@@ -1144,10 +1137,6 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
                     ))
                 );
             }
-        }
-        v0 = (v0).wrapping_sub(2);
-        if (((v0) as i16).wrapping_sub(56) < 0) {
-            break;
         }
     }
     let E = Get_Draygon(0, game);
@@ -1581,13 +1570,11 @@ pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
 }
 pub unsafe fn SporeSpawn_Func_7(a: u16, game: &mut Game) {
     let mut v1: u16 = a;
-    let mut i: i32 = 0;
-    while i != 32 {
+    for i in (0i32..32).step_by(2) {
         word!(
             game.palette_buffer[((i >> 1) + 144)] =
                 crate::rtl::rom_table_word!(game, 0xa5e379, (v1 >> 1) as isize)
         );
         v1 = (v1).wrapping_add(2);
-        i += 2;
     }
 }

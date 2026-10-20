@@ -2348,14 +2348,12 @@ unsafe fn EprojInit_TourianStatueEyeGlow(j: u16, game: &mut Game) {
     word!(game.eproj_x_pos[v3] = kEprojInit_TourianStatueEyeGlow_X[v2 as usize]);
     word!(game.eproj_y_pos[v3] = kEprojInit_TourianStatueEyeGlow_Y[v2 as usize]);
     let mut v4: u16 = (4 * v1 as i32) as u16;
-    let mut i: i32 = 498;
-    while i != 506 {
+    for i in (498i32..506).step_by(2) {
         word!(
             game.palette_buffer[(i >> 1)] =
                 kEprojInit_TourianStatueEyeGlow_Colors[(v4 >> 1) as usize]
         );
         v4 = (v4 as i32 + 2) as u16;
-        i += 2;
     }
 }
 unsafe fn EprojInit_TourianStatueUnlockingParticle(j: u16, game: &mut Game) {
@@ -2641,8 +2639,7 @@ unsafe fn Eproj_CheckForBombCollisionWithRect(rect: Rect16U, game: &mut Game) ->
     if word!(game.bomb_counter) == 0 {
         return 0;
     }
-    let mut v1: i32 = 10;
-    while v1 < 20 {
+    for v1 in (10i32..20).step_by(2) {
         let v2: i32 = v1 >> 1;
         if (word!(game.projectile_type[v2]) & 0xf00) == 1280
             && word!(game.projectile_variables[v2]) == 0
@@ -2660,7 +2657,6 @@ unsafe fn Eproj_CheckForBombCollisionWithRect(rect: Rect16U, game: &mut Game) ->
                 }
             }
         }
-        v1 += 2;
     }
     0
 }
@@ -5002,8 +4998,7 @@ crate::prefixed_callbacks! {
         let mut v2: i16 = (word!(game.eproj_y_vel[v1]) as i32 - 2i32) as i16;
         word!(game.eproj_y_vel[v1] = v2 as u16);
         if v2 >= 0 {
-            let mut n: i32 = 2;
-            loop {
+            for n in (1i32..=2).rev() {
                 let mut v3: i16 = (n + word!(game.eproj_y_vel[v1]) as i32 - 1i32) as i16;
                 if v3 < 0 {
                     v3 = 0;
@@ -5015,10 +5010,6 @@ crate::prefixed_callbacks! {
                     *(rom_ptr!(game, u32; 0xa0cbc7)).offset((t >> 1) as isize),
                 );
                 word!(game.eproj_F[v1] = crate::rtl::rom_table_word!(game, 0xa0cbc7, (t + 1) as isize));
-                n -= 1;
-                if (n == 0) {
-                    break;
-                }
             }
             Eproj_NorfairLavaquakeRocks_Func3(k, game);
         } else {
@@ -5032,8 +5023,7 @@ crate::prefixed_callbacks! {
         if v2 as i32 - 64i32 & 0x8000 == 0 {
             word!(game.eproj_y_vel[v1] = 64);
         }
-        let mut n: i32 = 2;
-        loop {
+        for n in (1i32..=2).rev() {
             let t: i32 = 8 * (word!(game.eproj_y_vel[v1]) as i32 - n + 1) >> 1;
             AddToHiLo(
                 (ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize),
@@ -5041,10 +5031,6 @@ crate::prefixed_callbacks! {
                 *(rom_ptr!(game, u32; 0xa0cbc7)).offset((t >> 1) as isize),
             );
             word!(game.eproj_F[v1] = crate::rtl::rom_table_word!(game, 0xa0cbc7, (t + 1) as isize));
-            n -= 1;
-            if (n == 0) {
-                break;
-            }
         }
         Eproj_NorfairLavaquakeRocks_Func3(k, game);
     };
