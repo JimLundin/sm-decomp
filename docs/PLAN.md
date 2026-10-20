@@ -2458,7 +2458,28 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `f8b235ce` shares all 95 callback
+Latest reviewed integration (2026-10-20): `3848ea69` groups the complete
+5093-declaration public numeric family, including primitive and alias types.
+Independent AST and ordered-entry reconstruction cover 356 groups across
+30 files, with no adjacent attributes. All 44 type spellings, 3980 u32 and
+1113 i32 values, public names, literal tokens and module scopes remain exact;
+the eight nonnumeric public constants retain their original expressions.
+
+All 72 committed source/Cargo inputs match the frozen CPU/string/callback
+composition; all 69 replay sources match the candidate byte-for-byte.
+Independent actual library expansion comparison preserves all 2218569 tokens,
+including 68301 commas, after removing only the exact new helper/import.
+No type, literal or punctuation normalization is needed. All three expansion
+and helper hashes remain stable. The earlier 1451-constant subset and its
+replay are superseded by this complete-family verification.
+
+Normal release (24.38s wall), formatting, progress and the full any% replay
+pass: 129712/0 (107.74s replay), native exit 0. All 74 replay pins remain
+unchanged after completion; review reused these checks. Net Rust lines -1726,
+total 135572; other progress counters remain unchanged. The movie still
+contains zero ending/credits frames; broader gameplay coverage remains open.
+
+Included `f8b235ce` shares all 95 callback
 array initializers across 17 callers. Independent AST inventory and signature
 review cover all 1039 slots: 1020 function casts, 18 None entries and the
 unchanged transmute. All 12 aliases and 36 caller bindings resolve to their
