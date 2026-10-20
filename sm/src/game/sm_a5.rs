@@ -1297,9 +1297,8 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Draygon_Instr_22 [jp.offset(1)] { word!(game.kraid_unk9000 = *jp); };
     Draygon_Instr_27 [jp] {
         let E = Get_Draygon(0, game);
-        (*E).base.x_pos = 128;
-        (*E).base.y_pos = 624;
-        (*E).base.properties = ((*E).base.properties & 0x5bff | 0xa000);
+        set_fields! {[(*E).base]; x_pos = 128, y_pos = 624,
+            properties = ((*E).base.properties & 0x5bff | 0xa000), };
     };
     Draygon_Instr_23 [jp.offset(1)] { QueueSfx2_Max6(*jp, game); };
     Draygon_Instr_30 [jp] { Enemy_ItemDrop_SporeSpawn(k, game); };
@@ -1390,11 +1389,8 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
     );
     let E = Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game);
     let E0 = Get_SporeSpawn(0, game);
-    (*E).var_04 = (*E).base.x_pos;
-    (*E).var_05 = ((*E).base.y_pos).wrapping_sub(72);
-    (*E).var_C = (*E).base.x_pos;
-    (*E).var_D = (*E).base.y_pos;
-    (*E).var_F = 0;
+    set_fields! {[(*E)]; var_04 = (*E).base.x_pos, var_05 = ((*E).base.y_pos).wrapping_sub(72),
+    var_C = (*E).base.x_pos, var_D = (*E).base.y_pos, var_F = 0, };
     if (*ram_ptr!(game; 0xd828, word!(game.area_index) as isize) & 2) != 0 {
         (*E0).base.current_instruction = addr_kDraygon_Ilist_E6B9 as u16;
         (*E0).var_A = ((0xa5eb1ai32) as u16);

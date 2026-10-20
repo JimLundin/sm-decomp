@@ -1593,11 +1593,8 @@ pub unsafe fn Sfx_Init(
         [0x446, 0x448, 0x44b],
         [0x47e, 0x480, 0x483],
     ];
-    (*sr).voice_id = 9;
-    (*sr).voices_remaining = (*p).is_chan_on;
-    (*sr).init_flag = 0xff;
-    (*sr).chan_idx_x2 = 0;
-    (*sr).chan_idx = (*sr).chan_idx_x2;
+    set_fields! {[(*sr)]; voice_id = 9, voices_remaining = (*p).is_chan_on, init_flag = 0xff,
+    chan_idx_x2 = 0, chan_idx = (*sr).chan_idx_x2, };
     let mut i: i32 = 0;
     while i < num {
         set_fields! {[(*channels.offset(i as isize))], 0; voice_bitset, voice_index}

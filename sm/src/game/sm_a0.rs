@@ -338,14 +338,10 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
 pub unsafe fn RecordEnemySpawnData(j: u16, game: &mut Game) {
     let v1 = gEnemyData(j as i32, game);
     let mut v2 = gEnemySpawnData(j as i32, game);
-    (*v2).id = (*v1).enemy_ptr;
-    (*v2).x_pos = (*v1).x_pos;
-    (*v2).y_pos = (*v1).y_pos;
-    (*v2).init_param = (*v1).current_instruction;
-    (*v2).properties = (*v1).properties;
-    (*v2).extra_properties = (*v1).extra_properties;
-    (*v2).param_1 = (*v1).parameter_1;
-    (*v2).param_2 = (*v1).parameter_2;
+    set_fields! {[(*v2)]; id = (*v1).enemy_ptr, x_pos = (*v1).x_pos, y_pos = (*v1).y_pos,
+    init_param = (*v1).current_instruction, properties = (*v1).properties,
+    extra_properties = (*v1).extra_properties, param_1 = (*v1).parameter_1,
+    param_2 = (*v1).parameter_2, };
     let mut r18: u16 = 0;
     let mut r20: u16 = 0;
     let mut r22: u16 = 0;
@@ -415,14 +411,10 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
         if (*ED).boss_fight_value != 0 {
             word!(game.boss_id = (*ED).boss_fight_value);
         }
-        (*E).enemy_ptr = (*EP).enemy_ptr;
-        (*E).x_pos = (*EP).x_pos;
-        (*E).y_pos = (*EP).y_pos;
-        (*E).current_instruction = (*EP).init_param;
-        (*E).properties = (*EP).properties;
-        (*E).extra_properties = (*EP).extra_properties;
-        (*E).parameter_1 = (*EP).parameter1;
-        (*E).parameter_2 = (*EP).parameter2;
+        set_fields! {[(*E)]; enemy_ptr = (*EP).enemy_ptr, x_pos = (*EP).x_pos,
+            y_pos = (*EP).y_pos, current_instruction = (*EP).init_param,
+            properties = (*EP).properties, extra_properties = (*EP).extra_properties,
+            parameter_1 = (*EP).parameter1, parameter_2 = (*EP).parameter2, };
         set_fields! {[(*E)], 0; frame_counter, timer}
         (*E).instruction_timer = 1;
         (*E).frame_counter = 0;
@@ -1575,14 +1567,10 @@ pub unsafe fn SpawnEnemy(db: u8, k: u16, game: &mut Game) -> u16 {
             (*E).health = (*ED).health;
             (*E).layer = (*ED).layer as u16;
             *(&raw mut (*E).bank as *mut u16) = *(&raw mut (*ED).bank as *mut u16);
-            (*E).enemy_ptr = (*EP).enemy_ptr;
-            (*E).x_pos = (*EP).x_pos;
-            (*E).y_pos = (*EP).y_pos;
-            (*E).current_instruction = (*EP).init_param;
-            (*E).properties = (*EP).properties;
-            (*E).extra_properties = (*EP).extra_properties;
-            (*E).parameter_1 = (*EP).parameter1;
-            (*E).parameter_2 = (*EP).parameter2;
+            set_fields! {[(*E)]; enemy_ptr = (*EP).enemy_ptr, x_pos = (*EP).x_pos,
+            y_pos = (*EP).y_pos, current_instruction = (*EP).init_param,
+            properties = (*EP).properties, extra_properties = (*EP).extra_properties,
+            parameter_1 = (*EP).parameter1, parameter_2 = (*EP).parameter2, };
             set_fields! {[(*E)], 0; frame_counter, timer, ai_var_A, ai_var_B, ai_var_C, ai_var_D, ai_var_E, ai_preinstr}
             (*E).instruction_timer = 1;
             (*E).frame_counter = 0;

@@ -618,13 +618,9 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
     (*E).var_A = ((0xa69615i32) as u16);
     let v2: i32 = ((4u16).wrapping_mul((*E).var_E)) as i32 >> 1;
     let v3: u16 = g_word_A695F6[v2 as usize];
-    (*E).var_23 = v3;
-    (*E).var_21 = v3;
-    (*E).var_2E = g_word_A695F6[(v2 + 1) as usize];
-    (*E).var_2B = g_word_A695FE[v2 as usize];
-    (*E).var_2C = g_word_A695FE[(v2 + 1) as usize];
-    (*E).var_30 = g_word_A69606[v2 as usize];
-    (*E).var_2F = g_word_A69606[(v2 + 1) as usize];
+    set_fields! {[(*E)]; var_23 = v3, var_21 = v3, var_2E = g_word_A695F6[(v2 + 1) as usize],
+    var_2B = g_word_A695FE[v2 as usize], var_2C = g_word_A695FE[(v2 + 1) as usize],
+    var_30 = g_word_A69606[v2 as usize], var_2F = g_word_A69606[(v2 + 1) as usize], };
     let mut v4: u16 = (8u16).wrapping_mul((*E).var_C);
     if (*E).var_E == 0 {
         v4 = (v4).wrapping_add(4);
@@ -1653,14 +1649,8 @@ crate::game::callback_dispatch! {
                 (*E).var_A = ((0xa6a35bi32) as u16);
                 set_fields! {[(*E)], 0; var_B, var_C}
                 (*E).base.layer = 5;
-                (*E).var_01 = 0;
-                (*E).var_02 = 1;
-                (*E).var_20 = 64;
-                (*E).var_21 = 416;
-                (*E).var_22 = 64;
-                (*E).var_23 = 224;
-                (*E).var_10 = 2;
-                (*E).var_1C = 120;
+                set_fields! {[(*E)]; var_01 = 0, var_02 = 1, var_20 = 64, var_21 = 416,
+                    var_22 = 64, var_23 = 224, var_10 = 2, var_1C = 120, };
                 WriteColorsToTargetPalette(0xa6, 0x140, addr_word_A6E1CF as u16, 0x20, game);
                 word_transfers!(game, ascending, 15;
                     le(target_palettes, 113) <- value(0),
@@ -4363,12 +4353,10 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
 }
 pub unsafe fn CeresSteam_Init(game: &mut Game) {
     let E = Get_CeresSteam(word!(game.cur_enemy_index) as i32, game);
-    (*E).base.vram_tiles_index = 0;
-    (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_DisableSamusColl) as u16);
-    (*E).base.extra_properties = ((*E).base.extra_properties) | (4u16);
-    (*E).base.instruction_timer = 1;
-    (*E).base.timer = 0;
-    (*E).base.palette_index = 2560;
+    set_fields! {[(*E).base]; vram_tiles_index = 0,
+    properties = ((*E).base.properties) | ((kEnemyProps_DisableSamusColl) as u16),
+    extra_properties = ((*E).base.extra_properties) | (4u16), instruction_timer = 1,
+    timer = 0, palette_index = 2560, };
     (*E).var_D = ((NextRandom(game) as i32 & 0x1f) + 1) as u16;
     let v1: i32 = (*E).parameter_1 as i32;
     (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xa6eff5, v1 as isize);
@@ -4644,11 +4632,8 @@ pub unsafe fn CeresDoor_Func_8(game: &mut Game) {
 }
 pub unsafe fn Zebetites_Init(game: &mut Game) {
     let E = Get_Zebetites(word!(game.cur_enemy_index) as i32, game);
-    (*E).base.properties = ((*E).base.properties) | (0xa000u16);
-    (*E).base.instruction_timer = 1;
-    (*E).base.timer = 0;
-    (*E).base.palette_index = 1024;
-    (*E).base.vram_tiles_index = 128;
+    set_fields! {[(*E).base]; properties = ((*E).base.properties) | (0xa000u16),
+    instruction_timer = 1, timer = 0, palette_index = 1024, vram_tiles_index = 128, };
     (*E).var_C = 0;
     let mut v1: u16 = ((0xa6fc41i32) as u16);
     if (*E).parameter_1 != 0 {

@@ -209,9 +209,8 @@ crate::game::callback_dispatch! {
         if fresh8 == 1 {
             (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).vram_tiles_index =
                 ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
-            (*E).base.palette_index = 2560;
-            (*E).base.vram_tiles_index = 0;
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
+            set_fields! {[(*E).base]; palette_index = 2560, vram_tiles_index = 0,
+                properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16), };
         } else {
             if (*E).var_A == 8 {
                 let v2: u16 = word!(game.cur_enemy_index);
@@ -449,9 +448,8 @@ crate::game::callback_dispatch! {
         ) != 0
         {
             (*E).var_A = ((0xa39224i32) as u16);
-            (*E).base.instruction_timer = 1;
-            (*E).base.timer = 0;
-            (*E).base.current_instruction = addr_kMaridiaFish_Ilist_903C as u16;
+            set_fields! {[(*E).base]; instruction_timer = 1, timer = 0,
+                current_instruction = addr_kMaridiaFish_Ilist_903C as u16, };
         } else {
             advance_maridia_fish_sine_motion!(E, game, 0xa39224i32, addr_kMaridiaFish_Ilist_903C);
         }
@@ -465,9 +463,8 @@ crate::game::callback_dispatch! {
         ) != 0
         {
             (*E).var_A = ((0xa39256i32) as u16);
-            (*E).base.instruction_timer = 1;
-            (*E).base.timer = 0;
-            (*E).base.current_instruction = addr_kMaridiaFish_Ilist_9072 as u16;
+            set_fields! {[(*E).base]; instruction_timer = 1, timer = 0,
+                current_instruction = addr_kMaridiaFish_Ilist_9072 as u16, };
         } else {
             advance_maridia_fish_sine_motion!(E, game, 0xa39256i32, addr_kMaridiaFish_Ilist_9072);
         }
@@ -478,9 +475,8 @@ crate::game::callback_dispatch! {
             (*E).var_01 = 0;
             (*E).var_A = ((0xa391abi32) as u16);
             (*E).var_02 = -((*E).var_02 as i32) as u16;
-            (*E).base.instruction_timer = 1;
-            (*E).base.timer = 0;
-            (*E).base.current_instruction = addr_kMaridiaFish_Ilist_9060 as u16;
+            set_fields! {[(*E).base]; instruction_timer = 1, timer = 0,
+                current_instruction = addr_kMaridiaFish_Ilist_9060 as u16, };
         }
     };
     [10719830] MaridiaFish_Func_4 [] {
@@ -488,9 +484,8 @@ crate::game::callback_dispatch! {
             (*E).var_01 = 0;
             (*E).var_A = ((0xa39132i32) as u16);
             (*E).var_02 = -((*E).var_02 as i32) as u16;
-            (*E).base.instruction_timer = 1;
-            (*E).base.timer = 0;
-            (*E).base.current_instruction = addr_kMaridiaFish_Ilist_902A as u16;
+            set_fields! {[(*E).base]; instruction_timer = 1, timer = 0,
+                current_instruction = addr_kMaridiaFish_Ilist_902A as u16, };
         }
     };
     MaridiaFish_Main [] {
@@ -499,10 +494,8 @@ crate::game::callback_dispatch! {
 }
 pub unsafe fn Elevator_Init(game: &mut Game) {
     let E = Get_Elevator(word!(game.cur_enemy_index) as i32, game);
-    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A3 as u16;
-    (*E).base.instruction_timer = 1;
-    (*E).base.timer = 0;
-    (*E).base.current_instruction = addr_kElevator_Ilist_94D6 as u16;
+    set_fields! {[(*E).base]; spritemap_pointer = addr_kSpritemap_Nothing_A3 as u16,
+    instruction_timer = 1, timer = 0, current_instruction = addr_kElevator_Ilist_94D6 as u16, };
     (*E).parameter_1 = ((*E).parameter_1).wrapping_mul(2);
     (*E).var_A = (*E).base.y_pos;
     if word!(game.elevator_status) != 2 {
@@ -1890,9 +1883,8 @@ crate::game::callback_dispatch! {
         if fresh18 == 1 {
             (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).vram_tiles_index =
                 ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
-            (*E).base.palette_index = 2560;
-            (*E).base.vram_tiles_index = 0;
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
+            set_fields! {[(*E).base]; palette_index = 2560, vram_tiles_index = 0,
+                properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16), };
         } else {
             if (*E).var_A == 8 {
                 let v2: u16 = word!(game.cur_enemy_index);
@@ -2273,10 +2265,9 @@ crate::prefixed_callbacks! {
                         return;
                     }
                     if (*E).var_D as i32 != 0xa3cf5f & 0xffff {
-                        (*E).base.current_instruction = (*E).var_D;
-                        (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A3 as u16;
-                        (*E).base.instruction_timer = 1;
-                        (*E).base.timer = 0;
+                        set_fields! {[(*E).base]; current_instruction = (*E).var_D,
+                            spritemap_pointer = addr_kSpritemap_Nothing_A3 as u16,
+                            instruction_timer = 1, timer = 0, };
                         (*E).var_08 = 2;
                         return;
                     }

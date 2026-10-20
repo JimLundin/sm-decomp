@@ -74,9 +74,7 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
             0,
             size_of::<[i16; 19]>() as size_t,
         );
-        (*dsp).channel[i as usize].srcn = 0;
-        (*dsp).channel[i as usize].decodeOffset = 0;
-        (*dsp).channel[i as usize].previousFlags = 0;
+        set_fields! {[(*dsp).channel[i as usize]]; srcn = 0, decodeOffset = 0, previousFlags = 0, };
         set_fields! {[(*dsp).channel[i as usize]], 0; old, older}
         (*dsp).channel[i as usize].useNoise = false_0 != 0;
         memset(
@@ -85,23 +83,16 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
             0,
             size_of::<[u16; 4]>() as size_t,
         );
-        (*dsp).channel[i as usize].rateCounter = 0;
-        (*dsp).channel[i as usize].adsrState = 0;
-        (*dsp).channel[i as usize].sustainLevel = 0;
-        (*dsp).channel[i as usize].useGain = false_0 != 0;
-        (*dsp).channel[i as usize].gainMode = 0;
-        (*dsp).channel[i as usize].directGain = false_0 != 0;
+        set_fields! {[(*dsp).channel[i as usize]]; rateCounter = 0, adsrState = 0,
+        sustainLevel = 0, useGain = false_0 != 0, gainMode = 0, directGain = false_0 != 0, };
         set_fields! {[(*dsp).channel[i as usize]], 0; gainValue, gain}
         (*dsp).channel[i as usize].keyOn = false_0 != 0;
-        (*dsp).channel[i as usize].keyOff = false_0 != 0;
-        (*dsp).channel[i as usize].sampleOut = 0;
+        set_fields! {[(*dsp).channel[i as usize]]; keyOff = false_0 != 0, sampleOut = 0, };
         set_fields! {[(*dsp).channel[i as usize]], 0; volumeL, volumeR}
         (*dsp).channel[i as usize].echoEnable = false_0 != 0;
     }
-    (*dsp).dirPage = 0;
-    (*dsp).evenCycle = false_0 != 0;
-    (*dsp).mute = true_0 != 0;
-    (*dsp).reset = true_0 != 0;
+    set_fields! {[(*dsp)]; dirPage = 0, evenCycle = false_0 != 0, mute = true_0 != 0,
+    reset = true_0 != 0, };
     set_fields! {[(*dsp)], 0; masterVolumeL, masterVolumeR}
     (*dsp).noiseSample = -0x4000i16;
     set_fields! {[(*dsp)], 0; noiseRate, noiseCounter}
@@ -271,8 +262,7 @@ unsafe fn dsp_cycleChannel(dsp: *mut Dsp, ch: i32) {
         )
     };
     if (*dsp).reset {
-        (*dsp).channel[ch as usize].adsrState = 4;
-        (*dsp).channel[ch as usize].gain = 0;
+        set_fields! {[(*dsp).channel[ch as usize]]; adsrState = 4, gain = 0, };
     }
     let doingDirectGain: bool = (*dsp).channel[ch as usize].adsrState as i32 != 4
         && (*dsp).channel[ch as usize].useGain as i32 != 0
@@ -412,8 +402,7 @@ unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
                 .offset((samplePointer as i32 + 3 & 0xffff) as isize) as i32)
                 << 8) as u16;
         if (*dsp).channel[ch as usize].previousFlags as i32 == 1 {
-            (*dsp).channel[ch as usize].adsrState = 4;
-            (*dsp).channel[ch as usize].gain = 0;
+            set_fields! {[(*dsp).channel[ch as usize]]; adsrState = 4, gain = 0, };
         }
         (*dsp).ram[0x7ci32 as usize] = ((*dsp).ram[0x7ci32 as usize] as i32 | (1i32) << ch) as u8;
     }
@@ -453,8 +442,7 @@ unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
         old = s;
         (*dsp).channel[ch as usize].decodeBuffer[(i + 3) as usize] = s as i16;
     }
-    (*dsp).channel[ch as usize].older = older as i16;
-    (*dsp).channel[ch as usize].old = old as i16;
+    set_fields! {[(*dsp).channel[ch as usize]]; older = older as i16, old = old as i16, };
 }
 unsafe fn dsp_handleNoise(dsp: *mut Dsp) {
     if (*dsp).noiseRate as i32 != 0 {
@@ -556,10 +544,9 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
             }
         }
         108 => {
-            (*dsp).reset = val & 0x80 != 0;
-            (*dsp).mute = val & 0x40 != 0;
-            (*dsp).echoWrites = val & 0x20 == 0;
-            (*dsp).noiseRate = rateValues[(val as i32 & 0x1f) as usize] as u16;
+            set_fields! {[(*dsp)]; reset = val & 0x80 != 0, mute = val & 0x40 != 0,
+            echoWrites = val & 0x20 == 0,
+            noiseRate = rateValues[(val as i32 & 0x1f) as usize] as u16, };
         }
         124 => val = 0,
         13 => (*dsp).feedbackVolume = val as i8,

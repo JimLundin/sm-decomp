@@ -14,12 +14,8 @@ use ::core::ptr::null_mut;
 pub const NULL: *mut c_void = null_mut::<c_void>();
 pub unsafe fn cart_init(snes: *mut Snes) -> *mut Cart {
     let cart = malloc(size_of::<Cart>() as size_t) as *mut Cart;
-    (*cart).snes = snes;
-    (*cart).type_0 = 0;
-    (*cart).rom = null_mut::<u8>();
-    (*cart).romSize = 0;
-    (*cart).ram = null_mut::<u8>();
-    (*cart).ramSize = 0;
+    crate::set_fields! {[(*cart)]; snes = snes, type_0 = 0, rom = null_mut::<u8>(), romSize = 0,
+    ram = null_mut::<u8>(), ramSize = 0, };
     cart
 }
 pub unsafe fn cart_reset(cart: *mut Cart) {}

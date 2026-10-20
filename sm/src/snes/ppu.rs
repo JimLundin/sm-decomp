@@ -206,10 +206,8 @@ fn update_brightness_tables(brightness: u8, normal: &mut [u8; 63], half: &mut [u
 }
 pub unsafe fn ppu_runLine(ppu: *mut Ppu, line: i32, game: &mut Game) {
     if line == 0 {
-        (*ppu).mosaicStartLine = 1;
-        (*ppu).rangeOver = false_0 != 0;
-        (*ppu).timeOver = false_0 != 0;
-        (*ppu).evenFrame = !(*ppu).evenFrame;
+        set_fields! {[(*ppu)]; mosaicStartLine = 1, rangeOver = false_0 != 0,
+        timeOver = false_0 != 0, evenFrame = !(*ppu).evenFrame, };
     } else {
         if (*ppu).brightness != (*ppu).lastBrightnessMult {
             let brightness = (*ppu).brightness;
@@ -1683,10 +1681,8 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
             val_4 = (val_4 | (*ppu).ppu2openBus & 0x20);
             val_4 = (val_4 as i32 | ((*ppu).countersLatched as i32) << 6) as u8;
             val_4 = (val_4 as i32 | ((*ppu).evenFrame as i32) << 7) as u8;
-            (*ppu).countersLatched = false_0 != 0;
-            (*ppu).hCountSecond = false_0 != 0;
-            (*ppu).vCountSecond = false_0 != 0;
-            (*ppu).ppu2openBus = val_4;
+            set_fields! {[(*ppu)]; countersLatched = false_0 != 0, hCountSecond = false_0 != 0,
+            vCountSecond = false_0 != 0, ppu2openBus = val_4, };
             val_4
         }
         _ => (*(*ppu).snes).openBus,
@@ -1708,18 +1704,14 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             current_block_164 = 16754622181974910496;
         }
         2 => {
-            (*ppu).oamAdr = val;
-            (*ppu).oamAdrWritten = (*ppu).oamAdr;
-            (*ppu).oamInHigh = (*ppu).oamInHighWritten;
-            (*ppu).oamSecondWrite = false_0 != 0;
+            set_fields! {[(*ppu)]; oamAdr = val, oamAdrWritten = (*ppu).oamAdr,
+            oamInHigh = (*ppu).oamInHighWritten, oamSecondWrite = false_0 != 0, };
             current_block_164 = 16754622181974910496;
         }
         3 => {
-            (*ppu).objPriority = val & 0x80 != 0;
-            (*ppu).oamInHigh = val & 1 != 0;
-            (*ppu).oamInHighWritten = (*ppu).oamInHigh;
-            (*ppu).oamAdr = (*ppu).oamAdrWritten;
-            (*ppu).oamSecondWrite = false_0 != 0;
+            set_fields! {[(*ppu)]; objPriority = val & 0x80 != 0, oamInHigh = val & 1 != 0,
+            oamInHighWritten = (*ppu).oamInHigh, oamAdr = (*ppu).oamAdrWritten,
+            oamSecondWrite = false_0 != 0, };
             current_block_164 = 16754622181974910496;
         }
         4 => {
@@ -1832,10 +1824,8 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             current_block_164 = 16754622181974910496;
         }
         26 => {
-            (*ppu).m7largeField = val & 0x80 != 0;
-            (*ppu).m7charFill = val & 0x40 != 0;
-            (*ppu).m7yFlip = val & 0x02 != 0;
-            (*ppu).m7xFlip = val & 0x01 != 0;
+            set_fields! {[(*ppu)]; m7largeField = val & 0x80 != 0, m7charFill = val & 0x40 != 0,
+            m7yFlip = val & 0x02 != 0, m7xFlip = val & 0x01 != 0, };
             current_block_164 = 16754622181974910496;
         }
         27 | 28 | 29 | 30 => {
@@ -1959,10 +1949,8 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             current_block_164 = 16754622181974910496;
         }
         48 => {
-            (*ppu).directColor = val & 0x01 != 0;
-            (*ppu).addSubscreen = val & 0x02 != 0;
-            (*ppu).preventMathMode = (val & 0x30) >> 4;
-            (*ppu).clipMode = (val & 0xc0) >> 6;
+            set_fields! {[(*ppu)]; directColor = val & 0x01 != 0, addSubscreen = val & 0x02 != 0,
+            preventMathMode = (val & 0x30) >> 4, clipMode = (val & 0xc0) >> 6, };
             current_block_164 = 16754622181974910496;
         }
         49 => {
@@ -1986,11 +1974,9 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             current_block_164 = 16754622181974910496;
         }
         51 => {
-            (*ppu).interlace = val & 0x01 != 0;
-            (*ppu).objInterlace = val & 0x02 != 0;
-            (*ppu).overscan = val & 0x04 != 0;
-            (*ppu).pseudoHires = val & 0x08 != 0;
-            (*ppu).m7extBg = val & 0x40 != 0;
+            set_fields! {[(*ppu)]; interlace = val & 0x01 != 0, objInterlace = val & 0x02 != 0,
+            overscan = val & 0x04 != 0, pseudoHires = val & 0x08 != 0,
+            m7extBg = val & 0x40 != 0, };
             current_block_164 = 16754622181974910496;
         }
         _ => current_block_164 = 16754622181974910496,

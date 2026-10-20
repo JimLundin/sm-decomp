@@ -33,20 +33,9 @@ pub unsafe fn cpu_init(mem: *mut c_void, memType: i32) -> *mut Cpu {
 }
 fn finish_reset(cpu: &mut Cpu) {
     set_fields! {[cpu], 0; dp, k, db}
-    cpu.c = false;
-    cpu.z = false;
-    cpu.v = false;
-    cpu.n = false;
-    cpu.i = true;
-    cpu.d = false;
-    cpu.xf = true;
-    cpu.mf = true;
-    cpu.e = true;
-    cpu.irqWanted = false;
-    cpu.nmiWanted = false;
-    cpu.waiting = false;
-    cpu.stopped = false;
-    cpu.cyclesUsed = 0;
+    set_fields! {[cpu]; c = false, z = false, v = false, n = false, i = true, d = false,
+    xf = true, mf = true, e = true, irqWanted = false, nmiWanted = false, waiting = false,
+    stopped = false, cyclesUsed = 0, };
 }
 pub unsafe fn cpu_reset(cpu: *mut Cpu, game: &mut Game) {
     set_fields! {[(*cpu)], 0; a, x, y}
@@ -115,14 +104,9 @@ pub fn cpu_getFlags(cpu: &Cpu) -> u8 {
         | u8::from(cpu.c)
 }
 pub fn cpu_setFlags(val: u8, cpu: &mut Cpu) {
-    cpu.n = val & 0x80 != 0;
-    cpu.v = val & 0x40 != 0;
-    cpu.mf = val & 0x20 != 0;
-    cpu.xf = val & 0x10 != 0;
-    cpu.d = val & 0x08 != 0;
-    cpu.i = val & 0x04 != 0;
-    cpu.z = val & 0x02 != 0;
-    cpu.c = val & 0x01 != 0;
+    set_fields! {[cpu]; n = val & 0x80 != 0, v = val & 0x40 != 0, mf = val & 0x20 != 0,
+    xf = val & 0x10 != 0, d = val & 0x08 != 0, i = val & 0x04 != 0, z = val & 0x02 != 0,
+    c = val & 0x01 != 0, };
     if cpu.e {
         cpu.mf = true;
         cpu.xf = true;
@@ -933,11 +917,8 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             push_byte(cpu, (*cpu).k, game);
             push_word(cpu, (*cpu).pc, game);
             push_byte(cpu, cpu_getFlags(&*cpu), game);
-            (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-            (*cpu).i = true;
-            (*cpu).d = false;
-            (*cpu).k = 0_;
-            (*cpu).pc = read_word(cpu, 0xffe4_, 0xffe5_, game);
+            set_fields! {[(*cpu)]; cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1), i = true,
+                d = false, k = 0_, pc = read_word(cpu, 0xffe4_, 0xffe5_, game), };
         }
         0x04 => [address_direct_page(cpu, None, game) => test_and_update_bits(true)]
         0x08 => (push_byte(cpu, cpu_getFlags(&*cpu), game))

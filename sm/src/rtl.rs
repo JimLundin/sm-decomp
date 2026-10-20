@@ -383,11 +383,9 @@ pub unsafe fn StateRecorder_Load(
     (*sr).replay_next_cmd_at = 0;
     (*sr).replay_mode = replay_mode;
     if replay_mode {
-        (*sr).frames_since_last = 0;
-        (*sr).last_inputs = 0;
-        (*sr).replay_pos_last_complete = 0;
-        (*sr).replay_pos = (*sr).replay_pos_last_complete;
-        (*sr).replay_frame_counter = 0;
+        crate::set_fields! {[(*sr)]; frames_since_last = 0, last_inputs = 0,
+        replay_pos_last_complete = 0, replay_pos = (*sr).replay_pos_last_complete,
+        replay_frame_counter = 0, };
         if (*sr).base_snapshot.size > 8192 as size_t {
             let mut state: LoadFuncState = LoadFuncState {
                 p: (*sr).base_snapshot.data,

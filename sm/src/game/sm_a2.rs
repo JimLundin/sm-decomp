@@ -1355,11 +1355,8 @@ crate::game::callback_dispatch! {
                 game,
             ) != 0
             {
-                (*E).var_04 = 1;
-                (*E).var_05 = ((*E).var_02) ^ (1u16);
-                (*E).var_01 = 0;
-                (*E).var_00 = 4;
-                (*E).var_E = ((0xa29d98i32) as u16);
+                set_fields! {[(*E)]; var_04 = 1, var_05 = ((*E).var_02) ^ (1u16), var_01 = 0,
+                    var_00 = 4, var_E = ((0xa29d98i32) as u16), };
             }
         };
     };
@@ -1859,9 +1856,8 @@ pub unsafe fn GunshipTop_4(k: u16, game: &mut Game) {
     let mut v5: u16 = ((*GunshipTop).var_E).wrapping_add(1);
     (*GunshipTop).var_E = v5;
     if v5 as i32 - 17i32 & 0x8000 == 0 {
-        (*GunshipTop).var_F = ((0xa2a942i32) as u16);
-        (*GunshipTop).var_E = (*GunshipTop).base.y_pos;
-        (*GunshipTop).var_D = 1;
+        set_fields! {[(*GunshipTop)]; var_F = ((0xa2a942i32) as u16),
+        var_E = (*GunshipTop).base.y_pos, var_D = 1, };
         let v6 = Get_GunshipTop(0, game);
         (*v6).var_C = 0;
         word!(game.samus_x_pos = ((*GunshipTop).base.x_pos).wrapping_add(1));
@@ -2155,10 +2151,9 @@ pub unsafe fn Flies_Init(game: &mut Game) {
     let E = Get_Flies(word!(game.cur_enemy_index) as i32, game);
     (*E).var_E = 0;
     (*E).var_F = ((0xa2b14ei32) as u16);
-    (*E).base.current_instruction = addr_kFlies_Ilist_B013 as u16;
-    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16;
-    (*E).base.instruction_timer = 1;
-    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16;
+    set_fields! {[(*E).base]; current_instruction = addr_kFlies_Ilist_B013 as u16,
+    spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16, instruction_timer = 1,
+    spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16, };
 }
 pub unsafe fn CarryAdd16(rv: *mut u16, v: u16) -> bool {
     let i: i32 = *rv as i32 + v as i32;
@@ -3504,10 +3499,8 @@ crate::game::callback_dispatch! {
             (*E).var_D = (*E).var_D.wrapping_sub(1);
             if ((*E).var_D & 0x8000) != 0 {
                 (*E).var_B = (*E).var_06;
-                (*E).base.x_pos = (*E).var_00;
-                (*E).base.x_subpos = 0;
-                (*E).base.y_pos = (*E).var_01;
-                (*E).base.y_subpos = 0;
+                set_fields! {[(*E).base]; x_pos = (*E).var_00, x_subpos = 0, y_pos = (*E).var_01,
+                    y_subpos = 0, };
                 HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D82C as u16, game);
                 (*E).var_A = ((0xa2e035i32) as u16);
             }
@@ -3786,11 +3779,10 @@ pub unsafe fn LavaSeahorse_E7DA(game: &mut Game) {
     if (*E).base.health != 0 {
         let shake_timer: u16 = (*E).base.shake_timer;
         let E1 = Get_LavaSeahorse(word!(game.cur_enemy_index) as i32 + 64, game);
-        (*E1).base.shake_timer = shake_timer;
-        (*E1).base.invincibility_timer = (*E).base.invincibility_timer;
-        (*E1).base.flash_timer = (*E).base.flash_timer;
-        (*E1).base.frozen_timer = (*E).base.frozen_timer;
-        (*E1).base.ai_handler_bits = (*E).base.ai_handler_bits;
+        set_fields! {[(*E1).base]; shake_timer = shake_timer,
+        invincibility_timer = (*E).base.invincibility_timer,
+        flash_timer = (*E).base.flash_timer, frozen_timer = (*E).base.frozen_timer,
+        ai_handler_bits = (*E).base.ai_handler_bits, };
     } else {
         let E1_0 = Get_LavaSeahorse(word!(game.cur_enemy_index) as i32 + 64, game);
         (*E1_0).base.properties = ((*E1_0).base.properties) | (0x200u16);

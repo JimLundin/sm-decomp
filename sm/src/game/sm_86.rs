@@ -1687,14 +1687,11 @@ pub unsafe fn RespawnEnemy(v0: u16, game: &mut Game) {
         game,
     );
     let E = gEnemyData(v0 as i32, game);
-    (*E).enemy_ptr = *(v1 as *mut u16);
-    (*E).x_pos = *(v1.offset(2) as *mut u16);
-    (*E).y_pos = *(v1.offset(4) as *mut u16);
-    (*E).current_instruction = *(v1.offset(6) as *mut u16);
-    (*E).properties = *(v1.offset(8) as *mut u16);
-    (*E).extra_properties = *(v1.offset(10) as *mut u16);
-    (*E).parameter_1 = *(v1.offset(12) as *mut u16);
-    (*E).parameter_2 = *(v1.offset(14) as *mut u16);
+    set_fields! {[(*E)]; enemy_ptr = *(v1 as *mut u16), x_pos = *(v1.offset(2) as *mut u16),
+    y_pos = *(v1.offset(4) as *mut u16), current_instruction = *(v1.offset(6) as *mut u16),
+    properties = *(v1.offset(8) as *mut u16),
+    extra_properties = *(v1.offset(10) as *mut u16),
+    parameter_1 = *(v1.offset(12) as *mut u16), parameter_2 = *(v1.offset(14) as *mut u16), };
     let ESD = gEnemySpawnData(v0 as i32, game);
     (*E).palette_index = (*ESD).palette_index;
     (*E).vram_tiles_index = (*ESD).vram_tiles_index;

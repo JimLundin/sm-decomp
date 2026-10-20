@@ -35,16 +35,9 @@ pub unsafe fn spc_init(apu: *mut Apu) -> *mut Spc {
 pub unsafe fn spc_reset(spc: *mut Spc) {
     set_fields! {[(*spc)], 0; a, x, y, sp}
     (*spc).pc = (spc_read(spc, 0xfffe) as i32 | (spc_read(spc, 0xffff) as i32) << 8) as u16;
-    (*spc).c = false_0 != 0;
-    (*spc).z = false_0 != 0;
-    (*spc).v = false_0 != 0;
-    (*spc).n = false_0 != 0;
-    (*spc).i = false_0 != 0;
-    (*spc).h = false_0 != 0;
-    (*spc).p = false_0 != 0;
-    (*spc).b = false_0 != 0;
-    (*spc).stopped = false_0 != 0;
-    (*spc).cyclesUsed = 0;
+    set_fields! {[(*spc)]; c = false_0 != 0, z = false_0 != 0, v = false_0 != 0,
+    n = false_0 != 0, i = false_0 != 0, h = false_0 != 0, p = false_0 != 0, b = false_0 != 0,
+    stopped = false_0 != 0, cyclesUsed = 0, };
 }
 pub unsafe fn spc_saveload(
     spc: *mut Spc,
@@ -88,14 +81,9 @@ unsafe fn spc_getFlags(spc: *mut Spc) -> u8 {
         | u8::from((*spc).c)
 }
 unsafe fn spc_setFlags(spc: *mut Spc, val: u8) {
-    (*spc).n = val & 0x80 != 0;
-    (*spc).v = val & 0x40 != 0;
-    (*spc).p = val & 0x20 != 0;
-    (*spc).b = val & 0x10 != 0;
-    (*spc).h = val & 0x08 != 0;
-    (*spc).i = val & 0x04 != 0;
-    (*spc).z = val & 0x02 != 0;
-    (*spc).c = val & 0x01 != 0;
+    set_fields! {[(*spc)]; n = val & 0x80 != 0, v = val & 0x40 != 0, p = val & 0x20 != 0,
+    b = val & 0x10 != 0, h = val & 0x08 != 0, i = val & 0x04 != 0, z = val & 0x02 != 0,
+    c = val & 0x01 != 0, };
 }
 unsafe fn spc_setZN(spc: *mut Spc, value: u8) {
     (*spc).z = value == 0;
@@ -613,10 +601,8 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
                 result_6 = value_4 as i32 / (*spc).x as i32;
                 mod_0 = value_4 as i32 % (*spc).x as i32;
             }
-            (*spc).v = result_6 > 0xff;
-            (*spc).h = (*spc).x & 0xf <= (*spc).y & 0xf;
-            (*spc).a = result_6 as u8;
-            (*spc).y = mod_0 as u8;
+            set_fields! {[(*spc)]; v = result_6 > 0xff, h = (*spc).x & 0xf <= (*spc).y & 0xf,
+            a = result_6 as u8, y = mod_0 as u8, };
             spc_setZN(spc, (*spc).a);
         }
         159 => {
@@ -635,10 +621,8 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: u8) {
             let mut low_4: u16 = 0;
             let high_4: u16 = spc_adrDpWord(spc, &raw mut low_4);
             let val_5: u16 = spc_readWord(spc, low_4, high_4);
-            (*spc).a = (val_5 as u8 & 0xff);
-            (*spc).y = (val_5 >> 8) as u8;
-            (*spc).z = val_5 as i32 == 0;
-            (*spc).n = val_5 & 0x8000 != 0;
+            set_fields! {[(*spc)]; a = (val_5 as u8 & 0xff), y = (val_5 >> 8) as u8,
+            z = val_5 as i32 == 0, n = val_5 & 0x8000 != 0, };
         }
         189 => (*spc).sp = (*spc).x,
         190 => {

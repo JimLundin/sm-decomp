@@ -152,8 +152,12 @@ macro_rules! native_assertion {
     };
 }
 
-// Emit repeated literal field stores without hoisting the receiver or value.
+// Emit ordered field stores without hoisting the receiver or values.
 macro_rules! set_fields {
+    ($receiver:tt; $($field:ident = $value:expr),+ $(,)?) => {
+        $($crate::set_fields!(@store $receiver, $field, $value);)+
+    };
+
     ($receiver:tt, $value:expr; $($field:ident),+ $(,)?) => {
         $($crate::set_fields!(@store $receiver, $field, $value);)+
     };

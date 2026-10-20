@@ -371,11 +371,8 @@ pub unsafe fn MiniDraygon_Func_11(game: &mut Game) {
             == 0
     {
         let E = Get_MiniDraygon(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_0B = 0;
-        (*E).var_0C = 1;
-        (*E).var_C = ((0xa88a78i32) as u16);
-        (*E).var_0C = 1;
-        (*E).var_02 = addr_kMiniDraygon_Ilist_8775 as u16;
+        set_fields! {[(*E)]; var_0B = 0, var_0C = 1, var_C = ((0xa88a78i32) as u16), var_0C = 1,
+        var_02 = addr_kMiniDraygon_Ilist_8775 as u16, };
         MiniDraygon_Func_12(game);
     }
 }
@@ -678,9 +675,8 @@ crate::game::callback_dispatch! {
         (*E).var_A = (*E).var_00;
     };
     Fune_Func_4 [] {
-        (*E).base.instruction_timer = 1;
-        (*E).base.timer = 0;
-        (*E).base.current_instruction = *(RomPtr_A8((*E).var_A, game) as *mut u16);
+        set_fields! {[(*E).base]; instruction_timer = 1, timer = 0,
+            current_instruction = *(RomPtr_A8((*E).var_A, game) as *mut u16), };
     };
     @external {
         11048846 => [()]; 11048847 => [()];
@@ -744,14 +740,9 @@ crate::game::callback_dispatch! {
         let E = Get_WreckedShipGhost(word!(game.cur_enemy_index) as i32, game);
         if (*E).var_B | v4 == 0 {
             (*E).base.properties = ((*E).base.properties) & (0xfaffu16);
-            (*E).var_A = ((0xa89c8ai32) as u16);
-            (*E).var_00 = (*E).base.y_pos;
-            (*E).var_B = 1;
-            (*E).var_C = 2;
-            (*E).var_01 = 0;
-            (*E).var_02 = g_word_A89AA2;
-            (*E).var_B = g_word_A89AA6;
-            (*E).var_05 = 4;
+            set_fields! {[(*E)]; var_A = ((0xa89c8ai32) as u16), var_00 = (*E).base.y_pos,
+                var_B = 1, var_C = 2, var_01 = 0, var_02 = g_word_A89AA2, var_B = g_word_A89AA6,
+                var_05 = 4, };
             let v2: u16 = word!(game.samus_x_pos);
             (*E).var_06 = word!(game.samus_x_pos);
             (*E).var_07 = v2;
@@ -760,11 +751,8 @@ crate::game::callback_dispatch! {
             let v3: u16 = *((ram_ptr!(game, u16; 0xafa) as *mut u8)
                 .offset(word!(game.cur_enemy_index) as i32 as isize)
                 as *mut u16);
-            (*E).var_0A = v3;
-            (*E).var_0B = v3;
-            (*E).var_0C = v3;
-            (*E).var_0D = g_word_A89A9E;
-            (*E).var_0E = g_word_A89A9C;
+            set_fields! {[(*E)]; var_0A = v3, var_0B = v3, var_0C = v3, var_0D = g_word_A89A9E,
+                var_0E = g_word_A89A9C, };
         }
     };
     [11050089] WreckedShipGhost_Func_4 [] {
@@ -2583,10 +2571,9 @@ pub unsafe fn WreckedShipRobot_Init(game: &mut Game) {
         (*(ram_ptr!(game, LongPtr; 0x178c))).bank = -88i32 as u8;
         (*(ram_ptr!(game, LongPtr; 0x178c))).addr = ((0xa8cc67i32) as u16);
         let E = Get_WreckedShipRobot(word!(game.cur_enemy_index) as i32, game);
-        (*E).base.properties = ((*E).base.properties) | (0xa000u16);
-        (*E).base.instruction_timer = 4;
-        (*E).base.timer = 0;
-        (*E).base.current_instruction = addr_kWreckedShipRobot_Ilist_C6E5 as u16;
+        set_fields! {[(*E).base]; properties = ((*E).base.properties) | (0xa000u16),
+        instruction_timer = 4, timer = 0,
+        current_instruction = addr_kWreckedShipRobot_Ilist_C6E5 as u16, };
         (*E).var_A = -512i32 as u16;
         word!(game.wrecked_ship_robot_palanim_timer = 1);
         *(ram_ptr!(game, u16; 0xd656)) = 0;
@@ -2602,11 +2589,9 @@ pub unsafe fn WreckedShipRobotDeactivated_Init(game: &mut Game) {
     if parameter_1 & 0x8000 != 0 || parameter_1 as i32 - 4i32 & 0x8000 == 0 {
         parameter_1 = 0;
     }
-    (*v0).parameter_1 = parameter_1;
-    (*v0).current_instruction = crate::rtl::rom_table_word!(game, 0xa8cc30, parameter_1 as isize);
-    (*v0).properties = ((*v0).properties) | (0x8000u16);
-    (*v0).instruction_timer = 1;
-    (*v0).timer = 0;
+    set_fields! {[(*v0)]; parameter_1 = parameter_1,
+    current_instruction = crate::rtl::rom_table_word!(game, 0xa8cc30, parameter_1 as isize),
+    properties = ((*v0).properties) | (0x8000u16), instruction_timer = 1, timer = 0, };
     word!(game.wrecked_ship_robot_palanim_timer = 0);
     (*v0).ai_var_E = 0;
     (*v0).ai_preinstr = 1;
@@ -2954,17 +2939,14 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_MaridiaPuffer(word!(game.cur_enemy_index) as i32, game); };
     MaridiaPuffer_Init [] {
-        (*E).base.instruction_timer = 1;
-        (*E).base.timer = 0;
-        (*E).base.current_instruction = addr_kMaridiaPuffer_Ilist_D841 as u16;
+        set_fields! {[(*E).base]; instruction_timer = 1, timer = 0,
+            current_instruction = addr_kMaridiaPuffer_Ilist_D841 as u16, };
         let v1: i32 = ((4u16).wrapping_mul((*E).parameter_1)) as i32 >> 1;
         let v2: u16 = g_word_A8D895[v1 as usize] as u16;
-        (*E).var_05 = v2;
-        (*E).var_F = v2;
-        (*E).var_06 = g_word_A8D895[(v1 + 1) as usize] as u16;
-        (*E).var_E = 16;
-        (*E).var_A = ((0xa8d92bi32) as u16);
-        (*E).var_00 = g_word_A8D885[(*E).parameter_2 as usize] as u16;
+        set_fields! {[(*E)]; var_05 = v2, var_F = v2,
+            var_06 = g_word_A8D895[(v1 + 1) as usize] as u16, var_E = 16,
+            var_A = ((0xa8d92bi32) as u16),
+            var_00 = g_word_A8D885[(*E).parameter_2 as usize] as u16, };
     };
     MaridiaPuffer_Main [] {
         let v1: u16 = ((*E).var_07).wrapping_sub(1);
@@ -3032,9 +3014,8 @@ crate::game::callback_dispatch! {
         (*E).var_40 = (*E).base.health;
         Enemy_NormalShotAI_A8(game);
         if (*E).base.health == (*E).var_40 && (*E).var_03 == 0 {
-            (*E).base.instruction_timer = 1;
-            (*E).base.timer = 0;
-            (*E).base.current_instruction = addr_kMaridiaPuffer_Ilist_D855 as u16;
+            set_fields! {[(*E).base]; instruction_timer = 1, timer = 0,
+                current_instruction = addr_kMaridiaPuffer_Ilist_D855 as u16, };
             (*E).var_02 =
                 g_word_A8D871[(word!(game.projectile_dir[word!(game.collision_detection_index)]) as i32
                     & 0xf) as usize] as u16;
@@ -3579,12 +3560,9 @@ crate::game::callback_dispatch! {
                 crate::rtl::rom_table_word!(game, 0xa8f3b0, (v10 + 1) as isize);
             (*E).base.instruction_timer = 1;
             (*E1_0).base.instruction_timer = 1;
-            (*E).var_B = (r18).wrapping_add((*E).base.x_pos);
-            (*E).var_C = (*E).base.y_pos;
-            (*E).var_A = ((0xa8f3b8i32) as u16);
-            (*E).var_12 = r24;
-            (*E).var_11 = r20;
-            (*E).var_10 = 0;
+            set_fields! {[(*E)]; var_B = (r18).wrapping_add((*E).base.x_pos),
+                var_C = (*E).base.y_pos, var_A = ((0xa8f3b8i32) as u16), var_12 = r24,
+                var_11 = r20, var_10 = 0, };
         }
     };
     [11073203] KiHunter_Func_8 [] {
@@ -3738,18 +3716,12 @@ crate::game::callback_dispatch! {
         }
     };
     KiHunter_Func_15 [] {
-        (*E).var_00 = ((0xa8f7dbi32) as u16);
-        (*E).var_B = (*E).var_0A;
-        (*E).var_F = -8192i32 as u16;
-        (*E).var_05 = (*E).base.x_pos;
-        (*E).var_06 = (*E).base.y_pos;
+        set_fields! {[(*E)]; var_00 = ((0xa8f7dbi32) as u16), var_B = (*E).var_0A,
+            var_F = -8192i32 as u16, var_05 = (*E).base.x_pos, var_06 = (*E).base.y_pos, };
     };
     KiHunter_Func_16 [] {
-        (*E).var_00 = ((0xa8f8adi32) as u16);
-        (*E).var_B = (*E).var_0A;
-        (*E).var_F = -24576i32 as u16;
-        (*E).var_05 = (*E).base.x_pos;
-        (*E).var_06 = (*E).base.y_pos;
+        set_fields! {[(*E)]; var_00 = ((0xa8f8adi32) as u16), var_B = (*E).var_0A,
+            var_F = -24576i32 as u16, var_05 = (*E).base.x_pos, var_06 = (*E).base.y_pos, };
     };
     @external {
         11072995 => [()];
@@ -3799,10 +3771,8 @@ pub unsafe fn KiHunter_Shot(game: &mut Game) {
             || ((health) as i16).wrapping_sub(((*E1).parameter_1) as i16) < 0
         {
             if (*EK).var_14 == 0 {
-                (*EK).var_14 = 1;
-                (*EK).var_A = ((0xa8f55ai32) as u16);
-                (*EK).var_08 = 0;
-                (*EK).var_09 = 1;
+                set_fields! {[(*EK)]; var_14 = 1, var_A = ((0xa8f55ai32) as u16), var_08 = 0,
+                var_09 = 1, };
                 word!(game.cur_enemy_index = (old_cur_enemy_index).wrapping_add(64));
                 if (*E1).var_A as i32 != 0xa8f7cf & 0xffff {
                     (*E1).var_07 = (*E1).base.y_pos;
@@ -3810,12 +3780,10 @@ pub unsafe fn KiHunter_Shot(game: &mut Game) {
                     KiHunter_Func_17(game);
                     KiHunter_Func_12(game);
                     KiHunter_Func_13(game);
-                    (*E1).var_F = -8192i32 as u16;
-                    (*E1).var_A = ((0xa8f7cfi32) as u16);
-                    (*E1).var_00 = ((0xa8f7dbi32) as u16);
-                    (*E1).var_06 = ((*E1).var_07).wrapping_sub((*E1).var_0B);
-                    (*E1).var_05 = (*E1).base.x_pos;
-                    (*E1).var_B = (*E1).var_0A;
+                    set_fields! {[(*E1)]; var_F = -8192i32 as u16,
+                    var_A = ((0xa8f7cfi32) as u16), var_00 = ((0xa8f7dbi32) as u16),
+                    var_06 = ((*E1).var_07).wrapping_sub((*E1).var_0B),
+                    var_05 = (*E1).base.x_pos, var_B = (*E1).var_0A, };
                     (*E1).base.current_instruction = addr_kKiHunter_Ilist_EA7E as u16;
                     (*E1).base.spritemap_pointer = addr_kSpritemap_Nothing_A8 as u16;
                     (*E1).base.instruction_timer = 1;
@@ -3876,15 +3844,10 @@ crate::game::callback_dispatch! {
     KiHunter_Init [] {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_DisableSamusColl) as u16);
         (*E).var_14 = 0;
-        (*E).base.instruction_timer = 1;
-        (*E).base.timer = 0;
-        (*E).base.current_instruction = addr_kKiHunter_Ilist_E9FA as u16;
-        (*E).var_F = 0;
-        (*E).var_A = ((0xa8f268i32) as u16);
-        (*E).var_08 = 0;
-        (*E).var_09 = 1;
-        (*E).var_06 = 0;
-        (*E).var_07 = -1i32 as u16;
+        set_fields! {[(*E).base]; instruction_timer = 1, timer = 0,
+            current_instruction = addr_kKiHunter_Ilist_E9FA as u16, };
+        set_fields! {[(*E)]; var_F = 0, var_A = ((0xa8f268i32) as u16), var_08 = 0, var_09 = 1,
+            var_06 = 0, var_07 = -1i32 as u16, };
         let v1: u16 = ((*E).base.y_pos).wrapping_sub(16);
         (*E).var_0A = v1;
         (*E).var_0B = (v1).wrapping_add(32);

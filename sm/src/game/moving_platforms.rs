@@ -114,21 +114,16 @@ pub(crate) unsafe fn initialize(kind: Kind, game: &mut Game) {
     let p = kind.motion();
     (*e).var_00 = (*e).base.current_instruction as u8 as u16;
     let i = 4 * (*e).var_00 as isize;
-    (*e).var_D = crate::rtl::rom_table_word!(game, 0xa28187, i);
-    (*e).var_C = crate::rtl::rom_table_word!(game, 0xa28187, i + 1);
-    (*e).var_F = crate::rtl::rom_table_word!(game, 0xa28187, i + 2);
-    (*e).var_E = crate::rtl::rom_table_word!(game, 0xa28187, i + 3);
-    (*e).var_01 = (*e).base.current_instruction >> 8;
-    (*e).var_20 = (*e).var_01 ^ p.horizontal as u16;
-    (*e).var_02 = (*e).base.extra_properties as u8 as u16;
-    (*e).var_08 = 16u16.wrapping_mul((*e).var_02);
-    (*e).var_03 = (*e).base.extra_properties >> 8;
-    (*e).var_09 = 16u16.wrapping_mul((*e).var_03);
-    (*e).var_04 = (*e).parameter_1 as u8 as u16;
-    (*e).var_07 = 2u16.wrapping_mul((*e).var_04);
-    (*e).var_05 = (*e).parameter_1 >> 8;
-    (*e).var_06 = (*e).parameter_2;
-    (*e).var_B = (*e).parameter_2;
+    crate::set_fields! {[(*e)]; var_D = crate::rtl::rom_table_word!(game, 0xa28187, i),
+    var_C = crate::rtl::rom_table_word!(game, 0xa28187, i + 1),
+    var_F = crate::rtl::rom_table_word!(game, 0xa28187, i + 2),
+    var_E = crate::rtl::rom_table_word!(game, 0xa28187, i + 3),
+    var_01 = (*e).base.current_instruction >> 8, var_20 = (*e).var_01 ^ p.horizontal as u16,
+    var_02 = (*e).base.extra_properties as u8 as u16,
+    var_08 = 16u16.wrapping_mul((*e).var_02), var_03 = (*e).base.extra_properties >> 8,
+    var_09 = 16u16.wrapping_mul((*e).var_03), var_04 = (*e).parameter_1 as u8 as u16,
+    var_07 = 2u16.wrapping_mul((*e).var_04), var_05 = (*e).parameter_1 >> 8,
+    var_06 = (*e).parameter_2, var_B = (*e).parameter_2, };
     let pos = if p.horizontal {
         (*e).base.x_pos
     } else {

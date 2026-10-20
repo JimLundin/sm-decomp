@@ -379,9 +379,7 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
         (*E).var_A = 84;
         enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E1CC as u16, timer = 1}
         (*E).base.x_pos = 576;
-        (*E).base.y_pos = 144;
-        (*E).base.y_height = 28;
-        (*E).base.x_width = 40;
+        set_fields! {[(*E).base]; y_pos = 144, y_height = 28, x_width = 40, };
         let v6: u16 = word!(game.vram_write_queue_tail);
         let mut v7: *mut VramWriteEntry =
             gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
@@ -404,9 +402,8 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
         word!(game.UNUSED_word_7E179E = 16);
         word!(game.camera_distance_index = 2);
         word!(game.enemy_bg2_tilemap_size = 1024);
-        (*E_0).base.current_instruction = addr_kCrocomire_Ilist_BADE as u16;
-        (*E_0).base.extra_properties = ((*E_0).base.extra_properties) | (4u16);
-        (*E_0).base.instruction_timer = 1;
+        set_fields! {[(*E_0).base]; current_instruction = addr_kCrocomire_Ilist_BADE as u16,
+        extra_properties = ((*E_0).base.extra_properties) | (4u16), instruction_timer = 1, };
     };
 }
 pub unsafe fn Crocomire_Func_27(k: u16, game: &mut Game) {
@@ -1363,9 +1360,8 @@ crate::prefixed_callbacks! {
         } else {
             enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E1CC as u16, timer = 1}
             (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(64);
-            (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(21);
-            (*E).base.y_height = 28;
-            (*E).base.x_width = 40;
+            set_fields! {[(*E).base]; y_pos = ((*E).base.y_pos).wrapping_add(21), y_height = 28,
+                x_width = 40, };
             SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb753 as VoidP), game);
             Enemy_ItemDrop_Crocomire(0, game);
             Crocomire_9BB3(game);

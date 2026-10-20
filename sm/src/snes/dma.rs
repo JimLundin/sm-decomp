@@ -33,24 +33,13 @@ pub unsafe fn dma_init(snes: *mut Snes) -> *mut Dma {
 }
 pub unsafe fn dma_reset(dma: *mut Dma) {
     for i in 0..8 {
-        (*dma).channel[i].bAdr = 0xff;
-        (*dma).channel[i].aAdr = 0xffff;
-        (*dma).channel[i].aBank = 0xff;
-        (*dma).channel[i].size = 0xffff;
-        (*dma).channel[i].indBank = 0xff;
-        (*dma).channel[i].tableAdr = 0xffff;
+        set_fields! {[(*dma).channel[i]]; bAdr = 0xff, aAdr = 0xffff, aBank = 0xff,
+        size = 0xffff, indBank = 0xff, tableAdr = 0xffff, };
         set_fields! {[(*dma).channel[i]], 0xff; repCount, unusedByte}
         (*dma).channel[i].dmaActive = false;
-        (*dma).channel[i].hdmaActive = false;
-        (*dma).channel[i].mode = 7;
-        (*dma).channel[i].fixed = true;
-        (*dma).channel[i].decrement = true;
-        (*dma).channel[i].indirect = true;
-        (*dma).channel[i].fromB = true;
-        (*dma).channel[i].unusedBit = true;
-        (*dma).channel[i].doTransfer = false;
-        (*dma).channel[i].terminated = false;
-        (*dma).channel[i].offIndex = 0;
+        set_fields! {[(*dma).channel[i]]; hdmaActive = false, mode = 7, fixed = true,
+        decrement = true, indirect = true, fromB = true, unusedBit = true,
+        doTransfer = false, terminated = false, offIndex = 0, };
     }
     set_fields! {[(*dma)], 0; hdmaTimer, dmaTimer}
     (*dma).dmaBusy = false;
@@ -104,12 +93,9 @@ pub unsafe fn dma_write(dma: *mut Dma, address: u16, value: u8) {
     let channel = &mut (*dma).channel[usize::from((address >> 4) & 7)];
     match address & 0x0f {
         0 => {
-            channel.mode = value & 7;
-            channel.fixed = value & 0x08 != 0;
-            channel.decrement = value & 0x10 != 0;
-            channel.unusedBit = value & 0x20 != 0;
-            channel.indirect = value & 0x40 != 0;
-            channel.fromB = value & 0x80 != 0;
+            set_fields! {[channel]; mode = value & 7, fixed = value & 0x08 != 0,
+            decrement = value & 0x10 != 0, unusedBit = value & 0x20 != 0,
+            indirect = value & 0x40 != 0, fromB = value & 0x80 != 0, };
         }
         1 => channel.bAdr = value,
         2 => channel.aAdr = (channel.aAdr & 0xff00) | u16::from(value),
@@ -174,8 +160,7 @@ pub unsafe fn dma_doDma(dma: *mut Dma, game: &mut Game) {
     }
     (*dma).channel[i].size = (*dma).channel[i].size.wrapping_sub(1);
     if (*dma).channel[i].size == 0 {
-        (*dma).channel[i].offIndex = 0;
-        (*dma).channel[i].dmaActive = false;
+        set_fields! {[(*dma).channel[i]]; offIndex = 0, dmaActive = false, };
         (*dma).dmaTimer = (*dma).dmaTimer.wrapping_add(8);
     }
 }
@@ -200,10 +185,9 @@ pub unsafe fn dma_initHdma(dma: *mut Dma, game: &mut Game) {
     for i in 0i32..8 {
         let mut keep_channel_active: bool = if (*dma).channel[i as usize].hdmaActive {
             hdmaHappened = true_0 != 0;
-            (*dma).channel[i as usize].dmaActive = false_0 != 0;
-            (*dma).channel[i as usize].offIndex = 0;
-            (*dma).channel[i as usize].tableAdr = (*dma).channel[i as usize].aAdr;
-            (*dma).channel[i as usize].repCount = hdma_read_table_byte(dma, i as usize, game);
+            set_fields! {[(*dma).channel[i as usize]]; dmaActive = false_0 != 0, offIndex = 0,
+            tableAdr = (*dma).channel[i as usize].aAdr,
+            repCount = hdma_read_table_byte(dma, i as usize, game), };
             if (*dma).channel[i as usize].repCount as i32 == 0 {
                 (*dma).channel[i as usize].terminated = true_0 != 0;
                 false
@@ -236,8 +220,7 @@ pub unsafe fn dma_doHdma(dma: *mut Dma, game: &mut Game) {
             && !(*dma).channel[i as usize].terminated
         {
             hdmaHappened = true_0 != 0;
-            (*dma).channel[i as usize].dmaActive = false_0 != 0;
-            (*dma).channel[i as usize].offIndex = 0;
+            set_fields! {[(*dma).channel[i as usize]]; dmaActive = false_0 != 0, offIndex = 0, };
             (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8) as u16;
             if (*dma).channel[i as usize].doTransfer {
                 let mut j: i32 = 0;

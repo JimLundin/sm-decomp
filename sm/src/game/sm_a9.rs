@@ -549,10 +549,7 @@ crate::game::callback_dispatch! {
         QueueMusic_Delayed8(5, game);
         word!(game.earthquake_type = 2);
         word!(game.earthquake_timer = 256);
-        (*E1).var_34 = 80;
-        (*E1).var_31 = 1;
-        (*E1).var_32 = 8;
-        (*E1).var_33 = 6;
+        set_fields! {[(*E1)]; var_34 = 80, var_31 = 1, var_32 = 8, var_33 = 6, };
         (*E0).var_A = ((0xa98e4di32) as u16);
     };
     [11120417] MotherBrain_Phase3_Death_2 [] {
@@ -731,10 +728,7 @@ crate::game::callback_dispatch! {
     [11122923] MotherBomb_FiringRainbowBeam_0 [] {
         MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C87 as u16, game);
         let E1 = Get_MotherBrain(0x40, game);
-        (*E1).var_34 = 64;
-        (*E1).var_31 = 1;
-        (*E1).var_32 = 2;
-        (*E1).var_33 = 4;
+        set_fields! {[(*E1)]; var_34 = 64, var_31 = 1, var_32 = 2, var_33 = 4, };
         let E = Get_MotherBrain(0, game);
         (*E).var_A = ((0xa9b91ai32) as u16);
         (*E).var_F = 256;
@@ -769,10 +763,7 @@ crate::game::callback_dispatch! {
                 (*E).var_33 = 512;
                 (*E).var_09 = SpawnMotherBrainRainbowBeamHdma(game);
                 let E1 = Get_MotherBrain(0x40, game);
-                (*E1).var_34 = 64;
-                (*E1).var_31 = 1;
-                (*E1).var_32 = 2;
-                (*E1).var_33 = 4;
+                set_fields! {[(*E1)]; var_34 = 64, var_31 = 1, var_32 = 2, var_33 = 4, };
                 set_fields! {[(*E)], 0; parameter_1, parameter_2}
                 let mut v4: u16 = 5;
                 if ((word!(game.samus_health)) as i16).wrapping_sub(700) < 0 {
@@ -996,10 +987,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11123421] MotherBomb_FiringRainbowBeam_13_LowerHead [] {
-        (*E1).var_34 = 64;
-        (*E1).var_31 = 1;
-        (*E1).var_32 = 2;
-        (*E1).var_33 = 4;
+        set_fields! {[(*E1)]; var_34 = 64, var_31 = 1, var_32 = 2, var_33 = 4, };
         let E = Get_MotherBrain(0, game);
         (*E).var_A = ((0xa9bb06i32) as u16);
         (*E).var_F = 128;
@@ -1389,10 +1377,7 @@ crate::game::callback_dispatch! {
     [11125022] MotherBrain_Phase2_Revive_7 [] {
         (*E).var_13 = 0;
         let E1 = Get_MotherBrain(0x40, game);
-        (*E1).var_31 = 1;
-        (*E1).var_32 = 2;
-        (*E1).var_33 = 4;
-        (*E1).var_34 = 64;
+        set_fields! {[(*E1)]; var_31 = 1, var_32 = 2, var_33 = 4, var_34 = 64, };
         (*E).var_A = ((0xa9c147i32) as u16);
         MotherBrain_Phase2_Revive_8(game);
     };
@@ -1863,9 +1848,8 @@ pub unsafe fn MotherBrainsBrain_Init(game: &mut Game) {
     let E1 = Get_MotherBrain(0x40, game);
     (*E1).base.health = 3000;
     MotherBrain_SetBrainUnusedInstrs(addr_kMotherBrain_Ilist_9C13 as u16, game);
-    (*E1).base.vram_tiles_index = 0;
-    (*E1).base.properties = ((*E1).base.properties) | (0x1100u16);
-    (*E1).base.palette_index = 512;
+    set_fields! {[(*E1).base]; vram_tiles_index = 0,
+    properties = ((*E1).base.properties) | (0x1100u16), palette_index = 512, };
     let E = Get_MotherBrain(0, game);
     set_fields! {[(*E)], 512; var_0C, var_0D}
     MotherBrain_SetBrainInstrs(addr_stru_A99C21 as u16, game);
@@ -3090,11 +3074,8 @@ crate::game::callback_dispatch! {
         }
     };
     [11125552] MotherBrain_Phase3_Neck_Normal [] {
-        (*E).var_32 = 1;
-        (*E).var_34 = 128;
-        (*E).var_32 = 2;
-        (*E).var_33 = 4;
-        (*E).var_18 = addr_locret_A9C353 as u16;
+        set_fields! {[(*E)]; var_32 = 1, var_34 = 128, var_32 = 2, var_33 = 4,
+            var_18 = addr_locret_A9C353 as u16, };
     };
     [11125588] MotherBrain_Phase3_Neck_SetupRecoilRecovery [] {
         (*E).var_31 = 1;
@@ -3382,9 +3363,7 @@ pub unsafe fn ShitroidInCutscene_Init(game: &mut Game) {
     (*E).var_04 = 1;
     (*E).base.timer = 0;
     (*E).var_E = 10;
-    (*E).base.vram_tiles_index = 160;
-    (*E).base.x_pos = 320;
-    (*E).base.y_pos = 96;
+    set_fields! {[(*E).base]; vram_tiles_index = 160, x_pos = 320, y_pos = 96, };
     set_fields! {[(*E)], 0; var_B, var_C, var_09}
     (*E).var_A = ((0xa9c7cci32) as u16);
     (*E).var_F = 248;
@@ -3524,12 +3503,8 @@ crate::game::callback_dispatch! {
         }
         if (*E).base.health == 0 {
             (*E).base.health = 320;
-            (*E).var_A = ((0xa9cb13i32) as u16);
-            (*E).var_E = 10;
-            (*E).var_D = 0;
-            (*E).var_0F = ((0xa9f68fi32) as u16);
-            (*E).var_04 = 1;
-            (*E).var_09 = 0;
+            set_fields! {[(*E)]; var_A = ((0xa9cb13i32) as u16), var_E = 10, var_D = 0,
+                var_0F = ((0xa9f68fi32) as u16), var_04 = 1, var_09 = 0, };
         }
     };
     [11127571] ShitroidInCutscene_ReleaseSamus [] {
@@ -4108,11 +4083,7 @@ pub unsafe fn DeadTorizo_Init(game: &mut Game) {
     enemy_instruction! {[(*E).base]; instruction = addr_kDeadTorizo_Ilist_D6DC as u16, timer = 1}
     (*E).base.timer = 0;
     (*E).base.palette_index = 512;
-    (*E).var_B = 0;
-    (*E).var_C = 8;
-    (*E).var_04 = 0;
-    (*E).var_02 = 15;
-    (*E).var_03 = 0;
+    set_fields! {[(*E)]; var_B = 0, var_C = 8, var_04 = 0, var_02 = 15, var_03 = 0, };
     InitializeEnemyCorpseRotting(0, addr_stru_A9DD58 as u16, game);
 }
 crate::game::callback_dispatch! {
@@ -4564,14 +4535,9 @@ pub use self::DeadZoomer_Rotting as DeadSkree_Rotting;
 pub unsafe fn ProcessCorpseRotting(k: u16, game: &mut Game) -> u8 {
     let EK = Get_DeadMonsters(k as i32, game);
     let mut E0 = Get_DeadMonsters(0, game);
-    (*E0).var_45 = (*EK).var_57;
-    (*E0).var_46 = (*EK).var_58;
-    (*E0).var_47 = (*EK).var_59;
-    (*E0).var_48 = (*EK).var_5A;
-    (*E0).var_49 = (*EK).var_5B;
-    (*E0).var_44 = (*EK).var_56;
-    (*E0).var_42 = (*EK).var_54;
-    (*E0).var_43 = (*EK).var_55;
+    set_fields! {[(*E0)]; var_45 = (*EK).var_57, var_46 = (*EK).var_58, var_47 = (*EK).var_59,
+    var_48 = (*EK).var_5A, var_49 = (*EK).var_5B, var_44 = (*EK).var_56,
+    var_42 = (*EK).var_54, var_43 = (*EK).var_55, };
     let mut dms_var_52: u16 = (*EK).var_52;
     let mut v4: u16 = 0;
     loop {
@@ -4658,11 +4624,9 @@ pub unsafe fn InitializeCorpseRottingDataTable(mut table: *mut u16, a: u16) {
 pub unsafe fn InitializeEnemyCorpseRotting(k: u16, j: u16, game: &mut Game) {
     let v2 = RomPtr_A9(j, game);
     let E = Get_DeadMonsters(k as i32, game);
-    (*E).var_52 = *(v2 as *mut u16);
-    (*E).var_53 = *(v2.offset(2) as *mut u16);
-    (*E).var_54 = *(v2.offset(4) as *mut u16);
-    (*E).var_55 = *(v2.offset(6) as *mut u16);
-    (*E).var_5B = *(v2.offset(14) as *mut u16);
+    set_fields! {[(*E)]; var_52 = *(v2 as *mut u16), var_53 = *(v2.offset(2) as *mut u16),
+    var_54 = *(v2.offset(4) as *mut u16), var_55 = *(v2.offset(6) as *mut u16),
+    var_5B = *(v2.offset(14) as *mut u16), };
     let v4: u16 = *(v2.offset(12) as *mut u16);
     (*E).var_56 = v4;
     (*E).var_5A = (*(RomPtr_A9(v4, game) as *mut u16).offset(1)).wrapping_sub(12);

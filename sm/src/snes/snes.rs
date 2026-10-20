@@ -28,21 +28,13 @@ pub const false_0: i32 = 0;
 pub unsafe fn snes_init(ram: *mut u8) -> *mut Snes {
     let snes = malloc(size_of::<Snes>() as size_t) as *mut Snes;
     core::ptr::write_bytes(snes, 0, 1);
-    (*snes).ram = ram;
-    (*snes).debug_cycles = false_0 != 0;
-    (*snes).debug_apu_cycles = false_0 != 0;
-    (*snes).runningWhichVersion = 0;
-    (*snes).disableRender = false;
+    set_fields! {[(*snes)]; ram = ram, debug_cycles = false_0 != 0,
+    debug_apu_cycles = false_0 != 0, runningWhichVersion = 0, disableRender = false, };
     set_fields! {[(*snes)], 0; cpuMemOps, cpuCyclesLeft}
     (*snes).cpu = cpu_init(snes as *mut c_void, 0);
-    (*snes).apu = apu_init();
-    (*snes).dma = dma_init(snes);
-    (*snes).my_ppu = ppu_init(snes);
-    (*snes).snes_ppu = ppu_init(snes);
-    (*snes).ppu = (*snes).snes_ppu;
-    (*snes).cart = cart_init(snes);
-    (*snes).input1 = input_init(snes);
-    (*snes).input2 = input_init(snes);
+    set_fields! {[(*snes)]; apu = apu_init(), dma = dma_init(snes), my_ppu = ppu_init(snes),
+    snes_ppu = ppu_init(snes), ppu = (*snes).snes_ppu, cart = cart_init(snes),
+    input1 = input_init(snes), input2 = input_init(snes), };
     snes
 }
 pub unsafe fn snes_saveload(
@@ -75,25 +67,14 @@ pub unsafe fn snes_reset(snes: *mut Snes, hard: bool, game: &mut Game) {
     }
     set_fields! {[(*snes)], 0; ramAdr, hPos, vPos, frames}
     (*snes).cpuCyclesLeft = 52;
-    (*snes).cpuMemOps = 0;
-    (*snes).apuCatchupCycles = 0.0f64;
-    (*snes).hIrqEnabled = false;
-    (*snes).vIrqEnabled = false;
-    (*snes).nmiEnabled = false;
+    set_fields! {[(*snes)]; cpuMemOps = 0, apuCatchupCycles = 0.0f64, hIrqEnabled = false,
+    vIrqEnabled = false, nmiEnabled = false, };
     set_fields! {[(*snes)], 0x1ff; hTimer, vTimer}
     (*snes).inNmi = false;
-    (*snes).inIrq = false;
-    (*snes).inVblank = false;
-    (*snes).portAutoReadX = [0; 4];
-    (*snes).autoJoyRead = false;
-    (*snes).autoJoyTimer = 0;
-    (*snes).ppuLatch = false;
-    (*snes).multiplyA = 0xff;
-    (*snes).multiplyResult = 0xfe01;
-    (*snes).divideA = 0xffff;
-    (*snes).divideResult = 0x101;
-    (*snes).fastMem = false;
-    (*snes).openBus = 0;
+    set_fields! {[(*snes)]; inIrq = false, inVblank = false, portAutoReadX = [0; 4],
+    autoJoyRead = false, autoJoyTimer = 0, ppuLatch = false, multiplyA = 0xff,
+    multiplyResult = 0xfe01, divideA = 0xffff, divideResult = 0x101, fastMem = false,
+    openBus = 0, };
 }
 pub unsafe fn snes_handle_pos_stuff(snes: *mut Snes, game: &mut Game) {
     if (*snes).hPos == 0 {

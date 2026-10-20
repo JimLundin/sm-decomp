@@ -1008,25 +1008,14 @@ unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
     ] = (*s).mode7_flags;
     [ppu.rangeOver, ppu.timeOver, ppu.evenFrame] = (*s).status_flags;
     [ppu.scrollPrev, ppu.scrollPrev2, ppu.m7prev] = (*s).write_latches;
-    (*(*snes).ppu).cgram = (*s).cgram;
-    (*(*snes).ppu).cgramPointer = (*s).cgram_pointer;
-    (*(*snes).ppu).cgramSecondWrite = (*s).cgram_second_write;
-    (*(*snes).ppu).cgramBuffer = (*s).cgram_buffer;
-    (*(*snes).ppu).ppu1openBus = (*s).ppu1_open_bus;
-    (*(*snes).ppu).ppu2openBus = (*s).ppu2_open_bus;
-    (*(*snes).ppu).vramReadBuffer = (*s).vram_read_buffer;
-    (*(*snes).ppu).vramPointer = (*s).vram_pointer;
-    (*(*snes).ppu).vramIncrement = (*s).vram_increment;
-    (*(*snes).ppu).vramIncrementOnHigh = (*s).vram_increment_on_high;
-    (*(*snes).ppu).vramRemapMode = (*s).vram_remap_mode;
-    (*c).a = (*s).a;
-    (*c).x = (*s).x;
-    (*c).y = (*s).y;
-    (*c).sp = (*s).sp;
-    (*c).dp = (*s).dp;
-    (*c).db = (*s).db;
-    (*c).pc = (*s).pc;
-    (*c).k = (*s).k;
+    crate::set_fields! {[(*(*snes).ppu)]; cgram = (*s).cgram, cgramPointer = (*s).cgram_pointer,
+    cgramSecondWrite = (*s).cgram_second_write, cgramBuffer = (*s).cgram_buffer,
+    ppu1openBus = (*s).ppu1_open_bus, ppu2openBus = (*s).ppu2_open_bus,
+    vramReadBuffer = (*s).vram_read_buffer, vramPointer = (*s).vram_pointer,
+    vramIncrement = (*s).vram_increment, vramIncrementOnHigh = (*s).vram_increment_on_high,
+    vramRemapMode = (*s).vram_remap_mode, };
+    crate::set_fields! {[(*c)]; a = (*s).a, x = (*s).x, y = (*s).y, sp = (*s).sp, dp = (*s).dp,
+    db = (*s).db, pc = (*s).pc, k = (*s).k, };
     (*snes).vTimer = (*s).vTimer;
     (*c).e = (*s).cpu_emulation;
     (*c).stopped = (*s).cpu_stopped;
@@ -1066,23 +1055,15 @@ unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
         (size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
     let ppu = &mut *(*snes).ppu;
-    ppu.hCount = (*s).counters.horizontal;
-    ppu.vCount = (*s).counters.vertical;
-    ppu.hCountSecond = (*s).counters.horizontal_second_byte;
-    ppu.vCountSecond = (*s).counters.vertical_second_byte;
-    ppu.countersLatched = (*s).counters.latched;
-    ppu.oam = (*s).oam;
-    ppu.highOam = (*s).high_oam;
-    ppu.oamAdr = (*s).sprite.address;
-    ppu.oamAdrWritten = (*s).sprite.written_address;
-    ppu.oamInHigh = (*s).sprite.high_table;
-    ppu.oamInHighWritten = (*s).sprite.written_high_table;
-    ppu.oamSecondWrite = (*s).sprite.second_byte;
-    ppu.oamBuffer = (*s).sprite.buffer;
-    ppu.objPriority = (*s).sprite.priority_rotation;
-    ppu.objTileAdr1 = (*s).sprite.tile_address_1;
-    ppu.objTileAdr2 = (*s).sprite.tile_address_2;
-    ppu.objSize = (*s).sprite.size;
+    crate::set_fields! {[ppu]; hCount = (*s).counters.horizontal,
+    vCount = (*s).counters.vertical, hCountSecond = (*s).counters.horizontal_second_byte,
+    vCountSecond = (*s).counters.vertical_second_byte,
+    countersLatched = (*s).counters.latched, oam = (*s).oam, highOam = (*s).high_oam,
+    oamAdr = (*s).sprite.address, oamAdrWritten = (*s).sprite.written_address,
+    oamInHigh = (*s).sprite.high_table, oamInHighWritten = (*s).sprite.written_high_table,
+    oamSecondWrite = (*s).sprite.second_byte, oamBuffer = (*s).sprite.buffer,
+    objPriority = (*s).sprite.priority_rotation, objTileAdr1 = (*s).sprite.tile_address_1,
+    objTileAdr2 = (*s).sprite.tile_address_2, objSize = (*s).sprite.size, };
     ppu.objPixelBufferXX[..19].copy_from_slice(&(*s).sprite.legacy_pixel_prefix);
 }
 pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut Game) -> i32 {
@@ -1093,15 +1074,9 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
     printf(b"RunAsmCode!\n\0" as *const u8 as *const c_char);
     game.g_ram[0x1ffffi32 as usize] = 1;
     let dc: bool = (*game.g_snes).debug_cycles;
-    (*game.g_cpu).db = (pc >> 16) as u8;
-    (*game.g_cpu).a = a;
-    (*game.g_cpu).x = x;
-    (*game.g_cpu).y = y;
-    (*game.g_cpu).spBreakpoint = (*game.g_cpu).sp;
-    (*game.g_cpu).k = (pc >> 16) as u8;
-    (*game.g_cpu).pc = (pc & 0xffff) as u16;
-    (*game.g_cpu).mf = flags & 1 != 0;
-    (*game.g_cpu).xf = (flags & 2) >> 1 != 0;
+    crate::set_fields! {[(*game.g_cpu)]; db = (pc >> 16) as u8, a = a, x = x, y = y,
+    spBreakpoint = (*game.g_cpu).sp, k = (pc >> 16) as u8, pc = (pc & 0xffff) as u16,
+    mf = flags & 1 != 0, xf = (flags & 2) >> 1 != 0, };
     game.g_calling_asm_from_c = true_0 != 0;
     while game.g_calling_asm_from_c {
         let pc_0: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
@@ -1123,10 +1098,7 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
             }
         }
     }
-    (*game.g_cpu).dp = org_dp;
-    (*game.g_cpu).sp = org_sp;
-    (*game.g_cpu).db = org_b;
-    (*game.g_cpu).pc = org_pc;
+    crate::set_fields! {[(*game.g_cpu)]; dp = org_dp, sp = org_sp, db = org_b, pc = org_pc, };
     (*game.g_snes).debug_cycles = dc;
     game.g_calling_asm_from_c_ret
 }

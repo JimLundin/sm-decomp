@@ -391,13 +391,10 @@ pub unsafe fn Kraid_Init(game: &mut Game) {
         (*E_0).kraid_healths_4ths[3i32 as usize] =
             ((*E_0).kraid_healths_4ths[0i32 as usize]).wrapping_add(v12);
         (*E_0).field_2E[8i32 as usize] = 0;
-        (*E_0).base.x_pos = 176;
-        (*E_0).base.y_pos = 592;
-        (*E_0).base.properties = ((*E_0).base.properties) | ((kEnemyProps_Tangible) as u16);
-        (*E_0).kraid_var_A = ((0xa7c865i32) as u16);
-        (*E_0).kraid_var_F = 300;
-        (*E_0).kraid_next = ((0xa7c86bi32) as u16);
-        (*E_0).kraid_var_C = 64;
+        set_fields! {[(*E_0).base]; x_pos = 176, y_pos = 592,
+        properties = ((*E_0).base.properties) | ((kEnemyProps_Tangible) as u16), };
+        set_fields! {[(*E_0)]; kraid_var_A = ((0xa7c865i32) as u16), kraid_var_F = 300,
+        kraid_next = ((0xa7c86bi32) as u16), kraid_var_C = 64, };
         DisableMinimapAndMarkBossRoomAsExplored(game);
         word_transfers!(game, descending, 32; native(0x2ffe) <- value(824));
         word!(game.earthquake_type = 5);
@@ -439,9 +436,8 @@ pub unsafe fn KraidsTopLint_Init(game: &mut Game) {
         (*v0.offset(2)).palette_index = (*v0).palette_index;
         enemy_instruction! {[(*v0.offset(2))]; timer = 0x7fff, instruction = addr_kKraid_Ilist_8AFE as u16}
         (*v0.offset(2)).spritemap_pointer = addr_kKraid_Sprmap_A5DF as u16;
-        (*v0.offset(2)).ai_var_A = addr_locret_A7B831 as u16;
-        (*v0.offset(2)).ai_preinstr = 0x7fff;
-        (*v0.offset(2)).ai_var_C = 0;
+        set_fields! {[(*v0.offset(2))]; ai_var_A = addr_locret_A7B831 as u16,
+        ai_preinstr = 0x7fff, ai_var_C = 0, };
     };
 }
 pub unsafe fn KraidsMiddleLint_Init(game: &mut Game) {
@@ -1575,11 +1571,9 @@ crate::game::callback_dispatch! {
         };
         let v3 = RomPtr_A7(v2, game);
         let E = Get_Kraid(word!(game.cur_enemy_index) as i32, game);
-        (*E).kraid_var_B = *(v3 as *mut u16);
-        (*E).kraid_var_C = *(v3.offset(2) as *mut u16);
-        (*E).kraid_var_D = *(v3.offset(4) as *mut u16);
-        (*E).kraid_var_E = *(v3.offset(6) as *mut u16);
-        (*E).kraid_parameter_1 = 1;
+        set_fields! {[(*E)]; kraid_var_B = *(v3 as *mut u16),
+            kraid_var_C = *(v3.offset(2) as *mut u16), kraid_var_D = *(v3.offset(4) as *mut u16),
+            kraid_var_E = *(v3.offset(6) as *mut u16), kraid_parameter_1 = 1, };
         (*E).base.properties = ((*E).base.properties as i32
             & !(kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
             as u16;
@@ -3513,10 +3507,8 @@ pub unsafe fn Etecoon_Func_10(k: u16, game: &mut Game) {
             (*E_0).base.current_instruction = addr_kEtecoon_Ilist_E8AC as u16;
         }
         (*E_0).base.instruction_timer = 1;
-        (*E_0).var_E = 11;
-        (*E_0).var_F = ((0xa7ec1bi32) as u16);
-        (*E_0).var_A = g_word_A7E900;
-        (*E_0).var_B = g_word_A7E902;
+        set_fields! {[(*E_0)]; var_E = 11, var_F = ((0xa7ec1bi32) as u16), var_A = g_word_A7E900,
+        var_B = g_word_A7E902, };
     }
 }
 pub unsafe fn Etecoon_Func_11(k: u16, game: &mut Game) {
@@ -3741,11 +3733,8 @@ pub unsafe fn Etecoon_Func_26(k: u16, game: &mut Game) {
     Etecoon_Func_2(k, game);
     if Etecoon_Func_3(k, game) & 1 != 0 {
         let E = Get_Etecoon(k as i32, game);
-        (*E).var_C = g_word_A7E90C;
-        (*E).var_D = g_word_A7E90E;
-        (*E).var_F = ((0xa7eb02i32) as u16);
-        (*E).var_A = g_word_A7E900;
-        (*E).var_B = g_word_A7E902;
+        set_fields! {[(*E)]; var_C = g_word_A7E90C, var_D = g_word_A7E90E,
+        var_F = ((0xa7eb02i32) as u16), var_A = g_word_A7E900, var_B = g_word_A7E902, };
         enemy_instruction! {[(*E).base]; timer = 1, instruction = addr_stru_A7E828 as u16}
     }
 }
