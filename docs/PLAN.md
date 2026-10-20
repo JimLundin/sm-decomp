@@ -593,7 +593,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    including the 668-line `beam_windows` module, direct imports/callers and
    source registration. Shared directional setup and edge advancement retain
    corrected X-ray positive-down stores, saturation and ordered rainbow headers.
-   All 62,368 actual old/new Rust full-RAM component cases pass. The Charge Beam
+   All 64,100 actual old/new Rust full-RAM component cases pass. The Charge Beam
    boot route passes **28699/0**, with seven required probes including 1,645
    shared-edge calls, 74 generic-ramp calls and cleanup plus 180 follow-up frames.
    The clean focused run and full any% **129712/0** and Speed Booster **148406/0**
@@ -958,7 +958,7 @@ Latest full integration: the shared beam-window owner passes full boot any%
 **129712/0** and Speed Booster **148406/0**, with normal rendering, audio and
 comparisons. Charge Beam **28699/0** exercises seven required probes through
 the shared renderer and eye-beam cleanup plus 180 follow-up frames; the clean
-run passes at the same endpoint. Actual old/new Rust components pass 62,368
+run passes at the same endpoint. Actual old/new Rust components pass 64,100
 full-RAM cases including all directions, corrected wraps, callers, saturation,
 headers and null-dispatch effects. Unvisited Mother Brain behavior has component
 coverage; no endgame movie or credits is claimed. The final source preserves

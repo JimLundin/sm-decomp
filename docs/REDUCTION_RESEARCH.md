@@ -1611,7 +1611,7 @@ Public C alone is insufficient to validate those corrections. The 500-line
 discovery threshold does not veto a useful complete replacement below that size.
 
 Both complete optimized library/frontend builds pass. Separate complete old/new
-Rust DLLs pass **62,368 cases**, comparing all 128 KiB RAM, returned panic status
+Rust DLLs pass **64,100 cases**, comparing all 128 KiB RAM, returned panic status
 and ordered full-RAM hash observations at the sole fixed printf call. Cases
 cover all X-ray directions, on/offscreen destinations, synthetic gradients,
 row-zero/wrapping corrections, actual Samus/eye-beam callers and color aliasing,
@@ -1619,6 +1619,19 @@ all six rainbow directions, saturation, overlapping headers, all 16 public
 dispatch indices and matched null-dispatch panics. Independent source review
 checks directional arguments, retained helper tokens, live rereads and routing;
 1,310,720 independent scalar calculations support the edge arithmetic check.
+The final 1,732 added cases cover the special-right implementation and public
+right-beam caller with real ROM gradients. They change no candidate source.
+
+Tracing the complete responsibility back through its actual sources gives
+**521 original C lines -> 1,322 initial Rust -> 876 corrected current Rust ->
+668 lines in the shared owner**. The C blocks contain 218 X-ray and 303 rainbow
+lines; the initial Rust contains 610 and 712; current blocks contain 631 and
+245. Imports, retained neighboring declarations and source registration make
+the complete adoption **205 net lines**, rather than the 208-line body delta.
+Original C and initial Rust lack the later positive-down corrections, so this
+lineage explains the representation and overhead without claiming equivalent
+behavior or an additional saving. The reusable design is shared edge traversal
+with explicit direction parameters, retaining distinct carry/cleanup contracts.
 
 The Charge Beam boot route passes **28,699 frames / zero failures**, requiring
 seven probes: calculate (289 calls), shared edges (1,645), generic ramp (74),
