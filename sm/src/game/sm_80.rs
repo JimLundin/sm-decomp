@@ -341,7 +341,7 @@ pub unsafe fn LoadMirrorOfExploredMapTiles(game: &mut Game) {
     let mut v2: u16 = 0u16;
     loop {
         *(ram_ptr!(game, u16; 0x7f7, v2 as isize)) =
-            ram_word!(game, explored_map_tiles_saved[(v1 as i32 >> 1i32)]);
+            ram_word!(game, explored_map_tiles_saved[(v1 >> 1)]);
         v1 = (v1).wrapping_add(2u16);
         v2 = (v2).wrapping_add(2u16);
         if (((v2) as i16).wrapping_sub(256i16) >= 0i16) {
@@ -357,8 +357,7 @@ pub unsafe fn SaveExploredMapTilesToSaved(game: &mut Game) {
     let mut v2: u16 = 0u16;
     loop {
         set_ram_word!(
-            game.explored_map_tiles_saved[(v1 as i32 >> 1i32)] =
-                *(ram_ptr!(game, u16; 0x7f7, v2 as isize))
+            game.explored_map_tiles_saved[(v1 >> 1)] = *(ram_ptr!(game, u16; 0x7f7, v2 as isize))
         );
         v1 = (v1).wrapping_add(2u16);
         v2 = (v2).wrapping_add(2u16);
@@ -1375,7 +1374,7 @@ static kIrqHandlers: [Func_V; 14] = [
     IrqHandler_26_HorizDoor_EndDraw,
 ];
 pub unsafe fn Vector_IRQ(game: &mut Game) {
-    kIrqHandlers[(ram_word!(game, cur_irq_handler) as i32 >> 1i32) as usize](game);
+    kIrqHandlers[(ram_word!(game, cur_irq_handler) >> 1) as usize](game);
 }
 static kHudTilemaps_Row1to3: [u16; 96] = [
     0x2c0f, 0x2c0f, 0x2c0f, 0x2c0f, 0x2c0f, 0x2c0f, 0x2c0f, 0x2c0f, 0x2c0f, 0x2c0f, 0x2c0f, 0x2c0f,
@@ -1524,9 +1523,8 @@ pub unsafe fn HandleHudTilemap(game: &mut Game) {
                 r20 = r20.wrapping_sub(1);
                 v3 = 10289u16;
             }
-            *(ram_ptr!(game, u16; 0xc608)).offset(
-                (kEnergyTankIconTilemapOffsets[(v2 >> 1i32) as usize] as i32 >> 1i32) as isize,
-            ) = v3;
+            *(ram_ptr!(game, u16; 0xc608))
+                .offset((kEnergyTankIconTilemapOffsets[(v2 >> 1i32) as usize] >> 1) as isize) = v3;
             v2 += 2i32;
             if (((v2 - 28i32) as i16) >= 0i16) {
                 break;
@@ -1656,7 +1654,7 @@ pub unsafe fn ToggleHudItemHighlight(a: u16, k: u16, game: &mut Game) {
 }
 pub unsafe fn DrawThreeHudDigits(addr: u32, a: u16, k: u16, game: &mut Game) {
     set_ram_word!(
-        game.hud_tilemap[(k as i32 >> 1i32)] = *(RomPtr(
+        game.hud_tilemap[(k >> 1)] = *(RomPtr(
             (addr).wrapping_add((2i32 * (a as i32 / 100i32)) as u32,),
             game,
         ) as *mut u16)
@@ -2196,26 +2194,26 @@ pub unsafe fn UpdateBgGraphicsWhenScrolling(game: &mut Game) {
     }
 }
 pub unsafe fn CalculateBgScrollAndLayerPositionBlocks(game: &mut Game) {
-    set_ram_word!(game.bg1_x_block = (ram_word!(game, reg_BG1HOFS) as i32 >> 4i32) as u16);
-    set_ram_word!(game.bg2_x_block = (ram_word!(game, reg_BG2HOFS) as i32 >> 4i32) as u16);
-    let mut v0: u16 = (ram_word!(game, layer1_x_pos) as i32 >> 4i32) as u16;
+    set_ram_word!(game.bg1_x_block = (ram_word!(game, reg_BG1HOFS) >> 4));
+    set_ram_word!(game.bg2_x_block = (ram_word!(game, reg_BG2HOFS) >> 4));
+    let mut v0: u16 = (ram_word!(game, layer1_x_pos) >> 4);
     if (ram_word!(game, layer1_x_pos) as i32 >> 4i32 & 0x800i32) != 0i32 {
         v0 = (v0) | (0xf000u16);
     }
     set_ram_word!(game.layer1_x_block = v0);
-    let mut v1: u16 = (ram_word!(game, layer2_x_pos) as i32 >> 4i32) as u16;
+    let mut v1: u16 = (ram_word!(game, layer2_x_pos) >> 4);
     if (ram_word!(game, layer2_x_pos) as i32 >> 4i32 & 0x800i32) != 0i32 {
         v1 = (v1) | (0xf000u16);
     }
     set_ram_word!(game.layer2_x_block = v1);
-    set_ram_word!(game.bg1_y_block = (ram_word!(game, reg_BG1VOFS) as i32 >> 4i32) as u16);
-    set_ram_word!(game.bg2_y_block = (ram_word!(game, reg_BG2VOFS) as i32 >> 4i32) as u16);
-    let mut v2: u16 = (ram_word!(game, layer1_y_pos) as i32 >> 4i32) as u16;
+    set_ram_word!(game.bg1_y_block = (ram_word!(game, reg_BG1VOFS) >> 4));
+    set_ram_word!(game.bg2_y_block = (ram_word!(game, reg_BG2VOFS) >> 4));
+    let mut v2: u16 = (ram_word!(game, layer1_y_pos) >> 4);
     if (ram_word!(game, layer1_y_pos) as i32 >> 4i32 & 0x800i32) != 0i32 {
         v2 = (v2) | (0xf000u16);
     }
     set_ram_word!(game.layer1_y_block = v2);
-    let mut v3: u16 = (ram_word!(game, layer2_y_pos) as i32 >> 4i32) as u16;
+    let mut v3: u16 = (ram_word!(game, layer2_y_pos) >> 4);
     if (ram_word!(game, layer2_y_pos) as i32 >> 4i32 & 0x800i32) != 0i32 {
         v3 = (v3) | (0xf000u16);
     }
@@ -2237,7 +2235,7 @@ pub unsafe fn HandleAutoscrolling_X(game: &mut Game) {
         }
         let mut v1: i16 = *(ram_ptr!(game, u16; 0x911) as *mut u8).offset(1isize) as i16;
         let v2: u16 = (Mult8x8(
-            (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) as i32 >> 8i32) as u8,
+            (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) >> 8) as u8,
             ram_word!(game, room_width_in_scrolls) as u8,
         ))
         .wrapping_add((v1) as u16);
@@ -2254,7 +2252,7 @@ pub unsafe fn HandleAutoscrolling_X(game: &mut Game) {
                 var939 = v5;
                 v6 = *(&raw mut var939 as *mut u8).offset(1isize) as i16;
                 if *ram_ptr!(game; 0xcd20, ((Mult8x8(
-                        (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) as i32 >> 8i32)
+                        (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) >> 8)
                             as u8,
                         ram_word!(game, room_width_in_scrolls) as u8,
                     ))
@@ -2278,7 +2276,7 @@ pub unsafe fn HandleAutoscrolling_X(game: &mut Game) {
                     as u16;
                 v3 = ((*(&raw mut var939 as *mut u8).offset(1isize)).wrapping_add(1u8)) as i16;
                 if *ram_ptr!(game; 0xcd20, ((Mult8x8(
-                        (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) as i32 >> 8i32)
+                        (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) >> 8)
                             as u8,
                         ram_word!(game, room_width_in_scrolls) as u8,
                     ))
@@ -2307,7 +2305,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollRight(game: &mut Game) {
     if v0 >= ram_word!(game, layer1_x_pos) {
         let mut v1: i16 = *(ram_ptr!(game, u16; 0x911) as *mut u8).offset(1isize) as i16;
         let RegWord: u16 = Mult8x8(
-            (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) as i32 >> 8i32) as u8,
+            (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) >> 8) as u8,
             ram_word!(game, room_width_in_scrolls) as u8,
         );
         if *ram_ptr!(game; 0xcd20, (RegWord as i32 + 1i32 + v1 as i32) as u16 as isize) == 0 {
@@ -2335,7 +2333,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollLeft(game: &mut Game) {
     if (ram_word!(game, layer1_x_pos) & 0x8000) == 0 {
         let mut v0: i16 = *(ram_ptr!(game, u16; 0x911) as *mut u8).offset(1isize) as i16;
         let prod: u16 = Mult8x8(
-            (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) as i32 >> 8i32) as u8,
+            (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) >> 8) as u8,
             ram_word!(game, room_width_in_scrolls) as u8,
         );
         if *ram_ptr!(game; 0xcd20, ((prod).wrapping_add((v0) as u16)) as isize) == 0 {
@@ -2356,8 +2354,7 @@ pub unsafe fn HandleAutoscrolling_Y(game: &mut Game) {
     let mut v8: u16 = 0;
     if ram_word!(game, time_is_frozen_flag) == 0 {
         let mut v0: u16 = 0u16;
-        let mut v1: i16 =
-            (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) as i32 >> 8i32) as i16;
+        let mut v1: i16 = (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) >> 8) as i16;
         let r20: u16 = (Mult8x8(
             *(ram_ptr!(game, u16; 0x915) as *mut u8).offset(1isize),
             ram_word!(game, room_width_in_scrolls) as u8,
@@ -2372,15 +2369,14 @@ pub unsafe fn HandleAutoscrolling_Y(game: &mut Game) {
             set_ram_word!(game.layer1_y_pos = 0u16);
         }
         *(&raw mut v2 as *mut u8).offset(0) =
-            (((ram_word!(game, room_height_in_scrolls)).wrapping_sub(1u16)) as i32 >> 8i32) as u8;
+            (((ram_word!(game, room_height_in_scrolls)).wrapping_sub(1u16)) >> 8) as u8;
         *(&raw mut v2 as *mut u8).offset(1isize) =
             ((ram_word!(game, room_height_in_scrolls)) as u8).wrapping_sub(1u8);
         let v3: u16 = (var933).wrapping_add((v2) as u16);
         if v3 < ram_word!(game, layer1_y_pos) {
             set_ram_word!(game.layer1_y_pos = v3);
         }
-        let mut v4: i16 =
-            (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) as i32 >> 8i32) as i16;
+        let mut v4: i16 = (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) >> 8) as i16;
         let v5: u16 = (Mult8x8(
             *(ram_ptr!(game, u16; 0x915) as *mut u8).offset(1isize),
             ram_word!(game, room_width_in_scrolls) as u8,
@@ -2397,7 +2393,7 @@ pub unsafe fn HandleAutoscrolling_Y(game: &mut Game) {
                     + (ram_word!(game, absolute_moved_last_frame_y) as i32 + 2i32))
                     as u16;
                 let mut v7: i16 =
-                    (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) as i32 >> 8i32) as i16;
+                    (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) >> 8) as i16;
                 let prod: u16 = Mult8x8(
                     (*(&raw mut v6 as *mut u8).offset(1isize)).wrapping_add(1u8),
                     ram_word!(game, room_width_in_scrolls) as u8,
@@ -2428,9 +2424,8 @@ pub unsafe fn HandleAutoscrolling_Y(game: &mut Game) {
                         *(&raw mut v9 as *mut u8).offset(1isize),
                         ram_word!(game, room_width_in_scrolls) as u8,
                     );
-                    let mut v10: i16 = (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16))
-                        as i32
-                        >> 8i32) as i16;
+                    let mut v10: i16 =
+                        (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) >> 8) as i16;
                     if *ram_ptr!(game; 0xcd20, ((prod_0).wrapping_add((v10) as u16)) as isize) != 0
                     {
                         v8 = var939;
@@ -2450,7 +2445,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollDown(game: &mut Game) {
         *(ram_ptr!(game, u16; 0x915) as *mut u8).offset(1isize),
         ram_word!(game, room_width_in_scrolls) as u8,
     );
-    let v1: u16 = (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) as i32 >> 8i32) as u16;
+    let v1: u16 = (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) >> 8);
     let r20: u16 = (prod).wrapping_add(v1);
     if *ram_ptr!(game; 0xcd20, r20 as isize) != 1u8 {
         v0 = 31i32;
@@ -2496,8 +2491,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollUp(game: &mut Game) {
             *(ram_ptr!(game, u16; 0x915) as *mut u8).offset(1isize),
             ram_word!(game, room_width_in_scrolls) as u8,
         );
-        let mut v0: i16 =
-            (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) as i32 >> 8i32) as i16;
+        let mut v0: i16 = (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) >> 8) as i16;
         if *ram_ptr!(game; 0xcd20, ((prod).wrapping_add((v0) as u16)) as isize) == 0 {
             let var933: u16 = ((ram_word!(game, layer1_y_pos) as i32 & 0xff00i32) + 256i32) as u16;
             let mut v1: u16 =
@@ -2581,7 +2575,7 @@ pub unsafe fn UpdateLevelOrBackgroundDataColumn(k: u16, game: &mut Game) {
     let t2: u16 = k;
     let mut v9: u16 = 0u16;
     for _ in 0u16..16u16 {
-        let var93B: u16 = *r54.offset((v9 as i32 >> 1i32) as isize);
+        let var93B: u16 = *r54.offset((v9 >> 1) as isize);
         let v17: u16 = v9;
         let v11: u16 = var937;
         let tile_index = (var937 >> 1) as usize;
@@ -2671,7 +2665,7 @@ pub unsafe fn UpdateLevelOrBackgroundDataRow(v0: u16, game: &mut Game) {
     let t2: u16 = v0;
     let mut v9: u16 = 0u16;
     for _ in 0u16..17u16 {
-        let var93B: u16 = *r54.offset((v9 as i32 >> 1i32) as isize);
+        let var93B: u16 = *r54.offset((v9 >> 1) as isize);
         let v17: u16 = v9;
         let v11: u16 = var937;
         let tile_index = (var937 >> 1) as usize;
@@ -3086,7 +3080,7 @@ pub unsafe fn DecompressToMem(src: u32, decompress_dst: *mut u8, game: &mut Game
     decompress(src, DecompressionMemory(decompress_dst), &raw mut *game);
 }
 unsafe fn ReadPpuByte(addr: u16, game: &mut Game) -> u8 {
-    WriteRegWord(VMADDL as u16, (addr as i32 >> 1i32) as u16, game);
+    WriteRegWord(VMADDL as u16, (addr >> 1), game);
     ReadRegWord(RDVRAML as u16, game);
     let data: u16 = ReadRegWord(RDVRAML as u16, game);
     ((if addr & 1 != 0 {

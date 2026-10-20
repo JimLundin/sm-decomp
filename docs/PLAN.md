@@ -72,6 +72,29 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Native-width fixed right shifts (2026-10-20): simplify all 1030 eligible
+expressions across 38 files: 565 final casts and 465 RAM array indices,
+including nested existing macro arguments. The compiler binds 968 u16,
+49 u8 and 13 i16 operands; every fixed shift is below its source width.
+Remove the i32 promotion and redundant result casts, preserving operand
+occurrence/order, signed shifts, result truncation and final isize indices.
+No helper, borrow, cached value or control-flow change is introduced.
+
+Complete formatted-source reconstruction and fresh baseline/candidate compiler
+type binding pass, including all 17 nested pairs. Z3 proves all 1030 changes
+for every native input bit pattern; wrong signedness and shift-count controls
+fail. One u32-source expression remains outside this narrow family.
+Final composition includes the 2529 pointer-annotation removals. Corrected
+macro context labels describe 164 read, 251 set and 50 update indices.
+
+Formatting/check, normal release (24.92s), progress and both
+shared-library replays pass: any% 129712/0 (124.74s wall),
+Speed Booster 148406/0 (159.68s wall), native exits 0. The host
+reuses the exact normal library; all 149 verification pins stay fixed.
+Rust lines -381 to 127132; i32 cast-containing lines -934 to 9819.
+Other progress counters are unchanged. These proofs cover selected integer
+expressions; broader routes, frontend execution and alias ownership remain open.
+
 Shared forwarding declarations (2026-10-20): 350 direct-call functions in
 94 adjacent groups share identical signatures through one caller-side macro.
 It emits separate original functions: 262 unit statements retain semicolons,

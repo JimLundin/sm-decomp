@@ -193,7 +193,7 @@ unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
             .offset((adr as i32 + 1i32 & 0xffffi32) as isize) as i32)
             << 8i32)) as i16;
     (*dsp).firBufferL[(*dsp).firBufferIndex as usize] =
-        ((*dsp).firBufferL[(*dsp).firBufferIndex as usize] as i32 >> 1i32) as i16;
+        ((*dsp).firBufferL[(*dsp).firBufferIndex as usize] >> 1);
     (*dsp).firBufferR[(*dsp).firBufferIndex as usize] = (*(*dsp)
         .apu_ram
         .offset((adr as i32 + 2i32 & 0xffffi32) as isize)
@@ -203,7 +203,7 @@ unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
             .offset((adr as i32 + 3i32 & 0xffffi32) as isize) as i32)
             << 8i32)) as i16;
     (*dsp).firBufferR[(*dsp).firBufferIndex as usize] =
-        ((*dsp).firBufferR[(*dsp).firBufferIndex as usize] as i32 >> 1i32) as i16;
+        ((*dsp).firBufferR[(*dsp).firBufferIndex as usize] >> 1);
     let mut sumL: i32 = 0i32;
     let mut sumR: i32 = 0i32;
     let mut i: i32 = 0i32;
@@ -329,10 +329,9 @@ unsafe fn dsp_cycleChannel(dsp: *mut Dsp, ch: i32) {
     if doingDirectGain {
         (*dsp).channel[ch as usize].gain = (*dsp).channel[ch as usize].gainValue;
     }
-    (*dsp).ram[(ch << 4i32 | 8i32) as usize] =
-        ((*dsp).channel[ch as usize].gain as i32 >> 4i32) as u8;
+    (*dsp).ram[(ch << 4i32 | 8i32) as usize] = ((*dsp).channel[ch as usize].gain >> 4) as u8;
     sample = (sample as i32 * (*dsp).channel[ch as usize].gain as i32 >> 11i32) as i16;
-    (*dsp).ram[(ch << 4i32 | 9i32) as usize] = (sample as i32 >> 7i32) as u8;
+    (*dsp).ram[(ch << 4i32 | 9i32) as usize] = (sample >> 7) as u8;
     (*dsp).channel[ch as usize].sampleOut = sample;
 }
 unsafe fn dsp_handleGain(dsp: *mut Dsp, ch: i32) {
@@ -501,8 +500,7 @@ unsafe fn dsp_handleNoise(dsp: *mut Dsp) {
     if (*dsp).noiseCounter as i32 >= (*dsp).noiseRate as i32 && (*dsp).noiseRate as i32 != 0i32 {
         let bit: i32 = (*dsp).noiseSample as i32 & 1i32 ^ (*dsp).noiseSample as i32 >> 1i32 & 1i32;
         (*dsp).noiseSample = ((*dsp).noiseSample as i32 >> 1i32 & 0x3fffi32 | bit << 14i32) as i16;
-        (*dsp).noiseSample =
-            ((((*dsp).noiseSample as i32 & 0x7fffi32) << 1i32) as i16 as i32 >> 1i32) as i16;
+        (*dsp).noiseSample = ((((*dsp).noiseSample as i32 & 0x7fffi32) << 1i32) as i16 >> 1);
         (*dsp).noiseCounter = 0u16;
     }
 }

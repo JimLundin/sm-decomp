@@ -435,8 +435,7 @@ pub unsafe fn Torizo_Instr_28(k: u16, jp: *const u16, game: &mut Game) -> *const
 pub unsafe fn Torizo_Instr_4(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let v2: u16 = *jp.offset(0);
     let E = Get_Torizo(k as i32, game);
-    (*E).base.x_pos =
-        ((*E).base.x_pos).wrapping_add((g_word_AAC3EE[(v2 as i32 >> 1i32) as usize]) as u16);
+    (*E).base.x_pos = ((*E).base.x_pos).wrapping_add((g_word_AAC3EE[(v2 >> 1) as usize]) as u16);
     (*E).base.y_pos = ((*E).base.y_pos)
         .wrapping_add((g_word_AAC40E[((v2 as i32 & 0xfi32) >> 1i32) as usize]) as u16);
     jp.offset(1)
@@ -444,15 +443,14 @@ pub unsafe fn Torizo_Instr_4(k: u16, jp: *const u16, game: &mut Game) -> *const 
 pub unsafe fn Torizo_Instr_40(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let v2: u16 = *jp.offset(0);
     let E = Get_Torizo(k as i32, game);
-    (*E).base.x_pos =
-        ((*E).base.x_pos).wrapping_sub((g_word_AAC440[(v2 as i32 >> 1i32) as usize]) as u16);
+    (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub((g_word_AAC440[(v2 >> 1) as usize]) as u16);
     (*E).base.y_pos = ((*E).base.y_pos)
         .wrapping_sub((g_word_AAC460[((v2 as i32 & 0xfi32) >> 1i32) as usize]) as u16);
     jp.offset(1)
 }
 pub unsafe fn Torizo_Instr_16(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E = Get_Torizo(k as i32, game);
-    (*E).toriz_var_A = g_word_AAC4BD[(*jp.offset(0) as i32 >> 1i32) as usize] as u16;
+    (*E).toriz_var_A = g_word_AAC4BD[(*jp.offset(0) >> 1) as usize] as u16;
     if Enemy_MoveRight_IgnoreSlopes(k, ((*E).toriz_var_A as i16 as i32) << 16i32, game) != 0 {
         (*E).toriz_var_03 = 0u16;
         if ((*E).toriz_parameter_1 & 0x8000) != 0 {
@@ -478,7 +476,7 @@ pub unsafe fn Torizo_Instr_16(k: u16, jp: *const u16, game: &mut Game) -> *const
 }
 pub unsafe fn Torizo_Instr_27(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E = Get_Torizo(k as i32, game);
-    (*E).toriz_var_A = g_word_AAC532[(*jp.offset(0) as i32 >> 1i32) as usize] as u16;
+    (*E).toriz_var_A = g_word_AAC532[(*jp.offset(0) >> 1) as usize] as u16;
     if Enemy_MoveRight_IgnoreSlopes(k, ((*E).toriz_var_A as i16 as i32) << 16i32, game) != 0 {
         (*E).toriz_var_03 = 0u16;
         if ((*E).toriz_parameter_1 & 0x8000) != 0 {
@@ -668,8 +666,7 @@ pub unsafe fn Torizo_Func_4(k: u16, game: &mut Game) {
     let E = Get_Torizo(k as i32, game);
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
     let mut v2: u16 = 78u16;
-    while ram_word!(game, plm_header_ptr[(v2 as i32 >> 1i32)]) as i32 != addr_kPlmHeader_D6EA as i32
-    {
+    while ram_word!(game, plm_header_ptr[(v2 >> 1)]) as i32 != addr_kPlmHeader_D6EA as i32 {
         v2 = (v2).wrapping_sub(2u16);
         if (v2 & 0x8000) != 0 {
             QueueMusic_Delayed8(g_word_AAB096, game);
@@ -1072,7 +1069,7 @@ pub unsafe fn Torizo_Instr_45(k: u16, jp: *const u16, game: &mut Game) -> *const
 }
 pub unsafe fn Torizo_Instr_54(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E = Get_Torizo(k as i32, game);
-    (*E).toriz_var_A = g_word_AAD59A[(*jp.offset(0) as i32 >> 1i32) as usize] as u16;
+    (*E).toriz_var_A = g_word_AAD59A[(*jp.offset(0) >> 1) as usize] as u16;
     if Enemy_MoveRight_IgnoreSlopes(k, ((*E).toriz_var_A as i16 as i32) << 16i32, game) != 0 {
         (*E).toriz_var_03 = 0u16;
         if ((*E).toriz_parameter_1 & 0x8000) != 0 {
@@ -1198,8 +1195,7 @@ pub unsafe fn Torizo_D6A6(game: &mut Game) {
     }
 }
 pub unsafe fn Torizo_D6D1(k: u16, j: u16, game: &mut Game) {
-    update_ram_word!(game.projectile_dir[(j as i32 >> 1i32)], |fresh1| (fresh1
-        & !(0x10)));
+    update_ram_word!(game.projectile_dir[(j >> 1)], |fresh1| (fresh1 & !(0x10)));
     let E = Get_Torizo(k as i32, game);
     (*E).toriz_var_E = ((0xaac6abi32) as u16);
     (*E).base.instruction_timer = 1u16;
@@ -1216,8 +1212,7 @@ pub unsafe fn Torizo_D6F7(k: u16, j: u16, game: &mut Game) {
     if (Torizo_Func_12(k, game) & 0x8000) == 0 {
         (*E).toriz_parameter_2 = ((*E).toriz_parameter_2) | (0x1000u16);
         (*E).toriz_var_E = ((0xaac6abi32) as u16);
-        update_ram_word!(game.projectile_dir[(j as i32 >> 1i32)], |fresh0| (fresh0)
-            | (0x10u16));
+        update_ram_word!(game.projectile_dir[(j >> 1)], |fresh0| (fresh0) | (0x10u16));
         (*E).base.instruction_timer = 1u16;
         let mut v3: u16 = 0;
         if ((*E).toriz_parameter_1 & 0x2000) != 0 {
@@ -1241,8 +1236,7 @@ pub unsafe fn TourianEntranceStatue_Init(game: &mut Game) {
     (*v0).palette_index = 0u16;
     (*v0).instruction_timer = 1u16;
     (*v0).timer = 0u16;
-    let v1: u16 =
-        crate::rtl::rom_table_word!(game, 0xaad810, ((*v0).parameter_1 as i32 >> 1i32) as isize);
+    let v1: u16 = crate::rtl::rom_table_word!(game, 0xaad810, ((*v0).parameter_1 >> 1) as isize);
     (*v0).current_instruction = v1;
     if (*v0).parameter_1 == 0 {
         SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueBaseDecoration as u16, 0u16, game);
@@ -1520,7 +1514,7 @@ pub unsafe fn Shaktool_DCD7(k: u16, game: &mut Game) {
     enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(
         game,
         0xaadd15,
-        ((v3 as i32 >> 4i32) as u16 as i32 >> 1i32) as isize
+        ((v3 >> 4) >> 1) as isize
     ), timer = 1u16}
 }
 pub unsafe fn Shaktool_DD25(mut k: u16, game: &mut Game) {
@@ -1712,8 +1706,8 @@ pub unsafe fn Shaktool_Instr_7(k: u16, jp: *const u16, game: &mut Game) -> *cons
     (*E).shakt_var_C = *jp.offset(0);
     Enemy_MoveRight_IgnoreSlopes(
         k,
-        (crate::rtl::rom_table_word!(game, 0xaae630, ((*E).shakt_var_C as i32 >> 1i32) as isize)
-            as i16 as i32)
+        (crate::rtl::rom_table_word!(game, 0xaae630, ((*E).shakt_var_C >> 1) as isize) as i16
+            as i32)
             << 8i32,
         game,
     );
@@ -1722,7 +1716,7 @@ pub unsafe fn Shaktool_Instr_7(k: u16, jp: *const u16, game: &mut Game) -> *cons
         (abs16(crate::rtl::rom_table_word!(
             game,
             0xaae630,
-            ((*E).shakt_var_C as i32 >> 1i32) as isize
+            ((*E).shakt_var_C >> 1) as isize
         )) as i16 as i32)
             << 8i32,
         game,
@@ -1774,7 +1768,7 @@ pub unsafe fn ChozoStatue_Init(game: &mut Game) {
     (*gEnemyData(0i32, game)).layer = 0u16;
     let parameter_2: u16 = (*v0).parameter_2;
     (*v0).current_instruction =
-        crate::rtl::rom_table_word!(game, 0xaae7a2, (parameter_2 as i32 >> 1i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xaae7a2, (parameter_2 >> 1) as isize);
     if parameter_2 != 0 {
         sub_AAE784(game);
     } else {

@@ -581,8 +581,8 @@ pub unsafe fn MiniDraygon_Init(game: &mut Game) {
             v2 as i32, game
         ))
         .mdn_parameter_2 as *mut u8)
-            .offset(1isize) as i32
-            >> 1i32) as u16;
+            .offset(1isize)
+            >> 1) as u16;
     }
     set_fields! {[(*E)], 0u16; mdn_var_00, mdn_var_01}
     (*E).mdn_var_C = ((0xa88922i32) as u16);
@@ -1082,7 +1082,7 @@ pub unsafe fn WreckedShipGhost_Init(game: &mut Game) {
     let v2: u16 = u16::swap_bytes((*E).base.palette_index);
     let mut v3: u16 = (16i32 * v2 as i32 + 256i32) as u16;
     for _ in 0i32..=16i32 {
-        set_ram_word!(game.target_palettes[(v3 as i32 >> 1i32)] = 0u16);
+        set_ram_word!(game.target_palettes[(v3 >> 1)] = 0u16);
         v3 = (v3).wrapping_add(2u16);
     }
 }
@@ -1124,8 +1124,7 @@ pub unsafe fn WreckedShipGhost_Func_1(k: u16, game: &mut Game) {
         let mut v9: u16 = 0u16;
         loop {
             set_ram_word!(
-                game.target_palettes[(v8 as i32 >> 1i32)] =
-                    kWreckedShipGhost_Palette[(v9 as i32 >> 1i32) as usize]
+                game.target_palettes[(v8 >> 1)] = kWreckedShipGhost_Palette[(v9 >> 1) as usize]
             );
             v8 = (v8).wrapping_add(2u16);
             v9 = (v9).wrapping_add(2u16);
@@ -1176,7 +1175,7 @@ pub unsafe fn WreckedShipGhost_Func_3(k: u16, game: &mut Game) {
                 && ({
                     let mut wsgt_var_C: u16 = 0;
                     wsgt_var_C = (*E).wsgt_var_C;
-                    let mut v5: i16 = g_word_A89ACC[(wsgt_var_C as i32 >> 1i32) as usize] as i16;
+                    let mut v5: i16 = g_word_A89ACC[(wsgt_var_C >> 1) as usize] as i16;
                     if v5 < 0i16 {
                         set_fields! {[(*E)], 0u16; wsgt_var_B, wsgt_var_C}
                         return;
@@ -1222,7 +1221,7 @@ pub unsafe fn WreckedShipGhost_Func_5(k: u16, game: &mut Game) {
         let t: i32 = u16::swap_bytes((*E).base.palette_index) as i32;
         let mut v9: u16 = (16i32 * t + 256i32) as u16;
         for _ in 0i32..=16i32 {
-            set_ram_word!(game.target_palettes[(v9 as i32 >> 1i32)] = 0x7fffu16);
+            set_ram_word!(game.target_palettes[(v9 >> 1)] = 0x7fffu16);
             v9 = (v9).wrapping_add(2u16);
         }
     }
@@ -1517,7 +1516,7 @@ pub unsafe fn YappingMaw_Func_1(game: &mut Game) {
 pub unsafe fn YappingMaw_Func_2(game: &mut Game) {
     let E = Get_YappingMaw(ram_word!(game, cur_enemy_index) as i32, game);
     set_fields! {[(*E)], 0u16; ymw_var_B, ymw_var_C, ymw_var_D}
-    (*E).ymw_var_09 = ((*E).ymw_var_08 as i32 >> 1i32) as u16;
+    (*E).ymw_var_09 = ((*E).ymw_var_08 >> 1);
     let v1: u16 = ((64u8).wrapping_sub(((*E).ymw_var_0A) as u8)) as u16;
     (*E).ymw_var_0B = v1;
     if v1 as i32 - 128i32 & 0x8000i32 != 0 {
@@ -1528,7 +1527,7 @@ pub unsafe fn YappingMaw_Func_2(game: &mut Game) {
     YappingMaw_Func_3(game);
     let v2: u16 = (2i32 * (((((*E).ymw_var_0A) as u8).wrapping_add(16u8)) as i32 >> 5i32)) as u16;
     (*E).ymw_var_34 = v2;
-    enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa8a097, (v2 as i32 >> 1i32) as isize), timer = 1u16}
+    enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa8a097, (v2 >> 1) as isize), timer = 1u16}
     (*E).base.timer = 0u16;
     (*E).ymw_var_32 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa8a0a7)) as *mut u16
         as *mut u8)
@@ -1541,7 +1540,7 @@ pub unsafe fn YappingMaw_Func_2(game: &mut Game) {
 pub unsafe fn YappingMaw_Func_3(game: &mut Game) {
     let E = Get_YappingMaw(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).ymw_var_0E = YappingMaw_Func_16(0x80u16, (*E).ymw_var_09, game);
-    (*E).ymw_var_0F = YappingMaw_Func_17(0x80u16, ((*E).ymw_var_09 as i32 >> 1i32) as u16, game);
+    (*E).ymw_var_0F = YappingMaw_Func_17(0x80u16, ((*E).ymw_var_09 >> 1), game);
 }
 pub unsafe fn YappingMaw_Func_4(game: &mut Game) {
     let E = Get_YappingMaw(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1585,7 +1584,7 @@ pub unsafe fn YappingMaw_Func_7(game: &mut Game) {
 }
 pub unsafe fn YappingMaw_Func_8(game: &mut Game) {
     let E = Get_YappingMaw(ram_word!(game, cur_enemy_index) as i32, game);
-    let r20: u16 = ((*E).ymw_var_B as i32 >> 2i32) as u16;
+    let r20: u16 = ((*E).ymw_var_B >> 2);
     if (*E).ymw_var_2F != 0 {
         (*E).ymw_var_21 = (128u16).wrapping_add(r20);
         (*E).ymw_var_22 = (128i32 + r20 as i32 * 2i32) as u16;
@@ -1606,7 +1605,7 @@ pub unsafe fn YappingMaw_Func_8(game: &mut Game) {
         (YappingMaw_Func_16((*E).ymw_var_23, varE32, game)).wrapping_sub((*E).ymw_var_0E);
     (*E).ymw_var_06 =
         (YappingMaw_Func_16((*E).ymw_var_24, varE32, game)).wrapping_sub((*E).ymw_var_0E);
-    varE32 = ((*E).ymw_var_09 as i32 >> 1i32) as u16;
+    varE32 = ((*E).ymw_var_09 >> 1);
     (*E).ymw_var_01 =
         (YappingMaw_Func_17((*E).ymw_var_21, varE32, game)).wrapping_sub((*E).ymw_var_0F);
     (*E).ymw_var_03 =
@@ -1775,7 +1774,7 @@ pub unsafe fn YappingMaw_Shot(game: &mut Game) {
             as *mut u16) = 0u16;
         *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset((*E).ymw_var_43 as i32 as isize)
             as *mut u16) = 0u16;
-        set_ram_word!(game.sprite_instr_list_ptrs[((*E).ymw_var_46 as i32 >> 1i32)] = 0u16);
+        set_ram_word!(game.sprite_instr_list_ptrs[((*E).ymw_var_46 >> 1)] = 0u16);
         if ram_word!(game, samus_input_handler) as i32 != 0x90e91di32 & 0xffffi32 {
             set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
         }
@@ -1815,19 +1814,19 @@ pub unsafe fn YappingMaw_Func_19(game: &mut Game) {
     let r18: u16 = (*E).ymw_var_45;
     let r20: u16 = (*E).ymw_var_46;
     set_ram_word!(
-        game.sprite_palettes[(r20 as i32 >> 1i32)] =
-            (r18 | ram_word!(game, sprite_palettes[(r20 as i32 >> 1i32)]) & 0xf1ff)
+        game.sprite_palettes[(r20 >> 1)] =
+            (r18 | ram_word!(game, sprite_palettes[(r20 >> 1)]) & 0xf1ff)
     );
     if (*E).base.frozen_timer != 0 {
         set_ram_word!(
-            game.sprite_palettes[(r20 as i32 >> 1i32)] =
-                (ram_word!(game, sprite_palettes[(r20 as i32 >> 1i32)]) & 0xf1ff | 0xc00)
+            game.sprite_palettes[(r20 >> 1)] =
+                (ram_word!(game, sprite_palettes[(r20 >> 1)]) & 0xf1ff | 0xc00)
         );
         let frozen_timer: u16 = (*E).base.frozen_timer;
         if frozen_timer as i32 - 90i32 & 0x8000i32 != 0 && (frozen_timer & 2) == 0 {
             set_ram_word!(
-                game.sprite_palettes[(r20 as i32 >> 1i32)] =
-                    (r18 | ram_word!(game, sprite_palettes[(r20 as i32 >> 1i32)]) & 0xf1ff)
+                game.sprite_palettes[(r20 >> 1)] =
+                    (r18 | ram_word!(game, sprite_palettes[(r20 >> 1)]) & 0xf1ff)
             );
         }
     }
@@ -2004,7 +2003,7 @@ pub unsafe fn NorfairLavaMan_Init(game: &mut Game) {
     let v0: u16 = (2u16).wrapping_mul(
         (*Get_NorfairLavaMan(ram_word!(game, cur_enemy_index) as i32, game)).nlmn_parameter_1,
     );
-    g_off_A8AF4F[(v0 as i32 >> 1i32) as usize].expect("non-null function pointer")(game);
+    g_off_A8AF4F[(v0 >> 1) as usize].expect("non-null function pointer")(game);
     NorfairLavaMan_Func_4(game);
     NorfairLavaMan_Func_5(ram_word!(game, cur_enemy_index), game);
 }
@@ -2197,8 +2196,8 @@ pub unsafe fn NorfairLavaMan_Func_12(k: u16, game: &mut Game) {
         (*E).nlmn_var_F = ((0xa8b291i32) as u16);
         (*E).nlmn_var_0C = 1u16;
         if ((-((*E).nlmn_var_E as i32)
-            - crate::rtl::rom_table_word!(game, 0xa8af55, (nlmn_var_B as i32 >> 1i32) as isize)
-                as i32) as i16)
+            - crate::rtl::rom_table_word!(game, 0xa8af55, (nlmn_var_B >> 1) as isize) as i32)
+            as i16)
             < 0i16
         {
             return;
@@ -2214,7 +2213,7 @@ pub unsafe fn NorfairLavaMan_Func_12(k: u16, game: &mut Game) {
         (*E).nlmn_var_B = (*E).nlmn_var_B.wrapping_add(1);
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(8u16);
         (*E).nlmn_var_D =
-            crate::rtl::rom_table_word!(game, 0xa8af67, ((*E).nlmn_var_B as i32 >> 1i32) as isize);
+            crate::rtl::rom_table_word!(game, 0xa8af67, ((*E).nlmn_var_B >> 1) as isize);
         NorfairLavaMan_Func_20(game);
     };
 }
@@ -2239,14 +2238,14 @@ pub unsafe fn NorfairLavaMan_Func_14(k: u16, game: &mut Game) {
         - crate::rtl::rom_table_word!(
             game,
             0xa8af55,
-            ((((*E).nlmn_var_B).wrapping_sub(2u16)) as i32 >> 1i32) as isize
+            ((((*E).nlmn_var_B).wrapping_sub(2u16)) >> 1) as isize
         ) as i32) as i16)
         < 0i16
     {
         (*E).nlmn_var_B = ((*E).nlmn_var_B).wrapping_sub(2u16);
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub(8u16);
         (*E).nlmn_var_D =
-            crate::rtl::rom_table_word!(game, 0xa8af67, ((*E).nlmn_var_B as i32 >> 1i32) as isize);
+            crate::rtl::rom_table_word!(game, 0xa8af67, ((*E).nlmn_var_B >> 1) as isize);
         NorfairLavaMan_Func_20(game);
     }
 }
@@ -2298,8 +2297,7 @@ pub unsafe fn NorfairLavaMan_Func_17(k: u16, game: &mut Game) {
             0xa8af79,
             (*(ram_ptr!(game, u16; 0xf68))
                 .offset(((ram_word!(game, cur_enemy_index) as i32 >> 1i32) + 1i32) as isize)
-                as i32
-                >> 1i32) as isize,
+                >> 1) as isize,
         ));
     }
     NorfairLavaMan_Func_19(ram_word!(game, cur_enemy_index), game);
@@ -2316,7 +2314,7 @@ pub unsafe fn NorfairLavaMan_Func_18(k: u16, game: &mut Game) {
             crate::rtl::rom_table_word!(
                 game,
                 0xa8af79,
-                (ram_word!(game, enemy_drawing_queue_sizes[(v1 + 1i32)]) as i32 >> 1i32) as isize,
+                (ram_word!(game, enemy_drawing_queue_sizes[(v1 + 1i32)]) >> 1) as isize,
             ),
         );
     }
@@ -2965,23 +2963,21 @@ pub unsafe fn MaridiaFloater_Func_2(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     let v2: u16 = ram_word!(game, enemy_drawing_queue[(v1 + 103i32)]);
     if v2 as i32 + 0x3e6fi32 & 0x8000i32 != 0 {
-        let mut v3: u16 = ((v2 as i32 - 4i32 + 15997i32) as u16 as i32 >> 1i32) as u16;
+        let mut v3: u16 = ((v2 as i32 - 4i32 + 15997i32) as u16 >> 1);
         if v3 as i32 - 6i32 & 0x8000i32 == 0 {
             v3 = 0u16;
         }
         set_ram_word!(
-            game.enemy_drawing_queue[(v1 + 93i32)] = ((g_word_A8C277[(v3 as i32 >> 1i32) as usize])
-                as u16)
+            game.enemy_drawing_queue[(v1 + 93i32)] = ((g_word_A8C277[(v3 >> 1) as usize]) as u16)
                 .wrapping_add((*Get_MaridiaFloater(k as i32, game)).base.y_pos,)
         );
     } else {
-        let mut v4: u16 = ((v2 as i32 - 4i32 + 15983i32) as u16 as i32 >> 1i32) as u16;
+        let mut v4: u16 = ((v2 as i32 - 4i32 + 15983i32) as u16 >> 1);
         if v4 as i32 - 6i32 & 0x8000i32 == 0 {
             v4 = 0u16;
         }
         set_ram_word!(
-            game.enemy_drawing_queue[(v1 + 93i32)] = ((g_word_A8C27D[(v4 as i32 >> 1i32) as usize])
-                as u16)
+            game.enemy_drawing_queue[(v1 + 93i32)] = ((g_word_A8C27D[(v4 >> 1) as usize]) as u16)
                 .wrapping_add((*Get_MaridiaFloater(k as i32, game)).base.y_pos,)
         );
     };
@@ -3258,12 +3254,12 @@ pub unsafe fn MaridiaFloater_Func_12(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     if ram_word!(game, enemy_drawing_queue[(v1 + 103i32)]) as i32 + 0x3e6fi32 & 0x8000i32 == 0 {
         let v2: u16 = ((ram_word!(game, enemy_drawing_queue[(v1 + 103i32)]) as i32 - 4i32
-            + 15983i32) as u16 as i32
-            >> 1i32) as u16;
+            + 15983i32) as u16
+            >> 1);
         if v2 != 0 {
             set_ram_word!(
                 game.enemy_drawing_queue[(v1 + 103i32)] =
-                    crate::rtl::rom_table_word!(game, 0xa8c599, (v2 as i32 >> 1i32) as isize)
+                    crate::rtl::rom_table_word!(game, 0xa8c599, (v2 >> 1) as isize)
             );
             set_ram_word!(game.enemy_drawing_queue[(v1 + 104i32)] = 1u16);
         }
@@ -4343,7 +4339,7 @@ pub unsafe fn BlueBrinstarFaceBlock_Func_1(game: &mut Game) {
             (8u16).wrapping_mul(ram_word!(game, variables_for_enemy_graphics_drawn_hook[1]));
         for _ in 0i32..4i32 {
             *(ram_ptr!(game, u16; 0xc000)).offset(((v0 as i32 >> 1i32) + 137i32) as isize) =
-                crate::rtl::rom_table_word!(game, 0xa8e7cc, (v1 as i32 >> 1i32) as isize);
+                crate::rtl::rom_table_word!(game, 0xa8e7cc, (v1 >> 1) as isize);
             v1 = (v1).wrapping_add(2u16);
             v0 = (v0).wrapping_add(2u16);
         }
@@ -4949,7 +4945,7 @@ pub unsafe fn KiHunter_Func_17(game: &mut Game) {
     loop {
         let mut v3: u16 = ((*E).khr_var_0A).wrapping_add(384u16);
         (*E).khr_var_0A = v3;
-        v3 = (v3 as i32 >> 8i32) as u16;
+        v3 = (v3 >> 8);
         let mut v5: u16 = (*((game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *mut u16
             as *mut u8)
             .offset((8i32 * v3 as i32) as isize)

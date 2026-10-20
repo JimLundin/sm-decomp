@@ -1913,8 +1913,8 @@ pub unsafe fn ThinHoppingBlobs_Func5(game: &mut Game) {
     }
     (*E).thbs_var_B = r22;
     (*E).thbs_var_03 = 0u16;
-    let v3: u16 = (r22 as i32 >> 1i32) as u16;
-    (*E).thbs_var_07 = (r22 as i32 >> 1i32) as u16;
+    let v3: u16 = (r22 >> 1);
+    (*E).thbs_var_07 = (r22 >> 1);
     (*E).thbs_var_06 = ((*E).thbs_var_07 as i32 + (v3 as i32 >> 1i32)) as u16;
 }
 pub unsafe fn ThinHoppingBlobs_Func6(k: u16, game: &mut Game) {
@@ -1953,7 +1953,7 @@ pub unsafe fn ThinHoppingBlobs_Func8(game: &mut Game) {
     if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
         *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v6 as i32 >> 2i32) as isize) as i32,
+            .offset((v6 >> 2) as isize) as i32,
         game,
     ) != 0
     {
@@ -2850,7 +2850,7 @@ pub unsafe fn GunshipTop_21(k: u16, game: &mut Game) {
     let v6: u32 = ((ram_word!(game, samus_y_pos) as u32) << 16i32
         | ram_word!(game, samus_y_subpos) as u32)
         .wrapping_sub(
-            (((*E).gtp_var_F as i32 >> 8i32) as u32) << 16i32
+            (((*E).gtp_var_F >> 8) as u32) << 16i32
                 | (((*E).gtp_var_F as i32) << 8i32) as u16 as u32,
         );
     set_ram_word!(game.samus_y_subpos = v6 as u16);
@@ -3086,7 +3086,7 @@ pub unsafe fn LavaquakeRocks_2(game: &mut Game) {
     (*E).lrs_var_B = crate::rtl::rom_table_word!(
         game,
         0xa2b520,
-        (((NextRandom(game)) & (0xeu16)) as i32 >> 1i32) as isize
+        (((NextRandom(game)) & (0xeu16)) >> 1) as isize
     );
 }
 pub unsafe fn LavaquakeRocks_3(game: &mut Game) {
@@ -3611,8 +3611,8 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_2(k: u16, game: &mut Game) {
     (*E).nley_var_C = crate::rtl::rom_table_word!(
         game,
         0xa2be86,
-        ((((*(ram_ptr!(game, u16; 0x5e5) as *mut u8).offset(1isize)) as u16) & (6u16)) as i32
-            >> 1i32) as isize,
+        ((((*(ram_ptr!(game, u16; 0x5e5) as *mut u8).offset(1isize)) as u16) & (6u16)) >> 1)
+            as isize,
     );
     (*E).nley_var_F = ((0xa2bf3ei32) as u16);
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_ProcessedOffscreen) as u16);
@@ -3774,7 +3774,7 @@ pub unsafe fn NorfairRio_Func_2(k: u16, game: &mut Game) {
         (*E).nro_var_A = crate::rtl::rom_table_word!(
             game,
             0xa2c1c1,
-            ((ram_word!(game, random_number) as i32 >> 1i32 & 2i32) as u16 as i32 >> 1i32) as isize,
+            ((ram_word!(game, random_number) as i32 >> 1i32 & 2i32) as u16 >> 1) as isize,
         );
         (*E).nro_var_B = crate::rtl::rom_table_word!(game, 0xa2c1c5, 0isize);
         if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) < 0i16 {
@@ -4834,7 +4834,7 @@ pub unsafe fn TimedShutter_Func_10(k: u16, game: &mut Game) {
     let E = Get_TimedShutter(k as i32, game);
     (*E).tsr_var_40 = (*E).base.y_pos;
     let v2: u16 = (2u16).wrapping_mul((*E).tsr_var_F);
-    off_A2EC3A[(v2 as i32 >> 1i32) as usize].expect("non-null function pointer")(game);
+    off_A2EC3A[(v2 >> 1) as usize].expect("non-null function pointer")(game);
     if CheckIfEnemyTouchesSamus(k, game) != 0 {
         let v4: i16 = (((*E).base.y_pos) as i16).wrapping_sub(((*E).tsr_var_40) as i16);
         if v4 < 0i16 {

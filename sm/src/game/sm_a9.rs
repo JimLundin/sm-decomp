@@ -1386,8 +1386,7 @@ pub unsafe fn MotherBrain_SpawnDustCloudsForAscent(game: &mut Game) {
     };
     SpawnEprojWithRoomGfx(
         addr_kEproj_DustCloudExplosion as u16,
-        g_byte_A98F7D[(((ram_word!(game, random_number)) & (0x100u16)) as i32 >> 8i32) as usize]
-            as u16,
+        g_byte_A98F7D[(((ram_word!(game, random_number)) & (0x100u16)) >> 8) as usize] as u16,
         game,
     );
     QueueSfx2_Max3(0x29u16, game);
@@ -2509,7 +2508,7 @@ pub unsafe fn MotherBrain_SamusCollDetect(game: &mut Game) {
     let E0 = Get_MotherBrain(0i32, game);
     let mut R26: u16 = (*E0).mbn_var_04;
     let mut v1: i8 = ((R26) as i8) & (1i8);
-    R26 = (R26 as i32 >> 1i32) as u16;
+    R26 = (R26 >> 1);
     if v1 == 0
         || MotherBrain_SamusCollDetectPart(
             addr_word_A9B427 as u16,
@@ -2521,14 +2520,14 @@ pub unsafe fn MotherBrain_SamusCollDetect(game: &mut Game) {
     {
         let E = Get_MotherBrain(0x40i32, game);
         v1 = ((R26) as i8) & (1i8);
-        R26 = (R26 as i32 >> 1i32) as u16;
+        R26 = (R26 >> 1);
         if v1 == 0
             || MotherBrain_SamusCollDetectPart(0xb439u16, (*E).base.x_pos, (*E).base.y_pos, game)
                 & 1
                 == 0
         {
             v1 = ((R26) as i8) & (1i8);
-            R26 = (R26 as i32 >> 1i32) as u16;
+            R26 = (R26 >> 1);
             if v1 != 0
                 && MotherBrain_SamusCollDetectPart(
                     0xb44bu16,
@@ -2759,7 +2758,7 @@ pub unsafe fn MotherBrain_Body_Phase2_TryAttack(game: &mut Game) {
                 }
             }
         }
-        let v6: u16 = crate::rtl::rom_table_word!(game, 0xa9b6d4, (v4 as i32 >> 1i32) as isize);
+        let v6: u16 = crate::rtl::rom_table_word!(game, 0xa9b6d4, (v4 >> 1) as isize);
         if v6 as i32 == addr_kMotherBrain_Ilist_9ECC as i32 {
             if (*E1).mbn_var_05 as i32 - 1i32 & 0x8000i32 != 0 {
                 (*E).mbn_var_A = ((0xa9b781i32) as u16);
@@ -3210,9 +3209,8 @@ pub unsafe fn MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(
         + *(&raw mut a as *mut u8).offset(0) as i32;
     *(ram_ptr!(game, u16; 0xafc) as *mut u8).offset(1isize) = carry as u8;
     *(ram_ptr!(game, u16; 0xb16) as *mut u8).offset(1isize) = carry as u8;
-    let v4: u16 = (ram_word!(game, samus_y_pos) as i32
-        + (a as i32 >> 8i32) as i8 as i32
-        + (carry >> 8i32)) as u16;
+    let v4: u16 =
+        (ram_word!(game, samus_y_pos) as i32 + (a >> 8) as i8 as i32 + (carry >> 8i32)) as u16;
     let mut v6: u16 = 0;
     if v4 as i32 - 48i32 & 0x8000i32 != 0 {
         v6 = 48u16;
@@ -3236,9 +3234,8 @@ pub unsafe fn MotherBrain_MoveSamusHorizTowardsWall(mut a: u16, game: &mut Game)
         + *(&raw mut a as *mut u8).offset(0) as i32;
     *(ram_ptr!(game, u16; 0xaf8) as *mut u8).offset(1isize) = carry as u8;
     *(ram_ptr!(game, u16; 0xb12) as *mut u8).offset(1isize) = carry as u8;
-    let v4: u16 = (ram_word!(game, samus_x_pos) as i32
-        + (a as i32 >> 8i32) as i8 as i32
-        + (carry >> 8i32)) as u16;
+    let v4: u16 =
+        (ram_word!(game, samus_x_pos) as i32 + (a >> 8) as i8 as i32 + (carry >> 8i32)) as u16;
     if v4 as i32 - 235i32 & 0x8000i32 != 0 {
         set_ram_word!(game.samus_x_pos = v4);
         set_ram_word!(game.samus_prev_x_pos = v4);
@@ -3303,8 +3300,7 @@ pub unsafe fn MotherBrain_HandleRainbowBeamPalette(game: &mut Game) {
         let mut v1: u16 = 0;
         loop {
             v1 = mbn_var_01;
-            mbn_var_01 =
-                crate::rtl::rom_table_word!(game, 0xade434, (mbn_var_01 as i32 >> 1i32) as isize);
+            mbn_var_01 = crate::rtl::rom_table_word!(game, 0xade434, (mbn_var_01 >> 1) as isize);
             if (mbn_var_01 != 0) {
                 break;
             }
@@ -3440,7 +3436,7 @@ pub unsafe fn MotherBrain_DrainedByShitroid_2(game: &mut Game) {
     CallMotherBrainPainfulWalk((((*E1).mbn_var_08) as u32) | (0xa90000u32), game);
     let v2: u16 = (2u16).wrapping_mul((*E1).mbn_var_06);
     (*E1).mbn_var_07 = g_byte_A9BEEE[v2 as usize] as u16;
-    (*E1).mbn_var_34 = g_word_A9BEFE[(v2 as i32 >> 1i32) as usize];
+    (*E1).mbn_var_34 = g_word_A9BEFE[(v2 >> 1) as usize];
     if (*E1).mbn_var_06 == 6u16 {
         let E = Get_MotherBrain(0i32, game);
         (*E).mbn_var_16 = 0u16;
@@ -3856,14 +3852,12 @@ pub unsafe fn MoveEnemyWithVelocity(game: &mut Game) {
     let mut carry: i32 = *(&raw mut (*v0).x_subpos as *mut u8).offset(1isize) as i32
         + *(&raw mut ai_var_B as *mut u8).offset(0) as i32;
     *(&raw mut (*v0).x_subpos as *mut u8).offset(1isize) = carry as u8;
-    (*v0).x_pos =
-        ((*v0).x_pos as i32 + ((ai_var_B as i32 >> 8i32) as i8 as i32 + (carry >> 8i32))) as u16;
+    (*v0).x_pos = ((*v0).x_pos as i32 + ((ai_var_B >> 8) as i8 as i32 + (carry >> 8i32))) as u16;
     let mut ai_var_C: u16 = (*v0).ai_var_C;
     carry = *(&raw mut (*v0).y_subpos as *mut u8).offset(1isize) as i32
         + *(&raw mut ai_var_C as *mut u8).offset(0) as i32;
     *(&raw mut (*v0).y_subpos as *mut u8).offset(1isize) = carry as u8;
-    (*v0).y_pos =
-        ((*v0).y_pos as i32 + ((ai_var_C as i32 >> 8i32) as i8 as i32 + (carry >> 8i32))) as u16;
+    (*v0).y_pos = ((*v0).y_pos as i32 + ((ai_var_C >> 8) as i8 as i32 + (carry >> 8i32))) as u16;
 }
 pub unsafe fn MotherBrain_SetBodyInstrs(a: u16, game: &mut Game) {
     let E = Get_MotherBrain(0i32, game);
@@ -3902,7 +3896,7 @@ pub unsafe fn Enemy_IncreaseYpos(k: u16, mut a: u16, game: &mut Game) {
     let carry: i32 = *(&raw mut (*v2).y_subpos as *mut u8).offset(1isize) as i32
         + *(&raw mut a as *mut u8).offset(0) as i32;
     *(&raw mut (*v2).y_subpos as *mut u8).offset(1isize) = carry as u8;
-    (*v2).y_pos = ((*v2).y_pos as i32 + ((a as i32 >> 8i32) as i8 as i32 + (carry >> 8i32))) as u16;
+    (*v2).y_pos = ((*v2).y_pos as i32 + ((a >> 8) as i8 as i32 + (carry >> 8i32))) as u16;
 }
 pub unsafe fn Samus_DecrementAmmoDueToRainbowBeam(game: &mut Game) {
     if (ram_word!(game, random_enemy_counter) & 3) == 0 && ram_word!(game, samus_missiles) != 0u16 {
@@ -4023,7 +4017,7 @@ pub unsafe fn MotherBrain_MakeWalkForwards(j: u16, a: u16, game: &mut Game) -> u
         }
         if (*E).base.x_pos as i32 - 128i32 & 0x8000i32 != 0 {
             MotherBrain_SetBodyInstrs(
-                crate::rtl::rom_table_word!(game, 0xa9c61e, (j as i32 >> 1i32) as isize),
+                crate::rtl::rom_table_word!(game, 0xa9c61e, (j >> 1) as isize),
                 game,
             );
             return 0u8;
@@ -4039,7 +4033,7 @@ pub unsafe fn MotherBrain_MakeWalkBackwards(a: u16, j: u16, game: &mut Game) -> 
         }
         if (*E).base.x_pos as i32 - 48i32 & 0x8000i32 == 0 {
             MotherBrain_SetBodyInstrs(
-                crate::rtl::rom_table_word!(game, 0xa9c664, (j as i32 >> 1i32) as isize),
+                crate::rtl::rom_table_word!(game, 0xa9c664, (j >> 1) as isize),
                 game,
             );
             return 0u8;
@@ -4741,13 +4735,13 @@ pub unsafe fn ShitroidInCutscene_HandleHealthBasedPalette(k: u16, game: &mut Gam
                 }
             }
             let v5: u16 = v3;
-            let v4: u16 = crate::rtl::rom_table_word!(game, 0xade7e2, (v3 as i32 >> 1i32) as isize);
+            let v4: u16 = crate::rtl::rom_table_word!(game, 0xade7e2, (v3 >> 1) as isize);
             WriteColorsToPalette(0x1e2u16, 0xadu8, v4, 4u16, game);
             WriteColorsToPalette(0x1f4u16, 0xadu8, (v4).wrapping_add(8u16), 5u16, game);
             WriteColorsToPalette(
                 0x1eau16,
                 0xadu8,
-                crate::rtl::rom_table_word!(game, 0xade882, (v5 as i32 >> 1i32) as isize),
+                crate::rtl::rom_table_word!(game, 0xade882, (v5 >> 1) as isize),
                 5u16,
                 game,
             );
@@ -4935,7 +4929,7 @@ pub unsafe fn MotherBrain_HandleBrainPal(game: &mut Game) {
             let r18: u16 = crate::rtl::rom_table_word!(
                 game,
                 0xa9d260,
-                (*(&raw mut (*E).mbn_var_E as *mut u8).offset(1isize) as i32 >> 1i32) as isize,
+                (*(&raw mut (*E).mbn_var_E as *mut u8).offset(1isize) >> 1) as isize,
             );
             *(&raw mut (*E).mbn_var_D as *mut u8).offset(1isize) = (*E).mbn_var_E as u8;
             let mut mbn_var_D: i8 = (*E).mbn_var_D as i8;
@@ -4962,9 +4956,7 @@ pub unsafe fn MotherBrain_HandleBrainPal(game: &mut Game) {
 pub unsafe fn WriteColorsToPalette(mut k: u16, db: u8, mut j: u16, a: u16, game: &mut Game) {
     let mut n: i32 = a as i32;
     loop {
-        set_ram_word!(
-            game.palette_buffer[(k as i32 >> 1i32)] = *(RomPtrWithBank(db, j, game) as *mut u16)
-        );
+        set_ram_word!(game.palette_buffer[(k >> 1)] = *(RomPtrWithBank(db, j, game) as *mut u16));
         k = (k).wrapping_add(2u16);
         j = (j).wrapping_add(2u16);
         n -= 1;
@@ -4976,9 +4968,7 @@ pub unsafe fn WriteColorsToPalette(mut k: u16, db: u8, mut j: u16, a: u16, game:
 pub unsafe fn WriteColorsToTargetPalette(db: u8, mut k: u16, mut j: u16, a: u16, game: &mut Game) {
     let mut n: i32 = a as i32;
     loop {
-        set_ram_word!(
-            game.target_palettes[(k as i32 >> 1i32)] = *(RomPtrWithBank(db, j, game) as *mut u16)
-        );
+        set_ram_word!(game.target_palettes[(k >> 1)] = *(RomPtrWithBank(db, j, game) as *mut u16));
         k = (k).wrapping_add(2u16);
         j = (j).wrapping_add(2u16);
         n -= 1;
@@ -5151,7 +5141,7 @@ pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
             (*v10).vram_dst = crate::rtl::rom_table_word!(game, 0xa9d583, (v11 + 3i32) as isize);
             v3 = (v3).wrapping_add(7u16);
             v8 = (v8).wrapping_add(8u16);
-            v9 = crate::rtl::rom_table_word!(game, 0xa9d583, (v8 as i32 >> 1i32) as isize);
+            v9 = crate::rtl::rom_table_word!(game, 0xa9d583, (v8 >> 1) as isize);
             if (v9 == 0) {
                 break;
             }
@@ -5169,7 +5159,7 @@ pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
             (*v5).vram_dst = crate::rtl::rom_table_word!(game, 0xa9d549, (v6 + 3i32) as isize);
             v3 = (v3).wrapping_add(7u16);
             v2 = (v2).wrapping_add(8u16);
-            v4 = crate::rtl::rom_table_word!(game, 0xa9d549, (v2 as i32 >> 1i32) as isize);
+            v4 = crate::rtl::rom_table_word!(game, 0xa9d549, (v2 >> 1) as isize);
             if (v4 == 0) {
                 break;
             }
@@ -5409,8 +5399,7 @@ pub unsafe fn DeadMonsters_Func_3(k: u16, game: &mut Game) -> u8 {
         let full: i32 = *(&raw mut (*E).base.y_subpos as *mut u8).offset(1isize) as i32
             + *(&raw mut v3 as *mut u8).offset(0) as i32;
         *(&raw mut (*E).base.y_subpos as *mut u8).offset(1isize) = full as u8;
-        let v12: u16 =
-            ((*E).base.y_pos as i32 + (v3 as i32 >> 8i32) as i8 as i32 + (full >> 8i32)) as u16;
+        let v12: u16 = ((*E).base.y_pos as i32 + (v3 >> 8) as i8 as i32 + (full >> 8i32)) as u16;
         (*E).base.y_pos = v12;
         ((v12 as i32 - 184i32 & 0x8000i32) == 0i32) as u8
     } else {
@@ -5424,7 +5413,7 @@ pub unsafe fn DeadMonsters_Func_4(k: u16, mut a: u16, game: &mut Game) {
             + *(&raw mut a as *mut u8).offset(0) as i32;
         *(&raw mut (*E).base.x_subpos as *mut u8).offset(1isize) = full as u8;
         (*E).base.x_pos =
-            ((*E).base.x_pos as i32 + ((a as i32 >> 8i32) as i8 as i32 + (full >> 8i32))) as u16;
+            ((*E).base.x_pos as i32 + ((a >> 8) as i8 as i32 + (full >> 8i32))) as u16;
     } else {
         Enemy_MoveRight_IgnoreSlopes(k, (a as i16 as i32) << 8i32, game);
     };
@@ -5592,9 +5581,9 @@ pub unsafe fn ProcessCorpseRotting(k: u16, game: &mut Game) -> u8 {
 pub unsafe fn CopyMoveCorpseRottingRotEntry(r20: *const u16, a: u16, r18: u16, game: &mut Game) {
     let E = Get_DeadMonsters(0i32, game);
     (*E).dms_var_41 = a;
-    let v1: u16 = (((a) & (0xfff8u16)) as i32 >> 2i32) as u16;
+    let v1: u16 = (((a) & (0xfff8u16)) >> 2);
     let v2: u16 = (a) & (7u16);
-    let v6: u16 = (*r20.offset((v1 as i32 >> 1i32) as isize) as i32 + 2i32 * v2 as i32) as u16;
+    let v6: u16 = (*r20.offset((v1 >> 1) as isize) as i32 + 2i32 * v2 as i32) as u16;
     if v2 >= 6u16 {
         CallCorpseRottingMove(
             ((r18) as u32) | (0xa90000u32),
@@ -6612,7 +6601,7 @@ pub unsafe fn Shitroid_AccelerateTowardsPoint(
     let mut R28: u16 = 0u16;
     R28 = (R28).wrapping_add(Shitroid_AccelerateTowardsX(k, r18, a, game));
     R28 = (R28).wrapping_add(Shitroid_AccelerateTowardsY(k, r20, a, game));
-    R28 = (R28 as i32 >> 1i32) as u16;
+    R28 = (R28 >> 1);
     ((R28) as u8) & (1u8)
 }
 pub unsafe fn Shitroid_AccelerateTowardsY(k: u16, r20: u16, r22: u16, game: &mut Game) -> u16 {
@@ -6627,8 +6616,7 @@ pub unsafe fn Shitroid_AccelerateTowardsY(k: u16, r20: u16, r22: u16, game: &mut
             v7 = -1280i32 as u16;
         }
         (*E).shitr_var_C = v7;
-        if (((*E).base.y_pos as i32 + (v7 as i32 >> 8i32) as i8 as i32 - r20 as i32) as i16) <= 0i16
-        {
+        if (((*E).base.y_pos as i32 + (v7 >> 8) as i8 as i32 - r20 as i32) as i16) <= 0i16 {
             (*E).shitr_var_C = 0u16;
             result = result.wrapping_add(1);
         }
@@ -6638,8 +6626,7 @@ pub unsafe fn Shitroid_AccelerateTowardsY(k: u16, r20: u16, r22: u16, game: &mut
             v3 = 1280u16;
         }
         (*E).shitr_var_C = v3;
-        if (((*E).base.y_pos as i32 + (v3 as i32 >> 8i32) as i8 as i32 - r20 as i32) as i16) >= 0i16
-        {
+        if (((*E).base.y_pos as i32 + (v3 >> 8) as i8 as i32 - r20 as i32) as i16) >= 0i16 {
             (*E).shitr_var_C = 0u16;
             result = result.wrapping_add(1);
         }
@@ -6655,8 +6642,7 @@ pub unsafe fn Shitroid_AccelerateTowardsX(k: u16, r18: u16, r22: u16, game: &mut
             v6 = -1280i32 as u16;
         }
         (*E).shitr_var_B = v6;
-        if (((*E).base.x_pos as i32 + (v6 as i32 >> 8i32) as i8 as i32 - r18 as i32) as i16) <= 0i16
-        {
+        if (((*E).base.x_pos as i32 + (v6 >> 8) as i8 as i32 - r18 as i32) as i16) <= 0i16 {
             (*E).shitr_var_B = 0u16;
             result = result.wrapping_add(1);
         }
@@ -6666,8 +6652,7 @@ pub unsafe fn Shitroid_AccelerateTowardsX(k: u16, r18: u16, r22: u16, game: &mut
             v2 = 1280u16;
         }
         (*E).shitr_var_B = v2;
-        if (((*E).base.x_pos as i32 + (v2 as i32 >> 8i32) as i8 as i32 - r18 as i32) as i16) >= 0i16
-        {
+        if (((*E).base.x_pos as i32 + (v2 >> 8) as i8 as i32 - r18 as i32) as i16) >= 0i16 {
             (*E).shitr_var_B = 0u16;
             result = result.wrapping_add(1);
         }

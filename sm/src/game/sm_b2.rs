@@ -199,8 +199,7 @@ pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
                 {
                     current_block = 1528265894032410192;
                 } else {
-                    let mut v3: i16 =
-                        (((r18) & ((kProjectileType_TypeMask) as u16)) as i32 >> 8i32) as i16;
+                    let mut v3: i16 = (((r18) & ((kProjectileType_TypeMask) as u16)) >> 8) as i16;
                     let mut v = get_Vulnerability((r20).wrapping_add((v3) as u16), game);
                     if ((*v).plasma_ice_wave & 0xf) != 0 && ((*v).plasma_ice_wave & 0xf) != 15 {
                         current_block = 1528265894032410192;
@@ -454,12 +453,12 @@ pub unsafe fn SpacePirates_Func_2(k: u16, game: &mut Game) {
     let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_pos = ((*E).sps_var_D).wrapping_add(SineMult8bit(
         (*E).sps_var_F,
-        ((*E).sps_parameter_2 as i32 >> 1i32) as u16,
+        ((*E).sps_parameter_2 >> 1),
         game,
     ));
     (*E).base.y_pos = ((*E).sps_var_E).wrapping_sub(CosineMult8bit(
         (*E).sps_var_F,
-        ((*E).sps_parameter_2 as i32 >> 2i32) as u16,
+        ((*E).sps_parameter_2 >> 2),
         game,
     ));
     let v1: u16 = ((*(&raw mut (*E).sps_var_F as *mut u8).offset(0))
@@ -486,12 +485,12 @@ pub unsafe fn SpacePirates_Func_4(k: u16, game: &mut Game) {
     let E = Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_pos = ((*E).sps_var_D).wrapping_add(SineMult8bit(
         (*E).sps_var_F,
-        ((*E).sps_parameter_2 as i32 >> 1i32) as u16,
+        ((*E).sps_parameter_2 >> 1),
         game,
     ));
     (*E).base.y_pos = ((*E).sps_var_E).wrapping_sub(CosineMult8bit(
         (*E).sps_var_F,
-        ((*E).sps_parameter_2 as i32 >> 2i32) as u16,
+        ((*E).sps_parameter_2 >> 2),
         game,
     ));
     let v1: u16 = ((*(&raw mut (*E).sps_var_22 as *mut u8).offset(0))
@@ -578,7 +577,7 @@ pub unsafe fn NinjaSpacePirates_Init(game: &mut Game) {
         (*E).sps_var_F = x_pos;
         (*E).sps_var_E = (x_pos).wrapping_sub((*E).sps_parameter_2);
     }
-    let mut r20: u16 = ((((*E).sps_var_F).wrapping_sub((*E).sps_var_E)) as i32 >> 1i32) as u16;
+    let mut r20: u16 = ((((*E).sps_var_F).wrapping_sub((*E).sps_var_E)) >> 1);
     (*E).sps_var_D = ((*E).sps_var_E).wrapping_add(r20);
     let mut r18: u16 = 0u16;
     let mut R22: u16 = 0u16;
@@ -605,7 +604,7 @@ pub unsafe fn NinjaSpacePirates_Init(game: &mut Game) {
     let mut v7: u16 = 0u16;
     for _ in 0i32..=15i32 {
         *(ram_ptr!(game, u16; 0xc200)).offset(((v7 as i32 >> 1i32) + 240i32) as isize) =
-            crate::rtl::rom_table_word!(game, 0xb28727, (v6 as i32 >> 1i32) as isize);
+            crate::rtl::rom_table_word!(game, 0xb28727, (v6 >> 1) as isize);
         v6 = (v6).wrapping_add(2u16);
         v7 = (v7).wrapping_add(2u16);
     }
@@ -666,7 +665,7 @@ pub unsafe fn SpacePirates_Func_7(k: u16, game: &mut Game) {
 }
 pub unsafe fn SpacePirates_Func_8(game: &mut Game) -> u16 {
     let mut v0: u16 = 8u16;
-    while ram_word!(game, projectile_type[(v0 as i32 >> 1i32)]) == 0 {
+    while ram_word!(game, projectile_type[(v0 >> 1)]) == 0 {
         v0 = (v0).wrapping_sub(2u16);
         if (v0 & 0x8000) != 0 {
             return 0u16;
@@ -1063,7 +1062,7 @@ pub unsafe fn WalkingSpacePirates_FDCE(game: &mut Game) {
 }
 pub unsafe fn WalkingSpacePirates_FE4B(game: &mut Game) {
     let mut v0: u16 = 8u16;
-    while ram_word!(game, projectile_type[(v0 as i32 >> 1i32)]) == 0 {
+    while ram_word!(game, projectile_type[(v0 >> 1)]) == 0 {
         v0 = (v0).wrapping_sub(2u16);
         if (v0 & 0x8000) != 0 {
             return;

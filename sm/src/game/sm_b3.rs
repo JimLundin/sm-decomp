@@ -813,9 +813,9 @@ pub unsafe fn Botwoon_Init(game: &mut Game) {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
         let mut health: u16 = (*E).base.health;
         (*E).botwoon_var_5B = health;
-        health = (health as i32 >> 1i32) as u16;
+        health = (health >> 1);
         (*E).botwoon_var_5C = health;
-        (*E).botwoon_var_5D = (health as i32 >> 1i32) as u16;
+        (*E).botwoon_var_5D = (health >> 1);
         let x_pos: u16 = (*E).base.x_pos;
         (*E).botwoon_var_50 = x_pos;
         (*E).botwoon_var_52 = x_pos;
@@ -890,11 +890,9 @@ pub unsafe fn Botwoon_Func_4(game: &mut Game) {
 pub unsafe fn Botwoon_Func_5(game: &mut Game) {
     let mut v0: u16 = 34u16;
     loop {
-        update_ram_word!(
-            game.eproj_properties[(v0 as i32 >> 1i32)],
-            |fresh4| (fresh4) | (0x2000u16)
-        );
-        set_ram_word!(game.eproj_flags[(v0 as i32 >> 1i32)] = 2u16);
+        update_ram_word!(game.eproj_properties[(v0 >> 1)], |fresh4| (fresh4)
+            | (0x2000u16));
+        set_ram_word!(game.eproj_flags[(v0 >> 1)] = 2u16);
         v0 = (v0).wrapping_sub(2u16);
         if (((v0) as i16).wrapping_sub(10i16) < 0i16) {
             break;
@@ -905,11 +903,8 @@ pub unsafe fn Botwoon_HealthBasedPalHandling(game: &mut Game) {
     let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).botwoon_var_4F != 16u16
         && (((*E).base.health) as i16).wrapping_sub(
-            (crate::rtl::rom_table_word!(
-                game,
-                0xb3981b,
-                ((*E).botwoon_var_4F as i32 >> 1i32) as isize
-            )) as i16,
+            (crate::rtl::rom_table_word!(game, 0xb3981b, ((*E).botwoon_var_4F >> 1) as isize))
+                as i16,
         ) < 0i16
     {
         let mut r18: u16 = (16u16).wrapping_mul((*E).botwoon_var_4F);
@@ -918,8 +913,8 @@ pub unsafe fn Botwoon_HealthBasedPalHandling(game: &mut Game) {
             let fresh5 = r18;
             r18 = r18.wrapping_add(1);
             set_ram_word!(
-                game.palette_buffer[(r20 as i32 >> 1i32)] =
-                    crate::rtl::rom_table_word!(game, 0xb3971b, (fresh5 as i32 >> 1i32) as isize)
+                game.palette_buffer[(r20 >> 1)] =
+                    crate::rtl::rom_table_word!(game, 0xb3971b, (fresh5 >> 1) as isize)
             );
             r18 = r18.wrapping_add(1);
             r20 = (r20).wrapping_add(2u16);
@@ -1197,18 +1192,16 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
             (*ET).botwoon_var_10 = ((*ET).botwoon_var_10) ^ (1u16);
             if v4 {
                 update_ram_word!(
-                    game.eproj_properties[(botwoo_var_00 as i32 >> 1i32)],
+                    game.eproj_properties[(botwoo_var_00 >> 1)],
                     |fresh0| (fresh0 & !(0x2000))
                 );
-                *(ram_ptr!(game, u16; 0xf380)).offset((botwoo_var_00 as i32 >> 1i32) as isize) =
-                    1u16;
+                *(ram_ptr!(game, u16; 0xf380)).offset((botwoo_var_00 >> 1) as isize) = 1u16;
             } else {
                 update_ram_word!(
-                    game.eproj_properties[(botwoo_var_00 as i32 >> 1i32)],
+                    game.eproj_properties[(botwoo_var_00 >> 1)],
                     |fresh1| (fresh1) | (0x2000u16)
                 );
-                *(ram_ptr!(game, u16; 0xf380)).offset((botwoo_var_00 as i32 >> 1i32) as isize) =
-                    2u16;
+                *(ram_ptr!(game, u16; 0xf380)).offset((botwoo_var_00 >> 1) as isize) = 2u16;
             }
             if v2 == 0 {
                 set_fields! {[(*E)], 0u16; botwoon_var_35, botwoon_var_3E}
@@ -1265,7 +1258,7 @@ pub unsafe fn Botwoon_Func_25(game: &mut Game) {
                 .wrapping_sub(ram_word!(game, eproj_y_pos[v2]));
         }
         set_ram_word!(
-            game.eproj_E[(botwoo_var_00 as i32 >> 1i32)] = (2i32
+            game.eproj_E[(botwoo_var_00 >> 1)] = (2i32
                 * (((r24).wrapping_add(CalculateAngleFromXY(x, y, game))) as i32 >> 5i32))
                 as u16
         );
@@ -1293,11 +1286,7 @@ pub unsafe fn Botwoon_Func_26(k: u16, game: &mut Game) {
             (*E).botwoon_var_45 = ((*E).botwoon_var_45 as i32
                 + (((r22) as i8).wrapping_sub(((*E).botwoon_var_45) as i8)) as i32 * 3i32 / 4i32)
                 as u8 as u16;
-            v1 = crate::rtl::rom_table_word!(
-                game,
-                0xb3946b,
-                ((*E).botwoon_var_45 as i32 >> 5i32) as isize
-            );
+            v1 = crate::rtl::rom_table_word!(game, 0xb3946b, ((*E).botwoon_var_45 >> 5) as isize);
         }
         if v1 != (*E).botwoon_var_3B {
             (*E).base.current_instruction = v1;
@@ -1323,7 +1312,7 @@ pub unsafe fn Botwoon_Func_27(k: u16, game: &mut Game) {
     let v3: u16 = crate::rtl::rom_table_word!(
         game,
         0xb3948b,
-        ((((v2) as u8).wrapping_add(16u8)) as i32 >> 5i32) as isize
+        ((((v2) as u8).wrapping_add(16u8)) >> 5) as isize
     );
     (*E).base.current_instruction = v3;
     (*E).botwoon_var_3B = v3;

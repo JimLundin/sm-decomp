@@ -705,7 +705,7 @@ pub fn DemoPreInstr_8AB0(game: &mut Game) {
 }
 unsafe fn XrayFillUp(dest: *mut u16, fill_with: u16, mut v1: u16) {
     loop {
-        *dest.offset((v1 as i32 >> 1i32) as isize) = fill_with;
+        *dest.offset((v1 >> 1) as isize) = fill_with;
         v1 = (v1).wrapping_sub(2u16);
         if (v1 & 0x8000 != 0) {
             break;
@@ -714,7 +714,7 @@ unsafe fn XrayFillUp(dest: *mut u16, fill_with: u16, mut v1: u16) {
 }
 unsafe fn XrayFillDown(dest: *mut u16, fill_with: u16, mut v1: u16) {
     loop {
-        *dest.offset((v1 as i32 >> 1i32) as isize) = fill_with;
+        *dest.offset((v1 >> 1) as isize) = fill_with;
         v1 = (v1).wrapping_add(2u16);
         if (v1 >= 460u16) {
             break;
@@ -1130,7 +1130,7 @@ unsafe fn XrayHdmaFunc_BeamAimedD(ctx: &XrayHdmaCtx, game: &mut Game) {
 }
 unsafe fn XrayHdmaFunc_BeamHoriz(ctx: *mut XrayHdmaCtx, game: &mut Game) {
     let v0: u16 = (2i32 * ((*ctx).r24 as i32 - 1i32)) as u16;
-    *(*ctx).dest.offset((v0 as i32 >> 1i32) as isize) = 0xff00u16;
+    *(*ctx).dest.offset((v0 >> 1) as isize) = 0xff00u16;
     XrayFillUp((*ctx).dest, 0xffu16, (v0).wrapping_sub(2u16));
     XrayFillDown((*ctx).dest, 0xffu16, (v0).wrapping_add(2u16));
 }
@@ -1297,8 +1297,8 @@ unsafe fn XrayHdmaOnScreen_BeamAimedD(ctx: &XrayHdmaCtx, game: &mut Game) {
 }
 unsafe fn XrayHdmaOnScreen_BeamHoriz(ctx: *mut XrayHdmaCtx, game: &mut Game) {
     let v0: u16 = (2i32 * ((*ctx).r24 as i32 - 1i32)) as u16;
-    let t: u32 = ((*ctx).r22 as i32 >> 8i32) as u32;
-    *(*ctx).dest.offset((v0 as i32 >> 1i32) as isize) = (if (*ctx).r18_avoid == 64u16 {
+    let t: u32 = ((*ctx).r22 >> 8) as u32;
+    *(*ctx).dest.offset((v0 >> 1) as isize) = (if (*ctx).r18_avoid == 64u16 {
         t | 0xff00u32
     } else {
         t << 8i32
@@ -1513,7 +1513,7 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
         pointer __ASSERT_FUNCTION.as_ptr()
     };
     let mut r34: u16 = (Mult8x8(
-        (ram_word!(game, layer1_y_pos) as i32 >> 4i32) as u8,
+        (ram_word!(game, layer1_y_pos) >> 4) as u8,
         ram_word!(game, room_width_in_blocks) as u8,
     ) as i32
         + (ram_word!(game, layer1_x_pos) as i32 >> 4i32)) as u16;
@@ -2107,7 +2107,7 @@ pub unsafe fn Samus_HandlePalette(game: &mut Game) {
             crate::rtl::rom_table_word!(
                 game,
                 0x91d727,
-                (ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize
+                (ram_word!(game, samus_suit_palette_index) >> 1) as isize
             ),
             game,
         );
@@ -2154,13 +2154,13 @@ pub unsafe fn HandleBeamChargePalettes(game: &mut Game) -> u8 {
             R36 = crate::rtl::rom_table_word!(
                 game,
                 0x91d7ff,
-                (ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize
+                (ram_word!(game, samus_suit_palette_index) >> 1) as isize
             );
         } else {
             R36 = crate::rtl::rom_table_word!(
                 game,
                 0x91d7d5,
-                (ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize
+                (ram_word!(game, samus_suit_palette_index) >> 1) as isize
             );
         }
         CopyToSamusSuitPalette(
@@ -2198,7 +2198,7 @@ pub unsafe fn HandleVisorPalette(game: &mut Game) -> u8 {
             game.palette_buffer[196] = crate::rtl::rom_table_word!(
                 game,
                 0x9ba3c0,
-                (*(&raw mut v1 as *mut u8).offset(1isize,) as i32 >> 1i32) as isize,
+                (*(&raw mut v1 as *mut u8).offset(1isize,) >> 1) as isize,
             )
         );
         let v2: i32 = *(&raw mut v1 as *mut u8).offset(1isize) as i32 + 2i32;
@@ -2309,7 +2309,7 @@ pub unsafe fn HandleMiscSamusPalette(game: &mut Game) {
                     crate::rtl::rom_table_word!(
                         game,
                         0x91d998,
-                        (ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize,
+                        (ram_word!(game, samus_suit_palette_index) >> 1) as isize,
                     ),
                     game,
                 );
@@ -2356,7 +2356,7 @@ pub unsafe fn Samus_HandleScrewAttackSpeedBoostingPals(game: &mut Game) -> u8 {
             let R36: u16 = crate::rtl::rom_table_word!(
                 game,
                 0x91da4a,
-                (ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize
+                (ram_word!(game, samus_suit_palette_index) >> 1) as isize
             );
             let v1: u16 = *(RomPtr_91(
                 (R36).wrapping_add(ram_word!(game, special_samus_palette_frame)),
@@ -2387,7 +2387,7 @@ pub unsafe fn Samus_HandleScrewAttackSpeedBoostingPals(game: &mut Game) -> u8 {
                 let R36_0: u16 = crate::rtl::rom_table_word!(
                     game,
                     0x91daa9,
-                    (ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize
+                    (ram_word!(game, samus_suit_palette_index) >> 1) as isize
                 );
                 if ram_word!(game, special_samus_palette_frame) > 6u16 {
                     set_ram_word!(game.special_samus_palette_frame = 6u16);
@@ -2422,7 +2422,7 @@ pub unsafe fn Samus_SpeedBoosterShinePals(game: &mut Game) -> u8 {
         let R36: u16 = crate::rtl::rom_table_word!(
             game,
             0x91db10,
-            (ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize
+            (ram_word!(game, samus_suit_palette_index) >> 1) as isize
         );
         let v1: u16 = *(RomPtr_91(
             (R36).wrapping_add(ram_word!(game, special_samus_palette_frame)),
@@ -2447,7 +2447,7 @@ pub unsafe fn Samus_HandleShinesparkingPals(game: &mut Game) -> u8 {
         let R36: u16 = crate::rtl::rom_table_word!(
             game,
             0x91db75,
-            (ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize
+            (ram_word!(game, samus_suit_palette_index) >> 1) as isize
         );
         let v1: u16 = *(RomPtr_91(
             (R36).wrapping_add(ram_word!(game, special_samus_palette_frame)),
@@ -2477,7 +2477,7 @@ pub unsafe fn Samus_HandleCrystalFlashPals(game: &mut Game) -> u8 {
                 crate::rtl::rom_table_word!(
                     game,
                     0x91dc28,
-                    (ram_word!(game, special_samus_palette_frame) as i32 >> 1i32) as isize
+                    (ram_word!(game, special_samus_palette_frame) >> 1) as isize
                 ),
                 game,
             );
@@ -2550,7 +2550,7 @@ pub unsafe fn Samus_HandleXrayPals(game: &mut Game) -> u8 {
                         game.palette_buffer[196] = crate::rtl::rom_table_word!(
                             game,
                             0x9ba3c0,
-                            (ram_word!(game, special_samus_palette_frame) as i32 >> 1i32) as isize,
+                            (ram_word!(game, special_samus_palette_frame) >> 1) as isize,
                         )
                     );
                     if ram_word!(game, special_samus_palette_frame) as i32 - 4i32 & 0x8000i32 != 0 {
@@ -2573,7 +2573,7 @@ pub unsafe fn Samus_HandleXrayPals(game: &mut Game) -> u8 {
             game.palette_buffer[196] = crate::rtl::rom_table_word!(
                 game,
                 0x9ba3c0,
-                (ram_word!(game, special_samus_palette_frame) as i32 >> 1i32) as isize,
+                (ram_word!(game, special_samus_palette_frame) >> 1) as isize,
             )
         );
         let mut v3: u16 = (ram_word!(game, special_samus_palette_frame)).wrapping_add(2u16);
@@ -3224,7 +3224,7 @@ pub unsafe fn Samus_HandleTransFromBlockColl_2(game: &mut Game) {
         } else {
             set_ram_word!(
                 game.samus_new_pose =
-                    crate::rtl::rom_table_word!(game, 0x91e921, (v0 as i32 >> 1i32) as isize)
+                    crate::rtl::rom_table_word!(game, 0x91e921, (v0 >> 1) as isize)
             );
         }
         set_ram_word!(game.samus_momentum_routine_index = 5u16);
@@ -4465,7 +4465,7 @@ pub unsafe fn SamusFunc_F468_CrouchTransEtc(game: &mut Game) -> u8 {
             break 's_43;
         }
         set_ram_word!(game.samus_momentum_routine_index = 7u16);
-        return off_91F790[(v0 as i32 >> 1i32) as usize].expect("non-null function pointer")(game);
+        return off_91F790[(v0 >> 1) as usize].expect("non-null function pointer")(game);
     }
     0u8
 }

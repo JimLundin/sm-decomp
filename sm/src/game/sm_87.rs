@@ -44,7 +44,7 @@ pub unsafe fn ClearAnimtiles(game: &mut Game) {
 pub unsafe fn SpawnAnimtiles(j: u16, game: &mut Game) {
     let v0: u16 = j;
     let mut v1: u16 = 10u16;
-    while ram_word!(game, animtiles_ids[(v1 as i32 >> 1i32)]) != 0 {
+    while ram_word!(game, animtiles_ids[(v1 >> 1)]) != 0 {
         v1 = (v1).wrapping_sub(2u16);
         if (v1 & 0x8000) != 0 {
             return;
@@ -128,7 +128,7 @@ pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {
     }
 }
 pub unsafe fn AnimtilesInstr_Delete(k: u16, j: u16, game: &mut Game) -> u16 {
-    set_ram_word!(game.animtiles_ids[(k as i32 >> 1i32)] = 0u16);
+    set_ram_word!(game.animtiles_ids[(k >> 1)] = 0u16);
     0u16
 }
 pub unsafe fn AnimtilesInstr_Goto(k: u16, j: u16, game: &mut Game) -> u16 {
@@ -222,7 +222,7 @@ pub unsafe fn AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet(
     game: &mut Game,
 ) -> u16 {
     if CheckBossBitForCurArea(1u16, game) & 1 == 0 {
-        set_ram_word!(game.animtiles_instr_timers[(k as i32 >> 1i32)] = 1u16);
+        set_ram_word!(game.animtiles_instr_timers[(k >> 1)] = 1u16);
         return 0u16;
     }
     j
@@ -283,7 +283,7 @@ pub unsafe fn AnimtilesInstr_Write8PaletteColors(k: u16, j: u16, game: &mut Game
     let mut i: i32 = 0i32;
     while i != 16i32 {
         set_ram_word!(
-            game.target_palettes[(v2 as i32 >> 1i32)] =
+            game.target_palettes[(v2 >> 1)] =
                 kAnimtilesInstr_Write8PaletteColors[(i >> 1i32) as usize]
         );
         v2 = (v2).wrapping_add(2u16);

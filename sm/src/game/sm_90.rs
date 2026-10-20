@@ -913,7 +913,7 @@ pub unsafe fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
             0x929263,
             ram_word!(game, samus_pose) as isize
         ));
-        let v2: i16 = (ram_word!(game, speed_echo_ypos[(k as i32 >> 1i32)]) as i32
+        let v2: i16 = (ram_word!(game, speed_echo_ypos[(k >> 1)]) as i32
             - (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
                 .offset(ram_word!(game, samus_pose) as isize))
             .y_offset_to_gfx as i32
@@ -921,7 +921,7 @@ pub unsafe fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
         if v2 >= 0i16 && v2 as i32 - 248i32 & 0x8000i32 != 0 {
             DrawSamusSpritemap(
                 a,
-                (ram_word!(game, speed_echo_xpos[(k as i32 >> 1i32)]))
+                (ram_word!(game, speed_echo_xpos[(k >> 1)]))
                     .wrapping_sub(ram_word!(game, layer1_x_pos)),
                 v2 as u16,
                 game,
@@ -939,7 +939,7 @@ pub unsafe fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
                     ));
                 DrawSamusSpritemap(
                     v5,
-                    (ram_word!(game, speed_echo_xpos[(k as i32 >> 1i32)]))
+                    (ram_word!(game, speed_echo_xpos[(k >> 1)]))
                         .wrapping_sub(ram_word!(game, layer1_x_pos)),
                     v2 as u16,
                     game,
@@ -991,7 +991,7 @@ pub unsafe fn Samus_DrawDuringDeathAnim(game: &mut Game) {
             (ram_word!(game, samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
                 game,
                 0x92945d,
-                (R36 as i32 >> 1i32) as isize
+                (R36 >> 1) as isize
             )),
             (ram_word!(game, layer1_x_pos)).wrapping_add(ram_word!(game, samus_spritemap_x_pos)),
             (ram_word!(game, layer1_y_pos)).wrapping_add(ram_word!(game, samus_spritemap_y_pos)),
@@ -1020,7 +1020,7 @@ pub unsafe fn Samus_DrawWhenNotAnimatingOrDying(game: &mut Game) {
             (ram_word!(game, samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
                 game,
                 0x92945d,
-                (R36 as i32 >> 1i32) as isize
+                (R36 >> 1) as isize
             )),
             ram_word!(game, samus_spritemap_x_pos),
             ram_word!(game, samus_spritemap_y_pos),
@@ -1055,7 +1055,7 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
                                     (r18).wrapping_add(crate::rtl::rom_table_word!(
                                         game,
                                         0x908b93,
-                                        (v3 as i32 >> 1i32) as isize,
+                                        (v3 >> 1) as isize,
                                     ),),
                                     game,
                                 )
@@ -1069,7 +1069,7 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
                         (r18).wrapping_add(crate::rtl::rom_table_word!(
                             game,
                             0x908b93,
-                            (v3 as i32 >> 1i32) as isize
+                            (v3 >> 1) as isize
                         ),),
                         game,
                     ) as *mut u16)
@@ -1078,8 +1078,7 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
                     (ram_word!(game, atmospheric_gfx_frame_and_type[v1])).wrapping_add(1u16);
                 set_ram_word!(game.atmospheric_gfx_frame_and_type[v1] = v5);
                 (((v5 as u8) as i16).wrapping_sub(
-                    (crate::rtl::rom_table_word!(game, 0x908bef, (v3 as i32 >> 1i32) as isize))
-                        as i16,
+                    (crate::rtl::rom_table_word!(game, 0x908bef, (v3 >> 1) as isize)) as i16,
                 ) >= 0i16)
                     && ({
                         set_ram_word!(game.atmospheric_gfx_frame_and_type[v1] = 0u16);
@@ -1087,8 +1086,9 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
                     })
             };
             if !(skip_effect) {
-                kAtmosphericTypeFuncs[(v3 as i32 >> 1i32) as usize]
-                    .expect("non-null function pointer")(v3, i as u16, game);
+                kAtmosphericTypeFuncs[(v3 >> 1) as usize].expect("non-null function pointer")(
+                    v3, i as u16, game,
+                );
             }
         }
         i -= 2i32;
@@ -1128,7 +1128,7 @@ pub unsafe fn AtmosphericTypeFunc_1_FootstepSplash(k: u16, j: u16, game: &mut Ga
                 (r18).wrapping_add(crate::rtl::rom_table_word!(
                     game,
                     0x908bff,
-                    (k as i32 >> 1i32) as isize
+                    (k >> 1) as isize
                 )),
                 game,
             ) as *mut u16);
@@ -1167,22 +1167,16 @@ pub unsafe fn AtmosphericTypeFunc_4_LavaSurfaceDmg(k: u16, j: u16, game: &mut Ga
         v3 = (ram_word!(game, atmospheric_gfx_x_pos[v2])).wrapping_add(1u16);
     }
     set_ram_word!(game.atmospheric_gfx_x_pos[v2] = v3);
-    update_ram_word!(
-        game.atmospheric_gfx_y_pos[(j as i32 >> 1i32)],
-        wrapping_sub(1)
-    );
+    update_ram_word!(game.atmospheric_gfx_y_pos[(j >> 1)], wrapping_sub(1));
     AtmosphericTypeFunc_1_FootstepSplash(k, j, game);
 }
 pub unsafe fn AtmosphericTypeFunc_67_Dust(k: u16, j: u16, game: &mut Game) {
-    update_ram_word!(
-        game.atmospheric_gfx_y_pos[(j as i32 >> 1i32)],
-        wrapping_sub(1)
-    );
+    update_ram_word!(game.atmospheric_gfx_y_pos[(j >> 1)], wrapping_sub(1));
     AtmosphericTypeFunc_1_FootstepSplash(k, j, game);
 }
 pub unsafe fn AtmosphericTypeFunc_5_Bubbles(k: u16, j: u16, game: &mut Game) {
-    let r18: u16 = *((ram_ptr!(game, u16; 0xaec)).offset((j as i32 >> 1i32) as isize) as *mut u8)
-        .offset(0) as u16;
+    let r18: u16 =
+        *((ram_ptr!(game, u16; 0xaec)).offset((j >> 1) as isize) as *mut u8).offset(0) as u16;
     AtmosphericTypeFunc_Common(j, (r18).wrapping_add(390u16), game);
 }
 static kSamus_CalcSpritemapPos: [Option<Func_Y_To_PairU16>; 28] = callback_table! { Func_Y_To_PairU16;
@@ -1240,7 +1234,7 @@ pub unsafe fn Samus_CalcSpritemapPos_Default(j: u16, game: &mut Game) -> PairU16
 pub unsafe fn Samus_CalcSpritemapPos_Standing(j: u16, game: &mut Game) -> PairU16 {
     static g_byte_908D28: [u8; 16] = [3, 6, 0, 0, 3, 6, 0, 0, 3, 3, 6, 0, 3, 3, 6, 0];
     let mut v3: PairU16 = PairU16 { k: 0, j: 0 };
-    let mut v1: i16 = (j as i32 >> 1i32) as i16;
+    let mut v1: i16 = (j >> 1) as i16;
     if j as i32 >> 1i32 == 0 || v1 as i32 == kPose_9B_FaceF_VariaGravitySuit as i32 {
         if ram_word!(game, samus_anim_frame) as i32 - 2i32 & 0x8000i32 == 0 {
             set_ram_word!(
@@ -1290,7 +1284,7 @@ pub unsafe fn Samus_CalcSpritemapPos_Crouch(j: u16, game: &mut Game) -> PairU16 
     static byte_908D80: [i8; 24] = [
         -8, 0, -8, 0, -4, -2, -4, -2, 0, 0, 0, 0, -4, 0, -4, 0, 5, 4, 5, 4, 0, 0, 0, 0,
     ];
-    let mut v1: i16 = (j as i32 >> 1i32) as i16;
+    let mut v1: i16 = (j >> 1) as i16;
     if (j as i32 >> 1i32) - kPose_35_FaceR_CrouchTrans as i32 & 0x8000i32 != 0
         || v1 as i32 - kPose_41_FaceL_Morphball_Ground as i32 & 0x8000i32 == 0
     {
@@ -1924,14 +1918,14 @@ pub unsafe fn Samus_HandleScroll_X(game: &mut Game) {
         set_ram_word!(
             game.ideal_layer1_xpos = (ram_word!(game, samus_x_pos)).wrapping_sub(
                 kSamus_HandleScroll_X_FaceRight
-                    [(ram_word!(game, camera_distance_index) as i32 >> 1i32) as usize],
+                    [(ram_word!(game, camera_distance_index) >> 1) as usize],
             )
         );
     } else {
         set_ram_word!(
             game.ideal_layer1_xpos = (ram_word!(game, samus_x_pos)).wrapping_sub(
                 kSamus_HandleScroll_X_FaceLeft
-                    [(ram_word!(game, camera_distance_index) as i32 >> 1i32) as usize],
+                    [(ram_word!(game, camera_distance_index) >> 1) as usize],
             )
         );
     }
@@ -2286,7 +2280,7 @@ pub unsafe fn Samus_InitWallJump(game: &mut Game) {
         set_ram_word!(game.samus_y_speed = kSamus_InitWallJump_0[v1 as usize]);
     }
     if (ram_word!(game, equipped_items) & 0x2000) != 0 {
-        r18 = (ram_word!(game, samus_x_extra_run_speed) as i32 >> 1i32) as u16;
+        r18 = (ram_word!(game, samus_x_extra_run_speed) >> 1);
         update_ram_word!(
             game.samus_y_subspeed,
             wrapping_add(ram_word!(game, samus_x_extra_run_subspeed))
@@ -2370,7 +2364,7 @@ pub unsafe fn Samus_CalcBaseSpeed_X(k: u16, game: &mut Game) -> i32 {
     let sste = get_SamusSpeedTableEntry(k, game);
     if ram_word!(game, samus_x_accel_mode) != 0 {
         let delta: i32 = (if *ram_ptr!(game; 0xb4c) != 0u8 {
-            ((Mult8x8(*ram_ptr!(game; 0xb4c), (*sste).decel as u8) as i32 >> 8i32) as u32) << 16i32
+            ((Mult8x8(*ram_ptr!(game; 0xb4c), (*sste).decel as u8) >> 8) as u32) << 16i32
                 | Mult8x8(
                     *ram_ptr!(game; 0xb4c),
                     *(&raw mut (*sste).decel_sub as *mut u8).offset(1isize),
@@ -2412,7 +2406,7 @@ unsafe fn Samus_CalcBaseSpeed_NoDecel_X(k: u16, game: &mut Game) -> Pair_Bool_Am
     let mut rv: bool = false_0 != 0;
     if (ram_word!(game, samus_x_accel_mode) & 1) != 0 {
         let delta: i32 = (if *ram_ptr!(game; 0xb4c) != 0u8 {
-            ((Mult8x8(*ram_ptr!(game; 0xb4c), (*sste).decel as u8) as i32 >> 8i32) as u32) << 16i32
+            ((Mult8x8(*ram_ptr!(game; 0xb4c), (*sste).decel as u8) >> 8) as u32) << 16i32
                 | Mult8x8(
                     *ram_ptr!(game; 0xb4c),
                     *(&raw mut (*sste).decel_sub as *mut u8).offset(1isize),
@@ -2961,7 +2955,7 @@ pub unsafe fn Samus_Movement_1B_ShinesparkEtc(game: &mut Game) {
 static kShr0x80: [u8; 8] = [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1];
 static kShr0xFc00: [u16; 8] = [0xfc00, 0x7e00, 0x3f00, 0x1f80, 0xfc0, 0x7e0, 0x3f0, 0x1f8];
 unsafe fn MarkMapTileAsExplored(r18: u16, r24: u16, game: &mut Game) {
-    let v0: u8 = (((r18) & (0xff00u16)) as i32 >> 8i32) as u8;
+    let v0: u8 = (((r18) & (0xff00u16)) >> 8) as u8;
     let R34: u16 = (ram_word!(game, room_x_coordinate_on_map) as i32 + v0 as i32 & 0x20i32) as u16;
     let r20: u16 =
         ((ram_word!(game, room_x_coordinate_on_map) as i32 + v0 as i32 & 0x1fi32) >> 3i32) as u16;
@@ -3023,7 +3017,7 @@ pub unsafe fn UpdateMinimap(game: &mut Game) {
         return;
     }
     let mut r46: u16 = 0u16;
-    let v0: u8 = (((ram_word!(game, samus_x_pos)) & (0xff00u16)) as i32 >> 8i32) as u8;
+    let v0: u8 = (((ram_word!(game, samus_x_pos)) & (0xff00u16)) >> 8) as u8;
     let r34: u16 = (ram_word!(game, room_x_coordinate_on_map) as i32 + v0 as i32 & 0x20i32) as u16;
     let r18: u16 = (ram_word!(game, room_x_coordinate_on_map) as i32 + v0 as i32 & 0x1fi32) as u16;
     let v1: u16 = (ram_word!(game, room_x_coordinate_on_map) as i32 + v0 as i32 & 7i32) as u16;
@@ -3144,7 +3138,7 @@ pub unsafe fn UpdateMinimapInside(
     let mut v5: i16 = 0;
     let mut v7: i16 = 0;
     let mut v8: i16 = 0;
-    *(&raw mut v0 as *mut u8).offset(0) = (((r34).wrapping_add(r22)) as i32 >> 8i32) as u8;
+    *(&raw mut v0 as *mut u8).offset(0) = (((r34).wrapping_add(r22)) >> 8) as u8;
     *(&raw mut v0 as *mut u8).offset(1isize) = ((r34) as u8).wrapping_add((r22) as u8);
     let t: u16 = (r18 as i32 + (v0 as i32 >> 3i32)) as u16;
     if r34 != 0u16 && (t as i32 & 0x1fi32) - 2i32 & 0x8000i32 != 0 {
@@ -3168,7 +3162,7 @@ pub unsafe fn UpdateMinimapInside(
         let mut v4: bool = r38 as i32 >> 15i32 != 0;
         r38 = (r38).wrapping_mul(2u16);
         if !v4 || {
-            v5 = *r0.offset((v2 as i32 >> 1i32) as isize) as i16;
+            v5 = *r0.offset((v2 >> 1) as isize) as i16;
             ram_word!(game, has_area_map) == 0
         } {
             v5 = 31i16;
@@ -3179,14 +3173,13 @@ pub unsafe fn UpdateMinimapInside(
         r24 = (r24).wrapping_mul(2u16);
         if v4 {
             set_ram_word!(
-                game.hud_tilemap[(v6 + 26i32)] =
-                    (*r0.offset((v2 as i32 >> 1i32) as isize) & 0xc3ff | 0x2800)
+                game.hud_tilemap[(v6 + 26i32)] = (*r0.offset((v2 >> 1) as isize) & 0xc3ff | 0x2800)
             );
         }
         v4 = r40 as i32 >> 15i32 != 0;
         r40 = (r40).wrapping_mul(2u16);
         if !v4 || {
-            v7 = *r3.offset((v2 as i32 >> 1i32) as isize) as i16;
+            v7 = *r3.offset((v2 >> 1) as isize) as i16;
             ram_word!(game, has_area_map) == 0
         } {
             v7 = 31i16;
@@ -3196,8 +3189,7 @@ pub unsafe fn UpdateMinimapInside(
         r26 = (r26).wrapping_mul(2u16);
         if v4 {
             set_ram_word!(
-                game.hud_tilemap[(v6 + 58i32)] =
-                    (*r3.offset((v2 as i32 >> 1i32) as isize) & 0xc3ff | 0x2800)
+                game.hud_tilemap[(v6 + 58i32)] = (*r3.offset((v2 >> 1) as isize) & 0xc3ff | 0x2800)
             );
             if n == 3i32 && (ram_word!(game, hud_tilemap[(v6 + 58i32)]) & 0x1ff) == 40 {
                 let ref mut fresh99 =
@@ -3208,7 +3200,7 @@ pub unsafe fn UpdateMinimapInside(
         v4 = r42 as i32 >> 15i32 != 0;
         r42 = (r42).wrapping_mul(2u16);
         if !v4 || {
-            v8 = *r6.offset((v2 as i32 >> 1i32) as isize) as i16;
+            v8 = *r6.offset((v2 >> 1) as isize) as i16;
             ram_word!(game, has_area_map) == 0
         } {
             v8 = 31i16;
@@ -3218,8 +3210,7 @@ pub unsafe fn UpdateMinimapInside(
         r28 = (r28).wrapping_mul(2u16);
         if v4 {
             set_ram_word!(
-                game.hud_tilemap[(v6 + 90i32)] =
-                    (*r6.offset((v2 as i32 >> 1i32) as isize) & 0xc3ff | 0x2800)
+                game.hud_tilemap[(v6 + 90i32)] = (*r6.offset((v2 >> 1) as isize) & 0xc3ff | 0x2800)
             );
         }
         v3 = (v3).wrapping_add(2u16);
@@ -3279,7 +3270,7 @@ pub unsafe fn UpdateBeamTilesAndPalette(game: &mut Game) {
     (*gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game)).size = 256u16;
     v1 = (v1).wrapping_add(2u16);
     (*gVramWriteEntry(v1 as i32, game)).size =
-        crate::rtl::rom_table_word!(game, 0x90c3b1, (v0 as i32 >> 1i32) as isize);
+        crate::rtl::rom_table_word!(game, 0x90c3b1, (v0 >> 1) as isize);
     v1 = (v1).wrapping_add(2u16);
     let fresh155 = v1;
     v1 = v1.wrapping_add(1);
@@ -3297,7 +3288,7 @@ pub unsafe fn WriteBeamPalette_A(a: u16, game: &mut Game) {
     WriteBeamPalette_Y((2i32 * (a as i32 & 0xfffi32)) as u16, game);
 }
 pub unsafe fn WriteBeamPalette_Y(j: u16, game: &mut Game) {
-    let r0: u16 = crate::rtl::rom_table_word!(game, 0x90c3c9, (j as i32 >> 1i32) as isize);
+    let r0: u16 = crate::rtl::rom_table_word!(game, 0x90c3c9, (j >> 1) as isize);
     let mut v1: u16 = 0u16;
     let mut v2: u16 = 0u16;
     loop {
@@ -3441,9 +3432,7 @@ pub unsafe fn KillProjectile(k: u16, game: &mut Game) {
         );
     }
     KillProjectileInner(k, game);
-    set_ram_word!(
-        game.projectile_bomb_pre_instructions[(k as i32 >> 1i32)] = ((0x90b169i32) as u16)
-    );
+    set_ram_word!(game.projectile_bomb_pre_instructions[(k >> 1)] = ((0x90b169i32) as u16));
 }
 crate::game::address_dispatch! {
     pub unsafe fn CallProjPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
@@ -3564,8 +3553,9 @@ pub unsafe fn ProjPreInstr_Missile(mut k: u16, game: &mut Game) {
             wrapping_add((kDirToVelMult16_Y[v5 as usize]) as u16)
         );
         Missile_Func1(k, game);
-        kProjPreInstr_Missile_Funcs[(v4 as i32 >> 1i32) as usize]
-            .expect("non-null function pointer")(v4, game);
+        kProjPreInstr_Missile_Funcs[(v4 >> 1) as usize].expect("non-null function pointer")(
+            v4, game,
+        );
         DeleteProjectileIfFarOffScreen(game);
     };
 }
@@ -3601,7 +3591,7 @@ pub unsafe fn ProjPreInstr_SuperMissile(mut k: u16, game: &mut Game) {
             SpawnProjectileTrail(k, game);
             k = ram_word!(game, projectile_index);
         }
-        let mut v3: i16 = ((ram_word!(game, projectile_dir[(k as i32 >> 1i32)])) as i16) & (0xfi16);
+        let mut v3: i16 = ((ram_word!(game, projectile_dir[(k >> 1)])) as i16) & (0xfi16);
         Missile_Func1(k, game);
         kProjPreInstr_SuperMissile_Funcs[v3 as usize].expect("non-null function pointer")(
             v3 as u16, game,
@@ -3637,7 +3627,7 @@ pub unsafe fn ProjPreInstr_SuperMissile_Func27(k: u16, game: &mut Game) {
     SuperMissileBlockCollDetect_X(game);
 }
 pub unsafe fn ProjPreInstr_Func1(k: u16, game: &mut Game) {
-    if (ram_word!(game, projectile_dir[(k as i32 >> 1i32)]) & 0xf0) != 0 {
+    if (ram_word!(game, projectile_dir[(k >> 1)]) & 0xf0) != 0 {
         ClearProjectile(k, game);
         let mut i: i32 = 8i32;
         while i >= 0i32 {
@@ -3649,7 +3639,7 @@ pub unsafe fn ProjPreInstr_Func1(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn ProjPreInstr_Bomb(k: u16, game: &mut Game) {
-    if (ram_word!(game, projectile_dir[(k as i32 >> 1i32)]) & 0xf0) != 0 {
+    if (ram_word!(game, projectile_dir[(k >> 1)]) & 0xf0) != 0 {
         ClearProjectile(k, game);
     } else {
         Bomb_Func2(game);
@@ -3657,7 +3647,7 @@ pub unsafe fn ProjPreInstr_Bomb(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn ProjPreInstr_PowerBomb(k: u16, game: &mut Game) {
-    if (ram_word!(game, projectile_dir[(k as i32 >> 1i32)]) & 0xf0) != 0 {
+    if (ram_word!(game, projectile_dir[(k >> 1)]) & 0xf0) != 0 {
         ClearProjectile(k, game);
     } else {
         PowerBomb_Func3(game);
@@ -3733,7 +3723,7 @@ pub unsafe fn ProjPreInstr_WavePlasmaEtc_27(k: u16, game: &mut Game) {
     BlockCollWaveBeamHoriz(ram_word!(game, projectile_index), game);
 }
 pub unsafe fn ProjPreInstr_HyperBeam(k: u16, game: &mut Game) {
-    if (ram_word!(game, projectile_dir[(k as i32 >> 1i32)]) & 0xf0) != 0 {
+    if (ram_word!(game, projectile_dir[(k >> 1)]) & 0xf0) != 0 {
         ClearProjectile(k, game);
     } else {
         ProjPreInstr_Wave_Shared(k, game);
@@ -3741,12 +3731,11 @@ pub unsafe fn ProjPreInstr_HyperBeam(k: u16, game: &mut Game) {
 }
 pub unsafe fn DeleteProjectileIfFarOffScreen(game: &mut Game) -> u8 {
     let mut v0: i16 = ((*(ram_ptr!(game, u16; 0xb64))
-        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize))
-        as i16)
+        .offset((ram_word!(game, projectile_index) >> 1) as isize)) as i16)
         .wrapping_sub((ram_word!(game, layer1_x_pos)) as i16);
     if v0 as i32 + 64i32 & 0x8000i32 == 0 && v0 as i32 - 320i32 & 0x8000i32 != 0 {
         let mut v2: i16 = ((*(ram_ptr!(game, u16; 0xb78))
-            .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize))
+            .offset((ram_word!(game, projectile_index) >> 1) as isize))
             as i16)
             .wrapping_sub((ram_word!(game, layer1_y_pos)) as i16);
         if v2 as i32 + 64i32 & 0x8000i32 == 0 && v2 as i32 - 320i32 & 0x8000i32 != 0 {
@@ -3766,7 +3755,7 @@ pub unsafe fn SetInitialProjectileSpeed(r20: u16, game: &mut Game) {
     let v2: u16 = (2i32 * (ram_word!(game, projectile_dir[v0]) as i32 & 0xfi32)) as u16;
     let mut r22: u16 = 0;
     if v2 == 0 || v2 == 4u16 || v2 == 8u16 || v2 == 10u16 || v2 == 14u16 || v2 == 18u16 {
-        r22 = kInitializeProjectileSpeed_XY_Diag[(v1 as i32 >> 1i32) as usize];
+        r22 = kInitializeProjectileSpeed_XY_Diag[(v1 >> 1) as usize];
     } else {
         if v2 != 2u16 && v2 != 6u16 && v2 != 12u16 && v2 != 16u16 {
             Unreachable(game);
@@ -3926,8 +3915,7 @@ pub unsafe fn SuperMissileBlockCollDetect_Y(game: &mut Game) {
                 let v4: i32 = ram_word!(game, projectile_index) as i32 >> 1i32;
                 if (ram_word!(game, projectile_type[v4]) & 0xf00) != 2048 {
                     set_ram_word!(
-                        game.projectile_y_pos[(v5 as i32 >> 1i32)] =
-                            ram_word!(game, projectile_y_pos[v4])
+                        game.projectile_y_pos[(v5 >> 1)] = ram_word!(game, projectile_y_pos[v4])
                     );
                     return;
                 }
@@ -3936,28 +3924,28 @@ pub unsafe fn SuperMissileBlockCollDetect_Y(game: &mut Game) {
                 if (ram_word!(game, projectile_bomb_y_speed[v0]) & 0x8000) == 0 {
                     let v6: u16 = ram_word!(game, projectile_index);
                     set_ram_word!(
-                        game.projectile_y_pos[(v5 as i32 >> 1i32)] =
+                        game.projectile_y_pos[(v5 >> 1)] =
                             (ram_word!(game, projectile_y_pos[v0])).wrapping_sub(r18)
                     );
                     set_ram_word!(game.projectile_index = v5 as u16);
                     BlockCollMissileVert(v5 as u16, game);
                     set_ram_word!(game.projectile_index = v6);
-                    if (ram_word!(game, projectile_type[(v6 as i32 >> 1i32)]) & 0xf00) == 2048 {
+                    if (ram_word!(game, projectile_type[(v6 >> 1)]) & 0xf00) == 2048 {
                         ClearProjectile(v5 as u16, game);
                     }
                     return;
                 }
                 let v7: u16 = ram_word!(game, projectile_index);
                 set_ram_word!(
-                    game.projectile_y_pos[(v5 as i32 >> 1i32)] = (r18).wrapping_add(
+                    game.projectile_y_pos[(v5 >> 1)] = (r18).wrapping_add(
                         *(ram_ptr!(game, u16; 0xb78))
-                            .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize,),
+                            .offset((ram_word!(game, projectile_index) >> 1) as isize,),
                     )
                 );
                 set_ram_word!(game.projectile_index = v5 as u16);
                 BlockCollMissileVert(v5 as u16, game);
                 set_ram_word!(game.projectile_index = v7);
-                if (ram_word!(game, projectile_type[(v7 as i32 >> 1i32)]) & 0xf00) != 2048 {
+                if (ram_word!(game, projectile_type[(v7 >> 1)]) & 0xf00) != 2048 {
                     return;
                 }
             }
@@ -3992,8 +3980,7 @@ pub unsafe fn SuperMissileBlockCollDetect_X(game: &mut Game) {
                 let v4: i32 = ram_word!(game, projectile_index) as i32 >> 1i32;
                 if (ram_word!(game, projectile_type[v4]) & 0xf00) != 2048 {
                     set_ram_word!(
-                        game.projectile_x_pos[(v5 as i32 >> 1i32)] =
-                            ram_word!(game, projectile_x_pos[v4])
+                        game.projectile_x_pos[(v5 >> 1)] = ram_word!(game, projectile_x_pos[v4])
                     );
                     return;
                 }
@@ -4002,28 +3989,28 @@ pub unsafe fn SuperMissileBlockCollDetect_X(game: &mut Game) {
                 if (ram_word!(game, projectile_bomb_x_speed[v0]) & 0x8000) == 0 {
                     let v6: u16 = ram_word!(game, projectile_index);
                     set_ram_word!(
-                        game.projectile_x_pos[(v5 as i32 >> 1i32)] =
+                        game.projectile_x_pos[(v5 >> 1)] =
                             (ram_word!(game, projectile_x_pos[v0])).wrapping_sub(r18)
                     );
                     set_ram_word!(game.projectile_index = v5 as u16);
                     BlockCollMissileHoriz(v5 as u16, game);
                     set_ram_word!(game.projectile_index = v6);
-                    if (ram_word!(game, projectile_type[(v6 as i32 >> 1i32)]) & 0xf00) == 2048 {
+                    if (ram_word!(game, projectile_type[(v6 >> 1)]) & 0xf00) == 2048 {
                         ClearProjectile(v5 as u16, game);
                     }
                     return;
                 }
                 let v7: u16 = ram_word!(game, projectile_index);
                 set_ram_word!(
-                    game.projectile_x_pos[(v5 as i32 >> 1i32)] = (r18).wrapping_add(
+                    game.projectile_x_pos[(v5 >> 1)] = (r18).wrapping_add(
                         *(ram_ptr!(game, u16; 0xb64))
-                            .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize,),
+                            .offset((ram_word!(game, projectile_index) >> 1) as isize,),
                     )
                 );
                 set_ram_word!(game.projectile_index = v5 as u16);
                 BlockCollMissileHoriz(v5 as u16, game);
                 set_ram_word!(game.projectile_index = v7);
-                if (ram_word!(game, projectile_type[(v7 as i32 >> 1i32)]) & 0xf00) != 2048 {
+                if (ram_word!(game, projectile_type[(v7 >> 1)]) & 0xf00) != 2048 {
                     return;
                 }
             }
@@ -4032,26 +4019,17 @@ pub unsafe fn SuperMissileBlockCollDetect_X(game: &mut Game) {
     }
 }
 pub unsafe fn ProjInstr_MoveLeftProjectileTrailDown(j: u16, game: &mut Game) {
-    update_ram_word!(
-        game.projectiletrail_left_y_pos[(j as i32 >> 1i32)],
-        wrapping_add(1)
-    );
+    update_ram_word!(game.projectiletrail_left_y_pos[(j >> 1)], wrapping_add(1));
 }
 pub unsafe fn ProjInstr_MoveRightProjectileTrailDown(j: u16, game: &mut Game) {
-    update_ram_word!(
-        game.projectiletrail_right_y_pos[(j as i32 >> 1i32)],
-        wrapping_add(1)
-    );
+    update_ram_word!(game.projectiletrail_right_y_pos[(j >> 1)], wrapping_add(1));
 }
 pub unsafe fn ProjInstr_MoveLeftProjectileTrailUp(j: u16, game: &mut Game) {
-    update_ram_word!(
-        game.projectiletrail_left_y_pos[(j as i32 >> 1i32)],
-        wrapping_sub(1)
-    );
+    update_ram_word!(game.projectiletrail_left_y_pos[(j >> 1)], wrapping_sub(1));
 }
 pub unsafe fn SpawnProjectileTrail(k: u16, game: &mut Game) {
     let mut v2: i16 = 0;
-    let mut v1: u16 = ram_word!(game, projectile_type[(k as i32 >> 1i32)]);
+    let mut v1: u16 = ram_word!(game, projectile_type[(k >> 1)]);
     if (v1 & 0xf00) != 0 {
         let v3: u16 = ((*(&raw mut v1 as *mut u8).offset(1isize)) as u16) & (0xfu16);
         if v3 >= 3u16 {
@@ -4059,10 +4037,10 @@ pub unsafe fn SpawnProjectileTrail(k: u16, game: &mut Game) {
         }
         v2 = ((v3) as i16).wrapping_add(31i16);
     } else {
-        v2 = ((ram_word!(game, projectile_type[(k as i32 >> 1i32)])) as i16) & (0x3fi16);
+        v2 = ((ram_word!(game, projectile_type[(k >> 1)])) as i16) & (0x3fi16);
     }
     let mut v4: u16 = 34u16;
-    while ram_word!(game, projectiletrail_left_instr_timer[(v4 as i32 >> 1i32)]) != 0 {
+    while ram_word!(game, projectiletrail_left_instr_timer[(v4 >> 1)]) != 0 {
         v4 = (v4).wrapping_sub(2u16);
         if (v4 & 0x8000) != 0 {
             return;
@@ -4327,7 +4305,7 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
     }
     if Samus_CanFireBeam(game) & 1 != 0 {
         let mut v0: u16 = 0u16;
-        while ram_word!(game, projectile_damage[(v0 as i32 >> 1i32)]) != 0 {
+        while ram_word!(game, projectile_damage[(v0 >> 1)]) != 0 {
             v0 = (v0).wrapping_add(2u16);
             if (((v0) as i16).wrapping_sub(10i16) < 0i16) {
                 continue;
@@ -4387,7 +4365,7 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
                 CheckBeamCollByDir(v1, game);
                 v1 = ram_word!(game, projectile_index);
                 if (*(ram_ptr!(game, u16; 0xc18))
-                    .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
+                    .offset((ram_word!(game, projectile_index) >> 1) as isize)
                     & 0xf00)
                     != 0
                 {
@@ -4395,10 +4373,8 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
                 }
             }
             set_ram_word!(
-                game.projectile_bomb_pre_instructions[(v1 as i32 >> 1i32)] =
-                    kProjectileBombPreInstr[(ram_word!(game, projectile_type[(v1 as i32 >> 1i32)])
-                        as i32
-                        & 0xfi32) as usize]
+                game.projectile_bomb_pre_instructions[(v1 >> 1)] = kProjectileBombPreInstr
+                    [(ram_word!(game, projectile_type[(v1 >> 1)]) as i32 & 0xfi32) as usize]
             );
             SetInitialProjectileSpeed(v1, game);
             return;
@@ -4426,7 +4402,7 @@ static kFireChargedBeam_Funcs: [u16; 12] = [
 pub unsafe fn FireChargedBeam(game: &mut Game) {
     if Samus_CanFireBeam(game) & 1 != 0 {
         let mut v0: u16 = 0u16;
-        while ram_word!(game, projectile_damage[(v0 as i32 >> 1i32)]) != 0 {
+        while ram_word!(game, projectile_damage[(v0 >> 1)]) != 0 {
             v0 = (v0).wrapping_add(2u16);
             if (((v0) as i16).wrapping_sub(10i16) < 0i16) {
                 continue;
@@ -4466,19 +4442,15 @@ pub unsafe fn FireChargedBeam(game: &mut Game) {
                 CheckBeamCollByDir(v1, game);
                 v1 = ram_word!(game, projectile_index);
                 !((*(ram_ptr!(game, u16; 0xc18))
-                    .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
+                    .offset((ram_word!(game, projectile_index) >> 1) as isize)
                     & 0xf00)
                     != 0)
             };
             if initialize_projectile {
                 r20 = v1;
                 set_ram_word!(
-                    game.projectile_bomb_pre_instructions[(v1 as i32 >> 1i32)] =
-                        kFireChargedBeam_Funcs[(ram_word!(
-                            game,
-                            projectile_type[(v1 as i32 >> 1i32)]
-                        ) as i32
-                            & 0xfi32) as usize]
+                    game.projectile_bomb_pre_instructions[(v1 >> 1)] = kFireChargedBeam_Funcs
+                        [(ram_word!(game, projectile_type[(v1 >> 1)]) as i32 & 0xfi32) as usize]
                 );
                 SetInitialProjectileSpeed(r20, game);
             }
@@ -4619,7 +4591,7 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
                         as *mut u16) = v2;
                     let mut v3: u16 = v2;
                     let r0 = RomPtr_90(
-                        crate::rtl::rom_table_word!(game, 0x90c481, (v0 as i32 >> 1i32) as isize),
+                        crate::rtl::rom_table_word!(game, 0x90c481, (v0 >> 1) as isize),
                         game,
                     );
                     let mut v4: i16 = *r0.offset(v2 as isize) as i16;
@@ -4664,9 +4636,9 @@ pub unsafe fn DrawFlareAnimationComponent(k: u16, game: &mut Game) {
     let mut r20: u16 = 0;
     let mut r18: u16 = *(ram_ptr!(game, u16; 0xcd6) as *mut u8).offset(k as i32 as isize) as u16;
     if *ram_ptr!(game; 0xa1e) == 4u8 {
-        v1 = word_93A22B[(k as i32 >> 1i32) as usize];
+        v1 = word_93A22B[(k >> 1) as usize];
     } else {
-        v1 = word_93A225[(k as i32 >> 1i32) as usize];
+        v1 = word_93A225[(k >> 1) as usize];
     }
     let r22: u16 = (r18).wrapping_add(v1);
     let r24: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
@@ -4722,7 +4694,7 @@ pub unsafe fn ClearFlareAnimationState(game: &mut Game) {
 pub unsafe fn FireHyperBeam(game: &mut Game) {
     if Samus_CanFireBeam(game) & 1 != 0 {
         let mut v0: u16 = 0u16;
-        while ram_word!(game, projectile_damage[(v0 as i32 >> 1i32)]) != 0 {
+        while ram_word!(game, projectile_damage[(v0 >> 1)]) != 0 {
             v0 = (v0).wrapping_add(2u16);
             if (((v0) as i16).wrapping_sub(10i16) < 0i16) {
                 continue;
@@ -4734,7 +4706,7 @@ pub unsafe fn FireHyperBeam(game: &mut Game) {
         if InitProjectilePositionDirection(r20, game) & 1 == 0 {
             set_ram_word!(game.projectile_invincibility_timer = 10u16);
             let k: u16 = r20;
-            set_ram_word!(game.projectile_type[(r20 as i32 >> 1i32)] = -28648i32 as u16);
+            set_ram_word!(game.projectile_type[(r20 >> 1)] = -28648i32 as u16);
             QueueSfx1_Max15(kChargedProjectile_Sfx[8i32 as usize], game);
             set_ram_word!(game.play_resume_charging_beam_sfx = 0u16);
             InitializeProjectile(k, game);
@@ -4768,8 +4740,7 @@ static kCheckBeamCollByDir: [Option<Func_V>; 10] = callback_table! { unsafe Func
     CheckBeamCollByDir_0459,
 };
 pub unsafe fn CheckBeamCollByDir(k: u16, game: &mut Game) {
-    kCheckBeamCollByDir
-        [(ram_word!(game, projectile_dir[(k as i32 >> 1i32)]) as i32 & 0xfi32) as usize]
+    kCheckBeamCollByDir[(ram_word!(game, projectile_dir[(k >> 1)]) as i32 & 0xfi32) as usize]
         .expect("non-null function pointer")(game);
 }
 pub unsafe fn CheckBeamCollByDir_0459(game: &mut Game) {
@@ -4786,8 +4757,8 @@ pub unsafe fn CheckBeamCollByDir_2(game: &mut Game) {
 }
 pub unsafe fn CheckBeamCollByDir_7(game: &mut Game) {
     let v0: u16 = ram_word!(game, projectile_index);
-    *(ram_ptr!(game, u16; 0xbdc))
-        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) = -1i32 as u16;
+    *(ram_ptr!(game, u16; 0xbdc)).offset((ram_word!(game, projectile_index) >> 1) as isize) =
+        -1i32 as u16;
     BlockCollNoWaveBeamHoriz(v0, game);
 }
 static kWaveBeam_CheckColl_Funcs: [Option<Func_V>; 10] = callback_table! { unsafe Func_V;
@@ -4797,8 +4768,7 @@ static kWaveBeam_CheckColl_Funcs: [Option<Func_V>; 10] = callback_table! { unsaf
     WaveBeam_CheckColl_0459,
 };
 pub unsafe fn WaveBeam_CheckColl(k: u16, game: &mut Game) {
-    kWaveBeam_CheckColl_Funcs
-        [(ram_word!(game, projectile_dir[(k as i32 >> 1i32)]) as i32 & 0xfi32) as usize]
+    kWaveBeam_CheckColl_Funcs[(ram_word!(game, projectile_dir[(k >> 1)]) as i32 & 0xfi32) as usize]
         .expect("non-null function pointer")(game);
 }
 pub unsafe fn WaveBeam_CheckColl_0459(game: &mut Game) {
@@ -4815,8 +4785,8 @@ pub unsafe fn WaveBeam_CheckColl_2(game: &mut Game) {
 }
 pub unsafe fn WaveBeam_CheckColl_7(game: &mut Game) {
     let v0: u16 = ram_word!(game, projectile_index);
-    *(ram_ptr!(game, u16; 0xbdc))
-        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) = -1i32 as u16;
+    *(ram_ptr!(game, u16; 0xbdc)).offset((ram_word!(game, projectile_index) >> 1) as isize) =
+        -1i32 as u16;
     BlockCollWaveBeamHoriz(v0, game);
 }
 pub unsafe fn ProjectileReflection(r20: u16, game: &mut Game) {
@@ -4869,7 +4839,7 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
     if current_block == 7351195479953500246 {
         let mut v0: u16 = 0u16;
         loop {
-            if (ram_word!(game, projectile_damage[(v0 as i32 >> 1i32)]) == 0) {
+            if (ram_word!(game, projectile_damage[(v0 >> 1)]) == 0) {
                 current_block = 13536709405535804910;
                 break;
             }
@@ -4897,7 +4867,7 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
                     | (r18 | 0x8000)));
                 let v4: u16 = (2i32 * (v3 as i32 & 0xfi32)) as u16;
                 if ram_word!(game, cinematic_function) == 0 {
-                    QueueSfx1_Max6(kNonBeamProjectile_Sfx[(v4 as i32 >> 1i32) as usize], game);
+                    QueueSfx1_Max6(kNonBeamProjectile_Sfx[(v4 >> 1) as usize], game);
                 }
                 InitializeProjectileSpeedOfType(r20, game);
                 InitializeProjectile(r20, game);
@@ -4936,7 +4906,7 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
 }
 pub unsafe fn Missile_Func2(game: &mut Game) {
     let mut v0: u16 = 0u16;
-    while ram_word!(game, projectile_damage[(v0 as i32 >> 1i32)]) != 0 {
+    while ram_word!(game, projectile_damage[(v0 >> 1)]) != 0 {
         v0 = (v0).wrapping_add(2u16);
         if ((v0) as i16).wrapping_sub(10i16) >= 0i16 {
             return;
@@ -4952,12 +4922,11 @@ pub unsafe fn Missile_Func2(game: &mut Game) {
     InitProjectilePositionDirection(r20, game);
     InitializeInstrForSuperMissile(v0, game);
     set_ram_word!(game.projectile_bomb_pre_instructions[v1] = ((0x90b075i32) as u16));
-    *(ram_ptr!(game, u16; 0xc7c))
-        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) = (v0 as i32
-        + (*(ram_ptr!(game, u16; 0xc7c))
-            .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) as i32
-            & 0xff00i32))
-        as u16;
+    *(ram_ptr!(game, u16; 0xc7c)).offset((ram_word!(game, projectile_index) >> 1) as isize) =
+        (v0 as i32
+            + (*(ram_ptr!(game, u16; 0xc7c))
+                .offset((ram_word!(game, projectile_index) >> 1) as isize) as i32
+                & 0xff00i32)) as u16;
     update_ram_word!(game.projectile_counter, wrapping_add(1));
 }
 pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
@@ -4971,7 +4940,7 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
                 {
                     set_ram_word!(game.power_bomb_flag = -1i32 as u16);
                     let mut v2: u16 = 10u16;
-                    while ram_word!(game, projectile_type[(v2 as i32 >> 1i32)]) != 0 {
+                    while ram_word!(game, projectile_type[(v2 >> 1)]) != 0 {
                         v2 = (v2).wrapping_add(2u16);
                         if (((v2) as i16).wrapping_sub(20i16) < 0i16) {
                             continue;
@@ -5009,7 +4978,7 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
             }
         } else if HudSelectionHandler_MorphBall_Helper(game) & 1 != 0 {
             let mut v0: u16 = 10u16;
-            while ram_word!(game, projectile_type[(v0 as i32 >> 1i32)]) != 0 {
+            while ram_word!(game, projectile_type[(v0 >> 1)]) != 0 {
                 v0 = (v0).wrapping_add(2u16);
                 if (((v0) as i16).wrapping_sub(20i16) < 0i16) {
                     continue;
@@ -5113,7 +5082,7 @@ pub unsafe fn PowerBomb_Func3(game: &mut Game) {
             set_ram_word!(game.power_bomb_explosion_y_pos = ram_word!(game, projectile_y_pos[v1]));
             EnableHdmaObjects(game);
             SpawnPowerBombExplosion(game);
-            set_ram_word!(game.projectile_variables[(v0 as i32 >> 1i32)] = -1i32 as u16);
+            set_ram_word!(game.projectile_variables[(v0 >> 1)] = -1i32 as u16);
         }
     } else if ram_word!(game, power_bomb_flag) == 0 {
         ClearProjectile(ram_word!(game, projectile_index), game);
@@ -5303,7 +5272,7 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
             v3 = (2u16).wrapping_mul((v2) as u16);
             r22 = (v0).wrapping_add(2u16);
         }
-        let r24: u16 = kDrawArmCannon_Char[(v3 as i32 >> 1i32) as usize];
+        let r24: u16 = kDrawArmCannon_Char[(v3 >> 1) as usize];
         let v4 = RomPtr_90(
             (r22 as i32 + 2i32 * ram_word!(game, samus_anim_frame) as i32) as u16,
             game,
@@ -5367,7 +5336,7 @@ unsafe fn Projectile_SinLookup_Inner(k: u16, r24: u16) -> u16 {
             .offset(k as i32 as isize),
         r24 as u8,
     );
-    let r18: u16 = (prod as i32 >> 8i32) as u16;
+    let r18: u16 = (prod >> 8);
     prod = Mult8x8(
         *((&raw const kSinCosTable8bit_Sext as *const i16).offset(64) as *mut u8)
             .offset(k as i32 as isize)
@@ -5412,13 +5381,12 @@ pub unsafe fn FireSba(game: &mut Game) -> u8 {
     }
     let v1: u16 = (2i32 * (ram_word!(game, equipped_beams) as i32 & 0xfi32)) as u16;
     let mut v2: i16 = ((ram_word!(game, samus_power_bombs)) as i16)
-        .wrapping_sub((kCostOfSbaInPowerBombs[(v1 as i32 >> 1i32) as usize]) as i16);
+        .wrapping_sub((kCostOfSbaInPowerBombs[(v1 >> 1) as usize]) as i16);
     if v2 < 0i16 {
         v2 = 0i16;
     }
     set_ram_word!(game.samus_power_bombs = v2 as u16);
-    let rv: u8 =
-        kFireSbaFuncs[(v1 as i32 >> 1i32) as usize].expect("non-null function pointer")(game);
+    let rv: u8 = kFireSbaFuncs[(v1 >> 1) as usize].expect("non-null function pointer")(game);
     if ram_word!(game, samus_power_bombs) == 0 {
         set_ram_words! { game, 0u16; hud_item_index, samus_auto_cancel_hud_item_index }
     }
@@ -6498,8 +6466,7 @@ pub unsafe fn ProjPreInstr_SpazerSba(mut k: u16, game: &mut Game) {
         set_ram_word!(
             game.projectile_x_pos[v4] = (pt.x).wrapping_add(ram_word!(game, samus_x_pos))
         );
-        kProjPreInstr_SpazerSba_FuncsB
-            [(ram_word!(game, projectile_unk_A[v4]) as i32 >> 1i32) as usize]
+        kProjPreInstr_SpazerSba_FuncsB[(ram_word!(game, projectile_unk_A[v4]) >> 1) as usize]
             .expect("non-null function pointer")(k, pt.y, game);
         set_ram_word!(game.cooldown_timer = 2u16);
         set_ram_word!(game.flare_counter = 0u16);
@@ -6573,7 +6540,7 @@ pub unsafe fn ProjPreInstr_SpazerSba_FuncB_1(j: u16, r22: u16, game: &mut Game) 
 }
 pub unsafe fn ProjPreInstr_SpazerSba_FuncB_2(j: u16, r22: u16, game: &mut Game) {
     let v1: u16 = (r22 as i32 + ram_word!(game, samus_y_pos) as i32 - 114i32) as u16;
-    set_ram_word!(game.projectile_y_pos[(j as i32 >> 1i32)] = v1);
+    set_ram_word!(game.projectile_y_pos[(j >> 1)] = v1);
     if v1 as i32 - ram_word!(game, layer1_y_pos) as i32 - 16i32 & 0x8000i32 != 0 || {
         let mut v2: i32 = j as i32 >> 1i32;
         set_ram_word!(
@@ -6601,7 +6568,7 @@ pub unsafe fn FireEndOfSpazerSba(j: u16, game: &mut Game) {
     set_ram_word!(game.projectile_timers[v1] = 4u16);
     set_ram_word!(game.projectile_bomb_pre_instructions[v1] = ((0x90dc9ci32) as u16));
     if ((j) as i16).wrapping_sub(4i16) < 0i16 {
-        set_ram_word!(game.projectile_type[(j as i32 >> 1i32)] = -32732i32 as u16);
+        set_ram_word!(game.projectile_type[(j >> 1)] = -32732i32 as u16);
         InitializeShinesparkEchoOrSpazerSba(j, game);
     }
 }
@@ -6676,9 +6643,7 @@ pub unsafe fn HudSelectionHandler_Normal(game: &mut Game) {
     } else {
         v0 = 8u16;
     }
-    kHudSelectionHandler_Normal[(v0 as i32 >> 1i32) as usize].expect("non-null function pointer")(
-        game,
-    );
+    kHudSelectionHandler_Normal[(v0 >> 1) as usize].expect("non-null function pointer")(game);
 }
 pub unsafe fn HudSelectionHandler_Grappling(game: &mut Game) {
     GrappleBeamHandler(game);
@@ -7816,16 +7781,10 @@ static byte_90ED50: [u8; 28] = [
 ];
 pub unsafe fn SwappedAmmoRoutine(game: &mut Game) {
     if byte_90ED50[*ram_ptr!(game; 0xa1f) as usize] != 0 {
-        set_ram_word!(game.samus_missiles = (ram_word!(game, samus_x_pos) as i32 >> 4i32) as u16);
-        set_ram_word!(
-            game.samus_max_missiles = (ram_word!(game, samus_x_pos) as i32 >> 4i32) as u16
-        );
-        set_ram_word!(
-            game.samus_super_missiles = (ram_word!(game, samus_y_pos) as i32 >> 4i32) as u16
-        );
-        set_ram_word!(
-            game.samus_max_super_missiles = (ram_word!(game, samus_y_pos) as i32 >> 4i32) as u16
-        );
+        set_ram_word!(game.samus_missiles = (ram_word!(game, samus_x_pos) >> 4));
+        set_ram_word!(game.samus_max_missiles = (ram_word!(game, samus_x_pos) >> 4));
+        set_ram_word!(game.samus_super_missiles = (ram_word!(game, samus_y_pos) >> 4));
+        set_ram_word!(game.samus_max_super_missiles = (ram_word!(game, samus_y_pos) >> 4));
     }
 }
 pub unsafe fn UNUSEDsub_90ED6C(game: &mut Game) {
@@ -8040,7 +7999,7 @@ pub unsafe fn CallSomeSamusCode(a: u16, game: &mut Game) -> u16 {
     let code: u16 = kSamusCodeHandlers[(a as i32 & 0x1fi32) as usize]
         .expect("non-null function pointer")(game) as u16;
     if code & 1 == 0 {
-        return (code as i32 >> 1i32) as u16;
+        return (code >> 1);
     }
     set_ram_word!(game.samus_new_pose = -1i32 as u16);
     set_ram_word!(game.samus_new_pose_interrupted = -1i32 as u16);

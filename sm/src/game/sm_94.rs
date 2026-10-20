@@ -1431,7 +1431,7 @@ unsafe fn BlockReact_BombableBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
     1u8
 }
 unsafe fn BlockBombedReact(ci: *mut CollInfo, v0: u16, game: &mut Game) {
-    set_ram_word!(game.cur_block_index = (v0 as i32 >> 1i32) as u16);
+    set_ram_word!(game.cur_block_index = (v0 >> 1));
     game.react_to_block(|block_type, game| match block_type {
         0 | 1 | 2 | 3 | 6 => 0,
         4 => BlockReact_ShootableAir(ci, game),
@@ -1456,16 +1456,14 @@ unsafe fn BlockFunc_A06A(k: u16, game: &mut Game) {
         let r18: u16 = *(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(1isize) as u16;
         let r20: u16 = (((3u16)
             .wrapping_mul((*(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(1isize)) as u16))
-            as i32
-            >> 2i32) as u16;
+            >> 2);
         let mut v3: i16 = ((ram_word!(game, power_bomb_explosion_x_pos)) as i16)
             .wrapping_sub((*(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(1isize)) as i16);
         if v3 < 0i16 {
             v3 = 0i16;
         }
-        let r22: u16 = (v3 as u16 as i32 >> 4i32) as u16;
-        let mut v4: u16 = (((r18).wrapping_add(ram_word!(game, power_bomb_explosion_x_pos))) as i32
-            >> 4i32) as u16;
+        let r22: u16 = (v3 as u16 >> 4);
+        let mut v4: u16 = (((r18).wrapping_add(ram_word!(game, power_bomb_explosion_x_pos))) >> 4);
         if v4 >= ram_word!(game, room_width_in_blocks) {
             v4 = (ram_word!(game, room_width_in_blocks)).wrapping_sub(1u16);
         }
@@ -1474,9 +1472,8 @@ unsafe fn BlockFunc_A06A(k: u16, game: &mut Game) {
         if (v5 as i16) < 0i16 {
             v5 = 0u16;
         }
-        let r26: u16 = (v5 as i32 >> 4i32) as u16;
-        let mut v6: u16 = (((r20).wrapping_add(ram_word!(game, power_bomb_explosion_y_pos))) as i32
-            >> 4i32) as u16;
+        let r26: u16 = (v5 >> 4);
+        let mut v6: u16 = (((r20).wrapping_add(ram_word!(game, power_bomb_explosion_y_pos))) >> 4);
         if v6 >= ram_word!(game, room_height_in_blocks) {
             v6 = (ram_word!(game, room_height_in_blocks)).wrapping_sub(1u16);
         }
@@ -1584,7 +1581,7 @@ unsafe fn react_to_shot_block(
     if k >= ram_word!(game, room_size_in_blocks) {
         return 1u8;
     }
-    set_ram_word!(game.cur_block_index = (k as i32 >> 1i32) as u16);
+    set_ram_word!(game.cur_block_index = (k >> 1));
     let v1 = game.react_to_block(|block_type, game| match block_type {
         0 | 2 | 3 | 6 => 0,
         1 => slope(ci, game),
@@ -1826,13 +1823,13 @@ crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game) -> u8;
     BlockCollMissileVert => missile_block_collision(k, ShotAxis::Vertical, game);
 }
 unsafe fn BlockShotReact_Slope_NonSquare(ci: *mut CollInfo, j: u16, k: u16, game: &mut Game) -> u8 {
-    let v2: u16 = (ram_word!(game, projectile_x_pos[(j as i32 >> 1i32)]) as i32 & 0xfi32
+    let v2: u16 = (ram_word!(game, projectile_x_pos[(j >> 1)]) as i32 & 0xfi32
         ^ (if (*ram_ptr!(game; 0x16402, k as isize) & 0x40) != 0 {
             0xfi32
         } else {
             0i32
         })) as u16;
-    let v4: u16 = (ram_word!(game, projectile_y_pos[(j as i32 >> 1i32)]) as i32 & 0xfi32
+    let v4: u16 = (ram_word!(game, projectile_y_pos[(j >> 1)]) as i32 & 0xfi32
         ^ (if (*ram_ptr!(game; 0x16402, k as isize) & 0x80) != 0 {
             0xfi32
         } else {
@@ -1856,7 +1853,7 @@ unsafe fn BlockShotReactVert_Slope_NonSquare(ci: *mut CollInfo, game: &mut Game)
         ram_word!(game, cur_block_index),
         ram_word!(game, room_width_in_blocks) as u8,
     );
-    if ram_word!(game, projectile_y_pos[(v1 as i32 >> 1i32)]) as i32 >> 4i32 == div as i32 {
+    if ram_word!(game, projectile_y_pos[(v1 >> 1)]) as i32 >> 4i32 == div as i32 {
         BlockShotReact_Slope_NonSquare(ci, v1, v0, game)
     } else {
         0u8
@@ -1869,7 +1866,7 @@ unsafe fn BlockShotReactHoriz_Slope_NonSquare(ci: *mut CollInfo, game: &mut Game
         ram_word!(game, cur_block_index),
         ram_word!(game, room_width_in_blocks) as u8,
     );
-    if ram_word!(game, projectile_x_pos[(v1 as i32 >> 1i32)]) as i32 >> 4i32 == mod_0 as i32 {
+    if ram_word!(game, projectile_x_pos[(v1 >> 1)]) as i32 >> 4i32 == mod_0 as i32 {
         BlockShotReact_Slope_NonSquare(ci, v1, v0, game)
     } else {
         0u8
@@ -2092,10 +2089,10 @@ pub unsafe fn BlockCollGrappleBeam(game: &mut Game) -> u8 {
 }
 pub unsafe fn BlockReactGrapple(game: &mut Game) -> u8 {
     let prod: u16 = Mult8x8(
-        (ram_word!(game, grapple_beam_end_y_pos) as i32 >> 4i32) as u8,
+        (ram_word!(game, grapple_beam_end_y_pos) >> 4) as u8,
         ram_word!(game, room_width_in_blocks) as u8,
     );
-    let mut v0: i16 = (ram_word!(game, grapple_beam_end_x_pos) as i32 >> 4i32) as i16;
+    let mut v0: i16 = (ram_word!(game, grapple_beam_end_x_pos) >> 4) as i16;
     set_ram_word!(game.cur_block_index = (prod).wrapping_add((v0) as u16));
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: 0i32,
@@ -2192,7 +2189,7 @@ unsafe fn BlockFunc_A957(tmpD82: u16, tmpD84: u16, game: &mut Game) {
         v6 = (ram_word!(game, grapple_beam_end_x_pos) as i32 + (prod_0 as i32 >> 8i32)) as u16;
     }
     set_ram_word!(game.grapple_beam_grapple_start_x = v6);
-    set_ram_word!(game.grapple_beam_grapple_start_block_x = (v6 as i32 >> 4i32) as u8 as u16);
+    set_ram_word!(game.grapple_beam_grapple_start_block_x = (v6 >> 4) as u8 as u16);
     let mut v7: i16 = kSinCosTable8bit_Sext[v4 as usize];
     if v7 < 0i16 {
         if v7 == -256i16 {
@@ -2208,7 +2205,7 @@ unsafe fn BlockFunc_A957(tmpD82: u16, tmpD84: u16, game: &mut Game) {
         v8 = (ram_word!(game, grapple_beam_end_y_pos) as i32 + (prod_2 as i32 >> 8i32)) as u16;
     }
     set_ram_word!(game.grapple_beam_grapple_start_y = v8);
-    set_ram_word!(game.grapple_beam_grapple_start_block_y = (v8 as i32 >> 4i32) as u8 as u16);
+    set_ram_word!(game.grapple_beam_grapple_start_block_y = (v8 >> 4) as u8 as u16);
 }
 unsafe fn BlockReact_AA64(game: &mut Game) -> u8 {
     let v0: u16 = ram_word!(game, grapple_beam_grapple_start_block_x);
@@ -2393,8 +2390,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
             if current_block == 16784897620381762466 {
             } else {
                 *(&raw mut v4 as *mut u8).offset(0) = 0u8;
-                *(&raw mut v4 as *mut u8).offset(1isize) =
-                    (grapple_beam_tmpD86 as i32 >> 1i32) as u8;
+                *(&raw mut v4 as *mut u8).offset(1isize) = (grapple_beam_tmpD86 >> 1) as u8;
                 set_ram_word!(game.grapple_beam_end_angle16 = ((v4) as u16) | (0x80u16));
                 set_ram_word!(game.grapple_beam_end_angles_mirror = ((v4) as u16) | (0x80u16));
                 if ram_word!(game, g_word_7E0D98) != 6u16 && ram_word!(game, g_word_7E0D98) != 5u16
@@ -2466,8 +2462,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
                 let grapple_beam_tmpD82_0: u16 = (v5 as i32 - 2i32 & 0x1ffi32) as u16;
                 if BlockFunc_ABE6(grapple_beam_tmpD82_0, game) & 1 != 0 {
                     *(&raw mut v7 as *mut u8).offset(0) = 0u8;
-                    *(&raw mut v7 as *mut u8).offset(1isize) =
-                        (grapple_beam_tmpD86 as i32 >> 1i32) as u8;
+                    *(&raw mut v7 as *mut u8).offset(1isize) = (grapple_beam_tmpD86 >> 1) as u8;
                     set_ram_word!(game.grapple_beam_end_angle16 = ((v7) as u16) | (0x80u16));
                     set_ram_word!(game.grapple_beam_end_angles_mirror = ((v7) as u16) | (0x80u16));
                     if (ram_word!(game, g_word_7E0D98) == 6u16
@@ -2693,11 +2688,8 @@ unsafe fn DrawGrappleOams3(game: &mut Game) {
         - ram_word!(game, layer1_y_pos) as i32
         - 4i32) as u8;
     *(&raw mut (*v2).charnum as *mut u16) = 14880u16;
-    update_ram_word!(
-        game.oam_ext[(idx as i32 >> 5i32)],
-        |fresh19| (fresh19 as i32
-            | ((x as i32 & 0x100i32) >> 8i32) << 2i32 * (idx as i32 >> 2i32 & 7i32))
-            as u16
-    );
+    update_ram_word!(game.oam_ext[(idx >> 5)], |fresh19| (fresh19 as i32
+        | ((x as i32 & 0x100i32) >> 8i32) << 2i32 * (idx as i32 >> 2i32 & 7i32))
+        as u16);
     set_ram_word!(game.oam_next_ptr = (idx).wrapping_add(4u16));
 }

@@ -114,11 +114,9 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     if (*FD).type_0 != 0 {
         set_ram_word!(
             game.fx_tilemap_ptr =
-                crate::rtl::rom_table_word!(game, 0x83abf0, ((*FD).type_0 as i32 >> 1i32) as isize)
+                crate::rtl::rom_table_word!(game, 0x83abf0, ((*FD).type_0 >> 1) as isize)
         );
-        kFxTypeFuncPtrs[((*FD).type_0 as i32 >> 1i32) as usize].expect("non-null function pointer")(
-            game,
-        );
+        kFxTypeFuncPtrs[((*FD).type_0 >> 1) as usize].expect("non-null function pointer")(game);
     }
     if (*FD).palette_fx_bitset != 0 {
         let mut bits: i32 = (*FD).palette_fx_bitset as i32;

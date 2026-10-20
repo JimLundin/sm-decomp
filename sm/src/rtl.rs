@@ -974,11 +974,7 @@ pub unsafe fn ReadRegWord(reg: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn WriteRegWord(reg: u16, value: u16, game: &mut Game) {
     WriteReg(reg, value as u8, game);
-    WriteReg(
-        (reg as i32 + 1i32) as u16,
-        (value as i32 >> 8i32) as u8,
-        game,
-    );
+    WriteReg((reg as i32 + 1i32) as u16, (value >> 8) as u8, game);
 }
 
 pub unsafe fn RtlApuWrite(adr: u32, val: u8, game: &mut Game) {

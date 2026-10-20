@@ -1484,9 +1484,8 @@ unsafe fn HandleGamepadAxisInput(gamepad_id: i32, axis: i32, value: i32, game: &
             ];
             let angle: u8 = (ApproximateAtan2(last_y as c_float, last_x as c_float) * 64.0f32
                 + 0.5f32) as i32 as u8;
-            buttons = kSegmentToButtons
-                [((angle as i32 + 16i32 + 64i32) as u8 as i32 >> 5i32) as usize]
-                as i32;
+            buttons =
+                kSegmentToButtons[((angle as i32 + 16i32 + 64i32) as u8 >> 5) as usize] as i32;
         }
         g_gamepad_buttons = buttons as u8;
     } else if (axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT || axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)

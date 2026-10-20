@@ -103,7 +103,7 @@ static off_A486B3: [Option<CrocomireFunc>; 21] = callback_table! { unsafe Crocom
 pub unsafe fn Crocomire_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let crocom_var_C: u16 =
         (*Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game)).crocom_var_C;
-    off_A486B3[(crocom_var_C as i32 >> 1i32) as usize].expect("non-null function pointer")(
+    off_A486B3[(crocom_var_C >> 1) as usize].expect("non-null function pointer")(
         crocom_var_C,
         jp,
         game,
@@ -420,7 +420,7 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
     set_ram_word!(game.boss_id = 6u16);
     let mut v0: u16 = 0u16;
     loop {
-        set_ram_word!(game.tilemap_stuff[(v0 as i32 >> 1i32)] = 824u16);
+        set_ram_word!(game.tilemap_stuff[(v0 >> 1)] = 824u16);
         v0 = (v0).wrapping_add(2u16);
         if (((v0) as i16).wrapping_sub(4096i16) >= 0i16) {
             break;
@@ -493,9 +493,7 @@ pub unsafe fn Crocomire_Func_27(k: u16, game: &mut Game) {
     let mut spritemap_pointer: u16 = 0;
     loop {
         spritemap_pointer = (*Get_Crocomire(0i32, game)).base.spritemap_pointer;
-        if spritemap_pointer
-            == crate::rtl::rom_table_word!(game, 0xa48b79, (v1 as i32 >> 1i32) as isize)
-        {
+        if spritemap_pointer == crate::rtl::rom_table_word!(game, 0xa48b79, (v1 >> 1) as isize) {
             break;
         }
         v1 = (v1).wrapping_sub(2u16);
@@ -600,7 +598,7 @@ pub unsafe fn Crocomire_Func_31(game: &mut Game) {
             let mut j: u16 = 14u16;
             while (j & 0x8000) == 0 {
                 *(ram_ptr!(game, u16; 0xc000)).offset(((j as i32 >> 1i32) + 112i32) as isize) =
-                    crate::rtl::rom_table_word!(game, 0xa4b89d, (j as i32 >> 1i32) as isize);
+                    crate::rtl::rom_table_word!(game, 0xa4b89d, (j >> 1) as isize);
                 j = (j).wrapping_sub(2u16);
             }
         }
@@ -950,7 +948,7 @@ pub unsafe fn Crocomire_Func_52(game: &mut Game) {
         let ref mut fresh17 = *((ram_ptr!(game, u16; 0x9015) as *mut u8).offset(1) as *mut u16);
         *fresh17 = (*fresh17).wrapping_add(2u16);
         SpawnEprojWithGfx(
-            crate::rtl::rom_table_word!(game, 0xa49156, (v0 as i32 >> 1i32) as isize),
+            crate::rtl::rom_table_word!(game, 0xa49156, (v0 >> 1) as isize),
             v1,
             addr_stru_868F9D as u16,
             game,
@@ -990,7 +988,7 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
         let mut v3: u16 =
             (8i32 * (ram_word!(game, reg_BG2VOFS) as i32 + 288i32 & 0xfff8i32)) as u16;
         for _ in 0i32..32i32 {
-            set_ram_word!(game.tilemap_stuff[(v3 as i32 >> 1i32)] = 824u16);
+            set_ram_word!(game.tilemap_stuff[(v3 >> 1)] = 824u16);
             v3 = (v3).wrapping_add(2u16);
         }
         set_ram_word!(game.nmi_flag_bg2_enemy_vram_transfer = 1u16);
@@ -1182,7 +1180,7 @@ pub unsafe fn Crocomire_Func_59(game: &mut Game) {
     (*E).base.current_instruction = addr_kCrocomire_Ilist_BF7E as u16;
     let mut v1: u16 = 0u16;
     loop {
-        set_ram_word!(game.tilemap_stuff[(v1 as i32 >> 1i32)] = 824u16);
+        set_ram_word!(game.tilemap_stuff[(v1 >> 1)] = 824u16);
         v1 = (v1).wrapping_add(2u16);
         if (((v1) as i16).wrapping_sub(2048i16) >= 0i16) {
             break;
@@ -1308,7 +1306,7 @@ pub unsafe fn Crocomire_950F(game: &mut Game) {
     let mut v1: u16 = (2i32 * ((*Get_Crocomire(0x40i32, game)).base.y_pos as i32 - 72i32)) as u16;
     let v2: u16 = ram_word!(game, reg_BG2VOFS);
     loop {
-        set_ram_word!(game.crocomire_bg2_scroll_hdma_data[(v1 as i32 >> 1i32)] = v2);
+        set_ram_word!(game.crocomire_bg2_scroll_hdma_data[(v1 >> 1)] = v2);
         v1 = (v1).wrapping_sub(2u16);
         if ((v1 & 0x8000) != 0) {
             break;
@@ -1366,7 +1364,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
             set_ram_word!(game.message_box_animation_y1 = ram_word!(game, g_word_7E0694));
             loop {
                 set_ram_word!(
-                    game.crocomire_bg2_scroll_hdma_data[(v6 as i32 >> 1i32)] =
+                    game.crocomire_bg2_scroll_hdma_data[(v6 >> 1)] =
                         (ram_word!(game, reg_BG2VOFS) as i32 + v7 as i32
                             - ram_word!(game, message_box_animation_y1) as i32)
                             as u16
@@ -1385,7 +1383,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
             if ((v6) as i16).wrapping_sub(512i16) < 0i16 {
                 let v9: u16 = ram_word!(game, reg_BG2VOFS);
                 loop {
-                    set_ram_word!(game.crocomire_bg2_scroll_hdma_data[(v6 as i32 >> 1i32)] = v9);
+                    set_ram_word!(game.crocomire_bg2_scroll_hdma_data[(v6 >> 1)] = v9);
                     v6 = (v6).wrapping_add(2u16);
                     if (((v6) as i16).wrapping_sub(512i16) >= 0i16) {
                         break;
@@ -1405,7 +1403,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
         i += 8i32;
     }
     set_ram_word!(game.croco_word_7E069A = (i + 2i32) as u16);
-    set_ram_word!(game.hdma_object_channels_bitmask[((*E0).crocom_var_1F as i32 >> 1i32)] = 0u16);
+    set_ram_word!(game.hdma_object_channels_bitmask[((*E0).crocom_var_1F >> 1)] = 0u16);
 }
 pub unsafe fn Crocomire_Func_66(game: &mut Game) {
     let E = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1547,8 +1545,7 @@ pub unsafe fn Crocomire_Func_70(game: &mut Game) {
     let E1 = Get_Crocomire(0x40i32, game);
     let E2 = Get_Crocomire(0x80i32, game);
     let E3 = Get_Crocomire(0xc0i32, game);
-    if crate::rtl::rom_table_word!(game, 0xa498ca, ((*E0).crocom_var_D as i32 >> 1i32) as isize)
-        == 0x8080u16
+    if crate::rtl::rom_table_word!(game, 0xa498ca, ((*E0).crocom_var_D >> 1) as isize) == 0x8080u16
     {
         (*E1).crocom_var_D = -32640i32 as u16;
         (*E0).crocom_var_D = 128u16;
@@ -1566,8 +1563,7 @@ pub unsafe fn Crocomire_Func_70(game: &mut Game) {
         let v3: u16 = (*E1).crocom_var_D;
         let v4: i32 = crocom_var_D as i32 >> 1i32;
         if v3 == crate::rtl::rom_table_word!(game, 0xa498ca, v4 as isize) {
-            if (crate::rtl::rom_table_word!(game, 0xa498ca, (crocom_var_D as i32 >> 1i32) as isize)
-                & 0x8000)
+            if (crate::rtl::rom_table_word!(game, 0xa498ca, (crocom_var_D >> 1) as isize) & 0x8000)
                 != 0
             {
                 let v7: u16 = (*E2).crocom_var_D;
@@ -1579,13 +1575,10 @@ pub unsafe fn Crocomire_Func_70(game: &mut Game) {
                 }
                 let v8: u16 = (crocom_var_D).wrapping_add(2u16);
                 (*E2).crocom_var_D =
-                    crate::rtl::rom_table_word!(game, 0xa498ca, (v8 as i32 >> 1i32) as isize);
+                    crate::rtl::rom_table_word!(game, 0xa498ca, (v8 >> 1) as isize);
                 crocom_var_D = (v8).wrapping_add(2u16);
-                (*E3).crocom_var_D = crate::rtl::rom_table_word!(
-                    game,
-                    0xa498ca,
-                    (crocom_var_D as i32 >> 1i32) as isize
-                );
+                (*E3).crocom_var_D =
+                    crate::rtl::rom_table_word!(game, 0xa498ca, (crocom_var_D >> 1) as isize);
             }
             (*E0).crocom_var_D = (crocom_var_D).wrapping_add(2u16);
         } else {

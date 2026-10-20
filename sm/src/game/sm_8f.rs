@@ -402,10 +402,7 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
         let x: u16 = (ram_word!(game, layer1_x_pos)).wrapping_add((Random as u8) as u16);
         let y: u16 = (ram_word!(game, layer1_y_pos))
             .wrapping_add((*(&raw mut Random as *mut u8).offset(1isize)) as u16);
-        let prod: u16 = Mult8x8(
-            (y as i32 >> 4i32) as u8,
-            ram_word!(game, room_width_in_blocks) as u8,
-        );
+        let prod: u16 = Mult8x8((y >> 4) as u8, ram_word!(game, room_width_in_blocks) as u8);
         if (*(ram_ptr!(game, u16; 0x10002)).offset((prod as i32 + (x as i32 >> 4i32)) as isize)
             & 0x3ff)
             != 255

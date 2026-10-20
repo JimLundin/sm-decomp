@@ -68,8 +68,7 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
                             !(v1 & 0x8000 != 0)
                                 && ({
                                     *(ram_ptr!(game, u16; 0xeff8)).offset(
-                                        (ram_word!(game, sprite_object_index) as i32 >> 1i32)
-                                            as isize,
+                                        (ram_word!(game, sprite_object_index) >> 1) as isize,
                                     ) = v1;
                                     true
                                 })
@@ -90,20 +89,18 @@ pub unsafe fn SpriteObject_Instr_RepeatLast(game: &mut Game) {
     set_ram_word!(game.sprite_instr_timer[v2] = 0x7fffu16);
 }
 pub unsafe fn SpriteObject_Instr_Terminate(game: &mut Game) {
-    *(ram_ptr!(game, u16; 0xef78))
-        .offset((ram_word!(game, sprite_object_index) as i32 >> 1i32) as isize) = 0u16;
+    *(ram_ptr!(game, u16; 0xef78)).offset((ram_word!(game, sprite_object_index) >> 1) as isize) =
+        0u16;
 }
 pub unsafe fn SpriteObject_Instr_Goto(game: &mut Game) {
     let v2: u16 = *(RomPtr_B4(
-        *(ram_ptr!(game, u16; 0xef78))
-            .offset((ram_word!(game, sprite_object_index) as i32 >> 1i32) as isize),
+        *(ram_ptr!(game, u16; 0xef78)).offset((ram_word!(game, sprite_object_index) >> 1) as isize),
         game,
     )
     .offset(2) as *mut u16);
-    *(ram_ptr!(game, u16; 0xef78))
-        .offset((ram_word!(game, sprite_object_index) as i32 >> 1i32) as isize) = v2;
-    *(ram_ptr!(game, u16; 0xeff8))
-        .offset((ram_word!(game, sprite_object_index) as i32 >> 1i32) as isize) =
+    *(ram_ptr!(game, u16; 0xef78)).offset((ram_word!(game, sprite_object_index) >> 1) as isize) =
+        v2;
+    *(ram_ptr!(game, u16; 0xeff8)).offset((ram_word!(game, sprite_object_index) >> 1) as isize) =
         *(RomPtr_B4(v2, game) as *mut u16);
 }
 pub unsafe fn DrawSpriteObjects(game: &mut Game) {

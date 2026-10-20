@@ -1507,13 +1507,12 @@ unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
     let mut tilesFound: i32 = 0i32;
     let mut i: i32 = 0i32;
     while i < 128i32 {
-        let y: u8 = ((*ppu).oam[index as usize] as i32 >> 8i32) as u8;
+        let y: u8 = ((*ppu).oam[index as usize] >> 8) as u8;
         let mut row: u8 = (line - y as i32) as u8;
-        let spriteSize: i32 = spriteSizes[(*ppu).objSize as usize][((*ppu).highOam
-            [(index as i32 >> 3i32) as usize]
-            as i32
-            >> (index as i32 & 7i32) + 1i32
-            & 1i32) as usize];
+        let spriteSize: i32 =
+            spriteSizes[(*ppu).objSize as usize][((*ppu).highOam[(index >> 3) as usize] as i32
+                >> (index as i32 & 7i32) + 1i32
+                & 1i32) as usize];
         let spriteHeight: i32 = if (*ppu).objInterlace as i32 != 0 {
             spriteSize / 2i32
         } else {
@@ -1521,8 +1520,7 @@ unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
         };
         if (row as i32) < spriteHeight {
             let mut x: i32 = (*ppu).oam[index as usize] as i32 & 0xffi32;
-            x |= ((*ppu).highOam[(index as i32 >> 3i32) as usize] as i32 >> (index as i32 & 7i32)
-                & 1i32)
+            x |= ((*ppu).highOam[(index >> 3) as usize] as i32 >> (index as i32 & 7i32) & 1i32)
                 << 8i32;
             if x > 255i32 {
                 x -= 512i32;
@@ -1673,7 +1671,7 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
             } else {
                 let fresh2 = (*ppu).oamAdr;
                 (*ppu).oamAdr = (*ppu).oamAdr.wrapping_add(1);
-                ret = ((*ppu).oam[fresh2 as usize] as i32 >> 8i32) as u8;
+                ret = ((*ppu).oam[fresh2 as usize] >> 8) as u8;
                 if (*ppu).oamAdr as i32 == 0i32 {
                     (*ppu).oamInHigh = true_0 != 0;
                 }
@@ -1701,8 +1699,8 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
                 (*ppu).vramPointer =
                     ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as u16;
             }
-            (*ppu).ppu1openBus = (val_0 as i32 >> 8i32) as u8;
-            (val_0 as i32 >> 8i32) as u8
+            (*ppu).ppu1openBus = (val_0 >> 8) as u8;
+            (val_0 >> 8) as u8
         }
         59 => {
             let mut ret_0: u8 = 0u8;
@@ -1773,7 +1771,7 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             current_block_164 = 16754622181974910496;
         }
         1 => {
-            (*ppu).objSize = (val as i32 >> 5i32) as u8;
+            (*ppu).objSize = (val >> 5);
             (*ppu).objTileAdr1 = ((val as i32 & 7i32) << 13i32) as u16;
             (*ppu).objTileAdr2 =
                 ((*ppu).objTileAdr1 as i32 + (((val as i32 & 0x18i32) + 8i32) << 9i32)) as u16;

@@ -206,9 +206,8 @@ pub unsafe fn InitializeSbaProjectile(k: u16, game: &mut Game) {
     set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1u16);
 }
 pub unsafe fn ProjectileInsts_GetValue(k: u16, game: &mut Game) -> u16 {
-    let ip: i32 = ram_word!(game, projectile_bomb_instruction_ptr[(k as i32 >> 1i32)]) as i32;
-    let delta: i32 = if ram_word!(game, projectile_bomb_instruction_timers[(k as i32 >> 1i32)])
-        == 1u16
+    let ip: i32 = ram_word!(game, projectile_bomb_instruction_ptr[(k >> 1)]) as i32;
+    let delta: i32 = if ram_word!(game, projectile_bomb_instruction_timers[(k >> 1)]) == 1u16
         && (*get_ProjectileInstr(ip as u16, game)).timer & 0x8000 == 0
     {
         0i32

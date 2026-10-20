@@ -183,9 +183,9 @@ unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut C
         i += 1;
     }
     (*header).name[21i32 as usize] = 0 as c_char;
-    (*header).speed = (*data.offset((location + 0x15i32) as isize) as i32 >> 4i32) as u8;
+    (*header).speed = (*data.offset((location + 0x15i32) as isize) >> 4);
     (*header).type_0 = (*data.offset((location + 0x15i32) as isize) & 0xf);
-    (*header).coprocessor = (*data.offset((location + 0x16i32) as isize) as i32 >> 4i32) as u8;
+    (*header).coprocessor = (*data.offset((location + 0x16i32) as isize) >> 4);
     (*header).chips = (*data.offset((location + 0x16i32) as isize) & 0xf);
     (*header).romSize = ((0x400i32) << *data.offset((location + 0x17i32) as isize) as i32) as u32;
     (*header).ramSize = ((0x400i32) << *data.offset((location + 0x18i32) as isize) as i32) as u32;

@@ -38,8 +38,7 @@ static funcs_BE56D: [Option<Func_V>; 16] = callback_table! { unsafe Func_V;
 pub unsafe fn MotherBrain_CalcHdma(game: &mut Game) {
     let E = Get_MotherBrain(0i32, game);
     let E1 = Get_MotherBrain(0x40i32, game);
-    let mut r18: u16 =
-        (*(&raw mut (*E).mbn_var_33 as *mut u8).offset(1isize) as i32 >> 1i32) as u16;
+    let mut r18: u16 = (*(&raw mut (*E).mbn_var_33 as *mut u8).offset(1isize) >> 1) as u16;
     (*E).mbn_var_3A = ((*E).mbn_var_31).wrapping_sub(r18);
     (*E).mbn_var_3B = (r18).wrapping_add((*E).mbn_var_31);
     let v2: u16 = (*((&raw mut (*E1).base.enemy_ptr as *mut u8).offset(1) as *mut u16) as i32
@@ -342,21 +341,21 @@ pub unsafe fn MotherBrain_HealthBasedPaletteHandling(game: &mut Game) {
         WriteColorsToPalette(
             0x82u16,
             0xadu8,
-            crate::rtl::rom_table_word!(game, 0xade6a2, (v0 as i32 >> 1i32) as isize),
+            crate::rtl::rom_table_word!(game, 0xade6a2, (v0 >> 1) as isize),
             0xfu16,
             game,
         );
         WriteColorsToPalette(
             0x122u16,
             0xadu8,
-            crate::rtl::rom_table_word!(game, 0xade6a2, (v0 as i32 >> 1i32) as isize),
+            crate::rtl::rom_table_word!(game, 0xade6a2, (v0 >> 1) as isize),
             0xfu16,
             game,
         );
         WriteColorsToPalette(
             0x162u16,
             0xadu8,
-            crate::rtl::rom_table_word!(game, 0xade742, (v0 as i32 >> 1i32) as isize),
+            crate::rtl::rom_table_word!(game, 0xade742, (v0 >> 1) as isize),
             0xfu16,
             game,
         );

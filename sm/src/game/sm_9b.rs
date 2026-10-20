@@ -216,7 +216,7 @@ pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
         crate::rtl::rom_table_word!(
             game,
             0x9bb5c8,
-            (ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize
+            (ram_word!(game, samus_suit_palette_index) >> 1) as isize
         ),
         game,
     ) as *const u16;
@@ -242,7 +242,7 @@ pub unsafe fn CopyPalettesForSamusDeath(v0: u16, game: &mut Game) {
     let r20: i32 = crate::rtl::rom_table_word!(
         game,
         0x9bb6d2,
-        (ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize
+        (ram_word!(game, samus_suit_palette_index) >> 1) as isize
     ) as i32;
     let v1 = RomPtr_9B((r20 + v0 as i32) as u16, game) as *const u16;
     memcpy(
@@ -253,7 +253,7 @@ pub unsafe fn CopyPalettesForSamusDeath(v0: u16, game: &mut Game) {
     memcpy(
         (ram_ptr!(game, u16; 0xc000)).offset(240) as *mut c_void,
         RomPtr_9B(
-            crate::rtl::rom_table_word!(game, 0x9bb80f, (v0 as i32 >> 1i32) as isize),
+            crate::rtl::rom_table_word!(game, 0x9bb80f, (v0 >> 1) as isize),
             game,
         ) as *const c_void,
         32 as size_t,
@@ -386,9 +386,9 @@ unsafe fn ProcessEnemyGrappleBeamColl(a: u16, mut r18: u16, game: &mut Game) -> 
         6 => {
             r18 = *(RomPtr_A0(r18, game) as *mut u16).offset(3);
             if (ram_word!(game, equipped_items) & 0x20) != 0 {
-                r18 = (r18 as i32 >> 2i32) as u16;
+                r18 = (r18 >> 2);
             } else if ram_word!(game, equipped_items) & 1 != 0 {
-                r18 = (r18 as i32 >> 1i32) as u16;
+                r18 = (r18 >> 1);
             }
             Samus_DealDamage(r18, game);
             set_ram_word!(game.samus_invincibility_timer = 96u16);
@@ -619,7 +619,7 @@ pub unsafe fn GrappleBeamFunc_BB64(game: &mut Game) {
             if ram_word!(game, grapple_beam_flags) != 0u16
                 && (ram_word!(game, grapple_beam_flags) & 1) != 0
             {
-                set_ram_word!(game.grapple_beam_unkD2A = (g_word_9BC11A as i32 >> 1i32) as u16);
+                set_ram_word!(game.grapple_beam_unkD2A = (g_word_9BC11A >> 1));
             } else {
                 set_ram_word!(game.grapple_beam_unkD2A = g_word_9BC11A);
             }
@@ -685,18 +685,18 @@ pub unsafe fn GrappleBeamFunc_BC1F(game: &mut Game) {
         if ram_word!(game, grapple_beam_flags) != 0u16
             && (ram_word!(game, grapple_beam_flags) & 1) != 0
         {
-            set_ram_word!(game.grapple_beam_unkD28 = (g_word_9BC118 as i32 >> 1i32) as u16);
+            set_ram_word!(game.grapple_beam_unkD28 = (g_word_9BC118 >> 1));
         } else {
             set_ram_word!(game.grapple_beam_unkD28 = g_word_9BC118);
         }
     } else {
-        set_ram_word!(game.grapple_beam_unkD2C = (g_word_9BC11C as i32 >> 2i32) as u16);
+        set_ram_word!(game.grapple_beam_unkD2C = (g_word_9BC11C >> 2));
         if ram_word!(game, grapple_beam_flags) != 0u16
             && (ram_word!(game, grapple_beam_flags) & 1) != 0
         {
-            set_ram_word!(game.grapple_beam_unkD28 = (g_word_9BC118 as i32 >> 3i32) as u16);
+            set_ram_word!(game.grapple_beam_unkD28 = (g_word_9BC118 >> 3));
         } else {
-            set_ram_word!(game.grapple_beam_unkD28 = (g_word_9BC118 as i32 >> 2i32) as u16);
+            set_ram_word!(game.grapple_beam_unkD28 = (g_word_9BC118 >> 2));
         }
     };
 }
@@ -739,7 +739,7 @@ pub unsafe fn GrappleBeamFunc_BD44(game: &mut Game) {
             } else if ram_word!(game, grapple_beam_flags) != 0u16
                 && (ram_word!(game, grapple_beam_flags) & 1) != 0
             {
-                set_ram_word!(game.grapple_beam_unkD2E = (g_word_9BC120 as i32 >> 1i32) as u16);
+                set_ram_word!(game.grapple_beam_unkD2E = (g_word_9BC120 >> 1));
             } else {
                 set_ram_word!(game.grapple_beam_unkD2E = g_word_9BC120);
             }
@@ -969,7 +969,7 @@ pub unsafe fn UpdateGrappleBeamTiles(game: &mut Game) {
     (*gVramWriteEntry(v0 as i32, game)).size = 128u16;
     v0 = (v0).wrapping_add(2u16);
     (*gVramWriteEntry(v0 as i32, game)).size =
-        crate::rtl::rom_table_word!(game, 0x9bc346, (v1 as i32 >> 1i32) as isize);
+        crate::rtl::rom_table_word!(game, 0x9bc346, (v1 >> 1) as isize);
     v0 = (v0).wrapping_add(2u16);
     let fresh28 = v0;
     v0 = v0.wrapping_add(1);

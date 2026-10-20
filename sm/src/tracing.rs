@@ -414,7 +414,7 @@ unsafe fn getDisassemblySpc(apu: *mut Apu, line: *mut c_char) {
     let rel: u16 = ((*(*apu).spc).pc as i32 + 2i32 + byte as i8 as i32) as u16;
     let rel2: u16 = ((*(*apu).spc).pc as i32 + 2i32 + byte2 as i8 as i32) as u16;
     let wordb: u16 = (word & 0x1fff);
-    let bit: u8 = (word as i32 >> 13i32) as u8;
+    let bit: u8 = (word >> 13) as u8;
     match opcodeTypeSpc[opcode as usize] {
         0 => {
             sprintf(
