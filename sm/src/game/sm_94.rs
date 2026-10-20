@@ -480,7 +480,7 @@ pub unsafe fn Samus_AlignYPosSlope(game: &mut Game) {
         }
     }
 }
-fn square_slope_occupied(
+pub(super) fn square_slope_occupied(
     index: u16,
     first: u16,
     last: u16,
@@ -495,6 +495,18 @@ fn square_slope_occupied(
         return kTab948E54[usize::from(index ^ other)] != 0;
     }
     kTab948E54[usize::from(index)] != 0 || kTab948E54[usize::from(index ^ other)] != 0
+}
+// A span wholly inside one block must test both of its own edges. The
+// low-byte and full-word edge arithmetic agree on bit 3, including wraparound.
+pub(super) fn square_slope_single_block(
+    index: u16,
+    position: u16,
+    radius: u16,
+    other: u16,
+) -> bool {
+    (position.wrapping_sub(radius) & 8 == 0 && kTab948E54[usize::from(index)] != 0)
+        || (radius.wrapping_add(position).wrapping_sub(1) & 8 != 0
+            && kTab948E54[usize::from(index ^ other)] != 0)
 }
 fn square_slope_delta(edge: u16, radius: u16, position: u16, negative: bool) -> i32 {
     // Truncate to signed sixteen bits before clamping at the eight-pixel boundary.
@@ -1885,78 +1897,28 @@ unsafe fn shot_square_slope(
         ShotAxis::Horizontal => 1,
         ShotAxis::Vertical => 2,
     };
-    let captured = match axis {
-        ShotAxis::Horizontal => None,
-        ShotAxis::Vertical => Some(word!(game.projectile_index)),
+    crate::verify_probe::hit(match axis {
+        ShotAxis::Horizontal => "square-slope.shot.horizontal",
+        ShotAxis::Vertical => "square-slope.shot.vertical",
+    });
+    // No stores or callbacks occur before sampling; the projectile slot is stable.
+    let k = word!(game.projectile_index);
+    let position = shot_word(axis.pair().0, k, game);
+    if (*ci).ci_r30 != 0 {
+        if position & 8 != 0 {
+            index ^= other;
+        }
+        return u8::from(kTab948E54[index as usize] != 0);
+    }
+    let radius = shot_word(axis.radius(), k, game);
+    let occupied = if (*ci).ci_r26 == 0 {
+        square_slope_single_block(index, position, radius, other)
+    } else {
+        square_slope_occupied(index, (*ci).ci_r38, (*ci).ci_r26, position, radius, other)
     };
-    if (*ci).ci_r30 == 0 {
-        if (*ci).ci_r26 == 0 {
-            let k = captured.unwrap_or_else(|| word!(game.projectile_index));
-            if shot_word(axis.pair().0, k, game).wrapping_sub(shot_word(axis.radius(), k, game)) & 8
-                != 0
-                || kTab948E54[index as usize] == 0
-            {
-                if i32::from(shot_byte(axis.radius(), k, game))
-                    + i32::from(shot_byte(axis.pair().0, k, game))
-                    - 1
-                    & 8
-                    == 0
-                    || kTab948E54[(index ^ other) as usize] == 0
-                {
-                    return 0;
-                }
-            }
-            return 1;
-        }
-        if (*ci).ci_r38 != 0 {
-            if (*ci).ci_r38 == (*ci).ci_r26
-                && shot_word(
-                    axis.pair().0,
-                    captured.unwrap_or_else(|| word!(game.projectile_index)),
-                    game,
-                )
-                .wrapping_sub(shot_word(
-                    axis.radius(),
-                    captured.unwrap_or_else(|| word!(game.projectile_index)),
-                    game,
-                )) & 8
-                    != 0
-            {
-                return u8::from(kTab948E54[(index ^ other) as usize] != 0);
-            }
-        } else if i32::from(shot_byte(
-            axis.radius(),
-            captured.unwrap_or_else(|| word!(game.projectile_index)),
-            game,
-        )) + i32::from(shot_byte(
-            axis.pair().0,
-            captured.unwrap_or_else(|| word!(game.projectile_index)),
-            game,
-        )) - 1
-            & 8
-            == 0
-        {
-            return u8::from(kTab948E54[index as usize] != 0);
-        }
-        if kTab948E54[index as usize] != 0 {
-            return 1;
-        }
-        return u8::from(kTab948E54[(index ^ other) as usize] != 0);
-    }
-    if shot_word(
-        axis.pair().0,
-        captured.unwrap_or_else(|| word!(game.projectile_index)),
-        game,
-    ) & 8
-        != 0
-    {
-        index ^= other;
-    }
-    u8::from(kTab948E54[index as usize] != 0)
+    u8::from(occupied)
 }
-unsafe fn shot_byte(base: usize, k: u16, game: &mut Game) -> u8 {
-    *game.g_ram.as_ptr().add(base + usize::from(k >> 1) * 2)
-}
+
 crate::forward_calls! { unsafe fn ( ci: *mut CollInfo, a: u16, k: u16, game: &mut Game, ) -> u8;
     BlockShotReactVert_Slope_Square => shot_square_slope(ci, a, k, ShotAxis::Vertical, game);
     BlockShotReactHoriz_Slope_Square => shot_square_slope(ci, a, k, ShotAxis::Horizontal, game);

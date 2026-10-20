@@ -16,6 +16,7 @@ use crate::game::sm_86::{DrawEprojsWithPriority, EprojPriority, SpawnEprojWithGf
 use crate::game::sm_90::{CallSomeSamusCode, DrawSamusAndProjectiles};
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_93::DrawBombAndProjectileExplosions;
+use crate::game::sm_94::square_slope_occupied;
 use crate::game::sm_a2::{
     BouncingGoofball_Init, BouncingGoofball_Instr_88C5, BouncingGoofball_Instr_88C6,
     BouncingGoofball_Main, EnemyInstr_Rio_Instr_1, Enemy_GrappleReact_CancelBeam_A2,
@@ -3877,9 +3878,6 @@ fn EnemyBlockCollVertReact_Slope(collision: &mut EnemyBlockCollInfo, game: &mut 
         EnemyBlockCollVertReact_Slope_Square(collision, bts, game)
     }
 }
-static byte_A0C435: [u8; 20] = [
-    0, 1, 0x82, 0x83, 0, 0x81, 2, 0x83, 0, 1, 2, 0x83, 0, 0x81, 0x82, 0x83, 0x80, 0x81, 0x82, 0x83,
-];
 fn EnemyBlockCollHorizReact_Slope_Square(
     collision: &mut EnemyBlockCollInfo,
     bts: u8,
@@ -3891,20 +3889,15 @@ fn EnemyBlockCollHorizReact_Slope_Square(
     let enemy = game.enemy_coordinates(enemy_index);
     let position = enemy.y_pos();
     let size = enemy.y_height();
-    let near_is_solid = byte_A0C435[index] & 0x80 != 0;
-    if collision.ebci_r28 == 0 {
-        // The original bottom-edge test reads only the low bytes of both fields.
-        let far_edge = (position as u8).wrapping_add(size as u8).wrapping_sub(1);
-        if far_edge & 8 == 0 {
-            return u8::from(near_is_solid);
-        }
-    } else if collision.ebci_r28 == collision.ebci_r30 && position.wrapping_sub(size) & 8 != 0 {
-        return u8::from(byte_A0C435[index ^ 2] & 0x80 != 0);
-    }
-    if near_is_solid {
-        return 1;
-    }
-    u8::from(byte_A0C435[index ^ 2] & 0x80 != 0)
+    crate::verify_probe::hit("square-slope.enemy.horiz");
+    u8::from(square_slope_occupied(
+        index as u16,
+        collision.ebci_r28,
+        collision.ebci_r30,
+        position,
+        size,
+        2,
+    ))
 }
 fn EnemyBlockCollVertReact_Slope_Square(
     collision: &mut EnemyBlockCollInfo,
@@ -3917,20 +3910,15 @@ fn EnemyBlockCollVertReact_Slope_Square(
     let enemy = game.enemy_coordinates(enemy_index);
     let position = enemy.x_pos();
     let size = enemy.x_width();
-    let near_is_solid = byte_A0C435[index] & 0x80 != 0;
-    if collision.ebci_r28 == 0 {
-        // The original bottom-edge test reads only the low bytes of both fields.
-        let far_edge = (position as u8).wrapping_add(size as u8).wrapping_sub(1);
-        if far_edge & 8 == 0 {
-            return u8::from(near_is_solid);
-        }
-    } else if collision.ebci_r28 == collision.ebci_r30 && position.wrapping_sub(size) & 8 != 0 {
-        return u8::from(byte_A0C435[index ^ 1] & 0x80 != 0);
-    }
-    if near_is_solid {
-        return 1;
-    }
-    u8::from(byte_A0C435[index ^ 1] & 0x80 != 0)
+    crate::verify_probe::hit("square-slope.enemy.vert");
+    u8::from(square_slope_occupied(
+        index as u16,
+        collision.ebci_r28,
+        collision.ebci_r30,
+        position,
+        size,
+        1,
+    ))
 }
 fn EnemyBlockCollHorizReact_Slope_NonSquare(
     collision: &mut EnemyBlockCollInfo,

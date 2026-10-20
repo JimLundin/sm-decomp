@@ -20,6 +20,45 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared square-slope occupancy (2026-10-20)
+
+Enemy, enemy-projectile and Samus-projectile square-slope handlers now share
+bank 94's occupancy tests. A separate single-block test retains both edge
+gates; multi-block spans reuse the existing Samus/post-grapple helper. The
+removed bank 86/A0 tables have identical solidity bits. Axis-specific index
+construction, point sampling and enemy-projectile collision stores remain.
+The complete formatted change removes **89 lines**, including six probes.
+
+A temporary DLL compares original/replacement Rust with the actual Game,
+RAM accessors and collision layouts: **1783808 checks pass**. This includes
+112640 enemy-projectile comparisons (30720 overlapping-context cases),
+98304 Samus-projectile comparisons, 524288 enemy comparisons and 1048576
+word/byte arithmetic cases. Returns, panic outcomes and complete RAM agree;
+tests cover both axes, all orientations, span modes, invalid table indices
+and high-word/low-nibble boundaries. These are compiler-specific x86-64
+comparisons, not a general aliasing/undefined-behavior proof. An initial
+mid-function probe changed the compiled overlapping-context result. Placing
+the probe before the first RAM read makes the final comparisons agree;
+all checked production bodies match the final composed source.
+
+Formatting, all-target draft check, normal release (27.56s in main), diff
+check and progress pass. Source-checked any% passes **129712/0** and Speed
+Booster **148406/0**, native exits 0; full command times are 124.74s and
+156.62s. Source/input/library/DLL hashes stay fixed, main matches the frozen
+composition, and its rebuilt library passes the embedded-source check.
+Both routes exercise both shot axes. Speed additionally exercises enemy
+horizontal/vertical handling (978/1744 calls) and enemy-projectile vertical
+handling (one call). Enemy-projectile horizontal has synthetic coverage but
+no movie hit. Initial runs had zero failing frames but correctly rejected
+absent required probes; final runs require their exercised paths. Existing
+route and credits limitations remain.
+
+Rust lines are **113937**, leaving **13938 further lines** to reach the fixed
+under-100000 target. Unsafe functions fall one to 5371 through removing the
+unused byte reader; other counters are unchanged from `e72ca2cd`. This lands
+another proven algorithm family; the complete remaining budget is unfinished.
+Temporary drafts and comparisons are in `%TEMP%/sm-square-slopes-root-ae66aa50`.
+
 ## Shared equipment selection (2026-10-20)
 
 Six pause-menu searches now share their word-table traversal. The original

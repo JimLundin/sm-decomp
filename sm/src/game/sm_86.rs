@@ -14,7 +14,7 @@ use crate::game::sm_91::{
     Samus_DealDamage, Samus_RestoreHealth, Samus_RestoreMissiles, Samus_RestorePowerBombs,
     Samus_RestoreSuperMissiles,
 };
-use crate::game::sm_94::kSinCosTable8bit_Sext;
+use crate::game::sm_94::{kSinCosTable8bit_Sext, square_slope_occupied, square_slope_single_block};
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CalculateAngleOfSamusFromEproj, CallEnemyAi, ConvertAngleToXy,
     SignExtend8, SpawnEnemyDrops, SuitDamageDivision,
@@ -621,9 +621,6 @@ unsafe fn EprojColl_85AD(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
         EprojColl_8676(eci, v0, game.cur_block_index(), 0, game)
     }
 }
-static unk_868729: [u8; 20] = [
-    0, 1, 0x82, 0x83, 0, 0x81, 2, 0x83, 0, 1, 2, 0x83, 0, 0x81, 0x82, 0x83, 0x80, 0x81, 0x82, 0x83,
-];
 #[derive(Copy, Clone)]
 enum EprojCollisionAxis {
     Horizontal,
@@ -673,11 +670,6 @@ impl EprojCollisionAxis {
         }
     }
 }
-enum SquareSlopeHalf {
-    First,
-    Either,
-    Opposite,
-}
 // Keep context reads raw: the collision context may alias a destination store.
 unsafe fn eproj_square_slope(
     eci: *mut EprojCollInfo,
@@ -686,6 +678,10 @@ unsafe fn eproj_square_slope(
     axis: EprojCollisionAxis,
     game: &mut Game,
 ) -> u8 {
+    crate::verify_probe::hit(match axis {
+        EprojCollisionAxis::Horizontal => "square-slope.eproj.horizontal",
+        EprojCollisionAxis::Vertical => "square-slope.eproj.vertical",
+    });
     // Only the vertical original captures this index before the BTS/context reads.
     let captured_index = match axis {
         EprojCollisionAxis::Horizontal => None,
@@ -700,60 +696,25 @@ unsafe fn eproj_square_slope(
         .wrapping_mul(4)
         .wrapping_add(orientation ^ (((*eci).eci_r34 & 8) >> shift));
     let other = axis.other_half();
-    if (*eci).eci_r32 == 0 {
-        let k = captured_index.unwrap_or_else(|| EprojState(&game.g_ram).index());
-        if axis
-            .perpendicular_position(k, game)
-            .wrapping_sub(axis.perpendicular_radius(eci))
-            & 8
-            != 0
-            || unk_868729[index as usize] & 0x80 == 0
-        {
-            if axis
-                .perpendicular_radius(eci)
-                .wrapping_add(axis.perpendicular_position(k, game))
-                .wrapping_sub(1)
-                & 8
-                == 0
-                || unk_868729[(index ^ other) as usize] & 0x80 == 0
-            {
-                return 0;
-            }
-        }
+    // The original bank's table has the same solidity bits as bank 94.
+    // Sampling performs no stores; retain raw context reads after the first store.
+    let k = captured_index.unwrap_or_else(|| EprojState(&game.g_ram).index());
+    let position = axis.perpendicular_position(k, game);
+    let radius = axis.perpendicular_radius(eci);
+    let occupied = if (*eci).eci_r32 == 0 {
+        square_slope_single_block(index, position, radius, other)
     } else {
-        let half = if (*eci).eci_r26 == 0 {
-            if axis
-                .perpendicular_radius(eci)
-                .wrapping_add(axis.perpendicular_position(EprojState(&game.g_ram).index(), game))
-                .wrapping_sub(1)
-                & 8
-                == 0
-            {
-                SquareSlopeHalf::First
-            } else {
-                SquareSlopeHalf::Either
-            }
-        } else if (*eci).eci_r26 != (*eci).eci_r32
-            || axis
-                .perpendicular_position(EprojState(&game.g_ram).index(), game)
-                .wrapping_sub(axis.perpendicular_radius(eci))
-                & 8
-                == 0
-        {
-            SquareSlopeHalf::Either
-        } else {
-            SquareSlopeHalf::Opposite
-        };
-        if matches!(half, SquareSlopeHalf::First) {
-            if unk_868729[index as usize] & 0x80 == 0 {
-                return 0;
-            }
-        } else if (matches!(half, SquareSlopeHalf::Opposite)
-            || unk_868729[index as usize] & 0x80 == 0)
-            && unk_868729[(index ^ other) as usize] & 0x80 == 0
-        {
-            return 0;
-        }
+        square_slope_occupied(
+            index,
+            (*eci).eci_r26,
+            (*eci).eci_r32,
+            position,
+            radius,
+            other,
+        )
+    };
+    if !occupied {
+        return 0;
     }
     let slot = usize::from(EprojState(&game.g_ram).index() >> 1);
     EprojStateMut(&mut game.g_ram).write(axis.subposition_base(), slot, 0);
