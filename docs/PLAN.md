@@ -3159,7 +3159,40 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `02347c9d` uses native u8/u16
+Latest reviewed integration (2026-10-20): `755f8836` uses native widths for
+1030 fixed right shifts across 38 files, on `5f87586d`. Independent selection
+reproduces 565 final-cast expressions and 465 unsigned RAM array indices.
+All 78 committed inputs match the frozen candidate; 2187 exact edits and normal
+rustfmt reconstruct every candidate file. Narrow operands keep one evaluation,
+fixed counts stay below their width, and result/index casts preserve the original
+integer value. The unsupported u32 source remains excluded.
+
+Independent bit-vector reruns prove all 1030 expressions for every operand bit
+pattern; signedness and shift-count controls detect differences. Fresh baseline
+and candidate library/frontend compiler captures bind every result, operand and
+Shr operation, including all 17 nested pairs. Six immutable-static reference/value
+span ambiguities resolve to the actual u16 shift inputs and unchanged declarations.
+
+Direct bracket inspection binds 164 ram_word, 251 set_ram_word and 50 update_ram_word
+indices. The earlier recursive traversal mislabeled 22 nested reads as their
+outer store/update macro; the final direct-child traversal corrects every label
+without changing selected code. Composition with pointer-annotation cleanup
+preserves all selected shapes, relative edits and proof expression hashes;
+998 shifted byte spans are rebound to fresh source and compiler captures.
+Original authorities remain preserved. All 149 final verification pins and
+independent review pins remain unchanged. The actual cached DLL passes both
+its host source stamp and compiled game-library source-byte inspection.
+
+Formatting/check, progress, normal release (24.92s) and shared host (5.05s) pass.
+The host reuses the release library's exact hash and timestamp. Authoritative
+any% 129712/0 (124.51s replay/124.74s wall) and Speed Booster 148406/0
+(159.46s replay/159.68s wall), native exits 0, are reused without another build
+or replay. This shift change removes 381 Rust lines to 127132 and 934 cast lines
+to 9819; other counters are unchanged. Speed visits 55 rooms and 53 enemy
+definitions; neither route reaches credits. Complete gameplay, frontend,
+hardware/audio and alias ownership remain open.
+
+Included bitwise integration (2026-10-20): `02347c9d` uses native u8/u16
 bitwise operations in 2276 expressions across 41 files, on Bang prerequisite
 `1d83d967`. All 78 committed inputs match the final frozen source. Independent
 classification reproduces all selections/exclusions; 6575 exact edits and
