@@ -512,125 +512,66 @@ unsafe fn RegisterDefaultKeys() {
     }
 }
 unsafe fn GetIniSection(s: *const c_char) -> i32 {
-    if StringEqualsNoCase(s, b"[KeyMap]\0" as *const u8 as *const c_char) {
-        return 0;
-    }
-    if StringEqualsNoCase(s, b"[Graphics]\0" as *const u8 as *const c_char) {
-        return 1;
-    }
-    if StringEqualsNoCase(s, b"[Sound]\0" as *const u8 as *const c_char) {
-        return 2;
-    }
-    if StringEqualsNoCase(s, b"[General]\0" as *const u8 as *const c_char) {
-        return 3;
-    }
-    if StringEqualsNoCase(s, b"[Features]\0" as *const u8 as *const c_char) {
-        return 4;
-    }
-    if StringEqualsNoCase(s, b"[GamepadMap]\0" as *const u8 as *const c_char) {
-        return 5;
-    }
-    -1i32
+    [
+        c"[KeyMap]",
+        c"[Graphics]",
+        c"[Sound]",
+        c"[General]",
+        c"[Features]",
+        c"[GamepadMap]",
+    ]
+    .iter()
+    .position(|name| StringEqualsNoCase(s, name.as_ptr()))
+    .map_or(-1, |index| index as i32)
 }
-pub unsafe fn ParseBool(mut value: *const c_char, result: *mut bool) -> bool {
-    let mut rv: bool = false_0 != 0;
-    crate::update_place! { previous fresh2 = value => value.offset(1); }
-    match *fresh2 as i32 | 32 {
-        48 => {
-            if (*value as i32 != 0) {
-                return false_0 != 0;
-            }
-        }
-        102 => {
-            if !StringEqualsNoCase(value, b"alse\0" as *const u8 as *const c_char) {
-                return false_0 != 0;
-            }
-        }
-        110 => {
-            if !StringEqualsNoCase(value, b"o\0" as *const u8 as *const c_char) {
-                return false_0 != 0;
-            }
-        }
+pub unsafe fn ParseBool(value: *const c_char, result: *mut bool) -> bool {
+    // The original first-byte OR also accepts control bytes $10/$11 as 0/1.
+    let suffix = value.add(1);
+    let (parsed, expected) = match *value as i32 | 32 {
+        48 => (false, c""),
+        49 => (true, c""),
+        102 => (false, c"alse"),
+        110 => (false, c"o"),
         111 => {
-            rv = *value as i32 | 32 == 'n' as i32;
-            if !StringEqualsNoCase(
-                value,
-                if rv as i32 != 0 {
-                    b"n\0" as *const u8 as *const c_char
-                } else {
-                    b"ff\0" as *const u8 as *const c_char
-                },
-            ) {
-                return false_0 != 0;
-            }
+            let on = *suffix as i32 | 32 == 'n' as i32;
+            (on, if on { c"n" } else { c"ff" })
         }
-        49 => {
-            rv = true_0 != 0;
-            if (*value as i32 != 0) {
-                return false_0 != 0;
-            }
-        }
-        121 => {
-            rv = true_0 != 0;
-            if !StringEqualsNoCase(value, b"es\0" as *const u8 as *const c_char) {
-                return false_0 != 0;
-            }
-        }
-        116 => {
-            rv = true_0 != 0;
-            if !StringEqualsNoCase(value, b"rue\0" as *const u8 as *const c_char) {
-                return false_0 != 0;
-            }
-        }
-        _ => return false_0 != 0,
+        121 => (true, c"es"),
+        116 => (true, c"rue"),
+        _ => return false,
+    };
+    if !StringEqualsNoCase(suffix, expected.as_ptr()) {
+        return false;
     }
-    if !result.is_null() {
-        *result = rv;
-        return true_0 != 0;
+    if result.is_null() {
+        parsed
+    } else {
+        *result = parsed;
+        true
     }
-    rv
 }
 unsafe fn HandleIniConfig(section: i32, key: *const c_char, mut value: *mut c_char) -> bool {
-    if section == 0 {
-        let mut i: i32 = 0;
-        while (i as usize)
-            < (size_of::<[KeyNameId; 24]>() as usize).wrapping_div(size_of::<KeyNameId>() as usize)
-        {
-            if StringEqualsNoCase(key, kKeyNameId[i as usize].name) {
-                has_keynameid[i as usize] = true_0 != 0;
-                ParseKeyArray(
-                    value,
-                    kKeyNameId[i as usize].id as i32,
-                    kKeyNameId[i as usize].size as i32,
-                );
-                return true_0 != 0;
-            }
-            i += 1;
-        }
-    } else if section == 5 {
-        let mut i_0: i32 = 0;
-        while (i_0 as usize)
-            < (size_of::<[KeyNameId; 24]>() as usize).wrapping_div(size_of::<KeyNameId>() as usize)
-        {
-            if StringEqualsNoCase(key, kKeyNameId[i_0 as usize].name) {
-                if i_0 == 1 {
-                    has_joypad_controls = true_0 != 0;
+    if section == 0 || section == 5 {
+        for i in 0..24 {
+            if StringEqualsNoCase(key, kKeyNameId[i].name) {
+                if section == 0 {
+                    has_keynameid[i] = true;
+                    ParseKeyArray(value, kKeyNameId[i].id as i32, kKeyNameId[i].size as i32);
+                } else {
+                    if i == 1 {
+                        has_joypad_controls = true;
+                    }
+                    ParseGamepadArray(value, kKeyNameId[i].id as i32, kKeyNameId[i].size as i32);
                 }
-                ParseGamepadArray(
-                    value,
-                    kKeyNameId[i_0 as usize].id as i32,
-                    kKeyNameId[i_0 as usize].size as i32,
-                );
-                return true_0 != 0;
+                return true;
             }
-            i_0 += 1;
         }
     } else if section == 1 {
-        if StringEqualsNoCase(key, b"WindowSize\0" as *const u8 as *const c_char) {
+        if StringEqualsNoCase(key, c"WindowSize".as_ptr()) {
             let mut s = null_mut::<c_char>();
-            if StringEqualsNoCase(value, b"Auto\0" as *const u8 as *const c_char) {
+            if StringEqualsNoCase(value, c"Auto".as_ptr()) {
                 set_fields! {[g_config], 0; window_width, window_height}
-                return true_0 != 0;
+                return true;
             }
             loop {
                 s = NextDelim(&raw mut value, 'x' as i32);
@@ -641,98 +582,92 @@ unsafe fn HandleIniConfig(section: i32, key: *const c_char, mut value: *mut c_ch
                     g_config.window_width = atoi(s);
                 } else {
                     g_config.window_height = atoi(s);
-                    return true_0 != 0;
+                    return true;
                 }
             }
-        } else if StringEqualsNoCase(key, b"EnhancedMode7\0" as *const u8 as *const c_char) {
+        } else if StringEqualsNoCase(key, c"EnhancedMode7".as_ptr()) {
             return ParseBool(value, &raw mut g_config.enhanced_mode7);
-        } else if StringEqualsNoCase(key, b"NewRenderer\0" as *const u8 as *const c_char) {
+        } else if StringEqualsNoCase(key, c"NewRenderer".as_ptr()) {
             return ParseBool(value, &raw mut g_config.new_renderer);
-        } else if StringEqualsNoCase(key, b"IgnoreAspectRatio\0" as *const u8 as *const c_char) {
+        } else if StringEqualsNoCase(key, c"IgnoreAspectRatio".as_ptr()) {
             return ParseBool(value, &raw mut g_config.ignore_aspect_ratio);
-        } else if StringEqualsNoCase(key, b"Fullscreen\0" as *const u8 as *const c_char) {
+        } else if StringEqualsNoCase(key, c"Fullscreen".as_ptr()) {
             g_config.fullscreen = strtol(value, NULL_0 as *mut *mut c_char, 10) as u8;
-            return true_0 != 0;
-        } else if StringEqualsNoCase(key, b"WindowScale\0" as *const u8 as *const c_char) {
+            return true;
+        } else if StringEqualsNoCase(key, c"WindowScale".as_ptr()) {
             g_config.window_scale = strtol(value, NULL_0 as *mut *mut c_char, 10) as u8;
-            return true_0 != 0;
-        } else if StringEqualsNoCase(key, b"OutputMethod\0" as *const u8 as *const c_char) {
+            return true;
+        } else if StringEqualsNoCase(key, c"OutputMethod".as_ptr()) {
             g_config.output_method =
-                (if StringEqualsNoCase(value, b"SDL-Software\0" as *const u8 as *const c_char)
-                    as i32
-                    != 0
-                {
+                (if StringEqualsNoCase(value, c"SDL-Software".as_ptr()) as i32 != 0 {
                     kOutputMethod_SDLSoftware as i32
-                } else if StringEqualsNoCase(value, b"OpenGL\0" as *const u8 as *const c_char)
-                    as i32
-                    != 0
-                {
+                } else if StringEqualsNoCase(value, c"OpenGL".as_ptr()) as i32 != 0 {
                     kOutputMethod_OpenGL as i32
                 } else {
                     kOutputMethod_SDL as i32
                 }) as u8;
-            return true_0 != 0;
-        } else if StringEqualsNoCase(key, b"LinearFiltering\0" as *const u8 as *const c_char) {
+            return true;
+        } else if StringEqualsNoCase(key, c"LinearFiltering".as_ptr()) {
             return ParseBool(value, &raw mut g_config.linear_filtering);
-        } else if StringEqualsNoCase(key, b"NoSpriteLimits\0" as *const u8 as *const c_char) {
+        } else if StringEqualsNoCase(key, c"NoSpriteLimits".as_ptr()) {
             return ParseBool(value, &raw mut g_config.no_sprite_limits);
-        } else if StringEqualsNoCase(key, b"LinkGraphics\0" as *const u8 as *const c_char) {
+        } else if StringEqualsNoCase(key, c"LinkGraphics".as_ptr()) {
             g_config.link_graphics = value;
-            return true_0 != 0;
-        } else if StringEqualsNoCase(key, b"Shader\0" as *const u8 as *const c_char) {
+            return true;
+        } else if StringEqualsNoCase(key, c"Shader".as_ptr()) {
             g_config.shader = if *value as i32 != 0 {
                 value
             } else {
                 null_mut::<c_char>()
             };
-            return true_0 != 0;
+            return true;
         }
     } else if section == 2 {
-        if StringEqualsNoCase(key, b"EnableAudio\0" as *const u8 as *const c_char) {
+        if StringEqualsNoCase(key, c"EnableAudio".as_ptr()) {
             return ParseBool(value, &raw mut g_config.enable_audio);
-        } else if StringEqualsNoCase(key, b"AudioFreq\0" as *const u8 as *const c_char) {
+        } else if StringEqualsNoCase(key, c"AudioFreq".as_ptr()) {
             g_config.audio_freq = strtol(value, NULL_0 as *mut *mut c_char, 10) as u16;
-            return true_0 != 0;
-        } else if StringEqualsNoCase(key, b"AudioChannels\0" as *const u8 as *const c_char) {
+            return true;
+        } else if StringEqualsNoCase(key, c"AudioChannels".as_ptr()) {
             g_config.audio_channels = strtol(value, NULL_0 as *mut *mut c_char, 10) as u8;
-            return true_0 != 0;
-        } else if StringEqualsNoCase(key, b"AudioSamples\0" as *const u8 as *const c_char) {
+            return true;
+        } else if StringEqualsNoCase(key, c"AudioSamples".as_ptr()) {
             g_config.audio_samples = strtol(value, NULL_0 as *mut *mut c_char, 10) as u16;
-            return true_0 != 0;
-        } else if StringEqualsNoCase(key, b"EnableMSU\0" as *const u8 as *const c_char) {
-            if StringEqualsNoCase(value, b"opuz\0" as *const u8 as *const c_char) {
+            return true;
+        } else if StringEqualsNoCase(key, c"EnableMSU".as_ptr()) {
+            if StringEqualsNoCase(value, c"opuz".as_ptr()) {
                 g_config.enable_msu = kMsuEnabled_Opuz as i32 as u8;
-            } else if StringEqualsNoCase(value, b"deluxe\0" as *const u8 as *const c_char) {
+            } else if StringEqualsNoCase(value, c"deluxe".as_ptr()) {
                 g_config.enable_msu = kMsuEnabled_MsuDeluxe as i32 as u8;
-            } else if StringEqualsNoCase(value, b"deluxe-opuz\0" as *const u8 as *const c_char) {
+            } else if StringEqualsNoCase(value, c"deluxe-opuz".as_ptr()) {
                 g_config.enable_msu =
                     (kMsuEnabled_MsuDeluxe as i32 | kMsuEnabled_Opuz as i32) as u8;
             } else {
                 return ParseBool(value, &raw mut g_config.enable_msu as *mut bool);
             }
-            return true_0 != 0;
-        } else if StringEqualsNoCase(key, b"MSUPath\0" as *const u8 as *const c_char) {
+            return true;
+        } else if StringEqualsNoCase(key, c"MSUPath".as_ptr()) {
             g_config.msu_path = value;
-            return true_0 != 0;
-        } else if StringEqualsNoCase(key, b"MSUVolume\0" as *const u8 as *const c_char) {
+            return true;
+        } else if StringEqualsNoCase(key, c"MSUVolume".as_ptr()) {
             g_config.msuvolume = atoi(value) as u8;
-            return true_0 != 0;
-        } else if StringEqualsNoCase(key, b"ResumeMSU\0" as *const u8 as *const c_char) {
+            return true;
+        } else if StringEqualsNoCase(key, c"ResumeMSU".as_ptr()) {
             return ParseBool(value, &raw mut g_config.resume_msu);
         }
     } else if section == 3 {
-        if StringEqualsNoCase(key, b"Autosave\0" as *const u8 as *const c_char) {
+        if StringEqualsNoCase(key, c"Autosave".as_ptr()) {
             g_config.autosave = strtol(value, NULL_0 as *mut *mut c_char, 10) != 0;
-            return true_0 != 0;
-        } else if StringEqualsNoCase(key, b"DisplayPerfInTitle\0" as *const u8 as *const c_char) {
+            return true;
+        } else if StringEqualsNoCase(key, c"DisplayPerfInTitle".as_ptr()) {
             return ParseBool(value, &raw mut g_config.display_perf_title);
-        } else if StringEqualsNoCase(key, b"DisableFrameDelay\0" as *const u8 as *const c_char) {
+        } else if StringEqualsNoCase(key, c"DisableFrameDelay".as_ptr()) {
             return ParseBool(value, &raw mut g_config.disable_frame_delay);
         }
     } else {
         section == 4;
     }
-    false_0 != 0
+    false
 }
 unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
     let mut filedata = ReadWholeFile(filename, null_mut::<size_t>()) as *mut c_char;

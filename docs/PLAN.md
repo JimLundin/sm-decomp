@@ -278,7 +278,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **9,968-line** gap; parked small drafts are not
+   replacement yet funds the **9,903-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -345,6 +345,13 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    normal release and full any%/Speed Booster integration pass. This is a
    completed repeated algorithm, with all helper/import/caller costs included.
 
+   INI section/value decoding removes **65 lines (109,967 -> 109,902)**:
+   section lookup, boolean suffix validation and keyboard/gamepad group lookup
+   share their repeated algorithms. All 354,060 frontend cases pass against
+   the original decoder, including normal-library file loading, invalid values,
+   aliasing outputs and the accepted control-byte booleans. Release, formatting
+   and all-target checks pass. This frontend-only change needs no movie replay.
+
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
    globally and land coherent stages; do not force every individual call site
@@ -383,6 +390,12 @@ may overlap landed work and are not a current reduction budget.
 - Residual micro-families (queues, palette/homing kernels, HUD/menu rows,
   bitwise word updates, typed ROM records) price in tens to low hundreds of
   lines. They do not independently justify a new volume-reduction workstream.
+- A chained VRAM-write cursor stores each argument immediately, preserving
+  later expressions' access to earlier writes. Across 43 retained-pointer
+  entries / 42 functions it grows **63 formatted lines**, including its helper.
+  Reject this representation; wrapped/mixed writers and the consumer remain
+  outside its measured scope. No compilation or runtime claim. Draft/report:
+  TEMP sm-bindings-root-9c4daf2f/vram-cursors/REPORT.md.
 - Shared layouts, RAM/word/byte access, callback declarations, dispatch,
   exact aliases, graphics/word transfers, corpse tile traversal and audited
   unused-code removal are already harvested. Count only further net deletion.
@@ -563,11 +576,11 @@ Rust lines 112265. The unrelated 83-line shader draft is excluded from the
 committed baseline and budget.
 
 After the Japanese correction, local bindings, intro pages, enemy callback
-imports, ordered stores, PNG texture loading, beam firing, moving platforms
-and byte-partial-product sharing, maintained Rust is **109,967**, leaving
-**9,968** to reach 99,999. Counters:
+imports, ordered stores, PNG texture loading, beam firing, moving platforms,
+byte-partial-product sharing and INI decoding, maintained Rust is **109,902**,
+leaving **9,903** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 5190; cast lines 8662. The unrelated 83-line shader draft
+unsafe functions 5190; cast lines 8658. The unrelated 83-line shader draft
 remains excluded; working-tree counts are not the committed baseline.
 Continue item 2's remaining-responsibility comparison. The complete hopping
 draft remains parked; neither it nor the completed small migrations establish
