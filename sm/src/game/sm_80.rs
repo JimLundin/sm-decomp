@@ -2075,297 +2075,254 @@ pub unsafe fn UpdateBgGraphicsWhenScrolling(game: &mut Game) {
     }
 }
 pub unsafe fn CalculateBgScrollAndLayerPositionBlocks(game: &mut Game) {
-    word!(game.bg1_x_block = (word!(game.reg_BG1HOFS) >> 4));
-    word!(game.bg2_x_block = (word!(game.reg_BG2HOFS) >> 4));
-    let mut v0: u16 = (word!(game.layer1_x_pos) >> 4);
-    if (word!(game.layer1_x_pos) as i32 >> 4 & 0x800) != 0 {
-        v0 = (v0) | (0xf000u16);
-    }
-    word!(game.layer1_x_block = v0);
-    let mut v1: u16 = (word!(game.layer2_x_pos) >> 4);
-    if (word!(game.layer2_x_pos) as i32 >> 4 & 0x800) != 0 {
-        v1 = (v1) | (0xf000u16);
-    }
-    word!(game.layer2_x_block = v1);
-    word!(game.bg1_y_block = (word!(game.reg_BG1VOFS) >> 4));
-    word!(game.bg2_y_block = (word!(game.reg_BG2VOFS) >> 4));
-    let mut v2: u16 = (word!(game.layer1_y_pos) >> 4);
-    if (word!(game.layer1_y_pos) as i32 >> 4 & 0x800) != 0 {
-        v2 = (v2) | (0xf000u16);
-    }
-    word!(game.layer1_y_block = v2);
-    let mut v3: u16 = (word!(game.layer2_y_pos) >> 4);
-    if (word!(game.layer2_y_pos) as i32 >> 4 & 0x800) != 0 {
-        v3 = (v3) | (0xf000u16);
-    }
-    word!(game.layer2_y_block = v3);
+    crate::verify_probe::hit("camera.blocks");
+    word!(game.bg1_x_block = word!(game.reg_BG1HOFS) >> 4);
+    word!(game.bg2_x_block = word!(game.reg_BG2HOFS) >> 4);
+    word!(game.layer1_x_block = ((word!(game.layer1_x_pos) as i16) >> 4) as u16);
+    word!(game.layer2_x_block = ((word!(game.layer2_x_pos) as i16) >> 4) as u16);
+    word!(game.bg1_y_block = word!(game.reg_BG1VOFS) >> 4);
+    word!(game.bg2_y_block = word!(game.reg_BG2VOFS) >> 4);
+    word!(game.layer1_y_block = ((word!(game.layer1_y_pos) as i16) >> 4) as u16);
+    word!(game.layer2_y_block = ((word!(game.layer2_y_pos) as i16) >> 4) as u16);
 }
+// Multiplication uses the width's low byte. A column may include a full-word
+// row stride; it is added afterward, with the original word wrapping.
+unsafe fn camera_scroll_value(column: u16, row: u8, game: &mut Game) -> u8 {
+    let index = Mult8x8(row, word!(game.room_width_in_scrolls) as u8).wrapping_add(column);
+    *ram_ptr!(game; 0xcd20, index as isize)
+}
+
 pub unsafe fn HandleAutoscrolling_X(game: &mut Game) {
-    let mut v3: i16 = 0;
-    let mut v6: i16 = 0;
-    let mut v4: u16 = 0;
-    let mut var933: u16 = 0;
-    if word!(game.time_is_frozen_flag) == 0 {
-        let mut var939: u16 = word!(game.layer1_x_pos);
-        if (word!(game.layer1_x_pos) & 0x8000) != 0 {
-            word!(game.layer1_x_pos = 0);
-        }
-        let v0: u16 = u16::swap_bytes((word!(game.room_width_in_scrolls)).wrapping_sub(1));
-        if v0 < word!(game.layer1_x_pos) {
-            word!(game.layer1_x_pos = v0);
-        }
-        let mut v1: i16 = byte!(@pointer ram_ptr!(game, u16; 0x911); 1) as i16;
-        let v2: u16 = (Mult8x8(
-            (((word!(game.layer1_y_pos)).wrapping_add(128u16)) >> 8) as u8,
-            word!(game.room_width_in_scrolls) as u8,
-        ))
-        .wrapping_add((v1) as u16);
-        if *ram_ptr!(game; 0xcd20, v2 as isize) != 0 {
-            if *ram_ptr!(game; 0xcd20, ((v2).wrapping_add(1)) as isize) != 0 {
-                return;
-            }
-            var933 = (word!(game.layer1_x_pos)) & (0xff00u16);
-            let v5: u16 =
-                (var939 as i32 - word!(game.absolute_moved_last_frame_x) as i32 - 2i32) as u16;
-            if ((v5 as i32 - (word!(game.layer1_x_pos) as i32 & 0xff00)) as i16) < 0 {
-                v4 = var933;
-            } else {
-                var939 = v5;
-                v6 = byte!(var939; 1) as i16;
-                if *ram_ptr!(game; 0xcd20, ((Mult8x8(
-                        (((word!(game.layer1_y_pos)).wrapping_add(128)) >> 8)
-                            as u8,
-                        word!(game.room_width_in_scrolls) as u8,
-                    ))
-                    .wrapping_add((v6) as u16)) as isize,)
-                    != 0
-                {
-                    v4 = var939;
-                } else {
-                    v4 = ((var939 as i32 & 0xff00) + 256) as u16;
-                }
-            }
-        } else {
-            var933 = ((word!(game.layer1_x_pos) as i32 & 0xff00) + 256) as u16;
-            if ((word!(game.absolute_moved_last_frame_x) as i32 + var939 as i32 + 2) as u16)
-                >= var933
-            {
-                v4 = var933;
-            } else {
-                var939 =
-                    (var939 as i32 + (word!(game.absolute_moved_last_frame_x) as i32 + 2)) as u16;
-                v3 = ((byte!(var939; 1isize)).wrapping_add(1)) as i16;
-                if *ram_ptr!(game; 0xcd20, ((Mult8x8(
-                        (((word!(game.layer1_y_pos)).wrapping_add(128)) >> 8)
-                            as u8,
-                        word!(game.room_width_in_scrolls) as u8,
-                    ))
-                    .wrapping_add((v3) as u16)) as isize,)
-                    != 0
-                {
-                    v4 = var939;
-                } else {
-                    v4 = (var939) & (0xff00u16);
-                }
-            }
-        }
-        word!(game.layer1_x_pos = v4);
+    crate::verify_probe::hit("camera.auto_x");
+    if word!(game.time_is_frozen_flag) != 0 {
+        return;
     }
-}
-pub unsafe fn HandleScrollingWhenTriggeringScrollRight(game: &mut Game) {
-    let var939: u16 = word!(game.layer1_x_pos);
-    if ((word!(game.ideal_layer1_xpos)) as i16).wrapping_sub((word!(game.layer1_x_pos)) as i16) < 0
-    {
-        word!(game.layer1_x_pos = word!(game.ideal_layer1_xpos));
-        word!(game.layer1_x_subpos = 0);
-    }
-    let v0: u16 = u16::swap_bytes((word!(game.room_width_in_scrolls)).wrapping_sub(1));
-    if v0 >= word!(game.layer1_x_pos) {
-        let mut v1: i16 = byte!(@pointer ram_ptr!(game, u16; 0x911); 1) as i16;
-        let RegWord: u16 = Mult8x8(
-            (((word!(game.layer1_y_pos)).wrapping_add(128)) >> 8) as u8,
-            word!(game.room_width_in_scrolls) as u8,
-        );
-        if *ram_ptr!(game; 0xcd20, (RegWord as i32 + 1 + v1 as i32) as u16 as isize) == 0 {
-            let var933: u16 = (word!(game.layer1_x_pos)) & (0xff00u16);
-            let mut v4: u16 =
-                (var939 as i32 - word!(game.absolute_moved_last_frame_x) as i32 - 2i32) as u16;
-            if ((v4 as i32 - (word!(game.layer1_x_pos) as i32 & 0xff00)) as i16) < 0 {
-                v4 = var933;
-            }
-            word!(game.layer1_x_pos = v4);
-        }
-    } else {
-        word!(game.layer1_x_pos = v0);
-    };
-}
-pub unsafe fn HandleScrollingWhenTriggeringScrollLeft(game: &mut Game) {
-    let var939: u16 = word!(game.layer1_x_pos);
-    if ((word!(game.layer1_x_pos)) as i16).wrapping_sub((word!(game.ideal_layer1_xpos)) as i16) < 0
-    {
-        word!(game.layer1_x_pos = word!(game.ideal_layer1_xpos));
-        word!(game.layer1_x_subpos = 0);
-    }
-    if (word!(game.layer1_x_pos) & 0x8000) == 0 {
-        let mut v0: i16 = byte!(@pointer ram_ptr!(game, u16; 0x911); 1) as i16;
-        let prod: u16 = Mult8x8(
-            (((word!(game.layer1_y_pos)).wrapping_add(128)) >> 8) as u8,
-            word!(game.room_width_in_scrolls) as u8,
-        );
-        if *ram_ptr!(game; 0xcd20, ((prod).wrapping_add((v0) as u16)) as isize) == 0 {
-            let var933: u16 = ((word!(game.layer1_x_pos) as i32 & 0xff00) + 256) as u16;
-            let mut v1: u16 =
-                (word!(game.absolute_moved_last_frame_x) as i32 + var939 as i32 + 2) as u16;
-            if v1 >= var933 {
-                v1 = var933;
-            }
-            word!(game.layer1_x_pos = v1);
-        }
-    } else {
+    let previous = word!(game.layer1_x_pos);
+    if previous & 0x8000 != 0 {
         word!(game.layer1_x_pos = 0);
-    };
-}
-pub unsafe fn HandleAutoscrolling_Y(game: &mut Game) {
-    let mut v2: i16 = 0;
-    let mut v8: u16 = 0;
-    if word!(game.time_is_frozen_flag) == 0 {
-        let mut v0: u16 = 0;
-        let mut v1: i16 = (((word!(game.layer1_x_pos)).wrapping_add(128)) >> 8) as i16;
-        let r20: u16 = (Mult8x8(
-            byte!(@pointer ram_ptr!(game, u16; 0x915); 1isize),
-            word!(game.room_width_in_scrolls) as u8,
-        ))
-        .wrapping_add((v1) as u16);
-        if *ram_ptr!(game; 0xcd20, r20 as isize) != 1 {
-            v0 = 31;
-        }
-        let var933: u16 = v0;
-        let mut var939: u16 = word!(game.layer1_y_pos);
-        if (word!(game.layer1_y_pos) & 0x8000) != 0 {
-            word!(game.layer1_y_pos = 0);
-        }
-        byte!(v2; 0) = (((word!(game.room_height_in_scrolls)).wrapping_sub(1)) >> 8) as u8;
-        byte!(v2; 1) = ((word!(game.room_height_in_scrolls)) as u8).wrapping_sub(1);
-        let v3: u16 = (var933).wrapping_add((v2) as u16);
-        if v3 < word!(game.layer1_y_pos) {
-            word!(game.layer1_y_pos = v3);
-        }
-        let mut v4: i16 = (((word!(game.layer1_x_pos)).wrapping_add(128)) >> 8) as i16;
-        let v5: u16 = (Mult8x8(
-            byte!(@pointer ram_ptr!(game, u16; 0x915); 1isize),
-            word!(game.room_width_in_scrolls) as u8,
-        ))
-        .wrapping_add((v4) as u16);
-        if *ram_ptr!(game; 0xcd20, v5 as isize) == 0 {
-            let var935: u16 = ((word!(game.layer1_y_pos) as i32 & 0xff00) + 256) as u16;
-            let mut v6: u16 =
-                (word!(game.absolute_moved_last_frame_y) as i32 + var939 as i32 + 2) as u16;
-            if v6 >= var935 {
-                v8 = var935;
-            } else {
-                var939 =
-                    (var939 as i32 + (word!(game.absolute_moved_last_frame_y) as i32 + 2)) as u16;
-                let mut v7: i16 = (((word!(game.layer1_x_pos)).wrapping_add(128)) >> 8) as i16;
-                let prod: u16 = Mult8x8(
-                    (byte!(v6; 1isize)).wrapping_add(1),
-                    word!(game.room_width_in_scrolls) as u8,
-                );
-                if *ram_ptr!(game; 0xcd20, ((prod).wrapping_add((v7) as u16)) as isize) != 0 {
-                    v8 = var939;
-                } else {
-                    v8 = (var939) & (0xff00u16);
-                }
-            }
-            word!(game.layer1_y_pos = v8);
+    }
+    let limit = word!(game.room_width_in_scrolls)
+        .wrapping_sub(1)
+        .swap_bytes();
+    if limit < word!(game.layer1_x_pos) {
+        word!(game.layer1_x_pos = limit);
+    }
+    let position = word!(game.layer1_x_pos);
+    let row = (word!(game.layer1_y_pos).wrapping_add(128) >> 8) as u8;
+    let column = position >> 8;
+    let next = if camera_scroll_value(column, row, game) != 0 {
+        if camera_scroll_value(column + 1, row, game) != 0 {
             return;
         }
-        if *ram_ptr!(game; 0xcd20, ((word!(game.room_width_in_scrolls)).wrapping_add(v5)) as isize)
-            == 0
+        let boundary = position & 0xff00;
+        let next = previous
+            .wrapping_sub(word!(game.absolute_moved_last_frame_x))
+            .wrapping_sub(2);
+        if (next.wrapping_sub(boundary) as i16) < 0 {
+            boundary
+        } else if camera_scroll_value(next >> 8, row, game) != 0 {
+            next
+        } else {
+            (next & 0xff00).wrapping_add(256)
+        }
+    } else {
+        let boundary = (position & 0xff00).wrapping_add(256);
+        let next = previous
+            .wrapping_add(word!(game.absolute_moved_last_frame_x))
+            .wrapping_add(2);
+        if next >= boundary {
+            boundary
+        } else if camera_scroll_value(
+            u16::from((next >> 8) as u8).wrapping_add(1) & 0xff,
+            row,
+            game,
+        ) != 0
         {
-            let var937: u16 = (var933 as i32 + (word!(game.layer1_y_pos) as i32 & 0xff00)) as u16;
-            if var937 < word!(game.layer1_y_pos) {
-                let mut v9: u16 =
-                    (var939 as i32 - word!(game.absolute_moved_last_frame_y) as i32 - 2i32) as u16;
-                if ((v9) as i16).wrapping_sub((var937) as i16) < 0 {
-                    v8 = var937;
-                } else {
-                    var939 = v9;
-                    let prod_0: u16 =
-                        Mult8x8(byte!(v9; 1), word!(game.room_width_in_scrolls) as u8);
-                    let mut v10: i16 = (((word!(game.layer1_x_pos)).wrapping_add(128)) >> 8) as i16;
-                    if *ram_ptr!(game; 0xcd20, ((prod_0).wrapping_add((v10) as u16)) as isize) != 0
-                    {
-                        v8 = var939;
-                    } else {
-                        v8 = ((var939 as i32 & 0xff00) + 256) as u16;
-                    }
-                }
-                word!(game.layer1_y_pos = v8);
+            next
+        } else {
+            next & 0xff00
+        }
+    };
+    word!(game.layer1_x_pos = next);
+}
+pub unsafe fn HandleScrollingWhenTriggeringScrollRight(game: &mut Game) {
+    crate::verify_probe::hit("camera.trigger_right");
+    let previous = word!(game.layer1_x_pos);
+    if (word!(game.ideal_layer1_xpos).wrapping_sub(word!(game.layer1_x_pos)) as i16) < 0 {
+        word!(game.layer1_x_pos = word!(game.ideal_layer1_xpos));
+        word!(game.layer1_x_subpos = 0);
+    }
+    let limit = word!(game.room_width_in_scrolls)
+        .wrapping_sub(1)
+        .swap_bytes();
+    let position = word!(game.layer1_x_pos);
+    if limit < position {
+        word!(game.layer1_x_pos = limit);
+    } else if camera_scroll_value(
+        (position >> 8) + 1,
+        (word!(game.layer1_y_pos).wrapping_add(128) >> 8) as u8,
+        game,
+    ) == 0
+    {
+        let boundary = position & 0xff00;
+        let next = previous
+            .wrapping_sub(word!(game.absolute_moved_last_frame_x))
+            .wrapping_sub(2);
+        word!(
+            game.layer1_x_pos = if (next.wrapping_sub(boundary) as i16) < 0 {
+                boundary
+            } else {
+                next
             }
+        );
+    }
+}
+pub unsafe fn HandleScrollingWhenTriggeringScrollLeft(game: &mut Game) {
+    crate::verify_probe::hit("camera.trigger_left");
+    let previous = word!(game.layer1_x_pos);
+    if (word!(game.layer1_x_pos).wrapping_sub(word!(game.ideal_layer1_xpos)) as i16) < 0 {
+        word!(game.layer1_x_pos = word!(game.ideal_layer1_xpos));
+        word!(game.layer1_x_subpos = 0);
+    }
+    let position = word!(game.layer1_x_pos);
+    if position & 0x8000 != 0 {
+        word!(game.layer1_x_pos = 0);
+    } else if camera_scroll_value(
+        position >> 8,
+        (word!(game.layer1_y_pos).wrapping_add(128) >> 8) as u8,
+        game,
+    ) == 0
+    {
+        let boundary = (position & 0xff00).wrapping_add(256);
+        let next = previous
+            .wrapping_add(word!(game.absolute_moved_last_frame_x))
+            .wrapping_add(2);
+        word!(game.layer1_x_pos = next.min(boundary));
+    }
+}
+pub unsafe fn HandleAutoscrolling_Y(game: &mut Game) {
+    crate::verify_probe::hit("camera.auto_y");
+    if word!(game.time_is_frozen_flag) != 0 {
+        return;
+    }
+    let column = word!(game.layer1_x_pos).wrapping_add(128) >> 8;
+    let padding = if camera_scroll_value(column, (word!(game.layer1_y_pos) >> 8) as u8, game) == 1 {
+        0u16
+    } else {
+        31
+    };
+    let previous = word!(game.layer1_y_pos);
+    if previous & 0x8000 != 0 {
+        word!(game.layer1_y_pos = 0);
+    }
+    let limit = word!(game.room_height_in_scrolls)
+        .wrapping_sub(1)
+        .swap_bytes()
+        .wrapping_add(padding);
+    if limit < word!(game.layer1_y_pos) {
+        word!(game.layer1_y_pos = limit);
+    }
+    let position = word!(game.layer1_y_pos);
+    let row = (position >> 8) as u8;
+    if camera_scroll_value(column, row, game) == 0 {
+        let boundary = (position & 0xff00).wrapping_add(256);
+        let next = previous
+            .wrapping_add(word!(game.absolute_moved_last_frame_y))
+            .wrapping_add(2);
+        let next = if next >= boundary {
+            boundary
+        } else if camera_scroll_value(column, ((next >> 8) as u8).wrapping_add(1), game) != 0 {
+            next
+        } else {
+            next & 0xff00
+        };
+        word!(game.layer1_y_pos = next);
+    } else if camera_scroll_value(
+        column.wrapping_add(word!(game.room_width_in_scrolls)),
+        row,
+        game,
+    ) == 0
+    {
+        let boundary = padding.wrapping_add(position & 0xff00);
+        if boundary < position {
+            let next = previous
+                .wrapping_sub(word!(game.absolute_moved_last_frame_y))
+                .wrapping_sub(2);
+            let next = if (next.wrapping_sub(boundary) as i16) < 0 {
+                boundary
+            } else if camera_scroll_value(column, (next >> 8) as u8, game) != 0 {
+                next
+            } else {
+                (next & 0xff00).wrapping_add(256)
+            };
+            word!(game.layer1_y_pos = next);
         }
     }
 }
 pub unsafe fn HandleScrollingWhenTriggeringScrollDown(game: &mut Game) {
-    let var939: u16 = word!(game.layer1_y_pos);
-    let mut v0: i32 = 0;
-    let prod: u16 = Mult8x8(
-        byte!(@pointer ram_ptr!(game, u16; 0x915); 1),
-        word!(game.room_width_in_scrolls) as u8,
-    );
-    let v1: u16 = (((word!(game.layer1_x_pos)).wrapping_add(128)) >> 8);
-    let r20: u16 = (prod).wrapping_add(v1);
-    if *ram_ptr!(game; 0xcd20, r20 as isize) != 1 {
-        v0 = 31;
-    }
-    let var933: u16 = v0 as u16;
-    if ((word!(game.ideal_layer1_ypos)) as i16).wrapping_sub((word!(game.layer1_y_pos)) as i16) < 0
-    {
+    crate::verify_probe::hit("camera.trigger_down");
+    let previous = word!(game.layer1_y_pos);
+    let column = word!(game.layer1_x_pos).wrapping_add(128) >> 8;
+    let row = (word!(game.layer1_y_pos) >> 8) as u8;
+    let padding = if camera_scroll_value(column, row, game) == 1 {
+        0u16
+    } else {
+        31
+    };
+    if (word!(game.ideal_layer1_ypos).wrapping_sub(word!(game.layer1_y_pos)) as i16) < 0 {
         word!(game.layer1_y_pos = word!(game.ideal_layer1_ypos));
         word!(game.layer1_y_subpos = 0);
     }
-    let v2: u16 = u16::swap_bytes((word!(game.room_height_in_scrolls)).wrapping_sub(1));
-    let mut var937: u16 = (var933).wrapping_add(v2);
-    if (var933).wrapping_add(v2) < word!(game.layer1_y_pos)
-        || *ram_ptr!(game; 0xcd20, ((word!(game.room_width_in_scrolls)).wrapping_add(r20)) as isize)
-            == 0
+    let position = word!(game.layer1_y_pos);
+    let mut boundary = word!(game.room_height_in_scrolls)
+        .wrapping_sub(1)
+        .swap_bytes()
+        .wrapping_add(padding);
+    if boundary < position
+        || camera_scroll_value(
+            column.wrapping_add(word!(game.room_width_in_scrolls)),
+            row,
+            game,
+        ) == 0
             && {
-                var937 = (var933 as i32 + (word!(game.layer1_y_pos) as i32 & 0xff00)) as u16;
-                var937 < word!(game.layer1_y_pos)
+                boundary = padding.wrapping_add(position & 0xff00);
+                boundary < position
             }
     {
-        let mut v3: u16 =
-            (var939 as i32 - word!(game.absolute_moved_last_frame_y) as i32 - 2i32) as u16;
-        if ((v3) as i16).wrapping_sub((var937) as i16) < 0 {
-            v3 = var937;
-        }
-        word!(game.layer1_y_pos = v3);
+        let next = previous
+            .wrapping_sub(word!(game.absolute_moved_last_frame_y))
+            .wrapping_sub(2);
+        word!(
+            game.layer1_y_pos = if (next.wrapping_sub(boundary) as i16) < 0 {
+                boundary
+            } else {
+                next
+            }
+        );
     }
 }
 pub unsafe fn HandleScrollingWhenTriggeringScrollUp(game: &mut Game) {
-    let var939: u16 = word!(game.layer1_y_pos);
-    if ((word!(game.layer1_y_pos)) as i16).wrapping_sub((word!(game.ideal_layer1_ypos)) as i16) < 0
-    {
+    crate::verify_probe::hit("camera.trigger_up");
+    let previous = word!(game.layer1_y_pos);
+    if (word!(game.layer1_y_pos).wrapping_sub(word!(game.ideal_layer1_ypos)) as i16) < 0 {
         word!(game.layer1_y_pos = word!(game.ideal_layer1_ypos));
         word!(game.layer1_y_subpos = 0);
     }
-    if (word!(game.layer1_y_pos) & 0x8000) == 0 {
-        let prod: u16 = Mult8x8(
-            byte!(@pointer ram_ptr!(game, u16; 0x915); 1),
-            word!(game.room_width_in_scrolls) as u8,
-        );
-        let mut v0: i16 = (((word!(game.layer1_x_pos)).wrapping_add(128)) >> 8) as i16;
-        if *ram_ptr!(game; 0xcd20, ((prod).wrapping_add((v0) as u16)) as isize) == 0 {
-            let var933: u16 = ((word!(game.layer1_y_pos) as i32 & 0xff00) + 256) as u16;
-            let mut v1: u16 =
-                (word!(game.absolute_moved_last_frame_y) as i32 + var939 as i32 + 2) as u16;
-            if v1 >= var933 {
-                v1 = var933;
-            }
-            word!(game.layer1_y_pos = v1);
-        }
-    } else {
+    let position = word!(game.layer1_y_pos);
+    if position & 0x8000 != 0 {
         word!(game.layer1_y_pos = 0);
-    };
+    } else if camera_scroll_value(
+        word!(game.layer1_x_pos).wrapping_add(128) >> 8,
+        (position >> 8) as u8,
+        game,
+    ) == 0
+    {
+        let boundary = (position & 0xff00).wrapping_add(256);
+        let next = previous
+            .wrapping_add(word!(game.absolute_moved_last_frame_y))
+            .wrapping_add(2);
+        word!(game.layer1_y_pos = next.min(boundary));
+    }
 }
 pub unsafe fn DebugScrollPosSaveLoad(game: &mut Game) {
     if (word!(game.joypad2_new_keys) & 0x40) != 0 {

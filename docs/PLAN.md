@@ -20,6 +20,44 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared camera scroll-grid calculations (2026-10-20)
+
+The two autoscroll and four triggered-scroll routines now share their scroll-
+grid lookup and use direct named position/boundary decisions. The companion
+block-coordinate calculation uses signed shifts for the four layer positions.
+Existing entries, byte-compatible RAM and write order remain. The upper and
+lower gates retain their different unsigned/signed comparisons. Full-word row
+strides, low-byte width multiplication, byte-wrapped lookahead, pre-clamp
+positions, blue-scroll padding and frozen autoscroll guards stay explicit.
+The complete formatted reduction is **43 lines**, including the helper and
+seven probes. This prices the entire selected family, not a larger budget.
+
+Actual original/replacement Rust comparisons pass **1835008 cases** with Game
+and real RAM accessors. Complete RAM agrees across all word positions and
+varied signed edges, motion distances, ideal positions, room dimensions,
+frozen flags and four grid patterns. All word representations are tested in
+the layer-to-block shifts. This is a finite native comparison, not the full
+Cartesian product or a general aliasing proof. A structural reconstruction
+binds all seven bodies and the helper to the final checked source.
+
+Formatting, all-target release check, normal release (25.82s in the frozen
+checkout; 32.68s in main), diff check and progress pass. The exact proposed
+commit source passes source-checked any% **129712/0** and Speed Booster
+**148406/0**, native exits 0, in 106.93s and 150.15s. Speed requires and
+hits all seven probes: blocks 130900, auto X/Y 85610/83282, triggered
+left/right 15616/18187 and up/down 15741. Source/input/library/DLL pins stay
+fixed, and the replay host reuses the normal library. The shared checkout's
+additional uncommitted shader edit stays separate; its normal library passes
+the embedded-source check. Existing route and credits limitations remain.
+
+Committed Rust falls to **113508 lines**, leaving **13509 further lines** for
+the fixed under-100000 target. Unsafe functions change by +1 for the grid
+reader and cast-containing lines by -25; other counters are unchanged.
+Temporary drafts and checks are under `%TEMP%/sm-camera-root-f858c922`.
+The complete remaining reduction budget remains unfinished. Next assess the
+adjacent row/column tile-buffer builders using their existing ScrollingDmaLayout;
+preserve parameter-store order, tile quadrants and live source strides.
+
 ## Shared homing acceleration (2026-10-20)
 
 Six Ridley/Ceres Ridley/endgame Metroid routines now share their signed
