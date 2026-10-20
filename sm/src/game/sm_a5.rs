@@ -1129,34 +1129,31 @@ pub unsafe fn Draygon_Func_37(game: &mut Game) {
     };
 }
 pub unsafe fn Draygon_Func_38(game: &mut Game) {
-    let current_block: u64;
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
     let v0: u16 = ram_word!(game, joypad2_last);
     let mut v2: u16 = 0;
-    if (ram_word!(game, joypad2_last) as i32 & 0x200i32) == 0i32 || {
+    let change_instruction: bool = if (ram_word!(game, joypad2_last) as i32 & 0x200i32) == 0i32 || {
         (*E).base.x_pos = (*E).base.x_pos.wrapping_sub(1);
         v0 == ram_word!(game, debug_enemy_population_pointer)
     } {
-        if (v0 as i32 & 0x100i32) == 0i32 {
-            current_block = 1196177745739367891;
-        } else {
-            (*E).base.x_pos = (*E).base.x_pos.wrapping_add(1);
-            if v0 == ram_word!(game, debug_enemy_population_pointer) {
-                current_block = 1196177745739367891;
-            } else {
-                set_ram_word!(game.debug_enemy_population_pointer = v0);
-                v2 = addr_kDraygon_Ilist_97D1 as u16;
-                (*E).draygon_var_20 = 1u16;
-                current_block = 3276175668257526147;
-            }
-        }
+        !((v0 as i32 & 0x100i32) == 0i32)
+            && ({
+                (*E).base.x_pos = (*E).base.x_pos.wrapping_add(1);
+                !(v0 == ram_word!(game, debug_enemy_population_pointer))
+                    && ({
+                        set_ram_word!(game.debug_enemy_population_pointer = v0);
+                        v2 = addr_kDraygon_Ilist_97D1 as u16;
+                        (*E).draygon_var_20 = 1u16;
+                        true
+                    })
+            })
     } else {
         set_ram_word!(game.debug_enemy_population_pointer = v0);
         v2 = addr_kDraygon_Ilist_97BB as u16;
         (*E).draygon_var_20 = 0u16;
-        current_block = 3276175668257526147;
-    }
-    if current_block == 3276175668257526147 {
+        true
+    };
+    if change_instruction {
         (*E).base.current_instruction = v2;
         (*E).base.instruction_timer = 1u16;
     }
@@ -1167,35 +1164,34 @@ pub unsafe fn Draygon_Func_38(game: &mut Game) {
     }
 }
 pub unsafe fn Draygon_Func_39(game: &mut Game) {
-    let current_block: u64;
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
     let mut v0: u16 = ram_word!(game, joypad2_last);
     let mut v2: u16 = 0;
-    if (ram_word!(game, joypad2_last) as i32 & 0x200i32) == 0i32 || {
+    let change_instruction: bool = if (ram_word!(game, joypad2_last) as i32 & 0x200i32) == 0i32 || {
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(4u16);
         v0 = ram_word!(game, joypad2_last);
         ram_word!(game, joypad2_last) == ram_word!(game, debug_enemy_population_pointer)
     } {
-        if (v0 as i32 & 0x100i32) == 0i32 {
-            current_block = 18201098939790280272;
-        } else {
-            (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(4u16);
-            if ram_word!(game, joypad2_last) == ram_word!(game, debug_enemy_population_pointer) {
-                current_block = 18201098939790280272;
-            } else {
-                set_ram_word!(game.debug_enemy_population_pointer = ram_word!(game, joypad2_last));
-                v2 = addr_kDraygon_Ilist_97D1 as u16;
-                (*E).draygon_var_20 = 1u16;
-                current_block = 3276175668257526147;
-            }
-        }
+        !((v0 as i32 & 0x100i32) == 0i32)
+            && ({
+                (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(4u16);
+                !(ram_word!(game, joypad2_last) == ram_word!(game, debug_enemy_population_pointer))
+                    && ({
+                        set_ram_word!(
+                            game.debug_enemy_population_pointer = ram_word!(game, joypad2_last)
+                        );
+                        v2 = addr_kDraygon_Ilist_97D1 as u16;
+                        (*E).draygon_var_20 = 1u16;
+                        true
+                    })
+            })
     } else {
         set_ram_word!(game.debug_enemy_population_pointer = ram_word!(game, joypad2_last));
         v2 = addr_kDraygon_Ilist_97BB as u16;
         (*E).draygon_var_20 = 0u16;
-        current_block = 3276175668257526147;
-    }
-    if current_block == 3276175668257526147 {
+        true
+    };
+    if change_instruction {
         (*E).base.current_instruction = v2;
         (*E).base.instruction_timer = 1u16;
     }

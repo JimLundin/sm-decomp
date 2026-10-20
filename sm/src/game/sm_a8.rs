@@ -1211,37 +1211,31 @@ pub unsafe fn WreckedShipGhost_Func_2(k: u16, game: &mut Game) {
 pub unsafe fn WreckedShipGhost_Func_3(k: u16, game: &mut Game) {
     let mut v3: u16 = 0;
     let mut wsgt_var_C: u16 = 0;
-    let current_block: u64;
+
     let mut v5: i16 = 0;
     let E: *mut Enemy_WreckedShipGhost = Get_WreckedShipGhost(k as i32, game);
     let wsgt_var_B: u16 = (*E).wsgt_var_B;
-    if wsgt_var_B == 0 {
-        current_block = 6804514963299881235;
-    } else {
-        v3 = 0;
-        v3 = (wsgt_var_B).wrapping_sub(1u16);
-        (*E).wsgt_var_B = v3;
-        if v3 == 0 {
-            wsgt_var_C = 0;
-            wsgt_var_C = (*E).wsgt_var_C;
-            v5 = g_word_A89ACC[(wsgt_var_C as i32 >> 1i32) as usize] as i16;
-            if v5 < 0i16 {
-                (*E).wsgt_var_B = 0u16;
-                (*E).wsgt_var_C = 0u16;
-                return;
-            }
-            (*E).wsgt_var_B = v5 as u16;
-            (*E).wsgt_var_C = (wsgt_var_C).wrapping_add(2u16);
-            if (wsgt_var_C as i32 & 2i32) == 0i32 {
-                current_block = 6804514963299881235;
-            } else {
-                current_block = 12800627514080957624;
-            }
-        } else {
-            current_block = 12800627514080957624;
-        }
-    }
-    if current_block == 6804514963299881235 {
+    let make_visible: bool = (wsgt_var_B == 0)
+        || ({
+            v3 = 0;
+            v3 = (wsgt_var_B).wrapping_sub(1u16);
+            (*E).wsgt_var_B = v3;
+            (v3 == 0)
+                && ({
+                    wsgt_var_C = 0;
+                    wsgt_var_C = (*E).wsgt_var_C;
+                    v5 = g_word_A89ACC[(wsgt_var_C as i32 >> 1i32) as usize] as i16;
+                    if v5 < 0i16 {
+                        (*E).wsgt_var_B = 0u16;
+                        (*E).wsgt_var_C = 0u16;
+                        return;
+                    }
+                    (*E).wsgt_var_B = v5 as u16;
+                    (*E).wsgt_var_C = (wsgt_var_C).wrapping_add(2u16);
+                    ((wsgt_var_C as i32 & 2i32) == 0i32)
+                })
+        });
+    if make_visible {
         (*E).base.properties =
             ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
     };
@@ -1309,8 +1303,10 @@ pub unsafe fn WreckedShipGhost_Func_7(k: u16, game: &mut Game) {
     let mut v9: i16 = 0;
     let E: *mut Enemy_WreckedShipGhost = Get_WreckedShipGhost(k as i32, game);
     let mut v3: u16 = 0;
-    let current_block_26: u64;
-    if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).wsgt_var_07) as i16) < 0i16
+
+    let skip_reposition: bool = if ((ram_word!(game, samus_x_pos)) as i16)
+        .wrapping_sub(((*E).wsgt_var_07) as i16)
+        < 0i16
         || ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).wsgt_var_08) as i16) >= 0i16
         || {
             v2 = *((ram_ptr!(game, u16; 0xafa) as *mut u8).offset(k as i32 as isize) as *mut u16)
@@ -1337,34 +1333,29 @@ pub unsafe fn WreckedShipGhost_Func_7(k: u16, game: &mut Game) {
             if v7 as i32 == (*E).wsgt_var_09 as i32 {
                 let v10: u16 = ((*E).wsgt_var_0E).wrapping_sub(1u16);
                 (*E).wsgt_var_0E = v10;
-                if v10 == 0 {
-                    current_block_26 = 1955728515491069284;
-                } else {
-                    current_block_26 = 3437258052017859086;
-                }
+                !(v10 == 0)
             } else {
                 (*E).wsgt_var_09 = v7 as u16;
                 (*E).wsgt_var_0E = g_word_A89A9C;
-                current_block_26 = 3437258052017859086;
+                true
             }
         } else {
             (*E).wsgt_var_05 = v4 as u16;
             (*E).wsgt_var_0E = g_word_A89A9C;
-            current_block_26 = 3437258052017859086;
+            true
         }
     } else {
         v3 = 0;
         v3 = ((*E).wsgt_var_0D).wrapping_sub(1u16);
         (*E).wsgt_var_0D = v3;
-        if v3 == 0 {
-            (*E).wsgt_var_05 = 4u16;
-            (*E).wsgt_var_09 = 12u16;
-            current_block_26 = 1955728515491069284;
-        } else {
-            current_block_26 = 3437258052017859086;
-        }
-    }
-    if current_block_26 == 3437258052017859086 {
+        !(v3 == 0)
+            || ({
+                (*E).wsgt_var_05 = 4u16;
+                (*E).wsgt_var_09 = 12u16;
+                false
+            })
+    };
+    if skip_reposition {
     } else {
         (*E).wsgt_var_A = ((0xa89b42i32) as u16);
         (*E).wsgt_var_0D = g_word_A89A9E;
@@ -2308,7 +2299,6 @@ pub unsafe fn NorfairLavaMan_Func_11(k: u16, game: &mut Game) {
     NorfairLavaMan_Func_12(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn NorfairLavaMan_Func_12(k: u16, game: &mut Game) {
-    let current_block: u64;
     let mut v3: i32 = 0;
     let E: *mut Enemy_NorfairLavaMan = Get_NorfairLavaMan(k as i32, game);
     if -((*E).nlmn_var_E as i32) - 108i32 & 0x8000i32 == 0 {
@@ -2318,7 +2308,7 @@ pub unsafe fn NorfairLavaMan_Func_12(k: u16, game: &mut Game) {
         );
     }
     let nlmn_var_B: u16 = (*E).nlmn_var_B;
-    if -((*E).nlmn_var_E as i32) - 108i32 & 0x8000i32 == 0 || {
+    let advance_lava_phase: bool = if -((*E).nlmn_var_E as i32) - 108i32 & 0x8000i32 == 0 || {
         v3 = nlmn_var_B as i32 >> 1i32;
         (((*E).base.y_pos as i32
             - crate::rtl::rom_table_word!(game, 0xa8af79, v3 as isize) as i32
@@ -2334,16 +2324,13 @@ pub unsafe fn NorfairLavaMan_Func_12(k: u16, game: &mut Game) {
         {
             return;
         }
-        current_block = 9609259077933178539;
-    } else if ((-((*E).nlmn_var_E as i32)
-        - crate::rtl::rom_table_word!(game, 0xa8af55, v3 as isize) as i32) as i16)
-        >= 0i16
-    {
-        current_block = 9609259077933178539;
+        true
     } else {
-        current_block = 7746791466490516765;
-    }
-    if current_block == 9609259077933178539 {
+        (((-((*E).nlmn_var_E as i32)
+            - crate::rtl::rom_table_word!(game, 0xa8af55, v3 as isize) as i32) as i16)
+            >= 0i16)
+    };
+    if advance_lava_phase {
         (*E).nlmn_var_B = (*E).nlmn_var_B.wrapping_add(1);
         (*E).nlmn_var_B = (*E).nlmn_var_B.wrapping_add(1);
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(8u16);
@@ -3059,7 +3046,6 @@ pub unsafe fn Beetom_Main(game: &mut Game) {
     CallBeetomFunc((((*E).beetom_var_C) as u32) | (0xa80000u32), game);
 }
 pub unsafe fn Beetom_Touch(game: &mut Game) {
-    let current_block: u64;
     let E: *mut Enemy_Beetom = Get_Beetom(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).beetom_var_08 == 0 {
         if (*E).beetom_var_09 != 0 {
@@ -3073,21 +3059,16 @@ pub unsafe fn Beetom_Touch(game: &mut Game) {
         (*E).beetom_var_06 = (ram_word!(game, samus_x_pos)).wrapping_sub((*E).base.x_pos);
         (*E).beetom_var_07 = (ram_word!(game, samus_y_pos)).wrapping_sub((*E).base.y_pos);
     }
-    if ram_word!(game, samus_contact_damage_index) != 0 {
-        current_block = 12103599785691237014;
-    } else {
-        if (ram_word!(game, random_enemy_counter) as i32 & 7i32) == 7i32
-            && ram_word!(game, samus_health) as i32 - 30i32 & 0x8000i32 == 0
-        {
-            QueueSfx3_Max6(0x2du16, game);
-        }
-        if ((*E).base.frame_counter as i32 & 0x3fi32) == 63i32 {
-            current_block = 12103599785691237014;
-        } else {
-            current_block = 10599921512955367680;
-        }
-    }
-    if current_block == 12103599785691237014 {
+    let apply_touch_damage: bool = (ram_word!(game, samus_contact_damage_index) != 0)
+        || ({
+            if (ram_word!(game, random_enemy_counter) as i32 & 7i32) == 7i32
+                && ram_word!(game, samus_health) as i32 - 30i32 & 0x8000i32 == 0
+            {
+                QueueSfx3_Max6(0x2du16, game);
+            }
+            (((*E).base.frame_counter as i32 & 0x3fi32) == 63i32)
+        });
+    if apply_touch_damage {
         Enemy_NormalTouchAI_A8(game);
         set_ram_words! { game, 0u16; samus_invincibility_timer, samus_knockback_timer }
     };
@@ -3245,39 +3226,39 @@ pub unsafe fn MaridiaFloater_Func_5(k: u16, game: &mut Game) {
 }
 pub unsafe fn MaridiaFloater_Func_6(k: u16, game: &mut Game) {
     let mut v4: i32 = 0;
-    let current_block: u64;
+
     let E: *mut Enemy_MaridiaFloater = Get_MaridiaFloater(k as i32, game);
     let v2: bool = (*E).mfr_var_D == 1u16;
     (*E).mfr_var_D = (*E).mfr_var_D.wrapping_sub(1);
     let v3: bool = ((*E).mfr_var_D as i32 & 0x8000i32) != 0i32;
-    if !v2 && !v3 {
-        current_block = 14916268686031723178;
-    } else {
-        (*E).mfr_var_D = 5u16;
-        v4 = 0;
-        v4 = k as i32 >> 1i32;
-        let v5: u16 = (g_word_A8C1A1[(*E).mfr_var_C as usize])
-            .wrapping_add(ram_word!(game, enemy_drawing_queue_sizes[v4]));
-        set_ram_word!(game.enemy_drawing_queue[(v4 + 91i32)] = v5);
-        (*E).base.x_pos = v5;
-        if (*E).mfr_var_C != 0u16 && (*E).mfr_var_C != 6u16 {
-            let mut v7: u16 = ((*E).mfr_var_C).wrapping_add(1u16);
-            if v7 as i32 - 12i32 & 0x8000i32 == 0 {
-                v7 = 0u16;
+    let move_down: bool = (!v2 && !v3)
+        || ({
+            (*E).mfr_var_D = 5u16;
+            v4 = 0;
+            v4 = k as i32 >> 1i32;
+            let v5: u16 = (g_word_A8C1A1[(*E).mfr_var_C as usize])
+                .wrapping_add(ram_word!(game, enemy_drawing_queue_sizes[v4]));
+            set_ram_word!(game.enemy_drawing_queue[(v4 + 91i32)] = v5);
+            (*E).base.x_pos = v5;
+            if (*E).mfr_var_C != 0u16 && (*E).mfr_var_C != 6u16 {
+                let mut v7: u16 = ((*E).mfr_var_C).wrapping_add(1u16);
+                if v7 as i32 - 12i32 & 0x8000i32 == 0 {
+                    v7 = 0u16;
+                }
+                (*E).mfr_var_C = v7;
+                true
+            } else {
+                (*E).mfr_var_F = ((0xa8c500i32) as u16);
+                (*E).mfr_var_E = 10u16;
+                set_ram_word!(game.enemy_drawing_queue[(v4 + 104i32)] = 1u16);
+                set_ram_word!(
+                    game.enemy_drawing_queue[(v4 + 103i32)] =
+                        addr_kMaridiaFloater_Ilist_C191 as u16
+                );
+                false
             }
-            (*E).mfr_var_C = v7;
-            current_block = 14916268686031723178;
-        } else {
-            (*E).mfr_var_F = ((0xa8c500i32) as u16);
-            (*E).mfr_var_E = 10u16;
-            set_ram_word!(game.enemy_drawing_queue[(v4 + 104i32)] = 1u16);
-            set_ram_word!(
-                game.enemy_drawing_queue[(v4 + 103i32)] = addr_kMaridiaFloater_Ilist_C191 as u16
-            );
-            current_block = 14963264723745262966;
-        }
-    }
-    if current_block == 14916268686031723178 {
+        });
+    if move_down {
         AddToHiLo(
             &raw mut (*E).mfr_var_A,
             &raw mut (*E).mfr_var_B,
@@ -3339,7 +3320,7 @@ pub unsafe fn MaridiaFloater_Func_7(k: u16, game: &mut Game) {
 pub unsafe fn MaridiaFloater_Func_8(k: u16, game: &mut Game) {
     let mut v4: i32 = 0;
     let mut v5: u16 = 0;
-    let current_block: u64;
+
     let E: *mut Enemy_MaridiaFloater = Get_MaridiaFloater(k as i32, game);
     if ((*E).base.ai_handler_bits as i32 & 1i32) == 0i32 {
         (*E).mfr_var_F = ((0xa8c36bi32) as u16);
@@ -3348,30 +3329,29 @@ pub unsafe fn MaridiaFloater_Func_8(k: u16, game: &mut Game) {
     let v2: bool = (*E).mfr_var_D == 1u16;
     (*E).mfr_var_D = (*E).mfr_var_D.wrapping_sub(1);
     let v3: bool = ((*E).mfr_var_D as i32 & 0x8000i32) != 0i32;
-    if !v2 && !v3 {
-        current_block = 12800627514080957624;
-    } else {
-        (*E).mfr_var_D = 5u16;
-        v4 = 0;
-        v4 = k as i32 >> 1i32;
-        v5 = 0;
-        v5 = (g_word_A8C1A1[(*E).mfr_var_C as usize])
-            .wrapping_add(ram_word!(game, enemy_drawing_queue_sizes[v4]));
-        set_ram_word!(game.enemy_drawing_queue[(v4 + 91i32)] = v5);
-        (*E).base.x_pos = v5;
-        if (*E).mfr_var_C != 0u16 && (*E).mfr_var_C != 6u16 {
-            let mut v7: u16 = ((*E).mfr_var_C).wrapping_add(1u16);
-            if v7 as i32 - 12i32 & 0x8000i32 == 0 {
-                v7 = 0u16;
+    let move_down: bool = (!v2 && !v3)
+        || ({
+            (*E).mfr_var_D = 5u16;
+            v4 = 0;
+            v4 = k as i32 >> 1i32;
+            v5 = 0;
+            v5 = (g_word_A8C1A1[(*E).mfr_var_C as usize])
+                .wrapping_add(ram_word!(game, enemy_drawing_queue_sizes[v4]));
+            set_ram_word!(game.enemy_drawing_queue[(v4 + 91i32)] = v5);
+            (*E).base.x_pos = v5;
+            if (*E).mfr_var_C != 0u16 && (*E).mfr_var_C != 6u16 {
+                let mut v7: u16 = ((*E).mfr_var_C).wrapping_add(1u16);
+                if v7 as i32 - 12i32 & 0x8000i32 == 0 {
+                    v7 = 0u16;
+                }
+                (*E).mfr_var_C = v7;
+                true
+            } else {
+                (*E).mfr_var_F = ((0xa8c4dci32) as u16);
+                false
             }
-            (*E).mfr_var_C = v7;
-            current_block = 12800627514080957624;
-        } else {
-            (*E).mfr_var_F = ((0xa8c4dci32) as u16);
-            current_block = 4833750592470317582;
-        }
-    }
-    if current_block == 12800627514080957624 {
+        });
+    if move_down {
         AddToHiLo(
             &raw mut (*E).mfr_var_A,
             &raw mut (*E).mfr_var_B,
@@ -4726,30 +4706,30 @@ pub unsafe fn KiHunterWings_Main(game: &mut Game) {
     );
 }
 pub unsafe fn KiHunter_Func_1(k: u16, game: &mut Game) {
-    let current_block: u64;
     let mut v4: i16 = 0;
     let E: *mut Enemy_KiHunter = Get_KiHunter(k as i32, game);
-    if Enemy_MoveDown(
+    let update_velocity: bool = if Enemy_MoveDown(
         k,
         (((*E).khr_var_09 as u32) << 16i32 | (*E).khr_var_08 as u32) as i32,
         game,
     ) != 0
     {
         v4 = -((*E).khr_var_09 as i32) as i16;
-        current_block = 8515828400728868193;
+        true
     } else {
         let y_pos: u16 = (*E).base.y_pos;
         if ((y_pos) as i16).wrapping_sub(((*E).khr_var_0A) as i16) < 0i16 {
             v4 = 1i16;
-            current_block = 8515828400728868193;
-        } else if ((y_pos) as i16).wrapping_sub(((*E).khr_var_0B) as i16) < 0i16 {
-            current_block = 3218563456939568490;
+            true
         } else {
-            v4 = -1i16;
-            current_block = 8515828400728868193;
+            !(((y_pos) as i16).wrapping_sub(((*E).khr_var_0B) as i16) < 0i16)
+                && ({
+                    v4 = -1i16;
+                    true
+                })
         }
-    }
-    if current_block == 8515828400728868193 {
+    };
+    if update_velocity {
         (*E).khr_var_09 = v4 as u16;
     }
     if Enemy_MoveRight_IgnoreSlopes(

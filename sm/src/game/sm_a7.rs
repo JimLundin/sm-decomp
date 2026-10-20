@@ -893,7 +893,7 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
     let mut r22: u16 = 0;
     let mut r20: u16 = 0;
     let mut r18: u16 = 0;
-    let mut current_block: u64;
+    let mut skip_mouth_hit: bool;
     let mut v3: i16 = 0;
     let E: *mut Enemy_Kraid = Get_Kraid(0i32, game);
     if (*E).kraid_var_A as i32 + 0x3ac9i32 & 0x8000i32 == 0 {
@@ -936,15 +936,13 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
                 {
                     v8 = 0;
                     v8 = ram_word!(game, projectile_type[v7]);
-                    if (v8 as i32 & 0xf00i32) != 0i32 {
-                        current_block = 10915565897473588658;
-                    } else if (v8 as i32 & 0x10i32) != 0i32 {
-                        (*E).kraid_mouth_flags = ((*E).kraid_mouth_flags) | (1u16);
-                        current_block = 10915565897473588658;
-                    } else {
-                        current_block = 2822809649030392525;
-                    }
-                    if current_block == 2822809649030392525 {
+                    skip_mouth_hit = !((v8 as i32 & 0xf00i32) != 0i32)
+                        && (!((v8 as i32 & 0x10i32) != 0i32)
+                            || ({
+                                (*E).kraid_mouth_flags = ((*E).kraid_mouth_flags) | (1u16);
+                                false
+                            }));
+                    if skip_mouth_hit {
                     } else {
                         set_ram_word!(game.collision_detection_index = (v6 as i32 >> 1i32) as u16);
                         NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
@@ -1068,15 +1066,15 @@ pub unsafe fn Kraid_Shot_Body(game: &mut Game) {
             while i >= 0i32 {
                 let v5: i32 = i >> 1i32;
                 let mut v10: i32 = 0;
-                let current_block_12: u64;
-                if ram_word!(game, projectile_y_pos[v5]) as i32
+
+                let hit_body: bool = if ram_word!(game, projectile_y_pos[v5]) as i32
                     - ram_word!(game, projectile_y_radius[v5]) as i32
                     - 1i32
                     - r18 as i32
                     & 0x8000i32
                     != 0
                 {
-                    if ram_word!(game, projectile_y_radius[v5]) as i32
+                    (ram_word!(game, projectile_y_radius[v5]) as i32
                         + ram_word!(game, projectile_y_pos[v5]) as i32
                         - r20 as i32
                         & 0x8000i32
@@ -1085,12 +1083,7 @@ pub unsafe fn Kraid_Shot_Body(game: &mut Game) {
                             + ram_word!(game, projectile_x_pos[v5]) as i32
                             - r22 as i32
                             & 0x8000i32
-                            == 0
-                    {
-                        current_block_12 = 2894936153070068674;
-                    } else {
-                        current_block_12 = 11194104282611034094;
-                    }
+                            == 0)
                 } else {
                     v10 = 0;
                     v10 = i >> 1i32;
@@ -1113,21 +1106,16 @@ pub unsafe fn Kraid_Shot_Body(game: &mut Game) {
                         }
                         j = (j).wrapping_add(4u16);
                     }
-                    if (((*E).base.x_pos as i32
+                    ((((*E).base.x_pos as i32
                         + crate::rtl::rom_table_word!(
                             game,
                             0xa7b161,
                             ((j as i32 >> 1i32) + 1i32) as isize
                         ) as i32
                         - r18 as i32) as i16)
-                        < 0i16
-                    {
-                        current_block_12 = 2894936153070068674;
-                    } else {
-                        current_block_12 = 11194104282611034094;
-                    }
-                }
-                if current_block_12 == 2894936153070068674 {
+                        < 0i16)
+                };
+                if hit_body {
                     Kraid_SpawnExplosionEproj(i as u16, game);
                     let v6: i32 = i >> 1i32;
                     update_ram_word!(game.projectile_dir[v6], |fresh14| (fresh14) | (0x10u16));
@@ -1149,29 +1137,24 @@ pub unsafe fn Kraid_Shot_Body(game: &mut Game) {
     }
 }
 pub unsafe fn Kraid_Palette_Handling(game: &mut Game) {
-    let current_block: u64;
+    let continue_palette_update: bool;
     let E: *mut Enemy_Kraid = Get_Kraid(0i32, game);
     if (*E).base.health as i32 - 1i32 & 0x8000i32 != 0 {
         (*E).kraid_hurt_frame = (*E).base.health;
     } else {
-        if (*E).kraid_hurt_frame != 0 {
-            let v1: u16 = ((*E).kraid_hurt_frame_timer).wrapping_sub(1u16);
-            (*E).kraid_hurt_frame_timer = v1;
-            if v1 == 0 {
-                (*E).kraid_hurt_frame_timer = 2u16;
-                (*E).kraid_hurt_frame = (*E).kraid_hurt_frame.wrapping_sub(1);
-                current_block = 530921790263604621;
-            } else {
-                current_block = 5720623009719927633;
-            }
-        } else {
-            current_block = 5720623009719927633;
-        }
-        match current_block {
-            530921790263604621 => {}
-            _ => {
-                return;
-            }
+        continue_palette_update = ((*E).kraid_hurt_frame != 0)
+            && ({
+                let v1: u16 = ((*E).kraid_hurt_frame_timer).wrapping_sub(1u16);
+                (*E).kraid_hurt_frame_timer = v1;
+                (v1 == 0)
+                    && ({
+                        (*E).kraid_hurt_frame_timer = 2u16;
+                        (*E).kraid_hurt_frame = (*E).kraid_hurt_frame.wrapping_sub(1);
+                        true
+                    })
+            });
+        if !(continue_palette_update) {
+            return;
         }
     }
     Kraid_HurtFlash_Handling(game);
@@ -1782,7 +1765,7 @@ pub unsafe fn KraidsBadFingernail_Main(game: &mut Game) {
 }
 pub unsafe fn KraidsFingernail_Init(game: &mut Game) {
     let mut v7: u16 = 0;
-    let current_block: u64;
+
     let mut v2: u16 = 0;
     let mut kraid_var_E: u16 = (*Get_Kraid(0x180i32, game)).kraid_var_E;
     if ram_word!(game, cur_enemy_index) == 384u16 {
@@ -1814,33 +1797,31 @@ pub unsafe fn KraidsFingernail_Init(game: &mut Game) {
     (*E).base.instruction_timer = 1u16;
     (*E).base.current_instruction = addr_kKraid_Ilist_8B0A as u16;
     (*E).kraid_var_A = ((0xa7be8ei32) as u16);
-    if (ram_word!(game, random_number) as i32 & 1i32) == 0i32 {
-        current_block = 1333174206292935201;
-    } else {
-        v7 = 0;
-        v7 = (*Get_Kraid(0x180i32, game)).kraid_healths_8ths[1i32 as usize];
-        if ram_word!(game, cur_enemy_index) != 448u16 {
-            v7 = (*Get_Kraid(0x1c0i32, game)).kraid_healths_8ths[1i32 as usize];
-        }
-        if v7 == 1u16 {
-            current_block = 1333174206292935201;
-        } else {
-            (*E).kraid_healths_8ths[1i32 as usize] = 1u16;
-            (*E).base.x_pos = 50u16;
-            (*E).base.y_pos = 240u16;
-            (*E).kraid_var_B = 0u16;
-            (*E).kraid_var_C = 1u16;
-            (*E).kraid_var_D = 0u16;
-            (*E).kraid_var_E = 0u16;
-            (*E).kraid_var_A = ((0xa7b907i32) as u16);
-            (*E).kraid_next = ((0xa7be8ei32) as u16);
-            (*E).base.properties = ((*E).base.properties as i32
-                | (kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
-                as u16;
-            current_block = 16203760046146113240;
-        }
-    }
-    if current_block == 1333174206292935201 {
+    let position_at_kraid: bool = ((ram_word!(game, random_number) as i32 & 1i32) == 0i32)
+        || ({
+            v7 = 0;
+            v7 = (*Get_Kraid(0x180i32, game)).kraid_healths_8ths[1i32 as usize];
+            if ram_word!(game, cur_enemy_index) != 448u16 {
+                v7 = (*Get_Kraid(0x1c0i32, game)).kraid_healths_8ths[1i32 as usize];
+            }
+            (v7 == 1u16)
+                || ({
+                    (*E).kraid_healths_8ths[1i32 as usize] = 1u16;
+                    (*E).base.x_pos = 50u16;
+                    (*E).base.y_pos = 240u16;
+                    (*E).kraid_var_B = 0u16;
+                    (*E).kraid_var_C = 1u16;
+                    (*E).kraid_var_D = 0u16;
+                    (*E).kraid_var_E = 0u16;
+                    (*E).kraid_var_A = ((0xa7b907i32) as u16);
+                    (*E).kraid_next = ((0xa7be8ei32) as u16);
+                    (*E).base.properties = ((*E).base.properties as i32
+                        | (kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
+                        as u16;
+                    false
+                })
+        });
+    if position_at_kraid {
         (*E).kraid_healths_8ths[1i32 as usize] = 0u16;
         let E0: *mut Enemy_Kraid = Get_Kraid(0i32, game);
         (*E).base.x_pos =
@@ -4887,23 +4868,17 @@ pub unsafe fn Dachora_Func_11(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Dachora_Func_12(k: u16, game: &mut Game) {
-    let current_block: u64;
+    let keep_hidden: bool;
     let E: *mut Enemy_Dachora = Get_Dachora(k as i32, game);
     let dachor_var_D: u16 = (*E).dachor_var_D;
     if (dachor_var_D != 0) {
         (*E).dachor_var_D = (dachor_var_D).wrapping_sub(1u16);
-        if (k as i32 & 0x40i32) != 0i32 {
-            if (ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) == 0i32 {
-                current_block = 6459227026555017041;
-            } else {
-                current_block = 7351195479953500246;
-            }
-        } else if (ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) != 0i32 {
-            current_block = 6459227026555017041;
+        keep_hidden = if (k as i32 & 0x40i32) != 0i32 {
+            ((ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) == 0i32)
         } else {
-            current_block = 7351195479953500246;
-        }
-        if current_block == 6459227026555017041 {
+            ((ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) != 0i32)
+        };
+        if keep_hidden {
         } else {
             (*E).base.properties =
                 ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;

@@ -52,7 +52,7 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
         return;
     }
     set_ram_word!(game.sprite_object_index = 62u16);
-    let mut current_block_9: u64;
+    let mut skip_instruction: bool;
     loop {
         let mut v0: i32 = 0;
         v0 = ram_word!(game, sprite_object_index) as i32 >> 1i32;
@@ -60,31 +60,27 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
             || (ram_word!(game, sprite_disable_flag[v0]) as i32 & 1i32) != 0i32)
         {
             v1 = ram_word!(game, sprite_instr_timer[v0]);
-            if v1 as i32 & 0x8000i32 != 0 {
-                current_block_9 = 8895462745870634114;
-            } else {
-                set_ram_word!(game.sprite_instr_timer[v0] = (v1).wrapping_sub(1u16));
-                if v1 == 1u16 {
-                    let v3: u16 = (ram_word!(game, sprite_instr_list_ptrs[v0])).wrapping_add(4u16);
-                    set_ram_word!(game.sprite_instr_list_ptrs[v0] = v3);
-                    v1 = *(RomPtr_B4(v3, game) as *mut u16);
-                    if v1 as i32 & 0x8000i32 != 0 {
-                        current_block_9 = 8895462745870634114;
-                    } else {
-                        *(ram_ptr!(game, u16; 0xeff8)).offset(
-                            (ram_word!(game, sprite_object_index) as i32 >> 1i32) as isize,
-                        ) = v1;
-                        current_block_9 = 14916268686031723178;
-                    }
-                } else {
-                    current_block_9 = 14916268686031723178;
-                }
-            }
-            match current_block_9 {
-                14916268686031723178 => {}
-                _ => {
-                    CallSpriteObjectInstr(((v1) as u32) | (0xb40000u32), game);
-                }
+            skip_instruction = !(v1 as i32 & 0x8000i32 != 0)
+                && ({
+                    set_ram_word!(game.sprite_instr_timer[v0] = (v1).wrapping_sub(1u16));
+                    !(v1 == 1u16)
+                        || ({
+                            let v3: u16 =
+                                (ram_word!(game, sprite_instr_list_ptrs[v0])).wrapping_add(4u16);
+                            set_ram_word!(game.sprite_instr_list_ptrs[v0] = v3);
+                            v1 = *(RomPtr_B4(v3, game) as *mut u16);
+                            !(v1 as i32 & 0x8000i32 != 0)
+                                && ({
+                                    *(ram_ptr!(game, u16; 0xeff8)).offset(
+                                        (ram_word!(game, sprite_object_index) as i32 >> 1i32)
+                                            as isize,
+                                    ) = v1;
+                                    true
+                                })
+                        })
+                });
+            if !(skip_instruction) {
+                CallSpriteObjectInstr(((v1) as u32) | (0xb40000u32), game);
             }
         }
         if (update_ram_word!(game.sprite_object_index, wrapping_sub(2u16), reread) as i32

@@ -2045,25 +2045,19 @@ pub unsafe fn Xray_SetupStage7(game: &mut Game) {
     };
 }
 pub unsafe fn HdmaobjPreInstr_XraySetup(k: u16, game: &mut Game) {
-    let current_block: u64;
     let mut v1: u16 = 0;
     v1 = 4096u16;
-    if ram_word!(game, fx_type) == 36u16 {
-        if (*ram_ptr!(game; 0x74, 0) as i32 & 0x1fi32) - 7i32 & 0x8000i32 == 0 {
-            current_block = 5035836855854403712;
-        } else {
-            current_block = 4263953485050074566;
-        }
+    let update_window_masks: bool = if ram_word!(game, fx_type) == 36u16 {
+        !((*ram_ptr!(game; 0x74, 0) as i32 & 0x1fi32) - 7i32 & 0x8000i32 == 0)
     } else {
         v1 = 0x2000u16;
-        if CanXrayShowBlocks(game) {
-            v1 = 0x4000u16;
-            current_block = 4263953485050074566;
-        } else {
-            current_block = 5035836855854403712;
-        }
-    }
-    if current_block == 4263953485050074566 {
+        (CanXrayShowBlocks(game))
+            && ({
+                v1 = 0x4000u16;
+                true
+            })
+    };
+    if update_window_masks {
         *(ram_ptr!(game, u16; 0x74, 0)) = 0x27u16;
         *(ram_ptr!(game, u16; 0x74, 1)) = 0x47u16;
         *(ram_ptr!(game, u16; 0x74, 2)) = 0x87u16;
@@ -3185,61 +3179,53 @@ pub unsafe fn Samus_UpdatePreviousPose_0(game: &mut Game) {
     *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
 }
 pub unsafe fn SamusFunc_E633_0(game: &mut Game) {
-    let current_block_4: u64;
-    if ram_word!(game, samus_pose) != 0 {
-        if ram_word!(game, samus_pose) as i32 == kPose_9B_FaceF_VariaGravitySuit as i32
+    let refresh_pose: bool = if ram_word!(game, samus_pose) != 0 {
+        (ram_word!(game, samus_pose) as i32 == kPose_9B_FaceF_VariaGravitySuit as i32
             && (ram_word!(game, equipped_items) as i32 & 1i32) == 0i32
-            && (ram_word!(game, equipped_items) as i32 & 0x20i32) == 0i32
-        {
-            set_ram_word!(game.samus_pose = kPose_00_FaceF_Powersuit as u16);
-            current_block_4 = 5176481699505674939;
-        } else {
-            current_block_4 = 7351195479953500246;
-        }
-    } else if (ram_word!(game, equipped_items) as i32 & 1i32) != 0i32
-        || (ram_word!(game, equipped_items) as i32 & 0x20i32) != 0i32
-    {
-        set_ram_word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
-        current_block_4 = 5176481699505674939;
+            && (ram_word!(game, equipped_items) as i32 & 0x20i32) == 0i32)
+            && ({
+                set_ram_word!(game.samus_pose = kPose_00_FaceF_Powersuit as u16);
+                true
+            })
     } else {
-        current_block_4 = 7351195479953500246;
-    }
-    if current_block_4 == 5176481699505674939 {
+        ((ram_word!(game, equipped_items) as i32 & 1i32) != 0i32
+            || (ram_word!(game, equipped_items) as i32 & 0x20i32) != 0i32)
+            && ({
+                set_ram_word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
+                true
+            })
+    };
+    if refresh_pose {
         SamusFunc_F433(game);
         Samus_SetAnimationFrameIfPoseChanged(game);
         Samus_UpdatePreviousPose_0(game);
     };
 }
 pub unsafe fn SamusFunc_E633_3(game: &mut Game) {
-    let current_block: u64;
     if *ram_ptr!(game; 0xa1e) == 4u8 {
         *(ram_ptr!(game, u16; 0xa22)) = 260u16;
     } else {
         *(ram_ptr!(game, u16; 0xa22)) = 264u16;
     }
-    if ram_word!(game, samus_pose) as i32 != kPose_81_FaceR_Screwattack as i32
+    let start_spin_jump: bool = if ram_word!(game, samus_pose) as i32
+        != kPose_81_FaceR_Screwattack as i32
         && ram_word!(game, samus_pose) as i32 != kPose_82_FaceL_Screwattack as i32
     {
-        if ram_word!(game, samus_pose) as i32 != kPose_1B_FaceR_SpaceJump as i32
-            && ram_word!(game, samus_pose) as i32 != kPose_1C_FaceL_SpaceJump as i32
-        {
-            current_block = 14317573491659972910;
-        } else if (ram_word!(game, equipped_items) as i32 & 8i32) != 0i32 {
-            if *ram_ptr!(game; 0xa1e) == 4u8 {
-                set_ram_word!(game.samus_pose = kPose_82_FaceL_Screwattack as u16);
-            } else {
-                set_ram_word!(game.samus_pose = kPose_81_FaceR_Screwattack as u16);
-            }
-            current_block = 14317573491659972910;
-        } else {
-            current_block = 5564999883274278710;
-        }
-    } else if (ram_word!(game, equipped_items) as i32 & 8i32) == 0i32 {
-        current_block = 5564999883274278710;
+        !(ram_word!(game, samus_pose) as i32 != kPose_1B_FaceR_SpaceJump as i32
+            && ram_word!(game, samus_pose) as i32 != kPose_1C_FaceL_SpaceJump as i32)
+            && (!((ram_word!(game, equipped_items) as i32 & 8i32) != 0i32)
+                || ({
+                    if *ram_ptr!(game; 0xa1e) == 4u8 {
+                        set_ram_word!(game.samus_pose = kPose_82_FaceL_Screwattack as u16);
+                    } else {
+                        set_ram_word!(game.samus_pose = kPose_81_FaceR_Screwattack as u16);
+                    }
+                    false
+                }))
     } else {
-        current_block = 14317573491659972910;
-    }
-    if current_block == 5564999883274278710 {
+        ((ram_word!(game, equipped_items) as i32 & 8i32) == 0i32)
+    };
+    if start_spin_jump {
         if *ram_ptr!(game; 0xa1e) == 4u8 {
             set_ram_word!(game.samus_pose = kPose_1A_FaceL_SpinJump as u16);
         } else {
@@ -3475,7 +3461,7 @@ pub unsafe fn Samus_CheckWalkedIntoSomething(game: &mut Game) {
         collision: 0,
         amt: 0,
     };
-    let current_block: u64;
+
     let mut amt: i32 = 0;
     if ram_word!(game, samus_collides_with_solid_enemy) != 0u16 && *ram_ptr!(game; 0xa1f) == 1u8 {
         set_ram_word!(
@@ -3502,30 +3488,28 @@ pub unsafe fn Samus_CheckWalkedIntoSomething(game: &mut Game) {
         set_ram_word!(game.samus_collides_with_solid_enemy = 0u16);
         return;
     }
-    if *ram_ptr!(game; 0xa1e) != 4u8 {
+    let move_right: bool = if *ram_ptr!(game; 0xa1e) != 4u8 {
         set_ram_word!(game.samus_collision_direction = 1u16);
         amt = (1i16 as i32) << 16i32;
         cres = Samus_CheckSolidEnemyColl(amt, game);
-        if cres.collision == 0 {
-            set_ram_word!(game.samus_collision_direction = 1u16);
-            amt = (1i16 as i32) << 16i32;
-            current_block = 12513788902857388954;
-        } else {
-            current_block = 8208193451455325075;
-        }
+        (cres.collision == 0)
+            && ({
+                set_ram_word!(game.samus_collision_direction = 1u16);
+                amt = (1i16 as i32) << 16i32;
+                true
+            })
     } else {
         set_ram_word!(game.samus_collision_direction = 0u16);
         amt = (1i16 as i32) << 16i32;
         cres_0 = Samus_CheckSolidEnemyColl(amt, game);
-        if cres_0.collision != 0 {
-            current_block = 8208193451455325075;
-        } else {
-            amt = (-1i16 as i32) << 16i32;
-            set_ram_word!(game.samus_collision_direction = 0u16);
-            current_block = 12513788902857388954;
-        }
-    }
-    if current_block == 12513788902857388954 {
+        !(cres_0.collision != 0)
+            && ({
+                amt = (-1i16 as i32) << 16i32;
+                set_ram_word!(game.samus_collision_direction = 0u16);
+                true
+            })
+    };
+    if move_right {
         Samus_MoveRight_NoSolidColl(amt, game);
         if (ram_word!(game, samus_collision_flag) == 0) {
             set_ram_word!(game.samus_collides_with_solid_enemy = 0u16);
@@ -3797,7 +3781,7 @@ pub unsafe fn Samus_HandleTransitionsB_4(game: &mut Game) {
     Samus_InitJump(game);
 }
 pub unsafe fn Samus_HandleTransitionsB_5(game: &mut Game) {
-    let current_block_21: u64;
+    let begin_shinespark: bool;
     match *ram_ptr!(game; 0xa1f) as i32 {
         5 => {
             if *ram_ptr!(game; 0xa1e) == 4u8 {
@@ -3805,7 +3789,7 @@ pub unsafe fn Samus_HandleTransitionsB_5(game: &mut Game) {
             } else {
                 set_ram_word!(game.xray_angle = 64u16);
             }
-            current_block_21 = 619521094565907383;
+            begin_shinespark = true;
         }
         0 | 21 | 1 => {
             if *ram_ptr!(game; 0xa1e) == 4u8 {
@@ -3813,13 +3797,13 @@ pub unsafe fn Samus_HandleTransitionsB_5(game: &mut Game) {
             } else {
                 set_ram_word!(game.xray_angle = 64u16);
             }
-            current_block_21 = 619521094565907383;
+            begin_shinespark = true;
         }
         _ => {
-            current_block_21 = 5948590327928692120;
+            begin_shinespark = false;
         }
     }
-    if current_block_21 == 619521094565907383 {
+    if begin_shinespark {
         set_ram_word!(game.samus_anim_frame = 2u16);
         set_ram_word!(game.samus_anim_frame_timer = 63u16);
         set_ram_word!(game.samus_movement_handler = ((0x90e94fi32) as u16));
@@ -4010,33 +3994,25 @@ pub unsafe fn HandleLandingGraphics_Ceres(game: &mut Game) {
 }
 static g_byte_91F0F3: [u8; 17] = [1, 0, 0, 0, 0, 2, 0, 4, 0, 4, 4, 4, 4, 0, 4, 0, 0];
 pub unsafe fn HandleLandingGraphics_Crateria(game: &mut Game) {
-    let current_block: u64;
+    let use_default_landing: bool;
     if (ram_word!(game, cinematic_function) == 0) {
         if ram_word!(game, room_index) == 28u16 {
             HandleLandingGraphics_Norfair(game);
             return;
         }
         if (((ram_word!(game, room_index)) as i16).wrapping_sub(16i16) < 0i16) {
-            if (g_byte_91F0F3[ram_word!(game, room_index) as usize] as i32 & 1i32) == 0i32 {
-                if (g_byte_91F0F3[ram_word!(game, room_index) as usize] as i32 & 2i32) != 0i32 {
-                    if ram_word!(game, samus_y_pos) as i32 - 944i32 & 0x8000i32 == 0 {
-                        current_block = 18265313692946425332;
+            use_default_landing =
+                if (g_byte_91F0F3[ram_word!(game, room_index) as usize] as i32 & 1i32) == 0i32 {
+                    if (g_byte_91F0F3[ram_word!(game, room_index) as usize] as i32 & 2i32) != 0i32 {
+                        !(ram_word!(game, samus_y_pos) as i32 - 944i32 & 0x8000i32 == 0)
                     } else {
-                        current_block = 4562832191328891483;
+                        !((g_byte_91F0F3[ram_word!(game, room_index) as usize] as i32 & 4i32)
+                            != 0i32)
                     }
-                } else if (g_byte_91F0F3[ram_word!(game, room_index) as usize] as i32 & 4i32)
-                    != 0i32
-                {
-                    current_block = 18265313692946425332;
                 } else {
-                    current_block = 4562832191328891483;
-                }
-            } else if ram_word!(game, fx_type) != 10u16 {
-                current_block = 4562832191328891483;
-            } else {
-                current_block = 18265313692946425332;
-            }
-            if current_block == 4562832191328891483 {
+                    (ram_word!(game, fx_type) != 10u16)
+                };
+            if use_default_landing {
             } else {
                 HandleLandingGraphics_Maridia(game);
                 return;
@@ -4783,18 +4759,15 @@ pub unsafe fn SamusFunc_F468_MorphBall(game: &mut Game) -> u8 {
     0u8
 }
 pub unsafe fn SamusFunc_FA0A(game: &mut Game) {
-    let current_block: u64;
-    if *ram_ptr!(game; 0xa22) == 8u8 {
+    let apply_extra_run_speed: bool = if *ram_ptr!(game; 0xa22) == 8u8 {
         if *ram_ptr!(game; 0xa1e) != 4u8 {
             return;
         }
-        current_block = 17179679302217393232;
-    } else if *ram_ptr!(game; 0xa1e) == 8u8 {
-        current_block = 17179679302217393232;
+        true
     } else {
-        current_block = 7351195479953500246;
-    }
-    if current_block == 17179679302217393232 {
+        (*ram_ptr!(game; 0xa1e) == 8u8)
+    };
+    if apply_extra_run_speed {
         AddToHiLo(
             ram_ptr!(game, u16; 0xb46),
             ram_ptr!(game, u16; 0xb48),

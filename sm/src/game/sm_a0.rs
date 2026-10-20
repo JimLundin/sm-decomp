@@ -2918,7 +2918,7 @@ pub unsafe fn DeleteEnemyAndConnectedEnemies(game: &mut Game) {
     }
 }
 pub unsafe fn SpawnEnemy(db: u8, k: u16, game: &mut Game) -> u16 {
-    let current_block: u64;
+    let initialize_enemy_slots: bool;
     let mut varE20: u16 = k;
     let cur_enemy_index_backup: u16 = ram_word!(game, cur_enemy_index);
     let enemy_ptr: u16 = (*get_EnemyPopulation(db, k, game)).enemy_ptr;
@@ -2933,7 +2933,7 @@ pub unsafe fn SpawnEnemy(db: u8, k: u16, game: &mut Game) -> u16 {
         let mut v4: u16 = new_enemy_index;
         while (*gEnemyData(v4 as i32, game)).enemy_ptr == 0 {
             if varE22 == 0 {
-                current_block = 12137821391237576008;
+                initialize_enemy_slots = true;
                 break 's_26;
             }
             varE22 = varE22.wrapping_sub(1);
@@ -2944,12 +2944,12 @@ pub unsafe fn SpawnEnemy(db: u8, k: u16, game: &mut Game) -> u16 {
         }
         new_enemy_index = (new_enemy_index).wrapping_add(64u16);
         if (new_enemy_index >= 2048u16) {
-            current_block = 7651349459974463963;
+            initialize_enemy_slots = false;
             break;
         }
     }
-    match current_block {
-        12137821391237576008 => loop {
+    if initialize_enemy_slots {
+        loop {
             let E: *mut EnemyData = gEnemyData(new_enemy_index as i32, game);
             let EP: *mut EnemyPopulation = get_EnemyPopulation(db, varE20, game);
             let mut v10: i32 = 0i32;
@@ -3020,8 +3020,9 @@ pub unsafe fn SpawnEnemy(db: u8, k: u16, game: &mut Game) -> u16 {
             }
             new_enemy_index = (new_enemy_index).wrapping_add(64u16);
             varE20 = (varE20).wrapping_add(16u16);
-        },
-        _ => 0xffffu16,
+        }
+    } else {
+        0xffffu16
     }
 }
 pub unsafe fn DrawOneEnemy(game: &mut Game) {
@@ -4154,7 +4155,7 @@ pub unsafe fn EnemyFunc_A6B4_UsedBySporeSpawn(game: &mut Game) {
 pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
     let mut ttt: u32 = 0;
     let mut r42: u16 = 0;
-    let current_block: u64;
+    let apply_damage: bool;
     let mut varE2E: u16 = 0u16;
     let mut v5: i16 = 0;
     let mut v6: i16 = 0;
@@ -4174,21 +4175,22 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
     let r20: u16 = vulnerability_ptr;
     if (r18 as i32 & 0xf00i32) != 0i32 {
         v5 = ((r18) as i16) & (0xf00i16);
-        if (r18 as i32 & 0xf00i32) == 256i32 || v5 == 512i16 {
+        apply_damage = if (r18 as i32 & 0xf00i32) == 256i32 || v5 == 512i16 {
             v6 = ((r18 as i32 & 0xf00i32) >> 8i32) as i16;
             varE32 = (((*get_Vulnerability((r20).wrapping_add((v6) as u16), game)).plasma_ice_wave)
                 as u16)
                 & (0x7fu16);
-            current_block = 5143058163439228106;
+            true
         } else if v5 == 1280i16 {
             varE32 = (((*get_Vulnerability(r20, game)).bomb) as u16) & (0x7fu16);
-            current_block = 5143058163439228106;
-        } else if v5 != 768i16 {
-            current_block = 3938820862080741272;
+            true
         } else {
-            varE32 = (((*get_Vulnerability(r20, game)).power_bomb) as u16) & (0x7fu16);
-            current_block = 5143058163439228106;
-        }
+            !(v5 != 768i16)
+                && ({
+                    varE32 = (((*get_Vulnerability(r20, game)).power_bomb) as u16) & (0x7fu16);
+                    true
+                })
+        };
     } else {
         set_ram_word!(
             game.last_enemy_power =
@@ -4197,22 +4199,19 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
         );
         varE32 = (ram_word!(game, last_enemy_power)) & (0x7fu16);
         if ram_word!(game, last_enemy_power) != 255u16 {
-            if (r18 as i32 & 0x10i32) != 0i32 {
-                let charged_beam: u8 = (*get_Vulnerability(r20, game)).charged_beam;
-                if charged_beam == 255u8 {
-                    current_block = 3938820862080741272;
-                } else {
-                    let v4: u16 = ((charged_beam) as u16) & (0xfu16);
-                    if v4 == 0 {
-                        current_block = 3938820862080741272;
-                    } else {
-                        varE32 = v4;
-                        current_block = 5143058163439228106;
-                    }
-                }
-            } else {
-                current_block = 5143058163439228106;
-            }
+            apply_damage = !((r18 as i32 & 0x10i32) != 0i32)
+                || ({
+                    let charged_beam: u8 = (*get_Vulnerability(r20, game)).charged_beam;
+                    !(charged_beam == 255u8)
+                        && ({
+                            let v4: u16 = ((charged_beam) as u16) & (0xfu16);
+                            !(v4 == 0)
+                                && ({
+                                    varE32 = v4;
+                                    true
+                                })
+                        })
+                });
         } else {
             let v8: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
             if (*v8).frozen_timer == 0 {
@@ -4228,7 +4227,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
             return varE2E;
         }
     }
-    if current_block == 5143058163439228106 {
+    if apply_damage {
         ttt = ((pd as i32 >> 1i32) as u32).wrapping_mul(varE32 as u32);
         r42 = ttt as u16;
         if r42 != 0 {

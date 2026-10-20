@@ -3056,21 +3056,18 @@ pub unsafe fn Flies_5(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Flies_6(k: u16, game: &mut Game) {
-    let current_block: u64;
     let v1: u16 = Flies_2(k, game);
     let E: *mut Enemy_Flies = Get_Flies(k as i32, game);
     (*E).flies_var_A = (*E).flies_var_A.wrapping_add(1);
-    if ((*E).flies_var_C as i32 & 0x8000i32) == 0i32 {
+    let reverse_direction: bool = if ((*E).flies_var_C as i32 & 0x8000i32) == 0i32 {
         if v1 < (*E).flies_var_D {
             return;
         }
-        current_block = 6833738745606017744;
-    } else if v1 < (*E).flies_var_D {
-        current_block = 6833738745606017744;
+        true
     } else {
-        current_block = 10879442775620481940;
-    }
-    if current_block == 6833738745606017744 {
+        (v1 < (*E).flies_var_D)
+    };
+    if reverse_direction {
         (*E).flies_var_C = -((*E).flies_var_C as i32) as u16;
         (*E).flies_var_F = ((0xa2b1d2i32) as u16);
     };

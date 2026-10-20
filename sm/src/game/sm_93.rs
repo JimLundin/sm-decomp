@@ -266,7 +266,7 @@ pub unsafe fn Proj93Instr_Goto(k: u16, j: u16, game: &mut Game) -> u16 {
 pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
     let mut v2: u16 = 0;
     let mut v3: u16 = 0;
-    let mut current_block: u64;
+    let mut skip_explosion_draw: bool;
     let mut v0: u16 = 8u16;
     let mut r18: u16 = 0;
     let mut r20: u16 = 0;
@@ -277,36 +277,21 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
             v2 = 0;
             v3 = 0;
             v2 = ram_word!(game, projectile_type[v1]);
-            if v2 as i32 & (kProjectileType_TypeMask as i32 | 0x10i32) != 0i32 {
-                if (v2 as i32 & 0xf00i32) - 768i32 & 0x8000i32 == 0 {
-                    current_block = 10261563330130345889;
-                } else {
-                    current_block = 7149356873433890176;
-                }
+            skip_explosion_draw = if v2 as i32 & (kProjectileType_TypeMask as i32 | 0x10i32) != 0i32
+            {
+                ((v2 as i32 & 0xf00i32) - 768i32 & 0x8000i32 == 0)
             } else if (v2 as i32 & 0xci32) != 0i32 {
                 if (v0 as i32 & 2i32) != 0i32 {
-                    if (ram_word!(game, nmi_frame_counter_word) as i32 & 2i32) == 0i32 {
-                        current_block = 10261563330130345889;
-                    } else {
-                        current_block = 7149356873433890176;
-                    }
-                } else if (ram_word!(game, nmi_frame_counter_word) as i32 & 2i32) != 0i32 {
-                    current_block = 10261563330130345889;
+                    ((ram_word!(game, nmi_frame_counter_word) as i32 & 2i32) == 0i32)
                 } else {
-                    current_block = 7149356873433890176;
+                    ((ram_word!(game, nmi_frame_counter_word) as i32 & 2i32) != 0i32)
                 }
             } else if (v0 as i32 & 2i32) != 0i32 {
-                if (ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) != 0i32 {
-                    current_block = 10261563330130345889;
-                } else {
-                    current_block = 7149356873433890176;
-                }
-            } else if (ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) == 0i32 {
-                current_block = 10261563330130345889;
+                ((ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) != 0i32)
             } else {
-                current_block = 7149356873433890176;
-            }
-            if current_block == 10261563330130345889 {
+                ((ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) == 0i32)
+            };
+            if skip_explosion_draw {
             } else {
                 if (ram_word!(game, ceres_status) as i32 & 0x8000i32) == 0i32 {
                     r20 = (ram_word!(game, projectile_x_pos[v1]))

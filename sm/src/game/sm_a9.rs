@@ -1629,7 +1629,7 @@ pub unsafe fn CallMotherBrainInstr(ea: u32, k: u16, game: &mut Game) -> u16 {
     }
 }
 pub unsafe fn MotherBrain_Func_1_DoubleRet(game: &mut Game) -> i32 {
-    let mut current_block: u64;
+    let mut execute_instruction: bool;
     let mut v5: u16 = 0;
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     let mut pc: u16 = (*E).mbn_var_21;
@@ -1641,27 +1641,26 @@ pub unsafe fn MotherBrain_Func_1_DoubleRet(game: &mut Game) -> i32 {
         return *(p.offset(2) as *mut u16) as i32;
     }
     v5 = *(p as *mut u16);
-    if v5 as i32 & 0x8000i32 != 0 {
-        current_block = 87389992155768869;
-    } else {
-        if ((v5) as i16).wrapping_sub(((*E).mbn_var_20) as i16) >= 0i16 {
-            (*E).mbn_var_20 = (*E).mbn_var_20.wrapping_add(1);
-            return *(p.offset(2) as *mut u16) as i32;
-        }
-        pc = (pc).wrapping_add(4u16);
-        current_block = 1917311967535052937;
-    }
+    execute_instruction = (v5 as i32 & 0x8000i32 != 0)
+        || ({
+            if ((v5) as i16).wrapping_sub(((*E).mbn_var_20) as i16) >= 0i16 {
+                (*E).mbn_var_20 = (*E).mbn_var_20.wrapping_add(1);
+                return *(p.offset(2) as *mut u16) as i32;
+            }
+            pc = (pc).wrapping_add(4u16);
+            false
+        });
     loop {
-        if current_block == 87389992155768869 {
+        if execute_instruction {
             pc = CallMotherBrainInstr(((v5) as u32) | (0xa90000u32), (pc).wrapping_add(2u16), game);
-            current_block = 1917311967535052937;
+            execute_instruction = false;
         } else {
             p = RomPtr_A9(pc, game);
             v5 = *(p as *mut u16);
             if v5 as i32 & 0x8000i32 == 0 {
                 break;
             } else {
-                current_block = 87389992155768869;
+                execute_instruction = true;
             }
         }
     }
@@ -2153,21 +2152,17 @@ pub unsafe fn MotherBrain_Instr_AimRingsAtSamus(k: u16, game: &mut Game) -> u16 
     k
 }
 pub unsafe fn MotherBrain_Instr_AimRings(x: u16, y: u16, game: &mut Game) {
-    let current_block: u64;
     let mut v0: u16 = -(CalculateAngleFromXY(x, y, game) as i32 + 0x80i32) as u8 as u16;
-    if v0 as i32 - 16i32 & 0x80i32 == 0 {
-        if (v0 as u8) < 0x48u8 {
-            current_block = 8016059118846638429;
-        } else {
-            current_block = 5817625388393324680;
-        }
-    } else if v0 as i32 + 64i32 & 0x80i32 != 0 {
-        current_block = 5817625388393324680;
+    let clamp_ring_angle: bool = if v0 as i32 - 16i32 & 0x80i32 == 0 {
+        !((v0 as u8) < 0x48u8)
     } else {
-        *(&raw mut v0 as *mut u8).offset(0) = 16u8;
-        current_block = 8016059118846638429;
-    }
-    if current_block == 5817625388393324680 {
+        (v0 as i32 + 64i32 & 0x80i32 != 0)
+            || ({
+                *(&raw mut v0 as *mut u8).offset(0) = 16u8;
+                false
+            })
+    };
+    if clamp_ring_angle {
         *(&raw mut v0 as *mut u8).offset(0) = 72u8;
     }
     (*Get_MotherBrain(0i32, game)).mbn_var_1A = v0;
@@ -2795,26 +2790,21 @@ pub unsafe fn MotherBrain_Body_Phase2_Thinking(game: &mut Game) {
         return;
     }
     if (*E).mbn_var_02 == 0 {
-        let current_block_9: u64;
+        let keep_walking: bool;
         if (*E1).base.health as i32 - 4500i32 & 0x8000i32 == 0 {
-            if ram_word!(game, random_number) >= 0x1000u16 {
-                current_block_9 = 3601231341105262975;
-            } else {
-                current_block_9 = 13880174989427944637;
-            }
+            keep_walking = (ram_word!(game, random_number) >= 0x1000u16);
         } else if ram_word!(game, random_number) < 0x2000u16 {
-            current_block_9 = 3601231341105262975;
+            keep_walking = true;
         } else if ram_word!(game, random_number) >= 0xa000u16 {
-            current_block_9 = 13880174989427944637;
+            keep_walking = false;
         } else {
             (*E).mbn_var_A = ((0xa9b87di32) as u16);
             return;
         }
-        match current_block_9 {
-            3601231341105262975 => MotherBrain_HandleWalking(game),
-            _ => {
-                (*E).mbn_var_A = ((0xa9b64bi32) as u16);
-            }
+        if keep_walking {
+            MotherBrain_HandleWalking(game)
+        } else {
+            (*E).mbn_var_A = ((0xa9b64bi32) as u16);
         }
     }
 }
@@ -4210,29 +4200,28 @@ pub unsafe fn MotherBrain_HandleWalking(game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     if (*E).mbn_var_02 == 0 {
         let mut v2: u16 = 0;
-        let current_block_15: u64;
+
         let mbn_var_07: u16 = (*E).mbn_var_07;
-        if mbn_var_07 != 0 {
+        let can_pause_walk: bool = if mbn_var_07 != 0 {
             v2 = 0;
             v2 = (mbn_var_07).wrapping_add(6u16);
             (*E).mbn_var_07 = v2;
-            if v2 >= 0x100u16 {
-                current_block_15 = 2842450993777580018;
-            } else {
-                if (*E).base.x_pos as i32 - 48i32 & 0x8000i32 == 0 {
-                    return;
-                }
-                current_block_15 = 3512920355445576850;
-            }
+            !(v2 >= 0x100u16)
+                && ({
+                    if (*E).base.x_pos as i32 - 48i32 & 0x8000i32 == 0 {
+                        return;
+                    }
+                    true
+                })
         } else {
             (*E).mbn_var_07 = 1u16;
             if (*E).base.x_pos as i32 - 48i32 & 0x8000i32 == 0 {
                 MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_98C6 as u16, game);
                 return;
             }
-            current_block_15 = 3512920355445576850;
-        }
-        if current_block_15 == 3512920355445576850
+            true
+        };
+        if can_pause_walk
             && (ram_word!(game, random_number) as i32 & 0xfffi32) - 4032i32 & 0x8000i32 != 0
         {
             return;
@@ -4942,23 +4931,15 @@ pub unsafe fn ShitroidInCutscene_UpdateSpeedAndAngle(
         }
     }
     let mut v4: u16 = 0;
-    let current_block_13: u64;
-    if (r18 as i32 & 0x8000i32) != 0i32 {
+
+    let use_target_angle: bool = if (r18 as i32 & 0x8000i32) != 0i32 {
         v4 = ((*E).sice_var_0A).wrapping_add(r18);
-        if v4 as i32 - r20 as i32 & 0x8000i32 != 0 {
-            current_block_13 = 17187448977823727056;
-        } else {
-            current_block_13 = 12039483399334584727;
-        }
+        (v4 as i32 - r20 as i32 & 0x8000i32 != 0)
     } else {
         v4 = ((*E).sice_var_0A).wrapping_add(r18);
-        if v4 as i32 - r20 as i32 & 0x8000i32 == 0 {
-            current_block_13 = 17187448977823727056;
-        } else {
-            current_block_13 = 12039483399334584727;
-        }
-    }
-    if current_block_13 == 17187448977823727056 {
+        (v4 as i32 - r20 as i32 & 0x8000i32 == 0)
+    };
+    if use_target_angle {
         v4 = r20;
     }
     (*E).sice_var_0A = v4;
@@ -5016,37 +4997,36 @@ pub unsafe fn MotherBrain_Pal_WriteRoomPal(j: u16, game: &mut Game) {
     WriteColorsToPalette(0xe6u16, 0xa9u8, (j).wrapping_add(24u16), 12u16, game);
 }
 pub unsafe fn HandleMotherBrainInstructionList(a: u16, game: &mut Game) -> u16 {
-    let mut current_block: u64;
+    let mut execute_instruction: bool;
     let st: *mut MotherBrainInstrExecState = ram_ptr!(game, MotherBrainInstrExecState; a as isize);
     if ((*st).ip as i32 & 0x8000i32) == 0i32 {
         return 0u16;
     }
     let mut v2: u16 = (*st).ip;
     let mut v3: *const u16 = RomPtr_A9(v2, game) as *mut u16;
-    if *v3.offset(0) as i32 & 0x8000i32 != 0 {
-        current_block = 2809726207655838168;
-    } else {
-        if (*st).timer != *v3.offset(0) {
-            (*st).timer = (*st).timer.wrapping_add(1);
-            return *v3.offset(1);
-        }
-        v2 = (v2).wrapping_add(4u16);
-        current_block = 6937071982253665452;
-    }
+    execute_instruction = (*v3.offset(0) as i32 & 0x8000i32 != 0)
+        || ({
+            if (*st).timer != *v3.offset(0) {
+                (*st).timer = (*st).timer.wrapping_add(1);
+                return *v3.offset(1);
+            }
+            v2 = (v2).wrapping_add(4u16);
+            false
+        });
     loop {
-        if current_block == 2809726207655838168 {
+        if execute_instruction {
             v2 = CallMotherBrainInstr(
                 ((*v3.offset(0)) as u32) | (0xa90000u32),
                 (v2).wrapping_add(2u16),
                 game,
             );
-            current_block = 6937071982253665452;
+            execute_instruction = false;
         } else {
             v3 = RomPtr_A9(v2, game) as *mut u16;
             if *v3.offset(0) as i32 & 0x8000i32 == 0 {
                 break;
             } else {
-                current_block = 2809726207655838168;
+                execute_instruction = true;
             }
         }
     }

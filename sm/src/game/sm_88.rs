@@ -963,13 +963,9 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
         v1 = (ram_word!(game, samus_y_pos) as i32 - ram_word!(game, layer1_y_pos) as i32 - 16i32)
             as u16;
     }
-    let current_block_11: u64;
-    if v0 < 0i16 {
-        if *ram_ptr!(game; 0xa1e) != 4u8 {
-            current_block_11 = 13131151160068275183;
-        } else {
-            current_block_11 = 10599921512955367680;
-        }
+
+    let skip_xray_table: bool = if v0 < 0i16 {
+        !(*ram_ptr!(game; 0xa1e) != 4u8)
     } else {
         if (v0).wrapping_sub(256i16) < 0i16 {
             CalculateXrayHdmaTableInner(
@@ -983,13 +979,9 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
             );
             return;
         }
-        if *ram_ptr!(game; 0xa1e) != 8u8 {
-            current_block_11 = 13131151160068275183;
-        } else {
-            current_block_11 = 10599921512955367680;
-        }
-    }
-    if current_block_11 == 10599921512955367680 {
+        !(*ram_ptr!(game; 0xa1e) != 8u8)
+    };
+    if skip_xray_table {
     } else {
         CalculateXrayHdmaTableInner(
             v0 as u16,

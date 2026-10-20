@@ -1156,7 +1156,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
     if a as i32 == 0xf0i32 {
         (*p).key_OFF = ((*p).key_OFF as i32 | !((*p).is_chan_on as i32)) as u8;
     } else {
-        let mut current_block_83: u64;
+        let mut read_toplevel_word: bool;
         if !(a as i32 != 0xf1i32
             && a as i32 != 255i32
             && a as i32 != (*p).port_to_snes[0i32 as usize] as i32)
@@ -1164,18 +1164,17 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
             if (*p).port_to_snes[0i32 as usize] as i32 == 0i32 {
                 return;
             }
-            if (*p).counter_sf0c as i32 == 0i32 {
-                current_block_83 = 7829208624863839112;
-            } else {
-                (*p).counter_sf0c = (*p).counter_sf0c.wrapping_sub(1);
-                if (*p).counter_sf0c as i32 != 0i32 {
-                    Music_ResetChan(p);
-                    return;
-                }
-                current_block_83 = 12349973810996921269;
-            }
+            read_toplevel_word = !((*p).counter_sf0c as i32 == 0i32)
+                && ({
+                    (*p).counter_sf0c = (*p).counter_sf0c.wrapping_sub(1);
+                    if (*p).counter_sf0c as i32 != 0i32 {
+                        Music_ResetChan(p);
+                        return;
+                    }
+                    true
+                });
             '_label_a: loop {
-                if current_block_83 == 12349973810996921269 {
+                if read_toplevel_word {
                     t = *((&raw mut (*p).ram as *mut u8).offset((*p).music_ptr_toplevel as isize)
                         as *mut u16) as i32;
                     (*p).music_ptr_toplevel = ((*p).music_ptr_toplevel as i32 + 2i32) as u16;
@@ -1210,7 +1209,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                                 break;
                             }
                         }
-                        current_block_83 = 7829208624863839112;
+                        read_toplevel_word = false;
                     } else if t == 0i32 {
                         a = 0u8;
                         break;
@@ -1233,7 +1232,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                                 (*p).music_ptr_toplevel = t as u16;
                             }
                         }
-                        current_block_83 = 12349973810996921269;
+                        read_toplevel_word = true;
                     }
                 } else {
                     (*p).vol_dirty = 0u8;
@@ -1255,7 +1254,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                                     let mut cmd: u8 = (*p).ram[fresh0 as usize];
                                     if cmd as i32 == 0i32 {
                                         if (*c).subroutine_num_loops == 0 {
-                                            current_block_83 = 12349973810996921269;
+                                            read_toplevel_word = true;
                                             continue '_label_a;
                                         }
                                         (*c).subroutine_num_loops =

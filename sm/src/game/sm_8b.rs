@@ -2577,22 +2577,21 @@ pub unsafe fn CinematicSprInstr_9F19(k: u16, j: u16, game: &mut Game) -> u16 {
     j
 }
 pub unsafe fn CinematicFunc_Func1(game: &mut Game) {
-    let current_block: u64;
     let v0: bool =
         (update_ram_word!(game.demo_timer, wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32;
-    if ram_word!(game, demo_timer) == 0 || v0 {
+    let begin_fade: bool = if ram_word!(game, demo_timer) == 0 || v0 {
         set_ram_word!(game.cinematic_function = ((0x8b9faei32) as u16));
-        current_block = 5176254373955358112;
-    } else if (ram_word!(game, joypad1_newkeys) as i32
-        & (kButton_B as i32 | kButton_Start as i32 | kButton_A as i32) as u16 as i32)
-        != 0i32
-    {
-        set_ram_word!(game.cinematic_function = ((0x8b9f52i32) as u16));
-        current_block = 5176254373955358112;
+        true
     } else {
-        current_block = 4906268039856690917;
-    }
-    if current_block == 5176254373955358112 {
+        ((ram_word!(game, joypad1_newkeys) as i32
+            & (kButton_B as i32 | kButton_Start as i32 | kButton_A as i32) as u16 as i32)
+            != 0i32)
+            && ({
+                set_ram_word!(game.cinematic_function = ((0x8b9f52i32) as u16));
+                true
+            })
+    };
+    if begin_fade {
         set_ram_words! { game, 2u16; screen_fade_delay, screen_fade_counter }
     };
 }
@@ -6274,7 +6273,6 @@ pub unsafe fn CinematicFunction_Intro_Func144(game: &mut Game) {
     }
 }
 pub unsafe fn CalcItemPercentageCount(k: u16, instrp: u16, game: &mut Game) -> u16 {
-    let current_block: u64;
     let mut j: u16 = 0;
     let mut v0: u16 = 4u16;
     let mut r18: u16 = 0u16;
@@ -6324,15 +6322,13 @@ pub unsafe fn CalcItemPercentageCount(k: u16, instrp: u16, game: &mut Game) -> u
             crate::rtl::rom_table_word!(game, 0x8be741, (v5 + 1i32) as isize);
     }
     let mut v6: u16 = r20;
-    if r20 != 0 {
-        current_block = 18317007320854588510;
-    } else if r18 != 0 {
-        v6 = r20;
-        current_block = 18317007320854588510;
-    } else {
-        current_block = 2719512138335094285;
-    }
-    if current_block == 18317007320854588510 {
+    let draw_percentage_digit: bool = (r20 != 0)
+        || ((r18 != 0)
+            && ({
+                v6 = r20;
+                true
+            }));
+    if draw_percentage_digit {
         let v7: i32 = ((4u16).wrapping_mul(v6)) as i32 >> 1i32;
         (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[463i32 as usize] =
             crate::rtl::rom_table_word!(game, 0x8be741, v7 as isize);

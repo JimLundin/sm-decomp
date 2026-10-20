@@ -979,23 +979,23 @@ static kGameStateFuncs: [Option<Func_V_Coroutine>; 45] = callback_table! { unsaf
     GameState_43_TransitionFromDemo, GameState_44_TransitionFromDemo,
 };
 pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
-    let current_block: u64;
     let mut st: i32 = *ram_ptr!(game; 0x611) as i32;
-    if st >= 1i32 && st <= 3i32 {
+    let begin_frame: bool = if st >= 1i32 && st <= 3i32 {
         let mut _coret_: u8 = Vector_RESET_Async(game);
         if _coret_ != 0 {
             return _coret_;
         }
-        current_block = 8515828400728868193;
-    } else if st >= 10i32 {
-        current_block = 2185597630302572016;
+        true
     } else {
-        if st != 0i32 {
-            Die(b"Incorrect coroutine_state_0\0" as *const u8 as *const c_char);
-        }
-        current_block = 8515828400728868193;
-    }
-    if current_block == 8515828400728868193 {
+        !(st >= 10i32)
+            && ({
+                if st != 0i32 {
+                    Die(b"Incorrect coroutine_state_0\0" as *const u8 as *const c_char);
+                }
+                true
+            })
+    };
+    if begin_frame {
         let ref mut fresh149 = *ram_ptr!(game; 0x615);
         *fresh149 = 0u8;
         let ref mut fresh150 = *ram_ptr!(game; 0x614);
@@ -1894,7 +1894,7 @@ pub unsafe fn DrawPauseMenuDuringFadeout(game: &mut Game) {
 }
 pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
     let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x612);
-    let current_block_17: u64;
+    let run_unpause_hook: bool;
     match *_state_variable_ as i32 {
         0 => {
             ClearSamusBeamTiles(game);
@@ -1903,16 +1903,16 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
             RestoreSomeGfxStateForPause(game);
             RestoreBG2TilemapFromPauseScreen(game);
             set_ram_words! { game, 1u16; screen_fade_delay, screen_fade_counter }
-            current_block_17 = 16264310372000621783;
+            run_unpause_hook = true;
         }
         1 => {
-            current_block_17 = 16264310372000621783;
+            run_unpause_hook = true;
         }
         _ => {
-            current_block_17 = 4166486009154926805;
+            run_unpause_hook = false;
         }
     }
-    if current_block_17 == 16264310372000621783 {
+    if run_unpause_hook {
         let mut _coret_: u8 = CallUnpauseHook_Async(Load24(ram_ptr!(game, LongPtr; 0x604)), game);
         if _coret_ != 0 {
             *_state_variable_ = 1u8;
@@ -2563,23 +2563,20 @@ pub unsafe fn ClearPauseMenuData(game: &mut Game) {
 }
 pub fn sub_82A425() {}
 pub unsafe fn sub_82A42A(game: &mut Game) {
-    let current_block: u64;
-    if ram_word!(game, samus_pose) as i32 == kPose_81_FaceR_Screwattack as i32
+    let start_spin_jump: bool = if ram_word!(game, samus_pose) as i32
+        == kPose_81_FaceR_Screwattack as i32
         || ram_word!(game, samus_pose) as i32 == kPose_82_FaceL_Screwattack as i32
     {
         if (ram_word!(game, equipped_items) as i32 & 8i32) != 0i32 {
             return;
         }
-        current_block = 2878476956402529644;
-    } else if (ram_word!(game, samus_pose) as i32 == kPose_1B_FaceR_SpaceJump as i32
-        || ram_word!(game, samus_pose) as i32 == kPose_1C_FaceL_SpaceJump as i32)
-        && (ram_word!(game, equipped_items) as i32 & 0x20i32) == 0i32
-    {
-        current_block = 2878476956402529644;
+        true
     } else {
-        current_block = 10886091980245723256;
-    }
-    if current_block == 2878476956402529644 {
+        ((ram_word!(game, samus_pose) as i32 == kPose_1B_FaceR_SpaceJump as i32
+            || ram_word!(game, samus_pose) as i32 == kPose_1C_FaceL_SpaceJump as i32)
+            && (ram_word!(game, equipped_items) as i32 & 0x20i32) == 0i32)
+    };
+    if start_spin_jump {
         if *ram_ptr!(game; 0xa1e) == 4u8 {
             set_ram_word!(game.samus_pose = kPose_1A_FaceL_SpinJump as u16);
         } else {
@@ -2616,8 +2613,10 @@ pub unsafe fn HandlePauseScreenLR(game: &mut Game) {
     DrawLrHighlight(game);
 }
 pub unsafe fn HandlePauseScreenLrInput(game: &mut Game) {
-    let current_block: u64;
-    if (ram_word!(game, newly_held_down_timed_held_input) as i32 & kButton_L as i32) != 0i32 {
+    let play_switch_sound: bool = if (ram_word!(game, newly_held_down_timed_held_input) as i32
+        & kButton_L as i32)
+        != 0i32
+    {
         if ram_word!(game, pausemenu_button_label_mode) == 0 {
             return;
         }
@@ -2625,20 +2624,20 @@ pub unsafe fn HandlePauseScreenLrInput(game: &mut Game) {
         set_ram_word!(game.pausemenu_shoulder_button_highlight = 1u16);
         set_ram_word!(game.pausemenu_button_label_mode = 0u16);
         SetPauseScreenButtonLabelPalettes(game);
-        current_block = 2636532137229557926;
-    } else if (ram_word!(game, newly_held_down_timed_held_input) as i32 & kButton_R as i32) != 0i32
-        && ram_word!(game, pausemenu_button_label_mode) != 2u16
-    {
-        set_ram_word!(game.pausemenu_start_lr_pressed_highlight_timer = 5u16);
-        set_ram_words! { game, 2u16;
-            menu_index, pausemenu_shoulder_button_highlight, pausemenu_button_label_mode,
-        }
-        SetPauseScreenButtonLabelPalettes(game);
-        current_block = 2636532137229557926;
+        true
     } else {
-        current_block = 13536709405535804910;
-    }
-    if current_block == 2636532137229557926 {
+        ((ram_word!(game, newly_held_down_timed_held_input) as i32 & kButton_R as i32) != 0i32
+            && ram_word!(game, pausemenu_button_label_mode) != 2u16)
+            && ({
+                set_ram_word!(game.pausemenu_start_lr_pressed_highlight_timer = 5u16);
+                set_ram_words! { game, 2u16;
+                    menu_index, pausemenu_shoulder_button_highlight, pausemenu_button_label_mode,
+                }
+                SetPauseScreenButtonLabelPalettes(game);
+                true
+            })
+    };
+    if play_switch_sound {
         QueueSfx1_Max6(0x38u16, game);
     };
 }
@@ -3883,46 +3882,46 @@ pub unsafe fn DrawBossMapIcons(a: u16, k: u16, game: &mut Game) {
         return;
     }
     let mut v4: *const u16 = RomPtr_82(t as u16, game) as *const u16;
-    let mut current_block_8: u64;
+    let mut advance_boss_bit: bool;
     loop {
         if *v4.offset(0) == 0xffffu16 {
             return;
         }
-        if *v4.offset(0) != 0xfffeu16 {
-            let v5: i32 = bits & 1i32;
-            bits >>= 1i32;
-            if v5 != 0 {
-                DrawMenuSpritemap(
-                    0x62u16,
-                    (*v4.offset(0)).wrapping_sub(ram_word!(game, reg_BG1HOFS)),
-                    (*v4.offset(1)).wrapping_sub(ram_word!(game, reg_BG1VOFS)),
-                    3584u16,
-                    game,
-                );
-                DrawMenuSpritemap(
-                    a,
-                    (*v4.offset(0)).wrapping_sub(ram_word!(game, reg_BG1HOFS)),
-                    (*v4.offset(1)).wrapping_sub(ram_word!(game, reg_BG1VOFS)),
-                    3072u16,
-                    game,
-                );
-                current_block_8 = 12675440807659640239;
-            } else if ram_word!(game, has_area_map) != 0 {
-                DrawMenuSpritemap(
-                    a,
-                    (*v4.offset(0)).wrapping_sub(ram_word!(game, reg_BG1HOFS)),
-                    (*v4.offset(1)).wrapping_sub(ram_word!(game, reg_BG1VOFS)),
-                    3584u16,
-                    game,
-                );
-                current_block_8 = 12675440807659640239;
-            } else {
-                current_block_8 = 7651349459974463963;
-            }
-        } else {
-            current_block_8 = 7651349459974463963;
-        }
-        if current_block_8 == 7651349459974463963 {
+        advance_boss_bit = !(*v4.offset(0) != 0xfffeu16)
+            || ({
+                let v5: i32 = bits & 1i32;
+                bits >>= 1i32;
+                if v5 != 0 {
+                    DrawMenuSpritemap(
+                        0x62u16,
+                        (*v4.offset(0)).wrapping_sub(ram_word!(game, reg_BG1HOFS)),
+                        (*v4.offset(1)).wrapping_sub(ram_word!(game, reg_BG1VOFS)),
+                        3584u16,
+                        game,
+                    );
+                    DrawMenuSpritemap(
+                        a,
+                        (*v4.offset(0)).wrapping_sub(ram_word!(game, reg_BG1HOFS)),
+                        (*v4.offset(1)).wrapping_sub(ram_word!(game, reg_BG1VOFS)),
+                        3072u16,
+                        game,
+                    );
+                    false
+                } else {
+                    !(ram_word!(game, has_area_map) != 0)
+                        || ({
+                            DrawMenuSpritemap(
+                                a,
+                                (*v4.offset(0)).wrapping_sub(ram_word!(game, reg_BG1HOFS)),
+                                (*v4.offset(1)).wrapping_sub(ram_word!(game, reg_BG1VOFS)),
+                                3584u16,
+                                game,
+                            );
+                            false
+                        })
+                }
+            });
+        if advance_boss_bit {
             bits >>= 1i32;
         }
         v4 = v4.offset(2);
@@ -4439,35 +4438,34 @@ pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn RefillHealthFromReserveTanks(game: &mut Game) -> u8 {
-    let current_block: u64;
+    let refill_in_progress: bool;
     if ram_word!(game, samus_reserve_health) != 0 {
         if (ram_word!(game, nmi_frame_counter_word) as i32 & 7i32) == 0i32 {
             QueueSfx3_Max3(0x2du16, game);
         }
-        if ((update_ram_word!(game.samus_health, wrapping_add(1), reread)) as i16)
+        refill_in_progress = if ((update_ram_word!(game.samus_health, wrapping_add(1), reread))
+            as i16)
             .wrapping_sub((ram_word!(game, samus_max_health)) as i16)
             >= 0i16
         {
             set_ram_word!(game.samus_health = ram_word!(game, samus_max_health));
-            current_block = 15379867480756242343;
+            false
         } else {
             let v0: bool = (update_ram_word!(game.samus_reserve_health, wrapping_sub(1), reread)
                 as i32
                 & 0x8000i32)
                 != 0i32;
-            if ram_word!(game, samus_reserve_health) == 0 {
-                current_block = 15379867480756242343;
-            } else if v0 {
-                update_ram_word!(
-                    game.samus_health,
-                    wrapping_add(ram_word!(game, samus_reserve_health))
-                );
-                current_block = 15379867480756242343;
-            } else {
-                current_block = 13183875560443969876;
-            }
-        }
-        if current_block == 13183875560443969876 {
+            !(ram_word!(game, samus_reserve_health) == 0)
+                && (!(v0)
+                    || ({
+                        update_ram_word!(
+                            game.samus_health,
+                            wrapping_add(ram_word!(game, samus_reserve_health))
+                        );
+                        false
+                    }))
+        };
+        if refill_in_progress {
         } else {
             set_ram_word!(game.samus_reserve_health = 0u16);
             return (ram_word!(game, samus_reserve_health) == 0u16) as u8;
@@ -6262,37 +6260,36 @@ pub unsafe fn LoadControllerOptionsFromControllerBindings(game: &mut Game) {
     let mut v2: i16 = 0;
     let mut v0: u16 = 0u16;
     loop {
-        let current_block_13: u64;
         let v1: i32 = v0 as i32 >> 1i32;
         v2 = *(ram_ptr!(game, u16; crate::rtl::rom_table_word!(
             game,
             0x82f54a,
             v1 as isize
         ) as isize)) as i16;
-        if (v2 as i32 & kButton_X as i32) != 0i32 {
-            current_block_13 = 4528428927647462225;
-        } else if (v2 as i32 & kButton_A as i32) != 0i32 {
-            set_ram_word!(game.eproj_F[(v1 + 13i32)] = 1u16);
-            current_block_13 = 2720989448508244618;
-        } else if v2 < 0i16 {
-            set_ram_word!(game.eproj_F[(v1 + 13i32)] = 2u16);
-            current_block_13 = 2720989448508244618;
-        } else if (v2 as i32 & kButton_Select as i32) != 0i32 {
-            set_ram_word!(game.eproj_F[(v1 + 13i32)] = 3u16);
-            current_block_13 = 2720989448508244618;
-        } else if (v2 as i32 & kButton_Y as i32) != 0i32 {
-            set_ram_word!(game.eproj_F[(v1 + 13i32)] = 4u16);
-            current_block_13 = 2720989448508244618;
-        } else if (v2 as i32 & kButton_L as i32) != 0i32 {
-            set_ram_word!(game.eproj_F[(v1 + 13i32)] = 5u16);
-            current_block_13 = 2720989448508244618;
-        } else if (v2 as i32 & kButton_R as i32) == 0i32 {
-            current_block_13 = 4528428927647462225;
-        } else {
-            set_ram_word!(game.eproj_F[(v1 + 13i32)] = 6u16);
-            current_block_13 = 2720989448508244618;
-        }
-        if current_block_13 == 4528428927647462225 {
+        let clear_button_mapping: bool = ((v2 as i32 & kButton_X as i32) != 0i32)
+            || (if (v2 as i32 & kButton_A as i32) != 0i32 {
+                set_ram_word!(game.eproj_F[(v1 + 13i32)] = 1u16);
+                false
+            } else if v2 < 0i16 {
+                set_ram_word!(game.eproj_F[(v1 + 13i32)] = 2u16);
+                false
+            } else if (v2 as i32 & kButton_Select as i32) != 0i32 {
+                set_ram_word!(game.eproj_F[(v1 + 13i32)] = 3u16);
+                false
+            } else if (v2 as i32 & kButton_Y as i32) != 0i32 {
+                set_ram_word!(game.eproj_F[(v1 + 13i32)] = 4u16);
+                false
+            } else if (v2 as i32 & kButton_L as i32) != 0i32 {
+                set_ram_word!(game.eproj_F[(v1 + 13i32)] = 5u16);
+                false
+            } else {
+                ((v2 as i32 & kButton_R as i32) == 0i32)
+                    || ({
+                        set_ram_word!(game.eproj_F[(v1 + 13i32)] = 6u16);
+                        false
+                    })
+            });
+        if clear_button_mapping {
             set_ram_word!(game.eproj_F[(v1 + 13i32)] = 0u16);
         }
         v0 = (v0).wrapping_add(2u16);

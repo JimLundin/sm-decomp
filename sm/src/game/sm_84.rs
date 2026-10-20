@@ -1840,20 +1840,20 @@ pub unsafe fn PlmSetup_BTS_Brinstar_0x81_Ceilingplant(j: u16, game: &mut Game) -
     0u8
 }
 pub unsafe fn ActivateStationIfSamusCannonLinedUp(a: u16, j: u16, game: &mut Game) -> u8 {
-    let current_block: u64;
+    let found_plm: bool;
     let mut v2: u16 = 78u16;
     loop {
         if (a == ram_word!(game, plm_block_indices[(v2 as i32 >> 1i32)])) {
-            current_block = 16658872821858055392;
+            found_plm = true;
             break;
         }
         v2 = (v2).wrapping_sub(2u16);
         if (v2 as i32 & 0x8000i32) != 0i32 {
-            current_block = 12991533354927412482;
+            found_plm = false;
             break;
         }
     }
-    if current_block == 16658872821858055392 {
+    if found_plm {
         CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
         if ((16u16).wrapping_mul(ram_word!(game, plm_y_block))) as i32 | 0xbi32
             == ram_word!(game, samus_y_pos) as i32
@@ -2853,20 +2853,20 @@ pub unsafe fn sub_84C647(j: u16, game: &mut Game) -> u8 {
 }
 pub unsafe fn sub_84C64C(j: u16, a: u16, game: &mut Game) -> u8 {
     let mut v3: i32 = 0;
-    let current_block: u64;
+    let found_plm: bool;
     let mut v2: u16 = 78u16;
     loop {
         if (a == ram_word!(game, plm_block_indices[(v2 as i32 >> 1i32)])) {
-            current_block = 16658872821858055392;
+            found_plm = true;
             break;
         }
         v2 = (v2).wrapping_sub(2u16);
         if (v2 as i32 & 0x8000i32) != 0i32 {
-            current_block = 5208286747870620093;
+            found_plm = false;
             break;
         }
     }
-    if current_block == 16658872821858055392 {
+    if found_plm {
         v3 = 0;
         v3 = v2 as i32 >> 1i32;
         if ram_word!(game, plm_timers[v3]) == 0 {

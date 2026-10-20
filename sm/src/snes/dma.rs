@@ -204,10 +204,10 @@ unsafe fn hdma_load_indirect_address(dma: *mut Dma, channel: usize, game: &mut G
 pub unsafe fn dma_initHdma(dma: *mut Dma, game: &mut Game) {
     (*dma).hdmaTimer = 0u16;
     let mut hdmaHappened: bool = false_0 != 0;
-    let mut current_block_16: u64;
+    let mut keep_channel_active: bool;
     let mut i: i32 = 0i32;
     while i < 8i32 {
-        if (*dma).channel[i as usize].hdmaActive {
+        keep_channel_active = if (*dma).channel[i as usize].hdmaActive {
             hdmaHappened = true_0 != 0;
             (*dma).channel[i as usize].dmaActive = false_0 != 0;
             (*dma).channel[i as usize].offIndex = 0u8;
@@ -215,20 +215,20 @@ pub unsafe fn dma_initHdma(dma: *mut Dma, game: &mut Game) {
             (*dma).channel[i as usize].repCount = hdma_read_table_byte(dma, i as usize, game);
             if (*dma).channel[i as usize].repCount as i32 == 0i32 {
                 (*dma).channel[i as usize].terminated = true_0 != 0;
-                current_block_16 = 12237857397564741460;
+                false
             } else {
                 (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8i32) as u16;
                 if (*dma).channel[i as usize].indirect {
                     hdma_load_indirect_address(dma, i as usize, game);
                 }
                 (*dma).channel[i as usize].doTransfer = true_0 != 0;
-                current_block_16 = 7976072742316086414;
+                true
             }
         } else {
             (*dma).channel[i as usize].doTransfer = false_0 != 0;
-            current_block_16 = 7976072742316086414;
-        }
-        if current_block_16 == 7976072742316086414 {
+            true
+        };
+        if keep_channel_active {
             (*dma).channel[i as usize].terminated = false_0 != 0;
         }
         i += 1;

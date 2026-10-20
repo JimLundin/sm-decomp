@@ -522,40 +522,30 @@ pub unsafe fn Crocomire_Func_27(k: u16, game: &mut Game) {
     Crocomire_8BA4(game);
 }
 pub unsafe fn Crocomire_8BA4(game: &mut Game) {
-    let current_block: u64;
     let E0: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     let E1: *mut Enemy_Crocomire =
         Get_Crocomire(ram_word!(game, cur_enemy_index) as i32 + 64i32, game);
     (*E1).base.x_pos = ((*E1).crocom_var_A).wrapping_add((*E0).base.x_pos);
     (*E1).base.y_pos = (*E0).base.y_pos;
     let x_pos: u16 = (*E0).base.x_pos;
-    if ((x_pos) as i16).wrapping_sub((ram_word!(game, layer1_x_pos)) as i16) >= 0i16 {
-        if (*E0).base.x_pos as i32 - 128i32 - (ram_word!(game, layer1_x_pos) as i32 + 256i32)
-            & 0x8000i32
-            != 0
-        {
-            current_block = 6937071982253665452;
+    let scroll_bg2: bool =
+        if ((x_pos) as i16).wrapping_sub((ram_word!(game, layer1_x_pos)) as i16) >= 0i16 {
+            ((*E0).base.x_pos as i32 - 128i32 - (ram_word!(game, layer1_x_pos) as i32 + 256i32)
+                & 0x8000i32
+                != 0)
         } else {
-            current_block = 1762290943679506230;
+            !(((x_pos as i32 + 128i32 - ram_word!(game, layer1_x_pos) as i32) as i16) < 0i16)
+        };
+    if scroll_bg2 {
+        let mut v6: u16 =
+            (ram_word!(game, layer1_x_pos) as i32 - (*E0).base.x_pos as i32 + 51i32) as u16;
+        let v4: u16 = abs16(v6);
+        if v4 as i32 - 284i32 & 0x8000i32 == 0 {
+            v6 = 256u16;
         }
-    } else if ((x_pos as i32 + 128i32 - ram_word!(game, layer1_x_pos) as i32) as i16) < 0i16 {
-        current_block = 1762290943679506230;
+        set_ram_word!(game.reg_BG2HOFS = v6);
     } else {
-        current_block = 6937071982253665452;
-    }
-    match current_block {
-        6937071982253665452 => {
-            let mut v6: u16 =
-                (ram_word!(game, layer1_x_pos) as i32 - (*E0).base.x_pos as i32 + 51i32) as u16;
-            let v4: u16 = abs16(v6);
-            if v4 as i32 - 284i32 & 0x8000i32 == 0 {
-                v6 = 256u16;
-            }
-            set_ram_word!(game.reg_BG2HOFS = v6);
-        }
-        _ => {
-            set_ram_word!(game.reg_BG2HOFS = 256u16);
-        }
+        set_ram_word!(game.reg_BG2HOFS = 256u16);
     }
 }
 pub fn nullsub_305(game: &mut Game) {}
@@ -1382,7 +1372,7 @@ pub unsafe fn Crocomire_Func_63(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_65(game: &mut Game) {
     let mut v4: u16 = 0;
-    let current_block: u64;
+    let skip_tilemap_update: bool;
     let mut i: i32 = 0;
     Crocomire_Func_53(game);
     let E0: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
@@ -1398,17 +1388,13 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
         Crocomire_Func_27(ram_word!(game, cur_enemy_index), game);
         v4 = 0;
         v4 = (ram_word!(game, g_word_7E0694)).wrapping_sub(3u16);
-        if ram_word!(game, g_word_7E0694) as i32 - 19i32 & 0x8000i32 != 0 {
-            if ((ram_word!(game, g_word_7E0692)) as i16).wrapping_sub(20480i16) >= 0i16 {
-                current_block = 11812396948646013369;
-            } else {
-                v4 = 16u16;
-                current_block = 15652330335145281839;
-            }
-        } else {
-            current_block = 15652330335145281839;
-        }
-        if current_block == 11812396948646013369 {
+        skip_tilemap_update = (ram_word!(game, g_word_7E0694) as i32 - 19i32 & 0x8000i32 != 0)
+            && ((((ram_word!(game, g_word_7E0692)) as i16).wrapping_sub(20480i16) >= 0i16)
+                || ({
+                    v4 = 16u16;
+                    false
+                }));
+        if skip_tilemap_update {
         } else {
             set_ram_word!(game.g_word_7E0694 = v4);
             let mut v5: u16 = (ram_word!(game, g_word_7E0692)).wrapping_add(384u16);
@@ -1960,49 +1946,46 @@ pub unsafe fn Crocomire_Powerbomb(game: &mut Game) {
 pub unsafe fn Crocomire_Func_95(game: &mut Game) {
     let mut v1: u16 = 0;
     let mut v2: u16 = 0;
-    let current_block: u64;
+
     let mut v3: i16 = 0;
     let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
     (*E).base.invincibility_timer = 0u16;
-    if (((*E).base.x_pos as i32
+    let advance_animation: bool = ((((*E).base.x_pos as i32
         - (*E).base.x_width as i32
         - 256i32
         - ram_word!(game, layer1_x_pos) as i32) as i16)
-        >= 0i16
-    {
-        current_block = 4956146061682418353;
-    } else {
-        v1 = 0;
-        v2 = 0;
-        v1 = ram_word!(
-            game,
-            projectile_type[ram_word!(game, collision_detection_index)]
-        );
-        if (v1 as i32 & 0xf00i32) != 0i32 {
-            v3 = ((v1) as i16) & (0xf00i16);
-            v2 = g_word_A4869A;
-            if v3 != 256i16 {
-                v2 = g_word_A4869C;
-                if v3 != 512i16 {
-                    v2 = 0u16;
+        >= 0i16)
+        || ({
+            v1 = 0;
+            v2 = 0;
+            v1 = ram_word!(
+                game,
+                projectile_type[ram_word!(game, collision_detection_index)]
+            );
+            if (v1 as i32 & 0xf00i32) != 0i32 {
+                v3 = ((v1) as i16) & (0xf00i16);
+                v2 = g_word_A4869A;
+                if v3 != 256i16 {
+                    v2 = g_word_A4869C;
+                    if v3 != 512i16 {
+                        v2 = 0u16;
+                    }
+                }
+            } else {
+                v2 = g_word_A48698;
+                if (v1 as i32 & 0x10i32) == 0i32 {
+                    (*E).base.instruction_timer = g_word_A486A0;
+                    Crocomire_Func_1(game);
+                    return;
                 }
             }
-        } else {
-            v2 = g_word_A48698;
-            if (v1 as i32 & 0x10i32) == 0i32 {
-                (*E).base.instruction_timer = g_word_A486A0;
-                Crocomire_Func_1(game);
-                return;
-            }
-        }
-        if v2 != 0 {
-            (*E).crocom_var_D = ((*E).crocom_var_D).wrapping_add(v2);
-            current_block = 4956146061682418353;
-        } else {
-            current_block = 7172762164747879670;
-        }
-    }
-    if current_block == 4956146061682418353 {
+            (v2 != 0)
+                && ({
+                    (*E).crocom_var_D = ((*E).crocom_var_D).wrapping_add(v2);
+                    true
+                })
+        });
+    if advance_animation {
         let mut v4: u16 = ((*E).crocom_var_B) & (0xfu16);
         if v4 as i32 - 15i32 & 0x8000i32 != 0 {
             v4 = v4.wrapping_add(1);

@@ -740,54 +740,54 @@ pub unsafe fn RoomCode_HandleCeresRidleyGetaway(game: &mut Game) {
 }
 pub unsafe fn RoomCode_ShakeScreenHorizDiag(game: &mut Game) {
     let mut v0: u16 = 0;
-    let current_block_3: u64;
-    if *(ram_ptr!(game, u16; 0x7e1)) != 0 {
+
+    let update_earthquake: bool = if *(ram_ptr!(game, u16; 0x7e1)) != 0 {
         let ref mut fresh11 = *(ram_ptr!(game, u16; 0x7e1));
         *fresh11 = (*fresh11).wrapping_sub(1);
-        if *fresh11 == 0 {
-            v0 = 18u16;
-            current_block_3 = 10175730460759437497;
-        } else {
-            current_block_3 = 11006700562992250127;
-        }
-    } else if NextRandom(game) < 0x200u16 {
-        strcpy(
-            ram_ptr!(game, c_char; 0x7e1),
-            b"*\0" as *const u8 as *const c_char,
-        );
-        v0 = 23u16;
-        current_block_3 = 10175730460759437497;
+        (*fresh11 == 0)
+            && ({
+                v0 = 18u16;
+                true
+            })
     } else {
-        current_block_3 = 11006700562992250127;
-    }
-    if current_block_3 == 10175730460759437497 {
+        (NextRandom(game) < 0x200u16)
+            && ({
+                strcpy(
+                    ram_ptr!(game, c_char; 0x7e1),
+                    b"*\0" as *const u8 as *const c_char,
+                );
+                v0 = 23u16;
+                true
+            })
+    };
+    if update_earthquake {
         set_ram_word!(game.earthquake_type = v0);
     }
     RoomCode_GenRandomExplodes_4th(game);
 }
 pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
     let mut v0: i16 = 0;
-    let current_block_3: u64;
-    if *(ram_ptr!(game, u16; 0x7e1)) != 0 {
+
+    let update_earthquake: bool = if *(ram_ptr!(game, u16; 0x7e1)) != 0 {
         let ref mut fresh10 = *(ram_ptr!(game, u16; 0x7e1));
         *fresh10 = (*fresh10).wrapping_sub(1);
-        if *fresh10 == 0 {
-            v0 = 21i16;
-            current_block_3 = 1544504899801662111;
-        } else {
-            current_block_3 = 11006700562992250127;
-        }
-    } else if NextRandom(game) < 0x180u16 {
-        strcpy(
-            ram_ptr!(game, c_char; 0x7e1),
-            b"*\0" as *const u8 as *const c_char,
-        );
-        v0 = 26i16;
-        current_block_3 = 1544504899801662111;
+        (*fresh10 == 0)
+            && ({
+                v0 = 21i16;
+                true
+            })
     } else {
-        current_block_3 = 11006700562992250127;
-    }
-    if current_block_3 == 1544504899801662111 {
+        (NextRandom(game) < 0x180u16)
+            && ({
+                strcpy(
+                    ram_ptr!(game, c_char; 0x7e1),
+                    b"*\0" as *const u8 as *const c_char,
+                );
+                v0 = 26i16;
+                true
+            })
+    };
+    if update_earthquake {
         *(ram_ptr!(game, u16; 0x7e1, 2)) = v0 as u16;
     }
     set_ram_word!(game.earthquake_type = *(ram_ptr!(game, u16; 0x7e1, 2)));

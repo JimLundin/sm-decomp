@@ -1188,34 +1188,32 @@ pub unsafe fn GoldTorizo_Shot(game: &mut Game) {
     if (*E).base.flash_timer == 0 {
         let mut v2: u16 = 0;
         let mut v3: u16 = 0;
-        let current_block_14: u64;
+
         if (*E).toriz_var_04 != 0 {
             Torizo_D6A6(game);
             return;
         }
-        if ((*E).toriz_parameter_2 as i32 & 0x1000i32) != 0i32 {
-            current_block_14 = 17149359649428287120;
-        } else {
-            v2 = 0;
-            v3 = 0;
-            v2 = (2u16).wrapping_mul(ram_word!(game, collision_detection_index));
-            v3 = (ram_word!(
-                game,
-                projectile_type[ram_word!(game, collision_detection_index)]
-            )) & (0xf00u16);
-            (*E).toriz_var_05 = v3;
-            if v3 == 256u16 {
-                Torizo_D6D1(ram_word!(game, cur_enemy_index), v2, game);
-                return;
-            }
-            if v3 != 512u16 {
-                current_block_14 = 17149359649428287120;
-            } else {
-                Torizo_D6F7(ram_word!(game, cur_enemy_index), v2, game);
-                current_block_14 = 3512920355445576850;
-            }
-        }
-        if current_block_14 == 17149359649428287120 {
+        let react_to_shot: bool = (((*E).toriz_parameter_2 as i32 & 0x1000i32) != 0i32)
+            || ({
+                v2 = 0;
+                v3 = 0;
+                v2 = (2u16).wrapping_mul(ram_word!(game, collision_detection_index));
+                v3 = (ram_word!(
+                    game,
+                    projectile_type[ram_word!(game, collision_detection_index)]
+                )) & (0xf00u16);
+                (*E).toriz_var_05 = v3;
+                if v3 == 256u16 {
+                    Torizo_D6D1(ram_word!(game, cur_enemy_index), v2, game);
+                    return;
+                }
+                (v3 != 512u16)
+                    || ({
+                        Torizo_D6F7(ram_word!(game, cur_enemy_index), v2, game);
+                        false
+                    })
+            });
+        if react_to_shot {
             (*E).toriz_parameter_2 = ((*E).toriz_parameter_2) | (0x2000u16);
             Torizo_D6A6(game);
         }

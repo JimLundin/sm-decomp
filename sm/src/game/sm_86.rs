@@ -2282,24 +2282,22 @@ pub unsafe fn EprojPreInstr_PhantoonStartingFireballs2(k: u16, game: &mut Game) 
 }
 static word_869A3E: [u16; 3] = [0xfd00u16, 0xfe00u16, 0xff00u16];
 pub unsafe fn EprojPreInstr_PhantoonStartingFireballs3(k: u16, game: &mut Game) {
-    let current_block: u64;
     let v1: i32 = k as i32 >> 1i32;
     update_ram_word!(game.eproj_y_vel[v1], |fresh129| (fresh129 as i32 + 16i32)
         as u16);
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
+    let switch_fireball_phase: bool = if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0
+    {
         let v2: u16 = (ram_word!(game, eproj_E[v1]) as i32 + 1i32) as u16;
         set_ram_word!(game.eproj_E[v1] = v2);
         if v2 as i32 - 3i32 & 0x8000i32 != 0 {
             set_ram_word!(game.eproj_y_vel[v1] = word_869A3E[v2 as usize]);
             return;
         }
-        current_block = 220575731145207134;
-    } else if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0 {
-        current_block = 220575731145207134;
+        true
     } else {
-        current_block = 13183875560443969876;
-    }
-    if current_block == 220575731145207134 {
+        (EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0)
+    };
+    if switch_fireball_phase {
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_word_869782 as u16);
         set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
         set_ram_word!(game.eproj_pre_instr[v1] = (0x869a44i32 & 0xffffi32) as u16);
@@ -2345,24 +2343,23 @@ pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs(k: u16, game: &mut Game
 pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_2(k: u16, game: &mut Game) {
     let mut v2: bool = false;
     let mut v3: bool = false;
-    let current_block: u64;
+
     let v1: i32 = k as i32 >> 1i32;
-    if ram_word!(game, eproj_x_vel[v1]) == 0 {
-        current_block = 8066597768905169940;
-    } else {
-        v2 = false;
-        v3 = false;
-        v2 = ram_word!(game, eproj_x_vel[v1]) == 1u16;
-        v3 = (update_ram_word!(game.eproj_x_vel[v1], wrapping_sub(1), reread) as i32 & 0x8000i32)
-            != 0i32;
-        if v2 || v3 {
-            QueueSfx3_Max6(0x1du16, game);
-            current_block = 8066597768905169940;
-        } else {
-            current_block = 2868539653012386629;
-        }
-    }
-    if current_block == 8066597768905169940 {
+    let apply_gravity: bool = (ram_word!(game, eproj_x_vel[v1]) == 0)
+        || ({
+            v2 = false;
+            v3 = false;
+            v2 = ram_word!(game, eproj_x_vel[v1]) == 1u16;
+            v3 = (update_ram_word!(game.eproj_x_vel[v1], wrapping_sub(1), reread) as i32
+                & 0x8000i32)
+                != 0i32;
+            (v2 || v3)
+                && ({
+                    QueueSfx3_Max6(0x1du16, game);
+                    true
+                })
+        });
+    if apply_gravity {
         update_ram_word!(game.eproj_y_vel[v1], |fresh126| (fresh126 as i32 + 16i32)
             as u16);
         if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
@@ -4349,8 +4346,8 @@ pub unsafe fn EprojPreInstr_MotherBrainBomb(k: u16, game: &mut Game) {
         return;
     }
     let v1: i32 = k as i32 >> 1i32;
-    let current_block_19: u64;
-    if ram_word!(game, eproj_F[v1]) != 0 {
+
+    let advance_bomb_phase: bool = if ram_word!(game, eproj_F[v1]) != 0 {
         let v4: i32 = k as i32 >> 1i32;
         let v5: u16 =
             kMotherBrainsBomb_Yaccel[(ram_word!(game, eproj_F[v4]) as i32 >> 1i32) as usize] as u16;
@@ -4378,11 +4375,7 @@ pub unsafe fn EprojPreInstr_MotherBrainBomb(k: u16, game: &mut Game) {
             QueueSfx3_Max6(0x13u16, game);
             return;
         }
-        if MoveMotherBrainBomb(k, v5, game) as i32 & 1i32 != 0 {
-            current_block_19 = 15976848397966268834;
-        } else {
-            current_block_19 = 7175849428784450219;
-        }
+        (MoveMotherBrainBomb(k, v5, game) as i32 & 1i32 != 0)
     } else {
         v2 = (abs16(ram_word!(game, eproj_x_vel[v1])) as i32 - 2i32) as i16;
         if v2 < 0i16 {
@@ -4395,13 +4388,9 @@ pub unsafe fn EprojPreInstr_MotherBrainBomb(k: u16, game: &mut Game) {
                 v2 as i32
             }) as u16
         );
-        if MoveMotherBrainBomb(k, 7u16, game) as i32 & 1i32 != 0 {
-            current_block_19 = 15976848397966268834;
-        } else {
-            current_block_19 = 7175849428784450219;
-        }
-    }
-    if current_block_19 == 15976848397966268834 {
+        (MoveMotherBrainBomb(k, 7u16, game) as i32 & 1i32 != 0)
+    };
+    if advance_bomb_phase {
         let v3: i32 = k as i32 >> 1i32;
         update_ram_word!(game.eproj_F[v3], |fresh82| (fresh82 as i32 + 2i32) as u16);
     };
@@ -5214,25 +5203,25 @@ pub unsafe fn EprojPreInstr_KagosBugs(k: u16, game: &mut Game) {
 }
 static word_86D082: u16 = 0xe0u16;
 pub unsafe fn EprojPreInstr_D0EC(k: u16, game: &mut Game) {
-    let current_block: u64;
+    let reset_vertical_speed: bool;
     EprojPreInstr_KagosBugs_Func1(k, game);
     EprojPreInstr_KagosBugs_Func2(k, game);
     if EprojBlockCollisition_Horiz(k, game) != 0 {
         set_ram_word!(game.eproj_x_vel[(k as i32 >> 1i32)] = 0u16);
-        current_block = 4781832012581146689;
+        reset_vertical_speed = true;
     } else if EprojBlockCollisition_Vertical(k, game) != 0 {
-        current_block = 4781832012581146689;
+        reset_vertical_speed = true;
     } else {
         let v2: u16 = ram_word!(game, eproj_y_vel[(k as i32 >> 1i32)]);
         let v3: bool = ((word_86D082) as i16).wrapping_add((v2) as i16) < 0i16;
         set_ram_word!(game.eproj_y_vel[(k as i32 >> 1i32)] = (word_86D082).wrapping_add(v2));
         if !v3 {
-            current_block = 15427931788582360902;
+            reset_vertical_speed = false;
         } else {
             return;
         }
     }
-    if current_block == 4781832012581146689 {
+    if reset_vertical_speed {
         set_ram_word!(game.eproj_y_vel[(k as i32 >> 1i32)] = 256u16);
     }
     set_ram_word!(game.eproj_pre_instr[(k as i32 >> 1i32)] = ((0x86d128i32) as u16));
@@ -6504,42 +6493,39 @@ static off_86F0AD: [Option<Func_V>; 7] = callback_table! { unsafe Func_V;
 pub unsafe fn EprojPreInstr_Pickup(k: u16, game: &mut Game) {
     let mut v2: u16 = 0;
     let mut v3: u16 = 0;
-    let current_block: u64;
+    let skip_pickup_collision: bool;
     let v1: i32 = k as i32 >> 1i32;
     let fresh53 = EprojStateMut(&mut game.g_ram).add_word(0x1b23, v1 as usize, u16::MAX);
     if (fresh53 != 0) {
-        if CallSomeSamusCode(0xdu16, game) != 0 {
-            if ram_word!(game, eproj_F[v1]) as i32 - 384i32 & 0x8000i32 != 0 {
-                v2 = 0;
-                v3 = 0;
-                v2 = abs16(
-                    (ram_word!(game, eproj_x_pos[v1]) as i32
-                        - ram_word!(game, grapple_beam_end_x_pos) as i32)
-                        as u16,
-                );
-                if v2 as i32 - 16i32 & 0x8000i32 != 0 {
-                    v3 = abs16(
-                        (ram_word!(game, eproj_y_pos[v1]) as i32
-                            - ram_word!(game, grapple_beam_end_y_pos) as i32)
+        skip_pickup_collision = (CallSomeSamusCode(0xdu16, game) != 0)
+            && ((ram_word!(game, eproj_F[v1]) as i32 - 384i32 & 0x8000i32 != 0)
+                && ({
+                    v2 = 0;
+                    v3 = 0;
+                    v2 = abs16(
+                        (ram_word!(game, eproj_x_pos[v1]) as i32
+                            - ram_word!(game, grapple_beam_end_x_pos) as i32)
                             as u16,
                     );
-                    if v3 as i32 - 16i32 & 0x8000i32 != 0 {
-                        off_86F0AD[(ram_word!(game, eproj_E[v1]) as i32 >> 1i32) as usize]
-                            .expect("non-null function pointer")(game);
-                        current_block = 4906268039856690917;
-                    } else {
-                        current_block = 11050875288958768710;
-                    }
-                } else {
-                    current_block = 11050875288958768710;
-                }
-            } else {
-                current_block = 11050875288958768710;
-            }
-        } else {
-            current_block = 11050875288958768710;
-        }
-        if current_block == 4906268039856690917 {
+                    (v2 as i32 - 16i32 & 0x8000i32 != 0)
+                        && ({
+                            v3 = abs16(
+                                (ram_word!(game, eproj_y_pos[v1]) as i32
+                                    - ram_word!(game, grapple_beam_end_y_pos) as i32)
+                                    as u16,
+                            );
+                            (v3 as i32 - 16i32 & 0x8000i32 != 0)
+                                && ({
+                                    off_86F0AD
+                                        [(ram_word!(game, eproj_E[v1]) as i32 >> 1i32) as usize]
+                                        .expect("non-null function pointer")(
+                                        game
+                                    );
+                                    true
+                                })
+                        })
+                }));
+        if skip_pickup_collision {
         } else {
             let v5: i32 = k as i32 >> 1i32;
             let varE20: u16 = EprojState(&game.g_ram).x_radius(v5 as usize) as u16;
@@ -6597,7 +6583,7 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
     let mut v5: u16 = 0;
     let mut v7: *const u8 = null::<u8>();
     let mut i: i32 = 0;
-    let current_block: u64;
+    let update_health_bias: bool;
     let mut v9: i8 = 0;
     let mut r18: u8 = 0;
     let mut r22: u8 = 0;
@@ -6620,25 +6606,19 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
             r24 = 0u16;
             v5 = 0;
             v5 = 1u16;
-            if game
+            update_health_bias = !(game
                 .samus_reserve_health()
                 .wrapping_add(game.samus_health())
-                >= 0x1eu16
-            {
-                if game
+                >= 0x1eu16)
+                || (!(game
                     .samus_reserve_health()
                     .wrapping_add(game.samus_health())
-                    < 0x32u16
-                {
-                    current_block = 4166486009154926805;
-                } else {
-                    v5 = 0u16;
-                    current_block = 5399440093318478209;
-                }
-            } else {
-                current_block = 5399440093318478209;
-            }
-            if current_block == 5399440093318478209 {
+                    < 0x32u16)
+                    && ({
+                        v5 = 0u16;
+                        true
+                    }));
+            if update_health_bias {
                 set_ram_word!(game.health_drop_bias_flag = v5);
             }
             v7 = RomPtr_B4(v2, game);

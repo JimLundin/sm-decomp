@@ -1142,19 +1142,19 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
         update_ram_word!(game.menu_index, wrapping_add(7u16));
         QueueSfx1_Max6(0x37u16, game);
     } else {
-        let current_block_18: u64;
+        let selection_unchanged: bool;
         if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32 {
             v0 = ram_word!(game, eproj_id[15]) as u8;
             loop {
                 v0 = v0.wrapping_sub(1);
                 if ((v0 as i32 & 0x80i32) != 0i32) {
-                    current_block_18 = 1109700713171191020;
+                    selection_unchanged = true;
                     break;
                 }
                 if (kBitShl[v0 as usize] as i32 & ram_word!(game, nonempty_save_slots) as i32)
                     != 0i32
                 {
-                    current_block_18 = 1398313740379482408;
+                    selection_unchanged = false;
                     break;
                 }
             }
@@ -1163,21 +1163,21 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
             loop {
                 v0 = v0.wrapping_add(1);
                 if (((v0) as i8).wrapping_sub(4i8) >= 0i8) {
-                    current_block_18 = 1109700713171191020;
+                    selection_unchanged = true;
                     break;
                 }
                 if v0 == 3u8
                     || (kBitShl[v0 as usize] as i32 & ram_word!(game, nonempty_save_slots) as i32)
                         != 0i32
                 {
-                    current_block_18 = 1398313740379482408;
+                    selection_unchanged = false;
                     break;
                 }
             }
         } else {
-            current_block_18 = 1109700713171191020;
+            selection_unchanged = true;
         }
-        if current_block_18 == 1109700713171191020 {
+        if selection_unchanged {
         } else {
             *((ram_ptr!(game, u16; 0x1997)).offset(15) as *mut u8).offset(0) = v0;
             QueueSfx1_Max6(0x37u16, game);
@@ -1528,19 +1528,19 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
             return;
         }
     } else if ((ram_word!(game, joypad1_newkeys) as i32 & 0x8000i32) == 0i32) {
-        let current_block_18: u64;
+        let selection_unchanged: bool;
         if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32 {
             v1 = ram_word!(game, eproj_id[15]) as u8;
             loop {
                 v1 = v1.wrapping_sub(1);
                 if ((v1 as i32 & 0x80i32) != 0i32) {
-                    current_block_18 = 11307063007268554308;
+                    selection_unchanged = true;
                     break;
                 }
                 if (kBitShl_[v1 as usize] as i32 & ram_word!(game, nonempty_save_slots) as i32)
                     != 0i32
                 {
-                    current_block_18 = 11325801268588962582;
+                    selection_unchanged = false;
                     break;
                 }
             }
@@ -1549,21 +1549,21 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
             loop {
                 v1 = v1.wrapping_add(1);
                 if (((v1) as i8).wrapping_sub(4i8) >= 0i8) {
-                    current_block_18 = 11307063007268554308;
+                    selection_unchanged = true;
                     break;
                 }
                 if v1 == 3u8
                     || (kBitShl_[v1 as usize] as i32 & ram_word!(game, nonempty_save_slots) as i32)
                         != 0i32
                 {
-                    current_block_18 = 11325801268588962582;
+                    selection_unchanged = false;
                     break;
                 }
             }
         } else {
-            current_block_18 = 11307063007268554308;
+            selection_unchanged = true;
         }
-        if current_block_18 == 11307063007268554308 {
+        if selection_unchanged {
         } else {
             *((ram_ptr!(game, u16; 0x1997)).offset(15) as *mut u8).offset(0) = v1;
             *(&raw mut v0 as *mut u8).offset(0) = 55u8;
@@ -1594,7 +1594,7 @@ pub unsafe fn FileSelectMenu_23_FileClearInitConfirm(game: &mut Game) {
     set_ram_word!(game.eproj_id[15] = 0u16);
 }
 pub unsafe fn FileSelectMenu_24_FileClearConfirm(game: &mut Game) {
-    let current_block: u64;
+    let keep_confirming: bool;
     let mut v0: u16 = 0;
     DrawBorderAroundDataClearMode(game);
     DrawMenuSelectionMissile(game);
@@ -1603,22 +1603,22 @@ pub unsafe fn FileSelectMenu_24_FileClearConfirm(game: &mut Game) {
         QueueSfx1_Max6(0x37u16, game);
     } else {
         if (ram_word!(game, joypad1_newkeys) as i32 & 0x8000i32) != 0i32 {
-            current_block = 18062911466027671358;
+            keep_confirming = false;
         } else if ram_word!(game, joypad1_newkeys) as i32
             & (kButton_Start as i32 | kButton_A as i32)
             == 0i32
         {
-            current_block = 504450154722759016;
+            keep_confirming = true;
         } else {
             QueueSfx1_Max6(0x38u16, game);
             if ram_word!(game, eproj_id[15]) != 0 {
-                current_block = 18062911466027671358;
+                keep_confirming = false;
             } else {
                 update_ram_word!(game.menu_index, wrapping_add(1));
                 return;
             }
         }
-        if current_block == 504450154722759016 {
+        if keep_confirming {
         } else {
             update_ram_word!(game.menu_index, wrapping_sub(2u16));
             set_ram_word!(game.eproj_id[15] = ram_word!(game, eproj_id[16]));
@@ -1677,26 +1677,22 @@ pub unsafe fn FileSelectMenu_25_FileClearDoClear(game: &mut Game) {
 pub unsafe fn FileSelectMenu_26_ClearCompleted(game: &mut Game) {
     DrawBorderAroundDataClearMode(game);
     if ram_word!(game, joypad1_newkeys) != 0 {
-        let current_block_7: u64;
+        let use_first_slot: bool;
         QueueSfx1_Max6(0x37u16, game);
         update_ram_word!(game.menu_index, wrapping_add(1));
         if (LoadFromSram(0u16, game) != 0) {
-            if LoadFromSram(1u16, game) != 0 {
-                if LoadFromSram(2u16, game) != 0 {
-                    current_block_7 = 17037298857681653719;
-                } else {
-                    set_ram_word!(game.selected_save_slot = 2u16);
-                    current_block_7 = 1394248824506584008;
-                }
+            use_first_slot = if LoadFromSram(1u16, game) != 0 {
+                (LoadFromSram(2u16, game) != 0)
+                    || ({
+                        set_ram_word!(game.selected_save_slot = 2u16);
+                        false
+                    })
             } else {
                 set_ram_word!(game.selected_save_slot = 1u16);
-                current_block_7 = 1394248824506584008;
-            }
-            match current_block_7 {
-                17037298857681653719 => {}
-                _ => {
-                    return;
-                }
+                false
+            };
+            if !(use_first_slot) {
+                return;
             }
         }
         set_ram_word!(game.selected_save_slot = 0u16);
@@ -2015,7 +2011,7 @@ pub unsafe fn DrawFileSelectionTime(a: u16, k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
-    let current_block: u64;
+    let selection_unchanged: bool;
     let mut v0: i16 = 0;
     let mut v1: u16 = 0;
     let mut v2: u16 = 0;
@@ -2026,55 +2022,53 @@ pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
     DrawFileSelectSlotSamusHelmet(6u16, game);
     DrawFileSelectSlotSamusHelmet(8u16, game);
     if ram_word!(game, joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) == 0i32 {
-        if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32 {
-            if ram_word!(game, nonempty_save_slots) != 0 {
-                v1 = (ram_word!(game, selected_save_slot)).wrapping_sub(1u16);
-                if ((ram_word!(game, selected_save_slot)) as i16).wrapping_sub(1i16) < 0i16 {
-                    v1 = 5u16;
-                }
-            } else {
-                v1 = (ram_word!(game, selected_save_slot)).wrapping_sub(1u16);
-                if ((ram_word!(game, selected_save_slot)) as i16).wrapping_sub(1i16) >= 0i16 {
-                    if ram_word!(game, selected_save_slot) as i32 - 5i32 & 0x8000i32 == 0 {
-                        v1 = 2u16;
+        selection_unchanged =
+            if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32 {
+                if ram_word!(game, nonempty_save_slots) != 0 {
+                    v1 = (ram_word!(game, selected_save_slot)).wrapping_sub(1u16);
+                    if ((ram_word!(game, selected_save_slot)) as i16).wrapping_sub(1i16) < 0i16 {
+                        v1 = 5u16;
                     }
                 } else {
-                    v1 = 5u16;
-                }
-            }
-            set_ram_word!(game.selected_save_slot = v1);
-            current_block = 14136749492126903395;
-        } else if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Down as i32) == 0i32 {
-            if (ram_word!(game, joypad1_newkeys) as i32 & kButton_B as i32) != 0i32 {
-                QueueSfx1_Max6(0x37u16, game);
-                set_ram_word!(game.menu_index = 33u16);
-                QueueSfx1_Max6(0x37u16, game);
-            }
-            current_block = 8908889263641380247;
-        } else {
-            if ram_word!(game, nonempty_save_slots) != 0 {
-                v2 = (ram_word!(game, selected_save_slot)).wrapping_add(1u16);
-                if ram_word!(game, selected_save_slot) as i32 - 5i32 & 0x8000i32 == 0 {
-                    v2 = 0u16;
-                }
-            } else {
-                v2 = (ram_word!(game, selected_save_slot)).wrapping_add(1u16);
-                if ram_word!(game, selected_save_slot) as i32 - 2i32 & 0x8000i32 == 0 {
-                    if ram_word!(game, selected_save_slot) as i32 - 5i32 & 0x8000i32 != 0 {
-                        v2 = 5u16;
+                    v1 = (ram_word!(game, selected_save_slot)).wrapping_sub(1u16);
+                    if ((ram_word!(game, selected_save_slot)) as i16).wrapping_sub(1i16) >= 0i16 {
+                        if ram_word!(game, selected_save_slot) as i32 - 5i32 & 0x8000i32 == 0 {
+                            v1 = 2u16;
+                        }
                     } else {
-                        v2 = 0u16;
+                        v1 = 5u16;
                     }
                 }
-            }
-            set_ram_word!(game.selected_save_slot = v2);
-            current_block = 14136749492126903395;
-        }
-        match current_block {
-            8908889263641380247 => {}
-            _ => {
-                QueueSfx1_Max6(0x37u16, game);
-            }
+                set_ram_word!(game.selected_save_slot = v1);
+                false
+            } else if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Down as i32) == 0i32 {
+                if (ram_word!(game, joypad1_newkeys) as i32 & kButton_B as i32) != 0i32 {
+                    QueueSfx1_Max6(0x37u16, game);
+                    set_ram_word!(game.menu_index = 33u16);
+                    QueueSfx1_Max6(0x37u16, game);
+                }
+                true
+            } else {
+                if ram_word!(game, nonempty_save_slots) != 0 {
+                    v2 = (ram_word!(game, selected_save_slot)).wrapping_add(1u16);
+                    if ram_word!(game, selected_save_slot) as i32 - 5i32 & 0x8000i32 == 0 {
+                        v2 = 0u16;
+                    }
+                } else {
+                    v2 = (ram_word!(game, selected_save_slot)).wrapping_add(1u16);
+                    if ram_word!(game, selected_save_slot) as i32 - 2i32 & 0x8000i32 == 0 {
+                        if ram_word!(game, selected_save_slot) as i32 - 5i32 & 0x8000i32 != 0 {
+                            v2 = 5u16;
+                        } else {
+                            v2 = 0u16;
+                        }
+                    }
+                }
+                set_ram_word!(game.selected_save_slot = v2);
+                false
+            };
+        if !(selection_unchanged) {
+            QueueSfx1_Max6(0x37u16, game);
         }
     } else {
         v0 = ram_word!(game, selected_save_slot) as i16;

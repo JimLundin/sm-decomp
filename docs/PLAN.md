@@ -31,6 +31,29 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Two-state generated control flow (2026-10-20): all 106 eligible local
+discriminators across 104 functions now use named Boolean decisions.
+The complete 399 literal assignments and 106 comparisons/match reads retain
+their finite mapping; 95 decision trees fold with original short-circuit
+and effect order, 62 declarations merge at their sole assignment site,
+and 13 Boolean matches become direct if expressions. All 47 multistate
+locals and every unselected function remain exact. No helper is added.
+Independent full-source/staged-AST reconstruction and lifetime/type review
+pass, including macro internals, discarded unit values and Copy temporaries.
+All 399 mapping cases and 4178 opaque-condition/effect traces pass; parsed
+mutations detect 4178 result inversions, 47 reorders and 81 effect deletions.
+These checks establish transformation/order equivalence, not new route coverage.
+Net Rust lines -357, to 134177; total deletion across the three commits is
+1248 lines. The cast-line metric rises four through formatting; all 15773
+source as-i32 spellings remain. Other progress counters are unchanged.
+
+Shared C-library/RAM/control verification on the register/numeric composition
+passes normal release (22.72s), formatting/check, progress and
+full any% 129712/0 (105.19s), native exit 0. All 77 final
+source/config/host inputs and 102 replay/proof pins remain fixed. This is
+combined verification for all three focused commits. Any% provides core
+integration coverage; broader routes, alias safety and boot-to-credits remain open.
+
 Adjacent RAM literal stores (2026-10-20): one caller-side macro shares
 all 486 eligible runs, comprising 1692 stores with 50 exact u16 literal
 spellings and 409 indexed stores across 25 callers. Each setter, index and

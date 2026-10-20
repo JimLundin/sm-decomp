@@ -558,23 +558,15 @@ pub unsafe fn BrinstarYellowPipeBug_Func_1(game: &mut Game) {
     let mut v2: i16 = 0;
     let mut SamusEnemyDelta_X: i16 = 0;
     let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
-    let current_block_6: u64;
-    if (*E).pbg_parameter_1 != 0 {
+
+    let samus_in_x_range: bool = if (*E).pbg_parameter_1 != 0 {
         SamusEnemyDelta_X = GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as i16;
-        if SamusEnemyDelta_X < 0i16 && SamusEnemyDelta_X as i32 + 192i32 & 0x8000i32 == 0 {
-            current_block_6 = 1628911311613519252;
-        } else {
-            current_block_6 = 2868539653012386629;
-        }
+        (SamusEnemyDelta_X < 0i16 && SamusEnemyDelta_X as i32 + 192i32 & 0x8000i32 == 0)
     } else {
         v2 = GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as i16;
-        if v2 >= 0i16 && v2 as i32 - 192i32 & 0x8000i32 != 0 {
-            current_block_6 = 1628911311613519252;
-        } else {
-            current_block_6 = 2868539653012386629;
-        }
-    }
-    if current_block_6 == 1628911311613519252
+        (v2 >= 0i16 && v2 as i32 - 192i32 & 0x8000i32 != 0)
+    };
+    if samus_in_x_range
         && IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x30u16, game) != 0
     {
         (*E).base.properties =

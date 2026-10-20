@@ -1367,27 +1367,23 @@ pub unsafe fn FakeKraid_Func_1(k: u16, j: u16, game: &mut Game) {
     };
 }
 pub unsafe fn FakeKraid_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let current_block: u64;
     let E: *mut Enemy_FakeKraid = Get_FakeKraid(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).fkd_var_E != 0 {
         (*E).fkd_var_E = (*E).fkd_var_E.wrapping_sub(1);
     }
     let fresh1 = (*E).fkd_var_D;
     (*E).fkd_var_D = (*E).fkd_var_D.wrapping_sub(1);
-    if fresh1 == 1u16 {
+    let reverse_direction: bool = if fresh1 == 1u16 {
         (*E).fkd_var_D = ((ram_word!(game, random_number) as i32 & 3i32) + 7i32) as u16;
-        current_block = 6873731126896040597;
-    } else if Enemy_MoveRight_IgnoreSlopes(
-        ram_word!(game, cur_enemy_index),
-        ((*E).fkd_var_B as i16 as i32) << 16i32,
-        game,
-    ) == 0
-    {
-        current_block = 7288802866200656202;
+        true
     } else {
-        current_block = 6873731126896040597;
-    }
-    if current_block == 6873731126896040597 {
+        !(Enemy_MoveRight_IgnoreSlopes(
+            ram_word!(game, cur_enemy_index),
+            ((*E).fkd_var_B as i16 as i32) << 16i32,
+            game,
+        ) == 0)
+    };
+    if reverse_direction {
         (*E).fkd_var_B = -((*E).fkd_var_B as i32) as u16;
     }
     (*E).fkd_var_C = -4i32 as u16;
@@ -2257,24 +2253,21 @@ pub unsafe fn Ridley_Func_2(game: &mut Game) {
     Ridley_Hurt(game);
 }
 pub unsafe fn Ridley_Hurt(game: &mut Game) {
-    let current_block: u64;
     let E: *mut Enemy_Ridley = Get_Ridley(0i32, game);
-    if ((*E).base.frame_counter as i32 & 1i32) == 0i32 {
-        Ridley_Func_39(game);
-        Ridley_Func_42(game);
-        CallRidleyFunc((((*E).ridley_var_A) as u32) | (0xa60000u32), game);
-        if (*Get_Ridley(0i32, game)).ridley_var_02 == 0 {
-            current_block = 18350095613861854843;
-        } else {
-            Ridley_Func_112(game);
-            Ridley_Func_115(game);
-            Ridley_Func_70(game);
-            current_block = 13513818773234778473;
-        }
-    } else {
-        current_block = 13513818773234778473;
-    }
-    if current_block == 13513818773234778473 {
+    let update_hurt_animation: bool = !(((*E).base.frame_counter as i32 & 1i32) == 0i32)
+        || ({
+            Ridley_Func_39(game);
+            Ridley_Func_42(game);
+            CallRidleyFunc((((*E).ridley_var_A) as u32) | (0xa60000u32), game);
+            !((*Get_Ridley(0i32, game)).ridley_var_02 == 0)
+                && ({
+                    Ridley_Func_112(game);
+                    Ridley_Func_115(game);
+                    Ridley_Func_70(game);
+                    true
+                })
+        });
+    if update_hurt_animation {
         Ridley_Func_129(game);
         Ridley_Func_102(game);
         sub_A6DB2A(game);
@@ -2360,31 +2353,26 @@ pub unsafe fn Ridley_Func_6(game: &mut Game) {
         w: 0,
         h: 0,
     };
-    let current_block: u64;
+
     let E: *mut Enemy_Ridley = Get_Ridley(0i32, game);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
-    if ((*E).ridley_var_F as i32 & 0x8000i32) != 0i32 {
-        current_block = 10433200308384073363;
-    } else {
-        v2 = 0;
-        v2 = 192u16;
-        if (*E).ridley_var_10 != 0 {
-            v2 = 96u16;
-        }
-        rect = Rect16U {
-            x: v2,
-            y: 256u16,
-            w: 8u16,
-            h: 8u16,
-        };
-        Ridley_Func_104_0(0u16, Ridley_Func_7(game), rect.x, rect.y, game);
-        if Shitroid_Func_2(0u16, rect, game) == 0 {
-            current_block = 10433200308384073363;
-        } else {
-            current_block = 11006700562992250127;
-        }
-    }
-    if current_block == 10433200308384073363 {
+    let change_ridley_state: bool = (((*E).ridley_var_F as i32 & 0x8000i32) != 0i32)
+        || ({
+            v2 = 0;
+            v2 = 192u16;
+            if (*E).ridley_var_10 != 0 {
+                v2 = 96u16;
+            }
+            rect = Rect16U {
+                x: v2,
+                y: 256u16,
+                w: 8u16,
+                h: 8u16,
+            };
+            Ridley_Func_104_0(0u16, Ridley_Func_7(game), rect.x, rect.y, game);
+            (Shitroid_Func_2(0u16, rect, game) == 0)
+        });
+    if change_ridley_state {
         (*E).ridley_var_A = ((0xa6b321i32) as u16);
     };
 }
@@ -4969,23 +4957,15 @@ pub unsafe fn Ridley_Func_111(mut r18: u16, r20: u16, r22: u16, game: &mut Game)
         }
     }
     let mut v3: u16 = 0;
-    let current_block_13: u64;
-    if (r18 as i32 & 0x8000i32) != 0i32 {
+
+    let use_target_angle: bool = if (r18 as i32 & 0x8000i32) != 0i32 {
         v3 = ((*E).ridley_var_0A).wrapping_add(r18);
-        if v3 as i32 - r20 as i32 & 0x8000i32 != 0 {
-            current_block_13 = 872684080230000114;
-        } else {
-            current_block_13 = 12039483399334584727;
-        }
+        (v3 as i32 - r20 as i32 & 0x8000i32 != 0)
     } else {
         v3 = ((*E).ridley_var_0A).wrapping_add(r18);
-        if v3 as i32 - r20 as i32 & 0x8000i32 == 0 {
-            current_block_13 = 872684080230000114;
-        } else {
-            current_block_13 = 12039483399334584727;
-        }
-    }
-    if current_block_13 == 872684080230000114 {
+        (v3 as i32 - r20 as i32 & 0x8000i32 == 0)
+    };
+    if use_target_angle {
         v3 = r20;
     }
     (*E).ridley_var_0A = v3;
@@ -5062,25 +5042,24 @@ pub unsafe fn Ridley_Func_113(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_114(game: &mut Game) {
-    let current_block: u64;
     let E: *mut Enemy_Ridley = Get_Ridley(0i32, game);
     let ridley_var_10: u16 = (*E).ridley_var_10;
     let mut v2: u16 = 0;
-    if ridley_var_10 == 0 {
+    let change_instruction: bool = if ridley_var_10 == 0 {
         if *((&raw mut (*E).base.enemy_ptr as *mut u8).offset(1) as *mut i16) < 0i16 {
             return;
         }
         v2 = addr_kRidley_Ilist_E6F0 as u16;
-        current_block = 16875472102381009524;
-    } else if ridley_var_10 != 1u16
-        && *((&raw mut (*E).base.enemy_ptr as *mut u8).offset(1) as *mut i16) < 0i16
-    {
-        v2 = addr_kRidley_Ilist_E706 as u16;
-        current_block = 16875472102381009524;
+        true
     } else {
-        current_block = 14523784380283086299;
-    }
-    if current_block == 16875472102381009524 {
+        (ridley_var_10 != 1u16
+            && *((&raw mut (*E).base.enemy_ptr as *mut u8).offset(1) as *mut i16) < 0i16)
+            && ({
+                v2 = addr_kRidley_Ilist_E706 as u16;
+                true
+            })
+    };
+    if change_instruction {
         (*E).base.current_instruction = v2;
         (*E).base.instruction_timer = 2u16;
         (*E).base.timer = 0u16;
@@ -5274,37 +5253,36 @@ pub unsafe fn CallBabyMetroidInstr(ea: u32, k: u16, game: &mut Game) -> u16 {
     }
 }
 unsafe fn BabyMetroid_DBCB_DoubleRetEx(a: u16, game: &mut Game) -> i32 {
-    let mut current_block: u64;
+    let mut execute_instruction: bool;
     let st: *mut BabyMetroidExecState = ram_ptr!(game, BabyMetroidExecState; a as isize);
     if ((*st).ip as i32 & 0x8000i32) == 0i32 {
         return -1i32;
     }
     let mut v2: u16 = (*st).ip;
     let mut v3: *const u16 = RomPtr_A6(v2, game) as *mut u16;
-    if *v3.offset(0) as i32 & 0x8000i32 != 0 {
-        current_block = 14076424727262896545;
-    } else {
-        if (*st).timer != *v3.offset(0) {
-            (*st).timer = (*st).timer.wrapping_add(1);
-            return *v3.offset(1) as i32;
-        }
-        v2 = (v2).wrapping_add(4u16);
-        current_block = 6937071982253665452;
-    }
+    execute_instruction = (*v3.offset(0) as i32 & 0x8000i32 != 0)
+        || ({
+            if (*st).timer != *v3.offset(0) {
+                (*st).timer = (*st).timer.wrapping_add(1);
+                return *v3.offset(1) as i32;
+            }
+            v2 = (v2).wrapping_add(4u16);
+            false
+        });
     loop {
-        if current_block == 14076424727262896545 {
+        if execute_instruction {
             v2 = CallBabyMetroidInstr(
                 ((*v3.offset(0)) as u32) | (0xa60000u32),
                 (v2).wrapping_add(2u16),
                 game,
             );
-            current_block = 6937071982253665452;
+            execute_instruction = false;
         } else {
             v3 = RomPtr_A6(v2, game) as *mut u16;
             if *v3.offset(0) as i32 & 0x8000i32 == 0 {
                 break;
             } else {
-                current_block = 14076424727262896545;
+                execute_instruction = true;
             }
         }
     }
