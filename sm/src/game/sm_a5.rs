@@ -151,37 +151,7 @@ unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
 }
 crate::game::constants::typed_constants! { i32;
     fnSamus_ScrollFinishedHook_SporeSpawnFight = 0x909589, fnGrappleBeam_Func2 = 0x9bc8c5,
-    fnnullsub_169_A5 = 0xa5804b, fnDraygon_Func_1 = 0xa5871b,
-    fnDraygon_Func_2 = 0xa5878b, fnDraygon_Func_4 = 0xa587f4,
-    fnDraygon_Func_6 = 0xa588b1, fnDraygon_Func_8 = 0xa58922,
-    fnDraygon_Func_9 = 0xa58951, fnDraygon_Func_10 = 0xa589b3,
-    fnDraygon_Func_11 = 0xa58a00, fnDraygon_Func_12 = 0xa58a50,
-    fnDraygon_Func_13 = 0xa58a90, fnDraygon_Func_14 = 0xa58b0a,
-    fnDraygon_Func_15 = 0xa58b52, fnDraygon_Func_16 = 0xa58bae,
-    fnDraygon_Func_17 = 0xa58c33, fnDraygon_Func_18 = 0xa58c8e,
-    fnDraygon_Func_19 = 0xa58cd4, fnDraygon_Func_20 = 0xa58d30,
-    fnDraygon_Func_21 = 0xa58db2, fnDraygon_Func_22 = 0xa58e19,
-    fnDraygon_Func_23 = 0xa58f10, fnDraygon_Func_24 = 0xa58f1e,
-    fnDraygon_Func_25 = 0xa58fd6, fnDraygon_Func_26 = 0xa590d4,
-    fnDraygon_Func_27 = 0xa59105, fnDraygon_Func_28 = 0xa59124,
-    fnDraygon_Func_29 = 0xa59128, fnDraygon_Func_30 = 0xa59154,
-    fnDraygon_Func_31 = 0xa59185, fnDraygon_Func_32 = 0xa59294,
-    fnDraygon_Func_33 = 0xa592ab, fnDraygon_Func_36 = 0xa59342,
-}
-crate::game::constants::typed_constants! { u32;
-    fnDraygon_Func_48 = 10863757, fnDraygon_Func_49 = 10863891,
-}
-crate::game::constants::typed_constants! { i32;
-    fnnullsub_223 = 0xa5eb1a,
-}
-crate::game::constants::typed_constants! { u32;
-    fnSporeSpawn_Func_1 = 10873627,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSporeSpawn_Func_2 = 0xa5eb52,
-}
-crate::game::constants::typed_constants! { u32;
-    fnSporeSpawn_Func_3 = 10873755, fnSporeSpawn_Func_4 = 10873838,
+    fnDraygon_Func_36 = 0xa59342,
 }
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];

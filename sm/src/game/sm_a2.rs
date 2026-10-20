@@ -550,30 +550,7 @@ crate::ram_map::ram_pointer_functions! {
 crate::game::constants::typed_constants! { i32;
     fnSamus_FrameHandlerAlfa_Func11 = 0x90e695, fnSamus_FrameHandlerBeta_Func17 = 0x90e725,
     fnMiniCrocomire_PreInstr5 = 0xa28a43, fnMiniCrocomire_PreInstr6 = 0xa28a5c,
-    fnnullsub_175 = 0xa28a75, fnMaridiaBeybladeTurtle_Func1 = 0xa28dd8,
-}
-crate::game::constants::typed_constants! { u32;
-    fnnullsub_360 = 10653193,
-}
-crate::game::constants::typed_constants! { i32;
-    fnMaridiaBeybladeTurtle_Func2 = 0xa28e0a, fnMaridiaBeybladeTurtle_Func3 = 0xa28ee0,
-    fnMaridiaBeybladeTurtle_Func5 = 0xa28f3f, fnMaridiaBeybladeTurtle_Func7 = 0xa28f8d,
-    fnMaridiaBeybladeTurtle_Func8 = 0xa28feb, fnMaridiaBeybladeTurtle_Func9 = 0xa29083,
-    fnMaridiaBeybladeTurtle_Func10 = 0xa290cc, fnMaridiaBeybladeTurtle_Func11 = 0xa290e1,
-    fnMiniMaridiaBeybladeTurtle_Func1 = 0xa29142, fnMiniMaridiaBeybladeTurtle_Func2 = 0xa2916e,
-    fnMiniMaridiaBeybladeTurtle_Func3 = 0xa29198, fnMiniMaridiaBeybladeTurtle_Func4 = 0xa291f8,
-    fnMiniMaridiaBeybladeTurtle_Func6 = 0xa29239, fnMiniMaridiaBeybladeTurtle_Func7 = 0xa2925e,
-    fnThinHoppingBlobs_Func6 = 0xa29b65, fnThinHoppingBlobs_Func7 = 0xa29b81,
-}
-crate::game::constants::typed_constants! { u32;
-    fnThinHoppingBlobs_Func11 = 10657035, fnThinHoppingBlobs_Func12 = 10657067,
-    fnThinHoppingBlobs_Func13 = 10657099, fnThinHoppingBlobs_Func14 = 10657131,
-}
-crate::game::constants::typed_constants! { i32;
-    fnThinHoppingBlobs_Func15 = 0xa29d98,
-}
-crate::game::constants::typed_constants! { u32;
-    fnThinHoppingBlobs_Func16 = 10657229,
+    fnnullsub_175 = 0xa28a75,
 }
 crate::game::constants::typed_constants! { i32;
     fnSpikeShootingPlant_2 = 0xa29fba, fnSpikeShootingPlant_3 = 0xa29fec,
@@ -589,13 +566,8 @@ crate::game::constants::typed_constants! { i32;
     fnGunshipTop_19 = 0xa2acd7, fnGunshipTop_20 = 0xa2ad0e,
     fnGunshipTop_21 = 0xa2ad2d, fnFlies_4 = 0xa2b14e,
     fnFlies_5 = 0xa2b17c, fnFlies_6 = 0xa2b1aa,
-    fnFlies_7 = 0xa2b1d2, fnLavaquakeRocks_1 = 0xa2b596,
-    fnLavaquakeRocks_2 = 0xa2b5b2, fnLavaquakeRocks_3 = 0xa2b5ea,
-    fnRinka_3 = 0xa2b7df, fnRinka_4 = 0xa2b844,
-    fnRinka_5 = 0xa2b852, fnRinka_B85B = 0xa2b85b,
-    fnRio_1 = 0xa2bbed, fnRio_2 = 0xa2bc32,
-    fnRio_3 = 0xa2bc48, fnRio_4 = 0xa2bcb7,
-    fnRio_5 = 0xa2bcff, fnNorfairLavajumpingEnemy_Func_1 = 0xa2bedc,
+    fnFlies_7 = 0xa2b1d2,
+    fnNorfairLavajumpingEnemy_Func_1 = 0xa2bedc,
     fnNorfairLavajumpingEnemy_Func_2 = 0xa2bf1a, fnNorfairLavajumpingEnemy_Func_3 = 0xa2bf3e,
     fnNorfairLavajumpingEnemy_Func_4 = 0xa2bf7c, fnNorfairLavajumpingEnemy_Func_5 = 0xa2bfbc,
     fnNorfairRio_Func_1 = 0xa2c281, fnNorfairRio_Func_2 = 0xa2c2e7,
@@ -604,28 +576,12 @@ crate::game::constants::typed_constants! { i32;
     fnLowerNorfairRio_Func_1 = 0xa2c72e, fnLowerNorfairRio_Func_2 = 0xa2c771,
     fnLowerNorfairRio_Func_3 = 0xa2c7bb, fnLowerNorfairRio_Func_4 = 0xa2c7d6,
     fnLowerNorfairRio_Func_5 = 0xa2c82d, fnLowerNorfairRio_Func_6 = 0xa2c888,
-    fnMaridiaLargeSnail_Func_4 = 0xa2cde6, fnMaridiaLargeSnail_Func_5 = 0xa2ce2b,
-    fnMaridiaLargeSnail_Func_6 = 0xa2cf40, fnMaridiaLargeSnail_Func_7 = 0xa2cf66,
-    fnMaridiaLargeSnail_Func_8 = 0xa2cfa9, fnHirisingSlowfalling_Func_4 = 0xa2e035,
-    fnHirisingSlowfalling_Func_5 = 0xa2e04f, fnHirisingSlowfalling_Func_6 = 0xa2e06a,
-    fnHirisingSlowfalling_Func_7 = 0xa2e0cd, fnLavaSeahorse_Func_1 = 0xa2e654,
+    fnMaridiaLargeSnail_Func_7 = 0xa2cf66,
+    fnMaridiaLargeSnail_Func_8 = 0xa2cfa9,
+    fnLavaSeahorse_Func_1 = 0xa2e654,
     fnLavaSeahorse_Func_2 = 0xa2e6ad, fnLavaSeahorse_Func_3 = 0xa2e6f1,
     fnLavaSeahorse_Func_4 = 0xa2e734, fnLavaSeahorse_Func_5 = 0xa2e749,
     fnnullsub_196 = 0xa2e781,
-}
-crate::game::constants::typed_constants! { u32;
-    fnTimedShutter_Func_1 = 10676925, fnTimedShutter_Func_2 = 10676945,
-    fnTimedShutter_Func_3 = 10676967, fnTimedShutter_Func_4 = 10676989,
-}
-crate::game::constants::typed_constants! { i32;
-    fnTimedShutter_Func_5 = 0xa2eb11, fnTimedShutter_Func_10 = 0xa2ec13,
-    fnRisingFallingPlatform_Func_2 = 0xa2ef09, fnRisingFallingPlatform_Func_4 = 0xa2ef28,
-    fnRisingFallingPlatform_Func_9 = 0xa2ef68, fnRisingFallingPlatform_Func_10 = 0xa2efd4,
-    fnRisingFallingPlatform_Func_11 = 0xa2f040, fnRisingFallingPlatform_Func_12 = 0xa2f072,
-    fnRisingFallingPlatform_Func_13 = 0xa2f099, fnHorizontalShootableShutter_Func_2 = 0xa2f224,
-    fnHorizontalShootableShutter_Func_4 = 0xa2f243, fnHorizontalShootableShutter_Func_8 = 0xa2f272,
-    fnHorizontalShootableShutter_Func_9 = 0xa2f2e4, fnHorizontalShootableShutter_Func_12 = 0xa2f38c,
-    fnHorizontalShootableShutter_Func_13 = 0xa2f3b0, fnHorizontalShootableShutter_Func_14 = 0xa2f3d4,
 }
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];

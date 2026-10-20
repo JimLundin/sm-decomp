@@ -24,11 +24,6 @@ pub use crate::types::{
     Ram4000_Backups,
 };
 const RomPtr_85: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x85>;
-crate::game::constants::typed_constants! { u32;
-    fnWriteLargeMessageBoxTilemap = 8749658, fnWriteSmallMessageBoxTilemap = 8749705,
-    fnDrawShootButtonAndSetupPpuForLargeMessageBox = 8750021, fnDrawRunButtonAndSetupPpuForLargeMessageBox = 8750028,
-    fnSetupPpuForSmallMessageBox = 8750134, fnSetupPpuForLargeMessageBox = 8750145,
-}
 
 static kMsgBoxSpecialButtonTilemapOffs: [u16; 27] = [
     0, 0x12a, 0x12a, 0x12c, 0x12c, 0x12c, 0, 0, 0, 0, 0, 0, 0x120, 0, 0, 0, 0, 0, 0x12a, 0, 0, 0,

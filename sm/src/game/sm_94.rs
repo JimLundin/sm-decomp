@@ -58,9 +58,6 @@ unsafe fn get_DoorDef(a: u16, game: &mut Game) -> *mut DoorDef {
 crate::game::constants::typed_constants! { i32;
     fnDoorTransitionFunction_HandleElevator = 0x82e17d,
 }
-crate::game::constants::typed_constants! { u32;
-    fnGrappleInstr_Goto = 9744628,
-}
 crate::game::constants::typed_constants! { i32;
     fnGrappleBeam_Func2 = 0x9bc8c5,
 }

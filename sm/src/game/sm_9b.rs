@@ -50,28 +50,13 @@ crate::game::constants::typed_constants! { i32;
     fnSamus_MoveHandler_ReleaseFromGrapple = 0x90946e, fnSamus_MovementHandler_Normal = 0x90a337,
     fnSamusDrawHandler_Default = 0x90eb52, fnsub_90EB86 = 0x90eb86,
 }
-crate::game::constants::typed_constants! { u32;
-    fnGrappleNext_SwingClockwise = 10205657, fnGrappleNext_SwingAntiClockwise = 10205666,
-    fnGrappleNext_StandAimRight = 10205674, fnGrappleNext_StandAimDownRight = 10205683,
-    fnGrappleNext_StandAimDownLeft = 10205692, fnGrappleNext_StandAimLeft = 10205701,
-    fnGrappleNext_CrouchAimRight = 10205710, fnGrappleNext_CrouchAimDownRight = 10205719,
-    fnGrappleNext_CrouchAimDownLeft = 10205728, fnGrappleNext_CrouchAimLeft = 10205737,
-    fnGrappleBeamFunc_BB64 = 10206052, fnGrappleBeamFunc_BC1F = 10206239,
-    fnGrappleBeamFunc_BCFF = 10206463, fnGrappleBeamFunc_BD44 = 10206532,
-    fnGrappleBeamFunc_BD95 = 10206613, fnGrappleBeamFunc_BE98 = 10206872,
-    fnGrappleBeamFunc_BEEB = 10206955, fnGrappleBeamFunc_BF1B = 10207003,
-}
 crate::game::constants::typed_constants! { i32;
-    fnGrappleBeamFunc_Inactive = 0x9bc4f0, fnGrappleBeamFunc_FireGoToCancel = 0x9bc51e,
+    fnGrappleBeamFunc_Inactive = 0x9bc4f0,
     fnGrappleBeamFunc_Firing = 0x9bc703, fnGrappleBeamFunc_ConnectedLockedInPlace = 0x9bc77e,
 }
-crate::game::constants::typed_constants! { u32;
-    fnGrappleBeamFunc_Connected_Swinging = 10209181, fnGrappleBeamFunc_Wallgrab = 10209300,
-}
 crate::game::constants::typed_constants! { i32;
-    fnGrappleBeamFunc_C832 = 0x9bc832, fnGrappleBeamFunc_Cancel = 0x9bc856,
-    fnGrappleBeam_Func2 = 0x9bc8c5, fnGrappleBeamFunc_C9CE = 0x9bc9ce,
-    fnGrappleBeamFunc_ReleaseFromSwing = 0x9bcb8b,
+    fnGrappleBeamFunc_Cancel = 0x9bc856,
+    fnGrappleBeam_Func2 = 0x9bc8c5,
 }
 static kDeathAnimationFrames: [u8; 28] = [
     5, 5, 5, 5, 1, 5, 5, 0, 1, 0, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5,

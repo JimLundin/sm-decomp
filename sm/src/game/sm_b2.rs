@@ -82,45 +82,6 @@ unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
 unsafe fn get_Vulnerability(a: u16, game: &mut Game) -> *mut Vulnerability {
     RomPtr((0xb40000u32) | ((a) as u32), game) as *mut Vulnerability
 }
-crate::game::constants::typed_constants! { i32;
-    fnnullsub_169_B2 = 0xb2804b, fnSpacePirates_Func_1 = 0xb2f034,
-}
-crate::game::constants::typed_constants! { u32;
-    fnnullsub_279 = 11726927, fnSpacePirates_Func_2 = 11726928,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSpacePirates_Func_3 = 0xb2f0c8,
-}
-crate::game::constants::typed_constants! { u32;
-    fnnullsub_281 = 11727075, fnSpacePirates_Func_4 = 11727076,
-    fnSpacePirates_Func_5 = 11728553, fnSpacePirates_Func_6 = 11728612,
-    fnSpacePirates_Func_11 = 11728919,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSpacePirates_Func_12 = 0xb2f84c,
-}
-crate::game::constants::typed_constants! { u32;
-    fnSpacePirates_Func_13 = 11729040,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSpacePirates_Func_14 = 0xb2f8c5,
-}
-crate::game::constants::typed_constants! { u32;
-    fnSpacePirates_Func_15 = 11729161, fnSpacePirates_F985 = 11729285,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSpacePirates_F9C1 = 0xb2f9c1, fnSpacePirates_FA15 = 0xb2fa15,
-}
-crate::game::constants::typed_constants! { u32;
-    fnSpacePirates_FA59 = 11729497,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSpacePirates_FA95 = 0xb2fa95, fnSpacePirates_FAE9 = 0xb2fae9,
-}
-crate::game::constants::typed_constants! { u32;
-    fnWalkingSpacePirates_FD44 = 11730244, fnWalkingSpacePirates_FDCE = 11730382,
-    fnnullsub_282 = 11730506,
-}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_SpacePirates(o: i32) -> Enemy_SpacePirates = [0xf78, o as isize];

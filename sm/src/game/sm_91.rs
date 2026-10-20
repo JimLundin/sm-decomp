@@ -141,37 +141,13 @@ crate::game::constants::typed_constants! { i32;
     fnnullsub_152 = 0x90e90e, fnSamus_InputHandler_E913 = 0x90e913,
     fnSamus_Func20_ = 0x90e918, fnSamus_InputHandler_E91D = 0x90e91d,
     fnHandleAutoJumpHack = 0x90e926, fnSamusMovementType_Xray = 0x90e94f,
-    fnSamusDrawHandler_Default = 0x90eb52, fnSamus_InputHandler = 0x918000,
-    fnDemoPreInstr_nullsub_162 = 0x9183bf,
-}
-crate::game::constants::typed_constants! { u32;
-    fnDemoInstr_Finish = 9536551, fnDemoInstr_SetPreInstr = 9536564,
-    fnDemoInstr_ClearPreInstr = 9536575, fnDemoInstr_Goto = 9536584,
-    fnDemoInstr_DecTimerAndGoto = 9536591, fnDemoInstr_SetTimer = 9536601,
-    fnDemoInstr_Func2 = 9537020, fnDemoPreInstr_864F = 9537103,
-}
-crate::game::constants::typed_constants! { i32;
-    fnDemoPreInstr_866A = 0x91866a,
-}
-crate::game::constants::typed_constants! { u32;
-    fnDemoInstr_Disable = 9537154, fnDemoInstr_Func3 = 9537337,
+    fnSamusDrawHandler_Default = 0x90eb52,
 }
 crate::game::constants::typed_constants! { i32;
     fnDemoPreInstr_CheckLeaveDemo = 0x918a9b,
 }
-crate::game::constants::typed_constants! { u32;
-    fnDemoPreInstr_8AB0 = 9538224, fnXray_Func6 = 9555577,
-    fnXray_Func6B = 9555643, fnXray_Func7 = 9555766,
-    fnXray_Func8 = 9555774,
-}
 crate::game::constants::typed_constants! { i32;
-    fnXray_Func9 = 0x91cf4e,
-}
-crate::game::constants::typed_constants! { u32;
-    fnXray_Func10 = 9555810,
-}
-crate::game::constants::typed_constants! { i32;
-    fnXray_Func11 = 0x91cf6f, fnGrappleBeamFunc_Inactive = 0x9bc4f0,
+    fnGrappleBeamFunc_Inactive = 0x9bc4f0,
 }
 static kSamusInputHandlers: [Option<Func_V>; 28] = callback_table! { unsafe Func_V;
     Samus_Input_00_Standing, Samus_Input_01_Running, Samus_Input_02_NormalJumping,

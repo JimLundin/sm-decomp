@@ -222,32 +222,15 @@ unsafe fn get_PlmHeader_Size6(a: u16, game: &mut Game) -> *mut PlmHeader_Size6 {
     RomPtr((0x840000u32) | ((a) as u32), game) as *mut PlmHeader_Size6
 }
 crate::game::constants::typed_constants! { u32;
-    fnDemoRoom_ChargeBeamRoomScroll21 = 8554778, fnnullsub_291 = 8554788,
-    fnDemoRoom_SetBG2TilemapBase = 8554789, fnDemoRoom_SetKraidFunctionTimer = 8554795,
-    fnDemoRoom_SetBrinstarBossBits = 8554802, fnOptionsPreInstr_nullsub_57 = 8555536,
-    fnOptionsInstr_Destroy = 8555610, fnOptionsInstr_8C64 = 8555620,
-    fnOptionsInstr_SetPreInstr = 8555630, fnOptionsInstr_8C79 = 8555641,
-    fnOptionsInstr_Goto = 8555650, fnOptionsInstr_8C89 = 8555657,
-    fnOptionsInstr_8C93 = 8555667, fnBabyMetroidPlaySfx0x23 = 8567820,
-    fnBabyMetroidPlaySfx0x26 = 8567829, fnBabyMetroidPlaySfx0x27 = 8567838,
     fnDoorTransitionFunction_HandleElevator = 8577405,
 }
 crate::game::constants::typed_constants! { i32;
-    fnDoorTransitionFunction_Wait48frames = 0x82e19f, fnDoorTransitionFunction_WaitForSoundsToFinish = 0x82e29e,
-    fnDoorTransitionFunction_FadeOutScreen = 0x82e2db, fnDoorTransitionFunction_LoadDoorHeaderEtc = 0x82e2f7,
-    fnDoorTransitionFunction_ScrollScreenToAlignment = 0x82e310, fnDoorTransitionFunction_FixDoorsMovingUp = 0x82e353,
-    fnDoorTransitionFunction_SetupNewRoom = 0x82e36e, fnDoorTransitionFunction_SetupScrolling = 0x82e38e,
-    fnDoorTransitionFunction_PlaceSamusLoadTiles = 0x82e3c0, fnDoorTransitionFunction_LoadMoreThings_Async = 0x82e4a9,
-    fnDoorTransition_C_HandleAnimTiles = 0x82e659, fnDoorTransition_WaitForMusicToClear = 0x82e664,
+    fnDoorTransitionFunction_FadeOutScreen = 0x82e2db,
+    fnDoorTransition_WaitForMusicToClear = 0x82e664,
     fnDoorTransition_HandleTransition = 0x82e6a2, fnDoorTransition_FadeInScreenAndFinish = 0x82e737,
 }
 crate::game::constants::typed_constants! { u32;
-    fnsub_82F296 = 8581782, fnOptionsPreInstr_F2A9 = 8581801,
-    fnsub_82F34B = 8581963, fnsub_82F353 = 8581971,
-    fnsub_82F35B = 8581979, fnsub_82F363 = 8581987,
-    fnOptionsPreInstr_F376 = 8582006, fnOptionsPreInstr_F3A0 = 8582048,
-    fnOptionsPreInstr_F3E2 = 8582114, fnsub_82F419 = 8582169,
-    fnOptionsPreInstr_F42C = 8582188, fnPauseHook_Empty = 8946657,
+    fnPauseHook_Empty = 8946657,
 }
 crate::game::constants::typed_constants! { i32;
     fnCinematicFunctionNone = 0x8b9a47, fnCinematicFunctionOpening = 0x8b9b68,
@@ -259,9 +242,6 @@ crate::game::constants::typed_constants! { u32;
     fnUnpauseHook_Kraid_IsDead = 10994171, fnUnpauseHook_Kraid_IsAlive = 10994254,
     fnKraid_UnpauseHook_IsSinking = 10994336, fnPauseHook_Kraid = 10994469,
     fnMotherBrainsBody_UnpauseHook = 11110243,
-}
-crate::game::constants::typed_constants! { i32;
-    fnlocret_828C81 = 0x828c81,
 }
 crate::game::address_dispatch! {
     pub unsafe fn CallDemoRoomDataFunc(ea: u32, game: &mut Game) => ea;

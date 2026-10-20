@@ -163,59 +163,11 @@ unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
     RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
 crate::game::constants::typed_constants! { i32;
-    fnnullsub_170_A7 = 0xa7804c, fnKraid_GetsBig_BreakCeilingPlatforms = 0xa7ac4d,
-    fnKraid_GetsBig_SetBG2TilemapPrioBits = 0xa7ad3a, fnKraid_GetsBig_FinishUpdateBg2Tilemap = 0xa7ad61,
-    fnKraid_GetsBig_DrawRoomBg = 0xa7ad8e, fnKraid_GetsBig_FadeInRoomBg = 0xa7ae23,
-    fnKraid_Mainloop_Thinking = 0xa7aea4, fnKraid_GetsBig_Thinking = 0xa7aec4,
-    fnKraid_Shot_MouthIsOpen = 0xa7aee4,
-}
-crate::game::constants::typed_constants! { u32;
-    fnKraidInstr_PlayRoarSfx = 10989460, fnKraidInstr_PlayDyingSfx = 10989471,
+    fnnullsub_170_A7 = 0xa7804c,
 }
 crate::game::constants::typed_constants! { i32;
-    fnKraid_InitEyeGlowing = 0xa7b6bf, fnKraid_Shot_GlowHisEye = 0xa7b6d7,
-    fnKraid_Shot_UnglowEye = 0xa7b73d,
-}
-crate::game::constants::typed_constants! { u32;
-    fnnullsub_347 = 10991665,
-}
-crate::game::constants::typed_constants! { i32;
-    fnKraidLint_ProduceLint = 0xa7b832, fnKraidLint_ChargeLint = 0xa7b868,
-    fnKraidLint_FireLint = 0xa7b89b, fnKraidFingernail_WaitForLintXpos = 0xa7b907,
-    fnKraid_AlignEnemyToKraid = 0xa7b923, fnKraidEnemy_HandleFunctionTimer = 0xa7b92d,
-    fnKraidEnemy_DecrementEnemyFunctionTimer = 0xa7b93f, fnKraidFoot_FirstPhase_Thinking = 0xa7b960,
-    fnKraidEnemy_ProcessInstrEnemyTimer = 0xa7b965, fnnullsub_234 = 0xa7ba2d,
-    fnKraidsFoot_SecondPhase_Thinking = 0xa7ba2e, fnKraidsFoot_SecondPhase_WalkingBackwards = 0xa7bb45,
-    fnKraidsFoot_SecondPhaseSetup_WalkToStartPt = 0xa7bb6e, fnKraidsFoot_SecondPhase_Init = 0xa7bba4,
-    fnKraidsFoot_SecondPhase_WalkForward = 0xa7bbae, fnKraid_Main_AttackWithMouthOpen = 0xa7bbea,
-    fnKraidsFingernail_Init = 0xa7bd60, fnKraidsFingernail_Fire = 0xa7be8e,
-    fnKraidsFoot_PrepareToLungeForward = 0xa7bf2d, fnKraidsFoot_FirstPhase_LungeForward = 0xa7bf5d,
-    fnKraidsFoot_FirstPhase_RetreatFromLunge = 0xa7bfab, fnKraid_GetsBig_ReleaseCamera = 0xa7c0a1,
     fnUnpauseHook_Kraid_IsDead = 0xa7c1fb, fnUnpauseHook_Kraid_IsAlive = 0xa7c24e,
     fnKraid_UnpauseHook_IsSinking = 0xa7c2a0, fnPauseHook_Kraid = 0xa7c325,
-    fnKraid_Death_Init = 0xa7c360, fnKraid_Death_Fadeout = 0xa7c3f9,
-    fnKraid_Death_UpdateBG2TilemapTopHalf = 0xa7c4a4, fnKraid_Death_UpdateBG2TilemapBottomHalf = 0xa7c4c8,
-    fnKraid_Death_SinkThroughFloor = 0xa7c537,
-}
-crate::game::constants::typed_constants! { u32;
-    fnKraid_CrumbleLeftPlatform_Left = 10995345, fnnullsub_356 = 10995366,
-    fnKraid_CrumbleRightPlatform_Middle = 10995367, fnKraid_CrumbleRightPlatform_Left = 10995389,
-    fnKraid_CrumbleLeftPlatform_Right = 10995411, fnKraid_CrumbleLeftPlatform_Middle = 10995433,
-    fnKraid_CrumbleRightPlatform_Right = 10995455,
-}
-crate::game::constants::typed_constants! { i32;
-    fnKraid_FadeInBg_ClearBg2TilemapTopHalf = 0xa7c715, fnKraid_FadeInBg_ClearBg2TilemapBottomHalf = 0xa7c751,
-    fnKraid_FadeInBg_LoadBg3Tiles1of4 = 0xa7c777, fnKraid_FadeInBg_LoadBg3Tiles2of4 = 0xa7c7a3,
-    fnKraid_FadeInBg_LoadBg3Tiles3of4 = 0xa7c7c9, fnKraid_FadeInBg_LoadBg3Tiles4of4 = 0xa7c7ef,
-    fnKraid_FadeInBg_FadeInBp6 = 0xa7c815, fnKraid_FadeInBg_SetEnemyDead_KraidWasAlive = 0xa7c843,
-    fnKraid_FadeInBg_SetEnemyDead_KraidWasDead = 0xa7c851, fnKraid_RestrictSamusXtoFirstScreen = 0xa7c865,
-    fnKraid_RaiseKraidThroughFloor = 0xa7c86b, fnKraid_Raise_LoadTilemapBottomAndShake = 0xa7c89a,
-    fnKraid_Raise_SpawnRandomEarthquakeProjs16 = 0xa7c8e0, fnKraid_Raise_SpawnRandomEarthquakeProjs8 = 0xa7c902,
-    fnKraid_Raise_Handler = 0xa7c924,
-}
-crate::game::constants::typed_constants! { u32;
-    fnPhantoon_Func_1 = 10997485, fnPhantoon_Func_4 = 10997598,
-    fnPhantoon_StartTrackingSamusAndInitEyeTimer = 10997823, fnPhantoon_PickPatternForRound2 = 10997878,
 }
 crate::game::constants::typed_constants! { i32;
     fnnullsub_237 = 0xa7d4a8, fnPhantoon_Spawn8FireballsInCircleAtStart = 0xa7d4a9,

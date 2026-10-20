@@ -94,25 +94,10 @@ crate::game::constants::typed_constants! { i32;
     fnnullsub_171_B3 = 0xb3807b, fnBrinstarPipeBug_PreInstr_1 = 0xb38880,
     fnBrinstarPipeBug_PreInstr_2 = 0xb38890, fnBrinstarPipeBug_PreInstr_3 = 0xb388e3,
     fnBrinstarPipeBug_PreInstr_4 = 0xb3891c, fnBrinstarPipeBug_PreInstr_5 = 0xb3897e,
-    fnNorfairPipeBug_Func_1 = 0xb38bcd, fnNorfairPipeBug_Func_2 = 0xb38bff,
-    fnNorfairPipeBug_Func_4 = 0xb38ca6, fnNorfairPipeBug_Func_5 = 0xb38cff,
-    fnNorfairPipeBug_Func_6 = 0xb38d0c, fnNorfairPipeBug_Func_7 = 0xb38d4e,
-    fnNorfairPipeBug_Func_8 = 0xb38d90, fnNorfairPipeBug_Func_9 = 0xb38dd2,
-    fnNorfairPipeBug_Func_10 = 0xb38e14, fnNorfairPipeBug_Func_11 = 0xb38e35,
-    fnNorfairPipeBug_Func_12 = 0xb38e5a, fnBrinstarYellowPipeBug_Func_1 = 0xb38fb5,
-    fnBrinstarYellowPipeBug_Func_2 = 0xb38ff5, fnBrinstarYellowPipeBug_Func_3 = 0xb39028,
-    fnBrinstarYellowPipeBug_Func_5 = 0xb390bd, fnBrinstarYellowPipeBug_Func_7 = 0xb3915a,
-    fnBrinstarYellowPipeBug_Func_8 = 0xb391d8, fnBotwoon_Func_6 = 0xb39878,
-    fnBotwoon_Func_7 = 0xb3989d, fnBotwoon_Func_12 = 0xb399a4,
-    fnBotwoon_Func_13 = 0xb399e4, fnBotwoon_Func_14 = 0xb39a46,
-    fnBotwoon_Func_15 = 0xb39a5e, fnBotwoon_Func_16 = 0xb39aca,
-    fnBotwoon_Func_18 = 0xb39af9, fnBotwoon_Func_19 = 0xb39bb7,
+    fnNorfairPipeBug_Func_5 = 0xb38cff,
     fnBotwoon_Func_26 = 0xb39dc0, fnBotwoon_Func_27 = 0xb39e7d,
     fnBotwoon_Func_28 = 0xb39ee0, fnBotwoon_Func_29 = 0xb39f34,
-    fnBotwoon_Func_30 = 0xb39f7a, fnBotwoon_Func_32 = 0xb3e250,
-}
-crate::game::constants::typed_constants! { u32;
-    fnBotwoon_Func_33 = 11788940,
+    fnBotwoon_Func_30 = 0xb39f7a,
 }
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];

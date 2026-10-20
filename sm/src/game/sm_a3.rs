@@ -411,41 +411,9 @@ unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
     RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
 crate::game::constants::typed_constants! { i32;
-    fnMetalee_Func_1 = 0xa38987, fnMetalee_Func_3 = 0xa389d4,
-    fnMetalee_Func_4 = 0xa389f3, fnMetalee_Func_5 = 0xa38a5c,
-    fnMaridiaFish_Func_1 = 0xa39132, fnMaridiaFish_Func_2 = 0xa391ab,
-    fnMaridiaFish_Func_3 = 0xa39224, fnMaridiaFish_Func_4 = 0xa39256,
-    fnRoach_Func_9 = 0xa3a2d7,
-}
-crate::game::constants::typed_constants! { u32;
-    fnRoach_Func_10 = 10724097, fnRoach_Func_11 = 10724107,
-    fnRoach_Func_12 = 10724117, fnRoach_Func_13 = 10724133,
-    fnRoach_Func_14 = 10724155, fnRoach_Func_15 = 10724171,
-    fnRoach_Func_16 = 10724224,
-}
-crate::game::constants::typed_constants! { i32;
-    fnRoach_Func_19 = 0xa3a407, fnRoach_Func_20 = 0xa3a40e,
-    fnRoach_Func_21 = 0xa3a440, fnRoach_Func_22 = 0xa3a447,
-    fnRoach_Func_23 = 0xa3a44e, fnRoach_Func_24 = 0xa3a462,
-    fnRoach_Func_25 = 0xa3a476, fnRoach_Func_26 = 0xa3a4b6,
-    fnRoach_Func_27 = 0xa3a4f0, fnSidehopper_Func_4 = 0xa3abd6,
-}
-crate::game::constants::typed_constants! { u32;
-    fnSidehopper_Func_5 = 10726374, fnSidehopper_Func_6 = 10726419,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSidehopper_Func_7 = 0xa3ac40, fnSidehopper_Func_8 = 0xa3ac56,
-    fnSidehopper_Func_9 = 0xa3ac6c, fnSidehopper_Func_10 = 0xa3ac8f,
-    fnSidehopper_Func_11 = 0xa3aca8, fnSidehopper_Func_12 = 0xa3accb,
-    fnSidehopper_Func_13 = 0xa3ace4, fnSidehopper_Func_14 = 0xa3ad0e,
-    fnSidehopper_Func_15 = 0xa3ad20, fnSidehopper_Func_16 = 0xa3ad32,
-    fnSidehopper_Func_17 = 0xa3ad44, fnSidehopper_Func_18 = 0xa3ad56,
-    fnMaridiaRefillCandy_Func_1 = 0xa3b482, fnMaridiaRefillCandy_Func_2 = 0xa3b4a8,
-    fnMaridiaRefillCandy_Func_3 = 0xa3b4d6, fnBang_Func_6 = 0xa3bca5,
+    fnBang_Func_6 = 0xa3bca5,
     fnBang_Func_7 = 0xa3bcc1, fnBang_Func_8 = 0xa3bcc5,
     fnBang_Func_10 = 0xa3bd1c, fnBang_Func_11 = 0xa3bd2c,
-    fnSkree_Func_1 = 0xa3c6d5, fnSkree_Func_2 = 0xa3c6f7,
-    fnSkree_Func_3 = 0xa3c716, fnSkree_Func_4 = 0xa3c77f,
     fnnullsub_215 = 0xa3cf5f, fnMaridiaSnail_Func_15 = 0xa3d1b3,
     fnReflec_Func_1 = 0xa3db0c, fnnullsub_304 = 0xa3e6c1,
     fnFireZoomer_Func_1 = 0xa3e6c8, fnFireZoomer_Func_2 = 0xa3e785,

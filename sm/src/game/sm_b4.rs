@@ -6,10 +6,6 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
 
 const RomPtr_B4: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb4>;
-crate::game::constants::typed_constants! { u32;
-    fnSpriteObject_Instr_RepeatLast = 11844848, fnSpriteObject_Instr_Terminate = 11844871,
-    fnSpriteObject_Instr_Goto = 11844882,
-}
 pub unsafe fn CreateSpriteAtPos(
     x_r18: u16,
     y_r20: u16,

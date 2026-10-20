@@ -14,20 +14,6 @@ use crate::rtl::{RomPtr, Unreachable};
 
 pub use crate::types::Consts_86;
 const RomPtr_87: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x87>;
-crate::game::constants::typed_constants! { u32;
-    fnAnimtilesInstr_Delete = 8880306, fnAnimtilesInstr_Goto = 8880311,
-    fnAnimtilesInstr_GotoRel = 8880316, fnAnimtilesInstr_DecrementTimerAndGoto = 8880340,
-    fnAnimtilesInstr_DecrementTimerAndGotoRel = 8880348, fnAnimtilesInstr_SetTimer = 8880355,
-    fnAnimtilesInstr_QueueMusic = 8880368, fnAnimtilesInstr_QueueSfx1 = 8880380,
-    fnAnimtilesInstr_QueueSfx2 = 8880392, fnAnimtilesInstr_QueueSfx3 = 8880404,
-    fnAnimtilesInstr_GotoIfBossBitSet = 8880416, fnAnimtilesInstr_SetBossBit = 8880435,
-    fnAnimtilesInstr_GotoIfEventHappened = 8880447, fnAnimtilesInstr_SetEventHappened = 8880464,
-    fnAnimtilesInstr_WaitUntilAreaBossDead_DoubleRet = 8880570, fnAnimtilesInstr_GotoIfBossBitSetInArea = 8880899,
-    fnAnimtilesInstr_SpawnTourianStatueEyeGlow = 8880928, fnAnimtilesInstr_SpawnTourianStatueSoul = 8880943,
-    fnAnimtilesInstr_GotoIfTourianStatueBusy = 8880958, fnAnimtilesInstr_TourianStatueSetState = 8880969,
-    fnAnimtilesInstr_TourianStatueClearState = 8880978, fnAnimtilesInstr_Clear3PaletteColors = 8880987,
-    fnAnimtilesInstr_SpawnPalfxObj = 8881010, fnAnimtilesInstr_Write8PaletteColors = 8881023,
-}
 pub unsafe fn EnableAnimtiles(game: &mut Game) {
     update_ram_word!(game.animtiles_enable_flag, |fresh9| (fresh9) | (0x8000u16));
 }

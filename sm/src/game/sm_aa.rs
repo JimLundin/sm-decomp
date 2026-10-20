@@ -88,13 +88,7 @@ unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
     RomPtr((((bank as i32) << 16i32) + 0x8000i32) as u32, game).offset(-(0x8000i32 as isize))
 }
 crate::game::constants::typed_constants! { i32;
-    fnnullsub_171_AA = 0xaa807b, fnnullsub_270 = 0xaac6ab,
-    fnTorizo_Func_3 = 0xaac6bf,
-}
-crate::game::constants::typed_constants! { u32;
-    fnTorizo_Func_4 = 11192006, fnTorizo_Func_1 = 11192063,
-    fnTorizo_Func_9 = 11195842, fnTorizo_Func_10 = 11195871,
-    fnTorizo_D5E6 = 11195878,
+    fnnullsub_171_AA = 0xaa807b,
 }
 crate::game::constants::typed_constants! { i32;
     fnnullsub_274 = 0xaadcaa, fnnullsub_276 = 0xaae7a6,

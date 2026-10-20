@@ -72,6 +72,25 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Volume priority (user direction, 2026-10-20): target net reductions on the
+scale of thousands of lines, including all helpers and caller changes.
+Defer isolated hundred-line batches. Measure complete repeated families and
+unused declaration chains before implementation; preserve runtime behavior.
+The 90-method word-accessor draft (-195 lines) is parked outside the repository.
+
+Unused function-address declarations (2026-10-20): remove all 3130
+definition-only `fn*` constants across 26 bank files. Maintained Rust/tool
+references are absent; the remaining numeric dispatches and named constants
+stay intact. No helper or runtime operation is added. Compiler expansion
+retains all 9830855 remaining core bytes after exactly those declarations
+are removed and both sets of 67 embedded source files are checked byte-for-byte.
+Final composition includes SDL cleanup 97572c73. Formatting/check, final normal
+release (4.94s after the host's 18.27s library rebuild) and progress pass. Source-checked
+full any% 129712/0 (123.92s wall) and Speed Booster 148406/0 (164.68s wall),
+native exits 0, pass with source/input/artifact bytes fixed. Rust lines -2071
+to 124326; other counters unchanged. This removes unused declarations;
+broader gameplay/ownership and further thousand-line reductions remain open.
+
 Unused SDL declarations (2026-10-20): remove 671 of 772 copied constants
 across main, configuration and OpenGL. Retain all 101 referenced declarations,
 including the two window-position masks used by other constant initializers.

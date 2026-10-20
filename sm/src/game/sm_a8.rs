@@ -371,84 +371,28 @@ crate::ram_map::ram_pointer_functions! {
 crate::game::constants::typed_constants! { i32;
     fnnullsub_152 = 0x90e90e, fnSamus_InputHandler_E913 = 0x90e913,
     fnSamus_InputHandler_E91D = 0x90e91d, fnnullsub_170_A8 = 0xa8804c,
-    fnMiniDraygon_Func_4 = 0xa88922, fnMiniDraygon_Func_8 = 0xa88a34,
-    fnMiniDraygon_Func_9 = 0xa88a3b, fnMiniDraygon_Func_10 = 0xa88a78,
     fnMorphBallEye_Func_1 = 0xa890f1, fnMorphBallEye_Func_2 = 0xa8912e,
     fnMorphBallEye_Func_3 = 0xa89160, fnMorphBallEye_Func_4 = 0xa891ce,
-    fnnullsub_244 = 0xa891dc, fnFune_Func_1 = 0xa89737,
-    fnFune_Func_2 = 0xa8975c, fnnullsub_247 = 0xa8978e,
-    fnnullsub_248 = 0xa8978f, fnWreckedShipGhost_Func_1 = 0xa89b42,
-    fnWreckedShipGhost_Func_2 = 0xa89bad, fnWreckedShipGhost_Func_4 = 0xa89c69,
-    fnWreckedShipGhost_Func_5 = 0xa89c8a, fnWreckedShipGhost_Func_6 = 0xa89d13,
-    fnWreckedShipGhost_Func_7 = 0xa89d36, fnYappingMaw_Func_1 = 0xa8a235,
-    fnYappingMaw_Func_2 = 0xa8a28c, fnYappingMaw_Func_8 = 0xa8a445,
-    fnYappingMaw_Func_11 = 0xa8a68a, fnKago_Func_1 = 0xa8ab7b,
-    fnnullsub_306 = 0xa8ab81, fnNorfairLavaMan_Func_6 = 0xa8b0b2,
+    fnnullsub_244 = 0xa891dc,
+    fnNorfairLavaMan_Func_6 = 0xa8b0b2,
     fnNorfairLavaMan_Func_7 = 0xa8b11a, fnNorfairLavaMan_Func_8 = 0xa8b175,
     fnsub_A8B193 = 0xa8b193, fnNorfairLavaMan_Func_9 = 0xa8b1b8,
     fnNorfairLavaMan_Func_10 = 0xa8b1dd, fnNorfairLavaMan_Func_11 = 0xa8b204,
     fnsub_A8B291 = 0xa8b291, fnNorfairLavaMan_Func_13 = 0xa8b295,
     fnNorfairLavaMan_Func_15 = 0xa8b30d, fnNorfairLavaMan_Func_16 = 0xa8b31f,
     fnNorfairLavaMan_Func_17 = 0xa8b356, fnNorfairLavaMan_Func_18 = 0xa8b3a7,
-    fnBeetom_Func_3 = 0xa8b814, fnBeetom_Func_4 = 0xa8b82f,
-}
-crate::game::constants::typed_constants! { u32;
-    fnBeetom_Func_5 = 11057231,
 }
 crate::game::constants::typed_constants! { i32;
-    fnBeetom_Func_6 = 0xa8b85f, fnBeetom_Func_7 = 0xa8b873,
-}
-crate::game::constants::typed_constants! { u32;
-    fnBeetom_Func_8 = 11057287, fnBeetom_Func_9 = 11057321,
-    fnBeetom_Func_10 = 11057355, fnBeetom_Func_11 = 11057389,
-}
-crate::game::constants::typed_constants! { i32;
-    fnBeetom_Func_12 = 0xa8b90f, fnBeetom_Func_13 = 0xa8b952,
-    fnBeetom_Func_14 = 0xa8b966, fnBeetom_Func_15 = 0xa8b97a,
-    fnBeetom_Func_16 = 0xa8b9a2, fnBeetom_Func_17 = 0xa8b9b2,
-    fnBeetom_Func_18 = 0xa8b9c1, fnBeetom_Func_19 = 0xa8ba24,
-    fnBeetom_Func_20 = 0xa8ba84, fnBeetom_Func_21 = 0xa8bab7,
-    fnBeetom_Func_24 = 0xa8bb55, fnBeetom_Func_25 = 0xa8bb88,
-    fnBeetom_Func_28 = 0xa8bc26, fnBeetom_Func_29 = 0xa8bc5a,
-    fnBeetom_Func_32 = 0xa8bcf8, fnBeetom_Func_33 = 0xa8bd42,
-    fnBeetom_Func_35 = 0xa8bd9d, fnBeetom_Func_36 = 0xa8bdc5,
     fnMaridiaFloater_Func_3 = 0xa8c283, fnMaridiaFloater_Func_4 = 0xa8c2a6,
     fnMaridiaFloater_Func_5 = 0xa8c2cf, fnMaridiaFloater_Func_6 = 0xa8c36b,
     fnMaridiaFloater_Func_7 = 0xa8c3e1, fnMaridiaFloater_Func_8 = 0xa8c469,
     fnMaridiaFloater_Func_9 = 0xa8c4dc, fnMaridiaFloater_Func_10 = 0xa8c500,
     fnMaridiaFloater_Func_11 = 0xa8c51d, fnnullsub_256 = 0xa8c568,
     fnMaridiaFloater_Func_12 = 0xa8c569, fnMaridiaFloater_Func_13 = 0xa8c59f,
-    fnWreckedShipRobot_Func_1 = 0xa8cc67, fnMaridiaPuffer_Func_1 = 0xa8d92b,
-    fnMaridiaPuffer_Func_2 = 0xa8d940, fnMaridiaPuffer_Func_3 = 0xa8d963,
-    fnMaridiaPuffer_Func_4 = 0xa8d97c, fnWalkingLavaSeahorse_Func_3 = 0xa8dd71,
-    fnWalkingLavaSeahorse_Func_4 = 0xa8ddc6, fnWalkingLavaSeahorse_Func_6 = 0xa8de05,
-    fnWalkingLavaSeahorse_Func_7 = 0xa8de4b, fnnullsub_257 = 0xa8decc,
-    fnWalkingLavaSeahorse_Func_8 = 0xa8decd, fnWalkingLavaSeahorse_Func_9 = 0xa8deec,
-    fnWreckedShipOrbs_Func_3 = 0xa8e405, fnWreckedShipOrbs_Func_4 = 0xa8e424,
-    fnWreckedShipOrbs_Func_5 = 0xa8e443, fnWreckedShipOrbs_Func_6 = 0xa8e462,
-}
-crate::game::constants::typed_constants! { u32;
-    fnnullsub_259 = 11069076,
+    fnWreckedShipRobot_Func_1 = 0xa8cc67,
 }
 crate::game::constants::typed_constants! { i32;
-    fnWreckedShipSpark_Func_1 = 0xa8e695, fnWreckedShipSpark_Func_2 = 0xa8e6b7,
-}
-crate::game::constants::typed_constants! { u32;
-    fnWreckedShipSpark_Func_3 = 11069148,
-}
-crate::game::constants::typed_constants! { i32;
-    fnBlueBrinstarFaceBlock_Func_1 = 0xa8e86e, fnKiHunter_Func_1 = 0xa8f268,
-    fnKiHunter_Func_2 = 0xa8f3b8, fnKiHunter_Func_3 = 0xa8f4ed,
-    fnKiHunter_Func_4 = 0xa8f55a, fnKiHunter_Func_5 = 0xa8f58b,
-}
-crate::game::constants::typed_constants! { u32;
-    fnnullsub_346 = 11072995,
-}
-crate::game::constants::typed_constants! { i32;
-    fnKiHunter_Func_6 = 0xa8f5f0, fnKiHunter_Func_7 = 0xa8f68b,
-    fnKiHunter_Func_8 = 0xa8f6b3, fnKiHunter_Func_9 = 0xa8f6f3,
-    fnKiHunter_Func_10 = 0xa8f7cf, fnKiHunter_Func_11 = 0xa8f7db,
-    fnKiHunter_Func_14 = 0xa8f8ad,
+    fnBlueBrinstarFaceBlock_Func_1 = 0xa8e86e,
 }
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
