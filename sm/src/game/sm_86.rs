@@ -1207,8 +1207,7 @@ unsafe fn Eproj_GetCollDetectRect(k: u16, game: &mut Game) -> Rect16U {
     rect
 }
 pub unsafe fn Eproj_Earthqhake5(k: u16, game: &mut Game) {
-    word!(game.earthquake_timer = 10);
-    word!(game.earthquake_type = 5);
+    word! {game; earthquake_timer = 10; earthquake_type = 5; }
     BlueRingContactExplosion(k, game);
 }
 pub use self::sub_869DA5 as sub_86C42E;
@@ -1470,8 +1469,7 @@ pub unsafe fn Eproj_FuncE722(k: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn Eproj_AngleToSamus(j: u16, r18: u16, r20: u16, game: &mut Game) {
     let v1: i32 = j as i32 >> 1;
-    word!(game.eproj_x_pos[v1] = r18);
-    word!(game.eproj_y_pos[v1] = r20);
+    word! {game; eproj_x_pos[v1] = r18; eproj_y_pos[v1] = r20; }
     let v2: u16 = (64
         - CalculateAngleFromXY(
             (word!(game.samus_x_pos) as i32 - word!(game.eproj_x_pos[v1]) as i32) as u16,
@@ -1480,10 +1478,8 @@ pub unsafe fn Eproj_AngleToSamus(j: u16, r18: u16, r20: u16, game: &mut Game) {
         ) as i32) as u8 as u16;
     word!(game.g_word_7E97DC[v1] = v2);
     let pt: Point32 = ConvertAngleToXy(v2, word!(game.cinematic_var8), game);
-    word!(game.eproj_x_vel[v1] = (pt.x >> 16) as u16);
-    word!(game.eproj_E[v1] = pt.x as u16);
-    word!(game.eproj_y_vel[v1] = (pt.y >> 16) as u16);
-    word!(game.eproj_F[v1] = pt.y as u16);
+    word! {game; eproj_x_vel[v1] = (pt.x >> 16) as u16; eproj_E[v1] = pt.x as u16;
+    eproj_y_vel[v1] = (pt.y >> 16) as u16; eproj_F[v1] = pt.y as u16; }
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallBotwoonEprojFunc(ea: u32, k: u16, game: &mut Game) => ea;
@@ -1491,8 +1487,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (v0: u16, game: &mut Game)];
     [8841972] Eproj_BotwonsBodyFunction_Dying [] {
         let v1: i32 = v0 as i32 >> 1;
-        word!(game.eproj_E[v1] = (4 * v0 as i32 + 96) as u16);
-        word!(game.eproj_x_vel[v1] = 0xeb04);
+        word! {game; eproj_E[v1] = (4 * v0 as i32 + 96) as u16; eproj_x_vel[v1] = 0xeb04; }
         Eproj_BotwonsBodyFunction_Dying2(v0, game);
     };
     [8841988] Eproj_BotwonsBodyFunction_Dying2 [] {
@@ -1518,11 +1513,9 @@ crate::game::callback_dispatch! {
             word!(game.eproj_instr_timers[v7] = 0);
             Eproj_BotwoonsBodyHurtFlashHandling2(v0, game);
         } else {
-            word!(game.eproj_y_pos[v1] = 200);
-            word!(game.eproj_x_vel[v1] = (0x86eb93 & 0xffff) as u16);
-            word!(game.eproj_instr_list_ptr[v1] = addr_word_86E208 as u16);
-            word!(game.eproj_gfx_idx[v1] = 2560);
-            word!(game.eproj_instr_timers[v1] = 1);
+            word! {game; eproj_y_pos[v1] = 200; eproj_x_vel[v1] = (0x86eb93 & 0xffff) as u16;
+                eproj_instr_list_ptr[v1] = addr_word_86E208 as u16; eproj_gfx_idx[v1] = 2560;
+                eproj_instr_timers[v1] = 1; }
             QueueSmallExplosionSfx(game);
             if v0 == 10 {
                 *((&raw mut (*(ram_ptr!(game, ExtraEnemyRam8800; 0x8800))).pad as *mut u8)
@@ -1732,8 +1725,7 @@ crate::game::callback_dispatch! {
     [8817984] EprojInit_DraygonsWallTurretProjs [] {
         Eproj_AngleToSamus(j, game.eproj_spawn_pt.x, game.eproj_spawn_pt.y, game);
         let v1: i32 = j as i32 >> 1;
-        word!(game.eproj_gfx_idx[v1] = 2560);
-        word!(game.eproj_pre_instr[v1] = (0x868d54 & 0xffff) as u16);
+        word! {game; eproj_gfx_idx[v1] = 2560; eproj_pre_instr[v1] = (0x868d54 & 0xffff) as u16; }
     };
     [8819658] EprojInit_9642_RidleysFireball [] {
         let slot = usize::from(j >> 1);
@@ -1823,9 +1815,8 @@ crate::game::callback_dispatch! {
         word!(game.eproj_x_pos[v2] = (game.enemy_state(enemy_index).x_pos()).wrapping_add(16));
         word!(game.eproj_y_pos[v2] = (game.enemy_state(enemy_index).y_pos()).wrapping_sub(96));
         word! { game, 0; eproj_y_subpos[v2], eproj_x_subpos[v2] }
-        word!(game.eproj_x_vel[v2] = word!(game.cinematic_var8));
-        word!(game.eproj_y_vel[v2] = -1024i32 as u16);
-        word!(game.eproj_gfx_idx[v2] = 1536);
+        word! {game; eproj_x_vel[v2] = word!(game.cinematic_var8);
+            eproj_y_vel[v2] = -1024i32 as u16; eproj_gfx_idx[v2] = 1536; }
     };
     [8822028] EprojInit_RocksWhenKraidRises [] {
         let mut v1: i16 = ((word!(game.random_number)) as i16) & (0x3fi16);
@@ -1842,9 +1833,8 @@ crate::game::callback_dispatch! {
         );
         word!(game.eproj_y_pos[v2] = 432);
         word! { game, 0; eproj_y_subpos[v2], eproj_x_subpos[v2] }
-        word!(game.eproj_x_vel[v2] = word!(game.cinematic_var8));
-        word!(game.eproj_y_vel[v2] = -1280i32 as u16);
-        word!(game.eproj_gfx_idx[v2] = 1536);
+        word! {game; eproj_x_vel[v2] = word!(game.cinematic_var8);
+            eproj_y_vel[v2] = -1280i32 as u16; eproj_gfx_idx[v2] = 1536; }
         QueueSfx3_Max6(0x1e, game);
     };
     [8822450] EprojInit_WalkingLavaSeahorseFireball [] {
@@ -2004,12 +1994,10 @@ crate::game::callback_dispatch! {
         };
         let v2 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
         let v3: i32 = j as i32 >> 1;
-        word!(game.eproj_y_pos[v3] = ((*v2).y_pos as i32 + v1) as u16);
-        word!(game.eproj_y_vel[v3] = 0);
+        word! {game; eproj_y_pos[v3] = ((*v2).y_pos as i32 + v1) as u16; eproj_y_vel[v3] = 0; }
         if ((*v2).parameter_1 & 0x8000) != 0 {
-            word!(game.eproj_x_pos[v3] = ((*v2).x_pos as i32 + 32) as u16);
-            word!(game.eproj_x_vel[v3] = 624);
-            word!(game.eproj_instr_list_ptr[v3] = addr_off_86ADD2 as u16);
+            word! {game; eproj_x_pos[v3] = ((*v2).x_pos as i32 + 32) as u16;
+                eproj_x_vel[v3] = 624; eproj_instr_list_ptr[v3] = addr_off_86ADD2 as u16; }
         } else {
             word!(game.eproj_x_pos[v3] = ((*v2).x_pos as i32 - 32i32) as u16);
             word!(game.eproj_x_vel[v3] = -624i32 as u16);
@@ -2027,8 +2015,7 @@ crate::game::callback_dispatch! {
     [8826881] EprojInit_GoldenTorizoEgg [] {
         let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
         let v2: i32 = j as i32 >> 1;
-        word!(game.eproj_F[v2] = ((0xe2 & 0x1f) + 64) as u16);
-        word!(game.eproj_E[v2] = (*v1).parameter_1);
+        word! {game; eproj_F[v2] = ((0xe2 & 0x1f) + 64) as u16; eproj_E[v2] = (*v1).parameter_1; }
         let v4: u16 = (if (*v1).parameter_1 & 0x8000 != 0 {
             addr_kEprojInit_GoldenTorizoEgg0 as i32
         } else {
@@ -2075,9 +2062,8 @@ crate::game::callback_dispatch! {
         word!(game.eproj_y_pos[v2] = ((*v1).y_pos).wrapping_sub(28));
         word!(game.eproj_y_vel[v2] = -961i32 as u16);
         if ((*v1).ai_var_A & 0x8000) == 0 {
-            word!(game.eproj_x_pos[v2] = ((*v1).x_pos as i32 + 12) as u16);
-            word!(game.eproj_x_vel[v2] = 704);
-            word!(game.eproj_instr_list_ptr[v2] = addr_word_86B4CB as u16);
+            word! {game; eproj_x_pos[v2] = ((*v1).x_pos as i32 + 12) as u16;
+                eproj_x_vel[v2] = 704; eproj_instr_list_ptr[v2] = addr_word_86B4CB as u16; }
         } else {
             word!(game.eproj_x_pos[v2] = ((*v1).x_pos).wrapping_sub(12));
             word!(game.eproj_x_vel[v2] = -704i32 as u16);
@@ -2147,10 +2133,8 @@ crate::game::callback_dispatch! {
     [8829842] EprojInit_NuclearWaffleBody [] {
         let v2 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
         let v3: i32 = j as i32 >> 1;
-        word!(game.eproj_x_pos[v3] = (*v2).x_pos);
-        word!(game.eproj_x_subpos[v3] = (*v2).x_subpos);
-        word!(game.eproj_y_pos[v3] = (*v2).y_pos);
-        word!(game.eproj_y_subpos[v3] = (*v2).y_subpos);
+        word! {game; eproj_x_pos[v3] = (*v2).x_pos; eproj_x_subpos[v3] = (*v2).x_subpos;
+            eproj_y_pos[v3] = (*v2).y_pos; eproj_y_subpos[v3] = (*v2).y_subpos; }
         let v4 = gExtraEnemyRam8000(word!(game.cur_enemy_index) as i32, game);
         (*gExtraEnemyRam7800(
             word!(game.cur_enemy_index) as i32
@@ -2296,19 +2280,16 @@ crate::game::callback_dispatch! {
     [8842182] EprojInit_BotwoonsSpit [] {
         let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
         let v2: i32 = j as i32 >> 1;
-        word!(game.eproj_x_pos[v2] = (*v1).x_pos);
-        word!(game.eproj_y_pos[v2] = (*v1).y_pos);
-        word!(game.eproj_instr_list_ptr[v2] = addr_word_86EBAE as u16);
-        word!(game.g_word_7E97DC[v2] = *ram_ptr!(game; 0x60b) as u16);
+        word! {game; eproj_x_pos[v2] = (*v1).x_pos; eproj_y_pos[v2] = (*v1).y_pos;
+            eproj_instr_list_ptr[v2] = addr_word_86EBAE as u16;
+            g_word_7E97DC[v2] = *ram_ptr!(game; 0x60b) as u16; }
         let pt: Point32 = ConvertAngleToXy(
             *ram_ptr!(game; 0x60b) as u16,
             word!(game.cinematic_var8),
             game,
         );
-        word!(game.eproj_x_vel[v2] = (pt.x >> 16) as u16);
-        word!(game.eproj_E[v2] = pt.x as u16);
-        word!(game.eproj_y_vel[v2] = (pt.y >> 16) as u16);
-        word!(game.eproj_F[v2] = pt.y as u16);
+        word! {game; eproj_x_vel[v2] = (pt.x >> 16) as u16; eproj_E[v2] = pt.x as u16;
+            eproj_y_vel[v2] = (pt.y >> 16) as u16; eproj_F[v2] = pt.y as u16; }
     };
     [8844177] EprojInit_Sparks [] {
         static word_86F3D4: [u16; 14] = [
@@ -2318,10 +2299,9 @@ crate::game::callback_dispatch! {
         let v2: i32 = j as i32 >> 1;
         word!(game.eproj_instr_list_ptr[v2] = addr_kEnemyDef_F353 as u16);
         let v3 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        word!(game.eproj_x_pos[v2] = (*v3).x_pos);
-        word!(game.eproj_x_subpos[v2] = (*v3).x_subpos);
-        word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 + 8) as u16);
-        word!(game.eproj_y_subpos[v2] = (*v3).y_subpos);
+        word! {game; eproj_x_pos[v2] = (*v3).x_pos; eproj_x_subpos[v2] = (*v3).x_subpos;
+            eproj_y_pos[v2] = ((*v3).y_pos as i32 + 8) as u16;
+            eproj_y_subpos[v2] = (*v3).y_subpos; }
         word! { game, 0; eproj_x_vel[v2], eproj_y_vel[v2] }
         let v4: u16 = ((NextRandom(game) as i32 & 0x1c) >> 1) as u16;
         word!(
@@ -2386,9 +2366,7 @@ crate::game::callback_dispatch! {
     };
     [8831731] Eproj_MotherBrainsBlueRingLasers [] {
         let v1: i32 = j as i32 >> 1;
-        word!(game.eproj_E[v1] = 8);
-        word!(game.eproj_F[v1] = 0);
-        word!(game.eproj_gfx_idx[v1] = 1024);
+        word! {game; eproj_E[v1] = 8; eproj_F[v1] = 0; eproj_gfx_idx[v1] = 1024; }
         let r18: u16 = word!(game.cinematic_var8);
         word! { game;
             eproj_x_vel[v1] = Math_MultBySin(0x450, r18);
@@ -2435,15 +2413,13 @@ crate::game::callback_dispatch! {
             eproj_instr_list_ptr[v2] = crate::rtl::rom_table_word!(game, 0x86d96a, (v1 >> 1) as isize);
         }
         let enemy_index = game.cur_enemy_index();
-        word!(game.eproj_x_pos[v2] = game.enemy_state(enemy_index).x_pos());
-        word!(game.eproj_x_subpos[v2] = game.enemy_state(enemy_index).x_subpos());
-        word!(game.eproj_y_pos[v2] = game.enemy_state(enemy_index).y_pos());
-        word!(game.eproj_y_subpos[v2] = game.enemy_state(enemy_index).y_subpos());
-        word!(game.eproj_y_vel[v2] = -512i32 as u16);
-        word!(game.eproj_x_vel[v2] = 512);
+        word! {game; eproj_x_pos[v2] = game.enemy_state(enemy_index).x_pos();
+            eproj_x_subpos[v2] = game.enemy_state(enemy_index).x_subpos();
+            eproj_y_pos[v2] = game.enemy_state(enemy_index).y_pos();
+            eproj_y_subpos[v2] = game.enemy_state(enemy_index).y_subpos();
+            eproj_y_vel[v2] = -512i32 as u16; eproj_x_vel[v2] = 512; }
         if EprojState(&game.g_ram).init_param_1() as i32 - 12i32 & 0x8000 == 0 {
-            word!(game.eproj_y_vel[v2] = -384i32 as u16);
-            word!(game.eproj_x_vel[v2] = 384);
+            word! {game; eproj_y_vel[v2] = -384i32 as u16; eproj_x_vel[v2] = 384; }
         }
     };
     @functions [unsafe fn (v0: u16, game: &mut Game)];
@@ -2467,11 +2443,9 @@ crate::game::callback_dispatch! {
         word!(game.g_word_7E97DC[v1] = word!(game.cinematic_var9));
         let pt: Point32 =
             ConvertAngleToXy(word!(game.cinematic_var9), word!(game.cinematic_var8), game);
-        word!(game.eproj_x_vel[v1] = (pt.x >> 16) as u16);
-        word!(game.eproj_E[v1] = pt.x as u16);
-        word!(game.eproj_y_vel[v1] = (pt.y >> 16) as u16);
-        word!(game.eproj_F[v1] = pt.y as u16);
-        word!(game.eproj_gfx_idx[v1] = 1024);
+        word! {game; eproj_x_vel[v1] = (pt.x >> 16) as u16; eproj_E[v1] = pt.x as u16;
+            eproj_y_vel[v1] = (pt.y >> 16) as u16; eproj_F[v1] = pt.y as u16;
+            eproj_gfx_idx[v1] = 1024; }
     };
     [8818895] EprojInit_CrocomireSpikeWallPieces [] {
         word!(
@@ -2483,12 +2457,10 @@ crate::game::callback_dispatch! {
             eproj_x_vel[v1], eproj_y_vel[v1], eproj_E[v1], eproj_F[v1], eproj_x_subpos[v1],
             eproj_y_subpos[v1],
         }
-        word!(game.eproj_y_vel[v1] = -5i32 as u16);
-        word!(game.eproj_F[v1] = -30720i32 as u16);
+        word! {game; eproj_y_vel[v1] = -5i32 as u16; eproj_F[v1] = -30720i32 as u16; }
     };
     [8819334] EprojInit_CrocomireBridgeCrumbling [] {
-        word!(game.eproj_x_pos[v1] = word!(game.cinematic_var8));
-        word!(game.eproj_y_pos[v1] = 187);
+        word! {game; eproj_x_pos[v1] = word!(game.cinematic_var8); eproj_y_pos[v1] = 187; }
         word! { game, 0; eproj_y_subpos[v1], eproj_x_subpos[v1], eproj_x_vel[v1] }
         word!(game.eproj_y_vel[v1] = ((word!(game.random_number) as i32 & 0x3f) + 64) as u16);
         word!(game.eproj_gfx_idx[v1] = 1024);
@@ -2518,8 +2490,7 @@ crate::game::callback_dispatch! {
         }
     };
     [8821976] EprojInit_RocksFallingKraidCeiling [] {
-        word!(game.eproj_x_pos[v1] = word!(game.cinematic_var8));
-        word!(game.eproj_y_pos[v1] = 312);
+        word! {game; eproj_x_pos[v1] = word!(game.cinematic_var8); eproj_y_pos[v1] = 312; }
         word! { game, 0; eproj_y_subpos[v1], eproj_x_subpos[v1], eproj_x_vel[v1] }
         word!(game.eproj_y_vel[v1] = (word!(game.random_number) & 0x3f).wrapping_add(64));
         word!(game.eproj_gfx_idx[v1] = 1536);
@@ -2592,8 +2563,7 @@ crate::game::callback_dispatch! {
         word! { game, 0; eproj_x_subpos[v1], eproj_y_subpos[v1] }
     };
     [8826691] EprojInit_TourianStatueDustClouds [] {
-        word!(game.eproj_E[v1] = 128);
-        word!(game.eproj_F[v1] = 188);
+        word! {game; eproj_E[v1] = 128; eproj_F[v1] = 188; }
     };
     [8828061] EprojInit_TourianEscapeShaftFakeWallExplode [] {
         word! { game, 272; eproj_x_pos[v1], eproj_E[v1] }
@@ -2624,15 +2594,12 @@ crate::game::callback_dispatch! {
         word!(game.eproj_y_vel[v1] = word!(game.cinematic_var8));
         word!(game.eproj_x_vel[v1] = word!(game.cinematic_var9));
         let v2 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        word!(game.eproj_x_pos[v1] = (*v2).x_pos);
-        word!(game.eproj_x_subpos[v1] = (*v2).x_subpos);
-        word!(game.eproj_y_pos[v1] = (*v2).y_pos);
-        word!(game.eproj_y_subpos[v1] = (*v2).y_subpos);
+        word! {game; eproj_x_pos[v1] = (*v2).x_pos; eproj_x_subpos[v1] = (*v2).x_subpos;
+            eproj_y_pos[v1] = (*v2).y_pos; eproj_y_subpos[v1] = (*v2).y_subpos; }
     };
     [8830370] EprojInit_BDA2 [] {
         let v2 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        word!(game.eproj_x_pos[v1] = (*v2).x_pos);
-        word!(game.eproj_y_pos[v1] = (*v2).y_pos);
+        word! {game; eproj_x_pos[v1] = (*v2).x_pos; eproj_y_pos[v1] = (*v2).y_pos; }
         let v3: u16 = (2 * byte!((*v2).ai_var_D; 0) as i32) as u16;
         let v4: i32 = v3 as i32 >> 1;
         word!(game.eproj_x_vel[v1] = kSinCosTable8bit_Sext[(v4 + 64) as usize] as u16);
@@ -2666,8 +2633,7 @@ crate::game::callback_dispatch! {
         Eproj_SetYvelRandom(j, game);
     };
     [8830809] EprojInit_MotherBrainRoomTurretBullets [] {
-        word!(game.eproj_F[v1] = 0);
-        word!(game.eproj_gfx_idx[v1] = 1024);
+        word! {game; eproj_F[v1] = 0; eproj_gfx_idx[v1] = 1024; }
         let v2: u16 = (2 * byte!(@pointer (ram_ptr!(game, u16; 0x1a6f))
             .offset((word!(game.cinematic_var8) >> 1) as isize); 0) as i32) as u16;
         word!(game.eproj_E[v1] = v2);
@@ -2684,12 +2650,9 @@ crate::game::callback_dispatch! {
     };
     [8832644] EprojInit_MotherBrainDeathBeemFired [] {
         let E = Get_MotherBrain(0, game);
-        word!(game.eproj_x_pos[v1] = (*E).var_24);
-        word!(game.eproj_x_subpos[v1] = (*E).var_23);
-        word!(game.eproj_y_pos[v1] = (*E).var_26);
-        word!(game.eproj_y_subpos[v1] = (*E).var_25);
-        word!(game.eproj_x_vel[v1] = (*E).var_27);
-        word!(game.eproj_y_vel[v1] = (*E).var_28);
+        word! {game; eproj_x_pos[v1] = (*E).var_24; eproj_x_subpos[v1] = (*E).var_23;
+            eproj_y_pos[v1] = (*E).var_26; eproj_y_subpos[v1] = (*E).var_25;
+            eproj_x_vel[v1] = (*E).var_27; eproj_y_vel[v1] = (*E).var_28; }
         MoveEprojWithVelocity(j, game);
         (*E).var_24 = word!(game.eproj_x_pos[v1]);
         (*E).var_23 = word!(game.eproj_x_subpos[v1]);
@@ -2712,8 +2675,7 @@ crate::game::callback_dispatch! {
             };
             SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x1d, game);
             QueueSfx3_Max6(0x13, game);
-            word!(game.earthquake_timer = 10);
-            word!(game.earthquake_type = 5);
+            word! {game; earthquake_timer = 10; earthquake_type = 5; }
         } else {
             word!(game.eproj_E[v1] = (word!(game.eproj_E[v1]) as i32 + 1 & 3) as u16);
             word! { game, 0; eproj_F[v1], eproj_x_vel[v1], eproj_y_vel[v1] }
@@ -2724,8 +2686,7 @@ crate::game::callback_dispatch! {
         EprojPreInstr_MotherBrainRainbowBeam(j, game);
     };
     [8833091] EprojInit_MotherBrainsDrool [] {
-        word!(game.eproj_gfx_idx[v1] = 0);
-        word!(game.eproj_E[v1] = word!(game.cinematic_var8));
+        word! {game; eproj_gfx_idx[v1] = 0; eproj_E[v1] = word!(game.cinematic_var8); }
         EprojPreInstr_C84D(j, game);
     };
     [8833269] EprojInit_MotherBrainsDeathExplosion [] {
@@ -2770,18 +2731,16 @@ crate::game::callback_dispatch! {
     [8833993] EprojInit_MotherBrainTubeFalling [] {
         word!(game.eproj_gfx_idx[v1] = 3584);
         word! { game, 0; eproj_x_vel[v1], eproj_y_vel[v1] }
-        word!(game.eproj_x_pos[v1] = game.eproj_spawn_pt.x);
-        word!(game.eproj_y_pos[v1] = game.eproj_spawn_pt.y);
-        word!(game.eproj_E[v1] = (0x86cbea & 0xffff) as u16);
+        word! {game; eproj_x_pos[v1] = game.eproj_spawn_pt.x;
+            eproj_y_pos[v1] = game.eproj_spawn_pt.y; eproj_E[v1] = (0x86cbea & 0xffff) as u16; }
     };
     [8835642] EprojInit_MaridiaFloatersSpikes [] {
         word! { game, 0;
             eproj_x_subpos[v1], eproj_y_subpos[v1], eproj_x_vel[v1], eproj_y_vel[v1],
         }
         let v2 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        word!(game.eproj_x_pos[v1] = (*v2).x_pos);
-        word!(game.eproj_y_pos[v1] = (*v2).y_pos);
-        word!(game.eproj_E[v1] = word!(game.cinematic_var8));
+        word! {game; eproj_x_pos[v1] = (*v2).x_pos; eproj_y_pos[v1] = (*v2).y_pos;
+            eproj_E[v1] = word!(game.cinematic_var8); }
     };
     [8838307] EprojInit_SporeSpawnStalk [] {
         word!(
@@ -2815,19 +2774,16 @@ crate::game::callback_dispatch! {
         NextRandom(game);
     };
     [8841777] EprojInit_BotwoonsBody [] {
-        word!(game.eproj_x_pos[v1] = (*(ram_ptr!(game, EnemyData; 0xf78))).x_pos);
-        word!(game.eproj_y_pos[v1] = (*(ram_ptr!(game, EnemyData; 0xf78))).y_pos);
-        word!(game.eproj_y_vel[v1] = 0);
+        word! {game; eproj_x_pos[v1] = (*(ram_ptr!(game, EnemyData; 0xf78))).x_pos;
+            eproj_y_pos[v1] = (*(ram_ptr!(game, EnemyData; 0xf78))).y_pos; eproj_y_vel[v1] = 0; }
         let v2: u16 = (if (*(ram_ptr!(game, EnemyData; 0xf78))).ai_var_A != 0 {
             16
         } else {
             48
         }) as u16;
         let v3: u16 = crate::rtl::rom_table_word!(game, 0x86e9f1, (v2 >> 1) as isize);
-        word!(game.eproj_instr_list_ptr[v1] = v3);
-        word!(game.eproj_F[v1] = v3);
-        word!(game.eproj_E[v1] = v2);
-        word!(game.eproj_x_vel[v1] = (0x86ea98 & 0xffff) as u16);
+        word! {game; eproj_instr_list_ptr[v1] = v3; eproj_F[v1] = v3; eproj_E[v1] = v2;
+            eproj_x_vel[v1] = (0x86ea98 & 0xffff) as u16; }
         let Ex = gExtraEnemyRam7800((*(ram_ptr!(game, EnemyData; 0xf78))).ai_var_A as i32, game);
         (*Ex).kraid.kraid_next = j;
         word!(game.eproj_flags[v1] = 2);
@@ -2836,8 +2792,7 @@ crate::game::callback_dispatch! {
     @functions [unsafe fn (j: u16, game: &mut Game)];
     @prefix { let v2: i32 = j as i32 >> 1; };
     [8818723] EprojInit_CrocomireProjectile [] {
-        word!(game.eproj_x_vel[v2] = -512i32 as u16);
-        word!(game.eproj_y_vel[v2] = 1);
+        word! {game; eproj_x_vel[v2] = -512i32 as u16; eproj_y_vel[v2] = 1; }
         let v3 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
         word!(game.eproj_x_pos[v2] = ((*v3).x_pos as i32 - 32i32) as u16);
         word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 - 16i32) as u16);
@@ -2898,9 +2853,8 @@ crate::game::callback_dispatch! {
         word!(game.eproj_x_pos[v2] = game.enemy_state(enemy_index).x_pos());
         word!(game.eproj_y_pos[v2] = game.enemy_state(enemy_index).y_pos());
         let v4: u16 = ((game.random_number() as i32 & 7) + 1) as u16;
-        word!(game.eproj_G[v2] = v4);
-        word!(game.eproj_E[v2] = v4.wrapping_add(4));
-        word!(game.eproj_pre_instr[v2] = ((0x86d0cai32) as u16));
+        word! {game; eproj_G[v2] = v4; eproj_E[v2] = v4.wrapping_add(4);
+            eproj_pre_instr[v2] = ((0x86d0cai32) as u16); }
     };
     [8835852] EprojInit_WreckedShipRobotLaserDown [] {
         word!(game.eproj_x_vel[v2] = (*gEnemyData(word!(game.cur_enemy_index) as i32, game)).ai_var_A);
@@ -2925,18 +2879,15 @@ crate::game::callback_dispatch! {
             word!(game.eproj_E[v2] = (0x86db8c & 0xffff) as u16);
         }
         let v3 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        word!(game.eproj_x_pos[v2] = (*v3).x_pos);
-        word!(game.eproj_x_subpos[v2] = (*v3).x_subpos);
-        word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 + 2) as u16);
-        word!(game.eproj_y_subpos[v2] = (*v3).y_subpos);
-        word!(game.eproj_y_vel[v2] = -256i32 as u16);
-        word!(game.eproj_x_vel[v2] = 256);
+        word! {game; eproj_x_pos[v2] = (*v3).x_pos; eproj_x_subpos[v2] = (*v3).x_subpos;
+            eproj_y_pos[v2] = ((*v3).y_pos as i32 + 2) as u16;
+            eproj_y_subpos[v2] = (*v3).y_subpos; eproj_y_vel[v2] = -256i32 as u16;
+            eproj_x_vel[v2] = 256; }
     };
     [8838285] EprojInit_Spores [] {
         crate::update_place! { reference fresh4 = *(ram_ptr!(game, u16; 0x1a4b)).offset(v2 as isize) => game.eproj_spawn_pt.x; }
-        word!(game.eproj_F[v2] = *fresh4);
-        word!(game.eproj_y_pos[v2] = game.eproj_spawn_pt.y);
-        word!(game.eproj_gfx_idx[v2] = 512);
+        word! {game; eproj_F[v2] = *fresh4; eproj_y_pos[v2] = game.eproj_spawn_pt.y;
+            eproj_gfx_idx[v2] = 512; }
     };
     [8838870] EprojInit_NamiFuneFireball [] {
         word!(game.eproj_instr_list_ptr[v2] = addr_word_86DE96 as u16);
@@ -2946,10 +2897,8 @@ crate::game::callback_dispatch! {
             word!(game.eproj_E[v2] = (0x86df6a & 0xffff) as u16);
         }
         let v3 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        word!(game.eproj_x_pos[v2] = (*v3).x_pos);
-        word!(game.eproj_x_subpos[v2] = (*v3).x_subpos);
-        word!(game.eproj_y_pos[v2] = (*v3).y_pos);
-        word!(game.eproj_y_subpos[v2] = (*v3).y_subpos);
+        word! {game; eproj_x_pos[v2] = (*v3).x_pos; eproj_x_subpos[v2] = (*v3).x_subpos;
+            eproj_y_pos[v2] = (*v3).y_pos; eproj_y_subpos[v2] = (*v3).y_subpos; }
         if ((*v3).parameter_1 & 0xf) != 0 {
             word!(game.eproj_y_pos[v2], |fresh3| (fresh3 as i32 + 4) as u16);
         }
@@ -2965,18 +2914,15 @@ crate::game::callback_dispatch! {
             word!(game.eproj_E[v2] = (0x86e07a & 0xffff) as u16);
         }
         let v3 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        word!(game.eproj_x_pos[v2] = (*v3).x_pos);
-        word!(game.eproj_x_subpos[v2] = (*v3).x_subpos);
-        word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 + 2) as u16);
-        word!(game.eproj_y_subpos[v2] = (*v3).y_subpos);
-        word!(game.eproj_y_vel[v2] = -768i32 as u16);
-        word!(game.eproj_x_vel[v2] = 768);
+        word! {game; eproj_x_pos[v2] = (*v3).x_pos; eproj_x_subpos[v2] = (*v3).x_subpos;
+            eproj_y_pos[v2] = ((*v3).y_pos as i32 + 2) as u16;
+            eproj_y_subpos[v2] = (*v3).y_subpos; eproj_y_vel[v2] = -768i32 as u16;
+            eproj_x_vel[v2] = 768; }
     };
     [8843049] EprojInit_F337 [] {
-        word!(game.eproj_x_pos[v2] = game.eproj_spawn_pt.x);
-        word!(game.eproj_y_pos[v2] = game.eproj_spawn_pt.y);
-        word!(game.eproj_gfx_idx[v2] = 0);
-        word!(game.eproj_enemy_header_ptr[v2] = game.eproj_spawn_varE24);
+        word! {game; eproj_x_pos[v2] = game.eproj_spawn_pt.x;
+            eproj_y_pos[v2] = game.eproj_spawn_pt.y; eproj_gfx_idx[v2] = 0;
+            eproj_enemy_header_ptr[v2] = game.eproj_spawn_varE24; }
         let v3: u16 = RandomDropRoutine(j, game);
         if v3 != 0 && v3 as i32 - 6i32 & 0x8000 != 0 {
             let v4: u16 = (2u16).wrapping_mul(v3);
@@ -2990,10 +2936,9 @@ crate::game::callback_dispatch! {
             word!(game.eproj_killed_enemy_index[(j >> 1)] = -1i32 as u16);
         } else {
             let v5: i32 = j as i32 >> 1;
-            word!(game.eproj_instr_list_ptr[v5] = addr_word_86ECA3 as u16);
-            word!(game.eproj_instr_timers[v5] = 1);
-            word!(game.eproj_properties[v5] = 12288);
-            word!(game.eproj_pre_instr[v5] = (0x86efdf & 0xffff) as u16);
+            word! {game; eproj_instr_list_ptr[v5] = addr_word_86ECA3 as u16;
+                eproj_instr_timers[v5] = 1; eproj_properties[v5] = 12288;
+                eproj_pre_instr[v5] = (0x86efdf & 0xffff) as u16; }
         };
     };
     @functions [unsafe fn (j: u16, game: &mut Game)];
@@ -3021,21 +2966,17 @@ crate::game::callback_dispatch! {
         let v3: i32 = EprojState(&game.g_ram).init_param_1() as i32 >> 1;
         let v4: u16 = (kEprojInit_BombTorizoLowHealthExplode_X[v3 as usize] as i32
             + word!(game.eproj_x_pos[v2]) as i32) as u16;
-        word!(game.eproj_x_pos[v2] = v4);
-        word!(game.eproj_E[v2] = v4);
+        word! {game; eproj_x_pos[v2] = v4; eproj_E[v2] = v4; }
         let v5: u16 = (kEprojInit_BombTorizoLowHealthExplode_Y[v3 as usize] as i32
             + word!(game.eproj_y_pos[v2]) as i32) as u16;
-        word!(game.eproj_y_pos[v2] = v5);
-        word!(game.eproj_F[v2] = v5);
+        word! {game; eproj_y_pos[v2] = v5; eproj_F[v2] = v5; }
     };
     [8824945] EprojInit_BombTorizoDeathExplosion [] {
         let x_pos: u16 = game.enemy_state(enemy_index).x_pos();
         let v3: i32 = j as i32 >> 1;
-        word!(game.eproj_x_pos[v3] = x_pos);
-        word!(game.eproj_E[v3] = x_pos);
+        word! {game; eproj_x_pos[v3] = x_pos; eproj_E[v3] = x_pos; }
         let y_pos: u16 = game.enemy_state(enemy_index).y_pos();
-        word!(game.eproj_y_pos[v3] = y_pos);
-        word!(game.eproj_F[v3] = y_pos);
+        word! {game; eproj_y_pos[v3] = y_pos; eproj_F[v3] = y_pos; }
     };
     [8825835] EprojInit_BombTorizosChozoOrbs [] {
         let v2: u16 = (if (game.enemy_state(enemy_index).parameter_1() & 0x8000) != 0 {
@@ -3213,8 +3154,7 @@ crate::game::callback_dispatch! {
                 abs16((word!(game.samus_y_pos) as i32 - word!(game.eproj_y_pos[v1]) as i32) as u16);
             v3 as i32 - 20i32 & 0x8000 != 0
         } {
-            word!(game.eproj_instr_list_ptr[v1] = 0x8c38);
-            word!(game.eproj_instr_timers[v1] = 1);
+            word! {game; eproj_instr_list_ptr[v1] = 0x8c38; eproj_instr_timers[v1] = 1; }
         } else if Eproj_FuncE722(k, game) != 0 {
             word!(game.eproj_id[v1] = 0);
         }
@@ -3327,9 +3267,8 @@ crate::game::callback_dispatch! {
     [8821545] EprojPreInstr_PhantoonStartingFireballsB [] {
         if (*(ram_ptr!(game, EnemyData; 0xf78))).ai_var_B != 0 {
             let v1: i32 = k as i32 >> 1;
-            word!(game.eproj_pre_instr[v1] = (0x869b41 & 0xffff) as u16);
-            word!(game.eproj_x_vel[v1] = 180);
-            word!(game.eproj_y_vel[v1] = 48);
+            word! {game; eproj_pre_instr[v1] = (0x869b41 & 0xffff) as u16; eproj_x_vel[v1] = 180;
+                eproj_y_vel[v1] = 48; }
         }
     };
     [8822102] EprojPreInstr_KraidRocks [] {
@@ -3418,9 +3357,8 @@ crate::game::callback_dispatch! {
             word!(game.eproj_y_pos[v1] = game.samus_y_pos().wrapping_add(28));
             let fresh113 = EprojStateMut(&mut game.g_ram).add_word(0xafa, 0, 1);
             if fresh113 as i32 - 73i32 & 0x8000 == 0 {
-                word!(game.samus_y_pos = 72);
-                word!(game.eproj_instr_timers[v1] = 1);
-                word!(game.eproj_instr_list_ptr[v1] = addr_off_86A28B as u16);
+                word! {game; samus_y_pos = 72; eproj_instr_timers[v1] = 1;
+                    eproj_instr_list_ptr[v1] = addr_off_86A28B as u16; }
                 CallSomeSamusCode(0xe, game);
             }
         }
@@ -3508,10 +3446,9 @@ crate::game::callback_dispatch! {
     [8826476] EprojPreInstr_TorizoSonicBoom [] {
         if EprojBlockCollisition_Horiz(k, game) & 1 != 0 {
             let v4: i32 = k as i32 >> 1;
-            word!(game.eproj_instr_list_ptr[v4] = addr_off_86ADE5 as u16);
-            word!(game.eproj_instr_timers[v4] = 1);
-            word!(game.eproj_E[v4] = word!(game.eproj_x_pos[v4]));
-            word!(game.eproj_F[v4] = word!(game.eproj_y_pos[v4]));
+            word! {game; eproj_instr_list_ptr[v4] = addr_off_86ADE5 as u16;
+                eproj_instr_timers[v4] = 1; eproj_E[v4] = word!(game.eproj_x_pos[v4]);
+                eproj_F[v4] = word!(game.eproj_y_pos[v4]); }
         } else {
             let v1: i32 = k as i32 >> 1;
             word!(game.eproj_x_vel[v1], |fresh109| (fresh109 as i32
@@ -3529,8 +3466,7 @@ crate::game::callback_dispatch! {
         let mut v2: i16 = 0;
         if EprojBlockCollisition_Horiz(k, game) & 1 != 0 {
             let v3: i32 = k as i32 >> 1;
-            word!(game.eproj_pre_instr[v3] = 0xb0dd);
-            word!(game.eproj_y_vel[v3] = 0);
+            word! {game; eproj_pre_instr[v3] = 0xb0dd; eproj_y_vel[v3] = 0; }
         } else {
             let v1: i32 = k as i32 >> 1;
             if (word!(game.eproj_E[v1]) & 0x8000) != 0 {
@@ -3891,9 +3827,8 @@ crate::game::callback_dispatch! {
         if word!(game.kraid_unk9000) == 0 {
             let v1: i32 = k as i32 >> 1;
             if word!(game.eproj_F[v1]) == 0 {
-                word!(game.eproj_instr_list_ptr[v1] = addr_word_86DC06 as u16);
-                word!(game.eproj_instr_timers[v1] = 1);
-                word!(game.eproj_F[v1] = (NextRandom(game) & 0x1ff));
+                word! {game; eproj_instr_list_ptr[v1] = addr_word_86DC06 as u16;
+                    eproj_instr_timers[v1] = 1; eproj_F[v1] = (NextRandom(game) & 0x1ff); }
             }
             word!(game.eproj_F[v1], wrapping_sub(1));
         }
@@ -3922,8 +3857,7 @@ crate::game::callback_dispatch! {
     [8824967] sub_86A887 [] {
         if EprojBlockCollisition_Horiz(v0, game) & 1 != 0 {
             let v6: i32 = v0 as i32 >> 1;
-            word!(game.eproj_instr_list_ptr[v6] = 0xa48a);
-            word!(game.eproj_instr_timers[v6] = 1);
+            word! {game; eproj_instr_list_ptr[v6] = 0xa48a; eproj_instr_timers[v6] = 1; }
         } else {
             let v1: i32 = v0 as i32 >> 1;
             let mut v2: i16 = word!(game.eproj_x_vel[v1]) as i16;
@@ -4135,13 +4069,11 @@ crate::game::callback_dispatch! {
         let v2: bool = word!(game.eproj_E[v1]) == 1;
         let v3: bool = (word!(game.eproj_E[v1], wrapping_sub(1), reread) & 0x8000) != 0;
         if v2 || v3 {
-            word!(game.eproj_pre_instr[v1] = (0x869a01 & 0xffff) as u16);
-            word!(game.eproj_instr_list_ptr[v1] = addr_word_869772 as u16);
-            word!(game.eproj_instr_timers[v1] = 1);
+            word! {game; eproj_pre_instr[v1] = (0x869a01 & 0xffff) as u16;
+                eproj_instr_list_ptr[v1] = addr_word_869772 as u16; eproj_instr_timers[v1] = 1; }
             word!(game.eproj_y_pos[v1], |fresh132| (fresh132 as i32 - 8i32)
                 as u16);
-            word!(game.eproj_y_vel[v1] = -768i32 as u16);
-            word!(game.eproj_E[v1] = 0);
+            word! {game; eproj_y_vel[v1] = -768i32 as u16; eproj_E[v1] = 0; }
             if (word!(game.nmi_frame_counter_word) & 1) != 0 {
                 word!(game.eproj_x_vel[v1] = -128i32 as u16);
             } else {
@@ -4164,9 +4096,8 @@ crate::game::callback_dispatch! {
             (EprojBlockCollisition_Horiz(k, game) & 1 != 0)
         };
         if switch_fireball_phase {
-            word!(game.eproj_instr_list_ptr[v1] = addr_word_869782 as u16);
-            word!(game.eproj_instr_timers[v1] = 1);
-            word!(game.eproj_pre_instr[v1] = (0x869a44 & 0xffff) as u16);
+            word! {game; eproj_instr_list_ptr[v1] = addr_word_869782 as u16;
+                eproj_instr_timers[v1] = 1; eproj_pre_instr[v1] = (0x869a44 & 0xffff) as u16; }
         };
     };
     [8821396] EprojPreInstr_PhantoonDestroyableFireballs_2 [] {
@@ -4435,8 +4366,7 @@ crate::game::callback_dispatch! {
             }
             Eproj_NorfairLavaquakeRocks_Func3(k, game);
         } else {
-            word!(game.eproj_y_vel[v1] = 0);
-            word!(game.eproj_E[v1] = (0x86bc8f & 0xffff) as u16);
+            word! {game; eproj_y_vel[v1] = 0; eproj_E[v1] = (0x86bc8f & 0xffff) as u16; }
         };
     };
     Eproj_NorfairLavaquakeRocks_Func2 [] {
@@ -4597,8 +4527,7 @@ crate::game::callback_dispatch! {
     };
     [8833786] EprojPreInstr_TimeBombSetJapaneseText [] {
         word! { game, 0; eproj_x_vel[v1], eproj_y_vel[v1] }
-        word!(game.eproj_x_pos[v1] = 128);
-        word!(game.eproj_y_pos[v1] = 192);
+        word! {game; eproj_x_pos[v1] = 128; eproj_y_pos[v1] = 192; }
     };
     MotherBrainTubeFallingFunc_GenerateExplosion [] {
         game.eproj_spawn_pt = Point16U {
@@ -4794,9 +4723,8 @@ crate::game::callback_dispatch! {
         let v2: u16 =
             crate::rtl::rom_table_word!(game, 0x86e9f1, (word!(game.eproj_E[v1]) >> 1) as isize);
         if v2 != word!(game.eproj_F[v1]) {
-            word!(game.eproj_instr_list_ptr[v1] = v2);
-            word!(game.eproj_F[v1] = v2);
-            word!(game.eproj_instr_timers[v1] = 1);
+            word! {game; eproj_instr_list_ptr[v1] = v2; eproj_F[v1] = v2;
+                eproj_instr_timers[v1] = 1; }
         }
         Eproj_BotwoonsBodyHurtFlashHandling1(k, game);
     };
@@ -4883,8 +4811,7 @@ crate::game::callback_dispatch! {
                         as u16
                 );
                 word!(game.eproj_E[v1], |fresh51| (fresh51 as i32 * 2) as u16);
-                word!(game.eproj_x_vel[v1] = 0x8000);
-                word!(game.eproj_y_vel[v1] = -1i32 as u16);
+                word! {game; eproj_x_vel[v1] = 0x8000; eproj_y_vel[v1] = -1i32 as u16; }
                 word!(game.eproj_y_pos[v1], |fresh52| (fresh52 as i32 - 2i32)
                     as u16);
                 return;
@@ -4993,10 +4920,9 @@ crate::game::callback_dispatch! {
         if word!(game.samus_x_speed_divisor) as i32 - 5i32 & 0x8000 != 0 {
             word!(game.samus_x_speed_divisor, wrapping_add(1));
             let v3: i32 = k as i32 >> 1;
-            word!(game.eproj_F[v3] = v2);
-            word!(game.eproj_E[v3] = 256);
-            word!(game.eproj_pre_instr[v3] = (0x868dca & 0xffff) as u16);
-            word!(game.eproj_properties[v3] = (word!(game.eproj_properties[v3]) & 0x5fff | 0x2000));
+            word! {game; eproj_F[v3] = v2; eproj_E[v3] = 256;
+                eproj_pre_instr[v3] = (0x868dca & 0xffff) as u16;
+                eproj_properties[v3] = (word!(game.eproj_properties[v3]) & 0x5fff | 0x2000); }
             word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
         }
         epjp
@@ -5389,8 +5315,7 @@ crate::game::callback_dispatch! {
         if t & 0x100 != 0 {
             v4 = -(v4 as i32) as u16;
         }
-        word!(game.eproj_x_vel[v2] = v4);
-        word!(game.eproj_pre_instr[v2] = ((0x86d0eci32) as u16));
+        word! {game; eproj_x_vel[v2] = v4; eproj_pre_instr[v2] = ((0x86d0eci32) as u16); }
     };
     [8835510] EprojInstr_D1B6 [epjp] {
         let v1: i32 = k as i32 >> 1;
@@ -5412,10 +5337,8 @@ crate::game::callback_dispatch! {
             word!(game.eproj_x_pos[v2] = word!(game.eproj_F[v2]));
             word!(game.eproj_spritemap_ptr[v2] = *(epjp as *mut u16));
         } else {
-            word!(
-                game.eproj_x_pos[v2] = (128 - word!(game.eproj_F[v2]) as i32 + 128) as u16
-            );
-            word!(game.eproj_spritemap_ptr[v2] = *(epjp.offset(2) as *mut u16));
+            word! {game; eproj_x_pos[v2] = (128 - word!(game.eproj_F[v2]) as i32 + 128) as u16;
+                eproj_spritemap_ptr[v2] = *(epjp.offset(2) as *mut u16); }
         }
         word!(
             game.eproj_instr_list_ptr[v2] =
@@ -5500,10 +5423,8 @@ crate::game::callback_dispatch! {
             word!(game.eproj_instr_list_ptr[v4]) as usize as *const u8
         } else {
             let v6: i32 = k as i32 >> 1;
-            word!(game.eproj_instr_timers[v6] = 1);
-            word!(game.eproj_properties[v6] = 12288);
-            word!(game.eproj_pre_instr[v6] = ((0x86efdfi32) as u16));
-            word!(game.eproj_instr_list_ptr[v6] = 0xeca3);
+            word! {game; eproj_instr_timers[v6] = 1; eproj_properties[v6] = 12288;
+                eproj_pre_instr[v6] = ((0x86efdfi32) as u16); eproj_instr_list_ptr[v6] = 0xeca3; }
             0xeca3i32 as usize as *const u8
         }
     };

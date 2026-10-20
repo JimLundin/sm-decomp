@@ -147,8 +147,7 @@ crate::prefixed_callbacks! {
             );
             QueueSfx2_Max6(0xc, game);
         }
-        word!(game.projectile_bomb_instruction_timers[v1] = 1);
-        word!(game.projectile_damage[v1] = 8);
+        word! {game; projectile_bomb_instruction_timers[v1] = 1; projectile_damage[v1] = 8; }
     };
     InitializeBombExplosion [] {
         word!(

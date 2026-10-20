@@ -301,12 +301,10 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game)];
     [9408916] RoomSetup_AfterSavingAnimals [] {
         SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x3d, 0xb, 0xbb30 as VoidP), game);
-        word!(game.earthquake_type = 24);
-        word!(game.earthquake_timer = -1i32 as u16);
+        word! {game; earthquake_type = 24; earthquake_timer = -1i32 as u16; }
     };
     [9408957] RoomSetup_ShakeDuringEscape [] {
-        word!(game.earthquake_type = 6);
-        word!(game.earthquake_timer = -1i32 as u16);
+        word! {game; earthquake_type = 6; earthquake_timer = -1i32 as u16; }
         FxTypeFunc_20(game);
     };
     [9408983] RoomSetup_RunStatueUnlockAnims [] {
@@ -332,8 +330,7 @@ crate::game::callback_dispatch! {
     };
     [9423135] RoomCode_SetZebesTimebombEvent [] {
         SetEventHappened(0xe, game);
-        word!(game.earthquake_type = 18);
-        word!(game.earthquake_timer = -1i32 as u16);
+        word! {game; earthquake_type = 18; earthquake_timer = -1i32 as u16; }
     };
     [9423155] RoomCode_SetLightHorizRoomShake [] {
         word!(game.earthquake_type = 18);
@@ -342,8 +339,7 @@ crate::game::callback_dispatch! {
         word!(game.earthquake_timer = -1i32 as u16);
     };
     [9423174] RoomCode_SetMediumHorizRoomShake [] {
-        word!(game.earthquake_type = 21);
-        word!(game.earthquake_timer = -1i32 as u16);
+        word! {game; earthquake_type = 21; earthquake_timer = -1i32 as u16; }
     };
     [9423187] RoomCode_Escape4_SetMediumHorizRoomShake [] {
         SpawnHardcodedPlm(
@@ -440,9 +436,7 @@ crate::game::callback_dispatch! {
         crate::rtl::write_register_and_mirror(BGMODE as u16, 7, 0x56, true, game);
         word! { game, 256; reg_M7A, reg_M7D }
         word! { game, 0; reg_M7B, reg_M7C }
-        word!(game.reg_M7X = 128);
-        word!(game.reg_M7Y = 1008);
-        word!(game.irq_enable_mode7 = 1);
+        word! {game; reg_M7X = 128; reg_M7Y = 1008; irq_enable_mode7 = 1; }
         strcpy(
             ram_ptr!(game, c_char; 0x7e1),
             b"\"\0" as *const u8 as *const c_char,
@@ -540,8 +534,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9429686] RoomCode_Elevatube [] {
-        word!(game.samus_x_pos = 128);
-        word!(game.samus_x_subpos = 0);
+        word! {game; samus_x_pos = 128; samus_x_subpos = 0; }
         let amt: i32 = (*(ram_ptr!(game, u16; 0x7e1, 4)) as i16 as i32) << 8;
         let mut v0: u16 = ((amt as u32).wrapping_add(*(ram_ptr!(game, u32; 0x7e1))) >> 16) as u16;
         crate::update_place! { reference fresh13 = *(ram_ptr!(game, u16; 0x7e1)) => (*fresh13 as i32 + amt) as u16; }

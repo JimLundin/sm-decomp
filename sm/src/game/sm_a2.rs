@@ -845,8 +845,7 @@ crate::game::callback_dispatch! {
                 var_02,
                 var_01 = -(words!(i32, (*E), var_02, var_01)) as u32
             );
-            word!(game.earthquake_type = 0);
-            word!(game.earthquake_timer = 16);
+            word! {game; earthquake_type = 0; earthquake_timer = 16; }
             QueueSfx2_Max6(0x1b, game);
         } else {
             MaridiaBeybladeTurtle_Func6(k, game);
@@ -2075,16 +2074,14 @@ pub unsafe fn GunshipTop_18(k: u16, game: &mut Game) {
         } else {
             (word!(game.samus_y_pos)).wrapping_sub(1)
         };
-        word!(game.samus_y_pos = v3);
-        word!(game.samus_prev_y_pos = v3);
+        word! {game; samus_y_pos = v3; samus_prev_y_pos = v3; }
     } else {
         let mut v4: u16 = if (gtp_var_E & 1) != 0 {
             (word!(game.samus_y_pos)).wrapping_add(2)
         } else {
             (word!(game.samus_y_pos)).wrapping_sub(2)
         };
-        word!(game.samus_y_pos = v4);
-        word!(game.samus_prev_y_pos = v4);
+        word! {game; samus_y_pos = v4; samus_prev_y_pos = v4; }
     }
     let mut v5: i16 = ((word!(game.samus_y_pos)) as i16).wrapping_sub(17);
     let E0 = Get_GunshipTop(k as i32, game);
@@ -2140,8 +2137,7 @@ pub unsafe fn GunshipTop_21(k: u16, game: &mut Game) {
         ((*E).var_F >> 8),
         (((*E).var_F as i32) << 8) as u16
     )));
-    word!(game.samus_y_subpos = v6 as u16);
-    word!(game.samus_y_pos = (v6 >> 16) as u16);
+    word! {game; samus_y_subpos = v6 as u16; samus_y_pos = (v6 >> 16) as u16; }
     let v5: u16 = (word!(game.samus_y_pos)).wrapping_sub(17);
     (*Get_GunshipTop(k as i32, game)).base.y_pos = v5;
     (*Get_GunshipTop(k as i32 + 128i32, game)).base.y_pos = (v5).wrapping_sub(1);

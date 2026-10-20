@@ -280,14 +280,12 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                 if word!(game.loading_game_state) as i32
                     == kLoadingGameState_1F_StartingAtCeres as i32
                 {
-                    word!(game.area_index = 6);
-                    word!(game.load_station_index = 0);
+                    word! {game; area_index = 6; load_station_index = 0; }
                     ClearTimerRam(game);
                 } else if word!(game.loading_game_state) as i32
                     == kLoadingGameState_22_EscapingCeres as i32
                 {
-                    word!(game.area_index = 0);
-                    word!(game.load_station_index = 18);
+                    word! {game; area_index = 0; load_station_index = 18; }
                     LoadMirrorOfExploredMapTiles(game);
                 }
             }
@@ -556,9 +554,8 @@ pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRe
         *ram_ptr!(game; 0x6d) = 0;
         *ram_ptr!(game; 0x55) = 9;
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.game_state = kGameState_39_EndingAndCredits as u16);
-        word!(game.cinematic_function = ((0x8bd480i32) as u16));
-        word!(game.timer_status = 0);
+        word! {game; game_state = kGameState_39_EndingAndCredits as u16;
+        cinematic_function = ((0x8bd480i32) as u16); timer_status = 0; }
         QueueMusic_Delayed8(0, game);
         QueueSfx1_Max15(2, game);
         QueueSfx2_Max15(0x71, game);
@@ -599,8 +596,7 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
                 if !(word!(game.demo_timer) == 0 || (word!(game.demo_timer) & 0x8000) != 0) {
                     break 'done;
                 }
-                word!(game.substate = 0);
-                word!(game.my_counter = 90);
+                word! {game; substate = 0; my_counter = 90; }
             }
             do_until! { word!(game.my_counter, wrapping_sub(1), reread) == 0;
                 let yielded: u8 = WaitForNMI_Async(game);
@@ -652,12 +648,10 @@ pub unsafe fn GameState_44_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
         word!(game.game_state = kGameState_40_TransitionToDemo as u16);
     } else if word!(game.substate) != 0 {
         LoadTitleSequenceGraphics(game);
-        word!(game.eproj_x_pos[4] = 2);
-        word!(game.cinematic_function = ((0x8b9a47i32) as u16));
+        word! {game; eproj_x_pos[4] = 2; cinematic_function = ((0x8b9a47i32) as u16); }
     } else {
         QueueMusic_Delayed8(0, game);
-        word!(game.debug_disable_sounds = 0);
-        word!(game.cinematic_function = ((0x8b9b68i32) as u16));
+        word! {game; debug_disable_sounds = 0; cinematic_function = ((0x8b9b68i32) as u16); }
     }
     kCoroutineNone as CoroutineRet
 }
@@ -674,8 +668,7 @@ pub unsafe fn CheckForNextDemo(game: &mut Game) {
         if v0 >= word!(game.num_demo_sets) {
             v0 = 0;
         }
-        word!(game.demo_set = v0);
-        word!(game.demo_scene = 0);
+        word! {game; demo_set = v0; demo_scene = 0; }
     } else {
         word!(game.substate = 0x8000);
     };
@@ -900,8 +893,7 @@ pub unsafe fn ShowSpareCpu(game: &mut Game) {
 }
 pub unsafe fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
     word! { game, 0; UNUSED_word_7E0DF8, UNUSED_word_7E0DFA, UNUSED_word_7E0DFC }
-    word!(game.cinematic_function = ((0x8b9b68i32) as u16));
-    word!(game.demo_set = 0);
+    word! {game; cinematic_function = ((0x8b9b68i32) as u16); demo_set = 0; }
     if word!(game.num_demo_sets) == 4 {
         word!(game.demo_set = 3);
     }
@@ -1000,9 +992,8 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (j: u16, game: &mut Game)];
     [8581782] sub_82F296 [] {
         let v1: i32 = j as i32 >> 1;
-        word!(game.eproj_y_pos[(v1 + 13)] = 24);
-        word!(game.eproj_x_vel[(v1 + 3)] = 56);
-        word!(game.eproj_x_vel[(v1 + 11)] = 3584);
+        word! {game; eproj_y_pos[(v1 + 13)] = 24; eproj_x_vel[(v1 + 3)] = 56;
+            eproj_x_vel[(v1 + 11)] = 3584; }
     };
     [8581963] sub_82F34B [] {
         *(ram_ptr!(game, u16; 0x1a93)).offset(((j as i32 >> 1) + 13) as isize) = 124;
@@ -1018,9 +1009,8 @@ crate::game::callback_dispatch! {
     };
     [8582169] sub_82F419 [] {
         let v1: i32 = j as i32 >> 1;
-        word!(game.eproj_y_pos[(v1 + 13)] = 216);
-        word!(game.eproj_x_vel[(v1 + 3)] = 16);
-        word!(game.eproj_x_vel[(v1 + 11)] = 3584);
+        word! {game; eproj_y_pos[(v1 + 13)] = 216; eproj_x_vel[(v1 + 3)] = 16;
+            eproj_x_vel[(v1 + 11)] = 3584; }
     };
     @external {
         8581987 => sub_82F363;
@@ -1037,9 +1027,8 @@ pub unsafe fn CreateOptionsMenuObject_(a: u16, j: u16, game: &mut Game) -> u8 {
     }
     let v5 = RomPtr_82(j, game);
     let v6: i32 = v3 as i32 >> 1;
-    word!(game.optionsmenu_arr1[v6] = *(v5.offset(2) as *mut u16));
-    word!(game.cinematicspr_arr7[v6] = *(v5.offset(4) as *mut u16));
-    word!(game.cinematicspr_instr_ptr[v6] = 1);
+    word! {game; optionsmenu_arr1[v6] = *(v5.offset(2) as *mut u16);
+    cinematicspr_arr7[v6] = *(v5.offset(4) as *mut u16); cinematicspr_instr_ptr[v6] = 1; }
     word! { game, 0;
         cinematicbg_arr8[v6], optionsmenu_arr5[v6], cinematicspr_arr6[v6], optionsmenu_arr7[v6],
     }
@@ -1072,17 +1061,14 @@ crate::game::callback_dispatch! {
                     game,
                 ) as *const u16;
                 let v5: i32 = v0 as i32 >> 1;
-                word!(game.eproj_y_pos[(v5 + 13)] = *v4);
-                word!(game.eproj_x_vel[(v5 + 3)] = *v4.offset(1));
+                word! {game; eproj_y_pos[(v5 + 13)] = *v4; eproj_x_vel[(v5 + 3)] = *v4.offset(1); }
             } else {
                 let v6: i32 = v0 as i32 >> 1;
-                word!(game.eproj_y_pos[(v6 + 13)] = 384);
-                word!(game.eproj_x_vel[(v6 + 3)] = 16);
+                word! {game; eproj_y_pos[(v6 + 13)] = 384; eproj_x_vel[(v6 + 3)] = 16; }
             }
         } else {
             let v1: i32 = v0 as i32 >> 1;
-            word!(game.eproj_E[(v1 + 15)] = 1);
-            word!(game.eproj_y_vel[(v1 + 17)] = addr_off_82F4B6 as u16);
+            word! {game; eproj_E[(v1 + 15)] = 1; eproj_y_vel[(v1 + 17)] = addr_off_82F4B6 as u16; }
         };
     };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
@@ -1091,8 +1077,7 @@ crate::game::callback_dispatch! {
             || word!(game.game_options_screen_index) == 6 && *ram_ptr!(game; 0x51) == 0x80
         {
             let v1: i32 = k as i32 >> 1;
-            word!(game.eproj_E[(v1 + 15)] = 1);
-            word!(game.eproj_y_vel[(v1 + 17)] = addr_off_82F4B6 as u16);
+            word! {game; eproj_E[(v1 + 15)] = 1; eproj_y_vel[(v1 + 17)] = addr_off_82F4B6 as u16; }
         }
     };
     [8582048] OptionsPreInstr_F3A0 [] {
@@ -1116,15 +1101,13 @@ crate::game::callback_dispatch! {
     [8582114] OptionsPreInstr_F3E2 [] {
         if word!(game.game_options_screen_index) == 6 && *ram_ptr!(game; 0x51) == 0x80 {
             let v1: i32 = k as i32 >> 1;
-            word!(game.eproj_E[(v1 + 15)] = 1);
-            word!(game.eproj_y_vel[(v1 + 17)] = -2890i32 as u16);
+            word! {game; eproj_E[(v1 + 15)] = 1; eproj_y_vel[(v1 + 17)] = -2890i32 as u16; }
         }
     };
     [8582188] OptionsPreInstr_F42C [] {
         if word!(game.game_state) != 2 {
             let v1: i32 = k as i32 >> 1;
-            word!(game.eproj_E[(v1 + 15)] = 1);
-            word!(game.eproj_y_vel[(v1 + 17)] = addr_off_82F4B6 as u16);
+            word! {game; eproj_E[(v1 + 15)] = 1; eproj_y_vel[(v1 + 17)] = addr_off_82F4B6 as u16; }
         }
     };
     @external {
@@ -1190,9 +1173,8 @@ pub unsafe fn OptionsMenuFunc2(k: u16, game: &mut Game) {
             }
         }
         let v7: i32 = v1 as i32 >> 1;
-        word!(game.cinematicspr_instr_ptr[v7] = *v5);
-        word!(game.cinematicbg_arr8[v7] = *v5.offset(1));
-        word!(game.cinematicspr_arr7[v7] = (v4).wrapping_add(4));
+        word! {game; cinematicspr_instr_ptr[v7] = *v5; cinematicbg_arr8[v7] = *v5.offset(1);
+        cinematicspr_arr7[v7] = (v4).wrapping_add(4); }
     }
 }
 pub unsafe fn DrawOptionsMenuSpritemaps(game: &mut Game) {
@@ -1257,8 +1239,7 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
     BackupGameplayPalettesAndLoadForPause(game);
     ContinueInitPauseMenu(game);
     word! { game, 1; screen_fade_delay, screen_fade_counter }
-    word!(game.pausemenu_leftarrow_animation_frame = 0);
-    word!(game.pausemenu_palette_animation_timer = 1);
+    word! {game; pausemenu_leftarrow_animation_frame = 0; pausemenu_palette_animation_timer = 1; }
     word! { game, 0; map_scrolling_direction, map_scrolling_speed_index }
     QueueClearingOfFxTilemap(game);
     word!(game.game_state, wrapping_add(1));
@@ -1796,8 +1777,7 @@ unsafe fn find_map_edge(mut source: *const u8, edge: MapEdge) -> u16 {
 }
 
 pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
-    word!(game.reg_BG1HOFS = word!(game.reg_BG4HOFS));
-    word!(game.reg_BG1VOFS = word!(game.reg_BG4VOFS));
+    word! {game; reg_BG1HOFS = word!(game.reg_BG4HOFS); reg_BG1VOFS = word!(game.reg_BG4VOFS); }
     crate::rtl::register_writes! { game;
         byte(VMADDL as u16, 0); byte(VMADDH as u16, 0x30);
         byte(VMAIN as u16, 0x80);
@@ -1933,9 +1913,8 @@ pub unsafe fn ResetPauseMenuAnimations(game: &mut Game) {
         samus_position_indicator_animation_frame, samus_position_indicator_animation_timer,
         samus_position_indicator_animation_loop_counter,
     }
-    word!(game.pausemenu_lr_animation_timer = *(rom_ptr!(game, u8; 0x82c10c) as *mut u16));
-    word!(game.pausemenu_palette_animation_timer = 1);
-    word!(game.pausemenu_palette_animation_frame = 0);
+    word! {game; pausemenu_lr_animation_timer = *(rom_ptr!(game, u8; 0x82c10c) as *mut u16);
+    pausemenu_palette_animation_timer = 1; pausemenu_palette_animation_frame = 0; }
 }
 unsafe fn ChangePaletteValues(target: *mut u16, new_color: u16, n: size_t) {
     let mut i: size_t = 0 as size_t;
@@ -2110,8 +2089,7 @@ pub unsafe fn HandlePauseScreenLrInput(game: &mut Game) {
             return;
         }
         word! { game, 5; pausemenu_start_lr_pressed_highlight_timer, menu_index }
-        word!(game.pausemenu_shoulder_button_highlight = 1);
-        word!(game.pausemenu_button_label_mode = 0);
+        word! {game; pausemenu_shoulder_button_highlight = 1; pausemenu_button_label_mode = 0; }
         SetPauseScreenButtonLabelPalettes(game);
         true
     } else {
@@ -2297,8 +2275,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
     let mut current_block: u64;
     let mut v5: i16 = 0;
     let mut v7: i16 = 0;
-    word!(game.reg_BG4HOFS = word!(game.reg_BG1HOFS));
-    word!(game.reg_BG4VOFS = word!(game.reg_BG1VOFS));
+    word! {game; reg_BG4HOFS = word!(game.reg_BG1HOFS); reg_BG4VOFS = word!(game.reg_BG1VOFS); }
     word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
     if word!(game.samus_max_reserve_health) != 0 && word!(game.reserve_health_mode) != 0 {
         let mut v0: VoidP = addr_kEquipmentScreenTilemap_AUTO as i32 as VoidP;
@@ -2462,19 +2439,16 @@ pub unsafe fn EquipmentScreenGlowingArrowAnimated(game: &mut Game) {
         word!(game.palette_buffer[107] = kEquipmentScreenGlowingArrowPalettes1[v0 as usize]);
         EquipmentScreenEnergyArrowGlow_On(game);
     } else {
-        word!(game.palette_buffer[107] = 926);
-        word!(game.palette_buffer[102] = 342);
+        word! {game; palette_buffer[107] = 926; palette_buffer[102] = 342; }
         EquipmentScreenEnergyArrowGlow_Off(game);
     };
 }
 pub unsafe fn EquipmentScreenGlowingArrowSolidOn(game: &mut Game) {
-    word!(game.palette_buffer[107] = 926);
-    word!(game.palette_buffer[102] = 342);
+    word! {game; palette_buffer[107] = 926; palette_buffer[102] = 342; }
     EquipmentScreenEnergyArrowGlow_On(game);
 }
 pub unsafe fn EquipmentScreenGlowingArrowSolidOff(game: &mut Game) {
-    word!(game.palette_buffer[107] = 926);
-    word!(game.palette_buffer[102] = 342);
+    word! {game; palette_buffer[107] = 926; palette_buffer[102] = 342; }
     EquipmentScreenEnergyArrowGlow_Off(game);
 }
 pub unsafe fn EquipmentScreenEnergyArrowGlow_On(game: &mut Game) {
@@ -2549,12 +2523,9 @@ pub unsafe fn EquipmentScreenHudReserveAutoTilemap_On_BUGGY(game: &mut Game) {
         v0 = -26217i32 as u16;
     }
     let v1 = RomPtr_82(v0, game) as *const u16;
-    word!(game.hud_tilemap[8] = *v1);
-    word!(game.hud_tilemap[9] = *v1.offset(1));
-    word!(game.hud_tilemap[40] = *v1.offset(2));
-    word!(game.hud_tilemap[41] = *v1.offset(3));
-    word!(game.hud_tilemap[72] = *v1.offset(4));
-    word!(game.hud_tilemap[73] = *v1.offset(5));
+    word! {game; hud_tilemap[8] = *v1; hud_tilemap[9] = *v1.offset(1);
+    hud_tilemap[40] = *v1.offset(2); hud_tilemap[41] = *v1.offset(3);
+    hud_tilemap[72] = *v1.offset(4); hud_tilemap[73] = *v1.offset(5); }
 }
 pub unsafe fn EquipmentScreenHudReserveAutoTilemap_Off(game: &mut Game) {
     word! { game, 11279;
@@ -3680,8 +3651,7 @@ pub unsafe fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
 }
 pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
     if *ram_ptr!(game; 0x612) == 0 && RefillHealthFromReserveTanks(game) != 0 {
-        word!(game.time_is_frozen_flag = 0);
-        word!(game.game_state = kGameState_8_MainGameplay as u16);
+        word! {game; time_is_frozen_flag = 0; game_state = kGameState_8_MainGameplay as u16; }
         CallSomeSamusCode(0x10, game);
     }
     let mut _coret_: u8 = GameState_8_MainGameplay(game);
@@ -3762,8 +3732,7 @@ pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
             game_options_screen_index, screen_fade_delay, screen_fade_counter,
         }
         word_transfers!(game, descending, 128; le(eproj_y_subpos, 142) <- value(0));
-        word!(game.g_word_7E0DE8 = 16);
-        word!(game.game_options_screen_index = 3);
+        word! {game; g_word_7E0DE8 = 16; game_options_screen_index = 3; }
         word! { game, 0; g_word_7E0DE4, g_word_7E0DE6 }
         word!(game.game_state, wrapping_add(1));
         word!(game.power_bomb_explosion_status = 0);
@@ -5101,8 +5070,7 @@ pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
             word!(game.game_options_screen_index = 10);
             return;
         }
-        word!(game.menu_option_index = 8);
-        word!(game.game_options_screen_index = 9);
+        word! {game; menu_option_index = 8; game_options_screen_index = 9; }
         return;
     }
     if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
@@ -5114,8 +5082,7 @@ pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
             return;
         }
         if v1 == 9 {
-            word!(game.menu_option_index = 0);
-            word!(game.game_options_screen_index = 10);
+            word! {game; menu_option_index = 0; game_options_screen_index = 10; }
         }
     } else if word!(game.joypad1_newkeys) != 0 {
         QueueSfx1_Max6(0x38, game);
@@ -5141,13 +5108,10 @@ pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
 }
 pub unsafe fn OptionsMenuControllerFunc_8(game: &mut Game) {
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
-        word!(game.button_config_shoot_x = 64);
-        word!(game.button_config_jump_a = 128);
-        word!(game.button_config_run_b = 0x8000);
-        word!(game.button_config_itemcancel_y = 0x4000);
-        word!(game.button_config_itemswitch = 0x2000);
-        word!(game.button_config_aim_up_R = 16);
-        word!(game.button_config_aim_down_L = 32);
+        word! {game; button_config_shoot_x = 64; button_config_jump_a = 128;
+        button_config_run_b = 0x8000; button_config_itemcancel_y = 0x4000;
+        button_config_itemswitch = 0x2000; button_config_aim_up_R = 16;
+        button_config_aim_down_L = 32; }
         LoadControllerOptionsFromControllerBindings(game);
         OptionsMenuFunc6(game);
     }
@@ -5175,8 +5139,7 @@ pub unsafe fn GameOptionsMenu_A_ScrollControllerSettingsUp(game: &mut Game) {
 pub use self::sub_82F35B as sub_82F363;
 pub unsafe fn sub_82F369(j: u16, game: &mut Game) {
     let v1: i32 = j as i32 >> 1;
-    word!(game.eproj_x_vel[(v1 + 3)] = 16);
-    word!(game.eproj_x_vel[(v1 + 11)] = 3584);
+    word! {game; eproj_x_vel[(v1 + 3)] = 16; eproj_x_vel[(v1 + 11)] = 3584; }
 }
 pub unsafe fn LoadControllerOptionsFromControllerBindings(game: &mut Game) {
     for v0 in (0u16..14).step_by(2) {

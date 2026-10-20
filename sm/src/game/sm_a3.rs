@@ -573,9 +573,8 @@ pub unsafe fn Elevator_Func3b(game: &mut Game) {
 }
 pub unsafe fn Elevator_Func_4(game: &mut Game) {
     let E = Get_Elevator(word!(game.cur_enemy_index) as i32, game);
-    word!(game.samus_y_pos = ((*E).base.y_pos).wrapping_sub(26));
-    word!(game.samus_y_subpos = 0);
-    word!(game.samus_x_pos = (*E).base.x_pos);
+    word! {game; samus_y_pos = ((*E).base.y_pos).wrapping_sub(26); samus_y_subpos = 0;
+    samus_x_pos = (*E).base.x_pos; }
     word! { game, 0; samus_y_speed, samus_y_subspeed }
 }
 pub unsafe fn Crab_Init(game: &mut Game) {
@@ -1661,10 +1660,8 @@ pub unsafe fn Bang_Func_4(a: u16, game: &mut Game) -> u16 {
     }
     let E = Get_Bang(word!(game.cur_enemy_index) as i32, game);
     let v3: i32 = i >> 1;
-    word!(game.projectile_x_pos[v3] = (*E).base.x_pos);
-    word!(game.projectile_y_pos[v3] = (*E).base.y_pos);
-    word!(game.projectile_dir[v3] = a);
-    word!(game.projectile_type[v3] = (word!(game.equipped_beams) & 0xf | 0x10));
+    word! {game; projectile_x_pos[v3] = (*E).base.x_pos; projectile_y_pos[v3] = (*E).base.y_pos;
+    projectile_dir[v3] = a; projectile_type[v3] = (word!(game.equipped_beams) & 0xf | 0x10); }
     word!(game.projectile_counter, wrapping_add(1));
     ProjectileReflection(i as u16, game);
     word!(game.projectile_damage[v3] = (*E).var_E);
@@ -2820,13 +2817,11 @@ pub unsafe fn Metroid_Frozen(game: &mut Game) {
         (*E).base.flash_timer = 2;
     }
     let v1: i32 = (*E).var_00 as i32 >> 1;
-    word!(game.sprite_palettes[v1] = 3072);
-    word!(game.sprite_disable_flag[v1] = 1);
-    word!(game.sprite_instr_list_ptrs[v1] = addr_kSpriteObject_Ilist_C3BA as u16);
+    word! {game; sprite_palettes[v1] = 3072; sprite_disable_flag[v1] = 1;
+    sprite_instr_list_ptrs[v1] = addr_kSpriteObject_Ilist_C3BA as u16; }
     let v2: i32 = (*E).var_01 as i32 >> 1;
-    word!(game.sprite_palettes[v2] = 3072);
-    word!(game.sprite_disable_flag[v2] = 1);
-    word!(game.sprite_instr_list_ptrs[v2] = addr_kSpriteObject_Ilist_C4B6 as u16);
+    word! {game; sprite_palettes[v2] = 3072; sprite_disable_flag[v2] = 1;
+    sprite_instr_list_ptrs[v2] = addr_kSpriteObject_Ilist_C4B6 as u16; }
 }
 pub unsafe fn Metroid_Hurt(game: &mut Game) {
     let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
@@ -2857,15 +2852,11 @@ pub unsafe fn Metroid_Main(game: &mut Game) {
     );
     let r24: u16 = ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
     let v2: i32 = (*E).var_00 as i32 >> 1;
-    word!(game.sprite_x_pos[v2] = (*E).base.x_pos);
-    word!(game.sprite_y_pos[v2] = (*E).base.y_pos);
-    word!(game.sprite_palettes[v2] = r24);
-    word!(game.sprite_disable_flag[v2] = 0);
+    word! {game; sprite_x_pos[v2] = (*E).base.x_pos; sprite_y_pos[v2] = (*E).base.y_pos;
+    sprite_palettes[v2] = r24; sprite_disable_flag[v2] = 0; }
     let v4: i32 = (*E).var_01 as i32 >> 1;
-    word!(game.sprite_x_pos[v4] = (*E).base.x_pos);
-    word!(game.sprite_y_pos[v4] = (*E).base.y_pos);
-    word!(game.sprite_palettes[v4] = r24);
-    word!(game.sprite_disable_flag[v4] = 0);
+    word! {game; sprite_x_pos[v4] = (*E).base.x_pos; sprite_y_pos[v4] = (*E).base.y_pos;
+    sprite_palettes[v4] = r24; sprite_disable_flag[v4] = 0; }
 }
 pub unsafe fn Metroid_Func_1(varE32: u16, game: &mut Game) {
     let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);

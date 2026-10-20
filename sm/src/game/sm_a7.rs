@@ -322,8 +322,7 @@ pub unsafe fn Kraid_Touch_ArmFoot(game: &mut Game) {
     NormalEnemyTouchAi(game);
 }
 pub unsafe fn Kraid_Func_1(game: &mut Game) {
-    word!(game.extra_samus_x_displacement = 4);
-    word!(game.extra_samus_y_displacement = -8i32 as u16);
+    word! {game; extra_samus_x_displacement = 4; extra_samus_y_displacement = -8i32 as u16; }
 }
 crate::forward_calls! { pub unsafe fn (game: &mut Game);
     Kraid_Touch => NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
@@ -753,8 +752,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Kraid_Instr_IncrYpos_Shake [jp] {
         let E = Get_Kraid(0, game);
         (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
-        word!(game.earthquake_type = 1);
-        word!(game.earthquake_timer = 10);
+        word! {game; earthquake_type = 1; earthquake_timer = 10; }
     };
     Kraid_Instr_PlaySound_0x76 [jp] { QueueSfx2_Max6(0x76, game); };
     Kraid_Instr_XposMinus3 [jp] {
@@ -777,8 +775,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
             (*E).kraid_target_x == 0
         }) && Enemy_MoveRight_IgnoreSlopes(0, (g_word_A7A922 as i16 as i32) << 16, game) != 0
         {
-            word!(game.earthquake_type = 0);
-            word!(game.earthquake_timer = 7);
+            word! {game; earthquake_type = 0; earthquake_timer = 7; }
             let x_pos: u16 = (*Get_Kraid(0, game)).base.x_pos;
             (*Get_Kraid(0x140, game)).base.x_pos = x_pos;
         }
@@ -1126,8 +1123,7 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
                     .wrapping_sub(((*(rom_ptr!(game, KraidSinkTable; 0xa7c5e7))).field_0) as i16)
                     >= 0
                 {
-                    word!(game.my_counter = 0);
-                    word!(game.my_counter2 = word!(game.vram_write_queue_tail));
+                    word! {game; my_counter = 0; my_counter2 = word!(game.vram_write_queue_tail); }
                     true
                 } else {
                     break 's_100;
@@ -1699,8 +1695,7 @@ crate::game::callback_dispatch! {
         (*E).kraid_var_A = ((0xa7c537i32) as u16);
         word!(game.kraid_unk9000 = 43);
         (*E).base.properties = ((*E).base.properties) | (0x8000u16);
-        word!(game.earthquake_type = 1);
-        word!(game.earthquake_timer = 256);
+        word! {game; earthquake_type = 1; earthquake_timer = 256; }
         let E1 = Get_Kraid(0x40, game);
         enemy_instruction! {[(*E1).base]; instruction = addr_kKraid_Ilist_8AA4 as u16, timer = 1}
         let E5 = Get_Kraid(0x140, game);
@@ -2182,8 +2177,7 @@ crate::game::callback_dispatch! {
             (*E0).kraid_var_C = *((&raw mut (*(rom_ptr!(game, KraidInstrList; 0xa796d2))).timer
                 as *mut u8)
                 .offset(v3 as i32 as isize) as *mut u16);
-            word!(game.earthquake_type = 4);
-            word!(game.earthquake_timer = 340);
+            word! {game; earthquake_type = 4; earthquake_timer = 340; }
             let E5 = Get_Kraid(0x140, game);
             enemy_instruction! {[(*E5).base]; instruction = addr_kKraid_Ilist_86E7 as u16, timer = 1}
             (*E5).kraid_var_A = ((0xa7ba2di32) as u16);

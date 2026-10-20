@@ -544,11 +544,9 @@ crate::game::callback_dispatch! {
             ((*E0).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
         (*E0).base.x_pos = 59;
         (*E0).base.y_pos = 279;
-        word!(game.reg_BG2HOFS = -27i32 as u16);
-        word!(game.reg_BG2VOFS = -217i32 as u16);
+        word! {game; reg_BG2HOFS = -27i32 as u16; reg_BG2VOFS = -217i32 as u16; }
         QueueMusic_Delayed8(5, game);
-        word!(game.earthquake_type = 2);
-        word!(game.earthquake_timer = 256);
+        word! {game; earthquake_type = 2; earthquake_timer = 256; }
         set_fields! {[(*E1)]; var_34 = 80, var_31 = 1, var_32 = 8, var_33 = 6, };
         (*E0).var_A = ((0xa98e4di32) as u16);
     };
@@ -631,8 +629,7 @@ crate::game::callback_dispatch! {
                 game,
             );
             QueueMusic_Delayed8(7, game);
-            word!(game.earthquake_type = 5);
-            word!(game.earthquake_timer = -1i32 as u16);
+            word! {game; earthquake_type = 5; earthquake_timer = -1i32 as u16; }
             SpawnPalfxObject(addr_kPalfx_FFC9 as u16, game);
             SpawnPalfxObject(addr_kPalfx_FFCD as u16, game);
             SpawnPalfxObject(addr_kPalfx_FFD1 as u16, game);
@@ -803,8 +800,7 @@ crate::game::callback_dispatch! {
         let E = Get_MotherBomb(0, game);
         (*E).var_A = ((0xa9ba3ci32) as u16);
         (*E).var_F = 299;
-        word!(game.earthquake_timer = 299);
-        word!(game.earthquake_type = 8);
+        word! {game; earthquake_timer = 299; earthquake_type = 8; }
         MotherBomb_FiringRainbowBeam_9_DrainingSamus(game);
     };
     [11123260] MotherBomb_FiringRainbowBeam_9_DrainingSamus [] {
@@ -1653,8 +1649,7 @@ crate::game::callback_dispatch! {
     [11111875] MotherBrainBody_FakeDeath_Ascent_11_ContinuePause {
         (*E).base.x_pos = 59;
         (*E).base.y_pos = 279;
-        word!(game.reg_BG2HOFS = -27i32 as u16);
-        word!(game.reg_BG2VOFS = -217i32 as u16);
+        word! {game; reg_BG2HOFS = -27i32 as u16; reg_BG2VOFS = -217i32 as u16; }
         (*E).var_04 = 7;
         (*E).var_A = ((0xa98deci32) as u16);
     };
@@ -1879,8 +1874,7 @@ pub unsafe fn MotherBrainsBody_UnpauseHook(game: &mut Game) -> CoroutineRet {
         QueueSfx1_Max6(0x40, game);
     }
     if ((*E).base.extra_properties & 4) != 0 {
-        word!(game.enemy_bg2_tilemap_size = 2048);
-        word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
+        word! {game; enemy_bg2_tilemap_size = 2048; nmi_flag_bg2_enemy_vram_transfer = 1; }
     }
     kCoroutineNone as CoroutineRet
 }
@@ -2242,8 +2236,7 @@ pub unsafe fn MotherBrain_MoveBodyDown(a: u16, game: &mut Game) {
     word!(game.reg_BG2HOFS = (34u16).wrapping_sub((*E).base.x_pos));
 }
 pub unsafe fn MotherBrain_FootstepEffect(game: &mut Game) {
-    word!(game.earthquake_type = 1);
-    word!(game.earthquake_timer = 4);
+    word! {game; earthquake_type = 1; earthquake_timer = 4; }
     if (*Get_MotherBrain(0i32, game)).var_00 == 3 {
         printf(b"Write to rom!\n\0" as *const u8 as *const c_char);
     }
@@ -2530,9 +2523,8 @@ pub unsafe fn MotherBrain_SamusCollDetectPart(k: u16, r18: u16, r20: u16, game: 
                 word! { game, 0;
                     extra_samus_x_subdisplacement, extra_samus_y_subdisplacement,
                 }
-                word!(game.samus_invincibility_timer = 96);
-                word!(game.samus_knockback_timer = 5);
-                word!(game.knockback_x_dir = 1);
+                word! {game; samus_invincibility_timer = 96; samus_knockback_timer = 5;
+                knockback_x_dir = 1; }
                 if word!(game.samus_y_pos) as i32 - 192i32 & 0x8000 != 0 {
                     word!(game.samus_y_dir = 2);
                 }
@@ -2738,8 +2730,7 @@ pub unsafe fn MotherBrain_MoveSamusHorizTowardsWall(mut a: u16, game: &mut Game)
     byte!(@pointer ram_ptr!(game, u16; 0xb12); 1) = carry as u8;
     let v4: u16 = (word!(game.samus_x_pos) as i32 + (a >> 8) as i8 as i32 + (carry >> 8)) as u16;
     if v4 as i32 - 235i32 & 0x8000 != 0 {
-        word!(game.samus_x_pos = v4);
-        word!(game.samus_prev_x_pos = v4);
+        word! {game; samus_x_pos = v4; samus_prev_x_pos = v4; }
         0
     } else {
         word! { game, 235; samus_x_pos, samus_prev_x_pos }
@@ -3990,9 +3981,8 @@ pub unsafe fn MotherBrain_Pal_ProcessInvincibility(game: &mut Game) {
             for i in (0i32..=28).rev().step_by(2) {
                 let v2: i32 = i >> 1;
                 let v3: u16 = word!(game.palette_buffer[(v2 + 129)]);
-                word!(game.palette_buffer[(v2 + 145)] = v3);
-                word!(game.palette_buffer[(v2 + 177)] = v3);
-                word!(game.palette_buffer[(v2 + 65)] = v3);
+                word! {game; palette_buffer[(v2 + 145)] = v3; palette_buffer[(v2 + 177)] = v3;
+                palette_buffer[(v2 + 65)] = v3; }
             }
         }
     }
@@ -5047,9 +5037,7 @@ crate::game::callback_dispatch! {
             (*E).var_04 = 0;
             QueueMusic_Delayed8(7, game);
         } else {
-            word!(game.cooldown_timer = 8);
-            word!(game.bomb_counter = 5);
-            word!(game.samus_x_speed_divisor = 2);
+            word! {game; cooldown_timer = 8; bomb_counter = 5; samus_x_speed_divisor = 2; }
             if word!(game.samus_y_speed) as i32 - 4i32 & 0x8000 == 0 {
                 word!(game.samus_y_speed = 2);
             }

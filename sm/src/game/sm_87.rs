@@ -32,14 +32,11 @@ pub unsafe fn SpawnAnimtiles(j: u16, game: &mut Game) {
         }
     }
     let v2: i32 = v1 as i32 >> 1;
-    word!(game.animtiles_ids[v2] = v0);
-    word!(game.animtiles_timers[v2] = 0);
+    word! {game; animtiles_ids[v2] = v0; animtiles_timers[v2] = 0; }
     let v3 = RomPtr_87(v0, game) as *const u16;
-    word!(game.animtiles_instr_list_ptrs[v2] = *v3);
-    word!(game.animtiles_src_ptr[v2] = 0);
-    word!(game.animtiles_sizes[v2] = *v3.offset(1));
-    word!(game.animtiles_vram_ptr[v2] = *v3.offset(2));
-    word!(game.animtiles_instr_timers[v2] = 1);
+    word! {game; animtiles_instr_list_ptrs[v2] = *v3; animtiles_src_ptr[v2] = 0;
+    animtiles_sizes[v2] = *v3.offset(1); animtiles_vram_ptr[v2] = *v3.offset(2);
+    animtiles_instr_timers[v2] = 1; }
 }
 pub unsafe fn AnimtilesHandler(game: &mut Game) {
     if (word!(game.animtiles_enable_flag) & 0x8000) != 0 {

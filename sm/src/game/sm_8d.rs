@@ -45,12 +45,10 @@ pub unsafe fn SpawnPalfxObject(j: u16, game: &mut Game) {
         }
     }
     let v2: i32 = v1 as i32 >> 1;
-    word!(game.palettefx_ids[v2] = j);
-    word!(game.palettefx_color_indexes[v2] = 0);
-    word!(game.palettefx_pre_instr[v2] = ((0x8dc526i32) as u16));
-    word!(game.palettefx_instr_list_ptrs[v2] = (*get_PalFxDef(j, game)).instrs);
-    word!(game.palettefx_instr_timers[v2] = 1);
-    word!(game.palettefx_timers[v2] = 0);
+    word! {game; palettefx_ids[v2] = j; palettefx_color_indexes[v2] = 0;
+    palettefx_pre_instr[v2] = ((0x8dc526i32) as u16);
+    palettefx_instr_list_ptrs[v2] = (*get_PalFxDef(j, game)).instrs;
+    palettefx_instr_timers[v2] = 1; palettefx_timers[v2] = 0; }
     let mut PalFxDef = get_PalFxDef(j, game);
     CallPalfxFunc(
         (((*PalFxDef).func) as u32) | (0x8d0000u32),

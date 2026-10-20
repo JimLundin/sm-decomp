@@ -107,9 +107,8 @@ unsafe fn fire(charged: bool, game: &mut Game) {
                 word!(game.projectile_damage[slot] = 1000);
                 word!(game.projectile_bomb_pre_instructions[slot] = ((0x90b159i32) as u16));
                 projectile_flight::initialize_beam_speed(projectile, game);
-                word!(game.cooldown_timer = 21);
-                word!(game.charged_shot_glow_timer = -32748i32 as u16);
-                word!(game.flare_animation_frame = 29);
+                word! {game; cooldown_timer = 21; charged_shot_glow_timer = -32748i32 as u16;
+                flare_animation_frame = 29; }
                 word! { game, 5; flare_slow_sparks_anim_frame, flare_fast_sparks_anim_frame }
                 word! { game, 3; flare_animation_timer, flare_slow_sparks_anim_timer, flare_fast_sparks_anim_timer }
                 word!(game.flare_counter = 0x8000);

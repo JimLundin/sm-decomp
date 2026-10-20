@@ -495,8 +495,7 @@ pub unsafe fn GameOverMenu_7_FadeOutToSoftReset(game: &mut Game) {
 pub unsafe fn GameOverMenu_6_LoadGameMapView(game: &mut Game) {
     DisableHdmaObjects(game);
     WaitUntilEndOfVblankAndClearHdma(game);
-    word!(game.game_state = kGameState_5_FileSelectMap as u16);
-    word!(game.menu_index = 0);
+    word! {game; game_state = kGameState_5_FileSelectMap as u16; menu_index = 0; }
 }
 pub unsafe fn GameOverMenu_4_Main(game: &mut Game) {
     HandleGameOverBabyMetroid(game);
@@ -526,8 +525,7 @@ pub unsafe fn GameOverMenu_4_Main(game: &mut Game) {
     if word!(game.file_select_map_area_index) != 0 {
         v0 = 192;
     }
-    word!(game.eproj_id[5] = 40);
-    word!(game.eproj_id[10] = v0);
+    word! {game; eproj_id[5] = 40; eproj_id[10] = v0; }
 }
 pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
     *ram_ptr!(game; 0x69) = 17;
@@ -536,8 +534,7 @@ pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
     *ram_ptr!(game; 0x74, 2) = 0x80;
     QueueMusic_Delayed8(0, game);
     QueueMusic_Delayed8(0xff03, game);
-    word!(game.cinematic_var5 = 1);
-    word!(game.eproj_id[0] = 0);
+    word! {game; cinematic_var5 = 1; eproj_id[0] = 0; }
     word_transfers!(game, ascending, 1024; native(0x3600) <- value(15));
     let v1: i32 = word!(game.vram_write_queue_tail) as i32;
     let v2 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
@@ -568,8 +565,7 @@ pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
     word! { game, 0;
         screen_fade_delay, screen_fade_counter, file_select_map_area_index,
     }
-    word!(game.eproj_id[5] = 40);
-    word!(game.eproj_id[10] = 160);
+    word! {game; eproj_id[5] = 40; eproj_id[10] = 160; }
 }
 pub unsafe fn GameOverMenu_2_PlayMusic(game: &mut Game) {
     if HasQueuedMusic(game) == 0 {
@@ -625,8 +621,7 @@ pub unsafe fn FileSelectMenu_32_FadeOutToOptions(game: &mut Game) {
     DrawFileSelectSamusHelmets(game);
     HandleFadeOut(game);
     if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
-        word!(game.game_state = kGameState_2_GameOptionsMenu as u16);
-        word!(game.menu_index = 0);
+        word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
         word_transfers!(game, ascending, 24; native(0x198d) <- value(0));
     }
 }
@@ -899,8 +894,7 @@ pub unsafe fn FileSelectMenu_11_InitializeConfirm(game: &mut Game) {
         (word!(game.eproj_id[17])).wrapping_add(8298);
     DrawFileCopyClearConfirmation(game);
     word!(game.menu_index, wrapping_add(1));
-    word!(game.eproj_id[15] = 0);
-    word!(game.cinematic_var6 = 8);
+    word! {game; eproj_id[15] = 0; cinematic_var6 = 8; }
 }
 pub unsafe fn DrawFileCopyClearConfirmation(game: &mut Game) {
     (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
@@ -945,8 +939,7 @@ pub unsafe fn FileSelectMenu_12_FileCopyConfirm(game: &mut Game) {
     if word!(game.eproj_id[15]) != 0 {
         v0 = 208;
     }
-    word!(game.eproj_id[10] = v0);
-    word!(game.eproj_id[5] = 94);
+    word! {game; eproj_id[10] = v0; eproj_id[5] = 94; }
 }
 pub unsafe fn HandleFileCopyArrowPalette(game: &mut Game) {
     if word!(game.cinematic_var6) != 0 {
@@ -1117,8 +1110,7 @@ pub unsafe fn FileSelectMenu_24_FileClearConfirm(game: &mut Game) {
     if word!(game.eproj_id[15]) != 0 {
         v0 = 208;
     }
-    word!(game.eproj_id[10] = v0);
-    word!(game.eproj_id[5] = 94);
+    word! {game; eproj_id[10] = v0; eproj_id[5] = 94; }
 }
 pub unsafe fn FileSelectMenu_25_FileClearDoClear(game: &mut Game) {
     static kBitShl_Not: [u16; 3] = [0xfffe, 0xfffd, 0xfffb];
@@ -1248,8 +1240,7 @@ pub unsafe fn FileSelectMap_22(game: &mut Game) {
     DrawAreaSelectMapLabels(game);
     HandleFadeOut(game);
     if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
-        word!(game.game_state = kGameState_2_GameOptionsMenu as u16);
-        word!(game.menu_index = 0);
+        word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
     }
 }
 pub unsafe fn FileSelectMenu_1_LoadFileSelectMenuBG2(game: &mut Game) {
@@ -1265,8 +1256,7 @@ pub unsafe fn FileSelectMenu_1_LoadFileSelectMenuBG2(game: &mut Game) {
     (*v2).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
     word!(game.vram_write_queue_tail = (v1).wrapping_add(7));
     word!(game.menu_index, wrapping_add(1));
-    word!(game.cinematic_var5 = 1);
-    word!(game.eproj_id[0] = 0);
+    word! {game; cinematic_var5 = 1; eproj_id[0] = 0; }
 }
 pub unsafe fn FileSelectMenu_2_InitMain(game: &mut Game) {
     let mut v0: u16 = 0;
@@ -1336,9 +1326,7 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
         eproj_id[2], eproj_id[3], eproj_id[4], eproj_id[5], eproj_id[10], eproj_id[6], eproj_id[11],
     }
     word! { game, 100; eproj_id[7], eproj_id[8], eproj_id[9] }
-    word!(game.eproj_id[12] = 47);
-    word!(game.eproj_id[13] = 87);
-    word!(game.eproj_id[14] = 127);
+    word! {game; eproj_id[12] = 47; eproj_id[13] = 87; eproj_id[14] = 127; }
     word! { game, 1; screen_fade_delay, screen_fade_counter }
     ScreenOn(game);
     word!(game.menu_index, wrapping_add(1));
@@ -1539,8 +1527,7 @@ pub unsafe fn FileSelectMap_0(game: &mut Game) {
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
     *(&raw mut (*v1).src.bank as *mut u16) = 126;
     (*v1).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
-    word!(game.vram_write_queue_tail = (v0).wrapping_add(7));
-    word!(game.palette_change_num = 0);
+    word! {game; vram_write_queue_tail = (v0).wrapping_add(7); palette_change_num = 0; }
     LoadFileSelectPalettes(game);
     word_transfers!(game, ascending, 32; le(target_palettes, 0) <- le(palette_buffer, 0));
     word! { game, 0; target_palettes[14], target_palettes[30] }
@@ -1711,8 +1698,7 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
         crate::update_place! { reference fresh36 = *ram_ptr!(game; 0x69) => (*fresh36 & !(2)); }
         *ram_ptr!(game; 0x6c) = 0;
         *ram_ptr!(game; 0x6d) = 0;
-        word!(game.reg_BG2VOFS = 24);
-        word!(game.pausemenu_palette_animation_timer = 1);
+        word! {game; reg_BG2VOFS = 24; pausemenu_palette_animation_timer = 1; }
         let mut v1: u16 = 0;
         word_transfers!(game, ascending, 800; xray(0) <- rom(0xb6e000, 0));
         v1 = 800;
@@ -1985,10 +1971,8 @@ pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
     (*v1).src.bank = 126;
     (*v1).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
-    word!(game.vram_write_queue_tail = (v0).wrapping_add(7));
-    word!(
-        game.expand_sq_timer = kRoomSelectMapExpandingSquareTimers[word!(game.area_index) as usize]
-    );
+    word! {game; vram_write_queue_tail = (v0).wrapping_add(7);
+    expand_sq_timer = kRoomSelectMapExpandingSquareTimers[word!(game.area_index) as usize]; }
     let v2: i32 = ((4u16).wrapping_mul(word!(game.area_index))) as i32 >> 1;
     word!(game.expand_sq_left_pos = kAreaSelectMapLabelPositions[v2 as usize]);
     word!(game.expand_sq_right_pos = word!(game.expand_sq_left_pos));
@@ -2000,14 +1984,11 @@ pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
     }
     let vels: *const ExpandingSquareVels =
         (rom_ptr!(game, ExpandingSquareVels; 0x81aa34)).offset(word!(game.area_index) as isize);
-    word!(game.expand_sq_left_subvel = (*vels).left_subvel);
-    word!(game.expand_sq_left_vel = (*vels).left_vel);
-    word!(game.expand_sq_right_subvel = (*vels).right_subvel);
-    word!(game.expand_sq_right_vel = (*vels).right_vel);
-    word!(game.expand_sq_top_subvel = (*vels).top_subvel);
-    word!(game.expand_sq_top_vel = (*vels).top_vel);
-    word!(game.expand_sq_bottom_subvel = (*vels).bottom_subvel);
-    word!(game.expand_sq_bottom_vel = (*vels).bottom_vel);
+    word! {game; expand_sq_left_subvel = (*vels).left_subvel;
+    expand_sq_left_vel = (*vels).left_vel; expand_sq_right_subvel = (*vels).right_subvel;
+    expand_sq_right_vel = (*vels).right_vel; expand_sq_top_subvel = (*vels).top_subvel;
+    expand_sq_top_vel = (*vels).top_vel; expand_sq_bottom_subvel = (*vels).bottom_subvel;
+    expand_sq_bottom_vel = (*vels).bottom_vel; }
     SetupRoomSelectMapExpandingSquareTransHDMA(game);
     crate::rtl::write_register_and_mirror(HDMAEN as u16, 0xc, 0x85, true, game);
     word!(game.menu_index, wrapping_add(1));
@@ -2405,17 +2386,12 @@ pub unsafe fn NewSaveFile(game: &mut Game) {
         collected_items, equipped_items, reserve_health_mode, samus_max_reserve_health,
         samus_reserve_health, samus_reserve_missiles,
     }
-    word!(game.button_config_up = kButton_Up as u16);
-    word!(game.button_config_down = kButton_Down as u16);
-    word!(game.button_config_left = kButton_Left as u16);
-    word!(game.button_config_right = kButton_Right as u16);
-    word!(game.button_config_jump_a = kButton_A as u16);
-    word!(game.button_config_run_b = kButton_B as u16);
-    word!(game.button_config_shoot_x = kButton_X as u16);
-    word!(game.button_config_itemcancel_y = kButton_Y as u16);
-    word!(game.button_config_itemswitch = kButton_Select as u16);
-    word!(game.button_config_aim_up_R = kButton_R as u16);
-    word!(game.button_config_aim_down_L = kButton_L as u16);
+    word! {game; button_config_up = kButton_Up as u16; button_config_down = kButton_Down as u16;
+    button_config_left = kButton_Left as u16; button_config_right = kButton_Right as u16;
+    button_config_jump_a = kButton_A as u16; button_config_run_b = kButton_B as u16;
+    button_config_shoot_x = kButton_X as u16; button_config_itemcancel_y = kButton_Y as u16;
+    button_config_itemswitch = kButton_Select as u16;
+    button_config_aim_up_R = kButton_R as u16; button_config_aim_down_L = kButton_L as u16; }
     word! { game, 0;
         game_time_frames, game_time_seconds, game_time_minutes, game_time_hours, japanese_text_flag,
         moonwalk_flag, hud_auto_cancel_flag,

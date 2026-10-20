@@ -1197,9 +1197,7 @@ pub unsafe fn Ridley_Func_17(r18: u16, game: &mut Game) -> u8 {
     0
 }
 pub unsafe fn Ridley_Func_18(game: &mut Game) {
-    word!(game.tilemap_stuff[9] = 240);
-    word!(game.tilemap_stuff[15] = 16);
-    word!(game.tilemap_stuff[0] = 1);
+    word! {game; tilemap_stuff[9] = 240; tilemap_stuff[15] = 16; tilemap_stuff[0] = 1; }
     (*Get_Ridley(0i32, game)).var_A = ((0xa6b6a7i32) as u16);
 }
 pub unsafe fn Ridley_Func_23(game: &mut Game) -> u8 {
@@ -1467,8 +1465,7 @@ crate::game::callback_dispatch! {
         };
     };
     [10925508] Ridley_Func_14 [] {
-        word!(game.tilemap_stuff[15] = 11);
-        word!(game.tilemap_stuff[9] = 384);
+        word! {game; tilemap_stuff[15] = 11; tilemap_stuff[9] = 384; }
         let E = Get_Ridley(0, game);
         (*E).var_A = ((0xa6b5e5i32) as u16);
         (*E).var_F = ((word!(game.random_number) as i32 & 0x1f) + 32) as u16;
@@ -1499,8 +1496,7 @@ crate::game::callback_dispatch! {
                 };
                 SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
                 QueueSfx2_Max6(0x76, game);
-                word!(game.earthquake_type = 13);
-                word!(game.earthquake_timer = 4);
+                word! {game; earthquake_type = 13; earthquake_timer = 4; }
                 Ridley_Func_28(game);
                 Ridley_Func_29(game);
                 Ridley_Func_93(0x2026, addr_word_A6D37C as u16, game);
@@ -1590,9 +1586,7 @@ crate::game::callback_dispatch! {
         (*E).var_F = (*E).var_F.wrapping_sub(1);
         if ((*E).var_F & 0x8000) != 0 {
             set_fields! {[(*E)], 0; var_B, var_C}
-            word!(game.fx_target_y_pos = 528);
-            word!(game.fx_y_vel = 64);
-            word!(game.fx_timer = 1);
+            word! {game; fx_target_y_pos = 528; fx_y_vel = 64; fx_timer = 1; }
             set_fields! {[(*E)], 0; var_27, var_28}
             (*E).var_A = ((0xa6c588i32) as u16);
             (*E).var_F = 160;
@@ -1739,8 +1733,7 @@ crate::game::callback_dispatch! {
             do_until! { (v5 == 1);
     let mut v5: i16 = v2;
     let v3: u16 = crate::rtl::rom_table_word!(game, 0xa6e30a, (cry_var_E >> 1) as isize);
-    word!(game.palette_buffer[(r18 >> 1)] = v3);
-    word!(game.palette_buffer[(r20 >> 1)] = v3);
+    word! {game; palette_buffer[(r18 >> 1)] = v3; palette_buffer[(r20 >> 1)] = v3; }
     cry_var_E = (cry_var_E).wrapping_add(2);
     r18 = (r18).wrapping_add(2);
     r20 = (r20).wrapping_add(2);
@@ -1774,9 +1767,7 @@ crate::game::callback_dispatch! {
             if CeresRidley_Func_8((v2).wrapping_sub(1), game) & 1 == 0 {
                 return;
             }
-            word!(game.fx_target_y_pos = 440);
-            word!(game.fx_y_vel = -96i32 as u16);
-            word!(game.fx_timer = 32);
+            word! {game; fx_target_y_pos = 440; fx_y_vel = -96i32 as u16; fx_timer = 32; }
         } else {
             (*E).var_F = (*E).var_F.wrapping_sub(1);
             let v1_0: bool = ((*E).var_F & 0x8000) != 0;
@@ -1902,8 +1893,7 @@ crate::game::callback_dispatch! {
         }
         if cry_var_33 == 208 {
             Samus_SetPushedOutOfCeresRidley(game);
-            word!(game.earthquake_type = 35);
-            word!(game.earthquake_timer = 64);
+            word! {game; earthquake_type = 35; earthquake_timer = 64; }
         }
         let v2: i32 = cry_var_33 as i32 >> 1;
         if crate::rtl::rom_table_word!(game, 0xa6ae4d, v2 as isize) == 0xffff {
@@ -2307,8 +2297,7 @@ crate::game::callback_dispatch! {
     [10927089] Ridley_Func_35 [] {
         (*E).var_F = (*E).var_F.wrapping_sub(1);
         if ((*E).var_F & 0x8000) != 0 {
-            word!(game.tilemap_stuff[15] = 8);
-            word!(game.tilemap_stuff[9] = 240);
+            word! {game; tilemap_stuff[15] = 8; tilemap_stuff[9] = 240; }
             Ridley_Func_38(game);
             (*E).var_A = ((0xa6bc2ei32) as u16);
             (*E).var_F = 64;
@@ -2319,8 +2308,7 @@ crate::game::callback_dispatch! {
     [10927150] Ridley_Func_36 [] {
         (*E).var_F = (*E).var_F.wrapping_sub(1);
         if ((*E).var_F & 0x8000) != 0 {
-            word!(game.tilemap_stuff[15] = 16);
-            word!(game.tilemap_stuff[9] = 240);
+            word! {game; tilemap_stuff[15] = 16; tilemap_stuff[9] = 240; }
             (*E).var_A = ((0xa6b321i32) as u16);
         } else {
             Ridley_Func_104_0(0, 0, g_word_A6BC62[(*E).var_10 as usize], 224, game);
@@ -2450,8 +2438,7 @@ crate::game::callback_dispatch! {
                 || abs16((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos)) < 0x80)
             && (word!(game.tilemap_stuff[13]) & word!(game.tilemap_stuff[14]) & 0x8000) != 0
         {
-            word!(game.tilemap_stuff[13] = 16128);
-            word!(game.tilemap_stuff[10] = 8);
+            word! {game; tilemap_stuff[13] = 16128; tilemap_stuff[10] = 8; }
         } else if word!(game.tilemap_stuff[76])
             | (word!(game.tilemap_stuff[66])
                 | word!(game.tilemap_stuff[56])
@@ -2464,8 +2451,7 @@ crate::game::callback_dispatch! {
             if ((*Get_Ridley(0i32, game)).var_C & 0x8000) == 0 {
                 word!(game.tilemap_stuff[0] = 5);
             }
-            word!(game.tilemap_stuff[13] = -1i32 as u16);
-            word!(game.tilemap_stuff[14] = -1i32 as u16);
+            word! {game; tilemap_stuff[13] = -1i32 as u16; tilemap_stuff[14] = -1i32 as u16; }
             let mut v1: u16 = word!(game.tilemap_stuff[8]);
             if word!(game.tilemap_stuff[8]) == 0
                 || {
@@ -2489,8 +2475,7 @@ crate::game::callback_dispatch! {
                 || abs16((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos)) < 0x80)
             && (word!(game.tilemap_stuff[13]) & word!(game.tilemap_stuff[14]) & 0x8000) != 0
         {
-            word!(game.tilemap_stuff[13] = 16128);
-            word!(game.tilemap_stuff[10] = 8);
+            word! {game; tilemap_stuff[13] = 16128; tilemap_stuff[10] = 8; }
         } else if word!(game.tilemap_stuff[76])
             | (word!(game.tilemap_stuff[66])
                 | word!(game.tilemap_stuff[56])
@@ -2512,8 +2497,7 @@ crate::game::callback_dispatch! {
                 }
                 word!(game.tilemap_stuff[16] = 0x8000);
             }
-            word!(game.tilemap_stuff[13] = -1i32 as u16);
-            word!(game.tilemap_stuff[14] = -1i32 as u16);
+            word! {game; tilemap_stuff[13] = -1i32 as u16; tilemap_stuff[14] = -1i32 as u16; }
             let mut v1: u16 = word!(game.tilemap_stuff[8]);
             if word!(game.tilemap_stuff[8]) != 0 {
                 v1 = (word!(game.tilemap_stuff[8])).wrapping_sub(1);
@@ -2865,8 +2849,7 @@ pub unsafe fn Ridley_Func_58(game: &mut Game) {
     let E = Get_Ridley(0, game);
     (*E).var_F = 0;
     (*E).var_A = ((0xa6aa50i32) as u16);
-    word!(game.timer_status = 1);
-    word!(game.ceres_status = 2);
+    word! {game; timer_status = 1; ceres_status = 2; }
     SetBossBitForCurArea(1, game);
 }
 pub unsafe fn Ridley_Func_59(game: &mut Game) {
@@ -3225,11 +3208,9 @@ pub unsafe fn Ridley_Func_74(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_75(game: &mut Game) {
     if (*Get_Ridley(0i32, game)).var_10 != 0 {
-        word!(game.tilemap_stuff[13] = 0x4000);
-        word!(game.tilemap_stuff[14] = -1i32 as u16);
+        word! {game; tilemap_stuff[13] = 0x4000; tilemap_stuff[14] = -1i32 as u16; }
     } else {
-        word!(game.tilemap_stuff[14] = 0x4000);
-        word!(game.tilemap_stuff[13] = -1i32 as u16);
+        word! {game; tilemap_stuff[14] = 0x4000; tilemap_stuff[13] = -1i32 as u16; }
     }
     Ridley_CBC7(game);
     if word!(game.tilemap_stuff[76])
@@ -3549,8 +3530,7 @@ pub unsafe fn Ridley_Func_89(a: u16, game: &mut Game) {
             }
             let v8: u16 = (word!(game.tilemap_stuff[5]) as i32 + v7 as i32 + 0x4000) as u16;
             if v8 >= word!(game.tilemap_stuff[21]) {
-                word!(game.tilemap_stuff[14] = v8);
-                word!(game.tilemap_stuff[10] = 8);
+                word! {game; tilemap_stuff[14] = v8; tilemap_stuff[10] = 8; }
             }
         } else {
             let mut v5: u16 = r18;
@@ -3559,8 +3539,7 @@ pub unsafe fn Ridley_Func_89(a: u16, game: &mut Game) {
             }
             let v6: u16 = (v5 as i32 + 16128 - word!(game.tilemap_stuff[5]) as i32) as u16;
             if v6 < word!(game.tilemap_stuff[21]) {
-                word!(game.tilemap_stuff[13] = v6);
-                word!(game.tilemap_stuff[10] = 8);
+                word! {game; tilemap_stuff[13] = v6; tilemap_stuff[10] = 8; }
             }
         }
     }
@@ -3604,13 +3583,9 @@ pub unsafe fn Ridley_Func_90(out: *mut Point16U, game: &mut Game) -> u8 {
     1
 }
 pub unsafe fn Ridley_Func_92(game: &mut Game) {
-    word!(game.tilemap_stuff[10] = 1);
-    word!(game.tilemap_stuff[11] = 16368);
-    word!(game.tilemap_stuff[12] = 16448);
-    word!(game.tilemap_stuff[13] = -1i32 as u16);
-    word!(game.tilemap_stuff[14] = -1i32 as u16);
-    word!(game.tilemap_stuff[9] = 240);
-    word!(game.tilemap_stuff[15] = 16);
+    word! {game; tilemap_stuff[10] = 1; tilemap_stuff[11] = 16368; tilemap_stuff[12] = 16448;
+    tilemap_stuff[13] = -1i32 as u16; tilemap_stuff[14] = -1i32 as u16;
+    tilemap_stuff[9] = 240; tilemap_stuff[15] = 16; }
     word! { game, 17;
         tilemap_stuff[17], tilemap_stuff[27], tilemap_stuff[37], tilemap_stuff[47],
         tilemap_stuff[57], tilemap_stuff[67], tilemap_stuff[77],
@@ -3639,13 +3614,9 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
     Ridley_Func_95 => Ridley_Func_D3DC(0x8000, game);
 }
 pub unsafe fn Ridley_Func_D3DC(a: u16, game: &mut Game) {
-    word!(game.tilemap_stuff[16] = a);
-    word!(game.tilemap_stuff[26] = a);
-    word!(game.tilemap_stuff[36] = a);
-    word!(game.tilemap_stuff[46] = a);
-    word!(game.tilemap_stuff[56] = a);
-    word!(game.tilemap_stuff[66] = a);
-    word!(game.tilemap_stuff[76] = a);
+    word! {game; tilemap_stuff[16] = a; tilemap_stuff[26] = a; tilemap_stuff[36] = a;
+    tilemap_stuff[46] = a; tilemap_stuff[56] = a; tilemap_stuff[66] = a;
+    tilemap_stuff[76] = a; }
 }
 pub unsafe fn Ridley_Func_96(game: &mut Game) {
     Ridley_Func_93(0x2026, addr_word_A6D37C as u16, game);
@@ -3900,8 +3871,7 @@ pub unsafe fn Ridley_Func_113(k: u16, game: &mut Game) {
         }
         if v2 >= 0x280 {
             let mut v3: u16 = if word!(game.area_index) == 2 { 24 } else { 33 };
-            word!(game.earthquake_type = v3);
-            word!(game.earthquake_timer = 12);
+            word! {game; earthquake_type = v3; earthquake_timer = 12; }
         }
     }
 }
@@ -4125,8 +4095,7 @@ pub unsafe fn Ridley_Func_122(rect: Rect16U, game: &mut Game) -> u16 {
         }
     }
     let v8: i32 = result as i32 >> 1;
-    word!(game.projectile_x_pos[v8] = rect.x);
-    word!(game.projectile_y_pos[v8] = rect.y);
+    word! {game; projectile_x_pos[v8] = rect.x; projectile_y_pos[v8] = rect.y; }
     word!(game.projectile_dir[v8], |fresh2| (fresh2) | (0x10u16));
     result
 }
@@ -4552,11 +4521,9 @@ pub unsafe fn CeresDoor_Main(game: &mut Game) {
 pub unsafe fn CeresDoor_F773(j: u16, game: &mut Game) {
     if word!(game.ceres_status) >= 2 && word!(game.earthquake_timer) == 0 {
         if (word!(game.random_number) & 0xfff) < 0x80 {
-            word!(game.earthquake_timer = 4);
-            word!(game.earthquake_type = (j).wrapping_add(6));
+            word! {game; earthquake_timer = 4; earthquake_type = (j).wrapping_add(6); }
         } else {
-            word!(game.earthquake_timer = 2);
-            word!(game.earthquake_type = j);
+            word! {game; earthquake_timer = 2; earthquake_type = j; }
         }
     }
 }

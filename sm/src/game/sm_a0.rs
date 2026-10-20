@@ -432,9 +432,8 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
         v5 = (v5).wrapping_add(64);
         v4 = (v4).wrapping_add(16);
     }
-    word!(game.first_free_enemy_index = v5);
-    word!(game.num_enemies_in_room = (v5 >> 6));
-    word!(game.num_enemy_deaths_left_to_clear = *RomPtr_A1(v4, game).offset(2) as u16);
+    word! {game; first_free_enemy_index = v5; num_enemies_in_room = (v5 >> 6);
+    num_enemy_deaths_left_to_clear = *RomPtr_A1(v4, game).offset(2) as u16; }
 }
 pub unsafe fn LoadEnemyGfxIndexes(k: u16, j: u16, game: &mut Game) {
     let E = gEnemyData(j as i32, game);
@@ -1776,8 +1775,7 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
                     SuitDamageDivision(word!(game.projectile_damage[pidx]), game),
                     game,
                 );
-                word!(game.samus_invincibility_timer = 96);
-                word!(game.samus_knockback_timer = 5);
+                word! {game; samus_invincibility_timer = 96; samus_knockback_timer = 5; }
                 crate::native_assertion! {
                     '_c2rust_label;
                     b"0\0", b"src/sm_a0.c\0", 2048,
@@ -1839,8 +1837,7 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
     }
 }
 pub unsafe fn HandleEprojCollWithSamus(k: u16, game: &mut Game) {
-    word!(game.samus_invincibility_timer = 96);
-    word!(game.samus_knockback_timer = 5);
+    word! {game; samus_invincibility_timer = 96; samus_knockback_timer = 5; }
     let v1: u16 = *(RomPtr_86(
         *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(k as i32 as isize) as *mut u16),
         game,
@@ -1848,8 +1845,7 @@ pub unsafe fn HandleEprojCollWithSamus(k: u16, game: &mut Game) {
         .offset(5);
     if v1 != 0 {
         let v2: i32 = k as i32 >> 1;
-        word!(game.eproj_instr_list_ptr[v2] = v1);
-        word!(game.eproj_instr_timers[v2] = 1);
+        word! {game; eproj_instr_list_ptr[v2] = v1; eproj_instr_timers[v2] = 1; }
     }
     let v3: i32 = k as i32 >> 1;
     if (word!(game.eproj_properties[v3]) & 0x4000) == 0 {
@@ -2244,8 +2240,7 @@ crate::prefixed_callbacks! {
                                 < 0
                         {
                             if (word!(game.projectile_type[pidx]) & 0xf00) == 512 {
-                                word!(game.earthquake_timer = 30);
-                                word!(game.earthquake_type = 18);
+                                word! {game; earthquake_timer = 30; earthquake_type = 18; }
                             }
                             if ((*E).properties & 0x1000) != 0
                                 || (word!(game.projectile_type[pidx]) & 8) == 0
@@ -2345,8 +2340,7 @@ crate::prefixed_callbacks! {
         set_fields! {[(*E)], 0; ai_handler_bits, invincibility_timer, frozen_timer, shake_timer}
     };
     SamusLatchesOnWithGrapple [] {
-        word!(game.grapple_beam_end_x_pos = (*E).x_pos);
-        word!(game.grapple_beam_end_y_pos = (*E).y_pos);
+        word! {game; grapple_beam_end_x_pos = (*E).x_pos; grapple_beam_end_y_pos = (*E).y_pos; }
         if (*E).frozen_timer != 0 {
             (*E).ai_handler_bits = 4;
         } else {
@@ -2372,8 +2366,7 @@ crate::prefixed_callbacks! {
             );
             (*E).ai_handler_bits = 0;
         }
-        word!(game.grapple_beam_end_x_pos = (*E).x_pos);
-        word!(game.grapple_beam_end_y_pos = (*E).y_pos);
+        word! {game; grapple_beam_end_x_pos = (*E).x_pos; grapple_beam_end_y_pos = (*E).y_pos; }
     };
     SamusLatchesOnWithGrappleParalyze [] {
         let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
@@ -2442,8 +2435,7 @@ crate::prefixed_callbacks! {
                     && (y as i32 - word!(game.projectile_y_radius[pidx]) as i32) < (*E).y_height as i32
                 {
                     if (word!(game.projectile_type[pidx]) & 0xf00) == 512 {
-                        word!(game.earthquake_timer = 30);
-                        word!(game.earthquake_type = 18);
+                        word! {game; earthquake_timer = 30; earthquake_type = 18; }
                     }
                     if ((*E).properties & 0x1000) != 0 || (word!(game.projectile_type[pidx]) & 8) == 0 {
                         word!(game.projectile_dir[pidx], |fresh26| (fresh26) | (0x10u16));

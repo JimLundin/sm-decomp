@@ -23,9 +23,8 @@ pub unsafe fn CreateSpriteAtPos(
     word! { game, 0;
         sprite_palettes[v1], sprite_x_subpos[v1], sprite_y_subpos[v1], sprite_disable_flag[v1],
     }
-    word!(game.sprite_x_pos[v1] = x_r18);
-    word!(game.sprite_y_pos[v1] = y_r20);
-    word!(game.sprite_palettes[v1] = pal_r24);
+    word! {game; sprite_x_pos[v1] = x_r18; sprite_y_pos[v1] = y_r20;
+    sprite_palettes[v1] = pal_r24; }
     let v2: u16 = crate::rtl::rom_table_word!(game, 0xb4bda8, ilist_r22 as isize);
     word!(game.sprite_instr_list_ptrs[v1] = v2);
     word!(game.sprite_instr_timer[v1] = *(RomPtr_B4(v2, game) as *mut u16));

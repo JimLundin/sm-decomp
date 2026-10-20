@@ -2138,8 +2138,7 @@ unsafe fn BlockReact_AA64_SpikeAir(ci: *mut CollInfo, game: &mut Game) -> u8 {
         let v: u32 = ((g_word_94AAF7[v0 as usize] as i16 as i32) << 16) as u32;
         if v != 0 {
             words!(game.samus_periodic_damage, samus_periodic_subdamage += v);
-            word!(game.samus_invincibility_timer = 60);
-            word!(game.samus_knockback_timer = 10);
+            word! {game; samus_invincibility_timer = 60; samus_knockback_timer = 10; }
         }
     }
     0
@@ -2154,8 +2153,7 @@ unsafe fn BlockReact_AA64_SpikeBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
         let v: u32 = ((g_word_94AB70[v0 as usize] as i16 as i32) << 16) as u32;
         if v != 0 {
             words!(game.samus_periodic_damage, samus_periodic_subdamage += v);
-            word!(game.samus_invincibility_timer = 60);
-            word!(game.samus_knockback_timer = 10);
+            word! {game; samus_invincibility_timer = 60; samus_knockback_timer = 10; }
         }
     }
     1

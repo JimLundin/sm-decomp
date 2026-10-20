@@ -107,8 +107,7 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
             let mother_brain = matches!(scene, Scene::MotherBrain);
             *ram_ptr!(game; 0x58) = if mother_brain { 80 } else { 84 };
             if !mother_brain {
-                word!(game.room_width_in_blocks = 32);
-                word!(game.room_height_in_blocks = 16);
+                word! {game; room_width_in_blocks = 32; room_height_in_blocks = 16; }
             }
             word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
             SamusFunc_F433(game);
@@ -118,12 +117,8 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
             word!(game.samus_prev_pose = word!(game.samus_pose));
             *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
             let (x, y) = if mother_brain { (155, 115) } else { (376, 147) };
-            word!(game.samus_x_pos = x);
-            word!(game.samus_prev_x_pos = x);
-            word!(game.samus_y_pos = y);
-            word!(game.samus_prev_y_pos = y);
-            word!(game.cinematic_var8 = 0);
-            word!(game.cinematic_var13 = 127);
+            word! {game; samus_x_pos = x; samus_prev_x_pos = x; samus_y_pos = y;
+            samus_prev_y_pos = y; cinematic_var8 = 0; cinematic_var13 = 127; }
             if mother_brain {
                 // The preceding $1A4B store leaves $007F in the ROM accumulator.
                 SpawnCinematicSpriteObjectAtSlot(
@@ -287,9 +282,8 @@ pub(super) unsafe fn draw_japanese_text(
 pub(super) unsafe fn continue_japanese_text(next: u16, lines: &[u16], k: u16, game: &mut Game) {
     if word!(game.joypad1_newkeys) != 0 {
         let slot = k as usize >> 1;
-        word!(game.mode7_obj_instr_ptr[slot] = next);
-        word!(game.mode7_obj_instr_timer[slot] = 1);
-        word!(game.mode7_obj_preinstr_func[slot] = ((0x8b93d9i32) as u16));
+        word! {game; mode7_obj_instr_ptr[slot] = next; mode7_obj_instr_timer[slot] = 1;
+        mode7_obj_preinstr_func[slot] = ((0x8b93d9i32) as u16); }
         draw_japanese_text(lines, false, 0, game);
         word!(game.cinematic_var16 = 60);
     }

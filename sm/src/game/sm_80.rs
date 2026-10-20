@@ -737,9 +737,8 @@ pub unsafe fn QueueMusic_Delayed8(a: u16, game: &mut Game) {
     {
         let mut v1: i8 = word!(game.music_queue_write_pos) as i8;
         let v2: i32 = word!(game.music_queue_write_pos) as i32 >> 1;
-        word!(game.music_queue_track[v2] = a);
-        word!(game.music_queue_delay[v2] = 8);
-        word!(game.music_queue_write_pos = (v1 as i32 + 2 & 0xe) as u16);
+        word! {game; music_queue_track[v2] = a; music_queue_delay[v2] = 8;
+        music_queue_write_pos = (v1 as i32 + 2 & 0xe) as u16; }
     }
 }
 pub unsafe fn QueueMusic_DelayedY(a: u16, j: u16, game: &mut Game) {
@@ -1374,10 +1373,8 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
 pub unsafe fn AddToTilemapInner(k: u16, j: *const u16, game: &mut Game) {
     let v2: i32 = k as i32 >> 1;
     if (word!(game.hud_tilemap[v2]) & 0x3ff) == 15 {
-        word!(game.hud_tilemap[v2] = *j);
-        word!(game.hud_tilemap[(v2 + 1)] = *j.offset(1));
-        word!(game.hud_tilemap[(v2 + 32)] = *j.offset(2));
-        word!(game.hud_tilemap[(v2 + 33)] = *j.offset(3));
+        word! {game; hud_tilemap[v2] = *j; hud_tilemap[(v2 + 1)] = *j.offset(1);
+        hud_tilemap[(v2 + 32)] = *j.offset(2); hud_tilemap[(v2 + 33)] = *j.offset(3); }
     }
 }
 pub unsafe fn InitializeHud(game: &mut Game) {
@@ -1445,12 +1442,9 @@ pub unsafe fn HandleHudTilemap(game: &mut Game) {
         if word!(game.samus_reserve_health) == 0 {
             v1 = v1.offset(6);
         }
-        word!(game.hud_tilemap[8] = *v1);
-        word!(game.hud_tilemap[9] = *v1.offset(1));
-        word!(game.hud_tilemap[40] = *v1.offset(2));
-        word!(game.hud_tilemap[41] = *v1.offset(3));
-        word!(game.hud_tilemap[72] = *v1.offset(4));
-        word!(game.hud_tilemap[73] = *v1.offset(5));
+        word! {game; hud_tilemap[8] = *v1; hud_tilemap[9] = *v1.offset(1);
+        hud_tilemap[40] = *v1.offset(2); hud_tilemap[41] = *v1.offset(3);
+        hud_tilemap[72] = *v1.offset(4); hud_tilemap[73] = *v1.offset(5); }
     }
     if word!(game.samus_health) != word!(game.samus_prev_health) {
         word!(game.samus_prev_health = word!(game.samus_health));
@@ -2024,14 +2018,13 @@ pub unsafe fn UpdateBgGraphicsWhenScrolling(game: &mut Game) {
 }
 pub unsafe fn CalculateBgScrollAndLayerPositionBlocks(game: &mut Game) {
     crate::verify_probe::hit("camera.blocks");
-    word!(game.bg1_x_block = word!(game.reg_BG1HOFS) >> 4);
-    word!(game.bg2_x_block = word!(game.reg_BG2HOFS) >> 4);
-    word!(game.layer1_x_block = ((word!(game.layer1_x_pos) as i16) >> 4) as u16);
-    word!(game.layer2_x_block = ((word!(game.layer2_x_pos) as i16) >> 4) as u16);
-    word!(game.bg1_y_block = word!(game.reg_BG1VOFS) >> 4);
-    word!(game.bg2_y_block = word!(game.reg_BG2VOFS) >> 4);
-    word!(game.layer1_y_block = ((word!(game.layer1_y_pos) as i16) >> 4) as u16);
-    word!(game.layer2_y_block = ((word!(game.layer2_y_pos) as i16) >> 4) as u16);
+    word! {game; bg1_x_block = word!(game.reg_BG1HOFS) >> 4;
+    bg2_x_block = word!(game.reg_BG2HOFS) >> 4;
+    layer1_x_block = ((word!(game.layer1_x_pos) as i16) >> 4) as u16;
+    layer2_x_block = ((word!(game.layer2_x_pos) as i16) >> 4) as u16;
+    bg1_y_block = word!(game.reg_BG1VOFS) >> 4; bg2_y_block = word!(game.reg_BG2VOFS) >> 4;
+    layer1_y_block = ((word!(game.layer1_y_pos) as i16) >> 4) as u16;
+    layer2_y_block = ((word!(game.layer2_y_pos) as i16) >> 4) as u16; }
 }
 // Multiplication uses the width's low byte. A column may include a full-word
 // row stride; it is added afterward, with the original word wrapping.
@@ -2097,8 +2090,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollRight(game: &mut Game) {
     crate::verify_probe::hit("camera.trigger_right");
     let previous = word!(game.layer1_x_pos);
     if (word!(game.ideal_layer1_xpos).wrapping_sub(word!(game.layer1_x_pos)) as i16) < 0 {
-        word!(game.layer1_x_pos = word!(game.ideal_layer1_xpos));
-        word!(game.layer1_x_subpos = 0);
+        word! {game; layer1_x_pos = word!(game.ideal_layer1_xpos); layer1_x_subpos = 0; }
     }
     let limit = word!(game.room_width_in_scrolls)
         .wrapping_sub(1)
@@ -2129,8 +2121,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollLeft(game: &mut Game) {
     crate::verify_probe::hit("camera.trigger_left");
     let previous = word!(game.layer1_x_pos);
     if (word!(game.layer1_x_pos).wrapping_sub(word!(game.ideal_layer1_xpos)) as i16) < 0 {
-        word!(game.layer1_x_pos = word!(game.ideal_layer1_xpos));
-        word!(game.layer1_x_subpos = 0);
+        word! {game; layer1_x_pos = word!(game.ideal_layer1_xpos); layer1_x_subpos = 0; }
     }
     let position = word!(game.layer1_x_pos);
     if position & 0x8000 != 0 {
@@ -2218,8 +2209,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollDown(game: &mut Game) {
         31
     };
     if (word!(game.ideal_layer1_ypos).wrapping_sub(word!(game.layer1_y_pos)) as i16) < 0 {
-        word!(game.layer1_y_pos = word!(game.ideal_layer1_ypos));
-        word!(game.layer1_y_subpos = 0);
+        word! {game; layer1_y_pos = word!(game.ideal_layer1_ypos); layer1_y_subpos = 0; }
     }
     let position = word!(game.layer1_y_pos);
     let mut boundary = word!(game.room_height_in_scrolls)
@@ -2253,8 +2243,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollUp(game: &mut Game) {
     crate::verify_probe::hit("camera.trigger_up");
     let previous = word!(game.layer1_y_pos);
     if (word!(game.layer1_y_pos).wrapping_sub(word!(game.ideal_layer1_ypos)) as i16) < 0 {
-        word!(game.layer1_y_pos = word!(game.ideal_layer1_ypos));
-        word!(game.layer1_y_subpos = 0);
+        word! {game; layer1_y_pos = word!(game.ideal_layer1_ypos); layer1_y_subpos = 0; }
     }
     let position = word!(game.layer1_y_pos);
     if position & 0x8000 != 0 {
@@ -2554,10 +2543,7 @@ pub unsafe fn DoorTransition_Down(game: &mut Game) -> u8 {
         word!(game.previous_layer1_y_block, wrapping_sub(1));
         word!(game.previous_layer2_y_block, wrapping_sub(1));
         UpdateScrollVarsUpdateMap(game);
-        word!(game.layer2_y_pos = v2);
-        word!(game.layer1_y_pos = v3);
-        word!(game.reg_BG2VOFS = v4);
-        word!(game.reg_BG1VOFS = v5);
+        word! {game; layer2_y_pos = v2; layer1_y_pos = v3; reg_BG2VOFS = v4; reg_BG1VOFS = v5; }
     }
     word!(game.door_transition_frame_counter = (v6).wrapping_add(1));
     if (v6).wrapping_add(1) < 0x39 {
@@ -2602,10 +2588,7 @@ pub unsafe fn DoorTransition_Up(game: &mut Game) -> u8 {
         word!(game.previous_layer1_y_block, wrapping_add(1));
         word!(game.previous_layer2_y_block, wrapping_add(1));
         UpdateScrollVarsUpdateMap(game);
-        word!(game.layer2_y_pos = v2);
-        word!(game.layer1_y_pos = v3);
-        word!(game.reg_BG2VOFS = v4);
-        word!(game.reg_BG1VOFS = v5);
+        word! {game; layer2_y_pos = v2; layer1_y_pos = v3; reg_BG2VOFS = v4; reg_BG1VOFS = v5; }
     }
     word!(game.door_transition_frame_counter = (v6).wrapping_add(1));
     (v6 == 56) as u8
@@ -2751,8 +2734,7 @@ pub unsafe fn LoadFromLoadStation(game: &mut Game) {
             + 14 * word!(game.load_station_index) as i32) as u16,
         game,
     ) as *mut LoadStationList;
-    word!(game.room_ptr = (*L).room_ptr_);
-    word!(game.door_def_ptr = (*L).door_ptr);
+    word! {game; room_ptr = (*L).room_ptr_; door_def_ptr = (*L).door_ptr; }
     crate::update_place! { reference fresh77 = *(ram_ptr!(game, u16; 0x911)) => (*L).screen_x_pos; }
     word!(game.bg1_x_offset = *fresh77);
     crate::update_place! { reference fresh78 = *(ram_ptr!(game, u16; 0x915)) => (*L).screen_y_pos; }

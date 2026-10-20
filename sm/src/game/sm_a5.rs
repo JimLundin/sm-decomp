@@ -1037,8 +1037,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         (*E).var_0F = 24;
         let v3 = RomPtr_A0((*E).base.enemy_ptr, game);
         Samus_DealDamage(SuitDamageDivision(*(v3.offset(6) as *mut u16), game), game);
-        word!(game.earthquake_timer = 32);
-        word!(game.earthquake_type = 7);
+        word! {game; earthquake_timer = 32; earthquake_type = 7; }
         CreateSpriteAtPos(
             word!(game.samus_x_pos),
             (word!(game.samus_y_pos)).wrapping_add(16),
@@ -1459,8 +1458,7 @@ pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
         r18 = ((((*E).var_04).wrapping_sub((*E).base.x_pos)) >> 1);
         r20 = (-(v1 as i32) as u16 >> 2);
         r22 = (r18).wrapping_add(r20);
-        word!(game.eproj_x_pos[14] = 128);
-        word!(game.eproj_x_pos[15] = ((*E).var_04).wrapping_sub(r20));
+        word! {game; eproj_x_pos[14] = 128; eproj_x_pos[15] = ((*E).var_04).wrapping_sub(r20); }
         (*E).var_20 = word!(game.eproj_x_pos[15]);
         word!(game.eproj_x_pos[16] = ((*E).var_04).wrapping_sub(r18));
         (*E).var_21 = word!(game.eproj_x_pos[16]);
@@ -1483,8 +1481,7 @@ pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
         r18 = (((*E).var_05 as i32 - ((*E).base.y_pos as i32 - 40i32)) as u16 >> 1);
         r20 = (-(v3 as i32) as u16 >> 2);
         r22 = (r18).wrapping_add(r20);
-        word!(game.eproj_y_pos[14] = 560);
-        word!(game.eproj_y_pos[15] = ((*E).var_05).wrapping_sub(r20));
+        word! {game; eproj_y_pos[14] = 560; eproj_y_pos[15] = ((*E).var_05).wrapping_sub(r20); }
         (*E).var_23 = word!(game.eproj_y_pos[15]);
         word!(game.eproj_y_pos[16] = ((*E).var_05).wrapping_sub(r18));
         (*E).var_24 = word!(game.eproj_y_pos[16]);

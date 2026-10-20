@@ -414,8 +414,7 @@ pub unsafe fn MotherBrain_Phase3_TurnLightsBackOn(a: u16, game: &mut Game) -> u8
     0
 }
 pub unsafe fn EnableEarthquakeAframes(a: u16, game: &mut Game) {
-    word!(game.earthquake_type = a);
-    word!(game.earthquake_timer = 20);
+    word! {game; earthquake_type = a; earthquake_timer = 20; }
     QueueSfx2_Max6(0x25, game);
 }
 pub unsafe fn HandleMotherBrainBodyFlickering(game: &mut Game) {

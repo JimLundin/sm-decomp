@@ -1219,8 +1219,7 @@ crate::game::callback_dispatch! {
     };
     YappingMaw_Func_12 [] {
         let v1: i32 = (*E).var_40 as i32 >> 1;
-        word!(game.eproj_x_pos[v1] = (*E).var_0C);
-        word!(game.eproj_y_pos[v1] = (*E).var_0D);
+        word! {game; eproj_x_pos[v1] = (*E).var_0C; eproj_y_pos[v1] = (*E).var_0D; }
     };
     YappingMaw_Func_13 [] {
         let v1: i32 = (*E).var_41 as i32 >> 1;
@@ -1386,8 +1385,7 @@ pub unsafe fn Kago_Main(game: &mut Game) {
 }
 pub unsafe fn Kago_Shot(game: &mut Game) {
     NormalEnemyShotAi(game);
-    word!(game.earthquake_type = 2);
-    word!(game.earthquake_timer = 16);
+    word! {game; earthquake_type = 2; earthquake_timer = 16; }
     let E = Get_Kago(word!(game.cur_enemy_index) as i32, game);
     if (*E).var_B == 0 {
         (*E).var_B = 1;
@@ -1544,10 +1542,8 @@ pub unsafe fn NorfairLavaMan_Func_6(game: &mut Game) {
         let r22: u16 = crate::rtl::rom_table_word!(game, 0xa8ac1c, (v0 + 11) as isize);
         let r24: u16 = crate::rtl::rom_table_word!(game, 0xa8ac1c, (v0 + 12) as isize);
         let v1: i32 = word!(game.variables_for_enemy_graphics_drawn_hook[0]) as i32 >> 1;
-        word!(game.palette_buffer[(v1 + 9)] = r18);
-        word!(game.palette_buffer[(v1 + 10)] = r20);
-        word!(game.palette_buffer[(v1 + 11)] = r22);
-        word!(game.palette_buffer[(v1 + 12)] = r24);
+        word! {game; palette_buffer[(v1 + 9)] = r18; palette_buffer[(v1 + 10)] = r20;
+        palette_buffer[(v1 + 11)] = r22; palette_buffer[(v1 + 12)] = r24; }
     }
 }
 pub unsafe fn NorfairLavaMan_Func_12(k: u16, game: &mut Game) {
@@ -2366,10 +2362,8 @@ crate::prefixed_callbacks! {
                     (*E).var_F = ((0xa8c500i32) as u16);
                     (*E).var_E = 10;
                     let v10: i32 = k as i32 >> 1;
-                    word!(game.enemy_drawing_queue[(v10 + 104)] = 1);
-                    word!(
-                        game.enemy_drawing_queue[(v10 + 103)] = addr_kMaridiaFloater_Ilist_C191 as u16
-                    );
+                    word! {game; enemy_drawing_queue[(v10 + 104)] = 1;
+                        enemy_drawing_queue[(v10 + 103)] = addr_kMaridiaFloater_Ilist_C191 as u16; }
                 } else {
                     (*E).var_F = ((0xa8c36bi32) as u16);
                 }
@@ -2399,10 +2393,8 @@ crate::prefixed_callbacks! {
                 } else {
                     (*E).var_F = ((0xa8c500i32) as u16);
                     (*E).var_E = 10;
-                    word!(game.enemy_drawing_queue[(v4 + 104)] = 1);
-                    word!(
-                        game.enemy_drawing_queue[(v4 + 103)] = addr_kMaridiaFloater_Ilist_C191 as u16
-                    );
+                    word! {game; enemy_drawing_queue[(v4 + 104)] = 1;
+                        enemy_drawing_queue[(v4 + 103)] = addr_kMaridiaFloater_Ilist_C191 as u16; }
                     false
                 }
             });
@@ -2672,8 +2664,7 @@ unsafe fn move_wrecked_ship_robot(
         return wall_instruction as usize as *const u16;
     }
     if CheckIfEnemyTouchesSamus(word!(game.cur_enemy_index), game) != 0 {
-        word!(game.extra_samus_x_subdisplacement = 0);
-        word!(game.extra_samus_x_displacement = step as u16);
+        word! {game; extra_samus_x_subdisplacement = 0; extra_samus_x_displacement = step as u16; }
     }
     let Some(edge_instruction) = edge_instruction else {
         return jp;

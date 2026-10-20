@@ -399,9 +399,8 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
             le(target_palettes, 224) <- rom(0xa4b8dd, 16),
         );
         (*E_0).var_C = 4;
-        word!(game.UNUSED_word_7E179E = 16);
-        word!(game.camera_distance_index = 2);
-        word!(game.enemy_bg2_tilemap_size = 1024);
+        word! {game; UNUSED_word_7E179E = 16; camera_distance_index = 2;
+        enemy_bg2_tilemap_size = 1024; }
         set_fields! {[(*E_0).base]; current_instruction = addr_kCrocomire_Ilist_BADE as u16,
         extra_properties = ((*E_0).base.extra_properties) | (4u16), instruction_timer = 1, };
     };
@@ -594,8 +593,7 @@ pub unsafe fn Crocomire_8EE5(game: &mut Game) {
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     Crocomire_Instr_2 [jp] {
-        word!(game.earthquake_type = 4);
-        word!(game.earthquake_timer = 5);
+        word! {game; earthquake_type = 4; earthquake_timer = 5; }
         QueueSfx2_Max6(0x76, game);
     };
     Crocomire_Instr_4 [jp] {
@@ -1528,8 +1526,7 @@ crate::prefixed_callbacks! {
 }
             i = v6 as i32 + 4;
         }
-        word!(game.croco_word_7E069A = (i + 2) as u16);
-        word!(game.g_word_7E068A = (i + 2) as u16);
+        word! {game; croco_word_7E069A = (i + 2) as u16; g_word_7E068A = (i + 2) as u16; }
         word_transfers!(game, descending, 65; native(0x71c) <- value(0));
     };
     Crocomire_Func_63 [] {

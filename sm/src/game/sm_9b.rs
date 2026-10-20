@@ -139,8 +139,7 @@ pub unsafe fn StartSamusDeathAnimation(game: &mut Game) {
     *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
     word!(game.samus_prev_pose = word!(game.samus_pose));
     *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
-    word!(game.samus_anim_frame_skip = 0);
-    word!(game.samus_anim_frame = v1);
+    word! {game; samus_anim_frame_skip = 0; samus_anim_frame = v1; }
     word!(game.samus_x_pos, wrapping_sub(word!(game.layer1_x_pos)));
     word!(game.samus_y_pos, wrapping_sub(word!(game.layer1_y_pos)));
 }
@@ -156,8 +155,7 @@ pub unsafe fn HandleSamusDeathSequence(game: &mut Game) -> u16 {
             (word!(game.game_options_screen_index, wrapping_sub(1), reread) & 0x8000) != 0;
         if word!(game.game_options_screen_index) == 0 || v0 {
             if word!(game.g_word_7E0DE4) != 0 {
-                word!(game.g_word_7E0DE4 = 0);
-                word!(game.game_options_screen_index = 3);
+                word! {game; g_word_7E0DE4 = 0; game_options_screen_index = 3; }
             } else {
                 word! { game, 1; g_word_7E0DE4, game_options_screen_index }
             }
@@ -340,9 +338,8 @@ unsafe fn ProcessEnemyGrappleBeamColl(a: u16, mut r18: u16, game: &mut Game) -> 
                 r18 = (r18 >> 1);
             }
             Samus_DealDamage(r18, game);
-            word!(game.samus_invincibility_timer = 96);
-            word!(game.samus_knockback_timer = 5);
-            word!(game.knockback_x_dir = (*ram_ptr!(game; 0xa1e) == 4) as u16);
+            word! {game; samus_invincibility_timer = 96; samus_knockback_timer = 5;
+            knockback_x_dir = (*ram_ptr!(game; 0xa1e) == 4) as u16; }
             1
         }
         _ => {
@@ -592,8 +589,7 @@ pub unsafe fn UpdateGrappleBeamTiles(game: &mut Game) {
 pub unsafe fn HandleGrappleBeamFlare(game: &mut Game) {
     if word!(game.flare_counter) != 0 {
         if word!(game.flare_counter) == 1 {
-            word!(game.flare_animation_frame = 16);
-            word!(game.flare_animation_timer = 3);
+            word! {game; flare_animation_frame = 16; flare_animation_timer = 3; }
         }
         if (word!(game.flare_animation_timer, wrapping_sub(1), reread) & 0x8000) != 0 {
             let mut v0: u16 = word!(game.flare_animation_frame, wrapping_add(1), reread);
@@ -939,8 +935,7 @@ crate::game::callback_dispatch! {
             (((*ram_ptr!(game; 0xcfb) as i32) << 8) != 0x8000)
                 || ({
                     if word!(game.samus_anim_frame) as i32 - 64i32 & 0x8000 != 0 {
-                        word!(game.samus_anim_frame_timer = 8);
-                        word!(game.samus_anim_frame = 64);
+                        word! {game; samus_anim_frame_timer = 8; samus_anim_frame = 64; }
                     }
                     v1 = byte!(@pointer rom_ptr!(game; 0x9bc1c2); *(ram_ptr!(game, u16; 0xcfc) as *mut u8).offset(1) as isize)
                         as u16;
@@ -1070,23 +1065,19 @@ crate::game::callback_dispatch! {
             grapple_beam_unkD2C, grapple_beam_unkD2E, grapple_beam_unkD30, grapple_beam_unkD1E,
             grapple_beam_unkD20,
         }
-        word!(game.grapple_beam_unkD3A = 2);
-        word!(game.grapple_beam_unkD3C = 0);
-        word!(game.grapple_point_anim_timer = 5);
-        word!(game.grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0));
+        word! {game; grapple_beam_unkD3A = 2; grapple_beam_unkD3C = 0;
+            grapple_point_anim_timer = 5;
+            grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0); }
         word! { game, 0;
             grapple_beam_grapple_start_x, grapple_beam_unkD38, grapple_beam_unkD36,
             slow_grabble_scrolling_flag,
         }
         GrappleFunc_AF87(game);
-        word!(game.samus_draw_handler = ((0x90eb86i32) as u16));
-        word!(game.grapple_walljump_timer = 0);
+        word! {game; samus_draw_handler = ((0x90eb86i32) as u16); grapple_walljump_timer = 0; }
         LoadProjectilePalette(2, game);
-        word!(game.palette_buffer[223] = 32657);
-        word!(game.grapple_beam_function = ((0x9bc703i32) as u16));
+        word! {game; palette_buffer[223] = 32657; grapple_beam_function = ((0x9bc703i32) as u16); }
         QueueSfx1_Max1(5, game);
-        word!(game.flare_counter = 1);
-        word!(game.play_resume_charging_beam_sfx = 0);
+        word! {game; flare_counter = 1; play_resume_charging_beam_sfx = 0; }
         if word!(game.samus_movement_handler) as i32 == 0x90946e & 0xffff {
             word!(game.samus_movement_handler = ((0x90a337i32) as u16));
         }
@@ -1261,8 +1252,7 @@ crate::game::callback_dispatch! {
         if current_block == 16041378612104114408 {
             word!(game.samus_new_pose_transitional = kPose_01_FaceR_Normal as u16);
         }
-        word!(game.samus_hurt_switch_index = 0);
-        word!(game.input_to_pose_calc = 1);
+        word! {game; samus_hurt_switch_index = 0; input_to_pose_calc = 1; }
         word! { game, 0;
             samus_x_base_speed, samus_x_base_subspeed, samus_y_subspeed, samus_y_speed,
             grapple_beam_unkD1E, grapple_beam_unkD20, grapple_beam_direction, grapple_beam_unkD36,

@@ -596,8 +596,7 @@ crate::game::callback_dispatch! {
         if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) != 0 {
             let v3: i16 = (*E).var_B as i16;
             if v3 >= 0 && v3 != 256 {
-                word!(game.earthquake_type = 4);
-                word!(game.earthquake_timer = 32);
+                word! {game; earthquake_type = 4; earthquake_timer = 32; }
                 (*E).var_B = 256;
             }
         } else {
@@ -631,8 +630,7 @@ crate::game::callback_dispatch! {
         if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) != 0 {
             enemy_instruction! {[(*E).base]; instruction = (*E).var_00, timer = 1}
             (*E).var_B = 256;
-            word!(game.earthquake_type = 4);
-            word!(game.earthquake_timer = 32);
+            word! {game; earthquake_type = 4; earthquake_timer = 32; }
         } else {
             (*E).var_B = ((*E).var_B).wrapping_add((*E).var_C);
         };
@@ -1392,8 +1390,7 @@ pub unsafe fn Shaktool_Shot(game: &mut Game) {
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     Shaktool_Instr_9 [jp] {
-        word!(game.fx_timer = 32);
-        word!(game.fx_y_vel = 64);
+        word! {game; fx_timer = 32; fx_y_vel = 64; }
     };
     Shaktool_Instr_11 [jp] { word!(game.fx_base_y_pos = 722); };
     Shaktool_Instr_10 [jp] { CallSomeSamusCode(1, game); };

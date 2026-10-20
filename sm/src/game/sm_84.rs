@@ -369,8 +369,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
             if (word!(game.plm_flag) & 0x8000) == 0 {
                 return kCoroutineNone as CoroutineRet;
             }
-            word!(game.plm_draw_tilemap_index = 0);
-            word!(game.plm_id = 78);
+            word! {game; plm_draw_tilemap_index = 0; plm_id = 78; }
         }
         loop {
             if !message_pending {
@@ -1364,8 +1363,7 @@ crate::game::callback_dispatch! {
     [8697795] PlmSetup_B7EB_EnableSoundsIn32Frames [] {
         let mut v1: u16 = if word!(game.area_index) == 6 { 32 } else { 240 };
         let v2: i32 = j as i32 >> 1;
-        word!(game.plm_timers[v2] = v1);
-        word!(game.plm_pre_instrs[v2] = ((0x84b7ddi32) as u16));
+        word! {game; plm_timers[v2] = v1; plm_pre_instrs[v2] = ((0x84b7ddi32) as u16); }
         0
     };
     [8698012] PlmSetup_SpeedBoosterEscape [] {
@@ -1384,8 +1382,7 @@ crate::game::callback_dispatch! {
             let v1: i32 = j as i32 >> 1;
             let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
             let v3: u16 = (word!(game.level_data[v2]) & 0xf000 | 0x9f);
-            word!(game.plm_variable[v1] = v3);
-            word!(game.level_data[v2] = (v3) & (0x8fffu16));
+            word! {game; plm_variable[v1] = v3; level_data[v2] = (v3) & (0x8fffu16); }
         } else {
             word!(game.plm_header_ptr[(j >> 1)] = 0);
         }
@@ -1547,8 +1544,7 @@ crate::game::callback_dispatch! {
             let v1: i32 = j as i32 >> 1;
             let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
             let v3: u16 = word!(game.level_data[v2]);
-            word!(game.plm_variable[v1] = v3);
-            word!(game.level_data[v2] = (v3) & (0xfffu16));
+            word! {game; plm_variable[v1] = v3; level_data[v2] = (v3) & (0xfffu16); }
             0
         } else {
             word!(game.plm_header_ptr[(j >> 1)] = 0);
@@ -1567,8 +1563,7 @@ crate::game::callback_dispatch! {
             let v1: i32 = j as i32 >> 1;
             let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
             let v3: u16 = (word!(game.level_data[v2]) & 0xf000 | 0xb6);
-            word!(game.plm_variable[v1] = v3);
-            word!(game.level_data[v2] = (v3) & (0xfffu16));
+            word! {game; plm_variable[v1] = v3; level_data[v2] = (v3) & (0xfffu16); }
             0
         } else {
             word!(game.plm_header_ptr[(j >> 1)] = 0);
@@ -1580,9 +1575,8 @@ crate::game::callback_dispatch! {
             let v1: i32 = j as i32 >> 1;
             let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
             let v3: u16 = (word!(game.level_data[v2]) & 0xf000 | 0xbc);
-            word!(game.plm_variable[v1] = v3);
-            word!(game.level_data[v2] = (v3) & (0x8fffu16));
-            word!(game.plm_instruction_timer[v1] = 4);
+            word! {game; plm_variable[v1] = v3; level_data[v2] = (v3) & (0x8fffu16);
+                plm_instruction_timer[v1] = 4; }
         } else {
             word!(game.plm_header_ptr[(j >> 1)] = 0);
         }
@@ -1602,8 +1596,7 @@ crate::game::callback_dispatch! {
             let v2: i32 = j as i32 >> 1;
             let v3: i32 = word!(game.plm_block_indices[v2]) as i32 >> 1;
             let v4: u16 = (word!(game.level_data[v3]) & 0xf000 | 0x58);
-            word!(game.plm_variable[v2] = v4);
-            word!(game.level_data[v3] = (v4) & (0xfffu16));
+            word! {game; plm_variable[v2] = v4; level_data[v3] = (v4) & (0xfffu16); }
             0
         } else {
             word!(game.plm_header_ptr[(j >> 1)] = 0);
@@ -1620,14 +1613,12 @@ crate::game::callback_dispatch! {
             advance_plm_instruction(v5 as usize, 3, game);
             let v6: i32 = word!(game.plm_block_indices[v5]) as i32 >> 1;
             let v7: u16 = (word!(game.level_data[v6]) & 0xf000 | 0x58);
-            word!(game.plm_variable[v5] = v7);
-            word!(game.level_data[v6] = (v7) & (0x8fffu16));
+            word! {game; plm_variable[v5] = v7; level_data[v6] = (v7) & (0x8fffu16); }
         } else if v1 == 768 {
             let v2: i32 = j as i32 >> 1;
             let v3: i32 = word!(game.plm_block_indices[v2]) as i32 >> 1;
             let v4: u16 = (word!(game.level_data[v3]) & 0xf000 | 0x58);
-            word!(game.plm_variable[v2] = v4);
-            word!(game.level_data[v3] = (v4) & (0x8fffu16));
+            word! {game; plm_variable[v2] = v4; level_data[v3] = (v4) & (0x8fffu16); }
         } else {
             word!(game.plm_header_ptr[(j >> 1)] = 0);
         }
@@ -1644,8 +1635,7 @@ crate::game::callback_dispatch! {
             let v2: i32 = j as i32 >> 1;
             let v3: i32 = word!(game.plm_block_indices[v2]) as i32 >> 1;
             let v4: u16 = (word!(game.level_data[v3]) & 0xf000 | 0x9f);
-            word!(game.plm_variable[v2] = v4);
-            word!(game.level_data[v3] = (v4) & (0x8fffu16));
+            word! {game; plm_variable[v2] = v4; level_data[v3] = (v4) & (0x8fffu16); }
         } else {
             word!(game.plm_header_ptr[(j >> 1)] = 0);
         }
@@ -1962,8 +1952,7 @@ crate::game::callback_dispatch! {
     [8703595] PlmSetup_RespawningShotBlock [] {
         let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
         let v3: u16 = (word!(game.level_data[v2]) & 0xf000 | 0x52);
-        word!(game.plm_variable[v1] = v3);
-        word!(game.level_data[v2] = (v3) & (0x8fffu16));
+        word! {game; plm_variable[v1] = v3; level_data[v2] = (v3) & (0x8fffu16); }
         0
     };
     [8703925] PlmSetup_D0DC_BreakableGrappleBlock [] {
@@ -2171,8 +2160,7 @@ crate::game::callback_dispatch! {
     };
     [8698184] PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft [] {
         if WakePlmIfSamusIsBelowAndRightOfTarget(k, 240, 1344, game) == 0 {
-            word!(game.fx_y_vel = -104i32 as u16);
-            word!(game.fx_timer = 16);
+            word! {game; fx_y_vel = -104i32 as u16; fx_timer = 16; }
         }
     };
     [8698731] PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm [] {
@@ -2551,8 +2539,7 @@ crate::game::callback_dispatch! {
         plmp
     };
     [8705334] PlmInstr_DiagonalEarthquake [] {
-        word!(game.earthquake_type = 11);
-        word!(game.earthquake_timer = 64);
+        word! {game; earthquake_type = 11; earthquake_timer = 64; }
         plmp
     };
     [8705951] PlmInstr_SpawnTwoEyeDoorSmoke [] {
@@ -3224,10 +3211,8 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8];
     [8708223] PlmInstr_DrawItemFrame_Common [null::<u8>()] {
         let v2: i32 = k as i32 >> 1;
-        word!(game.plm_instruction_timer[v2] = 4);
-        word!(
-            game.plm_instr_list_ptrs[v2] = plmp.offset_from(RomBankBase(0x84, game)) as c_long as u16
-        );
+        word! {game; plm_instruction_timer[v2] = 4;
+            plm_instr_list_ptrs[v2] = plmp.offset_from(RomBankBase(0x84, game)) as c_long as u16; }
         ProcessPlmDrawInstruction(k, game);
         let v3: u16 = word!(game.plm_id);
         CalculatePlmBlockCoords(word!(game.plm_id), game);
