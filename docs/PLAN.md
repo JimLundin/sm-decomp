@@ -6296,9 +6296,13 @@ Workspace audit (2026-10-20): project-prefixed temporary files total roughly
 229 GiB. Of 86 explicitly retired/cache directories, two still have helper
 dependencies. Bulk deletion of the reviewed independent directories, and a
 smaller compiler-artifact-only batch, was rejected as "blocked by policy".
-One individually named obsolete Python bytecode file (5,270 bytes) was
-deleted. Further cleanup remains unfinished; historical recovery-path notes
-below are not a requirement to retain spent artifacts indefinitely.
+Individual cleanup removed an obsolete Python bytecode file (5,270 bytes)
+and 118 spent root-level target artifacts (2,127,319 bytes): 60 build/replay
+logs, 57 route/probe scripts and an unused verifier snapshot pointer. No
+retained helper or live process references these files; generated route
+inputs remain available. Cargo refused the older Samus snapshot's build
+cleanup because it lacks CACHEDIR.TAG. Further cleanup remains unfinished;
+historical recovery-path notes below do not require indefinite retention.
 Two implementation tasks are active; the shader task has a terminal socket
 timeout, with its unfinished source and validation files retained. No Git
 lock or lingering shader replay process was found. Formatting, release build
