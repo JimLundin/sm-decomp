@@ -20,6 +20,39 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared equipment selection (2026-10-20)
+
+Six pause-menu searches now share their word-table traversal. The original
+entry points retain category limits, signed wrapping exit gates, odd-offset
+rounding, the hyper-beam guard and failure fallback. Downward beam selection
+still stores before queuing sound; all other successes store afterward.
+Downward suit selection retains its zero success result. The suit downward
+limit remains ten even though upward search can start at offset ten.
+
+An extracted-Rust comparison passes 2621748 cases, comparing complete RAM,
+ROM-read addresses and ordered sound observations. It includes every initial
+word offset, collected mask and hyper-beam flag, empty tables, signed-boundary
+scans and callbacks that mutate selection/items. Synthetic ROM and sound
+adapters supplement the actual oracle replay; they add no gameplay coverage.
+
+Formatting, normal release (18.63s), source checks, diff check and progress
+pass. The final combined source passes source-checked any% 129712/0 and the
+full-boot Speed Booster/equipment/resume route 150383/0, native exits 0.
+The extended route hits all six searches plus skip/failure probes and returns
+to gameplay. Source/input/library/DLL hashes stay fixed during both runs;
+the host reuses the normal library. The actual working tree matches the
+frozen full-replay source byte-for-byte; its rebuilt library also passes the
+1352/0 segment with all eight probes. The route remains ignored locally as
+`movies/speed-booster-equipment.inputs`; no inputs or checkpoints are committed.
+
+The complete formatted reduction is 28 lines, including eight probes, taking
+Rust to **114026**. The shared helper raises unsafe functions by one to 5372;
+cast-containing lines fall four to 9104, and other counters stay unchanged.
+The under-100000 target still needs **14027 further lines**; the complete
+remaining reduction budget stays unfinished. The initial 36-line draft count
+excluded probes and is superseded. Temporary comparisons and replay results
+are under `%TEMP%/sm-equipment-search-7bb28f55`.
+
 ## Structured decisions (2026-10-20)
 
 Twenty-five existing functions now use direct decisions, early exits and

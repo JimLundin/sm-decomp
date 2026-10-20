@@ -2906,116 +2906,88 @@ pub unsafe fn EquipmentScreenMoveToReserveTanks(game: &mut Game) -> u16 {
     }
     result
 }
-pub unsafe fn EquipmentScreenMoveToBeams(mut v0: u16, r18: u16, game: &mut Game) {
-    let mut v1: i16 = 0;
-    let mut current_block_5: u64;
-    if word!(game.hyper_beam_flag) != 0 {
-        current_block_5 = 16475780731721606008;
-    } else {
-        loop {
-            if ((crate::rtl::rom_table_word!(game, 0x82c04c, (v0 >> 1) as isize)
-                & word!(game.collected_beams))
-                != 0)
-            {
-                current_block_5 = 6873731126896040597;
-                break;
-            }
-            v0 = (v0).wrapping_add(2);
-            if ((v0) as i16).wrapping_sub(10) >= 0 {
-                current_block_5 = 16475780731721606008;
-                break;
-            }
-        }
-        if current_block_5 == 16475780731721606008 {
-        } else {
-            byte!(v1; 0) = ((v0 >> 1) >> 8) as u8;
-            byte!(v1; 1) = (v0 >> 1) as u8;
-            word!(game.pausemenu_equipment_category_item = (v1 as u16 & 0xff00 | 1));
-            QueueSfx1_Max6(0x37, game);
-            current_block_5 = 13513818773234778473;
-        }
-    }
-    if current_block_5 == 16475780731721606008 {
-        word!(game.pausemenu_equipment_category_item = r18);
+// Scan the original word-offset tables, including their signed wraparound gates.
+// A missing item either preserves the selection or restores the caller's saved word.
+unsafe fn move_equipment_selection(
+    category: u16,
+    mut offset: u16,
+    upward: bool,
+    fallback: Option<u16>,
+    game: &mut Game,
+) -> u16 {
+    let (table, limit) = match category {
+        1 => (0xc04c, 10),
+        2 => (0xc056, 10),
+        3 => (0xc062, 6),
+        _ => unreachable!(),
     };
-}
-pub unsafe fn EquipmentScreenMoveToBottomOfBeams(mut k: u16, game: &mut Game) -> u16 {
-    if word!(game.hyper_beam_flag) != 0 {
-        return -1i32 as u16;
-    }
-    while (crate::rtl::rom_table_word!(game, 0x82c04c, (k >> 1) as isize)
-        & word!(game.collected_beams))
-        == 0
-    {
-        k = (k).wrapping_sub(2);
-        if (k & 0x8000) != 0 {
-            return -1i32 as u16;
+    let mut found = category != 1 || word!(game.hyper_beam_flag) == 0;
+    while found {
+        let mask = crate::rtl::read_rom_table_word(
+            RomPtr_82(table, game).cast::<u16>(),
+            (offset >> 1) as isize,
+        );
+        let collected = if category == 1 {
+            word!(game.collected_beams)
+        } else {
+            word!(game.collected_items)
+        };
+        if mask & collected != 0 {
+            break;
         }
+        crate::verify_probe::hit("equipment-search-skip");
+        offset = offset.wrapping_add(if upward { 0xfffe } else { 2 });
+        found = if upward {
+            offset & 0x8000 == 0
+        } else {
+            (offset as i16).wrapping_sub(limit) < 0
+        };
     }
-    QueueSfx1_Max6(0x37, game);
-    let result: u16 = ((k as i32 >> 1) << 8 | 1) as u16;
-    word!(game.pausemenu_equipment_category_item = result);
-    result
-}
-pub unsafe fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: u16, game: &mut Game) -> u16 {
-    let mut v1: i16 = 0;
-    while (crate::rtl::rom_table_word!(game, 0x82c056, (v0 >> 1) as isize)
-        & word!(game.collected_items))
-        == 0
-    {
-        v0 = (v0).wrapping_add(2);
-        if ((v0) as i16).wrapping_sub(10) >= 0 {
-            return -1i32 as u16;
+    if !found {
+        crate::verify_probe::hit("equipment-search-empty");
+        if let Some(previous) = fallback {
+            word!(game.pausemenu_equipment_category_item = previous);
         }
+        return 0xffff;
     }
-    QueueSfx1_Max6(0x37, game);
-    byte!(v1; 0) = ((v0 >> 1) >> 8) as u8;
-    byte!(v1; 1) = (v0 >> 1) as u8;
-    word!(game.pausemenu_equipment_category_item = (v1 as u16 & 0xff00 | 2));
-    0
+    let selection = ((offset >> 1) << 8) | category;
+    // Downward beam selection stores before queuing sound; the other paths store after it.
+    if category == 1 && !upward {
+        word!(game.pausemenu_equipment_category_item = selection);
+        QueueSfx1_Max6(0x37, game);
+    } else {
+        QueueSfx1_Max6(0x37, game);
+        word!(game.pausemenu_equipment_category_item = selection);
+    }
+    if category == 2 && !upward {
+        0
+    } else {
+        selection
+    }
 }
-pub unsafe fn EquipmentScreenMoveToScrewOrHigherOnSuits(mut v0: u16, r18: u16, game: &mut Game) {
-    while (crate::rtl::rom_table_word!(game, 0x82c056, (v0 >> 1) as isize)
-        & word!(game.collected_items))
-        == 0
-    {
-        v0 = (v0).wrapping_sub(2);
-        if (v0 & 0x8000) != 0 {
-            word!(game.pausemenu_equipment_category_item = r18);
-            return;
-        }
-    }
-    QueueSfx1_Max6(0x37, game);
-    word!(game.pausemenu_equipment_category_item = ((v0 as i32 >> 1) << 8 | 2) as u16);
+pub unsafe fn EquipmentScreenMoveToBeams(v0: u16, r18: u16, game: &mut Game) {
+    crate::verify_probe::hit("equipment-search-beams-down");
+    move_equipment_selection(1, v0, false, Some(r18), game);
 }
-pub unsafe fn EquipmentScreenMoveToHighJumpOrLowerInBoots(mut v0: u16, r18: u16, game: &mut Game) {
-    while (crate::rtl::rom_table_word!(game, 0x82c062, (v0 >> 1) as isize)
-        & word!(game.collected_items))
-        == 0
-    {
-        v0 = (v0).wrapping_add(2);
-        if ((v0) as i16).wrapping_sub(6) >= 0 {
-            word!(game.pausemenu_equipment_category_item = r18);
-            return;
-        }
-    }
-    QueueSfx1_Max6(0x37, game);
-    word!(game.pausemenu_equipment_category_item = ((v0 as i32 >> 1) << 8 | 3) as u16);
+pub unsafe fn EquipmentScreenMoveToBottomOfBeams(k: u16, game: &mut Game) -> u16 {
+    crate::verify_probe::hit("equipment-search-beams-up");
+    move_equipment_selection(1, k, true, None, game)
 }
-pub unsafe fn EquipmentScreenCategory_Boots_MoveUpInBoots(mut k: u16, game: &mut Game) -> u16 {
-    while (crate::rtl::rom_table_word!(game, 0x82c062, (k >> 1) as isize)
-        & word!(game.collected_items))
-        == 0
-    {
-        k = (k).wrapping_sub(2);
-        if (k & 0x8000) != 0 {
-            return -1i32 as u16;
-        }
-    }
-    QueueSfx1_Max6(0x37, game);
-    let result: u16 = ((k as i32 >> 1) << 8 | 3) as u16;
-    word!(game.pausemenu_equipment_category_item = result);
-    result
+pub unsafe fn EquipmentScreenMoveLowerOnSuitsMisc(v0: u16, game: &mut Game) -> u16 {
+    crate::verify_probe::hit("equipment-search-suits-down");
+    move_equipment_selection(2, v0, false, None, game)
+}
+pub unsafe fn EquipmentScreenMoveToScrewOrHigherOnSuits(v0: u16, r18: u16, game: &mut Game) {
+    crate::verify_probe::hit("equipment-search-suits-up");
+    move_equipment_selection(2, v0, true, Some(r18), game);
+}
+pub unsafe fn EquipmentScreenMoveToHighJumpOrLowerInBoots(v0: u16, r18: u16, game: &mut Game) {
+    crate::verify_probe::hit("equipment-search-boots-down");
+    move_equipment_selection(3, v0, false, Some(r18), game);
+}
+pub unsafe fn EquipmentScreenCategory_Boots_MoveUpInBoots(k: u16, game: &mut Game) -> u16 {
+    crate::verify_probe::hit("equipment-search-boots-up");
+    move_equipment_selection(3, k, true, None, game)
 }
 pub unsafe fn EquipmentScreenCategory_ButtonResponse(r24: u16, game: &mut Game) {
     if (word!(game.joypad1_newkeys) as i32 & kButton_A as i32) != 0 {
