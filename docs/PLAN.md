@@ -72,6 +72,20 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Unused SDL declarations (2026-10-20): remove 671 of 772 copied constants
+across main, configuration and OpenGL. Retain all 101 referenced declarations,
+including the two window-position masks used by other constant initializers.
+The existing helper still serves those declarations; enum paths, cast modes,
+types and order remain exact. Complete-source reference/dependency checks and
+full-file reconstruction pass; all 137 function/static/type bodies are unchanged.
+Frozen f2e0e71e plus these three files passes format/check, normal release
+(22.45s), all-target/all-feature checks and any% 129712/0 (116.19s total),
+native exit 0. The host reuses the exact normal library; sources and inputs
+stay fixed. Rust lines -210 to 126397; all other progress counters unchanged.
+This removes unused declarations without adding gameplay or frontend execution
+coverage. Residual comparison (-49 lines) and parentheses (-52) measurements
+remain parked; continue larger families toward the full readability goal.
+
 Snapshot RAM normalization (2026-10-20): all 34 comparison-exception copies
 now use one safe byte-slice helper and an ordered list of source/range pairs.
 The eight oracle-source and 26 Rust-source copies retain every boundary and
