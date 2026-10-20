@@ -31,6 +31,25 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Mother Brain directional beam tables (2026-10-20): all six upward/downward
+builders share one private implementation with a six-variant named direction.
+Ordered byte-angle/ROM lookups, negation-to-u8, saturating edges, after-write
+termination, upward trailers, downward post-fill row reread and DownLeft's
+zero sentinel remain exact. The distinct horizontal two-pass builder stays
+separate. Complete source reconstruction and final extraction binding pass.
+7296 ordered-read/write/full-backing comparisons, 7230 actual-library cases
+within derived 128 KiB RAM bounds, and 1048576 saturation cases pass.
+Hoisted-reread, wrong-sentinel and reordered-ROM mutations are detected.
+Wrap endpoints use enlarged synthetic backing; no production guard is added.
+
+Final composition includes reviewed 52817319 key encoding. Formatting,
+normal release (12.98s), progress and full any% 129712/0 (107.51s), native
+exit 0, pass. Frozen source and focused/replay artifacts retain their hashes.
+Any% has no Mother Brain route coverage; focused checks cover this family.
+Rust lines -163 to 133653; cast lines -18. Unsafe-function count rises one
+for the shared helper; other counters are unchanged. Continue substantial
+shared implementations; broader routes/frontend/alias work remains open.
+
 SDL key-code encoding (2026-10-20): one named pure const function shares
 all 83 repeated conversions: 81 default entries and both runtime lookup/parser
 forms, including their differing alias casts and modifier-expression layout.

@@ -168,137 +168,116 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedUp(game: &mut Game) {
         *(ram_ptr!(game, u16; 0x9c00, 12)) = 0u16;
     };
 }
-pub unsafe fn MotherBrain_CalcHdma_Up_UpRight(mut r22: u16, mut r24: u16, game: &mut Game) {
+#[derive(Clone, Copy)]
+enum MotherBrainBeamDirection {
+    UpRight,
+    Up,
+    UpLeft,
+    DownRight,
+    Down,
+    DownLeft,
+}
+
+/// Rasterize the two saturated beam edges in their original RAM order.
+unsafe fn mother_brain_beam_edges(
+    direction: MotherBrainBeamDirection,
+    mut left: u16,
+    mut right: u16,
+    game: &mut Game,
+) {
+    use MotherBrainBeamDirection::*;
+    let down = matches!(direction, DownRight | Down | DownLeft);
+    let add_left = matches!(direction, UpRight | DownRight);
+    let add_right = matches!(direction, UpRight | Up | DownRight | Down);
+    let zero_sentinel = matches!(direction, DownLeft);
     set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
-    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let r18: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        *(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as isize
-    );
-    let r20: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        *(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as isize
-    );
-    let mut mbn_var_3D: u16 = (*E).mbn_var_3D;
-    let mut v2: *mut u16 = (ram_ptr!(game, u16; 0x9d00))
-        .offset((mbn_var_3D as i32 - 32i32) as isize)
-        .offset(1);
-    *v2.offset(1) = 255u16;
-    *v2.offset(2) = 255u16;
+    let enemy = Get_MotherBrain(0, game);
+    let left_step = crate::rtl::rom_table_word!(game, 0x91c9d4, {
+        let angle = if down {
+            *(&raw mut (*enemy).mbn_var_3A as *mut u8).offset(0)
+        } else {
+            *(&raw mut (*enemy).mbn_var_3B as *mut u8).offset(0)
+        };
+        (if add_left {
+            angle
+        } else {
+            (-(angle as i32)) as u8
+        }) as isize
+    });
+    let right_step = crate::rtl::rom_table_word!(game, 0x91c9d4, {
+        let angle = if down {
+            *(&raw mut (*enemy).mbn_var_3B as *mut u8).offset(0)
+        } else {
+            *(&raw mut (*enemy).mbn_var_3A as *mut u8).offset(0)
+        };
+        (if add_right {
+            angle
+        } else {
+            (-(angle as i32)) as u8
+        }) as isize
+    });
+    let mut row = (*enemy).mbn_var_3D;
+    let mut dst = if down {
+        let mut remaining = row.wrapping_sub(32);
+        let mut dst = ram_ptr!(game, u16; 0x9d00).offset(2);
+        loop {
+            let current = dst;
+            dst = dst.offset(1);
+            *current = 255;
+            remaining = remaining.wrapping_sub(1);
+            if remaining == 0 {
+                break;
+            }
+        }
+        // Preserve the original post-fill read of the starting row.
+        row = (*Get_MotherBrain(0, game)).mbn_var_3D;
+        dst
+    } else {
+        let dst = ram_ptr!(game, u16; 0x9d00)
+            .offset((row as i32 - 32) as isize)
+            .offset(1);
+        *dst.offset(1) = 255;
+        *dst.offset(2) = 255;
+        dst
+    };
     loop {
-        let mut v4: u16 = (r18).wrapping_add(r22);
-        if u16::overflowing_add(r18, r22).1 {
-            v4 = -1i32 as u16;
+        left = if add_left {
+            left_step.saturating_add(left)
+        } else {
+            left.saturating_sub(left_step)
+        };
+        let low = left >> 8;
+        right = if add_right {
+            right_step.saturating_add(right)
+        } else {
+            right.saturating_sub(right_step)
+        };
+        let mut packed = low | (right & 0xff00);
+        if packed == if zero_sentinel { 0 } else { 0xffff } {
+            packed = 255;
         }
-        r22 = v4;
-        let R36: u16 = (v4 as i32 >> 8i32 & 0xffi32) as u16;
-        let mut v7: u16 = (r20).wrapping_add(r24);
-        if u16::overflowing_add(r20, r24).1 {
-            v7 = -1i32 as u16;
-        }
-        r24 = v7;
-        let mut v8: u16 = (R36 as i32 | v7 as i32 & 0xff00i32) as u16;
-        if v8 == 0xffffu16 {
-            v8 = 255u16;
-        }
-        let fresh10 = v2;
-        v2 = v2.offset(-1);
-        *fresh10 = v8;
-        mbn_var_3D = mbn_var_3D.wrapping_sub(1);
-        if (mbn_var_3D == 32u16) {
+        let current = dst;
+        dst = dst.offset(if down { 1 } else { -1 });
+        *current = packed;
+        row = if down {
+            row.wrapping_add(1)
+        } else {
+            row.wrapping_sub(1)
+        };
+        if row == if down { 232 } else { 32 } {
             break;
         }
     }
 }
-pub unsafe fn MotherBrain_CalcHdma_Up_Up(mut r22: u16, mut r24: u16, game: &mut Game) {
-    set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
-    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let r18: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        -(*(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as i32) as u8 as isize
-    );
-    let r20: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        *(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as isize
-    );
-    let mut mbn_var_3D: u16 = (*E).mbn_var_3D;
-    let mut v2: *mut u16 = (ram_ptr!(game, u16; 0x9d00))
-        .offset((mbn_var_3D as i32 - 32i32) as isize)
-        .offset(1);
-    *v2.offset(1) = 255u16;
-    *v2.offset(2) = 255u16;
-    loop {
-        let mut v4: u16 = (r22).wrapping_sub(r18);
-        if r22 < r18 {
-            v4 = 0u16;
-        }
-        r22 = v4;
-        let r26: u16 = (v4 as i32 >> 8i32) as u8 as u16;
-        let mut v7: u16 = (r20).wrapping_add(r24);
-        if u16::overflowing_add(r20, r24).1 {
-            v7 = -1i32 as u16;
-        }
-        r24 = v7;
-        let mut v8: u16 = (r26 as i32 | v7 as i32 & 0xff00i32) as u16;
-        if v8 == 0xffffu16 {
-            v8 = 255u16;
-        }
-        let fresh9 = v2;
-        v2 = v2.offset(-1);
-        *fresh9 = v8;
-        mbn_var_3D = mbn_var_3D.wrapping_sub(1);
-        if (mbn_var_3D == 32u16) {
-            break;
-        }
-    }
+
+pub unsafe fn MotherBrain_CalcHdma_Up_UpRight(r22: u16, r24: u16, game: &mut Game) {
+    mother_brain_beam_edges(MotherBrainBeamDirection::UpRight, r22, r24, game);
 }
-pub unsafe fn MotherBrain_CalcHdma_Up_UpLeft(mut r22: u16, mut r24: u16, game: &mut Game) {
-    set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
-    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let r18: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        -(*(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as i32) as u8 as isize
-    );
-    let r20: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        -(*(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as i32) as u8 as isize
-    );
-    let mut mbn_var_3D: u16 = (*E).mbn_var_3D;
-    let mut v2: *mut u16 = (ram_ptr!(game, u16; 0x9d00))
-        .offset((mbn_var_3D as i32 - 32i32) as isize)
-        .offset(1);
-    *v2.offset(1) = 255u16;
-    *v2.offset(2) = 255u16;
-    loop {
-        let mut v4: u16 = (r22).wrapping_sub(r18);
-        if r22 < r18 {
-            v4 = 0u16;
-        }
-        r22 = v4;
-        let R36: u16 = (v4 as i32 >> 8i32) as u16;
-        let mut v7: u16 = (r24).wrapping_sub(r20);
-        if r24 < r20 {
-            v7 = 0u16;
-        }
-        r24 = v7;
-        let mut v8: u16 = (R36 as i32 | v7 as i32 & 0xff00i32) as u16;
-        if v8 == 0xffffu16 {
-            v8 = 255u16;
-        }
-        let fresh8 = v2;
-        v2 = v2.offset(-1);
-        *fresh8 = v8;
-        mbn_var_3D = mbn_var_3D.wrapping_sub(1);
-        if (mbn_var_3D == 32u16) {
-            break;
-        }
-    }
+pub unsafe fn MotherBrain_CalcHdma_Up_Up(r22: u16, r24: u16, game: &mut Game) {
+    mother_brain_beam_edges(MotherBrainBeamDirection::Up, r22, r24, game);
+}
+pub unsafe fn MotherBrain_CalcHdma_Up_UpLeft(r22: u16, r24: u16, game: &mut Game) {
+    mother_brain_beam_edges(MotherBrainBeamDirection::UpLeft, r22, r24, game);
 }
 static g_off_ADE20E: [Option<Func_CalcHdma>; 4] = callback_table! { unsafe Func_CalcHdma;
     MotherBrain_CalcHdma_Down_DownRight, None, MotherBrain_CalcHdma_Down_Down,
@@ -319,156 +298,14 @@ pub unsafe fn MotherBrain_CalcHdma_Down(game: &mut Game) {
     *(ram_ptr!(game, u16; 0x9c00, 10)) = -25114i32 as u16;
     *(ram_ptr!(game, u16; 0x9c00, 12)) = 0u16;
 }
-pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(mut r22: u16, mut r24: u16, game: &mut Game) {
-    set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
-    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let r18: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        *(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as isize
-    );
-    let r20: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        *(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as isize
-    );
-    let mut v1: u16 = ((*E).mbn_var_3D).wrapping_sub(32u16);
-    let mut dst: *mut u16 = (ram_ptr!(game, u16; 0x9d00)).offset(2);
-    loop {
-        let fresh6 = dst;
-        dst = dst.offset(1);
-        *fresh6 = 255u16;
-        v1 = v1.wrapping_sub(1);
-        if (v1 == 0) {
-            break;
-        }
-    }
-    let mut mbn_var_3D: u16 = (*Get_MotherBrain(0i32, game)).mbn_var_3D;
-    loop {
-        let mut v4: u16 = (r18).wrapping_add(r22);
-        if u16::overflowing_add(r18, r22).1 {
-            v4 = -1i32 as u16;
-        }
-        r22 = v4;
-        let r26: u16 = (v4 as i32 >> 8i32) as u16;
-        let mut v7: u16 = (r20).wrapping_add(r24);
-        if u16::overflowing_add(r20, r24).1 {
-            v7 = -1i32 as u16;
-        }
-        r24 = v7;
-        let mut v8: u16 = (r26 as i32 | v7 as i32 & 0xff00i32) as u16;
-        if v8 == 0xffffu16 {
-            v8 = 255u16;
-        }
-        let fresh7 = dst;
-        dst = dst.offset(1);
-        *fresh7 = v8;
-        mbn_var_3D = mbn_var_3D.wrapping_add(1);
-        if (mbn_var_3D == 232u16) {
-            break;
-        }
-    }
+pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(r22: u16, r24: u16, game: &mut Game) {
+    mother_brain_beam_edges(MotherBrainBeamDirection::DownRight, r22, r24, game);
 }
-pub unsafe fn MotherBrain_CalcHdma_Down_Down(mut r22: u16, mut r24: u16, game: &mut Game) {
-    set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
-    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let r18: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        -(*(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as i32) as u8 as isize
-    );
-    let r20: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        *(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as isize
-    );
-    let mut v1: u16 = ((*E).mbn_var_3D).wrapping_sub(32u16);
-    let mut dst: *mut u16 = (ram_ptr!(game, u16; 0x9d00)).offset(2);
-    loop {
-        let fresh4 = dst;
-        dst = dst.offset(1);
-        *fresh4 = 255u16;
-        v1 = v1.wrapping_sub(1);
-        if (v1 == 0) {
-            break;
-        }
-    }
-    let mut mbn_var_3D: u16 = (*Get_MotherBrain(0i32, game)).mbn_var_3D;
-    loop {
-        let mut v4: u16 = (r22).wrapping_sub(r18);
-        if r22 < r18 {
-            v4 = 0u16;
-        }
-        r22 = v4;
-        let r26: u16 = (v4 as i32 >> 8i32) as u16;
-        let mut v7: u16 = (r20).wrapping_add(r24);
-        if u16::overflowing_add(r20, r24).1 {
-            v7 = -1i32 as u16;
-        }
-        r24 = v7;
-        let mut v8: u16 = (r26 as i32 | v7 as i32 & 0xff00i32) as u16;
-        if v8 == 0xffffu16 {
-            v8 = 255u16;
-        }
-        let fresh5 = dst;
-        dst = dst.offset(1);
-        *fresh5 = v8;
-        mbn_var_3D = mbn_var_3D.wrapping_add(1);
-        if (mbn_var_3D == 232u16) {
-            break;
-        }
-    }
+pub unsafe fn MotherBrain_CalcHdma_Down_Down(r22: u16, r24: u16, game: &mut Game) {
+    mother_brain_beam_edges(MotherBrainBeamDirection::Down, r22, r24, game);
 }
-pub unsafe fn MotherBrain_CalcHdma_Down_DownLeft(mut r22: u16, mut r24: u16, game: &mut Game) {
-    set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
-    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let r18: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        -(*(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as i32) as u8 as isize
-    );
-    let r20: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        -(*(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as i32) as u8 as isize
-    );
-    let mut v1: u16 = ((*E).mbn_var_3D).wrapping_sub(32u16);
-    let mut dst: *mut u16 = (ram_ptr!(game, u16; 0x9d00)).offset(2);
-    loop {
-        let fresh2 = dst;
-        dst = dst.offset(1);
-        *fresh2 = 255u16;
-        v1 = v1.wrapping_sub(1);
-        if (v1 == 0) {
-            break;
-        }
-    }
-    let mut mbn_var_3D: u16 = (*Get_MotherBrain(0i32, game)).mbn_var_3D;
-    loop {
-        let mut v4: u16 = (r22).wrapping_sub(r18);
-        if r22 < r18 {
-            v4 = 0u16;
-        }
-        r22 = v4;
-        let v5: u16 = (v4 as i32 >> 8i32) as u16;
-        let r26: u16 = v5;
-        let mut v7: u16 = (r24).wrapping_sub(r20);
-        if r24 < r20 {
-            v7 = 0u16;
-        }
-        r24 = v7;
-        let mut v8: u16 = (r26 as i32 | v7 as i32 & 0xff00i32) as u16;
-        if v8 == 0 {
-            v8 = 255u16;
-        }
-        let fresh3 = dst;
-        dst = dst.offset(1);
-        *fresh3 = v8;
-        mbn_var_3D = mbn_var_3D.wrapping_add(1);
-        if (mbn_var_3D == 232u16) {
-            break;
-        }
-    }
+pub unsafe fn MotherBrain_CalcHdma_Down_DownLeft(r22: u16, r24: u16, game: &mut Game) {
+    mother_brain_beam_edges(MotherBrainBeamDirection::DownLeft, r22, r24, game);
 }
 pub unsafe fn MotherBrain_SealWall(game: &mut Game) {
     game.eproj_spawn_pt = Point16U {
