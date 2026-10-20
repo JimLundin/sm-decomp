@@ -422,49 +422,10 @@ pub unsafe fn MotherBrainBody_FakeDeath_Descent_0_Pause(game: &mut Game) {
     (*E).var_F = 64;
     MotherBrainBody_FakeDeath_Descent_1(game);
 }
-pub unsafe fn MotherBrainBody_FakeDeath_Descent_5(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
-        (*E).var_F = 8;
-        let v2: u16 = ((*E).var_37).wrapping_add(1);
-        (*E).var_37 = v2;
-        if MotherBrain_FadeToGray_FakeDeath((v2).wrapping_sub(1), game) & 1 != 0 {
-            (*E).var_A = ((0xa988d3i32) as u16);
-        }
-    }
-    MotherBrainBody_FakeDeath_Descent_6(game);
-}
 pub unsafe fn MotherBrainBody_FakeDeath_Descent_6(game: &mut Game) {
     let E = Get_MotherBrainBody(0x40, game);
     CallMotherBrainFunc((((*E).var_E) as u32) | (0xa90000u32), game);
     MotherBrain_HandleFakeDeathExplosions(game);
-}
-pub unsafe fn MotherBrain_HandleFakeDeathExplosions(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    let mut v1: i16 = (((*E).var_38) as i16).wrapping_sub(1);
-    if v1 < 0 {
-        (*E).var_38 = 8;
-        let mut v2: i16 = (((*E).var_39) as i16).wrapping_sub(1);
-        if v2 < 0 {
-            v2 = 7;
-        }
-        (*E).var_39 = v2 as u16;
-        let v3: i32 = ((4u16).wrapping_mul((v2) as u16)) as i32 >> 1;
-        game.eproj_spawn_pt = Point16U {
-            x: crate::rtl::rom_table_word!(game, 0xa98929, v3 as isize),
-            y: crate::rtl::rom_table_word!(game, 0xa98929, (v3 + 1) as isize),
-        };
-        let v4: u16 = (if word!(game.random_number) < 0x4000 {
-            12
-        } else {
-            3
-        }) as u16;
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, v4, game);
-        QueueSfx2_Max3(0x24, game);
-    } else {
-        (*E).var_38 = v1 as u16;
-    };
 }
 pub unsafe fn MotherBrainBody_0_Wait(game: &mut Game) {
     let mut v0: u16 = 0;
@@ -609,84 +570,81 @@ crate::game::address_dispatch! {
         11111382 => MotherBrainsTubesFalling_Falling;
     }
 }
-pub unsafe fn MotherBrainsTubesFalling_Main(k: u16, game: &mut Game) {
-    let E = Get_MotherBrainsTubesFalling(k as i32, game);
-    CallMotherBrainsTubesFalling((((*E).var_A) as u32) | (0xa90000u32), k, game);
-}
-pub unsafe fn MotherBrainsTubesFalling_Main_NonMain(k: u16, game: &mut Game) {
-    let E = Get_MotherBrainsTubesFalling(k as i32, game);
-    let v2: u16 = ((*E).var_C).wrapping_add(6);
-    (*E).var_C = v2;
-    Enemy_IncreaseYpos(k, v2, game);
-    if (((*E).base.y_pos) as i16).wrapping_sub(((*E).var_B) as i16) < 0 {
-        MotherBrainsTubesFalling_HandleSmoke(k, game);
-    } else {
-        MotherBrainsTubesFalling_Explode(k, game);
+crate::prefixed_callbacks! {
+    pub unsafe fn (k: u16, game: &mut Game);
+    @prefix { let E = Get_MotherBrainsTubesFalling(k as i32, game); };
+    MotherBrainsTubesFalling_Main [] {
+        CallMotherBrainsTubesFalling((((*E).var_A) as u32) | (0xa90000u32), k, game);
     };
-}
-pub unsafe fn MotherBrainsTubesFalling_HandleSmoke(k: u16, game: &mut Game) {
-    let E = Get_MotherBrainsTubesFalling(k as i32, game);
-    (*E).var_D = (*E).var_D.wrapping_sub(1);
-    if ((*E).var_D & 0x8000) != 0 {
-        MotherBrainsTubesFalling_SpawnSmoke(k, game);
-    }
-}
-pub unsafe fn MotherBrainsTubesFalling_Explode(k: u16, game: &mut Game) {
-    let E = Get_MotherBrainsTubesFalling(k as i32, game);
-    (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
-    game.eproj_spawn_pt = Point16U {
-        x: (*E).base.x_pos,
-        y: (*E).base.y_pos,
+    MotherBrainsTubesFalling_Main_NonMain [] {
+        let v2: u16 = ((*E).var_C).wrapping_add(6);
+        (*E).var_C = v2;
+        Enemy_IncreaseYpos(k, v2, game);
+        if (((*E).base.y_pos) as i16).wrapping_sub(((*E).var_B) as i16) < 0 {
+            MotherBrainsTubesFalling_HandleSmoke(k, game);
+        } else {
+            MotherBrainsTubesFalling_Explode(k, game);
+        };
     };
-    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 3, game);
-    QueueSfx2_Max3(0x24, game);
-}
-pub unsafe fn MotherBrainsTubesFalling_WaitToFall(k: u16, game: &mut Game) {
-    let E = Get_MotherBrainsTubesFalling(k as i32, game);
-    (*E).parameter_2 = (*E).parameter_2.wrapping_sub(1);
-    if ((*E).parameter_2 & 0x8000) != 0 {
-        (*E).var_A = ((0xa98bd6i32) as u16);
-        MotherBrainsTubesFalling_Falling(k, game);
-    }
-}
-pub unsafe fn MotherBrainsTubesFalling_Falling(k: u16, game: &mut Game) {
-    let E = Get_MotherBrainsTubesFalling(k as i32, game);
-    let v2: u16 = ((*E).var_C).wrapping_add(6);
-    (*E).var_C = v2;
-    Enemy_IncreaseYpos(k, v2, game);
-    let ypos: u16 = (*E).base.y_pos;
-    if ypos as i32 - 244i32 & 0x8000 == 0 {
-        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
-    }
-    let E1 = Get_MotherBrainsTubesFalling(0x40, game);
-    (*E1).base.y_pos = (ypos).wrapping_sub(56);
-    if (*E1).base.y_pos as i32 - 0xc4i32 & 0x8000 != 0 {
-        MotherBrainsTubesFalling_HandleSmoke(k, game);
-    } else {
-        MotherBrain_Pal_EndScreenFlash(game);
-        EnableEarthquakeAframes(0x19, game);
-        word! { game, 0;
-            hdma_object_channels_bitmask[0], hdma_object_channels_bitmask[1],
+    MotherBrainsTubesFalling_HandleSmoke [] {
+        (*E).var_D = (*E).var_D.wrapping_sub(1);
+        if ((*E).var_D & 0x8000) != 0 {
+            MotherBrainsTubesFalling_SpawnSmoke(k, game);
         }
-        (*E1).base.y_pos = 196;
-        let E0 = Get_MotherBrainsTubesFalling(0, game);
-        (*E0).base.x_pos = 59;
-        (*E0).base.y_pos = 279;
-        MotherBrain_SetupNeckForFakeAscent(game);
-        (*E0).var_A = ((0xa98c87i32) as u16);
-        MotherBrainsTubesFalling_Explode(word!(game.cur_enemy_index), game);
     };
-}
-pub unsafe fn MotherBrainsTubesFalling_SpawnSmoke(k: u16, game: &mut Game) {
-    let E = Get_MotherBrainsTubesFalling(k as i32, game);
-    (*E).var_D = 8;
-    let v2: u16 = ((*E).var_E as i32 + 1 & 3) as u16;
-    (*E).var_E = v2;
-    game.eproj_spawn_pt = Point16U {
-        x: (((*E).base.x_pos).wrapping_add(g_word_A98C61[v2 as usize])),
-        y: 208,
+    MotherBrainsTubesFalling_Explode [] {
+        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
+        game.eproj_spawn_pt = Point16U {
+            x: (*E).base.x_pos,
+            y: (*E).base.y_pos,
+        };
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 3, game);
+        QueueSfx2_Max3(0x24, game);
     };
-    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
+    MotherBrainsTubesFalling_WaitToFall [] {
+        (*E).parameter_2 = (*E).parameter_2.wrapping_sub(1);
+        if ((*E).parameter_2 & 0x8000) != 0 {
+            (*E).var_A = ((0xa98bd6i32) as u16);
+            MotherBrainsTubesFalling_Falling(k, game);
+        }
+    };
+    MotherBrainsTubesFalling_Falling [] {
+        let v2: u16 = ((*E).var_C).wrapping_add(6);
+        (*E).var_C = v2;
+        Enemy_IncreaseYpos(k, v2, game);
+        let ypos: u16 = (*E).base.y_pos;
+        if ypos as i32 - 244i32 & 0x8000 == 0 {
+            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
+        }
+        let E1 = Get_MotherBrainsTubesFalling(0x40, game);
+        (*E1).base.y_pos = (ypos).wrapping_sub(56);
+        if (*E1).base.y_pos as i32 - 0xc4i32 & 0x8000 != 0 {
+            MotherBrainsTubesFalling_HandleSmoke(k, game);
+        } else {
+            MotherBrain_Pal_EndScreenFlash(game);
+            EnableEarthquakeAframes(0x19, game);
+            word! { game, 0;
+                hdma_object_channels_bitmask[0], hdma_object_channels_bitmask[1],
+            }
+            (*E1).base.y_pos = 196;
+            let E0 = Get_MotherBrainsTubesFalling(0, game);
+            (*E0).base.x_pos = 59;
+            (*E0).base.y_pos = 279;
+            MotherBrain_SetupNeckForFakeAscent(game);
+            (*E0).var_A = ((0xa98c87i32) as u16);
+            MotherBrainsTubesFalling_Explode(word!(game.cur_enemy_index), game);
+        };
+    };
+    MotherBrainsTubesFalling_SpawnSmoke [] {
+        (*E).var_D = 8;
+        let v2: u16 = ((*E).var_E as i32 + 1 & 3) as u16;
+        (*E).var_E = v2;
+        game.eproj_spawn_pt = Point16U {
+            x: (((*E).base.x_pos).wrapping_add(g_word_A98C61[v2 as usize])),
+            y: 208,
+        };
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
+    };
 }
 pub unsafe fn MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23(game: &mut Game) {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0x2, 0xb67b as VoidP), game);
@@ -809,59 +767,6 @@ pub unsafe fn MotherBrainBody_FakeDeath_Ascent_12_StartMusic(game: &mut Game) {
     (*E1).var_33 = 6;
     (*E0).var_A = ((0xa98e4di32) as u16);
 }
-pub unsafe fn MotherBrainBody_FakeDeath_Ascent_13_Raise(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    if !((word!(game.nmi_frame_counter_word) & 3) != 0 || {
-        MotherBrain_SpawnDustCloudsForAscent(game);
-        word!(game.reg_BG2VOFS, wrapping_add(2));
-        let mut v1: u16 = ((*E).base.y_pos).wrapping_sub(2);
-        (*E).base.y_pos = v1;
-        v1 >= 0xbd
-    }) {
-        word!(game.enemy_bg2_tilemap_size = 320);
-        (*E).base.y_pos = 188;
-        word! { game, 0;
-            earthquake_timer, hdma_object_channels_bitmask[((*E).var_09 as i32 >> 1)],
-        }
-        MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_99AA as u16, game);
-        (*E).var_A = ((0xa98e95i32) as u16);
-        MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching(game);
-    }
-}
-pub unsafe fn MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    if (*E).var_02 == 0 {
-        (*E).var_37 = 0;
-        (*E).var_A = ((0xa98eaai32) as u16);
-        (*E).var_F = 0;
-    }
-}
-pub unsafe fn MotherBrain_SpawnDustCloudsForAscent(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
-        (*E).var_F = 7;
-    }
-    game.eproj_spawn_pt = Point16U {
-        x: g_word_A98F7F[(*E).var_F as usize],
-        y: 212,
-    };
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as u16,
-        g_byte_A98F7D[(((word!(game.random_number)) & (0x100u16)) >> 8) as usize] as u16,
-        game,
-    );
-    QueueSfx2_Max3(0x29, game);
-}
-pub unsafe fn MotherBrain_SetupNeckForFakeAscent(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    (*E).var_24 = 2;
-    set_fields! {[(*E)], 10; var_27, var_2D}
-    set_fields! {[(*E)], 20; var_2A, var_30}
-    (*E).var_20 = 18432;
-    (*E).var_21 = 20480;
-    (*E).var_34 = 256;
-}
 pub unsafe fn MotherBrain_HandleNeckLower(game: &mut Game) {
     let mbn_var_32: u16 = (*Get_MotherBrain(0x40i32, game)).var_32;
     if mbn_var_32 != 0 {
@@ -880,124 +785,6 @@ pub unsafe fn MotherBrain_HandleNeckLower(game: &mut Game) {
     };
 }
 pub fn MotherBrain_HandleNeckLower_0() {}
-pub unsafe fn MotherBrain_HandleNeckLower_2_BobDown(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    let mut v1: i16 = (((*E).var_20) as i16).wrapping_sub(((*E).var_34) as i16);
-    if (v1 as u16) < 0x2800 {
-        (*E).var_32 = 4;
-        v1 = 10240;
-    }
-    (*E).var_20 = v1 as u16;
-}
-pub unsafe fn MotherBrain_HandleNeckLower_4_BobUp(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    if (*E).base.y_pos as i32 - 60i32 & 0x8000 != 0 {
-        (*E).var_32 = 2;
-    } else {
-        let mut v1: i16 = (((*E).var_34) as i16).wrapping_add(((*E).var_20) as i16);
-        if (v1 as u16) >= 0x9000 {
-            (*E).var_32 = 2;
-            v1 = -28672i16;
-        }
-        (*E).var_20 = v1 as u16;
-    };
-}
-pub unsafe fn MotherBrain_HandleNeckLower_6_Lower(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    let mut v1: i16 = (((*E).var_20) as i16).wrapping_sub(((*E).var_34) as i16);
-    if (v1 as u16) < 0x3000 {
-        (*E).var_32 = 0;
-        v1 = 12288;
-    }
-    (*E).var_20 = v1 as u16;
-}
-pub unsafe fn MotherBrain_HandleNeckLower_8_Raise(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    let mut v1: i16 = (((*E).var_34) as i16).wrapping_add(((*E).var_20) as i16);
-    if (v1 as u16) >= 0x9000 {
-        (*E).var_32 = 0;
-        v1 = -28672i16;
-    }
-    (*E).var_20 = v1 as u16;
-}
-pub unsafe fn MotherBrain_HandleNeckUpper(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    let mbn_var_33: u16 = (*E).var_33;
-    if mbn_var_33 != 0 {
-        match mbn_var_33 as i32 {
-            2 => {
-                if (((*E).base.y_pos as i32 + 4 - word!(game.samus_y_pos) as i32) as i16) < 0 {
-                    let mut v2: i16 = (((*E).var_21) as i16).wrapping_sub(((*E).var_34) as i16);
-                    if (v2 as u16) < 0x2000 {
-                        (*E).var_33 = 4;
-                        v2 = 0x2000;
-                    }
-                    (*E).var_21 = v2 as u16;
-                } else {
-                    set_fields! {[(*E)], 4; var_32, var_33}
-                }
-            }
-            4 => {
-                let r18: u16 = ((*E).var_20).wrapping_add(2048);
-                let mut v4: u16 = ((*E).var_34).wrapping_add((*E).var_21);
-                if v4 >= r18 {
-                    (*E).var_33 = 2;
-                    v4 = r18;
-                }
-                (*E).var_21 = v4;
-            }
-            6 => {
-                let mut v6: i16 = (((*E).var_21) as i16).wrapping_sub(((*E).var_34) as i16);
-                if (v6 as u16) < 0x2000 {
-                    (*E).var_33 = 0;
-                    v6 = 0x2000;
-                }
-                (*E).var_21 = v6 as u16;
-            }
-            8 => {
-                let r18_0: u16 = ((*E).var_20).wrapping_add(2048);
-                let mut v8: u16 = ((*E).var_34).wrapping_add((*E).var_21);
-                if v8 >= r18_0 {
-                    (*E).var_33 = 0;
-                    v8 = r18_0;
-                }
-                (*E).var_21 = v8;
-            }
-            _ => {
-                Unreachable(game);
-                loop {}
-            }
-        }
-    }
-}
-pub unsafe fn MotherBrain_HandleNeck(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).var_0A = ((*E).base.x_pos).wrapping_sub(80);
-    (*E).var_0B = ((*E).base.y_pos).wrapping_add(46);
-    let E1 = Get_MotherBrain(0x40, game);
-    if (*E1).var_31 != 0 {
-        MotherBrain_HandleNeckLower(game);
-        MotherBrain_HandleNeckUpper(game);
-    }
-    let mut r18: u16 = byte!((*E1).var_20; 1) as u16;
-    (*E1).var_22 =
-        ((*E).var_0A as i32 + ComputeSinMult((*E1).var_24, r18, game) as i32 + 112) as u16;
-    (*E1).var_23 =
-        ((*E).var_0B as i32 + ComputeCosMult((*E1).var_24, r18, game) as i32 - 96i32) as u16;
-    (*E1).var_25 =
-        ((*E).var_0A as i32 + ComputeSinMult((*E1).var_27, r18, game) as i32 + 112) as u16;
-    (*E1).var_26 =
-        ((*E).var_0B as i32 + ComputeCosMult((*E1).var_27, r18, game) as i32 - 96i32) as u16;
-    (*E1).var_28 =
-        ((*E).var_0A as i32 + ComputeSinMult((*E1).var_2A, r18, game) as i32 + 112) as u16;
-    (*E1).var_29 =
-        ((*E).var_0B as i32 + ComputeCosMult((*E1).var_2A, r18, game) as i32 - 96i32) as u16;
-    r18 = byte!((*E1).var_21; 1) as u16;
-    (*E1).var_2B = ((*E1).var_28).wrapping_add(ComputeSinMult((*E1).var_2D, r18, game));
-    (*E1).var_2C = ((*E1).var_29).wrapping_add(ComputeCosMult((*E1).var_2D, r18, game));
-    (*E1).var_2E = ((*E1).var_28).wrapping_add(ComputeSinMult((*E1).var_30, r18, game));
-    (*E1).var_2F = ((*E1).var_29).wrapping_add(ComputeCosMult((*E1).var_30, r18, game));
-}
 crate::game::address_dispatch! {
     pub unsafe fn CallMotherBrainInstr(ea: u32, k: u16, game: &mut Game) -> u16 => ea;
         call (k, game); default Unreachable(game) as u16;
@@ -1066,43 +853,6 @@ pub unsafe fn MotherBrain_DrawNeck(game: &mut Game) {
         MotherBrain_DrawNeckSegment((*E).var_28, (*E).var_29, game);
         MotherBrain_DrawNeckSegment((*E).var_25, (*E).var_26, game);
         MotherBrain_DrawNeckSegment((*E).var_22, (*E).var_23, game);
-    }
-}
-pub unsafe fn MotherBrain_DrawBrain(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    if (*E).var_14 != 0 && (*E).var_15 == 0 && (word!(game.random_number) & 0x8000) == 0 {
-        SpawnEprojWithRoomGfx(
-            addr_kEproj_MotherBrainPurpleBreathSmall as u16,
-            word!(game.random_number),
-            game,
-        );
-    }
-    let tt: i32 = MotherBrain_Func_1_DoubleRet(game);
-    if tt < 0 {
-        return;
-    }
-    let v2: u16 = tt as u16;
-    let mut mbn_var_0D: u16 = (*Get_MotherBrain(0i32, game)).var_0D;
-    if (*E).base.flash_timer & 1 != 0 {
-        mbn_var_0D = 0;
-    }
-    let r22: u16 = mbn_var_0D;
-    let mbn_var_00: u16 = (*E).var_00;
-    let mut flash_timer: u16 = 0;
-    if mbn_var_00 != 0 {
-        flash_timer = (mbn_var_00).wrapping_sub(1);
-        (*E).var_00 = flash_timer;
-    } else {
-        flash_timer = (*E).base.flash_timer;
-        if flash_timer == 0 {
-            flash_timer = (*E).base.shake_timer;
-        }
-    }
-    let v6: i32 = (flash_timer as i32 & 6) >> 1;
-    let r18: u16 = ((*E).base.x_pos).wrapping_add((g_word_A993BB[v6 as usize]) as u16);
-    if ((r18 as i32 + 32 - word!(game.layer1_x_pos) as i32) as i16) >= 0 {
-        let r20: u16 = ((*E).base.y_pos).wrapping_add((g_word_A993C3[v6 as usize]) as u16);
-        MotherBrain_AddSpritemapToOam(v2, r18, r20, r22, game);
     }
 }
 pub unsafe fn MotherBrain_DrawNeckSegment(x: u16, y: u16, game: &mut Game) {
@@ -1455,18 +1205,6 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, game: &mut Game) -> u16;
         QueueSfx2_Max6(0x7f, game);
     };
 }
-pub unsafe fn MotherBrain_Phase3_Death_0(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-    let E1 = Get_MotherBrain(0x40, game);
-    (*E1).base.properties = ((*E1).base.properties) | (0x400u16);
-    (*E).var_04 = 0;
-    if MotherBrain_MakeWalkBackwards(0x28, 6, game) & 1 != 0 {
-        (*E).var_A = ((0xa9af12i32) as u16);
-        (*E).var_F = 128;
-        MotherBrain_Phase3_Death_1(game);
-    }
-}
 pub unsafe fn MotherBrain_Phase3_Death_2(game: &mut Game) {
     MotherBrain_GenerateSmokyExplosions(game);
     if MotherBrain_MakeWalkForwards(2, 0x60, game) & 1 != 0 {
@@ -1592,20 +1330,6 @@ pub unsafe fn MotherBrain_Phase3_Death_7(game: &mut Game) {
     (*E).var_A = ((0xa9b12di32) as u16);
     MotherBrain_Phase3_Death_8(game);
 }
-pub unsafe fn MotherBrain_Phase3_Death_8(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    let mut v1: u16 = ((*E).var_F).wrapping_add(32);
-    (*E).var_F = v1;
-    let E1 = Get_MotherBrain(0x40, game);
-    let mut v3: i16 = (((*E1).base.y_pos) as i16).wrapping_add((byte!(v1; 1)) as i16);
-    if (v3 as u16) >= 0xc4 {
-        EnableEarthquakeAframes(2, game);
-        (*E).var_A = ((0xa9b15ei32) as u16);
-        (*E).var_F = 256;
-        v3 = 196;
-    }
-    (*E1).base.y_pos = v3 as u16;
-}
 pub unsafe fn MotherBrain_Phase3_Death_9(game: &mut Game) {
     if ProcessSpriteTilesTransfers(0xa9, addr_stru_A99003 as u16, game) != 0 {
         let E = Get_MotherBrain(0, game);
@@ -1628,17 +1352,6 @@ pub unsafe fn MotherBrain_Phase3_Death_13(game: &mut Game) {
         (*E1).var_F = 20;
         MotherBrain_Phase3_Death_14_20framedelay(game);
     };
-}
-pub unsafe fn MotherBrain_CorpseRottingFinished(game: &mut Game) {
-    let E1 = Get_MotherBrain(0x40, game);
-    game.eproj_spawn_pt = Point16U {
-        x: ((*E1).base.x_pos as i32 + (word!(game.random_number) as i32 & 0x1f) - 16i32) as u16,
-        y: (((*E1).base.y_pos).wrapping_add(16)),
-    };
-    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xa, game);
-    if (word!(game.random_enemy_counter) & 7) == 0 {
-        QueueSfx2_Max3(0x10, game);
-    }
 }
 pub unsafe fn MotherBrain_Phase3_Death_15_LoadEscapeTimerTiles(game: &mut Game) {
     if ProcessSpriteTilesTransfers(0xa6, addr_stru_A6C4CB as u16, game) != 0 {
@@ -1673,19 +1386,6 @@ pub unsafe fn MotherBrain_Phase3_Death_16_StartEscape(game: &mut Game) {
         (*E).var_A = v1;
     }
 }
-pub unsafe fn MotherBrain_Phase3_Death_17_SpawnTimeBomb(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
-        (*E).var_A = ((0xa9b2e3i32) as u16);
-        SpawnEprojWithRoomGfx(
-            addr_kEproj_TimeBombSetJapaneseText as u16,
-            ((0xa9b2e3i32) as u16),
-            game,
-        );
-    }
-    MotherBrain_Phase3_Death_18_TypesZebesText(game);
-}
 pub unsafe fn MotherBrain_Phase3_Death_18_TypesZebesText(game: &mut Game) {
     if HandleTypewriterText_Ext(0x2610, game) & 1 != 0 {
         let E = Get_MotherBrain(0, game);
@@ -1715,30 +1415,6 @@ pub unsafe fn MotherBrain_Phase3_Death_20_BlowUpEscapeDoor(game: &mut Game) {
 pub unsafe fn MotherBrain_Phase3_Death_21_KeepEarthquakeGoing(game: &mut Game) {
     if word!(game.earthquake_timer) == 0 {
         word!(game.earthquake_timer, wrapping_sub(1));
-    }
-}
-pub unsafe fn MotherBrain_GenerateEscapeDoorExploding(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    let mut v1: i16 = (((*E).var_E) as i16).wrapping_sub(1);
-    (*E).var_E = v1 as u16;
-    if v1 < 0 {
-        (*E).var_E = 4;
-        let mut v2: i16 = (((*E).var_F) as i16).wrapping_sub(1);
-        (*E).var_F = v2 as u16;
-        if v2 < 0 {
-            (*E).var_F = 3;
-        }
-        let v3: i32 = ((4u16).wrapping_mul((*E).var_F)) as i32 >> 1;
-        game.eproj_spawn_pt = Point16U {
-            x: g_word_A9B393[v3 as usize],
-            y: g_word_A9B393[(v3 + 1) as usize],
-        };
-        let mut v4: u16 = 3;
-        if NextRandom(game) < 0x4000 {
-            v4 = 12;
-        }
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, v4, game);
-        QueueSfx2_Max3(0x24, game);
     }
 }
 pub unsafe fn MotherBrain_ExplodeEscapeDoor(game: &mut Game) {
@@ -1840,37 +1516,6 @@ pub unsafe fn MotherBrain_SamusCollDetectPart(k: u16, r18: u16, r20: u16, game: 
 pub unsafe fn MotherBrainsBody_Shot(game: &mut Game) {
     CreateDudShot(game);
 }
-pub unsafe fn MotherBrainsBrain_Shot(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    if (*E).var_00 != 0 {
-        MotherBrain_Phase23_ShotReaction(game);
-        if (*E).var_00 == 1 {
-            CreateDudShot(game);
-        } else {
-            NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-        }
-    } else {
-        let v1: u16 = ((byte!(@pointer (ram_ptr!(game, u16; 0xc18))
-            .offset(word!(game.collision_detection_index) as isize); 1))
-            as u16)
-            & (7u16);
-        if g_byte_A9B546[v1 as usize] != 0 {
-            word!(
-                game.plm_room_arguments[39],
-                wrapping_add((g_byte_A9B546[v1 as usize]) as u16)
-            );
-            QueueSfx2_Max6(0x6e, game);
-            let mut v2: i16 = 13;
-            let E1 = Get_MotherBrain(0x40, game);
-            let flash_timer: u16 = (*E1).base.flash_timer;
-            if flash_timer != 0 && flash_timer & 1 != 0 {
-                v2 = 14;
-            }
-            (*E1).base.flash_timer = v2 as u16;
-            NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-        }
-    };
-}
 pub unsafe fn MotherBrain_Phase23_ShotReaction(game: &mut Game) {
     let mut v1: i16 = 0;
     let E = Get_MotherBrain(0, game);
@@ -1890,16 +1535,6 @@ pub unsafe fn MotherBrain_DetermineShotReactionType(game: &mut Game) -> u16 {
     g_byte_A9B5A1[(byte!(@pointer (ram_ptr!(game, u16; 0xc18))
         .offset(word!(game.collision_detection_index) as isize); 1) as i32
         & 7) as usize] as u16
-}
-pub unsafe fn MotherBrain_Phase3_BeamShotReaction(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    let mut v1: i16 = (((*E).var_07) as i16).wrapping_sub(266);
-    if v1 < 0 {
-        (*Get_MotherBrain(0x40i32, game)).var_18 = ((0xa9c395i32) as u16);
-        v1 = 0;
-        (*E).var_F = 0;
-    }
-    (*E).var_07 = v1 as u16;
 }
 pub unsafe fn MotherBrainsBrain_Touch(game: &mut Game) {
     if *ram_ptr!(game; 0xa1f) == 3 {
@@ -1924,81 +1559,6 @@ pub unsafe fn MotherBrain_HurtSamus(game: &mut Game) {
         ) >= 0) as u16
     );
 }
-pub unsafe fn MotherBrain_Body_Phase2_Thinking(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    let E1 = Get_MotherBrain(0x40, game);
-    if (*E1).base.health == 0 {
-        (*E).var_A = ((0xa9b8ebi32) as u16);
-        MotherBomb_FiringRainbowBeam_0(game);
-        return;
-    }
-    if (*E).var_02 == 0 {
-        let keep_walking: bool = if (*E1).base.health as i32 - 4500i32 & 0x8000 == 0 {
-            (word!(game.random_number) >= 0x1000)
-        } else if word!(game.random_number) < 0x2000 {
-            true
-        } else if word!(game.random_number) >= 0xa000 {
-            false
-        } else {
-            (*E).var_A = ((0xa9b87di32) as u16);
-            return;
-        };
-        if keep_walking {
-            MotherBrain_HandleWalking(game)
-        } else {
-            (*E).var_A = ((0xa9b64bi32) as u16);
-        }
-    }
-}
-pub unsafe fn MotherBrain_Body_Phase2_TryAttack(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    let mut v0: i16 = (2i16).wrapping_mul(((*E).var_18) as i16);
-    if v0 != 0 {
-        if v0 == 2 {
-            MotherBrain_Phase2_Attack_Cooldown(game);
-        } else {
-            if v0 != 4 {
-                Unreachable(game);
-                loop {}
-            }
-            MotherBrain_Phase2_Attack_End(game);
-        }
-    } else {
-        (*E).parameter_1 = 64;
-        (*E).var_18 = (*E).var_18.wrapping_add(1);
-        if MotherBrain_Phase2_DecideAttackStrategy_DoubleRet(game) != 0 {
-            return;
-        }
-        let mut v2: u16 = addr_byte_A9B6DC as u16;
-        let E1 = Get_MotherBrain(0x40, game);
-        if abs16(((*E1).base.y_pos as i32 + 4 - word!(game.samus_y_pos) as i32) as u16) < 0x20 {
-            v2 = addr_byte_A9B6DF as u16;
-        }
-        let mut v4: u16 = 0;
-        let v5 = RomPtr_A9(v2, game);
-        if (word!(game.random_number) as u8) >= *v5 {
-            v4 = 2;
-            if (word!(game.random_number) as u8) >= *v5.offset(1) {
-                v4 = 4;
-                if (word!(game.random_number) as u8) >= *v5.offset(2) {
-                    v4 = 6;
-                }
-            }
-        }
-        let v6: u16 = crate::rtl::rom_table_word!(game, 0xa9b6d4, (v4 >> 1) as isize);
-        if v6 as i32 == addr_kMotherBrain_Ilist_9ECC as i32 {
-            if (*E1).var_05 as i32 - 1i32 & 0x8000 != 0 {
-                (*E).var_A = ((0xa9b781i32) as u16);
-                MotherBrain_FiringBomb_DecideOnWalking(game);
-            }
-        } else if v6 as i32 == addr_kMotherBrain_Ilist_9F34 as i32 {
-            (*E).var_A = ((0xa9b80ei32) as u16);
-            MotherBomb_FiringLaser_PositionHead(game);
-        } else {
-            MotherBrain_SetBrainInstrs(v6, game);
-        }
-    };
-}
 pub unsafe fn MotherBrain_Phase2_DecideAttackStrategy_DoubleRet(game: &mut Game) -> u8 {
     if g_word_A9B72C[*ram_ptr!(game; 0xa1f) as usize] != 0 {
         if word!(game.random_number) as u8 as i32 - 128i32 & 0x8000 != 0 {
@@ -2022,18 +1582,6 @@ pub unsafe fn MotherBrain_Phase2_DecideAttackStrategy_DoubleRet(game: &mut Game)
         1
     }
 }
-pub unsafe fn MotherBrain_Phase2_Attack_Cooldown(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    crate::update_place! { previous fresh9 = (*E).parameter_1 => (*E).parameter_1.wrapping_sub(1); }
-    if fresh9 == 1 {
-        (*E).var_18 = (*E).var_18.wrapping_add(1);
-    }
-}
-pub unsafe fn MotherBrain_Phase2_Attack_End(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).var_18 = 0;
-    (*E).var_A = ((0xa9b605i32) as u16);
-}
 pub unsafe fn MotherBrain_FiringBomb_DecideOnWalking(game: &mut Game) {
     if word!(game.random_number) >= 0xff80 {
         MotherBrain_FiringBomb_DecideOnCrouching(game);
@@ -2052,12 +1600,6 @@ pub unsafe fn MotherBrain_FiringBomb_DecideOnWalking(game: &mut Game) {
     } else {
         (*E).var_A = ((0xa9b7aci32) as u16);
     };
-}
-pub unsafe fn MotherBrain_FiringBomb_WalkingBackwards(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    if MotherBrain_MakeWalkBackwards((*E).var_F, 6, game) & 1 != 0 {
-        MotherBrain_FiringBomb_DecideOnCrouching(game);
-    }
 }
 pub unsafe fn MotherBrain_FiringBomb_DecideOnCrouching(game: &mut Game) {
     if NextRandom(game) >= 0x8000 {
@@ -2279,16 +1821,6 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround(game: &mut G
         (*Get_MotherBomb(0i32, game)).var_A = ((0xa9baddi32) as u16);
     }
 }
-pub unsafe fn MotherBomb_FiringRainbowBeam_13_LowerHead(game: &mut Game) {
-    let E1 = Get_MotherBrain(0x40, game);
-    (*E1).var_34 = 64;
-    (*E1).var_31 = 1;
-    (*E1).var_32 = 2;
-    (*E1).var_33 = 4;
-    let E = Get_MotherBrain(0, game);
-    (*E).var_A = ((0xa9bb06i32) as u16);
-    (*E).var_F = 128;
-}
 crate::game::countdown_callbacks! {
     pub unsafe fn (game: &mut Game);
     before {
@@ -2315,46 +1847,12 @@ crate::game::countdown_callbacks! {
         }
     };
 }
-pub unsafe fn MotherBrain_PlayRainbowBeamSfx(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    let mut mbn_var_15: i16 = (*E).var_15 as i16;
-    if mbn_var_15 >= 0 {
-        (*E).var_15 = ((mbn_var_15) as u16).wrapping_sub(1);
-        QueueSfx1_Max6(0x40, game);
-        (*E).var_16 = 1;
-    }
-}
 pub unsafe fn MotherBrain_WalkBackwardsSlowlyAndRetractHead(a: u16, game: &mut Game) -> u8 {
     let rv: u8 = MotherBrain_MakeWalkBackwards(a, 0xa, game);
     if rv != 0 {
         MotherBrain_RetractHead(game);
     }
     rv
-}
-pub unsafe fn MotherBrain_RetractHead(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    (*E).var_34 = 80;
-    (*E).var_31 = 1;
-    (*E).var_32 = 8;
-    (*E).var_33 = 6;
-}
-pub unsafe fn MotherBrain_AimBeamAndIncrWidth(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    let mut v1: i16 = (((*E).var_33) as i16).wrapping_add(384);
-    if (*E).var_33 as i32 - 2688i32 & 0x8000 == 0 {
-        v1 = 3072;
-    }
-    (*E).var_33 = v1 as u16;
-    MotherBrain_AimBeam(game);
-}
-pub unsafe fn MotherBrain_AimBeam(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    (*Get_MotherBrain(0i32, game)).var_31 = -(CalculateAngleFromXY(
-        (word!(game.samus_x_pos) as i32 - (*E).base.x_pos as i32 - 16i32) as u16,
-        (word!(game.samus_y_pos) as i32 - (*E).base.y_pos as i32 - 4i32) as u16,
-        game,
-    ) as i32
-        + 0x80i32) as u8 as u16;
 }
 pub unsafe fn MotherBrain_MoveSamusTowardsWallDueToBeam(game: &mut Game) -> u8 {
     let v0: u8 = MotherBrain_MoveSamusHorizTowardsWall(0x1000, game);
@@ -2419,21 +1917,6 @@ pub unsafe fn MotherBrain_MoveSamusHorizTowardsWall(mut a: u16, game: &mut Game)
         word! { game, 235; samus_x_pos, samus_prev_x_pos }
         word! { game, 0; samus_x_subpos, samus_prev_x_subpos }
         1
-    }
-}
-pub unsafe fn MotherBrain_HandleRainbowBeamExplosions(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).parameter_2 = (*E).parameter_2.wrapping_sub(1);
-    if ((*E).parameter_2 & 0x8000) != 0 {
-        (*E).parameter_2 = 8;
-        (*E).parameter_1 = (*E).parameter_1.wrapping_add(1);
-        let v2: i32 = (*E).parameter_1 as i32 & 7;
-        game.eproj_spawn_pt = Point16U {
-            x: g_word_A9BCA6[v2 as usize] as u16,
-            y: g_word_A9BCB6[v2 as usize] as u16,
-        };
-        SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainRainbowBeamExplosion as u16, 0, game);
-        QueueSfx2_Max6(0x24, game);
     }
 }
 pub unsafe fn MotherBrain_BodyRainbowBeamPalAnimIndex0(game: &mut Game) {
@@ -2533,16 +2016,6 @@ pub unsafe fn MotherBrain_Phase2Cut_4(game: &mut Game) {
 pub unsafe fn MotherBrain_SpawnShitroidInCutscene(game: &mut Game) {
     (*Get_MotherBrain(0x40i32, game)).var_0A = SpawnEnemy(0xa9, addr_stru_A9BE28 as u16, game);
 }
-pub unsafe fn MotherBrain_DrainedByShitroid_0(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).var_00 = 3;
-    let E1 = Get_MotherBrain(0x40, game);
-    set_fields! {[(*E1)], 8; var_32, var_33}
-    (*E1).var_34 = 1792;
-    (*E).var_A = ((0xa9be5di32) as u16);
-    (*E).var_F = 48;
-    MotherBrain_DrainedByShitroid_1(game);
-}
 pub unsafe fn MotherBrain_DrainedByShitroid_1(game: &mut Game) {
     MotherBrain_HandleRainbowBeamPalette(game);
     let E = Get_MotherBrain(0, game);
@@ -2565,36 +2038,6 @@ crate::game::address_dispatch! {
         11124764 => MotherBrain_PainfulWalkingBackwards;
     }
 }
-pub unsafe fn MotherBrain_DrainedByShitroid_2(game: &mut Game) {
-    let E1 = Get_MotherBrain(0x40, game);
-    if (*E1).var_00 == 0 {
-        (*E1).var_00 = 50;
-    }
-    MotherBrain_HandleRainbowBeamPalette(game);
-    CallMotherBrainPainfulWalk((((*E1).var_08) as u32) | (0xa90000u32), game);
-    let v2: u16 = (2u16).wrapping_mul((*E1).var_06);
-    (*E1).var_07 = g_byte_A9BEEE[v2 as usize] as u16;
-    (*E1).var_34 = g_word_A9BEFE[(v2 >> 1) as usize];
-    if (*E1).var_06 == 6 {
-        let E = Get_MotherBrain(0, game);
-        (*E).var_16 = 0;
-        (*E1).var_10 = 0;
-        MotherBrain_WritePhase2DeathPalette(game);
-        QueueSfx1_Max6(2, game);
-        (*E).var_A = ((0xa9bf0ei32) as u16);
-    }
-}
-pub unsafe fn MotherBrain_DrainedByShitroid_3(game: &mut Game) {
-    let E1 = Get_MotherBrain(0x40, game);
-    CallMotherBrainPainfulWalk((((*E1).var_08) as u32) | (0xa90000u32), game);
-    if ((*E1).var_06 as i32 - 8i32 & 0x8000 == 0) {
-        (*E1).var_34 = 64;
-        set_fields! {[(*E1)], 8; var_32, var_33}
-        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C39 as u16, game);
-        (*Get_MotherBrain(0i32, game)).var_A = ((0xa9bf41i32) as u16);
-        MotherBrain_DrainedByShitroid_4(game);
-    }
-}
 pub unsafe fn MotherBrain_DrainedByShitroid_4(game: &mut Game) {
     if MotherBrain_MakeWalkBackwards(0x28, 0, game) & 1 != 0 {
         (*Get_MotherBrain(0i32, game)).var_A = ((0xa9bf56i32) as u16);
@@ -2602,49 +2045,67 @@ pub unsafe fn MotherBrain_DrainedByShitroid_4(game: &mut Game) {
         MotherBrain_DrainedByShitroid_5(game);
     }
 }
-pub unsafe fn MotherBrain_DrainedByShitroid_5(game: &mut Game) {
-    let E1 = Get_MotherBrain(0x40, game);
-    if *(&raw mut (*E1).var_32 as *mut u32) == 0 {
-        (*E1).var_12 = ((*E1).var_33) | ((*E1).var_32);
-        let E = Get_MotherBrain(0, game);
-        if (*E).var_02 == 0 {
-            MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_9A26 as u16, game);
-            (*E).var_A = ((0xa9bf7di32) as u16);
-            (*E).var_F = 64;
+crate::prefixed_callbacks! {
+    pub unsafe fn (game: &mut Game);
+    @prefix { let E1 = Get_MotherBrain(0x40, game); };
+    MotherBrain_CorpseRottingFinished [] {
+        game.eproj_spawn_pt = Point16U {
+            x: ((*E1).base.x_pos as i32 + (word!(game.random_number) as i32 & 0x1f) - 16i32) as u16,
+            y: (((*E1).base.y_pos).wrapping_add(16)),
+        };
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xa, game);
+        if (word!(game.random_enemy_counter) & 7) == 0 {
+            QueueSfx2_Max3(0x10, game);
         }
-    }
-}
-pub unsafe fn MotherBrain_DrainedByShitroid_7(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    let v2: bool = ((*E).var_F & 0x8000) != 0;
-    if v2 && {
-        (*E).var_F = 16;
-        let mut v3: u16 = ((*E).var_37).wrapping_add(1);
-        (*E).var_37 = v3;
-        MotherBrain_FadeToGray_Drained((v3).wrapping_sub(1), game) & 1 != 0
-    } {
-        let E1 = Get_MotherBrain(0x40, game);
-        (*E1).base.health = -29536i32 as u16;
-        (*E).var_1F = 1;
-        (*E1).var_14 = 0;
-        (*E).var_00 = 2;
-        (*E).var_A = ((0xa9c059i32) as u16);
-    }
-}
-pub unsafe fn MotherBrain_PainfulWalkForwards(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    if MotherBrain_MakeWalkForwards((*E).var_07, 0x48, game) & 1 != 0 {
-        (*E).var_08 = ((0xa9bfe8i32) as u16);
-        MotherBrain_SetPainfulWalkingTimer(game);
-    }
-}
-pub unsafe fn MotherBrain_PainfulWalkBackwards(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    if MotherBrain_MakeWalkBackwards(0x28, (*E).var_07, game) & 1 != 0 {
-        (*E).var_08 = ((0xa9c01ci32) as u16);
-        MotherBrain_SetPainfulWalkingTimer(game);
-    }
+    };
+    MotherBomb_FiringRainbowBeam_13_LowerHead [] {
+        (*E1).var_34 = 64;
+        (*E1).var_31 = 1;
+        (*E1).var_32 = 2;
+        (*E1).var_33 = 4;
+        let E = Get_MotherBrain(0, game);
+        (*E).var_A = ((0xa9bb06i32) as u16);
+        (*E).var_F = 128;
+    };
+    MotherBrain_DrainedByShitroid_2 [] {
+        if (*E1).var_00 == 0 {
+            (*E1).var_00 = 50;
+        }
+        MotherBrain_HandleRainbowBeamPalette(game);
+        CallMotherBrainPainfulWalk((((*E1).var_08) as u32) | (0xa90000u32), game);
+        let v2: u16 = (2u16).wrapping_mul((*E1).var_06);
+        (*E1).var_07 = g_byte_A9BEEE[v2 as usize] as u16;
+        (*E1).var_34 = g_word_A9BEFE[(v2 >> 1) as usize];
+        if (*E1).var_06 == 6 {
+            let E = Get_MotherBrain(0, game);
+            (*E).var_16 = 0;
+            (*E1).var_10 = 0;
+            MotherBrain_WritePhase2DeathPalette(game);
+            QueueSfx1_Max6(2, game);
+            (*E).var_A = ((0xa9bf0ei32) as u16);
+        }
+    };
+    MotherBrain_DrainedByShitroid_3 [] {
+        CallMotherBrainPainfulWalk((((*E1).var_08) as u32) | (0xa90000u32), game);
+        if ((*E1).var_06 as i32 - 8i32 & 0x8000 == 0) {
+            (*E1).var_34 = 64;
+            set_fields! {[(*E1)], 8; var_32, var_33}
+            MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C39 as u16, game);
+            (*Get_MotherBrain(0i32, game)).var_A = ((0xa9bf41i32) as u16);
+            MotherBrain_DrainedByShitroid_4(game);
+        }
+    };
+    MotherBrain_DrainedByShitroid_5 [] {
+        if *(&raw mut (*E1).var_32 as *mut u32) == 0 {
+            (*E1).var_12 = ((*E1).var_33) | ((*E1).var_32);
+            let E = Get_MotherBrain(0, game);
+            if (*E).var_02 == 0 {
+                MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_9A26 as u16, game);
+                (*E).var_A = ((0xa9bf7di32) as u16);
+                (*E).var_F = 64;
+            }
+        }
+    };
 }
 crate::game::countdown_callbacks! {
     pub unsafe fn (game: &mut Game);
@@ -2663,38 +2124,6 @@ crate::game::countdown_callbacks! {
         (*E).var_08 = ((0xa9bfd0i32) as u16);
     };
 }
-pub unsafe fn MotherBrain_SetPainfulWalkingTimer(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    (*E).var_09 = byte!(@pointer (&raw const g_word_A9C049 as *const i16).offset((*E).var_06 as isize); 0)
-        as u16;
-}
-pub unsafe fn MotherBrain_Phase2_Revive_0(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).var_A = ((0xa9c066i32) as u16);
-    (*E).var_F = 768;
-}
-pub unsafe fn MotherBrain_Phase2_Revive_2(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).var_A = ((0xa9c08fi32) as u16);
-    (*E).var_37 = 0;
-    MotherBrain_Phase2_Revive_3(game);
-}
-pub unsafe fn MotherBrain_Phase2_Revive_3(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    let v1: bool = ((*E).var_F & 0x8000) != 0;
-    if v1 && {
-        (*E).var_F = 16;
-        let mut v2: u16 = ((*E).var_37).wrapping_add(1);
-        (*E).var_37 = v2;
-        MotherBrain_FadeFromGray_Drained((v2).wrapping_sub(1), game) & 1 != 0
-    } {
-        (*E).var_A = ((0xa9c0bai32) as u16);
-        (*Get_MotherBrain(0x40i32, game)).var_10 = 1;
-        MotherBrain_SetupBrainNormalPal(game);
-        MotherBrain_Phase2_Revive_4(game);
-    }
-}
 pub unsafe fn MotherBrain_Phase2_Revive_4(game: &mut Game) {
     if MotherBrain_MakeHerStandUp(game) & 1 != 0 {
         let E1 = Get_MotherBrain(0x40, game);
@@ -2706,27 +2135,6 @@ pub unsafe fn MotherBrain_Phase2_Revive_4(game: &mut Game) {
         (*E).var_F = 16;
         MotherBrain_Phase2_Revive_5(game);
     }
-}
-pub unsafe fn MotherBrain_Phase2_Revive_6(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    let v1: bool = ((*E).var_F & 0x8000) != 0;
-    if v1 && MotherBrain_MakeWalkForwards(4, 0x50, game) & 1 != 0 {
-        (*E).var_A = ((0xa9c11ei32) as u16);
-        (*E).var_1F = 2;
-        (*Get_MotherBrain(0x40i32, game)).var_11 = 1;
-    }
-}
-pub unsafe fn MotherBrain_Phase2_Revive_7(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).var_13 = 0;
-    let E1 = Get_MotherBrain(0x40, game);
-    (*E1).var_31 = 1;
-    (*E1).var_32 = 2;
-    (*E1).var_33 = 4;
-    (*E1).var_34 = 64;
-    (*E).var_A = ((0xa9c147i32) as u16);
-    MotherBrain_Phase2_Revive_8(game);
 }
 pub unsafe fn MotherBrain_Phase2_Revive_8(game: &mut Game) {
     if MotherBrain_MakeHerStandUp(game) & 1 != 0 {
@@ -2765,13 +2173,6 @@ pub unsafe fn MotherBrain_MaybeStandupOrLeanDown(game: &mut Game) {
     } else if (word!(game.random_number) as u8) >= 0xc0 {
         MotherBrain_MakeHerLeanDown(game);
     }
-}
-pub unsafe fn MotherBrain_Phase3_Recover_MakeDistance(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).var_00 = 4;
-    (*E).var_A = ((0xa9c1f0i32) as u16);
-    (*E).var_F = 32;
-    MotherBrain_MakeWalkBackwards(((*E).base.x_pos).wrapping_sub(14), 2, game);
 }
 pub unsafe fn MotherBrain_Phase3_Fighting_Main(game: &mut Game) {
     if (*Get_MotherBrain(0x40i32, game)).base.health != 0 {
@@ -2978,47 +2379,6 @@ pub unsafe fn MotherBrain_Phase3_WalkHandler(game: &mut Game) {
         );
     }
 }
-pub unsafe fn MotherBrain_Phase3_Walk_TryToInchForward(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    let mbn_var_07: u16 = (*E).var_07;
-    if mbn_var_07 != 0 {
-        let v3: u16 = (mbn_var_07).wrapping_add(32);
-        (*E).var_07 = v3;
-        if v3 >= 0x100 {
-            let v4: u16 = ((*E).base.x_pos).wrapping_add(1);
-            let E1 = Get_MotherBrain(0x40, game);
-            (*E1).var_1B = v4;
-            if MotherBrain_MakeWalkForwards(
-                ((word!(game.random_number) as i32 & 2) + 4) as u16,
-                (*E1).var_1B,
-                game,
-            ) & 1
-                != 0
-            {
-                (*E).var_07 = 128;
-            }
-        }
-    } else {
-        let v6: u16 = ((*E).base.x_pos).wrapping_sub(14);
-        let E1_0 = Get_MotherBrain(0x40, game);
-        (*E1_0).var_1B = v6;
-        (*E1_0).var_1A = ((0xa9c2b3i32) as u16);
-        MotherBrain_Phase3_Walk_RetreatQuickly(game);
-    };
-}
-pub unsafe fn MotherBrain_Phase3_Walk_RetreatQuickly(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    if MotherBrain_MakeWalkBackwards((*E).var_1B, 2, game) & 1 != 0 {
-        (*E).var_1B = ((*Get_MotherBrain(0i32, game)).base.x_pos).wrapping_sub(14);
-        (*E).var_1A = ((0xa9c2d2i32) as u16);
-    }
-}
-pub unsafe fn MotherBrain_Phase3_Walk_RetreatSlowly(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    if MotherBrain_MakeWalkBackwards((*E).var_1B, 4, game) & 1 != 0 {
-        MotherBrain_SetToTryToInchForward(0x40, game);
-    }
-}
 pub unsafe fn MotherBrain_SetToTryToInchForward(a: u16, game: &mut Game) {
     let E = Get_MotherBrain(0, game);
     (*E).var_07 = a;
@@ -3042,56 +2402,6 @@ pub unsafe fn MotherBrain_Phase3_NeckHandler(game: &mut Game) {
         (((*Get_MotherBrain(0x40i32, game)).var_18) as u32) | (0xa90000u32),
         game,
     );
-}
-pub unsafe fn MotherBrain_Phase3_Neck_Normal(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    (*E).var_32 = 1;
-    (*E).var_34 = 128;
-    (*E).var_32 = 2;
-    (*E).var_33 = 4;
-    (*E).var_18 = addr_locret_A9C353 as u16;
-}
-pub unsafe fn MotherBrain_Phase3_Neck_SetupRecoilRecovery(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    (*E).var_31 = 1;
-    (*E).var_34 = 1280;
-    set_fields! {[(*E)], 6; var_32, var_33}
-    (*E).var_18 = ((0xa9c37bi32) as u16);
-    (*E).var_19 = 16;
-    MotherBrain_Phase3_Neck_RecoilRecovery(game);
-}
-pub unsafe fn MotherBrain_Phase3_Neck_RecoilRecovery(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    let mut v1: i16 = (((*E).var_19) as i16).wrapping_sub(1);
-    if v1 < 0 {
-        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9DBB as u16, game);
-        (*E).var_18 = ((0xa9c330i32) as u16);
-    } else {
-        (*E).var_19 = v1 as u16;
-    };
-}
-pub unsafe fn MotherBrain_Phase3_Neck_SetupHyperBeamRecoil(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    (*E).var_31 = 1;
-    (*Get_MotherBrain(0i32, game)).var_06 = 1;
-    MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9BE7 as u16, game);
-    (*E).var_00 = 50;
-    (*E).var_34 = 2304;
-    set_fields! {[(*E)], 8; var_32, var_33}
-    (*E).var_18 = ((0xa9c3cdi32) as u16);
-    (*E).var_19 = 11;
-    MotherBrain_Phase3_Neck_HyperBeamRecoil(game);
-}
-pub unsafe fn MotherBrain_Phase3_Neck_HyperBeamRecoil(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    let mut v2: i16 = (((*E).var_19) as i16).wrapping_sub(1);
-    if v2 < 0 {
-        (*E).var_34 = 128;
-        (*Get_MotherBrain(0i32, game)).var_06 = 0;
-        (*E).var_18 = ((0xa9c354i32) as u16);
-    } else {
-        (*E).var_19 = v2 as u16;
-    };
 }
 pub unsafe fn MoveEnemyWithVelocity(game: &mut Game) {
     let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
@@ -3313,37 +2623,6 @@ pub unsafe fn MotherBrain_MakeHerLeanDown(game: &mut Game) -> u8 {
     }
     0
 }
-pub unsafe fn MotherBrain_HandleWalking(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    if (*E).var_02 == 0 {
-        let mbn_var_07: u16 = (*E).var_07;
-        let can_pause_walk: bool = if mbn_var_07 != 0 {
-            let mut v2: u16 = (mbn_var_07).wrapping_add(6);
-            (*E).var_07 = v2;
-            !(v2 >= 0x100)
-                && ({
-                    if (*E).base.x_pos as i32 - 48i32 & 0x8000 == 0 {
-                        return;
-                    }
-                    true
-                })
-        } else {
-            (*E).var_07 = 1;
-            if (*E).base.x_pos as i32 - 48i32 & 0x8000 == 0 {
-                MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_98C6 as u16, game);
-                return;
-            }
-            true
-        };
-        if can_pause_walk && (word!(game.random_number) as i32 & 0xfff) - 4032i32 & 0x8000 != 0 {
-            return;
-        }
-        (*E).var_07 = 128;
-        if (*E).base.x_pos as i32 - 128i32 & 0x8000 != 0 {
-            MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_97A4 as u16, game);
-        }
-    }
-}
 pub unsafe fn ShitroidInCutscene_Init(game: &mut Game) {
     let E = Get_ShitdroidInCutscene(word!(game.cur_enemy_index) as i32, game);
     (*E).base.properties = ((*E).base.properties as i32
@@ -3510,17 +2789,6 @@ pub unsafe fn ShitroidInCutscene_ActivateRainbowBeam(k: u16, game: &mut Game) {
         (*E0).var_16 = 1;
     }
 }
-pub unsafe fn ShitroidInCutscene_BrainTurnsToCorpse(k: u16, game: &mut Game) {
-    let E = Get_ShitdroidInCutscene(k as i32, game);
-    let E1 = Get_ShitdroidInCutscene(0x40, game);
-    let v2: i32 = ((*E).base.frame_counter as i32 & 6) >> 1;
-    (*E).base.x_pos = ((*E1).base.x_pos).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
-    (*E).base.y_pos = ((*E1).base.y_pos as i32 + g_word_A993C3[v2 as usize] as i32 - 24i32) as u16;
-    if (*Get_ShitdroidInCutscene(0i32, game)).var_1F != 0 {
-        (*E).var_A = ((0xa9c915i32) as u16);
-        (*E).var_F = 64;
-    }
-}
 pub unsafe fn ShitroidInCutscene_StopDraining(k: u16, game: &mut Game) {
     let E = Get_ShitroidInCutscene(k as i32, game);
     let E1 = Get_ShitroidInCutscene(0x40, game);
@@ -3534,15 +2802,6 @@ pub unsafe fn ShitroidInCutscene_StopDraining(k: u16, game: &mut Game) {
         (*E).var_F = 32;
         set_fields! {[(*E)], 0; var_B, var_C}
     }
-}
-pub unsafe fn ShitroidInCutscene_LetGoAndSpawnDust(k: u16, game: &mut Game) {
-    let E = Get_ShitdroidInCutscene(k as i32, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
-        ShitroidInCutscene_SpawnThreeDustClouds(game);
-        (*E).var_A = addr_loc_A9C959 as u16;
-    }
-    ShitroidInCutscene_MoveUpToCeiling(k, game);
 }
 pub unsafe fn ShitroidInCutscene_MoveUpToCeiling(k: u16, game: &mut Game) {
     let rect: Rect16U = Rect16U {
@@ -3580,38 +2839,6 @@ crate::game::address_dispatch! {
         11138150 => Shitroid_GraduallyAccelerateTowards0x10;
     }
 }
-pub unsafe fn ShitroidInCutscene_MoveToSamus(k: u16, game: &mut Game) {
-    let E = Get_ShitdroidInCutscene(k as i32, game);
-    (*E).var_04 = 0;
-    (*E).var_09 = 1;
-    if (word!(game.random_number) & 0xfff) >= 0xfa0 {
-        QueueSfx2_Max6(0x52, game);
-    }
-    let sice_var_0E: u16 = (*E).var_0E;
-    let v3 = RomPtr_A9(sice_var_0E, game) as *const u16;
-    let rect: Rect16U = Rect16U {
-        x: *v3,
-        y: *v3.offset(1),
-        w: 4,
-        h: 4,
-    };
-    CallShitroidMoveFunc(
-        ((*v3.offset(3)) as u32) | (0xa90000u32),
-        k,
-        *v3.offset(2),
-        rect.x,
-        rect.y,
-        game,
-    );
-    if Shitroid_Func_2(k, rect, game) == 0 {
-        let mut v4: i16 = *(RomPtr_A9(sice_var_0E, game) as *mut u16).offset(4) as i16;
-        if v4 < 0 {
-            (*E).var_A = v4 as u16;
-        } else {
-            (*E).var_0E = ((*E).var_0E).wrapping_add(8);
-        }
-    }
-}
 pub unsafe fn ShitroidInCutscene_LatchOntoSamus(k: u16, game: &mut Game) {
     Shitroid_Func_GraduallyAccelerateTowards0x400(
         k,
@@ -3620,20 +2847,6 @@ pub unsafe fn ShitroidInCutscene_LatchOntoSamus(k: u16, game: &mut Game) {
         (word!(game.samus_y_pos)).wrapping_sub(20),
         game,
     );
-}
-pub unsafe fn ShitroidInCutscene_HealSamusToFullHealth(k: u16, game: &mut Game) {
-    let E = Get_ShitdroidInCutscene(k as i32, game);
-    (*E).var_04 = 0;
-    ShitroidInCutscene_HandleCry(game);
-    let v2: i32 = ((*E).base.frame_counter as i32 & 6) >> 1;
-    (*E).base.x_pos = (word!(game.samus_x_pos)).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
-    (*E).base.y_pos =
-        (word!(game.samus_y_pos) as i32 + g_word_A993C3[v2 as usize] as i32 - 20i32) as u16;
-    if Samus_HealDueToShitroid(game) & 1 == 0 {
-        word!(game.samus_reserve_health = word!(game.samus_max_reserve_health));
-        (*E).var_A = ((0xa9cabdi32) as u16);
-        (*E).var_0F = ((0xa9cabci32) as u16);
-    }
 }
 pub unsafe fn ShitroidInCutscene_IdleUntilToNoHealth(k: u16, game: &mut Game) {
     ShitroidInCutscene_HandleCry(game);
@@ -3883,24 +3096,6 @@ pub unsafe fn ShitroidInCutscene_FadeShitroidToBlack(k: u16, game: &mut Game) ->
     );
     0
 }
-pub unsafe fn ShitroidInCutscene_HandleShitroidDeathExplosions(k: u16, game: &mut Game) {
-    let E = Get_ShitdroidInCutscene(k as i32, game);
-    let mut v2: i16 = (((*E).var_08) as i16).wrapping_sub(1);
-    if v2 < 0 {
-        (*E).var_08 = 4;
-        let mut v3: u16 = ((*E).var_07).wrapping_add(1);
-        if (*E).var_07 as i32 - 9i32 & 0x8000 == 0 {
-            v3 = 0;
-        }
-        (*E).var_07 = v3;
-        let v4: i32 = ((4u16).wrapping_mul(v3)) as i32 >> 1;
-        crate::game::sm_a6::set_explosion_spawn_offset!(game, E, 0xa9cdfc, v4);
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 3, game);
-        QueueSfx3_Max3(0x13, game);
-    } else {
-        (*E).var_08 = v2 as u16;
-    };
-}
 pub unsafe fn ShitroidInCutscene_HandleEnemyBlinking(k: u16, game: &mut Game) {
     let E = Get_ShitroidInCutscene(k as i32, game);
     if ((*E).base.frame_counter & 1) != 0 {
@@ -3923,50 +3118,131 @@ pub unsafe fn ShitroidInCutscene_AccelerateDownwards(k: u16, game: &mut Game) {
     }) as u16;
     (*E).var_C = ((*E).var_C).wrapping_add(2);
 }
-pub unsafe fn ShitroidInCutscene_HandleHealthBasedPalette(k: u16, game: &mut Game) {
-    let E = Get_ShitdroidInCutscene(k as i32, game);
-    if (*E).var_09 != 0 {
-        let health: u16 = (*E).base.health;
-        if health as i32 - 2560i32 & 0x8000 != 0 {
-            let mut v3: u16 = 2;
-            if health as i32 - 2240i32 & 0x8000 != 0 {
-                v3 = 4;
-                if health as i32 - 1920i32 & 0x8000 != 0 {
-                    v3 = 6;
-                    if health as i32 - 1600i32 & 0x8000 != 0 {
-                        v3 = 8;
-                        if health as i32 - 1280i32 & 0x8000 != 0 {
-                            v3 = 10;
-                            if health as i32 - 960i32 & 0x8000 != 0 {
-                                v3 = 12;
-                                if health as i32 - 640i32 & 0x8000 != 0 {
-                                    v3 = 14;
+crate::prefixed_callbacks! {
+    pub unsafe fn (k: u16, game: &mut Game);
+    @prefix { let E = Get_ShitdroidInCutscene(k as i32, game); };
+    ShitroidInCutscene_BrainTurnsToCorpse [] {
+        let E1 = Get_ShitdroidInCutscene(0x40, game);
+        let v2: i32 = ((*E).base.frame_counter as i32 & 6) >> 1;
+        (*E).base.x_pos = ((*E1).base.x_pos).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
+        (*E).base.y_pos = ((*E1).base.y_pos as i32 + g_word_A993C3[v2 as usize] as i32 - 24i32) as u16;
+        if (*Get_ShitdroidInCutscene(0i32, game)).var_1F != 0 {
+            (*E).var_A = ((0xa9c915i32) as u16);
+            (*E).var_F = 64;
+        }
+    };
+    ShitroidInCutscene_LetGoAndSpawnDust [] {
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+        if ((*E).var_F & 0x8000) != 0 {
+            ShitroidInCutscene_SpawnThreeDustClouds(game);
+            (*E).var_A = addr_loc_A9C959 as u16;
+        }
+        ShitroidInCutscene_MoveUpToCeiling(k, game);
+    };
+    ShitroidInCutscene_MoveToSamus [] {
+        (*E).var_04 = 0;
+        (*E).var_09 = 1;
+        if (word!(game.random_number) & 0xfff) >= 0xfa0 {
+            QueueSfx2_Max6(0x52, game);
+        }
+        let sice_var_0E: u16 = (*E).var_0E;
+        let v3 = RomPtr_A9(sice_var_0E, game) as *const u16;
+        let rect: Rect16U = Rect16U {
+            x: *v3,
+            y: *v3.offset(1),
+            w: 4,
+            h: 4,
+        };
+        CallShitroidMoveFunc(
+            ((*v3.offset(3)) as u32) | (0xa90000u32),
+            k,
+            *v3.offset(2),
+            rect.x,
+            rect.y,
+            game,
+        );
+        if Shitroid_Func_2(k, rect, game) == 0 {
+            let mut v4: i16 = *(RomPtr_A9(sice_var_0E, game) as *mut u16).offset(4) as i16;
+            if v4 < 0 {
+                (*E).var_A = v4 as u16;
+            } else {
+                (*E).var_0E = ((*E).var_0E).wrapping_add(8);
+            }
+        }
+    };
+    ShitroidInCutscene_HealSamusToFullHealth [] {
+        (*E).var_04 = 0;
+        ShitroidInCutscene_HandleCry(game);
+        let v2: i32 = ((*E).base.frame_counter as i32 & 6) >> 1;
+        (*E).base.x_pos = (word!(game.samus_x_pos)).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
+        (*E).base.y_pos =
+            (word!(game.samus_y_pos) as i32 + g_word_A993C3[v2 as usize] as i32 - 20i32) as u16;
+        if Samus_HealDueToShitroid(game) & 1 == 0 {
+            word!(game.samus_reserve_health = word!(game.samus_max_reserve_health));
+            (*E).var_A = ((0xa9cabdi32) as u16);
+            (*E).var_0F = ((0xa9cabci32) as u16);
+        }
+    };
+    ShitroidInCutscene_HandleShitroidDeathExplosions [] {
+        let mut v2: i16 = (((*E).var_08) as i16).wrapping_sub(1);
+        if v2 < 0 {
+            (*E).var_08 = 4;
+            let mut v3: u16 = ((*E).var_07).wrapping_add(1);
+            if (*E).var_07 as i32 - 9i32 & 0x8000 == 0 {
+                v3 = 0;
+            }
+            (*E).var_07 = v3;
+            let v4: i32 = ((4u16).wrapping_mul(v3)) as i32 >> 1;
+            crate::game::sm_a6::set_explosion_spawn_offset!(game, E, 0xa9cdfc, v4);
+            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 3, game);
+            QueueSfx3_Max3(0x13, game);
+        } else {
+            (*E).var_08 = v2 as u16;
+        };
+    };
+    ShitroidInCutscene_HandleHealthBasedPalette [] {
+        if (*E).var_09 != 0 {
+            let health: u16 = (*E).base.health;
+            if health as i32 - 2560i32 & 0x8000 != 0 {
+                let mut v3: u16 = 2;
+                if health as i32 - 2240i32 & 0x8000 != 0 {
+                    v3 = 4;
+                    if health as i32 - 1920i32 & 0x8000 != 0 {
+                        v3 = 6;
+                        if health as i32 - 1600i32 & 0x8000 != 0 {
+                            v3 = 8;
+                            if health as i32 - 1280i32 & 0x8000 != 0 {
+                                v3 = 10;
+                                if health as i32 - 960i32 & 0x8000 != 0 {
+                                    v3 = 12;
+                                    if health as i32 - 640i32 & 0x8000 != 0 {
+                                        v3 = 14;
+                                    }
                                 }
                             }
                         }
                     }
                 }
+                let v5: u16 = v3;
+                let v4: u16 = crate::rtl::rom_table_word!(game, 0xade7e2, (v3 >> 1) as isize);
+                WriteColorsToPalette(0x1e2, 0xad, v4, 4, game);
+                WriteColorsToPalette(0x1f4, 0xad, (v4).wrapping_add(8), 5, game);
+                WriteColorsToPalette(
+                    0x1ea,
+                    0xad,
+                    crate::rtl::rom_table_word!(game, 0xade882, (v5 >> 1) as isize),
+                    5,
+                    game,
+                );
             }
-            let v5: u16 = v3;
-            let v4: u16 = crate::rtl::rom_table_word!(game, 0xade7e2, (v3 >> 1) as isize);
-            WriteColorsToPalette(0x1e2, 0xad, v4, 4, game);
-            WriteColorsToPalette(0x1f4, 0xad, (v4).wrapping_add(8), 5, game);
-            WriteColorsToPalette(
-                0x1ea,
-                0xad,
-                crate::rtl::rom_table_word!(game, 0xade882, (v5 >> 1) as isize),
-                5,
-                game,
-            );
         }
-    }
-}
-pub unsafe fn ShitroidInCutscene_Shake(k: u16, game: &mut Game) {
-    let E = Get_ShitdroidInCutscene(k as i32, game);
-    (*E).var_C = (*E).var_C.wrapping_sub(1);
-    let v2: i32 = ((*E).base.frame_counter as i32 & 6) >> 1;
-    (*E).base.x_pos = ((*E).var_10).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
-    (*E).base.y_pos = ((*E).var_11).wrapping_add((g_word_A993C3[v2 as usize]) as u16);
+    };
+    ShitroidInCutscene_Shake [] {
+        (*E).var_C = (*E).var_C.wrapping_sub(1);
+        let v2: i32 = ((*E).base.frame_counter as i32 & 6) >> 1;
+        (*E).base.x_pos = ((*E).var_10).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
+        (*E).base.y_pos = ((*E).var_11).wrapping_add((g_word_A993C3[v2 as usize]) as u16);
+    };
 }
 pub unsafe fn ShitroidInCutscene_Touch(game: &mut Game) {
     let E = Get_ShitroidInCutscene(word!(game.cur_enemy_index) as i32, game);
@@ -4013,16 +3289,6 @@ pub unsafe fn MotherBrain_Pal_ProcessInvincibility(game: &mut Game) {
             }
         }
     }
-}
-pub unsafe fn MotherBrain_Pal_BeginScreenFlash(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    (*E).var_0E = addr_stru_A9D046 as u16;
-    (*E).var_0F = 1;
-}
-pub unsafe fn MotherBrain_Pal_EndScreenFlash(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    set_fields! {[(*E)], 0; var_0E, var_0F}
-    MotherBrain_Pal_WriteRoomPal(addr_word_A9D082 as u16, game);
 }
 pub unsafe fn MotherBrain_Pal_HandleRoomPal(game: &mut Game) {
     let j: u16 = HandleMotherBrainInstructionList(
@@ -4078,14 +3344,271 @@ pub unsafe fn HandleMotherBrainInstructionList(a: u16, game: &mut Game) -> u16 {
         *v3.offset(1)
     }
 }
-pub unsafe fn MotherBrain_HandlePalette(game: &mut Game) {
-    let E = Get_MotherBrain(0x40, game);
-    if (*E).var_10 != 0 {
-        MotherBrain_HandleBrainPal(game);
-    }
-    if (*E).var_11 != 0 {
-        MotherBrain_HealthBasedPaletteHandling(game);
-    }
+crate::prefixed_callbacks! {
+    pub unsafe fn (game: &mut Game);
+    @prefix { let E = Get_MotherBrain(0x40, game); };
+    MotherBrain_SpawnDustCloudsForAscent [] {
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+        if ((*E).var_F & 0x8000) != 0 {
+            (*E).var_F = 7;
+        }
+        game.eproj_spawn_pt = Point16U {
+            x: g_word_A98F7F[(*E).var_F as usize],
+            y: 212,
+        };
+        SpawnEprojWithRoomGfx(
+            addr_kEproj_DustCloudExplosion as u16,
+            g_byte_A98F7D[(((word!(game.random_number)) & (0x100u16)) >> 8) as usize] as u16,
+            game,
+        );
+        QueueSfx2_Max3(0x29, game);
+    };
+    MotherBrain_SetupNeckForFakeAscent [] {
+        (*E).var_24 = 2;
+        set_fields! {[(*E)], 10; var_27, var_2D}
+        set_fields! {[(*E)], 20; var_2A, var_30}
+        (*E).var_20 = 18432;
+        (*E).var_21 = 20480;
+        (*E).var_34 = 256;
+    };
+    MotherBrain_HandleNeckLower_2_BobDown [] {
+        let mut v1: i16 = (((*E).var_20) as i16).wrapping_sub(((*E).var_34) as i16);
+        if (v1 as u16) < 0x2800 {
+            (*E).var_32 = 4;
+            v1 = 10240;
+        }
+        (*E).var_20 = v1 as u16;
+    };
+    MotherBrain_HandleNeckLower_4_BobUp [] {
+        if (*E).base.y_pos as i32 - 60i32 & 0x8000 != 0 {
+            (*E).var_32 = 2;
+        } else {
+            let mut v1: i16 = (((*E).var_34) as i16).wrapping_add(((*E).var_20) as i16);
+            if (v1 as u16) >= 0x9000 {
+                (*E).var_32 = 2;
+                v1 = -28672i16;
+            }
+            (*E).var_20 = v1 as u16;
+        };
+    };
+    MotherBrain_HandleNeckLower_6_Lower [] {
+        let mut v1: i16 = (((*E).var_20) as i16).wrapping_sub(((*E).var_34) as i16);
+        if (v1 as u16) < 0x3000 {
+            (*E).var_32 = 0;
+            v1 = 12288;
+        }
+        (*E).var_20 = v1 as u16;
+    };
+    MotherBrain_HandleNeckLower_8_Raise [] {
+        let mut v1: i16 = (((*E).var_34) as i16).wrapping_add(((*E).var_20) as i16);
+        if (v1 as u16) >= 0x9000 {
+            (*E).var_32 = 0;
+            v1 = -28672i16;
+        }
+        (*E).var_20 = v1 as u16;
+    };
+    MotherBrain_HandleNeckUpper [] {
+        let mbn_var_33: u16 = (*E).var_33;
+        if mbn_var_33 != 0 {
+            match mbn_var_33 as i32 {
+                2 => {
+                    if (((*E).base.y_pos as i32 + 4 - word!(game.samus_y_pos) as i32) as i16) < 0 {
+                        let mut v2: i16 = (((*E).var_21) as i16).wrapping_sub(((*E).var_34) as i16);
+                        if (v2 as u16) < 0x2000 {
+                            (*E).var_33 = 4;
+                            v2 = 0x2000;
+                        }
+                        (*E).var_21 = v2 as u16;
+                    } else {
+                        set_fields! {[(*E)], 4; var_32, var_33}
+                    }
+                }
+                4 => {
+                    let r18: u16 = ((*E).var_20).wrapping_add(2048);
+                    let mut v4: u16 = ((*E).var_34).wrapping_add((*E).var_21);
+                    if v4 >= r18 {
+                        (*E).var_33 = 2;
+                        v4 = r18;
+                    }
+                    (*E).var_21 = v4;
+                }
+                6 => {
+                    let mut v6: i16 = (((*E).var_21) as i16).wrapping_sub(((*E).var_34) as i16);
+                    if (v6 as u16) < 0x2000 {
+                        (*E).var_33 = 0;
+                        v6 = 0x2000;
+                    }
+                    (*E).var_21 = v6 as u16;
+                }
+                8 => {
+                    let r18_0: u16 = ((*E).var_20).wrapping_add(2048);
+                    let mut v8: u16 = ((*E).var_34).wrapping_add((*E).var_21);
+                    if v8 >= r18_0 {
+                        (*E).var_33 = 0;
+                        v8 = r18_0;
+                    }
+                    (*E).var_21 = v8;
+                }
+                _ => {
+                    Unreachable(game);
+                    loop {}
+                }
+            }
+        }
+    };
+    MotherBrain_DrawBrain [] {
+        if (*E).var_14 != 0 && (*E).var_15 == 0 && (word!(game.random_number) & 0x8000) == 0 {
+            SpawnEprojWithRoomGfx(
+                addr_kEproj_MotherBrainPurpleBreathSmall as u16,
+                word!(game.random_number),
+                game,
+            );
+        }
+        let tt: i32 = MotherBrain_Func_1_DoubleRet(game);
+        if tt < 0 {
+            return;
+        }
+        let v2: u16 = tt as u16;
+        let mut mbn_var_0D: u16 = (*Get_MotherBrain(0i32, game)).var_0D;
+        if (*E).base.flash_timer & 1 != 0 {
+            mbn_var_0D = 0;
+        }
+        let r22: u16 = mbn_var_0D;
+        let mbn_var_00: u16 = (*E).var_00;
+        let mut flash_timer: u16 = 0;
+        if mbn_var_00 != 0 {
+            flash_timer = (mbn_var_00).wrapping_sub(1);
+            (*E).var_00 = flash_timer;
+        } else {
+            flash_timer = (*E).base.flash_timer;
+            if flash_timer == 0 {
+                flash_timer = (*E).base.shake_timer;
+            }
+        }
+        let v6: i32 = (flash_timer as i32 & 6) >> 1;
+        let r18: u16 = ((*E).base.x_pos).wrapping_add((g_word_A993BB[v6 as usize]) as u16);
+        if ((r18 as i32 + 32 - word!(game.layer1_x_pos) as i32) as i16) >= 0 {
+            let r20: u16 = ((*E).base.y_pos).wrapping_add((g_word_A993C3[v6 as usize]) as u16);
+            MotherBrain_AddSpritemapToOam(v2, r18, r20, r22, game);
+        }
+    };
+    MotherBrain_GenerateEscapeDoorExploding [] {
+        let mut v1: i16 = (((*E).var_E) as i16).wrapping_sub(1);
+        (*E).var_E = v1 as u16;
+        if v1 < 0 {
+            (*E).var_E = 4;
+            let mut v2: i16 = (((*E).var_F) as i16).wrapping_sub(1);
+            (*E).var_F = v2 as u16;
+            if v2 < 0 {
+                (*E).var_F = 3;
+            }
+            let v3: i32 = ((4u16).wrapping_mul((*E).var_F)) as i32 >> 1;
+            game.eproj_spawn_pt = Point16U {
+                x: g_word_A9B393[v3 as usize],
+                y: g_word_A9B393[(v3 + 1) as usize],
+            };
+            let mut v4: u16 = 3;
+            if NextRandom(game) < 0x4000 {
+                v4 = 12;
+            }
+            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, v4, game);
+            QueueSfx2_Max3(0x24, game);
+        }
+    };
+    MotherBrain_RetractHead [] {
+        (*E).var_34 = 80;
+        (*E).var_31 = 1;
+        (*E).var_32 = 8;
+        (*E).var_33 = 6;
+    };
+    MotherBrain_AimBeam [] {
+        (*Get_MotherBrain(0i32, game)).var_31 = -(CalculateAngleFromXY(
+            (word!(game.samus_x_pos) as i32 - (*E).base.x_pos as i32 - 16i32) as u16,
+            (word!(game.samus_y_pos) as i32 - (*E).base.y_pos as i32 - 4i32) as u16,
+            game,
+        ) as i32
+            + 0x80i32) as u8 as u16;
+    };
+    MotherBrain_PainfulWalkForwards [] {
+        if MotherBrain_MakeWalkForwards((*E).var_07, 0x48, game) & 1 != 0 {
+            (*E).var_08 = ((0xa9bfe8i32) as u16);
+            MotherBrain_SetPainfulWalkingTimer(game);
+        }
+    };
+    MotherBrain_PainfulWalkBackwards [] {
+        if MotherBrain_MakeWalkBackwards(0x28, (*E).var_07, game) & 1 != 0 {
+            (*E).var_08 = ((0xa9c01ci32) as u16);
+            MotherBrain_SetPainfulWalkingTimer(game);
+        }
+    };
+    MotherBrain_SetPainfulWalkingTimer [] {
+        (*E).var_09 = byte!(@pointer (&raw const g_word_A9C049 as *const i16).offset((*E).var_06 as isize); 0)
+            as u16;
+    };
+    MotherBrain_Phase3_Walk_RetreatQuickly [] {
+        if MotherBrain_MakeWalkBackwards((*E).var_1B, 2, game) & 1 != 0 {
+            (*E).var_1B = ((*Get_MotherBrain(0i32, game)).base.x_pos).wrapping_sub(14);
+            (*E).var_1A = ((0xa9c2d2i32) as u16);
+        }
+    };
+    MotherBrain_Phase3_Walk_RetreatSlowly [] {
+        if MotherBrain_MakeWalkBackwards((*E).var_1B, 4, game) & 1 != 0 {
+            MotherBrain_SetToTryToInchForward(0x40, game);
+        }
+    };
+    MotherBrain_Phase3_Neck_Normal [] {
+        (*E).var_32 = 1;
+        (*E).var_34 = 128;
+        (*E).var_32 = 2;
+        (*E).var_33 = 4;
+        (*E).var_18 = addr_locret_A9C353 as u16;
+    };
+    MotherBrain_Phase3_Neck_SetupRecoilRecovery [] {
+        (*E).var_31 = 1;
+        (*E).var_34 = 1280;
+        set_fields! {[(*E)], 6; var_32, var_33}
+        (*E).var_18 = ((0xa9c37bi32) as u16);
+        (*E).var_19 = 16;
+        MotherBrain_Phase3_Neck_RecoilRecovery(game);
+    };
+    MotherBrain_Phase3_Neck_RecoilRecovery [] {
+        let mut v1: i16 = (((*E).var_19) as i16).wrapping_sub(1);
+        if v1 < 0 {
+            MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9DBB as u16, game);
+            (*E).var_18 = ((0xa9c330i32) as u16);
+        } else {
+            (*E).var_19 = v1 as u16;
+        };
+    };
+    MotherBrain_Phase3_Neck_SetupHyperBeamRecoil [] {
+        (*E).var_31 = 1;
+        (*Get_MotherBrain(0i32, game)).var_06 = 1;
+        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9BE7 as u16, game);
+        (*E).var_00 = 50;
+        (*E).var_34 = 2304;
+        set_fields! {[(*E)], 8; var_32, var_33}
+        (*E).var_18 = ((0xa9c3cdi32) as u16);
+        (*E).var_19 = 11;
+        MotherBrain_Phase3_Neck_HyperBeamRecoil(game);
+    };
+    MotherBrain_Phase3_Neck_HyperBeamRecoil [] {
+        let mut v2: i16 = (((*E).var_19) as i16).wrapping_sub(1);
+        if v2 < 0 {
+            (*E).var_34 = 128;
+            (*Get_MotherBrain(0i32, game)).var_06 = 0;
+            (*E).var_18 = ((0xa9c354i32) as u16);
+        } else {
+            (*E).var_19 = v2 as u16;
+        };
+    };
+    MotherBrain_HandlePalette [] {
+        if (*E).var_10 != 0 {
+            MotherBrain_HandleBrainPal(game);
+        }
+        if (*E).var_11 != 0 {
+            MotherBrain_HealthBasedPaletteHandling(game);
+        }
+    };
 }
 pub unsafe fn MotherBrain_SetupBrainNormalPal(game: &mut Game) {
     (*Get_MotherBrain(0i32, game)).var_E = 10;
@@ -4093,32 +3616,457 @@ pub unsafe fn MotherBrain_SetupBrainNormalPal(game: &mut Game) {
 pub unsafe fn MotherBrain_SetupBrainPalForLaser(game: &mut Game) {
     (*Get_MotherBrain(0i32, game)).var_E = 514;
 }
-pub unsafe fn MotherBrain_HandleBrainPal(game: &mut Game) {
-    let E = Get_MotherBrain(0, game);
-    if (*E).var_00 != 1 {
-        let mut mbn_var_D_high: i8 = byte!((*E).var_D; 1) as i8;
-        if mbn_var_D_high != 0 {
-            byte!((*E).var_D; 1) = ((mbn_var_D_high) as u8).wrapping_sub(1);
-        } else {
-            let r18: u16 = crate::rtl::rom_table_word!(
-                game,
-                0xa9d260,
-                (*(&raw mut (*E).var_E as *mut u8).offset(1) >> 1) as isize,
-            );
-            byte!((*E).var_D; 1) = (*E).var_E as u8;
-            let mut mbn_var_D: i8 = (*E).var_D as i8;
-            if mbn_var_D != 0 || (*Get_MotherBrain(0x40i32, game)).var_A as i32 == 0xa987a2 & 0xffff
-            {
-                let v4: u8 = (mbn_var_D as i32 + 1 & 7) as u8;
-                byte!((*E).var_D; 0) = v4;
-                let mut v5: u16 = 290;
-                if (*E).var_0D != 512 {
-                    v5 = 482;
-                }
-                WriteColorsToPalette(v5, 0xa9, (r18 as i32 + 8 * v4 as i32) as u16, 3, game);
+crate::prefixed_callbacks! {
+    pub unsafe fn (game: &mut Game);
+    @prefix { let E = Get_MotherBrain(0, game); };
+    MotherBrainBody_FakeDeath_Descent_5 [] {
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+        if ((*E).var_F & 0x8000) != 0 {
+            (*E).var_F = 8;
+            let v2: u16 = ((*E).var_37).wrapping_add(1);
+            (*E).var_37 = v2;
+            if MotherBrain_FadeToGray_FakeDeath((v2).wrapping_sub(1), game) & 1 != 0 {
+                (*E).var_A = ((0xa988d3i32) as u16);
             }
         }
-    }
+        MotherBrainBody_FakeDeath_Descent_6(game);
+    };
+    MotherBrain_HandleFakeDeathExplosions [] {
+        let mut v1: i16 = (((*E).var_38) as i16).wrapping_sub(1);
+        if v1 < 0 {
+            (*E).var_38 = 8;
+            let mut v2: i16 = (((*E).var_39) as i16).wrapping_sub(1);
+            if v2 < 0 {
+                v2 = 7;
+            }
+            (*E).var_39 = v2 as u16;
+            let v3: i32 = ((4u16).wrapping_mul((v2) as u16)) as i32 >> 1;
+            game.eproj_spawn_pt = Point16U {
+                x: crate::rtl::rom_table_word!(game, 0xa98929, v3 as isize),
+                y: crate::rtl::rom_table_word!(game, 0xa98929, (v3 + 1) as isize),
+            };
+            let v4: u16 = (if word!(game.random_number) < 0x4000 {
+                12
+            } else {
+                3
+            }) as u16;
+            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, v4, game);
+            QueueSfx2_Max3(0x24, game);
+        } else {
+            (*E).var_38 = v1 as u16;
+        };
+    };
+    MotherBrainBody_FakeDeath_Ascent_13_Raise [] {
+        if !((word!(game.nmi_frame_counter_word) & 3) != 0 || {
+            MotherBrain_SpawnDustCloudsForAscent(game);
+            word!(game.reg_BG2VOFS, wrapping_add(2));
+            let mut v1: u16 = ((*E).base.y_pos).wrapping_sub(2);
+            (*E).base.y_pos = v1;
+            v1 >= 0xbd
+        }) {
+            word!(game.enemy_bg2_tilemap_size = 320);
+            (*E).base.y_pos = 188;
+            word! { game, 0;
+                earthquake_timer, hdma_object_channels_bitmask[((*E).var_09 as i32 >> 1)],
+            }
+            MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_99AA as u16, game);
+            (*E).var_A = ((0xa98e95i32) as u16);
+            MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching(game);
+        }
+    };
+    MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching [] {
+        if (*E).var_02 == 0 {
+            (*E).var_37 = 0;
+            (*E).var_A = ((0xa98eaai32) as u16);
+            (*E).var_F = 0;
+        }
+    };
+    MotherBrain_HandleNeck [] {
+        (*E).var_0A = ((*E).base.x_pos).wrapping_sub(80);
+        (*E).var_0B = ((*E).base.y_pos).wrapping_add(46);
+        let E1 = Get_MotherBrain(0x40, game);
+        if (*E1).var_31 != 0 {
+            MotherBrain_HandleNeckLower(game);
+            MotherBrain_HandleNeckUpper(game);
+        }
+        let mut r18: u16 = byte!((*E1).var_20; 1) as u16;
+        (*E1).var_22 =
+            ((*E).var_0A as i32 + ComputeSinMult((*E1).var_24, r18, game) as i32 + 112) as u16;
+        (*E1).var_23 =
+            ((*E).var_0B as i32 + ComputeCosMult((*E1).var_24, r18, game) as i32 - 96i32) as u16;
+        (*E1).var_25 =
+            ((*E).var_0A as i32 + ComputeSinMult((*E1).var_27, r18, game) as i32 + 112) as u16;
+        (*E1).var_26 =
+            ((*E).var_0B as i32 + ComputeCosMult((*E1).var_27, r18, game) as i32 - 96i32) as u16;
+        (*E1).var_28 =
+            ((*E).var_0A as i32 + ComputeSinMult((*E1).var_2A, r18, game) as i32 + 112) as u16;
+        (*E1).var_29 =
+            ((*E).var_0B as i32 + ComputeCosMult((*E1).var_2A, r18, game) as i32 - 96i32) as u16;
+        r18 = byte!((*E1).var_21; 1) as u16;
+        (*E1).var_2B = ((*E1).var_28).wrapping_add(ComputeSinMult((*E1).var_2D, r18, game));
+        (*E1).var_2C = ((*E1).var_29).wrapping_add(ComputeCosMult((*E1).var_2D, r18, game));
+        (*E1).var_2E = ((*E1).var_28).wrapping_add(ComputeSinMult((*E1).var_30, r18, game));
+        (*E1).var_2F = ((*E1).var_29).wrapping_add(ComputeCosMult((*E1).var_30, r18, game));
+    };
+    MotherBrain_Phase3_Death_0 [] {
+        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
+        let E1 = Get_MotherBrain(0x40, game);
+        (*E1).base.properties = ((*E1).base.properties) | (0x400u16);
+        (*E).var_04 = 0;
+        if MotherBrain_MakeWalkBackwards(0x28, 6, game) & 1 != 0 {
+            (*E).var_A = ((0xa9af12i32) as u16);
+            (*E).var_F = 128;
+            MotherBrain_Phase3_Death_1(game);
+        }
+    };
+    MotherBrain_Phase3_Death_8 [] {
+        let mut v1: u16 = ((*E).var_F).wrapping_add(32);
+        (*E).var_F = v1;
+        let E1 = Get_MotherBrain(0x40, game);
+        let mut v3: i16 = (((*E1).base.y_pos) as i16).wrapping_add((byte!(v1; 1)) as i16);
+        if (v3 as u16) >= 0xc4 {
+            EnableEarthquakeAframes(2, game);
+            (*E).var_A = ((0xa9b15ei32) as u16);
+            (*E).var_F = 256;
+            v3 = 196;
+        }
+        (*E1).base.y_pos = v3 as u16;
+    };
+    MotherBrain_Phase3_Death_17_SpawnTimeBomb [] {
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+        if ((*E).var_F & 0x8000) != 0 {
+            (*E).var_A = ((0xa9b2e3i32) as u16);
+            SpawnEprojWithRoomGfx(
+                addr_kEproj_TimeBombSetJapaneseText as u16,
+                ((0xa9b2e3i32) as u16),
+                game,
+            );
+        }
+        MotherBrain_Phase3_Death_18_TypesZebesText(game);
+    };
+    MotherBrainsBrain_Shot [] {
+        if (*E).var_00 != 0 {
+            MotherBrain_Phase23_ShotReaction(game);
+            if (*E).var_00 == 1 {
+                CreateDudShot(game);
+            } else {
+                NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+            }
+        } else {
+            let v1: u16 = ((byte!(@pointer (ram_ptr!(game, u16; 0xc18))
+                .offset(word!(game.collision_detection_index) as isize); 1))
+                as u16)
+                & (7u16);
+            if g_byte_A9B546[v1 as usize] != 0 {
+                word!(
+                    game.plm_room_arguments[39],
+                    wrapping_add((g_byte_A9B546[v1 as usize]) as u16)
+                );
+                QueueSfx2_Max6(0x6e, game);
+                let mut v2: i16 = 13;
+                let E1 = Get_MotherBrain(0x40, game);
+                let flash_timer: u16 = (*E1).base.flash_timer;
+                if flash_timer != 0 && flash_timer & 1 != 0 {
+                    v2 = 14;
+                }
+                (*E1).base.flash_timer = v2 as u16;
+                NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+            }
+        };
+    };
+    MotherBrain_Phase3_BeamShotReaction [] {
+        let mut v1: i16 = (((*E).var_07) as i16).wrapping_sub(266);
+        if v1 < 0 {
+            (*Get_MotherBrain(0x40i32, game)).var_18 = ((0xa9c395i32) as u16);
+            v1 = 0;
+            (*E).var_F = 0;
+        }
+        (*E).var_07 = v1 as u16;
+    };
+    MotherBrain_Body_Phase2_Thinking [] {
+        let E1 = Get_MotherBrain(0x40, game);
+        if (*E1).base.health == 0 {
+            (*E).var_A = ((0xa9b8ebi32) as u16);
+            MotherBomb_FiringRainbowBeam_0(game);
+            return;
+        }
+        if (*E).var_02 == 0 {
+            let keep_walking: bool = if (*E1).base.health as i32 - 4500i32 & 0x8000 == 0 {
+                (word!(game.random_number) >= 0x1000)
+            } else if word!(game.random_number) < 0x2000 {
+                true
+            } else if word!(game.random_number) >= 0xa000 {
+                false
+            } else {
+                (*E).var_A = ((0xa9b87di32) as u16);
+                return;
+            };
+            if keep_walking {
+                MotherBrain_HandleWalking(game)
+            } else {
+                (*E).var_A = ((0xa9b64bi32) as u16);
+            }
+        }
+    };
+    MotherBrain_Body_Phase2_TryAttack [] {
+        let mut v0: i16 = (2i16).wrapping_mul(((*E).var_18) as i16);
+        if v0 != 0 {
+            if v0 == 2 {
+                MotherBrain_Phase2_Attack_Cooldown(game);
+            } else {
+                if v0 != 4 {
+                    Unreachable(game);
+                    loop {}
+                }
+                MotherBrain_Phase2_Attack_End(game);
+            }
+        } else {
+            (*E).parameter_1 = 64;
+            (*E).var_18 = (*E).var_18.wrapping_add(1);
+            if MotherBrain_Phase2_DecideAttackStrategy_DoubleRet(game) != 0 {
+                return;
+            }
+            let mut v2: u16 = addr_byte_A9B6DC as u16;
+            let E1 = Get_MotherBrain(0x40, game);
+            if abs16(((*E1).base.y_pos as i32 + 4 - word!(game.samus_y_pos) as i32) as u16) < 0x20 {
+                v2 = addr_byte_A9B6DF as u16;
+            }
+            let mut v4: u16 = 0;
+            let v5 = RomPtr_A9(v2, game);
+            if (word!(game.random_number) as u8) >= *v5 {
+                v4 = 2;
+                if (word!(game.random_number) as u8) >= *v5.offset(1) {
+                    v4 = 4;
+                    if (word!(game.random_number) as u8) >= *v5.offset(2) {
+                        v4 = 6;
+                    }
+                }
+            }
+            let v6: u16 = crate::rtl::rom_table_word!(game, 0xa9b6d4, (v4 >> 1) as isize);
+            if v6 as i32 == addr_kMotherBrain_Ilist_9ECC as i32 {
+                if (*E1).var_05 as i32 - 1i32 & 0x8000 != 0 {
+                    (*E).var_A = ((0xa9b781i32) as u16);
+                    MotherBrain_FiringBomb_DecideOnWalking(game);
+                }
+            } else if v6 as i32 == addr_kMotherBrain_Ilist_9F34 as i32 {
+                (*E).var_A = ((0xa9b80ei32) as u16);
+                MotherBomb_FiringLaser_PositionHead(game);
+            } else {
+                MotherBrain_SetBrainInstrs(v6, game);
+            }
+        };
+    };
+    MotherBrain_Phase2_Attack_Cooldown [] {
+        crate::update_place! { previous fresh9 = (*E).parameter_1 => (*E).parameter_1.wrapping_sub(1); }
+        if fresh9 == 1 {
+            (*E).var_18 = (*E).var_18.wrapping_add(1);
+        }
+    };
+    MotherBrain_Phase2_Attack_End [] {
+        (*E).var_18 = 0;
+        (*E).var_A = ((0xa9b605i32) as u16);
+    };
+    MotherBrain_FiringBomb_WalkingBackwards [] {
+        if MotherBrain_MakeWalkBackwards((*E).var_F, 6, game) & 1 != 0 {
+            MotherBrain_FiringBomb_DecideOnCrouching(game);
+        }
+    };
+    MotherBrain_PlayRainbowBeamSfx [] {
+        let mut mbn_var_15: i16 = (*E).var_15 as i16;
+        if mbn_var_15 >= 0 {
+            (*E).var_15 = ((mbn_var_15) as u16).wrapping_sub(1);
+            QueueSfx1_Max6(0x40, game);
+            (*E).var_16 = 1;
+        }
+    };
+    MotherBrain_AimBeamAndIncrWidth [] {
+        let mut v1: i16 = (((*E).var_33) as i16).wrapping_add(384);
+        if (*E).var_33 as i32 - 2688i32 & 0x8000 == 0 {
+            v1 = 3072;
+        }
+        (*E).var_33 = v1 as u16;
+        MotherBrain_AimBeam(game);
+    };
+    MotherBrain_HandleRainbowBeamExplosions [] {
+        (*E).parameter_2 = (*E).parameter_2.wrapping_sub(1);
+        if ((*E).parameter_2 & 0x8000) != 0 {
+            (*E).parameter_2 = 8;
+            (*E).parameter_1 = (*E).parameter_1.wrapping_add(1);
+            let v2: i32 = (*E).parameter_1 as i32 & 7;
+            game.eproj_spawn_pt = Point16U {
+                x: g_word_A9BCA6[v2 as usize] as u16,
+                y: g_word_A9BCB6[v2 as usize] as u16,
+            };
+            SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainRainbowBeamExplosion as u16, 0, game);
+            QueueSfx2_Max6(0x24, game);
+        }
+    };
+    MotherBrain_DrainedByShitroid_0 [] {
+        (*E).var_00 = 3;
+        let E1 = Get_MotherBrain(0x40, game);
+        set_fields! {[(*E1)], 8; var_32, var_33}
+        (*E1).var_34 = 1792;
+        (*E).var_A = ((0xa9be5di32) as u16);
+        (*E).var_F = 48;
+        MotherBrain_DrainedByShitroid_1(game);
+    };
+    MotherBrain_DrainedByShitroid_7 [] {
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+        let v2: bool = ((*E).var_F & 0x8000) != 0;
+        if v2 && {
+            (*E).var_F = 16;
+            let mut v3: u16 = ((*E).var_37).wrapping_add(1);
+            (*E).var_37 = v3;
+            MotherBrain_FadeToGray_Drained((v3).wrapping_sub(1), game) & 1 != 0
+        } {
+            let E1 = Get_MotherBrain(0x40, game);
+            (*E1).base.health = -29536i32 as u16;
+            (*E).var_1F = 1;
+            (*E1).var_14 = 0;
+            (*E).var_00 = 2;
+            (*E).var_A = ((0xa9c059i32) as u16);
+        }
+    };
+    MotherBrain_Phase2_Revive_0 [] {
+        (*E).var_A = ((0xa9c066i32) as u16);
+        (*E).var_F = 768;
+    };
+    MotherBrain_Phase2_Revive_2 [] {
+        (*E).var_A = ((0xa9c08fi32) as u16);
+        (*E).var_37 = 0;
+        MotherBrain_Phase2_Revive_3(game);
+    };
+    MotherBrain_Phase2_Revive_3 [] {
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+        let v1: bool = ((*E).var_F & 0x8000) != 0;
+        if v1 && {
+            (*E).var_F = 16;
+            let mut v2: u16 = ((*E).var_37).wrapping_add(1);
+            (*E).var_37 = v2;
+            MotherBrain_FadeFromGray_Drained((v2).wrapping_sub(1), game) & 1 != 0
+        } {
+            (*E).var_A = ((0xa9c0bai32) as u16);
+            (*Get_MotherBrain(0x40i32, game)).var_10 = 1;
+            MotherBrain_SetupBrainNormalPal(game);
+            MotherBrain_Phase2_Revive_4(game);
+        }
+    };
+    MotherBrain_Phase2_Revive_6 [] {
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+        let v1: bool = ((*E).var_F & 0x8000) != 0;
+        if v1 && MotherBrain_MakeWalkForwards(4, 0x50, game) & 1 != 0 {
+            (*E).var_A = ((0xa9c11ei32) as u16);
+            (*E).var_1F = 2;
+            (*Get_MotherBrain(0x40i32, game)).var_11 = 1;
+        }
+    };
+    MotherBrain_Phase2_Revive_7 [] {
+        (*E).var_13 = 0;
+        let E1 = Get_MotherBrain(0x40, game);
+        (*E1).var_31 = 1;
+        (*E1).var_32 = 2;
+        (*E1).var_33 = 4;
+        (*E1).var_34 = 64;
+        (*E).var_A = ((0xa9c147i32) as u16);
+        MotherBrain_Phase2_Revive_8(game);
+    };
+    MotherBrain_Phase3_Recover_MakeDistance [] {
+        (*E).var_00 = 4;
+        (*E).var_A = ((0xa9c1f0i32) as u16);
+        (*E).var_F = 32;
+        MotherBrain_MakeWalkBackwards(((*E).base.x_pos).wrapping_sub(14), 2, game);
+    };
+    MotherBrain_Phase3_Walk_TryToInchForward [] {
+        let mbn_var_07: u16 = (*E).var_07;
+        if mbn_var_07 != 0 {
+            let v3: u16 = (mbn_var_07).wrapping_add(32);
+            (*E).var_07 = v3;
+            if v3 >= 0x100 {
+                let v4: u16 = ((*E).base.x_pos).wrapping_add(1);
+                let E1 = Get_MotherBrain(0x40, game);
+                (*E1).var_1B = v4;
+                if MotherBrain_MakeWalkForwards(
+                    ((word!(game.random_number) as i32 & 2) + 4) as u16,
+                    (*E1).var_1B,
+                    game,
+                ) & 1
+                    != 0
+                {
+                    (*E).var_07 = 128;
+                }
+            }
+        } else {
+            let v6: u16 = ((*E).base.x_pos).wrapping_sub(14);
+            let E1_0 = Get_MotherBrain(0x40, game);
+            (*E1_0).var_1B = v6;
+            (*E1_0).var_1A = ((0xa9c2b3i32) as u16);
+            MotherBrain_Phase3_Walk_RetreatQuickly(game);
+        };
+    };
+    MotherBrain_HandleWalking [] {
+        if (*E).var_02 == 0 {
+            let mbn_var_07: u16 = (*E).var_07;
+            let can_pause_walk: bool = if mbn_var_07 != 0 {
+                let mut v2: u16 = (mbn_var_07).wrapping_add(6);
+                (*E).var_07 = v2;
+                !(v2 >= 0x100)
+                    && ({
+                        if (*E).base.x_pos as i32 - 48i32 & 0x8000 == 0 {
+                            return;
+                        }
+                        true
+                    })
+            } else {
+                (*E).var_07 = 1;
+                if (*E).base.x_pos as i32 - 48i32 & 0x8000 == 0 {
+                    MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_98C6 as u16, game);
+                    return;
+                }
+                true
+            };
+            if can_pause_walk && (word!(game.random_number) as i32 & 0xfff) - 4032i32 & 0x8000 != 0 {
+                return;
+            }
+            (*E).var_07 = 128;
+            if (*E).base.x_pos as i32 - 128i32 & 0x8000 != 0 {
+                MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_97A4 as u16, game);
+            }
+        }
+    };
+    MotherBrain_Pal_BeginScreenFlash [] {
+        (*E).var_0E = addr_stru_A9D046 as u16;
+        (*E).var_0F = 1;
+    };
+    MotherBrain_Pal_EndScreenFlash [] {
+        set_fields! {[(*E)], 0; var_0E, var_0F}
+        MotherBrain_Pal_WriteRoomPal(addr_word_A9D082 as u16, game);
+    };
+    MotherBrain_HandleBrainPal [] {
+        if (*E).var_00 != 1 {
+            let mut mbn_var_D_high: i8 = byte!((*E).var_D; 1) as i8;
+            if mbn_var_D_high != 0 {
+                byte!((*E).var_D; 1) = ((mbn_var_D_high) as u8).wrapping_sub(1);
+            } else {
+                let r18: u16 = crate::rtl::rom_table_word!(
+                    game,
+                    0xa9d260,
+                    (*(&raw mut (*E).var_E as *mut u8).offset(1) >> 1) as isize,
+                );
+                byte!((*E).var_D; 1) = (*E).var_E as u8;
+                let mut mbn_var_D: i8 = (*E).var_D as i8;
+                if mbn_var_D != 0 || (*Get_MotherBrain(0x40i32, game)).var_A as i32 == 0xa987a2 & 0xffff
+                {
+                    let v4: u8 = (mbn_var_D as i32 + 1 & 7) as u8;
+                    byte!((*E).var_D; 0) = v4;
+                    let mut v5: u16 = 290;
+                    if (*E).var_0D != 512 {
+                        v5 = 482;
+                    }
+                    WriteColorsToPalette(v5, 0xa9, (r18 as i32 + 8 * v4 as i32) as u16, 3, game);
+                }
+            }
+        }
+    };
 }
 pub unsafe fn WriteColorsToPalette(mut k: u16, db: u8, mut j: u16, a: u16, game: &mut Game) {
     let mut n: i32 = a as i32;
@@ -5190,10 +5138,6 @@ pub unsafe fn Shitroid_Main(game: &mut Game) {
         Shitroid_HandleNormalPalette(game);
     }
 }
-pub unsafe fn Shitroid_Func_3(k: u16, game: &mut Game) {
-    let E = Get_Shitroid(k as i32, game);
-    set_fields! {[(*E)], 0; var_B, var_C}
-}
 pub unsafe fn Shitroid_Func_4(game: &mut Game) {
     if word!(game.layer1_x_pos) as i32 - 513i32 & 0x8000 != 0 {
         word!(game.layer1_x_pos = 512);
@@ -5205,12 +5149,6 @@ pub unsafe fn Shitroid_Func_4(game: &mut Game) {
         (*E).var_A = ((0xa9f02bi32) as u16);
         (*E).var_04 = 1;
     }
-}
-pub unsafe fn Shitroid_Func_5(k: u16, game: &mut Game) {
-    let E = Get_Shitroid(k as i32, game);
-    (*E).var_A = ((0xa9f037i32) as u16);
-    (*E).var_F = 464;
-    Shitroid_Func_6(k, game);
 }
 pub unsafe fn Shitroid_Func_7(k: u16, game: &mut Game) {
     let rect: Rect16U = Rect16U {
@@ -5260,78 +5198,12 @@ pub unsafe fn Shitroid_Func_9(k: u16, game: &mut Game) {
         (*E).var_F = 320;
     }
 }
-pub unsafe fn Shitroid_Func_10(k: u16, game: &mut Game) {
-    let E = Get_Shitroid(k as i32, game);
-    let v2: i32 = ((*E).base.frame_counter as i32 & 6) >> 1;
-    let E1 = Get_Shitroid(k as i32 + 64, game);
-    (*E).base.x_pos = ((*E1).base.x_pos).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
-    (*E).base.y_pos = ((*E1).base.y_pos as i32 + g_word_A993C3[v2 as usize] as i32 - 32i32) as u16;
-    crate::update_place! { previous fresh13 = (*E).var_F => (*E).var_F.wrapping_sub(1); }
-    if fresh13 == 1 {
-        (*E).var_A = ((0xa9f125i32) as u16);
-        enemy_instruction! {[(*E).base]; instruction = addr_kShitroid_Ilist_F906 as u16, timer = 1}
-        (*E).base.timer = 0;
-        (*E).var_E = 10;
-    }
-}
 pub unsafe fn Shitroid_Func_11(k: u16, game: &mut Game) {
     (*Get_Shitroid(0x40i32, game)).var_08 = 1;
     let E = Get_Shitroid(k as i32, game);
     (*E).var_A = ((0xa9f138i32) as u16);
     (*E).var_F = 192;
     Shitroid_Func_12(k, game);
-}
-pub unsafe fn Shitroid_Func_12(k: u16, game: &mut Game) {
-    let E = Get_Shitroid(k as i32, game);
-    Shitroid_Func_GraduallyAccelerateTowards0x400(k, 0, (*E).base.x_pos, 104, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
-        (*E).var_A = ((0xa9f180i32) as u16);
-        (*E).parameter_2 = 1;
-        crate::update_place! { reference fresh14 = *(ram_ptr!(game, u16; 0xcd20)) => (*fresh14) | (0x100u16); }
-        crate::update_place! { reference fresh15 = *(ram_ptr!(game, u16; 0xcd20, 2)) => (*fresh15) | (0x100u16); }
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb763 as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x1f, 0x3, 0xb763 as VoidP), game);
-    }
-}
-pub unsafe fn Shitroid_Func_13(k: u16, game: &mut Game) {
-    let E = Get_Shitroid(k as i32, game);
-    let v2: u16 = abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)));
-    let mut shitro_var_02: u16 = 0;
-    if v2 >= 8 {
-        shitro_var_02 = (*E).var_02;
-        if shitro_var_02 != 0 {
-            shitro_var_02 = shitro_var_02.wrapping_sub(1);
-            if (shitro_var_02 & 0x8000) != 0 {
-                shitro_var_02 = 0;
-            }
-        }
-    } else {
-        shitro_var_02 = ((v2 >= 8) as i32 + (*E).var_02 as i32 + 2) as u16;
-    }
-    (*E).var_02 = shitro_var_02;
-    if shitro_var_02 >= 0x100 || word!(game.samus_x_pos) as i32 - 512i32 & 0x8000 != 0 {
-        (*Get_Shitroid(word!(game.cur_enemy_index) as i32, game)).var_A = ((0xa9f1fai32) as u16);
-    } else {
-        let shitro_var_01: u16 = (*E).var_01;
-        let mut v5: u16 = 0;
-        if shitro_var_01 != 0 {
-            (*E).var_01 = (shitro_var_01).wrapping_sub(1);
-            v5 = word!(game.samus_y_pos);
-        } else {
-            v5 = 80;
-            if (word!(game.random_number) & 0xfff) >= 0xfe0 {
-                (*E).var_01 = 32;
-            }
-        }
-        Shitroid_Func_GraduallyAccelerateTowards0x400(
-            word!(game.cur_enemy_index),
-            0xa,
-            word!(game.samus_x_pos),
-            v5,
-            game,
-        );
-    };
 }
 pub unsafe fn Shitroid_Func_14(k: u16, game: &mut Game) {
     Shitroid_Func_GraduallyAccelerateTowards0x400(
@@ -5346,39 +5218,6 @@ pub unsafe fn Shitroid_Func_15(k: u16, game: &mut Game) {
     CallSomeSamusCode(0x12, game);
     (*Get_Shitroid(0i32, game)).var_A = ((0xa9f21bi32) as u16);
     Shitroid_Func_16(k, game);
-}
-pub unsafe fn Shitroid_Func_16(k: u16, game: &mut Game) {
-    let E = Get_Shitroid(k as i32, game);
-    if word!(game.samus_health) < 2 {
-        word! { game, 0; samus_x_speed_divisor, bomb_counter }
-        (*E).var_A = ((0xa9f2a2i32) as u16);
-        set_fields! {[(*E)], 0; var_B, var_C}
-        Enemy_SetInstrList(k, addr_kShitroid_Ilist_F906 as u16, game);
-        (*E).var_E = 10;
-        CallSomeSamusCode(0x13, game);
-        SomeMotherBrainScripts(0, game);
-        (*E).var_04 = 0;
-        QueueMusic_Delayed8(7, game);
-    } else {
-        word!(game.cooldown_timer = 8);
-        word!(game.bomb_counter = 5);
-        word!(game.samus_x_speed_divisor = 2);
-        if word!(game.samus_y_speed) as i32 - 4i32 & 0x8000 == 0 {
-            word!(game.samus_y_speed = 2);
-        }
-        let v2: i32 = ((*E).base.frame_counter as i32 & 6) >> 1;
-        (*E).base.x_pos =
-            (word!(game.samus_x_pos)).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
-        (*E).base.y_pos =
-            (word!(game.samus_y_pos) as i32 + g_word_A993C3[v2 as usize] as i32 - 20i32) as u16;
-        Samus_DamageDueToShitroid(game);
-    };
-}
-pub unsafe fn Shitroid_Func_17(k: u16, game: &mut Game) {
-    let E = Get_Shitroid(k as i32, game);
-    (*E).var_A = ((0xa9f2aei32) as u16);
-    (*E).var_F = 120;
-    Shitroid_Func_18(k, game);
 }
 crate::game::countdown_callbacks! {
     pub unsafe fn (k: u16, game: &mut Game);
@@ -5478,16 +5317,121 @@ pub unsafe fn Shitroid_Func_23(game: &mut Game) {
         (*E).var_A = ((0xa9efdfi32) as u16);
     }
 }
-pub unsafe fn Shitroid_Func_24(k: u16, game: &mut Game) {
-    let E = Get_Shitroid(k as i32, game);
-    (*E).var_F = (*E).var_F.wrapping_sub(1);
-    if ((*E).var_F & 0x8000) != 0 {
-        SomeMotherBrainScripts(2, game);
-        (*E).parameter_2 = 1;
-        (*E).var_A = ((0xa9f3bei32) as u16);
-        Shitroid_Func_25(k, game);
-    } else {
-        Shitroid_Func_27(k, game);
+crate::prefixed_callbacks! {
+    pub unsafe fn (k: u16, game: &mut Game);
+    @prefix { let E = Get_Shitroid(k as i32, game); };
+    Shitroid_Func_3 [] {
+        set_fields! {[(*E)], 0; var_B, var_C}
+    };
+    Shitroid_Func_5 [] {
+        (*E).var_A = ((0xa9f037i32) as u16);
+        (*E).var_F = 464;
+        Shitroid_Func_6(k, game);
+    };
+    Shitroid_Func_10 [] {
+        let v2: i32 = ((*E).base.frame_counter as i32 & 6) >> 1;
+        let E1 = Get_Shitroid(k as i32 + 64, game);
+        (*E).base.x_pos = ((*E1).base.x_pos).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
+        (*E).base.y_pos = ((*E1).base.y_pos as i32 + g_word_A993C3[v2 as usize] as i32 - 32i32) as u16;
+        crate::update_place! { previous fresh13 = (*E).var_F => (*E).var_F.wrapping_sub(1); }
+        if fresh13 == 1 {
+            (*E).var_A = ((0xa9f125i32) as u16);
+            enemy_instruction! {[(*E).base]; instruction = addr_kShitroid_Ilist_F906 as u16, timer = 1}
+            (*E).base.timer = 0;
+            (*E).var_E = 10;
+        }
+    };
+    Shitroid_Func_12 [] {
+        Shitroid_Func_GraduallyAccelerateTowards0x400(k, 0, (*E).base.x_pos, 104, game);
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+        if ((*E).var_F & 0x8000) != 0 {
+            (*E).var_A = ((0xa9f180i32) as u16);
+            (*E).parameter_2 = 1;
+            crate::update_place! { reference fresh14 = *(ram_ptr!(game, u16; 0xcd20)) => (*fresh14) | (0x100u16); }
+            crate::update_place! { reference fresh15 = *(ram_ptr!(game, u16; 0xcd20, 2)) => (*fresh15) | (0x100u16); }
+            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb763 as VoidP), game);
+            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x1f, 0x3, 0xb763 as VoidP), game);
+        }
+    };
+    Shitroid_Func_13 [] {
+        let v2: u16 = abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)));
+        let mut shitro_var_02: u16 = 0;
+        if v2 >= 8 {
+            shitro_var_02 = (*E).var_02;
+            if shitro_var_02 != 0 {
+                shitro_var_02 = shitro_var_02.wrapping_sub(1);
+                if (shitro_var_02 & 0x8000) != 0 {
+                    shitro_var_02 = 0;
+                }
+            }
+        } else {
+            shitro_var_02 = ((v2 >= 8) as i32 + (*E).var_02 as i32 + 2) as u16;
+        }
+        (*E).var_02 = shitro_var_02;
+        if shitro_var_02 >= 0x100 || word!(game.samus_x_pos) as i32 - 512i32 & 0x8000 != 0 {
+            (*Get_Shitroid(word!(game.cur_enemy_index) as i32, game)).var_A = ((0xa9f1fai32) as u16);
+        } else {
+            let shitro_var_01: u16 = (*E).var_01;
+            let mut v5: u16 = 0;
+            if shitro_var_01 != 0 {
+                (*E).var_01 = (shitro_var_01).wrapping_sub(1);
+                v5 = word!(game.samus_y_pos);
+            } else {
+                v5 = 80;
+                if (word!(game.random_number) & 0xfff) >= 0xfe0 {
+                    (*E).var_01 = 32;
+                }
+            }
+            Shitroid_Func_GraduallyAccelerateTowards0x400(
+                word!(game.cur_enemy_index),
+                0xa,
+                word!(game.samus_x_pos),
+                v5,
+                game,
+            );
+        };
+    };
+    Shitroid_Func_16 [] {
+        if word!(game.samus_health) < 2 {
+            word! { game, 0; samus_x_speed_divisor, bomb_counter }
+            (*E).var_A = ((0xa9f2a2i32) as u16);
+            set_fields! {[(*E)], 0; var_B, var_C}
+            Enemy_SetInstrList(k, addr_kShitroid_Ilist_F906 as u16, game);
+            (*E).var_E = 10;
+            CallSomeSamusCode(0x13, game);
+            SomeMotherBrainScripts(0, game);
+            (*E).var_04 = 0;
+            QueueMusic_Delayed8(7, game);
+        } else {
+            word!(game.cooldown_timer = 8);
+            word!(game.bomb_counter = 5);
+            word!(game.samus_x_speed_divisor = 2);
+            if word!(game.samus_y_speed) as i32 - 4i32 & 0x8000 == 0 {
+                word!(game.samus_y_speed = 2);
+            }
+            let v2: i32 = ((*E).base.frame_counter as i32 & 6) >> 1;
+            (*E).base.x_pos =
+                (word!(game.samus_x_pos)).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
+            (*E).base.y_pos =
+                (word!(game.samus_y_pos) as i32 + g_word_A993C3[v2 as usize] as i32 - 20i32) as u16;
+            Samus_DamageDueToShitroid(game);
+        };
+    };
+    Shitroid_Func_17 [] {
+        (*E).var_A = ((0xa9f2aei32) as u16);
+        (*E).var_F = 120;
+        Shitroid_Func_18(k, game);
+    };
+    Shitroid_Func_24 [] {
+        (*E).var_F = (*E).var_F.wrapping_sub(1);
+        if ((*E).var_F & 0x8000) != 0 {
+            SomeMotherBrainScripts(2, game);
+            (*E).parameter_2 = 1;
+            (*E).var_A = ((0xa9f3bei32) as u16);
+            Shitroid_Func_25(k, game);
+        } else {
+            Shitroid_Func_27(k, game);
+        };
     };
 }
 pub unsafe fn Shitroid_Func_25(k: u16, game: &mut Game) {

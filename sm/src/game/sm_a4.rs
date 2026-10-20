@@ -483,26 +483,6 @@ pub unsafe fn Crocomire_Func_28(game: &mut Game) {
 pub unsafe fn Crocomire_Func_29(game: &mut Game) {
     word! { game, 0; reg_BG2HOFS, reg_BG2VOFS }
 }
-pub unsafe fn Crocomire_Func_30(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    if (*E).var_A == 0
-        && (((*E).base.x_pos as i32
-            - (*E).base.x_width as i32
-            - word!(game.samus_x_radius) as i32
-            - word!(game.samus_x_pos) as i32) as i16)
-            < 0
-    {
-        NormalEnemyTouchAi(game);
-        word!(
-            game.samus_x_pos = ((*E).base.x_pos as i32
-                - (*E).base.x_width as i32
-                - word!(game.samus_x_radius) as i32) as u16
-        );
-        word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
-        word!(game.extra_samus_x_displacement = -4i32 as u16);
-        word!(game.extra_samus_y_displacement = -1i32 as u16);
-    }
-}
 pub unsafe fn Crocomire_Func_31(game: &mut Game) {
     if word!(game.door_transition_flag_enemies) == 0 {
         if (*Get_Crocomire(0i32, game)).base.flash_timer != 0
@@ -519,33 +499,10 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Crocomire_Instr_7 [jp] { QueueSfx2_Max6(0x25, game); };
     Crocomire_Instr_19 [jp] { QueueSfx2_Max6(0x75, game); };
 }
-pub unsafe fn Crocomire_Func_35(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    let crocom_var_20: u16 = (*E).var_20;
-    if crocom_var_20 != 0 {
-        let v2: u16 = (crocom_var_20).wrapping_sub(1);
-        (*E).var_20 = v2;
-        if v2 == 0 {
-            (*E).var_20 = 32;
-            QueueSfx3_Max6(0x22, game);
-        }
-    }
-}
 pub unsafe fn Crocomire_Func_36(game: &mut Game) {
     Crocomire_Func_35(game);
     Crocomire_8BA4(game);
     Crocomire_8D47(game);
-}
-pub unsafe fn Crocomire_8D47(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    let crocom_var_D: u16 = (*E).var_D;
-    if crocom_var_D != 0 {
-        (*E).var_D = (crocom_var_D).wrapping_sub(1);
-    } else {
-        (*E).var_A = (*E).var_A.wrapping_add(1);
-        (*E).var_A = (*E).var_A.wrapping_add(1);
-        (*E).var_E = 768;
-    };
 }
 pub unsafe fn Crocomire_Func_37(game: &mut Game) {
     let E0 = Get_Crocomire(0, game);
@@ -721,21 +678,6 @@ pub unsafe fn Crocomire_Func_49(game: &mut Game) {
         word! { game, 0; camera_distance_index, croco_target_0688 }
     }
 }
-pub unsafe fn Crocomire_Func_50(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    let y_pos: u16 = (*E).base.y_pos;
-    let mut v2: u16 = addr_kCrocomire_Ilist_BF7E as u16;
-    if y_pos as i32 - 280i32 & 0x8000 != 0 {
-        v2 = addr_kCrocomire_Ilist_BF86 as u16;
-        if y_pos as i32 - 264i32 & 0x8000 != 0 {
-            v2 = addr_kCrocomire_Ilist_BF8C as u16;
-            if y_pos as i32 - 248i32 & 0x8000 != 0 {
-                v2 = addr_kCrocomire_Ilist_BF92 as u16;
-            }
-        }
-    }
-    enemy_instruction! {[(*E).base]; instruction = v2, timer = 1}
-}
 pub unsafe fn Crocomire_Func_51(game: &mut Game) {
     Crocomire_Func_53(game);
     let E = Get_Crocomire(0, game);
@@ -833,23 +775,6 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
         (*E).var_A = (*E).var_A.wrapping_add(1);
         (*E0).var_D = 48;
     };
-}
-pub unsafe fn Crocomire_Func_56(game: &mut Game) {
-    let E = Get_Crocomire(word!(game.cur_enemy_index) as i32, game);
-    let y_pos: u16 = (*E).base.y_pos;
-    let mut v2: u16 = addr_kCrocomire_Ilist_BF7E as u16;
-    if y_pos as i32 - 280i32 & 0x8000 != 0 {
-        v2 = addr_kCrocomire_Ilist_BF86 as u16;
-        if y_pos as i32 - 264i32 & 0x8000 != 0 {
-            v2 = addr_kCrocomire_Ilist_BF8C as u16;
-            if y_pos as i32 - 248i32 & 0x8000 != 0 {
-                v2 = addr_kCrocomire_Ilist_BF92 as u16;
-            }
-        }
-    }
-    enemy_instruction! {[(*E).base]; instruction = v2, timer = 1}
-    Crocomire_Func_53(game);
-    Crocomire_92D8(game);
 }
 pub unsafe fn Crocomire_929E(game: &mut Game) {
     Crocomire_Func_53(game);
@@ -968,52 +893,6 @@ pub unsafe fn Crocomire_Func_59(game: &mut Game) {
     word_transfers!(game, ascending, 1024; le(tilemap_stuff, 0) <- value(824));
     load_crocomire_tilemap_until_sentinel!(game, 0xa49e7b);
 }
-pub unsafe fn Crocomire_Func_60(game: &mut Game) {
-    let E = Get_Crocomire(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_A = ((*E).var_A).wrapping_add(2);
-    word! { game;
-        g_word_7E0692 = 256;
-        croco_cur_vline_idx = 0;
-        g_word_7E0698 = *((rom_ptr!(game, u16; 0xa49bc5) as *mut u8)
-            .offset(word!(game.croco_word_7E069A) as i32 as isize)
-            as *mut u16);
-        g_word_7E0694 = word!(game.g_word_7E0698);
-        g_word_7E0696 = *((rom_ptr!(game, u16; 0xa49bc7) as *mut u8)
-            .offset(word!(game.croco_word_7E069A) as i32 as isize)
-            as *mut u16);
-        g_word_7E068E = *((rom_ptr!(game, u16; 0xa49bc9) as *mut u8)
-            .offset(word!(game.croco_word_7E069A) as i32 as isize)
-            as *mut u16);
-    }
-    let bank: u8 = *((rom_ptr!(game, u16; 0xa49bcb) as *mut u8)
-        .offset(word!(game.croco_word_7E069A) as i32 as isize) as *mut u16)
-        as u8;
-    let mut i: i32 = word!(game.croco_word_7E069A) as i32 + 8;
-    loop {
-        let mut v2: u16 =
-            *((rom_ptr!(game, u16; 0xa49bc5) as *mut u8).offset(i as isize) as *mut u16);
-        if v2 == 0xffff {
-            break;
-        }
-        let mut v6: u16 = i as u16;
-        let mut v3: u16 =
-            *((rom_ptr!(game, u16; 0xa49bc7) as *mut u8).offset(i as isize) as *mut u16);
-        let mut n: i32 = word!(game.g_word_7E068E) as i32;
-        loop {
-            *(ram_ptr!(game, u16; v3 as isize)) = *(RomPtrWithBank(bank, v2, game) as *mut u16);
-            v3 = (v3).wrapping_add(2);
-            v2 = (v2).wrapping_add(2);
-            n -= 1;
-            if (n < 0) {
-                break;
-            }
-        }
-        i = v6 as i32 + 4;
-    }
-    word!(game.croco_word_7E069A = (i + 2) as u16);
-    word!(game.g_word_7E068A = (i + 2) as u16);
-    word_transfers!(game, descending, 65; native(0x71c) <- value(0));
-}
 pub unsafe fn Crocomire_Func_62(game: &mut Game) {
     let v0: u16 = word!(game.g_word_7E068A);
     let v1: u16 = word!(game.vram_write_queue_tail);
@@ -1071,10 +950,6 @@ pub unsafe fn Crocomire_950F(game: &mut Game) {
     *(ram_ptr!(game, u16; 0xcae0, 4)) = -13330i32 as u16;
     *(ram_ptr!(game, u16; 0xcae0, 6)) = 0;
     (*v4).var_1F = SpawnHdmaObject(0xa4, &raw const unk_A49559 as *const c_void, game);
-}
-pub unsafe fn Crocomire_Func_63(game: &mut Game) {
-    let E = Get_Crocomire(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_A = ((*E).var_A).wrapping_add(2);
 }
 pub unsafe fn Crocomire_Func_65(game: &mut Game) {
     Crocomire_Func_53(game);
@@ -1147,20 +1022,6 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
     }
     word!(game.croco_word_7E069A = (i + 2) as u16);
     word!(game.hdma_object_channels_bitmask[((*E0).var_1F >> 1)] = 0);
-}
-pub unsafe fn Crocomire_Func_66(game: &mut Game) {
-    let E = Get_Crocomire(word!(game.cur_enemy_index) as i32, game);
-    set_fields! {[(*E)], 0; var_E, var_F}
-    (*E).var_D = 2048;
-    word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(824));
-    let v2: u16 = word!(game.vram_write_queue_tail);
-    let mut v3 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-    (*v3).size = 2048;
-    (*v3).src.addr = 0x2000 as VoidP;
-    *(&raw mut (*v3).src.bank as *mut u16) = 126;
-    (*v3).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfe) << 8) as u16;
-    word!(game.vram_write_queue_tail = (v2).wrapping_add(7));
-    Crocomire_9BB3(game);
 }
 static kCrocoEraseLineMasks: [u8; 8] = [0x7f, 0xbf, 0xdf, 0xef, 0xf7, 0xfb, 0xfd, 0xfe];
 pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
@@ -1251,18 +1112,6 @@ pub unsafe fn Crocomire_Func_68(game: &mut Game) {
         Crocomire_9BB3(game);
     }
 }
-pub unsafe fn Crocomire_Func_69(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    let v1: u16 = ((*E).base.x_pos).wrapping_sub(2);
-    (*E).base.x_pos = v1;
-    if v1 as i32 - 480i32 & 0x8000 != 0 {
-        (*E).base.x_pos = 480;
-        (*E).base.y_pos = 54;
-        (*E).var_A = 62;
-    } else {
-        (*E).base.y_pos = 220;
-    };
-}
 pub unsafe fn Crocomire_Func_70(game: &mut Game) {
     let E0 = Get_Crocomire(0, game);
     let E1 = Get_Crocomire(0x40, game);
@@ -1308,87 +1157,6 @@ pub unsafe fn Crocomire_Func_70(game: &mut Game) {
         }
     };
 }
-pub unsafe fn Crocomire_Func_71(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    let crocom_var_D: u16 = (*E).var_D;
-    if crocom_var_D != 0 {
-        (*E).var_D = (crocom_var_D).wrapping_sub(1);
-        let mut v3: i16 = word!(game.croco_target_0688) as i16;
-        let v4: i32 = word!(game.croco_target_0688) as i32 >> 1;
-        if crate::rtl::rom_table_word!(game, 0xa499cb, v4 as isize) != 0xffff {
-            let v5: u16 = word!(game.vram_write_queue_tail);
-            let mut v6: *mut VramWriteEntry =
-                gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-            (*v6).size = 512;
-            (*v6).src.addr = crate::rtl::rom_table_word!(game, 0xa499d9, v4 as isize);
-            *(&raw mut (*v6).src.bank as *mut u16) = 173;
-            (*v6).vram_dst = (crate::rtl::rom_table_word!(game, 0xa499cb, v4 as isize) as i32
-                + ((*ram_ptr!(game; 0x52) as i32 & 7) << 13)) as u16;
-            word!(game.vram_write_queue_tail = (v5).wrapping_add(7));
-            word!(game.croco_target_0688 = ((v3) as u16).wrapping_add(2));
-        }
-    } else {
-        (*E).base.x_pos = 480;
-        (*E).base.y_pos = 54;
-        (*Get_Crocomire(0x80i32, game)).var_D = 80;
-        set_fields! {[(*E)], 0; var_E, var_F}
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x20, 0x3, 0xb753 as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb757 as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x70, 0xb, 0xb747 as VoidP), game);
-        QueueSfx2_Max6(0x29, game);
-        enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E158 as u16, timer = 1}
-        (*E).base.palette_index = 0;
-        word_transfers!(game, descending, 16; le(palette_buffer, 159) <- rom(0xa4b8fd, 15));
-        ClearEprojs(game);
-        let v8: u16 = 8;
-        for _ in 0..8 {
-            SpawnEprojWithGfx(
-                v8,
-                word!(game.cur_enemy_index),
-                addr_kEproj_CrocomireSpikeWallPieces as u16,
-                game,
-            );
-        }
-        QueueSfx2_Max6(0x30, game);
-        Crocomire_9BB3(game);
-    };
-}
-pub unsafe fn Crocomire_Func_72(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    if (*E).base.x_pos as i32 - 224i32 & 0x8000 != 0 {
-        let mut t: u32 = (words!((*E), var_F, var_E)).wrapping_add(0x8000);
-        if (t >> 16i32).wrapping_sub(2) & 0x8000 == 0 {
-            t = t & 0xffff | ((2i32) << 16) as u32;
-        }
-        words!((*E), var_F, var_E = t);
-        words!((*E).base, x_pos, x_subpos += t);
-    }
-    let E2 = Get_Crocomire(0x80, game);
-    if (*E2).var_D != 0 && {
-        crate::update_place! { previous fresh19 = (*E2).var_D => (*E2).var_D.wrapping_sub(1); }
-        fresh19 == 1
-    } {
-        (*E).var_E = 0;
-        enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E14A as u16, timer = 1}
-        Crocomire_9BB3(game);
-    }
-}
-pub unsafe fn Crocomire_Func_73(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    let mut t: u32 = (words!((*E), var_F, var_E)).wrapping_add(2048);
-    if (t >> 16i32).wrapping_sub(5) & 0x8000 == 0 {
-        t = t & 0xffff | ((5i32) << 16) as u32;
-    }
-    words!((*E), var_F, var_E = t);
-    words!((*E).base, y_pos, y_subpos += 0xe000);
-    words!((*E).base, x_pos, x_subpos += t);
-    if (*E).base.x_pos as i32 - 576i32 & 0x8000 == 0 {
-        QueueSfx2_Max6(0x25, game);
-        (*Get_Crocomire(0x40i32, game)).base.palette_index = (*E).base.palette_index;
-        enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E158 as u16, timer = 1}
-        Crocomire_9BB3(game);
-    }
-}
 crate::forward_calls! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     Crocomire_Instr_8 => Crocomire_Func_87(jp, 0xffe0, game);
     Crocomire_Instr_6 => Crocomire_Func_87(jp, 0, game);
@@ -1413,25 +1181,6 @@ pub unsafe fn Crocomire_Func_87(jp: *const u16, a: u16, game: &mut Game) -> *con
     SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
     jp
 }
-pub unsafe fn Crocomire_Func_88(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    if (*E).base.current_instruction as i32 + 0x1e3a & 0x8000 != 0 {
-        let mut t: u32 = (words!((*E), var_F, var_E)).wrapping_add(4096);
-        if (t >> 16i32).wrapping_sub(6) & 0x8000 == 0 {
-            t = t & 0xffff | ((6i32) << 16) as u32;
-        }
-        words!((*E), var_F, var_E = t);
-    } else {
-        enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E1CC as u16, timer = 1}
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(64);
-        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(21);
-        (*E).base.y_height = 28;
-        (*E).base.x_width = 40;
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb753 as VoidP), game);
-        Enemy_ItemDrop_Crocomire(0, game);
-        Crocomire_9BB3(game);
-    };
-}
 pub unsafe fn Crocomire_9B65(game: &mut Game) {
     *(ram_ptr!(game, u16; 0xcd20)) = 257;
     *(ram_ptr!(game, u16; 0xcd20, 2)) = 257;
@@ -1440,12 +1189,6 @@ pub unsafe fn Crocomire_9B65(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_89(game: &mut Game) {
     Crocomire_9BB3(game);
-}
-pub unsafe fn Crocomire_Func_90(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    if (*E).base.current_instruction as i32 + 0x1e3a & 0x8000 == 0 {
-        Crocomire_9BB3(game);
-    }
 }
 pub unsafe fn Crocomire_9B86(game: &mut Game) {
     QueueMusic_Delayed8(6, game);
@@ -1456,25 +1199,12 @@ pub unsafe fn Crocomire_9B86(game: &mut Game) {
     Crocomire_Func_87(null::<u16>(), 0x10, game);
     Crocomire_9BB3(game);
 }
-pub unsafe fn Crocomire_9BB3(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    (*E).var_A = (*E).var_A.wrapping_add(1);
-    (*E).var_A = (*E).var_A.wrapping_add(1);
-}
 pub use self::Crocomire_Func_89 as Crocomire_Func_91;
 pub unsafe fn Crocomire_Func_92(game: &mut Game) {
     NormalEnemyTouchAi(game);
     let E = Get_Crocomire(0, game);
     (*E).var_B = ((*E).var_B) | (0x4000u16);
     word!(game.extra_samus_x_displacement = -4i32 as u16);
-}
-pub unsafe fn Crocomire_Func_93(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    let mut v1: u16 = ((*E).var_B) & (0xfu16);
-    if v1 as i32 - 15i32 & 0x8000 != 0 {
-        v1 = v1.wrapping_add(1);
-    }
-    (*E).var_B = ((*E).var_B) | (v1);
 }
 pub unsafe fn Crocomire_Func_94(game: &mut Game) {
     let v0: i32 = word!(game.collision_detection_index) as i32;
@@ -1489,105 +1219,364 @@ pub unsafe fn Crocomire_Func_94(game: &mut Game) {
     }) as u16;
     SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, v1, game);
 }
-pub unsafe fn Crocomire_Powerbomb(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    if (*E).var_A == 0 && g_word_A4869E != 0 {
-        (*E).var_D = g_word_A4869E;
-        if (*E).var_C != 24 {
-            (*E).var_B = ((*E).var_B & 0x3ff0 | 0x8000);
-            (*E).var_E = 10;
-            (*E).base.flash_timer = ((*E).base.flash_timer).wrapping_add(4);
-            (*E).base.ai_handler_bits = ((*E).base.ai_handler_bits) | (2u16);
-            (*E).var_C = 24;
-            let mut spritemap_pointer: u16 = (*E).base.spritemap_pointer;
-            let mut v3: u16 = 0;
-            let mut n: i32 = *(RomPtr_A4(spritemap_pointer, game) as *mut u16) as i32;
-            loop {
-                let mut v2: u16 = *(RomPtr_A4(spritemap_pointer, game) as *mut u16).offset(3);
-                v3 = addr_kCrocomire_Ilist_BDAE as u16;
-                if v2 as i32 == addr_kCrocomire_BigSprmap_D600 as i32 {
-                    break;
-                }
-                v3 = addr_kCrocomire_Ilist_BDB2 as u16;
-                if v2 as i32 == addr_kCrocomire_BigSprmap_D51C as i32 {
-                    break;
-                }
-                spritemap_pointer = (spritemap_pointer).wrapping_add(8);
-                n -= 1;
-                if (n != 0) {
-                    continue;
-                }
-                v3 = addr_kCrocomire_Ilist_BDB6 as u16;
-                break;
-            }
-            let E0 = Get_Crocomire(0, game);
-            enemy_instruction! {[(*E0).base]; instruction = v3, timer = 1}
+crate::prefixed_callbacks! {
+    pub unsafe fn (game: &mut Game);
+    @prefix { let E = Get_Crocomire(0, game); };
+    Crocomire_Func_30 [] {
+        if (*E).var_A == 0
+            && (((*E).base.x_pos as i32
+                - (*E).base.x_width as i32
+                - word!(game.samus_x_radius) as i32
+                - word!(game.samus_x_pos) as i32) as i16)
+                < 0
+        {
+            NormalEnemyTouchAi(game);
+            word!(
+                game.samus_x_pos = ((*E).base.x_pos as i32
+                    - (*E).base.x_width as i32
+                    - word!(game.samus_x_radius) as i32) as u16
+            );
+            word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
+            word!(game.extra_samus_x_displacement = -4i32 as u16);
+            word!(game.extra_samus_y_displacement = -1i32 as u16);
         }
-    }
-}
-pub unsafe fn Crocomire_Func_95(game: &mut Game) {
-    let E = Get_Crocomire(0, game);
-    (*E).base.invincibility_timer = 0;
-    let advance_animation: bool = ((((*E).base.x_pos as i32
-        - (*E).base.x_width as i32
-        - 256i32
-        - word!(game.layer1_x_pos) as i32) as i16)
-        >= 0)
-        || ({
-            let mut v2: u16 = 0;
-            let mut v1: u16 = word!(game.projectile_type[word!(game.collision_detection_index)]);
-            if (v1 & 0xf00) != 0 {
-                let mut v3: i16 = ((v1) as i16) & (0xf00i16);
-                v2 = g_word_A4869A;
-                if v3 != 256 {
-                    v2 = g_word_A4869C;
-                    if v3 != 512 {
-                        v2 = 0;
+    };
+    Crocomire_Func_35 [] {
+        let crocom_var_20: u16 = (*E).var_20;
+        if crocom_var_20 != 0 {
+            let v2: u16 = (crocom_var_20).wrapping_sub(1);
+            (*E).var_20 = v2;
+            if v2 == 0 {
+                (*E).var_20 = 32;
+                QueueSfx3_Max6(0x22, game);
+            }
+        }
+    };
+    Crocomire_8D47 [] {
+        let crocom_var_D: u16 = (*E).var_D;
+        if crocom_var_D != 0 {
+            (*E).var_D = (crocom_var_D).wrapping_sub(1);
+        } else {
+            (*E).var_A = (*E).var_A.wrapping_add(1);
+            (*E).var_A = (*E).var_A.wrapping_add(1);
+            (*E).var_E = 768;
+        };
+    };
+    Crocomire_Func_50 [] {
+        let y_pos: u16 = (*E).base.y_pos;
+        let mut v2: u16 = addr_kCrocomire_Ilist_BF7E as u16;
+        if y_pos as i32 - 280i32 & 0x8000 != 0 {
+            v2 = addr_kCrocomire_Ilist_BF86 as u16;
+            if y_pos as i32 - 264i32 & 0x8000 != 0 {
+                v2 = addr_kCrocomire_Ilist_BF8C as u16;
+                if y_pos as i32 - 248i32 & 0x8000 != 0 {
+                    v2 = addr_kCrocomire_Ilist_BF92 as u16;
+                }
+            }
+        }
+        enemy_instruction! {[(*E).base]; instruction = v2, timer = 1}
+    };
+    Crocomire_Func_69 [] {
+        let v1: u16 = ((*E).base.x_pos).wrapping_sub(2);
+        (*E).base.x_pos = v1;
+        if v1 as i32 - 480i32 & 0x8000 != 0 {
+            (*E).base.x_pos = 480;
+            (*E).base.y_pos = 54;
+            (*E).var_A = 62;
+        } else {
+            (*E).base.y_pos = 220;
+        };
+    };
+    Crocomire_Func_71 [] {
+        let crocom_var_D: u16 = (*E).var_D;
+        if crocom_var_D != 0 {
+            (*E).var_D = (crocom_var_D).wrapping_sub(1);
+            let mut v3: i16 = word!(game.croco_target_0688) as i16;
+            let v4: i32 = word!(game.croco_target_0688) as i32 >> 1;
+            if crate::rtl::rom_table_word!(game, 0xa499cb, v4 as isize) != 0xffff {
+                let v5: u16 = word!(game.vram_write_queue_tail);
+                let mut v6: *mut VramWriteEntry =
+                    gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
+                (*v6).size = 512;
+                (*v6).src.addr = crate::rtl::rom_table_word!(game, 0xa499d9, v4 as isize);
+                *(&raw mut (*v6).src.bank as *mut u16) = 173;
+                (*v6).vram_dst = (crate::rtl::rom_table_word!(game, 0xa499cb, v4 as isize) as i32
+                    + ((*ram_ptr!(game; 0x52) as i32 & 7) << 13)) as u16;
+                word!(game.vram_write_queue_tail = (v5).wrapping_add(7));
+                word!(game.croco_target_0688 = ((v3) as u16).wrapping_add(2));
+            }
+        } else {
+            (*E).base.x_pos = 480;
+            (*E).base.y_pos = 54;
+            (*Get_Crocomire(0x80i32, game)).var_D = 80;
+            set_fields! {[(*E)], 0; var_E, var_F}
+            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x20, 0x3, 0xb753 as VoidP), game);
+            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb757 as VoidP), game);
+            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x70, 0xb, 0xb747 as VoidP), game);
+            QueueSfx2_Max6(0x29, game);
+            enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E158 as u16, timer = 1}
+            (*E).base.palette_index = 0;
+            word_transfers!(game, descending, 16; le(palette_buffer, 159) <- rom(0xa4b8fd, 15));
+            ClearEprojs(game);
+            let v8: u16 = 8;
+            for _ in 0..8 {
+                SpawnEprojWithGfx(
+                    v8,
+                    word!(game.cur_enemy_index),
+                    addr_kEproj_CrocomireSpikeWallPieces as u16,
+                    game,
+                );
+            }
+            QueueSfx2_Max6(0x30, game);
+            Crocomire_9BB3(game);
+        };
+    };
+    Crocomire_Func_72 [] {
+        if (*E).base.x_pos as i32 - 224i32 & 0x8000 != 0 {
+            let mut t: u32 = (words!((*E), var_F, var_E)).wrapping_add(0x8000);
+            if (t >> 16i32).wrapping_sub(2) & 0x8000 == 0 {
+                t = t & 0xffff | ((2i32) << 16) as u32;
+            }
+            words!((*E), var_F, var_E = t);
+            words!((*E).base, x_pos, x_subpos += t);
+        }
+        let E2 = Get_Crocomire(0x80, game);
+        if (*E2).var_D != 0 && {
+            crate::update_place! { previous fresh19 = (*E2).var_D => (*E2).var_D.wrapping_sub(1); }
+            fresh19 == 1
+        } {
+            (*E).var_E = 0;
+            enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E14A as u16, timer = 1}
+            Crocomire_9BB3(game);
+        }
+    };
+    Crocomire_Func_73 [] {
+        let mut t: u32 = (words!((*E), var_F, var_E)).wrapping_add(2048);
+        if (t >> 16i32).wrapping_sub(5) & 0x8000 == 0 {
+            t = t & 0xffff | ((5i32) << 16) as u32;
+        }
+        words!((*E), var_F, var_E = t);
+        words!((*E).base, y_pos, y_subpos += 0xe000);
+        words!((*E).base, x_pos, x_subpos += t);
+        if (*E).base.x_pos as i32 - 576i32 & 0x8000 == 0 {
+            QueueSfx2_Max6(0x25, game);
+            (*Get_Crocomire(0x40i32, game)).base.palette_index = (*E).base.palette_index;
+            enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E158 as u16, timer = 1}
+            Crocomire_9BB3(game);
+        }
+    };
+    Crocomire_Func_88 [] {
+        if (*E).base.current_instruction as i32 + 0x1e3a & 0x8000 != 0 {
+            let mut t: u32 = (words!((*E), var_F, var_E)).wrapping_add(4096);
+            if (t >> 16i32).wrapping_sub(6) & 0x8000 == 0 {
+                t = t & 0xffff | ((6i32) << 16) as u32;
+            }
+            words!((*E), var_F, var_E = t);
+        } else {
+            enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E1CC as u16, timer = 1}
+            (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(64);
+            (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(21);
+            (*E).base.y_height = 28;
+            (*E).base.x_width = 40;
+            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb753 as VoidP), game);
+            Enemy_ItemDrop_Crocomire(0, game);
+            Crocomire_9BB3(game);
+        };
+    };
+    Crocomire_Func_90 [] {
+        if (*E).base.current_instruction as i32 + 0x1e3a & 0x8000 == 0 {
+            Crocomire_9BB3(game);
+        }
+    };
+    Crocomire_9BB3 [] {
+        (*E).var_A = (*E).var_A.wrapping_add(1);
+        (*E).var_A = (*E).var_A.wrapping_add(1);
+    };
+    Crocomire_Func_93 [] {
+        let mut v1: u16 = ((*E).var_B) & (0xfu16);
+        if v1 as i32 - 15i32 & 0x8000 != 0 {
+            v1 = v1.wrapping_add(1);
+        }
+        (*E).var_B = ((*E).var_B) | (v1);
+    };
+    Crocomire_Powerbomb [] {
+        if (*E).var_A == 0 && g_word_A4869E != 0 {
+            (*E).var_D = g_word_A4869E;
+            if (*E).var_C != 24 {
+                (*E).var_B = ((*E).var_B & 0x3ff0 | 0x8000);
+                (*E).var_E = 10;
+                (*E).base.flash_timer = ((*E).base.flash_timer).wrapping_add(4);
+                (*E).base.ai_handler_bits = ((*E).base.ai_handler_bits) | (2u16);
+                (*E).var_C = 24;
+                let mut spritemap_pointer: u16 = (*E).base.spritemap_pointer;
+                let mut v3: u16 = 0;
+                let mut n: i32 = *(RomPtr_A4(spritemap_pointer, game) as *mut u16) as i32;
+                loop {
+                    let mut v2: u16 = *(RomPtr_A4(spritemap_pointer, game) as *mut u16).offset(3);
+                    v3 = addr_kCrocomire_Ilist_BDAE as u16;
+                    if v2 as i32 == addr_kCrocomire_BigSprmap_D600 as i32 {
+                        break;
+                    }
+                    v3 = addr_kCrocomire_Ilist_BDB2 as u16;
+                    if v2 as i32 == addr_kCrocomire_BigSprmap_D51C as i32 {
+                        break;
+                    }
+                    spritemap_pointer = (spritemap_pointer).wrapping_add(8);
+                    n -= 1;
+                    if (n != 0) {
+                        continue;
+                    }
+                    v3 = addr_kCrocomire_Ilist_BDB6 as u16;
+                    break;
+                }
+                let E0 = Get_Crocomire(0, game);
+                enemy_instruction! {[(*E0).base]; instruction = v3, timer = 1}
+            }
+        }
+    };
+    Crocomire_Func_95 [] {
+        (*E).base.invincibility_timer = 0;
+        let advance_animation: bool = ((((*E).base.x_pos as i32
+            - (*E).base.x_width as i32
+            - 256i32
+            - word!(game.layer1_x_pos) as i32) as i16)
+            >= 0)
+            || ({
+                let mut v2: u16 = 0;
+                let mut v1: u16 = word!(game.projectile_type[word!(game.collision_detection_index)]);
+                if (v1 & 0xf00) != 0 {
+                    let mut v3: i16 = ((v1) as i16) & (0xf00i16);
+                    v2 = g_word_A4869A;
+                    if v3 != 256 {
+                        v2 = g_word_A4869C;
+                        if v3 != 512 {
+                            v2 = 0;
+                        }
+                    }
+                } else {
+                    v2 = g_word_A48698;
+                    if (v1 & 0x10) == 0 {
+                        (*E).base.instruction_timer = g_word_A486A0;
+                        Crocomire_Func_1(game);
+                        return;
                     }
                 }
-            } else {
-                v2 = g_word_A48698;
-                if (v1 & 0x10) == 0 {
-                    (*E).base.instruction_timer = g_word_A486A0;
-                    Crocomire_Func_1(game);
-                    return;
+                (v2 != 0)
+                    && ({
+                        (*E).var_D = ((*E).var_D).wrapping_add(v2);
+                        true
+                    })
+            });
+        if advance_animation {
+            let mut v4: u16 = ((*E).var_B) & (0xfu16);
+            if v4 as i32 - 15i32 & 0x8000 != 0 {
+                v4 = v4.wrapping_add(1);
+            }
+            if ((*E).var_B & 0x800) == 0 {
+                let mut v5: u16 = g_word_A48692;
+                if (*E).var_C == 8 {
+                    v5 = g_word_A48694;
                 }
+                (*E).base.instruction_timer = ((*E).base.instruction_timer).wrapping_add(v5);
             }
-            (v2 != 0)
-                && ({
-                    (*E).var_D = ((*E).var_D).wrapping_add(v2);
-                    true
-                })
-        });
-    if advance_animation {
-        let mut v4: u16 = ((*E).var_B) & (0xfu16);
-        if v4 as i32 - 15i32 & 0x8000 != 0 {
-            v4 = v4.wrapping_add(1);
+            (*E).var_B = (v4 | (*E).var_B & 0xb7f0 | 0x800);
+            (*E).var_E = 10;
         }
-        if ((*E).var_B & 0x800) == 0 {
-            let mut v5: u16 = g_word_A48692;
-            if (*E).var_C == 8 {
-                v5 = g_word_A48694;
-            }
-            (*E).base.instruction_timer = ((*E).base.instruction_timer).wrapping_add(v5);
-        }
-        (*E).var_B = (v4 | (*E).var_B & 0xb7f0 | 0x800);
-        (*E).var_E = 10;
-    }
-    (*E).base.flash_timer = ((*E).base.flash_timer).wrapping_add(14);
-    (*E).base.ai_handler_bits = ((*E).base.ai_handler_bits) | (2u16);
+        (*E).base.flash_timer = ((*E).base.flash_timer).wrapping_add(14);
+        (*E).base.ai_handler_bits = ((*E).base.ai_handler_bits) | (2u16);
+    };
 }
 pub use self::Crocomire_Func_94 as Crocomire_Func_1;
-pub unsafe fn CrocomireTongue_Init(game: &mut Game) {
-    let E = Get_Crocomire(word!(game.cur_enemy_index) as i32, game);
-    if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 2) != 0 {
-        (*E).base.properties = ((*E).base.properties & 0xdcff | 0x300);
-    } else {
-        (*E).base.current_instruction = addr_kCrocomire_Ilist_BE56 as u16;
-        (*E).base.extra_properties = ((*E).base.extra_properties) | (0x404u16);
-        (*E).base.instruction_timer = 1;
-        (*E).var_A = 23;
-        (*E).base.palette_index = 3584;
+crate::prefixed_callbacks! {
+    pub unsafe fn (game: &mut Game);
+    @prefix { let E = Get_Crocomire(word!(game.cur_enemy_index) as i32, game); };
+    Crocomire_Func_56 [] {
+        let y_pos: u16 = (*E).base.y_pos;
+        let mut v2: u16 = addr_kCrocomire_Ilist_BF7E as u16;
+        if y_pos as i32 - 280i32 & 0x8000 != 0 {
+            v2 = addr_kCrocomire_Ilist_BF86 as u16;
+            if y_pos as i32 - 264i32 & 0x8000 != 0 {
+                v2 = addr_kCrocomire_Ilist_BF8C as u16;
+                if y_pos as i32 - 248i32 & 0x8000 != 0 {
+                    v2 = addr_kCrocomire_Ilist_BF92 as u16;
+                }
+            }
+        }
+        enemy_instruction! {[(*E).base]; instruction = v2, timer = 1}
+        Crocomire_Func_53(game);
+        Crocomire_92D8(game);
+    };
+    Crocomire_Func_60 [] {
+        (*E).var_A = ((*E).var_A).wrapping_add(2);
+        word! { game;
+            g_word_7E0692 = 256;
+            croco_cur_vline_idx = 0;
+            g_word_7E0698 = *((rom_ptr!(game, u16; 0xa49bc5) as *mut u8)
+                .offset(word!(game.croco_word_7E069A) as i32 as isize)
+                as *mut u16);
+            g_word_7E0694 = word!(game.g_word_7E0698);
+            g_word_7E0696 = *((rom_ptr!(game, u16; 0xa49bc7) as *mut u8)
+                .offset(word!(game.croco_word_7E069A) as i32 as isize)
+                as *mut u16);
+            g_word_7E068E = *((rom_ptr!(game, u16; 0xa49bc9) as *mut u8)
+                .offset(word!(game.croco_word_7E069A) as i32 as isize)
+                as *mut u16);
+        }
+        let bank: u8 = *((rom_ptr!(game, u16; 0xa49bcb) as *mut u8)
+            .offset(word!(game.croco_word_7E069A) as i32 as isize) as *mut u16)
+            as u8;
+        let mut i: i32 = word!(game.croco_word_7E069A) as i32 + 8;
+        loop {
+            let mut v2: u16 =
+                *((rom_ptr!(game, u16; 0xa49bc5) as *mut u8).offset(i as isize) as *mut u16);
+            if v2 == 0xffff {
+                break;
+            }
+            let mut v6: u16 = i as u16;
+            let mut v3: u16 =
+                *((rom_ptr!(game, u16; 0xa49bc7) as *mut u8).offset(i as isize) as *mut u16);
+            let mut n: i32 = word!(game.g_word_7E068E) as i32;
+            loop {
+                *(ram_ptr!(game, u16; v3 as isize)) = *(RomPtrWithBank(bank, v2, game) as *mut u16);
+                v3 = (v3).wrapping_add(2);
+                v2 = (v2).wrapping_add(2);
+                n -= 1;
+                if (n < 0) {
+                    break;
+                }
+            }
+            i = v6 as i32 + 4;
+        }
+        word!(game.croco_word_7E069A = (i + 2) as u16);
+        word!(game.g_word_7E068A = (i + 2) as u16);
+        word_transfers!(game, descending, 65; native(0x71c) <- value(0));
+    };
+    Crocomire_Func_63 [] {
+        (*E).var_A = ((*E).var_A).wrapping_add(2);
+    };
+    Crocomire_Func_66 [] {
+        set_fields! {[(*E)], 0; var_E, var_F}
+        (*E).var_D = 2048;
+        word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(824));
+        let v2: u16 = word!(game.vram_write_queue_tail);
+        let mut v3 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
+        (*v3).size = 2048;
+        (*v3).src.addr = 0x2000 as VoidP;
+        *(&raw mut (*v3).src.bank as *mut u16) = 126;
+        (*v3).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfe) << 8) as u16;
+        word!(game.vram_write_queue_tail = (v2).wrapping_add(7));
+        Crocomire_9BB3(game);
+    };
+    CrocomireTongue_Init [] {
+        if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 2) != 0 {
+            (*E).base.properties = ((*E).base.properties & 0xdcff | 0x300);
+        } else {
+            (*E).base.current_instruction = addr_kCrocomire_Ilist_BE56 as u16;
+            (*E).base.extra_properties = ((*E).base.extra_properties) | (0x404u16);
+            (*E).base.instruction_timer = 1;
+            (*E).var_A = 23;
+            (*E).base.palette_index = 3584;
+        };
     };
 }
 pub fn CrocomireTongue_Main() {}

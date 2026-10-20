@@ -206,30 +206,6 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         SpawnPalfxObject(addr_stru_8DF759 as u16, game);
     };
 }
-pub unsafe fn Torizo_C20A(k: u16, game: &mut Game) {
-    let E = Get_Torizo(k as i32, game);
-    let mut v2: i16 = if ((*E).parameter_1 & 0x8000) != 0 {
-        512
-    } else {
-        -512i16
-    };
-    (*E).var_A = v2 as u16;
-    (*E).var_B = -1472i32 as u16;
-    (*E).var_C = 40;
-    (*E).base.instruction_timer = 1;
-}
-pub unsafe fn Torizo_C22D(k: u16, game: &mut Game) {
-    let E = Get_Torizo(k as i32, game);
-    let mut v2: i16 = if ((*E).parameter_1 & 0x8000) != 0 {
-        -768i16
-    } else {
-        768
-    };
-    (*E).var_A = v2 as u16;
-    (*E).var_B = -1152i32 as u16;
-    (*E).var_C = 40;
-    (*E).base.instruction_timer = 1;
-}
 pub unsafe fn Torizo_C250(game: &mut Game) {
     word_transfers!(game, descending, 16;
         le(target_palettes, 175) <- table(kTorizo_Palettes_3, 15),
@@ -498,19 +474,6 @@ pub unsafe fn Torizo_C620(k: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn Torizo_C643(k: u16, game: &mut Game) {
-    let E = Get_Torizo(k as i32, game);
-    if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) != 0 {
-        let v3: i16 = (*E).var_B as i16;
-        if v3 >= 0 && v3 != 256 {
-            word!(game.earthquake_type = 4);
-            word!(game.earthquake_timer = 32);
-            (*E).var_B = 256;
-        }
-    } else {
-        (*E).var_B = ((*E).var_B).wrapping_add(40);
-    };
-}
 pub unsafe fn Torizo_Hurt(game: &mut Game) {
     Torizo_C620(word!(game.cur_enemy_index), game);
     if (*Get_Torizo(word!(game.cur_enemy_index) as i32, game))
@@ -536,32 +499,9 @@ crate::game::address_dispatch! {
         11195878 => Torizo_D5E6;
     }
 }
-pub unsafe fn Torizo_Main(game: &mut Game) {
-    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
-    CallTorizoFunc(
-        (((*E).var_E) as u32) | (0xaa0000u32),
-        word!(game.cur_enemy_index),
-        game,
-    );
-}
 pub unsafe fn Torizo_Func_3(k: u16, game: &mut Game) {
     Torizo_C620(k, game);
     Torizo_C643(k, game);
-}
-pub unsafe fn Torizo_Func_4(k: u16, game: &mut Game) {
-    let E = Get_Torizo(k as i32, game);
-    (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-    let mut v2: u16 = 78;
-    while word!(game.plm_header_ptr[(v2 >> 1)]) as i32 != addr_kPlmHeader_D6EA as i32 {
-        v2 = (v2).wrapping_sub(2);
-        if (v2 & 0x8000) != 0 {
-            QueueMusic_Delayed8(g_word_AAB096, game);
-            (*E).base.properties =
-                ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16;
-            enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2), timer = 1}
-            return;
-        }
-    }
 }
 pub unsafe fn Torizo_Func_1(k: u16, game: &mut Game) {
     Torizo_C620(k, game);
@@ -621,73 +561,8 @@ macro_rules! torizo_fall_until_timer {
     };
 }
 
-pub unsafe fn Torizo_Func_5(k: u16, game: &mut Game) {
-    let E = Get_Torizo(k as i32, game);
-    if ((*E).parameter_2 & 0x4000) != 0 {
-        torizo_fall_until_timer!(E, k, game, addr_kTorizo_Ilist_BD0E, addr_kTorizo_Ilist_C188);
-    } else {
-        torizo_fall_until_timer!(E, k, game, addr_kTorizo_Ilist_B962, addr_kTorizo_Ilist_BDD8);
-    };
-}
 pub unsafe fn Torizo_Func_6(k: u16, game: &mut Game) {
     Torizo_C643(k, game);
-}
-pub unsafe fn Torizo_Func_7(k: u16, game: &mut Game) {
-    let E = Get_Torizo(k as i32, game);
-    Enemy_MoveRight_IgnoreSlopes(k, ((*E).var_A as i16 as i32) << 8, game);
-    EnemyFunc_C8AD(k, game);
-    if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) != 0 {
-        enemy_instruction! {[(*E).base]; instruction = (*E).var_00, timer = 1}
-        (*E).var_B = 256;
-        word!(game.earthquake_type = 4);
-        word!(game.earthquake_timer = 32);
-    } else {
-        (*E).var_B = ((*E).var_B).wrapping_add((*E).var_C);
-    };
-}
-pub unsafe fn Torizo_Init(game: &mut Game) {
-    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
-    if CheckBossBitForCurArea(4, game) & 1 != 0 {
-        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
-    } else {
-        let v2: i32 = word!(game.area_index) as i32 >> 1;
-        (*E).base.properties = ((*E).base.properties) | ((g_word_AAC96B[v2 as usize]) as u16);
-        (*E).base.extra_properties = ((*E).base.extra_properties) | (4u16);
-        (*E).base.x_width = g_word_AAC96F[v2 as usize] as u16;
-        (*E).base.y_height = g_word_AAC973[v2 as usize] as u16;
-        (*E).var_E = ((0xaac6bfi32) as u16);
-        (*E).base.instruction_timer = 1;
-        set_fields! {[(*E).base], 0; timer, palette_index}
-        (*E).var_F = addr_locret_AAC95E as u16;
-        (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xaac967, v2 as isize);
-        (*E).base.spritemap_pointer = addr_kTorizo_ExtSprmap_87D0 as u16;
-        (*E).base.x_pos = g_word_AAC95F[v2 as usize] as u16;
-        (*E).base.y_pos = g_word_AAC963[v2 as usize] as u16;
-        (*E).var_A = 0;
-        (*E).var_B = 256;
-        word_transfers!(game, descending, 16;
-            le(target_palettes, 255) <- table(kTorizo_Palettes_1, 15),
-            le(target_palettes, 191) <- table(kTorizo_Palette, 15),
-        );
-        if word!(game.area_index) != 0 {
-            Torizo_C280(game);
-            if word!(game.joypad1_lastkeys) == 0xc0c0 {
-                word! { game, 700; samus_health, samus_max_health }
-                word! { game, 300; samus_max_reserve_health, samus_reserve_health }
-                word! { game, 100; samus_missiles, samus_max_missiles }
-                word! { game, 20;
-                    samus_super_missiles, samus_max_super_missiles, samus_power_bombs,
-                    samus_max_power_bombs,
-                }
-                word!(game.equipped_items = -3273i32 as u16);
-                word!(game.collected_items = -3273i32 as u16);
-                word! { game, 4111; equipped_beams, collected_beams }
-            }
-        } else {
-            Torizo_C250(game);
-            SpawnBombTorizoHaze(game);
-        }
-    };
 }
 pub unsafe fn GoldTorizo_Touch(game: &mut Game) {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
@@ -752,21 +627,6 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Torizo_Instr_62 [jp] {  (*E).var_06 = ((*E).var_06) | (0x8000u16); };
     Torizo_Instr_63 [jp] {  (*E).parameter_2 = ((*E).parameter_2 & !(0x2000)); };
 }
-pub unsafe fn GoldTorizo_Main(game: &mut Game) {
-    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
-    if word!(game.samus_pose) as i32 == kPose_1B_FaceR_SpaceJump as i32
-        || word!(game.samus_pose) as i32 == kPose_1C_FaceL_SpaceJump as i32
-    {
-        (*E).var_07 = (*E).var_07.wrapping_add(1);
-    } else {
-        (*E).var_07 = 0;
-    }
-    CallTorizoFunc(
-        (((*E).var_E) as u32) | (0xaa0000u32),
-        word!(game.cur_enemy_index),
-        game,
-    );
-}
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     Torizo_Instr_56 [jp] { QueueSfx2_Max6(0x34, game); };
     Torizo_Instr_60 [jp] { QueueSfx2_Max6(0x67, game); };
@@ -775,10 +635,6 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
 pub unsafe fn Torizo_Func_12(k: u16, game: &mut Game) -> u16 {
     let E = Get_Torizo(k as i32, game);
     ((*E).parameter_1 as i32 ^ (*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32) as u16
-}
-pub unsafe fn Torizo_Func_11(k: u16, game: &mut Game) {
-    let E = Get_Torizo(k as i32, game);
-    SetGoldenTorizoPalette((*E).base.health, game);
 }
 pub unsafe fn GoldTorizo_Hurt(game: &mut Game) {
     Torizo_C620(word!(game.cur_enemy_index), game);
@@ -932,45 +788,184 @@ pub unsafe fn Torizo_D5E6(k: u16, game: &mut Game) {
     CallEnemyPreInstr((((*E).var_F) as u32) | (0xaa0000u32), game);
 }
 pub use self::Torizo_Func_6 as Torizo_D5ED;
-pub unsafe fn Torizo_D5F1(k: u16, game: &mut Game) {
-    let E = Get_Torizo(k as i32, game);
-    torizo_fall_until_timer!(E, k, game, addr_kTorizo_Ilist_D203, addr_kTorizo_Ilist_D2BF);
-}
-pub unsafe fn Torizo_D658(game: &mut Game) {
-    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
-    if (*E).base.flash_timer == 0 && (*E).var_04 == 0 {
-        Torizo_D6A6(game);
-    }
-}
-pub unsafe fn GoldTorizo_Shot(game: &mut Game) {
-    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
-    if (*E).base.flash_timer == 0 {
-        if (*E).var_04 != 0 {
-            Torizo_D6A6(game);
-            return;
+crate::prefixed_callbacks! {
+    pub unsafe fn (k: u16, game: &mut Game);
+    @prefix { let E = Get_Torizo(k as i32, game); };
+    Torizo_C20A [] {
+        let mut v2: i16 = if ((*E).parameter_1 & 0x8000) != 0 {
+            512
+        } else {
+            -512i16
+        };
+        (*E).var_A = v2 as u16;
+        (*E).var_B = -1472i32 as u16;
+        (*E).var_C = 40;
+        (*E).base.instruction_timer = 1;
+    };
+    Torizo_C22D [] {
+        let mut v2: i16 = if ((*E).parameter_1 & 0x8000) != 0 {
+            -768i16
+        } else {
+            768
+        };
+        (*E).var_A = v2 as u16;
+        (*E).var_B = -1152i32 as u16;
+        (*E).var_C = 40;
+        (*E).base.instruction_timer = 1;
+    };
+    Torizo_C643 [] {
+        if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) != 0 {
+            let v3: i16 = (*E).var_B as i16;
+            if v3 >= 0 && v3 != 256 {
+                word!(game.earthquake_type = 4);
+                word!(game.earthquake_timer = 32);
+                (*E).var_B = 256;
+            }
+        } else {
+            (*E).var_B = ((*E).var_B).wrapping_add(40);
+        };
+    };
+    Torizo_Func_4 [] {
+        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
+        let mut v2: u16 = 78;
+        while word!(game.plm_header_ptr[(v2 >> 1)]) as i32 != addr_kPlmHeader_D6EA as i32 {
+            v2 = (v2).wrapping_sub(2);
+            if (v2 & 0x8000) != 0 {
+                QueueMusic_Delayed8(g_word_AAB096, game);
+                (*E).base.properties =
+                    ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16;
+                enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2), timer = 1}
+                return;
+            }
         }
-        let react_to_shot: bool = (((*E).parameter_2 & 0x1000) != 0)
-            || ({
-                let mut v2: u16 = (2u16).wrapping_mul(word!(game.collision_detection_index));
-                let mut v3: u16 =
-                    (word!(game.projectile_type[word!(game.collision_detection_index)]))
-                        & (0xf00u16);
-                (*E).var_05 = v3;
-                if v3 == 256 {
-                    Torizo_D6D1(word!(game.cur_enemy_index), v2, game);
-                    return;
+    };
+    Torizo_Func_5 [] {
+        if ((*E).parameter_2 & 0x4000) != 0 {
+            torizo_fall_until_timer!(E, k, game, addr_kTorizo_Ilist_BD0E, addr_kTorizo_Ilist_C188);
+        } else {
+            torizo_fall_until_timer!(E, k, game, addr_kTorizo_Ilist_B962, addr_kTorizo_Ilist_BDD8);
+        };
+    };
+    Torizo_Func_7 [] {
+        Enemy_MoveRight_IgnoreSlopes(k, ((*E).var_A as i16 as i32) << 8, game);
+        EnemyFunc_C8AD(k, game);
+        if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) != 0 {
+            enemy_instruction! {[(*E).base]; instruction = (*E).var_00, timer = 1}
+            (*E).var_B = 256;
+            word!(game.earthquake_type = 4);
+            word!(game.earthquake_timer = 32);
+        } else {
+            (*E).var_B = ((*E).var_B).wrapping_add((*E).var_C);
+        };
+    };
+    Torizo_Func_11 [] {
+        SetGoldenTorizoPalette((*E).base.health, game);
+    };
+    Torizo_D5F1 [] {
+        torizo_fall_until_timer!(E, k, game, addr_kTorizo_Ilist_D203, addr_kTorizo_Ilist_D2BF);
+    };
+}
+crate::prefixed_callbacks! {
+    pub unsafe fn (game: &mut Game);
+    @prefix { let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game); };
+    Torizo_Main [] {
+        CallTorizoFunc(
+            (((*E).var_E) as u32) | (0xaa0000u32),
+            word!(game.cur_enemy_index),
+            game,
+        );
+    };
+    Torizo_Init [] {
+        if CheckBossBitForCurArea(4, game) & 1 != 0 {
+            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
+        } else {
+            let v2: i32 = word!(game.area_index) as i32 >> 1;
+            (*E).base.properties = ((*E).base.properties) | ((g_word_AAC96B[v2 as usize]) as u16);
+            (*E).base.extra_properties = ((*E).base.extra_properties) | (4u16);
+            (*E).base.x_width = g_word_AAC96F[v2 as usize] as u16;
+            (*E).base.y_height = g_word_AAC973[v2 as usize] as u16;
+            (*E).var_E = ((0xaac6bfi32) as u16);
+            (*E).base.instruction_timer = 1;
+            set_fields! {[(*E).base], 0; timer, palette_index}
+            (*E).var_F = addr_locret_AAC95E as u16;
+            (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xaac967, v2 as isize);
+            (*E).base.spritemap_pointer = addr_kTorizo_ExtSprmap_87D0 as u16;
+            (*E).base.x_pos = g_word_AAC95F[v2 as usize] as u16;
+            (*E).base.y_pos = g_word_AAC963[v2 as usize] as u16;
+            (*E).var_A = 0;
+            (*E).var_B = 256;
+            word_transfers!(game, descending, 16;
+                le(target_palettes, 255) <- table(kTorizo_Palettes_1, 15),
+                le(target_palettes, 191) <- table(kTorizo_Palette, 15),
+            );
+            if word!(game.area_index) != 0 {
+                Torizo_C280(game);
+                if word!(game.joypad1_lastkeys) == 0xc0c0 {
+                    word! { game, 700; samus_health, samus_max_health }
+                    word! { game, 300; samus_max_reserve_health, samus_reserve_health }
+                    word! { game, 100; samus_missiles, samus_max_missiles }
+                    word! { game, 20;
+                        samus_super_missiles, samus_max_super_missiles, samus_power_bombs,
+                        samus_max_power_bombs,
+                    }
+                    word!(game.equipped_items = -3273i32 as u16);
+                    word!(game.collected_items = -3273i32 as u16);
+                    word! { game, 4111; equipped_beams, collected_beams }
                 }
-                (v3 != 512)
-                    || ({
-                        Torizo_D6F7(word!(game.cur_enemy_index), v2, game);
-                        false
-                    })
-            });
-        if react_to_shot {
-            (*E).parameter_2 = ((*E).parameter_2) | (0x2000u16);
+            } else {
+                Torizo_C250(game);
+                SpawnBombTorizoHaze(game);
+            }
+        };
+    };
+    GoldTorizo_Main [] {
+        if word!(game.samus_pose) as i32 == kPose_1B_FaceR_SpaceJump as i32
+            || word!(game.samus_pose) as i32 == kPose_1C_FaceL_SpaceJump as i32
+        {
+            (*E).var_07 = (*E).var_07.wrapping_add(1);
+        } else {
+            (*E).var_07 = 0;
+        }
+        CallTorizoFunc(
+            (((*E).var_E) as u32) | (0xaa0000u32),
+            word!(game.cur_enemy_index),
+            game,
+        );
+    };
+    Torizo_D658 [] {
+        if (*E).base.flash_timer == 0 && (*E).var_04 == 0 {
             Torizo_D6A6(game);
         }
-    }
+    };
+    GoldTorizo_Shot [] {
+        if (*E).base.flash_timer == 0 {
+            if (*E).var_04 != 0 {
+                Torizo_D6A6(game);
+                return;
+            }
+            let react_to_shot: bool = (((*E).parameter_2 & 0x1000) != 0)
+                || ({
+                    let mut v2: u16 = (2u16).wrapping_mul(word!(game.collision_detection_index));
+                    let mut v3: u16 =
+                        (word!(game.projectile_type[word!(game.collision_detection_index)]))
+                            & (0xf00u16);
+                    (*E).var_05 = v3;
+                    if v3 == 256 {
+                        Torizo_D6D1(word!(game.cur_enemy_index), v2, game);
+                        return;
+                    }
+                    (v3 != 512)
+                        || ({
+                            Torizo_D6F7(word!(game.cur_enemy_index), v2, game);
+                            false
+                        })
+                });
+            if react_to_shot {
+                (*E).parameter_2 = ((*E).parameter_2) | (0x2000u16);
+                Torizo_D6A6(game);
+            }
+        }
+    };
 }
 pub unsafe fn Torizo_D6A6(game: &mut Game) {
     NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);

@@ -216,37 +216,6 @@ pub unsafe fn Draygon_Func_4(game: &mut Game) {
     enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_97D1 as u16, timer = 1}
     (*E).var_20 = 1;
 }
-pub unsafe fn Draygon_Func_5(game: &mut Game) {
-    let E = Get_Draygon(0, game);
-    let mut varE24: u16 = 384;
-    let mut varE22: u16 = 0;
-    let mut varE26: u16 = 0;
-    loop {
-        varE22 = (varE22).wrapping_add((*E).var_0F);
-        let v1: u16 = (varE24).wrapping_sub((byte!(varE22; 1)) as u16);
-        if ((v1) as i16).wrapping_sub(((*E).var_01) as i16) < 0 {
-            break;
-        }
-        varE24 = (varE24).wrapping_sub((byte!(varE22; 1)) as u16);
-        crate::update_place! { previous fresh4 = varE26 => varE26.wrapping_add(1); }
-        *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(fresh4 as i32 as isize) as *mut u16) = v1;
-        varE26 = (varE26).wrapping_add(2);
-        varE26 = varE26.wrapping_add(1);
-        if varE26 as i32 - 2048i32 & 0x8000 == 0 {
-            Unreachable(game);
-        }
-    }
-    let t: u32 = EnemyFunc_Divide(
-        (varE26 >> 2) as u32,
-        ((Abs16(((*E).var_00).wrapping_sub(word!(game.samus_x_pos))) as i32) << 16) as u32,
-    );
-    words!((*E), var_D, var_E = t);
-    let v6: u16 = varE26;
-    *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(varE26 as i32 as isize) as *mut u16) =
-        (*E).base.y_pos;
-    (*E).var_B = v6;
-    (*E).var_C = v6;
-}
 
 macro_rules! advance_draygon_scripted_y {
     ($game:ident, $enemy:ident, $instruction:ident) => {
@@ -396,35 +365,6 @@ pub unsafe fn Draygon_Func_15(game: &mut Game) {
         words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
     };
 }
-pub unsafe fn Draygon_Func_16(game: &mut Game) {
-    let E = Get_Draygon(0, game);
-    Draygon_Func_3(game);
-    if word!(game.samus_x_speed_divisor) == 0 {
-        'advance: {
-            if (word!(game.random_number) & 0xf) == 0 {
-                let v1: u16 = ((*E).var_03).wrapping_sub(1);
-                (*E).var_03 = v1;
-                if v1 == 0 {
-                    break 'advance;
-                }
-                enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_9C90 as u16, timer = 1}
-            }
-            (*E).base.y_pos = (CosineMult8bit((*E).var_0D, 32u16, game)).wrapping_add(384);
-            (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-            words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
-            if !(((*E).base.x_pos as i16) >= 0 && (*E).base.x_pos as i32 - 672i32 & 0x8000 == 0) {
-                return;
-            }
-        }
-        if word!(game.samus_x_speed_divisor) == 0 {
-            let E3 = Get_Draygon(0xc0, game);
-            enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_9BDA as u16, timer = 1}
-            (*E).var_A = ((0xa58c33i32) as u16);
-            return;
-        }
-    }
-    (*E).var_A = ((0xa58e19i32) as u16);
-}
 pub unsafe fn Draygon_Func_17(k: u16, game: &mut Game) {
     Draygon_Func_35(game);
     let E = Get_Draygon(0, game);
@@ -437,19 +377,6 @@ pub unsafe fn Draygon_Func_17(k: u16, game: &mut Game) {
         (*E).base.y_pos = -80i32 as u16;
         (*E).var_B = (*E).var_C;
     }
-}
-pub unsafe fn Draygon_Func_18(game: &mut Game) {
-    let E = Get_Draygon(0, game);
-    (*E).base.x_pos = (*E).var_02;
-    (*E).base.y_pos = 384;
-    (*E).var_E = 0;
-    (*E).var_D = 1;
-    (*E).var_0D = 0;
-    let E3 = Get_Draygon(0xc0, game);
-    enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_9C06 as u16, timer = 1}
-    (*E).var_A = ((0xa58cd4i32) as u16);
-    enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_97BB as u16, timer = 1}
-    (*E).var_20 = 0;
 }
 pub unsafe fn Draygon_Func_19(game: &mut Game) {
     Draygon_Func_3(game);
@@ -468,38 +395,6 @@ pub unsafe fn Draygon_Func_19(game: &mut Game) {
             x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
         );
     };
-}
-pub unsafe fn Draygon_Func_20(game: &mut Game) {
-    let E = Get_Draygon(0, game);
-    if word!(game.samus_x_speed_divisor) == 0 {
-        'advance: {
-            if (word!(game.random_number) & 0xf) == 0 {
-                let v1: u16 = ((*E).var_03).wrapping_sub(1);
-                (*E).var_03 = v1;
-                if v1 == 0 {
-                    break 'advance;
-                }
-                enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_98FE as u16, timer = 1}
-            }
-            (*E).base.y_pos = (CosineMult8bit((*E).var_0D, 32u16, game)).wrapping_add(384);
-            (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-            words!(
-                (*E).base,
-                x_pos,
-                x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
-            );
-            if !((*E).base.x_pos < 0 && (*E).base.x_pos as i32 + 80 & 0x8000 != 0) {
-                return;
-            }
-        }
-        if word!(game.samus_x_speed_divisor) == 0 {
-            let E3 = Get_Draygon(0xc0, game);
-            enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_97E7 as u16, timer = 1}
-            (*Get_Draygon(0i32, game)).var_A = ((0xa58db2i32) as u16);
-            return;
-        }
-    }
-    (*Get_Draygon(0i32, game)).var_A = ((0xa58e19i32) as u16);
 }
 pub unsafe fn Draygon_Func_21(k: u16, game: &mut Game) {
     let E = Get_Draygon(0, game);
@@ -520,53 +415,6 @@ pub unsafe fn Draygon_Func_21(k: u16, game: &mut Game) {
             (*E).base.y_pos = -80i32 as u16;
             (*E).var_B = (*E).var_C;
         }
-    };
-}
-pub unsafe fn Draygon_Func_22(game: &mut Game) {
-    let E = Get_Draygon(0, game);
-    Draygon_Func_3(game);
-    if word!(game.samus_x_speed_divisor) != 0 {
-        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-        let mut v2: i16 = 8;
-        if (*E).var_20 == 0 {
-            v2 = -8i16;
-        }
-        let v3: u16 =
-            Abs16(((*E).base.x_pos as i32 + v2 as i32 - word!(game.samus_x_pos) as i32) as u16);
-        if v3 as i32 - 8i32 & 0x8000 != 0 && {
-            let mut v4: u16 = Abs16(((*E).base.y_pos).wrapping_sub(word!(game.samus_y_pos)));
-            v4 as i32 - 8i32 & 0x8000 != 0
-        } {
-            let mut v5: u16 = addr_kDraygon_Ilist_9845 as u16;
-            if (*E).var_20 != 0 {
-                v5 = addr_kDraygon_Ilist_9C38 as u16;
-            }
-            let E3 = Get_Draygon(0xc0, game);
-            enemy_instruction! {[(*E3).base]; instruction = v5, timer = 1}
-            if CallSomeSamusCode(0xd, game) != 0 {
-                (*E).var_A = ((0xa58f10i32) as u16);
-            } else {
-                Samus_SetGrabbedByDraygonPose(((*E).var_20 != 0) as u16, game);
-                (*E).var_06 = 256;
-                (*E).var_07 = 384;
-                set_fields! {[(*E)], 0; var_05, var_09}
-                (*E).var_08 = 192;
-                (*E).var_0B = 2048;
-                (*E).var_A = ((0xa58f1ei32) as u16);
-            }
-        } else {
-            let varE20: u16 = ((64u8).wrapping_sub(
-                (CalculateAngleFromXY(
-                    (word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos),
-                    (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos),
-                    game,
-                )) as u8,
-            )) as u16;
-            let pt: Point32 = ConvertAngleToXy(varE20, 2, game);
-            EnemyFunc_B691(varE20, pt, game);
-        }
-    } else {
-        (*E).var_A = ((0xa59154i32) as u16);
     };
 }
 pub unsafe fn Draygon_Func_23(game: &mut Game) {
@@ -708,53 +556,6 @@ pub unsafe fn Draygon_Func_30(game: &mut Game) {
         (*E).base.y_pos = (*E).var_01;
     }
 }
-pub unsafe fn Draygon_Func_31(game: &mut Game) {
-    let E = Get_Draygon(0, game);
-    if ((*Get_Draygon(word!(game.cur_enemy_index) as i32, game))
-        .base
-        .frame_counter
-        & 0xf)
-        == 0
-    {
-        let x: u16 = (if (*E).var_20 != 0 {
-            (*E).base.x_pos as i32 + 32
-        } else {
-            (*E).base.x_pos as i32 - 32i32
-        }) as u16;
-        let y: u16 = ((*E).base.y_pos).wrapping_sub(16);
-        CreateSpriteAtPos(x, y, 61, 0, game);
-    }
-    (*E).var_43 = ((64u8).wrapping_sub(
-        (CalculateAngleFromXY(
-            (64 - ((*E).base.x_pos as i32 >> 2)) as u16,
-            (120 - ((*E).base.y_pos as i32 >> 2)) as u16,
-            game,
-        )) as u8,
-    )) as u16;
-    let pt: Point32 = ConvertAngleToXy(byte!((*E).var_43; 0) as u16, 1, game);
-    EnemyFunc_B691(byte!((*E).var_43; 0) as u16, pt, game);
-    let v3: u16 = Abs16(((*E).base.x_pos).wrapping_sub(256));
-    if v3 as i32 - 4i32 & 0x8000 != 0 {
-        let v4: u16 = Abs16(((*E).base.y_pos).wrapping_sub(480));
-        if v4 as i32 - 4i32 & 0x8000 != 0 {
-            Draygon_Func_43(game);
-            (*E).var_A = ((0xa59294i32) as u16);
-            QueueMusic_Delayed8(3, game);
-            (*E).var_B = 416;
-            enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_97B9 as u16, timer = 1}
-            let v5: u16 = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
-            (*Get_Draygon(0x80i32, game)).base.properties = v5;
-            (*Get_Draygon(0xc0i32, game)).base.properties = v5;
-            let mut v6: u16 = addr_kDraygon_Ilist_999C as u16;
-            if (*E).var_20 != 0 {
-                v6 = addr_kDraygon_Ilist_9D3E as u16;
-            }
-            let E1 = Get_Draygon(0x40, game);
-            enemy_instruction! {[(*E1).base]; instruction = v6, timer = 1}
-            (*E1).var_A = ((0xa5804bi32) as u16);
-        }
-    }
-}
 pub unsafe fn Draygon_Func_32(game: &mut Game) {
     Draygon_Func_34(game);
     let E = Get_Draygon(0, game);
@@ -799,17 +600,6 @@ pub unsafe fn Draygon_Func_35(game: &mut Game) {
             0,
             game,
         );
-    }
-}
-pub unsafe fn Draygon_Func_36(game: &mut Game) {
-    let E = Get_Draygon(0, game);
-    word! { game;
-        reg_BG2HOFS = ((*E).var_5E as i32 + word!(game.layer1_x_pos) as i32
-            - (*E).base.x_pos as i32
-            - 450i32) as u16;
-        reg_BG2VOFS = ((*E).var_5F as i32 + word!(game.layer1_y_pos) as i32
-            - (*E).base.y_pos as i32
-            - 192i32) as u16;
     }
 }
 pub unsafe fn Draygon_Func_40(k: u16, game: &mut Game) {
@@ -894,14 +684,6 @@ pub unsafe fn Draygon_Touch(game: &mut Game) {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
     sub_A5960D(game);
 }
-pub unsafe fn Draygon_Shot(game: &mut Game) {
-    let E = Get_Draygon(0, game);
-    if (*E).var_0F as i32 - 152i32 & 0x8000 != 0 {
-        (*E).var_0F = ((*E).var_0F).wrapping_add(8);
-    }
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-    sub_A5960D(game);
-}
 pub unsafe fn Draygon_Powerbomb(game: &mut Game) {
     NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
     sub_A5960D(game);
@@ -945,26 +727,239 @@ pub unsafe fn sub_A5960D(game: &mut Game) {
         (*E).var_2B = pt.y as u16;
     };
 }
-pub unsafe fn Draygon_Func_41(game: &mut Game) {
-    let E = Get_Draygon(0, game);
-    let mut i: i32 = 0;
-    while ((((*E).base.health) as i16)
-        .wrapping_sub((crate::rtl::rom_table_word!(game, 0xa596ef, (i >> 1) as isize)) as i16)
-        < 0)
-    {
-        i += 2;
-    }
-    if i != (*E).var_0E as i32 {
-        (*E).var_0E = i as u16;
-        let mut v2: u16 = (4u16).wrapping_mul((*E).var_0E);
-        let mut j: u16 = 0;
-        while j != 8 {
-            *(ram_ptr!(game, u16; 0xc000)).offset(((j as i32 >> 1) + 89) as isize) =
-                crate::rtl::rom_table_word!(game, 0xa596af, (v2 >> 1) as isize);
-            v2 = (v2).wrapping_add(2);
-            j = (j).wrapping_add(2);
+crate::prefixed_callbacks! {
+    pub unsafe fn (game: &mut Game);
+    @prefix { let E = Get_Draygon(0, game); };
+    Draygon_Func_5 [] {
+        let mut varE24: u16 = 384;
+        let mut varE22: u16 = 0;
+        let mut varE26: u16 = 0;
+        loop {
+            varE22 = (varE22).wrapping_add((*E).var_0F);
+            let v1: u16 = (varE24).wrapping_sub((byte!(varE22; 1)) as u16);
+            if ((v1) as i16).wrapping_sub(((*E).var_01) as i16) < 0 {
+                break;
+            }
+            varE24 = (varE24).wrapping_sub((byte!(varE22; 1)) as u16);
+            crate::update_place! { previous fresh4 = varE26 => varE26.wrapping_add(1); }
+            *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(fresh4 as i32 as isize) as *mut u16) = v1;
+            varE26 = (varE26).wrapping_add(2);
+            varE26 = varE26.wrapping_add(1);
+            if varE26 as i32 - 2048i32 & 0x8000 == 0 {
+                Unreachable(game);
+            }
         }
-    }
+        let t: u32 = EnemyFunc_Divide(
+            (varE26 >> 2) as u32,
+            ((Abs16(((*E).var_00).wrapping_sub(word!(game.samus_x_pos))) as i32) << 16) as u32,
+        );
+        words!((*E), var_D, var_E = t);
+        let v6: u16 = varE26;
+        *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(varE26 as i32 as isize) as *mut u16) =
+            (*E).base.y_pos;
+        (*E).var_B = v6;
+        (*E).var_C = v6;
+    };
+    Draygon_Func_16 [] {
+        Draygon_Func_3(game);
+        if word!(game.samus_x_speed_divisor) == 0 {
+            'advance: {
+                if (word!(game.random_number) & 0xf) == 0 {
+                    let v1: u16 = ((*E).var_03).wrapping_sub(1);
+                    (*E).var_03 = v1;
+                    if v1 == 0 {
+                        break 'advance;
+                    }
+                    enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_9C90 as u16, timer = 1}
+                }
+                (*E).base.y_pos = (CosineMult8bit((*E).var_0D, 32u16, game)).wrapping_add(384);
+                (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
+                words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
+                if !(((*E).base.x_pos as i16) >= 0 && (*E).base.x_pos as i32 - 672i32 & 0x8000 == 0) {
+                    return;
+                }
+            }
+            if word!(game.samus_x_speed_divisor) == 0 {
+                let E3 = Get_Draygon(0xc0, game);
+                enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_9BDA as u16, timer = 1}
+                (*E).var_A = ((0xa58c33i32) as u16);
+                return;
+            }
+        }
+        (*E).var_A = ((0xa58e19i32) as u16);
+    };
+    Draygon_Func_18 [] {
+        (*E).base.x_pos = (*E).var_02;
+        (*E).base.y_pos = 384;
+        (*E).var_E = 0;
+        (*E).var_D = 1;
+        (*E).var_0D = 0;
+        let E3 = Get_Draygon(0xc0, game);
+        enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_9C06 as u16, timer = 1}
+        (*E).var_A = ((0xa58cd4i32) as u16);
+        enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_97BB as u16, timer = 1}
+        (*E).var_20 = 0;
+    };
+    Draygon_Func_20 [] {
+        if word!(game.samus_x_speed_divisor) == 0 {
+            'advance: {
+                if (word!(game.random_number) & 0xf) == 0 {
+                    let v1: u16 = ((*E).var_03).wrapping_sub(1);
+                    (*E).var_03 = v1;
+                    if v1 == 0 {
+                        break 'advance;
+                    }
+                    enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_98FE as u16, timer = 1}
+                }
+                (*E).base.y_pos = (CosineMult8bit((*E).var_0D, 32u16, game)).wrapping_add(384);
+                (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
+                words!(
+                    (*E).base,
+                    x_pos,
+                    x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
+                );
+                if !((*E).base.x_pos < 0 && (*E).base.x_pos as i32 + 80 & 0x8000 != 0) {
+                    return;
+                }
+            }
+            if word!(game.samus_x_speed_divisor) == 0 {
+                let E3 = Get_Draygon(0xc0, game);
+                enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_97E7 as u16, timer = 1}
+                (*Get_Draygon(0i32, game)).var_A = ((0xa58db2i32) as u16);
+                return;
+            }
+        }
+        (*Get_Draygon(0i32, game)).var_A = ((0xa58e19i32) as u16);
+    };
+    Draygon_Func_22 [] {
+        Draygon_Func_3(game);
+        if word!(game.samus_x_speed_divisor) != 0 {
+            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
+            let mut v2: i16 = 8;
+            if (*E).var_20 == 0 {
+                v2 = -8i16;
+            }
+            let v3: u16 =
+                Abs16(((*E).base.x_pos as i32 + v2 as i32 - word!(game.samus_x_pos) as i32) as u16);
+            if v3 as i32 - 8i32 & 0x8000 != 0 && {
+                let mut v4: u16 = Abs16(((*E).base.y_pos).wrapping_sub(word!(game.samus_y_pos)));
+                v4 as i32 - 8i32 & 0x8000 != 0
+            } {
+                let mut v5: u16 = addr_kDraygon_Ilist_9845 as u16;
+                if (*E).var_20 != 0 {
+                    v5 = addr_kDraygon_Ilist_9C38 as u16;
+                }
+                let E3 = Get_Draygon(0xc0, game);
+                enemy_instruction! {[(*E3).base]; instruction = v5, timer = 1}
+                if CallSomeSamusCode(0xd, game) != 0 {
+                    (*E).var_A = ((0xa58f10i32) as u16);
+                } else {
+                    Samus_SetGrabbedByDraygonPose(((*E).var_20 != 0) as u16, game);
+                    (*E).var_06 = 256;
+                    (*E).var_07 = 384;
+                    set_fields! {[(*E)], 0; var_05, var_09}
+                    (*E).var_08 = 192;
+                    (*E).var_0B = 2048;
+                    (*E).var_A = ((0xa58f1ei32) as u16);
+                }
+            } else {
+                let varE20: u16 = ((64u8).wrapping_sub(
+                    (CalculateAngleFromXY(
+                        (word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos),
+                        (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos),
+                        game,
+                    )) as u8,
+                )) as u16;
+                let pt: Point32 = ConvertAngleToXy(varE20, 2, game);
+                EnemyFunc_B691(varE20, pt, game);
+            }
+        } else {
+            (*E).var_A = ((0xa59154i32) as u16);
+        };
+    };
+    Draygon_Func_31 [] {
+        if ((*Get_Draygon(word!(game.cur_enemy_index) as i32, game))
+            .base
+            .frame_counter
+            & 0xf)
+            == 0
+        {
+            let x: u16 = (if (*E).var_20 != 0 {
+                (*E).base.x_pos as i32 + 32
+            } else {
+                (*E).base.x_pos as i32 - 32i32
+            }) as u16;
+            let y: u16 = ((*E).base.y_pos).wrapping_sub(16);
+            CreateSpriteAtPos(x, y, 61, 0, game);
+        }
+        (*E).var_43 = ((64u8).wrapping_sub(
+            (CalculateAngleFromXY(
+                (64 - ((*E).base.x_pos as i32 >> 2)) as u16,
+                (120 - ((*E).base.y_pos as i32 >> 2)) as u16,
+                game,
+            )) as u8,
+        )) as u16;
+        let pt: Point32 = ConvertAngleToXy(byte!((*E).var_43; 0) as u16, 1, game);
+        EnemyFunc_B691(byte!((*E).var_43; 0) as u16, pt, game);
+        let v3: u16 = Abs16(((*E).base.x_pos).wrapping_sub(256));
+        if v3 as i32 - 4i32 & 0x8000 != 0 {
+            let v4: u16 = Abs16(((*E).base.y_pos).wrapping_sub(480));
+            if v4 as i32 - 4i32 & 0x8000 != 0 {
+                Draygon_Func_43(game);
+                (*E).var_A = ((0xa59294i32) as u16);
+                QueueMusic_Delayed8(3, game);
+                (*E).var_B = 416;
+                enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_97B9 as u16, timer = 1}
+                let v5: u16 = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
+                (*Get_Draygon(0x80i32, game)).base.properties = v5;
+                (*Get_Draygon(0xc0i32, game)).base.properties = v5;
+                let mut v6: u16 = addr_kDraygon_Ilist_999C as u16;
+                if (*E).var_20 != 0 {
+                    v6 = addr_kDraygon_Ilist_9D3E as u16;
+                }
+                let E1 = Get_Draygon(0x40, game);
+                enemy_instruction! {[(*E1).base]; instruction = v6, timer = 1}
+                (*E1).var_A = ((0xa5804bi32) as u16);
+            }
+        }
+    };
+    Draygon_Func_36 [] {
+        word! { game;
+            reg_BG2HOFS = ((*E).var_5E as i32 + word!(game.layer1_x_pos) as i32
+                - (*E).base.x_pos as i32
+                - 450i32) as u16;
+            reg_BG2VOFS = ((*E).var_5F as i32 + word!(game.layer1_y_pos) as i32
+                - (*E).base.y_pos as i32
+                - 192i32) as u16;
+        }
+    };
+    Draygon_Shot [] {
+        if (*E).var_0F as i32 - 152i32 & 0x8000 != 0 {
+            (*E).var_0F = ((*E).var_0F).wrapping_add(8);
+        }
+        NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+        sub_A5960D(game);
+    };
+    Draygon_Func_41 [] {
+        let mut i: i32 = 0;
+        while ((((*E).base.health) as i16)
+            .wrapping_sub((crate::rtl::rom_table_word!(game, 0xa596ef, (i >> 1) as isize)) as i16)
+            < 0)
+        {
+            i += 2;
+        }
+        if i != (*E).var_0E as i32 {
+            (*E).var_0E = i as u16;
+            let mut v2: u16 = (4u16).wrapping_mul((*E).var_0E);
+            let mut j: u16 = 0;
+            while j != 8 {
+                *(ram_ptr!(game, u16; 0xc000)).offset(((j as i32 >> 1) + 89) as isize) =
+                    crate::rtl::rom_table_word!(game, 0xa596af, (v2 >> 1) as isize);
+                v2 = (v2).wrapping_add(2);
+                j = (j).wrapping_add(2);
+            }
+        }
+    };
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     Draygon_Instr_13 [jp.offset(1)] { (*Get_Draygon(k as i32, game)).var_A = *jp; };

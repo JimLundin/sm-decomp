@@ -46,6 +46,12 @@ macro_rules! update_place {
 // Each instruction row declares Name [result] { effects }; [] keeps a full body.
 // A shared prefix runs inside each function, before its effects and result.
 macro_rules! instruction_callbacks {
+    ($visibility:vis unsafe fn $parameters:tt; @prefix $prefix:tt; $($name:ident $tail:tt $body:tt;)*) => {
+        $($crate::instruction_callbacks!(@function [$visibility unsafe fn $name $parameters] $prefix $tail $body);)*
+    };
+    ($visibility:vis fn $parameters:tt; @prefix $prefix:tt; $($name:ident $tail:tt $body:tt;)*) => {
+        $($crate::instruction_callbacks!(@function [$visibility fn $name $parameters] $prefix $tail $body);)*
+    };
     ($visibility:vis unsafe fn $parameters:tt -> $result:ty; @prefix $prefix:tt; $($name:ident $tail:tt $body:tt;)*) => {
         $($crate::instruction_callbacks!(@function [$visibility unsafe fn $name $parameters -> $result] $prefix $tail $body);)*
     };
@@ -66,6 +72,7 @@ macro_rules! instruction_callbacks {
     };
 }
 pub(crate) use instruction_callbacks;
+pub(crate) use instruction_callbacks as prefixed_callbacks;
 
 // Declare forwarding wrappers with their original signatures and call order.
 // Unit wrappers retain a statement; value-returning wrappers retain a tail call.

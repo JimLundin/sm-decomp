@@ -30,6 +30,9 @@ boundaries, then deriving and pricing common algorithms with explicit variants.
 Repeated exact scans alone are not a new approach; detector hits are not savings.
 
 Latest user clarification: code-volume reduction is the immediate priority.
+Focus on repeated code patterns; broad system redesign is too costly unless
+it directly removes substantial repetition. Investigate efficient methods in
+parallel and price the complete repeated group before expanding implementation.
 Re-architecture, shared lifecycle engines and declarative behavior sequences
 are justified when they replace substantial implementation. Price complete
 families, including their replacement costs, before runtime checks. Previous
@@ -290,7 +293,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **9,557-line** gap; parked small drafts are not
+   replacement yet funds the **9,075-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -382,6 +385,16 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    scenarios and inherited launch motion. All 15 requested component probes
    execute; focused movies and clean full integration pass as recorded below.
    The remaining projectile instruction, drawing and firing owners are separate.
+
+   Complete callback entry-capture sharing removes **482 lines
+   (109,556 -> 109,074)** across 754 callbacks / 67 groups, including seven
+   shared support lines. Independent source reconstruction and compiler
+   expansion preserve every selected callback and all 7,006 current named
+   definitions exactly, with no binding renames. Formatting, normal release
+   and compiled-source checks pass. This is static equivalence, with no new
+   movie result. Lower unsafe/cast counters reflect shared declarations;
+   no unsafe runtime operations disappear. Continue the structural/variant
+   audit rather than repeating the completed prefix/signature census.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -621,10 +634,11 @@ committed baseline and budget.
 
 After the Japanese correction, local bindings, intro pages, enemy callback
 imports, ordered stores, PNG texture loading, beam firing, moving platforms,
-byte-partial-product sharing, INI decoding, countdown callbacks and projectile
-flight, maintained Rust is **109,556**, leaving **9,557** to reach 99,999. Counters:
+byte-partial-product sharing, INI decoding, countdown callbacks, projectile
+flight and callback entry captures, maintained Rust is **109,074**, leaving
+**9,075** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 5102; cast lines 8621. The unrelated 83-line shader draft
+unsafe functions 4429; cast lines 8107. The unrelated 83-line shader draft
 remains excluded; working-tree counts are not the committed baseline.
 Continue item 2's structural/variant audit from the research note. The hopping
 draft remains parked; neither it nor the completed small migrations establish

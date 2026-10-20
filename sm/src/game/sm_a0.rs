@@ -2017,225 +2017,6 @@ crate::game::address_dispatch! {
         11700286 => sm_b2::WalkingSpacePirates_883E;
     }
 }
-pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {
-    let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    word!(game.enemy_processing_stage = 6);
-    if (*E).spritemap_pointer == 0 {
-        return;
-    }
-    let touch_ai: u16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).touch_ai;
-    if touch_ai as i32 == 0xa0804c & 0xffff || touch_ai as i32 == 0xa0804b & 0xffff {
-        return;
-    }
-    if word!(game.samus_contact_damage_index) != 0 {
-        word!(game.samus_invincibility_timer = 0);
-    } else if word!(game.samus_invincibility_timer) != 0 {
-        return;
-    }
-    if (*E).spritemap_pointer & 0x8000 == 0 {
-        return;
-    }
-    let samus_right_border_coll: u16 =
-        (word!(game.samus_x_radius)).wrapping_add(word!(game.samus_x_pos));
-    let samus_left_border_coll: u16 =
-        (word!(game.samus_x_pos)).wrapping_sub(word!(game.samus_x_radius));
-    let samus_bottom_border_coll: u16 =
-        (word!(game.samus_y_radius)).wrapping_add(word!(game.samus_y_pos));
-    let samus_top_border_coll: u16 =
-        (word!(game.samus_y_pos)).wrapping_sub(word!(game.samus_y_radius));
-    let mut n: i32 = *RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game) as i32;
-    let mut enemy_spritemap_entry_pointer: u16 = ((*E).spritemap_pointer).wrapping_add(2);
-    loop {
-        let ES = get_ExtendedSpriteMap((*E).bank, enemy_spritemap_entry_pointer, game);
-        let coll_x_pos: u16 = ((*ES).xpos).wrapping_add((*E).x_pos);
-        let coll_y_pos: u16 = ((*ES).ypos).wrapping_add((*E).y_pos);
-        let p = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
-        let mut m: i32 = *(p as *mut u16) as i32;
-        let mut hb = p.offset(2) as *mut Hitbox;
-        while m != 0 {
-            if (((*hb).left as i32 + coll_x_pos as i32 - samus_right_border_coll as i32) as i16) < 0
-                && (((*hb).right as i32 + coll_x_pos as i32 - samus_left_border_coll as i32) as i16)
-                    >= 0
-                && (((*hb).top as i32 + coll_y_pos as i32 - samus_bottom_border_coll as i32) as i16)
-                    < 0
-                && (((*hb).bottom as i32 + coll_y_pos as i32 - samus_top_border_coll as i32) as i16)
-                    >= 0
-            {
-                CallHitboxTouch((words!(i32, ((*E).bank, (*hb).func_ptr))) as u32, game);
-                return;
-            }
-            m -= 1;
-            hb = hb.offset(1);
-        }
-        enemy_spritemap_entry_pointer = (enemy_spritemap_entry_pointer).wrapping_add(8);
-        n -= 1;
-        if (n == 0) {
-            break;
-        }
-    }
-}
-pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
-    let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    word!(game.enemy_processing_stage = 3);
-    if word!(game.projectile_counter) == 0
-        || (*E).spritemap_pointer == 0
-        || (*E).spritemap_pointer as i32 == addr_kExtendedSpritemap_Nothing_A0 as i32
-    {
-        return;
-    }
-    let shot_ai: u16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai;
-    if shot_ai as i32 == 0xa0804c & 0xffff || shot_ai as i32 == 0xa0804b & 0xffff {
-        return;
-    }
-    if ((*E).properties & 0x400) != 0
-        || (*E).invincibility_timer != 0
-        || (*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32
-    {
-        return;
-    }
-    let mut pidx: i32 = 0;
-    while pidx < 5 {
-        let v4: u16 = word!(game.projectile_type[pidx]);
-        if v4 != 0
-            && (v4 & 0xf00) != 768
-            && (v4 & 0xf00) != 1280
-            && (v4 as i32 & 0xf00) - 1792i32 & 0x8000 != 0
-        {
-            if (*E).spritemap_pointer & 0x8000 == 0 {
-                Unreachable(game);
-            }
-            let esep = RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game);
-            let mut n: i32 = *esep as i32;
-            let mut ES = esep.offset(2) as *mut ExtendedSpriteMap;
-            while n != 0 {
-                let coll_x_pos: u16 = ((*ES).xpos).wrapping_add((*E).x_pos);
-                let coll_y_pos: u16 = ((*ES).ypos).wrapping_add((*E).y_pos);
-                let p = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
-                let mut m: i32 = *(p as *mut u16) as i32;
-                let mut hb = p.offset(2) as *mut Hitbox;
-                while m != 0 {
-                    if ((word!(game.projectile_x_radius[pidx]) as i32
-                        + word!(game.projectile_x_pos[pidx]) as i32
-                        - (coll_x_pos as i32 + (*hb).left as i32)) as i16)
-                        >= 0
-                        && ((word!(game.projectile_x_pos[pidx]) as i32
-                            - word!(game.projectile_x_radius[pidx]) as i32
-                            - (coll_x_pos as i32 + (*hb).right as i32))
-                            as i16)
-                            < 0
-                        && ((word!(game.projectile_y_radius[pidx]) as i32
-                            + word!(game.projectile_y_pos[pidx]) as i32
-                            - (coll_y_pos as i32 + (*hb).top as i32))
-                            as i16)
-                            >= 0
-                        && ((word!(game.projectile_y_pos[pidx]) as i32
-                            - word!(game.projectile_y_radius[pidx]) as i32
-                            - (coll_y_pos as i32 + (*hb).bottom as i32))
-                            as i16)
-                            < 0
-                    {
-                        if (word!(game.projectile_type[pidx]) & 0xf00) == 512 {
-                            word!(game.earthquake_timer = 30);
-                            word!(game.earthquake_type = 18);
-                        }
-                        if ((*E).properties & 0x1000) != 0
-                            || (word!(game.projectile_type[pidx]) & 8) == 0
-                        {
-                            word!(game.projectile_dir[pidx], |fresh27| (fresh27) | (0x10u16));
-                        }
-                        word!(game.collision_detection_index = pidx as u16);
-                        CallHitboxShot(
-                            (words!(i32, ((*E).bank, (*hb).func_ptrA))) as u32,
-                            (pidx * 2) as u16,
-                            game,
-                        );
-                        return;
-                    }
-                    m -= 1;
-                    hb = hb.offset(1);
-                }
-                n -= 1;
-                ES = ES.offset(1);
-            }
-        }
-        pidx += 1;
-    }
-}
-pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
-    let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    word!(game.enemy_processing_stage = 4);
-    if (*E).spritemap_pointer == 0
-        || ((*E).properties & 0x400) != 0
-        || (*E).invincibility_timer != 0
-    {
-        return;
-    }
-    let shot_ai: u16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai;
-    if shot_ai as i32 == 0xa0804c & 0xffff
-        || shot_ai as i32 == 0xa0804b & 0xffff
-        || word!(game.bomb_counter) == 0
-    {
-        return;
-    }
-    let mut pidx: i32 = 5;
-    while pidx != 10 {
-        if (word!(game.projectile_x_pos[pidx]) != 0) {
-            let v4: u16 = word!(game.projectile_type[pidx]);
-            if v4 != 0 && (v4 & 0xf00) == 1280 && word!(game.projectile_variables[pidx]) == 0 {
-                if (*E).spritemap_pointer & 0x8000 == 0 {
-                    Unreachable(game);
-                }
-                let esep = RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game);
-                let mut n: i32 = *(esep as *mut u16) as i32;
-                let mut ES = esep.offset(2) as *mut ExtendedSpriteMap;
-                while n != 0 {
-                    let coll_x_pos: u16 = ((*ES).xpos).wrapping_add((*E).x_pos);
-                    let coll_y_pos: u16 = ((*ES).ypos).wrapping_add((*E).y_pos);
-                    let p = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
-                    let mut m: i32 = *(p as *mut u16) as i32;
-                    let mut hb = p.offset(2) as *mut Hitbox;
-                    while m != 0 {
-                        if ((word!(game.projectile_x_radius[pidx]) as i32
-                            + word!(game.projectile_x_pos[pidx]) as i32
-                            - (coll_x_pos as i32 + (*hb).left as i32))
-                            as i16)
-                            >= 0
-                            && ((word!(game.projectile_x_pos[pidx]) as i32
-                                - word!(game.projectile_x_radius[pidx]) as i32
-                                - (coll_x_pos as i32 + (*hb).right as i32))
-                                as i16)
-                                < 0
-                            && ((word!(game.projectile_y_radius[pidx]) as i32
-                                + word!(game.projectile_y_pos[pidx]) as i32
-                                - (coll_y_pos as i32 + (*hb).top as i32))
-                                as i16)
-                                >= 0
-                            && ((word!(game.projectile_y_pos[pidx]) as i32
-                                - word!(game.projectile_y_radius[pidx]) as i32
-                                - (coll_y_pos as i32 + (*hb).bottom as i32))
-                                as i16)
-                                < 0
-                        {
-                            word!(game.projectile_dir[pidx], |fresh24| (fresh24) | (0x10u16));
-                            word!(game.collision_detection_index = pidx as u16);
-                            CallHitboxShot(
-                                (words!(i32, ((*E).bank, (*hb).func_ptrA))) as u32,
-                                (pidx * 2) as u16,
-                                game,
-                            );
-                            return;
-                        }
-                        m -= 1;
-                        hb = hb.offset(1);
-                    }
-                    n -= 1;
-                    ES = ES.offset(1);
-                }
-            }
-        }
-        pidx += 1;
-    }
-}
 pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
     let mut E = null_mut::<EnemyData>();
     CallSomeSamusCode(0xd, game);
@@ -2297,26 +2078,6 @@ pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
         j: enemy_ptr,
     }
 }
-pub unsafe fn SwitchEnemyAiToMainAi(game: &mut Game) {
-    let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    set_fields! {[(*E)], 0; ai_handler_bits, invincibility_timer, frozen_timer, shake_timer}
-}
-pub unsafe fn SamusLatchesOnWithGrapple(game: &mut Game) {
-    let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    word!(game.grapple_beam_end_x_pos = (*E).x_pos);
-    word!(game.grapple_beam_end_y_pos = (*E).y_pos);
-    if (*E).frozen_timer != 0 {
-        (*E).ai_handler_bits = 4;
-    } else {
-        let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
-        (*E).flash_timer = (if (*ED).hurt_ai_time != 0 {
-            (*ED).hurt_ai_time as i32
-        } else {
-            4
-        }) as u16;
-        (*E).ai_handler_bits = 0;
-    };
-}
 pub unsafe fn EnemyGrappleDeath(game: &mut Game) {
     (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).cause_of_death = 4;
     EnemyDeathAnimation(word!(game.cur_enemy_index), 0, game);
@@ -2325,152 +2086,7 @@ pub unsafe fn EnemyGrappleDeath(game: &mut Game) {
 pub unsafe fn Enemy_SwitchToFrozenAi(game: &mut Game) {
     (*gEnemyData(word!(game.cur_enemy_index) as i32, game)).ai_handler_bits = 4;
 }
-pub unsafe fn SamusLatchesOnWithGrappleNoInvinc(game: &mut Game) {
-    let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    if (*E).frozen_timer != 0 {
-        (*E).ai_handler_bits = 4;
-    } else {
-        CallEnemyAi(
-            (words!(
-                i32,
-                ((*E).bank, (*get_EnemyDef_A2((*E).enemy_ptr, game)).main_ai)
-            )) as u32,
-            game,
-        );
-        (*E).ai_handler_bits = 0;
-    }
-    word!(game.grapple_beam_end_x_pos = (*E).x_pos);
-    word!(game.grapple_beam_end_y_pos = (*E).y_pos);
-}
-pub unsafe fn SamusLatchesOnWithGrappleParalyze(game: &mut Game) {
-    let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
-    (*E).flash_timer = (if (*ED).hurt_ai_time != 0 {
-        (*ED).hurt_ai_time as i32
-    } else {
-        4
-    }) as u16;
-    (*E).ai_handler_bits = 0;
-    (*E).extra_properties = ((*E).extra_properties) | (1u16);
-}
 pub use self::Enemy_SwitchToFrozenAi as SamusHurtFromGrapple;
-pub unsafe fn EnemySamusCollHandler(game: &mut Game) {
-    let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    word!(game.enemy_processing_stage = 9);
-    if (*E).spritemap_pointer == 0 {
-        return;
-    }
-    if word!(game.samus_contact_damage_index) != 0 {
-        word!(game.samus_invincibility_timer = 0);
-    } else if word!(game.samus_invincibility_timer) != 0 {
-        if (*E).enemy_ptr as i32 != addr_kEnemyDef_DAFF as i32 {
-            return;
-        }
-        let some_flag: u16 = (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).some_flag;
-        if some_flag == 0 || some_flag == 8 {
-            return;
-        }
-    }
-    let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
-    if (*ED).touch_ai as i32 == 0xa0804c & 0xffff || (*ED).touch_ai as i32 == 0xa0804b & 0xffff {
-        return;
-    }
-    if (abs16((word!(game.samus_x_pos)).wrapping_sub((*E).x_pos)) as i32
-        - word!(game.samus_x_radius) as i32)
-        < (*E).x_width as i32
-        && (abs16((word!(game.samus_y_pos)).wrapping_sub((*E).y_pos)) as i32
-            - word!(game.samus_y_radius) as i32)
-            < (*E).y_height as i32
-        && ((*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32 || (*E).frozen_timer == 0)
-    {
-        CallEnemyAi((words!(i32, ((*E).bank, (*ED).touch_ai))) as u32, game);
-    }
-}
-pub unsafe fn EprojCollHandler(game: &mut Game) {
-    let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    word!(game.enemy_processing_stage = 7);
-    if word!(game.projectile_counter) == 0 {
-        return;
-    }
-    if (*E).spritemap_pointer == 0
-        || (*E).spritemap_pointer as i32 == addr_kSpritemap_Nothing_A0 as i32
-        || ((*E).properties & 0x400) != 0
-        || (*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32
-        || (*E).invincibility_timer != 0
-    {
-        return;
-    }
-    let mut pidx: i32 = 0;
-    while pidx < 5 {
-        let j: u16 = word!(game.projectile_type[pidx]);
-        if j != 0
-            && (j & 0xf00) != 768
-            && (j & 0xf00) != 1280
-            && (j as i32 & 0xf00) - 1792i32 & 0x8000 != 0
-        {
-            let x: u16 = abs16((word!(game.projectile_x_pos[pidx])).wrapping_sub((*E).x_pos));
-            let y: u16 = abs16((word!(game.projectile_y_pos[pidx])).wrapping_sub((*E).y_pos));
-            if (x as i32 - word!(game.projectile_x_radius[pidx]) as i32) < (*E).x_width as i32
-                && (y as i32 - word!(game.projectile_y_radius[pidx]) as i32) < (*E).y_height as i32
-            {
-                if (word!(game.projectile_type[pidx]) & 0xf00) == 512 {
-                    word!(game.earthquake_timer = 30);
-                    word!(game.earthquake_type = 18);
-                }
-                if ((*E).properties & 0x1000) != 0 || (word!(game.projectile_type[pidx]) & 8) == 0 {
-                    word!(game.projectile_dir[pidx], |fresh26| (fresh26) | (0x10u16));
-                }
-                word!(game.collision_detection_index = pidx as u16);
-                CallEnemyAi(
-                    (words!(
-                        i32,
-                        ((*E).bank, (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai)
-                    )) as u32,
-                    game,
-                );
-                return;
-            }
-        }
-        pidx += 1;
-    }
-}
-pub unsafe fn EnemyBombCollHandler(game: &mut Game) {
-    let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    word!(game.enemy_processing_stage = 8);
-    if word!(game.bomb_counter) == 0
-        || (*E).spritemap_pointer == 0
-        || (*E).invincibility_timer != 0
-        || (*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32
-    {
-        return;
-    }
-    let mut pidx: i32 = 5;
-    while pidx < 10 {
-        if !(word!(game.projectile_type[pidx]) == 0
-            || word!(game.projectile_variables[pidx]) != 0
-            || (word!(game.projectile_type[pidx]) & 0xf00) != 1280
-                && (word!(game.projectile_type[pidx]) & 0x8000) == 0)
-            && (abs16((word!(game.projectile_x_pos[pidx])).wrapping_sub((*E).x_pos)) as i32
-                - word!(game.projectile_x_radius[pidx]) as i32)
-                < (*E).x_width as i32
-            && (abs16((word!(game.projectile_y_pos[pidx])).wrapping_sub((*E).y_pos)) as i32
-                - word!(game.projectile_y_radius[pidx]) as i32)
-                < (*E).y_height as i32
-        {
-            word!(game.collision_detection_index = pidx as u16);
-            word!(game.projectile_dir[pidx], |fresh23| (fresh23) | (0x10u16));
-            CallEnemyAi(
-                (words!(
-                    i32,
-                    ((*E).bank, (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai)
-                )) as u32,
-                game,
-            );
-            return;
-        }
-        pidx += 1;
-    }
-}
 pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
     word!(game.enemy_processing_stage = 5);
     let rx: u16 = byte!(@pointer ram_ptr!(game, u16; 0xcea); 1) as u16;
@@ -2562,64 +2178,441 @@ pub unsafe fn NormalEnemyTouchAi(game: &mut Game) {
 pub unsafe fn NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game: &mut Game) {
     NormalEnemyTouchAiSkipDeathAnim(game);
 }
-pub unsafe fn NormalEnemyTouchAiSkipDeathAnim(game: &mut Game) {
-    let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
-    if word!(game.samus_contact_damage_index) == 0 {
-        Samus_DealDamage(SuitDamageDivision((*ED).damage, game), game);
-        word!(game.samus_invincibility_timer = 96);
-        word!(game.samus_knockback_timer = 5);
-        word!(
-            game.knockback_x_dir =
-                (((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).x_pos) as i16) >= 0) as u16
-        );
-        return;
-    }
-    let mut r20: u16 = (word!(game.samus_contact_damage_index)).wrapping_add(15);
-    let mut r22: u16 = if word!(game.samus_contact_damage_index) == 1 {
-        500
-    } else if word!(game.samus_contact_damage_index) == 2 {
-        300
-    } else if word!(game.samus_contact_damage_index) == 3 {
-        2000
-    } else {
-        r20 = r20.wrapping_add(1);
-        if word!(game.samus_contact_damage_index) == 4 {
-            CallSomeSamusCode(4, game);
+crate::prefixed_callbacks! {
+    pub unsafe fn (game: &mut Game);
+    @prefix { let E = gEnemyData(word!(game.cur_enemy_index) as i32, game); };
+    EnemySamusCollHandler_Multibox [] {
+        word!(game.enemy_processing_stage = 6);
+        if (*E).spritemap_pointer == 0 {
+            return;
         }
-        200
+        let touch_ai: u16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).touch_ai;
+        if touch_ai as i32 == 0xa0804c & 0xffff || touch_ai as i32 == 0xa0804b & 0xffff {
+            return;
+        }
+        if word!(game.samus_contact_damage_index) != 0 {
+            word!(game.samus_invincibility_timer = 0);
+        } else if word!(game.samus_invincibility_timer) != 0 {
+            return;
+        }
+        if (*E).spritemap_pointer & 0x8000 == 0 {
+            return;
+        }
+        let samus_right_border_coll: u16 =
+            (word!(game.samus_x_radius)).wrapping_add(word!(game.samus_x_pos));
+        let samus_left_border_coll: u16 =
+            (word!(game.samus_x_pos)).wrapping_sub(word!(game.samus_x_radius));
+        let samus_bottom_border_coll: u16 =
+            (word!(game.samus_y_radius)).wrapping_add(word!(game.samus_y_pos));
+        let samus_top_border_coll: u16 =
+            (word!(game.samus_y_pos)).wrapping_sub(word!(game.samus_y_radius));
+        let mut n: i32 = *RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game) as i32;
+        let mut enemy_spritemap_entry_pointer: u16 = ((*E).spritemap_pointer).wrapping_add(2);
+        loop {
+            let ES = get_ExtendedSpriteMap((*E).bank, enemy_spritemap_entry_pointer, game);
+            let coll_x_pos: u16 = ((*ES).xpos).wrapping_add((*E).x_pos);
+            let coll_y_pos: u16 = ((*ES).ypos).wrapping_add((*E).y_pos);
+            let p = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
+            let mut m: i32 = *(p as *mut u16) as i32;
+            let mut hb = p.offset(2) as *mut Hitbox;
+            while m != 0 {
+                if (((*hb).left as i32 + coll_x_pos as i32 - samus_right_border_coll as i32) as i16) < 0
+                    && (((*hb).right as i32 + coll_x_pos as i32 - samus_left_border_coll as i32) as i16)
+                        >= 0
+                    && (((*hb).top as i32 + coll_y_pos as i32 - samus_bottom_border_coll as i32) as i16)
+                        < 0
+                    && (((*hb).bottom as i32 + coll_y_pos as i32 - samus_top_border_coll as i32) as i16)
+                        >= 0
+                {
+                    CallHitboxTouch((words!(i32, ((*E).bank, (*hb).func_ptr))) as u32, game);
+                    return;
+                }
+                m -= 1;
+                hb = hb.offset(1);
+            }
+            enemy_spritemap_entry_pointer = (enemy_spritemap_entry_pointer).wrapping_add(8);
+            n -= 1;
+            if (n == 0) {
+                break;
+            }
+        }
     };
-    let vp: u16 = (if (*ED).vulnerability_ptr != 0 {
-        (*ED).vulnerability_ptr as i32
-    } else {
-        addr_stru_B4EC1C as i32
-    }) as u16;
-    word!(
-        game.last_enemy_power = *(&raw mut (*(get_Vulnerability
-            as unsafe fn(u16, &mut Game) -> *mut Vulnerability)(
-            (r20).wrapping_add(vp), game,
-        ))
-        .power as *mut u16)
-    );
-    let varE32: u16 = (word!(game.last_enemy_power)) & (0x7fu16);
-    if (word!(game.last_enemy_power) & 0x7f) != 0 {
-        let dmg: u16 = ((r22 as i32 >> 1) * varE32 as i32) as u16;
-        if dmg != 0 {
+    EprojCollHandler_Multibox [] {
+        word!(game.enemy_processing_stage = 3);
+        if word!(game.projectile_counter) == 0
+            || (*E).spritemap_pointer == 0
+            || (*E).spritemap_pointer as i32 == addr_kExtendedSpritemap_Nothing_A0 as i32
+        {
+            return;
+        }
+        let shot_ai: u16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai;
+        if shot_ai as i32 == 0xa0804c & 0xffff || shot_ai as i32 == 0xa0804b & 0xffff {
+            return;
+        }
+        if ((*E).properties & 0x400) != 0
+            || (*E).invincibility_timer != 0
+            || (*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32
+        {
+            return;
+        }
+        let mut pidx: i32 = 0;
+        while pidx < 5 {
+            let v4: u16 = word!(game.projectile_type[pidx]);
+            if v4 != 0
+                && (v4 & 0xf00) != 768
+                && (v4 & 0xf00) != 1280
+                && (v4 as i32 & 0xf00) - 1792i32 & 0x8000 != 0
+            {
+                if (*E).spritemap_pointer & 0x8000 == 0 {
+                    Unreachable(game);
+                }
+                let esep = RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game);
+                let mut n: i32 = *esep as i32;
+                let mut ES = esep.offset(2) as *mut ExtendedSpriteMap;
+                while n != 0 {
+                    let coll_x_pos: u16 = ((*ES).xpos).wrapping_add((*E).x_pos);
+                    let coll_y_pos: u16 = ((*ES).ypos).wrapping_add((*E).y_pos);
+                    let p = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
+                    let mut m: i32 = *(p as *mut u16) as i32;
+                    let mut hb = p.offset(2) as *mut Hitbox;
+                    while m != 0 {
+                        if ((word!(game.projectile_x_radius[pidx]) as i32
+                            + word!(game.projectile_x_pos[pidx]) as i32
+                            - (coll_x_pos as i32 + (*hb).left as i32)) as i16)
+                            >= 0
+                            && ((word!(game.projectile_x_pos[pidx]) as i32
+                                - word!(game.projectile_x_radius[pidx]) as i32
+                                - (coll_x_pos as i32 + (*hb).right as i32))
+                                as i16)
+                                < 0
+                            && ((word!(game.projectile_y_radius[pidx]) as i32
+                                + word!(game.projectile_y_pos[pidx]) as i32
+                                - (coll_y_pos as i32 + (*hb).top as i32))
+                                as i16)
+                                >= 0
+                            && ((word!(game.projectile_y_pos[pidx]) as i32
+                                - word!(game.projectile_y_radius[pidx]) as i32
+                                - (coll_y_pos as i32 + (*hb).bottom as i32))
+                                as i16)
+                                < 0
+                        {
+                            if (word!(game.projectile_type[pidx]) & 0xf00) == 512 {
+                                word!(game.earthquake_timer = 30);
+                                word!(game.earthquake_type = 18);
+                            }
+                            if ((*E).properties & 0x1000) != 0
+                                || (word!(game.projectile_type[pidx]) & 8) == 0
+                            {
+                                word!(game.projectile_dir[pidx], |fresh27| (fresh27) | (0x10u16));
+                            }
+                            word!(game.collision_detection_index = pidx as u16);
+                            CallHitboxShot(
+                                (words!(i32, ((*E).bank, (*hb).func_ptrA))) as u32,
+                                (pidx * 2) as u16,
+                                game,
+                            );
+                            return;
+                        }
+                        m -= 1;
+                        hb = hb.offset(1);
+                    }
+                    n -= 1;
+                    ES = ES.offset(1);
+                }
+            }
+            pidx += 1;
+        }
+    };
+    EnemyBombCollHandler_Multibox [] {
+        word!(game.enemy_processing_stage = 4);
+        if (*E).spritemap_pointer == 0
+            || ((*E).properties & 0x400) != 0
+            || (*E).invincibility_timer != 0
+        {
+            return;
+        }
+        let shot_ai: u16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai;
+        if shot_ai as i32 == 0xa0804c & 0xffff
+            || shot_ai as i32 == 0xa0804b & 0xffff
+            || word!(game.bomb_counter) == 0
+        {
+            return;
+        }
+        let mut pidx: i32 = 5;
+        while pidx != 10 {
+            if (word!(game.projectile_x_pos[pidx]) != 0) {
+                let v4: u16 = word!(game.projectile_type[pidx]);
+                if v4 != 0 && (v4 & 0xf00) == 1280 && word!(game.projectile_variables[pidx]) == 0 {
+                    if (*E).spritemap_pointer & 0x8000 == 0 {
+                        Unreachable(game);
+                    }
+                    let esep = RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game);
+                    let mut n: i32 = *(esep as *mut u16) as i32;
+                    let mut ES = esep.offset(2) as *mut ExtendedSpriteMap;
+                    while n != 0 {
+                        let coll_x_pos: u16 = ((*ES).xpos).wrapping_add((*E).x_pos);
+                        let coll_y_pos: u16 = ((*ES).ypos).wrapping_add((*E).y_pos);
+                        let p = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
+                        let mut m: i32 = *(p as *mut u16) as i32;
+                        let mut hb = p.offset(2) as *mut Hitbox;
+                        while m != 0 {
+                            if ((word!(game.projectile_x_radius[pidx]) as i32
+                                + word!(game.projectile_x_pos[pidx]) as i32
+                                - (coll_x_pos as i32 + (*hb).left as i32))
+                                as i16)
+                                >= 0
+                                && ((word!(game.projectile_x_pos[pidx]) as i32
+                                    - word!(game.projectile_x_radius[pidx]) as i32
+                                    - (coll_x_pos as i32 + (*hb).right as i32))
+                                    as i16)
+                                    < 0
+                                && ((word!(game.projectile_y_radius[pidx]) as i32
+                                    + word!(game.projectile_y_pos[pidx]) as i32
+                                    - (coll_y_pos as i32 + (*hb).top as i32))
+                                    as i16)
+                                    >= 0
+                                && ((word!(game.projectile_y_pos[pidx]) as i32
+                                    - word!(game.projectile_y_radius[pidx]) as i32
+                                    - (coll_y_pos as i32 + (*hb).bottom as i32))
+                                    as i16)
+                                    < 0
+                            {
+                                word!(game.projectile_dir[pidx], |fresh24| (fresh24) | (0x10u16));
+                                word!(game.collision_detection_index = pidx as u16);
+                                CallHitboxShot(
+                                    (words!(i32, ((*E).bank, (*hb).func_ptrA))) as u32,
+                                    (pidx * 2) as u16,
+                                    game,
+                                );
+                                return;
+                            }
+                            m -= 1;
+                            hb = hb.offset(1);
+                        }
+                        n -= 1;
+                        ES = ES.offset(1);
+                    }
+                }
+            }
+            pidx += 1;
+        }
+    };
+    SwitchEnemyAiToMainAi [] {
+        set_fields! {[(*E)], 0; ai_handler_bits, invincibility_timer, frozen_timer, shake_timer}
+    };
+    SamusLatchesOnWithGrapple [] {
+        word!(game.grapple_beam_end_x_pos = (*E).x_pos);
+        word!(game.grapple_beam_end_y_pos = (*E).y_pos);
+        if (*E).frozen_timer != 0 {
+            (*E).ai_handler_bits = 4;
+        } else {
+            let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
             (*E).flash_timer = (if (*ED).hurt_ai_time != 0 {
                 (*ED).hurt_ai_time as i32
             } else {
                 4
             }) as u16;
-            (*E).ai_handler_bits = ((*E).ai_handler_bits) | ((kEnemyAiBits_Hurt) as u16);
-            word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
-            (*E).health = (if (((*E).health) as i16).wrapping_sub((dmg) as i16) < 0 {
-                0
-            } else {
-                ((((*E).health) as i16).wrapping_sub((dmg) as i16)) as i32
-            }) as u16;
-            QueueSfx2_Max1(0xb, game);
+            (*E).ai_handler_bits = 0;
+        };
+    };
+    SamusLatchesOnWithGrappleNoInvinc [] {
+        if (*E).frozen_timer != 0 {
+            (*E).ai_handler_bits = 4;
+        } else {
+            CallEnemyAi(
+                (words!(
+                    i32,
+                    ((*E).bank, (*get_EnemyDef_A2((*E).enemy_ptr, game)).main_ai)
+                )) as u32,
+                game,
+            );
+            (*E).ai_handler_bits = 0;
         }
-    }
+        word!(game.grapple_beam_end_x_pos = (*E).x_pos);
+        word!(game.grapple_beam_end_y_pos = (*E).y_pos);
+    };
+    SamusLatchesOnWithGrappleParalyze [] {
+        let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
+        (*E).flash_timer = (if (*ED).hurt_ai_time != 0 {
+            (*ED).hurt_ai_time as i32
+        } else {
+            4
+        }) as u16;
+        (*E).ai_handler_bits = 0;
+        (*E).extra_properties = ((*E).extra_properties) | (1u16);
+    };
+    EnemySamusCollHandler [] {
+        word!(game.enemy_processing_stage = 9);
+        if (*E).spritemap_pointer == 0 {
+            return;
+        }
+        if word!(game.samus_contact_damage_index) != 0 {
+            word!(game.samus_invincibility_timer = 0);
+        } else if word!(game.samus_invincibility_timer) != 0 {
+            if (*E).enemy_ptr as i32 != addr_kEnemyDef_DAFF as i32 {
+                return;
+            }
+            let some_flag: u16 = (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).some_flag;
+            if some_flag == 0 || some_flag == 8 {
+                return;
+            }
+        }
+        let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
+        if (*ED).touch_ai as i32 == 0xa0804c & 0xffff || (*ED).touch_ai as i32 == 0xa0804b & 0xffff {
+            return;
+        }
+        if (abs16((word!(game.samus_x_pos)).wrapping_sub((*E).x_pos)) as i32
+            - word!(game.samus_x_radius) as i32)
+            < (*E).x_width as i32
+            && (abs16((word!(game.samus_y_pos)).wrapping_sub((*E).y_pos)) as i32
+                - word!(game.samus_y_radius) as i32)
+                < (*E).y_height as i32
+            && ((*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32 || (*E).frozen_timer == 0)
+        {
+            CallEnemyAi((words!(i32, ((*E).bank, (*ED).touch_ai))) as u32, game);
+        }
+    };
+    EprojCollHandler [] {
+        word!(game.enemy_processing_stage = 7);
+        if word!(game.projectile_counter) == 0 {
+            return;
+        }
+        if (*E).spritemap_pointer == 0
+            || (*E).spritemap_pointer as i32 == addr_kSpritemap_Nothing_A0 as i32
+            || ((*E).properties & 0x400) != 0
+            || (*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32
+            || (*E).invincibility_timer != 0
+        {
+            return;
+        }
+        let mut pidx: i32 = 0;
+        while pidx < 5 {
+            let j: u16 = word!(game.projectile_type[pidx]);
+            if j != 0
+                && (j & 0xf00) != 768
+                && (j & 0xf00) != 1280
+                && (j as i32 & 0xf00) - 1792i32 & 0x8000 != 0
+            {
+                let x: u16 = abs16((word!(game.projectile_x_pos[pidx])).wrapping_sub((*E).x_pos));
+                let y: u16 = abs16((word!(game.projectile_y_pos[pidx])).wrapping_sub((*E).y_pos));
+                if (x as i32 - word!(game.projectile_x_radius[pidx]) as i32) < (*E).x_width as i32
+                    && (y as i32 - word!(game.projectile_y_radius[pidx]) as i32) < (*E).y_height as i32
+                {
+                    if (word!(game.projectile_type[pidx]) & 0xf00) == 512 {
+                        word!(game.earthquake_timer = 30);
+                        word!(game.earthquake_type = 18);
+                    }
+                    if ((*E).properties & 0x1000) != 0 || (word!(game.projectile_type[pidx]) & 8) == 0 {
+                        word!(game.projectile_dir[pidx], |fresh26| (fresh26) | (0x10u16));
+                    }
+                    word!(game.collision_detection_index = pidx as u16);
+                    CallEnemyAi(
+                        (words!(
+                            i32,
+                            ((*E).bank, (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai)
+                        )) as u32,
+                        game,
+                    );
+                    return;
+                }
+            }
+            pidx += 1;
+        }
+    };
+    EnemyBombCollHandler [] {
+        word!(game.enemy_processing_stage = 8);
+        if word!(game.bomb_counter) == 0
+            || (*E).spritemap_pointer == 0
+            || (*E).invincibility_timer != 0
+            || (*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32
+        {
+            return;
+        }
+        let mut pidx: i32 = 5;
+        while pidx < 10 {
+            if !(word!(game.projectile_type[pidx]) == 0
+                || word!(game.projectile_variables[pidx]) != 0
+                || (word!(game.projectile_type[pidx]) & 0xf00) != 1280
+                    && (word!(game.projectile_type[pidx]) & 0x8000) == 0)
+                && (abs16((word!(game.projectile_x_pos[pidx])).wrapping_sub((*E).x_pos)) as i32
+                    - word!(game.projectile_x_radius[pidx]) as i32)
+                    < (*E).x_width as i32
+                && (abs16((word!(game.projectile_y_pos[pidx])).wrapping_sub((*E).y_pos)) as i32
+                    - word!(game.projectile_y_radius[pidx]) as i32)
+                    < (*E).y_height as i32
+            {
+                word!(game.collision_detection_index = pidx as u16);
+                word!(game.projectile_dir[pidx], |fresh23| (fresh23) | (0x10u16));
+                CallEnemyAi(
+                    (words!(
+                        i32,
+                        ((*E).bank, (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai)
+                    )) as u32,
+                    game,
+                );
+                return;
+            }
+            pidx += 1;
+        }
+    };
+    NormalEnemyTouchAiSkipDeathAnim [] {
+        let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
+        if word!(game.samus_contact_damage_index) == 0 {
+            Samus_DealDamage(SuitDamageDivision((*ED).damage, game), game);
+            word!(game.samus_invincibility_timer = 96);
+            word!(game.samus_knockback_timer = 5);
+            word!(
+                game.knockback_x_dir =
+                    (((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).x_pos) as i16) >= 0) as u16
+            );
+            return;
+        }
+        let mut r20: u16 = (word!(game.samus_contact_damage_index)).wrapping_add(15);
+        let mut r22: u16 = if word!(game.samus_contact_damage_index) == 1 {
+            500
+        } else if word!(game.samus_contact_damage_index) == 2 {
+            300
+        } else if word!(game.samus_contact_damage_index) == 3 {
+            2000
+        } else {
+            r20 = r20.wrapping_add(1);
+            if word!(game.samus_contact_damage_index) == 4 {
+                CallSomeSamusCode(4, game);
+            }
+            200
+        };
+        let vp: u16 = (if (*ED).vulnerability_ptr != 0 {
+            (*ED).vulnerability_ptr as i32
+        } else {
+            addr_stru_B4EC1C as i32
+        }) as u16;
+        word!(
+            game.last_enemy_power = *(&raw mut (*(get_Vulnerability
+                as unsafe fn(u16, &mut Game) -> *mut Vulnerability)(
+                (r20).wrapping_add(vp), game,
+            ))
+            .power as *mut u16)
+        );
+        let varE32: u16 = (word!(game.last_enemy_power)) & (0x7fu16);
+        if (word!(game.last_enemy_power) & 0x7f) != 0 {
+            let dmg: u16 = ((r22 as i32 >> 1) * varE32 as i32) as u16;
+            if dmg != 0 {
+                (*E).flash_timer = (if (*ED).hurt_ai_time != 0 {
+                    (*ED).hurt_ai_time as i32
+                } else {
+                    4
+                }) as u16;
+                (*E).ai_handler_bits = ((*E).ai_handler_bits) | ((kEnemyAiBits_Hurt) as u16);
+                word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
+                (*E).health = (if (((*E).health) as i16).wrapping_sub((dmg) as i16) < 0 {
+                    0
+                } else {
+                    ((((*E).health) as i16).wrapping_sub((dmg) as i16)) as i32
+                }) as u16;
+                QueueSfx2_Max1(0xb, game);
+            }
+        }
+    };
 }
 pub unsafe fn NormalEnemyPowerBombAi(game: &mut Game) {
     NormalEnemyPowerBombAiSkipDeathAnim(game);

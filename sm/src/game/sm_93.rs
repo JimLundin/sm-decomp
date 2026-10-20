@@ -35,41 +35,6 @@ unsafe fn get_ProjectileDataTable(a: u16, game: &mut Game) -> *mut ProjectileDat
 unsafe fn get_ProjectileInstr(a: u16, game: &mut Game) -> *mut ProjectileInstr {
     RomPtr((0x930000u32) | ((a) as u32), game) as *mut ProjectileInstr
 }
-pub unsafe fn InitializeProjectile(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    let r18: i32 = word!(game.projectile_dir[v1]) as i32 & 0xf;
-    let mut v2: u16 = word!(game.projectile_type[v1]);
-    let mut v3: u16 = if (v2 & 0xf00) != 0 {
-        crate::rtl::rom_table_word!(
-            game,
-            0x9383f1,
-            (*(&raw mut v2 as *mut u8).offset(1) as i32 & 0xf) as isize
-        )
-    } else if (v2 & 0x10) != 0 {
-        crate::rtl::rom_table_word!(
-            game,
-            0x9383d9,
-            (word!(game.projectile_type[v1]) as i32 & 0xf) as isize
-        )
-    } else {
-        crate::rtl::rom_table_word!(
-            game,
-            0x9383c1,
-            (word!(game.projectile_type[v1]) as i32 & 0xf) as isize
-        )
-    };
-    let PD = get_ProjectileDataTable(v3, game);
-    if (*PD).damage & 0x8000 != 0 {
-        InvalidInterrupt_Crash(game);
-    }
-    word!(game.projectile_damage[v1] = (*PD).damage);
-    let v7: u16 = (*PD).instr_ptrs[r18 as usize];
-    word!(game.projectile_bomb_instruction_ptr[v1] = v7);
-    let v8 = RomPtr_93(v7, game);
-    word!(game.projectile_x_radius[v1] = *v8.offset(4) as u16);
-    word!(game.projectile_y_radius[v1] = *v8.offset(5) as u16);
-    word!(game.projectile_bomb_instruction_timers[v1] = 1);
-}
 pub unsafe fn InitializeInstrForSuperMissile(v0: u16, game: &mut Game) {
     let v1: i32 = v0 as i32 >> 1;
     let v3 = RomPtr_93(
@@ -108,93 +73,127 @@ pub unsafe fn InitializeInstrForMissile(v0: u16, game: &mut Game) {
     word!(game.projectile_bomb_instruction_ptr[v1] = *(v3.offset(2) as *mut u16));
     word!(game.projectile_bomb_instruction_timers[v1] = 1);
 }
-pub unsafe fn KillProjectileInner(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    if (word!(game.projectile_type[v1]) & 0xf00) != 0 {
-        if word!(game.cinematic_function) == 0 {
-            QueueSfx2_Max6(7, game);
+crate::prefixed_callbacks! {
+    pub unsafe fn (k: u16, game: &mut Game);
+    @prefix { let v1: i32 = k as i32 >> 1; };
+    InitializeProjectile [] {
+        let r18: i32 = word!(game.projectile_dir[v1]) as i32 & 0xf;
+        let mut v2: u16 = word!(game.projectile_type[v1]);
+        let mut v3: u16 = if (v2 & 0xf00) != 0 {
+            crate::rtl::rom_table_word!(
+                game,
+                0x9383f1,
+                (*(&raw mut v2 as *mut u8).offset(1) as i32 & 0xf) as isize
+            )
+        } else if (v2 & 0x10) != 0 {
+            crate::rtl::rom_table_word!(
+                game,
+                0x9383d9,
+                (word!(game.projectile_type[v1]) as i32 & 0xf) as isize
+            )
+        } else {
+            crate::rtl::rom_table_word!(
+                game,
+                0x9383c1,
+                (word!(game.projectile_type[v1]) as i32 & 0xf) as isize
+            )
+        };
+        let PD = get_ProjectileDataTable(v3, game);
+        if (*PD).damage & 0x8000 != 0 {
+            InvalidInterrupt_Crash(game);
         }
-        let v2: u16 = word!(game.projectile_type[v1]);
-        word!(game.projectile_type[v1] = (v2 & 0xf0ff | 0x800));
-        if (v2 & 0x200) != 0 {
+        word!(game.projectile_damage[v1] = (*PD).damage);
+        let v7: u16 = (*PD).instr_ptrs[r18 as usize];
+        word!(game.projectile_bomb_instruction_ptr[v1] = v7);
+        let v8 = RomPtr_93(v7, game);
+        word!(game.projectile_x_radius[v1] = *v8.offset(4) as u16);
+        word!(game.projectile_y_radius[v1] = *v8.offset(5) as u16);
+        word!(game.projectile_bomb_instruction_timers[v1] = 1);
+    };
+    KillProjectileInner [] {
+        if (word!(game.projectile_type[v1]) & 0xf00) != 0 {
+            if word!(game.cinematic_function) == 0 {
+                QueueSfx2_Max6(7, game);
+            }
+            let v2: u16 = word!(game.projectile_type[v1]);
+            word!(game.projectile_type[v1] = (v2 & 0xf0ff | 0x800));
+            if (v2 & 0x200) != 0 {
+                word!(
+                    game.projectile_bomb_instruction_ptr[v1] =
+                        *(&raw mut (*(rom_ptr!(game, ProjectileDamagesAndInstrPtr; 0x938691))).damages
+                            as *mut u16)
+                            .offset(1,)
+                );
+                word!(game.earthquake_type = 20);
+                word!(game.earthquake_timer = 30);
+            } else {
+                word!(
+                    game.projectile_bomb_instruction_ptr[v1] =
+                        *(&raw mut (*(rom_ptr!(game, ProjectileDamagesAndInstrPtr; 0x938679)))
+                            .instr_ptr)
+                            .offset(1)
+                );
+            }
+            if word!(game.cooldown_timer) as i32 - 21i32 & 0x8000 == 0 {
+                word!(game.cooldown_timer = 20);
+            }
+        } else {
+            word!(game.projectile_type[v1] = (word!(game.projectile_type[v1]) & 0xf0ff | 0x700));
             word!(
                 game.projectile_bomb_instruction_ptr[v1] =
-                    *(&raw mut (*(rom_ptr!(game, ProjectileDamagesAndInstrPtr; 0x938691))).damages
+                    *(&raw mut (*(rom_ptr!(game, ProjectileDamagesAndInstrPtr; 0x938679))).damages
                         as *mut u16)
                         .offset(1,)
             );
-            word!(game.earthquake_type = 20);
-            word!(game.earthquake_timer = 30);
-        } else {
-            word!(
-                game.projectile_bomb_instruction_ptr[v1] =
-                    *(&raw mut (*(rom_ptr!(game, ProjectileDamagesAndInstrPtr; 0x938679)))
-                        .instr_ptr)
-                        .offset(1)
-            );
+            QueueSfx2_Max6(0xc, game);
         }
-        if word!(game.cooldown_timer) as i32 - 21i32 & 0x8000 == 0 {
-            word!(game.cooldown_timer = 20);
-        }
-    } else {
-        word!(game.projectile_type[v1] = (word!(game.projectile_type[v1]) & 0xf0ff | 0x700));
+        word!(game.projectile_bomb_instruction_timers[v1] = 1);
+        word!(game.projectile_damage[v1] = 8);
+    };
+    InitializeBombExplosion [] {
         word!(
             game.projectile_bomb_instruction_ptr[v1] =
-                *(&raw mut (*(rom_ptr!(game, ProjectileDamagesAndInstrPtr; 0x938679))).damages
+                *(&raw mut (*(rom_ptr!(game, ProjectileDamagesAndInstrPtr; 0x938681))).damages
                     as *mut u16)
                     .offset(1,)
         );
-        QueueSfx2_Max6(0xc, game);
-    }
-    word!(game.projectile_bomb_instruction_timers[v1] = 1);
-    word!(game.projectile_damage[v1] = 8);
-}
-pub unsafe fn InitializeBombExplosion(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    word!(
-        game.projectile_bomb_instruction_ptr[v1] =
-            *(&raw mut (*(rom_ptr!(game, ProjectileDamagesAndInstrPtr; 0x938681))).damages
-                as *mut u16)
-                .offset(1,)
-    );
-    word!(game.projectile_bomb_instruction_timers[v1] = 1);
-}
-pub unsafe fn InitializeShinesparkEchoOrSpazerSba(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    let r18: i32 = word!(game.projectile_dir[v1]) as i32 & 0xf;
-    let PD = get_ProjectileDataTable(
-        crate::rtl::rom_table_word!(
+        word!(game.projectile_bomb_instruction_timers[v1] = 1);
+    };
+    InitializeShinesparkEchoOrSpazerSba [] {
+        let r18: i32 = word!(game.projectile_dir[v1]) as i32 & 0xf;
+        let PD = get_ProjectileDataTable(
+            crate::rtl::rom_table_word!(
+                game,
+                0x938403,
+                (*((ram_ptr!(game, u16; 0xc18)).offset(v1 as isize) as *mut u8) as i32 - 34i32)
+                    as isize,
+            ),
             game,
-            0x938403,
-            (*((ram_ptr!(game, u16; 0xc18)).offset(v1 as isize) as *mut u8) as i32 - 34i32)
-                as isize,
-        ),
-        game,
-    );
-    word!(game.projectile_damage[v1] = (*PD).damage);
-    if (*PD).damage & 0x8000 != 0 {
-        InvalidInterrupt_Crash(game);
-    }
-    word!(game.projectile_bomb_instruction_ptr[v1] = (*PD).instr_ptrs[r18 as usize]);
-    word!(game.projectile_bomb_instruction_timers[v1] = 1);
-}
-pub unsafe fn InitializeSbaProjectile(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    let v2 = RomPtr_93(
-        crate::rtl::rom_table_word!(
+        );
+        word!(game.projectile_damage[v1] = (*PD).damage);
+        if (*PD).damage & 0x8000 != 0 {
+            InvalidInterrupt_Crash(game);
+        }
+        word!(game.projectile_bomb_instruction_ptr[v1] = (*PD).instr_ptrs[r18 as usize]);
+        word!(game.projectile_bomb_instruction_timers[v1] = 1);
+    };
+    InitializeSbaProjectile [] {
+        let v2 = RomPtr_93(
+            crate::rtl::rom_table_word!(
+                game,
+                0x938413,
+                (word!(game.projectile_type[v1]) as i32 & 0xf) as isize
+            ),
             game,
-            0x938413,
-            (word!(game.projectile_type[v1]) as i32 & 0xf) as isize
-        ),
-        game,
-    );
-    let v3: u16 = *(v2 as *mut u16);
-    word!(game.projectile_damage[v1] = v3);
-    if v3 & 0x8000 != 0 {
-        InvalidInterrupt_Crash(game);
-    }
-    word!(game.projectile_bomb_instruction_ptr[v1] = *(v2.offset(2) as *mut u16));
-    word!(game.projectile_bomb_instruction_timers[v1] = 1);
+        );
+        let v3: u16 = *(v2 as *mut u16);
+        word!(game.projectile_damage[v1] = v3);
+        if v3 & 0x8000 != 0 {
+            InvalidInterrupt_Crash(game);
+        }
+        word!(game.projectile_bomb_instruction_ptr[v1] = *(v2.offset(2) as *mut u16));
+        word!(game.projectile_bomb_instruction_timers[v1] = 1);
+    };
 }
 pub unsafe fn ProjectileInsts_GetValue(k: u16, game: &mut Game) -> u16 {
     let ip: i32 = word!(game.projectile_bomb_instruction_ptr[(k >> 1)]) as i32;
