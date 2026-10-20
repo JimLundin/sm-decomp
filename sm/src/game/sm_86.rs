@@ -4168,35 +4168,35 @@ pub unsafe fn sub_86C605(j: u16, game: &mut Game) {
         eproj_y_subpos[v1],
     }
     let E = Get_MotherBrain(0i32, game);
-    set_fields! {[(*E)], 0u16; mbn_var_23, mbn_var_25}
+    set_fields! {[(*E)], 0u16; var_23, var_25}
     set_ram_word!(game.eproj_gfx_idx[v1] = 1024u16);
     crate::update_place! { reference fresh8 = *(ram_ptr!(game, u16; 0x1a4b)).offset(v1 as isize) => ((*E).base.x_pos as i32 + 64i32) as u16; }
-    (*E).mbn_var_24 = *fresh8;
-    let x: u16 = (ram_word!(game, samus_x_pos) as i32 - (*E).mbn_var_24 as i32) as u16;
+    (*E).var_24 = *fresh8;
+    let x: u16 = (ram_word!(game, samus_x_pos) as i32 - (*E).var_24 as i32) as u16;
     crate::update_place! { reference fresh9 = *(ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize) => ((*E).base.y_pos as i32 - 48i32) as u16; }
-    (*E).mbn_var_26 = *fresh9;
-    let y: u16 = (ram_word!(game, samus_y_pos) as i32 - (*E).mbn_var_26 as i32) as u16;
+    (*E).var_26 = *fresh9;
+    let y: u16 = (ram_word!(game, samus_y_pos) as i32 - (*E).var_26 as i32) as u16;
     let r18: i32 = -(CalculateAngleFromXY(x, y, game) as i32 + 0x80i32) as u8 as i32;
-    (*E).mbn_var_29 = r18 as u16;
-    (*E).mbn_var_27 = Math_MultBySin(0xc00u16, r18 as u16);
-    (*E).mbn_var_28 = Math_MultByCos(0xc00u16, r18 as u16);
+    (*E).var_29 = r18 as u16;
+    (*E).var_27 = Math_MultBySin(0xc00u16, r18 as u16);
+    (*E).var_28 = Math_MultByCos(0xc00u16, r18 as u16);
 }
 unsafe fn EprojInit_MotherBrainDeathBeemFired(j: u16, game: &mut Game) {
     let v1: i32 = j as i32 >> 1i32;
     let E = Get_MotherBrain(0i32, game);
-    set_ram_word!(game.eproj_x_pos[v1] = (*E).mbn_var_24);
-    set_ram_word!(game.eproj_x_subpos[v1] = (*E).mbn_var_23);
-    set_ram_word!(game.eproj_y_pos[v1] = (*E).mbn_var_26);
-    set_ram_word!(game.eproj_y_subpos[v1] = (*E).mbn_var_25);
-    set_ram_word!(game.eproj_x_vel[v1] = (*E).mbn_var_27);
-    set_ram_word!(game.eproj_y_vel[v1] = (*E).mbn_var_28);
+    set_ram_word!(game.eproj_x_pos[v1] = (*E).var_24);
+    set_ram_word!(game.eproj_x_subpos[v1] = (*E).var_23);
+    set_ram_word!(game.eproj_y_pos[v1] = (*E).var_26);
+    set_ram_word!(game.eproj_y_subpos[v1] = (*E).var_25);
+    set_ram_word!(game.eproj_x_vel[v1] = (*E).var_27);
+    set_ram_word!(game.eproj_y_vel[v1] = (*E).var_28);
     MoveEprojWithVelocity(j, game);
-    (*E).mbn_var_24 = ram_word!(game, eproj_x_pos[v1]);
-    (*E).mbn_var_23 = ram_word!(game, eproj_x_subpos[v1]);
-    (*E).mbn_var_26 = ram_word!(game, eproj_y_pos[v1]);
-    (*E).mbn_var_25 = ram_word!(game, eproj_y_subpos[v1]);
-    let r18: u16 = (*(&raw mut (*E).mbn_var_29 as *mut u8).offset(0) as i32
-        + NextRandom(game) as i32) as u8 as u16;
+    (*E).var_24 = ram_word!(game, eproj_x_pos[v1]);
+    (*E).var_23 = ram_word!(game, eproj_x_subpos[v1]);
+    (*E).var_26 = ram_word!(game, eproj_y_pos[v1]);
+    (*E).var_25 = ram_word!(game, eproj_y_subpos[v1]);
+    let r18: u16 = (*(&raw mut (*E).var_29 as *mut u8).offset(0) as i32 + NextRandom(game) as i32)
+        as u8 as u16;
     let rv: u16 = NextRandom(game);
     set_ram_word!(game.eproj_x_vel[v1] = Math_MultBySin((rv & 0x700), r18,));
     set_ram_word!(

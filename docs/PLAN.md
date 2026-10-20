@@ -78,6 +78,35 @@ Defer isolated hundred-line batches. Measure complete repeated families and
 unused declaration chains before implementation; preserve runtime behavior.
 The 90-method word-accessor draft (-195 lines) is parked outside the repository.
 
+Reduction throughput (subagent investigation, 2026-10-20): rank complete
+structural families by formatted net savings before extensive validation.
+The shared enemy layouts below beat the remaining individual clone pairs
+(largest measured pair: 68 lines). Keep sub-thousand-line families parked.
+Use one explicit transformation map per family, distinguishing field names
+from local variables; check compiler layouts/operations where applicable.
+Freeze the reviewed source before the normal build and full required replays.
+Keep discovery in temporary drafts so it cannot invalidate verification.
+The preliminary unreachable-function closure needs a complete root/reference
+review before removal; further thousand-line reductions remain open.
+
+Shared enemy layouts (2026-10-20): 94 overlays now alias six shared repr(C)
+layouts, retaining their enemy type names and exact field order/types/padding.
+Waver's meaningful fields and Kraid's exceptional arrays remain distinct.
+Rename 7979 field uses, including 59 offset_of sites, while preserving all
+532 similarly named local-variable occurrences. No helper, borrow or runtime
+operation is introduced; no repository code inspects nominal type identity.
+
+Compiler checks cover all 94 sizes/alignments and 3651 field offsets/types,
+plus Copy/Clone. All remaining core expansion tokens match after the field
+mapping and one optional struct-literal trailing comma; both sets of 67
+embedded source files are bound exactly. The actual source matches the
+reviewed snapshot byte-for-byte. Formatting/check, normal release (50.04s),
+source-checked host (9.91s) and progress pass. Full any% 129712/0 (244.09s wall)
+and Speed Booster 148406/0 (295.55s wall), native exits 0, pass with fixed
+source/input/artifact bytes. Rust lines -1696 to 122630; cast-containing lines
+-17 from reflow to 9799; other counters unchanged. This preserves existing
+route coverage and does not resolve the remaining global ownership work.
+
 Unused function-address declarations (2026-10-20): remove all 3130
 definition-only `fn*` constants across 26 bank files. Maintained Rust/tool
 references are absent; the remaining numeric dispatches and named constants

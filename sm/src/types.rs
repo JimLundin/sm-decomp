@@ -1,6 +1,5 @@
 //! Shared byte-compatible gameplay, hardware and music types.
 
-use crate::game::enemy_layouts::enemy_layout;
 use crate::game_state::Game;
 use ::core::ffi::{c_char, c_double, c_float, c_long, c_schar, c_short, c_uchar, c_ushort, c_void};
 
@@ -357,76 +356,9 @@ pub struct EnemyTileset {
     pub vram_dst: u16,
 }
 
-enemy_layout! {
-    Enemy_Botwoon {
-        base: EnemyBase,
-        words: [
-            botwoon_var_A, botwoon_var_B, botwoon_var_C, botwoon_var_D, botwoon_var_E,
-            botwoon_var_F, botwoon_parameter_1, botwoon_parameter_2,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            botwoon_var_00, botwoon_var_01, botwoon_var_02, botwoon_var_03,
-            botwoon_var_04, botwoon_var_05, botwoon_var_06, botwoon_var_07,
-            botwoon_var_08, botwoon_var_09, botwoon_var_0A, botwoon_var_0B,
-            botwoon_var_0C, botwoon_var_0D, botwoon_var_0E, botwoon_var_0F,
-            botwoon_var_10, botwoon_var_11, botwoon_var_12, botwoon_var_13,
-            botwoon_var_14, botwoon_var_15, botwoon_var_16, botwoon_var_17,
-            botwoon_var_18, botwoon_var_19, botwoon_var_1A, botwoon_var_1B,
-            botwoon_var_1C, botwoon_var_1D, botwoon_var_1E, botwoon_var_1F,
-        ],
-        pad2: [u8; 1984],
-        words: [
-            botwoon_var_20, botwoon_var_21, botwoon_var_22, botwoon_var_23,
-            botwoon_var_24, botwoon_var_25, botwoon_var_26, botwoon_var_27,
-            botwoon_var_28, botwoon_var_29, botwoon_var_2A, botwoon_var_2B,
-            botwoon_var_2C, botwoon_var_2D, botwoon_var_2E, botwoon_var_2F,
-            botwoon_var_30, botwoon_var_31, botwoon_var_32, botwoon_var_33,
-            botwoon_var_34, botwoon_var_35, botwoon_var_36, botwoon_var_37,
-            botwoon_var_38, botwoon_var_39, botwoon_var_3A, botwoon_var_3B,
-            botwoon_var_3C, botwoon_var_3D, botwoon_var_3E, botwoon_var_3F,
-        ],
-        pad3: [u8; 1984],
-        words: [
-            botwoon_var_40, botwoon_var_41, botwoon_var_42, botwoon_var_43,
-            botwoon_var_44, botwoon_var_45, botwoon_var_46, botwoon_var_47,
-            botwoon_var_48, botwoon_var_49, botwoon_var_4A, botwoon_var_4B,
-            botwoon_var_4C, botwoon_var_4D, botwoon_var_4E, botwoon_var_4F,
-            botwoon_var_50, botwoon_var_51, botwoon_var_52, botwoon_var_53,
-            botwoon_var_54, botwoon_var_55, botwoon_var_56, botwoon_var_57,
-            botwoon_var_58, botwoon_var_59, botwoon_var_5A, botwoon_var_5B,
-            botwoon_var_5C, botwoon_var_5D, botwoon_var_5E, botwoon_var_5F,
-        ],
-    }
-}
+pub type Enemy_Botwoon = crate::game::enemy_layouts::EnemyLayout104;
 
-enemy_layout! {
-    Enemy_MotherBrain {
-        base: EnemyBase,
-        words: [
-            mbn_var_A, mbn_var_B, mbn_var_C, mbn_var_D, mbn_var_E, mbn_var_F,
-            mbn_parameter_1, mbn_parameter_2,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            mbn_var_00, mbn_var_01, mbn_var_02, mbn_var_03, mbn_var_04, mbn_var_05,
-            mbn_var_06, mbn_var_07, mbn_var_08, mbn_var_09, mbn_var_0A, mbn_var_0B,
-            mbn_var_0C, mbn_var_0D, mbn_var_0E, mbn_var_0F, mbn_var_10, mbn_var_11,
-            mbn_var_12, mbn_var_13, mbn_var_14, mbn_var_15, mbn_var_16, mbn_var_17,
-            mbn_var_18, mbn_var_19, mbn_var_1A, mbn_var_1B, mbn_var_1C, mbn_var_1D,
-            mbn_var_1E, mbn_var_1F,
-        ],
-        pad2: [u8; 1984],
-        words: [
-            mbn_var_20, mbn_var_21, mbn_var_22, mbn_var_23, mbn_var_24, mbn_var_25,
-            mbn_var_26, mbn_var_27, mbn_var_28, mbn_var_29, mbn_var_2A, mbn_var_2B,
-            mbn_var_2C, mbn_var_2D, mbn_var_2E, mbn_var_2F, mbn_var_30, mbn_var_31,
-            mbn_var_32, mbn_var_33, mbn_var_34, mbn_var_35, mbn_var_36, mbn_var_37,
-            mbn_var_38, mbn_var_39, mbn_var_3A, mbn_var_3B, mbn_var_3C, mbn_var_3D,
-            mbn_var_3E, mbn_var_3F,
-        ],
-    }
-}
+pub type Enemy_MotherBrain = crate::game::enemy_layouts::EnemyLayout72;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]

@@ -334,19 +334,14 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
             set_ram_word!(game.REMOVED_varE24 = 0u16);
         } else if FixBugHook(0xb39ddbu32, game) {
             let E = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-            set_ram_word!(
-                game.REMOVED_R18 = ((*E).base.x_pos as i32 - (*E).botwoon_var_56 as i32) as u16
-            );
-            set_ram_word!(
-                game.REMOVED_R20 = ((*E).base.y_pos as i32 - (*E).botwoon_var_57 as i32) as u16
-            );
+            set_ram_word!(game.REMOVED_R18 = ((*E).base.x_pos as i32 - (*E).var_56 as i32) as u16);
+            set_ram_word!(game.REMOVED_R20 = ((*E).base.y_pos as i32 - (*E).var_57 as i32) as u16);
         } else if FixBugHook(0xb39e13u32, game) {
             let E_0 = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-            (*E_0).botwoon_var_45 = ((*E_0).botwoon_var_45 as i32
-                + (ram_word!(game, REMOVED_R22) as i32 - (*E_0).botwoon_var_45 as i32) as i8 as i32
-                    * 3i32
+            (*E_0).var_45 = ((*E_0).var_45 as i32
+                + (ram_word!(game, REMOVED_R22) as i32 - (*E_0).var_45 as i32) as i8 as i32 * 3i32
                     / 4i32) as u8 as u16;
-            set_ram_word!(game.REMOVED_R22 = (*E_0).botwoon_var_45);
+            set_ram_word!(game.REMOVED_R22 = (*E_0).var_45);
         }
     }
     0u32

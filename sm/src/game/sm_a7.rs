@@ -100,15 +100,7 @@ crate::game::constants::typed_constants! { Consts_A7;
     addr_kSpritemap_Nothing_A7 = 32845,
 }
 pub use crate::types::SpawnHardcodedPlmArgs;
-enemy_layout! {
-    Enemy_Phantoon {
-        base: EnemyBase,
-        words: [
-            phant_var_A, phant_var_B, phant_var_C, phant_var_D, phant_var_E, phant_var_F,
-            phant_parameter_1, phant_parameter_2,
-        ],
-    }
-}
+pub type Enemy_Phantoon = crate::game::enemy_layouts::EnemyLayout8;
 
 enemy_layout! {
     Enemy_Kraid {
@@ -131,25 +123,9 @@ enemy_layout! {
     }
 }
 
-enemy_layout! {
-    Enemy_Etecoon {
-        base: EnemyBase,
-        words: [
-            etecoon_var_A, etecoon_var_B, etecoon_var_C, etecoon_var_D, etecoon_var_E,
-            etecoon_var_F, etecoon_parameter_1, etecoon_parameter_2,
-        ],
-    }
-}
+pub type Enemy_Etecoon = crate::game::enemy_layouts::EnemyLayout8;
 
-enemy_layout! {
-    Enemy_Dachora {
-        base: EnemyBase,
-        words: [
-            dachor_var_A, dachor_var_B, dachor_var_C, dachor_var_D, dachor_var_E,
-            dachor_var_F, dachor_parameter_1, dachor_parameter_2,
-        ],
-    }
-}
+pub type Enemy_Dachora = crate::game::enemy_layouts::EnemyLayout8;
 
 crate::game::constants::typed_constants! { i32;
     kCoroutineNone = 0,
@@ -2563,11 +2539,11 @@ pub unsafe fn Phantoon_Init(game: &mut Game) {
     set_ram_word!(game.enemy_bg2_tilemap_size = 864u16);
     DisableMinimapAndMarkBossRoomAsExplored(game);
     let E = Get_Phantoon(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).phant_var_E = 120u16;
-    set_fields! {[(*E)], 0u16; phant_var_A, phant_var_B}
+    (*E).var_E = 120u16;
+    set_fields! {[(*E)], 0u16; var_A, var_B}
     set_ram_word!(game.g_word_7E9032 = 0u16);
     let E1 = Get_Phantoon(0x40i32, game);
-    set_fields! {[(*E1)], 0u16; phant_parameter_1, phant_parameter_2}
+    set_fields! {[(*E1)], 0u16; parameter_1, parameter_2}
     let E0 = Get_Phantoon(0i32, game);
     (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
     static unk_A7CE51: SpawnHdmaObject_Args =
@@ -2592,7 +2568,7 @@ pub unsafe fn Phantoon2_Init(game: &mut Game) {
 pub unsafe fn Phantoon_Main(game: &mut Game) {
     Phantoon_Func_2(ram_word!(game, cur_enemy_index), game);
     let EK = Get_Phantoon(ram_word!(game, cur_enemy_index) as i32, game);
-    CallEnemyPreInstr((((*EK).phant_var_F) as u32) | (0xa70000u32), game);
+    CallEnemyPreInstr((((*EK).var_F) as u32) | (0xa70000u32), game);
     if ram_word!(game, cur_enemy_index) == 0u16 {
         let E0 = Get_Phantoon(0i32, game);
         let E1 = Get_Phantoon(0x40i32, game);
@@ -2606,7 +2582,7 @@ pub unsafe fn Phantoon_Main(game: &mut Game) {
         (*E1).base.y_pos = y_pos;
         (*E2).base.y_pos = y_pos;
         (*E3).base.y_pos = y_pos;
-        if (*E1).phant_parameter_1 == 0 {
+        if (*E1).parameter_1 == 0 {
             set_ram_word!(
                 game.reg_BG2HOFS =
                     (ram_word!(game, layer1_x_pos) as i32 - (*E0).base.x_pos as i32 + 40i32) as u16
@@ -2648,21 +2624,21 @@ pub unsafe fn Phantoon_Func_3(amt: i32, game: &mut Game) -> u8 {
     let E = Get_Phantoon(0xc0i32, game);
     let r18: u16 = amt as u16;
     let r20: u16 = (amt >> 16i32) as u16;
-    if (*E).phant_var_E != 0 {
-        let phant_var_D: u16 = (*E).phant_var_D;
+    if (*E).var_E != 0 {
+        let phant_var_D: u16 = (*E).var_D;
         let v4: bool = phant_var_D < r18;
-        (*E).phant_var_D = (phant_var_D).wrapping_sub(r18);
+        (*E).var_D = (phant_var_D).wrapping_sub(r18);
         if v4 {
-            (*E).phant_var_D = 0u16;
+            (*E).var_D = 0u16;
             return 1u8;
         }
     } else {
         let r22: u16 = ((r20 as i32 & 0xff00i32) >> 8i32) as u16;
-        let mut v1: u16 = (r18).wrapping_add((*E).phant_var_D);
-        (*E).phant_var_D = v1;
+        let mut v1: u16 = (r18).wrapping_add((*E).var_D);
+        (*E).var_D = v1;
         v1 = ((v1 as i32 & 0xff00i32) >> 8i32) as u16;
         if v1 as i32 - r22 as i32 & 0x8000i32 == 0 {
-            (*E).phant_var_D = r20;
+            (*E).var_D = r20;
         }
     }
     0u8
@@ -2705,26 +2681,26 @@ pub unsafe fn Phantoon_Func_6(k: u16, a: u16, game: &mut Game) {
 }
 pub unsafe fn Phantoon_Func_7(k: u16, game: &mut Game) {
     let E = Get_Phantoon(k as i32 + 192i32, game);
-    let mut v3: bool = (*E).phant_var_B == 1u16;
-    (*E).phant_var_B = (*E).phant_var_B.wrapping_sub(1);
-    let v4: bool = ((*E).phant_var_B & 0x8000) != 0;
+    let mut v3: bool = (*E).var_B == 1u16;
+    (*E).var_B = (*E).var_B.wrapping_sub(1);
+    let v4: bool = ((*E).var_B & 0x8000) != 0;
     if v3 || v4 {
-        if ((*E).phant_var_C & 0x8000) == 0 {
-            v3 = (*E).phant_var_C == 1u16;
-            (*E).phant_var_C = (*E).phant_var_C.wrapping_sub(1);
-            let v8: bool = ((*E).phant_var_C & 0x8000) != 0;
+        if ((*E).var_C & 0x8000) == 0 {
+            v3 = (*E).var_C == 1u16;
+            (*E).var_C = (*E).var_C.wrapping_sub(1);
+            let v8: bool = ((*E).var_C & 0x8000) != 0;
             if v3 || v8 {
-                (*E).phant_var_C = -1i32 as u16;
-                (*E).phant_var_B = *(RomPtr_A7(
-                    crate::rtl::rom_table_word!(game, 0xa7ccfd, (*E).phant_var_A as isize),
+                (*E).var_C = -1i32 as u16;
+                (*E).var_B = *(RomPtr_A7(
+                    crate::rtl::rom_table_word!(game, 0xa7ccfd, (*E).var_A as isize),
                     game,
                 ) as *mut u16)
                     .offset(1);
             } else {
-                (*E).phant_var_B = *(RomPtr_A7(
-                    (2i32 * (*E).phant_var_C as i32
-                        + crate::rtl::rom_table_word!(game, 0xa7ccfd, (*E).phant_var_A as isize)
-                            as i32) as u16,
+                (*E).var_B = *(RomPtr_A7(
+                    (2i32 * (*E).var_C as i32
+                        + crate::rtl::rom_table_word!(game, 0xa7ccfd, (*E).var_A as isize) as i32)
+                        as u16,
                     game,
                 ) as *mut u16)
                     .offset(1);
@@ -2732,64 +2708,64 @@ pub unsafe fn Phantoon_Func_7(k: u16, game: &mut Game) {
             enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kKraid_Ilist_CCEB as u16}
         } else {
             let v5: u16 = (NextRandom(game)) & (3u16);
-            (*E).phant_var_A = v5;
+            (*E).var_A = v5;
             let v6: u16 = crate::rtl::rom_table_word!(game, 0xa7ccfd, v5 as isize);
             let v7: u16 = *(RomPtr_A7(v6, game) as *mut u16);
-            (*E).phant_var_C = v7;
-            (*E).phant_var_B =
+            (*E).var_C = v7;
+            (*E).var_B =
                 *(RomPtr_A7((2i32 * v7 as i32 + v6 as i32) as u16, game) as *mut u16).offset(1);
         }
     }
 }
 pub unsafe fn Phantoon_StartTrackingSamusAndInitEyeTimer(game: &mut Game) {
-    (*Get_Phantoon(0x80i32, game)).phant_var_A = 0u16;
+    (*Get_Phantoon(0x80i32, game)).var_A = 0u16;
     let E = Get_Phantoon(0i32, game);
     enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kKraid_Ilist_CC4D as u16}
     (*E).base.properties = ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16;
-    (*E).phant_var_E =
+    (*E).var_E =
         crate::rtl::rom_table_word!(game, 0xa7cd41, (NextRandom(game) as i32 & 7i32) as isize);
-    (*E).phant_var_F = ((0xa7d60di32) as u16);
+    (*E).var_F = ((0xa7d60di32) as u16);
     let E1 = Get_Phantoon(0x40i32, game);
     enemy_instruction! {[(*E1).base]; timer = 1u16, instruction = addr_kKraid_Ilist_CC9D as u16}
 }
 pub unsafe fn Phantoon_PickPatternForRound2(game: &mut Game) {
     let E = Get_Phantoon(0i32, game);
-    (*E).phant_var_E = 60u16;
+    (*E).var_E = 60u16;
     let v1: u16 =
         crate::rtl::rom_table_word!(game, 0xa7cd53, (NextRandom(game) as i32 & 7i32) as isize);
     let E1 = Get_Phantoon(0x40i32, game);
-    (*E1).phant_var_A = v1;
+    (*E1).var_A = v1;
     if (ram_word!(game, nmi_frame_counter_word) & 1) != 0 {
-        if (*E1).phant_var_C == 0 {
-            let mut v4: i16 = (((*E).phant_var_A) as i16).wrapping_sub(1i16);
-            (*E).phant_var_A = v4 as u16;
+        if (*E1).var_C == 0 {
+            let mut v4: i16 = (((*E).var_A) as i16).wrapping_sub(1i16);
+            (*E).var_A = v4 as u16;
             if v4 < 0i16 {
-                (*E).phant_var_A = 533u16;
+                (*E).var_A = 533u16;
             }
         }
-        set_fields! {[(*E)], 0u16; phant_var_C, phant_var_B, phant_var_D}
-        (*E1).phant_var_C = 1u16;
+        set_fields! {[(*E)], 0u16; var_C, var_B, var_D}
+        (*E1).var_C = 1u16;
     } else {
-        if (*E1).phant_var_C != 0 {
-            let v3: u16 = ((*E).phant_var_A).wrapping_add(1u16);
-            (*E).phant_var_A = v3;
+        if (*E1).var_C != 0 {
+            let v3: u16 = ((*E).var_A).wrapping_add(1u16);
+            (*E).var_A = v3;
             if v3 as i32 - 534i32 & 0x8000i32 == 0 {
-                (*E).phant_var_A = 0u16;
+                (*E).var_A = 0u16;
             }
         }
-        (*E).phant_var_C = 1u16;
-        set_fields! {[(*E)], 0u16; phant_var_B, phant_var_D}
-        (*E1).phant_var_C = 0u16;
+        (*E).var_C = 1u16;
+        set_fields! {[(*E)], 0u16; var_B, var_D}
+        (*E1).var_C = 0u16;
     }
-    if (*E).phant_parameter_2 != 0 {
-        (*E1).phant_var_F = 0u16;
-        (*E).phant_var_F = ((0xa7d82ai32) as u16);
+    if (*E).parameter_2 != 0 {
+        (*E1).var_F = 0u16;
+        (*E).var_F = ((0xa7d82ai32) as u16);
     } else {
-        (*E).phant_var_F = ((0xa7d5e7i32) as u16);
+        (*E).var_F = ((0xa7d5e7i32) as u16);
     };
 }
 pub unsafe fn Phantoon_AdjustSpeedAndMoveInFigure8(game: &mut Game) {
-    if (*Get_Phantoon(0x40i32, game)).phant_var_C != 0 {
+    if (*Get_Phantoon(0x40i32, game)).var_C != 0 {
         Phantoon_AdjustSpeedRightSideClockwise(game);
         Phantoon_MoveInFigure8_RightSideClockwise(addr_kPhantoonMoveData as u16, 533u16, game);
     } else {
@@ -2799,112 +2775,112 @@ pub unsafe fn Phantoon_AdjustSpeedAndMoveInFigure8(game: &mut Game) {
 }
 pub unsafe fn Phantoon_AdjustSpeedLeftSideClockwise(game: &mut Game) {
     let E = Get_Phantoon(0i32, game);
-    let phant_var_D: u16 = (*E).phant_var_D;
+    let phant_var_D: u16 = (*E).var_D;
     if phant_var_D != 0 {
         if (phant_var_D & 1) != 0 {
             AddToHiLo(
-                &raw mut (*E).phant_var_C,
-                &raw mut (*E).phant_var_B,
+                &raw mut (*E).var_C,
+                &raw mut (*E).var_B,
                 (g_word_A7CD79 as u32) << 16i32 | g_word_A7CD77 as u32,
             );
-            if (((*E).phant_var_C) as i16).wrapping_sub((g_word_A7CD7D) as i16) >= 0i16 {
-                (*E).phant_var_C = g_word_A7CD7D;
-                (*E).phant_var_B = 0u16;
-                (*E).phant_var_D = (*E).phant_var_D.wrapping_add(1);
+            if (((*E).var_C) as i16).wrapping_sub((g_word_A7CD7D) as i16) >= 0i16 {
+                (*E).var_C = g_word_A7CD7D;
+                (*E).var_B = 0u16;
+                (*E).var_D = (*E).var_D.wrapping_add(1);
             }
         } else {
             AddToHiLo(
-                &raw mut (*E).phant_var_C,
-                &raw mut (*E).phant_var_B,
+                &raw mut (*E).var_C,
+                &raw mut (*E).var_B,
                 -((g_word_A7CD79 as i32) << 16i32 | g_word_A7CD77 as i32) as u32,
             );
-            if (*E).phant_var_C == g_word_A7CD7F
-                || (((*E).phant_var_C) as i16).wrapping_sub((g_word_A7CD7F) as i16) < 0i16
+            if (*E).var_C == g_word_A7CD7F
+                || (((*E).var_C) as i16).wrapping_sub((g_word_A7CD7F) as i16) < 0i16
             {
-                (*E).phant_var_C = (g_word_A7CD7F).wrapping_add(1u16);
-                set_fields! {[(*E)], 0u16; phant_var_B, phant_var_D}
+                (*E).var_C = (g_word_A7CD7F).wrapping_add(1u16);
+                set_fields! {[(*E)], 0u16; var_B, var_D}
             }
         }
     } else {
         AddToHiLo(
-            &raw mut (*E).phant_var_C,
-            &raw mut (*E).phant_var_B,
+            &raw mut (*E).var_C,
+            &raw mut (*E).var_B,
             (g_word_A7CD75 as u32) << 16i32 | g_word_A7CD73 as u32,
         );
-        if (((*E).phant_var_C) as i16).wrapping_sub((g_word_A7CD7B) as i16) >= 0i16 {
-            (*E).phant_var_C = (g_word_A7CD7B).wrapping_sub(1u16);
-            (*E).phant_var_B = 0u16;
-            (*E).phant_var_D = (*E).phant_var_D.wrapping_add(1);
+        if (((*E).var_C) as i16).wrapping_sub((g_word_A7CD7B) as i16) >= 0i16 {
+            (*E).var_C = (g_word_A7CD7B).wrapping_sub(1u16);
+            (*E).var_B = 0u16;
+            (*E).var_D = (*E).var_D.wrapping_add(1);
         }
     };
 }
 pub unsafe fn Phantoon_AdjustSpeedRightSideClockwise(game: &mut Game) {
     let E = Get_Phantoon(0i32, game);
-    let phant_var_D: u16 = (*E).phant_var_D;
+    let phant_var_D: u16 = (*E).var_D;
     if phant_var_D != 0 {
         if (phant_var_D & 1) != 0 {
             AddToHiLo(
-                &raw mut (*E).phant_var_C,
-                &raw mut (*E).phant_var_B,
+                &raw mut (*E).var_C,
+                &raw mut (*E).var_B,
                 -((g_word_A7CD87 as i32) << 16i32 | g_word_A7CD85 as i32) as u32,
             );
-            if (*E).phant_var_C == g_word_A7CD8B
-                || (((*E).phant_var_C) as i16).wrapping_sub((g_word_A7CD8B) as i16) < 0i16
+            if (*E).var_C == g_word_A7CD8B
+                || (((*E).var_C) as i16).wrapping_sub((g_word_A7CD8B) as i16) < 0i16
             {
-                (*E).phant_var_C = (g_word_A7CD8B).wrapping_add(1u16);
-                (*E).phant_var_B = 0u16;
-                (*E).phant_var_D = (*E).phant_var_D.wrapping_add(1);
+                (*E).var_C = (g_word_A7CD8B).wrapping_add(1u16);
+                (*E).var_B = 0u16;
+                (*E).var_D = (*E).var_D.wrapping_add(1);
             }
         } else {
             AddToHiLo(
-                &raw mut (*E).phant_var_C,
-                &raw mut (*E).phant_var_B,
+                &raw mut (*E).var_C,
+                &raw mut (*E).var_B,
                 (g_word_A7CD87 as u32) << 16i32 | g_word_A7CD85 as u32,
             );
-            if (((*E).phant_var_C) as i16).wrapping_sub((g_word_A7CD8D) as i16) >= 0i16 {
-                (*E).phant_var_C = g_word_A7CD8D;
-                set_fields! {[(*E)], 0u16; phant_var_B, phant_var_D}
+            if (((*E).var_C) as i16).wrapping_sub((g_word_A7CD8D) as i16) >= 0i16 {
+                (*E).var_C = g_word_A7CD8D;
+                set_fields! {[(*E)], 0u16; var_B, var_D}
             }
         }
     } else {
         AddToHiLo(
-            &raw mut (*E).phant_var_C,
-            &raw mut (*E).phant_var_B,
+            &raw mut (*E).var_C,
+            &raw mut (*E).var_B,
             -((g_word_A7CD83 as i32) << 16i32 | g_word_A7CD81 as i32) as u32,
         );
-        if (*E).phant_var_C == g_word_A7CD89
-            || (((*E).phant_var_C) as i16).wrapping_sub((g_word_A7CD89) as i16) < 0i16
+        if (*E).var_C == g_word_A7CD89
+            || (((*E).var_C) as i16).wrapping_sub((g_word_A7CD89) as i16) < 0i16
         {
-            (*E).phant_var_C = (g_word_A7CD89).wrapping_add(2u16);
-            (*E).phant_var_B = 0u16;
-            (*E).phant_var_D = (*E).phant_var_D.wrapping_add(1);
+            (*E).var_C = (g_word_A7CD89).wrapping_add(2u16);
+            (*E).var_B = 0u16;
+            (*E).var_D = (*E).var_D.wrapping_add(1);
         }
     };
 }
 pub unsafe fn Phantoon_MoveInFigure8_LeftSideClockwise(j: u16, r20: u16, game: &mut Game) {
     let E = Get_Phantoon(0i32, game);
-    let mut n: i32 = (*E).phant_var_C as i32;
+    let mut n: i32 = (*E).var_C as i32;
     while n != 0 {
-        let v2 = RomPtr_A7((2i32 * (*E).phant_var_A as i32 + j as i32) as u16, game);
+        let v2 = RomPtr_A7((2i32 * (*E).var_A as i32 + j as i32) as u16, game);
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_add((*v2.offset(0) as i8) as u16);
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_add((*v2.offset(1) as i8) as u16);
-        (*E).phant_var_A = (*E).phant_var_A.wrapping_add(1);
-        if (*E).phant_var_A as i32 - r20 as i32 & 0x8000i32 == 0 {
-            (*E).phant_var_A = 0u16;
+        (*E).var_A = (*E).var_A.wrapping_add(1);
+        if (*E).var_A as i32 - r20 as i32 & 0x8000i32 == 0 {
+            (*E).var_A = 0u16;
         }
         n -= 1;
     }
 }
 pub unsafe fn Phantoon_MoveInFigure8_RightSideClockwise(j: u16, r20: u16, game: &mut Game) {
     let E = Get_Phantoon(0i32, game);
-    let mut n: i32 = -((*E).phant_var_C as i32) as u16 as i32;
+    let mut n: i32 = -((*E).var_C as i32) as u16 as i32;
     while n != 0 {
-        let v4 = RomPtr_A7((2i32 * (*E).phant_var_A as i32 + j as i32) as u16, game);
+        let v4 = RomPtr_A7((2i32 * (*E).var_A as i32 + j as i32) as u16, game);
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub((*v4.offset(0) as i8) as u16);
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub((*v4.offset(1) as i8) as u16);
-        (*E).phant_var_A = (*E).phant_var_A.wrapping_sub(1);
-        if (*E).phant_var_A & 0x8000 != 0 {
-            (*E).phant_var_A = r20;
+        (*E).var_A = (*E).var_A.wrapping_sub(1);
+        if (*E).var_A & 0x8000 != 0 {
+            (*E).var_A = r20;
         }
         n -= 1;
     }
@@ -2913,58 +2889,58 @@ pub unsafe fn Phantoon_MoveInSwoopingPattern(k: u16, game: &mut Game) {
     let mut v4: u16 = 0;
     let mut v13: i16 = 0;
     let E2 = Get_Phantoon(0x80i32, game);
-    let mut phant_var_E: i16 = (*E2).phant_var_E as i16;
+    let mut phant_var_E: i16 = (*E2).var_E as i16;
     if phant_var_E < 0i16 {
         let mut v6: u16 = ((phant_var_E) as u16).wrapping_sub(2u16);
-        (*E2).phant_var_E = v6;
+        (*E2).var_E = v6;
         v4 = (v6) & (0x7fffu16);
         if v4 == 0 {
             v4 = 0u16;
-            (*E2).phant_var_E = 0u16;
+            (*E2).var_E = 0u16;
         }
     } else {
         v4 = ((phant_var_E) as u16).wrapping_add(2u16);
-        (*E2).phant_var_E = v4;
+        (*E2).var_E = v4;
         if v4 as i32 - 256i32 & 0x8000i32 == 0 {
             let mut v5: u16 = (v4) | (0x8000u16);
-            (*E2).phant_var_E = v5;
+            (*E2).var_E = v5;
             v4 = (v5) & (0x7fffu16);
         }
     }
     let E0 = Get_Phantoon(0i32, game);
     if ((v4) as i16).wrapping_sub(((*E0).base.x_pos) as i16) < 0i16 {
-        if (*E2).phant_var_C as i32 + 2047i32 & 0x8000i32 == 0 {
-            (*E2).phant_var_C = ((*E2).phant_var_C).wrapping_sub(32u16);
+        if (*E2).var_C as i32 + 2047i32 & 0x8000i32 == 0 {
+            (*E2).var_C = ((*E2).var_C).wrapping_sub(32u16);
         }
-    } else if (*E2).phant_var_C as i32 - 2048i32 & 0x8000i32 != 0 {
-        (*E2).phant_var_C = ((*E2).phant_var_C).wrapping_add(32u16);
+    } else if (*E2).var_C as i32 - 2048i32 & 0x8000i32 != 0 {
+        (*E2).var_C = ((*E2).var_C).wrapping_add(32u16);
     }
     AddToHiLo(
         &raw mut (*E0).base.x_pos,
         &raw mut (*E0).base.x_subpos,
-        (((*E2).phant_var_C as i16 as i32) << 8i32) as u32,
+        (((*E2).var_C as i16 as i32) << 8i32) as u32,
     );
     if (*E0).base.x_pos as i32 + 64i32 & 0x8000i32 != 0 {
         (*E0).base.x_pos = -64i32 as u16;
     } else if (*E0).base.x_pos as i32 - 448i32 & 0x8000i32 == 0 {
         (*E0).base.x_pos = 448u16;
     }
-    if (*Get_Phantoon(k as i32, game)).phant_var_F as i32 == 0xa7d92ei32 & 0xffffi32 {
+    if (*Get_Phantoon(k as i32, game)).var_F as i32 == 0xa7d92ei32 & 0xffffi32 {
         v13 = 112i16;
     } else {
         v13 = ((ram_word!(game, samus_y_pos)) as i16).wrapping_sub(48i16);
     }
     if (v13).wrapping_sub(((*E0).base.y_pos) as i16) < 0i16 {
-        if (*E2).phant_var_D as i32 + 1535i32 & 0x8000i32 == 0 {
-            (*E2).phant_var_D = ((*E2).phant_var_D).wrapping_sub(64u16);
+        if (*E2).var_D as i32 + 1535i32 & 0x8000i32 == 0 {
+            (*E2).var_D = ((*E2).var_D).wrapping_sub(64u16);
         }
-    } else if (*E2).phant_var_D as i32 - 1536i32 & 0x8000i32 != 0 {
-        (*E2).phant_var_D = ((*E2).phant_var_D).wrapping_add(64u16);
+    } else if (*E2).var_D as i32 - 1536i32 & 0x8000i32 != 0 {
+        (*E2).var_D = ((*E2).var_D).wrapping_add(64u16);
     }
     AddToHiLo(
         &raw mut (*E0).base.y_pos,
         &raw mut (*E0).base.y_subpos,
-        (((*E2).phant_var_D as i16 as i32) << 8i32) as u32,
+        (((*E2).var_D as i16 as i32) << 8i32) as u32,
     );
     if (*E0).base.y_pos as i32 - 64i32 & 0x8000i32 != 0 {
         (*E0).base.y_pos = 64u16;
@@ -2974,11 +2950,11 @@ pub unsafe fn Phantoon_MoveInSwoopingPattern(k: u16, game: &mut Game) {
 }
 pub unsafe fn Phantoon_BeginSwoopingPattern(k: u16, game: &mut Game) {
     let E2 = Get_Phantoon(0x80i32, game);
-    set_fields! {[(*E2)], 1024u16; phant_var_C, phant_var_D}
-    (*E2).phant_var_E = 0u16;
+    set_fields! {[(*E2)], 1024u16; var_C, var_D}
+    (*E2).var_E = 0u16;
     let E = Get_Phantoon(k as i32, game);
-    (*E).phant_var_F = ((0xa7d678i32) as u16);
-    (*E).phant_var_E = 360u16;
+    (*E).var_F = ((0xa7d678i32) as u16);
+    (*E).var_E = 360u16;
 }
 pub unsafe fn Phantoon_ChangeEyeSpriteBasedOnSamusDist(game: &mut Game) {
     let v0: u16 = (2u16).wrapping_mul(DetermineDirectionOfSamusFromEnemy(game));
@@ -2987,15 +2963,14 @@ pub unsafe fn Phantoon_ChangeEyeSpriteBasedOnSamusDist(game: &mut Game) {
 }
 pub unsafe fn Phantoon_StartDeathSequence(k: u16, game: &mut Game) {
     let E = Get_Phantoon(k as i32, game);
-    if (*E).phant_var_F as i32 == 0xa7d678i32 & 0xffffi32
-        || (*E).phant_var_F as i32 == 0xa7d6b9i32 & 0xffffi32
+    if (*E).var_F as i32 == 0xa7d678i32 & 0xffffi32 || (*E).var_F as i32 == 0xa7d6b9i32 & 0xffffi32
     {
-        (*E).phant_var_F = ((0xa7d92ei32) as u16);
+        (*E).var_F = ((0xa7d92ei32) as u16);
     } else {
-        (*E).phant_var_F = ((0xa7d948i32) as u16);
+        (*E).var_F = ((0xa7d948i32) as u16);
     }
     let E1 = Get_Phantoon(0x40i32, game);
-    set_fields! {[(*E1)], 0u16; phant_var_C, phant_var_F}
+    set_fields! {[(*E1)], 0u16; var_C, var_F}
     Phantoon_ChangeEyeSpriteBasedOnSamusDist(game);
     let mut v3: i16 = 510i16;
     let v4: u16 = ram_word!(game, reg_BG2HOFS);
@@ -3009,15 +2984,15 @@ pub unsafe fn Phantoon_StartDeathSequence(k: u16, game: &mut Game) {
     }
     update_ram_word!(game.phantom_related_layer_flag, |fresh29| (fresh29)
         | (0x4000u16));
-    (*Get_Phantoon(0xc0i32, game)).phant_parameter_2 = 1u16;
+    (*Get_Phantoon(0xc0i32, game)).parameter_2 = 1u16;
 }
 pub unsafe fn Phantoon_FadeOut(a: u16, game: &mut Game) {
     if (ram_word!(game, nmi_frame_counter_word) & 1) == 0 {
         let E = Get_Phantoon(0x40i32, game);
-        if (*E).phant_var_F == 0 {
-            (*E).phant_var_D = a;
+        if (*E).var_F == 0 {
+            (*E).var_D = a;
             if Phantoon_Func_8(game) & 1 != 0 {
-                (*E).phant_var_F = 1u16;
+                (*E).var_F = 1u16;
             }
         }
     }
@@ -3025,36 +3000,31 @@ pub unsafe fn Phantoon_FadeOut(a: u16, game: &mut Game) {
 pub unsafe fn Phantoon_FadeIn(a: u16, game: &mut Game) {
     if (ram_word!(game, nmi_frame_counter_word) & 1) == 0 {
         let E = Get_Phantoon(0x40i32, game);
-        if (*E).phant_var_F == 0 {
-            (*E).phant_var_D = a;
+        if (*E).var_F == 0 {
+            (*E).var_D = a;
             if Phantoon_SetColorBasedOnHp(game) & 1 != 0 {
-                (*E).phant_var_F = 1u16;
+                (*E).var_F = 1u16;
             }
         }
     }
 }
 pub unsafe fn Phantoon_Spawn8FireballsInCircleAtStart(k: u16, game: &mut Game) {
     let EK = Get_Phantoon(k as i32, game);
-    let v2: bool = (*EK).phant_var_E == 1u16;
-    (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
-    let v3: bool = ((*EK).phant_var_E & 0x8000) != 0;
+    let v2: bool = (*EK).var_E == 1u16;
+    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
+    let v3: bool = ((*EK).var_E & 0x8000) != 0;
     if v2 || v3 {
         let E0 = Get_Phantoon(0i32, game);
-        SpawnEprojWithGfx(
-            (*E0).phant_var_A,
-            k,
-            addr_kEproj_StartingFireballs as u16,
-            game,
-        );
+        SpawnEprojWithGfx((*E0).var_A, k, addr_kEproj_StartingFireballs as u16, game);
         QueueSfx3_Max6(0x1du16, game);
-        (*EK).phant_var_E = 30u16;
-        let v5: u16 = ((*E0).phant_var_A).wrapping_add(1u16);
-        (*E0).phant_var_A = v5;
+        (*EK).var_E = 30u16;
+        let v5: u16 = ((*E0).var_A).wrapping_add(1u16);
+        (*E0).var_A = v5;
         if v5 as i32 - 8i32 & 0x8000i32 == 0 {
-            (*E0).phant_var_A = 0u16;
-            (*Get_Phantoon(k as i32 + 128i32, game)).phant_var_B = 0u16;
-            (*EK).phant_var_F = ((0xa7d4eei32) as u16);
-            (*EK).phant_var_E = 30u16;
+            (*E0).var_A = 0u16;
+            (*Get_Phantoon(k as i32 + 128i32, game)).var_B = 0u16;
+            (*EK).var_F = ((0xa7d4eei32) as u16);
+            (*EK).var_E = 30u16;
             SpawnHardcodedPlm(
                 SpawnHardcodedPlmArgs::new(0u8, 0x6u8, 0xb781 as VoidP),
                 game,
@@ -3064,31 +3034,31 @@ pub unsafe fn Phantoon_Spawn8FireballsInCircleAtStart(k: u16, game: &mut Game) {
 }
 pub unsafe fn Phantoon_WaitBetweenSpawningAndSpinningFireballs(k: u16, game: &mut Game) {
     let E = Get_Phantoon(k as i32, game);
-    let v2: bool = (*E).phant_var_E == 1u16;
-    (*E).phant_var_E = (*E).phant_var_E.wrapping_sub(1);
-    let v3: bool = ((*E).phant_var_E & 0x8000) != 0;
+    let v2: bool = (*E).var_E == 1u16;
+    (*E).var_E = (*E).var_E.wrapping_sub(1);
+    let v3: bool = ((*E).var_E & 0x8000) != 0;
     if v2 || v3 {
-        (*E).phant_var_E = 240u16;
-        (*E).phant_var_B = 1u16;
-        (*E).phant_var_F = ((0xa7d508i32) as u16);
+        (*E).var_E = 240u16;
+        (*E).var_B = 1u16;
+        (*E).var_F = ((0xa7d508i32) as u16);
     }
 }
 pub unsafe fn Phantoon_SpawnFireballsBeforeFight(k: u16, game: &mut Game) {
     let EK = Get_Phantoon(k as i32, game);
-    let v3: bool = (*EK).phant_var_E == 1u16;
-    (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
-    let v4: bool = ((*EK).phant_var_E & 0x8000) != 0;
+    let v3: bool = (*EK).var_E == 1u16;
+    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
+    let v4: bool = ((*EK).var_E & 0x8000) != 0;
     if v3 || v4 {
-        (*EK).phant_var_B = 0u16;
+        (*EK).var_B = 0u16;
         update_ram_word!(game.phantom_related_layer_flag, |fresh30| (fresh30)
             | (0x4000u16));
-        (*EK).phant_var_F = ((0xa7d54ai32) as u16);
+        (*EK).var_F = ((0xa7d54ai32) as u16);
         let E3 = Get_Phantoon(0xc0i32, game);
-        (*E3).phant_parameter_1 = -32767i32 as u16;
-        (*EK).phant_var_E = 120u16;
+        (*E3).parameter_1 = -32767i32 as u16;
+        (*EK).var_E = 120u16;
         sub_88E487(2u16, g_word_A7CDA3, game);
-        (*E3).phant_var_D = g_word_A7CD9D;
-        (*Get_Phantoon(0x40i32, game)).phant_var_F = 0u16;
+        (*E3).var_D = g_word_A7CD9D;
+        (*Get_Phantoon(0x40i32, game)).var_F = 0u16;
         QueueMusic_Delayed8(5u16, game);
     }
 }
@@ -3100,44 +3070,44 @@ pub unsafe fn Phantoon_WavyFadeIn(k: u16, game: &mut Game) {
     ) != 0
     {
         let E = Get_Phantoon(k as i32, game);
-        (*E).phant_var_F = ((0xa7d596i32) as u16);
-        (*Get_Phantoon(0xc0i32, game)).phant_parameter_1 = 1u16;
-        (*E).phant_var_E = 30u16;
+        (*E).var_F = ((0xa7d596i32) as u16);
+        (*Get_Phantoon(0xc0i32, game)).parameter_1 = 1u16;
+        (*E).var_E = 30u16;
     } else {
         let E_0 = Get_Phantoon(k as i32, game);
-        let v2: bool = (*E_0).phant_var_E == 1u16;
-        (*E_0).phant_var_E = (*E_0).phant_var_E.wrapping_sub(1);
-        let v3: bool = ((*E_0).phant_var_E & 0x8000) != 0;
+        let v2: bool = (*E_0).var_E == 1u16;
+        (*E_0).var_E = (*E_0).var_E.wrapping_sub(1);
+        let v3: bool = ((*E_0).var_E & 0x8000) != 0;
         if v2 || v3 {
-            (*Get_Phantoon(0xc0i32, game)).phant_var_E = 1u16;
+            (*Get_Phantoon(0xc0i32, game)).var_E = 1u16;
         }
     };
 }
 pub unsafe fn Phantoon_PickPatternForRound1(k: u16, game: &mut Game) {
     let EK = Get_Phantoon(k as i32, game);
-    let v2: bool = (*EK).phant_var_E == 1u16;
-    (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
-    let v3: bool = ((*EK).phant_var_E & 0x8000) != 0;
+    let v2: bool = (*EK).var_E == 1u16;
+    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
+    let v3: bool = ((*EK).var_E & 0x8000) != 0;
     if v2 || v3 {
         let E1 = Get_Phantoon(0x40i32, game);
-        (*E1).phant_parameter_1 = 0u16;
-        (*EK).phant_var_F = ((0xa7d5e7i32) as u16);
-        (*E1).phant_var_A = crate::rtl::rom_table_word!(
+        (*E1).parameter_1 = 0u16;
+        (*EK).var_F = ((0xa7d5e7i32) as u16);
+        (*E1).var_A = crate::rtl::rom_table_word!(
             game,
             0xa7cd53,
             (ram_word!(game, nmi_frame_counter_word) as i32 >> 1i32 & 3i32) as isize
         );
         if (NextRandom(game) & 1) != 0 {
             let E = Get_Phantoon(0i32, game);
-            set_fields! {[(*E)], 0u16; phant_var_C, phant_var_B, phant_var_D}
-            (*E1).phant_var_C = 1u16;
-            (*E).phant_var_A = 533u16;
+            set_fields! {[(*E)], 0u16; var_C, var_B, var_D}
+            (*E1).var_C = 1u16;
+            (*E).var_A = 533u16;
         } else {
             let E_0 = Get_Phantoon(0i32, game);
-            (*E_0).phant_var_C = 1u16;
-            set_fields! {[(*E_0)], 0u16; phant_var_B, phant_var_D}
-            (*E1).phant_var_C = 0u16;
-            (*E_0).phant_var_A = 0u16;
+            (*E_0).var_C = 1u16;
+            set_fields! {[(*E_0)], 0u16; var_B, var_D}
+            (*E1).var_C = 0u16;
+            (*E_0).var_A = 0u16;
         }
     }
 }
@@ -3145,26 +3115,26 @@ pub unsafe fn Phantoon_MovePhantoonInFigure8ThenOpenEye(k: u16, game: &mut Game)
     Phantoon_AdjustSpeedAndMoveInFigure8(game);
     Phantoon_Func_7(k, game);
     let E = Get_Phantoon(0x40i32, game);
-    let v2: bool = (*E).phant_var_A == 1u16;
-    (*E).phant_var_A = (*E).phant_var_A.wrapping_sub(1);
-    let v3: bool = ((*E).phant_var_A & 0x8000) != 0;
+    let v2: bool = (*E).var_A == 1u16;
+    (*E).var_A = (*E).var_A.wrapping_sub(1);
+    let v3: bool = ((*E).var_A & 0x8000) != 0;
     if v2 || v3 {
-        (*Get_Phantoon(k as i32, game)).phant_var_F = ((0xa7d4a8i32) as u16);
+        (*Get_Phantoon(k as i32, game)).var_F = ((0xa7d4a8i32) as u16);
         enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kKraid_Ilist_CC53 as u16}
-        (*Get_Phantoon(0i32, game)).phant_parameter_2 = 0u16;
+        (*Get_Phantoon(0i32, game)).parameter_2 = 0u16;
         Phantoon_Func_5(k, game);
     }
 }
 pub unsafe fn Phantoon_EyeFollowsSamusUntilTimerRunsOut(k: u16, game: &mut Game) {
     let EK = Get_Phantoon(k as i32, game);
-    let v2: bool = (*EK).phant_var_E == 1u16;
-    (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
-    let v3: bool = ((*EK).phant_var_E & 0x8000) != 0;
+    let v2: bool = (*EK).var_E == 1u16;
+    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
+    let v3: bool = ((*EK).var_E & 0x8000) != 0;
     if v2 || v3 {
-        (*Get_Phantoon(k as i32 + 128i32, game)).phant_var_B = 0u16;
+        (*Get_Phantoon(k as i32 + 128i32, game)).var_B = 0u16;
         let E2 = Get_Phantoon(0x80i32, game);
-        if (*E2).phant_var_A == 0 {
-            (*EK).phant_var_F = ((0xa7d4a8i32) as u16);
+        if (*E2).var_A == 0 {
+            (*EK).var_F = ((0xa7d4a8i32) as u16);
             let E0 = Get_Phantoon(0i32, game);
             (*E0).base.instruction_timer = 1u16;
             let E1 = Get_Phantoon(0x40i32, game);
@@ -3172,12 +3142,12 @@ pub unsafe fn Phantoon_EyeFollowsSamusUntilTimerRunsOut(k: u16, game: &mut Game)
             (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as u16;
             (*E1).base.current_instruction = addr_kKraid_Ilist_CC81 as u16;
             (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
-            (*E0).phant_parameter_2 = 1u16;
+            (*E0).parameter_2 = 1u16;
             return;
         }
-        (*E2).phant_var_A = 0u16;
-        (*EK).phant_var_E = 60u16;
-        (*EK).phant_var_F = ((0xa7d65ci32) as u16);
+        (*E2).var_A = 0u16;
+        (*EK).var_E = 60u16;
+        (*EK).var_F = ((0xa7d65ci32) as u16);
     }
     Phantoon_ChangeEyeSpriteBasedOnSamusDist(game);
 }
@@ -3193,11 +3163,11 @@ pub unsafe fn Phantoon_IsSwooping(k: u16, game: &mut Game) {
     Phantoon_ChangeEyeSpriteBasedOnSamusDist(game);
     Phantoon_MoveInSwoopingPattern(k, game);
     let EK = Get_Phantoon(k as i32, game);
-    let v2: bool = (*EK).phant_var_E == 1u16;
-    (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
-    let v3: bool = ((*EK).phant_var_E & 0x8000) != 0;
+    let v2: bool = (*EK).var_E == 1u16;
+    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
+    let v3: bool = ((*EK).var_E & 0x8000) != 0;
     if v2 || v3 {
-        (*EK).phant_var_F = ((0xa7d6b9i32) as u16);
+        (*EK).var_F = ((0xa7d6b9i32) as u16);
         update_ram_word!(game.phantom_related_layer_flag, |fresh27| (fresh27)
             | (0x4000u16));
         let E0 = Get_Phantoon(0i32, game);
@@ -3207,55 +3177,55 @@ pub unsafe fn Phantoon_IsSwooping(k: u16, game: &mut Game) {
         (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as u16;
         (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as u16;
         (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
-        (*E1).phant_var_F = 0u16;
-        (*Get_Phantoon(k as i32 + 128i32, game)).phant_var_B = 0u16;
+        (*E1).var_F = 0u16;
+        (*Get_Phantoon(k as i32 + 128i32, game)).var_B = 0u16;
     }
 }
 pub unsafe fn Phantoon_FadeoutWithSwoop(k: u16, game: &mut Game) {
     Phantoon_MoveInSwoopingPattern(k, game);
     Phantoon_FadeOut(0xcu16, game);
-    if (*Get_Phantoon(0x40i32, game)).phant_var_F != 0 {
+    if (*Get_Phantoon(0x40i32, game)).var_F != 0 {
         let E = Get_Phantoon(k as i32, game);
-        (*E).phant_var_F = ((0xa7d6d4i32) as u16);
-        (*E).phant_var_E = 120u16;
+        (*E).var_F = ((0xa7d6d4i32) as u16);
+        (*E).var_E = 120u16;
     }
 }
 pub unsafe fn Phantoon_WaitAfterFadeOut(k: u16, game: &mut Game) {
     let E = Get_Phantoon(k as i32, game);
-    let v2: bool = (*E).phant_var_E == 1u16;
-    (*E).phant_var_E = (*E).phant_var_E.wrapping_sub(1);
-    let v3: bool = ((*E).phant_var_E & 0x8000) != 0;
+    let v2: bool = (*E).var_E == 1u16;
+    (*E).var_E = (*E).var_E.wrapping_sub(1);
+    let v3: bool = ((*E).var_E & 0x8000) != 0;
     if v2 || v3 {
-        (*E).phant_var_F = ((0xa7d6e2i32) as u16);
+        (*E).var_F = ((0xa7d6e2i32) as u16);
     }
 }
 pub unsafe fn Phantoon_MoveLeftOrRightAndPickEyeOpenPatt(k: u16, game: &mut Game) {
     let E = Get_Phantoon(0i32, game);
     if (NextRandom(game) & 1) != 0 {
-        (*E).phant_var_A = 136u16;
+        (*E).var_A = 136u16;
         (*E).base.x_pos = 208u16;
     } else {
-        (*E).phant_var_A = 399u16;
+        (*E).var_A = 399u16;
         (*E).base.x_pos = 48u16;
     }
     (*E).base.y_pos = 96u16;
     let E1 = Get_Phantoon(0x40i32, game);
-    (*E1).phant_var_C = 0u16;
-    (*E).phant_var_C = 1u16;
-    set_fields! {[(*E)], 0u16; phant_var_B, phant_parameter_2}
+    (*E1).var_C = 0u16;
+    (*E).var_C = 1u16;
+    set_fields! {[(*E)], 0u16; var_B, parameter_2}
     Phantoon_PickPatternForRound2(game);
-    (*Get_Phantoon(k as i32, game)).phant_var_F = ((0xa7d72di32) as u16);
-    (*E1).phant_var_F = 0u16;
+    (*Get_Phantoon(k as i32, game)).var_F = ((0xa7d72di32) as u16);
+    (*E1).var_F = 0u16;
 }
 pub unsafe fn Phantoon_FadeInBeforeFigure8(k: u16, game: &mut Game) {
     Phantoon_FadeIn(0xcu16, game);
-    if (*Get_Phantoon(0x40i32, game)).phant_var_F != 0 {
-        (*Get_Phantoon(0i32, game)).phant_var_F = ((0xa7d5e7i32) as u16);
+    if (*Get_Phantoon(0x40i32, game)).var_F != 0 {
+        (*Get_Phantoon(0i32, game)).var_F = ((0xa7d5e7i32) as u16);
     }
 }
 pub unsafe fn Phantoon_BecomeSolidAfterRainingFireballs(k: u16, game: &mut Game) {
     let E1 = Get_Phantoon(0x40i32, game);
-    (*E1).phant_var_F = 0u16;
+    (*E1).var_F = 0u16;
     update_ram_word!(game.phantom_related_layer_flag, |fresh20| (fresh20
         & !(0x4000)));
     let E = Get_Phantoon(0i32, game);
@@ -3263,34 +3233,34 @@ pub unsafe fn Phantoon_BecomeSolidAfterRainingFireballs(k: u16, game: &mut Game)
     (*E1).base.instruction_timer = 1u16;
     (*E).base.current_instruction = addr_kKraid_Ilist_CC47 as u16;
     (*E1).base.current_instruction = addr_kKraid_Ilist_CC9D as u16;
-    (*Get_Phantoon(k as i32, game)).phant_var_F = ((0xa7d767i32) as u16);
+    (*Get_Phantoon(k as i32, game)).var_F = ((0xa7d767i32) as u16);
 }
 pub unsafe fn Phantoon_FadeInDuringFireballRain(k: u16, game: &mut Game) {
     Phantoon_FadeIn(1u16, game);
-    if (*Get_Phantoon(0x40i32, game)).phant_var_F != 0 {
+    if (*Get_Phantoon(0x40i32, game)).var_F != 0 {
         let E = Get_Phantoon(0i32, game);
         (*E).base.properties =
             ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16;
-        (*Get_Phantoon(k as i32, game)).phant_var_F = ((0xa7d788i32) as u16);
-        (*E).phant_var_E = 90u16;
+        (*Get_Phantoon(k as i32, game)).var_F = ((0xa7d788i32) as u16);
+        (*E).var_E = 90u16;
     }
 }
 pub unsafe fn Phantoon_FollowSamusWithEyeDuringFireballRain(k: u16, game: &mut Game) {
     let EK = Get_Phantoon(k as i32, game);
-    let v2: bool = (*EK).phant_var_E == 1u16;
-    (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
-    let v3: bool = ((*EK).phant_var_E & 0x8000) != 0;
+    let v2: bool = (*EK).var_E == 1u16;
+    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
+    let v3: bool = ((*EK).var_E & 0x8000) != 0;
     if v2 || v3 {
-        (*Get_Phantoon(k as i32 + 128i32, game)).phant_var_B = 0u16;
+        (*Get_Phantoon(k as i32 + 128i32, game)).var_B = 0u16;
         let E2 = Get_Phantoon(0x80i32, game);
-        if (*E2).phant_var_A != 0 {
-            (*E2).phant_var_A = 0u16;
-            (*Get_Phantoon(0i32, game)).phant_parameter_2 = 1u16;
+        if (*E2).var_A != 0 {
+            (*E2).var_A = 0u16;
+            (*Get_Phantoon(0i32, game)).parameter_2 = 1u16;
             Phantoon_BeginSwoopingPattern(k, game);
         } else {
-            (*EK).phant_var_F = ((0xa7d7d5i32) as u16);
+            (*EK).var_F = ((0xa7d7d5i32) as u16);
             let E1 = Get_Phantoon(0x40i32, game);
-            (*E1).phant_var_F = 0u16;
+            (*E1).var_F = 0u16;
             let E0 = Get_Phantoon(0i32, game);
             (*E0).base.instruction_timer = 1u16;
             (*E1).base.instruction_timer = 1u16;
@@ -3304,27 +3274,27 @@ pub unsafe fn Phantoon_FollowSamusWithEyeDuringFireballRain(k: u16, game: &mut G
 }
 pub unsafe fn Phantoon_FadeOutDuringFireballRain(k: u16, game: &mut Game) {
     Phantoon_FadeOut(0xcu16, game);
-    if (*Get_Phantoon(0x40i32, game)).phant_var_F != 0 {
+    if (*Get_Phantoon(0x40i32, game)).var_F != 0 {
         let E = Get_Phantoon(k as i32, game);
-        (*E).phant_var_F = ((0xa7d7f7i32) as u16);
-        (*E).phant_var_E =
+        (*E).var_F = ((0xa7d7f7i32) as u16);
+        (*E).var_E =
             crate::rtl::rom_table_word!(game, 0xa7cd63, (NextRandom(game) as i32 & 7i32) as isize);
     }
 }
 pub unsafe fn Phantoon_SpawnRainingFireballs(k: u16, game: &mut Game) {
     let EK = Get_Phantoon(k as i32, game);
-    let v2: bool = (*EK).phant_var_E == 1u16;
-    (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
-    let v3: bool = ((*EK).phant_var_E & 0x8000) != 0;
+    let v2: bool = (*EK).var_E == 1u16;
+    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
+    let v3: bool = ((*EK).var_E & 0x8000) != 0;
     if v2 || v3 {
         let a: u16 = (NextRandom(game)) & (7u16);
         let v4: i32 = 8i32 * a as i32 >> 1i32;
         let E0 = Get_Phantoon(0i32, game);
-        (*E0).phant_var_A = crate::rtl::rom_table_word!(game, 0xa7cdad, v4 as isize);
+        (*E0).var_A = crate::rtl::rom_table_word!(game, 0xa7cdad, v4 as isize);
         (*E0).base.x_pos = crate::rtl::rom_table_word!(game, 0xa7cdad, (v4 + 1i32) as isize);
         (*E0).base.y_pos = crate::rtl::rom_table_word!(game, 0xa7cdad, (v4 + 2i32) as isize);
-        (*Get_Phantoon(0x40i32, game)).phant_var_C = 0u16;
-        (*EK).phant_var_F = ((0xa7d73fi32) as u16);
+        (*Get_Phantoon(0x40i32, game)).var_C = 0u16;
+        (*EK).var_F = ((0xa7d73fi32) as u16);
         Phantoon_Func_6(k, a, game);
     }
 }
@@ -3333,12 +3303,12 @@ pub unsafe fn Phantoon_FadeOutBeforeFirstFireballRain(k: u16, game: &mut Game) {
     Phantoon_AdjustSpeedAndMoveInFigure8(game);
     Phantoon_Func_7(k, game);
     let E = Get_Phantoon(0x40i32, game);
-    let v2: bool = (*E).phant_var_A == 1u16;
-    (*E).phant_var_A = (*E).phant_var_A.wrapping_sub(1);
-    let v3: bool = ((*E).phant_var_A & 0x8000) != 0;
+    let v2: bool = (*E).var_A == 1u16;
+    (*E).var_A = (*E).var_A.wrapping_sub(1);
+    let v3: bool = ((*E).var_A & 0x8000) != 0;
     if v2 || v3 {
-        (*Get_Phantoon(0x80i32, game)).phant_var_A = 0u16;
-        (*Get_Phantoon(k as i32, game)).phant_var_F = ((0xa7d73fi32) as u16);
+        (*Get_Phantoon(0x80i32, game)).var_A = 0u16;
+        (*Get_Phantoon(k as i32, game)).var_F = ((0xa7d73fi32) as u16);
         if (*Get_Phantoon(0i32, game)).base.x_pos as i32 - 128i32 & 0x8000i32 != 0 {
             Phantoon_Func_6(k, 0u16, game);
         } else {
@@ -3348,41 +3318,41 @@ pub unsafe fn Phantoon_FadeOutBeforeFirstFireballRain(k: u16, game: &mut Game) {
 }
 pub unsafe fn Phantoon_FadeOutBeforeEnrage(k: u16, game: &mut Game) {
     Phantoon_FadeOut(0xcu16, game);
-    if (*Get_Phantoon(0x40i32, game)).phant_var_F != 0 {
+    if (*Get_Phantoon(0x40i32, game)).var_F != 0 {
         let E = Get_Phantoon(k as i32, game);
-        (*E).phant_var_F = ((0xa7d874i32) as u16);
-        (*E).phant_var_E = 120u16;
+        (*E).var_F = ((0xa7d874i32) as u16);
+        (*E).var_E = 120u16;
     }
 }
 pub unsafe fn Phantoon_MoveEnragedPhantoonToTopCenter(k: u16, game: &mut Game) {
     let E = Get_Phantoon(k as i32, game);
-    let v2: bool = (*E).phant_var_E == 1u16;
-    (*E).phant_var_E = (*E).phant_var_E.wrapping_sub(1);
-    let v3: bool = ((*E).phant_var_E & 0x8000) != 0;
+    let v2: bool = (*E).var_E == 1u16;
+    (*E).var_E = (*E).var_E.wrapping_sub(1);
+    let v3: bool = ((*E).var_E & 0x8000) != 0;
     if v2 || v3 {
-        (*E).phant_var_F = ((0xa7d891i32) as u16);
+        (*E).var_F = ((0xa7d891i32) as u16);
         let E_0 = Get_Phantoon(0i32, game);
         (*E_0).base.x_pos = 128u16;
         (*E_0).base.y_pos = 32u16;
-        (*Get_Phantoon(0x40i32, game)).phant_var_F = 0u16;
+        (*Get_Phantoon(0x40i32, game)).var_F = 0u16;
     }
 }
 pub unsafe fn Phantoon_FadeInEnragedPhantoon(k: u16, game: &mut Game) {
     Phantoon_FadeIn(0xcu16, game);
     let E = Get_Phantoon(0x40i32, game);
-    if (*E).phant_var_F != 0 {
-        (*Get_Phantoon(0i32, game)).phant_var_F = ((0xa7d8aci32) as u16);
-        (*Get_Phantoon(k as i32, game)).phant_var_E = 4u16;
-        (*E).phant_var_F = 0u16;
+    if (*E).var_F != 0 {
+        (*Get_Phantoon(0i32, game)).var_F = ((0xa7d8aci32) as u16);
+        (*Get_Phantoon(k as i32, game)).var_E = 4u16;
+        (*E).var_F = 0u16;
     }
 }
 pub unsafe fn Phantoon_Enraged(k: u16, game: &mut Game) {
     let E = Get_Phantoon(k as i32, game);
-    let v2: bool = (*E).phant_var_E == 1u16;
-    (*E).phant_var_E = (*E).phant_var_E.wrapping_sub(1);
-    let v3: bool = ((*E).phant_var_E & 0x8000) != 0;
+    let v2: bool = (*E).var_E == 1u16;
+    (*E).var_E = (*E).var_E.wrapping_sub(1);
+    let v3: bool = ((*E).var_E & 0x8000) != 0;
     if v2 || v3 {
-        if ((*Get_Phantoon(0x40i32, game)).phant_var_F & 1) != 0 {
+        if ((*Get_Phantoon(0x40i32, game)).var_F & 1) != 0 {
             let mut v5: i16 = 15i16;
             loop {
                 let mut v8: i16 = v5;
@@ -3411,23 +3381,23 @@ pub unsafe fn Phantoon_Enraged(k: u16, game: &mut Game) {
         }
         QueueSfx3_Max6(0x29u16, game);
         let E1 = Get_Phantoon(0x40i32, game);
-        let v7: u16 = ((*E1).phant_var_F).wrapping_add(1u16);
-        (*E1).phant_var_F = v7;
+        let v7: u16 = ((*E1).var_F).wrapping_add(1u16);
+        (*E1).var_F = v7;
         if v7 as i32 - 8i32 & 0x8000i32 != 0 {
-            (*Get_Phantoon(k as i32, game)).phant_var_E = 128u16;
+            (*Get_Phantoon(k as i32, game)).var_E = 128u16;
         } else {
             enemy_instruction! {[(*E1).base]; timer = 1u16, instruction = addr_kKraid_Ilist_CC91 as u16}
-            (*E1).phant_var_F = 0u16;
-            (*Get_Phantoon(k as i32, game)).phant_var_F = ((0xa7d916i32) as u16);
+            (*E1).var_F = 0u16;
+            (*Get_Phantoon(k as i32, game)).var_F = ((0xa7d916i32) as u16);
         }
     }
 }
 pub unsafe fn Phantoon_FadeoutAfterEnrage(k: u16, game: &mut Game) {
     Phantoon_FadeOut(0xcu16, game);
-    if (*Get_Phantoon(0x40i32, game)).phant_var_F != 0 {
+    if (*Get_Phantoon(0x40i32, game)).var_F != 0 {
         let E = Get_Phantoon(k as i32, game);
-        (*E).phant_var_F = ((0xa7d6d4i32) as u16);
-        (*E).phant_var_E = 120u16;
+        (*E).var_F = ((0xa7d6d4i32) as u16);
+        (*E).var_E = 120u16;
     }
 }
 pub unsafe fn Phantoon_CompleteSwoopAfterFatalShot(k: u16, game: &mut Game) {
@@ -3435,41 +3405,41 @@ pub unsafe fn Phantoon_CompleteSwoopAfterFatalShot(k: u16, game: &mut Game) {
     Phantoon_MoveInSwoopingPattern(k, game);
     let x_pos: u16 = (*Get_Phantoon(0i32, game)).base.x_pos;
     if x_pos as i32 - 96i32 & 0x8000i32 == 0 && x_pos as i32 - 160i32 & 0x8000i32 != 0 {
-        (*Get_Phantoon(k as i32, game)).phant_var_F = ((0xa7d948i32) as u16);
+        (*Get_Phantoon(k as i32, game)).var_F = ((0xa7d948i32) as u16);
     }
 }
 pub unsafe fn Phantoon_DyingPhantoonFadeInOut(k: u16, game: &mut Game) {
     let E1 = Get_Phantoon(0x40i32, game);
-    if ((*E1).phant_var_C & 1) != 0 {
+    if ((*E1).var_C & 1) != 0 {
         Phantoon_FadeIn(0xcu16, game);
-        if (*E1).phant_var_F == 0 {
+        if (*E1).var_F == 0 {
             return;
         }
     } else {
         Phantoon_FadeOut(0xcu16, game);
-        if (*E1).phant_var_F == 0 {
+        if (*E1).var_F == 0 {
             return;
         }
     }
-    (*E1).phant_var_F = 0u16;
-    let v2: u16 = ((*E1).phant_var_C).wrapping_add(1u16);
-    (*E1).phant_var_C = v2;
+    (*E1).var_F = 0u16;
+    let v2: u16 = ((*E1).var_C).wrapping_add(1u16);
+    (*E1).var_C = v2;
     if v2 as i32 - 10i32 & 0x8000i32 == 0 {
         let E = Get_Phantoon(k as i32, game);
-        (*E).phant_var_F = ((0xa7d98bi32) as u16);
-        (*E).phant_var_E = 15u16;
-        (*Get_Phantoon(0x80i32, game)).phant_var_F = 0u16;
-        (*Get_Phantoon(0i32, game)).phant_var_A = 0u16;
+        (*E).var_F = ((0xa7d98bi32) as u16);
+        (*E).var_E = 15u16;
+        (*Get_Phantoon(0x80i32, game)).var_F = 0u16;
+        (*Get_Phantoon(0i32, game)).var_A = 0u16;
     }
 }
 pub unsafe fn Phantoon_DyingPhantoonExplosions(k: u16, game: &mut Game) {
     let EK = Get_Phantoon(k as i32, game);
-    let v2: bool = (*EK).phant_var_E == 1u16;
-    (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
-    let v3: bool = ((*EK).phant_var_E & 0x8000) != 0;
+    let v2: bool = (*EK).var_E == 1u16;
+    (*EK).var_E = (*EK).var_E.wrapping_sub(1);
+    let v3: bool = ((*EK).var_E & 0x8000) != 0;
     if v2 || v3 {
         let E2 = Get_Phantoon(0x80i32, game);
-        let v5: u16 = (4u16).wrapping_mul((*E2).phant_var_F);
+        let v5: u16 = (4u16).wrapping_mul((*E2).var_F);
         let E0 = Get_Phantoon(0i32, game);
         game.eproj_spawn_pt = Point16U {
             x: (((*(game.g_rom.offset(crate::rtl::lorom_offset(0xa7da1d)) as *mut u8)
@@ -3487,26 +3457,26 @@ pub unsafe fn Phantoon_DyingPhantoonExplosions(k: u16, game: &mut Game) {
         } else {
             QueueSfx2_Max6(0x2bu16, game);
         }
-        (*EK).phant_var_E = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7da1d)) as *mut u8)
+        (*EK).var_E = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7da1d)) as *mut u8)
             .offset((v5 as i32 + 3i32) as isize) as u16;
-        let v9: u16 = ((*E2).phant_var_F).wrapping_add(1u16);
-        (*E2).phant_var_F = v9;
+        let v9: u16 = ((*E2).var_F).wrapping_add(1u16);
+        (*E2).var_F = v9;
         if v9 as i32 - 13i32 & 0x8000i32 == 0 {
-            (*E2).phant_var_F = 5u16;
-            let v10: u16 = ((*E0).phant_var_A).wrapping_add(1u16);
-            (*E0).phant_var_A = v10;
+            (*E2).var_F = 5u16;
+            let v10: u16 = ((*E0).var_A).wrapping_add(1u16);
+            (*E0).var_A = v10;
             if v10 as i32 - 3i32 & 0x8000i32 == 0 {
-                (*EK).phant_var_F = ((0xa7da51i32) as u16);
+                (*EK).var_F = ((0xa7da51i32) as u16);
             }
         }
     }
 }
 pub unsafe fn Phantoon_WavyDyingPhantoonAndCry(k: u16, game: &mut Game) {
     sub_88E487(1u16, g_word_A7CDA3, game);
-    (*Get_Phantoon(0xc0i32, game)).phant_var_D = 0u16;
-    (*Get_Phantoon(k as i32, game)).phant_var_F = ((0xa7da86i32) as u16);
+    (*Get_Phantoon(0xc0i32, game)).var_D = 0u16;
+    (*Get_Phantoon(k as i32, game)).var_F = ((0xa7da86i32) as u16);
     let mut Phantoon = Get_Phantoon(0x40i32, game);
-    (*Phantoon).phant_var_C = 2u16;
+    (*Phantoon).var_C = 2u16;
     let v2: u16 = ((*Get_Phantoon(0i32, game)).base.properties as i32
         & !(kEnemyProps_DisableSamusColl as i32
             | kEnemyProps_Tangible as i32
@@ -3524,18 +3494,18 @@ pub unsafe fn Phantoon_DyingFadeOut(k: u16, game: &mut Game) {
         game,
     );
     let E = Get_Phantoon(0x40i32, game);
-    if (*E).phant_var_C == 0xffffu16 {
+    if (*E).var_C == 0xffffu16 {
         Phantoon_FadeOut(0xcu16, game);
-        if (*E).phant_var_F != 0 {
-            (*Get_Phantoon(k as i32, game)).phant_var_F = ((0xa7dad7i32) as u16);
+        if (*E).var_F != 0 {
+            (*Get_Phantoon(k as i32, game)).var_F = ((0xa7dad7i32) as u16);
         }
     } else if (ram_word!(game, nmi_frame_counter_word) & 0xf) == 0 {
-        if *(&raw mut (*E).phant_var_C as *mut u8).offset(0) == 0xf2u8 {
-            (*E).phant_var_C = -1i32 as u16;
-            (*E).phant_var_F = 0u16;
+        if *(&raw mut (*E).var_C as *mut u8).offset(0) == 0xf2u8 {
+            (*E).var_C = -1i32 as u16;
+            (*E).var_F = 0u16;
         } else {
-            let v2: u8 = (*(&raw mut (*E).phant_var_C as *mut u8).offset(0)).wrapping_add(16u8);
-            *(&raw mut (*E).phant_var_C as *mut u8).offset(0) = v2;
+            let v2: u8 = (*(&raw mut (*E).var_C as *mut u8).offset(0)).wrapping_add(16u8);
+            *(&raw mut (*E).var_C as *mut u8).offset(0) = v2;
             *ram_ptr!(game; 0x57) = v2;
         }
     }
@@ -3543,14 +3513,14 @@ pub unsafe fn Phantoon_DyingFadeOut(k: u16, game: &mut Game) {
 pub unsafe fn Phantoon_AlmostDead(k: u16, game: &mut Game) {
     *ram_ptr!(game; 0x57) = 0u8;
     let E1 = Get_Phantoon(0x40i32, game);
-    (*E1).phant_parameter_1 = 0u16;
+    (*E1).parameter_1 = 0u16;
     update_ram_word!(game.phantom_related_layer_flag, |fresh18| (fresh18
         & !(0x4000)));
-    (*Get_Phantoon(0xc0i32, game)).phant_parameter_1 = -1i32 as u16;
+    (*Get_Phantoon(0xc0i32, game)).parameter_1 = -1i32 as u16;
     let EK = Get_Phantoon(k as i32, game);
-    (*EK).phant_var_F = ((0xa7db3di32) as u16);
-    (*EK).phant_var_E = 60u16;
-    (*E1).phant_var_F = 0u16;
+    (*EK).var_F = ((0xa7db3di32) as u16);
+    (*EK).var_E = 60u16;
+    (*E1).var_F = 0u16;
     let E0 = Get_Phantoon(0i32, game);
     (*E0).base.x_pos = 384u16;
     (*E0).base.y_pos = 128u16;
@@ -3576,11 +3546,11 @@ pub unsafe fn Phantoon_AlmostDead(k: u16, game: &mut Game) {
 }
 pub unsafe fn Phantoon_Dead(k: u16, game: &mut Game) {
     let EK = Get_Phantoon(k as i32, game);
-    if (*EK).phant_var_E != 0 {
-        (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
+    if (*EK).var_E != 0 {
+        (*EK).var_E = (*EK).var_E.wrapping_sub(1);
     } else if (ram_word!(game, nmi_frame_counter_word) & 3) == 0 {
         let E1 = Get_Phantoon(0x40i32, game);
-        (*E1).phant_var_D = 12u16;
+        (*E1).var_D = 12u16;
         if Phantoon_Func_9(game) & 1 != 0 {
             crate::update_place! { reference fresh22 = *ram_ptr!(game; 0x69) => (*fresh22) | (2u8); }
             Enemy_ItemDrop_Phantoon(k, game);
@@ -3601,13 +3571,13 @@ pub unsafe fn Phantoon_Dead(k: u16, game: &mut Game) {
 }
 pub unsafe fn Phantoon_Func_8(game: &mut Game) -> u8 {
     let E = Get_Phantoon(0x40i32, game);
-    if ((*E).phant_var_D).wrapping_add(1u16) >= (*E).phant_var_E {
+    if ((*E).var_D).wrapping_add(1u16) >= (*E).var_E {
         let mut i: i32 = 0i32;
         while i < 0x20i32 {
             set_ram_word!(
                 game.palette_buffer[((i >> 1i32) + 112i32)] =
                     Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
-                        (*E).phant_var_E,
+                        (*E).var_E,
                         *(ram_ptr!(game, u16; 0xc000)).offset(((i >> 1i32) + 112i32) as isize,),
                         crate::rtl::rom_table_word!(game, 0xa7ca41, (i >> 1i32) as isize),
                         game,
@@ -3615,17 +3585,17 @@ pub unsafe fn Phantoon_Func_8(game: &mut Game) -> u8 {
             );
             i += 2i32;
         }
-        (*E).phant_var_E = (*E).phant_var_E.wrapping_add(1);
+        (*E).var_E = (*E).var_E.wrapping_add(1);
         0u8
     } else {
-        (*E).phant_var_E = 0u16;
+        (*E).var_E = 0u16;
         1u8
     }
 }
 pub unsafe fn Phantoon_SetColorBasedOnHp(game: &mut Game) -> u8 {
     let mut Entry: PairU16 = PairU16 { k: 0, j: 0 };
     let E = Get_Phantoon(0x40i32, game);
-    if ((*E).phant_var_D).wrapping_add(1u16) >= (*E).phant_var_E {
+    if ((*E).var_D).wrapping_add(1u16) >= (*E).var_E {
         let mut v2: u16 = 0u16;
         loop {
             let mut v7: u16 = v2;
@@ -3634,16 +3604,16 @@ pub unsafe fn Phantoon_SetColorBasedOnHp(game: &mut Game) -> u8 {
             let v5: u16 =
                 *(ram_ptr!(game, u16; 0xc000)).offset(((Entry.k as i32 >> 1i32) + 112i32) as isize);
             *(ram_ptr!(game, u16; 0xc000)).offset(((v7 as i32 >> 1i32) + 112i32) as isize) =
-                Phantoon_Func_10_CalculateNthTransitionColorFromXtoY((*E).phant_var_E, v5, j, game);
+                Phantoon_Func_10_CalculateNthTransitionColorFromXtoY((*E).var_E, v5, j, game);
             v2 = (v7).wrapping_add(2u16);
             if ((v7).wrapping_add(2u16) >= 0x20u16) {
                 break;
             }
         }
-        (*E).phant_var_E = (*E).phant_var_E.wrapping_add(1);
+        (*E).var_E = (*E).var_E.wrapping_add(1);
         0u8
     } else {
-        (*E).phant_var_E = 0u16;
+        (*E).var_E = 0u16;
         1u8
     }
 }
@@ -3672,13 +3642,13 @@ pub unsafe fn Phantoon_SetColorBasedOnHp_FindEntry(k: u16, game: &mut Game) -> P
 }
 pub unsafe fn Phantoon_Func_9(game: &mut Game) -> u8 {
     let E = Get_Phantoon(0x40i32, game);
-    if ((*E).phant_var_D).wrapping_add(1u16) >= (*E).phant_var_E {
+    if ((*E).var_D).wrapping_add(1u16) >= (*E).var_E {
         let mut i: i32 = 0i32;
         while i < 0xe0i32 {
             set_ram_word!(
                 game.palette_buffer[(i >> 1i32)] =
                     Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
-                        (*E).phant_var_E,
+                        (*E).var_E,
                         ram_word!(game, palette_buffer[(i >> 1i32)]),
                         crate::rtl::rom_table_word!(game, 0xa7ca61, (i >> 1i32) as isize),
                         game,
@@ -3686,10 +3656,10 @@ pub unsafe fn Phantoon_Func_9(game: &mut Game) -> u8 {
             );
             i += 2i32;
         }
-        (*E).phant_var_E = (*E).phant_var_E.wrapping_add(1);
+        (*E).var_E = (*E).var_E.wrapping_add(1);
         0u8
     } else {
-        (*E).phant_var_E = 0u16;
+        (*E).var_E = 0u16;
         1u8
     }
 }
@@ -3731,7 +3701,7 @@ pub unsafe fn Phantoon_CalculateNthTransitionColorComponentFromXtoY(
     }
     let v4: u16 = (a).wrapping_sub(1u16);
     let E = Get_Phantoon(0x40i32, game);
-    if v4 == (*E).phant_var_D {
+    if v4 == (*E).var_D {
         return j;
     }
     let r20: u16 = (v4).wrapping_add(1u16);
@@ -3739,7 +3709,7 @@ pub unsafe fn Phantoon_CalculateNthTransitionColorComponentFromXtoY(
     let v6: u8 = abs16(r18) as u8;
     let RegWord: u16 = SnesDivide(
         ((v6 as i32) << 8i32) as u16,
-        (*(&raw mut (*E).phant_var_D as *mut u8).offset(0) as i32 - r20 as i32 + 1i32) as u8,
+        (*(&raw mut (*E).var_D as *mut u8).offset(0) as i32 - r20 as i32 + 1i32) as u8,
     );
     r18 = (if r18 & 0x8000 != 0 {
         -(RegWord as i32)
@@ -3756,7 +3726,7 @@ pub unsafe fn Phantoon_Hurt(game: &mut Game) {
             if *(&raw mut (*(Get_Phantoon as unsafe fn(i32, &mut Game) -> *mut Enemy_Phantoon)(
                 0x80i32, game,
             ))
-            .phant_parameter_2 as *mut u8)
+            .parameter_2 as *mut u8)
                 .offset(1isize)
                 == 0
             {
@@ -3766,7 +3736,7 @@ pub unsafe fn Phantoon_Hurt(game: &mut Game) {
             if *(&raw mut (*(Get_Phantoon as unsafe fn(i32, &mut Game) -> *mut Enemy_Phantoon)(
                 0x80i32, game,
             ))
-            .phant_parameter_2 as *mut u8)
+            .parameter_2 as *mut u8)
                 .offset(1isize)
                 == 0
             {
@@ -3777,7 +3747,7 @@ pub unsafe fn Phantoon_Hurt(game: &mut Game) {
                     i -= 2i32;
                 }
                 let E3_0 = Get_Phantoon(0x80i32, game);
-                (*E3_0).phant_parameter_2 = ((*E3_0).phant_parameter_2) | (0x100u16);
+                (*E3_0).parameter_2 = ((*E3_0).parameter_2) | (0x100u16);
             }
             return;
         }
@@ -3793,7 +3763,7 @@ pub unsafe fn Phantoon_Hurt(game: &mut Game) {
         }
     }
     let E3 = Get_Phantoon(0x80i32, game);
-    (*E3).phant_parameter_2 = *(&raw mut (*E3).phant_parameter_2 as *mut u8).offset(0) as u16;
+    (*E3).parameter_2 = *(&raw mut (*E3).parameter_2 as *mut u8).offset(0) as u16;
 }
 pub unsafe fn Phantoon_Touch(game: &mut Game) {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
@@ -3801,7 +3771,7 @@ pub unsafe fn Phantoon_Touch(game: &mut Game) {
 pub unsafe fn Phantoon_Shot(game: &mut Game) {
     let mut current_block: u64;
     let E0 = Get_Phantoon(0i32, game);
-    if (*E0).phant_var_F as i32 + 0x26b8i32 & 0x8000i32 == 0 {
+    if (*E0).var_F as i32 + 0x26b8i32 & 0x8000i32 == 0 {
         return;
     }
     let v1: u16 = ram_word!(game, cur_enemy_index);
@@ -3810,14 +3780,14 @@ pub unsafe fn Phantoon_Shot(game: &mut Game) {
     NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
     if (*EK).base.health == 0 {
         QueueSfx2_Max6(0x73u16, game);
-        (*Get_Phantoon(0x80i32, game)).phant_parameter_2 = 1u16;
+        (*Get_Phantoon(0x80i32, game)).parameter_2 = 1u16;
         (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
         Phantoon_StartDeathSequence(v1, game);
         return;
     }
     if ((*EK).base.ai_handler_bits & 2) != 0 {
         QueueSfx2_Max6(0x73u16, game);
-        let phanto_var_F: u16 = (*EK).phant_var_F;
+        let phanto_var_F: u16 = (*EK).var_F;
         if phanto_var_F as i32 != 0xa7d60di32 & 0xffffi32
             && phanto_var_F as i32 != 0xa7d788i32 & 0xffffi32
         {
@@ -3833,10 +3803,10 @@ pub unsafe fn Phantoon_Shot(game: &mut Game) {
                         != 512
                 {
                     let E2 = Get_Phantoon(v1 as i32 + 0x80i32, game);
-                    let v7: u16 = (health).wrapping_add((*E2).phant_var_B);
-                    (*E2).phant_var_B = v7;
+                    let v7: u16 = (health).wrapping_add((*E2).var_B);
+                    (*E2).var_B = v7;
                     if v7 as i32 - 300i32 & 0x8000i32 == 0 {
-                        (*EK).phant_var_E = 1u16;
+                        (*EK).var_E = 1u16;
                     }
                     current_block = 17320862420850216187;
                 } else {
@@ -3857,22 +3827,22 @@ pub unsafe fn Phantoon_Shot(game: &mut Game) {
                 let mut E2_0 = null_mut::<Enemy_Phantoon>();
                 E2_0 = Get_Phantoon(v1 as i32 + 0x80i32, game);
                 let mut v9: u16 = 0;
-                v9 = (health).wrapping_add((*E2_0).phant_var_B);
-                (*E2_0).phant_var_B = v9;
+                v9 = (health).wrapping_add((*E2_0).var_B);
+                (*E2_0).var_B = v9;
                 if v9 as i32 - 300i32 & 0x8000i32 == 0 {
-                    (*EK).phant_var_F = ((0xa7d6b9i32) as u16);
+                    (*EK).var_F = ((0xa7d6b9i32) as u16);
                     current_block = 4949463109084628481;
                 } else {
                     let v10: u16 = (NextRandom(game)) & (7u16);
-                    (*Get_Phantoon(0x40i32, game)).phant_var_B =
+                    (*Get_Phantoon(0x40i32, game)).var_B =
                         *(&raw const g_byte_A7CDA5 as *const u8).offset(v10 as i32 as isize) as u16;
-                    (*Get_Phantoon(0xc0i32, game)).phant_parameter_2 = v10;
+                    (*Get_Phantoon(0xc0i32, game)).parameter_2 = v10;
                     let E2x = Get_Phantoon(0x80i32, game);
-                    (*E2x).phant_parameter_2 = 1u16;
-                    if (*E2x).phant_var_A == 0 {
-                        (*E2x).phant_var_A = 1u16;
-                        if (*EK).phant_var_E as i32 - 16i32 & 0x8000i32 == 0 {
-                            (*EK).phant_var_E = 16u16;
+                    (*E2x).parameter_2 = 1u16;
+                    if (*E2x).var_A == 0 {
+                        (*E2x).var_A = 1u16;
+                        if (*EK).var_E as i32 - 16i32 & 0x8000i32 == 0 {
+                            (*EK).var_E = 16u16;
                         }
                     }
                     current_block = 6450597802325118133;
@@ -3882,13 +3852,13 @@ pub unsafe fn Phantoon_Shot(game: &mut Game) {
         if current_block == 6450597802325118133 {
         } else {
             if current_block == 1670498606268217318 {
-                (*EK).phant_var_F = ((0xa7d85ci32) as u16);
+                (*EK).var_F = ((0xa7d85ci32) as u16);
                 current_block = 4949463109084628481;
             }
             if current_block == 4949463109084628481 {
-                (*EK).phant_var_E = 0u16;
-                (*Get_Phantoon(0x80i32, game)).phant_var_A = 0u16;
-                (*Get_Phantoon(v1 as i32 + 0x80i32, game)).phant_var_B = 0u16;
+                (*EK).var_E = 0u16;
+                (*Get_Phantoon(0x80i32, game)).var_A = 0u16;
+                (*Get_Phantoon(v1 as i32 + 0x80i32, game)).var_B = 0u16;
                 update_ram_word!(game.phantom_related_layer_flag, |fresh28| (fresh28)
                     | (0x4000u16));
                 (*E0).base.instruction_timer = 1u16;
@@ -3897,9 +3867,9 @@ pub unsafe fn Phantoon_Shot(game: &mut Game) {
                 (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as u16;
                 (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as u16;
                 (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
-                (*E1).phant_var_F = 0u16;
+                (*E1).var_F = 0u16;
             }
-            (*Get_Phantoon(0x80i32, game)).phant_parameter_2 = 2u16;
+            (*Get_Phantoon(0x80i32, game)).parameter_2 = 2u16;
         }
     }
 }
@@ -3910,22 +3880,22 @@ pub unsafe fn Etecoon_Init(game: &mut Game) {
     (*E).base.instruction_timer = 1u16;
     (*E).base.timer = 0u16;
     (*E).base.current_instruction = addr_kEtecoon_Ilist_E8CE as u16;
-    (*E).etecoon_var_F = ((0xa7e9afi32) as u16);
-    (*E).etecoon_var_E = -1i32 as u16;
+    (*E).var_F = ((0xa7e9afi32) as u16);
+    (*E).var_E = -1i32 as u16;
 }
 pub unsafe fn Etecoon_Main(game: &mut Game) {
     let E = Get_Etecoon(ram_word!(game, cur_enemy_index) as i32, game);
-    if *(&raw mut (*E).etecoon_parameter_2 as *mut u8).offset(1isize) != 0 {
-        (*E).etecoon_parameter_2 = ((*E).etecoon_parameter_2).wrapping_sub(256u16);
+    if *(&raw mut (*E).parameter_2 as *mut u8).offset(1isize) != 0 {
+        (*E).parameter_2 = ((*E).parameter_2).wrapping_sub(256u16);
     } else {
-        CallEnemyPreInstr((((*E).etecoon_var_F) as u32) | (0xa70000u32), game);
+        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa70000u32), game);
     };
 }
 pub unsafe fn Etecoon_Func_1(k: u16, game: &mut Game) {
     if ram_word!(game, earthquake_timer) != 0 {
         let E = Get_Etecoon(k as i32, game);
-        (*E).etecoon_parameter_2 =
-            ((*(&raw mut (*E).etecoon_parameter_2 as *mut u8).offset(0)) as u16) | (0x8000u16);
+        (*E).parameter_2 =
+            ((*(&raw mut (*E).parameter_2 as *mut u8).offset(0)) as u16) | (0x8000u16);
         (*E).base.instruction_timer = ((*E).base.instruction_timer).wrapping_add(128u16);
     }
 }
@@ -3933,17 +3903,17 @@ pub unsafe fn Etecoon_Func_2(k: u16, game: &mut Game) -> u8 {
     let E = Get_Etecoon(k as i32, game);
     Enemy_MoveRight_IgnoreSlopes(
         k,
-        (((*E).etecoon_var_C as u32) << 16i32 | (*E).etecoon_var_D as u32) as i32,
+        (((*E).var_C as u32) << 16i32 | (*E).var_D as u32) as i32,
         game,
     )
 }
 pub unsafe fn Etecoon_Func_3(k: u16, game: &mut Game) -> u8 {
     let E = Get_Etecoon(k as i32, game);
-    let amt: i32 = (((*E).etecoon_var_A as u32) << 16i32 | (*E).etecoon_var_B as u32) as i32;
-    if (*E).etecoon_var_A as i32 - 5i32 & 0x8000i32 != 0 {
+    let amt: i32 = (((*E).var_A as u32) << 16i32 | (*E).var_B as u32) as i32;
+    if (*E).var_A as i32 - 5i32 & 0x8000i32 != 0 {
         AddToHiLo(
-            &raw mut (*E).etecoon_var_A,
-            &raw mut (*E).etecoon_var_B,
+            &raw mut (*E).var_A,
+            &raw mut (*E).var_B,
             (ram_word!(game, samus_y_accel) as u32) << 16i32
                 | ram_word!(game, samus_y_subaccel) as u32,
         );
@@ -3953,34 +3923,34 @@ pub unsafe fn Etecoon_Func_3(k: u16, game: &mut Game) -> u8 {
 pub unsafe fn Etecoon_Func_4(k: u16, game: &mut Game) {
     if ram_word!(game, door_transition_flag_enemies) == 0 {
         let E = Get_Etecoon(k as i32, game);
-        if ((*E).etecoon_var_E & 0x8000) == 0 {
-            let v2: bool = (*E).etecoon_var_E == 1u16;
-            (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
-            let v3: bool = ((*E).etecoon_var_E & 0x8000) != 0;
+        if ((*E).var_E & 0x8000) == 0 {
+            let v2: bool = (*E).var_E == 1u16;
+            (*E).var_E = (*E).var_E.wrapping_sub(1);
+            let v3: bool = ((*E).var_E & 0x8000) != 0;
             if v2 || v3 {
                 (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as u16;
-                (*E).etecoon_var_F = ((0xa7ea00i32) as u16);
-                (*E).etecoon_var_E = 11u16;
+                (*E).var_F = ((0xa7ea00i32) as u16);
+                (*E).var_E = 11u16;
             }
         } else if IsSamusWithinEnemy_Y(k, 0x80u16, game) != 0 {
-            if ((*E).etecoon_parameter_2 & 3) == 0 {
+            if ((*E).parameter_2 & 3) == 0 {
                 QueueSfx2_Max15(0x35u16, game);
             }
             enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kEtecoon_Ilist_E8D6 as u16}
-            (*E).etecoon_var_E = 256u16;
+            (*E).var_E = 256u16;
         }
     }
 }
 pub unsafe fn Etecoon_Func_5(k: u16, game: &mut Game) {
     let E = Get_Etecoon(k as i32, game);
-    let v2: bool = (*E).etecoon_var_E == 1u16;
-    (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
-    let v3: bool = ((*E).etecoon_var_E & 0x8000) != 0;
+    let v2: bool = (*E).var_E == 1u16;
+    (*E).var_E = (*E).var_E.wrapping_sub(1);
+    let v3: bool = ((*E).var_E & 0x8000) != 0;
     if v2 || v3 {
-        (*E).etecoon_var_A = g_word_A7E900;
-        (*E).etecoon_var_B = g_word_A7E902;
+        (*E).var_A = g_word_A7E900;
+        (*E).var_B = g_word_A7E902;
         enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2u16), timer = 1u16}
-        (*E).etecoon_var_F = ((0xa7ea37i32) as u16);
+        (*E).var_F = ((0xa7ea37i32) as u16);
         if ram_word!(game, samus_x_pos) as i32 - 256i32 & 0x8000i32 == 0 {
             QueueSfx2_Max6(0x33u16, game);
         }
@@ -3989,67 +3959,67 @@ pub unsafe fn Etecoon_Func_5(k: u16, game: &mut Game) {
 pub unsafe fn Etecoon_Func_6(k: u16, game: &mut Game) {
     if Etecoon_Func_3(k, game) & 1 != 0 {
         let E = Get_Etecoon(k as i32, game);
-        if ((*E).etecoon_var_A & 0x8000) == 0 {
+        if ((*E).var_A & 0x8000) == 0 {
             if IsSamusWithinEnemy_Y(k, 0x40u16, game) != 0u16
                 && IsSamusWithinEnemy_X(k, g_word_A7E910, game) != 0u16
             {
                 let v2: u16 = DetermineDirectionOfSamusFromEnemy(game);
                 if v2 as i32 - 5i32 & 0x8000i32 != 0 {
                     (*E).base.current_instruction = addr_kEtecoon_Ilist_E81E as u16;
-                    (*E).etecoon_parameter_1 = 0u16;
+                    (*E).parameter_1 = 0u16;
                 } else {
                     (*E).base.current_instruction = addr_kEtecoon_Ilist_E876 as u16;
-                    (*E).etecoon_parameter_1 = 1u16;
+                    (*E).parameter_1 = 1u16;
                 }
-                (*E).etecoon_var_E = 32u16;
+                (*E).var_E = 32u16;
                 (*E).base.instruction_timer = 1u16;
-                (*E).etecoon_var_F = ((0xa7eab5i32) as u16);
+                (*E).var_F = ((0xa7eab5i32) as u16);
             } else {
-                (*E).etecoon_var_E = 11u16;
-                (*E).etecoon_var_F = ((0xa7ea00i32) as u16);
+                (*E).var_E = 11u16;
+                (*E).var_F = ((0xa7ea00i32) as u16);
                 enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kEtecoon_Ilist_E854 as u16}
             }
         } else {
-            set_fields! {[(*E)], 0u16; etecoon_var_A, etecoon_var_B}
+            set_fields! {[(*E)], 0u16; var_A, var_B}
             enemy_instruction! {[(*E).base]; timer = 3u16, instruction = addr_stru_A7E862 as u16}
         }
     }
 }
 pub unsafe fn Etecoon_Func_7(k: u16, game: &mut Game) {
     let E = Get_Etecoon(k as i32, game);
-    let v2: bool = (*E).etecoon_var_E == 1u16;
-    (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
-    let v3: bool = ((*E).etecoon_var_E & 0x8000) != 0;
+    let v2: bool = (*E).var_E == 1u16;
+    (*E).var_E = (*E).var_E.wrapping_sub(1);
+    let v3: bool = ((*E).var_E & 0x8000) != 0;
     if v2 || v3 {
         enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2u16), timer = 1u16}
-        if (*E).etecoon_parameter_1 != 0 {
-            (*E).etecoon_var_C = g_word_A7E908;
-            (*E).etecoon_var_D = g_word_A7E90A;
-            (*E).etecoon_var_F = ((0xa7eb2ci32) as u16);
+        if (*E).parameter_1 != 0 {
+            (*E).var_C = g_word_A7E908;
+            (*E).var_D = g_word_A7E90A;
+            (*E).var_F = ((0xa7eb2ci32) as u16);
         } else {
-            (*E).etecoon_var_C = g_word_A7E90C;
-            (*E).etecoon_var_D = g_word_A7E90E;
-            (*E).etecoon_var_F = ((0xa7eb02i32) as u16);
+            (*E).var_C = g_word_A7E90C;
+            (*E).var_D = g_word_A7E90E;
+            (*E).var_F = ((0xa7eb02i32) as u16);
         }
-        (*E).etecoon_var_A = g_word_A7E900;
-        (*E).etecoon_var_B = g_word_A7E902;
+        (*E).var_A = g_word_A7E900;
+        (*E).var_B = g_word_A7E902;
     }
 }
 pub unsafe fn Etecoon_Func_8(k: u16, game: &mut Game) {
     if Etecoon_Func_2(k, game) & 1 != 0 {
         let E = Get_Etecoon(k as i32, game);
-        (*E).etecoon_var_C = g_word_A7E908;
-        (*E).etecoon_var_D = g_word_A7E90A;
-        (*E).etecoon_var_F = ((0xa7eb2ci32) as u16);
+        (*E).var_C = g_word_A7E908;
+        (*E).var_D = g_word_A7E90A;
+        (*E).var_F = ((0xa7eb2ci32) as u16);
         enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E880 as u16}
-        (*E).etecoon_parameter_1 = 1u16;
+        (*E).parameter_1 = 1u16;
     }
 }
 pub unsafe fn Etecoon_Func_9(k: u16, game: &mut Game) {
     if EnemyFunc_BBBF(k, ((32u32) << 16i32 | 0u16 as u32) as i32, game) != 0 {
         let E = Get_Etecoon(k as i32, game);
         enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E898 as u16}
-        (*E).etecoon_var_F = ((0xa7eb50i32) as u16);
+        (*E).var_F = ((0xa7eb50i32) as u16);
     } else {
         Etecoon_Func_2(k, game);
     };
@@ -4058,53 +4028,53 @@ pub unsafe fn Etecoon_Func_10(k: u16, game: &mut Game) {
     Etecoon_Func_1(k, game);
     if Etecoon_Func_2(k, game) & 1 != 0 {
         let E = Get_Etecoon(k as i32, game);
-        if (*E).etecoon_parameter_1 != 0 {
+        if (*E).parameter_1 != 0 {
             (*E).base.current_instruction = addr_kEtecoon_Ilist_E870 as u16;
-            (*E).etecoon_parameter_1 = 0u16;
+            (*E).parameter_1 = 0u16;
         } else {
             (*E).base.current_instruction = addr_kEtecoon_Ilist_E8C8 as u16;
-            (*E).etecoon_parameter_1 = 1u16;
+            (*E).parameter_1 = 1u16;
         }
         (*E).base.instruction_timer = 1u16;
-        (*E).etecoon_var_F = ((0xa7ebcdi32) as u16);
-        (*E).etecoon_var_E = 8u16;
+        (*E).var_F = ((0xa7ebcdi32) as u16);
+        (*E).var_E = 8u16;
         if ram_word!(game, samus_x_pos) as i32 - 256i32 & 0x8000i32 == 0 {
             QueueSfx2_Max6(0x32u16, game);
         }
     } else if Etecoon_Func_3(k, game) & 1 != 0 {
         let E_0 = Get_Etecoon(k as i32, game);
-        if (*E_0).etecoon_parameter_1 != 0 {
+        if (*E_0).parameter_1 != 0 {
             (*E_0).base.current_instruction = addr_kEtecoon_Ilist_E854 as u16;
         } else {
             (*E_0).base.current_instruction = addr_kEtecoon_Ilist_E8AC as u16;
         }
         (*E_0).base.instruction_timer = 1u16;
-        (*E_0).etecoon_var_E = 11u16;
-        (*E_0).etecoon_var_F = ((0xa7ec1bi32) as u16);
-        (*E_0).etecoon_var_A = g_word_A7E900;
-        (*E_0).etecoon_var_B = g_word_A7E902;
+        (*E_0).var_E = 11u16;
+        (*E_0).var_F = ((0xa7ec1bi32) as u16);
+        (*E_0).var_A = g_word_A7E900;
+        (*E_0).var_B = g_word_A7E902;
     }
 }
 pub unsafe fn Etecoon_Func_11(k: u16, game: &mut Game) {
     Etecoon_Func_1(k, game);
     let E = Get_Etecoon(k as i32, game);
-    let v2: bool = (*E).etecoon_var_E == 1u16;
-    (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
-    let v3: bool = ((*E).etecoon_var_E & 0x8000) != 0;
+    let v2: bool = (*E).var_E == 1u16;
+    (*E).var_E = (*E).var_E.wrapping_sub(1);
+    let v3: bool = ((*E).var_E & 0x8000) != 0;
     if v2 || v3 {
-        if (*E).etecoon_parameter_1 != 0 {
+        if (*E).parameter_1 != 0 {
             (*E).base.current_instruction = addr_kEtecoon_Ilist_E894 as u16;
-            (*E).etecoon_var_C = g_word_A7E908;
-            (*E).etecoon_var_D = g_word_A7E90A;
+            (*E).var_C = g_word_A7E908;
+            (*E).var_D = g_word_A7E90A;
         } else {
             (*E).base.current_instruction = addr_kEtecoon_Ilist_E83C as u16;
-            (*E).etecoon_var_C = g_word_A7E90C;
-            (*E).etecoon_var_D = g_word_A7E90E;
+            (*E).var_C = g_word_A7E90C;
+            (*E).var_D = g_word_A7E90E;
         }
         (*E).base.instruction_timer = 1u16;
-        (*E).etecoon_var_F = ((0xa7eb50i32) as u16);
-        (*E).etecoon_var_A = g_word_A7E900;
-        (*E).etecoon_var_B = g_word_A7E902;
+        (*E).var_F = ((0xa7eb50i32) as u16);
+        (*E).var_A = g_word_A7E900;
+        (*E).var_B = g_word_A7E902;
     }
 }
 static funcs_A2A79: [Option<Func_Y_V>; 3] = callback_table! { unsafe Func_Y_V;
@@ -4112,44 +4082,44 @@ static funcs_A2A79: [Option<Func_Y_V>; 3] = callback_table! { unsafe Func_Y_V;
 };
 pub unsafe fn Etecoon_Func_12(k: u16, game: &mut Game) {
     let E = Get_Etecoon(k as i32, game);
-    let v2: bool = (*E).etecoon_var_E == 1u16;
-    (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
-    let v3: bool = ((*E).etecoon_var_E & 0x8000) != 0;
+    let v2: bool = (*E).var_E == 1u16;
+    (*E).var_E = (*E).var_E.wrapping_sub(1);
+    let v3: bool = ((*E).var_E & 0x8000) != 0;
     if v2 || v3 {
-        (*E).etecoon_var_A = g_word_A7E900;
-        (*E).etecoon_var_B = g_word_A7E902;
-        funcs_A2A79[*(&raw mut (*E).etecoon_parameter_2 as *mut u8).offset(0) as usize]
+        (*E).var_A = g_word_A7E900;
+        (*E).var_B = g_word_A7E902;
+        funcs_A2A79[*(&raw mut (*E).parameter_2 as *mut u8).offset(0) as usize]
             .expect("non-null function pointer")(k, game);
         (*Get_Etecoon(k as i32, game)).base.instruction_timer = 1u16;
     }
 }
 pub unsafe fn Etecoon_Func_13(j: u16, game: &mut Game) {
     let E = Get_Etecoon(j as i32, game);
-    (*E).etecoon_var_F = ((0xa7ec97i32) as u16);
+    (*E).var_F = ((0xa7ec97i32) as u16);
     (*E).base.current_instruction = addr_stru_A7E828 as u16;
-    (*E).etecoon_var_C = g_word_A7E90C;
-    (*E).etecoon_var_D = g_word_A7E90E;
+    (*E).var_C = g_word_A7E90C;
+    (*E).var_D = g_word_A7E90E;
 }
 pub unsafe fn Etecoon_Func_14(j: u16, game: &mut Game) {
     let E = Get_Etecoon(j as i32, game);
-    (*E).etecoon_var_F = ((0xa7ecbbi32) as u16);
+    (*E).var_F = ((0xa7ecbbi32) as u16);
     (*E).base.current_instruction = addr_stru_A7E880 as u16;
-    (*E).etecoon_var_C = g_word_A7E908;
-    (*E).etecoon_var_D = g_word_A7E90A;
+    (*E).var_C = g_word_A7E908;
+    (*E).var_D = g_word_A7E90A;
 }
 pub unsafe fn Etecoon_Func_15(j: u16, game: &mut Game) {
     let E = Get_Etecoon(j as i32, game);
-    (*E).etecoon_var_F = ((0xa7ed75i32) as u16);
+    (*E).var_F = ((0xa7ed75i32) as u16);
     (*E).base.current_instruction = ((*E).base.current_instruction).wrapping_add(2u16);
-    (*E).etecoon_var_C = g_word_A7E908;
-    (*E).etecoon_var_D = g_word_A7E90A;
+    (*E).var_C = g_word_A7E908;
+    (*E).var_D = g_word_A7E90A;
 }
 pub unsafe fn Etecoon_Func_16(k: u16, game: &mut Game) {
     Etecoon_Func_2(k, game);
     let E = Get_Etecoon(k as i32, game);
     if (*E).base.x_pos as i32 - 537i32 & 0x8000i32 != 0 {
-        (*E).etecoon_var_E = 11u16;
-        (*E).etecoon_var_F = ((0xa7edc7i32) as u16);
+        (*E).var_E = 11u16;
+        (*E).var_F = ((0xa7edc7i32) as u16);
         enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kEtecoon_Ilist_E854 as u16}
     }
 }
@@ -4157,8 +4127,8 @@ pub unsafe fn Etecoon_Func_17(k: u16, game: &mut Game) {
     Etecoon_Func_2(k, game);
     let E = Get_Etecoon(k as i32, game);
     if (*E).base.x_pos as i32 - 600i32 & 0x8000i32 == 0 {
-        (*E).etecoon_var_E = 11u16;
-        (*E).etecoon_var_F = ((0xa7edc7i32) as u16);
+        (*E).var_E = 11u16;
+        (*E).var_F = ((0xa7edc7i32) as u16);
         enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kEtecoon_Ilist_E854 as u16}
     }
 }
@@ -4166,9 +4136,9 @@ pub unsafe fn Etecoon_Func_18(k: u16, game: &mut Game) {
     Etecoon_Func_2(k, game);
     let E = Get_Etecoon(k as i32, game);
     if (*E).base.x_pos as i32 - 600i32 & 0x8000i32 == 0 {
-        (*E).etecoon_var_F = ((0xa7ed09i32) as u16);
-        (*E).etecoon_var_A = g_word_A7E904;
-        (*E).etecoon_var_B = g_word_A7E906;
+        (*E).var_F = ((0xa7ed09i32) as u16);
+        (*E).var_A = g_word_A7E904;
+        (*E).var_B = g_word_A7E906;
         enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E898 as u16}
     }
 }
@@ -4178,7 +4148,7 @@ pub unsafe fn Etecoon_Func_19(k: u16, game: &mut Game) {
     let E = Get_Etecoon(k as i32, game);
     if (*E).base.x_pos as i32 - 680i32 & 0x8000i32 == 0 {
         enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E880 as u16}
-        (*E).etecoon_var_F = ((0xa7ed2ai32) as u16);
+        (*E).var_F = ((0xa7ed2ai32) as u16);
     }
 }
 pub unsafe fn Etecoon_Func_20(k: u16, game: &mut Game) {
@@ -4186,36 +4156,34 @@ pub unsafe fn Etecoon_Func_20(k: u16, game: &mut Game) {
     let E = Get_Etecoon(k as i32, game);
     if (*E).base.x_pos as i32 - 840i32 & 0x8000i32 == 0 {
         enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E898 as u16}
-        (*E).etecoon_var_F = ((0xa7ed54i32) as u16);
-        (*E).etecoon_var_A = -1i32 as u16;
-        (*E).etecoon_var_B = g_word_A7E906;
+        (*E).var_F = ((0xa7ed54i32) as u16);
+        (*E).var_A = -1i32 as u16;
+        (*E).var_B = g_word_A7E906;
     }
 }
 pub unsafe fn Etecoon_Func_21(k: u16, game: &mut Game) {
     Etecoon_Func_2(k, game);
     if Etecoon_Func_3(k, game) & 1 != 0 {
         let E = Get_Etecoon(k as i32, game);
-        (*E).etecoon_var_E = 11u16;
+        (*E).var_E = 11u16;
         enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kEtecoon_Ilist_E854 as u16}
-        (*E).etecoon_var_F = ((0xa7edc7i32) as u16);
+        (*E).var_F = ((0xa7edc7i32) as u16);
     }
 }
 pub unsafe fn Etecoon_Func_22(k: u16, game: &mut Game) {
     Etecoon_Func_1(k, game);
     if Etecoon_Func_3(k, game) & 1 != 0 {
         let E = Get_Etecoon(k as i32, game);
-        if ((*E).etecoon_var_A & 0x8000) == 0 {
-            (*E).etecoon_var_E = 11u16;
+        if ((*E).var_A & 0x8000) == 0 {
+            (*E).var_E = 11u16;
             enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kEtecoon_Ilist_E854 as u16}
-            if ((*E).etecoon_parameter_2 & 2) != 0
-                && (*E).base.x_pos as i32 - 832i32 & 0x8000i32 != 0
-            {
-                (*E).etecoon_var_F = ((0xa7ee3ei32) as u16);
+            if ((*E).parameter_2 & 2) != 0 && (*E).base.x_pos as i32 - 832i32 & 0x8000i32 != 0 {
+                (*E).var_F = ((0xa7ee3ei32) as u16);
             } else {
-                (*E).etecoon_var_F = ((0xa7edc7i32) as u16);
+                (*E).var_F = ((0xa7edc7i32) as u16);
             }
         } else {
-            set_fields! {[(*E)], 0u16; etecoon_var_A, etecoon_var_B}
+            set_fields! {[(*E)], 0u16; var_A, var_B}
             enemy_instruction! {[(*E).base]; timer = 3u16, instruction = addr_stru_A7E862 as u16}
         }
     }
@@ -4223,27 +4191,26 @@ pub unsafe fn Etecoon_Func_22(k: u16, game: &mut Game) {
 pub unsafe fn Etecoon_Func_23(k: u16, game: &mut Game) {
     Etecoon_Func_1(k, game);
     let E = Get_Etecoon(k as i32, game);
-    let v2: bool = (*E).etecoon_var_E == 1u16;
-    (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
-    let v3: bool = ((*E).etecoon_var_E & 0x8000) != 0;
+    let v2: bool = (*E).var_E == 1u16;
+    (*E).var_E = (*E).var_E.wrapping_sub(1);
+    let v3: bool = ((*E).var_E & 0x8000) != 0;
     if v2 || v3 {
-        let v4: u16 = ((*E).etecoon_parameter_1).wrapping_add(256u16);
-        (*E).etecoon_parameter_1 = v4;
+        let v4: u16 = ((*E).parameter_1).wrapping_add(256u16);
+        (*E).parameter_1 = v4;
         if (v4 as i32 & 0xff00i32) - 1024i32 & 0x8000i32 != 0 || {
-            (*E).etecoon_parameter_1 =
-                *(&raw mut (*E).etecoon_parameter_1 as *mut u8).offset(0) as u16;
-            ((*E).etecoon_parameter_2 & 2) != 0
+            (*E).parameter_1 = *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16;
+            ((*E).parameter_2 & 2) != 0
         } {
-            (*E).etecoon_var_F = ((0xa7ed75i32) as u16);
+            (*E).var_F = ((0xa7ed75i32) as u16);
             (*E).base.current_instruction = ((*E).base.current_instruction).wrapping_add(2u16);
         } else {
-            (*E).etecoon_var_F = ((0xa7ee9ai32) as u16);
+            (*E).var_F = ((0xa7ee9ai32) as u16);
             (*E).base.current_instruction = addr_stru_A7E880 as u16;
-            (*E).etecoon_var_C = g_word_A7E908;
-            (*E).etecoon_var_D = g_word_A7E90A;
+            (*E).var_C = g_word_A7E908;
+            (*E).var_D = g_word_A7E90A;
         }
-        (*E).etecoon_var_A = g_word_A7E900;
-        (*E).etecoon_var_B = g_word_A7E902;
+        (*E).var_A = g_word_A7E900;
+        (*E).var_B = g_word_A7E902;
         (*E).base.instruction_timer = 1u16;
         if ram_word!(game, samus_x_pos) as i32 - 256i32 & 0x8000i32 == 0 {
             QueueSfx2_Max6(0x33u16, game);
@@ -4253,20 +4220,20 @@ pub unsafe fn Etecoon_Func_23(k: u16, game: &mut Game) {
 pub unsafe fn Etecoon_Func_24(k: u16, game: &mut Game) {
     Etecoon_Func_1(k, game);
     let E = Get_Etecoon(k as i32, game);
-    let v2: bool = (*E).etecoon_var_E == 1u16;
-    (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
-    let v3: bool = ((*E).etecoon_var_E & 0x8000) != 0;
+    let v2: bool = (*E).var_E == 1u16;
+    (*E).var_E = (*E).var_E.wrapping_sub(1);
+    let v3: bool = ((*E).var_E & 0x8000) != 0;
     if v2 || v3 {
         if IsSamusWithinEnemy_Y(k, 0x40u16, game) != 0u16
             && IsSamusWithinEnemy_X(k, 0x30u16, game) != 0u16
         {
             (*E).base.current_instruction = addr_stru_A7E880 as u16;
-            (*E).etecoon_var_F = ((0xa7ecdfi32) as u16);
+            (*E).var_F = ((0xa7ecdfi32) as u16);
         } else {
-            (*E).etecoon_var_A = g_word_A7E900;
-            (*E).etecoon_var_B = g_word_A7E902;
+            (*E).var_A = g_word_A7E900;
+            (*E).var_B = g_word_A7E902;
             (*E).base.current_instruction = ((*E).base.current_instruction).wrapping_add(2u16);
-            (*E).etecoon_var_F = ((0xa7ed75i32) as u16);
+            (*E).var_F = ((0xa7ed75i32) as u16);
             if ram_word!(game, samus_x_pos) as i32 - 256i32 & 0x8000i32 == 0 {
                 QueueSfx2_Max6(0x33u16, game);
             }
@@ -4278,7 +4245,7 @@ pub unsafe fn Etecoon_Func_25(k: u16, game: &mut Game) {
     Etecoon_Func_2(k, game);
     let E = Get_Etecoon(k as i32, game);
     if (*E).base.x_pos as i32 - 600i32 & 0x8000i32 == 0 {
-        (*E).etecoon_var_F = ((0xa7eeb8i32) as u16);
+        (*E).var_F = ((0xa7eeb8i32) as u16);
         enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E898 as u16}
     }
 }
@@ -4286,11 +4253,11 @@ pub unsafe fn Etecoon_Func_26(k: u16, game: &mut Game) {
     Etecoon_Func_2(k, game);
     if Etecoon_Func_3(k, game) & 1 != 0 {
         let E = Get_Etecoon(k as i32, game);
-        (*E).etecoon_var_C = g_word_A7E90C;
-        (*E).etecoon_var_D = g_word_A7E90E;
-        (*E).etecoon_var_F = ((0xa7eb02i32) as u16);
-        (*E).etecoon_var_A = g_word_A7E900;
-        (*E).etecoon_var_B = g_word_A7E902;
+        (*E).var_C = g_word_A7E90C;
+        (*E).var_D = g_word_A7E90E;
+        (*E).var_F = ((0xa7eb02i32) as u16);
+        (*E).var_A = g_word_A7E900;
+        (*E).var_B = g_word_A7E902;
         enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E828 as u16}
     }
 }
@@ -4300,26 +4267,26 @@ pub unsafe fn Dachora_Init(game: &mut Game) {
     (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A7 as u16;
     (*E).base.instruction_timer = 1u16;
     (*E).base.timer = 0u16;
-    let mut dachor_parameter_1: i16 = (*E).dachor_parameter_1 as i16;
+    let mut dachor_parameter_1: i16 = (*E).parameter_1 as i16;
     if dachor_parameter_1 < 0i16 {
         if (dachor_parameter_1 as u16 & 1) != 0 {
             (*E).base.current_instruction = addr_kDachora_Ilist_F4B9 as u16;
         } else {
             (*E).base.current_instruction = addr_kDachora_Ilist_F3F7 as u16;
         }
-        (*E).dachor_var_F = ((0xa7f98ci32) as u16);
+        (*E).var_F = ((0xa7f98ci32) as u16);
     } else {
         if dachor_parameter_1 != 0 {
             (*E).base.current_instruction = addr_kDachora_Ilist_F45B as u16;
         } else {
             (*E).base.current_instruction = addr_kDachora_Ilist_F399 as u16;
         }
-        (*E).dachor_var_F = ((0xa7f570i32) as u16);
+        (*E).var_F = ((0xa7f570i32) as u16);
     };
 }
 pub unsafe fn Dachora_Main(game: &mut Game) {
     let E = Get_Dachora(ram_word!(game, cur_enemy_index) as i32, game);
-    CallEnemyPreInstr((((*E).dachor_var_F) as u32) | (0xa70000u32), game);
+    CallEnemyPreInstr((((*E).var_F) as u32) | (0xa70000u32), game);
 }
 pub unsafe fn Dachora_Func_1(j: u16, k: u16, game: &mut Game) {
     let E = Get_Dachora(k as i32, game);
@@ -4340,30 +4307,30 @@ pub unsafe fn Dachora_Func_2(k: u16, game: &mut Game) {
         && IsSamusWithinEnemy_X(k, g_word_A7F4C9, game) != 0u16
     {
         let E = Get_Dachora(k as i32, game);
-        if (*E).dachor_parameter_1 != 0 {
+        if (*E).parameter_1 != 0 {
             (*E).base.current_instruction = addr_kDachora_Ilist_F48B as u16;
         } else {
             (*E).base.current_instruction = addr_kDachora_Ilist_F3C9 as u16;
         }
         (*E).base.instruction_timer = 1u16;
-        (*E).dachor_var_F = ((0xa7f5bci32) as u16);
-        (*E).dachor_var_A = g_word_A7F4CD;
+        (*E).var_F = ((0xa7f5bci32) as u16);
+        (*E).var_A = g_word_A7F4CD;
         QueueSfx2_Max15(0x1du16, game);
     }
 }
 pub unsafe fn Dachora_Func_3(k: u16, game: &mut Game) {
     let E = Get_Dachora(k as i32, game);
-    crate::update_place! { previous fresh2 = (*E).dachor_var_A => (*E).dachor_var_A.wrapping_sub(1); }
+    crate::update_place! { previous fresh2 = (*E).var_A => (*E).var_A.wrapping_sub(1); }
     if fresh2 == 1u16 {
-        if (*E).dachor_parameter_1 != 0 {
+        if (*E).parameter_1 != 0 {
             (*E).base.current_instruction = addr_kDachora_Ilist_F407 as u16;
-            (*E).dachor_var_F = ((0xa7f65ei32) as u16);
+            (*E).var_F = ((0xa7f65ei32) as u16);
         } else {
             (*E).base.current_instruction = addr_kDachora_Ilist_F345 as u16;
-            (*E).dachor_var_F = ((0xa7f5edi32) as u16);
+            (*E).var_F = ((0xa7f5edi32) as u16);
         }
         (*E).base.instruction_timer = 1u16;
-        (*E).dachor_var_E = 1u16;
+        (*E).var_E = 1u16;
     }
 }
 pub unsafe fn Dachora_Func_4(k: u16, game: &mut Game) {
@@ -4374,10 +4341,10 @@ pub unsafe fn Dachora_Func_4(k: u16, game: &mut Game) {
         (*E).base.x_pos as i32 - 96i32 & 0x8000i32 != 0
     } {
         (*E).base.current_instruction = addr_kDachora_Ilist_F407 as u16;
-        (*E).dachor_var_F = ((0xa7f65ei32) as u16);
-        set_fields! {[(*E)], 1u16; dachor_var_E, dachor_parameter_1}
+        (*E).var_F = ((0xa7f65ei32) as u16);
+        set_fields! {[(*E)], 1u16; var_E, parameter_1}
         (*E).base.instruction_timer = 1u16;
-        set_fields! {[(*E)], 0u16; dachor_var_A, dachor_var_B}
+        set_fields! {[(*E)], 0u16; var_A, var_B}
         Dachora_Func_1(addr_kDachora_Palette as u16, k, game);
     }
 }
@@ -4387,83 +4354,83 @@ pub unsafe fn Dachora_Func_5(k: u16, game: &mut Game) {
     if Enemy_MoveRight_IgnoreSlopes(k, amt, game) != 0 {
         QueueSfx2_Max15(0x71u16, game);
         (*E).base.current_instruction = addr_kDachora_Ilist_F345 as u16;
-        (*E).dachor_var_F = ((0xa7f5edi32) as u16);
-        set_fields! {[(*E)], 0u16; dachor_parameter_1, dachor_var_A}
+        (*E).var_F = ((0xa7f5edi32) as u16);
+        set_fields! {[(*E)], 0u16; parameter_1, var_A}
         Dachora_Func_1(addr_kDachora_Palette as u16, k, game);
     } else {
         EnemyFunc_C8AD(k, game);
         if (*E).base.x_pos as i32 - 1152i32 & 0x8000i32 == 0 {
             (*E).base.current_instruction = addr_kDachora_Ilist_F4B3 as u16;
-            (*E).dachor_var_F = ((0xa7f78fi32) as u16);
-            (*E).dachor_var_A = g_word_A7F4CF;
+            (*E).var_F = ((0xa7f78fi32) as u16);
+            (*E).var_A = g_word_A7F4CF;
             (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(8u16);
             QueueSfx2_Max6(0x3du16, game);
         } else {
             return;
         }
     }
-    set_fields! {[(*E)], 0u16; dachor_var_E, dachor_var_B}
+    set_fields! {[(*E)], 0u16; var_E, var_B}
     (*E).base.instruction_timer = 1u16;
 }
 pub unsafe fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
     let E = Get_Dachora(k as i32, game);
-    if (((*E).dachor_var_A) as i16).wrapping_sub((g_word_A7F4D5) as i16) >= 0i16 {
-        if (*E).dachor_var_E == 1u16 {
+    if (((*E).var_A) as i16).wrapping_sub((g_word_A7F4D5) as i16) >= 0i16 {
+        if (*E).var_E == 1u16 {
             QueueSfx2_Max6(0x39u16, game);
         }
-        let v2: u16 = ((*E).dachor_var_E).wrapping_sub(1u16);
-        (*E).dachor_var_E = v2;
+        let v2: u16 = ((*E).var_E).wrapping_sub(1u16);
+        (*E).var_E = v2;
         if v2 as u8 == 0 {
             Dachora_Func_1(
                 crate::rtl::rom_table_word!(
                     game,
                     0xa7f787,
-                    *(&raw mut (*E).dachor_var_E as *mut u8).offset(1isize) as isize
+                    *(&raw mut (*E).var_E as *mut u8).offset(1isize) as isize
                 ),
                 k,
                 game,
             );
-            let v3: u16 = ((*E).dachor_var_E).wrapping_add(272u16);
-            (*E).dachor_var_E = v3;
+            let v3: u16 = ((*E).var_E).wrapping_add(272u16);
+            (*E).var_E = v3;
             if v3 as i32 - 1040i32 & 0x8000i32 == 0 {
-                (*E).dachor_var_E = 784u16;
+                (*E).var_E = 784u16;
             }
         }
     }
     Enemy_MoveDown(k, (1i16 as i32) << 16i32, game);
-    if (((*E).dachor_var_A) as i16).wrapping_sub((g_word_A7F4D5) as i16) >= 0i16
-        && (((*E).dachor_var_B) as i16).wrapping_sub((g_word_A7F4D7) as i16) >= 0i16
+    if (((*E).var_A) as i16).wrapping_sub((g_word_A7F4D5) as i16) >= 0i16
+        && (((*E).var_B) as i16).wrapping_sub((g_word_A7F4D7) as i16) >= 0i16
     {
-        (*E).dachor_var_A = g_word_A7F4D5;
-        (*E).dachor_var_B = g_word_A7F4D7;
+        (*E).var_A = g_word_A7F4D5;
+        (*E).var_B = g_word_A7F4D7;
         return ((g_word_A7F4D5 as u32) << 16i32 | g_word_A7F4D7 as u32) as i32;
     }
     AddToHiLo(
-        &raw mut (*E).dachor_var_A,
-        &raw mut (*E).dachor_var_B,
+        &raw mut (*E).var_A,
+        &raw mut (*E).var_B,
         (g_word_A7F4D9 as u32) << 16i32 | g_word_A7F4DB as u32,
     );
-    if ((*E).dachor_var_A == 4u16 || (*E).dachor_var_A == 8u16) && (*E).dachor_var_B == 0 {
+    if ((*E).var_A == 4u16 || (*E).var_A == 8u16) && (*E).var_B == 0 {
         (*E).base.current_instruction = ((*E).base.current_instruction).wrapping_add(28u16);
     }
-    (((*E).dachor_var_A as u32) << 16i32 | (*E).dachor_var_B as u32) as i32
+    (((*E).var_A as u32) << 16i32 | (*E).var_B as u32) as i32
 }
 pub unsafe fn Dachora_Func_7(k: u16, game: &mut Game) {
     Dachora_Func_10(k, game);
     let E = Get_Dachora(k as i32, game);
-    crate::update_place! { previous fresh3 = (*E).dachor_var_A => (*E).dachor_var_A.wrapping_sub(1); }
+    crate::update_place! { previous fresh3 = (*E).var_A => (*E).var_A.wrapping_sub(1); }
     if fresh3 == 1u16 {
         enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2u16), timer = 1u16}
-        (*E).dachor_var_F = ((0xa7f806i32) as u16);
+        (*E).var_F = ((0xa7f806i32) as u16);
         let E1 = Get_Dachora(k as i32 + 64i32, game);
-        set_fields! {[(*E1)], 0u16; dachor_var_A, dachor_var_D}
-        (*Get_Dachora(k as i32 + 128i32, game)).dachor_var_D = 0u16;
-        (*Get_Dachora(k as i32 + 192i32, game)).dachor_var_D = 0u16;
-        (*Get_Dachora(k as i32 + 256i32, game)).dachor_var_D = 0u16;
-        set_fields! {[(*E)], 0u16; dachor_var_C, dachor_var_D}
+        set_fields! {[(*E1)], 0u16; var_A, var_D}
+        (*Get_Dachora(k as i32 + 128i32, game)).var_D = 0u16;
+        (*Get_Dachora(k as i32 + 192i32, game)).var_D = 0u16;
+        (*Get_Dachora(k as i32 + 256i32, game)).var_D = 0u16;
+        set_fields! {[(*E)], 0u16; var_C, var_D}
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub(8u16);
         QueueSfx2_Max6(0x3bu16, game);
-        if (*E).dachor_parameter_1 != 0 {
+        if (*E).parameter_1 != 0 {
             (*Get_Dachora(k as i32 + 64i32, game))
                 .base
                 .current_instruction = addr_kDachora_Ilist_F4B9 as u16;
@@ -4509,31 +4476,31 @@ pub unsafe fn Dachora_Func_8(k: u16, game: &mut Game) {
     Dachora_Func_9(k, game);
     let E = Get_Dachora(k as i32, game);
     AddToHiLo(
-        &raw mut (*E).dachor_var_C,
-        &raw mut (*E).dachor_var_D,
+        &raw mut (*E).var_C,
+        &raw mut (*E).var_D,
         (ram_word!(game, samus_y_accel) as u32) << 16i32 | ram_word!(game, samus_y_subaccel) as u32,
     );
     AddToHiLo(
-        &raw mut (*E).dachor_var_A,
-        &raw mut (*E).dachor_var_B,
-        ((*E).dachor_var_C as u32) << 16i32 | (*E).dachor_var_D as u32,
+        &raw mut (*E).var_A,
+        &raw mut (*E).var_B,
+        ((*E).var_C as u32) << 16i32 | (*E).var_D as u32,
     );
-    let mut v6: u16 = (*E).dachor_var_A;
+    let mut v6: u16 = (*E).var_A;
     if v6 as i32 - 15i32 & 0x8000i32 == 0 {
         v6 = 15u16;
     }
-    let amt: i32 = ((v6 as u32) << 16i32 | (*E).dachor_var_B as u32) as i32;
+    let amt: i32 = ((v6 as u32) << 16i32 | (*E).var_B as u32) as i32;
     if Enemy_MoveDown(k, -amt, game) != 0 {
-        if (*E).dachor_parameter_1 != 0 {
+        if (*E).parameter_1 != 0 {
             (*E).base.current_instruction = addr_kDachora_Ilist_F3FF as u16;
-            (*E).dachor_parameter_1 = 0u16;
+            (*E).parameter_1 = 0u16;
         } else {
             (*E).base.current_instruction = addr_kDachora_Ilist_F4C1 as u16;
-            (*E).dachor_parameter_1 = 1u16;
+            (*E).parameter_1 = 1u16;
         }
-        (*E).dachor_var_F = ((0xa7f935i32) as u16);
+        (*E).var_F = ((0xa7f935i32) as u16);
         (*E).base.instruction_timer = 1u16;
-        set_fields! {[(*E)], 0u16; dachor_var_A, dachor_var_B, dachor_var_E}
+        set_fields! {[(*E)], 0u16; var_A, var_B, var_E}
         Dachora_Func_1(addr_kDachora_Palette as u16, k, game);
         QueueSfx2_Max6(0x3cu16, game);
     }
@@ -4541,36 +4508,36 @@ pub unsafe fn Dachora_Func_8(k: u16, game: &mut Game) {
 pub unsafe fn Dachora_Func_9(k: u16, game: &mut Game) {
     let EK = Get_Dachora(k as i32, game);
     let E1 = Get_Dachora(k as i32 + 64i32, game);
-    let dachor_var_A: u16 = (*E1).dachor_var_A;
+    let dachor_var_A: u16 = (*E1).var_A;
     if dachor_var_A != 0 {
-        (*E1).dachor_var_A = (dachor_var_A).wrapping_sub(1u16);
+        (*E1).var_A = (dachor_var_A).wrapping_sub(1u16);
     } else {
-        (*E1).dachor_var_A = g_word_A7F4D1;
-        if (*E1).dachor_var_D != 0 {
+        (*E1).var_A = g_word_A7F4D1;
+        if (*E1).var_D != 0 {
             let E2 = Get_Dachora(k as i32 + 128i32, game);
-            if (*E2).dachor_var_D != 0 {
+            if (*E2).var_D != 0 {
                 let E3 = Get_Dachora(k as i32 + 192i32, game);
-                if (*E3).dachor_var_D != 0 {
+                if (*E3).var_D != 0 {
                     let E4 = Get_Dachora(k as i32 + 256i32, game);
-                    if (*E4).dachor_var_D == 0 {
+                    if (*E4).var_D == 0 {
                         (*E4).base.x_pos = (*EK).base.x_pos;
                         (*E4).base.y_pos = (*EK).base.y_pos;
-                        (*E4).dachor_var_D = g_word_A7F4D3;
+                        (*E4).var_D = g_word_A7F4D3;
                     }
                 } else {
                     (*E3).base.x_pos = (*EK).base.x_pos;
                     (*E3).base.y_pos = (*EK).base.y_pos;
-                    (*E3).dachor_var_D = g_word_A7F4D3;
+                    (*E3).var_D = g_word_A7F4D3;
                 }
             } else {
                 (*E2).base.x_pos = (*EK).base.x_pos;
                 (*E2).base.y_pos = (*EK).base.y_pos;
-                (*E2).dachor_var_D = g_word_A7F4D3;
+                (*E2).var_D = g_word_A7F4D3;
             }
         } else {
             (*E1).base.x_pos = (*EK).base.x_pos;
             (*E1).base.y_pos = (*EK).base.y_pos;
-            (*E1).dachor_var_D = g_word_A7F4D3;
+            (*E1).var_D = g_word_A7F4D3;
         }
     };
 }
@@ -4580,46 +4547,46 @@ pub unsafe fn Dachora_Func_10(k: u16, game: &mut Game) {
         crate::rtl::rom_table_word!(
             game,
             0xa7f92d,
-            *(&raw mut (*E).dachor_var_E as *mut u8).offset(1isize) as isize
+            *(&raw mut (*E).var_E as *mut u8).offset(1isize) as isize
         ),
         k,
         game,
     );
-    let v2: u16 = ((*E).dachor_var_E).wrapping_add(256u16);
-    (*E).dachor_var_E = v2;
+    let v2: u16 = ((*E).var_E).wrapping_add(256u16);
+    (*E).var_E = v2;
     if v2 as i32 - 1024i32 & 0x8000i32 == 0 {
-        (*E).dachor_var_E = 0u16;
+        (*E).var_E = 0u16;
     }
 }
 pub unsafe fn Dachora_Func_11(k: u16, game: &mut Game) {
     let E = Get_Dachora(k as i32, game);
     AddToHiLo(
-        &raw mut (*E).dachor_var_A,
-        &raw mut (*E).dachor_var_B,
+        &raw mut (*E).var_A,
+        &raw mut (*E).var_B,
         (ram_word!(game, samus_y_accel) as u32) << 16i32 | ram_word!(game, samus_y_subaccel) as u32,
     );
-    let mut amt: i32 = (((*E).dachor_var_A as u32) << 16i32 | (*E).dachor_var_B as u32) as i32;
+    let mut amt: i32 = (((*E).var_A as u32) << 16i32 | (*E).var_B as u32) as i32;
     if (amt >> 16i32) - 10i32 & 0x8000i32 == 0 {
         amt = (10i16 as i32) << 16i32;
     }
     if Enemy_MoveDown(k, amt, game) != 0 {
-        if (*E).dachor_parameter_1 != 0 {
+        if (*E).parameter_1 != 0 {
             (*E).base.current_instruction = addr_kDachora_Ilist_F407 as u16;
-            (*E).dachor_var_F = ((0xa7f65ei32) as u16);
+            (*E).var_F = ((0xa7f65ei32) as u16);
         } else {
             (*E).base.current_instruction = addr_kDachora_Ilist_F345 as u16;
-            (*E).dachor_var_F = ((0xa7f5edi32) as u16);
+            (*E).var_F = ((0xa7f5edi32) as u16);
         }
         (*E).base.instruction_timer = 1u16;
-        set_fields! {[(*E)], 0u16; dachor_var_A, dachor_var_B}
+        set_fields! {[(*E)], 0u16; var_A, var_B}
     }
 }
 pub unsafe fn Dachora_Func_12(k: u16, game: &mut Game) {
     let keep_hidden: bool;
     let E = Get_Dachora(k as i32, game);
-    let dachor_var_D: u16 = (*E).dachor_var_D;
+    let dachor_var_D: u16 = (*E).var_D;
     if (dachor_var_D != 0) {
-        (*E).dachor_var_D = (dachor_var_D).wrapping_sub(1u16);
+        (*E).var_D = (dachor_var_D).wrapping_sub(1u16);
         keep_hidden = if (k & 0x40) != 0 {
             ((ram_word!(game, nmi_frame_counter_word) & 1) == 0)
         } else {
