@@ -100,13 +100,14 @@ aggregate target. Continue the large repeated-family priority below.
 Volume priority (user direction, 2026-10-20): reduce maintained sm/src Rust
 below 100000 lines. The current 116551 lines require at least 16552 further
 lines removed, including all helpers and caller changes. The user's latest
-correction rejects incremental small examples as the strategy: select whole
-subsystem replacements with credible multi-thousand-line net reductions.
-Assess alternative interfaces, representations and control-flow designs over
-complete ownership surfaces. Small clone censuses do not bound what those
-designs can remove. Park the cinematic initializer, current-enemy accessor
-and terminal/indexed-loop drafts. Preserve runtime behavior and readability;
-formatting compression does not satisfy the reduction goal.
+correction keeps the architecture and prioritizes large repeated-code families;
+whole-system redesign would take too long. Analyze complete recurring algorithms
+and multi-statement patterns, including variants in names, fields, constants,
+callees and control flow. Require credible multi-thousand-line net reductions
+across complete families, counting helpers and callers. Small exact-clone
+censuses do not bound these opportunities. Park the cinematic initializer,
+current-enemy accessor and terminal/indexed-loop drafts. Preserve runtime
+behavior and readability; formatting compression does not satisfy the goal.
 The 90-method word-accessor draft (-195 lines) is parked outside the repository.
 
 Identical same-module functions (2026-10-20): 71 duplicate public functions
@@ -137,7 +138,7 @@ any% 129712/0 (155.13s) and Speed Booster 148406/0 (203.52s), native exits
 0, pass with fixed source/input/artifact bytes and embedded source checking.
 Rust lines -209 to 116962; cast-containing lines -15 to 9481 reflect reflow,
 with other counters unchanged. This closes the applied small batch; the next
-implementation follows the subsystem-scale priority above.
+implementation follows the large repeated-family priority above.
 
 Reduction throughput (subagent investigation, 2026-10-20): rank complete
 structural families by formatted net savings before extensive validation.
