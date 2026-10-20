@@ -31,6 +31,25 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Pause/file-select map rendering (2026-10-20): the complete two-screen renderer
+and four directional map-bound scans now share private named implementations.
+Both mapped/unmapped branches preserve original ROM/RAM read and write order,
+byte rotation, conditional tile reads, distinct blank values, final mask-word
+prefetch and file-select VRAM queue tail. Edge scans retain left/right layout
+jumps, short-circuit byte reads and asymmetric top/bottom empty-map defaults.
+No range guard or broader RAM borrow is added. Full-file reconstruction and
+final extraction binding pass on published 939101ab dispatch composition.
+1024 ordered/full-RAM rendering comparisons also match actual-library outputs;
+9220 ordered edge cases cover empty, every single marked tile and mixed maps.
+Final-prefetch removal, wrong-blank and reordered-prefetch mutations are detected.
+
+Formatting, normal release (17.62s), progress and full any% 129712/0
+(104.68s), native exit 0, pass; all frozen source/replay/focused pins remain
+stable. Any% is integration coverage, not complete map-route coverage.
+Rust lines -104 to 132341; cast lines -27; unsafe-function count rises two
+for the shared implementations. Other counters are unchanged. Continue large
+shared families; broader routes/frontend/alias work and credits remain open.
+
 Address-dispatch shared arguments (2026-10-20): one declaration macro now
 shares callback arguments across all 114 existing address tables and 19
 ordinary dispatch functions, including pointer/value-returning dispatchers.

@@ -1930,6 +1930,154 @@ pub unsafe fn GameState_18_Unpausing(game: &mut Game) -> CoroutineRet {
     }
     kCoroutineNone as CoroutineRet
 }
+#[derive(Clone, Copy)]
+enum MapScreen {
+    Pause,
+    FileSelect,
+}
+
+// Render both map screens with the original mask/ROM/RAM access order.
+unsafe fn render_map_tilemap(screen: MapScreen, game: &mut Game) {
+    let mut v0: u16 = ram_word!(game, area_index);
+    if ram_word!(game, area_index) as i32 - 7i32 & 0x8000i32 == 0 {
+        v0 = 0u16;
+    }
+    let r0: *const u16 = RomPtr(
+        Load24(
+            (game.g_rom.offset(crate::rtl::lorom_offset(0x82964a)) as *mut LongPtr)
+                .offset(v0 as isize),
+        ),
+        game,
+    ) as *const u16;
+    let r3: *mut u16 = match screen {
+        MapScreen::Pause => ram_ptr!(game, Ram4000; 0x4000) as *mut u16,
+        MapScreen::FileSelect => ram_ptr!(game, Ram3000; 0x3000) as *mut u16,
+    };
+    let mut r6: *const u16 = RomPtr_82(
+        crate::rtl::rom_table_word!(game, 0x829717, v0 as isize),
+        game,
+    ) as *const u16;
+    let mut r9: *const u16 = ram_ptr!(game; 0x7f7) as *const u16;
+    if *ram_ptr!(game; 0xd908, ram_word!(game, area_index) as isize) != 0 {
+        let mut mapped = u16::swap_bytes(*r6);
+        r6 = r6.offset(1);
+        let mut explored = u16::swap_bytes(*r9);
+        r9 = r9.offset(1);
+        for tile in 0..2048isize {
+            let mut value = *r0.offset(tile);
+            let was_explored = explored & 0x8000 != 0;
+            explored = explored.wrapping_mul(2);
+            if was_explored {
+                value &= 0xfbff;
+                mapped = mapped.wrapping_mul(2);
+            } else {
+                let was_mapped = mapped & 0x8000 != 0;
+                mapped = mapped.wrapping_mul(2);
+                if !was_mapped {
+                    value = 31;
+                }
+            }
+            *r3.offset(tile) = value;
+            if tile & 15 == 15 {
+                // Keep the original prefetch after the final tile too.
+                mapped = u16::swap_bytes(*r6);
+                r6 = r6.offset(1);
+                explored = u16::swap_bytes(*r9);
+                r9 = r9.offset(1);
+            }
+        }
+    } else {
+        let mut tile = 0isize;
+        for byte in 0..256isize {
+            for _ in 0..8 {
+                let explored = ram_ptr!(game; 0x7f7, byte);
+                let previous = *explored;
+                *explored = ((*explored as i32) << 1) as u8;
+                if previous & 0x80 == 0 {
+                    *r3.offset(tile) = match screen {
+                        MapScreen::Pause => 31,
+                        MapScreen::FileSelect => 15,
+                    };
+                } else {
+                    *explored = (*explored).wrapping_add(1);
+                    *r3.offset(tile) = *r0.offset(tile) & 0xfbff;
+                }
+                tile += 1;
+            }
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+enum MapEdge {
+    Left,
+    Right,
+    Top,
+    Bottom,
+}
+
+unsafe fn find_map_edge(mut source: *const u8, edge: MapEdge) -> u16 {
+    match edge {
+        MapEdge::Left | MapEdge::Right => {
+            let right = matches!(edge, MapEdge::Right);
+            let mut column: u16 = if right { 63 } else { 0 };
+            loop {
+                let mask = k0x80Shr[(column & 7) as usize];
+                for offset in (0..128).step_by(4) {
+                    if mask & *source.offset(offset) != 0 {
+                        return column;
+                    }
+                }
+                column = if right {
+                    column.wrapping_sub(1)
+                } else {
+                    column.wrapping_add(1)
+                };
+                if if right {
+                    column & 0x8000 != 0
+                } else {
+                    (column as i16).wrapping_sub(64) >= 0
+                } {
+                    return if right { 28 } else { 26 };
+                }
+                if column & 7 == if right { 7 } else { 0 } {
+                    source = source.offset(if right { -1 } else { 1 });
+                }
+                if column == if right { 31 } else { 32 } {
+                    source = source.offset(if right { -124 } else { 123 });
+                }
+            }
+        }
+        MapEdge::Top | MapEdge::Bottom => {
+            let bottom = matches!(edge, MapEdge::Bottom);
+            let mut second = source.offset(128);
+            let mut row: u16 = if bottom { 31 } else { 0 };
+            let mut offset: u16 = 0;
+            while *source.offset(offset as isize) == 0 && *second.offset(offset as isize) == 0 {
+                offset = offset.wrapping_add(1);
+                if (offset as i16).wrapping_sub(4) >= 0 {
+                    offset = 0;
+                    source = source.offset(if bottom { -4 } else { 4 });
+                    second = second.offset(if bottom { -4 } else { 4 });
+                    row = if bottom {
+                        row.wrapping_sub(1)
+                    } else {
+                        row.wrapping_add(1)
+                    };
+                    if if bottom {
+                        row == 0
+                    } else {
+                        (row as i16).wrapping_sub(31) >= 0
+                    } {
+                        return if bottom { 11 } else { 1 };
+                    }
+                }
+            }
+            row
+        }
+    }
+}
+
 pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
     set_ram_word!(game.reg_BG1HOFS = ram_word!(game, reg_BG4HOFS));
     set_ram_word!(game.reg_BG1VOFS = ram_word!(game, reg_BG4VOFS));
@@ -1957,179 +2105,13 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
     }
 }
 pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
-    let mut v0: u16 = ram_word!(game, area_index);
-    if ram_word!(game, area_index) as i32 - 7i32 & 0x8000i32 == 0 {
-        v0 = 0u16;
-    }
-    let r0: *const u16 = RomPtr(
-        Load24(
-            (game.g_rom.offset(crate::rtl::lorom_offset(0x82964a)) as *mut LongPtr)
-                .offset(v0 as isize),
-        ),
-        game,
-    ) as *const u16;
-    let r3: *mut u16 = ram_ptr!(game, Ram4000; 0x4000) as *mut u16;
-    let mut r6: *const u16 = RomPtr_82(
-        crate::rtl::rom_table_word!(game, 0x829717, v0 as isize),
-        game,
-    ) as *const u16;
-    let mut r9: *const u16 = ram_ptr!(game; 0x7f7) as *const u16;
-    if *ram_ptr!(game; 0xd908, ram_word!(game, area_index) as isize) != 0 {
-        let fresh86 = r6;
-        r6 = r6.offset(1);
-        let mut r38: u16 = u16::swap_bytes(*fresh86);
-        let fresh87 = r9;
-        r9 = r9.offset(1);
-        let mut r40: u16 = u16::swap_bytes(*fresh87);
-        let mut v8: u16 = 0u16;
-        let mut v9: i32 = 16i32;
-        loop {
-            let mut v10: u16 = *r0.offset((v8 as i32 >> 1i32) as isize);
-            let mut v11: bool = r40 as i32 >> 15i32 != 0;
-            r40 = (r40).wrapping_mul(2u16);
-            if v11 {
-                v10 = (v10 as i32 & !(0x400i32)) as u16;
-                r38 = (r38).wrapping_mul(2u16);
-            } else {
-                v11 = r38 as i32 >> 15i32 != 0;
-                r38 = (r38).wrapping_mul(2u16);
-                if !v11 {
-                    v10 = 31u16;
-                }
-            }
-            *r3.offset((v8 as i32 >> 1i32) as isize) = v10;
-            v9 -= 1;
-            if v9 == 0 {
-                v9 = 16i32;
-                let fresh88 = r6;
-                r6 = r6.offset(1);
-                r38 = u16::swap_bytes(*fresh88);
-                let fresh89 = r9;
-                r9 = r9.offset(1);
-                r40 = u16::swap_bytes(*fresh89);
-            }
-            v8 = (v8).wrapping_add(2u16);
-            if (((v8) as i16).wrapping_sub(4096i16) >= 0i16) {
-                break;
-            }
-        }
-    } else {
-        let mut v1: u16 = 0u16;
-        let mut v2: u16 = 0u16;
-        let mut r18: u8 = 0u8;
-        loop {
-            let t: u8 = *ram_ptr!(game; 0x7f7, v2 as isize);
-            let ref mut fresh90 = *ram_ptr!(game; 0x7f7, v2 as isize);
-            *fresh90 = ((*fresh90 as i32) << 1i32) as u8;
-            if t as i32 & 0x80i32 == 0 {
-                *r3.offset((v1 as i32 >> 1i32) as isize) = 0x1fu16;
-            } else {
-                let ref mut fresh91 = *ram_ptr!(game; 0x7f7, v2 as isize);
-                *fresh91 = (*fresh91).wrapping_add(1);
-                *r3.offset((v1 as i32 >> 1i32) as isize) =
-                    (*r0.offset((v1 as i32 >> 1i32) as isize)) & (0xfbffu16);
-            }
-            v1 = (v1).wrapping_add(2u16);
-            r18 = r18.wrapping_add(1);
-            if (r18 < 8u8) {
-                continue;
-            }
-            r18 = 0u8;
-            v2 = v2.wrapping_add(1);
-            if ((v2) as i16).wrapping_sub(256i16) >= 0i16 {
-                break;
-            }
-        }
-    };
+    render_map_tilemap(MapScreen::Pause, game);
 }
 pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
     *ram_ptr!(game; 0x5d) = 51u8;
     *ram_ptr!(game; 0x69) = 19u8;
     set_ram_word!(game.reg_BG1VOFS = -40i32 as u16);
-    let mut v0: u16 = ram_word!(game, area_index);
-    if ram_word!(game, area_index) as i32 - 7i32 & 0x8000i32 == 0 {
-        v0 = 0u16;
-    }
-    let r0: *const u16 = RomPtr(
-        Load24(
-            (game.g_rom.offset(crate::rtl::lorom_offset(0x82964a)) as *mut LongPtr)
-                .offset(v0 as isize),
-        ),
-        game,
-    ) as *const u16;
-    let r3: *mut u16 = ram_ptr!(game, Ram3000; 0x3000) as *mut u16;
-    let mut r6: *const u16 = RomPtr_82(
-        crate::rtl::rom_table_word!(game, 0x829717, v0 as isize),
-        game,
-    ) as *const u16;
-    let mut r9: *const u16 = ram_ptr!(game; 0x7f7) as *const u16;
-    if *ram_ptr!(game; 0xd908, ram_word!(game, area_index) as isize) != 0 {
-        let fresh43 = r6;
-        r6 = r6.offset(1);
-        let mut r38: u16 = u16::swap_bytes(*fresh43);
-        let fresh44 = r9;
-        r9 = r9.offset(1);
-        let mut r40: u16 = u16::swap_bytes(*fresh44);
-        let mut v9: u16 = 0u16;
-        let mut v10: i32 = 16i32;
-        loop {
-            let mut v11: u16 = *r0.offset((v9 as i32 >> 1i32) as isize);
-            let mut v12: bool = r40 as i32 >> 15i32 != 0;
-            r40 = (r40).wrapping_mul(2u16);
-            if v12 {
-                v11 = (v11 as i32 & !(0x400i32)) as u16;
-                r38 = (r38).wrapping_mul(2u16);
-            } else {
-                v12 = r38 as i32 >> 15i32 != 0;
-                r38 = (r38).wrapping_mul(2u16);
-                if !v12 {
-                    v11 = 31u16;
-                }
-            }
-            *r3.offset((v9 as i32 >> 1i32) as isize) = v11;
-            v10 -= 1;
-            if v10 == 0 {
-                v10 = 16i32;
-                let fresh45 = r6;
-                r6 = r6.offset(1);
-                r38 = u16::swap_bytes(*fresh45);
-                let fresh46 = r9;
-                r9 = r9.offset(1);
-                r40 = u16::swap_bytes(*fresh46);
-            }
-            v9 = (v9).wrapping_add(2u16);
-            if (((v9) as i16).wrapping_sub(4096i16) >= 0i16) {
-                break;
-            }
-        }
-    } else {
-        let mut v1: u16 = 0u16;
-        let mut v2: u16 = 0u16;
-        let mut r18: u8 = 0u8;
-        loop {
-            let what: u8 = *ram_ptr!(game; 0x7f7, v2 as isize);
-            let ref mut fresh47 = *ram_ptr!(game; 0x7f7, v2 as isize);
-            *fresh47 = ((*fresh47 as i32) << 1i32) as u8;
-            if what as i32 & 0x80i32 == 0 {
-                *r3.offset((v1 as i32 >> 1i32) as isize) = 0xfu16;
-            } else {
-                let ref mut fresh48 = *ram_ptr!(game; 0x7f7, v2 as isize);
-                *fresh48 = (*fresh48).wrapping_add(1);
-                *r3.offset((v1 as i32 >> 1i32) as isize) =
-                    (*r0.offset((v1 as i32 >> 1i32) as isize) as i32 & !(0x400i32)) as u16;
-            }
-            v1 = (v1).wrapping_add(2u16);
-            r18 = r18.wrapping_add(1);
-            if (r18 as i32 - 8i32 & 0x80i32 != 0) {
-                continue;
-            }
-            r18 = 0u8;
-            v2 = v2.wrapping_add(1);
-            if ((v2) as i16).wrapping_sub(256i16) >= 0i16 {
-                break;
-            }
-        }
-    }
+    render_map_tilemap(MapScreen::FileSelect, game);
     let v16: u16 = ram_word!(game, vram_write_queue_tail);
     let v17: *mut VramWriteEntry =
         gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
@@ -2195,104 +2177,18 @@ pub unsafe fn SetupMapScrollingForPauseMenu(a: u16, game: &mut Game) {
     }
 }
 static k0x80Shr: [u8; 8] = [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1];
-static k0x80Shr_0: [u8; 8] = [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1];
-unsafe fn DetermineLeftmostMapColumn(mut r0: *const u8) -> u16 {
-    let mut r18: u8 = 0;
-    let mut v2: u16 = 0;
-    let mut v0: u16 = 0;
-    let mut result: u16 = 0u16;
-    '_LABEL_2: loop {
-        v0 = (result) & (7u16);
-        r18 = k0x80Shr[v0 as usize];
-        v2 = 0u16;
-        loop {
-            if ((r18 as i32 & *r0.offset(v2 as isize) as i32) != 0i32) {
-                break '_LABEL_2;
-            }
-            v2 = (v2).wrapping_add(4u16);
-            if (((v2) as i16).wrapping_sub(128i16) < 0i16) {
-                continue;
-            }
-            result = result.wrapping_add(1);
-            if ((result) as i16).wrapping_sub(64i16) >= 0i16 {
-                return 26u16;
-            }
-            if (result as i32 & 7i32) == 0i32 {
-                r0 = r0.offset(1);
-            }
-            if result == 32u16 {
-                r0 = r0.offset(123);
-            }
-            break;
-        }
-    }
-    result
+
+unsafe fn DetermineLeftmostMapColumn(r0: *const u8) -> u16 {
+    find_map_edge(r0, MapEdge::Left)
 }
-unsafe fn DetermineRightmostMapColumn(mut r0: *const u8) -> u16 {
-    let mut r18: u8 = 0;
-    let mut v1: u16 = 0;
-    let mut result: u16 = 63u16;
-    's_7: loop {
-        r18 = k0x80Shr_0[(result as i32 & 7i32) as usize];
-        v1 = 0u16;
-        loop {
-            if ((r18 as i32 & *r0.offset(v1 as isize) as i32) != 0i32) {
-                break 's_7;
-            }
-            v1 = (v1).wrapping_add(4u16);
-            if (((v1) as i16).wrapping_sub(128i16) < 0i16) {
-                continue;
-            }
-            result = result.wrapping_sub(1);
-            if (result as i32 & 0x8000i32) != 0i32 {
-                return 28u16;
-            }
-            if (result as i32 & 7i32) == 7i32 {
-                r0 = r0.offset(-1);
-            }
-            if result == 31u16 {
-                r0 = r0.offset(-(124i32 as isize));
-            }
-            break;
-        }
-    }
-    result
+unsafe fn DetermineRightmostMapColumn(r0: *const u8) -> u16 {
+    find_map_edge(r0, MapEdge::Right)
 }
-unsafe fn DetermineTopmostMapColumn(mut r0: *const u8) -> u16 {
-    let mut r3: *const u8 = r0.offset(128);
-    let mut result: u16 = 0u16;
-    let mut v1: u16 = 0u16;
-    while *r0.offset(v1 as isize) == 0 && *r3.offset(v1 as isize) == 0 {
-        v1 = v1.wrapping_add(1);
-        if ((v1) as i16).wrapping_sub(4i16) >= 0i16 {
-            v1 = 0u16;
-            r0 = r0.offset(4);
-            r3 = r3.offset(4);
-            result = result.wrapping_add(1);
-            if ((result) as i16).wrapping_sub(31i16) >= 0i16 {
-                return 1u16;
-            }
-        }
-    }
-    result
+unsafe fn DetermineTopmostMapColumn(r0: *const u8) -> u16 {
+    find_map_edge(r0, MapEdge::Top)
 }
-unsafe fn DetermineBottommostMapColumn(mut r0: *const u8) -> u16 {
-    let mut r3: *const u8 = r0.offset(128);
-    let mut result: u16 = 31u16;
-    let mut v1: u16 = 0u16;
-    while *r0.offset(v1 as isize) == 0 && *r3.offset(v1 as isize) == 0 {
-        v1 = v1.wrapping_add(1);
-        if ((v1) as i16).wrapping_sub(4i16) >= 0i16 {
-            v1 = 0u16;
-            r0 = r0.offset(-(4i32 as isize));
-            r3 = r3.offset(-(4i32 as isize));
-            result = result.wrapping_sub(1);
-            if result == 0 {
-                return 11u16;
-            }
-        }
-    }
-    result
+unsafe fn DetermineBottommostMapColumn(r0: *const u8) -> u16 {
+    find_map_edge(r0, MapEdge::Bottom)
 }
 pub unsafe fn DetermineMapScrollLimits(game: &mut Game) {
     let mut r6: *const u8 = null::<u8>();
