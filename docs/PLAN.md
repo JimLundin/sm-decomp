@@ -166,6 +166,16 @@ is claimed. No full release/replay was started for these parked drafts.
 Continue a larger complete shared implementation rather than publishing
 these small projections; wider routes/frontend/ownership remain open.
 
+Further complete measurements (2026-10-20) remain parked. Four timer/offset
+interpreters and seven live-index schedulers save 45 lines. The mixed named
+RAM-store projection covers 1140 adjacent runs and 3844 ordered stores but
+adds 298 lines. Fifteen remaining expression dispatches (336 arms) save 131.
+Player-projectile flight/trail phases, both Super Missile secondary-collision
+axes and all initial-speed direction arms separately save 76, 40 and 47 lines.
+All counts include formatted callers and shared code. Reports, candidates and
+exclusion maps are preserved outside the repository; no compiler, normal build,
+runtime comparison or replay was run for these drafts. Continue larger families.
+
 Ridley tail segments (2026-10-20): share the repeated tail reset,
 coordinate-chain and six length-update bodies in Ridley_Func_85/86/87.
 The three entry points retain ordered byte/word reads and stores in the shared
