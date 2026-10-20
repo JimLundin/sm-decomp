@@ -22,6 +22,13 @@ further, by tackling large structural changes before individual cleanup.
 Use **90,000 lines as a stretch planning checkpoint**, not a demonstrated
 forecast. This work order replaces earlier reduction and cleanup queues.
 
+Latest reconsideration: research existing clone/refactoring tools and successful
+post-transpilation reductions before selecting another small family. Findings
+and a bounded local scanner trial are in [REDUCTION_RESEARCH.md](REDUCTION_RESEARCH.md).
+The next discovery experiment is normalized/structural grouping across existing
+boundaries, then deriving and pricing common algorithms with explicit variants.
+Repeated exact scans alone are not a new approach; detector hits are not savings.
+
 Latest user clarification: code-volume reduction is the immediate priority.
 Re-architecture, shared lifecycle engines and declarative behavior sequences
 are justified when they replace substantial implementation. Price complete
@@ -215,8 +222,13 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    budget was established; no oracle execution or landed savings are claimed.
    Drafts and exact counts: TEMP sm-bindings-root-9c4daf2f/samus-cycle/REPORT.md.
 
-2. [ ] **Compare the remaining large subsystem replacements.** Inspect in
-   this order, using the same complete-replacement test as item 1:
+2. [ ] **Compare the remaining large subsystem replacements.** Start with the
+   research note's cross-cutting structural/variant audit, including same-file
+   and near-miss clones. The initial Copydetect trial is incomplete for those
+   cases and establishes no deletion budget. Use existing tools, identify the
+   common algorithm and its differences, then price whole groups before another
+   implementation. The regions and prior results below guide coverage, not
+   boundaries that candidate replacements must preserve:
 
    Enemy/projectile preflight found no credible large replacement. Complete
    Metalee/Skree bodies occupy 252 lines; B2 plus laser/claw bodies occupy about
