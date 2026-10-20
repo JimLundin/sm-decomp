@@ -41,6 +41,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::rom_ptr;
 use crate::rtl::{mov24, MemCpy, ReadRegWord, RomPtr, SnesDivide, Unreachable, WriteReg};
 use crate::set_fields;
 pub use crate::snes::registers::*;
@@ -2688,7 +2689,7 @@ pub unsafe fn MotherBrain_HandleRainbowBeamPalette(game: &mut Game) {
         let v2: u16 = (v1).wrapping_add(2);
         (*Get_MotherBrain(0x40i32, game)).var_01 = v2;
         MotherBrain_WritePalette(
-            *((game.g_rom.offset(crate::rtl::lorom_offset(0xade434)) as *mut u16 as *mut u8)
+            *((rom_ptr!(game, u16; 0xade434) as *mut u8)
                 .offset(v2 as i32 as isize)
                 .offset(-(2i32 as isize)) as *mut u16),
             game,

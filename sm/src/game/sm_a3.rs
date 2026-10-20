@@ -28,6 +28,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, SnesDivide, Unreachable};
@@ -320,7 +321,7 @@ pub unsafe fn Fireflea_Func_3(k: u16, game: &mut Game) {
 }
 pub unsafe fn Fireflea_Func_4(k: u16, game: &mut Game) {
     let E = Get_FireFlea(k as i32, game);
-    (*E).var_C = byte!(@pointer (game.g_rom.offset(crate::rtl::lorom_offset(0xa38d1d)) as *mut u16)
+    (*E).var_C = byte!(@pointer (rom_ptr!(game, u16; 0xa38d1d))
         .offset(*(&raw mut (*E).parameter_2 as *mut u8).offset(1isize) as isize); 0)
         as u16;
 }
@@ -1377,7 +1378,7 @@ pub unsafe fn Sidehopper_Func_2(r22: u16, r24: u16, game: &mut Game) -> u16 {
     loop {
         r18 = (r18).wrapping_add(r24);
         r20 = (r20).wrapping_add(
-            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *mut u16 as *mut u8)
+            *((rom_ptr!(game, u16; 0xa2838f) as *mut u8)
                 .offset((8i32 * r18 as i32) as isize)
                 .offset(1) as *mut u16),
         );
@@ -2043,8 +2044,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     MaridiaSnail_Instr_4 [jp.offset(1)] {
         let E = Get_MaridiaSnail(k as i32, game);
         (*E).var_07 = *jp.offset(0);
-        (*E).var_C = *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
-            as *mut MaridiaSnailData2)
+        (*E).var_C = *((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42))
             .offset(0))
         .field_6 as *mut u8)
             .offset((8 * (*E).var_07 as i32) as isize) as *mut u16);
@@ -2066,20 +2066,16 @@ pub unsafe fn MaridiaSnail_Init(game: &mut Game) {
     (*E).var_F = ((0xa3cf5fi32) as u16);
     (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A3 as u16;
     (*E).base.instruction_timer = 1;
-    crate::update_place! { previous current_instruction: u16 = (*E).base.current_instruction => (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
-        as *mut MaridiaSnailData2)
+    crate::update_place! { previous current_instruction: u16 = (*E).base.current_instruction => (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42))
         .offset(current_instruction as isize))
     .field_0; }
     (*E).base.properties = ((*E).base.properties)
-        | ((*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42)) as *mut MaridiaSnailData2)
-            .offset(current_instruction as isize))
-        .field_2);
-    (*E).var_D = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
-        as *mut MaridiaSnailData2)
+        | ((*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42)).offset(current_instruction as isize))
+            .field_2);
+    (*E).var_D = (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42))
         .offset(current_instruction as isize))
     .field_4;
-    (*E).var_C = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
-        as *mut MaridiaSnailData2)
+    (*E).var_C = (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42))
         .offset(current_instruction as isize))
     .field_6;
     (*E).var_08 = 0;
@@ -2414,26 +2410,17 @@ pub unsafe fn MaridiaSnail_Func_19(k: u16, game: &mut Game) -> u8 {
     let v2: u16 = crate::rtl::rom_table_word!(game, 0xa3cdc2, (*E).var_07 as isize);
     (*E).var_07 = v2;
     (*E).base.current_instruction =
-        *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
-            as *mut MaridiaSnailData2)
-            .offset(0))
-        .field_0 as *mut u8)
+        *((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42)).offset(0)).field_0 as *mut u8)
             .offset((8 * v2 as i32) as isize) as *mut VoidP);
-    (*E).base.properties = (*((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
-        as *mut MaridiaSnailData2)
-        .offset(0))
-    .field_2 as *mut u8)
+    (*E).base.properties = (*((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42)).offset(0))
+        .field_2 as *mut u8)
         .offset((8 * v2 as i32) as isize) as *mut u16)
         | (*E).base.properties & !(3));
-    (*E).var_D = *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
-        as *mut MaridiaSnailData2)
-        .offset(0))
-    .field_4 as *mut u8)
+    (*E).var_D = *((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42)).offset(0)).field_4
+        as *mut u8)
         .offset((8 * v2 as i32) as isize) as *mut VoidP);
-    (*E).var_C = *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa3cd42))
-        as *mut MaridiaSnailData2)
-        .offset(0))
-    .field_6 as *mut u8)
+    (*E).var_C = *((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42)).offset(0)).field_6
+        as *mut u8)
         .offset((8 * v2 as i32) as isize) as *mut u16);
     MaridiaSnail_Func_2(k, (8u16).wrapping_mul(v2), game);
     MaridiaSnail_Func_3(k, game);

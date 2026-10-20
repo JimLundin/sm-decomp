@@ -35,6 +35,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, Unreachable};
@@ -880,12 +881,10 @@ pub unsafe fn MaridiaBeybladeTurtle_Func7(k: u16, game: &mut Game) {
             if (((*E).base.x_pos) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0 {
                 v3 = 4;
             }
-            (*E).var_01 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa28d56)) as *mut u16
-                as *mut u8)
-                .offset(v3 as i32 as isize) as *mut u16);
-            (*E).var_02 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa28d58)) as *mut u16
-                as *mut u8)
-                .offset(v3 as i32 as isize) as *mut u16);
+            (*E).var_01 = *((rom_ptr!(game, u16; 0xa28d56) as *mut u8).offset(v3 as i32 as isize)
+                as *mut u16);
+            (*E).var_02 = *((rom_ptr!(game, u16; 0xa28d58) as *mut u8).offset(v3 as i32 as isize)
+                as *mut u16);
             set_fields! {[(*E)], 0; var_E, var_03}
             (*E).var_A = ((0xa28febi32) as u16);
         }
@@ -1314,8 +1313,8 @@ pub unsafe fn ThinHoppingBlobs_Func3(game: &mut Game) {
     }
     let v3: u16 = (8u16).wrapping_mul(thbs_var_00);
     (*E).var_F = v3;
-    (*E).var_E = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa29a0d)) as *mut u16 as *mut u8)
-        .offset(v3 as i32 as isize) as *mut u16);
+    (*E).var_E =
+        *((rom_ptr!(game, u16; 0xa29a0d) as *mut u8).offset(v3 as i32 as isize) as *mut u16);
 }
 pub unsafe fn ThinHoppingBlobs_Func4(game: &mut Game) -> u16 {
     NextRandom(game);
@@ -1332,18 +1331,18 @@ pub unsafe fn ThinHoppingBlobs_Func5(game: &mut Game) {
     let mut r24: u16 = 0;
     loop {
         r22 = (r22).wrapping_add(
-            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa29a09)) as *mut u16 as *mut u8)
-                .offset(thbs_var_F as i32 as isize) as *mut u16),
+            *((rom_ptr!(game, u16; 0xa29a09) as *mut u8).offset(thbs_var_F as i32 as isize)
+                as *mut u16),
         );
         r24 = (r24).wrapping_add(
-            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *mut u16 as *mut u8)
+            *((rom_ptr!(game, u16; 0xa2838f) as *mut u8)
                 .offset((8i32 * ((r22 as i32 & 0xff00i32) >> 8i32)) as isize)
                 .offset(1) as *mut u16),
         );
         thbs_var_F = (*E).var_F;
         let mut v2: u16 = u16::swap_bytes(
-            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa29a07)) as *mut u16 as *mut u8)
-                .offset(thbs_var_F as i32 as isize) as *mut u16),
+            *((rom_ptr!(game, u16; 0xa29a07) as *mut u8).offset(thbs_var_F as i32 as isize)
+                as *mut u16),
         );
         if (v2 as i32 - r24 as i32 & 0x8000 != 0) {
             break;
@@ -1390,8 +1389,7 @@ pub unsafe fn ThinHoppingBlobs_Func8(game: &mut Game) {
     }
     if Enemy_MoveDown(
         word!(game.cur_enemy_index),
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v6 >> 2) as isize) as i32,
+        *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v6 >> 2) as isize) as i32,
         game,
     ) != 0
     {
@@ -1409,22 +1407,21 @@ pub unsafe fn ThinHoppingBlobs_Func8(game: &mut Game) {
         if (*E).var_03 != 0 {
             ThinHoppingBlobs_Func10(game);
             (*E).var_B = ((*E).var_B).wrapping_add(
-                *((game.g_rom.offset(crate::rtl::lorom_offset(0xa29a0b)) as *mut u16 as *mut u8)
-                    .offset(thbs_var_F as i32 as isize) as *mut u16),
+                *((rom_ptr!(game, u16; 0xa29a0b) as *mut u8).offset(thbs_var_F as i32 as isize)
+                    as *mut u16),
             );
         } else {
             ThinHoppingBlobs_Func9(game);
             (*E).var_B = ((*E).var_B).wrapping_sub(
-                *((game.g_rom.offset(crate::rtl::lorom_offset(0xa29a0b)) as *mut u16 as *mut u8)
-                    .offset(thbs_var_F as i32 as isize) as *mut u16),
+                *((rom_ptr!(game, u16; 0xa29a0b) as *mut u8).offset(thbs_var_F as i32 as isize)
+                    as *mut u16),
             );
         }
         if (*E).var_B & 0x8000 != 0 {
             (*E).var_03 = 1;
             (*E).var_B = 0;
         }
-        let mut R20: u16 = ((*((game.g_rom.offset(crate::rtl::lorom_offset(0xa29a09)) as *mut u16
-            as *mut u8)
+        let mut R20: u16 = ((*((rom_ptr!(game, u16; 0xa29a09) as *mut u8)
             .offset((*E).var_F as i32 as isize) as *mut u16) as i32
             & 0xff00)
             >> 8) as u16;
@@ -1533,12 +1530,11 @@ pub unsafe fn ThinHoppingBlobs_Func14(game: &mut Game) {
 pub unsafe fn ThinHoppingBlobs_Func15(game: &mut Game) {
     let E = Get_ThinHoppingBlobs(word!(game.cur_enemy_index) as i32, game);
     let thbs_var_F: u16 = (*E).var_F;
-    let R20: u16 = ((*((game.g_rom.offset(crate::rtl::lorom_offset(0xa29a0b)) as *mut u16
-        as *mut u8)
-        .offset(thbs_var_F as i32 as isize) as *mut u16) as i32
+    let R20: u16 = ((*((rom_ptr!(game, u16; 0xa29a0b) as *mut u8).offset(thbs_var_F as i32 as isize)
+        as *mut u16) as i32
         & 0xff00)
         >> 8) as u16;
-    let R18: u16 = ((byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0xa29a0b)) as *mut u16; thbs_var_F as i32 as isize)
+    let R18: u16 = ((byte!(@pointer rom_ptr!(game, u16; 0xa29a0b); thbs_var_F as i32 as isize)
         as i32)
         << 8) as u16;
     if Enemy_MoveDown(
@@ -1860,10 +1856,9 @@ pub unsafe fn GunshipTop_1(k: u16, game: &mut Game) {
     let v4: bool = ((*E0).var_D & 0x8000) != 0;
     if v3 as i32 != 0 || v4 as i32 != 0 {
         let v5: u16 = (2u16).wrapping_mul((*E0).var_C);
-        (*E0).var_D = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0xa2a7cf)); v5 as isize)
-            as u16;
-        let v6: u16 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0xa2a7cf)); (v5 as i32 + 1) as isize)
-            as i8 as u16;
+        (*E0).var_D = byte!(@pointer rom_ptr!(game; 0xa2a7cf); v5 as isize) as u16;
+        let v6: u16 =
+            byte!(@pointer rom_ptr!(game; 0xa2a7cf); (v5 as i32 + 1) as isize) as i8 as u16;
         (*E0).base.y_pos = ((*E0).base.y_pos).wrapping_add(v6);
         let E1 = Get_GunshipTop(k as i32 + 64, game);
         (*E1).base.y_pos = ((*E1).base.y_pos).wrapping_add(v6);
@@ -3430,8 +3425,7 @@ pub unsafe fn MaridiaLargeSnail_Func_7(k: u16, game: &mut Game) {
     let v5: i32 = 8 * (v2 as i32 >> 8) >> 1;
     if Enemy_MoveDown(
         k,
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v5 >> 1) as isize) as i32,
+        *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v5 >> 1) as isize) as i32,
         game,
     ) != 0
     {
@@ -3453,8 +3447,7 @@ pub unsafe fn MaridiaLargeSnail_Func_8(k: u16, game: &mut Game) {
         let v5: i32 = 8 * v3 as i32 >> 1;
         Enemy_MoveDown(
             k,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-                .offset((v5 + 2 >> 1) as isize) as i32,
+            *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v5 + 2 >> 1) as isize) as i32,
             game,
         );
     } else {

@@ -8,6 +8,7 @@ use crate::game::sm_90::{
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::rom_ptr;
 use crate::rtl::{RomPtr, Unreachable};
 use ::core::ptr::null_mut;
 
@@ -119,9 +120,8 @@ pub unsafe fn KillProjectileInner(k: u16, game: &mut Game) {
         if (v2 & 0x200) != 0 {
             word!(
                 game.projectile_bomb_instruction_ptr[v1] =
-                    *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938691))
-                        as *mut ProjectileDamagesAndInstrPtr))
-                        .damages as *mut u16)
+                    *(&raw mut (*(rom_ptr!(game, ProjectileDamagesAndInstrPtr; 0x938691))).damages
+                        as *mut u16)
                         .offset(1,)
             );
             word!(game.earthquake_type = 20);
@@ -129,8 +129,7 @@ pub unsafe fn KillProjectileInner(k: u16, game: &mut Game) {
         } else {
             word!(
                 game.projectile_bomb_instruction_ptr[v1] =
-                    *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938679))
-                        as *mut ProjectileDamagesAndInstrPtr))
+                    *(&raw mut (*(rom_ptr!(game, ProjectileDamagesAndInstrPtr; 0x938679)))
                         .instr_ptr)
                         .offset(1)
             );
@@ -142,9 +141,8 @@ pub unsafe fn KillProjectileInner(k: u16, game: &mut Game) {
         word!(game.projectile_type[v1] = (word!(game.projectile_type[v1]) & 0xf0ff | 0x700));
         word!(
             game.projectile_bomb_instruction_ptr[v1] =
-                *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938679))
-                    as *mut ProjectileDamagesAndInstrPtr))
-                    .damages as *mut u16)
+                *(&raw mut (*(rom_ptr!(game, ProjectileDamagesAndInstrPtr; 0x938679))).damages
+                    as *mut u16)
                     .offset(1,)
         );
         QueueSfx2_Max6(0xc, game);
@@ -156,9 +154,8 @@ pub unsafe fn InitializeBombExplosion(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1;
     word!(
         game.projectile_bomb_instruction_ptr[v1] =
-            *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938681))
-                as *mut ProjectileDamagesAndInstrPtr))
-                .damages as *mut u16)
+            *(&raw mut (*(rom_ptr!(game, ProjectileDamagesAndInstrPtr; 0x938681))).damages
+                as *mut u16)
                 .offset(1,)
     );
     word!(game.projectile_bomb_instruction_timers[v1] = 1);

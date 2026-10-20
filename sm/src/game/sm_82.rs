@@ -78,6 +78,7 @@ use crate::host::{Die, Warning};
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::rom_ptr;
 use crate::rtl::{
     Load24, Mult8x8, RomPtr, RtlApuWrite, SnesDivide, Unreachable, WriteReg, WriteRegWord,
 };
@@ -1409,10 +1410,7 @@ pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
     word!(game.pause_screen_mode = 1);
     SetPauseScreenButtonLabelPalettes(game);
     word!(game.pausemenu_lr_animation_frame = 0);
-    word!(
-        game.pausemenu_lr_animation_timer =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *mut u8 as *mut u16)
-    );
+    word!(game.pausemenu_lr_animation_timer = *(rom_ptr!(game, u8; 0x82c10c) as *mut u16));
     word! { game, 1; screen_fade_delay, screen_fade_counter }
     word!(game.menu_index, wrapping_add(1));
 }
@@ -1421,10 +1419,7 @@ pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
     LoadPauseMenuMapTilemapAndAreaLabel(game);
     SetPauseScreenButtonLabelPalettes(game);
     word!(game.pausemenu_lr_animation_frame = 0);
-    word!(
-        game.pausemenu_lr_animation_timer =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *mut u8 as *mut u16)
-    );
+    word!(game.pausemenu_lr_animation_timer = *(rom_ptr!(game, u8; 0x82c10c) as *mut u16));
     word! { game, 1; screen_fade_delay, screen_fade_counter }
     word!(game.pause_screen_mode = 0);
     word!(game.menu_index, wrapping_add(1));
@@ -1594,10 +1589,7 @@ unsafe fn render_map_tilemap(screen: MapScreen, game: &mut Game) {
         v0 = 0;
     }
     let r0 = RomPtr(
-        Load24(
-            (game.g_rom.offset(crate::rtl::lorom_offset(0x82964a)) as *mut LongPtr)
-                .offset(v0 as isize),
-        ),
+        Load24((rom_ptr!(game, LongPtr; 0x82964a)).offset(v0 as isize)),
         game,
     ) as *const u16;
     let r3 = match screen {
@@ -1870,10 +1862,7 @@ pub unsafe fn ResetPauseMenuAnimations(game: &mut Game) {
         samus_position_indicator_animation_frame, samus_position_indicator_animation_timer,
         samus_position_indicator_animation_loop_counter,
     }
-    word!(
-        game.pausemenu_lr_animation_timer =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *mut u8 as *mut u16)
-    );
+    word!(game.pausemenu_lr_animation_timer = *(rom_ptr!(game, u8; 0x82c10c) as *mut u16));
     word!(game.pausemenu_palette_animation_timer = 1);
     word!(game.pausemenu_palette_animation_frame = 0);
 }
@@ -2168,21 +2157,15 @@ pub unsafe fn UpdatePauseMenuLRStartVramTilemap(game: &mut Game) {
 pub unsafe fn DrawPauseScreenSpriteAnim(a: u16, input_k: u16, input_j: u16, game: &mut Game) {
     let t: i32 = a as i32 - 1i32;
     let v8 = RomPtr_RAM(
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0c4))
-            as *mut PauseScreenSpriteAnimationData))
-            .arr[t as usize],
+        (*(rom_ptr!(game, PauseScreenSpriteAnimationData; 0x82c0c4))).arr[t as usize],
         game,
     ) as *mut u16;
     let v5 = RomPtr_RAM(
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0b2))
-            as *mut PauseScreenSpriteAnimationData))
-            .arr[t as usize],
+        (*(rom_ptr!(game, PauseScreenSpriteAnimationData; 0x82c0b2))).arr[t as usize],
         game,
     ) as *mut u16;
     let v3 = RomPtr_82(
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0e8))
-            as *mut PauseScreenSpriteAnimationData))
-            .arr[t as usize],
+        (*(rom_ptr!(game, PauseScreenSpriteAnimationData; 0x82c0e8))).arr[t as usize],
         game,
     );
     *v5 = (*v5).wrapping_sub(1);
@@ -2198,9 +2181,7 @@ pub unsafe fn DrawPauseScreenSpriteAnim(a: u16, input_k: u16, input_j: u16, game
     let r3: u16 = crate::rtl::rom_table_word!(game, 0x82c0fa, 3);
     let r24: i32 = *v3.offset((3 * *v8 as i32 + 2) as isize) as i32;
     let r26: i32 = 2 * *RomPtr_RAM(
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0d6))
-            as *mut PauseScreenSpriteAnimationData))
-            .arr[t as usize],
+        (*(rom_ptr!(game, PauseScreenSpriteAnimationData; 0x82c0d6))).arr[t as usize],
         game,
     ) as i32;
     let v11 = RomPtr_82(
@@ -2225,7 +2206,7 @@ pub unsafe fn HandlePauseScreenPaletteAnimation(game: &mut Game) {
             let mut i: i32 = word!(game.pausemenu_palette_animation_frame) as i32 + 1;
             loop {
                 byte!(@pointer ram_ptr!(game, u16; 0x74f); 0) = i as u8;
-                v1 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)); (3 * i) as isize);
+                v1 = byte!(@pointer rom_ptr!(game; 0x82c10c); (3 * i) as isize);
                 if v1 != 0xff {
                     break;
                 }
@@ -2271,12 +2252,12 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
     word!(game.pausemenu_item_selector_animation_frame = 0);
     word!(
         game.pausemenu_item_selector_animation_timer =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *mut u8).offset(0) as u16
+            *(rom_ptr!(game, u8; 0x82c10c)).offset(0) as u16
     );
     word!(game.pausemenu_reserve_tank_animation_frame = 0);
     word!(
         game.pausemenu_reserve_tank_animation_timer =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c165)) as *mut u8).offset(0) as u16
+            *(rom_ptr!(game, u8; 0x82c165)).offset(0) as u16
     );
     if word!(game.samus_max_reserve_health) != 0 {
         word!(game.pausemenu_equipment_category_item = 0);
@@ -2883,12 +2864,11 @@ pub unsafe fn EquipmentScreenDisplayReserves_PaletteSetup(game: &mut Game) -> u1
             != 0;
         if word!(game.pausemenu_reserve_tank_animation_timer) == 0 || v0 {
             word!(game.pausemenu_reserve_tank_animation_frame, wrapping_add(1));
-            let mut v1: u16 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x82c165)); (2 * word!(game.pausemenu_reserve_tank_animation_frame) as i32) as isize)
+            let mut v1: u16 = byte!(@pointer rom_ptr!(game; 0x82c165); (2 * word!(game.pausemenu_reserve_tank_animation_frame) as i32) as isize)
                 as u16;
             if v1 == 255 {
                 word!(game.pausemenu_reserve_tank_animation_frame = 0);
-                v1 =
-                    byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x82c165)); 0) as u16;
+                v1 = byte!(@pointer rom_ptr!(game; 0x82c165); 0) as u16;
             }
             word!(game.pausemenu_reserve_tank_animation_timer = v1);
         }
@@ -3082,10 +3062,8 @@ pub unsafe fn DrawFileSelectMapIcons(game: &mut Game) {
     DrawSimpleMapIcons(0x4e, 0xc7fb, 3584, game);
     let a: u16 = UpdateSamusPositionIndicatorAnimation(game);
     let data: *const u16 = (RomPtr_82(
-        *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c7cb))
-            as *mut MapIconDataPointers)
-            .offset(4))
-        .crateria as *mut u8)
+        *((&raw mut (*(rom_ptr!(game, MapIconDataPointers; 0x82c7cb)).offset(4)).crateria
+            as *mut u8)
             .offset((2i32 * word!(game.area_index) as i32) as isize) as *mut VoidP),
         game,
     ) as *mut u16)
@@ -3258,8 +3236,7 @@ pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
     }
     if word!(game.map_max_y_scroll) as i32 - 177i32 - word!(game.reg_BG1VOFS) as i32 & 0x8000 != 0 {
         if word!(game.map_scrolling_direction)
-            == (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82b9be)) as *mut MapScrollArrowData))
-                .map_scroll_dir
+            == (*(rom_ptr!(game, MapScrollArrowData; 0x82b9be))).map_scroll_dir
         {
             word! { game, 0;
                 map_scrolling_gear_switch_timer, map_scrolling_direction, map_scrolling_speed_index,
@@ -3355,15 +3332,9 @@ pub unsafe fn DrawFileCopyArrow(game: &mut Game) {
         }
     }
     DrawMenuSpritemap(
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82bb0c)) as *mut FileCopyArrowStuff)
-            .offset(v0 as isize))
-        .spritemap,
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82bb0c)) as *mut FileCopyArrowStuff)
-            .offset(v0 as isize))
-        .xpos,
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82bb0c)) as *mut FileCopyArrowStuff)
-            .offset(v0 as isize))
-        .ypos,
+        (*(rom_ptr!(game, FileCopyArrowStuff; 0x82bb0c)).offset(v0 as isize)).spritemap,
+        (*(rom_ptr!(game, FileCopyArrowStuff; 0x82bb0c)).offset(v0 as isize)).xpos,
+        (*(rom_ptr!(game, FileCopyArrowStuff; 0x82bb0c)).offset(v0 as isize)).ypos,
         512,
         game,
     );

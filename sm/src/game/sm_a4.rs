@@ -18,6 +18,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::RomPtr;
 use crate::rtl::{AddToHiLo, SetHiLo};
@@ -977,36 +978,34 @@ pub unsafe fn Crocomire_Func_60(game: &mut Game) {
     word!(game.g_word_7E0692 = 256);
     word!(game.croco_cur_vline_idx = 0);
     word!(
-        game.g_word_7E0698 =
-            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16 as *mut u8)
-                .offset(word!(game.croco_word_7E069A) as i32 as isize) as *mut u16)
+        game.g_word_7E0698 = *((rom_ptr!(game, u16; 0xa49bc5) as *mut u8)
+            .offset(word!(game.croco_word_7E069A) as i32 as isize)
+            as *mut u16)
     );
     word!(game.g_word_7E0694 = word!(game.g_word_7E0698));
     word!(
-        game.g_word_7E0696 =
-            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc7)) as *mut u16 as *mut u8)
-                .offset(word!(game.croco_word_7E069A) as i32 as isize) as *mut u16)
+        game.g_word_7E0696 = *((rom_ptr!(game, u16; 0xa49bc7) as *mut u8)
+            .offset(word!(game.croco_word_7E069A) as i32 as isize)
+            as *mut u16)
     );
     word!(
-        game.g_word_7E068E =
-            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc9)) as *mut u16 as *mut u8)
-                .offset(word!(game.croco_word_7E069A) as i32 as isize) as *mut u16)
+        game.g_word_7E068E = *((rom_ptr!(game, u16; 0xa49bc9) as *mut u8)
+            .offset(word!(game.croco_word_7E069A) as i32 as isize)
+            as *mut u16)
     );
-    let bank: u8 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bcb)) as *mut u16 as *mut u8)
+    let bank: u8 = *((rom_ptr!(game, u16; 0xa49bcb) as *mut u8)
         .offset(word!(game.croco_word_7E069A) as i32 as isize) as *mut u16)
         as u8;
     let mut i: i32 = word!(game.croco_word_7E069A) as i32 + 8;
     loop {
-        let mut v2: u16 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16
-            as *mut u8)
-            .offset(i as isize) as *mut u16);
+        let mut v2: u16 =
+            *((rom_ptr!(game, u16; 0xa49bc5) as *mut u8).offset(i as isize) as *mut u16);
         if v2 == 0xffff {
             break;
         }
         let mut v6: u16 = i as u16;
-        let mut v3: u16 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc7)) as *mut u16
-            as *mut u8)
-            .offset(i as isize) as *mut u16);
+        let mut v3: u16 =
+            *((rom_ptr!(game, u16; 0xa49bc7) as *mut u8).offset(i as isize) as *mut u16);
         let mut n: i32 = word!(game.g_word_7E068E) as i32;
         loop {
             *(ram_ptr!(game, u16; v3 as isize)) = *(RomPtrWithBank(bank, v2, game) as *mut u16);
@@ -1027,7 +1026,7 @@ pub unsafe fn Crocomire_Func_62(game: &mut Game) {
     let mut v2 = null_mut::<VramWriteEntry>();
     let v0: u16 = word!(game.g_word_7E068A);
     let v1: u16 = word!(game.vram_write_queue_tail);
-    if *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16 as *mut u8)
+    if *((rom_ptr!(game, u16; 0xa49bc5) as *mut u8)
         .offset(word!(game.g_word_7E068A) as i32 as isize) as *mut u16)
         == 0xffff
     {
@@ -1037,18 +1036,14 @@ pub unsafe fn Crocomire_Func_62(game: &mut Game) {
         word!(game.g_word_7E068A = 0);
     } else {
         v2 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v2).size = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16
-            as *mut u8)
+        (*v2).size = *((rom_ptr!(game, u16; 0xa49bc5) as *mut u8)
             .offset(word!(game.g_word_7E068A) as i32 as isize) as *mut u16);
-        (*v2).src.addr = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bcb)) as *mut u16
-            as *mut u8)
-            .offset(v0 as i32 as isize) as *mut u16);
+        (*v2).src.addr =
+            *((rom_ptr!(game, u16; 0xa49bcb) as *mut u8).offset(v0 as i32 as isize) as *mut u16);
         *(&raw mut (*v2).src.bank as *mut u16) =
-            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc9)) as *mut u16 as *mut u8)
-                .offset(v0 as i32 as isize) as *mut u16);
-        (*v2).vram_dst = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc7)) as *mut u16
-            as *mut u8)
-            .offset(v0 as i32 as isize) as *mut u16);
+            *((rom_ptr!(game, u16; 0xa49bc9) as *mut u8).offset(v0 as i32 as isize) as *mut u16);
+        (*v2).vram_dst =
+            *((rom_ptr!(game, u16; 0xa49bc7) as *mut u8).offset(v0 as i32 as isize) as *mut u16);
         word!(game.g_word_7E068A = (v0).wrapping_add(8));
         word!(game.vram_write_queue_tail = (v1).wrapping_add(7));
     };
@@ -1157,10 +1152,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
     let EK = Get_Crocomire(word!(game.cur_enemy_index) as i32, game);
     (*EK).var_A = ((*EK).var_A).wrapping_add(2);
     let mut i: i32 = word!(game.croco_word_7E069A) as i32;
-    while *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16 as *mut u8)
-        .offset(i as isize) as *mut u16)
-        != 0xffff
-    {
+    while *((rom_ptr!(game, u16; 0xa49bc5) as *mut u8).offset(i as isize) as *mut u16) != 0xffff {
         i += 8;
     }
     word!(game.croco_word_7E069A = (i + 2) as u16);
@@ -1187,7 +1179,7 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
         if word!(game.croco_cur_vline_idx) > 48 {
             return 1;
         }
-        let rr: i32 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0xa49697)); word!(game.croco_cur_vline_idx) as isize)
+        let rr: i32 = byte!(@pointer rom_ptr!(game; 0xa49697); word!(game.croco_cur_vline_idx) as isize)
             as i32;
         if ((*ram_ptr!(game; 0x69c, rr as isize)) as i8)
             .wrapping_sub((word!(game.croco_target_0688)) as i8)
@@ -1205,8 +1197,8 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
         b"croco_cur_vline_idx <= 48\0", b"src/sm_a4.c\0", 1215,
         b"uint16 Crocomire_Func_67(void)\0"
     };
-    let vline_idx: i32 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0xa49697)); word!(game.croco_cur_vline_idx) as isize)
-        as i32;
+    let vline_idx: i32 =
+        byte!(@pointer rom_ptr!(game; 0xa49697); word!(game.croco_cur_vline_idx) as isize) as i32;
     let mask: u8 = kCrocoEraseLineMasks[(vline_idx & 7) as usize];
     loop {
         let q: i32 = *ram_ptr!(game; 0x69c, vline_idx as isize) as i32;
@@ -1229,8 +1221,7 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
     loop {
         v7 = (word!(game.g_word_7E068A)).wrapping_add(word!(game.croco_word_7E069A));
         v8 = word!(game.vram_write_queue_tail);
-        if *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16 as *mut u8)
-            .offset(v7 as i32 as isize) as *mut u16)
+        if *((rom_ptr!(game, u16; 0xa49bc5) as *mut u8).offset(v7 as i32 as isize) as *mut u16)
             != 0xffff
         {
             break;
@@ -1238,17 +1229,14 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
         word!(game.g_word_7E068A = 0);
     }
     let v9 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-    (*v9).size = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16 as *mut u8)
-        .offset(v7 as i32 as isize) as *mut u16);
-    (*v9).src.addr = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bcb)) as *mut u16
-        as *mut u8)
-        .offset(v7 as i32 as isize) as *mut u16);
+    (*v9).size =
+        *((rom_ptr!(game, u16; 0xa49bc5) as *mut u8).offset(v7 as i32 as isize) as *mut u16);
+    (*v9).src.addr =
+        *((rom_ptr!(game, u16; 0xa49bcb) as *mut u8).offset(v7 as i32 as isize) as *mut u16);
     *(&raw mut (*v9).src.bank as *mut u16) =
-        *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc9)) as *mut u16 as *mut u8)
-            .offset(v7 as i32 as isize) as *mut u16);
-    (*v9).vram_dst = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc7)) as *mut u16
-        as *mut u8)
-        .offset(v7 as i32 as isize) as *mut u16);
+        *((rom_ptr!(game, u16; 0xa49bc9) as *mut u8).offset(v7 as i32 as isize) as *mut u16);
+    (*v9).vram_dst =
+        *((rom_ptr!(game, u16; 0xa49bc7) as *mut u8).offset(v7 as i32 as isize) as *mut u16);
     word!(game.vram_write_queue_tail = (v8).wrapping_add(7));
     word!(game.g_word_7E068A, wrapping_add(8));
     1

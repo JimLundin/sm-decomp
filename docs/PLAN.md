@@ -20,6 +20,48 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared fixed ROM pointers (2026-10-20)
+
+All 229 remaining literal-address LoROM pointer constructions across 20 banks
+now share caller-side rom_ptr!, following ram_ptr!'s type/address syntax.
+The complete formatted family removes **246 lines**, including the macro and
+imports. Its 195 existing mutable casts and 34 uncast pointers retain their
+types, mapping, evaluation order and later offsets/field projections. Five
+dynamic mappings remain explicit. No reader, Game borrow or runtime state is
+introduced; the existing word-table reader remains unchanged.
+
+Independent inversion recovers all 72 frozen Rust files after formatting.
+Actual whole-library compiler expansions match across 5694665 normalized
+bytes. Only the exact new declaration/imports, six independently expanded
+nested macro uses, whitespace and 68 individually bound embedded source
+payloads differ. Both expansion checks take about 1.85s; frontend metadata
+compilation passes in 8.98s. This follows the inline-RAM-pointer mechanical
+precedent, without per-routine probes or claims that every caller executed.
+Expansion equality is not an all-state or pointer-safety proof.
+
+Formatting, normal release (19.29s frozen; 26.14s main), diff check and progress
+pass. Proposed committed source passes source-checked any% **129712/0** and
+Speed Booster/equipment **150383/0**, native exits 0, in 163.97s/227.43s.
+Source/input/library/DLL pins remain fixed; the host reuses the normal library.
+The separate main composition passes its embedded-library source check too.
+Concurrent shader/configuration changes stay outside this commit. Existing
+route and credits limitations remain.
+
+Committed Rust is **112983 lines**, leaving **12984 further lines** for the
+fixed under-100000 target. Other progress counters stay unchanged. Draft and
+validation work used TEMP roots sm-fixed-rom-pointers-455b1e37,
+sm-rom-pointer-expansion-review-455b1e37 and sm-rom-pointers-root-9c4daf2f;
+dispose of completed artifacts when no active helper needs them. The complete
+remaining reduction budget is still unproven.
+
+Four other full formatted drafts remain parked without runtime validation:
+timed enemy phases save 118 lines at 128 sites; combat flash/freeze setup saves
+7 lines at seven sites; six multi-local tuple branch trees add 9 lines; PLM's
+shared final tile loop saves 28 lines. These are measured drafts, not landed
+reductions. Do not repeat those studies or count their containing functions
+as savings. Next concrete discovery examines complete orbit/angle-to-position
+motion sequences, preserving phase truncation, live reads and callback order.
+
 ## Shared sound-effect channels (2026-10-20)
 
 The three native sound-effect ports now share command acceptance, voice reset,

@@ -23,6 +23,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, Unreachable, WriteReg};
@@ -1142,9 +1143,9 @@ pub unsafe fn YappingMaw_Func_2(game: &mut Game) {
     (*E).var_34 = v2;
     enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa8a097, (v2 >> 1) as isize), timer = 1}
     (*E).base.timer = 0;
-    (*E).var_32 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa8a0a7)) as *mut u16 as *mut u8)
+    (*E).var_32 = *((rom_ptr!(game, u16; 0xa8a0a7) as *mut u8)
         .offset(((2u16).wrapping_mul(v2)) as i32 as isize) as *mut u16);
-    (*E).var_33 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa8a0a9)) as *mut u16 as *mut u8)
+    (*E).var_33 = *((rom_ptr!(game, u16; 0xa8a0a9) as *mut u8)
         .offset(((2u16).wrapping_mul(v2)) as i32 as isize) as *mut u16);
     (*E).var_A = ((0xa8a445i32) as u16);
 }
@@ -2085,7 +2086,7 @@ macro_rules! advance_beetom_jump_descent {
         let v2: i32 = 8 * (*E).var_B as i32 >> 1;
         if Enemy_MoveDown(
             $enemy_index,
-            *($game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
+            *($crate::rtl::rom_ptr!($game, u32; 0xa0cbc7))
                 .offset((v2 >> 1) as isize) as i32,
             $game,
         ) != 0
@@ -2116,8 +2117,7 @@ unsafe fn advance_beetom_jump<const FALLING: bool, const STEP: u16, const CAPTUR
     let index = (index + if FALLING { 0 } else { 2 }) >> 1;
     if Enemy_MoveDown(
         k,
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32).offset(index as isize)
-            as i32,
+        *(rom_ptr!(game, u32; 0xa0cbc7)).offset(index as isize) as i32,
         game,
     ) != 0
     {
@@ -4010,7 +4010,7 @@ pub unsafe fn KiHunter_Func_10(k: u16, game: &mut Game) {
 pub unsafe fn KiHunter_Func_11(game: &mut Game) {
     let E = Get_KiHunter(word!(game.cur_enemy_index) as i32, game);
     (*E).var_F = ((*E).var_F).wrapping_add(
-        *(((game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *mut u16).offset(2) as *mut u8)
+        *(((rom_ptr!(game, u16; 0xa2838f)).offset(2) as *mut u8)
             .offset((8i32 * byte!((*E).var_B; 1isize) as i32) as isize)
             .offset(1) as *mut u16),
     );
@@ -4046,7 +4046,7 @@ pub unsafe fn KiHunter_Func_14(game: &mut Game) {
     let mut khr_var_07: i16 = 0;
     let E = Get_KiHunter(word!(game.cur_enemy_index) as i32, game);
     (*E).var_F = ((*E).var_F).wrapping_add(
-        *((game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *mut u16 as *mut u8)
+        *((rom_ptr!(game, u16; 0xa2838f) as *mut u8)
             .offset((8i32 * byte!((*E).var_B; 1isize) as i32) as isize)
             .offset(1) as *mut u16),
     );
@@ -4097,8 +4097,7 @@ pub unsafe fn KiHunter_Func_17(game: &mut Game) {
         let mut v3: u16 = ((*E).var_0A).wrapping_add(384);
         (*E).var_0A = v3;
         v3 = (v3 >> 8);
-        let mut v5: u16 = (*((game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *mut u16
-            as *mut u8)
+        let mut v5: u16 = (*((rom_ptr!(game, u16; 0xa2838f) as *mut u8)
             .offset((8i32 * v3 as i32) as isize)
             .offset(1) as *mut u16))
             .wrapping_add((*E).var_D);

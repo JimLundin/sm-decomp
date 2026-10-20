@@ -22,6 +22,7 @@ use crate::game::sm_88::{
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{RomPtr, RtlWriteSram, Unreachable, WriteReg};
@@ -179,8 +180,7 @@ pub unsafe fn UnpackMapFromSave(game: &mut Game) {
     word_transfers!(game, descending, 897; le(explored_map_tiles_saved, 896) <- value(0));
     let mut i_0: i32 = 0;
     while i_0 < 6 {
-        let mut n: i32 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x818131)); i_0 as isize)
-            as i32;
+        let mut n: i32 = byte!(@pointer rom_ptr!(game; 0x818131); i_0 as isize) as i32;
         let mut r0 = RomPtr_81(
             crate::rtl::rom_table_word!(game, 0x8182d6, i_0 as isize),
             game,
@@ -203,8 +203,7 @@ pub unsafe fn UnpackMapFromSave(game: &mut Game) {
 pub unsafe fn PackMapToSave(game: &mut Game) {
     let mut i: i32 = 0;
     while i < 6 {
-        let mut n: i32 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x818131)); i as isize)
-            as i32;
+        let mut n: i32 = byte!(@pointer rom_ptr!(game; 0x818131); i as isize) as i32;
         let mut r0 = RomPtr_81(
             crate::rtl::rom_table_word!(game, 0x8182d6, i as isize),
             game,
@@ -2012,10 +2011,8 @@ pub unsafe fn CheckIfFileSelectMapAreaCanBeSelected(a: u16, game: &mut Game) -> 
     if *(ram_ptr!(game, u16; 0xd8f8, v1 as isize)) != 0 {
         return true_0 as u16;
     }
-    let t: u16 = (*((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c7cb))
-        as *mut MapIconDataPointers)
-        .offset(4))
-    .crateria as *mut u8)
+    let t: u16 = (*((&raw mut (*(rom_ptr!(game, MapIconDataPointers; 0x82c7cb)).offset(4)).crateria
+        as *mut u8)
         .offset(v1 as isize) as *mut u16))
         .wrapping_add(64);
     (t != 0xffff) as u16
@@ -2054,10 +2051,8 @@ pub unsafe fn DrawAreaSelectMapLabels(game: &mut Game) {
         let v1: u16 = (2u16).wrapping_mul(kFileSelectMap_AreaIndexes[i as usize]);
         let mut r36: u16 = *(ram_ptr!(game, u16; 0xd8f8, v1 as isize));
         let mut v2 = RomPtr_82(
-            *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c7cb))
-                as *mut MapIconDataPointers)
-                .offset(4))
-            .crateria as *mut u8)
+            *((&raw mut (*(rom_ptr!(game, MapIconDataPointers; 0x82c7cb)).offset(4)).crateria
+                as *mut u8)
                 .offset(v1 as i32 as isize) as *mut VoidP),
             game,
         ) as *const u16;
@@ -2128,9 +2123,8 @@ pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
         expand_sq_left_subpos, expand_sq_right_subpos, expand_sq_top_subpos,
         expand_sq_bottom_subpos,
     }
-    let vels: *const ExpandingSquareVels = (game.g_rom.offset(crate::rtl::lorom_offset(0x81aa34))
-        as *mut ExpandingSquareVels)
-        .offset(word!(game.area_index) as isize);
+    let vels: *const ExpandingSquareVels =
+        (rom_ptr!(game, ExpandingSquareVels; 0x81aa34)).offset(word!(game.area_index) as isize);
     word!(game.expand_sq_left_subvel = (*vels).left_subvel);
     word!(game.expand_sq_left_vel = (*vels).left_vel);
     word!(game.expand_sq_right_subvel = (*vels).right_subvel);
@@ -2384,8 +2378,7 @@ pub unsafe fn HandleFileSelectMapScrollArrows(game: &mut Game) {
     }
     if word!(game.map_max_y_scroll) as i32 - 145i32 - word!(game.reg_BG1VOFS) as i32 & 0x8000 != 0 {
         if word!(game.map_scrolling_direction)
-            == (*(game.g_rom.offset(crate::rtl::lorom_offset(0x81af50)) as *mut MapScrollArrowData))
-                .map_scroll_dir
+            == (*(rom_ptr!(game, MapScrollArrowData; 0x81af50))).map_scroll_dir
         {
             word! { game, 0;
                 map_scrolling_gear_switch_timer, map_scrolling_direction, map_scrolling_speed_index,
@@ -2455,76 +2448,60 @@ pub unsafe fn FileSelectMap_20_SetupExpandingSquare(game: &mut Game) {
             (kRoomSelectMapExpandingSquareTimers[word!(game.area_index) as usize]).wrapping_sub(12)
     );
     word!(
-        game.expand_sq_left_subvel =
-            *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x81aa34))
-                as *mut ExpandingSquareVels)
-                .offset(0))
-            .left_subvel as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
-                as *mut u16)
+        game.expand_sq_left_subvel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34))
+            .offset(0))
+        .left_subvel as *mut u8)
+            .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
+            as *mut u16)
     );
     word!(
-        game.expand_sq_left_vel =
-            *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x81aa34))
-                as *mut ExpandingSquareVels)
-                .offset(0))
-            .left_vel as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
-                as *mut u16)
+        game.expand_sq_left_vel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34))
+            .offset(0))
+        .left_vel as *mut u8)
+            .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
+            as *mut u16)
     );
     word!(
-        game.expand_sq_right_subvel =
-            *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x81aa34))
-                as *mut ExpandingSquareVels)
-                .offset(0))
-            .right_subvel as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
-                as *mut u16)
+        game.expand_sq_right_subvel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34))
+            .offset(0))
+        .right_subvel as *mut u8)
+            .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
+            as *mut u16)
     );
     word!(
-        game.expand_sq_right_vel =
-            *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x81aa34))
-                as *mut ExpandingSquareVels)
-                .offset(0))
-            .right_vel as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
-                as *mut u16)
+        game.expand_sq_right_vel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34))
+            .offset(0))
+        .right_vel as *mut u8)
+            .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
+            as *mut u16)
     );
     word!(
-        game.expand_sq_top_subvel =
-            *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x81aa34))
-                as *mut ExpandingSquareVels)
-                .offset(0))
-            .top_subvel as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
-                as *mut u16)
+        game.expand_sq_top_subvel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34))
+            .offset(0))
+        .top_subvel as *mut u8)
+            .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
+            as *mut u16)
     );
     word!(
-        game.expand_sq_top_vel =
-            *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x81aa34))
-                as *mut ExpandingSquareVels)
-                .offset(0))
-            .top_vel as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
-                as *mut u16)
+        game.expand_sq_top_vel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34))
+            .offset(0))
+        .top_vel as *mut u8)
+            .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
+            as *mut u16)
     );
     word!(
         game.expand_sq_bottom_subvel =
-            *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x81aa34))
-                as *mut ExpandingSquareVels)
-                .offset(0))
-            .bottom_subvel as *mut u8)
+            *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34)).offset(0)).bottom_subvel
+                as *mut u8)
                 .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
                 as *mut u16)
     );
     word!(
-        game.expand_sq_bottom_vel =
-            *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x81aa34))
-                as *mut ExpandingSquareVels)
-                .offset(0))
-            .bottom_vel as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
-                as *mut u16)
+        game.expand_sq_bottom_vel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34))
+            .offset(0))
+        .bottom_vel as *mut u8)
+            .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize,)
+            as *mut u16)
     );
     word!(game.expand_sq_left_pos = 8);
     word!(game.expand_sq_right_pos = 248);

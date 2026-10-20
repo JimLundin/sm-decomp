@@ -315,6 +315,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, Unreachable};
 use crate::set_fields;
@@ -4214,7 +4215,7 @@ pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
                 } else {
                     (*E).x_pos as i32
                 }) as u16;
-            let v4: i16 = ((byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)); (temp_collision_DD6 as i32 + (j as i32 & 0xf)) as isize)
+            let v4: i16 = ((byte!(@pointer rom_ptr!(game; 0x948b2b); (temp_collision_DD6 as i32 + (j as i32 & 0xf)) as isize)
                 as i32
                 & 0x1f)
                 - temp_collision_DD4 as i32
@@ -4241,7 +4242,7 @@ pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
                 } else {
                     (*E).x_pos as i32
                 }) as u16;
-            let v7: i16 = ((byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)); (temp_collision_DD6_0 as i32 + (j_0 as i32 & 0xf)) as isize)
+            let v7: i16 = ((byte!(@pointer rom_ptr!(game; 0x948b2b); (temp_collision_DD6_0 as i32 + (j_0 as i32 & 0xf)) as isize)
                 as i32
                 & 0x1f)
                 - temp_collision_DD4_0 as i32

@@ -38,6 +38,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{mov24, Mult8x8, RomPtr, SnesDivide, Unreachable};
@@ -298,8 +299,7 @@ pub unsafe fn Boulder_Func_4(game: &mut Game) {
     let v1: i32 = 8 * byte!((*E).var_C; 1) as i32 >> 1;
     if Enemy_MoveDown(
         word!(game.cur_enemy_index),
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v1 >> 1) as isize) as i32,
+        *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v1 >> 1) as isize) as i32,
         game,
     ) != 0
     {
@@ -342,9 +342,8 @@ pub unsafe fn Boulder_Func_5(game: &mut Game) {
     let v3: i32 = v2 as i32 >> 1;
     Enemy_MoveDown(
         word!(game.cur_enemy_index),
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v3 >> 1i32) as isize))
-        .wrapping_add((((*E).var_01 as i32) << 16) as u32) as i32,
+        (*(rom_ptr!(game, u32; 0xa0cbc7)).offset((v3 >> 1i32) as isize))
+            .wrapping_add((((*E).var_01 as i32) << 16) as u32) as i32,
         game,
     );
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub((*E).var_01);
@@ -354,8 +353,7 @@ pub unsafe fn Boulder_Func_5(game: &mut Game) {
     let v4: i32 = v2 as i32 >> 1;
     if Enemy_MoveRight_IgnoreSlopes(
         word!(game.cur_enemy_index),
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v4 >> 1) as isize) as i32,
+        *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v4 >> 1) as isize) as i32,
         game,
     ) != 0
     {
@@ -1213,8 +1211,7 @@ pub unsafe fn CeresRidley_Func_4(game: &mut Game) {
         (*E).var_F = (*E).var_F.wrapping_add(1);
         if (*E).var_F != 0 {
             (*E).var_F = 0;
-            let mut v2: i16 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0xa6e269)); cry_var_E as isize)
-                as i16;
+            let mut v2: i16 = byte!(@pointer rom_ptr!(game; 0xa6e269); cry_var_E as isize) as i16;
             if v2 == 255 {
                 (*E).var_E = 0;
                 (*E).var_A = ((0xa6a3dfi32) as u16);
@@ -3015,14 +3012,13 @@ pub unsafe fn RidleysExplosion_Init(game: &mut Game) {
             12 => {
                 (*E).base.x_pos = word!(game.tilemap_stuff[82]);
                 (*E).base.y_pos = word!(game.tilemap_stuff[83]);
-                (*E).base.current_instruction =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c7ba)) as *mut u16).offset(
-                        ((byte!(@pointer (ram_ptr!(game, u16; 0x2000)).offset(71); 0) as i32
-                            + byte!(@pointer (ram_ptr!(game, u16; 0x2000)).offset(81); 0) as i32
-                            + 8
-                            & 0xf0) as u8
-                            >> 4) as isize,
-                    );
+                (*E).base.current_instruction = *(rom_ptr!(game, u16; 0xa6c7ba)).offset(
+                    ((byte!(@pointer (ram_ptr!(game, u16; 0x2000)).offset(71); 0) as i32
+                        + byte!(@pointer (ram_ptr!(game, u16; 0x2000)).offset(81); 0) as i32
+                        + 8
+                        & 0xf0) as u8
+                        >> 4) as isize,
+                );
             }
             14 => {
                 place_ridley_explosion_x!(E0, game, v13, 0xa6c804, E);

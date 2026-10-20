@@ -25,6 +25,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
@@ -765,13 +766,11 @@ unsafe fn EprojColl_874E(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
     };
     let index = row.wrapping_add(x & 15);
     // Both original ROM reads remain separate and occur before the landing stores.
-    let height =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b))).offset(index as isize) & 0x1f;
+    let height = *(rom_ptr!(game; 0x948b2b)).offset(index as isize) & 0x1f;
     let adjustment = i16::from(height)
         .wrapping_sub(edge_offset as i16)
         .wrapping_sub(1);
-    let height =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b))).offset(index as isize) & 0x1f;
+    let height = *(rom_ptr!(game; 0x948b2b)).offset(index as isize) & 0x1f;
     if i32::from(height) - i32::from(edge_offset) != 1 && adjustment >= 0 {
         return 0;
     }
@@ -3251,8 +3250,7 @@ pub unsafe fn Eproj_NorfairLavaquakeRocks_Func1(k: u16, game: &mut Game) {
             AddToHiLo(
                 (ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize),
                 (ram_ptr!(game, u16; 0x1a6f)).offset(v1 as isize),
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-                    .offset((t >> 1) as isize),
+                *(rom_ptr!(game, u32; 0xa0cbc7)).offset((t >> 1) as isize),
             );
             word!(game.eproj_F[v1] = crate::rtl::rom_table_word!(game, 0xa0cbc7, (t + 1) as isize));
             n -= 1;
@@ -3279,8 +3277,7 @@ pub unsafe fn Eproj_NorfairLavaquakeRocks_Func2(k: u16, game: &mut Game) {
         AddToHiLo(
             (ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize),
             (ram_ptr!(game, u16; 0x1a6f)).offset(v1 as isize),
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-                .offset((t >> 1) as isize),
+            *(rom_ptr!(game, u32; 0xa0cbc7)).offset((t >> 1) as isize),
         );
         word!(game.eproj_F[v1] = crate::rtl::rom_table_word!(game, 0xa0cbc7, (t + 1) as isize));
         n -= 1;
@@ -3413,11 +3410,10 @@ pub unsafe fn EprojPreInstr_MotherBrainRoomTurrets(k: u16, game: &mut Game) {
             Eproj_MotherBrainRoomTurretBullets_Func2(k, game);
             let v3: i32 = k as i32 >> 1;
             word!(
-                game.eproj_instr_list_ptr[v3] =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x86c040)) as *mut u16).offset(
-                        *((ram_ptr!(game, u16; 0x1a6f)).offset(v3 as isize) as *mut u8).offset(0)
-                            as isize,
-                    )
+                game.eproj_instr_list_ptr[v3] = *(rom_ptr!(game, u16; 0x86c040)).offset(
+                    *((ram_ptr!(game, u16; 0x1a6f)).offset(v3 as isize) as *mut u8).offset(0)
+                        as isize,
+                )
             );
             word!(game.eproj_instr_timers[v3] = 1);
         }
@@ -4858,7 +4854,7 @@ pub unsafe fn EprojPreInstr_Spores(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1;
     let v2: u16 = byte!(@pointer (ram_ptr!(game, u16; 0x1aff)).offset(v1 as isize); 0) as u16;
     let mut r18: u16 = SignExtend8(
-        byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x86dd6c)); *((ram_ptr!(game, u16; 0x1aff)).offset(v1 as isize) as *mut u8).offset(0) as isize)
+        byte!(@pointer rom_ptr!(game; 0x86dd6c); *((ram_ptr!(game, u16; 0x1aff)).offset(v1 as isize) as *mut u8).offset(0) as isize)
             as u16,
     );
     if (word!(game.eproj_F[v1]) & 0x80) != 0 {
@@ -4868,10 +4864,7 @@ pub unsafe fn EprojPreInstr_Spores(k: u16, game: &mut Game) {
         game.eproj_x_pos[v1],
         |fresh65| (fresh65 as i32 + r18 as i32) as u16
     );
-    r18 = SignExtend8(
-        byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x86dd6c)); (v2 as i32 + 1) as isize)
-            as u16,
-    );
+    r18 = SignExtend8(byte!(@pointer rom_ptr!(game; 0x86dd6c); (v2 as i32 + 1) as isize) as u16);
     let v3: u16 = (r18 as i32 + word!(game.eproj_y_pos[v1]) as i32 + r18 as i32) as u16;
     word!(game.eproj_y_pos[v1] = v3);
     if v3 as i32 - 768i32 & 0x8000 == 0 {
@@ -5249,8 +5242,7 @@ pub unsafe fn Eproj_BotwonsBodyFunction_DyingFalling(v0: u16, game: &mut Game) {
     AddToHiLo(
         (ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize),
         (ram_ptr!(game, u16; 0x1a6f)).offset(v1 as isize),
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v3 >> 1) as isize),
+        *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v3 >> 1) as isize),
     );
     if word!(game.eproj_y_pos[v1]) as i32 - 200i32 & 0x8000 != 0 {
         let v7: i32 = v0 as i32 >> 1;

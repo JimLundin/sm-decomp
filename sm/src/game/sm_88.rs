@@ -24,6 +24,7 @@ use crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::{mov24, Load24, Mult8x8, RomPtr, Unreachable, WriteReg, WriteRegWord};
 use crate::rtl::{AddToHiLo, SetHiLo};
@@ -1161,7 +1162,7 @@ unsafe fn calculate_explosion_hdma_scaled(
                     ((word!(game.power_bomb_explosion_radius) as i32 & 0xff00) >> 8) as u8
                 }
             },
-            byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)); (j as u8 as i32 + 32) as isize),
+            byte!(@pointer rom_ptr!(game; 0x88a206); (j as u8 as i32 + 32) as isize),
         ) >> 8) as u8;
         // Power Bomb reads its center between the two shape bytes; Crystal Flash reads after both.
         let center_before_width = match scale {
@@ -1177,7 +1178,7 @@ unsafe fn calculate_explosion_hdma_scaled(
                     ((word!(game.power_bomb_explosion_radius) as i32 & 0xff00) >> 8) as u8
                 }
             },
-            byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)); j as u8 as isize),
+            byte!(@pointer rom_ptr!(game; 0x88a206); j as u8 as isize),
         ) >> 8) as u8;
         let c = match center_before_width {
             Some(c) => c,
@@ -1292,7 +1293,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(k: u16, game: &mu
     calculate_explosion_hdma_table_pointers(k, false, game);
     let kk: i32 = Mult8x8(
         ((word!(game.power_bomb_explosion_radius) as i32 & 0xff00) >> 8) as u8,
-        byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x88a286)); 0),
+        byte!(@pointer rom_ptr!(game; 0x88a286); 0),
     ) as i32
         >> 8;
     let side = explosion_window_side(false, game);
@@ -1394,7 +1395,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k: u16, game: &
     let v1: u16 = 96;
     let kk: i32 = Mult8x8(
         byte!(@pointer ram_ptr!(game, u16; 0xcec); 1),
-        byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x88a286)); 0),
+        byte!(@pointer rom_ptr!(game; 0x88a286); 0),
     ) as i32
         >> 8;
     let side = explosion_window_side(true, game);
@@ -1547,7 +1548,7 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(k: u16, game: &mut G
     calculate_explosion_hdma_table_pointers(k, false, game);
     let kk: i32 = Mult8x8(
         ((word!(game.power_bomb_explosion_radius) as i32 & 0xff00) >> 8) as u8,
-        byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x88a286)); 0),
+        byte!(@pointer rom_ptr!(game; 0x88a286); 0),
     ) as i32
         >> 8;
     let side = explosion_window_side(false, game);
@@ -1846,19 +1847,15 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(k: u16, game: &mut Game) {
     *ram_ptr!(game; 0x59) = 74;
     let mut v1: u16 = 0;
     loop {
-        let v3: *mut u16 = ram_ptr!(game, u16; (*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *mut HdmaScrollEntry)
+        let v3: *mut u16 = ram_ptr!(game, u16; (*(rom_ptr!(game, HdmaScrollEntry; 0x88aec1))
                 .offset(v1 as isize))
             .hdma_data_table_entry as isize,);
         AddToHiLo(
             v3.offset(1),
             v3.offset(0),
             words!((
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *mut HdmaScrollEntry)
-                    .offset(v1 as isize))
-                .scroll_speed,
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *mut HdmaScrollEntry)
-                    .offset(v1 as isize))
-                .scroll_subspeed
+                (*(rom_ptr!(game, HdmaScrollEntry; 0x88aec1)).offset(v1 as isize)).scroll_speed,
+                (*(rom_ptr!(game, HdmaScrollEntry; 0x88aec1)).offset(v1 as isize)).scroll_subspeed
             )),
         );
         v1 = v1.wrapping_add(1);
@@ -1875,18 +1872,14 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(k: u16, game: &mut Game) {
     let mut v6: u16 = 3;
     loop {
         while ((r18) as i16).wrapping_sub(
-            ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *mut HdmaScrollEntry)
-                .offset(v5 as isize))
-            .top_pos) as i16,
+            ((*(rom_ptr!(game, HdmaScrollEntry; 0x88aec1)).offset(v5 as isize)).top_pos) as i16,
         ) >= 0
             && ((r18) as i16).wrapping_sub(
-                ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *mut HdmaScrollEntry)
-                    .offset((v5 as i32 + 1i32) as isize))
-                .top_pos) as i16,
+                ((*(rom_ptr!(game, HdmaScrollEntry; 0x88aec1)).offset((v5 as i32 + 1i32) as isize))
+                    .top_pos) as i16,
             ) < 0
         {
-            let mut v8: u16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1))
-                as *mut HdmaScrollEntry)
+            let mut v8: u16 = ((*(rom_ptr!(game, HdmaScrollEntry; 0x88aec1))
                 .offset((v5 as i32 + 1i32) as isize))
             .top_pos)
                 .wrapping_sub(r18);
@@ -1894,20 +1887,16 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(k: u16, game: &mut Game) {
             if v8 as i32 - 128i32 & 0x8000 == 0 {
                 *(ram_ptr!(game, u16; 0x9f00, v6 as isize)) = 127;
                 *(ram_ptr!(game, u16; 0x9f00, (v6 as i32 + 1) as isize)) =
-                    ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1))
-                        as *mut HdmaScrollEntry)
-                        .offset(v5 as isize))
-                    .hdma_data_table_entry)
+                    ((*(rom_ptr!(game, HdmaScrollEntry; 0x88aec1)).offset(v5 as isize))
+                        .hdma_data_table_entry)
                         .wrapping_add(2);
                 v6 = (v6).wrapping_add(3);
                 v8 = (r24).wrapping_sub(127);
             }
             *(ram_ptr!(game, u16; 0x9f00, v6 as isize)) = v8;
             *(ram_ptr!(game, u16; 0x9f00, (v6 as i32 + 1) as isize)) =
-                ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1))
-                    as *mut HdmaScrollEntry)
-                    .offset(v5 as isize))
-                .hdma_data_table_entry)
+                ((*(rom_ptr!(game, HdmaScrollEntry; 0x88aec1)).offset(v5 as isize))
+                    .hdma_data_table_entry)
                     .wrapping_add(2);
             r18 = (r18).wrapping_add(r24);
             v6 = (v6).wrapping_add(3);
@@ -2902,7 +2891,7 @@ macro_rules! widen_suit_pickup_beam_row {
     ($game:ident, $width_index:ident, $output_offset:ident) => {
         let mut v4: i8 = ((word!($game.suit_pickup_light_beam_pos)) as i8).wrapping_sub(
             (byte!(
-                @pointer $game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9));
+                @pointer $crate::rtl::rom_ptr!($game; 0x88e3c9);
                 $width_index as isize
             )) as i8,
         );
@@ -2913,13 +2902,13 @@ macro_rules! widen_suit_pickup_beam_row {
             v4 as u8;
         let v5: u16 = (($output_offset) as u16).wrapping_add(1);
         let mut v6: i8 = ((byte!(
-            @pointer $game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9));
+            @pointer $crate::rtl::rom_ptr!($game; 0x88e3c9);
             $width_index as isize
         )) as i8)
             .wrapping_add((byte!(@pointer ram_ptr!($game, u16; 0xdee); 1)) as i8);
         if u8::overflowing_add(
             byte!(
-                @pointer $game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9));
+                @pointer $crate::rtl::rom_ptr!($game; 0x88e3c9);
                 $width_index as isize
             ),
             byte!(@pointer ram_ptr!($game, u16; 0xdee); 1isize),

@@ -25,6 +25,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
@@ -1368,7 +1369,7 @@ pub unsafe fn Shaktool_Init(game: &mut Game) {
         0xaadea3,
         v3 as isize
     ));
-    (*E).var_F = *((game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *mut u16 as *mut u8)
+    (*E).var_F = *((rom_ptr!(game, u16; 0xaadedb) as *mut u8)
         .offset(shakto_parameter_2 as i32 as isize) as *mut u16);
     (*E).var_C = (*((&raw const g_word_AADEE9 as *const u16 as *mut u8)
         .offset(shakto_parameter_2 as i32 as isize) as *mut u16))

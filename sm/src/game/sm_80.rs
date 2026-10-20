@@ -5,6 +5,7 @@ pub use crate::game::constants::game_states::*;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::AddToHiLo;
 pub use crate::snes::registers::*;
@@ -710,8 +711,7 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
             *ram_ptr!(game; 0x64c) = -1i32 as u8;
             APU_UploadBank(
                 Load24(
-                    (game.g_rom.offset(crate::rtl::lorom_offset(0x8fe7e1)) as *mut LongPtr
-                        as *mut u8)
+                    (rom_ptr!(game, LongPtr; 0x8fe7e1) as *mut u8)
                         .offset(word!(game.music_entry) as u8 as i32 as isize)
                         as *mut LongPtr,
                 ),

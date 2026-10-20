@@ -24,6 +24,7 @@ use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
@@ -1134,25 +1135,20 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
         );
         if (v1 & 0x8000) == 0 {
             let v2: u16 = v1;
-            if *((game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *mut u8)
-                .offset(v1 as isize) as *mut u16)
-                == 0x8080
-            {
+            if *((rom_ptr!(game, u8; 0xa5ce07)).offset(v1 as isize) as *mut u16) == 0x8080 {
                 word!(game.sprite_instr_list_ptrs[(v0 >> 1)] = 0);
             } else {
                 let v3: i32 = v0 as i32 >> 1;
                 word!(
                     game.sprite_x_pos[v3],
                     wrapping_add(SignExtend8(
-                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *mut u8)
-                            .offset(v1 as isize) as u16,
+                        *(rom_ptr!(game, u8; 0xa5ce07)).offset(v1 as isize) as u16,
                     ))
                 );
                 word!(
                     game.sprite_y_pos[v3],
                     wrapping_add(SignExtend8(
-                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *mut u8)
-                            .offset((v2 as i32 + 1) as isize) as u16,
+                        *(rom_ptr!(game, u8; 0xa5ce07)).offset((v2 as i32 + 1) as isize) as u16,
                     ))
                 );
             }

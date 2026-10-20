@@ -50,6 +50,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Load24, MakePairU16, Mult8x8, RomPtr, Unreachable};
@@ -796,9 +797,8 @@ pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
 pub unsafe fn Samus_DrawEcho(j: u16, game: &mut Game) {
     let v1: i32 = j as i32 >> 1;
     let v2: i16 = (word!(game.speed_echo_ypos[v1]) as i32
-        - (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
-            .offset(word!(game.samus_pose) as isize))
-        .y_offset_to_gfx as i32
+        - (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(word!(game.samus_pose) as isize))
+            .y_offset_to_gfx as i32
         - word!(game.layer1_y_pos) as i32) as i16;
     if v2 >= 0 && v2 as i32 - 248i32 & 0x8000 != 0 {
         DrawSamusSpritemap(
@@ -825,9 +825,8 @@ pub unsafe fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
             word!(game.samus_pose) as isize
         ));
         let v2: i16 = (word!(game.speed_echo_ypos[(k >> 1)]) as i32
-            - (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
-                .offset(word!(game.samus_pose) as isize))
-            .y_offset_to_gfx as i32
+            - (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(word!(game.samus_pose) as isize))
+                .y_offset_to_gfx as i32
             - word!(game.layer1_y_pos) as i32) as i16;
         if v2 >= 0 && v2 as i32 - 248i32 & 0x8000 != 0 {
             DrawSamusSpritemap(
@@ -1108,10 +1107,8 @@ pub unsafe fn Samus_CalcSpritemapPos(k: u16, game: &mut Game) -> PairU16 {
     MakePairU16(v1.k, v1.j)
 }
 pub unsafe fn Samus_CalcSpritemapPos_Default(j: u16, game: &mut Game) -> PairU16 {
-    let v1: i32 = *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-        as *mut SamusPoseParams)
-        .offset(0))
-    .y_offset_to_gfx)
+    let v1: i32 = *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(0))
+        .y_offset_to_gfx)
         .offset((4 * j as i32) as isize) as i8 as i32;
     word!(
         game.samus_spritemap_y_pos =
@@ -2422,8 +2419,7 @@ pub unsafe fn Samus_Movement_03_SpinJumping(game: &mut Game) {
             word!(game.samus_contact_damage_index = 4);
         }
     } else if word!(game.samus_anim_frame_timer) == 1
-        && byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x90a514)); word!(game.samus_anim_frame) as isize)
-            != 0
+        && byte!(@pointer rom_ptr!(game; 0x90a514); word!(game.samus_anim_frame) as isize) != 0
     {
         QueueSfx1_Max6(0x2f, game);
     }
@@ -2634,8 +2630,7 @@ pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
     );
     let mut v2: u16 = 5;
     while word!(game.boss_id)
-        != (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90a83a))
-            as *mut DisableMinimapAndMarkBossRoomAsExploredEnt)
+        != (*(rom_ptr!(game, DisableMinimapAndMarkBossRoomAsExploredEnt; 0x90a83a))
             .offset(v2 as isize))
         .boss_id_
     {
@@ -2644,8 +2639,7 @@ pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
             return;
         }
     }
-    let mut i: i32 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90a83a))
-        as *mut DisableMinimapAndMarkBossRoomAsExploredEnt)
+    let mut i: i32 = (*(rom_ptr!(game, DisableMinimapAndMarkBossRoomAsExploredEnt; 0x90a83a))
         .offset(v2 as isize))
     .ptrs as i32;
     loop {
@@ -2789,10 +2783,7 @@ pub unsafe fn UpdateMinimapInside(
     }
     let mut v2: u16 = (2u16).wrapping_mul((v1) as u16);
     let r0 = RomPtr(
-        Load24(
-            (game.g_rom.offset(crate::rtl::lorom_offset(0x82964a)) as *mut LongPtr)
-                .offset(word!(game.area_index) as isize),
-        ),
+        Load24((rom_ptr!(game, LongPtr; 0x82964a)).offset(word!(game.area_index) as isize)),
         game,
     ) as *const u16;
     let r3 = r0.offset(32);
@@ -3983,17 +3974,13 @@ pub unsafe fn InitProjectilePositionDirection(r20: u16, game: &mut Game) -> u8 {
         direction_shots_fired = word!(game.new_projectile_direction_changed_pose) as u8 as u16;
         word!(game.new_projectile_direction_changed_pose = 0);
     } else {
-        direction_shots_fired = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-            as *mut SamusPoseParams)
-            .offset(v0 as isize))
-        .direction_shots_fired as u16;
+        direction_shots_fired = (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(v0 as isize))
+            .direction_shots_fired as u16;
         if (direction_shots_fired & 0xf0) != 0 {
             if direction_shots_fired != 16 || {
-                byte!(direction_shots_fired; 0) =
-                    (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-                        as *mut SamusPoseParams)
-                        .offset(word!(game.samus_last_different_pose) as isize))
-                    .direction_shots_fired;
+                byte!(direction_shots_fired; 0) = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
+                    .offset(word!(game.samus_last_different_pose) as isize))
+                .direction_shots_fired;
                 (direction_shots_fired & 0xf0) != 0
             } {
                 word!(game.projectile_counter, wrapping_sub(1));
@@ -4005,10 +3992,8 @@ pub unsafe fn InitProjectilePositionDirection(r20: u16, game: &mut Game) -> u8 {
     }
     let v2: i32 = r20 as i32 >> 1;
     word!(game.projectile_dir[v2] = direction_shots_fired);
-    let r22: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-        as *mut SamusPoseParams)
-        .offset(v0 as isize))
-    .y_offset_to_gfx as u16;
+    let r22: u16 =
+        (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(v0 as isize)).y_offset_to_gfx as u16;
     let v3: u16 = (2 * (word!(game.projectile_dir[v2]) as i32 & 0xf)) as u16;
     if word!(game.samus_pose) as i32 == kPose_75_FaceL_Moonwalk_AimUL as i32
         || word!(game.samus_pose) as i32 == kPose_76_FaceR_Moonwalk_AimUR as i32
@@ -4144,12 +4129,10 @@ pub unsafe fn DrawFlareAnimationComponent(k: u16, game: &mut Game) {
         v1 = word_93A225[(k >> 1) as usize];
     }
     let r22: u16 = (r18).wrapping_add(v1);
-    let r24: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-        as *mut SamusPoseParams)
+    let r24: u16 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
         .offset(word!(game.samus_pose) as isize))
     .y_offset_to_gfx as u16;
-    let mut v2: i16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-        as *mut SamusPoseParams)
+    let mut v2: i16 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
         .offset(word!(game.samus_pose) as isize))
     .direction_shots_fired as i16;
     if v2 != 255 && v2 != 16 {
@@ -4737,9 +4720,8 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
         );
         let r18: u16 = *v4.offset(0) as i8 as u16;
         let r20: u16 = *v4.offset(1) as i8 as u16;
-        r22 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
-            .offset(word!(game.samus_pose) as isize))
-        .y_offset_to_gfx as u16;
+        r22 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(word!(game.samus_pose) as isize))
+            .y_offset_to_gfx as u16;
         let v7: u16 = word!(game.oam_next_ptr);
         let v8: i16 =
             (r18 as i32 + word!(game.samus_x_pos) as i32 - word!(game.layer1_x_pos) as i32) as i16;

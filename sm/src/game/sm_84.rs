@@ -23,6 +23,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::rom_ptr;
 use crate::types::TileDrawOrder;
 use ::core::ffi::{c_char, c_long, c_void};
 use ::core::ptr::{null, null_mut};
@@ -2267,8 +2268,7 @@ pub unsafe fn PlmPreInstr_GotoLinkIfCrittersEscaped(k: u16, game: &mut Game) {
 }
 pub unsafe fn PlmInstr_SetGreyDoorPreInstr(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
     word!(
-        game.plm_pre_instrs[(k >> 1)] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x84be4b))
-            as *mut u16)
+        game.plm_pre_instrs[(k >> 1)] = *(rom_ptr!(game, u16; 0x84be4b))
             .offset((word!(game.plm_variable[(k >> 1)]) >> 1) as isize,)
     );
     plmp
@@ -3210,14 +3210,14 @@ crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &m
     PlmInstr_DrawItemFrame0 [PlmInstr_DrawItemFrame_Common(plmp, k, game)] {
         word!(
             game.plm_instruction_draw_ptr[(k >> 1)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x84e05f)) as *mut u16)
+                *(rom_ptr!(game, u16; 0x84e05f))
                     .offset((word!(game.plm_variables[(k >> 1)]) >> 1) as isize,)
         );
     };
     PlmInstr_DrawItemFrame1 [PlmInstr_DrawItemFrame_Common(plmp, k, game)] {
         word!(
             game.plm_instruction_draw_ptr[(k >> 1)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x84e077)) as *mut u16)
+                *(rom_ptr!(game, u16; 0x84e077))
                     .offset((word!(game.plm_variables[(k >> 1)]) >> 1) as isize,)
         );
     };

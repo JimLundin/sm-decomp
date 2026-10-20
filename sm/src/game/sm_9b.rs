@@ -25,6 +25,7 @@ use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::rtl::abs16;
+use crate::rtl::rom_ptr;
 use crate::rtl::words;
 use crate::rtl::SetHiLo;
 use crate::rtl::{RomPtr, Unreachable};
@@ -205,10 +206,7 @@ pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
         32 as size_t,
     );
     QueueTransferOfSamusDeathSequence(8, game);
-    word!(
-        game.game_options_screen_index =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb823)) as *mut u8).offset(0) as u16
-    );
+    word!(game.game_options_screen_index = *(rom_ptr!(game, u8; 0x9bb823)).offset(0) as u16);
     word! { game, 0; g_word_7E0DE4, g_word_7E0DE6 }
     GameState_24_SamusNoHealth_Explosion_2(game);
 }
@@ -284,24 +282,22 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion_2(game: &mut Game) -> u16 {
         }
         if word!(game.substate) == 0 || word!(game.g_word_7E0DE4) as i32 - 2i32 & 0x8000 != 0 {
             word!(
-                game.game_options_screen_index =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb823)) as *mut u8)
-                        .offset((2 * word!(game.g_word_7E0DE4) as i32) as isize,)
-                        as u16
+                game.game_options_screen_index = *(rom_ptr!(game, u8; 0x9bb823))
+                    .offset((2 * word!(game.g_word_7E0DE4) as i32) as isize,)
+                    as u16
             );
             CopyPalettesForSamusDeath(
                 (2u16).wrapping_mul(
-                    (byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x9bb823)); (2 * word!(game.g_word_7E0DE4) as i32 + 1) as isize))
+                    (byte!(@pointer rom_ptr!(game; 0x9bb823); (2 * word!(game.g_word_7E0DE4) as i32 + 1) as isize))
                         as u16,
                 ),
                 game,
             );
         } else {
             word!(
-                game.game_options_screen_index =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb823)) as *mut u8)
-                        .offset((2 * word!(game.g_word_7E0DE4) as i32) as isize,)
-                        as u16
+                game.game_options_screen_index = *(rom_ptr!(game, u8; 0x9bb823))
+                    .offset((2 * word!(game.g_word_7E0DE4) as i32) as isize,)
+                    as u16
             );
         }
     }
@@ -313,8 +309,7 @@ pub unsafe fn CancelGrappleBeamIfIncompatiblePose(game: &mut Game) {
         if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff
             && word!(game.grapple_beam_function) as i32 + 0x3882 & 0x8000 != 0
         {
-            let mut v0: i16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-                as *mut SamusPoseParams)
+            let mut v0: i16 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
                 .offset(word!(game.samus_pose) as isize))
             .direction_shots_fired as i16;
             if (v0 as u16 & 0xf0) == 0 {
@@ -488,10 +483,7 @@ pub unsafe fn HandleConnectingGrapple_StuckInPlace(game: &mut Game) {
 pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> u8 {
     let mut v0: u16 = 7;
     while word!(game.grapple_beam_end_angle16)
-        != (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc43e))
-            as *mut GrappleBeamSpecialAngles)
-            .offset(v0 as isize))
-        .field_0
+        != (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_0
     {
         v0 = v0.wrapping_sub(1);
         if (v0 & 0x8000) != 0 {
@@ -499,32 +491,22 @@ pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> u8 {
         }
     }
     word!(
-        game.samus_new_pose_interrupted = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc43e))
-            as *mut GrappleBeamSpecialAngles)
-            .offset(v0 as isize))
-        .field_2
+        game.samus_new_pose_interrupted =
+            (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_2
     );
     word!(
         game.samus_x_pos = (word!(game.grapple_beam_end_x_pos)).wrapping_add(
-            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc43e))
-                as *mut GrappleBeamSpecialAngles)
-                .offset(v0 as isize))
-            .field_4,
+            (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_4,
         )
     );
     word!(
         game.samus_y_pos = (word!(game.grapple_beam_end_y_pos)).wrapping_add(
-            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc43e))
-                as *mut GrappleBeamSpecialAngles)
-                .offset(v0 as isize))
-            .field_6,
+            (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_6,
         )
     );
     word!(
-        game.grapple_beam_function = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc43e))
-            as *mut GrappleBeamSpecialAngles)
-            .offset(v0 as isize))
-        .field_8
+        game.grapple_beam_function =
+            (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_8
     );
     word! { game, 0; samus_special_transgfx_index, slow_grabble_scrolling_flag }
     let v2: i16 =
@@ -715,14 +697,14 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
                     word!(game.samus_anim_frame_timer = 8);
                     word!(game.samus_anim_frame = 64);
                 }
-                v1 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)); *(ram_ptr!(game, u16; 0xcfc) as *mut u8).offset(1) as isize)
+                v1 = byte!(@pointer rom_ptr!(game; 0x9bc1c2); *(ram_ptr!(game, u16; 0xcfc) as *mut u8).offset(1) as isize)
                     as u16;
                 false
             })
     };
     if start_grapple_animation {
         word!(game.samus_anim_frame_timer = 15);
-        v1 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)); *(ram_ptr!(game, u16; 0xcfc) as *mut u8).offset(1) as isize)
+        v1 = byte!(@pointer rom_ptr!(game; 0x9bc1c2); *(ram_ptr!(game, u16; 0xcfc) as *mut u8).offset(1) as isize)
             as u16;
         word!(game.samus_anim_frame = v1);
     }
@@ -806,8 +788,7 @@ macro_rules! restore_grapple_start_positions {
 }
 
 pub unsafe fn GrappleBeamFunc_BF1B(game: &mut Game) {
-    let r22: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-        as *mut SamusPoseParams)
+    let r22: u16 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
         .offset(word!(game.samus_pose) as isize))
     .y_offset_to_gfx as u16;
     let v0: u16 = (2u16).wrapping_mul(word!(game.grapple_beam_direction));
@@ -876,13 +857,13 @@ pub unsafe fn HandleGrappleBeamFlare(game: &mut Game) {
         }
         if (word!(game.flare_animation_timer, wrapping_sub(1), reread) & 0x8000) != 0 {
             let mut v0: u16 = word!(game.flare_animation_frame, wrapping_add(1), reread);
-            if byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x90c487)); word!(game.flare_animation_frame) as isize)
+            if byte!(@pointer rom_ptr!(game; 0x90c487); word!(game.flare_animation_frame) as isize)
                 == 254
             {
                 word!(
                     game.flare_animation_frame,
                     wrapping_sub(
-                        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90c487)) as *mut u8)
+                        (*(rom_ptr!(game, u8; 0x90c487))
                             .offset(
                                 ((word!(game.flare_animation_frame)).wrapping_add(1)) as isize,
                             )) as u16
@@ -891,9 +872,8 @@ pub unsafe fn HandleGrappleBeamFlare(game: &mut Game) {
                 v0 = word!(game.flare_animation_frame);
             }
             word!(
-                game.flare_animation_timer = *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c487))
-                    as *mut u8)
-                    .offset(v0 as isize) as u16
+                game.flare_animation_timer =
+                    *(rom_ptr!(game, u8; 0x90c487)).offset(v0 as isize) as u16
             );
         }
         let mut r22: u16 = 0;
@@ -1008,12 +988,10 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
         v0 = CheckBannedDraygonGrappleDirs(word!(game.samus_pose), game) as i32;
         r22 = 6;
     } else {
-        r22 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
-            .offset(word!(game.samus_pose) as isize))
-        .y_offset_to_gfx as u16;
-        v0 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
-            .offset(word!(game.samus_pose) as isize))
-        .direction_shots_fired as i32;
+        r22 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(word!(game.samus_pose) as isize))
+            .y_offset_to_gfx as u16;
+        v0 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(word!(game.samus_pose) as isize))
+            .direction_shots_fired as i32;
         if (v0 & 0xf0) != 0 {
             word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
             return;
@@ -1230,7 +1208,7 @@ pub unsafe fn GrappleBeam_Func2(game: &mut Game) {
         if word!(game.samus_pose) as i32 == kPose_B3_FaceL_Grapple_Air as i32 {
             current_block = 13151459208701579741;
         } else if word!(game.samus_y_radius) as i32 - 17i32 & 0x8000 != 0 {
-            if ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
+            if ((*(rom_ptr!(game, SamusPoseParams; 0x91b629))
                 .offset(word!(game.samus_pose) as isize))
             .direction_shots_fired
                 & 0xf0)
@@ -1243,20 +1221,16 @@ pub unsafe fn GrappleBeam_Func2(game: &mut Game) {
                 }
             } else {
                 word!(
-                    game.samus_new_pose_transitional =
-                        *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc9c4)) as *mut u8).offset(
-                            *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-                                as *mut SamusPoseParams)
-                                .offset(0))
+                    game.samus_new_pose_transitional = *(rom_ptr!(game, u8; 0x9bc9c4)).offset(
+                        *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(0))
                             .direction_shots_fired)
-                                .offset((8 * word!(game.samus_pose) as i32) as isize,)
-                                as isize,
-                        ) as u16
+                            .offset((8 * word!(game.samus_pose) as i32) as isize,)
+                            as isize,
+                    ) as u16
                 );
             }
             current_block = 8968942556654489080;
-        } else if ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-            as *mut SamusPoseParams)
+        } else if ((*(rom_ptr!(game, SamusPoseParams; 0x91b629))
             .offset(word!(game.samus_pose) as isize))
         .direction_shots_fired
             & 0xf0)
@@ -1269,15 +1243,12 @@ pub unsafe fn GrappleBeam_Func2(game: &mut Game) {
             }
         } else {
             word!(
-                game.samus_new_pose_transitional =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc9ba)) as *mut u8).offset(
-                        *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-                            as *mut SamusPoseParams)
-                            .offset(0))
+                game.samus_new_pose_transitional = *(rom_ptr!(game, u8; 0x9bc9ba)).offset(
+                    *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(0))
                         .direction_shots_fired)
-                            .offset((8 * word!(game.samus_pose) as i32) as isize,)
-                            as isize,
-                    ) as u16
+                        .offset((8 * word!(game.samus_pose) as i32) as isize,)
+                        as isize,
+                ) as u16
             );
             current_block = 8968942556654489080;
         }

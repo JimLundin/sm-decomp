@@ -64,6 +64,17 @@ macro_rules! register_writes {
 }
 pub(crate) use register_writes;
 
+/// Construct a fixed LoROM pointer at the caller, before any later offsets.
+macro_rules! rom_ptr {
+    ($game:ident; $address:literal) => {
+        $game.g_rom.offset($crate::rtl::lorom_offset($address))
+    };
+    ($game:ident, $target:ty; $address:literal) => {
+        $game.g_rom.offset($crate::rtl::lorom_offset($address)) as *mut $target
+    };
+}
+pub(crate) use rom_ptr;
+
 /// Read a word from a fixed LoROM table, retaining pointer-before-index order.
 macro_rules! rom_table_word {
     ($game:ident, $address:literal, $index:expr $(,)?) => {
