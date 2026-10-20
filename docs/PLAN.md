@@ -20,6 +20,42 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared projectile trails (2026-10-20)
+
+Four OAM drawing paths and two instruction loops in HandleProjectileTrails now
+share two named local macros. The complete active/frozen, left/right family
+shrinks from 171 to 107 lines: **64 net lines**, including execution probes.
+The descending slot scan, single freeze read, live OAM reread, partial full-word
+X store before Y validation, and active/frozen timer-gate order remain. Left
+instruction cursors retain i32 addition; right cursors retain wrapping u16.
+Caller-side macros avoid an additional Game borrow around retained raw pointers.
+
+Independent actual-Rust original/replacement checks pass **5343 cases**, using
+Game, RAM accessors, the ROM reader and all three real instruction callbacks.
+They compare complete RAM, failure/ROM state and ordered callback/read traces,
+including timer/cursor boundaries and OAM/trail-array overlaps. All five probes
+execute in these finite native comparisons; they are not movie coverage or a
+general unsafe-aliasing proof. Final source and relevant dependencies are bound
+to the tested bodies.
+
+Formatting, normal release (24.80s frozen; 25.77s main), diff check and progress
+pass. Source-checked any% passes **129712/0** (128.58s), and the extended Speed
+Booster/equipment/death route passes **151151/0** (173.20s), native exits 0.
+The 768-input extension uses ordinary movement/fire inputs and reaches health
+depletion. It supplies 12 frozen-left and 12 frozen-right drawing-branch calls;
+the full route also supplies 2740 active-left calls and 126345 routine calls.
+Active-right drawing has native comparison coverage but no demonstrated movie
+hit. The complete routine remains shared; this branch gap is not claimed closed.
+Full-boot and checkpoint-resumed ending states are byte-identical. Source,
+inputs, normal library and DLL stay fixed during both final replays.
+
+Committed Rust is **113384 lines**, leaving **13385 further lines** for the
+under-100000 target. Cast-containing lines fall seven; other counters stay
+unchanged. The unrelated shader edit remains separate. Temporary drafts/checks
+are under `%TEMP%/sm-projectile-trails-f26ce93e` and `sm-trails-root-f26ce93e`;
+no inputs or checkpoints are committed. This completes a repeated algorithm,
+not the remaining reduction budget.
+
 ## Shared scrolling tile-buffer construction (2026-10-20)
 
 The level/background row and column builders now share their source lookup,
@@ -732,7 +768,9 @@ keep the fixed target visible instead of claiming success from small cleanups.
   | Weapon firing and slot selection | Ten entries / six helpers | 99 |
   | Projectile-trail advancement/drawing | One entry / two macros | 77 |
 
-  Keep these parked under the substantial-reduction priority. Only the
+  The completed projectile-trail section above supersedes that draft's parked
+  status; its final price including probes is 64 lines. Keep the other drafts
+  parked under the substantial-reduction priority. Only the
   Draygon draft received a metadata compile; none has behavioral validation
   or replay results. The simpler 103-site arithmetic subset also grows three
   lines. Do not repeat these projections or add overlapping subsets together.

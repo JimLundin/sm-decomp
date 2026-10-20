@@ -3653,175 +3653,111 @@ crate::game::address_dispatch! {
         9483699 => ProjInstr_MoveLeftProjectileTrailUp;
     }
 }
-pub unsafe fn HandleProjectileTrails(game: &mut Game) {
-    let mut v11 = null_mut::<OamEnt>();
-    let mut v23 = null_mut::<OamEnt>();
-    let mut v29 = null_mut::<OamEnt>();
-    let mut v34 = null_mut::<OamEnt>();
-    let mut v6: u16 = 0;
-    let mut v18: u16 = 0;
-    if word!(game.time_is_frozen_flag) == 0 {
-        let mut skip_first_trail: bool;
-        let mut v0: u16 = 34;
-        loop {
-            let mut v1: i32 = v0 as i32 >> 1;
-            let mut v2: u16 = word!(game.projectiletrail_left_instr_timer[v1]);
-            if v2 != 0 {
-                let v3: u16 = (v2).wrapping_sub(1);
-                word!(game.projectiletrail_left_instr_timer[v1] = v3);
-                skip_first_trail = !(v3 != 0)
-                    && ({
-                        let mut i: i32 = word!(game.projectiletrail_left_instr_list_ptr[v1]) as i32;
-                        loop {
-                            let v5 = RomPtr_90(i as u16, game) as *const u16;
-                            v6 = *v5;
-                            if (*v5 & 0x8000) == 0 {
-                                break;
-                            }
-                            CallProjInstr(((v6) as u32) | (0x900000u32), v0, game);
-                            i += 2;
-                        }
-                        let mut v7: i32 = v0 as i32 >> 1;
-                        word!(game.projectiletrail_left_instr_timer[v7] = v6);
-                        !(v6 != 0)
-                            || ({
-                                word!(
-                                    game.projectiletrail_left_tile_and_attribs[v7] =
-                                        *(RomPtr_90(i as u16, game) as *mut u16).offset(1)
-                                );
-                                word!(
-                                    game.projectiletrail_left_instr_list_ptr[v7] = (i + 4) as u16
-                                );
-                                false
-                            })
-                    });
-                if skip_first_trail {
+macro_rules! advance_projectile_trail {
+    ($game:ident, $slot:ident; $timer:ident, $instructions:ident, $tile:ident;
+     $cursor:ident: $cursor_type:ty, $next:expr, $after_frame:expr) => {{
+        let index = $slot as i32 >> 1;
+        let timer = word!($game.$timer[index]);
+        if timer == 0 {
+            false
+        } else {
+            let remaining = timer.wrapping_sub(1);
+            word!($game.$timer[index] = remaining);
+            if remaining != 0 {
+                true
+            } else {
+                let mut $cursor: $cursor_type = word!($game.$instructions[index]) as $cursor_type;
+                let duration;
+                loop {
+                    let instruction = RomPtr_90($cursor as u16, $game) as *const u16;
+                    let value = *instruction;
+                    if *instruction & 0x8000 == 0 {
+                        duration = value;
+                        break;
+                    }
+                    CallProjInstr(value as u32 | 0x900000, $slot, $game);
+                    $cursor = $next;
+                }
+                let index = $slot as i32 >> 1;
+                word!($game.$timer[index] = duration);
+                if duration == 0 {
+                    false
                 } else {
-                    let v8: u16 = word!(game.oam_next_ptr);
-                    if ((word!(game.oam_next_ptr)) as i16).wrapping_sub(512) < 0 {
-                        let v9: i32 = v0 as i32 >> 1;
-                        let mut v10: i16 = ((word!(game.projectiletrail_left_x_pos[v9])) as i16)
-                            .wrapping_sub((word!(game.layer1_x_pos)) as i16);
-                        if (v10 as u16 & 0xff00) == 0 {
-                            v11 = gOamEnt(word!(game.oam_next_ptr) as i32, game);
-                            *(&raw mut (*v11).xcoord as *mut u16) = v10 as u16;
-                            let mut v12: i16 = ((word!(game.projectiletrail_left_y_pos[v9]))
-                                as i16)
-                                .wrapping_sub((word!(game.layer1_y_pos)) as i16);
-                            if (v12 as u16 & 0xff00) == 0 {
-                                *(&raw mut (*v11).ycoord as *mut u16) = v12 as u16;
-                                *(&raw mut (*v11).charnum as *mut u16) =
-                                    word!(game.projectiletrail_left_tile_and_attribs[v9]);
-                                word!(game.oam_next_ptr = (v8).wrapping_add(4));
-                            }
-                        }
-                    }
+                    word!(
+                        $game.$tile[index] =
+                            *(RomPtr_90($cursor as u16, $game) as *mut u16).offset(1)
+                    );
+                    word!($game.$instructions[index] = $after_frame);
+                    true
                 }
-            }
-            let v13: i32 = v0 as i32 >> 1;
-            let v14: u16 = word!(game.projectiletrail_right_instr_timer[v13]);
-            if v14 != 0 {
-                let v15: u16 = (v14).wrapping_sub(1);
-                word!(game.projectiletrail_right_instr_timer[v13] = v15);
-                let draw_second_trail: bool = (v15 != 0)
-                    || ({
-                        let mut j: u16 = word!(game.projectiletrail_right_instr_list_ptr[v13]);
-                        loop {
-                            let v17 = RomPtr_90(j, game) as *const u16;
-                            v18 = *v17;
-                            if (*v17 & 0x8000) == 0 {
-                                break;
-                            }
-                            CallProjInstr(((v18) as u32) | (0x900000u32), v0, game);
-                            j = (j).wrapping_add(2);
-                        }
-                        let mut v19: i32 = 0;
-                        v19 = v0 as i32 >> 1;
-                        word!(game.projectiletrail_right_instr_timer[v19] = v18);
-                        (v18 != 0)
-                            && ({
-                                word!(
-                                    game.projectiletrail_right_tile_and_attribs[v19] =
-                                        *(RomPtr_90(j, game) as *mut u16).offset(1)
-                                );
-                                word!(
-                                    game.projectiletrail_right_instr_list_ptr[v19] =
-                                        (j).wrapping_add(4)
-                                );
-                                true
-                            })
-                    });
-                if draw_second_trail {
-                    let v20: u16 = word!(game.oam_next_ptr);
-                    if ((word!(game.oam_next_ptr)) as i16).wrapping_sub(512) < 0 {
-                        let v21: i32 = v0 as i32 >> 1;
-                        let mut v22: i16 = ((word!(game.projectiletrail_right_x_pos[v21])) as i16)
-                            .wrapping_sub((word!(game.layer1_x_pos)) as i16);
-                        if (v22 as u16 & 0xff00) == 0 {
-                            v23 = gOamEnt(word!(game.oam_next_ptr) as i32, game);
-                            *(&raw mut (*v23).xcoord as *mut u16) = v22 as u16;
-                            let mut v24: i16 = ((word!(game.projectiletrail_right_y_pos[v21]))
-                                as i16)
-                                .wrapping_sub((word!(game.layer1_y_pos)) as i16);
-                            if (v24 as u16 & 0xff00) == 0 {
-                                *(&raw mut (*v23).ycoord as *mut u16) = v24 as u16;
-                                *(&raw mut (*v23).charnum as *mut u16) =
-                                    word!(game.projectiletrail_right_tile_and_attribs[v21]);
-                                word!(game.oam_next_ptr = (v20).wrapping_add(4));
-                            }
-                        }
-                    }
-                }
-            }
-            v0 = (v0).wrapping_sub(2);
-            if (v0 & 0x8000) != 0 {
-                return;
             }
         }
-    }
-    let mut k: u16 = 34;
-    while (k & 0x8000) == 0 {
-        let v26: u16 = word!(game.oam_next_ptr);
-        if ((word!(game.oam_next_ptr)) as i16).wrapping_sub(512) < 0 {
-            let v27: i32 = k as i32 >> 1;
-            if word!(game.projectiletrail_left_instr_timer[v27]) != 0 {
-                let mut v28: i16 = ((word!(game.projectiletrail_left_x_pos[v27])) as i16)
-                    .wrapping_sub((word!(game.layer1_x_pos)) as i16);
-                if (v28 as u16 & 0xff00) == 0 {
-                    v29 = gOamEnt(word!(game.oam_next_ptr) as i32, game);
-                    *(&raw mut (*v29).xcoord as *mut u16) = v28 as u16;
-                    let mut v30: i16 = ((word!(game.projectiletrail_left_y_pos[v27])) as i16)
-                        .wrapping_sub((word!(game.layer1_y_pos)) as i16);
-                    if (v30 as u16 & 0xff00) == 0 {
-                        *(&raw mut (*v29).ycoord as *mut u16) = v30 as u16;
-                        *(&raw mut (*v29).charnum as *mut u16) =
-                            word!(game.projectiletrail_left_tile_and_attribs[v27]);
-                        word!(game.oam_next_ptr = (v26).wrapping_add(4));
+    }};
+}
+macro_rules! draw_projectile_trail {
+    ($game:ident, $slot:ident, $enabled:expr; $frozen:ident, $side:literal;
+     $x:ident, $y:ident, $tile:ident) => {{
+        let saved_oam = word!($game.oam_next_ptr);
+        if (word!($game.oam_next_ptr) as i16).wrapping_sub(512) < 0 {
+            let index = $slot as i32 >> 1;
+            if $enabled {
+                crate::verify_probe::hit(if $frozen {
+                    concat!("trails.draw.frozen_", $side)
+                } else {
+                    concat!("trails.draw.active_", $side)
+                });
+                let x =
+                    (word!($game.$x[index]) as i16).wrapping_sub(word!($game.layer1_x_pos) as i16);
+                if x as u16 & 0xff00 == 0 {
+                    let entry = gOamEnt(word!($game.oam_next_ptr) as i32, $game);
+                    *(&raw mut (*entry).xcoord as *mut u16) = x as u16;
+                    let y = (word!($game.$y[index]) as i16)
+                        .wrapping_sub(word!($game.layer1_y_pos) as i16);
+                    if y as u16 & 0xff00 == 0 {
+                        *(&raw mut (*entry).ycoord as *mut u16) = y as u16;
+                        *(&raw mut (*entry).charnum as *mut u16) = word!($game.$tile[index]);
+                        word!($game.oam_next_ptr = saved_oam.wrapping_add(4));
                     }
                 }
             }
         }
-        let v31: u16 = word!(game.oam_next_ptr);
-        if ((word!(game.oam_next_ptr)) as i16).wrapping_sub(512) < 0 {
-            let v32: i32 = k as i32 >> 1;
-            if word!(game.projectiletrail_right_instr_timer[v32]) != 0 {
-                let mut v33: i16 = ((word!(game.projectiletrail_right_x_pos[v32])) as i16)
-                    .wrapping_sub((word!(game.layer1_x_pos)) as i16);
-                if (v33 as u16 & 0xff00) == 0 {
-                    v34 = gOamEnt(word!(game.oam_next_ptr) as i32, game);
-                    *(&raw mut (*v34).xcoord as *mut u16) = v33 as u16;
-                    let mut v35: i16 = ((word!(game.projectiletrail_right_y_pos[v32])) as i16)
-                        .wrapping_sub((word!(game.layer1_y_pos)) as i16);
-                    if (v35 as u16 & 0xff00) == 0 {
-                        *(&raw mut (*v34).ycoord as *mut u16) = v35 as u16;
-                        *(&raw mut (*v34).charnum as *mut u16) =
-                            word!(game.projectiletrail_right_tile_and_attribs[v32]);
-                        word!(game.oam_next_ptr = (v31).wrapping_add(4));
-                    }
-                }
-            }
+    }};
+}
+pub unsafe fn HandleProjectileTrails(game: &mut Game) {
+    crate::verify_probe::hit("trails.update");
+    let frozen = word!(game.time_is_frozen_flag) != 0;
+    let mut slot: u16 = 34;
+    loop {
+        if frozen
+            || advance_projectile_trail!(game, slot;
+            projectiletrail_left_instr_timer, projectiletrail_left_instr_list_ptr,
+            projectiletrail_left_tile_and_attribs;
+            cursor: i32, cursor + 2, (cursor + 4) as u16)
+        {
+            draw_projectile_trail!(game, slot,
+                !frozen || word!(game.projectiletrail_left_instr_timer[(slot as i32 >> 1)]) != 0;
+                frozen, "left";
+                projectiletrail_left_x_pos,
+                projectiletrail_left_y_pos,
+                projectiletrail_left_tile_and_attribs);
         }
-        k = (k).wrapping_sub(2);
+        if frozen
+            || advance_projectile_trail!(game, slot;
+            projectiletrail_right_instr_timer, projectiletrail_right_instr_list_ptr,
+            projectiletrail_right_tile_and_attribs;
+            cursor: u16, cursor.wrapping_add(2), cursor.wrapping_add(4))
+        {
+            draw_projectile_trail!(game, slot,
+                !frozen || word!(game.projectiletrail_right_instr_timer[(slot as i32 >> 1)]) != 0;
+                frozen, "right";
+                projectiletrail_right_x_pos,
+                projectiletrail_right_y_pos,
+                projectiletrail_right_tile_and_attribs);
+        }
+        slot = slot.wrapping_sub(2);
+        if slot & 0x8000 != 0 {
+            return;
+        }
     }
 }
 pub unsafe fn HudSelectionHandler_NothingOrPowerBombs(game: &mut Game) {
