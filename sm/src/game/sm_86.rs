@@ -14,7 +14,9 @@ use crate::game::sm_91::{
     Samus_DealDamage, Samus_RestoreHealth, Samus_RestoreMissiles, Samus_RestorePowerBombs,
     Samus_RestoreSuperMissiles,
 };
-use crate::game::sm_94::{kSinCosTable8bit_Sext, square_slope_occupied, square_slope_single_block};
+use crate::game::sm_94::{
+    kSinCosTable8bit_Sext, scale_sine_word, square_slope_occupied, square_slope_single_block,
+};
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CalculateAngleOfSamusFromEproj, CallEnemyAi, ConvertAngleToXy,
     SignExtend8, SpawnEnemyDrops, SuitDamageDivision,
@@ -1770,34 +1772,19 @@ pub unsafe fn Eproj_PhantomFireballs_Func1(j: u16, a: u16) -> Point16U {
     let r24: u16 = a;
     let r26: u16 = j;
     let mut v2: u16 = if j as i32 - 128i32 & 0x8000 != 0 {
-        Eproj_PhantomFireballs_Func2((2 * j as i32) as u16, r24)
+        scale_sine_word((2 * j as i32) as u16, r24)
     } else {
-        -(Eproj_PhantomFireballs_Func2((2i32 * (j as i32 + 0x80i32) as u8 as i32) as u16, r24)
-            as i32) as u16
+        -(scale_sine_word((2i32 * (j as i32 + 0x80i32) as u8 as i32) as u16, r24) as i32) as u16
     };
     let r20: u16 = v2;
     let mut v3: i16 = (r26 as i32 - 64i32) as u8 as i16;
     let mut v4: u16 = if v3 as i32 - 128i32 & 0x8000 != 0 {
-        Eproj_PhantomFireballs_Func2((2 * v3 as i32) as u16, r24)
+        scale_sine_word((2 * v3 as i32) as u16, r24)
     } else {
-        -(Eproj_PhantomFireballs_Func2((2i32 * (v3 as i32 + 0x80i32) as u8 as i32) as u16, r24)
-            as i32) as u16
+        -(scale_sine_word((2i32 * (v3 as i32 + 0x80i32) as u8 as i32) as u16, r24) as i32) as u16
     };
     let r22: u16 = v4;
     Point16U { x: r20, y: r22 }
-}
-pub unsafe fn Eproj_PhantomFireballs_Func2(k: u16, r24: u16) -> u16 {
-    let r18: u16 = (Mult8x8(
-        byte!(@pointer (&raw const kSinCosTable8bit_Sext as *const i16).offset(64); k as i32 as isize),
-        r24 as u8,
-    ) >> 8);
-    (r18 as i32
-        + Mult8x8(
-            *((&raw const kSinCosTable8bit_Sext as *const i16).offset(64) as *mut u8)
-                .offset(k as i32 as isize)
-                .offset(1),
-            r24 as u8,
-        ) as i32) as u16
 }
 unsafe fn EprojInit_RocksKraidSpits(j: u16, game: &mut Game) {
     let enemy_index = word!(game.cur_enemy_index);

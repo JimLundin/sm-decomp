@@ -278,7 +278,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **10,039-line** gap; parked small drafts are not
+   replacement yet funds the **9,968-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -336,6 +336,14 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    All 16,414 constructed full-RAM comparisons pass, including persistent
    updates and wrapping boundaries. Full integration and observed branch
    limits are below. This retires about 30% of the old family, not a full bank.
+
+   The complete byte-partial-product cohort removes **71 lines
+   (110,038 -> 109,967)**: six decomposed products become native multiplication,
+   and two duplicate sine-scaling helpers become one with eight callers.
+   Explicit magnitude/sign, selected product byte and low-amplitude truncation
+   preserve the original arithmetic. Independent actual-function/RAM checks,
+   normal release and full any%/Speed Booster integration pass. This is a
+   completed repeated algorithm, with all helper/import/caller costs included.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -484,9 +492,11 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full subsystem integration: moving platforms over 63b0ffe4, including
-beam firing, passes any% **129712/0** and Speed Booster **148406/0**, with normal rendering,
-audio and comparisons. Platform probes cover timed initialization, triggering,
+Latest full integration: byte-partial-product sharing over 092be7bd passes
+any% **129712/0** and Speed Booster **148406/0**, with normal rendering, audio
+and comparisons. Its changed arithmetic has independent actual-function
+coverage; these replays do not establish execution of the changed HDMA paths.
+Earlier platform probes cover timed initialization, triggering,
 closing and stage advancement. Required opening/carry and non-timed movement/
 activation probes have zero hits: those coverage checks fail despite zero
 differing frames. Those paths have constructed old/new Rust comparisons,
@@ -553,10 +563,11 @@ Rust lines 112265. The unrelated 83-line shader draft is excluded from the
 committed baseline and budget.
 
 After the Japanese correction, local bindings, intro pages, enemy callback
-imports, ordered stores, PNG texture loading, beam firing and moving platforms,
-maintained Rust is **110,038**, leaving **10,039** to reach 99,999. Counters:
+imports, ordered stores, PNG texture loading, beam firing, moving platforms
+and byte-partial-product sharing, maintained Rust is **109,967**, leaving
+**9,968** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 5191; cast lines 8679. The unrelated 83-line shader draft
+unsafe functions 5190; cast lines 8662. The unrelated 83-line shader draft
 remains excluded; working-tree counts are not the committed baseline.
 Continue item 2's remaining-responsibility comparison. The complete hopping
 draft remains parked; neither it nor the completed small migrations establish

@@ -3175,8 +3175,19 @@ pub unsafe fn HdmaobjInstr_E4BD(k: u16, hdp: *const u8, game: &mut Game) -> *con
     word! { game, 0; hdma_object_C[v6], hdma_object_D[v6] }
     hdp
 }
+// Keep bits 16..23 of the magnitude product before restoring the sine sign.
+fn hdma_wave_offset(sample: i16, amplitude_low: u8, amplitude_high: u8) -> u16 {
+    let amplitude = u16::from_le_bytes([amplitude_low, amplitude_high]);
+    let product = u32::from(sample.unsigned_abs()) * u32::from(amplitude);
+    let offset = (product >> 16) as u8 as u16;
+    if sample < 0 {
+        offset.wrapping_neg()
+    } else {
+        offset
+    }
+}
+
 pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
-    let mut v8: u16 = 0;
     let mut r28: u16 = 0;
     let mut r30: u16 = 0;
     if (*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 != 0 {
@@ -3201,60 +3212,18 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
         let mut r20: u16 = word!(game.hdma_object_A[v2]);
         let mut v4: u16 = 0;
         loop {
-            let v11: u16 = v4;
             let v5: u16 = r20;
             let v6: i32 = r20 as i32 >> 1;
-            let mut v7: i16 = kSinCosTable8bit_Sext[(v6 + 64) as usize];
-            if v7 < 0 {
-                let mut r18: u16 = -(v7 as i32) as u16;
-                let mut r22: u16 = (Mult8x8(
-                    -(v7 as i8 as i32) as u8,
-                    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D as u8,
-                ) >> 8);
-                r22 = (r22).wrapping_add(Mult8x8(
-                    byte!(r18; 1),
-                    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D as u8,
-                ));
-                let r24: u16 = Mult8x8(
-                    r18 as u8,
-                    byte!((*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D; 1),
-                );
-                let mult: u8 = Mult8x8(
-                    byte!(r18; 1),
-                    byte!((*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D; 1),
-                ) as u8;
-                r22 = (r22).wrapping_add(r24);
-                r18 = ((r22 as i32 + ((mult as i32) << 8) & 0xff00) >> 8) as u16;
-                r20 = (r28 as i32 + v5 as i32 & 0x1ff) as u16;
-                v8 = v11;
-                *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(v11 as i32 as isize)
-                    as *mut u16) = (word!(game.reg_BG2HOFS)).wrapping_sub(r18);
-            } else {
-                let mut r18_0: u16 = kSinCosTable8bit_Sext[(v6 + 64) as usize] as u16;
-                let mut r22_0: u16 = (Mult8x8(
-                    v7 as u8,
-                    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D as u8,
-                ) >> 8);
-                r22_0 = (r22_0).wrapping_add(Mult8x8(
-                    byte!(r18_0; 1),
-                    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D as u8,
-                ));
-                let r24_0: u16 = Mult8x8(
-                    r18_0 as u8,
-                    byte!((*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D; 1),
-                );
-                let mult_0: u8 = Mult8x8(
-                    byte!(r18_0; 1),
-                    byte!((*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D; 1),
-                ) as u8;
-                r22_0 = (r22_0).wrapping_add(r24_0);
-                r18_0 = ((r22_0 as i32 + ((mult_0 as i32) << 8) & 0xff00) >> 8) as u16;
-                r20 = (r28 as i32 + v5 as i32 & 0x1ff) as u16;
-                v8 = v11;
-                *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(v11 as i32 as isize)
-                    as *mut u16) = (r18_0).wrapping_add(word!(game.reg_BG2HOFS));
-            }
-            v4 = (v8).wrapping_add(2);
+            let sample = kSinCosTable8bit_Sext[(v6 + 64) as usize];
+            let offset = hdma_wave_offset(
+                sample,
+                (*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D as u8,
+                byte!((*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D; 1),
+            );
+            r20 = (r28 as i32 + v5 as i32 & 0x1ff) as u16;
+            *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(v4 as i32 as isize) as *mut u16) =
+                word!(game.reg_BG2HOFS).wrapping_add(offset);
+            v4 = v4.wrapping_add(2);
             if (((v4) as i16).wrapping_sub((r30) as i16) >= 0) {
                 break;
             }
@@ -3587,7 +3556,6 @@ pub unsafe fn HdmaobjInstr_EC9F_ClearVars(k: u16, hdp: *const u8, game: &mut Gam
     hdp
 }
 pub unsafe fn HdmaobjPreInstr_ECB6(k: u16, game: &mut Game) {
-    let mut v8: u16 = 0;
     if word!(game.g_word_7E0D9C) != 0 {
         let r28: u16 = 4;
         let n: i32 = 128;
@@ -3600,36 +3568,13 @@ pub unsafe fn HdmaobjPreInstr_ECB6(k: u16, game: &mut Game) {
         let mut r20: u16 = word!(game.hdma_object_A[v3]);
         let mut v4: u16 = 0;
         loop {
-            let v10: u16 = v4;
             let v5: u16 = r20;
             let v6: i32 = r20 as i32 >> 1;
-            let mut v7: i16 = kSinCosTable8bit_Sext[(v6 + 64) as usize];
-            if v7 < 0 {
-                let mut r18: u16 = -(v7 as i32) as u16;
-                let mut r22: u16 = (Mult8x8(-(v7 as i8 as i32) as u8, *ram_ptr!(game; 0xd9e)) >> 8);
-                r22 = (r22).wrapping_add(Mult8x8(byte!(r18; 1), *ram_ptr!(game; 0xd9e)));
-                let r24: u16 = Mult8x8(r18 as u8, *ram_ptr!(game; 0xd9f));
-                let mult: u8 = Mult8x8(byte!(r18; 1), *ram_ptr!(game; 0xd9f)) as u8;
-                r22 = (r22).wrapping_add(r24);
-                r18 = ((r22 as i32 + ((mult as i32) << 8) & 0xff00) >> 8) as u16;
-                r20 = (r28 as i32 + v5 as i32 & 0x1ff) as u16;
-                v8 = v10;
-                word!(game.hdma_table_1[(v10 >> 1)] = (word!(game.reg_BG3HOFS)).wrapping_sub(r18));
-            } else {
-                let mut r18_0: u16 = kSinCosTable8bit_Sext[(v6 + 64) as usize] as u16;
-                let mut r22_0: u16 = (Mult8x8(v7 as u8, *ram_ptr!(game; 0xd9e)) >> 8);
-                r22_0 = (r22_0).wrapping_add(Mult8x8(byte!(r18_0; 1), *ram_ptr!(game; 0xd9e)));
-                let r24_0: u16 = Mult8x8(r18_0 as u8, *ram_ptr!(game; 0xd9f));
-                let mult_0: u8 = Mult8x8(byte!(r18_0; 1), *ram_ptr!(game; 0xd9f)) as u8;
-                r22_0 = (r22_0).wrapping_add(r24_0);
-                r18_0 = ((r22_0 as i32 + ((mult_0 as i32) << 8) & 0xff00) >> 8) as u16;
-                r20 = (r28 as i32 + v5 as i32 & 0x1ff) as u16;
-                v8 = v10;
-                word!(
-                    game.hdma_table_1[(v10 >> 1)] = (r18_0).wrapping_add(word!(game.reg_BG3HOFS))
-                );
-            }
-            v4 = (v8).wrapping_add(2);
+            let sample = kSinCosTable8bit_Sext[(v6 + 64) as usize];
+            let offset = hdma_wave_offset(sample, *ram_ptr!(game; 0xd9e), *ram_ptr!(game; 0xd9f));
+            r20 = (r28 as i32 + v5 as i32 & 0x1ff) as u16;
+            word!(game.hdma_table_1[(v4 >> 1)] = word!(game.reg_BG3HOFS).wrapping_add(offset));
+            v4 = v4.wrapping_add(2);
             if (((v4 as i32 - n) as i16) >= 0) {
                 break;
             }

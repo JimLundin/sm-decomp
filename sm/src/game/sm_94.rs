@@ -2046,6 +2046,17 @@ pub static kSinCosTable8bit_Sext: [i16; 320] = [
     -120i16, -115i16, -109i16, -103i16, -97i16, -92i16, -86i16, -80i16, -74i16, -68i16, -62i16,
     -56i16, -49i16, -43i16, -37i16, -31i16, -25i16, -18i16, -12i16, -6i16,
 ];
+// Read from byte offset 128 + byte_offset; retain the amplitude's low byte.
+// The two bytes must be within the sine table. Odd byte offsets are allowed.
+pub(crate) unsafe fn scale_sine_word(byte_offset: u16, amplitude: u16) -> u16 {
+    let table = (&raw const kSinCosTable8bit_Sext as *const i16).offset(64) as *const u8;
+    let sample = u16::from_le_bytes([
+        *table.offset(byte_offset as i32 as isize),
+        *table.offset(byte_offset as i32 as isize).offset(1),
+    ]);
+    ((u32::from(sample) * u32::from(amplitude as u8)) >> 8) as u16
+}
+
 unsafe fn BlockFunc_A957(tmpD82: u16, tmpD84: u16, game: &mut Game) {
     let v0: u16 = tmpD82;
     let mut v2: u16 = 0;
