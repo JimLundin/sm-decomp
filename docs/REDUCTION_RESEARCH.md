@@ -1,8 +1,9 @@
 # Reducing transpiled Rust: tools and process
 
 Research date: 2026-10-20. Immediate objective: reduce maintained source,
-preserving behavior. This note records primary-source research and a bounded
-scanner trial, not a new reduction budget or a claim of exhaustive discovery.
+preserving behavior. This note records primary-source research, scanner trials
+and isolated measured experiments. Their scopes are explicit; they are not an
+exhaustive discovery result or a whole-game deletion forecast.
 
 ## A directly relevant successful migration
 
@@ -64,7 +65,8 @@ The refactor build is pinned to nightly-2023-04-15 and the documented hosts
 are Linux/macOS. It is a useful reference, not a drop-in Windows cleanup command
 for our current Rust. Header/declaration deduplication and ownership migration
 are separate problems; much of the former is already harvested in this repo.
-No original C is needed for the proposed source analysis, and none was consulted.
+That initial Rust-side investigation did not consult original C. The later
+C-side experiments below answer a different, explicitly requested question.
 
 ## The research term: anti-unification / clone refactoring
 
@@ -173,8 +175,9 @@ The comparison snapshot **f57e4abf**, **109,556 lines**, already shares these
 algorithms and address primitives. The address queries find zero current
 matches; selected declarations expose only 65 gross duplicate lines before
 costs. Consequently **the original saving is not additional current savings**.
-It establishes a useful early-transpilation workflow, but does not demonstrate
-that restarting would beat current code or exhaust other possible reductions.
+It establishes a useful early-transpilation workflow. The user's subsequent
+question concerns discovering repeated algorithms in the original C and
+improving translation inputs; it does not ask for a restart comparison.
 
 Scanner coverage also differs greatly: raw cross-file matches touch 138,426
 original lines versus 7,290 in that current snapshot; normalized AST matches
@@ -189,3 +192,150 @@ combined/trial.patch, and the full results/limits in combined/REPORT.md.
 Independent studies are declarations_extern/, clone-folding/,
 algorithm-variants/ and tool-audit/. The original and current inputs were
 checked byte-for-byte against Git. No ROMs or save states were added.
+
+## Experiments restructuring the original C before C2Rust
+
+The user clarified the question: identify large repeated algorithms while the
+original C still exposes their structure, and test changing that C before
+translation. A restart comparison does not answer this question. Original C
+access is explicitly authorized for these isolated experiments; maintained
+Rust remains the implementation.
+
+### Original C size and provenance
+
+The original Rust commit 1311d3b4 names snesrev/sm **578f90b** and C2Rust 0.22.1
+as its inputs. Recovered that exact upstream revision,
+[`578f90b3cc49557bb70060ad033bb90b8cf8ac50`](https://github.com/snesrev/sm/tree/578f90b3cc49557bb70060ad033bb90b8cf8ac50),
+and checked every extracted C/H file against the downloaded archive.
+Archive SHA-256:
+`69c78831351112887575f852dadf0281dd5c23cef890b07a268ae6cf60aa9193`.
+
+| Original source scope | Files | Lines |
+| --- | ---: | ---: |
+| Gameplay banks, `src/sm_XX.c` | 32 | 83,657 |
+| SNES backend, `src/snes/*.c` | 10 | 7,444 |
+| Runtime, audio, frontend and verifier C | 9 | 6,084 |
+| Bundled OpenGL loader C | 1 | 3,189 |
+| **C files selected by the original Makefile** | **52** | **100,374** |
+| Other platform C, outside that build | 2 | 126 |
+| **All C implementation files** | **54** | **100,500** |
+| First-party headers | 29 | 17,995 |
+| Bundled headers | 2 | 11,600 |
+| **All C and headers** | **85** | **130,095** |
+
+These are newline counts, matching `tools/progress.sh`, including comments and
+blank lines. As with `wc -l`, an unterminated final line is not counted; there
+is one in the build's C files and eight across the full C/H inventory.
+The original Makefile selects `src/*.c`, `src/snes/*.c` and
+`third_party/gl_core/gl_core_3_1.c`. Its first-party C subset is 97,185 lines.
+Headers contain declarations, layouts and macros, plus the bundled stb_image
+implementation; they are not all redundant prototypes. Comparing all maintained
+Rust against C implementation files alone is therefore a deliberately stricter
+target than counting all source on both sides.
+
+Use the requested **under-100,000 Rust ceiling**, preferably lower, rather than
+raising it to include the headers. The C implementation supplies a concrete size
+baseline, not proof that the current approach will automatically reach it.
+Reproducible file-by-file counts: TEMP/sm-c-input-experiments/c-baseline.json;
+the adjacent `count_c_baseline.py` checks archive contents and the build scope.
+
+### Two shared algorithms, measured through the actual translator
+
+Parallel experiments rewrote original C and ran **actual C2Rust 0.22.1** on
+unchanged and rewritten complete bank translation units. They use the same
+project-header amalgamation, remote Linux standard headers, translation flags
+and local rustfmt at 100 columns. All generated helpers, declarations and root
+module registrations count. These are fresh paired translations, not a
+byte-identical reconstruction of the historical compile database.
+
+| Complete experimental scope | Before Rust | After Rust | Net removal |
+| --- | ---: | ---: | ---: |
+| Scrolling DMA and tile streaming, complete sm_80 unit | 8,015 | 7,496 | **519** |
+| Collision, complete sm_94/sm_a0/sm_86 units plus helper and roots | 35,330 | 34,686 | **644** |
+
+The disjoint groups remove **1,163 lines combined**, including the added module
+registration. Their generated files are compiled; this is measured source
+reduction in the experiment, not deletion already applied to current main.
+
+**Collision:** twelve routines across Samus, post-grapple movement, player
+projectiles, enemy projectiles and enemies repeat the same slope geometry under
+different temporary names, context layouts, table encodings and branch trees.
+The replacement shares square-slope occupancy and two nonlinear vertical
+responses. It retains three distinct sampling contracts: legacy span, clipped
+span, and point. A generic rectangle test would erase real behavioral differences.
+The original C/H rewrite removes 243 lines including its helper/header costs;
+the actual generated Rust removes 644 after full-module costs.
+
+**Scrolling:** four layer/direction variants share one ordered DMA transfer
+algorithm. A second shared algorithm maps a block's four tile quadrants using
+its horizontal/vertical flip bits, replacing the repeated orientation branches
+in row and column streaming. A controlled scrolling-only comparison produces
+443 Rust lines originally, **506 with only a recovered struct layout**, and
+**182 with algorithm sharing plus that layout**. Introducing types alone grows
+the output; removing repeated work produces the saving. These extracted-unit
+counts explain the result and are not added to the full-bank saving above.
+
+Collision passes 360,000 original/replacement native-C comparisons and 48,000
+original-C/generated-Rust comparisons, checking all 128 KiB RAM, returns and
+collision context. Scrolling passes 6,250 cases across six compiled C/generated-
+Rust variants (original, layout-only and shared), comparing full RAM and 358,220
+ordered register write events. Tile streaming passes 3,076 cases across four
+C/generated-Rust variants, both directions, layers, four flip orientations,
+wrap positions and Mode 7 bypass.
+
+Full affected generated modules pass Rust metadata compilation after identical
+obsolete-feature/pointer-API compatibility edits on both sides. Executable
+collision and scrolling checks use optimized generated Rust with matched
+dependencies.
+The constructed tests do not establish whole-game/SNES replay equivalence.
+DMA uses a register-event recorder rather than emulated PPU transfers; collision
+uses valid object indices and bounded shape/radius domains, not arbitrary C
+undefined behavior. Those limits remain adoption requirements.
+
+TinyCC 0.9.27 supplies the local C compiler. Compiler Explorer's
+[`c2rust-master`](https://godbolt.org/) service reports version 0.22.1 for each
+translation; a pinned service-binary hash is unavailable. Exact public C inputs,
+version responses, translator output and formatting hashes are retained locally.
+Only public upstream C and new nonsecret helpers were submitted. Local ROM
+data, save states, test buffers and private current source were not submitted.
+
+### Translation-wide control: high-byte/high-word access
+
+A third experiment changes the original `HIBYTE`/`HIWORD` definitions to call
+two shared pointer helpers. It retains lvalue access, single address evaluation
+and the actual operand width. All **394 affected call sites in 30 C files** were
+retranslated; low-byte accesses were left alone. The complete measured cohort
+is **226,966 -> 226,396 Rust lines: 570 removed**, including the 32-line emitted
+helper and the extra root registration. Thirty original units alone contain
+226,936 lines; their replacements contain 226,333 before these costs.
+
+This is a useful preprocessing change but only a **0.25%** reduction in its
+tested scope. It does not provide a large algorithmic reduction by itself.
+It overlaps the gameplay experiments, so **570 is not added to their 1,163**.
+The broader count of 709 partial-access sites includes unchanged low-byte
+operations and must not be used to inflate this experiment's coverage.
+
+Native checks pass 16,384 pointer/lvalue cases across widths and input bytes,
+including compound writes and guarded full-buffer comparison. Another 7,680
+comparisons between the original C macros and actual generated Rust helpers
+pass for pointer results and reads/writes. All 61 original/replacement/helper
+units pass C compilation and Rust metadata checks; the 30/31-module roots
+also pass. Both CPU-infrastructure controls require enabling `extern_types`
+for the generated opaque glibc FILE declaration. Compatibility settings are
+identical between controls; complete-game linking and performance are untested.
+Exact paired outputs and per-file counts are in `toolchain/partial-access/`;
+the source change is in `translation-shapes/types-partial-access.h` and
+`translation-shapes/partial-access.c`. These access checks are distinct from
+gameplay-equivalence or whole-game replay claims.
+
+Artifacts under TEMP/sm-c-input-experiments: `algorithm-study/REPORT.md`,
+`algorithm-study/trial.patch`, `translation-shapes/`, and `toolchain/REPORT.md`.
+The native and generated-Rust comparison scripts, paired complete C/Rust units,
+raw service responses and compiler records remain there for review and reruns.
+
+The actionable process is to group original C by a repeated operation across
+banks, identify its real variants, replace the whole group with a named shared
+algorithm, then translate both versions and price the complete result. This
+produces domain seams such as slope geometry and tile streaming. It is a useful
+step toward descriptive engine modules; it does not by itself retire entire
+banks or establish the remaining whole-game reduction budget.

@@ -22,6 +22,14 @@ further, by tackling large structural changes before individual cleanup.
 Use **90,000 lines as a stretch planning checkpoint**, not a demonstrated
 forecast. This work order replaces earlier reduction and cleanup queues.
 
+The user also sets the original C implementation as the Rust size ceiling.
+At the exact upstream input 578f90b, the Makefile builds **100,374 physical
+lines of C** in 52 files, including 83,657 in the 32 gameplay banks. All 54 C
+files total 100,500; 31 headers add 29,595 separately. These use the progress
+script's newline count, including comments and blanks. Keep the stricter
+under-100,000 Rust target; do not inflate it by adding headers. Scope and
+source provenance are recorded in [REDUCTION_RESEARCH.md](REDUCTION_RESEARCH.md).
+
 The research-led structural/variant audit has now covered same-file and cross-file
 function bodies, callback rows and compound blocks within large routines. It
 selected the opcode-grid consolidation below, but established no new 500-line
@@ -35,8 +43,15 @@ complete: combined tool-assisted replacements remove **49,687 lines
 Optimized compilation, structural correspondence and focused routine checks
 pass; no full-game/SNES replay is claimed. The compared current snapshot
 already shares these implementations, so this result supplies no new main
-deletion budget and does not establish a benefit from restarting. Details and
-isolated patches are in the research note's original-transpilation experiment.
+deletion budget. Details and isolated patches are in the research note's
+original-transpilation experiment.
+
+The latest user correction explicitly authorizes isolated experiments on the
+original C, superseding the no-C rule for this research. The question is which
+large repeated algorithms and C representations should be changed before
+transpilation, not whether a restart beats current main. Keep maintained Rust
+as the implementation and measure actual paired C2Rust output, including
+shared helpers and registration. Do not infer whole-game savings from a pilot.
 
 Latest user clarification: code-volume reduction is the immediate priority.
 Focus on repeated code patterns; broad system redesign is too costly unless
@@ -247,6 +262,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Require a materially new named algorithm
    or scope before repeating discovery. The regions and prior results below
    guide coverage, not boundaries that candidate replacements must preserve:
+
+   The source-first C experiment now demonstrates two shared algorithms across
+   complete translation units: slope geometry across five gameplay consumers
+   removes **644 generated Rust lines**, and scrolling/tile streaming removes
+   **519**, including all helper/registration costs. Actual C2Rust controls,
+   compiler checks and constructed C/generated-Rust comparisons pass. Three
+   distinct slope sampling contracts must remain explicit. A layout-only
+   control grows code; sharing the algorithm produces the deletion. These are
+   isolated experimental savings, not current-main deletions or full-game
+   replay proof. A separate complete 394-site high-byte/high-word preprocessing
+   trial across 30 C files removes **570 generated lines (0.25%)**, including
+   helper/registration. It overlaps those algorithms and is not additive; this
+   representation change alone is not a large reduction route. Details, C
+   baseline and patches: REDUCTION_RESEARCH.md.
 
    A separate normalized/aligned audit of 1,331 bodies at least 20 lines long
    produced three complete prices: enemy collision sweeps **-38**, room loading
