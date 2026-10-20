@@ -87,17 +87,22 @@ of disk space; the same candidate succeeded after completed caches were
 compressed with their contents verified unchanged. Any% supplies core
 integration coverage; broader routes, frontend and alias safety remain open.
 
-Next prepared family (2026-10-20): isolated literal field-store candidate
-covers all 220 adjacent same-receiver/same-integer-literal runs, 559 stores
-across 24 gameplay/hardware/frontend callers and 23 literal spellings.
-Measured net -304 formatted Rust lines. Source reconstruction and both
-core/actual frontend compiler expansions pass; all original nonblank expanded
-lines are byte-exact after removing only added helper/comment/imports.
-Receiver expressions and contextually typed literals repeat at each original
-assignment; no value, receiver or borrow is hoisted. Candidate is preserved
-outside maintained source, pending reconciliation with the active 55-loop/
-702-local composition before final normal release and one any% replay.
-No field-literal build/replay has started; avoid stale parallel integration.
+Literal field stores (2026-10-20): one caller-side macro shares the complete
+220 adjacent same-receiver/same-integer-literal runs: 559 assignments across
+24 gameplay/hardware/frontend callers and 23 literal spellings. Each receiver
+and contextually typed literal is emitted independently at its original store;
+no receiver, value or borrow is hoisted. A fresh AST census on the published
+55-loop/702-local composition retains exactly the original eligible family.
+All selected files reverse exactly and every unselected Rust file is preserved.
+
+Actual core and frontend compiler expansions match all 10212733 and 10507906
+bytes after removing only the added macro/comment/re-export, its separator
+and 22 core/24 frontend imports. Every original whitespace/punctuation token
+is retained; no runtime comparison harness is added. Formatting, normal release
+(19.90s), progress and full any% 129712/0 (111.75s replay, 113.97s wall),
+native exit 0, pass on 635b8d6f plus review-only 190d2fcc. Rust lines -304,
+to 130888; all other counters are unchanged. Any% supplies core integration
+coverage; broader routes, frontend, ownership and alias safety remain open.
 
 Enemy instruction/timer pairs (2026-10-20): one caller-side macro shares all
 249 adjacent direct field pairs with exactly matching receiver expressions

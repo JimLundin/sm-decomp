@@ -14,6 +14,17 @@
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
 
+// Emit repeated literal field stores without hoisting the receiver or value.
+macro_rules! set_fields {
+    ($receiver:tt, $value:expr; $($field:ident),+ $(,)?) => {
+        $($crate::set_fields!(@store $receiver, $field, $value);)+
+    };
+    (@store [$($receiver:tt)*], $field:ident, $value:expr) => {
+        $($receiver)*.$field = $value
+    };
+}
+pub(crate) use set_fields;
+
 /// Gameplay, one module per original ROM bank (`sm_80` = bank $80, ...).
 pub mod game {
     pub(crate) mod callback_tables;

@@ -316,6 +316,7 @@ use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, Unreachable};
+use crate::set_fields;
 pub use crate::types::{size_t, EnemyData, LongPtr, PairU16, Point16U, VoidP, VramWriteEntry};
 pub use crate::types::{EnemyDef, EnemySpawnData, Vulnerability};
 pub use crate::types::{EnemyProps, EprojDef, ExtendedSpriteMap, Hitbox};
@@ -1345,8 +1346,7 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
         (*E).extra_properties = (*EP).extra_properties;
         (*E).parameter_1 = (*EP).parameter1;
         (*E).parameter_2 = (*EP).parameter2;
-        (*E).frame_counter = 0u16;
-        (*E).timer = 0u16;
+        set_fields! {[(*E)], 0u16; frame_counter, timer}
         (*E).instruction_timer = 1u16;
         (*E).frame_counter = 0u16;
         RecordEnemySpawnData(v5, game);
@@ -2474,8 +2474,7 @@ pub unsafe fn SpawnEnemy(db: u8, k: u16, game: &mut Game) -> u16 {
                     enemy_gfxdata_vram_ptr[v10]
                 )));
             } else {
-                (*E).vram_tiles_index = 0u16;
-                (*E).palette_index = 0u16;
+                set_fields! {[(*E)], 0u16; vram_tiles_index, palette_index}
             }
             let ED: *mut EnemyDef = get_EnemyDef_A2((*EP).enemy_ptr, game);
             (*E).x_width = (*ED).x_radius;
@@ -2491,14 +2490,7 @@ pub unsafe fn SpawnEnemy(db: u8, k: u16, game: &mut Game) -> u16 {
             (*E).extra_properties = (*EP).extra_properties;
             (*E).parameter_1 = (*EP).parameter1;
             (*E).parameter_2 = (*EP).parameter2;
-            (*E).frame_counter = 0u16;
-            (*E).timer = 0u16;
-            (*E).ai_var_A = 0u16;
-            (*E).ai_var_B = 0u16;
-            (*E).ai_var_C = 0u16;
-            (*E).ai_var_D = 0u16;
-            (*E).ai_var_E = 0u16;
-            (*E).ai_preinstr = 0u16;
+            set_fields! {[(*E)], 0u16; frame_counter, timer, ai_var_A, ai_var_B, ai_var_C, ai_var_D, ai_var_E, ai_preinstr}
             (*E).instruction_timer = 1u16;
             (*E).frame_counter = 0u16;
             RecordEnemySpawnData(new_enemy_index, game);
@@ -3204,10 +3196,7 @@ pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
 }
 pub unsafe fn SwitchEnemyAiToMainAi(game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).ai_handler_bits = 0u16;
-    (*E).invincibility_timer = 0u16;
-    (*E).frozen_timer = 0u16;
-    (*E).shake_timer = 0u16;
+    set_fields! {[(*E)], 0u16; ai_handler_bits, invincibility_timer, frozen_timer, shake_timer}
 }
 pub unsafe fn SamusLatchesOnWithGrapple(game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);

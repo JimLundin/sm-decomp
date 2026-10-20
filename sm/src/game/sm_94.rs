@@ -12,6 +12,7 @@ use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
+use crate::set_fields;
 use crate::snes::snes::snes_read;
 use ::core::ffi::c_void;
 use ::core::ptr::{null, null_mut};
@@ -1966,8 +1967,7 @@ unsafe fn BlockShotReact_Slope_NonSquare(ci: *mut CollInfo, j: u16, k: u16, game
         + (v2 as i32 & 0xfi32)) as usize]) as u16)
         & (0x1fu16);
     if ((v5) as i16).wrapping_sub((v4) as i16) <= 0i16 {
-        (*ci).ci_r38 = 0u16;
-        (*ci).ci_r40 = 0u16;
+        set_fields! {[(*ci)], 0u16; ci_r38, ci_r40}
         1u8
     } else {
         0u8

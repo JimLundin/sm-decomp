@@ -28,6 +28,7 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
+use crate::set_fields;
 use ::core::ffi::{c_long, c_void};
 use ::core::ptr::{null, null_mut};
 
@@ -4668,8 +4669,7 @@ pub unsafe fn sub_86C605(j: u16, game: &mut Game) {
         eproj_y_subpos[v1],
     }
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    (*E).mbn_var_23 = 0u16;
-    (*E).mbn_var_25 = 0u16;
+    set_fields! {[(*E)], 0u16; mbn_var_23, mbn_var_25}
     set_ram_word!(game.eproj_gfx_idx[v1] = 1024u16);
     let ref mut fresh8 = *(ram_ptr!(game, u16; 0x1a4b)).offset(v1 as isize);
     *fresh8 = ((*E).base.x_pos as i32 + 64i32) as u16;
@@ -6668,17 +6668,7 @@ pub unsafe fn RespawnEnemy(v0: u16, game: &mut Game) {
     let ESD: *mut EnemySpawnData = gEnemySpawnData(v0 as i32, game);
     (*E).palette_index = (*ESD).palette_index;
     (*E).vram_tiles_index = (*ESD).vram_tiles_index;
-    (*E).frozen_timer = 0u16;
-    (*E).flash_timer = 0u16;
-    (*E).invincibility_timer = 0u16;
-    (*E).timer = 0u16;
-    (*E).frame_counter = 0u16;
-    (*E).ai_var_A = 0u16;
-    (*E).ai_var_B = 0u16;
-    (*E).ai_var_C = 0u16;
-    (*E).ai_var_D = 0u16;
-    (*E).ai_var_E = 0u16;
-    (*E).ai_preinstr = 0u16;
+    set_fields! {[(*E)], 0u16; frozen_timer, flash_timer, invincibility_timer, timer, frame_counter, ai_var_A, ai_var_B, ai_var_C, ai_var_D, ai_var_E, ai_preinstr}
     (*E).instruction_timer = 1u16;
     let Edef: *mut EnemyDef = get_EnemyDef_A2((*E).enemy_ptr, game);
     (*E).x_width = (*Edef).x_radius;

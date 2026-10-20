@@ -22,6 +22,7 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::RomPtr;
 use crate::rtl::{AddToHiLo, SetHiLo};
+use crate::set_fields;
 pub use crate::types::Consts_A4;
 pub use crate::types::SpawnHardcodedPlmArgs;
 pub use crate::types::{Consts_86, Ram4000, Ram4000_Backups};
@@ -468,8 +469,7 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
         set_ram_word!(game.croco_word_7E069A = 0u16);
         let E_0: *mut Enemy_Crocomire =
             Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
-        (*E_0).crocom_var_A = 0u16;
-        (*E_0).crocom_var_E = 0u16;
+        set_fields! {[(*E_0)], 0u16; crocom_var_A, crocom_var_E}
         *(ram_ptr!(game, u16; 0xcd20)) = 0u16;
         let mut i: i32 = 32i32;
         while i >= 0i32 {
@@ -737,8 +737,7 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
             enemy_instruction! {[(*E1).base]; timer = 0x7fffu16, instruction = addr_kCrocomire_Ilist_BF62 as u16}
             let fresh11 = &raw mut (*Get_Crocomire(0x40i32, game)).base.properties;
             fresh11.write_unaligned((fresh11.read_unaligned()) | (0x100u16));
-            (*EK).crocom_var_E = 0u16;
-            (*EK).crocom_var_F = 0u16;
+            set_fields! {[(*EK)], 0u16; crocom_var_E, crocom_var_F}
             (*EK).crocom_var_D = 2048u16;
             (*Get_Crocomire(0i32, game)).base.y_height = 16u16;
         }
@@ -1423,8 +1422,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_66(game: &mut Game) {
     let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).crocom_var_E = 0u16;
-    (*E).crocom_var_F = 0u16;
+    set_fields! {[(*E)], 0u16; crocom_var_E, crocom_var_F}
     (*E).crocom_var_D = 2048u16;
     let mut i: i32 = 4094i32;
     while i >= 0i32 {
@@ -1650,8 +1648,7 @@ pub unsafe fn Crocomire_Func_71(game: &mut Game) {
         (*E).base.x_pos = 480u16;
         (*E).base.y_pos = 54u16;
         (*Get_Crocomire(0x80i32, game)).crocom_var_D = 80u16;
-        (*E).crocom_var_E = 0u16;
-        (*E).crocom_var_F = 0u16;
+        set_fields! {[(*E)], 0u16; crocom_var_E, crocom_var_F}
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0x20u8, 0x3u8, 0xb753 as VoidP),
             game,

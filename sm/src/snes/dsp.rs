@@ -1,5 +1,6 @@
 use crate::c_library::{free, malloc, memset};
 use crate::game_state::Game;
+use crate::set_fields;
 pub use crate::types::{size_t, Dsp, DspChannel, SaveLoadFunc};
 use ::core::ffi::{c_double, c_void};
 use ::core::mem::size_of;
@@ -64,8 +65,7 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     (*dsp).ram[0x7ci32 as usize] = 0xffu8;
     let mut i: i32 = 0i32;
     while i < 8i32 {
-        (*dsp).channel[i as usize].pitch = 0u16;
-        (*dsp).channel[i as usize].pitchCounter = 0u16;
+        set_fields! {[(*dsp).channel[i as usize]], 0u16; pitch, pitchCounter}
         (*dsp).channel[i as usize].pitchModulation = false_0 != 0;
         memset(
             &raw mut (*(&raw mut (*dsp).channel as *mut DspChannel).offset(i as isize)).decodeBuffer
@@ -76,8 +76,7 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
         (*dsp).channel[i as usize].srcn = 0u8;
         (*dsp).channel[i as usize].decodeOffset = 0u16;
         (*dsp).channel[i as usize].previousFlags = 0u8;
-        (*dsp).channel[i as usize].old = 0i16;
-        (*dsp).channel[i as usize].older = 0i16;
+        set_fields! {[(*dsp).channel[i as usize]], 0i16; old, older}
         (*dsp).channel[i as usize].useNoise = false_0 != 0;
         memset(
             &raw mut (*(&raw mut (*dsp).channel as *mut DspChannel).offset(i as isize)).adsrRates
@@ -91,13 +90,11 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
         (*dsp).channel[i as usize].useGain = false_0 != 0;
         (*dsp).channel[i as usize].gainMode = 0u8;
         (*dsp).channel[i as usize].directGain = false_0 != 0;
-        (*dsp).channel[i as usize].gainValue = 0u16;
-        (*dsp).channel[i as usize].gain = 0u16;
+        set_fields! {[(*dsp).channel[i as usize]], 0u16; gainValue, gain}
         (*dsp).channel[i as usize].keyOn = false_0 != 0;
         (*dsp).channel[i as usize].keyOff = false_0 != 0;
         (*dsp).channel[i as usize].sampleOut = 0i16;
-        (*dsp).channel[i as usize].volumeL = 0i8;
-        (*dsp).channel[i as usize].volumeR = 0i8;
+        set_fields! {[(*dsp).channel[i as usize]], 0i8; volumeL, volumeR}
         (*dsp).channel[i as usize].echoEnable = false_0 != 0;
         i += 1;
     }
@@ -105,18 +102,13 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     (*dsp).evenCycle = false_0 != 0;
     (*dsp).mute = true_0 != 0;
     (*dsp).reset = true_0 != 0;
-    (*dsp).masterVolumeL = 0i8;
-    (*dsp).masterVolumeR = 0i8;
+    set_fields! {[(*dsp)], 0i8; masterVolumeL, masterVolumeR}
     (*dsp).noiseSample = -0x4000i16;
-    (*dsp).noiseRate = 0u16;
-    (*dsp).noiseCounter = 0u16;
+    set_fields! {[(*dsp)], 0u16; noiseRate, noiseCounter}
     (*dsp).echoWrites = false_0 != 0;
-    (*dsp).echoVolumeL = 0i8;
-    (*dsp).echoVolumeR = 0i8;
-    (*dsp).feedbackVolume = 0i8;
+    set_fields! {[(*dsp)], 0i8; echoVolumeL, echoVolumeR, feedbackVolume}
     (*dsp).echoBufferAdr = 0u16;
-    (*dsp).echoDelay = 1u16;
-    (*dsp).echoRemain = 1u16;
+    set_fields! {[(*dsp)], 1u16; echoDelay, echoRemain}
     (*dsp).echoBufferIndex = 0u16;
     (*dsp).firBufferIndex = 0u8;
     memset(

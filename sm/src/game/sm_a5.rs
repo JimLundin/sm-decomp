@@ -27,6 +27,7 @@ use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
+use crate::set_fields;
 pub use crate::types::Consts_A5;
 pub use crate::types::{
     size_t, EnemyBase, EnemyData, EnemyProps, LongPtr, Point16U, VoidP, VramWriteEntry,
@@ -752,8 +753,7 @@ pub unsafe fn Draygon_Func_22(game: &mut Game) {
                 Samus_SetGrabbedByDraygonPose(((*E).draygon_var_20 != 0u16) as u16, game);
                 (*E).draygon_var_06 = 256u16;
                 (*E).draygon_var_07 = 384u16;
-                (*E).draygon_var_05 = 0u16;
-                (*E).draygon_var_09 = 0u16;
+                set_fields! {[(*E)], 0u16; draygon_var_05, draygon_var_09}
                 (*E).draygon_var_08 = 192u16;
                 (*E).draygon_var_0B = 2048u16;
                 (*E).draygon_var_A = ((0xa58f1ei32) as u16);
@@ -2067,9 +2067,7 @@ pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
             Get_SporeSpawn(ram_word!(game, cur_enemy_index) as i32, game);
         let E0: *mut Enemy_SporeSpawn = Get_SporeSpawn(0i32, game);
         (*E0).ssn_var_0E = 0u16;
-        (*E).base.invincibility_timer = 0u16;
-        (*E).base.flash_timer = 0u16;
-        (*E).base.ai_handler_bits = 0u16;
+        set_fields! {[(*E).base], 0u16; invincibility_timer, flash_timer, ai_handler_bits}
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
         let mut i: i32 = 26i32;
         while i >= 0i32 {

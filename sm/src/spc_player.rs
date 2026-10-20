@@ -1,4 +1,5 @@
 use crate::c_library::{__assert_fail, malloc, memcpy, memset, printf};
+use crate::set_fields;
 use crate::snes::dsp::{dsp_cycle, dsp_init, dsp_reset, dsp_write};
 pub use crate::types::{
     size_t, Channel, Dsp, DspChannel, DspRegWriteHistory, SfxChan, SfxRegs, SpcPlayer,
@@ -635,25 +636,14 @@ unsafe fn Music_ResetChan(p: *mut SpcPlayer) {
         ) = 0xffu8;
         (*c).pan_flag_with_phase_invert = 10u8;
         (*c).pan_value = ((10i32) << 8i32) as u16;
-        (*c).instrument_id = 0u8;
-        (*c).fine_tune = 0u8;
-        (*c).channel_transposition = 0u8;
-        (*c).pitch_envelope_num_ticks = 0u8;
-        (*c).cutk = 0u8;
-        (*c).vib_depth = 0u8;
-        (*c).tremolo_depth = 0u8;
+        set_fields! {[(*c)], 0u8; instrument_id, fine_tune, channel_transposition, pitch_envelope_num_ticks, cutk, vib_depth, tremolo_depth}
         c = c.offset(-1);
         (*p).cur_chan_bit = ((*p).cur_chan_bit as i32 >> 1i32) as u8;
         if ((*p).cur_chan_bit == 0) {
             break;
         }
     }
-    (*p).master_volume_fade_ticks = 0u8;
-    (*p).echo_volume_fade_ticks = 0u8;
-    (*p).tempo_fade_num_ticks = 0u8;
-    (*p).global_transposition = 0u8;
-    (*p).block_count = 0u8;
-    (*p).percussion_base_id = 0u8;
+    set_fields! {[(*p)], 0u8; master_volume_fade_ticks, echo_volume_fade_ticks, tempo_fade_num_ticks, global_transposition, block_count, percussion_base_id}
     *(&raw mut (*p).master_volume as *mut u8).offset(
         (size_of::<u16>() as usize)
             .wrapping_div(size_of::<u8>() as usize)
@@ -867,8 +857,7 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
             (*p).reg_FLG = ((*p).reg_FLG as i32 & !(0x20i32)) as u8;
         }
         246 => {
-            (*p).echo_volume_left = 0u16;
-            (*p).echo_volume_right = 0u16;
+            set_fields! {[(*p)], 0u16; echo_volume_left, echo_volume_right}
             (*p).reg_FLG = ((*p).reg_FLG as i32 | 0x20i32) as u8;
         }
         247 => {
@@ -1199,9 +1188,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                             {
                                 Channel_SetInstrument(p, c, 0u8);
                             }
-                            (*c).subroutine_num_loops = 0u8;
-                            (*c).volume_fade_ticks = 0u8;
-                            (*c).pan_num_ticks = 0u8;
+                            set_fields! {[(*c)], 0u8; subroutine_num_loops, volume_fade_ticks, pan_num_ticks}
                             (*c).note_ticks_left = 1u8;
                             c = c.offset(1);
                             (*p).cur_chan_bit = (((*p).cur_chan_bit as i32) << 1i32) as u8;
@@ -1393,10 +1380,7 @@ unsafe fn PlayNote(p: *mut SpcPlayer, c: *mut Channel, mut note: u8) {
         << 8i32
         | (*c).fine_tune as i32) as u16;
     (*c).vibrato_count = (((*c).vibrato_fade_num_ticks as i32) << 7i32) as u8;
-    (*c).vibrato_hold_count = 0u8;
-    (*c).vibrato_change_count = 0u8;
-    (*c).tremolo_count = 0u8;
-    (*c).tremolo_hold_count = 0u8;
+    set_fields! {[(*c)], 0u8; vibrato_hold_count, vibrato_change_count, tremolo_count, tremolo_hold_count}
     (*p).vol_dirty = ((*p).vol_dirty as i32 | (*p).cur_chan_bit as i32) as u8;
     (*p).key_ON = ((*p).key_ON as i32 | (*p).cur_chan_bit as i32) as u8;
     (*c).pitch_slide_length = (*c).pitch_envelope_num_ticks;
@@ -1540,9 +1524,7 @@ pub unsafe fn Sfx_Chan_Reset(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxCha
     (*c).final_volume = (*s).volume;
     (*c).pan_flag_with_phase_invert = (*s).phase_invert;
     if (*sr).enabled_voices == 0 {
-        (*sr).cur_sound = 0u8;
-        (*sr).priority = 0u8;
-        (*sr).init_flag = 0u8;
+        set_fields! {[(*sr)], 0u8; cur_sound, priority, init_flag}
     }
 }
 static kSfx1InstrListPtrs: [u16; 66] = [
@@ -1607,8 +1589,7 @@ pub unsafe fn Sfx1_HandleCmdFromSnes(p: *mut SpcPlayer) {
             (*p).sfx1.priority = 0u8;
         }
         1 => {
-            (*p).sfx1.voices_to_setup = 1u8;
-            (*p).sfx1.priority = 1u8;
+            set_fields! {[(*p).sfx1], 1u8; voices_to_setup, priority}
         }
         2 => {
             (*p).sfx1.voices_to_setup = 2u8;
@@ -1687,8 +1668,7 @@ pub unsafe fn Sfx2_HandleCmdFromSnes(p: *mut SpcPlayer) {
             (*p).sfx2.priority = 0u8;
         }
         1 => {
-            (*p).sfx2.voices_to_setup = 1u8;
-            (*p).sfx2.priority = 1u8;
+            set_fields! {[(*p).sfx2], 1u8; voices_to_setup, priority}
         }
         2 => {
             (*p).sfx2.voices_to_setup = 2u8;
@@ -1773,8 +1753,7 @@ pub unsafe fn Sfx3_HandleCmdFromSnes(p: *mut SpcPlayer) {
             (*p).sfx3.priority = 1u8;
         }
         5 => {
-            (*p).sfx3.voices_to_setup = 1u8;
-            (*p).sfx3.priority = 1u8;
+            set_fields! {[(*p).sfx3], 1u8; voices_to_setup, priority}
         }
         _ => {}
     };
@@ -1791,9 +1770,7 @@ pub unsafe fn Sfx_RunChan(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) 
     (*s).instr_timer = (*s).instr_timer.wrapping_sub(1);
     if (*s).instr_timer as i32 == 0i32 {
         if (*s).legato == 0 {
-            (*s).enable_pitch_slide = 0u8;
-            (*s).subnote_delta = 0u8;
-            (*s).target_note = 0u8;
+            set_fields! {[(*s)], 0u8; enable_pitch_slide, subnote_delta, target_note}
             if (*s).release_flag as i32 != 0xffi32 {
                 (*p).key_OFF = ((*p).key_OFF as i32 | (*s).voice_bitset as i32) as u8;
                 (*s).release_timer = 2u8;
@@ -2011,10 +1988,8 @@ pub unsafe fn Sfx_Init(
     (*sr).chan_idx = (*sr).chan_idx_x2;
     let mut i: i32 = 0i32;
     while i < num {
-        (*channels.offset(i as isize)).voice_bitset = 0u8;
-        (*channels.offset(i as isize)).voice_index = 0u8;
-        (*channels.offset(i as isize)).channel_mask = 0xffu8;
-        (*channels.offset(i as isize)).disable = 0xffu8;
+        set_fields! {[(*channels.offset(i as isize))], 0u8; voice_bitset, voice_index}
+        set_fields! {[(*channels.offset(i as isize))], 0xffu8; channel_mask, disable}
         i += 1;
     }
     loop {

@@ -1,5 +1,6 @@
 use crate::c_library::{free, malloc};
 use crate::game_state::Game;
+use crate::set_fields;
 use crate::snes::apu::{apu_cpuRead, apu_cpuWrite};
 pub use crate::types::{
     size_t, Apu, ApuHistory as C2RustUnnamed, Dsp, DspChannel, DspRegWriteHistory, SaveLoadFunc,
@@ -35,10 +36,7 @@ pub unsafe fn spc_free(spc: *mut Spc) {
     free(spc as *mut c_void);
 }
 pub unsafe fn spc_reset(spc: *mut Spc) {
-    (*spc).a = 0u8;
-    (*spc).x = 0u8;
-    (*spc).y = 0u8;
-    (*spc).sp = 0u8;
+    set_fields! {[(*spc)], 0u8; a, x, y, sp}
     (*spc).pc =
         (spc_read(spc, 0xfffeu16) as i32 | (spc_read(spc, 0xffffu16) as i32) << 8i32) as u16;
     (*spc).c = false_0 != 0;

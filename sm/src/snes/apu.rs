@@ -1,5 +1,6 @@
 use crate::c_library::{free, malloc, memset, puts};
 use crate::game_state::Game;
+use crate::set_fields;
 use crate::snes::dsp::{
     dsp_cycle, dsp_free, dsp_init, dsp_read, dsp_reset, dsp_saveload, dsp_write,
 };
@@ -36,15 +37,11 @@ pub unsafe fn apu_reset(apu: *mut Apu) {
     spc_reset((*apu).spc);
     dsp_reset((*apu).dsp);
     (*apu).ram.fill(0);
-    (*apu).dspAdr = 0;
-    (*apu).cycles = 0;
+    set_fields! {[(*apu)], 0; dspAdr, cycles}
     (*apu).inPorts.fill(0);
     (*apu).outPorts.fill(0);
     for timer in &mut (*apu).timer {
-        timer.cycles = 0;
-        timer.divider = 0;
-        timer.target = 0;
-        timer.counter = 0;
+        set_fields! {[timer], 0; cycles, divider, target, counter}
         timer.enabled = false;
     }
     (*apu).cpuCyclesLeft = 7;
@@ -132,8 +129,7 @@ pub unsafe fn apu_cpuWrite(apu: *mut Apu, adr: u16, val: u8) {
                 let enabled = val & (1 << i) != 0;
                 let timer = &mut (*apu).timer[i];
                 if !timer.enabled && enabled {
-                    timer.divider = 0;
-                    timer.counter = 0;
+                    set_fields! {[timer], 0; divider, counter}
                 }
                 timer.enabled = enabled;
             }

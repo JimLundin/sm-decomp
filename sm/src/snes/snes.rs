@@ -1,6 +1,7 @@
 use crate::c_library::{__assert_fail, free, malloc, memset, printf};
 use crate::game_state::Game;
 use crate::rtl::RtlApuWrite;
+use crate::set_fields;
 use crate::snes::apu::{apu_cycle, apu_free, apu_init, apu_reset, apu_saveload};
 use crate::snes::cart::{cart_free, cart_init, cart_read, cart_reset, cart_saveload, cart_write};
 use crate::snes::cpu::{cpu_free, cpu_init, cpu_reset, cpu_saveload};
@@ -31,8 +32,7 @@ pub unsafe fn snes_init(ram: *mut u8) -> *mut Snes {
     (*snes).debug_apu_cycles = false_0 != 0;
     (*snes).runningWhichVersion = 0u8;
     (*snes).disableRender = false;
-    (*snes).cpuMemOps = 0;
-    (*snes).cpuCyclesLeft = 0;
+    set_fields! {[(*snes)], 0; cpuMemOps, cpuCyclesLeft}
     (*snes).cpu = cpu_init(snes as *mut c_void, 0i32);
     (*snes).apu = apu_init();
     (*snes).dma = dma_init(snes);
@@ -82,18 +82,14 @@ pub unsafe fn snes_reset(snes: *mut Snes, hard: bool, game: &mut Game) {
     if hard {
         memset((*snes).ram as *mut c_void, 0i32, 0x20000i32 as size_t);
     }
-    (*snes).ramAdr = 0;
-    (*snes).hPos = 0;
-    (*snes).vPos = 0;
-    (*snes).frames = 0;
+    set_fields! {[(*snes)], 0; ramAdr, hPos, vPos, frames}
     (*snes).cpuCyclesLeft = 52;
     (*snes).cpuMemOps = 0;
     (*snes).apuCatchupCycles = 0.0f64;
     (*snes).hIrqEnabled = false;
     (*snes).vIrqEnabled = false;
     (*snes).nmiEnabled = false;
-    (*snes).hTimer = 0x1ff;
-    (*snes).vTimer = 0x1ff;
+    set_fields! {[(*snes)], 0x1ff; hTimer, vTimer}
     (*snes).inNmi = false;
     (*snes).inIrq = false;
     (*snes).inVblank = false;

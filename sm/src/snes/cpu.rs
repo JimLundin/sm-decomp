@@ -2,6 +2,7 @@ use crate::c_library::{__assert_fail, free, malloc, memset, printf};
 use crate::cpu_infra::{CpuOpcodeHook, HookedFunctionRts};
 use crate::game_state::Game;
 use crate::host::Die;
+use crate::set_fields;
 use crate::snes::snes::{snes_cpuRead, snes_cpuWrite};
 use crate::types::{Cpu, SaveLoadFunc, Snes};
 use ::core::ffi::{c_char, c_void};
@@ -33,9 +34,7 @@ pub unsafe fn cpu_free(cpu: *mut Cpu) {
     free(cpu as *mut c_void);
 }
 fn finish_reset(cpu: &mut Cpu) {
-    cpu.dp = 0;
-    cpu.k = 0;
-    cpu.db = 0;
+    set_fields! {[cpu], 0; dp, k, db}
     cpu.c = false;
     cpu.z = false;
     cpu.v = false;
@@ -52,9 +51,7 @@ fn finish_reset(cpu: &mut Cpu) {
     cpu.cyclesUsed = 0;
 }
 pub unsafe fn cpu_reset(cpu: *mut Cpu, game: &mut Game) {
-    (*cpu).a = 0;
-    (*cpu).x = 0;
-    (*cpu).y = 0;
+    set_fields! {[(*cpu)], 0; a, x, y}
     (*cpu).sp = 0x100;
     (*cpu).pc = read_word(cpu, 0xfffc, 0xfffd, game);
     finish_reset(&mut *cpu);

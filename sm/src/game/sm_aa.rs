@@ -29,6 +29,7 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
+use crate::set_fields;
 use ::core::ffi::c_long;
 use ::core::ptr::null;
 
@@ -370,8 +371,7 @@ pub unsafe fn Torizo_Instr_30(k: u16, jp: *const u16, game: &mut Game) -> *const
     (*E).base.current_instruction = (jp.offset(1) as *mut u8)
         .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
         as c_long as u16;
-    (*E).base.flash_timer = 40u16;
-    (*E).base.instruction_timer = 40u16;
+    set_fields! {[(*E).base], 40u16; flash_timer, instruction_timer}
     null::<u16>()
 }
 pub unsafe fn Torizo_Instr_34(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -381,8 +381,7 @@ pub unsafe fn Torizo_Instr_34(k: u16, jp: *const u16, game: &mut Game) -> *const
     (*E).base.current_instruction = (jp as *mut u8)
         .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
         as c_long as u16;
-    (*E).base.flash_timer = 1u16;
-    (*E).base.instruction_timer = 1u16;
+    set_fields! {[(*E).base], 1u16; flash_timer, instruction_timer}
     null::<u16>()
 }
 pub unsafe fn Torizo_Instr_24(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -804,8 +803,7 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
         (*E).base.y_height = g_word_AAC973[v2 as usize] as u16;
         (*E).toriz_var_E = ((0xaac6bfi32) as u16);
         (*E).base.instruction_timer = 1u16;
-        (*E).base.timer = 0u16;
-        (*E).base.palette_index = 0u16;
+        set_fields! {[(*E).base], 0u16; timer, palette_index}
         (*E).toriz_var_F = addr_locret_AAC95E as u16;
         (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xaac967, v2 as isize);
         (*E).base.spritemap_pointer = addr_kTorizo_ExtSprmap_87D0 as u16;
@@ -1622,8 +1620,7 @@ pub unsafe fn Shaktool_Init(game: &mut Game) {
     let E: *mut Enemy_Shaktool = Get_Shaktool(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.instruction_timer = 1u16;
     (*E).base.timer = 0u16;
-    (*E).shakt_var_A = 0u16;
-    (*E).shakt_var_D = 0u16;
+    set_fields! {[(*E)], 0u16; shakt_var_A, shakt_var_D}
     let shakto_parameter_2: u16 = (*E).shakt_parameter_2;
     let v3: i32 = shakto_parameter_2 as i32 >> 1i32;
     (*E).base.properties =
@@ -1787,8 +1784,7 @@ pub unsafe fn ChozoStatue_Init(game: &mut Game) {
     (*v0).instruction_timer = 1u16;
     (*v0).timer = 0u16;
     (*v0).ai_preinstr = ((0xaae7a6i32) as u16);
-    (*v0).parameter_1 = 0u16;
-    (*v0).palette_index = 0u16;
+    set_fields! {[(*v0)], 0u16; parameter_1, palette_index}
     (*gEnemyData(0i32, game)).layer = 0u16;
     let parameter_2: u16 = (*v0).parameter_2;
     (*v0).current_instruction =

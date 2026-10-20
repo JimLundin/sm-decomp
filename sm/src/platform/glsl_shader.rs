@@ -6,6 +6,7 @@ use crate::c_library::{
     strtod, strtol, strtoul, ungetc,
 };
 use crate::config::{g_config, ParseBool};
+use crate::set_fields;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
 pub use crate::types::{
     __off64_t, __off_t, ptrdiff_t, size_t, GLboolean, GLchar, GLenum, GLfloat, GLint, GLsizei,
@@ -235,8 +236,7 @@ pub const SEEK_SET: i32 = 0;
 pub const SEEK_CUR: i32 = 1;
 unsafe fn stbi__start_mem(s: *mut stbi__context, buffer: *const stbi_uc, len: i32) {
     (*s).io.read = None;
-    (*s).read_from_callbacks = 0i32;
-    (*s).callback_already_read = 0i32;
+    set_fields! {[(*s)], 0i32; read_from_callbacks, callback_already_read}
     (*s).img_buffer_original = buffer as *mut stbi_uc;
     (*s).img_buffer = (*s).img_buffer_original;
     (*s).img_buffer_original_end = (buffer as *mut stbi_uc).offset(len as isize);

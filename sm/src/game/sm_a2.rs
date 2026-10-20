@@ -39,6 +39,7 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, Unreachable};
+use crate::set_fields;
 use ::core::ptr::null_mut;
 
 pub use crate::types::Buttons;
@@ -1373,8 +1374,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Func7(k: u16, game: &mut Game) {
             (*E).mte_var_02 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa28d58)) as *mut u16
                 as *mut u8)
                 .offset(v3 as i32 as isize) as *mut u16);
-            (*E).mte_var_E = 0u16;
-            (*E).mte_var_03 = 0u16;
+            set_fields! {[(*E)], 0u16; mte_var_E, mte_var_03}
             (*E).mte_var_A = ((0xa28febi32) as u16);
         }
     }
@@ -1433,8 +1433,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Func9(k: u16, game: &mut Game) {
         v2 = ((0xa290e1i32) as u16);
     }
     (*E).mte_var_A = v2;
-    (*E).mte_var_07 = 0u16;
-    (*E).mte_var_04 = 0u16;
+    set_fields! {[(*E)], 0u16; mte_var_07, mte_var_04}
 }
 pub unsafe fn MaridiaBeybladeTurtle_Func10(k: u16, game: &mut Game) {
     MaridiaBeybladeTurtle_Func4(game);
@@ -2726,8 +2725,7 @@ pub unsafe fn GunshipTop_12(k: u16, game: &mut Game) {
     if CheckEventHappened(0xeu16, game) != 0 {
         (*Get_GunshipTop(k as i32, game)).gtp_var_F = ((0xa2abc7i32) as u16);
         let E: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32 + 64i32, game);
-        (*E).gtp_var_F = 0u16;
-        (*E).gtp_var_E = 0u16;
+        set_fields! {[(*E)], 0u16; gtp_var_F, gtp_var_E}
         set_ram_words! { game, 0u16; substate, suit_pickup_light_beam_pos }
         *(ram_ptr!(game, u16; 0xdf0)) = 0u16;
         *(ram_ptr!(game, u16; 0xdf2)) = 0u16;
@@ -3198,8 +3196,7 @@ pub unsafe fn Rinka_Init3(k: u16, game: &mut Game) {
     let E: *mut Enemy_Rinka = Get_Rinka(k as i32, game);
     (*E).rinka_var_A = ((0xa2b852i32) as u16);
     (*E).rinka_var_F = 26u16;
-    (*E).rinka_var_B = 0u16;
-    (*E).rinka_var_C = 0u16;
+    set_fields! {[(*E)], 0u16; rinka_var_B, rinka_var_C}
     if (*E).rinka_parameter_1 != 0 {
         if (*Get_Rinka(0i32, game)).rinka_var_1D != 0 {
             (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
@@ -3528,8 +3525,7 @@ pub unsafe fn EnemyInstr_Rio_Instr_1(k: u16, jp: *const u16, game: &mut Game) ->
 }
 pub unsafe fn Rio_Init(game: &mut Game) {
     let E: *mut Enemy_Rio = Get_Rio(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).rio_var_E = 0u16;
-    (*E).rio_var_F = 0u16;
+    set_fields! {[(*E)], 0u16; rio_var_E, rio_var_F}
     (*E).base.current_instruction = addr_kRio_Ilist_BB4B as u16;
     (*E).rio_var_B = ((0xa2bbedi32) as u16);
 }
@@ -3583,8 +3579,7 @@ pub unsafe fn Rio_3(k: u16, game: &mut Game) {
         (*E).rio_var_C = v4 as u16;
         if v4 < 0i16 {
             (*E).rio_var_A = (*E).rio_var_D;
-            (*E).rio_var_D = 0u16;
-            (*E).rio_var_C = 0u16;
+            set_fields! {[(*E)], 0u16; rio_var_D, rio_var_C}
             (*E).rio_var_B = ((0xa2bcffi32) as u16);
         } else if (*E).rio_var_E != 0 {
             (*E).rio_var_E = 0u16;
@@ -3644,8 +3639,7 @@ pub unsafe fn NorfairLavajumpingEnemy_Instr_BE8E(
 pub unsafe fn NorfairLavajumpingEnemy_Init(game: &mut Game) {
     let E: *mut Enemy_NorfairLavajumpingEnemy =
         Get_NorfairLavajumpingEnemy(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).nley_var_00 = 0u16;
-    (*E).nley_var_01 = 0u16;
+    set_fields! {[(*E)], 0u16; nley_var_00, nley_var_01}
     if ((*E).nley_parameter_1 as i32 & 0x8000i32) != 0i32 {
         (*E).base.current_instruction = addr_kNorfairLavajumpingEnemy_Ilist_BE62 as u16;
         (*E).nley_var_F = ((0xa2bedci32) as u16);
@@ -3796,8 +3790,7 @@ pub unsafe fn NorfairRio_Instr_C237(k: u16, jp: *const u16, game: &mut Game) -> 
 }
 pub unsafe fn NorfairRio_Init(game: &mut Game) {
     let E: *mut Enemy_NorfairRio = Get_NorfairRio(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).nro_var_01 = 0u16;
-    (*E).nro_var_02 = 0u16;
+    set_fields! {[(*E)], 0u16; nro_var_01, nro_var_02}
     if ((*E).nro_parameter_1 as i32 & 0x8000i32) != 0i32 {
         (*E).nro_var_00 = addr_kNorfairRio_Ilist_C18F as u16;
         (*E).base.current_instruction = addr_kNorfairRio_Ilist_C18F as u16;
@@ -4056,13 +4049,7 @@ pub unsafe fn MaridiaLargeSnail_Instr_CCC9(k: u16, jp: *const u16, game: &mut Ga
 pub unsafe fn MaridiaLargeSnail_Init(game: &mut Game) {
     let E: *mut Enemy_MaridiaLargeSnail =
         Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).mlsl_var_B = 0u16;
-    (*E).mlsl_var_D = 0u16;
-    (*E).mlsl_var_00 = 0u16;
-    (*E).mlsl_var_01 = 0u16;
-    (*E).mlsl_var_02 = 0u16;
-    (*E).mlsl_var_03 = 0u16;
-    (*E).mlsl_var_0A = 0u16;
+    set_fields! {[(*E)], 0u16; mlsl_var_B, mlsl_var_D, mlsl_var_00, mlsl_var_01, mlsl_var_02, mlsl_var_03, mlsl_var_0A}
     (*E).mlsl_var_E = 3u16;
     (*E).mlsl_var_C = 128u16;
     (*E).base.current_instruction = addr_kMaridiaLargeSnail_Ilist_CA4B as u16;
@@ -4151,8 +4138,7 @@ pub unsafe fn MaridiaLargeSnail_Func_4(game: &mut Game) {
         (*E).mlsl_var_00 = 0u16;
         if (GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as i32 & 0x8000i32) != 0i32
         {
-            (*E).mlsl_var_D = 1u16;
-            (*E).mlsl_var_00 = 1u16;
+            set_fields! {[(*E)], 1u16; mlsl_var_D, mlsl_var_00}
         }
         MaridiaLargeSnail_Func_10(ram_word!(game, cur_enemy_index), game);
         if IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), 0x18u16, game) != 0 {
@@ -4189,13 +4175,11 @@ pub unsafe fn MaridiaLargeSnail_Func_5(game: &mut Game) {
             && (*E).mlsl_var_03 != 0u16
             && (*E).mlsl_var_E == 0
         {
-            (*E).mlsl_var_00 = 0u16;
-            (*E).mlsl_var_D = 0u16;
+            set_fields! {[(*E)], 0u16; mlsl_var_00, mlsl_var_D}
             if (GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as i32 & 0x8000i32)
                 != 0i32
             {
-                (*E).mlsl_var_00 = 1u16;
-                (*E).mlsl_var_D = 1u16;
+                set_fields! {[(*E)], 1u16; mlsl_var_00, mlsl_var_D}
             }
             (*E).mlsl_var_C = 128u16;
             (*E).mlsl_var_00 = ((*E).mlsl_var_00 as i32 & 1i32 | 4i32) as u16;
@@ -4308,8 +4292,7 @@ pub unsafe fn MaridiaLargeSnail_Func_10(k: u16, game: &mut Game) {
 pub unsafe fn MaridiaLargeSnail_Func_11(game: &mut Game) {
     let E: *mut Enemy_MaridiaLargeSnail =
         Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).mlsl_var_04 = 0u16;
-    (*E).mlsl_var_05 = 0u16;
+    set_fields! {[(*E)], 0u16; mlsl_var_04, mlsl_var_05}
     if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x20u16, game) != 0u16
         && IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), 0x18u16, game) != 0u16
     {
@@ -4654,14 +4637,12 @@ pub unsafe fn LavaSeahorse_Init(game: &mut Game) {
         Get_LavaSeahorse(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).lse_var_02 = 0u16;
     if (*E).lse_parameter_1 != 0 {
-        (*E).lse_var_00 = 2u16;
-        (*E).lse_var_01 = 2u16;
+        set_fields! {[(*E)], 2u16; lse_var_00, lse_var_01}
         (*E).base.current_instruction = addr_kLavaSeahorse_Ilist_E5A1 as u16;
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
         (*E).lse_var_F = ((0xa2e781i32) as u16);
     } else {
-        (*E).lse_var_00 = 0u16;
-        (*E).lse_var_01 = 0u16;
+        set_fields! {[(*E)], 0u16; lse_var_00, lse_var_01}
         (*E).base.current_instruction = addr_kLavaSeahorse_Ilist_E59B as u16;
         (*E).lse_var_F = ((0xa2e654i32) as u16);
     };
@@ -5332,8 +5313,7 @@ pub unsafe fn HorizontalShootableShutter_Func_1(k: u16, game: &mut Game) {
     (*E).rfpm_var_A = ((0xa2f224i32) as u16);
     (*E).rfpm_var_15 = ram_word!(game, samus_x_pos);
     (*E).base.extra_properties = 0u16;
-    (*E).rfpm_var_0A = 0u16;
-    (*E).rfpm_var_0B = 0u16;
+    set_fields! {[(*E)], 0u16; rfpm_var_0A, rfpm_var_0B}
 }
 pub unsafe fn HorizontalShootableShutter_Main(game: &mut Game) {
     let E: *mut Enemy_RisingFallingPlatform =

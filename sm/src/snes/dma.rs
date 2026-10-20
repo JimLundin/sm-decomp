@@ -1,4 +1,5 @@
 use crate::game_state::Game;
+use crate::set_fields;
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::{size_of, transmute};
 
@@ -40,8 +41,7 @@ pub unsafe fn dma_reset(dma: *mut Dma) {
         (*dma).channel[i].size = 0xffff;
         (*dma).channel[i].indBank = 0xff;
         (*dma).channel[i].tableAdr = 0xffff;
-        (*dma).channel[i].repCount = 0xff;
-        (*dma).channel[i].unusedByte = 0xff;
+        set_fields! {[(*dma).channel[i]], 0xff; repCount, unusedByte}
         (*dma).channel[i].dmaActive = false;
         (*dma).channel[i].hdmaActive = false;
         (*dma).channel[i].mode = 7;
@@ -54,8 +54,7 @@ pub unsafe fn dma_reset(dma: *mut Dma) {
         (*dma).channel[i].terminated = false;
         (*dma).channel[i].offIndex = 0;
     }
-    (*dma).hdmaTimer = 0;
-    (*dma).dmaTimer = 0;
+    set_fields! {[(*dma)], 0; hdmaTimer, dmaTimer}
     (*dma).dmaBusy = false;
 }
 pub unsafe fn dma_saveload(

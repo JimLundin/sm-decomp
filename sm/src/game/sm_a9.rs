@@ -41,6 +41,7 @@ use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{mov24, MemCpy, ReadRegWord, RomPtr, SnesDivide, Unreachable, WriteReg};
+use crate::set_fields;
 pub use crate::snes::registers::*;
 pub use crate::types::Consts_8D;
 pub use crate::types::Consts_A6;
@@ -681,8 +682,7 @@ pub unsafe fn MotherBrainsBrain_Init(game: &mut Game) {
     (*E1).base.properties = ((*E1).base.properties) | (0x1100u16);
     (*E1).base.palette_index = 512u16;
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    (*E).mbn_var_0C = 512u16;
-    (*E).mbn_var_0D = 512u16;
+    set_fields! {[(*E)], 512u16; mbn_var_0C, mbn_var_0D}
     MotherBrain_SetBrainInstrs(addr_stru_A99C21 as u16, game);
     MotherBrain_SetupBrainNormalPal(game);
 }
@@ -751,8 +751,7 @@ pub unsafe fn MotherBrainsBody_FirstPhase_DoubleRet(game: &mut Game) {
         (*E1).mbn_var_00 = ram_word!(game, earthquake_timer);
         if ram_word!(game, samus_x_pos) as i32 - 236i32 & 0x8000i32 != 0 && (*E1).base.health == 0 {
             let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-            (*E).mbn_var_1D = 1u16;
-            (*E).mbn_var_00 = 1u16;
+            set_fields! {[(*E)], 1u16; mbn_var_1D, mbn_var_00}
             DisableMinimapAndMarkBossRoomAsExplored(game);
             QueueMusic_Delayed8(6u16, game);
             MotherBrain_SealWall(game);
@@ -806,8 +805,7 @@ pub unsafe fn MotherBrainBody_FakeDeath_Descent_4(game: &mut Game) {
         LoadFxEntry(2u16, game);
         (*Get_MotherBrain(0x40i32, game)).mbn_var_E = ((0xa98949i32) as u16);
         (*E).mbn_var_A = ((0xa988b2i32) as u16);
-        (*E).mbn_var_F = 0u16;
-        (*E).mbn_var_37 = 0u16;
+        set_fields! {[(*E)], 0u16; mbn_var_F, mbn_var_37}
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0xeu8, 0x2u8, 0xb6b3 as VoidP),
             game,
@@ -1053,9 +1051,7 @@ pub unsafe fn MotherBrainsTubesFalling_Init(game: &mut Game) {
     (*E).base.x_width = g_word_A98B5D[v1 as usize];
     (*E).base.y_height = g_word_A98B67[v1 as usize];
     (*E).mbtfg_var_B = g_word_A98B71[v1 as usize];
-    (*E).mbtfg_var_D = 0u16;
-    (*E).mbtfg_var_E = 0u16;
-    (*E).mbtfg_var_C = 0u16;
+    set_fields! {[(*E)], 0u16; mbtfg_var_D, mbtfg_var_E, mbtfg_var_C}
     (*E).mbtfg_var_A = crate::rtl::rom_table_word!(game, 0xa98b7b, v1 as isize);
 }
 crate::game::address_dispatch! {
@@ -1344,8 +1340,7 @@ pub unsafe fn MotherBrainBody_FakeDeath_Ascent_15_TransitionFromGrey(game: &mut 
             (*E1).mbn_var_10 = 1u16;
             (*E0).mbn_var_00 = 2u16;
             (*E1).mbn_var_12 = 1u16;
-            (*E1).mbn_var_32 = 6u16;
-            (*E1).mbn_var_33 = 6u16;
+            set_fields! {[(*E1)], 6u16; mbn_var_32, mbn_var_33}
             (*E1).mbn_var_34 = 1280u16;
             (*E0).mbn_var_A = ((0xa98ef5i32) as u16);
             (*E0).mbn_var_F = 23u16;
@@ -1404,10 +1399,8 @@ pub unsafe fn MotherBrain_SpawnDustCloudsForAscent(game: &mut Game) {
 pub unsafe fn MotherBrain_SetupNeckForFakeAscent(game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
     (*E).mbn_var_24 = 2u16;
-    (*E).mbn_var_27 = 10u16;
-    (*E).mbn_var_2D = 10u16;
-    (*E).mbn_var_2A = 20u16;
-    (*E).mbn_var_30 = 20u16;
+    set_fields! {[(*E)], 10u16; mbn_var_27, mbn_var_2D}
+    set_fields! {[(*E)], 20u16; mbn_var_2A, mbn_var_30}
     (*E).mbn_var_20 = 18432u16;
     (*E).mbn_var_21 = 20480u16;
     (*E).mbn_var_34 = 256u16;
@@ -1487,8 +1480,7 @@ pub unsafe fn MotherBrain_HandleNeckUpper(game: &mut Game) {
                     }
                     (*E).mbn_var_21 = v2 as u16;
                 } else {
-                    (*E).mbn_var_32 = 4u16;
-                    (*E).mbn_var_33 = 4u16;
+                    set_fields! {[(*E)], 4u16; mbn_var_32, mbn_var_33}
                 }
             }
             4 => {
@@ -2183,8 +2175,7 @@ pub unsafe fn MotherBrain_Phase3_Death_2(game: &mut Game) {
     if MotherBrain_MakeWalkForwards(2u16, 0x60u16, game) as i32 & 1i32 != 0 {
         MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C39 as u16, game);
         let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
-        (*E1).mbn_var_32 = 6u16;
-        (*E1).mbn_var_33 = 6u16;
+        set_fields! {[(*E1)], 6u16; mbn_var_32, mbn_var_33}
         (*E1).mbn_var_34 = 1280u16;
         let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
         (*E).mbn_var_A = ((0xa9af54i32) as u16);
@@ -2197,12 +2188,7 @@ pub unsafe fn MotherBrain_Phase3_Death_3(game: &mut Game) {
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if ((*E).mbn_var_F as i32 & 0x8000i32) != 0i32 {
         let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
-        (*E1).mbn_var_32 = 0u16;
-        (*E1).mbn_var_33 = 0u16;
-        (*E1).mbn_var_12 = 0u16;
-        (*E1).mbn_var_14 = 0u16;
-        (*E1).mbn_var_10 = 0u16;
-        (*E1).mbn_var_11 = 0u16;
+        set_fields! {[(*E1)], 0u16; mbn_var_32, mbn_var_33, mbn_var_12, mbn_var_14, mbn_var_10, mbn_var_11}
         let mut i: i32 = 28i32;
         while i >= 0i32 {
             set_ram_word!(
@@ -2213,8 +2199,7 @@ pub unsafe fn MotherBrain_Phase3_Death_3(game: &mut Game) {
         }
         MotherBrain_HealthBasedPaletteHandling(game);
         (*E).mbn_var_0D = 3584u16;
-        (*E1).mbn_var_E = 0u16;
-        (*E1).mbn_var_F = 0u16;
+        set_fields! {[(*E1)], 0u16; mbn_var_E, mbn_var_F}
         (*E).mbn_var_A = ((0xa9af9di32) as u16);
         MotherBrain_Phase3_Death_4(game);
     }
@@ -2393,8 +2378,7 @@ pub unsafe fn MotherBrain_Phase3_Death_14_20framedelay(game: &mut Game) {
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if ((*E).mbn_var_F as i32 & 0x8000i32) != 0i32 {
         let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
-        (*E1).base.x_pos = 0u16;
-        (*E1).base.y_pos = 0u16;
+        set_fields! {[(*E1).base], 0u16; x_pos, y_pos}
         (*E).mbn_var_A = ((0xa9b258i32) as u16);
     }
 }
@@ -2474,8 +2458,7 @@ pub unsafe fn MotherBrain_Phase3_Death_19_EscapeDoorExploding(game: &mut Game) {
         SetEventHappened(0xeu16, game);
         (*E).mbn_var_A = ((0xa9b32ai32) as u16);
         let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
-        (*E1).mbn_var_E = 0u16;
-        (*E1).mbn_var_F = 0u16;
+        set_fields! {[(*E1)], 0u16; mbn_var_E, mbn_var_F}
     }
 }
 pub unsafe fn MotherBrain_Phase3_Death_20_BlowUpEscapeDoor(game: &mut Game) {
@@ -2940,8 +2923,7 @@ pub unsafe fn MotherBomb_FiringLaser_FinishAttack(game: &mut Game) {
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if ((*E).mbn_var_F as i32 & 0x8000i32) != 0i32 {
         let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
-        (*E1).mbn_var_32 = 4u16;
-        (*E1).mbn_var_33 = 4u16;
+        set_fields! {[(*E1)], 4u16; mbn_var_32, mbn_var_33}
         (*E).mbn_var_A = ((0xa9b605i32) as u16);
         MotherBrain_Body_Phase2_Thinking(game);
     }
@@ -3020,8 +3002,7 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_3_Wait(game: &mut Game) {
 pub unsafe fn MotherBomb_FiringRainbowBeam_4_ExtendNeckDown(game: &mut Game) {
     set_ram_word!(game.cooldown_timer = 8u16);
     let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
-    (*E1).mbn_var_32 = 6u16;
-    (*E1).mbn_var_33 = 6u16;
+    set_fields! {[(*E1)], 6u16; mbn_var_32, mbn_var_33}
     (*E1).mbn_var_34 = 1280u16;
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     (*E).mbn_var_A = ((0xa9b975i32) as u16);
@@ -3044,8 +3025,7 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_5_StartFiring(game: &mut Game) {
             (*E1).mbn_var_31 = 1u16;
             (*E1).mbn_var_32 = 2u16;
             (*E1).mbn_var_33 = 4u16;
-            (*E).mbn_parameter_1 = 0u16;
-            (*E).mbn_parameter_2 = 0u16;
+            set_fields! {[(*E)], 0u16; mbn_parameter_1, mbn_parameter_2}
             let mut v4: u16 = 5u16;
             if ((ram_word!(game, samus_health)) as i16).wrapping_sub(700i16) < 0i16 {
                 v4 = 24u16;
@@ -3417,8 +3397,7 @@ pub unsafe fn MotherBrain_Phase2Cut_5(game: &mut Game) {
         MotherBrain_BodyRainbowBeamPalAnimIndex0(game);
         MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C77 as u16, game);
         let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
-        (*E1).mbn_var_32 = 6u16;
-        (*E1).mbn_var_33 = 6u16;
+        set_fields! {[(*E1)], 6u16; mbn_var_32, mbn_var_33}
         (*E1).mbn_var_34 = 1280u16;
         QueueSfx2_Max6(0x71u16, game);
         (*E).mbn_var_A = ((0xa9be1ai32) as u16);
@@ -3432,8 +3411,7 @@ pub unsafe fn MotherBrain_DrainedByShitroid_0(game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     (*E).mbn_var_00 = 3u16;
     let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
-    (*E1).mbn_var_32 = 8u16;
-    (*E1).mbn_var_33 = 8u16;
+    set_fields! {[(*E1)], 8u16; mbn_var_32, mbn_var_33}
     (*E1).mbn_var_34 = 1792u16;
     (*E).mbn_var_A = ((0xa9be5di32) as u16);
     (*E).mbn_var_F = 48u16;
@@ -3448,8 +3426,7 @@ pub unsafe fn MotherBrain_DrainedByShitroid_1(game: &mut Game) {
         let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
         (*E1).mbn_var_08 = ((0xa9bfd0i32) as u16);
         (*E1).mbn_var_06 = 0u16;
-        (*E1).mbn_var_07 = 2u16;
-        (*E1).mbn_var_32 = 2u16;
+        set_fields! {[(*E1)], 2u16; mbn_var_07, mbn_var_32}
         (*E1).mbn_var_33 = 4u16;
     }
 }
@@ -3486,8 +3463,7 @@ pub unsafe fn MotherBrain_DrainedByShitroid_3(game: &mut Game) {
     CallMotherBrainPainfulWalk((((*E1).mbn_var_08) as u32) | (0xa90000u32), game);
     if ((*E1).mbn_var_06 as i32 - 8i32 & 0x8000i32 == 0) {
         (*E1).mbn_var_34 = 64u16;
-        (*E1).mbn_var_32 = 8u16;
-        (*E1).mbn_var_33 = 8u16;
+        set_fields! {[(*E1)], 8u16; mbn_var_32, mbn_var_33}
         MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C39 as u16, game);
         (*Get_MotherBrain(0i32, game)).mbn_var_A = ((0xa9bf41i32) as u16);
         MotherBrain_DrainedByShitroid_4(game);
@@ -3588,8 +3564,7 @@ pub unsafe fn MotherBrain_Phase2_Revive_1(game: &mut Game) {
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if ((*E).mbn_var_F as i32 & 0x8000i32) != 0i32 {
         let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
-        (*E1).mbn_var_14 = 1u16;
-        (*E1).mbn_var_12 = 1u16;
+        set_fields! {[(*E1)], 1u16; mbn_var_14, mbn_var_12}
         (*E).mbn_var_A = ((0xa9c082i32) as u16);
         (*E).mbn_var_F = 224u16;
         MotherBrain_Phase2_Revive_2(game);
@@ -3620,8 +3595,7 @@ pub unsafe fn MotherBrain_Phase2_Revive_3(game: &mut Game) {
 pub unsafe fn MotherBrain_Phase2_Revive_4(game: &mut Game) {
     if MotherBrain_MakeHerStandUp(game) as i32 & 1i32 != 0 {
         let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
-        (*E1).mbn_var_32 = 6u16;
-        (*E1).mbn_var_33 = 6u16;
+        set_fields! {[(*E1)], 6u16; mbn_var_32, mbn_var_33}
         (*E1).mbn_var_34 = 1280u16;
         (*E1).mbn_var_31 = 1u16;
         let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
@@ -3847,8 +3821,7 @@ pub unsafe fn MotherBrain_Phase3_Neck_SetupRecoilRecovery(game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
     (*E).mbn_var_31 = 1u16;
     (*E).mbn_var_34 = 1280u16;
-    (*E).mbn_var_32 = 6u16;
-    (*E).mbn_var_33 = 6u16;
+    set_fields! {[(*E)], 6u16; mbn_var_32, mbn_var_33}
     (*E).mbn_var_18 = ((0xa9c37bi32) as u16);
     (*E).mbn_var_19 = 16u16;
     MotherBrain_Phase3_Neck_RecoilRecovery(game);
@@ -3870,8 +3843,7 @@ pub unsafe fn MotherBrain_Phase3_Neck_SetupHyperBeamRecoil(game: &mut Game) {
     MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9BE7 as u16, game);
     (*E).mbn_var_00 = 50u16;
     (*E).mbn_var_34 = 2304u16;
-    (*E).mbn_var_32 = 8u16;
-    (*E).mbn_var_33 = 8u16;
+    set_fields! {[(*E)], 8u16; mbn_var_32, mbn_var_33}
     (*E).mbn_var_18 = ((0xa9c3cdi32) as u16);
     (*E).mbn_var_19 = 11u16;
     MotherBrain_Phase3_Neck_HyperBeamRecoil(game);
@@ -4173,9 +4145,7 @@ pub unsafe fn ShitroidInCutscene_Init(game: &mut Game) {
     (*E).base.vram_tiles_index = 160u16;
     (*E).base.x_pos = 320u16;
     (*E).base.y_pos = 96u16;
-    (*E).sice_var_B = 0u16;
-    (*E).sice_var_C = 0u16;
-    (*E).sice_var_09 = 0u16;
+    set_fields! {[(*E)], 0u16; sice_var_B, sice_var_C, sice_var_09}
     (*E).sice_var_A = ((0xa9c7cci32) as u16);
     (*E).sice_var_F = 248u16;
     (*E).sice_var_0F = ((0xa9f683i32) as u16);
@@ -4330,8 +4300,7 @@ pub unsafe fn ShitroidInCutscene_ActivateRainbowBeam(k: u16, game: &mut Game) {
         != 0
     {
         let E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as i32, game);
-        (*E).sice_var_B = 0u16;
-        (*E).sice_var_C = 0u16;
+        set_fields! {[(*E)], 0u16; sice_var_B, sice_var_C}
         (*E).base.x_pos = (*E1).base.x_pos;
         (*E).base.y_pos = ((*E1).base.y_pos).wrapping_sub(24u16);
         Enemy_SetInstrList(k, addr_kShitroid_Ilist_CFB8 as u16, game);
@@ -4365,8 +4334,7 @@ pub unsafe fn ShitroidInCutscene_StopDraining(k: u16, game: &mut Game) {
         (*E).sice_var_E = 10u16;
         (*E).sice_var_A = ((0xa9c94bi32) as u16);
         (*E).sice_var_F = 32u16;
-        (*E).sice_var_B = 0u16;
-        (*E).sice_var_C = 0u16;
+        set_fields! {[(*E)], 0u16; sice_var_B, sice_var_C}
     }
 }
 pub unsafe fn ShitroidInCutscene_LetGoAndSpawnDust(k: u16, game: &mut Game) {
@@ -4567,8 +4535,7 @@ pub unsafe fn ShitroidInCutscene_FinalCharge(k: u16, game: &mut Game) {
         QueueSfx3_Max6(0x19u16, game);
         TurnOffLightsForShitroidDeath(game);
         Enemy_SetInstrList(k, addr_kShitroid_Ilist_CFCE as u16, game);
-        (*E).sice_var_B = 0u16;
-        (*E).sice_var_C = 0u16;
+        set_fields! {[(*E)], 0u16; sice_var_B, sice_var_C}
         (*Get_ShitdroidInCutscene(0i32, game)).sice_var_A = addr_locret_A9C18D as u16;
         QueueMusic_Delayed8(0u16, game);
         (*E).sice_var_A = ((0xa9cc3ei32) as u16);
@@ -4824,8 +4791,7 @@ pub unsafe fn ShitroidInCutscene_Touch(game: &mut Game) {
             & 1i32
             != 0
     {
-        (*E).sice_var_B = 0u16;
-        (*E).sice_var_C = 0u16;
+        set_fields! {[(*E)], 0u16; sice_var_B, sice_var_C}
         (*E).sice_var_A = ((0xa9ca7ai32) as u16);
     }
 }
@@ -4898,8 +4864,7 @@ pub unsafe fn MotherBrain_Pal_BeginScreenFlash(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_Pal_EndScreenFlash(game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    (*E).mbn_var_0E = 0u16;
-    (*E).mbn_var_0F = 0u16;
+    set_fields! {[(*E)], 0u16; mbn_var_0E, mbn_var_0F}
     MotherBrain_Pal_WriteRoomPal(addr_word_A9D082 as u16, game);
 }
 pub unsafe fn MotherBrain_Pal_HandleRoomPal(game: &mut Game) {
@@ -4953,8 +4918,7 @@ pub unsafe fn HandleMotherBrainInstructionList(a: u16, game: &mut Game) -> u16 {
         }
     }
     if *v3.offset(0) == 0 {
-        (*st).ip = 0u16;
-        (*st).timer = 0u16;
+        set_fields! {[(*st)], 0u16; ip, timer}
         0u16
     } else {
         (*st).timer = 1u16;
@@ -6169,8 +6133,7 @@ pub unsafe fn Shitroid_Init(game: &mut Game) {
         v2 = ((0xa9efdfi32) as u16);
     }
     (*E).shitr_var_A = v2;
-    (*E).shitr_var_B = 0u16;
-    (*E).shitr_var_C = 0u16;
+    set_fields! {[(*E)], 0u16; shitr_var_B, shitr_var_C}
     (*E).shitr_var_E = 10u16;
     (*E).shitr_parameter_2 = 0u16;
     WriteColorsToTargetPalette(0xa9u8, 0x120u16, addr_word_A9F8C6 as u16, 0x10u16, game);
@@ -6225,8 +6188,7 @@ pub unsafe fn Shitroid_Main(game: &mut Game) {
 }
 pub unsafe fn Shitroid_Func_3(k: u16, game: &mut Game) {
     let E: *mut Enemy_Shitroid = Get_Shitroid(k as i32, game);
-    (*E).shitr_var_B = 0u16;
-    (*E).shitr_var_C = 0u16;
+    set_fields! {[(*E)], 0u16; shitr_var_B, shitr_var_C}
 }
 pub unsafe fn Shitroid_Func_4(game: &mut Game) {
     if ram_word!(game, layer1_x_pos) as i32 - 513i32 & 0x8000i32 != 0 {
@@ -6299,8 +6261,7 @@ pub unsafe fn Shitroid_Func_9(k: u16, game: &mut Game) {
         != 0
     {
         let E: *mut Enemy_Shitroid = Get_Shitroid(k as i32, game);
-        (*E).shitr_var_B = 0u16;
-        (*E).shitr_var_C = 0u16;
+        set_fields! {[(*E)], 0u16; shitr_var_B, shitr_var_C}
         (*E).base.x_pos = (*E1).base.x_pos;
         (*E).base.y_pos = ((*E1).base.y_pos).wrapping_sub(32u16);
         enemy_instruction! {[(*E).base]; instruction = addr_kShitroid_Ilist_F924 as u16, timer = 1u16}
@@ -6413,8 +6374,7 @@ pub unsafe fn Shitroid_Func_16(k: u16, game: &mut Game) {
     if ram_word!(game, samus_health) < 2u16 {
         set_ram_words! { game, 0u16; samus_x_speed_divisor, bomb_counter }
         (*E).shitr_var_A = ((0xa9f2a2i32) as u16);
-        (*E).shitr_var_B = 0u16;
-        (*E).shitr_var_C = 0u16;
+        set_fields! {[(*E)], 0u16; shitr_var_B, shitr_var_C}
         Enemy_SetInstrList(k, addr_kShitroid_Ilist_F906 as u16, game);
         (*E).shitr_var_E = 10u16;
         CallSomeSamusCode(0x13u16, game);
@@ -6524,8 +6484,7 @@ pub unsafe fn Shitroid_Func_23(game: &mut Game) {
     );
     if Shitroid_Func_2(ram_word!(game, cur_enemy_index), rect, game) == 0 {
         let E: *mut Enemy_Shitroid = Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game);
-        (*E).shitr_var_B = 0u16;
-        (*E).shitr_var_C = 0u16;
+        set_fields! {[(*E)], 0u16; shitr_var_B, shitr_var_C}
         (*E).base.properties = ((*E).base.properties as i32
             & !(kEnemyProps_DisableSamusColl as i32 | kEnemyProps_Invisible as i32))
             as u16;
@@ -6903,9 +6862,7 @@ pub unsafe fn Shitroid_Touch(game: &mut Game) {
                 enemy_instruction! {[(*E).base]; instruction = addr_kShitroid_Ilist_F924 as u16, timer = 1u16}
                 (*E).base.timer = 0u16;
                 (*E).shitr_var_E = 1u16;
-                (*E).shitr_parameter_2 = 0u16;
-                (*E).shitr_var_B = 0u16;
-                (*E).shitr_var_C = 0u16;
+                set_fields! {[(*E)], 0u16; shitr_parameter_2, shitr_var_B, shitr_var_C}
                 (*E).shitr_var_A = ((0xa9f20ei32) as u16);
             }
         } else if (*E).shitr_var_A as i32 == 0xa9f180i32 & 0xffffi32 {

@@ -27,6 +27,7 @@ use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{mov24, Load24, Mult8x8, RomPtr, Unreachable, WriteReg, WriteRegWord};
 use crate::rtl::{AddToHiLo, SetHiLo};
+use crate::set_fields;
 pub use crate::snes::registers::*;
 use ::core::ffi::{c_long, c_void};
 use ::core::ptr::{null, null_mut};
@@ -3558,8 +3559,7 @@ pub unsafe fn HdmaobjPreInstr_E449(k: u16, game: &mut Game) {
 static unk_88E4A0: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42u8, 0xfu8, 0xe4a8 as VoidP);
 pub unsafe fn sub_88E487(v0: u16, r22: u16, game: &mut Game) {
     (*(ram_ptr!(game, EnemyData; 0xf78)).offset(2)).parameter_1 = v0;
-    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D = 0u16;
-    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_E = 0u16;
+    set_fields! {[(*(ram_ptr!(game, EnemyData; 0xf78)).offset(3))], 0u16; ai_var_D, ai_var_E}
     (*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_preinstr = r22;
     SpawnHdmaObject(0x88u8, &raw const unk_88E4A0 as *const c_void, game);
 }

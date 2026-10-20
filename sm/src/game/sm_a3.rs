@@ -32,6 +32,7 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, SnesDivide, Unreachable};
+use crate::set_fields;
 pub use crate::types::{
     EnemyBase, EnemyData, EnemyProps, EnemySpawnData, Func_V, Func_Y_V, LongPtr, VoidP,
 };
@@ -502,9 +503,7 @@ pub unsafe fn Metalee_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const
 }
 pub unsafe fn Metalee_Init(game: &mut Game) {
     let E: *mut Enemy_Metalee = Get_Metalee(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).metalee_var_C = 0u16;
-    (*E).metalee_var_D = 0u16;
-    (*E).metalee_var_E = 0u16;
+    set_fields! {[(*E)], 0u16; metalee_var_C, metalee_var_D, metalee_var_E}
     (*E).base.current_instruction = addr_kMetalee_Ilist_8910 as u16;
     (*E).metalee_var_B = ((0xa38987i32) as u16);
 }
@@ -632,8 +631,7 @@ pub unsafe fn Metalee_Shot(game: &mut Game) {
         SpawnEprojWithGfx(0u16, v2, addr_stru_868C08 as u16, game);
         SpawnEprojWithGfx(0u16, v2, addr_stru_868C16 as u16, game);
         SpawnEprojWithGfx(0u16, v2, addr_stru_868C24 as u16, game);
-        (*E).base.vram_tiles_index = 0u16;
-        (*E).base.palette_index = 0u16;
+        set_fields! {[(*E).base], 0u16; vram_tiles_index, palette_index}
     }
 }
 pub unsafe fn Fireflea_Init(game: &mut Game) {
@@ -779,8 +777,7 @@ pub unsafe fn MaridiaFish_Init(game: &mut Game) {
     (*E).mfh_var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 3i32) as isize);
     (*E).mfh_var_00 = *(&raw mut (*E).mfh_parameter_2 as *mut u8).offset(0) as u16;
     (*E).mfh_var_02 = *(&raw mut (*E).mfh_parameter_2 as *mut u8).offset(1isize) as u16;
-    (*E).mfh_var_F = 0u16;
-    (*E).mfh_var_01 = 0u16;
+    set_fields! {[(*E)], 0u16; mfh_var_F, mfh_var_01}
     (*E).mfh_var_03 = SineMult8bit((*E).mfh_var_F, (*E).mfh_var_00, game);
 }
 pub unsafe fn MaridiaFish_Func_1(game: &mut Game) {
@@ -1099,9 +1096,7 @@ pub unsafe fn PlatformThatFalls_Init(k: u16, j: u16, game: &mut Game) {
     (*E).ptfwss_var_B = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1i32) as isize);
     (*E).ptfwss_var_E = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2i32) as isize);
     (*E).ptfwss_var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3i32) as isize);
-    (*E).ptfwss_var_00 = 0u16;
-    (*E).ptfwss_var_03 = 0u16;
-    (*E).ptfwss_var_04 = 0u16;
+    set_fields! {[(*E)], 0u16; ptfwss_var_00, ptfwss_var_03, ptfwss_var_04}
     (*E).ptfwss_var_A = ((*E).base.y_pos).wrapping_add(1u16);
     (*E).ptfwss_var_F = 0u16;
     (*E).ptfwss_var_05 = *(&raw mut (*E).ptfwss_parameter_2 as *mut u8).offset(1isize) as u16;
@@ -1301,8 +1296,7 @@ pub unsafe fn Roach_Func_1(game: &mut Game) {
 }
 pub unsafe fn Roach_Init(game: &mut Game) {
     let E: *mut Enemy_Roach = Get_Roach(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).roach_var_25 = 0u16;
-    (*E).roach_var_24 = 0u16;
+    set_fields! {[(*E)], 0u16; roach_var_25, roach_var_24}
     Roach_Func_2(ram_word!(game, cur_enemy_index), game);
     Roach_Func_4(ram_word!(game, cur_enemy_index), game);
     Roach_Func_5(ram_word!(game, cur_enemy_index), game);
@@ -1753,8 +1747,7 @@ pub unsafe fn Mochtroid_Func_1(game: &mut Game) {
         game,
     ) != 0
     {
-        (*E).mochtr_var_C = 0u16;
-        (*E).mochtr_var_D = 0u16;
+        set_fields! {[(*E)], 0u16; mochtr_var_C, mochtr_var_D}
     }
     t = ((((((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16)) as i32
         >> 2i32) as i16 as i32)
@@ -1788,8 +1781,7 @@ pub unsafe fn Mochtroid_Func_1(game: &mut Game) {
         game,
     ) != 0
     {
-        (*E).mochtr_var_A = 0u16;
-        (*E).mochtr_var_B = 0u16;
+        set_fields! {[(*E)], 0u16; mochtr_var_A, mochtr_var_B}
     }
     Mochtroid_Func_4(
         ram_word!(game, cur_enemy_index),
@@ -1802,10 +1794,7 @@ pub unsafe fn Mochtroid_Func_2(game: &mut Game) {
     let v2: i32 = ((*E).mochtr_var_E as i32 & 6i32) >> 1i32;
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add((g_word_A3A76D[v2 as usize]) as u16);
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_add((g_word_A3A775[v2 as usize]) as u16);
-    (*E).mochtr_var_A = 0u16;
-    (*E).mochtr_var_B = 0u16;
-    (*E).mochtr_var_C = 0u16;
-    (*E).mochtr_var_D = 0u16;
+    set_fields! {[(*E)], 0u16; mochtr_var_A, mochtr_var_B, mochtr_var_C, mochtr_var_D}
     let fresh12 = (*E).mochtr_var_E;
     (*E).mochtr_var_E = (*E).mochtr_var_E.wrapping_sub(1);
     if fresh12 == 1u16 {
@@ -1821,8 +1810,7 @@ pub unsafe fn Mochtroid_Func_3(game: &mut Game) {
     let E: *mut Enemy_Mochtroid = Get_Mochtroid(ram_word!(game, cur_enemy_index) as i32, game);
     let x_pos: u16 = (*E).base.x_pos;
     if x_pos == ram_word!(game, samus_x_pos) {
-        (*E).mochtr_var_A = 0u16;
-        (*E).mochtr_var_B = 0u16;
+        set_fields! {[(*E)], 0u16; mochtr_var_A, mochtr_var_B}
     } else if ((x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) >= 0i16 {
         (*E).mochtr_var_A = 0u16;
         (*E).mochtr_var_B = -1i32 as u16;
@@ -1837,8 +1825,7 @@ pub unsafe fn Mochtroid_Func_3(game: &mut Game) {
     );
     let y_pos: u16 = (*E).base.y_pos;
     if y_pos == ram_word!(game, samus_y_pos) {
-        (*E).mochtr_var_C = 0u16;
-        (*E).mochtr_var_D = 0u16;
+        set_fields! {[(*E)], 0u16; mochtr_var_C, mochtr_var_D}
     } else if ((y_pos) as i16).wrapping_sub((ram_word!(game, samus_y_pos)) as i16) >= 0i16 {
         (*E).mochtr_var_C = 0u16;
         (*E).mochtr_var_D = -1i32 as u16;
@@ -1902,9 +1889,7 @@ pub unsafe fn Sidehopper_Init(game: &mut Game) {
     set_ram_word!(game.random_number = 37u16);
     NextRandom(game);
     let E: *mut Enemy_Sidehopper = Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).sideh_var_03 = 0u16;
-    (*E).sideh_var_04 = 0u16;
-    (*E).sideh_var_05 = 0u16;
+    set_fields! {[(*E)], 0u16; sideh_var_03, sideh_var_04, sideh_var_05}
     let v2: u16 = (2u16).wrapping_mul((*get_EnemyDef_A2((*E).base.enemy_ptr, game)).field_2A);
     (*E).sideh_var_06 = v2;
     let mut v4: u16 = 0;
@@ -2233,9 +2218,7 @@ pub unsafe fn MaridiaRefillCandy_Init(game: &mut Game) {
     let E: *mut Enemy_MaridiaRefillCandy =
         Get_MaridiaRefillCandy(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).mrcy_parameter_1 = ((0xa3b482i32) as u16);
-    (*E).mrcy_var_D = 0u16;
-    (*E).mrcy_var_E = 0u16;
-    (*E).mrcy_var_00 = 0u16;
+    set_fields! {[(*E)], 0u16; mrcy_var_D, mrcy_var_E, mrcy_var_00}
     (*E).base.current_instruction = addr_kMaridiaRefillCandy_Ilist_B3C1 as u16;
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
     (*E).mrcy_var_B = (*E).base.x_pos;
@@ -2350,11 +2333,7 @@ pub unsafe fn Bang_Init(game: &mut Game) {
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_BlockPlasmaBeam) as u16);
     (*E).bang_var_F = ((0xa3bca5i32) as u16);
     (*E).bang_var_00 = 16u16;
-    (*E).bang_var_01 = 0u16;
-    (*E).bang_var_02 = 0u16;
-    (*E).bang_var_20 = 0u16;
-    (*E).bang_var_21 = 0u16;
-    (*E).bang_var_22 = 0u16;
+    set_fields! {[(*E)], 0u16; bang_var_01, bang_var_02, bang_var_20, bang_var_21, bang_var_22}
     (*E).bang_var_0B = crate::rtl::rom_table_word!(
         game,
         0xa3ba84,
@@ -2480,10 +2459,7 @@ pub unsafe fn Bang_Func_8(k: u16, game: &mut Game) {
     let E: *mut Enemy_Bang = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).bang_var_01 = v1 as u16;
     (*E).bang_var_F = ((0xa3bd1ci32) as u16);
-    (*E).bang_var_07 = 0u16;
-    (*E).bang_var_08 = 0u16;
-    (*E).bang_var_09 = 0u16;
-    (*E).bang_var_0A = 0u16;
+    set_fields! {[(*E)], 0u16; bang_var_07, bang_var_08, bang_var_09, bang_var_0A}
 }
 pub unsafe fn Bang_Func_9(game: &mut Game) {
     let v1: u8 = ((CalculateAngleOfSamusFromEnemy(ram_word!(game, cur_enemy_index), game)) as u8)
@@ -2587,8 +2563,7 @@ pub unsafe fn Bang_Shot(game: &mut Game) {
                 & 0xfi32) as isize,
         );
         (*E).bang_var_F = ((0xa3bd2ci32) as u16);
-        (*E).bang_var_07 = 0u16;
-        (*E).bang_var_08 = 0u16;
+        set_fields! {[(*E)], 0u16; bang_var_07, bang_var_08}
         (*E).bang_var_09 = 256u16;
         (*E).bang_var_0A = 1536u16;
     }
@@ -2609,9 +2584,7 @@ pub unsafe fn Skree_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u
 }
 pub unsafe fn Skree_Init(game: &mut Game) {
     let E: *mut Enemy_Skree = Get_Skree(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).skree_var_C = 0u16;
-    (*E).skree_var_D = 0u16;
-    (*E).skree_var_E = 0u16;
+    set_fields! {[(*E)], 0u16; skree_var_C, skree_var_D, skree_var_E}
     (*E).base.current_instruction = addr_kSkree_Ilist_C65E as u16;
     (*E).skree_var_B = ((0xa3c6d5i32) as u16);
 }
@@ -3053,10 +3026,7 @@ pub unsafe fn MaridiaSnail_Func_14(k: u16, game: &mut Game) {
         (*E).msl_var_D = crate::rtl::rom_table_word!(game, 0xa3d1ab, (v2 + 1i32) as isize);
         (*E).base.instruction_timer = 1u16;
         (*E).base.timer = 0u16;
-        (*E).msl_var_02 = 0u16;
-        (*E).msl_var_03 = 0u16;
-        (*E).msl_var_00 = 0u16;
-        (*E).msl_var_01 = 0u16;
+        set_fields! {[(*E)], 0u16; msl_var_02, msl_var_03, msl_var_00, msl_var_01}
     }
 }
 pub unsafe fn MaridiaSnail_Func_15(k: u16, game: &mut Game) {
@@ -3095,12 +3065,7 @@ pub unsafe fn MaridiaSnail_Func_15(k: u16, game: &mut Game) {
     {
         let msl_var_01: i16 = (*E).msl_var_01 as i16;
         if msl_var_01 >= 0i16 && msl_var_01 as i32 - 3i32 & 0x8000i32 != 0 {
-            (*E).msl_var_03 = 0u16;
-            (*E).msl_var_02 = 0u16;
-            (*E).msl_var_01 = 0u16;
-            (*E).msl_var_00 = 0u16;
-            (*E).msl_var_E = 0u16;
-            (*E).msl_var_04 = 0u16;
+            set_fields! {[(*E)], 0u16; msl_var_03, msl_var_02, msl_var_01, msl_var_00, msl_var_E, msl_var_04}
             (*E).msl_var_05 = 1u16;
             if (*E).msl_var_08 == 3u16 {
                 (*E).msl_var_08 = 0u16;
@@ -3626,12 +3591,9 @@ pub unsafe fn FireZoomer_Func_2(k: u16, game: &mut Game) {
     ) != 0
     {
         if (*E).fzr_parameter_1 == 255u16 {
-            (*E).fzr_var_A = 128u16;
-            (*E).fzr_var_B = 128u16;
+            set_fields! {[(*E)], 128u16; fzr_var_A, fzr_var_B}
         }
-        (*E).fzr_var_01 = 0u16;
-        (*E).fzr_var_02 = 0u16;
-        (*E).fzr_var_04 = 0u16;
+        set_fields! {[(*E)], 0u16; fzr_var_01, fzr_var_02, fzr_var_04}
         (*E).fzr_var_F = (*E).fzr_var_03;
     } else {
         if (*E).fzr_var_02 as i32 - 4i32 & 0x8000i32 != 0 {
@@ -3855,8 +3817,7 @@ pub unsafe fn Metroid_Func_1(varE32: u16, game: &mut Game) {
         game,
     ) != 0
     {
-        (*E).metroid_var_C = 0u16;
-        (*E).metroid_var_D = 0u16;
+        set_fields! {[(*E)], 0u16; metroid_var_C, metroid_var_D}
     }
     t = ((((((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16)) as i32
         >> 2i32) as i16 as i32)
@@ -3891,8 +3852,7 @@ pub unsafe fn Metroid_Func_1(varE32: u16, game: &mut Game) {
         game,
     ) != 0
     {
-        (*E).metroid_var_A = 0u16;
-        (*E).metroid_var_B = 0u16;
+        set_fields! {[(*E)], 0u16; metroid_var_A, metroid_var_B}
     }
 }
 pub unsafe fn Metroid_Func_2(varE32: u16, game: &mut Game) {
@@ -3936,8 +3896,7 @@ pub unsafe fn Metroid_Func_2(varE32: u16, game: &mut Game) {
         game,
     ) != 0
     {
-        (*E).metroid_var_C = 0u16;
-        (*E).metroid_var_D = 0u16;
+        set_fields! {[(*E)], 0u16; metroid_var_C, metroid_var_D}
     }
     r18 = 0u16;
     r20 = 0u16;
@@ -3974,18 +3933,14 @@ pub unsafe fn Metroid_Func_2(varE32: u16, game: &mut Game) {
         game,
     ) != 0
     {
-        (*E).metroid_var_A = 0u16;
-        (*E).metroid_var_B = 0u16;
+        set_fields! {[(*E)], 0u16; metroid_var_A, metroid_var_B}
     }
 }
 pub unsafe fn Metroid_Func_3(varE32: u16, game: &mut Game) {
     let E: *mut Enemy_Metroid = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_pos = ram_word!(game, samus_x_pos);
     (*E).base.y_pos = varE32;
-    (*E).metroid_var_A = 0u16;
-    (*E).metroid_var_B = 0u16;
-    (*E).metroid_var_C = 0u16;
-    (*E).metroid_var_D = 0u16;
+    set_fields! {[(*E)], 0u16; metroid_var_A, metroid_var_B, metroid_var_C, metroid_var_D}
 }
 pub unsafe fn Metroid_Func_4(varE32: u16, game: &mut Game) {
     let E: *mut Enemy_Metroid = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);
@@ -3997,10 +3952,7 @@ pub unsafe fn Metroid_Func_4(varE32: u16, game: &mut Game) {
         0xa3ea3f,
         (v1 + 4i32) as isize
     ));
-    (*E).metroid_var_A = 0u16;
-    (*E).metroid_var_B = 0u16;
-    (*E).metroid_var_C = 0u16;
-    (*E).metroid_var_D = 0u16;
+    set_fields! {[(*E)], 0u16; metroid_var_A, metroid_var_B, metroid_var_C, metroid_var_D}
     let fresh9 = (*E).metroid_var_E;
     (*E).metroid_var_E = (*E).metroid_var_E.wrapping_sub(1);
     if fresh9 == 1u16 {
@@ -4013,8 +3965,7 @@ pub unsafe fn Metroid_Touch(game: &mut Game) {
     let varE32: u16 = (ram_word!(game, samus_y_pos)).wrapping_sub(8u16);
     if ram_word!(game, samus_contact_damage_index) != 0 {
         if (*E).metroid_var_F != 2u16 {
-            (*E).metroid_var_A = 0u16;
-            (*E).metroid_var_C = 0u16;
+            set_fields! {[(*E)], 0u16; metroid_var_A, metroid_var_C}
             let v2: i16 =
                 (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16);
             (*E).metroid_var_B = (if v2 < 0i16 { -256i32 } else { 0i32 }) as u16;
@@ -4100,8 +4051,7 @@ pub unsafe fn Metroid_Shot(game: &mut Game) {
             CallSomeSamusCode(0x13u16, game);
         }
     } else {
-        (*E).metroid_var_A = 0u16;
-        (*E).metroid_var_C = 0u16;
+        set_fields! {[(*E)], 0u16; metroid_var_A, metroid_var_C}
         let v7: i16 =
             (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, projectile_x_pos[0])) as i16);
         (*E).metroid_var_B = (if v7 < 0i16 { -256i32 } else { 0i32 }) as u16;

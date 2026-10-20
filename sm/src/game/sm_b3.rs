@@ -23,6 +23,7 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{RomPtr, Unreachable};
+use crate::set_fields;
 
 pub use crate::types::Consts_86;
 pub use crate::types::Consts_B3;
@@ -170,8 +171,7 @@ pub unsafe fn BrinstarPipeBug_Init(game: &mut Game) {
     (*PipeBug).pbg_var_00 = (y_pos).wrapping_sub(16u16);
     (*PipeBug).pbg_var_F = ((0xb38880i32) as u16);
     (*PipeBug).pbg_var_D = 48u16;
-    (*PipeBug).pbg_var_E = 0u16;
-    (*PipeBug).pbg_var_01 = 0u16;
+    set_fields! {[(*PipeBug)], 0u16; pbg_var_E, pbg_var_01}
     (*PipeBug).base.current_instruction = addr_kBrinstarPipeBug_Ilist_87AB as u16;
     if (*PipeBug).pbg_parameter_1 != 0 {
         (*PipeBug).base.current_instruction = addr_kBrinstarPipeBug_Ilist_8A1D as u16;
@@ -523,8 +523,7 @@ pub unsafe fn BrinstarYellowPipeBug_Init(game: &mut Game) {
     let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).pbg_var_07 = (*E).base.x_pos;
     (*E).pbg_var_08 = (*E).base.y_pos;
-    (*E).base.x_subpos = 0u16;
-    (*E).base.y_subpos = 0u16;
+    set_fields! {[(*E).base], 0u16; x_subpos, y_subpos}
     (*E).base.instruction_timer = 1u16;
     (*E).base.timer = 0u16;
     (*E).base.current_instruction = addr_kBrinstarYellowPipeBug_Ilist_8EFC as u16;
@@ -588,8 +587,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_3(game: &mut Game) {
     if CheckIfEnemyIsOnScreen(game) != 0 {
         (*E).base.x_pos = (*E).pbg_var_07;
         (*E).base.y_pos = (*E).pbg_var_08;
-        (*E).base.x_subpos = 0u16;
-        (*E).base.y_subpos = 0u16;
+        set_fields! {[(*E).base], 0u16; x_subpos, y_subpos}
         (*E).pbg_var_A = ((0xb38fb5i32) as u16);
         (*E).pbg_var_06 = 0u16;
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
@@ -597,8 +595,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_3(game: &mut Game) {
         && (*E).base.x_pos as i32 - ram_word!(game, samus_x_pos) as i32 - 48i32 & 0x8000i32 != 0
     {
         (*E).pbg_var_A = ((0xb3915ai32) as u16);
-        (*E).pbg_var_C = 0u16;
-        (*E).pbg_var_D = 0u16;
+        set_fields! {[(*E)], 0u16; pbg_var_C, pbg_var_D}
         (*E).pbg_var_E = 40u16;
         (*E).pbg_var_F = 1u16;
         (*E).pbg_var_04 = (*E).base.x_pos;
@@ -621,8 +618,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_5(game: &mut Game) {
     if CheckIfEnemyIsOnScreen(game) != 0 {
         (*E).base.x_pos = (*E).pbg_var_07;
         (*E).base.y_pos = (*E).pbg_var_08;
-        (*E).base.x_subpos = 0u16;
-        (*E).base.y_subpos = 0u16;
+        set_fields! {[(*E).base], 0u16; x_subpos, y_subpos}
         (*E).pbg_var_A = ((0xb38fb5i32) as u16);
         (*E).pbg_var_06 = 0u16;
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
@@ -630,8 +626,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_5(game: &mut Game) {
         && ram_word!(game, samus_x_pos) as i32 - (*E).base.x_pos as i32 - 48i32 & 0x8000i32 != 0
     {
         (*E).pbg_var_A = ((0xb391d8i32) as u16);
-        (*E).pbg_var_C = 0u16;
-        (*E).pbg_var_D = 0u16;
+        set_fields! {[(*E)], 0u16; pbg_var_C, pbg_var_D}
         (*E).pbg_var_E = 40u16;
         (*E).pbg_var_F = 1u16;
         (*E).pbg_var_04 = (*E).base.x_pos;
@@ -653,8 +648,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_7(game: &mut Game) {
     if CheckIfEnemyIsOnScreen(game) != 0 {
         (*E).base.x_pos = (*E).pbg_var_07;
         (*E).base.y_pos = (*E).pbg_var_08;
-        (*E).base.x_subpos = 0u16;
-        (*E).base.y_subpos = 0u16;
+        set_fields! {[(*E).base], 0u16; x_subpos, y_subpos}
         (*E).pbg_var_A = ((0xb38fb5i32) as u16);
         (*E).pbg_var_06 = 0u16;
         (*E).base.instruction_timer = 1u16;
@@ -668,8 +662,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_7(game: &mut Game) {
         } else {
             BrinstarYellowPipeBug_Func_9(ram_word!(game, cur_enemy_index), game);
             if (((*E).base.y_pos) as i16).wrapping_sub(((*E).pbg_var_08) as i16) < 0i16 {
-                (*E).pbg_var_06 = 1u16;
-                (*E).pbg_var_F = 1u16;
+                set_fields! {[(*E)], 1u16; pbg_var_06, pbg_var_F}
                 (*E).pbg_var_A = ((0xb39028i32) as u16);
                 (*E).base.instruction_timer = 1u16;
                 (*E).base.timer = 0u16;
@@ -683,8 +676,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_8(game: &mut Game) {
     if CheckIfEnemyIsOnScreen(game) != 0 {
         (*E).base.x_pos = (*E).pbg_var_07;
         (*E).base.y_pos = (*E).pbg_var_08;
-        (*E).base.x_subpos = 0u16;
-        (*E).base.y_subpos = 0u16;
+        set_fields! {[(*E).base], 0u16; x_subpos, y_subpos}
         (*E).pbg_var_A = ((0xb38fb5i32) as u16);
         (*E).pbg_var_06 = 0u16;
         (*E).base.instruction_timer = 1u16;
@@ -698,8 +690,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_8(game: &mut Game) {
         } else {
             BrinstarYellowPipeBug_Func_9(ram_word!(game, cur_enemy_index), game);
             if (((*E).pbg_var_08) as i16).wrapping_sub(((*E).base.y_pos) as i16) >= 0i16 {
-                (*E).pbg_var_06 = 1u16;
-                (*E).pbg_var_F = 1u16;
+                set_fields! {[(*E)], 1u16; pbg_var_06, pbg_var_F}
                 (*E).base.instruction_timer = 1u16;
                 (*E).base.timer = 0u16;
                 (*E).base.current_instruction = addr_kBrinstarYellowPipeBug_Ilist_8F24 as u16;
@@ -723,8 +714,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_10(k: u16, game: &mut Game) {
     let E: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
     (*E).pbg_var_E = (*E).pbg_var_E.wrapping_sub(1);
     if ((*E).pbg_var_E as i32 & 0x8000i32) != 0i32 {
-        (*E).pbg_var_E = 0u16;
-        (*E).pbg_var_F = 0u16;
+        set_fields! {[(*E)], 0u16; pbg_var_E, pbg_var_F}
     } else {
         let v4: i32 = 8i32 * (*E).pbg_var_E as i32 >> 1i32;
         AddToHiLo(
@@ -743,8 +733,7 @@ pub unsafe fn Botwoon_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const
 }
 pub unsafe fn Botwoon_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.x_width = 12u16;
-    (*E).base.y_height = 12u16;
+    set_fields! {[(*E).base], 12u16; x_width, y_height}
     jp
 }
 pub unsafe fn Botwoon_Instr_3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -755,8 +744,7 @@ pub unsafe fn Botwoon_Instr_3(k: u16, jp: *const u16, game: &mut Game) -> *const
 }
 pub unsafe fn Botwoon_Instr_4(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.x_width = 12u16;
-    (*E).base.y_height = 12u16;
+    set_fields! {[(*E).base], 12u16; x_width, y_height}
     jp
 }
 pub unsafe fn Botwoon_Instr_5(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -773,8 +761,7 @@ pub unsafe fn Botwoon_Instr_6(k: u16, jp: *const u16, game: &mut Game) -> *const
 }
 pub unsafe fn Botwoon_Instr_7(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.x_width = 12u16;
-    (*E).base.y_height = 12u16;
+    set_fields! {[(*E).base], 12u16; x_width, y_height}
     jp
 }
 pub unsafe fn Botwoon_Instr_8(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -785,8 +772,7 @@ pub unsafe fn Botwoon_Instr_8(k: u16, jp: *const u16, game: &mut Game) -> *const
 }
 pub unsafe fn Botwoon_Instr_9(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.x_width = 12u16;
-    (*E).base.y_height = 12u16;
+    set_fields! {[(*E).base], 12u16; x_width, y_height}
     jp
 }
 pub unsafe fn Botwoon_Instr_10(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -841,9 +827,7 @@ pub unsafe fn Botwoon_Init(game: &mut Game) {
         (*E).botwoon_var_20 = 256u16;
         (*E).botwoon_var_38 = crate::rtl::rom_table_word!(game, 0xb394bb, 0);
         (*E).botwoon_var_C = crate::rtl::rom_table_word!(game, 0xb394bb, 1);
-        (*E).botwoon_var_33 = 1u16;
-        (*E).botwoon_var_34 = 1u16;
-        (*E).botwoon_var_59 = 1u16;
+        set_fields! {[(*E)], 1u16; botwoon_var_33, botwoon_var_34, botwoon_var_59}
         (*E).botwoon_var_36 = -1i32 as u16;
         (*E).botwoon_var_37 = 0u16;
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
@@ -916,8 +900,7 @@ pub unsafe fn Botwoon_Func_3(game: &mut Game) {
         (*E).botwoon_var_30 = 1u16;
         (*E).botwoon_var_D = ((0xb39a46i32) as u16);
         (*E).botwoon_var_22 = 240u16;
-        (*E).botwoon_var_2F = 0u16;
-        (*E).botwoon_var_3E = 0u16;
+        set_fields! {[(*E)], 0u16; botwoon_var_2F, botwoon_var_3E}
     }
 }
 pub unsafe fn Botwoon_Func_4(game: &mut Game) {
@@ -1134,9 +1117,7 @@ pub unsafe fn Botwoon_Func_17(k: u16, game: &mut Game) {
     );
     Enemy_ItemDrop_Botwoon(k, game);
     let E: *mut Enemy_Botwoon = Get_Botwoon(k as i32, game);
-    (*E).botwoon_var_23 = 0u16;
-    (*E).botwoon_var_24 = 0u16;
-    (*E).botwoon_var_25 = 0u16;
+    set_fields! {[(*E)], 0u16; botwoon_var_23, botwoon_var_24, botwoon_var_25}
 }
 pub unsafe fn Botwoon_Func_18(k: u16, game: &mut Game) {
     let E: *mut Enemy_Botwoon = Get_Botwoon(k as i32, game);
@@ -1250,8 +1231,7 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
                     2u16;
             }
             if v2 == 0 {
-                (*E).botwoon_var_35 = 0u16;
-                (*E).botwoon_var_3E = 0u16;
+                set_fields! {[(*E)], 0u16; botwoon_var_35, botwoon_var_3E}
                 (*E).botwoon_var_36 = -1i32 as u16;
                 if (*E).botwoon_var_33 == 0 {
                     (*E).botwoon_var_3E = 1u16;
@@ -1593,8 +1573,7 @@ pub unsafe fn EscapeEtecoon_Init(game: &mut Game) {
             | (kEnemyProps_DisableSamusColl as i32 | kEnemyProps_Tangible as i32 | 0x8000i32))
             as u16;
         (*E).base.instruction_timer = 1u16;
-        (*E).base.timer = 0u16;
-        (*E).base.palette_index = 0u16;
+        set_fields! {[(*E).base], 0u16; timer, palette_index}
         let v3: i32 = (*E).een_parameter_1 as i32 >> 1i32;
         (*E).base.x_pos = crate::rtl::rom_table_word!(game, 0xb3e718, v3 as isize);
         (*E).base.y_pos = crate::rtl::rom_table_word!(game, 0xb3e71e, v3 as isize);

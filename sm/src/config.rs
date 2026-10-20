@@ -1,6 +1,7 @@
 use crate::c_library::{fprintf, free, realloc, stderr, strtol};
 use crate::host::Die;
 use crate::sdl_constants;
+use crate::set_fields;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
 pub use crate::types::{
     _IO_lock_t, __off64_t, __off_t, size_t, SDL_Keycode, Sint32, _IO_FILE, FILE,
@@ -756,8 +757,7 @@ unsafe fn HandleIniConfig(section: i32, key: *const c_char, mut value: *mut c_ch
         if StringEqualsNoCase(key, b"WindowSize\0" as *const u8 as *const c_char) {
             let mut s: *mut c_char = null_mut::<c_char>();
             if StringEqualsNoCase(value, b"Auto\0" as *const u8 as *const c_char) {
-                g_config.window_width = 0i32;
-                g_config.window_height = 0i32;
+                set_fields! {[g_config], 0i32; window_width, window_height}
                 return true_0 != 0;
             }
             loop {

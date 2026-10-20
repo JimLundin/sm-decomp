@@ -1,4 +1,5 @@
 use crate::game_state::Game;
+use crate::set_fields;
 use ::core::ffi::{c_char, c_long, c_void};
 use ::core::mem::{size_of, transmute};
 
@@ -138,9 +139,7 @@ pub unsafe fn ppu_reset(ppu: *mut Ppu) {
     (*ppu).renderBuffer = render_buffer;
     (*ppu).renderPitch = pitch;
     (*ppu).snes = snes;
-    (*ppu).vramIncrement = 1;
-    (*ppu).mosaicSize = 1;
-    (*ppu).mosaicStartLine = 1;
+    set_fields! {[(*ppu)], 1; vramIncrement, mosaicSize, mosaicStartLine}
     (*ppu).forcedBlank = true;
 }
 
