@@ -2880,7 +2880,39 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `9696bdbe` shares Ridley tail
+Latest reviewed integration (2026-10-20): `0abab3c1` shares all 64 native
+assertion wrappers across 16 callers, including two CPU opcode-table calls.
+The 40 conditional, 18 unconditional and six direct-failure sites retain
+their exact labels, conditions, diagnostic strings, line numbers, pointer
+arguments, C failure binding and statement scopes. Seven function-name
+arguments still use the original pointer expression. Native frontend abort
+and verifier exit behavior remain unchanged.
+
+Independent discovery and complete source inversion preserve every original
+token outside the added helper. Reconciliation retains the two current SNES
+direct-expression match arms. The final Ridley composition changes only
+the same committed sm_a6.rs in both reviewed trees; all assertion inputs
+and bindings stay byte-exact. All 77 published and maintained inputs match
+the final frozen candidate.
+
+Independent final compiler comparison preserves all 10150568 core and
+10445642 frontend-library bytes after removing only the 969 added helper
+bytes. All 213650 frontend-main bytes outside the checkpoint literal match;
+both literals bind their 22 included sources, with 637734/632602-byte
+payloads. No original compiler output is otherwise normalized.
+
+Formatting/check, normal release (30.09s), progress and full any% pass:
+129712/0, native exit 0, 124.87s wall/124.74s replay. Review reused the
+authoritative build/replay; all 134 verification pins remain fixed.
+The earlier uncomposed build exhausted disk while writing incremental
+bitcode and supplies no release pass. The successful composed release and
+host disable incremental caching, retaining the release optimization profile.
+Rust lines fall 330 to 129176; every other progress counter is unchanged.
+The movie covers six rooms and three enemy definitions with zero credits
+frames. Broader gameplay, frontend/hardware/audio coverage and global alias
+safety remain open.
+
+Included Ridley integration (2026-10-20): `9696bdbe` shares Ridley tail
 reset, coordinate-chain and length updates. Independent full-file inversion
 restores the exact three original bodies; all 76 available snapshot inputs
 match the commit. The snapshot omits rust-toolchain.toml, but build and
