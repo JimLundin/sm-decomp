@@ -31,6 +31,16 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Next-family assessment (2026-10-20): preserved two isolated compiler-passing
+candidates without changing maintained Rust: all three SPC command/process
+pairs measure only -93 formatted lines; all 42 ordered cinematic x/y/palette
+triples (36 complete initializers) measure -129. These stay parked under the
+substantial-family priority. The fresh whole-function AST survey also finds
+six adjacent x/y-only cinematic pairs; they are not falsely claimed as triples.
+Next assess the larger pause/file-select map-rendering and map-bound family,
+retaining mapped/unmapped branches, exploration-byte rotation, final word
+prefetches, distinct blank tiles and VRAM queue ordering. Broader plan stays open.
+
 Mother Brain directional beam tables (2026-10-20): all six upward/downward
 builders share one private implementation with a six-variant named direction.
 Ordered byte-angle/ROM lookups, negation-to-u8, saturating edges, after-write
