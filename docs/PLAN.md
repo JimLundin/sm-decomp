@@ -20,6 +20,47 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Direct coroutine progression (2026-10-20)
+
+Nine coroutine routines in 80/82/84/8B now use their captured resume byte,
+direct stage checks and ordinary loops. Game loading shares its enemy-tile
+transfer/wait loop across normal, demo and Ceres-escape startup; logo phases
+share frame waiting/drawing; PLM processing resumes message boxes inside its
+instruction traversal. Saved resume values, yield results, callback order and
+live RAM reads remain. The selected functions shrink from 883 to 715 lines,
+including execution probes and comments: **168 net lines removed**.
+
+Parsed control-flow comparisons pass 16416 modeled cases, including every
+resume-byte value. Conditions and game effects are opaque in this model;
+these are control/effect trace checks, not independent RAM-equivalence tests.
+All 36 yield-result, reset-state, effect-order and effect-deletion mutations
+are detected. The final composed function pairs exactly match the checked pairs.
+
+The final composition includes the graphics-loader and named-algorithm commits.
+Formatting, all-target draft check, normal release (32.68s in main), diff check
+and progress pass. Main's source exactly matches the frozen replay snapshot,
+and its host checks the rebuilt library without changing the normal library.
+Source-checked any% passes **129712/0**, Speed Booster **148406/0**, and a
+12000-frame no-input title/demo route **12000/0**, native exits 0. Full replay
+command times are 124.34s, 168.17s and 11.12s; source/input/library/DLL pins stay
+fixed. Probes exercise all nine routines and all three loading/logo modes.
+Speed supplies 17 Ceres-escape calls and 7887 PLM message calls; the demo route
+supplies 80 demo-loading and 6206 demo-handler calls. An earlier any% attempt
+correctly rejected the absent Ceres-escape probe despite zero failing frames;
+final any% requires its exercised modes. Existing gameplay route/credits limits
+remain; the demo route separately exercises state 42.
+
+Rust lines are **114457**, so **14458 further lines** must go. Cast-containing
+lines fall 10 to 9119; other progress counters are unchanged from `da530852`.
+This lands another proven family; the complete remaining budget is unfinished.
+
+Additional discovery remains unpriced: a conservative 413-binding immediate
+temporary-inlining projection grows formatted source by 225 lines and is
+discarded. A macro-aware integer-arithmetic census finds 1647 overlapping
+candidates / 2660 gross expression lines, not net savings. Inspecting the wider
+snail/platform/boulder/pipe-bug motion variants did not produce a substantial
+extension of the parked hopping draft. Do not count these leads toward the gap.
+
 ## Named repeated algorithms (2026-10-20)
 
 The finalized repeated-pattern draft now shares 80 named algorithms at 179

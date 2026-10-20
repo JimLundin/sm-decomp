@@ -918,176 +918,123 @@ pub unsafe fn AdvanceSlowScreenFadeIn(game: &mut Game) -> u8 {
     1
 }
 pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x612);
-    's_645: {
-        let mut current_block_182: u64;
-        match *_state_variable_ as i32 {
-            0 => {
-                crate::rtl::write_register_and_mirror(INIDISP as u16, 0x8f, 0x51, false, game);
-                word!(game.oam_next_ptr = 0);
-                ClearOamExt(game);
-                ClearUnusedOam(game);
-                word! { game, 0;
-                    nmi_copy_samus_halves, nmi_copy_samus_top_half_src,
-                    nmi_copy_samus_bottom_half_src,
-                }
-                crate::rtl::register_writes! { game;
-                    mirror(NMITIMEN as u16, 1, 0x84, false); byte(WRIO as u16, 0);
-                    byte(WRMPYA as u16, 0); byte(WRMPYB as u16, 0);
-                    byte(WRDIVL as u16, 0); byte(WRDIVH as u16, 0);
-                    byte(WRDIVB as u16, 0); byte(HTIMEL as u16, 0);
-                    byte(HTIMEH as u16, 0); byte(VTIMEL as u16, 0);
-                    byte(VTIMEH as u16, 0); byte(MDMAEN as u16, 0);
-                    mirror(HDMAEN as u16, 0, 0x85, false); mirror(MEMSEL as u16, 1, 0x86, false);
-                    mirror(OBSEL as u16, 3, 0x52, false); byte(OAMADDL as u16, 0);
-                }
-                *(ram_ptr!(game, u16; 0x53) as *mut u8).offset(0) = 0;
-                WriteReg(OAMADDH as u16, 0x80, game);
-                byte!(@pointer ram_ptr!(game, u16; 0x53); 1) = 0x80;
-                crate::rtl::register_writes! { game;
-                    byte(OAMDATA as u16, 0); byte(OAMDATA as u16, 0);
-                    mirror(BGMODE as u16, 1, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
-                    mirror(BG1SC as u16, 0, 0x58, false); mirror(BG2SC as u16, 0, 0x59, false);
-                    mirror(BG3SC as u16, 0, 0x5a, false); mirror(BG4SC as u16, 0, 0x5c, false);
-                    mirror(BG12NBA as u16, 0, 0x5d, false); mirror(BG34NBA as u16, 0, 0x5e, false);
-                    byte(BG1HOFS as u16, 0); byte(BG1HOFS as u16, 0);
-                    byte(BG1VOFS as u16, 0); byte(BG1VOFS as u16, 0);
-                    byte(BG2HOFS as u16, 0); byte(BG2HOFS as u16, 0);
-                    byte(BG2VOFS as u16, 0); byte(BG2VOFS as u16, 0);
-                    byte(BG3HOFS as u16, 0); byte(BG3HOFS as u16, 0);
-                    byte(BG3VOFS as u16, 0); byte(BG3VOFS as u16, 0);
-                    byte(BG4HOFS as u16, 0); byte(BG4HOFS as u16, 0);
-                    byte(BG4VOFS as u16, 0); byte(BG4VOFS as u16, 0);
-                    byte(VMAIN as u16, 0); mirror(M7SEL as u16, 0, 0x5f, false);
-                    byte(M7A as u16, 0); byte(M7B as u16, 0);
-                    byte(M7C as u16, 0); byte(M7D as u16, 0);
-                    byte(M7X as u16, 0); byte(M7Y as u16, 0);
-                    mirror(W12SEL as u16, 0, 0x60, false); mirror(W34SEL as u16, 0, 0x61, false);
-                    mirror(WOBJSEL as u16, 0, 0x62, false); mirror(WH0 as u16, 0, 0x63, false);
-                    mirror(WH1 as u16, 0, 0x64, false); mirror(WH2 as u16, 0, 0x65, false);
-                    mirror(WH3 as u16, 0, 0x66, false); mirror(WBGLOG as u16, 0, 0x67, false);
-                    mirror(WOBJLOG as u16, 0, 0x68, false); mirror(TM as u16, 0x10, 0x69, false);
-                    mirror(TMW as u16, 0, 0x6c, false); mirror(TS as u16, 0, 0x6b, false);
-                    mirror(TSW as u16, 0, 0x6d, false); mirror(CGWSEL as u16, 0, 0x6e, false);
-                    mirror(CGADSUB as u16, 0, 0x71, false); byte(COLDATA as u16, 0xe0);
-                }
-                *ram_ptr!(game; 0x74, 0) = 32;
-                *ram_ptr!(game; 0x74, 1) = 64;
-                *ram_ptr!(game; 0x74, 2) = 0x80;
-                crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
-                GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
-                GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
-                *ram_ptr!(game; 0x51) = 0x80;
-                word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce1e9, 0));
-                EnableNMI(game);
-                word! { game, 1; screen_fade_delay, screen_fade_counter }
-                current_block_182 = 17485376261910781866;
-            }
-            1 => current_block_182 = 3156160545233843657,
-            2 => current_block_182 = 6110428972393212497,
-            3 => current_block_182 = 2371591747199196472,
-            4 => current_block_182 = 17628988452808763652,
-            5 => current_block_182 = 17952583510507278934,
-            6 => current_block_182 = 2484129932066553195,
-            _ => current_block_182 = 2222055338596505704,
+    crate::verify_probe::hit("coroutine.logo");
+    let resume_state: *mut u8 = ram_ptr!(game; 0x612);
+    let mut stage = *resume_state;
+    if stage == 0 {
+        crate::rtl::write_register_and_mirror(INIDISP as u16, 0x8f, 0x51, false, game);
+        word!(game.oam_next_ptr = 0);
+        ClearOamExt(game);
+        ClearUnusedOam(game);
+        word! { game, 0;
+            nmi_copy_samus_halves, nmi_copy_samus_top_half_src,
+            nmi_copy_samus_bottom_half_src,
         }
-        loop {
-            match current_block_182 {
-                2222055338596505704 => break 's_645,
-                17628988452808763652 => {
-                    let mut _coret__2: u8 = WaitForNMI_Async(game);
-                    if _coret__2 != 0 {
-                        *_state_variable_ = 4;
-                        return _coret__2;
-                    }
-                    word! { game, 1; screen_fade_delay, screen_fade_counter }
-                    current_block_182 = 7019009297990327870;
-                }
-                6110428972393212497 => {
-                    let mut _coret__0: u8 = WaitForNMI_Async(game);
-                    if _coret__0 != 0 {
-                        *_state_variable_ = 2;
-                        return _coret__0;
-                    }
-                    word!(game.game_options_screen_index = 120);
-                    current_block_182 = 18425699056680496821;
-                }
-                17485376261910781866 => {
-                    ClearOamExt(game);
-                    word!(game.oam_next_ptr = 0);
-                    AddNintentoLogoToOam(game);
-                    if AdvanceFastScreenFadeIn(game) & 1 != 0 {
-                        ClearUnusedOam(game);
-                        current_block_182 = 6110428972393212497;
-                        continue;
-                    } else {
-                        ClearUnusedOam(game);
-                        current_block_182 = 3156160545233843657;
-                        continue;
-                    }
-                }
-                3156160545233843657 => {
-                    let mut _coret_: u8 = WaitForNMI_Async(game);
-                    if _coret_ != 0 {
-                        *_state_variable_ = 1;
-                        return _coret_;
-                    }
-                    current_block_182 = 17485376261910781866;
-                    continue;
-                }
-                2371591747199196472 => {
-                    let mut _coret__1: u8 = WaitForNMI_Async(game);
-                    if _coret__1 != 0 {
-                        *_state_variable_ = 3;
-                        return _coret__1;
-                    }
-                    current_block_182 = 18425699056680496821;
-                }
-                17952583510507278934 => {
-                    let mut _coret__3: u8 = WaitForNMI_Async(game);
-                    if _coret__3 != 0 {
-                        *_state_variable_ = 5;
-                        return _coret__3;
-                    }
-                    current_block_182 = 7019009297990327870;
-                }
-                _ => {
-                    let mut _coret__4: u8 = WaitForNMI_Async(game);
-                    if _coret__4 != 0 {
-                        *_state_variable_ = 6;
-                        return _coret__4;
-                    }
-                    crate::rtl::write_register_and_mirror(INIDISP as u16, 0x8f, 0x51, false, game);
-                    current_block_182 = 2222055338596505704;
-                    continue;
-                }
-            }
-            if current_block_182 == 18425699056680496821 {
-                ClearOamExt(game);
-                word!(game.oam_next_ptr = 0);
-                AddNintentoLogoToOam(game);
-                if word!(game.game_options_screen_index, wrapping_sub(1), reread) == 0 {
-                    ClearUnusedOam(game);
-                    current_block_182 = 17628988452808763652;
-                } else {
-                    ClearUnusedOam(game);
-                    current_block_182 = 2371591747199196472;
-                }
-            } else {
-                ClearOamExt(game);
-                word!(game.oam_next_ptr = 0);
-                AddNintentoLogoToOam(game);
-                if AdvanceFastScreenFadeOut(game) & 1 != 0 {
-                    ClearUnusedOam(game);
-                    current_block_182 = 2484129932066553195;
-                } else {
-                    ClearUnusedOam(game);
-                    current_block_182 = 17952583510507278934;
-                }
-            }
+        crate::rtl::register_writes! { game;
+            mirror(NMITIMEN as u16, 1, 0x84, false); byte(WRIO as u16, 0);
+            byte(WRMPYA as u16, 0); byte(WRMPYB as u16, 0);
+            byte(WRDIVL as u16, 0); byte(WRDIVH as u16, 0);
+            byte(WRDIVB as u16, 0); byte(HTIMEL as u16, 0);
+            byte(HTIMEH as u16, 0); byte(VTIMEL as u16, 0);
+            byte(VTIMEH as u16, 0); byte(MDMAEN as u16, 0);
+            mirror(HDMAEN as u16, 0, 0x85, false); mirror(MEMSEL as u16, 1, 0x86, false);
+            mirror(OBSEL as u16, 3, 0x52, false); byte(OAMADDL as u16, 0);
         }
+        *(ram_ptr!(game, u16; 0x53) as *mut u8).offset(0) = 0;
+        WriteReg(OAMADDH as u16, 0x80, game);
+        byte!(@pointer ram_ptr!(game, u16; 0x53); 1) = 0x80;
+        crate::rtl::register_writes! { game;
+            byte(OAMDATA as u16, 0); byte(OAMDATA as u16, 0);
+            mirror(BGMODE as u16, 1, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
+            mirror(BG1SC as u16, 0, 0x58, false); mirror(BG2SC as u16, 0, 0x59, false);
+            mirror(BG3SC as u16, 0, 0x5a, false); mirror(BG4SC as u16, 0, 0x5c, false);
+            mirror(BG12NBA as u16, 0, 0x5d, false); mirror(BG34NBA as u16, 0, 0x5e, false);
+            byte(BG1HOFS as u16, 0); byte(BG1HOFS as u16, 0);
+            byte(BG1VOFS as u16, 0); byte(BG1VOFS as u16, 0);
+            byte(BG2HOFS as u16, 0); byte(BG2HOFS as u16, 0);
+            byte(BG2VOFS as u16, 0); byte(BG2VOFS as u16, 0);
+            byte(BG3HOFS as u16, 0); byte(BG3HOFS as u16, 0);
+            byte(BG3VOFS as u16, 0); byte(BG3VOFS as u16, 0);
+            byte(BG4HOFS as u16, 0); byte(BG4HOFS as u16, 0);
+            byte(BG4VOFS as u16, 0); byte(BG4VOFS as u16, 0);
+            byte(VMAIN as u16, 0); mirror(M7SEL as u16, 0, 0x5f, false);
+            byte(M7A as u16, 0); byte(M7B as u16, 0);
+            byte(M7C as u16, 0); byte(M7D as u16, 0);
+            byte(M7X as u16, 0); byte(M7Y as u16, 0);
+            mirror(W12SEL as u16, 0, 0x60, false); mirror(W34SEL as u16, 0, 0x61, false);
+            mirror(WOBJSEL as u16, 0, 0x62, false); mirror(WH0 as u16, 0, 0x63, false);
+            mirror(WH1 as u16, 0, 0x64, false); mirror(WH2 as u16, 0, 0x65, false);
+            mirror(WH3 as u16, 0, 0x66, false); mirror(WBGLOG as u16, 0, 0x67, false);
+            mirror(WOBJLOG as u16, 0, 0x68, false); mirror(TM as u16, 0x10, 0x69, false);
+            mirror(TMW as u16, 0, 0x6c, false); mirror(TS as u16, 0, 0x6b, false);
+            mirror(TSW as u16, 0, 0x6d, false); mirror(CGWSEL as u16, 0, 0x6e, false);
+            mirror(CGADSUB as u16, 0, 0x71, false); byte(COLDATA as u16, 0xe0);
+        }
+        *ram_ptr!(game; 0x74, 0) = 32;
+        *ram_ptr!(game; 0x74, 1) = 64;
+        *ram_ptr!(game; 0x74, 2) = 0x80;
+        crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
+        GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
+        GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
+        *ram_ptr!(game; 0x51) = 0x80;
+        word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce1e9, 0));
+        EnableNMI(game);
+        word! { game, 1; screen_fade_delay, screen_fade_counter }
     }
-    *_state_variable_ = 0;
+    // Stages 1..=6 resume a pending NMI before drawing the next frame.
+    while stage <= 6 {
+        if stage != 0 {
+            let yielded: u8 = WaitForNMI_Async(game);
+            if yielded != 0 {
+                *resume_state = stage;
+                return yielded;
+            }
+            match stage {
+                2 => {
+                    word!(game.game_options_screen_index = 120);
+                }
+                4 => {
+                    word! { game, 1; screen_fade_delay, screen_fade_counter }
+                }
+                6 => {
+                    crate::rtl::write_register_and_mirror(INIDISP as u16, 0x8f, 0x51, false, game);
+                    break;
+                }
+                _ => {}
+            }
+        }
+        ClearOamExt(game);
+        word!(game.oam_next_ptr = 0);
+        AddNintentoLogoToOam(game);
+        stage = match stage {
+            0 | 1 => {
+                crate::verify_probe::hit("coroutine.logo.in");
+                if AdvanceFastScreenFadeIn(game) & 1 != 0 {
+                    2
+                } else {
+                    1
+                }
+            }
+            2 | 3 => {
+                crate::verify_probe::hit("coroutine.logo.hold");
+                if word!(game.game_options_screen_index, wrapping_sub(1), reread) == 0 {
+                    4
+                } else {
+                    3
+                }
+            }
+            _ => {
+                crate::verify_probe::hit("coroutine.logo.out");
+                if AdvanceFastScreenFadeOut(game) & 1 != 0 {
+                    6
+                } else {
+                    5
+                }
+            }
+        };
+        ClearUnusedOam(game);
+    }
+    *resume_state = 0;
     0 as CoroutineRet
 }
 pub unsafe fn AddNintentoLogoToOam(game: &mut Game) {

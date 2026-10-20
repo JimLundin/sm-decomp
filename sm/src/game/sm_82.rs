@@ -252,158 +252,122 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x612);
-    's_445: {
-        let mut current_block_103: u64;
-        match *_state_variable_ as i32 {
-            0 => {
-                if word!(game.game_state) as i32 == kGameState_40_TransitionToDemo as i32 {
-                    InitIoForGameplay(game);
-                    LoadStdBG3andSpriteTilesClearTilemaps(game);
-                    LoadInitialPalette(game);
-                    Samus_Initialize(game);
-                    LoadDemoRoomData(game);
-                } else {
-                    if word!(game.loading_game_state) as i32 != kLoadingGameState_5_Main as i32 {
-                        if word!(game.loading_game_state) as i32
-                            == kLoadingGameState_1F_StartingAtCeres as i32
-                        {
-                            word!(game.area_index = 6);
-                            word!(game.load_station_index = 0);
-                            ClearTimerRam(game);
-                        } else if word!(game.loading_game_state) as i32
-                            == kLoadingGameState_22_EscapingCeres as i32
-                        {
-                            word!(game.area_index = 0);
-                            word!(game.load_station_index = 18);
-                            LoadMirrorOfExploredMapTiles(game);
-                        }
-                    }
-                    InitIoForGameplay(game);
-                    LoadStdBG3andSpriteTilesClearTilemaps(game);
-                    LoadInitialPalette(game);
-                    Samus_Initialize(game);
-                    LoadFromLoadStation(game);
+    crate::verify_probe::hit("coroutine.init");
+    let resume_state: *mut u8 = ram_ptr!(game; 0x612);
+    let mut stage = *resume_state;
+    let mut waiting = stage >= 2;
+    if stage == 0 {
+        if word!(game.game_state) as i32 == kGameState_40_TransitionToDemo as i32 {
+            InitIoForGameplay(game);
+            LoadStdBG3andSpriteTilesClearTilemaps(game);
+            LoadInitialPalette(game);
+            Samus_Initialize(game);
+            LoadDemoRoomData(game);
+        } else {
+            if word!(game.loading_game_state) as i32 != kLoadingGameState_5_Main as i32 {
+                if word!(game.loading_game_state) as i32
+                    == kLoadingGameState_1F_StartingAtCeres as i32
+                {
+                    word!(game.area_index = 6);
+                    word!(game.load_station_index = 0);
+                    ClearTimerRam(game);
+                } else if word!(game.loading_game_state) as i32
+                    == kLoadingGameState_22_EscapingCeres as i32
+                {
+                    word!(game.area_index = 0);
+                    word!(game.load_station_index = 18);
+                    LoadMirrorOfExploredMapTiles(game);
                 }
-                current_block_103 = 9959648584402098530;
             }
-            1 => current_block_103 = 9959648584402098530,
-            2 => current_block_103 = 6249748917338837630,
-            3 => current_block_103 = 4453751417072702604,
-            4 => current_block_103 = 12557724779959852293,
-            _ => current_block_103 = 12705158477165241210,
+            InitIoForGameplay(game);
+            LoadStdBG3andSpriteTilesClearTilemaps(game);
+            LoadInitialPalette(game);
+            Samus_Initialize(game);
+            LoadFromLoadStation(game);
         }
-        if current_block_103 == 9959648584402098530 {
-            let mut _coret_: u8 = StartGameplay_Async(game);
-            if _coret_ != 0 {
-                *_state_variable_ = 1;
-                return _coret_;
-            }
-            InitializeHud(game);
-            word_transfers!(game, ascending, 16; native(0xc380) <- native(0xc180));
-            word! { game, 1; screen_fade_delay, screen_fade_counter }
-            EnableNMI(game);
-            EnableEprojs(game);
-            EnablePLMs(game);
-            EnablePaletteFx(game);
-            EnableHdmaObjects(game);
-            EnableAnimtiles(game);
-            SetLiquidPhysicsType(game);
-            if word!(game.game_state) as i32 == kGameState_40_TransitionToDemo as i32 {
-                word!(game.loop_counter_transfer_enemies_to_vram = 6);
-                current_block_103 = 980989089337379490;
-            } else if word!(game.loading_game_state) as i32
-                == kLoadingGameState_22_EscapingCeres as i32
-            {
-                QueueMusic_Delayed8(5, game);
-                word!(game.loop_counter_transfer_enemies_to_vram = 15);
-                current_block_103 = 10753070352654377903;
-            } else {
-                word!(game.loop_counter_transfer_enemies_to_vram = 6);
-                current_block_103 = 129780949503461575;
-            }
+    }
+    if stage <= 1 {
+        let yielded: u8 = StartGameplay_Async(game);
+        if yielded != 0 {
+            *resume_state = 1;
+            return yielded;
         }
+        InitializeHud(game);
+        word_transfers!(game, ascending, 16; native(0xc380) <- native(0xc180));
+        word! { game, 1; screen_fade_delay, screen_fade_counter }
+        EnableNMI(game);
+        EnableEprojs(game);
+        EnablePLMs(game);
+        EnablePaletteFx(game);
+        EnableHdmaObjects(game);
+        EnableAnimtiles(game);
+        SetLiquidPhysicsType(game);
+        if word!(game.game_state) as i32 == kGameState_40_TransitionToDemo as i32 {
+            word!(game.loop_counter_transfer_enemies_to_vram = 6);
+            stage = 2;
+        } else if word!(game.loading_game_state) as i32 == kLoadingGameState_22_EscapingCeres as i32
+        {
+            QueueMusic_Delayed8(5, game);
+            word!(game.loop_counter_transfer_enemies_to_vram = 15);
+            stage = 3;
+        } else {
+            word!(game.loop_counter_transfer_enemies_to_vram = 6);
+            stage = 4;
+        }
+    }
+    if matches!(stage, 2..=4) {
+        crate::verify_probe::hit(match stage {
+            2 => "coroutine.init.demo",
+            3 => "coroutine.init.escape",
+            _ => "coroutine.init.normal",
+        });
         loop {
-            match current_block_103 {
-                129780949503461575 => {
-                    TransferEnemyTilesToVramAndInit(game);
-                    current_block_103 = 12557724779959852293;
-                }
-                4453751417072702604 => {
-                    let mut _coret__1: u8 = WaitForNMI_Async(game);
-                    if _coret__1 != 0 {
-                        *_state_variable_ = 3;
-                        return _coret__1;
-                    }
-                    word!(game.loop_counter_transfer_enemies_to_vram, wrapping_sub(1));
-                    if (word!(game.loop_counter_transfer_enemies_to_vram) & 0x8000) == 0 {
-                        current_block_103 = 10753070352654377903;
-                        continue;
-                    }
-                    word!(game.game_state, wrapping_add(1));
-                    word_transfers!(game, ascending, 256; native(0xc000) <- le(target_palettes, 0));
-                    current_block_103 = 12705158477165241210;
-                }
-                6249748917338837630 => {
-                    let mut _coret__0: u8 = WaitForNMI_Async(game);
-                    if _coret__0 != 0 {
-                        *_state_variable_ = 2;
-                        return _coret__0;
-                    }
-                    word!(game.loop_counter_transfer_enemies_to_vram, wrapping_sub(1));
-                    if (word!(game.loop_counter_transfer_enemies_to_vram) & 0x8000) == 0 {
-                        current_block_103 = 980989089337379490;
-                        continue;
-                    }
-                    let r18: u16 = (*get_DemoRoomData(
-                        (crate::rtl::rom_table_word!(game, 0x82876c, word!(game.demo_set) as isize)
-                            as i32
-                            + 18i32 * (word!(game.demo_scene) as i32 - 1i32))
-                            as u16,
-                        game,
-                    ))
-                    .demo_code_ptr;
-                    CallDemoRoomDataFunc(((r18) as u32) | (0x820000u32), game);
-                    word!(game.game_state, wrapping_add(1));
-                    word_transfers!(game, ascending, 256; native(0xc000) <- le(target_palettes, 0));
-                    current_block_103 = 12705158477165241210;
-                }
-                12705158477165241210 => break 's_445,
-                980989089337379490 => {
-                    TransferEnemyTilesToVramAndInit(game);
-                    current_block_103 = 6249748917338837630;
-                }
-                10753070352654377903 => {
-                    TransferEnemyTilesToVramAndInit(game);
-                    current_block_103 = 4453751417072702604;
-                }
-                _ => {
-                    let mut _coret__2: u8 = WaitForNMI_Async(game);
-                    if _coret__2 != 0 {
-                        *_state_variable_ = 4;
-                        return _coret__2;
-                    }
-                    word!(game.loop_counter_transfer_enemies_to_vram, wrapping_sub(1));
-                    if (word!(game.loop_counter_transfer_enemies_to_vram) & 0x8000) == 0 {
-                        current_block_103 = 129780949503461575;
-                        continue;
-                    }
-                    word!(game.game_state = kGameState_7_MainGameplayFadeIn as u16);
-                    word_transfers!(game, ascending, 256; native(0xc000) <- le(target_palettes, 0));
-                    if word!(game.loading_game_state) as i32
-                        == kLoadingGameState_1F_StartingAtCeres as i32
-                    {
-                        word!(game.palette_buffer[223] = 0);
-                        CallSomeSamusCode(8, game);
-                    } else {
-                        CallSomeSamusCode(9, game);
-                    }
-                    current_block_103 = 12705158477165241210;
-                }
+            if !waiting {
+                TransferEnemyTilesToVramAndInit(game);
+            }
+            let yielded: u8 = WaitForNMI_Async(game);
+            if yielded != 0 {
+                *resume_state = stage;
+                return yielded;
+            }
+            word!(game.loop_counter_transfer_enemies_to_vram, wrapping_sub(1));
+            if (word!(game.loop_counter_transfer_enemies_to_vram) & 0x8000) != 0 {
+                break;
+            }
+            waiting = false;
+        }
+        match stage {
+            2 => {
+                let r18: u16 = (*get_DemoRoomData(
+                    (crate::rtl::rom_table_word!(game, 0x82876c, word!(game.demo_set) as isize)
+                        as i32
+                        + 18i32 * (word!(game.demo_scene) as i32 - 1i32))
+                        as u16,
+                    game,
+                ))
+                .demo_code_ptr;
+                CallDemoRoomDataFunc(((r18) as u32) | (0x820000u32), game);
+                word!(game.game_state, wrapping_add(1));
+            }
+            3 => {
+                word!(game.game_state, wrapping_add(1));
+            }
+            _ => {
+                word!(game.game_state = kGameState_7_MainGameplayFadeIn as u16);
+            }
+        }
+        word_transfers!(game, ascending, 256; native(0xc000) <- le(target_palettes, 0));
+        if stage == 4 {
+            if word!(game.loading_game_state) as i32 == kLoadingGameState_1F_StartingAtCeres as i32
+            {
+                word!(game.palette_buffer[223] = 0);
+                CallSomeSamusCode(8, game);
+            } else {
+                CallSomeSamusCode(9, game);
             }
         }
     }
-    *_state_variable_ = 0;
+    *resume_state = 0;
     0 as CoroutineRet
 }
 pub unsafe fn InitIoForGameplay(game: &mut Game) {
@@ -601,64 +565,52 @@ pub unsafe fn GameState_41_TransitionToDemo(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
-    let mut current_block: u64;
-    let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x614);
-    match *_state_variable_ as i32 {
-        0 | 2 => {
-            let mut _coret_: u8 = GameState_8_MainGameplay(game);
-            if _coret_ != 0 {
-                *_state_variable_ = 2;
-                return _coret_;
-            }
-            if word!(game.joypad1_newkeys) != 0 {
-                word!(game.substate = 1);
-                current_block = 4040822987312515878;
-            } else {
-                word!(game.demo_timer, wrapping_sub(1));
-                if word!(game.demo_timer) == 0 || (word!(game.demo_timer) & 0x8000) != 0 {
-                    word!(game.substate = 0);
-                    word!(game.my_counter = 90);
-                    current_block = 12296459429166835708;
-                } else {
-                    current_block = 13472856163611868459;
-                }
-            }
+    crate::verify_probe::hit("coroutine.demo");
+    let resume_state: *mut u8 = ram_ptr!(game; 0x614);
+    let resume = *resume_state;
+    'done: {
+        if resume > 2 {
+            break 'done;
         }
-        1 => current_block = 12296459429166835708,
-        _ => current_block = 13472856163611868459,
-    }
-    loop {
-        match current_block {
-            13472856163611868459 => {
-                *_state_variable_ = 0;
-                break;
-            }
-            12296459429166835708 => {
-                let mut _coret__0: u8 = WaitForNMI_Async(game);
-                if _coret__0 != 0 {
-                    *_state_variable_ = 1;
-                    return _coret__0;
+        'finish_demo: {
+            if resume != 1 {
+                let yielded: u8 = GameState_8_MainGameplay(game);
+                if yielded != 0 {
+                    *resume_state = 2;
+                    return yielded;
                 }
                 if word!(game.joypad1_newkeys) != 0 {
                     word!(game.substate = 1);
-                    current_block = 4040822987312515878;
-                } else {
-                    if word!(game.my_counter, wrapping_sub(1), reread) == 0 {
-                        current_block = 4040822987312515878;
-                    } else {
-                        current_block = 12296459429166835708;
-                    }
+                    break 'finish_demo;
+                }
+                word!(game.demo_timer, wrapping_sub(1));
+                if !(word!(game.demo_timer) == 0 || (word!(game.demo_timer) & 0x8000) != 0) {
+                    break 'done;
+                }
+                word!(game.substate = 0);
+                word!(game.my_counter = 90);
+            }
+            loop {
+                let yielded: u8 = WaitForNMI_Async(game);
+                if yielded != 0 {
+                    *resume_state = 1;
+                    return yielded;
+                }
+                if word!(game.joypad1_newkeys) != 0 {
+                    word!(game.substate = 1);
+                    break;
+                }
+                if word!(game.my_counter, wrapping_sub(1), reread) == 0 {
+                    break;
                 }
             }
-            _ => {
-                word!(game.game_state, wrapping_add(1));
-                word!(game.debug_disable_sounds = 0);
-                *ram_ptr!(game; 0x51) = 0x80;
-                word! { game, 1; screen_fade_delay, screen_fade_counter }
-                current_block = 13472856163611868459;
-            }
         }
+        word!(game.game_state, wrapping_add(1));
+        word!(game.debug_disable_sounds = 0);
+        *ram_ptr!(game; 0x51) = 0x80;
+        word! { game, 1; screen_fade_delay, screen_fade_counter }
     }
+    *resume_state = 0;
     0 as CoroutineRet
 }
 pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
@@ -988,46 +940,35 @@ pub unsafe fn GameState_28_Unused(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_8_MainGameplay(game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x612);
-    let mut current_block_38: u64;
-    match *_state_variable_ as i32 {
-        0 => {
-            DetermineWhichEnemiesToProcess(game);
-            PaletteFxHandler(game);
-            HandleControllerInputForGamePhysics(game);
-            if word!(game.debug_disable_sprite_interact) == 0 {
-                SamusProjectileInteractionHandler(game);
-            }
-            EnemyMain(game);
-            if word!(game.queued_message_box_index) != 0 {
-                current_block_38 = 6718109325120641364;
-            } else {
-                current_block_38 = 13586036798005543211;
-            }
+    crate::verify_probe::hit("coroutine.gameplay");
+    let resume_state: *mut u8 = ram_ptr!(game; 0x612);
+    let resume = *resume_state;
+    if resume == 0 {
+        DetermineWhichEnemiesToProcess(game);
+        PaletteFxHandler(game);
+        HandleControllerInputForGamePhysics(game);
+        if word!(game.debug_disable_sprite_interact) == 0 {
+            SamusProjectileInteractionHandler(game);
         }
-        1 => current_block_38 = 6718109325120641364,
-        2 => current_block_38 = 8001970166466707590,
-        _ => current_block_38 = 652864300344834934,
+        EnemyMain(game);
     }
-    if current_block_38 == 6718109325120641364 {
-        let mut _coret_: u8 = DisplayMessageBox_Async(word!(game.queued_message_box_index), game);
-        if _coret_ != 0 {
-            *_state_variable_ = 1;
-            return _coret_;
+    if resume == 1 || (resume == 0 && word!(game.queued_message_box_index) != 0) {
+        let yielded: u8 = DisplayMessageBox_Async(word!(game.queued_message_box_index), game);
+        if yielded != 0 {
+            *resume_state = 1;
+            return yielded;
         }
         word!(game.queued_message_box_index = 0);
-        current_block_38 = 13586036798005543211;
     }
-    if current_block_38 == 13586036798005543211 {
+    if resume <= 1 {
         HandleSamusMovementAndPause(game);
         EprojRunAll(game);
-        current_block_38 = 8001970166466707590;
     }
-    if current_block_38 == 8001970166466707590 {
-        let mut _coret__0: u8 = PlmHandler_Async(game);
-        if _coret__0 != 0 {
-            *_state_variable_ = 2;
-            return _coret__0;
+    if resume <= 2 {
+        let yielded: u8 = PlmHandler_Async(game);
+        if yielded != 0 {
+            *resume_state = 2;
+            return yielded;
         }
         AnimtilesHandler(game);
         if word!(game.debug_disable_sprite_interact) == 0 {
@@ -1049,7 +990,7 @@ pub unsafe fn GameState_8_MainGameplay(game: &mut Game) -> CoroutineRet {
         HandleRoomShaking(game);
         DecrementSamusTimers(game);
     }
-    *_state_variable_ = 0;
+    *resume_state = 0;
     0 as CoroutineRet
 }
 pub unsafe fn DeleteAllOptionsMenuObjects_(game: &mut Game) {
@@ -4328,99 +4269,86 @@ static kUpdateBackgroundCommands: [Func_Y_Y; 8] = [
     UpdateBackgroundCommand_E_DoorDependentTransferToVRAM,
 ];
 pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> CoroutineRet {
+    crate::verify_probe::hit("coroutine.door");
     let mut bg_data_ptr: u16 = 0;
-    's_188: {
-        let mut current_block_45: u64;
-        match game.coroutine_state_1() {
-            0 => {
-                LoadEnemyGfxToVram(game);
-                LoadRoomMusic(game);
-                ClearEprojs(game);
-                ClearAnimtiles(game);
-                ClearPaletteFXObjects(game);
-                ClearPLMs(game);
-                CreatePlmsExecuteDoorAsmRoomSetup(game);
-                LoadFXHeader(game);
-                SpawnDoorClosingPLM(game);
-                UpdateBeamTilesAndPalette(game);
-                LoadColorsForSpritesBeamsAndEnemies(game);
-                LoadEnemies(game);
-                InitializeEnemies(game);
-                ResetProjectileData(game);
-                Samus_LoadSuitTargetPalette(game);
-                ClearFxTilemap(game);
-                let fx_tilemap_ptr = u16::from_le_bytes([game.g_ram[0x1964], game.g_ram[0x1965]]);
-                if fx_tilemap_ptr != 0 {
-                    CopyToVramNow(
-                        addr_unk_605BE0 as u16,
-                        0x8a0000 | u32::from(fx_tilemap_ptr),
-                        2112,
-                        game,
-                    );
-                }
-                bg_data_ptr = game.read_rom_word(
-                    0x8f0000 | u32::from(game.roomdefroomstate_ptr()),
-                    core::mem::offset_of!(RoomDefRoomstate, bg_data_ptr),
+    let resume = game.coroutine_state_1();
+    if resume == 0 {
+        LoadEnemyGfxToVram(game);
+        LoadRoomMusic(game);
+        ClearEprojs(game);
+        ClearAnimtiles(game);
+        ClearPaletteFXObjects(game);
+        ClearPLMs(game);
+        CreatePlmsExecuteDoorAsmRoomSetup(game);
+        LoadFXHeader(game);
+        SpawnDoorClosingPLM(game);
+        UpdateBeamTilesAndPalette(game);
+        LoadColorsForSpritesBeamsAndEnemies(game);
+        LoadEnemies(game);
+        InitializeEnemies(game);
+        ResetProjectileData(game);
+        Samus_LoadSuitTargetPalette(game);
+        ClearFxTilemap(game);
+        let fx_tilemap_ptr = u16::from_le_bytes([game.g_ram[0x1964], game.g_ram[0x1965]]);
+        if fx_tilemap_ptr != 0 {
+            CopyToVramNow(
+                addr_unk_605BE0 as u16,
+                0x8a0000 | u32::from(fx_tilemap_ptr),
+                2112,
+                game,
+            );
+        }
+        bg_data_ptr = game.read_rom_word(
+            0x8f0000 | u32::from(game.roomdefroomstate_ptr()),
+            core::mem::offset_of!(RoomDefRoomstate, bg_data_ptr),
+        );
+        if bg_data_ptr & 0x8000 != 0 {
+            loop {
+                let command = game.read_rom_word(0x8f0000 | u32::from(bg_data_ptr), 0);
+                bg_data_ptr = kUpdateBackgroundCommands[usize::from(command >> 1)](
+                    bg_data_ptr.wrapping_add(2),
+                    game,
                 );
-                if bg_data_ptr & 0x8000 != 0 {
-                    loop {
-                        let command = game.read_rom_word(0x8f0000 | u32::from(bg_data_ptr), 0);
-                        bg_data_ptr = kUpdateBackgroundCommands[usize::from(command >> 1)](
-                            bg_data_ptr.wrapping_add(2),
-                            game,
-                        );
-                        if bg_data_ptr == 0 {
-                            break;
-                        }
-                    }
+                if bg_data_ptr == 0 {
+                    break;
                 }
-                current_block_45 = 2370887241019905314;
             }
-            1 => current_block_45 = 16864618877125483552,
-            2 => current_block_45 = 17993885260445251066,
-            _ => current_block_45 = 6417057564578538666,
         }
+    }
+    if resume <= 1 {
+        let mut waiting = resume == 1;
         loop {
-            match current_block_45 {
-                6417057564578538666 => break 's_188,
-                2370887241019905314 => {
-                    let door_transition_flag =
-                        u16::from_le_bytes([game.g_ram[0x931], game.g_ram[0x932]]);
-                    if door_transition_flag & 0x8000 == 0 {
-                        current_block_45 = 16864618877125483552;
-                        continue;
-                    }
-                    game.g_ram[0xc188..0xc18a].copy_from_slice(&15328u16.to_le_bytes());
-                    SpawnBG3ScrollHdmaObject(game);
-                    game.set_hdma_objects_enable_flag(game.hdma_objects_enable_flag() | 0x8000);
-                    current_block_45 = 17993885260445251066;
-                }
-                16864618877125483552 => {
-                    let mut _coret_: u8 = WaitForNMI_Async(game);
-                    if _coret_ != 0 {
-                        game.set_coroutine_state_1(1);
-                        return _coret_;
-                    }
-                    current_block_45 = 2370887241019905314;
-                }
-                _ => {
-                    let mut _coret__0: u8 = PlmHandler_Async(game);
-                    if _coret__0 != 0 {
-                        game.set_coroutine_state_1(2);
-                        return _coret__0;
-                    }
-                    if game.door_direction() & 2 == 0 {
-                        if game.door_direction() & 3 != 0 {
-                            game.set_samus_x_pos(game.samus_x_pos() & 0xfff8);
-                        } else {
-                            game.set_samus_x_pos(game.samus_x_pos() | 7);
-                        }
-                    }
-                    game.set_door_transition_function(0xe659);
-                    current_block_45 = 6417057564578538666;
+            if waiting {
+                let yielded: u8 = WaitForNMI_Async(game);
+                if yielded != 0 {
+                    game.set_coroutine_state_1(1);
+                    return yielded;
                 }
             }
+            let door_transition_flag = u16::from_le_bytes([game.g_ram[0x931], game.g_ram[0x932]]);
+            if door_transition_flag & 0x8000 != 0 {
+                break;
+            }
+            waiting = true;
         }
+        game.g_ram[0xc188..0xc18a].copy_from_slice(&15328u16.to_le_bytes());
+        SpawnBG3ScrollHdmaObject(game);
+        game.set_hdma_objects_enable_flag(game.hdma_objects_enable_flag() | 0x8000);
+    }
+    if resume <= 2 {
+        let yielded: u8 = PlmHandler_Async(game);
+        if yielded != 0 {
+            game.set_coroutine_state_1(2);
+            return yielded;
+        }
+        if game.door_direction() & 2 == 0 {
+            if game.door_direction() & 3 != 0 {
+                game.set_samus_x_pos(game.samus_x_pos() & 0xfff8);
+            } else {
+                game.set_samus_x_pos(game.samus_x_pos() | 7);
+            }
+        }
+        game.set_door_transition_function(0xe659);
     }
     game.set_coroutine_state_1(0);
     0 as CoroutineRet

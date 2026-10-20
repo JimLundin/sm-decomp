@@ -232,34 +232,29 @@ pub unsafe fn memset7E(mut k: *mut u16, a: u16, mut j: u16) {
     }
 }
 pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x611);
+    crate::verify_probe::hit("coroutine.reset");
+    let resume_state: *mut u8 = ram_ptr!(game; 0x611);
+    // Callbacks may change RAM; dispatch uses the captured resume byte.
+    let resume = *resume_state;
     let mut bak: u16 = 0;
-    let mut current_block_63: u64;
-    match *_state_variable_ as i32 {
-        1 => {
-            crate::rtl::write_register_and_mirror(MEMSEL as u16, 1, 0x86, false, game);
-            bak = word!(game.bug_fix_counter);
-            memset(
-                &raw mut game.g_ram as *mut u8 as *mut c_void,
-                0,
-                8192 as size_t,
-            );
-            word!(game.bug_fix_counter = bak);
-            current_block_63 = 17803482508355472374;
-        }
-        2 => current_block_63 = 17803482508355472374,
-        3 => current_block_63 = 3640593987805443782,
-        _ => current_block_63 = 5330834795799507926,
+    if resume == 1 {
+        crate::rtl::write_register_and_mirror(MEMSEL as u16, 1, 0x86, false, game);
+        bak = word!(game.bug_fix_counter);
+        memset(
+            &raw mut game.g_ram as *mut u8 as *mut c_void,
+            0,
+            8192 as size_t,
+        );
+        word!(game.bug_fix_counter = bak);
     }
-    if current_block_63 == 17803482508355472374 {
-        let mut _coret_: u8 = InitializeIoDisplayLogo_Async(game);
-        if _coret_ != 0 {
-            *_state_variable_ = 2;
-            return _coret_;
+    if matches!(resume, 1 | 2) {
+        let yielded: u8 = InitializeIoDisplayLogo_Async(game);
+        if yielded != 0 {
+            *resume_state = 2;
+            return yielded;
         }
-        current_block_63 = 3640593987805443782;
     }
-    if current_block_63 == 3640593987805443782 {
+    if matches!(resume, 1..=3) {
         APU_UploadBank(0xcf8000, game);
         WriteReg(INIDISP as u16, 0x8f, game);
         bak = word!(game.bug_fix_counter);
@@ -312,7 +307,7 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
         VerifySRAM(game);
         word! { game, 0; debug_disable_sounds, sound_handler_downtime }
     }
-    *_state_variable_ = 2;
+    *resume_state = 2;
     0 as CoroutineRet
 }
 pub unsafe fn InvalidInterrupt_Crash(game: &mut Game) {
@@ -1772,31 +1767,25 @@ pub unsafe fn DrawTimerSpritemap(a: u16, j: u16, game: &mut Game) {
     );
 }
 pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x613);
-    let mut current_block_54: u64;
-    match *_state_variable_ as i32 {
-        0 => {
-            WriteRegWord(MDMAEN as u16, 0, game);
-            word! { game, 0;
-                scrolling_finished_hook, music_data_index, music_track_index, timer_status,
-            }
-            ResetSoundQueues(game);
-            word!(game.debug_disable_sounds = -1i32 as u16);
-            DisableNMI(game);
-            DisableIrqInterrupts(game);
-            LoadDestinationRoomThings(game);
-            current_block_54 = 9431711618385729511;
+    crate::verify_probe::hit("coroutine.start");
+    let resume_state: *mut u8 = ram_ptr!(game; 0x613);
+    let resume = *resume_state;
+    if resume == 0 {
+        WriteRegWord(MDMAEN as u16, 0, game);
+        word! { game, 0;
+            scrolling_finished_hook, music_data_index, music_track_index, timer_status,
         }
-        1 => current_block_54 = 9431711618385729511,
-        2 => current_block_54 = 4121473168792104488,
-        3 => current_block_54 = 3421737773041484705,
-        _ => current_block_54 = 7659304154607701039,
+        ResetSoundQueues(game);
+        word!(game.debug_disable_sounds = -1i32 as u16);
+        DisableNMI(game);
+        DisableIrqInterrupts(game);
+        LoadDestinationRoomThings(game);
     }
-    if current_block_54 == 9431711618385729511 {
-        let mut _coret_: u8 = Play20FramesOfMusic_Async(game);
-        if _coret_ != 0 {
-            *_state_variable_ = 1;
-            return _coret_;
+    if resume <= 1 {
+        let yielded: u8 = Play20FramesOfMusic_Async(game);
+        if yielded != 0 {
+            *resume_state = 1;
+            return yielded;
         }
         ClearAnimtiles(game);
         WaitUntilEndOfVblankAndClearHdma(game);
@@ -1808,13 +1797,12 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
         LoadColorsForSpritesBeamsAndEnemies(game);
         LoadEnemies(game);
         LoadRoomMusic(game);
-        current_block_54 = 4121473168792104488;
     }
-    if current_block_54 == 4121473168792104488 {
-        let mut _coret__0: u8 = Play20FramesOfMusic_Async(game);
-        if _coret__0 != 0 {
-            *_state_variable_ = 2;
-            return _coret__0;
+    if resume <= 2 {
+        let yielded: u8 = Play20FramesOfMusic_Async(game);
+        if yielded != 0 {
+            *resume_state = 2;
+            return yielded;
         }
         UpdateMusicTrackIndex(game);
         NullFunc();
@@ -1837,58 +1825,47 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
             }) as u16
         );
         EnableIrqInterrupts(game);
-        current_block_54 = 3421737773041484705;
     }
-    if current_block_54 == 3421737773041484705 {
-        let mut _coret__1: u8 = Play20FramesOfMusic_Async(game);
-        if _coret__1 != 0 {
-            *_state_variable_ = 3;
-            return _coret__1;
+    if resume <= 3 {
+        let yielded: u8 = Play20FramesOfMusic_Async(game);
+        if yielded != 0 {
+            *resume_state = 3;
+            return yielded;
         }
         SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x8, 0x8, 0xb7eb as VoidP), game);
         word!(game.door_transition_function = ((0x82e737i32) as u16));
     }
-    *_state_variable_ = 0;
+    *resume_state = 0;
     0 as CoroutineRet
 }
 pub unsafe fn Play20FramesOfMusic_Async(game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x614);
-    's_57: {
-        let mut current_block_9: u64;
-        match *_state_variable_ as i32 {
-            0 => {
-                EnableNMI(game);
-                word!(game.my_counter = 0);
-                current_block_9 = 8258075665625361029;
-            }
-            1 => current_block_9 = 4436247046726756244,
-            _ => current_block_9 = 13536709405535804910,
-        }
+    crate::verify_probe::hit("coroutine.music");
+    let resume_state: *mut u8 = ram_ptr!(game; 0x614);
+    let resume = *resume_state;
+    if resume == 0 {
+        EnableNMI(game);
+        word!(game.my_counter = 0);
+    }
+    if resume <= 1 {
+        let mut waiting = resume == 1;
         loop {
-            match current_block_9 {
-                13536709405535804910 => break 's_57,
-                8258075665625361029 => {
-                    if word!(game.my_counter) != 20 {
-                        HandleMusicQueue(game);
-                        current_block_9 = 4436247046726756244;
-                    } else {
-                        DisableNMI(game);
-                        current_block_9 = 13536709405535804910;
-                    }
+            if !waiting {
+                if word!(game.my_counter) == 20 {
+                    DisableNMI(game);
+                    break;
                 }
-                _ => {
-                    let mut _coret_: u8 = WaitForNMI_Async(game);
-                    if _coret_ != 0 {
-                        *_state_variable_ = 1;
-                        return _coret_;
-                    }
-                    word!(game.my_counter, wrapping_add(1));
-                    current_block_9 = 8258075665625361029;
-                }
+                HandleMusicQueue(game);
             }
+            let yielded: u8 = WaitForNMI_Async(game);
+            if yielded != 0 {
+                *resume_state = 1;
+                return yielded;
+            }
+            word!(game.my_counter, wrapping_add(1));
+            waiting = false;
         }
     }
-    *_state_variable_ = 0;
+    *resume_state = 0;
     0 as CoroutineRet
 }
 pub unsafe fn ResumeGameplay(game: &mut Game) {

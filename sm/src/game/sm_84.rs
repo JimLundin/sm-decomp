@@ -368,71 +368,63 @@ pub unsafe fn SpawnPLMWithCollision(header: u16, displacement: *mut i32, game: &
     )
 }
 pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x613);
-    's_158: {
+    crate::verify_probe::hit("coroutine.plm");
+    let resume_state: *mut u8 = ram_ptr!(game; 0x613);
+    let resume = *resume_state;
+
+    if resume <= 1 {
         let mut base = null::<u8>();
         let mut v5 = null::<u8>();
-        let mut current_block_28: u64;
-        match *_state_variable_ as i32 {
-            0 => {
-                if (word!(game.plm_flag) & 0x8000) == 0 {
-                    return kCoroutineNone as CoroutineRet;
-                }
-                word!(game.plm_draw_tilemap_index = 0);
-                word!(game.plm_id = 78);
-                current_block_28 = 17179679302217393232;
+        let mut message_pending = resume == 1;
+        if resume == 0 {
+            if (word!(game.plm_flag) & 0x8000) == 0 {
+                return kCoroutineNone as CoroutineRet;
             }
-            1 => current_block_28 = 12780425637862113792,
-            _ => current_block_28 = 2569451025026770673,
+            word!(game.plm_draw_tilemap_index = 0);
+            word!(game.plm_id = 78);
         }
-        'c_23315: loop {
-            match current_block_28 {
-                2569451025026770673 => break 's_158,
-                17179679302217393232 => {
-                    if (word!(game.plm_id) & 0x8000) == 0 {
-                        if *(ram_ptr!(game, u16; 0x1c37)).offset((word!(game.plm_id) >> 1) as isize)
-                            == 0
-                        {
-                            current_block_28 = 735147466149431745;
-                        } else {
-                            CallPlmPreInstr(
-                                ((*(ram_ptr!(game, u16; 0x1cd7))
-                                    .offset((word!(game.plm_id) >> 1) as isize))
-                                    as u32)
-                                    | (0x840000u32),
-                                word!(game.plm_id),
-                                game,
-                            );
-                            if word!(
-                                game.plm_instruction_timer[(word!(game.plm_id) >> 1)],
-                                wrapping_sub(1),
-                                reread
-                            ) != 0
-                            {
-                                current_block_28 = 735147466149431745;
-                            } else {
-                                base = RomBankBase(0x84, game);
-                                v5 = null::<u8>();
-                                v5 = base.offset(
-                                    *(ram_ptr!(game, u16; 0x1d27))
-                                        .offset((word!(game.plm_id) >> 1) as isize)
-                                        as i32 as isize,
-                                );
-                                current_block_28 = 11812396948646013369;
-                            }
-                        }
-                    } else {
-                        word!(game.plm_id = 0);
-                        current_block_28 = 2569451025026770673;
-                        continue;
-                    }
+        loop {
+            if !message_pending {
+                if (word!(game.plm_id) & 0x8000) != 0 {
+                    word!(game.plm_id = 0);
+                    break;
                 }
-                _ => {
-                    let mut _coret_: u8 =
+                if *(ram_ptr!(game, u16; 0x1c37)).offset((word!(game.plm_id) >> 1) as isize) == 0 {
+                    word!(game.plm_id, wrapping_sub(2));
+                    continue;
+                }
+                CallPlmPreInstr(
+                    ((*(ram_ptr!(game, u16; 0x1cd7)).offset((word!(game.plm_id) >> 1) as isize))
+                        as u32)
+                        | (0x840000u32),
+                    word!(game.plm_id),
+                    game,
+                );
+
+                if word!(
+                    game.plm_instruction_timer[(word!(game.plm_id) >> 1)],
+                    wrapping_sub(1),
+                    reread
+                ) != 0
+                {
+                    word!(game.plm_id, wrapping_sub(2));
+                    continue;
+                }
+                base = RomBankBase(0x84, game);
+                v5 = null::<u8>();
+                v5 = base.offset(
+                    *(ram_ptr!(game, u16; 0x1d27)).offset((word!(game.plm_id) >> 1) as isize) as i32
+                        as isize,
+                );
+            }
+            loop {
+                if message_pending {
+                    crate::verify_probe::hit("coroutine.plm.message");
+                    let yielded: u8 =
                         DisplayMessageBox_Async(word!(game.queued_message_box_index), game);
-                    if _coret_ != 0 {
-                        *_state_variable_ = 1;
-                        return _coret_;
+                    if yielded != 0 {
+                        *resume_state = 1;
+                        return yielded;
                     }
                     word!(game.queued_message_box_index = 0);
                     base = RomBankBase(0x84, game);
@@ -440,58 +432,46 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                         *(ram_ptr!(game, u16; 0x1d27)).offset((word!(game.plm_id) >> 1) as isize)
                             as i32 as isize,
                     );
-                    current_block_28 = 11812396948646013369;
+
+                    message_pending = false;
+                }
+                if (*(v5 as *mut u16) & 0x8000) == 0 {
+                    let mut v7: i32 = word!(game.plm_id) as i32 >> 1;
+                    word!(game.plm_instruction_timer[v7] = *(v5 as *mut u16));
+                    word!(game.plm_instruction_draw_ptr[v7] = *(v5.offset(2) as *mut u16));
+                    word!(
+                        game.plm_instr_list_ptrs[v7] =
+                            v5.offset(4).offset_from(base) as c_long as u16
+                    );
+                    ProcessPlmDrawInstruction(word!(game.plm_id), game);
+                    CalculatePlmBlockCoords(word!(game.plm_id), game);
+                    DrawPlm(word!(game.plm_id), game);
+
+                    break;
+                }
+                v5 = CallPlmInstr(
+                    ((*(v5 as *mut u16)) as u32) | (0x840000u32),
+                    v5.offset(2),
+                    word!(game.plm_id),
+                    game,
+                );
+
+                if v5.is_null() {
+                    break;
+                }
+                if (v5 as usize) < 0x10000i32 as usize {
+                    v5 = base.offset(v5 as usize as isize);
+                }
+                if word!(game.queued_message_box_index) != 0 {
+                    *(ram_ptr!(game, u16; 0x1d27)).offset((word!(game.plm_id) >> 1) as isize) =
+                        v5.offset_from(base) as c_long as u16;
+                    message_pending = true;
                 }
             }
-            loop {
-                match current_block_28 {
-                    735147466149431745 => {
-                        word!(game.plm_id, wrapping_sub(2));
-                        current_block_28 = 17179679302217393232;
-                        continue 'c_23315;
-                    }
-                    _ => {
-                        if (*(v5 as *mut u16) & 0x8000) == 0 {
-                            let mut v7: i32 = word!(game.plm_id) as i32 >> 1;
-                            word!(game.plm_instruction_timer[v7] = *(v5 as *mut u16));
-                            word!(game.plm_instruction_draw_ptr[v7] = *(v5.offset(2) as *mut u16));
-                            word!(
-                                game.plm_instr_list_ptrs[v7] =
-                                    v5.offset(4).offset_from(base) as c_long as u16
-                            );
-                            ProcessPlmDrawInstruction(word!(game.plm_id), game);
-                            CalculatePlmBlockCoords(word!(game.plm_id), game);
-                            DrawPlm(word!(game.plm_id), game);
-                            current_block_28 = 735147466149431745;
-                        } else {
-                            v5 = CallPlmInstr(
-                                ((*(v5 as *mut u16)) as u32) | (0x840000u32),
-                                v5.offset(2),
-                                word!(game.plm_id),
-                                game,
-                            );
-                            if v5.is_null() {
-                                current_block_28 = 735147466149431745;
-                                continue;
-                            }
-                            if (v5 as usize) < 0x10000i32 as usize {
-                                v5 = base.offset(v5 as usize as isize);
-                            }
-                            if word!(game.queued_message_box_index) != 0 {
-                                break;
-                            } else {
-                                current_block_28 = 11812396948646013369;
-                            }
-                        }
-                    }
-                }
-            }
-            *(ram_ptr!(game, u16; 0x1d27)).offset((word!(game.plm_id) >> 1) as isize) =
-                v5.offset_from(base) as c_long as u16;
-            current_block_28 = 12780425637862113792;
+            word!(game.plm_id, wrapping_sub(2));
         }
     }
-    *_state_variable_ = 0;
+    *resume_state = 0;
     0 as CoroutineRet
 }
 #[inline]
