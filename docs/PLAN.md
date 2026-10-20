@@ -2477,7 +2477,26 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `3848ea69` groups the complete
+Latest reviewed integration (2026-10-20): `db17de38` shares 121 ordered
+register-write runs across eight callers. Independent AST inventory accounts
+for all 899 direct writes: 778 grouped operations and 121 unchanged isolated
+writes. Caller imports resolve to the original RTL functions without local
+shadows. Address/value expressions, mirror offsets, operation order and
+statement boundaries remain exact; later arguments are not pre-evaluated.
+
+Independent source reconstruction, including rustfmt, binds all 72 committed
+inputs and all 69 replay sources. Actual whole-library expansion retains all
+2261783 tokens, including 68303 commas, after removing only the exact new
+helper/import and resolving the verified RTL qualifications. All three
+expansion/helper hashes and 74 replay pins remain stable.
+
+Normal release (23.60s), formatting, progress and full any% pass: 129712/0
+(102.85s replay), native exit 0; review reused the owner's completed run.
+Net Rust lines -147, total 135425; cast lines fall one through formatting,
+with all cast operations preserved. The movie still contains zero ending/
+credits frames; broader gameplay and hardware coverage remain open.
+
+Included `3848ea69` groups the complete
 5093-declaration public numeric family, including primitive and alias types.
 Independent AST and ordered-entry reconstruction cover 356 groups across
 30 files, with no adjacent attributes. All 44 type spellings, 3980 u32 and
