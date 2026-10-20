@@ -2558,7 +2558,31 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `44930f5a` completes the shared
+Latest reviewed integration (2026-10-20): `52817319` shares all 83 SDL
+key-code conversions through one pure const function: 81 default entries
+and the runtime lookup/parser forms. Independent source reconstruction binds
+all 77 committed inputs to the frozen candidate; all 14 unselected config
+functions and the selected functions' interfaces remain exact.
+SDL_Keycode resolves through Sint32 to i32. Caller validation, modifier
+handling, parser masking, hash calls and initialization order are preserved.
+
+Independent reconstruction of the compiled comparison source and rerun of
+its DLL pass all 130 default entries, 1572864 lookup cases and 196608 parser
+encoding cases. The checks cover every combination of the ten relevant key
+bits and left/right Shift/Ctrl/Alt bits, plus ignored high bits individually
+and together. Wrong-mask and wrong-marker controls each detect 12288 cases.
+All comparison and SDL dependency hashes remain fixed. This covers extracted
+encoding and lookup behavior; complete frontend and string-parser execution
+remain outside the check.
+
+Normal release (31.67s), formatting/check, progress and full any% pass:
+129712/0, native exit 0, 111.14s wall/110.94s replay. Review reused the
+completed run; all 92 verification pins remain stable. Rust lines fall 361
+to 133816, with cast lines down 201 and other progress counters unchanged.
+The movie still covers no ending/credits frames; broader gameplay, frontend
+execution and alias safety remain open.
+
+Included `44930f5a` completes the shared
 C-library/RAM/control composition with `24fcc574` and `fb65629d`.
 Independent reconstruction binds all 77 inputs at each of the three focused
 commits to its reviewed stage; the final commit matches the verified source.
