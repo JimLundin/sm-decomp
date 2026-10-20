@@ -782,14 +782,14 @@ pub unsafe fn RunDoorSetupCode(game: &mut Game) {
 }
 pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
     let mut ai_var_D: u16 = 0;
-    if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).properties & 0x200) == 0 {
-        if (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_A == 64 {
+    if ((*(ram_ptr!(game, EnemyData; 0xf78))).properties & 0x200) == 0 {
+        if (*(ram_ptr!(game, EnemyData; 0xf78))).ai_var_A == 64 {
             word!(
                 game.reg_BG1VOFS = ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).ai_var_D as i32
                     + word!(game.bg1_y_offset) as i32
                     + word!(game.layer1_y_pos) as i32) as u16
             );
-        } else if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_B & 0x400) != 0 {
+        } else if ((*(ram_ptr!(game, EnemyData; 0xf78))).ai_var_B & 0x400) != 0 {
             let fresh5 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).ai_var_D;
             fresh5.write_unaligned(fresh5.read_unaligned().wrapping_sub(1));
             if fresh5.read_unaligned() as i32 + 7 & 0x8000 != 0 {
@@ -801,12 +801,12 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
             }
             word!(game.reg_BG1VOFS, wrapping_add(ai_var_D));
             word!(game.reg_BG2VOFS = (ai_var_D).wrapping_sub(48));
-        } else if (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_C == 34
-            && (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_D != 0
+        } else if (*(ram_ptr!(game, EnemyData; 0xf78))).ai_var_C == 34
+            && (*(ram_ptr!(game, EnemyData; 0xf78))).ai_var_D != 0
         {
-            let fresh7 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_D;
+            let fresh7 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78))).ai_var_D;
             fresh7.write_unaligned(fresh7.read_unaligned().wrapping_sub(1));
-            if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_D & 1) != 0 {
+            if ((*(ram_ptr!(game, EnemyData; 0xf78))).ai_var_D & 1) != 0 {
                 word!(game.layer1_x_pos, wrapping_sub(4));
             } else {
                 word!(game.layer1_x_pos, wrapping_add(4));

@@ -79,12 +79,7 @@ pub unsafe fn snes_loadRom(
         i += 1;
     }
     if length >= 0x8000 {
-        readHeader(
-            data,
-            length,
-            0x7fc0,
-            (&raw mut headers as *mut CartHeader).offset(0),
-        );
+        readHeader(data, length, 0x7fc0, (&raw mut headers as *mut CartHeader));
     }
     if length >= 0x8200 {
         readHeader(

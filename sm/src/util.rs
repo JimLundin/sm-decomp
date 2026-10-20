@@ -25,7 +25,7 @@ pub const SEEK_END: i32 = 2;
 pub unsafe fn NextDelim(s: *mut *mut c_char, sep: i32) -> *mut c_char {
     let mut r = *s;
     if !r.is_null() {
-        while *r.offset(0) as i32 == ' ' as i32 || *r.offset(0) as i32 == '\t' as i32 {
+        while *r as i32 == ' ' as i32 || *r as i32 == '\t' as i32 {
             r = r.offset(1);
         }
         let mut t = strchr(r, sep);
@@ -123,7 +123,7 @@ pub unsafe fn NextLineStripComments(s: *mut *mut c_char) -> *mut c_char {
         eol = eol.offset(-1);
     }
     *eol = 0 as c_char;
-    while *p.offset(0) as i32 == ' ' as i32 || *p.offset(0) as i32 == '\t' as i32 {
+    while *p as i32 == ' ' as i32 || *p as i32 == '\t' as i32 {
         p = p.offset(1);
     }
     p
@@ -191,7 +191,7 @@ pub unsafe fn SplitKeyValue(p: *mut c_char) -> *mut c_char {
     }
     *kr = 0 as c_char;
     let mut v = equals.offset(1);
-    while *v.offset(0) as i32 == ' ' as i32 || *v.offset(0) as i32 == '\t' as i32 {
+    while *v as i32 == ' ' as i32 || *v as i32 == '\t' as i32 {
         v = v.offset(1);
     }
     v

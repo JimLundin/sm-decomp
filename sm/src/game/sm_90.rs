@@ -1107,8 +1107,7 @@ pub unsafe fn Samus_CalcSpritemapPos(k: u16, game: &mut Game) -> PairU16 {
     MakePairU16(v1.k, v1.j)
 }
 pub unsafe fn Samus_CalcSpritemapPos_Default(j: u16, game: &mut Game) -> PairU16 {
-    let v1: i32 = *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(0))
-        .y_offset_to_gfx)
+    let v1: i32 = *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629))).y_offset_to_gfx)
         .offset((4 * j as i32) as isize) as i8 as i32;
     word!(
         game.samus_spritemap_y_pos =
@@ -2647,7 +2646,7 @@ pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
         if (*v4 & 0x8000) != 0 {
             break;
         }
-        MarkMapTileAsExplored(*v4.offset(0), *v4.offset(1), game);
+        MarkMapTileAsExplored(*v4, *v4.offset(1), game);
         i += 4;
     }
 }
@@ -2901,8 +2900,7 @@ pub unsafe fn UpdateBeamTilesAndPalette(game: &mut Game) {
         fresh155 as i32,
         game,
     ))
-    .size as *mut u8)
-        .offset(0) = -102i32 as u8;
+    .size as *mut u8) = -102i32 as u8;
     (*gVramWriteEntry(v1 as i32, game)).size = addr_unk_606300 as u16;
     word!(game.vram_write_queue_tail = (v1).wrapping_add(2));
     WriteBeamPalette_Y(v0, game);
@@ -4718,7 +4716,7 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
             (r22 as i32 + 2 * word!(game.samus_anim_frame) as i32) as u16,
             game,
         );
-        let r18: u16 = *v4.offset(0) as i8 as u16;
+        let r18: u16 = *v4 as i8 as u16;
         let r20: u16 = *v4.offset(1) as i8 as u16;
         r22 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(word!(game.samus_pose) as isize))
             .y_offset_to_gfx as u16;
@@ -4746,7 +4744,7 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
             v12 = (if word!(game.samus_anim_frame) != 0 {
                 *v11.offset(2) as i32
             } else {
-                *v11.offset(0) as i32
+                *v11 as i32
             }) as u8;
         }
         let v13: u16 = (crate::rtl::rom_table_word!(game, 0x90c7a5, (v12 as i32 & 0x7f) as isize)
@@ -4763,8 +4761,7 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
             fresh15 as i32,
             game,
         ))
-        .size as *mut u8)
-            .offset(0) = -102i32 as u8;
+        .size as *mut u8) = -102i32 as u8;
         (*gVramWriteEntry(v14 as i32, game)).size = addr_unk_6061F0 as u16;
         word!(game.vram_write_queue_tail = (v14).wrapping_add(2));
     }
@@ -5280,15 +5277,13 @@ pub unsafe fn Samus_MoveHandler_ShinesparkCrash_0(game: &mut Game) {
 }
 pub unsafe fn Samus_MoveHandler_ShinesparkCrash_1(game: &mut Game) {
     word!(
-        game.speed_echo_xspeed[0] = ((*((ram_ptr!(game, u16; 0xab0)).offset(2) as *mut u8)
-            .offset(0))
-        .wrapping_add(*((ram_ptr!(game, u16; 0xac0)).offset(0) as *mut u8).offset(0),))
+        game.speed_echo_xspeed[0] = ((*((ram_ptr!(game, u16; 0xab0)).offset(2) as *mut u8))
+            .wrapping_add(*((ram_ptr!(game, u16; 0xac0)) as *mut u8),))
             as u16
     );
     word!(
-        game.speed_echo_xspeed[1] = ((*((ram_ptr!(game, u16; 0xab0)).offset(2) as *mut u8)
-            .offset(0))
-        .wrapping_add(*((ram_ptr!(game, u16; 0xac0)).offset(1) as *mut u8).offset(0),))
+        game.speed_echo_xspeed[1] = ((*((ram_ptr!(game, u16; 0xab0)).offset(2) as *mut u8))
+            .wrapping_add(*((ram_ptr!(game, u16; 0xac0)).offset(1) as *mut u8),))
             as u16
     );
     word!(game.speed_echo_ypos[2], wrapping_add(4));
@@ -5850,11 +5845,10 @@ pub unsafe fn ProjPreInstr_SpazerSba_FuncB_1(j: u16, r22: u16, game: &mut Game) 
         FireEndOfSpazerSba(j, game);
     } else {
         word!(
-            game.projectile_variables[v2] =
-                ((*((ram_ptr!(game, u16; 0xbf0)).offset(v2 as isize) as *mut u8).offset(0))
-                    .wrapping_add(
-                        *((ram_ptr!(game, u16; 0xc7c)).offset(v2 as isize) as *mut u8).offset(0),
-                    )) as u16
+            game.projectile_variables[v2] = ((*((ram_ptr!(game, u16; 0xbf0)).offset(v2 as isize)
+                as *mut u8))
+                .wrapping_add(*((ram_ptr!(game, u16; 0xc7c)).offset(v2 as isize) as *mut u8),))
+                as u16
         );
         let v3: u16 = (word!(game.projectile_bomb_x_speed[v2])).wrapping_sub(5);
         word!(game.projectile_bomb_x_speed[v2] = v3);
@@ -5877,11 +5871,10 @@ pub unsafe fn ProjPreInstr_SpazerSba_FuncB_2(j: u16, r22: u16, game: &mut Game) 
     if v1 as i32 - word!(game.layer1_y_pos) as i32 - 16i32 & 0x8000 != 0 || {
         let mut v2: i32 = j as i32 >> 1;
         word!(
-            game.projectile_variables[v2] =
-                ((*((ram_ptr!(game, u16; 0xbf0)).offset(v2 as isize) as *mut u8).offset(0))
-                    .wrapping_add(
-                        *((ram_ptr!(game, u16; 0xc7c)).offset(v2 as isize) as *mut u8).offset(0),
-                    )) as u16
+            game.projectile_variables[v2] = ((*((ram_ptr!(game, u16; 0xbf0)).offset(v2 as isize)
+                as *mut u8))
+                .wrapping_add(*((ram_ptr!(game, u16; 0xc7c)).offset(v2 as isize) as *mut u8),))
+                as u16
         );
         let mut v3: u16 = (word!(game.projectile_bomb_x_speed[v2])).wrapping_add(5);
         word!(game.projectile_bomb_x_speed[v2] = v3);

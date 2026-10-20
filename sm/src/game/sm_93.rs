@@ -167,8 +167,8 @@ pub unsafe fn InitializeShinesparkEchoOrSpazerSba(k: u16, game: &mut Game) {
         crate::rtl::rom_table_word!(
             game,
             0x938403,
-            (*((ram_ptr!(game, u16; 0xc18)).offset(v1 as isize) as *mut u8).offset(0) as i32
-                - 34i32) as isize,
+            (*((ram_ptr!(game, u16; 0xc18)).offset(v1 as isize) as *mut u8) as i32 - 34i32)
+                as isize,
         ),
         game,
     );

@@ -1418,7 +1418,7 @@ crate::instruction_callbacks! { pub unsafe fn (
     MotherBrain_Instr_SpawnEprojToOffset [jp.offset(3)] {
         let E = Get_MotherBrain(0, game);
         game.eproj_spawn_pt = Point16U {
-            x: (((*E).base.x_pos).wrapping_add(*jp.offset(0))),
+            x: (((*E).base.x_pos).wrapping_add(*jp)),
             y: (((*E).base.y_pos).wrapping_add(*jp.offset(1))),
         };
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, *jp.offset(2), game);
@@ -3730,7 +3730,7 @@ pub unsafe fn ShitroidInCutscene_MoveToSamus(k: u16, game: &mut Game) {
     let sice_var_0E: u16 = (*E).var_0E;
     let v3 = RomPtr_A9(sice_var_0E, game) as *const u16;
     let rect: Rect16U = Rect16U {
-        x: *v3.offset(0),
+        x: *v3,
         y: *v3.offset(1),
         w: 4,
         h: 4,
@@ -4181,9 +4181,9 @@ pub unsafe fn HandleMotherBrainInstructionList(a: u16, game: &mut Game) -> u16 {
     }
     let mut v2: u16 = (*st).ip;
     let mut v3: *const u16 = RomPtr_A9(v2, game) as *mut u16;
-    execute_instruction = (*v3.offset(0) & 0x8000 != 0)
+    execute_instruction = (*v3 & 0x8000 != 0)
         || ({
-            if (*st).timer != *v3.offset(0) {
+            if (*st).timer != *v3 {
                 (*st).timer = (*st).timer.wrapping_add(1);
                 return *v3.offset(1);
             }
@@ -4192,22 +4192,18 @@ pub unsafe fn HandleMotherBrainInstructionList(a: u16, game: &mut Game) -> u16 {
         });
     loop {
         if execute_instruction {
-            v2 = CallMotherBrainInstr(
-                ((*v3.offset(0)) as u32) | (0xa90000u32),
-                (v2).wrapping_add(2),
-                game,
-            );
+            v2 = CallMotherBrainInstr(((*v3) as u32) | (0xa90000u32), (v2).wrapping_add(2), game);
             execute_instruction = false;
         } else {
             v3 = RomPtr_A9(v2, game) as *mut u16;
-            if *v3.offset(0) & 0x8000 == 0 {
+            if *v3 & 0x8000 == 0 {
                 break;
             } else {
                 execute_instruction = true;
             }
         }
     }
-    if *v3.offset(0) == 0 {
+    if *v3 == 0 {
         set_fields! {[(*st)], 0; ip, timer}
         0
     } else {
@@ -4852,7 +4848,7 @@ pub unsafe fn InitializeCorpseRottingDataTable(mut table: *mut u16, a: u16) {
     let mut v2: i16 = ((a) as i16).wrapping_sub(1);
     let mut r18: u16 = 0;
     loop {
-        *table.offset(0) = v2 as u16;
+        *table = v2 as u16;
         *table.offset(1) = r18;
         table = table.offset(2);
         r18 = (r18).wrapping_add(2);
@@ -5927,7 +5923,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16) -> *const
 }
 pub unsafe fn Shitroid_Instr_5(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     if (word!(game.random_number) & 0x8000) == 0 {
-        return *jp.offset(0) as usize as *const u16;
+        return *jp as usize as *const u16;
     }
     QueueSfx2_Max6(0x52, game);
     jp.offset(1)

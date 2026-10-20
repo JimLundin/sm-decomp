@@ -2113,8 +2113,7 @@ pub unsafe fn GunshipTop_17(k: u16, game: &mut Game) {
         fresh5 as i32,
         game,
     ))
-    .size as *mut u8)
-        .offset(0) = -108i32 as u8;
+    .size as *mut u8) = -108i32 as u8;
     (*gVramWriteEntry(v2 as i32, game)).size =
         crate::rtl::rom_table_word!(game, 0xa2ac11, v3 as isize);
     word!(game.vram_write_queue_tail = (v2).wrapping_add(2));
@@ -3795,13 +3794,13 @@ pub unsafe fn LavaSeahorse_Func_1(k: u16, game: &mut Game) {
         let t: u16 = GetSamusEnemyDelta_X(k, game);
         (*E).var_A = ((*E).var_A & 0x7fff | t & 0x8000);
         if ((*E).var_A & 0x8000) != 0 {
-            crate::update_place! { reference fresh16 = *(&raw mut (*E).var_00 as *mut u8).offset(0) => (*fresh16 & !(1)); }
+            crate::update_place! { reference fresh16 = *(&raw mut (*E).var_00 as *mut u8) => (*fresh16 & !(1)); }
             let E1 = Get_LavaSeahorse(k as i32 + 64, game);
-            crate::update_place! { reference fresh17 = *(&raw mut (*E1).var_00 as *mut u8).offset(0) => (*fresh17 & !(1)); }
+            crate::update_place! { reference fresh17 = *(&raw mut (*E1).var_00 as *mut u8) => (*fresh17 & !(1)); }
         } else {
-            crate::update_place! { reference fresh18 = *(&raw mut (*E).var_00 as *mut u8).offset(0) => (*fresh18) | (1u8); }
+            crate::update_place! { reference fresh18 = *(&raw mut (*E).var_00 as *mut u8) => (*fresh18) | (1u8); }
             let E1_0 = Get_LavaSeahorse(k as i32 + 64, game);
-            crate::update_place! { reference fresh19 = *(&raw mut (*E1_0).var_00 as *mut u8).offset(0) => (*fresh19) | (1u8); }
+            crate::update_place! { reference fresh19 = *(&raw mut (*E1_0).var_00 as *mut u8) => (*fresh19) | (1u8); }
         }
         LavaSeahorse_Func_6(game);
         LavaSeahorse_Func_7(game);

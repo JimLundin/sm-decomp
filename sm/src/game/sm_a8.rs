@@ -580,7 +580,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
                 game,
             ))
             .parameter_2 as *mut u8)
-                .offset(0) as u16
+                 as u16
         );
     };
     Fune_Instr_6 [jp] {
@@ -1469,7 +1469,7 @@ pub unsafe fn Kago_Shot(game: &mut Game) {
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     NorfairLavaMan_Instr_1 [jp.offset(1)] {
         if CheckIfEnemyIsOnScreen(game) == 0 {
-            QueueSfx2_Max6(*jp.offset(0), game);
+            QueueSfx2_Max6(*jp, game);
         }
     };
     NorfairLavaMan_Instr_8 [jp] {
@@ -3588,8 +3588,7 @@ pub unsafe fn BlueBrinstarFaceBlock_Func_1(game: &mut Game) {
         }
         word!(
             game.variables_for_enemy_graphics_drawn_hook[1] =
-                (*((ram_ptr!(game, u16; 0x1794)).offset(1) as *mut u8).offset(0) as i32 + 1 & 7)
-                    as u16
+                (*((ram_ptr!(game, u16; 0x1794)).offset(1) as *mut u8) as i32 + 1 & 7) as u16
         );
     }
 }

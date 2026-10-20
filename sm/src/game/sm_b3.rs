@@ -78,7 +78,7 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
     Enemy_SetAiPreInstr_B3 [jp.offset(1)] {
-        (*gEnemyData(k as i32, game)).ai_preinstr = *jp.offset(0);
+        (*gEnemyData(k as i32, game)).ai_preinstr = *jp;
     };
     Enemy_ClearAiPreInstr_B3 [jp] {
         (*gEnemyData(k as i32, game)).ai_preinstr = ((0xb3807bi32) as u16);
@@ -1320,12 +1320,12 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         if word!(game.lava_acid_y_pos) >= 0xce {
             jp.offset(1)
         } else {
-            *jp.offset(0) as usize as *const u16
+            *jp as usize as *const u16
         }
     };
     EscapeEtecoon_Instr_2 [jp.offset(1)] {
         let E = Get_EscapeEtecoon(k as i32, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp.offset(0));
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp);
     };
 }
 pub unsafe fn EscapeEtecoon_Main(game: &mut Game) {
@@ -1383,12 +1383,12 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         if word!(game.lava_acid_y_pos) >= 0xce {
             jp.offset(1)
         } else {
-            *jp.offset(0) as usize as *const u16
+            *jp as usize as *const u16
         }
     };
     EscapeDachora_Instr_3 [] {
         if CheckEventHappened(0xf, game) != 0 {
-            *jp.offset(0) as usize as *const u16
+            *jp as usize as *const u16
         } else {
             jp.offset(1)
         }

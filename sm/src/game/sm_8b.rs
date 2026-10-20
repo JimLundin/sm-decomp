@@ -424,8 +424,7 @@ pub unsafe fn UpdateCinematicBgTilemap(game: &mut Game) {
             fresh157 as i32,
             game,
         ))
-        .size as *mut u8)
-            .offset(0) = 126;
+        .size as *mut u8) = 126;
         (*gVramWriteEntry(v0 as i32, game)).size = word!(game.cinematicbg_var3);
         word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
     }
@@ -449,8 +448,7 @@ pub unsafe fn CinematicUpdateSomeBg(game: &mut Game) {
             fresh4 as i32,
             game,
         ))
-        .size as *mut u8)
-            .offset(0) = 126;
+        .size as *mut u8) = 126;
         (*gVramWriteEntry(v0 as i32, game)).size = word!(game.cinematicbg_var3);
         word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
     }
@@ -575,15 +573,15 @@ pub unsafe fn ProcessCinematicBgObject_Unk1(k: u16, j: u16, r18: u16, game: &mut
     let mut v3: u16 = (j).wrapping_add(4);
     let mut v4: u16 = word!(game.mode7_vram_write_queue_tail);
     loop {
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_0)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0)
             .offset(v4 as i32 as isize) as *mut u16) = 128;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_1 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_1 as *mut u8)
             .offset(v4 as i32 as isize) as *mut u16) = v3;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
             .offset(v4 as isize) as *mut u16) = 139;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
             .offset((v4 as i32 + 1) as isize) as *mut u16) = r18x;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
             .offset((v4 as i32 + 3) as isize) as *mut u16) = r22;
         *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1 as *mut u8)
             .offset(v4 as i32 as isize) as *mut u16) = 0;
@@ -605,15 +603,15 @@ pub unsafe fn ProcessCinematicBgObject_Unk2(k: u16, j: u16, r18: u16, game: &mut
     let mut v3: u16 = (j).wrapping_add(4);
     let mut v4: u16 = word!(game.mode7_vram_write_queue_tail);
     loop {
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_0)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0)
             .offset(v4 as i32 as isize) as *mut u16) = 128;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_1 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_1 as *mut u8)
             .offset(v4 as i32 as isize) as *mut u16) = v3;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
             .offset(v4 as isize) as *mut u16) = 139;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
             .offset((v4 as i32 + 1) as isize) as *mut u16) = r20;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
             .offset((v4 as i32 + 3) as isize) as *mut u16) = r22;
         *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1 as *mut u8)
             .offset(v4 as i32 as isize) as *mut u16) = 2;
@@ -768,7 +766,7 @@ pub unsafe fn ComposeFadingPalettes(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func20(j: u16, game: &mut Game) {
     let mut tt = RomPtr_8B(j, game) as *mut u16;
-    let mut v2: u16 = *tt.offset(0);
+    let mut v2: u16 = *tt;
     let mut r18: i32 = *tt.offset(1) as i32;
     let dst = &raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).intro_japanese_text_tiles as *mut u16;
     loop {
@@ -801,8 +799,7 @@ pub unsafe fn TransferJapaneseTextTilesToVram(game: &mut Game) {
         fresh21 as i32,
         game,
     ))
-    .size as *mut u8)
-        .offset(0) = 126;
+    .size as *mut u8) = 126;
     (*gVramWriteEntry(v0 as i32, game)).size = 16768;
     word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
 }
@@ -940,7 +937,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
             mirror(HDMAEN as u16, 0, 0x85, false); mirror(MEMSEL as u16, 1, 0x86, false);
             mirror(OBSEL as u16, 3, 0x52, false); byte(OAMADDL as u16, 0);
         }
-        *(ram_ptr!(game, u16; 0x53) as *mut u8).offset(0) = 0;
+        *(ram_ptr!(game, u16; 0x53) as *mut u8) = 0;
         WriteReg(OAMADDH as u16, 0x80, game);
         byte!(@pointer ram_ptr!(game, u16; 0x53); 1) = 0x80;
         crate::rtl::register_writes! { game;
@@ -2036,8 +2033,7 @@ pub unsafe fn CinematicFunction_Intro_DrawInitJpn(game: &mut Game) {
                 fresh146 as i32,
                 game,
             ))
-            .size as *mut u8)
-                .offset(0) = 126;
+            .size as *mut u8) = 126;
             (*gVramWriteEntry(v0 as i32, game)).size = 20192;
             word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
         }
@@ -4361,33 +4357,33 @@ pub unsafe fn CinematicFunction_Intro_Func118(game: &mut Game) {
     let v1: u16 = word!(game.mode7_vram_write_queue_tail);
     let mut v2: u32 = word!(game.mode7_vram_write_queue_tail) as u32;
     if word!(game.cinematic_var4) as i32 - 8i32 & 0x8000 != 0 {
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_0)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0)
             .offset(word!(game.mode7_vram_write_queue_tail) as i32 as isize)
             as *mut u16) = 192;
         let v3: i32 = v0 as i32;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_1 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_1 as *mut u8)
             .offset(v2 as isize) as *mut u16) = kCinematicFunction_Intro_Func118_Tab0[v3 as usize];
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
             .offset(v1 as isize) as *mut u16) = 127;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
             .offset((v1 as i32 + 1) as isize) as *mut u16) = 2048;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
             .offset((v1 as i32 + 3) as isize) as *mut u16) =
             kCinematicFunction_Intro_Func118_Tab1[v3 as usize];
         *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1 as *mut u8)
             .offset(v1 as i32 as isize) as *mut u16) = 128;
     } else {
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_0)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0)
             .offset(word!(game.mode7_vram_write_queue_tail) as i32 as isize)
             as *mut u16) = 128;
         let v4: i32 = v0 as i32;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_1 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_1 as *mut u8)
             .offset(v2 as isize) as *mut u16) = kCinematicFunction_Intro_Func118_Tab0[v4 as usize];
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
             .offset(v1 as isize) as *mut u16) = 127;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
             .offset((v1 as i32 + 1) as isize) as *mut u16) = 2048;
-        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
             .offset((v1 as i32 + 3) as isize) as *mut u16) =
             kCinematicFunction_Intro_Func118_Tab1[v4 as usize];
         *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1 as *mut u8)
@@ -4801,8 +4797,7 @@ pub unsafe fn CinematicFunction_Intro_Func142(game: &mut Game) {
             fresh75 as i32,
             game,
         ))
-        .size as *mut u8)
-            .offset(0) =
+        .size as *mut u8) =
             crate::rtl::rom_table_word!(game, 0x8be45a, (v0 as i32 + 2) as isize) as u8;
         (*gVramWriteEntry(v1 as i32, game)).size =
             crate::rtl::rom_table_word!(game, 0x8be45a, (v2 + 3) as isize);
@@ -5359,7 +5354,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, j: u16, game: &mut Game) 
         *ram_ptr!(game; 0x6b) = 2;
         *ram_ptr!(game; 0x6f) = 2;
         *ram_ptr!(game; 0x72) = 17;
-        *(&raw mut v0 as *mut u8).offset(0) = 124;
+        *(&raw mut v0 as *mut u8) = 124;
         *ram_ptr!(game; 0x59) = 124;
         SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEEBB as u16, 0, game);
         SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEEF7 as u16, 2, game);
@@ -5622,8 +5617,7 @@ pub unsafe fn CinematicFunction_Intro_Func216(game: &mut Game) {
             fresh28 as i32,
             game,
         ))
-        .size as *mut u8)
-            .offset(0) = 127;
+        .size as *mut u8) = 127;
         (*gVramWriteEntry(v1 as i32, game)).size =
             crate::rtl::rom_table_word!(game, 0x8bf6d8, v2 as isize);
         word!(game.vram_write_queue_tail = (v1).wrapping_add(2));

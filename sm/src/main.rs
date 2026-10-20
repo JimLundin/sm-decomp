@@ -667,14 +667,14 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
     argc -= 1;
     argv = argv.offset(1);
     let mut config_file = null::<c_char>();
-    if argc >= 2 && strcmp(*argv.offset(0), b"--config\0" as *const u8 as *const c_char) == 0 {
+    if argc >= 2 && strcmp(*argv, b"--config\0" as *const u8 as *const c_char) == 0 {
         config_file = *argv.offset(1);
         argc -= 2;
         argv = argv.offset(2);
     } else {
         SwitchDirectory();
     }
-    if argc >= 1 && strcmp(*argv.offset(0), b"--debug\0" as *const u8 as *const c_char) == 0 {
+    if argc >= 1 && strcmp(*argv, b"--debug\0" as *const u8 as *const c_char) == 0 {
         owner.with(|game| game.g_debug_flag = true_0 != 0);
         argc -= 1;
         argv = argv.offset(1);
@@ -734,8 +734,8 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
     } else {
         g_renderer_funcs = kSdlRendererFuncs;
     }
-    let filename = if !(*argv.offset(0)).is_null() {
-        *argv.offset(0) as *const c_char
+    let filename = if !(*argv).is_null() {
+        *argv as *const c_char
     } else {
         b"sm.smc\0" as *const u8 as *const c_char
     };

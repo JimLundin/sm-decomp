@@ -190,7 +190,7 @@ crate::instruction_callbacks! { pub unsafe fn (
     @prefix {
         if Enemy_MoveDown(
             word!(game.cur_enemy_index),
-            (*jp.offset(0) as i16 as i32) << 16,
+            (*jp as i16 as i32) << 16,
             game,
         ) == 0
         {
@@ -278,7 +278,7 @@ pub unsafe fn SpacePirates_Instr_SetEnemyFunc(
     jp: *const u16,
     game: &mut Game,
 ) -> *const u16 {
-    (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game)).var_A = *jp.offset(0);
+    (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game)).var_A = *jp;
     jp.offset(1)
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
@@ -389,9 +389,9 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     SpacePirates_Instr_20 [jp.offset(1)] {
         (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
             .base
-            .palette_index = *jp.offset(0);
+            .palette_index = *jp;
     };
-    SpacePirates_Instr_16 [jp.offset(1)] { QueueSfx2_Max6(*jp.offset(0), game); };
+    SpacePirates_Instr_16 [jp.offset(1)] { QueueSfx2_Max6(*jp, game); };
     SpacePirates_Instr_15 [jp.offset(3)] {
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         game.eproj_spawn_rect = Rect16U {
@@ -401,7 +401,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
             h: *jp.offset(2),
         };
         SpawnEprojWithGfx(
-            *jp.offset(0),
+            *jp,
             word!(game.cur_enemy_index),
             addr_kEproj_PirateClaw as u16,
             game,
@@ -754,7 +754,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         game.eproj_spawn_pt = Point16U {
             x: (((*E).base.x_pos).wrapping_sub(24)),
-            y: (((*E).base.y_pos).wrapping_sub(*jp.offset(0))),
+            y: (((*E).base.y_pos).wrapping_sub(*jp)),
         };
         game.eproj_spawn_r22 = 0;
         SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 0, game);
@@ -763,13 +763,13 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         game.eproj_spawn_pt = Point16U {
             x: (((*E).base.x_pos).wrapping_add(24)),
-            y: (((*E).base.y_pos).wrapping_sub(*jp.offset(0))),
+            y: (((*E).base.y_pos).wrapping_sub(*jp)),
         };
         game.eproj_spawn_r22 = 1;
         SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 1, game);
     };
     SpacePirates_Instr_11 [jp.offset(1)] {
-        (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game)).var_A = *jp.offset(0);
+        (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game)).var_A = *jp;
     };
     SpacePirates_Instr_13 [] {
         if IsSamusWithinEnemy_Y(word!(game.cur_enemy_index), 0x10, game) != 0 {

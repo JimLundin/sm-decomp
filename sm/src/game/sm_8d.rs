@@ -182,7 +182,7 @@ pub unsafe fn PalPreInstr_E1BC(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn PalPreInstr_CheckEnemy0Health(k: u16, game: &mut Game) {
-    if (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).health == 0 {
+    if (*(ram_ptr!(game, EnemyData; 0xf78))).health == 0 {
         word!(game.palettefx_ids[(k >> 1)] = 0);
     }
 }

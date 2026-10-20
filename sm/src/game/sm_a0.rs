@@ -726,7 +726,7 @@ pub unsafe fn RecordEnemySpawnData(j: u16, game: &mut Game) {
     let name_ptr: u16 = (*get_EnemyDef_A2((*v1).enemy_ptr, game)).name_ptr;
     if name_ptr != 0 {
         let v4 = RomPtr_B4(name_ptr, game) as *const u16;
-        r18 = *v4.offset(0);
+        r18 = *v4;
         r20 = *v4.offset(1);
         r22 = *v4.offset(2);
         r24 = *v4.offset(3);
@@ -2375,7 +2375,7 @@ pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
                 Unreachable(game);
             }
             let esep = RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game);
-            let mut n: i32 = *esep.offset(0) as i32;
+            let mut n: i32 = *esep as i32;
             let mut ES = esep.offset(2) as *mut ExtendedSpriteMap;
             while n != 0 {
                 let coll_x_pos: u16 = ((*ES).xpos).wrapping_add((*E).x_pos);

@@ -391,7 +391,7 @@ pub unsafe fn InitPpuForGameplay(game: &mut Game) {
         mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
         byte(OAMADDL as u16, 0);
     }
-    *(ram_ptr!(game, u16; 0x53) as *mut u8).offset(0) = 0;
+    *(ram_ptr!(game, u16; 0x53) as *mut u8) = 0;
     WriteReg(OAMADDH as u16, 0x80, game);
     byte!(@pointer ram_ptr!(game, u16; 0x53); 1) = 0x80;
     crate::rtl::register_writes! { game;
@@ -731,7 +731,7 @@ pub unsafe fn DemoRoom_SetBG2TilemapBase(game: &mut Game) {
     *(ram_ptr!(game, u16; 0x59)) = 74;
 }
 pub unsafe fn DemoRoom_SetKraidFunctionTimer(game: &mut Game) {
-    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_preinstr = 60;
+    (*(ram_ptr!(game, EnemyData; 0xf78))).ai_preinstr = 60;
 }
 pub unsafe fn DemoRoom_SetBrinstarBossBits(game: &mut Game) {
     *ram_ptr!(game; 0xd828, 1) = 1;
@@ -1072,11 +1072,11 @@ pub unsafe fn OptionsMenuFunc2(k: u16, game: &mut Game) {
         let mut v5 = null_mut::<u16>();
         loop {
             v5 = RomPtr_82(v4, game) as *mut u16;
-            if (*v5.offset(0) & 0x8000) == 0 {
+            if (*v5 & 0x8000) == 0 {
                 break;
             }
             v4 = CallOptionsInstr(
-                ((*v5.offset(0)) as u32) | (0x820000u32),
+                ((*v5) as u32) | (0x820000u32),
                 v1,
                 (v4).wrapping_add(2),
                 game,
@@ -1086,7 +1086,7 @@ pub unsafe fn OptionsMenuFunc2(k: u16, game: &mut Game) {
             }
         }
         let v7: i32 = v1 as i32 >> 1;
-        word!(game.cinematicspr_instr_ptr[v7] = *v5.offset(0));
+        word!(game.cinematicspr_instr_ptr[v7] = *v5);
         word!(game.cinematicbg_arr8[v7] = *v5.offset(1));
         word!(game.cinematicspr_arr7[v7] = (v4).wrapping_add(4));
     }
@@ -2148,8 +2148,7 @@ pub unsafe fn UpdatePauseMenuLRStartVramTilemap(game: &mut Game) {
         fresh23 as i32,
         game,
     ))
-    .size as *mut u8)
-        .offset(0) = 126;
+    .size as *mut u8) = 126;
     (*gVramWriteEntry(v0 as i32, game)).size =
         (((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) + 800) as u16;
     word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
@@ -2174,7 +2173,7 @@ pub unsafe fn DrawPauseScreenSpriteAnim(a: u16, input_k: u16, input_j: u16, game
         let mut v10: u16 = *v3.offset((3 * *v8 as i32) as isize) as u16;
         if v10 == 255 {
             *v8 = 0;
-            v10 = *v3.offset(0) as u16;
+            v10 = *v3 as u16;
         }
         *v5 = v10;
     }
@@ -2250,15 +2249,9 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
         }
     }
     word!(game.pausemenu_item_selector_animation_frame = 0);
-    word!(
-        game.pausemenu_item_selector_animation_timer =
-            *(rom_ptr!(game, u8; 0x82c10c)).offset(0) as u16
-    );
+    word!(game.pausemenu_item_selector_animation_timer = *(rom_ptr!(game, u8; 0x82c10c)) as u16);
     word!(game.pausemenu_reserve_tank_animation_frame = 0);
-    word!(
-        game.pausemenu_reserve_tank_animation_timer =
-            *(rom_ptr!(game, u8; 0x82c165)).offset(0) as u16
-    );
+    word!(game.pausemenu_reserve_tank_animation_timer = *(rom_ptr!(game, u8; 0x82c165)) as u16);
     if word!(game.samus_max_reserve_health) != 0 {
         word!(game.pausemenu_equipment_category_item = 0);
     } else {
@@ -2714,7 +2707,7 @@ macro_rules! queue_ram_tilemap_write {
             $game,
         ))
         .size as *mut u8)
-            .offset(0) = 126;
+             = 126;
         (*gVramWriteEntry(v0 as i32, $game)).size = $destination;
         word!($game.vram_write_queue_tail = (v0).wrapping_add(2));
     };
@@ -2764,7 +2757,7 @@ pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
                 + 4 * byte!(@pointer ram_ptr!(game, u16; 0x755); 1) as i32) as u16,
             game,
         ) as *mut u16;
-        DrawPauseScreenSpriteAnim(3, (*t.offset(0)).wrapping_sub(1), *t.offset(1), game);
+        DrawPauseScreenSpriteAnim(3, (*t).wrapping_sub(1), *t.offset(1), game);
     }
 }
 pub unsafe fn EquipmentScreenDisplayReserveTankAmount(game: &mut Game) {
@@ -3068,7 +3061,7 @@ pub unsafe fn DrawFileSelectMapIcons(game: &mut Game) {
         game,
     ) as *mut u16)
         .offset((word!(game.load_station_index) as i32 * 2) as isize);
-    let v1: u16 = (*data.offset(0)).wrapping_sub(word!(game.reg_BG1HOFS));
+    let v1: u16 = (*data).wrapping_sub(word!(game.reg_BG1HOFS));
     let v2: u16 = (*data.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS));
     if (word!(game.samus_position_indicator_animation_loop_counter) & 1) == 0 {
         DrawMenuSpritemap(0x12, v1, v2, 3584, game);
@@ -3138,12 +3131,11 @@ pub unsafe fn DrawMapIconsOfType(mut a: u16, r34: u16, mut r36: u16, r3: u16, ga
         let mut v3: i8 = ((r36) as i8) & (1i8);
         r36 = (r36 >> 1);
         if v3 != 0 {
-            let mut v4: i16 =
-                CheckIfMapPositionIsExplored(*v2.offset(0), *v2.offset(1), game) as i16;
+            let mut v4: i16 = CheckIfMapPositionIsExplored(*v2, *v2.offset(1), game) as i16;
             if v4 != 0 {
                 DrawMenuSpritemap(
                     r34,
-                    (*v2.offset(0)).wrapping_sub(word!(game.reg_BG1HOFS)),
+                    (*v2).wrapping_sub(word!(game.reg_BG1HOFS)),
                     (*v2.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS)),
                     r3,
                     game,
@@ -3171,24 +3163,24 @@ pub unsafe fn DrawBossMapIcons(a: u16, k: u16, game: &mut Game) {
     let mut v4 = RomPtr_82(t as u16, game) as *const u16;
     let mut advance_boss_bit: bool;
     loop {
-        if *v4.offset(0) == 0xffff {
+        if *v4 == 0xffff {
             return;
         }
-        advance_boss_bit = !(*v4.offset(0) != 0xfffe)
+        advance_boss_bit = !(*v4 != 0xfffe)
             || ({
                 let v5: i32 = bits & 1;
                 bits >>= 1;
                 if v5 != 0 {
                     DrawMenuSpritemap(
                         0x62,
-                        (*v4.offset(0)).wrapping_sub(word!(game.reg_BG1HOFS)),
+                        (*v4).wrapping_sub(word!(game.reg_BG1HOFS)),
                         (*v4.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS)),
                         3584,
                         game,
                     );
                     DrawMenuSpritemap(
                         a,
-                        (*v4.offset(0)).wrapping_sub(word!(game.reg_BG1HOFS)),
+                        (*v4).wrapping_sub(word!(game.reg_BG1HOFS)),
                         (*v4.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS)),
                         3072,
                         game,
@@ -3199,7 +3191,7 @@ pub unsafe fn DrawBossMapIcons(a: u16, k: u16, game: &mut Game) {
                         || ({
                             DrawMenuSpritemap(
                                 a,
-                                (*v4.offset(0)).wrapping_sub(word!(game.reg_BG1HOFS)),
+                                (*v4).wrapping_sub(word!(game.reg_BG1HOFS)),
                                 (*v4.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS)),
                                 3584,
                                 game,
@@ -3293,10 +3285,8 @@ pub unsafe fn DrawMenuSelectionMissile(game: &mut Game) {
     if word!(game.cinematic_var5) != 0 {
         if word!(game.cinematic_var5, wrapping_sub(1), reread) == 0 {
             word!(
-                game.eproj_id[0] = (*((ram_ptr!(game, u16; 0x1997)).offset(0) as *mut u8).offset(0)
-                    as i32
-                    + 1
-                    & 3) as u16
+                game.eproj_id[0] =
+                    (*((ram_ptr!(game, u16; 0x1997)) as *mut u8) as i32 + 1 & 3) as u16
             );
             word!(
                 game.cinematic_var5 =
@@ -3360,9 +3350,9 @@ pub unsafe fn DisplayMapElevatorDestinations(game: &mut Game) {
     }
 }
 pub unsafe fn HandleGameOverBabyMetroid(game: &mut Game) {
-    if (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).instruction_timer != 0 {
+    if (*(ram_ptr!(game, EnemyData; 0xf78))).instruction_timer != 0 {
         sub_82BB7F(
-            (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).instruction_timer,
+            (*(ram_ptr!(game, EnemyData; 0xf78))).instruction_timer,
             game,
         );
     } else {
@@ -3378,21 +3368,18 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn sub_82BB7F(a: u16, game: &mut Game) {
-    let current_instruction: u16 =
-        (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).current_instruction;
-    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).instruction_timer = (a).wrapping_sub(1);
+    let current_instruction: u16 = (*(ram_ptr!(game, EnemyData; 0xf78))).current_instruction;
+    (*(ram_ptr!(game, EnemyData; 0xf78))).instruction_timer = (a).wrapping_sub(1);
     if a == 1 {
         let v2 = RomPtr_82(
-            (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).current_instruction,
+            (*(ram_ptr!(game, EnemyData; 0xf78))).current_instruction,
             game,
         );
         if *(v2.offset(6) as *mut u16) == 0xffff {
             sub_82BBDD(game);
         } else if ((*(v2.offset(6) as *mut u16)) as i16).wrapping_add(1) >= 0 {
-            (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).instruction_timer =
-                *(v2.offset(6) as *mut u16);
-            let fresh18 =
-                &raw mut (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).current_instruction;
+            (*(ram_ptr!(game, EnemyData; 0xf78))).instruction_timer = *(v2.offset(6) as *mut u16);
+            let fresh18 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78))).current_instruction;
             fresh18.write_unaligned((fresh18.read_unaligned()).wrapping_add(6));
             DrawBabyMetroid((current_instruction).wrapping_add(6), game);
         } else {
@@ -3400,13 +3387,13 @@ pub unsafe fn sub_82BB7F(a: u16, game: &mut Game) {
         }
     } else {
         DrawBabyMetroid(
-            (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).current_instruction,
+            (*(ram_ptr!(game, EnemyData; 0xf78))).current_instruction,
             game,
         );
     };
 }
 pub unsafe fn sub_82BBDD(game: &mut Game) {
-    enemy_instruction! {[(*(ram_ptr!(game, EnemyData; 0xf78)).offset(0))]; instruction = addr_kgameOverBabyMetridInstructionList as u16, timer = 10}
+    enemy_instruction! {[(*(ram_ptr!(game, EnemyData; 0xf78)))]; instruction = addr_kgameOverBabyMetridInstructionList as u16, timer = 10}
     sub_82BB7F(0xa, game);
 }
 pub unsafe fn DrawBabyMetroid(k: u16, game: &mut Game) {
@@ -3425,18 +3412,18 @@ pub unsafe fn DrawBabyMetroid(k: u16, game: &mut Game) {
 }
 pub unsafe fn FinishProcessingGameOverBabyMetroidAsm(game: &mut Game) {
     let t: u16 = *(RomPtr_82(
-        (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).current_instruction,
+        (*(ram_ptr!(game, EnemyData; 0xf78))).current_instruction,
         game,
     ) as *mut u16)
         .offset(4);
-    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).instruction_timer = t;
-    let fresh17 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).current_instruction;
+    (*(ram_ptr!(game, EnemyData; 0xf78))).instruction_timer = t;
+    let fresh17 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78))).current_instruction;
     fresh17.write_unaligned((fresh17.read_unaligned()).wrapping_add(8));
     if t == 0xffff {
         sub_82BBDD(game);
     } else {
         DrawBabyMetroid(
-            (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).current_instruction,
+            (*(ram_ptr!(game, EnemyData; 0xf78))).current_instruction,
             game,
         );
     };
@@ -4829,8 +4816,7 @@ pub unsafe fn OptionsMenu_AddToVramQueue(game: &mut Game) {
         fresh118 as i32,
         game,
     ))
-    .size as *mut u8)
-        .offset(0) = 126;
+    .size as *mut u8) = 126;
     (*gVramWriteEntry(v0 as i32, game)).size = 20480;
     word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
 }

@@ -4108,8 +4108,8 @@ pub unsafe fn sub_A6DB2A(game: &mut Game) {
             crate::rtl::rom_table_word!(
                 game,
                 0xa6dcba,
-                ((*((ram_ptr!(game, u16; 0x2000)).offset(71) as *mut u8).offset(0) as i32
-                    + *((ram_ptr!(game, u16; 0x2000)).offset(81) as *mut u8).offset(0) as i32
+                ((*((ram_ptr!(game, u16; 0x2000)).offset(71) as *mut u8) as i32
+                    + *((ram_ptr!(game, u16; 0x2000)).offset(81) as *mut u8) as i32
                     + 8
                     & 0xf0) as u8
                     >> 4) as isize,
@@ -4175,9 +4175,9 @@ unsafe fn BabyMetroid_DBCB_DoubleRetEx(a: u16, game: &mut Game) -> i32 {
     }
     let mut v2: u16 = (*st).ip;
     let mut v3: *const u16 = RomPtr_A6(v2, game) as *mut u16;
-    execute_instruction = (*v3.offset(0) & 0x8000 != 0)
+    execute_instruction = (*v3 & 0x8000 != 0)
         || ({
-            if (*st).timer != *v3.offset(0) {
+            if (*st).timer != *v3 {
                 (*st).timer = (*st).timer.wrapping_add(1);
                 return *v3.offset(1) as i32;
             }
@@ -4186,15 +4186,11 @@ unsafe fn BabyMetroid_DBCB_DoubleRetEx(a: u16, game: &mut Game) -> i32 {
         });
     loop {
         if execute_instruction {
-            v2 = CallBabyMetroidInstr(
-                ((*v3.offset(0)) as u32) | (0xa60000u32),
-                (v2).wrapping_add(2),
-                game,
-            );
+            v2 = CallBabyMetroidInstr(((*v3) as u32) | (0xa60000u32), (v2).wrapping_add(2), game);
             execute_instruction = false;
         } else {
             v3 = RomPtr_A6(v2, game) as *mut u16;
-            if *v3.offset(0) & 0x8000 == 0 {
+            if *v3 & 0x8000 == 0 {
                 break;
             } else {
                 execute_instruction = true;
@@ -4403,7 +4399,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         QueueSfx2_Max6(0x59, game);
     };
     Ridley_Instr_6 [jp] { (*Get_Ridley(0, game)).var_0F = 0; };
-    Ridley_Instr_10 [*jp.offset(0) as usize as *const u16] {
+    Ridley_Instr_10 [*jp as usize as *const u16] {
         if word!(game.area_index) == 2
             || word!(game.samus_health) as i32 - 30i32 & 0x8000 == 0
         {
@@ -4413,7 +4409,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     };
     Ridley_Instr_4 [] {
         if (*Get_Ridley(0, game)).var_1B != 0 {
-            *jp.offset(0) as usize as *const u16
+            *jp as usize as *const u16
         } else {
             *jp.offset(1) as usize as *const u16
         }
@@ -4422,24 +4418,24 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         if (*Get_Ridley(0, game)).var_1B != 0 {
             jp.offset(1)
         } else {
-            *jp.offset(0) as usize as *const u16
+            *jp as usize as *const u16
         }
     };
     Ridley_Instr_2 [jp.offset(1)] {
         word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
         word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
-        (*Get_Ridley(0, game)).var_1D = *jp.offset(0);
+        (*Get_Ridley(0, game)).var_1D = *jp;
     };
     Ridley_Instr_1 [] {
         if (*Get_Ridley(0, game)).var_10 != 0 {
-            *jp.offset(0) as usize as *const u16
+            *jp as usize as *const u16
         } else {
             jp.offset(1)
         }
     };
     Ridley_Instr_14 [jp.offset(2)] {
         let E = Get_Ridley(0, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp.offset(0));
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp);
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(*jp.offset(1));
     };
     Ridley_Instr_9 [jp] { (*Get_Ridley(0, game)).var_10 = 0; Ridley_Func_96(game); };
@@ -4575,7 +4571,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         let E = Get_CeresSteam(k as i32, game);
         crate::update_place! { previous fresh0 = (*E).var_D => (*E).var_D.wrapping_sub(1); }
         if fresh0 != 1 {
-            return *jp.offset(0) as usize as *const u16;
+            return *jp as usize as *const u16;
         }
     };
     CeresSteam_Instr_3 [jp] {

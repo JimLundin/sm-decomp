@@ -121,10 +121,7 @@ pub unsafe fn ProjectileTrail_Func5(k: u16, j: u16, game: &mut Game) {
         game.projectiletrail_left_y_pos[v7] =
             (r20 as i32 + *p.offset(1) as i8 as i32 - 4i32) as u16
     );
-    word!(
-        game.projectiletrail_left_x_pos[v7] =
-            (r18 as i32 + *p.offset(0) as i8 as i32 - 4i32) as u16
-    );
+    word!(game.projectiletrail_left_x_pos[v7] = (r18 as i32 + *p as i8 as i32 - 4i32) as u16);
     word!(
         game.projectiletrail_right_y_pos[v7] =
             (r20 as i32 + *p.offset(3) as i8 as i32 - 4i32) as u16
@@ -206,7 +203,7 @@ pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
         32 as size_t,
     );
     QueueTransferOfSamusDeathSequence(8, game);
-    word!(game.game_options_screen_index = *(rom_ptr!(game, u8; 0x9bb823)).offset(0) as u16);
+    word!(game.game_options_screen_index = *(rom_ptr!(game, u8; 0x9bb823)) as u16);
     word! { game, 0; g_word_7E0DE4, g_word_7E0DE6 }
     GameState_24_SamusNoHealth_Explosion_2(game);
 }
@@ -243,8 +240,7 @@ pub unsafe fn QueueTransferOfSamusDeathSequence(v0: u16, game: &mut Game) {
         fresh7 as i32,
         game,
     ))
-    .size as *mut u8)
-        .offset(0) = 0x9b;
+    .size as *mut u8) = 0x9b;
     (*gVramWriteEntry(v1 as i32, game)).size = g_word_9BB7C9[v2 as usize];
     word!(game.vram_write_queue_tail = (v1).wrapping_add(2));
 }
@@ -828,8 +824,7 @@ pub unsafe fn UpdateGrappleBeamTiles(game: &mut Game) {
         fresh27 as i32,
         game,
     ))
-    .size as *mut u8)
-        .offset(0) = -102i32 as u8;
+    .size as *mut u8) = -102i32 as u8;
     (*gVramWriteEntry(v0 as i32, game)).size = 25088;
     word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
     let v1: u16 = (*ram_ptr!(game; 0xcfb) as i32 >> 1 & 0xfe) as u16;
@@ -844,8 +839,7 @@ pub unsafe fn UpdateGrappleBeamTiles(game: &mut Game) {
         fresh28 as i32,
         game,
     ))
-    .size as *mut u8)
-        .offset(0) = -102i32 as u8;
+    .size as *mut u8) = -102i32 as u8;
     (*gVramWriteEntry(v0 as i32, game)).size = 25104;
     word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
 }
@@ -1222,7 +1216,7 @@ pub unsafe fn GrappleBeam_Func2(game: &mut Game) {
             } else {
                 word!(
                     game.samus_new_pose_transitional = *(rom_ptr!(game, u8; 0x9bc9c4)).offset(
-                        *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(0))
+                        *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)))
                             .direction_shots_fired)
                             .offset((8 * word!(game.samus_pose) as i32) as isize,)
                             as isize,
@@ -1244,8 +1238,7 @@ pub unsafe fn GrappleBeam_Func2(game: &mut Game) {
         } else {
             word!(
                 game.samus_new_pose_transitional = *(rom_ptr!(game, u8; 0x9bc9ba)).offset(
-                    *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(0))
-                        .direction_shots_fired)
+                    *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629))).direction_shots_fired)
                         .offset((8 * word!(game.samus_pose) as i32) as isize,)
                         as isize,
                 ) as u16

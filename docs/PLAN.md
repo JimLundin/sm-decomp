@@ -20,6 +20,45 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Remove zero pointer offsets (2026-10-20)
+
+Remove all 514 literal `.offset(0)` operations across 32 source files. Complete
+formatted source shrinks **130 lines** with no helper, cast, receiver, comment,
+RAM-layout or evaluation-order change. This is a completed mechanical family;
+it does not establish the substantial remaining reduction budget.
+
+Static validation follows the current strategy. Actual compiler types bind all
+514 source sites to 526 expanded occurrences: 522 frontend-library calls and
+four binary calls. Every unadjusted receiver is a raw pointer with the same
+type as the original offset result. Reference and custom-method negative
+controls are rejected. Original, candidate and instrumented library/binary
+metadata checks pass. Independent reconstruction covers all 72 Rust files;
+the reviewer independently matches all receiver spans and checks every use:
+497 dereferences, 11 casts, four explicit-pointer initializers and two by-value
+arguments. No selected pointer result is borrowed or used through autoderef.
+The raw-pointer zero-offset contract preserves value and provenance without
+adding a nonzero-range requirement. Existing dereference obligations remain.
+
+Formatting, normal release (19.43s frozen; 20.32s main), source-checked library
+inspection (2.18s frozen; 2.11s main), diff check and progress pass. Final source
+pins stay fixed. No gameplay movie is needed or claimed for this identity
+change. The preceding any% 129712/0 and Speed Booster 148406/0 remain historical
+integration results. The foreign shader change is cleanly composed and built,
+but only the independently reviewed zero-offset shader edits enter this commit.
+
+Committed Rust becomes **112786 lines**, leaving **12787 further lines** to
+reach below 100000. Working-tree Rust is 112703 because the foreign shader
+change removes another 83 lines; those are not credited here. Cast-containing
+lines fall by five through reflow; every cast remains and other counters stay
+unchanged. TEMP drafts/checks are under `sm-zero-pointer-offsets-7e41e99c`,
+`sm-zero-offset-semantic-review-7e41e99c` and `sm-zero-offset-root-f829ce69`.
+
+New declaration-fragment pricing saves only 72 lines across 24 adjacent macro
+groups. Separate import grouping saves 139, mostly presentation changes. Both
+remain parked without builds. The next distinct repetition study compares
+existing helper algorithms with copies embedded inside larger callers, avoiding
+new-helper costs. The under-100000 target and its complete budget stay open.
+
 ## Shared key-group construction (2026-10-20)
 
 All 24 keyboard/gamepad command-group records now use one const constructor.

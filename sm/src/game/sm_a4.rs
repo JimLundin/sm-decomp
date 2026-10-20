@@ -815,7 +815,7 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
         }
         byte!((*E).var_D; 1) = v7 as u8;
         let mut v8: bool = u8::overflowing_add(byte!((*E).var_E; 0), v7 as u8).1;
-        crate::update_place! { reference fresh13 = *(&raw mut (*E).var_E as *mut u8).offset(0) => (*fresh13).wrapping_add((v7) as u8); }
+        crate::update_place! { reference fresh13 = *(&raw mut (*E).var_E as *mut u8) => (*fresh13).wrapping_add((v7) as u8); }
         v9 = ((v8) as i8).wrapping_add((byte!((*E).var_E; 1)) as i8);
         if v9 as i32 - 3i32 & 0x80 == 0 {
             v9 = 3;
@@ -829,7 +829,7 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
         v8 = u8::overflowing_add(v8 as u8, crocom_var_E_high as u8).1;
         let mut v12: i8 = ((v13) as i8).wrapping_add(crocom_var_E_high);
         v8 = (v8 as i32 | u8::overflowing_add(byte!((*E).base.y_pos; 0), v12 as u8).1 as i32) != 0;
-        crate::update_place! { reference fresh15 = *(&raw mut (*E).base.y_pos as *mut u8).offset(0) => (*fresh15).wrapping_add((v12) as u8); }
+        crate::update_place! { reference fresh15 = *(&raw mut (*E).base.y_pos as *mut u8) => (*fresh15).wrapping_add((v12) as u8); }
         crate::update_place! { reference fresh16 = *(&raw mut (*E).base.y_pos as *mut u8).offset(1) => (*fresh16).wrapping_add((v8) as u8); }
     } else {
         (*E).var_A = (*E).var_A.wrapping_add(1);

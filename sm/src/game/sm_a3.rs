@@ -1683,7 +1683,7 @@ pub unsafe fn Bang_Init(game: &mut Game) {
     (*E).var_0B = crate::rtl::rom_table_word!(
         game,
         0xa3ba84,
-        *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as isize
+        *(&raw mut (*E).parameter_2 as *mut u8) as isize
     );
     let v1: i32 = 2 * byte!((*E).parameter_2; 1) as i32;
     let v2: u16 = crate::rtl::rom_table_word!(game, 0xa3bc6a, v1 as isize);
@@ -2043,15 +2043,15 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     MaridiaSnail_Instr_2 [jp.offset(1)] { (*Get_MaridiaSnail(k as i32, game)).var_D = *jp; };
     MaridiaSnail_Instr_4 [jp.offset(1)] {
         let E = Get_MaridiaSnail(k as i32, game);
-        (*E).var_07 = *jp.offset(0);
+        (*E).var_07 = *jp;
         (*E).var_C = *((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42))
-            .offset(0))
+            )
         .field_6 as *mut u8)
             .offset((8 * (*E).var_07 as i32) as isize) as *mut u16);
     };
     MaridiaSnail_Instr_3 [jp.offset(2)] {
         let E = Get_MaridiaSnail(k as i32, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp.offset(0));
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp);
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(*jp.offset(1));
     };
 }
@@ -2409,18 +2409,16 @@ pub unsafe fn MaridiaSnail_Func_19(k: u16, game: &mut Game) -> u8 {
     }
     let v2: u16 = crate::rtl::rom_table_word!(game, 0xa3cdc2, (*E).var_07 as isize);
     (*E).var_07 = v2;
-    (*E).base.current_instruction =
-        *((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42)).offset(0)).field_0 as *mut u8)
-            .offset((8 * v2 as i32) as isize) as *mut VoidP);
-    (*E).base.properties = (*((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42)).offset(0))
-        .field_2 as *mut u8)
+    (*E).base.current_instruction = *((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42)))
+        .field_0 as *mut u8)
+        .offset((8 * v2 as i32) as isize) as *mut VoidP);
+    (*E).base.properties = (*((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42))).field_2
+        as *mut u8)
         .offset((8 * v2 as i32) as isize) as *mut u16)
         | (*E).base.properties & !(3));
-    (*E).var_D = *((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42)).offset(0)).field_4
-        as *mut u8)
+    (*E).var_D = *((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42))).field_4 as *mut u8)
         .offset((8 * v2 as i32) as isize) as *mut VoidP);
-    (*E).var_C = *((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42)).offset(0)).field_6
-        as *mut u8)
+    (*E).var_C = *((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42))).field_6 as *mut u8)
         .offset((8 * v2 as i32) as isize) as *mut u16);
     MaridiaSnail_Func_2(k, (8u16).wrapping_mul(v2), game);
     MaridiaSnail_Func_3(k, game);
@@ -2531,13 +2529,12 @@ pub unsafe fn Reflec_Func_1(game: &mut Game) {
         }
         word!(
             game.variables_for_enemy_graphics_drawn_hook[1] =
-                (*((ram_ptr!(game, u16; 0x1794)).offset(1) as *mut u8).offset(0) as i32 + 1 & 7)
-                    as u16
+                (*((ram_ptr!(game, u16; 0x1794)).offset(1) as *mut u8) as i32 + 1 & 7) as u16
         );
     }
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
-    Reflec_Instr_1 [jp.offset(1)] { (*Get_Reflec(k as i32, game)).parameter_2 = *jp.offset(0); };
+    Reflec_Instr_1 [jp.offset(1)] { (*Get_Reflec(k as i32, game)).parameter_2 = *jp; };
 }
 pub unsafe fn Reflec_Init(game: &mut Game) {
     let E = Get_Reflec(word!(game.cur_enemy_index) as i32, game);
@@ -2590,7 +2587,7 @@ pub unsafe fn WreckedShipOrangeZoomer_Func_1(
     jp: *const u16,
     game: &mut Game,
 ) -> *const u16 {
-    (*Get_WreckedShipOrangeZoomer(k as i32, game)).var_F = *jp.offset(0);
+    (*Get_WreckedShipOrangeZoomer(k as i32, game)).var_F = *jp;
     jp.offset(1)
 }
 pub unsafe fn WreckedShipOrangeZoomer_Init(game: &mut Game) {
@@ -2729,7 +2726,7 @@ pub unsafe fn FireZoomer_Init(game: &mut Game) {
     StoneZoomer_E67A(word!(game.cur_enemy_index), game);
 }
 pub unsafe fn Zoomer_Instr_SetPreinstr(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*gEnemyData(k as i32, game)).ai_preinstr = *jp.offset(0);
+    (*gEnemyData(k as i32, game)).ai_preinstr = *jp;
     jp.offset(1)
 }
 pub unsafe fn StoneZoomer_Init(game: &mut Game) {

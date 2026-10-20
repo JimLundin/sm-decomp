@@ -756,7 +756,7 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZb
                 loop {
                     let pixel_0 = ppu_mode7_sample(ppu, xpos, ypos, outside_value, char_fill);
                     if pixel_0 != 0 {
-                        *dstz.offset(0) = (pixel_0 as i32 + z as i32) as PpuZbufType;
+                        *dstz = (pixel_0 as i32 + z as i32) as PpuZbufType;
                     }
                     xpos = xpos.wrapping_add(dx);
                     ypos = ypos.wrapping_add(dy);
@@ -797,8 +797,8 @@ unsafe fn PpuDrawSprites(ppu: *mut Ppu, y: u32, sub: u32, clear_backdrop: bool) 
                 );
             } else {
                 loop {
-                    if *src.offset(0) as i32 > *dst.offset(0) as i32 {
-                        *dst.offset(0) = *src.offset(0);
+                    if *src as i32 > *dst as i32 {
+                        *dst = *src;
                     }
                     src = src.offset(1);
                     dst = dst.offset(1);
@@ -1089,7 +1089,7 @@ unsafe fn ppu_handlePixel(ppu: *mut Ppu, x: i32, y: i32) {
             .wrapping_mul((*ppu).renderPitch)
             .wrapping_add(((x + (*ppu).extraLeftRight as i32) * 4) as u32) as isize,
     );
-    *pixelBuffer.offset(0) = ((b << 3 | b >> 2) * (*ppu).brightness as i32 / 15) as u8;
+    *pixelBuffer = ((b << 3 | b >> 2) * (*ppu).brightness as i32 / 15) as u8;
     *pixelBuffer.offset(1) = ((g << 3 | g >> 2) * (*ppu).brightness as i32 / 15) as u8;
     *pixelBuffer.offset(2) = ((r << 3 | r >> 2) * (*ppu).brightness as i32 / 15) as u8;
     *pixelBuffer.offset(3) = 0;
@@ -1540,9 +1540,8 @@ unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
                                 let addr = (&raw mut (*ppu).vram as *mut u16).offset(
                                     (objAdr + usedTile * 16 + (row as i32 & 0x7) & 0x7fff) as isize,
                                 );
-                                let plane: u32 = (*addr.offset(0) as i32
-                                    | (*addr.offset(8) as i32) << 16)
-                                    as u32;
+                                let plane: u32 =
+                                    (*addr as i32 | (*addr.offset(8) as i32) << 16) as u32;
                                 let px_left: i32 =
                                     IntMax(-(col + x + kPpuExtraLeftRight as i32), 0);
                                 let px_right: i32 =

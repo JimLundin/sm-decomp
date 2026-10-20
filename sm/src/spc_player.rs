@@ -651,12 +651,12 @@ unsafe fn Channel_SetInstrument_NoSetId(p: *mut SpcPlayer, c: *mut Channel, mut 
         return;
     }
     let reg: u8 = ((*c).index as i32 * 16) as u8;
-    if *ip.offset(0) & 0x80 != 0 {
-        (*p).reg_FLG = ((*p).reg_FLG & 0x20 | *ip.offset(0) & 0x1f);
+    if *ip & 0x80 != 0 {
+        (*p).reg_FLG = ((*p).reg_FLG & 0x20 | *ip & 0x1f);
         (*p).reg_NON = ((*p).reg_NON | (*p).cur_chan_bit);
         Dsp_Write(p, (reg as i32 + V0SRCN as i32) as u8, 0);
     } else {
-        Dsp_Write(p, (reg as i32 + V0SRCN as i32) as u8, *ip.offset(0));
+        Dsp_Write(p, (reg as i32 + V0SRCN as i32) as u8, *ip);
     }
     Dsp_Write(p, (reg as i32 + V0ADSR1 as i32) as u8, *ip.offset(1));
     Dsp_Write(p, (reg as i32 + V0ADSR2 as i32) as u8, *ip.offset(2));
@@ -1702,7 +1702,7 @@ pub unsafe fn SpcPlayer_CopyVariablesToRam(p: *mut SpcPlayer) {
     let mut c = &raw mut (*p).channel as *mut Channel;
     let mut i: i32 = 0;
     while i < 8 {
-        let mut m = (&raw const kChannel_Maps as *const MemMap).offset(0);
+        let mut m = (&raw const kChannel_Maps as *const MemMap);
         while m
             != (&raw const kChannel_Maps as *const MemMap).offset(
                 (size_of::<[MemMap; 47]>() as usize).wrapping_div(size_of::<MemMap>() as usize)
@@ -1721,7 +1721,7 @@ pub unsafe fn SpcPlayer_CopyVariablesToRam(p: *mut SpcPlayer) {
         i += 1;
         c = c.offset(1);
     }
-    let mut m_0 = (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(0);
+    let mut m_0 = (&raw const kSpcPlayer_Maps as *const MemMapSized);
     while m_0
         != (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(
             (size_of::<[MemMapSized; 283]>() as usize)
@@ -1740,7 +1740,7 @@ pub unsafe fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer) {
     let mut c = &raw mut (*p).channel as *mut Channel;
     let mut i: i32 = 0;
     while i < 8 {
-        let mut m = (&raw const kChannel_Maps as *const MemMap).offset(0);
+        let mut m = (&raw const kChannel_Maps as *const MemMap);
         while m
             != (&raw const kChannel_Maps as *const MemMap).offset(
                 (size_of::<[MemMap; 47]>() as usize).wrapping_div(size_of::<MemMap>() as usize)
@@ -1759,7 +1759,7 @@ pub unsafe fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer) {
         i += 1;
         c = c.offset(1);
     }
-    let mut m_0 = (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(0);
+    let mut m_0 = (&raw const kSpcPlayer_Maps as *const MemMapSized);
     while m_0
         != (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(
             (size_of::<[MemMapSized; 283]>() as usize)

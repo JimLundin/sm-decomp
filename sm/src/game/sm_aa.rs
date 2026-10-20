@@ -159,9 +159,9 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         (*gEnemyData(k as i32, game)).ai_preinstr = ((0xaa807bi32) as u16);
     };
     Enemy_SetAiPreInstr_AA [jp.offset(1)] {
-        (*gEnemyData(k as i32, game)).ai_preinstr = *jp.offset(0);
+        (*gEnemyData(k as i32, game)).ai_preinstr = *jp;
     };
-    Torizo_Instr_3 [jp.offset(1)] { (*Get_Torizo(k as i32, game)).var_E = *jp.offset(0); };
+    Torizo_Instr_3 [jp.offset(1)] { (*Get_Torizo(k as i32, game)).var_E = *jp; };
     Torizo_Instr_31 [jp] {
         let E = Get_Torizo(k as i32, game);
         (*E).parameter_2 = ((*E).parameter_2) | (0x8000u16);
@@ -270,7 +270,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Torizo_Instr_8 [jp] { (*Get_Torizo(k as i32, game)).var_04 = 0; };
     Torizo_Instr_25 [] {
         if ((*Get_Torizo(k as i32, game)).parameter_2 & 0x4000) != 0 {
-            return *jp.offset(0) as usize as *const u16;
+            return *jp as usize as *const u16;
         }
         if word!(game.area_index) != 0 {
             *jp.offset(1) as usize as *const u16
@@ -278,11 +278,11 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
             jp.offset(2)
         }
     };
-    Torizo_Instr_22 [jp.offset(1)] { (*Get_Torizo(k as i32, game)).var_00 = *jp.offset(0); };
+    Torizo_Instr_22 [jp.offset(1)] { (*Get_Torizo(k as i32, game)).var_00 = *jp; };
     Torizo_Instr_19 [(*Get_Torizo(k as i32, game)).var_00 as usize as *const u16] { };
     Torizo_Instr_32 [(*Get_Torizo(k as i32, game)).var_01 as usize as *const u16] { };
     Torizo_Instr_30 [null::<u16>()] {
-        let a: u16 = *jp.offset(0);
+        let a: u16 = *jp;
         for _ in 0..=5 {
             SpawnEprojWithRoomGfx(addr_kEproj_BombTorizoLowHealthExplode as u16, a, game);
         }
@@ -345,14 +345,14 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         (*E).var_09 = (*E).var_09.wrapping_add(1);
     };
     Torizo_Instr_4 [jp.offset(1)] {
-        let v2: u16 = *jp.offset(0);
+        let v2: u16 = *jp;
         let E = Get_Torizo(k as i32, game);
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_add((g_word_AAC3EE[(v2 >> 1) as usize]) as u16);
         (*E).base.y_pos = ((*E).base.y_pos)
             .wrapping_add((g_word_AAC40E[((v2 as i32 & 0xf) >> 1) as usize]) as u16);
     };
     Torizo_Instr_40 [jp.offset(1)] {
-        let v2: u16 = *jp.offset(0);
+        let v2: u16 = *jp;
         let E = Get_Torizo(k as i32, game);
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub((g_word_AAC440[(v2 >> 1) as usize]) as u16);
         (*E).base.y_pos = ((*E).base.y_pos)
@@ -360,7 +360,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     };
     Torizo_Instr_16 [] {
         let E = Get_Torizo(k as i32, game);
-        (*E).var_A = g_word_AAC4BD[(*jp.offset(0) >> 1) as usize] as u16;
+        (*E).var_A = g_word_AAC4BD[(*jp >> 1) as usize] as u16;
         if Enemy_MoveRight_IgnoreSlopes(k, ((*E).var_A as i16 as i32) << 16, game) != 0 {
             (*E).var_03 = 0;
             if ((*E).parameter_1 & 0x8000) != 0 {
@@ -386,7 +386,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     };
     Torizo_Instr_27 [] {
         let E = Get_Torizo(k as i32, game);
-        (*E).var_A = g_word_AAC532[(*jp.offset(0) >> 1) as usize] as u16;
+        (*E).var_A = g_word_AAC532[(*jp >> 1) as usize] as u16;
         if Enemy_MoveRight_IgnoreSlopes(k, ((*E).var_A as i16 as i32) << 16, game) != 0 {
             (*E).var_03 = 0;
             if ((*E).parameter_1 & 0x8000) != 0 {
@@ -412,12 +412,12 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     };
     Torizo_Instr_23 [] {
         if ((*Get_Torizo(k as i32, game)).var_B & 0x8000) != 0 {
-            *jp.offset(0) as usize as *const u16
+            *jp as usize as *const u16
         } else {
             jp.offset(1)
         }
     };
-    Torizo_Instr_14 [*jp.offset(0) as usize as *const u16] {
+    Torizo_Instr_14 [*jp as usize as *const u16] {
         if CompareDistToSamus_X(k, 0x38, game) & 1 != 0 {
             return jp.offset(1);
         }
@@ -432,7 +432,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
             .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
             as c_long as u16;
     };
-    Torizo_Instr_15 [*jp.offset(0) as usize as *const u16] {
+    Torizo_Instr_15 [*jp as usize as *const u16] {
         if CompareDistToSamus_X(k, 0x20, game) & 1 != 0 || (Torizo_Func_12(k, game) & 0x8000) != 0 {
             return jp.offset(1);
         }
@@ -450,7 +450,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
                 & 8)
                 != 0
         {
-            *jp.offset(0) as usize as *const u16
+            *jp as usize as *const u16
         } else {
             *jp.offset(1) as usize as *const u16
         }
@@ -463,7 +463,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     };
     Torizo_Instr_20 [jp.offset(1)] {
         SpawnEprojWithGfx(
-            *jp.offset(0),
+            *jp,
             k,
             addr_kEproj_BombTorizoSonicBoom as u16,
             game,
@@ -471,7 +471,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     };
     Torizo_Instr_44 [jp.offset(1)] {
         SpawnEprojWithGfx(
-            *jp.offset(0),
+            *jp,
             k,
             addr_kEproj_GoldenTorizoSonicBoom as u16,
             game,
@@ -480,7 +480,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Torizo_Instr_21 [jp.offset(1)] {
         SpawnEprojWithRoomGfx(
             addr_kEproj_BombTorizoExplosiveSwipe as u16,
-            *jp.offset(0),
+            *jp,
             game,
         );
     };
@@ -723,7 +723,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         if (*Get_Torizo(k as i32, game)).base.y_pos == 375 {
             jp.offset(1)
         } else {
-            *jp.offset(0) as usize as *const u16
+            *jp as usize as *const u16
         }
     };
     Torizo_Instr_41 [jp] { Torizo_C298(game); };
@@ -739,7 +739,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         (*E).parameter_2 = ((*E).parameter_2 & !(0x1000));
     };
     Torizo_Instr_57 [jp] { SpawnEprojWithRoomGfx(addr_stru_86B1C0 as u16, 0, game); };
-    Torizo_Instr_58 [*jp.offset(0) as usize as *const u16] {
+    Torizo_Instr_58 [*jp as usize as *const u16] {
         let mut v2: i16 = 34;
         while *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(v2 as u16 as i32 as isize) as *mut u16)
             != 0xb1c0
@@ -800,7 +800,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Torizo_Instr_47 [jp] {
         SpawnEprojWithRoomGfx(addr_kEproj_GoldenTorizoSuperMissile as u16, 0, game);
     };
-    Torizo_Instr_49 [*jp.offset(0) as usize as *const u16] {
+    Torizo_Instr_49 [*jp as usize as *const u16] {
         if (Torizo_Func_12(k, game) & 0x8000) == 0
             || CompareDistToSamus_X(k, 4, game) & 1 == 0
             || CompareDistToSamus_X(k, 0x28, game) & 1 != 0
@@ -817,9 +817,9 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         (*Get_Torizo(k as i32, game)).var_09 = 0;
     };
     Torizo_Instr_61 [jp.offset(1)] {
-        SpawnEprojWithRoomGfx(addr_kEproj_GoldenTorizoEyeBeam as u16, *jp.offset(0), game);
+        SpawnEprojWithRoomGfx(addr_kEproj_GoldenTorizoEyeBeam as u16, *jp, game);
     };
-    Torizo_Instr_53 [*jp.offset(0) as usize as *const u16] {
+    Torizo_Instr_53 [*jp as usize as *const u16] {
         if (Torizo_Func_12(k, game) & 0x8000) != 0
             || CompareDistToSamus_X(k, 0x20, game) & 1 == 0
             || CompareDistToSamus_X(k, 0x60, game) & 1 != 0
@@ -831,7 +831,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
             .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
             as c_long as u16;
     };
-    Torizo_Instr_55 [*jp.offset(0) as usize as *const u16] {
+    Torizo_Instr_55 [*jp as usize as *const u16] {
         let E = Get_Torizo(k as i32, game);
         if (*E).base.health > 0x788 || (NextRandom(game) & 0x102) != 0 {
             return jp.offset(1) as usize as *const u16;
@@ -841,7 +841,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
             .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
             as c_long as u16;
     };
-    Torizo_Instr_52 [*jp.offset(0) as usize as *const u16] {
+    Torizo_Instr_52 [*jp as usize as *const u16] {
         let E = Get_Torizo(k as i32, game);
         if (*E).base.health <= 0x2a30 || ((*E).parameter_2 & 0x2000) == 0 {
             return jp.offset(1);
@@ -850,7 +850,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
             .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
             as c_long as u16;
     };
-    Torizo_Instr_50 [*jp.offset(0) as usize as *const u16] {
+    Torizo_Instr_50 [*jp as usize as *const u16] {
         if CompareDistToSamus_X(k, 0x70, game) & 1 == 0 {
             return jp.offset(1);
         }
@@ -869,7 +869,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Torizo_Instr_43 [jp] {
         SpawnEprojWithGfx(0, k, addr_kEproj_GoldenTorizosChozoOrbs as u16, game);
     };
-    Torizo_Instr_51 [*jp.offset(0) as usize as *const u16] {
+    Torizo_Instr_51 [*jp as usize as *const u16] {
         let E = Get_Torizo(k as i32, game);
         if (*E).var_09 < 8
             && (CompareDistToSamus_X(k, 0x20, game) & 1 != 0
@@ -891,14 +891,14 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
                 & 8)
                 != 0
         {
-            *jp.offset(0) as usize as *const u16
+            *jp as usize as *const u16
         } else {
             *jp.offset(1) as usize as *const u16
         }
     };
     Torizo_Instr_54 [] {
         let E = Get_Torizo(k as i32, game);
-        (*E).var_A = g_word_AAD59A[(*jp.offset(0) >> 1) as usize] as u16;
+        (*E).var_A = g_word_AAD59A[(*jp >> 1) as usize] as u16;
         if Enemy_MoveRight_IgnoreSlopes(k, ((*E).var_A as i16 as i32) << 16, game) != 0 {
             (*E).var_03 = 0;
             if ((*E).parameter_1 & 0x8000) != 0 {
@@ -1429,7 +1429,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Shaktool_Instr_13 [jp] { QueueSfx2_Max6(0x4b, game); };
     Shaktool_Instr_12 [jp.offset(1)] {
         let e = Get_Shaktool(k as i32, game);
-        let arg: u16 = *jp.offset(0);
+        let arg: u16 = *jp;
         CalculateBlockContainingPixelPos(
             ((*e).base.x_pos).wrapping_add(arg),
             ((*e).base.y_pos).wrapping_add(28),
@@ -1451,7 +1451,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     };
     Shaktool_Instr_7 [jp.offset(1)] {
         let E = Get_Shaktool(k as i32, game);
-        (*E).var_C = *jp.offset(0);
+        (*E).var_C = *jp;
         Enemy_MoveRight_IgnoreSlopes(
             k,
             (crate::rtl::rom_table_word!(game, 0xaae630, ((*E).var_C >> 1) as isize) as i16 as i32)

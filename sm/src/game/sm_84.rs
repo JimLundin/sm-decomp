@@ -624,7 +624,7 @@ pub unsafe fn PlmInstr_CopyFromRamToVram(plmp: *const u8, _k: u16, game: &mut Ga
 }
 crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
     PlmInstr_GotoIfBossBitSet [] {
-        if CheckBossBitForCurArea(*plmp.offset(0) as u16, game) != 0 {
+        if CheckBossBitForCurArea(*plmp as u16, game) != 0 {
             PlmInstr_Goto(plmp.offset(1), k)
         } else {
             plmp.offset(3)
@@ -848,7 +848,7 @@ crate::instruction_callbacks! { pub unsafe fn (
     PlmInstr_IncrementArgumentAndJGE [] {
         let v2: u8 =
             (*(ram_ptr!(game, u16; 0x1dc7) as *mut u8).offset(k as i32 as isize)).wrapping_add(1);
-        if v2 >= *plmp.offset(0) {
+        if v2 >= *plmp {
             let v4: i32 = k as i32 >> 1;
             word!(game.plm_room_arguments[v4] = -1i32 as u16);
             word!(game.plm_pre_instrs[v4] = addr_locret_848AE0 as u16);
@@ -917,8 +917,8 @@ crate::instruction_callbacks! { pub unsafe fn (
     PlmInstr_ProcessSolidScrollUpdate [plmp] {
         word!(game.plm_variable[(k >> 1)] = 0);
         let mut v5 = RomPtr_8F(word!(game.plm_room_arguments[(k >> 1)]), game);
-        while (*v5.offset(0) & 0x80 == 0) {
-            *ram_ptr!(game; 0xcd20, *v5.offset(0) as isize) = *v5.offset(1);
+        while (*v5 & 0x80 == 0) {
+            *ram_ptr!(game; 0xcd20, *v5 as isize) = *v5.offset(1);
             v5 = v5.offset(2);
         }
         let v7: i32 = word!(game.plm_block_indices[(k >> 1)]) as i32 >> 1;
@@ -926,7 +926,7 @@ crate::instruction_callbacks! { pub unsafe fn (
     };
 }
 crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
-    PlmInstr_QueueMusic [plmp.offset(1)] { QueueMusic_Delayed8(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueMusic [plmp.offset(1)] { QueueMusic_Delayed8(*plmp as u16, game); };
 }
 pub unsafe fn PlmInstr_ClearMusicQueueAndQueueTrack(
     plmp: *const u8,
@@ -939,25 +939,25 @@ pub unsafe fn PlmInstr_ClearMusicQueueAndQueueTrack(
     );
     word!(game.music_queue_read_pos = word!(game.music_queue_write_pos));
     word! { game, 0; music_timer, music_entry }
-    QueueMusic_Delayed8(*plmp.offset(0) as u16, game);
+    QueueMusic_Delayed8(*plmp as u16, game);
     plmp.offset(1)
 }
 crate::instruction_callbacks! { pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8;
-    PlmInstr_QueueSfx1_Max6 [plmp.offset(1)] { QueueSfx1_Max6(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx2_Max6 [plmp.offset(1)] { QueueSfx2_Max6(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx3_Max6 [plmp.offset(1)] { QueueSfx3_Max6(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx1_Max15 [plmp.offset(1)] { QueueSfx1_Max15(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx2_Max15 [plmp.offset(1)] { QueueSfx2_Max15(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx3_Max15 [plmp.offset(1)] { QueueSfx3_Max15(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx1_Max3 [plmp.offset(1)] { QueueSfx1_Max3(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx2_Max3 [plmp.offset(1)] { QueueSfx2_Max3(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx_Max3 [plmp.offset(1)] { QueueSfx3_Max3(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx1_Max9 [plmp.offset(1)] { QueueSfx1_Max9(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx2_Max9 [plmp.offset(1)] { QueueSfx2_Max9(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx3_Max9 [plmp.offset(1)] { QueueSfx3_Max9(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx1_Max1 [plmp.offset(1)] { QueueSfx1_Max1(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx2_Max1 [plmp.offset(1)] { QueueSfx2_Max1(*plmp.offset(0) as u16, game); };
-    PlmInstr_QueueSfx3_Max1 [plmp.offset(1)] { QueueSfx3_Max1(*plmp.offset(0) as u16, game); };
+    PlmInstr_QueueSfx1_Max6 [plmp.offset(1)] { QueueSfx1_Max6(*plmp as u16, game); };
+    PlmInstr_QueueSfx2_Max6 [plmp.offset(1)] { QueueSfx2_Max6(*plmp as u16, game); };
+    PlmInstr_QueueSfx3_Max6 [plmp.offset(1)] { QueueSfx3_Max6(*plmp as u16, game); };
+    PlmInstr_QueueSfx1_Max15 [plmp.offset(1)] { QueueSfx1_Max15(*plmp as u16, game); };
+    PlmInstr_QueueSfx2_Max15 [plmp.offset(1)] { QueueSfx2_Max15(*plmp as u16, game); };
+    PlmInstr_QueueSfx3_Max15 [plmp.offset(1)] { QueueSfx3_Max15(*plmp as u16, game); };
+    PlmInstr_QueueSfx1_Max3 [plmp.offset(1)] { QueueSfx1_Max3(*plmp as u16, game); };
+    PlmInstr_QueueSfx2_Max3 [plmp.offset(1)] { QueueSfx2_Max3(*plmp as u16, game); };
+    PlmInstr_QueueSfx_Max3 [plmp.offset(1)] { QueueSfx3_Max3(*plmp as u16, game); };
+    PlmInstr_QueueSfx1_Max9 [plmp.offset(1)] { QueueSfx1_Max9(*plmp as u16, game); };
+    PlmInstr_QueueSfx2_Max9 [plmp.offset(1)] { QueueSfx2_Max9(*plmp as u16, game); };
+    PlmInstr_QueueSfx3_Max9 [plmp.offset(1)] { QueueSfx3_Max9(*plmp as u16, game); };
+    PlmInstr_QueueSfx1_Max1 [plmp.offset(1)] { QueueSfx1_Max1(*plmp as u16, game); };
+    PlmInstr_QueueSfx2_Max1 [plmp.offset(1)] { QueueSfx2_Max1(*plmp as u16, game); };
+    PlmInstr_QueueSfx3_Max1 [plmp.offset(1)] { QueueSfx3_Max1(*plmp as u16, game); };
 }
 pub unsafe fn PlmInstr_ActivateMapStation(plmp: *const u8, _k: u16, game: &mut Game) -> *const u8 {
     // map_station_byte_array; word OR with 00FF preserves the neighboring byte.
@@ -1013,7 +1013,7 @@ pub unsafe fn PlmInstr_GotoIfSamusNear(plmp: *const u8, k: u16, game: &mut Game)
     let v4: u8 =
         abs16(((word!(game.samus_y_pos) as i32 >> 4) - word!(game.plm_y_block) as i32) as u16)
             as u8;
-    if v2 <= *plmp.offset(0) && v4 <= *plmp.offset(1) {
+    if v2 <= *plmp && v4 <= *plmp.offset(1) {
         *(plmp.offset(2) as *mut u16) as usize as *const u8
     } else {
         plmp.offset(4)
@@ -1030,9 +1030,9 @@ unsafe fn PartiallyQueueVramForSingleScreenPlm(
     (*ent).vram_dst = (r28) | (a);
     let size: u16 = (4u16).wrapping_mul(r20);
     let base: VoidP = (word!(game.plm_draw_tilemap_index)).wrapping_add(0xc6c8);
-    (*ent.offset(0)).size = size;
+    (*ent).size = size;
     (*ent.offset(1)).size = size;
-    (*ent.offset(0)).src = LongPtr {
+    (*ent).src = LongPtr {
         addr: base,
         bank: 126,
     };
@@ -1149,8 +1149,8 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
                 game,
             );
             let mut v25 = gVramWriteEntry(v24 as i32, game);
-            (*v25.offset(1)).vram_dst = ((*v25.offset(0)).vram_dst).wrapping_add(1);
-            r0 = ram_ptr!(game, u16; (*v25.offset(0)).src.addr as i32 as isize);
+            (*v25.offset(1)).vram_dst = ((*v25).vram_dst).wrapping_add(1);
+            r0 = ram_ptr!(game, u16; (*v25).src.addr as i32 as isize);
             r6 = ram_ptr!(game, u16; (*v25.offset(1)).src.addr as i32 as isize);
             word!(game.vram_write_queue_tail = (v24).wrapping_add(14));
             r18 = (r18).wrapping_mul(2);
@@ -1250,7 +1250,7 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
                 let mut v10 = gVramWriteEntry(v3 as i32, game);
                 (*v10).size = v9;
                 (*v10.offset(2)).size = v9;
-                (*v10.offset(0)).vram_dst = a;
+                (*v10).vram_dst = a;
                 (*v10.offset(1)).vram_dst = (a & 0xffe0 ^ 0x400);
                 (*v10.offset(3)).vram_dst = ((*v10.offset(1)).vram_dst).wrapping_add(32);
                 (*v10.offset(2)).vram_dst = ((*v10).vram_dst).wrapping_add(32);
@@ -1275,8 +1275,8 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
             } else {
                 PartiallyQueueVramForSingleScreenPlm(a, v3, r20, 0, game);
                 let mut v15 = gVramWriteEntry(v3 as i32, game);
-                (*v15.offset(1)).vram_dst = ((*v15.offset(0)).vram_dst).wrapping_add(32);
-                r0 = ram_ptr!(game, u16; (*v15.offset(0)).src.addr as i32 as isize);
+                (*v15.offset(1)).vram_dst = ((*v15).vram_dst).wrapping_add(32);
+                r0 = ram_ptr!(game, u16; (*v15).src.addr as i32 as isize);
                 r6 = ram_ptr!(game, u16; (*v15.offset(1)).src.addr as i32 as isize);
                 word!(game.vram_write_queue_tail = (v3).wrapping_add(14));
             }
@@ -2723,7 +2723,7 @@ pub unsafe fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(
             || word!(game.samus_pose) as i32 == kPose_7A_FaceL_Springball_Ground as i32)
     {
         SetEventHappened(0xc, game);
-        (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).parameter_1 = 1;
+        (*(ram_ptr!(game, EnemyData; 0xf78))).parameter_1 = 1;
         let v2: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;
         word!(game.level_data[v2], |fresh3| (fresh3) & (0xfffu16));
         CallSomeSamusCode(0, game);
@@ -2757,7 +2757,7 @@ pub unsafe fn PlmInstr_SpawnFourMotherBrainGlass(
     game: &mut Game,
 ) -> *const u8 {
     QueueSfx3_Max15(0x2e, game);
-    SpawnMotherBrainGlassShatteringShard(*(plmp.offset(0) as *mut u16), game);
+    SpawnMotherBrainGlassShatteringShard(*(plmp as *mut u16), game);
     SpawnMotherBrainGlassShatteringShard(*(plmp.offset(2) as *mut u16), game);
     SpawnMotherBrainGlassShatteringShard(*(plmp.offset(4) as *mut u16), game);
     SpawnMotherBrainGlassShatteringShard(*(plmp.offset(6) as *mut u16), game);
@@ -2885,7 +2885,7 @@ pub unsafe fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(
             || word!(game.samus_pose) as i32 == kPose_79_FaceR_Springball_Ground as i32
             || word!(game.samus_pose) as i32 == kPose_7A_FaceL_Springball_Ground as i32)
     {
-        (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).parameter_1 = 1;
+        (*(ram_ptr!(game, EnemyData; 0xf78))).parameter_1 = 1;
         *(ram_ptr!(game, u16; 0xcd20, 7)) = 514;
         *(ram_ptr!(game, u16; 0xcd20, 13)) = 257;
         let v1: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;

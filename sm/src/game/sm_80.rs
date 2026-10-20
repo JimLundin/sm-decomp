@@ -363,7 +363,7 @@ pub unsafe fn InitializePpuIoRegs(game: &mut Game) {
         mirror(INIDISP as u16, 0x8f, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
         byte(OAMADDL as u16, 0);
     }
-    *(ram_ptr!(game, u16; 0x53) as *mut u8).offset(0) = 0;
+    *(ram_ptr!(game, u16; 0x53) as *mut u8) = 0;
     WriteReg(OAMADDH as u16, 0x80, game);
     byte!(@pointer ram_ptr!(game, u16; 0x53); 1) = 0x80;
     crate::rtl::register_writes! { game;
@@ -500,8 +500,7 @@ pub unsafe fn QueueMode7Transfers(db: u8, k: u16, game: &mut Game) {
 pub unsafe fn NMI_ProcessMode7Queue(game: &mut Game) {
     if word!(game.mode7_vram_write_queue_tail) != 0 {
         NMI_ProcessMode7QueueInner(ram_ptr!(game; 0x2d0), game);
-        *(&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_0 as *mut u16) =
-            0;
+        *(&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0 as *mut u16) = 0;
         word!(game.mode7_vram_write_queue_tail = 0);
     }
 }
@@ -658,7 +657,7 @@ pub unsafe fn Nmi_ProcessVertScrollingDma(game: &mut Game) {
 }
 pub unsafe fn NMI_ProcessVramReadQueue(game: &mut Game) {
     if word!(game.vram_read_queue_tail) as u8 != 0 {
-        byte!((*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).vram_target; word!(game.vram_read_queue_tail) as u8 as i32 as isize) =
+        byte!((*(ram_ptr!(game, VramReadQueueEnt; 0x340))).vram_target; word!(game.vram_read_queue_tail) as u8 as i32 as isize) =
             0;
         let mut v0: i32 = 0;
         WriteReg(VMAIN as u16, 0x80, game);
@@ -1392,7 +1391,7 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
 pub unsafe fn AddToTilemapInner(k: u16, j: *const u16, game: &mut Game) {
     let v2: i32 = k as i32 >> 1;
     if (word!(game.hud_tilemap[v2]) & 0x3ff) == 15 {
-        word!(game.hud_tilemap[v2] = *j.offset(0));
+        word!(game.hud_tilemap[v2] = *j);
         word!(game.hud_tilemap[(v2 + 1)] = *j.offset(1));
         word!(game.hud_tilemap[(v2 + 32)] = *j.offset(2));
         word!(game.hud_tilemap[(v2 + 33)] = *j.offset(3));
@@ -1463,7 +1462,7 @@ pub unsafe fn HandleHudTilemap(game: &mut Game) {
         if word!(game.samus_reserve_health) == 0 {
             v1 = v1.offset(6);
         }
-        word!(game.hud_tilemap[8] = *v1.offset(0));
+        word!(game.hud_tilemap[8] = *v1);
         word!(game.hud_tilemap[9] = *v1.offset(1));
         word!(game.hud_tilemap[40] = *v1.offset(2));
         word!(game.hud_tilemap[41] = *v1.offset(3));
@@ -2842,7 +2841,7 @@ pub unsafe fn LoadFromLoadStation(game: &mut Game) {
     );
     word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
     word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
-    *(ram_ptr!(game, u16; 0x79f) as *mut u8).offset(0) =
+    *(ram_ptr!(game, u16; 0x79f) as *mut u8) =
         (*get_RoomDefHeader(word!(game.room_ptr), game)).area_index_;
     byte!(@pointer ram_ptr!(game, u16; 0x5f7); 0) = 0;
 }
@@ -2853,6 +2852,6 @@ pub unsafe fn SetElevatorsAsUsed(game: &mut Game) {
             as u16,
         game,
     );
-    crate::update_place! { reference fresh92 = *ram_ptr!(game; 0xd8f8, *v0.offset(0) as isize) => (*fresh92) | (*v0.offset(1)); }
+    crate::update_place! { reference fresh92 = *ram_ptr!(game; 0xd8f8, *v0 as isize) => (*fresh92) | (*v0.offset(1)); }
     crate::update_place! { reference fresh93 = *ram_ptr!(game; 0xd8f8, *v0.offset(2) as isize) => (*fresh93) | (*v0.offset(3)); }
 }

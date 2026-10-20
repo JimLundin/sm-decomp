@@ -830,7 +830,7 @@ pub unsafe fn Draygon_Func_40(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Draygon_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_Draygon(0i32, game)).base.current_instruction = *jp.offset(0);
+    (*Get_Draygon(0i32, game)).base.current_instruction = *jp;
     (*Get_Draygon(0x40i32, game)).base.current_instruction = *jp.offset(1);
     (*Get_Draygon(0x80i32, game)).base.current_instruction = *jp.offset(2);
     (*Get_Draygon(0xc0i32, game)).base.current_instruction = *jp.offset(3);
@@ -970,7 +970,7 @@ pub unsafe fn Draygon_Func_41(game: &mut Game) {
     }
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
-    Draygon_Instr_13 [jp.offset(1)] { (*Get_Draygon(k as i32, game)).var_A = *jp.offset(0); };
+    Draygon_Instr_13 [jp.offset(1)] { (*Get_Draygon(k as i32, game)).var_A = *jp; };
 }
 unsafe fn Draygon_Func_47(game: &mut Game) -> Point16U {
     NextRandom(game);
@@ -1019,12 +1019,12 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Draygon_Instr_17 [jp] { word!(game.room_loading_irq_handler = 12); };
     Draygon_Instr_14 [jp.offset(2)] {
         let E = Get_Draygon(0, game);
-        (*E).var_5E = *jp.offset(0);
+        (*E).var_5E = *jp;
         (*E).var_5F = *jp.offset(1);
     };
-    Draygon_Instr_16 [jp.offset(1)] { (*Get_Draygon(0, game)).var_A = *jp.offset(0); };
-    Draygon_Instr_10 [jp.offset(1)] { QueueSfx2_Max6(*jp.offset(0), game); };
-    Draygon_Instr_4 [jp.offset(1)] { QueueSfx3_Max6(*jp.offset(0), game); };
+    Draygon_Instr_16 [jp.offset(1)] { (*Get_Draygon(0, game)).var_A = *jp; };
+    Draygon_Instr_10 [jp.offset(1)] { QueueSfx2_Max6(*jp, game); };
+    Draygon_Instr_4 [jp.offset(1)] { QueueSfx3_Max6(*jp, game); };
     Draygon_Instr_12 [jp] {
         let E = Get_Draygon(0, game);
         game.eproj_spawn_pt = Point16U {
@@ -1167,7 +1167,7 @@ pub unsafe fn DraygonsEye_Init(game: &mut Game) {
     (*E).var_A = ((0xa5804bi32) as u16);
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
-    Draygon_Instr_3 [jp.offset(1)] { (*Get_Draygon(0x40, game)).var_A = *jp.offset(0); };
+    Draygon_Instr_3 [jp.offset(1)] { (*Get_Draygon(0x40, game)).var_A = *jp; };
 }
 pub unsafe fn DraygonsEye_Main(game: &mut Game) {
     let E = Get_Draygon(word!(game.cur_enemy_index) as i32, game);
@@ -1267,23 +1267,23 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
     Draygon_Instr_24 [jp] { (*Get_Draygon(0, game)).var_2F = 0; };
     Draygon_Instr_21 [jp.offset(2)] {
         let E = Get_Draygon(0, game);
-        (*E).var_0B = *jp.offset(0);
+        (*E).var_0B = *jp;
         (*E).var_0C = *jp.offset(1);
     };
-    Draygon_Instr_22 [jp.offset(1)] { word!(game.kraid_unk9000 = *jp.offset(0)); };
+    Draygon_Instr_22 [jp.offset(1)] { word!(game.kraid_unk9000 = *jp); };
     Draygon_Instr_27 [jp] {
         let E = Get_Draygon(0, game);
         (*E).base.x_pos = 128;
         (*E).base.y_pos = 624;
         (*E).base.properties = ((*E).base.properties & 0x5bff | 0xa000);
     };
-    Draygon_Instr_23 [jp.offset(1)] { QueueSfx2_Max6(*jp.offset(0), game); };
+    Draygon_Instr_23 [jp.offset(1)] { QueueSfx2_Max6(*jp, game); };
     Draygon_Instr_30 [jp] { Enemy_ItemDrop_SporeSpawn(k, game); };
     Draygon_Instr_20 [jp.offset(1)] {
-        (*Get_Draygon(word!(game.cur_enemy_index) as i32, game)).var_A = *jp.offset(0);
+        (*Get_Draygon(word!(game.cur_enemy_index) as i32, game)).var_A = *jp;
     };
     Draygon_Instr_29 [jp.offset(1)] {
-        let v2: u16 = *jp.offset(0);
+        let v2: u16 = *jp;
         word_transfers!(game, ascending, 16;
             le(palette_buffer, 144) <- rom(0xa5e3f9, (v2 as i32 >> 1)),
         );
@@ -1295,7 +1295,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         );
     };
     Draygon_Instr_19 [jp.offset(1)] {
-        let v2: u16 = *jp.offset(0);
+        let v2: u16 = *jp;
         word_transfers!(game, ascending, 16;
             le(target_palettes, 144) <- rom(0xa5e3f9, (v2 as i32 >> 1)),
         );

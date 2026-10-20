@@ -68,16 +68,10 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight2(game: &mut Game) {
 pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, game: &mut Game) {
     word! { game, 255; hdma_table_2[0], hdma_table_2[1] }
     let E = Get_MotherBrain(0, game);
-    let r18: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        *(&raw mut (*E).var_3A as *mut u8).offset(0) as isize
-    );
-    let r20: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x91c9d4,
-        *(&raw mut (*E).var_3B as *mut u8).offset(0) as isize
-    );
+    let r18: u16 =
+        crate::rtl::rom_table_word!(game, 0x91c9d4, *(&raw mut (*E).var_3A as *mut u8) as isize);
+    let r20: u16 =
+        crate::rtl::rom_table_word!(game, 0x91c9d4, *(&raw mut (*E).var_3B as *mut u8) as isize);
     let mut mbn_var_3F: u16 = (*E).var_3F;
     let mut v2 = (ram_ptr!(game, u16; 0x9d00))
         .offset((mbn_var_3F as i32 - 32i32) as isize)
@@ -186,9 +180,9 @@ unsafe fn mother_brain_beam_edges(
     let enemy = Get_MotherBrain(0, game);
     let left_step = crate::rtl::rom_table_word!(game, 0x91c9d4, {
         let angle = if down {
-            *(&raw mut (*enemy).var_3A as *mut u8).offset(0)
+            *(&raw mut (*enemy).var_3A as *mut u8)
         } else {
-            *(&raw mut (*enemy).var_3B as *mut u8).offset(0)
+            *(&raw mut (*enemy).var_3B as *mut u8)
         };
         (if add_left {
             angle
@@ -198,9 +192,9 @@ unsafe fn mother_brain_beam_edges(
     });
     let right_step = crate::rtl::rom_table_word!(game, 0x91c9d4, {
         let angle = if down {
-            *(&raw mut (*enemy).var_3B as *mut u8).offset(0)
+            *(&raw mut (*enemy).var_3B as *mut u8)
         } else {
-            *(&raw mut (*enemy).var_3A as *mut u8).offset(0)
+            *(&raw mut (*enemy).var_3A as *mut u8)
         };
         (if add_right {
             angle

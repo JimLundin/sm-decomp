@@ -607,54 +607,50 @@ unsafe fn convert_image_channels<T: ImageChannel>(
         while i >= 0 {
             match conversion {
                 10 => {
-                    *dest.offset(0) = *src.offset(0);
+                    *dest = *src;
                     *dest.offset(1) = T::OPAQUE;
                 }
                 11 => {
-                    crate::update_place! { reference fresh9 = *dest.offset(2) => *src.offset(0); }
+                    crate::update_place! { reference fresh9 = *dest.offset(2) => *src; }
                     crate::update_place! { reference fresh10 = *dest.offset(1) => *fresh9; }
-                    *dest.offset(0) = *fresh10;
+                    *dest = *fresh10;
                 }
                 12 => {
-                    crate::update_place! { reference fresh11 = *dest.offset(2) => *src.offset(0); }
+                    crate::update_place! { reference fresh11 = *dest.offset(2) => *src; }
                     crate::update_place! { reference fresh12 = *dest.offset(1) => *fresh11; }
-                    *dest.offset(0) = *fresh12;
+                    *dest = *fresh12;
                     *dest.offset(3) = T::OPAQUE;
                 }
-                17 => *dest.offset(0) = *src.offset(0),
+                17 => *dest = *src,
                 19 => {
-                    crate::update_place! { reference fresh13 = *dest.offset(2) => *src.offset(0); }
+                    crate::update_place! { reference fresh13 = *dest.offset(2) => *src; }
                     crate::update_place! { reference fresh14 = *dest.offset(1) => *fresh13; }
-                    *dest.offset(0) = *fresh14;
+                    *dest = *fresh14;
                 }
                 20 => {
-                    crate::update_place! { reference fresh15 = *dest.offset(2) => *src.offset(0); }
+                    crate::update_place! { reference fresh15 = *dest.offset(2) => *src; }
                     crate::update_place! { reference fresh16 = *dest.offset(1) => *fresh15; }
-                    *dest.offset(0) = *fresh16;
+                    *dest = *fresh16;
                     *dest.offset(3) = *src.offset(1);
                 }
                 28 => {
-                    *dest.offset(0) = *src.offset(0);
+                    *dest = *src;
                     *dest.offset(1) = *src.offset(1);
                     *dest.offset(2) = *src.offset(2);
                     *dest.offset(3) = T::OPAQUE;
                 }
-                25 => {
-                    *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2))
-                }
+                25 => *dest = T::luminance(*src, *src.offset(1), *src.offset(2)),
                 26 => {
-                    *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2));
+                    *dest = T::luminance(*src, *src.offset(1), *src.offset(2));
                     *dest.offset(1) = T::OPAQUE;
                 }
-                33 => {
-                    *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2))
-                }
+                33 => *dest = T::luminance(*src, *src.offset(1), *src.offset(2)),
                 34 => {
-                    *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2));
+                    *dest = T::luminance(*src, *src.offset(1), *src.offset(2));
                     *dest.offset(1) = *src.offset(3);
                 }
                 35 => {
-                    *dest.offset(0) = *src.offset(0);
+                    *dest = *src;
                     *dest.offset(1) = *src.offset(1);
                     *dest.offset(2) = *src.offset(2);
                 }
@@ -1549,7 +1545,7 @@ unsafe fn stbi__create_png_image_raw(
         let mut cur16 = cur_1 as *mut stbi__uint16;
         i = 0 as stbi__uint32;
         while i < x.wrapping_mul(y).wrapping_mul(out_n as stbi__uint32) {
-            *cur16 = ((*cur_1.offset(0) as i32) << 8 | *cur_1.offset(1) as i32) as stbi__uint16;
+            *cur16 = ((*cur_1 as i32) << 8 | *cur_1.offset(1) as i32) as stbi__uint16;
             i = i.wrapping_add(1);
             cur16 = cur16.offset(1);
             cur_1 = cur_1.offset(2);
@@ -1666,18 +1662,14 @@ unsafe fn stbi__compute_transparency(z: *mut stbi__png, tc: *mut stbi_uc, out_n:
     if out_n == 2 {
         i = 0 as stbi__uint32;
         while i < pixel_count {
-            *p.offset(1) = (if *p.offset(0) as i32 == *tc.offset(0) as i32 {
-                0
-            } else {
-                255
-            }) as stbi_uc;
+            *p.offset(1) = (if *p as i32 == *tc as i32 { 0 } else { 255 }) as stbi_uc;
             p = p.offset(2);
             i = i.wrapping_add(1);
         }
     } else {
         i = 0 as stbi__uint32;
         while i < pixel_count {
-            if *p.offset(0) as i32 == *tc.offset(0) as i32
+            if *p as i32 == *tc as i32
                 && *p.offset(1) as i32 == *tc.offset(1) as i32
                 && *p.offset(2) as i32 == *tc.offset(2) as i32
             {
@@ -1706,18 +1698,14 @@ unsafe fn stbi__compute_transparency16(
     if out_n == 2 {
         i = 0 as stbi__uint32;
         while i < pixel_count {
-            *p.offset(1) = (if *p.offset(0) as i32 == *tc.offset(0) as i32 {
-                0
-            } else {
-                65535
-            }) as stbi__uint16;
+            *p.offset(1) = (if *p as i32 == *tc as i32 { 0 } else { 65535 }) as stbi__uint16;
             p = p.offset(2);
             i = i.wrapping_add(1);
         }
     } else {
         i = 0 as stbi__uint32;
         while i < pixel_count {
-            if *p.offset(0) as i32 == *tc.offset(0) as i32
+            if *p as i32 == *tc as i32
                 && *p.offset(1) as i32 == *tc.offset(1) as i32
                 && *p.offset(2) as i32 == *tc.offset(2) as i32
             {
@@ -1747,7 +1735,7 @@ unsafe fn stbi__expand_png_palette(
         i = 0 as stbi__uint32;
         while i < pixel_count {
             let n: i32 = *orig.offset(i as isize) as i32 * 4;
-            *p.offset(0) = *palette.offset(n as isize);
+            *p = *palette.offset(n as isize);
             *p.offset(1) = *palette.offset((n + 1) as isize);
             *p.offset(2) = *palette.offset((n + 2) as isize);
             p = p.offset(3);
@@ -1757,7 +1745,7 @@ unsafe fn stbi__expand_png_palette(
         i = 0 as stbi__uint32;
         while i < pixel_count {
             let n_0: i32 = *orig.offset(i as isize) as i32 * 4;
-            *p.offset(0) = *palette.offset(n_0 as isize);
+            *p = *palette.offset(n_0 as isize);
             *p.offset(1) = *palette.offset((n_0 + 1) as isize);
             *p.offset(2) = *palette.offset((n_0 + 2) as isize);
             *p.offset(3) = *palette.offset((n_0 + 3) as isize);
@@ -1779,8 +1767,8 @@ unsafe fn stbi__de_iphone(z: *mut stbi__png) {
     if (*s).img_out_n == 3 {
         i = 0 as stbi__uint32;
         while i < pixel_count {
-            let t: stbi_uc = *p.offset(0);
-            *p.offset(0) = *p.offset(2);
+            let t: stbi_uc = *p;
+            *p = *p.offset(2);
             *p.offset(2) = t;
             p = p.offset(3);
             i = i.wrapping_add(1);
@@ -1795,16 +1783,15 @@ unsafe fn stbi__de_iphone(z: *mut stbi__png) {
             i = 0 as stbi__uint32;
             while i < pixel_count {
                 let a: stbi_uc = *p.offset(3);
-                let t_0: stbi_uc = *p.offset(0);
+                let t_0: stbi_uc = *p;
                 if a != 0 {
                     let half: stbi_uc = (a as i32 / 2) as stbi_uc;
-                    *p.offset(0) =
-                        ((*p.offset(2) as i32 * 255 + half as i32) / a as i32) as stbi_uc;
+                    *p = ((*p.offset(2) as i32 * 255 + half as i32) / a as i32) as stbi_uc;
                     *p.offset(1) =
                         ((*p.offset(1) as i32 * 255 + half as i32) / a as i32) as stbi_uc;
                     *p.offset(2) = ((t_0 as i32 * 255 + half as i32) / a as i32) as stbi_uc;
                 } else {
-                    *p.offset(0) = *p.offset(2);
+                    *p = *p.offset(2);
                     *p.offset(2) = t_0;
                 }
                 p = p.offset(4);
@@ -1813,8 +1800,8 @@ unsafe fn stbi__de_iphone(z: *mut stbi__png) {
         } else {
             i = 0 as stbi__uint32;
             while i < pixel_count {
-                let t_1: stbi_uc = *p.offset(0);
-                *p.offset(0) = *p.offset(2);
+                let t_1: stbi_uc = *p;
+                *p = *p.offset(2);
                 *p.offset(2) = t_1;
                 p = p.offset(4);
                 i = i.wrapping_add(1);
@@ -3249,10 +3236,7 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
         (*p.offset(-1i32 as isize)).gl_texture,
     );
     if (*p).unif.OutputSize >= 0 {
-        let mut output_size: [c_float; 2] = [
-            (*p.offset(0)).width as c_float,
-            (*p.offset(0)).height as c_float,
-        ];
+        let mut output_size: [c_float; 2] = [(*p).width as c_float, (*p).height as c_float];
         gl::Uniform2fv(
             (*p).unif.OutputSize as GLint,
             1 as GLsizei,
@@ -3277,9 +3261,9 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
     RenderCtx_SetGlslTextureUniform(
         ctx,
         &raw mut (*p).unif.Orig,
-        (*(*gs).pass.offset(0)).width as i32,
-        (*(*gs).pass.offset(0)).height as i32,
-        (*(*gs).pass.offset(0)).gl_texture,
+        (*(*gs).pass).width as i32,
+        (*(*gs).pass).height as i32,
+        (*(*gs).pass).gl_texture,
     );
     let mut i: i32 = 0;
     while i < (*gs).max_prev_frame {
@@ -3350,9 +3334,9 @@ pub unsafe fn GlslShader_Render(
     viewport_width: i32,
     viewport_height: i32,
 ) {
-    (*(*gs).pass.offset(0)).gl_texture = (*tex).gl_texture;
-    (*(*gs).pass.offset(0)).width = (*tex).width;
-    (*(*gs).pass.offset(0)).height = (*tex).height;
+    (*(*gs).pass).gl_texture = (*tex).gl_texture;
+    (*(*gs).pass).width = (*tex).width;
+    (*(*gs).pass).height = (*tex).height;
     let mut previous_framebuffer: GLint = 0;
     gl::GetIntegerv(
         GL_FRAMEBUFFER_BINDING as GLenum,

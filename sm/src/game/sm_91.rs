@@ -1315,51 +1315,43 @@ pub unsafe fn Xray_SetupStage1_FreezeTimeBackup(k: u16, game: &mut Game) {
 }
 pub unsafe fn Xray_SetupStage2_ReadBg1_2ndScreen(game: &mut Game) {
     let v0: u16 = word!(game.vram_read_queue_tail);
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).vram_target as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).vram_target as *mut u8)
         .offset(v0 as i32 as isize) as *mut u16) =
         (((*ram_ptr!(game; 0x58) as i32 & 0xfc) << 8) + 1024) as u16;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).dma_parameters as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).dma_parameters as *mut u8)
         .offset(v0 as i32 as isize) as *mut u16) = 129;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).dma_parameters as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).dma_parameters as *mut u8)
         .offset(v0 as i32 as isize)
         .offset(1) as *mut u16) = 57;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0))
-        .src
-        .addr as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).src.addr as *mut u8)
         .offset(v0 as i32 as isize) as *mut VoidP) = ((ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8)
         as c_long
         + 0x2800 as c_long) as VoidP;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0))
-        .src
-        .bank)
-        .offset(v0 as i32 as isize) as *mut u16) = 126;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).size as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).src.bank).offset(v0 as i32 as isize)
+        as *mut u16) = 126;
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).size as *mut u8)
         .offset(v0 as i32 as isize) as *mut u16) = 2048;
     word!(game.vram_read_queue_tail = (v0).wrapping_add(9));
 }
 pub unsafe fn Xray_SetupStage3_ReadBg1_1stScreen(game: &mut Game) {
     let v0: u16 = word!(game.vram_read_queue_tail);
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).vram_target as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).vram_target as *mut u8)
         .offset(v0 as i32 as isize) as *mut u16) =
         ((*ram_ptr!(game; 0x58) as i32 & 0xfc) << 8) as u16;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).dma_parameters as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).dma_parameters as *mut u8)
         .offset(v0 as i32 as isize) as *mut u16) = 129;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).dma_parameters as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).dma_parameters as *mut u8)
         .offset(v0 as i32 as isize)
         .offset(1) as *mut u16) = 57;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0))
-        .src
-        .addr as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).src.addr as *mut u8)
         .offset(v0 as i32 as isize) as *mut VoidP) = ((ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8)
         as c_long
         + 0x2000 as c_long) as VoidP;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0))
-        .src
-        .bank)
-        .offset(v0 as i32 as isize) as *mut u16) = 126;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).size as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).src.bank).offset(v0 as i32 as isize)
+        as *mut u16) = 126;
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).size as *mut u8)
         .offset(v0 as i32 as isize) as *mut u16) = 2048;
     word!(game.vram_read_queue_tail = (v0).wrapping_add(9));
 }
@@ -1451,23 +1443,19 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
     }
     LoadXrayBlocks(game);
     let v7: u16 = word!(game.vram_read_queue_tail);
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).vram_target as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).vram_target as *mut u8)
         .offset(v7 as i32 as isize) as *mut u16) =
         ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).dma_parameters as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).dma_parameters as *mut u8)
         .offset(v7 as i32 as isize) as *mut u16) = 129;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).dma_parameters as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).dma_parameters as *mut u8)
         .offset(v7 as i32 as isize)
         .offset(1) as *mut u16) = 57;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0))
-        .src
-        .addr as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).src.addr as *mut u8)
         .offset(v7 as i32 as isize) as *mut VoidP) = 0x5000 as VoidP;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0))
-        .src
-        .bank)
-        .offset(v7 as i32 as isize) as *mut u16) = 126;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).size as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).src.bank).offset(v7 as i32 as isize)
+        as *mut u16) = 126;
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).size as *mut u8)
         .offset(v7 as i32 as isize) as *mut u16) = 2048;
     word!(game.vram_read_queue_tail = (v7).wrapping_add(9));
 }
@@ -1549,7 +1537,7 @@ pub unsafe fn Xray_SetupStage4_Func2(dst_r22: u16, r34: u16, game: &mut Game) {
     }
     let src_0 = (&raw mut (*(ram_ptr!(game, TileTables; 0xa000))).tables as *mut TileTable)
         .offset(*(jp.offset(4) as *mut u16) as i32 as isize);
-    *dst.offset(0) = (*src_0).top_left;
+    *dst = (*src_0).top_left;
     *dst.offset(1) = (*src_0).top_right;
     *dst.offset(32) = (*src_0).bottom_left;
     *dst.offset(33) = (*src_0).bottom_right;
@@ -1587,8 +1575,8 @@ unsafe fn Xray_CombinedMove(dst_r22: u16, r36: u16, which_dir: bool, game: &mut 
             (*(rom_ptr!(game, XrayBlockData; 0x91d2d6)).offset(1)).addr,
             game,
         ) as *mut u16;
-        while *t.offset(0) != 0xffff {
-            if *t.offset(0) == 0xff00 || *t.offset(0) as i32 == step & 0xff {
+        while *t != 0xffff {
+            if *t == 0xff00 || *t as i32 == step & 0xff {
                 Xray_Func12(
                     dst_r22,
                     RomPtr_91((*t.offset(1)).wrapping_add(2), game),
@@ -1745,21 +1733,19 @@ pub unsafe fn Xray_SetupStage5(game: &mut Game) {
     }
     let v0: u16 = word!(game.vram_read_queue_tail);
     let mut v1: u32 = word!(game.vram_read_queue_tail) as u32;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).vram_target as *mut u8)
-        .offset(word!(game.vram_read_queue_tail) as i32 as isize) as *mut u16) =
-        (((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) + 1024) as u16;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).dma_parameters as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).vram_target as *mut u8).offset(word!(
+        game.vram_read_queue_tail
+    )
+        as i32
+        as isize) as *mut u16) = (((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) + 1024) as u16;
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).dma_parameters as *mut u8)
         .offset(v1 as isize)
         .offset(1) as *mut u16) = 57;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0))
-        .src
-        .addr as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).src.addr as *mut u8)
         .offset(v0 as i32 as isize) as *mut VoidP) = 0x5800 as VoidP;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0))
-        .src
-        .bank)
-        .offset(v0 as i32 as isize) as *mut u16) = 126;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(0)).size as *mut u8)
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).src.bank).offset(v0 as i32 as isize)
+        as *mut u16) = 126;
+    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).size as *mut u8)
         .offset(v0 as i32 as isize) as *mut u16) = 2048;
     word!(game.vram_read_queue_tail = (v0).wrapping_add(9));
 }
@@ -2312,13 +2298,12 @@ pub unsafe fn Samus_HandleCrystalFlashPals(game: &mut Game) -> u8 {
         let v1: bool = (*fresh15 as i16) < 0;
         if *(ram_ptr!(game, u16; 0xdf2)) == 0 || v1 {
             *(ram_ptr!(game, u16; 0xdf2)) =
-                *((&raw mut (*(rom_ptr!(game, SamusCrystalFlashPalTable; 0x91dc00)).offset(0)).timer
+                *((&raw mut (*(rom_ptr!(game, SamusCrystalFlashPalTable; 0x91dc00))).timer
                     as *mut u8)
                     .offset(word!(game.special_samus_palette_timer) as i32 as isize)
                     as *mut u16);
             Samus_Copy10PalColors(
-                *((&raw mut (*(rom_ptr!(game, SamusCrystalFlashPalTable; 0x91dc00)).offset(0)).ptr
-                    as *mut u8)
+                *((&raw mut (*(rom_ptr!(game, SamusCrystalFlashPalTable; 0x91dc00))).ptr as *mut u8)
                     .offset(word!(game.special_samus_palette_timer) as i32 as isize)
                     as *mut VoidP),
                 game,
@@ -3158,8 +3143,7 @@ pub unsafe fn Samus_CheckWalkedIntoSomething(game: &mut Game) {
             game.samus_new_pose = crate::rtl::rom_table_word!(
                 game,
                 0x91eb74,
-                *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(0))
-                    .direction_shots_fired)
+                *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629))).direction_shots_fired)
                     .offset((8 * word!(game.samus_pose) as i32) as isize,) as isize,
             )
         );
@@ -3207,8 +3191,7 @@ pub unsafe fn Samus_CheckWalkedIntoSomething(game: &mut Game) {
         game.samus_new_pose = crate::rtl::rom_table_word!(
             game,
             0x91eb74,
-            *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(0))
-                .direction_shots_fired)
+            *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629))).direction_shots_fired)
                 .offset((8 * word!(game.samus_new_pose) as i32) as isize,) as isize,
         )
     );
@@ -3854,7 +3837,7 @@ pub unsafe fn SamusFunc_F404(game: &mut Game) -> u8 {
 }
 pub unsafe fn SamusFunc_F433(game: &mut Game) {
     *(ram_ptr!(game, u16; 0xa1e)) =
-        *((&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(0)).pose_x_dir)
+        *((&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629))).pose_x_dir)
             .offset((8 * word!(game.samus_pose) as i32) as isize) as *mut u16);
     SamusFunc_F468(game);
     if (*ram_ptr!(game; 0xa23) as i32 == kMovementType_03_SpinJumping as i32
@@ -3880,12 +3863,12 @@ pub unsafe fn SamusFunc_F468(game: &mut Game) {
         != 0
     {
         *(ram_ptr!(game, u16; 0xa1e)) =
-            *((&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(0)).pose_x_dir)
+            *((&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629))).pose_x_dir)
                 .offset((8 * word!(game.samus_pose) as i32) as isize) as *mut u16);
         if (*(ram_ptr!(game, u16; 0xa1e)) & 0xff00) == 3584 {
             off_91F4A2[14i32 as usize].expect("non-null function pointer")(game);
             *(ram_ptr!(game, u16; 0xa1e)) =
-                *((&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(0)).pose_x_dir)
+                *((&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629))).pose_x_dir)
                     .offset((8 * word!(game.samus_pose) as i32) as isize)
                     as *mut u16);
         }
