@@ -356,6 +356,17 @@ unsafe fn KeyMapHash_Find(key: u16) -> i32 {
     }
     0i32
 }
+// Pack SDL's low nine key bits and scancode marker into the key-map format.
+// Modifier bits and each caller's validation remain separate.
+const fn encode_keycode(code: SDL_Keycode) -> i32 {
+    let scancode = if code & SDLK_SCANCODE_MASK != 0 {
+        kKeyMod_ScanCode as i32
+    } else {
+        0i32
+    };
+    scancode | (code & (kKeyMod_ScanCode as i32 - 1i32))
+}
+
 pub unsafe fn FindCmdForSdlKey(code: SDL_Keycode, mod_0: SDL_Keymod) -> i32 {
     if code & !(SDLK_SCANCODE_MASK as SDL_Keycode | 0x1ff as SDL_Keycode) != 0 {
         return 0i32;
@@ -382,11 +393,7 @@ pub unsafe fn FindCmdForSdlKey(code: SDL_Keycode, mod_0: SDL_Keymod) -> i32 {
             0i32
         };
     }
-    key |= ((if code & SDLK_SCANCODE_MASK as SDL_Keycode != 0 {
-        kKeyMod_ScanCode as i32 as SDL_Keycode
-    } else {
-        0 as SDL_Keycode
-    }) | code & kKeyMod_ScanCode as i32 as SDL_Keycode - 1 as SDL_Keycode);
+    key |= encode_keycode(code);
     KeyMapHash_Find(key as u16)
 }
 unsafe fn ParseKeyArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
@@ -424,14 +431,7 @@ unsafe fn ParseKeyArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
                     s,
                 );
             } else if !KeyMapHash_Add(
-                (key_with_mod as SDL_Keycode
-                    | (if key & SDLK_SCANCODE_MASK as SDL_Keycode != 0 {
-                        kKeyMod_ScanCode as i32 as SDL_Keycode
-                    } else {
-                        0 as SDL_Keycode
-                    })
-                    | key & kKeyMod_ScanCode as i32 as SDL_Keycode - 1 as SDL_Keycode)
-                    as u16,
+                (key_with_mod as SDL_Keycode | encode_keycode(key)) as u16,
                 cmd as u16,
             ) {
                 fprintf(
@@ -959,116 +959,28 @@ pub const false_0: i32 = 0;
 unsafe fn run_static_initializers() {
     kDefaultKbdControls = [
         0i32 as u16,
-        ((if SDLK_UP as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_UP as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_DOWN as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_DOWN as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_LEFT as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_LEFT as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_RIGHT as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_RIGHT as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_RSHIFT as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_RSHIFT as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_RETURN as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_RETURN as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_x as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_x as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_z as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_z as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_s as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_s as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_a as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_a as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_c as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_c as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_v as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_v as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_F1 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F1 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_F2 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F2 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_F3 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F3 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_F4 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F4 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_F5 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F5 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_F6 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F6 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_F7 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F7 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_F8 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F8 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_F9 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F9 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_F10 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F10 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
+        encode_keycode(SDLK_UP as i32) as u16,
+        encode_keycode(SDLK_DOWN as i32) as u16,
+        encode_keycode(SDLK_LEFT as i32) as u16,
+        encode_keycode(SDLK_RIGHT as i32) as u16,
+        encode_keycode(SDLK_RSHIFT as i32) as u16,
+        encode_keycode(SDLK_RETURN as i32) as u16,
+        encode_keycode(SDLK_x as i32) as u16,
+        encode_keycode(SDLK_z as i32) as u16,
+        encode_keycode(SDLK_s as i32) as u16,
+        encode_keycode(SDLK_a as i32) as u16,
+        encode_keycode(SDLK_c as i32) as u16,
+        encode_keycode(SDLK_v as i32) as u16,
+        encode_keycode(SDLK_F1 as i32) as u16,
+        encode_keycode(SDLK_F2 as i32) as u16,
+        encode_keycode(SDLK_F3 as i32) as u16,
+        encode_keycode(SDLK_F4 as i32) as u16,
+        encode_keycode(SDLK_F5 as i32) as u16,
+        encode_keycode(SDLK_F6 as i32) as u16,
+        encode_keycode(SDLK_F7 as i32) as u16,
+        encode_keycode(SDLK_F8 as i32) as u16,
+        encode_keycode(SDLK_F9 as i32) as u16,
+        encode_keycode(SDLK_F10 as i32) as u16,
         N as u16,
         N as u16,
         N as u16,
@@ -1079,66 +991,16 @@ unsafe fn run_static_initializers() {
         N as u16,
         N as u16,
         N as u16,
-        ((if SDLK_F1 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F1 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Shift as i32) as u16,
-        ((if SDLK_F2 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F2 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Shift as i32) as u16,
-        ((if SDLK_F3 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F3 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Shift as i32) as u16,
-        ((if SDLK_F4 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F4 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Shift as i32) as u16,
-        ((if SDLK_F5 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F5 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Shift as i32) as u16,
-        ((if SDLK_F6 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F6 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Shift as i32) as u16,
-        ((if SDLK_F7 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F7 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Shift as i32) as u16,
-        ((if SDLK_F8 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F8 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Shift as i32) as u16,
-        ((if SDLK_F9 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F9 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Shift as i32) as u16,
-        ((if SDLK_F10 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F10 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Shift as i32) as u16,
+        (encode_keycode(SDLK_F1 as i32) | kKeyMod_Shift as i32) as u16,
+        (encode_keycode(SDLK_F2 as i32) | kKeyMod_Shift as i32) as u16,
+        (encode_keycode(SDLK_F3 as i32) | kKeyMod_Shift as i32) as u16,
+        (encode_keycode(SDLK_F4 as i32) | kKeyMod_Shift as i32) as u16,
+        (encode_keycode(SDLK_F5 as i32) | kKeyMod_Shift as i32) as u16,
+        (encode_keycode(SDLK_F6 as i32) | kKeyMod_Shift as i32) as u16,
+        (encode_keycode(SDLK_F7 as i32) | kKeyMod_Shift as i32) as u16,
+        (encode_keycode(SDLK_F8 as i32) | kKeyMod_Shift as i32) as u16,
+        (encode_keycode(SDLK_F9 as i32) | kKeyMod_Shift as i32) as u16,
+        (encode_keycode(SDLK_F10 as i32) | kKeyMod_Shift as i32) as u16,
         N as u16,
         N as u16,
         N as u16,
@@ -1149,66 +1011,16 @@ unsafe fn run_static_initializers() {
         N as u16,
         N as u16,
         N as u16,
-        ((if SDLK_F1 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F1 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_F2 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F2 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_F3 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F3 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_F4 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F4 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_F5 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F5 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_F6 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F6 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_F7 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F7 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_F8 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F8 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_F9 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F9 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_F10 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_F10 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_F1 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_F2 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_F3 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_F4 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_F5 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_F6 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_F7 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_F8 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_F9 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_F10 as i32) | kKeyMod_Ctrl as i32) as u16,
         N as u16,
         N as u16,
         N as u16,
@@ -1219,71 +1031,19 @@ unsafe fn run_static_initializers() {
         N as u16,
         N as u16,
         N as u16,
-        ((if SDLK_1 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_1 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_2 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_2 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_3 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_3 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_4 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_4 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_5 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_5 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_6 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_6 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_7 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_7 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_8 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_8 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_9 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_9 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_0 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_0 as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_MINUS as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_MINUS as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_EQUALS as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_EQUALS as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_BACKSPACE as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_BACKSPACE as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
+        encode_keycode(SDLK_1 as i32) as u16,
+        encode_keycode(SDLK_2 as i32) as u16,
+        encode_keycode(SDLK_3 as i32) as u16,
+        encode_keycode(SDLK_4 as i32) as u16,
+        encode_keycode(SDLK_5 as i32) as u16,
+        encode_keycode(SDLK_6 as i32) as u16,
+        encode_keycode(SDLK_7 as i32) as u16,
+        encode_keycode(SDLK_8 as i32) as u16,
+        encode_keycode(SDLK_9 as i32) as u16,
+        encode_keycode(SDLK_0 as i32) as u16,
+        encode_keycode(SDLK_MINUS as i32) as u16,
+        encode_keycode(SDLK_EQUALS as i32) as u16,
+        encode_keycode(SDLK_BACKSPACE as i32) as u16,
         N as u16,
         N as u16,
         N as u16,
@@ -1291,84 +1051,19 @@ unsafe fn run_static_initializers() {
         N as u16,
         N as u16,
         N as u16,
-        ((if SDLK_1 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_1 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_2 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_2 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_3 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_3 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_4 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_4 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_5 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_5 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_6 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_6 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_7 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_7 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_8 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_8 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_9 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_9 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_0 as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_0 as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_MINUS as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_MINUS as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_EQUALS as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_EQUALS as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_BACKSPACE as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_BACKSPACE as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_1 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_2 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_3 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_4 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_5 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_6 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_7 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_8 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_9 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_0 as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_MINUS as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_EQUALS as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_BACKSPACE as i32) | kKeyMod_Ctrl as i32) as u16,
         N as u16,
         N as u16,
         N as u16,
@@ -1376,77 +1071,21 @@ unsafe fn run_static_initializers() {
         N as u16,
         N as u16,
         N as u16,
-        ((if SDLK_w as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_w as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_q as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_q as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_r as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_r as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Shift as i32) as u16,
-        ((if SDLK_k as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_k as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_l as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_l as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_RETURN as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_RETURN as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Alt as i32) as u16,
-        ((if SDLK_r as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_r as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Ctrl as i32) as u16,
-        ((if SDLK_p as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_p as i32 & kKeyMod_ScanCode as i32 - 1i32
-            | kKeyMod_Shift as i32) as u16,
-        ((if SDLK_p as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_p as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_TAB as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_TAB as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_t as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_t as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
+        encode_keycode(SDLK_w as i32) as u16,
+        encode_keycode(SDLK_q as i32) as u16,
+        (encode_keycode(SDLK_r as i32) | kKeyMod_Shift as i32) as u16,
+        encode_keycode(SDLK_k as i32) as u16,
+        encode_keycode(SDLK_l as i32) as u16,
+        (encode_keycode(SDLK_RETURN as i32) | kKeyMod_Alt as i32) as u16,
+        (encode_keycode(SDLK_r as i32) | kKeyMod_Ctrl as i32) as u16,
+        (encode_keycode(SDLK_p as i32) | kKeyMod_Shift as i32) as u16,
+        encode_keycode(SDLK_p as i32) as u16,
+        encode_keycode(SDLK_TAB as i32) as u16,
+        encode_keycode(SDLK_t as i32) as u16,
         N as u16,
         N as u16,
-        ((if SDLK_f as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_f as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
-        ((if SDLK_r as i32 & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as i32
-        } else {
-            0i32
-        }) | SDLK_r as i32 & kKeyMod_ScanCode as i32 - 1i32) as u16,
+        encode_keycode(SDLK_f as i32) as u16,
+        encode_keycode(SDLK_r as i32) as u16,
         0i32 as u16,
         0i32 as u16,
     ];

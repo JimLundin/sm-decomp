@@ -31,6 +31,29 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+SDL key-code encoding (2026-10-20): one named pure const function shares
+all 83 repeated conversions: 81 default entries and both runtime lookup/parser
+forms, including their differing alias casts and modifier-expression layout.
+The complete 130-entry default table, key validation, modifiers, hash calls,
+parser diagnostics and static initialization order remain unchanged.
+The helper retains the low nine key bits and converts SDL's scancode marker;
+no validation is added to the parser's original masking behavior.
+
+Independent source/type reconstruction passes for all 77 inputs and all
+14 unselected config functions. Extracted compiled comparisons pass all 130
+default entries, 1572864 lookup cases and 196608 parser conversions, covering
+all ten relevant key bits, left/right Shift/Ctrl/Alt bits and ignored high bits
+individually and together. Wrong-mask and wrong-marker controls each fail
+12288 cases. This checks encoding and lookup factoring, not the complete
+frontend event loop or string parser.
+
+Normal release (31.67s), formatting/check, progress and full
+any% 129712/0 (111.14s), native exit 0, pass on acbdc0e7.
+All 77 final source/config/host inputs and 92 verification pins remain fixed.
+Net Rust lines -361, to 133816; cast lines -201, other counters unchanged.
+Any% provides core regression coverage; this frontend change is covered by
+the normal build and focused checks. Broader readability remains open.
+
 Two-state generated control flow (2026-10-20): all 106 eligible local
 discriminators across 104 functions now use named Boolean decisions.
 The complete 399 literal assignments and 106 comparisons/match reads retain
