@@ -60,6 +60,21 @@ counters stay unchanged. Checks live temporarily under the bindings root's
 cleanup remains blocked by automatic policy rejection; no removal is claimed.
 The complete remaining reduction budget remains unproven.
 
+After this commit, checked native PowerShell deletion of the completed
+`keygroups/` directory was also rejected as "blocked by policy". Its processes
+are terminal; no active helper depends on those disposable checks. The existing
+`integrated/` build cache remains needed for the next implementation.
+
+Next concrete draft: file-copy/file-clear occupied-slot navigation in bank 81.
+Both complete callers plus a shared search helper save **34 formatted lines**
+before adding any required execution probes. The draft preserves up-before-down
+input priority, signed byte bounds, live occupied-slot reads, byte-only selection
+stores and the clear menu's inherited sound-argument high byte. It has no
+compilation or behavioral/oracle validation yet and is not counted as landed.
+Draft/pricing files: `%TEMP%/sm-bindings-root-9c4daf2f/file-selection-next.rs`
+and `price-file-selection.py`. CPU dispatch and the prior hopping/Samus family
+are already shared; they supply no new savings from this inspection.
+
 ## Validation strategy (2026-10-20)
 
 User direction: choose verification by the changed behavior and its callers,
