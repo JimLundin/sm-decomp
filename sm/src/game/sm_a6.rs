@@ -1933,41 +1933,33 @@ pub unsafe fn Ridley_Func_14(game: &mut Game) {
     (*E).var_F = ((word!(game.random_number) as i32 & 0x1f) + 32) as u16;
     Ridley_Func_15(game);
 }
-pub unsafe fn Ridley_Func_15(game: &mut Game) {
-    let E = Get_Ridley(0, game);
-    if Ridley_Func_17(
-        crate::rtl::rom_table_word!(game, 0xa6b60d, (*E).var_10 as isize),
-        game,
-    ) & 1
-        != 0
-    {
-        Ridley_Func_18(game);
-    } else {
-        (*E).var_F = (*E).var_F.wrapping_sub(1);
-        if ((*E).var_F & 0x8000) != 0 {
-            (*E).var_A = ((0xa6b613i32) as u16);
-            (*E).var_F = 128;
-            Ridley_Func_114(game);
+
+macro_rules! advance_ridley_instruction_with_timeout {
+    ($game:ident, $instruction_table:literal, $timeout_state:literal) => {
+        let E = Get_Ridley(0, $game);
+        if Ridley_Func_17(
+            crate::rtl::rom_table_word!($game, $instruction_table, (*E).var_10 as isize),
+            $game,
+        ) & 1
+            != 0
+        {
+            Ridley_Func_18($game);
+        } else {
+            (*E).var_F = (*E).var_F.wrapping_sub(1);
+            if ((*E).var_F & 0x8000) != 0 {
+                (*E).var_A = (($timeout_state) as u16);
+                (*E).var_F = 128;
+                Ridley_Func_114($game);
+            }
         }
     };
 }
+
+pub unsafe fn Ridley_Func_15(game: &mut Game) {
+    advance_ridley_instruction_with_timeout!(game, 0xa6b60d, 0xa6b613i32);
+}
 pub unsafe fn Ridley_Func_16(game: &mut Game) {
-    let E = Get_Ridley(0, game);
-    if Ridley_Func_17(
-        crate::rtl::rom_table_word!(game, 0xa6b63b, (*E).var_10 as isize),
-        game,
-    ) & 1
-        != 0
-    {
-        Ridley_Func_18(game);
-    } else {
-        (*E).var_F = (*E).var_F.wrapping_sub(1);
-        if ((*E).var_F & 0x8000) != 0 {
-            (*E).var_A = ((0xa6b5e5i32) as u16);
-            (*E).var_F = 128;
-            Ridley_Func_114(game);
-        }
-    };
+    advance_ridley_instruction_with_timeout!(game, 0xa6b63b, 0xa6b5e5i32);
 }
 pub unsafe fn Ridley_Func_17(r18: u16, game: &mut Game) -> u8 {
     let mut v0: u16 = word!(game.samus_y_pos);
@@ -2232,38 +2224,33 @@ pub unsafe fn Ridley_Func_29(game: &mut Game) {
         t as i32
     }) as u16;
 }
+
+macro_rules! reduce_ridley_axis_speed {
+    ($velocity:ident, $reduced_velocity:ident, $enemy:ident, $velocity_field:ident) => {
+        if $velocity != 0 {
+            let v2: i16 = ((abs16($velocity)) as i16).wrapping_sub(4);
+            if v2 >= 0 {
+                $reduced_velocity = (if $velocity & 0x8000 != 0 {
+                    -(v2 as i32)
+                } else {
+                    v2 as i32
+                }) as u16;
+            } else {
+                $reduced_velocity = 0;
+            }
+            (*$enemy).$velocity_field = $reduced_velocity;
+        }
+    };
+}
+
 pub unsafe fn Ridley_Func_30(game: &mut Game) {
     let E = Get_Ridley(0, game);
     let ridley_var_14: u16 = (*E).var_14;
     let mut v3: u16 = 0;
     let mut v6: u16 = 0;
-    if ridley_var_14 != 0 {
-        let v2: i16 = ((abs16(ridley_var_14)) as i16).wrapping_sub(4);
-        if v2 >= 0 {
-            v3 = (if ridley_var_14 & 0x8000 != 0 {
-                -(v2 as i32)
-            } else {
-                v2 as i32
-            }) as u16;
-        } else {
-            v3 = 0;
-        }
-        (*E).var_14 = v3;
-    }
+    reduce_ridley_axis_speed!(ridley_var_14, v3, E, var_14);
     let ridley_var_15: u16 = (*E).var_15;
-    if ridley_var_15 != 0 {
-        let v5: i16 = ((abs16(ridley_var_15)) as i16).wrapping_sub(4);
-        if v5 >= 0 {
-            v6 = (if ridley_var_15 & 0x8000 != 0 {
-                -(v5 as i32)
-            } else {
-                v5 as i32
-            }) as u16;
-        } else {
-            v6 = 0;
-        }
-        (*E).var_15 = v6;
-    }
+    reduce_ridley_axis_speed!(ridley_var_15, v6, E, var_15);
     word!(
         game.samus_x_pos = ((*E).var_14 as i32
             + (*E).base.x_pos as i32
@@ -2991,6 +2978,27 @@ pub unsafe fn Ridley_Func_69(game: &mut Game) {
         (*E).var_27 = v1 as u16;
     };
 }
+
+macro_rules! place_ridley_explosion_x {
+    (
+        $ridley:ident, $game:ident, $orientation_index:ident, $x_offset_table:literal,
+        $explosion:ident $(,)?
+    ) => {
+        let mut v10: u16 = 0;
+        let $ridley = Get_Ridley(0, $game);
+        if (*$ridley).var_10 != 0 {
+            v10 = 2;
+        }
+        let $orientation_index: i32 = v10 as i32 >> 1;
+        let v14: u16 = ((*$ridley).base.x_pos).wrapping_add(crate::rtl::rom_table_word!(
+            $game,
+            $x_offset_table,
+            $orientation_index as isize
+        ));
+        (*$explosion).base.x_pos = v14;
+    };
+}
+
 pub unsafe fn RidleysExplosion_Init(game: &mut Game) {
     let E = Get_Ridley(word!(game.cur_enemy_index) as i32, game);
     (*E).base.instruction_timer = 1;
@@ -3045,86 +3053,31 @@ pub unsafe fn RidleysExplosion_Init(game: &mut Game) {
                     );
             }
             14 => {
-                let mut v10: u16 = 0;
-                let E0 = Get_Ridley(0, game);
-                if (*E0).var_10 != 0 {
-                    v10 = 2;
-                }
-                let v13: i32 = v10 as i32 >> 1;
-                let v14: u16 = ((*E0).base.x_pos).wrapping_add(crate::rtl::rom_table_word!(
-                    game,
-                    0xa6c804,
-                    v13 as isize
-                ));
-                (*E).base.x_pos = v14;
+                place_ridley_explosion_x!(E0, game, v13, 0xa6c804, E);
                 (*E).base.y_pos = (*E0).base.y_pos;
                 (*E).base.current_instruction =
                     crate::rtl::rom_table_word!(game, 0xa6c808, v13 as isize);
             }
             16 => {
-                let mut v16: u16 = 0;
-                let E0_0 = Get_Ridley(0, game);
-                if (*E0_0).var_10 != 0 {
-                    v16 = 2;
-                }
-                let v19: i32 = v16 as i32 >> 1;
-                let v20: u16 = ((*E0_0).base.x_pos).wrapping_add(crate::rtl::rom_table_word!(
-                    game,
-                    0xa6c836,
-                    v19 as isize
-                ));
-                (*E).base.x_pos = v20;
+                place_ridley_explosion_x!(E0_0, game, v19, 0xa6c836, E);
                 (*E).base.y_pos = ((*E0_0).base.y_pos).wrapping_add(22);
                 (*E).base.current_instruction =
                     crate::rtl::rom_table_word!(game, 0xa6c83a, v19 as isize);
             }
             18 => {
-                let mut v22: u16 = 0;
-                let E0_1 = Get_Ridley(0, game);
-                if (*E0_1).var_10 != 0 {
-                    v22 = 2;
-                }
-                let v25: i32 = v22 as i32 >> 1;
-                let v26: u16 = ((*E0_1).base.x_pos).wrapping_add(crate::rtl::rom_table_word!(
-                    game,
-                    0xa6c868,
-                    v25 as isize
-                ));
-                (*E).base.x_pos = v26;
+                place_ridley_explosion_x!(E0_1, game, v25, 0xa6c868, E);
                 (*E).base.y_pos = ((*E0_1).base.y_pos).wrapping_sub(24);
                 (*E).base.current_instruction =
                     crate::rtl::rom_table_word!(game, 0xa6c86c, v25 as isize);
             }
             20 => {
-                let mut v28: u16 = 0;
-                let E0_2 = Get_Ridley(0, game);
-                if (*E0_2).var_10 != 0 {
-                    v28 = 2;
-                }
-                let v31: i32 = v28 as i32 >> 1;
-                let v32: u16 = ((*E0_2).base.x_pos).wrapping_add(crate::rtl::rom_table_word!(
-                    game,
-                    0xa6c89a,
-                    v31 as isize
-                ));
-                (*E).base.x_pos = v32;
+                place_ridley_explosion_x!(E0_2, game, v31, 0xa6c89a, E);
                 (*E).base.y_pos = (*E0_2).base.y_pos;
                 (*E).base.current_instruction =
                     crate::rtl::rom_table_word!(game, 0xa6c89e, v31 as isize);
             }
             22 => {
-                let mut v34: u16 = 0;
-                let E0_3 = Get_Ridley(0, game);
-                if (*E0_3).var_10 != 0 {
-                    v34 = 2;
-                }
-                let v37: i32 = v34 as i32 >> 1;
-                let v38: u16 = ((*E0_3).base.x_pos).wrapping_add(crate::rtl::rom_table_word!(
-                    game,
-                    0xa6c8cc,
-                    v37 as isize
-                ));
-                (*E).base.x_pos = v38;
+                place_ridley_explosion_x!(E0_3, game, v37, 0xa6c8cc, E);
                 (*E).base.y_pos = ((*E0_3).base.y_pos).wrapping_add(7);
                 (*E).base.current_instruction =
                     crate::rtl::rom_table_word!(game, 0xa6c8d0, v37 as isize);
@@ -3287,29 +3240,36 @@ pub unsafe fn Ridley_Func_78(game: &mut Game) -> u8 {
             & word!(game.tilemap_stuff[16])))
         != 0) as u8
 }
+
+macro_rules! start_ridley_tile_effect_when_idle {
+    ($game:ident) => {
+        if word!($game.tilemap_stuff[76])
+            | (word!($game.tilemap_stuff[66])
+                | word!($game.tilemap_stuff[56])
+                | word!($game.tilemap_stuff[46])
+                | word!($game.tilemap_stuff[36])
+                | word!($game.tilemap_stuff[26])
+                | word!($game.tilemap_stuff[16]))
+            == 0
+        {
+            word!($game.tilemap_stuff[16] = 0x8000);
+            word!($game.tilemap_stuff[13] = -1i32 as u16);
+            word!($game.tilemap_stuff[14] = -1i32 as u16);
+            let mut v0: u16 = 2;
+            if word!($game.samus_x_pos) < 0x70 {
+                v0 = 1;
+            }
+            word!($game.tilemap_stuff[10] = v0);
+        }
+    };
+}
+
 pub unsafe fn Ridley_Func_79(game: &mut Game) {
     Ridley_Func_77(game);
     if Ridley_Func_78(game) != 0 && Ridley_Func_80_DoubleRet(game) != 0 {
         return;
     }
-    if word!(game.tilemap_stuff[76])
-        | (word!(game.tilemap_stuff[66])
-            | word!(game.tilemap_stuff[56])
-            | word!(game.tilemap_stuff[46])
-            | word!(game.tilemap_stuff[36])
-            | word!(game.tilemap_stuff[26])
-            | word!(game.tilemap_stuff[16]))
-        == 0
-    {
-        word!(game.tilemap_stuff[16] = 0x8000);
-        word!(game.tilemap_stuff[13] = -1i32 as u16);
-        word!(game.tilemap_stuff[14] = -1i32 as u16);
-        let mut v0: u16 = 2;
-        if word!(game.samus_x_pos) < 0x70 {
-            v0 = 1;
-        }
-        word!(game.tilemap_stuff[10] = v0);
-    }
+    start_ridley_tile_effect_when_idle!(game);
 }
 pub unsafe fn Ridley_Func_80_DoubleRet(game: &mut Game) -> u8 {
     let mut current_block: u64;
@@ -3346,24 +3306,7 @@ pub unsafe fn Ridley_Func_81(game: &mut Game) {
     if Ridley_Func_78(game) & 1 != 0 && Ridley_Func_82_DoubleRet(game) {
         return;
     }
-    if word!(game.tilemap_stuff[76])
-        | (word!(game.tilemap_stuff[66])
-            | word!(game.tilemap_stuff[56])
-            | word!(game.tilemap_stuff[46])
-            | word!(game.tilemap_stuff[36])
-            | word!(game.tilemap_stuff[26])
-            | word!(game.tilemap_stuff[16]))
-        == 0
-    {
-        word!(game.tilemap_stuff[16] = 0x8000);
-        word!(game.tilemap_stuff[13] = -1i32 as u16);
-        word!(game.tilemap_stuff[14] = -1i32 as u16);
-        let mut v0: u16 = 2;
-        if word!(game.samus_x_pos) < 0x70 {
-            v0 = 1;
-        }
-        word!(game.tilemap_stuff[10] = v0);
-    }
+    start_ridley_tile_effect_when_idle!(game);
 }
 pub unsafe fn Ridley_Func_82_DoubleRet(game: &mut Game) -> bool {
     if word!(game.tilemap_stuff[2]) != 0
@@ -3889,6 +3832,30 @@ pub unsafe fn Ridley_Func_103(k: u16, j: u16, game: &mut Game) -> u8 {
 pub unsafe fn Ridley_Func_104_0(k: u16, j: u16, r18: u16, r20: u16, game: &mut Game) {
     Ridley_Func_104(k, j, 0, r18, r20, game);
 }
+
+macro_rules! accelerate_ridley_negative_axis {
+    ($distance:ident, $divisor:ident, $enemy:ident, $velocity_field:ident, $acceleration:ident) => {
+        let mut RegWord: u16 = SnesDivide($distance as u16, $divisor as u8);
+        if RegWord == 0 {
+            RegWord = 1;
+        }
+        let r22: u16 = RegWord;
+        let mut ridley_var_C: i16 = (*$enemy).$velocity_field as i16;
+        let v14: bool = 0u8 != 0u8;
+        if ridley_var_C >= 0 {
+            let mut v15: u16 = ((ridley_var_C) as u16).wrapping_sub($acceleration);
+            v15 = (v15).wrapping_sub(8);
+            let v16: u16 = r22;
+            ridley_var_C = ((v15) as i16).wrapping_sub((v16) as i16);
+        }
+        let mut v17: i16 = (ridley_var_C).wrapping_sub((r22) as i16);
+        if v17 as i32 + 1280 & 0x8000 != 0 {
+            v17 = -1280i16;
+        }
+        (*$enemy).$velocity_field = v17 as u16;
+    };
+}
+
 pub unsafe fn Ridley_Func_104(k: u16, j: u16, a: u16, r18: u16, r20: u16, game: &mut Game) {
     let R26: u16 = a;
     let r24: u16 = g_byte_A6D61F[j as usize] as u16;
@@ -3897,24 +3864,7 @@ pub unsafe fn Ridley_Func_104(k: u16, j: u16, a: u16, r18: u16, r20: u16, game: 
     let mut v4: i16 = (((*E).base.y_pos) as i16).wrapping_sub((r20) as i16);
     if v4 != 0 {
         if v4 >= 0 {
-            let mut RegWord: u16 = SnesDivide(v4 as u16, r24 as u8);
-            if RegWord == 0 {
-                RegWord = 1;
-            }
-            let r22: u16 = RegWord;
-            let mut ridley_var_C: i16 = (*E).var_C as i16;
-            let v14: bool = 0u8 != 0u8;
-            if ridley_var_C >= 0 {
-                let mut v15: u16 = ((ridley_var_C) as u16).wrapping_sub(R26);
-                v15 = (v15).wrapping_sub(8);
-                let v16: u16 = r22;
-                ridley_var_C = ((v15) as i16).wrapping_sub((v16) as i16);
-            }
-            let mut v17: i16 = (ridley_var_C).wrapping_sub((r22) as i16);
-            if v17 as i32 + 1280 & 0x8000 != 0 {
-                v17 = -1280i16;
-            }
-            (*E).var_C = v17 as u16;
+            accelerate_ridley_negative_axis!(v4, r24, E, var_C, R26);
         } else {
             let mut v5: u16 = SnesDivide((r20).wrapping_sub((*E).base.y_pos), r24 as u8);
             if v5 == 0 {
@@ -3942,24 +3892,7 @@ pub unsafe fn Ridley_Func_105(k: u16, r18: u16, r24: u16, r26: u16, game: &mut G
     let mut v2: i16 = (((*E).base.x_pos) as i16).wrapping_sub((r18) as i16);
     if v2 != 0 {
         if v2 >= 0 {
-            let mut RegWord: u16 = SnesDivide(v2 as u16, r24 as u8);
-            if RegWord == 0 {
-                RegWord = 1;
-            }
-            let r22: u16 = RegWord;
-            let mut ridley_var_B: i16 = (*E).var_B as i16;
-            let v12: bool = 0u8 != 0u8;
-            if ridley_var_B >= 0 {
-                let mut v13: u16 = ((ridley_var_B) as u16).wrapping_sub(r26);
-                v13 = (v13).wrapping_sub(8);
-                let v14: u16 = r22;
-                ridley_var_B = ((v13) as i16).wrapping_sub((v14) as i16);
-            }
-            let mut v15: i16 = (ridley_var_B).wrapping_sub((r22) as i16);
-            if v15 as i32 + 1280 & 0x8000 != 0 {
-                v15 = -1280i16;
-            }
-            (*E).var_B = v15 as u16;
+            accelerate_ridley_negative_axis!(v2, r24, E, var_B, r26);
         } else {
             let mut v3: u16 = SnesDivide((r18).wrapping_sub((*E).base.x_pos), r24 as u8);
             if v3 == 0 {
@@ -4055,39 +3988,47 @@ pub unsafe fn Ridley_Func_107(k: u16, r18: u16, r24: u16, game: &mut Game) {
         }) as u16;
     };
 }
+
+macro_rules! steer_enemy_speed_and_angle {
+    ($target_speed:ident, $enemy:ident, $angle_step:ident, $target_angle:ident) => {
+        if $target_speed != (*$enemy).var_0B {
+            if (($target_speed) as i16).wrapping_sub(((*$enemy).var_0B) as i16) >= 0 {
+                let mut v2: u16 = ((*$enemy).var_0B).wrapping_add(32);
+                if v2 as i32 - $target_speed as i32 & 0x8000 == 0 {
+                    v2 = $target_speed;
+                }
+                (*$enemy).var_0B = v2;
+            } else {
+                let mut v1: u16 = ((*$enemy).var_0B).wrapping_sub(32);
+                if v1 as i32 - $target_speed as i32 & 0x8000 != 0 {
+                    v1 = $target_speed;
+                }
+                (*$enemy).var_0B = v1;
+            }
+        }
+        let mut v3: u16 = 0;
+
+        let use_target_angle: bool = if ($angle_step & 0x8000) != 0 {
+            v3 = ((*$enemy).var_0A).wrapping_add($angle_step);
+            (v3 as i32 - $target_angle as i32 & 0x8000 != 0)
+        } else {
+            v3 = ((*$enemy).var_0A).wrapping_add($angle_step);
+            (v3 as i32 - $target_angle as i32 & 0x8000 == 0)
+        };
+        if use_target_angle {
+            v3 = $target_angle;
+        }
+        (*$enemy).var_0A = v3;
+        $angle_step = byte!(v3; 1) as u16;
+        (*$enemy).var_B = Math_MultBySin((*$enemy).var_0B, $angle_step);
+        (*$enemy).var_C = Math_MultByCos((*$enemy).var_0B, $angle_step);
+    };
+}
+pub(crate) use steer_enemy_speed_and_angle;
+
 pub unsafe fn Ridley_Func_111(mut r18: u16, r20: u16, r22: u16, game: &mut Game) {
     let E = Get_Ridley(0, game);
-    if r22 != (*E).var_0B {
-        if ((r22) as i16).wrapping_sub(((*E).var_0B) as i16) >= 0 {
-            let mut v2: u16 = ((*E).var_0B).wrapping_add(32);
-            if v2 as i32 - r22 as i32 & 0x8000 == 0 {
-                v2 = r22;
-            }
-            (*E).var_0B = v2;
-        } else {
-            let mut v1: u16 = ((*E).var_0B).wrapping_sub(32);
-            if v1 as i32 - r22 as i32 & 0x8000 != 0 {
-                v1 = r22;
-            }
-            (*E).var_0B = v1;
-        }
-    }
-    let mut v3: u16 = 0;
-
-    let use_target_angle: bool = if (r18 & 0x8000) != 0 {
-        v3 = ((*E).var_0A).wrapping_add(r18);
-        (v3 as i32 - r20 as i32 & 0x8000 != 0)
-    } else {
-        v3 = ((*E).var_0A).wrapping_add(r18);
-        (v3 as i32 - r20 as i32 & 0x8000 == 0)
-    };
-    if use_target_angle {
-        v3 = r20;
-    }
-    (*E).var_0A = v3;
-    r18 = byte!(v3; 1) as u16;
-    (*E).var_B = Math_MultBySin((*E).var_0B, r18);
-    (*E).var_C = Math_MultByCos((*E).var_0B, r18);
+    steer_enemy_speed_and_angle!(r22, E, r18, r20);
 }
 pub unsafe fn Ridley_Func_112(game: &mut Game) {
     let mut Ridley = Get_Ridley(0, game);
@@ -4911,6 +4852,25 @@ pub unsafe fn CeresDoor_Func_5(k: u16, game: &mut Game) {
         set_fields! {[(*E0)], 0; var_E, var_F}
     }
 }
+
+macro_rules! set_explosion_spawn_offset {
+    ($game:ident, $enemy:ident, $offset_table:literal, $offset_index:ident) => {
+        $game.eproj_spawn_pt = Point16U {
+            x: (((*$enemy).base.x_pos).wrapping_add(crate::rtl::rom_table_word!(
+                $game,
+                $offset_table,
+                $offset_index as isize
+            ))),
+            y: (((*$enemy).base.y_pos).wrapping_add(crate::rtl::rom_table_word!(
+                $game,
+                $offset_table,
+                ($offset_index + 1) as isize
+            ))),
+        };
+    };
+}
+pub(crate) use set_explosion_spawn_offset;
+
 pub unsafe fn CeresDoor_Func_6(k: u16, game: &mut Game) {
     let E = Get_CeresDoor(k as i32, game);
     (*E).var_D = (*E).var_D.wrapping_sub(1);
@@ -4931,18 +4891,7 @@ pub unsafe fn CeresDoor_Func_6(k: u16, game: &mut Game) {
                 (*E0).var_F = 3;
             }
             let v5: i32 = ((4u16).wrapping_mul((*E0).var_F)) as i32 >> 1;
-            game.eproj_spawn_pt = Point16U {
-                x: (((*E).base.x_pos).wrapping_add(crate::rtl::rom_table_word!(
-                    game,
-                    0xa6f840,
-                    v5 as isize
-                ))),
-                y: (((*E).base.y_pos).wrapping_add(crate::rtl::rom_table_word!(
-                    game,
-                    0xa6f840,
-                    (v5 + 1) as isize
-                ))),
-            };
+            set_explosion_spawn_offset!(game, E, 0xa6f840, v5);
             let mut v6: u16 = 3;
             if NextRandom(game) < 0x4000 {
                 v6 = 12;

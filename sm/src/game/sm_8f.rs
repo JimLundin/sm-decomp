@@ -587,27 +587,40 @@ pub unsafe fn RoomCode_HandleCeresRidleyGetaway(game: &mut Game) {
         HandleCeresRidleyGetawayCutscene(game);
     }
 }
+
+macro_rules! select_room_earthquake_update {
+    (
+        $update_earthquake:ident, $game:ident, $timer_reference:ident, $earthquake_kind:ident,
+        $ending_kind:literal, $random_threshold:literal, $starting_kind:literal $(,)?
+    ) => {
+        let $update_earthquake: bool = if *(ram_ptr!($game, u16; 0x7e1)) != 0 {
+            crate::update_place! {
+                reference $timer_reference = *(ram_ptr!($game, u16; 0x7e1))
+                    => (*$timer_reference).wrapping_sub(1);
+            }
+            (*$timer_reference == 0)
+                && ({
+                    $earthquake_kind = $ending_kind;
+                    true
+                })
+        } else {
+            (NextRandom($game) < $random_threshold)
+                && ({
+                    strcpy(
+                        ram_ptr!($game, c_char; 0x7e1),
+                        b"*\0" as *const u8 as *const c_char,
+                    );
+                    $earthquake_kind = $starting_kind;
+                    true
+                })
+        };
+    };
+}
+
 pub unsafe fn RoomCode_ShakeScreenHorizDiag(game: &mut Game) {
     let mut v0: u16 = 0;
 
-    let update_earthquake: bool = if *(ram_ptr!(game, u16; 0x7e1)) != 0 {
-        crate::update_place! { reference fresh11 = *(ram_ptr!(game, u16; 0x7e1)) => (*fresh11).wrapping_sub(1); }
-        (*fresh11 == 0)
-            && ({
-                v0 = 18;
-                true
-            })
-    } else {
-        (NextRandom(game) < 0x200)
-            && ({
-                strcpy(
-                    ram_ptr!(game, c_char; 0x7e1),
-                    b"*\0" as *const u8 as *const c_char,
-                );
-                v0 = 23;
-                true
-            })
-    };
+    select_room_earthquake_update!(update_earthquake, game, fresh11, v0, 18, 0x200, 23);
     if update_earthquake {
         word!(game.earthquake_type = v0);
     }
@@ -616,24 +629,7 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiag(game: &mut Game) {
 pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
     let mut v0: i16 = 0;
 
-    let update_earthquake: bool = if *(ram_ptr!(game, u16; 0x7e1)) != 0 {
-        crate::update_place! { reference fresh10 = *(ram_ptr!(game, u16; 0x7e1)) => (*fresh10).wrapping_sub(1); }
-        (*fresh10 == 0)
-            && ({
-                v0 = 21;
-                true
-            })
-    } else {
-        (NextRandom(game) < 0x180)
-            && ({
-                strcpy(
-                    ram_ptr!(game, c_char; 0x7e1),
-                    b"*\0" as *const u8 as *const c_char,
-                );
-                v0 = 26;
-                true
-            })
-    };
+    select_room_earthquake_update!(update_earthquake, game, fresh10, v0, 21, 0x180, 26);
     if update_earthquake {
         *(ram_ptr!(game, u16; 0x7e1, 2)) = v0 as u16;
     }

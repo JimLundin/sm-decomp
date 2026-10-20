@@ -341,73 +341,62 @@ pub unsafe fn NorfairPipeBug_Func_5(k: u16, game: &mut Game) {
     (*E).var_C = (*E).var_C.wrapping_add(1);
     (*E).var_A = ((0xb38e5ai32) as u16);
 }
+
+macro_rules! move_pipe_bug_to_upper_limit {
+    ($enemy:ident, $game:ident, $distance:literal) => {
+        (*$enemy).var_C = (*$enemy).var_C.wrapping_add(1);
+        words!(
+            (*$enemy).base,
+            y_pos,
+            y_subpos += words!((
+                crate::rtl::rom_table_word!($game, 0xa28187, 66),
+                crate::rtl::rom_table_word!($game, 0xa28187, 67)
+            ))
+        );
+        if (((*$enemy).base.y_pos as i32 + $distance - (*$enemy).var_01 as i32) as i16) < 0 {
+            (*$enemy).base.y_pos = ((*$enemy).var_01).wrapping_sub($distance);
+            (*$enemy).base.y_subpos = 0;
+            (*$enemy).var_A = ((0xb38e5ai32) as u16);
+        }
+    };
+}
+
 pub unsafe fn NorfairPipeBug_Func_6(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_C = (*E).var_C.wrapping_add(1);
-    words!(
-        (*E).base,
-        y_pos,
-        y_subpos += words!((
-            crate::rtl::rom_table_word!(game, 0xa28187, 66),
-            crate::rtl::rom_table_word!(game, 0xa28187, 67)
-        ))
-    );
-    if (((*E).base.y_pos as i32 + 16 - (*E).var_01 as i32) as i16) < 0 {
-        (*E).base.y_pos = ((*E).var_01).wrapping_sub(16);
-        (*E).base.y_subpos = 0;
-        (*E).var_A = ((0xb38e5ai32) as u16);
-    }
+    move_pipe_bug_to_upper_limit!(E, game, 16);
 }
 pub unsafe fn NorfairPipeBug_Func_7(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_C = (*E).var_C.wrapping_add(1);
-    words!(
-        (*E).base,
-        y_pos,
-        y_subpos += words!((
-            crate::rtl::rom_table_word!(game, 0xa28187, 66),
-            crate::rtl::rom_table_word!(game, 0xa28187, 67)
-        ))
-    );
-    if (((*E).base.y_pos as i32 + 32 - (*E).var_01 as i32) as i16) < 0 {
-        (*E).base.y_pos = ((*E).var_01).wrapping_sub(32);
-        (*E).base.y_subpos = 0;
-        (*E).var_A = ((0xb38e5ai32) as u16);
-    }
+    move_pipe_bug_to_upper_limit!(E, game, 32);
 }
+
+macro_rules! move_pipe_bug_to_lower_limit {
+    ($enemy:ident, $game:ident, $signed_distance:literal, $distance:literal) => {
+        (*$enemy).var_C = (*$enemy).var_C.wrapping_add(1);
+        words!(
+            (*$enemy).base,
+            y_pos,
+            y_subpos += words!((
+                crate::rtl::rom_table_word!($game, 0xa28187, 64),
+                crate::rtl::rom_table_word!($game, 0xa28187, 65)
+            ))
+        );
+        if (((*$enemy).base.y_pos as i32 - $signed_distance - (*$enemy).var_01 as i32) as i16) >= 0
+        {
+            (*$enemy).base.y_pos = ((*$enemy).var_01).wrapping_add($distance);
+            (*$enemy).base.y_subpos = 0;
+            (*$enemy).var_A = ((0xb38e5ai32) as u16);
+        }
+    };
+}
+
 pub unsafe fn NorfairPipeBug_Func_8(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_C = (*E).var_C.wrapping_add(1);
-    words!(
-        (*E).base,
-        y_pos,
-        y_subpos += words!((
-            crate::rtl::rom_table_word!(game, 0xa28187, 64),
-            crate::rtl::rom_table_word!(game, 0xa28187, 65)
-        ))
-    );
-    if (((*E).base.y_pos as i32 - 16i32 - (*E).var_01 as i32) as i16) >= 0 {
-        (*E).base.y_pos = ((*E).var_01).wrapping_add(16);
-        (*E).base.y_subpos = 0;
-        (*E).var_A = ((0xb38e5ai32) as u16);
-    }
+    move_pipe_bug_to_lower_limit!(E, game, 16i32, 16);
 }
 pub unsafe fn NorfairPipeBug_Func_9(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_C = (*E).var_C.wrapping_add(1);
-    words!(
-        (*E).base,
-        y_pos,
-        y_subpos += words!((
-            crate::rtl::rom_table_word!(game, 0xa28187, 64),
-            crate::rtl::rom_table_word!(game, 0xa28187, 65)
-        ))
-    );
-    if (((*E).base.y_pos as i32 - 32i32 - (*E).var_01 as i32) as i16) >= 0 {
-        (*E).base.y_pos = ((*E).var_01).wrapping_add(32);
-        (*E).base.y_subpos = 0;
-        (*E).var_A = ((0xb38e5ai32) as u16);
-    }
+    move_pipe_bug_to_lower_limit!(E, game, 32i32, 32);
 }
 pub unsafe fn NorfairPipeBug_Func_10(game: &mut Game) {
     let E = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);

@@ -191,25 +191,35 @@ fn PostGrappleColl_Vert_Slope_NonSquare(
         0xffff
     }
 }
+
+macro_rules! check_grapple_square_slope_span {
+    (
+        $game:ident, $block_index:ident, $sample:ident, $orientation_shift:literal,
+        $position:ident, $radius:ident, $sample_mask:literal, $distance:ident $(,)?
+    ) => {
+        let bts = $game.g_ram[0x16402 + usize::from($block_index)];
+        let index = u16::from(bts & 0x1f) * 4
+            + (u16::from(bts >> 6) ^ (($sample.edge_position & 8) >> $orientation_shift));
+        if !square_slope_occupied(
+            index,
+            $sample.remaining_span,
+            $sample.initial_span,
+            $game.$position(),
+            $game.$radius(),
+            $sample_mask,
+        ) {
+            return 0xffff;
+        }
+        let $distance = $sample.edge_position & 7;
+    };
+}
+
 fn PostGrappleColl_Horiz_Slope_Square(
     sample: &PostGrappleCollisionSample,
     k: u16,
     game: &mut Game,
 ) -> u16 {
-    let bts = game.g_ram[0x16402 + usize::from(k)];
-    let index =
-        u16::from(bts & 0x1f) * 4 + (u16::from(bts >> 6) ^ ((sample.edge_position & 8) >> 3));
-    if !square_slope_occupied(
-        index,
-        sample.remaining_span,
-        sample.initial_span,
-        game.samus_y_pos(),
-        game.samus_y_radius(),
-        2,
-    ) {
-        return 0xffff;
-    }
-    let distance = sample.edge_position & 7;
+    check_grapple_square_slope_span!(game, k, sample, 3, samus_y_pos, samus_y_radius, 2, distance);
     if game.samus_collision_direction() & 1 != 0 {
         distance
     } else {
@@ -221,20 +231,7 @@ fn PostGrappleColl_Vertical_Slope_Square(
     k: u16,
     game: &mut Game,
 ) -> u16 {
-    let bts = game.g_ram[0x16402 + usize::from(k)];
-    let index =
-        u16::from(bts & 0x1f) * 4 + (u16::from(bts >> 6) ^ ((sample.edge_position & 8) >> 2));
-    if !square_slope_occupied(
-        index,
-        sample.remaining_span,
-        sample.initial_span,
-        game.samus_x_pos(),
-        game.samus_x_radius(),
-        1,
-    ) {
-        return 0xffff;
-    }
-    let distance = sample.edge_position & 7;
+    check_grapple_square_slope_span!(game, k, sample, 2, samus_x_pos, samus_x_radius, 1, distance);
     if game.samus_collision_direction() & 1 != 0 {
         distance
     } else {
@@ -511,28 +508,38 @@ fn square_slope_delta(edge: u16, radius: u16, position: u16, negative: bool) -> 
     };
     i32::from(if negative { delta.min(0) } else { delta.max(0) }) << 16
 }
+
+macro_rules! check_square_slope_perpendicular_span {
+    (
+        $game:ident, $block_index:ident, $slope:ident, $collision:ident,
+        $orientation_shift:literal, $position:ident, $radius:ident, $sample_mask:literal $(,)?
+    ) => {
+        let orientation = u16::from($game.g_ram[0x16402 + usize::from($block_index)] >> 6);
+        let index = $slope
+            .wrapping_mul(4)
+            .wrapping_add(orientation ^ (((*$collision).ci_r32 & 8) >> $orientation_shift));
+        let perpendicular_position = $game.$position();
+        let perpendicular_radius = $game.$radius();
+        if !square_slope_occupied(
+            index,
+            (*$collision).ci_r26,
+            (*$collision).ci_r28,
+            perpendicular_position,
+            perpendicular_radius,
+            $sample_mask,
+        ) {
+            return 0;
+        }
+    };
+}
+
 unsafe fn BlockColl_Horiz_Slope_Square(
     ci: *mut CollInfo,
     slope: u16,
     k: u16,
     game: &mut Game,
 ) -> u8 {
-    let orientation = u16::from(game.g_ram[0x16402 + usize::from(k)] >> 6);
-    let index = slope
-        .wrapping_mul(4)
-        .wrapping_add(orientation ^ (((*ci).ci_r32 & 8) >> 3));
-    let perpendicular_position = game.samus_y_pos();
-    let perpendicular_radius = game.samus_y_radius();
-    if !square_slope_occupied(
-        index,
-        (*ci).ci_r26,
-        (*ci).ci_r28,
-        perpendicular_position,
-        perpendicular_radius,
-        2,
-    ) {
-        return 0;
-    }
+    check_square_slope_perpendicular_span!(game, k, slope, ci, 3, samus_y_pos, samus_y_radius, 2);
     let negative = (*ci).ci_r18_r20 < 0;
     let radius = game.samus_x_radius();
     let position = game.samus_x_pos();
@@ -547,22 +554,7 @@ unsafe fn BlockColl_Vert_Slope_Square(
     k: u16,
     game: &mut Game,
 ) -> u8 {
-    let orientation = u16::from(game.g_ram[0x16402 + usize::from(k)] >> 6);
-    let index = slope
-        .wrapping_mul(4)
-        .wrapping_add(orientation ^ (((*ci).ci_r32 & 8) >> 2));
-    let perpendicular_position = game.samus_x_pos();
-    let perpendicular_radius = game.samus_x_radius();
-    if !square_slope_occupied(
-        index,
-        (*ci).ci_r26,
-        (*ci).ci_r28,
-        perpendicular_position,
-        perpendicular_radius,
-        1,
-    ) {
-        return 0;
-    }
+    check_square_slope_perpendicular_span!(game, k, slope, ci, 2, samus_x_pos, samus_x_radius, 1);
     let negative = (*ci).ci_r18_r20 < 0;
     let radius = game.samus_y_radius();
     let position = game.samus_y_pos();
@@ -1269,6 +1261,24 @@ unsafe fn BlockFunc_9C73(v0: u16, game: &mut Game) -> u16 {
         kBlockFunc_9C73_Tab0[(3 * r18 + 2) as usize] as u16
     }
 }
+
+macro_rules! prepare_bomb_block_collision {
+    ($game:ident, $x:ident, $y:ident, $collision:ident) => {
+        word!($game.cur_block_index = 0);
+        CalculateBlockAt($x, $y, 0, 0, $game);
+        let mut $collision: CollInfo = CollInfo {
+            ci_r18_r20: 0,
+            ci_r24: 0,
+            ci_r26: $x,
+            ci_r28: $y,
+            ci_r30: 0,
+            ci_r32: 0,
+            ci_r38: 0,
+            ci_r40: 0,
+        };
+    };
+}
+
 pub unsafe fn BombOrPowerBomb_Func1(v0: u16, game: &mut Game) {
     let mut v3: i16 = 0;
     let temp_collision_DD2: u16 = BlockFunc_9C73(v0, game);
@@ -1285,18 +1295,7 @@ pub unsafe fn BombOrPowerBomb_Func1(v0: u16, game: &mut Game) {
                     .wrapping_sub((word!(game.room_height_in_scrolls)) as i16)
                     < 0
                 {
-                    word!(game.cur_block_index = 0);
-                    CalculateBlockAt(r26, R28, 0, 0, game);
-                    let mut ci: CollInfo = CollInfo {
-                        ci_r18_r20: 0,
-                        ci_r24: 0,
-                        ci_r26: r26,
-                        ci_r28: R28,
-                        ci_r30: 0,
-                        ci_r32: 0,
-                        ci_r38: 0,
-                        ci_r40: 0,
-                    };
+                    prepare_bomb_block_collision!(game, r26, R28, ci);
                     if temp_collision_DD2 == 2 {
                         BlockColl_BombExplosion(&raw mut ci, v0, game);
                     } else {
@@ -1850,18 +1849,7 @@ pub unsafe fn BlockCollSpreadBomb(k: u16, game: &mut Game) -> u8 {
     let v1: i32 = k as i32 >> 1;
     let r26: u16 = word!(game.projectile_x_pos[v1]);
     let r28: u16 = word!(game.projectile_y_pos[v1]);
-    word!(game.cur_block_index = 0);
-    CalculateBlockAt(r26, r28, 0, 0, game);
-    let mut ci: CollInfo = CollInfo {
-        ci_r18_r20: 0,
-        ci_r24: 0,
-        ci_r26: r26,
-        ci_r28: r28,
-        ci_r30: 0,
-        ci_r32: 0,
-        ci_r38: 0,
-        ci_r40: 0,
-    };
+    prepare_bomb_block_collision!(game, r26, r28, ci);
     if word!(game.projectile_variables[v1]) == 0 {
         BlockColl_BombExplosion(&raw mut ci, k, game);
         return 0;

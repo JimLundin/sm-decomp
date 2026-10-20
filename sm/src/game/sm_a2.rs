@@ -3703,28 +3703,38 @@ pub unsafe fn JetPowerRipper_Init(game: &mut Game) {
     }
     (*E).var_C = v4;
 }
+
+macro_rules! move_ripper_and_reverse_on_collision {
+    (
+        $get_enemy:path, $game:ident, $instruction:ident, $positive_instruction:literal,
+        $negative_instruction:literal $(,)?
+    ) => {
+        let E = $get_enemy(word!($game.cur_enemy_index) as i32, $game);
+        if Enemy_MoveRight_IgnoreSlopes(
+            word!($game.cur_enemy_index),
+            (words!((*E), var_D, var_C)) as i32,
+            $game,
+        ) != 0
+        {
+            let v2: i32 = (*E).var_E as i32 >> 1;
+            if ((*E).var_D & 0x8000) == 0 {
+                (*E).var_D = crate::rtl::rom_table_word!($game, 0xa28187, (v2 + 2) as isize);
+                (*E).var_C = crate::rtl::rom_table_word!($game, 0xa28187, (v2 + 3) as isize);
+                $instruction = -$positive_instruction;
+            } else {
+                (*E).var_D = crate::rtl::rom_table_word!($game, 0xa28187, v2 as isize);
+                (*E).var_C = crate::rtl::rom_table_word!($game, 0xa28187, (v2 + 1) as isize);
+                $instruction = -$negative_instruction;
+            }
+            enemy_instruction! {[(*E).base]; instruction = $instruction as u16, timer = 1}
+            (*E).base.timer = 0;
+        }
+    };
+}
+
 pub unsafe fn JetPowerRipper_Main(game: &mut Game) {
     let mut v3: i16 = 0;
-    let E = Get_JetPowerRipper(word!(game.cur_enemy_index) as i32, game);
-    if Enemy_MoveRight_IgnoreSlopes(
-        word!(game.cur_enemy_index),
-        (words!((*E), var_D, var_C)) as i32,
-        game,
-    ) != 0
-    {
-        let v2: i32 = (*E).var_E as i32 >> 1;
-        if ((*E).var_D & 0x8000) == 0 {
-            (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 2) as isize);
-            (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 3) as isize);
-            v3 = -7456i16;
-        } else {
-            (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, v2 as isize);
-            (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 1) as isize);
-            v3 = -7436i16;
-        }
-        enemy_instruction! {[(*E).base]; instruction = v3 as u16, timer = 1}
-        (*E).base.timer = 0;
-    }
+    move_ripper_and_reverse_on_collision!(Get_JetPowerRipper, game, v3, 7456i16, 7436i16);
 }
 pub unsafe fn JetPowerRipper_Shot(game: &mut Game) {
     NormalEnemyShotAi(game);
@@ -3759,26 +3769,7 @@ pub unsafe fn Ripper_Init(game: &mut Game) {
 }
 pub unsafe fn Ripper_Main(game: &mut Game) {
     let mut v3: i16 = 0;
-    let E = Get_Ripper(word!(game.cur_enemy_index) as i32, game);
-    if Enemy_MoveRight_IgnoreSlopes(
-        word!(game.cur_enemy_index),
-        (words!((*E), var_D, var_C)) as i32,
-        game,
-    ) != 0
-    {
-        let v2: i32 = (*E).var_E as i32 >> 1;
-        if ((*E).var_D & 0x8000) == 0 {
-            (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 2) as isize);
-            (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 3) as isize);
-            v3 = -7029i16;
-        } else {
-            (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, v2 as isize);
-            (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 1) as isize);
-            v3 = -7049i16;
-        }
-        enemy_instruction! {[(*E).base]; instruction = v3 as u16, timer = 1}
-        (*E).base.timer = 0;
-    }
+    move_ripper_and_reverse_on_collision!(Get_Ripper, game, v3, 7029i16, 7049i16);
 }
 pub unsafe fn LavaSeahorse_Instr_E5FB(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     (*Get_LavaSeahorse(word!(game.cur_enemy_index) as i32, game)).var_02 = 1;
@@ -4079,35 +4070,31 @@ pub unsafe fn TimedShutter_Func_11(game: &mut Game) {
         (*E).base.y_height = 16;
     }
 }
+
+macro_rules! move_timed_shutter_to_open_limit {
+    ($enemy:ident, $limit_field:ident, $instruction:ident, $collision_height:literal) => {
+        words!(
+            (*$enemy).base,
+            y_pos,
+            y_subpos += -(words!(i32, (*$enemy), var_00, var_01)) as u32
+        );
+        let v3: i16 = (((*$enemy).$limit_field) as i16).wrapping_sub(16);
+        if (v3).wrapping_sub(((*$enemy).base.y_pos) as i16) >= 0 {
+            (*$enemy).base.y_pos = ((v3) as u16).wrapping_add(7);
+            (*$enemy).var_F = (*$enemy).var_F.wrapping_add(1);
+            enemy_instruction! {[(*$enemy).base]; timer = 1, instruction = $instruction as u16}
+            (*$enemy).base.y_height = $collision_height;
+        }
+    };
+}
+
 pub unsafe fn TimedShutter_Func_12(game: &mut Game) {
     let E = Get_TimedShutter(word!(game.cur_enemy_index) as i32, game);
-    words!(
-        (*E).base,
-        y_pos,
-        y_subpos += -(words!(i32, (*E), var_00, var_01)) as u32
-    );
-    let v3: i16 = (((*E).var_C) as i16).wrapping_sub(16);
-    if (v3).wrapping_sub(((*E).base.y_pos) as i16) >= 0 {
-        (*E).base.y_pos = ((v3) as u16).wrapping_add(7);
-        (*E).var_F = (*E).var_F.wrapping_add(1);
-        enemy_instruction! {[(*E).base]; timer = 1, instruction = addr_kTimedShutter_Ilist_E9A4 as u16}
-        (*E).base.y_height = 24;
-    }
+    move_timed_shutter_to_open_limit!(E, var_C, addr_kTimedShutter_Ilist_E9A4, 24);
 }
 pub unsafe fn TimedShutter_Func_13(game: &mut Game) {
     let E = Get_TimedShutter(word!(game.cur_enemy_index) as i32, game);
-    words!(
-        (*E).base,
-        y_pos,
-        y_subpos += -(words!(i32, (*E), var_00, var_01)) as u32
-    );
-    let v3: i16 = (((*E).var_D) as i16).wrapping_sub(16);
-    if (v3).wrapping_sub(((*E).base.y_pos) as i16) >= 0 {
-        (*E).base.y_pos = ((v3) as u16).wrapping_add(7);
-        (*E).var_F = (*E).var_F.wrapping_add(1);
-        enemy_instruction! {[(*E).base]; timer = 1, instruction = addr_kTimedShutter_Ilist_E9AA as u16}
-        (*E).base.y_height = 32;
-    }
+    move_timed_shutter_to_open_limit!(E, var_D, addr_kTimedShutter_Ilist_E9AA, 32);
 }
 pub unsafe fn TimedShutter_Func_14(game: &mut Game) {
     let E = Get_TimedShutter(word!(game.cur_enemy_index) as i32, game);
@@ -4133,6 +4120,36 @@ pub unsafe fn ShootableShutter_Init(game: &mut Game) {
     (*gEnemyData(word!(game.cur_enemy_index) as i32, game)).current_instruction =
         addr_kTimedShutter_Ilist_E9AA as u16;
 }
+
+macro_rules! decode_platform_motion_parameters {
+    (
+        $enemy:ident, $extra_properties_low:ident, $position_field:ident, $low_limit:ident,
+        $high_limit:ident $(,)?
+    ) => {
+        (*$enemy).var_02 = $extra_properties_low;
+        (*$enemy).var_08 = (16u16).wrapping_mul($extra_properties_low);
+        let extra_properties_high: u16 =
+            byte!((*$enemy).base.extra_properties; 1) as u16;
+        (*$enemy).var_03 = extra_properties_high;
+        (*$enemy).var_09 = (16u16).wrapping_mul(extra_properties_high);
+        let rfpm_parameter_1_low: u16 = byte!((*$enemy).parameter_1; 0) as u16;
+        (*$enemy).var_04 = rfpm_parameter_1_low;
+        (*$enemy).var_07 = (2u16).wrapping_mul(rfpm_parameter_1_low);
+        (*$enemy).var_05 = byte!((*$enemy).parameter_1; 1) as u16;
+        let rfpm_parameter_2: u16 = (*$enemy).parameter_2;
+        (*$enemy).var_06 = rfpm_parameter_2;
+        (*$enemy).var_B = rfpm_parameter_2;
+        let y_pos: u16 = (*$enemy).base.$position_field;
+        (*$enemy).$low_limit = y_pos;
+        (*$enemy).$high_limit = ((*$enemy).var_05).wrapping_add(y_pos);
+        if (*$enemy).var_01 == 0 {
+            let v10: u16 = (*$enemy).base.$position_field;
+            (*$enemy).$high_limit = v10;
+            (*$enemy).$low_limit = (v10).wrapping_sub((*$enemy).var_05);
+        }
+    };
+}
+
 pub unsafe fn RisingFallingPlatform_Func_1(k: u16, game: &mut Game) {
     let E = Get_RisingFallingPlatform(k as i32, game);
     let current_instruction_low: u16 = byte!((*E).base.current_instruction; 0) as u16;
@@ -4146,26 +4163,7 @@ pub unsafe fn RisingFallingPlatform_Func_1(k: u16, game: &mut Game) {
     (*E).var_01 = current_instruction_high;
     (*E).var_20 = current_instruction_high;
     let extra_properties_low: u16 = byte!((*E).base.extra_properties; 0) as u16;
-    (*E).var_02 = extra_properties_low;
-    (*E).var_08 = (16u16).wrapping_mul(extra_properties_low);
-    let extra_properties_high: u16 = byte!((*E).base.extra_properties; 1) as u16;
-    (*E).var_03 = extra_properties_high;
-    (*E).var_09 = (16u16).wrapping_mul(extra_properties_high);
-    let rfpm_parameter_1_low: u16 = byte!((*E).parameter_1; 0) as u16;
-    (*E).var_04 = rfpm_parameter_1_low;
-    (*E).var_07 = (2u16).wrapping_mul(rfpm_parameter_1_low);
-    (*E).var_05 = byte!((*E).parameter_1; 1) as u16;
-    let rfpm_parameter_2: u16 = (*E).parameter_2;
-    (*E).var_06 = rfpm_parameter_2;
-    (*E).var_B = rfpm_parameter_2;
-    let y_pos: u16 = (*E).base.y_pos;
-    (*E).var_0F = y_pos;
-    (*E).var_10 = ((*E).var_05).wrapping_add(y_pos);
-    if (*E).var_01 == 0 {
-        let v10: u16 = (*E).base.y_pos;
-        (*E).var_10 = v10;
-        (*E).var_0F = (v10).wrapping_sub((*E).var_05);
-    }
+    decode_platform_motion_parameters!(E, extra_properties_low, y_pos, var_0F, var_10);
     (*E).var_A = ((0xa2ef09i32) as u16);
     (*E).base.extra_properties = 0;
     (*E).var_0A = 0;
@@ -4364,26 +4362,7 @@ pub unsafe fn HorizontalShootableShutter_Func_1(k: u16, game: &mut Game) {
     (*E).var_01 = current_instruction_high;
     (*E).var_20 = (current_instruction_high) ^ (1u16);
     let extra_properties_low: u16 = byte!((*E).base.extra_properties; 0) as u16;
-    (*E).var_02 = extra_properties_low;
-    (*E).var_08 = (16u16).wrapping_mul(extra_properties_low);
-    let extra_properties_high: u16 = byte!((*E).base.extra_properties; 1) as u16;
-    (*E).var_03 = extra_properties_high;
-    (*E).var_09 = (16u16).wrapping_mul(extra_properties_high);
-    let rfpm_parameter_1_low: u16 = byte!((*E).parameter_1; 0) as u16;
-    (*E).var_04 = rfpm_parameter_1_low;
-    (*E).var_07 = (2u16).wrapping_mul(rfpm_parameter_1_low);
-    (*E).var_05 = byte!((*E).parameter_1; 1) as u16;
-    let rfpm_parameter_2: u16 = (*E).parameter_2;
-    (*E).var_06 = rfpm_parameter_2;
-    (*E).var_B = rfpm_parameter_2;
-    let x_pos: u16 = (*E).base.x_pos;
-    (*E).var_11 = x_pos;
-    (*E).var_12 = ((*E).var_05).wrapping_add(x_pos);
-    if (*E).var_01 == 0 {
-        let v10: u16 = (*E).base.x_pos;
-        (*E).var_12 = v10;
-        (*E).var_11 = (v10).wrapping_sub((*E).var_05);
-    }
+    decode_platform_motion_parameters!(E, extra_properties_low, x_pos, var_11, var_12);
     (*E).var_A = ((0xa2f224i32) as u16);
     (*E).var_15 = word!(game.samus_x_pos);
     (*E).base.extra_properties = 0;

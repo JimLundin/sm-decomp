@@ -246,19 +246,26 @@ pub unsafe fn Draygon_Func_5(game: &mut Game) {
     (*E).var_B = v6;
     (*E).var_C = v6;
 }
+
+macro_rules! advance_draygon_scripted_y {
+    ($game:ident, $enemy:ident, $instruction:ident) => {
+        Draygon_Func_3($game);
+        Draygon_Func_35($game);
+        let $enemy = Get_Draygon(0, $game);
+        let draygon_var_B: u16 = (*$enemy).var_B;
+        if draygon_var_B == 104 {
+            let E3 = Get_Draygon(0xc0, $game);
+            enemy_instruction! {[(*E3).base]; instruction = $instruction as u16, timer = 1}
+        }
+        (*Get_Draygon(word!($game.cur_enemy_index) as i32, $game))
+            .base
+            .y_pos = *((ram_ptr!($game, u16; 0x9002) as *mut u8)
+            .offset(draygon_var_B as i32 as isize) as *mut u16);
+    };
+}
+
 pub unsafe fn Draygon_Func_6(game: &mut Game) {
-    Draygon_Func_3(game);
-    Draygon_Func_35(game);
-    let E = Get_Draygon(0, game);
-    let draygon_var_B: u16 = (*E).var_B;
-    if draygon_var_B == 104 {
-        let E3 = Get_Draygon(0xc0, game);
-        enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_9C06 as u16, timer = 1}
-    }
-    (*Get_Draygon(word!(game.cur_enemy_index) as i32, game))
-        .base
-        .y_pos = *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(draygon_var_B as i32 as isize)
-        as *mut u16);
+    advance_draygon_scripted_y!(game, E, addr_kDraygon_Ilist_9C06);
     (*E).var_B = ((*E).var_B).wrapping_sub(4);
     if (*E).var_B != 0 {
         words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
@@ -316,18 +323,7 @@ pub unsafe fn Draygon_Func_10(game: &mut Game) {
     (*E).var_B = (*E).var_C;
 }
 pub unsafe fn Draygon_Func_11(game: &mut Game) {
-    Draygon_Func_3(game);
-    Draygon_Func_35(game);
-    let E = Get_Draygon(0, game);
-    let draygon_var_B: u16 = (*E).var_B;
-    if draygon_var_B == 104 {
-        let E3 = Get_Draygon(0xc0, game);
-        enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_9813 as u16, timer = 1}
-    }
-    (*Get_Draygon(word!(game.cur_enemy_index) as i32, game))
-        .base
-        .y_pos = *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(draygon_var_B as i32 as isize)
-        as *mut u16);
+    advance_draygon_scripted_y!(game, E, addr_kDraygon_Ilist_9813);
     (*E).var_B = ((*E).var_B).wrapping_sub(4);
     if (*E).var_B != 0 {
         words!(
@@ -351,18 +347,7 @@ pub unsafe fn Draygon_Func_12(game: &mut Game) {
     (*E).var_A = ((0xa58a90i32) as u16);
 }
 pub unsafe fn Draygon_Func_13(game: &mut Game) {
-    Draygon_Func_3(game);
-    Draygon_Func_35(game);
-    let E = Get_Draygon(0, game);
-    let draygon_var_B: u16 = (*E).var_B;
-    if draygon_var_B == 104 {
-        let E3 = Get_Draygon(0xc0, game);
-        enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_97E7 as u16, timer = 1}
-    }
-    (*Get_Draygon(word!(game.cur_enemy_index) as i32, game))
-        .base
-        .y_pos = *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(draygon_var_B as i32 as isize)
-        as *mut u16);
+    advance_draygon_scripted_y!(game, E, addr_kDraygon_Ilist_97E7);
     (*E).var_B = ((*E).var_B).wrapping_add(4);
     if (*E).var_B == (*E).var_C {
         if (word!(game.random_number) & 1) != 0 {
@@ -884,21 +869,28 @@ pub unsafe fn Draygon_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const
     (*Get_Draygon(0xc0i32, game)).base.instruction_timer = 1;
     jp.offset(4)
 }
+
+macro_rules! copy_draygon_hurt_palette {
+    ($game:ident, $palette:ident, $destination:ident, $row_offset:literal) => {
+        if ((*Get_Draygon(word!($game.cur_enemy_index) as i32, $game))
+            .base
+            .flash_timer
+            & 2)
+            != 0
+        {
+            $palette = addr_word_A5A297 as u16;
+        }
+        memcpy(
+            ram_ptr!($game, c_void; $destination as i32 as isize, $row_offset),
+            RomPtr_A5($palette, $game) as *const c_void,
+            32 as size_t,
+        );
+    };
+}
+
 pub unsafe fn Draygon_Hurt(game: &mut Game) {
     let mut v0: u16 = addr_kDraygon_MorePalettes2 as u16;
-    if ((*Get_Draygon(word!(game.cur_enemy_index) as i32, game))
-        .base
-        .flash_timer
-        & 2)
-        != 0
-    {
-        v0 = addr_word_A5A297 as u16;
-    }
-    memcpy(
-        ram_ptr!(game, c_void; addr_kDraygon_BigSprmap_C08F as i32 as isize, 17),
-        RomPtr_A5(v0, game) as *const c_void,
-        32 as size_t,
-    );
+    copy_draygon_hurt_palette!(game, v0, addr_kDraygon_BigSprmap_C08F, 17);
     if ((*Get_Draygon(word!(game.cur_enemy_index) as i32, game))
         .base
         .flash_timer
@@ -917,19 +909,7 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
         }
     }
     let mut v5: u16 = addr_kDraygon_Palette as u16;
-    if ((*Get_Draygon(word!(game.cur_enemy_index) as i32, game))
-        .base
-        .flash_timer
-        & 2)
-        != 0
-    {
-        v5 = addr_word_A5A297 as u16;
-    }
-    memcpy(
-        ram_ptr!(game, c_void; addr_kDraygon_BigSprmap_C11B as i32 as isize, 197),
-        RomPtr_A5(v5, game) as *const c_void,
-        32 as size_t,
-    );
+    copy_draygon_hurt_palette!(game, v5, addr_kDraygon_BigSprmap_C11B, 197);
     if (word!(game.samus_grapple_flags) & 1) != 0 {
         let E = Get_Draygon(0, game);
         if ((*E).base.frame_counter & 7) == 0 {

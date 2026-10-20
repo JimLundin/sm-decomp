@@ -588,54 +588,57 @@ pub unsafe fn Kraid_GetsBig_FadeInRoomBg(game: &mut Game) {
         enemy_instruction! {[(*E5).base]; timer = 1, instruction = addr_kKraid_Ilist_8887 as u16}
     }
 }
+
+macro_rules! advance_kraid_thinking_timer {
+    ($enemy:ident, $next_state:literal, $game:ident) => {
+        let kraid_thinking: u16 = (*$enemy).kraid_thinking;
+        if kraid_thinking != 0 {
+            let v2: u16 = (kraid_thinking).wrapping_sub(1);
+            (*$enemy).kraid_thinking = v2;
+            if v2 == 0 {
+                (*$enemy).kraid_var_A = (($next_state) as u16);
+                (*$enemy).kraid_var_B = addr_stru_A796DA as u16;
+                (*$enemy).kraid_var_C = (*($game.g_rom.offset(crate::rtl::lorom_offset(0xa796d2))
+                    as *mut KraidInstrList))
+                    .timer;
+            }
+        }
+    };
+}
+
 pub unsafe fn Kraid_Mainloop_Thinking(game: &mut Game) {
     let E = Get_Kraid(0, game);
-    let kraid_thinking: u16 = (*E).kraid_thinking;
-    if kraid_thinking != 0 {
-        let v2: u16 = (kraid_thinking).wrapping_sub(1);
-        (*E).kraid_thinking = v2;
-        if v2 == 0 {
-            (*E).kraid_var_A = ((0xa7bbeai32) as u16);
-            (*E).kraid_var_B = addr_stru_A796DA as u16;
-            (*E).kraid_var_C = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa796d2))
-                as *mut KraidInstrList))
-                .timer;
-        }
-    }
+    advance_kraid_thinking_timer!(E, 0xa7bbeai32, game);
 }
 pub unsafe fn Kraid_GetsBig_Thinking(game: &mut Game) {
     let E = Get_Kraid(0, game);
-    let kraid_thinking: u16 = (*E).kraid_thinking;
-    if kraid_thinking != 0 {
-        let v2: u16 = (kraid_thinking).wrapping_sub(1);
-        (*E).kraid_thinking = v2;
-        if v2 == 0 {
-            (*E).kraid_var_A = ((0xa7aee4i32) as u16);
-            (*E).kraid_var_B = addr_stru_A796DA as u16;
-            (*E).kraid_var_C = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa796d2))
-                as *mut KraidInstrList))
-                .timer;
-        }
-    }
+    advance_kraid_thinking_timer!(E, 0xa7aee4i32, game);
 }
+
+macro_rules! advance_kraid_mouth_hit_response {
+    ($enemy:ident) => {
+        (*$enemy).kraid_var_C = 90;
+        let kraid_mouth_flags: u16 = (*$enemy).kraid_mouth_flags;
+        if (kraid_mouth_flags & 4) != 0 && {
+            let mut v2: u16 = (kraid_mouth_flags).wrapping_sub(256);
+            (*$enemy).kraid_mouth_flags = v2;
+            (v2 & 0xff00) != 0
+        } {
+            (*$enemy).kraid_var_A = ((0xa7b92di32) as u16);
+            (*$enemy).kraid_var_F = 64;
+            (*$enemy).kraid_next = ((0xa7b6bfi32) as u16);
+            (*$enemy).field_2 = 2;
+        } else {
+            (*$enemy).kraid_mouth_flags = 0;
+        }
+    };
+}
+
 pub unsafe fn Kraid_Shot_MouthIsOpen(game: &mut Game) {
     let E = Get_Kraid(0, game);
     if Kraid_ProcessKraidInstr(game) == 0xffff {
         (*E).kraid_var_A = ((0xa7aea4i32) as u16);
-        (*E).kraid_var_C = 90;
-        let kraid_mouth_flags: u16 = (*E).kraid_mouth_flags;
-        if (kraid_mouth_flags & 4) != 0 && {
-            let mut v2: u16 = (kraid_mouth_flags).wrapping_sub(256);
-            (*E).kraid_mouth_flags = v2;
-            (v2 & 0xff00) != 0
-        } {
-            (*E).kraid_var_A = ((0xa7b92di32) as u16);
-            (*E).kraid_var_F = 64;
-            (*E).kraid_next = ((0xa7b6bfi32) as u16);
-            (*E).field_2 = 2;
-        } else {
-            (*E).kraid_mouth_flags = 0;
-        }
+        advance_kraid_mouth_hit_response!(E);
     }
 }
 pub unsafe fn Kraid_ProcessKraidInstr(game: &mut Game) -> u16 {
@@ -1434,20 +1437,7 @@ pub unsafe fn Kraid_Main_AttackWithMouthOpen(game: &mut Game) {
     let E = Get_Kraid(0, game);
     if Kraid_ProcessKraidInstr(game) == 0xffff {
         Kraid_Mainloop_Thinking_Setup(game);
-        (*E).kraid_var_C = 90;
-        let kraid_mouth_flags: u16 = (*E).kraid_mouth_flags;
-        if (kraid_mouth_flags & 4) != 0 && {
-            let mut v3: u16 = (kraid_mouth_flags).wrapping_sub(256);
-            (*E).kraid_mouth_flags = v3;
-            (v3 & 0xff00) != 0
-        } {
-            (*E).kraid_var_A = ((0xa7b92di32) as u16);
-            (*E).kraid_var_F = 64;
-            (*E).kraid_next = ((0xa7b6bfi32) as u16);
-            (*E).field_2 = 2;
-        } else {
-            (*E).kraid_mouth_flags = 0;
-        }
+        advance_kraid_mouth_hit_response!(E);
     } else if *(RomPtr_A7(((*E).kraid_var_B).wrapping_sub(8u16), game) as *mut u16).offset(1) as i32
         == addr_kKraidTilemaps_3 as i32
         && ((*E).kraid_var_C & 0xf) == 0
@@ -2206,33 +2196,29 @@ pub unsafe fn Kraid_Raise_LoadTilemapBottomAndShake(game: &mut Game) {
     QueueMusic_Delayed8(5, game);
     Kraid_UpdateBG2TilemapBottomHalf(game);
 }
-pub unsafe fn Kraid_Raise_SpawnRandomEarthquakeProjs16(game: &mut Game) {
-    Kraid_RestrictSamusXtoFirstScreen_2(game);
-    let E = Get_Kraid(0, game);
-    let v1: u16 = ((*E).kraid_var_F).wrapping_sub(1);
-    (*E).kraid_var_F = v1;
-    if v1 != 0 {
-        if (v1 & 0xf) == 0 {
-            Kraid_SpawnRandomQuakeProjs(game);
+
+macro_rules! spawn_kraid_quake_projectiles_until_timer {
+    ($game:ident, $interval_mask:literal, $next_state:literal, $next_timer:literal) => {
+        Kraid_RestrictSamusXtoFirstScreen_2($game);
+        let E = Get_Kraid(0, $game);
+        let v1: u16 = ((*E).kraid_var_F).wrapping_sub(1);
+        (*E).kraid_var_F = v1;
+        if v1 != 0 {
+            if (v1 & $interval_mask) == 0 {
+                Kraid_SpawnRandomQuakeProjs($game);
+            }
+        } else {
+            (*E).kraid_var_A = (($next_state) as u16);
+            (*E).kraid_var_F = $next_timer;
         }
-    } else {
-        (*E).kraid_var_A = ((0xa7c902i32) as u16);
-        (*E).kraid_var_F = 96;
     };
 }
+
+pub unsafe fn Kraid_Raise_SpawnRandomEarthquakeProjs16(game: &mut Game) {
+    spawn_kraid_quake_projectiles_until_timer!(game, 0xf, 0xa7c902i32, 96);
+}
 pub unsafe fn Kraid_Raise_SpawnRandomEarthquakeProjs8(game: &mut Game) {
-    Kraid_RestrictSamusXtoFirstScreen_2(game);
-    let E = Get_Kraid(0, game);
-    let v1: u16 = ((*E).kraid_var_F).wrapping_sub(1);
-    (*E).kraid_var_F = v1;
-    if v1 != 0 {
-        if (v1 & 7) == 0 {
-            Kraid_SpawnRandomQuakeProjs(game);
-        }
-    } else {
-        (*E).kraid_var_A = ((0xa7c924i32) as u16);
-        (*E).kraid_var_F = 288;
-    };
+    spawn_kraid_quake_projectiles_until_timer!(game, 7, 0xa7c924i32, 288);
 }
 pub unsafe fn Kraid_Raise_Handler(game: &mut Game) {
     Kraid_RestrictSamusXtoFirstScreen_2(game);

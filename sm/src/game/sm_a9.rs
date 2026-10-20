@@ -4023,18 +4023,7 @@ pub unsafe fn ShitroidInCutscene_HandleShitroidDeathExplosions(k: u16, game: &mu
         }
         (*E).var_07 = v3;
         let v4: i32 = ((4u16).wrapping_mul(v3)) as i32 >> 1;
-        game.eproj_spawn_pt = Point16U {
-            x: (((*E).base.x_pos).wrapping_add(crate::rtl::rom_table_word!(
-                game,
-                0xa9cdfc,
-                v4 as isize
-            ))),
-            y: (((*E).base.y_pos).wrapping_add(crate::rtl::rom_table_word!(
-                game,
-                0xa9cdfc,
-                (v4 + 1) as isize
-            ))),
-        };
+        crate::game::sm_a6::set_explosion_spawn_offset!(game, E, 0xa9cdfc, v4);
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 3, game);
         QueueSfx3_Max3(0x13, game);
     } else {
@@ -4132,37 +4121,7 @@ pub unsafe fn ShitroidInCutscene_UpdateSpeedAndAngle(
     game: &mut Game,
 ) {
     let E = Get_ShitdroidInCutscene(k as i32, game);
-    if r22 != (*E).var_0B {
-        if ((r22) as i16).wrapping_sub(((*E).var_0B) as i16) >= 0 {
-            let mut v3: u16 = ((*E).var_0B).wrapping_add(32);
-            if v3 as i32 - r22 as i32 & 0x8000 == 0 {
-                v3 = r22;
-            }
-            (*E).var_0B = v3;
-        } else {
-            let mut v2: u16 = ((*E).var_0B).wrapping_sub(32);
-            if v2 as i32 - r22 as i32 & 0x8000 != 0 {
-                v2 = r22;
-            }
-            (*E).var_0B = v2;
-        }
-    }
-    let mut v4: u16 = 0;
-
-    let use_target_angle: bool = if (r18 & 0x8000) != 0 {
-        v4 = ((*E).var_0A).wrapping_add(r18);
-        (v4 as i32 - r20 as i32 & 0x8000 != 0)
-    } else {
-        v4 = ((*E).var_0A).wrapping_add(r18);
-        (v4 as i32 - r20 as i32 & 0x8000 == 0)
-    };
-    if use_target_angle {
-        v4 = r20;
-    }
-    (*E).var_0A = v4;
-    r18 = byte!(v4; 1) as u16;
-    (*E).var_B = Math_MultBySin((*E).var_0B, r18);
-    (*E).var_C = Math_MultByCos((*E).var_0B, r18);
+    crate::game::sm_a6::steer_enemy_speed_and_angle!(r22, E, r18, r20);
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16) -> *const u16;
     Shitroid_Instr_1 [addr_kShitroid_Ilist_CFA2 as i32 as usize as *const u16] { };
@@ -4452,6 +4411,31 @@ pub unsafe fn DeadTorizo_Func_0(game: &mut Game) -> u8 {
     }
     0
 }
+
+macro_rules! queue_dead_torizo_tile_transfers {
+    ($game:ident, $transfer_table:literal, $entry:ident, $tail:ident) => {
+        let mut v8: u16 = 0;
+        let mut v9: u16 = crate::rtl::rom_table_word!($game, $transfer_table, 0);
+        loop {
+            $entry = gVramWriteEntry($tail as i32, $game);
+            (*$entry).size = v9;
+            let v11: i32 = v8 as i32 >> 1;
+            *((&raw mut (*$entry).src.addr as *mut u8).offset(1) as *mut VoidP) =
+                crate::rtl::rom_table_word!($game, $transfer_table, (v11 + 1) as isize);
+            (*$entry).src.addr =
+                crate::rtl::rom_table_word!($game, $transfer_table, (v11 + 2) as isize);
+            (*$entry).vram_dst =
+                crate::rtl::rom_table_word!($game, $transfer_table, (v11 + 3) as isize);
+            $tail = ($tail).wrapping_add(7);
+            v8 = (v8).wrapping_add(8);
+            v9 = crate::rtl::rom_table_word!($game, $transfer_table, (v8 >> 1) as isize);
+            if (v9 == 0) {
+                break;
+            }
+        }
+    };
+}
+
 pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
     let mut v5 = null_mut::<VramWriteEntry>();
     let mut v10 = null_mut::<VramWriteEntry>();
@@ -4460,41 +4444,9 @@ pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
     (*E).var_00 = v1;
     let mut v3: u16 = word!(game.vram_write_queue_tail);
     if v1 & 1 != 0 {
-        let mut v8: u16 = 0;
-        let mut v9: u16 = crate::rtl::rom_table_word!(game, 0xa9d583, 0);
-        loop {
-            v10 = gVramWriteEntry(v3 as i32, game);
-            (*v10).size = v9;
-            let v11: i32 = v8 as i32 >> 1;
-            *((&raw mut (*v10).src.addr as *mut u8).offset(1) as *mut VoidP) =
-                crate::rtl::rom_table_word!(game, 0xa9d583, (v11 + 1) as isize);
-            (*v10).src.addr = crate::rtl::rom_table_word!(game, 0xa9d583, (v11 + 2) as isize);
-            (*v10).vram_dst = crate::rtl::rom_table_word!(game, 0xa9d583, (v11 + 3) as isize);
-            v3 = (v3).wrapping_add(7);
-            v8 = (v8).wrapping_add(8);
-            v9 = crate::rtl::rom_table_word!(game, 0xa9d583, (v8 >> 1) as isize);
-            if (v9 == 0) {
-                break;
-            }
-        }
+        queue_dead_torizo_tile_transfers!(game, 0xa9d583, v10, v3);
     } else {
-        let mut v2: u16 = 0;
-        let mut v4: u16 = crate::rtl::rom_table_word!(game, 0xa9d549, 0);
-        loop {
-            v5 = gVramWriteEntry(v3 as i32, game);
-            (*v5).size = v4;
-            let v6: i32 = v2 as i32 >> 1;
-            *((&raw mut (*v5).src.addr as *mut u8).offset(1) as *mut VoidP) =
-                crate::rtl::rom_table_word!(game, 0xa9d549, (v6 + 1) as isize);
-            (*v5).src.addr = crate::rtl::rom_table_word!(game, 0xa9d549, (v6 + 2) as isize);
-            (*v5).vram_dst = crate::rtl::rom_table_word!(game, 0xa9d549, (v6 + 3) as isize);
-            v3 = (v3).wrapping_add(7);
-            v2 = (v2).wrapping_add(8);
-            v4 = crate::rtl::rom_table_word!(game, 0xa9d549, (v2 >> 1) as isize);
-            if (v4 == 0) {
-                break;
-            }
-        }
+        queue_dead_torizo_tile_transfers!(game, 0xa9d549, v5, v3);
     }
     (*Get_DeadEnemy(0i32, game)).var_22 = 0;
     word!(game.vram_write_queue_tail = v3);
@@ -4597,53 +4549,39 @@ pub unsafe fn DeadSidehopper_Init_1(game: &mut Game) {
     );
     InitializeEnemyCorpseRotting(word!(game.cur_enemy_index), addr_stru_A9DD78 as u16, game);
 }
+
+macro_rules! initialize_rotting_enemy_corpse {
+    (
+        $enemy:ident, $state_address:literal, $game:ident, $instruction_table:literal,
+        $corpse_table:literal $(,)?
+    ) => {
+        (*$enemy).palette_index = 3584;
+        (*$enemy).ai_var_A = (($state_address) as u16);
+        let v2: i32 = (*$enemy).parameter_1 as i32 >> 1;
+        Enemy_SetInstrList(
+            word!($game.cur_enemy_index),
+            crate::rtl::rom_table_word!($game, $instruction_table, v2 as isize),
+            $game,
+        );
+        InitializeEnemyCorpseRotting(
+            word!($game.cur_enemy_index),
+            crate::rtl::rom_table_word!($game, $corpse_table, v2 as isize),
+            $game,
+        );
+    };
+}
+
 pub unsafe fn DeadZoomer_Init(game: &mut Game) {
     let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    (*v1).palette_index = 3584;
-    (*v1).ai_var_A = ((0xa9da69i32) as u16);
-    let v2: i32 = (*v1).parameter_1 as i32 >> 1;
-    Enemy_SetInstrList(
-        word!(game.cur_enemy_index),
-        crate::rtl::rom_table_word!(game, 0xa9d86a, v2 as isize),
-        game,
-    );
-    InitializeEnemyCorpseRotting(
-        word!(game.cur_enemy_index),
-        crate::rtl::rom_table_word!(game, 0xa9d870, v2 as isize),
-        game,
-    );
+    initialize_rotting_enemy_corpse!(v1, 0xa9da69i32, game, 0xa9d86a, 0xa9d870);
 }
 pub unsafe fn DeadRipper_Init(game: &mut Game) {
     let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    (*v1).palette_index = 3584;
-    (*v1).ai_var_A = ((0xa9da73i32) as u16);
-    let v2: i32 = (*v1).parameter_1 as i32 >> 1;
-    Enemy_SetInstrList(
-        word!(game.cur_enemy_index),
-        crate::rtl::rom_table_word!(game, 0xa9d897, v2 as isize),
-        game,
-    );
-    InitializeEnemyCorpseRotting(
-        word!(game.cur_enemy_index),
-        crate::rtl::rom_table_word!(game, 0xa9d89b, v2 as isize),
-        game,
-    );
+    initialize_rotting_enemy_corpse!(v1, 0xa9da73i32, game, 0xa9d897, 0xa9d89b);
 }
 pub unsafe fn DeadSkree_Init(game: &mut Game) {
     let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    (*v1).palette_index = 3584;
-    (*v1).ai_var_A = ((0xa9da6ei32) as u16);
-    let v2: i32 = (*v1).parameter_1 as i32 >> 1;
-    Enemy_SetInstrList(
-        word!(game.cur_enemy_index),
-        crate::rtl::rom_table_word!(game, 0xa9d8c0, v2 as isize),
-        game,
-    );
-    InitializeEnemyCorpseRotting(
-        word!(game.cur_enemy_index),
-        crate::rtl::rom_table_word!(game, 0xa9d8c6, v2 as isize),
-        game,
-    );
+    initialize_rotting_enemy_corpse!(v1, 0xa9da6ei32, game, 0xa9d8c0, 0xa9d8c6);
 }
 pub unsafe fn DeadSidehopper_Powerbomb(game: &mut Game) {
     if (*Get_DeadSidehopper(word!(game.cur_enemy_index) as i32, game)).var_08 >= 8 {

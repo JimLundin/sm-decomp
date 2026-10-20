@@ -1458,20 +1458,27 @@ pub unsafe fn PlmSetup_BTS_Brinstar_0x81_Ceilingplant(j: u16, game: &mut Game) -
     }
     0
 }
+
+macro_rules! find_plm_at_block {
+    ($found:ident, $plm_offset:ident, $block:ident, $game:ident) => {
+        let $found: bool;
+        let mut $plm_offset: u16 = 78;
+        loop {
+            if ($block == word!($game.plm_block_indices[($plm_offset >> 1)])) {
+                $found = true;
+                break;
+            }
+            $plm_offset = ($plm_offset).wrapping_sub(2);
+            if ($plm_offset & 0x8000) != 0 {
+                $found = false;
+                break;
+            }
+        }
+    };
+}
+
 pub unsafe fn ActivateStationIfSamusCannonLinedUp(a: u16, j: u16, game: &mut Game) -> u8 {
-    let found_plm: bool;
-    let mut v2: u16 = 78;
-    loop {
-        if (a == word!(game.plm_block_indices[(v2 >> 1)])) {
-            found_plm = true;
-            break;
-        }
-        v2 = (v2).wrapping_sub(2);
-        if (v2 & 0x8000) != 0 {
-            found_plm = false;
-            break;
-        }
-    }
+    find_plm_at_block!(found_plm, v2, a, game);
     if found_plm {
         CalculatePlmBlockCoords(word!(game.plm_id), game);
         if ((16u16).wrapping_mul(word!(game.plm_y_block))) | 0xb == word!(game.samus_y_pos) {
@@ -2380,19 +2387,7 @@ crate::forward_calls! { pub unsafe fn (j: u16, game: &mut Game) -> u8;
     );
 }
 pub unsafe fn sub_84C64C(j: u16, a: u16, game: &mut Game) -> u8 {
-    let found_plm: bool;
-    let mut v2: u16 = 78;
-    loop {
-        if (a == word!(game.plm_block_indices[(v2 >> 1)])) {
-            found_plm = true;
-            break;
-        }
-        v2 = (v2).wrapping_sub(2);
-        if (v2 & 0x8000) != 0 {
-            found_plm = false;
-            break;
-        }
-    }
+    find_plm_at_block!(found_plm, v2, a, game);
     if found_plm {
         let mut v3: i32 = 0;
         v3 = v2 as i32 >> 1;
@@ -2445,6 +2440,24 @@ pub unsafe fn PlmSetup_C82E_UpwardsOpenGate(j: u16, game: &mut Game) -> u8 {
     SetBts0x10FiveStepsUp(j, game);
     0
 }
+
+macro_rules! install_optional_gate_block {
+    ($game:ident, $block_table:literal, $plm_index:ident, $neighbor_operation:ident) => {
+        let v2: u16 = crate::rtl::rom_table_word!(
+            $game,
+            $block_table,
+            (word!($game.plm_room_arguments[$plm_index]) >> 1) as isize
+        );
+        if v2 != 0 {
+            WriteLevelDataBlockTypeAndBts(
+                (word!($game.plm_block_indices[$plm_index])).$neighbor_operation(2),
+                v2,
+                $game,
+            );
+        }
+    };
+}
+
 pub unsafe fn PlmSetup_C836_DownwardsGateShootblock(j: u16, game: &mut Game) -> u8 {
     let v1: i32 = j as i32 >> 1;
     word!(
@@ -2454,30 +2467,8 @@ pub unsafe fn PlmSetup_C836_DownwardsGateShootblock(j: u16, game: &mut Game) -> 
             (word!(game.plm_room_arguments[v1]) >> 1) as isize,
         )
     );
-    let v2: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x84c71a,
-        (word!(game.plm_room_arguments[v1]) >> 1) as isize
-    );
-    if v2 != 0 {
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.plm_block_indices[v1])).wrapping_sub(2),
-            v2,
-            game,
-        );
-    }
-    let v3: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x84c72a,
-        (word!(game.plm_room_arguments[v1]) >> 1) as isize
-    );
-    if v3 != 0 {
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.plm_block_indices[v1])).wrapping_add(2),
-            v3,
-            game,
-        );
-    }
+    install_optional_gate_block!(game, 0x84c71a, v1, wrapping_sub);
+    install_optional_gate_block!(game, 0x84c72a, v1, wrapping_add);
     0
 }
 pub unsafe fn PlmSetup_C73A_UpwardsGateShootblock(j: u16, game: &mut Game) -> u8 {
@@ -2489,30 +2480,8 @@ pub unsafe fn PlmSetup_C73A_UpwardsGateShootblock(j: u16, game: &mut Game) -> u8
             (word!(game.plm_room_arguments[v1]) >> 1) as isize,
         )
     );
-    let v2: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x84c774,
-        (word!(game.plm_room_arguments[v1]) >> 1) as isize
-    );
-    if v2 != 0 {
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.plm_block_indices[v1])).wrapping_sub(2),
-            v2,
-            game,
-        );
-    }
-    let v3: u16 = crate::rtl::rom_table_word!(
-        game,
-        0x84c784,
-        (word!(game.plm_room_arguments[v1]) >> 1) as isize
-    );
-    if v3 != 0 {
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.plm_block_indices[v1])).wrapping_add(2),
-            v3,
-            game,
-        );
-    }
+    install_optional_gate_block!(game, 0x84c774, v1, wrapping_sub);
+    install_optional_gate_block!(game, 0x84c784, v1, wrapping_add);
     0
 }
 pub unsafe fn PlmSetup_C794_GreyDoor(j: u16, game: &mut Game) -> u8 {

@@ -908,6 +908,25 @@ pub unsafe fn Crocomire_92D8(game: &mut Game) {
         crate::update_place! { reference fresh7 = *(&raw mut (*E0).base.y_pos as *mut u8).offset(1) => (*fresh7).wrapping_sub((y_pos < v9) as u8); }
     };
 }
+
+macro_rules! load_crocomire_tilemap_until_sentinel {
+    ($game:ident, $tilemap_table:literal) => {
+        let mut i: i32 = 0;
+        loop {
+            let v6: i32 = i >> 1;
+            if crate::rtl::rom_table_word!($game, $tilemap_table, v6 as isize) == 0xffff {
+                break;
+            }
+            word!(
+                $game.tilemap_stuff[(v6 + 32)] =
+                    crate::rtl::rom_table_word!($game, $tilemap_table, v6 as isize)
+            );
+            i += 2;
+        }
+        Crocomire_93BE((i + 1024) as u16, $game);
+    };
+}
+
 pub unsafe fn Crocomire_Func_57(game: &mut Game) {
     *ram_ptr!(game; 0x68c) = 48;
     word!(game.croco_target_0688 = 48);
@@ -925,19 +944,7 @@ pub unsafe fn Crocomire_Func_57(game: &mut Game) {
         le(tilemap_stuff, 0) <- value(824),
         le(tilemap_stuff, 1) <- value(824),
     );
-    let mut i: i32 = 0;
-    loop {
-        let v6: i32 = i >> 1;
-        if crate::rtl::rom_table_word!(game, 0xa49c79, v6 as isize) == 0xffff {
-            break;
-        }
-        word!(
-            game.tilemap_stuff[(v6 + 32)] =
-                crate::rtl::rom_table_word!(game, 0xa49c79, v6 as isize)
-        );
-        i += 2;
-    }
-    Crocomire_93BE((i + 1024) as u16, game);
+    load_crocomire_tilemap_until_sentinel!(game, 0xa49c79);
 }
 pub unsafe fn Crocomire_93BE(k: u16, game: &mut Game) {
     let v2: u16 = word!(game.vram_write_queue_tail);
@@ -962,19 +969,7 @@ pub unsafe fn Crocomire_Func_59(game: &mut Game) {
     word!(game.croco_target_0688 = 48);
     (*E).base.current_instruction = addr_kCrocomire_Ilist_BF7E as u16;
     word_transfers!(game, ascending, 1024; le(tilemap_stuff, 0) <- value(824));
-    let mut i: i32 = 0;
-    loop {
-        let v3: i32 = i >> 1;
-        if crate::rtl::rom_table_word!(game, 0xa49e7b, v3 as isize) == 0xffff {
-            break;
-        }
-        word!(
-            game.tilemap_stuff[(v3 + 32)] =
-                crate::rtl::rom_table_word!(game, 0xa49e7b, v3 as isize)
-        );
-        i += 2;
-    }
-    Crocomire_93BE((i + 1024) as u16, game);
+    load_crocomire_tilemap_until_sentinel!(game, 0xa49e7b);
 }
 pub unsafe fn Crocomire_Func_60(game: &mut Game) {
     let E = Get_Crocomire(word!(game.cur_enemy_index) as i32, game);

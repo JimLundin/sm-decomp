@@ -1269,20 +1269,27 @@ pub unsafe fn IrqHandler_16_VerticalDoor_BeginHud(game: &mut Game) {
     }
     IrqHandler_SetResult(18, 31, 152, game);
 }
+
+macro_rules! finish_door_hud_irq {
+    ($game:ident) => {
+        let mut v0: u8 = 0;
+        if ((word!($game.previous_cre_bitset) | word!($game.cre_bitset)) & 1) != 0 {
+            v0 = 16;
+        } else {
+            v0 = 17;
+        }
+        crate::rtl::register_writes! { $game;
+            byte(TM as u16, v0); byte(CGWSEL as u16, 0);
+            byte(CGADSUB as u16, 0);
+        }
+        if (word!($game.door_transition_flag) & 0x8000) == 0 {
+            Irq_FollowDoorTransition($game);
+        }
+    };
+}
+
 pub unsafe fn IrqHandler_18_VerticalDoor_EndHud(game: &mut Game) {
-    let mut v0: u8 = 0;
-    if ((word!(game.previous_cre_bitset) | word!(game.cre_bitset)) & 1) != 0 {
-        v0 = 16;
-    } else {
-        v0 = 17;
-    }
-    crate::rtl::register_writes! { game;
-        byte(TM as u16, v0); byte(CGWSEL as u16, 0);
-        byte(CGADSUB as u16, 0);
-    }
-    if (word!(game.door_transition_flag) & 0x8000) == 0 {
-        Irq_FollowDoorTransition(game);
-    }
+    finish_door_hud_irq!(game);
     IrqHandler_SetResult(20, 216, 152, game);
 }
 pub unsafe fn IrqHandler_20_VerticalDoor_EndDraw(game: &mut Game) {
@@ -1298,19 +1305,7 @@ pub unsafe fn IrqHandler_22_HorizDoor_BeginHud(game: &mut Game) {
     IrqHandler_SetResult(24, 31, 152, game);
 }
 pub unsafe fn IrqHandler_24_HorizDoor_EndHud(game: &mut Game) {
-    let mut v0: u8 = 0;
-    if ((word!(game.previous_cre_bitset) | word!(game.cre_bitset)) & 1) != 0 {
-        v0 = 16;
-    } else {
-        v0 = 17;
-    }
-    crate::rtl::register_writes! { game;
-        byte(TM as u16, v0); byte(CGWSEL as u16, 0);
-        byte(CGADSUB as u16, 0);
-    }
-    if (word!(game.door_transition_flag) & 0x8000) == 0 {
-        Irq_FollowDoorTransition(game);
-    }
+    finish_door_hud_irq!(game);
     IrqHandler_SetResult(26, 160, 152, game);
 }
 pub unsafe fn IrqHandler_26_HorizDoor_EndDraw(game: &mut Game) {

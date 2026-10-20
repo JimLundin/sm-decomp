@@ -670,27 +670,40 @@ pub unsafe fn SpacePirates_F985(k: u16, game: &mut Game) {
         (*E).var_00 = 1536;
     }
 }
+
+macro_rules! finish_space_pirate_vertical_jump {
+    (
+        $enemy_index:ident, $enemy:ident, $game:ident, $velocity:ident, $next_state:literal,
+        $instruction:ident $(,)?
+    ) => {
+        if Enemy_MoveDown(
+            $enemy_index,
+            (words!((
+                byte!((*$enemy).var_00; 1),
+                byte!((*$enemy).var_00; 0) as u16
+            ))) as i32,
+            $game,
+        ) != 0
+            || {
+                $velocity = (((*$enemy).var_00) as i16).wrapping_sub(64);
+                (*$enemy).var_00 = $velocity as u16;
+                $velocity < 0
+            }
+            || ($velocity as u16 & 0xff00) == 0
+        {
+            (*$enemy).var_A = (($next_state) as u16);
+            enemy_instruction! {[(*$enemy).base]; instruction = $instruction as u16, timer = 1}
+            (*$enemy).base.y_pos = (*$enemy).var_08;
+            SpacePirates_FB11($enemy_index, $game);
+        }
+    };
+}
+
 pub unsafe fn SpacePirates_F9C1(k: u16, game: &mut Game) {
     let mut v2: i16 = 0;
     let E = Get_SpacePirates(k as i32, game);
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(5);
-    if Enemy_MoveDown(
-        k,
-        (words!((byte!((*E).var_00; 1), byte!((*E).var_00; 0) as u16))) as i32,
-        game,
-    ) != 0
-        || {
-            v2 = (((*E).var_00) as i16).wrapping_sub(64);
-            (*E).var_00 = v2 as u16;
-            v2 < 0
-        }
-        || (v2 as u16 & 0xff00) == 0
-    {
-        (*E).var_A = ((0xb2fa15i32) as u16);
-        enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_F2B2 as u16, timer = 1}
-        (*E).base.y_pos = (*E).var_08;
-        SpacePirates_FB11(k, game);
-    }
+    finish_space_pirate_vertical_jump!(k, E, game, v2, 0xb2fa15i32, addr_kSpacePirates_Ilist_F2B2);
 }
 pub unsafe fn SpacePirates_FA15(k: u16, game: &mut Game) {
     let E = Get_SpacePirates(k as i32, game);
@@ -724,23 +737,7 @@ pub unsafe fn SpacePirates_FA95(k: u16, game: &mut Game) {
     let mut v2: i16 = 0;
     let E = Get_SpacePirates(k as i32, game);
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(5);
-    if Enemy_MoveDown(
-        k,
-        (words!((byte!((*E).var_00; 1), byte!((*E).var_00; 0) as u16))) as i32,
-        game,
-    ) != 0
-        || {
-            v2 = (((*E).var_00) as i16).wrapping_sub(64);
-            (*E).var_00 = v2 as u16;
-            v2 < 0
-        }
-        || (v2 as u16 & 0xff00) == 0
-    {
-        (*E).var_A = ((0xb2fae9i32) as u16);
-        enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_F4A4 as u16, timer = 1}
-        (*E).base.y_pos = (*E).var_08;
-        SpacePirates_FB11(k, game);
-    }
+    finish_space_pirate_vertical_jump!(k, E, game, v2, 0xb2fae9i32, addr_kSpacePirates_Ilist_F4A4);
 }
 pub unsafe fn SpacePirates_FAE9(k: u16, game: &mut Game) {
     let E = Get_SpacePirates(k as i32, game);

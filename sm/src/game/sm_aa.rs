@@ -585,72 +585,52 @@ pub unsafe fn Torizo_Func_1(k: u16, game: &mut Game) {
         enemy_instruction! {[(*E).base]; instruction = addr_kTorizo_Ilist_B0E5 as u16, timer = 1}
     };
 }
-pub unsafe fn Torizo_Func_5(k: u16, game: &mut Game) {
-    let E = Get_Torizo(k as i32, game);
-    if ((*E).parameter_2 & 0x4000) != 0 {
-        let torizo_var_03: u16 = (*E).var_03;
+
+macro_rules! torizo_fall_until_timer {
+    (
+        $enemy:ident, $enemy_index:ident, $game:ident, $facing_left_instruction:ident,
+        $facing_right_instruction:ident $(,)?
+    ) => {
+        let torizo_var_03: u16 = (*$enemy).var_03;
         if torizo_var_03 == 0 || {
             let mut v8: u16 = (torizo_var_03).wrapping_sub(1);
-            (*E).var_03 = v8;
-            (*E).var_03 != 0
+            (*$enemy).var_03 = v8;
+            (*$enemy).var_03 != 0
         } {
-            let mut v10: u16 = (abs16((*E).var_A)).wrapping_add(1);
+            let mut v10: u16 = (abs16((*$enemy).var_A)).wrapping_add(1);
             if v10 >= 0x10 {
                 v10 = 15;
             }
-            if Enemy_MoveDown(k, (v10 as i16 as i32) << 16, game) == 0 {
+            if Enemy_MoveDown($enemy_index, (v10 as i16 as i32) << 16, $game) == 0 {
                 let mut v11: u16 = 0;
-                if ((*E).parameter_1 & 0x8000) != 0 {
+                if ((*$enemy).parameter_1 & 0x8000) != 0 {
                     v11 = addr_off_AAC0F2 as u16;
                 } else {
                     v11 = addr_off_AABC78 as u16;
                 }
-                enemy_instruction! {[(*E).base]; instruction = v11, timer = 1}
-                (*E).var_B = 256;
-                (*E).var_A = 0;
+                enemy_instruction! {[(*$enemy).base]; instruction = v11, timer = 1}
+                (*$enemy).var_B = 256;
+                (*$enemy).var_A = 0;
             }
         } else {
-            (*E).var_03 = 0;
+            (*$enemy).var_03 = 0;
             let mut v9: u16 = 0;
-            if ((*E).parameter_1 & 0x8000) != 0 {
-                v9 = addr_kTorizo_Ilist_BD0E as u16;
+            if ((*$enemy).parameter_1 & 0x8000) != 0 {
+                v9 = $facing_left_instruction as u16;
             } else {
-                v9 = addr_kTorizo_Ilist_C188 as u16;
+                v9 = $facing_right_instruction as u16;
             }
-            enemy_instruction! {[(*E).base]; instruction = v9, timer = 1}
+            enemy_instruction! {[(*$enemy).base]; instruction = v9, timer = 1}
         }
+    };
+}
+
+pub unsafe fn Torizo_Func_5(k: u16, game: &mut Game) {
+    let E = Get_Torizo(k as i32, game);
+    if ((*E).parameter_2 & 0x4000) != 0 {
+        torizo_fall_until_timer!(E, k, game, addr_kTorizo_Ilist_BD0E, addr_kTorizo_Ilist_C188);
     } else {
-        let v2: u16 = (*E).var_03;
-        if v2 == 0 || {
-            let mut v3: u16 = (v2).wrapping_sub(1);
-            (*E).var_03 = v3;
-            (*E).var_03 != 0
-        } {
-            let mut v5: u16 = (abs16((*E).var_A)).wrapping_add(1);
-            if v5 >= 0x10 {
-                v5 = 15;
-            }
-            if Enemy_MoveDown(k, (v5 as i16 as i32) << 16, game) == 0 {
-                let mut v6: u16 = 0;
-                if ((*E).parameter_1 & 0x8000) != 0 {
-                    v6 = addr_off_AAC0F2 as u16;
-                } else {
-                    v6 = addr_off_AABC78 as u16;
-                }
-                enemy_instruction! {[(*E).base]; instruction = v6, timer = 1}
-                (*E).var_B = 256;
-                (*E).var_A = 0;
-            }
-        } else {
-            (*E).var_03 = 0;
-            let mut v4: u16 = 0;
-            if ((*E).parameter_1 & 0x8000) != 0 {
-                v4 = addr_kTorizo_Ilist_B962 as u16;
-            } else {
-                v4 = addr_kTorizo_Ilist_BDD8 as u16;
-            }
-            enemy_instruction! {[(*E).base]; instruction = v4, timer = 1}
-        }
+        torizo_fall_until_timer!(E, k, game, addr_kTorizo_Ilist_B962, addr_kTorizo_Ilist_BDD8);
     };
 }
 pub unsafe fn Torizo_Func_6(k: u16, game: &mut Game) {
@@ -958,37 +938,7 @@ pub unsafe fn Torizo_D5E6(k: u16, game: &mut Game) {
 pub use self::Torizo_Func_6 as Torizo_D5ED;
 pub unsafe fn Torizo_D5F1(k: u16, game: &mut Game) {
     let E = Get_Torizo(k as i32, game);
-    let torizo_var_03: u16 = (*E).var_03;
-    if torizo_var_03 == 0 || {
-        let mut v3: u16 = (torizo_var_03).wrapping_sub(1);
-        (*E).var_03 = v3;
-        (*E).var_03 != 0
-    } {
-        let mut v5: u16 = (abs16((*E).var_A)).wrapping_add(1);
-        if v5 >= 0x10 {
-            v5 = 15;
-        }
-        if Enemy_MoveDown(k, (v5 as i16 as i32) << 16, game) == 0 {
-            let mut v6: u16 = 0;
-            if ((*E).parameter_1 & 0x8000) != 0 {
-                v6 = addr_off_AAC0F2 as u16;
-            } else {
-                v6 = addr_off_AABC78 as u16;
-            }
-            enemy_instruction! {[(*E).base]; instruction = v6, timer = 1}
-            (*E).var_B = 256;
-            (*E).var_A = 0;
-        }
-    } else {
-        (*E).var_03 = 0;
-        let mut v4: u16 = 0;
-        if ((*E).parameter_1 & 0x8000) != 0 {
-            v4 = addr_kTorizo_Ilist_D203 as u16;
-        } else {
-            v4 = addr_kTorizo_Ilist_D2BF as u16;
-        }
-        enemy_instruction! {[(*E).base]; instruction = v4, timer = 1}
-    };
+    torizo_fall_until_timer!(E, k, game, addr_kTorizo_Ilist_D203, addr_kTorizo_Ilist_D2BF);
 }
 pub unsafe fn Torizo_D658(game: &mut Game) {
     let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);

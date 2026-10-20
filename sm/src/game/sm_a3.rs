@@ -422,6 +422,29 @@ pub unsafe fn MaridiaFish_Init(game: &mut Game) {
     set_fields! {[(*E)], 0; var_F, var_01}
     (*E).var_03 = SineMult8bit((*E).var_F, (*E).var_00, game);
 }
+
+macro_rules! advance_maridia_fish_sine_motion {
+    ($enemy:ident, $game:ident, $collision_state:literal, $collision_instruction:ident) => {
+        let v2: u16 = SineMult8bit((*$enemy).var_F, (*$enemy).var_00, $game);
+        (*$enemy).var_04 = v2;
+        if Enemy_MoveDown(
+            word!($game.cur_enemy_index),
+            ((((v2) as i16).wrapping_sub(((*$enemy).var_03) as i16)) as i32) << 16,
+            $game,
+        ) != 0
+        {
+            (*$enemy).var_A = (($collision_state) as u16);
+            (*$enemy).base.instruction_timer = 1;
+            (*$enemy).base.timer = 0;
+            (*$enemy).base.current_instruction = $collision_instruction as u16;
+        } else {
+            (*$enemy).var_F = ((byte!((*$enemy).var_02; 0))
+                .wrapping_add(((*$enemy).var_F) as u8))
+                as u16;
+        }
+    };
+}
+
 pub unsafe fn MaridiaFish_Func_1(game: &mut Game) {
     let E = Get_MaridiaFish(word!(game.cur_enemy_index) as i32, game);
     if Enemy_MoveRight_IgnoreSlopes(
@@ -435,21 +458,7 @@ pub unsafe fn MaridiaFish_Func_1(game: &mut Game) {
         (*E).base.timer = 0;
         (*E).base.current_instruction = addr_kMaridiaFish_Ilist_903C as u16;
     } else {
-        let v2: u16 = SineMult8bit((*E).var_F, (*E).var_00, game);
-        (*E).var_04 = v2;
-        if Enemy_MoveDown(
-            word!(game.cur_enemy_index),
-            ((((v2) as i16).wrapping_sub(((*E).var_03) as i16)) as i32) << 16,
-            game,
-        ) != 0
-        {
-            (*E).var_A = ((0xa39224i32) as u16);
-            (*E).base.instruction_timer = 1;
-            (*E).base.timer = 0;
-            (*E).base.current_instruction = addr_kMaridiaFish_Ilist_903C as u16;
-        } else {
-            (*E).var_F = ((byte!((*E).var_02; 0)).wrapping_add(((*E).var_F) as u8)) as u16;
-        }
+        advance_maridia_fish_sine_motion!(E, game, 0xa39224i32, addr_kMaridiaFish_Ilist_903C);
     }
     (*E).var_03 = (*E).var_04;
 }
@@ -466,21 +475,7 @@ pub unsafe fn MaridiaFish_Func_2(game: &mut Game) {
         (*E).base.timer = 0;
         (*E).base.current_instruction = addr_kMaridiaFish_Ilist_9072 as u16;
     } else {
-        let v2: u16 = SineMult8bit((*E).var_F, (*E).var_00, game);
-        (*E).var_04 = v2;
-        if Enemy_MoveDown(
-            word!(game.cur_enemy_index),
-            ((((v2) as i16).wrapping_sub(((*E).var_03) as i16)) as i32) << 16,
-            game,
-        ) != 0
-        {
-            (*E).var_A = ((0xa39256i32) as u16);
-            (*E).base.instruction_timer = 1;
-            (*E).base.timer = 0;
-            (*E).base.current_instruction = addr_kMaridiaFish_Ilist_9072 as u16;
-        } else {
-            (*E).var_F = ((byte!((*E).var_02; 0)).wrapping_add(((*E).var_F) as u8)) as u16;
-        }
+        advance_maridia_fish_sine_motion!(E, game, 0xa39256i32, addr_kMaridiaFish_Ilist_9072);
     }
     (*E).var_03 = (*E).var_04;
 }
@@ -899,47 +894,40 @@ pub unsafe fn Roach_Func_2(k: u16, game: &mut Game) {
     words!((*E), var_01, var_00 = pt.x);
     words!((*E), var_03, var_02 = pt.y);
 }
+
+macro_rules! set_roach_trigonometric_velocity {
+    (
+        $enemy:ident, $cosine_high:ident, $cosine_low:ident, $angle_adjust:ident, $game:ident,
+        $sine_high:ident, $sine_low:ident $(,)?
+    ) => {
+        words!(
+            (*$enemy),
+            $cosine_high,
+            $cosine_low = CosineMult8bitFull(
+                ((byte!((*$enemy).parameter_1; 1isize)).$angle_adjust(32)) as u16,
+                byte!((*$enemy).parameter_1; 0) as u16,
+                $game,
+            )
+        );
+        words!(
+            (*$enemy),
+            $sine_high,
+            $sine_low = SineMult8bitFull(
+                ((byte!((*$enemy).parameter_1; 1isize)).$angle_adjust(32)) as u16,
+                byte!((*$enemy).parameter_1; 0) as u16,
+                $game,
+            )
+        );
+    };
+}
+
 pub unsafe fn Roach_Func_4(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
-    words!(
-        (*E),
-        var_05,
-        var_04 = CosineMult8bitFull(
-            ((byte!((*E).parameter_1; 1isize)).wrapping_sub(32)) as u16,
-            byte!((*E).parameter_1; 0) as u16,
-            game,
-        )
-    );
-    words!(
-        (*E),
-        var_07,
-        var_06 = SineMult8bitFull(
-            ((byte!((*E).parameter_1; 1isize)).wrapping_sub(32)) as u16,
-            byte!((*E).parameter_1; 0) as u16,
-            game,
-        )
-    );
+    set_roach_trigonometric_velocity!(E, var_05, var_04, wrapping_sub, game, var_07, var_06);
 }
 pub unsafe fn Roach_Func_5(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
-    words!(
-        (*E),
-        var_09,
-        var_08 = CosineMult8bitFull(
-            ((byte!((*E).parameter_1; 1isize)).wrapping_add(32)) as u16,
-            byte!((*E).parameter_1; 0) as u16,
-            game,
-        )
-    );
-    words!(
-        (*E),
-        var_0B,
-        var_0A = SineMult8bitFull(
-            ((byte!((*E).parameter_1; 1isize)).wrapping_add(32)) as u16,
-            byte!((*E).parameter_1; 0) as u16,
-            game,
-        )
-    );
+    set_roach_trigonometric_velocity!(E, var_09, var_08, wrapping_add, game, var_0B, var_0A);
 }
 pub unsafe fn Roach_Func_6(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
@@ -1195,6 +1183,34 @@ pub unsafe fn Mochtroid_Main(game: &mut Game) {
     (*Get_Mochtroid(word!(game.cur_enemy_index) as i32, game)).var_F = 0;
     off_A3A7A4[(v0 >> 1) as usize].expect("non-null function pointer")(game);
 }
+
+macro_rules! accelerate_and_clamp_mochtroid_axis {
+    (
+        $enemy:ident, $speed_high:ident, $speed_low:ident, $acceleration:ident,
+        $high_field:ident, $clamped_speed:ident, $low_field:ident $(,)?
+    ) => {
+        words!((*$enemy), $speed_high, $speed_low += -$acceleration as u32);
+
+        let update_vertical_speed: bool = if ((*$enemy).$high_field as i16) < 0 {
+            ((*$enemy).$high_field < 0xfffd)
+                && ({
+                    $clamped_speed = -3i16;
+                    true
+                })
+        } else {
+            ((*$enemy).$high_field >= 3)
+                && ({
+                    $clamped_speed = 3;
+                    true
+                })
+        };
+        if update_vertical_speed {
+            (*$enemy).$high_field = $clamped_speed as u16;
+            (*$enemy).$low_field = 0;
+        }
+    };
+}
+
 pub unsafe fn Mochtroid_Func_1(game: &mut Game) {
     let mut v5: i16 = 0;
     let mut v10: i16 = 0;
@@ -1202,25 +1218,7 @@ pub unsafe fn Mochtroid_Func_1(game: &mut Game) {
     let mut t: i32 = ((((((*E).base.y_pos) as i16).wrapping_sub((word!(game.samus_y_pos)) as i16))
         >> 2) as i32)
         << 8;
-    words!((*E), var_D, var_C += -t as u32);
-
-    let update_vertical_speed: bool = if ((*E).var_D as i16) < 0 {
-        ((*E).var_D < 0xfffd)
-            && ({
-                v5 = -3i16;
-                true
-            })
-    } else {
-        ((*E).var_D >= 3)
-            && ({
-                v5 = 3;
-                true
-            })
-    };
-    if update_vertical_speed {
-        (*E).var_D = v5 as u16;
-        (*E).var_C = 0;
-    }
+    accelerate_and_clamp_mochtroid_axis!(E, var_D, var_C, t, var_D, v5, var_C);
     if Enemy_MoveDown(
         word!(game.cur_enemy_index),
         (words!((*E), var_D, var_C)) as i32,
@@ -1231,25 +1229,7 @@ pub unsafe fn Mochtroid_Func_1(game: &mut Game) {
     }
     t = ((((((*E).base.x_pos) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16)) >> 2) as i32)
         << 8;
-    words!((*E), var_B, var_A += -t as u32);
-
-    let update_horizontal_speed: bool = if ((*E).var_B as i16) < 0 {
-        ((*E).var_B < 0xfffd)
-            && ({
-                v10 = -3i16;
-                true
-            })
-    } else {
-        ((*E).var_B >= 3)
-            && ({
-                v10 = 3;
-                true
-            })
-    };
-    if update_horizontal_speed {
-        (*E).var_B = v10 as u16;
-        (*E).var_A = 0;
-    }
+    accelerate_and_clamp_mochtroid_axis!(E, var_B, var_A, t, var_B, v10, var_A);
     if Enemy_MoveRight_IgnoreSlopes(
         word!(game.cur_enemy_index),
         (words!((*E), var_B, var_A)) as i32,
@@ -1389,20 +1369,28 @@ pub unsafe fn Sidehopper_Init(game: &mut Game) {
     );
     (*E).var_B = ((0xa3abd6i32) as u16);
 }
-pub unsafe fn Sidehopper_Func_2(r22: u16, r24: u16, game: &mut Game) -> u16 {
-    let mut r18: u16 = 0;
-    let mut r20: u16 = 0;
-    loop {
-        r18 = (r18).wrapping_add(r24);
-        r20 = (r20).wrapping_add(
-            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *mut u16 as *mut u8)
-                .offset((8i32 * r18 as i32) as isize)
-                .offset(1) as *mut u16),
-        );
-        if (r20 as i32 - r22 as i32 & 0x8000 == 0) {
-            break;
+
+macro_rules! find_jump_frame_for_height {
+    ($frame:ident, $frame_step:ident, $game:ident, $target_height:ident) => {
+        let mut $frame: u16 = 0;
+        let mut r20: u16 = 0;
+        loop {
+            $frame = ($frame).wrapping_add($frame_step);
+            r20 = (r20).wrapping_add(
+                *(($game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *mut u16 as *mut u8)
+                    .offset((8i32 * $frame as i32) as isize)
+                    .offset(1) as *mut u16),
+            );
+            if (r20 as i32 - $target_height as i32 & 0x8000 == 0) {
+                break;
+            }
         }
-    }
+    };
+}
+pub(crate) use find_jump_frame_for_height;
+
+pub unsafe fn Sidehopper_Func_2(r22: u16, r24: u16, game: &mut Game) -> u16 {
+    find_jump_frame_for_height!(r18, r24, game, r22);
     r18
 }
 pub unsafe fn Sidehopper_Func_3(game: &mut Game) {
@@ -1560,6 +1548,25 @@ pub unsafe fn Sidehopper_Func_19(game: &mut Game) {
         }
     };
 }
+
+macro_rules! advance_sidehopper_rebound {
+    ($game:ident, $enemy:ident) => {
+        if Enemy_MoveRight_IgnoreSlopes(
+            word!($game.cur_enemy_index),
+            ((*$enemy).var_D as i16 as i32) << 16,
+            $game,
+        ) != 0
+        {
+            (*$enemy).var_D = -((*$enemy).var_D as i32) as u16;
+        }
+        let mut v3: i16 = (((*$enemy).var_E) as i16).wrapping_add(((*$enemy).var_C) as i16);
+        if v3 as i32 - 64i32 & 0x8000 == 0 {
+            v3 = 64;
+        }
+        (*$enemy).var_C = v3 as u16;
+    };
+}
+
 pub unsafe fn Sidehopper_Func_20(game: &mut Game) {
     let E = Get_Sidehopper(word!(game.cur_enemy_index) as i32, game);
     let v2: i32 = 8 * (*E).var_C as i32 >> 1;
@@ -1575,19 +1582,7 @@ pub unsafe fn Sidehopper_Func_20(game: &mut Game) {
         (*E).var_03 = 0;
         (*E).var_B = ((0xa3ace4i32) as u16);
     } else {
-        if Enemy_MoveRight_IgnoreSlopes(
-            word!(game.cur_enemy_index),
-            ((*E).var_D as i16 as i32) << 16,
-            game,
-        ) != 0
-        {
-            (*E).var_D = -((*E).var_D as i32) as u16;
-        }
-        let mut v3: i16 = (((*E).var_E) as i16).wrapping_add(((*E).var_C) as i16);
-        if v3 as i32 - 64i32 & 0x8000 == 0 {
-            v3 = 64;
-        }
-        (*E).var_C = v3 as u16;
+        advance_sidehopper_rebound!(game, E);
     };
 }
 pub unsafe fn Sidehopper_Func_21(game: &mut Game) {
@@ -1636,19 +1631,7 @@ pub unsafe fn Sidehopper_Func_22(game: &mut Game) {
         (*E).var_03 = 0;
         (*E).var_B = ((0xa3ace4i32) as u16);
     } else {
-        if Enemy_MoveRight_IgnoreSlopes(
-            word!(game.cur_enemy_index),
-            ((*E).var_D as i16 as i32) << 16,
-            game,
-        ) != 0
-        {
-            (*E).var_D = -((*E).var_D as i32) as u16;
-        }
-        let mut v3: i16 = (((*E).var_E) as i16).wrapping_add(((*E).var_C) as i16);
-        if v3 as i32 - 64i32 & 0x8000 == 0 {
-            v3 = 64;
-        }
-        (*E).var_C = v3 as u16;
+        advance_sidehopper_rebound!(game, E);
     };
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;

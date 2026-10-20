@@ -30,32 +30,42 @@ const RomPtr_83: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_p
 unsafe fn get_FxDef(a: u16, game: &mut Game) -> *mut FxDef {
     RomPtr((0x830000u32) | ((a) as u32), game) as *mut FxDef
 }
+
+macro_rules! apply_room_fx_definition {
+    ($game:ident, $definition:ident, $palette_field:ident) => {
+        word!($game.fx_base_y_pos = (*$definition).base_y_pos);
+        word!($game.fx_target_y_pos = (*$definition).target_y_pos);
+        word!($game.fx_y_vel = (*$definition).y_vel);
+        word!($game.fx_timer = (*$definition).timer as u16);
+        word!($game.fx_layer_blending_config_a = (*$definition).default_layer_blend as u16);
+        word!($game.fx_layer_blending_config_b = (*$definition).layer3_layer_blend as u16);
+        word!($game.fx_liquid_options = (*$definition).fx_liquid_options_ as u16);
+        if (*$definition).palette_blend != 0 {
+            let v2: i32 = (*$definition).palette_blend as i32 >> 1;
+            word!(
+                $game.$palette_field[25] =
+                    crate::rtl::rom_table_word!($game, 0x89aa02, v2 as isize)
+            );
+            word!(
+                $game.$palette_field[26] =
+                    crate::rtl::rom_table_word!($game, 0x89aa02, (v2 + 1) as isize)
+            );
+            word!(
+                $game.$palette_field[27] =
+                    crate::rtl::rom_table_word!($game, 0x89aa02, (v2 + 2) as isize)
+            );
+        } else {
+            word!($game.$palette_field[27] = 0);
+        }
+    };
+}
+
 pub unsafe fn LoadFxEntry(v0: u16, game: &mut Game) {
     let FD = get_FxDef(
         (word!(game.room_layer3_asm_ptr) as i32 + 16 * (v0 as i32 & 7)) as u16,
         game,
     );
-    word!(game.fx_base_y_pos = (*FD).base_y_pos);
-    word!(game.fx_target_y_pos = (*FD).target_y_pos);
-    word!(game.fx_y_vel = (*FD).y_vel);
-    word!(game.fx_timer = (*FD).timer as u16);
-    word!(game.fx_layer_blending_config_a = (*FD).default_layer_blend as u16);
-    word!(game.fx_layer_blending_config_b = (*FD).layer3_layer_blend as u16);
-    word!(game.fx_liquid_options = (*FD).fx_liquid_options_ as u16);
-    if (*FD).palette_blend != 0 {
-        let v2: i32 = (*FD).palette_blend as i32 >> 1;
-        word!(game.palette_buffer[25] = crate::rtl::rom_table_word!(game, 0x89aa02, v2 as isize));
-        word!(
-            game.palette_buffer[26] =
-                crate::rtl::rom_table_word!(game, 0x89aa02, (v2 + 1) as isize)
-        );
-        word!(
-            game.palette_buffer[27] =
-                crate::rtl::rom_table_word!(game, 0x89aa02, (v2 + 2) as isize)
-        );
-    } else {
-        word!(game.palette_buffer[27] = 0);
-    };
+    apply_room_fx_definition!(game, FD, palette_buffer);
 }
 pub fn nullsub_106(game: &mut Game) {}
 static kFxTypeFuncPtrs: [Option<Func_V>; 23] = callback_table! { unsafe Func_V;
@@ -65,6 +75,30 @@ static kFxTypeFuncPtrs: [Option<Func_V>; 23] = callback_table! { unsafe Func_V;
     FxTypeFunc_22_ScrollingSky, FxTypeFunc_24, FxTypeFunc_26_TourianEntranceStatue,
     FxTypeFunc_28_CeresRidley, FxTypeFunc_CeresElevator, FxTypeFunc_2C_Haze,
 };
+
+macro_rules! spawn_room_effect_bitset {
+    (
+        $definition:ident, $bitset_field:ident, $game:ident, $object_table:literal,
+        $spawn_object:path $(,)?
+    ) => {
+        if (*$definition).$bitset_field != 0 {
+            let mut bits: i32 = (*$definition).$bitset_field as i32;
+            let v11 = RomPtr_83(
+                crate::rtl::rom_table_word!($game, $object_table, word!($game.area_index) as isize),
+                $game,
+            );
+            let mut j: i32 = 0;
+            while j != 16 {
+                if bits & 1 != 0 {
+                    $spawn_object(*(v11.offset(j as isize) as *mut u16), $game);
+                }
+                j += 2;
+                bits >>= 1;
+            }
+        }
+    };
+}
+
 pub unsafe fn LoadFXHeader(game: &mut Game) {
     let mut entry_ptr: u16 = word!(game.room_layer3_asm_ptr);
     if entry_ptr == 0 {
@@ -84,27 +118,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         entry_ptr = (entry_ptr).wrapping_add(16);
     }
     let FD = get_FxDef(entry_ptr, game);
-    word!(game.fx_base_y_pos = (*FD).base_y_pos);
-    word!(game.fx_target_y_pos = (*FD).target_y_pos);
-    word!(game.fx_y_vel = (*FD).y_vel);
-    word!(game.fx_timer = (*FD).timer as u16);
-    word!(game.fx_layer_blending_config_a = (*FD).default_layer_blend as u16);
-    word!(game.fx_layer_blending_config_b = (*FD).layer3_layer_blend as u16);
-    word!(game.fx_liquid_options = (*FD).fx_liquid_options_ as u16);
-    if (*FD).palette_blend != 0 {
-        let v4: i32 = (*FD).palette_blend as i32 >> 1;
-        word!(game.target_palettes[25] = crate::rtl::rom_table_word!(game, 0x89aa02, v4 as isize));
-        word!(
-            game.target_palettes[26] =
-                crate::rtl::rom_table_word!(game, 0x89aa02, (v4 + 1) as isize)
-        );
-        word!(
-            game.target_palettes[27] =
-                crate::rtl::rom_table_word!(game, 0x89aa02, (v4 + 2) as isize)
-        );
-    } else {
-        word!(game.target_palettes[27] = 0);
-    }
+    apply_room_fx_definition!(game, FD, target_palettes);
     word!(game.fx_type = (*FD).type_0 as u16);
     if (*FD).type_0 != 0 {
         word!(
@@ -113,36 +127,8 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         );
         kFxTypeFuncPtrs[((*FD).type_0 >> 1) as usize].expect("non-null function pointer")(game);
     }
-    if (*FD).palette_fx_bitset != 0 {
-        let mut bits: i32 = (*FD).palette_fx_bitset as i32;
-        let v11 = RomPtr_83(
-            crate::rtl::rom_table_word!(game, 0x83ac46, word!(game.area_index) as isize),
-            game,
-        );
-        let mut j: i32 = 0;
-        while j != 16 {
-            if bits & 1 != 0 {
-                SpawnPalfxObject(*(v11.offset(j as isize) as *mut u16), game);
-            }
-            j += 2;
-            bits >>= 1;
-        }
-    }
-    if (*FD).animtiles_bitset != 0 {
-        let mut bits_0: i32 = (*FD).animtiles_bitset as i32;
-        let v14 = RomPtr_83(
-            crate::rtl::rom_table_word!(game, 0x83ac56, word!(game.area_index) as isize),
-            game,
-        );
-        let mut k: i32 = 0;
-        while k != 16 {
-            if bits_0 & 1 != 0 {
-                SpawnAnimtiles(*(v14.offset(k as isize) as *mut u16), game);
-            }
-            k += 2;
-            bits_0 >>= 1;
-        }
-    }
+    spawn_room_effect_bitset!(FD, palette_fx_bitset, game, 0x83ac46, SpawnPalfxObject);
+    spawn_room_effect_bitset!(FD, animtiles_bitset, game, 0x83ac56, SpawnAnimtiles);
 }
 pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
     let mut v1: i16 = 0;

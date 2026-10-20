@@ -1950,19 +1950,7 @@ pub unsafe fn Beetom_Init(game: &mut Game) {
     (*E).var_C = ((0xa8b814i32) as u16);
 }
 pub unsafe fn Beetom_Func_2(r22: u16, r24: u16, game: &mut Game) -> u16 {
-    let mut r18: u16 = 0;
-    let mut r20: u16 = 0;
-    loop {
-        r18 = (r18).wrapping_add(r24);
-        r20 = (r20).wrapping_add(
-            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *mut u16 as *mut u8)
-                .offset((8i32 * r18 as i32) as isize)
-                .offset(1) as *mut u16),
-        );
-        if (r20 as i32 - r22 as i32 & 0x8000 == 0) {
-            break;
-        }
-    }
+    crate::game::sm_a3::find_jump_frame_for_height!(r18, r24, game, r22);
     r18
 }
 pub unsafe fn Beetom_Func_3(game: &mut Game) {
@@ -2119,42 +2107,56 @@ pub unsafe fn Beetom_Func_19(game: &mut Game) {
         }
     };
 }
-pub unsafe fn Beetom_Func_22(k: u16, game: &mut Game) {
-    let E = Get_Beetom(k as i32, game);
-    let v2: i32 = 8 * (*E).var_B as i32 >> 1;
-    if Enemy_MoveDown(
-        k,
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v2 + 2 >> 1) as isize) as i32,
-        game,
-    ) != 0
-    {
-        (*E).var_C = ((0xa8b97ai32) as u16);
-    } else {
-        (*E).var_B = ((*E).var_B).wrapping_sub(4);
-        if (*E).var_B & 0x8000 != 0 {
-            (*E).var_B = 0;
-            (*E).var_05 = 1;
+
+macro_rules! advance_beetom_jump_ascent {
+    ($enemy_index:ident, $game:ident, $frame_step:literal) => {
+        let E = Get_Beetom($enemy_index as i32, $game);
+        let v2: i32 = 8 * (*E).var_B as i32 >> 1;
+        if Enemy_MoveDown(
+            $enemy_index,
+            *($game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
+                .offset((v2 + 2 >> 1) as isize) as i32,
+            $game,
+        ) != 0
+        {
+            (*E).var_C = ((0xa8b97ai32) as u16);
+        } else {
+            (*E).var_B = ((*E).var_B).wrapping_sub($frame_step);
+            if (*E).var_B & 0x8000 != 0 {
+                (*E).var_B = 0;
+                (*E).var_05 = 1;
+            }
         }
     };
 }
-pub unsafe fn Beetom_Func_23(k: u16, game: &mut Game) {
-    let E = Get_Beetom(k as i32, game);
-    let v2: i32 = 8 * (*E).var_B as i32 >> 1;
-    if Enemy_MoveDown(
-        k,
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v2 >> 1) as isize) as i32,
-        game,
-    ) != 0
-    {
-        (*E).var_C = ((0xa8b814i32) as u16);
-    } else {
-        (*E).var_B = ((*E).var_B).wrapping_add(4);
-        if (*E).var_B as i32 - 64i32 & 0x8000 == 0 {
-            (*E).var_B = 64;
+
+pub unsafe fn Beetom_Func_22(k: u16, game: &mut Game) {
+    advance_beetom_jump_ascent!(k, game, 4);
+}
+
+macro_rules! advance_beetom_jump_descent {
+    ($enemy_index:ident, $game:ident, $frame_step:literal) => {
+        let E = Get_Beetom($enemy_index as i32, $game);
+        let v2: i32 = 8 * (*E).var_B as i32 >> 1;
+        if Enemy_MoveDown(
+            $enemy_index,
+            *($game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
+                .offset((v2 >> 1) as isize) as i32,
+            $game,
+        ) != 0
+        {
+            (*E).var_C = ((0xa8b814i32) as u16);
+        } else {
+            (*E).var_B = ((*E).var_B).wrapping_add($frame_step);
+            if (*E).var_B as i32 - 64i32 & 0x8000 == 0 {
+                (*E).var_B = 64;
+            }
         }
     };
+}
+
+pub unsafe fn Beetom_Func_23(k: u16, game: &mut Game) {
+    advance_beetom_jump_descent!(k, game, 4);
 }
 pub unsafe fn Beetom_Func_20(game: &mut Game) {
     let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
@@ -2181,41 +2183,10 @@ pub unsafe fn Beetom_Func_21(game: &mut Game) {
     }
 }
 pub unsafe fn Beetom_Func_26(k: u16, game: &mut Game) {
-    let E = Get_Beetom(k as i32, game);
-    let v2: i32 = 8 * (*E).var_B as i32 >> 1;
-    if Enemy_MoveDown(
-        k,
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v2 + 2 >> 1) as isize) as i32,
-        game,
-    ) != 0
-    {
-        (*E).var_C = ((0xa8b97ai32) as u16);
-    } else {
-        (*E).var_B = ((*E).var_B).wrapping_sub(5);
-        if (*E).var_B & 0x8000 != 0 {
-            (*E).var_B = 0;
-            (*E).var_05 = 1;
-        }
-    };
+    advance_beetom_jump_ascent!(k, game, 5);
 }
 pub unsafe fn Beetom_Func_27(k: u16, game: &mut Game) {
-    let E = Get_Beetom(k as i32, game);
-    let v2: i32 = 8 * (*E).var_B as i32 >> 1;
-    if Enemy_MoveDown(
-        k,
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *mut u32)
-            .offset((v2 >> 1) as isize) as i32,
-        game,
-    ) != 0
-    {
-        (*E).var_C = ((0xa8b814i32) as u16);
-    } else {
-        (*E).var_B = ((*E).var_B).wrapping_add(5);
-        if (*E).var_B as i32 - 64i32 & 0x8000 == 0 {
-            (*E).var_B = 64;
-        }
-    };
+    advance_beetom_jump_descent!(k, game, 5);
 }
 pub unsafe fn Beetom_Func_24(game: &mut Game) {
     let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
@@ -2547,28 +2518,35 @@ pub unsafe fn MaridiaFloater_Func_4(k: u16, game: &mut Game) {
     }
     MaridiaFloater_Func_2(k, game);
 }
+
+macro_rules! advance_maridia_floater_bob {
+    ($enemy:ident, $enemy_index:ident, $game:ident) => {
+        let v2: bool = (*$enemy).var_D == 1;
+        (*$enemy).var_D = (*$enemy).var_D.wrapping_sub(1);
+        let v3: bool = ((*$enemy).var_D & 0x8000) != 0;
+        if v2 || v3 {
+            (*$enemy).var_D = 5;
+            let v4: i32 = $enemy_index as i32 >> 1;
+            let v5: u16 = (g_word_A8C1A1[(*$enemy).var_C as usize])
+                .wrapping_add(word!($game.enemy_drawing_queue_sizes[v4]));
+            word!($game.enemy_drawing_queue[(v4 + 91)] = v5);
+            (*$enemy).base.x_pos = v5;
+            let mut v6: u16 = ((*$enemy).var_C).wrapping_add(1);
+            if (*$enemy).var_C as i32 - 11i32 & 0x8000 == 0 {
+                v6 = 0;
+            }
+            (*$enemy).var_C = v6;
+        }
+    };
+}
+
 pub unsafe fn MaridiaFloater_Func_5(k: u16, game: &mut Game) {
     let E = Get_MaridiaFloater(k as i32, game);
     if ((*E).base.ai_handler_bits & 1) != 0 {
         (*E).var_F = ((0xa8c3e1i32) as u16);
         MaridiaFloater_Func_7(k, game);
     } else {
-        let v2: bool = (*E).var_D == 1;
-        (*E).var_D = (*E).var_D.wrapping_sub(1);
-        let v3: bool = ((*E).var_D & 0x8000) != 0;
-        if v2 || v3 {
-            (*E).var_D = 5;
-            let v4: i32 = k as i32 >> 1;
-            let v5: u16 = (g_word_A8C1A1[(*E).var_C as usize])
-                .wrapping_add(word!(game.enemy_drawing_queue_sizes[v4]));
-            word!(game.enemy_drawing_queue[(v4 + 91)] = v5);
-            (*E).base.x_pos = v5;
-            let mut v6: u16 = ((*E).var_C).wrapping_add(1);
-            if (*E).var_C as i32 - 11i32 & 0x8000 == 0 {
-                v6 = 0;
-            }
-            (*E).var_C = v6;
-        }
+        advance_maridia_floater_bob!(E, k, game);
         words!((*E), var_A, var_B += words!((g_word_A8C1B9, g_word_A8C1BB)));
         if Enemy_MoveDown(k, (words!((*E), var_A, var_B)) as i32, game) != 0
             || ((*(ram_ptr!(game, u16; 0xf68)).offset(((k as i32 >> 1) + 1) as isize) as i32
@@ -2632,22 +2610,7 @@ pub unsafe fn MaridiaFloater_Func_6(k: u16, game: &mut Game) {
 pub unsafe fn MaridiaFloater_Func_7(k: u16, game: &mut Game) {
     let E = Get_MaridiaFloater(k as i32, game);
     if ((*E).base.ai_handler_bits & 1) != 0 {
-        let v2: bool = (*E).var_D == 1;
-        (*E).var_D = (*E).var_D.wrapping_sub(1);
-        let v3: bool = ((*E).var_D & 0x8000) != 0;
-        if v2 || v3 {
-            (*E).var_D = 5;
-            let v4: i32 = k as i32 >> 1;
-            let v5: u16 = (g_word_A8C1A1[(*E).var_C as usize])
-                .wrapping_add(word!(game.enemy_drawing_queue_sizes[v4]));
-            word!(game.enemy_drawing_queue[(v4 + 91)] = v5);
-            (*E).base.x_pos = v5;
-            let mut v6: u16 = ((*E).var_C).wrapping_add(1);
-            if (*E).var_C as i32 - 11i32 & 0x8000 == 0 {
-                v6 = 0;
-            }
-            (*E).var_C = v6;
-        }
+        advance_maridia_floater_bob!(E, k, game);
         words!((*E), var_A, var_B += words!((g_word_A8C1B9, g_word_A8C1BB)));
         if Enemy_MoveDown(k, (words!((*E), var_A, var_B)) as i32, game) != 0
             || ((*(ram_ptr!(game, u16; 0xf68)).offset(((k as i32 >> 1) + 1) as isize) as i32

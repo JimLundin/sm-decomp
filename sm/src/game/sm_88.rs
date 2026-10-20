@@ -1017,6 +1017,24 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_SetWindowConf(k: u16, game: &mut 
     word!(game.fx_layer_blending_config_c, |fresh129| (fresh129)
         | (0x8000u16));
 }
+
+macro_rules! fade_explosion_afterglow_color {
+    ($game:ident) => {
+        if (*ram_ptr!($game; 0x74, 0) & 0x1f) != 0 {
+            *ram_ptr!($game; 0x74, 0) =
+                ((*ram_ptr!($game; 0x74, 0) as i32 & 0x1f) - 1i32 | 0x20) as u8;
+        }
+        if (*ram_ptr!($game; 0x74, 1) & 0x1f) != 0 {
+            *ram_ptr!($game; 0x74, 1) =
+                ((*ram_ptr!($game; 0x74, 1) as i32 & 0x1f) - 1i32 | 0x40) as u8;
+        }
+        if (*ram_ptr!($game; 0x74, 2) & 0x1f) != 0 {
+            *ram_ptr!($game; 0x74, 2) =
+                ((*ram_ptr!($game; 0x74, 2) as i32 & 0x1f) - 1i32 | 0x80) as u8;
+        }
+    };
+}
+
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(k: u16, game: &mut Game) {
     if (word!(game.power_bomb_explosion_status) & 0x8000) != 0 {
         let v1: i32 = k as u8 as i32 >> 1;
@@ -1029,18 +1047,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(k: u16, game: &m
                     wrapping_add(2)
                 );
             } else {
-                if (*ram_ptr!(game; 0x74, 0) & 0x1f) != 0 {
-                    *ram_ptr!(game; 0x74, 0) =
-                        ((*ram_ptr!(game; 0x74, 0) as i32 & 0x1f) - 1i32 | 0x20) as u8;
-                }
-                if (*ram_ptr!(game; 0x74, 1) & 0x1f) != 0 {
-                    *ram_ptr!(game; 0x74, 1) =
-                        ((*ram_ptr!(game; 0x74, 1) as i32 & 0x1f) - 1i32 | 0x40) as u8;
-                }
-                if (*ram_ptr!(game; 0x74, 2) & 0x1f) != 0 {
-                    *ram_ptr!(game; 0x74, 2) =
-                        ((*ram_ptr!(game; 0x74, 2) as i32 & 0x1f) - 1i32 | 0x80) as u8;
-                }
+                fade_explosion_afterglow_color!(game);
                 byte!(@pointer ram_ptr!(game, u16; 0x1908); k as u8 as i32 as isize) =
                     g_word_888B96 as u8;
             }
@@ -1519,18 +1526,7 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(k: u16, game: &mut G
                 & 0x1f)
                 != 0
             {
-                if (*ram_ptr!(game; 0x74, 0) & 0x1f) != 0 {
-                    *ram_ptr!(game; 0x74, 0) =
-                        ((*ram_ptr!(game; 0x74, 0) as i32 & 0x1f) - 1i32 | 0x20) as u8;
-                }
-                if (*ram_ptr!(game; 0x74, 1) & 0x1f) != 0 {
-                    *ram_ptr!(game; 0x74, 1) =
-                        ((*ram_ptr!(game; 0x74, 1) as i32 & 0x1f) - 1i32 | 0x40) as u8;
-                }
-                if (*ram_ptr!(game; 0x74, 2) & 0x1f) != 0 {
-                    *ram_ptr!(game; 0x74, 2) =
-                        ((*ram_ptr!(game; 0x74, 2) as i32 & 0x1f) - 1i32 | 0x80) as u8;
-                }
+                fade_explosion_afterglow_color!(game);
                 byte!(@pointer ram_ptr!(game, u16; 0x1908); k as i32 as isize) =
                     g_word_888B96 as u8;
             } else {
@@ -2075,53 +2071,59 @@ pub unsafe fn FxTypeFunc_4_Acid(game: &mut Game) {
     SpawnBG3ScrollHdmaObject(game);
     SpawnAnimtiles(addr_kAnimtiles_Acid as u16, game);
 }
+
+macro_rules! advance_liquid_tide {
+    (
+        $game:ident, $amplitude:literal, $sign_mask:literal, $phase:ident,
+        $nonnegative_sine_step:literal, $negative_sine_step:literal $(,)?
+    ) => {
+        word! { $game, 0; fx_y_suboffset, fx_y_offset }
+        let v0: i32 = byte!(@pointer ram_ptr!($game, u16; 0x1974); 1) as i32;
+        let v1: u16 =
+            ($amplitude).wrapping_mul((kSinCosTable8bit_Sext[v0 as usize]) as u16);
+        if (kSinCosTable8bit_Sext[v0 as usize] as u16 & $sign_mask) != 0 {
+            word!($game.fx_y_offset, wrapping_sub(1));
+        }
+        *((ram_ptr!($game, u16; 0x1970) as *mut u8).offset(1) as *mut u16) = v1;
+        if (kSinCosTable8bit_Sext[v0 as usize] as u16 & 0x8000) == 0 {
+            $phase = (word!($game.tide_phase)).wrapping_add($nonnegative_sine_step);
+        } else {
+            $phase = (word!($game.tide_phase)).wrapping_add($negative_sine_step);
+        }
+        word!($game.tide_phase = $phase);
+    };
+}
+
 pub unsafe fn FxHandleTide(game: &mut Game) {
     let mut v2: u16 = 0;
     let mut v5: u16 = 0;
     if *((ram_ptr!(game, u16; 0x197c) as *mut u8).offset(1) as *mut i16) < 0 {
-        word! { game, 0; fx_y_suboffset, fx_y_offset }
-        let v0: i32 = byte!(@pointer ram_ptr!(game, u16; 0x1974); 1) as i32;
-        let v1: u16 = (8u16).wrapping_mul((kSinCosTable8bit_Sext[v0 as usize]) as u16);
-        if (kSinCosTable8bit_Sext[v0 as usize] as u16 & 0x1000) != 0 {
-            word!(game.fx_y_offset, wrapping_sub(1));
-        }
-        *((ram_ptr!(game, u16; 0x1970) as *mut u8).offset(1) as *mut u16) = v1;
-        if (kSinCosTable8bit_Sext[v0 as usize] as u16 & 0x8000) == 0 {
-            v2 = (word!(game.tide_phase)).wrapping_add(288);
-        } else {
-            v2 = (word!(game.tide_phase)).wrapping_add(192);
-        }
-        word!(game.tide_phase = v2);
+        advance_liquid_tide!(game, 8u16, 0x1000, v2, 288, 192);
     } else if (*((ram_ptr!(game, u16; 0x197c) as *mut u8).offset(1) as *mut u16) & 0x4000) != 0 {
-        word! { game, 0; fx_y_suboffset, fx_y_offset }
-        let v3: i32 = byte!(@pointer ram_ptr!(game, u16; 0x1974); 1) as i32;
-        let v4: u16 = (32u16).wrapping_mul((kSinCosTable8bit_Sext[v3 as usize]) as u16);
-        if (kSinCosTable8bit_Sext[v3 as usize] as u16 & 0x400) != 0 {
-            word!(game.fx_y_offset, wrapping_sub(1));
-        }
-        *((ram_ptr!(game, u16; 0x1970) as *mut u8).offset(1) as *mut u16) = v4;
-        if (kSinCosTable8bit_Sext[v3 as usize] as u16 & 0x8000) == 0 {
-            v5 = (word!(game.tide_phase)).wrapping_add(224);
-        } else {
-            v5 = (word!(game.tide_phase)).wrapping_add(128);
-        }
-        word!(game.tide_phase = v5);
+        advance_liquid_tide!(game, 32u16, 0x400, v5, 224, 128);
     }
 }
-pub unsafe fn FxRisingFunction_LavaAcid(game: &mut Game) {
-    if word!(game.fx_y_vel) != 0 {
-        if (word!(game.fx_y_vel) & 0x8000) == 0 {
-            if word!(game.fx_target_y_pos) < word!(game.fx_base_y_pos)
-                || word!(game.fx_target_y_pos) == word!(game.fx_base_y_pos)
+
+macro_rules! start_liquid_motion_toward_target {
+    ($game:ident, $motion_state:literal) => {
+        if (word!($game.fx_y_vel) & 0x8000) == 0 {
+            if word!($game.fx_target_y_pos) < word!($game.fx_base_y_pos)
+                || word!($game.fx_target_y_pos) == word!($game.fx_base_y_pos)
             {
                 return;
             }
-        } else if !(word!(game.fx_target_y_pos) != word!(game.fx_base_y_pos)
-            && word!(game.fx_target_y_pos) < word!(game.fx_base_y_pos))
+        } else if !(word!($game.fx_target_y_pos) != word!($game.fx_base_y_pos)
+            && word!($game.fx_target_y_pos) < word!($game.fx_base_y_pos))
         {
             return;
         }
-        word!(game.fx_rising_function_bank_88 = ((0x88b367i32) as u16));
+        word!($game.fx_rising_function_bank_88 = (($motion_state) as u16));
+    };
+}
+
+pub unsafe fn FxRisingFunction_LavaAcid(game: &mut Game) {
+    if word!(game.fx_y_vel) != 0 {
+        start_liquid_motion_toward_target!(game, 0x88b367i32);
     }
 }
 pub unsafe fn FxRisingFunction_LavaAcid_WaitToRise(game: &mut Game) {
@@ -2325,18 +2327,7 @@ pub unsafe fn FxTypeFunc_6_Water(game: &mut Game) {
 }
 pub unsafe fn FxRisingFunction_C428_WaterNormal(game: &mut Game) {
     if word!(game.fx_y_vel) != 0 {
-        if (word!(game.fx_y_vel) & 0x8000) == 0 {
-            if word!(game.fx_target_y_pos) < word!(game.fx_base_y_pos)
-                || word!(game.fx_target_y_pos) == word!(game.fx_base_y_pos)
-            {
-                return;
-            }
-        } else if !(word!(game.fx_target_y_pos) != word!(game.fx_base_y_pos)
-            && word!(game.fx_target_y_pos) < word!(game.fx_base_y_pos))
-        {
-            return;
-        }
-        word!(game.fx_rising_function_bank_88 = ((0x88c44ci32) as u16));
+        start_liquid_motion_toward_target!(game, 0x88c44ci32);
     }
 }
 pub unsafe fn FxRisingFunction_WaterWaitToRise(game: &mut Game) {
@@ -2918,6 +2909,42 @@ pub unsafe fn VariaSuitPickup_1(game: &mut Game) -> u8 {
     }
     1
 }
+
+macro_rules! widen_suit_pickup_beam_row {
+    ($game:ident, $width_index:ident, $output_offset:ident) => {
+        let mut v4: i8 = ((word!($game.suit_pickup_light_beam_pos)) as i8).wrapping_sub(
+            (byte!(
+                @pointer $game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9));
+                $width_index as isize
+            )) as i8,
+        );
+        if v4 < 0 {
+            v4 = 0;
+        }
+        byte!(@pointer ram_ptr!($game, u16; 0x9800); $output_offset as u16 as i32 as isize) =
+            v4 as u8;
+        let v5: u16 = (($output_offset) as u16).wrapping_add(1);
+        let mut v6: i8 = ((byte!(
+            @pointer $game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9));
+            $width_index as isize
+        )) as i8)
+            .wrapping_add((byte!(@pointer ram_ptr!($game, u16; 0xdee); 1)) as i8);
+        if u8::overflowing_add(
+            byte!(
+                @pointer $game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9));
+                $width_index as isize
+            ),
+            byte!(@pointer ram_ptr!($game, u16; 0xdee); 1isize),
+        )
+        .1
+        {
+            v6 = -1i8;
+        }
+        byte!(@pointer ram_ptr!($game, u16; 0x9800); v5 as i32 as isize) = v6 as u8;
+        $output_offset = ((v5) as i16).wrapping_add(1);
+    };
+}
+
 pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> u8 {
     AdvanceSuitPickupColorMathSubscreenToWhite(game);
     let v0: bool = ((word!(game.suit_pickup_light_beam_pos)) as i8)
@@ -2944,29 +2971,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> u8 {
     let mut v2: i16 = 0;
     let mut v3: u16 = 0;
     loop {
-        let mut v4: i8 = ((word!(game.suit_pickup_light_beam_pos)) as i8).wrapping_sub(
-            (byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)); v3 as isize))
-                as i8,
-        );
-        if v4 < 0 {
-            v4 = 0;
-        }
-        byte!(@pointer ram_ptr!(game, u16; 0x9800); v2 as u16 as i32 as isize) = v4 as u8;
-        let v5: u16 = ((v2) as u16).wrapping_add(1);
-        let mut v6: i8 =
-            ((byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)); v3 as isize))
-                as i8)
-                .wrapping_add((byte!(@pointer ram_ptr!(game, u16; 0xdee); 1)) as i8);
-        if u8::overflowing_add(
-            byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)); v3 as isize),
-            byte!(@pointer ram_ptr!(game, u16; 0xdee); 1isize),
-        )
-        .1
-        {
-            v6 = -1i8;
-        }
-        byte!(@pointer ram_ptr!(game, u16; 0x9800); v5 as i32 as isize) = v6 as u8;
-        v2 = ((v5) as i16).wrapping_add(1);
+        widen_suit_pickup_beam_row!(game, v3, v2);
         v3 = v3.wrapping_add(1);
         if (v2 >= 0x100) {
             break;
@@ -2974,29 +2979,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> u8 {
     }
     let mut v7: u16 = (v3).wrapping_sub(1);
     loop {
-        let mut v8: i8 = ((word!(game.suit_pickup_light_beam_pos)) as i8).wrapping_sub(
-            (byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)); v7 as isize))
-                as i8,
-        );
-        if v8 < 0 {
-            v8 = 0;
-        }
-        byte!(@pointer ram_ptr!(game, u16; 0x9800); v2 as u16 as i32 as isize) = v8 as u8;
-        let v9: u16 = ((v2) as u16).wrapping_add(1);
-        let mut v10: i8 =
-            ((byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)); v7 as isize))
-                as i8)
-                .wrapping_add((byte!(@pointer ram_ptr!(game, u16; 0xdee); 1)) as i8);
-        if u8::overflowing_add(
-            byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)); v7 as isize),
-            byte!(@pointer ram_ptr!(game, u16; 0xdee); 1isize),
-        )
-        .1
-        {
-            v10 = -1i8;
-        }
-        byte!(@pointer ram_ptr!(game, u16; 0x9800); v9 as i32 as isize) = v10 as u8;
-        v2 = ((v9) as i16).wrapping_add(1);
+        widen_suit_pickup_beam_row!(game, v7, v2);
         v7 = v7.wrapping_sub(1);
         if (v2 >= 0x200) {
             break;

@@ -1706,6 +1706,45 @@ pub unsafe fn EprojPreInstr_PhantoonStartingFireballs3(k: u16, game: &mut Game) 
         word!(game.eproj_pre_instr[v1] = (0x869a44 & 0xffff) as u16);
     };
 }
+
+macro_rules! move_phantoon_orbiting_fireball {
+    ($game:ident, $slot:ident, $angle:ident, $y_position:ident) => {
+        word!($game.eproj_E[$slot] = $angle);
+        let pt: Point16U =
+            Eproj_PhantomFireballs_Func1($angle, word!($game.eproj_y_vel[$slot]));
+        let mut v3: bool = ((pt.x as i32
+            + (*(ram_ptr!($game, EnemyData; 0xf78)).offset(0)).x_pos as i32)
+            as i16)
+            < 0;
+        let mut v4: i16 = (pt.x as i32
+            + (*(ram_ptr!($game, EnemyData; 0xf78)).offset(0)).x_pos as i32)
+            as i16;
+        word!(
+            $game.eproj_x_pos[$slot] = (pt.x as i32
+                + (*(ram_ptr!($game, EnemyData; 0xf78)).offset(0)).x_pos as i32)
+                as u16
+        );
+        if v3
+            || v4 as i32 - 256i32 & 0x8000 == 0
+            || {
+                v3 = ((pt.y as i32
+                    + (*(ram_ptr!($game, EnemyData; 0xf78)).offset(0)).y_pos as i32
+                    + 16) as i16)
+                    < 0;
+                $y_position = (pt.y as i32
+                    + (*(ram_ptr!($game, EnemyData; 0xf78)).offset(0)).y_pos as i32
+                    + 16) as u16;
+                word!($game.eproj_y_pos[$slot] = $y_position);
+                v3 as i32 != 0
+            }
+            || $y_position as i32 - 256i32 & 0x8000 == 0
+        {
+            word!($game.eproj_instr_list_ptr[$slot] = addr_off_8697F8 as u16);
+            word!($game.eproj_instr_timers[$slot] = 1);
+        }
+    };
+}
+
 pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs(k: u16, game: &mut Game) {
     let mut v5: u16 = 0;
     let v1: i32 = k as i32 >> 1;
@@ -1713,32 +1752,7 @@ pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs(k: u16, game: &mut Game
         as u16);
     let v2: u16 = (byte!(@pointer (ram_ptr!(game, u16; 0x1ab7)).offset(v1 as isize); 0) as i32
         + word!(game.eproj_E[v1]) as i32) as u8 as u16;
-    word!(game.eproj_E[v1] = v2);
-    let pt: Point16U = Eproj_PhantomFireballs_Func1(v2, word!(game.eproj_y_vel[v1]));
-    let mut v3: bool =
-        ((pt.x as i32 + (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).x_pos as i32) as i16) < 0;
-    let mut v4: i16 =
-        (pt.x as i32 + (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).x_pos as i32) as i16;
-    word!(
-        game.eproj_x_pos[v1] =
-            (pt.x as i32 + (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).x_pos as i32) as u16
-    );
-    if v3
-        || v4 as i32 - 256i32 & 0x8000 == 0
-        || {
-            v3 = ((pt.y as i32 + (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).y_pos as i32 + 16)
-                as i16)
-                < 0;
-            v5 = (pt.y as i32 + (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).y_pos as i32 + 16)
-                as u16;
-            word!(game.eproj_y_pos[v1] = v5);
-            v3 as i32 != 0
-        }
-        || v5 as i32 - 256i32 & 0x8000 == 0
-    {
-        word!(game.eproj_instr_list_ptr[v1] = addr_off_8697F8 as u16);
-        word!(game.eproj_instr_timers[v1] = 1);
-    }
+    move_phantoon_orbiting_fireball!(game, v1, v2, v5);
 }
 pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_2(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1;
@@ -1773,32 +1787,7 @@ pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_3(k: u16, game: &mut Ga
     word!(game.eproj_y_vel[v1], |fresh123| (fresh123 as i32 + 2)
         as u16);
     let v2: u16 = (word!(game.eproj_E[v1]) as i32 + 2) as u8 as u16;
-    word!(game.eproj_E[v1] = v2);
-    let pt: Point16U = Eproj_PhantomFireballs_Func1(v2, word!(game.eproj_y_vel[v1]));
-    let mut v3: bool =
-        ((pt.x as i32 + (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).x_pos as i32) as i16) < 0;
-    let mut v4: i16 =
-        (pt.x as i32 + (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).x_pos as i32) as i16;
-    word!(
-        game.eproj_x_pos[v1] =
-            (pt.x as i32 + (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).x_pos as i32) as u16
-    );
-    if v3
-        || v4 as i32 - 256i32 & 0x8000 == 0
-        || {
-            v3 = ((pt.y as i32 + (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).y_pos as i32 + 16)
-                as i16)
-                < 0;
-            v5 = (pt.y as i32 + (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).y_pos as i32 + 16)
-                as u16;
-            word!(game.eproj_y_pos[v1] = v5);
-            v3 as i32 != 0
-        }
-        || v5 as i32 - 256i32 & 0x8000 == 0
-    {
-        word!(game.eproj_instr_list_ptr[v1] = addr_off_8697F8 as u16);
-        word!(game.eproj_instr_timers[v1] = 1);
-    }
+    move_phantoon_orbiting_fireball!(game, v1, v2, v5);
 }
 pub unsafe fn EprojPreInstr_PhantoonStartingFireballsB(k: u16, game: &mut Game) {
     if (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_B != 0 {
@@ -4252,20 +4241,30 @@ unsafe fn EprojInit_MotherBrainGlassShatteringSparkle(j: u16, game: &mut Game) {
     );
     word!(game.eproj_gfx_idx[v2] = 1600);
 }
+
+macro_rules! integrate_shard_velocity_xy {
+    (
+        $slot:ident, $projectile_index:ident, $game:ident, $x_high_ram:literal,
+        $x_low_ram:literal $(,)?
+    ) => {
+        let $slot: i32 = $projectile_index as i32 >> 1;
+        let mut amt: i32 = (word!($game.eproj_x_vel[$slot]) as i16 as i32) << 8;
+        AddToHiLo(
+            (ram_ptr!($game, u16; $x_high_ram)).offset($slot as isize),
+            (ram_ptr!($game, u16; $x_low_ram)).offset($slot as isize),
+            amt as u32,
+        );
+        amt = (word!($game.eproj_y_vel[$slot]) as i16 as i32) << 8;
+        AddToHiLo(
+            (ram_ptr!($game, u16; 0x1a93)).offset($slot as isize),
+            (ram_ptr!($game, u16; 0x1a6f)).offset($slot as isize),
+            amt as u32,
+        );
+    };
+}
+
 pub unsafe fn EprojPreInstr_MotherBrainGlassShatteringShard(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    let mut amt: i32 = (word!(game.eproj_x_vel[v1]) as i16 as i32) << 8;
-    AddToHiLo(
-        (ram_ptr!(game, u16; 0x1a4b)).offset(v1 as isize),
-        (ram_ptr!(game, u16; 0x1a27)).offset(v1 as isize),
-        amt as u32,
-    );
-    amt = (word!(game.eproj_y_vel[v1]) as i16 as i32) << 8;
-    AddToHiLo(
-        (ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize),
-        (ram_ptr!(game, u16; 0x1a6f)).offset(v1 as isize),
-        amt as u32,
-    );
+    integrate_shard_velocity_xy!(v1, k, game, 0x1a4b, 0x1a27);
     let v6: u16 = word!(game.eproj_y_subpos[v1]);
     if (word!(game.eproj_y_pos[v1]) & 0xff00) != 0 {
         word!(game.eproj_id[v1] = 0);
@@ -4652,19 +4651,7 @@ pub unsafe fn sub_86D7DE(k: u16, game: &mut Game) {
     );
 }
 pub unsafe fn EprojPreInstr_N00bTubeShards(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    let mut amt: i32 = (word!(game.eproj_x_vel[v1]) as i16 as i32) << 8;
-    AddToHiLo(
-        (ram_ptr!(game, u16; 0x1b23)).offset(v1 as isize),
-        (ram_ptr!(game, u16; 0x1aff)).offset(v1 as isize),
-        amt as u32,
-    );
-    amt = (word!(game.eproj_y_vel[v1]) as i16 as i32) << 8;
-    AddToHiLo(
-        (ram_ptr!(game, u16; 0x1a93)).offset(v1 as isize),
-        (ram_ptr!(game, u16; 0x1a6f)).offset(v1 as isize),
-        amt as u32,
-    );
+    integrate_shard_velocity_xy!(v1, k, game, 0x1b23, 0x1aff);
     Eproj_DeleteIfYposOutside(k, game);
 }
 pub unsafe fn sub_86D83D(k: u16, game: &mut Game) {

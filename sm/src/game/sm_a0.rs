@@ -609,6 +609,28 @@ static kRoomShakes: [u16; 144] = [
     3, 0, 3, 0, 0, 3, 0, 3, 3, 3, 3, 3, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 2,
     0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0, 3, 3,
 ];
+
+macro_rules! adjust_room_shake_scroll {
+    ($game:ident, $adjust:ident, $shake_index:ident) => {
+        word!(
+            $game.reg_BG1HOFS,
+            $adjust(kRoomShakes[$shake_index as usize])
+        );
+        word!(
+            $game.reg_BG1VOFS,
+            $adjust(kRoomShakes[($shake_index + 1) as usize])
+        );
+        word!(
+            $game.reg_BG2HOFS,
+            $adjust(kRoomShakes[($shake_index + 2) as usize])
+        );
+        word!(
+            $game.reg_BG2VOFS,
+            $adjust(kRoomShakes[($shake_index + 3) as usize])
+        );
+    };
+}
+
 pub unsafe fn HandleRoomShaking(game: &mut Game) {
     if word!(game.earthquake_timer) != 0
         && word!(game.time_is_frozen_flag) == 0
@@ -616,33 +638,9 @@ pub unsafe fn HandleRoomShaking(game: &mut Game) {
     {
         let v0: i32 = 8 * word!(game.earthquake_type) as i32 >> 1;
         if (word!(game.earthquake_timer) & 2) != 0 {
-            word!(game.reg_BG1HOFS, wrapping_sub(kRoomShakes[v0 as usize]));
-            word!(
-                game.reg_BG1VOFS,
-                wrapping_sub(kRoomShakes[(v0 + 1) as usize])
-            );
-            word!(
-                game.reg_BG2HOFS,
-                wrapping_sub(kRoomShakes[(v0 + 2) as usize])
-            );
-            word!(
-                game.reg_BG2VOFS,
-                wrapping_sub(kRoomShakes[(v0 + 3) as usize])
-            );
+            adjust_room_shake_scroll!(game, wrapping_sub, v0);
         } else {
-            word!(game.reg_BG1HOFS, wrapping_add(kRoomShakes[v0 as usize]));
-            word!(
-                game.reg_BG1VOFS,
-                wrapping_add(kRoomShakes[(v0 + 1) as usize])
-            );
-            word!(
-                game.reg_BG2HOFS,
-                wrapping_add(kRoomShakes[(v0 + 2) as usize])
-            );
-            word!(
-                game.reg_BG2VOFS,
-                wrapping_add(kRoomShakes[(v0 + 3) as usize])
-            );
+            adjust_room_shake_scroll!(game, wrapping_add, v0);
         }
         word!(game.earthquake_timer, wrapping_sub(1));
         if word!(game.earthquake_type) as i32 - 18i32 & 0x8000 == 0 {
@@ -2793,45 +2791,38 @@ pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
         i -= 0x40;
     }
 }
+
+macro_rules! spawn_enemy_death_and_clear_slot {
+    ($explosion_kind:ident, $kind_limit:literal, $game:ident, $enemy:ident) => {
+        if $explosion_kind as i32 - $kind_limit & 0x8000 == 0 {
+            $explosion_kind = 0;
+        }
+        SpawnEprojWithGfx(
+            $explosion_kind,
+            word!($game.cur_enemy_index),
+            addr_kEproj_EnemyDeathExplosion as u16,
+            $game,
+        );
+        let r18: u16 = ((*$enemy).properties) & (0x4000u16);
+        memset($enemy as *mut c_void, 0, 64 as size_t);
+        if r18 != 0 {
+            (*$enemy).enemy_ptr = addr_kEnemyDef_DAFF as u16;
+            (*$enemy).bank = 0xa3;
+        }
+    };
+}
+
 pub unsafe fn EnemyDeathAnimation(k: u16, mut a: u16, game: &mut Game) {
     let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
     if (*E).ai_handler_bits == 1 {
         word!(game.grapple_beam_function = ((0x9bc8c5i32) as u16));
     }
-    if a as i32 - 5i32 & 0x8000 == 0 {
-        a = 0;
-    }
-    SpawnEprojWithGfx(
-        a,
-        word!(game.cur_enemy_index),
-        addr_kEproj_EnemyDeathExplosion as u16,
-        game,
-    );
-    let r18: u16 = ((*E).properties) & (0x4000u16);
-    memset(E as *mut c_void, 0, 64 as size_t);
-    if r18 != 0 {
-        (*E).enemy_ptr = addr_kEnemyDef_DAFF as u16;
-        (*E).bank = 0xa3;
-    }
+    spawn_enemy_death_and_clear_slot!(a, 5i32, game, E);
     word!(game.num_enemies_killed_in_room, wrapping_add(1));
 }
 pub unsafe fn RinkasDeathAnimation(mut a: u16, game: &mut Game) {
     let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    if a as i32 - 3i32 & 0x8000 == 0 {
-        a = 0;
-    }
-    SpawnEprojWithGfx(
-        a,
-        word!(game.cur_enemy_index),
-        addr_kEproj_EnemyDeathExplosion as u16,
-        game,
-    );
-    let r18: u16 = ((*E).properties) & (0x4000u16);
-    memset(E as *mut c_void, 0, 64 as size_t);
-    if r18 != 0 {
-        (*E).enemy_ptr = addr_kEnemyDef_DAFF as u16;
-        (*E).bank = 0xa3;
-    }
+    spawn_enemy_death_and_clear_slot!(a, 3i32, game, E);
 }
 pub unsafe fn SuitDamageDivision(a: u16, game: &mut Game) -> u16 {
     if (word!(game.equipped_items) & 0x20) != 0 {
@@ -3647,6 +3638,29 @@ pub fn CompareDistToSamus_X(k: u16, a: u16, game: &mut Game) -> u8 {
     let delta = GetSamusEnemyDelta_X(k, game);
     u8::from(Abs16(delta) >= a)
 }
+
+macro_rules! calculate_enemy_motion_leading_edge {
+    (
+        $amount:ident, $game:ident, $enemy_index:ident, $position:ident, $subposition:ident,
+        $edge:ident, $radius:ident $(,)?
+    ) => {
+        let position = ($amount as u32).wrapping_add(
+            (u32::from($game.enemy_coordinates($enemy_index).$position()) << 16)
+                | u32::from($game.enemy_coordinates($enemy_index).$subposition()),
+        );
+        let x = (position >> 16) as u16;
+        let $edge = if $amount < 0 {
+            x.wrapping_sub($game.enemy_coordinates($enemy_index).$radius())
+        } else {
+            $game
+                .enemy_coordinates($enemy_index)
+                .$radius()
+                .wrapping_add(x)
+                .wrapping_sub(1)
+        };
+    };
+}
+
 pub fn EnemyFunc_BBBF(k: u16, amt: i32, game: &mut Game) -> u8 {
     let top = game
         .enemy_coordinates(k)
@@ -3660,19 +3674,7 @@ pub fn EnemyFunc_BBBF(k: u16, amt: i32, game: &mut Game) -> u8 {
         .wrapping_sub(top & 0xfff0)
         >> 4;
     let row_offset = u16::from((top >> 4) as u8) * u16::from(game.room_width_in_blocks() as u8);
-    let position = (amt as u32).wrapping_add(
-        (u32::from(game.enemy_coordinates(k).x_pos()) << 16)
-            | u32::from(game.enemy_coordinates(k).x_subpos()),
-    );
-    let x = (position >> 16) as u16;
-    let edge = if amt < 0 {
-        x.wrapping_sub(game.enemy_coordinates(k).x_width())
-    } else {
-        game.enemy_coordinates(k)
-            .x_width()
-            .wrapping_add(x)
-            .wrapping_sub(1)
-    };
+    calculate_enemy_motion_leading_edge!(amt, game, k, x_pos, x_subpos, edge, x_width);
     let mut block_offset = row_offset.wrapping_add(edge >> 4).wrapping_mul(2);
     loop {
         let offset = 0x10002 + usize::from(block_offset);
@@ -3687,6 +3689,28 @@ pub fn EnemyFunc_BBBF(k: u16, amt: i32, game: &mut Game) -> u8 {
         }
     }
 }
+
+macro_rules! scan_enemy_collision_block_row {
+    ($edge:ident, $game:ident, $left:ident, $columns:ident) => {
+        let row_offset =
+            u16::from(($edge >> 4) as u8) * u16::from($game.room_width_in_blocks() as u8);
+        // This cursor is not truncated to a word as the horizontal scan's is.
+        let mut block_offset = 2 * (usize::from(row_offset) + usize::from($left >> 4));
+        loop {
+            let offset = 0x10002 + block_offset;
+            let block = u16::from_le_bytes([$game.g_ram[offset], $game.g_ram[offset + 1]]);
+            if block & 0x8000 != 0 {
+                return 1;
+            }
+            $columns = $columns.wrapping_sub(1);
+            if $columns & 0x8000 != 0 {
+                return 0;
+            }
+            block_offset += 2;
+        }
+    };
+}
+
 pub fn EnemyFunc_BC76(k: u16, amt: i32, game: &mut Game) -> u8 {
     let left = game
         .enemy_coordinates(k)
@@ -3699,34 +3723,8 @@ pub fn EnemyFunc_BC76(k: u16, amt: i32, game: &mut Game) -> u8 {
         .wrapping_sub(1)
         .wrapping_sub(left & 0xfff0)
         >> 4;
-    let position = (amt as u32).wrapping_add(
-        (u32::from(game.enemy_coordinates(k).y_pos()) << 16)
-            | u32::from(game.enemy_coordinates(k).y_subpos()),
-    );
-    let y = (position >> 16) as u16;
-    let edge = if amt < 0 {
-        y.wrapping_sub(game.enemy_coordinates(k).y_height())
-    } else {
-        game.enemy_coordinates(k)
-            .y_height()
-            .wrapping_add(y)
-            .wrapping_sub(1)
-    };
-    let row_offset = u16::from((edge >> 4) as u8) * u16::from(game.room_width_in_blocks() as u8);
-    // This cursor is not truncated to a word as the horizontal scan's is.
-    let mut block_offset = 2 * (usize::from(row_offset) + usize::from(left >> 4));
-    loop {
-        let offset = 0x10002 + block_offset;
-        let block = u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]]);
-        if block & 0x8000 != 0 {
-            return 1;
-        }
-        columns = columns.wrapping_sub(1);
-        if columns & 0x8000 != 0 {
-            return 0;
-        }
-        block_offset += 2;
-    }
+    calculate_enemy_motion_leading_edge!(amt, game, k, y_pos, y_subpos, edge, y_height);
+    scan_enemy_collision_block_row!(edge, game, left, columns);
 }
 pub fn EnemyFunc_BF8A(k: u16, a: u16, amt: i32, game: &mut Game) -> u8 {
     let left = game
@@ -3755,20 +3753,7 @@ pub fn EnemyFunc_BF8A(k: u16, a: u16, amt: i32, game: &mut Game) -> u8 {
         .wrapping_sub(amt as u32);
         ((position >> 16) as u16).wrapping_sub(game.enemy_coordinates(k).y_height())
     };
-    let row_offset = u16::from((edge >> 4) as u8) * u16::from(game.room_width_in_blocks() as u8);
-    let mut block_offset = 2 * (usize::from(row_offset) + usize::from(left >> 4));
-    loop {
-        let offset = 0x10002 + block_offset;
-        let block = u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]]);
-        if block & 0x8000 != 0 {
-            return 1;
-        }
-        columns = columns.wrapping_sub(1);
-        if columns & 0x8000 != 0 {
-            return 0;
-        }
-        block_offset += 2;
-    }
+    scan_enemy_collision_block_row!(edge, game, left, columns);
 }
 pub unsafe fn CalculateAngleOfSamusFromEproj(k: u16, game: &mut Game) -> u16 {
     let x = game

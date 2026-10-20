@@ -20,6 +20,50 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Named repeated algorithms (2026-10-20)
+
+The finalized repeated-pattern draft now shares 80 named algorithms at 179
+sites across 24 gameplay files. Private macros emit the original statements
+in caller scope; five cross-module uses retain explicit reexports. Helpers
+sit beside their first local callers. The cohort includes motion clamps,
+Torizo landing/timers, missile collision, cinematic command loops, X-ray tiles
+and equipment traversal. Original entry points, casts, reads, writes and
+callback order remain; no new runtime state or interpreter is introduced.
+
+Independent substitution checks cover all 179 selected spans. The finalized
+draft matches all 7319 optimized library MIR function occurrences against
+7ccac620. After composing with the committed GraphicsAsset change, all 7321
+function occurrences and all 10488 ordinary non-function occurrences match
+the GraphicsAsset-only baseline. The comparison retains locals, types,
+operations, allocations and order; it normalizes only debug binding names,
+source locations and numeric compiler IDs while preserving item paths.
+All 68 embedded-source literals and allocations bind to exact frozen bytes;
+only the 24 edited source payloads and their dependent lengths differ.
+This is compiler-specific MIR evidence, not universal equivalence or new
+gameplay coverage. Existing movie routes still do not reach credits.
+
+Formatting, normal release (22.32s), diff check and progress pass. The actual
+workspace source matches the reviewed composed snapshot byte-for-byte.
+Source-checked any% passes 129712/0 and Speed Booster 148406/0, native exits 0;
+source/input/library/DLL hashes stay fixed and the host reuses the normal
+library. Full replay command wall times are 130.96s and 165.17s.
+
+Rust lines fall 713 from 115338 to **114625**. The earlier 808-line estimate
+is superseded by this readable, formatted result including all helpers and
+callers. Textual raw-offset occurrences fall 1 to 34 and cast-containing lines
+fall 142 to 9129 through sharing; other counters stay unchanged. The fixed
+under-100000 target still requires **14626 further lines**. This lands a
+proven family while the complete remaining reduction budget stays unfinished.
+
+The efficiency follow-up rejected a signed-difference primitive: replacing
+863 predicates across 26 files increases formatted source by 142 lines.
+Longer callers and helper costs outweigh sharing of already short expressions.
+Price the most different real variants early and prefer substantial common
+algorithm bodies with few varying inputs. This result does not exhaust
+semantic sharing. The next drafts remove repeated numeric routing decisions
+within existing functions; their behavior checks remain separate from this
+completed extraction. All analysis artifacts remain in TEMP.
+
 ## Shared graphics loads (2026-10-20)
 
 The cinematic asset loader now lives beside shared DMA setup in sm_80.rs as
@@ -290,7 +334,9 @@ flowchart LR
    at 90 sites and saves **548 net lines**, including definitions and callers.
    Extending that semantic review to 90 groups keeps 80 positive groups at
    179 sites and saves **808 net lines** in a separately frozen third draft.
-   Neither named draft has compilation, expansion-proof or replay results.
+   At that checkpoint neither named draft had compilation, expansion-proof
+   or replay results. The finalized 713-line extraction above supersedes
+   that implementation status and the earlier 808-line estimate.
    All these subsets overlap; their savings must not be added. They do not
    establish the complete budget needed for the fixed target.
 

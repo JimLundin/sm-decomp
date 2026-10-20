@@ -1943,6 +1943,53 @@ unsafe fn ChangePaletteValues(target: *mut u16, new_color: u16, n: size_t) {
         i = i.wrapping_add(1);
     }
 }
+
+macro_rules! draw_equipment_icons {
+    (
+        $icon_count:literal, $game:ident, $destinations:ident, $collected_field:ident,
+        $mask_table:literal, $tilemap_table:literal, $byte_count:literal,
+        $equipped_field:ident, $word_count:literal $(,)?
+    ) => {
+        let mut i_0: i32 = 0;
+        while i_0 < $icon_count {
+            let target: *mut u16 = ram_ptr!(
+                $game, u16; *$destinations.offset(i_0 as isize) as i32 as isize
+            );
+            if (word!($game.$collected_field)
+                & crate::rtl::rom_table_word!($game, $mask_table, i_0 as isize))
+                != 0
+            {
+                memcpy(
+                    target as *mut c_void,
+                    RomPtr_82(
+                        crate::rtl::rom_table_word!(
+                            $game,
+                            $tilemap_table,
+                            i_0 as isize
+                        ),
+                        $game,
+                    ) as *const c_void,
+                    $byte_count as size_t,
+                );
+                if (word!($game.$equipped_field)
+                    & crate::rtl::rom_table_word!($game, $mask_table, i_0 as isize))
+                    == 0
+                {
+                    ChangePaletteValues(target, 3072, $word_count as size_t);
+                }
+            } else {
+                memcpy(
+                    target as *mut c_void,
+                    RomPtr_82(addr_kEquipmentScreenTilemap_Blank as u16, $game)
+                        as *const c_void,
+                    $byte_count as size_t,
+                );
+            }
+            i_0 += 1;
+        }
+    };
+}
+
 pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
     if word!(game.samus_max_reserve_health) != 0 {
         memcpy(
@@ -1971,97 +2018,42 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
             i += 1;
         }
     } else {
-        let mut i_0: i32 = 0;
-        while i_0 < 6 {
-            let target: *mut u16 = ram_ptr!(game, u16; *p.offset(i_0 as isize) as i32 as isize);
-            if (word!(game.collected_beams)
-                & crate::rtl::rom_table_word!(game, 0x82c04c, i_0 as isize))
-                != 0
-            {
-                memcpy(
-                    target as *mut c_void,
-                    RomPtr_82(
-                        crate::rtl::rom_table_word!(game, 0x82c08c, i_0 as isize),
-                        game,
-                    ) as *const c_void,
-                    10 as size_t,
-                );
-                if (word!(game.equipped_beams)
-                    & crate::rtl::rom_table_word!(game, 0x82c04c, i_0 as isize))
-                    == 0
-                {
-                    ChangePaletteValues(target, 3072, 5 as size_t);
-                }
-            } else {
-                memcpy(
-                    target as *mut c_void,
-                    RomPtr_82(addr_kEquipmentScreenTilemap_Blank as u16, game) as *const c_void,
-                    10 as size_t,
-                );
-            }
-            i_0 += 1;
-        }
+        draw_equipment_icons!(
+            6,
+            game,
+            p,
+            collected_beams,
+            0x82c04c,
+            0x82c08c,
+            10,
+            equipped_beams,
+            5
+        );
     }
     p = RomPtr_82(addr_kEquipmentTilemapOffs_Suits as u16, game) as *mut u16;
-    let mut i_1: i32 = 0;
-    while i_1 < 6 {
-        let target_0: *mut u16 = ram_ptr!(game, u16; *p.offset(i_1 as isize) as i32 as isize);
-        if (word!(game.collected_items) & crate::rtl::rom_table_word!(game, 0x82c056, i_1 as isize))
-            != 0
-        {
-            memcpy(
-                target_0 as *mut c_void,
-                RomPtr_82(
-                    crate::rtl::rom_table_word!(game, 0x82c096, i_1 as isize),
-                    game,
-                ) as *const c_void,
-                18 as size_t,
-            );
-            if (word!(game.equipped_items)
-                & crate::rtl::rom_table_word!(game, 0x82c056, i_1 as isize))
-                == 0
-            {
-                ChangePaletteValues(target_0, 3072, 9 as size_t);
-            }
-        } else {
-            memcpy(
-                target_0 as *mut c_void,
-                RomPtr_82(addr_kEquipmentScreenTilemap_Blank as u16, game) as *const c_void,
-                18 as size_t,
-            );
-        }
-        i_1 += 1;
-    }
+    draw_equipment_icons!(
+        6,
+        game,
+        p,
+        collected_items,
+        0x82c056,
+        0x82c096,
+        18,
+        equipped_items,
+        9
+    );
     p = RomPtr_82(addr_kEquipmentTilemapOffs_Boots as u16, game) as *mut u16;
-    let mut i_2: i32 = 0;
-    while i_2 < 3 {
-        let target_1: *mut u16 = ram_ptr!(game, u16; *p.offset(i_2 as isize) as i32 as isize);
-        if (word!(game.collected_items) & crate::rtl::rom_table_word!(game, 0x82c062, i_2 as isize))
-            != 0
-        {
-            memcpy(
-                target_1 as *mut c_void,
-                RomPtr_82(
-                    crate::rtl::rom_table_word!(game, 0x82c0a2, i_2 as isize),
-                    game,
-                ) as *const c_void,
-                18 as size_t,
-            );
-            if (word!(game.equipped_items)
-                & crate::rtl::rom_table_word!(game, 0x82c062, i_2 as isize))
-                == 0
-            {
-                ChangePaletteValues(target_1, 3072, 9 as size_t);
-            }
-        } else {
-            memcpy(
-                target_1 as *mut c_void,
-                RomPtr_82(addr_kEquipmentScreenTilemap_Blank as u16, game) as *const c_void,
-                18 as size_t,
-            );
-        }
-        i_2 += 1;
-    }
+    draw_equipment_icons!(
+        3,
+        game,
+        p,
+        collected_items,
+        0x82c062,
+        0x82c0a2,
+        18,
+        equipped_items,
+        9
+    );
 }
 pub unsafe fn ClearSamusBeamTiles(game: &mut Game) {
     GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1000).load(game);
@@ -2778,25 +2770,38 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
         EquipmentScreenMoveToScrewOrHigherOnSuits(0xa, r18, game);
     }
 }
+
+macro_rules! queue_ram_tilemap_write {
+    (
+        $game:ident, $byte_count:literal, $source_offset:literal, $bank_write_offset:ident,
+        $destination:literal $(,)?
+    ) => {
+        let mut v0: u16 = word!($game.vram_write_queue_tail);
+        (*gVramWriteEntry(word!($game.vram_write_queue_tail) as i32, $game)).size =
+            $byte_count;
+        v0 = (v0).wrapping_add(2);
+        (*gVramWriteEntry(v0 as i32, $game)).size =
+            ((ram_ptr!($game, Ram3800; 0x3800) as *mut u8)
+                .offset_from(&raw mut $game.g_ram as *mut u8) as c_long
+                + $source_offset as c_long) as u16;
+        v0 = (v0).wrapping_add(2);
+        crate::update_place! { previous $bank_write_offset = v0 => v0.wrapping_add(1); }
+        *(&raw mut (*(gVramWriteEntry
+            as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
+            $bank_write_offset as i32,
+            $game,
+        ))
+        .size as *mut u8)
+            .offset(0) = 126;
+        (*gVramWriteEntry(v0 as i32, $game)).size = $destination;
+        word!($game.vram_write_queue_tail = (v0).wrapping_add(2));
+    };
+}
+pub(crate) use queue_ram_tilemap_write;
+
 pub unsafe fn WriteSamusWireframeTilemapAndQueue(game: &mut Game) {
     WriteSamusWireframeTilemap(game);
-    let mut v0: u16 = word!(game.vram_write_queue_tail);
-    (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 1280;
-    v0 = (v0).wrapping_add(2);
-    (*gVramWriteEntry(v0 as i32, game)).size = ((ram_ptr!(game, Ram3800; 0x3800) as *mut u8)
-        .offset_from(&raw mut game.g_ram as *mut u8)
-        as c_long
-        + 256 as c_long) as u16;
-    v0 = (v0).wrapping_add(2);
-    crate::update_place! { previous fresh63 = v0 => v0.wrapping_add(1); }
-    *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-        fresh63 as i32,
-        game,
-    ))
-    .size as *mut u8)
-        .offset(0) = 126;
-    (*gVramWriteEntry(v0 as i32, game)).size = 0x3080;
-    word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
+    queue_ram_tilemap_write!(game, 1280, 256, fresh63, 0x3080);
 }
 pub unsafe fn WriteSamusWireframeTilemap(game: &mut Game) {
     let mut i: u16 = 0;
@@ -4568,26 +4573,34 @@ pub unsafe fn LoadCRETilesTilesetTilesAndPalette(game: &mut Game) {
         game,
     );
 }
+
+macro_rules! decompress_room_level_and_split_arrays {
+    ($game:ident) => {
+        DecompressToMem(
+            Load24(ram_ptr!($game, LongPtr; 0x7bd)),
+            ram_ptr!($game, u16; 0x10000) as *mut u8,
+            $game,
+        );
+        let size: u16 = word!($game.ram7F_start);
+        memcpy(
+            ram_ptr!($game, u16; 0x19602) as *mut c_void,
+            (ram_ptr!($game, u16; 0x10002) as *mut u8)
+                .offset(size as i32 as isize)
+                .offset((size >> 1) as isize) as *const c_void,
+            size as size_t,
+        );
+        memcpy(
+            ram_ptr!($game, c_void; 0x16402),
+            (ram_ptr!($game, u16; 0x10002) as *mut u8).offset(size as i32 as isize)
+                as *const c_void,
+            (size as i32 >> 1) as size_t,
+        );
+    };
+}
+
 pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
     word_transfers!(game, descending, 12800; le(level_data, 12799) <- value(0x8000));
-    DecompressToMem(
-        Load24(ram_ptr!(game, LongPtr; 0x7bd)),
-        ram_ptr!(game, u16; 0x10000) as *mut u8,
-        game,
-    );
-    let size: u16 = word!(game.ram7F_start);
-    memcpy(
-        ram_ptr!(game, u16; 0x19602) as *mut c_void,
-        (ram_ptr!(game, u16; 0x10002) as *mut u8)
-            .offset(size as i32 as isize)
-            .offset((size >> 1) as isize) as *const c_void,
-        size as size_t,
-    );
-    memcpy(
-        ram_ptr!(game, c_void; 0x16402),
-        (ram_ptr!(game, u16; 0x10002) as *mut u8).offset(size as i32 as isize) as *const c_void,
-        (size as i32 >> 1) as size_t,
-    );
+    decompress_room_level_and_split_arrays!(game);
     if word!(game.area_index) == 6 {
         DecompressToMem(
             Load24(ram_ptr!(game, LongPtr; 0x7c0)),
@@ -4790,24 +4803,7 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
         native(0x14b00) <- value(0x8000),
         native(0x16400) <- value(0x8000),
     );
-    DecompressToMem(
-        Load24(ram_ptr!(game, LongPtr; 0x7bd)),
-        ram_ptr!(game, u16; 0x10000) as *mut u8,
-        game,
-    );
-    let size: u16 = word!(game.ram7F_start);
-    memcpy(
-        ram_ptr!(game, u16; 0x19602) as *mut c_void,
-        (ram_ptr!(game, u16; 0x10002) as *mut u8)
-            .offset(size as i32 as isize)
-            .offset((size >> 1) as isize) as *const c_void,
-        size as size_t,
-    );
-    memcpy(
-        ram_ptr!(game, c_void; 0x16402),
-        (ram_ptr!(game, u16; 0x10002) as *mut u8).offset(size as i32 as isize) as *const c_void,
-        (size as i32 >> 1) as size_t,
-    );
+    decompress_room_level_and_split_arrays!(game);
     if word!(game.area_index) == 6 {
         DecompressToMem(
             Load24(ram_ptr!(game, LongPtr; 0x7c0)),
