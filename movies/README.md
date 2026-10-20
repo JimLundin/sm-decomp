@@ -95,8 +95,20 @@ its probes. See the
 full boot replays are required and the integration cadence.
 
 The DLL script builds before replaying; `--rustc` selects a compiler when it
-is not on PATH. Use `--no-build` only to reuse a DLL built from the source you
-intend to verify, and do not rebuild it while another process has it loaded.
+is not on PATH. `--no-build` checks the DLL's embedded source stamp before
+reusing it. Changed Rust sources, manifests, lockfile, toolchain configuration,
+local Cargo configuration or launcher require a rebuild; unstamped older DLLs
+also require one. The launcher rejects source changes during build/replay.
+It also compares source bytes embedded by the game library's own compilation.
+If Cargo reuses stale library contents (including edits with restored old
+timestamps), `--cargo` rebuilds the sm package, then checks again before replay.
+New library source files must be added to `sm/src/verify_source.rs`; omitted
+files fail the check. It prints the source SHA-256, build/check time and total
+time. These checks establish source identity; required probes and oracle
+comparisons establish which behavior was exercised. Capturing a source file
+does not prove its functions ran, and the DLL replay does not exercise the UI.
+Keep artifacts local to the checkout as described above, and do not rebuild
+a DLL while another process has it loaded.
 
 Either verifier accepts `--frames 3600` for a short smoke check. Omit it for
 the full movie. Verifier exit code 0 means no mismatches, 1 means comparison

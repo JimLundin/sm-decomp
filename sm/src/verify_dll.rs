@@ -13,6 +13,39 @@ static mut g_pixels: [u8; 245760] = [0; 245760];
 static mut g_my_pixels: [u8; 245760] = [0; 245760];
 static STARTED: AtomicBool = AtomicBool::new(false);
 
+/// The launcher stamps the source contents when it builds this host.
+/// Cargo tracks this environment value without rebuilding the game library.
+#[no_mangle]
+pub extern "C" fn sm_verify_source_hash() -> *const u8 {
+    match option_env!("SM_VERIFY_SOURCE_HASH") {
+        Some(hash) if hash.len() == 64 => hash.as_ptr(),
+        _ => std::ptr::null(),
+    }
+}
+
+#[repr(C)]
+pub struct SourceFile {
+    path: *const u8,
+    path_len: usize,
+    data: *const u8,
+    data_len: usize,
+}
+
+/// These bytes come from sm's rlib, independently of the host's source stamp.
+#[no_mangle]
+pub extern "C" fn sm_verify_source_file(index: usize) -> SourceFile {
+    let (path, data) = sm::verify_source::FILES
+        .get(index)
+        .copied()
+        .unwrap_or(("", &[]));
+    SourceFile {
+        path: path.as_ptr(),
+        path_len: path.len(),
+        data: data.as_ptr(),
+        data_len: data.len(),
+    }
+}
+
 // Transpiled code expects glibc's stderr global; MinGW exposes its FILE via
 // __acrt_iob_func instead. FILE remains opaque to this host and the game code.
 #[no_mangle]

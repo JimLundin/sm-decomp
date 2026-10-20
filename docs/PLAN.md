@@ -20,6 +20,47 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+Verifier source freshness (2026-10-20): ongoing pipeline work must measure
+the complete edit/build/result cycle and establish execution of changed code.
+The Windows launcher now rejects stale or unstamped cached DLLs and source
+changes during build/replay. It reports source SHA-256, build/check time and
+total time. A host stamp alone is insufficient: Cargo can reuse an old game
+library after a same-size source edit restores its previous timestamp.
+
+The actual game library now embeds the bytes of all 67 library source files.
+The launcher compares those bytes and the complete path set before replay.
+New library files must be registered in verify_source.rs; omissions fail.
+When normal Cargo reuse is stale, the launcher touches only the crate-root
+timestamp, preserving source bytes, and rebuilds once before checking again.
+It does not delete artifacts or fabricate cache-directory tags. Ordinary
+normal-build reuse remains intact; the host stamp separately covers host,
+manifest, lockfile, toolchain, local Cargo configuration and launcher contents.
+
+Independent tiny-Cargo and actual-game-library controls pass: a same-length,
+backdated 111-to-222 edit is refused by --no-build, then normal --cargo repairs
+the library and executes 222. A backdated compiler error stops before replay
+and preserves the last cached DLL. Missing source-list entries, old DLLs,
+unexecuted required probes and concurrent replay edits are rejected. A native
+RAM fault produces exactly one failing frame at 200; an exercised checkpoint
+segment reports its required call at the same absolute input frame.
+
+Final composition includes reviewed PNG 54af58df and raw-pointer decompression
+71d03889. Formatting/check, progress and normal release (23.99s) pass. The
+verifier host takes 1.90s and retains the normal library's exact hash/mtime.
+Any% 129712/0 (128.86s replay) and Speed Booster 148406/0 (161.07s), native
+exits 0, pass with fixed source/input/artifact bytes. Incremental caching is
+disabled only for disk space; release optimization/codegen settings remain.
+Checked cached setup measures 0.03/0.04/0.04s. Own Rust lines +142 and
+no_mangle symbols +2 provide source capture/inspection; other counters unchanged.
+
+Source identity does not establish execution, branch coverage or independent
+hardware behavior. Any% still visits six rooms without credits; Speed Booster
+visits 55 rooms and 53 enemy definitions, also without credits. Keep explicit
+required routine/branch hits and mode-appropriate tests, including frontend
+tests outside the DLL replay. Next pipeline work: profile the remaining full
+replay cost in snapshots/comparison/drawing, retaining every oracle check,
+and use the shortest exercised checkpoint segment during local iteration.
+
 Checkpoint repair verified (2026-10-19): the earlier codec read uninitialized
 `Dma.pad`. The repaired codec projects initialized DMA fields directly from
 the allocation without referencing the whole Dma, and excludes explicit

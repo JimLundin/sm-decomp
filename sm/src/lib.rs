@@ -203,4 +203,7 @@ pub mod game_state;
 /// Execution requirements for focused verifier scenarios.
 pub mod verify_probe;
 
+#[doc(hidden)]
+pub mod verify_source;
+
 pub(crate) mod native_audio;

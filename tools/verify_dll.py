@@ -2,15 +2,86 @@
 """Build the Windows verifier DLL, then run one replay via ctypes."""
 import argparse
 import ctypes
+import hashlib
 import json
 import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
+import time
 
 
-def cargo_host(root, rustc, linker, output):
+def source_hash(root):
+    """Bind cached replays to source contents, including added/deleted modules."""
+    paths = set((root / "sm").rglob("*.rs"))
+    paths.update(root / name for name in (
+        "Cargo.toml", "Cargo.lock", "sm/Cargo.toml", "rust-toolchain.toml",
+        "tools/verify_dll.py"))
+    paths.update(path for path in (root / ".cargo").glob("*") if path.is_file())
+    digest = hashlib.sha256()
+    for path in sorted(paths):
+        data = path.read_bytes()
+        digest.update(path.relative_to(root).as_posix().encode("utf-8") + b"\0")
+        digest.update(len(data).to_bytes(8, "little"))
+        digest.update(data)
+    return digest.hexdigest()
+
+
+def check_source(host, expected):
+    if not hasattr(host, "sm_verify_source_hash"):
+        raise RuntimeError("cached DLL has no source stamp; run without --no-build")
+    host.sm_verify_source_hash.argtypes = []
+    host.sm_verify_source_hash.restype = ctypes.c_void_p
+    stamp = host.sm_verify_source_hash()
+    if not stamp or ctypes.string_at(stamp, 64) != expected.encode("ascii"):
+        raise RuntimeError("cached DLL does not match current source; run without --no-build")
+
+
+def load_host(dll):
+    # Keep SDK search directories alive for as long as this DLL is loaded.
+    directories = []
+    for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep):
+        if path:
+            for directory in (Path(path), Path(path).parent / "bin"):
+                if directory.is_dir():
+                    directories.append(os.add_dll_directory(str(directory.resolve())))
+    host = ctypes.CDLL(str(dll))
+    host._sdk_directories = directories
+    return host
+
+
+def check_library(host, root):
+    """Compare the rlib's compiled source bytes, not the host's environment."""
+    if not hasattr(host, "sm_verify_source_file"):
+        raise RuntimeError("cached DLL has no game-library source data; rebuild")
+
+    class SourceFile(ctypes.Structure):
+        _fields_ = [("path", ctypes.c_void_p), ("path_len", ctypes.c_size_t),
+                    ("data", ctypes.c_void_p), ("data_len", ctypes.c_size_t)]
+
+    host.sm_verify_source_file.argtypes = [ctypes.c_size_t]
+    host.sm_verify_source_file.restype = SourceFile
+    expected = {path.relative_to(root).as_posix()
+                for path in (root / "sm" / "src").rglob("*.rs")}
+    expected.difference_update(("sm/src/main.rs", "sm/src/verify.rs",
+                                "sm/src/verify_dll.rs", "sm/src/verify/checkpoint.rs"))
+    for index in range(len(expected) + 1):
+        source = host.sm_verify_source_file(index)
+        if source.path_len == 0:
+            break
+        path = ctypes.string_at(source.path, source.path_len).decode("utf-8")
+        if path not in expected:
+            raise RuntimeError(f"unexpected or repeated game-library source: {path}; rebuild")
+        expected.remove(path)
+        if ctypes.string_at(source.data, source.data_len) != (root / path).read_bytes():
+            raise RuntimeError(f"stale game-library source: {path}; rebuild")
+    if expected:
+        raise RuntimeError("game-library source list incomplete; update sm/src/verify_source.rs: "
+                           + ", ".join(sorted(expected)))
+
+
+def cargo_host(root, rustc, linker, output, source, retry=True):
     cargo = shutil.which("cargo") or str(Path(rustc).with_name("cargo.exe"))
     sdk = [arg for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
            if path for arg in ("-L", f"native={path}")]
@@ -21,7 +92,8 @@ def cargo_host(root, rustc, linker, output):
          "--target-dir", str(root / "target"), "--message-format=json",
          "--", "-C", f"linker={linker}",
          "-C", "linker-flavor=ld", "-C", "debuginfo=0", "-A", "warnings"] + sdk,
-        cwd=root, env=dict(os.environ, RUSTC=rustc), text=True, encoding="utf-8",
+        cwd=root, env=dict(os.environ, RUSTC=rustc, SM_VERIFY_SOURCE_HASH=source),
+        text=True, encoding="utf-8",
         stdout=subprocess.PIPE,
     )
     dll = None
@@ -37,6 +109,21 @@ def cargo_host(root, rustc, linker, output):
     result.check_returncode()
     if dll is None:
         raise RuntimeError("Cargo did not report the verifier DLL")
+    # Inspect in a separate process so a stale DLL is unloaded before rebuilding.
+    checked = subprocess.run(
+        [sys.executable, str(root / "tools/verify_dll.py"), "--check-library", str(dll)],
+        cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+    )
+    if checked.returncode:
+        if not retry:
+            raise RuntimeError(checked.stderr.strip() or "unable to inspect game library")
+        print(checked.stderr.strip(), file=sys.stderr)
+        print("Rebuilding sm after game-library source check failed", file=sys.stderr)
+        # Invalidate Cargo's timestamp check without deleting artifacts or
+        # changing source contents. The crate root is always a library input.
+        # This also works with pre-existing/seeded targets lacking CACHEDIR.TAG.
+        (root / "sm/src/lib.rs").touch()
+        return cargo_host(root, rustc, linker, output, source, retry=False)
     # Preserve --no-build's existing path. An unchanged DLL can still be loaded
     # by another replay; do not overwrite it merely to refresh its timestamp.
     cached = output / "sm_verify.dll"
@@ -46,6 +133,7 @@ def cargo_host(root, rustc, linker, output):
 
 
 def build(root, rustc, use_cargo=False):
+    source = source_hash(root)
     output = root / "target" / "verify-dll"
     output.mkdir(parents=True, exist_ok=True)
     library = output / "libsm.rlib"
@@ -63,7 +151,10 @@ def build(root, rustc, use_cargo=False):
     # Rust's bundled lld handles those object files without external tools.
     linker = sysroot / "lib" / "rustlib" / host / "bin" / "gcc-ld" / "ld.lld.exe"
     if use_cargo:
-        return cargo_host(root, rustc, linker, output)
+        dll = cargo_host(root, rustc, linker, output, source)
+        if source_hash(root) != source:
+            raise RuntimeError("source changed during build; rebuild before replay")
+        return dll
     subprocess.run(
         common + ["--crate-name", "sm", "--crate-type", "rlib", "--cfg",
                   "sm_verify_dll", "-C", f"incremental={output / 'incremental-sm'}",
@@ -75,8 +166,10 @@ def build(root, rustc, use_cargo=False):
                   "-C", f"linker={linker}", "-C", "linker-flavor=ld",
                   "-C", f"incremental={output / 'incremental-host'}", "sm/src/verify_dll.rs",
                   "--extern", f"sm={library}", "-o", str(dll)],
-        cwd=root, check=True,
+        cwd=root, env=dict(os.environ, SM_VERIFY_SOURCE_HASH=source), check=True,
     )
+    if source_hash(root) != source:
+        raise RuntimeError("source changed during build; rebuild before replay")
     return dll
 
 
@@ -92,7 +185,7 @@ def main():
     parser.add_argument("--require-hit", action="append", default=[], metavar="PROBE",
                         help="require an explicit routine/branch probe to execute (repeatable)")
     parser.add_argument("--no-build", action="store_true",
-                        help="reuse target/verify-dll/sm_verify.dll")
+                        help="reuse target/verify-dll/sm_verify.dll if its source still matches")
     parser.add_argument("--cargo", action="store_true",
                         help="reuse Cargo release compilation (requires the SDL2 environment)")
     parser.add_argument("--rustc", default=shutil.which("rustc") or str(
@@ -103,6 +196,8 @@ def main():
     if args.frames is not None and not 1 <= args.frames <= 2**64 - 1:
         parser.error("--frames must be a positive u64")
     root = Path(__file__).resolve().parents[1]
+    started = time.perf_counter()
+    source = source_hash(root)
     # Paths are resolved before changing cwd so invocation works from anywhere.
     rom, inputs = args.rom.resolve(), args.inputs.resolve()
     replay_args = [str(rom), str(inputs)]
@@ -118,15 +213,13 @@ def main():
     if not args.no_build:
         dll = build(root, args.rustc, args.cargo)
     os.chdir(root)
-    # Keep SDK search directories alive throughout the native replay.
-    dll_directories = []
-    # MinGW SDKs place runtime DLLs beside lib/ in bin/.
-    for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep):
-        if path:
-            for directory in (Path(path), Path(path).parent / "bin"):
-                if directory.is_dir():
-                    dll_directories.append(os.add_dll_directory(str(directory.resolve())))
-    host = ctypes.CDLL(str(dll))
+    host = load_host(dll)
+    check_source(host, source)
+    check_library(host, root)
+    if source_hash(root) != source:
+        raise RuntimeError("source changed before replay; rebuild before replay")
+    print(f"Verifier build/check: {time.perf_counter() - started:.2f}s; source {source}",
+          file=sys.stderr, flush=True)
     if args.checkpoint_in is not None or args.checkpoint_out is not None or args.require_hit:
         if not hasattr(host, "sm_verify_args"):
             raise RuntimeError("cached DLL predates segment options; run without --no-build")
@@ -134,15 +227,23 @@ def main():
         host.sm_verify_args.restype = ctypes.c_int
         argv = (ctypes.c_char_p * len(replay_args))(
             *(arg.encode("utf-8") for arg in replay_args))
-        return host.sm_verify_args(len(replay_args), argv)
-    host.sm_verify.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint64]
-    host.sm_verify.restype = ctypes.c_int
-    return host.sm_verify(str(rom).encode("utf-8"), str(inputs).encode("utf-8"),
-                          args.frames or 0)
+        result = host.sm_verify_args(len(replay_args), argv)
+    else:
+        host.sm_verify.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint64]
+        host.sm_verify.restype = ctypes.c_int
+        result = host.sm_verify(str(rom).encode("utf-8"), str(inputs).encode("utf-8"),
+                                args.frames or 0)
+    if source_hash(root) != source:
+        raise RuntimeError("source changed during replay; result applies only to the printed source")
+    print(f"Verifier total: {time.perf_counter() - started:.2f}s", file=sys.stderr)
+    return result
 
 
 if __name__ == "__main__":
     try:
+        if len(sys.argv) == 3 and sys.argv[1] == "--check-library":
+            check_library(load_host(sys.argv[2]), Path(__file__).resolve().parents[1])
+            sys.exit(0)
         sys.exit(main())
     except (OSError, RuntimeError, ValueError, subprocess.CalledProcessError) as error:
         print(f"verify: {error}", file=sys.stderr)
