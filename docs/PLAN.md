@@ -2837,7 +2837,32 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `1a70f534`, `c5561eb6` and
+Latest reviewed integration (2026-10-20): `9696bdbe` shares Ridley tail
+reset, coordinate-chain and length updates. Independent full-file inversion
+restores the exact three original bodies; all 76 available snapshot inputs
+match the commit. The snapshot omits rust-toolchain.toml, but build and
+verification explicitly select the recorded Rust compiler. All 95 final
+verification pins remain fixed.
+
+The inspected host projection preserves byte/word accesses, value-before-
+destination stores and the packed enemy layout's X/Y/direction offsets.
+Independent rerun passes 196608 seeded and 7392 boundary cases, comparing
+ordered reads/writes and complete synthetic RAM. All four wrong-source,
+read-order, ordinary-clamp and cached-limit controls are detected. Segment
+61 still reads word 21; alternating chain sums, straight-tail rereads and
+each segment's signed wrapping threshold and maximum/resting values remain
+exact. The raw helpers introduce no whole-RAM reference or range guard.
+
+Formatting/check, normal release (25.37s), progress and full any% pass:
+129712/0, native exit 0, 112.70s wall/110.76s replay. Review reused the
+completed build/replay. Rust lines fall 149 to 129506 and cast lines fall
+24 to 13169; four private helpers raise unsafe-function definitions to
+6268. Other counters are unchanged. The movie covers six rooms and three
+enemy definitions, with no Ridley route or ending/credits coverage.
+These checks establish factored tail-state equivalence; broader gameplay,
+frontend/hardware/audio coverage and global alias safety remain open.
+
+Included collision/record/arm integration (2026-10-20): `1a70f534`, `c5561eb6` and
 `5e909d71` share projectile collision implementations, consecutive record
 field types and unit-valued match arms. All 77 committed inputs at each
 stage match the frozen verified trees after Git line-ending normalization.
