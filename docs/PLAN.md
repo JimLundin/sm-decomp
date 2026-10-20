@@ -76,6 +76,25 @@ CRUST/Sonder fail the tested real inputs.
 Corrode is a useful emission comparator, not an unchanged replacement across
 the project; do not extrapolate these bounded counts to the whole game.
 
+Latest user request: actually build and test Cpp2Rust, and determine whether
+Corrode's packing differences affect behavior. The 11/12-byte DebugDoorDef
+example is unused and did not establish a gameplay failure. A new executed
+test of the actual seven-byte VRAM queue consumer does: unmodified Corrode
+writes destination 0x0058 instead of 0x5880. Preserving packing on its records
+fixes all 1,056 constructed queue cases; normal local field access passes
+65,536 controls even with different padding. Packing is a specific repairable
+boundary issue, not grounds to dismiss the translator. Cpp2Rust now runs
+real-input trials with a disclosed builtin-type rule pack and
+Windows runtime profile. The default backend preserves the queue's byte
+behavior in all 56 cases despite physically larger Rust records; raw-pointer
+output fails 48 nonempty cases, fixed by preserving packing. On the two
+disjoint original transfer units Cpp2Rust emits **1,312 default / 1,147 unsafe
+lines**, versus **1,035 C2Rust / 723 Corrode**. Large sm_90 unsafe output also
+grows, including when comparing the same 449 function definitions. These
+results do not select Cpp2Rust for volume reduction. Complete-bank counts
+have no runtime proof; details and shared-runtime costs are in the research
+note. Keep unrelated reduction work parked.
+
 Latest user clarification: code-volume reduction is the immediate priority.
 Focus on repeated code patterns; broad system redesign is too costly unless
 it directly removes substantial repetition. Investigate efficient methods in

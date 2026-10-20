@@ -15,6 +15,12 @@ experiments, not current-main deletions. The
 final sections distinguish algorithm sharing, emitter policy and independently
 tested alternative transpilers.
 
+The subsequent Cpp2Rust trial builds and executes both backends on real C;
+neither reduces source volume in the tested scopes. Its default mode does
+preserve packed byte accesses despite physically larger Rust structs. Corrode's
+specific packing omission is repairable; layout differences alone are not a
+correctness verdict. The independent-transpiler sections record these tests.
+
 ## A directly relevant successful migration
 
 **rav1d is a useful precedent.** Its [deduplication issue #26](https://github.com/memorysafety/rav1d/issues/26)
@@ -549,8 +555,9 @@ save states, test buffers and private current source stayed local.
 
 ## Independent transpilers: executed comparisons
 
-Three independent translators were built from pinned source and run locally
-against public original C. This answers whether another translator can produce
+The initial trial built three independent translators from pinned source and
+ran them locally against public original C; the Cpp2Rust trial follows below.
+This answers whether another translator can produce
 smaller useful Rust without inferring quality from its advertised features.
 
 | Translator | Actual trial | Result |
@@ -595,29 +602,154 @@ Corrode's smaller declaration prefix offsets longer generated function bodies;
 the 30.1% result above does not generalize even to this tested bank. Full-bank
 runtime behavior remains untested.
 
-Corrode also has a concrete correctness blocker. Its
+Corrode also omits a relevant layout constraint. Its
 [declaration handling](https://github.com/jameysharp/corrode/blob/34053342c2f1ca04f23ad94d67057f14e74d9fb9/src/Language/Rust/Corrode/C.md)
 leaves attributes unprocessed. Translating the actual pragma-packed
 `DebugDoorDef` from the original header gives **12 bytes / field offset 10**,
 where the original C gives **11 bytes / offset 9**. Both compile; executed
-measurement functions expose the difference. A global switch requires fixing
-packing and checking actual layouts/accesses, not just compiling the output.
+measurement functions expose the difference. A subsequent use-site audit
+finds only its declaration in the original C: that example alone does **not**
+demonstrate changed gameplay. Padding can differ harmlessly for an internal
+object accessed only through normal fields. The follow-up below tests both
+that case and an active byte-layout contract.
 Initial full sm_87/util attempts stop at standard-header extern declarations,
 using both TinyCC and GHC/MinGW preprocessing. For the complete sm_87 trial
 above, project-header amalgamation and public Clang 18 Linux preprocessing
 resolve that input obstacle; the translator itself is unchanged. The packed
 layout failure still prevents an unchanged project-wide rollout.
 
-### Other available approaches, not executed here
+### Packing: a demonstrated behavior difference and a small repair
 
-[Cpp2Rust](https://github.com/Cpp2Rust/cpp2rust) is a separate Clang-based
-translator with a [PLDI 2026 paper](https://web.ist.utl.pt/nuno.lopes/pubs/cpp2rust-pldi26.pdf).
-Its documented build needs Clang 23 development libraries and CMake/Ninja;
-no release asset or Compiler Explorer instance was available. Its default
-backend uses checked reference-counted pointers through `libcc2rs`; it also
-offers `--model=unsafe`. A useful trial must include that support code and test
-RAM/pointer compatibility. It is the next deterministic candidate, not a
-demonstrated replacement from this experiment.
+The user's distinction between stricter layout and wrong behavior is useful.
+A control writes and reads every possible 16-bit value through a local
+`DebugDoorDef`: all **65,536 cases agree**, despite Corrode's extra padding.
+There is no need to preserve an old physical layout when nothing observes it.
+
+The actual
+[`NMI_ProcessVramWriteQueue`](https://github.com/snesrev/sm/blob/578f90b3cc49557bb70060ad033bb90b8cf8ac50/src/sm_80.c#L478)
+does observe it. It overlays a record on `g_ram + 0xd0`, advances by **seven
+bytes**, and writes its terminator at a byte offset. Corrode expands nested
+`LongPtr` from 3 to 4 bytes and `VramWriteEntry` from 7 to 8, moving its
+destination field from offset 5 to 6. Executing the actual translated consumer
+on the same synthetic seven-byte transfer produces **destination 0x0058 where
+the C implementation writes 0x5880**. This is a different register operation,
+not a conclusion drawn solely from `sizeof`.
+
+The repair is small for this unit: change the relevant records from
+`#[repr(C)]` to `#[repr(C, packed)]`, including the nested record, without
+altering generated function bodies. Original C, unmodified Corrode and repaired
+Corrode all compile as optimized DLLs. Across **1,056 constructed queues**
+(0..32 entries), compare all 128 KiB RAM and ordered register operations:
+unmodified Corrode differs in **1,024**, while the repaired output matches
+**all 1,056**. Empty queues account for the 32 original matches. The local-field
+control also matches in all three builds.
+
+This tests the real consumer with recorded register operations and instrumented
+scrolling calls. It does not run actual DMA/PPU processing, ROM access or a
+whole game. Other packed records and references to unaligned fields still need
+checks; this is a specific output repair, not a generic verified packing pass.
+Current RAM/ROM byte contracts must be preserved or explicitly decoded at an
+engine boundary. Native internal game objects need not retain historical
+packing. Corrode's omission is repairable and does not invalidate its useful
+results elsewhere. Artifacts and reproduction:
+TEMP/sm-transpiler-tailoring/layout-use/REPORT.md and build_test.py.
+
+### Cpp2Rust: built and tested on the original C
+
+Built pinned
+[Cpp2Rust 193a66a8](https://github.com/Cpp2Rust/cpp2rust/tree/193a66a8b8f172816e472c0f47a54b1714b7f24c)
+with portable Clang/LLVM 23.1.3, CMake 4.4.4 and Ninja 1.13.2. A MinGW link
+adjustment uses shared LLVM without duplicate static LLVM symbols. A DLL
+bridge invokes the original translator because this host blocks fresh EXEs.
+Neither adaptation changes an AST conversion or emission algorithm.
+
+The full rule-preprocessing pipeline pulls in a pinned rustc-dev toolchain and
+many library integrations. The executed trial instead materializes a small
+builtin-type rule pack from the upstream C/Rust type and initializer mappings.
+This is an explicit fixture configuration: the complete official installation
+and its standard-library expression substitutions were not tested. The real
+transfer and queue operations use no C library APIs; complete-bank results
+may differ under a full library rule pack.
+
+All outputs use the installed rustfmt's default 100-column width. Counts
+include emitted types/helpers, with test dependencies and shared runtime
+identified separately:
+
+| Complete algorithm input | C2Rust | Corrode | Cpp2Rust default/refcount | Cpp2Rust unsafe |
+| --- | ---: | ---: | ---: | ---: |
+| Original horizontal/vertical scrolling DMA | 443 | 256 | 451 | 496 |
+| Original row/column tile streaming | 592 | 467 | 861 | 651 |
+| Shared tile-streaming algorithm, alternative to preceding row | 344 | 277 | 399 | 360 |
+
+The disjoint original units total **1,035 C2Rust, 723 Corrode, 1,312 Cpp2Rust
+default and 1,147 Cpp2Rust unsafe lines**. Neither Cpp2Rust mode reduces emitted
+source here. Sharing the C tile algorithm still helps substantially in both
+modes; that is a separate gain from changing translators. Cpp2Rust omits
+externally defined RAM/functions, which the component harness supplies; these
+omissions are not a free maintained-source reduction.
+
+All six original/shared transfer outputs compile as optimized DLLs with their
+typed test dependencies and unchanged generated game function bodies.
+**6,250 scrolling cases** pass against native C/C2Rust in both modes, comparing
+all 128 KiB RAM and **358,220 ordered register writes**. **3,076 tile-streaming
+cases** pass across eight original/shared C, C2Rust and Cpp2Rust binaries,
+covering both layers/axes, four flip orientations, wrapping positions and
+Mode 7 skipping. These constructed checks record register calls; actual
+PPU/DMA processing and full-game history are outside their scope.
+
+The complete-bank controls also test a materially larger input:
+
+| Entire emitted bank | C2Rust | Cpp2Rust default | Cpp2Rust unsafe |
+| --- | ---: | ---: | ---: |
+| Animated tiles, sm_87 | 679 | 5,233 | 3,977 |
+| Samus, sm_90 | 17,789 | No output within 60-second bound | 24,680 |
+
+Each row uses identical preprocessed public C for its compilers. Cpp2Rust emits
+many extra unused header declarations, which should be shared/pruned during
+integration rather than charged repeatedly. Nevertheless the difference is
+not solely header cost: the same **34 sm_87 functions** occupy **429 C2Rust /
+535 default / 472 unsafe lines**, and the same **449 sm_90 functions** occupy
+**15,774 C2Rust / 20,122 unsafe lines**. These function-span counts include
+signatures and are diagnostic breakdowns, not complete replacement prices.
+The banks have no complete compiled/integrated runtime validation; the sm_90
+default timeout is only a bounded attempt, not proof it cannot finish.
+
+Cpp2Rust's default representation confirms why native Rust size alone cannot
+decide correctness. Its
+[record emitter](https://github.com/Cpp2Rust/cpp2rust/blob/193a66a8b8f172816e472c0f47a54b1714b7f24c/cpp2rust/converter/models/converter_refcount.cpp#L730-L765)
+records C byte sizes and offsets, and the runtime mediates pointer/field access.
+In actual queue execution its Rust records have physical sizes **4/8/12**,
+while translated C `sizeof` correctly returns **3/7/11**. All **56 queue cases**
+match native C's complete 128 KiB RAM and register trace. Its unsafe backend
+returns 4/8/12 and fails all **48 nonempty cases**. Preserving packed attributes
+fixes all 56 without changing its generated function bodies. The 65,536 local
+field controls agree in each mode. These are actual optimized DLL comparisons
+of the real consumer with translated test dependencies, not a layout-only
+inference or a full-game replay.
+
+The real runtime and macros compile under a Windows fixture profile. It gates
+Unix I/O/descriptor/compatibility/formatting modules and unused library shims;
+the necessary map/iterator shims remain. Every compiled pointer, byte, callback
+and macro implementation is byte-identical to upstream; only the module root
+selects this profile. Generated code drops an unused unconditional Unix import.
+Actual dependency build scripts run through DLL entry wrappers to work around
+the host's executable restriction. This is not a full Windows runtime port.
+
+Support is a **one-time shared dependency cost**, shown separately from game
+output: runtime source **7,623 lines**, macro implementation **1,434**, and all
+library shims **2,207**; total **11,264** if vendored in full. The compiled
+fixture source includes **9,739 lines**, including inline tests. Third-party
+dependencies, Rust std and external test scaffolding are excluded. Do not
+multiply this cost by the number of banks or confuse it with generated game
+logic. Code-volume results already favor C2Rust/Corrode before adding support.
+
+Artifacts: TEMP/sm-cpp2rust-experiment/REPORT.md, outputs/, queue-validation/,
+runtime-manual/REPORT.md, source-counts.json and portability.patch. Exact
+inputs, compiler/formatter logs, rule configuration, source hashes and scripts
+remain available. Only public C was sent for Linux preprocessing and the
+C2Rust comparator; Cpp2Rust ran locally. No maintained source was regenerated.
+
+### Other available approaches, not executed here
 
 [Intel Labs IDEAS](https://github.com/IntelLabs/IDEAS#use-with-locally-hosted-models)
 can translate raw C through an LLM and supports a local vLLM endpoint. It is
@@ -627,9 +759,11 @@ also has raw-C and C2Rust-cleanup modes with build/test feedback; its documented
 providers need API credentials. Neither pipeline was run. Both require a
 separate migration/equivalence experiment rather than a compiler substitution.
 
-Decision: use Corrode as an independent comparison of emission rules on
-compatible units. Prioritize the already measured C2Rust numeric policy and
-complete C algorithm sharing; the tested Corrode layout defect blocks an
-unchanged project-wide rollout. CRUST/Sonder do not justify further production
+Decision: Corrode is an independent comparison of emission rules and a viable
+candidate for further trials with explicit layout handling. Its tested packing
+omission is a fixable boundary issue. Prioritize measured output and behavior
+over accepting or rejecting a translator by its declared goals. The Cpp2Rust
+trial demonstrates a working alternative byte representation, but no selected
+code-volume advantage. CRUST/Sonder do not justify further production
 trials on these results. Artifacts, source/input/output hashes, commands and
 primary-source findings: TEMP/sm-transpiler-tailoring/alternatives/REPORT.md.
