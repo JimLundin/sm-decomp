@@ -3973,41 +3973,60 @@ pub unsafe fn Ridley_Func_84(game: &mut Game) {
         set_ram_word!(game.tilemap_stuff[10] = v1);
     }
 }
+// Tail words alias the shared tilemap workspace; keep each load/store ordered.
+unsafe fn ridley_tail_word(ram: *mut u8, index: usize) -> u16 {
+    u16::from_le(ram.add(0x2000 + index * 2).cast::<u16>().read_unaligned())
+}
+unsafe fn ridley_tail_store(ram: *mut u8, index: usize, value: u16) {
+    ram.add(0x2000 + index * 2)
+        .cast::<u16>()
+        .write_unaligned(value.to_le());
+}
+unsafe fn ridley_tail_chain(ram: *mut u8, first: usize) {
+    for index in (first + 10..=first + 50).step_by(20) {
+        let value =
+            ridley_tail_word(ram, index + 2).wrapping_add(ridley_tail_word(ram, index - 10));
+        ridley_tail_store(ram, index, value);
+        let value = ridley_tail_word(ram, index + 12)
+            .wrapping_add(ridley_tail_word(ram, index + 2))
+            .wrapping_add(ridley_tail_word(ram, index - 10));
+        ridley_tail_store(ram, index + 10, value);
+    }
+}
+unsafe fn ridley_tail_length(ram: *mut u8, index: usize, maximum: u16, resting: u16) {
+    if ridley_tail_word(ram, index + 1) != 0 {
+        if (ridley_tail_word(ram, index + 1) as i16)
+            .wrapping_sub(ridley_tail_word(ram, index) as i16)
+            < 0
+        {
+            ridley_tail_store(ram, index + 1, 0);
+        }
+        let mut value = ridley_tail_word(ram, 9).wrapping_add(ridley_tail_word(ram, index));
+        if (ridley_tail_word(ram, 9) as i32 + ridley_tail_word(ram, index) as i32 - maximum as i32)
+            & 0x8000
+            == 0
+        {
+            value = maximum;
+        }
+        ridley_tail_store(ram, index, value);
+    } else if (resting as i16).wrapping_sub(ridley_tail_word(ram, index) as i16) < 0 {
+        let value = ridley_tail_word(ram, index).wrapping_sub(128);
+        ridley_tail_store(ram, index, value);
+    }
+}
 pub unsafe fn Ridley_Func_85(game: &mut Game) {
-    set_ram_word!(
-        game.tilemap_stuff[21] = ((*((ram_ptr!(game, u16; 0x2000)).offset(21) as *mut u8).offset(0))
-            as u16)
-            | (0x4000u16)
-    );
-    set_ram_word!(
-        game.tilemap_stuff[31] = ((*((ram_ptr!(game, u16; 0x2000)).offset(31) as *mut u8).offset(0))
-            as u16)
-            | (0x4000u16)
-    );
-    set_ram_word!(
-        game.tilemap_stuff[41] = ((*((ram_ptr!(game, u16; 0x2000)).offset(41) as *mut u8).offset(0))
-            as u16)
-            | (0x4000u16)
-    );
-    set_ram_word!(
-        game.tilemap_stuff[51] = ((*((ram_ptr!(game, u16; 0x2000)).offset(51) as *mut u8).offset(0))
-            as u16)
-            | (0x4000u16)
-    );
-    set_ram_word!(
-        game.tilemap_stuff[61] =
-            (ram_word!(game, tilemap_stuff[21]) as i32 & 0x4ffi32 | 0x4000i32) as u16
-    );
-    set_ram_word!(
-        game.tilemap_stuff[71] = ((*((ram_ptr!(game, u16; 0x2000)).offset(71) as *mut u8).offset(0))
-            as u16)
-            | (0x4000u16)
-    );
-    set_ram_word!(
-        game.tilemap_stuff[81] = ((*((ram_ptr!(game, u16; 0x2000)).offset(81) as *mut u8).offset(0))
-            as u16)
-            | (0x4000u16)
-    );
+    let ram = (&raw mut game.g_ram).cast::<u8>();
+    for index in [21usize, 31, 41, 51] {
+        let value = ram.add(0x2000 + index * 2).read() as u16 | 0x4000;
+        ridley_tail_store(ram, index, value);
+    }
+    // Segment 61 deliberately uses word 21, including its bit 10.
+    let value = ridley_tail_word(ram, 21) & 0x4ff | 0x4000;
+    ridley_tail_store(ram, 61, value);
+    for index in [71usize, 81] {
+        let value = ram.add(0x2000 + index * 2).read() as u16 | 0x4000;
+        ridley_tail_store(ram, index, value);
+    }
 }
 pub unsafe fn Ridley_Func_86(game: &mut Game) {
     let E: *mut Enemy_Ridley = Get_Ridley(0i32, game);
@@ -4015,33 +4034,8 @@ pub unsafe fn Ridley_Func_86(game: &mut Game) {
         game.tilemap_stuff[23] =
             (ram_word!(game, tilemap_stuff[25]) as i32 + (*E).base.y_pos as i32 + 16i32) as u16
     );
-    set_ram_word!(
-        game.tilemap_stuff[33] =
-            (ram_word!(game, tilemap_stuff[35])).wrapping_add(ram_word!(game, tilemap_stuff[23]),)
-    );
-    set_ram_word!(
-        game.tilemap_stuff[43] = (ram_word!(game, tilemap_stuff[45]) as i32
-            + ram_word!(game, tilemap_stuff[35]) as i32
-            + ram_word!(game, tilemap_stuff[23]) as i32) as u16
-    );
-    set_ram_word!(
-        game.tilemap_stuff[53] =
-            (ram_word!(game, tilemap_stuff[55])).wrapping_add(ram_word!(game, tilemap_stuff[43]),)
-    );
-    set_ram_word!(
-        game.tilemap_stuff[63] = (ram_word!(game, tilemap_stuff[65]) as i32
-            + ram_word!(game, tilemap_stuff[55]) as i32
-            + ram_word!(game, tilemap_stuff[43]) as i32) as u16
-    );
-    set_ram_word!(
-        game.tilemap_stuff[73] =
-            (ram_word!(game, tilemap_stuff[75])).wrapping_add(ram_word!(game, tilemap_stuff[63]),)
-    );
-    set_ram_word!(
-        game.tilemap_stuff[83] = (ram_word!(game, tilemap_stuff[85]) as i32
-            + ram_word!(game, tilemap_stuff[75]) as i32
-            + ram_word!(game, tilemap_stuff[63]) as i32) as u16
-    );
+    let ram = (&raw mut game.g_ram).cast::<u8>();
+    ridley_tail_chain(ram, 23);
     let mut v1: i16 = (((*E).ridley_var_10) as i16).wrapping_sub(1i16);
     if (*E).ridley_var_10 != 1u16 {
         v1 = ((ram_word!(game, tilemap_stuff[24])) as i16)
@@ -4050,165 +4044,22 @@ pub unsafe fn Ridley_Func_86(game: &mut Game) {
     set_ram_word!(game.tilemap_stuff[22] = ((*E).base.x_pos).wrapping_add((v1) as u16));
     if (*E).ridley_var_10 == 1u16 {
         set_ram_word!(game.tilemap_stuff[32] = (*E).base.x_pos);
-        set_ram_word!(game.tilemap_stuff[42] = ram_word!(game, tilemap_stuff[32]));
-        set_ram_word!(game.tilemap_stuff[52] = ram_word!(game, tilemap_stuff[32]));
-        set_ram_word!(game.tilemap_stuff[62] = ram_word!(game, tilemap_stuff[32]));
-        set_ram_word!(game.tilemap_stuff[72] = ram_word!(game, tilemap_stuff[32]));
-        set_ram_word!(game.tilemap_stuff[82] = ram_word!(game, tilemap_stuff[32]));
+        for index in [42usize, 52, 62, 72, 82] {
+            let value = ridley_tail_word(ram, 32);
+            ridley_tail_store(ram, index, value);
+        }
     } else {
-        set_ram_word!(
-            game.tilemap_stuff[32] = (ram_word!(game, tilemap_stuff[34]))
-                .wrapping_add(ram_word!(game, tilemap_stuff[22]),)
-        );
-        set_ram_word!(
-            game.tilemap_stuff[42] = (ram_word!(game, tilemap_stuff[44]) as i32
-                + ram_word!(game, tilemap_stuff[34]) as i32
-                + ram_word!(game, tilemap_stuff[22]) as i32)
-                as u16
-        );
-        set_ram_word!(
-            game.tilemap_stuff[52] = (ram_word!(game, tilemap_stuff[54]))
-                .wrapping_add(ram_word!(game, tilemap_stuff[42]),)
-        );
-        set_ram_word!(
-            game.tilemap_stuff[62] = (ram_word!(game, tilemap_stuff[64]) as i32
-                + ram_word!(game, tilemap_stuff[54]) as i32
-                + ram_word!(game, tilemap_stuff[42]) as i32)
-                as u16
-        );
-        set_ram_word!(
-            game.tilemap_stuff[72] = (ram_word!(game, tilemap_stuff[74]))
-                .wrapping_add(ram_word!(game, tilemap_stuff[62]),)
-        );
-        set_ram_word!(
-            game.tilemap_stuff[82] = (ram_word!(game, tilemap_stuff[84]) as i32
-                + ram_word!(game, tilemap_stuff[74]) as i32
-                + ram_word!(game, tilemap_stuff[62]) as i32)
-                as u16
-        );
+        ridley_tail_chain(ram, 22);
     };
 }
 pub unsafe fn Ridley_Func_87(game: &mut Game) {
-    if ram_word!(game, tilemap_stuff[30]) != 0 {
-        if ((ram_word!(game, tilemap_stuff[30])) as i16)
-            .wrapping_sub((ram_word!(game, tilemap_stuff[29])) as i16)
-            < 0i16
-        {
-            set_ram_word!(game.tilemap_stuff[30] = 0u16);
-        }
-        let mut v0: u16 =
-            (ram_word!(game, tilemap_stuff[9])).wrapping_add(ram_word!(game, tilemap_stuff[29]));
-        if ram_word!(game, tilemap_stuff[9]) as i32 + ram_word!(game, tilemap_stuff[29]) as i32
-            - 6144i32
-            & 0x8000i32
-            == 0
-        {
-            v0 = 6144u16;
-        }
-        set_ram_word!(game.tilemap_stuff[29] = v0);
-    } else if (2048i16).wrapping_sub((ram_word!(game, tilemap_stuff[29])) as i16) < 0i16 {
-        update_ram_word!(game.tilemap_stuff[29], wrapping_sub(128u16));
-    }
-    if ram_word!(game, tilemap_stuff[40]) != 0 {
-        if ((ram_word!(game, tilemap_stuff[40])) as i16)
-            .wrapping_sub((ram_word!(game, tilemap_stuff[39])) as i16)
-            < 0i16
-        {
-            set_ram_word!(game.tilemap_stuff[40] = 0u16);
-        }
-        let mut v1: u16 =
-            (ram_word!(game, tilemap_stuff[9])).wrapping_add(ram_word!(game, tilemap_stuff[39]));
-        if ram_word!(game, tilemap_stuff[9]) as i32 + ram_word!(game, tilemap_stuff[39]) as i32
-            - 6144i32
-            & 0x8000i32
-            == 0
-        {
-            v1 = 6144u16;
-        }
-        set_ram_word!(game.tilemap_stuff[39] = v1);
-    } else if (2048i16).wrapping_sub((ram_word!(game, tilemap_stuff[39])) as i16) < 0i16 {
-        update_ram_word!(game.tilemap_stuff[39], wrapping_sub(128u16));
-    }
-    if ram_word!(game, tilemap_stuff[50]) != 0 {
-        if ((ram_word!(game, tilemap_stuff[50])) as i16)
-            .wrapping_sub((ram_word!(game, tilemap_stuff[49])) as i16)
-            < 0i16
-        {
-            set_ram_word!(game.tilemap_stuff[50] = 0u16);
-        }
-        let mut v2: u16 =
-            (ram_word!(game, tilemap_stuff[9])).wrapping_add(ram_word!(game, tilemap_stuff[49]));
-        if ram_word!(game, tilemap_stuff[9]) as i32 + ram_word!(game, tilemap_stuff[49]) as i32
-            - 5632i32
-            & 0x8000i32
-            == 0
-        {
-            v2 = 5632u16;
-        }
-        set_ram_word!(game.tilemap_stuff[49] = v2);
-    } else if (2048i16).wrapping_sub((ram_word!(game, tilemap_stuff[49])) as i16) < 0i16 {
-        update_ram_word!(game.tilemap_stuff[49], wrapping_sub(128u16));
-    }
-    if ram_word!(game, tilemap_stuff[60]) != 0 {
-        if ((ram_word!(game, tilemap_stuff[60])) as i16)
-            .wrapping_sub((ram_word!(game, tilemap_stuff[59])) as i16)
-            < 0i16
-        {
-            set_ram_word!(game.tilemap_stuff[60] = 0u16);
-        }
-        let mut v3: u16 =
-            (ram_word!(game, tilemap_stuff[9])).wrapping_add(ram_word!(game, tilemap_stuff[59]));
-        if ram_word!(game, tilemap_stuff[9]) as i32 + ram_word!(game, tilemap_stuff[59]) as i32
-            - 5632i32
-            & 0x8000i32
-            == 0
-        {
-            v3 = 5632u16;
-        }
-        set_ram_word!(game.tilemap_stuff[59] = v3);
-    } else if (2048i16).wrapping_sub((ram_word!(game, tilemap_stuff[59])) as i16) < 0i16 {
-        update_ram_word!(game.tilemap_stuff[59], wrapping_sub(128u16));
-    }
-    if ram_word!(game, tilemap_stuff[70]) != 0 {
-        if ((ram_word!(game, tilemap_stuff[70])) as i16)
-            .wrapping_sub((ram_word!(game, tilemap_stuff[69])) as i16)
-            < 0i16
-        {
-            set_ram_word!(game.tilemap_stuff[70] = 0u16);
-        }
-        let mut v4: u16 =
-            (ram_word!(game, tilemap_stuff[9])).wrapping_add(ram_word!(game, tilemap_stuff[69]));
-        if ram_word!(game, tilemap_stuff[9]) as i32 + ram_word!(game, tilemap_stuff[69]) as i32
-            - 4608i32
-            & 0x8000i32
-            == 0
-        {
-            v4 = 4608u16;
-        }
-        set_ram_word!(game.tilemap_stuff[69] = v4);
-    } else if (2048i16).wrapping_sub((ram_word!(game, tilemap_stuff[69])) as i16) < 0i16 {
-        update_ram_word!(game.tilemap_stuff[69], wrapping_sub(128u16));
-    }
-    if ram_word!(game, tilemap_stuff[80]) != 0 {
-        if ((ram_word!(game, tilemap_stuff[80])) as i16)
-            .wrapping_sub((ram_word!(game, tilemap_stuff[79])) as i16)
-            < 0i16
-        {
-            set_ram_word!(game.tilemap_stuff[80] = 0u16);
-        }
-        let mut v5: u16 =
-            (ram_word!(game, tilemap_stuff[9])).wrapping_add(ram_word!(game, tilemap_stuff[79]));
-        if ram_word!(game, tilemap_stuff[9]) as i32 + ram_word!(game, tilemap_stuff[79]) as i32
-            - 1280i32
-            & 0x8000i32
-            == 0
-        {
-            v5 = 1280u16;
-        }
-        set_ram_word!(game.tilemap_stuff[79] = v5);
-    } else if (1280i16).wrapping_sub((ram_word!(game, tilemap_stuff[79])) as i16) < 0i16 {
-        update_ram_word!(game.tilemap_stuff[79], wrapping_sub(128u16));
-    }
+    let ram = (&raw mut game.g_ram).cast::<u8>();
+    ridley_tail_length(ram, 29, 6144, 2048);
+    ridley_tail_length(ram, 39, 6144, 2048);
+    ridley_tail_length(ram, 49, 5632, 2048);
+    ridley_tail_length(ram, 59, 5632, 2048);
+    ridley_tail_length(ram, 69, 4608, 2048);
+    ridley_tail_length(ram, 79, 1280, 1280);
 }
 pub unsafe fn Ridley_Func_88(k: u16, game: &mut Game) {
     let mut current_block: u64;

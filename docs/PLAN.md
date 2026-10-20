@@ -31,6 +31,34 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Ridley tail segments (2026-10-20): share the repeated tail reset,
+coordinate-chain and six length-update bodies in Ridley_Func_85/86/87.
+The three entry points retain ordered byte/word reads and stores in the shared
+tilemap workspace. Segment 61 deliberately reads word 21 with mask 0x04ff;
+vertical and horizontal chains retain their alternating two/three-term sums,
+the straight-tail branch rereads word 32 before each store, and every segment
+keeps its own maximum/resting limit and signed wrapping threshold test.
+No range guard or whole-RAM reference is introduced across raw enemy pointers.
+
+Full-file reconstruction restores the exact three original bodies; all other
+source inputs remain unchanged. Extracted ordered-read/write and full-RAM
+comparisons pass 196608 seeded word-state cases plus 7392 explicit boundary
+cases (204000 total), across valid direction values 0/1/2. Wrong segment source,
+reversed sum reads, ordinary clamp and removed limit reread controls all fail.
+The mock coordinate/direction offsets follow the maintained packed EnemyBase
+and Ridley overlay. These checks are factored tail-state equivalence; the any%
+fixture provides integration coverage and does not prove a Ridley route or
+complete alias safety.
+
+Rust lines -149 to 129506, cast lines -24. Four private raw RAM helpers raise
+the unsafe-function source count by four; runtime unsafe loads/stores are
+consolidated, not eliminated. Other progress counters are unchanged.
+
+Formatting/check, source-local normal release (25.37s), progress and full any%
+129712/0 (110.76s replay), native exit 0, pass. Initial registry build-script
+execution was denied by Windows; registry-only cache seeding allowed a fresh
+local game/frontend build. Broader routes/frontend/ownership remain open.
+
 Unit-valued match arms (2026-10-20): simplify 287 single-operation arms
 across 17 files, including 50 inside the existing CPU opcode table. No helper
 or runtime operation is added. Rustfmt retains braces for 16 long arms; those
