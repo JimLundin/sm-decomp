@@ -2741,14 +2741,15 @@ emits the literal separately for each field, retaining contextual inference
 for unsuffixed values. Field order, duplicate evaluations and statement
 boundaries remain exact; no cached receiver/value, runtime loop, allocation
 or broader borrow is introduced. Every final ordered receiver/field/literal
-run matches the prepared candidate's invariant. This binds the existing core
-and frontend expansion proof to the final loop/initializer composition.
+run matches the prepared candidate's invariant. Both final compiler input
+trees also match all 70 Rust files at the exact before/after commits.
 
-Independent comparison of those actual compiler outputs is byte-exact after
+Independent comparison of the final actual compiler outputs is byte-exact after
 removing only the added helper/comment/re-export and 22 core or 24 frontend
-imports: 10231806 and 10528756 bytes respectively. No original whitespace,
-literal, parenthesis or punctuation is normalized. The complete final source
-projection and normal build establish the final composition separately.
+imports: 10212733 and 10507906 bytes respectively. No original whitespace,
+literal, parenthesis or punctuation is normalized. All four final compiler
+captures retain their recorded hashes; no compiler or replay was repeated
+for this independent comparison.
 
 Formatting/check, normal release (19.90s wall/19.86s cargo), progress and
 full any% pass: 129712/0, native exit 0, 113.97s wall/111.75s replay. Review
