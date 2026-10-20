@@ -90,6 +90,21 @@ The unused-function closure below completes that root/reference review.
 Further thousand-line reductions remain open; the remaining unused-data
 census (177 raw lines) is below the current priority and stays parked.
 
+Post-interface reduction bounds (2026-10-20, afdbc270): a temporary draft
+removing 4632 primary-expression parenthesis pairs preserves parsed expression
+structure but adds 32 formatted Rust lines; park it. Bank imports
+occupy only 816 lines before replacement cost, and the 54 remaining ordinary
+function-pointer casts occupy 63. Neither establishes a thousand-line family.
+The 75 adjacent equal-literal/type local groups contain 187 declarations,
+with only 112 optimistic removable lines before replacement cost. A conservative
+type/reference closure finds 34 unused-declaration candidates occupying 67 lines,
+retaining tool references and ambiguous names/import aliases. These are discovery
+bounds, not validated source changes. Keep these small families parked and
+require a complete projection for the next broader gameplay-module candidate.
+Maintained Rust is unchanged at 117475 lines; progress and every prior
+source/input/artifact pin still match release and any% 129712/0 / Speed Booster
+148406/0. No replay rerun. Further substantial reductions remain open.
+
 Unified RAM-word interface (2026-10-20): one `word!` macro replaces the
 separate read, write, ordered-literal-store and update macros at 14758 sites
 across 33 callers. Reads use `word!(game.field)` and writes use
