@@ -1447,76 +1447,6 @@ static kSfx1Conf: [u8; 66] = [
     0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
     2, 2,
 ];
-pub unsafe fn Sfx1_HandleCmdFromSnes(p: *mut SpcPlayer) {
-    let a: u8 = (*p).input_ports[1i32 as usize];
-    (*p).input_ports[1i32 as usize] = 255;
-    if a as i32 == 255
-        || a as i32 == 0
-        || a as i32 != 1 && a as i32 != 2 && (*p).sfx1.priority as i32 != 0
-    {
-        if (*p).sfx1.cur_sound != 0 {
-            Sfx1_Process(p);
-        }
-        return;
-    }
-    if (*p).sfx1.cur_sound != 0 {
-        (*p).sfx1.enabled_voices = 0;
-        Sfx_Chan_Reset(
-            p,
-            &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(0),
-        );
-        Sfx_Chan_Reset(
-            p,
-            &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(1),
-        );
-        Sfx_Chan_Reset(
-            p,
-            &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(2),
-        );
-        Sfx_Chan_Reset(
-            p,
-            &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(3),
-        );
-    }
-    let mut i: i32 = 0;
-    while i != 4 {
-        (*p).sfx_chans_1[i as usize].legato = 0;
-        i += 1;
-    }
-    (*p).sfx1.cur_sound_index = ((a as i32 - 1i32) * 2) as u8;
-    (*p).sfx1.cur_ptr = kSfx1InstrListPtrs[((*p).sfx1.cur_sound_index >> 1) as usize];
-    (*p).sfx1.cur_sound = a;
-    match kSfx1Conf[(a as i32 - 1i32) as usize] as i32 {
-        0 => {
-            (*p).sfx1.voices_to_setup = 1;
-            (*p).sfx1.priority = 0;
-        }
-        1 => {
-            set_fields! {[(*p).sfx1], 1; voices_to_setup, priority}
-        }
-        2 => {
-            (*p).sfx1.voices_to_setup = 2;
-            (*p).sfx1.priority = 0;
-        }
-        3 => {
-            (*p).sfx1.voices_to_setup = 3;
-            (*p).sfx1.priority = 1;
-        }
-        4 => {
-            (*p).sfx1.voices_to_setup = 4;
-            (*p).sfx1.priority = 0;
-        }
-        5 => {
-            (*p).sfx1.voices_to_setup = 4;
-            (*p).sfx1.priority = 0;
-        }
-        _ => {}
-    };
-}
 static kSfx2InstrListPtrs: [u16; 127] = [
     0x3ab1, 0x3ac3, 0x3ad5, 0x3af1, 0x3af3, 0x3af5, 0x3b0c, 0x3b28, 0x3b2a, 0x3b3a, 0x3b42, 0x3b5e,
     0x3b73, 0x3b85, 0x3b92, 0x3ba9, 0x3bb4, 0x3bc1, 0x3be7, 0x3c08, 0x3c33, 0x3c3b, 0x3c43, 0x3c56,
@@ -1536,58 +1466,6 @@ static kSfx2Conf: [u8; 127] = [
     0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3, 0, 3, 3, 0, 0, 1, 0, 2, 0, 2, 3, 2, 0, 0, 0, 0, 0, 0,
     0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 3, 3, 3, 3, 0, 3, 2, 2, 2, 2, 1, 1, 1, 2,
 ];
-pub unsafe fn Sfx2_HandleCmdFromSnes(p: *mut SpcPlayer) {
-    let a: u8 = (*p).input_ports[2i32 as usize];
-    (*p).input_ports[2i32 as usize] = 255;
-    if a as i32 == 255
-        || a as i32 == 0
-        || a as i32 != 0x71 && a as i32 != 0x7e && (*p).sfx2.priority as i32 != 0
-    {
-        if (*p).sfx2.cur_sound != 0 {
-            Sfx2_Process(p);
-        }
-        return;
-    }
-    if (*p).sfx2.cur_sound != 0 {
-        (*p).sfx2.enabled_voices = 0;
-        Sfx_Chan_Reset(
-            p,
-            &raw mut (*p).sfx2,
-            (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(0),
-        );
-        Sfx_Chan_Reset(
-            p,
-            &raw mut (*p).sfx2,
-            (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(1),
-        );
-    }
-    let mut i: i32 = 0;
-    while i != 2 {
-        (*p).sfx_chans_2[i as usize].legato = 0;
-        i += 1;
-    }
-    (*p).sfx2.cur_sound_index = ((a as i32 - 1i32) * 2) as u8;
-    (*p).sfx2.cur_ptr = kSfx2InstrListPtrs[((*p).sfx2.cur_sound_index >> 1) as usize];
-    (*p).sfx2.cur_sound = a;
-    match kSfx2Conf[(a as i32 - 1i32) as usize] as i32 {
-        0 => {
-            (*p).sfx2.voices_to_setup = 1;
-            (*p).sfx2.priority = 0;
-        }
-        1 => {
-            set_fields! {[(*p).sfx2], 1; voices_to_setup, priority}
-        }
-        2 => {
-            (*p).sfx2.voices_to_setup = 2;
-            (*p).sfx2.priority = 0;
-        }
-        3 => {
-            (*p).sfx2.voices_to_setup = 2;
-            (*p).sfx2.priority = 1;
-        }
-        _ => {}
-    };
-}
 static kSfx3InstrListPtrs: [u16; 47] = [
     0x4eed, 0x4ef5, 0x4f00, 0x4f4b, 0x4f5b, 0x4f6b, 0x4f73, 0x4f89, 0x4f9f, 0x4fb6, 0x4fe1, 0x4ff7,
     0x4fff, 0x500c, 0x5047, 0x50a8, 0x50c4, 0x50d1, 0x50d4, 0x50f0, 0x511a, 0x5130, 0x5142, 0x5175,
@@ -1598,72 +1476,6 @@ static kSfx3Conf: [u8; 47] = [
     0, 1, 2, 3, 3, 2, 4, 4, 2, 5, 3, 2, 2, 4, 3, 2, 2, 5, 2, 4, 4, 2, 2, 2, 4, 2, 4, 2, 2, 2, 2, 5,
     5, 2, 2, 5, 2, 2, 2, 2, 2, 2, 2, 4, 2, 4, 2,
 ];
-pub unsafe fn Sfx3_HandleCmdFromSnes(p: *mut SpcPlayer) {
-    let a: u8 = (*p).input_ports[3i32 as usize];
-    (*p).input_ports[3i32 as usize] = 255;
-    if a as i32 == 255
-        || a as i32 == 0
-        || a as i32 != 1
-            && ((*p).sfx3.some_value as i32 == 2 || a as i32 != 2 && (*p).sfx3.priority as i32 != 0)
-    {
-        if (*p).sfx3.cur_sound != 0 {
-            Sfx3_Process(p);
-        }
-        return;
-    }
-    if (*p).sfx3.cur_sound != 0 {
-        (*p).sfx3.enabled_voices = 0;
-        Sfx_Chan_Reset(
-            p,
-            &raw mut (*p).sfx3,
-            (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(0),
-        );
-        Sfx_Chan_Reset(
-            p,
-            &raw mut (*p).sfx3,
-            (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(1),
-        );
-    }
-    let mut i: i32 = 0;
-    while i != 2 {
-        (*p).sfx_chans_3[i as usize].legato = 0;
-        i += 1;
-    }
-    (*p).sfx3.cur_sound_index = ((a as i32 - 1i32) * 2) as u8;
-    (*p).sfx3.cur_ptr = kSfx3InstrListPtrs[((*p).sfx3.cur_sound_index >> 1) as usize];
-    (*p).sfx3.cur_sound = a;
-    if (*p).sfx3.cur_sound as i32 >= 0xfe {
-        Sfx3_Process(p);
-        return;
-    }
-    match kSfx3Conf[(a as i32 - 1i32) as usize] as i32 {
-        0 => {
-            (*p).sfx3.voices_to_setup = 1;
-            (*p).sfx3.some_value = 0;
-            (*p).sfx3.priority = 1;
-        }
-        1 => {
-            (*p).sfx3.voices_to_setup = 1;
-            (*p).sfx3.some_value = 2;
-        }
-        2 => {
-            (*p).sfx3.voices_to_setup = 1;
-            (*p).sfx3.priority = 0;
-        }
-        3 => {
-            (*p).sfx3.voices_to_setup = 2;
-            (*p).sfx3.priority = 0;
-        }
-        4 => {
-            (*p).sfx3.voices_to_setup = 2;
-            (*p).sfx3.priority = 1;
-        }
-        5 => {
-            set_fields! {[(*p).sfx3], 1; voices_to_setup, priority}
-        }
-        _ => {}
-    };
-}
 pub unsafe fn SfxChan_GetByte(p: *mut SpcPlayer, s: *mut SfxChan) -> u8 {
     crate::update_place! { previous fresh31 = (*s).ptr_idx => (*s).ptr_idx.wrapping_add(1); }
     (*p).ram[((*s).ptr as i32 + fresh31 as i32) as usize]
@@ -1793,81 +1605,6 @@ pub unsafe fn Sfx_RunChan(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) 
         (&raw mut (*p).channel as *mut Channel).offset(((*s).voice_index >> 1) as isize),
         (((*s).note as i32) << 8 | (*s).subnote as i32) as u16,
     );
-}
-pub unsafe fn Sfx1_Process(p: *mut SpcPlayer) {
-    if (*p).sfx1.init_flag as i32 != 0xff {
-        Sfx1_Init(p);
-        let mut i: i32 = 0;
-        while i < 4 {
-            let s = (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(i as isize);
-            (*s).ptr = *((&raw mut (*p).ram as *mut u8)
-                .offset(((*p).sfx1.cur_ptr as i32 + i * 2) as isize)
-                as *mut u16);
-            (*s).voice_index_mult8 = ((*s).voice_index as i32 * 8) as u8;
-            (*s).ptr_idx = 0;
-            (*s).instr_timer = 1;
-            i += 1;
-        }
-    }
-    let mut i_0: i32 = 0;
-    while i_0 < 4 {
-        Sfx_RunChan(
-            p,
-            &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(i_0 as isize),
-        );
-        i_0 += 1;
-    }
-}
-pub unsafe fn Sfx2_Process(p: *mut SpcPlayer) {
-    if (*p).sfx2.init_flag as i32 != 0xff {
-        Sfx2_Init(p);
-        let mut i: i32 = 0;
-        while i < 2 {
-            let s = (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(i as isize);
-            (*s).ptr = *((&raw mut (*p).ram as *mut u8)
-                .offset(((*p).sfx2.cur_ptr as i32 + i * 2) as isize)
-                as *mut u16);
-            (*s).voice_index_mult8 = ((*s).voice_index as i32 * 8) as u8;
-            (*s).ptr_idx = 0;
-            (*s).instr_timer = 1;
-            i += 1;
-        }
-    }
-    let mut i_0: i32 = 0;
-    while i_0 < 2 {
-        Sfx_RunChan(
-            p,
-            &raw mut (*p).sfx2,
-            (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(i_0 as isize),
-        );
-        i_0 += 1;
-    }
-}
-pub unsafe fn Sfx3_Process(p: *mut SpcPlayer) {
-    if (*p).sfx3.init_flag as i32 != 0xff {
-        Sfx3_Init(p);
-        let mut i: i32 = 0;
-        while i < 2 {
-            let s = (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(i as isize);
-            (*s).ptr = *((&raw mut (*p).ram as *mut u8)
-                .offset(((*p).sfx3.cur_ptr as i32 + i * 2) as isize)
-                as *mut u16);
-            (*s).voice_index_mult8 = ((*s).voice_index as i32 * 8) as u8;
-            (*s).ptr_idx = 0;
-            (*s).instr_timer = 1;
-            i += 1;
-        }
-    }
-    let mut i_0: i32 = 0;
-    while i_0 < 2 {
-        Sfx_RunChan(
-            p,
-            &raw mut (*p).sfx3,
-            (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(i_0 as isize),
-        );
-        i_0 += 1;
-    }
 }
 pub unsafe fn Sfx_Init(
     p: *mut SpcPlayer,
@@ -2103,4 +1840,112 @@ pub unsafe fn SpcPlayer_Upload(p: *mut SpcPlayer, mut data: *const u8) {
     (*p).music_ptr_toplevel = *((&raw mut (*p).ram as *mut u8).offset(0x581e) as *mut u16);
     (*p).counter_sf0c = 2;
     (*p).key_OFF = ((*p).key_OFF | !((*p).is_chan_on));
+}
+
+// The three command ports own four, two and two independent sound voices.
+unsafe fn sound_effect_channels(
+    p: *mut SpcPlayer,
+    group: usize,
+) -> (*mut SfxRegs, *mut SfxChan, usize) {
+    match group {
+        0 => (&raw mut (*p).sfx1, (&raw mut (*p).sfx_chans_1).cast(), 4),
+        1 => (&raw mut (*p).sfx2, (&raw mut (*p).sfx_chans_2).cast(), 2),
+        2 => (&raw mut (*p).sfx3, (&raw mut (*p).sfx_chans_3).cast(), 2),
+        _ => unreachable!(),
+    }
+}
+
+unsafe fn handle_sound_effect_command(p: *mut SpcPlayer, group: usize) {
+    crate::verify_probe::hit(["sfx.command.1", "sfx.command.2", "sfx.command.3"][group]);
+    let (regs, channels, count) = sound_effect_channels(p, group);
+    let sound = (*p).input_ports[group + 1];
+    (*p).input_ports[group + 1] = 255;
+    if sound == 255
+        || sound == 0
+        || match group {
+            0 => sound != 1 && sound != 2 && (*regs).priority != 0,
+            1 => sound != 0x71 && sound != 0x7e && (*regs).priority != 0,
+            _ => sound != 1 && ((*regs).some_value == 2 || sound != 2 && (*regs).priority != 0),
+        }
+    {
+        if (*regs).cur_sound != 0 {
+            process_sound_effect(p, group);
+        }
+        return;
+    }
+    crate::verify_probe::hit(["sfx.start.1", "sfx.start.2", "sfx.start.3"][group]);
+    if (*regs).cur_sound != 0 {
+        (*regs).enabled_voices = 0;
+        for i in 0..count {
+            Sfx_Chan_Reset(p, regs, channels.add(i));
+        }
+    }
+    for i in 0..count {
+        (*channels.add(i)).legato = 0;
+    }
+    (*regs).cur_sound_index = ((sound as i32 - 1) * 2) as u8;
+    let (instructions, configuration): (&[u16], &[u8]) = match group {
+        0 => (&kSfx1InstrListPtrs, &kSfx1Conf),
+        1 => (&kSfx2InstrListPtrs, &kSfx2Conf),
+        _ => (&kSfx3InstrListPtrs, &kSfx3Conf),
+    };
+    (*regs).cur_ptr = instructions[((*regs).cur_sound_index >> 1) as usize];
+    (*regs).cur_sound = sound;
+    if group == 2 && (*regs).cur_sound >= 0xfe {
+        process_sound_effect(p, group);
+        return;
+    }
+    // Port 3's first two configurations also control its interruption gate.
+    let (voices, priority) = match (group, configuration[(sound - 1) as usize]) {
+        (2, 0) => {
+            (*regs).voices_to_setup = 1;
+            (*regs).some_value = 0;
+            (*regs).priority = 1;
+            return;
+        }
+        (2, 1) => {
+            (*regs).voices_to_setup = 1;
+            (*regs).some_value = 2;
+            return;
+        }
+        (2, 2) | (0 | 1, 0) => (1, 0),
+        (2, 3) | (0 | 1, 2) => (2, 0),
+        (2, 4) | (1, 3) => (2, 1),
+        (2, 5) | (0 | 1, 1) => (1, 1),
+        (0, 3) => (3, 1),
+        (0, 4 | 5) => (4, 0),
+        _ => return,
+    };
+    (*regs).voices_to_setup = voices;
+    (*regs).priority = priority;
+}
+
+unsafe fn process_sound_effect(p: *mut SpcPlayer, group: usize) {
+    crate::verify_probe::hit(["sfx.process.1", "sfx.process.2", "sfx.process.3"][group]);
+    let (regs, channels, count) = sound_effect_channels(p, group);
+    if (*regs).init_flag != 0xff {
+        crate::verify_probe::hit(["sfx.init.1", "sfx.init.2", "sfx.init.3"][group]);
+        Sfx_Init(p, regs, channels, group as i32);
+        for i in 0..count {
+            let channel = channels.add(i);
+            (*channel).ptr = *((&raw mut (*p).ram)
+                .cast::<u8>()
+                .add((*regs).cur_ptr as usize + i * 2) as *mut u16);
+            (*channel).voice_index_mult8 = ((*channel).voice_index as i32 * 8) as u8;
+            (*channel).ptr_idx = 0;
+            (*channel).instr_timer = 1;
+        }
+    }
+    for i in 0..count {
+        Sfx_RunChan(p, regs, channels.add(i));
+    }
+}
+
+crate::forward_calls! { pub unsafe fn (p: *mut SpcPlayer);
+    Sfx1_HandleCmdFromSnes => handle_sound_effect_command(p, 0);
+    Sfx2_HandleCmdFromSnes => handle_sound_effect_command(p, 1);
+    Sfx3_HandleCmdFromSnes => handle_sound_effect_command(p, 2);
+    Sfx1_Process => process_sound_effect(p, 0);
+    Sfx2_Process => process_sound_effect(p, 1);
+    Sfx3_Process => process_sound_effect(p, 2);
 }

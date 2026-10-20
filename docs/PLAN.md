@@ -20,6 +20,56 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared sound-effect channels (2026-10-20)
+
+The three native sound-effect ports now share command acceptance, voice reset,
+instruction setup and playback traversal. Their four/two/two channel counts,
+priority exceptions, port 3 interruption fields, configuration-specific write
+order and original public entries remain explicit. The source keeps each
+instruction-pointer reread after initialization and the legacy native word
+loads, including odd addresses. Complete formatted source shrinks **155 lines**,
+including all helpers, forwarders and twelve execution probes.
+
+Actual original/replacement Rust comparisons pass **983040 cases**, with real
+voice reset, initialization, playback and DSP writes. They compare every player
+and channel field, complete player RAM, all DSP fields and ordered register
+history, excluding allocation links and layout padding. Cases cover all byte
+command/priority pairs in four state profiles, interruption flags, active/idle
+voices, instruction timers, replacement, safe odd/even table offsets and panic
+outcomes. These finite native checks are not an all-state or aliasing proof.
+
+Source-checked coverage discovery passes **35000/0**, requiring command, start,
+initialization and playback hits for all three groups. A separate temporary
+Speed replay runs the actual original and replacement command routines from
+the same live playback state on every call and compares player/DSP state plus
+ordered register writes. It passes **148406/0**, exit 0, in 254.82s;
+all three paired-call probes execute. Original six bodies and complete shared
+source are bound to these checks. The paired replay predates the independent
+projectile-trail commit; final integration below includes that commit.
+
+Formatting, all-target release check, normal release (41.61s frozen;
+38.62s main), diff check and progress pass. Reconciled proposed commit source
+passes full any% **129712/0** and Speed Booster **148406/0**, native exits 0,
+in 155.56s/189.11s. Speed requires all twelve probes. Source/input/
+library/DLL pins stay fixed; the host reuses the normal library. Main's separate
+pending shader composition passes its normal-build embedded-source check.
+This preserves the existing native driver; physical-SPC equivalence, broader
+gameplay and credits limitations remain unchanged.
+
+Committed Rust is **113229 lines**, leaving **13230 further lines** for the
+fixed under-100000 target. Unsafe functions change by -2 and cast-containing
+lines by -23; other counters stay unchanged. Temporary drafts/checks are
+under `%TEMP%/sm-sfx-root-25aea684`. The complete remaining reduction budget
+remains unfinished.
+
+The preceding projectile/bomb multibox-search draft remains parked: its full
+formatted helper, byte/word count variant and probes save only **13 lines**.
+It has no compilation, behavioral comparison or replay validation and is not
+counted as a landed reduction. Draft: `%TEMP%/sm-hitbox-search-root-f30522d5`.
+Inspection also found differing liquid HDMA table layouts; no complete liquid
+draft or savings claim resulted. Further discovery needs a distinct concrete
+algorithm rather than repeating the parked broad scans.
+
 ## Shared projectile trails (2026-10-20)
 
 Four OAM drawing paths and two instruction loops in HandleProjectileTrails now
