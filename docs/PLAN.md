@@ -33,10 +33,16 @@ Complete formatted-source reconstruction, all-target release checks, static
 table element/bounds checks and compiler-evaluated actual overlay layouts pass.
 Review corrected ROM-read alignment and pointer mutability. The affine census
 checks 84474 modeled iterations; it is not an original-Rust equivalence proof.
-An earlier 208-fragment draft reported 13312 comparisons/zero differences, but
-its exact artifacts were not frozen. Final 204-fragment boundary and overlap
-harnesses compile; Windows denied execution. Do not present the earlier run
-as execution of the final candidate or claim complete route/branch coverage.
+The final 204-fragment harness now executes: 16320 boundary/randomized
+comparisons and 16128 separate directional/overlap comparisons pass, native
+exits 0. The original final harnesses and helper were checked against their
+recorded hashes; all 204 old fragments match `9cce192d`, and the helper matches
+the committed source. After standalone executable launches were denied, an
+added DLL entry point called each unchanged test main through the same loading
+mechanism as game verification. Source and DLL hashes stayed fixed throughout.
+These are x86-64 RAM/counter comparisons with synthetic inputs, not additional
+gameplay route coverage or a general undefined-behavior proof. They supersede
+the earlier unfrozen 208-fragment result and the final-harness execution gap.
 
 Formatting, normal release (32.15s), progress and diff check pass. Source-checked
 any% passes 129712/0 (139.03s wall), Speed Booster 148406/0 (170.20s), native
@@ -201,6 +207,15 @@ keep the fixed target visible instead of claiming success from small cleanups.
 
 ### Already harvested or parked
 
+- Script-loop discovery at `42bb4a44`: 22 disjoint loop spans containing direct
+  instruction/preinstruction dispatch occupy 578 lines, including outer object
+  traversal and PLM coroutine handling. This gross count does not establish a
+  large reduction. Cinematic loops retain bank-relative u16 cursors; projectile
+  and enemy loops also accept native pointers and small numeric offsets. PLMs
+  suspend for message boxes, palette commands can replace both cursor and slot,
+  and enemy callbacks distinguish captured animation slots from live indices.
+  Sharing fetch/execute alone cannot fund a multi-thousand-line cut from these
+  spans; broader state progression remains unpriced. Keep it secondary.
 - Hopping-cycle projection (2026-10-20, based on `9cce192d`): sharing
   Sidehopper, Beetom and Thin Hopping Blobs movement phases replaces 31
   entry points / 549 lines with 259 lines including eight helpers and callers,
