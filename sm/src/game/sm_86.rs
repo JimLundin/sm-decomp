@@ -1027,305 +1027,208 @@ static unk_868729: [u8; 20] = [
     0u8, 1u8, 0x82u8, 0x83u8, 0u8, 0x81u8, 2u8, 0x83u8, 0u8, 1u8, 2u8, 0x83u8, 0u8, 0x81u8, 0x82u8,
     0x83u8, 0x80u8, 0x81u8, 0x82u8, 0x83u8,
 ];
-unsafe fn EprojColl_85C2(eci: *mut EprojCollInfo, a: u16, k: u16, game: &mut Game) -> u8 {
-    let mut current_block: u64;
-    let temp_collision_DD4: u16 = (4i32 * a as i32) as u16;
-    let temp_collision_DD6: u16 = (*ram_ptr!(game; 0x16402, k as isize) as i32 >> 6i32) as u16;
-    let v2: u16 = (4i32 * a as i32
-        + (temp_collision_DD6 as i32 ^ ((*eci).eci_r34 as i32 & 8i32) >> 3i32))
-        as u16;
+#[derive(Copy, Clone)]
+enum EprojCollisionAxis {
+    Horizontal,
+    Vertical,
+}
+impl EprojCollisionAxis {
+    unsafe fn radius(self, eci: *const EprojCollInfo) -> u16 {
+        match self {
+            Self::Horizontal => (*eci).eci_r28,
+            Self::Vertical => (*eci).eci_r30,
+        }
+    }
+    unsafe fn perpendicular_radius(self, eci: *const EprojCollInfo) -> u16 {
+        match self {
+            Self::Horizontal => (*eci).eci_r30,
+            Self::Vertical => (*eci).eci_r28,
+        }
+    }
+    fn position(self, k: u16, game: &Game) -> u16 {
+        match self {
+            Self::Horizontal => game.enemy_projectile_x_pos(k),
+            Self::Vertical => game.enemy_projectile_y_pos(k),
+        }
+    }
+    fn perpendicular_position(self, k: u16, game: &Game) -> u16 {
+        match self {
+            Self::Horizontal => game.enemy_projectile_y_pos(k),
+            Self::Vertical => game.enemy_projectile_x_pos(k),
+        }
+    }
+    fn position_base(self) -> usize {
+        match self {
+            Self::Horizontal => 0x1a4b,
+            Self::Vertical => 0x1a93,
+        }
+    }
+    fn subposition_base(self) -> usize {
+        match self {
+            Self::Horizontal => 0x1a27,
+            Self::Vertical => 0x1a6f,
+        }
+    }
+    fn other_half(self) -> u16 {
+        match self {
+            Self::Horizontal => 2,
+            Self::Vertical => 1,
+        }
+    }
+}
+enum SquareSlopeHalf {
+    First,
+    Either,
+    Opposite,
+}
+// Keep context reads raw: the collision context may alias a destination store.
+unsafe fn eproj_square_slope(
+    eci: *mut EprojCollInfo,
+    slope: u16,
+    block: u16,
+    axis: EprojCollisionAxis,
+    game: &mut Game,
+) -> u8 {
+    // Only the vertical original captures this index before the BTS/context reads.
+    let captured_index = match axis {
+        EprojCollisionAxis::Horizontal => None,
+        EprojCollisionAxis::Vertical => Some(EprojState(&game.g_ram).index()),
+    };
+    let orientation = (*ram_ptr!(game; 0x16402, block as isize) >> 6) as u16;
+    let shift = match axis {
+        EprojCollisionAxis::Horizontal => 3,
+        EprojCollisionAxis::Vertical => 2,
+    };
+    let index = slope
+        .wrapping_mul(4)
+        .wrapping_add(orientation ^ (((*eci).eci_r34 & 8) >> shift));
+    let other = axis.other_half();
     if (*eci).eci_r32 == 0 {
-        let v3: i32 = ram_word!(game, cinematic_var7) as i32 >> 1i32;
-        if (ram_word!(game, eproj_y_pos[v3]) as i32 - (*eci).eci_r30 as i32 & 8i32) != 0i32
-            || (if unk_868729[v2 as usize] as i32 & 0x80i32 != 0 {
-                -1i32
-            } else {
-                0i32
-            }) >= 0i32
+        let k = captured_index.unwrap_or_else(|| EprojState(&game.g_ram).index());
+        if axis
+            .perpendicular_position(k, game)
+            .wrapping_sub(axis.perpendicular_radius(eci))
+            & 8
+            != 0
+            || unk_868729[index as usize] & 0x80 == 0
         {
-            let v4: u16 = (v2 as i32 ^ 2i32) as u16;
-            if ((*eci).eci_r30 as i32 + ram_word!(game, eproj_y_pos[v3]) as i32 - 1i32 & 8i32)
-                == 0i32
-                || (if unk_868729[v4 as usize] as i32 & 0x80i32 != 0 {
-                    -1i32
-                } else {
-                    0i32
-                }) >= 0i32
+            if axis
+                .perpendicular_radius(eci)
+                .wrapping_add(axis.perpendicular_position(k, game))
+                .wrapping_sub(1)
+                & 8
+                == 0
+                || unk_868729[(index ^ other) as usize] & 0x80 == 0
             {
-                return 0u8;
+                return 0;
             }
         }
     } else {
-        if (*eci).eci_r26 == 0 {
-            if ((*eci).eci_r30 as i32
-                + *(ram_ptr!(game, u16; 0x1a93))
-                    .offset((ram_word!(game, cinematic_var7) as i32 >> 1i32) as isize)
-                    as i32
-                - 1i32
-                & 8i32)
-                == 0i32
+        let half = if (*eci).eci_r26 == 0 {
+            if axis
+                .perpendicular_radius(eci)
+                .wrapping_add(axis.perpendicular_position(EprojState(&game.g_ram).index(), game))
+                .wrapping_sub(1)
+                & 8
+                == 0
             {
-                if (if unk_868729[v2 as usize] as i32 & 0x80i32 != 0 {
-                    -1i32
-                } else {
-                    0i32
-                }) >= 0i32
-                {
-                    return 0u8;
-                }
-                current_block = 12039483399334584727;
+                SquareSlopeHalf::First
             } else {
-                current_block = 2204372562120708137;
+                SquareSlopeHalf::Either
             }
         } else if (*eci).eci_r26 != (*eci).eci_r32
-            || (*(ram_ptr!(game, u16; 0x1a93))
-                .offset((ram_word!(game, cinematic_var7) as i32 >> 1i32) as isize)
-                as i32
-                - (*eci).eci_r30 as i32
-                & 8i32)
-                == 0i32
+            || axis
+                .perpendicular_position(EprojState(&game.g_ram).index(), game)
+                .wrapping_sub(axis.perpendicular_radius(eci))
+                & 8
+                == 0
         {
-            current_block = 2204372562120708137;
+            SquareSlopeHalf::Either
         } else {
-            current_block = 3512920355445576850;
-        }
-        if current_block == 12039483399334584727 {
-        } else {
-            if current_block == 2204372562120708137 {
-                if (if unk_868729[v2 as usize] as i32 & 0x80i32 != 0 {
-                    -1i32
-                } else {
-                    0i32
-                }) < 0i32
-                {
-                    current_block = 12039483399334584727;
-                } else {
-                    current_block = 3512920355445576850;
-                }
+            SquareSlopeHalf::Opposite
+        };
+        if matches!(half, SquareSlopeHalf::First) {
+            if unk_868729[index as usize] & 0x80 == 0 {
+                return 0;
             }
-            match current_block {
-                12039483399334584727 => {}
-                _ => {
-                    if (if unk_868729[(v2 as i32 ^ 2i32) as usize] as i32 & 0x80i32 != 0 {
-                        -1i32
-                    } else {
-                        0i32
-                    }) >= 0i32
-                    {
-                        return 0u8;
-                    }
-                }
-            }
+        } else if (matches!(half, SquareSlopeHalf::Opposite)
+            || unk_868729[index as usize] & 0x80 == 0)
+            && unk_868729[(index ^ other) as usize] & 0x80 == 0
+        {
+            return 0;
         }
     }
-    let v6: i32 = ram_word!(game, cinematic_var7) as i32 >> 1i32;
-    let mut v7: u16 = 0;
-    set_ram_word!(game.eproj_x_subpos[v6] = 0u16);
-    if ((*eci).eci_r20 as i32 & 0x8000i32) != 0i32 {
-        v7 = ((*eci).eci_r28 as i32 + ((*eci).eci_r34 as i32 | 7i32) + 1i32) as u16;
+    let slot = usize::from(EprojState(&game.g_ram).index() >> 1);
+    EprojStateMut(&mut game.g_ram).write(axis.subposition_base(), slot, 0);
+    let position = if (*eci).eci_r20 & 0x8000 != 0 {
+        axis.radius(eci)
+            .wrapping_add((*eci).eci_r34 | 7)
+            .wrapping_add(1)
     } else {
-        v7 = (((*eci).eci_r34 as i32 & 0xfff8i32) - (*eci).eci_r28 as i32) as u16;
-    }
-    set_ram_word!(game.eproj_x_pos[v6] = v7);
-    1u8
+        ((*eci).eci_r34 & 0xfff8).wrapping_sub(axis.radius(eci))
+    };
+    EprojStateMut(&mut game.g_ram).write(axis.position_base(), slot, position);
+    1
+}
+unsafe fn EprojColl_85C2(eci: *mut EprojCollInfo, a: u16, k: u16, game: &mut Game) -> u8 {
+    eproj_square_slope(eci, a, k, EprojCollisionAxis::Horizontal, game)
 }
 unsafe fn EprojColl_8676(eci: *mut EprojCollInfo, a: u16, k: u16, j: u16, game: &mut Game) -> u8 {
-    let mut current_block: u64;
-    let v2: u16 = EprojState(&game.g_ram).index();
-    let temp_collision_DD4: u16 = (4u16).wrapping_mul(a);
-    let temp_collision_DD6: u16 = (*ram_ptr!(game; 0x16402, k as isize) as i32 >> 6i32) as u16;
-    let v3: u16 = (4i32 * a as i32
-        + (temp_collision_DD6 as i32 ^ ((*eci).eci_r34 as i32 & 8i32) >> 2i32))
-        as u16;
-    if (*eci).eci_r32 == 0 {
-        let v4: i32 = v2 as i32 >> 1i32;
-        if (game.enemy_projectile_x_pos(v2) as i32 - (*eci).eci_r28 as i32 & 8i32) != 0i32
-            || (if unk_868729[v3 as usize] as i32 & 0x80i32 != 0 {
-                -1i32
-            } else {
-                0i32
-            }) >= 0i32
-        {
-            let v5: u16 = (v3) ^ (1u16);
-            if ((*eci).eci_r28 as i32 + game.enemy_projectile_x_pos(v2) as i32 - 1i32 & 8i32)
-                == 0i32
-                || (if unk_868729[v5 as usize] as i32 & 0x80i32 != 0 {
-                    -1i32
-                } else {
-                    0i32
-                }) >= 0i32
-            {
-                return 0u8;
-            }
-        }
-    } else {
-        if (*eci).eci_r26 == 0 {
-            if ((*eci).eci_r28 as i32
-                + *(ram_ptr!(game, u16; 0x1a4b))
-                    .offset((ram_word!(game, cinematic_var7) as i32 >> 1i32) as isize)
-                    as i32
-                - 1i32
-                & 8i32)
-                == 0i32
-            {
-                if (if unk_868729[v3 as usize] as i32 & 0x80i32 != 0 {
-                    -1i32
-                } else {
-                    0i32
-                }) >= 0i32
-                {
-                    return 0u8;
-                }
-                current_block = 5143058163439228106;
-            } else {
-                current_block = 8777407941634159499;
-            }
-        } else if (*eci).eci_r26 != (*eci).eci_r32
-            || (*(ram_ptr!(game, u16; 0x1a4b))
-                .offset((ram_word!(game, cinematic_var7) as i32 >> 1i32) as isize)
-                as i32
-                - (*eci).eci_r28 as i32
-                & 8i32)
-                == 0i32
-        {
-            current_block = 8777407941634159499;
-        } else {
-            current_block = 12349973810996921269;
-        }
-        if current_block == 5143058163439228106 {
-        } else {
-            if current_block == 8777407941634159499 {
-                if (if unk_868729[v3 as usize] as i32 & 0x80i32 != 0 {
-                    -1i32
-                } else {
-                    0i32
-                }) < 0i32
-                {
-                    current_block = 5143058163439228106;
-                } else {
-                    current_block = 12349973810996921269;
-                }
-            }
-            match current_block {
-                5143058163439228106 => {}
-                _ => {
-                    if (if unk_868729[(v3 as i32 ^ 1i32) as usize] as i32 & 0x80i32 != 0 {
-                        -1i32
-                    } else {
-                        0i32
-                    }) >= 0i32
-                    {
-                        return 0u8;
-                    }
-                }
-            }
-        }
-    }
-    let v7: i32 = EprojState(&game.g_ram).index() as i32 >> 1i32;
-    let mut v8: u16 = 0;
-    EprojStateMut(&mut game.g_ram).write(0x1a6f, v7 as usize, 0u16);
-    if ((*eci).eci_r20 as i32 & 0x8000i32) != 0i32 {
-        v8 = ((*eci).eci_r30 as i32 + ((*eci).eci_r34 as i32 | 7i32) + 1i32) as u16;
-    } else {
-        v8 = (((*eci).eci_r34 as i32 & 0xfff8i32) - (*eci).eci_r30 as i32) as u16;
-    }
-    EprojStateMut(&mut game.g_ram).write(0x1a93, v7 as usize, v8);
-    1u8
+    eproj_square_slope(eci, a, k, EprojCollisionAxis::Vertical, game)
 }
 pub fn EprojColl_873D() -> u8 {
     0u8
 }
 unsafe fn EprojColl_874E(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
-    let mut v6: u16 = 0;
-    let mut v8: i16 = 0;
-    let mut v13: u16 = 0;
-    let mut v15: i16 = 0;
-    let v0: u16 = EprojState(&game.g_ram).index();
-    if ((*eci).eci_r20 as i32 & 0x8000i32) != 0i32 {
-        let v9: u16 = ram_word!(game, cur_block_index);
-        let mod_0: u16 = SnesModulus(
-            ram_word!(game, cur_block_index),
-            ram_word!(game, room_width_in_blocks) as u8,
-        );
-        let v10: i32 = v0 as i32 >> 1i32;
-        let mut v11: i16 = (ram_word!(game, eproj_x_pos[v10]) as i32 >> 4i32) as i16;
-        if v11 as i32 == mod_0 as i32 {
-            let temp_collision_DD4: u16 =
-                ((*eci).eci_r24 as i32 - (*eci).eci_r30 as i32 & 0xfi32 ^ 0xfi32) as u16;
-            let temp_collision_DD6: u16 =
-                (16i32 * (*ram_ptr!(game; 0x16402, v9 as isize) as i32 & 0x1fi32)) as u16;
-            let mut v12: i16 = ((*ram_ptr!(game; 0x16402, v9 as isize) as i32) << 8i32) as i16;
-            if v12 < 0i16 && {
-                if (v12 as i32 & 0x4000i32) != 0i32 {
-                    v13 = (ram_word!(game, eproj_x_pos[v10]) as i32 ^ 0xfi32) as u16;
-                } else {
-                    v13 = ram_word!(game, eproj_x_pos[v10]);
-                };
-                let mut v14: u16 = (temp_collision_DD6 as i32 + (v13 as i32 & 0xfi32)) as u16;
-                v15 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *mut u8)
-                    .offset(v14 as isize) as i32
-                    & 0x1fi32)
-                    - temp_collision_DD4 as i32
-                    - 1i32) as i16;
-                ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *mut u8)
-                    .offset(v14 as isize) as i32
-                    & 0x1fi32)
-                    - temp_collision_DD4 as i32)
-                    == 1i32
-                    || v15 < 0i16
-            } {
-                set_ram_word!(game.eproj_y_pos[v10] = ((*eci).eci_r24 as i32 - v15 as i32) as u16);
-                set_ram_word!(game.eproj_y_subpos[v10] = 0u16);
-                1u8
-            } else {
-                0u8
-            }
-        } else {
-            0u8
-        }
-    } else {
-        let v1: u16 = game.cur_block_index();
-        let mod_1: u16 = SnesModulus(game.cur_block_index(), game.room_width_in_blocks() as u8);
-        let v2: i32 = v0 as i32 >> 1i32;
-        let mut v3: i16 = (game.enemy_projectile_x_pos(v0) as i32 >> 4i32) as i16;
-        if v3 as i32 == mod_1 as i32 {
-            let temp_collision_DD4_0: u16 =
-                (((*eci).eci_r30 as i32 + (*eci).eci_r24 as i32 - 1i32) as u16) & (0xfu16);
-            let temp_collision_DD6_0: u16 = (16u16)
-                .wrapping_mul((*ram_ptr!(game; 0x16402, v1 as isize) as i32 & 0x1fi32) as u16);
-            let mut v5: i16 = ((*ram_ptr!(game; 0x16402, v1 as isize) as i32) << 8i32) as i16;
-            if v5 >= 0 && {
-                if (v5 as i32 & 0x4000i32) != 0i32 {
-                    v6 = (game.enemy_projectile_x_pos(v0)) ^ (0xfu16);
-                } else {
-                    v6 = game.enemy_projectile_x_pos(v0);
-                };
-                let mut v7: u16 = (temp_collision_DD6_0).wrapping_add((v6 as i32 & 0xfi32) as u16);
-                v8 = (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *mut u8)
-                    .offset(v7 as isize) as i32
-                    & 0x1fi32)
-                    - temp_collision_DD4_0 as i32) as i16)
-                    .wrapping_sub(1i16);
-                ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *mut u8)
-                    .offset(v7 as isize) as i32
-                    & 0x1fi32)
-                    - temp_collision_DD4_0 as i32)
-                    == 1i32
-                    || v8 < 0
-            } {
-                {
-                    let eproj_position: u16 = ((*eci).eci_r24).wrapping_add((v8) as u16);
-                    EprojStateMut(&mut game.g_ram).write(0x1a93, v2 as usize, eproj_position);
-                }
-                EprojStateMut(&mut game.g_ram).write(0x1a6f, v2 as usize, -1i32 as u16);
-                1u8
-            } else {
-                0u8
-            }
-        } else {
-            0u8
-        }
+    let k = EprojState(&game.g_ram).index();
+    let negative = (*eci).eci_r20 & 0x8000 != 0;
+    let block = ram_word!(game, cur_block_index);
+    let column = SnesModulus(
+        ram_word!(game, cur_block_index),
+        ram_word!(game, room_width_in_blocks) as u8,
+    );
+    if game.enemy_projectile_x_pos(k) >> 4 != column {
+        return 0;
     }
+    let edge_offset = if negative {
+        ((*eci).eci_r24.wrapping_sub((*eci).eci_r30) & 15) ^ 15
+    } else {
+        (*eci).eci_r30.wrapping_add((*eci).eci_r24).wrapping_sub(1) & 15
+    };
+    let row = u16::from(*ram_ptr!(game; 0x16402, block as isize) & 0x1f) * 16;
+    let bts = *ram_ptr!(game; 0x16402, block as isize);
+    if (bts & 0x80 != 0) != negative {
+        return 0;
+    }
+    let x = if bts & 0x40 != 0 {
+        game.enemy_projectile_x_pos(k) ^ 15
+    } else {
+        game.enemy_projectile_x_pos(k)
+    };
+    let index = row.wrapping_add(x & 15);
+    // Both original ROM reads remain separate and occur before the landing stores.
+    let height =
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b))).offset(index as isize) & 0x1f;
+    let adjustment = i16::from(height)
+        .wrapping_sub(edge_offset as i16)
+        .wrapping_sub(1);
+    let height =
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b))).offset(index as isize) & 0x1f;
+    if i32::from(height) - i32::from(edge_offset) != 1 && adjustment >= 0 {
+        return 0;
+    }
+    let position = if negative {
+        (*eci).eci_r24.wrapping_sub(adjustment as u16)
+    } else {
+        (*eci).eci_r24.wrapping_add(adjustment as u16)
+    };
+    EprojStateMut(&mut game.g_ram).write(0x1a93, usize::from(k >> 1), position);
+    EprojStateMut(&mut game.g_ram).write(
+        0x1a6f,
+        usize::from(k >> 1),
+        if negative { 0 } else { 0xffff },
+    );
+    1
 }
 unsafe fn react_to_enemy_projectile_block(
     eci: *mut EprojCollInfo,
@@ -1357,129 +1260,117 @@ pub unsafe fn EprojBlockCollisition_CheckVertical(
 ) -> u8 {
     react_to_enemy_projectile_block(eci, k, EprojColl_85AD, game)
 }
-pub unsafe fn EprojBlockCollisition_Horiz(k: u16, game: &mut Game) -> u8 {
-    let v1: i32 = k as i32 >> 1i32;
-    let amt: i32 = (EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as i16 as i32) << 8i32;
-    let R30: u16 = EprojState(&game.g_ram).y_radius(v1 as usize) as u16;
-    let R28: u16 = EprojState(&game.g_ram).x_radius(v1 as usize) as u16;
-    let mut r26: u16 = ((game.enemy_projectile_y_pos(k) as i32 - R30 as i32) as u16) & (0xfff0u16);
-    r26 = (R30
-        .wrapping_add(game.enemy_projectile_y_pos(k))
-        .wrapping_sub(1)
-        .wrapping_sub(r26) as i32
-        >> 4i32) as u16;
-    let R32: u16 = r26;
-    let prod: u16 = Mult8x8(
-        (game.enemy_projectile_y_pos(k).wrapping_sub(R30) as i32 >> 4i32) as u8,
-        game.room_width_in_blocks() as u8,
-    );
-    let v3: u16 = ((amt as u32).wrapping_add(
-        (game.enemy_projectile_x_pos(k) as u32) << 16i32
-            | EprojState(&game.g_ram).slot_word(0x1a27, v1 as usize) as u32,
-    ) >> 16i32) as u16;
-    let r22: u16 = (amt + EprojState(&game.g_ram).slot_word(0x1a27, v1 as usize) as i32) as u16;
-    let r24: u16 = v3;
-    let mut v4: u16 = 0;
-    if amt < 0i32 {
-        v4 = v3.wrapping_sub(R28);
-    } else {
-        v4 = R28.wrapping_add(v3).wrapping_sub(1);
-    }
-    let mut eci: EprojCollInfo = EprojCollInfo {
-        eci_r20: (amt >> 16i32) as u16,
-        eci_r24: r24,
-        eci_r26: r26,
-        eci_r28: R28,
-        eci_r30: R30,
-        eci_r32: R32,
-        eci_r34: v4,
+unsafe fn eproj_block_collision(k: u16, axis: EprojCollisionAxis, game: &mut Game) -> u8 {
+    let slot = usize::from(k >> 1);
+    let velocity_base = match axis {
+        EprojCollisionAxis::Horizontal => 0x1ab7,
+        EprojCollisionAxis::Vertical => 0x1adb,
     };
-    let mut v5: u16 = (2i32 * (prod as i32 + (v4 as i32 >> 4i32))) as u16;
-    while EprojBlockCollisition_CheckHorizontal(&raw mut eci, v5, game) as i32 & 1i32 == 0 {
-        v5 = (v5).wrapping_add((game.room_width_in_blocks() as i32 * 2i32) as u16);
-        eci.eci_r26 = eci.eci_r26.wrapping_sub(1);
-        if (eci.eci_r26 as i32 & 0x8000i32) != 0i32 {
-            let v6: i32 = k as i32 >> 1i32;
-            EprojStateMut(&mut game.g_ram).write(0x1a27, v6 as usize, r22);
-            EprojStateMut(&mut game.g_ram).write(0x1a4b, v6 as usize, r24);
-            return 0u8;
+    let amount = i32::from(EprojState(&game.g_ram).slot_word(velocity_base, slot) as i16) << 8;
+    let y_radius = u16::from(EprojState(&game.g_ram).y_radius(slot));
+    let x_radius = u16::from(EprojState(&game.g_ram).x_radius(slot));
+    let (radius, perpendicular_radius) = match axis {
+        EprojCollisionAxis::Horizontal => (x_radius, y_radius),
+        EprojCollisionAxis::Vertical => (y_radius, x_radius),
+    };
+    let first_edge = axis
+        .perpendicular_position(k, game)
+        .wrapping_sub(perpendicular_radius)
+        & 0xfff0;
+    let span = (perpendicular_radius
+        .wrapping_add(axis.perpendicular_position(k, game))
+        .wrapping_sub(1)
+        .wrapping_sub(first_edge))
+        >> 4;
+    // The horizontal path reads room width and perpendicular position before movement.
+    let horizontal_product = match axis {
+        EprojCollisionAxis::Horizontal => Mult8x8(
+            (game.enemy_projectile_y_pos(k).wrapping_sub(y_radius) >> 4) as u8,
+            game.room_width_in_blocks() as u8,
+        ),
+        EprojCollisionAxis::Vertical => 0,
+    };
+    let position = ((amount as u32).wrapping_add(
+        (u32::from(axis.position(k, game)) << 16)
+            | u32::from(EprojState(&game.g_ram).slot_word(axis.subposition_base(), slot)),
+    ) >> 16) as u16;
+    let subposition = (amount
+        + i32::from(EprojState(&game.g_ram).slot_word(axis.subposition_base(), slot)))
+        as u16;
+    let edge = if amount < 0 {
+        position.wrapping_sub(radius)
+    } else {
+        radius.wrapping_add(position).wrapping_sub(1)
+    };
+    let mut collision = EprojCollInfo {
+        eci_r20: (amount >> 16) as u16,
+        eci_r24: position,
+        eci_r26: span,
+        eci_r28: x_radius,
+        eci_r30: y_radius,
+        eci_r32: span,
+        eci_r34: edge,
+    };
+    let mut cursor = match axis {
+        EprojCollisionAxis::Horizontal => {
+            i32::from((2 * (i32::from(horizontal_product) + i32::from(edge >> 4))) as u16)
+        }
+        EprojCollisionAxis::Vertical => {
+            let product = Mult8x8((edge >> 4) as u8, game.room_width_in_blocks() as u8);
+            let column = (game.enemy_projectile_x_pos(k).wrapping_sub(x_radius) >> 4) as i16;
+            2 * (i32::from(product) + i32::from(column))
+        }
+    };
+    loop {
+        let hit = match axis {
+            EprojCollisionAxis::Horizontal => {
+                EprojBlockCollisition_CheckHorizontal(&raw mut collision, cursor as u16, game)
+            }
+            EprojCollisionAxis::Vertical => {
+                EprojBlockCollisition_CheckVertical(&raw mut collision, cursor as u16, game)
+            }
+        };
+        if hit & 1 != 0 {
+            break;
+        }
+        if matches!(axis, EprojCollisionAxis::Horizontal) {
+            cursor = i32::from(
+                (cursor as u16).wrapping_add((i32::from(game.room_width_in_blocks()) * 2) as u16),
+            );
+        }
+        collision.eci_r26 = collision.eci_r26.wrapping_sub(1);
+        if collision.eci_r26 & 0x8000 != 0 {
+            EprojStateMut(&mut game.g_ram).write(axis.subposition_base(), slot, subposition);
+            EprojStateMut(&mut game.g_ram).write(axis.position_base(), slot, position);
+            return 0;
+        }
+        if matches!(axis, EprojCollisionAxis::Vertical) {
+            cursor += 2;
         }
     }
-    let v8: i32 = k as i32 >> 1i32;
-    EprojStateMut(&mut game.g_ram).write(0x1a27, v8 as usize, 0u16);
-    if amt < 0i32 {
-        let v10: u16 = (eci.eci_r28 as i32 + (eci.eci_r34 as i32 | 0xfi32) + 1i32) as u16;
-        if v10 <= game.enemy_projectile_x_pos(k) {
-            EprojStateMut(&mut game.g_ram).write(0x1a4b, v8 as usize, v10);
+    EprojStateMut(&mut game.g_ram).write(axis.subposition_base(), slot, 0);
+    if amount < 0 {
+        let corrected = axis
+            .radius(&raw const collision)
+            .wrapping_add(collision.eci_r34 | 15)
+            .wrapping_add(1);
+        if corrected <= axis.position(k, game) {
+            EprojStateMut(&mut game.g_ram).write(axis.position_base(), slot, corrected);
         }
     } else {
-        let v9: u16 = ((eci.eci_r34 as i32 & 0xfff0i32) - eci.eci_r28 as i32) as u16;
-        if v9 >= game.enemy_projectile_x_pos(k) {
-            EprojStateMut(&mut game.g_ram).write(0x1a4b, v8 as usize, v9);
+        let corrected =
+            (collision.eci_r34 & 0xfff0).wrapping_sub(axis.radius(&raw const collision));
+        if corrected >= axis.position(k, game) {
+            EprojStateMut(&mut game.g_ram).write(axis.position_base(), slot, corrected);
         }
     }
-    1u8
+    1
+}
+pub unsafe fn EprojBlockCollisition_Horiz(k: u16, game: &mut Game) -> u8 {
+    eproj_block_collision(k, EprojCollisionAxis::Horizontal, game)
 }
 pub unsafe fn EprojBlockCollisition_Vertical(k: u16, game: &mut Game) -> u8 {
-    let v1: i32 = k as i32 >> 1i32;
-    let amt: i32 = (EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as i16 as i32) << 8i32;
-    let R30: u16 = EprojState(&game.g_ram).y_radius(v1 as usize) as u16;
-    let R28: u16 = EprojState(&game.g_ram).x_radius(v1 as usize) as u16;
-    let mut r26: u16 = ((game.enemy_projectile_x_pos(k) as i32 - R28 as i32) as u16) & (0xfff0u16);
-    r26 = (R28
-        .wrapping_add(game.enemy_projectile_x_pos(k))
-        .wrapping_sub(1)
-        .wrapping_sub(r26) as i32
-        >> 4i32) as u16;
-    let R32: u16 = r26;
-    let v3: u16 = ((amt as u32).wrapping_add(
-        (game.enemy_projectile_y_pos(k) as u32) << 16i32
-            | EprojState(&game.g_ram).slot_word(0x1a6f, v1 as usize) as u32,
-    ) >> 16i32) as u16;
-    let r22: u16 = (amt + EprojState(&game.g_ram).slot_word(0x1a6f, v1 as usize) as i32) as u16;
-    let r24: u16 = v3;
-    let mut v4: u16 = 0;
-    if amt < 0i32 {
-        v4 = v3.wrapping_sub(R30);
-    } else {
-        v4 = R30.wrapping_add(v3).wrapping_sub(1);
-    }
-    let mut eci: EprojCollInfo = EprojCollInfo {
-        eci_r20: (amt >> 16i32) as u16,
-        eci_r24: r24,
-        eci_r26: r26,
-        eci_r28: R28,
-        eci_r30: R30,
-        eci_r32: R32,
-        eci_r34: v4,
-    };
-    let prod: u16 = Mult8x8((v4 as i32 >> 4i32) as u8, game.room_width_in_blocks() as u8);
-    let mut v5: i16 = (game.enemy_projectile_x_pos(k).wrapping_sub(R28) as i32 >> 4i32) as i16;
-    let mut i: i32 = 2i32 * (prod as i32 + v5 as i32);
-    while EprojBlockCollisition_CheckVertical(&raw mut eci, i as u16, game) as i32 & 1i32 == 0 {
-        eci.eci_r26 = eci.eci_r26.wrapping_sub(1);
-        if (eci.eci_r26 as i32 & 0x8000i32) != 0i32 {
-            let v7: i32 = k as i32 >> 1i32;
-            EprojStateMut(&mut game.g_ram).write(0x1a6f, v7 as usize, r22);
-            EprojStateMut(&mut game.g_ram).write(0x1a93, v7 as usize, r24);
-            return 0u8;
-        }
-        i += 2i32;
-    }
-    let v9: i32 = k as i32 >> 1i32;
-    EprojStateMut(&mut game.g_ram).write(0x1a6f, v9 as usize, 0u16);
-    if amt < 0i32 {
-        let v11: u16 = (eci.eci_r30 as i32 + (eci.eci_r34 as i32 | 0xfi32) + 1i32) as u16;
-        if v11 <= game.enemy_projectile_y_pos(k) {
-            EprojStateMut(&mut game.g_ram).write(0x1a93, v9 as usize, v11);
-        }
-    } else {
-        let v10: u16 = ((eci.eci_r34 as i32 & 0xfff0i32) - eci.eci_r30 as i32) as u16;
-        if v10 >= game.enemy_projectile_y_pos(k) {
-            EprojStateMut(&mut game.g_ram).write(0x1a93, v9 as usize, v10);
-        }
-    }
-    1u8
+    eproj_block_collision(k, EprojCollisionAxis::Vertical, game)
 }
 unsafe fn Eproj_Init_0x8aaf(j: u16, game: &mut Game) {
     NextRandom(game);

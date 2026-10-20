@@ -31,6 +31,37 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Projectile block collision (2026-10-20): 15 original declarations in banks
+86/94 share named axis implementations for enemy-projectile square/nonsquare
+landing and traversal, shot spans, six beam/missile traversals and both shot
+square handlers. Captured/live indices, high-bit versus nonzero occupancy,
+byte-only far edges, full-word horizontal stride, after-callback termination,
+wave zero-result behavior, nonwave kill gate and both ordered ROM reads remain
+exact. Raw context reads remain after overlapping stores; no range guard is added.
+
+Extracted comparisons pass 8192 mutating enemy traversal cases, 12288 multistep
+ordered shot cases, 40960 ordered shot square cases, 12288 ordered enemy
+square/landing cases and 73728 aligned RAM-context alias cases. Ten stride,
+step, termination, cached-position, landing and ROM controls are detected.
+Fresh source-bound actual-library wrappers pass 17920 square/landing cases.
+Corrected mocks retain cur_block_index at 0xDC4, repr(C) contexts and value-before-
+destination stores. Earlier unbound wrappers are superseded by the frozen
+single-shim builds and corrected comparison script bound to those fresh DLLs.
+The original comparison pointed at older DLLs and is superseded.
+Stack-context/table read order is source-reviewed; wider
+routes and complete alias safety remain open.
+
+Net Rust lines -239, to 130649; i32 cast lines -195. Unsafe-function source
+count rises 14 for shared helper/method definitions, from 6250 to 6264;
+this does not claim fewer runtime unsafe operations. Other counters are unchanged.
+
+Shared projectile-collision/typed-record/unit-arm verification uses frozen
+31af2b92 composition. Formatting/check, normal release (22.59s),
+progress and full any% 129712/0 (107.73s), native exit 0, pass.
+All 77 final inputs and 461 verification pins remain fixed. Any% supplies
+core integration coverage; broader gameplay routes, frontend and global alias
+safety remain open. The complete readability goal remains unfinished.
+
 Local first assignments (2026-10-20): declare 702 primitive/raw-pointer
 locals at their first assignment across 421 functions/32 files, removing dead
 zero/null initializers. All original types, mutability and RHS expressions

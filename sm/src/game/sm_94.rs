@@ -1619,335 +1619,234 @@ unsafe fn BlockShotReactHoriz(ci: *mut CollInfo, k: u16, game: &mut Game) -> u8 
 unsafe fn BlockShotReactVert(ci: *mut CollInfo, k: u16, game: &mut Game) -> u8 {
     react_to_shot_block(ci, k, BlockShotReactVert_Slope, game)
 }
+#[derive(Copy, Clone)]
+enum ShotAxis {
+    Horizontal,
+    Vertical,
+}
+impl ShotAxis {
+    fn pair(self) -> (usize, usize) {
+        match self {
+            Self::Horizontal => (0xb64, 0xb8c),
+            Self::Vertical => (0xb78, 0xba0),
+        }
+    }
+    fn radius(self) -> usize {
+        match self {
+            Self::Horizontal => 0xbb4,
+            Self::Vertical => 0xbc8,
+        }
+    }
+    fn speed(self) -> usize {
+        match self {
+            Self::Horizontal => 0xbdc,
+            Self::Vertical => 0xbf0,
+        }
+    }
+    fn other(self) -> Self {
+        match self {
+            Self::Horizontal => Self::Vertical,
+            Self::Vertical => Self::Horizontal,
+        }
+    }
+    unsafe fn scrolls(self, game: &mut Game) -> u16 {
+        match self {
+            Self::Horizontal => ram_word!(game, room_width_in_scrolls),
+            Self::Vertical => ram_word!(game, room_height_in_scrolls),
+        }
+    }
+    unsafe fn react(self, ci: *mut CollInfo, block: u16, game: &mut Game) -> u8 {
+        match self {
+            Self::Horizontal => BlockShotReactHoriz(ci, block, game),
+            Self::Vertical => BlockShotReactVert(ci, block, game),
+        }
+    }
+    unsafe fn advance(self, block: u16, game: &mut Game) -> u16 {
+        match self {
+            Self::Horizontal => {
+                block.wrapping_add(ram_word!(game, room_width_in_blocks).wrapping_mul(2))
+            }
+            Self::Vertical => block.wrapping_add(2),
+        }
+    }
+}
+unsafe fn shot_word(base: usize, k: u16, game: &mut Game) -> u16 {
+    (game.g_ram.as_ptr().add(base + usize::from(k >> 1) * 2) as *const u16).read_unaligned()
+}
+unsafe fn shot_span(k: u16, axis: ShotAxis, game: &mut Game) -> u16 {
+    let other = axis.other();
+    let first = shot_word(other.pair().0, k, game).wrapping_sub(shot_word(other.radius(), k, game))
+        & 0xfff0;
+    shot_word(other.radius(), k, game)
+        .wrapping_add(shot_word(other.pair().0, k, game))
+        .wrapping_sub(1)
+        .wrapping_sub(first)
+        >> 4
+}
 unsafe fn BlockGetSomePos1(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1i32;
-    let r38: u16 = (ram_word!(game, projectile_y_pos[v1]) as i32
-        - ram_word!(game, projectile_y_radius[v1]) as i32
-        & 0xfff0i32) as u16;
-    ((ram_word!(game, projectile_y_radius[v1]) as i32
-        + ram_word!(game, projectile_y_pos[v1]) as i32
-        - 1i32
-        - r38 as i32) as u16 as i32
-        >> 4i32) as u16
+    shot_span(k, ShotAxis::Horizontal, game)
 }
 unsafe fn BlockGetSomePos2(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1i32;
-    let r38: u16 = (ram_word!(game, projectile_x_pos[v1]) as i32
-        - ram_word!(game, projectile_x_radius[v1]) as i32
-        & 0xfff0i32) as u16;
-    ((ram_word!(game, projectile_x_radius[v1]) as i32
-        + ram_word!(game, projectile_x_pos[v1]) as i32
-        - 1i32
-        - r38 as i32) as u16 as i32
-        >> 4i32) as u16
+    shot_span(k, ShotAxis::Vertical, game)
+}
+unsafe fn move_shot(k: u16, axis: ShotAxis, amount: i32, game: &mut Game) {
+    let (position, subposition) = axis.pair();
+    AddToHiLo(
+        game.g_ram
+            .as_mut_ptr()
+            .add(position + usize::from(k >> 1) * 2) as *mut u16,
+        game.g_ram
+            .as_mut_ptr()
+            .add(subposition + usize::from(k >> 1) * 2) as *mut u16,
+        amount as u32,
+    );
+}
+unsafe fn beam_block_collision(k: u16, axis: ShotAxis, wave: bool, game: &mut Game) -> u8 {
+    let amount = i32::from(shot_word(axis.speed(), k, game) as i16) << 8;
+    let span = shot_span(k, axis, game);
+    // Horizontal traversal computes the row before updating the split position.
+    let row = match axis {
+        ShotAxis::Horizontal => Mult8x8(
+            (shot_word(0xb78, k, game).wrapping_sub(shot_word(0xbc8, k, game)) >> 4) as u8,
+            ram_word!(game, room_width_in_blocks) as u8,
+        ),
+        ShotAxis::Vertical => 0,
+    };
+    move_shot(k, axis, amount, game);
+    let position = shot_word(axis.pair().0, k, game);
+    let edge = if amount < 0 {
+        shot_word(axis.pair().0, k, game).wrapping_sub(shot_word(axis.radius(), k, game))
+    } else {
+        shot_word(axis.radius(), k, game)
+            .wrapping_add(shot_word(axis.pair().0, k, game))
+            .wrapping_sub(1)
+    };
+    let mut block = match axis {
+        ShotAxis::Horizontal => row.wrapping_add(edge >> 4).wrapping_mul(2),
+        ShotAxis::Vertical => {
+            // Wave reads room width before the X edge; nonwave reverses those reads.
+            let column = if wave {
+                0
+            } else {
+                shot_word(0xb64, k, game).wrapping_sub(shot_word(0xbb4, k, game)) >> 4
+            };
+            let row = Mult8x8(
+                (edge >> 4) as u8,
+                ram_word!(game, room_width_in_blocks) as u8,
+            );
+            let column = if wave {
+                shot_word(0xb64, k, game).wrapping_sub(shot_word(0xbb4, k, game)) >> 4
+            } else {
+                column
+            };
+            row.wrapping_add(column).wrapping_mul(2)
+        }
+    };
+    if span.wrapping_sub(16) & 0x8000 == 0 {
+        return 0;
+    }
+    if !wave && (i16::from((edge >> 8) as u8)).wrapping_sub(axis.scrolls(game) as i16) >= 0 {
+        return 0;
+    }
+    let mut ci = CollInfo {
+        ci_r18_r20: amount,
+        ci_r24: position,
+        ci_r26: span,
+        ci_r28: edge,
+        ci_r30: 0,
+        ci_r32: 0,
+        ci_r38: span,
+        ci_r40: span,
+    };
+    if wave {
+        let other = axis.other();
+        let high = *game
+            .g_ram
+            .as_ptr()
+            .add(other.pair().0 + usize::from(k >> 1) * 2 + 1);
+        if high & 0x80 != 0
+            || i16::from(high).wrapping_sub(other.scrolls(game) as i16) >= 0
+            || i16::from((edge >> 8) as u8).wrapping_sub(axis.scrolls(game) as i16) >= 0
+        {
+            return 0;
+        }
+    }
+    loop {
+        axis.react(&raw mut ci, block, game);
+        block = axis.advance(block, game);
+        ci.ci_r38 = ci.ci_r38.wrapping_sub(1);
+        if ci.ci_r38 & 0x8000 != 0 {
+            break;
+        }
+    }
+    if wave || ci.ci_r40 & 0x8000 == 0 {
+        return 0;
+    }
+    KillProjectile(k, game);
+    1
 }
 pub unsafe fn BlockCollNoWaveBeamHoriz(k: u16, game: &mut Game) -> u8 {
-    let mut v7: u16 = 0;
-    let v1: i32 = k as i32 >> 1i32;
-    let amt: i32 = (ram_word!(game, projectile_bomb_x_speed[v1]) as i16 as i32) << 8i32;
-    let some_pos: u16 = BlockGetSomePos1(k, game);
-    let prod: u16 = Mult8x8(
-        (((ram_word!(game, projectile_y_pos[v1]))
-            .wrapping_sub(ram_word!(game, projectile_y_radius[v1]))) as i32
-            >> 4i32) as u8,
-        ram_word!(game, room_width_in_blocks) as u8,
-    );
-    AddToHiLo(
-        (ram_ptr!(game, u16; 0xb64)).offset(v1 as isize),
-        (ram_ptr!(game, u16; 0xb8c)).offset(v1 as isize),
-        amt as u32,
-    );
-    let r24: u16 = ram_word!(game, projectile_x_pos[v1]);
-    if amt < 0i32 {
-        v7 = (ram_word!(game, projectile_x_pos[v1]))
-            .wrapping_sub(ram_word!(game, projectile_x_radius[v1]));
-    } else {
-        v7 = (ram_word!(game, projectile_x_radius[v1]) as i32
-            + ram_word!(game, projectile_x_pos[v1]) as i32
-            - 1i32) as u16;
-    }
-    let mut R28: u16 = v7;
-    let mut v8: u16 = (2i32 * (prod as i32 + (v7 as i32 >> 4i32))) as u16;
-    if some_pos as i32 - 16i32 & 0x8000i32 == 0
-        || ((*(&raw mut R28 as *mut u8).offset(1isize)) as i16)
-            .wrapping_sub((ram_word!(game, room_width_in_scrolls)) as i16)
-            >= 0i16
-    {
-        return 0u8;
-    }
-    let mut ci: CollInfo = CollInfo {
-        ci_r18_r20: amt,
-        ci_r24: r24,
-        ci_r26: some_pos,
-        ci_r28: R28,
-        ci_r30: 0u16,
-        ci_r32: 0,
-        ci_r38: some_pos,
-        ci_r40: some_pos,
-    };
-    loop {
-        BlockShotReactHoriz(&raw mut ci, v8, game);
-        v8 = (v8 as i32 + ram_word!(game, room_width_in_blocks) as i32 * 2i32) as u16;
-        ci.ci_r38 = ci.ci_r38.wrapping_sub(1);
-        if ((ci.ci_r38 as i32 & 0x8000i32) != 0i32) {
-            break;
-        }
-    }
-    if (ci.ci_r40 as i32 & 0x8000i32) == 0i32 {
-        return 0u8;
-    }
-    KillProjectile(k, game);
-    1u8
+    beam_block_collision(k, ShotAxis::Horizontal, false, game)
 }
 pub unsafe fn BlockCollNoWaveBeamVert(k: u16, game: &mut Game) -> u8 {
-    let mut v7: u16 = 0;
-    let v1: i32 = k as i32 >> 1i32;
-    let amt: i32 = (ram_word!(game, projectile_bomb_y_speed[v1]) as i16 as i32) << 8i32;
-    let some_pos: u16 = BlockGetSomePos2(k, game);
-    AddToHiLo(
-        (ram_ptr!(game, u16; 0xb78)).offset(v1 as isize),
-        (ram_ptr!(game, u16; 0xba0)).offset(v1 as isize),
-        amt as u32,
-    );
-    let r24: u16 = ram_word!(game, projectile_y_pos[v1]);
-    if amt < 0i32 {
-        v7 = (ram_word!(game, projectile_y_pos[v1]))
-            .wrapping_sub(ram_word!(game, projectile_y_radius[v1]));
-    } else {
-        v7 = (ram_word!(game, projectile_y_radius[v1]) as i32
-            + ram_word!(game, projectile_y_pos[v1]) as i32
-            - 1i32) as u16;
-    }
-    let mut R28: u16 = v7;
-    let v8: u16 = (((ram_word!(game, projectile_x_pos[v1]))
-        .wrapping_sub(ram_word!(game, projectile_x_radius[v1]))) as i32
-        >> 4i32) as u16;
-    let mut v9: u16 = (2i32
-        * (Mult8x8(
-            (v7 as i32 >> 4i32) as u8,
-            ram_word!(game, room_width_in_blocks) as u8,
-        ) as i32
-            + v8 as i32)) as u16;
-    if some_pos as i32 - 16i32 & 0x8000i32 == 0
-        || ((*(&raw mut R28 as *mut u8).offset(1isize)) as i16)
-            .wrapping_sub((ram_word!(game, room_height_in_scrolls)) as i16)
-            >= 0i16
-    {
-        return 0u8;
-    }
-    let mut ci: CollInfo = CollInfo {
-        ci_r18_r20: amt,
-        ci_r24: r24,
-        ci_r26: some_pos,
-        ci_r28: R28,
-        ci_r30: 0u16,
-        ci_r32: 0,
-        ci_r38: some_pos,
-        ci_r40: some_pos,
-    };
-    loop {
-        BlockShotReactVert(&raw mut ci, v9, game);
-        v9 = (v9).wrapping_add(2u16);
-        ci.ci_r38 = ci.ci_r38.wrapping_sub(1);
-        if ((ci.ci_r38 as i32 & 0x8000i32) != 0i32) {
-            break;
-        }
-    }
-    if (ci.ci_r40 as i32 & 0x8000i32) == 0i32 {
-        return 0u8;
-    }
-    KillProjectile(k, game);
-    1u8
+    beam_block_collision(k, ShotAxis::Vertical, false, game)
 }
 pub unsafe fn BlockCollWaveBeamHoriz(k: u16, game: &mut Game) -> u8 {
-    let mut v7: u16 = 0;
-    let v1: i32 = k as i32 >> 1i32;
-    let amt: i32 = (ram_word!(game, projectile_bomb_x_speed[v1]) as i16 as i32) << 8i32;
-    let some_pos: u16 = BlockGetSomePos1(k, game);
-    let prod: u16 = Mult8x8(
-        (((ram_word!(game, projectile_y_pos[v1]))
-            .wrapping_sub(ram_word!(game, projectile_y_radius[v1]))) as i32
-            >> 4i32) as u8,
-        ram_word!(game, room_width_in_blocks) as u8,
-    );
-    AddToHiLo(
-        (ram_ptr!(game, u16; 0xb64)).offset(v1 as isize),
-        (ram_ptr!(game, u16; 0xb8c)).offset(v1 as isize),
-        amt as u32,
-    );
-    let r24: u16 = ram_word!(game, projectile_x_pos[v1]);
-    if amt < 0i32 {
-        v7 = (ram_word!(game, projectile_x_pos[v1]))
-            .wrapping_sub(ram_word!(game, projectile_x_radius[v1]));
-    } else {
-        v7 = (ram_word!(game, projectile_x_radius[v1]) as i32
-            + ram_word!(game, projectile_x_pos[v1]) as i32
-            - 1i32) as u16;
-    }
-    let mut R28: u16 = v7;
-    let mut v8: u16 = (2i32 * (prod as i32 + (v7 as i32 >> 4i32))) as u16;
-    if some_pos as i32 - 16i32 & 0x8000i32 == 0 {
-        return 0u8;
-    }
-    let mut ci: CollInfo = CollInfo {
-        ci_r18_r20: amt,
-        ci_r24: r24,
-        ci_r26: some_pos,
-        ci_r28: R28,
-        ci_r30: 0u16,
-        ci_r32: 0,
-        ci_r38: some_pos,
-        ci_r40: some_pos,
-    };
-    let v9: u8 = *((ram_ptr!(game, u16; 0xb78)).offset(v1 as isize) as *mut u8).offset(1isize);
-    if v9 as i32 & 0x80i32 == 0
-        && ((v9) as i16).wrapping_sub((ram_word!(game, room_height_in_scrolls)) as i16) < 0i16
-        && ((*(&raw mut R28 as *mut u8).offset(1isize)) as i16)
-            .wrapping_sub((ram_word!(game, room_width_in_scrolls)) as i16)
-            < 0i16
-    {
-        loop {
-            BlockShotReactHoriz(&raw mut ci, v8, game);
-            v8 = (v8 as i32 + ram_word!(game, room_width_in_blocks) as i32 * 2i32) as u16;
-            ci.ci_r38 = ci.ci_r38.wrapping_sub(1);
-            if ((ci.ci_r38 as i32 & 0x8000i32) != 0i32) {
-                break;
-            }
-        }
-    }
-    0u8
+    beam_block_collision(k, ShotAxis::Horizontal, true, game)
 }
 pub unsafe fn BlockCollWaveBeamVert(k: u16, game: &mut Game) -> u8 {
-    let mut v7: u16 = 0;
-    let v1: i32 = k as i32 >> 1i32;
-    let amt: i32 = (ram_word!(game, projectile_bomb_y_speed[v1]) as i16 as i32) << 8i32;
-    let some_pos: u16 = BlockGetSomePos2(k, game);
-    AddToHiLo(
-        (ram_ptr!(game, u16; 0xb78)).offset(v1 as isize),
-        (ram_ptr!(game, u16; 0xba0)).offset(v1 as isize),
-        amt as u32,
-    );
-    let r24: u16 = ram_word!(game, projectile_y_pos[v1]);
-    if amt < 0i32 {
-        v7 = (ram_word!(game, projectile_y_pos[v1]))
-            .wrapping_sub(ram_word!(game, projectile_y_radius[v1]));
-    } else {
-        v7 = (ram_word!(game, projectile_y_radius[v1]) as i32
-            + ram_word!(game, projectile_y_pos[v1]) as i32
-            - 1i32) as u16;
-    }
-    let mut R28: u16 = v7;
-    let prod: u16 = Mult8x8(
-        (v7 as i32 >> 4i32) as u8,
-        ram_word!(game, room_width_in_blocks) as u8,
-    );
-    let v8: u16 = (((ram_word!(game, projectile_x_pos[v1]))
-        .wrapping_sub(ram_word!(game, projectile_x_radius[v1]))) as i32
-        >> 4i32) as u16;
-    let mut v9: u16 = (2i32 * (prod as i32 + v8 as i32)) as u16;
-    if some_pos as i32 - 16i32 & 0x8000i32 == 0 {
-        return 0u8;
-    }
-    let v10: u8 = *((ram_ptr!(game, u16; 0xb64)).offset(v1 as isize) as *mut u8).offset(1isize);
-    let mut ci: CollInfo = CollInfo {
-        ci_r18_r20: amt,
-        ci_r24: r24,
-        ci_r26: some_pos,
-        ci_r28: R28,
-        ci_r30: 0u16,
-        ci_r32: 0,
-        ci_r38: some_pos,
-        ci_r40: some_pos,
+    beam_block_collision(k, ShotAxis::Vertical, true, game)
+}
+unsafe fn missile_block_collision(k: u16, axis: ShotAxis, game: &mut Game) -> u8 {
+    let amount = i32::from(shot_word(axis.speed(), k, game) as i16) << 8;
+    let row = match axis {
+        ShotAxis::Horizontal => Mult8x8(
+            (shot_word(0xb78, k, game) >> 4) as u8,
+            ram_word!(game, room_width_in_blocks) as u8,
+        ),
+        ShotAxis::Vertical => 0,
     };
-    if v10 as i32 & 0x80i32 == 0
-        && ((v10) as i16).wrapping_sub((ram_word!(game, room_width_in_scrolls)) as i16) < 0i16
-        && ((*(&raw mut R28 as *mut u8).offset(1isize)) as i16)
-            .wrapping_sub((ram_word!(game, room_height_in_scrolls)) as i16)
-            < 0i16
-    {
-        loop {
-            BlockShotReactVert(&raw mut ci, v9, game);
-            v9 = (v9).wrapping_add(2u16);
-            ci.ci_r38 = ci.ci_r38.wrapping_sub(1);
-            if ((ci.ci_r38 as i32 & 0x8000i32) != 0i32) {
-                break;
-            }
-        }
+    move_shot(k, axis, amount, game);
+    if matches!(axis, ShotAxis::Horizontal) {
+        let _subposition = shot_word(0xb8c, k, game);
     }
-    0u8
+    let position = shot_word(axis.pair().0, k, game);
+    let block = match axis {
+        ShotAxis::Horizontal => row
+            .wrapping_add(shot_word(0xb64, k, game) >> 4)
+            .wrapping_mul(2),
+        ShotAxis::Vertical => {
+            let row = Mult8x8(
+                (shot_word(0xb78, k, game) >> 4) as u8,
+                ram_word!(game, room_width_in_blocks) as u8,
+            );
+            row.wrapping_add(shot_word(0xb64, k, game) >> 4)
+                .wrapping_mul(2)
+        }
+    };
+    let mut ci = CollInfo {
+        ci_r18_r20: amount,
+        ci_r24: position,
+        ci_r26: 0,
+        ci_r28: position,
+        ci_r30: 1,
+        ci_r32: 0,
+        ci_r38: 0,
+        ci_r40: 0,
+    };
+    if i16::from((position >> 8) as u8).wrapping_sub(axis.scrolls(game) as i16) >= 0
+        || axis.react(&raw mut ci, block, game) == 0
+    {
+        return 0;
+    }
+    KillProjectile(k, game);
+    1
 }
 pub unsafe fn BlockCollMissileHoriz(k: u16, game: &mut Game) -> u8 {
-    let v1: i32 = k as i32 >> 1i32;
-    let amt: i32 = (ram_word!(game, projectile_bomb_x_speed[v1]) as i16 as i32) << 8i32;
-    let prod: u16 = Mult8x8(
-        (ram_word!(game, projectile_y_pos[v1]) as i32 >> 4i32) as u8,
-        ram_word!(game, room_width_in_blocks) as u8,
-    );
-    AddToHiLo(
-        (ram_ptr!(game, u16; 0xb64)).offset(v1 as isize),
-        (ram_ptr!(game, u16; 0xb8c)).offset(v1 as isize),
-        amt as u32,
-    );
-    let v3: u16 = ram_word!(game, projectile_bomb_x_subpos[v1]);
-    let mut r24: u16 = ram_word!(game, projectile_x_pos[v1]);
-    let r28: u16 = r24;
-    let v7: u16 =
-        (2i32 * (prod as i32 + (ram_word!(game, projectile_x_pos[v1]) as i32 >> 4i32))) as u16;
-    let mut ci: CollInfo = CollInfo {
-        ci_r18_r20: amt,
-        ci_r24: r24,
-        ci_r26: 0u16,
-        ci_r28: r28,
-        ci_r30: 1u16,
-        ci_r32: 0,
-        ci_r38: 0u16,
-        ci_r40: 0,
-    };
-    if ((*(&raw mut r24 as *mut u8).offset(1isize)) as i16)
-        .wrapping_sub((ram_word!(game, room_width_in_scrolls)) as i16)
-        >= 0i16
-        || BlockShotReactHoriz(&raw mut ci, v7, game) == 0
-    {
-        return 0u8;
-    }
-    KillProjectile(k, game);
-    1u8
+    missile_block_collision(k, ShotAxis::Horizontal, game)
 }
 pub unsafe fn BlockCollMissileVert(k: u16, game: &mut Game) -> u8 {
-    let v1: i32 = k as i32 >> 1i32;
-    let amt: i32 = (ram_word!(game, projectile_bomb_y_speed[v1]) as i16 as i32) << 8i32;
-    AddToHiLo(
-        (ram_ptr!(game, u16; 0xb78)).offset(v1 as isize),
-        (ram_ptr!(game, u16; 0xba0)).offset(v1 as isize),
-        amt as u32,
-    );
-    let mut r24: u16 = ram_word!(game, projectile_y_pos[v1]);
-    let r28: u16 = r24;
-    let prod: u16 = Mult8x8(
-        (ram_word!(game, projectile_y_pos[v1]) as i32 >> 4i32) as u8,
-        ram_word!(game, room_width_in_blocks) as u8,
-    );
-    let v7: u16 = (ram_word!(game, projectile_x_pos[v1]) as i32 >> 4i32) as u16;
-    let v8: u16 = (2i32 * (prod as i32 + v7 as i32)) as u16;
-    let mut ci: CollInfo = CollInfo {
-        ci_r18_r20: amt,
-        ci_r24: r24,
-        ci_r26: 0u16,
-        ci_r28: r28,
-        ci_r30: 1u16,
-        ci_r32: 0,
-        ci_r38: 0u16,
-        ci_r40: 0,
-    };
-    if ((*(&raw mut r24 as *mut u8).offset(1isize)) as i16)
-        .wrapping_sub((ram_word!(game, room_height_in_scrolls)) as i16)
-        >= 0i16
-        || BlockShotReactVert(&raw mut ci, v8, game) == 0
-    {
-        return 0u8;
-    }
-    KillProjectile(k, game);
-    1u8
+    missile_block_collision(k, ShotAxis::Vertical, game)
 }
 unsafe fn BlockShotReact_Slope_NonSquare(ci: *mut CollInfo, j: u16, k: u16, game: &mut Game) -> u8 {
     let v2: u16 = (ram_word!(game, projectile_x_pos[(j as i32 >> 1i32)]) as i32 & 0xfi32
@@ -2031,66 +1930,104 @@ pub unsafe fn BlockCollSpreadBomb(k: u16, game: &mut Game) -> u8 {
         _ => unreachable!(),
     })
 }
+unsafe fn shot_square_slope(
+    ci: *mut CollInfo,
+    slope: u16,
+    block: u16,
+    axis: ShotAxis,
+    game: &mut Game,
+) -> u8 {
+    let orientation = u16::from(*ram_ptr!(game; 0x16402, block as isize) >> 6);
+    let shift = match axis {
+        ShotAxis::Horizontal => 2,
+        ShotAxis::Vertical => 3,
+    };
+    let mut index = slope
+        .wrapping_mul(4)
+        .wrapping_add(orientation ^ (((*ci).ci_r28 & 8) >> shift));
+    let other = match axis {
+        ShotAxis::Horizontal => 1,
+        ShotAxis::Vertical => 2,
+    };
+    let captured = match axis {
+        ShotAxis::Horizontal => None,
+        ShotAxis::Vertical => Some(ram_word!(game, projectile_index)),
+    };
+    if (*ci).ci_r30 == 0 {
+        if (*ci).ci_r26 == 0 {
+            let k = captured.unwrap_or_else(|| ram_word!(game, projectile_index));
+            if shot_word(axis.pair().0, k, game).wrapping_sub(shot_word(axis.radius(), k, game)) & 8
+                != 0
+                || kTab948E54[index as usize] == 0
+            {
+                if i32::from(shot_byte(axis.radius(), k, game))
+                    + i32::from(shot_byte(axis.pair().0, k, game))
+                    - 1
+                    & 8
+                    == 0
+                    || kTab948E54[(index ^ other) as usize] == 0
+                {
+                    return 0;
+                }
+            }
+            return 1;
+        }
+        if (*ci).ci_r38 != 0 {
+            if (*ci).ci_r38 == (*ci).ci_r26
+                && shot_word(
+                    axis.pair().0,
+                    captured.unwrap_or_else(|| ram_word!(game, projectile_index)),
+                    game,
+                )
+                .wrapping_sub(shot_word(
+                    axis.radius(),
+                    captured.unwrap_or_else(|| ram_word!(game, projectile_index)),
+                    game,
+                )) & 8
+                    != 0
+            {
+                return u8::from(kTab948E54[(index ^ other) as usize] != 0);
+            }
+        } else if i32::from(shot_byte(
+            axis.radius(),
+            captured.unwrap_or_else(|| ram_word!(game, projectile_index)),
+            game,
+        )) + i32::from(shot_byte(
+            axis.pair().0,
+            captured.unwrap_or_else(|| ram_word!(game, projectile_index)),
+            game,
+        )) - 1
+            & 8
+            == 0
+        {
+            return u8::from(kTab948E54[index as usize] != 0);
+        }
+        if kTab948E54[index as usize] != 0 {
+            return 1;
+        }
+        return u8::from(kTab948E54[(index ^ other) as usize] != 0);
+    }
+    if shot_word(
+        axis.pair().0,
+        captured.unwrap_or_else(|| ram_word!(game, projectile_index)),
+        game,
+    ) & 8
+        != 0
+    {
+        index ^= other;
+    }
+    u8::from(kTab948E54[index as usize] != 0)
+}
+unsafe fn shot_byte(base: usize, k: u16, game: &mut Game) -> u8 {
+    *game.g_ram.as_ptr().add(base + usize::from(k >> 1) * 2)
+}
 unsafe fn BlockShotReactVert_Slope_Square(
     ci: *mut CollInfo,
     a: u16,
     k: u16,
     game: &mut Game,
 ) -> u8 {
-    let temp_collision_DD4: u16 = (4u16).wrapping_mul(a);
-    let temp_collision_DD6: u16 = (*ram_ptr!(game; 0x16402, k as isize) as i32 >> 6i32) as u16;
-    let mut v2: u16 = (4i32 * a as i32
-        + (temp_collision_DD6 as i32 ^ ((*ci).ci_r28 as i32 & 8i32) >> 3i32))
-        as u16;
-    let v3: i32 = ram_word!(game, projectile_index) as i32 >> 1i32;
-    if (*ci).ci_r30 == 0 {
-        if (*ci).ci_r26 == 0 {
-            if (ram_word!(game, projectile_y_pos[v3]) as i32
-                - ram_word!(game, projectile_y_radius[v3]) as i32
-                & 8i32)
-                != 0i32
-                || kTab948E54[v2 as usize] == 0
-            {
-                let v4: u16 = (v2) ^ (2u16);
-                if (*((ram_ptr!(game, u16; 0xbc8)).offset(v3 as isize) as *mut u8).offset(0) as i32
-                    + *((ram_ptr!(game, u16; 0xb78)).offset(v3 as isize) as *mut u8).offset(0)
-                        as i32
-                    - 1i32
-                    & 8i32)
-                    == 0i32
-                    || kTab948E54[v4 as usize] == 0
-                {
-                    return 0u8;
-                }
-            }
-            return 1u8;
-        }
-        if (*ci).ci_r38 != 0 {
-            if (*ci).ci_r38 == (*ci).ci_r26
-                && (ram_word!(game, projectile_y_pos[v3]) as i32
-                    - ram_word!(game, projectile_y_radius[v3]) as i32
-                    & 8i32)
-                    != 0i32
-            {
-                return (kTab948E54[(v2 as i32 ^ 2i32) as usize] != 0u8) as u8;
-            }
-        } else if (*((ram_ptr!(game, u16; 0xbc8)).offset(v3 as isize) as *mut u8).offset(0) as i32
-            + *((ram_ptr!(game, u16; 0xb78)).offset(v3 as isize) as *mut u8).offset(0) as i32
-            - 1i32
-            & 8i32)
-            == 0i32
-        {
-            return (kTab948E54[v2 as usize] != 0u8) as u8;
-        }
-        if kTab948E54[v2 as usize] != 0u8 {
-            return 1u8;
-        }
-        return (kTab948E54[(v2 as i32 ^ 2i32) as usize] != 0u8) as u8;
-    }
-    if (ram_word!(game, projectile_y_pos[v3]) as i32 & 8i32) != 0i32 {
-        v2 = (v2) ^ (2u16);
-    }
-    (kTab948E54[v2 as usize] != 0u8) as u8
+    shot_square_slope(ci, a, k, ShotAxis::Vertical, game)
 }
 unsafe fn BlockShotReactHoriz_Slope_Square(
     ci: *mut CollInfo,
@@ -2098,74 +2035,7 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
     k: u16,
     game: &mut Game,
 ) -> u8 {
-    let temp_collision_DD4: u16 = (4u16).wrapping_mul(a);
-    let temp_collision_DD6: u16 = (*ram_ptr!(game; 0x16402, k as isize) as i32 >> 6i32) as u16;
-    let mut v2: u16 = (4i32 * a as i32
-        + (temp_collision_DD6 as i32 ^ ((*ci).ci_r28 as i32 & 8i32) >> 2i32))
-        as u16;
-    if (*ci).ci_r30 == 0 {
-        if (*ci).ci_r26 == 0 {
-            let v3: i32 = ram_word!(game, projectile_index) as i32 >> 1i32;
-            if (ram_word!(game, projectile_x_pos[v3]) as i32
-                - ram_word!(game, projectile_x_radius[v3]) as i32
-                & 8i32)
-                != 0i32
-                || kTab948E54[v2 as usize] == 0u8
-            {
-                let v4: u16 = (v2) ^ (1u16);
-                if (*((ram_ptr!(game, u16; 0xbb4)).offset(v3 as isize) as *mut u8).offset(0) as i32
-                    + *((ram_ptr!(game, u16; 0xb64)).offset(v3 as isize) as *mut u8).offset(0)
-                        as i32
-                    - 1i32
-                    & 8i32)
-                    == 0i32
-                    || kTab948E54[v4 as usize] == 0u8
-                {
-                    return 0u8;
-                }
-            }
-            return 1u8;
-        }
-        if (*ci).ci_r38 != 0 {
-            if (*ci).ci_r38 == (*ci).ci_r26
-                && (*(ram_ptr!(game, u16; 0xb64))
-                    .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
-                    as i32
-                    - *(ram_ptr!(game, u16; 0xbb4))
-                        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
-                        as i32
-                    & 8i32)
-                    != 0i32
-            {
-                return (kTab948E54[(v2 as i32 ^ 1i32) as usize] != 0u8) as u8;
-            }
-        } else if (*((ram_ptr!(game, u16; 0xbb4))
-            .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
-            as *mut u8)
-            .offset(0) as i32
-            + *((ram_ptr!(game, u16; 0xb64))
-                .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
-                as *mut u8)
-                .offset(0) as i32
-            - 1i32
-            & 8i32)
-            == 0i32
-        {
-            return (kTab948E54[v2 as usize] != 0u8) as u8;
-        }
-        if kTab948E54[v2 as usize] != 0u8 {
-            return 1u8;
-        }
-        return (kTab948E54[(v2 as i32 ^ 1i32) as usize] != 0u8) as u8;
-    }
-    if (*(ram_ptr!(game, u16; 0xb64))
-        .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) as i32
-        & 8i32)
-        != 0i32
-    {
-        v2 = (v2) ^ (1u16);
-    }
-    (kTab948E54[v2 as usize] != 0u8) as u8
+    shot_square_slope(ci, a, k, ShotAxis::Horizontal, game)
 }
 unsafe fn BlockReactGrapple_GrappleBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
     static kBlockReactGrapple_GrappleBlockPlm: [u16; 4] = [0xd0d8, 0xd0dc, 0xd0e0, 0xd0d8];
