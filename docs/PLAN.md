@@ -72,6 +72,31 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Shared forwarding declarations (2026-10-20): 350 direct-call functions in
+94 adjacent groups share identical signatures through one caller-side macro.
+It emits separate original functions: 262 unit statements retain semicolons,
+88 value results retain tail calls, and all parameter/callee bindings, call
+order and temporary scopes stay intact. Two receiver methods and three
+frontend mutex wrappers retain their original scopes. Singletons stay ordinary.
+
+Independent complete-source census, inversion and hygiene review pass. Final
+78-input composition includes bitwise 02347c9d and Bang; all 94 original and
+replacement groups exactly reuse the reviewed forwarding source. Fresh compiler
+outputs retain all 10102037 core and 10382005 frontend-library bytes after
+binding every 67-file source payload and removing only the 820-byte expanded
+helper. Main's 22-file payload is also bound; its sole remaining difference is
+one explicitly checked empty comment line. The three changed frontend wrappers
+have identical typed HIR. No general whitespace or punctuation normalization.
+
+Formatting/check, normal release (21.84s), progress and full any% 129712/0
+(98.69s replay, 98.86s wall), native exit 0, pass. The local Cargo host takes
+1.94s and reuses the normal library's exact hash/mtime; all 240 verification
+pins remain fixed. Rust lines -475 to 127865. The textual unsafe-function
+count falls by 209 through signature sharing; all 298 unsafe and 52 safe
+selected functions remain. Other progress counters are unchanged. This is
+declaration consolidation with integration coverage; broader gameplay,
+frontend execution and ownership work remain open.
+
 Native-width bitwise expressions (2026-10-20): simplify all 2276 eligible
 expressions across 41 files: 1984 comparisons and 292 final truncations,
 including existing RAM/instruction macros and the frontend turbo toggle.

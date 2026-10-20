@@ -672,26 +672,14 @@ static g_word_A28E80: [i16; 48] = [
     -4, -4, 0, 0, -16, -16, -16, -15, -15, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4,
     -3, -3, -2, 0, 0, 0, 0,
 ];
-pub unsafe fn Enemy_GrappleReact_CancelBeam_A2(game: &mut Game) {
-    Enemy_SwitchToFrozenAi(game);
-}
-pub unsafe fn Enemy_GrappleReact_KillEnemy_A2(game: &mut Game) {
-    EnemyGrappleDeath(game);
-}
-pub unsafe fn Enemy_GrappleReact_SamusLatchesOn_A2(game: &mut Game) {
-    SamusLatchesOnWithGrapple(game);
-}
-pub unsafe fn Enemy_NormalFrozenAI_A2(game: &mut Game) {
-    NormalEnemyFrozenAI(game);
-}
-pub unsafe fn Enemy_NormalPowerBombAI_A2(game: &mut Game) {
-    NormalEnemyPowerBombAi(game);
-}
-pub unsafe fn Enemy_NormalTouchAI_A2(game: &mut Game) {
-    NormalEnemyTouchAi(game);
-}
-pub unsafe fn Enemy_NormalShotAI_A2(game: &mut Game) {
-    NormalEnemyShotAi(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Enemy_GrappleReact_CancelBeam_A2 => Enemy_SwitchToFrozenAi(game);
+    Enemy_GrappleReact_KillEnemy_A2 => EnemyGrappleDeath(game);
+    Enemy_GrappleReact_SamusLatchesOn_A2 => SamusLatchesOnWithGrapple(game);
+    Enemy_NormalFrozenAI_A2 => NormalEnemyFrozenAI(game);
+    Enemy_NormalPowerBombAI_A2 => NormalEnemyPowerBombAi(game);
+    Enemy_NormalTouchAI_A2 => NormalEnemyTouchAi(game);
+    Enemy_NormalShotAI_A2 => NormalEnemyShotAi(game);
 }
 pub fn BouncingGoofball_Init(game: &mut Game) {
     let index = game.cur_enemy_index();
@@ -5220,11 +5208,9 @@ pub unsafe fn RisingFallingPlatform_Func_12(game: &mut Game) {
     }
 }
 pub fn RisingFallingPlatform_Func_13() {}
-pub unsafe fn RisingFallingPlatform_Touch(game: &mut Game) {
-    RisingFallingPlatform_Powerbomb(game);
-}
-pub unsafe fn RisingFallingPlatform_Shot(game: &mut Game) {
-    RisingFallingPlatform_Powerbomb(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    RisingFallingPlatform_Touch => RisingFallingPlatform_Powerbomb(game);
+    RisingFallingPlatform_Shot => RisingFallingPlatform_Powerbomb(game);
 }
 pub unsafe fn ShootableShutter_Shot(game: &mut Game) {
     NormalEnemyShotAi(game);

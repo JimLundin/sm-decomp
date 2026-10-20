@@ -270,14 +270,13 @@ unsafe fn mother_brain_beam_edges(
     }
 }
 
-pub unsafe fn MotherBrain_CalcHdma_Up_UpRight(r22: u16, r24: u16, game: &mut Game) {
-    mother_brain_beam_edges(MotherBrainBeamDirection::UpRight, r22, r24, game);
-}
-pub unsafe fn MotherBrain_CalcHdma_Up_Up(r22: u16, r24: u16, game: &mut Game) {
-    mother_brain_beam_edges(MotherBrainBeamDirection::Up, r22, r24, game);
-}
-pub unsafe fn MotherBrain_CalcHdma_Up_UpLeft(r22: u16, r24: u16, game: &mut Game) {
-    mother_brain_beam_edges(MotherBrainBeamDirection::UpLeft, r22, r24, game);
+crate::forward_calls! { pub unsafe fn (r22: u16, r24: u16, game: &mut Game);
+    MotherBrain_CalcHdma_Up_UpRight =>
+        mother_brain_beam_edges(MotherBrainBeamDirection::UpRight, r22, r24, game);
+    MotherBrain_CalcHdma_Up_Up =>
+        mother_brain_beam_edges(MotherBrainBeamDirection::Up, r22, r24, game);
+    MotherBrain_CalcHdma_Up_UpLeft =>
+        mother_brain_beam_edges(MotherBrainBeamDirection::UpLeft, r22, r24, game);
 }
 static g_off_ADE20E: [Option<Func_CalcHdma>; 4] = callback_table! { unsafe Func_CalcHdma;
     MotherBrain_CalcHdma_Down_DownRight, None, MotherBrain_CalcHdma_Down_Down,
@@ -298,14 +297,13 @@ pub unsafe fn MotherBrain_CalcHdma_Down(game: &mut Game) {
     *(ram_ptr!(game, u16; 0x9c00, 10)) = -25114i32 as u16;
     *(ram_ptr!(game, u16; 0x9c00, 12)) = 0u16;
 }
-pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(r22: u16, r24: u16, game: &mut Game) {
-    mother_brain_beam_edges(MotherBrainBeamDirection::DownRight, r22, r24, game);
-}
-pub unsafe fn MotherBrain_CalcHdma_Down_Down(r22: u16, r24: u16, game: &mut Game) {
-    mother_brain_beam_edges(MotherBrainBeamDirection::Down, r22, r24, game);
-}
-pub unsafe fn MotherBrain_CalcHdma_Down_DownLeft(r22: u16, r24: u16, game: &mut Game) {
-    mother_brain_beam_edges(MotherBrainBeamDirection::DownLeft, r22, r24, game);
+crate::forward_calls! { pub unsafe fn (r22: u16, r24: u16, game: &mut Game);
+    MotherBrain_CalcHdma_Down_DownRight =>
+        mother_brain_beam_edges(MotherBrainBeamDirection::DownRight, r22, r24, game);
+    MotherBrain_CalcHdma_Down_Down =>
+        mother_brain_beam_edges(MotherBrainBeamDirection::Down, r22, r24, game);
+    MotherBrain_CalcHdma_Down_DownLeft =>
+        mother_brain_beam_edges(MotherBrainBeamDirection::DownLeft, r22, r24, game);
 }
 pub unsafe fn MotherBrain_SealWall(game: &mut Game) {
     game.eproj_spawn_pt = Point16U {

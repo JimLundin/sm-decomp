@@ -7473,17 +7473,13 @@ crate::game::address_dispatch! {
         9496861 => Samus_InputHandler_E91D; 9496870 => HandleAutoJumpHack;
     }
 }
-pub unsafe fn Samus_CallInputHandler(game: &mut Game) {
-    CallSamusInputHandler(
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Samus_CallInputHandler => CallSamusInputHandler(
         ((ram_word!(game, samus_input_handler)) as u32) | (0x900000u32),
         game,
     );
-}
-pub unsafe fn Samus_InputHandler_E913(game: &mut Game) {
-    Samus_InputHandler(game);
-}
-pub unsafe fn Samus_Func20_(game: &mut Game) {
-    Samus_Func20(game);
+    Samus_InputHandler_E913 => Samus_InputHandler(game);
+    Samus_Func20_ => Samus_Func20(game);
 }
 pub unsafe fn Samus_InputHandler_E91D(game: &mut Game) {
     DemoObjectInputHandler(game);

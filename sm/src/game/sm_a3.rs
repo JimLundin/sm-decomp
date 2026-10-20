@@ -473,29 +473,15 @@ crate::ram_map::ram_pointer_functions! {
 }
 static g_word_A3A76D: [i16; 4] = [2, 0, -2, 0];
 static g_word_A3A775: [i16; 4] = [0, -2, 0, 2];
-pub unsafe fn Enemy_GrappleReact_NoInteract_A3(game: &mut Game) {
-    SwitchEnemyAiToMainAi(game);
-}
-pub unsafe fn Enemy_GrappleReact_KillEnemy_A3(game: &mut Game) {
-    EnemyGrappleDeath(game);
-}
-pub unsafe fn Enemy_GrappleReact_CancelBeam_A3(game: &mut Game) {
-    Enemy_SwitchToFrozenAi(game);
-}
-pub unsafe fn Enemy_NormalTouchAI_A3(game: &mut Game) {
-    NormalEnemyTouchAi(game);
-}
-pub unsafe fn Enemy_NormalShotAI_A3(game: &mut Game) {
-    NormalEnemyShotAi(game);
-}
-pub unsafe fn Enemy_NormalShotAI_SkipSomeParts_A3(game: &mut Game) {
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-}
-pub unsafe fn Enemy_NormalPowerBombAI_A3(game: &mut Game) {
-    NormalEnemyPowerBombAi(game);
-}
-pub unsafe fn Enemy_NormalFrozenAI_A3(game: &mut Game) {
-    NormalEnemyFrozenAI(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Enemy_GrappleReact_NoInteract_A3 => SwitchEnemyAiToMainAi(game);
+    Enemy_GrappleReact_KillEnemy_A3 => EnemyGrappleDeath(game);
+    Enemy_GrappleReact_CancelBeam_A3 => Enemy_SwitchToFrozenAi(game);
+    Enemy_NormalTouchAI_A3 => NormalEnemyTouchAi(game);
+    Enemy_NormalShotAI_A3 => NormalEnemyShotAi(game);
+    Enemy_NormalShotAI_SkipSomeParts_A3 => NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+    Enemy_NormalPowerBombAI_A3 => NormalEnemyPowerBombAi(game);
+    Enemy_NormalFrozenAI_A3 => NormalEnemyFrozenAI(game);
 }
 pub unsafe fn Metalee_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     (*Get_Metalee(ram_word!(game, cur_enemy_index) as i32, game)).metalee_var_E = 1u16;
@@ -1539,11 +1525,9 @@ pub unsafe fn Roach_Func_20(game: &mut Game) {
         Roach_Func_30(ram_word!(game, cur_enemy_index), game);
     };
 }
-pub unsafe fn Roach_Func_21(game: &mut Game) {
-    Roach_Func_32(ram_word!(game, cur_enemy_index), game);
-}
-pub unsafe fn Roach_Func_22(game: &mut Game) {
-    Roach_Func_32(ram_word!(game, cur_enemy_index), game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Roach_Func_21 => Roach_Func_32(ram_word!(game, cur_enemy_index), game);
+    Roach_Func_22 => Roach_Func_32(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn Roach_Func_23(game: &mut Game) {
     let E: *mut Enemy_Roach = Get_Roach(ram_word!(game, cur_enemy_index) as i32, game);

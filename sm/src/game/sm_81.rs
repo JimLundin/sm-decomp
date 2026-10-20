@@ -2147,11 +2147,11 @@ pub unsafe fn sub_81A3D1(k: u16, game: &mut Game) {
 }
 static kActiveAreaMapForegroundColors: [u16; 6] = [0, 0xa, 0x10, 0x16, 0x24, 0x2a];
 static kInactiveAreaMapForegroundColors: [u16; 6] = [0x30, 0x3a, 0x40, 0x46, 0x54, 0x5a];
-pub unsafe fn LoadActiveAreaMapForegroundColors(v0: u16, game: &mut Game) {
-    LoadAreaMapForegroundColors(kActiveAreaMapForegroundColors[v0 as usize], game);
-}
-pub unsafe fn LoadInactiveAreaMapForegroundColors(v0: u16, game: &mut Game) {
-    LoadAreaMapForegroundColors(kInactiveAreaMapForegroundColors[v0 as usize], game);
+crate::forward_calls! { pub unsafe fn (v0: u16, game: &mut Game);
+    LoadActiveAreaMapForegroundColors =>
+        LoadAreaMapForegroundColors(kActiveAreaMapForegroundColors[v0 as usize], game);
+    LoadInactiveAreaMapForegroundColors =>
+        LoadAreaMapForegroundColors(kInactiveAreaMapForegroundColors[v0 as usize], game);
 }
 pub unsafe fn LoadAreaMapForegroundColors(mut j: u16, game: &mut Game) {
     loop {

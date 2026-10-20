@@ -212,11 +212,9 @@ pub unsafe fn AnimtilesInstr_SetEventHappened(k: u16, j: u16, game: &mut Game) -
     SetEventHappened(*v2, game);
     (j).wrapping_add(2u16)
 }
-pub unsafe fn UNUSED_sub_87815A(game: &mut Game) {
-    CallSomeSamusCode(0u16, game);
-}
-pub unsafe fn UNUSED_sub_878162(game: &mut Game) {
-    CallSomeSamusCode(1u16, game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    UNUSED_sub_87815A => CallSomeSamusCode(0u16, game);
+    UNUSED_sub_878162 => CallSomeSamusCode(1u16, game);
 }
 pub unsafe fn AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet(
     k: u16,

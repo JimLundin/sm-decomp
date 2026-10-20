@@ -660,15 +660,10 @@ unsafe fn initialize_verify_audio(game: &mut Game) -> Result<(), String> {
     Ok(())
 }
 
-unsafe fn finish_verify_audio() {
-    SDL_DestroyMutex(g_audio_mutex);
-}
-
-unsafe fn host_apu_lock() {
-    SDL_LockMutex(g_audio_mutex);
-}
-unsafe fn host_apu_unlock() {
-    SDL_UnlockMutex(g_audio_mutex);
+sm::forward_calls! { unsafe fn ();
+    finish_verify_audio => SDL_DestroyMutex(g_audio_mutex);
+    host_apu_lock => SDL_LockMutex(g_audio_mutex);
+    host_apu_unlock => SDL_UnlockMutex(g_audio_mutex);
 }
 unsafe extern "C" fn AudioCallback(userdata: *mut c_void, mut stream: *mut Uint8, mut len: i32) {
     let owner = &*(userdata as *const GameOwner);

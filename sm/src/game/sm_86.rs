@@ -355,11 +355,9 @@ impl EprojState<'_> {
     fn enabled(&self) -> bool {
         u16::from_le_bytes([self.0[0x198d], self.0[0x198e]]) & 0x8000 != 0
     }
-    fn index(&self) -> u16 {
-        u16::from_le_bytes([self.0[0x1991], self.0[0x1992]])
-    }
-    fn init_param_1(&self) -> u16 {
-        u16::from_le_bytes([self.0[0x1993], self.0[0x1994]])
+    crate::forward_calls! { fn (&self) -> u16;
+        index => u16::from_le_bytes([self.0[0x1991], self.0[0x1992]]);
+        init_param_1 => u16::from_le_bytes([self.0[0x1993], self.0[0x1994]]);
     }
     fn slot_word(&self, base: usize, word_index: usize) -> u16 {
         let address = base + word_index * 2;
@@ -1212,19 +1210,11 @@ unsafe fn react_to_enemy_projectile_block(
         _ => unreachable!(),
     })
 }
-pub unsafe fn EprojBlockCollisition_CheckHorizontal(
-    eci: *mut EprojCollInfo,
-    k: u16,
-    game: &mut Game,
-) -> u8 {
-    react_to_enemy_projectile_block(eci, k, EprojColl_858E, game)
-}
-pub unsafe fn EprojBlockCollisition_CheckVertical(
-    eci: *mut EprojCollInfo,
-    k: u16,
-    game: &mut Game,
-) -> u8 {
-    react_to_enemy_projectile_block(eci, k, EprojColl_85AD, game)
+crate::forward_calls! { pub unsafe fn ( eci: *mut EprojCollInfo, k: u16, game: &mut Game, ) -> u8;
+    EprojBlockCollisition_CheckHorizontal =>
+        react_to_enemy_projectile_block(eci, k, EprojColl_858E, game);
+    EprojBlockCollisition_CheckVertical =>
+        react_to_enemy_projectile_block(eci, k, EprojColl_85AD, game);
 }
 unsafe fn eproj_block_collision(k: u16, axis: EprojCollisionAxis, game: &mut Game) -> u8 {
     let slot = usize::from(k >> 1);
@@ -1332,11 +1322,9 @@ unsafe fn eproj_block_collision(k: u16, axis: EprojCollisionAxis, game: &mut Gam
     }
     1
 }
-pub unsafe fn EprojBlockCollisition_Horiz(k: u16, game: &mut Game) -> u8 {
-    eproj_block_collision(k, EprojCollisionAxis::Horizontal, game)
-}
-pub unsafe fn EprojBlockCollisition_Vertical(k: u16, game: &mut Game) -> u8 {
-    eproj_block_collision(k, EprojCollisionAxis::Vertical, game)
+crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game) -> u8;
+    EprojBlockCollisition_Horiz => eproj_block_collision(k, EprojCollisionAxis::Horizontal, game);
+    EprojBlockCollisition_Vertical => eproj_block_collision(k, EprojCollisionAxis::Vertical, game);
 }
 unsafe fn Eproj_Init_0x8aaf(j: u16, game: &mut Game) {
     NextRandom(game);
@@ -1886,17 +1874,11 @@ unsafe fn EprojInit_FireballChild(j: u16, x: u16, y: u16, handler: u16, game: &m
     EprojStateMut(&mut game.g_ram).write(0x1adb, slot, y);
     EprojInit_Common(j, parent, handler, game);
 }
-unsafe fn EprojInit_9688(j: u16, game: &mut Game) {
-    EprojInit_FireballChild(j, 0, (-3584i16) as u16, 0x9688, game);
-}
-unsafe fn EprojInit_9696(j: u16, game: &mut Game) {
-    EprojInit_FireballChild(j, 0, 3584, 0x9696, game);
-}
-unsafe fn EprojInit_966C(j: u16, game: &mut Game) {
-    EprojInit_FireballChild(j, 3584, 0, 0x966c, game);
-}
-unsafe fn EprojInit_967A(j: u16, game: &mut Game) {
-    EprojInit_FireballChild(j, (-3584i16) as u16, 0, 0x967a, game);
+crate::forward_calls! { unsafe fn (j: u16, game: &mut Game);
+    EprojInit_9688 => EprojInit_FireballChild(j, 0, (-3584i16) as u16, 0x9688, game);
+    EprojInit_9696 => EprojInit_FireballChild(j, 0, 3584, 0x9696, game);
+    EprojInit_966C => EprojInit_FireballChild(j, 3584, 0, 0x966c, game);
+    EprojInit_967A => EprojInit_FireballChild(j, (-3584i16) as u16, 0, 0x967a, game);
 }
 pub unsafe fn EprojPreInstr_966C(k: u16, game: &mut Game) {
     MoveEprojWithVelocityX(k, game);
@@ -2435,11 +2417,9 @@ unsafe fn EprojInit_MiniKraidSpikes(j: u16, a: u16, game: &mut Game) {
     set_ram_word!(game.eproj_y_pos[v2] = (r18).wrapping_add(game.enemy_state(enemy_index).y_pos()));
     set_ram_words! { game, 0u16; eproj_y_subpos[v2], eproj_x_subpos[v2], eproj_y_vel[v2] }
 }
-unsafe fn EprojInit_MiniKraidSpikesLeft(j: u16, game: &mut Game) {
-    EprojInit_MiniKraidSpikes(j, -0x200i32 as u16, game);
-}
-unsafe fn EprojInit_MiniKraidSpikesRight(j: u16, game: &mut Game) {
-    EprojInit_MiniKraidSpikes(j, 0x200u16, game);
+crate::forward_calls! { unsafe fn (j: u16, game: &mut Game);
+    EprojInit_MiniKraidSpikesLeft => EprojInit_MiniKraidSpikes(j, -0x200i32 as u16, game);
+    EprojInit_MiniKraidSpikesRight => EprojInit_MiniKraidSpikes(j, 0x200u16, game);
 }
 pub unsafe fn EprojPreInstr_MiniKraidSpikes(k: u16, game: &mut Game) {
     if EprojBlockCollisition_Horiz(k, game) & 1 != 0 {
@@ -4245,11 +4225,9 @@ unsafe fn Eproj_CheckForCollisionWithSamus(v0: u16, game: &mut Game) -> u8 {
     }
     result
 }
-pub unsafe fn Math_MultBySin(a: u16, r18: u16) -> u16 {
-    Math_MultBySinCos(a, r18)
-}
-pub unsafe fn Math_MultByCos(a: u16, r18: u16) -> u16 {
-    Math_MultBySinCos(a, r18.wrapping_add(64))
+crate::forward_calls! { pub unsafe fn (a: u16, r18: u16) -> u16;
+    Math_MultBySin => Math_MultBySinCos(a, r18);
+    Math_MultByCos => Math_MultBySinCos(a, r18.wrapping_add(64));
 }
 pub unsafe fn Math_MultBySinCos(r38: u16, a: u16) -> u16 {
     let r46: u16 = kSinCosTable8bit_Sext[((a as i32 & 0xffi32) + 64i32) as usize] as u16;
@@ -5405,14 +5383,13 @@ pub fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k: u16, game: &mut Game) {
         ((EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as i16 as i32) << 8i32) as u32;
     EprojStateMut(&mut game.g_ram).add_split_words(0x1a4b, 0x1a27, v1 as usize, split_amount);
 }
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1(k: u16, game: &mut Game) {
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k, game);
-}
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2(k: u16, game: &mut Game) {
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k, game);
-}
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1(k: u16, game: &mut Game) {
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, game);
+crate::forward_calls! { pub fn (k: u16, game: &mut Game);
+    EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1 =>
+        EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k, game);
+    EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2 =>
+        EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k, game);
+    EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1 =>
+        EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, game);
 }
 pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2(k: u16, game: &mut Game) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k, game);
@@ -5832,14 +5809,10 @@ unsafe fn EprojInit_SpawnedGate_Common(j: u16, v1: u16, game: &mut Game) {
         game.eproj_y_pos[v3] = (v1 as i32 + 16i32 * ram_word!(game, plm_y_block) as i32) as u16
     );
 }
-unsafe fn EprojInit_SpawnedShotGate(j: u16, game: &mut Game) {
-    EprojInit_SpawnedGate_Common(j, 0u16, game);
-}
-unsafe fn EprojInit_ClosedDownwardsShotGate(j: u16, game: &mut Game) {
-    EprojInit_SpawnedGate_Common(j, 0x40u16, game);
-}
-unsafe fn EprojInit_ClosedUpwardsShotGate(j: u16, game: &mut Game) {
-    EprojInit_SpawnedGate_Common(j, -0x40i32 as u16, game);
+crate::forward_calls! { unsafe fn (j: u16, game: &mut Game);
+    EprojInit_SpawnedShotGate => EprojInit_SpawnedGate_Common(j, 0u16, game);
+    EprojInit_ClosedDownwardsShotGate => EprojInit_SpawnedGate_Common(j, 0x40u16, game);
+    EprojInit_ClosedUpwardsShotGate => EprojInit_SpawnedGate_Common(j, -0x40i32 as u16, game);
 }
 pub unsafe fn EprojPreInstr_E605(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;

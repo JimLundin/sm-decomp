@@ -137,14 +137,12 @@ pub unsafe fn RoomSetup_AfterSavingAnimals(game: &mut Game) {
     set_ram_word!(game.earthquake_type = 24u16);
     set_ram_word!(game.earthquake_timer = -1i32 as u16);
 }
-pub unsafe fn RoomSetup_AutoDestroyWallAfterEscape(game: &mut Game) {
-    SpawnHardcodedPlm(
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    RoomSetup_AutoDestroyWallAfterEscape => SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs::new(0x10u8, 0x87u8, 0xb964 as VoidP),
         game,
     );
-}
-pub unsafe fn RoomSetup_TurnWallIntoShotblocks(game: &mut Game) {
-    SpawnHardcodedPlm(
+    RoomSetup_TurnWallIntoShotblocks => SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs::new(0xfu8, 0xau8, 0xb9ed as VoidP),
         game,
     );
@@ -154,11 +152,9 @@ pub unsafe fn RoomSetup_ShakeDuringEscape(game: &mut Game) {
     set_ram_word!(game.earthquake_timer = -1i32 as u16);
     FxTypeFunc_20(game);
 }
-pub unsafe fn RoomSetup_ScrollingSkyLand(game: &mut Game) {
-    FxTypeFunc_20(game);
-}
-pub unsafe fn RoomSetup_ScrollingSkyOcean(game: &mut Game) {
-    RoomSetupAsm_ScrollingSkyOcean(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    RoomSetup_ScrollingSkyLand => FxTypeFunc_20(game);
+    RoomSetup_ScrollingSkyOcean => RoomSetupAsm_ScrollingSkyOcean(game);
 }
 pub unsafe fn RoomSetup_RunStatueUnlockAnims(game: &mut Game) {
     SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Kraid as u16, game);
@@ -394,11 +390,9 @@ pub unsafe fn DoorCode_SetScroll_42(game: &mut Game) {
 pub unsafe fn DoorCode_SetScroll_43(game: &mut Game) {
     *ram_ptr!(game; 0xcd20, 14) = 0u8;
 }
-pub unsafe fn RoomCode_ScrollingSkyLand_(game: &mut Game) {
-    RoomCode_ScrollingSkyLand(game);
-}
-pub unsafe fn RoomCode_ScrollingSkyOcean_(game: &mut Game) {
-    RoomMainAsm_ScrollingSkyOcean(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    RoomCode_ScrollingSkyLand_ => RoomCode_ScrollingSkyLand(game);
+    RoomCode_ScrollingSkyOcean_ => RoomMainAsm_ScrollingSkyOcean(game);
 }
 pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
     if ram_word!(game, time_is_frozen_flag) == 0
@@ -470,11 +464,10 @@ pub unsafe fn RoomCode_ScrollRightDachora(game: &mut Game) {
             as u16);
     }
 }
-pub unsafe fn RoomCode_8FC8C8(game: &mut Game) {
-    SpawnEprojWithRoomGfx(addr_kEproj_PrePhantomRoom as u16, 0u16, game);
-}
-pub unsafe fn RoomCode_SetupShaktoolRoomPlm(game: &mut Game) {
-    SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0u8, 0u8, 0xb8eb as VoidP), game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    RoomCode_8FC8C8 => SpawnEprojWithRoomGfx(addr_kEproj_PrePhantomRoom as u16, 0u16, game);
+    RoomCode_SetupShaktoolRoomPlm =>
+        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0u8, 0u8, 0xb8eb as VoidP), game);
 }
 pub unsafe fn RoomCode_SetPauseCodeForDraygon(game: &mut Game) {
     mov24(

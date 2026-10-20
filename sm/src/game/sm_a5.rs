@@ -188,20 +188,12 @@ crate::ram_map::ram_pointer_functions! {
     Get_Draygon(o: i32) -> Enemy_Draygon = [0xf78, o as isize];
     Get_SporeSpawn(o: i32) -> Enemy_SporeSpawn = [0xf78, o as isize];
 }
-pub unsafe fn Enemy_GrappleReact_NoInteract_A5(game: &mut Game) {
-    SwitchEnemyAiToMainAi(game);
-}
-pub unsafe fn Enemy_GrappleReact_CancelBeam_A5(game: &mut Game) {
-    Enemy_SwitchToFrozenAi(game);
-}
-pub unsafe fn Enemy_NormalTouchAI_A5(game: &mut Game) {
-    NormalEnemyTouchAi(game);
-}
-pub unsafe fn Enemy_NormalShotAI_A5(game: &mut Game) {
-    NormalEnemyShotAi(game);
-}
-pub unsafe fn Enemy_NormalFrozenAI_A5(game: &mut Game) {
-    NormalEnemyFrozenAI(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Enemy_GrappleReact_NoInteract_A5 => SwitchEnemyAiToMainAi(game);
+    Enemy_GrappleReact_CancelBeam_A5 => Enemy_SwitchToFrozenAi(game);
+    Enemy_NormalTouchAI_A5 => NormalEnemyTouchAi(game);
+    Enemy_NormalShotAI_A5 => NormalEnemyShotAi(game);
+    Enemy_NormalFrozenAI_A5 => NormalEnemyFrozenAI(game);
 }
 pub unsafe fn Draygon_Init(game: &mut Game) {
     let mut i: i32 = 48i32;

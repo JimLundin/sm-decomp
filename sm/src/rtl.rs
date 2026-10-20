@@ -698,11 +698,9 @@ pub unsafe fn StateRecorder_StopReplay(sr: *mut StateRecorder) {
     (*sr).total_frames = (*sr).replay_frame_counter;
     (*sr).log.size = (*sr).replay_pos_last_complete as size_t;
 }
-pub unsafe fn RtlClearKeyLog(game: &mut Game) {
-    StateRecorder_ClearKeyLog(&raw mut game.state_recorder, game);
-}
-pub unsafe fn RtlStopReplay(game: &mut Game) {
-    StateRecorder_StopReplay(&raw mut game.state_recorder);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    RtlClearKeyLog => StateRecorder_ClearKeyLog(&raw mut game.state_recorder, game);
+    RtlStopReplay => StateRecorder_StopReplay(&raw mut game.state_recorder);
 }
 pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
     // TAS verification preserves every recorded button, including opposites.

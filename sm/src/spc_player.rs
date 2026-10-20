@@ -2000,24 +2000,20 @@ pub unsafe fn Sfx_Init(
         }
     }
 }
-pub unsafe fn Sfx1_Init(p: *mut SpcPlayer) {
-    Sfx_Init(
+crate::forward_calls! { pub unsafe fn (p: *mut SpcPlayer);
+    Sfx1_Init => Sfx_Init(
         p,
         &raw mut (*p).sfx1,
         &raw mut (*p).sfx_chans_1 as *mut SfxChan,
         0i32,
     );
-}
-pub unsafe fn Sfx2_Init(p: *mut SpcPlayer) {
-    Sfx_Init(
+    Sfx2_Init => Sfx_Init(
         p,
         &raw mut (*p).sfx2,
         &raw mut (*p).sfx_chans_2 as *mut SfxChan,
         1i32,
     );
-}
-pub unsafe fn Sfx3_Init(p: *mut SpcPlayer) {
-    Sfx_Init(
+    Sfx3_Init => Sfx_Init(
         p,
         &raw mut (*p).sfx3,
         &raw mut (*p).sfx_chans_3 as *mut SfxChan,

@@ -14,6 +14,24 @@
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
 
+// Declare forwarding wrappers with their original signatures and call order.
+// Unit wrappers retain a statement; value-returning wrappers retain a tail call.
+#[macro_export]
+macro_rules! forward_calls {
+    ($visibility:vis unsafe fn $parameters:tt -> $result:ty; $($name:ident => $call:expr;)+) => {
+        $($visibility unsafe fn $name $parameters -> $result { $call })+
+    };
+    ($visibility:vis unsafe fn $parameters:tt; $($name:ident => $call:expr;)+) => {
+        $($visibility unsafe fn $name $parameters { $call; })+
+    };
+    ($visibility:vis fn $parameters:tt -> $result:ty; $($name:ident => $call:expr;)+) => {
+        $($visibility fn $name $parameters -> $result { $call })+
+    };
+    ($visibility:vis fn $parameters:tt; $($name:ident => $call:expr;)+) => {
+        $($visibility fn $name $parameters { $call; })+
+    };
+}
+
 // Share consecutive field types without changing declaration order or layout.
 macro_rules! typed_struct {
     ($(#[$metadata:meta])* $visibility:vis struct $name:ident {

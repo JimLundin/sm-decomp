@@ -197,17 +197,11 @@ pub unsafe fn Samus_Input_00_Standing(game: &mut Game) {
         Samus_LookupTransitionTable(game);
     }
 }
-pub unsafe fn Samus_Input_01_Running(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_02_NormalJumping(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_03_SpinJumping(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_04_MorphBallOnGround(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Samus_Input_01_Running => Samus_LookupTransitionTable(game);
+    Samus_Input_02_NormalJumping => Samus_LookupTransitionTable(game);
+    Samus_Input_03_SpinJumping => Samus_LookupTransitionTable(game);
+    Samus_Input_04_MorphBallOnGround => Samus_LookupTransitionTable(game);
 }
 pub fn Samus_Input_07_Unused(game: &mut Game) {}
 pub unsafe fn Samus_Input_05_Crouching(game: &mut Game) {
@@ -221,11 +215,9 @@ pub unsafe fn Samus_Input_05_Crouching(game: &mut Game) {
         }
     };
 }
-pub unsafe fn Samus_Input_06_Falling(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_08_MorphBallFalling(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Samus_Input_06_Falling => Samus_LookupTransitionTable(game);
+    Samus_Input_08_MorphBallFalling => Samus_LookupTransitionTable(game);
 }
 pub fn Samus_Input_09_Unused(game: &mut Game) {}
 pub unsafe fn Samus_Input_0A_KnockbackOrCrystalFlashEnding(game: &mut Game) {
@@ -236,30 +228,18 @@ pub unsafe fn Samus_Input_0A_KnockbackOrCrystalFlashEnding(game: &mut Game) {
     }
 }
 pub fn Samus_Input_0B_Unused(game: &mut Game) {}
-pub unsafe fn Samus_Input_0C_Unused(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_0D_Unused(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_0E_TurningAroundOnGround(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Samus_Input_0C_Unused => Samus_LookupTransitionTable(game);
+    Samus_Input_0D_Unused => Samus_LookupTransitionTable(game);
+    Samus_Input_0E_TurningAroundOnGround => Samus_LookupTransitionTable(game);
 }
 pub fn Samus_Input_0F_CrouchingEtcTransition(game: &mut Game) {}
-pub unsafe fn Samus_Input_10_Moonwalking(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_11_SpringBallOnGround(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_12_SpringBallInAir(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_13_SpringBallFalling(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_14_WallJumping(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Samus_Input_10_Moonwalking => Samus_LookupTransitionTable(game);
+    Samus_Input_11_SpringBallOnGround => Samus_LookupTransitionTable(game);
+    Samus_Input_12_SpringBallInAir => Samus_LookupTransitionTable(game);
+    Samus_Input_13_SpringBallFalling => Samus_LookupTransitionTable(game);
+    Samus_Input_14_WallJumping => Samus_LookupTransitionTable(game);
 }
 pub unsafe fn Samus_Input_15_RanIntoWall(game: &mut Game) {
     if ram_word!(game, time_is_frozen_flag) != 0 {
@@ -268,23 +248,13 @@ pub unsafe fn Samus_Input_15_RanIntoWall(game: &mut Game) {
         Samus_LookupTransitionTable(game);
     };
 }
-pub unsafe fn Samus_Input_16_Grappling(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_17_TurningAroundJumping(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_18_TurningAroundFalling(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_19_DamageBoost(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_1A_GrabbedByDraygon(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
-}
-pub unsafe fn Samus_Input_1B_ShinesparkEtc(game: &mut Game) {
-    Samus_LookupTransitionTable(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Samus_Input_16_Grappling => Samus_LookupTransitionTable(game);
+    Samus_Input_17_TurningAroundJumping => Samus_LookupTransitionTable(game);
+    Samus_Input_18_TurningAroundFalling => Samus_LookupTransitionTable(game);
+    Samus_Input_19_DamageBoost => Samus_LookupTransitionTable(game);
+    Samus_Input_1A_GrabbedByDraygon => Samus_LookupTransitionTable(game);
+    Samus_Input_1B_ShinesparkEtc => Samus_LookupTransitionTable(game);
 }
 pub unsafe fn Samus_LookupTransitionTable(game: &mut Game) {
     if ram_word!(game, joypad1_lastkeys) != 0 {
@@ -695,14 +665,10 @@ pub unsafe fn DemoSetFunc_7(game: &mut Game) {
     set_ram_word!(game.samus_health = 20u16);
     DemoSetFunc_2(game);
 }
-pub unsafe fn DemoSetFunc_2(game: &mut Game) {
-    DemoSetFunc_Common(kPose_02_FaceL_Normal as u16, game);
-}
-pub unsafe fn DemoSetFunc_4(game: &mut Game) {
-    DemoSetFunc_Common(kPose_2A_FaceL_Fall as u16, game);
-}
-pub unsafe fn DemoSetFunc_1(game: &mut Game) {
-    DemoSetFunc_Common(kPose_01_FaceR_Normal as u16, game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    DemoSetFunc_2 => DemoSetFunc_Common(kPose_02_FaceL_Normal as u16, game);
+    DemoSetFunc_4 => DemoSetFunc_Common(kPose_2A_FaceL_Fall as u16, game);
+    DemoSetFunc_1 => DemoSetFunc_Common(kPose_01_FaceR_Normal as u16, game);
 }
 pub unsafe fn DemoSetFunc_Common(pose: u16, game: &mut Game) {
     game.set_samus_pose(pose);
@@ -2624,15 +2590,13 @@ pub unsafe fn Samus_HandleXrayPals(game: &mut Game) -> u8 {
 pub fn nullsub_164(game: &mut Game) -> u8 {
     0u8
 }
-pub unsafe fn CopyToSamusSuitPalette(k: u16, game: &mut Game) {
-    memcpy(
+crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game);
+    CopyToSamusSuitPalette => memcpy(
         (ram_ptr!(game, u16; 0xc000)).offset(192) as *mut c_void,
         RomPtr_9B(k, game) as *mut u16 as *const c_void,
         32 as size_t,
     );
-}
-pub unsafe fn CopyToSamusSuitTargetPalette(k: u16, game: &mut Game) {
-    memcpy(
+    CopyToSamusSuitTargetPalette => memcpy(
         (ram_ptr!(game, u16; 0xc200)).offset(192) as *mut c_void,
         RomPtr_9B(k, game) as *mut u16 as *const c_void,
         32 as size_t,

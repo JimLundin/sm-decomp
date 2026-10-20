@@ -182,11 +182,9 @@ static kChozoStatue_Palettes3: [i16; 16] = [
     0x3800, 0x633f, 0x4a9f, 0x2ddf, 0x2295, 0x118d, 0x8e8, 0x85, 0x27ff, 0x1af7, 0xdce, 0xc6,
     0x3fff, 0x2b39, 0x5294, 1,
 ];
-pub unsafe fn Enemy_GrappleReact_CancelBeam_AA(game: &mut Game) {
-    Enemy_SwitchToFrozenAi(game);
-}
-pub unsafe fn Enemy_NormalFrozenAI_AA(game: &mut Game) {
-    NormalEnemyFrozenAI(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Enemy_GrappleReact_CancelBeam_AA => Enemy_SwitchToFrozenAi(game);
+    Enemy_NormalFrozenAI_AA => NormalEnemyFrozenAI(game);
 }
 pub unsafe fn Enemy_ClearAiPreInstr_AA(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     (*gEnemyData(k as i32, game)).ai_preinstr = ((0xaa807bi32) as u16);

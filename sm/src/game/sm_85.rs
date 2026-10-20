@@ -227,11 +227,9 @@ unsafe fn DrawRunButtonAndSetupPpuForLargeMessageBox(game: &mut Game) {
     let button = u16::from_le_bytes([game.g_ram[0x9b6], game.g_ram[0x9b7]]);
     DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
 }
-unsafe fn SetupPpuForSmallMessageBox(game: &mut Game) {
-    SetupPpuForActiveMessageBox(448u16, game);
-}
-unsafe fn SetupPpuForLargeMessageBox(game: &mut Game) {
-    SetupPpuForActiveMessageBox(416u16, game);
+crate::forward_calls! { unsafe fn (game: &mut Game);
+    SetupPpuForSmallMessageBox => SetupPpuForActiveMessageBox(448u16, game);
+    SetupPpuForLargeMessageBox => SetupPpuForActiveMessageBox(416u16, game);
 }
 crate::game::address_dispatch! {
     unsafe fn CallMsgBoxModify(ea: u32, game: &mut Game) => ea;

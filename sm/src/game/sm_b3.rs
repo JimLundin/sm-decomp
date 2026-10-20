@@ -122,32 +122,16 @@ crate::ram_map::ram_pointer_functions! {
     Get_PipeBug(o: i32) -> Enemy_PipeBug = [0xf78, o as isize];
 }
 static g_word_B39E77: [i16; 3] = [2, 3, 4];
-pub unsafe fn Enemy_GrappleReact_NoInteract_B3(game: &mut Game) {
-    SwitchEnemyAiToMainAi(game);
-}
-pub unsafe fn Enemy_GrappleReact_KillEnemy_B3(game: &mut Game) {
-    EnemyGrappleDeath(game);
-}
-pub unsafe fn Enemy_GrappleReact_CancelBeam_B3(game: &mut Game) {
-    Enemy_SwitchToFrozenAi(game);
-}
-pub unsafe fn Enemy_NormalTouchAI_B3(game: &mut Game) {
-    NormalEnemyTouchAi(game);
-}
-pub unsafe fn Enemy_NormalTouchAI_SkipDeathAnim_B3(game: &mut Game) {
-    NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
-}
-pub unsafe fn Enemy_NormalShotAI_B3(game: &mut Game) {
-    NormalEnemyShotAi(game);
-}
-pub unsafe fn Enemy_NormalShotAI_SkipSomeParts_B3(game: &mut Game) {
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-}
-pub unsafe fn Enemy_NormalPowerBombAI_SkipDeathAnim_B3(game: &mut Game) {
-    NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
-}
-pub unsafe fn Enemy_NormalFrozenAI_B3(game: &mut Game) {
-    NormalEnemyFrozenAI(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Enemy_GrappleReact_NoInteract_B3 => SwitchEnemyAiToMainAi(game);
+    Enemy_GrappleReact_KillEnemy_B3 => EnemyGrappleDeath(game);
+    Enemy_GrappleReact_CancelBeam_B3 => Enemy_SwitchToFrozenAi(game);
+    Enemy_NormalTouchAI_B3 => NormalEnemyTouchAi(game);
+    Enemy_NormalTouchAI_SkipDeathAnim_B3 => NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+    Enemy_NormalShotAI_B3 => NormalEnemyShotAi(game);
+    Enemy_NormalShotAI_SkipSomeParts_B3 => NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+    Enemy_NormalPowerBombAI_SkipDeathAnim_B3 => NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
+    Enemy_NormalFrozenAI_B3 => NormalEnemyFrozenAI(game);
 }
 pub unsafe fn Enemy_SetAiPreInstr_B3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     (*gEnemyData(k as i32, game)).ai_preinstr = *jp.offset(0);

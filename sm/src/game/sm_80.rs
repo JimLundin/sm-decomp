@@ -437,14 +437,10 @@ pub unsafe fn WriteLotsOf0x1c2f(game: &mut Game) {
     sub_8088FE(0x1c2fu16, game);
     sub_808911(0x1c2fu16, game);
 }
-pub unsafe fn sub_8088EB(a: u16, game: &mut Game) {
-    memset7E(ram_ptr!(game, u16; 0x3000), a, 0x800u16);
-}
-pub unsafe fn sub_8088FE(a: u16, game: &mut Game) {
-    memset7E(ram_ptr!(game, u16; 0x4000), a, 0x800u16);
-}
-pub unsafe fn sub_808911(a: u16, game: &mut Game) {
-    memset7E(ram_ptr!(game, u16; 0x6000), a, 0x800u16);
+crate::forward_calls! { pub unsafe fn (a: u16, game: &mut Game);
+    sub_8088EB => memset7E(ram_ptr!(game, u16; 0x3000), a, 0x800u16);
+    sub_8088FE => memset7E(ram_ptr!(game, u16; 0x4000), a, 0x800u16);
+    sub_808911 => memset7E(ram_ptr!(game, u16; 0x6000), a, 0x800u16);
 }
 fn tick_screen_fade(game: &mut Game) -> bool {
     let screen_fade_counter = u16::from_le_bytes([game.g_ram[0x725], game.g_ram[0x726]]);
@@ -843,58 +839,34 @@ fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Game) {
     }
 }
 
-pub fn QueueSfx1_Max15(sound: u16, game: &mut Game) {
-    queue_sfx(0, sound as u8, 15, game);
-}
-pub fn QueueSfx1_Max9(sound: u16, game: &mut Game) {
-    queue_sfx(0, sound as u8, 9, game);
-}
-pub fn QueueSfx1_Max3(sound: u16, game: &mut Game) {
-    queue_sfx(0, sound as u8, 3, game);
-}
-pub fn QueueSfx1_Max1(sound: u16, game: &mut Game) {
-    queue_sfx(0, sound as u8, 1, game);
-}
-pub fn QueueSfx1_Max6(sound: u16, game: &mut Game) {
-    queue_sfx(0, sound as u8, 6, game);
+crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
+    QueueSfx1_Max15 => queue_sfx(0, sound as u8, 15, game);
+    QueueSfx1_Max9 => queue_sfx(0, sound as u8, 9, game);
+    QueueSfx1_Max3 => queue_sfx(0, sound as u8, 3, game);
+    QueueSfx1_Max1 => queue_sfx(0, sound as u8, 1, game);
+    QueueSfx1_Max6 => queue_sfx(0, sound as u8, 6, game);
 }
 pub fn QueueSfx1_Internal(packed: u16, game: &mut Game) {
     let [max_queued, sound] = packed.to_le_bytes();
     queue_sfx(0, sound, max_queued, game);
 }
-pub fn QueueSfx2_Max15(sound: u16, game: &mut Game) {
-    queue_sfx(1, sound as u8, 15, game);
-}
-pub fn QueueSfx2_Max9(sound: u16, game: &mut Game) {
-    queue_sfx(1, sound as u8, 9, game);
-}
-pub fn QueueSfx2_Max3(sound: u16, game: &mut Game) {
-    queue_sfx(1, sound as u8, 3, game);
-}
-pub fn QueueSfx2_Max1(sound: u16, game: &mut Game) {
-    queue_sfx(1, sound as u8, 1, game);
-}
-pub fn QueueSfx2_Max6(sound: u16, game: &mut Game) {
-    queue_sfx(1, sound as u8, 6, game);
+crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
+    QueueSfx2_Max15 => queue_sfx(1, sound as u8, 15, game);
+    QueueSfx2_Max9 => queue_sfx(1, sound as u8, 9, game);
+    QueueSfx2_Max3 => queue_sfx(1, sound as u8, 3, game);
+    QueueSfx2_Max1 => queue_sfx(1, sound as u8, 1, game);
+    QueueSfx2_Max6 => queue_sfx(1, sound as u8, 6, game);
 }
 pub fn QueueSfx2_Internal(packed: u16, game: &mut Game) {
     let [max_queued, sound] = packed.to_le_bytes();
     queue_sfx(1, sound, max_queued, game);
 }
-pub fn QueueSfx3_Max15(sound: u16, game: &mut Game) {
-    queue_sfx(2, sound as u8, 15, game);
-}
-pub fn QueueSfx3_Max9(sound: u16, game: &mut Game) {
-    queue_sfx(2, sound as u8, 9, game);
-}
-pub fn QueueSfx3_Max3(sound: u16, game: &mut Game) {
-    queue_sfx(2, sound as u8, 3, game);
-}
-pub fn QueueSfx3_Max1(sound: u16, game: &mut Game) {
-    queue_sfx(2, sound as u8, 1, game);
-}
-pub fn QueueSfx3_Max6(sound: u16, game: &mut Game) {
-    queue_sfx(2, sound as u8, 6, game);
+crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
+    QueueSfx3_Max15 => queue_sfx(2, sound as u8, 15, game);
+    QueueSfx3_Max9 => queue_sfx(2, sound as u8, 9, game);
+    QueueSfx3_Max3 => queue_sfx(2, sound as u8, 3, game);
+    QueueSfx3_Max1 => queue_sfx(2, sound as u8, 1, game);
+    QueueSfx3_Max6 => queue_sfx(2, sound as u8, 6, game);
 }
 pub fn QueueSfx3_Internal(packed: u16, game: &mut Game) {
     let [max_queued, sound] = packed.to_le_bytes();
@@ -1428,29 +1400,23 @@ pub unsafe fn AddMissilesToHudTilemap(game: &mut Game) {
         set_ram_word!(game.hud_tilemap[44] = kHudTilemaps_Missiles[5i32 as usize]);
     }
 }
-pub unsafe fn AddSuperMissilesToHudTilemap(game: &mut Game) {
-    AddToTilemapInner(
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    AddSuperMissilesToHudTilemap => AddToTilemapInner(
         0x1cu16,
         RomPtr_80((addr_kHudTilemaps_Missiles as i32 + 12i32) as u16, game) as *const u16,
         game,
     );
-}
-pub unsafe fn AddPowerBombsToHudTilemap(game: &mut Game) {
-    AddToTilemapInner(
+    AddPowerBombsToHudTilemap => AddToTilemapInner(
         0x22u16,
         RomPtr_80((addr_kHudTilemaps_Missiles as i32 + 20i32) as u16, game) as *const u16,
         game,
     );
-}
-pub unsafe fn AddGrappleToHudTilemap(game: &mut Game) {
-    AddToTilemapInner(
+    AddGrappleToHudTilemap => AddToTilemapInner(
         0x28u16,
         RomPtr_80((addr_kHudTilemaps_Missiles as i32 + 28i32) as u16, game) as *const u16,
         game,
     );
-}
-pub unsafe fn AddXrayToHudTilemap(game: &mut Game) {
-    AddToTilemapInner(
+    AddXrayToHudTilemap => AddToTilemapInner(
         0x2eu16,
         RomPtr_80((addr_kHudTilemaps_Missiles as i32 + 36i32) as u16, game) as *const u16,
         game,
@@ -2558,11 +2524,9 @@ pub unsafe fn DebugScrollPosSaveLoad(game: &mut Game) {
         set_ram_word!(game.debug_saved_yscroll = ram_word!(game, layer1_y_pos));
     };
 }
-pub unsafe fn UploadBackgroundDataColumn(game: &mut Game) {
-    UpdateLevelOrBackgroundDataColumn(0x1cu16, game);
-}
-pub unsafe fn UploadLevelDataColumn(game: &mut Game) {
-    UpdateLevelOrBackgroundDataColumn(0u16, game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    UploadBackgroundDataColumn => UpdateLevelOrBackgroundDataColumn(0x1cu16, game);
+    UploadLevelDataColumn => UpdateLevelOrBackgroundDataColumn(0u16, game);
 }
 pub unsafe fn UpdateLevelOrBackgroundDataColumn(k: u16, game: &mut Game) {
     if ram_word!(game, irq_enable_mode7) != 0 {
@@ -2644,11 +2608,9 @@ pub unsafe fn UpdateLevelOrBackgroundDataColumn(k: u16, game: &mut Game) {
         *((ram_ptr!(game, u16; 0x962) as *mut u8).offset(t2 as i32 as isize) as *mut u16);
     *fresh7 = (*fresh7).wrapping_add(1);
 }
-pub unsafe fn UpdateBackgroundDataRow(game: &mut Game) {
-    UpdateLevelOrBackgroundDataRow(0x1cu16, game);
-}
-pub unsafe fn UpdateLevelDataRow(game: &mut Game) {
-    UpdateLevelOrBackgroundDataRow(0u16, game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    UpdateBackgroundDataRow => UpdateLevelOrBackgroundDataRow(0x1cu16, game);
+    UpdateLevelDataRow => UpdateLevelOrBackgroundDataRow(0u16, game);
 }
 pub unsafe fn UpdateLevelOrBackgroundDataRow(v0: u16, game: &mut Game) {
     if ram_word!(game, irq_enable_mode7) != 0 {

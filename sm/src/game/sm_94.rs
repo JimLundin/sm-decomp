@@ -933,11 +933,9 @@ unsafe fn BlockColl_Handle_Horiz(amt: i32, game: &mut Game) -> Pair_Bool_Amt {
         amt: context.ci_r18_r20,
     }
 }
-unsafe fn BlockColl_Handle_Vert_LeftToRight(amt: i32, game: &mut Game) -> Pair_Bool_Amt {
-    handle_vertical_collision(amt, false, game)
-}
-unsafe fn BlockColl_Handle_Vert_RightToLeft(amt: i32, game: &mut Game) -> Pair_Bool_Amt {
-    handle_vertical_collision(amt, true, game)
+crate::forward_calls! { unsafe fn (amt: i32, game: &mut Game) -> Pair_Bool_Amt;
+    BlockColl_Handle_Vert_LeftToRight => handle_vertical_collision(amt, false, game);
+    BlockColl_Handle_Vert_RightToLeft => handle_vertical_collision(amt, true, game);
 }
 unsafe fn handle_vertical_collision(
     amt: i32,
@@ -1606,11 +1604,9 @@ unsafe fn react_to_shot_block(
     }
     v1
 }
-unsafe fn BlockShotReactHoriz(ci: *mut CollInfo, k: u16, game: &mut Game) -> u8 {
-    react_to_shot_block(ci, k, BlockShotReactHoriz_Slope, game)
-}
-unsafe fn BlockShotReactVert(ci: *mut CollInfo, k: u16, game: &mut Game) -> u8 {
-    react_to_shot_block(ci, k, BlockShotReactVert_Slope, game)
+crate::forward_calls! { unsafe fn (ci: *mut CollInfo, k: u16, game: &mut Game) -> u8;
+    BlockShotReactHoriz => react_to_shot_block(ci, k, BlockShotReactHoriz_Slope, game);
+    BlockShotReactVert => react_to_shot_block(ci, k, BlockShotReactVert_Slope, game);
 }
 #[derive(Copy, Clone)]
 enum ShotAxis {
@@ -1676,11 +1672,9 @@ unsafe fn shot_span(k: u16, axis: ShotAxis, game: &mut Game) -> u16 {
         .wrapping_sub(first)
         >> 4
 }
-unsafe fn BlockGetSomePos1(k: u16, game: &mut Game) -> u16 {
-    shot_span(k, ShotAxis::Horizontal, game)
-}
-unsafe fn BlockGetSomePos2(k: u16, game: &mut Game) -> u16 {
-    shot_span(k, ShotAxis::Vertical, game)
+crate::forward_calls! { unsafe fn (k: u16, game: &mut Game) -> u16;
+    BlockGetSomePos1 => shot_span(k, ShotAxis::Horizontal, game);
+    BlockGetSomePos2 => shot_span(k, ShotAxis::Vertical, game);
 }
 unsafe fn move_shot(k: u16, axis: ShotAxis, amount: i32, game: &mut Game) {
     let (position, subposition) = axis.pair();
@@ -1778,17 +1772,11 @@ unsafe fn beam_block_collision(k: u16, axis: ShotAxis, wave: bool, game: &mut Ga
     KillProjectile(k, game);
     1
 }
-pub unsafe fn BlockCollNoWaveBeamHoriz(k: u16, game: &mut Game) -> u8 {
-    beam_block_collision(k, ShotAxis::Horizontal, false, game)
-}
-pub unsafe fn BlockCollNoWaveBeamVert(k: u16, game: &mut Game) -> u8 {
-    beam_block_collision(k, ShotAxis::Vertical, false, game)
-}
-pub unsafe fn BlockCollWaveBeamHoriz(k: u16, game: &mut Game) -> u8 {
-    beam_block_collision(k, ShotAxis::Horizontal, true, game)
-}
-pub unsafe fn BlockCollWaveBeamVert(k: u16, game: &mut Game) -> u8 {
-    beam_block_collision(k, ShotAxis::Vertical, true, game)
+crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game) -> u8;
+    BlockCollNoWaveBeamHoriz => beam_block_collision(k, ShotAxis::Horizontal, false, game);
+    BlockCollNoWaveBeamVert => beam_block_collision(k, ShotAxis::Vertical, false, game);
+    BlockCollWaveBeamHoriz => beam_block_collision(k, ShotAxis::Horizontal, true, game);
+    BlockCollWaveBeamVert => beam_block_collision(k, ShotAxis::Vertical, true, game);
 }
 unsafe fn missile_block_collision(k: u16, axis: ShotAxis, game: &mut Game) -> u8 {
     let amount = i32::from(shot_word(axis.speed(), k, game) as i16) << 8;
@@ -1835,11 +1823,9 @@ unsafe fn missile_block_collision(k: u16, axis: ShotAxis, game: &mut Game) -> u8
     KillProjectile(k, game);
     1
 }
-pub unsafe fn BlockCollMissileHoriz(k: u16, game: &mut Game) -> u8 {
-    missile_block_collision(k, ShotAxis::Horizontal, game)
-}
-pub unsafe fn BlockCollMissileVert(k: u16, game: &mut Game) -> u8 {
-    missile_block_collision(k, ShotAxis::Vertical, game)
+crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game) -> u8;
+    BlockCollMissileHoriz => missile_block_collision(k, ShotAxis::Horizontal, game);
+    BlockCollMissileVert => missile_block_collision(k, ShotAxis::Vertical, game);
 }
 unsafe fn BlockShotReact_Slope_NonSquare(ci: *mut CollInfo, j: u16, k: u16, game: &mut Game) -> u8 {
     let v2: u16 = (ram_word!(game, projectile_x_pos[(j as i32 >> 1i32)]) as i32 & 0xfi32
@@ -2014,21 +2000,9 @@ unsafe fn shot_square_slope(
 unsafe fn shot_byte(base: usize, k: u16, game: &mut Game) -> u8 {
     *game.g_ram.as_ptr().add(base + usize::from(k >> 1) * 2)
 }
-unsafe fn BlockShotReactVert_Slope_Square(
-    ci: *mut CollInfo,
-    a: u16,
-    k: u16,
-    game: &mut Game,
-) -> u8 {
-    shot_square_slope(ci, a, k, ShotAxis::Vertical, game)
-}
-unsafe fn BlockShotReactHoriz_Slope_Square(
-    ci: *mut CollInfo,
-    a: u16,
-    k: u16,
-    game: &mut Game,
-) -> u8 {
-    shot_square_slope(ci, a, k, ShotAxis::Horizontal, game)
+crate::forward_calls! { unsafe fn ( ci: *mut CollInfo, a: u16, k: u16, game: &mut Game, ) -> u8;
+    BlockShotReactVert_Slope_Square => shot_square_slope(ci, a, k, ShotAxis::Vertical, game);
+    BlockShotReactHoriz_Slope_Square => shot_square_slope(ci, a, k, ShotAxis::Horizontal, game);
 }
 unsafe fn BlockReactGrapple_GrappleBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
     static kBlockReactGrapple_GrappleBlockPlm: [u16; 4] = [0xd0d8, 0xd0dc, 0xd0e0, 0xd0d8];

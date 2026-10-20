@@ -518,32 +518,16 @@ static g_word_A8F180: u16 = 0x60u16;
 static g_word_A8F182: u16 = 0xe000u16;
 static g_word_A8F184: u16 = 0u16;
 static g_byte_A8F186: u8 = 0x30u8;
-pub unsafe fn Enemy_GrappleReact_NoInteract_A8(game: &mut Game) {
-    SwitchEnemyAiToMainAi(game);
-}
-pub unsafe fn Enemy_GrappleReact_KillEnemy_A8(game: &mut Game) {
-    EnemyGrappleDeath(game);
-}
-pub unsafe fn Enemy_GrappleReact_CancelBeam_A8(game: &mut Game) {
-    Enemy_SwitchToFrozenAi(game);
-}
-pub unsafe fn Enemy_GrappleReact_SamusLatchesNoInvinc_A8(game: &mut Game) {
-    SamusLatchesOnWithGrappleNoInvinc(game);
-}
-pub unsafe fn Enemy_GrappleReact_HurtSamus_A8(game: &mut Game) {
-    SamusHurtFromGrapple(game);
-}
-pub unsafe fn Enemy_NormalTouchAI_A8(game: &mut Game) {
-    NormalEnemyTouchAi(game);
-}
-pub unsafe fn Enemy_NormalShotAI_A8(game: &mut Game) {
-    NormalEnemyShotAi(game);
-}
-pub unsafe fn Enemy_NormalPowerBombAI_A8(game: &mut Game) {
-    NormalEnemyPowerBombAi(game);
-}
-pub unsafe fn Enemy_NormalFrozenAI_A8(game: &mut Game) {
-    NormalEnemyFrozenAI(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Enemy_GrappleReact_NoInteract_A8 => SwitchEnemyAiToMainAi(game);
+    Enemy_GrappleReact_KillEnemy_A8 => EnemyGrappleDeath(game);
+    Enemy_GrappleReact_CancelBeam_A8 => Enemy_SwitchToFrozenAi(game);
+    Enemy_GrappleReact_SamusLatchesNoInvinc_A8 => SamusLatchesOnWithGrappleNoInvinc(game);
+    Enemy_GrappleReact_HurtSamus_A8 => SamusHurtFromGrapple(game);
+    Enemy_NormalTouchAI_A8 => NormalEnemyTouchAi(game);
+    Enemy_NormalShotAI_A8 => NormalEnemyShotAi(game);
+    Enemy_NormalPowerBombAI_A8 => NormalEnemyPowerBombAi(game);
+    Enemy_NormalFrozenAI_A8 => NormalEnemyFrozenAI(game);
 }
 pub unsafe fn MiniDraygon_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     QueueSfx2_Max6(0x5eu16, game);
@@ -3579,8 +3563,8 @@ unsafe fn move_wrecked_ship_robot(
     jp
 }
 
-pub unsafe fn WreckedShipRobot_Instr_4(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    move_wrecked_ship_robot(
+crate::forward_calls! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    WreckedShipRobot_Instr_4 => move_wrecked_ship_robot(
         jp,
         (0xfe00, -4),
         (
@@ -3589,19 +3573,15 @@ pub unsafe fn WreckedShipRobot_Instr_4(k: u16, jp: *const u16, game: &mut Game) 
         ),
         false,
         game,
-    )
-}
-pub unsafe fn WreckedShipRobot_Instr_9(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    move_wrecked_ship_robot(
+    );
+    WreckedShipRobot_Instr_9 => move_wrecked_ship_robot(
         jp,
         (0xfe00, -4),
         (addr_kWreckedShipRobot_Ilist_C73F as u16, None),
         false,
         game,
-    )
-}
-pub unsafe fn WreckedShipRobot_Instr_6(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    move_wrecked_ship_robot(
+    );
+    WreckedShipRobot_Instr_6 => move_wrecked_ship_robot(
         jp,
         (0xfe00, 4),
         (
@@ -3610,22 +3590,20 @@ pub unsafe fn WreckedShipRobot_Instr_6(k: u16, jp: *const u16, game: &mut Game) 
         ),
         false,
         game,
-    )
-}
-pub unsafe fn WreckedShipRobot_Instr_8(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    move_wrecked_ship_robot(
+    );
+    WreckedShipRobot_Instr_8 => move_wrecked_ship_robot(
         jp,
         (0xfe00, 4),
         (addr_stru_A8C6E9 as u16, None),
         false,
         game,
-    )
+    );
 }
 pub unsafe fn WreckedShipRobot_Instr_7(k: u16, jp: *const u16) -> *const u16 {
     addr_kWreckedShipRobot_Ilist_C92D as i32 as usize as *const u16
 }
-pub unsafe fn WreckedShipRobot_Instr_15(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    move_wrecked_ship_robot(
+crate::forward_calls! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    WreckedShipRobot_Instr_15 => move_wrecked_ship_robot(
         jp,
         (512, 4),
         (
@@ -3634,19 +3612,15 @@ pub unsafe fn WreckedShipRobot_Instr_15(k: u16, jp: *const u16, game: &mut Game)
         ),
         false,
         game,
-    )
-}
-pub unsafe fn WreckedShipRobot_Instr_18(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    move_wrecked_ship_robot(
+    );
+    WreckedShipRobot_Instr_18 => move_wrecked_ship_robot(
         jp,
         (512, 4),
         (addr_kWreckedShipRobot_Ilist_C985 as u16, None),
         false,
         game,
-    )
-}
-pub unsafe fn WreckedShipRobot_Instr_16(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    move_wrecked_ship_robot(
+    );
+    WreckedShipRobot_Instr_16 => move_wrecked_ship_robot(
         jp,
         (512, -4),
         (
@@ -3655,10 +3629,9 @@ pub unsafe fn WreckedShipRobot_Instr_16(k: u16, jp: *const u16, game: &mut Game)
         ),
         true,
         game,
-    )
-}
-pub unsafe fn WreckedShipRobot_Instr_17(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    move_wrecked_ship_robot(jp, (512, -4), (addr_stru_A8C6E9 as u16, None), false, game)
+    );
+    WreckedShipRobot_Instr_17 =>
+        move_wrecked_ship_robot(jp, (512, -4), (addr_stru_A8C6E9 as u16, None), false, game);
 }
 pub unsafe fn WreckedShipRobot_Instr_3(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E: *mut Enemy_WreckedShipRobot =
@@ -3675,23 +3648,21 @@ pub unsafe fn WreckedShipRobot_Instr_3(k: u16, jp: *const u16, game: &mut Game) 
 pub unsafe fn WreckedShipRobot_Instr_10(k: u16, jp: *const u16) -> *const u16 {
     addr_stru_A8C6E9 as i32 as usize as *const u16
 }
-pub unsafe fn WreckedShipRobot_Instr_14(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    WreckedShipRobot_CommonInstr(
+crate::forward_calls! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    WreckedShipRobot_Instr_14 => WreckedShipRobot_CommonInstr(
         k,
         jp,
         addr_kWreckedShipRobot_Ilist_CB1D as u16,
         addr_kEproj_WreckedShipRobotLaserUpRight as u16,
         game,
-    )
-}
-pub unsafe fn WreckedShipRobot_Instr_2(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    WreckedShipRobot_CommonInstr(
+    );
+    WreckedShipRobot_Instr_2 => WreckedShipRobot_CommonInstr(
         k,
         jp,
         addr_kWreckedShipRobot_Ilist_C8D1 as u16,
         addr_kEproj_WreckedShipRobotLaserUpLeft as u16,
         game,
-    )
+    );
 }
 pub unsafe fn WreckedShipRobot_CommonInstr(
     k: u16,
@@ -3711,11 +3682,11 @@ pub unsafe fn WreckedShipRobot_CommonInstr(
     }
     jp
 }
-pub unsafe fn WreckedShipRobot_Instr_13(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    WreckedShipRobot_D10C(k, jp, addr_kWreckedShipRobot_Ilist_CB09 as u16, game)
-}
-pub unsafe fn WreckedShipRobot_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    WreckedShipRobot_D10C(k, jp, addr_kWreckedShipRobot_Ilist_C8BD as u16, game)
+crate::forward_calls! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    WreckedShipRobot_Instr_13 =>
+        WreckedShipRobot_D10C(k, jp, addr_kWreckedShipRobot_Ilist_CB09 as u16, game);
+    WreckedShipRobot_Instr_1 =>
+        WreckedShipRobot_D10C(k, jp, addr_kWreckedShipRobot_Ilist_C8BD as u16, game);
 }
 pub unsafe fn WreckedShipRobot_D10C(
     k: u16,
@@ -3739,23 +3710,21 @@ pub unsafe fn WreckedShipRobot_D10C(
     }
     jp
 }
-pub unsafe fn WreckedShipRobot_Instr_12(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    WreckedShipRobot_D147(
+crate::forward_calls! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    WreckedShipRobot_Instr_12 => WreckedShipRobot_D147(
         k,
         jp,
         addr_kEproj_WreckedShipRobotLaserDownRight as u16,
         addr_kWreckedShipRobot_Ilist_CAFD as u16,
         game,
-    )
-}
-pub unsafe fn WreckedShipRobot_Instr_5(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    WreckedShipRobot_D147(
+    );
+    WreckedShipRobot_Instr_5 => WreckedShipRobot_D147(
         k,
         jp,
         addr_kEproj_WreckedShipRobotLaserDownLeft as u16,
         addr_kWreckedShipRobot_Ilist_C8B1 as u16,
         game,
-    )
+    );
 }
 pub unsafe fn WreckedShipRobot_D147(
     k: u16,

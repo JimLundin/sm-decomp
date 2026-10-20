@@ -623,11 +623,9 @@ crate::game::address_dispatch! {
         11110306 => MotherBrainsBrain_SetupBrainAndNeckToDraw;
     }
 }
-pub unsafe fn Enemy_GrappleReact_CancelBeam_A9(game: &mut Game) {
-    Enemy_SwitchToFrozenAi(game);
-}
-pub unsafe fn Enemy_NormalFrozenAI_A9(game: &mut Game) {
-    NormalEnemyFrozenAI(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Enemy_GrappleReact_CancelBeam_A9 => Enemy_SwitchToFrozenAi(game);
+    Enemy_NormalFrozenAI_A9 => NormalEnemyFrozenAI(game);
 }
 pub unsafe fn MotherBrainsBody_Init(game: &mut Game) {
     let mut i: i32 = 4094i32;
@@ -740,11 +738,9 @@ pub unsafe fn MotherBrain_DrawBrainNeck_EnemyGfxDrawHook(game: &mut Game) {
     MotherBrain_DrawBrain(game);
     MotherBrain_DrawNeck(game);
 }
-pub unsafe fn MotherBrainsBrain_SetupBrainToDraw(game: &mut Game) {
-    mov24(ram_ptr!(game, LongPtr; 0x178c), 0xa987ddu32);
-}
-pub unsafe fn MotherBrainsBrain_GfxDrawHook(game: &mut Game) {
-    MotherBrain_DrawBrain(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    MotherBrainsBrain_SetupBrainToDraw => mov24(ram_ptr!(game, LongPtr; 0x178c), 0xa987ddu32);
+    MotherBrainsBrain_GfxDrawHook => MotherBrain_DrawBrain(game);
 }
 pub unsafe fn MotherBrainsBody_FirstPhase_DoubleRet(game: &mut Game) {
     if CheckEventHappened(2u16, game) != 0 {
@@ -2248,11 +2244,11 @@ pub unsafe fn MotherBrain_Phase3_Death_6(game: &mut Game) {
         (*E).mbn_var_A = ((0xa9b115i32) as u16);
     }
 }
-pub unsafe fn MotherBrain_GenerateSmokyExplosions(game: &mut Game) {
-    MotherBrain_GenerateExplosions(0x10u16, addr_word_A9B10F as u16, 2u16, game);
-}
-pub unsafe fn MotherBrain_GenerateMixedExplosions(game: &mut Game) {
-    MotherBrain_GenerateExplosions(8u16, addr_word_A9B109 as u16, 4u16, game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    MotherBrain_GenerateSmokyExplosions =>
+        MotherBrain_GenerateExplosions(0x10u16, addr_word_A9B10F as u16, 2u16, game);
+    MotherBrain_GenerateMixedExplosions =>
+        MotherBrain_GenerateExplosions(8u16, addr_word_A9B109 as u16, 4u16, game);
 }
 pub unsafe fn MotherBrain_GenerateExplosions(a: u16, r22: u16, r24: u16, game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
@@ -3890,11 +3886,9 @@ pub unsafe fn Enemy_SetInstrList(k: u16, a: u16, game: &mut Game) {
     enemy_instruction! {[(*v2)]; instruction = a, timer = 1u16}
     (*v2).timer = 0u16;
 }
-pub unsafe fn ComputeSinMult(a: u16, r18: u16, game: &mut Game) -> u16 {
-    sub_A9C46C(r18, a, game)
-}
-pub unsafe fn ComputeCosMult(a: u16, r18: u16, game: &mut Game) -> u16 {
-    sub_A9C46C((r18).wrapping_add(64u16), a, game)
+crate::forward_calls! { pub unsafe fn (a: u16, r18: u16, game: &mut Game) -> u16;
+    ComputeSinMult => sub_A9C46C(r18, a, game);
+    ComputeCosMult => sub_A9C46C((r18).wrapping_add(64u16), a, game);
 }
 pub unsafe fn sub_A9C46C(a: u16, j: u16, game: &mut Game) -> u16 {
     let mut v2: u16 = kSinCosTable8bit_Sext[((a as i32 & 0xffi32) + 64i32) as usize] as u16;
@@ -5466,17 +5460,12 @@ pub unsafe fn DeadMonsters_Func_5(k: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn DeadSidehopper_WaitForSamusColl(k: u16, game: &mut Game) {
-    DeadMonsters_WaitForSamusColl(k, ((0xa9da8fi32) as u16), game);
-}
-pub unsafe fn DeadZoomer_WaitForSamusColl(k: u16, game: &mut Game) {
-    DeadMonsters_WaitForSamusColl(k, ((0xa9da94i32) as u16), game);
-}
-pub unsafe fn DeadSkree_WaitForSamusColl(k: u16, game: &mut Game) {
-    DeadMonsters_WaitForSamusColl(k, ((0xa9da9ei32) as u16), game);
-}
-pub unsafe fn DeadRipper_WaitForSamusColl(k: u16, game: &mut Game) {
-    DeadMonsters_WaitForSamusColl(k, ((0xa9da99i32) as u16), game);
+crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game);
+    DeadSidehopper_WaitForSamusColl =>
+        DeadMonsters_WaitForSamusColl(k, ((0xa9da8fi32) as u16), game);
+    DeadZoomer_WaitForSamusColl => DeadMonsters_WaitForSamusColl(k, ((0xa9da94i32) as u16), game);
+    DeadSkree_WaitForSamusColl => DeadMonsters_WaitForSamusColl(k, ((0xa9da9ei32) as u16), game);
+    DeadRipper_WaitForSamusColl => DeadMonsters_WaitForSamusColl(k, ((0xa9da99i32) as u16), game);
 }
 pub unsafe fn DeadMonsters_WaitForSamusColl(k: u16, j: u16, game: &mut Game) {
     if k == ram_word!(game, enemy_index_colliding_dirs[0])
@@ -5487,17 +5476,11 @@ pub unsafe fn DeadMonsters_WaitForSamusColl(k: u16, j: u16, game: &mut Game) {
         (*Get_DeadMonsters(k as i32, game)).dms_var_A = j;
     }
 }
-pub unsafe fn DeadSidehopper_PreRotDelay(k: u16, game: &mut Game) {
-    DeadMonsters_PreRotDelay_Common(k, ((0xa9dabai32) as u16), game);
-}
-pub unsafe fn DeadZoomer_PreRotDelay(k: u16, game: &mut Game) {
-    DeadMonsters_PreRotDelay_Common(k, ((0xa9dad0i32) as u16), game);
-}
-pub unsafe fn DeadRipper_PreRotDelay(k: u16, game: &mut Game) {
-    DeadMonsters_PreRotDelay_Common(k, ((0xa9dae6i32) as u16), game);
-}
-pub unsafe fn DeadSkree_PreRotDelay(k: u16, game: &mut Game) {
-    DeadMonsters_PreRotDelay_Common(k, ((0xa9dafci32) as u16), game);
+crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game);
+    DeadSidehopper_PreRotDelay => DeadMonsters_PreRotDelay_Common(k, ((0xa9dabai32) as u16), game);
+    DeadZoomer_PreRotDelay => DeadMonsters_PreRotDelay_Common(k, ((0xa9dad0i32) as u16), game);
+    DeadRipper_PreRotDelay => DeadMonsters_PreRotDelay_Common(k, ((0xa9dae6i32) as u16), game);
+    DeadSkree_PreRotDelay => DeadMonsters_PreRotDelay_Common(k, ((0xa9dafci32) as u16), game);
 }
 pub unsafe fn DeadMonsters_PreRotDelay_Common(k: u16, j: u16, game: &mut Game) {
     let E: *mut Enemy_DeadMonsters = Get_DeadMonsters(k as i32, game);
@@ -5774,8 +5757,8 @@ unsafe fn initialize_corpse_tiles(
     }
 }
 
-pub unsafe fn Torizo_CorpseRottingInitFunc(game: &mut Game) {
-    initialize_corpse_tiles(
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Torizo_CorpseRottingInitFunc => initialize_corpse_tiles(
         addr_kDeadTorizo_TileData as u16,
         0x2000,
         &[
@@ -5794,9 +5777,7 @@ pub unsafe fn Torizo_CorpseRottingInitFunc(game: &mut Game) {
         ],
         game,
     );
-}
-pub unsafe fn Sidehopper_CorpseRottingInitFunc_0(game: &mut Game) {
-    initialize_corpse_tiles(
+    Sidehopper_CorpseRottingInitFunc_0 => initialize_corpse_tiles(
         addr_kDeadMonsters_TileData as u16,
         0x2000,
         &[
@@ -5808,9 +5789,7 @@ pub unsafe fn Sidehopper_CorpseRottingInitFunc_0(game: &mut Game) {
         ],
         game,
     );
-}
-pub unsafe fn Sidehopper_CorpseRottingInitFunc_2(game: &mut Game) {
-    initialize_corpse_tiles(
+    Sidehopper_CorpseRottingInitFunc_2 => initialize_corpse_tiles(
         addr_kDeadMonsters_TileData as u16,
         0x2000,
         &[
@@ -5822,49 +5801,37 @@ pub unsafe fn Sidehopper_CorpseRottingInitFunc_2(game: &mut Game) {
         ],
         game,
     );
-}
-pub unsafe fn Zoomer_CorpseRottingInitFunc_0(game: &mut Game) {
-    initialize_corpse_tiles(
+    Zoomer_CorpseRottingInitFunc_0 => initialize_corpse_tiles(
         addr_kDeadMonsters_TileData as u16,
         0x2000,
         &[(0x940, 0xa60, 0x60), (0x9a0, 0xc60, 0x60)],
         game,
     );
-}
-pub unsafe fn Zoomer_CorpseRottingInitFunc_2(game: &mut Game) {
-    initialize_corpse_tiles(
+    Zoomer_CorpseRottingInitFunc_2 => initialize_corpse_tiles(
         addr_kDeadMonsters_TileData as u16,
         0x2000,
         &[(0xa00, 0xac0, 0x60), (0xa60, 0xcc0, 0x60)],
         game,
     );
-}
-pub unsafe fn Zoomer_CorpseRottingInitFunc_4(game: &mut Game) {
-    initialize_corpse_tiles(
+    Zoomer_CorpseRottingInitFunc_4 => initialize_corpse_tiles(
         addr_kDeadMonsters_TileData as u16,
         0x2000,
         &[(0xac0, 0xb20, 0x60), (0xb20, 0xd20, 0x60)],
         game,
     );
-}
-pub unsafe fn Ripper_CorpseRottingInitFunc_0(game: &mut Game) {
-    initialize_corpse_tiles(
+    Ripper_CorpseRottingInitFunc_0 => initialize_corpse_tiles(
         addr_kDeadMonsters_TileData as u16,
         0x2000,
         &[(0xb80, 0xa00, 0x60), (0xbe0, 0xc00, 0x60)],
         game,
     );
-}
-pub unsafe fn Ripper_CorpseRottingInitFunc_2(game: &mut Game) {
-    initialize_corpse_tiles(
+    Ripper_CorpseRottingInitFunc_2 => initialize_corpse_tiles(
         addr_kDeadMonsters_TileData as u16,
         0x2000,
         &[(0xc40, 0xb80, 0x60), (0xca0, 0xd80, 0x60)],
         game,
     );
-}
-pub unsafe fn Skree_CorpseRottingInitFunc_0(game: &mut Game) {
-    initialize_corpse_tiles(
+    Skree_CorpseRottingInitFunc_0 => initialize_corpse_tiles(
         addr_kDeadMonsters_TileData as u16,
         0x2000,
         &[
@@ -5875,9 +5842,7 @@ pub unsafe fn Skree_CorpseRottingInitFunc_0(game: &mut Game) {
         ],
         game,
     );
-}
-pub unsafe fn Skree_CorpseRottingInitFunc_2(game: &mut Game) {
-    initialize_corpse_tiles(
+    Skree_CorpseRottingInitFunc_2 => initialize_corpse_tiles(
         addr_kDeadMonsters_TileData as u16,
         0x2000,
         &[
@@ -5888,9 +5853,7 @@ pub unsafe fn Skree_CorpseRottingInitFunc_2(game: &mut Game) {
         ],
         game,
     );
-}
-pub unsafe fn Skree_CorpseRottingInitFunc_4(game: &mut Game) {
-    initialize_corpse_tiles(
+    Skree_CorpseRottingInitFunc_4 => initialize_corpse_tiles(
         addr_kDeadMonsters_TileData as u16,
         0x2000,
         &[
@@ -5901,9 +5864,7 @@ pub unsafe fn Skree_CorpseRottingInitFunc_4(game: &mut Game) {
         ],
         game,
     );
-}
-pub unsafe fn MotherBrain_CorpseRottingInitFunc(game: &mut Game) {
-    initialize_corpse_tiles(
+    MotherBrain_CorpseRottingInitFunc => initialize_corpse_tiles(
         addr_kMotherBrain_Misc_TileData as u16,
         0x9000,
         &[
@@ -5973,8 +5934,8 @@ fn transfer_corpse_tiles(
     }
 }
 
-pub fn Torizo_CorpseRottingMoveFunc(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(
+crate::forward_calls! { pub fn (j: u16, k: u16, game: &mut Game);
+    Torizo_CorpseRottingMoveFunc => transfer_corpse_tiles(
         j,
         k,
         0x2000,
@@ -5984,9 +5945,7 @@ pub fn Torizo_CorpseRottingMoveFunc(j: u16, k: u16, game: &mut Game) {
         false,
         game,
     );
-}
-pub fn Torizo_CorpseRottingCopyFunc(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(
+    Torizo_CorpseRottingCopyFunc => transfer_corpse_tiles(
         j,
         k,
         0x2000,
@@ -5996,72 +5955,49 @@ pub fn Torizo_CorpseRottingCopyFunc(j: u16, k: u16, game: &mut Game) {
         false,
         game,
     );
-}
-pub fn Sidehopper_CorpseRottingMoveFunc_0(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2000, 38, &[8, 8, 0, 0, 0], true, false, game);
-}
-pub fn Sidehopper_CorpseRottingCopyFunc_0(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2000, 38, &[8, 8, 0, 0, 0], false, false, game);
-}
-pub fn Sidehopper_CorpseRottingMoveFunc_2(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2320, 38, &[0, 0, 8, 8, 8], true, false, game);
-}
-pub fn Sidehopper_CorpseRottingCopyFunc_2(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2320, 38, &[0, 0, 8, 8, 8], false, false, game);
-}
-pub fn Zoomer_CorpseRottingMoveFunc_0(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2940, 14, &[0, 0, 0], true, false, game);
-}
-pub fn Zoomer_CorpseRottingCopyFunc_0(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2940, 14, &[0, 0, 0], false, false, game);
-}
-pub fn Zoomer_CorpseRottingMoveFunc_2(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2a00, 14, &[0, 0, 0], true, false, game);
-}
-pub fn Zoomer_CorpseRottingCopyFunc_2(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2a00, 14, &[0, 0, 0], false, false, game);
-}
-pub fn Zoomer_CorpseRottingMoveFunc_4(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2ac0, 14, &[0, 0, 0], true, false, game);
-}
-pub fn Zoomer_CorpseRottingCopyFunc_4(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2ac0, 14, &[0, 0, 0], false, false, game);
-}
-pub fn Ripper_CorpseRottingMoveFunc_0(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2b80, 14, &[0, 0, 0], true, false, game);
-}
-pub fn Ripper_CorpseRottingCopyFunc_0(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2b80, 14, &[0, 0, 0], false, false, game);
-}
-pub fn Ripper_CorpseRottingMoveFunc_2(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2c40, 14, &[0, 0, 0], true, false, game);
-}
-pub fn Ripper_CorpseRottingCopyFunc_2(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2c40, 14, &[0, 0, 0], false, false, game);
-}
-pub fn Skree_CorpseRottingMoveFunc_0(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2640, 30, &[0, 0], true, false, game);
-}
-pub fn Skree_CorpseRottingCopyFunc_0(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2640, 30, &[0, 0], false, false, game);
-}
-pub fn Skree_CorpseRottingMoveFunc_2(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2740, 30, &[0, 0], true, false, game);
-}
-pub fn Skree_CorpseRottingCopyFunc_2(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2740, 30, &[0, 0], false, false, game);
-}
-pub fn Skree_CorpseRottingMoveFunc_4(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2840, 30, &[0, 0], true, false, game);
-}
-pub fn Skree_CorpseRottingCopyFunc_4(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x2840, 30, &[0, 0], false, false, game);
-}
-pub fn MotherBrain_CorpseRottingMoveFunc(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(j, k, 0x9000, 46, &[16, 8, 0, 0, 0, 8, 32], true, true, game);
-}
-pub fn MotherBrain_CorpseRottingCopyFunc(j: u16, k: u16, game: &mut Game) {
-    transfer_corpse_tiles(
+    Sidehopper_CorpseRottingMoveFunc_0 =>
+        transfer_corpse_tiles(j, k, 0x2000, 38, &[8, 8, 0, 0, 0], true, false, game);
+    Sidehopper_CorpseRottingCopyFunc_0 =>
+        transfer_corpse_tiles(j, k, 0x2000, 38, &[8, 8, 0, 0, 0], false, false, game);
+    Sidehopper_CorpseRottingMoveFunc_2 =>
+        transfer_corpse_tiles(j, k, 0x2320, 38, &[0, 0, 8, 8, 8], true, false, game);
+    Sidehopper_CorpseRottingCopyFunc_2 =>
+        transfer_corpse_tiles(j, k, 0x2320, 38, &[0, 0, 8, 8, 8], false, false, game);
+    Zoomer_CorpseRottingMoveFunc_0 =>
+        transfer_corpse_tiles(j, k, 0x2940, 14, &[0, 0, 0], true, false, game);
+    Zoomer_CorpseRottingCopyFunc_0 =>
+        transfer_corpse_tiles(j, k, 0x2940, 14, &[0, 0, 0], false, false, game);
+    Zoomer_CorpseRottingMoveFunc_2 =>
+        transfer_corpse_tiles(j, k, 0x2a00, 14, &[0, 0, 0], true, false, game);
+    Zoomer_CorpseRottingCopyFunc_2 =>
+        transfer_corpse_tiles(j, k, 0x2a00, 14, &[0, 0, 0], false, false, game);
+    Zoomer_CorpseRottingMoveFunc_4 =>
+        transfer_corpse_tiles(j, k, 0x2ac0, 14, &[0, 0, 0], true, false, game);
+    Zoomer_CorpseRottingCopyFunc_4 =>
+        transfer_corpse_tiles(j, k, 0x2ac0, 14, &[0, 0, 0], false, false, game);
+    Ripper_CorpseRottingMoveFunc_0 =>
+        transfer_corpse_tiles(j, k, 0x2b80, 14, &[0, 0, 0], true, false, game);
+    Ripper_CorpseRottingCopyFunc_0 =>
+        transfer_corpse_tiles(j, k, 0x2b80, 14, &[0, 0, 0], false, false, game);
+    Ripper_CorpseRottingMoveFunc_2 =>
+        transfer_corpse_tiles(j, k, 0x2c40, 14, &[0, 0, 0], true, false, game);
+    Ripper_CorpseRottingCopyFunc_2 =>
+        transfer_corpse_tiles(j, k, 0x2c40, 14, &[0, 0, 0], false, false, game);
+    Skree_CorpseRottingMoveFunc_0 =>
+        transfer_corpse_tiles(j, k, 0x2640, 30, &[0, 0], true, false, game);
+    Skree_CorpseRottingCopyFunc_0 =>
+        transfer_corpse_tiles(j, k, 0x2640, 30, &[0, 0], false, false, game);
+    Skree_CorpseRottingMoveFunc_2 =>
+        transfer_corpse_tiles(j, k, 0x2740, 30, &[0, 0], true, false, game);
+    Skree_CorpseRottingCopyFunc_2 =>
+        transfer_corpse_tiles(j, k, 0x2740, 30, &[0, 0], false, false, game);
+    Skree_CorpseRottingMoveFunc_4 =>
+        transfer_corpse_tiles(j, k, 0x2840, 30, &[0, 0], true, false, game);
+    Skree_CorpseRottingCopyFunc_4 =>
+        transfer_corpse_tiles(j, k, 0x2840, 30, &[0, 0], false, false, game);
+    MotherBrain_CorpseRottingMoveFunc =>
+        transfer_corpse_tiles(j, k, 0x9000, 46, &[16, 8, 0, 0, 0, 8, 32], true, true, game);
+    MotherBrain_CorpseRottingCopyFunc => transfer_corpse_tiles(
         j,
         k,
         0x9000,
@@ -6590,41 +6526,15 @@ pub unsafe fn Shitroid_GraduallyAccelerateTowardsPt(
         }
     }
 }
-pub unsafe fn Shitroid_Func_GraduallyAccelerateTowards0x400(
-    k: u16,
-    j: u16,
-    r18: u16,
-    r20: u16,
-    game: &mut Game,
-) {
-    Shitroid_GraduallyAccelerateTowardsPt(k, j, r18, r20, 1024u16, game);
-}
-pub unsafe fn Shitroid_GraduallyAccelerateTowards0x4(
-    k: u16,
-    j: u16,
-    r18: u16,
-    r20: u16,
-    game: &mut Game,
-) {
-    Shitroid_GraduallyAccelerateTowardsPt(k, j, r18, r20, 4u16, game);
-}
-pub unsafe fn Shitroid_GraduallyAccelerateTowards0x8(
-    k: u16,
-    j: u16,
-    r18: u16,
-    r20: u16,
-    game: &mut Game,
-) {
-    Shitroid_GraduallyAccelerateTowardsPt(k, j, r18, r20, 8u16, game);
-}
-pub unsafe fn Shitroid_GraduallyAccelerateTowards0x10(
-    k: u16,
-    j: u16,
-    r18: u16,
-    r20: u16,
-    game: &mut Game,
-) {
-    Shitroid_GraduallyAccelerateTowardsPt(k, j, r18, r20, 16u16, game);
+crate::forward_calls! { pub unsafe fn ( k: u16, j: u16, r18: u16, r20: u16, game: &mut Game, );
+    Shitroid_Func_GraduallyAccelerateTowards0x400 =>
+        Shitroid_GraduallyAccelerateTowardsPt(k, j, r18, r20, 1024u16, game);
+    Shitroid_GraduallyAccelerateTowards0x4 =>
+        Shitroid_GraduallyAccelerateTowardsPt(k, j, r18, r20, 4u16, game);
+    Shitroid_GraduallyAccelerateTowards0x8 =>
+        Shitroid_GraduallyAccelerateTowardsPt(k, j, r18, r20, 8u16, game);
+    Shitroid_GraduallyAccelerateTowards0x10 =>
+        Shitroid_GraduallyAccelerateTowardsPt(k, j, r18, r20, 16u16, game);
 }
 pub unsafe fn Shitroid_GraduallyAccelerateHoriz(
     k: u16,
@@ -6773,14 +6683,13 @@ pub unsafe fn Shitroid_AccelerateTowardsX(k: u16, r18: u16, r22: u16, game: &mut
     }
     result
 }
-pub unsafe fn Shitroid_HandleNormalPalette(game: &mut Game) {
-    Shitroid_HandleCutscenePalette_Common(addr_word_A9F6D1 as u16, 330u16, game);
-}
-pub unsafe fn Shitroid_HandleCutscenePalette(game: &mut Game) {
-    Shitroid_HandleCutscenePalette_Common(addr_word_A9F6D1 as u16, 490u16, game);
-}
-pub unsafe fn Shitroid_HandleCutscenePalette_LowHealth(game: &mut Game) {
-    Shitroid_HandleCutscenePalette_Common(addr_word_A9F711 as u16, 490u16, game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Shitroid_HandleNormalPalette =>
+        Shitroid_HandleCutscenePalette_Common(addr_word_A9F6D1 as u16, 330u16, game);
+    Shitroid_HandleCutscenePalette =>
+        Shitroid_HandleCutscenePalette_Common(addr_word_A9F6D1 as u16, 490u16, game);
+    Shitroid_HandleCutscenePalette_LowHealth =>
+        Shitroid_HandleCutscenePalette_Common(addr_word_A9F711 as u16, 490u16, game);
 }
 pub unsafe fn Shitroid_HandleCutscenePalette_Common(r22: u16, r18: u16, game: &mut Game) {
     let mut shitro_var_D_high: i8 = 0;

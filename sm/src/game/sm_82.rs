@@ -1083,11 +1083,9 @@ pub unsafe fn GameState_1_OpeningCinematic(game: &mut Game) -> CoroutineRet {
 pub unsafe fn GameState_3_Null(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
 }
-pub unsafe fn GameState_37_CeresGoesBoomWithSamus(game: &mut Game) -> CoroutineRet {
-    GameState_37_CeresGoesBoomWithSamus_(game)
-}
-pub unsafe fn GameState_39_EndingAndCredits(game: &mut Game) -> CoroutineRet {
-    GameState_39_EndingAndCredits_(game)
+crate::forward_calls! { pub unsafe fn (game: &mut Game) -> CoroutineRet;
+    GameState_37_CeresGoesBoomWithSamus => GameState_37_CeresGoesBoomWithSamus_(game);
+    GameState_39_EndingAndCredits => GameState_39_EndingAndCredits_(game);
 }
 pub unsafe fn GameState_7_MainGameplayFadeIn(game: &mut Game) -> CoroutineRet {
     let mut _coret_: u8 = GameState_8_MainGameplay(game);
@@ -2073,17 +2071,11 @@ pub unsafe fn SetupMapScrollingForPauseMenu(a: u16, game: &mut Game) {
 }
 static k0x80Shr: [u8; 8] = [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1];
 
-unsafe fn DetermineLeftmostMapColumn(r0: *const u8) -> u16 {
-    find_map_edge(r0, MapEdge::Left)
-}
-unsafe fn DetermineRightmostMapColumn(r0: *const u8) -> u16 {
-    find_map_edge(r0, MapEdge::Right)
-}
-unsafe fn DetermineTopmostMapColumn(r0: *const u8) -> u16 {
-    find_map_edge(r0, MapEdge::Top)
-}
-unsafe fn DetermineBottommostMapColumn(r0: *const u8) -> u16 {
-    find_map_edge(r0, MapEdge::Bottom)
+crate::forward_calls! { unsafe fn (r0: *const u8) -> u16;
+    DetermineLeftmostMapColumn => find_map_edge(r0, MapEdge::Left);
+    DetermineRightmostMapColumn => find_map_edge(r0, MapEdge::Right);
+    DetermineTopmostMapColumn => find_map_edge(r0, MapEdge::Top);
+    DetermineBottommostMapColumn => find_map_edge(r0, MapEdge::Bottom);
 }
 pub unsafe fn DetermineMapScrollLimits(game: &mut Game) {
     let mut r6: *const u8 = null::<u8>();
@@ -3744,14 +3736,10 @@ pub unsafe fn UpdateSamusPositionIndicatorAnimation(game: &mut Game) -> u16 {
     kMap_SamusPositionIndicator_SpritemapIds
         [(ram_word!(game, samus_position_indicator_animation_frame) as i32 >> 1i32) as usize]
 }
-pub unsafe fn DrawBorderAroundSamusData(game: &mut Game) {
-    DrawMenuSpritemap(0x48u16, 0x80u16, 0x10u16, 3584u16, game);
-}
-pub unsafe fn DrawBorderAroundDataCopyMode(game: &mut Game) {
-    DrawMenuSpritemap(0x49u16, 0x80u16, 0x10u16, 3584u16, game);
-}
-pub unsafe fn DrawBorderAroundDataClearMode(game: &mut Game) {
-    DrawMenuSpritemap(0x4au16, 0x7cu16, 0x10u16, 3584u16, game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    DrawBorderAroundSamusData => DrawMenuSpritemap(0x48u16, 0x80u16, 0x10u16, 3584u16, game);
+    DrawBorderAroundDataCopyMode => DrawMenuSpritemap(0x49u16, 0x80u16, 0x10u16, 3584u16, game);
+    DrawBorderAroundDataClearMode => DrawMenuSpritemap(0x4au16, 0x7cu16, 0x10u16, 3584u16, game);
 }
 static kDrawMenuSelectionMissile_Enable: [u16; 4] = [8u16, 8u16, 8u16, 8u16];
 static kDrawMenuSelectionMissile_SpriteMap: [u16; 4] = [0x37, 0x36, 0x35, 0x34];

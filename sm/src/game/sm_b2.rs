@@ -125,14 +125,10 @@ crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_SpacePirates(o: i32) -> Enemy_SpacePirates = [0xf78, o as isize];
 }
-pub unsafe fn Enemy_GrappleReact_CancelBeam_B2(game: &mut Game) {
-    Enemy_SwitchToFrozenAi(game);
-}
-pub unsafe fn Enemy_NormalFrozenAI_B2(game: &mut Game) {
-    NormalEnemyFrozenAI(game);
-}
-pub unsafe fn WalkingSpacePirates_Powerbomb(game: &mut Game) {
-    NormalEnemyPowerBombAi(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Enemy_GrappleReact_CancelBeam_B2 => Enemy_SwitchToFrozenAi(game);
+    Enemy_NormalFrozenAI_B2 => NormalEnemyFrozenAI(game);
+    WalkingSpacePirates_Powerbomb => NormalEnemyPowerBombAi(game);
 }
 pub unsafe fn WalkingSpacePirates_Touch(game: &mut Game) {
     if (*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game))

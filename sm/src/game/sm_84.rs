@@ -1973,17 +1973,11 @@ pub fn DeletePlm(j: u16, game: &mut Game) {
     let header_offset = 0x1c37 + usize::from(j & !1);
     game.g_ram[header_offset..header_offset + 2].fill(0);
 }
-pub fn PlmSetup_B638_Rightwards_Extension(j: u16, game: &mut Game) -> u8 {
-    setup_extension_block(j, 0x50ff, game)
-}
-pub fn PlmSetup_B63F_Leftwards_Extension(j: u16, game: &mut Game) -> u8 {
-    setup_extension_block(j, 0x5001, game)
-}
-pub fn PlmSetup_B643_Downwards_Extension(j: u16, game: &mut Game) -> u8 {
-    setup_extension_block(j, 0xd0ff, game)
-}
-pub fn PlmSetup_B647_Upwards_Extension(j: u16, game: &mut Game) -> u8 {
-    setup_extension_block(j, 0xd001, game)
+crate::forward_calls! { pub fn (j: u16, game: &mut Game) -> u8;
+    PlmSetup_B638_Rightwards_Extension => setup_extension_block(j, 0x50ff, game);
+    PlmSetup_B63F_Leftwards_Extension => setup_extension_block(j, 0x5001, game);
+    PlmSetup_B643_Downwards_Extension => setup_extension_block(j, 0xd0ff, game);
+    PlmSetup_B647_Upwards_Extension => setup_extension_block(j, 0xd001, game);
 }
 fn setup_extension_block(j: u16, block_type_and_bts: u16, game: &mut Game) -> u8 {
     let slot_offset = 0x1c87 + usize::from(j & !1);
@@ -2000,11 +1994,9 @@ fn advance_plm_instruction(word_index: usize, bytes: u16, game: &mut Game) {
 pub fn SkipDebugDrawInstructionsForScrollPlms(j: u16, game: &mut Game) {
     advance_plm_instruction(usize::from(j >> 1), 4, game);
 }
-pub fn PlmSetup_B703_ScrollPLM(j: u16, game: &mut Game) -> u8 {
-    setup_scroll_block(j, 0x3046, game)
-}
-pub fn PlmSetup_B707_SolidScrollPLM(j: u16, game: &mut Game) -> u8 {
-    setup_scroll_block(j, 0xb046, game)
+crate::forward_calls! { pub fn (j: u16, game: &mut Game) -> u8;
+    PlmSetup_B703_ScrollPLM => setup_scroll_block(j, 0x3046, game);
+    PlmSetup_B707_SolidScrollPLM => setup_scroll_block(j, 0xb046, game);
 }
 fn setup_scroll_block(j: u16, block_type_and_bts: u16, game: &mut Game) -> u8 {
     let slot_index = usize::from(j & !1);
@@ -2767,19 +2759,17 @@ pub unsafe fn PlmSetup_C816_LeftBlueGateTrigger(j: u16, game: &mut Game) -> u8 {
     set_ram_word!(game.plm_header_ptr[(j as i32 >> 1i32)] = 0u16);
     PlmSetup_C81A_RightBlueGateTrigger(j, game)
 }
-pub unsafe fn sub_84C63F(j: u16, game: &mut Game) -> u8 {
-    sub_84C64C(
+crate::forward_calls! { pub unsafe fn (j: u16, game: &mut Game) -> u8;
+    sub_84C63F => sub_84C64C(
         j,
         (ram_word!(game, plm_block_indices[(j as i32 >> 1i32)])).wrapping_add(2u16),
         game,
-    )
-}
-pub unsafe fn sub_84C647(j: u16, game: &mut Game) -> u8 {
-    sub_84C64C(
+    );
+    sub_84C647 => sub_84C64C(
         j,
         (ram_word!(game, plm_block_indices[(j as i32 >> 1i32)])).wrapping_sub(2u16),
         game,
-    )
+    );
 }
 pub unsafe fn sub_84C64C(j: u16, a: u16, game: &mut Game) -> u8 {
     let found_plm: bool;
@@ -3815,17 +3805,11 @@ pub unsafe fn PlmInstr_E63B(plmp: *const u8, k: u16, game: &mut Game) -> *const 
     set_ram_word!(game.fx_y_vel = -32i32 as u16);
     plmp
 }
-pub unsafe fn sub_84EE4D(j: u16, game: &mut Game) -> u8 {
-    sub_84EE5F(j, 8u16, game)
-}
-pub unsafe fn sub_84EE52(j: u16, game: &mut Game) -> u8 {
-    sub_84EE5F(j, 0xau16, game)
-}
-pub unsafe fn sub_84EE57(j: u16, game: &mut Game) -> u8 {
-    sub_84EE5F(j, 0xcu16, game)
-}
-pub unsafe fn sub_84EE5C(j: u16, game: &mut Game) -> u8 {
-    sub_84EE5F(j, 0xeu16, game)
+crate::forward_calls! { pub unsafe fn (j: u16, game: &mut Game) -> u8;
+    sub_84EE4D => sub_84EE5F(j, 8u16, game);
+    sub_84EE52 => sub_84EE5F(j, 0xau16, game);
+    sub_84EE57 => sub_84EE5F(j, 0xcu16, game);
+    sub_84EE5C => sub_84EE5F(j, 0xeu16, game);
 }
 pub unsafe fn sub_84EE5F(j: u16, a: u16, game: &mut Game) -> u8 {
     set_ram_word!(game.plm_variables[(j as i32 >> 1i32)] = a);
@@ -3840,17 +3824,11 @@ pub unsafe fn sub_84EE64(j: u16, game: &mut Game) -> u8 {
     update_ram_word!(game.global_number_of_items_loaded_ctr, wrapping_add(1));
     0u8
 }
-pub unsafe fn sub_84EE77(j: u16, game: &mut Game) -> u8 {
-    sub_84EE89(j, 8u16, game)
-}
-pub unsafe fn sub_84EE7C(j: u16, game: &mut Game) -> u8 {
-    sub_84EE89(j, 0xau16, game)
-}
-pub unsafe fn sub_84EE81(j: u16, game: &mut Game) -> u8 {
-    sub_84EE89(j, 0xcu16, game)
-}
-pub unsafe fn sub_84EE86(j: u16, game: &mut Game) -> u8 {
-    sub_84EE89(j, 0xeu16, game)
+crate::forward_calls! { pub unsafe fn (j: u16, game: &mut Game) -> u8;
+    sub_84EE77 => sub_84EE89(j, 8u16, game);
+    sub_84EE7C => sub_84EE89(j, 0xau16, game);
+    sub_84EE81 => sub_84EE89(j, 0xcu16, game);
+    sub_84EE86 => sub_84EE89(j, 0xeu16, game);
 }
 pub unsafe fn sub_84EE89(j: u16, a: u16, game: &mut Game) -> u8 {
     set_ram_word!(game.plm_variables[(j as i32 >> 1i32)] = a);

@@ -992,50 +992,22 @@ crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
 }
-pub unsafe fn Enemy_GrappleReact_NoInteract_A0(game: &mut Game) {
-    SwitchEnemyAiToMainAi(game);
-}
-pub unsafe fn Enemy_GrappleReact_SamusLatchesOn_A0(game: &mut Game) {
-    SamusLatchesOnWithGrapple(game);
-}
-pub unsafe fn Enemy_GrappleReact_KillEnemy_A0(game: &mut Game) {
-    EnemyGrappleDeath(game);
-}
-pub unsafe fn Enemy_GrappleReact_CancelBeam_A0(game: &mut Game) {
-    Enemy_SwitchToFrozenAi(game);
-}
-pub unsafe fn Enemy_GrappleReact_SamusLatchesNoInvinc_A0(game: &mut Game) {
-    SamusLatchesOnWithGrappleNoInvinc(game);
-}
-pub unsafe fn Enemy_GrappleReact_SamusLatchesParalyze_A0(game: &mut Game) {
-    SamusLatchesOnWithGrappleParalyze(game);
-}
-pub unsafe fn Enemy_GrappleReact_HurtSamus_A0(game: &mut Game) {
-    SamusHurtFromGrapple(game);
-}
-pub unsafe fn Enemy_NormalTouchAI_A0(game: &mut Game) {
-    NormalEnemyTouchAi(game);
-}
-pub unsafe fn Enemy_NormalTouchAI_SkipDeathAnim_A0(game: &mut Game) {
-    NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
-}
-pub unsafe fn Enemy_NormalShotAI_A0(game: &mut Game) {
-    NormalEnemyShotAi(game);
-}
-pub unsafe fn Enemy_NormalShotAI_SkipSomeParts_A0(game: &mut Game) {
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-}
-pub unsafe fn Enemy_NormalPowerBombAI_A0(game: &mut Game) {
-    NormalEnemyPowerBombAi(game);
-}
-pub unsafe fn Enemy_NormalPowerBombAI_SkipDeathAnim_A0(game: &mut Game) {
-    NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
-}
-pub unsafe fn Enemy_NormalFrozenAI(game: &mut Game) {
-    NormalEnemyFrozenAI(game);
-}
-pub unsafe fn CreateADudShot(game: &mut Game) {
-    CreateDudShot(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Enemy_GrappleReact_NoInteract_A0 => SwitchEnemyAiToMainAi(game);
+    Enemy_GrappleReact_SamusLatchesOn_A0 => SamusLatchesOnWithGrapple(game);
+    Enemy_GrappleReact_KillEnemy_A0 => EnemyGrappleDeath(game);
+    Enemy_GrappleReact_CancelBeam_A0 => Enemy_SwitchToFrozenAi(game);
+    Enemy_GrappleReact_SamusLatchesNoInvinc_A0 => SamusLatchesOnWithGrappleNoInvinc(game);
+    Enemy_GrappleReact_SamusLatchesParalyze_A0 => SamusLatchesOnWithGrappleParalyze(game);
+    Enemy_GrappleReact_HurtSamus_A0 => SamusHurtFromGrapple(game);
+    Enemy_NormalTouchAI_A0 => NormalEnemyTouchAi(game);
+    Enemy_NormalTouchAI_SkipDeathAnim_A0 => NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+    Enemy_NormalShotAI_A0 => NormalEnemyShotAi(game);
+    Enemy_NormalShotAI_SkipSomeParts_A0 => NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+    Enemy_NormalPowerBombAI_A0 => NormalEnemyPowerBombAi(game);
+    Enemy_NormalPowerBombAI_SkipDeathAnim_A0 => NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
+    Enemy_NormalFrozenAI => NormalEnemyFrozenAI(game);
+    CreateADudShot => CreateDudShot(game);
 }
 pub fn func_nullsub_169() {}
 pub fn func_nullsub_170() {}
@@ -4132,12 +4104,9 @@ pub fn SineMult8bit(phase: u16, amplitude: u16, game: &mut Game) -> u16 {
     (SineMult8bitInner(amplitude, phase.wrapping_add(0x80) as u8 as u16, game) >> 16) as u16
 }
 
-pub fn CosineMult8bitFull(phase: u16, amplitude: u16, game: &mut Game) -> u32 {
-    SineMult8bitInner(amplitude, phase.wrapping_add(64) as u8 as u16, game)
-}
-
-pub fn SineMult8bitFull(phase: u16, amplitude: u16, game: &mut Game) -> u32 {
-    SineMult8bitInner(amplitude, phase.wrapping_add(0x80) as u8 as u16, game)
+crate::forward_calls! { pub fn (phase: u16, amplitude: u16, game: &mut Game) -> u32;
+    CosineMult8bitFull => SineMult8bitInner(amplitude, phase.wrapping_add(64) as u8 as u16, game);
+    SineMult8bitFull => SineMult8bitInner(amplitude, phase.wrapping_add(0x80) as u8 as u16, game);
 }
 pub fn ConvertAngleToXy(phase: u16, amplitude: u16, game: &mut Game) -> Point32 {
     let x_index = usize::from(phase.wrapping_add(0x40) & 0x7f);
@@ -4243,38 +4212,29 @@ unsafe fn spawn_area_enemy_item_drops(
 pub unsafe fn Enemy_ItemDrop_MiniKraid(k: u16, death_animation: u16, game: &mut Game) {
     spawn_nearby_enemy_item_drops(addr_kEnemyDef_E0FF as u16, k, 4, death_animation, game);
 }
-pub unsafe fn Enemy_ItemDrop_LowerNorfairSpacePirate(k: u16, game: &mut Game) {
-    spawn_nearby_enemy_item_drops(addr_kEnemyDef_F593 as u16, k, 5, 0, game);
-}
-pub unsafe fn Enemy_ItemDrop_Metroid(k: u16, game: &mut Game) {
-    spawn_nearby_enemy_item_drops(addr_kEnemyDef_DD7F as u16, k, 5, 0, game);
-}
-pub unsafe fn Enemy_ItemDrop_Ridley(k: u16, game: &mut Game) {
-    spawn_area_enemy_item_drops(addr_kEnemyDef_E17F as u16, k, 64, 320, 127, game);
-}
-pub unsafe fn Enemy_ItemDrop_Crocomire(k: u16, game: &mut Game) {
-    spawn_area_enemy_item_drops(addr_kEnemyDef_DDBF as u16, k, 576, 96, 127, game);
-}
-pub unsafe fn Enemy_ItemDrop_Phantoon(k: u16, game: &mut Game) {
-    spawn_area_enemy_item_drops(addr_kEnemyDef_E4BF as u16, k, 64, 96, 127, game);
-}
-pub unsafe fn Enemy_ItemDrop_Botwoon(k: u16, game: &mut Game) {
-    spawn_area_enemy_item_drops(addr_kEnemyDef_F293 as u16, k, 64, 128, 127, game);
-}
-pub unsafe fn Enemy_ItemDrop_Kraid(k: u16, game: &mut Game) {
-    spawn_area_enemy_item_drops(addr_kEnemyDef_E2BF as u16, k, 128, 352, 255, game);
-}
-pub unsafe fn Enemy_ItemDrop_BombTorizo(k: u16, game: &mut Game) {
-    spawn_area_enemy_item_drops(addr_kEnemyDef_EEFF as u16, k, 64, 96, 127, game);
-}
-pub unsafe fn Enemy_ItemDrop_GoldenTorizo(k: u16, game: &mut Game) {
-    spawn_area_enemy_item_drops(addr_kEnemyDef_EEFF as u16, k, 128, 288, 255, game);
-}
-pub unsafe fn Enemy_ItemDrop_SporeSpawn(k: u16, game: &mut Game) {
-    spawn_area_enemy_item_drops(addr_kEnemyDef_DF3F as u16, k, 64, 528, 127, game);
-}
-pub unsafe fn Enemy_ItemDrop_Draygon(k: u16, game: &mut Game) {
-    spawn_area_enemy_item_drops(addr_kEnemyDef_DE3F as u16, k, 128, 352, 255, game);
+crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game);
+    Enemy_ItemDrop_LowerNorfairSpacePirate =>
+        spawn_nearby_enemy_item_drops(addr_kEnemyDef_F593 as u16, k, 5, 0, game);
+    Enemy_ItemDrop_Metroid =>
+        spawn_nearby_enemy_item_drops(addr_kEnemyDef_DD7F as u16, k, 5, 0, game);
+    Enemy_ItemDrop_Ridley =>
+        spawn_area_enemy_item_drops(addr_kEnemyDef_E17F as u16, k, 64, 320, 127, game);
+    Enemy_ItemDrop_Crocomire =>
+        spawn_area_enemy_item_drops(addr_kEnemyDef_DDBF as u16, k, 576, 96, 127, game);
+    Enemy_ItemDrop_Phantoon =>
+        spawn_area_enemy_item_drops(addr_kEnemyDef_E4BF as u16, k, 64, 96, 127, game);
+    Enemy_ItemDrop_Botwoon =>
+        spawn_area_enemy_item_drops(addr_kEnemyDef_F293 as u16, k, 64, 128, 127, game);
+    Enemy_ItemDrop_Kraid =>
+        spawn_area_enemy_item_drops(addr_kEnemyDef_E2BF as u16, k, 128, 352, 255, game);
+    Enemy_ItemDrop_BombTorizo =>
+        spawn_area_enemy_item_drops(addr_kEnemyDef_EEFF as u16, k, 64, 96, 127, game);
+    Enemy_ItemDrop_GoldenTorizo =>
+        spawn_area_enemy_item_drops(addr_kEnemyDef_EEFF as u16, k, 128, 288, 255, game);
+    Enemy_ItemDrop_SporeSpawn =>
+        spawn_area_enemy_item_drops(addr_kEnemyDef_DF3F as u16, k, 64, 528, 127, game);
+    Enemy_ItemDrop_Draygon =>
+        spawn_area_enemy_item_drops(addr_kEnemyDef_DE3F as u16, k, 128, 352, 255, game);
 }
 pub fn CompareDistToSamus_X(k: u16, a: u16, game: &mut Game) -> u8 {
     let delta = GetSamusEnemyDelta_X(k, game);
@@ -4680,14 +4640,10 @@ fn EnemyBlockCollReact_VertExt(_collision: &mut EnemyBlockCollInfo, game: &mut G
     game.set_cur_block_index(game.cur_block_index().wrapping_add(offset));
     0xff
 }
-pub unsafe fn Enemy_MoveRight_SlopesAsWalls(k: u16, amt: i32, game: &mut Game) -> u8 {
-    Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x4000u16, game)
-}
-pub unsafe fn Enemy_MoveRight_ProcessSlopes(k: u16, amt: i32, game: &mut Game) -> u8 {
-    Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x8000u16, game)
-}
-pub unsafe fn Enemy_MoveRight_IgnoreSlopes(k: u16, amt: i32, game: &mut Game) -> u8 {
-    Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0u16, game)
+crate::forward_calls! { pub unsafe fn (k: u16, amt: i32, game: &mut Game) -> u8;
+    Enemy_MoveRight_SlopesAsWalls => Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x4000u16, game);
+    Enemy_MoveRight_ProcessSlopes => Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x8000u16, game);
+    Enemy_MoveRight_IgnoreSlopes => Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0u16, game);
 }
 unsafe fn Enemy_MoveRight_IgnoreSlopes_Inner(
     k: u16,

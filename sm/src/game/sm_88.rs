@@ -2164,11 +2164,11 @@ pub unsafe fn RoomMainAsm_ScrollingSky(src: *const u16, game: &mut Game) {
         set_ram_word!(game.vram_write_queue_tail = (v0).wrapping_add(28u16));
     };
 }
-pub unsafe fn RoomCode_ScrollingSkyLand(game: &mut Game) {
-    RoomMainAsm_ScrollingSky(RomPtr_88(addr_off_88AD9C as u16, game) as *const u16, game);
-}
-pub unsafe fn RoomMainAsm_ScrollingSkyOcean(game: &mut Game) {
-    RoomMainAsm_ScrollingSky(RomPtr_88(addr_off_88ADA6 as u16, game) as *const u16, game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    RoomCode_ScrollingSkyLand =>
+        RoomMainAsm_ScrollingSky(RomPtr_88(addr_off_88AD9C as u16, game) as *const u16, game);
+    RoomMainAsm_ScrollingSkyOcean =>
+        RoomMainAsm_ScrollingSky(RomPtr_88(addr_off_88ADA6 as u16, game) as *const u16, game);
 }
 static unk_88B08C: SpawnHdmaObject_Args =
     SpawnHdmaObject_Args::new(0x42u8, 0x11u8, 0xb0ac as VoidP);
@@ -3028,11 +3028,9 @@ pub unsafe fn FxTypeFunc_2C_Haze(game: &mut Game) {
         SpawnHdmaObject(0x88u8, &raw const unk_88DDD4 as *const c_void, game);
     };
 }
-pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyAlive(k: u16, game: &mut Game) {
-    sub_88DE18(k, 0x80u16, game);
-}
-pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyDead(k: u16, game: &mut Game) {
-    sub_88DE18(k, 0x20u16, game);
+crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game);
+    HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyAlive => sub_88DE18(k, 0x80u16, game);
+    HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyDead => sub_88DE18(k, 0x20u16, game);
 }
 pub unsafe fn sub_88DE18(k: u16, a: u16, game: &mut Game) {
     let v2: i32 = k as u8 as i32 >> 1i32;
@@ -3109,14 +3107,10 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(k: u16, game: &mu
 static unk_88DF38: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0u8, 0x2cu8, 0xdf4f as VoidP);
 static unk_88DF41: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0u8, 0x2cu8, 0xdf6b as VoidP);
 static unk_88DF4A: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x2u8, 0x12u8, 0xdf77 as VoidP);
-pub unsafe fn sub_88DF34(game: &mut Game) {
-    SpawnHdmaObject(0x88u8, &raw const unk_88DF38 as *const c_void, game);
-}
-pub unsafe fn sub_88DF3D(game: &mut Game) {
-    SpawnHdmaObject(0x88u8, &raw const unk_88DF41 as *const c_void, game);
-}
-pub unsafe fn sub_88DF46(game: &mut Game) {
-    SpawnHdmaObject(0x88u8, &raw const unk_88DF4A as *const c_void, game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    sub_88DF34 => SpawnHdmaObject(0x88u8, &raw const unk_88DF38 as *const c_void, game);
+    sub_88DF3D => SpawnHdmaObject(0x88u8, &raw const unk_88DF41 as *const c_void, game);
+    sub_88DF46 => SpawnHdmaObject(0x88u8, &raw const unk_88DF4A as *const c_void, game);
 }
 pub unsafe fn HdmaobjPreInstr_DF94(v0: u16, game: &mut Game) {
     let mut v1: i16 = 0;
@@ -3700,11 +3694,11 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
 static unk_88E722: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0u8, 0x2cu8, 0xe727 as VoidP);
 static unk_88E74C: SpawnHdmaObject_Args =
     SpawnHdmaObject_Args::new(0x41u8, 0x26u8, 0xe751 as VoidP);
-pub unsafe fn MotherBrainRisingHdmaObject(game: &mut Game) -> u16 {
-    SpawnHdmaObject(0x88u8, &raw const unk_88E722 as *const c_void, game)
-}
-pub unsafe fn SpawnMotherBrainRainbowBeamHdma(game: &mut Game) -> u16 {
-    SpawnHdmaObject(0x88u8, &raw const unk_88E74C as *const c_void, game)
+crate::forward_calls! { pub unsafe fn (game: &mut Game) -> u16;
+    MotherBrainRisingHdmaObject =>
+        SpawnHdmaObject(0x88u8, &raw const unk_88E722 as *const c_void, game);
+    SpawnMotherBrainRainbowBeamHdma =>
+        SpawnHdmaObject(0x88u8, &raw const unk_88E74C as *const c_void, game);
 }
 pub unsafe fn InitializeRainbowBeam(game: &mut Game) {
     *ram_ptr!(game; 0x74, 0) = 32u8;

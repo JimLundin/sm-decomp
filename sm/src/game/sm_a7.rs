@@ -315,20 +315,12 @@ pub unsafe fn EnemyInstr_Call_A7(k: u16, jp: *const u16, game: &mut Game) -> *co
     CallEnemyInstrExtFunc(((*jp.offset(0)) as u32) | (0xa70000u32), k, game);
     jp.offset(1)
 }
-pub unsafe fn Enemy_GrappleReact_NoInteract_A7(game: &mut Game) {
-    SwitchEnemyAiToMainAi(game);
-}
-pub unsafe fn Enemy_GrappleReact_CancelBeam_A7(game: &mut Game) {
-    Enemy_SwitchToFrozenAi(game);
-}
-pub unsafe fn Enemy_NormalShotAI_A7(game: &mut Game) {
-    NormalEnemyShotAi(game);
-}
-pub unsafe fn Enemy_NormalPowerBombAI_SkipDeathAnim_A7(game: &mut Game) {
-    NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
-}
-pub unsafe fn Enemy_NormalFrozenAI_A7(game: &mut Game) {
-    NormalEnemyFrozenAI(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Enemy_GrappleReact_NoInteract_A7 => SwitchEnemyAiToMainAi(game);
+    Enemy_GrappleReact_CancelBeam_A7 => Enemy_SwitchToFrozenAi(game);
+    Enemy_NormalShotAI_A7 => NormalEnemyShotAi(game);
+    Enemy_NormalPowerBombAI_SkipDeathAnim_A7 => NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
+    Enemy_NormalFrozenAI_A7 => NormalEnemyFrozenAI(game);
 }
 pub unsafe fn Kraid_Instr_9(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E: *mut Enemy_Kraid = Get_Kraid(0i32, game);
@@ -349,11 +341,9 @@ pub unsafe fn Kraid_Func_1(game: &mut Game) {
     set_ram_word!(game.extra_samus_x_displacement = 4u16);
     set_ram_word!(game.extra_samus_y_displacement = -8i32 as u16);
 }
-pub unsafe fn Kraid_Touch(game: &mut Game) {
-    NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
-}
-pub unsafe fn Kraid_Shot(game: &mut Game) {
-    NormalEnemyShotAi(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Kraid_Touch => NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+    Kraid_Shot => NormalEnemyShotAi(game);
 }
 pub unsafe fn KraidsArm_Touch(game: &mut Game) {
     if ram_word!(game, samus_invincibility_timer) == 0 {
@@ -808,11 +798,9 @@ pub unsafe fn Kraid_ProcessKraidInstr(game: &mut Game) -> u16 {
     }
     result
 }
-pub unsafe fn KraidInstr_PlayRoarSfx(game: &mut Game) {
-    QueueSfx2_Max6(0x2du16, game);
-}
-pub unsafe fn KraidInstr_PlayDyingSfx(game: &mut Game) {
-    QueueSfx2_Max15(0x2eu16, game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    KraidInstr_PlayRoarSfx => QueueSfx2_Max6(0x2du16, game);
+    KraidInstr_PlayDyingSfx => QueueSfx2_Max15(0x2eu16, game);
 }
 crate::game::address_dispatch! {
     pub unsafe fn CallKraidInstr(ea: u32, game: &mut Game) => ea;
@@ -1674,11 +1662,9 @@ pub unsafe fn KraidFingernailInit(k: u16, game: &mut Game) {
     (*E).kraid_var_A = ((0xa7b92di32) as u16);
     (*E).kraid_var_F = 64u16;
 }
-pub unsafe fn KraidsGoodFingernail_Init(game: &mut Game) {
-    KraidFingernailInit(ram_word!(game, cur_enemy_index), game);
-}
-pub unsafe fn KraidsBadFingernail_Init(game: &mut Game) {
-    KraidFingernailInit(ram_word!(game, cur_enemy_index), game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    KraidsGoodFingernail_Init => KraidFingernailInit(ram_word!(game, cur_enemy_index), game);
+    KraidsBadFingernail_Init => KraidFingernailInit(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn KraidsGoodFingernail_Main(game: &mut Game) {
     let v0: *mut EnemyData = gEnemyData(0i32, game);
@@ -1915,14 +1901,12 @@ pub unsafe fn Kraid_GetsBig_ReleaseCamera(game: &mut Game) {
     *(ram_ptr!(game, u16; 0xcd20, 2)) = 257u16;
     (*E).kraid_min_y_pos_eject = 164u16;
 }
-pub unsafe fn Kraid_SpawnPlmToClearCeiling(game: &mut Game) {
-    SpawnHardcodedPlm(
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Kraid_SpawnPlmToClearCeiling => SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs::new(0x2u8, 0x12u8, 0xb7b7 as VoidP),
         game,
     );
-}
-pub unsafe fn Kraid_ClearSomeSpikes(game: &mut Game) {
-    SpawnHardcodedPlm(
+    Kraid_ClearSomeSpikes => SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs::new(0x5u8, 0x1bu8, 0xb7bb as VoidP),
         game,
     );

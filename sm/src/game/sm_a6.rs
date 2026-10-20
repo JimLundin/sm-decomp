@@ -435,20 +435,12 @@ static g_byte_A6D712: [u8; 16] = [
     0x10, 0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 9, 8, 7, 6, 5, 4, 3, 2, 1,
 ];
 static g_word_A6D9ED: [u16; 8] = [0xc, 0xe, 0x10, 0x12, 0x1c, 0x20, 0x28, 0x30];
-pub unsafe fn Enemy_GrappleReact_NoInteract_A6(game: &mut Game) {
-    SwitchEnemyAiToMainAi(game);
-}
-pub unsafe fn Enemy_GrappleReact_CancelBeam_A6(game: &mut Game) {
-    Enemy_SwitchToFrozenAi(game);
-}
-pub unsafe fn Enemy_NormalTouchAI_A6(game: &mut Game) {
-    NormalEnemyTouchAi(game);
-}
-pub unsafe fn Enemy_NormalShotAI_A6(game: &mut Game) {
-    NormalEnemyShotAi(game);
-}
-pub unsafe fn Enemy_NormalFrozenAI_A6(game: &mut Game) {
-    NormalEnemyFrozenAI(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Enemy_GrappleReact_NoInteract_A6 => SwitchEnemyAiToMainAi(game);
+    Enemy_GrappleReact_CancelBeam_A6 => Enemy_SwitchToFrozenAi(game);
+    Enemy_NormalTouchAI_A6 => NormalEnemyTouchAi(game);
+    Enemy_NormalShotAI_A6 => NormalEnemyShotAi(game);
+    Enemy_NormalFrozenAI_A6 => NormalEnemyFrozenAI(game);
 }
 pub unsafe fn Boulder_Init(game: &mut Game) {
     let mut boulder_parameter_2_high: i16 = 0;
@@ -4306,11 +4298,9 @@ pub unsafe fn Ridley_Func_93(j: u16, k: u16, game: &mut Game) {
         src = src.offset(1);
     }
 }
-pub unsafe fn Ridley_Func_94(game: &mut Game) {
-    Ridley_Func_D3DC(0u16, game);
-}
-pub unsafe fn Ridley_Func_95(game: &mut Game) {
-    Ridley_Func_D3DC(0x8000u16, game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Ridley_Func_94 => Ridley_Func_D3DC(0u16, game);
+    Ridley_Func_95 => Ridley_Func_D3DC(0x8000u16, game);
 }
 pub unsafe fn Ridley_Func_D3DC(a: u16, game: &mut Game) {
     set_ram_word!(game.tilemap_stuff[16] = a);
@@ -5040,11 +5030,9 @@ pub unsafe fn Ridley_Func_124(rect: Rect16U, game: &mut Game) -> u8 {
     }
     0u8
 }
-pub unsafe fn sub_A6DF59(game: &mut Game) {
-    NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
-}
-pub unsafe fn sub_A6DF60(game: &mut Game) {
-    Ridley_Func_125(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    sub_A6DF59 => NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+    sub_A6DF60 => Ridley_Func_125(game);
 }
 pub unsafe fn Ridley_Func_125(game: &mut Game) {
     Ridley_Func_98(game);
@@ -5297,11 +5285,9 @@ pub unsafe fn Ridley_Instr_11(k: u16, jp: *const u16, game: &mut Game) -> *const
     (*E).ridley_var_1A = Math_MultByCos(0x500u16, r18);
     jp
 }
-pub unsafe fn Ridley_Instr_12(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Ridley_E90C(k, jp, 0u16, game)
-}
-pub unsafe fn Ridley_Instr_13(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Ridley_E90C(k, jp, 0xeu16, game)
+crate::forward_calls! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    Ridley_Instr_12 => Ridley_E90C(k, jp, 0u16, game);
+    Ridley_Instr_13 => Ridley_E90C(k, jp, 0xeu16, game);
 }
 pub unsafe fn Ridley_E90C(k: u16, jp: *const u16, a: u16, game: &mut Game) -> *const u16 {
     set_ram_word!(game.cinematic_var9 = a);
@@ -5513,11 +5499,9 @@ pub unsafe fn CeresDoor_Main(game: &mut Game) {
     let E: *mut Enemy_CeresDoor = Get_CeresDoor(ram_word!(game, cur_enemy_index) as i32, game);
     CallCeresDoor((((*E).cdr_var_A) as u32) | (0xa60000u32), game);
 }
-pub unsafe fn CeresDoor_Func_2(game: &mut Game) {
-    CeresDoor_F773(0x14u16, game);
-}
-pub unsafe fn CeresDoor_Func_3(game: &mut Game) {
-    CeresDoor_F773(0x1du16, game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    CeresDoor_Func_2 => CeresDoor_F773(0x14u16, game);
+    CeresDoor_Func_3 => CeresDoor_F773(0x1du16, game);
 }
 pub unsafe fn CeresDoor_F773(j: u16, game: &mut Game) {
     if ram_word!(game, ceres_status) >= 2u16 && ram_word!(game, earthquake_timer) == 0 {

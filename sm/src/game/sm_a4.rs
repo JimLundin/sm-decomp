@@ -83,17 +83,11 @@ static g_word_A4869E: u16 = 3u16;
 static g_word_A486A0: u16 = 8u16;
 static g_word_A486A2: u16 = 0x300u16;
 static g_word_A486A4: u16 = 0x640u16;
-pub unsafe fn Enemy_GrappleReact_SamusLatchesOn_A4(game: &mut Game) {
-    SamusLatchesOnWithGrapple(game);
-}
-pub unsafe fn Enemy_NormalTouchAI_A4(game: &mut Game) {
-    NormalEnemyTouchAi(game);
-}
-pub unsafe fn Enemy_NormalShotAI_A4(game: &mut Game) {
-    NormalEnemyShotAi(game);
-}
-pub unsafe fn Enemy_NormalFrozenAI_A4(game: &mut Game) {
-    NormalEnemyFrozenAI(game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
+    Enemy_GrappleReact_SamusLatchesOn_A4 => SamusLatchesOnWithGrapple(game);
+    Enemy_NormalTouchAI_A4 => NormalEnemyTouchAi(game);
+    Enemy_NormalShotAI_A4 => NormalEnemyShotAi(game);
+    Enemy_NormalFrozenAI_A4 => NormalEnemyFrozenAI(game);
 }
 pub unsafe fn Crocomire_Hurt(game: &mut Game) {
     Crocomire_Func_27(ram_word!(game, cur_enemy_index), game);
@@ -1721,44 +1715,20 @@ pub unsafe fn Crocomire_Func_73(game: &mut Game) {
         Crocomire_9BB3(game);
     }
 }
-pub unsafe fn Crocomire_Instr_8(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Crocomire_Func_87(jp, 0xffe0u16, game)
-}
-pub unsafe fn Crocomire_Instr_6(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Crocomire_Func_87(jp, 0u16, game)
-}
-pub unsafe fn Crocomire_Instr_9(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Crocomire_Func_87(jp, 0xfff0u16, game)
-}
-pub unsafe fn Crocomire_Instr_5(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Crocomire_Func_87(jp, 0x10u16, game)
-}
-pub unsafe fn Crocomire_Instr_20(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Crocomire_Func_87(jp, 0u16, game)
-}
-pub unsafe fn Crocomire_Instr_21(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Crocomire_Func_87(jp, 8u16, game)
-}
-pub unsafe fn Crocomire_Instr_22(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Crocomire_Func_87(jp, 0x10u16, game)
-}
-pub unsafe fn Crocomire_Instr_23(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Crocomire_Func_87(jp, 0x18u16, game)
-}
-pub unsafe fn Crocomire_Instr_24(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Crocomire_Func_87(jp, 0x20u16, game)
-}
-pub unsafe fn Crocomire_Instr_10(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Crocomire_Func_87(jp, 0x28u16, game)
-}
-pub unsafe fn Crocomire_Instr_25(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Crocomire_Func_87(jp, 0x30u16, game)
-}
-pub unsafe fn Crocomire_Instr_26(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Crocomire_Func_87(jp, 0x38u16, game)
-}
-pub unsafe fn Crocomire_Instr_27(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    Crocomire_Func_87(jp, 0x40u16, game)
+crate::forward_calls! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+    Crocomire_Instr_8 => Crocomire_Func_87(jp, 0xffe0u16, game);
+    Crocomire_Instr_6 => Crocomire_Func_87(jp, 0u16, game);
+    Crocomire_Instr_9 => Crocomire_Func_87(jp, 0xfff0u16, game);
+    Crocomire_Instr_5 => Crocomire_Func_87(jp, 0x10u16, game);
+    Crocomire_Instr_20 => Crocomire_Func_87(jp, 0u16, game);
+    Crocomire_Instr_21 => Crocomire_Func_87(jp, 8u16, game);
+    Crocomire_Instr_22 => Crocomire_Func_87(jp, 0x10u16, game);
+    Crocomire_Instr_23 => Crocomire_Func_87(jp, 0x18u16, game);
+    Crocomire_Instr_24 => Crocomire_Func_87(jp, 0x20u16, game);
+    Crocomire_Instr_10 => Crocomire_Func_87(jp, 0x28u16, game);
+    Crocomire_Instr_25 => Crocomire_Func_87(jp, 0x30u16, game);
+    Crocomire_Instr_26 => Crocomire_Func_87(jp, 0x38u16, game);
+    Crocomire_Instr_27 => Crocomire_Func_87(jp, 0x40u16, game);
 }
 pub unsafe fn Crocomire_Func_87(jp: *const u16, a: u16, game: &mut Game) -> *const u16 {
     let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);

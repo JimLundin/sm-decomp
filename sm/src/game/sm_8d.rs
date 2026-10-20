@@ -160,23 +160,13 @@ pub unsafe fn PalInstr_Wait(k: u16, j: u16, game: &mut Game) -> PairU16 {
         (j).wrapping_add(4u16);
     MakePairU16(0u16, 0u16)
 }
-pub unsafe fn PalInstr_ColorPlus2(k: u16, j: u16) -> PairU16 {
-    MakePairU16((k).wrapping_add(4u16), (j).wrapping_add(2u16))
-}
-pub unsafe fn PalInstr_ColorPlus3(k: u16, j: u16) -> PairU16 {
-    MakePairU16((k).wrapping_add(6u16), (j).wrapping_add(2u16))
-}
-pub unsafe fn PalInstr_ColorPlus4(k: u16, j: u16) -> PairU16 {
-    MakePairU16((k).wrapping_add(8u16), (j).wrapping_add(2u16))
-}
-pub unsafe fn PalInstr_ColorPlus8(k: u16, j: u16) -> PairU16 {
-    MakePairU16((k).wrapping_add(16u16), (j).wrapping_add(2u16))
-}
-pub unsafe fn PalInstr_ColorPlus9(k: u16, j: u16) -> PairU16 {
-    MakePairU16((k).wrapping_add(18u16), (j).wrapping_add(2u16))
-}
-pub unsafe fn PalInstr_ColorPlus15(k: u16, j: u16) -> PairU16 {
-    MakePairU16((k).wrapping_add(30u16), (j).wrapping_add(2u16))
+crate::forward_calls! { pub unsafe fn (k: u16, j: u16) -> PairU16;
+    PalInstr_ColorPlus2 => MakePairU16((k).wrapping_add(4u16), (j).wrapping_add(2u16));
+    PalInstr_ColorPlus3 => MakePairU16((k).wrapping_add(6u16), (j).wrapping_add(2u16));
+    PalInstr_ColorPlus4 => MakePairU16((k).wrapping_add(8u16), (j).wrapping_add(2u16));
+    PalInstr_ColorPlus8 => MakePairU16((k).wrapping_add(16u16), (j).wrapping_add(2u16));
+    PalInstr_ColorPlus9 => MakePairU16((k).wrapping_add(18u16), (j).wrapping_add(2u16));
+    PalInstr_ColorPlus15 => MakePairU16((k).wrapping_add(30u16), (j).wrapping_add(2u16));
 }
 pub unsafe fn PalInstr_Delete(k: u16, j: u16, game: &mut Game) -> PairU16 {
     set_ram_word!(game.palettefx_ids[(k as i32 >> 1i32)] = 0u16);
