@@ -2728,7 +2728,37 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `ebfc9250` converts 55 literal
+Latest reviewed integration (2026-10-20): `6a050845` shares 220 adjacent
+literal field-store runs, comprising 559 assignments across 24 callers and
+23 literal spellings. Independent discovery from the final baseline AST
+finds exactly those runs. Complete source projection matches all 1184694
+tokens outside the separately checked helper/import additions, including
+comments, field names, literal spellings and punctuation. All 74 committed
+inputs bind to the frozen source pins after Git line-ending normalization.
+
+The helper repeats each receiver at its original assignment statement and
+emits the literal separately for each field, retaining contextual inference
+for unsuffixed values. Field order, duplicate evaluations and statement
+boundaries remain exact; no cached receiver/value, runtime loop, allocation
+or broader borrow is introduced. Every final ordered receiver/field/literal
+run matches the prepared candidate's invariant. This binds the existing core
+and frontend expansion proof to the final loop/initializer composition.
+
+Independent comparison of those actual compiler outputs is byte-exact after
+removing only the added helper/comment/re-export and 22 core or 24 frontend
+imports: 10231806 and 10528756 bytes respectively. No original whitespace,
+literal, parenthesis or punctuation is normalized. The complete final source
+projection and normal build establish the final composition separately.
+
+Formatting/check, normal release (19.90s wall/19.86s cargo), progress and
+full any% pass: 129712/0, native exit 0, 113.97s wall/111.75s replay. Review
+reused the completed build/replay; all 97 final and 92 prepared-candidate
+pins remain stable. Rust lines fall 304 to 130888; all other progress
+counters remain unchanged. The movie covers six rooms and three enemy
+definitions with no ending/credits frames. Broader gameplay, frontend,
+hardware/audio coverage and alias safety remain open.
+
+Included `ebfc9250` converts 55 literal
 counted loops and `635b8d6f` moves 702 local declarations to first assignment.
 All 77 committed inputs at each stage match the frozen loop and final trees.
 Independent reconstruction matches all 1186054 final source tokens and
