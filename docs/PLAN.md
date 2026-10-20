@@ -88,7 +88,7 @@ complete behavior is represented, rather than repeat those searches.
 
 ## Work order
 
-1. [ ] **Price a complete Samus movement/pose replacement.** Start with
+1. [x] **Price a complete Samus movement/pose replacement.** Start with
    Samus_MovementHandler_Normal and its movement table in 90, then follow
    Samus_InputHandler, Samus_HandleTransitions and block-collision transitions
    in 91 into the movement/collision routines in 94. Include state entry,
@@ -114,6 +114,16 @@ complete behavior is represented, rather than repeat those searches.
    If it only yields another small extraction, record the reason in one short
    paragraph and advance to item 2. Do not spend an iteration landing its
    incidental small cleanups. If stuck for an hour, record findings and stop.
+
+   Pilot decision: reject this representation and advance to item 2. Consolidated
+   domain functions remove **77 formatted lines**; ordinary typed profiles remove
+   **71**, including all helpers, declarations and callers. Both compile across
+   all frontend targets. The pilots cover all 28 input states and the morph/spring
+   ball entry, grounded movement, landing, bounce and equipment-refresh lifecycle.
+   Jump/fall/spin, grapple, knockback and bank-94 collision paths retain their
+   existing algorithms and phase boundaries. No full replacement or 1,000-line
+   budget was established; no oracle execution or landed savings are claimed.
+   Drafts and exact counts: TEMP sm-bindings-root-9c4daf2f/samus-cycle/REPORT.md.
 
 2. [ ] **Compare the remaining large subsystem replacements.** Inspect in
    this order, using the same complete-replacement test as item 1:
@@ -181,6 +191,10 @@ may overlap landed work and are not a current reduction budget.
 - Shared layouts, RAM/word/byte access, callback declarations, dispatch,
   exact aliases, graphics/word transfers, corpse tile traversal and audited
   unused-code removal are already harvested. Count only further net deletion.
+- A revalidated unused-declaration draft removes 336 formatted lines: 587
+  import bindings and five unreferenced Bang helpers. Static/compiler/release
+  checks pass; hold it for item 4, outside the active volume budget. Local draft:
+  TEMP sm-bindings-root-9c4daf2f/unused/.
 - Renderer unification and PNG library substitution remain parked: previously
   assessed alternatives did not preserve the existing contracts.
 
@@ -305,9 +319,9 @@ Rust lines 112265. The working tree at this review also contains an unrelated
 83-line shader reduction, so `sh tools/progress.sh` reports **112182**. That
 uncommitted draft is excluded from the committed baseline and budget.
 
-This strategy review changes documentation only. Inventory and Git-history
-counts, exact preservation of the validation strategy, local links and incoming
-README anchors, diff check and progress pass. No gameplay replay was required
-or run. Maintained Rust and its progress counters are unchanged by this review.
+The Samus pilot decision changes documentation only. Both formatted pilots pass
+all-target release compiler checks; no gameplay validation is claimed. Diff and
+progress checks pass. Maintained Rust and its counters remain unchanged; the
+active work is now item 2, beginning with enemy/projectile lifecycles.
 
 Historical details before this reset remain in **ec45c573:docs/PLAN.md**.
