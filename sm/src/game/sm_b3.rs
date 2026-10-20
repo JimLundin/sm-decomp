@@ -188,8 +188,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_1(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarPipeBug_PreInstr_2(k: u16, game: &mut Game) {
-    let mut SamusEnemyDelta_Y: i16 = 0;
-    SamusEnemyDelta_Y = GetSamusEnemyDelta_Y(k, game) as i16;
+    let mut SamusEnemyDelta_Y: i16 = GetSamusEnemyDelta_Y(k, game) as i16;
     if SamusEnemyDelta_Y < 0i16 && SamusEnemyDelta_Y as i32 + 96i32 & 0x8000i32 == 0 {
         let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as i32, game);
         let a: u16 = GetSamusEnemyDelta_X(k, game);
@@ -549,15 +548,14 @@ pub unsafe fn BrinstarYellowPipeBug_Main(game: &mut Game) {
     );
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_1(game: &mut Game) {
-    let mut v2: i16 = 0;
-    let mut SamusEnemyDelta_X: i16 = 0;
     let E: *mut Enemy_PipeBug = Get_PipeBug(ram_word!(game, cur_enemy_index) as i32, game);
 
     let samus_in_x_range: bool = if (*E).pbg_parameter_1 != 0 {
-        SamusEnemyDelta_X = GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as i16;
+        let mut SamusEnemyDelta_X: i16 =
+            GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as i16;
         (SamusEnemyDelta_X < 0i16 && SamusEnemyDelta_X as i32 + 192i32 & 0x8000i32 == 0)
     } else {
-        v2 = GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as i16;
+        let mut v2: i16 = GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as i16;
         (v2 >= 0i16 && v2 as i32 - 192i32 & 0x8000i32 != 0)
     };
     if samus_in_x_range
@@ -821,7 +819,6 @@ pub unsafe fn Botwoon_Init(game: &mut Game) {
     } else {
         let v3: u16 = 24u16;
         (*E).botwoon_var_A = 24u16;
-        let mut v5: bool = false;
         loop {
             SpawnEprojWithGfx(
                 v3,
@@ -830,7 +827,7 @@ pub unsafe fn Botwoon_Init(game: &mut Game) {
                 game,
             );
             (*E).botwoon_var_A = (*E).botwoon_var_A.wrapping_sub(1);
-            v5 = (((*E).botwoon_var_A) as i16).wrapping_sub(1i16) < 0i16;
+            let mut v5: bool = (((*E).botwoon_var_A) as i16).wrapping_sub(1i16) < 0i16;
             (*E).botwoon_var_A = (*E).botwoon_var_A.wrapping_sub(1);
             if v5 {
                 break;
@@ -1034,11 +1031,10 @@ pub unsafe fn Botwoon_Func_10(k: u16, game: &mut Game) {
         + 4i32 * (*E).botwoon_var_37 as i32) as u16;
 }
 pub unsafe fn Botwoon_Func_11(k: u16, game: &mut Game) {
-    let mut health: i16 = 0;
     let E: *mut Enemy_Botwoon = Get_Botwoon(k as i32, game);
     if (*E).botwoon_var_33 == 0 {
         (*E).botwoon_var_3F = 0u16;
-        health = (*E).base.health as i16;
+        let mut health: i16 = (*E).base.health as i16;
         if health > 0i16 && (health).wrapping_sub(((*E).botwoon_var_5C) as i16) < 0i16 {
             if (health).wrapping_sub(((*E).botwoon_var_5D) as i16) < 0i16 {
                 (*E).botwoon_var_3F = 2u16;
@@ -1070,7 +1066,6 @@ pub unsafe fn Botwoon_Func_12(game: &mut Game) {
     };
 }
 pub unsafe fn Botwoon_Func_13(game: &mut Game) {
-    let mut v3: u16 = 0;
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).botwoon_var_21 != 0 {
         (*E).botwoon_var_2E = 0u16;
@@ -1081,7 +1076,7 @@ pub unsafe fn Botwoon_Func_13(game: &mut Game) {
         (*E).botwoon_var_E = ((0xb3e250i32) as u16);
         (*E).botwoon_var_F = ((0xb39dc0i32) as u16);
         if (*E).botwoon_var_2F != 0u16 || {
-            v3 = (NextRandom(game)) & (1u16);
+            let mut v3: u16 = (NextRandom(game)) & (1u16);
             (*E).botwoon_var_33 = v3;
             (*E).botwoon_var_34 = v3;
             (*E).botwoon_var_34 == 0u16

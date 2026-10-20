@@ -1231,10 +1231,9 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
             let varE36: u16 = ram_word!(game, enemy_drawing_queue_sizes[phase_varE32]);
             let varE3A: u16 = crate::rtl::rom_table_word!(game, 0xa0b133, phase_varE32 as isize);
             let mut v1: u16 = 0u16;
-            let mut varE38: u16 = 0;
             set_ram_word!(game.enemy_drawing_queue_sizes[phase_varE32] = 0u16);
             loop {
-                varE38 = v1;
+                let mut varE38: u16 = v1;
                 let v2: *mut u8 = RomPtr_RAM((varE3A).wrapping_add(v1), game);
                 let v3: u16 = *(v2 as *mut u16);
                 *(v2 as *mut u16) = 0u16;
@@ -1251,10 +1250,8 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
     CallEnemyGfxDrawHook(Load24(ram_ptr!(game, LongPtr; 0x178c)), game);
 }
 pub unsafe fn RecordEnemySpawnData(j: u16, game: &mut Game) {
-    let mut v2: *mut EnemySpawnData = null_mut::<EnemySpawnData>();
-    let mut v5: *mut EnemySpawnData = null_mut::<EnemySpawnData>();
     let v1: *mut EnemyData = gEnemyData(j as i32, game);
-    v2 = gEnemySpawnData(j as i32, game);
+    let mut v2: *mut EnemySpawnData = gEnemySpawnData(j as i32, game);
     (*v2).id = (*v1).enemy_ptr;
     (*v2).x_pos = (*v1).x_pos;
     (*v2).y_pos = (*v1).y_pos;
@@ -1279,7 +1276,7 @@ pub unsafe fn RecordEnemySpawnData(j: u16, game: &mut Game) {
         R26 = *v4.offset(4);
         R28 = *v4.offset(6);
     }
-    v5 = gEnemySpawnData(j as i32, game);
+    let mut v5: *mut EnemySpawnData = gEnemySpawnData(j as i32, game);
     *(&raw mut (*v5).name as *mut u8 as *mut u16) = r18;
     *((&raw mut (*v5).name as *mut u8).offset(2) as *mut u16) = r20;
     *((&raw mut (*v5).name as *mut u8).offset(4) as *mut u16) = r22;
@@ -2246,9 +2243,6 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn EnemyMain(game: &mut Game) {
-    let mut ED: *mut EnemyDef = null_mut::<EnemyDef>();
-    let mut v6: i16 = 0;
-    let mut v8: i8 = 0;
     if ram_word!(game, first_free_enemy_index) != 0 {
         if ram_word!(game, enemy_index_to_shake) != 0xffffu16 {
             (*gEnemyData(ram_word!(game, enemy_index_to_shake) as i32, game)).shake_timer = 64u16;
@@ -2306,12 +2300,12 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                     | ram_word!(game, time_is_frozen_flag) as i32
                     == 0
                 {
-                    v6 = 0i16;
+                    let mut v6: i16 = 0i16;
                     let mut ai_handler_bits: u16 = (*E).ai_handler_bits;
                     if ai_handler_bits != 0 {
                         loop {
                             v6 += 1;
-                            v8 = ((ai_handler_bits) as i8) & (1i8);
+                            let mut v8: i8 = ((ai_handler_bits) as i8) & (1i8);
                             ai_handler_bits = (ai_handler_bits as i32 >> 1i32) as u16;
                             if (v8 != 0) {
                                 break;
@@ -2329,7 +2323,7 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                     );
                     current_block_39 = 5447921980315815038;
                 } else {
-                    ED = get_EnemyDef_A2((*E).enemy_ptr, game);
+                    let mut ED: *mut EnemyDef = get_EnemyDef_A2((*E).enemy_ptr, game);
                     if (*ED).time_is_frozen_ai != 0 {
                         CallEnemyAi(
                             (((*E).bank as i32) << 16i32 | (*ED).time_is_frozen_ai as i32) as u32,
@@ -3147,7 +3141,6 @@ pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
     }
 }
 pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
-    let mut grapple_ai: VoidP = 0;
     let mut E: *mut EnemyData = null_mut::<EnemyData>();
     CallSomeSamusCode(0xdu16, game);
     set_ram_word!(game.collision_detection_index = 0u16);
@@ -3177,7 +3170,7 @@ pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
     (*E).ai_handler_bits = 1u16;
     let mut v0: u16 = 0u16;
     let enemy_ptr: u16 = (*E).enemy_ptr;
-    grapple_ai = (*get_EnemyDef_A2((*E).enemy_ptr, game)).grapple_ai;
+    let mut grapple_ai: VoidP = (*get_EnemyDef_A2((*E).enemy_ptr, game)).grapple_ai;
     if grapple_ai as i32 != 0xa08000i32 & 0xffffi32 {
         v0 = 1u16;
         if grapple_ai as i32 != 0xa08005i32 & 0xffffi32 {
@@ -3565,8 +3558,6 @@ pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game: &mut Game) {
     NormalEnemyPowerBombAiSkipDeathAnim(game);
 }
 pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim(game: &mut Game) {
-    let mut EnemyDef_A2: *mut EnemyDef = null_mut::<EnemyDef>();
-    let mut hurt_ai_time: i16 = 0;
     let v0: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     let mut vulnerability_ptr: u16 = (*get_EnemyDef_A2((*v0).enemy_ptr, game)).vulnerability_ptr;
     if vulnerability_ptr == 0 {
@@ -3581,8 +3572,8 @@ pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim(game: &mut Game) {
                 (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).invincibility_timer =
                     48u16;
                 let j: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-                EnemyDef_A2 = get_EnemyDef_A2((*j).enemy_ptr, game);
-                hurt_ai_time = (*EnemyDef_A2).hurt_ai_time as i16;
+                let mut EnemyDef_A2: *mut EnemyDef = get_EnemyDef_A2((*j).enemy_ptr, game);
+                let mut hurt_ai_time: i16 = (*EnemyDef_A2).hurt_ai_time as i16;
                 if (*EnemyDef_A2).hurt_ai_time == 0 {
                     hurt_ai_time = 4i16;
                 }
@@ -3637,16 +3628,8 @@ pub unsafe fn EnemyFunc_A6B4_UsedBySporeSpawn(game: &mut Game) {
     }
 }
 pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
-    let mut ttt: u32 = 0;
-    let mut r42: u16 = 0;
     let apply_damage: bool;
     let mut varE2E: u16 = 0u16;
-    let mut v5: i16 = 0;
-    let mut v6: i16 = 0;
-    let mut v9: i16 = 0;
-    let mut EnemyDef_A2: *mut EnemyDef = null_mut::<EnemyDef>();
-    let mut hurt_ai_time: i16 = 0;
-    let mut v20: i16 = 0;
     let mut varE32: u16 = 0;
     let v0: i32 = ram_word!(game, collision_detection_index) as i32;
     let mut pd: u16 = ram_word!(game, projectile_damage[v0]);
@@ -3658,9 +3641,9 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
     }
     let r20: u16 = vulnerability_ptr;
     if (r18 as i32 & 0xf00i32) != 0i32 {
-        v5 = ((r18) as i16) & (0xf00i16);
+        let mut v5: i16 = ((r18) as i16) & (0xf00i16);
         apply_damage = if (r18 as i32 & 0xf00i32) == 256i32 || v5 == 512i16 {
-            v6 = ((r18 as i32 & 0xf00i32) >> 8i32) as i16;
+            let mut v6: i16 = ((r18 as i32 & 0xf00i32) >> 8i32) as i16;
             varE32 = (((*get_Vulnerability((r20).wrapping_add((v6) as u16), game)).plasma_ice_wave)
                 as u16)
                 & (0x7fu16);
@@ -3701,7 +3684,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
             if (*v8).frozen_timer == 0 {
                 QueueSfx3_Max3(0xau16, game);
             }
-            v9 = 400i16;
+            let mut v9: i16 = 400i16;
             if ram_word!(game, area_index) == 2u16 {
                 v9 = 300i16;
             }
@@ -3712,13 +3695,13 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
         }
     }
     if apply_damage {
-        ttt = ((pd as i32 >> 1i32) as u32).wrapping_mul(varE32 as u32);
-        r42 = ttt as u16;
+        let mut ttt: u32 = ((pd as i32 >> 1i32) as u32).wrapping_mul(varE32 as u32);
+        let mut r42: u16 = ttt as u16;
         if r42 != 0 {
             pd = r42;
             let v10: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-            EnemyDef_A2 = get_EnemyDef_A2((*v10).enemy_ptr, game);
-            hurt_ai_time = (*EnemyDef_A2).hurt_ai_time as i16;
+            let mut EnemyDef_A2: *mut EnemyDef = get_EnemyDef_A2((*v10).enemy_ptr, game);
+            let mut hurt_ai_time: i16 = (*EnemyDef_A2).hurt_ai_time as i16;
             if (*EnemyDef_A2).hurt_ai_time == 0 {
                 hurt_ai_time = 4i16;
             }
@@ -3758,7 +3741,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
                     && (ram_word!(game, last_enemy_power) as i32 & 0xf0i32) != 128i32
                     && (*v16).frozen_timer == 0
                 {
-                    v20 = 400i16;
+                    let mut v20: i16 = 400i16;
                     if ram_word!(game, area_index) == 2u16 {
                         v20 = 300i16;
                     }

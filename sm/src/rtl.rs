@@ -673,12 +673,11 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                     ((*sr).last_inputs as i32 ^ (1i32) << ((*sr).replay_cmd as i32 >> 4i32)) as u16;
             } else if ((*sr).replay_cmd as i32) < 0xd0i32 {
                 let mut nb: i32 = 1i32 + ((*sr).replay_cmd as i32 >> 2i32 & 3i32);
-                let mut t: u8 = 0;
                 if nb == 4i32 {
                     loop {
                         let fresh3 = replay_pos;
                         replay_pos = replay_pos + 1;
-                        t = *(*sr).log.data.offset(fresh3 as isize);
+                        let mut t: u8 = *(*sr).log.data.offset(fresh3 as isize);
                         nb += t as i32;
                         if (t as i32 != 255i32) {
                             break;
@@ -729,7 +728,6 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
             let fresh7 = replay_pos;
             replay_pos = replay_pos + 1;
             let cmd: u8 = *(*sr).log.data.offset(fresh7 as isize);
-            let mut t_0: u8 = 0;
             let mask: i32 = if (cmd as i32) < 0xc0i32 {
                 0xfi32
             } else {
@@ -740,7 +738,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                 loop {
                     let fresh8 = replay_pos;
                     replay_pos = replay_pos + 1;
-                    t_0 = *(*sr).log.data.offset(fresh8 as isize);
+                    let mut t_0: u8 = *(*sr).log.data.offset(fresh8 as isize);
                     frames += t_0 as i32;
                     if (t_0 as i32 != 255i32) {
                         break;

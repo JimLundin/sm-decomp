@@ -45,7 +45,6 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn HandleSpriteObjects(game: &mut Game) {
-    let mut v1: u16 = 0;
     if ram_word!(game, debug_time_frozen_for_enemies) as i32
         | ram_word!(game, time_is_frozen_flag) as i32
         != 0
@@ -55,12 +54,11 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
     set_ram_word!(game.sprite_object_index = 62u16);
     let mut skip_instruction: bool;
     loop {
-        let mut v0: i32 = 0;
-        v0 = ram_word!(game, sprite_object_index) as i32 >> 1i32;
+        let mut v0: i32 = ram_word!(game, sprite_object_index) as i32 >> 1i32;
         if !(ram_word!(game, sprite_instr_list_ptrs[v0]) == 0
             || (ram_word!(game, sprite_disable_flag[v0]) as i32 & 1i32) != 0i32)
         {
-            v1 = ram_word!(game, sprite_instr_timer[v0]);
+            let mut v1: u16 = ram_word!(game, sprite_instr_timer[v0]);
             skip_instruction = !(v1 as i32 & 0x8000i32 != 0)
                 && ({
                     set_ram_word!(game.sprite_instr_timer[v0] = (v1).wrapping_sub(1u16));

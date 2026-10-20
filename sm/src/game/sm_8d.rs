@@ -63,7 +63,6 @@ pub unsafe fn ClearPaletteFXObjects(game: &mut Game) {
     }
 }
 pub unsafe fn SpawnPalfxObject(j: u16, game: &mut Game) {
-    let mut PalFxDef: *mut PalFxDef = null_mut::<PalFxDef>();
     let mut v1: u16 = 14u16;
     while ram_word!(game, palettefx_ids[(v1 as i32 >> 1i32)]) != 0 {
         v1 = (v1).wrapping_sub(2u16);
@@ -78,7 +77,7 @@ pub unsafe fn SpawnPalfxObject(j: u16, game: &mut Game) {
     set_ram_word!(game.palettefx_instr_list_ptrs[v2] = (*get_PalFxDef(j, game)).instrs);
     set_ram_word!(game.palettefx_instr_timers[v2] = 1u16);
     set_ram_word!(game.palettefx_timers[v2] = 0u16);
-    PalFxDef = get_PalFxDef(j, game);
+    let mut PalFxDef: *mut PalFxDef = get_PalFxDef(j, game);
     CallPalfxFunc(
         (((*PalFxDef).func) as u32) | (0x8d0000u32),
         -1i32 as u16,
@@ -136,11 +135,10 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
     let v8: i32 = v1 as i32 >> 1i32;
     set_ram_word!(game.palettefx_instr_timers[v8] = v6);
     let mut color_idx: u16 = ram_word!(game, palettefx_color_indexes[v8]);
-    let mut v10: *const u8 = null::<u8>();
     let mut v11: u16 = 0;
     loop {
         loop {
-            v10 = RomPtr_8D(j, game);
+            let mut v10: *const u8 = RomPtr_8D(j, game);
             v11 = *(v10.offset(2) as *mut u16);
             if v11 as i32 & 0x8000i32 != 0 {
                 break;

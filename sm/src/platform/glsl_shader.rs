@@ -266,9 +266,8 @@ unsafe fn stbi__stdio_read(user: *mut c_void, data: *mut c_char, size: i32) -> i
     ) as i32
 }
 unsafe fn stbi__stdio_skip(user: *mut c_void, n: i32) {
-    let mut ch: i32 = 0;
     fseek(user as *mut FILE, n as c_long, SEEK_CUR);
-    ch = fgetc(user as *mut FILE);
+    let mut ch: i32 = fgetc(user as *mut FILE);
     if ch != EOF {
         ungetc(ch, user as *mut FILE);
     }
@@ -379,14 +378,12 @@ unsafe fn stbi__convert_16_to_8(
     h: i32,
     channels: i32,
 ) -> *mut stbi_uc {
-    let mut i: i32 = 0;
     let img_len: i32 = w * h * channels;
-    let mut reduced: *mut stbi_uc = null_mut::<stbi_uc>();
-    reduced = stbi__malloc(img_len as size_t) as *mut stbi_uc;
+    let mut reduced: *mut stbi_uc = stbi__malloc(img_len as size_t) as *mut stbi_uc;
     if reduced.is_null() {
         return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut stbi_uc;
     }
-    i = 0i32;
+    let mut i: i32 = 0i32;
     while i < img_len {
         *reduced.offset(i as isize) =
             (*orig.offset(i as isize) as i32 >> 8i32 & 0xffi32) as stbi_uc;
@@ -401,15 +398,14 @@ unsafe fn stbi__convert_8_to_16(
     h: i32,
     channels: i32,
 ) -> *mut stbi__uint16 {
-    let mut i: i32 = 0;
     let img_len: i32 = w * h * channels;
-    let mut enlarged: *mut stbi__uint16 = null_mut::<stbi__uint16>();
-    enlarged = stbi__malloc((img_len * 2i32) as size_t) as *mut stbi__uint16;
+    let mut enlarged: *mut stbi__uint16 =
+        stbi__malloc((img_len * 2i32) as size_t) as *mut stbi__uint16;
     if enlarged.is_null() {
         return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar
             as *mut stbi__uint16;
     }
-    i = 0i32;
+    let mut i: i32 = 0i32;
     while i < img_len {
         *enlarged.offset(i as isize) = (((*orig.offset(i as isize) as i32) << 8i32)
             + *orig.offset(i as isize) as i32)
@@ -420,11 +416,10 @@ unsafe fn stbi__convert_8_to_16(
     enlarged
 }
 unsafe fn stbi__vertical_flip(image: *mut c_void, w: i32, h: i32, bytes_per_pixel: i32) {
-    let mut row: i32 = 0;
     let bytes_per_row: size_t = (w as size_t).wrapping_mul(bytes_per_pixel as size_t);
     let mut temp: [stbi_uc; 2048] = [0; 2048];
     let bytes: *mut stbi_uc = image as *mut stbi_uc;
-    row = 0i32;
+    let mut row: i32 = 0i32;
     while row < h >> 1i32 {
         let mut row0: *mut stbi_uc =
             bytes.offset((row as size_t).wrapping_mul(bytes_per_row) as isize);
@@ -556,8 +551,7 @@ unsafe fn stbi__load_and_postprocess_16bit(
     result as *mut stbi__uint16
 }
 unsafe fn stbi__fopen(filename: *const c_char, mode: *const c_char) -> *mut FILE {
-    let mut f: *mut FILE = null_mut::<FILE>();
-    f = fopen(filename, mode) as *mut FILE;
+    let mut f: *mut FILE = fopen(filename, mode) as *mut FILE;
     f
 }
 pub unsafe fn stbi_load(
@@ -568,11 +562,10 @@ pub unsafe fn stbi_load(
     req_comp: i32,
 ) -> *mut stbi_uc {
     let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
-    let mut result: *mut c_uchar = null_mut::<c_uchar>();
     if f.is_null() {
         return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut stbi_uc;
     }
-    result = stbi_load_from_file(f, x, y, comp, req_comp) as *mut c_uchar;
+    let mut result: *mut c_uchar = stbi_load_from_file(f, x, y, comp, req_comp) as *mut c_uchar;
     fclose(f);
     result as *mut stbi_uc
 }
@@ -624,11 +617,11 @@ pub unsafe fn stbi_load_16(
     req_comp: i32,
 ) -> *mut stbi_us {
     let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
-    let mut result: *mut stbi__uint16 = null_mut::<stbi__uint16>();
     if f.is_null() {
         return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar as *mut stbi_us;
     }
-    result = stbi_load_from_file_16(f, x, y, comp, req_comp) as *mut stbi__uint16;
+    let mut result: *mut stbi__uint16 =
+        stbi_load_from_file_16(f, x, y, comp, req_comp) as *mut stbi__uint16;
     fclose(f);
     result as *mut stbi_us
 }
@@ -689,8 +682,7 @@ unsafe fn stbi__loadf_main(
     comp: *mut i32,
     req_comp: i32,
 ) -> *mut c_float {
-    let mut data: *mut c_uchar = null_mut::<c_uchar>();
-    data = stbi__load_and_postprocess_8bit(s, x, y, comp, req_comp);
+    let mut data: *mut c_uchar = stbi__load_and_postprocess_8bit(s, x, y, comp, req_comp);
     if !data.is_null() {
         return stbi__ldr_to_hdr(
             data as *mut stbi_uc,
@@ -732,12 +724,11 @@ pub unsafe fn stbi_loadf(
     comp: *mut i32,
     req_comp: i32,
 ) -> *mut c_float {
-    let mut result: *mut c_float = null_mut::<c_float>();
     let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
     if f.is_null() {
         return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_float;
     }
-    result = stbi_loadf_from_file(f, x, y, comp, req_comp);
+    let mut result: *mut c_float = stbi_loadf_from_file(f, x, y, comp, req_comp);
     fclose(f);
     result
 }
@@ -840,19 +831,17 @@ unsafe fn stbi__getn(s: *mut stbi__context, buffer: *mut stbi_uc, n: i32) -> i32
     if (*s).io.read.is_some() {
         let blen: i32 = (*s).img_buffer_end.offset_from((*s).img_buffer) as c_long as i32;
         if blen < n {
-            let mut res: i32 = 0;
-            let mut count: i32 = 0;
             memcpy(
                 buffer as *mut c_void,
                 (*s).img_buffer as *const c_void,
                 blen as size_t,
             );
-            count = (*s).io.read.expect("non-null function pointer")(
+            let mut count: i32 = (*s).io.read.expect("non-null function pointer")(
                 (*s).io_user_data,
                 (buffer as *mut c_char).offset(blen as isize),
                 n - blen,
             );
-            res = (count == n - blen) as i32;
+            let mut res: i32 = (count == n - blen) as i32;
             (*s).img_buffer = (*s).img_buffer_end;
             return res;
         }
@@ -1000,7 +989,6 @@ unsafe fn stbi__convert_format(
     x: u32,
     y: u32,
 ) -> *mut c_uchar {
-    let mut good: *mut c_uchar = null_mut::<c_uchar>();
     if req_comp == img_n {
         return data;
     }
@@ -1018,7 +1006,8 @@ unsafe fn stbi__convert_format(
             );
         }
     };
-    good = stbi__malloc_mad3(req_comp, x as i32, y as i32, 0i32) as *mut c_uchar;
+    let mut good: *mut c_uchar =
+        stbi__malloc_mad3(req_comp, x as i32, y as i32, 0i32) as *mut c_uchar;
     if good.is_null() {
         free(data as *mut c_void);
         return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar;
@@ -1048,7 +1037,6 @@ unsafe fn stbi__convert_format16(
     x: u32,
     y: u32,
 ) -> *mut stbi__uint16 {
-    let mut good: *mut stbi__uint16 = null_mut::<stbi__uint16>();
     if req_comp == img_n {
         return data;
     }
@@ -1066,7 +1054,7 @@ unsafe fn stbi__convert_format16(
             );
         }
     };
-    good = stbi__malloc(
+    let mut good: *mut stbi__uint16 = stbi__malloc(
         (req_comp as u32)
             .wrapping_mul(x)
             .wrapping_mul(y)
@@ -1097,14 +1085,12 @@ unsafe fn stbi__convert_format16(
     good
 }
 unsafe fn stbi__ldr_to_hdr(data: *mut stbi_uc, x: i32, y: i32, comp: i32) -> *mut c_float {
-    let mut i: i32 = 0;
-    let mut k: i32 = 0;
     let mut n: i32 = 0;
-    let mut output: *mut c_float = null_mut::<c_float>();
     if data.is_null() {
         return null_mut::<c_float>();
     }
-    output = stbi__malloc_mad4(x, y, comp, size_of::<c_float>() as i32, 0i32) as *mut c_float;
+    let mut output: *mut c_float =
+        stbi__malloc_mad4(x, y, comp, size_of::<c_float>() as i32, 0i32) as *mut c_float;
     if output.is_null() {
         free(data as *mut c_void);
         return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_float;
@@ -1114,9 +1100,9 @@ unsafe fn stbi__ldr_to_hdr(data: *mut stbi_uc, x: i32, y: i32, comp: i32) -> *mu
     } else {
         n = comp - 1i32;
     }
-    i = 0i32;
+    let mut i: i32 = 0i32;
     while i < x * y {
-        k = 0i32;
+        let mut k: i32 = 0i32;
         while k < n {
             *output.offset((i * comp + k) as isize) = (pow(
                 (*data.offset((i * comp + k) as isize) as i32 as c_float / 255.0f32) as c_double,
@@ -1163,9 +1149,7 @@ unsafe fn stbi__bit_reverse(v: i32, bits: i32) -> i32 {
     stbi__bitreverse16(v) >> 16i32 - bits
 }
 unsafe fn stbi__zbuild_huffman(z: *mut stbi__zhuffman, sizelist: *const stbi_uc, num: i32) -> i32 {
-    let mut i: i32 = 0;
     let mut k: i32 = 0i32;
-    let mut code: i32 = 0;
     let mut next_code: [i32; 16] = [0; 16];
     let mut sizes: [i32; 17] = [0; 17];
     memset(
@@ -1178,7 +1162,7 @@ unsafe fn stbi__zbuild_huffman(z: *mut stbi__zhuffman, sizelist: *const stbi_uc,
         0i32,
         size_of::<[stbi__uint16; 512]>() as size_t,
     );
-    i = 0i32;
+    let mut i: i32 = 0i32;
     while i < num {
         sizes[*sizelist.offset(i as isize) as usize] += 1;
         i += 1;
@@ -1191,7 +1175,7 @@ unsafe fn stbi__zbuild_huffman(z: *mut stbi__zhuffman, sizelist: *const stbi_uc,
         }
         i += 1;
     }
-    code = 0i32;
+    let mut code: i32 = 0i32;
     i = 1i32;
     while i < 16i32 {
         next_code[i as usize] = code;
@@ -1256,28 +1240,25 @@ unsafe fn stbi__fill_bits(z: *mut stbi__zbuf) {
     }
 }
 unsafe fn stbi__zreceive(z: *mut stbi__zbuf, n: i32) -> u32 {
-    let mut k: u32 = 0;
     if (*z).num_bits < n {
         stbi__fill_bits(z);
     }
-    k = ((*z).code_buffer & (((1i32) << n) - 1i32) as stbi__uint32);
+    let mut k: u32 = ((*z).code_buffer & (((1i32) << n) - 1i32) as stbi__uint32);
     (*z).code_buffer >>= n;
     (*z).num_bits -= n;
     k
 }
 unsafe fn stbi__zhuffman_decode_slowpath(a: *mut stbi__zbuf, z: *mut stbi__zhuffman) -> i32 {
-    let mut b: i32 = 0;
-    let mut s: i32 = 0;
-    let mut k: i32 = 0;
-    k = stbi__bit_reverse((*a).code_buffer as i32, 16i32);
-    s = STBI__ZFAST_BITS + 1i32;
+    let mut k: i32 = stbi__bit_reverse((*a).code_buffer as i32, 16i32);
+    let mut s: i32 = STBI__ZFAST_BITS + 1i32;
     while (k >= (*z).maxcode[s as usize]) {
         s += 1;
     }
     if s >= 16i32 {
         return -1i32;
     }
-    b = (k >> 16i32 - s) - (*z).firstcode[s as usize] as i32 + (*z).firstsymbol[s as usize] as i32;
+    let mut b: i32 =
+        (k >> 16i32 - s) - (*z).firstcode[s as usize] as i32 + (*z).firstsymbol[s as usize] as i32;
     if b >= STBI__ZNSYMS {
         return -1i32;
     }
@@ -1289,17 +1270,16 @@ unsafe fn stbi__zhuffman_decode_slowpath(a: *mut stbi__zbuf, z: *mut stbi__zhuff
     (*z).value[b as usize] as i32
 }
 unsafe fn stbi__zhuffman_decode(a: *mut stbi__zbuf, z: *mut stbi__zhuffman) -> i32 {
-    let mut b: i32 = 0;
-    let mut s: i32 = 0;
     if (*a).num_bits < 16i32 {
         if stbi__zeof(a) != 0 {
             return -1i32;
         }
         stbi__fill_bits(a);
     }
-    b = (*z).fast[((*a).code_buffer & STBI__ZFAST_MASK as stbi__uint32) as usize] as i32;
+    let mut b: i32 =
+        (*z).fast[((*a).code_buffer & STBI__ZFAST_MASK as stbi__uint32) as usize] as i32;
     if b != 0 {
-        s = b >> 9i32;
+        let mut s: i32 = b >> 9i32;
         (*a).code_buffer >>= s;
         (*a).num_bits -= s;
         return b & 511i32;
@@ -1307,17 +1287,13 @@ unsafe fn stbi__zhuffman_decode(a: *mut stbi__zbuf, z: *mut stbi__zhuffman) -> i
     stbi__zhuffman_decode_slowpath(a, z)
 }
 unsafe fn stbi__zexpand(z: *mut stbi__zbuf, zout: *mut c_char, n: i32) -> i32 {
-    let mut q: *mut c_char = null_mut::<c_char>();
-    let mut cur: u32 = 0;
-    let mut limit: u32 = 0;
-    let mut old_limit: u32 = 0;
     (*z).zout = zout;
     if (*z).z_expandable == 0 {
         return 0i32;
     }
-    cur = (*z).zout.offset_from((*z).zout_start) as c_long as u32;
-    old_limit = (*z).zout_end.offset_from((*z).zout_start) as c_long as u32;
-    limit = old_limit;
+    let mut cur: u32 = (*z).zout.offset_from((*z).zout_start) as c_long as u32;
+    let mut old_limit: u32 = (*z).zout_end.offset_from((*z).zout_start) as c_long as u32;
+    let mut limit: u32 = old_limit;
     if UINT_MAX.wrapping_sub(cur) < n as u32 {
         return 0i32;
     }
@@ -1327,7 +1303,8 @@ unsafe fn stbi__zexpand(z: *mut stbi__zbuf, zout: *mut c_char, n: i32) -> i32 {
         }
         limit = limit.wrapping_mul(2u32);
     }
-    q = realloc((*z).zout_start as *mut c_void, limit as size_t) as *mut c_char;
+    let mut q: *mut c_char =
+        realloc((*z).zout_start as *mut c_void, limit as size_t) as *mut c_char;
     if q.is_null() {
         return 0i32;
     }
@@ -1369,15 +1346,12 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
             zout = zout.offset(1);
             *fresh45 = z as c_char;
         } else {
-            let mut p: *mut stbi_uc = null_mut::<stbi_uc>();
-            let mut len: i32 = 0;
-            let mut dist: i32 = 0;
             if z == 256i32 {
                 (*a).zout = zout;
                 return 1i32;
             }
             z -= 257i32;
-            len = stbi__zlength_base[z as usize];
+            let mut len: i32 = stbi__zlength_base[z as usize];
             if stbi__zlength_extra[z as usize] != 0 {
                 len = (len as u32).wrapping_add(stbi__zreceive(a, stbi__zlength_extra[z as usize]))
                     as i32;
@@ -1386,7 +1360,7 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
             if z < 0i32 {
                 return 0i32;
             }
-            dist = stbi__zdist_base[z as usize];
+            let mut dist: i32 = stbi__zdist_base[z as usize];
             if stbi__zdist_extra[z as usize] != 0 {
                 dist = (dist as u32).wrapping_add(stbi__zreceive(a, stbi__zdist_extra[z as usize]))
                     as i32;
@@ -1400,7 +1374,7 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
                 }
                 zout = (*a).zout;
             }
-            p = zout.offset(-(dist as isize)) as *mut stbi_uc;
+            let mut p: *mut stbi_uc = zout.offset(-(dist as isize)) as *mut stbi_uc;
             if dist == 1i32 {
                 let v: stbi_uc = *p;
                 if len != 0 {
@@ -1437,8 +1411,6 @@ unsafe fn stbi__compute_huffman_codes(a: *mut stbi__zbuf) -> i32 {
     let mut z_codelength: stbi__zhuffman = stbi__zhuffman::EMPTY;
     let mut lencodes: [stbi_uc; 455] = [0; 455];
     let mut codelength_sizes: [stbi_uc; 19] = [0; 19];
-    let mut i: i32 = 0;
-    let mut n: i32 = 0;
     let hlit: i32 = stbi__zreceive(a, 5i32).wrapping_add(257u32) as i32;
     let hdist: i32 = stbi__zreceive(a, 5i32).wrapping_add(1u32) as i32;
     let hclen: i32 = stbi__zreceive(a, 4i32).wrapping_add(4u32) as i32;
@@ -1448,7 +1420,7 @@ unsafe fn stbi__compute_huffman_codes(a: *mut stbi__zbuf) -> i32 {
         0i32,
         size_of::<[stbi_uc; 19]>() as size_t,
     );
-    i = 0i32;
+    let mut i: i32 = 0i32;
     while i < hclen {
         let s: i32 = stbi__zreceive(a, 3i32) as i32;
         codelength_sizes[length_dezigzag[i as usize] as usize] = s as stbi_uc;
@@ -1462,7 +1434,7 @@ unsafe fn stbi__compute_huffman_codes(a: *mut stbi__zbuf) -> i32 {
     {
         return 0i32;
     }
-    n = 0i32;
+    let mut n: i32 = 0i32;
     while n < ntot {
         let mut c: i32 = stbi__zhuffman_decode(a, &raw mut z_codelength);
         if c < 0i32 || c >= 19i32 {
@@ -1521,13 +1493,10 @@ unsafe fn stbi__compute_huffman_codes(a: *mut stbi__zbuf) -> i32 {
 }
 unsafe fn stbi__parse_uncompressed_block(a: *mut stbi__zbuf) -> i32 {
     let mut header: [stbi_uc; 4] = [0; 4];
-    let mut len: i32 = 0;
-    let mut nlen: i32 = 0;
-    let mut k: i32 = 0;
     if (*a).num_bits & 7i32 != 0 {
         stbi__zreceive(a, (*a).num_bits & 7i32);
     }
-    k = 0i32;
+    let mut k: i32 = 0i32;
     while (*a).num_bits > 0i32 {
         let fresh51 = k;
         k = k + 1;
@@ -1543,8 +1512,8 @@ unsafe fn stbi__parse_uncompressed_block(a: *mut stbi__zbuf) -> i32 {
         k = k + 1;
         header[fresh52 as usize] = stbi__zget8(a);
     }
-    len = header[1i32 as usize] as i32 * 256i32 + header[0i32 as usize] as i32;
-    nlen = header[3i32 as usize] as i32 * 256i32 + header[2i32 as usize] as i32;
+    let mut len: i32 = header[1i32 as usize] as i32 * 256i32 + header[0i32 as usize] as i32;
+    let mut nlen: i32 = header[3i32 as usize] as i32 * 256i32 + header[2i32 as usize] as i32;
     if nlen != len ^ 0xffffi32 {
         return 0i32;
     }
@@ -1596,16 +1565,14 @@ static mut stbi__zdefault_distance: [stbi_uc; 32] = [
     5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
 ];
 unsafe fn stbi__parse_zlib(a: *mut stbi__zbuf, parse_header: i32) -> i32 {
-    let mut final_0: i32 = 0;
-    let mut type_0: i32 = 0;
     if parse_header != 0 && stbi__parse_zlib_header(a) == 0 {
         return 0i32;
     }
     (*a).num_bits = 0i32;
     (*a).code_buffer = 0 as stbi__uint32;
     loop {
-        final_0 = stbi__zreceive(a, 1i32) as i32;
-        type_0 = stbi__zreceive(a, 2i32) as i32;
+        let mut final_0: i32 = stbi__zreceive(a, 1i32) as i32;
+        let mut type_0: i32 = stbi__zreceive(a, 2i32) as i32;
         if type_0 == 0i32 {
             if stbi__parse_uncompressed_block(a) == 0 {
                 return 0i32;
@@ -1745,8 +1712,7 @@ unsafe fn stbi__get_chunk_header(s: *mut stbi__context) -> stbi__pngchunk {
 }
 unsafe fn stbi__check_png_header(s: *mut stbi__context) -> i32 {
     static mut png_sig: [stbi_uc; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
-    let mut i: i32 = 0;
-    i = 0i32;
+    let mut i: i32 = 0i32;
     while i < 8i32 {
         if stbi__get8(s) as i32 != png_sig[i as usize] as i32 {
             return 0i32;
@@ -1789,12 +1755,9 @@ unsafe fn stbi__create_png_image_raw(
     let bytes: i32 = if depth == 16i32 { 2i32 } else { 1i32 };
     let s: *mut stbi__context = (*a).s;
     let mut i: stbi__uint32 = 0;
-    let mut j: stbi__uint32 = 0;
     let stride: stbi__uint32 = x
         .wrapping_mul(out_n as stbi__uint32)
         .wrapping_mul(bytes as stbi__uint32);
-    let mut img_len: stbi__uint32 = 0;
-    let mut img_width_bytes: stbi__uint32 = 0;
     let mut k: i32 = 0;
     let img_n: i32 = (*s).img_n;
     let output_bytes: i32 = out_n * bytes;
@@ -1821,21 +1784,20 @@ unsafe fn stbi__create_png_image_raw(
     if stbi__mad3sizes_valid(img_n, x as i32, depth, 7i32) == 0 {
         return 0i32;
     }
-    img_width_bytes = (img_n as stbi__uint32)
+    let mut img_width_bytes: stbi__uint32 = (img_n as stbi__uint32)
         .wrapping_mul(x)
         .wrapping_mul(depth as stbi__uint32)
         .wrapping_add(7 as stbi__uint32)
         >> 3i32;
-    img_len = img_width_bytes
+    let mut img_len: stbi__uint32 = img_width_bytes
         .wrapping_add(1 as stbi__uint32)
         .wrapping_mul(y);
     if raw_len < img_len {
         return 0i32;
     }
-    j = 0 as stbi__uint32;
+    let mut j: stbi__uint32 = 0 as stbi__uint32;
     while j < y {
         let mut cur: *mut stbi_uc = (*a).out.offset(stride.wrapping_mul(j) as isize);
-        let mut prior: *mut stbi_uc = null_mut::<stbi_uc>();
         let fresh19 = raw;
         raw = raw.offset(1);
         let mut filter: i32 = *fresh19 as i32;
@@ -1853,7 +1815,7 @@ unsafe fn stbi__create_png_image_raw(
             filter_bytes = 1i32;
             width = img_width_bytes as i32;
         }
-        prior = cur.offset(-(stride as isize));
+        let mut prior: *mut stbi_uc = cur.offset(-(stride as isize));
         if j == 0 as stbi__uint32 {
             filter = first_row_filter[filter as usize] as i32;
         }
@@ -2338,8 +2300,6 @@ unsafe fn stbi__create_png_image(
 ) -> i32 {
     let bytes: i32 = if depth == 16i32 { 2i32 } else { 1i32 };
     let out_bytes: i32 = out_n * bytes;
-    let mut final_0: *mut stbi_uc = null_mut::<stbi_uc>();
-    let mut p: i32 = 0;
     if interlaced == 0 {
         return stbi__create_png_image_raw(
             a,
@@ -2352,7 +2312,7 @@ unsafe fn stbi__create_png_image(
             color,
         );
     }
-    final_0 = stbi__malloc_mad3(
+    let mut final_0: *mut stbi_uc = stbi__malloc_mad3(
         (*(*a).s).img_x as i32,
         (*(*a).s).img_y as i32,
         out_bytes,
@@ -2361,23 +2321,19 @@ unsafe fn stbi__create_png_image(
     if final_0.is_null() {
         return 0i32;
     }
-    p = 0i32;
+    let mut p: i32 = 0i32;
     while p < 7i32 {
         let xorig: [i32; 7] = [0i32, 4i32, 0i32, 2i32, 0i32, 1i32, 0i32];
         let yorig: [i32; 7] = [0i32, 0i32, 4i32, 0i32, 2i32, 0i32, 1i32];
         let xspc: [i32; 7] = [8i32, 8i32, 4i32, 4i32, 2i32, 2i32, 1i32];
         let yspc: [i32; 7] = [8i32, 8i32, 8i32, 4i32, 4i32, 2i32, 2i32];
-        let mut i: i32 = 0;
-        let mut j: i32 = 0;
-        let mut x: i32 = 0;
-        let mut y: i32 = 0;
-        x = (*(*a).s)
+        let mut x: i32 = (*(*a).s)
             .img_x
             .wrapping_sub(xorig[p as usize] as stbi__uint32)
             .wrapping_add(xspc[p as usize] as stbi__uint32)
             .wrapping_sub(1 as stbi__uint32)
             .wrapping_div(xspc[p as usize] as stbi__uint32) as i32;
-        y = (*(*a).s)
+        let mut y: i32 = (*(*a).s)
             .img_y
             .wrapping_sub(yorig[p as usize] as stbi__uint32)
             .wrapping_add(yspc[p as usize] as stbi__uint32)
@@ -2400,9 +2356,9 @@ unsafe fn stbi__create_png_image(
                 free(final_0 as *mut c_void);
                 return 0i32;
             }
-            j = 0i32;
+            let mut j: i32 = 0i32;
             while j < y {
-                i = 0i32;
+                let mut i: i32 = 0i32;
                 while i < x {
                     let out_y: i32 = j * yspc[p as usize] + yorig[p as usize];
                     let out_x: i32 = i * xspc[p as usize] + xorig[p as usize];
@@ -2530,14 +2486,13 @@ unsafe fn stbi__expand_png_palette(
 ) -> i32 {
     let mut i: stbi__uint32 = 0;
     let pixel_count: stbi__uint32 = (*(*a).s).img_x.wrapping_mul((*(*a).s).img_y);
-    let mut p: *mut stbi_uc = null_mut::<stbi_uc>();
-    let mut temp_out: *mut stbi_uc = null_mut::<stbi_uc>();
     let orig: *mut stbi_uc = (*a).out;
-    p = stbi__malloc_mad2(pixel_count as i32, pal_img_n, 0i32) as *mut stbi_uc;
+    let mut p: *mut stbi_uc =
+        stbi__malloc_mad2(pixel_count as i32, pal_img_n, 0i32) as *mut stbi_uc;
     if p.is_null() {
         return 0i32;
     }
-    temp_out = p;
+    let mut temp_out: *mut stbi_uc = p;
     if pal_img_n == 3i32 {
         i = 0 as stbi__uint32;
         while i < pixel_count {
@@ -2662,8 +2617,6 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                 stbi__skip(s, c.length as i32);
             }
             1229472850 => {
-                let mut comp: i32 = 0;
-                let mut filter: i32 = 0;
                 if first == 0 {
                     return 0i32;
                 }
@@ -2700,11 +2653,11 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                 } else if color & 1i32 != 0 {
                     return 0i32;
                 }
-                comp = stbi__get8(s) as i32;
+                let mut comp: i32 = stbi__get8(s) as i32;
                 if comp != 0 {
                     return 0i32;
                 }
-                filter = stbi__get8(s) as i32;
+                let mut filter: i32 = stbi__get8(s) as i32;
                 if filter != 0 {
                     return 0i32;
                 }
@@ -2835,7 +2788,6 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                 }
                 if ioff.wrapping_add(c.length) > idata_limit {
                     let idata_limit_old: stbi__uint32 = idata_limit;
-                    let mut p: *mut stbi_uc = null_mut::<stbi_uc>();
                     if idata_limit == 0 as stbi__uint32 {
                         idata_limit = if c.length > 4096 as stbi__uint32 {
                             c.length
@@ -2846,7 +2798,8 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                     while ioff.wrapping_add(c.length) > idata_limit {
                         idata_limit = idata_limit.wrapping_mul(2 as stbi__uint32);
                     }
-                    p = realloc((*z).idata as *mut c_void, idata_limit as size_t) as *mut stbi_uc;
+                    let mut p: *mut stbi_uc =
+                        realloc((*z).idata as *mut c_void, idata_limit as size_t) as *mut stbi_uc;
                     if p.is_null() {
                         return 0i32;
                     }
@@ -2858,8 +2811,6 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                 ioff = ioff.wrapping_add(c.length);
             }
             1229278788 => {
-                let mut raw_len: stbi__uint32 = 0;
-                let mut bpl: stbi__uint32 = 0;
                 if first != 0 {
                     return 0i32;
                 }
@@ -2869,12 +2820,12 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                 if (*z).idata.is_null() {
                     return 0i32;
                 }
-                bpl = (*s)
+                let mut bpl: stbi__uint32 = (*s)
                     .img_x
                     .wrapping_mul((*z).depth as stbi__uint32)
                     .wrapping_add(7 as stbi__uint32)
                     .wrapping_div(8 as stbi__uint32);
-                raw_len = bpl
+                let mut raw_len: stbi__uint32 = bpl
                     .wrapping_mul((*s).img_y)
                     .wrapping_mul((*s).img_n as stbi__uint32)
                     .wrapping_add((*s).img_y);
@@ -3040,8 +2991,7 @@ unsafe fn stbi__png_load(
     stbi__do_png(&raw mut p, x, y, comp, req_comp, ri)
 }
 unsafe fn stbi__png_test(s: *mut stbi__context) -> i32 {
-    let mut r: i32 = 0;
-    r = stbi__check_png_header(s);
+    let mut r: i32 = stbi__check_png_header(s);
     stbi__rewind(s);
     r
 }
@@ -3098,11 +3048,10 @@ unsafe fn stbi__is_16_main(s: *mut stbi__context) -> i32 {
 }
 pub unsafe fn stbi_info(filename: *const c_char, x: *mut i32, y: *mut i32, comp: *mut i32) -> i32 {
     let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
-    let mut result: i32 = 0;
     if f.is_null() {
         return 0i32;
     }
-    result = stbi_info_from_file(f, x, y, comp);
+    let mut result: i32 = stbi_info_from_file(f, x, y, comp);
     fclose(f);
     result
 }
@@ -3117,11 +3066,10 @@ pub unsafe fn stbi_info_from_file(f: *mut FILE, x: *mut i32, y: *mut i32, comp: 
 }
 pub unsafe fn stbi_is_16_bit(filename: *const c_char) -> i32 {
     let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
-    let mut result: i32 = 0;
     if f.is_null() {
         return 0i32;
     }
-    result = stbi_is_16_bit_from_file(f);
+    let mut result: i32 = stbi_is_16_bit_from_file(f);
     fclose(f);
     result
 }
@@ -3334,7 +3282,6 @@ unsafe fn GlslShader_ReadPresetFile(gs: *mut GlslShader, filename: *const c_char
             break;
         }
         let mut value: *mut c_char = SplitKeyValue(line);
-        let mut t: *mut c_char = null_mut::<c_char>();
         if value.is_null() {
             if *line != 0 {
                 fprintf(
@@ -3347,7 +3294,7 @@ unsafe fn GlslShader_ReadPresetFile(gs: *mut GlslShader, filename: *const c_char
         } else {
             if *value as i32 == '"' as i32 {
                 value = value.offset(1);
-                t = value;
+                let mut t: *mut c_char = value;
                 while *t as i32 != 0 && *t as i32 != '"' as i32 {
                     t = t.offset(1);
                 }
@@ -4111,9 +4058,8 @@ pub unsafe fn GlslShader_Destroy(gs: *mut GlslShader) {
         free((*t).filename as *mut c_void);
         free(t as *mut c_void);
     }
-    let mut pp: *mut GlslParam = null_mut::<GlslParam>();
     loop {
-        pp = (*gs).first_param;
+        let mut pp: *mut GlslParam = (*gs).first_param;
         if pp.is_null() {
             break;
         }

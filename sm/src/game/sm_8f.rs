@@ -600,11 +600,10 @@ pub unsafe fn DoorCode_SetupElevatubeFromNorth(game: &mut Game) {
     );
 }
 pub unsafe fn RoomCode_Elevatube(game: &mut Game) {
-    let mut v0: u16 = 0;
     set_ram_word!(game.samus_x_pos = 128u16);
     set_ram_word!(game.samus_x_subpos = 0u16);
     let amt: i32 = (*(ram_ptr!(game, u16; 0x7e1, 4)) as i16 as i32) << 8i32;
-    v0 = ((amt as u32).wrapping_add(*(ram_ptr!(game, u32; 0x7e1))) >> 16i32) as u16;
+    let mut v0: u16 = ((amt as u32).wrapping_add(*(ram_ptr!(game, u32; 0x7e1))) >> 16i32) as u16;
     let ref mut fresh13 = *(ram_ptr!(game, u16; 0x7e1));
     *fresh13 = (*fresh13 as i32 + amt) as u16;
     *(ram_ptr!(game, u16; 0x7e1, 2)) = v0;
@@ -878,8 +877,8 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn RunRoomSetupCode(game: &mut Game) {
-    let mut RoomDefRoomstate: *mut RoomDefRoomstate = null_mut::<RoomDefRoomstate>();
-    RoomDefRoomstate = get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
+    let mut RoomDefRoomstate: *mut RoomDefRoomstate =
+        get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
     if (*RoomDefRoomstate).room_setup_code != 0 {
         CallRoomSetupCode(
             (((*RoomDefRoomstate).room_setup_code) as u32) | (0x8f0000u32),

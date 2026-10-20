@@ -293,7 +293,6 @@ unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: u32) {
         0i32
     } as i16;
     (*win).edges[1i32 as usize] = window_right as i16;
-    let mut i: u32 = 0;
     let mut j: u32 = 0;
     let mut t: i32 = 0;
     let w1_ena: bool = winflags & kWindow1Enabled as i32 as u32 != 0
@@ -313,7 +312,7 @@ unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: u32) {
     let w2_ena: bool = winflags & kWindow2Enabled as i32 as u32 != 0
         && (*ppu).window2left as i32 <= (*ppu).window2right as i32;
     if w2_ena {
-        i = 0u32;
+        let mut i: u32 = 0u32;
         while i <= nr && {
             t = (*ppu).window2left as i32;
             t != (*win).edges[i as usize] as i32

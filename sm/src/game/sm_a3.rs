@@ -1157,23 +1157,20 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_2(game: &mut Game) {
     }
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_3(game: &mut Game) {
-    let mut ptfwss_var_05: u16 = 0;
-    let mut v3: i32 = 0;
-
     let E: *mut Enemy_PlatformThatFallsWithSamus =
         Get_PlatformThatFallsWithSamus(ram_word!(game, cur_enemy_index) as i32, game);
     let stop_platform: bool = ((((*E).base.y_pos) as i16).wrapping_sub(((*E).ptfwss_var_A) as i16)
         < 0i16)
         || ({
             PlatformThatFallsWithSamus_Func_9(game);
-            ptfwss_var_05 = 0;
+            let mut ptfwss_var_05: u16 = 0;
             (*E).ptfwss_var_F = (*E).ptfwss_var_F.wrapping_add(1);
             ptfwss_var_05 = (*E).ptfwss_var_F;
             if ((ptfwss_var_05) as i16).wrapping_sub(((*E).ptfwss_var_05) as i16) >= 0i16 {
                 ptfwss_var_05 = (*E).ptfwss_var_05;
                 (*E).ptfwss_var_F = ptfwss_var_05;
             }
-            v3 = 0;
+            let mut v3: i32 = 0;
             v3 = 8i32 * ptfwss_var_05 as i32 >> 1i32;
             (Enemy_MoveDown(
                 ram_word!(game, cur_enemy_index),
@@ -2192,7 +2189,6 @@ pub unsafe fn Sidehopper_Func_21(game: &mut Game) {
     };
 }
 pub unsafe fn Sidehopper_Func_22(game: &mut Game) {
-    let mut v3: i16 = 0;
     let E: *mut Enemy_Sidehopper = Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game);
     let v2: i32 = 8i32 * (*E).sideh_var_C as i32 >> 1i32;
     if Enemy_MoveDown(
@@ -2214,7 +2210,7 @@ pub unsafe fn Sidehopper_Func_22(game: &mut Game) {
         {
             (*E).sideh_var_D = -((*E).sideh_var_D as i32) as u16;
         }
-        v3 = (((*E).sideh_var_E) as i16).wrapping_add(((*E).sideh_var_C) as i16);
+        let mut v3: i16 = (((*E).sideh_var_E) as i16).wrapping_add(((*E).sideh_var_C) as i16);
         if v3 as i32 - 64i32 & 0x8000i32 == 0 {
             v3 = 64i16;
         }
@@ -2263,9 +2259,8 @@ pub unsafe fn MaridiaRefillCandy_Main(game: &mut Game) {
     );
 }
 pub unsafe fn MaridiaRefillCandy_Func_1(game: &mut Game) {
-    let mut v1: i16 = 0;
     if IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), 0x80u16, game) != 0 {
-        v1 = 1i16;
+        let mut v1: i16 = 1i16;
         if (GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as i32 & 0x8000i32) == 0i32
         {
             v1 = 3i16;
@@ -2397,7 +2392,6 @@ pub unsafe fn Bang_Func_2(game: &mut Game) {
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
 }
 pub unsafe fn Bang_Func_3(game: &mut Game) {
-    let mut bang_var_B: i16 = 0;
     Bang_Func_5(game);
     let E0: *mut Enemy_Bang = Get_Bang(ram_word!(game, cur_enemy_index) as i32, game);
     let x_pos: u16 = (*E0).base.x_pos;
@@ -2408,7 +2402,7 @@ pub unsafe fn Bang_Func_3(game: &mut Game) {
     let y_pos: u16 = (*E0).base.y_pos;
     set_ram_word!(game.enemy_drawing_queue[(v3 + 93i32)] = y_pos);
     (*E1).base.y_pos = y_pos;
-    bang_var_B = (*E0).bang_var_B as i16;
+    let mut bang_var_B: i16 = (*E0).bang_var_B as i16;
     if ((*E0).bang_var_20 as i32 & 1i32) != 0i32 {
         bang_var_B = 3072i16;
     }
@@ -2437,11 +2431,10 @@ pub unsafe fn Bang_Func_3(game: &mut Game) {
     }
 }
 pub unsafe fn Bang_Func_4(a: u16, game: &mut Game) -> u16 {
-    let mut i: i32 = 0;
     if ram_word!(game, projectile_counter) as i32 - 5i32 & 0x8000i32 == 0 {
         return 1u16;
     }
-    i = 0i32;
+    let mut i: i32 = 0i32;
     while ram_word!(game, projectile_damage[(i >> 1i32)]) != 0 {
         i += 2i32;
     }
@@ -3425,8 +3418,6 @@ pub unsafe fn WreckedShipOrangeZoomer_Main(game: &mut Game) {
 }
 pub unsafe fn WreckedShipOrangeZoomer_Func_2(k: u16, game: &mut Game) {
     let mut v7: i16 = 0;
-    let mut v9: u16 = 0;
-    let mut v12: u16 = 0;
     let E: *mut Enemy_WreckedShipOrangeZoomer = Get_WreckedShipOrangeZoomer(k as i32, game);
     if ram_word!(game, earthquake_timer) == 30u16 && ram_word!(game, earthquake_type) == 20u16 {
         (*E).wsozr_var_03 = (*E).wsozr_var_F;
@@ -3455,7 +3446,7 @@ pub unsafe fn WreckedShipOrangeZoomer_Func_2(k: u16, game: &mut Game) {
             return;
         }
         (*E).wsozr_var_A = -((*E).wsozr_var_A as i32) as u16;
-        v9 = addr_kWreckedShipOrangeZoomer_Ilist_E01F as u16;
+        let mut v9: u16 = addr_kWreckedShipOrangeZoomer_Ilist_E01F as u16;
         if ((*E).wsozr_var_B as i32 & 0x8000i32) != 0i32 {
             v9 = addr_kWreckedShipOrangeZoomer_Ilist_E003 as u16;
         }
@@ -3465,7 +3456,7 @@ pub unsafe fn WreckedShipOrangeZoomer_Func_2(k: u16, game: &mut Game) {
         (*E).wsozr_var_04 = v11;
         if v11 as i32 - 4i32 & 0x8000i32 != 0 {
             (*E).wsozr_var_B = -((*E).wsozr_var_B as i32) as u16;
-            v12 = addr_kWreckedShipOrangeZoomer_Ilist_E01F as u16;
+            let mut v12: u16 = addr_kWreckedShipOrangeZoomer_Ilist_E01F as u16;
             if ((*E).wsozr_var_B as i32 & 0x8000i32) != 0i32 {
                 v12 = addr_kWreckedShipOrangeZoomer_Ilist_E003 as u16;
             }
@@ -3478,8 +3469,6 @@ pub unsafe fn WreckedShipOrangeZoomer_Func_2(k: u16, game: &mut Game) {
 }
 pub unsafe fn sub_A3E168(k: u16, game: &mut Game) {
     let mut v7: i16 = 0;
-    let mut v9: u16 = 0;
-    let mut v12: u16 = 0;
     let E: *mut Enemy_WreckedShipOrangeZoomer = Get_WreckedShipOrangeZoomer(k as i32, game);
     if ram_word!(game, earthquake_timer) == 30u16 && ram_word!(game, earthquake_type) == 20u16 {
         (*E).wsozr_var_03 = (*E).wsozr_var_F;
@@ -3506,7 +3495,7 @@ pub unsafe fn sub_A3E168(k: u16, game: &mut Game) {
             return;
         }
         (*E).wsozr_var_B = -((*E).wsozr_var_B as i32) as u16;
-        v9 = addr_kWreckedShipOrangeZoomer_Ilist_DFE7 as u16;
+        let mut v9: u16 = addr_kWreckedShipOrangeZoomer_Ilist_DFE7 as u16;
         if ((*E).wsozr_var_A as i32 & 0x8000i32) != 0i32 {
             v9 = addr_kWreckedShipOrangeZoomer_Ilist_DFCB as u16;
         }
@@ -3516,7 +3505,7 @@ pub unsafe fn sub_A3E168(k: u16, game: &mut Game) {
         (*E).wsozr_var_04 = v11;
         if v11 as i32 - 4i32 & 0x8000i32 != 0 {
             (*E).wsozr_var_A = -((*E).wsozr_var_A as i32) as u16;
-            v12 = addr_kWreckedShipOrangeZoomer_Ilist_DFE7 as u16;
+            let mut v12: u16 = addr_kWreckedShipOrangeZoomer_Ilist_DFE7 as u16;
             if ((*E).wsozr_var_A as i32 & 0x8000i32) != 0i32 {
                 v12 = addr_kWreckedShipOrangeZoomer_Ilist_DFCB as u16;
             }
@@ -3830,9 +3819,7 @@ pub unsafe fn Metroid_Main(game: &mut Game) {
 }
 pub unsafe fn Metroid_Func_1(varE32: u16, game: &mut Game) {
     let mut current_block: u64;
-    let mut v3: i16 = 0;
     let mut v4: i16 = 0;
-    let mut v8: i16 = 0;
     let mut v9: i16 = 0;
     let E: *mut Enemy_Metroid = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);
     let mut t: i32 = ((((((*E).base.y_pos) as i16).wrapping_sub((varE32) as i16)) as i32 >> 2i32)
@@ -3843,7 +3830,7 @@ pub unsafe fn Metroid_Func_1(varE32: u16, game: &mut Game) {
     let metroid_var_C: u16 = (*E).metroid_var_C;
     let mut v2: bool = metroid_var_C < r18;
     (*E).metroid_var_C = (metroid_var_C).wrapping_sub(r18);
-    v3 = ((*E).metroid_var_D as i32 - (v2 as i32 + r20 as i32)) as i16;
+    let mut v3: i16 = ((*E).metroid_var_D as i32 - (v2 as i32 + r20 as i32)) as i16;
     (*E).metroid_var_D = v3 as u16;
     if v3 < 0i16 {
         if (v3 as u16) >= 0xfffdu16 {
@@ -3879,7 +3866,7 @@ pub unsafe fn Metroid_Func_1(varE32: u16, game: &mut Game) {
     let metroid_var_A: u16 = (*E).metroid_var_A;
     v2 = metroid_var_A < r18;
     (*E).metroid_var_A = (metroid_var_A).wrapping_sub(r18);
-    v8 = ((*E).metroid_var_B as i32 - (v2 as i32 + r20 as i32)) as i16;
+    let mut v8: i16 = ((*E).metroid_var_B as i32 - (v2 as i32 + r20 as i32)) as i16;
     (*E).metroid_var_B = v8 as u16;
     if v8 < 0i16 {
         if (v8 as u16) >= 0xfffdu16 {
@@ -3915,13 +3902,12 @@ pub unsafe fn Metroid_Func_2(varE32: u16, game: &mut Game) {
     let mut v2: u16 = 0;
     let mut v6: u16 = 0;
     let mut r18: u16 = 0u16;
-    let mut r20: u16 = 0u16;
     let E: *mut Enemy_Metroid = Get_Metroid(ram_word!(game, cur_enemy_index) as i32, game);
     *(&raw mut v1 as *mut u8).offset(0) =
         (((varE32).wrapping_sub((*E).base.y_pos)) as i32 >> 8i32) as u8;
     *(&raw mut v1 as *mut u8).offset(1isize) =
         ((varE32) as u8).wrapping_sub(*(&raw mut (*E).base.y_pos as *mut u8).offset(0));
-    r20 = ((((v1) as u16) & (0xff00u16)) as i32 >> 3i32) as u16;
+    let mut r20: u16 = ((((v1) as u16) & (0xff00u16)) as i32 >> 3i32) as u16;
     if (r20 as i32 & 0x1000i32) != 0i32 {
         r20 = (r20) | (0xe000u16);
     }

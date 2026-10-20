@@ -346,12 +346,12 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion_2(game: &mut Game) -> u16 {
     0u16
 }
 pub unsafe fn CancelGrappleBeamIfIncompatiblePose(game: &mut Game) {
-    let mut v0: i16 = 0;
     if (kIsGrappleBannedForMovementType[*ram_ptr!(game; 0xa1f) as usize] == 0) {
         if ram_word!(game, grapple_beam_function) as i32 != 0x9bc4f0i32 & 0xffffi32
             && ram_word!(game, grapple_beam_function) as i32 + 0x3882i32 & 0x8000i32 != 0
         {
-            v0 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
+            let mut v0: i16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
+                as *mut SamusPoseParams)
                 .offset(ram_word!(game, samus_pose) as isize))
             .direction_shots_fired as i16;
             if (v0 as i32 & 0xf0i32) == 0i32 {
@@ -828,9 +828,7 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
     GrappleBeamFunc_BE98(game);
 }
 pub unsafe fn GrappleBeamFunc_BE98(game: &mut Game) {
-    let mut v0: i16 = 0;
-    let mut v1: i16 = 0;
-    v0 = ((ram_word!(game, samus_x_pos)) as i16)
+    let mut v0: i16 = ((ram_word!(game, samus_x_pos)) as i16)
         .wrapping_sub((ram_word!(game, samus_prev_x_pos)) as i16);
     if ((ram_word!(game, samus_x_pos)) as i16)
         .wrapping_sub((ram_word!(game, samus_prev_x_pos)) as i16)
@@ -844,7 +842,7 @@ pub unsafe fn GrappleBeamFunc_BE98(game: &mut Game) {
     } else if v0 as i32 - 13i32 & 0x8000i32 == 0 {
         set_ram_word!(game.samus_prev_x_pos = (ram_word!(game, samus_x_pos)).wrapping_sub(12u16));
     }
-    v1 = ((ram_word!(game, samus_y_pos)) as i16)
+    let mut v1: i16 = ((ram_word!(game, samus_y_pos)) as i16)
         .wrapping_sub((ram_word!(game, samus_prev_y_pos)) as i16);
     if ((ram_word!(game, samus_y_pos)) as i16)
         .wrapping_sub((ram_word!(game, samus_prev_y_pos)) as i16)
@@ -1513,12 +1511,10 @@ pub unsafe fn GrappleBeamFunc_C9CE(game: &mut Game) {
     }
 }
 pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
-    let mut v1: i16 = 0;
-    let mut v2: i16 = 0;
     let mut v0: u16 = 0;
     if (ram_word!(game, grapple_beam_unkD26) as i32 & 0x8000i32) == 0i32 {
         v0 = (2u16).wrapping_mul(ram_word!(game, grapple_beam_unkD26));
-        v2 = kSinCosTable8bit_Sext
+        let mut v2: i16 = kSinCosTable8bit_Sext
             [(*(ram_ptr!(game, u16; 0xcfa) as *mut u8).offset(1isize) as i32 + 64i32) as usize];
         if v2 >= 0i16 {
             SetHiLo(
@@ -1537,7 +1533,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
         }
     } else {
         v0 = (-2i32 * ram_word!(game, grapple_beam_unkD26) as i32) as u16;
-        v1 = kSinCosTable8bit_Sext
+        let mut v1: i16 = kSinCosTable8bit_Sext
             [(*(ram_ptr!(game, u16; 0xcfa) as *mut u8).offset(1isize) as i32 + 64i32) as usize];
         if v1 < 0i16 {
             SetHiLo(

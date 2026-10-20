@@ -1280,11 +1280,10 @@ unsafe fn BlockFunc_9C73(v0: u16, game: &mut Game) -> u16 {
     }
 }
 pub unsafe fn BombOrPowerBomb_Func1(v0: u16, game: &mut Game) {
-    let mut v2: i16 = 0;
     let mut v3: i16 = 0;
     let temp_collision_DD2: u16 = BlockFunc_9C73(v0, game);
     let v1: i32 = v0 as i32 >> 1i32;
-    v2 = ram_word!(game, projectile_x_pos[v1]) as i16;
+    let mut v2: i16 = ram_word!(game, projectile_x_pos[v1]) as i16;
     if v2 >= 0i16 {
         let r26: u16 = ram_word!(game, projectile_x_pos[v1]);
         if ((*(&raw mut v2 as *mut u8).offset(1isize)) as i16)
@@ -1335,10 +1334,9 @@ unsafe fn BlockColl_GetBlockIndexBelow(k: u16, game: &mut Game) -> u16 {
     (ram_word!(game, room_width_in_blocks) as i32 * 2i32 + k as i32 + 1i32 + 1i32) as u16
 }
 unsafe fn BlockColl_BombExplosion(ci: *mut CollInfo, k: u16, game: &mut Game) {
-    let mut v2: i16 = 0;
     let v1: i32 = k as i32 >> 1i32;
     if ram_word!(game, projectile_variables[v1]) == 0 {
-        v2 = ram_word!(game, projectile_type[v1]) as i16;
+        let mut v2: i16 = ram_word!(game, projectile_type[v1]) as i16;
         if (v2 as i32 & 1i32) == 0i32 {
             set_ram_word!(game.projectile_type[v1] = ((v2) as u16) | (1u16));
             if ram_word!(game, cur_block_index) != 0xffffu16 {
@@ -1456,10 +1454,8 @@ unsafe fn BlockBombedReact(ci: *mut CollInfo, v0: u16, game: &mut Game) {
     });
 }
 unsafe fn BlockFunc_A06A(k: u16, game: &mut Game) {
-    let mut v2: i16 = 0;
-    let mut v3: i16 = 0;
     let v1: i32 = k as i32 >> 1i32;
-    v2 = ram_word!(game, projectile_variables[v1]) as i16;
+    let mut v2: i16 = ram_word!(game, projectile_variables[v1]) as i16;
     if v2 != 0 {
         if v2 < 0i16 {
             set_ram_word!(game.projectile_variables[v1] = 0u16);
@@ -1470,7 +1466,7 @@ unsafe fn BlockFunc_A06A(k: u16, game: &mut Game) {
             .wrapping_mul((*(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(1isize)) as u16))
             as i32
             >> 2i32) as u16;
-        v3 = ((ram_word!(game, power_bomb_explosion_x_pos)) as i16)
+        let mut v3: i16 = ((ram_word!(game, power_bomb_explosion_x_pos)) as i16)
             .wrapping_sub((*(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(1isize)) as i16);
         if v3 < 0i16 {
             v3 = 0i16;
@@ -2263,13 +2259,11 @@ pub unsafe fn BlockCollGrappleBeam(game: &mut Game) -> u8 {
     result
 }
 pub unsafe fn BlockReactGrapple(game: &mut Game) -> u8 {
-    let mut v0: i16 = 0;
-
     let prod: u16 = Mult8x8(
         (ram_word!(game, grapple_beam_end_y_pos) as i32 >> 4i32) as u8,
         ram_word!(game, room_width_in_blocks) as u8,
     );
-    v0 = (ram_word!(game, grapple_beam_end_x_pos) as i32 >> 4i32) as i16;
+    let mut v0: i16 = (ram_word!(game, grapple_beam_end_x_pos) as i32 >> 4i32) as i16;
     set_ram_word!(game.cur_block_index = (prod).wrapping_add((v0) as u16));
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: 0i32,
@@ -2327,8 +2321,6 @@ pub static kSinCosTable8bit_Sext: [i16; 320] = [
     -56i16, -49i16, -43i16, -37i16, -31i16, -25i16, -18i16, -12i16, -6i16,
 ];
 unsafe fn BlockFunc_A957(tmpD82: u16, tmpD84: u16, game: &mut Game) {
-    let mut v5: i16 = 0;
-    let mut v7: i16 = 0;
     let v0: u16 = tmpD82;
     let mut v2: u16 = 0;
     let mut v3: u16 = 0;
@@ -2348,7 +2340,7 @@ unsafe fn BlockFunc_A957(tmpD82: u16, tmpD84: u16, game: &mut Game) {
         set_ram_word!(game.grapple_beam_end_y_pos = v3);
     }
     let v4: i32 = v0 as i32 >> 1i32;
-    v5 = kSinCosTable8bit_Sext[(v4 + 64i32) as usize];
+    let mut v5: i16 = kSinCosTable8bit_Sext[(v4 + 64i32) as usize];
     let mut v6: u16 = 0;
     let mut v8: u16 = 0;
     if v5 < 0i16 {
@@ -2369,7 +2361,7 @@ unsafe fn BlockFunc_A957(tmpD82: u16, tmpD84: u16, game: &mut Game) {
     }
     set_ram_word!(game.grapple_beam_grapple_start_x = v6);
     set_ram_word!(game.grapple_beam_grapple_start_block_x = (v6 as i32 >> 4i32) as u8 as u16);
-    v7 = kSinCosTable8bit_Sext[v4 as usize];
+    let mut v7: i16 = kSinCosTable8bit_Sext[v4 as usize];
     if v7 < 0i16 {
         if v7 == -256i16 {
             v8 = (ram_word!(game, grapple_beam_end_y_pos)).wrapping_sub(tmpD84);
@@ -2523,8 +2515,6 @@ pub unsafe fn BlockFunc_AC31(game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
-    let mut v2: u16 = 0;
-    let mut v5: u16 = 0;
     let mut current_block: u64;
     let mut prod16: u16 = 0;
     let mut v4: i16 = 0;
@@ -2552,7 +2542,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
         grapple_beam_tmpD88 = (2i32
             * (((ram_word!(game, grapple_beam_end_angle16)).wrapping_add(prod16)) as i32 >> 8i32))
             as u16;
-        v2 = 0;
+        let mut v2: u16 = 0;
         v2 = (2u16).wrapping_mul((*ram_ptr!(game; 0xcfb)) as u16);
         if v2 != grapple_beam_tmpD88 {
             loop {
@@ -2635,7 +2625,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
         grapple_beam_tmpD88 = (2i32
             * (((ram_word!(game, grapple_beam_end_angle16)).wrapping_sub(prod16)) as i32 >> 8i32))
             as u16;
-        v5 = 0;
+        let mut v5: u16 = 0;
         v5 = (2u16).wrapping_mul((*ram_ptr!(game; 0xcfb)) as u16);
         if v5 == grapple_beam_tmpD88 {
             current_block = 5091811861639934416;
@@ -2812,13 +2802,12 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
     let mut n: i32 = (ram_word!(game, grapple_beam_length) as i32 / 8i32 & 0xfi32) - 1i32;
     let mut q: i32 = 15i32;
     loop {
-        let mut i: i32 = 0;
         let ref mut fresh17 = *(ram_ptr!(game, u16; 0xd42)).offset(q as isize);
         let fresh18 = *fresh17;
         *fresh17 = (*fresh17).wrapping_sub(1);
         if fresh18 == 1u16 {
             let mut v9: *const u16 = null::<u16>();
-            i = ram_word!(game, grapple_segment_anim_instr_ptrs[q]) as i32;
+            let mut i: i32 = ram_word!(game, grapple_segment_anim_instr_ptrs[q]) as i32;
             loop {
                 v9 = RomPtr_94(i as u16, game) as *const u16;
                 if (*v9 as i32 & 0x8000i32) == 0i32 {

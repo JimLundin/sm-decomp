@@ -264,8 +264,6 @@ pub unsafe fn Proj93Instr_Goto(k: u16, j: u16, game: &mut Game) -> u16 {
     *(RomPtr_93(j, game) as *mut u16)
 }
 pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
-    let mut v2: u16 = 0;
-    let mut v3: u16 = 0;
     let mut skip_explosion_draw: bool;
     let mut v0: u16 = 8u16;
     let mut r18: u16 = 0;
@@ -274,8 +272,8 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
     loop {
         let v1: i32 = v0 as i32 >> 1i32;
         if (ram_word!(game, projectile_bomb_instruction_ptr[v1]) != 0) {
-            v2 = 0;
-            v3 = 0;
+            let mut v2: u16 = 0;
+            let mut v3: u16 = 0;
             v2 = ram_word!(game, projectile_type[v1]);
             skip_explosion_draw = if v2 as i32 & (kProjectileType_TypeMask as i32 | 0x10i32) != 0i32
             {

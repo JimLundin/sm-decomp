@@ -487,10 +487,9 @@ unsafe fn GamepadMap_Add(button: i32, modifiers: u32, cmd: u16) {
     *p = (i + 1i32) as u16;
 }
 pub unsafe fn FindCmdForGamepadButton(button: i32, modifiers: u32) -> i32 {
-    let mut ent: *mut GamepadMapEnt = null_mut::<GamepadMapEnt>();
     let mut e: i32 = joymap_first[button as usize] as i32;
     while e != 0i32 {
-        ent = joymap_ents.offset((e - 1i32) as isize);
+        let mut ent: *mut GamepadMapEnt = joymap_ents.offset((e - 1i32) as isize);
         if modifiers & (*ent).modifiers == (*ent).modifiers {
             return (*ent).cmd as i32;
         }

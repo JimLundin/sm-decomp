@@ -31,6 +31,37 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Local first assignments (2026-10-20): declare 702 primitive/raw-pointer
+locals at their first assignment across 421 functions/32 files, removing dead
+zero/null initializers. All original types, mutability and RHS expressions
+remain exact. The 297 same-block and 405 nested-block declarations retain
+all uses in their assignment's block, with the first assignment dominating
+those uses. The counted-loop batch already removed 21 preliminary targets.
+No read, side effect, caller argument or observable drop is moved.
+
+Independent reconstruction binds all 77 inputs and preserves all 320 ordered
+comments and 202 attributes in changed files. Actual frontend library/main
+expansions reconstruct completely under the exact 702 declaration moves:
+2254397/28830 tokens, including each macro-internal use and the checkpoint's
+22 included-source payloads. The 238 macro-generated raw borrows refer only
+to existing Game RAM; no temporary gains a longer lifetime. Nested local
+address-taking, closure/macro captures, type shadows and changed callback
+bindings are excluded. Local receiver methods are primitive/raw-pointer
+operations; no implicit custom-trait borrow is introduced.
+
+Net Rust lines -625, to 131192, with every other progress counter unchanged.
+Together with the counted-loop commit this removes 909 lines. The broader
+readability goal remains open; continue substantial complete families.
+
+Shared counted-loop/local-initializer verification includes reviewed
+50b89505 instruction/timer pairs and map rendering. Formatting/check, progress,
+normal release (25.77s) and full any% 129712/0
+(125.81s), native exit 0, pass. All 77 final inputs and
+109 recorded verification pins remain fixed. The initial build ran out
+of disk space; the same candidate succeeded after completed caches were
+compressed with their contents verified unchanged. Any% supplies core
+integration coverage; broader routes, frontend and alias safety remain open.
+
 Literal counted loops (2026-10-20): replace all 55 eligible pure-counter
 loops in 45 functions/17 files with typed for ranges. The 42 zero-exit loops
 retain their exact iteration counts; the 13 positive-literal sign-exit forms

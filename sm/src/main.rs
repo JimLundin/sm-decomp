@@ -1035,7 +1035,6 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
     }
     let mut running: bool = true_0 != 0;
     let mut lastTick: u32 = SDL_GetTicks() as u32;
-    let mut curTick: u32 = 0u32;
     let mut frameCtr: u32 = 0u32;
     let mut audiopaused: u8 = true_0 as u8;
     let mut has_bug_in_title: bool = false_0 != 0;
@@ -1168,7 +1167,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
                     SDL_SetWindowTitle(g_window, &raw const kWindowTitle as *const c_char);
                 }
             }
-            curTick = SDL_GetTicks() as u32;
+            let mut curTick: u32 = SDL_GetTicks() as u32;
             if !disable_render && !g_config.disable_frame_delay {
                 static mut delays: [u8; 3] = [17, 17, 16];
                 lastTick =
@@ -1255,14 +1254,13 @@ unsafe fn RenderDigit(mut dst: *mut u8, pitch: size_t, digit: i32, color: u32, b
 unsafe fn RenderNumber(dst: *mut u8, pitch: size_t, n: i32, big: u8) {
     let mut buf: [c_char; 32] = [0; 32];
     let mut s: *mut c_char = null_mut::<c_char>();
-    let mut i: i32 = 0;
     sprintf(
         &raw mut buf as *mut c_char,
         b"%d\0" as *const u8 as *const c_char,
         n,
     );
     s = &raw mut buf as *mut c_char;
-    i = 2i32 * 4i32;
+    let mut i: i32 = 2i32 * 4i32;
     while *s != 0 {
         RenderDigit(
             dst.offset(

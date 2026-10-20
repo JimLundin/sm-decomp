@@ -709,13 +709,11 @@ pub unsafe fn Torizo_Func_1(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn Torizo_Func_5(k: u16, game: &mut Game) {
-    let mut v3: u16 = 0;
-    let mut v8: u16 = 0;
     let E: *mut Enemy_Torizo = Get_Torizo(k as i32, game);
     if ((*E).toriz_parameter_2 as i32 & 0x4000i32) != 0i32 {
         let torizo_var_03: u16 = (*E).toriz_var_03;
         if torizo_var_03 == 0 || {
-            v8 = (torizo_var_03).wrapping_sub(1u16);
+            let mut v8: u16 = (torizo_var_03).wrapping_sub(1u16);
             (*E).toriz_var_03 = v8;
             (*E).toriz_var_03 != 0u16
         } {
@@ -747,7 +745,7 @@ pub unsafe fn Torizo_Func_5(k: u16, game: &mut Game) {
     } else {
         let v2: u16 = (*E).toriz_var_03;
         if v2 == 0 || {
-            v3 = (v2).wrapping_sub(1u16);
+            let mut v3: u16 = (v2).wrapping_sub(1u16);
             (*E).toriz_var_03 = v3;
             (*E).toriz_var_03 != 0u16
         } {
@@ -895,8 +893,7 @@ pub unsafe fn Torizo_Instr_57(k: u16, jp: *const u16, game: &mut Game) -> *const
     jp
 }
 pub unsafe fn Torizo_Instr_58(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    let mut v2: i16 = 0;
-    v2 = 34i16;
+    let mut v2: i16 = 34i16;
     while *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(v2 as u16 as i32 as isize) as *mut u16)
         != 0xb1c0u16
     {
@@ -1128,11 +1125,10 @@ pub unsafe fn Torizo_D5ED(k: u16, game: &mut Game) {
     Torizo_C643(k, game);
 }
 pub unsafe fn Torizo_D5F1(k: u16, game: &mut Game) {
-    let mut v3: u16 = 0;
     let E: *mut Enemy_Torizo = Get_Torizo(k as i32, game);
     let torizo_var_03: u16 = (*E).toriz_var_03;
     if torizo_var_03 == 0 || {
-        v3 = (torizo_var_03).wrapping_sub(1u16);
+        let mut v3: u16 = (torizo_var_03).wrapping_sub(1u16);
         (*E).toriz_var_03 = v3;
         (*E).toriz_var_03 != 0u16
     } {
@@ -1171,17 +1167,14 @@ pub unsafe fn Torizo_D658(game: &mut Game) {
 pub unsafe fn GoldTorizo_Shot(game: &mut Game) {
     let E: *mut Enemy_Torizo = Get_Torizo(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).base.flash_timer == 0 {
-        let mut v2: u16 = 0;
-        let mut v3: u16 = 0;
-
         if (*E).toriz_var_04 != 0 {
             Torizo_D6A6(game);
             return;
         }
         let react_to_shot: bool = (((*E).toriz_parameter_2 as i32 & 0x1000i32) != 0i32)
             || ({
-                v2 = 0;
-                v3 = 0;
+                let mut v2: u16 = 0;
+                let mut v3: u16 = 0;
                 v2 = (2u16).wrapping_mul(ram_word!(game, collision_detection_index));
                 v3 = (ram_word!(
                     game,
@@ -1393,44 +1386,36 @@ pub unsafe fn Shaktool_DB40(k: u16, a: u16, game: &mut Game) {
     (*Get_Shaktool(shakto_var_E as i32 + 384i32, game)).shakt_var_B = a;
 }
 pub unsafe fn Shaktool_DB59(k: u16, game: &mut Game) {
-    let mut shakto_var_E: u16 = 0;
-    let mut shakto_var_B: u16 = 0;
-    let mut v7: u16 = 0;
-    let mut v10: u16 = 0;
-    let mut x_subpos: u16 = 0;
-    let mut y_subpos: u16 = 0;
-    let mut x_pos: u16 = 0;
-    let mut y_pos: u16 = 0;
-    shakto_var_E = (*Get_Shaktool(k as i32, game)).shakt_var_E;
+    let mut shakto_var_E: u16 = (*Get_Shaktool(k as i32, game)).shakt_var_E;
     let Shaktool: *mut Enemy_Shaktool = Get_Shaktool(shakto_var_E as i32 + 192i32, game);
     (*Shaktool).shakt_var_D = ((*Shaktool).shakt_var_D) ^ (0x8000u16);
     let v3: *mut Enemy_Shaktool = Get_Shaktool(shakto_var_E as i32 + 384i32, game);
-    shakto_var_B = (*v3).shakt_var_B;
+    let mut shakto_var_B: u16 = (*v3).shakt_var_B;
     let v5: *mut Enemy_Shaktool = Get_Shaktool(shakto_var_E as i32 + 64i32, game);
     (*v3).shakt_var_B = (((*v5).shakt_var_B as i32 ^ 0x8000i32) & 0xff00i32) as u16;
     (*v5).shakt_var_B = ((shakto_var_B as i32 ^ 0x8000i32) & 0xff00i32) as u16;
     let v6: *mut Enemy_Shaktool = Get_Shaktool(shakto_var_E as i32 + 320i32, game);
-    v7 = (*v6).shakt_var_B;
+    let mut v7: u16 = (*v6).shakt_var_B;
     let v8: *mut Enemy_Shaktool = Get_Shaktool(shakto_var_E as i32 + 128i32, game);
     (*v6).shakt_var_B = (((*v8).shakt_var_B as i32 ^ 0x8000i32) & 0xff00i32) as u16;
     (*v8).shakt_var_B = ((v7 as i32 ^ 0x8000i32) & 0xff00i32) as u16;
     let v9: *mut Enemy_Shaktool = Get_Shaktool(shakto_var_E as i32 + 256i32, game);
-    v10 = (*v9).shakt_var_B;
+    let mut v10: u16 = (*v9).shakt_var_B;
     let v11: *mut Enemy_Shaktool = Get_Shaktool(shakto_var_E as i32 + 192i32, game);
     (*v9).shakt_var_B = (((*v11).shakt_var_B as i32 ^ 0x8000i32) & 0xff00i32) as u16;
     (*v11).shakt_var_B = ((v10 as i32 ^ 0x8000i32) & 0xff00i32) as u16;
     let v12: *mut Enemy_Shaktool = Get_Shaktool(shakto_var_E as i32 + 384i32, game);
-    x_subpos = (*v12).base.x_subpos;
+    let mut x_subpos: u16 = (*v12).base.x_subpos;
     let v14: *mut Enemy_Shaktool = Get_Shaktool(shakto_var_E as i32, game);
     (*v12).base.x_subpos = (*v14).base.x_subpos;
     (*v14).base.x_subpos = x_subpos;
-    y_subpos = (*v12).base.y_subpos;
+    let mut y_subpos: u16 = (*v12).base.y_subpos;
     (*v12).base.y_subpos = (*v14).base.y_subpos;
     (*v14).base.y_subpos = y_subpos;
-    x_pos = (*v12).base.x_pos;
+    let mut x_pos: u16 = (*v12).base.x_pos;
     (*v12).base.x_pos = (*v14).base.x_pos;
     (*v14).base.x_pos = x_pos;
-    y_pos = (*v12).base.y_pos;
+    let mut y_pos: u16 = (*v12).base.y_pos;
     (*v12).base.y_pos = (*v14).base.y_pos;
     (*v14).base.y_pos = y_pos;
     (*Get_Shaktool(shakto_var_E as i32 + 64i32, game))
@@ -1550,7 +1535,6 @@ pub unsafe fn Shaktool_DCD7(k: u16, game: &mut Game) {
     ), timer = 1u16}
 }
 pub unsafe fn Shaktool_DD25(mut k: u16, game: &mut Game) {
-    let mut v7: i16 = 0;
     let E: *mut Enemy_Shaktool = Get_Shaktool(k as i32, game);
     let y_pos: u16 = (*E).base.y_pos;
     let x_pos: u16 = (*E).base.x_pos;
@@ -1596,7 +1580,7 @@ pub unsafe fn Shaktool_DD25(mut k: u16, game: &mut Game) {
         }
         (*E).shakt_var_D = 0u16;
         let v5: u16 = CalculateAngleOfEnemyXfromEnemyY(k, (*E).shakt_var_E, game);
-        v7 = ((v5 as i32) << 8i32) as i16;
+        let mut v7: i16 = ((v5 as i32) << 8i32) as i16;
         let mut v8: u16 = 0;
         if ((*E).shakt_parameter_1 as i32 & 0x8000i32) != 0i32 {
             v8 = ((v7) as u16).wrapping_sub(0x4000u16);
