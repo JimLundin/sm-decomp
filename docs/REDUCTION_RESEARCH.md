@@ -14,7 +14,9 @@ correspondence/component checks and both full boot replay routes pass for the
 adopted source. Neither count is below 100,000, and their savings are not added.
 The historical pipeline also fixes concrete packing and unaligned-reference
 defects; correctness costs are charged separately from code reduction.
-Maintained Rust needs another **6,190 lines removed** to reach 99,999. A separate
+The subsequent shared beam-window owner removes another **205 lines**, reaching
+**105,984**, with passing component and focused/full replay checks. Maintained
+Rust needs another **5,985 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -1559,6 +1561,95 @@ substantial adoption or demonstrated route through the remaining 6,190 lines.
 Reports and source candidates are under `TEMP/sm-tailored-next/instruction-data`,
 `finite-state-programs`, `address-ownership`, `ram-pointer-chains`,
 `internal-imports` and `infix-word-math`.
+
+### Test complete domain algorithms after recovering compact translation
+
+The next studies use the repaired **106,189-line current source**, with original
+C as a guide to algorithm boundaries. They include complete setup, processing,
+exceptions, consumers and replacement support; gross function spans are not
+reported as removable code.
+
+| Experiment | Complete result | Validation and decision |
+| --- | ---: | --- |
+| Palette pipelines: room-transition scheduling, Phantoon interpolation/targets, cinematic palette planes and suit/visor effects | 106,169 (**-20**) | Full optimized library/frontend builds and source checks pass; park before runtime |
+| Native recording/playback, save/load and history rebasing | 106,121 (**-68**) | Formatted price only; park before builds or behavior checks |
+| Samus locomotion/contact lifecycle | No implemented price | 23 new items occupy 313 gross lines; existing sharing consumes larger repeats |
+| Cross-actor world collision | No implemented price | 1,428 lines audited; no large complete replacement established |
+| Complete X-ray and Mother Brain beam-window rasterization | 105,984 (**-205**) | Compiled components and focused/full replays pass; adopted |
+
+Palette sharing replaces 20 functions and removes 221 lines from their bodies,
+but the common numerical operations, range/health helper and caller costs leave
+only 20 net. It also removes 858 noncomment tokens and 1,305 token-spelling bytes.
+OR-versus-add color composition, full/swapped accumulators, divide-by-zero
+behavior, do-once ranges and live timer reads prevent a single simpler formula.
+
+The recorder's nine principal functions shrink from 442 to 331 lines. Native
+buffer ownership, explicit initialization before `Game::assume_init`, fallible
+growth, borrowed cursors and snapshot/file adapters repay most of that saving.
+The stream/checkpoint formats and current audio/history behavior remain in the
+candidate. Shader construction independently uses ByteArray, so its type and
+remaining helpers cannot be counted as deletions. Original C supplies 17 lineage
+functions occupying 292 lines, but lacks some current audio/history behavior.
+No compatibility claim is made for this unbuilt candidate.
+
+The locomotion and cross-actor studies expose meaningful differences after
+existing sharing: ordinary Samus falling uses velocity captured before
+acceleration, while bomb falling uses the updated velocity; enemy horizontal
+movement commits against live coordinates, while vertical movement commits a
+precomputed position; beams move before reactions and continue their span,
+while actor sweeps stop at the first collision. `Game::react_to_block` and
+`square_slope_occupied` already share the retry and occupancy algorithms.
+These bounded preflights do not prove that broader redesign cannot help.
+
+The complete beam-window replacement is adopted: **106,189 -> 105,984 (-205)**,
+also removing 1,986 lexical tokens and 4,901 token-spelling bytes. Its 668-line
+descriptive owner includes all shared routines and retained exceptions; direct
+imports/callers and source registration count. Old bank facades are removed.
+X-ray and rainbow beams share directional setup and fixed-point edge advancement,
+while retaining the oracle-corrected positive-down carry/store/cleanup behavior.
+Public C alone is insufficient to validate those corrections. The 500-line
+discovery threshold does not veto a useful complete replacement below that size.
+
+Both complete optimized library/frontend builds pass. Separate complete old/new
+Rust DLLs pass **62,368 cases**, comparing all 128 KiB RAM, returned panic status
+and ordered full-RAM hash observations at the sole fixed printf call. Cases
+cover all X-ray directions, on/offscreen destinations, synthetic gradients,
+row-zero/wrapping corrections, actual Samus/eye-beam callers and color aliasing,
+all six rainbow directions, saturation, overlapping headers, all 16 public
+dispatch indices and matched null-dispatch panics. Independent source review
+checks directional arguments, retained helper tokens, live rereads and routing;
+1,310,720 independent scalar calculations support the edge arithmetic check.
+
+The Charge Beam boot route passes **28,699 frames / zero failures**, requiring
+seven probes: calculate (289 calls), shared edges (1,645), generic ramp (74),
+positive-down onscreen (177), eye update (289), full-beam phase (271) and cleanup
+(one). Changed rendering executes at inputs 28,228..28,517, shared edges at
+28,323..28,456, and cleanup at 28,518; 180 subsequent frames are checked. The
+same clean endpoint passes. Full boot any% **129,712/0** and Speed Booster
+**148,406/0** pass with normal rendering/audio/comparisons. Their compiled source
+hash is `71a1ec954a42ee3b57783f80867b687b95ac7a2d32a41628a2e55ba2d24f77a2`.
+Adoption preserves an existing field-store macro comment that the frozen
+experiment predated; that sole final delta has identical executable tokens and
+fresh complete library/frontend compilation. The shader draft remains untouched.
+
+These movies do not exercise the Mother Brain encounter or credits. Constructed
+components cover its changed behavior; they exclude raw out-of-allocation
+geometry and the unchanged special-right no-carry cleanup that can leave the
+RAM allocation. Hold further cleanup of that path without additional context.
+The study retires this responsibility from two banks, not the entire banks.
+
+Reports and candidates: TEMP/sm-tailored-next/{palette-pipeline,
+state-recorder-native,samus-locomotion-cycle,actor-world-collision,beam-windows}.
+The prices are separate experiments, not an additive reduction budget.
+
+A source-ownership count also clarifies the remaining search space. The repaired
+control has **83,741 lines under game/**, **13,135 root-level lines**, **2,743
+platform lines**, **6,077 SNES lines** and **493 verify-subdirectory lines**:
+106,189 total. Original gameplay C is 83,657 lines; the other built C is 16,717.
+Shared game types and RAM helpers live among the Rust root files. Consequently
+the 84-line game-directory difference is ownership accounting, not semantic
+equivalence, and the 22,448 lines outside game/ are not a deletion budget.
+Header lines remain separate from the original C ceiling.
 
 ## Independent transpilers: executed comparisons
 

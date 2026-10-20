@@ -1,4 +1,5 @@
 use crate::c_library::printf;
+use crate::game::beam_windows::calculate_rainbow_window;
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
@@ -31,11 +32,11 @@ use crate::game::sm_a6::{
     SetupZebesEscapeTypewriter,
 };
 use crate::game::sm_ad::{
-    EnableEarthquakeAframes, HandleMotherBrainBodyFlickering, MotherBrain_CalcHdma,
-    MotherBrain_FadeFromGray_Drained, MotherBrain_FadeFromGray_FakeDeath,
-    MotherBrain_FadePalToBlack, MotherBrain_FadeToGray_Drained, MotherBrain_FadeToGray_FakeDeath,
-    MotherBrain_FadeToGray_RealDeath, MotherBrain_HealthBasedPaletteHandling,
-    MotherBrain_Phase3_TurnLightsBackOn, MotherBrain_SealWall, TurnOffLightsForShitroidDeath,
+    EnableEarthquakeAframes, HandleMotherBrainBodyFlickering, MotherBrain_FadeFromGray_Drained,
+    MotherBrain_FadeFromGray_FakeDeath, MotherBrain_FadePalToBlack, MotherBrain_FadeToGray_Drained,
+    MotherBrain_FadeToGray_FakeDeath, MotherBrain_FadeToGray_RealDeath,
+    MotherBrain_HealthBasedPaletteHandling, MotherBrain_Phase3_TurnLightsBackOn,
+    MotherBrain_SealWall, TurnOffLightsForShitroidDeath,
 };
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
@@ -2221,7 +2222,7 @@ pub unsafe fn MotherBrain_AddSpritemapToOam(j: u16, r18: u16, r20: u16, r22: u16
     word!(game.oam_next_ptr = idx as u16);
 }
 pub unsafe fn MotherBrain_CalculateRainbowBeamHdma(game: &mut Game) {
-    MotherBrain_CalcHdma(game);
+    calculate_rainbow_window(game);
 }
 pub unsafe fn MotherBrain_MoveBodyDownScrollLeft(k: u16, a: u16, game: &mut Game) {
     let E = Get_MotherBrain(0, game);

@@ -91,8 +91,12 @@ normal rendering, audio and comparisons. Neither route reaches credits.
 Broad field and earlier loop spellings that reduced lines while increasing
 text were rejected; retain this token/text check against line packing.
 The unrelated shader draft is preserved and excluded from the committed
-count. Another **6,190 lines** are needed to reach 99,999; no remaining
-deletion budget or bank retirement is established by these rules.
+count. The subsequent complete beam-window replacement removes **205 more
+lines**, reaching **105,984**, with all imports and source registration counted.
+It owns X-ray and rainbow-beam rasterization under descriptive names, with
+direct callers and no bank facades. Component checks and focused/full replays
+pass as recorded below. Another **5,985 lines** are needed to reach 99,999;
+no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
 music queue and related update captures. The historical repair changes 228
@@ -472,11 +476,33 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    shrink tokens/text. Park the named version before broad validation.
    Reports: TEMP sm-tailored-next/finite-state-programs and infix-word-math.
 
-   These completed representation trials establish no new substantial adoption
-   or path through the remaining 6,190-line gap. Stop these scoped studies.
-   The next discovery must name a materially different complete game algorithm
-   and an actual replacement; another generic operation runner, spelling pass
-   or repeat of the covered detectors is not the next item. Current-derived
+   Those representation studies are closed. Five subsequent domain studies
+   use the same repaired 106,189-line control:
+
+   - Complete palette pipelines across room transitions, Phantoon, cinematics
+     and suit/visor effects save only **20 lines**, including all 20 replaced
+     functions and shared support. Full library/frontend builds pass; park
+     without runtime work.
+   - Native recording/playback, snapshot loading/saving and history rebasing
+     save only **68 lines**, including Vec initialization, cursor/file helpers,
+     unchanged stream formats and checkpoint adapters. Shader consumers still
+     require ByteArray. Park this formatted, uncompiled price.
+   - Samus locomotion/contact preflight identifies 313 gross lines in 23 new
+     items; existing shared motion and transition owners remain charged.
+     Cross-actor collision preflight audits 1,428 lines, finding shared retry,
+     square-slope and shot-axis owners already present. Neither establishes a
+     new large replacement; no implementation or saving is claimed. These are
+     bounded findings, not limits on every possible redesign.
+   - The complete X-ray/Mother Brain beam-window replacement is adopted under
+     item 3: **205 lines removed**, with corrected current-Rust behavior and
+     direct callers validated. A 500-line discovery threshold is a prioritization
+     aid, not a reason to reject a useful complete replacement.
+
+   Reports: TEMP sm-tailored-next/palette-pipeline, state-recorder-native,
+   samus-locomotion-cycle, actor-world-collision and beam-windows. These are
+   separate controls; do not add their prices. Keep these scoped studies closed.
+   Further discovery needs a new complete algorithm and replacement, not a
+   repeat of these cohorts or another generic operation runner. Current-derived
    translation recovery remains demonstrated separately at 110,009 lines.
 
    The expanded source-first C experiment is complete: sharing 35 algorithm
@@ -560,8 +586,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **6,190-line** gap; parked small drafts are not
+   replacement yet funds the **5,985-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Complete beam-window ownership removes **205 lines (106,189 -> 105,984)**,
+   including the 668-line `beam_windows` module, direct imports/callers and
+   source registration. Shared directional setup and edge advancement retain
+   corrected X-ray positive-down stores, saturation and ordered rainbow headers.
+   All 62,368 actual old/new Rust full-RAM component cases pass. The Charge Beam
+   boot route passes **28699/0**, with seven required probes including 1,645
+   shared-edge calls, 74 generic-ramp calls and cleanup plus 180 follow-up frames.
+   The clean focused run and full any% **129712/0** and Speed Booster **148406/0**
+   pass. Complete optimized library/frontend builds and independent review pass.
+   Mother Brain and other unvisited branches have constructed component
+   coverage; no endgame movie execution or credits is claimed.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
    declarations at their first value or binding an exhaustive branch result,
@@ -916,7 +954,18 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: terminal loops, selected field/RAM store groups and
+Latest full integration: the shared beam-window owner passes full boot any%
+**129712/0** and Speed Booster **148406/0**, with normal rendering, audio and
+comparisons. Charge Beam **28699/0** exercises seven required probes through
+the shared renderer and eye-beam cleanup plus 180 follow-up frames; the clean
+run passes at the same endpoint. Actual old/new Rust components pass 62,368
+full-RAM cases including all directions, corrected wraps, callers, saturation,
+headers and null-dispatch effects. Unvisited Mother Brain behavior has component
+coverage; no endgame movie or credits is claimed. The final source preserves
+one existing macro comment; executable tokens match the full replay build.
+Final-source library/frontend compilation and static checks pass.
+
+Earlier full integration: terminal loops, selected field/RAM store groups and
 the 83-capture unaligned RAM repair through dc5d2f08 pass full boot any%
 **129712/0** and Speed Booster **148406/0**, with normal rendering, audio and
 comparisons. The final source matches the replayed snapshot. Complete expanded
@@ -1020,12 +1069,12 @@ imports, ordered stores, PNG texture loading, beam firing, moving platforms,
 byte-partial-product sharing, INI decoding, countdown callbacks, projectile
 flight, callback entry captures, opcode grids, blast windows, indexed loops and
 combined callback/dispatch declarations, terminal loops, selected field/RAM
-store groups and the unaligned RAM repair, maintained Rust is **106,189**,
-leaving **6,190** to reach 99,999. Counters:
+store groups, the unaligned RAM repair and shared beam windows, maintained Rust
+is **105,984**, leaving **5,985** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3665; cast lines 8096. Shared declarations lower the unsafe
-source count; ten additional cast lines come from normal body reflow, with
-unchanged cast operations. The unrelated 83-line shader draft
+unsafe functions 3652; cast lines 8057. The beam-window replacement removes
+13 unsafe function declarations and 39 cast-containing lines. The unrelated
+83-line shader draft
 remains excluded; working-tree counts are not the committed baseline.
 Item 2's function/compound-body variant audits are complete for their stated
 scope. The remaining gap has no established replacement budget. The hopping

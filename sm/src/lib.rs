@@ -306,6 +306,7 @@ pub mod game {
     pub(crate) use enemy_instruction;
 
     pub(crate) mod beam_firing;
+    pub(crate) mod beam_windows;
     pub mod constants;
     pub(crate) mod enemy_layouts;
     pub(crate) mod enemy_ram;

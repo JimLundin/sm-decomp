@@ -1,3 +1,4 @@
+use crate::game::beam_windows::calculate_xray_window;
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
@@ -14,9 +15,9 @@ use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::{
-    CalculateXrayHdmaTableInner, CanXrayShowBlocks, HdmaobjPreInstr_XraySetup,
-    InitializeSuitPickupHdma, ResponsibleForXrayStandupGlitch, SamusFunc_F433,
-    Samus_LoadSuitPalette, Samus_SetAnimationFrameIfPoseChanged, Xray_SetupStage1_FreezeTimeBackup,
+    CanXrayShowBlocks, HdmaobjPreInstr_XraySetup, InitializeSuitPickupHdma,
+    ResponsibleForXrayStandupGlitch, SamusFunc_F433, Samus_LoadSuitPalette,
+    Samus_SetAnimationFrameIfPoseChanged, Xray_SetupStage1_FreezeTimeBackup,
     Xray_SetupStage2_ReadBg1_2ndScreen, Xray_SetupStage3_ReadBg1_1stScreen, Xray_SetupStage4,
     Xray_SetupStage5, Xray_SetupStage6, Xray_SetupStage7, Xray_SetupStage8_SetBackdropColor,
 };
@@ -814,7 +815,7 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
         !(*ram_ptr!(game; 0xa1e) != 4)
     } else {
         if (v0).wrapping_sub(256) < 0 {
-            CalculateXrayHdmaTableInner(
+            calculate_xray_window(
                 v0 as u16,
                 v1,
                 word!(game.xray_angle),
@@ -829,7 +830,7 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
     };
     if skip_xray_table {
     } else {
-        CalculateXrayHdmaTableInner(
+        calculate_xray_window(
             v0 as u16,
             v1,
             word!(game.xray_angle),
@@ -2640,7 +2641,7 @@ pub unsafe fn UpdateMorphBallEyeBeamHdma(k: u16, game: &mut Game) {
         .enemy_coordinates(BEAM_ENEMY)
         .x_pos()
         .wrapping_sub(game.layer1_x_pos());
-    CalculateXrayHdmaTableInner(
+    calculate_xray_window(
         relative_x,
         relative_y,
         angle,
