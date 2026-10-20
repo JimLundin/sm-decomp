@@ -9,6 +9,7 @@ use crate::game::sm_a9::WriteColorsToPalette;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::set_ram_word;
+use crate::ram_map::set_ram_words;
 use crate::rtl::RomPtr;
 pub use crate::types::Consts_86;
 pub use crate::types::Consts_AD;
@@ -67,8 +68,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight2(game: &mut Game) {
     *(ram_ptr!(game, u16; 0x9c00, 12)) = 0u16;
 }
 pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, game: &mut Game) {
-    set_ram_word!(game.hdma_table_2[0] = 255u16);
-    set_ram_word!(game.hdma_table_2[1] = 255u16);
+    set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     let r18: u16 = crate::rtl::rom_table_word!(
         game,
@@ -169,8 +169,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedUp(game: &mut Game) {
     };
 }
 pub unsafe fn MotherBrain_CalcHdma_Up_UpRight(mut r22: u16, mut r24: u16, game: &mut Game) {
-    set_ram_word!(game.hdma_table_2[0] = 255u16);
-    set_ram_word!(game.hdma_table_2[1] = 255u16);
+    set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     let r18: u16 = crate::rtl::rom_table_word!(
         game,
@@ -214,8 +213,7 @@ pub unsafe fn MotherBrain_CalcHdma_Up_UpRight(mut r22: u16, mut r24: u16, game: 
     }
 }
 pub unsafe fn MotherBrain_CalcHdma_Up_Up(mut r22: u16, mut r24: u16, game: &mut Game) {
-    set_ram_word!(game.hdma_table_2[0] = 255u16);
-    set_ram_word!(game.hdma_table_2[1] = 255u16);
+    set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     let r18: u16 = crate::rtl::rom_table_word!(
         game,
@@ -259,8 +257,7 @@ pub unsafe fn MotherBrain_CalcHdma_Up_Up(mut r22: u16, mut r24: u16, game: &mut 
     }
 }
 pub unsafe fn MotherBrain_CalcHdma_Up_UpLeft(mut r22: u16, mut r24: u16, game: &mut Game) {
-    set_ram_word!(game.hdma_table_2[0] = 255u16);
-    set_ram_word!(game.hdma_table_2[1] = 255u16);
+    set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     let r18: u16 = crate::rtl::rom_table_word!(
         game,
@@ -323,8 +320,7 @@ pub unsafe fn MotherBrain_CalcHdma_Down(game: &mut Game) {
     *(ram_ptr!(game, u16; 0x9c00, 12)) = 0u16;
 }
 pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(mut r22: u16, mut r24: u16, game: &mut Game) {
-    set_ram_word!(game.hdma_table_2[0] = 255u16);
-    set_ram_word!(game.hdma_table_2[1] = 255u16);
+    set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     let r18: u16 = crate::rtl::rom_table_word!(
         game,
@@ -374,8 +370,7 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(mut r22: u16, mut r24: u16, ga
     }
 }
 pub unsafe fn MotherBrain_CalcHdma_Down_Down(mut r22: u16, mut r24: u16, game: &mut Game) {
-    set_ram_word!(game.hdma_table_2[0] = 255u16);
-    set_ram_word!(game.hdma_table_2[1] = 255u16);
+    set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     let r18: u16 = crate::rtl::rom_table_word!(
         game,
@@ -425,8 +420,7 @@ pub unsafe fn MotherBrain_CalcHdma_Down_Down(mut r22: u16, mut r24: u16, game: &
     }
 }
 pub unsafe fn MotherBrain_CalcHdma_Down_DownLeft(mut r22: u16, mut r24: u16, game: &mut Game) {
-    set_ram_word!(game.hdma_table_2[0] = 255u16);
-    set_ram_word!(game.hdma_table_2[1] = 255u16);
+    set_ram_words! { game, 255u16; hdma_table_2[0], hdma_table_2[1] }
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     let r18: u16 = crate::rtl::rom_table_word!(
         game,

@@ -33,6 +33,7 @@ use crate::game::sm_a0::{
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
@@ -2753,8 +2754,7 @@ pub unsafe fn GunshipTop_12(k: u16, game: &mut Game) {
         let E: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32 + 64i32, game);
         (*E).gtp_var_F = 0u16;
         (*E).gtp_var_E = 0u16;
-        set_ram_word!(game.substate = 0u16);
-        set_ram_word!(game.suit_pickup_light_beam_pos = 0u16);
+        set_ram_words! { game, 0u16; substate, suit_pickup_light_beam_pos }
         *(ram_ptr!(game, u16; 0xdf0)) = 0u16;
         *(ram_ptr!(game, u16; 0xdf2)) = 0u16;
         CallSomeSamusCode(0xau16, game);
@@ -2928,8 +2928,7 @@ pub unsafe fn GunshipTop_20(k: u16, game: &mut Game) {
     if (*E).base.y_pos as i32 - 256i32 & 0x8000i32 != 0 {
         (*E).gtp_var_F = ((0xa2ad2di32) as u16);
         set_ram_word!(game.game_state = 38u16);
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
     }
 }
 pub unsafe fn GunshipTop_21(k: u16, game: &mut Game) {

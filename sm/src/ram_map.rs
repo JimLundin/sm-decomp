@@ -113,6 +113,15 @@ macro_rules! set_ram_word {
 }
 pub(crate) use set_ram_word;
 
+// Share a literal across ordered stores without introducing a runtime block.
+// Every index is still evaluated by its original setter, at its original store.
+macro_rules! set_ram_words {
+    ($game:ident, $value:literal; $($field:ident$([$index:expr])?),+ $(,)?) => {
+        $($crate::ram_map::set_ram_word!($game.$field$([$index])? = $value);)+
+    };
+}
+pub(crate) use set_ram_words;
+
 // Capture the raw destination, read its old word first, then evaluate/store RHS.
 // The expression form binds a primitive value; it does not create a closure.
 // Indices use only primitives, with no extending temporary lifetimes.

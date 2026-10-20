@@ -23,6 +23,7 @@ use crate::game::sm_94::{
 use crate::game::sm_a0::{CalculateAngleFromXY, GrappleBeam_CollDetect_Enemy};
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::SetHiLo;
@@ -197,8 +198,7 @@ pub unsafe fn HandleSamusDeathSequence(game: &mut Game) -> u16 {
                 set_ram_word!(game.g_word_7E0DE4 = 0u16);
                 set_ram_word!(game.game_options_screen_index = 3u16);
             } else {
-                set_ram_word!(game.g_word_7E0DE4 = 1u16);
-                set_ram_word!(game.game_options_screen_index = 1u16);
+                set_ram_words! { game, 1u16; g_word_7E0DE4, game_options_screen_index }
             }
             CopyPalettesForSamusDeath((ram_word!(game, g_word_7E0DE4)).wrapping_mul(2u16), game);
         }
@@ -237,8 +237,7 @@ pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
         game.game_options_screen_index =
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb823)) as *mut u8).offset(0) as u16
     );
-    set_ram_word!(game.g_word_7E0DE4 = 0u16);
-    set_ram_word!(game.g_word_7E0DE6 = 0u16);
+    set_ram_words! { game, 0u16; g_word_7E0DE4, g_word_7E0DE6 }
     GameState_24_SamusNoHealth_Explosion_2(game);
 }
 pub unsafe fn CopyPalettesForSamusDeath(v0: u16, game: &mut Game) {
@@ -374,8 +373,9 @@ pub unsafe fn CancelGrappleBeamIfIncompatiblePose(game: &mut Game) {
     }
 }
 pub unsafe fn CheckIfGrappleIsConnectedToBlock(game: &mut Game) -> u8 {
-    set_ram_word!(game.grapple_beam_extension_x_velocity = 0u16);
-    set_ram_word!(game.grapple_beam_extension_y_velocity = 0u16);
+    set_ram_words! { game, 0u16;
+        grapple_beam_extension_x_velocity, grapple_beam_extension_y_velocity,
+    }
     if (BlockReactGrapple(game) as i32 & 1i32) == 0i32 {
         return 0u8;
     }
@@ -570,8 +570,7 @@ pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> u8 {
             .offset(v0 as isize))
         .field_8
     );
-    set_ram_word!(game.samus_special_transgfx_index = 0u16);
-    set_ram_word!(game.slow_grabble_scrolling_flag = 0u16);
+    set_ram_words! { game, 0u16; samus_special_transgfx_index, slow_grabble_scrolling_flag }
     let v2: i16 = ((ram_word!(game, samus_x_pos)) as i16)
         .wrapping_sub((ram_word!(game, samus_prev_x_pos)) as i16);
     if ((ram_word!(game, samus_x_pos)) as i16)
@@ -670,8 +669,7 @@ pub unsafe fn GrappleBeamFunc_BC1F(game: &mut Game) {
         }
     } else if ram_word!(game, grapple_beam_end_angle16) as i32 & 0x8000i32 != 0 {
         if ((*ram_ptr!(game; 0xcfb) as i32) << 8i32) == 0x8000i32 {
-            set_ram_word!(game.grapple_beam_unkD28 = 0u16);
-            set_ram_word!(game.grapple_beam_unkD2C = 0u16);
+            set_ram_words! { game, 0u16; grapple_beam_unkD28, grapple_beam_unkD2C }
             let mut v0: u16 = ram_word!(game, grapple_beam_unkD26);
             if (ram_word!(game, grapple_beam_unkD26) as i32 & 0x8000i32) != 0i32 {
                 v0 = !(ram_word!(game, grapple_beam_unkD26) as i32 - 1i32) as u16;
@@ -1094,13 +1092,11 @@ pub unsafe fn GrappleBeamFunc_Inactive(game: &mut Game) {
     {
         GrappleBeamFunc_FireGoToCancel(game);
     } else if ram_word!(game, flare_counter) != 0 {
-        set_ram_word!(game.flare_counter = 0u16);
-        set_ram_word!(game.flare_animation_frame = 0u16);
-        set_ram_word!(game.flare_slow_sparks_anim_frame = 0u16);
-        set_ram_word!(game.flare_fast_sparks_anim_frame = 0u16);
-        set_ram_word!(game.flare_animation_timer = 0u16);
-        set_ram_word!(game.flare_slow_sparks_anim_timer = 0u16);
-        set_ram_word!(game.flare_fast_sparks_anim_timer = 0u16);
+        set_ram_words! { game, 0u16;
+            flare_counter, flare_animation_frame, flare_slow_sparks_anim_frame,
+            flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
+            flare_fast_sparks_anim_timer,
+        }
         Samus_LoadSuitPalette(game);
     }
 }
@@ -1217,33 +1213,27 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
                     - r22 as i32) as u16
         );
     }
-    set_ram_word!(game.grapple_beam_end_x_subpos = 0u16);
-    set_ram_word!(game.grapple_beam_end_y_subpos = 0u16);
-    set_ram_word!(game.grapple_beam_end_x_suboffset = 0u16);
-    set_ram_word!(game.grapple_beam_end_x_offset = 0u16);
-    set_ram_word!(game.grapple_beam_end_y_suboffset = 0u16);
-    set_ram_word!(game.grapple_beam_end_y_offset = 0u16);
-    set_ram_word!(game.grapple_beam_flags = 0u16);
+    set_ram_words! { game, 0u16;
+        grapple_beam_end_x_subpos, grapple_beam_end_y_subpos, grapple_beam_end_x_suboffset,
+        grapple_beam_end_x_offset, grapple_beam_end_y_suboffset, grapple_beam_end_y_offset,
+        grapple_beam_flags,
+    }
     set_ram_word!(game.grapple_beam_length_delta = 12u16);
-    set_ram_word!(game.grapple_beam_length = 0u16);
-    set_ram_word!(game.grapple_beam_unkD26 = 0u16);
-    set_ram_word!(game.grapple_beam_unkD28 = 0u16);
-    set_ram_word!(game.grapple_beam_unkD2A = 0u16);
-    set_ram_word!(game.grapple_beam_unkD2C = 0u16);
-    set_ram_word!(game.grapple_beam_unkD2E = 0u16);
-    set_ram_word!(game.grapple_beam_unkD30 = 0u16);
-    set_ram_word!(game.grapple_beam_unkD1E = 0u16);
-    set_ram_word!(game.grapple_beam_unkD20 = 0u16);
+    set_ram_words! { game, 0u16;
+        grapple_beam_length, grapple_beam_unkD26, grapple_beam_unkD28, grapple_beam_unkD2A,
+        grapple_beam_unkD2C, grapple_beam_unkD2E, grapple_beam_unkD30, grapple_beam_unkD1E,
+        grapple_beam_unkD20,
+    }
     set_ram_word!(game.grapple_beam_unkD3A = 2u16);
     set_ram_word!(game.grapple_beam_unkD3C = 0u16);
     set_ram_word!(game.grapple_point_anim_timer = 5u16);
     set_ram_word!(
         game.grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0isize)
     );
-    set_ram_word!(game.grapple_beam_grapple_start_x = 0u16);
-    set_ram_word!(game.grapple_beam_unkD38 = 0u16);
-    set_ram_word!(game.grapple_beam_unkD36 = 0u16);
-    set_ram_word!(game.slow_grabble_scrolling_flag = 0u16);
+    set_ram_words! { game, 0u16;
+        grapple_beam_grapple_start_x, grapple_beam_unkD38, grapple_beam_unkD36,
+        slow_grabble_scrolling_flag,
+    }
     GrappleFunc_AF87(game);
     set_ram_word!(game.samus_draw_handler = ((0x90eb86i32) as u16));
     set_ram_word!(game.grapple_walljump_timer = 0u16);
@@ -1399,28 +1389,19 @@ pub unsafe fn GrappleBeamFunc_Cancel(game: &mut Game) {
     } else {
         CallSomeSamusCode(0x1cu16, game);
     }
-    set_ram_word!(game.grapple_beam_unkD1E = 0u16);
-    set_ram_word!(game.grapple_beam_unkD20 = 0u16);
-    set_ram_word!(game.grapple_beam_direction = 0u16);
-    set_ram_word!(game.grapple_beam_unkD36 = 0u16);
-    set_ram_word!(game.grapple_walljump_timer = 0u16);
-    set_ram_word!(game.slow_grabble_scrolling_flag = 0u16);
-    set_ram_word!(game.grapple_varCF6 = 0u16);
-    set_ram_word!(game.grapple_beam_flags = 0u16);
-    set_ram_word!(game.flare_counter = 0u16);
-    set_ram_word!(game.flare_animation_frame = 0u16);
-    set_ram_word!(game.flare_slow_sparks_anim_frame = 0u16);
-    set_ram_word!(game.flare_fast_sparks_anim_frame = 0u16);
-    set_ram_word!(game.flare_animation_timer = 0u16);
-    set_ram_word!(game.flare_slow_sparks_anim_timer = 0u16);
-    set_ram_word!(game.flare_fast_sparks_anim_timer = 0u16);
+    set_ram_words! { game, 0u16;
+        grapple_beam_unkD1E, grapple_beam_unkD20, grapple_beam_direction, grapple_beam_unkD36,
+        grapple_walljump_timer, slow_grabble_scrolling_flag, grapple_varCF6, grapple_beam_flags,
+        flare_counter, flare_animation_frame, flare_slow_sparks_anim_frame,
+        flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
+        flare_fast_sparks_anim_timer,
+    }
     LoadProjectilePalette(ram_word!(game, equipped_beams), game);
     set_ram_word!(game.grapple_beam_function = ((0x9bc4f0i32) as u16));
     set_ram_word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
     Samus_PostGrappleCollisionDetect(game);
     if ram_word!(game, samus_auto_cancel_hud_item_index) != 0 {
-        set_ram_word!(game.hud_item_index = 0u16);
-        set_ram_word!(game.samus_auto_cancel_hud_item_index = 0u16);
+        set_ram_words! { game, 0u16; hud_item_index, samus_auto_cancel_hud_item_index }
     }
 }
 pub unsafe fn GrappleBeam_Func2(game: &mut Game) {
@@ -1497,32 +1478,20 @@ pub unsafe fn GrappleBeam_Func2(game: &mut Game) {
     }
     set_ram_word!(game.samus_hurt_switch_index = 0u16);
     set_ram_word!(game.input_to_pose_calc = 1u16);
-    set_ram_word!(game.samus_x_base_speed = 0u16);
-    set_ram_word!(game.samus_x_base_subspeed = 0u16);
-    set_ram_word!(game.samus_y_subspeed = 0u16);
-    set_ram_word!(game.samus_y_speed = 0u16);
-    set_ram_word!(game.grapple_beam_unkD1E = 0u16);
-    set_ram_word!(game.grapple_beam_unkD20 = 0u16);
-    set_ram_word!(game.grapple_beam_direction = 0u16);
-    set_ram_word!(game.grapple_beam_unkD36 = 0u16);
-    set_ram_word!(game.grapple_walljump_timer = 0u16);
-    set_ram_word!(game.slow_grabble_scrolling_flag = 0u16);
-    set_ram_word!(game.grapple_varCF6 = 0u16);
-    set_ram_word!(game.grapple_beam_flags = 0u16);
-    set_ram_word!(game.flare_counter = 0u16);
-    set_ram_word!(game.flare_animation_frame = 0u16);
-    set_ram_word!(game.flare_slow_sparks_anim_frame = 0u16);
-    set_ram_word!(game.flare_fast_sparks_anim_frame = 0u16);
-    set_ram_word!(game.flare_animation_timer = 0u16);
-    set_ram_word!(game.flare_slow_sparks_anim_timer = 0u16);
-    set_ram_word!(game.flare_fast_sparks_anim_timer = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_x_base_speed, samus_x_base_subspeed, samus_y_subspeed, samus_y_speed,
+        grapple_beam_unkD1E, grapple_beam_unkD20, grapple_beam_direction, grapple_beam_unkD36,
+        grapple_walljump_timer, slow_grabble_scrolling_flag, grapple_varCF6, grapple_beam_flags,
+        flare_counter, flare_animation_frame, flare_slow_sparks_anim_frame,
+        flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
+        flare_fast_sparks_anim_timer,
+    }
     LoadProjectilePalette(ram_word!(game, equipped_beams), game);
     set_ram_word!(game.grapple_beam_function = ((0x9bc4f0i32) as u16));
     set_ram_word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
     Samus_PostGrappleCollisionDetect(game);
     if ram_word!(game, samus_auto_cancel_hud_item_index) != 0 {
-        set_ram_word!(game.hud_item_index = 0u16);
-        set_ram_word!(game.samus_auto_cancel_hud_item_index = 0u16);
+        set_ram_words! { game, 0u16; hud_item_index, samus_auto_cancel_hud_item_index }
     }
 }
 pub unsafe fn GrappleBeamFunc_C9CE(game: &mut Game) {
@@ -1533,39 +1502,21 @@ pub unsafe fn GrappleBeamFunc_C9CE(game: &mut Game) {
         set_ram_word!(game.samus_new_pose_transitional = kPose_83_FaceR_Walljump as u16);
     }
     set_ram_word!(game.samus_hurt_switch_index = 6u16);
-    set_ram_word!(game.samus_x_accel_mode = 0u16);
-    set_ram_word!(game.samus_collides_with_solid_enemy = 0u16);
-    set_ram_word!(game.samus_is_falling_flag = 0u16);
-    set_ram_word!(game.UNUSED_word_7E0B1A = 0u16);
-    set_ram_word!(game.UNUSED_word_7E0B2A = 0u16);
-    set_ram_word!(game.samus_y_subspeed = 0u16);
-    set_ram_word!(game.samus_y_speed = 0u16);
-    set_ram_word!(game.samus_y_dir = 0u16);
-    set_ram_word!(game.UNUSED_word_7E0B38 = 0u16);
-    set_ram_word!(game.samus_x_base_speed = 0u16);
-    set_ram_word!(game.samus_x_base_subspeed = 0u16);
-    set_ram_word!(game.grapple_beam_unkD1E = 0u16);
-    set_ram_word!(game.grapple_beam_unkD20 = 0u16);
-    set_ram_word!(game.grapple_beam_direction = 0u16);
-    set_ram_word!(game.grapple_beam_unkD36 = 0u16);
-    set_ram_word!(game.grapple_walljump_timer = 0u16);
-    set_ram_word!(game.slow_grabble_scrolling_flag = 0u16);
-    set_ram_word!(game.grapple_varCF6 = 0u16);
-    set_ram_word!(game.grapple_beam_flags = 0u16);
-    set_ram_word!(game.flare_counter = 0u16);
-    set_ram_word!(game.flare_animation_frame = 0u16);
-    set_ram_word!(game.flare_slow_sparks_anim_frame = 0u16);
-    set_ram_word!(game.flare_fast_sparks_anim_frame = 0u16);
-    set_ram_word!(game.flare_animation_timer = 0u16);
-    set_ram_word!(game.flare_slow_sparks_anim_timer = 0u16);
-    set_ram_word!(game.flare_fast_sparks_anim_timer = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_x_accel_mode, samus_collides_with_solid_enemy, samus_is_falling_flag,
+        UNUSED_word_7E0B1A, UNUSED_word_7E0B2A, samus_y_subspeed, samus_y_speed, samus_y_dir,
+        UNUSED_word_7E0B38, samus_x_base_speed, samus_x_base_subspeed, grapple_beam_unkD1E,
+        grapple_beam_unkD20, grapple_beam_direction, grapple_beam_unkD36, grapple_walljump_timer,
+        slow_grabble_scrolling_flag, grapple_varCF6, grapple_beam_flags, flare_counter,
+        flare_animation_frame, flare_slow_sparks_anim_frame, flare_fast_sparks_anim_frame,
+        flare_animation_timer, flare_slow_sparks_anim_timer, flare_fast_sparks_anim_timer,
+    }
     LoadProjectilePalette(ram_word!(game, equipped_beams), game);
     set_ram_word!(game.grapple_beam_function = ((0x9bc4f0i32) as u16));
     set_ram_word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
     Samus_PostGrappleCollisionDetect(game);
     if ram_word!(game, samus_auto_cancel_hud_item_index) != 0 {
-        set_ram_word!(game.hud_item_index = 0u16);
-        set_ram_word!(game.samus_auto_cancel_hud_item_index = 0u16);
+        set_ram_words! { game, 0u16; hud_item_index, samus_auto_cancel_hud_item_index }
     }
 }
 pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
@@ -1633,28 +1584,19 @@ pub unsafe fn GrappleBeamFunc_ReleaseFromSwing(game: &mut Game) {
         set_ram_word!(game.samus_new_pose_transitional = kPose_51_FaceR_Jump_NoAim_MoveF as u16);
     }
     set_ram_word!(game.samus_hurt_switch_index = 7u16);
-    set_ram_word!(game.grapple_beam_unkD1E = 0u16);
-    set_ram_word!(game.grapple_beam_unkD20 = 0u16);
-    set_ram_word!(game.grapple_beam_direction = 0u16);
-    set_ram_word!(game.grapple_beam_unkD36 = 0u16);
-    set_ram_word!(game.grapple_walljump_timer = 0u16);
-    set_ram_word!(game.slow_grabble_scrolling_flag = 0u16);
-    set_ram_word!(game.grapple_varCF6 = 0u16);
-    set_ram_word!(game.grapple_beam_flags = 0u16);
-    set_ram_word!(game.flare_counter = 0u16);
-    set_ram_word!(game.flare_animation_frame = 0u16);
-    set_ram_word!(game.flare_slow_sparks_anim_frame = 0u16);
-    set_ram_word!(game.flare_fast_sparks_anim_frame = 0u16);
-    set_ram_word!(game.flare_animation_timer = 0u16);
-    set_ram_word!(game.flare_slow_sparks_anim_timer = 0u16);
-    set_ram_word!(game.flare_fast_sparks_anim_timer = 0u16);
+    set_ram_words! { game, 0u16;
+        grapple_beam_unkD1E, grapple_beam_unkD20, grapple_beam_direction, grapple_beam_unkD36,
+        grapple_walljump_timer, slow_grabble_scrolling_flag, grapple_varCF6, grapple_beam_flags,
+        flare_counter, flare_animation_frame, flare_slow_sparks_anim_frame,
+        flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
+        flare_fast_sparks_anim_timer,
+    }
     LoadProjectilePalette(ram_word!(game, equipped_beams), game);
     set_ram_word!(game.grapple_beam_function = ((0x9bc4f0i32) as u16));
     set_ram_word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
     Samus_PostGrappleCollisionDetect(game);
     if ram_word!(game, samus_auto_cancel_hud_item_index) != 0 {
-        set_ram_word!(game.hud_item_index = 0u16);
-        set_ram_word!(game.samus_auto_cancel_hud_item_index = 0u16);
+        set_ram_words! { game, 0u16; hud_item_index, samus_auto_cancel_hud_item_index }
     }
 }
 crate::game::address_dispatch! {

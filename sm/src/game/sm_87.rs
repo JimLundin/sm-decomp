@@ -8,6 +8,7 @@ use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
 
@@ -278,9 +279,9 @@ pub unsafe fn AnimtilesInstr_TourianStatueClearState(k: u16, j: u16, game: &mut 
 }
 pub unsafe fn AnimtilesInstr_Clear3PaletteColors(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: i32 = *(RomPtr_87(j, game) as *mut u16) as i32 >> 1i32;
-    set_ram_word!(game.palette_buffer[v2] = 0u16);
-    set_ram_word!(game.palette_buffer[(v2 + 1i32)] = 0u16);
-    set_ram_word!(game.palette_buffer[(v2 + 2i32)] = 0u16);
+    set_ram_words! { game, 0u16;
+        palette_buffer[v2], palette_buffer[(v2 + 1i32)], palette_buffer[(v2 + 2i32)],
+    }
     (j).wrapping_add(2u16)
 }
 pub unsafe fn AnimtilesInstr_SpawnPalfxObj(k: u16, j: u16, game: &mut Game) -> u16 {

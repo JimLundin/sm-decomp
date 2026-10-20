@@ -75,6 +75,7 @@ use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
 use crate::game_state::Game;
 use crate::host::{Die, Warning};
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{
@@ -359,8 +360,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                     break;
                 }
             }
-            set_ram_word!(game.screen_fade_delay = 1u16);
-            set_ram_word!(game.screen_fade_counter = 1u16);
+            set_ram_words! { game, 1u16; screen_fade_delay, screen_fade_counter }
             EnableNMI(game);
             EnableEprojs(game);
             EnablePLMs(game);
@@ -619,8 +619,7 @@ pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRe
         != 0i32;
     if ram_word!(game, reached_ceres_elevator_fade_timer) == 0 || v0 {
         update_ram_word!(game.game_state, wrapping_add(1));
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
     }
     kCoroutineNone as CoroutineRet
 }
@@ -637,8 +636,7 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
         EnableNMI(game);
         WaitUntilEndOfVblankAndClearHdma(game);
         DisableIrqInterrupts(game);
-        set_ram_word!(game.fx_layer_blending_config_a = 0u16);
-        set_ram_word!(game.cur_irq_handler = 0u16);
+        set_ram_words! { game, 0u16; fx_layer_blending_config_a, cur_irq_handler }
         *ram_ptr!(game; 0x6e) = 0u8;
         *ram_ptr!(game; 0x71) = 0u8;
         *ram_ptr!(game; 0x69) = 16u8;
@@ -646,14 +644,12 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
         *ram_ptr!(game; 0x6c) = 0u8;
         *ram_ptr!(game; 0x6d) = 0u8;
         *ram_ptr!(game; 0x55) = 9u8;
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         set_ram_word!(game.loading_game_state = kLoadingGameState_22_EscapingCeres as u16);
         set_ram_word!(game.game_state = 34u16);
         SaveToSram(ram_word!(game, selected_save_slot), game);
         set_ram_word!(game.cinematic_function = ((0x8bc11bi32) as u16));
-        set_ram_word!(game.ceres_status = 0u16);
-        set_ram_word!(game.timer_status = 0u16);
+        set_ram_words! { game, 0u16; ceres_status, timer_status }
         QueueMusic_Delayed8(0u16, game);
         QueueSfx1_Max15(2u16, game);
         QueueSfx2_Max15(0x71u16, game);
@@ -669,8 +665,7 @@ pub unsafe fn GameState_35_TimeUp(game: &mut Game) -> CoroutineRet {
     set_ram_word!(game.palette_change_denom = 8u16);
     if AdvancePaletteFadeForAllPalettes(game) != 0 {
         set_ram_word!(game.game_state = kGameState_36_WhitingOutFromTimeUp as u16);
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
     }
     kCoroutineNone as CoroutineRet
 }
@@ -680,8 +675,7 @@ pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet
         EnableNMI(game);
         WaitUntilEndOfVblankAndClearHdma(game);
         DisableIrqInterrupts(game);
-        set_ram_word!(game.fx_layer_blending_config_a = 0u16);
-        set_ram_word!(game.cur_irq_handler = 0u16);
+        set_ram_words! { game, 0u16; fx_layer_blending_config_a, cur_irq_handler }
         *ram_ptr!(game; 0x6e) = 0u8;
         *ram_ptr!(game; 0x71) = 0u8;
         *ram_ptr!(game; 0x69) = 16u8;
@@ -689,16 +683,14 @@ pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet
         *ram_ptr!(game; 0x6c) = 0u8;
         *ram_ptr!(game; 0x6d) = 0u8;
         *ram_ptr!(game; 0x55) = 9u8;
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
-        set_ram_word!(game.ceres_status = 0u16);
-        set_ram_word!(game.timer_status = 0u16);
+        set_ram_words! { game, 0u16;
+            screen_fade_delay, screen_fade_counter, ceres_status, timer_status,
+        }
         QueueSfx1_Max15(2u16, game);
         QueueSfx2_Max15(0x71u16, game);
         QueueSfx3_Max15(1u16, game);
         if CheckEventHappened(0xeu16, game) != 0 {
-            set_ram_word!(game.game_options_screen_index = 0u16);
-            set_ram_word!(game.menu_index = 0u16);
+            set_ram_words! { game, 0u16; game_options_screen_index, menu_index }
             let mut i: i32 = 254i32;
             while i >= 0i32 {
                 set_ram_word!(game.eproj_y_subpos[((i >> 1i32) + 15i32)] = 0u16);
@@ -730,8 +722,7 @@ pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRe
         *ram_ptr!(game; 0x6c) = 0u8;
         *ram_ptr!(game; 0x6d) = 0u8;
         *ram_ptr!(game; 0x55) = 9u8;
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         set_ram_word!(game.game_state = kGameState_39_EndingAndCredits as u16);
         set_ram_word!(game.cinematic_function = ((0x8bd480i32) as u16));
         set_ram_word!(game.timer_status = 0u16);
@@ -812,8 +803,7 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
                 update_ram_word!(game.game_state, wrapping_add(1));
                 set_ram_word!(game.debug_disable_sounds = 0u16);
                 *ram_ptr!(game; 0x51) = 0x80u8;
-                set_ram_word!(game.screen_fade_delay = 1u16);
-                set_ram_word!(game.screen_fade_counter = 1u16);
+                set_ram_words! { game, 1u16; screen_fade_delay, screen_fade_counter }
                 current_block = 13472856163611868459;
             }
         }
@@ -826,13 +816,12 @@ pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
     }
     EnableNMI(game);
     update_ram_word!(game.game_state, wrapping_add(1));
-    set_ram_word!(game.screen_fade_delay = 0u16);
-    set_ram_word!(game.screen_fade_counter = 0u16);
+    set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
     WaitUntilEndOfVblankAndClearHdma(game);
     DisableIrqInterrupts(game);
-    set_ram_word!(game.fx_layer_blending_config_a = 0u16);
-    set_ram_word!(game.cur_irq_handler = 0u16);
-    set_ram_word!(game.irqhandler_next_handler = 0u16);
+    set_ram_words! { game, 0u16;
+        fx_layer_blending_config_a, cur_irq_handler, irqhandler_next_handler,
+    }
     DisablePaletteFx(game);
     ClearPaletteFXObjects(game);
     let mut i: i32 = 656i32;
@@ -914,8 +903,7 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
     set_ram_word!(game.demo_timer = (*drd).demo_length);
     *(ram_ptr!(game, u16; 0x79f) as *mut u8).offset(0) =
         (*get_RoomDefHeader(ram_word!(game, room_ptr), game)).area_index_;
-    set_ram_word!(game.reg_BG1HOFS = 0u16);
-    set_ram_word!(game.reg_BG1VOFS = 0u16);
+    set_ram_words! { game, 0u16; reg_BG1HOFS, reg_BG1VOFS }
     update_ram_word!(game.demo_scene, wrapping_add(1));
     let mut v1: u16 = 0u16;
     loop {
@@ -952,9 +940,9 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
             break;
         }
     }
-    set_ram_word!(game.samus_max_reserve_health = 0u16);
-    set_ram_word!(game.samus_reserve_health = 0u16);
-    set_ram_word!(game.reserve_health_mode = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_max_reserve_health, samus_reserve_health, reserve_health_mode,
+    }
     set_ram_word!(game.loading_game_state = kLoadingGameState_0_Intro as u16);
     set_ram_word!(game.debug_disable_minimap = 0u16);
 }
@@ -1019,10 +1007,10 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
         HdmaObjectHandler(game);
         NextRandom(game);
         ClearOamExt(game);
-        set_ram_word!(game.oam_next_ptr = 0u16);
-        set_ram_word!(game.nmi_copy_samus_halves = 0u16);
-        set_ram_word!(game.nmi_copy_samus_top_half_src = 0u16);
-        set_ram_word!(game.nmi_copy_samus_bottom_half_src = 0u16);
+        set_ram_words! { game, 0u16;
+            oam_next_ptr, nmi_copy_samus_halves, nmi_copy_samus_top_half_src,
+            nmi_copy_samus_bottom_half_src,
+        }
         st = ram_word!(game, game_state) as i32 + 10i32;
         *ram_ptr!(game; 0x611) = st as u8;
     }
@@ -1149,9 +1137,7 @@ pub unsafe fn ShowSpareCpu(game: &mut Game) {
     set_ram_word!(game.joypad1_input_samusfilter = ram_word!(game, joypad1_lastkeys));
 }
 pub unsafe fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
-    set_ram_word!(game.UNUSED_word_7E0DF8 = 0u16);
-    set_ram_word!(game.UNUSED_word_7E0DFA = 0u16);
-    set_ram_word!(game.UNUSED_word_7E0DFC = 0u16);
+    set_ram_words! { game, 0u16; UNUSED_word_7E0DF8, UNUSED_word_7E0DFA, UNUSED_word_7E0DFC }
     set_ram_word!(game.cinematic_function = ((0x8b9b68i32) as u16));
     set_ram_word!(game.demo_set = 0u16);
     if ram_word!(game, num_demo_sets) == 4u16 {
@@ -1179,8 +1165,7 @@ pub unsafe fn GameState_7_MainGameplayFadeIn(game: &mut Game) -> CoroutineRet {
     }
     HandleFadeIn(game);
     if *ram_ptr!(game; 0x51) == 15u8 {
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         update_ram_word!(game.game_state, wrapping_add(1));
     }
     kCoroutineNone as CoroutineRet
@@ -1265,8 +1250,7 @@ pub unsafe fn DeleteAllOptionsMenuObjects_(game: &mut Game) {
     let mut i: i32 = 14i32;
     while i >= 0i32 {
         let v1: i32 = i >> 1i32;
-        set_ram_word!(game.eproj_y_pos[(v1 + 5i32)] = 0u16);
-        set_ram_word!(game.eproj_y_vel[(v1 + 17i32)] = 0u16);
+        set_ram_words! { game, 0u16; eproj_y_pos[(v1 + 5i32)], eproj_y_vel[(v1 + 17i32)] }
         i -= 2i32;
     }
 }
@@ -1294,10 +1278,9 @@ pub unsafe fn CreateOptionsMenuObject_(a: u16, j: u16, game: &mut Game) -> u8 {
     set_ram_word!(game.optionsmenu_arr1[v6] = *(v5.offset(2) as *mut u16));
     set_ram_word!(game.cinematicspr_arr7[v6] = *(v5.offset(4) as *mut u16));
     set_ram_word!(game.cinematicspr_instr_ptr[v6] = 1u16);
-    set_ram_word!(game.cinematicbg_arr8[v6] = 0u16);
-    set_ram_word!(game.optionsmenu_arr5[v6] = 0u16);
-    set_ram_word!(game.cinematicspr_arr6[v6] = 0u16);
-    set_ram_word!(game.optionsmenu_arr7[v6] = 0u16);
+    set_ram_words! { game, 0u16;
+        cinematicbg_arr8[v6], optionsmenu_arr5[v6], cinematicspr_arr6[v6], optionsmenu_arr7[v6],
+    }
     CallOptionsEntryFunc(((*(v5 as *mut u16)) as u32) | (0x820000u32), v3, game);
     0u8
 }
@@ -1372,8 +1355,7 @@ pub unsafe fn OptionsMenuFunc2(k: u16, game: &mut Game) {
 }
 pub unsafe fn OptionsInstr_Destroy(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: i32 = k as i32 >> 1i32;
-    set_ram_word!(game.cinematicbg_arr8[v2] = 0u16);
-    set_ram_word!(game.cinematicspr_arr7[v2] = 0u16);
+    set_ram_words! { game, 0u16; cinematicbg_arr8[v2], cinematicspr_arr7[v2] }
     0u16
 }
 pub unsafe fn OptionsInstr_8C64(k: u16, j: u16, game: &mut Game) -> u16 {
@@ -1432,8 +1414,7 @@ pub unsafe fn GameState_12_Pausing_Darkening_Async(game: &mut Game) -> Coroutine
     HandleFadeOut(game);
     if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
         EnableNMI(game);
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         update_ram_word!(game.game_state, wrapping_add(1));
     }
     kCoroutineNone as CoroutineRet
@@ -1472,12 +1453,10 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
     LoadPauseMenuMapTilemapAndAreaLabel(game);
     BackupGameplayPalettesAndLoadForPause(game);
     ContinueInitPauseMenu(game);
-    set_ram_word!(game.screen_fade_delay = 1u16);
-    set_ram_word!(game.screen_fade_counter = 1u16);
+    set_ram_words! { game, 1u16; screen_fade_delay, screen_fade_counter }
     set_ram_word!(game.pausemenu_leftarrow_animation_frame = 0u16);
     set_ram_word!(game.pausemenu_palette_animation_timer = 1u16);
-    set_ram_word!(game.map_scrolling_direction = 0u16);
-    set_ram_word!(game.map_scrolling_speed_index = 0u16);
+    set_ram_words! { game, 0u16; map_scrolling_direction, map_scrolling_speed_index }
     QueueClearingOfFxTilemap(game);
     update_ram_word!(game.game_state, wrapping_add(1));
     kCoroutineNone as CoroutineRet
@@ -1705,8 +1684,7 @@ pub unsafe fn GameState_14_Paused_Async(game: &mut Game) -> CoroutineRet {
     DrawPauseMenuDuringFadeIn(game);
     HandleFadeIn(game);
     if *ram_ptr!(game; 0x51) == 15u8 {
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         update_ram_word!(game.game_state, wrapping_add(1));
     }
     kCoroutineNone as CoroutineRet
@@ -1737,8 +1715,7 @@ pub unsafe fn PauseMenu_0_MapScreen(game: &mut Game) {
     set_ram_word!(game.pause_screen_mode = 0u16);
 }
 pub unsafe fn PauseMenu_1_EquipmentScreen(game: &mut Game) {
-    set_ram_word!(game.reg_BG1HOFS = 0u16);
-    set_ram_word!(game.reg_BG1VOFS = 0u16);
+    set_ram_words! { game, 0u16; reg_BG1HOFS, reg_BG1VOFS }
     EquipmentScreenMain(game);
     HandlePauseScreenLR(game);
     HandlePauseScreenStart(game);
@@ -1753,8 +1730,7 @@ pub unsafe fn PauseMenu_2(game: &mut Game) {
     HandleFadeOut(game);
     if *ram_ptr!(game; 0x51) == 0x80u8 {
         EnableNMI(game);
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
@@ -1765,8 +1741,7 @@ pub unsafe fn PauseMenu_5(game: &mut Game) {
     HandleFadeOut(game);
     if *ram_ptr!(game; 0x51) == 0x80u8 {
         EnableNMI(game);
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
@@ -1781,8 +1756,7 @@ pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
         game.pausemenu_lr_animation_timer =
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *mut u8 as *mut u16)
     );
-    set_ram_word!(game.screen_fade_delay = 1u16);
-    set_ram_word!(game.screen_fade_counter = 1u16);
+    set_ram_words! { game, 1u16; screen_fade_delay, screen_fade_counter }
     update_ram_word!(game.menu_index, wrapping_add(1));
 }
 pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
@@ -1794,8 +1768,7 @@ pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
         game.pausemenu_lr_animation_timer =
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *mut u8 as *mut u16)
     );
-    set_ram_word!(game.screen_fade_delay = 1u16);
-    set_ram_word!(game.screen_fade_counter = 1u16);
+    set_ram_words! { game, 1u16; screen_fade_delay, screen_fade_counter }
     set_ram_word!(game.pause_screen_mode = 0u16);
     update_ram_word!(game.menu_index, wrapping_add(1));
 }
@@ -1806,8 +1779,7 @@ pub unsafe fn PauseMenu_7_EquipmentToMap_FadeIn(game: &mut Game) {
     set_ram_word!(game.pause_screen_mode = 0u16);
     HandleFadeIn(game);
     if *ram_ptr!(game; 0x51) == 15u8 {
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         let mut v0: u16 = ram_word!(game, pausemenu_button_label_mode);
         if ram_word!(game, pausemenu_button_label_mode) != 0 {
             v0 = 1u16;
@@ -1821,8 +1793,7 @@ pub unsafe fn PauseMenu_4_MapToEquipment_FadeIn(game: &mut Game) {
     set_ram_word!(game.pause_screen_mode = 1u16);
     HandleFadeIn(game);
     if *ram_ptr!(game; 0x51) == 15u8 {
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         let mut v0: u16 = ram_word!(game, pausemenu_button_label_mode);
         if ram_word!(game, pausemenu_button_label_mode) != 0 {
             v0 = 1u16;
@@ -1866,8 +1837,7 @@ pub unsafe fn MapScrolling_Common(game: &mut Game) {
         == 0i32
     {
         QueueSfx1_Max6(0x36u16, game);
-        set_ram_word!(game.map_scrolling_direction = 0u16);
-        set_ram_word!(game.map_scrolling_speed_index = 0u16);
+        set_ram_words! { game, 0u16; map_scrolling_direction, map_scrolling_speed_index }
         if ram_word!(game, map_scrolling_gear_switch_timer) != 0 {
             update_ram_word!(game.map_scrolling_gear_switch_timer, wrapping_sub(1));
         }
@@ -1906,8 +1876,7 @@ pub unsafe fn GameState_16_Unpausing_Async(game: &mut Game) -> CoroutineRet {
     HandleFadeOut(game);
     if *ram_ptr!(game; 0x51) == 0x80u8 {
         EnableNMI(game);
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         update_ram_word!(game.game_state, wrapping_add(1));
     }
     kCoroutineNone as CoroutineRet
@@ -1933,8 +1902,7 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
             ResumeGameplay(game);
             RestoreSomeGfxStateForPause(game);
             RestoreBG2TilemapFromPauseScreen(game);
-            set_ram_word!(game.screen_fade_delay = 1u16);
-            set_ram_word!(game.screen_fade_counter = 1u16);
+            set_ram_words! { game, 1u16; screen_fade_delay, screen_fade_counter }
             current_block_17 = 16264310372000621783;
         }
         1 => {
@@ -1965,8 +1933,7 @@ pub unsafe fn GameState_18_Unpausing(game: &mut Game) -> CoroutineRet {
     }
     HandleFadeIn(game);
     if *ram_ptr!(game; 0x51) == 15u8 {
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         set_ram_word!(game.game_state = kGameState_8_MainGameplay as u16);
     }
     kCoroutineNone as CoroutineRet
@@ -2377,18 +2344,12 @@ pub unsafe fn SetupPpuForPauseMenu(game: &mut Game) {
     *ram_ptr!(game; 0x71) = 0u8;
 }
 pub unsafe fn ResetPauseMenuAnimations(game: &mut Game) {
-    set_ram_word!(game.pausemenu_reserve_tank_delay_ctr = 0u16);
-    set_ram_word!(game.reg_BG1HOFS = 0u16);
-    set_ram_word!(game.reg_BG2HOFS = 0u16);
-    set_ram_word!(game.reg_BG3HOFS = 0u16);
-    set_ram_word!(game.reg_BG2VOFS = 0u16);
-    set_ram_word!(game.reg_BG3VOFS = 0u16);
-    set_ram_word!(game.pausemenu_button_label_mode = 0u16);
-    set_ram_word!(game.pausemenu_lr_animation_frame = 0u16);
-    set_ram_word!(game.UNUSED_word_7E0745 = 0u16);
-    set_ram_word!(game.samus_position_indicator_animation_frame = 0u16);
-    set_ram_word!(game.samus_position_indicator_animation_timer = 0u16);
-    set_ram_word!(game.samus_position_indicator_animation_loop_counter = 0u16);
+    set_ram_words! { game, 0u16;
+        pausemenu_reserve_tank_delay_ctr, reg_BG1HOFS, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
+        reg_BG3VOFS, pausemenu_button_label_mode, pausemenu_lr_animation_frame, UNUSED_word_7E0745,
+        samus_position_indicator_animation_frame, samus_position_indicator_animation_timer,
+        samus_position_indicator_animation_loop_counter,
+    }
     set_ram_word!(
         game.pausemenu_lr_animation_timer =
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *mut u8 as *mut u16)
@@ -2586,34 +2547,19 @@ pub unsafe fn UpdateBeamTilesAndPalette_Unpause(game: &mut Game) {
     UpdateBeamTilesAndPalette(game);
 }
 pub unsafe fn ClearPauseMenuData(game: &mut Game) {
-    set_ram_word!(game.menu_index = 0u16);
-    set_ram_word!(game.pausemenu_start_lr_pressed_highlight_timer = 0u16);
-    set_ram_word!(game.pausemenu_lr_animation_timer = 0u16);
-    set_ram_word!(game.pausemenu_item_selector_animation_timer = 0u16);
-    set_ram_word!(game.pausemenu_reserve_tank_animation_timer = 0u16);
-    set_ram_word!(game.UNUSED_word_7E0731 = 0u16);
-    set_ram_word!(game.pausemenu_uparrow_animation_timer = 0u16);
-    set_ram_word!(game.pausemenu_downarrow_animation_timer = 0u16);
-    set_ram_word!(game.pausemenu_rightarrow_animation_timer = 0u16);
-    set_ram_word!(game.pausemenu_leftarrow_animation_timer = 0u16);
-    set_ram_word!(game.UNUSED_word_7E073D = 0u16);
-    set_ram_word!(game.pausemenu_lr_animation_frame = 0u16);
-    set_ram_word!(game.pausemenu_item_selector_animation_frame = 0u16);
-    set_ram_word!(game.pausemenu_reserve_tank_animation_frame = 0u16);
-    set_ram_word!(game.UNUSED_word_7E0745 = 0u16);
-    set_ram_word!(game.pausemenu_uparrow_animation_frame = 0u16);
-    set_ram_word!(game.pausemenu_downarrow_animation_frame = 0u16);
-    set_ram_word!(game.pausemenu_rightarrow_animation_frame = 0u16);
-    set_ram_word!(game.pausemenu_leftarrow_animation_frame = 0u16);
-    set_ram_word!(game.pausemenu_shoulder_button_highlight = 0u16);
-    set_ram_word!(game.pausemenu_button_label_mode = 0u16);
-    set_ram_word!(game.pausemenu_equipment_category_item = 0u16);
-    set_ram_word!(game.pausemenu_reserve_tank_delay_ctr = 0u16);
-    set_ram_word!(game.UNUSED_word_7E0759 = 0u16);
-    set_ram_word!(game.UNUSED_word_7E075B = 0u16);
-    set_ram_word!(game.UNUSED_word_7E075D = 0u16);
-    set_ram_word!(game.UNUSED_word_7E075F = 0u16);
-    set_ram_word!(game.UNUSED_word_7E0761 = 0u16);
+    set_ram_words! { game, 0u16;
+        menu_index, pausemenu_start_lr_pressed_highlight_timer, pausemenu_lr_animation_timer,
+        pausemenu_item_selector_animation_timer, pausemenu_reserve_tank_animation_timer,
+        UNUSED_word_7E0731, pausemenu_uparrow_animation_timer, pausemenu_downarrow_animation_timer,
+        pausemenu_rightarrow_animation_timer, pausemenu_leftarrow_animation_timer,
+        UNUSED_word_7E073D, pausemenu_lr_animation_frame, pausemenu_item_selector_animation_frame,
+        pausemenu_reserve_tank_animation_frame, UNUSED_word_7E0745,
+        pausemenu_uparrow_animation_frame, pausemenu_downarrow_animation_frame,
+        pausemenu_rightarrow_animation_frame, pausemenu_leftarrow_animation_frame,
+        pausemenu_shoulder_button_highlight, pausemenu_button_label_mode,
+        pausemenu_equipment_category_item, pausemenu_reserve_tank_delay_ctr, UNUSED_word_7E0759,
+        UNUSED_word_7E075B, UNUSED_word_7E075D, UNUSED_word_7E075F, UNUSED_word_7E0761,
+    }
 }
 pub fn sub_82A425() {}
 pub unsafe fn sub_82A42A(game: &mut Game) {
@@ -2675,8 +2621,7 @@ pub unsafe fn HandlePauseScreenLrInput(game: &mut Game) {
         if ram_word!(game, pausemenu_button_label_mode) == 0 {
             return;
         }
-        set_ram_word!(game.pausemenu_start_lr_pressed_highlight_timer = 5u16);
-        set_ram_word!(game.menu_index = 5u16);
+        set_ram_words! { game, 5u16; pausemenu_start_lr_pressed_highlight_timer, menu_index }
         set_ram_word!(game.pausemenu_shoulder_button_highlight = 1u16);
         set_ram_word!(game.pausemenu_button_label_mode = 0u16);
         SetPauseScreenButtonLabelPalettes(game);
@@ -2685,9 +2630,9 @@ pub unsafe fn HandlePauseScreenLrInput(game: &mut Game) {
         && ram_word!(game, pausemenu_button_label_mode) != 2u16
     {
         set_ram_word!(game.pausemenu_start_lr_pressed_highlight_timer = 5u16);
-        set_ram_word!(game.menu_index = 2u16);
-        set_ram_word!(game.pausemenu_shoulder_button_highlight = 2u16);
-        set_ram_word!(game.pausemenu_button_label_mode = 2u16);
+        set_ram_words! { game, 2u16;
+            menu_index, pausemenu_shoulder_button_highlight, pausemenu_button_label_mode,
+        }
         SetPauseScreenButtonLabelPalettes(game);
         current_block = 2636532137229557926;
     } else {
@@ -2725,8 +2670,7 @@ pub unsafe fn DrawLrHighlight(game: &mut Game) {
 pub unsafe fn HandlePauseScreenStart(game: &mut Game) {
     if (ram_word!(game, newly_held_down_timed_held_input) as i32 & kButton_Start as i32) != 0i32 {
         QueueSfx1_Max6(0x38u16, game);
-        set_ram_word!(game.screen_fade_delay = 1u16);
-        set_ram_word!(game.screen_fade_counter = 1u16);
+        set_ram_words! { game, 1u16; screen_fade_delay, screen_fade_counter }
         let v0: u16 = ram_word!(game, pausemenu_button_label_mode);
         set_ram_word!(game.pausemenu_button_label_mode = 1u16);
         SetPauseScreenButtonLabelPalettes(game);
@@ -2885,8 +2829,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
     let mut v8: i16 = 0;
     set_ram_word!(game.reg_BG4HOFS = ram_word!(game, reg_BG1HOFS));
     set_ram_word!(game.reg_BG4VOFS = ram_word!(game, reg_BG1VOFS));
-    set_ram_word!(game.reg_BG1HOFS = 0u16);
-    set_ram_word!(game.reg_BG1VOFS = 0u16);
+    set_ram_words! { game, 0u16; reg_BG1HOFS, reg_BG1VOFS }
     if ram_word!(game, samus_max_reserve_health) != 0u16
         && ram_word!(game, reserve_health_mode) != 0u16
     {
@@ -3198,12 +3141,10 @@ pub unsafe fn EquipmentScreenHudReserveAutoTilemap_On_BUGGY(game: &mut Game) {
     set_ram_word!(game.hud_tilemap[73] = *v1.offset(5));
 }
 pub unsafe fn EquipmentScreenHudReserveAutoTilemap_Off(game: &mut Game) {
-    set_ram_word!(game.hud_tilemap[8] = 11279u16);
-    set_ram_word!(game.hud_tilemap[9] = 11279u16);
-    set_ram_word!(game.hud_tilemap[40] = 11279u16);
-    set_ram_word!(game.hud_tilemap[41] = 11279u16);
-    set_ram_word!(game.hud_tilemap[72] = 11279u16);
-    set_ram_word!(game.hud_tilemap[73] = 11279u16);
+    set_ram_words! { game, 11279u16;
+        hud_tilemap[8], hud_tilemap[9], hud_tilemap[40], hud_tilemap[41], hud_tilemap[72],
+        hud_tilemap[73],
+    }
 }
 static kReserveTankEnergyTransferPerFrame: u16 = 1u16;
 pub unsafe fn EquipmentScreenCategory_Tanks_1(game: &mut Game) {
@@ -3248,8 +3189,7 @@ pub unsafe fn EquipmentScreenCategory_Tanks_1(game: &mut Game) {
     } else {
         set_ram_word!(game.samus_health = ram_word!(game, samus_max_health));
     }
-    set_ram_word!(game.samus_reserve_health = 0u16);
-    set_ram_word!(game.pausemenu_reserve_tank_delay_ctr = 0u16);
+    set_ram_words! { game, 0u16; samus_reserve_health, pausemenu_reserve_tank_delay_ctr }
     EquipmentScreenEnergyArrowGlow_Off(game);
     set_ram_word!(game.pausemenu_equipment_category_item = 0u16);
 }
@@ -4028,9 +3968,9 @@ pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
             == (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82b9be)) as *mut MapScrollArrowData))
                 .map_scroll_dir
         {
-            set_ram_word!(game.map_scrolling_gear_switch_timer = 0u16);
-            set_ram_word!(game.map_scrolling_direction = 0u16);
-            set_ram_word!(game.map_scrolling_speed_index = 0u16);
+            set_ram_words! { game, 0u16;
+                map_scrolling_gear_switch_timer, map_scrolling_direction, map_scrolling_speed_index,
+            }
         }
     } else {
         DrawMapScrollArrowAndCheckToScroll(0x82u8, addr_stru_82B9BE as u16, game);
@@ -4481,9 +4421,7 @@ pub unsafe fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
         }
     }
     if ram_word!(game, game_time_hours) as i32 - 100i32 & 0x8000i32 == 0 {
-        set_ram_word!(game.game_time_frames = 59u16);
-        set_ram_word!(game.game_time_seconds = 59u16);
-        set_ram_word!(game.game_time_minutes = 59u16);
+        set_ram_words! { game, 59u16; game_time_frames, game_time_seconds, game_time_minutes }
         set_ram_word!(game.game_time_hours = 99u16);
     }
 }
@@ -4567,13 +4505,10 @@ pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {
         m -= 2i32;
     }
     set_ram_word!(game.game_options_screen_index = 3u16);
-    set_ram_word!(game.g_word_7E0DE4 = 0u16);
-    set_ram_word!(game.g_word_7E0DE6 = 0u16);
-    set_ram_word!(game.g_word_7E0DE8 = 0u16);
-    set_ram_word!(game.hud_item_index = 0u16);
-    set_ram_word!(game.samus_auto_cancel_hud_item_index = 0u16);
-    set_ram_word!(game.samus_invincibility_timer = 0u16);
-    set_ram_word!(game.samus_knockback_timer = 0u16);
+    set_ram_words! { game, 0u16;
+        g_word_7E0DE4, g_word_7E0DE6, g_word_7E0DE8, hud_item_index,
+        samus_auto_cancel_hud_item_index, samus_invincibility_timer, samus_knockback_timer,
+    }
     update_ram_word!(game.game_state, wrapping_add(1));
     kCoroutineNone as CoroutineRet
 }
@@ -4586,8 +4521,7 @@ pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
     if AdvancePaletteFadeForAllPalettes(game) != 0 {
         WaitUntilEndOfVblankAndClearHdma(game);
         DisableIrqInterrupts(game);
-        set_ram_word!(game.fx_layer_blending_config_a = 0u16);
-        set_ram_word!(game.cur_irq_handler = 0u16);
+        set_ram_words! { game, 0u16; fx_layer_blending_config_a, cur_irq_handler }
         *ram_ptr!(game; 0x6e) = 0u8;
         *ram_ptr!(game; 0x71) = 0u8;
         *ram_ptr!(game; 0x69) = 16u8;
@@ -4595,9 +4529,9 @@ pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
         *ram_ptr!(game; 0x6c) = 0u8;
         *ram_ptr!(game; 0x6d) = 0u8;
         *ram_ptr!(game; 0x55) = 9u8;
-        set_ram_word!(game.game_options_screen_index = 0u16);
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16;
+            game_options_screen_index, screen_fade_delay, screen_fade_counter,
+        }
         let mut i: i32 = 254i32;
         while i >= 0i32 {
             set_ram_word!(game.eproj_y_subpos[((i >> 1i32) + 15i32)] = 0u16);
@@ -4605,8 +4539,7 @@ pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
         }
         set_ram_word!(game.g_word_7E0DE8 = 16u16);
         set_ram_word!(game.game_options_screen_index = 3u16);
-        set_ram_word!(game.g_word_7E0DE4 = 0u16);
-        set_ram_word!(game.g_word_7E0DE6 = 0u16);
+        set_ram_words! { game, 0u16; g_word_7E0DE4, g_word_7E0DE6 }
         update_ram_word!(game.game_state, wrapping_add(1));
         set_ram_word!(game.power_bomb_explosion_status = 0u16);
         QueueSfx1_Max15(2u16, game);
@@ -4645,8 +4578,7 @@ pub unsafe fn GameState_23_SamusNoHealth_Flashing(game: &mut Game) -> CoroutineR
 }
 pub unsafe fn GameState_24_SamusNoHealth_Explosion(game: &mut Game) -> CoroutineRet {
     if GameState_24_SamusNoHealth_Explosion_Helper(game) != 0 {
-        set_ram_word!(game.screen_fade_delay = 1u16);
-        set_ram_word!(game.screen_fade_counter = 1u16);
+        set_ram_words! { game, 1u16; screen_fade_delay, screen_fade_counter }
         update_ram_word!(game.game_state, wrapping_add(1));
     }
     kCoroutineNone as CoroutineRet
@@ -4655,11 +4587,9 @@ pub unsafe fn GameState_25_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
     HandleFadeOut(game);
     if *ram_ptr!(game; 0x51) == 0x80u8 {
         EnableNMI(game);
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         update_ram_word!(game.game_state, wrapping_add(1));
-        set_ram_word!(game.menu_index = 0u16);
-        set_ram_word!(game.debug_disable_sounds = 0u16);
+        set_ram_words! { game, 0u16; menu_index, debug_disable_sounds }
     }
     kCoroutineNone as CoroutineRet
 }
@@ -4907,10 +4837,10 @@ pub unsafe fn DoorTransitionFunction_Wait48frames(game: &mut Game) -> CoroutineR
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRet {
-    set_ram_word!(game.door_transition_flag_enemies = 1u16);
-    set_ram_word!(game.door_transition_flag_elevator_zebetites = 1u16);
-    set_ram_word!(game.debug_disable_minimap = 0u16);
-    set_ram_word!(game.save_station_lockout_flag = 0u16);
+    set_ram_words! { game, 1u16;
+        door_transition_flag_enemies, door_transition_flag_elevator_zebetites,
+    }
+    set_ram_words! { game, 0u16; debug_disable_minimap, save_station_lockout_flag }
     DetermineWhichEnemiesToProcess(game);
     EnemyMain(game);
     DrawSamusEnemiesAndProjectiles(game);
@@ -4919,8 +4849,7 @@ pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
     let mut i: i32 = 254i32;
     while i >= 0i32 {
         let v1: i32 = i >> 1i32;
-        set_ram_word!(game.target_palettes[v1] = 0u16);
-        set_ram_word!(game.target_palettes[(v1 + 128i32)] = 0u16);
+        set_ram_words! { game, 0u16; target_palettes[v1], target_palettes[(v1 + 128i32)] }
         i -= 2i32;
     }
     set_ram_word!(game.target_palettes[9] = ram_word!(game, palette_buffer[9]));
@@ -5726,8 +5655,7 @@ pub unsafe fn GameOptionsMenuFunc_0(game: &mut Game) {
     HandleFadeOut(game);
     if *ram_ptr!(game; 0x51) == 0x80u8 {
         EnableNMI(game);
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         update_ram_word!(game.game_options_screen_index, wrapping_add(1));
     } else if *ram_ptr!(game; 0x51) == 14u8 {
         let v0: u16 = *ram_ptr!(game; 0x6b) as u16;
@@ -5753,11 +5681,9 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
     static unk_82EC3D: StartDmaCopy = StartDmaCopy::vram_words(1, 0x8edc00, 0x800);
     SetupDmaTransfer(&raw const unk_82EC3D as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
-    set_ram_word!(game.reg_BG1HOFS = 0u16);
-    set_ram_word!(game.reg_BG1VOFS = 0u16);
-    set_ram_word!(game.reg_BG2HOFS = 0u16);
-    set_ram_word!(game.reg_BG2VOFS = 0u16);
-    set_ram_word!(game.debug_invincibility = 0u16);
+    set_ram_words! { game, 0u16;
+        reg_BG1HOFS, reg_BG1VOFS, reg_BG2HOFS, reg_BG2VOFS, debug_invincibility,
+    }
     let mut i: i32 = 510i32;
     while i >= 0i32 {
         set_ram_word!(
@@ -5790,8 +5716,7 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
 pub unsafe fn GameOptionsMenu_2_FadeInOptionsScreen(game: &mut Game) {
     HandleFadeIn(game);
     if *ram_ptr!(game; 0x51) == 15u8 {
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         update_ram_word!(game.game_options_screen_index, wrapping_add(1));
     }
 }
@@ -5864,8 +5789,7 @@ pub unsafe fn GameOptionsMenuItemFunc_0(game: &mut Game) {
     {
         set_ram_word!(game.game_options_screen_index = 4u16);
     } else {
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         set_ram_word!(game.game_options_screen_index = 12u16);
     };
 }
@@ -5889,27 +5813,23 @@ pub unsafe fn OptionsMenuFunc4(game: &mut Game) {
 }
 pub unsafe fn GameOptionsMenuItemFunc_4(game: &mut Game) {
     *ram_ptr!(game; 0x57) = 3u8;
-    set_ram_word!(game.screen_fade_delay = 0u16);
-    set_ram_word!(game.screen_fade_counter = 0u16);
+    set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
     set_ram_word!(game.game_options_screen_index = 5u16);
 }
 pub unsafe fn GameOptionsMenu_B_TransitionBackToFileSelect(game: &mut Game) {
     HandleFadeOut(game);
     if *ram_ptr!(game; 0x51) == 0x80u8 {
         EnableNMI(game);
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         set_ram_word!(game.game_state = kGameState_4_FileSelectMenus as u16);
-        set_ram_word!(game.menu_index = 0u16);
-        set_ram_word!(game.game_options_screen_index = 0u16);
+        set_ram_words! { game, 0u16; menu_index, game_options_screen_index }
     }
 }
 pub unsafe fn GameOptionsMenu_C_FadeOutOptionsScreenToStart(game: &mut Game) {
     HandleFadeOut(game);
     if *ram_ptr!(game; 0x51) == 0x80u8 {
         EnableNMI(game);
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         set_ram_word!(game.game_options_screen_index = 4u16);
     }
 }
@@ -5928,14 +5848,11 @@ pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
         if ram_word!(game, loading_game_state) as i32 == kGameState_34_CeresGoesBoom as i32 {
             set_ram_word!(game.cinematic_function = ((0x8bc11bi32) as u16));
         }
-        set_ram_word!(game.menu_option_index = 0u16);
-        set_ram_word!(game.game_options_screen_index = 0u16);
+        set_ram_words! { game, 0u16; menu_option_index, game_options_screen_index }
     } else {
         set_ram_word!(game.game_state = kGameState_30_IntroCinematic as u16);
         set_ram_word!(game.cinematic_function = ((0x8ba395i32) as u16));
-        set_ram_word!(game.menu_option_index = 0u16);
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; menu_option_index, screen_fade_delay, screen_fade_counter }
     };
 }
 pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
@@ -5951,9 +5868,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
     }
     if *ram_ptr!(game; 0x51) == 0x80u8 {
         EnableNMI(game);
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
-        set_ram_word!(game.reg_BG1VOFS = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter, reg_BG1VOFS }
         update_ram_word!(game.game_options_screen_index, wrapping_add(1));
         if ram_word!(game, menu_option_index) != 0 {
             if (ram_word!(game, menu_option_index) as i32 & 4i32) != 0i32 {
@@ -6021,8 +5936,7 @@ pub unsafe fn GameOptionsMenu_6_DissolveInScreen(game: &mut Game) {
     }
     if *ram_ptr!(game; 0x51) == 15u8 {
         *ram_ptr!(game; 0x57) = 0u8;
-        set_ram_word!(game.screen_fade_delay = 0u16);
-        set_ram_word!(game.screen_fade_counter = 0u16);
+        set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
         if ram_word!(game, menu_option_index) != 0 {
             if (ram_word!(game, menu_option_index) as i32 & 4i32) != 0i32 {
                 set_ram_word!(game.game_options_screen_index = 8u16);

@@ -21,6 +21,7 @@ use crate::game::sm_a0::{
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
@@ -3088,8 +3089,7 @@ pub unsafe fn Beetom_Touch(game: &mut Game) {
     }
     if current_block == 12103599785691237014 {
         Enemy_NormalTouchAI_A8(game);
-        set_ram_word!(game.samus_invincibility_timer = 0u16);
-        set_ram_word!(game.samus_knockback_timer = 0u16);
+        set_ram_words! { game, 0u16; samus_invincibility_timer, samus_knockback_timer }
     };
 }
 pub unsafe fn Beetom_Shot(game: &mut Game) {
@@ -3568,10 +3568,10 @@ pub unsafe fn WreckedShipRobotDeactivated_Init(game: &mut Game) {
     let v2: i32 = 16i32
         * ((ram_word!(game, wrecked_ship_robot_palanim_palindex) as i32 & 0xff00i32) >> 8i32)
         >> 1i32;
-    set_ram_word!(game.palette_buffer[(v2 + 137i32)] = 10u16);
-    set_ram_word!(game.palette_buffer[(v2 + 138i32)] = 10u16);
-    set_ram_word!(game.palette_buffer[(v2 + 139i32)] = 10u16);
-    set_ram_word!(game.palette_buffer[(v2 + 140i32)] = 10u16);
+    set_ram_words! { game, 10u16;
+        palette_buffer[(v2 + 137i32)], palette_buffer[(v2 + 138i32)], palette_buffer[(v2 + 139i32)],
+        palette_buffer[(v2 + 140i32)],
+    }
 }
 pub unsafe fn WreckedShipRobot_Main(game: &mut Game) {
     let E: *mut Enemy_WreckedShipRobot =

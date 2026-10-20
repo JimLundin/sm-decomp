@@ -26,6 +26,7 @@ use crate::game::sm_b4::CreateSpriteAtPos;
 pub use crate::game::waver::{Enemy_Waver, Waver_Func_1, Waver_Init, Waver_Instr_1, Waver_Main};
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
@@ -980,8 +981,7 @@ pub unsafe fn Elevator_Func3b(game: &mut Game) {
             return;
         }
     }
-    set_ram_word!(game.elevator_status = 0u16);
-    set_ram_word!(game.elevator_flags = 0u16);
+    set_ram_words! { game, 0u16; elevator_status, elevator_flags }
     QueueSfx3_Max6(0x25u16, game);
     (*E).base.y_pos = (*E).elevat_var_A;
     CallSomeSamusCode(0xbu16, game);
@@ -992,8 +992,7 @@ pub unsafe fn Elevator_Func_4(game: &mut Game) {
     set_ram_word!(game.samus_y_pos = ((*E).base.y_pos).wrapping_sub(26u16));
     set_ram_word!(game.samus_y_subpos = 0u16);
     set_ram_word!(game.samus_x_pos = (*E).base.x_pos);
-    set_ram_word!(game.samus_y_speed = 0u16);
-    set_ram_word!(game.samus_y_subspeed = 0u16);
+    set_ram_words! { game, 0u16; samus_y_speed, samus_y_subspeed }
 }
 pub unsafe fn Crab_Init(game: &mut Game) {
     let v1: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1910,8 +1909,7 @@ pub unsafe fn Mochtroid_Touch(game: &mut Game) {
     }
     if current_block == 17285009320546006530 {
         Enemy_NormalTouchAI_A3(game);
-        set_ram_word!(game.samus_invincibility_timer = 0u16);
-        set_ram_word!(game.samus_knockback_timer = 0u16);
+        set_ram_words! { game, 0u16; samus_invincibility_timer, samus_knockback_timer }
     };
 }
 pub unsafe fn Mochtroid_Shot(game: &mut Game) {

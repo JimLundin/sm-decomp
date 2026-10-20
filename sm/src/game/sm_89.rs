@@ -11,6 +11,7 @@ use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::RomPtr;
 
@@ -169,8 +170,7 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
             && ram_word!(game, game_state) as i32 == kGameState_8_MainGameplay as i32
         {
             CallSomeSamusCode(2u16, game);
-            set_ram_word!(game.screen_fade_delay = 0u16);
-            set_ram_word!(game.screen_fade_counter = 0u16);
+            set_ram_words! { game, 0u16; screen_fade_delay, screen_fade_counter }
             set_ram_word!(game.game_state = 32u16);
         }
         let ref mut fresh0 = *(ram_ptr!(game, u16; 0x7e1, 2));

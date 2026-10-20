@@ -36,6 +36,7 @@ use crate::game::sm_ad::{
 };
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{mov24, MemCpy, ReadRegWord, RomPtr, SnesDivide, Unreachable, WriteReg};
@@ -1162,8 +1163,9 @@ pub unsafe fn MotherBrainsTubesFalling_Falling(k: u16, game: &mut Game) {
     } else {
         MotherBrain_Pal_EndScreenFlash(game);
         EnableEarthquakeAframes(0x19u16, game);
-        set_ram_word!(game.hdma_object_channels_bitmask[0] = 0u16);
-        set_ram_word!(game.hdma_object_channels_bitmask[1] = 0u16);
+        set_ram_words! { game, 0u16;
+            hdma_object_channels_bitmask[0], hdma_object_channels_bitmask[1],
+        }
         (*E1).base.y_pos = 196u16;
         let E0: *mut Enemy_MotherBrainsTubesFalling = Get_MotherBrainsTubesFalling(0i32, game);
         (*E0).base.x_pos = 59u16;
@@ -1355,8 +1357,9 @@ pub unsafe fn MotherBrainBody_FakeDeath_Ascent_13_Raise(game: &mut Game) {
     }) {
         set_ram_word!(game.enemy_bg2_tilemap_size = 320u16);
         (*E).base.y_pos = 188u16;
-        set_ram_word!(game.earthquake_timer = 0u16);
-        set_ram_word!(game.hdma_object_channels_bitmask[((*E).mbn_var_09 as i32 >> 1i32)] = 0u16);
+        set_ram_words! { game, 0u16;
+            earthquake_timer, hdma_object_channels_bitmask[((*E).mbn_var_09 as i32 >> 1i32)],
+        }
         MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_99AA as u16, game);
         (*E).mbn_var_A = ((0xa98e95i32) as u16);
         MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching(game);
@@ -2667,8 +2670,9 @@ pub unsafe fn MotherBrain_SamusCollDetectPart(k: u16, r18: u16, r20: u16, game: 
                 }
                 set_ram_word!(game.extra_samus_x_displacement = v5 as u16);
                 set_ram_word!(game.extra_samus_y_displacement = 4u16);
-                set_ram_word!(game.extra_samus_x_subdisplacement = 0u16);
-                set_ram_word!(game.extra_samus_y_subdisplacement = 0u16);
+                set_ram_words! { game, 0u16;
+                    extra_samus_x_subdisplacement, extra_samus_y_subdisplacement,
+                }
                 set_ram_word!(game.samus_invincibility_timer = 96u16);
                 set_ram_word!(game.samus_knockback_timer = 5u16);
                 set_ram_word!(game.knockback_x_dir = 1u16);
@@ -3146,8 +3150,7 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_7_DelayFrame(game: &mut Game) {
     let E: *mut Enemy_MotherBomb = Get_MotherBomb(0i32, game);
     (*E).mbb_var_F = (*E).mbb_var_F.wrapping_sub(1);
     if ((*E).mbb_var_F as i32 & 0x8000i32) != 0i32 {
-        set_ram_word!(game.earthquake_type = 8u16);
-        set_ram_word!(game.earthquake_timer = 8u16);
+        set_ram_words! { game, 8u16; earthquake_type, earthquake_timer }
         (*E).mbb_var_A = ((0xa9ba27i32) as u16);
     }
 }
@@ -3185,8 +3188,9 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_10_FinishFiringRainbow(game: &mut Gam
         (*E).mbn_var_33 = 512u16;
         (*E).mbn_parameter_1 = -256i32 as u16;
         (*E).mbn_parameter_2 = 0u16;
-        set_ram_word!(game.hdma_object_channels_bitmask[((*E).mbn_var_09 as i32 >> 1i32)] = 0u16);
-        set_ram_word!(game.earthquake_timer = 0u16);
+        set_ram_words! { game, 0u16;
+            hdma_object_channels_bitmask[((*E).mbn_var_09 as i32 >> 1i32)], earthquake_timer,
+        }
         MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C87 as u16, game);
         MotherBrain_SetupBrainNormalPal(game);
         MotherBrain_WriteDefaultPalette(game);
@@ -3329,8 +3333,7 @@ pub unsafe fn MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(
     let ref mut fresh3 = *(ram_ptr!(game, u16; 0xafa));
     *fresh3 = v6;
     set_ram_word!(game.samus_prev_y_pos = *fresh3);
-    set_ram_word!(game.samus_y_subpos = 0u16);
-    set_ram_word!(game.samus_prev_y_subpos = 0u16);
+    set_ram_words! { game, 0u16; samus_y_subpos, samus_prev_y_subpos }
     1u8
 }
 pub unsafe fn MotherBrain_MoveSamusHorizTowardsWall(mut a: u16, game: &mut Game) -> u8 {
@@ -3346,10 +3349,8 @@ pub unsafe fn MotherBrain_MoveSamusHorizTowardsWall(mut a: u16, game: &mut Game)
         set_ram_word!(game.samus_prev_x_pos = v4);
         0u8
     } else {
-        set_ram_word!(game.samus_x_pos = 235u16);
-        set_ram_word!(game.samus_prev_x_pos = 235u16);
-        set_ram_word!(game.samus_x_subpos = 0u16);
-        set_ram_word!(game.samus_prev_x_subpos = 0u16);
+        set_ram_words! { game, 235u16; samus_x_pos, samus_prev_x_pos }
+        set_ram_words! { game, 0u16; samus_x_subpos, samus_prev_x_subpos }
         1u8
     }
 }
@@ -5273,8 +5274,9 @@ pub unsafe fn DeadTorizo_Func_0(game: &mut Game) -> u8 {
                 }
                 set_ram_word!(game.extra_samus_x_displacement = v5 as u16);
                 set_ram_word!(game.extra_samus_y_displacement = 4u16);
-                set_ram_word!(game.extra_samus_x_subdisplacement = 0u16);
-                set_ram_word!(game.extra_samus_y_subdisplacement = 0u16);
+                set_ram_words! { game, 0u16;
+                    extra_samus_x_subdisplacement, extra_samus_y_subdisplacement,
+                }
                 return 1u8;
             }
         }
@@ -6542,8 +6544,7 @@ pub unsafe fn Shitroid_Func_15(k: u16, game: &mut Game) {
 pub unsafe fn Shitroid_Func_16(k: u16, game: &mut Game) {
     let E: *mut Enemy_Shitroid = Get_Shitroid(k as i32, game);
     if ram_word!(game, samus_health) < 2u16 {
-        set_ram_word!(game.samus_x_speed_divisor = 0u16);
-        set_ram_word!(game.bomb_counter = 0u16);
+        set_ram_words! { game, 0u16; samus_x_speed_divisor, bomb_counter }
         (*E).shitr_var_A = ((0xa9f2a2i32) as u16);
         (*E).shitr_var_B = 0u16;
         (*E).shitr_var_C = 0u16;

@@ -18,6 +18,7 @@ use crate::game::sm_a6::HandleCeresRidleyGetawayCutscene;
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{mov24, Mult8x8, RomPtr, Unreachable, WriteReg};
 pub use crate::snes::registers::*;
@@ -686,10 +687,8 @@ pub unsafe fn DoorCode_SetScroll_65(game: &mut Game) {
 }
 pub unsafe fn DoorCode_CeresElevatorShaft(game: &mut Game) {
     crate::rtl::write_register_and_mirror(BGMODE as u16, 7, 0x56, true, game);
-    set_ram_word!(game.reg_M7A = 256u16);
-    set_ram_word!(game.reg_M7D = 256u16);
-    set_ram_word!(game.reg_M7B = 0u16);
-    set_ram_word!(game.reg_M7C = 0u16);
+    set_ram_words! { game, 256u16; reg_M7A, reg_M7D }
+    set_ram_words! { game, 0u16; reg_M7B, reg_M7C }
     set_ram_word!(game.reg_M7X = 128u16);
     set_ram_word!(game.reg_M7Y = 1008u16);
     set_ram_word!(game.irq_enable_mode7 = 1u16);

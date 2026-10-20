@@ -23,6 +23,7 @@ use crate::game::sm_a0::{
 };
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
@@ -227,8 +228,9 @@ pub unsafe fn Torizo_Instr_35(k: u16, jp: *const u16, game: &mut Game) -> *const
     let mut i: i32 = 30i32;
     while i >= 0i32 {
         let v3: i32 = i >> 1i32;
-        set_ram_word!(game.target_palettes[(v3 + 160i32)] = 0u16);
-        set_ram_word!(game.target_palettes[(v3 + 144i32)] = 0u16);
+        set_ram_words! { game, 0u16;
+            target_palettes[(v3 + 160i32)], target_palettes[(v3 + 144i32)],
+        }
         i -= 2i32;
     }
     jp
@@ -634,8 +636,9 @@ pub unsafe fn Torizo_Hurt(game: &mut Game) {
         let mut i: i32 = 30i32;
         while i >= 0i32 {
             let v2: i32 = i >> 1i32;
-            set_ram_word!(game.palette_buffer[(v2 + 160i32)] = 0x7fffu16);
-            set_ram_word!(game.palette_buffer[(v2 + 144i32)] = 0x7fffu16);
+            set_ram_words! { game, 0x7fffu16;
+                palette_buffer[(v2 + 160i32)], palette_buffer[(v2 + 144i32)],
+            }
             i -= 2i32;
         }
     } else {
@@ -833,20 +836,16 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
         if ram_word!(game, area_index) != 0 {
             Torizo_C280(game);
             if ram_word!(game, joypad1_lastkeys) == 0xc0c0u16 {
-                set_ram_word!(game.samus_health = 700u16);
-                set_ram_word!(game.samus_max_health = 700u16);
-                set_ram_word!(game.samus_max_reserve_health = 300u16);
-                set_ram_word!(game.samus_reserve_health = 300u16);
-                set_ram_word!(game.samus_missiles = 100u16);
-                set_ram_word!(game.samus_max_missiles = 100u16);
-                set_ram_word!(game.samus_super_missiles = 20u16);
-                set_ram_word!(game.samus_max_super_missiles = 20u16);
-                set_ram_word!(game.samus_power_bombs = 20u16);
-                set_ram_word!(game.samus_max_power_bombs = 20u16);
+                set_ram_words! { game, 700u16; samus_health, samus_max_health }
+                set_ram_words! { game, 300u16; samus_max_reserve_health, samus_reserve_health }
+                set_ram_words! { game, 100u16; samus_missiles, samus_max_missiles }
+                set_ram_words! { game, 20u16;
+                    samus_super_missiles, samus_max_super_missiles, samus_power_bombs,
+                    samus_max_power_bombs,
+                }
                 set_ram_word!(game.equipped_items = -3273i32 as u16);
                 set_ram_word!(game.collected_items = -3273i32 as u16);
-                set_ram_word!(game.equipped_beams = 4111u16);
-                set_ram_word!(game.collected_beams = 4111u16);
+                set_ram_words! { game, 4111u16; equipped_beams, collected_beams }
             }
         } else {
             Torizo_C250(game);
@@ -977,8 +976,9 @@ pub unsafe fn GoldTorizo_Hurt(game: &mut Game) {
         let mut i: i32 = 30i32;
         while i >= 0i32 {
             let v2: i32 = i >> 1i32;
-            set_ram_word!(game.palette_buffer[(v2 + 160i32)] = 0x7fffu16);
-            set_ram_word!(game.palette_buffer[(v2 + 144i32)] = 0x7fffu16);
+            set_ram_words! { game, 0x7fffu16;
+                palette_buffer[(v2 + 160i32)], palette_buffer[(v2 + 144i32)],
+            }
             i -= 2i32;
         }
     } else {

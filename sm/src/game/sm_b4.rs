@@ -1,6 +1,7 @@
 use crate::game::sm_81::DrawSpritemapWithBaseTile;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
 
@@ -24,10 +25,9 @@ pub unsafe fn CreateSpriteAtPos(
         }
     }
     let v1: i32 = v0 >> 1i32;
-    set_ram_word!(game.sprite_palettes[v1] = 0u16);
-    set_ram_word!(game.sprite_x_subpos[v1] = 0u16);
-    set_ram_word!(game.sprite_y_subpos[v1] = 0u16);
-    set_ram_word!(game.sprite_disable_flag[v1] = 0u16);
+    set_ram_words! { game, 0u16;
+        sprite_palettes[v1], sprite_x_subpos[v1], sprite_y_subpos[v1], sprite_disable_flag[v1],
+    }
     set_ram_word!(game.sprite_x_pos[v1] = x_r18);
     set_ram_word!(game.sprite_y_pos[v1] = y_r20);
     set_ram_word!(game.sprite_palettes[v1] = pal_r24);

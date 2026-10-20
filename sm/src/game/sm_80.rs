@@ -4,6 +4,7 @@ pub use crate::game::constants::buttons::*;
 pub use crate::game::constants::game_states::*;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::AddToHiLo;
 pub use crate::snes::registers::*;
@@ -322,32 +323,25 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
         *ram_ptr!(game; 0x656, 0) = 0u8;
         *ram_ptr!(game; 0x666, 0) = 0u8;
         *ram_ptr!(game; 0x676, 0) = 0u8;
-        set_ram_word!(game.oam_next_ptr = 0u16);
-        set_ram_word!(game.reg_OAMaddr_UNUSED = 0u16);
+        set_ram_words! { game, 0u16; oam_next_ptr, reg_OAMaddr_UNUSED }
         ClearOamExt(game);
         ClearUnusedOam(game);
-        set_ram_word!(game.nmi_copy_samus_halves = 0u16);
-        set_ram_word!(game.nmi_copy_samus_top_half_src = 0u16);
-        set_ram_word!(game.nmi_copy_samus_bottom_half_src = 0u16);
+        set_ram_words! { game, 0u16;
+            nmi_copy_samus_halves, nmi_copy_samus_top_half_src, nmi_copy_samus_bottom_half_src,
+        }
         EnableNMI(game);
         RtlApuWrite(APUI00, 0u8, game);
         RtlApuWrite(APUI01, 0u8, game);
         RtlApuWrite(APUI02, 0u8, game);
         RtlApuWrite(APUI03, 0u8, game);
         set_ram_word!(game.random_number = 97u16);
-        set_ram_word!(game.music_timer = 0u16);
-        set_ram_word!(game.music_queue_delay[0] = 0u16);
-        set_ram_word!(game.music_queue_delay[1] = 0u16);
-        set_ram_word!(game.music_queue_delay[2] = 0u16);
-        set_ram_word!(game.music_queue_delay[3] = 0u16);
-        set_ram_word!(game.music_queue_delay[4] = 0u16);
-        set_ram_word!(game.music_queue_delay[5] = 0u16);
-        set_ram_word!(game.music_queue_delay[6] = 0u16);
-        set_ram_word!(game.music_queue_delay[7] = 0u16);
-        set_ram_word!(game.enable_debug = 0u16);
+        set_ram_words! { game, 0u16;
+            music_timer, music_queue_delay[0], music_queue_delay[1], music_queue_delay[2],
+            music_queue_delay[3], music_queue_delay[4], music_queue_delay[5], music_queue_delay[6],
+            music_queue_delay[7], enable_debug,
+        }
         VerifySRAM(game);
-        set_ram_word!(game.debug_disable_sounds = 0u16);
-        set_ram_word!(game.sound_handler_downtime = 0u16);
+        set_ram_words! { game, 0u16; debug_disable_sounds, sound_handler_downtime }
     }
     *_state_variable_ = 2u8;
     0 as CoroutineRet
@@ -771,8 +765,9 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
             );
             *ram_ptr!(game; 0x64c) = 0u8;
             let v5: i32 = ram_word!(game, music_queue_read_pos) as i32;
-            set_ram_word!(game.music_queue_track[(v5 >> 1i32)] = 0u16);
-            set_ram_word!(game.music_queue_delay[(v5 >> 1i32)] = 0u16);
+            set_ram_words! { game, 0u16;
+                music_queue_track[(v5 >> 1i32)], music_queue_delay[(v5 >> 1i32)],
+            }
             set_ram_word!(game.music_queue_read_pos = (v5 + 2i32 & 0xei32) as u16);
             set_ram_word!(game.sound_handler_downtime = 8u16);
             return;
@@ -787,8 +782,9 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
         *ram_ptr!(game; 0x64c) = v1;
         set_ram_word!(game.sound_handler_downtime = 8u16);
         let v2: i32 = ram_word!(game, music_queue_read_pos) as i32;
-        set_ram_word!(game.music_queue_track[(v2 >> 1i32)] = 0u16);
-        set_ram_word!(game.music_queue_delay[(v2 >> 1i32)] = 0u16);
+        set_ram_words! { game, 0u16;
+            music_queue_track[(v2 >> 1i32)], music_queue_delay[(v2 >> 1i32)],
+        }
         set_ram_word!(game.music_queue_read_pos = (v2 + 2i32 & 0xei32) as u16);
     }
     if ram_word!(game, music_queue_read_pos) == ram_word!(game, music_queue_write_pos) {
@@ -1114,24 +1110,21 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
                     | kButton_R as i32
         {
             if ram_word!(game, enable_debug) != 0 {
-                set_ram_word!(game.joypad_dbg_1 = 0u16);
-                set_ram_word!(game.joypad_dbg_2 = 0u16);
+                set_ram_words! { game, 0u16; joypad_dbg_1, joypad_dbg_2 }
                 if (ram_word!(game, joypad_dbg_flags) as i32 & 0x4000i32) == 0i32 {
                     if ram_word!(game, joypad1_lastkeys) as i32
                         & (kButton_Select as i32 | kButton_L as i32)
                         == kButton_Select as i32 | kButton_L as i32
                     {
                         set_ram_word!(game.joypad_dbg_1 = ram_word!(game, joypad1_newkeys));
-                        set_ram_word!(game.joypad1_lastkeys = 0u16);
-                        set_ram_word!(game.joypad1_newkeys = 0u16);
+                        set_ram_words! { game, 0u16; joypad1_lastkeys, joypad1_newkeys }
                     }
                     if ram_word!(game, joypad1_lastkeys) as i32
                         & (kButton_Select as i32 | kButton_R as i32)
                         == kButton_Select as i32 | kButton_R as i32
                     {
                         set_ram_word!(game.joypad_dbg_2 = ram_word!(game, joypad1_newkeys));
-                        set_ram_word!(game.joypad1_lastkeys = 0u16);
-                        set_ram_word!(game.joypad1_newkeys = 0u16);
+                        set_ram_words! { game, 0u16; joypad1_lastkeys, joypad1_newkeys }
                     }
                     if (ram_word!(game, joypad_dbg_2) as i32 & 0x80i32) != 0i32 {
                         let ref mut fresh82 = *(ram_ptr!(game, u16; 0x84));
@@ -1153,9 +1146,9 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
                                 game.joypad_dbg_power_bombs_swap =
                                     ram_word!(game, samus_power_bombs)
                             );
-                            set_ram_word!(game.samus_missiles = 0u16);
-                            set_ram_word!(game.samus_super_missiles = 0u16);
-                            set_ram_word!(game.samus_power_bombs = 0u16);
+                            set_ram_words! { game, 0u16;
+                                samus_missiles, samus_super_missiles, samus_power_bombs,
+                            }
                         } else {
                             set_ram_word!(
                                 game.samus_missiles = ram_word!(game, joypad_dbg_missiles_swap)
@@ -1175,8 +1168,7 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
                     }
                 }
             } else {
-                set_ram_word!(game.joypad_dbg_1 = 0u16);
-                set_ram_word!(game.joypad_dbg_2 = 0u16);
+                set_ram_words! { game, 0u16; joypad_dbg_1, joypad_dbg_2 }
                 update_ram_word!(game.joypad2_last, |fresh85| (fresh85) & (0x10u16));
                 update_ram_word!(game.joypad2_new_keys, |fresh86| (fresh86) & (0x10u16));
             }
@@ -1533,11 +1525,10 @@ pub unsafe fn InitializeHud(game: &mut Game) {
     if ram_word!(game, samus_max_power_bombs) != 0 {
         AddPowerBombsToHudTilemap(game);
     }
-    set_ram_word!(game.samus_prev_health = 0u16);
-    set_ram_word!(game.samus_prev_missiles = 0u16);
-    set_ram_word!(game.samus_prev_super_missiles = 0u16);
-    set_ram_word!(game.samus_prev_power_bombs = 0u16);
-    set_ram_word!(game.samus_prev_hud_item_index = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_prev_health, samus_prev_missiles, samus_prev_super_missiles, samus_prev_power_bombs,
+        samus_prev_hud_item_index,
+    }
     InitializeMiniMapBroken();
     if ram_word!(game, samus_max_missiles) != 0 {
         DrawThreeHudDigits(
@@ -1836,8 +1827,7 @@ pub unsafe fn SetTimerMinutes(a: u16, game: &mut Game) {
     *(ram_ptr!(game, u16; 0x946)) = a;
 }
 pub unsafe fn ClearTimerRam(game: &mut Game) {
-    set_ram_word!(game.timer_x_pos = 0x8000u16);
-    set_ram_word!(game.timer_y_pos = 0x8000u16);
+    set_ram_words! { game, 0x8000u16; timer_x_pos, timer_y_pos }
     *(ram_ptr!(game, u16; 0x945)) = 0u16;
     *(ram_ptr!(game, u16; 0x946)) = 0u16;
     set_ram_word!(game.timer_status = 0u16);
@@ -1920,10 +1910,9 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
     match *_state_variable_ as i32 {
         0 => {
             WriteRegWord(MDMAEN as u16, 0u16, game);
-            set_ram_word!(game.scrolling_finished_hook = 0u16);
-            set_ram_word!(game.music_data_index = 0u16);
-            set_ram_word!(game.music_track_index = 0u16);
-            set_ram_word!(game.timer_status = 0u16);
+            set_ram_words! { game, 0u16;
+                scrolling_finished_hook, music_data_index, music_track_index, timer_status,
+            }
             ResetSoundQueues(game);
             set_ram_word!(game.debug_disable_sounds = -1i32 as u16);
             DisableNMI(game);
@@ -3331,8 +3320,7 @@ pub unsafe fn LoadFromLoadStation(game: &mut Game) {
             (ram_word!(game, layer1_x_pos) as i32 + 128i32 + (*L).samus_x_offset as i32) as u16
     );
     set_ram_word!(game.samus_prev_x_pos = ram_word!(game, samus_x_pos));
-    set_ram_word!(game.reg_BG1HOFS = 0u16);
-    set_ram_word!(game.reg_BG1VOFS = 0u16);
+    set_ram_words! { game, 0u16; reg_BG1HOFS, reg_BG1VOFS }
     *(ram_ptr!(game, u16; 0x79f) as *mut u8).offset(0) =
         (*get_RoomDefHeader(ram_word!(game, room_ptr), game)).area_index_;
     *(ram_ptr!(game, u16; 0x5f7) as *mut u8).offset(0) = 0u8;

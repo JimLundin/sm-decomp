@@ -36,6 +36,7 @@ use crate::game::sm_a9::{
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::AddToHiLo;
@@ -1510,8 +1511,7 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
         (*E).base.extra_properties = ((*E).base.extra_properties) | (4u16);
         (*E).cry_var_01 = 0u16;
         (*E).cry_var_0D = 0u16;
-        set_ram_word!(game.earthquake_type = 0u16);
-        set_ram_word!(game.earthquake_timer = 0u16);
+        set_ram_words! { game, 0u16; earthquake_type, earthquake_timer }
         Ridley_Func_92(game);
         Ridley_Func_117(game);
         if ram_word!(game, area_index) == 2u16 {
@@ -1537,8 +1537,9 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
             v4 = 15i16;
             loop {
                 let v5: i32 = v3 as i32 >> 1i32;
-                set_ram_word!(game.target_palettes[(v5 + 113i32)] = 0u16);
-                set_ram_word!(game.target_palettes[(v5 + 241i32)] = 0u16);
+                set_ram_words! { game, 0u16;
+                    target_palettes[(v5 + 113i32)], target_palettes[(v5 + 241i32)],
+                }
                 v3 = (v3).wrapping_add(2u16);
                 v4 -= 1;
                 if (v4 == 0) {
@@ -2085,12 +2086,8 @@ pub unsafe fn CeresRidley_Func_27(game: &mut Game) {
     *ram_ptr!(game; 0x56) = 7u8;
     set_ram_word!(game.irq_enable_mode7 = 1u16);
     *ram_ptr!(game; 0x5f) = 0x80u8;
-    set_ram_word!(game.reg_M7A = 256u16);
-    set_ram_word!(game.reg_M7B = 256u16);
-    set_ram_word!(game.reg_M7C = 256u16);
-    set_ram_word!(game.reg_M7D = 256u16);
-    set_ram_word!(game.reg_M7X = 64u16);
-    set_ram_word!(game.reg_M7Y = 64u16);
+    set_ram_words! { game, 256u16; reg_M7A, reg_M7B, reg_M7C, reg_M7D }
+    set_ram_words! { game, 64u16; reg_M7X, reg_M7Y }
     let E: *mut Enemy_CeresRidley = Get_CeresRidley(0i32, game);
     (*E).cry_var_32 = 0u16;
     (*E).cry_var_33 = 0u16;
@@ -2124,14 +2121,9 @@ pub unsafe fn CeresRidley_Func_28(game: &mut Game) {
         (*E).cry_var_32 = (*E).cry_var_32.wrapping_add(1);
         *ram_ptr!(game; 0x56) = 9u8;
         *ram_ptr!(game; 0x5f) = 0u8;
-        set_ram_word!(game.reg_M7A = 0u16);
-        set_ram_word!(game.reg_M7B = 0u16);
-        set_ram_word!(game.reg_M7C = 0u16);
-        set_ram_word!(game.reg_M7D = 0u16);
-        set_ram_word!(game.reg_M7X = 0u16);
-        set_ram_word!(game.reg_M7Y = 0u16);
-        set_ram_word!(game.reg_BG1HOFS = 0u16);
-        set_ram_word!(game.reg_BG1VOFS = 0u16);
+        set_ram_words! { game, 0u16;
+            reg_M7A, reg_M7B, reg_M7C, reg_M7D, reg_M7X, reg_M7Y, reg_BG1HOFS, reg_BG1VOFS,
+        }
         (*E).cry_var_A = ((0xa6c04ei32) as u16);
         (*E).cry_var_F = 0u16;
     } else {
@@ -2624,13 +2616,10 @@ pub unsafe fn Ridley_Func_21(game: &mut Game) {
             Ridley_Func_28(game);
             Ridley_Func_29(game);
             Ridley_Func_93(0x2026u16, addr_word_A6D37C as u16, game);
-            set_ram_word!(game.tilemap_stuff[20] = 3072u16);
-            set_ram_word!(game.tilemap_stuff[30] = 3072u16);
-            set_ram_word!(game.tilemap_stuff[40] = 3072u16);
-            set_ram_word!(game.tilemap_stuff[50] = 3072u16);
-            set_ram_word!(game.tilemap_stuff[60] = 3072u16);
-            set_ram_word!(game.tilemap_stuff[70] = 3072u16);
-            set_ram_word!(game.tilemap_stuff[80] = 3072u16);
+            set_ram_words! { game, 3072u16;
+                tilemap_stuff[20], tilemap_stuff[30], tilemap_stuff[40], tilemap_stuff[50],
+                tilemap_stuff[60], tilemap_stuff[70], tilemap_stuff[80],
+            }
             set_ram_word!(game.tilemap_stuff[0] = 4u16);
             let mut v2: u16 = ((*E).ridley_var_26).wrapping_add(1u16);
             if (*E).ridley_var_26 as i32 - 1i32 & 0x8000i32 == 0 {
@@ -2702,8 +2691,7 @@ pub unsafe fn Ridley_Func_23(game: &mut Game) -> u8 {
     v0
 }
 pub unsafe fn Ridley_Func_24(game: &mut Game) {
-    set_ram_word!(game.tilemap_stuff[0] = 1u16);
-    set_ram_word!(game.tilemap_stuff[10] = 1u16);
+    set_ram_words! { game, 1u16; tilemap_stuff[0], tilemap_stuff[10] }
 }
 pub unsafe fn Ridley_Func_25(game: &mut Game) -> u8 {
     if (Ridley_Func_40_Carry(game) as i32 & 1i32) != 0i32 {
@@ -3026,8 +3014,7 @@ pub unsafe fn Ridley_Func_37(game: &mut Game) {
     Ridley_Func_119(1u8, game);
 }
 pub unsafe fn Ridley_Func_38(game: &mut Game) {
-    set_ram_word!(game.tilemap_stuff[2] = 1u16);
-    set_ram_word!(game.tilemap_stuff[0] = 1u16);
+    set_ram_words! { game, 1u16; tilemap_stuff[2], tilemap_stuff[0] }
     let E: *mut Enemy_Ridley = Get_Ridley(0i32, game);
     if ((*E).ridley_var_01 as i32 & 0x8000i32) == 0i32 {
         (*E).ridley_var_1E = (if Ridley_Func_40_Sign(game) != 0u8 {
@@ -3424,8 +3411,7 @@ pub unsafe fn SetupZebesEscapeTypewriter(game: &mut Game) {
     (*E).mbn_var_3D = 0u16;
     (*E).mbn_var_3E = 0u16;
     (*E).mbn_var_3F = 0u16;
-    set_ram_word!(game.reg_BG2HOFS = 0u16);
-    set_ram_word!(game.reg_BG2VOFS = 0u16);
+    set_ram_words! { game, 0u16; reg_BG2HOFS, reg_BG2VOFS }
 }
 pub unsafe fn ProcessEscapeTimerTileTransfers(game: &mut Game) -> u8 {
     let mut v4: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
@@ -4114,20 +4100,14 @@ pub unsafe fn Ridley_Func_84(game: &mut Game) {
     {
         if ((*E).ridley_var_C as i32 & 0x8000i32) == 0i32 {
             set_ram_word!(game.tilemap_stuff[0] = 6u16);
-            set_ram_word!(game.tilemap_stuff[20] = 2560u16);
-            set_ram_word!(game.tilemap_stuff[30] = 2560u16);
-            set_ram_word!(game.tilemap_stuff[40] = 2560u16);
-            set_ram_word!(game.tilemap_stuff[50] = 2560u16);
-            set_ram_word!(game.tilemap_stuff[60] = 2560u16);
-            set_ram_word!(game.tilemap_stuff[70] = 2560u16);
-            set_ram_word!(game.tilemap_stuff[80] = 2560u16);
-            set_ram_word!(game.tilemap_stuff[21] = 0x4000u16);
-            set_ram_word!(game.tilemap_stuff[31] = 0x4000u16);
-            set_ram_word!(game.tilemap_stuff[41] = 0x4000u16);
-            set_ram_word!(game.tilemap_stuff[51] = 0x4000u16);
-            set_ram_word!(game.tilemap_stuff[61] = 0x4000u16);
-            set_ram_word!(game.tilemap_stuff[71] = 0x4000u16);
-            set_ram_word!(game.tilemap_stuff[81] = 0x4000u16);
+            set_ram_words! { game, 2560u16;
+                tilemap_stuff[20], tilemap_stuff[30], tilemap_stuff[40], tilemap_stuff[50],
+                tilemap_stuff[60], tilemap_stuff[70], tilemap_stuff[80],
+            }
+            set_ram_words! { game, 0x4000u16;
+                tilemap_stuff[21], tilemap_stuff[31], tilemap_stuff[41], tilemap_stuff[51],
+                tilemap_stuff[61], tilemap_stuff[71], tilemap_stuff[81],
+            }
             set_ram_word!(game.tilemap_stuff[16] = 0x8000u16);
         }
         set_ram_word!(game.tilemap_stuff[13] = -1i32 as u16);
@@ -4482,8 +4462,9 @@ pub unsafe fn Ridley_Func_88(k: u16, game: &mut Game) {
         match current_block {
             5689001924483802034 => {
                 let v3: i32 = k as i32 >> 1i32;
-                set_ram_word!(game.tilemap_stuff[(v3 + 16i32)] = 0u16);
-                set_ram_word!(game.tilemap_stuff[(v3 + 17i32)] = 0u16);
+                set_ram_words! { game, 0u16;
+                    tilemap_stuff[(v3 + 16i32)], tilemap_stuff[(v3 + 17i32)],
+                }
                 update_ram_word!(game.tilemap_stuff[(v3 + 18i32)], |fresh13| (fresh13)
                     ^ (0x8000u16));
                 return;
@@ -4629,25 +4610,19 @@ pub unsafe fn Ridley_Func_92(game: &mut Game) {
     set_ram_word!(game.tilemap_stuff[14] = -1i32 as u16);
     set_ram_word!(game.tilemap_stuff[9] = 240u16);
     set_ram_word!(game.tilemap_stuff[15] = 16u16);
-    set_ram_word!(game.tilemap_stuff[17] = 17u16);
-    set_ram_word!(game.tilemap_stuff[27] = 17u16);
-    set_ram_word!(game.tilemap_stuff[37] = 17u16);
-    set_ram_word!(game.tilemap_stuff[47] = 17u16);
-    set_ram_word!(game.tilemap_stuff[57] = 17u16);
-    set_ram_word!(game.tilemap_stuff[67] = 17u16);
-    set_ram_word!(game.tilemap_stuff[77] = 17u16);
+    set_ram_words! { game, 17u16;
+        tilemap_stuff[17], tilemap_stuff[27], tilemap_stuff[37], tilemap_stuff[47],
+        tilemap_stuff[57], tilemap_stuff[67], tilemap_stuff[77],
+    }
     Ridley_Func_93(0x2024u16, addr_word_A6D36E as u16, game);
     Ridley_Func_93(0x2026u16, addr_word_A6D37C as u16, game);
     Ridley_Func_93(0x202au16, addr_word_A6D38A as u16, game);
     Ridley_Func_93(0x202cu16, addr_word_A6D398 as u16, game);
     Ridley_Func_93(0x202eu16, addr_word_A6D3A6 as u16, game);
-    set_ram_word!(game.tilemap_stuff[16] = 0u16);
-    set_ram_word!(game.tilemap_stuff[26] = 0u16);
-    set_ram_word!(game.tilemap_stuff[36] = 0u16);
-    set_ram_word!(game.tilemap_stuff[46] = 0u16);
-    set_ram_word!(game.tilemap_stuff[56] = 0u16);
-    set_ram_word!(game.tilemap_stuff[66] = 0u16);
-    set_ram_word!(game.tilemap_stuff[76] = 0u16);
+    set_ram_words! { game, 0u16;
+        tilemap_stuff[16], tilemap_stuff[26], tilemap_stuff[36], tilemap_stuff[46],
+        tilemap_stuff[56], tilemap_stuff[66], tilemap_stuff[76],
+    }
 }
 pub unsafe fn Ridley_Func_93(j: u16, k: u16, game: &mut Game) {
     let mut dst: *mut u16 = ram_ptr!(game, u16; j as i32 as isize);

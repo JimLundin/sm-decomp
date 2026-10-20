@@ -48,6 +48,7 @@ use crate::game::sm_9b::{
 use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
@@ -334,10 +335,10 @@ pub unsafe fn Samus_SpawnWaterSplash(r18: u16, game: &mut Game) {
         1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
     ];
     if kWaterSplashTypeTable[*ram_ptr!(game; 0xa1f) as usize] != 0 {
-        set_ram_word!(game.atmospheric_gfx_frame_and_type[0] = 256u16);
-        set_ram_word!(game.atmospheric_gfx_frame_and_type[1] = 256u16);
-        set_ram_word!(game.atmospheric_gfx_anim_timer[0] = 3u16);
-        set_ram_word!(game.atmospheric_gfx_anim_timer[1] = 3u16);
+        set_ram_words! { game, 256u16;
+            atmospheric_gfx_frame_and_type[0], atmospheric_gfx_frame_and_type[1],
+        }
+        set_ram_words! { game, 3u16; atmospheric_gfx_anim_timer[0], atmospheric_gfx_anim_timer[1] }
         set_ram_word!(
             game.atmospheric_gfx_x_pos[0] = (ram_word!(game, samus_x_pos)).wrapping_add(4u16)
         );
@@ -393,8 +394,7 @@ pub unsafe fn Samus_Animate_LavaFx(game: &mut Game) {
     {
         if ram_word!(game, speed_boost_counter) != 0 {
             Samus_CancelSpeedBoost(game);
-            set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-            set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
+            set_ram_words! { game, 0u16; samus_x_extra_run_speed, samus_x_extra_run_subspeed }
         }
         if (ram_word!(game, equipped_items) as i32 & 0x20i32) != 0i32 {
             set_ram_word!(game.samus_anim_frame_buffer = 0u16);
@@ -448,12 +448,11 @@ pub unsafe fn Samus_Animate_SubmergedLavaAcid(game: &mut Game) {
     if ((r20) as i16).wrapping_sub((ram_word!(game, lava_acid_y_pos)) as i16) < 0i16
         && (ram_word!(game, atmospheric_gfx_frame_and_type[0]) as i32 & 0x400i32) == 0i32
     {
-        set_ram_word!(game.atmospheric_gfx_frame_and_type[0] = 1024u16);
-        set_ram_word!(game.atmospheric_gfx_frame_and_type[1] = 1024u16);
-        set_ram_word!(game.atmospheric_gfx_frame_and_type[2] = 1024u16);
-        set_ram_word!(game.atmospheric_gfx_frame_and_type[3] = 1024u16);
-        set_ram_word!(game.atmospheric_gfx_anim_timer[0] = 3u16);
-        set_ram_word!(game.atmospheric_gfx_anim_timer[3] = 3u16);
+        set_ram_words! { game, 1024u16;
+            atmospheric_gfx_frame_and_type[0], atmospheric_gfx_frame_and_type[1],
+            atmospheric_gfx_frame_and_type[2], atmospheric_gfx_frame_and_type[3],
+        }
+        set_ram_words! { game, 3u16; atmospheric_gfx_anim_timer[0], atmospheric_gfx_anim_timer[3] }
         set_ram_word!(game.atmospheric_gfx_anim_timer[1] = -32766i32 as u16);
         set_ram_word!(game.atmospheric_gfx_anim_timer[2] = -32766i32 as u16);
         set_ram_word!(game.atmospheric_gfx_y_pos[0] = ram_word!(game, lava_acid_y_pos));
@@ -1503,8 +1502,7 @@ pub unsafe fn Samus_BombJumpRisingXMovement_(game: &mut Game) {
 pub unsafe fn Samus_BombJumpRisingYMovement_(game: &mut Game) {
     if ram_word!(game, samus_y_dir) == 1u16 {
         if (ram_word!(game, samus_y_speed) as i32 & 0x8000i32) != 0i32 {
-            set_ram_word!(game.samus_y_subspeed = 0u16);
-            set_ram_word!(game.samus_y_speed = 0u16);
+            set_ram_words! { game, 0u16; samus_y_subspeed, samus_y_speed }
             set_ram_word!(game.samus_y_dir = 2u16);
             if (ram_word!(game, bomb_jump_dir) as u8) != 2u8 {
                 set_ram_word!(game.samus_x_accel_mode = 2u16);
@@ -1564,8 +1562,7 @@ pub unsafe fn Samus_JumpingMovement(game: &mut Game) {
             == 0i32
             || (ram_word!(game, samus_y_speed) as i32 & 0x8000i32) != 0i32)
     {
-        set_ram_word!(game.samus_y_subspeed = 0u16);
-        set_ram_word!(game.samus_y_speed = 0u16);
+        set_ram_words! { game, 0u16; samus_y_subspeed, samus_y_speed }
         set_ram_word!(game.samus_y_dir = 2u16);
     }
     let pair: Pair_Bool_Amt =
@@ -1581,9 +1578,9 @@ pub unsafe fn Samus_JumpingMovement(game: &mut Game) {
     {
         current_block = 13338778356158832468;
     } else {
-        set_ram_word!(game.samus_x_base_speed = 0u16);
-        set_ram_word!(game.samus_x_base_subspeed = 0u16);
-        set_ram_word!(game.samus_collision_flag = 0u16);
+        set_ram_words! { game, 0u16;
+            samus_x_base_speed, samus_x_base_subspeed, samus_collision_flag,
+        }
         current_block = 294518303723010965;
     }
     if current_block == 13338778356158832468 {
@@ -1601,8 +1598,7 @@ pub unsafe fn Samus_SpinJumpMovement(game: &mut Game) {
             == 0i32
             || (ram_word!(game, samus_y_speed) as i32 & 0x8000i32) != 0i32)
     {
-        set_ram_word!(game.samus_y_subspeed = 0u16);
-        set_ram_word!(game.samus_y_speed = 0u16);
+        set_ram_words! { game, 0u16; samus_y_subspeed, samus_y_speed }
         set_ram_word!(game.samus_y_dir = 2u16);
     }
     let mut pair: Pair_Bool_Amt =
@@ -1624,10 +1620,9 @@ pub unsafe fn Samus_SpinJumpMovement(game: &mut Game) {
         if current_block == 15844657471994422988 {
         } else {
             pair.amt = 0i32;
-            set_ram_word!(game.samus_x_base_speed = 0u16);
-            set_ram_word!(game.samus_x_base_subspeed = 0u16);
-            set_ram_word!(game.samus_collision_flag = 0u16);
-            set_ram_word!(game.samus_x_accel_mode = 0u16);
+            set_ram_words! { game, 0u16;
+                samus_x_base_speed, samus_x_base_subspeed, samus_collision_flag, samus_x_accel_mode,
+            }
             current_block = 7037269245041226537;
         }
     }
@@ -1643,8 +1638,7 @@ pub unsafe fn Samus_CheckStartFalling(game: &mut Game) {
     if ram_word!(game, samus_y_dir) == 1u16
         && (ram_word!(game, samus_y_speed) as i32 & 0x8000i32) != 0i32
     {
-        set_ram_word!(game.samus_y_subspeed = 0u16);
-        set_ram_word!(game.samus_y_speed = 0u16);
+        set_ram_words! { game, 0u16; samus_y_subspeed, samus_y_speed }
         set_ram_word!(game.samus_y_dir = 2u16);
     }
 }
@@ -1691,9 +1685,9 @@ pub unsafe fn Samus_FallingMovement(game: &mut Game) {
     {
         Samus_MoveX(pair.amt, game);
     } else {
-        set_ram_word!(game.samus_x_base_speed = 0u16);
-        set_ram_word!(game.samus_x_base_subspeed = 0u16);
-        set_ram_word!(game.samus_collision_flag = 0u16);
+        set_ram_words! { game, 0u16;
+            samus_x_base_speed, samus_x_base_subspeed, samus_collision_flag,
+        }
     }
     Samus_CheckStartFalling(game);
     Samus_MoveY_WithSpeedCalc(game);
@@ -1706,9 +1700,9 @@ pub unsafe fn Samus_MorphedFallingMovement(game: &mut Game) {
         && (ram_word!(game, joypad1_lastkeys) as i32 & kButton_Left as i32) == 0i32
     {
         pair.amt = 0i32;
-        set_ram_word!(game.samus_x_base_speed = 0u16);
-        set_ram_word!(game.samus_x_base_subspeed = 0u16);
-        set_ram_word!(game.samus_collision_flag = 0u16);
+        set_ram_words! { game, 0u16;
+            samus_x_base_speed, samus_x_base_subspeed, samus_collision_flag,
+        }
     }
     Samus_MoveX(pair.amt, game);
     Samus_CheckStartFalling(game);
@@ -1722,9 +1716,9 @@ pub unsafe fn Samus_MorphedBouncingMovement(game: &mut Game) {
         && (ram_word!(game, joypad1_lastkeys) as i32 & kButton_Left as i32) == 0i32
     {
         pair.amt = 0i32;
-        set_ram_word!(game.samus_x_base_speed = 0u16);
-        set_ram_word!(game.samus_x_base_subspeed = 0u16);
-        set_ram_word!(game.samus_collision_flag = 0u16);
+        set_ram_words! { game, 0u16;
+            samus_x_base_speed, samus_x_base_subspeed, samus_collision_flag,
+        }
     }
     Samus_MoveX(pair.amt, game);
     if ram_word!(game, knockback_dir) == 0 {
@@ -1732,8 +1726,7 @@ pub unsafe fn Samus_MorphedBouncingMovement(game: &mut Game) {
             || ram_word!(game, extra_samus_y_subdisplacement) != 0u16
         {
             set_ram_word!(game.samus_y_dir = 2u16);
-            set_ram_word!(game.samus_y_subspeed = 0u16);
-            set_ram_word!(game.samus_y_speed = 0u16);
+            set_ram_words! { game, 0u16; samus_y_subspeed, samus_y_speed }
             let amt: i32 = ((ram_word!(game, extra_samus_y_displacement) as u32) << 16i32
                 | ram_word!(game, extra_samus_y_subdisplacement) as u32)
                 as i32;
@@ -1875,8 +1868,7 @@ pub unsafe fn Samus_MoveHandler_ReleaseFromGrapple(game: &mut Game) {
     if ram_word!(game, samus_y_dir) == 1u16
         && (ram_word!(game, samus_y_speed) as i32 & 0x8000i32) != 0i32
     {
-        set_ram_word!(game.samus_y_subspeed = 0u16);
-        set_ram_word!(game.samus_y_speed = 0u16);
+        set_ram_words! { game, 0u16; samus_y_subspeed, samus_y_speed }
         set_ram_word!(game.samus_y_dir = 2u16);
         set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
     }
@@ -1888,9 +1880,9 @@ pub unsafe fn Samus_MoveHandler_ReleaseFromGrapple(game: &mut Game) {
     {
         Samus_MoveX(amt, game);
     } else {
-        set_ram_word!(game.samus_x_base_speed = 0u16);
-        set_ram_word!(game.samus_x_base_subspeed = 0u16);
-        set_ram_word!(game.samus_collision_flag = 0u16);
+        set_ram_words! { game, 0u16;
+            samus_x_base_speed, samus_x_base_subspeed, samus_collision_flag,
+        }
     }
     Samus_MoveY_WithSpeedCalc(game);
     if ram_word!(game, input_to_pose_calc) != 0 {
@@ -1903,8 +1895,7 @@ pub unsafe fn Samus_HandleMovement_DrainedCrouching(game: &mut Game) {
         set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
         set_ram_word!(game.samus_anim_frame_timer = 8u16);
         set_ram_word!(game.samus_anim_frame = 7u16);
-        set_ram_word!(game.samus_y_subspeed = 0u16);
-        set_ram_word!(game.samus_y_speed = 0u16);
+        set_ram_words! { game, 0u16; samus_y_subspeed, samus_y_speed }
     }
 }
 crate::game::address_dispatch! {
@@ -2163,8 +2154,9 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
         } else {
             if (ram_word!(game, equipped_items) as i32 & 0x2000i32) != 0i32 {
                 if ram_word!(game, samus_has_momentum_flag) == 0 {
-                    set_ram_word!(game.samus_has_momentum_flag = 1u16);
-                    set_ram_word!(game.special_samus_palette_timer = 1u16);
+                    set_ram_words! { game, 1u16;
+                        samus_has_momentum_flag, special_samus_palette_timer,
+                    }
                     set_ram_word!(game.special_samus_palette_frame = 0u16);
                     set_ram_word!(
                         game.speed_boost_counter = crate::rtl::rom_table_word!(game, 0x91b61f, 0)
@@ -2227,8 +2219,7 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
         }
     }
     if current_block == 3594490907146900115 && ram_word!(game, samus_has_momentum_flag) == 0 {
-        set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-        set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
+        set_ram_words! { game, 0u16; samus_x_extra_run_speed, samus_x_extra_run_subspeed }
     }
     if (ram_word!(game, speed_boost_counter) as i32 & 0xff00i32) == 1024i32 {
         set_ram_word!(game.samus_contact_damage_index = 1u16);
@@ -2328,8 +2319,7 @@ pub unsafe fn Samus_InitJump(game: &mut Game) {
             + (ram_word!(game, samus_x_extra_run_speed) as i32 >> 1i32))
             as u16);
     }
-    set_ram_word!(game.grapple_walljump_timer = 0u16);
-    set_ram_word!(game.reached_ceres_elevator_fade_timer = 0u16);
+    set_ram_words! { game, 0u16; grapple_walljump_timer, reached_ceres_elevator_fade_timer }
     set_ram_word!(game.samus_y_dir = 1u16);
 }
 pub unsafe fn Samus_InitWallJump(game: &mut Game) {
@@ -2379,8 +2369,7 @@ pub unsafe fn Samus_InitWallJump(game: &mut Game) {
             + (ram_word!(game, samus_x_extra_run_speed) as i32 >> 1i32))
             as u16);
     }
-    set_ram_word!(game.grapple_walljump_timer = 0u16);
-    set_ram_word!(game.reached_ceres_elevator_fade_timer = 0u16);
+    set_ram_words! { game, 0u16; grapple_walljump_timer, reached_ceres_elevator_fade_timer }
     set_ram_word!(game.samus_y_dir = 1u16);
 }
 static kSamus_SetSpeedForKnockback_Y_Speed: [u16; 3] = [5, 2, 2];
@@ -2412,8 +2401,7 @@ pub unsafe fn Samus_SetSpeedForKnockback_Y(game: &mut Game) {
     let v1: i32 = v0 as i32 >> 1i32;
     set_ram_word!(game.samus_y_subspeed = kSamus_SetSpeedForKnockback_Y_Subspeed[v1 as usize]);
     set_ram_word!(game.samus_y_speed = kSamus_SetSpeedForKnockback_Y_Speed[v1 as usize]);
-    set_ram_word!(game.grapple_walljump_timer = 0u16);
-    set_ram_word!(game.reached_ceres_elevator_fade_timer = 0u16);
+    set_ram_words! { game, 0u16; grapple_walljump_timer, reached_ceres_elevator_fade_timer }
     set_ram_word!(game.samus_y_dir = 1u16);
 }
 pub unsafe fn Samus_InitBombJump(game: &mut Game) {
@@ -2445,8 +2433,7 @@ pub unsafe fn Samus_InitBombJump(game: &mut Game) {
     let v1: i32 = v0 as i32 >> 1i32;
     set_ram_word!(game.samus_y_subspeed = kSamus_InitBombJump_Subspeed[v1 as usize]);
     set_ram_word!(game.samus_y_speed = kSamus_InitBombJump_Speed[v1 as usize]);
-    set_ram_word!(game.grapple_walljump_timer = 0u16);
-    set_ram_word!(game.reached_ceres_elevator_fade_timer = 0u16);
+    set_ram_words! { game, 0u16; grapple_walljump_timer, reached_ceres_elevator_fade_timer }
     set_ram_word!(game.samus_y_dir = 1u16);
 }
 unsafe fn IsGreaterThanQuirked(vhi: u16, vlo: u16, cmphi: u16, cmplo: u16) -> bool {
@@ -2475,9 +2462,9 @@ pub unsafe fn Samus_CalcBaseSpeed_X(k: u16, game: &mut Game) -> i32 {
             -delta as u32,
         );
         if (ram_word!(game, samus_x_base_speed) as i16) < 0i16 {
-            set_ram_word!(game.samus_x_base_speed = 0u16);
-            set_ram_word!(game.samus_x_base_subspeed = 0u16);
-            set_ram_word!(game.samus_x_accel_mode = 0u16);
+            set_ram_words! { game, 0u16;
+                samus_x_base_speed, samus_x_base_subspeed, samus_x_accel_mode,
+            }
         }
     } else {
         AddToHiLo(
@@ -2517,9 +2504,9 @@ unsafe fn Samus_CalcBaseSpeed_NoDecel_X(k: u16, game: &mut Game) -> Pair_Bool_Am
             -delta as u32,
         );
         if (ram_word!(game, samus_x_base_speed) as i16) < 0i16 {
-            set_ram_word!(game.samus_x_base_speed = 0u16);
-            set_ram_word!(game.samus_x_base_subspeed = 0u16);
-            set_ram_word!(game.samus_x_accel_mode = 0u16);
+            set_ram_words! { game, 0u16;
+                samus_x_base_speed, samus_x_base_subspeed, samus_x_accel_mode,
+            }
         }
     } else {
         AddToHiLo(
@@ -2734,11 +2721,10 @@ pub unsafe fn Samus_Movement_00_Standing(game: &mut Game) {
         Samus_Move_NoBaseSpeed_X(game);
         Samus_Move_NoSpeedCalc_Y(game);
         Samus_CancelSpeedBoost(game);
-        set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-        set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
-        set_ram_word!(game.samus_x_base_speed = 0u16);
-        set_ram_word!(game.samus_x_base_subspeed = 0u16);
-        set_ram_word!(game.samus_x_accel_mode = 0u16);
+        set_ram_words! { game, 0u16;
+            samus_x_extra_run_speed, samus_x_extra_run_subspeed, samus_x_base_speed,
+            samus_x_base_subspeed, samus_x_accel_mode,
+        }
     } else {
         if ram_word!(game, elevator_status) != 0 {
             set_ram_word!(game.samus_collision_direction = 2u16);
@@ -2860,11 +2846,10 @@ pub unsafe fn Samus_Movement_04_MorphBallOnGround(game: &mut Game) {
             if Samus_CheckAndMoveY(game) as i32 & 1i32 == 0 {
                 Samus_Move_NoSpeedCalc_Y(game);
                 Samus_CancelSpeedBoost(game);
-                set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-                set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
-                set_ram_word!(game.samus_x_base_speed = 0u16);
-                set_ram_word!(game.samus_x_base_subspeed = 0u16);
-                set_ram_word!(game.samus_x_accel_mode = 0u16);
+                set_ram_words! { game, 0u16;
+                    samus_x_extra_run_speed, samus_x_extra_run_subspeed, samus_x_base_speed,
+                    samus_x_base_subspeed, samus_x_accel_mode,
+                }
             }
             return;
         }
@@ -2877,11 +2862,10 @@ pub unsafe fn Samus_Movement_04_MorphBallOnGround(game: &mut Game) {
 pub unsafe fn Samus_Movement_05_Crouching(game: &mut Game) {
     Samus_Move_NoBaseSpeed_X(game);
     Samus_Move_NoSpeedCalc_Y(game);
-    set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-    set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
-    set_ram_word!(game.samus_x_base_speed = 0u16);
-    set_ram_word!(game.samus_x_base_subspeed = 0u16);
-    set_ram_word!(game.samus_x_accel_mode = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_x_extra_run_speed, samus_x_extra_run_subspeed, samus_x_base_speed,
+        samus_x_base_subspeed, samus_x_accel_mode,
+    }
 }
 pub unsafe fn Samus_Movement_06_Falling(game: &mut Game) {
     Samus_FallingMovement(game);
@@ -2902,11 +2886,10 @@ pub unsafe fn Samus_Movement_08_MorphBallFalling(game: &mut Game) {
         && ram_word!(game, samus_x_accel_mode) == 0
     {
         Samus_CancelSpeedBoost(game);
-        set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-        set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
-        set_ram_word!(game.samus_x_base_speed = 0u16);
-        set_ram_word!(game.samus_x_base_subspeed = 0u16);
-        set_ram_word!(game.samus_x_accel_mode = 0u16);
+        set_ram_words! { game, 0u16;
+            samus_x_extra_run_speed, samus_x_extra_run_subspeed, samus_x_base_speed,
+            samus_x_base_subspeed, samus_x_accel_mode,
+        }
     }
     if ram_word!(game, used_for_ball_bounce_on_landing) != 0 {
         Samus_MorphedBouncingMovement(game);
@@ -2953,10 +2936,9 @@ pub unsafe fn Samus_Movement_0F_CrouchingEtcTransition(game: &mut Game) {
         }
     }
     if ram_word!(game, input_to_pose_calc) == 1025u16 {
-        set_ram_word!(game.samus_y_subspeed = 0u16);
-        set_ram_word!(game.samus_y_speed = 0u16);
-        set_ram_word!(game.samus_y_dir = 0u16);
-        set_ram_word!(game.used_for_ball_bounce_on_landing = 0u16);
+        set_ram_words! { game, 0u16;
+            samus_y_subspeed, samus_y_speed, samus_y_dir, used_for_ball_bounce_on_landing,
+        }
     }
     set_ram_word!(game.input_to_pose_calc = 0u16);
 }
@@ -2968,9 +2950,9 @@ pub unsafe fn Samus_Movement_0E_TurningAroundOnGround(game: &mut Game) {
     Samus_HandleMovement_X(game);
     Samus_Move_NoSpeedCalc_Y(game);
     Samus_CancelSpeedBoost(game);
-    set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-    set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
-    set_ram_word!(game.input_to_pose_calc = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_x_extra_run_speed, samus_x_extra_run_subspeed, input_to_pose_calc,
+    }
 }
 pub unsafe fn Samus_Movement_10_Moonwalking(game: &mut Game) {
     Samus_HandleMovement_X(game);
@@ -2996,11 +2978,10 @@ pub unsafe fn Samus_Movement_11_SpringBallOnGround(game: &mut Game) {
             if Samus_CheckAndMoveY(game) as i32 & 1i32 == 0 {
                 Samus_Move_NoSpeedCalc_Y(game);
                 Samus_CancelSpeedBoost(game);
-                set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-                set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
-                set_ram_word!(game.samus_x_base_speed = 0u16);
-                set_ram_word!(game.samus_x_base_subspeed = 0u16);
-                set_ram_word!(game.samus_x_accel_mode = 0u16);
+                set_ram_words! { game, 0u16;
+                    samus_x_extra_run_speed, samus_x_extra_run_subspeed, samus_x_base_speed,
+                    samus_x_base_subspeed, samus_x_accel_mode,
+                }
             }
             return;
         }
@@ -3023,11 +3004,10 @@ pub unsafe fn Samus_Movement_13_SpringBallFalling(game: &mut Game) {
         && ram_word!(game, samus_x_accel_mode) == 0
     {
         Samus_CancelSpeedBoost(game);
-        set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-        set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
-        set_ram_word!(game.samus_x_base_speed = 0u16);
-        set_ram_word!(game.samus_x_base_subspeed = 0u16);
-        set_ram_word!(game.samus_x_accel_mode = 0u16);
+        set_ram_words! { game, 0u16;
+            samus_x_extra_run_speed, samus_x_extra_run_subspeed, samus_x_base_speed,
+            samus_x_base_subspeed, samus_x_accel_mode,
+        }
     }
     if ram_word!(game, used_for_ball_bounce_on_landing) != 0 {
         Samus_MorphedBouncingMovement(game);
@@ -3051,11 +3031,10 @@ pub unsafe fn Samus_Movement_15_RanIntoWall(game: &mut Game) {
     Samus_Move_NoBaseSpeed_X(game);
     Samus_Move_NoSpeedCalc_Y(game);
     Samus_CancelSpeedBoost(game);
-    set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-    set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
-    set_ram_word!(game.samus_x_base_speed = 0u16);
-    set_ram_word!(game.samus_x_base_subspeed = 0u16);
-    set_ram_word!(game.samus_x_accel_mode = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_x_extra_run_speed, samus_x_extra_run_subspeed, samus_x_base_speed,
+        samus_x_base_subspeed, samus_x_accel_mode,
+    }
 }
 pub unsafe fn Samus_Movement_16_Grappling(game: &mut Game) {
     if ram_word!(game, input_to_pose_calc) != 5u16 {
@@ -3068,9 +3047,9 @@ pub unsafe fn Samus_Movement_17_TurningAroundJumping(game: &mut Game) {
         Samus_Move_NoSpeedCalc_Y(game);
     }
     Samus_CancelSpeedBoost(game);
-    set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-    set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
-    set_ram_word!(game.input_to_pose_calc = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_x_extra_run_speed, samus_x_extra_run_subspeed, input_to_pose_calc,
+    }
 }
 pub unsafe fn Samus_Movement_18_TurningAroundFalling(game: &mut Game) {
     Samus_HandleMovement_X(game);
@@ -3078,9 +3057,9 @@ pub unsafe fn Samus_Movement_18_TurningAroundFalling(game: &mut Game) {
         Samus_Move_NoSpeedCalc_Y(game);
     }
     Samus_CancelSpeedBoost(game);
-    set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-    set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
-    set_ram_word!(game.input_to_pose_calc = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_x_extra_run_speed, samus_x_extra_run_subspeed, input_to_pose_calc,
+    }
 }
 pub unsafe fn Samus_Movement_19_DamageBoost(game: &mut Game) {
     Samus_JumpingMovement(game);
@@ -3112,9 +3091,9 @@ pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
     let mut v0: u16 = 0u16;
     loop {
         let v1: i32 = v0 as i32 >> 1i32;
-        set_ram_word!(game.hud_tilemap[(v1 + 26i32)] = 11295u16);
-        set_ram_word!(game.hud_tilemap[(v1 + 58i32)] = 11295u16);
-        set_ram_word!(game.hud_tilemap[(v1 + 90i32)] = 11295u16);
+        set_ram_words! { game, 11295u16;
+            hud_tilemap[(v1 + 26i32)], hud_tilemap[(v1 + 58i32)], hud_tilemap[(v1 + 90i32)],
+        }
         v0 = (v0).wrapping_add(2u16);
         if (((v0) as i16).wrapping_sub(10i16) >= 0i16) {
             break;
@@ -3467,47 +3446,29 @@ pub unsafe fn ResetProjectileData(game: &mut Game) {
     let mut v0: u16 = 0u16;
     loop {
         let v1: i32 = v0 as i32 >> 1i32;
-        set_ram_word!(game.projectile_timers[v1] = 0u16);
-        set_ram_word!(game.projectile_x_pos[v1] = 0u16);
-        set_ram_word!(game.projectile_y_pos[v1] = 0u16);
-        set_ram_word!(game.projectile_dir[v1] = 0u16);
-        set_ram_word!(game.projectile_bomb_x_speed[v1] = 0u16);
-        set_ram_word!(game.projectile_bomb_y_speed[v1] = 0u16);
-        set_ram_word!(game.projectile_x_radius[v1] = 0u16);
-        set_ram_word!(game.projectile_y_radius[v1] = 0u16);
-        set_ram_word!(game.projectile_type[v1] = 0u16);
-        set_ram_word!(game.projectile_damage[v1] = 0u16);
-        set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = 0u16);
-        set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 0u16);
-        set_ram_word!(game.projectile_variables[v1] = 0u16);
-        set_ram_word!(game.projectile_spritemap_pointers[v1] = 0u16);
+        set_ram_words! { game, 0u16;
+            projectile_timers[v1], projectile_x_pos[v1], projectile_y_pos[v1], projectile_dir[v1],
+            projectile_bomb_x_speed[v1], projectile_bomb_y_speed[v1], projectile_x_radius[v1],
+            projectile_y_radius[v1], projectile_type[v1], projectile_damage[v1],
+            projectile_bomb_instruction_ptr[v1], projectile_bomb_instruction_timers[v1],
+            projectile_variables[v1], projectile_spritemap_pointers[v1],
+        }
         set_ram_word!(game.projectile_bomb_pre_instructions[v1] = ((0x90b169i32) as u16));
         v0 = (v0).wrapping_add(2u16);
         if (((v0) as i16).wrapping_sub(20i16) >= 0i16) {
             break;
         }
     }
-    set_ram_word!(game.bomb_counter = 0u16);
-    set_ram_word!(game.cooldown_timer = 0u16);
-    set_ram_word!(game.projectile_counter = 0u16);
-    set_ram_word!(game.power_bomb_flag = 0u16);
+    set_ram_words! { game, 0u16; bomb_counter, cooldown_timer, projectile_counter, power_bomb_flag }
     if ram_word!(game, hud_auto_cancel_flag) != 0 {
-        set_ram_word!(game.hud_item_index = 0u16);
-        set_ram_word!(game.samus_auto_cancel_hud_item_index = 0u16);
+        set_ram_words! { game, 0u16; hud_item_index, samus_auto_cancel_hud_item_index }
     }
-    set_ram_word!(game.speed_echo_xpos[0] = 0u16);
-    set_ram_word!(game.speed_echo_xpos[1] = 0u16);
-    set_ram_word!(game.speed_echo_xpos[2] = 0u16);
-    set_ram_word!(game.speed_echo_xpos[3] = 0u16);
-    set_ram_word!(game.speed_echo_ypos[0] = 0u16);
-    set_ram_word!(game.speed_echo_ypos[1] = 0u16);
-    set_ram_word!(game.speed_echo_ypos[2] = 0u16);
-    set_ram_word!(game.speed_echo_ypos[3] = 0u16);
-    set_ram_word!(game.speed_echo_xspeed[0] = 0u16);
-    set_ram_word!(game.speed_echo_xspeed[1] = 0u16);
-    set_ram_word!(game.speed_echo_xspeed[2] = 0u16);
-    set_ram_word!(game.speed_echo_xspeed[3] = 0u16);
-    set_ram_word!(game.speed_echoes_index = 0u16);
+    set_ram_words! { game, 0u16;
+        speed_echo_xpos[0], speed_echo_xpos[1], speed_echo_xpos[2], speed_echo_xpos[3],
+        speed_echo_ypos[0], speed_echo_ypos[1], speed_echo_ypos[2], speed_echo_ypos[3],
+        speed_echo_xspeed[0], speed_echo_xspeed[1], speed_echo_xspeed[2], speed_echo_xspeed[3],
+        speed_echoes_index,
+    }
     if ram_word!(game, samus_special_super_palette_flags) != 0 {
         set_ram_word!(game.samus_special_super_palette_flags = 0u16);
         Samus_LoadSuitTargetPalette(game);
@@ -3518,21 +3479,14 @@ pub unsafe fn ResetProjectileData(game: &mut Game) {
 }
 pub unsafe fn ClearProjectile(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
-    set_ram_word!(game.projectile_x_pos[v1] = 0u16);
-    set_ram_word!(game.projectile_y_pos[v1] = 0u16);
-    set_ram_word!(game.projectile_bomb_x_subpos[v1] = 0u16);
-    set_ram_word!(game.projectile_bomb_y_subpos[v1] = 0u16);
-    set_ram_word!(game.projectile_dir[v1] = 0u16);
-    set_ram_word!(game.projectile_bomb_x_speed[v1] = 0u16);
-    set_ram_word!(game.projectile_bomb_y_speed[v1] = 0u16);
-    set_ram_word!(game.projectile_x_radius[v1] = 0u16);
-    set_ram_word!(game.projectile_y_radius[v1] = 0u16);
-    set_ram_word!(game.projectile_type[v1] = 0u16);
-    set_ram_word!(game.projectile_damage[v1] = 0u16);
-    set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = 0u16);
-    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 0u16);
-    set_ram_word!(game.projectile_variables[v1] = 0u16);
-    set_ram_word!(game.projectile_spritemap_pointers[v1] = 0u16);
+    set_ram_words! { game, 0u16;
+        projectile_x_pos[v1], projectile_y_pos[v1], projectile_bomb_x_subpos[v1],
+        projectile_bomb_y_subpos[v1], projectile_dir[v1], projectile_bomb_x_speed[v1],
+        projectile_bomb_y_speed[v1], projectile_x_radius[v1], projectile_y_radius[v1],
+        projectile_type[v1], projectile_damage[v1], projectile_bomb_instruction_ptr[v1],
+        projectile_bomb_instruction_timers[v1], projectile_variables[v1],
+        projectile_spritemap_pointers[v1],
+    }
     set_ram_word!(game.projectile_bomb_pre_instructions[v1] = ((0x90b169i32) as u16));
     if ((k) as i16).wrapping_sub(10i16) >= 0i16 {
         if (update_ram_word!(game.bomb_counter, wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32
@@ -3966,8 +3920,7 @@ pub unsafe fn InitializeProjectileSpeedOfType(r20: u16, game: &mut Game) {
 pub unsafe fn InitializeProjectileSpeed(k: u16, r22: u16, game: &mut Game) {
     let mut r18: u16 = 0;
     let kh: i32 = k as i32 >> 1i32;
-    set_ram_word!(game.projectile_bomb_x_subpos[kh] = 0u16);
-    set_ram_word!(game.projectile_bomb_y_subpos[kh] = 0u16);
+    set_ram_words! { game, 0u16; projectile_bomb_x_subpos[kh], projectile_bomb_y_subpos[kh] }
     match 2i32 * (ram_word!(game, projectile_dir[kh]) as i32 & 0xfi32) {
         0 | 18 => {
             if ram_word!(game, projectile_init_speed_samus_moved_up) as u8 != 0 {
@@ -4263,8 +4216,9 @@ pub unsafe fn SpawnProjectileTrail(k: u16, game: &mut Game) {
         }
     }
     let v5: i32 = v4 as i32 >> 1i32;
-    set_ram_word!(game.projectiletrail_left_instr_timer[v5] = 1u16);
-    set_ram_word!(game.projectiletrail_right_instr_timer[v5] = 1u16);
+    set_ram_words! { game, 1u16;
+        projectiletrail_left_instr_timer[v5], projectiletrail_right_instr_timer[v5],
+    }
     let v6: i32 = v2 as i32;
     set_ram_word!(
         game.projectiletrail_left_instr_list_ptr[v5] =
@@ -4609,13 +4563,15 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
             if current_block_32 == 4068382217303356765 {
                 v4 = 0;
                 v4 = v1 as i32 >> 1i32;
-                set_ram_word!(game.projectile_bomb_x_speed[v4] = 0u16);
-                set_ram_word!(game.projectile_bomb_y_speed[v4] = 0u16);
+                set_ram_words! { game, 0u16;
+                    projectile_bomb_x_speed[v4], projectile_bomb_y_speed[v4],
+                }
                 set_ram_word!(game.projectile_index = v1);
                 WaveBeam_CheckColl(v1, game);
             } else {
-                set_ram_word!(game.projectile_bomb_x_speed[v2] = 0u16);
-                set_ram_word!(game.projectile_bomb_y_speed[v2] = 0u16);
+                set_ram_words! { game, 0u16;
+                    projectile_bomb_x_speed[v2], projectile_bomb_y_speed[v2],
+                }
                 set_ram_word!(game.projectile_index = v1);
                 CheckBeamCollByDir(v1, game);
                 v1 = ram_word!(game, projectile_index);
@@ -4687,14 +4643,16 @@ pub unsafe fn FireChargedBeam(game: &mut Game) {
             );
             if (v5 as i32 & 1i32) != 0i32 {
                 let v4: i32 = v1 as i32 >> 1i32;
-                set_ram_word!(game.projectile_bomb_x_speed[v4] = 0u16);
-                set_ram_word!(game.projectile_bomb_y_speed[v4] = 0u16);
+                set_ram_words! { game, 0u16;
+                    projectile_bomb_x_speed[v4], projectile_bomb_y_speed[v4],
+                }
                 set_ram_word!(game.projectile_index = v1);
                 WaveBeam_CheckColl(v1, game);
                 current_block_24 = 1109700713171191020;
             } else {
-                set_ram_word!(game.projectile_bomb_x_speed[v2] = 0u16);
-                set_ram_word!(game.projectile_bomb_y_speed[v2] = 0u16);
+                set_ram_words! { game, 0u16;
+                    projectile_bomb_x_speed[v2], projectile_bomb_y_speed[v2],
+                }
                 set_ram_word!(game.projectile_index = v1);
                 CheckBeamCollByDir(v1, game);
                 v1 = ram_word!(game, projectile_index);
@@ -4833,9 +4791,9 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
         }
     } else if (ram_word!(game, flare_counter) as i16) > 0i16 {
         if ram_word!(game, flare_counter) == 1u16 {
-            set_ram_word!(game.flare_animation_frame = 0u16);
-            set_ram_word!(game.flare_slow_sparks_anim_frame = 0u16);
-            set_ram_word!(game.flare_fast_sparks_anim_frame = 0u16);
+            set_ram_words! { game, 0u16;
+                flare_animation_frame, flare_slow_sparks_anim_frame, flare_fast_sparks_anim_frame,
+            }
             set_ram_word!(game.flare_animation_timer = 3u16);
             set_ram_word!(game.flare_slow_sparks_anim_timer = 5u16);
             set_ram_word!(game.flare_fast_sparks_anim_timer = 4u16);
@@ -4955,12 +4913,10 @@ pub unsafe fn DrawFlareAnimationComponent(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn ClearFlareAnimationState(game: &mut Game) {
-    set_ram_word!(game.flare_animation_frame = 0u16);
-    set_ram_word!(game.flare_slow_sparks_anim_frame = 0u16);
-    set_ram_word!(game.flare_fast_sparks_anim_frame = 0u16);
-    set_ram_word!(game.flare_animation_timer = 0u16);
-    set_ram_word!(game.flare_slow_sparks_anim_timer = 0u16);
-    set_ram_word!(game.flare_fast_sparks_anim_timer = 0u16);
+    set_ram_words! { game, 0u16;
+        flare_animation_frame, flare_slow_sparks_anim_frame, flare_fast_sparks_anim_frame,
+        flare_animation_timer, flare_slow_sparks_anim_timer, flare_fast_sparks_anim_timer,
+    }
 }
 pub unsafe fn FireHyperBeam(game: &mut Game) {
     if Samus_CanFireBeam(game) as i32 & 1i32 != 0 {
@@ -4982,8 +4938,7 @@ pub unsafe fn FireHyperBeam(game: &mut Game) {
             set_ram_word!(game.play_resume_charging_beam_sfx = 0u16);
             InitializeProjectile(k, game);
             let v1: i32 = k as i32 >> 1i32;
-            set_ram_word!(game.projectile_bomb_x_speed[v1] = 0u16);
-            set_ram_word!(game.projectile_bomb_y_speed[v1] = 0u16);
+            set_ram_words! { game, 0u16; projectile_bomb_x_speed[v1], projectile_bomb_y_speed[v1] }
             set_ram_word!(game.projectile_index = k);
             WaveBeam_CheckColl(k, game);
             let v2: u16 = ram_word!(game, projectile_index);
@@ -4995,11 +4950,12 @@ pub unsafe fn FireHyperBeam(game: &mut Game) {
             set_ram_word!(game.cooldown_timer = 21u16);
             set_ram_word!(game.charged_shot_glow_timer = -32748i32 as u16);
             set_ram_word!(game.flare_animation_frame = 29u16);
-            set_ram_word!(game.flare_slow_sparks_anim_frame = 5u16);
-            set_ram_word!(game.flare_fast_sparks_anim_frame = 5u16);
-            set_ram_word!(game.flare_animation_timer = 3u16);
-            set_ram_word!(game.flare_slow_sparks_anim_timer = 3u16);
-            set_ram_word!(game.flare_fast_sparks_anim_timer = 3u16);
+            set_ram_words! { game, 5u16;
+                flare_slow_sparks_anim_frame, flare_fast_sparks_anim_frame,
+            }
+            set_ram_words! { game, 3u16;
+                flare_animation_timer, flare_slow_sparks_anim_timer, flare_fast_sparks_anim_timer,
+            }
             set_ram_word!(game.flare_counter = 0x8000u16);
         }
     }
@@ -5163,8 +5119,7 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
                         as u16
                 );
                 if ram_word!(game, samus_auto_cancel_hud_item_index) != 0 {
-                    set_ram_word!(game.hud_item_index = 0u16);
-                    set_ram_word!(game.samus_auto_cancel_hud_item_index = 0u16);
+                    set_ram_words! { game, 0u16; hud_item_index, samus_auto_cancel_hud_item_index }
                     return;
                 }
                 if ram_word!(game, hud_item_index) == 2u16 {
@@ -5248,8 +5203,9 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
                             kNonBeamProjectileCooldowns[(v6 as i32 & 0xfi32) as usize] as u16
                     );
                     if ram_word!(game, samus_auto_cancel_hud_item_index) != 0 {
-                        set_ram_word!(game.hud_item_index = 0u16);
-                        set_ram_word!(game.samus_auto_cancel_hud_item_index = 0u16);
+                        set_ram_words! { game, 0u16;
+                            hud_item_index, samus_auto_cancel_hud_item_index,
+                        }
                     } else if ram_word!(game, hud_item_index) == 3u16
                         && ram_word!(game, samus_power_bombs) == 0
                     {
@@ -5680,8 +5636,7 @@ pub unsafe fn FireSba(game: &mut Game) -> u8 {
     let rv: u8 =
         kFireSbaFuncs[(v1 as i32 >> 1i32) as usize].expect("non-null function pointer")(game);
     if ram_word!(game, samus_power_bombs) == 0 {
-        set_ram_word!(game.hud_item_index = 0u16);
-        set_ram_word!(game.samus_auto_cancel_hud_item_index = 0u16);
+        set_ram_words! { game, 0u16; hud_item_index, samus_auto_cancel_hud_item_index }
     }
     rv
 }
@@ -5702,10 +5657,10 @@ pub unsafe fn FireSba_FireWave(game: &mut Game) -> u8 {
         set_ram_word!(game.projectile_dir[v1] = 0u16);
         set_ram_word!(game.projectile_bomb_pre_instructions[v1] = ((0x90da08i32) as u16));
         set_ram_word!(game.projectile_bomb_y_speed[v1] = 600u16);
-        set_ram_word!(game.projectile_bomb_x_speed[v1] = 0u16);
-        set_ram_word!(game.projectile_variables[v1] = 0u16);
-        set_ram_word!(game.projectile_bomb_x_subpos[v1] = 0u16);
-        set_ram_word!(game.projectile_bomb_y_subpos[v1] = 0u16);
+        set_ram_words! { game, 0u16;
+            projectile_bomb_x_speed[v1], projectile_variables[v1], projectile_bomb_x_subpos[v1],
+            projectile_bomb_y_subpos[v1],
+        }
         set_ram_word!(
             game.projectile_x_pos[v1] = ((kFireSba_FireWave_X[v1 as usize]) as u16)
                 .wrapping_add(ram_word!(game, samus_x_pos))
@@ -5777,10 +5732,10 @@ pub unsafe fn FireSba_FireSpazer(game: &mut Game) -> u8 {
         set_ram_word!(game.projectile_bomb_pre_instructions[v1] = ((0x90db06i32) as u16));
         set_ram_word!(game.projectile_bomb_x_speed[v1] = 40u16);
         set_ram_word!(game.projectile_bomb_y_speed[v1] = kFireSpazer_Yspeed[v1 as usize] as u16);
-        set_ram_word!(game.projectile_variables[v1] = 0u16);
-        set_ram_word!(game.projectile_unk_A[v1] = 0u16);
-        set_ram_word!(game.projectile_bomb_x_subpos[v1] = 0u16);
-        set_ram_word!(game.projectile_bomb_y_subpos[v1] = 0u16);
+        set_ram_words! { game, 0u16;
+            projectile_variables[v1], projectile_unk_A[v1], projectile_bomb_x_subpos[v1],
+            projectile_bomb_y_subpos[v1],
+        }
         if ((i - 4i32) as i16) >= 0i16 {
             set_ram_word!(game.projectile_type[(i >> 1i32)] = -32732i32 as u16);
             InitializeShinesparkEchoOrSpazerSba(i as u16, game);
@@ -5946,21 +5901,17 @@ pub unsafe fn Projectile_Func7_Shinespark(game: &mut Game) {
     set_ram_word!(game.samus_movement_handler = ((0x90d068i32) as u16));
     set_ram_word!(game.samus_y_dir = 1u16);
     set_ram_word!(game.speed_boost_counter = 1024u16);
-    set_ram_word!(game.samus_y_subspeed = 0u16);
-    set_ram_word!(game.samus_y_speed = 0u16);
-    set_ram_word!(game.knockback_dir = 0u16);
+    set_ram_words! { game, 0u16; samus_y_subspeed, samus_y_speed, knockback_dir }
     set_ram_word!(game.samus_x_extra_run_speed = 8u16);
-    set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
-    set_ram_word!(game.samus_x_base_speed = 0u16);
-    set_ram_word!(game.samus_x_base_subspeed = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_x_extra_run_subspeed, samus_x_base_speed, samus_x_base_subspeed,
+    }
     set_ram_word!(game.substate = 7u16);
-    set_ram_word!(game.suit_pickup_light_beam_pos = 0u16);
-    set_ram_word!(game.cooldown_timer = 0u16);
+    set_ram_words! { game, 0u16; suit_pickup_light_beam_pos, cooldown_timer }
     set_ram_word!(game.timer_for_shinesparks_startstop = 30u16);
     set_ram_word!(game.samus_shine_timer = 60u16);
     set_ram_word!(game.timer_for_shine_timer = 6u16);
-    set_ram_word!(game.special_samus_palette_frame = 0u16);
-    set_ram_word!(game.bomb_jump_dir = 0u16);
+    set_ram_words! { game, 0u16; special_samus_palette_frame, bomb_jump_dir }
     if ram_word!(game, flare_counter) != 0 {
         if ram_word!(game, flare_counter) as i32 - 16i32 & 0x8000i32 == 0 {
             QueueSfx1_Max9(2u16, game);
@@ -5985,11 +5936,10 @@ pub unsafe fn Samus_MoveHandlerShinesparkWindup(game: &mut Game) {
         }
         set_ram_word!(game.samus_movement_handler = ((0x90d0abi32) as u16));
         set_ram_word!(game.samus_input_handler = ((0x90e90ei32) as u16));
-        set_ram_word!(game.speed_echoes_index = 0u16);
-        set_ram_word!(game.speed_echo_xspeed[0] = 0u16);
-        set_ram_word!(game.speed_echo_xspeed[1] = 0u16);
-        set_ram_word!(game.speed_echo_xpos[0] = 0u16);
-        set_ram_word!(game.speed_echo_xpos[1] = 0u16);
+        set_ram_words! { game, 0u16;
+            speed_echoes_index, speed_echo_xspeed[0], speed_echo_xspeed[1], speed_echo_xpos[0],
+            speed_echo_xpos[1],
+        }
         QueueSfx3_Max9(0xfu16, game);
     }
 }
@@ -6147,13 +6097,10 @@ pub unsafe fn Samus_EndSuperJump(game: &mut Game) -> u8 {
         set_ram_word!(game.speed_echo_xspeed[1] = 96u16);
         set_ram_word!(game.speed_echo_xpos[2] = -4i32 as u16);
     }
-    set_ram_word!(game.samus_y_subspeed = 0u16);
-    set_ram_word!(game.samus_y_speed = 0u16);
-    set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-    set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
-    set_ram_word!(game.speed_boost_counter = 0u16);
-    set_ram_word!(game.UNUSED_word_7E0B1A = 0u16);
-    set_ram_word!(game.samus_y_dir = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_y_subspeed, samus_y_speed, samus_x_extra_run_speed, samus_x_extra_run_subspeed,
+        speed_boost_counter, UNUSED_word_7E0B1A, samus_y_dir,
+    }
     set_ram_word!(game.samus_movement_handler = ((0x90d346i32) as u16));
     set_ram_word!(game.samus_draw_handler = ((0x90ebf3i32) as u16));
     set_ram_word!(game.speed_echoes_index = 0u16);
@@ -6161,8 +6108,7 @@ pub unsafe fn Samus_EndSuperJump(game: &mut Game) -> u8 {
     set_ram_word!(game.speed_echo_xpos[1] = ram_word!(game, samus_x_pos));
     set_ram_word!(game.speed_echo_ypos[0] = ram_word!(game, samus_y_pos));
     set_ram_word!(game.speed_echo_ypos[1] = ram_word!(game, samus_y_pos));
-    set_ram_word!(game.speed_echo_xspeed[2] = 0u16);
-    set_ram_word!(game.samus_hurt_flash_counter = 0u16);
+    set_ram_words! { game, 0u16; speed_echo_xspeed[2], samus_hurt_flash_counter }
     QueueSfx1_Max6(0x35u16, game);
     QueueSfx3_Max6(0x10u16, game);
     1u8
@@ -6221,9 +6167,9 @@ pub unsafe fn Samus_MoveHandler_ShinesparkCrash_2(game: &mut Game) {
     if ram_word!(game, speed_echoes_index) as u8 == 0 {
         set_ram_word!(game.samus_movement_handler = ((0x90d3f3i32) as u16));
         set_ram_word!(game.timer_for_shinesparks_startstop = 30u16);
-        set_ram_word!(game.speed_echoes_index = 0u16);
-        set_ram_word!(game.speed_echo_xspeed[0] = 0u16);
-        set_ram_word!(game.speed_echo_xspeed[1] = 0u16);
+        set_ram_words! { game, 0u16;
+            speed_echoes_index, speed_echo_xspeed[0], speed_echo_xspeed[1],
+        }
     }
 }
 pub unsafe fn Samus_MoveHandler_ShinesparkCrashEchoCircle(game: &mut Game) {
@@ -6284,8 +6230,7 @@ pub unsafe fn Samus_MoveHandler_ShinesparkCrashFinish(game: &mut Game) {
         set_ram_word!(game.samus_new_pose_transitional = 1u16);
     }
     set_ram_word!(game.samus_hurt_switch_index = 2u16);
-    set_ram_word!(game.substate = 0u16);
-    set_ram_word!(game.suit_pickup_light_beam_pos = 0u16);
+    set_ram_words! { game, 0u16; substate, suit_pickup_light_beam_pos }
 }
 pub unsafe fn ProjPreInstr_SpeedEcho(k: u16, game: &mut Game) {
     let mut v3: i16 = 0;
@@ -6406,9 +6351,7 @@ pub unsafe fn Hdmaobj_CrystalFlash(game: &mut Game) -> u8 {
     set_ram_word!(game.special_samus_palette_frame = 0u16);
     set_ram_word!(game.samus_shine_timer = 1u16);
     *(ram_ptr!(game, u16; 0xdf2)) = 1u16;
-    set_ram_word!(game.samus_invincibility_timer = 0u16);
-    set_ram_word!(game.samus_knockback_timer = 0u16);
-    set_ram_word!(game.knockback_dir = 0u16);
+    set_ram_words! { game, 0u16; samus_invincibility_timer, samus_knockback_timer, knockback_dir }
     0u8
 }
 pub unsafe fn SamusMoveHandler_CrystalFlashStart(game: &mut Game) {
@@ -6425,8 +6368,7 @@ pub unsafe fn SamusMoveHandler_CrystalFlashStart(game: &mut Game) {
         set_ram_word!(game.samus_anim_frame = 6u16);
         *(ram_ptr!(game, u16; 0xdf0)) = ram_word!(game, samus_y_pos);
         set_ram_word!(game.samus_movement_handler = ((0x90d6cei32) as u16));
-        set_ram_word!(game.samus_invincibility_timer = 0u16);
-        set_ram_word!(game.samus_knockback_timer = 0u16);
+        set_ram_words! { game, 0u16; samus_invincibility_timer, samus_knockback_timer }
         QueueSfx3_Max15(1u16, game);
         set_ram_word!(game.power_bomb_flag = 0u16);
         set_ram_word!(game.power_bomb_explosion_x_pos = ram_word!(game, samus_x_pos));
@@ -6442,8 +6384,7 @@ static kSamusMoveHandler_CrystalFlashMainFuncs: [Option<Func_V>; 3] = callback_t
 pub unsafe fn SamusMoveHandler_CrystalFlashMain(game: &mut Game) {
     kSamusMoveHandler_CrystalFlashMainFuncs[ram_word!(game, which_item_to_pickup) as usize]
         .expect("non-null function pointer")(game);
-    set_ram_word!(game.samus_invincibility_timer = 0u16);
-    set_ram_word!(game.samus_knockback_timer = 0u16);
+    set_ram_words! { game, 0u16; samus_invincibility_timer, samus_knockback_timer }
 }
 pub unsafe fn SamusMoveHandler_CrystalFlashMain_0(game: &mut Game) {
     if (ram_word!(game, nmi_frame_counter_word) as i32 & 7i32) == 0i32 {
@@ -6490,8 +6431,7 @@ pub unsafe fn kSamusMoveHandler_CrystalFlashFinish(game: &mut Game) {
         set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
         if ram_word!(game, samus_input_handler) as i32 != 0x90e91di32 & 0xffffi32 {
             set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
-            set_ram_word!(game.samus_invincibility_timer = 0u16);
-            set_ram_word!(game.samus_knockback_timer = 0u16);
+            set_ram_words! { game, 0u16; samus_invincibility_timer, samus_knockback_timer }
         }
     }
 }
@@ -6611,8 +6551,7 @@ pub unsafe fn ProjPreInstr_SpreadBomb(k: u16, game: &mut Game) {
                     | ram_word!(game, projectile_timers[v1]) as i32) as u32,
             );
             if (ram_word!(game, projectile_bomb_y_speed[v1]) as i32 & 0x8000i32) != 0i32 {
-                set_ram_word!(game.projectile_bomb_y_speed[v1] = 0u16);
-                set_ram_word!(game.projectile_y_radius[v1] = 0u16);
+                set_ram_words! { game, 0u16; projectile_bomb_y_speed[v1], projectile_y_radius[v1] }
             } else {
                 set_ram_word!(game.projectile_timers[v1] = kBombSpread_Tab3[(v1 - 5i32) as usize]);
                 set_ram_word!(
@@ -6758,8 +6697,7 @@ pub unsafe fn BombSpread(game: &mut Game) {
                     .offset(1isize,) as i32
                     & 0xfi32) as usize] as u16
         );
-        set_ram_word!(game.bomb_spread_charge_timeout_counter = 0u16);
-        set_ram_word!(game.flare_counter = 0u16);
+        set_ram_words! { game, 0u16; bomb_spread_charge_timeout_counter, flare_counter }
     }
 }
 static kProjPreInstr_SpazerSba_FuncsB: [Option<Func_SpazerSba_V>; 3] = callback_table! { unsafe Func_SpazerSba_V;
@@ -7062,8 +7000,7 @@ pub unsafe fn Samus_HitInterruption(game: &mut Game) {
                 set_ram_word!(game.samus_special_transgfx_index = 1u16);
             }
         } else {
-            set_ram_word!(game.samus_invincibility_timer = 0u16);
-            set_ram_word!(game.samus_knockback_timer = 0u16);
+            set_ram_words! { game, 0u16; samus_invincibility_timer, samus_knockback_timer }
         }
     } else if ram_word!(game, knockback_dir) != 0 {
         if *ram_ptr!(game; 0xa1f) as i32 == kPose_0A_MoveL_NoAim as i32 {
@@ -7094,8 +7031,7 @@ pub unsafe fn Samus_HitInterrupt_Shinespark(game: &mut Game) -> u8 {
         set_ram_word!(game.samus_anim_frame_timer = 17u16);
         set_ram_word!(game.samus_anim_frame = 26u16);
     }
-    set_ram_word!(game.samus_special_transgfx_index = 0u16);
-    set_ram_word!(game.knockback_dir = 0u16);
+    set_ram_words! { game, 0u16; samus_special_transgfx_index, knockback_dir }
     0u8
 }
 pub unsafe fn Samus_HitInterrupt_KnockbackGrapple(game: &mut Game) -> u8 {
@@ -7103,16 +7039,14 @@ pub unsafe fn Samus_HitInterrupt_KnockbackGrapple(game: &mut Game) -> u8 {
     0u8
 }
 pub unsafe fn Samus_HitInterrupt_Turning(game: &mut Game) -> u8 {
-    set_ram_word!(game.samus_special_transgfx_index = 0u16);
-    set_ram_word!(game.knockback_dir = 0u16);
+    set_ram_words! { game, 0u16; samus_special_transgfx_index, knockback_dir }
     0u8
 }
 pub unsafe fn Samus_HitInterrupt_Falling(game: &mut Game) -> u8 {
     if ram_word!(game, frame_handler_gamma) as i32 != 0x90e41bi32 & 0xffffi32 {
         return Samus_HitInterrupt_Stand(game);
     }
-    set_ram_word!(game.samus_special_transgfx_index = 0u16);
-    set_ram_word!(game.knockback_dir = 0u16);
+    set_ram_words! { game, 0u16; samus_special_transgfx_index, knockback_dir }
     0u8
 }
 pub unsafe fn Samus_HitInterrupt_Stand(game: &mut Game) -> u8 {
@@ -7164,17 +7098,11 @@ pub unsafe fn Samus_MoveHandler_Knockback_Down(game: &mut Game) {
 }
 pub unsafe fn Samus_ClearMoveVars(game: &mut Game) {
     if ram_word!(game, samus_collision_flag) != 0 {
-        set_ram_word!(game.samus_x_accel_mode = 0u16);
-        set_ram_word!(game.samus_collides_with_solid_enemy = 0u16);
-        set_ram_word!(game.samus_is_falling_flag = 0u16);
-        set_ram_word!(game.UNUSED_word_7E0B1A = 0u16);
-        set_ram_word!(game.UNUSED_word_7E0B2A = 0u16);
-        set_ram_word!(game.samus_y_subspeed = 0u16);
-        set_ram_word!(game.samus_y_speed = 0u16);
-        set_ram_word!(game.samus_y_dir = 0u16);
-        set_ram_word!(game.UNUSED_word_7E0B38 = 0u16);
-        set_ram_word!(game.samus_x_base_speed = 0u16);
-        set_ram_word!(game.samus_x_base_subspeed = 0u16);
+        set_ram_words! { game, 0u16;
+            samus_x_accel_mode, samus_collides_with_solid_enemy, samus_is_falling_flag,
+            UNUSED_word_7E0B1A, UNUSED_word_7E0B2A, samus_y_subspeed, samus_y_speed, samus_y_dir,
+            UNUSED_word_7E0B38, samus_x_base_speed, samus_x_base_subspeed,
+        }
         Samus_AlignBottomWithPrevPose(game);
     }
 }
@@ -7352,15 +7280,14 @@ pub unsafe fn Samus_PushOutOfRidleysWay(game: &mut Game) {
         set_ram_word!(game.samus_var62 = 2u16);
     }
     set_ram_word!(game.samus_y_speed = 5u16);
-    set_ram_word!(game.samus_y_subspeed = 0u16);
-    set_ram_word!(game.bomb_jump_dir = 0u16);
+    set_ram_words! { game, 0u16; samus_y_subspeed, bomb_jump_dir }
     set_ram_word!(game.frame_handler_gamma = ((0x90e1c8i32) as u16));
     set_ram_word!(game.samus_new_pose = -1i32 as u16);
     set_ram_word!(game.samus_new_pose_interrupted = -1i32 as u16);
     set_ram_word!(game.samus_new_pose_transitional = -1i32 as u16);
-    set_ram_word!(game.samus_momentum_routine_index = 0u16);
-    set_ram_word!(game.samus_special_transgfx_index = 0u16);
-    set_ram_word!(game.samus_hurt_switch_index = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
+    }
     ProcessTimer(game);
     if ram_word!(game, timer_status) != 0 {
         DrawTimer(game);
@@ -7441,8 +7368,7 @@ pub unsafe fn Samus_SetGrabbedByDraygonPose(a: u16, game: &mut Game) {
     Samus_SetAnimationFrameIfPoseChanged(game);
     set_ram_word!(game.frame_handler_gamma = ((0x90e2a1i32) as u16));
     set_ram_word!(game.samus_movement_handler = ((0x90e90ei32) as u16));
-    set_ram_word!(game.substate = 0u16);
-    set_ram_word!(game.suit_pickup_light_beam_pos = 0u16);
+    set_ram_words! { game, 0u16; substate, suit_pickup_light_beam_pos }
     *(ram_ptr!(game, u16; 0xdf0)) = 0u16;
     set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
     *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
@@ -7451,9 +7377,9 @@ pub unsafe fn Samus_SetGrabbedByDraygonPose(a: u16, game: &mut Game) {
     set_ram_word!(game.samus_new_pose = -1i32 as u16);
     set_ram_word!(game.samus_new_pose_interrupted = -1i32 as u16);
     set_ram_word!(game.samus_new_pose_transitional = -1i32 as u16);
-    set_ram_word!(game.samus_momentum_routine_index = 0u16);
-    set_ram_word!(game.samus_special_transgfx_index = 0u16);
-    set_ram_word!(game.samus_hurt_switch_index = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
+    }
 }
 pub unsafe fn Samus_ReleaseFromDraygon_(game: &mut Game) {
     Samus_ReleaseFromDraygon(game);
@@ -7472,19 +7398,15 @@ pub unsafe fn Samus_ReleaseFromDraygon(game: &mut Game) {
     *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
     set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
     *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
-    set_ram_word!(game.samus_x_base_speed = 0u16);
-    set_ram_word!(game.samus_x_base_subspeed = 0u16);
+    set_ram_words! { game, 0u16; samus_x_base_speed, samus_x_base_subspeed }
     set_ram_word!(game.samus_new_pose = -1i32 as u16);
     set_ram_word!(game.samus_new_pose_interrupted = -1i32 as u16);
     set_ram_word!(game.samus_new_pose_transitional = -1i32 as u16);
-    set_ram_word!(game.samus_momentum_routine_index = 0u16);
-    set_ram_word!(game.samus_special_transgfx_index = 0u16);
-    set_ram_word!(game.samus_hurt_switch_index = 0u16);
-    set_ram_word!(game.samus_y_speed = 0u16);
-    set_ram_word!(game.samus_y_subspeed = 0u16);
-    set_ram_word!(game.samus_y_dir = 0u16);
-    set_ram_word!(game.used_for_ball_bounce_on_landing = 0u16);
-    set_ram_word!(game.samus_x_accel_mode = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
+        samus_y_speed, samus_y_subspeed, samus_y_dir, used_for_ball_bounce_on_landing,
+        samus_x_accel_mode,
+    }
     set_ram_word!(
         game.samus_grapple_flags =
             (ram_word!(game, samus_grapple_flags) as i32 & 0xfffdi32 | 2i32) as u16
@@ -7505,8 +7427,7 @@ pub unsafe fn Samus_Func7(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_Func8(game: &mut Game) {
-    set_ram_word!(game.samus_y_subspeed = 0u16);
-    set_ram_word!(game.samus_y_speed = 0u16);
+    set_ram_words! { game, 0u16; samus_y_subspeed, samus_y_speed }
     set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
     set_ram_word!(game.frame_handler_gamma = ((0x90e90ei32) as u16));
 }
@@ -7580,14 +7501,12 @@ pub unsafe fn Samus_ClearXSpeedIfColl(game: &mut Game) {
             set_ram_word!(game.samus_collides_with_solid_enemy = 4u16);
         }
         Samus_CancelSpeedBoost(game);
-        set_ram_word!(game.samus_x_extra_run_speed = 0u16);
-        set_ram_word!(game.samus_x_extra_run_subspeed = 0u16);
-        set_ram_word!(game.samus_x_base_speed = 0u16);
-        set_ram_word!(game.samus_x_base_subspeed = 0u16);
-        set_ram_word!(game.samus_x_accel_mode = 0u16);
+        set_ram_words! { game, 0u16;
+            samus_x_extra_run_speed, samus_x_extra_run_subspeed, samus_x_base_speed,
+            samus_x_base_subspeed, samus_x_accel_mode,
+        }
     } else {
-        set_ram_word!(game.input_to_pose_calc = 0u16);
-        set_ram_word!(game.samus_collides_with_solid_enemy = 0u16);
+        set_ram_words! { game, 0u16; input_to_pose_calc, samus_collides_with_solid_enemy }
     };
 }
 pub unsafe fn Samus_MoveUp_SetPoseCalcInput(game: &mut Game) {
@@ -7632,9 +7551,9 @@ pub unsafe fn Samus_FrameHandlerAlfa_Func11(game: &mut Game) {
     set_ram_word!(game.samus_new_pose = -1i32 as u16);
     set_ram_word!(game.samus_new_pose_interrupted = -1i32 as u16);
     set_ram_word!(game.samus_new_pose_transitional = -1i32 as u16);
-    set_ram_word!(game.samus_momentum_routine_index = 0u16);
-    set_ram_word!(game.samus_special_transgfx_index = 0u16);
-    set_ram_word!(game.samus_hurt_switch_index = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
+    }
     Samus_SetRadius(game);
     Samus_CallInputHandler(game);
     Samus_UpdateSuitPaletteIndex(game);
@@ -7647,9 +7566,9 @@ pub unsafe fn Samus_FrameHandlerAlfa_Func12(game: &mut Game) {
     set_ram_word!(game.samus_new_pose = -1i32 as u16);
     set_ram_word!(game.samus_new_pose_interrupted = -1i32 as u16);
     set_ram_word!(game.samus_new_pose_transitional = -1i32 as u16);
-    set_ram_word!(game.samus_momentum_routine_index = 0u16);
-    set_ram_word!(game.samus_special_transgfx_index = 0u16);
-    set_ram_word!(game.samus_hurt_switch_index = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
+    }
     set_ram_word!(game.controller1_input_for_demo = ram_word!(game, joypad1_lastkeys));
     set_ram_word!(game.controller1_new_input_for_demo = ram_word!(game, joypad1_newkeys));
     set_ram_word!(
@@ -7948,8 +7867,7 @@ pub unsafe fn Samus_PauseCheck(game: &mut Game) {
         && ram_word!(game, game_state) as i32 == kGameState_8_MainGameplay as i32
         && (ram_word!(game, joypad1_newkeys) as i32 & kButton_Start as i32) != 0i32
     {
-        set_ram_word!(game.screen_fade_delay = 1u16);
-        set_ram_word!(game.screen_fade_counter = 1u16);
+        set_ram_words! { game, 1u16; screen_fade_delay, screen_fade_counter }
         set_ram_word!(game.game_state = kGameState_12_Pausing as u16);
     }
 }
@@ -8002,16 +7920,13 @@ pub unsafe fn Samus_JumpCheck(game: &mut Game) {
     };
 }
 pub unsafe fn Samus_Func10(game: &mut Game) {
-    set_ram_word!(game.projectile_init_speed_samus_moved_left = 0u16);
-    set_ram_word!(game.projectile_init_speed_samus_moved_left_fract = 0u16);
-    set_ram_word!(game.projectile_init_speed_samus_moved_right = 0u16);
-    set_ram_word!(game.projectile_init_speed_samus_moved_right_fract = 0u16);
-    set_ram_word!(game.projectile_init_speed_samus_moved_up = 0u16);
-    set_ram_word!(game.projectile_init_speed_samus_moved_up_fract = 0u16);
-    set_ram_word!(game.projectile_init_speed_samus_moved_down = 0u16);
-    set_ram_word!(game.projectile_init_speed_samus_moved_down_fract = 0u16);
-    set_ram_word!(game.samus_anim_frame_skip = 0u16);
-    set_ram_word!(game.new_projectile_direction_changed_pose = 0u16);
+    set_ram_words! { game, 0u16;
+        projectile_init_speed_samus_moved_left, projectile_init_speed_samus_moved_left_fract,
+        projectile_init_speed_samus_moved_right, projectile_init_speed_samus_moved_right_fract,
+        projectile_init_speed_samus_moved_up, projectile_init_speed_samus_moved_up_fract,
+        projectile_init_speed_samus_moved_down, projectile_init_speed_samus_moved_down_fract,
+        samus_anim_frame_skip, new_projectile_direction_changed_pose,
+    }
     update_ram_word!(
         game.UNUSED_word_7E0DFA,
         |fresh27| ((fresh27 as i32) << 8i32) as u16
@@ -8267,8 +8182,9 @@ pub unsafe fn Samus_FootstepGraphics_Maridia(game: &mut Game) {
     set_ram_word!(
         game.atmospheric_gfx_y_pos[1] = (ram_word!(game, samus_y_pos)).wrapping_add(16u16)
     );
-    set_ram_word!(game.atmospheric_gfx_frame_and_type[0] = 256u16);
-    set_ram_word!(game.atmospheric_gfx_frame_and_type[1] = 256u16);
+    set_ram_words! { game, 256u16;
+        atmospheric_gfx_frame_and_type[0], atmospheric_gfx_frame_and_type[1],
+    }
     set_ram_word!(game.atmospheric_gfx_anim_timer[0] = -32766i32 as u16);
     set_ram_word!(game.atmospheric_gfx_anim_timer[1] = 3u16);
 }
@@ -8299,8 +8215,9 @@ pub unsafe fn Samus_FootstepGraphics_1(game: &mut Game) {
         set_ram_word!(
             game.atmospheric_gfx_y_pos[1] = (ram_word!(game, samus_y_pos)).wrapping_add(16u16)
         );
-        set_ram_word!(game.atmospheric_gfx_frame_and_type[0] = 1792u16);
-        set_ram_word!(game.atmospheric_gfx_frame_and_type[1] = 1792u16);
+        set_ram_words! { game, 1792u16;
+            atmospheric_gfx_frame_and_type[0], atmospheric_gfx_frame_and_type[1],
+        }
         set_ram_word!(game.atmospheric_gfx_anim_timer[0] = -32766i32 as u16);
         set_ram_word!(game.atmospheric_gfx_anim_timer[1] = 3u16);
     }
@@ -8382,8 +8299,7 @@ pub unsafe fn ProjPreInstr_UnknownProj8027(k: u16, game: &mut Game) {
 pub unsafe fn Samus_Func25_ShineSpark(game: &mut Game) {
     if ram_word!(game, samus_shine_timer) == 0 {
         set_ram_word!(game.special_samus_palette_frame = 6u16);
-        set_ram_word!(game.special_samus_palette_timer = 1u16);
-        set_ram_word!(game.demo_timer_counter = 1u16);
+        set_ram_words! { game, 1u16; special_samus_palette_timer, demo_timer_counter }
         set_ram_word!(game.timer_for_shine_timer = 10u16);
         set_ram_word!(game.samus_shine_timer = 120u16);
         set_ram_word!(game.samus_movement_handler = ((0x90f072i32) as u16));
@@ -8417,9 +8333,9 @@ pub unsafe fn CallSomeSamusCode(a: u16, game: &mut Game) -> u16 {
     set_ram_word!(game.samus_new_pose = -1i32 as u16);
     set_ram_word!(game.samus_new_pose_interrupted = -1i32 as u16);
     set_ram_word!(game.samus_new_pose_transitional = -1i32 as u16);
-    set_ram_word!(game.samus_momentum_routine_index = 0u16);
-    set_ram_word!(game.samus_special_transgfx_index = 0u16);
-    set_ram_word!(game.samus_hurt_switch_index = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
+    }
     -1i32 as u16
 }
 pub unsafe fn Samus_UpdatePreviousPose(game: &mut Game) {
@@ -8659,16 +8575,15 @@ pub unsafe fn SamusCode_18(game: &mut Game) -> u8 {
 }
 pub unsafe fn SamusCode_16(game: &mut Game) -> u8 {
     set_ram_word!(game.samus_special_super_palette_flags = 0x8000u16);
-    set_ram_word!(game.special_samus_palette_frame = 1u16);
-    set_ram_word!(game.special_samus_palette_timer = 1u16);
+    set_ram_words! { game, 1u16; special_samus_palette_frame, special_samus_palette_timer }
     set_ram_word!(game.samus_charge_palette_index = 0u16);
     0u8
 }
 pub unsafe fn SamusCode_17_DisableRainbowSamusAndStandUp(game: &mut Game) -> u8 {
-    set_ram_word!(game.samus_special_super_palette_flags = 0u16);
-    set_ram_word!(game.special_samus_palette_frame = 0u16);
-    set_ram_word!(game.special_samus_palette_timer = 0u16);
-    set_ram_word!(game.samus_charge_palette_index = 0u16);
+    set_ram_words! { game, 0u16;
+        samus_special_super_palette_flags, special_samus_palette_frame, special_samus_palette_timer,
+        samus_charge_palette_index,
+    }
     Samus_LoadSuitPalette(game);
     set_ram_word!(game.samus_anim_frame_timer = 1u16);
     set_ram_word!(game.samus_anim_frame = 13u16);
@@ -8763,14 +8678,10 @@ pub unsafe fn SamusCode_1E(game: &mut Game) -> u8 {
 }
 pub unsafe fn SamusCode_1F(game: &mut Game) -> u8 {
     if ram_word!(game, grapple_beam_function) != (addr_loc_90C4F0 as u16) {
-        set_ram_word!(game.grapple_beam_unkD1E = 0u16);
-        set_ram_word!(game.grapple_beam_unkD20 = 0u16);
-        set_ram_word!(game.grapple_beam_direction = 0u16);
-        set_ram_word!(game.grapple_beam_unkD36 = 0u16);
-        set_ram_word!(game.grapple_walljump_timer = 0u16);
-        set_ram_word!(game.slow_grabble_scrolling_flag = 0u16);
-        set_ram_word!(game.grapple_varCF6 = 0u16);
-        set_ram_word!(game.grapple_beam_flags = 0u16);
+        set_ram_words! { game, 0u16;
+            grapple_beam_unkD1E, grapple_beam_unkD20, grapple_beam_direction, grapple_beam_unkD36,
+            grapple_walljump_timer, slow_grabble_scrolling_flag, grapple_varCF6, grapple_beam_flags,
+        }
         LoadProjectilePalette(ram_word!(game, equipped_beams), game);
         set_ram_word!(game.grapple_beam_function = -15120i32 as u16);
         set_ram_word!(game.samus_draw_handler = ((0x90eb52i32) as u16));

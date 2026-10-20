@@ -21,6 +21,7 @@ use crate::game::sm_91::{
 };
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::types::TileDrawOrder;
@@ -1216,13 +1217,11 @@ pub unsafe fn PlmInstr_ClearMusicQueueAndQueueTrack(
     let mut i: i32 = 14i32;
     while i >= 0i32 {
         let v3: i32 = i >> 1i32;
-        set_ram_word!(game.music_queue_track[v3] = 0u16);
-        set_ram_word!(game.music_queue_delay[v3] = 0u16);
+        set_ram_words! { game, 0u16; music_queue_track[v3], music_queue_delay[v3] }
         i -= 2i32;
     }
     set_ram_word!(game.music_queue_read_pos = ram_word!(game, music_queue_write_pos));
-    set_ram_word!(game.music_timer = 0u16);
-    set_ram_word!(game.music_entry = 0u16);
+    set_ram_words! { game, 0u16; music_timer, music_entry }
     QueueMusic_Delayed8(*plmp.offset(0) as u16, game);
     plmp.offset(1)
 }
@@ -2372,8 +2371,7 @@ pub unsafe fn PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm(k: u16, game: &mut 
     let fresh85 = *fresh84;
     *fresh84 = (*fresh84).wrapping_sub(1);
     if fresh85 == 1u16 {
-        set_ram_word!(game.debug_disable_sounds = 0u16);
-        set_ram_word!(game.plm_header_ptr[v2] = 0u16);
+        set_ram_words! { game, 0u16; debug_disable_sounds, plm_header_ptr[v2] }
     }
 }
 pub unsafe fn PlmPreInstr_WakeAndLavaIfBoosterCollected(k: u16, game: &mut Game) {
@@ -2390,10 +2388,9 @@ pub unsafe fn PlmPreInstr_WakeAndLavaIfBoosterCollected(k: u16, game: &mut Game)
         }
     } else {
         set_ram_word!(game.fx_target_y_pos = -1i32 as u16);
-        set_ram_word!(game.fx_y_vel = 0u16);
-        set_ram_word!(game.fx_timer = 0u16);
-        set_ram_word!(game.earthquake_timer = 0u16);
-        set_ram_word!(game.plm_header_ptr[(k as i32 >> 1i32)] = 0u16);
+        set_ram_words! { game, 0u16;
+            fx_y_vel, fx_timer, earthquake_timer, plm_header_ptr[(k as i32 >> 1i32)],
+        }
     };
 }
 pub unsafe fn PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft(k: u16, game: &mut Game) {

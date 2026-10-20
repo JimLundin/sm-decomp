@@ -31,6 +31,23 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Adjacent RAM literal stores (2026-10-20): one caller-side macro shares
+all 486 eligible runs, comprising 1692 stores with 50 exact u16 literal
+spellings and 409 indexed stores across 25 callers. Each setter, index and
+statement remains in its original evaluation order; no runtime block,
+helper call, loop, borrow or hoisted value is introduced.
+Independent source reconstruction and fresh actual compiler expansion pass
+on the exact C-library/register/numeric composition: all 10243078 bytes
+match after removing only the added macro, re-export and 25 imports.
+Net Rust lines -631, to 134534; other progress counters are unchanged.
+
+Shared C-library/RAM/control verification on the register/numeric composition
+passes normal release (22.72s), formatting/check, progress and
+full any% 129712/0 (105.19s), native exit 0. All 77 final
+source/config/host inputs and 102 replay/proof pins remain fixed. This is
+combined verification for all three focused commits. Any% provides core
+integration coverage; broader routes, alias safety and boot-to-credits remain open.
+
 C-library boundary (2026-10-20): one module shares all 172 repeated
 native declarations across 37 foreign blocks in 36 callers, retaining 42
 original symbol names and exact ABI signatures. The two distinct Windows

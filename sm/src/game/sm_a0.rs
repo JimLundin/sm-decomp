@@ -312,6 +312,7 @@ use crate::game::sm_b4::{
 };
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, Unreachable};
@@ -1296,13 +1297,10 @@ pub unsafe fn LoadEnemies(game: &mut Game) {
     (*(ram_ptr!(game, LongPtr; 0x178c))).bank = 160u8;
     (*(ram_ptr!(game, LongPtr; 0x178c))).addr = ((0xa0804ci32) as u16);
     set_ram_word!(game.enemy_bg2_tilemap_size = 2048u16);
-    set_ram_word!(game.UNUSED_word_7E179E = 0u16);
-    set_ram_word!(game.UNUSED_word_7E17A0 = 0u16);
-    set_ram_word!(game.boss_id = 0u16);
+    set_ram_words! { game, 0u16; UNUSED_word_7E179E, UNUSED_word_7E17A0, boss_id }
     ClearEnemyDataAndProcessEnemySet(game);
     LoadEnemyTileData(game);
-    set_ram_word!(game.enemy_tile_vram_src = 0u16);
-    set_ram_word!(game.flag_disable_projectile_interaction = 0u16);
+    set_ram_words! { game, 0u16; enemy_tile_vram_src, flag_disable_projectile_interaction }
     ClearSpriteObjects(game);
 }
 pub unsafe fn ClearEnemyDataAndProcessEnemySet(game: &mut Game) {
@@ -1313,9 +1311,9 @@ pub unsafe fn ClearEnemyDataAndProcessEnemySet(game: &mut Game) {
 }
 pub unsafe fn InitializeEnemies(game: &mut Game) {
     memset(ram_ptr!(game, c_void; 0x7000), 0i32, 0x2800 as size_t);
-    set_ram_word!(game.num_enemies_in_room = 0u16);
-    set_ram_word!(game.num_enemies_killed_in_room = 0u16);
-    set_ram_word!(game.flag_process_all_enemies = 0u16);
+    set_ram_words! { game, 0u16;
+        num_enemies_in_room, num_enemies_killed_in_room, flag_process_all_enemies,
+    }
     let mut i: i32 = 286i32;
     while i >= 0i32 {
         set_ram_word!(game.eproj_flags[(i >> 1i32)] = 0u16);
@@ -1480,18 +1478,12 @@ pub unsafe fn TransferEnemyTilesToVramAndInit(game: &mut Game) {
 pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
     set_ram_word!(game.enemy_tile_load_data_write_pos = 0u16);
     let mut r30: u16 = 2048u16;
-    set_ram_word!(game.enemy_def_ptr[0] = 0u16);
-    set_ram_word!(game.enemy_def_ptr[1] = 0u16);
-    set_ram_word!(game.enemy_def_ptr[2] = 0u16);
-    set_ram_word!(game.enemy_def_ptr[3] = 0u16);
-    set_ram_word!(game.enemy_gfxdata_tiles_index[0] = 0u16);
-    set_ram_word!(game.enemy_gfxdata_tiles_index[1] = 0u16);
-    set_ram_word!(game.enemy_gfxdata_tiles_index[2] = 0u16);
-    set_ram_word!(game.enemy_gfxdata_tiles_index[3] = 0u16);
-    set_ram_word!(game.enemy_gfxdata_vram_ptr[0] = 0u16);
-    set_ram_word!(game.enemy_gfxdata_vram_ptr[1] = 0u16);
-    set_ram_word!(game.enemy_gfxdata_vram_ptr[2] = 0u16);
-    set_ram_word!(game.enemy_gfxdata_vram_ptr[3] = 0u16);
+    set_ram_words! { game, 0u16;
+        enemy_def_ptr[0], enemy_def_ptr[1], enemy_def_ptr[2], enemy_def_ptr[3],
+        enemy_gfxdata_tiles_index[0], enemy_gfxdata_tiles_index[1], enemy_gfxdata_tiles_index[2],
+        enemy_gfxdata_tiles_index[3], enemy_gfxdata_vram_ptr[0], enemy_gfxdata_vram_ptr[1],
+        enemy_gfxdata_vram_ptr[2], enemy_gfxdata_vram_ptr[3],
+    }
     let mut enemy_gfx_data_write_ptr: u16 = 0u16;
     let mut next_enemy_tiles_index: u16 = 0u16;
     let mut ET: *mut EnemyTileset =
@@ -1529,9 +1521,9 @@ pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
 }
 pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
     update_ram_word!(game.UNUSED_word_7E0E46, wrapping_add(1));
-    set_ram_word!(game.cur_enemy_index = 0u16);
-    set_ram_word!(game.active_enemy_indexes_write_ptr = 0u16);
-    set_ram_word!(game.interactive_enemy_indexes_write_ptr = 0u16);
+    set_ram_words! { game, 0u16;
+        cur_enemy_index, active_enemy_indexes_write_ptr, interactive_enemy_indexes_write_ptr,
+    }
     if ram_word!(game, flag_process_all_enemies) != 0 {
         loop {
             let v5: u16 = ram_word!(game, cur_enemy_index);
@@ -4067,8 +4059,7 @@ pub unsafe fn NormalEnemyTouchAiSkipDeathAnim(game: &mut Game) {
                 4i32
             }) as u16;
             (*E).ai_handler_bits = ((*E).ai_handler_bits) | ((kEnemyAiBits_Hurt) as u16);
-            set_ram_word!(game.samus_invincibility_timer = 0u16);
-            set_ram_word!(game.samus_knockback_timer = 0u16);
+            set_ram_words! { game, 0u16; samus_invincibility_timer, samus_knockback_timer }
             (*E).health = (if (((*E).health) as i16).wrapping_sub((dmg) as i16) < 0i16 {
                 0i32
             } else {

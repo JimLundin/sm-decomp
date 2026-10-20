@@ -24,6 +24,7 @@ use crate::game::sm_a0::{
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
@@ -2662,8 +2663,7 @@ pub unsafe fn Kraid_SpawnRandomQuakeProjs(game: &mut Game) {
 }
 pub unsafe fn Kraid_RestrictSamusXtoFirstScreen_2(game: &mut Game) {
     if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(256i16) >= 0i16 {
-        set_ram_word!(game.samus_x_pos = 256u16);
-        set_ram_word!(game.samus_prev_x_pos = 256u16);
+        set_ram_words! { game, 256u16; samus_x_pos, samus_prev_x_pos }
     }
 }
 pub unsafe fn CallKraidFunc(ea: u32, game: &mut Game) {

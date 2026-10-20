@@ -8,6 +8,7 @@ use crate::game::sm_90::KillProjectile;
 use crate::game::sm_a0::CalculateAngleFromXY;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
@@ -2733,8 +2734,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
         1u8
     } else {
         update_ram_word!(game.grapple_beam_unkD36, |fresh3| (fresh3) | (0x8000u16));
-        set_ram_word!(game.grapple_beam_unkD26 = 0u16);
-        set_ram_word!(game.grapple_beam_unkD2E = 0u16);
+        set_ram_words! { game, 0u16; grapple_beam_unkD26, grapple_beam_unkD2E }
         1u8
     }
 }
@@ -2750,8 +2750,7 @@ pub unsafe fn BlockFunc_AEE3(game: &mut Game) -> u8 {
         if update_ram_word!(game.grapple_beam_unkD38, wrapping_add(1), reread) == 32u16 {
             set_ram_word!(game.grapple_beam_function = ((0x9bc8c5i32) as u16));
         }
-        set_ram_word!(game.grapple_beam_unkD26 = 0u16);
-        set_ram_word!(game.grapple_beam_unkD2E = 0u16);
+        set_ram_words! { game, 0u16; grapple_beam_unkD26, grapple_beam_unkD2E }
         1u8
     }
 }

@@ -16,6 +16,7 @@ use crate::game::sm_a0::{
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
+use crate::ram_map::set_ram_words;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::RomPtr;
@@ -585,8 +586,7 @@ pub unsafe fn Crocomire_Func_28(game: &mut Game) {
     Crocomire_Func_27(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn Crocomire_Func_29(game: &mut Game) {
-    set_ram_word!(game.reg_BG2HOFS = 0u16);
-    set_ram_word!(game.reg_BG2VOFS = 0u16);
+    set_ram_words! { game, 0u16; reg_BG2HOFS, reg_BG2VOFS }
 }
 pub unsafe fn Crocomire_Func_30(game: &mut Game) {
     let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
@@ -672,10 +672,7 @@ pub unsafe fn Crocomire_8D47(game: &mut Game) {
 pub unsafe fn Crocomire_Func_37(game: &mut Game) {
     let E0: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
     if (*E0).base.x_pos as i32 - 1536i32 & 0x8000i32 != 0 {
-        set_ram_word!(game.kraid_unk9000 = 0u16);
-        set_ram_word!(game.g_word_7E9002 = 0u16);
-        set_ram_word!(game.g_word_7E9006 = 0u16);
-        set_ram_word!(game.g_word_7E900A = 0u16);
+        set_ram_words! { game, 0u16; kraid_unk9000, g_word_7E9002, g_word_7E9006, g_word_7E900A }
     } else if (*E0).base.x_pos as i32 - 1552i32 & 0x8000i32 != 0 {
         if ram_word!(game, kraid_unk9000) == 0 {
             set_ram_word!(game.kraid_unk9000 = 1u16);
@@ -686,9 +683,7 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
             SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15u16, game);
         }
     } else if (*E0).base.x_pos as i32 - 1552i32 & 0x8000i32 != 0 {
-        set_ram_word!(game.g_word_7E9002 = 0u16);
-        set_ram_word!(game.g_word_7E9006 = 0u16);
-        set_ram_word!(game.g_word_7E900A = 0u16);
+        set_ram_words! { game, 0u16; g_word_7E9002, g_word_7E9006, g_word_7E900A }
     } else if (*E0).base.x_pos as i32 - 1568i32 & 0x8000i32 != 0 {
         if ram_word!(game, g_word_7E9002) == 0 {
             set_ram_word!(game.g_word_7E9002 = 1u16);
@@ -705,8 +700,7 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
     } else {
         let x_pos: u16 = (*E0).base.x_pos;
         if x_pos as i32 - 1568i32 & 0x8000i32 != 0 {
-            set_ram_word!(game.g_word_7E9006 = 0u16);
-            set_ram_word!(game.g_word_7E900A = 0u16);
+            set_ram_words! { game, 0u16; g_word_7E9006, g_word_7E900A }
         } else if x_pos as i32 - 1584i32 & 0x8000i32 != 0 {
             if ram_word!(game, g_word_7E9006) == 0 {
                 set_ram_word!(game.g_word_7E9006 = 1u16);
@@ -940,8 +934,7 @@ pub unsafe fn Crocomire_Func_49(game: &mut Game) {
             SpawnHardcodedPlmArgs::new(0x4eu8, 0x3u8, 0xb753 as VoidP),
             game,
         );
-        set_ram_word!(game.camera_distance_index = 0u16);
-        set_ram_word!(game.croco_target_0688 = 0u16);
+        set_ram_words! { game, 0u16; camera_distance_index, croco_target_0688 }
     }
 }
 pub unsafe fn Crocomire_Func_50(game: &mut Game) {
@@ -1186,8 +1179,7 @@ pub unsafe fn Crocomire_Func_57(game: &mut Game) {
     let mut v3: u16 = 0u16;
     loop {
         let v4: i32 = v3 as i32 >> 1i32;
-        set_ram_word!(game.tilemap_stuff[v4] = 824u16);
-        set_ram_word!(game.tilemap_stuff[(v4 + 1i32)] = 824u16);
+        set_ram_words! { game, 824u16; tilemap_stuff[v4], tilemap_stuff[(v4 + 1i32)] }
         v3 = (v3).wrapping_add(4u16);
         if (((v3) as i16).wrapping_sub(1024i16) >= 0i16) {
             break;
