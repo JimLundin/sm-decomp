@@ -7,6 +7,7 @@ pub use crate::game::constants::bank_91::*;
 pub use crate::game::constants::buttons::*;
 pub use crate::game::constants::game_states::*;
 pub use crate::game::constants::samus_poses::*;
+use crate::game::explosion_window::spawn_power_bomb;
 use crate::game::sm_80::{
     memset7E, CheckEventHappened, ClearOamExt, ClearUnusedOam, CopySuperMetroidString,
     DecompressToMem, DisableIrqInterrupts, EnableNMI, GraphicsAsset, HandleFadeIn, HandleFadeOut,
@@ -16,7 +17,7 @@ use crate::game::sm_80::{
 use crate::game::sm_81::{DrawSpritemap, DrawSpritemapOffScreen, SaveToSram};
 use crate::game::sm_88::{
     CinematicFunction_Intro_Func133, DisableHdmaObjects, EnableHdmaObjects,
-    SpawnPowerBombExplosion, SpawnTitleScreenGradientObjs, WaitUntilEndOfVblankAndClearHdma,
+    SpawnTitleScreenGradientObjs, WaitUntilEndOfVblankAndClearHdma,
 };
 use crate::game::sm_8d::{
     ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx, PaletteFxHandler, SpawnPalfxObject,
@@ -2736,7 +2737,7 @@ pub unsafe fn CinematicFunction_Intro_Func76(game: &mut Game) {
                 (word!(game.reg_M7Y)).wrapping_sub(word!(game.cinematic_var10));
         }
         EnableHdmaObjects(game);
-        SpawnPowerBombExplosion(game);
+        spawn_power_bomb(game);
         *ram_ptr!(game; 0x6f) = 16;
         *ram_ptr!(game; 0x72) = 55;
         word!(game.cinematic_var6 = 768);

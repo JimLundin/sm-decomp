@@ -8,6 +8,7 @@ pub use crate::game::constants::buttons::*;
 pub use crate::game::constants::game_states::*;
 pub use crate::game::constants::samus_movement::*;
 pub use crate::game::constants::samus_poses::*;
+use crate::game::explosion_window::{spawn_crystal_flash, spawn_power_bomb};
 use crate::game::projectile_flight::{self, Flight};
 use crate::game::sm_80::{
     CheckEventHappened, DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
@@ -20,7 +21,7 @@ use crate::game::sm_80::{
 use crate::game::sm_81::{DrawBeamGrappleSpritemap, DrawSamusSpritemap};
 use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
 use crate::game::sm_86::{DisableEprojs, EnableEprojs, SpawnEprojWithGfx};
-use crate::game::sm_88::{EnableHdmaObjects, SpawnCrystalFlashHdmaObjs, SpawnPowerBombExplosion};
+use crate::game::sm_88::EnableHdmaObjects;
 use crate::game::sm_8b::Samus_CalcPos_Mode7;
 use crate::game::sm_8d::{DisablePaletteFx, SpawnPalfxObject};
 use crate::game::sm_91::{
@@ -3737,7 +3738,7 @@ pub unsafe fn PowerBomb_Func3(game: &mut Game) {
             word!(game.power_bomb_explosion_x_pos = word!(game.projectile_x_pos[v1]));
             word!(game.power_bomb_explosion_y_pos = word!(game.projectile_y_pos[v1]));
             EnableHdmaObjects(game);
-            SpawnPowerBombExplosion(game);
+            spawn_power_bomb(game);
             word!(game.projectile_variables[(v0 >> 1)] = -1i32 as u16);
         }
     } else if word!(game.power_bomb_flag) == 0 {
@@ -4643,7 +4644,7 @@ pub unsafe fn SamusMoveHandler_CrystalFlashStart(game: &mut Game) {
         word!(game.power_bomb_explosion_x_pos = word!(game.samus_x_pos));
         word!(game.power_bomb_explosion_y_pos = word!(game.samus_y_pos));
         EnableHdmaObjects(game);
-        SpawnCrystalFlashHdmaObjs(game);
+        spawn_crystal_flash(game);
     }
 }
 static kSamusMoveHandler_CrystalFlashMainFuncs: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;

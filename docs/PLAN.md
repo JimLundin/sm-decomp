@@ -248,6 +248,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    or scope before repeating discovery. The regions and prior results below
    guide coverage, not boundaries that candidate replacements must preserve:
 
+   A separate normalized/aligned audit of 1,331 bodies at least 20 lines long
+   produced three complete prices: enemy collision sweeps **-38**, room loading
+   **-24**, and Power Bomb/Crystal Flash windows **-90**. Counts include retained
+   variants, helpers, callers, imports and source registrations. Park the first
+   two; adopt the window drivers below. This overlaps the audits above and
+   supplies no larger forecast. TEMP: sm-structural-audit-f57e4abf,
+   sm-enemy-sweep-c98e8439, sm-room-loading-c98e8439 and
+   sm-bindings-root-9c4daf2f/blast-window.
+
    Enemy/projectile preflight found no credible large replacement. Complete
    Metalee/Skree bodies occupy 252 lines; B2 plus laser/claw bodies occupy about
    996 before retaining distinct wall, ninja and walking behavior. Rio, linked
@@ -308,7 +317,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **8,891-line** gap; parked small drafts are not
+   replacement yet funds the **8,801-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -419,6 +428,14 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    any%/Speed Booster replays. The two added unsafe functions are shared
    selectors; all their costs are included. These checks preserve existing
    arithmetic/bus operations without claiming every opcode executes in movies.
+
+   Complete blast-window ownership removes **90 lines (108,890 -> 108,800)**,
+   including the 539-line module and all caller/registration costs. Two drivers
+   replace five scaled/prescaled phase bodies; all 17 numeric routes survive.
+   Independent review preserves 20 moved definitions, and all 4,700 focused
+   SNES comparisons pass, including persistent phase progression. The two
+   additional unsafe functions are shared phase helpers. Ceres exercises every
+   Power Bomb phase and cleanup; Crystal Flash has constructed SNES coverage.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -590,7 +607,13 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: opcode grids over c98e8439 pass any% **129712/0** and
+Latest full integration: blast windows over ddba5db2 pass any% **129712/0** and
+Speed Booster **148406/0**, with normal rendering, audio and comparisons.
+The focused Ceres run passes **42819/0**, exercising all 11 required Power Bomb
+phase/transition/cleanup probes plus 180 follow-up frames. All 15 component
+probes execute across 4,700 SNES comparisons; Crystal Flash coverage remains
+constructed, not movie execution. No endgame execution is claimed.
+Earlier opcode grids over c98e8439 pass any% **129712/0** and
 Speed Booster **148406/0**, with normal rendering, audio and comparisons.
 Independent complete selector correspondence and compiled boundary traces
 cover all opcode values; these are not claims of every opcode's movie execution.
@@ -671,10 +694,10 @@ committed baseline and budget.
 After the Japanese correction, local bindings, intro pages, enemy callback
 imports, ordered stores, PNG texture loading, beam firing, moving platforms,
 byte-partial-product sharing, INI decoding, countdown callbacks, projectile
-flight, callback entry captures and opcode grids, maintained Rust is **108,890**,
-leaving **8,891** to reach 99,999. Counters:
+flight, callback entry captures, opcode grids and blast windows, maintained
+Rust is **108,800**, leaving **8,801** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 4431; cast lines 8107. The unrelated 83-line shader draft
+unsafe functions 4433; cast lines 8089. The unrelated 83-line shader draft
 remains excluded; working-tree counts are not the committed baseline.
 Item 2's function/compound-body variant audits are complete for their stated
 scope. The remaining gap has no established replacement budget. The hopping

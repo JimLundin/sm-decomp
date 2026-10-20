@@ -232,6 +232,7 @@ pub mod game {
     pub mod constants;
     pub(crate) mod enemy_layouts;
     pub(crate) mod enemy_ram;
+    pub(crate) mod explosion_window;
     pub(crate) mod intro_pages;
     pub(crate) mod moving_platforms;
     pub(crate) mod projectile_flight;
