@@ -3004,7 +3004,44 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `54af58df` shares PNG filter-byte
+Latest reviewed integration (2026-10-20): `d6211956` binds cached verification
+to compiled game-library source and includes shared decompression `71d03889`
+plus reviewed PNG `54af58df`. Independent inspection binds all 76 Rust/launcher/
+manifest inputs to the commit, accounting only for checkout CRLF conversion
+in four text files. All 82 final source, movie, ROM and binary pins remain
+unchanged. A fresh inspection of the actual cached DLL passes both its host
+stamp and all 67 compiled-library source entries.
+
+The original host-only stamp falsely accepted a backdated library edit while
+still executing old code. Independent tiny-Cargo and reviewed actual-library
+regressions now reject that cached DLL, rebuild and execute the new value.
+Unchanged normal builds retain reuse. The abandoned clean-based retry failed
+on targets without CACHEDIR.TAG; the accepted retry changes only the crate-root
+mtime, with source bytes intact. Compiler errors stop before replay and retain
+the previous cached DLL. Twelve control scripts/logs remain fixed, covering
+backdated changes, missing source entries and edits during replay.
+
+Independent full-file decompression inversion restores both original bodies
+and preserves DecompNextByte/ReadPpuByte exactly. The revised shared helper
+takes a raw Game pointer, avoiding an added whole-Game borrow around RAM output.
+Regenerated focused and four control hosts match their source exactly. Reruns
+pass 12096 complete ordered-event/state comparisons (4032 RAM, 8064 VRAM);
+omitted XOR, absolute VRAM base, backreference address and reversed word-fill
+controls all fail. All 16 focused pins remain unchanged. These models do not
+establish complete PPU or alias safety.
+
+Formatting/check, progress and normal release (23.993s) pass. The 1.896s
+verifier host retains the release library's exact hash and timestamp. Reused
+authoritative replays pass any% 129712/0 (128.86s replay, 129.387s wall) and
+Speed Booster 148406/0 (161.07s replay, 161.594s wall), native exits 0.
+The latter visits 55 rooms and 53 enemy definitions; neither reaches credits.
+Combined Rust count is 128995: decompression -81, verifier source checks +142.
+Seven added unsafe-function declarations and two verifier exports explain
+the increased unsafe-function/export counts. Broader routes, frontend/audio/
+hardware coverage and ownership remain open. Later DSP saturation changes
+remain outside this review.
+
+Included PNG integration (2026-10-20): `54af58df` shares PNG filter-byte
 reconstruction across all three row paths and unpacking for depths 1/2/4.
 Independent full-file inversion restores the original source exactly;
 the clean assertion composition and all 77 committed inputs match the frozen
