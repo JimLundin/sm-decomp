@@ -2767,17 +2767,13 @@ pub unsafe fn Rio_Init(game: &mut Game) {
     (*E).base.current_instruction = addr_kRio_Ilist_BB4B as u16;
     (*E).var_B = ((0xa2bbedi32) as u16);
 }
-pub unsafe fn CallRioFunc(ea: u32, game: &mut Game) {
-    let k: u16 = word!(game.cur_enemy_index);
-    match ea {
-        10664941 => Rio_1(k, game),
-        10665010 => Rio_2(k, game),
-        10665032 => Rio_3(k, game),
-        10665143 => Rio_4(k, game),
-        10665215 => Rio_5(k, game),
-        _ => {
-            Unreachable(game);
-        }
+crate::game::address_dispatch! {
+    pub unsafe fn CallRioFunc(ea: u32, game: &mut Game) => ea;
+        setup { let k: u16 = word!(game.cur_enemy_index); }
+        call (k, game); default { Unreachable(game); };
+    {
+        10664941 => Rio_1; 10665010 => Rio_2; 10665032 => Rio_3; 10665143 => Rio_4;
+        10665215 => Rio_5;
     }
 }
 pub unsafe fn Rio_Main(game: &mut Game) {

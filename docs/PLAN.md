@@ -20,6 +20,45 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared dispatch with captured setup (2026-10-20)
+
+Four remaining address dispatchers now reuse `address_dispatch!` with an
+optional setup sequence: CallEnemyPreInstr, CallRioFunc, CallCeresDoor and
+CallKraidFunc. Their captured enemy-index read stays in the original function
+scope before the match, including branches that do not use it. All 265 ordered
+addresses, signatures, calls, explicit argument exceptions, no-ops and defaults
+remain unchanged. Complete formatted source shrinks **141 lines**, including
+the one-line macro extension and all four callers; no runtime helper is added.
+
+Independent review checks all 265 mappings and the 133 existing declarations
+without findings. Source inversion reconstructs all four original bank files. Actual complete
+frontend-library compiler expansions agree over **9557011 normalized bytes**,
+including every existing dispatch user. Only the changed macro declaration,
+inter-token whitespace and five individually decoded/file-bound embedded source
+payloads are excluded. This follows the current static validation strategy;
+no new gameplay replay or changed-path execution is claimed.
+
+Formatting, normal release (20.27s frozen; 19.63s main), compiled-library source
+checks (1.83s frozen; 1.76s main), diff check and progress pass. The existing
+frozen checkout/target is refreshed from 8969be78; no build artifacts are copied.
+The foreign shader edit remains separate. Committed Rust becomes **112406**,
+leaving **12407 lines** to reach below 100000. Other progress counters stay
+unchanged. Draft/checks: TEMP `sm-captured-dispatch-8969be78`. This completes
+the residual captured-setup dispatch family, not the overall reduction goal.
+
+The parallel efficiency investigation closes two more bounded leads without
+behavioral validation: typed ROM-record places save only **25 formatted lines**
+across 119 replacements, including helper costs; residual safe RAM word access
+has 324 sites, 299 already on one line and just 43 extra internal line breaks.
+The latter is a census, not a draft price; raw `word!` substitution would alter
+bounds checks and slice-write evaluation/borrow order. Keep both parked. Reports
+are in TEMP `sm-rom-records-443e8471` and `sm-safe-ram-words-af8c1745`.
+Bounded menu/cinematic decisions and Phantoon/Torizo projectile-cycle reviews
+also produced no substantial draft: shared pieces already have helpers, while
+remaining input, collision, gravity and handoff contracts differ. Their reports
+are under the dispatch root and `sm-boss-ballistic-8969be78`. These inspections
+do not exhaust semantic sharing or establish the remaining reduction budget.
+
 ## Shared file-copy rows (2026-10-20)
 
 The three file-copy/clear display modes share one ordered traversal, and the

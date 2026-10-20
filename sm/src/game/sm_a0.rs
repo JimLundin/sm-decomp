@@ -1236,212 +1236,96 @@ crate::game::address_dispatch! {
                 | 11108407 | 11173943 | 11698231 | 11763767 => NormalEnemyPowerBombAi;
     }
 }
-pub unsafe fn CallEnemyPreInstr(ea: u32, game: &mut Game) {
-    let k: u16 = word!(game.cur_enemy_index);
-    match ea {
-        10518651 => (),
-        10649723 => (),
-        10652227 => MiniCrocomire_PreInstr5(k, game),
-        10652252 => MiniCrocomire_PreInstr6(k, game),
-        10652277 => (),
-        10657722 => SpikeShootingPlant_2(k, game),
-        10657772 => SpikeShootingPlant_3(k, game),
-        10657819 => (),
-        10659799 => (),
-        10659852 => GunshipTop_3(k, game),
-        10660048 => GunshipTop_4(k, game),
-        10660162 => GunshipTop_5(k, game),
-        10660176 => GunshipTop_6(k, game),
-        10660231 => GunshipTop_7(k, game),
-        10660285 => GunshipTop_8(k, game),
-        10660431 => GunshipTop_9(k, game),
-        10660445 => GunshipTop_10(k, game),
-        10660500 => GunshipTop_11(k, game),
-        10660514 => GunshipTop_12(k, game),
-        10660639 => GunshipTop_13(k, game),
-        10660704 => GunshipTop_14(k, game),
-        10660718 => GunshipTop_15(k, game),
-        10660773 => GunshipTop_16(k, game),
-        10660807 => GunshipTop_17(k, game),
-        10660891 => GunshipTop_18(k, game),
-        10661079 => GunshipTop_19(k, game),
-        10661134 => GunshipTop_20(k, game),
-        10661165 => GunshipTop_21(k, game),
-        10662222 => Flies_4(k, game),
-        10662268 => Flies_5(k, game),
-        10662314 => Flies_6(k, game),
-        10662354 => Flies_7(k, game),
-        10665692 => NorfairLavajumpingEnemy_Func_1(k, game),
-        10665754 => NorfairLavajumpingEnemy_Func_2(k, game),
-        10665790 => NorfairLavajumpingEnemy_Func_3(k, game),
-        10665852 => NorfairLavajumpingEnemy_Func_4(k, game),
-        10665916 => NorfairLavajumpingEnemy_Func_5(k, game),
-        10666625 => NorfairRio_Func_1(k, game),
-        10666727 => NorfairRio_Func_2(k, game),
-        10666815 => NorfairRio_Func_3(k, game),
-        10666849 => NorfairRio_Func_4(k, game),
-        10666929 => NorfairRio_Func_5(k, game),
-        10667014 => NorfairRio_Func_6(k, game),
-        10667822 => LowerNorfairRio_Func_1(k, game),
-        10667889 => LowerNorfairRio_Func_2(k, game),
-        10667963 => LowerNorfairRio_Func_3(k, game),
-        10667990 => LowerNorfairRio_Func_4(k, game),
-        10668077 => LowerNorfairRio_Func_5(k, game),
-        10668168 => LowerNorfairRio_Func_6(k, game),
-        10669926 => MaridiaLargeSnail_Func_7(k, game),
-        10669993 => MaridiaLargeSnail_Func_8(k, game),
-        10675796 => LavaSeahorse_Func_1(k, game),
-        10675885 => LavaSeahorse_Func_2(k, game),
-        10675953 => LavaSeahorse_Func_3(k, game),
-        10676020 => LavaSeahorse_Func_4(k, game),
-        10676041 => LavaSeahorse_Func_5(k, game),
-        10676097 => (),
-        10730661 => Bang_Func_6(k, game),
-        10730689 => Bang_Func_7(k),
-        10730693 => Bang_Func_8(k, game),
-        10730780 => Bang_Func_10(k, game),
-        10730796 => Bang_Func_11(k, game),
-        10735455 => (),
-        10736051 => MaridiaSnail_Func_15(k, game),
-        10739850 => (),
-        10739857 => WreckedShipOrangeZoomer_Func_2(k, game),
-        10741441 => (),
-        10741448 => FireZoomer_Func_1(k, game),
-        10741637 => FireZoomer_Func_2(k, game),
-        10741746 => FireZoomer_Func_3(k, game),
-        10998952 => (),
-        10998953 => Phantoon_Spawn8FireballsInCircleAtStart(k, game),
-        10999022 => Phantoon_WaitBetweenSpawningAndSpinningFireballs(k, game),
-        10999048 => Phantoon_SpawnFireballsBeforeFight(k, game),
-        10999114 => Phantoon_WavyFadeIn(k, game),
-        10999190 => Phantoon_PickPatternForRound1(k, game),
-        10999271 => Phantoon_MovePhantoonInFigure8ThenOpenEye(k, game),
-        10999309 => Phantoon_EyeFollowsSamusUntilTimerRunsOut(k, game),
-        10999388 => Phantoon_BecomesSolidAndBodyVuln(k, game),
-        10999416 => Phantoon_IsSwooping(k, game),
-        10999481 => Phantoon_FadeoutWithSwoop(k, game),
-        10999508 => Phantoon_WaitAfterFadeOut(k, game),
-        10999522 => Phantoon_MoveLeftOrRightAndPickEyeOpenPatt(k, game),
-        10999597 => Phantoon_FadeInBeforeFigure8(k, game),
-        10999615 => Phantoon_BecomeSolidAfterRainingFireballs(k, game),
-        10999655 => Phantoon_FadeInDuringFireballRain(k, game),
-        10999688 => Phantoon_FollowSamusWithEyeDuringFireballRain(k, game),
-        10999765 => Phantoon_FadeOutDuringFireballRain(k, game),
-        10999799 => Phantoon_SpawnRainingFireballs(k, game),
-        10999850 => Phantoon_FadeOutBeforeFirstFireballRain(k, game),
-        10999900 => Phantoon_FadeOutBeforeEnrage(k, game),
-        10999924 => Phantoon_MoveEnragedPhantoonToTopCenter(k, game),
-        10999953 => Phantoon_FadeInEnragedPhantoon(k, game),
-        10999980 => Phantoon_Enraged(k, game),
-        11000086 => Phantoon_FadeoutAfterEnrage(k, game),
-        11000110 => Phantoon_CompleteSwoopAfterFatalShot(k, game),
-        11000136 => Phantoon_DyingPhantoonFadeInOut(k, game),
-        11000203 => Phantoon_DyingPhantoonExplosions(k, game),
-        11000401 => Phantoon_WavyDyingPhantoonAndCry(k, game),
-        11000454 => Phantoon_DyingFadeOut(k, game),
-        11000535 => Phantoon_AlmostDead(k, game),
-        11000637 => Phantoon_Dead(k, game),
-        11004335 => Etecoon_Func_4(k, game),
-        11004416 => Etecoon_Func_5(k, game),
-        11004471 => Etecoon_Func_6(k, game),
-        11004597 => Etecoon_Func_7(k, game),
-        11004674 => Etecoon_Func_8(k, game),
-        11004716 => Etecoon_Func_9(k, game),
-        11004752 => Etecoon_Func_10(k, game),
-        11004877 => Etecoon_Func_11(k, game),
-        11004955 => Etecoon_Func_12(k, game),
-        11005079 => Etecoon_Func_16(k, game),
-        11005115 => Etecoon_Func_17(k, game),
-        11005151 => Etecoon_Func_18(k, game),
-        11005193 => Etecoon_Func_19(k, game),
-        11005226 => Etecoon_Func_20(k, game),
-        11005268 => Etecoon_Func_21(k, game),
-        11005301 => Etecoon_Func_22(k, game),
-        11005383 => Etecoon_Func_23(k, game),
-        11005502 => Etecoon_Func_24(k, game),
-        11005594 => Etecoon_Func_25(k, game),
-        11005624 => Etecoon_Func_26(k, game),
-        11007344 => Dachora_Func_2(k, game),
-        11007420 => Dachora_Func_3(k, game),
-        11007469 => Dachora_Func_4(k, game),
-        11007582 => Dachora_Func_5(k, game),
-        11007887 => Dachora_Func_7(k, game),
-        11008006 => Dachora_Func_8(k, game),
-        11008309 => Dachora_Func_11(k, game),
-        11008396 => Dachora_Func_12(k, game),
-        11047153 => MorphBallEye_Func_1(k, game),
-        11047214 => MorphBallEye_Func_2(k, game),
-        11047264 => MorphBallEye_Func_3(k, game),
-        11047374 => MorphBallEye_Func_4(k, game),
-        11047388 => (),
-        11055386 => NorfairLavaMan_Func_7(k, game),
-        11055477 => NorfairLavaMan_Func_8(k, game),
-        11055507 => sub_A8B193(k, game),
-        11055544 => NorfairLavaMan_Func_9(k, game),
-        11055581 => NorfairLavaMan_Func_10(k, game),
-        11055620 => NorfairLavaMan_Func_11(k, game),
-        11055761 => sub_A8B291(k),
-        11055765 => NorfairLavaMan_Func_13(game),
-        11055885 => NorfairLavaMan_Func_15(k, game),
-        11055903 => NorfairLavaMan_Func_16(k, game),
-        11055958 => NorfairLavaMan_Func_17(k, game),
-        11056039 => NorfairLavaMan_Func_18(k, game),
-        11059843 => MaridiaFloater_Func_3(k, game),
-        11059878 => MaridiaFloater_Func_4(k, game),
-        11059919 => MaridiaFloater_Func_5(k, game),
-        11060075 => MaridiaFloater_Func_6(k, game),
-        11060193 => MaridiaFloater_Func_7(k, game),
-        11060329 => MaridiaFloater_Func_8(k, game),
-        11060444 => MaridiaFloater_Func_9(k, game),
-        11060480 => MaridiaFloater_Func_10(k, game),
-        11060509 => MaridiaFloater_Func_11(k, game),
-        11060584 => (),
-        11060585 => MaridiaFloater_Func_12(k, game),
-        11060639 => MaridiaFloater_Func_13(k, game),
-        11192670 => (),
-        11197610 => (),
-        11200422 => (),
-        11174011 => (),
-        11763835 => (),
-        11765888 => BrinstarPipeBug_PreInstr_1(k, game),
-        11765904 => BrinstarPipeBug_PreInstr_2(k, game),
-        11765987 => BrinstarPipeBug_PreInstr_3(k, game),
-        11766044 => BrinstarPipeBug_PreInstr_4(k, game),
-        11766142 => BrinstarPipeBug_PreInstr_5(k, game),
-        11767039 => NorfairPipeBug_Func_5(k, game),
-        11771328 => Botwoon_Func_26(k, game),
-        11771517 => Botwoon_Func_27(k, game),
-        11771616 => Botwoon_Func_28(k, game),
-        11771700 => Botwoon_Func_29(k, game),
-        11771770 => Botwoon_Func_30(k, game),
-        11192146 => Torizo_Func_5(k, game),
-        11192360 => Torizo_Func_6(k, game),
-        11192364 => Torizo_Func_7(k, game),
-        11195885 => Torizo_D5ED(k, game),
-        11195889 => Torizo_D5F1(k, game),
-        11199557 => sub_AAE445(k, game),
-        11200430 => Shaktool_PreInstr_0(k, game),
-        11200474 => (),
-        11789916 => EscapeEtecoon_E65C(k, game),
-        11789936 => EscapeEtecoon_E670(k, game),
-        11789952 => EscapeEtecoon_E680(k, game),
-        10740072 => sub_A3E168(k, game),
-        10735456 => MaridiaSnail_Func_7(k, game),
-        10735526 => MaridiaSnail_Func_9(k, game),
-        10735543 => MaridiaSnail_CFB7(k, game),
-        10735549 => MaridiaSnail_CFBD(k, game),
-        10735566 => MaridiaSnail_CFCE(k, game),
-        10735572 => MaridiaSnail_CFD4(k, game),
-        10735589 => MaridiaSnail_CFE5(k, game),
-        10735595 => MaridiaSnail_CFEB(k, game),
-        10735612 => MaridiaSnail_CFFC(k, game),
-        11197611 => (),
-        11197612 => Shaktool_DCAC(k, game),
-        11197655 => Shaktool_DCD7(k, game),
-        11197733 => Shaktool_DD25(k, game),
-        _ => {
-            Unreachable(game);
-        }
+crate::game::address_dispatch! {
+    pub unsafe fn CallEnemyPreInstr(ea: u32, game: &mut Game) => ea;
+        setup { let k: u16 = word!(game.cur_enemy_index); }
+        call (k, game); default { Unreachable(game); };
+    {
+        10518651 => [()]; 10649723 => [()]; 10652227 => MiniCrocomire_PreInstr5;
+        10652252 => MiniCrocomire_PreInstr6; 10652277 => [()]; 10657722 => SpikeShootingPlant_2;
+        10657772 => SpikeShootingPlant_3; 10657819 => [()]; 10659799 => [()];
+        10659852 => GunshipTop_3; 10660048 => GunshipTop_4; 10660162 => GunshipTop_5;
+        10660176 => GunshipTop_6; 10660231 => GunshipTop_7; 10660285 => GunshipTop_8;
+        10660431 => GunshipTop_9; 10660445 => GunshipTop_10; 10660500 => GunshipTop_11;
+        10660514 => GunshipTop_12; 10660639 => GunshipTop_13; 10660704 => GunshipTop_14;
+        10660718 => GunshipTop_15; 10660773 => GunshipTop_16; 10660807 => GunshipTop_17;
+        10660891 => GunshipTop_18; 10661079 => GunshipTop_19; 10661134 => GunshipTop_20;
+        10661165 => GunshipTop_21; 10662222 => Flies_4; 10662268 => Flies_5; 10662314 => Flies_6;
+        10662354 => Flies_7; 10665692 => NorfairLavajumpingEnemy_Func_1;
+        10665754 => NorfairLavajumpingEnemy_Func_2; 10665790 => NorfairLavajumpingEnemy_Func_3;
+        10665852 => NorfairLavajumpingEnemy_Func_4; 10665916 => NorfairLavajumpingEnemy_Func_5;
+        10666625 => NorfairRio_Func_1; 10666727 => NorfairRio_Func_2; 10666815 => NorfairRio_Func_3;
+        10666849 => NorfairRio_Func_4; 10666929 => NorfairRio_Func_5; 10667014 => NorfairRio_Func_6;
+        10667822 => LowerNorfairRio_Func_1; 10667889 => LowerNorfairRio_Func_2;
+        10667963 => LowerNorfairRio_Func_3; 10667990 => LowerNorfairRio_Func_4;
+        10668077 => LowerNorfairRio_Func_5; 10668168 => LowerNorfairRio_Func_6;
+        10669926 => MaridiaLargeSnail_Func_7; 10669993 => MaridiaLargeSnail_Func_8;
+        10675796 => LavaSeahorse_Func_1; 10675885 => LavaSeahorse_Func_2;
+        10675953 => LavaSeahorse_Func_3; 10676020 => LavaSeahorse_Func_4;
+        10676041 => LavaSeahorse_Func_5; 10676097 => [()]; 10730661 => Bang_Func_6;
+        10730689 => [Bang_Func_7(k)]; 10730693 => Bang_Func_8; 10730780 => Bang_Func_10;
+        10730796 => Bang_Func_11; 10735455 => [()]; 10736051 => MaridiaSnail_Func_15;
+        10739850 => [()]; 10739857 => WreckedShipOrangeZoomer_Func_2; 10741441 => [()];
+        10741448 => FireZoomer_Func_1; 10741637 => FireZoomer_Func_2; 10741746 => FireZoomer_Func_3;
+        10998952 => [()]; 10998953 => Phantoon_Spawn8FireballsInCircleAtStart;
+        10999022 => Phantoon_WaitBetweenSpawningAndSpinningFireballs;
+        10999048 => Phantoon_SpawnFireballsBeforeFight; 10999114 => Phantoon_WavyFadeIn;
+        10999190 => Phantoon_PickPatternForRound1;
+        10999271 => Phantoon_MovePhantoonInFigure8ThenOpenEye;
+        10999309 => Phantoon_EyeFollowsSamusUntilTimerRunsOut;
+        10999388 => Phantoon_BecomesSolidAndBodyVuln; 10999416 => Phantoon_IsSwooping;
+        10999481 => Phantoon_FadeoutWithSwoop; 10999508 => Phantoon_WaitAfterFadeOut;
+        10999522 => Phantoon_MoveLeftOrRightAndPickEyeOpenPatt;
+        10999597 => Phantoon_FadeInBeforeFigure8;
+        10999615 => Phantoon_BecomeSolidAfterRainingFireballs;
+        10999655 => Phantoon_FadeInDuringFireballRain;
+        10999688 => Phantoon_FollowSamusWithEyeDuringFireballRain;
+        10999765 => Phantoon_FadeOutDuringFireballRain; 10999799 => Phantoon_SpawnRainingFireballs;
+        10999850 => Phantoon_FadeOutBeforeFirstFireballRain;
+        10999900 => Phantoon_FadeOutBeforeEnrage;
+        10999924 => Phantoon_MoveEnragedPhantoonToTopCenter;
+        10999953 => Phantoon_FadeInEnragedPhantoon; 10999980 => Phantoon_Enraged;
+        11000086 => Phantoon_FadeoutAfterEnrage; 11000110 => Phantoon_CompleteSwoopAfterFatalShot;
+        11000136 => Phantoon_DyingPhantoonFadeInOut; 11000203 => Phantoon_DyingPhantoonExplosions;
+        11000401 => Phantoon_WavyDyingPhantoonAndCry; 11000454 => Phantoon_DyingFadeOut;
+        11000535 => Phantoon_AlmostDead; 11000637 => Phantoon_Dead; 11004335 => Etecoon_Func_4;
+        11004416 => Etecoon_Func_5; 11004471 => Etecoon_Func_6; 11004597 => Etecoon_Func_7;
+        11004674 => Etecoon_Func_8; 11004716 => Etecoon_Func_9; 11004752 => Etecoon_Func_10;
+        11004877 => Etecoon_Func_11; 11004955 => Etecoon_Func_12; 11005079 => Etecoon_Func_16;
+        11005115 => Etecoon_Func_17; 11005151 => Etecoon_Func_18; 11005193 => Etecoon_Func_19;
+        11005226 => Etecoon_Func_20; 11005268 => Etecoon_Func_21; 11005301 => Etecoon_Func_22;
+        11005383 => Etecoon_Func_23; 11005502 => Etecoon_Func_24; 11005594 => Etecoon_Func_25;
+        11005624 => Etecoon_Func_26; 11007344 => Dachora_Func_2; 11007420 => Dachora_Func_3;
+        11007469 => Dachora_Func_4; 11007582 => Dachora_Func_5; 11007887 => Dachora_Func_7;
+        11008006 => Dachora_Func_8; 11008309 => Dachora_Func_11; 11008396 => Dachora_Func_12;
+        11047153 => MorphBallEye_Func_1; 11047214 => MorphBallEye_Func_2;
+        11047264 => MorphBallEye_Func_3; 11047374 => MorphBallEye_Func_4; 11047388 => [()];
+        11055386 => NorfairLavaMan_Func_7; 11055477 => NorfairLavaMan_Func_8;
+        11055507 => sub_A8B193; 11055544 => NorfairLavaMan_Func_9;
+        11055581 => NorfairLavaMan_Func_10; 11055620 => NorfairLavaMan_Func_11;
+        11055761 => [sub_A8B291(k)]; 11055765 => [NorfairLavaMan_Func_13(game)];
+        11055885 => NorfairLavaMan_Func_15; 11055903 => NorfairLavaMan_Func_16;
+        11055958 => NorfairLavaMan_Func_17; 11056039 => NorfairLavaMan_Func_18;
+        11059843 => MaridiaFloater_Func_3; 11059878 => MaridiaFloater_Func_4;
+        11059919 => MaridiaFloater_Func_5; 11060075 => MaridiaFloater_Func_6;
+        11060193 => MaridiaFloater_Func_7; 11060329 => MaridiaFloater_Func_8;
+        11060444 => MaridiaFloater_Func_9; 11060480 => MaridiaFloater_Func_10;
+        11060509 => MaridiaFloater_Func_11; 11060584 => [()]; 11060585 => MaridiaFloater_Func_12;
+        11060639 => MaridiaFloater_Func_13; 11192670 => [()]; 11197610 => [()]; 11200422 => [()];
+        11174011 => [()]; 11763835 => [()]; 11765888 => BrinstarPipeBug_PreInstr_1;
+        11765904 => BrinstarPipeBug_PreInstr_2; 11765987 => BrinstarPipeBug_PreInstr_3;
+        11766044 => BrinstarPipeBug_PreInstr_4; 11766142 => BrinstarPipeBug_PreInstr_5;
+        11767039 => NorfairPipeBug_Func_5; 11771328 => Botwoon_Func_26; 11771517 => Botwoon_Func_27;
+        11771616 => Botwoon_Func_28; 11771700 => Botwoon_Func_29; 11771770 => Botwoon_Func_30;
+        11192146 => Torizo_Func_5; 11192360 => Torizo_Func_6; 11192364 => Torizo_Func_7;
+        11195885 => Torizo_D5ED; 11195889 => Torizo_D5F1; 11199557 => sub_AAE445;
+        11200430 => Shaktool_PreInstr_0; 11200474 => [()]; 11789916 => EscapeEtecoon_E65C;
+        11789936 => EscapeEtecoon_E670; 11789952 => EscapeEtecoon_E680; 10740072 => sub_A3E168;
+        10735456 => MaridiaSnail_Func_7; 10735526 => MaridiaSnail_Func_9;
+        10735543 => MaridiaSnail_CFB7; 10735549 => MaridiaSnail_CFBD; 10735566 => MaridiaSnail_CFCE;
+        10735572 => MaridiaSnail_CFD4; 10735589 => MaridiaSnail_CFE5; 10735595 => MaridiaSnail_CFEB;
+        10735612 => MaridiaSnail_CFFC; 11197611 => [()]; 11197612 => Shaktool_DCAC;
+        11197655 => Shaktool_DCD7; 11197733 => Shaktool_DD25;
     }
 }
 crate::game::address_dispatch! {

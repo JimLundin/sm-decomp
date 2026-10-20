@@ -4675,18 +4675,14 @@ pub unsafe fn CeresDoor_Func_1(k: u16, game: &mut Game) {
         word!(game.vram_write_queue_tail = (v1).wrapping_add(7));
     }
 }
-pub unsafe fn CallCeresDoor(ea: u32, game: &mut Game) {
-    let k: u16 = word!(game.cur_enemy_index);
-    match ea {
-        10942315 => CeresDoor_Func_2(game),
-        10942320 => CeresDoor_Func_3(game),
-        10942373 => CeresDoor_Func_4(game),
-        10942397 => CeresDoor_Func_5(k, game),
-        10942428 => CeresDoor_Func_6(k, game),
-        10942544 => CeresDoor_Func_7(game),
-        _ => {
-            Unreachable(game);
-        }
+crate::game::address_dispatch! {
+    pub unsafe fn CallCeresDoor(ea: u32, game: &mut Game) => ea;
+        setup { let k: u16 = word!(game.cur_enemy_index); }
+        call (game); default { Unreachable(game); };
+    {
+        10942315 => CeresDoor_Func_2; 10942320 => CeresDoor_Func_3; 10942373 => CeresDoor_Func_4;
+        10942397 => [CeresDoor_Func_5(k, game)]; 10942428 => [CeresDoor_Func_6(k, game)];
+        10942544 => CeresDoor_Func_7;
     }
 }
 pub unsafe fn CeresDoor_Main(game: &mut Game) {
