@@ -938,9 +938,9 @@ pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
     while (*ET).enemy_def != 0xffff {
         let ED = get_EnemyDef_A2((*ET).enemy_def, game);
         memcpy(
-            (ram_ptr!(game, u16; 0xc200)).offset(
-                ((*(&raw mut (*ET).vram_dst as *mut u8).offset(0) as i32 + 8) * 16) as isize,
-            ) as *mut c_void,
+            (ram_ptr!(game, u16; 0xc200))
+                .offset(((byte!((*ET).vram_dst; 0) as i32 + 8) * 16) as isize)
+                as *mut c_void,
             RomPtrWithBank((*ED).bank, (*ED).palette_ptr, game) as *const c_void,
             32 as size_t,
         );
@@ -2007,7 +2007,7 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
                 x = (x2).wrapping_add((*ext).xpos);
                 y = (y2).wrapping_add((*ext).ypos);
                 if (x as i32 + 128 & 0xfe00) == 0 && (y as i32 + 128 & 0xfe00) == 0 {
-                    if *(&raw mut y as *mut u8).offset(1) != 0 {
+                    if byte!(y; 1) != 0 {
                         DrawSpritemapWithBaseTileOffscreen(
                             (*E).bank,
                             (*ext).spritemap,
@@ -2176,9 +2176,9 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
             && word!(game.eproj_radius[i]) != 0
         {
             let varE20: u16 =
-                *((ram_ptr!(game, u16; 0x1bb3)).offset(i as isize) as *mut u8).offset(0) as u16;
+                byte!(@pointer (ram_ptr!(game, u16; 0x1bb3)).offset(i as isize); 0) as u16;
             let varE22: u16 =
-                *((ram_ptr!(game, u16; 0x1bb3)).offset(i as isize) as *mut u8).offset(1) as u16;
+                byte!(@pointer (ram_ptr!(game, u16; 0x1bb3)).offset(i as isize); 1) as u16;
             if (abs16((word!(game.samus_x_pos)).wrapping_sub(word!(game.eproj_x_pos[i]))) as i32
                 - word!(game.samus_x_radius) as i32)
                 < varE20 as i32
@@ -2765,7 +2765,7 @@ pub unsafe fn EnemyBombCollHandler(game: &mut Game) {
 }
 pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
     word!(game.enemy_processing_stage = 5);
-    let rx: u16 = *(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(1) as u16;
+    let rx: u16 = byte!(@pointer ram_ptr!(game, u16; 0xcea); 1) as u16;
     let ry: u16 = (rx as i32 + (rx as i32 >> 1) >> 1) as u16;
     let mut i: i32 = 0x7c0;
     while rx != 0 && i >= 0 {
@@ -2972,10 +2972,9 @@ pub unsafe fn NormalEnemyShotAi(game: &mut Game) {
         CreateSpriteAtPos((*E).x_pos, (*E).y_pos, 55, 0, game);
     }
     if (*E).health == 0 {
-        let j: u16 = ((*((ram_ptr!(game, u16; 0xc18))
-            .offset(word!(game.collision_detection_index) as isize)
-            as *mut u8)
-            .offset(1)) as u16)
+        let j: u16 = ((byte!(@pointer (ram_ptr!(game, u16; 0xc18))
+            .offset(word!(game.collision_detection_index) as isize); 1))
+            as u16)
             & (0xfu16);
         (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).cause_of_death = j;
         let mut death_anim: u16 = 2;
@@ -4264,8 +4263,7 @@ pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
                 } else {
                     (*E).x_pos as i32
                 }) as u16;
-            let v4: i16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *mut u8)
-                .offset((temp_collision_DD6 as i32 + (j as i32 & 0xf)) as isize)
+            let v4: i16 = ((byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)); (temp_collision_DD6 as i32 + (j as i32 & 0xf)) as isize)
                 as i32
                 & 0x1f)
                 - temp_collision_DD4 as i32
@@ -4292,8 +4290,7 @@ pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
                 } else {
                     (*E).x_pos as i32
                 }) as u16;
-            let v7: i16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *mut u8)
-                .offset((temp_collision_DD6_0 as i32 + (j_0 as i32 & 0xf)) as isize)
+            let v7: i16 = ((byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)); (temp_collision_DD6_0 as i32 + (j_0 as i32 & 0xf)) as isize)
                 as i32
                 & 0x1f)
                 - temp_collision_DD4_0 as i32

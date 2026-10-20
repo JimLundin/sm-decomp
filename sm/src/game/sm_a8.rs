@@ -260,19 +260,17 @@ pub unsafe fn MiniDraygon_Init(game: &mut Game) {
         (*E).base.layer = 4;
     } else {
         MiniDraygon_Func_1(game);
-        let v2: u16 =
-            (8u16).wrapping_mul((*(&raw mut (*E).parameter_2 as *mut u8).offset(0)) as u16);
+        let v2: u16 = (8u16).wrapping_mul((byte!((*E).parameter_2; 0)) as u16);
         let v3: i32 = v2 as i32 >> 1;
         (*E).var_04 = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
         (*E).var_03 = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize);
         (*E).var_06 = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize);
         (*E).var_05 = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3) as isize);
-        (*E).var_E = (*(&raw mut (*(Get_MiniDraygon
+        (*E).var_E = (byte!((*(Get_MiniDraygon
             as unsafe fn(i32, &mut Game) -> *mut Enemy_MiniDraygon)(
             v2 as i32, game
         ))
-        .parameter_2 as *mut u8)
-            .offset(1)
+        .parameter_2; 1)
             >> 1) as u16;
     }
     set_fields! {[(*E)], 0; var_00, var_01}
@@ -366,7 +364,7 @@ pub unsafe fn MiniDraygon_Func_5(game: &mut Game) {
     }
     (*E).var_E = (*E).var_E.wrapping_sub(1);
     if ((*E).var_E & 0x8000) != 0 {
-        (*E).var_E = *(&raw mut (*E).parameter_2 as *mut u8).offset(1) as u16;
+        (*E).var_E = byte!((*E).parameter_2; 1) as u16;
         (*E).var_00 = ((*E).var_00) ^ (1u16);
     }
 }
@@ -681,8 +679,8 @@ pub unsafe fn Fune_Init(game: &mut Game) {
         (*E).var_A = ((*E).var_A).wrapping_add(2);
     }
     Fune_Func_4(game);
-    (*E).var_C = *(&raw mut (*E).parameter_2 as *mut u8).offset(1) as u16;
-    (*E).var_F = *(&raw mut (*E).parameter_1 as *mut u8).offset(1) as u16;
+    (*E).var_C = byte!((*E).parameter_2; 1) as u16;
+    (*E).var_F = byte!((*E).parameter_1; 1) as u16;
     (*E).var_E = 0;
 }
 crate::game::address_dispatch! {
@@ -1360,9 +1358,9 @@ pub unsafe fn YappingMaw_Func_17(a: u16, varE32: u16, game: &mut Game) -> u16 {
         v1 = -(v1 as i32) as i16;
         r20 = r20.wrapping_add(1);
     }
-    WriteReg(WRMPYA as u16, *(&raw mut v1 as *mut u8).offset(1), game);
+    WriteReg(WRMPYA as u16, byte!(v1; 1), game);
     if varE32 as u8 != 0 {
-        let prod: u16 = Mult8x8(*(&raw mut v1 as *mut u8).offset(1), varE32 as u8);
+        let prod: u16 = Mult8x8(byte!(v1; 1), varE32 as u8);
         r22 = (2 * ((prod as i32 & 0xff00) >> 8)) as u16;
         if r20 != 0 {
             r22 = (2 * (-(prod as i32) as u16 as i32 >> 8) | 0xff00) as u16;
@@ -1640,7 +1638,7 @@ pub unsafe fn NorfairLavaMan_Func_3(game: &mut Game) {
 }
 pub unsafe fn NorfairLavaMan_Func_4(game: &mut Game) {
     let E = Get_NorfairLavaMan(word!(game.cur_enemy_index) as i32, game);
-    let v1: i32 = 8 * *(&raw mut (*E).parameter_2 as *mut u8).offset(1) as i32 >> 1;
+    let v1: i32 = 8 * byte!((*E).parameter_2; 1) as i32 >> 1;
     (*E).var_08 = crate::rtl::rom_table_word!(game, 0xa28187, v1 as isize);
     (*E).var_07 = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 1) as isize);
     (*E).var_0A = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 2) as isize);
@@ -1704,7 +1702,7 @@ pub unsafe fn NorfairLavaMan_Func_7(k: u16, game: &mut Game) {
         (*E2).var_04 = 0;
         if IsSamusWithinEnemy_X(
             word!(game.cur_enemy_index),
-            *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as u16,
+            byte!((*E).parameter_2; 0) as u16,
             game,
         ) != 0
         {
@@ -4340,22 +4338,14 @@ pub unsafe fn KiHunter_Func_11(game: &mut Game) {
     let E = Get_KiHunter(word!(game.cur_enemy_index) as i32, game);
     (*E).var_F = ((*E).var_F).wrapping_add(
         *(((game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *mut u16).offset(2) as *mut u8)
-            .offset((8i32 * *(&raw mut (*E).var_B as *mut u8).offset(1isize) as i32) as isize)
+            .offset((8i32 * byte!((*E).var_B; 1isize) as i32) as isize)
             .offset(1) as *mut u16),
     );
     (*E).base.y_pos = ((*E).var_06 as i32
-        + SineMult8bit(
-            *(&raw mut (*E).var_F as *mut u8).offset(1) as u16,
-            g_byte_A8F186 as u16,
-            game,
-        ) as i32
+        + SineMult8bit(byte!((*E).var_F; 1) as u16, g_byte_A8F186 as u16, game) as i32
         - (*E).var_04 as i32) as u16;
     (*E).base.x_pos = ((*E).var_05 as i32
-        + CosineMult8bit(
-            *(&raw mut (*E).var_F as *mut u8).offset(1) as u16,
-            g_byte_A8F186 as u16,
-            game,
-        ) as i32
+        + CosineMult8bit(byte!((*E).var_F; 1) as u16, g_byte_A8F186 as u16, game) as i32
         - (*E).var_03 as i32) as u16;
     if (*E).var_F as i32 + 0x4000 & 0x8000 != 0 {
         KiHunter_Func_16(word!(game.cur_enemy_index), game);
@@ -4384,15 +4374,11 @@ pub unsafe fn KiHunter_Func_14(game: &mut Game) {
     let E = Get_KiHunter(word!(game.cur_enemy_index) as i32, game);
     (*E).var_F = ((*E).var_F).wrapping_add(
         *((game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *mut u16 as *mut u8)
-            .offset((8i32 * *(&raw mut (*E).var_B as *mut u8).offset(1isize) as i32) as isize)
+            .offset((8i32 * byte!((*E).var_B; 1isize) as i32) as isize)
             .offset(1) as *mut u16),
     );
     let r20: u16 = ((*E).var_06 as i32
-        + SineMult8bit(
-            *(&raw mut (*E).var_F as *mut u8).offset(1) as u16,
-            g_byte_A8F186 as u16,
-            game,
-        ) as i32
+        + SineMult8bit(byte!((*E).var_F; 1) as u16, g_byte_A8F186 as u16, game) as i32
         - (*E).var_02 as i32
         - (*E).base.y_pos as i32) as u16;
     if Enemy_MoveDown(word!(game.cur_enemy_index), (r20 as i16 as i32) << 16, game) != 0 {
@@ -4402,11 +4388,7 @@ pub unsafe fn KiHunter_Func_14(game: &mut Game) {
         (*E).base.y_pos = khr_var_07 as u16;
     } else {
         (*E).base.x_pos = ((*E).var_05 as i32
-            + CosineMult8bit(
-                *(&raw mut (*E).var_F as *mut u8).offset(1) as u16,
-                g_byte_A8F186 as u16,
-                game,
-            ) as i32
+            + CosineMult8bit(byte!((*E).var_F; 1) as u16, g_byte_A8F186 as u16, game) as i32
             - (*E).var_01 as i32) as u16;
         if (*E).var_F as i32 + 0x4000 & 0x8000 == 0 {
             KiHunter_Func_15(word!(game.cur_enemy_index), game);

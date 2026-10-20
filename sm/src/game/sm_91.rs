@@ -1321,19 +1321,18 @@ pub unsafe fn XrayRunHandler(game: &mut Game) {
     }
 }
 pub unsafe fn Xray_SetupStage1_FreezeTimeBackup(k: u16, game: &mut Game) {
-    *(ram_ptr!(game, u16; 0xa78) as *mut u8).offset(0) = 1;
-    *(ram_ptr!(game, u16; 0x1914) as *mut u8).offset(k as u8 as i32 as isize) =
+    byte!(@pointer ram_ptr!(game, u16; 0xa78); 0) = 1;
+    byte!(@pointer ram_ptr!(game, u16; 0x1914); k as u8 as i32 as isize) =
         word!(game.reg_BG2HOFS) as u8;
     *(ram_ptr!(game, u16; 0x1914) as *mut u8)
         .offset(k as u8 as i32 as isize)
-        .offset(1) = *(ram_ptr!(game, u16; 0xb5) as *mut u8).offset(1);
-    *(ram_ptr!(game, u16; 0x1920) as *mut u8).offset(k as u8 as i32 as isize) =
+        .offset(1) = byte!(@pointer ram_ptr!(game, u16; 0xb5); 1);
+    byte!(@pointer ram_ptr!(game, u16; 0x1920); k as u8 as i32 as isize) =
         word!(game.reg_BG2VOFS) as u8;
     *(ram_ptr!(game, u16; 0x1920) as *mut u8)
         .offset(k as u8 as i32 as isize)
-        .offset(1) = *(ram_ptr!(game, u16; 0xb7) as *mut u8).offset(1);
-    *(ram_ptr!(game, u16; 0x192c) as *mut u8).offset(k as u8 as i32 as isize) =
-        *ram_ptr!(game; 0x59);
+        .offset(1) = byte!(@pointer ram_ptr!(game, u16; 0xb7); 1);
+    byte!(@pointer ram_ptr!(game, u16; 0x192c); k as u8 as i32 as isize) = *ram_ptr!(game; 0x59);
 }
 pub unsafe fn Xray_SetupStage2_ReadBg1_2ndScreen(game: &mut Game) {
     let v0: u16 = word!(game.vram_read_queue_tail);
@@ -2124,7 +2123,7 @@ pub unsafe fn HandleVisorPalette(game: &mut Game) -> u8 {
                 (*(&raw mut v1 as *mut u8).offset(1,) >> 1) as isize,
             )
         );
-        let v2: i32 = *(&raw mut v1 as *mut u8).offset(1) as i32 + 2;
+        let v2: i32 = byte!(v1; 1) as i32 + 2;
         if v2 - 12i32 & 0x8000 != 0 {
             word!(
                 game.samus_visor_palette_timer_index = (u16::swap_bytes(v2 as u16))
@@ -3109,9 +3108,8 @@ static off_91E951: [Option<Func_U8>; 6] = callback_table! { unsafe Func_U8;
     Samus_HandleTransFromBlockColl_1_5,
 };
 pub unsafe fn Samus_HandleTransFromBlockColl_2(game: &mut Game) {
-    if *(ram_ptr!(game, u16; 0xdc6) as *mut u8).offset(1) != 4 {
-        let v0: u16 =
-            (4u16).wrapping_mul((*(ram_ptr!(game, u16; 0xdc6) as *mut u8).offset(1)) as u16);
+    if byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1) != 4 {
+        let v0: u16 = (4u16).wrapping_mul((byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1)) as u16);
         if *ram_ptr!(game; 0xa1e) == 4 {
             word!(
                 game.samus_new_pose =
@@ -3127,8 +3125,8 @@ pub unsafe fn Samus_HandleTransFromBlockColl_2(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_HandleTransFromBlockColl_1(game: &mut Game) {
-    if *(ram_ptr!(game, u16; 0xdc6) as *mut u8).offset(1) != 4 {
-        if off_91E951[*(ram_ptr!(game, u16; 0xdc6) as *mut u8).offset(1isize) as usize]
+    if byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1) != 4 {
+        if off_91E951[byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1isize) as usize]
             .expect("non-null function pointer")(game)
             & 1
             != 0
@@ -3689,10 +3687,10 @@ static kSamus_HandleTransitionsA_5_1: [Option<Func_U8>; 6] = callback_table! { u
 };
 pub unsafe fn Samus_HandleTransitionsA_5_1(game: &mut Game) {
     HandleLandingSoundEffectsAndGfx(game);
-    if *(ram_ptr!(game, u16; 0xdc6) as *mut u8).offset(1) == 4 {
+    if byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1) == 4 {
         SamusFunc_F1D3(game);
     } else if kSamus_HandleTransitionsA_5_1
-        [*(ram_ptr!(game, u16; 0xdc6) as *mut u8).offset(1isize) as usize]
+        [byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1isize) as usize]
         .expect("non-null function pointer")(game)
         & 1
         == 0

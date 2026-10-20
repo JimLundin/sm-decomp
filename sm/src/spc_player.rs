@@ -618,11 +618,9 @@ unsafe fn Music_ResetChan(p: *mut SpcPlayer) {
     let mut c = (&raw mut (*p).channel as *mut Channel).offset(7);
     (*p).cur_chan_bit = 0x80;
     loop {
-        *(&raw mut (*c).channel_volume as *mut u8).offset(
-            (size_of::<u16>() as usize)
+        byte!((*c).channel_volume; (size_of::<u16>() as usize)
                 .wrapping_div(size_of::<u8>() as usize)
-                .wrapping_sub(1_) as isize,
-        ) = 0xff;
+                .wrapping_sub(1_) as isize) = 0xff;
         (*c).pan_flag_with_phase_invert = 10;
         (*c).pan_value = ((10i32) << 8) as u16;
         set_fields! {[(*c)], 0; instrument_id, fine_tune, channel_transposition, pitch_envelope_num_ticks, cutk, vib_depth, tremolo_depth}
@@ -638,11 +636,9 @@ unsafe fn Music_ResetChan(p: *mut SpcPlayer) {
             .wrapping_div(size_of::<u8>() as usize)
             .wrapping_sub(1_) as isize,
     ) = 0xc0;
-    *(&raw mut (*p).tempo as *mut u8).offset(
-        (size_of::<u16>() as usize)
+    byte!((*p).tempo; (size_of::<u16>() as usize)
             .wrapping_div(size_of::<u8>() as usize)
-            .wrapping_sub(1_) as isize,
-    ) = 0x20;
+            .wrapping_sub(1_) as isize) = 0x20;
 }
 unsafe fn Channel_SetInstrument_NoSetId(p: *mut SpcPlayer, c: *mut Channel, mut instrument: u8) {
     if instrument & 0x80 != 0 {
@@ -1113,11 +1109,10 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                         c = &raw mut (*p).channel as *mut Channel;
                         (*p).cur_chan_bit = 1;
                         loop {
-                            if *(&raw mut (*c).pattern_order_ptr_for_chan as *mut u8).offset(
-                                (size_of::<u16>() as usize)
+                            if byte!((*c).pattern_order_ptr_for_chan; (size_of::<u16>() as usize)
                                     .wrapping_div(size_of::<u8>() as usize)
-                                    .wrapping_sub(1_) as isize,
-                            ) as i32
+                                    .wrapping_sub(1_) as isize)
+                                as i32
                                 != 0
                                 && (*c).instrument_id as i32 == 0
                             {
@@ -1160,11 +1155,10 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                     c = &raw mut (*p).channel as *mut Channel;
                     (*p).cur_chan_bit = 1;
                     loop {
-                        if (*(&raw mut (*c).pattern_order_ptr_for_chan as *mut u8).offset(
-                            (size_of::<u16>() as usize)
+                        if (byte!((*c).pattern_order_ptr_for_chan; (size_of::<u16>() as usize)
                                 .wrapping_div(size_of::<u8>() as usize)
-                                .wrapping_sub(1_) as isize,
-                        ) != 0)
+                                .wrapping_sub(1_) as isize)
+                            != 0)
                         {
                             (*c).note_ticks_left = (*c).note_ticks_left.wrapping_sub(1);
                             if (*c).note_ticks_left == 0 {
@@ -1268,11 +1262,10 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                     c = &raw mut (*p).channel as *mut Channel;
                     (*p).cur_chan_bit = 1;
                     loop {
-                        if *(&raw mut (*c).pattern_order_ptr_for_chan as *mut u8).offset(
-                            (size_of::<u16>() as usize)
+                        if byte!((*c).pattern_order_ptr_for_chan; (size_of::<u16>() as usize)
                                 .wrapping_div(size_of::<u8>() as usize)
-                                .wrapping_sub(1_) as isize,
-                        ) != 0
+                                .wrapping_sub(1_) as isize)
+                            != 0
                         {
                             Chan_HandleTick(p, c);
                         }
@@ -1356,11 +1349,9 @@ unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
     }
     t = (*p).main_tempo_accum as i32
         + (ticks as i32
-            * *(&raw mut (*p).tempo as *mut u8).offset(
-                (size_of::<u16>() as usize)
+            * byte!((*p).tempo; (size_of::<u16>() as usize)
                     .wrapping_div(size_of::<u8>() as usize)
-                    .wrapping_sub(1_) as isize,
-            ) as i32) as u8 as i32;
+                    .wrapping_sub(1_) as isize) as i32) as u8 as i32;
     (*p).main_tempo_accum = t as u8;
     if t >= 256 {
         loop {
@@ -1373,11 +1364,10 @@ unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
         let mut c = &raw mut (*p).channel as *mut Channel;
         (*p).cur_chan_bit = 1;
         while (*p).cur_chan_bit as i32 != 0 {
-            if *(&raw mut (*c).pattern_order_ptr_for_chan as *mut u8).offset(
-                (size_of::<u16>() as usize)
+            if byte!((*c).pattern_order_ptr_for_chan; (size_of::<u16>() as usize)
                     .wrapping_div(size_of::<u8>() as usize)
-                    .wrapping_sub(1_) as isize,
-            ) != 0
+                    .wrapping_sub(1_) as isize)
+                != 0
             {
                 HandlePanAndSweep(p, c);
             }
@@ -1424,11 +1414,9 @@ unsafe fn Vector_Reset_Spc(p: *mut SpcPlayer) {
     Dsp_Write(p, MVOLL as i32 as u8, 0x60);
     Dsp_Write(p, MVOLR as i32 as u8, 0x60);
     Dsp_Write(p, DIR as i32 as u8, 0x6d);
-    *(&raw mut (*p).tempo as *mut u8).offset(
-        (size_of::<u16>() as usize)
+    byte!((*p).tempo; (size_of::<u16>() as usize)
             .wrapping_div(size_of::<u8>() as usize)
-            .wrapping_sub(1_) as isize,
-    ) = 16;
+            .wrapping_sub(1_) as isize) = 16;
     (*p).timer_cycles = 0;
 }
 pub unsafe fn Sfx_Chan_Reset(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) {

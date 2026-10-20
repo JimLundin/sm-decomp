@@ -1286,11 +1286,11 @@ pub unsafe fn Shaktool_DC07(k: u16, game: &mut Game) {
     } else {
         v2 = ((*E).var_A).wrapping_sub((*E).var_B);
     }
-    (*E).var_C = (4u16).wrapping_mul((*(&raw mut v2 as *mut u8).offset(1)) as u16);
+    (*E).var_C = (4u16).wrapping_mul((byte!(v2; 1)) as u16);
 }
 pub unsafe fn Shaktool_DC2A(k: u16, game: &mut Game) {
     let E = Get_Shaktool(k as i32, game);
-    let v3: i32 = *(&raw mut (*E).var_B as *mut u8).offset(1) as i32;
+    let v3: i32 = byte!((*E).var_B; 1) as i32;
     let v5: i32 = k as i32 >> 1;
     SetHiLo(
         &raw mut (*E).base.x_pos,
@@ -1354,8 +1354,8 @@ pub unsafe fn Shaktool_DCD7(k: u16, game: &mut Game) {
     if ((*E).var_D & 0x8000) != 0 {
         crate::update_place! { reference fresh2 = *(&raw mut v2 as *mut u8).offset(1) => (*fresh2) ^ (0x80u8); }
     }
-    let v3: u16 = (*(&raw mut v2 as *mut u8).offset(1) as i32 + 8 & 0xe0) as u16;
-    *(&raw mut (*E).var_D as *mut u8).offset(0) = v3 as u8;
+    let v3: u16 = (byte!(v2; 1) as i32 + 8 & 0xe0) as u16;
+    byte!((*E).var_D; 0) = v3 as u8;
     enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(
         game,
         0xaadd15,
@@ -1430,7 +1430,7 @@ pub unsafe fn Shaktool_DD25(mut k: u16, game: &mut Game) {
                 Shaktool_DC6F(k, game);
                 (*E).var_D = 30720;
                 Shaktool_DB0E(k, ((*E).parameter_1) & (0xdfffu16), game);
-                (*E).var_D = ((*(&raw mut (*E).var_D as *mut u8).offset(1) as i32) << 8) as u16;
+                (*E).var_D = ((byte!((*E).var_D; 1) as i32) << 8) as u16;
             }
             let v2: u16 = ((*E).var_D).wrapping_add((*E).var_C);
             (*E).var_D = v2;

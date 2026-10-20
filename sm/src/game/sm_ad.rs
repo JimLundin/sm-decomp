@@ -37,7 +37,7 @@ static funcs_BE56D: [Option<Func_V>; 16] = callback_table! { unsafe Func_V;
 pub unsafe fn MotherBrain_CalcHdma(game: &mut Game) {
     let E = Get_MotherBrain(0, game);
     let E1 = Get_MotherBrain(0x40, game);
-    let mut r18: u16 = (*(&raw mut (*E).var_33 as *mut u8).offset(1) >> 1) as u16;
+    let mut r18: u16 = (byte!((*E).var_33; 1) >> 1) as u16;
     (*E).var_3A = ((*E).var_31).wrapping_sub(r18);
     (*E).var_3B = (r18).wrapping_add((*E).var_31);
     let v2: u16 = (*((&raw mut (*E1).base.enemy_ptr as *mut u8).offset(1) as *mut u16) as i32
@@ -92,7 +92,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, ga
         }
         r24 = (r24).wrapping_add(r20);
         crate::update_place! { previous fresh11 = v2 => v2.offset(-1); }
-        *fresh11 = ((*(&raw mut v4 as *mut u8).offset(1)) as u16) | (0xff00u16);
+        *fresh11 = ((byte!(v4; 1)) as u16) | (0xff00u16);
         mbn_var_3F = mbn_var_3F.wrapping_sub(1);
         if (mbn_var_3F == 32) {
             break;
@@ -115,7 +115,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, ga
         }
         r22 = (r22).wrapping_add(r18);
         crate::update_place! { previous fresh13 = v5 => v5.offset(1); }
-        *fresh13 = ((*(&raw mut v7 as *mut u8).offset(1)) as u16) | (0xff00u16);
+        *fresh13 = ((byte!(v7; 1)) as u16) | (0xff00u16);
         var_3F = var_3F.wrapping_add(1);
         if var_3F == 232 {
             return;

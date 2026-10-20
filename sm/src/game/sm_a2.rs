@@ -1548,8 +1548,8 @@ pub unsafe fn ThinHoppingBlobs_Func15(game: &mut Game) {
         .offset(thbs_var_F as i32 as isize) as *mut u16) as i32
         & 0xff00)
         >> 8) as u16;
-    let R18: u16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0xa29a0b)) as *mut u16 as *mut u8)
-        .offset(thbs_var_F as i32 as isize) as i32)
+    let R18: u16 = ((byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0xa29a0b)) as *mut u16; thbs_var_F as i32 as isize)
+        as i32)
         << 8) as u16;
     if Enemy_MoveDown(
         word!(game.cur_enemy_index),
@@ -1578,20 +1578,20 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
 pub unsafe fn SpikeShootingPlant_Init(game: &mut Game) {
     let E = Get_SpikeShootingPlant(word!(game.cur_enemy_index) as i32, game);
     (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16;
-    if *(&raw mut (*E).parameter_1 as *mut u8).offset(1) != 0 {
+    if byte!((*E).parameter_1; 1) != 0 {
         SpikeShootingPlant_5(game);
     } else {
         SpikeShootingPlant_7(game);
     }
-    let sspt_parameter_1_low: u16 = *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16;
+    let sspt_parameter_1_low: u16 = byte!((*E).parameter_1; 0) as u16;
     (*E).var_E = sspt_parameter_1_low;
     (*E).var_F = crate::rtl::rom_table_word!(game, 0xa29f42, sspt_parameter_1_low as isize);
-    let v2: i32 = *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as i32;
+    let v2: i32 = byte!((*E).parameter_2; 0) as i32;
     (*E).var_01 =
         (crate::rtl::rom_table_word!(game, 0xa29f36, v2 as isize)).wrapping_add((*E).base.x_pos);
     (*E).var_00 =
         ((*E).base.x_pos).wrapping_sub(crate::rtl::rom_table_word!(game, 0xa29f36, v2 as isize));
-    let v3: i32 = 8 * *(&raw mut (*E).parameter_2 as *mut u8).offset(1) as i32 >> 1;
+    let v3: i32 = 8 * byte!((*E).parameter_2; 1) as i32 >> 1;
     (*E).var_B = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
     (*E).var_A = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize);
     (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize);
@@ -1630,14 +1630,13 @@ pub unsafe fn SpikeShootingPlant_3(k: u16, game: &mut Game) {
 pub unsafe fn SpikeShootingPlant_4(game: &mut Game) {
     NextRandom(game);
     let E = Get_SpikeShootingPlant(word!(game.cur_enemy_index) as i32, game);
-    if ((*(&raw mut (*E).base.frame_counter as *mut u8).offset(0))
-        .wrapping_add((word!(game.random_number)) as u8)) as i32
+    if ((byte!((*E).base.frame_counter; 0)).wrapping_add((word!(game.random_number)) as u8)) as i32
         - 3i32
         & 0x8000
         != 0
     {
         (*E).var_F = ((0xa2a01bi32) as u16);
-        if *(&raw mut (*E).parameter_1 as *mut u8).offset(1) != 0 {
+        if byte!((*E).parameter_1; 1) != 0 {
             SpikeShootingPlant_6(game);
         } else {
             SpikeShootingPlant_8(game);
@@ -1688,17 +1687,17 @@ static off_A2A3D3: [Option<Func_V>; 7] = callback_table! { unsafe Func_V;
 pub unsafe fn MaridiaSpikeyShell_Init(game: &mut Game) {
     let E = Get_MaridiaSpikeyShell(word!(game.cur_enemy_index) as i32, game);
     (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16;
-    let mssl_parameter_1_low: u16 = *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16;
+    let mssl_parameter_1_low: u16 = byte!((*E).parameter_1; 0) as u16;
     (*E).var_E = mssl_parameter_1_low;
     off_A2A3D3[(mssl_parameter_1_low as i32 & 1i32) as usize].expect("non-null function pointer")(
         game,
     );
-    let v3: i32 = 4 * *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as i32;
+    let v3: i32 = 4 * byte!((*E).parameter_2; 0) as i32;
     (*E).var_B = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
     (*E).var_A = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize);
     (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize);
     (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3) as isize);
-    let v4: i32 = *(&raw mut (*E).parameter_2 as *mut u8).offset(1) as i32;
+    let v4: i32 = byte!((*E).parameter_2; 1) as i32;
     (*E).var_02 =
         (crate::rtl::rom_table_word!(game, 0xa2a3dd, v4 as isize)).wrapping_add((*E).base.x_pos);
     (*E).var_01 =
@@ -1780,14 +1779,13 @@ pub unsafe fn MaridiaSpikeyShell_7(game: &mut Game) {
     (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
     crate::update_place! { previous fresh29 = (*E).var_F => (*E).var_F.wrapping_sub(1); }
     if fresh29 == 1 {
-        (*E).var_E = ((*(ram_ptr!(game, u16; 0x5e5) as *mut u8).offset(1)) as u16) & (1u16);
+        (*E).var_E = ((byte!(@pointer ram_ptr!(game, u16; 0x5e5); 1)) as u16) & (1u16);
     }
 }
 pub unsafe fn MaridiaSpikeyShell_8(k: u16, game: &mut Game) {
     NextRandom(game);
     let E = Get_MaridiaSpikeyShell(k as i32, game);
-    if ((*(&raw mut (*E).base.frame_counter as *mut u8).offset(0))
-        .wrapping_add((word!(game.random_number)) as u8)) as i32
+    if ((byte!((*E).base.frame_counter; 0)).wrapping_add((word!(game.random_number)) as u8)) as i32
         - 6i32
         & 0x8000
         != 0
@@ -1888,10 +1886,10 @@ pub unsafe fn GunshipTop_1(k: u16, game: &mut Game) {
     let v4: bool = ((*E0).var_D & 0x8000) != 0;
     if v3 as i32 != 0 || v4 as i32 != 0 {
         let v5: u16 = (2u16).wrapping_mul((*E0).var_C);
-        (*E0).var_D = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2a7cf)) as *mut u8)
-            .offset(v5 as isize) as u16;
-        let v6: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2a7cf)) as *mut u8)
-            .offset((v5 as i32 + 1) as isize) as i8 as u16;
+        (*E0).var_D = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0xa2a7cf)); v5 as isize)
+            as u16;
+        let v6: u16 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0xa2a7cf)); (v5 as i32 + 1) as isize)
+            as i8 as u16;
         (*E0).base.y_pos = ((*E0).base.y_pos).wrapping_add(v6);
         let E1 = Get_GunshipTop(k as i32 + 64, game);
         (*E1).base.y_pos = ((*E1).base.y_pos).wrapping_add(v6);
@@ -2289,43 +2287,39 @@ pub unsafe fn Flies_1(k: u16, game: &mut Game) {
     let v2: i32 = (*E).var_E as i32 >> 1;
     let mut carry: bool = CarryAdd16(
         &raw mut (*E).base.x_subpos,
-        ((*((&raw const kSinCosTable8bit_Sext as *const i16).offset((v2 + 64i32) as isize)
-            as *mut u8)
-            .offset(0) as i32)
+        ((byte!(@pointer (&raw const kSinCosTable8bit_Sext as *const i16).offset((v2 + 64i32) as isize); 0)
+            as i32)
             << 8) as u16,
     );
     (*E).base.x_pos = ((*E).base.x_pos as i32
-        + (*((&raw const kSinCosTable8bit_Sext as *const i16).offset((v2 + 64i32) as isize)
-            as *mut u8)
-            .offset(1) as i8 as i32
+        + (byte!(@pointer (&raw const kSinCosTable8bit_Sext as *const i16).offset((v2 + 64i32) as isize); 1)
+            as i8 as i32
             + carry as i32)) as u16;
     carry = CarryAdd16(
         &raw mut (*E).base.y_subpos,
-        ((*((&raw const kSinCosTable8bit_Sext as *const i16).offset(v2 as isize) as *mut u8)
-            .offset(0) as i32)
+        ((byte!(@pointer (&raw const kSinCosTable8bit_Sext as *const i16).offset(v2 as isize); 0)
+            as i32)
             << 8) as u16,
     );
     (*E).base.y_pos = ((*E).base.y_pos as i32
-        + (*((&raw const kSinCosTable8bit_Sext as *const i16).offset(v2 as isize) as *mut u8)
-            .offset(1) as i8 as i32
+        + (byte!(@pointer (&raw const kSinCosTable8bit_Sext as *const i16).offset(v2 as isize); 1)
+            as i8 as i32
             + carry as i32)) as u16;
 }
 pub unsafe fn Flies_2(k: u16, game: &mut Game) -> u16 {
     let E = Get_Flies(k as i32, game);
     let mut carry: bool = CarryAdd16(
         &raw mut (*E).base.x_subpos,
-        ((*(&raw mut (*E).var_B as *mut u8).offset(0) as i32) << 8) as u16,
+        ((byte!((*E).var_B; 0) as i32) << 8) as u16,
     );
-    (*E).base.x_pos = ((*E).base.x_pos as i32
-        + (*(&raw mut (*E).var_B as *mut u8).offset(1) as i8 as i32 + carry as i32))
-        as u16;
+    (*E).base.x_pos =
+        ((*E).base.x_pos as i32 + (byte!((*E).var_B; 1) as i8 as i32 + carry as i32)) as u16;
     carry = CarryAdd16(
         &raw mut (*E).base.y_subpos,
-        ((*(&raw mut (*E).var_C as *mut u8).offset(0) as i32) << 8) as u16,
+        ((byte!((*E).var_C; 0) as i32) << 8) as u16,
     );
-    let result: u16 = ((*E).base.y_pos as i32
-        + *(&raw mut (*E).var_C as *mut u8).offset(1) as i8 as i32
-        + carry as i32) as u16;
+    let result: u16 =
+        ((*E).base.y_pos as i32 + byte!((*E).var_C; 1) as i8 as i32 + carry as i32) as u16;
     (*E).base.y_pos = result;
     result
 }
@@ -2402,11 +2396,7 @@ pub unsafe fn Flies_7(k: u16, game: &mut Game) {
 }
 pub unsafe fn NorfairErraticFireball_Init(game: &mut Game) {
     let E = Get_NorfairErraticFireball(word!(game.cur_enemy_index) as i32, game);
-    let pt: Point32 = ConvertAngleToXy(
-        (*E).parameter_1,
-        *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as u16,
-        game,
-    );
+    let pt: Point32 = ConvertAngleToXy((*E).parameter_1, byte!((*E).parameter_2; 0) as u16, game);
     (*E).var_C = (pt.x >> 16) as u16;
     (*E).var_D = pt.x as u16;
     (*E).var_E = (pt.y >> 16) as u16;
@@ -2415,11 +2405,7 @@ pub unsafe fn NorfairErraticFireball_Init(game: &mut Game) {
 }
 pub unsafe fn NorfairErraticFireball_Main(game: &mut Game) {
     let E = Get_NorfairErraticFireball(word!(game.cur_enemy_index) as i32, game);
-    let pt: Point32 = ConvertAngleToXy(
-        (*E).parameter_1,
-        *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as u16,
-        game,
-    );
+    let pt: Point32 = ConvertAngleToXy((*E).parameter_1, byte!((*E).parameter_2; 0) as u16, game);
     (*E).var_C = (pt.x >> 16) as u16;
     (*E).var_D = pt.x as u16;
     (*E).var_E = (pt.y >> 16) as u16;
@@ -2997,12 +2983,10 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_2(k: u16, game: &mut Game) {
 }
 pub unsafe fn NorfairLavajumpingEnemy_Func_3(k: u16, game: &mut Game) {
     let E = Get_NorfairLavajumpingEnemy(k as i32, game);
-    let t: i32 =
-        (*E).base.y_subpos as i32 + ((*(&raw mut (*E).var_C as *mut u8).offset(0) as i32) << 8);
+    let t: i32 = (*E).base.y_subpos as i32 + ((byte!((*E).var_C; 0) as i32) << 8);
     (*E).base.y_subpos = t as u16;
-    (*E).base.y_pos = ((*E).base.y_pos as i32
-        + (*(&raw mut (*E).var_C as *mut u8).offset(1) as i8 as i32 + (t >> 16)))
-        as u16;
+    (*E).base.y_pos =
+        ((*E).base.y_pos as i32 + (byte!((*E).var_C; 1) as i8 as i32 + (t >> 16))) as u16;
     let v3: u16 = ((*E).var_C).wrapping_add(56);
     (*E).var_C = v3;
     if v3 >= 0xfc00 {
@@ -3012,12 +2996,10 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_3(k: u16, game: &mut Game) {
 }
 pub unsafe fn NorfairLavajumpingEnemy_Func_4(k: u16, game: &mut Game) {
     let E = Get_NorfairLavajumpingEnemy(k as i32, game);
-    let t: i32 =
-        (*E).base.y_subpos as i32 + ((*(&raw mut (*E).var_C as *mut u8).offset(0) as i32) << 8);
+    let t: i32 = (*E).base.y_subpos as i32 + ((byte!((*E).var_C; 0) as i32) << 8);
     (*E).base.y_subpos = t as u16;
-    (*E).base.y_pos = ((*E).base.y_pos as i32
-        + (*(&raw mut (*E).var_C as *mut u8).offset(1) as i8 as i32 + (t >> 16)))
-        as u16;
+    (*E).base.y_pos =
+        ((*E).base.y_pos as i32 + (byte!((*E).var_C; 1) as i8 as i32 + (t >> 16))) as u16;
     (*E).var_C = ((*E).var_C).wrapping_add(56);
     if (*E).var_00 != 0 {
         (*E).var_00 = 0;
@@ -3026,12 +3008,10 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_4(k: u16, game: &mut Game) {
 }
 pub unsafe fn NorfairLavajumpingEnemy_Func_5(k: u16, game: &mut Game) {
     let E = Get_NorfairLavajumpingEnemy(k as i32, game);
-    let t: i32 =
-        (*E).base.y_subpos as i32 + ((*(&raw mut (*E).var_C as *mut u8).offset(0) as i32) << 8);
+    let t: i32 = (*E).base.y_subpos as i32 + ((byte!((*E).var_C; 0) as i32) << 8);
     (*E).base.y_subpos = t as u16;
-    (*E).base.y_pos = ((*E).base.y_pos as i32
-        + *(&raw mut (*E).var_C as *mut u8).offset(1) as i8 as i32
-        + (t >> 16)) as u16;
+    (*E).base.y_pos =
+        ((*E).base.y_pos as i32 + byte!((*E).var_C; 1) as i8 as i32 + (t >> 16)) as u16;
     if ((*E).base.y_pos & 0xf0) == 240 {
         (*E).base.x_pos = (*E).var_D;
         (*E).base.y_pos = (*E).var_E;
@@ -3592,7 +3572,7 @@ pub unsafe fn HirisingSlowfalling_Init(game: &mut Game) {
     (*E).var_A = ((0xa2e035i32) as u16);
     (*E).var_00 = (*E).base.x_pos;
     (*E).var_01 = (*E).base.y_pos;
-    let v2: i32 = *(&raw mut (*E).parameter_1 as *mut u8).offset(1) as i32;
+    let v2: i32 = byte!((*E).parameter_1; 1) as i32;
     (*E).var_E = crate::rtl::rom_table_word!(game, 0xa2df5e, v2 as isize);
     (*E).var_F = *(RomPtr_A2(
         crate::rtl::rom_table_word!(game, 0xa2df6a, v2 as isize),
@@ -3655,7 +3635,7 @@ pub unsafe fn HirisingSlowfalling_Func_5(game: &mut Game) {
 }
 pub unsafe fn HirisingSlowfalling_Func_6(game: &mut Game) {
     let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
-    let v2: i32 = 4 * *(&raw mut (*E).var_B as *mut u8).offset(1) as i32;
+    let v2: i32 = 4 * byte!((*E).var_B; 1) as i32;
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
@@ -3670,7 +3650,7 @@ pub unsafe fn HirisingSlowfalling_Func_6(game: &mut Game) {
         (*E).var_05 = (*E).var_03;
         (*E).base.y_pos = (*E).var_05;
         (*E).var_C = 0;
-        (*E).var_D = ((*(&raw mut (*E).parameter_1 as *mut u8).offset(0)) as u16).wrapping_sub(1);
+        (*E).var_D = ((byte!((*E).parameter_1; 0)) as u16).wrapping_sub(1);
         HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D840 as u16, game);
         (*E).var_A = ((0xa2e0cdi32) as u16);
     }
@@ -3678,7 +3658,7 @@ pub unsafe fn HirisingSlowfalling_Func_6(game: &mut Game) {
 pub unsafe fn HirisingSlowfalling_Func_7(game: &mut Game) {
     let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
     let v1 = RomPtr_A2(
-        ((*E).var_E as i32 + 4 * *(&raw mut (*E).var_C as *mut u8).offset(1) as i32) as u16,
+        ((*E).var_E as i32 + 4 * byte!((*E).var_C; 1) as i32) as u16,
         game,
     );
     if *(v1 as *mut u16) == 0x8000 {
@@ -3702,8 +3682,7 @@ pub unsafe fn HirisingSlowfalling_Func_7(game: &mut Game) {
 }
 pub unsafe fn Gripper_Init(game: &mut Game) {
     let E = Get_Gripper(word!(game.cur_enemy_index) as i32, game);
-    let v1: u16 = (8u16)
-        .wrapping_mul((*(&raw mut (*E).base.current_instruction as *mut u8).offset(0)) as u16);
+    let v1: u16 = (8u16).wrapping_mul((byte!((*E).base.current_instruction; 0)) as u16);
     (*E).var_E = v1;
     let v2: i32 = v1 as i32 >> 1;
     let mut v3: u16 = 0;
@@ -4019,9 +3998,7 @@ pub unsafe fn TimedShutter_Init(game: &mut Game) {
     (*E).base.extra_properties = 0;
     (*E).var_F = 0;
     (*E).base.current_instruction = addr_kTimedShutter_Ilist_E998 as u16;
-    let v5: i32 = ((4u16).wrapping_mul((*(&raw mut (*E).parameter_2 as *mut u8).offset(0)) as u16))
-        as i32
-        >> 1;
+    let v5: i32 = ((4u16).wrapping_mul((byte!((*E).parameter_2; 0)) as u16)) as i32 >> 1;
     (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa2ea56, v5 as isize);
     (*E).var_01 = crate::rtl::rom_table_word!(game, 0xa2ea56, (v5 + 1) as isize);
 }
@@ -4228,30 +4205,26 @@ pub unsafe fn ShootableShutter_Init(game: &mut Game) {
 }
 pub unsafe fn RisingFallingPlatform_Func_1(k: u16, game: &mut Game) {
     let E = Get_RisingFallingPlatform(k as i32, game);
-    let current_instruction_low: u16 =
-        *(&raw mut (*E).base.current_instruction as *mut u8).offset(0) as u16;
+    let current_instruction_low: u16 = byte!((*E).base.current_instruction; 0) as u16;
     (*E).var_00 = current_instruction_low;
     let v3: i32 = 8 * current_instruction_low as i32 >> 1;
     (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
     (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize);
     (*E).var_F = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize);
     (*E).var_E = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3) as isize);
-    let current_instruction_high: u16 =
-        *(&raw mut (*E).base.current_instruction as *mut u8).offset(1) as u16;
+    let current_instruction_high: u16 = byte!((*E).base.current_instruction; 1) as u16;
     (*E).var_01 = current_instruction_high;
     (*E).var_20 = current_instruction_high;
-    let extra_properties_low: u16 =
-        *(&raw mut (*E).base.extra_properties as *mut u8).offset(0) as u16;
+    let extra_properties_low: u16 = byte!((*E).base.extra_properties; 0) as u16;
     (*E).var_02 = extra_properties_low;
     (*E).var_08 = (16u16).wrapping_mul(extra_properties_low);
-    let extra_properties_high: u16 =
-        *(&raw mut (*E).base.extra_properties as *mut u8).offset(1) as u16;
+    let extra_properties_high: u16 = byte!((*E).base.extra_properties; 1) as u16;
     (*E).var_03 = extra_properties_high;
     (*E).var_09 = (16u16).wrapping_mul(extra_properties_high);
-    let rfpm_parameter_1_low: u16 = *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16;
+    let rfpm_parameter_1_low: u16 = byte!((*E).parameter_1; 0) as u16;
     (*E).var_04 = rfpm_parameter_1_low;
     (*E).var_07 = (2u16).wrapping_mul(rfpm_parameter_1_low);
-    (*E).var_05 = *(&raw mut (*E).parameter_1 as *mut u8).offset(1) as u16;
+    (*E).var_05 = byte!((*E).parameter_1; 1) as u16;
     let rfpm_parameter_2: u16 = (*E).parameter_2;
     (*E).var_06 = rfpm_parameter_2;
     (*E).var_B = rfpm_parameter_2;
@@ -4458,30 +4431,26 @@ pub unsafe fn HorizontalShootableShutter_Init(game: &mut Game) {
 }
 pub unsafe fn HorizontalShootableShutter_Func_1(k: u16, game: &mut Game) {
     let E = Get_RisingFallingPlatform(k as i32, game);
-    let current_instruction_low: u16 =
-        *(&raw mut (*E).base.current_instruction as *mut u8).offset(0) as u16;
+    let current_instruction_low: u16 = byte!((*E).base.current_instruction; 0) as u16;
     (*E).var_00 = current_instruction_low;
     let v3: i32 = 8 * current_instruction_low as i32 >> 1;
     (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
     (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize);
     (*E).var_F = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize);
     (*E).var_E = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3) as isize);
-    let current_instruction_high: u16 =
-        *(&raw mut (*E).base.current_instruction as *mut u8).offset(1) as u16;
+    let current_instruction_high: u16 = byte!((*E).base.current_instruction; 1) as u16;
     (*E).var_01 = current_instruction_high;
     (*E).var_20 = (current_instruction_high) ^ (1u16);
-    let extra_properties_low: u16 =
-        *(&raw mut (*E).base.extra_properties as *mut u8).offset(0) as u16;
+    let extra_properties_low: u16 = byte!((*E).base.extra_properties; 0) as u16;
     (*E).var_02 = extra_properties_low;
     (*E).var_08 = (16u16).wrapping_mul(extra_properties_low);
-    let extra_properties_high: u16 =
-        *(&raw mut (*E).base.extra_properties as *mut u8).offset(1) as u16;
+    let extra_properties_high: u16 = byte!((*E).base.extra_properties; 1) as u16;
     (*E).var_03 = extra_properties_high;
     (*E).var_09 = (16u16).wrapping_mul(extra_properties_high);
-    let rfpm_parameter_1_low: u16 = *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16;
+    let rfpm_parameter_1_low: u16 = byte!((*E).parameter_1; 0) as u16;
     (*E).var_04 = rfpm_parameter_1_low;
     (*E).var_07 = (2u16).wrapping_mul(rfpm_parameter_1_low);
-    (*E).var_05 = *(&raw mut (*E).parameter_1 as *mut u8).offset(1) as u16;
+    (*E).var_05 = byte!((*E).parameter_1; 1) as u16;
     let rfpm_parameter_2: u16 = (*E).parameter_2;
     (*E).var_06 = rfpm_parameter_2;
     (*E).var_B = rfpm_parameter_2;

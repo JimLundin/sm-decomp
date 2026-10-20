@@ -232,11 +232,11 @@ pub unsafe fn Draygon_Func_5(game: &mut Game) {
     let mut varE26: u16 = 0;
     loop {
         varE22 = (varE22).wrapping_add((*E).var_0F);
-        let v1: u16 = (varE24).wrapping_sub((*(&raw mut varE22 as *mut u8).offset(1)) as u16);
+        let v1: u16 = (varE24).wrapping_sub((byte!(varE22; 1)) as u16);
         if ((v1) as i16).wrapping_sub(((*E).var_01) as i16) < 0 {
             break;
         }
-        varE24 = (varE24).wrapping_sub((*(&raw mut varE22 as *mut u8).offset(1)) as u16);
+        varE24 = (varE24).wrapping_sub((byte!(varE22; 1)) as u16);
         crate::update_place! { previous fresh4 = varE26 => varE26.wrapping_add(1); }
         *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(fresh4 as i32 as isize) as *mut u16) = v1;
         varE26 = (varE26).wrapping_add(2);
@@ -707,9 +707,7 @@ pub unsafe fn Draygon_Func_25(k: u16, game: &mut Game) {
             || {
                 v6 = ((*E).var_0B).wrapping_sub(1);
                 (*E).var_0B = v6;
-                (*E).var_08 = ((*(&raw mut (*E).var_08 as *mut u8).offset(0))
-                    .wrapping_add(*(&raw mut v6 as *mut u8).offset(1)))
-                    as u16;
+                (*E).var_08 = ((byte!((*E).var_08; 0)).wrapping_add(byte!(v6; 1))) as u16;
                 crate::update_place! { previous mut draygon_var_0A: u16 = (*E).var_0A => (draygon_var_0A).wrapping_sub(0x4000); }
                 let mut v8: u16 = ((((*E).var_07 as u32) << 16i32 | draygon_var_0A as u32)
                     .wrapping_sub(0x4000)
@@ -809,13 +807,8 @@ pub unsafe fn Draygon_Func_31(game: &mut Game) {
             game,
         )) as u8,
     )) as u16;
-    let pt: Point32 =
-        ConvertAngleToXy(*(&raw mut (*E).var_43 as *mut u8).offset(0) as u16, 1, game);
-    EnemyFunc_B691(
-        *(&raw mut (*E).var_43 as *mut u8).offset(0) as u16,
-        pt,
-        game,
-    );
+    let pt: Point32 = ConvertAngleToXy(byte!((*E).var_43; 0) as u16, 1, game);
+    EnemyFunc_B691(byte!((*E).var_43; 0) as u16, pt, game);
     let v3: u16 = Abs16(((*E).base.x_pos).wrapping_sub(256));
     if v3 as i32 - 4i32 & 0x8000 != 0 {
         let v4: u16 = Abs16(((*E).base.y_pos).wrapping_sub(480));
@@ -1028,8 +1021,7 @@ pub unsafe fn sub_A5960D(game: &mut Game) {
                 game,
             )) as u8,
         )) as u16;
-        let pt: Point32 =
-            ConvertAngleToXy(*(&raw mut (*E).var_43 as *mut u8).offset(0) as u16, 1, game);
+        let pt: Point32 = ConvertAngleToXy(byte!((*E).var_43; 0) as u16, 1, game);
         (*E).var_28 = (pt.x >> 16) as u16;
         (*E).var_29 = pt.x as u16;
         (*E).var_2A = (pt.y >> 16) as u16;
@@ -1570,8 +1562,7 @@ pub unsafe fn SporeSpawn_Func_2(k: u16, game: &mut Game) {
         ((*E0).var_0B).wrapping_sub(16),
         game,
     ));
-    (*E0).var_0A =
-        ((*(&raw mut (*E0).var_0C as *mut u8).offset(0)).wrapping_add(((*E0).var_0A) as u8)) as u16;
+    (*E0).var_0A = ((byte!((*E0).var_0C; 0)).wrapping_add(((*E0).var_0A) as u8)) as u16;
 }
 pub unsafe fn SporeSpawn_Func_3(game: &mut Game) {
     let E0 = Get_SporeSpawn(0, game);
@@ -1583,11 +1574,7 @@ pub unsafe fn SporeSpawn_Func_3(game: &mut Game) {
         )) as u8,
     )) as u16;
     let E = Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game);
-    let pt: Point32 = ConvertAngleToXy(
-        *(&raw mut (*E0).var_43 as *mut u8).offset(0) as u16,
-        1,
-        game,
-    );
+    let pt: Point32 = ConvertAngleToXy(byte!((*E0).var_43; 0) as u16, 1, game);
     (*E).var_28 = (pt.x >> 16) as u16;
     (*E).var_29 = pt.x as u16;
     (*E).var_2A = (pt.y >> 16) as u16;
@@ -1596,7 +1583,7 @@ pub unsafe fn SporeSpawn_Func_3(game: &mut Game) {
 pub unsafe fn SporeSpawn_Func_4(game: &mut Game) {
     let E = Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game);
     let E0 = Get_SporeSpawn(0, game);
-    let varE20: u16 = *(&raw mut (*E0).var_43 as *mut u8).offset(0) as u16;
+    let varE20: u16 = byte!((*E0).var_43; 0) as u16;
     EnemyFunc_B691(
         varE20,
         Point32 {

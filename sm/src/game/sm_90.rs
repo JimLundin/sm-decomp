@@ -943,7 +943,7 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
         let mut v2: u16 = word!(game.atmospheric_gfx_frame_and_type[v1]);
         if (v2 != 0) {
             let r18: u16 = (2u16).wrapping_mul((v2 as u8) as u16);
-            let v3: u16 = (2u16).wrapping_mul((*(&raw mut v2 as *mut u8).offset(1)) as u16);
+            let v3: u16 = (2u16).wrapping_mul((byte!(v2; 1)) as u16);
             let mut v4: i16 = ((word!(game.atmospheric_gfx_anim_timer[v1])) as i16).wrapping_sub(1);
             word!(game.atmospheric_gfx_anim_timer[v1] = v4 as u16);
             skip_effect = if v4 != 0 {
@@ -996,9 +996,8 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
 pub unsafe fn AtmosphericTypeFunc_1_FootstepSplash(k: u16, j: u16, game: &mut Game) {
     let mut v5 = null_mut::<OamEnt>();
     let v2: i32 = j as i32 >> 1;
-    let r18: u16 = (2u16).wrapping_mul(
-        (*((ram_ptr!(game, u16; 0xaec)).offset(v2 as isize) as *mut u8).offset(0)) as u16,
-    );
+    let r18: u16 = (2u16)
+        .wrapping_mul((byte!(@pointer (ram_ptr!(game, u16; 0xaec)).offset(v2 as isize); 0)) as u16);
     let v3: u16 = word!(game.oam_next_ptr);
     let mut v4: i16 = (word!(game.atmospheric_gfx_x_pos[v2]) as i32
         - word!(game.layer1_x_pos) as i32
@@ -1048,7 +1047,7 @@ pub unsafe fn AtmosphericTypeFunc_Common(j: u16, a: u16, game: &mut Game) {
 }
 pub unsafe fn AtmosphericTypeFunc_3_DivingSplash(k: u16, j: u16, game: &mut Game) {
     let v2: i32 = j as i32 >> 1;
-    let r18: u16 = *((ram_ptr!(game, u16; 0xaec)).offset(v2 as isize) as *mut u8).offset(0) as u16;
+    let r18: u16 = byte!(@pointer (ram_ptr!(game, u16; 0xaec)).offset(v2 as isize); 0) as u16;
     word!(game.atmospheric_gfx_y_pos[v2] = word!(game.fx_y_pos));
     AtmosphericTypeFunc_Common(j, (r18).wrapping_add(399), game);
 }
@@ -1069,8 +1068,7 @@ pub unsafe fn AtmosphericTypeFunc_67_Dust(k: u16, j: u16, game: &mut Game) {
     AtmosphericTypeFunc_1_FootstepSplash(k, j, game);
 }
 pub unsafe fn AtmosphericTypeFunc_5_Bubbles(k: u16, j: u16, game: &mut Game) {
-    let r18: u16 =
-        *((ram_ptr!(game, u16; 0xaec)).offset((j >> 1) as isize) as *mut u8).offset(0) as u16;
+    let r18: u16 = byte!(@pointer (ram_ptr!(game, u16; 0xaec)).offset((j >> 1) as isize); 0) as u16;
     AtmosphericTypeFunc_Common(j, (r18).wrapping_add(390), game);
 }
 static kSamus_CalcSpritemapPos: [Option<Func_Y_To_PairU16>; 28] = callback_table! { Func_Y_To_PairU16;
@@ -2225,10 +2223,7 @@ pub unsafe fn Samus_CalcBaseSpeed_X(k: u16, game: &mut Game) -> i32 {
     if word!(game.samus_x_accel_mode) != 0 {
         let delta: i32 = (if *ram_ptr!(game; 0xb4c) != 0 {
             ((Mult8x8(*ram_ptr!(game; 0xb4c), (*sste).decel as u8) >> 8) as u32) << 16
-                | Mult8x8(
-                    *ram_ptr!(game; 0xb4c),
-                    *(&raw mut (*sste).decel_sub as *mut u8).offset(1),
-                ) as u32
+                | Mult8x8(*ram_ptr!(game; 0xb4c), byte!((*sste).decel_sub; 1)) as u32
         } else {
             ((*sste).decel as u32) << 16 | (*sste).decel_sub as u32
         }) as i32;
@@ -2267,10 +2262,7 @@ unsafe fn Samus_CalcBaseSpeed_NoDecel_X(k: u16, game: &mut Game) -> Pair_Bool_Am
     if (word!(game.samus_x_accel_mode) & 1) != 0 {
         let delta: i32 = (if *ram_ptr!(game; 0xb4c) != 0 {
             ((Mult8x8(*ram_ptr!(game; 0xb4c), (*sste).decel as u8) >> 8) as u32) << 16
-                | Mult8x8(
-                    *ram_ptr!(game; 0xb4c),
-                    *(&raw mut (*sste).decel_sub as *mut u8).offset(1),
-                ) as u32
+                | Mult8x8(*ram_ptr!(game; 0xb4c), byte!((*sste).decel_sub; 1)) as u32
         } else {
             ((*sste).decel as u32) << 16 | (*sste).decel_sub as u32
         }) as i32;
@@ -2567,8 +2559,7 @@ pub unsafe fn Samus_Movement_03_SpinJumping(game: &mut Game) {
             word!(game.samus_contact_damage_index = 4);
         }
     } else if word!(game.samus_anim_frame_timer) == 1
-        && *(game.g_rom.offset(crate::rtl::lorom_offset(0x90a514)) as *mut u8)
-            .offset(word!(game.samus_anim_frame) as isize)
+        && byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x90a514)); word!(game.samus_anim_frame) as isize)
             != 0
     {
         QueueSfx1_Max6(0x2f, game);
@@ -2874,36 +2865,34 @@ pub unsafe fn UpdateMinimap(game: &mut Game) {
             let v0_0: u16 = R48 as u16;
             let mut r44: u16 = 0;
             r9 = r15.offset(R48 as i32 as isize);
-            *(&raw mut r44 as *mut u8).offset(0) = *ram_ptr!(game; 0x7f7, R48 as isize);
-            *(&raw mut r44 as *mut u8).offset(1) = *r9;
+            byte!(r44; 0) = *ram_ptr!(game; 0x7f7, R48 as isize);
+            byte!(r44; 1) = *r9;
             if (r34 as u8) == 32 {
-                *(&raw mut r38 as *mut u8).offset(1) = *(&raw mut r44 as *mut u8).offset(1);
-                *(&raw mut r24 as *mut u8).offset(1) = r44 as u8;
+                byte!(r38; 1) = byte!(r44; 1);
+                byte!(r24; 1) = r44 as u8;
             } else {
-                *(&raw mut r38 as *mut u8).offset(0) = *(&raw mut r44 as *mut u8).offset(1);
-                *(&raw mut r24 as *mut u8).offset(0) = r44 as u8;
+                byte!(r38; 0) = byte!(r44; 1);
+                byte!(r24; 0) = r44 as u8;
             }
-            *(&raw mut r44 as *mut u8).offset(0) =
-                *ram_ptr!(game; 0x7f7, (v0_0 as i32 + 4) as isize);
+            byte!(r44; 0) = *ram_ptr!(game; 0x7f7, (v0_0 as i32 + 4) as isize);
             r9 = r9.offset(4);
-            *(&raw mut r44 as *mut u8).offset(1) = *r9;
+            byte!(r44; 1) = *r9;
             if (r34 as u8) == 32 {
-                *(&raw mut r40 as *mut u8).offset(1) = *(&raw mut r44 as *mut u8).offset(1);
-                *(&raw mut r26 as *mut u8).offset(1) = r44 as u8;
+                byte!(r40; 1) = byte!(r44; 1);
+                byte!(r26; 1) = r44 as u8;
             } else {
-                *(&raw mut r40 as *mut u8).offset(0) = *(&raw mut r44 as *mut u8).offset(1);
-                *(&raw mut r26 as *mut u8).offset(0) = r44 as u8;
+                byte!(r40; 0) = byte!(r44; 1);
+                byte!(r26; 0) = r44 as u8;
             }
-            *(&raw mut r44 as *mut u8).offset(0) =
-                *ram_ptr!(game; 0x7f7, (v0_0 as i32 + 8) as isize);
+            byte!(r44; 0) = *ram_ptr!(game; 0x7f7, (v0_0 as i32 + 8) as isize);
             r9 = r9.offset(4);
-            *(&raw mut r44 as *mut u8).offset(1) = *r9;
+            byte!(r44; 1) = *r9;
             if (r34 as u8) == 32 {
-                *(&raw mut r42 as *mut u8).offset(1) = *(&raw mut r44 as *mut u8).offset(1);
-                *(&raw mut r28 as *mut u8).offset(1) = r44 as u8;
+                byte!(r42; 1) = byte!(r44; 1);
+                byte!(r28; 1) = r44 as u8;
             } else {
-                *(&raw mut r42 as *mut u8).offset(0) = *(&raw mut r44 as *mut u8).offset(1);
-                *(&raw mut r28 as *mut u8).offset(0) = r44 as u8;
+                byte!(r42; 0) = byte!(r44; 1);
+                byte!(r28; 0) = r44 as u8;
             }
         }
     }
@@ -2938,8 +2927,8 @@ pub unsafe fn UpdateMinimapInside(
     let mut v5: i16 = 0;
     let mut v7: i16 = 0;
     let mut v8: i16 = 0;
-    *(&raw mut v0 as *mut u8).offset(0) = (((r34).wrapping_add(r22)) >> 8) as u8;
-    *(&raw mut v0 as *mut u8).offset(1) = ((r34) as u8).wrapping_add((r22) as u8);
+    byte!(v0; 0) = (((r34).wrapping_add(r22)) >> 8) as u8;
+    byte!(v0; 1) = ((r34) as u8).wrapping_add((r22) as u8);
     let t: u16 = (r18 as i32 + (v0 as i32 >> 3)) as u16;
     if r34 != 0 && (t as i32 & 0x1f) - 2i32 & 0x8000 != 0 {
         v1 = ((t) as i16).wrapping_sub(1026);
@@ -3206,8 +3195,7 @@ fn move_projectile_to_impact_point(index: u16, direction: usize, game: &mut Game
 pub unsafe fn KillProjectile(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1;
     if (word!(game.projectile_type[v1]) & 0xf00) != 0 {
-        if (*((ram_ptr!(game, u16; 0xc18)).offset(v1 as isize) as *mut u8).offset(1) as i32 & 0xf)
-            - 3i32
+        if (byte!(@pointer (ram_ptr!(game, u16; 0xc18)).offset(v1 as isize); 1) as i32 & 0xf) - 3i32
             & 0x8000
             == 0
         {
@@ -3793,7 +3781,7 @@ pub unsafe fn SpawnProjectileTrail(k: u16, game: &mut Game) {
     let mut v2: i16 = 0;
     let mut v1: u16 = word!(game.projectile_type[(k >> 1)]);
     if (v1 & 0xf00) != 0 {
-        let v3: u16 = ((*(&raw mut v1 as *mut u8).offset(1)) as u16) & (0xfu16);
+        let v3: u16 = ((byte!(v1; 1)) as u16) & (0xfu16);
         if v3 >= 3 {
             return;
         }
@@ -4232,7 +4220,7 @@ pub unsafe fn InitProjectilePositionDirection(r20: u16, game: &mut Game) -> u8 {
         .direction_shots_fired as u16;
         if (direction_shots_fired & 0xf0) != 0 {
             if direction_shots_fired != 16 || {
-                *(&raw mut direction_shots_fired as *mut u8).offset(0) =
+                byte!(direction_shots_fired; 0) =
                     (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
                         as *mut SamusPoseParams)
                         .offset(word!(game.samus_last_different_pose) as isize))
@@ -4380,7 +4368,7 @@ pub unsafe fn DrawFlareAnimationComponent(k: u16, game: &mut Game) {
     static word_93A22B: [u16; 3] = [0, 0x2a, 0x30];
     let mut v1: u16 = 0;
     let mut r20: u16 = 0;
-    let mut r18: u16 = *(ram_ptr!(game, u16; 0xcd6) as *mut u8).offset(k as i32 as isize) as u16;
+    let mut r18: u16 = byte!(@pointer ram_ptr!(game, u16; 0xcd6); k as i32 as isize) as u16;
     if *ram_ptr!(game; 0xa1e) == 4 {
         v1 = word_93A22B[(k >> 1) as usize];
     } else {
@@ -4542,7 +4530,7 @@ pub unsafe fn ProjectileReflection(r20: u16, game: &mut Game) {
     } else if (v2 & 0x200) != 0 {
         let k: u16 = r20;
         ClearProjectile(
-            *((ram_ptr!(game, u16; 0xc7c)).offset(v1 as isize) as *mut u8).offset(0) as u16,
+            byte!(@pointer (ram_ptr!(game, u16; 0xc7c)).offset(v1 as isize); 0) as u16,
             game,
         );
         InitializeProjectile(k, game);
@@ -4688,7 +4676,7 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
                     let v4: i32 = v2 as i32 >> 1;
                     let mut v5: u16 = (r18) | (word!(game.projectile_type[v4]));
                     word!(game.projectile_type[v4] = v5);
-                    let v6: u8 = *(&raw mut v5 as *mut u8).offset(1);
+                    let v6: u8 = byte!(v5; 1);
                     word!(game.projectile_dir[v4] = 0);
                     word!(game.projectile_x_pos[v4] = word!(game.samus_x_pos));
                     word!(game.projectile_y_pos[v4] = word!(game.samus_y_pos));
@@ -5052,8 +5040,7 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
 }
 unsafe fn Projectile_SinLookup_Inner(k: u16, r24: u16) -> u16 {
     let mut prod: u16 = Mult8x8(
-        *((&raw const kSinCosTable8bit_Sext as *const i16).offset(64) as *mut u8)
-            .offset(k as i32 as isize),
+        byte!(@pointer (&raw const kSinCosTable8bit_Sext as *const i16).offset(64); k as i32 as isize),
         r24 as u8,
     );
     let r18: u16 = (prod >> 8);
@@ -5545,8 +5532,7 @@ static kSamus_MoveHandler_ShinesparkCrash: [Option<Func_V>; 3] = callback_table!
 };
 pub unsafe fn Samus_MoveHandler_ShinesparkCrash(game: &mut Game) {
     word!(game.samus_shine_timer = 15);
-    kSamus_MoveHandler_ShinesparkCrash
-        [*(ram_ptr!(game, u16; 0xaae) as *mut u8).offset(1isize) as usize]
+    kSamus_MoveHandler_ShinesparkCrash[byte!(@pointer ram_ptr!(game, u16; 0xaae); 1isize) as usize]
         .expect("non-null function pointer")(game);
     let mut i: i32 = 2;
     while i >= 0 {
@@ -5661,7 +5647,7 @@ pub unsafe fn ProjPreInstr_SpeedEcho(k: u16, game: &mut Game) {
     word!(game.projectile_bomb_x_speed[v1], wrapping_add(8));
     let pt: Point16U = Projectile_SinLookup(
         word!(game.projectile_variables[v1]),
-        *((ram_ptr!(game, u16; 0xbdc)).offset(v1 as isize) as *mut u8).offset(0) as u16,
+        byte!(@pointer (ram_ptr!(game, u16; 0xbdc)).offset(v1 as isize); 0) as u16,
     );
     let v2: u16 = (pt.x).wrapping_add(word!(game.samus_x_pos));
     *((ram_ptr!(game, u16; 0xaae) as *mut u8).offset(k as i32 as isize) as *mut u16) =
@@ -6110,8 +6096,8 @@ pub unsafe fn ProjPreInstr_SpazerSba_FuncB_0(j: u16, r22: u16, game: &mut Game) 
     static kProjPreInstr_SpazerSba_Yspeed: [i16; 4] = [2, -2, 2, -2];
     let v1: i32 = j as i32 >> 1;
     word!(game.projectile_y_pos[v1] = (r22).wrapping_add(word!(game.samus_y_pos)));
-    let v2: u16 = ((*((ram_ptr!(game, u16; 0xbf0)).offset(v1 as isize) as *mut u8).offset(0))
-        .wrapping_add(*((ram_ptr!(game, u16; 0xc7c)).offset(v1 as isize) as *mut u8).offset(0)))
+    let v2: u16 = ((byte!(@pointer (ram_ptr!(game, u16; 0xbf0)).offset(v1 as isize); 0))
+        .wrapping_add(byte!(@pointer (ram_ptr!(game, u16; 0xc7c)).offset(v1 as isize); 0)))
         as u16;
     word!(game.projectile_variables[v1] = v2);
     if v2 == 128 {
@@ -6449,7 +6435,7 @@ static kSetupBombJump: [Option<Func_U8>; 28] = callback_table! { unsafe Func_U8;
     SetupBombJump_2, SetupBombJump_2, SetupBombJump_2, SetupBombJump_1A, SetupBombJump_1A,
 };
 pub unsafe fn SetupBombJump(game: &mut Game) {
-    if *(ram_ptr!(game, u16; 0xa56) as *mut u8).offset(1) == 0
+    if byte!(@pointer ram_ptr!(game, u16; 0xa56); 1) == 0
         && kSetupBombJump[*ram_ptr!(game; 0xa1f) as usize].expect("non-null function pointer")(game)
             & 1
             != 0
@@ -6827,11 +6813,11 @@ static kSamus_MoveDown_SetPoseCalcInput_Tab1: [u8; 28] = [
 pub unsafe fn Samus_MoveDown_SetPoseCalcInput(game: &mut Game) {
     if word!(game.samus_collision_flag) != 0 {
         word!(game.input_to_pose_calc = 1);
-        *(ram_ptr!(game, u16; 0xdc6) as *mut u8).offset(1) =
+        byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1) =
             kSamus_MoveDown_SetPoseCalcInput_Tab1[*ram_ptr!(game; 0xa1f) as usize];
     } else if (word!(game.input_to_pose_calc) as u8) != 5 {
         word!(game.input_to_pose_calc = 2);
-        *(ram_ptr!(game, u16; 0xdc6) as *mut u8).offset(1) =
+        byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1) =
             kSamus_MoveDown_SetPoseCalcInput_Tab0[*ram_ptr!(game; 0xa1f) as usize];
     }
 }

@@ -829,37 +829,29 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
         word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
         (*E0).base.extra_properties = ((*E0).base.extra_properties & !(0x8000));
         let mut crocom_var_D: i8 = (*E).var_D as i8;
-        *(&raw mut (*E).var_D as *mut u8).offset(0) = ((crocom_var_D) as u8).wrapping_add(0x80);
+        byte!((*E).var_D; 0) = ((crocom_var_D) as u8).wrapping_add(0x80);
         v7 = (u8::overflowing_add(crocom_var_D as u8, 0x80u8).1 as i32
-            + *(&raw mut (*E).var_D as *mut u8).offset(1) as i32
+            + byte!((*E).var_D; 1) as i32
             + 3) as i8;
         if v7 as i32 - 48i32 & 0x80 == 0 {
             v7 = 48;
         }
-        *(&raw mut (*E).var_D as *mut u8).offset(1) = v7 as u8;
-        let mut v8: bool =
-            u8::overflowing_add(*(&raw mut (*E).var_E as *mut u8).offset(0), v7 as u8).1;
+        byte!((*E).var_D; 1) = v7 as u8;
+        let mut v8: bool = u8::overflowing_add(byte!((*E).var_E; 0), v7 as u8).1;
         crate::update_place! { reference fresh13 = *(&raw mut (*E).var_E as *mut u8).offset(0) => (*fresh13).wrapping_add((v7) as u8); }
-        v9 = ((v8) as i8).wrapping_add((*(&raw mut (*E).var_E as *mut u8).offset(1)) as i8);
+        v9 = ((v8) as i8).wrapping_add((byte!((*E).var_E; 1)) as i8);
         if v9 as i32 - 3i32 & 0x80 == 0 {
             v9 = 3;
         }
-        *(&raw mut (*E).var_E as *mut u8).offset(1) = v9 as u8;
+        byte!((*E).var_E; 1) = v9 as u8;
         let mut crocom_var_E: i8 = (*E).var_E as i8;
-        v8 = u8::overflowing_add(
-            *(&raw mut (*E).var_F as *mut u8).offset(1isize),
-            crocom_var_E as u8,
-        )
-        .1;
+        v8 = u8::overflowing_add(byte!((*E).var_F; 1isize), crocom_var_E as u8).1;
         crate::update_place! { reference fresh14 = *(&raw mut (*E).var_F as *mut u8).offset(1) => (*fresh14).wrapping_add((crocom_var_E) as u8); }
-        crocom_var_E_high = *(&raw mut (*E).var_E as *mut u8).offset(1) as i8;
+        crocom_var_E_high = byte!((*E).var_E; 1) as i8;
         let v13: bool = v8;
         v8 = u8::overflowing_add(v8 as u8, crocom_var_E_high as u8).1;
         let mut v12: i8 = ((v13) as i8).wrapping_add(crocom_var_E_high);
-        v8 = (v8 as i32
-            | u8::overflowing_add(*(&raw mut (*E).base.y_pos as *mut u8).offset(0), v12 as u8).1
-                as i32)
-            != 0;
+        v8 = (v8 as i32 | u8::overflowing_add(byte!((*E).base.y_pos; 0), v12 as u8).1 as i32) != 0;
         crate::update_place! { reference fresh15 = *(&raw mut (*E).base.y_pos as *mut u8).offset(0) => (*fresh15).wrapping_add((v12) as u8); }
         crate::update_place! { reference fresh16 = *(&raw mut (*E).base.y_pos as *mut u8).offset(1) => (*fresh16).wrapping_add((v8) as u8); }
     } else {
@@ -923,22 +915,20 @@ pub unsafe fn Crocomire_92D8(game: &mut Game) {
         }
         (*E0).var_D = v3 as u16;
         let crocom_var_E: u8 = (*E0).var_E as u8;
-        let mut v5: bool = crocom_var_E < *(&raw mut (*E0).var_D as *mut u8).offset(1);
-        *(&raw mut (*E0).var_E as *mut u8).offset(0) =
-            (crocom_var_E).wrapping_sub(*(&raw mut (*E0).var_D as *mut u8).offset(1));
-        v6 = ((*(&raw mut (*E0).var_E as *mut u8).offset(1isize)) as i8).wrapping_sub((v5) as i8);
+        let mut v5: bool = crocom_var_E < byte!((*E0).var_D; 1);
+        byte!((*E0).var_E; 0) = (crocom_var_E).wrapping_sub(byte!((*E0).var_D; 1));
+        v6 = ((byte!((*E0).var_E; 1isize)) as i8).wrapping_sub((v5) as i8);
         if v6 < 0 {
-            *(&raw mut (*E0).var_E as *mut u8).offset(0) = -1i32 as u8;
+            byte!((*E0).var_E; 0) = -1i32 as u8;
             v6 = 0;
         }
-        *(&raw mut (*E0).var_E as *mut u8).offset(1) = v6 as u8;
-        let crocom_var_F_high: u8 = *(&raw mut (*E0).var_F as *mut u8).offset(1);
-        v5 = crocom_var_F_high < *(&raw mut (*E0).var_E as *mut u8).offset(0);
-        *(&raw mut (*E0).var_F as *mut u8).offset(1) =
-            (crocom_var_F_high).wrapping_sub(*(&raw mut (*E0).var_E as *mut u8).offset(0));
+        byte!((*E0).var_E; 1) = v6 as u8;
+        let crocom_var_F_high: u8 = byte!((*E0).var_F; 1);
+        v5 = crocom_var_F_high < byte!((*E0).var_E; 0);
+        byte!((*E0).var_F; 1) = (crocom_var_F_high).wrapping_sub(byte!((*E0).var_E; 0));
         let y_pos: u8 = (*E0).base.y_pos as u8;
-        let v9: u8 = ((v5) as u8).wrapping_add(*(&raw mut (*E0).var_E as *mut u8).offset(1));
-        *(&raw mut (*E0).base.y_pos as *mut u8).offset(0) = (y_pos).wrapping_sub(v9);
+        let v9: u8 = ((v5) as u8).wrapping_add(byte!((*E0).var_E; 1));
+        byte!((*E0).base.y_pos; 0) = (y_pos).wrapping_sub(v9);
         crate::update_place! { reference fresh7 = *(&raw mut (*E0).base.y_pos as *mut u8).offset(1) => (*fresh7).wrapping_sub((y_pos < v9) as u8); }
     };
 }
@@ -1250,8 +1240,8 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
         if word!(game.croco_cur_vline_idx) > 48 {
             return 1;
         }
-        let rr: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa49697)) as *mut u8)
-            .offset(word!(game.croco_cur_vline_idx) as isize) as i32;
+        let rr: i32 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0xa49697)); word!(game.croco_cur_vline_idx) as isize)
+            as i32;
         if ((*ram_ptr!(game; 0x69c, rr as isize)) as i8)
             .wrapping_sub((word!(game.croco_target_0688)) as i8)
             < 0
@@ -1268,8 +1258,8 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
         b"croco_cur_vline_idx <= 48\0", b"src/sm_a4.c\0", 1215,
         b"uint16 Crocomire_Func_67(void)\0"
     };
-    let vline_idx: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa49697)) as *mut u8)
-        .offset(word!(game.croco_cur_vline_idx) as isize) as i32;
+    let vline_idx: i32 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0xa49697)); word!(game.croco_cur_vline_idx) as isize)
+        as i32;
     let mask: u8 = kCrocoEraseLineMasks[(vline_idx & 7) as usize];
     loop {
         let q: i32 = *ram_ptr!(game; 0x69c, vline_idx as isize) as i32;

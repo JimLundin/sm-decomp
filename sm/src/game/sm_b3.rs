@@ -195,8 +195,7 @@ pub unsafe fn NorfairPipeBug_Init(game: &mut Game) {
     (*PipeBug).var_D = (*PipeBug).base.x_pos;
     (*PipeBug).var_E = (*PipeBug).base.y_pos;
     (*PipeBug).base.properties = ((*PipeBug).base.properties) | ((kEnemyProps_Invisible) as u16);
-    (*PipeBug).var_B =
-        (8u16).wrapping_mul((*(&raw mut (*PipeBug).parameter_2 as *mut u8).offset(1)) as u16);
+    (*PipeBug).var_B = (8u16).wrapping_mul((byte!((*PipeBug).parameter_2; 1)) as u16);
     (*PipeBug).var_C = 0;
     (*PipeBug).base.instruction_timer = 1;
     (*PipeBug).base.timer = 0;
@@ -240,12 +239,11 @@ pub unsafe fn NorfairPipeBug_8BA8(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Func_1(game: &mut Game) {
-    if *(&raw mut (*(Get_PipeBug as unsafe fn(i32, &mut Game) -> *mut Enemy_PipeBug)(
+    if byte!((*(Get_PipeBug as unsafe fn(i32, &mut Game) -> *mut Enemy_PipeBug)(
         word!(game.cur_enemy_index) as i32,
         game,
     ))
-    .parameter_2 as *mut u8)
-        .offset(0)
+    .parameter_2; 0)
         != 0
         && (*Get_PipeBug(word!(game.cur_enemy_index) as i32 + 64i32, game)).var_A as i32
             == 0xb38bcd & 0xffff
@@ -264,7 +262,7 @@ pub unsafe fn NorfairPipeBug_Func_2(game: &mut Game) {
     let PipeBug = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
     if IsSamusWithinEnemy_X(
         word!(game.cur_enemy_index),
-        *(&raw mut (*PipeBug).parameter_2 as *mut u8).offset(0) as u16,
+        byte!((*PipeBug).parameter_2; 0) as u16,
         game,
     ) != 0
         && (((*PipeBug).base.y_pos) as i16).wrapping_sub((word!(game.samus_y_pos)) as i16) >= 0
@@ -902,7 +900,7 @@ pub unsafe fn Botwoon_Func_14(game: &mut Game) {
 }
 pub unsafe fn Botwoon_Func_15(game: &mut Game) {
     let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game);
-    let v2: i32 = 8 * *(&raw mut (*E).var_28 as *mut u8).offset(1) as i32 >> 1;
+    let v2: i32 = 8 * byte!((*E).var_28; 1) as i32 >> 1;
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,

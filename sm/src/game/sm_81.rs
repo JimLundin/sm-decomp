@@ -193,8 +193,8 @@ pub unsafe fn UnpackMapFromSave(game: &mut Game) {
     }
     let mut i_0: i32 = 0;
     while i_0 < 6 {
-        let mut n: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x818131)) as *mut u8)
-            .offset(i_0 as isize) as i32;
+        let mut n: i32 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x818131)); i_0 as isize)
+            as i32;
         let mut r0 = RomPtr_81(
             crate::rtl::rom_table_word!(game, 0x8182d6, i_0 as isize),
             game,
@@ -217,8 +217,8 @@ pub unsafe fn UnpackMapFromSave(game: &mut Game) {
 pub unsafe fn PackMapToSave(game: &mut Game) {
     let mut i: i32 = 0;
     while i < 6 {
-        let mut n: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x818131)) as *mut u8)
-            .offset(i as isize) as i32;
+        let mut n: i32 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x818131)); i as isize)
+            as i32;
         let mut r0 = RomPtr_81(
             crate::rtl::rom_table_word!(game, 0x8182d6, i as isize),
             game,
@@ -1033,7 +1033,7 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
         }
         if selection_unchanged {
         } else {
-            *((ram_ptr!(game, u16; 0x1997)).offset(15) as *mut u8).offset(0) = v0;
+            byte!(@pointer (ram_ptr!(game, u16; 0x1997)).offset(15); 0) = v0;
             QueueSfx1_Max6(0x37, game);
             SetFileCopyMenuSelectionMissilePosition(game);
             return;
@@ -1367,7 +1367,7 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
     let mut v1: u8 = 0;
     DrawBorderAroundDataClearMode(game);
     DrawMenuSelectionMissile(game);
-    *(&raw mut v0 as *mut u8).offset(1) = *(ram_ptr!(game, u16; 0x8f) as *mut u8).offset(1);
+    byte!(v0; 1) = byte!(@pointer ram_ptr!(game, u16; 0x8f); 1);
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
         QueueSfx1_Max6(0x37, game);
         if word!(game.eproj_id[15]) != 3 {
@@ -1409,8 +1409,8 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
         }
         if selection_unchanged {
         } else {
-            *((ram_ptr!(game, u16; 0x1997)).offset(15) as *mut u8).offset(0) = v1;
-            *(&raw mut v0 as *mut u8).offset(0) = 55;
+            byte!(@pointer (ram_ptr!(game, u16; 0x1997)).offset(15); 0) = v1;
+            byte!(v0; 0) = 55;
             QueueSfx1_Max6(v0, game);
             SetFileClearMenuMissilePos(game);
             return;
@@ -2034,7 +2034,7 @@ pub unsafe fn FileSelectMap_4_SetupExpandingSquareTransition(game: &mut Game) {
     crate::rtl::write_register_and_mirror(HDMAEN as u16, 0xc, 0x85, true, game);
     ConfigureWindow1ForExpandingSquare(game);
     word!(game.hdma_objects_enable_flag = 0);
-    *(ram_ptr!(game, u16; 0x727) as *mut u8).offset(0) =
+    byte!(@pointer ram_ptr!(game, u16; 0x727); 0) =
         ((word!(game.menu_index)) as u8).wrapping_add(1);
 }
 pub unsafe fn ConfigureWindow1ForExpandingSquare(game: &mut Game) {
@@ -2048,8 +2048,8 @@ pub unsafe fn ConfigureWindow1ForExpandingSquare(game: &mut Game) {
 pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     word!(game.expand_sq_topbottom_margin_right_pos = 0);
     word!(game.expand_sq_topbottom_margin_left_pos = -1i32 as u16);
-    *(ram_ptr!(game, u16; 0x9e32) as *mut u8).offset(0) = 127;
-    *(ram_ptr!(game, u16; 0x9e36) as *mut u8).offset(0) = -127i32 as u8;
+    byte!(@pointer ram_ptr!(game, u16; 0x9e32); 0) = 127;
+    byte!(@pointer ram_ptr!(game, u16; 0x9e36); 0) = -127i32 as u8;
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_0 = 111;
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_1 = 34;
     (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_2 = -98i32 as u8;
@@ -2100,7 +2100,7 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
         .wrapping_sub((kExpandingSquareTransitionSpeed) as i8)
         < 0
     {
-        *(ram_ptr!(game, u16; 0x727) as *mut u8).offset(0) =
+        byte!(@pointer ram_ptr!(game, u16; 0x727); 0) =
             ((word!(game.menu_index)) as u8).wrapping_add(1);
         crate::update_place! { reference fresh36 = *ram_ptr!(game; 0x69) => (*fresh36 & !(2)); }
         *ram_ptr!(game; 0x6c) = 0;
@@ -2160,9 +2160,9 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
             (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0;
         (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(2)).field_0 =
             (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0;
-        *(ram_ptr!(game, u16; 0x9e32) as *mut u8).offset(0) =
+        byte!(@pointer ram_ptr!(game, u16; 0x9e32); 0) =
             ((word!(game.expand_sq_left_pos)) as u8).wrapping_sub(kExpandingSquareTransitionSpeed);
-        *(ram_ptr!(game, u16; 0x9e36) as *mut u8).offset(0) =
+        byte!(@pointer ram_ptr!(game, u16; 0x9e36); 0) =
             (kExpandingSquareTransitionSpeed).wrapping_add((word!(game.expand_sq_right_pos)) as u8);
     };
 }
@@ -2560,9 +2560,9 @@ pub unsafe fn FileSelectMap_9_InitRoomSelectMap(game: &mut Game) {
     DisableHdmaObjects(game);
     WaitUntilEndOfVblankAndClearHdma(game);
     let RoomDefHeader = get_RoomDefHeader(word!(game.room_ptr), game);
-    *(ram_ptr!(game, u16; 0x79f) as *mut u8).offset(0) = (*RoomDefHeader).area_index_;
-    *(ram_ptr!(game, u16; 0x7a1) as *mut u8).offset(0) = (*RoomDefHeader).x_coordinate_on_map;
-    *(ram_ptr!(game, u16; 0x7a3) as *mut u8).offset(0) = (*RoomDefHeader).y_coordinate_on_map;
+    byte!(@pointer ram_ptr!(game, u16; 0x79f); 0) = (*RoomDefHeader).area_index_;
+    byte!(@pointer ram_ptr!(game, u16; 0x7a1); 0) = (*RoomDefHeader).x_coordinate_on_map;
+    byte!(@pointer ram_ptr!(game, u16; 0x7a3); 0) = (*RoomDefHeader).y_coordinate_on_map;
     SetupMapScrollingForFileSelectMap(game);
     word!(game.map_min_y_scroll, wrapping_add(24));
     word!(game.reg_BG2VOFS = 24);

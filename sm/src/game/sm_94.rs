@@ -1261,8 +1261,7 @@ unsafe fn BlockFunc_9C73(v0: u16, game: &mut Game) -> u16 {
     let v1: i32 = v0 as i32 >> 1;
     if (word!(game.projectile_type[v1]) & 0xf00) != 0 {
         kBlockFunc_9C73_Tab1[(2
-            * (*((ram_ptr!(game, u16; 0xc18)).offset(v1 as isize) as *mut u8).offset(1) as i32
-                & 0xf)
+            * (byte!(@pointer (ram_ptr!(game, u16; 0xc18)).offset(v1 as isize); 1) as i32 & 0xf)
             + 1) as usize] as u16
     } else {
         let r18: i32 = word!(game.projectile_type[v1]) as i32 & 0xf;
@@ -1276,14 +1275,12 @@ pub unsafe fn BombOrPowerBomb_Func1(v0: u16, game: &mut Game) {
     let mut v2: i16 = word!(game.projectile_x_pos[v1]) as i16;
     if v2 >= 0 {
         let r26: u16 = word!(game.projectile_x_pos[v1]);
-        if ((*(&raw mut v2 as *mut u8).offset(1isize)) as i16)
-            .wrapping_sub((word!(game.room_width_in_scrolls)) as i16)
-            < 0
+        if ((byte!(v2; 1isize)) as i16).wrapping_sub((word!(game.room_width_in_scrolls)) as i16) < 0
         {
             v3 = word!(game.projectile_y_pos[v1]) as i16;
             if v3 >= 0 {
                 let R28: u16 = word!(game.projectile_y_pos[v1]);
-                if ((*(&raw mut v3 as *mut u8).offset(1isize)) as i16)
+                if ((byte!(v3; 1isize)) as i16)
                     .wrapping_sub((word!(game.room_height_in_scrolls)) as i16)
                     < 0
                 {
@@ -1443,12 +1440,11 @@ unsafe fn BlockFunc_A06A(k: u16, game: &mut Game) {
             word!(game.projectile_variables[v1] = 0);
         }
     } else {
-        let r18: u16 = *(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(1) as u16;
-        let r20: u16 = (((3u16)
-            .wrapping_mul((*(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(1)) as u16))
-            >> 2);
+        let r18: u16 = byte!(@pointer ram_ptr!(game, u16; 0xcea); 1) as u16;
+        let r20: u16 =
+            (((3u16).wrapping_mul((byte!(@pointer ram_ptr!(game, u16; 0xcea); 1)) as u16)) >> 2);
         let mut v3: i16 = ((word!(game.power_bomb_explosion_x_pos)) as i16)
-            .wrapping_sub((*(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(1)) as i16);
+            .wrapping_sub((byte!(@pointer ram_ptr!(game, u16; 0xcea); 1)) as i16);
         if v3 < 0 {
             v3 = 0;
         }
@@ -1484,7 +1480,7 @@ unsafe fn BlockFunc_A06A(k: u16, game: &mut Game) {
 }
 unsafe fn BlockFunc_A0F4(mut a: u16, r22: u16, r24: u16, r26: u16, r28: u16, game: &mut Game) {
     let RegWord: u16 = Mult8x8(a as u8, word!(game.room_width_in_blocks) as u8);
-    let mut v3: u16 = (2 * (RegWord as i32 + *(&raw mut a as *mut u8).offset(1) as i32)) as u16;
+    let mut v3: u16 = (2 * (RegWord as i32 + byte!(a; 1) as i32)) as u16;
     let mut v4: i16 = ((r24) as i16).wrapping_sub((r22) as i16);
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: 0,
@@ -1507,7 +1503,7 @@ unsafe fn BlockFunc_A0F4(mut a: u16, r22: u16, r24: u16, r26: u16, r28: u16, gam
 }
 unsafe fn BlockFunc_A11A(mut a: u16, r24: u16, r26: u16, r28: u16, game: &mut Game) {
     let RegWord: u16 = Mult8x8(a as u8, word!(game.room_width_in_blocks) as u8);
-    let mut v3: u16 = (2 * (RegWord as i32 + *(&raw mut a as *mut u8).offset(1) as i32)) as u16;
+    let mut v3: u16 = (2 * (RegWord as i32 + byte!(a; 1) as i32)) as u16;
     let mut v4: i16 = ((r28) as i16).wrapping_sub((r26) as i16);
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: 0,
@@ -2343,8 +2339,8 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
             }
             if current_block == 16784897620381762466 {
             } else {
-                *(&raw mut v4 as *mut u8).offset(0) = 0;
-                *(&raw mut v4 as *mut u8).offset(1) = (grapple_beam_tmpD86 >> 1) as u8;
+                byte!(v4; 0) = 0;
+                byte!(v4; 1) = (grapple_beam_tmpD86 >> 1) as u8;
                 word!(game.grapple_beam_end_angle16 = ((v4) as u16) | (0x80u16));
                 word!(game.grapple_beam_end_angles_mirror = ((v4) as u16) | (0x80u16));
                 if word!(game.g_word_7E0D98) != 6 && word!(game.g_word_7E0D98) != 5
@@ -2411,8 +2407,8 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
                 grapple_beam_tmpD86 = v5;
                 let grapple_beam_tmpD82_0: u16 = (v5 as i32 - 2i32 & 0x1ff) as u16;
                 if BlockFunc_ABE6(grapple_beam_tmpD82_0, game) & 1 != 0 {
-                    *(&raw mut v7 as *mut u8).offset(0) = 0;
-                    *(&raw mut v7 as *mut u8).offset(1) = (grapple_beam_tmpD86 >> 1) as u8;
+                    byte!(v7; 0) = 0;
+                    byte!(v7; 1) = (grapple_beam_tmpD86 >> 1) as u8;
                     word!(game.grapple_beam_end_angle16 = ((v7) as u16) | (0x80u16));
                     word!(game.grapple_beam_end_angles_mirror = ((v7) as u16) | (0x80u16));
                     if (word!(game.g_word_7E0D98) == 6 || word!(game.g_word_7E0D98) == 5)

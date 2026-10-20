@@ -87,7 +87,7 @@ unsafe fn get_PlmHeader_Size4(a: u16, game: &mut Game) -> *mut PlmHeader_Size4 {
 }
 pub unsafe fn SetGoldenTorizoPalette(mut a: u16, game: &mut Game) {
     let mut v1: i16 = 0;
-    v1 = ((*(&raw mut a as *mut u8).offset(1)) as i16) & (0x78i16);
+    v1 = ((byte!(a; 1)) as i16) & (0x78i16);
     if (v1 as u16 & 0x40) != 0 {
         v1 = 56;
     }
@@ -3232,7 +3232,7 @@ pub unsafe fn PlmSetup_DraygonCannon(j: u16, game: &mut Game) -> u8 {
 }
 pub unsafe fn PlmPreInstr_GotoLinkIfTriggered(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1;
-    if *((ram_ptr!(game, u16; 0x1d77)).offset(v1 as isize) as *mut u8).offset(0) == 255 {
+    if byte!(@pointer (ram_ptr!(game, u16; 0x1d77)).offset(v1 as isize); 0) == 255 {
         word!(game.plm_pre_instrs[v1] = ((0x84dfa8i32) as u16));
         word!(game.plm_instr_list_ptrs[v1] = word!(game.plm_instruction_list_link_reg[v1]));
         word!(game.plm_instruction_timer[v1] = 1);

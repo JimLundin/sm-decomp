@@ -290,8 +290,7 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion_2(game: &mut Game) -> u16 {
             );
             CopyPalettesForSamusDeath(
                 (2u16).wrapping_mul(
-                    (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb823)) as *mut u8)
-                        .offset((2 * word!(game.g_word_7E0DE4) as i32 + 1) as isize))
+                    (byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x9bb823)); (2 * word!(game.g_word_7E0DE4) as i32 + 1) as isize))
                         as u16,
                 ),
                 game,
@@ -618,7 +617,7 @@ pub unsafe fn GrappleBeamFunc_BC1F(game: &mut Game) {
             if (word!(game.grapple_beam_unkD26) & 0x8000) != 0 {
                 v0 = !(word!(game.grapple_beam_unkD26) as i32 - 1i32) as u16;
             }
-            if *(&raw mut v0 as *mut u8).offset(1) as i32 - 1i32 & 0x8000 != 0 {
+            if byte!(v0; 1) as i32 - 1i32 & 0x8000 != 0 {
                 word!(game.grapple_beam_unkD26 = 0);
             }
         } else {
@@ -701,16 +700,14 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
                     word!(game.samus_anim_frame_timer = 8);
                     word!(game.samus_anim_frame = 64);
                 }
-                v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)) as *mut u8)
-                    .offset(*(ram_ptr!(game, u16; 0xcfc) as *mut u8).offset(1) as isize)
+                v1 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)); *(ram_ptr!(game, u16; 0xcfc) as *mut u8).offset(1) as isize)
                     as u16;
                 false
             })
     };
     if start_grapple_animation {
         word!(game.samus_anim_frame_timer = 15);
-        v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)) as *mut u8)
-            .offset(*(ram_ptr!(game, u16; 0xcfc) as *mut u8).offset(1) as isize)
+        v1 = byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)); *(ram_ptr!(game, u16; 0xcfc) as *mut u8).offset(1) as isize)
             as u16;
         word!(game.samus_anim_frame = v1);
     }
@@ -913,8 +910,7 @@ pub unsafe fn HandleGrappleBeamFlare(game: &mut Game) {
         }
         if (word!(game.flare_animation_timer, wrapping_sub(1), reread) & 0x8000) != 0 {
             let mut v0: u16 = word!(game.flare_animation_frame, wrapping_add(1), reread);
-            if *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c487)) as *mut u8)
-                .offset(word!(game.flare_animation_frame) as isize)
+            if byte!(@pointer game.g_rom.offset(crate::rtl::lorom_offset(0x90c487)); word!(game.flare_animation_frame) as isize)
                 == 254
             {
                 word!(
@@ -1392,7 +1388,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
     if (word!(game.grapple_beam_unkD26) & 0x8000) == 0 {
         v0 = (2u16).wrapping_mul(word!(game.grapple_beam_unkD26));
         let mut v2: i16 = kSinCosTable8bit_Sext
-            [(*(ram_ptr!(game, u16; 0xcfa) as *mut u8).offset(1) as i32 + 64) as usize];
+            [(byte!(@pointer ram_ptr!(game, u16; 0xcfa); 1) as i32 + 64) as usize];
         if v2 >= 0 {
             SetHiLo(
                 ram_ptr!(game, u16; 0xb2e),
@@ -1411,7 +1407,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
     } else {
         v0 = (-2i32 * word!(game.grapple_beam_unkD26) as i32) as u16;
         let mut v1: i16 = kSinCosTable8bit_Sext
-            [(*(ram_ptr!(game, u16; 0xcfa) as *mut u8).offset(1) as i32 + 64) as usize];
+            [(byte!(@pointer ram_ptr!(game, u16; 0xcfa); 1) as i32 + 64) as usize];
         if v1 < 0 {
             SetHiLo(
                 ram_ptr!(game, u16; 0xb2e),

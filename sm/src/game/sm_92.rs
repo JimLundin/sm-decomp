@@ -27,14 +27,14 @@ pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
             + crate::rtl::rom_table_word!(game, 0x92d91e, (*AD).top_half_idx as isize) as i32)
             as u16
     );
-    *(ram_ptr!(game, u16; 0x71d) as *mut u8).offset(0) = 1;
+    byte!(@pointer ram_ptr!(game, u16; 0x71d); 0) = 1;
     if (*AD).bottom_half_idx != 255 {
         word!(
             game.nmi_copy_samus_bottom_half_src = (7 * (*AD).bottom_half_pos as i32
                 + crate::rtl::rom_table_word!(game, 0x92d938, (*AD).bottom_half_idx as isize)
                     as i32) as u16
         );
-        *(ram_ptr!(game, u16; 0x71d) as *mut u8).offset(1) = 1;
+        byte!(@pointer ram_ptr!(game, u16; 0x71d); 1) = 1;
     }
 }
 pub unsafe fn PlaySamusFanfare(game: &mut Game) -> u8 {

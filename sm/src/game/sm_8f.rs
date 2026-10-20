@@ -304,8 +304,7 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
     if word!(game.time_is_frozen_flag) == 0 && (word!(game.nmi_frame_counter_word) & 1) == 0 {
         let mut Random: u16 = NextRandom(game);
         let x: u16 = (word!(game.layer1_x_pos)).wrapping_add((Random as u8) as u16);
-        let y: u16 = (word!(game.layer1_y_pos))
-            .wrapping_add((*(&raw mut Random as *mut u8).offset(1)) as u16);
+        let y: u16 = (word!(game.layer1_y_pos)).wrapping_add((byte!(Random; 1)) as u16);
         let prod: u16 = Mult8x8((y >> 4) as u8, word!(game.room_width_in_blocks) as u8);
         if (*(ram_ptr!(game, u16; 0x10002)).offset((prod as i32 + (x as i32 >> 4)) as isize)
             & 0x3ff)
@@ -329,8 +328,7 @@ pub unsafe fn RoomCode_GenRandomExplodes_4th(game: &mut Game) {
         let mut Random: u16 = NextRandom(game);
         RoomCode_GenRandomExplodes(
             (word!(game.layer1_x_pos)).wrapping_add((Random as u8) as u16),
-            (word!(game.layer1_y_pos))
-                .wrapping_add((*(&raw mut Random as *mut u8).offset(1)) as u16),
+            (word!(game.layer1_y_pos)).wrapping_add((byte!(Random; 1)) as u16),
             game,
         );
     }

@@ -14,6 +14,17 @@
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
 
+// Access byte lanes through the original caller-side raw pointer.
+#[macro_export]
+macro_rules! byte {
+    ($place:expr; $lane:expr) => {
+        *(&raw mut $place as *mut u8).offset($lane)
+    };
+    (@pointer $pointer:expr; $lane:expr) => {
+        *($pointer as *mut u8).offset($lane)
+    };
+}
+
 // Emit place updates in caller scope, preserving the original capture and stores.
 #[macro_export]
 macro_rules! update_place {

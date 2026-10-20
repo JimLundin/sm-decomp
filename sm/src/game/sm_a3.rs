@@ -304,12 +304,11 @@ pub unsafe fn Fireflea_Func_1(k: u16, game: &mut Game) {
 }
 pub unsafe fn Fireflea_Func_2(k: u16, game: &mut Game) {
     let E = Get_FireFlea(k as i32, game);
-    (*E).var_D = ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1) as i32) << 8) as u16;
+    (*E).var_D = ((byte!((*E).parameter_1; 1) as i32) << 8) as u16;
 }
 pub unsafe fn Fireflea_Func_3(k: u16, game: &mut Game) {
     let E = Get_FireFlea(k as i32, game);
-    let mut v2: u16 =
-        (8u16).wrapping_mul((*(&raw mut (*E).parameter_2 as *mut u8).offset(0)) as u16);
+    let mut v2: u16 = (8u16).wrapping_mul((byte!((*E).parameter_2; 0)) as u16);
     if ((*E).parameter_1 & 1) == 0 {
         v2 = (v2).wrapping_add(4);
     }
@@ -320,10 +319,9 @@ pub unsafe fn Fireflea_Func_3(k: u16, game: &mut Game) {
 }
 pub unsafe fn Fireflea_Func_4(k: u16, game: &mut Game) {
     let E = Get_FireFlea(k as i32, game);
-    (*E).var_C = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa38d1d)) as *mut u16)
-        .offset(*(&raw mut (*E).parameter_2 as *mut u8).offset(1isize) as isize)
-        as *mut u8)
-        .offset(0) as u16;
+    (*E).var_C = byte!(@pointer (game.g_rom.offset(crate::rtl::lorom_offset(0xa38d1d)) as *mut u16)
+        .offset(*(&raw mut (*E).parameter_2 as *mut u8).offset(1isize) as isize); 0)
+        as u16;
 }
 pub unsafe fn Fireflea_Func_5(k: u16, game: &mut Game) {
     let E = Get_FireFlea(k as i32, game);
@@ -339,15 +337,12 @@ pub unsafe fn Fireflea_Main(game: &mut Game) {
     let E = Get_FireFlea(word!(game.cur_enemy_index) as i32, game);
     if ((*E).parameter_1 & 2) != 0 {
         (*E).base.x_pos = ((*E).var_E).wrapping_add(CosineMult8bit(
-            *(&raw mut (*E).var_D as *mut u8).offset(1) as u16,
+            byte!((*E).var_D; 1) as u16,
             (*E).var_C,
             game,
         ));
-        (*E).base.y_pos = ((*E).var_F).wrapping_add(SineMult8bit(
-            *(&raw mut (*E).var_D as *mut u8).offset(1) as u16,
-            (*E).var_C,
-            game,
-        ));
+        (*E).base.y_pos =
+            ((*E).var_F).wrapping_add(SineMult8bit(byte!((*E).var_D; 1) as u16, (*E).var_C, game));
         (*E).var_D =
             ((*E).var_D).wrapping_add(*((&raw mut (*E).var_A as *mut u8).offset(1) as *mut u16));
     } else {
@@ -410,17 +405,17 @@ pub unsafe fn MaridiaFish_Init(game: &mut Game) {
     let E = Get_MaridiaFish(word!(game.cur_enemy_index) as i32, game);
     (*E).base.current_instruction = addr_kMaridiaFish_Ilist_902A as u16;
     (*E).var_A = ((0xa39132i32) as u16);
-    if *(&raw mut (*E).parameter_1 as *mut u8).offset(1) == 0 {
+    if byte!((*E).parameter_1; 1) == 0 {
         (*E).base.current_instruction = addr_kMaridiaFish_Ilist_9060 as u16;
         (*E).var_A = ((0xa391abi32) as u16);
     }
-    let v1: i32 = 8 * *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as i32 >> 1;
+    let v1: i32 = 8 * byte!((*E).parameter_1; 0) as i32 >> 1;
     (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, v1 as isize);
     (*E).var_B = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 1) as isize);
     (*E).var_E = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 2) as isize);
     (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 3) as isize);
-    (*E).var_00 = *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as u16;
-    (*E).var_02 = *(&raw mut (*E).parameter_2 as *mut u8).offset(1) as u16;
+    (*E).var_00 = byte!((*E).parameter_2; 0) as u16;
+    (*E).var_02 = byte!((*E).parameter_2; 1) as u16;
     set_fields! {[(*E)], 0; var_F, var_01}
     (*E).var_03 = SineMult8bit((*E).var_F, (*E).var_00, game);
 }
@@ -450,8 +445,7 @@ pub unsafe fn MaridiaFish_Func_1(game: &mut Game) {
             (*E).base.timer = 0;
             (*E).base.current_instruction = addr_kMaridiaFish_Ilist_903C as u16;
         } else {
-            (*E).var_F = ((*(&raw mut (*E).var_02 as *mut u8).offset(0))
-                .wrapping_add(((*E).var_F) as u8)) as u16;
+            (*E).var_F = ((byte!((*E).var_02; 0)).wrapping_add(((*E).var_F) as u8)) as u16;
         }
     }
     (*E).var_03 = (*E).var_04;
@@ -482,8 +476,7 @@ pub unsafe fn MaridiaFish_Func_2(game: &mut Game) {
             (*E).base.timer = 0;
             (*E).base.current_instruction = addr_kMaridiaFish_Ilist_9072 as u16;
         } else {
-            (*E).var_F = ((*(&raw mut (*E).var_02 as *mut u8).offset(0))
-                .wrapping_add(((*E).var_F) as u8)) as u16;
+            (*E).var_F = ((byte!((*E).var_02; 0)).wrapping_add(((*E).var_F) as u8)) as u16;
         }
     }
     (*E).var_03 = (*E).var_04;
@@ -704,7 +697,7 @@ pub unsafe fn FastMovingSlowSinkingPlatform_Init(game: &mut Game) {
 pub unsafe fn PlatformThatFalls_Init(k: u16, j: u16, game: &mut Game) {
     let E = Get_PlatformThatFallsWithSamus(k as i32, game);
     (*E).base.current_instruction = j;
-    let v3: i32 = 8 * *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as i32 >> 1;
+    let v3: i32 = 8 * byte!((*E).parameter_2; 0) as i32 >> 1;
     (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
     (*E).var_B = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize);
     (*E).var_E = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize);
@@ -712,7 +705,7 @@ pub unsafe fn PlatformThatFalls_Init(k: u16, j: u16, game: &mut Game) {
     set_fields! {[(*E)], 0; var_00, var_03, var_04}
     (*E).var_A = ((*E).base.y_pos).wrapping_add(1);
     (*E).var_F = 0;
-    (*E).var_05 = *(&raw mut (*E).parameter_2 as *mut u8).offset(1) as u16;
+    (*E).var_05 = byte!((*E).parameter_2; 1) as u16;
 }
 static off_A39C97: [Option<Func_V>; 2] = callback_table! { unsafe Func_V;
     PlatformThatFallsWithSamus_Func_1, PlatformThatFallsWithSamus_Func_2,
@@ -909,8 +902,8 @@ pub unsafe fn Roach_Init(game: &mut Game) {
 pub unsafe fn Roach_Func_2(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
     let pt: Point32 = ConvertAngleToXy(
-        *(&raw mut (*E).parameter_1 as *mut u8).offset(1) as u16,
-        *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
+        byte!((*E).parameter_1; 1) as u16,
+        byte!((*E).parameter_1; 0) as u16,
         game,
     );
     SetHiLo(&raw mut (*E).var_01, &raw mut (*E).var_00, pt.x);
@@ -922,8 +915,8 @@ pub unsafe fn Roach_Func_4(k: u16, game: &mut Game) {
         &raw mut (*E).var_05,
         &raw mut (*E).var_04,
         CosineMult8bitFull(
-            ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_sub(32)) as u16,
-            *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
+            ((byte!((*E).parameter_1; 1isize)).wrapping_sub(32)) as u16,
+            byte!((*E).parameter_1; 0) as u16,
             game,
         ),
     );
@@ -931,8 +924,8 @@ pub unsafe fn Roach_Func_4(k: u16, game: &mut Game) {
         &raw mut (*E).var_07,
         &raw mut (*E).var_06,
         SineMult8bitFull(
-            ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_sub(32)) as u16,
-            *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
+            ((byte!((*E).parameter_1; 1isize)).wrapping_sub(32)) as u16,
+            byte!((*E).parameter_1; 0) as u16,
             game,
         ),
     );
@@ -943,8 +936,8 @@ pub unsafe fn Roach_Func_5(k: u16, game: &mut Game) {
         &raw mut (*E).var_09,
         &raw mut (*E).var_08,
         CosineMult8bitFull(
-            ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_add(32)) as u16,
-            *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
+            ((byte!((*E).parameter_1; 1isize)).wrapping_add(32)) as u16,
+            byte!((*E).parameter_1; 0) as u16,
             game,
         ),
     );
@@ -952,29 +945,23 @@ pub unsafe fn Roach_Func_5(k: u16, game: &mut Game) {
         &raw mut (*E).var_0B,
         &raw mut (*E).var_0A,
         SineMult8bitFull(
-            ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_add(32)) as u16,
-            *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
+            ((byte!((*E).parameter_1; 1isize)).wrapping_add(32)) as u16,
+            byte!((*E).parameter_1; 0) as u16,
             game,
         ),
     );
 }
 pub unsafe fn Roach_Func_6(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
-    (*E).var_20 = (2
-        * (((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_sub(48)) as i32 >> 5))
-        as u16;
+    (*E).var_20 = (2 * (((byte!((*E).parameter_1; 1isize)).wrapping_sub(48)) as i32 >> 5)) as u16;
 }
 pub unsafe fn Roach_Func_7(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
-    (*E).var_21 = (2
-        * (((*(&raw mut (*E).parameter_1 as *mut u8).offset(1isize)).wrapping_sub(80)) as i32 >> 5))
-        as u16;
+    (*E).var_21 = (2 * (((byte!((*E).parameter_1; 1isize)).wrapping_sub(80)) as i32 >> 5)) as u16;
 }
 pub unsafe fn Roach_Func_8(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
-    (*E).var_22 = (2
-        * ((*(&raw mut (*E).parameter_1 as *mut u8).offset(1) as i32 - 48i32 + 32) as u8 as i32
-            >> 5)) as u16;
+    (*E).var_22 = (2 * ((byte!((*E).parameter_1; 1) as i32 - 48i32 + 32) as u8 as i32 >> 5)) as u16;
 }
 crate::game::address_dispatch! {
     pub unsafe fn CallRoachFunc(ea: u32, game: &mut Game) => ea;
@@ -996,12 +983,12 @@ pub unsafe fn Roach_Func_9(game: &mut Game) {
     let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
     if IsSamusWithinEnemy_X(
         word!(game.cur_enemy_index),
-        *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as u16,
+        byte!((*E).parameter_2; 0) as u16,
         game,
     ) != 0
         && IsSamusWithinEnemy_Y(
             word!(game.cur_enemy_index),
-            *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as u16,
+            byte!((*E).parameter_2; 0) as u16,
             game,
         ) != 0
     {
@@ -1064,20 +1051,12 @@ pub unsafe fn Roach_Func_18(k: u16, game: &mut Game) {
     SetHiLo(
         &raw mut (*E).var_0D,
         &raw mut (*E).var_0C,
-        CosineMult8bitFull(
-            (*E).var_C,
-            *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
-            game,
-        ),
+        CosineMult8bitFull((*E).var_C, byte!((*E).parameter_1; 0) as u16, game),
     );
     SetHiLo(
         &raw mut (*E).var_0F,
         &raw mut (*E).var_0E,
-        SineMult8bitFull(
-            (*E).var_C,
-            *(&raw mut (*E).parameter_1 as *mut u8).offset(0) as u16,
-            game,
-        ),
+        SineMult8bitFull((*E).var_C, byte!((*E).parameter_1; 0) as u16, game),
     );
 }
 pub unsafe fn Roach_Func_19(game: &mut Game) {
@@ -1174,7 +1153,7 @@ pub unsafe fn Roach_Func_28(game: &mut Game) {
 }
 pub unsafe fn Roach_Func_29(k: u16, game: &mut Game) {
     let E = Get_Roach(k as i32, game);
-    let varE20: u16 = *(&raw mut (*E).parameter_1 as *mut u8).offset(1) as u16;
+    let varE20: u16 = byte!((*E).parameter_1; 1) as u16;
     EnemyFunc_B691(
         varE20,
         Point32 {
@@ -1826,7 +1805,7 @@ pub unsafe fn Bang_Init(game: &mut Game) {
         0xa3ba84,
         *(&raw mut (*E).parameter_2 as *mut u8).offset(0) as isize
     );
-    let v1: i32 = 2 * *(&raw mut (*E).parameter_2 as *mut u8).offset(1) as i32;
+    let v1: i32 = 2 * byte!((*E).parameter_2; 1) as i32;
     let v2: u16 = crate::rtl::rom_table_word!(game, 0xa3bc6a, v1 as isize);
     (*E).var_0C = v2;
     (*E).var_0D = v2;
@@ -3224,9 +3203,8 @@ pub unsafe fn Metroid_Func_2(varE32: u16, game: &mut Game) {
     let mut v6: u16 = 0;
     let mut r18: u16 = 0;
     let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
-    *(&raw mut v1 as *mut u8).offset(0) = (((varE32).wrapping_sub((*E).base.y_pos)) >> 8) as u8;
-    *(&raw mut v1 as *mut u8).offset(1) =
-        ((varE32) as u8).wrapping_sub(*(&raw mut (*E).base.y_pos as *mut u8).offset(0));
+    byte!(v1; 0) = (((varE32).wrapping_sub((*E).base.y_pos)) >> 8) as u8;
+    byte!(v1; 1) = ((varE32) as u8).wrapping_sub(byte!((*E).base.y_pos; 0));
     let mut r20: u16 = ((((v1) as u16) & (0xff00u16)) >> 3);
     if (r20 & 0x1000) != 0 {
         r20 = (r20) | (0xe000u16);
@@ -3260,10 +3238,8 @@ pub unsafe fn Metroid_Func_2(varE32: u16, game: &mut Game) {
     }
     r18 = 0;
     r20 = 0;
-    *(&raw mut v5 as *mut u8).offset(0) =
-        (((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos)) >> 8) as u8;
-    *(&raw mut v5 as *mut u8).offset(1) = ((word!(game.samus_x_pos)) as u8)
-        .wrapping_sub(*(&raw mut (*E).base.x_pos as *mut u8).offset(0));
+    byte!(v5; 0) = (((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos)) >> 8) as u8;
+    byte!(v5; 1) = ((word!(game.samus_x_pos)) as u8).wrapping_sub(byte!((*E).base.x_pos; 0));
     r20 = ((((v5) as u16) & (0xff00u16)) >> 3);
     if (r20 & 0x1000) != 0 {
         r20 = (r20) | (0xe000u16);

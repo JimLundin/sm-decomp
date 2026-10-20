@@ -73,11 +73,15 @@ results, including `7de53cc1`, describe the earlier codec.
 ## Cleanup approach (2026-10-19)
 
 Volume priority (user direction, 2026-10-20): reduce maintained sm/src Rust
-below 100000 lines. The current 117475 lines require at least 17476 further
-lines removed, including all helpers and caller changes. Prioritize complete
-repeated families and substantial reductions, while taking productive focused
-smaller changes toward this aggregate target. Preserve runtime behavior and
-readability; formatting compression does not satisfy the reduction goal.
+below 100000 lines. The current 116962 lines require at least 16963 further
+lines removed, including all helpers and caller changes. The user's latest
+correction rejects incremental small examples as the strategy: select whole
+subsystem replacements with credible multi-thousand-line net reductions.
+Assess alternative interfaces, representations and control-flow designs over
+complete ownership surfaces. Small clone censuses do not bound what those
+designs can remove. Park the cinematic initializer, current-enemy accessor
+and terminal/indexed-loop drafts. Preserve runtime behavior and readability;
+formatting compression does not satisfy the reduction goal.
 The 90-method word-accessor draft (-195 lines) is parked outside the repository.
 
 Identical same-module functions (2026-10-20): 71 duplicate public functions
@@ -96,6 +100,19 @@ inputs and artifacts and the launcher's embedded-library source check.
 Rust lines -304 to 117171, unsafe functions -59 to 5367 and cast-containing
 lines -42 to 9496; other counters unchanged. At least 17172 further lines
 must be removed to meet the fixed target; existing route coverage remains.
+
+Byte-lane interface (2026-10-20): the already-applied batch replaces 562
+caller-side raw byte accesses with one shared read/write-place macro. Both
+place and pointer forms retain the original dereference, cast, offset and
+evaluation order. Two match-arm sites retain their original block scopes.
+All 9002398 remaining expanded core bytes match after removing only the
+helper and binding both variants' 67 embedded source files to their bytes.
+Formatting, normal release (21.87s), diff check and progress pass. Full
+any% 129712/0 (155.13s) and Speed Booster 148406/0 (203.52s), native exits
+0, pass with fixed source/input/artifact bytes and embedded source checking.
+Rust lines -209 to 116962; cast-containing lines -15 to 9481 reflect reflow,
+with other counters unchanged. This closes the applied small batch; the next
+implementation follows the subsystem-scale priority above.
 
 Reduction throughput (subagent investigation, 2026-10-20): rank complete
 structural families by formatted net savings before extensive validation.
