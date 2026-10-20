@@ -20,6 +20,57 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared input-binding tables (2026-10-20)
+
+Default keyboard bindings now build their repeating load/save/replay groups
+from named commands, keys and modifiers, then publish the complete 130-entry
+array in its original startup initializer. Unbound slots, modifier encoding
+and initialization timing stay unchanged. Gamepad prefixes and IDs now live
+in one ordered table, retaining aliases, ASCII case handling, first-match
+precedence and the returned unconsumed suffix. Complete formatted source
+shrinks **81 lines**: 54 in keyboard construction and 27 in gamepad lookup.
+
+Actual original/replacement configuration modules pass **2503075 comparisons**.
+Checks exercise DLL startup before manual initialization, every keyboard slot,
+case/prefix/suffix/high-byte gamepad inputs, default registration under each
+overridden group, complete mapping entries and command lookups. A config file
+with gamepad aliases/chords also executes through the normal frontend library;
+its keyboard lookups and all 17 buttons across every 17-bit modifier mask agree
+with the original module. Actual source, unchanged supporting macros, the
+normal library and check DLL are bound. These are finite frontend comparisons,
+not new gameplay or physical controller-device coverage.
+
+Formatting, all-target release check, fresh normal release (20.21s), diff
+check and progress pass on the frozen proposed commit. Source-checked full any%
+passes **129712/0** and Speed Booster **148406/0**, native exits 0, in
+164.92s/210.97s. Source/input/library/DLL pins stay fixed and the
+host reuses the normal library (setup 2.68s). The final checkout seeds only registry
+dependencies and compiles the game and host locally. Its source includes the
+landed fixed-ROM-pointer reduction. Movies are regression checks; the frontend
+comparisons above exercise the changed binding behavior. Concurrent uncommitted
+verification and shader edits remain outside the replay snapshot and this
+commit. No shared-checkout build result is claimed for their composition.
+
+Committed Rust is **112902 lines**, leaving **12903 further lines** for the
+fixed under-100000 target. Cast-containing lines change by -79; other
+counters stay unchanged. Draft/check artifacts remain under
+`%TEMP%/sm-bindings-root-9c4daf2f`. Removal of the preceding candidate target
+was rejected by automatic approval review as blocked by policy; it remains
+pending cleanup. That earlier build copied an entire previous target and its
+20.86s time is seeded/load-dependent, not a speedup claim. The final build
+corrects that seeding and no longer depends on the camera snapshot target.
+The complete remaining reduction budget is
+unfinished. Samus rendering inspection found distinct coordinate/return/callback
+contracts and no complete draft; music fades and the room-background loaders
+also yielded no priced candidate. The earlier 43-line Zoomer wall-following
+projection remains parked and was not repeated.
+
+A separate complete key-group constructor draft saves **65 formatted lines**
+including its helper. It has no compilation or execution validation yet and
+is not counted here. Its draft and pricing script remain in the same TEMP
+root for the next frontend step; use the current Validation strategy and
+compare every group's name, command ID and size plus real parser behavior.
+
 ## Shared fixed ROM pointers (2026-10-20)
 
 All 229 remaining literal-address LoROM pointer constructions across 20 banks

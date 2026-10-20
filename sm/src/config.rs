@@ -464,60 +464,33 @@ pub unsafe fn FindCmdForGamepadButton(button: i32, modifiers: u32) -> i32 {
     0
 }
 unsafe fn ParseGamepadButtonName(value: *mut *const c_char) -> i32 {
-    let s = *value;
-    static mut kGamepadKeyNames: [*const c_char; 19] = [
-        b"Back\0" as *const u8 as *const c_char,
-        b"Guide\0" as *const u8 as *const c_char,
-        b"Start\0" as *const u8 as *const c_char,
-        b"L3\0" as *const u8 as *const c_char,
-        b"R3\0" as *const u8 as *const c_char,
-        b"L1\0" as *const u8 as *const c_char,
-        b"R1\0" as *const u8 as *const c_char,
-        b"DpadUp\0" as *const u8 as *const c_char,
-        b"DpadDown\0" as *const u8 as *const c_char,
-        b"DpadLeft\0" as *const u8 as *const c_char,
-        b"DpadRight\0" as *const u8 as *const c_char,
-        b"L2\0" as *const u8 as *const c_char,
-        b"R2\0" as *const u8 as *const c_char,
-        b"Lb\0" as *const u8 as *const c_char,
-        b"Rb\0" as *const u8 as *const c_char,
-        b"A\0" as *const u8 as *const c_char,
-        b"B\0" as *const u8 as *const c_char,
-        b"X\0" as *const u8 as *const c_char,
-        b"Y\0" as *const u8 as *const c_char,
+    const BUTTONS: &[(&core::ffi::CStr, i32)] = &[
+        (c"Back", kGamepadBtn_Back),
+        (c"Guide", kGamepadBtn_Guide),
+        (c"Start", kGamepadBtn_Start),
+        (c"L3", kGamepadBtn_L3),
+        (c"R3", kGamepadBtn_R3),
+        (c"L1", kGamepadBtn_L1),
+        (c"R1", kGamepadBtn_R1),
+        (c"DpadUp", kGamepadBtn_DpadUp),
+        (c"DpadDown", kGamepadBtn_DpadDown),
+        (c"DpadLeft", kGamepadBtn_DpadLeft),
+        (c"DpadRight", kGamepadBtn_DpadRight),
+        (c"L2", kGamepadBtn_L2),
+        (c"R2", kGamepadBtn_R2),
+        (c"Lb", kGamepadBtn_L1),
+        (c"Rb", kGamepadBtn_R1),
+        (c"A", kGamepadBtn_A),
+        (c"B", kGamepadBtn_B),
+        (c"X", kGamepadBtn_X),
+        (c"Y", kGamepadBtn_Y),
     ];
-    static mut kGamepadKeyIds: [u8; 19] = [
-        kGamepadBtn_Back as u8,
-        kGamepadBtn_Guide as u8,
-        kGamepadBtn_Start as u8,
-        kGamepadBtn_L3 as u8,
-        kGamepadBtn_R3 as u8,
-        kGamepadBtn_L1 as u8,
-        kGamepadBtn_R1 as u8,
-        kGamepadBtn_DpadUp as u8,
-        kGamepadBtn_DpadDown as u8,
-        kGamepadBtn_DpadLeft as u8,
-        kGamepadBtn_DpadRight as u8,
-        kGamepadBtn_L2 as u8,
-        kGamepadBtn_R2 as u8,
-        kGamepadBtn_L1 as u8,
-        kGamepadBtn_R1 as u8,
-        kGamepadBtn_A as u8,
-        kGamepadBtn_B as u8,
-        kGamepadBtn_X as u8,
-        kGamepadBtn_Y as u8,
-    ];
-    let mut i: size_t = 0 as size_t;
-    while i
-        != (size_of::<[*const c_char; 19]>() as usize)
-            .wrapping_div(size_of::<*const c_char>() as usize)
-    {
-        let r = StringStartsWithNoCase(s, kGamepadKeyNames[i as usize]);
-        if !r.is_null() {
-            *value = r;
-            return kGamepadKeyIds[i as usize] as i32;
+    for &(name, button) in BUTTONS {
+        let rest = StringStartsWithNoCase(*value, name.as_ptr());
+        if !rest.is_null() {
+            *value = rest;
+            return button;
         }
-        i = i.wrapping_add(1);
     }
     kGamepadBtn_Invalid
 }
@@ -919,138 +892,84 @@ pub const NULL_0: *mut c_void = null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 unsafe fn run_static_initializers() {
-    kDefaultKbdControls = [
-        0i32 as u16,
-        encode_keycode(SDLK_UP as i32) as u16,
-        encode_keycode(SDLK_DOWN as i32) as u16,
-        encode_keycode(SDLK_LEFT as i32) as u16,
-        encode_keycode(SDLK_RIGHT as i32) as u16,
-        encode_keycode(SDLK_RSHIFT as i32) as u16,
-        encode_keycode(SDLK_RETURN as i32) as u16,
-        encode_keycode(SDLK_x as i32) as u16,
-        encode_keycode(SDLK_z as i32) as u16,
-        encode_keycode(SDLK_s as i32) as u16,
-        encode_keycode(SDLK_a as i32) as u16,
-        encode_keycode(SDLK_c as i32) as u16,
-        encode_keycode(SDLK_v as i32) as u16,
-        encode_keycode(SDLK_F1 as i32) as u16,
-        encode_keycode(SDLK_F2 as i32) as u16,
-        encode_keycode(SDLK_F3 as i32) as u16,
-        encode_keycode(SDLK_F4 as i32) as u16,
-        encode_keycode(SDLK_F5 as i32) as u16,
-        encode_keycode(SDLK_F6 as i32) as u16,
-        encode_keycode(SDLK_F7 as i32) as u16,
-        encode_keycode(SDLK_F8 as i32) as u16,
-        encode_keycode(SDLK_F9 as i32) as u16,
-        encode_keycode(SDLK_F10 as i32) as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        (encode_keycode(SDLK_F1 as i32) | kKeyMod_Shift as i32) as u16,
-        (encode_keycode(SDLK_F2 as i32) | kKeyMod_Shift as i32) as u16,
-        (encode_keycode(SDLK_F3 as i32) | kKeyMod_Shift as i32) as u16,
-        (encode_keycode(SDLK_F4 as i32) | kKeyMod_Shift as i32) as u16,
-        (encode_keycode(SDLK_F5 as i32) | kKeyMod_Shift as i32) as u16,
-        (encode_keycode(SDLK_F6 as i32) | kKeyMod_Shift as i32) as u16,
-        (encode_keycode(SDLK_F7 as i32) | kKeyMod_Shift as i32) as u16,
-        (encode_keycode(SDLK_F8 as i32) | kKeyMod_Shift as i32) as u16,
-        (encode_keycode(SDLK_F9 as i32) | kKeyMod_Shift as i32) as u16,
-        (encode_keycode(SDLK_F10 as i32) | kKeyMod_Shift as i32) as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        (encode_keycode(SDLK_F1 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_F2 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_F3 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_F4 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_F5 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_F6 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_F7 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_F8 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_F9 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_F10 as i32) | kKeyMod_Ctrl as i32) as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        encode_keycode(SDLK_1 as i32) as u16,
-        encode_keycode(SDLK_2 as i32) as u16,
-        encode_keycode(SDLK_3 as i32) as u16,
-        encode_keycode(SDLK_4 as i32) as u16,
-        encode_keycode(SDLK_5 as i32) as u16,
-        encode_keycode(SDLK_6 as i32) as u16,
-        encode_keycode(SDLK_7 as i32) as u16,
-        encode_keycode(SDLK_8 as i32) as u16,
-        encode_keycode(SDLK_9 as i32) as u16,
-        encode_keycode(SDLK_0 as i32) as u16,
-        encode_keycode(SDLK_MINUS as i32) as u16,
-        encode_keycode(SDLK_EQUALS as i32) as u16,
-        encode_keycode(SDLK_BACKSPACE as i32) as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        (encode_keycode(SDLK_1 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_2 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_3 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_4 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_5 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_6 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_7 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_8 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_9 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_0 as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_MINUS as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_EQUALS as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_BACKSPACE as i32) | kKeyMod_Ctrl as i32) as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        N as u16,
-        encode_keycode(SDLK_w as i32) as u16,
-        encode_keycode(SDLK_q as i32) as u16,
-        (encode_keycode(SDLK_r as i32) | kKeyMod_Shift as i32) as u16,
-        encode_keycode(SDLK_k as i32) as u16,
-        encode_keycode(SDLK_l as i32) as u16,
-        (encode_keycode(SDLK_RETURN as i32) | kKeyMod_Alt as i32) as u16,
-        (encode_keycode(SDLK_r as i32) | kKeyMod_Ctrl as i32) as u16,
-        (encode_keycode(SDLK_p as i32) | kKeyMod_Shift as i32) as u16,
-        encode_keycode(SDLK_p as i32) as u16,
-        encode_keycode(SDLK_TAB as i32) as u16,
-        encode_keycode(SDLK_t as i32) as u16,
-        N as u16,
-        N as u16,
-        encode_keycode(SDLK_f as i32) as u16,
-        encode_keycode(SDLK_r as i32) as u16,
-        0i32 as u16,
-        0i32 as u16,
-    ];
+    let mut bindings = [N as u16; 130];
+    for (i, key) in [
+        SDLK_UP,
+        SDLK_DOWN,
+        SDLK_LEFT,
+        SDLK_RIGHT,
+        SDLK_RSHIFT,
+        SDLK_RETURN,
+        SDLK_x,
+        SDLK_z,
+        SDLK_s,
+        SDLK_a,
+        SDLK_c,
+        SDLK_v,
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        bindings[kKeys_Controls as usize + i] = encode_keycode(key as SDL_Keycode) as u16;
+    }
+    // Each save-state command group has twenty slots; only F1..F10 are bound.
+    for (command, modifier) in [
+        (kKeys_Load, 0),
+        (kKeys_Save, kKeyMod_Shift),
+        (kKeys_Replay, kKeyMod_Ctrl),
+    ] {
+        for (i, key) in [
+            SDLK_F1, SDLK_F2, SDLK_F3, SDLK_F4, SDLK_F5, SDLK_F6, SDLK_F7, SDLK_F8, SDLK_F9,
+            SDLK_F10,
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            bindings[command as usize + i] =
+                (encode_keycode(key as SDL_Keycode) | modifier as i32) as u16;
+        }
+    }
+    for (command, modifier) in [(kKeys_LoadRef, 0), (kKeys_ReplayRef, kKeyMod_Ctrl)] {
+        for (i, key) in [
+            SDLK_1,
+            SDLK_2,
+            SDLK_3,
+            SDLK_4,
+            SDLK_5,
+            SDLK_6,
+            SDLK_7,
+            SDLK_8,
+            SDLK_9,
+            SDLK_0,
+            SDLK_MINUS,
+            SDLK_EQUALS,
+            SDLK_BACKSPACE,
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            bindings[command as usize + i] =
+                (encode_keycode(key as SDL_Keycode) | modifier as i32) as u16;
+        }
+    }
+    for (command, key, modifier) in [
+        (kKeys_CheatLife, SDLK_w, 0),
+        (kKeys_CheatJump, SDLK_q, 0),
+        (kKeys_ToggleWhichFrame, SDLK_r, kKeyMod_Shift),
+        (kKeys_ClearKeyLog, SDLK_k, 0),
+        (kKeys_StopReplay, SDLK_l, 0),
+        (kKeys_Fullscreen, SDLK_RETURN, kKeyMod_Alt),
+        (kKeys_Reset, SDLK_r, kKeyMod_Ctrl),
+        (kKeys_Pause, SDLK_p, kKeyMod_Shift),
+        (kKeys_PauseDimmed, SDLK_p, 0),
+        (kKeys_Turbo, SDLK_TAB, 0),
+        (kKeys_ReplayTurbo, SDLK_t, 0),
+        (kKeys_DisplayPerf, SDLK_f, 0),
+        (kKeys_ToggleRenderer, SDLK_r, 0),
+    ] {
+        bindings[command as usize] = (encode_keycode(key as SDL_Keycode) | modifier as i32) as u16;
+    }
+    kDefaultKbdControls = bindings;
 }
 #[used]
 #[cfg_attr(target_os = "linux", link_section = ".init_array")]
