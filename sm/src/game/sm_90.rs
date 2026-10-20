@@ -65,15 +65,12 @@ crate::game::constants::typed_constants! { LiquidPhysicsType;
     kLiquidPhysicsType_Air = 0,
 }
 pub use crate::types::SamusPoseParams;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct SamusSpeedTableEntry {
-    pub accel: u16,
-    pub accel_sub: u16,
-    pub max_speed: u16,
-    pub max_speed_sub: u16,
-    pub decel: u16,
-    pub decel_sub: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct SamusSpeedTableEntry {
+        pub accel, accel_sub, max_speed, max_speed_sub, decel, decel_sub: u16;
+    }
 }
 pub use crate::types::SamusMovementType;
 #[derive(Copy, Clone)]

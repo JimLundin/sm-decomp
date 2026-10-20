@@ -13,12 +13,13 @@ pub type C2RustUnnamed_0 = u32;
 pub const kPpuExtraLeftRight: C2RustUnnamed_0 = 0;
 pub const kPpuXPixels: C2RustUnnamed_0 = 256;
 
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct PpuWindows {
-    pub edges: [i16; 6],
-    pub nr: u8,
-    pub bits: u8,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct PpuWindows {
+        pub edges: [i16; 6];
+        pub nr, bits: u8;
+    }
 }
 impl PpuWindows {
     const EMPTY: Self = PpuWindows {

@@ -31,6 +31,22 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Typed record fields (2026-10-20): share consecutive identical field types
+across all 108 eligible repr(C) structs: 1209 ordered fields in 489 groups.
+Names, exact types/visibility, arrays, padding, packed/unpacked representation,
+derives and comments are unchanged. No initializer or runtime operation changes.
+Independent complete source reconstruction and actual core/frontend compiler
+byte equality pass after removing only the 397 added macro/comment/export bytes.
+All 108 final invocations invert exactly to the reviewed collision stage.
+Net Rust lines -452, to 130197; all other progress counters are unchanged.
+
+Shared projectile-collision/typed-record/unit-arm verification uses frozen
+31af2b92 composition. Formatting/check, normal release (22.59s),
+progress and full any% 129712/0 (107.73s), native exit 0, pass.
+All 77 final inputs and 461 verification pins remain fixed. Any% supplies
+core integration coverage; broader gameplay routes, frontend and global alias
+safety remain open. The complete readability goal remains unfinished.
+
 Projectile block collision (2026-10-20): 15 original declarations in banks
 86/94 share named axis implementations for enemy-projectile square/nonsquare
 landing and traversal, shot spans, six beam/missile traversals and both shot

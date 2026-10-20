@@ -6,13 +6,12 @@ use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::RomPtr;
 
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct SamusTileAnimationDefs {
-    pub top_half_idx: u8,
-    pub top_half_pos: u8,
-    pub bottom_half_idx: u8,
-    pub bottom_half_pos: u8,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct SamusTileAnimationDefs {
+        pub top_half_idx, top_half_pos, bottom_half_idx, bottom_half_pos: u8;
+    }
 }
 #[inline]
 unsafe fn get_SamusTileAnimationDefs(a: u16, game: &mut Game) -> *mut SamusTileAnimationDefs {

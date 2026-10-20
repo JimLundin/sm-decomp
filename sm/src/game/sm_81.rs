@@ -31,17 +31,13 @@ pub use crate::types::{EnemyData, GameState, RoomDefHeader, SpawnHdmaObject_Args
 pub use crate::types::{ExpandingSquareTransitionHdma, MapIconDataPointers, StartDmaCopy};
 use ::core::ffi::{c_long, c_void};
 use ::core::ptr::null_mut;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct ExpandingSquareVels {
-    pub left_subvel: u16,
-    pub left_vel: u16,
-    pub right_subvel: u16,
-    pub right_vel: u16,
-    pub top_subvel: u16,
-    pub top_vel: u16,
-    pub bottom_subvel: u16,
-    pub bottom_vel: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct ExpandingSquareVels {
+        pub left_subvel, left_vel, right_subvel, right_vel, top_subvel, top_vel, bottom_subvel,
+            bottom_vel: u16;
+    }
 }
 pub use crate::types::{
     Consts_81, MapScrollArrowData, Ram3000, Ram3000_Menu, Ram3000_Misc, Ram3000_MsgBox, Ram4000,

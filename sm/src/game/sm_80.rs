@@ -36,37 +36,36 @@ use crate::rtl::{
 pub use crate::types::{
     size_t, CoroutineRet, Func_U8, Func_V, LongPtr, OamEnt, SnesRegs, VoidP, VramWriteEntry,
 };
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct LoadStationList {
-    pub room_ptr_: VoidP,
-    pub door_ptr: VoidP,
-    pub door_bts: u16,
-    pub screen_x_pos: u16,
-    pub screen_y_pos: u16,
-    pub samus_y_offset: u16,
-    pub samus_x_offset: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct LoadStationList {
+        pub room_ptr_, door_ptr: VoidP;
+        pub door_bts, screen_x_pos, screen_y_pos, samus_y_offset, samus_x_offset: u16;
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct SamusTileAnimationTileDefs {
-    pub src: LongPtr,
-    pub part1_size: u16,
-    pub part2_size: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct SamusTileAnimationTileDefs {
+        pub src: LongPtr;
+        pub part1_size, part2_size: u16;
+    }
 }
 pub use crate::types::Buttons;
 pub use crate::types::{GameState, Mode7VramWriteQueue, RoomDefHeader};
 pub use crate::types::{
     Ram4000, Ram4000_Backups, StartDmaCopy, TileTable, TileTables, VramReadQueueEnt,
 };
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Mode7CgvmWriteQueue {
-    pub tag: u8,
-    pub src_addr: LongPtr,
-    pub count: u16,
-    pub vram_addr: u16,
-    pub vmain: u8,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct Mode7CgvmWriteQueue {
+        pub tag: u8;
+        pub src_addr: LongPtr;
+        pub count, vram_addr: u16;
+        pub vmain: u8;
+    }
 }
 pub use crate::types::Consts_60;
 pub use crate::types::Consts_80;

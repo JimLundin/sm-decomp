@@ -46,20 +46,21 @@ pub struct SpriteDrawInstr {
     pub field_0: u16,
     pub field_2: VoidP,
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct KraidInstrList {
-    pub timer: u16,
-    pub tilemap: VoidP,
-    pub vuln_mouth_hitbox: VoidP,
-    pub invuln_mouth_hitbox: VoidP,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct KraidInstrList {
+        pub timer: u16;
+        pub tilemap, vuln_mouth_hitbox, invuln_mouth_hitbox: VoidP;
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct KraidSinkTable {
-    pub field_0: u16,
-    pub field_2: u16,
-    pub field_4: VoidP,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct KraidSinkTable {
+        pub field_0, field_2: u16;
+        pub field_4: VoidP;
+    }
 }
 pub use crate::types::Consts_A7;
 pub use crate::types::{

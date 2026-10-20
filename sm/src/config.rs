@@ -128,30 +128,32 @@ pub const kGamepadBtn_X: C2RustUnnamed_3 = 2;
 pub const kGamepadBtn_B: C2RustUnnamed_3 = 1;
 pub const kGamepadBtn_A: C2RustUnnamed_3 = 0;
 pub const kGamepadBtn_Invalid: C2RustUnnamed_3 = -1;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct GamepadMapEnt {
-    pub modifiers: u32,
-    pub cmd: u16,
-    pub next: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct GamepadMapEnt {
+        pub modifiers: u32;
+        pub cmd, next: u16;
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct KeyNameId {
-    pub name: *const c_char,
-    pub id: u16,
-    pub size: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct KeyNameId {
+        pub name: *const c_char;
+        pub id, size: u16;
+    }
 }
 pub const kKeyMod_ScanCode: C2RustUnnamed_4 = 512;
 pub const kKeyMod_Shift: C2RustUnnamed_4 = 2048;
 pub const kKeyMod_Ctrl: C2RustUnnamed_4 = 4096;
 pub const kKeyMod_Alt: C2RustUnnamed_4 = 1024;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct KeyMapHashEnt {
-    pub key: u16,
-    pub cmd: u16,
-    pub next: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct KeyMapHashEnt {
+        pub key, cmd, next: u16;
+    }
 }
 pub type C2RustUnnamed_4 = u32;
 #[inline]

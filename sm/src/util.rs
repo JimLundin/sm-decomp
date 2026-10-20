@@ -7,13 +7,13 @@ pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
 use ::core::ffi::{c_char, c_long, c_ulong, c_void};
 use ::core::ptr::{null, null_mut};
 pub type __builtin_va_list = [__va_list_tag; 1];
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct __va_list_tag {
-    pub gp_offset: u32,
-    pub fp_offset: u32,
-    pub overflow_arg_area: *mut c_void,
-    pub reg_save_area: *mut c_void,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct __va_list_tag {
+        pub gp_offset, fp_offset: u32;
+        pub overflow_arg_area, reg_save_area: *mut c_void;
+    }
 }
 pub use crate::types::{_IO_lock_t, __off64_t, __off_t, size_t, ByteArray, _IO_FILE, FILE};
 pub type va_list = __gnuc_va_list;

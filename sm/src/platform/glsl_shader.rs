@@ -32,23 +32,19 @@ pub use crate::types::{
     _IO_lock_t, stbi_uc, ByteArray, GlTextureWithSize, GlslParam, GlslPass, GlslShader,
     GlslTexture, GlslTextureUniform, GlslUniforms, _IO_FILE, FILE,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct stbi__context {
-    pub img_x: stbi__uint32,
-    pub img_y: stbi__uint32,
-    pub img_n: i32,
-    pub img_out_n: i32,
-    pub io: stbi_io_callbacks,
-    pub io_user_data: *mut c_void,
-    pub read_from_callbacks: i32,
-    pub buflen: i32,
-    pub buffer_start: [stbi_uc; 128],
-    pub callback_already_read: i32,
-    pub img_buffer: *mut stbi_uc,
-    pub img_buffer_end: *mut stbi_uc,
-    pub img_buffer_original: *mut stbi_uc,
-    pub img_buffer_original_end: *mut stbi_uc,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct stbi__context {
+        pub img_x, img_y: stbi__uint32;
+        pub img_n, img_out_n: i32;
+        pub io: stbi_io_callbacks;
+        pub io_user_data: *mut c_void;
+        pub read_from_callbacks, buflen: i32;
+        pub buffer_start: [stbi_uc; 128];
+        pub callback_already_read: i32;
+        pub img_buffer, img_buffer_end, img_buffer_original, img_buffer_original_end: *mut stbi_uc;
+    }
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -58,29 +54,30 @@ pub struct stbi_io_callbacks {
     pub eof: Option<unsafe fn(*mut c_void) -> i32>,
 }
 pub use crate::types::stbi__uint32;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct stbi__result_info {
-    pub bits_per_channel: i32,
-    pub num_channels: i32,
-    pub channel_order: i32,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct stbi__result_info {
+        pub bits_per_channel, num_channels, channel_order: i32;
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct stbi__png {
-    pub s: *mut stbi__context,
-    pub idata: *mut stbi_uc,
-    pub expanded: *mut stbi_uc,
-    pub out: *mut stbi_uc,
-    pub depth: i32,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct stbi__png {
+        pub s: *mut stbi__context;
+        pub idata, expanded, out: *mut stbi_uc;
+        pub depth: i32;
+    }
 }
 pub use crate::types::stbi__uint16;
 pub const STBI__SCAN_load: C2RustUnnamed_1 = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct stbi__pngchunk {
-    pub length: stbi__uint32,
-    pub type_0: stbi__uint32,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct stbi__pngchunk {
+        pub length, type_0: stbi__uint32;
+    }
 }
 pub const STBI__F_paeth_first: C2RustUnnamed_2 = 6;
 pub const STBI__F_avg_first: C2RustUnnamed_2 = 5;
@@ -89,19 +86,17 @@ pub const STBI__F_avg: C2RustUnnamed_2 = 3;
 pub const STBI__F_up: C2RustUnnamed_2 = 2;
 pub const STBI__F_sub: C2RustUnnamed_2 = 1;
 pub const STBI__F_none: C2RustUnnamed_2 = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct stbi__zbuf {
-    pub zbuffer: *mut stbi_uc,
-    pub zbuffer_end: *mut stbi_uc,
-    pub num_bits: i32,
-    pub code_buffer: stbi__uint32,
-    pub zout: *mut c_char,
-    pub zout_start: *mut c_char,
-    pub zout_end: *mut c_char,
-    pub z_expandable: i32,
-    pub z_length: stbi__zhuffman,
-    pub z_distance: stbi__zhuffman,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct stbi__zbuf {
+        pub zbuffer, zbuffer_end: *mut stbi_uc;
+        pub num_bits: i32;
+        pub code_buffer: stbi__uint32;
+        pub zout, zout_start, zout_end: *mut c_char;
+        pub z_expandable: i32;
+        pub z_length, z_distance: stbi__zhuffman;
+    }
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -116,13 +111,13 @@ pub struct stbi__zhuffman {
 pub const STBI__SCAN_header: C2RustUnnamed_1 = 2;
 pub const STBI__SCAN_type: C2RustUnnamed_1 = 1;
 pub const STBI_ORDER_RGB: C2RustUnnamed_0 = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct RenderCtx {
-    pub texture_unit: u32,
-    pub offset: u32,
-    pub num_vaos: u32,
-    pub vaos: [u32; 51],
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct RenderCtx {
+        pub texture_unit, offset, num_vaos: u32;
+        pub vaos: [u32; 51];
+    }
 }
 pub const kMaxVaosInRenderCtx: C2RustUnnamed_3 = 51;
 pub use crate::types::{stbi_us, Config};

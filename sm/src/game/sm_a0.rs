@@ -322,17 +322,13 @@ pub use crate::types::{EnemyDef, EnemySpawnData, Vulnerability};
 pub use crate::types::{EnemyProps, EprojDef, ExtendedSpriteMap, Hitbox};
 use ::core::ffi::{c_char, c_void};
 use ::core::ptr::{null, null_mut};
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyPopulation {
-    pub enemy_ptr: VoidP,
-    pub x_pos: u16,
-    pub y_pos: u16,
-    pub init_param: u16,
-    pub properties: u16,
-    pub extra_properties: u16,
-    pub parameter1: u16,
-    pub parameter2: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct EnemyPopulation {
+        pub enemy_ptr: VoidP;
+        pub x_pos, y_pos, init_param, properties, extra_properties, parameter1, parameter2: u16;
+    }
 }
 pub use crate::types::{EnemyAiBits, EnemyTileset};
 crate::game::constants::typed_constants! { EnemyAiBits;
@@ -354,25 +350,20 @@ pub use crate::types::Consts_B4;
 pub use crate::types::{
     CalculateAngleFromXYFunc, CheckEnemyColl_Result, CheckSolidEnemyColl_Result,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct PositionAndWidth {
-    pub x_pos: u16,
-    pub x_subpos: u16,
-    pub y_pos: u16,
-    pub y_subpos: u16,
-    pub width: u16,
-    pub height: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct PositionAndWidth {
+        pub x_pos, x_subpos, y_pos, y_subpos, width, height: u16;
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct EnemyBlockCollInfo {
-    pub ebci_r18_r20: i32,
-    pub ebci_r24: u16,
-    pub ebci_r26: u16,
-    pub ebci_r28: u16,
-    pub ebci_r30: u16,
-    pub ebci_r32: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct EnemyBlockCollInfo {
+        pub ebci_r18_r20: i32;
+        pub ebci_r24, ebci_r26, ebci_r28, ebci_r30, ebci_r32: u16;
+    }
 }
 pub type Func_EnemyBlockCollInfo_U8 = unsafe fn(&mut EnemyBlockCollInfo, &mut Game) -> u8;
 pub use crate::types::Point32;

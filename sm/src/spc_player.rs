@@ -29,18 +29,19 @@ pub const EDL: DspReg = 125;
 pub const DIR: DspReg = 93;
 pub const MVOLR: DspReg = 28;
 pub const MVOLL: DspReg = 12;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct MemMapSized {
-    pub off: u16,
-    pub org_off: u16,
-    pub size: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct MemMapSized {
+        pub off, org_off, size: u16;
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct MemMap {
-    pub off: u16,
-    pub org_off: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct MemMap {
+        pub off, org_off: u16;
+    }
 }
 
 impl MemMapSized {

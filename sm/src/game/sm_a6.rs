@@ -237,47 +237,21 @@ enemy_layout! {
     }
 }
 
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct BabyMetroidExecState {
-    pub ip: u16,
-    pub timer: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct BabyMetroidExecState {
+        pub ip, timer: u16;
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Ram8800_Default {
-    pub var_40: u16,
-    pub var_41: u16,
-    pub var_42: u16,
-    pub var_43: u16,
-    pub var_44: u16,
-    pub var_45: u16,
-    pub var_46: u16,
-    pub var_47: u16,
-    pub var_48: u16,
-    pub var_49: u16,
-    pub var_4A: u16,
-    pub var_4B: u16,
-    pub var_4C: u16,
-    pub var_4D: u16,
-    pub var_4E: u16,
-    pub var_4F: u16,
-    pub var_50: u16,
-    pub var_51: u16,
-    pub var_52: u16,
-    pub var_53: u16,
-    pub var_54: u16,
-    pub var_55: u16,
-    pub var_56: u16,
-    pub var_57: u16,
-    pub var_58: u16,
-    pub var_59: u16,
-    pub var_5A: u16,
-    pub var_5B: u16,
-    pub var_5C: u16,
-    pub var_5D: u16,
-    pub var_5E: u16,
-    pub var_5F: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct Ram8800_Default {
+        pub var_40, var_41, var_42, var_43, var_44, var_45, var_46, var_47, var_48, var_49, var_4A,
+            var_4B, var_4C, var_4D, var_4E, var_4F, var_50, var_51, var_52, var_53, var_54, var_55,
+            var_56, var_57, var_58, var_59, var_5A, var_5B, var_5C, var_5D, var_5E, var_5F: u16;
+    }
 }
 enemy_layout! {
     Enemy_RidleysExplosion {

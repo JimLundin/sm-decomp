@@ -8,11 +8,12 @@ use crate::rtl::{MakePairU16, RomPtr, Unreachable};
 use ::core::ptr::{null, null_mut};
 
 pub use crate::types::{EnemyData, PairU16, VoidP};
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct PalFxDef {
-    pub func: VoidP,
-    pub instrs: VoidP,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct PalFxDef {
+        pub func, instrs: VoidP;
+    }
 }
 pub use crate::types::Consts_8D;
 const RomPtr_8D: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8d>;

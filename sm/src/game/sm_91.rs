@@ -40,31 +40,27 @@ pub use crate::types::{SamusMovementType, SamusPoseParams};
 use ::core::ffi::{c_char, c_long, c_void};
 use ::core::mem::transmute;
 use ::core::ptr::{null, null_mut};
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct DemoInputObject {
-    pub ptr: VoidP,
-    pub pre_instr: VoidP,
-    pub instr_ptr: VoidP,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct DemoInputObject {
+        pub ptr, pre_instr, instr_ptr: VoidP;
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct DemoSetDef {
-    pub items: u16,
-    pub missiles: u16,
-    pub super_missiles: u16,
-    pub power_bombs: u16,
-    pub health: u16,
-    pub beams: u16,
-    pub equipped_beams_: u16,
-    pub demo_obj: VoidP,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct DemoSetDef {
+        pub items, missiles, super_missiles, power_bombs, health, beams, equipped_beams_: u16;
+        pub demo_obj: VoidP;
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct PoseEntry {
-    pub new_input: u16,
-    pub cur_input: u16,
-    pub new_pose: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct PoseEntry {
+        pub new_input, cur_input, new_pose: u16;
+    }
 }
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
@@ -87,17 +83,13 @@ pub use crate::types::{CheckEnemyColl_Result, CheckSolidEnemyColl_Result};
 pub use crate::types::{
     Consts_8D, Ram4000, Ram4000_Backups, TileTable, TileTables, VramReadQueueEnt,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct XrayHdmaCtx {
-    pub r22: u16,
-    pub r24: u16,
-    pub r26: u16,
-    pub r28: u16,
-    pub r30: u16,
-    pub r32: u16,
-    pub r18_avoid: u16,
-    pub dest: *mut u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct XrayHdmaCtx {
+        pub r22, r24, r26, r28, r30, r32, r18_avoid: u16;
+        pub dest: *mut u16;
+    }
 }
 enum XrayBeamDirection {
     Right,
@@ -106,11 +98,12 @@ enum XrayBeamDirection {
     Left,
     Horizontal,
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Pair_R18_R20 {
-    pub r18: u16,
-    pub r20: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct Pair_R18_R20 {
+        pub r18, r20: u16;
+    }
 }
 pub const NULL: *mut c_void = null_mut::<c_void>();
 crate::game::constants::typed_constants! { i32;

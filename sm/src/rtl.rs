@@ -73,23 +73,19 @@ pub use crate::types::{
     WindowLayer,
 };
 pub use crate::types::{RunFrameFunc, SyncAllFunc};
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct StateRecorder {
-    pub last_inputs: u16,
-    pub frames_since_last: u32,
-    pub total_frames: u32,
-    pub replay_pos: u32,
-    pub replay_pos_last_complete: u32,
-    pub replay_frame_counter: u32,
-    pub replay_next_cmd_at: u32,
-    pub snapshot_flags: u32,
-    pub replay_cmd: u8,
-    pub replay_mode: bool,
-    pub log: ByteArray,
-    pub base_snapshot: ByteArray,
-    pub has_base_audio_queue: bool,
-    pub base_audio_queue: [u8; 71],
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct StateRecorder {
+        pub last_inputs: u16;
+        pub frames_since_last, total_frames, replay_pos, replay_pos_last_complete,
+            replay_frame_counter, replay_next_cmd_at, snapshot_flags: u32;
+        pub replay_cmd: u8;
+        pub replay_mode: bool;
+        pub log, base_snapshot: ByteArray;
+        pub has_base_audio_queue: bool;
+        pub base_audio_queue: [u8; 71];
+    }
 }
 pub use crate::types::{
     ByteArray, Channel, SaveLoadFunc, SaveLoadOperation as C2RustUnnamed_0, SfxChan, SfxRegs,
@@ -99,11 +95,12 @@ pub const kSaveLoad_Replay: C2RustUnnamed_0 = 3;
 pub const kSaveLoad_Load: C2RustUnnamed_0 = 2;
 pub const kSaveLoad_Save: C2RustUnnamed_0 = 1;
 pub const kApuMaxQueueSize: C2RustUnnamed_2 = 16;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct LoadFuncState {
-    pub p: *mut u8,
-    pub pend: *mut u8,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct LoadFuncState {
+        pub p, pend: *mut u8;
+    }
 }
 pub const kCurrentBugFixCounter: C2RustUnnamed_1 = 1;
 pub use crate::types::SnesRegs;

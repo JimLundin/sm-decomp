@@ -31,18 +31,20 @@ use ::core::ptr::{null, null_mut};
 use crate::c_library::{__assert_fail, printf};
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
 pub use crate::types::{CoroutineRet, Func_Y_V, LongPtr, VoidP, VramWriteEntry};
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct PlmHeader_Size4 {
-    pub func_ptr: VoidP,
-    pub instr_list_ptr: VoidP,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct PlmHeader_Size4 {
+        pub func_ptr, instr_list_ptr: VoidP;
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct XraySpecialCasing {
-    pub x_block: u8,
-    pub y_block: u8,
-    pub level_data_block: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct XraySpecialCasing {
+        pub x_block, y_block: u8;
+        pub level_data_block: u16;
+    }
 }
 pub use crate::types::Buttons;
 pub use crate::types::Consts_84;

@@ -91,47 +91,45 @@ pub use crate::types::{
 use ::core::ffi::{c_char, c_long, c_void};
 use ::core::mem::transmute;
 use ::core::ptr::{null, null_mut};
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct PlmHeader_Size6 {
-    pub func_ptr: VoidP,
-    pub instr_list_1_ptr: VoidP,
-    pub instr_list_2_ptr: VoidP,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct PlmHeader_Size6 {
+        pub func_ptr, instr_list_1_ptr, instr_list_2_ptr: VoidP;
+    }
 }
 pub use crate::types::EnemyData;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct LoadBg_E {
-    pub field_0: u16,
-    pub field_2: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct LoadBg_E {
+        pub field_0, field_2: u16;
+    }
 }
 pub use crate::types::Buttons;
 pub use crate::types::LoadingGameState;
 pub use crate::types::{DoorDef, SamusPose};
 pub use crate::types::{EnemyTileset, GameState, RoomDefHeader};
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct TileSet {
-    pub tile_table_ptr: LongPtr,
-    pub tiles_ptr: LongPtr,
-    pub palette_ptr: LongPtr,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct TileSet {
+        pub tile_table_ptr, tiles_ptr, palette_ptr: LongPtr;
+    }
 }
 pub use crate::types::{
     ExpandingSquareTransitionHdma, MapIconDataPointers, MapScrollArrowData, RoomDefRoomstate,
     StartDmaCopy,
 };
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct DemoRoomData {
-    pub room_ptr_: VoidP,
-    pub door_ptr: u16,
-    pub door_slot: u16,
-    pub screen_x_pos: u16,
-    pub screen_y_pos: u16,
-    pub samus_x_offs: u16,
-    pub samus_y_offs: u16,
-    pub demo_length: u16,
-    pub demo_code_ptr: VoidP,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct DemoRoomData {
+        pub room_ptr_: VoidP;
+        pub door_ptr, door_slot, screen_x_pos, screen_y_pos, samus_x_offs, samus_y_offs,
+            demo_length: u16;
+        pub demo_code_ptr: VoidP;
+    }
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -139,25 +137,20 @@ pub union PauseScreenSpriteAnimationData {
     pub c2rust_unnamed: C2RustUnnamed,
     pub arr: [VoidP; 9],
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct C2RustUnnamed {
-    pub unused: VoidP,
-    pub lr_highlight: VoidP,
-    pub item_selector: VoidP,
-    pub unused2: VoidP,
-    pub unused3: VoidP,
-    pub map_scroll_arrow_up: VoidP,
-    pub map_scroll_arrow_down: VoidP,
-    pub map_scroll_arrow_right: VoidP,
-    pub map_scroll_arrow_left: VoidP,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct C2RustUnnamed {
+        pub unused, lr_highlight, item_selector, unused2, unused3, map_scroll_arrow_up,
+            map_scroll_arrow_down, map_scroll_arrow_right, map_scroll_arrow_left: VoidP;
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct FileCopyArrowStuff {
-    pub spritemap: u16,
-    pub xpos: u16,
-    pub ypos: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct FileCopyArrowStuff {
+        pub spritemap, xpos, ypos: u16;
+    }
 }
 pub use crate::types::Consts_82;
 pub use crate::types::Consts_83;

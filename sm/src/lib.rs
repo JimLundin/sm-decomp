@@ -14,6 +14,19 @@
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
 
+// Share consecutive field types without changing declaration order or layout.
+macro_rules! typed_struct {
+    ($(#[$metadata:meta])* $visibility:vis struct $name:ident {
+        $($field_visibility:vis $($field:ident),+ : $field_type:ty;)*
+    }) => {
+        $(#[$metadata])*
+        $visibility struct $name {
+            $($($field_visibility $field: $field_type,)*)*
+        }
+    };
+}
+pub(crate) use typed_struct;
+
 // Emit repeated literal field stores without hoisting the receiver or value.
 macro_rules! set_fields {
     ($receiver:tt, $value:expr; $($field:ident),+ $(,)?) => {

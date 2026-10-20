@@ -10,31 +10,24 @@ pub use crate::types::{
 };
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct CartHeader {
-    pub headerVersion: u8,
-    pub name: [c_char; 22],
-    pub speed: u8,
-    pub type_0: u8,
-    pub coprocessor: u8,
-    pub chips: u8,
-    pub romSize: u32,
-    pub ramSize: u32,
-    pub region: u8,
-    pub maker: u8,
-    pub version: u8,
-    pub checksumComplement: u16,
-    pub checksum: u16,
-    pub makerCode: [c_char; 3],
-    pub gameCode: [c_char; 5],
-    pub flashSize: u32,
-    pub exRamSize: u32,
-    pub specialVersion: u8,
-    pub exCoprocessor: u8,
-    pub score: i16,
-    pub pal: bool,
-    pub cartType: u8,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct CartHeader {
+        pub headerVersion: u8;
+        pub name: [c_char; 22];
+        pub speed, type_0, coprocessor, chips: u8;
+        pub romSize, ramSize: u32;
+        pub region, maker, version: u8;
+        pub checksumComplement, checksum: u16;
+        pub makerCode: [c_char; 3];
+        pub gameCode: [c_char; 5];
+        pub flashSize, exRamSize: u32;
+        pub specialVersion, exCoprocessor: u8;
+        pub score: i16;
+        pub pal: bool;
+        pub cartType: u8;
+    }
 }
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;

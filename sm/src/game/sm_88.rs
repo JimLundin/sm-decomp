@@ -36,13 +36,13 @@ pub use crate::types::EnemyData;
 pub use crate::types::{
     Func_U8, Func_V, Func_Y_V, Func_Y_Y, LongPtr, SnesRegs, VoidP, VramWriteEntry,
 };
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct HdmaScrollEntry {
-    pub top_pos: u16,
-    pub scroll_subspeed: u16,
-    pub scroll_speed: u16,
-    pub hdma_data_table_entry: VoidP,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct HdmaScrollEntry {
+        pub top_pos, scroll_subspeed, scroll_speed: u16;
+        pub hdma_data_table_entry: VoidP;
+    }
 }
 pub use crate::types::Consts_87;
 pub use crate::types::Consts_88;

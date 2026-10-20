@@ -26,17 +26,13 @@ crate::game::constants::typed_constants! { Consts_94;
     addr_word_94B197 = 45463, addr_word_94B193 = 45459,
     addr_word_94B18F = 45455, addr_word_94B18B = 45451,
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct CollInfo {
-    pub ci_r18_r20: i32,
-    pub ci_r24: u16,
-    pub ci_r26: u16,
-    pub ci_r28: u16,
-    pub ci_r30: u16,
-    pub ci_r32: u16,
-    pub ci_r38: u16,
-    pub ci_r40: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct CollInfo {
+        pub ci_r18_r20: i32;
+        pub ci_r24, ci_r26, ci_r28, ci_r30, ci_r32, ci_r38, ci_r40: u16;
+    }
 }
 pub type Func_CollInfo_U8 = unsafe fn(*mut CollInfo, &mut Game) -> u8;
 pub use crate::types::Pair_Bool_Amt;

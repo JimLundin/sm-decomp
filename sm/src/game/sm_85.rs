@@ -10,12 +10,12 @@ use crate::rtl::{ReadReg, ReadRegWord, RomPtr, Unreachable, WriteReg, WriteRegWo
 pub use crate::snes::registers::*;
 
 pub use crate::types::{CoroutineRet, SnesRegs, VoidP};
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct MsgBoxConfig {
-    pub modify_box_func: VoidP,
-    pub draw_initial_tilemap: VoidP,
-    pub message_tilemap: VoidP,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct MsgBoxConfig {
+        pub modify_box_func, draw_initial_tilemap, message_tilemap: VoidP;
+    }
 }
 pub use crate::types::Buttons;
 pub use crate::types::GameState;

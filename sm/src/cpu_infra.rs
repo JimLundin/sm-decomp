@@ -52,74 +52,60 @@ pub struct CounterSnapshot {
     pub vertical_second_byte: bool,
     pub latched: bool,
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Snapshot {
-    pub audio: crate::audio_snapshot::AudioSnapshot,
-    pub player: crate::audio_snapshot::PlayerSnapshot,
-    pub a: u16,
-    pub x: u16,
-    pub y: u16,
-    pub sp: u16,
-    pub dp: u16,
-    pub pc: u16,
-    pub k: u8,
-    pub db: u8,
-    pub flags: u8,
-    pub cpu_waiting: bool,
-    pub cpu_emulation: bool,
-    pub cpu_stopped: bool,
-    pub cpu_irq_pending: bool,
-    pub cpu_nmi_pending: bool,
-    pub video_clock: (u16, u16, u32),
-    pub interrupt_latches: (bool, bool, bool),
-    pub interrupt_enables: (bool, bool, bool),
-    pub h_timer: u16,
-    pub snes_open_bus: u8,
-    pub input_control: (bool, bool, u16),
-    pub wram_port_address: u32,
-    pub dma_channels: [crate::types::DmaChannel; 8],
-    pub dma_timing: (u16, u32, bool),
-    pub arithmetic: (u8, u16, u16, u16),
-    pub vTimer: u16,
-    pub ram: [u8; 131072],
-    pub vram: [u16; 32768],
-    pub sram: [u8; 8192],
-    pub oam: [u16; 256],
-    pub high_oam: [u8; 32],
-    pub sprite: SpriteSnapshot,
-    pub counters: CounterSnapshot,
-    pub status_flags: [bool; 3],
-    pub mode7_matrix: [i16; 8],
-    pub mode7_flags: [bool; 5],
-    pub mosaic: ([bool; 4], u8, u8),
-    pub bgmode: (u8, bool, [bool; 4]),
-    pub bg_scroll: [(u16, u16); 4],
-    pub bg_address: [(bool, bool, u16, u16); 4],
-    pub screen_routing: ([u8; 2], [u8; 2], [[bool; 4]; 5]),
-    pub window_select: (u32, [(bool, bool, bool, bool, u8); 6]),
-    pub window_bounds: [u8; 4],
-    pub fixed_color: [u8; 3],
-    pub color_math: (bool, bool, [bool; 6]),
-    pub color_selection: (u8, u8, bool, bool),
-    pub display_geometry: [bool; 6],
-    pub brightness: u8,
-    pub forced_blank: bool,
-    pub cgram: [u16; 256],
-    pub write_latches: [u8; 3],
-    pub cgram_pointer: u8,
-    pub cgram_second_write: bool,
-    pub cgram_buffer: u8,
-    pub ppu1_open_bus: u8,
-    pub ppu2_open_bus: u8,
-    pub vram_read_buffer: u16,
-    pub vram_pointer: u16,
-    pub vram_increment: u16,
-    pub vram_increment_on_high: bool,
-    pub vram_remap_mode: u8,
-    // Per-run observations, not emulated or serialized audio state.
-    pub apu_upload_count: u32,
-    pub apu_startup_upload: bool,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct Snapshot {
+        pub audio: crate::audio_snapshot::AudioSnapshot;
+        pub player: crate::audio_snapshot::PlayerSnapshot;
+        pub a, x, y, sp, dp, pc: u16;
+        pub k, db, flags: u8;
+        pub cpu_waiting, cpu_emulation, cpu_stopped, cpu_irq_pending, cpu_nmi_pending: bool;
+        pub video_clock: (u16, u16, u32);
+        pub interrupt_latches, interrupt_enables: (bool, bool, bool);
+        pub h_timer: u16;
+        pub snes_open_bus: u8;
+        pub input_control: (bool, bool, u16);
+        pub wram_port_address: u32;
+        pub dma_channels: [crate::types::DmaChannel; 8];
+        pub dma_timing: (u16, u32, bool);
+        pub arithmetic: (u8, u16, u16, u16);
+        pub vTimer: u16;
+        pub ram: [u8; 131072];
+        pub vram: [u16; 32768];
+        pub sram: [u8; 8192];
+        pub oam: [u16; 256];
+        pub high_oam: [u8; 32];
+        pub sprite: SpriteSnapshot;
+        pub counters: CounterSnapshot;
+        pub status_flags: [bool; 3];
+        pub mode7_matrix: [i16; 8];
+        pub mode7_flags: [bool; 5];
+        pub mosaic: ([bool; 4], u8, u8);
+        pub bgmode: (u8, bool, [bool; 4]);
+        pub bg_scroll: [(u16, u16); 4];
+        pub bg_address: [(bool, bool, u16, u16); 4];
+        pub screen_routing: ([u8; 2], [u8; 2], [[bool; 4]; 5]);
+        pub window_select: (u32, [(bool, bool, bool, bool, u8); 6]);
+        pub window_bounds: [u8; 4];
+        pub fixed_color: [u8; 3];
+        pub color_math: (bool, bool, [bool; 6]);
+        pub color_selection: (u8, u8, bool, bool);
+        pub display_geometry: [bool; 6];
+        pub brightness: u8;
+        pub forced_blank: bool;
+        pub cgram: [u16; 256];
+        pub write_latches: [u8; 3];
+        pub cgram_pointer: u8;
+        pub cgram_second_write: bool;
+        pub cgram_buffer, ppu1_open_bus, ppu2_open_bus: u8;
+        pub vram_read_buffer, vram_pointer, vram_increment: u16;
+        pub vram_increment_on_high: bool;
+        pub vram_remap_mode: u8;
+        // Per-run observations, not emulated or serialized audio state.
+        pub apu_upload_count: u32;
+        pub apu_startup_upload: bool;
+    }
 }
 pub const RM_MINE: RunMode = 1;
 pub const RM_BOTH: RunMode = 0;

@@ -42,54 +42,23 @@ pub use crate::types::{
 pub struct ExtraEnemyRam8800 {
     pub pad: [u8; 64],
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram7800_Default {
-    pub var_00: u16,
-    pub var_01: u16,
-    pub var_02: u16,
-    pub var_03: u16,
-    pub var_04: u16,
-    pub var_05: u16,
-    pub var_06: u16,
-    pub var_07: u16,
-    pub var_08: u16,
-    pub var_09: u16,
-    pub var_0A: u16,
-    pub var_0B: u16,
-    pub var_0C: u16,
-    pub var_0D: u16,
-    pub var_0E: u16,
-    pub var_0F: u16,
-    pub var_10: u16,
-    pub var_11: u16,
-    pub var_12: u16,
-    pub var_13: u16,
-    pub var_14: u16,
-    pub var_15: u16,
-    pub var_16: u16,
-    pub var_17: u16,
-    pub var_18: u16,
-    pub var_19: u16,
-    pub var_1A: u16,
-    pub var_1B: u16,
-    pub var_1C: u16,
-    pub var_1D: u16,
-    pub var_1E: u16,
-    pub var_1F: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct Ram7800_Default {
+        pub var_00, var_01, var_02, var_03, var_04, var_05, var_06, var_07, var_08, var_09, var_0A,
+            var_0B, var_0C, var_0D, var_0E, var_0F, var_10, var_11, var_12, var_13, var_14, var_15,
+            var_16, var_17, var_18, var_19, var_1A, var_1B, var_1C, var_1D, var_1E, var_1F: u16;
+    }
 }
 pub use crate::types::Consts_86;
 pub use crate::types::Consts_A0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct EprojCollInfo {
-    pub eci_r20: u16,
-    pub eci_r24: u16,
-    pub eci_r26: u16,
-    pub eci_r28: u16,
-    pub eci_r30: u16,
-    pub eci_r32: u16,
-    pub eci_r34: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct EprojCollInfo {
+        pub eci_r20, eci_r24, eci_r26, eci_r28, eci_r30, eci_r32, eci_r34: u16;
+    }
 }
 pub type Func_EprojCollInfo_U8 = unsafe fn(*mut EprojCollInfo, &mut Game) -> u8;
 pub use crate::types::{Enemy_MotherBrain, Point32};

@@ -31,14 +31,13 @@ use crate::rtl::{RomPtr, Unreachable};
 pub use crate::types::{size_t, LongPtr, PairU16, Point16U, SamusPose, VoidP, VramWriteEntry};
 pub use crate::types::{SamusMovementType, SamusPoseParams};
 use ::core::ffi::c_void;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct GrappleBeamSpecialAngles {
-    pub field_0: u16,
-    pub field_2: u16,
-    pub field_4: u16,
-    pub field_6: u16,
-    pub field_8: VoidP,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct GrappleBeamSpecialAngles {
+        pub field_0, field_2, field_4, field_6: u16;
+        pub field_8: VoidP;
+    }
 }
 pub use crate::types::Buttons;
 pub use crate::types::Consts_9B;

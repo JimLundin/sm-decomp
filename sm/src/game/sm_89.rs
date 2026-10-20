@@ -16,21 +16,14 @@ use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::RomPtr;
 
 pub use crate::types::Func_V;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct FxDef {
-    pub door_ptr: u16,
-    pub base_y_pos: u16,
-    pub target_y_pos: u16,
-    pub y_vel: u16,
-    pub timer: u8,
-    pub type_0: u8,
-    pub default_layer_blend: u8,
-    pub layer3_layer_blend: u8,
-    pub fx_liquid_options_: u8,
-    pub palette_fx_bitset: u8,
-    pub animtiles_bitset: u8,
-    pub palette_blend: u8,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct FxDef {
+        pub door_ptr, base_y_pos, target_y_pos, y_vel: u16;
+        pub timer, type_0, default_layer_blend, layer3_layer_blend, fx_liquid_options_,
+            palette_fx_bitset, animtiles_bitset, palette_blend: u8;
+    }
 }
 pub use crate::types::GameState;
 const RomPtr_83: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x83>;

@@ -59,11 +59,12 @@ crate::game::constants::typed_constants! { Consts_B7;
     addr_kDeadTorizo_TileData = 43008,
 }
 pub use crate::types::SpawnHardcodedPlmArgs;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct MotherBrainInstrExecState {
-    pub ip: u16,
-    pub timer: u16,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct MotherBrainInstrExecState {
+        pub ip, timer: u16;
+    }
 }
 pub use crate::types::Enemy_MotherBrain;
 enemy_layout! {

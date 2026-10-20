@@ -43,12 +43,12 @@ pub use crate::types::{
 };
 use ::core::ffi::{c_char, c_long, c_void};
 use ::core::ptr::null_mut;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Mode7ObjectDef {
-    pub field_0: VoidP,
-    pub field_2: VoidP,
-    pub field_4: VoidP,
+crate::typed_struct! {
+    #[derive(Copy, Clone)]
+    #[repr(C, packed)]
+    pub struct Mode7ObjectDef {
+        pub field_0, field_2, field_4: VoidP;
+    }
 }
 pub use crate::types::Buttons;
 pub use crate::types::Consts_8B;
