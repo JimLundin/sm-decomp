@@ -2152,7 +2152,6 @@ pub unsafe fn Ridley_Func_27(game: &mut Game) {
     Ridley_Func_33b(game);
 }
 pub unsafe fn Ridley_Func_28(game: &mut Game) {
-    let current_block: u64;
     let E = Get_Ridley(0, game);
     if (*E).var_B == 0 {
         (*E).var_B = (if (*E).base.x_pos & 0x80 != 0 {
@@ -2161,47 +2160,20 @@ pub unsafe fn Ridley_Func_28(game: &mut Game) {
             0xc0
         }) as u16;
     }
-    if (((*E).var_B as i32 ^ (*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32) & 0x8000) == 0
-    {
-        let mut x_pos: u16 = 0;
-        x_pos = (*E).base.x_pos;
-        if ((x_pos) as i16).wrapping_sub(((*E).var_22) as i16) >= 0 {
-            if ((x_pos) as i16).wrapping_sub(((*E).var_23) as i16) < 0 {
-                if word!(game.random_number) < 0x555 {
-                    return;
-                }
-                current_block = 7587493754414084492;
-            } else {
-                current_block = 12558520430340354144;
-            }
-        } else {
-            current_block = 3419095937434320988;
-        }
-    } else {
-        let mut v4: u16 = 0;
-        v4 = (*E).base.x_pos;
-        if ((v4) as i16).wrapping_sub(((*E).var_22) as i16) < 0 {
-            current_block = 3419095937434320988;
-        } else if ((v4) as i16).wrapping_sub(((*E).var_23) as i16) >= 0 {
-            current_block = 12558520430340354144;
-        } else if word!(game.random_number) < 0x555 {
-            current_block = 7587493754414084492;
-        } else {
+    let facing_away =
+        (((*E).var_B as i32 ^ (*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32) & 0x8000)
+            == 0;
+    let x_pos = (*E).base.x_pos;
+    if (x_pos as i16).wrapping_sub((*E).var_22 as i16) < 0 {
+        if ((*E).var_B & 0x8000) == 0 {
             return;
         }
-    }
-    match current_block {
-        3419095937434320988 => {
-            if ((*E).var_B & 0x8000) == 0 {
-                return;
-            }
+    } else if (x_pos as i16).wrapping_sub((*E).var_23 as i16) >= 0 {
+        if ((*E).var_B & 0x8000) != 0 {
+            return;
         }
-        12558520430340354144 => {
-            if ((*E).var_B & 0x8000) != 0 {
-                return;
-            }
-        }
-        _ => {}
+    } else if facing_away == (word!(game.random_number) < 0x555) {
+        return;
     }
     (*E).var_B = -((*E).var_B as i32) as u16;
 }
@@ -3272,30 +3244,23 @@ pub unsafe fn Ridley_Func_79(game: &mut Game) {
     start_ridley_tile_effect_when_idle!(game);
 }
 pub unsafe fn Ridley_Func_80_DoubleRet(game: &mut Game) -> u8 {
-    let mut current_block: u64;
     let E = Get_Ridley(0, game);
     let mut retval: bool = false_0 != 0;
-    let mut v1: u16 = 0;
-    if word!(game.tilemap_stuff[2]) != 0
+    let attack = if word!(game.tilemap_stuff[2]) != 0
         && (word!(game.tilemap_stuff[13]) & word!(game.tilemap_stuff[14]) & 0x8000) != 0
     {
-        current_block = 5875655901067838705;
+        Some((word!(game.tilemap_stuff[2])).wrapping_sub(1))
     } else if word!(game.tilemap_stuff[1]) == 0 {
-        current_block = 15129621311889290514;
+        None
     } else if (word!(game.random_number) as u8) >= 0xf0 {
-        current_block = 5875655901067838705;
+        Some((word!(game.tilemap_stuff[2])).wrapping_sub(1))
     } else if abs16((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos)) < 0x80 {
-        v1 = 0;
-        current_block = 993568416893248401;
+        Some(0)
     } else {
-        current_block = 15129621311889290514;
-    }
-    if current_block == 5875655901067838705 {
-        v1 = (word!(game.tilemap_stuff[2])).wrapping_sub(1);
-        current_block = 993568416893248401;
-    }
-    if current_block == 993568416893248401 {
-        Ridley_Func_89(v1, game);
+        None
+    };
+    if let Some(attack) = attack {
+        Ridley_Func_89(attack, game);
         retval = true_0 != 0;
     }
     word!(game.tilemap_stuff[2] = 0);
@@ -3493,7 +3458,6 @@ pub unsafe fn Ridley_Func_87(game: &mut Game) {
     ridley_tail_length(ram, 79, 1280, 1280);
 }
 pub unsafe fn Ridley_Func_88(k: u16, game: &mut Game) {
-    let mut current_block: u64;
     let mut v6: i16 = 0;
     let mut v2: u16 = 0;
     let v1: i32 = k as i32 >> 1;
@@ -3512,89 +3476,67 @@ pub unsafe fn Ridley_Func_88(k: u16, game: &mut Game) {
             word!(game.tilemap_stuff[(v4 + 26)] = 0x8000);
             word!(game.tilemap_stuff[(v4 + 28)] = word!(game.tilemap_stuff[(v4 + 18)]));
         }
-        if (word!(game.tilemap_stuff[(v4 + 18)]) & 0x8000) == 0 {
-            if (word!(game.tilemap_stuff[14]) & 0x8000) != 0 {
-                v2 = (word!(game.tilemap_stuff[10]))
-                    .wrapping_add(word!(game.tilemap_stuff[(v4 + 21)]));
-                if ((v2) as i16).wrapping_sub((word!(game.tilemap_stuff[12])) as i16) >= 0 {
-                    current_block = 4838848238792072683;
+        let stopped = 'advance: {
+            if (word!(game.tilemap_stuff[(v4 + 18)]) & 0x8000) == 0 {
+                let turn = if (word!(game.tilemap_stuff[14]) & 0x8000) != 0 {
+                    v2 = (word!(game.tilemap_stuff[10]))
+                        .wrapping_add(word!(game.tilemap_stuff[(v4 + 21)]));
+                    (v2 as i16).wrapping_sub(word!(game.tilemap_stuff[12]) as i16) >= 0
                 } else {
-                    current_block = 4216153537599944117;
-                }
-            } else {
-                word!(game.tilemap_stuff[(v4 + 20)] = 3072);
-                v2 = (word!(game.tilemap_stuff[10]))
-                    .wrapping_add(word!(game.tilemap_stuff[(v4 + 21)]));
-                if ((v2) as i16).wrapping_sub((word!(game.tilemap_stuff[14])) as i16) >= 0 {
-                    if k == 0 || word!(game.tilemap_stuff[(v4 + 6)]) == 0 {
-                        word!(game.tilemap_stuff[(v4 + 21)] = word!(game.tilemap_stuff[14]));
-                        current_block = 5689001924483802034;
+                    word!(game.tilemap_stuff[(v4 + 20)] = 3072);
+                    v2 = (word!(game.tilemap_stuff[10]))
+                        .wrapping_add(word!(game.tilemap_stuff[(v4 + 21)]));
+                    if (v2 as i16).wrapping_sub(word!(game.tilemap_stuff[14]) as i16) >= 0 {
+                        if k == 0 || word!(game.tilemap_stuff[(v4 + 6)]) == 0 {
+                            word!(game.tilemap_stuff[(v4 + 21)] = word!(game.tilemap_stuff[14]));
+                            break 'advance true;
+                        }
+                        true
                     } else {
-                        current_block = 4838848238792072683;
+                        false
                     }
-                } else {
-                    current_block = 4216153537599944117;
-                }
-            }
-            match current_block {
-                5689001924483802034 => {}
-                4216153537599944117 => {}
-                _ => {
+                };
+                if turn {
                     word!(game.tilemap_stuff[(v4 + 18)] = 0x8000);
                     v2 = word!(game.tilemap_stuff[12]);
-                    current_block = 4216153537599944117;
-                }
-            }
-        } else {
-            if (word!(game.tilemap_stuff[13]) & 0x8000) != 0 {
-                v6 = (word!(game.tilemap_stuff[(v4 + 21)]) as i32
-                    - word!(game.tilemap_stuff[10]) as i32
-                    - 1i32) as i16;
-                if (v6).wrapping_sub((word!(game.tilemap_stuff[11])) as i16) < 0 {
-                    current_block = 9260896848985358503;
-                } else {
-                    current_block = 2873832966593178012;
                 }
             } else {
-                word!(game.tilemap_stuff[(v4 + 20)] = 3072);
-                v6 = (word!(game.tilemap_stuff[(v4 + 21)]) as i32
-                    - word!(game.tilemap_stuff[10]) as i32
-                    - 1i32) as i16;
-                if (v6).wrapping_sub((word!(game.tilemap_stuff[13])) as i16) < 0 {
-                    if k == 0 || word!(game.tilemap_stuff[(v4 + 6)]) == 0 {
-                        word!(game.tilemap_stuff[(v4 + 21)] = word!(game.tilemap_stuff[13]));
-                        current_block = 5689001924483802034;
+                let turn = if (word!(game.tilemap_stuff[13]) & 0x8000) != 0 {
+                    v6 = (word!(game.tilemap_stuff[(v4 + 21)]) as i32
+                        - word!(game.tilemap_stuff[10]) as i32
+                        - 1i32) as i16;
+                    v6.wrapping_sub(word!(game.tilemap_stuff[11]) as i16) < 0
+                } else {
+                    word!(game.tilemap_stuff[(v4 + 20)] = 3072);
+                    v6 = (word!(game.tilemap_stuff[(v4 + 21)]) as i32
+                        - word!(game.tilemap_stuff[10]) as i32
+                        - 1i32) as i16;
+                    if v6.wrapping_sub(word!(game.tilemap_stuff[13]) as i16) < 0 {
+                        if k == 0 || word!(game.tilemap_stuff[(v4 + 6)]) == 0 {
+                            word!(game.tilemap_stuff[(v4 + 21)] = word!(game.tilemap_stuff[13]));
+                            break 'advance true;
+                        }
+                        true
                     } else {
-                        current_block = 9260896848985358503;
+                        false
                     }
-                } else {
-                    current_block = 2873832966593178012;
-                }
-            }
-            if current_block == 5689001924483802034 {
-            } else {
-                if current_block == 2873832966593178012 {
-                    v2 = ((v6) as u16).wrapping_add(1);
-                } else {
+                };
+                if turn {
                     word!(game.tilemap_stuff[(v4 + 18)] = 0);
                     v2 = word!(game.tilemap_stuff[11]);
+                } else {
+                    v2 = (v6 as u16).wrapping_add(1);
                 }
-                current_block = 4216153537599944117;
             }
-        }
-        match current_block {
-            5689001924483802034 => {
-                let v3: i32 = k as i32 >> 1;
-                word! { game, 0;
-                    tilemap_stuff[(v3 + 16)], tilemap_stuff[(v3 + 17)],
-                }
-                word!(game.tilemap_stuff[(v3 + 18)], |fresh13| (fresh13)
-                    ^ (0x8000u16));
-                return;
-            }
-            _ => {
-                word!(game.tilemap_stuff[(v4 + 21)] = v2);
-            }
+            word!(game.tilemap_stuff[(v4 + 21)] = v2);
+            false
+        };
+        if stopped {
+            let v3: i32 = k as i32 >> 1;
+            word! { game, 0; tilemap_stuff[(v3 + 16)], tilemap_stuff[(v3 + 17)], }
+            word!(game.tilemap_stuff[(v3 + 18)], |fresh13| (fresh13)
+                ^ (0x8000u16));
+            return;
         }
     } else {
         v2 = word!(game.tilemap_stuff[(v1 + 21)]);

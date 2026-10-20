@@ -103,61 +103,44 @@ pub unsafe fn WalkingSpacePirates_8789(game: &mut Game) {
     }
 }
 pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
-    let mut current_block: u64;
     if ((*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
         .base
         .enemy_ptr as i32
         == addr_kEnemyDef_F593 as i32)
     {
-        let mut r18: u16 = word!(game.projectile_type[word!(game.collision_detection_index)]);
+        let r18: u16 = word!(game.projectile_type[word!(game.collision_detection_index)]);
         if (r18 as i32 & kProjectileType_TypeMask as i32) - kProjectileType_PowerBomb as i32
             & 0x8000
-            != 0
+            == 0
         {
-            let mut enemy_ptr: u16 = 0;
-            let mut vulnerability_ptr: u16 = 0;
-            enemy_ptr = (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
-                .base
-                .enemy_ptr;
-            vulnerability_ptr = (*get_EnemyDef_A2(enemy_ptr, game)).vulnerability_ptr;
-            if vulnerability_ptr == 0 {
-                vulnerability_ptr = addr_stru_B4EC1C as u16;
-            }
-            let mut r20: u16 = vulnerability_ptr;
-            if (r18 as i32 & kProjectileType_TypeMask as i32) != 0 {
-                if r18 as i32 & kProjectileType_TypeMask as i32 != kProjectileType_Missile as i32
-                    && r18 as i32 & kProjectileType_TypeMask as i32
-                        != kProjectileType_SuperMissile as i32
-                {
-                    current_block = 1528265894032410192;
-                } else {
-                    let mut v3: i16 = (((r18) & ((kProjectileType_TypeMask) as u16)) >> 8) as i16;
-                    let mut v = get_Vulnerability((r20).wrapping_add((v3) as u16), game);
-                    if ((*v).plasma_ice_wave & 0xf) != 0 && ((*v).plasma_ice_wave & 0xf) != 15 {
-                        current_block = 1528265894032410192;
-                    } else {
-                        current_block = 17407779659766490442;
-                    }
-                }
+            return;
+        }
+        let enemy_ptr = (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
+            .base
+            .enemy_ptr;
+        let mut vulnerability_ptr = (*get_EnemyDef_A2(enemy_ptr, game)).vulnerability_ptr;
+        if vulnerability_ptr == 0 {
+            vulnerability_ptr = addr_stru_B4EC1C as u16;
+        }
+        let r20 = vulnerability_ptr;
+        let vulnerable = if (r18 as i32 & kProjectileType_TypeMask as i32) != 0 {
+            if r18 as i32 & kProjectileType_TypeMask as i32 != kProjectileType_Missile as i32
+                && r18 as i32 & kProjectileType_TypeMask as i32
+                    != kProjectileType_SuperMissile as i32
+            {
+                true
             } else {
-                let mut v2 = get_Vulnerability((r20 as i32 + (r18 as i32 & 0xf)) as u16, game);
-                if ((*v2).power & 0xf) != 0 && ((*v2).power & 0xf) != 15 {
-                    current_block = 1528265894032410192;
-                } else {
-                    current_block = 17407779659766490442;
-                }
-            }
-            if current_block == 1528265894032410192 {
-            } else {
-                WalkingSpacePirates_883E(game);
-                current_block = 15976848397966268834;
+                let v3: i16 = (((r18) & ((kProjectileType_TypeMask) as u16)) >> 8) as i16;
+                let v = get_Vulnerability((r20).wrapping_add((v3) as u16), game);
+                ((*v).plasma_ice_wave & 0xf) != 0 && ((*v).plasma_ice_wave & 0xf) != 15
             }
         } else {
-            current_block = 15976848397966268834;
-        }
-        match current_block {
-            1528265894032410192 => {}
-            _ => return,
+            let v2 = get_Vulnerability((r20 as i32 + (r18 as i32 & 0xf)) as u16, game);
+            ((*v2).power & 0xf) != 0 && ((*v2).power & 0xf) != 15
+        };
+        if !vulnerable {
+            WalkingSpacePirates_883E(game);
+            return;
         }
     }
     WalkingSpacePirates_8789(game);

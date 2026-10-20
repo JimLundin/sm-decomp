@@ -3892,20 +3892,10 @@ pub unsafe fn KiHunter_Func_1(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn KiHunter_Func_2(k: u16, game: &mut Game) {
-    let mut current_block: u64;
     let E = Get_KiHunter(k as i32, game);
-    if ((*E).var_04 & 0x8000) == 0 {
-        if (((*E).var_F) as i16).wrapping_sub(((*E).var_0E) as i16) < 0 {
-            current_block = 17315748505249742599;
-        } else {
-            current_block = 17179679302217393232;
-        }
-    } else if (((*E).var_F) as i16).wrapping_sub(((*E).var_0E) as i16) >= 0 {
-        current_block = 17315748505249742599;
-    } else {
-        current_block = 17179679302217393232;
-    }
-    if current_block == 17179679302217393232 && (*E).var_10 == 0 {
+    let moving_forward = ((*E).var_04 & 0x8000) == 0;
+    let past_turn = (((*E).var_F) as i16).wrapping_sub(((*E).var_0E) as i16) >= 0;
+    if moving_forward == past_turn && (*E).var_10 == 0 {
         (*E).var_10 = 1;
         let mut v2: u16 = addr_kKiHunter_Ilist_EA32 as u16;
         if ((*E).var_04 & 0x8000) != 0 {
@@ -3913,30 +3903,29 @@ pub unsafe fn KiHunter_Func_2(k: u16, game: &mut Game) {
         }
         enemy_instruction! {[(*E).base]; instruction = v2, timer = 1}
     }
-    if ((*E).var_04 & 0x8000) == 0 {
-        words!((*E), var_02, var_03 += words!((*E), var_04, var_05));
-        if (((*E).var_02) as i16).wrapping_sub(((*E).var_00) as i16) >= 0 {
-            (*E).var_02 = (*E).var_00;
-        }
-        (*E).var_F = ((*E).var_F).wrapping_add((*E).var_02);
-        if (*E).var_F as i32 - 256i32 & 0x8000 == 0 {
-            (*E).var_A = ((0xa8f268i32) as u16);
-            return;
-        }
+    let moving_forward = ((*E).var_04 & 0x8000) == 0;
+    words!((*E), var_02, var_03 += words!((*E), var_04, var_05));
+    let reached_speed_limit = if moving_forward {
+        (((*E).var_02) as i16).wrapping_sub(((*E).var_00) as i16) >= 0
     } else {
-        words!((*E), var_02, var_03 += words!((*E), var_04, var_05));
-        if (((*E).var_02) as i16).wrapping_sub(((*E).var_00) as i16) < 0 {
-            (*E).var_02 = (*E).var_00;
-        }
-        (*E).var_F = ((*E).var_F).wrapping_add((*E).var_02);
-        if (*E).var_F as i32 - 128i32 & 0x8000 != 0 {
-            (*E).var_A = ((0xa8f268i32) as u16);
-            return;
-        }
+        (((*E).var_02) as i16).wrapping_sub(((*E).var_00) as i16) < 0
+    };
+    if reached_speed_limit {
+        (*E).var_02 = (*E).var_00;
+    }
+    (*E).var_F = ((*E).var_F).wrapping_add((*E).var_02);
+    let finished_arc = if moving_forward {
+        (*E).var_F as i32 - 256i32 & 0x8000 == 0
+    } else {
+        (*E).var_F as i32 - 128i32 & 0x8000 != 0
+    };
+    if finished_arc {
+        (*E).var_A = ((0xa8f268i32) as u16);
+        return;
     }
     let mut r20: u16 = ((*E).var_B as i32 + CosineMult8bit((*E).var_F, (*E).var_11, game) as i32
         - (*E).base.x_pos as i32) as u16;
-    if Enemy_MoveRight_IgnoreSlopes(k, (r20 as i16 as i32) << 16, game) != 0 {
+    let collided = if Enemy_MoveRight_IgnoreSlopes(k, (r20 as i16 as i32) << 16, game) != 0 {
         if ((*E).var_04 & 0x8000) == 0 {
             (*E).var_06 = 0;
             (*E).var_07 = -1i32 as u16;
@@ -3944,18 +3933,14 @@ pub unsafe fn KiHunter_Func_2(k: u16, game: &mut Game) {
             (*E).var_06 = 0;
             (*E).var_07 = 1;
         }
-        current_block = 14751541640656221110;
+        true
     } else {
         EnemyFunc_C8AD(k, game);
         r20 = ((*E).var_C as i32 + SineMult8bit((*E).var_F, (*E).var_12, game) as i32
             - (*E).base.y_pos as i32) as u16;
-        if Enemy_MoveDown(k, (r20 as i16 as i32) << 16, game) != 0 {
-            current_block = 14751541640656221110;
-        } else {
-            current_block = 7828949454673616476;
-        }
-    }
-    if current_block == 14751541640656221110 {
+        Enemy_MoveDown(k, (r20 as i16 as i32) << 16, game) != 0
+    };
+    if collided {
         (*E).var_A = ((0xa8f4edi32) as u16);
         (*E).var_08 = 0;
         (*E).var_09 = -1i32 as u16;

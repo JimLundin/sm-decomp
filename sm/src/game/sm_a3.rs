@@ -3051,9 +3051,6 @@ pub unsafe fn Metroid_Main(game: &mut Game) {
     word!(game.sprite_disable_flag[v4] = 0);
 }
 pub unsafe fn Metroid_Func_1(varE32: u16, game: &mut Game) {
-    let mut current_block: u64;
-    let mut v4: i16 = 0;
-    let mut v9: i16 = 0;
     let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
     let mut t: i32 =
         ((((((*E).base.y_pos) as i16).wrapping_sub((varE32) as i16)) >> 2) as i32) << 8;
@@ -3064,21 +3061,9 @@ pub unsafe fn Metroid_Func_1(varE32: u16, game: &mut Game) {
     (*E).var_C = (metroid_var_C).wrapping_sub(r18);
     let mut v3: i16 = ((*E).var_D as i32 - (v2 as i32 + r20 as i32)) as i16;
     (*E).var_D = v3 as u16;
-    if v3 < 0 {
-        if (v3 as u16) >= 0xfffd {
-            current_block = 3810685344454692134;
-        } else {
-            v4 = -3i16;
-            current_block = 2868539653012386629;
-        }
-    } else if (v3 as u16) < 3 {
-        current_block = 3810685344454692134;
-    } else {
-        v4 = 3;
-        current_block = 2868539653012386629;
-    }
-    if current_block == 2868539653012386629 {
-        (*E).var_D = v4 as u16;
+    // The positive boundary also clears the fractional velocity.
+    if v3 < -3 || v3 >= 3 {
+        (*E).var_D = v3.clamp(-3, 3) as u16;
         (*E).var_C = 0;
     }
     if Enemy_MoveDown(
@@ -3098,21 +3083,9 @@ pub unsafe fn Metroid_Func_1(varE32: u16, game: &mut Game) {
     (*E).var_A = (metroid_var_A).wrapping_sub(r18);
     let mut v8: i16 = ((*E).var_B as i32 - (v2 as i32 + r20 as i32)) as i16;
     (*E).var_B = v8 as u16;
-    if v8 < 0 {
-        if (v8 as u16) >= 0xfffd {
-            current_block = 8759308886461481507;
-        } else {
-            v9 = -3i16;
-            current_block = 17478428563724192186;
-        }
-    } else if (v8 as u16) < 3 {
-        current_block = 8759308886461481507;
-    } else {
-        v9 = 3;
-        current_block = 17478428563724192186;
-    }
-    if current_block == 17478428563724192186 {
-        (*E).var_B = v9 as u16;
+    // The positive boundary also clears the fractional velocity.
+    if v8 < -3 || v8 >= 3 {
+        (*E).var_B = v8.clamp(-3, 3) as u16;
         (*E).var_A = 0;
     }
     if Enemy_MoveRight_IgnoreSlopes(
@@ -3125,11 +3098,8 @@ pub unsafe fn Metroid_Func_1(varE32: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Metroid_Func_2(varE32: u16, game: &mut Game) {
-    let mut current_block: u64;
     let mut v1: i16 = 0;
     let mut v5: i16 = 0;
-    let mut v2: u16 = 0;
-    let mut v6: u16 = 0;
     let mut r18: u16 = 0;
     let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
     byte!(v1; 0) = (((varE32).wrapping_sub((*E).base.y_pos)) >> 8) as u8;
@@ -3138,21 +3108,8 @@ pub unsafe fn Metroid_Func_2(varE32: u16, game: &mut Game) {
     if (r20 & 0x1000) != 0 {
         r20 = (r20) | (0xe000u16);
     }
-    if (r20 & 0x8000) != 0 {
-        if r20 >= 0xfffd {
-            current_block = 12681381661298955615;
-        } else {
-            v2 = -3i32 as u16;
-            current_block = 2868539653012386629;
-        }
-    } else if r20 < 3 {
-        current_block = 12681381661298955615;
-    } else {
-        v2 = 3;
-        current_block = 2868539653012386629;
-    }
-    if current_block == 2868539653012386629 {
-        r20 = v2;
+    if (r20 as i16) < -3 || (r20 as i16) >= 3 {
+        r20 = (r20 as i16).clamp(-3, 3) as u16;
         r18 = 0;
     }
     (*E).var_C = r18;
@@ -3173,21 +3130,8 @@ pub unsafe fn Metroid_Func_2(varE32: u16, game: &mut Game) {
     if (r20 & 0x1000) != 0 {
         r20 = (r20) | (0xe000u16);
     }
-    if (r20 & 0x8000) != 0 {
-        if r20 >= 0xfffd {
-            current_block = 8114601772576486457;
-        } else {
-            v6 = -3i32 as u16;
-            current_block = 18386322304582297246;
-        }
-    } else if r20 < 3 {
-        current_block = 8114601772576486457;
-    } else {
-        v6 = 3;
-        current_block = 18386322304582297246;
-    }
-    if current_block == 18386322304582297246 {
-        r20 = v6;
+    if (r20 as i16) < -3 || (r20 as i16) >= 3 {
+        r20 = (r20 as i16).clamp(-3, 3) as u16;
         r18 = 0;
     }
     (*E).var_A = r18;

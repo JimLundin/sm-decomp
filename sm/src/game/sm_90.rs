@@ -4459,87 +4459,73 @@ pub unsafe fn ProjectileReflection(r20: u16, game: &mut Game) {
     };
 }
 pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
-    let mut current_block: u64;
     if (word!(game.button_config_shoot_x) & word!(game.joypad1_newkeys)) == 0
         && (word!(game.button_config_shoot_x) & word!(game.joypad1_newinput_samusfilter)) == 0
         || Samus_CanFireSuperMissile(game) & 1 == 0
     {
         return;
     }
-    if word!(game.hud_item_index) != 2 {
-        if word!(game.samus_missiles) != 0 {
-            current_block = 7351195479953500246;
-        } else {
-            current_block = 12512720045134471270;
-        }
-    } else if word!(game.samus_super_missiles) == 0 {
-        current_block = 12512720045134471270;
+    let has_ammo = if word!(game.hud_item_index) != 2 {
+        word!(game.samus_missiles) != 0
     } else {
-        current_block = 7351195479953500246;
+        word!(game.samus_super_missiles) != 0
+    };
+    if !has_ammo {
+        word!(game.projectile_counter, wrapping_sub(1));
+        return;
     }
-    if current_block == 7351195479953500246 {
-        let mut v0: u16 = 0;
-        loop {
-            if (word!(game.projectile_damage[(v0 >> 1)]) == 0) {
-                current_block = 13536709405535804910;
-                break;
-            }
-            v0 = (v0).wrapping_add(2);
-            if ((v0) as i16).wrapping_sub(10) >= 0 {
-                current_block = 12512720045134471270;
-                break;
-            }
-        }
-        if current_block == 12512720045134471270 {
-        } else {
-            let r20: u16 = v0;
-            if InitProjectilePositionDirection(r20, game) & 1 == 0 {
-                word!(game.projectile_invincibility_timer = 20);
-                if word!(game.hud_item_index) == 2 {
-                    word!(game.samus_super_missiles, wrapping_sub(1));
-                } else {
-                    word!(game.samus_missiles, wrapping_sub(1));
-                }
-                let v1: i32 = r20 as i32 >> 1;
-                word!(game.projectile_timers[v1] = 4);
-                let v3: u16 = word!(game.hud_item_index);
-                let r18: u16 = u16::swap_bytes(word!(game.hud_item_index));
-                word!(game.projectile_type[v1], |fresh80| (fresh80
-                    | (r18 | 0x8000)));
-                let v4: u16 = (2 * (v3 as i32 & 0xf)) as u16;
-                if word!(game.cinematic_function) == 0 {
-                    QueueSfx1_Max6(kNonBeamProjectile_Sfx[(v4 >> 1) as usize], game);
-                }
-                InitializeProjectileSpeedOfType(r20, game);
-                InitializeProjectile(r20, game);
-                let mut v7: u16 = word!(game.projectile_type[v1]);
-                if (v7 & 0x200) != 0 {
-                    word!(game.projectile_bomb_pre_instructions[v1] = ((0x90afe5i32) as u16));
-                } else {
-                    word!(game.projectile_bomb_pre_instructions[v1] = ((0x90af68i32) as u16));
-                }
-                word!(
-                    game.cooldown_timer = kNonBeamProjectileCooldowns
-                        [(*(&raw mut v7 as *mut u8).offset(1,) as i32 & 0xf) as usize]
-                        as u16
-                );
-                if word!(game.samus_auto_cancel_hud_item_index) != 0 {
-                    word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
-                    return;
-                }
-                if word!(game.hud_item_index) == 2 {
-                    if word!(game.samus_super_missiles) != 0 {
-                        return;
-                    }
-                } else if word!(game.samus_missiles) != 0 {
-                    return;
-                }
-                word!(game.hud_item_index = 0);
-            }
+    let mut v0: u16 = 0;
+    while word!(game.projectile_damage[(v0 >> 1)]) != 0 {
+        v0 = (v0).wrapping_add(2);
+        if ((v0) as i16).wrapping_sub(10) >= 0 {
+            word!(game.projectile_counter, wrapping_sub(1));
             return;
         }
     }
-    word!(game.projectile_counter, wrapping_sub(1));
+    let r20: u16 = v0;
+    if InitProjectilePositionDirection(r20, game) & 1 == 0 {
+        word!(game.projectile_invincibility_timer = 20);
+        if word!(game.hud_item_index) == 2 {
+            word!(game.samus_super_missiles, wrapping_sub(1));
+        } else {
+            word!(game.samus_missiles, wrapping_sub(1));
+        }
+        let v1: i32 = r20 as i32 >> 1;
+        word!(game.projectile_timers[v1] = 4);
+        let v3: u16 = word!(game.hud_item_index);
+        let r18: u16 = u16::swap_bytes(word!(game.hud_item_index));
+        word!(game.projectile_type[v1], |fresh80| (fresh80
+            | (r18 | 0x8000)));
+        let v4: u16 = (2 * (v3 as i32 & 0xf)) as u16;
+        if word!(game.cinematic_function) == 0 {
+            QueueSfx1_Max6(kNonBeamProjectile_Sfx[(v4 >> 1) as usize], game);
+        }
+        InitializeProjectileSpeedOfType(r20, game);
+        InitializeProjectile(r20, game);
+        let mut v7: u16 = word!(game.projectile_type[v1]);
+        if (v7 & 0x200) != 0 {
+            word!(game.projectile_bomb_pre_instructions[v1] = ((0x90afe5i32) as u16));
+        } else {
+            word!(game.projectile_bomb_pre_instructions[v1] = ((0x90af68i32) as u16));
+        }
+        word!(
+            game.cooldown_timer = kNonBeamProjectileCooldowns
+                [(*(&raw mut v7 as *mut u8).offset(1,) as i32 & 0xf) as usize]
+                as u16
+        );
+        if word!(game.samus_auto_cancel_hud_item_index) != 0 {
+            word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
+            return;
+        }
+        if word!(game.hud_item_index) == 2 {
+            if word!(game.samus_super_missiles) != 0 {
+                return;
+            }
+        } else if word!(game.samus_missiles) != 0 {
+            return;
+        }
+        word!(game.hud_item_index = 0);
+    }
 }
 pub unsafe fn Missile_Func2(game: &mut Game) {
     let mut v0: u16 = 0;
@@ -4716,31 +4702,25 @@ static kRunSwitchedToHudHandler: [Option<Func_U8>; 6] = callback_table! { unsafe
     SwitchToHudHandler_PowerBombs, SwitchToHudHandler_Grapple, SwitchToHudHandler_Xray,
 };
 pub unsafe fn HandleSwitchingHudSelection(game: &mut Game) {
-    let mut current_block: u64;
-    let mut v0: u16 = 0;
     let mut r22: u16 = 0;
     let r18: u16 = word!(game.hud_item_index);
-    if (word!(game.button_config_itemcancel_y) & word!(game.joypad1_newkeys)) != 0 {
+    let selection = if (word!(game.button_config_itemcancel_y) & word!(game.joypad1_newkeys)) != 0 {
         word!(game.samus_auto_cancel_hud_item_index = 0);
-        current_block = 5182151076943748346;
+        Some(0)
     } else {
         r22 = ((word!(game.button_config_itemcancel_y) & word!(game.joypad1_lastkeys)) != 0) as u16;
         if (word!(game.button_config_itemswitch) & word!(game.joypad1_newkeys)) == 0 {
-            current_block = 16684771485965707775;
+            None
         } else {
-            v0 = (word!(game.hud_item_index)).wrapping_add(1);
-            if word!(game.hud_item_index) as i32 - 5i32 & 0x8000 == 0 {
-                current_block = 5182151076943748346;
+            let next = (word!(game.hud_item_index)).wrapping_add(1);
+            Some(if word!(game.hud_item_index) as i32 - 5i32 & 0x8000 == 0 {
+                0
             } else {
-                current_block = 11963831534727063849;
-            }
+                next
+            })
         }
-    }
-    if current_block == 5182151076943748346 {
-        v0 = 0;
-        current_block = 11963831534727063849;
-    }
-    if current_block == 11963831534727063849 {
+    };
+    if let Some(mut v0) = selection {
         word!(game.hud_item_index = v0);
         while kRunSwitchedToHudHandler[v0 as usize].expect("non-null function pointer")(game) & 1
             != 0
@@ -7651,47 +7631,27 @@ pub unsafe fn SamusCode_1B_CheckedLockSamus(game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn SamusCode_1C(game: &mut Game) -> u8 {
-    let current_block_5: u64;
-    if *ram_ptr!(game; 0xa1f) as i32 == kMovementType_14_WallJumping as i32 {
+    let sound = if *ram_ptr!(game; 0xa1f) as i32 == kMovementType_14_WallJumping as i32 {
         if word!(game.samus_anim_frame) as i32 - 23i32 & 0x8000 != 0 {
             if word!(game.samus_anim_frame) as i32 - 13i32 & 0x8000 != 0 {
-                current_block_5 = 15182254099572620017;
+                0x31
             } else {
-                current_block_5 = 14206663613128494784;
+                0x3e
             }
         } else {
-            current_block_5 = 11650488183268122163;
+            0x33
         }
     } else {
         if *ram_ptr!(game; 0xa1f) as i32 != kMovementType_03_SpinJumping as i32 {
             return 0;
         }
-        if word!(game.samus_pose) as i32 != kPose_81_FaceR_Screwattack as i32
-            && word!(game.samus_pose) as i32 != kPose_82_FaceL_Screwattack as i32
-        {
-            if word!(game.samus_pose) as i32 != kPose_1B_FaceR_SpaceJump as i32
-                && word!(game.samus_pose) as i32 != kPose_1C_FaceL_SpaceJump as i32
-            {
-                current_block_5 = 15182254099572620017;
-            } else {
-                current_block_5 = 14206663613128494784;
-            }
-        } else {
-            current_block_5 = 11650488183268122163;
+        match word!(game.samus_pose) as u32 {
+            kPose_81_FaceR_Screwattack | kPose_82_FaceL_Screwattack => 0x33,
+            kPose_1B_FaceR_SpaceJump | kPose_1C_FaceL_SpaceJump => 0x3e,
+            _ => 0x31,
         }
-    }
-    match current_block_5 {
-        11650488183268122163 => {}
-        15182254099572620017 => {
-            QueueSfx1_Max9(0x31, game);
-            return 0;
-        }
-        _ => {
-            QueueSfx1_Max9(0x3e, game);
-            return 0;
-        }
-    }
-    QueueSfx1_Max9(0x33, game);
+    };
+    QueueSfx1_Max9(sound, game);
     0
 }
 pub unsafe fn SamusCode_1D_ClearSoundInDoor(game: &mut Game) -> u8 {

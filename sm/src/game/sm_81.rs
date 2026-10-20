@@ -892,7 +892,6 @@ pub unsafe fn DrawFileCopySelectDestinationSaveFileInfo(game: &mut Game) {
     QueueTransferOfMenuTilemapToVramBG1(game);
 }
 pub unsafe fn FileSelectMenu_10_FileCopySelectDest(game: &mut Game) {
-    let mut current_block: u64;
     static kFileCopySelectDest_MissileY: [u16; 4] = [72, 104, 136, 212];
     let mut v0: u16 = 0;
     DrawBorderAroundDataCopyMode(game);
@@ -902,60 +901,50 @@ pub unsafe fn FileSelectMenu_10_FileCopySelectDest(game: &mut Game) {
         if word!(game.eproj_id[15]) != 3 {
             word!(game.eproj_id[17] = word!(game.eproj_id[15]));
             word!(game.menu_index, wrapping_add(1));
-            current_block = 16545170798630791882;
         } else {
             word!(game.menu_index, wrapping_add(5));
-            current_block = 16203760046146113240;
+            return;
         }
     } else if (word!(game.joypad1_newkeys) & 0x8000) == 0 {
-        if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
-            QueueSfx1_Max6(0x37, game);
-            v0 = word!(game.eproj_id[15]);
-            loop {
-                v0 = v0.wrapping_sub(1);
-                if ((v0 & 0x8000) != 0) {
-                    current_block = 16545170798630791882;
-                    break;
+        'move_selection: {
+            if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
+                QueueSfx1_Max6(0x37, game);
+                v0 = word!(game.eproj_id[15]);
+                loop {
+                    v0 = v0.wrapping_sub(1);
+                    if ((v0 & 0x8000) != 0) {
+                        break 'move_selection;
+                    }
+                    if v0 != word!(game.eproj_id[16]) {
+                        break;
+                    }
                 }
-                if v0 != word!(game.eproj_id[16]) {
-                    current_block = 1572352429258197161;
-                    break;
+            } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
+                QueueSfx1_Max6(0x37, game);
+                v0 = word!(game.eproj_id[15]);
+                loop {
+                    v0 = v0.wrapping_add(1);
+                    if (v0 == 4) {
+                        break 'move_selection;
+                    }
+                    if v0 != word!(game.eproj_id[16]) {
+                        break;
+                    }
                 }
+            } else {
+                break 'move_selection;
             }
-        } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
-            QueueSfx1_Max6(0x37, game);
-            v0 = word!(game.eproj_id[15]);
-            loop {
-                v0 = v0.wrapping_add(1);
-                if (v0 == 4) {
-                    current_block = 16545170798630791882;
-                    break;
-                }
-                if v0 != word!(game.eproj_id[16]) {
-                    current_block = 1572352429258197161;
-                    break;
-                }
-            }
-        } else {
-            current_block = 16545170798630791882;
-        }
-        if current_block == 16545170798630791882 {
-        } else {
             word!(game.eproj_id[15] = v0);
-            current_block = 16545170798630791882;
         }
     } else {
         word!(game.menu_index, wrapping_sub(2));
         word!(game.eproj_id[15] = word!(game.eproj_id[16]));
         QueueSfx1_Max6(0x37, game);
         FileSelectMenu_Func1(game);
-        current_block = 16203760046146113240;
+        return;
     }
-    if current_block == 16203760046146113240 {
-    } else {
-        word!(game.eproj_id[10] = kFileCopySelectDest_MissileY[word!(game.eproj_id[15]) as usize]);
-        word!(game.eproj_id[5] = 22);
-    }
+    word!(game.eproj_id[10] = kFileCopySelectDest_MissileY[word!(game.eproj_id[15]) as usize]);
+    word!(game.eproj_id[5] = 22);
 }
 pub unsafe fn FileSelectMenu_11_InitializeConfirm(game: &mut Game) {
     DrawBorderAroundDataCopyMode(game);
@@ -1887,65 +1876,53 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
     };
 }
 pub unsafe fn FileSelectMap_6_AreaSelectMap(game: &mut Game) {
-    let current_block: u64;
     let mut v0: i16 = word!(game.joypad1_newkeys) as i16;
-    if word!(game.joypad1_newkeys) as i32 & (kButton_Up as i32 | kButton_Left as i32) != 0 {
-        v0 = word!(game.enable_debug) as i16;
-        if word!(game.enable_debug) != 0 {
-            let mut R28: u16 = DecAndWraparoundTo5(word!(game.file_select_map_area_index));
-            if CheckIfFileSelectMapAreaCanBeSelected(R28, game) != 0
-                || {
-                    R28 = DecAndWraparoundTo5(R28);
-                    CheckIfFileSelectMapAreaCanBeSelected(R28, game) != 0
+    'handle_action: {
+        if word!(game.joypad1_newkeys) as i32 & (kButton_Up as i32 | kButton_Left as i32) != 0 {
+            v0 = word!(game.enable_debug) as i16;
+            if word!(game.enable_debug) != 0 {
+                let mut R28: u16 = DecAndWraparoundTo5(word!(game.file_select_map_area_index));
+                if CheckIfFileSelectMapAreaCanBeSelected(R28, game) != 0
+                    || {
+                        R28 = DecAndWraparoundTo5(R28);
+                        CheckIfFileSelectMapAreaCanBeSelected(R28, game) != 0
+                    }
+                    || {
+                        R28 = DecAndWraparoundTo5(R28);
+                        CheckIfFileSelectMapAreaCanBeSelected(R28, game) != 0
+                    }
+                {
+                    QueueSfx1_Max6(0x37, game);
+                    SwitchActiveFileSelectMapArea(R28, game);
+                    DrawAreaSelectMapLabels(game);
+                    return;
                 }
-                || {
-                    R28 = DecAndWraparoundTo5(R28);
-                    CheckIfFileSelectMapAreaCanBeSelected(R28, game) != 0
-                }
-            {
-                QueueSfx1_Max6(0x37, game);
-                SwitchActiveFileSelectMapArea(R28, game);
-                DrawAreaSelectMapLabels(game);
-                return;
+                break 'handle_action;
             }
-            current_block = 4115184416633590978;
-        } else {
-            current_block = 9480232856434185415;
-        }
-    } else if word!(game.joypad1_newkeys) as i32
-        & (kButton_Select as i32 | kButton_Down as i32 | kButton_Right as i32)
-        == 0
-    {
-        current_block = 9480232856434185415;
-    } else {
-        v0 = word!(game.enable_debug) as i16;
-        if word!(game.enable_debug) == 0 {
-            current_block = 9480232856434185415;
-        } else {
-            let mut n: i32 = 6;
-            let mut R28_0: u16 = word!(game.file_select_map_area_index);
-            loop {
-                R28_0 = WraparoundFrom6to0(R28_0);
-                if CheckIfFileSelectMapAreaCanBeSelected(R28_0, game) != 0 {
-                    current_block = 11194104282611034094;
-                    break;
+        } else if word!(game.joypad1_newkeys) as i32
+            & (kButton_Select as i32 | kButton_Down as i32 | kButton_Right as i32)
+            != 0
+        {
+            v0 = word!(game.enable_debug) as i16;
+            if word!(game.enable_debug) != 0 {
+                let mut n: i32 = 6;
+                let mut R28_0: u16 = word!(game.file_select_map_area_index);
+                loop {
+                    R28_0 = WraparoundFrom6to0(R28_0);
+                    if CheckIfFileSelectMapAreaCanBeSelected(R28_0, game) != 0 {
+                        break;
+                    }
+                    n -= 1;
+                    if n == 0 {
+                        break 'handle_action;
+                    }
                 }
-                n -= 1;
-                if n == 0 {
-                    current_block = 4115184416633590978;
-                    break;
-                }
-            }
-            if current_block == 4115184416633590978 {
-            } else {
                 SwitchActiveFileSelectMapArea(R28_0, game);
                 QueueSfx1_Max6(0x37, game);
                 DrawAreaSelectMapLabels(game);
                 return;
             }
         }
-    }
-    if current_block == 9480232856434185415 {
         if v0 < 0 {
             word!(game.menu_index = 22);
             DrawAreaSelectMapLabels(game);
@@ -2297,7 +2274,6 @@ pub unsafe fn FileSelectMap_10_RoomSelectMap(game: &mut Game) {
     if word!(game.enable_debug) != 0
         && (word!(game.joypad2_new_keys) as i32 & kButton_Select as i32) != 0
     {
-        let mut current_block_32: u64;
         QueueSfx1_Max6(0x38, game);
         let mut r24: u16 =
             *(ram_ptr!(game, u16; 0xd8f8, (2 * word!(game.area_index) as i32) as isize));
@@ -2319,25 +2295,15 @@ pub unsafe fn FileSelectMap_10_RoomSelectMap(game: &mut Game) {
         let mut v3: i16 = (4i16).wrapping_mul((word!(game.load_station_index)) as i16);
         let r18: u16 = *r0.offset((v3 >> 1) as isize);
         let r20: u16 = *r0.offset(((v3 as i32 >> 1) + 1) as isize);
-        if word!(game.load_station_index) as i32 - 16i32 & 0x8000 == 0 {
-            current_block_32 = 4150833010744877889;
-        } else {
-            current_block_32 = 12800627514080957624;
-        }
+        let mut check_unlocked = word!(game.load_station_index) as i32 - 16i32 & 0x8000 != 0;
         loop {
-            if current_block_32 == 12800627514080957624 {
-                if word!(game.load_station_index, wrapping_add(1), reread) as i32 - 16i32 & 0x8000
-                    == 0
-                {
-                    current_block_32 = 8236137900636309791;
-                } else {
-                    current_block_32 = 5601891728916014340;
-                }
+            let inspect_terminal = if check_unlocked {
+                word!(game.load_station_index, wrapping_add(1), reread) as i32 - 16i32 & 0x8000 == 0
             } else {
                 word!(game.load_station_index, wrapping_add(1));
-                current_block_32 = 8236137900636309791;
-            }
-            if current_block_32 == 8236137900636309791 {
+                true
+            };
+            if inspect_terminal {
                 let mut v5: i16 =
                     *r0.offset((2 * word!(game.load_station_index) as i32) as isize) as i16;
                 if v5 == -1i16 {
@@ -2346,7 +2312,7 @@ pub unsafe fn FileSelectMap_10_RoomSelectMap(game: &mut Game) {
                 } else if v5 != -2i16 {
                     break;
                 } else {
-                    current_block_32 = 4150833010744877889;
+                    check_unlocked = false;
                     continue;
                 }
             }
@@ -2354,7 +2320,7 @@ pub unsafe fn FileSelectMap_10_RoomSelectMap(game: &mut Game) {
             r24 = (r24 >> 1);
             if v4 == 0 || *r0.offset((2 * word!(game.load_station_index) as i32) as isize) >= 0xfffe
             {
-                current_block_32 = 12800627514080957624;
+                check_unlocked = true;
             } else {
                 break;
             }

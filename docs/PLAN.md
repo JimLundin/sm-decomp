@@ -20,6 +20,44 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Structured decisions (2026-10-20)
+
+Twenty-five existing functions now use direct decisions, early exits and
+shared tails instead of repeated numeric routing variables. Eight Samus
+functions cover poses, transitions, palette and HUD selection; seventeen
+others cover enemy motion, collision, drawing, menus, effects and Kraid resume.
+No helper, data table or runtime state is added. Public entries and numeric
+state addresses remain. Metroid's asymmetric clamp keeps the fractional
+velocity at -3 but clears it at +3; Draygon's unsigned negative-position test
+is deliberately preserved. Kraid retains the committed GraphicsAsset prefix.
+The concurrent PLM coroutine change is excluded from this batch and its count.
+
+Independent review binds all 25 original/replacement bodies and reconstructs
+all 12 changed files from ae66aa50 with no unrecorded code edits. Per-function
+branch correspondence checks predicates, ordered effects, callback arguments,
+live rereads and exits. Original/replacement Rust execution passes 1303712
+Samus comparisons and 81920 comparisons across ten other routines, checking
+full RAM, returns and callback traces with synthetic callbacks. Another 262144
+Metroid comparisons cover all signed-speed representations and four fractions.
+Harness bodies and result hashes bind to the reviewed source. The seven other
+routines rely on documented branch-path review: three menus, lava/acid HDMA,
+explosion drawing, walking space pirates and Kraid. Replays do not establish
+every branch or boss route; synthetic callbacks are not actual gameplay calls.
+
+Formatting, frontend metadata checks, normal release (19.30s), diff check and
+progress pass. Source-checked any% passes 129712/0 and Speed Booster 148406/0,
+native exits 0; command wall times are 152.19s and 195.19s. Source, inputs,
+normal library and DLL hashes stay fixed, and the host reuses the normal
+library. All 25 final formatted bodies match the reviewed replacements.
+
+Rust lines fall **403**, from 114457 to **114054**, including complete changed
+files. Cast-containing lines fall 11 to 9108; other progress counters stay
+unchanged. The fixed under-100000 target needs **14055 further lines**; its
+complete remaining budget is still unproven. Next work reprices the existing
+complete hopping/Samus action drafts after all intervening sharing and checks
+redundant temporary initialization as a distinct repeated-code family. Keep
+those drafts isolated until their actual net savings and behavior are checked.
+
 ## Direct coroutine progression (2026-10-20)
 
 Nine coroutine routines in 80/82/84/8B now use their captured resume byte,

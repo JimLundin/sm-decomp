@@ -1677,7 +1677,6 @@ pub unsafe fn EnemyMain(game: &mut Game) {
             (*gEnemyData(word!(game.enemy_index_to_shake) as i32, game)).shake_timer = 64;
             word!(game.enemy_index_to_shake = -1i32 as u16);
         }
-        let mut current_block_39: u64;
         let mut active_enemy_indexes_index: i32 = 0;
         loop {
             let v1: u16 = word!(game.active_enemy_indexes[(active_enemy_indexes_index >> 1)]);
@@ -1686,86 +1685,77 @@ pub unsafe fn EnemyMain(game: &mut Game) {
             }
             word!(game.cur_enemy_index = v1);
             let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-            if ((*E).properties & 0x400) == 0 {
-                if (*E).invincibility_timer != 0 {
-                    (*E).invincibility_timer = (*E).invincibility_timer.wrapping_sub(1);
-                    current_block_39 = 8457315219000651999;
-                } else if word!(game.debug_disable_sprite_interact) == 0 {
-                    if word!(game.debug_time_frozen_for_enemies) | word!(game.time_is_frozen_flag)
+            'process_enemy: {
+                let run_ai = if ((*E).properties & 0x400) == 0 {
+                    if (*E).invincibility_timer != 0 {
+                        (*E).invincibility_timer = (*E).invincibility_timer.wrapping_sub(1);
+                        true
+                    } else if word!(game.debug_disable_sprite_interact) == 0 {
+                        if word!(game.debug_time_frozen_for_enemies)
+                            | word!(game.time_is_frozen_flag)
+                            == 0
+                        {
+                            EnemyCollisionHandler(game);
+                            if (*E).enemy_ptr == 0 {
+                                break 'process_enemy;
+                            }
+                        }
+                        ((*E).extra_properties & 1) == 0
+                    } else {
+                        true
+                    }
+                } else {
+                    true
+                };
+                if run_ai {
+                    word!(game.UNUSED_word_7E17A2 = 0);
+                    let ran_ai = if word!(game.debug_time_frozen_for_enemies)
+                        | word!(game.time_is_frozen_flag)
                         == 0
                     {
-                        EnemyCollisionHandler(game);
-                        if (*E).enemy_ptr == 0 {
-                            current_block_39 = 10758786907990354186;
-                        } else {
-                            current_block_39 = 8236137900636309791;
-                        }
-                    } else {
-                        current_block_39 = 8236137900636309791;
-                    }
-                    match current_block_39 {
-                        10758786907990354186 => {}
-                        _ => {
-                            if ((*E).extra_properties & 1) != 0 {
-                                current_block_39 = 1836292691772056875;
-                            } else {
-                                current_block_39 = 8457315219000651999;
+                        let mut v6: i16 = 0;
+                        let mut ai_handler_bits: u16 = (*E).ai_handler_bits;
+                        if ai_handler_bits != 0 {
+                            loop {
+                                v6 += 1;
+                                let mut v8: i8 = ((ai_handler_bits) as i8) & (1i8);
+                                ai_handler_bits = (ai_handler_bits >> 1);
+                                if (v8 != 0) {
+                                    break;
+                                }
                             }
                         }
-                    }
-                } else {
-                    current_block_39 = 8457315219000651999;
-                }
-            } else {
-                current_block_39 = 8457315219000651999;
-            }
-            if current_block_39 == 8457315219000651999 {
-                word!(game.UNUSED_word_7E17A2 = 0);
-                if word!(game.debug_time_frozen_for_enemies) | word!(game.time_is_frozen_flag) == 0
-                {
-                    let mut v6: i16 = 0;
-                    let mut ai_handler_bits: u16 = (*E).ai_handler_bits;
-                    if ai_handler_bits != 0 {
-                        loop {
-                            v6 += 1;
-                            let mut v8: i8 = ((ai_handler_bits) as i8) & (1i8);
-                            ai_handler_bits = (ai_handler_bits >> 1);
-                            if (v8 != 0) {
-                                break;
-                            }
-                        }
-                    }
-                    CallEnemyAi(
-                        (words!(
-                            i32,
-                            (
-                                (*E).bank,
-                                (*get_EnemyDef_A2(
-                                    ((*E).enemy_ptr as i32 + 2i32 * v6 as i32) as u16,
-                                    game,
-                                ))
-                                .main_ai
-                            )
-                        )) as u32,
-                        game,
-                    );
-                    current_block_39 = 5447921980315815038;
-                } else {
-                    let mut ED = get_EnemyDef_A2((*E).enemy_ptr, game);
-                    if (*ED).time_is_frozen_ai != 0 {
                         CallEnemyAi(
-                            (words!(i32, ((*E).bank, (*ED).time_is_frozen_ai))) as u32,
+                            (words!(
+                                i32,
+                                (
+                                    (*E).bank,
+                                    (*get_EnemyDef_A2(
+                                        ((*E).enemy_ptr as i32 + 2i32 * v6 as i32) as u16,
+                                        game,
+                                    ))
+                                    .main_ai
+                                )
+                            )) as u32,
                             game,
                         );
-                        current_block_39 = 5447921980315815038;
+                        true
                     } else {
-                        current_block_39 = 1836292691772056875;
-                    }
-                }
-                if current_block_39 == 1836292691772056875 {
-                } else {
-                    if word!(game.debug_time_frozen_for_enemies) | word!(game.time_is_frozen_flag)
-                        == 0
+                        let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
+                        if (*ED).time_is_frozen_ai != 0 {
+                            CallEnemyAi(
+                                (words!(i32, ((*E).bank, (*ED).time_is_frozen_ai))) as u32,
+                                game,
+                            );
+                            true
+                        } else {
+                            false
+                        }
+                    };
+                    if ran_ai
+                        && word!(game.debug_time_frozen_for_enemies)
+                            | word!(game.time_is_frozen_flag)
+                            == 0
                     {
                         (*E).frame_counter = (*E).frame_counter.wrapping_add(1);
                         if ((*E).properties & 0x2000) != 0 {
@@ -1773,10 +1763,7 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                             ProcessEnemyInstructions(game);
                         }
                     }
-                    current_block_39 = 1836292691772056875;
                 }
-            }
-            if current_block_39 == 1836292691772056875 {
                 if ((*E).extra_properties & 1) != 0
                     && ((*E).flash_timer == 1 || (*E).frozen_timer == 1)
                 {

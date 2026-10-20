@@ -2157,9 +2157,6 @@ crate::game::address_dispatch! {
 }
 static kLavaSoundEffects: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
 pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(k: u16, game: &mut Game) {
-    let mut current_block: u64;
-    let mut v4: i16 = 0;
-    let mut v8: i16 = 0;
     word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
     if word!(game.time_is_frozen_flag) == 0 {
         CallFxRisingFunc(
@@ -2178,23 +2175,18 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(k: u16, game: &mut Game) {
         let mut v2: i16 = ((words!(game.fx_y_offset, fx_y_suboffset))
             .wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos))
             >> 16) as i16;
-        if v2 >= 0 {
-            let mut v3: i16 = (v2).wrapping_sub((word!(game.layer1_y_pos)) as i16);
+        let v4 = if v2 >= 0 {
+            let v3: i16 = (v2).wrapping_sub((word!(game.layer1_y_pos)) as i16);
             if v3 <= 0 {
-                v4 = ((v3 as i32 ^ 0x1f) & 0x1f | 0x100) as i16;
-                current_block = 135057599068437321;
+                ((v3 as i32 ^ 0x1f) & 0x1f | 0x100) as i16
             } else if (v3 as u16) < 0x100 {
-                v4 = !(v3 as i32) as u8 as i16;
-                current_block = 135057599068437321;
+                !(v3 as i32) as u8 as i16
             } else {
-                current_block = 4068382217303356765;
+                0
             }
         } else {
-            current_block = 4068382217303356765;
-        }
-        if current_block == 4068382217303356765 {
-            v4 = 0;
-        }
+            0
+        };
         *(ram_ptr!(game, u16; 0x9c00, 2)) = v4 as u16;
         if word!(game.fx_type) == 2 && (word!(game.lava_acid_y_pos) & 0x8000) == 0 {
             let v5: i32 = word!(game.hdma_object_index) as u8 as i32 >> 1;
@@ -2208,23 +2200,19 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(k: u16, game: &mut Game) {
             }
         }
         word!(game.random_number = u16::swap_bytes(word!(game.random_number)));
-        if (word!(game.lava_acid_y_pos) & 0x8000) == 0 {
-            v8 =
+        let v8 = if (word!(game.lava_acid_y_pos) & 0x8000) == 0 {
+            let v8 =
                 (word!(game.lava_acid_y_pos) as i32 - word!(game.layer1_y_pos) as i32 + 256) as i16;
             if v8 < 0 {
-                v8 = 255;
-                current_block = 7317190685143662286;
+                255
             } else if (v8 as u16) < 0x200 {
-                current_block = 7317190685143662286;
+                v8
             } else {
-                current_block = 11042950489265723346;
+                511
             }
         } else {
-            current_block = 11042950489265723346;
-        }
-        if current_block == 11042950489265723346 {
-            v8 = 511;
-        }
+            511
+        };
         *(ram_ptr!(game, u16; 0x18d8))
             .offset((word!(game.hdma_object_index) as u8 >> 1) as isize) =
             (3 * ((v8 as i32 ^ 0x1ff) + 1 & 0x3ff) + 0xb62a) as u16;

@@ -305,7 +305,6 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
     HandleProjectileTrails(game);
 }
 pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
-    let mut current_block: u64;
     let mut v0: u16 = 18;
     let mut v2: u16 = 0;
     let mut r18: u16 = 0;
@@ -316,43 +315,36 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
         if !(word!(game.projectile_bomb_instruction_ptr[v1]) == 0
             || (((word!(game.projectile_type[v1]) as i32 & 0xf00) - 768i32) as i16) < 0)
         {
-            if (word!(game.projectile_type[v1]) & 0xf00) == 768 {
-                if word!(game.projectile_variables[v1]) == 0 {
-                    current_block = 2612600445040741303;
+            'draw: {
+                let mode7 = if (word!(game.projectile_type[v1]) & 0xf00) == 768 {
+                    if word!(game.projectile_variables[v1]) == 0 {
+                        break 'draw;
+                    }
+                    false
+                } else if (word!(game.projectile_type[v1]) & 0xf00) == 1280
+                    || (word!(game.ceres_status) & 0x8000) == 0
+                {
+                    false
                 } else {
-                    current_block = 11875828834189669668;
-                }
-            } else if (word!(game.projectile_type[v1]) & 0xf00) == 1280
-                || (word!(game.ceres_status) & 0x8000) == 0
-            {
-                current_block = 11875828834189669668;
-            } else {
-                CalcExplosion_Mode7(v0, game);
-                v2 = r18;
-                current_block = 2311960645627505036;
-            }
-            if current_block == 2612600445040741303 {
-            } else {
-                if current_block == 11875828834189669668 {
+                    true
+                };
+                if mode7 {
+                    CalcExplosion_Mode7(v0, game);
+                    v2 = r18;
+                } else {
                     let v3: u16 =
                         (word!(game.projectile_x_pos[v1])).wrapping_sub(word!(game.layer1_x_pos));
                     r20 = v3;
                     if v3 as i32 - 304i32 & 0x8000 == 0 || v3 as i32 + 48 & 0x8000 != 0 {
-                        current_block = 2612600445040741303;
-                    } else {
-                        v2 = (word!(game.projectile_y_pos[v1]))
-                            .wrapping_sub(word!(game.layer1_y_pos));
-                        r18 = v2;
-                        current_block = 2311960645627505036;
+                        break 'draw;
                     }
+                    v2 = (word!(game.projectile_y_pos[v1])).wrapping_sub(word!(game.layer1_y_pos));
+                    r18 = v2;
                 }
-                if current_block == 2612600445040741303 {
-                } else {
-                    if ((v2 & 0xff00) == 0) {
-                        DrawProjectileSpritemap(v0, r20, r18, game);
-                    }
-                    v0 = word!(game.projectile_index);
+                if ((v2 & 0xff00) == 0) {
+                    DrawProjectileSpritemap(v0, r20, r18, game);
                 }
+                v0 = word!(game.projectile_index);
             }
         }
         v0 = (v0).wrapping_sub(2);

@@ -396,48 +396,33 @@ pub unsafe fn Draygon_Func_15(game: &mut Game) {
     };
 }
 pub unsafe fn Draygon_Func_16(game: &mut Game) {
-    let mut current_block: u64;
     let E = Get_Draygon(0, game);
     Draygon_Func_3(game);
-    if word!(game.samus_x_speed_divisor) != 0 {
-        current_block = 1399980599923904196;
-    } else {
-        if (word!(game.random_number) & 0xf) == 0 {
-            let v1: u16 = ((*E).var_03).wrapping_sub(1);
-            (*E).var_03 = v1;
-            if v1 == 0 {
-                current_block = 11361156962102030361;
-            } else {
+    if word!(game.samus_x_speed_divisor) == 0 {
+        'advance: {
+            if (word!(game.random_number) & 0xf) == 0 {
+                let v1: u16 = ((*E).var_03).wrapping_sub(1);
+                (*E).var_03 = v1;
+                if v1 == 0 {
+                    break 'advance;
+                }
                 enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_9C90 as u16, timer = 1}
-                current_block = 6483416627284290920;
             }
-        } else {
-            current_block = 6483416627284290920;
-        }
-        if current_block == 6483416627284290920 {
             (*E).base.y_pos = (CosineMult8bit((*E).var_0D, 32u16, game)).wrapping_add(384);
             (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
             words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
-            if ((*E).base.x_pos as i16) >= 0 && (*E).base.x_pos as i32 - 672i32 & 0x8000 == 0 {
-                current_block = 11361156962102030361;
-            } else {
-                current_block = 7976072742316086414;
-            }
-        }
-        if current_block == 7976072742316086414 {
-        } else {
-            if word!(game.samus_x_speed_divisor) == 0 {
-                let E3 = Get_Draygon(0xc0, game);
-                enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_9BDA as u16, timer = 1}
-                (*E).var_A = ((0xa58c33i32) as u16);
+            if !(((*E).base.x_pos as i16) >= 0 && (*E).base.x_pos as i32 - 672i32 & 0x8000 == 0) {
                 return;
             }
-            current_block = 1399980599923904196;
+        }
+        if word!(game.samus_x_speed_divisor) == 0 {
+            let E3 = Get_Draygon(0xc0, game);
+            enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_9BDA as u16, timer = 1}
+            (*E).var_A = ((0xa58c33i32) as u16);
+            return;
         }
     }
-    if current_block == 1399980599923904196 {
-        (*E).var_A = ((0xa58e19i32) as u16);
-    };
+    (*E).var_A = ((0xa58e19i32) as u16);
 }
 pub unsafe fn Draygon_Func_17(k: u16, game: &mut Game) {
     Draygon_Func_35(game);
@@ -484,24 +469,17 @@ pub unsafe fn Draygon_Func_19(game: &mut Game) {
     };
 }
 pub unsafe fn Draygon_Func_20(game: &mut Game) {
-    let mut current_block: u64;
     let E = Get_Draygon(0, game);
-    if word!(game.samus_x_speed_divisor) != 0 {
-        current_block = 11384386367536015713;
-    } else {
-        if (word!(game.random_number) & 0xf) == 0 {
-            let v1: u16 = ((*E).var_03).wrapping_sub(1);
-            (*E).var_03 = v1;
-            if v1 == 0 {
-                current_block = 17278387905106781498;
-            } else {
+    if word!(game.samus_x_speed_divisor) == 0 {
+        'advance: {
+            if (word!(game.random_number) & 0xf) == 0 {
+                let v1: u16 = ((*E).var_03).wrapping_sub(1);
+                (*E).var_03 = v1;
+                if v1 == 0 {
+                    break 'advance;
+                }
                 enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_98FE as u16, timer = 1}
-                current_block = 6873731126896040597;
             }
-        } else {
-            current_block = 6873731126896040597;
-        }
-        if current_block == 6873731126896040597 {
             (*E).base.y_pos = (CosineMult8bit((*E).var_0D, 32u16, game)).wrapping_add(384);
             (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
             words!(
@@ -509,26 +487,18 @@ pub unsafe fn Draygon_Func_20(game: &mut Game) {
                 x_pos,
                 x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
             );
-            if (*E).base.x_pos < 0 && (*E).base.x_pos as i32 + 80 & 0x8000 != 0 {
-                current_block = 17278387905106781498;
-            } else {
-                current_block = 10048703153582371463;
-            }
-        }
-        if current_block == 10048703153582371463 {
-        } else {
-            if word!(game.samus_x_speed_divisor) == 0 {
-                let E3 = Get_Draygon(0xc0, game);
-                enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_97E7 as u16, timer = 1}
-                (*Get_Draygon(0i32, game)).var_A = ((0xa58db2i32) as u16);
+            if !((*E).base.x_pos < 0 && (*E).base.x_pos as i32 + 80 & 0x8000 != 0) {
                 return;
             }
-            current_block = 11384386367536015713;
+        }
+        if word!(game.samus_x_speed_divisor) == 0 {
+            let E3 = Get_Draygon(0xc0, game);
+            enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_97E7 as u16, timer = 1}
+            (*Get_Draygon(0i32, game)).var_A = ((0xa58db2i32) as u16);
+            return;
         }
     }
-    if current_block == 11384386367536015713 {
-        (*Get_Draygon(0i32, game)).var_A = ((0xa58e19i32) as u16);
-    };
+    (*Get_Draygon(0i32, game)).var_A = ((0xa58e19i32) as u16);
 }
 pub unsafe fn Draygon_Func_21(k: u16, game: &mut Game) {
     let E = Get_Draygon(0, game);
