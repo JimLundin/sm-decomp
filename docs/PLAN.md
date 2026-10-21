@@ -1545,6 +1545,14 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the other 21 retained functions have exact source correspondence. Details and
    coverage limits are in CPU_DEPENDENCY.md. Durable source/checks:
    Local/sm-decomp-experiments/20261021/ppu-pixel-dependency.
+   The complete DMA dependency draft prices **97,313 -> 97,315 (+2)**: 16 Rust
+   lines removed, 16 C bridge and two installer lines added. Initial zero-count
+   HDMA termination stays local; preserving invalid-index failures, partial state
+   and the ROM-source warning retains transfer fallbacks. Live bus callbacks need
+   a nested, unwind-safe Game context. These costs consume the engine substitution's
+   saving. Park this formatted, uncompiled and unexecuted draft; no runtime or
+   compatibility claim is made. It would add 379 external DMA C/header lines.
+   Source and complete price: Local/sm-decomp-experiments/20261021/dma-dependency-price.
    Continue selecting larger complete responsibilities and repeated algorithms;
    the 90,000-line stretch checkpoint still has no demonstrated remaining budget.
    Durable experiments: Local/sm-decomp-experiments/20261021/complete-backend.
