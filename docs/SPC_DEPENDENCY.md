@@ -67,3 +67,71 @@ script was executed and no security setting changed. The earlier combined
 The short segment requires the observed SPC/audio probes; PPU reads are checked
 separately by the PPU change. Local reproduction inputs and logs are under
 `Local/sm-decomp-experiments/20261021/complete-backend/spc`.
+
+## Native music sequencer
+
+The native music engine uses selected routines from
+[snesrev/zelda3 at 45a149d8b4bb8098f53d1009f76e76e7d8b79bbf](https://github.com/snesrev/zelda3/tree/45a149d8b4bb8098f53d1009f76e76e7d8b79bbf).
+Keep the [Zelda3 MIT notice](../third_party/zelda3/LICENSE.txt) with distributed
+binaries. This dependency is separate from the SPC interpreter above: native
+music behavior remains fixed independently of uploaded SPC instruction bytes.
+
+On Windows, install the required `libsm_music.a` with Python and Zig:
+
+```powershell
+python tools/install_native_music.py --zig <zig.exe> --library-directory <SDL-lib>
+```
+
+Keep the output directory in `LIBRARY_PATH` for both Cargo and the verifier.
+The default source cache is `%LOCALAPPDATA%/sm-decomp-tools/native-music-45a149d8`;
+`--prefix` overrides it. Reinstall after changing the C adapter, layout header
+or compatibility installer. This Python installer was executed successfully.
+It verifies every upstream source/license checksum, selects named music
+routines, applies explicit compatibility changes and compiles the maintained
+adapter. The verifier checks the installed archive's C/header/installer stamp
+as well as the usual compiled Rust sources. No generated implementation is
+stored outside the count: selection and patch code are maintained in the installer.
+
+`sm/src/native_music.h` follows the existing Rust state layout. The replacement
+keeps SFX, scheduling, allocation, upload, snapshots and native shared primitives
+in Rust. Compatibility changes preserve native tables, pitch envelopes, tremolo,
+fade completion, song commands, busy-channel ordering and the `cutk` flag.
+The invalid-effect lookup and unbounded keyoff scan still fail through their
+Rust implementations, including preceding state changes. C is compiled with
+exception unwinding, wrapping signed arithmetic and strict aliasing disabled.
+Raw FIR/table accesses that were unchecked in Rust remain unchecked; malformed
+inputs reaching undefined raw-memory behavior are outside the comparison claims.
+
+The complete change removes 678 lines from the sequencer module and adds ten
+other Rust lines, 37 C lines, 101 header lines, 154 installer lines and ten
+verifier-launcher lines: **366 fewer maintained lines**. The complete fetched
+dependency is **1,659 external C/header lines**, including 1,447 sequencer,
+103 types and 109 DSP-register lines. Only selected music routines compile;
+the generated selection is 553 lines, with project modifications charged above.
+
+Validation compares 346 actual old/new cases over full player/RAM state and
+416 ordered DSP writes, including two matching failures. All 154 shared-layout
+sizes and field offsets match. A synthetic continuous track exercises the
+installed archive, native scheduler and DSP for 48 buffers: full state, 5,590
+ordered writes and 25,632 stereo samples match, with 38,434 nonzero sample values.
+The initial synthetic sample was too quiet after integer volume scaling; its
+silent run is excluded from active-synthesis coverage.
+
+Normal release library/frontend/verifier builds pass. Probed and clean native
+boot each pass 179 frames, inputs 0..178. Notes and effects first execute at 173;
+nonzero PCM is observed from 174 through four follow-up frames. Inputs 0..172
+are setup. Echo initialization occurs outside the measured movie-frame window
+and has component coverage. The first 2,000-frame run missed its echo probe and
+is not a coverage pass; the bounded rerun used the observed note/effect/PCM
+probes. An initial verifier import failure was fixed for isolated Python mode
+before either successful replay. These checks establish no gameplay, physical
+SPC or credits coverage. Local comparisons are under
+`Local/sm-decomp-experiments/20261021/patched-native-music`.
+Current source stamps pass; altered installer, C and header inputs are rejected.
+The tested and final installed archives have identical code, data, relocations
+and non-debug symbols; only discardable CodeView records differ.
+
+Unix installation has not been tested. Emit the same selected source with
+`--emit-only`, then compile `sm/src/native_music.c` with the emitted stamp and
+include directories, `-fPIC -fexceptions -fwrapv -fno-strict-aliasing`, and archive
+it as `libsm_music.a`. The installer currently targets Windows GNU explicitly.

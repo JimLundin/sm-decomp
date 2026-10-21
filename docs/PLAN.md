@@ -17,16 +17,28 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **97,077 Rust lines in 88 files**, plus 104 C
-bridge lines = **97,181 maintained implementation lines**. Counting all 124
-dependency-installer lines and eight added verifier-launcher lines gives
-**97,313**, down **1,572** from 98,885. This complete recount includes frontend,
+Current composition (2026-10-21): **96,409 Rust lines in 88 files**, plus 141 C
+bridge and 101 C-header lines = **96,651 maintained implementation lines**.
+Counting all 278 dependency-installer lines and 18 added verifier-launcher lines
+gives **96,947**, down **1,938** from 98,885. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
-**2,836 CPU, 2,104 SPC, 1,261 PPU and 685 DSP C/header lines**, plus **7,762 stb header
+**2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
 lines**, disclosed separately like GL/SDL.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
+The native music-sequencer replacement removes **366 complete maintained lines**,
+including its compatibility changes, C layout, installer and verifier costs.
+All 346 actual old/new cases, 154 C/Rust layout comparisons and 416 ordered DSP
+writes match, including two native failures. Continuous native playback matches
+48 buffers, 25,632 stereo samples and 5,590 ordered DSP writes, with nonzero PCM.
+The probed and clean native-music boot runs each pass **179/0**, inputs **0..178**:
+effects and notes first execute at 173, PCM at 174, followed by four frames.
+Inputs 0..172 are setup, not active-music coverage. The first 2,000-frame probe
+run missed echo initialization and is not a coverage pass; it was not extended.
+Echo initialization has actual-code component coverage. No gameplay, physical
+SPC or full replay is claimed. Dependency and compatibility details are in
+[SPC_DEPENDENCY.md](SPC_DEPENDENCY.md#native-music-sequencer).
 Legacy PPU pixel selection and decoding now use the existing PPU dependency,
 removing **256 complete maintained lines**. All **85,814** actual old/new pixel,
 scanline, full-state and failure comparisons pass, including native VRAM spill
@@ -1635,25 +1647,22 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    continuous execution, queue adaptation, PCM, physical upload/timing or full
    snapshots. No movie ran. Probe and results:
    Local/sm-decomp-experiments/20261021/native-sequencer-spc.
-   A different native-music dependency assessment uses the published Zelda
-   sequencer at `45a149d8b4bb`, rather than executing uploaded SPC instructions.
-   Its actual effect handler matches Rust's E1 pan control, but F1/F2/F3 reach
-   `Not_Implemented` while Rust configures or clears pitch envelopes. All four
-   commands are within both effect-length tables. The source-checked DLL probe
-   compiles the exact current Rust module/macros with production types; its
-   four isolated cases compare nine selected fields or the foreign assertion
-   exit. C assertions are explicitly enabled with `-UNDEBUG`. Initial harness
-   failures, including disabled assertions and a failed assertion catcher,
-   are excluded; the final harness reports assertions through child-process
-   exit instead. No DSP writes, synthesis, complete music ticks, state adapter,
-   snapshots or movie coverage is established. Static inspection also finds
-   differing song/instrument/pan-table addresses and port-command semantics.
-   The native music loop calls its private effect handler directly, so replacing
-   only the outer state mapping cannot supply the missing commands. Park direct
-   substitution at this pin; a different implementation or compatibility design
-   remains possible. No complete replacement price or saving is established.
-   Published inputs, actual-code probe and final four-case results:
-   Local/sm-decomp-experiments/20261021/native-music-dependency.
+   The published Zelda music sequencer at `45a149d8b4bb` is now adopted through
+   an explicitly maintained compatibility patch. Direct substitution failed on
+   native commands and data layout; the complete replacement supplies native
+   pitch envelopes, tremolo, fade completion, song/port behavior, table addresses
+   and failure ordering. SFX, scheduling, uploads, snapshots and shared native
+   primitives remain charged. The module changes **1,681 -> 1,003** lines;
+   all C/header, installer, registration and verifier costs give **97,313 ->
+   96,947 (-366)**. No new gameplay macros or hidden project implementation are added.
+   Actual old/new full-state, ordered-write, failure and continuous PCM checks
+   pass, followed by probed/clean **179/0** native-music boot runs. Active notes
+   and effects first execute at frame 173, PCM at 174, with four follow-up frames;
+   earlier inputs are setup. Echo and other unvisited branches have component
+   coverage. No full replay or gameplay coverage is claimed. The patch selects
+   only music routines; the entire 1,659-line pinned C/header input is disclosed
+   separately. Installation and limitations: SPC_DEPENDENCY.md. Local draft,
+   complete price and comparisons: Local/sm-decomp-experiments/20261021/patched-native-music.
    A current-Rust music-loop rewrite also fails the larger-savings test:
    shared pattern readers, the full order/track loop, channel/global fades and
    reset clearing price **97,313 -> 97,269 (-44)**, including all helpers and

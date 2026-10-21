@@ -17,6 +17,14 @@ pub unsafe extern "C" fn sm_verify_backend_source_hash() -> *const c_char {
     sm_backend_source_hash()
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn sm_verify_music_source_hash() -> *const c_char {
+    extern "C" {
+        fn sm_music_source_hash() -> *const c_char;
+    }
+    sm_music_source_hash()
+}
+
 static mut g_pixels: [u8; 245760] = [0; 245760];
 static mut g_my_pixels: [u8; 245760] = [0; 245760];
 static STARTED: AtomicBool = AtomicBool::new(false);

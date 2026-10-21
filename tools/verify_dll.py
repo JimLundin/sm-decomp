@@ -5,6 +5,7 @@ import ctypes
 import hashlib
 import json
 import os
+import runpy
 from pathlib import Path
 import shutil
 import subprocess
@@ -16,6 +17,8 @@ def source_hash(root):
     """Bind cached replays to source contents, including added/deleted modules."""
     paths = set((root / "sm").rglob("*.rs"))
     paths.update((root / "sm" / "src").rglob("*.c"))
+    paths.update((root / "sm" / "src").rglob("*.h"))
+    paths.add(root / "tools/install_native_music.py")
     paths.update(root / name for name in (
         "Cargo.toml", "Cargo.lock", "sm/Cargo.toml", "rust-toolchain.toml",
         "tools/verify_dll.py"))
@@ -65,7 +68,7 @@ def check_library(host, root):
     host.sm_verify_source_file.restype = SourceFile
     expected = {path.relative_to(root).as_posix()
                 for path in (root / "sm" / "src").rglob("*")
-                if path.suffix in (".rs", ".c")}
+                if path.suffix in (".rs", ".c", ".h")}
     expected.difference_update(("sm/src/main.rs", "sm/src/verify.rs",
                                 "sm/src/verify_dll.rs", "sm/src/verify/checkpoint.rs"))
     for index in range(len(expected) + 1):
@@ -87,6 +90,13 @@ def check_library(host, root):
     bridge = root / "sm/src/snes/backend.c"
     if host.sm_verify_backend_source_hash() != hashlib.sha256(bridge.read_bytes()).hexdigest().encode():
         raise RuntimeError("stale native backend; rerun tools/install_lakesnes_backend.ps1 and rebuild")
+
+    native_hash = runpy.run_path(str(root / "tools/install_native_music.py"))["native_hash"]
+    if not hasattr(host, "sm_verify_music_source_hash"):
+        raise RuntimeError("cached DLL has no music source stamp; rebuild")
+    host.sm_verify_music_source_hash.restype = ctypes.c_char_p
+    if host.sm_verify_music_source_hash() != native_hash(root).encode():
+        raise RuntimeError("stale native music; rerun tools/install_native_music.py and rebuild")
 
 
 def cargo_host(root, rustc, linker, output, source, retry=True):

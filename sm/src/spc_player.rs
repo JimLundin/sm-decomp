@@ -144,6 +144,18 @@ pub const V0ENVX: DspReg = 8;
 pub const V0VOLR: DspReg = 1;
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
+#[link(name = "sm_music", kind = "static", modifiers = "-bundle")]
+extern "C-unwind" {
+    #[link_name = "sm_music_SetupEchoParameter_EDL"]
+    fn SetupEchoParameter_EDL(p: *mut SpcPlayer, a: u8);
+    #[link_name = "sm_music_WriteVolumeToDsp"]
+    fn WriteVolumeToDsp(p: *mut SpcPlayer, c: *mut Channel, volume: u16);
+    #[link_name = "sm_music_HandlePanAndSweep"]
+    fn HandlePanAndSweep(p: *mut SpcPlayer, c: *mut Channel);
+    #[link_name = "sm_music_Music_HandleCmdFromSnes"]
+    fn Music_HandleCmdFromSnes(p: *mut SpcPlayer);
+}
+
 static kChannel_Maps: [MemMap; 47] = [
     MemMap::new(0, 0x8030),
     MemMap::new(3, 0x70),
@@ -293,7 +305,8 @@ const fn player_ram_map() -> [MemMapSized; 283] {
     maps
 }
 static kSpcPlayer_Maps: [MemMapSized; 283] = player_ram_map();
-unsafe fn Dsp_Write(p: *mut SpcPlayer, mut reg: u8, value: u8) {
+#[export_name = "sm_music_Dsp_Write"]
+pub unsafe extern "C-unwind" fn Dsp_Write(p: *mut SpcPlayer, mut reg: u8, value: u8) {
     let hist = (*p).reg_write_history;
     if !hist.is_null() && (*hist).count < 256 {
         if (*hist).count == 9 && reg as i32 == 0x5d {
@@ -307,89 +320,16 @@ unsafe fn Dsp_Write(p: *mut SpcPlayer, mut reg: u8, value: u8) {
         dsp_write((*p).dsp, reg, value);
     }
 }
-unsafe fn Not_Implemented() {
+#[export_name = "sm_music_Not_Implemented"]
+pub unsafe extern "C-unwind" fn Not_Implemented() {
     crate::native_assertion! {
         '_c2rust_label;
         b"0\0", b"src/spc_player.c\0", 383, b"void Not_Implemented(void)\0"
     };
     printf(c"Not Implemented\n".as_ptr());
 }
-unsafe fn SpcDivHelper(mut a: i32, b: u8) -> u16 {
-    let org_a: i32 = a;
-    if a & 0x100 != 0 {
-        a = -a;
-    }
-    let q: i32 = if b as i32 != 0 {
-        (a & 0xff) / b as i32
-    } else {
-        0xff
-    };
-    let r: i32 = if b as i32 != 0 {
-        (a & 0xff) % b as i32
-    } else {
-        a & 0xff
-    };
-    let t: i32 = (q << 8)
-        + (if b as i32 != 0 {
-            (r << 8) / b as i32 & 0xff
-        } else {
-            0xff
-        });
-    ((if org_a & 0x100 != 0 { -t } else { t }) as u16)
-}
-unsafe fn SetupEchoParameter_EDL(p: *mut SpcPlayer, mut a: u8) {
-    (*p).echo_parameter_EDL = a;
-    if a as i32 != (*p).last_written_edl as i32 {
-        a = ((*p).last_written_edl & 0xf ^ 0xff);
-        if (*p).echo_stored_time & 0x80 != 0 {
-            a = (a as i32 + (*p).echo_stored_time as i32) as u8;
-        }
-        (*p).echo_stored_time = a;
-        Dsp_Write(p, EON as i32 as u8, 0);
-        Dsp_Write(p, EFB as i32 as u8, 0);
-        Dsp_Write(p, EVOLR as i32 as u8, 0);
-        Dsp_Write(p, EVOLL as i32 as u8, 0);
-        Dsp_Write(p, FLG as i32 as u8, ((*p).reg_FLG | 0x20));
-        (*p).last_written_edl = (*p).echo_parameter_EDL;
-        Dsp_Write(p, EDL as i32 as u8, (*p).echo_parameter_EDL);
-    }
-    Dsp_Write(
-        p,
-        ESA as i32 as u8,
-        (((*p).echo_parameter_EDL as i32 * 8 ^ 0xff) + 0x16) as u8,
-    );
-}
-unsafe fn WriteVolumeToDsp(p: *mut SpcPlayer, c: *mut Channel, mut volume: u16) {
-    static kVolumeTable: [u8; 22] = [
-        0, 1, 3, 7, 13, 21, 30, 41, 52, 66, 81, 94, 103, 110, 115, 119, 122, 124, 125, 126, 127,
-        127,
-    ];
-    if (*p).is_chan_on & (*p).cur_chan_bit != 0 {
-        return;
-    }
-    for i in 0i32..2 {
-        let j: i32 = volume as i32 >> 8;
-        let mut t: u8 = if j >= 21 {
-            ((*p).ram[(j + 0x1e1d) as usize] as i32
-                + (((*p).ram[(j + 0x1e1d + 1) as usize] as i32
-                    - (*p).ram[(j + 0x1e1d) as usize] as i32)
-                    * volume as u8 as i32
-                    >> 8)) as u8
-        } else {
-            (kVolumeTable[j as usize] as i32
-                + ((kVolumeTable[(j + 1) as usize] as i32 - kVolumeTable[j as usize] as i32)
-                    * volume as u8 as i32
-                    >> 8)) as u8
-        };
-        t = (t as i32 * (*c).final_volume as i32 >> 8) as u8;
-        if ((*c).pan_flag_with_phase_invert as i32) << i & 0x80 != 0 {
-            t = -(t as i32) as u8;
-        }
-        Dsp_Write(p, (V0VOLL as i32 + i + (*c).index as i32 * 16) as u8, t);
-        volume = (0x1400 - volume as i32) as u16;
-    }
-}
-unsafe fn WritePitchInner(p: *mut SpcPlayer, c: *mut Channel, pitch: u16) {
+#[export_name = "sm_music_WritePitchInner"]
+pub unsafe extern "C-unwind" fn WritePitchInner(p: *mut SpcPlayer, c: *mut Channel, pitch: u16) {
     static kBaseNoteFreqs: [u16; 13] = [
         2143, 2270, 2405, 2548, 2700, 2860, 3030, 3211, 3402, 3604, 3818, 4045, 4286,
     ];
@@ -413,39 +353,12 @@ unsafe fn WritePitchInner(p: *mut SpcPlayer, c: *mut Channel, pitch: u16) {
         Dsp_Write(p, (reg as i32 + V0PITCHH as i32) as u8, (t >> 8) as u8);
     }
 }
-unsafe fn WritePitch(p: *mut SpcPlayer, c: *mut Channel, mut pitch: u16) {
-    if pitch as i32 >> 8 >= 0x34 {
-        pitch = (pitch as i32 + ((pitch as i32 >> 8) - 0x34i32)) as u16;
-    } else if (pitch as i32 >> 8) < 0x13 {
-        pitch =
-            (pitch as i32 + ((((pitch as i32 >> 8) - 0x13i32) * 2) as u8 as i32 - 256i32)) as u16;
-    }
-    WritePitchInner(p, c, pitch);
-}
-unsafe fn Music_ResetChan(p: *mut SpcPlayer) {
-    let mut c = (&raw mut (*p).channel as *mut Channel).offset(7);
-    (*p).cur_chan_bit = 0x80;
-    do_until! { ((*p).cur_chan_bit == 0);
-        byte!((*c).channel_volume; (size_of::<u16>() as usize)
-                .wrapping_div(size_of::<u8>() as usize)
-                .wrapping_sub(1_) as isize) = 0xff;
-        (*c).pan_flag_with_phase_invert = 10;
-        (*c).pan_value = ((10i32) << 8) as u16;
-        set_fields! {[(*c)], 0; instrument_id, fine_tune, channel_transposition, pitch_envelope_num_ticks, cutk, vib_depth, tremolo_depth}
-        c = c.offset(-1);
-        (*p).cur_chan_bit = ((*p).cur_chan_bit >> 1);
-    }
-    set_fields! {[(*p)], 0; master_volume_fade_ticks, echo_volume_fade_ticks, tempo_fade_num_ticks, global_transposition, block_count, percussion_base_id}
-    *(&raw mut (*p).master_volume as *mut u8).offset(
-        (size_of::<u16>() as usize)
-            .wrapping_div(size_of::<u8>() as usize)
-            .wrapping_sub(1_) as isize,
-    ) = 0xc0;
-    byte!((*p).tempo; (size_of::<u16>() as usize)
-            .wrapping_div(size_of::<u8>() as usize)
-            .wrapping_sub(1_) as isize) = 0x20;
-}
-unsafe fn Channel_SetInstrument_NoSetId(p: *mut SpcPlayer, c: *mut Channel, mut instrument: u8) {
+#[export_name = "sm_music_Channel_SetInstrument_NoSetId"]
+pub unsafe extern "C-unwind" fn Channel_SetInstrument_NoSetId(
+    p: *mut SpcPlayer,
+    c: *mut Channel,
+    mut instrument: u8,
+) {
     if instrument & 0x80 != 0 {
         instrument = (instrument as i32 + 54 + (*p).percussion_base_id as i32) as u8;
     }
@@ -468,209 +381,15 @@ unsafe fn Channel_SetInstrument_NoSetId(p: *mut SpcPlayer, c: *mut Channel, mut 
     Dsp_Write(p, (reg as i32 + V0GAIN as i32) as u8, *ip.offset(3));
     (*c).instrument_pitch_base = ((*ip.offset(4) as i32) << 8 | *ip.offset(5) as i32) as u16;
 }
-unsafe fn Channel_SetInstrument(p: *mut SpcPlayer, c: *mut Channel, instrument: u8) {
-    (*c).instrument_id = instrument;
-    Channel_SetInstrument_NoSetId(p, c, instrument);
-}
-unsafe fn ComputePitchAdd(c: *mut Channel, pitch: u8) {
-    (*c).pitch_target = (pitch & 0x7f);
-    (*c).pitch_add_per_tick = SpcDivHelper(
-        (*c).pitch_target as i32 - ((*c).pitch as i32 >> 8),
-        (*c).pitch_slide_length,
-    );
-}
-unsafe fn PitchSlideToNote_Check(p: *mut SpcPlayer, c: *mut Channel) {
-    if (*c).pitch_slide_length as i32 != 0
-        || (*p).ram[(*c).pattern_order_ptr_for_chan as usize] as i32 != 0xf9
-    {
-        return;
-    }
-    (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1);
-    crate::update_place! { previous fresh3 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-    (*c).pitch_slide_delay_left = (*p).ram[fresh3 as usize];
-    crate::update_place! { previous fresh4 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-    (*c).pitch_slide_length = (*p).ram[fresh4 as usize];
-    crate::update_place! { previous fresh5 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-    ComputePitchAdd(
-        c,
-        ((*p).ram[fresh5 as usize] as i32
-            + (*p).global_transposition as i32
-            + (*c).channel_transposition as i32) as u8,
-    );
-}
 static kEffectByteLength: [u8; 31] = [
     1, 1, 2, 3, 0, 1, 2, 1, 2, 1, 1, 3, 0, 1, 2, 3, 1, 3, 3, 0, 1, 3, 0, 3, 3, 3, 1, 2, 0, 0, 0,
 ];
-unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: u8) {
-    let arg: u8 = (if kEffectByteLength[(effect as i32 - 0xe0i32) as usize] as i32 != 0 {
-        crate::update_place! { previous fresh9 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-        (*p).ram[fresh9 as usize] as i32
-    } else {
-        0
-    }) as u8;
-    match effect as i32 {
-        224 => Channel_SetInstrument(p, c, arg),
-        225 => {
-            (*c).pan_flag_with_phase_invert = arg;
-            (*c).pan_value = ((arg as i32 & 0x1f) << 8) as u16;
-        }
-        226 => {
-            (*c).pan_num_ticks = arg;
-            crate::update_place! { previous fresh10 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*c).pan_target_value = (*p).ram[fresh10 as usize];
-            (*c).pan_add_per_tick = SpcDivHelper(
-                (*c).pan_target_value as i32 - ((*c).pan_value as i32 >> 8),
-                arg,
-            );
-        }
-        227 => {
-            (*c).vibrato_delay_ticks = arg;
-            crate::update_place! { previous fresh11 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*c).vibrato_rate = (*p).ram[fresh11 as usize];
-            crate::update_place! { previous fresh12 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*c).vib_depth = (*p).ram[fresh12 as usize];
-            (*c).vibrato_depth_target = (*c).vib_depth;
-            (*c).vibrato_fade_num_ticks = 0;
-        }
-        228 => {
-            (*c).vib_depth = 0;
-            (*c).vibrato_depth_target = (*c).vib_depth;
-            (*c).vibrato_fade_num_ticks = 0;
-        }
-        229 => (*p).master_volume = ((arg as i32) << 8) as u16,
-        230 => {
-            (*p).master_volume_fade_ticks = arg;
-            crate::update_place! { previous fresh13 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*p).master_volume_fade_target = (*p).ram[fresh13 as usize];
-            (*p).master_volume_fade_add_per_tick = SpcDivHelper(
-                (*p).master_volume_fade_target as i32 - ((*p).master_volume as i32 >> 8),
-                arg,
-            );
-        }
-        231 => (*p).tempo = ((arg as i32) << 8) as u16,
-        232 => {
-            (*p).tempo_fade_num_ticks = arg;
-            crate::update_place! { previous fresh14 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*p).tempo_fade_final = (*p).ram[fresh14 as usize];
-            (*p).tempo_fade_add =
-                SpcDivHelper((*p).tempo_fade_final as i32 - ((*p).tempo as i32 >> 8), arg);
-        }
-        233 => (*p).global_transposition = arg,
-        234 => (*c).channel_transposition = arg,
-        235 => {
-            (*c).tremolo_delay_ticks = arg;
-            crate::update_place! { previous fresh15 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*c).tremolo_rate = (*p).ram[fresh15 as usize];
-            crate::update_place! { previous fresh16 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*c).tremolo_depth = (*p).ram[fresh16 as usize];
-        }
-        236 => (*c).tremolo_depth = 0,
-        237 => (*c).channel_volume = ((arg as i32) << 8) as u16,
-        238 => {
-            (*c).volume_fade_ticks = arg;
-            crate::update_place! { previous fresh17 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*c).volume_fade_target = (*p).ram[fresh17 as usize];
-            (*c).volume_fade_addpertick = SpcDivHelper(
-                (*c).volume_fade_target as i32 - ((*c).channel_volume as i32 >> 8),
-                arg,
-            );
-        }
-        239 => {
-            crate::update_place! { previous fresh18 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*c).pattern_start_ptr = (((*p).ram[fresh18 as usize] as i32) << 8 | arg as i32) as u16;
-            crate::update_place! { previous fresh19 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*c).subroutine_num_loops = (*p).ram[fresh19 as usize];
-            (*c).saved_pattern_ptr = (*c).pattern_order_ptr_for_chan;
-            (*c).pattern_order_ptr_for_chan = (*c).pattern_start_ptr;
-        }
-        240 => {
-            (*c).vibrato_fade_num_ticks = arg;
-            (*c).vibrato_fade_add_per_tick = (if arg as i32 != 0 {
-                (*c).vib_depth as i32 / arg as i32
-            } else {
-                0xff
-            }) as u8;
-        }
-        241 | 242 => {
-            (*c).pitch_envelope_direction = (effect as i32 == 0xf1) as i32 as u8;
-            (*c).pitch_envelope_delay = arg;
-            crate::update_place! { previous fresh20 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*c).pitch_envelope_num_ticks = (*p).ram[fresh20 as usize];
-            crate::update_place! { previous fresh21 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*c).pitch_envelope_slide_value = (*p).ram[fresh21 as usize];
-        }
-        243 => (*c).pitch_envelope_num_ticks = 0,
-        244 => (*c).fine_tune = arg,
-        245 => {
-            (*p).reg_EON = arg;
-            crate::update_place! { previous fresh22 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*p).echo_volume_left = (((*p).ram[fresh22 as usize] as i32) << 8) as u16;
-            crate::update_place! { previous fresh23 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*p).echo_volume_right = (((*p).ram[fresh23 as usize] as i32) << 8) as u16;
-            (*p).reg_FLG = ((*p).reg_FLG & !(0x20));
-        }
-        246 => {
-            set_fields! {[(*p)], 0; echo_volume_left, echo_volume_right}
-            (*p).reg_FLG = ((*p).reg_FLG | 0x20);
-        }
-        247 => {
-            static kEchoFirParameters: [i8; 32] = [
-                127, 0, 0, 0, 0, 0, 0, 0, 88, -65, -37, -16, -2, 7, 12, 12, 12, 33, 43, 43, 19, -2,
-                -13, -7, 52, 51, 0, -39, -27, 1, -4, -21,
-            ];
-            SetupEchoParameter_EDL(p, arg);
-            crate::update_place! { previous fresh24 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*p).reg_EFB = (*p).ram[fresh24 as usize];
-            crate::update_place! { previous fresh25 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            let mut ep = (&raw const kEchoFirParameters as *const i8)
-                .offset(((*p).ram[fresh25 as usize] as i32 * 8) as isize);
-            for i in 0i32..8 {
-                crate::update_place! { previous fresh26 = ep => ep.offset(1); }
-                Dsp_Write(p, (FIR0 as i32 + i * 16) as u8, *fresh26 as u8);
-            }
-        }
-        248 => {
-            (*p).echo_volume_fade_ticks = arg;
-            crate::update_place! { previous fresh27 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*p).echo_volume_fade_target_left = (*p).ram[fresh27 as usize];
-            crate::update_place! { previous fresh28 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*p).echo_volume_fade_target_right = (*p).ram[fresh28 as usize];
-            (*p).echo_volume_fade_add_left = SpcDivHelper(
-                (*p).echo_volume_fade_target_left as i32 - ((*p).echo_volume_left as i32 >> 8),
-                arg,
-            );
-            (*p).echo_volume_fade_add_right = SpcDivHelper(
-                (*p).echo_volume_fade_target_right as i32 - ((*p).echo_volume_right as i32 >> 8),
-                arg,
-            );
-        }
-        249 => {
-            (*c).pitch_slide_delay_left = arg;
-            crate::update_place! { previous fresh29 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            (*c).pitch_slide_length = (*p).ram[fresh29 as usize];
-            crate::update_place! { previous fresh30 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-            ComputePitchAdd(
-                c,
-                ((*p).ram[fresh30 as usize] as i32
-                    + (*p).global_transposition as i32
-                    + (*c).channel_transposition as i32) as u8,
-            );
-        }
-        250 => (*p).percussion_base_id = arg,
-        251 => (*c).pattern_order_ptr_for_chan = (*c).pattern_order_ptr_for_chan.wrapping_add(1),
-        252 => (*c).cutk = (arg as i32 + 1) as u8,
-        253 => {
-            (*p).fast_forward = (arg as i32 + 1) as u8;
-            (*p).key_OFF = ((*p).key_OFF | !((*p).is_chan_on));
-        }
-        254 => {
-            (*p).fast_forward = arg;
-            (*p).key_OFF = ((*p).key_OFF | !((*p).is_chan_on));
-        }
-        _ => Not_Implemented(),
-    };
+#[export_name = "sm_music_EffectByteLength"]
+pub unsafe extern "C-unwind" fn EffectByteLength(effect: u8) -> u8 {
+    kEffectByteLength[(effect as i32 - 0xe0) as usize]
 }
-unsafe fn WantWriteKof(p: *mut SpcPlayer, c: *mut Channel) -> bool {
+#[export_name = "sm_music_WantWriteKof"]
+pub unsafe extern "C-unwind" fn WantWriteKof(p: *mut SpcPlayer, c: *mut Channel) -> bool {
     let mut loops: i32 = (*c).subroutine_num_loops as i32;
     let mut ptr: i32 = (*c).pattern_order_ptr_for_chan as i32;
     loop {
@@ -705,409 +424,12 @@ unsafe fn WantWriteKof(p: *mut SpcPlayer, c: *mut Channel) -> bool {
         }
     }
 }
-pub unsafe fn CalcFinalVolume(p: *mut SpcPlayer, c: *mut Channel, vol: u8) {
+#[export_name = "sm_music_CalcFinalVolume"]
+pub unsafe extern "C-unwind" fn CalcFinalVolume(p: *mut SpcPlayer, c: *mut Channel, vol: u8) {
     let mut t: i32 = ((*p).master_volume as i32 >> 8) * vol as i32 >> 8;
     t = t * (*c).channel_volume_master as i32 >> 8;
     t = t * ((*c).channel_volume as i32 >> 8) >> 8;
     (*c).final_volume = (t * t >> 8) as u8;
-}
-unsafe fn CalcTremolo(p: *mut SpcPlayer, c: *mut Channel, mut a: u8) {
-    if a & 0x80 != 0 {
-        a = (a as i32 * 2 ^ 0xff) as u8;
-    } else {
-        a = (a as i32 * 2) as u8;
-    }
-    a = (a as i32 * (*c).tremolo_depth as i32 >> 8) as u8;
-    CalcFinalVolume(p, c, (a ^ 0xff));
-}
-unsafe fn HandleTremolo(p: *mut SpcPlayer, c: *mut Channel) {
-    (*p).did_affect_volumepitch_flag = ((*p).did_affect_volumepitch_flag | 0x80);
-    CalcTremolo(
-        p,
-        c,
-        ((*c).tremolo_rate as i32 * (*p).main_tempo_accum as i32 >> 8) as u8,
-    );
-}
-unsafe fn CalcVibratoAddPitch(p: *mut SpcPlayer, c: *mut Channel, pitch: u16, value: u8) {
-    let mut t: i32 = (value as i32) << 2;
-    t ^= if t & 0x100 != 0 { 0xff } else { 0 };
-    let r: i32 = if (*c).vib_depth as i32 >= 0xf1 {
-        t as u8 as i32 * ((*c).vib_depth as i32 & 0xf)
-    } else {
-        t as u8 as i32 * (*c).vib_depth as i32 >> 8
-    };
-    WritePitch(
-        p,
-        c,
-        (pitch as i32 + (if value & 0x80 != 0 { -r } else { r })) as u16,
-    );
-}
-unsafe fn HandlePanAndSweep(p: *mut SpcPlayer, c: *mut Channel) {
-    (*p).did_affect_volumepitch_flag = 0;
-    if (*c).tremolo_depth as i32 != 0
-        && (*c).tremolo_hold_count as i32 == (*c).tremolo_delay_ticks as i32
-    {
-        HandleTremolo(p, c);
-    }
-    let mut volume: u16 = (*c).pan_value;
-    if (*c).pan_num_ticks != 0 {
-        (*p).did_affect_volumepitch_flag = 0x80;
-        volume = (volume as i32
-            + (*p).main_tempo_accum as i32 * (*c).pan_add_per_tick as i16 as i32 / 256)
-            as u16;
-    }
-    if (*p).did_affect_volumepitch_flag != 0 {
-        WriteVolumeToDsp(p, c, volume);
-    }
-    (*p).did_affect_volumepitch_flag = 0;
-    let mut pitch: u16 = (*c).pitch;
-    if (*c).pitch_slide_length as i32 != 0 && (*c).pitch_slide_delay_left == 0 {
-        (*p).did_affect_volumepitch_flag = ((*p).did_affect_volumepitch_flag | 0x80);
-        pitch = (pitch as i32
-            + (*p).main_tempo_accum as i32 * (*c).pitch_add_per_tick as i16 as i32 / 256)
-            as u16;
-    }
-    if (*c).vib_depth as i32 != 0
-        && (*c).vibrato_delay_ticks as i32 == (*c).vibrato_hold_count as i32
-    {
-        CalcVibratoAddPitch(
-            p,
-            c,
-            pitch,
-            (((*p).main_tempo_accum as i32 * (*c).vibrato_rate as i32 >> 8)
-                + (*c).vibrato_count as i32) as u8,
-        );
-        return;
-    }
-    if (*p).did_affect_volumepitch_flag != 0 {
-        WritePitch(p, c, pitch);
-    }
-}
-unsafe fn HandleNoteTick(p: *mut SpcPlayer, c: *mut Channel) {
-    if (*c).note_keyoff_ticks_left as i32 != 0
-        && {
-            (*c).note_keyoff_ticks_left = (*c).note_keyoff_ticks_left.wrapping_sub(1);
-            (*c).note_keyoff_ticks_left as i32 == 0 || (*c).note_ticks_left as i32 == 2
-        }
-        && WantWriteKof(p, c) as i32 != 0
-        && (*p).cur_chan_bit & (*p).is_chan_on == 0
-    {
-        Dsp_Write(p, KOF as i32 as u8, (*p).cur_chan_bit);
-    }
-    (*p).did_affect_volumepitch_flag = 0;
-    if (*c).pitch_slide_length != 0 {
-        if (*c).pitch_slide_delay_left != 0 {
-            (*c).pitch_slide_delay_left = (*c).pitch_slide_delay_left.wrapping_sub(1);
-        } else {
-            (*p).did_affect_volumepitch_flag = 0x80;
-            (*c).pitch_slide_length = (*c).pitch_slide_length.wrapping_sub(1);
-            if (*c).pitch_slide_length as i32 == 0 {
-                (*c).pitch = (((*c).pitch_target as i32) << 8 | (*c).fine_tune as i32) as u16;
-            } else {
-                (*c).pitch = ((*c).pitch as i32 + (*c).pitch_add_per_tick as i32) as u16;
-            }
-        }
-    }
-    let pitch: u16 = (*c).pitch;
-    if (*c).vib_depth != 0 {
-        if (*c).vibrato_delay_ticks as i32 == (*c).vibrato_hold_count as i32 {
-            if (*c).vibrato_change_count as i32 == (*c).vibrato_fade_num_ticks as i32 {
-                (*c).vib_depth = (*c).vibrato_depth_target;
-            } else {
-                crate::update_place! { previous fresh6 = (*c).vibrato_change_count => (*c).vibrato_change_count.wrapping_add(1); }
-                (*c).vib_depth = ((if fresh6 as i32 == 0 {
-                    0
-                } else {
-                    (*c).vib_depth as i32
-                }) + (*c).vibrato_fade_add_per_tick as i32) as u8;
-            }
-            (*c).vibrato_count = ((*c).vibrato_count as i32 + (*c).vibrato_rate as i32) as u8;
-            CalcVibratoAddPitch(p, c, pitch, (*c).vibrato_count);
-            return;
-        }
-        (*c).vibrato_hold_count = (*c).vibrato_hold_count.wrapping_add(1);
-    }
-    if (*p).did_affect_volumepitch_flag != 0 {
-        WritePitch(p, c, pitch);
-    }
-}
-unsafe fn Chan_HandleTick(p: *mut SpcPlayer, c: *mut Channel) {
-    if (*c).volume_fade_ticks != 0 {
-        (*c).volume_fade_ticks = (*c).volume_fade_ticks.wrapping_sub(1);
-        if (*c).volume_fade_ticks as i32 == 0 {
-            (*c).channel_volume = (((*c).volume_fade_target as i32) << 8) as u16;
-        } else {
-            (*c).channel_volume =
-                ((*c).channel_volume as i32 + (*c).volume_fade_addpertick as i32) as u16;
-        }
-        (*p).vol_dirty = ((*p).vol_dirty | (*p).cur_chan_bit);
-    }
-    if (*c).tremolo_depth != 0 {
-        if (*c).tremolo_delay_ticks as i32 == (*c).tremolo_hold_count as i32 {
-            (*p).vol_dirty = ((*p).vol_dirty | (*p).cur_chan_bit);
-            if (*c).tremolo_count & 0x80 != 0 && (*c).tremolo_depth as i32 == 0xff {
-                (*c).tremolo_count = 0x80;
-            } else {
-                (*c).tremolo_count = ((*c).tremolo_count as i32 + (*c).tremolo_rate as i32) as u8;
-            }
-            CalcTremolo(p, c, (*c).tremolo_count);
-        } else {
-            (*c).tremolo_hold_count = (*c).tremolo_hold_count.wrapping_add(1);
-            CalcFinalVolume(p, c, 0xff);
-        }
-    } else {
-        CalcFinalVolume(p, c, 0xff);
-    }
-    if (*c).pan_num_ticks != 0 {
-        (*c).pan_num_ticks = (*c).pan_num_ticks.wrapping_sub(1);
-        if (*c).pan_num_ticks as i32 == 0 {
-            (*c).pan_value = (((*c).pan_target_value as i32) << 8) as u16;
-        } else {
-            (*c).pan_value = ((*c).pan_value as i32 + (*c).pan_add_per_tick as i32) as u16;
-        }
-        (*p).vol_dirty = ((*p).vol_dirty | (*p).cur_chan_bit);
-    }
-    if (*p).vol_dirty & (*p).cur_chan_bit != 0 {
-        WriteVolumeToDsp(p, c, (*c).pan_value);
-    }
-}
-unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
-    let mut c = null_mut::<Channel>();
-    let mut t: i32 = 0;
-    let mut a: u8 = (*p).input_ports[0i32 as usize];
-    (*p).input_ports[0i32 as usize] = 255;
-    if a as i32 == 0xf0 {
-        (*p).key_OFF = ((*p).key_OFF | !((*p).is_chan_on));
-    } else {
-        if !(a as i32 != 0xf1
-            && a as i32 != 255
-            && a as i32 != (*p).port_to_snes[0i32 as usize] as i32)
-        {
-            if (*p).port_to_snes[0i32 as usize] as i32 == 0 {
-                return;
-            }
-            let mut read_toplevel_word: bool = !((*p).counter_sf0c as i32 == 0)
-                && ({
-                    (*p).counter_sf0c = (*p).counter_sf0c.wrapping_sub(1);
-                    if (*p).counter_sf0c as i32 != 0 {
-                        Music_ResetChan(p);
-                        return;
-                    }
-                    true
-                });
-            '_label_a: loop {
-                if read_toplevel_word {
-                    t = *((&raw mut (*p).ram as *mut u8).offset((*p).music_ptr_toplevel as isize)
-                        as *mut u16) as i32;
-                    (*p).music_ptr_toplevel = ((*p).music_ptr_toplevel as i32 + 2) as u16;
-                    if t >> 8 != 0 {
-                        for i in 0i32..8 {
-                            (*p).channel[i as usize].pattern_order_ptr_for_chan =
-                                *((&raw mut (*p).ram as *mut u8).offset(t as isize) as *mut u16);
-                            t += 2;
-                        }
-                        c = &raw mut (*p).channel as *mut Channel;
-                        (*p).cur_chan_bit = 1;
-                        do_until! { ((*p).cur_chan_bit == 0);
-                            if byte!((*c).pattern_order_ptr_for_chan; (size_of::<u16>() as usize)
-                                    .wrapping_div(size_of::<u8>() as usize)
-                                    .wrapping_sub(1_) as isize)
-                                as i32
-                                != 0
-                                && (*c).instrument_id as i32 == 0
-                            {
-                                Channel_SetInstrument(p, c, 0);
-                            }
-                            set_fields! {[(*c)], 0; subroutine_num_loops, volume_fade_ticks, pan_num_ticks}
-                            (*c).note_ticks_left = 1;
-                            c = c.offset(1);
-                            (*p).cur_chan_bit = (((*p).cur_chan_bit as i32) << 1) as u8;
-                        }
-                        read_toplevel_word = false;
-                    } else if t == 0 {
-                        a = 0;
-                        break;
-                    } else {
-                        if t == 0x80 {
-                            (*p).fast_forward = 0x80;
-                        } else if t == 0x81 {
-                            (*p).fast_forward = 0;
-                        } else {
-                            (*p).block_count = (*p).block_count.wrapping_sub(1);
-                            if (*p).block_count & 0x80 != 0 {
-                                (*p).block_count = t as u8;
-                            }
-                            t = *((&raw mut (*p).ram as *mut u8)
-                                .offset((*p).music_ptr_toplevel as isize)
-                                as *mut u16) as i32;
-                            (*p).music_ptr_toplevel = ((*p).music_ptr_toplevel as i32 + 2) as u16;
-                            if (*p).block_count as i32 != 0 {
-                                (*p).music_ptr_toplevel = t as u16;
-                            }
-                        }
-                        read_toplevel_word = true;
-                    }
-                } else {
-                    (*p).vol_dirty = 0;
-                    c = &raw mut (*p).channel as *mut Channel;
-                    (*p).cur_chan_bit = 1;
-                    do_until! { ((*p).cur_chan_bit == 0);
-                        if (byte!((*c).pattern_order_ptr_for_chan; (size_of::<u16>() as usize)
-                                .wrapping_div(size_of::<u8>() as usize)
-                                .wrapping_sub(1_) as isize)
-                            != 0)
-                        {
-                            (*c).note_ticks_left = (*c).note_ticks_left.wrapping_sub(1);
-                            if (*c).note_ticks_left == 0 {
-                                loop {
-                                    crate::update_place! { previous fresh0 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-                                    let mut cmd: u8 = (*p).ram[fresh0 as usize];
-                                    if cmd as i32 == 0 {
-                                        if (*c).subroutine_num_loops == 0 {
-                                            read_toplevel_word = true;
-                                            continue '_label_a;
-                                        }
-                                        (*c).subroutine_num_loops =
-                                            (*c).subroutine_num_loops.wrapping_sub(1);
-                                        (*c).pattern_order_ptr_for_chan =
-                                            (if (*c).subroutine_num_loops as i32 == 0 {
-                                                (*c).saved_pattern_ptr as i32
-                                            } else {
-                                                (*c).pattern_start_ptr as i32
-                                            }) as u16;
-                                    } else {
-                                        if cmd & 0x80 == 0 {
-                                            static kNoteVol: [u8; 16] = [
-                                                25, 50, 76, 101, 114, 127, 140, 152, 165, 178, 191,
-                                                203, 216, 229, 242, 252,
-                                            ];
-                                            static kNoteGateOffPct: [u8; 8] =
-                                                [50, 101, 127, 152, 178, 203, 229, 252];
-                                            (*c).note_length = cmd;
-                                            crate::update_place! { previous fresh1 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-                                            cmd = (*p).ram[fresh1 as usize];
-                                            if cmd & 0x80 == 0 {
-                                                (*c).note_gate_off_fixedpt =
-                                                    kNoteGateOffPct[(cmd as i32 >> 4 & 7) as usize];
-                                                (*c).channel_volume_master =
-                                                    kNoteVol[(cmd as i32 & 0xf) as usize];
-                                                crate::update_place! { previous fresh2 = (*c).pattern_order_ptr_for_chan => (*c).pattern_order_ptr_for_chan.wrapping_add(1); }
-                                                cmd = (*p).ram[fresh2 as usize];
-                                            }
-                                        }
-                                        if cmd as i32 >= 0xe0 {
-                                            HandleEffect(p, c, cmd);
-                                        } else {
-                                            if (*c).cutk | (*p).fast_forward == 0 {
-                                                PlayNote(p, c, cmd);
-                                            }
-                                            (*c).note_ticks_left = (*c).note_length;
-                                            t = (*c).note_ticks_left as i32
-                                                * (*c).note_gate_off_fixedpt as i32
-                                                >> 8;
-                                            (*c).note_keyoff_ticks_left =
-                                                (if t != 0 { t } else { 1 }) as u8;
-                                            PitchSlideToNote_Check(p, c);
-                                            break;
-                                        }
-                                    }
-                                }
-                            } else if (*p).fast_forward == 0 {
-                                HandleNoteTick(p, c);
-                                PitchSlideToNote_Check(p, c);
-                            }
-                        }
-                        c = c.offset(1);
-                        (*p).cur_chan_bit = (((*p).cur_chan_bit as i32) << 1) as u8;
-                    }
-                    if (*p).tempo_fade_num_ticks != 0 {
-                        (*p).tempo_fade_num_ticks = (*p).tempo_fade_num_ticks.wrapping_sub(1);
-                        (*p).tempo = (if (*p).tempo_fade_num_ticks as i32 == 0 {
-                            ((*p).tempo_fade_final as i32) << 8
-                        } else {
-                            (*p).tempo as i32 + (*p).tempo_fade_add as i32
-                        }) as u16;
-                    }
-                    if (*p).echo_volume_fade_ticks != 0 {
-                        (*p).echo_volume_left = ((*p).echo_volume_left as i32
-                            + (*p).echo_volume_fade_add_left as i32)
-                            as u16;
-                        (*p).echo_volume_right = ((*p).echo_volume_right as i32
-                            + (*p).echo_volume_fade_add_right as i32)
-                            as u16;
-                        (*p).echo_volume_fade_ticks = (*p).echo_volume_fade_ticks.wrapping_sub(1);
-                        if (*p).echo_volume_fade_ticks as i32 == 0 {
-                            (*p).echo_volume_left =
-                                (((*p).echo_volume_fade_target_left as i32) << 8) as u16;
-                            (*p).echo_volume_right =
-                                (((*p).echo_volume_fade_target_right as i32) << 8) as u16;
-                        }
-                    }
-                    if (*p).master_volume_fade_ticks != 0 {
-                        (*p).master_volume_fade_ticks =
-                            (*p).master_volume_fade_ticks.wrapping_sub(1);
-                        (*p).master_volume = (if (*p).master_volume_fade_ticks as i32 == 0 {
-                            ((*p).master_volume_fade_target as i32) << 8
-                        } else {
-                            (*p).master_volume as i32 + (*p).master_volume_fade_add_per_tick as i32
-                        }) as u16;
-                        (*p).vol_dirty = 0xff;
-                    }
-                    c = &raw mut (*p).channel as *mut Channel;
-                    (*p).cur_chan_bit = 1;
-                    do_until! { ((*p).cur_chan_bit == 0);
-                        if byte!((*c).pattern_order_ptr_for_chan; (size_of::<u16>() as usize)
-                                .wrapping_div(size_of::<u8>() as usize)
-                                .wrapping_sub(1_) as isize)
-                            != 0
-                        {
-                            Chan_HandleTick(p, c);
-                        }
-                        c = c.offset(1);
-                        (*p).cur_chan_bit = (((*p).cur_chan_bit as i32) << 1) as u8;
-                    }
-                    return;
-                }
-            }
-        }
-        (*p).port_to_snes[0i32 as usize] = a;
-        (*p).music_ptr_toplevel = *((&raw mut (*p).ram as *mut u8)
-            .offset((0x5820 + (a as i32 - 1i32) * 2) as isize)
-            as *mut u16);
-        (*p).counter_sf0c = 2;
-        (*p).key_OFF = ((*p).key_OFF | !((*p).is_chan_on));
-    }
-}
-unsafe fn PlayNote(p: *mut SpcPlayer, c: *mut Channel, mut note: u8) {
-    if note as i32 >= 0xca {
-        Channel_SetInstrument(p, c, note);
-        note = 0xa4;
-    }
-    if note as i32 >= 0xc8 || (*p).is_chan_on & (*p).cur_chan_bit != 0 {
-        return;
-    }
-    (*c).pitch = (((note as i32 & 0x7f)
-        + (*p).global_transposition as i32
-        + (*c).channel_transposition as i32)
-        << 8
-        | (*c).fine_tune as i32) as u16;
-    (*c).vibrato_count = (((*c).vibrato_fade_num_ticks as i32) << 7) as u8;
-    set_fields! {[(*c)], 0; vibrato_hold_count, vibrato_change_count, tremolo_count, tremolo_hold_count}
-    (*p).vol_dirty = ((*p).vol_dirty | (*p).cur_chan_bit);
-    (*p).key_ON = ((*p).key_ON | (*p).cur_chan_bit);
-    (*c).pitch_slide_length = (*c).pitch_envelope_num_ticks;
-    if (*c).pitch_slide_length != 0 {
-        (*c).pitch_slide_delay_left = (*c).pitch_envelope_delay;
-        if (*c).pitch_envelope_direction == 0 {
-            (*c).pitch =
-                ((*c).pitch as i32 - (((*c).pitch_envelope_slide_value as i32) << 8)) as u16;
-        }
-        ComputePitchAdd(
-            c,
-            (((*c).pitch as i32 >> 8) + (*c).pitch_envelope_slide_value as i32) as u8,
-        );
-    }
-    WritePitch(p, c, (*c).pitch);
 }
 unsafe fn Spc_Loop_Part1(p: *mut SpcPlayer) {
     Dsp_Write(p, KOF as i32 as u8, (*p).key_OFF);
