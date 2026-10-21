@@ -25,9 +25,9 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A successful partial
 profile or pilot does not finish this goal. The latest frozen composition
-now produces **162,136 -> 107,931 (-54,205)**, with complete optimized library
+now produces **162,136 -> 107,783 (-54,353)**, with complete optimized library
 and actual frontend metadata compilation passing. The latest stages remove
-**17,871** from the previous 125,802 checkpoint, including the selected C
+**18,019** from the previous 125,802 checkpoint, including the selected C
 algorithm families, shared enemy layouts, CPU/SPC grids, dispatchers, register
 writes, byte/split-word places, initialization/transfer families, map menus,
 explosion windows, assertion emission, ordered RAM-store groups, introduction
@@ -36,8 +36,9 @@ updates, selective computed stores, ordinary standard-library imports and
 graphics-transfer records, native tracing, nonnull callback tables, corrected
 beam windows, square-slope handling, Samus jump launch, enemy homing, DSP
 sample limits, solid-enemy queries, sprite drawing, wall-jump decisions,
-inside-block reactions and suit-pickup beams. The complete profile also removes
-576,909 tokens and 1,565,583 code-text bytes from its 162,136-line control. All local
+inside-block reactions, suit-pickup beams and initialization coroutines. The
+complete profile also removes 577,646 tokens and 1,569,227 code-text bytes from
+its 162,136-line control. All local
 support and overlaps are counted; external GL dependency code is disclosed
 separately. These historical stages claim no new main deletion or whole-game replay.
 Map component checks exposed the original C2Rust VramWriteEntry packing defect
@@ -71,16 +72,27 @@ and 292 exact bounds-panic controls. The suit suite passes 69,118 cases,
 retaining 20 inherited debug-countdown panic outcomes separately.
 Wall-jump `i32::MIN` wrapping explicitly follows current Rust; its zero-line
 policy cost is included and no C equivalence is claimed at that undefined input.
-Every complete build and source check passes. The historical gap to 99,999 is
-**7,932 lines**. TEMP sm-tailored-next/integration/phase18 freezes this result.
+Every complete build and source check passes. The subsequent complete
+initialization state models remove **148 lines**: 284 original C / 690 initial
+Rust / 377 preceding-profile lines become 229. All 745 C/old/new component
+cases pass, with 2,005 coroutine invocations, 8,020 debug/optimized comparisons
+and four negative controls. All 44 full scripted sequences finish; complete
+builds and 70-file source inverse pass. No helper, caller or registration is
+added. Current diagnostic hooks were already absent historically and receive
+no deletion credit. The unchanged historical logo setup still uses an aligned
+word read at an odd ROM address; these component inputs use an odd ROM base to
+align that read. Ordinary-base debug startup is unvalidated. Recover current
+Game's unaligned ROM endpoint as a separate correctness repair. The historical
+gap to 99,999 is now **7,784 lines**. TEMP sm-tailored-next/integration/phase19
+freezes this result.
 The separate current-policy GL replacement prices **108,052 -> 106,886
 (-1,166)** and passes source/build checks, but runtime/adoption is parked:
 Defender ASR event 1121 explicitly blocks its test executable under rule
 01443614-CD74-433A-B99E-2ECDC07BFC25. All attempted fallback results are excluded;
 no GL reduction is included in phase18 and no security settings change.
 TEMP sm-tailored-next/current-gl-policy records the price, policy differences
-and block. The next selected scope is the two complete initialization
-coroutines; their 140-line body difference is not a measured replacement price.
+and block. The next scopes are that ROM alignment repair and the complete
+Torizo fall/countdown/landing family; no unmeasured saving is included.
 Current source remains the behavior authority.
 The earlier 789-handler executor trial now grows 809 lines on the composed
 input; reject it. Its enemy-only subset saves 217 and remains parked. The
@@ -502,7 +514,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the same clone scans. Domain judgment selects the native helper contract;
    recognition derives per-member parameters and rejects different effects.
    Price any production adoption against current Rust and validate it under
-   item 3. The isolated 107,931-line output is a partial translation profile,
+   item 3. The isolated 107,783-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
 
    The new finite typed instruction-data experiment also fails its complete
@@ -551,7 +563,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    separate controls; do not add their prices. Keep these scoped studies closed.
    Further discovery needs a new complete algorithm and replacement, not a
    repeat of these cohorts or another generic operation runner. Current-derived
-   translation recovery remains demonstrated separately at 107,931 lines.
+   translation recovery remains demonstrated separately at 107,783 lines.
 
    Further complete experiments at 105,984 reject shared object-script traversal
    (**+117 lines**), contextual Kraid ownership (**+33**) and real receiver methods

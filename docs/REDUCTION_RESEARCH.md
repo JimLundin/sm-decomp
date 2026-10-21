@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**107,931-line** historical-source composition. The current-source batch has
+**107,783-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -1601,9 +1601,40 @@ Runtime and adoption are parked. Windows Defender event 1121 at
 `current-gl-policy/runtime-v2/current-debug.exe` test. A DLL fallback had begun
 before that event was checked; it was stopped, and all partial comparisons are
 excluded. Accepted runtime coverage is zero. No security setting was changed,
-and the denied test must not be repackaged to evade the block. No phase19 GL
-composition was emitted; phase18 remains the validated total. Source, price,
+and the denied test must not be repackaged to evade the block. No GL
+composition was emitted; phase18 was retained at that point. Source, price,
 builds and block records remain under `TEMP/sm-tailored-next/current-gl-policy`.
+
+The subsequent initialization experiment recovers the current explicit resume
+stages for both complete coroutines. The measured lineage is **284 original C
+-> 690 initial Rust -> 377 preceding-profile Rust -> 229 selected Rust lines**.
+Repeated transfer/wait and clear/draw/wait sequences share their stage logic;
+pending waits resume before the next transfer or drawing operation. Historical
+logo setup and all support remain counted. The actual complete-root result is
+**107,931 -> 107,783 (-148)**, also removing 737 tokens and 3,644 code-text bytes.
+Current diagnostic hooks were absent from this historical baseline and supply
+no deletion credit; their six calls/ten lines and shared 132-line module are
+disclosed separately.
+
+Complete library/frontend builds and 70-file source inverse pass. **745 actual
+C/old/new cases** include every byte-valued resume state, yield/counter edges
+and 44 complete scripted sequences, all required to finish. The suite executes
+2,005 coroutine invocations and 8,020 debug/optimized comparisons; four faulty
+variants are caught. Final RAM compares byte-for-byte. Ordered callbacks carry
+full-RAM digests, which are not exact intermediate-byte proofs. Child routines
+and hardware are scripted boundaries; there is no whole-game replay claim.
+The retained historical logo setup reads a word at an odd ROM offset; fixtures
+use an odd ROM base to align it. Ordinary-base debug startup remains unvalidated.
+Current Game already selects unaligned ROM reads; recover that policy in a
+separate correctness stage. This state-model change does not hide that repair.
+
+Frozen phase19 is **162,136 -> 107,783 (-54,353)**, removing 577,646 tokens and
+1,569,227 code-text bytes. Its strict gap is 7,784 lines. All 70 engine files
+count; local experiment Python is 19,015 lines/250 files, separate from engine
+support. Source, complete costs, reproduction and component limits:
+`TEMP/sm-tailored-next/initialization-coroutines/REPORT.md` and
+`TEMP/sm-tailored-next/integration/phase19/REPORT.md`. No current-main or GL
+saving is included.
 
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard
