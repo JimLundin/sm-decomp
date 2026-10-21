@@ -1612,6 +1612,25 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    continuous execution, queue adaptation, PCM, physical upload/timing or full
    snapshots. No movie ran. Probe and results:
    Local/sm-decomp-experiments/20261021/native-sequencer-spc.
+   A different native-music dependency assessment uses the published Zelda
+   sequencer at `45a149d8b4bb`, rather than executing uploaded SPC instructions.
+   Its actual effect handler matches Rust's E1 pan control, but F1/F2/F3 reach
+   `Not_Implemented` while Rust configures or clears pitch envelopes. All four
+   commands are within both effect-length tables. The source-checked DLL probe
+   compiles the exact current Rust module/macros with production types; its
+   four isolated cases compare nine selected fields or the foreign assertion
+   exit. C assertions are explicitly enabled with `-UNDEBUG`. Initial harness
+   failures, including disabled assertions and a failed assertion catcher,
+   are excluded; the final harness reports assertions through child-process
+   exit instead. No DSP writes, synthesis, complete music ticks, state adapter,
+   snapshots or movie coverage is established. Static inspection also finds
+   differing song/instrument/pan-table addresses and port-command semantics.
+   The native music loop calls its private effect handler directly, so replacing
+   only the outer state mapping cannot supply the missing commands. Park direct
+   substitution at this pin; a different implementation or compatibility design
+   remains possible. No complete replacement price or saving is established.
+   Published inputs, actual-code probe and final four-case results:
+   Local/sm-decomp-experiments/20261021/native-music-dependency.
    Continue selecting larger complete responsibilities and repeated algorithms;
    the 90,000-line stretch checkpoint still has no demonstrated remaining budget.
    Durable experiments: Local/sm-decomp-experiments/20261021/complete-backend.
