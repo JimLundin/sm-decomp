@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**103,256-line** historical-source composition. The current-source batch has
+**102,804-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -27,7 +27,9 @@ Native inflater ownership then removes **165 lines**, reaching **104,794**,
 with complete builds, 8,936 inflater cases and 3,080 PNG API comparisons passing.
 Explicit compound RAM updates remove **370 more lines**, reaching **104,424**,
 with complete compiler correspondence and both full boot replay routes passing.
-Maintained Rust needs another **4,425 lines removed** to reach 99,999. A separate
+Shared RAM metadata removes another **452 lines**, reaching **103,972**, with
+complete constant/export equality and static builds passing.
+Maintained Rust needs another **3,973 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -1966,6 +1968,46 @@ Static correspondence covers unchanged operations; these replays do not visit
 all updated sites or credits. The shader draft remains preserved and excluded
 from committed counts. Current proof: `compound-word-updates/current-FROZEN.json`;
 main build/replay logs: `TEMP/sm-compound-adoption-20261021`.
+
+Shared RAM metadata is a further implemented emission rule. The older
+original-C metadata pass retained one address/type/shape record per name.
+Now consecutive equal-type/equal-shape arithmetic runs retain their explicit
+names under a shared base and stride. For example:
+
+```rust
+0x00078 stride 2, uint16 Scalar => [reg_M7A, reg_M7B, reg_M7C, reg_M7D, reg_M7X, reg_M7Y];
+```
+
+All 1,169 records remain in their original order: 101 groups cover 938 records,
+and 231 singletons retain their own metadata. Quoted names, duplicate aliases
+and zero strides remain explicit. Array grouping describes bases only; it does
+not infer lengths, ownership or disjointness. Including 22 added support lines,
+the complete current source changes **104,424 -> 103,972 (-452)** and the actual
+phase30 output changes **103,256 -> 102,804 (-452)**. Each independently removes
+4,210 tokens and 16,206 spelling bytes. No formatting-only saving is included.
+The initially ambiguous plus notation was replaced with explicit `stride`;
+its extra six wrapped lines and 510 spelling bytes are charged.
+
+Paired compiler constant evaluation compares every ordered row's address,
+name bytes, C-type bytes and shape, plus all 981 current/994 historical exported
+offsets. Complete expanded export inventories preserve names, `usize` types,
+visibility and order, with no added or missing exports. All nonmetadata source
+bytes and every caller are unchanged. The table is built entirely in constant
+evaluation; RAM access/layout and runtime initialization do not change. Both
+complete optimized library/frontend metadata builds pass. Parent independently
+checked frozen artifacts, full source manifests, committed inputs and prices.
+Current adoption additionally passes ordinary Cargo release and formatting.
+These static-only changes require no gameplay replay under PLAN.
+
+The resulting historical profile is **162,136 -> 102,804 (-59,332)**, removing
+634,632 tokens and 1,731,989 spelling bytes cumulatively. The strict gap is 2,805
+lines. Its 71 Rust files and ten Cargo lines count; prototype Python adds 212
+lines in two scripts, totaling 27,877 lines/366 files. Constant-check harnesses
+are separately 1,003 current and 1,016 historical Rust lines. This remains a
+compiled translation profile, not a linked playable historical implementation.
+Final source and reproducible rule: `TEMP/sm-tailored-next/ram-metadata-sequences`
+(`historical-final-v2`, `current-final-v2`, `binding.json`, `REPORT.md`). Main
+build log: `TEMP/sm-ram-metadata-main-build-20261021.log`.
 
 The complete ordinary-place compound-update follow-up is rejected. Unlike
 the named RAM rule, it covers repeated field/place assignments and captured

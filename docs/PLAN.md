@@ -25,13 +25,13 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A partial profile
 does not finish this goal. The latest complete historical composition is
-**162,136 -> 103,256 (-58,880)**, also removing **630,422 tokens** and
-**1,715,783 code-text bytes**. The strict remaining gap is **3,257 lines**.
+**162,136 -> 102,804 (-59,332)**, also removing **634,632 tokens** and
+**1,731,989 code-text bytes**. The strict remaining gap is **2,805 lines**.
 All 71 Rust files, helpers, callers and registrations count; Cargo remains
 ten lines. External GL/SDL dependencies and experiment support are disclosed
 separately. Current Rust remains the behavior authority.
 
-The latest four-rule batch removes **1,069 lines**, **23,554 tokens** and
+The preceding four-rule batch removes **1,069 lines**, **23,554 tokens** and
 **57,729 code-text bytes** from the actual 104,325-line phase29 output:
 byte-place recovery 437, native index locals 105, explicit compound RAM
 updates 442, and inferred local annotations 85. These are sequential prices,
@@ -48,8 +48,15 @@ Annotation inference then passes fresh paired whole-library/frontend compiler
 checks on that actual output. Parent independently recounted every stage.
 
 The frozen output and exact reproduction are at TEMP
-sm-tailored-next/integration/phase30. Experiment Python totals 27,665 lines
-in 364 scripts, separately counted from emitted source. This is a compiled
+sm-tailored-next/integration/phase30. The subsequent RAM metadata rule removes
+**452 lines**, **4,210 tokens** and **16,206 spelling bytes** from that actual
+output. Its final root is TEMP
+sm-tailored-next/ram-metadata-sequences/historical-final-v2. All 1,169 ordered
+rows and 994 typed offsets have complete compiler-evaluated equality; exported
+names/types/visibility/order also match exactly. Runtime access source is
+unchanged, and complete optimized library/frontend metadata builds pass.
+Experiment Python totals 27,877 lines in 366 scripts, separately counted from
+emitted source. This is a compiled
 translation profile with the documented component/static checks, not a linked
 playable historical implementation or a whole-game replay result. It earns
 no current-main deletion. Earlier stages and their original-C lineage,
@@ -139,7 +146,9 @@ all allocation and caller costs counted. Complete release/frontend builds,
 8,936 inflater cases and 3,080 PNG API comparisons pass; the frontend-only
 change needs no game replay. Explicit compound RAM updates remove **370 more
 lines**, reaching **104,424**, with complete compiler correspondence and both
-full boot replay routes passing. Another **4,425 lines** are needed to reach 99,999;
+full boot replay routes passing. Shared RAM metadata removes **452 more lines**,
+reaching **103,972**, with complete constant/export equality and static builds.
+Another **3,973 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -498,7 +507,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the same clone scans. Domain judgment selects the native helper contract;
    recognition derives per-member parameters and rejects different effects.
    Price any production adoption against current Rust and validate it under
-   item 3. The isolated 103,256-line output is a partial translation profile,
+   item 3. The isolated 102,804-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
 
    The new finite typed instruction-data experiment also fails its complete
@@ -610,7 +619,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    separate controls; do not add their prices. Keep these scoped studies closed.
    Further discovery needs a new complete algorithm and replacement, not a
    repeat of these cohorts or another generic operation runner. Current-derived
-   translation recovery remains demonstrated separately at 103,256 lines.
+   translation recovery remains demonstrated separately at 102,804 lines.
 
    Further complete experiments at 105,984 reject shared object-script traversal
    (**+117 lines**), contextual Kraid ownership (**+33**) and real receiver methods
@@ -741,8 +750,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **4,425-line** gap; parked small drafts are not
+   replacement yet funds the **3,973-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Shared RAM metadata removes **452 lines (104,424 -> 103,972)**, 4,210
+   tokens and 16,206 spelling bytes, including 22 lines of support. The 1,169
+   named records become 101 explicit base/stride/type/shape groups plus 231
+   singletons. Every name, alias and row order remains explicit. Compile-time
+   comparison covers the entire ordered table and all 981 current exported
+   offsets; compiler expansion proves the exact name/type/visibility/order
+   inventory, with no extra exports. Runtime access helpers and every caller
+   remain byte-identical. Parent checked all frozen artifacts, source manifests,
+   committed inputs and the zero-drift formatter control. Ordinary Cargo release
+   and formatting pass. Static-only validation is appropriate: no runtime
+   initialization, access operation or layout changes, so no replay was run.
+   The corresponding actual historical stage removes 452 separately. Report:
+   TEMP sm-tailored-next/ram-metadata-sequences; main build:
+   TEMP sm-ram-metadata-main-build-20261021.log.
 
    Explicit compound RAM updates remove **370 lines (104,794 -> 104,424)**,
    2,586 tokens and 9,250 spelling bytes, including 41 support lines. All 801
@@ -1392,11 +1416,12 @@ flight, callback entry captures, opcode grids, blast windows, indexed loops and
 combined callback/dispatch declarations, terminal loops, selected field/RAM
 store groups, the unaligned RAM repair, shared beam windows, native tracing,
 nonnull callback tables, Samus pose sequences, the packed-sprite repair,
-shared gameplay imports, enemy callback ownership, native inflater and compound
-RAM updates, maintained Rust is **104,424**, leaving **4,425** to
+shared gameplay imports, enemy callback ownership, native inflater, compound
+RAM updates and shared RAM metadata, maintained Rust is **103,972**, leaving **3,973** to
 reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3330; cast lines 7870. Compound updates remove 370 lines and
+unsafe functions 3330; cast lines 7870. RAM metadata removes 452 lines without
+changing any other counter. Compound updates remove 370 lines and
 71 cast-containing lines without changing the other counters. The inflater removes 12 unsafe-function
 declarations and 25 cast-containing lines. Callback grouping removes 314 counted
 unsafe declaration lines while preserving expanded signatures. Its unchanged
