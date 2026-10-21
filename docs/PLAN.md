@@ -1631,6 +1631,19 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    remains possible. No complete replacement price or saving is established.
    Published inputs, actual-code probe and final four-case results:
    Local/sm-decomp-experiments/20261021/native-music-dependency.
+   The complete native cartridge draft prices **97,313 -> 97,208 (-105)**:
+   loading/header parsing falls from 273 to 177 lines and mapping/lifecycle
+   from 156 to 147. Shared header scoring and SRAM address selection retain
+   the public callers, allocation/reset order and LoROM crash diagnostics in
+   the draft; F0 remains readable SRAM but excluded from LoROM writes. There
+   are no new macros, dependencies or uncounted helpers. Park this formatted,
+   uncompiled and unexecuted replacement under the larger-scope direction;
+   no behavior, movie coverage or adopted saving is claimed. The separate
+   LakeSnes cartridge preflight also supplies no replacement price: SRAM reset,
+   invalid-read handling, successful-load output and oversized header shifts
+   require compatibility work. No foreign cartridge code was built or run.
+   Native draft: Local/sm-decomp-experiments/20261021/cartridge-native;
+   pinned foreign inputs: Local/sm-decomp-experiments/20261021/cartridge-dependency.
    Continue selecting larger complete responsibilities and repeated algorithms;
    the 90,000-line stretch checkpoint still has no demonstrated remaining budget.
    Durable experiments: Local/sm-decomp-experiments/20261021/complete-backend.
