@@ -702,7 +702,6 @@ pub unsafe fn Kraid_SetWalkingForwards(j: u16, a: u16, game: &mut Game) {
     (*E).kraid_var_A = ((0xa7bbaei32) as u16);
     enemy_instruction! {[(*E).base]; timer = 1, instruction = addr_kKraid_Ilist_86F3 as u16}
 }
-pub use self::KraidsGoodFingernail_Touch as KraidsBadFingernail_Touch;
 pub unsafe fn KraidFingernailInit(k: u16, game: &mut Game) {
     let palette_index: u16 = (*Get_Kraid(0i32, game)).base.palette_index;
     let E = Get_Kraid(k as i32, game);

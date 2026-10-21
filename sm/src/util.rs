@@ -3,8 +3,7 @@ use crate::c_library::{
     strdup, strlen,
 };
 use crate::host::Die;
-pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
-use ::core::ffi::{c_char, c_long, c_ulong, c_void};
+use ::core::ffi::{c_char, c_long, c_void};
 use ::core::ptr::{null, null_mut};
 pub type __builtin_va_list = [__va_list_tag; 1];
 crate::typed_struct! {
@@ -15,7 +14,7 @@ crate::typed_struct! {
         pub overflow_arg_area, reg_save_area: *mut c_void;
     }
 }
-pub use crate::types::{_IO_lock_t, __off64_t, __off_t, size_t, ByteArray, _IO_FILE, FILE};
+pub use crate::types::{size_t, ByteArray, FILE};
 pub type va_list = __gnuc_va_list;
 pub type __gnuc_va_list = __builtin_va_list;
 pub const NULL: *mut c_void = null_mut::<c_void>();

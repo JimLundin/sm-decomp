@@ -1,14 +1,9 @@
 use crate::game_state::Game;
-use crate::set_fields;
-use ::core::ffi::{c_char, c_long, c_void};
+use ::core::ffi::{c_char, c_void};
 use ::core::mem::{size_of, transmute};
 
-use crate::c_library::{__assert_fail, free, malloc, memcpy, memset};
-pub use crate::types::{
-    size_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
-    DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, SaveLoadFunc, Snes, Spc,
-    Timer, WindowLayer,
-};
+use crate::c_library::{__assert_fail, malloc, memcpy, memset};
+pub use crate::types::{size_t, Ppu, PpuPixelPrioBufs, PpuZbufType, SaveLoadFunc, Snes};
 crate::type_aliases! {
     pub C2RustUnnamed_0, C2RustUnnamed_1, C2RustUnnamed_2, C2RustUnnamed_3 = u32;
 }

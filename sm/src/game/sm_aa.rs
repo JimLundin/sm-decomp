@@ -343,7 +343,6 @@ pub unsafe fn Torizo_Func_12(k: u16, game: &mut Game) -> u16 {
     ((*E).parameter_1 as i32 ^ (*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32) as u16
 }
 pub use self::Torizo_Func_3 as Torizo_Func_10;
-pub use self::Torizo_Func_6 as Torizo_D5ED;
 pub unsafe fn Torizo_D6A6(game: &mut Game) {
     NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
     let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);

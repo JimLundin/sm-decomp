@@ -20,7 +20,6 @@ use crate::game::sm_89::LoadFXHeader;
 use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
 use crate::game::sm_8d::ClearPaletteFXObjects;
 use crate::game::sm_90::{InitializeMiniMapBroken, UpdateBeamTilesAndPalette};
-use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::LoadEnemies;
 use crate::rtl::RtlApuUpload;
 

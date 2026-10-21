@@ -369,7 +369,6 @@ pub unsafe fn Boulder_Func_9(j: u16, game: &mut Game) {
         ))
     );
 }
-pub use self::SpikeyPlatform2ndEnemy_Init as SpikeyPlatform2ndEnemy_Main;
 crate::game::callback_dispatch! {
     pub unsafe fn CallSpikeyPlatformFunc(ea: u32, k: u16, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };

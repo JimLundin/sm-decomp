@@ -1,16 +1,11 @@
 use crate::game_state::Game;
 use crate::rtl::words;
-use crate::set_fields;
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::{size_of, transmute};
 
-use crate::c_library::{__assert_fail, free, malloc, printf};
+use crate::c_library::{__assert_fail, malloc, printf};
 use crate::snes::snes::{snes_read, snes_readBBus, snes_write, snes_writeBBus};
-pub use crate::types::{
-    size_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
-    DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, SaveLoadFunc, Snes, Spc,
-    Timer, WindowLayer,
-};
+pub use crate::types::{size_t, Dma, SaveLoadFunc, Snes};
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 pub const __ASSERT_FUNCTION: [c_char; 34] =

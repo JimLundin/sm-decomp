@@ -14,16 +14,16 @@ use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{
     Abs16, CalculateAngleOfSamusFromEnemy, CalculateBlockContainingPixelPos, CallEnemyPreInstr,
     CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, ConvertAngleToXy, CosineMult8bit,
-    CosineMult8bitFull, DetermineDirectionOfSamusFromEnemy, EnemyDeathAnimation, EnemyFunc_B691,
-    EnemyFunc_BBBF, EnemyFunc_BC76, EnemyFunc_BF8A, EnemyFunc_C8AD, EnemyGrappleDeath,
-    Enemy_ItemDrop_Metroid, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
-    Enemy_MoveRight_ProcessSlopes, Enemy_SwitchToFrozenAi, GetSamusEnemyDelta_X,
-    GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, NormalEnemyFrozenAI,
-    NormalEnemyPowerBombAi, NormalEnemyShotAi, NormalEnemyShotAiSkipDeathAnim_CurEnemy,
-    NormalEnemyTouchAi, SignExtend8, SineMult8bit, SineMult8bitFull, SwitchEnemyAiToMainAi,
+    CosineMult8bitFull, EnemyDeathAnimation, EnemyFunc_B691, EnemyFunc_BBBF, EnemyFunc_BC76,
+    EnemyFunc_BF8A, EnemyFunc_C8AD, EnemyGrappleDeath, Enemy_ItemDrop_Metroid, Enemy_MoveDown,
+    Enemy_MoveRight_IgnoreSlopes, Enemy_MoveRight_ProcessSlopes, Enemy_SwitchToFrozenAi,
+    GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
+    NormalEnemyFrozenAI, NormalEnemyPowerBombAi, NormalEnemyShotAi,
+    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi, SignExtend8, SineMult8bit,
+    SineMult8bitFull, SwitchEnemyAiToMainAi,
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
-pub use crate::game::waver::{Enemy_Waver, Waver_Func_1, Waver_Init, Waver_Instr_1, Waver_Main};
+pub use crate::game::waver::{Waver_Init, Waver_Instr_1, Waver_Main};
 
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
@@ -1104,82 +1104,6 @@ pub unsafe fn MaridiaRefillCandy_Func_4(game: &mut Game) {
         enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3b40d, mrcy_var_D as isize), timer = 1}
         (*E).base.timer = 0;
     }
-}
-pub unsafe fn Bang_Func_1(game: &mut Game) {
-    let v0: u16 =
-        ((*Get_Bang(word!(game.cur_enemy_index) as i32 + 64i32, game)).var_20).wrapping_add(10);
-    (*Get_Bang(word!(game.cur_enemy_index) as i32, game)).var_20 = v0;
-    Bang_Func_18(game);
-    let E = Get_Bang(word!(game.cur_enemy_index) as i32, game);
-    (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-}
-pub unsafe fn Bang_Func_2(game: &mut Game) {
-    let v0: u16 =
-        ((*Get_Bang(word!(game.cur_enemy_index) as i32 + 1984i32, game)).var_00).wrapping_add(20);
-    let E = Get_Bang(word!(game.cur_enemy_index) as i32, game);
-    (*E).var_20 = v0;
-    Bang_Func_18(game);
-    (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-}
-pub unsafe fn Bang_Func_3(game: &mut Game) {
-    Bang_Func_5(game);
-    let E0 = Get_Bang(word!(game.cur_enemy_index) as i32, game);
-    let x_pos: u16 = (*E0).base.x_pos;
-    let v3: i32 = word!(game.cur_enemy_index) as i32 >> 1;
-    word!(game.enemy_drawing_queue[(v3 + 91)] = x_pos);
-    let E1 = Get_Bang(word!(game.cur_enemy_index) as i32 + 64, game);
-    (*E1).base.x_pos = x_pos;
-    let y_pos: u16 = (*E0).base.y_pos;
-    word!(game.enemy_drawing_queue[(v3 + 93)] = y_pos);
-    (*E1).base.y_pos = y_pos;
-    let mut bang_var_B: i16 = (*E0).var_B as i16;
-    if ((*E0).var_20 & 1) != 0 {
-        bang_var_B = 3072;
-    }
-    (*E0).base.palette_index = bang_var_B as u16;
-    Bang_Func_18(game);
-    if (*E0).var_22 != 0 {
-        (*E0).var_22 = 0;
-        if (*E0).var_20 == 9 {
-            (*E0).base.invincibility_timer = 16;
-            (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
-            let v7: u16 = DetermineDirectionOfSamusFromEnemy(game);
-            let v8: u16 = Bang_Func_4(v7, game);
-            EnemyDeathAnimation(word!(game.cur_enemy_index), v8, game);
-            let v9: u16 = word!(game.cur_enemy_index);
-            let E = Get_Bang(word!(game.cur_enemy_index) as i32 + 64, game);
-            (*E).base.properties = ((*E).base.properties) | (0x200u16);
-            word!(game.enemy_drawing_queue[((v9 as i32 >> 1) + 97)] |= (0x200u16));
-        } else {
-            (*E0).var_20 = (*E0).var_20.wrapping_add(1);
-            Bang_Func_18(game);
-        }
-    }
-}
-pub unsafe fn Bang_Func_4(a: u16, game: &mut Game) -> u16 {
-    if word!(game.projectile_counter) as i32 - 5i32 & 0x8000 == 0 {
-        return 1;
-    }
-    let mut i: i32 = 0;
-    while word!(game.projectile_damage[(i >> 1)]) != 0 {
-        i += 2;
-    }
-    let E = Get_Bang(word!(game.cur_enemy_index) as i32, game);
-    let v3: i32 = i >> 1;
-    word! {game; projectile_x_pos[v3] = (*E).base.x_pos; projectile_y_pos[v3] = (*E).base.y_pos;
-    projectile_dir[v3] = a; projectile_type[v3] = (word!(game.equipped_beams) & 0xf | 0x10); }
-    word!(game.projectile_counter += 1);
-    ProjectileReflection(i as u16, game);
-    word!(game.projectile_damage[v3] = (*E).var_E);
-    QueueSfx1_Max6(
-        crate::rtl::rom_table_word!(
-            game,
-            0xa3bc4a,
-            (word!(game.projectile_type[v3]) as i32 & 0xf) as isize
-        ),
-        game,
-    );
-    0
 }
 pub fn Bang_Func_7(k: u16) {}
 pub unsafe fn Bang_Func_9(game: &mut Game) {
@@ -2446,9 +2370,6 @@ crate::game::callback_dispatch! {
     };
     [10730277] Bang_Main [] {
         Call((((*E).parameter_1) as u32) | (0xa30000u32), game);
-    };
-    Bang_Func_5 [] {
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa30000u32), game);
     };
     Bang_Func_14 [] {
         let r18: u16 = crate::rtl::rom_table_word!(

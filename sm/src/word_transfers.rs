@@ -122,5 +122,3 @@ macro_rules! word_transfers {
         word_transfers!(@endpoint $game, native(0x4000 + 2 * ($index)))
     };
 }
-
-pub(crate) use word_transfers;

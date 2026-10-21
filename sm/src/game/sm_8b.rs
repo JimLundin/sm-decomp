@@ -3,14 +3,13 @@ pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_8d::*;
-pub use crate::game::constants::bank_91::*;
 
 use crate::game::explosion_window::spawn_power_bomb;
 use crate::game::sm_80::{
     memset7E, CheckEventHappened, ClearOamExt, ClearUnusedOam, CopySuperMetroidString,
-    DecompressToMem, DisableIrqInterrupts, EnableNMI, GraphicsAsset, HandleFadeIn, HandleFadeOut,
-    HasQueuedMusic, QueueMode7Transfers, QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15,
-    QueueSfx2_Max6, QueueSfx3_Max6, WaitForNMI_Async,
+    DisableIrqInterrupts, EnableNMI, GraphicsAsset, HandleFadeIn, HandleFadeOut, HasQueuedMusic,
+    QueueMode7Transfers, QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15, QueueSfx2_Max6,
+    QueueSfx3_Max6, WaitForNMI_Async,
 };
 use crate::game::sm_81::{DrawSpritemap, DrawSpritemapOffScreen, SaveToSram};
 use crate::game::sm_88::{

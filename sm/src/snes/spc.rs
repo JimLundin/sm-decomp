@@ -1,11 +1,7 @@
-use crate::c_library::{free, malloc};
+use crate::c_library::malloc;
 use crate::game_state::Game;
-use crate::set_fields;
 use crate::snes::apu::{apu_cpuRead, apu_cpuWrite};
-pub use crate::types::{
-    size_t, Apu, ApuHistory as C2RustUnnamed, Dsp, DspChannel, DspRegWriteHistory, SaveLoadFunc,
-    Spc, Timer,
-};
+pub use crate::types::{size_t, Apu, SaveLoadFunc, Spc};
 use ::core::ffi::c_void;
 use ::core::mem::size_of;
 pub const true_0: i32 = 1;

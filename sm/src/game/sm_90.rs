@@ -3,7 +3,6 @@ pub use crate::game::prelude::*;
 use crate::game::samus_animation::{
     HandleAtmosphericEffects, PlaySamusFanfare, Samus_Animate, Samus_Draw, Samus_DrawEchoes,
     Samus_DrawShinesparkCrashEchoes, Samus_DrawWhenNotAnimatingOrDying,
-    SetSamusTilesDefsForCurAnim,
 };
 
 pub use crate::game::constants::bank_60::*;
@@ -17,13 +16,12 @@ use crate::game::sm_80::{
     CheckEventHappened, DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
     HandleScrollingWhenTriggeringScrollDown, HandleScrollingWhenTriggeringScrollLeft,
     HandleScrollingWhenTriggeringScrollRight, HandleScrollingWhenTriggeringScrollUp,
-    InvalidInterrupt_Crash, NextRandom, ProcessTimer, QueueSfx1_Max15, QueueSfx1_Max6,
-    QueueSfx1_Max9, QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max3, QueueSfx3_Max6,
-    QueueSfx3_Max9,
+    InvalidInterrupt_Crash, ProcessTimer, QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx1_Max9,
+    QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max6, QueueSfx3_Max9,
 };
-use crate::game::sm_81::{DrawBeamGrappleSpritemap, DrawSamusSpritemap};
+use crate::game::sm_81::DrawBeamGrappleSpritemap;
 use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
-use crate::game::sm_86::{DisableEprojs, EnableEprojs, SpawnEprojWithGfx};
+use crate::game::sm_86::{EnableEprojs, SpawnEprojWithGfx};
 use crate::game::sm_88::EnableHdmaObjects;
 use crate::game::sm_8b::Samus_CalcPos_Mode7;
 use crate::game::sm_8d::{DisablePaletteFx, SpawnPalfxObject};
@@ -31,8 +29,7 @@ use crate::game::sm_91::{
     DemoObjectInputHandler, MakeSamusFaceForward, SamusFunc_E633, SamusFunc_F433,
     Samus_CancelSpeedBoost, Samus_Func20, Samus_HandlePalette, Samus_HandleTransFromBlockColl,
     Samus_HandleTransitions, Samus_InputHandler, Samus_LoadSuitPalette,
-    Samus_LoadSuitTargetPalette, Samus_RestoreHealth, Samus_SetAnimationFrameIfPoseChanged,
-    XrayRunHandler,
+    Samus_LoadSuitTargetPalette, Samus_RestoreHealth, XrayRunHandler,
 };
 use crate::game::sm_93::{
     DrawPlayerExplosions2, InitializeBombExplosion, InitializeInstrForMissile,
@@ -40,11 +37,11 @@ use crate::game::sm_93::{
     KillProjectileInner, RunProjectileInstructions,
 };
 use crate::game::sm_94::{
-    scale_sine_word, BlockCollMissileHoriz, BlockCollMissileVert, BlockCollNoWaveBeamHoriz,
-    BlockCollNoWaveBeamVert, BlockCollSpreadBomb, BlockCollWaveBeamHoriz, BlockCollWaveBeamVert,
-    BlockInsideDetection, BombOrPowerBomb_Func1, HandleGrappleBeamGfx,
-    PostGrappleCollisionDetect_X, PostGrappleCollisionDetect_Y, Samus_AlignYPosSlope,
-    Samus_MoveDown_NoSolidColl, Samus_MoveRight_NoSolidColl, WallJumpBlockCollDetect,
+    scale_sine_word, BlockCollNoWaveBeamHoriz, BlockCollNoWaveBeamVert, BlockCollSpreadBomb,
+    BlockCollWaveBeamHoriz, BlockCollWaveBeamVert, BlockInsideDetection, BombOrPowerBomb_Func1,
+    HandleGrappleBeamGfx, PostGrappleCollisionDetect_X, PostGrappleCollisionDetect_Y,
+    Samus_AlignYPosSlope, Samus_MoveDown_NoSolidColl, Samus_MoveRight_NoSolidColl,
+    WallJumpBlockCollDetect,
 };
 use crate::game::sm_9b::{
     GrappleBeamFunc_BF1B, GrappleBeamHandler, HandleGrappleBeamFlare, ProjectileTrail_Func5,
@@ -52,7 +49,7 @@ use crate::game::sm_9b::{
 };
 use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
 
-pub use crate::types::{FuncXY_V, Func_V_A, HandlerFunc};
+pub use crate::types::{Func_V_A, HandlerFunc};
 
 pub use crate::types::LiquidPhysicsType;
 

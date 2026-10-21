@@ -1,9 +1,7 @@
 //! Shared runtime state and explicit callbacks supplied by the frontend.
 //! Install callbacks before calling game code or starting an audio thread.
-use std::ffi::{c_char, c_int};
+use std::ffi::c_char;
 use std::sync::OnceLock;
-
-use crate::spc_player::SpcPlayer;
 
 #[derive(Copy, Clone)]
 pub struct HostHooks {

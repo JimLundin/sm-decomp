@@ -51,10 +51,7 @@ use crate::game::sm_90::{
     MainScrollingRoutine, ResetProjectileData, Samus_LowHealthCheck_0, SetLiquidPhysicsType,
     UpdateBeamTilesAndPalette,
 };
-use crate::game::sm_91::{
-    GameState_28_Unused_, SamusFunc_F433, Samus_Initialize, Samus_LoadSuitTargetPalette,
-    Samus_SetAnimationFrameIfPoseChanged,
-};
+use crate::game::sm_91::{GameState_28_Unused_, Samus_Initialize, Samus_LoadSuitTargetPalette};
 use crate::game::sm_9b::{
     DrawSamusStartingDeathAnim_, GameState_24_SamusNoHealth_Explosion_Helper,
     HandleSamusDeathSequence, StartSamusDeathAnimation,

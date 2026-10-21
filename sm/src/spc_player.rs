@@ -1,9 +1,6 @@
 use crate::c_library::{__assert_fail, malloc, memcpy, memset, printf};
-use crate::set_fields;
 use crate::snes::dsp::{dsp_cycle, dsp_init, dsp_reset, dsp_write};
-pub use crate::types::{
-    size_t, Channel, Dsp, DspChannel, DspRegWriteHistory, SfxChan, SfxRegs, SpcPlayer,
-};
+pub use crate::types::{size_t, Channel, DspRegWriteHistory, SfxChan, SfxRegs, SpcPlayer};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
 use ::core::ptr::null_mut;

@@ -17,16 +17,18 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **99,755 Rust lines in 82 files**, plus a
-four-line C bridge = **99,759 maintained implementation lines**. Counting the
-new 41-line CPU installer as well gives **99,800**. This is an actual complete
+Current composition (2026-10-21): **99,564 Rust lines in 82 files**, plus a
+four-line C bridge = **99,568 maintained implementation lines**. Counting the
+new 41-line CPU installer as well gives **99,609**. This is an actual complete
 source recount, including frontend and verifier code, all adapters, callers and
 registrations. Existing development scripts/configuration/docs are outside this
 implementation metric. The two pinned dependencies add **2,836 CPU C/header
 lines and 7,762 stb header lines**, disclosed separately, like existing GL/SDL.
 No project implementation is hidden in experiment directories.
-The final composition passes a normal release library/frontend build and an
-exercised gunship message-box check: eleven required probes, then 120 follow-up
+The final composition passes normal release library/frontend/verifier builds.
+The latest unused-declaration cleanup has complete retained-source and binding
+checks; it changes no executed behavior and needs no movie replay. The preceding
+gunship message-box check passed eleven required probes, then 120 follow-up
 frames, with normal rendering/audio and zero differences. Its 22,962 executed
 frames include boot setup; the setup prefix is not changed-code coverage.
 The under-100,000 maintained-source milestone is complete. Credits remain
@@ -1452,8 +1454,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    exercised gunship save flow pass. Samus animation/drawing already belong
    to `samus_animation`, and room background loading to
    `room_backgrounds::BackgroundLoad`. Banks 85 and 92 are fully retired.
-   Gameplay currently totals 81,717 lines; its 30 numeric bank modules still
-   own 76,355. These are ownership scopes, not deletion budgets. File moves
+   The unused-declaration cohort reserved for this stage is now adopted:
+   353 unused import bindings and five unreferenced Bang helpers remove
+   **191 lines (99,755 -> 99,564)**. Retained executable source, callback rows
+   and import targets are unchanged; compiler and release checks pass without
+   a movie replay. Runtime-source fingerprint changes invalidate old verifier
+   checkpoints; regenerate setup only when a selected exercised segment needs it.
+   Bang's live SNES execution path remains a future ownership task.
+   Gameplay currently totals 81,616 lines; its 30 numeric bank modules still
+   own 76,262. These are ownership scopes, not deletion budgets. File moves
    alone earn no volume reduction. Reassess the
    90,000-line stretch checkpoint using complete replacements, including retained
    exceptions and oracle adapters; it has no demonstrated deletion budget yet.
@@ -1495,10 +1504,11 @@ may overlap landed work and are not a current reduction budget.
 - Shared layouts, RAM/word/byte access, callback declarations, dispatch,
   exact aliases, graphics/word transfers, corpse tile traversal and audited
   unused-code removal are already harvested. Count only further net deletion.
-- A revalidated unused-declaration draft removes 336 formatted lines: 587
-  import bindings and five unreferenced Bang helpers. Static/compiler/release
-  checks pass; hold it for item 4, outside the active volume budget. Local draft:
-  TEMP sm-bindings-root-9c4daf2f/unused/.
+- The unused-declaration cohort reserved for item 4 is adopted there on current
+  source: 353 unused import bindings and five unreferenced Bang helpers remove
+  191 lines. The former 336-line draft used a different input and supplies no
+  additional savings. Current reconstruction and checks:
+  Local/sm-decomp-experiments/20261021/unused-declarations-current.
 - Grapple angular sweep: a 126-line draft passes 6,574 original/replacement
   comparisons and 6,574 oracle cases plus 254 follow-up calls. It remains
   unlanded and parked as a standalone fragment; no movie execution is claimed.
@@ -1666,6 +1676,13 @@ registry, evidence store or coverage dashboard is needed. Commands and
 checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
+
+Latest static-only change: unused declarations are removed after compiler
+reference checks. All 82 Rust files retain the same executable source and numeric
+callback rows outside five unreferenced Bang helpers; retained import bindings
+keep their targets and visibility. Release library/frontend/verifier builds,
+all-target and headless compiler checks, and embedded-source byte checks pass.
+No new movie run or gameplay coverage is claimed.
 
 Latest applicable verification: shared message-box lifecycle passes the gunship
 acceptance scenario, with eleven required open/close, confirmation, delay,
@@ -1903,13 +1920,16 @@ RAM updates, shared RAM/record metadata, alias declarations, native C-string
 literals, shared constant headers, native shader/presentation ownership and
 shared PPU pixel evaluation, native/SPC state transfers and live-typed snapshots,
 the pinned CPU/PNG dependencies, RAM pointer chains, readable control flow and
-shared room background loading, Samus animation ownership and the message-box
-lifecycle, maintained Rust is **99,755**, with applicable exercised checks passing.
-Including the four-line C bridge gives **99,759**; including the new 41-line
-installer as well gives **99,800**. The immediate volume target is complete.
+shared room background loading, Samus animation ownership, the message-box
+lifecycle and unused declarations, maintained Rust is **99,564**, with applicable
+static and exercised checks passing. Including the four-line C bridge gives
+**99,568**; including the new 41-line installer as well gives **99,609**.
+The immediate volume target is complete.
 External CPU/PNG code has 2,836/7,762 lines.
 Counters: raw offsets 30; extern C blocks 5; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3268; cast lines 7529. Message-box ownership changes only the
+unsafe functions 3264; cast lines 7516. Unused declarations remove four counted
+unsafe declarations and 13 cast-containing lines; no counter increases.
+Message-box ownership changes only the
 total line count. Samus animation ownership removes six
 unsafe declarations and 39 cast-containing lines; no counter increases.
 Room background ownership removes

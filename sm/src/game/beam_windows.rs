@@ -435,7 +435,6 @@ pub unsafe fn calculate_xray_window(
 }
 
 use crate::c_library::printf;
-use core::ffi::c_char;
 crate::ram_map::ram_pointer_functions! {
     rainbow_enemy(o: i32) -> Enemy_MotherBrain = [0xf78, o as isize];
     rainbow_shared_state(o: i32) -> Ram8000_Default = [0x8000, o as isize];

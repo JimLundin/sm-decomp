@@ -99,8 +99,8 @@ pub(crate) unsafe fn read_rom_table_word(table: *const u16, index: isize) -> u16
 }
 
 use crate::c_library::{
-    __assert_fail, fclose, fopen, fprintf, fread, fseek, ftell, fwrite, memcpy, memset, printf,
-    rename, sprintf, stderr,
+    __assert_fail, fclose, fopen, fprintf, fread, fseek, fwrite, memcpy, memset, printf, rename,
+    sprintf, stderr,
 };
 use crate::cpu_infra::RtlUpdateSnesPatchForBugfix;
 use crate::game_state::Game;
@@ -115,10 +115,7 @@ use crate::spc_player::{
     SpcPlayer_CopyVariablesFromRam, SpcPlayer_CopyVariablesToRam, SpcPlayer_GenerateSamples,
     SpcPlayer_Initialize, SpcPlayer_Upload,
 };
-pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
-pub use crate::types::{
-    _IO_lock_t, __off64_t, __off_t, size_t, LongPtr, PairU16, VoidP, _IO_FILE, FILE,
-};
+pub use crate::types::{size_t, LongPtr, PairU16, VoidP, FILE};
 use crate::util::{
     ByteArray_AppendByte, ByteArray_AppendData, ByteArray_Destroy, ByteArray_Resize,
 };
@@ -146,24 +143,16 @@ crate::typed_struct! {
         pub p, pend: *mut u8;
     }
 }
-pub use crate::types::{
-    Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
-    DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, Spc, Timer,
-    WindowLayer,
-};
+pub use crate::types::Dsp;
 pub use crate::types::{RunFrameFunc, SyncAllFunc};
 
-pub use crate::types::{
-    ByteArray, Channel, SaveLoadFunc, SaveLoadOperation as C2RustUnnamed_0, SfxChan, SfxRegs,
-    SpcPlayer,
-};
+pub use crate::types::{ByteArray, SaveLoadFunc, SaveLoadOperation as C2RustUnnamed_0};
 pub const kSaveLoad_Replay: C2RustUnnamed_0 = 3;
 pub const kSaveLoad_Load: C2RustUnnamed_0 = 2;
 pub const kSaveLoad_Save: C2RustUnnamed_0 = 1;
 pub const kApuMaxQueueSize: C2RustUnnamed_2 = 16;
 
 pub const kCurrentBugFixCounter: C2RustUnnamed_1 = 1;
-pub use crate::types::SnesRegs;
 crate::type_aliases! {
     pub C2RustUnnamed_1, C2RustUnnamed_2 = u32;
 }

@@ -1,9 +1,8 @@
-use crate::c_library::{__assert_fail, free, malloc, memset, printf};
+use crate::c_library::{__assert_fail, malloc, memset, printf};
 use crate::cpu_infra::{CpuOpcodeHook, HookedFunctionRts};
 use crate::game_state::Game;
 use crate::host::Die;
 use crate::rtl::words;
-use crate::set_fields;
 use crate::snes::snes::{snes_cpuRead, snes_cpuWrite};
 use crate::types::{Cpu, SaveLoadFunc, Snes};
 use ::core::ffi::{c_char, c_void};

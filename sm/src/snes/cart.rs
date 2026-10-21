@@ -3,11 +3,7 @@ use crate::game_state::Game;
 use crate::host::Die;
 use crate::rtl::words;
 use crate::snes::cpu::DumpCpuHistory;
-pub use crate::types::{
-    size_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
-    DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, SaveLoadFunc, Snes, Spc,
-    Timer, WindowLayer,
-};
+pub use crate::types::{size_t, Cart, SaveLoadFunc, Snes};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
 use ::core::ptr::null_mut;

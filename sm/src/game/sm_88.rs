@@ -8,7 +8,7 @@ pub use crate::game::constants::bank_8f::*;
 use crate::game::explosion_window::{self, Phase};
 use crate::game::sm_80::{
     CheckBossBitForCurArea, CheckEventHappened, HandleMusicQueue, QueueMusic_Delayed8,
-    QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx2_Max6, SetEventHappened,
+    QueueSfx1_Max6, QueueSfx2_Max6, SetEventHappened,
 };
 use crate::game::sm_84::SpawnHardcodedPlm;
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
@@ -43,7 +43,6 @@ crate::game::constants::typed_constants! { Consts_88;
     addr_loc_889180 = 37248,
     addr_locret_88858A = 34186,
 }
-pub use crate::types::Consts_89;
 
 pub const NULL: *mut c_void = null_mut::<c_void>();
 crate::game::constants::typed_constants! { i32;

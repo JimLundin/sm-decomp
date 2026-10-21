@@ -11,7 +11,6 @@ pub use crate::types::Consts_AD;
 crate::game::constants::typed_constants! { Consts_AD;
     addr_kTurnOffLightsForShitroidDeath = 61999,
 }
-pub use crate::types::Func_CalcHdma;
 const RomPtr_AD: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xad>;
 crate::game::constants::typed_constants! { i32;
     fnMotherBrainBody_FakeDeath_Descent_0_Pause = 0xa9881d,

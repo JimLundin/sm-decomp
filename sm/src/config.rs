@@ -1,22 +1,16 @@
 use crate::c_library::{fprintf, free, realloc, stderr, strtol};
 use crate::host::Die;
 use crate::sdl_constants;
-use crate::set_fields;
-pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
-pub use crate::types::{
-    _IO_lock_t, __off64_t, __off_t, size_t, SDL_Keycode, Sint32, _IO_FILE, FILE,
-};
+pub use crate::types::{size_t, SDL_Keycode};
 use crate::util::{
     NextDelim, NextLineStripComments, NextPossiblyQuotedString, ReadWholeFile,
     ReplaceFilenameWithNewPath, SkipPrefix, SplitKeyValue, StringEqualsNoCase,
     StringStartsWithNoCase,
 };
-use ::core::ffi::{c_char, c_long, c_void};
+use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
 use ::core::ptr::{null, null_mut};
-pub use sdl2_sys::{
-    SDL_GameController, SDL_GetKeyFromName, SDL_Renderer, SDL_SysWMmsg, SDL_Texture, SDL_mutex,
-};
+pub use sdl2_sys::SDL_GetKeyFromName;
 crate::type_aliases! {
     pub C2RustUnnamed, C2RustUnnamed_2, C2RustUnnamed_4 = u32;
 }

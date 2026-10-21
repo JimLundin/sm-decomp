@@ -1,13 +1,9 @@
-use crate::c_library::{free, malloc, memset, puts};
+use crate::c_library::{malloc, puts};
 use crate::game_state::Game;
-use crate::set_fields;
 use crate::snes::dsp::{dsp_cycle, dsp_init, dsp_read, dsp_reset, dsp_saveload, dsp_write};
 use crate::snes::spc::{spc_init, spc_reset, spc_runOpcode, spc_saveload};
 use crate::tracing::getProcessorStateSpc;
-pub use crate::types::{
-    size_t, Apu, ApuHistory as C2RustUnnamed, Dsp, DspChannel, DspRegWriteHistory, SaveLoadFunc,
-    Spc, Timer,
-};
+pub use crate::types::{size_t, Apu, DspRegWriteHistory, SaveLoadFunc};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
 pub const true_0: i32 = 1;

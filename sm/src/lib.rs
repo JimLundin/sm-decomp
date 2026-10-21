@@ -309,7 +309,6 @@ pub mod game {
             $($enemy)*.current_instruction = $instruction;
         };
     }
-    pub(crate) use enemy_instruction;
 
     pub(crate) mod beam_firing;
     pub(crate) mod beam_windows;

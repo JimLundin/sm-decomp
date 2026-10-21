@@ -1,6 +1,5 @@
-use crate::c_library::{free, malloc, memset};
+use crate::c_library::{malloc, memset};
 use crate::game_state::Game;
-use crate::set_fields;
 pub use crate::types::{size_t, Dsp, DspChannel, SaveLoadFunc};
 use ::core::ffi::{c_double, c_void};
 use ::core::mem::size_of;

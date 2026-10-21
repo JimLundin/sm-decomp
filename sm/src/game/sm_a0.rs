@@ -46,7 +46,6 @@ crate::game::constants::typed_constants! { EnemyAiBits;
     kEnemyAiBits_Grapple = 1,
 }
 
-pub use crate::types::CalculateAngleFromXYFunc;
 crate::typed_struct! {
     [
         #[derive(Copy, Clone)]

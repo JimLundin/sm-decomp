@@ -1,13 +1,8 @@
 use crate::c_library::{free, malloc, memcpy, memset, printf};
 use crate::game_state::Game;
 use crate::snes::cart::cart_load;
-use crate::snes::dsp::dsp_getSamples;
 use crate::snes::snes::snes_reset;
-pub use crate::types::{
-    size_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
-    DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, Spc, Timer,
-    WindowLayer,
-};
+pub use crate::types::{size_t, Snes};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
 crate::typed_struct! {

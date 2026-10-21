@@ -20,14 +20,8 @@ use crate::snes::dma::dma_doDma;
 use crate::snes::snes::{snes_handle_pos_stuff, snes_init};
 use crate::snes::snes_other::snes_loadRom;
 use crate::tracing::getProcessorStateCpu;
-pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
-pub use crate::types::{
-    _IO_lock_t, __off64_t, __off_t, __time_t, size_t, time_t, Apu, ApuHistory as C2RustUnnamed,
-    BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel, DspRegWriteHistory, EnemyBase,
-    Enemy_Botwoon, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, Spc, Timer, VoidP,
-    WindowLayer, _IO_FILE, FILE,
-};
-pub use crate::types::{ProjectileInstr, SyncAllFunc};
+pub use crate::types::ProjectileInstr;
+pub use crate::types::{size_t, time_t, Cpu, Dma, Enemy_Botwoon, Ppu, Snes};
 use crate::util::ReadWholeFile;
 // Explicit state previously included by the oversized OAM memory copy.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -75,7 +69,6 @@ pub const RM_MINE: RunMode = 1;
 pub const RM_BOTH: RunMode = 0;
 pub const RM_THEIRS: RunMode = 2;
 pub use crate::types::RunMode;
-pub use crate::types::{RunFrameFunc, SnesRegs};
 pub const NULL: *mut c_void = null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;

@@ -16,27 +16,19 @@ use sm::sdl_constants;
 use sm::update_place;
 mod verify;
 pub use sdl2_sys::{
-    SDL_AudioDeviceEvent, SDL_AudioSpec, SDL_CloseAudioDevice, SDL_CommonEvent,
-    SDL_ControllerAxisEvent, SDL_ControllerButtonEvent, SDL_ControllerDeviceEvent,
-    SDL_ControllerSensorEvent, SDL_ControllerTouchpadEvent, SDL_CreateMutex, SDL_CreateRenderer,
-    SDL_CreateTexture, SDL_CreateWindow, SDL_Delay, SDL_DestroyMutex, SDL_DestroyRenderer,
-    SDL_DestroyTexture, SDL_DestroyWindow, SDL_DisplayEvent, SDL_DollarGestureEvent, SDL_DropEvent,
-    SDL_Event, SDL_GameController, SDL_GameControllerOpen, SDL_GetDisplayUsableBounds,
-    SDL_GetError, SDL_GetGlobalMouseState, SDL_GetModState, SDL_GetPerformanceCounter,
-    SDL_GetPerformanceFrequency, SDL_GetPixelFormatName, SDL_GetRendererInfo, SDL_GetTicks,
-    SDL_GetWindowBordersSize, SDL_GetWindowDisplayIndex, SDL_GetWindowFlags, SDL_GetWindowSize,
-    SDL_HitTest, SDL_HitTestResult, SDL_Init, SDL_IsGameController, SDL_JoyAxisEvent,
-    SDL_JoyBallEvent, SDL_JoyBatteryEvent, SDL_JoyButtonEvent, SDL_JoyDeviceEvent, SDL_JoyHatEvent,
-    SDL_KeyboardEvent, SDL_Keysym, SDL_LockMutex, SDL_LockTexture, SDL_MixAudioFormat,
-    SDL_MouseButtonEvent, SDL_MouseMotionEvent, SDL_MouseWheelEvent, SDL_MultiGestureEvent,
-    SDL_NumJoysticks, SDL_OpenAudioDevice, SDL_PauseAudioDevice, SDL_Point, SDL_PollEvent,
-    SDL_Quit, SDL_QuitEvent, SDL_Rect, SDL_RenderClear, SDL_RenderCopy, SDL_RenderPresent,
-    SDL_RenderSetLogicalSize, SDL_Renderer, SDL_RendererInfo, SDL_SensorEvent, SDL_SetHint,
-    SDL_SetWindowBordered, SDL_SetWindowFullscreen, SDL_SetWindowHitTest, SDL_SetWindowPosition,
-    SDL_SetWindowSize, SDL_SetWindowTitle, SDL_ShowCursor, SDL_ShowSimpleMessageBox,
-    SDL_SysWMEvent, SDL_SysWMmsg, SDL_TextEditingEvent, SDL_TextEditingExtEvent,
-    SDL_TextInputEvent, SDL_Texture, SDL_TouchFingerEvent, SDL_UnlockMutex, SDL_UnlockTexture,
-    SDL_UserEvent, SDL_WindowEvent, SDL_bool, SDL_memset, SDL_mutex,
+    SDL_AudioSpec, SDL_CloseAudioDevice, SDL_CreateMutex, SDL_CreateRenderer, SDL_CreateTexture,
+    SDL_CreateWindow, SDL_Delay, SDL_DestroyMutex, SDL_DestroyRenderer, SDL_DestroyTexture,
+    SDL_DestroyWindow, SDL_Event, SDL_GameControllerOpen, SDL_GetDisplayUsableBounds, SDL_GetError,
+    SDL_GetGlobalMouseState, SDL_GetModState, SDL_GetPerformanceCounter,
+    SDL_GetPerformanceFrequency, SDL_GetRendererInfo, SDL_GetTicks, SDL_GetWindowBordersSize,
+    SDL_GetWindowDisplayIndex, SDL_GetWindowFlags, SDL_GetWindowSize, SDL_HitTestResult, SDL_Init,
+    SDL_IsGameController, SDL_LockMutex, SDL_LockTexture, SDL_MixAudioFormat, SDL_NumJoysticks,
+    SDL_OpenAudioDevice, SDL_PauseAudioDevice, SDL_Point, SDL_PollEvent, SDL_Quit, SDL_Rect,
+    SDL_RenderClear, SDL_RenderCopy, SDL_RenderPresent, SDL_RenderSetLogicalSize, SDL_Renderer,
+    SDL_RendererInfo, SDL_SetHint, SDL_SetWindowBordered, SDL_SetWindowFullscreen,
+    SDL_SetWindowHitTest, SDL_SetWindowPosition, SDL_SetWindowSize, SDL_SetWindowTitle,
+    SDL_ShowCursor, SDL_ShowSimpleMessageBox, SDL_Texture, SDL_UnlockMutex, SDL_UnlockTexture,
+    SDL_bool, SDL_memset, SDL_mutex,
 };
 #[cfg(not(windows))]
 use sm::c_library::{__assert_fail, stderr};
@@ -46,7 +38,7 @@ use sm::c_library::{
 };
 use sm::config::{g_config, FindCmdForGamepadButton, FindCmdForSdlKey, ParseConfigFile};
 use sm::cpu_infra::SnesInit;
-use sm::host::{Die, Warning};
+use sm::host::Die;
 use sm::platform::opengl::OpenGLRenderer_Create;
 use sm::rtl::{
     RtlCheat, RtlClearKeyLog, RtlReadSram, RtlRenderAudio, RtlReset, RtlRunFrame, RtlSaveLoad,
@@ -54,16 +46,14 @@ use sm::rtl::{
 };
 use sm::snes::ppu::{PpuBeginDrawing, PpuGetCurrentRenderScale};
 use sm::spc_player::{SpcPlayer_Create, SpcPlayer_Initialize};
-pub use sm::types::{_IO_codecvt, _IO_marker, _IO_wide_data, SDL_Window};
-pub use sm::types::{_IO_lock_t, __mode_t, __off64_t, __off_t, size_t, _IO_FILE, FILE};
+pub use sm::types::SDL_Window;
+pub use sm::types::{__mode_t, size_t, FILE};
 sdl_constants! {
     SDL_bool: SDL_bool;
     SDL_TRUE, SDL_FALSE,
 }
 pub use sm::types::SDL_AudioDeviceID;
-pub use sm::types::{
-    SDL_AudioCallback, SDL_AudioFormat, Sint16, Sint32, Sint64, Uint16, Uint32, Uint64, Uint8,
-};
+pub use sm::types::{SDL_AudioCallback, SDL_AudioFormat, Sint32, Uint16, Uint32, Uint8};
 pub type C2RustUnnamed = u32;
 
 sdl_constants! {
@@ -85,7 +75,6 @@ sdl_constants! {
     SDL_HITTEST_RESIZE_TOP, SDL_HITTEST_RESIZE_TOPLEFT, SDL_HITTEST_DRAGGABLE,
     SDL_HITTEST_NORMAL,
 }
-pub use sm::types::SDL_Scancode;
 
 pub use sm::types::{SDL_Keycode, SDL_Keymod};
 
@@ -93,7 +82,6 @@ sdl_constants! {
     SDL_Keymod as SDL_Keymod;
     KMOD_ALT, KMOD_SHIFT, KMOD_CTRL,
 }
-pub use sm::types::{SDL_JoystickID, SDL_JoystickPowerLevel};
 
 pub type C2RustUnnamed_1 = i32;
 sdl_constants! {
@@ -103,7 +91,6 @@ sdl_constants! {
 }
 pub type C2RustUnnamed_2 = i32;
 
-pub use sm::types::{SDL_FingerID, SDL_GestureID, SDL_TouchID};
 pub type C2RustUnnamed_3 = u32;
 
 sdl_constants! {
@@ -125,11 +112,6 @@ sdl_constants! {
     SDL_TextureAccess as C2RustUnnamed_6;
     SDL_TEXTUREACCESS_STREAMING,
 }
-pub use sm::types::{
-    Apu, ApuHistory as C2RustUnnamed_7, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
-    DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, Spc, Timer,
-    WindowLayer,
-};
 pub type C2RustUnnamed_8 = u32;
 pub const kPpuRenderFlags_NoSpriteLimits: C2RustUnnamed_8 = 8;
 pub const kPpuRenderFlags_Height240: C2RustUnnamed_8 = 4;
@@ -139,7 +121,7 @@ pub use sm::types::SaveLoadOperation as C2RustUnnamed_9;
 pub const kSaveLoad_Replay: C2RustUnnamed_9 = 3;
 pub const kSaveLoad_Load: C2RustUnnamed_9 = 2;
 pub const kSaveLoad_Save: C2RustUnnamed_9 = 1;
-pub use sm::types::{Channel, KeyAction as C2RustUnnamed_10, SfxChan, SfxRegs, SpcPlayer};
+pub use sm::types::KeyAction as C2RustUnnamed_10;
 pub const kKeys_Total: C2RustUnnamed_10 = 130;
 pub const kKeys_VolumeDown: C2RustUnnamed_10 = 129;
 pub const kKeys_VolumeUp: C2RustUnnamed_10 = 128;
@@ -175,7 +157,7 @@ pub use sm::types::OutputMethod as C2RustUnnamed_11;
 pub const kOutputMethod_OpenGL: C2RustUnnamed_11 = 2;
 pub const kOutputMethod_SDLSoftware: C2RustUnnamed_11 = 1;
 pub const kOutputMethod_SDL: C2RustUnnamed_11 = 0;
-pub use sm::types::{Config, GamepadButton as C2RustUnnamed_12};
+pub use sm::types::GamepadButton as C2RustUnnamed_12;
 pub const kGamepadBtn_Count: C2RustUnnamed_12 = 17;
 pub const kGamepadBtn_R2: C2RustUnnamed_12 = 16;
 pub const kGamepadBtn_L2: C2RustUnnamed_12 = 15;
