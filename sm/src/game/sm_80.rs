@@ -1,3 +1,4 @@
+use crate::game::decompression::{self, decompress_to_ram};
 pub use crate::game::prelude::*;
 use crate::game::room_backgrounds::BackgroundLoad;
 
@@ -803,7 +804,7 @@ pub unsafe fn SetupDmaTransfer(p: *const c_void, game: &mut Game) {
 // Decompression uses RAM offsets; VRAM uses word addresses. WRAM transfers
 // retain all three destination-register bytes, including ignored bank bits.
 pub(crate) enum GraphicsAsset {
-    Decompress(u32, isize),
+    Decompress(u32, usize),
     VramWords(u32, u16, u16),
     VramLowBytes(u32, u16, u16),
     VramHighBytes(u32, u16, u16),
@@ -821,7 +822,7 @@ impl GraphicsAsset {
         });
         let (transfer, vram) = match self {
             Self::Decompress(source, destination) => {
-                DecompressToMem(source, ram_ptr!(game; destination), game);
+                decompress_to_ram(source, destination, game);
                 return;
             }
             Self::VramWords(source, destination, size) => (
@@ -2535,125 +2536,24 @@ pub unsafe fn DoorTransition_Up(game: &mut Game) -> u8 {
     (v6 == 56) as u8
 }
 
-unsafe fn DecompNextByte(game: &mut Game) -> u8 {
-    let b: u8 = *RomPtr(game.decompress_src, game);
-    crate::update_place! { previous fresh31 = game.decompress_src => game.decompress_src.wrapping_add(1); }
-    if (fresh31 & 0xffff) == 0xffff {
-        game.decompress_src = game.decompress_src.wrapping_add(0x8000);
+// The hardware adapter is constructed only by the unsafe VRAM entry point.
+// The shared decoder and RAM output do not contain unsafe operations.
+struct DecompressionVram<'a>(&'a mut Game);
+impl decompression::Output for DecompressionVram<'_> {
+    fn next_byte(&mut self) -> u8 {
+        decompression::next_byte(self.0)
     }
-    b
-}
-// Command decoding is shared; destinations retain their own byte/write protocol.
-trait DecompressionOutput {
-    fn start(&self) -> i32;
-    unsafe fn read(&self, position: i32, game: *mut Game) -> u8;
-    unsafe fn write(&self, position: i32, value: u8, back_reference: bool, game: *mut Game);
-}
-struct DecompressionMemory(*mut u8);
-impl DecompressionOutput for DecompressionMemory {
-    fn start(&self) -> i32 {
-        0
+    fn read(&mut self, position: i32) -> u8 {
+        unsafe { ReadPpuByte(position as u16, self.0) }
     }
-    unsafe fn read(&self, position: i32, _game: *mut Game) -> u8 {
-        *self.0.offset(position as isize)
-    }
-    unsafe fn write(&self, position: i32, value: u8, _back_reference: bool, _game: *mut Game) {
-        *self.0.offset(position as isize) = value;
-    }
-}
-struct DecompressionVram(u16);
-impl DecompressionOutput for DecompressionVram {
-    fn start(&self) -> i32 {
-        self.0 as i32
-    }
-    unsafe fn read(&self, position: i32, game: *mut Game) -> u8 {
-        ReadPpuByte(position as u16, &mut *game)
-    }
-    unsafe fn write(&self, position: i32, value: u8, back_reference: bool, game: *mut Game) {
-        if back_reference {
-            WriteRegWord(VMADDL as u16, (position >> 1) as u16, &mut *game);
-        }
-        WriteReg((VMDATAL as i32 + (position & 1)) as u16, value, &mut *game);
-    }
-}
-unsafe fn decompress<O: DecompressionOutput>(src: u32, output: O, game: *mut Game) {
-    (*game).decompress_src = src;
-    let mut destination = output.start();
-    loop {
-        let header = DecompNextByte(&mut *game);
-        if header == 0xff {
-            break;
-        }
-        let (command, mut remaining) = if header & 0xe0 == 0xe0 {
-            (
-                (8 * header as i32 & 0xe0) as u8,
-                ((header as i32 & 3) << 8 | DecompNextByte(&mut *game) as i32) + 1,
-            )
-        } else {
-            (header & 0xe0, (header as i32 & 0x1f) + 1)
-        };
-        if command & 0x80 != 0 {
-            let xor = if command & 0x20 != 0 { 0xff } else { 0 };
-            let mut source = if command >= 0xc0 {
-                destination - DecompNextByte(&mut *game) as i32
-            } else {
-                let low = DecompNextByte(&mut *game) as i32;
-                low + DecompNextByte(&mut *game) as i32 * 256 + output.start()
-            };
-            do_until! { remaining == 0;
-                let value = output.read(source, game) ^ xor;
-                source += 1;
-                output.write(destination, value, true, game);
-                destination += 1;
-                remaining -= 1;
+    fn write(&mut self, position: i32, value: u8, back_reference: bool) {
+        unsafe {
+            if back_reference {
+                WriteRegWord(VMADDL as u16, (position >> 1) as u16, self.0);
             }
-        } else {
-            match command {
-                0x20 => {
-                    let value = DecompNextByte(&mut *game);
-                    do_until! { remaining == 0;
-                        output.write(destination, value, false, game);
-                        destination += 1;
-                        remaining -= 1;
-                    }
-                }
-                0x40 => {
-                    let first = DecompNextByte(&mut *game);
-                    let second = DecompNextByte(&mut *game);
-                    do_until! { remaining == 0;
-                        output.write(destination, first, false, game);
-                        destination += 1;
-                        remaining -= 1;
-                        if remaining == 0 {
-                            break;
-                        }
-                        output.write(destination, second, false, game);
-                        destination += 1;
-                        remaining -= 1;
-                    }
-                }
-                0x60 => {
-                    let mut value = DecompNextByte(&mut *game);
-                    do_until! { remaining == 0;
-                        crate::update_place! { previous previous = value => value.wrapping_add(1); }
-                        output.write(destination, previous, false, game);
-                        destination += 1;
-                        remaining -= 1;
-                    }
-                }
-                _ => do_until! { remaining == 0;
-                                    let value = DecompNextByte(&mut *game);
-                                    output.write(destination, value, false, game);
-                                    destination += 1;
-                                    remaining -= 1;
-                },
-            }
+            WriteReg((VMDATAL as i32 + (position & 1)) as u16, value, self.0);
         }
     }
-}
-
-pub unsafe fn DecompressToMem(src: u32, decompress_dst: *mut u8, game: &mut Game) {
-    decompress(src, DecompressionMemory(decompress_dst), &raw mut *game);
 }
 unsafe fn ReadPpuByte(addr: u16, game: &mut Game) -> u8 {
     WriteRegWord(VMADDL as u16, (addr >> 1), game);
@@ -2666,7 +2566,8 @@ unsafe fn ReadPpuByte(addr: u16, game: &mut Game) -> u8 {
     }) as u8)
 }
 pub unsafe fn DecompressToVRAM(src: u32, dst_addr: u16, game: &mut Game) {
-    decompress(src, DecompressionVram(dst_addr), &raw mut *game);
+    game.decompress_src = src;
+    decompression::decode(i32::from(dst_addr), &mut DecompressionVram(game));
 }
 pub unsafe fn LoadFromLoadStation(game: &mut Game) {
     word!(game.save_station_lockout_flag = 1);

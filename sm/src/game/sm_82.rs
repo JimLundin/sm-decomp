@@ -1,3 +1,4 @@
+use crate::game::decompression::decompress_to_ram;
 use crate::game::gameplay::advance as AdvanceGameplay;
 pub use crate::game::prelude::*;
 use crate::game::room_backgrounds::BackgroundLoad;
@@ -12,13 +13,13 @@ use crate::game::message_boxes;
 use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
 use crate::game::sm_80::{
     memset7E, CalculateLayer2PosAndScrollsWhenScrolling, CheckEventHappened, ClearOamExt,
-    ClearTimerRam, ClearUnusedOam, CopyToVramNow, DecompressToMem, DecompressToVRAM,
-    DisableIrqInterrupts, DoorTransitionScrollingSetup, DrawTimer, EnableIrqInterruptsNow,
-    EnableNMI, FixDoorsMovingUp, GraphicsAsset, HandleFadeIn, HandleFadeOut, HandleHudTilemap,
-    HasQueuedMusic, InitializeHud, LoadFromLoadStation, LoadMirrorOfExploredMapTiles, NextRandom,
-    PrepareBitAccess, QueueClearingOfFxTilemap, QueueMusic_Delayed8, QueueMusic_DelayedY,
-    QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max15,
-    QueueSfx3_Max3, QueueSfx3_Max6, ReadJoypadInputs, ReleaseButtonsFilter, ResumeGameplay,
+    ClearTimerRam, ClearUnusedOam, CopyToVramNow, DecompressToVRAM, DisableIrqInterrupts,
+    DoorTransitionScrollingSetup, DrawTimer, EnableIrqInterruptsNow, EnableNMI, FixDoorsMovingUp,
+    GraphicsAsset, HandleFadeIn, HandleFadeOut, HandleHudTilemap, HasQueuedMusic, InitializeHud,
+    LoadFromLoadStation, LoadMirrorOfExploredMapTiles, NextRandom, PrepareBitAccess,
+    QueueClearingOfFxTilemap, QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15,
+    QueueSfx1_Max6, QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max3,
+    QueueSfx3_Max6, ReadJoypadInputs, ReleaseButtonsFilter, ResumeGameplay,
     SaveExploredMapTilesToSaved, SetElevatorsAsUsed, SetupDmaTransfer, StartGameplay_Async,
     Vector_NMI, Vector_RESET_Async, WaitForNMI_Async,
 };
@@ -3929,14 +3930,10 @@ crate::game::callback_dispatch! {
         game.set_irqhandler_next_handler(irq_handler);
         WaitUntilEndOfVblankAndEnableIrq(game);
         if game.cre_bitset() & 2 != 0 && game.door_def_ptr() != addr_kDoorDef_947a as u16 {
-            DecompressToMem(0xb98000, ram_ptr!(game; 0x7000), game);
+            decompress_to_ram(0xb98000, 0x7000, game);
         }
-        DecompressToMem(game.tileset_tiles_pointer(), ram_ptr!(game; 0x2000), game);
-        DecompressToMem(
-            game.tileset_compr_palette_ptr(),
-            ram_ptr!(game; 0xc200),
-            game,
-        );
+        decompress_to_ram(game.tileset_tiles_pointer(), 0x2000, game);
+        decompress_to_ram(game.tileset_compr_palette_ptr(), 0xc200, game);
         CopyToVramNow(0, 0x7e2000, 0x2000, game);
         CopyToVramNow(0x1000, 0x7e4000, 0x2000, game);
         CopyToVramNow(0x2000, 0x7e6000, 0x1000, game);
@@ -4146,20 +4143,12 @@ pub unsafe fn LoadCRETilesTilesetTilesAndPalette(game: &mut Game) {
     DecompressToVRAM(0xb98000, addr_unk_605000 as u16, game);
     WriteRegWord(VMADDL as u16, 0, game);
     DecompressToVRAM(Load24(ram_ptr!(game, LongPtr; 0x7c3)), 0, game);
-    DecompressToMem(
-        Load24(ram_ptr!(game, LongPtr; 0x7c6)),
-        ram_ptr!(game; 0xc200),
-        game,
-    );
+    decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c6)), 0xc200, game);
 }
 
 macro_rules! decompress_room_level_and_split_arrays {
     ($game:ident) => {
-        DecompressToMem(
-            Load24(ram_ptr!($game, LongPtr; 0x7bd)),
-            ram_ptr!($game, u16; 0x10000) as *mut u8,
-            $game,
-        );
+        decompress_to_ram(Load24(ram_ptr!($game, LongPtr; 0x7bd)), 0x10000, $game);
         let size: u16 = word!($game.ram7F_start);
         memcpy(
             ram_ptr!($game, u16; 0x19602) as *mut c_void,
@@ -4178,18 +4167,10 @@ pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
     word_transfers!(game, descending, 12800; le(level_data, 12799) <- value(0x8000));
     decompress_room_level_and_split_arrays!(game);
     if word!(game.area_index) == 6 {
-        DecompressToMem(
-            Load24(ram_ptr!(game, LongPtr; 0x7c0)),
-            ram_ptr!(game; 0xa000),
-            game,
-        );
+        decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c0)), 0xa000, game);
     } else {
-        DecompressToMem(0xb9a09d, ram_ptr!(game; 0xa000), game);
-        DecompressToMem(
-            Load24(ram_ptr!(game, LongPtr; 0x7c0)),
-            ram_ptr!(game; 0xa800),
-            game,
-        );
+        decompress_to_ram(0xb9a09d, 0xa000, game);
+        decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c0)), 0xa800, game);
     }
     let RD = get_RoomDefRoomstate(word!(game.roomdefroomstate_ptr), game);
     let mut rdf_scroll_ptr: i16 = (*RD).rdf_scroll_ptr as i16;
@@ -4290,20 +4271,12 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
     );
     decompress_room_level_and_split_arrays!(game);
     if word!(game.area_index) == 6 {
-        DecompressToMem(
-            Load24(ram_ptr!(game, LongPtr; 0x7c0)),
-            ram_ptr!(game; 0xa000),
-            game,
-        );
+        decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c0)), 0xa000, game);
     } else {
         if (word!(game.cre_bitset) & 2) != 0 {
-            DecompressToMem(0xb9a09d, ram_ptr!(game; 0xa000), game);
+            decompress_to_ram(0xb9a09d, 0xa000, game);
         }
-        DecompressToMem(
-            Load24(ram_ptr!(game, LongPtr; 0x7c0)),
-            ram_ptr!(game; 0xa800),
-            game,
-        );
+        decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c0)), 0xa800, game);
     }
     let RD = get_RoomDefRoomstate(word!(game.roomdefroomstate_ptr), game);
     let mut rdf_scroll_ptr: i16 = (*RD).rdf_scroll_ptr as i16;
@@ -4400,11 +4373,11 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
         reg_BG1HOFS, reg_BG1VOFS, reg_BG2HOFS, reg_BG2VOFS, debug_invincibility,
     }
     word_transfers!(game, descending, 256; le(palette_buffer, 255) <- rom(0x8ee400, 255));
-    DecompressToMem(0x978df4, ram_ptr!(game; 0x1c000), game);
-    DecompressToMem(0x978fcd, ram_ptr!(game; 0x1c800), game);
-    DecompressToMem(0x9791c4, ram_ptr!(game; 0x1d000), game);
-    DecompressToMem(0x97938d, ram_ptr!(game; 0x1d800), game);
-    DecompressToMem(0x97953a, ram_ptr!(game; 0x1e000), game);
+    decompress_to_ram(0x978df4, 0x1c000, game);
+    decompress_to_ram(0x978fcd, 0x1c800, game);
+    decompress_to_ram(0x9791c4, 0x1d000, game);
+    decompress_to_ram(0x97938d, 0x1d800, game);
+    decompress_to_ram(0x97953a, 0x1e000, game);
     word_transfers!(game, descending, 1024; pause_map(1023) <- le(custom_background, 6398));
     // The ROM keeps the final copied tile in A through the object clear.
     let initial_tile = u16::from_le_bytes([game.g_ram[0x3000], game.g_ram[0x3001]]);

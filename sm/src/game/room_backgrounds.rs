@@ -1,6 +1,7 @@
 //! Room background commands, with the original initial-load and door DMA effects.
+use crate::game::decompression::decompress_to_ram;
 use crate::game::prelude::*;
-use crate::game::sm_80::{CopyToVramNow, DecompressToMem};
+use crate::game::sm_80::CopyToVramNow;
 
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
 
@@ -61,9 +62,9 @@ impl BackgroundLoad {
                 match self {
                     Self::Initial => {
                         let p = RomPtr_8F(cursor, game);
-                        DecompressToMem(
+                        decompress_to_ram(
                             Load24(p as *mut LongPtr),
-                            ram_ptr!(game; *(p.offset(3) as *mut u16) as i32 as isize),
+                            *(p.offset(3) as *mut u16) as usize,
                             game,
                         );
                     }
@@ -72,7 +73,7 @@ impl BackgroundLoad {
                         let source = u32::from(game.read_rom_word(address, 0))
                             | (u32::from(game.read_rom_byte(address, 2)) << 16);
                         let destination = usize::from(game.read_rom_word(address, 3));
-                        DecompressToMem(source, game.g_ram.as_mut_ptr().add(destination), game);
+                        decompress_to_ram(source, destination, game);
                     }
                 }
                 return cursor.wrapping_add(5);

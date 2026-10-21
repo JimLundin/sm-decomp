@@ -313,6 +313,7 @@ pub mod game {
     pub(crate) mod beam_firing;
     pub(crate) mod beam_windows;
     pub mod constants;
+    pub(crate) mod decompression;
     pub(crate) mod enemy_layouts;
     pub(crate) mod enemy_ram;
     pub(crate) mod explosion_window;

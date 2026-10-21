@@ -1,3 +1,4 @@
+use crate::game::decompression::decompress_to_ram;
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
@@ -5,8 +6,8 @@ pub use crate::game::constants::bank_86::*;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::minimap;
 use crate::game::sm_80::{
-    DecompressToMem, GraphicsAsset, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6,
-    QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn, WaitForNMI_Async,
+    GraphicsAsset, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max15,
+    QueueSfx2_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn, WaitForNMI_Async,
 };
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
 use crate::game::sm_84::SpawnHardcodedPlm;
@@ -287,8 +288,8 @@ pub unsafe fn Kraid_SetEnemyPropsToDead(game: &mut Game) {
     (*E).base.properties = ((*E).base.properties & 0x50ff | 0x700);
 }
 pub unsafe fn Kraid_SetupGfxWithTilePrioClear(r18: u16, game: &mut Game) {
-    DecompressToMem(0xb9fa38, ram_ptr!(game; 0x4000), game);
-    DecompressToMem(0xb9fe3e, ram_ptr!(game; 0x2000), game);
+    decompress_to_ram(0xb9fa38, 0x4000, game);
+    decompress_to_ram(0xb9fe3e, 0x2000, game);
     let E = Get_Kraid(0, game);
     set_fields! {[(*E)], 0; kraid_hurt_frame, kraid_hurt_frame_timer}
     for v1 in (0u16..1536).step_by(2) {

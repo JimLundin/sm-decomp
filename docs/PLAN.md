@@ -34,10 +34,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,264 Rust lines in 91 files**, plus 265 C
-bridge and 305 C-header lines = **94,834 maintained implementation lines**.
+Current composition (2026-10-22): **94,256 Rust lines in 92 files**, plus 265 C
+bridge and 305 C-header lines = **94,826 maintained implementation lines**.
 Counting all 804 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,666**. This complete recount includes frontend,
+gives **95,658**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1600,6 +1600,21 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    scenarios execute the changed reads, lifecycle, patching and bus consumers.
    Allocator-event identity, physical hardware and gameplay-route coverage are not
    claimed. Checks: Local/sm-decomp-experiments/20261022/owned-rom.
+   Asset decompression now has one safe byte decoder and a checked RAM-offset
+   entry point, used by all room, graphics, menu and boss callers. The module
+   forbids unsafe code; its input reads the owned ROM image. One output loop
+   handles literals, fills, alternating/incrementing runs and overlapping absolute
+   or relative references. The existing unsafe VRAM adapter preserves its register
+   protocol. All callers, registrations and the adapter included, this removes
+   **8 maintained lines** and adds no macros. Source-checked old/new comparisons
+   pass 1,621 full-RAM/PPU/normalized-Snes/cursor/failure cases and 672,705 ordered
+   register observations, using the real PPU backend. The actual release-library
+   Kraid graphics and room tiles/palette callers pass another 256 full-state cases;
+   all 98 old/99 final library inputs match. Checked out-of-range writes fail after
+   the valid prefix; lower-half ROM warnings preserve failure state and exact
+   Windows stdout bytes. Normal release library/frontend/verifier builds pass.
+   No movie ran; synthetic streams establish no gameplay-route or physical-device
+   coverage. Checks: Local/sm-decomp-experiments/20261022/safe-decompression.
    Pose-history recording now copies the two four-byte records using checked byte
    places, preserving the previous record before replacing it. It eliminates four
    raw word reads and four raw word stores, and its entry point is safe. Direct
@@ -2495,15 +2510,18 @@ effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects,
 scrolling-sky and grapple-swing ownership, the SPC/PPU/DSP/music replacements,
 shared configuration/input and utility dependencies, the desktop host,
 room-scroll data, the shader dependency, safe pose/mechanism RAM access,
-gameplay continuation ownership and owned ROM reads,
-maintained Rust is **94,264**, with
+gameplay continuation ownership, owned ROM reads and safe asset decompression,
+maintained Rust is **94,256**, with
 applicable static, component and exercised movie checks passing.
-Including 265 C and 305 header lines gives **94,834**; all 804 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,666**.
+Including 265 C and 305 header lines gives **94,826**; all 804 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,658**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3066; cast lines 6634. Owned ROM access adds 28 lines and removes
+unsafe functions 3057; cast lines 6626. Safe asset decompression removes nine
+counted unsafe declarations and eight cast-containing lines, with no counter
+increases. Its VRAM hardware interface still contains explicit unsafe operations.
+Owned ROM access adds 28 lines and removes
 one unsafe registration declaration plus the Game/cart raw ROM dereferences.
 Gameplay continuation ownership adds 55 lines without changing other counters.
 These are safety/ownership costs, not reductions. Safe pose history adds one line and
