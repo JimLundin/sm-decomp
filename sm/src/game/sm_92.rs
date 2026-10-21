@@ -49,10 +49,7 @@ pub unsafe fn PlaySamusFanfare(game: &mut Game) -> u8 {
         word!(game.substate, wrapping_add(1));
         0
     } else {
-        word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-        *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-        word!(game.samus_prev_pose = word!(game.samus_pose));
-        *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+        crate::game::samus_pose::record_pose_history(game);
         word!(game.substate = 0);
         1
     }

@@ -4,6 +4,10 @@
 
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/samus_pose.rs",
+        include_bytes!("game/samus_pose.rs"),
+    ),
+    (
         "sm/src/game/beam_windows.rs",
         include_bytes!("game/beam_windows.rs"),
     ),

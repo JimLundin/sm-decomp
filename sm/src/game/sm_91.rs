@@ -438,12 +438,7 @@ crate::game::callback_dispatch! {
     [0x918739] DemoInstr_Func3 [j] {
         word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
         word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
-        SamusFunc_F433(game);
-        Samus_SetAnimationFrameIfPoseChanged(game);
-        word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-        *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-        word!(game.samus_prev_pose = word!(game.samus_pose));
-        *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+        crate::game::samus_pose::finish_pose_change(game);
         DisableDemoInput(game);
         word!(game.samus_input_handler = ((0x90e90ei32) as u16));
     };
@@ -599,23 +594,20 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
 }
 pub unsafe fn DemoSetFunc_Common(pose: u16, game: &mut Game) {
     game.set_samus_pose(pose);
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
+    crate::game::samus_pose::refresh_pose(game);
     game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
 }
 pub unsafe fn DemoSetFunc_5(game: &mut Game) {
     game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
     Projectile_Func7_Shinespark(game);
     game.set_samus_pose(kPose_CD_FaceR_Shinespark_Diag as u16);
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
+    crate::game::samus_pose::refresh_pose(game);
 }
 pub unsafe fn DemoSetFunc_6(game: &mut Game) {
     word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
     Projectile_Func7_Shinespark(game);
     word!(game.samus_pose = kPose_CA_FaceL_Shinespark_Horiz as u16);
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
+    crate::game::samus_pose::refresh_pose(game);
 }
 pub unsafe fn XrayRunHandler(game: &mut Game) {
     if word!(game.time_is_frozen_flag) == 0
@@ -1168,8 +1160,7 @@ pub unsafe fn VariaSuitPickup(game: &mut Game) {
     } else {
         word!(game.samus_pose = kPose_00_FaceF_Powersuit as u16);
     }
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
+    crate::game::samus_pose::refresh_pose(game);
     CallSomeSamusCode(0x15, game);
     word!(game.samus_x_pos = (word!(game.layer1_x_pos)).wrapping_add(120));
     word!(game.samus_prev_x_pos = (word!(game.layer1_x_pos)).wrapping_add(120));
@@ -1204,8 +1195,7 @@ pub unsafe fn GravitySuitPickup(game: &mut Game) {
     } else {
         word!(game.samus_pose = kPose_00_FaceF_Powersuit as u16);
     }
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
+    crate::game::samus_pose::refresh_pose(game);
     CallSomeSamusCode(0x15, game);
     word!(game.samus_x_pos = (word!(game.layer1_x_pos)).wrapping_add(120));
     word!(game.samus_prev_x_pos = (word!(game.layer1_x_pos)).wrapping_add(120));
@@ -1979,12 +1969,7 @@ pub unsafe fn ResponsibleForXrayStandupGlitch(game: &mut Game) {
     } else {
         word!(game.samus_pose = kPose_01_FaceR_Normal as u16);
     }
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
-    word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-    *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-    word!(game.samus_prev_pose = word!(game.samus_pose));
-    *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+    crate::game::samus_pose::finish_pose_change(game);
     word! {game; samus_movement_handler = ((0x90a337i32) as u16);
     samus_input_handler = ((0x90e913i32) as u16); demo_timer_counter = -1i32 as u16; }
     let r18: u16 = (((*(rom_ptr!(game, SamusPoseParams; 0x91b629))
@@ -2006,12 +1991,7 @@ pub unsafe fn MakeSamusFaceForward(game: &mut Game) {
     } else {
         word!(game.samus_pose = kPose_00_FaceF_Powersuit as u16);
     }
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
-    word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-    *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-    word!(game.samus_prev_pose = word!(game.samus_pose));
-    *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+    crate::game::samus_pose::finish_pose_change(game);
     if word!(game.samus_y_radius) != 24 {
         word!(game.samus_y_pos, wrapping_sub(3));
         word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
@@ -2038,10 +2018,7 @@ static kSomeMotherBrainScripts: [Func_U8; 5] = callback_table! { nonnull Func_U8
 };
 pub unsafe fn SomeMotherBrainScripts(a: u16, game: &mut Game) {
     if kSomeMotherBrainScripts[a as usize](game) & 1 != 0 {
-        word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-        *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-        word!(game.samus_prev_pose = word!(game.samus_pose));
-        *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+        crate::game::samus_pose::record_pose_history(game);
         word! {game; samus_new_pose = -1i32 as u16; samus_new_pose_interrupted = -1i32 as u16;
         samus_new_pose_transitional = -1i32 as u16; }
         word! { game, 0;
@@ -2061,8 +2038,7 @@ pub unsafe fn SomeMotherBrainScripts_0(game: &mut Game) -> u8 {
         word!(game.samus_pose = kPose_E8_FaceR_Drained_CrouchFalling as u16);
     }
     word!(game.samus_anim_frame_skip = 2);
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
+    crate::game::samus_pose::refresh_pose(game);
     word!(
         game.samus_y_radius = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
             .offset(word!(game.samus_pose) as isize))
@@ -2171,12 +2147,6 @@ pub unsafe fn SamusFunc_E633(game: &mut Game) {
         QueueSfx3_Max6(2, game);
     }
 }
-pub unsafe fn Samus_UpdatePreviousPose_0(game: &mut Game) {
-    word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-    *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-    word!(game.samus_prev_pose = word!(game.samus_pose));
-    *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
-}
 pub unsafe fn SamusFunc_E633_0(game: &mut Game) {
     let refresh_pose: bool = if word!(game.samus_pose) != 0 {
         (word!(game.samus_pose) as i32 == kPose_9B_FaceF_VariaGravitySuit as i32
@@ -2194,9 +2164,7 @@ pub unsafe fn SamusFunc_E633_0(game: &mut Game) {
             })
     };
     if refresh_pose {
-        SamusFunc_F433(game);
-        Samus_SetAnimationFrameIfPoseChanged(game);
-        Samus_UpdatePreviousPose_0(game);
+        crate::game::samus_pose::finish_pose_change(game);
     };
 }
 pub unsafe fn SamusFunc_E633_3(game: &mut Game) {
@@ -2230,14 +2198,13 @@ pub unsafe fn SamusFunc_E633_3(game: &mut Game) {
             word!(game.samus_pose = kPose_19_FaceR_SpinJump as u16);
         }
     }
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
+    crate::game::samus_pose::refresh_pose(game);
     if *ram_ptr!(game; 0xa1e) == 4 {
         *(ram_ptr!(game, u16; 0xa22)) = 772;
     } else {
         *(ram_ptr!(game, u16; 0xa22)) = 776;
     }
-    Samus_UpdatePreviousPose_0(game);
+    crate::game::samus_pose::record_pose_history(game);
 }
 pub unsafe fn SamusFunc_E633_4(game: &mut Game) {
     if (word!(game.equipped_items) & 2) != 0 {
@@ -2246,9 +2213,7 @@ pub unsafe fn SamusFunc_E633_4(game: &mut Game) {
         } else {
             word!(game.samus_pose = kPose_79_FaceR_Springball_Ground as u16);
         }
-        SamusFunc_F433(game);
-        Samus_SetAnimationFrameIfPoseChanged(game);
-        Samus_UpdatePreviousPose_0(game);
+        crate::game::samus_pose::finish_pose_change(game);
     }
 }
 pub unsafe fn SamusFunc_E633_17(game: &mut Game) {
@@ -2258,9 +2223,7 @@ pub unsafe fn SamusFunc_E633_17(game: &mut Game) {
         } else {
             word!(game.samus_pose = kPose_1D_FaceR_Morphball_Ground as u16);
         }
-        SamusFunc_F433(game);
-        Samus_SetAnimationFrameIfPoseChanged(game);
-        Samus_UpdatePreviousPose_0(game);
+        crate::game::samus_pose::finish_pose_change(game);
     }
 }
 pub unsafe fn SamusFunc_E633_20(game: &mut Game) {
@@ -2530,8 +2493,7 @@ pub unsafe fn Samus_HandleTransitions(game: &mut Game) {
     let changed = if let Some(apply_pose) = transitional {
         if apply_pose {
             word!(game.samus_pose = word!(game.samus_new_pose_transitional));
-            SamusFunc_F433(game);
-            Samus_SetAnimationFrameIfPoseChanged(game);
+            crate::game::samus_pose::refresh_pose(game);
         }
         kSamus_HandleTransitionsC[word!(game.samus_hurt_switch_index) as usize](game);
         true
@@ -2554,10 +2516,7 @@ pub unsafe fn Samus_HandleTransitions(game: &mut Game) {
         }
     };
     if changed {
-        word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-        *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-        word!(game.samus_prev_pose = word!(game.samus_pose));
-        *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+        crate::game::samus_pose::record_pose_history(game);
     }
     word!(game.input_to_pose_calc = 0);
 }
@@ -3641,12 +3600,7 @@ pub unsafe fn Samus_Func20(game: &mut Game) {
             } else {
                 word!(game.samus_pose = kPose_D9_FaceR_Xray_Crouch as u16);
             }
-            SamusFunc_F433(game);
-            Samus_SetAnimationFrameIfPoseChanged(game);
-            word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-            *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-            word!(game.samus_prev_pose = word!(game.samus_pose));
-            *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+            crate::game::samus_pose::finish_pose_change(game);
         }
     } else {
         if *ram_ptr!(game; 0xa1e) == 4 {
@@ -3670,12 +3624,7 @@ pub unsafe fn Samus_Func20(game: &mut Game) {
                 word!(game.samus_pose = kPose_25_FaceR_Turn_Stand as u16);
             }
         }
-        SamusFunc_F433(game);
-        Samus_SetAnimationFrameIfPoseChanged(game);
-        word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-        *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-        word!(game.samus_prev_pose = word!(game.samus_pose));
-        *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+        crate::game::samus_pose::finish_pose_change(game);
     };
 }
 static off_91FE8A: [Func_U8; 4] = callback_table! { nonnull Func_U8;

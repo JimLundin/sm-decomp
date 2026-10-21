@@ -314,6 +314,7 @@ pub mod game {
     pub(crate) mod intro_pages;
     pub(crate) mod moving_platforms;
     pub(crate) mod projectile_flight;
+    pub(crate) mod samus_pose;
     pub mod sm_80;
     pub mod sm_81;
     pub mod sm_82;

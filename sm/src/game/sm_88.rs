@@ -16,8 +16,7 @@ use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::{
     CanXrayShowBlocks, HdmaobjPreInstr_XraySetup, InitializeSuitPickupHdma,
-    ResponsibleForXrayStandupGlitch, SamusFunc_F433, Samus_LoadSuitPalette,
-    Samus_SetAnimationFrameIfPoseChanged, Xray_SetupStage1_FreezeTimeBackup,
+    ResponsibleForXrayStandupGlitch, Samus_LoadSuitPalette, Xray_SetupStage1_FreezeTimeBackup,
     Xray_SetupStage2_ReadBg1_2ndScreen, Xray_SetupStage3_ReadBg1_1stScreen, Xray_SetupStage4,
     Xray_SetupStage5, Xray_SetupStage6, Xray_SetupStage7, Xray_SetupStage8_SetBackdropColor,
 };
@@ -2383,12 +2382,7 @@ pub unsafe fn VariaSuitPickup_3(game: &mut Game) -> u8 {
     word!(game.equipped_items, |fresh22| (fresh22) | (1u16));
     word!(game.collected_items, |fresh23| (fresh23) | (1u16));
     word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
-    word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-    *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-    word!(game.samus_prev_pose = word!(game.samus_pose));
-    *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+    crate::game::samus_pose::finish_pose_change(game);
     Samus_LoadSuitPalette(game);
     word!(game.substate, wrapping_add(1));
     1
@@ -2397,12 +2391,7 @@ pub unsafe fn GravitySuitPickup_3(game: &mut Game) -> u8 {
     word!(game.equipped_items, |fresh9| (fresh9) | (0x20u16));
     word!(game.collected_items, |fresh10| (fresh10) | (0x20u16));
     word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
-    word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-    *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-    word!(game.samus_prev_pose = word!(game.samus_pose));
-    *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+    crate::game::samus_pose::finish_pose_change(game);
     Samus_LoadSuitPalette(game);
     word!(game.substate, wrapping_add(1));
     1

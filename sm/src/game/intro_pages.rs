@@ -20,10 +20,7 @@ use super::sm_8b::{
     SpawnMode7Object, TransferJapaneseTextTilesToVram,
 };
 use super::sm_8d::SpawnPalfxObject;
-use super::sm_91::{
-    EnableDemoInput, LoadDemoInputObject, ResetDemoData, SamusFunc_F433,
-    Samus_SetAnimationFrameIfPoseChanged,
-};
+use super::sm_91::{EnableDemoInput, LoadDemoInputObject, ResetDemoData};
 use crate::game_state::Game;
 use crate::ram_map::{ram_ptr, word};
 
@@ -110,12 +107,7 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
                 word! {game; room_width_in_blocks = 32; room_height_in_blocks = 16; }
             }
             word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
-            SamusFunc_F433(game);
-            Samus_SetAnimationFrameIfPoseChanged(game);
-            word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-            *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-            word!(game.samus_prev_pose = word!(game.samus_pose));
-            *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+            crate::game::samus_pose::finish_pose_change(game);
             let (x, y) = if mother_brain { (155, 115) } else { (376, 147) };
             word! {game; samus_x_pos = x; samus_prev_x_pos = x; samus_y_pos = y;
             samus_prev_y_pos = y; cinematic_var8 = 0; cinematic_var13 = 127; }

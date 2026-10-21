@@ -10,10 +10,7 @@ use crate::game::sm_90::{
     CallSomeSamusCode, LoadProjectilePalette, Samus_DrawStartingDeathAnim, Samus_GetBottom_R18,
     Samus_GrappleWallJumpCheck, Samus_PostGrappleCollisionDetect,
 };
-use crate::game::sm_91::{
-    SamusFunc_F433, Samus_DealDamage, Samus_LoadSuitPalette, Samus_Pose_CancelGrapple,
-    Samus_SetAnimationFrameIfPoseChanged,
-};
+use crate::game::sm_91::{Samus_DealDamage, Samus_LoadSuitPalette, Samus_Pose_CancelGrapple};
 use crate::game::sm_92::DrawSamusSuitExploding;
 use crate::game::sm_93::ProjectileInsts_GetValue;
 use crate::game::sm_94::{
@@ -133,12 +130,7 @@ pub unsafe fn StartSamusDeathAnimation(game: &mut Game) {
     } else {
         word!(game.samus_pose = kPose_D7_FaceR_CrystalFlashEnd as u16);
     }
-    SamusFunc_F433(game);
-    Samus_SetAnimationFrameIfPoseChanged(game);
-    word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
-    *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
-    word!(game.samus_prev_pose = word!(game.samus_pose));
-    *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
+    crate::game::samus_pose::finish_pose_change(game);
     word! {game; samus_anim_frame_skip = 0; samus_anim_frame = v1; }
     word!(game.samus_x_pos, wrapping_sub(word!(game.layer1_x_pos)));
     word!(game.samus_y_pos, wrapping_sub(word!(game.layer1_y_pos)));
