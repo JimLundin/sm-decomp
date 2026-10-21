@@ -2,16 +2,16 @@ use crate::c_library::strcpy;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
 pub use crate::game::prelude::*;
+use crate::game::scrolling_sky::{
+    initialize_land, initialize_ocean, queue_land_rows, queue_ocean_rows,
+};
 use crate::game::sm_80::{
     CheckBossBitForCurArea, CheckEventHappened, NextRandom, QueueSfx2_Max6, SetEventHappened,
 };
 use crate::game::sm_84::SpawnHardcodedPlm;
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_87::SpawnAnimtiles;
-use crate::game::sm_88::{
-    FxTypeFunc_20, FxTypeFunc_2C_Haze, RoomCode_ScrollingSkyLand, RoomMainAsm_ScrollingSkyOcean,
-    RoomSetupAsm_ScrollingSkyOcean,
-};
+use crate::game::sm_88::FxTypeFunc_2C_Haze;
 use crate::game::sm_89::RoomCode_CeresElevatorShaft;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_94::Samus_MoveDown_NoSolidColl;
@@ -294,7 +294,7 @@ crate::game::callback_dispatch! {
     };
     [9408957] RoomSetup_ShakeDuringEscape [] {
         word! {game; earthquake_type = 6; earthquake_timer = -1i32 as u16; }
-        FxTypeFunc_20(game);
+        initialize_land(game);
     };
     [9408983] RoomSetup_RunStatueUnlockAnims [] {
         SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Kraid as u16, game);
@@ -362,8 +362,8 @@ crate::game::callback_dispatch! {
         game,
     );
     @forward [pub unsafe fn (game: &mut Game)];
-    [9408969] RoomSetup_ScrollingSkyLand => FxTypeFunc_20(game);
-    [9408974] RoomSetup_ScrollingSkyOcean => RoomSetupAsm_ScrollingSkyOcean(game);
+    [9408969] RoomSetup_ScrollingSkyLand => initialize_land(game);
+    [9408974] RoomSetup_ScrollingSkyOcean => initialize_ocean(game);
     @forward [pub unsafe fn (game: &mut Game)];
     [9423048] RoomCode_8FC8C8 => SpawnEprojWithRoomGfx(addr_kEproj_PrePhantomRoom as u16, 0, game);
     [9423059]
@@ -494,7 +494,7 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [9421088] RoomCode_ScrollingSkyLand_Shakes [] {
-        RoomCode_ScrollingSkyLand(game);
+        queue_land_rows(game);
         RoomCode_GenRandomExplodes_Nonblank(game);
         word!(game.earthquake_timer |= (0x8000u16));
     };
@@ -633,8 +633,8 @@ crate::game::callback_dispatch! {
         }
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [9421078] RoomCode_ScrollingSkyLand_ => RoomCode_ScrollingSkyLand(game);
-    [9421083] RoomCode_ScrollingSkyOcean_ => RoomMainAsm_ScrollingSkyOcean(game);
+    [9421078] RoomCode_ScrollingSkyLand_ => queue_land_rows(game);
+    [9421083] RoomCode_ScrollingSkyOcean_ => queue_ocean_rows(game);
     @external {
         9430308 => [()];
     }

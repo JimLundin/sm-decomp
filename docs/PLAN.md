@@ -17,16 +17,21 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **99,059 Rust lines in 86 files**, plus a
-four-line C bridge = **99,063 maintained implementation lines**. Counting the
-new 41-line CPU installer as well gives **99,104**. This is an actual complete
+Current composition (2026-10-21): **98,994 Rust lines in 87 files**, plus a
+four-line C bridge = **98,998 maintained implementation lines**. Counting the
+new 41-line CPU installer as well gives **99,039**. This is an actual complete
 source recount, including frontend and verifier code, all adapters, callers and
 registrations. Existing development scripts/configuration/docs are outside this
 implementation metric. The two pinned dependencies add **2,836 CPU C/header
 lines and 7,762 stb header lines**, disclosed separately, like existing GL/SDL.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
-Liquid setup, rising motion, tide and background HDMA tables pass **6,598**
+Scrolling-sky setup, parallax, HDMA bands and tile uploads pass **1,702**
+actual old/new full-RAM, completion and failure-flag comparisons, with 30
+matching ordered spawn boundaries. Actual ROM band edges, constructed counts,
+wave phases/timers, aliased slots and transfers, frozen paths and sequential
+updates are covered. Spawning is modeled; hardware/movie execution is not
+established. No movie ran. Previous liquid effects pass **6,598**
 actual old/new full-RAM, completion and failure-flag comparisons, with 1,511
 matching ordered boundary events. Checks cover motion/clamp boundaries, all
 tide phases, wave modes, frozen updates, aliased slots and callback mutation.
@@ -1460,14 +1465,16 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
 4. [ ] **Retire bank ownership by gameplay responsibility.** Select a complete
    responsibility, such as Samus movement, with an exercised boundary and named
    routines. Migrate its real callers and state transitions, then remove its
-   retired bank facade. Water, lava and acid setup, rising motion, tide and
-   background HDMA tables now belong to `liquid_effects`. Shared motion,
-   surface geometry and wave-table construction retain the straddling tide
-   accesses, odd/high slot behavior and water's one-word table displacement.
-   The complete replacement removes **75 lines (99,134 -> 99,059)**, 1,500
-   tokens and 4,169 spelling bytes, including helpers, callers and registration.
-   All 6,598 actual-code comparisons and retained-source/caller checks pass.
-   Liquid movie/hardware execution remains unestablished; no movie ran.
+   retired bank facade. Scrolling-sky setup, parallax motion, HDMA bands and
+   tile uploads now belong to `scrolling_sky`, including room and effect callers.
+   Shared vertical-band traversal and paired channel writes preserve overlapping
+   word stores, live descriptor reads, table gaps and ordered queue updates.
+   The complete replacement removes **65 lines (99,059 -> 98,994)**, 973
+   tokens and 2,621 spelling bytes, including helpers, callers and registration.
+   All 1,702 actual-code comparisons and retained-source/caller checks pass.
+   Spawning is modeled; sky movie/hardware execution remains unestablished.
+   Water, lava and acid setup, rising motion, tide and background HDMA tables
+   already belong to `liquid_effects`, with 6,598 actual-code comparisons.
    Room, X-ray and Power Bomb layer/window composition already belongs to
    `layer_blending`; its probed/clean Ceres fade-in segment passes at **3/0**,
    inputs 8324..8326. Bank 88 retains other duties.
@@ -1486,8 +1493,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Banks 85, 92, 93 and AD are fully retired. The unused-declaration cohort reserved
    for this stage is also adopted. Bang's live SNES execution path remains a
    future ownership task.
-   Gameplay currently totals 81,088 lines; its 28 numeric bank modules still
-   own 74,175. These are ownership scopes, not deletion budgets. File moves
+   Gameplay currently totals 81,018 lines; its 28 numeric bank modules still
+   own 73,811. These are ownership scopes, not deletion budgets. File moves
    alone earn no volume reduction. The complete save-file menu ownership draft
    prices **99,516 -> 99,510 (-6)**, including caller migration, imports, helpers
    and registration. It shares confirmation flow and main-menu rows, removes
@@ -1498,6 +1505,10 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    A separate complete sprite-effect pool rewrite saves only 11 lines, 117
    tokens and 301 spelling bytes; it is also parked before compiler/runtime
    work. Draft: Local/sm-decomp-experiments/20261021/sprite-effects.
+   Complete Shaktool formation ownership also saves only **11 lines** after
+   caller/registration costs. Park it uncompiled and without runtime claims.
+   Its scope excludes the misleadingly named Chozo-statue callbacks.
+   Draft: Local/sm-decomp-experiments/20261021/shaktool.
    Reassess the
    90,000-line stretch checkpoint using complete replacements, including retained
    exceptions and oracle adapters; it has no demonstrated deletion budget yet.
@@ -1712,7 +1723,22 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest applicable verification: liquid effects pass **6,598** actual old/new
+Latest applicable verification: scrolling sky passes **1,702** actual old/new
+full-RAM, completion and failure-flag comparisons, with **30** matching ordered
+spawn boundaries and incoming RAM. Cases cover actual ROM vertical/parallax
+band edges, constructed counts and table exhaustion, wave phases/timers,
+odd/high/aliased slots, speed carry and aliased camera/output, frozen paths,
+upload-tail wrap, overlapping source/queue writes, top-edge damage and
+successive updates. Spawn callbacks record arguments/RAM and model mutations;
+real spawning and HDMA/VRAM hardware consumption are not established.
+Complete retained-source/caller/import/dispatch/registration and extracted
+component/support checks pass, as do normal release library/frontend/verifier
+builds, formatting and embedded-source checks. No measured sky callback frame
+range is established; no movie ran. Source fingerprint:
+`5e7c6085b403ed3efbe784ce3c3660bfdbf5f1f273f3c1fa9894444106c0e941`.
+Local checks: Local/sm-decomp-experiments/20261021/scrolling-sky.
+
+Previous liquid effects pass **6,598** actual old/new
 full-RAM, completion and failure-flag comparisons, with **1,511** matching ordered
 boundary events. Cases cover velocity/subpixel carry, target equality and
 overshoot, signed/clamped surface heights, every tide phase and amplitude,
@@ -1991,15 +2017,18 @@ shared PPU pixel evaluation, native/SPC state transfers and live-typed snapshots
 the pinned CPU/PNG dependencies, RAM pointer chains, readable control flow and
 shared room background loading, Samus animation ownership, the message-box
 lifecycle, unused declarations, projectile animation, Mother Brain visual
-effects, minimap ownership, X-ray backgrounds, layer blending and liquid effects,
-maintained Rust is **99,059**, with applicable static, component and exercised
-movie checks passing.
+effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects
+and scrolling-sky ownership, maintained Rust is **98,994**, with applicable
+static, component and exercised movie checks passing.
 Including the four-line C bridge gives
-**99,063**; including the new 41-line installer as well gives **99,104**.
+**98,998**; including the new 41-line installer as well gives **99,039**.
 The immediate volume target is complete.
 External CPU/PNG code has 2,836/7,762 lines.
 Counters: raw offsets 25; extern C blocks 5; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3222; cast lines 7368. Liquid effects remove six unsafe
+unsafe functions 3223; cast lines 7345. Scrolling-sky ownership adds one unsafe
+helper for paired channel writes, replacing existing raw stores, and removes
+23 cast-containing lines. All other counters stay unchanged.
+Liquid effects remove six unsafe
 declarations and 37 cast-containing lines; no counter increases.
 Layer blending removes 26 unsafe
 declarations and two cast-containing lines; no counter increases.
