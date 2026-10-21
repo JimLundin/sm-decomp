@@ -133,13 +133,37 @@ cohorts and their composition, including shared-definition and caller costs.
 Distinguish automatically reproducing reductions already present in main
 from new algorithm sharing and cases that still require manual work.
 
-Next selection step: validate and compose the strongest remaining complete
-cohorts while discovery of larger families continues. The large-family studies
-above no longer justify repeatedly postponing useful measured replacements.
-Reopen alias grouping on the actual record-metadata outputs: its new scope is
-sequential composition and complete compiler validation, not another standalone
-price. Count only that composed result. Arbitrary single-function cleanup stays
-parked; fresh discovery must identify a previously unhandled family.
+Renewed user priority (2026-10-21): identify big changes that significantly
+reduce code volume. Alias grouping is now adopted; stop expanding the remaining
+small cohorts as the primary work queue. The reconstructed enemy-field and RAM
+pointer-chain prices are frozen at -107 and -99 lines respectively, without
+build/runtime claims or adoption. Do not add their independent prices.
+
+The distinct direct typed-RAM-prefix experiment on a2b507ae replaces 4,242 reads
+and 1,399 assignments over 562 eligible fields. Its complete formatted result is
+**103,313 -> 103,683 (+370)**, despite removing 15,139 tokens and 12,520 spelling
+bytes. It includes metadata-derived layout, padding, 1,052 byte-place migrations
+and 87 safe-function unsafe scopes. Even its caller-only control, with layout
+and byte adapters artificially free, saves just 442 lines; existing Game
+accessors remain. Reject this spelling for volume before compiler/runtime work.
+This is separate from the earlier cached Samus view.
+Durable candidate: Local/sm-decomp-experiments/20261021/typed-ram-prefix/candidate-v2.
+
+Next architectural comparisons must price complete responsibility replacement:
+maintained dependencies for host presentation/shaders/images, and native game
+video together with the oracle interface needed to retire the old backend.
+At a2b507ae the host graphics/shader/image scope is 2,557 lines; PPU plus DMA is
+2,431; CPU plus cartridge is 1,377. These are gross scopes, not deletion budgets.
+The entire SNES directory is 6,075 lines, shared by native execution and oracle;
+a new renderer alone does not let us delete the old one. An external oracle must
+support instruction/PC hooks, state access, patches and snapshot comparisons.
+External dependency code and all maintained adapters must be disclosed. Preserve
+shader behavior; do not resume or bypass the administrator-blocked GL test.
+Native audio already includes an SM sequencer and DSP, so ordinary audio playback
+libraries cannot replace its 2,507 lines of sound behavior. The broader ordered
+tile-contact scope is only 2,617 gross lines and has live callback effects; no
+multi-thousand-line gameplay saving is established. Bank retirement should follow
+actual responsibility replacement. Current committed total remains 103,313.
 The reconstructed alias, constant-group and native C-string cohorts are adopted
 under item 3, excluding the entire shader file while its unrelated draft is
 present. Their old interrupted prices are not additional savings. The distinct
