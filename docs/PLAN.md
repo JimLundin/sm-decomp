@@ -1467,7 +1467,25 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
 4. [ ] **Retire bank ownership by gameplay responsibility.** Select a complete
    responsibility, such as Samus movement, with an exercised boundary and named
    routines. Migrate its real callers and state transitions, then remove its
-   retired bank facade. Grapple swing placement, rope-length changes, clearance
+   retired bank facade.
+   Renewed user direction (2026-10-21): the search is still too narrow. Prioritize
+   substantial system replacements and repeated algorithms across responsibilities.
+   Stop spending implementation/validation effort on roughly hundred-line enemy
+   extractions or adding macros to trim local branches. Small preparatory edits
+   must belong to a concrete larger replacement with a measured complete price.
+   Next assess the complete native hardware backend and oracle together, including
+   rendering/audio consumers, register/bus access, instruction hooks, snapshots,
+   compatibility behavior and all maintained adapters. This extends the former
+   oracle-only assessment, which could not retire native hardware consumers.
+   Current `snes/` owns 4,621 lines; 211 are register names and 520 are the already
+   adopted CPU adapter. The remaining 3,890 are a gross scope, not savings.
+   Published LakeSnes revision `048a0d72568668f74e0cdf371dcd9e8efd614965` is
+   available under Local/sm-decomp-experiments/20261021/complete-backend.
+   Initial interface review finds custom PPU rendering/state, direct native
+   scanline scheduling and differing DSP key-on/envelope state. Price preservation
+   of these contracts before compilation; a drop-in replacement is not established.
+   Independently maintained dependency code must still be disclosed separately.
+   Grapple swing placement, rope-length changes, clearance
    and swept block contact now belong to `grapple_swing`, with bank 9B callers
    migrated. Shared projection, length traversal and bidirectional sweep retain
    cardinal-direction amplitude, overlapping BTS reads, damage, bounce/stop
@@ -1529,6 +1547,13 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Draft: Local/sm-decomp-experiments/20261021/phantoon-motion.
    These are independent formatted prices, with no accepted savings or behavior
    claims. Neither draft ran a movie; no relevant segment is established.
+   Complete Space Pirate ownership prices **98,840 -> 98,732 (-108)**, including
+   B2 retirement and real callback migration. Park under the renewed larger-scope
+   direction. Its actual old/new components passed 2,961 RAM/return/failure checks
+   and 1,636 ordered events, using real sine/RNG/sprite code and controlled movement,
+   sound and projectile boundaries. Complete source correspondence and release
+   validation remain unfinished; no movie ran and no main savings are accepted.
+   Draft: Local/sm-decomp-experiments/20261021/space-pirates.
    Reassess the
    90,000-line stretch checkpoint using complete replacements, including retained
    exceptions and oracle adapters; it has no demonstrated deletion budget yet.
