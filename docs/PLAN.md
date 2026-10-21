@@ -17,10 +17,27 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-22): **93,977 Rust lines in 89 files**, plus 265 C
-bridge and 305 C-header lines = **94,547 maintained implementation lines**.
+Safety requirement (user clarification, 2026-10-22): **remove all unsafe calls**
+alongside code reduction and data extraction. This includes replacing raw-memory
+access and manipulation, not merely removing `unsafe fn` annotations. Preserve
+the complete game, exact defined behavior and byte-compatible SNES RAM. Necessary
+safety work may temporarily increase source size; the volume-only parking rules
+below do not veto it. Count all replacement code and explain increases.
+
+The shared `word!` interface deliberately uses caller-side raw operations because
+enemy pointers can remain live across calls. Do not replace it globally with a
+whole-RAM borrow. Migrate retained pointers to offsets/handles, preserve live
+rereads and overlapping byte/word fields, and use checked byte access with scoped
+borrows. ROM ownership, packed queues, callbacks, initialization, native interfaces
+and verification code remain part of the safety work. Hiding unsafe operations
+inside a safe wrapper, macro or C adapter does not establish their elimination.
+Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
+of the remaining unsafe calls; the overall safety requirement is still open.
+
+Current composition (2026-10-22): **93,978 Rust lines in 89 files**, plus 265 C
+bridge and 305 C-header lines = **94,548 maintained implementation lines**.
 Counting all 804 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,379**. This complete recount includes frontend,
+gives **95,380**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1548,6 +1565,26 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Stop spending implementation/validation effort on roughly hundred-line enemy
    extractions or adding macros to trim local branches. Small preparatory edits
    must belong to a concrete larger replacement with a measured complete price.
+   Safety is now a required outcome alongside volume reduction. Start with
+   complete access paths whose retained-pointer and callback contracts are known;
+   expand the shared RAM/ROM interfaces as their real callers migrate. The earlier
+   direct typed-RAM-prefix draft is not a safety solution: it introduces raw byte
+   places and 87 unsafe scopes. Enemy-field flattening also retains raw pointers.
+   Do not revive either merely because it exposes named fields.
+   Pose-history recording now copies the two four-byte records using checked byte
+   places, preserving the previous record before replacing it. It eliminates four
+   raw word reads and four raw word stores, and its entry point is safe. Direct
+   indexing avoids adding a borrow of the entire RAM array. Its one-line source
+   increase is a safety cost, not a reduction. Other pose transitions remain unsafe.
+   Source-checked old/new fanfare callers pass 1,841 full-RAM/return comparisons,
+   including 1,052 executions of the changed history path; release builds pass.
+   No movie ran. Checks: Local/sm-decomp-experiments/20261022/safe-pose-history.
+   A complete room-object ownership draft on 0199ea48 prices **95,661 -> 95,581
+   (-80)**, including all 19 changed files, helpers, retained scripts, callers and
+   registrations. It shares 25 station/gate/breakable-block handlers but still uses
+   unsafe calls. Park this volume-only proposal before compilation/runtime checks;
+   it supplies no safety or adopted-reduction claim. Durable draft and price:
+   Local/sm-decomp-experiments/20261022/room-object-model.
    The latest data-extraction goal also calls for authored room/asset definitions
    to live as data. Door-entry scroll changes now use 63 ordered cell/color
    sequences for all 74 dispatch identities, removing separate callback definitions,
