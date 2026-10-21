@@ -1459,7 +1459,14 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    future ownership task.
    Gameplay currently totals 81,565 lines; its 29 numeric bank modules still
    own 75,925. These are ownership scopes, not deletion budgets. File moves
-   alone earn no volume reduction. Reassess the
+   alone earn no volume reduction. The complete save-file menu ownership draft
+   prices **99,516 -> 99,510 (-6)**, including caller migration, imports, helpers
+   and registration. It shares confirmation flow and main-menu rows, removes
+   forwarding wrappers and preserves separate SRAM/map primitives. That small
+   return does not justify adoption as a volume priority; park the draft before
+   compiler/runtime validation. No behavior or movie-coverage claim is made.
+   Current-source draft: Local/sm-decomp-experiments/20261021/file-select.
+   Reassess the
    90,000-line stretch checkpoint using complete replacements, including retained
    exceptions and oracle adapters; it has no demonstrated deletion budget yet.
    Local naming, unsafe removal and small duplication cleanup support that work.
