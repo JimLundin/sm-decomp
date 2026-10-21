@@ -17,6 +17,19 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
+Artifact availability update (2026-10-21): the entire local TEMP
+`sm-tailored-next` tree and the original-C/parser experiment directories
+disappeared during work. Both long and short Windows paths were checked;
+the cause and any relocation are unknown. Git source and the unrelated shader
+draft remain intact. Historical counts and checks below describe previously
+observed results, whose local reproduction artifacts are now unavailable.
+They cannot serve as a currently inspectable implementation or completion proof.
+The proposed phase31 composition was not completed; no combined reduction is
+accepted from its independent prices. Recover the historical inputs if available.
+Meanwhile reconstruct and validate selected current-source rules from committed
+Rust in isolated `Local/sm-decomp-experiments/20261021` directories, outside TEMP.
+Do not reconstruct a partial historical baseline and present it as the old one.
+
 User direction: reduce maintained Rust below **100,000 lines**, preferably
 further, by tackling large structural changes before individual cleanup.
 Use **90,000 lines as a stretch planning checkpoint**, not a demonstrated
@@ -24,7 +37,7 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A partial profile
-does not finish this goal. The latest complete historical composition is
+does not finish this goal. The last reported complete historical composition was
 **162,136 -> 102,539 (-59,597)**, also removing **636,768 tokens** and
 **1,736,945 code-text bytes**. The strict remaining gap is **2,540 lines**.
 All 71 Rust files, helpers, callers and registrations count; Cargo remains
@@ -126,6 +139,11 @@ Reopen alias grouping on the actual record-metadata outputs: its new scope is
 sequential composition and complete compiler validation, not another standalone
 price. Count only that composed result. Arbitrary single-function cleanup stays
 parked; fresh discovery must identify a previously unhandled family.
+The selected current cohorts are shared alias declarations, redundant constant
+group headers and native C-string literals. Exclude the entire shader file from
+adoption while its unrelated draft is present. Their interrupted experimental
+prices are not accepted savings; rebuild source-bound checks before adoption.
+Residual numeric control-flow tags are a separate new current-source trial.
 
 The current-source composition has landed in four focused commits:
 **107,520 -> 106,189 (-1,331)**, including 159 terminal loops, 114 selected
@@ -615,6 +633,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    contracts remain excluded. Historical phase30 has no injected `Game`
    parameters, so its direct saving is zero. Park these complete formatted
    prices without builds or runtime checks. TEMP sm-tailored-next/pure-game-context.
+
+   A distinct complete local-width trial includes callback bodies and known RAM
+   macro expressions. Its last observed current draft selected 32 locals in 25
+   functions (eight mutable), but grew five lines, 242 tokens and 389 spelling
+   bytes. Required widening boundaries consumed the benefit. Right shifts,
+   full-width comparisons, references, escapes and checked arithmetic observing
+   discarded bits remain excluded. Final guard corrections and historical pricing
+   were unfinished when the TEMP artifacts disappeared. Park with zero accepted
+   savings; neither reproducibility nor behavior validation is established.
 
    Grouping identical type-alias RHS text is a distinct declaration price:
    current RAM-stage input **103,972 -> 103,777 (-195)** across 186 aliases,
