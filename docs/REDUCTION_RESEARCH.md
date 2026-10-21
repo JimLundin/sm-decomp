@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**106,487-line** historical-source composition. The current-source batch has
+**105,903-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -1711,7 +1711,7 @@ The rule emits one shared Rust definition from each identical used private
 C-header definition group, with imports replacing local copies. It includes
 the moving-platform helper whose earlier emitter copied the same header body.
 Different RomPtr_RAM bodies and the four unused declarations stay untouched;
-the parked 13-line omission is not added. Final historical output is now
+the parked 13-line omission is not added. At phase23, historical output is
 **162,136 -> 106,487 (-55,649)**, removing 586,549 tokens and 1,607,675 code-text
 bytes. This actual batch removes **1,444 lines** from phase18, including the
 zero-line ROM repair. Its remaining strict gap is **6,488 lines**. Maintained
@@ -1720,6 +1720,29 @@ Local experiment Python now totals 21,213 lines/279 files, separate from all
 71 counted Rust files. Cargo remains nine lines; external GL costs are unchanged.
 Source/proof package: `TEMP/sm-tailored-next/private-header-helpers/sequential-final-v1`;
 frozen composition: `TEMP/sm-tailored-next/integration/phase23/REPORT.md`.
+
+The subsequent current-to-historical owner comparison finds a missed ROM-base
+emission case. Original C's `RomFixedPtr` expands to bank-address arithmetic
+at every use. The earlier memory rule handled `rom_at` inputs; **306 raw
+`g_rom.offset(...)` forms across 24 gameplay modules** bypassed it. Current
+Rust's shared ROM access provides the replacement: call the existing `rom_at`
+at the same base-expression position, retaining surrounding indices, casts,
+reads, writes and alignment policy. There is no new support or dependency.
+
+The actual phase24 composition is **106,487 -> 105,903 (-584)**, with **5,006
+fewer tokens and 15,335 fewer code-text bytes**. All 172 selected addresses
+match original-C definitions and the initial translated files. Independent
+71-file correspondence and fresh compiler expansion pass, with 1,534,092
+identical normalized library tokens and exact frontend tokens. Complete
+optimized library/frontend builds pass; this static ownership change adds no
+runtime or replay claim. Parent independently recounted both complete roots.
+
+The full composition is now **162,136 -> 105,903 (-56,233)**, removing 591,555
+tokens and 1,623,010 code-text bytes. The actual batch removes 2,028 lines from
+phase18, leaving **5,904** to reach 99,999. Current maintained Rust stays
+104,959. Local experiment Python is 21,557 lines/283 files, separately counted.
+The exact C/initial/current example, executable rule, source/build proofs and
+output are frozen at `TEMP/sm-tailored-next/integration/phase24/REPORT.md`.
 
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard

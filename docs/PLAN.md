@@ -25,7 +25,7 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A successful partial
 profile or pilot does not finish this goal. The latest frozen composition
-now produces **162,136 -> 106,487 (-55,649)**, with complete optimized library
+now produces **162,136 -> 105,903 (-56,233)**, with complete optimized library
 and actual frontend metadata compilation passing. The latest stages remove
 **19,315** from the previous 125,802 checkpoint, including the selected C
 algorithm families, shared enemy layouts, CPU/SPC grids, dispatchers, register
@@ -38,7 +38,7 @@ beam windows, square-slope handling, Samus jump launch, enemy homing, DSP
 sample limits, solid-enemy queries, sprite drawing, wall-jump decisions,
 inside-block reactions, suit-pickup beams, initialization coroutines, Torizo
 fall/countdown, cross-file callback ownership and used-header helper ownership.
-The complete profile also removes 586,549 tokens and 1,607,675 code-text bytes from
+The complete profile also removes 591,555 tokens and 1,623,010 code-text bytes from
 its 162,136-line control. All local
 support and overlaps are counted; external GL dependency code is disclosed
 separately. These historical stages claim no new main deletion or whole-game replay.
@@ -108,6 +108,16 @@ resolved types/targets across 11,821 normalized compiler owners pass. No runtime
 claim is added for this source-preserving ownership change. The full batch now
 removes **1,444 lines** from phase18. The strict historical gap is **6,488**;
 TEMP sm-tailored-next/integration/phase23 freezes the actual composition.
+The next current-to-historical comparison recovers a missed complete ROM-base
+cohort: **306 expressions across 24 gameplay modules** now use the existing
+`rom_at` helper, removing **584 lines** to reach **105,903**. No helper, import,
+registration or dependency is added. All 172 original-C address definitions,
+71-file source correspondence, complete compiler-expanded correspondence and
+optimized library/frontend builds pass. Pointer casts, indices, reads/writes
+and alignment policy remain unchanged; this static change adds no replay claim.
+Parent independently recounted both complete roots. The actual batch now removes
+**2,028 lines** from phase18; the strict remaining gap is **5,904**.
+TEMP sm-tailored-next/integration/phase24 freezes this sequential output.
 No whole-game or current-main reduction is claimed by these historical stages.
 The separate current-policy GL replacement prices **108,052 -> 106,886
 (-1,166)** and passes source/build checks, but runtime/adoption is parked:
@@ -544,7 +554,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the same clone scans. Domain judgment selects the native helper contract;
    recognition derives per-member parameters and rejects different effects.
    Price any production adoption against current Rust and validate it under
-   item 3. The isolated 106,487-line output is a partial translation profile,
+   item 3. The isolated 105,903-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
 
    The new finite typed instruction-data experiment also fails its complete
@@ -593,7 +603,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    separate controls; do not add their prices. Keep these scoped studies closed.
    Further discovery needs a new complete algorithm and replacement, not a
    repeat of these cohorts or another generic operation runner. Current-derived
-   translation recovery remains demonstrated separately at 106,487 lines.
+   translation recovery remains demonstrated separately at 105,903 lines.
 
    Further complete experiments at 105,984 reject shared object-script traversal
    (**+117 lines**), contextual Kraid ownership (**+33**) and real receiver methods
