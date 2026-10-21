@@ -25,9 +25,9 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A successful partial
 profile or pilot does not finish this goal. The latest frozen composition
-now produces **162,136 -> 105,312 (-56,824)**, with complete optimized library
+now produces **162,136 -> 104,742 (-57,394)**, with complete optimized library
 and actual frontend metadata compilation passing. The latest stages remove
-**20,490** from the previous 125,802 checkpoint, including the selected C
+**21,060** from the previous 125,802 checkpoint, including the selected C
 algorithm families, shared enemy layouts, CPU/SPC grids, dispatchers, register
 writes, byte/split-word places, initialization/transfer families, map menus,
 explosion windows, assertion emission, ordered RAM-store groups, introduction
@@ -38,9 +38,9 @@ beam windows, square-slope handling, Samus jump launch, enemy homing, DSP
 sample limits, solid-enemy queries, sprite drawing, wall-jump decisions,
 inside-block reactions, suit-pickup beams, initialization coroutines, Torizo
 fall/countdown, cross-file callback ownership and used-header helper ownership.
-The complete profile also removes 595,722 tokens and 1,635,946 code-text bytes from
+The complete profile also removes 601,593 tokens and 1,646,891 code-text bytes from
 its 162,136-line control. All local
-support and overlaps are counted; external GL dependency code is disclosed
+support and overlaps are counted; external GL/SDL dependency code is disclosed
 separately. These historical stages claim no new main deletion or whole-game replay.
 Map component checks exposed the original C2Rust VramWriteEntry packing defect
 again: destination offset 6 instead of 5. A separate zero-volume stage now
@@ -133,6 +133,21 @@ zero-capacity growth; DSP keeps its disjoint APU/DSP allocation contract and
 uses digests for persistent intermediate state. Neither stage adds a whole-game
 replay claim. Their separate current-source prices are 165 and 58 lines and
 remain unadopted; they are not added to the historical savings.
+Current-derived CPU implementation kernels then remove **169 lines**, reaching
+**105,143**. Tuple address returns and shared operation helpers replace the old
+out-pointer conventions while retaining historical hook/interrupt policies and
+the existing opcode grid. Complete builds and 471,360 original-C/old/new cases
+pass, including ordered bus-state comparisons and persistent sequences.
+Compatible published SDL declarations then remove **401 lines**, reaching
+**104,742**, including all 27 imports; Cargo adds one line. Seventeen raw
+integer/enum boundaries remain. Complete builds, 71-file source inverse, 32
+record layouts, 208 field offsets/types and 49 extern-C signatures pass on
+x86_64 Windows GNU. This SDL result is static ABI evidence, not runtime coverage.
+Selected external SDL Rust costs 28,711 lines and Windows libc 3,222, disclosed
+separately from maintained source. The actual batch removes **3,189 lines**
+from phase18; the strict historical gap is **4,743**. Parent independently
+recounted the complete roots. TEMP sm-tailored-next/integration/phase28 freezes
+the composition; all local support is counted and parked drafts remain excluded.
 No whole-game or current-main reduction is claimed by these historical stages.
 The separate current-policy GL replacement prices **108,052 -> 106,886
 (-1,166)** and passes source/build checks, but runtime/adoption is parked:
@@ -569,7 +584,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the same clone scans. Domain judgment selects the native helper contract;
    recognition derives per-member parameters and rejects different effects.
    Price any production adoption against current Rust and validate it under
-   item 3. The isolated 105,312-line output is a partial translation profile,
+   item 3. The isolated 104,742-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
 
    The new finite typed instruction-data experiment also fails its complete
@@ -606,6 +621,14 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    sm-tailored-next/{wrapping-pitch,support-consumer-liveness} and
    sm-cpu-decimal-recurrence-20261021. Do not repeat these scoped studies.
 
+   Remaining non-game internal declaration ownership separately prices **110
+   lines** on phase26: 146 foreign declarations become imports of 136 existing
+   symbols across 16 files. Complete builds and preservation of 638 enumerated
+   definitions pass; one incompatible frontend type boundary remains foreign.
+   Provider/address/interposition equivalence is unproved. Park this draft,
+   excluding it from the composition. Report: TEMP
+   sm-tailored-next/internal-declaration-owners/REPORT.md.
+
    Those representation studies are closed. Five subsequent domain studies
    use the same repaired 106,189-line control:
 
@@ -633,7 +656,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    separate controls; do not add their prices. Keep these scoped studies closed.
    Further discovery needs a new complete algorithm and replacement, not a
    repeat of these cohorts or another generic operation runner. Current-derived
-   translation recovery remains demonstrated separately at 105,312 lines.
+   translation recovery remains demonstrated separately at 104,742 lines.
 
    Further complete experiments at 105,984 reject shared object-script traversal
    (**+117 lines**), contextual Kraid ownership (**+33**) and real receiver methods

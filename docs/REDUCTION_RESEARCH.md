@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**105,312-line** historical-source composition. The current-source batch has
+**104,742-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -1749,7 +1749,7 @@ on that actual output. The native inflater removes **509**, reaching 105,394;
 DSP synthesis removes **82**, reaching **105,312**. Every helper, import,
 allocator boundary and unchanged caller remains counted. Parent independently
 recounted all three roots and confirmed the exact one-module change per stage.
-The complete composition is now **162,136 -> 105,312 (-56,824)**, also removing
+At phase26 the composition is **162,136 -> 105,312 (-56,824)**, also removing
 595,722 tokens and 1,635,946 code-text bytes. It remains **5,313 lines** above
 99,999. Current maintained Rust remains 104,959, without an adoption claim.
 
@@ -1789,6 +1789,47 @@ All 71 Rust files and nine Cargo lines count. Experiment Python is now 22,991
 lines/312 files; templates and generated harness costs are separately disclosed.
 The frozen sequential checkpoint is
 `TEMP/sm-tailored-next/integration/phase26/REPORT.md`.
+
+Current Rust exposes another missed translation cohort: the opcode-grid rule
+shared selection but retained the old CPU implementation helpers. The new
+complete kernel rule replaces 40 functions with 51 ordinary helpers, four enums
+and three impl blocks, including all 28 special consumers. Tuple address
+returns replace low-out-pointer/high-return conventions. Historical bus,
+interrupt, reset and hook policies remain; ADC/SBC arithmetic and grid choices
+are retained. This is **105,312 -> 105,143 (-169)**, removing 3,458 tokens and
+3,703 spelling bytes. Complete builds/source checks pass, together with
+**471,360 original-C/old/new cases** in debug and optimized Rust. These cover
+212 affected opcodes, all flag values, hook redispatch and persistent sequences,
+comparing complete CPU state at ordered bus effects. Three incorrect variants
+are detected. The constructed bus does not establish live SNES/game behavior.
+Report: `TEMP/sm-tailored-next/cpu-implementation-kernels/REPORT.md`.
+
+Published SDL ownership then removes 97 repeated declarations across three
+files: 32 records, nine aliases, 49 functions and seven opaque targets. All
+27 import lines count; no helper or adapter is added. Seventeen incompatible
+integer/enum boundaries remain raw. **105,143 -> 104,742 (-401)** removes
+2,413 tokens and 7,242 spelling bytes; Cargo adds one line. Complete optimized
+builds and static source/ABI checks pass: 32 layouts, 208 field offsets/types,
+49 exact extern-C signatures and recursive imported value domains. No arbitrary
+integer is narrowed to an enum. This establishes the selected x86_64 Windows
+GNU ABI, without runtime/GPU/replay coverage or hypothetical external Rust
+source compatibility for renamed SDK fields and opaque types.
+
+External ownership reduces maintained declarations, not total dependency code.
+The pinned sdl2-sys 0.38.0 selected source is 28,711 Rust lines, including its
+28,685-line binding; selected Windows libc 0.2.191 is 3,222 lines. Package-wide
+and build-dependency counts are disclosed separately and overlap selected
+counts. Native SDL was already required. The parked 110-line internal-symbol
+import draft lacks provider/address/interposition proof and is not composed.
+Report: `TEMP/sm-tailored-next/sdl-source-boundary/REPORT.md`.
+
+The frozen phase28 composition is **162,136 -> 104,742 (-57,394)**, removing
+601,593 tokens and 1,646,891 spelling bytes. It remains **4,743 lines** above
+99,999. All 71 Rust files and ten Cargo lines count; local experiment Python
+is 24,212 lines in 322 files, disclosed separately. Parent independently
+recounted the complete roots. Maintained main remains 104,959. These stages
+establish neither a playable historical build nor a whole-game replay result.
+Checkpoint: `TEMP/sm-tailored-next/integration/phase28/REPORT.md`.
 
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard
