@@ -324,6 +324,7 @@ pub mod game {
     pub(crate) mod layer_blending;
     pub(crate) mod liquid_effects;
     pub(crate) mod scrolling_sky;
+    pub(crate) mod grapple_swing;
     pub(crate) mod prelude;
     pub(crate) mod projectile_flight;
     pub(crate) mod room_backgrounds;

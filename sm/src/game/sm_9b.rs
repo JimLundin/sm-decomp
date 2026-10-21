@@ -1,3 +1,4 @@
+use crate::game::grapple_swing::{advance_swing, change_length, place_rope_origin};
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_9b::*;
@@ -14,8 +15,7 @@ use crate::game::sm_90::{
 };
 use crate::game::sm_91::{Samus_DealDamage, Samus_LoadSuitPalette, Samus_Pose_CancelGrapple};
 use crate::game::sm_94::{
-    kSinCosTable8bit_Sext, BlockCollGrappleBeam, BlockFunc_AC11, BlockFunc_AC31, BlockReactGrapple,
-    GrappleFunc_AF87, HandleMovementAndCollForSamusGrapple,
+    kSinCosTable8bit_Sext, BlockCollGrappleBeam, BlockReactGrapple, GrappleFunc_AF87,
 };
 use crate::game::sm_a0::{CalculateAngleFromXY, GrappleBeam_CollDetect_Enemy};
 
@@ -427,11 +427,11 @@ macro_rules! initialize_connected_grapple_angle {
 
 pub unsafe fn HandleConnectingGrapple_Swinging(game: &mut Game) {
     initialize_connected_grapple_angle!(game, 9);
-    BlockFunc_AC11(game);
+    place_rope_origin(game);
 }
 pub unsafe fn HandleConnectingGrapple_StuckInPlace(game: &mut Game) {
     initialize_connected_grapple_angle!(game, 10);
-    BlockFunc_AC11(game);
+    place_rope_origin(game);
 }
 pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> u8 {
     let mut v0: u16 = 7;
@@ -1093,12 +1093,12 @@ crate::game::callback_dispatch! {
         if (word!(game.button_config_shoot_x) & word!(game.joypad1_lastkeys)) != 0 {
             GrappleBeamFunc_BB64(game);
             if word!(game.grapple_beam_length_delta) != 0 {
-                BlockFunc_AC31(game);
+                change_length(game);
             }
             GrappleBeamFunc_BC1F(game);
             GrappleBeamFunc_BCFF(game);
             GrappleBeamFunc_BD44(game);
-            HandleMovementAndCollForSamusGrapple(game);
+            advance_swing(game);
             if (word!(game.grapple_beam_unkD36) & 0x8000) != 0
                 && HandleSpecialGrappleBeamAngles(game) & 1 != 0
             {
@@ -1112,7 +1112,7 @@ crate::game::callback_dispatch! {
             };
             if keep_swinging {
             } else {
-                BlockFunc_AC11(game);
+                place_rope_origin(game);
                 GrappleBeamFunc_BD95(game);
                 return;
             }

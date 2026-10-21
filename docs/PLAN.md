@@ -17,21 +17,23 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **98,994 Rust lines in 87 files**, plus a
-four-line C bridge = **98,998 maintained implementation lines**. Counting the
-new 41-line CPU installer as well gives **99,039**. This is an actual complete
+Current composition (2026-10-21): **98,840 Rust lines in 88 files**, plus a
+four-line C bridge = **98,844 maintained implementation lines**. Counting the
+new 41-line CPU installer as well gives **98,885**. This is an actual complete
 source recount, including frontend and verifier code, all adapters, callers and
 registrations. Existing development scripts/configuration/docs are outside this
 implementation metric. The two pinned dependencies add **2,836 CPU C/header
 lines and 7,762 stb header lines**, disclosed separately, like existing GL/SDL.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
-Scrolling-sky setup, parallax, HDMA bands and tile uploads pass **1,702**
-actual old/new full-RAM, completion and failure-flag comparisons, with 30
-matching ordered spawn boundaries. Actual ROM band edges, constructed counts,
-wave phases/timers, aliased slots and transfers, frozen paths and sequential
-updates are covered. Spawning is modeled; hardware/movie execution is not
-established. No movie ran. Previous liquid effects pass **6,598**
+Grapple swing placement, rope-length changes, clearance and block contact pass
+**2,950** actual old/new full-RAM, completion and failure-flag comparisons,
+including 37,203 matching ordered projection calls with incoming grapple state.
+Both swing directions, bounce/minimum-length stops, anchor snapping, extension blocks,
+spike damage and sequential updates are covered using the real implementations.
+No grapple movie segment is established; no movie ran. Previous scrolling sky
+passes 1,702 components; spawning is modeled and hardware/movie execution is
+unestablished. Previous liquid effects pass **6,598**
 actual old/new full-RAM, completion and failure-flag comparisons, with 1,511
 matching ordered boundary events. Checks cover motion/clamp boundaries, all
 tide phases, wave modes, frozen updates, aliased slots and callback mutation.
@@ -1465,14 +1467,19 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
 4. [ ] **Retire bank ownership by gameplay responsibility.** Select a complete
    responsibility, such as Samus movement, with an exercised boundary and named
    routines. Migrate its real callers and state transitions, then remove its
-   retired bank facade. Scrolling-sky setup, parallax motion, HDMA bands and
-   tile uploads now belong to `scrolling_sky`, including room and effect callers.
-   Shared vertical-band traversal and paired channel writes preserve overlapping
-   word stores, live descriptor reads, table gaps and ordered queue updates.
-   The complete replacement removes **65 lines (99,059 -> 98,994)**, 973
-   tokens and 2,621 spelling bytes, including helpers, callers and registration.
-   All 1,702 actual-code comparisons and retained-source/caller checks pass.
-   Spawning is modeled; sky movie/hardware execution remains unestablished.
+   retired bank facade. Grapple swing placement, rope-length changes, clearance
+   and swept block contact now belong to `grapple_swing`, with bank 9B callers
+   migrated. Shared projection, length traversal and bidirectional sweep retain
+   cardinal-direction amplitude, overlapping BTS reads, damage, bounce/stop
+   behavior and arithmetic/state-update order. Existing extension helpers stay
+   shared with other collision users; their unused context parameters are checked.
+   The complete replacement removes **154 lines (98,994 -> 98,840)**, 1,408
+   tokens and 4,513 spelling bytes, including helpers, callers and registration.
+   All 2,950 actual-code comparisons and retained-source/caller checks pass.
+   This includes the earlier isolated angular sweep in a complete responsibility;
+   that historical draft supplies no additional savings. Movie execution remains
+   unestablished. Scrolling-sky setup, parallax, HDMA bands and tile uploads already
+   belong to `scrolling_sky`, with 1,702 actual-code comparisons.
    Water, lava and acid setup, rising motion, tide and background HDMA tables
    already belong to `liquid_effects`, with 6,598 actual-code comparisons.
    Room, X-ray and Power Bomb layer/window composition already belongs to
@@ -1493,8 +1500,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Banks 85, 92, 93 and AD are fully retired. The unused-declaration cohort reserved
    for this stage is also adopted. Bang's live SNES execution path remains a
    future ownership task.
-   Gameplay currently totals 81,018 lines; its 28 numeric bank modules still
-   own 73,811. These are ownership scopes, not deletion budgets. File moves
+   Gameplay currently totals 80,859 lines; its 28 numeric bank modules still
+   own 73,444. These are ownership scopes, not deletion budgets. File moves
    alone earn no volume reduction. The complete save-file menu ownership draft
    prices **99,516 -> 99,510 (-6)**, including caller migration, imports, helpers
    and registration. It shares confirmation flow and main-menu rows, removes
@@ -1555,9 +1562,10 @@ may overlap landed work and are not a current reduction budget.
   191 lines. The former 336-line draft used a different input and supplies no
   additional savings. Current reconstruction and checks:
   Local/sm-decomp-experiments/20261021/unused-declarations-current.
-- Grapple angular sweep: a 126-line draft passes 6,574 original/replacement
-  comparisons and 6,574 oracle cases plus 254 follow-up calls. It remains
-  unlanded and parked as a standalone fragment; no movie execution is claimed.
+- The historical isolated grapple angular sweep is now subsumed by item 4's
+  complete current-source swing/length/contact replacement. Its earlier draft
+  and 6,574 comparisons/oracle cases are historical, not additional savings or
+  current-source validation. No grapple movie execution is claimed.
 - Renderer unification remains parked: assessed alternatives did not preserve
   the existing contracts. PNG inflater substitution is rejected by concrete
   EOF/reserved-code counterexamples; the native decoder replacement above
@@ -1723,7 +1731,25 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest applicable verification: scrolling sky passes **1,702** actual old/new
+Latest applicable verification: grapple swing passes **2,950** actual old/new
+full-RAM, completion and failure-flag comparisons. All **37,203** ordered
+projection calls match angle, length and incoming grapple-state bytes; ten
+invalid-angle/BTS cases preserve the original panic and preceding RAM state.
+Cases cover every sine-table angle, odd offsets and amplitude truncation,
+all block classes, overlapping BTS reads, spike damage/invincibility, chained
+extension blocks, radial clearance, length limits/wrap, both swing directions,
+scaled/truncated motion, impulse/timer boundaries and successive updates.
+Scenarios explicitly exercise free movement, bounce and minimum-length stops.
+Block reactions, extension traversal and multiplication are real implementations,
+not modeled boundaries. These are constructed component checks, not SNES/movie
+execution. No grapple segment is established; no movie ran.
+Complete retained-source/caller/import/registration, unused-context-parameter
+and extracted component/support checks pass, as do normal release library/
+frontend/verifier builds, formatting and embedded-source checks. Source:
+`157aae78a39fc63b23fe207d0de2680ae9f398093e190c286e0bf8b335486fe4`.
+Local checks: Local/sm-decomp-experiments/20261021/grapple-swing.
+
+Previous scrolling sky passes **1,702** actual old/new
 full-RAM, completion and failure-flag comparisons, with **30** matching ordered
 spawn boundaries and incoming RAM. Cases cover actual ROM vertical/parallax
 band edges, constructed counts and table exhaustion, wave phases/timers,
@@ -2017,15 +2043,17 @@ shared PPU pixel evaluation, native/SPC state transfers and live-typed snapshots
 the pinned CPU/PNG dependencies, RAM pointer chains, readable control flow and
 shared room background loading, Samus animation ownership, the message-box
 lifecycle, unused declarations, projectile animation, Mother Brain visual
-effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects
-and scrolling-sky ownership, maintained Rust is **98,994**, with applicable
-static, component and exercised movie checks passing.
+effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects,
+scrolling-sky and grapple-swing ownership, maintained Rust is **98,840**, with
+applicable static, component and exercised movie checks passing.
 Including the four-line C bridge gives
-**98,998**; including the new 41-line installer as well gives **99,039**.
+**98,844**; including the new 41-line installer as well gives **98,885**.
 The immediate volume target is complete.
 External CPU/PNG code has 2,836/7,762 lines.
 Counters: raw offsets 25; extern C blocks 5; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3223; cast lines 7345. Scrolling-sky ownership adds one unsafe
+unsafe functions 3221; cast lines 7326. Grapple-swing ownership removes two
+unsafe declarations and 19 cast-containing lines; no counter increases.
+Scrolling-sky ownership adds one unsafe
 helper for paired channel writes, replacing existing raw stores, and removes
 23 cast-containing lines. All other counters stay unchanged.
 Liquid effects remove six unsafe
