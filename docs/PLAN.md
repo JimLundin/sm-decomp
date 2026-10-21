@@ -17,16 +17,30 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **98,840 Rust lines in 88 files**, plus a
-four-line C bridge = **98,844 maintained implementation lines**. Counting the
-new 41-line CPU installer as well gives **98,885**. This is an actual complete
-source recount, including frontend and verifier code, all adapters, callers and
-registrations. Existing development scripts/configuration/docs are outside this
-implementation metric. The two pinned dependencies add **2,836 CPU C/header
-lines and 7,762 stb header lines**, disclosed separately, like existing GL/SDL.
+Current composition (2026-10-21): **97,824 Rust lines in 88 files**, plus 41 C
+bridge lines = **97,865 maintained implementation lines**. Counting all 121
+dependency-installer lines and eight added verifier-launcher lines gives
+**97,994**, down **891** from 98,885. This complete recount includes frontend,
+verifier, adapters, callers and registrations. Existing development scripts,
+configuration and docs remain outside the metric. External dependencies add
+**2,836 CPU, 2,104 SPC and 1,261 PPU C/header lines**, plus **7,762 stb header
+lines**, disclosed separately like GL/SDL.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
-Grapple swing placement, rope-length changes, clearance and block contact pass
+The coordinated SPC/PPU replacement passes actual-code component checks and
+probed/clean physical-audio boot **3/0**, input frames **0..2**, with normal
+rendering, audio advancement and comparisons. Required SPC execution, DSP
+advancement, VRAM writes, routing, mosaic and visible-rendering probes all first
+execute at frame zero; two follow-up frames observe retained state and consumers.
+PPU registers pass **77,824** full-state/read/write component comparisons,
+including every register/value pair and typed state variations. Reads do not
+execute in the selected movie: the initial 1,000-frame run had zero differences
+but failed its required read probe, so it supplies no read coverage and was not
+extended. Retained PPU rendering/lifecycle code has exact source correspondence;
+compiled C/Rust layout checks and actual/stale native-source stamp checks pass.
+No new full replay or credits coverage is claimed. SPC component and lifecycle
+details are in its focused commit and [SPC_DEPENDENCY.md](SPC_DEPENDENCY.md).
+Previous grapple swing placement, rope-length changes, clearance and block contact pass
 **2,950** actual old/new full-RAM, completion and failure-flag comparisons,
 including 37,203 matching ordered projection calls with incoming grapple state.
 Both swing directions, bounce/minimum-length stops, anchor snapping, extension blocks,
@@ -1473,32 +1487,30 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Stop spending implementation/validation effort on roughly hundred-line enemy
    extractions or adding macros to trim local branches. Small preparatory edits
    must belong to a concrete larger replacement with a measured complete price.
-   Next assess the complete native hardware backend and oracle together, including
-   rendering/audio consumers, register/bus access, instruction hooks, snapshots,
-   compatibility behavior and all maintained adapters. This extends the former
-   oracle-only assessment, which could not retire native hardware consumers.
-   Current `snes/` owns 4,621 lines; 211 are register names and 520 are the already
-   adopted CPU adapter. The remaining 3,890 are a gross scope, not savings.
-   Published LakeSnes revision `048a0d72568668f74e0cdf371dcd9e8efd614965` is
-   available under Local/sm-decomp-experiments/20261021/complete-backend.
-   Initial interface review finds custom PPU rendering/state, direct native
-   scanline scheduling and differing DSP key-on/envelope state. Price preservation
-   of these contracts before compilation; a drop-in replacement is not established.
-   Independently maintained dependency code must still be disclosed separately.
-   The complete SPC700 interpreter now uses pinned, unmodified LakeSnes
-   revision `1da16a22db4d0f2e7f6960a9846ef4e1f3acbd29`, preserving the live
-   Rust state, reset/save layout, APU bus, DSP and audio scheduling. Its isolated
-   complete price is **98,840 -> 98,164 Rust lines (-676)**; including the new
-   44-line installer removes **632 maintained lines**. The separately disclosed
-   dependency adds **2,104 C/header lines**; this reduces maintained source,
-   not total program source. All 528,395 actual-code comparisons pass, including
-   2,028,312 ordered bus events, reset/save and callback panic behavior. The
-   concurrent PPU composition passes normal release frontend/library/verifier
-   builds and probed/clean physical-audio inputs **0..2 (3/0)**, with 11,572
-   SPC instructions and 1,602 DSP advances observed. No gameplay or credits
-   coverage is claimed. The separate PPU adoption will update the combined
-   composition; do not count its draft savings in this isolated SPC price.
-   Installation, license and limits: [SPC_DEPENDENCY.md](SPC_DEPENDENCY.md).
+   The complete native/oracle backend assessment now replaces shared SPC
+   instruction execution and PPU register operations with independently published
+   LakeSnes dependencies. All native consumers, bus callbacks, state layout,
+   compatibility adapters, installers and verifier changes are counted. SPC
+   removes **676 Rust / 632 complete maintained lines**; the composed PPU stage
+   removes **340 Rust / 259 complete maintained lines**. Together they remove
+   **1,016 Rust / 891 complete maintained lines**, reaching the composition above.
+   SPC uses revision `1da16a2`; PPU registers use `28b8fbc`. Their separate pins,
+   licenses and installation are documented in SPC_DEPENDENCY.md and
+   CPU_DEPENDENCY.md. The earlier combined prototype supplies no extra savings.
+   PPU preserves line-zero mosaic setup, full routing bytes and temporary
+   beam/open-bus views, with 77,824 final installed-archive comparisons. The
+   renderer, DSP, DMA, scheduling, snapshots and CPU hooks remain maintained and
+   included in the price. Current `snes/` owns 3,596 Rust lines; these are a gross
+   retained scope, not a deletion budget. DSP immediate key-on and sample-buffer
+   rules differ from published engines, so no DSP replacement is established.
+   Continue selecting larger complete responsibilities and repeated algorithms;
+   the 90,000-line stretch checkpoint still has no demonstrated remaining budget.
+   Durable experiments: Local/sm-decomp-experiments/20261021/complete-backend.
+   SPC passes 528,395 actual old/new full-state/cycle/failure comparisons and
+   2,028,312 ordered bus events, including reset/save, sequential self-modification
+   and callback unwinding. See [SPC_DEPENDENCY.md](SPC_DEPENDENCY.md) for its
+   preserved state contracts, installation and limits. Dependency adoption reduces
+   maintained project source; it does not reduce total source including dependencies.
    Grapple swing placement, rope-length changes, clearance
    and swept block contact now belong to `grapple_swing`, with bank 9B callers
    migrated. Shared projection, length traversal and bidirectional sweep retain
@@ -1783,7 +1795,8 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest applicable verification: grapple swing passes **2,950** actual old/new
+Current backend verification and its PPU-read coverage limit are recorded in
+the active composition above. Previous grapple swing passes **2,950** actual old/new
 full-RAM, completion and failure-flag comparisons. All **37,203** ordered
 projection calls match angle, length and incoming grapple-state bytes; ten
 invalid-angle/BTS cases preserve the original panic and preceding RAM state.
@@ -2096,14 +2109,19 @@ the pinned CPU/PNG dependencies, RAM pointer chains, readable control flow and
 shared room background loading, Samus animation ownership, the message-box
 lifecycle, unused declarations, projectile animation, Mother Brain visual
 effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects,
-scrolling-sky and grapple-swing ownership, maintained Rust is **98,840**, with
+scrolling-sky and grapple-swing ownership, and the SPC/PPU dependency replacements,
+maintained Rust is **97,824**, with
 applicable static, component and exercised movie checks passing.
-Including the four-line C bridge gives
-**98,844**; including the new 41-line installer as well gives **98,885**.
+Including 41 C bridge lines gives **97,865**; all 121 dependency-installer lines
+and eight added launcher lines bring the complete price to **97,994**.
 The immediate volume target is complete.
-External CPU/PNG code has 2,836/7,762 lines.
-Counters: raw offsets 25; extern C blocks 5; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3221; cast lines 7326. Grapple-swing ownership removes two
+External CPU/SPC/PPU/PNG code has 2,836/2,104/1,261/7,762 lines.
+Counters: raw offsets 25; extern C blocks 6; counted C ABI exports 5; no_mangle 9;
+unsafe functions 3175; cast lines 7204. The PPU dependency adds one counted
+foreign block; its compiled-source verification export adds one counted C ABI
+export and no_mangle. SPC also adds a C-unwind boundary and two export_name
+callbacks, which this script does not count. Together the replacements remove
+46 counted unsafe declarations and 122 cast-containing lines. Grapple-swing ownership removes two
 unsafe declarations and 19 cast-containing lines; no counter increases.
 Scrolling-sky ownership adds one unsafe
 helper for paired channel writes, replacing existing raw stores, and removes

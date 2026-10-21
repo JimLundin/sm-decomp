@@ -696,414 +696,58 @@ unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
     }
     tilesFound != 0
 }
-unsafe fn ppu_getVramRemap(ppu: *mut Ppu) -> u16 {
-    let adr: u16 = (*ppu).vramPointer;
-    match (*ppu).vramRemapMode as i32 {
-        0 => return adr,
-        1 => {
-            return (adr as i32 & 0xff00 | (adr as i32 & 0xe0) >> 5 | (adr as i32 & 0x1f) << 3)
-                as u16
-        }
-        2 => {
-            return (adr as i32 & 0xfe00 | (adr as i32 & 0x1c0) >> 6 | (adr as i32 & 0x3f) << 3)
-                as u16
-        }
-        3 => {
-            return (adr as i32 & 0xfc00 | (adr as i32 & 0x380) >> 7 | (adr as i32 & 0x7f) << 3)
-                as u16
-        }
-        _ => {}
-    }
-    adr
+// Only register operations use the upstream PPU. Rendering and snapshots stay local.
+#[link(name = "lakesnes_backend", kind = "static", modifiers = "-bundle")]
+unsafe extern "C" {
+    fn sm_backend_ppu_read(ppu: *mut Ppu, adr: u8, h_pos: u16, v_pos: u16, bus: u8) -> u8;
+    fn sm_backend_ppu_write(ppu: *mut Ppu, adr: u8, value: u8);
 }
+
 pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
-    match adr as i32 {
-        4 | 20 | 36 | 5 | 21 | 37 | 6 | 22 | 38 | 8 | 24 | 40 | 9 | 25 | 41 | 10 | 26 | 42 => {
-            (*ppu).ppu1openBus
-        }
-        52 | 53 | 54 => {
-            let result: i32 = (*ppu).m7matrix[0i32 as usize] as i32
-                * ((*ppu).m7matrix[1i32 as usize] as i32 >> 8);
-            (*ppu).ppu1openBus = (result >> 8 * (adr as i32 - 0x34i32) & 0xff) as u8;
-            (*ppu).ppu1openBus
-        }
-        55 => {
-            (*ppu).hCount = ((*(*ppu).snes).hPos as i32 / 4) as u16;
-            (*ppu).vCount = (*(*ppu).snes).vPos;
-            (*ppu).countersLatched = true_0 != 0;
-            (*(*ppu).snes).openBus
-        }
-        56 => {
-            let mut ret: u8 = 0;
-            if (*ppu).oamInHigh {
-                ret = (*ppu).highOam
-                    [(((*ppu).oamAdr as i32 & 0xf) << 1 | (*ppu).oamSecondWrite as i32) as usize];
-                if (*ppu).oamSecondWrite {
-                    (*ppu).oamAdr = (*ppu).oamAdr.wrapping_add(1);
-                    if (*ppu).oamAdr as i32 == 0 {
-                        (*ppu).oamInHigh = false_0 != 0;
-                    }
-                }
-            } else if !(*ppu).oamSecondWrite {
-                ret = ((*ppu).oam[(*ppu).oamAdr as usize] as u8 & 0xff);
-            } else {
-                crate::update_place! { previous fresh2 = (*ppu).oamAdr => (*ppu).oamAdr.wrapping_add(1); }
-                ret = ((*ppu).oam[fresh2 as usize] >> 8) as u8;
-                if (*ppu).oamAdr as i32 == 0 {
-                    (*ppu).oamInHigh = true_0 != 0;
-                }
-            }
-            (*ppu).oamSecondWrite = !(*ppu).oamSecondWrite;
-            (*ppu).ppu1openBus = ret;
-            ret
-        }
-        57 => {
-            let val: u16 = (*ppu).vramReadBuffer;
-            if !(*ppu).vramIncrementOnHigh {
-                (*ppu).vramReadBuffer =
-                    (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff) as usize];
-                (*ppu).vramPointer =
-                    ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as u16;
-            }
-            (*ppu).ppu1openBus = (val as u8 & 0xff);
-            (val as u8 & 0xff)
-        }
-        58 => {
-            let val_0: u16 = (*ppu).vramReadBuffer;
-            if (*ppu).vramIncrementOnHigh {
-                (*ppu).vramReadBuffer =
-                    (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff) as usize];
-                (*ppu).vramPointer =
-                    ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as u16;
-            }
-            (*ppu).ppu1openBus = (val_0 >> 8) as u8;
-            (val_0 >> 8) as u8
-        }
-        59 => {
-            let mut ret_0: u8 = if !(*ppu).cgramSecondWrite {
-                ((*ppu).cgram[(*ppu).cgramPointer as usize] as u8 & 0xff)
-            } else {
-                crate::update_place! { previous fresh3 = (*ppu).cgramPointer => (*ppu).cgramPointer.wrapping_add(1); }
-                ((*ppu).cgram[fresh3 as usize] as i32 >> 8 & 0x7f
-                    | (*ppu).ppu2openBus as i32 & 0x80) as u8
-            };
-            (*ppu).cgramSecondWrite = !(*ppu).cgramSecondWrite;
-            (*ppu).ppu2openBus = ret_0;
-            ret_0
-        }
-        60 => {
-            let mut val_1: u8 = if (*ppu).hCountSecond {
-                ((*ppu).hCount as i32 >> 8 & 1 | (*ppu).ppu2openBus as i32 & 0xfe) as u8
-            } else {
-                ((*ppu).hCount as u8 & 0xff)
-            };
-            (*ppu).hCountSecond = !(*ppu).hCountSecond;
-            (*ppu).ppu2openBus = val_1;
-            val_1
-        }
-        61 => {
-            let mut val_2: u8 = if (*ppu).vCountSecond {
-                ((*ppu).vCount as i32 >> 8 & 1 | (*ppu).ppu2openBus as i32 & 0xfe) as u8
-            } else {
-                ((*ppu).vCount as u8 & 0xff)
-            };
-            (*ppu).vCountSecond = !(*ppu).vCountSecond;
-            (*ppu).ppu2openBus = val_2;
-            val_2
-        }
-        62 => {
-            let mut val_3: u8 = 0x1;
-            val_3 = (val_3 | (*ppu).ppu1openBus & 0x10);
-            val_3 = (val_3 as i32 | ((*ppu).rangeOver as i32) << 6) as u8;
-            val_3 = (val_3 as i32 | ((*ppu).timeOver as i32) << 7) as u8;
-            (*ppu).ppu1openBus = val_3;
-            val_3
-        }
-        63 => {
-            let mut val_4: u8 = 0x3;
-            val_4 = (val_4 | (*ppu).ppu2openBus & 0x20);
-            val_4 = (val_4 as i32 | ((*ppu).countersLatched as i32) << 6) as u8;
-            val_4 = (val_4 as i32 | ((*ppu).evenFrame as i32) << 7) as u8;
-            set_fields! {[(*ppu)]; countersLatched = false_0 != 0, hCountSecond = false_0 != 0,
-            vCountSecond = false_0 != 0, ppu2openBus = val_4, };
-            val_4
-        }
-        _ => (*(*ppu).snes).openBus,
-    }
-}
-pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
-    match adr as i32 {
-        0 => {
-            (*ppu).brightness = (val & 0xf);
-            (*ppu).forcedBlank = val & 0x80 != 0;
-        }
-        1 => {
-            (*ppu).objSize = (val >> 5);
-            (*ppu).objTileAdr1 = ((val as i32 & 7) << 13) as u16;
-            (*ppu).objTileAdr2 =
-                ((*ppu).objTileAdr1 as i32 + (((val as i32 & 0x18) + 8) << 9)) as u16;
-        }
-        2 => {
-            set_fields! {[(*ppu)]; oamAdr = val, oamAdrWritten = (*ppu).oamAdr,
-            oamInHigh = (*ppu).oamInHighWritten, oamSecondWrite = false_0 != 0, };
-        }
-        3 => {
-            set_fields! {[(*ppu)]; objPriority = val & 0x80 != 0, oamInHigh = val & 1 != 0,
-            oamInHighWritten = (*ppu).oamInHigh, oamAdr = (*ppu).oamAdrWritten,
-            oamSecondWrite = false_0 != 0, };
-        }
-        4 => {
-            if (*ppu).oamInHigh {
-                (*ppu).highOam
-                    [(((*ppu).oamAdr as i32 & 0xf) << 1 | (*ppu).oamSecondWrite as i32) as usize] =
-                    val;
-                if (*ppu).oamSecondWrite {
-                    (*ppu).oamAdr = (*ppu).oamAdr.wrapping_add(1);
-                    if (*ppu).oamAdr as i32 == 0 {
-                        (*ppu).oamInHigh = false_0 != 0;
-                    }
-                }
-            } else if !(*ppu).oamSecondWrite {
-                (*ppu).oamBuffer = val;
-            } else {
-                crate::update_place! { previous fresh4 = (*ppu).oamAdr => (*ppu).oamAdr.wrapping_add(1); }
-                (*ppu).oam[fresh4 as usize] = ((val as i32) << 8 | (*ppu).oamBuffer as i32) as u16;
-                if (*ppu).oamAdr as i32 == 0 {
-                    (*ppu).oamInHigh = true_0 != 0;
-                }
-            }
-            (*ppu).oamSecondWrite = !(*ppu).oamSecondWrite;
-        }
-        5 => {
-            (*ppu).mode = (val & 0x7);
-            (*ppu).bg3priority = val & 0x8 != 0;
-            (*ppu).bgLayer[0i32 as usize].bigTiles = val & 0x10 != 0;
-            (*ppu).bgLayer[1i32 as usize].bigTiles = val & 0x20 != 0;
-            (*ppu).bgLayer[2i32 as usize].bigTiles = val & 0x40 != 0;
-            (*ppu).bgLayer[3i32 as usize].bigTiles = val & 0x80 != 0;
-        }
-        6 => {
-            (*ppu).bgLayer[0i32 as usize].mosaicEnabled = val & 0x1 != 0;
-            (*ppu).bgLayer[1i32 as usize].mosaicEnabled = val & 0x2 != 0;
-            (*ppu).bgLayer[2i32 as usize].mosaicEnabled = val & 0x4 != 0;
-            (*ppu).bgLayer[3i32 as usize].mosaicEnabled = val & 0x8 != 0;
-            (*ppu).mosaicSize = ((val as i32 >> 4) + 1) as u8;
-            (*ppu).mosaicStartLine = 0;
-        }
-        7 | 8 | 9 | 10 => {
-            let bg = &mut (*ppu).bgLayer[usize::from(adr - 7)];
-            bg.tilemapWider = val & 1 != 0;
-            bg.tilemapHigher = val & 2 != 0;
-            bg.tilemapAdr = u16::from(val & 0xfc) << 8;
-        }
-        11 | 12 => {
-            let first_bg = usize::from(adr - 11) * 2;
-            (*ppu).bgLayer[first_bg].tileAdr = u16::from(val & 0x0f) << 12;
-            (*ppu).bgLayer[first_bg + 1].tileAdr = u16::from(val & 0xf0) << 8;
-        }
-        13 | 15 | 17 | 19 => {
-            if adr == 13 {
-                (*ppu).m7matrix[6] =
-                    ((u16::from(val) << 8 | u16::from((*ppu).m7prev)) & 0x1fff) as i16;
-                (*ppu).m7prev = val;
-            }
-
-            let layer = (usize::from(adr) - 0x0d) / 2;
-            (*ppu).bgLayer[layer].hScroll = ((u16::from(val) << 8)
-                | u16::from((*ppu).scrollPrev & 0xf8)
-                | u16::from((*ppu).scrollPrev2 & 0x07))
-                & 0x3ff;
-            (*ppu).scrollPrev = val;
-            (*ppu).scrollPrev2 = val;
-        }
-        14 | 16 | 18 | 20 => {
-            if adr == 14 {
-                (*ppu).m7matrix[7] =
-                    ((u16::from(val) << 8 | u16::from((*ppu).m7prev)) & 0x1fff) as i16;
-                (*ppu).m7prev = val;
-            }
-
-            let layer = (usize::from(adr) - 0x0e) / 2;
-            (*ppu).bgLayer[layer].vScroll =
-                ((u16::from(val) << 8) | u16::from((*ppu).scrollPrev)) & 0x3ff;
-            (*ppu).scrollPrev = val;
-        }
-        21 => {
-            if val & 3 == 0 {
-                (*ppu).vramIncrement = 1;
-            } else if val & 3 == 1 {
-                (*ppu).vramIncrement = 32;
-            } else {
-                (*ppu).vramIncrement = 128;
-            }
-            (*ppu).vramRemapMode = ((val as i32 & 0xc) >> 2) as u8;
-            (*ppu).vramIncrementOnHigh = val & 0x80 != 0;
-        }
-        22 => {
-            (*ppu).vramPointer = ((*ppu).vramPointer & 0xff00 | val as u16);
-            (*ppu).vramReadBuffer = (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff) as usize];
-        }
-        23 => {
-            (*ppu).vramPointer = ((*ppu).vramPointer as i32 & 0xff | (val as i32) << 8) as u16;
-            (*ppu).vramReadBuffer = (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff) as usize];
-        }
-        24 => {
-            let vramAdr: u16 = ppu_getVramRemap(ppu);
-            (*ppu).vram[(vramAdr as i32 & 0x7fff) as usize] =
-                ((*ppu).vram[(vramAdr as i32 & 0x7fff) as usize] & 0xff00 | val as u16);
-            if !(*ppu).vramIncrementOnHigh {
-                (*ppu).vramPointer =
-                    ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as u16;
-            }
-        }
-        25 => {
-            let vramAdr_0: u16 = ppu_getVramRemap(ppu);
-            (*ppu).vram[(vramAdr_0 as i32 & 0x7fff) as usize] =
-                ((*ppu).vram[(vramAdr_0 as i32 & 0x7fff) as usize] as i32 & 0xff
-                    | (val as i32) << 8) as u16;
-            if (*ppu).vramIncrementOnHigh {
-                (*ppu).vramPointer =
-                    ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as u16;
-            }
-        }
-        26 => {
-            set_fields! {[(*ppu)]; m7largeField = val & 0x80 != 0, m7charFill = val & 0x40 != 0,
-            m7yFlip = val & 0x02 != 0, m7xFlip = val & 0x01 != 0, };
-        }
-        27 | 28 | 29 | 30 => {
-            (*ppu).m7matrix[usize::from(adr - 0x1b)] =
-                (u16::from(val) << 8 | u16::from((*ppu).m7prev)) as i16;
-            (*ppu).m7prev = val;
-        }
-        31 | 32 => {
-            (*ppu).m7matrix[usize::from(adr - 0x1b)] =
-                ((u16::from(val) << 8 | u16::from((*ppu).m7prev)) & 0x1fff) as i16;
-            (*ppu).m7prev = val;
-        }
-        33 => {
-            (*ppu).cgramPointer = val;
-            (*ppu).cgramSecondWrite = false_0 != 0;
-        }
-        34 => {
-            if !(*ppu).cgramSecondWrite {
-                (*ppu).cgramBuffer = val;
-            } else {
-                crate::update_place! { previous fresh5 = (*ppu).cgramPointer => (*ppu).cgramPointer.wrapping_add(1); }
-                (*ppu).cgram[fresh5 as usize] =
-                    ((val as i32) << 8 | (*ppu).cgramBuffer as i32) as u16;
-            }
-            (*ppu).cgramSecondWrite = !(*ppu).cgramSecondWrite;
-        }
-        35 | 36 | 37 => {
-            if adr as i32 == 0x23 {
-                (*ppu).windowsel = (*ppu).windowsel & !(0xffi32) as u32 | val as u32;
-            } else if adr as i32 == 0x24 {
-                (*ppu).windowsel =
-                    (*ppu).windowsel & !(0xff00i32) as u32 | ((val as i32) << 8) as u32;
-            } else if adr as i32 == 0x25 {
-                (*ppu).windowsel =
-                    (*ppu).windowsel & !(0xff0000i32) as u32 | ((val as i32) << 16) as u32;
-            }
-            (*ppu).windowLayer[((adr as i32 - 0x23i32) * 2i32) as usize].window1inversed =
-                val & 0x1 != 0;
-            (*ppu).windowLayer[((adr as i32 - 0x23i32) * 2i32) as usize].window1enabled =
-                val & 0x2 != 0;
-            (*ppu).windowLayer[((adr as i32 - 0x23i32) * 2i32) as usize].window2inversed =
-                val & 0x4 != 0;
-            (*ppu).windowLayer[((adr as i32 - 0x23i32) * 2i32) as usize].window2enabled =
-                val & 0x8 != 0;
-            (*ppu).windowLayer[((adr as i32 - 0x23i32) * 2i32 + 1i32) as usize].window1inversed =
-                val & 0x10 != 0;
-            (*ppu).windowLayer[((adr as i32 - 0x23i32) * 2i32 + 1i32) as usize].window1enabled =
-                val & 0x20 != 0;
-            (*ppu).windowLayer[((adr as i32 - 0x23i32) * 2i32 + 1i32) as usize].window2inversed =
-                val & 0x40 != 0;
-            (*ppu).windowLayer[((adr as i32 - 0x23i32) * 2i32 + 1i32) as usize].window2enabled =
-                val & 0x80 != 0;
-        }
-        38 => {
-            (*ppu).window1left = val;
-        }
-        39 => {
-            (*ppu).window1right = val;
-        }
-        40 => {
-            (*ppu).window2left = val;
-        }
-        41 => {
-            (*ppu).window2right = val;
-        }
-        42 => {
-            (*ppu).windowLayer[0i32 as usize].maskLogic = (val & 0x3);
-            (*ppu).windowLayer[1i32 as usize].maskLogic = (val as i32 >> 2 & 0x3) as u8;
-            (*ppu).windowLayer[2i32 as usize].maskLogic = (val as i32 >> 4 & 0x3) as u8;
-            (*ppu).windowLayer[3i32 as usize].maskLogic = (val as i32 >> 6 & 0x3) as u8;
-        }
-        43 => {
-            (*ppu).windowLayer[4i32 as usize].maskLogic = (val & 0x3);
-            (*ppu).windowLayer[5i32 as usize].maskLogic = (val as i32 >> 2 & 0x3) as u8;
-        }
-        44 => {
-            (*ppu).screenEnabled[0] = val;
-            (*ppu).layer[0].mainScreenEnabled = val & 0x01 != 0;
-            (*ppu).layer[1].mainScreenEnabled = val & 0x02 != 0;
-            (*ppu).layer[2].mainScreenEnabled = val & 0x04 != 0;
-            (*ppu).layer[3].mainScreenEnabled = val & 0x08 != 0;
-            (*ppu).layer[4].mainScreenEnabled = val & 0x10 != 0;
-        }
-        45 => {
-            (*ppu).screenEnabled[1] = val;
-            (*ppu).layer[0].subScreenEnabled = val & 0x01 != 0;
-            (*ppu).layer[1].subScreenEnabled = val & 0x02 != 0;
-            (*ppu).layer[2].subScreenEnabled = val & 0x04 != 0;
-            (*ppu).layer[3].subScreenEnabled = val & 0x08 != 0;
-            (*ppu).layer[4].subScreenEnabled = val & 0x10 != 0;
-        }
-        46 => {
-            (*ppu).screenWindowed[0] = val;
-            (*ppu).layer[0].mainScreenWindowed = val & 0x01 != 0;
-            (*ppu).layer[1].mainScreenWindowed = val & 0x02 != 0;
-            (*ppu).layer[2].mainScreenWindowed = val & 0x04 != 0;
-            (*ppu).layer[3].mainScreenWindowed = val & 0x08 != 0;
-            (*ppu).layer[4].mainScreenWindowed = val & 0x10 != 0;
-        }
-        47 => {
-            (*ppu).screenWindowed[1] = val;
-            (*ppu).layer[0].subScreenWindowed = val & 0x01 != 0;
-            (*ppu).layer[1].subScreenWindowed = val & 0x02 != 0;
-            (*ppu).layer[2].subScreenWindowed = val & 0x04 != 0;
-            (*ppu).layer[3].subScreenWindowed = val & 0x08 != 0;
-            (*ppu).layer[4].subScreenWindowed = val & 0x10 != 0;
-        }
-        48 => {
-            set_fields! {[(*ppu)]; directColor = val & 0x01 != 0, addSubscreen = val & 0x02 != 0,
-            preventMathMode = (val & 0x30) >> 4, clipMode = (val & 0xc0) >> 6, };
-        }
-        49 => {
-            (*ppu).subtractColor = val & 0x80 != 0;
-            (*ppu).halfColor = val & 0x40 != 0;
-            for layer in 0..6 {
-                (*ppu).mathEnabled[layer] = val & (1 << layer) != 0;
-            }
-        }
-        50 => {
-            if val & 0x80 != 0 {
-                (*ppu).fixedColorB = val & 0x1f;
-            }
-            if val & 0x40 != 0 {
-                (*ppu).fixedColorG = val & 0x1f;
-            }
-            if val & 0x20 != 0 {
-                (*ppu).fixedColorR = val & 0x1f;
-            }
-        }
-        51 => {
-            set_fields! {[(*ppu)]; interlace = val & 0x01 != 0, objInterlace = val & 0x02 != 0,
-            overscan = val & 0x04 != 0, pseudoHires = val & 0x08 != 0,
-            m7extBg = val & 0x40 != 0, };
-        }
-        _ => {}
+    // Only open-bus reads and counter latching access the host SNES pointer.
+    let (h_pos, v_pos, bus) = match adr {
+        0x37 => (
+            (*(*ppu).snes).hPos,
+            (*(*ppu).snes).vPos,
+            (*(*ppu).snes).openBus,
+        ),
+        4
+        | 20
+        | 36
+        | 5
+        | 21
+        | 37
+        | 6
+        | 22
+        | 38
+        | 8
+        | 24
+        | 40
+        | 9
+        | 25
+        | 41
+        | 10
+        | 26
+        | 42
+        | 0x34..=0x36
+        | 0x38..=0x3f => (0, 0, 0),
+        _ => (0, 0, (*(*ppu).snes).openBus),
     };
+    sm_backend_ppu_read(ppu, adr, h_pos, v_pos, bus)
+}
+
+pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
+    // The native renderer caches complete register bytes, including unused bits.
+    match adr {
+        0x23..=0x25 => {
+            let shift = u32::from(adr - 0x23) * 8;
+            (*ppu).windowsel = ((*ppu).windowsel & !(0xff << shift)) | (u32::from(val) << shift);
+        }
+        0x2c..=0x2d => (*ppu).screenEnabled[usize::from(adr - 0x2c)] = val,
+        0x2e..=0x2f => (*ppu).screenWindowed[usize::from(adr - 0x2e)] = val,
+        _ => {}
+    }
+    sm_backend_ppu_write(ppu, adr, val);
 }
 pub fn PpuGetCurrentRenderScale(ppu: *mut Ppu, render_flags: u32) -> i32 {
     1
@@ -1383,3 +1027,10 @@ unsafe fn ppu_render_pixel<const NATIVE: bool>(ppu: *mut Ppu, x: i32, y: i32, st
         4,
     );
 }
+
+const _: () = {
+    assert!(core::mem::offset_of!(Ppu, vram) == 8);
+    assert!(core::mem::offset_of!(Ppu, bgLayer) == 67142);
+    assert!(core::mem::offset_of!(Ppu, windowLayer) == 67244);
+    assert!(core::mem::offset_of!(Ppu, pixelbuffer_placeholder) == 67313);
+};

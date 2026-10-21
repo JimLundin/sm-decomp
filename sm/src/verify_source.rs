@@ -164,6 +164,7 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("snes/snes_other.rs"),
     ),
     ("sm/src/snes/spc.rs", include_bytes!("snes/spc.rs")),
+    ("sm/src/snes/backend.c", include_bytes!("snes/backend.c")),
     ("sm/src/spc_player.rs", include_bytes!("spc_player.rs")),
     ("sm/src/tracing.rs", include_bytes!("tracing.rs")),
     ("sm/src/types.rs", include_bytes!("types.rs")),

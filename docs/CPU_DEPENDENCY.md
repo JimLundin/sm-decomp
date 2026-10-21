@@ -1,4 +1,44 @@
-# Pinned external CPU library
+# Pinned external hardware libraries
+
+## PPU registers
+
+The PPU register engine uses unmodified
+[angelo-wf/LakeSnes revision 28b8fbc](https://github.com/angelo-wf/LakeSnes/tree/28b8fbc15ad15afff003165ff4f2a8adb1c93d18).
+Its PPU register state matches the existing interface.
+The dependency adds 1,261 C/header lines, counted separately. The maintained C bridge, Rust adapter,
+installer and verifier changes are counted as project implementation.
+The custom PPU renderer, DSP, DMA, scheduling, buses, snapshots and CPU hooks stay
+in Rust. This dependency replaces shared native/oracle consumers; it does not
+replace the entire hardware backend.
+
+Install with
+`tools/install_lakesnes_backend.ps1 -Zig <path-to-zig.exe> -LibraryDirectory <SDL-lib>`.
+The installer checks every downloaded file against its pinned SHA256 and builds
+`liblakesnes_backend.a`. Add its directory to `LIBRARY_PATH` alongside the CPU,
+SPC, PNG and SDL libraries. Rebuild this archive after editing `sm/src/snes/backend.c`;
+the verifier rejects an archive whose compiled bridge hash is stale. Include
+[the pinned revision's MIT license](../third_party/lakesnes/LICENSE-2022.txt)
+with distributed binaries.
+
+The installer was syntax-checked. This machine's PowerShell script policy
+requires running its checksum-verified Zig compilation and archive commands
+directly; that is how the tested archive was built.
+
+PPU calls use a temporary beam-position/open-bus view and restore the original
+SNES pointer. The Rust adapter preserves line-zero mosaic setup and the native
+renderer's complete routing bytes.
+The shared state remains byte-compatible with existing snapshots.
+
+On another 64-bit host, verify the installer’s source hashes and compile
+`sm/src/snes/backend.c` with that source directory on the include path, C11,
+exception unwind support and `SM_BACKEND_SOURCE_HASH` defined as the quoted
+SHA256 of the bridge. Archive the object as `liblakesnes_backend.a`. The Windows
+GNU build is validated here; this host-native recipe has not been tested on Linux.
+
+The separate SPC interpreter dependency is documented in
+[SPC_DEPENDENCY.md](SPC_DEPENDENCY.md).
+
+## CPU instructions
 
 The CPU adapter links the unmodified MIT-licensed CPU and state handler from
 [dinkc64/LakeSnes](https://github.com/dinkc64/LakeSnes/tree/048a0d72568668f74e0cdf371dcd9e8efd614965),
