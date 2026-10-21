@@ -44,82 +44,7 @@ unsafe fn get_RoomDefStateSelect_E6E5_Finish(
 ) -> *mut RoomDefStateSelect_E6E5_Finish {
     RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefStateSelect_E6E5_Finish
 }
-// Each door callback writes its listed scroll cells in order: 0 red, 1 blue, 2 green.
-macro_rules! door_scroll_changes {
-    ($game:ident; $($name:ident { $($cell:literal => $color:literal),+ $(,)? };)+) => {
-        $(pub unsafe fn $name($game: &mut Game) {
-            $(*ram_ptr!($game; 0xcd20, $cell) = $color;)+
-        })+
-    };
-}
 
-door_scroll_changes! { game;
-    DoorCode_Scroll6_Green { 6 => 2 };
-    DoorCode_Scroll0_Blue { 0 => 1 };
-    DoorCode_Scroll13_Blue { 19 => 1 };
-    DoorCode_Scroll_4Blue_8Green { 4 => 0, 8 => 2 };
-    DoorCode_Scroll_8toB_Red { 8 => 0, 9 => 0, 10 => 0, 11 => 0 };
-    DoorCode_Scroll_LotsRed { 2 => 0, 3 => 0, 4 => 0, 5 => 0, 11 => 0, 12 => 0, 13 => 0, 17 => 0 };
-    DoorCode_Scroll_1_4_Green { 1 => 2, 4 => 2 };
-    DoorCode_Scroll_2_Blue { 2 => 1 };
-    DoorCode_Scroll_17_Blue { 23 => 1 };
-    DoorCode_Scroll_4_Blue { 4 => 1 };
-}
-pub use self::DoorCode_Scroll6_Green as DoorCode_Scroll_6_Green;
-door_scroll_changes! { game;
-    DoorCode_Scroll_3_Green { 3 => 2 };
-    DoorCode_SetScroll_0 { 24 => 2, 28 => 2 };
-    DoorCode_SetScroll_1 { 5 => 1, 6 => 1 };
-    DoorCode_SetScroll_2 { 29 => 1 };
-    DoorCode_SetScroll_3 { 2 => 2, 3 => 2 };
-    DoorCode_SetScroll_4 { 0 => 0, 1 => 2 };
-    DoorCode_SetScroll_5 { 11 => 2 };
-    DoorCode_SetScroll_6 { 28 => 0, 29 => 1 };
-    DoorCode_SetScroll_7 { 4 => 0 };
-    DoorCode_SetScroll_8 { 32 => 2, 36 => 2, 37 => 2 };
-}
-pub use self::DoorCode_Scroll_2_Blue as DoorCode_SetScroll_9;
-door_scroll_changes! { game;
-    DoorCode_SetScroll_10 { 0 => 2 };
-    DoorCode_SetScroll_11 { 6 => 2, 7 => 2 };
-    DoorCode_SetScroll_12 { 1 => 1, 2 => 0 };
-    DoorCode_SetScroll_13 { 1 => 1, 3 => 0 };
-    DoorCode_SetScroll_14 { 0 => 0, 4 => 1 };
-    DoorCode_SetScroll_15 { 2 => 1, 3 => 1 };
-    DoorCode_SetScroll_16 { 0 => 2, 1 => 2 };
-    DoorCode_SetScroll_17 { 1 => 2 };
-    DoorCode_SetScroll_18 { 15 => 2, 18 => 2 };
-}
-pub use self::DoorCode_Scroll6_Green as DoorCode_SetScroll_19;
-door_scroll_changes! { game;
-    DoorCode_SetScroll_20 { 0 => 2, 1 => 1 };
-    DoorCode_SetScroll_21 { 2 => 2 };
-    DoorCode_SetScroll_22 { 3 => 0, 4 => 0, 6 => 1, 7 => 1, 8 => 1 };
-    DoorCode_SetScroll_23 { 1 => 1, 2 => 1, 3 => 1, 4 => 2, 6 => 0 };
-    DoorCode_SetScroll_24 { 0 => 1, 1 => 1 };
-    DoorCode_SetScroll_25 { 1 => 0, 0 => 1 };
-    DoorCode_SetScroll_26 { 10 => 2 };
-    DoorCode_SetScroll_28 { 0 => 2, 2 => 2 };
-    DoorCode_SetScroll_29 { 6 => 1, 7 => 1, 8 => 0 };
-    DoorCode_SetScroll_30 { 2 => 0, 3 => 1 };
-    DoorCode_SetScroll_31 { 7 => 2 };
-    DoorCode_SetScroll_32 { 1 => 0, 2 => 1 };
-    DoorCode_SetScroll_33 { 3 => 0, 0 => 1 };
-    DoorCode_SetScroll_34 { 1 => 1, 4 => 0 };
-    DoorCode_SetScroll_35 { 0 => 1, 1 => 0, 2 => 0, 3 => 0 };
-}
-pub use self::DoorCode_SetScroll_10 as DoorCode_SetScroll_36;
-door_scroll_changes! { game;
-    DoorCode_SetScroll_37 { 0 => 1, 1 => 1, 4 => 0 };
-    DoorCode_SetScroll_38 { 0 => 1, 3 => 0 };
-}
-pub use self::DoorCode_Scroll0_Blue as DoorCode_SetScroll_39;
-door_scroll_changes! { game;
-    DoorCode_SetScroll_40 { 0 => 1, 1 => 0 };
-    DoorCode_SetScroll_41 { 24 => 1 };
-    DoorCode_SetScroll_42 { 3 => 0, 2 => 1 };
-    DoorCode_SetScroll_43 { 14 => 0 };
-}
 pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
     if word!(game.time_is_frozen_flag) == 0 && (word!(game.nmi_frame_counter_word) & 1) == 0 {
         let mut Random: u16 = NextRandom(game);
@@ -161,39 +86,7 @@ pub unsafe fn UnpauseHook_DraygonRoom(game: &mut Game) -> CoroutineRet {
     }
     kCoroutineNone as CoroutineRet
 }
-door_scroll_changes! { game;
-    DoorCode_SetScroll_44 { 1 => 1 };
-}
-pub use self::DoorCode_SetScroll_10 as DoorCode_SetScroll_45;
-door_scroll_changes! { game;
-    DoorCode_SetScroll_46 { 3 => 0, 4 => 1 };
-    DoorCode_SetScroll_47 { 41 => 1 };
-    DoorCode_SetScroll_48 { 40 => 2, 46 => 2 };
-    DoorCode_SetScroll_49 { 6 => 0, 7 => 0, 8 => 0, 9 => 0, 10 => 0, 11 => 0 };
-}
-door_scroll_changes! { game;
-    DoorCode_SetScroll_50 { 10 => 0, 11 => 1 };
-}
-pub use self::DoorCode_SetScroll_14 as DoorCode_SetScroll_53;
-door_scroll_changes! { game;
-    DoorCode_SetScroll_54 { 0 => 0, 1 => 1 };
-    DoorCode_SetScroll_55 { 9 => 0, 10 => 1 };
-    DoorCode_SetScroll_56 { 0 => 0, 2 => 0, 1 => 1 };
-}
-pub use self::DoorCode_SetScroll_44 as DoorCode_SetScroll_57;
-door_scroll_changes! { game;
-    DoorCode_SetScroll_58 { 6 => 1 };
-}
-pub use self::DoorCode_SetScroll_7 as DoorCode_SetScroll_59;
-door_scroll_changes! { game;
-    DoorCode_SetScroll_61 { 4 => 0, 7 => 0 };
-    DoorCode_SetScroll_62 { 2 => 0, 1 => 1 };
-}
-pub use self::DoorCode_SetScroll_16 as DoorCode_SetScroll_64;
-pub use self::DoorCode_SetScroll_28 as DoorCode_SetScroll_63;
-door_scroll_changes! { game;
-    DoorCode_SetScroll_65 { 24 => 1, 25 => 0 };
-}
+
 static kRoomCode_SpawnCeresFallingDebris_Tab: [u16; 16] = [
     0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0, 0x110, 0x130, 0x150, 0x170,
     0x190,
@@ -384,7 +277,9 @@ pub unsafe fn RunRoomSetupCode(game: &mut Game) {
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallDoorDefSetupCode(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
+    call (game); default {
+        if !crate::game::room_scrolls::apply(ea, game) { Unreachable(game); }
+    };
     @functions [pub unsafe fn (game: &mut Game)];
     [9419121] DoorCode_StartWreckedShipTreadmillWest [] {
         SpawnAnimtiles(addr_kAnimtiles_WreckedShipTradmillRight as u16, game);
@@ -439,47 +334,7 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x56) = 9;
         word!(game.irq_enable_mode7 = 0);
     };
-    @external {
-        9419137 => DoorCode_Scroll6_Green;
-        9419148 => DoorCode_Scroll0_Blue; 9419159 => DoorCode_Scroll13_Blue;
-        9419170 => DoorCode_Scroll_4Blue_8Green; 9419187 => DoorCode_Scroll_8toB_Red;
-        9419210 => DoorCode_Scroll_LotsRed; 9419249 => DoorCode_Scroll_1_4_Green;
-        9419264 => DoorCode_Scroll_2_Blue; 9419275 => DoorCode_Scroll_17_Blue;
-        9419286 => DoorCode_Scroll_4_Blue; 9419297 => DoorCode_Scroll_6_Green;
-        9419308 => DoorCode_Scroll_3_Green; 9420039 => DoorCode_SetScroll_0;
-        9420054 => DoorCode_SetScroll_1; 9420069 => DoorCode_SetScroll_2;
-        9420080 => DoorCode_SetScroll_3; 9420095 => DoorCode_SetScroll_4;
-        9420112 => DoorCode_SetScroll_5; 9420123 => DoorCode_SetScroll_6;
-        9420140 => DoorCode_SetScroll_7; 9420151 => DoorCode_SetScroll_8;
-        9420170 => DoorCode_SetScroll_9; 9420181 => DoorCode_SetScroll_10;
-        9420192 => DoorCode_SetScroll_11; 9420207 => DoorCode_SetScroll_12;
-        9420224 => DoorCode_SetScroll_13; 9420241 => DoorCode_SetScroll_14;
-        9420258 => DoorCode_SetScroll_15; 9420273 => DoorCode_SetScroll_16;
-        9420288 => DoorCode_SetScroll_17; 9420299 => DoorCode_SetScroll_18;
-        9420314 => DoorCode_SetScroll_19; 9420325 => DoorCode_SetScroll_20;
-        9420342 => DoorCode_SetScroll_21; 9420702 => DoorCode_SetScroll_22;
-        9420731 => DoorCode_SetScroll_23; 9420762 => DoorCode_SetScroll_24;
-        9420777 => DoorCode_SetScroll_25; 9420794 => DoorCode_SetScroll_26;
-        9420822 => DoorCode_SetScroll_28; 9420837 => DoorCode_SetScroll_29;
-        9420858 => DoorCode_SetScroll_30; 9420875 => DoorCode_SetScroll_31;
-        9420886 => DoorCode_SetScroll_32; 9420903 => DoorCode_SetScroll_33;
-        9420920 => DoorCode_SetScroll_34; 9420937 => DoorCode_SetScroll_35;
-        9420962 => DoorCode_SetScroll_36; 9420973 => DoorCode_SetScroll_37;
-        9420994 => DoorCode_SetScroll_38; 9421011 => DoorCode_SetScroll_39;
-        9421022 => DoorCode_SetScroll_40; 9421039 => DoorCode_SetScroll_41;
-        9421050 => DoorCode_SetScroll_42; 9421067 => DoorCode_SetScroll_43;
-        9429480 => DoorCode_SetScroll_44;
-        9429491 => DoorCode_SetScroll_45; 9429502 => DoorCode_SetScroll_46;
-        9429519 => DoorCode_SetScroll_47; 9429530 => DoorCode_SetScroll_48;
-        9429545 => DoorCode_SetScroll_49;
-        9429784 => DoorCode_SetScroll_50;
-        9429829 => DoorCode_SetScroll_53; 9429846 => DoorCode_SetScroll_54;
-        9429863 => DoorCode_SetScroll_55; 9429880 => DoorCode_SetScroll_56;
-        9429901 => DoorCode_SetScroll_57; 9429912 => DoorCode_SetScroll_58;
-        9429923 => DoorCode_SetScroll_59; 9429945 => DoorCode_SetScroll_61;
-        9429960 => DoorCode_SetScroll_62; 9429977 => DoorCode_SetScroll_63;
-        9430208 => DoorCode_SetScroll_64; 9430223 => DoorCode_SetScroll_65;
-    }
+
 }
 pub unsafe fn RunDoorSetupCode(game: &mut Game) {
     let DD = get_DoorDef(word!(game.door_def_ptr), game);

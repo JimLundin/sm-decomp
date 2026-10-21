@@ -17,10 +17,10 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-22): **94,591 Rust lines in 88 files**, plus 220 C
-bridge and 189 C-header lines = **95,000 maintained implementation lines**.
+Current composition (2026-10-22): **94,547 Rust lines in 89 files**, plus 220 C
+bridge and 189 C-header lines = **94,956 maintained implementation lines**.
 Counting all 677 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,705**. This complete recount includes frontend,
+gives **95,661**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1534,6 +1534,18 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Stop spending implementation/validation effort on roughly hundred-line enemy
    extractions or adding macros to trim local branches. Small preparatory edits
    must belong to a concrete larger replacement with a measured complete price.
+   The latest data-extraction goal also calls for authored room/asset definitions
+   to live as data. Door-entry scroll changes now use 63 ordered cell/color
+   sequences for all 74 dispatch identities, removing separate callback definitions,
+   aliases and registrations. The complete price is **95,705 -> 95,661 (-44)**,
+   including the data module, executor, caller and source registration. All 144
+   ordered writes and retained bank operations match; 666 actual old/new dispatcher
+   cases, 150 door-loading caller cases and 65,982 lookup/full-RAM cases pass.
+   Final release library/frontend/verifier builds pass. No movie ran; constructed
+   door records establish no camera, hardware or gameplay-route coverage. This
+   modest extraction retires no bank and establishes no large deletion budget;
+   substantial responsibility replacements remain the primary work queue.
+   Durable source and checks: Local/sm-decomp-experiments/20261022/room-scroll-data.
    Complete desktop host ownership now uses the pinned Zelda3 dependency,
    retaining Rust GameOwner boundaries, verification and the OpenGL presenter.
    The complete price is **96,402 -> 95,705 (-697)**: Rust loses 1,010 lines;
