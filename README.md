@@ -12,7 +12,7 @@ a time, with that per-frame comparison as the test. See
 ## Run
 
 Needs SDL2 (`apt install libsdl2-dev` on Debian/Ubuntu), rustup and the
-[pinned LakeSnes CPU, PPU-register and DSP libraries](docs/CPU_DEPENDENCY.md),
+[pinned LakeSnes CPU, PPU and DSP libraries](docs/CPU_DEPENDENCY.md),
 [SPC library](docs/SPC_DEPENDENCY.md) and
 [stb_image PNG library](docs/PNG_DEPENDENCY.md). Build these static libraries
 first and include their directory in `LIBRARY_PATH` when building or running.

@@ -17,16 +17,24 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **97,346 Rust lines in 88 files**, plus 91 C
-bridge lines = **97,437 maintained implementation lines**. Counting all 124
+Current composition (2026-10-21): **97,077 Rust lines in 88 files**, plus 104 C
+bridge lines = **97,181 maintained implementation lines**. Counting all 124
 dependency-installer lines and eight added verifier-launcher lines gives
-**97,569**, down **1,316** from 98,885. This complete recount includes frontend,
+**97,313**, down **1,572** from 98,885. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU and 685 DSP C/header lines**, plus **7,762 stb header
 lines**, disclosed separately like GL/SDL.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
+Legacy PPU pixel selection and decoding now use the existing PPU dependency,
+removing **256 complete maintained lines**. All **85,814** actual old/new pixel,
+scanline, full-state and failure comparisons pass, including native VRAM spill
+behavior. Probed and clean legacy-renderer boot pass **3/0**, inputs **0..2**;
+pixel-query and visible-output probes first execute at frame zero, followed by
+two frames. A local verifier host selects the frontend's legacy-renderer option;
+normal comparisons, rendering and audio remain enabled. Wider modes and unusual
+states have component coverage; no gameplay or new full replay is claimed.
 The DSP dependency replacement removes **425 complete maintained lines** and
 passes **66,590** actual old/new full-state, APU-RAM, failure and PCM comparisons.
 Immediate KON/KOFF, stopped sample writes at 534, padding and partial state before
@@ -44,7 +52,8 @@ PPU registers pass **77,824** full-state/read/write component comparisons,
 including every register/value pair and typed state variations. Reads do not
 execute in the selected movie: the initial 1,000-frame run had zero differences
 but failed its required read probe, so it supplies no read coverage and was not
-extended. Retained PPU rendering/lifecycle code has exact source correspondence;
+extended. At that stage, retained PPU rendering/lifecycle code had exact source
+correspondence;
 compiled C/Rust layout checks and actual/stale native-source stamp checks pass.
 No new full replay or credits coverage is claimed. SPC component and lifecycle
 details are in its focused commit and [SPC_DEPENDENCY.md](SPC_DEPENDENCY.md).
@@ -1517,13 +1526,25 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    state and failure instead of reaching unchecked foreign indexing. Existing
    allocation, snapshots, reads and resampling retain their Rust operations.
    The DSP dependency adds 685 external C/header lines, separately disclosed in
-   CPU_DEPENDENCY.md. Current `snes/` owns 3,118 Rust lines; these are a gross
+   CPU_DEPENDENCY.md. Current `snes/` owns 2,849 Rust lines; these are a gross
    retained scope, not a deletion budget. Durable DSP source/checks:
    Local/sm-decomp-experiments/20261021/dsp-dependency.
    A direct whole-PPU renderer substitution remains unsuitable: native VRAM
    addressing, layer priorities, windows, Mode7, sprite storage and snapshot state
    differ from upstream. Inspection establishes no complete compatibility-layer
-   price or saving; no renderer candidate was built or replayed.
+   price or saving; no whole-renderer candidate was built or replayed.
+   The bounded legacy pixel-query replacement is now adopted: layer selection,
+   tile decoding, offset-per-tile traversal and Mode7 lookup use the existing
+   unmodified PPU dependency. Native rendering, sprite evaluation, color math,
+   scanline output and snapshots remain local. Adapting one packed sprite cell
+   restores the obsolete buffers before returning. Invalid modes still fail in
+   Rust. The replacement removes **269 Rust lines**, adds **13 C bridge lines**
+   and removes **256 complete maintained lines**, with no added dependency code.
+   All 85,814 actual-code comparisons and probed/clean legacy-renderer boot **3/0**
+   checks pass. Native tile decoding retains base-before-column/plane wrapping;
+   the other 21 retained functions have exact source correspondence. Details and
+   coverage limits are in CPU_DEPENDENCY.md. Durable source/checks:
+   Local/sm-decomp-experiments/20261021/ppu-pixel-dependency.
    Continue selecting larger complete responsibilities and repeated algorithms;
    the 90,000-line stretch checkpoint still has no demonstrated remaining budget.
    Durable experiments: Local/sm-decomp-experiments/20261021/complete-backend.
@@ -2131,14 +2152,16 @@ shared room background loading, Samus animation ownership, the message-box
 lifecycle, unused declarations, projectile animation, Mother Brain visual
 effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects,
 scrolling-sky and grapple-swing ownership, and the SPC/PPU/DSP dependency replacements,
-maintained Rust is **97,346**, with
+maintained Rust is **97,077**, with
 applicable static, component and exercised movie checks passing.
-Including 91 C bridge lines gives **97,437**; all 124 dependency-installer lines
-and eight added launcher lines bring the complete price to **97,569**.
+Including 104 C bridge lines gives **97,181**; all 124 dependency-installer lines
+and eight added launcher lines bring the complete price to **97,313**.
 The immediate volume target is complete.
 External CPU/SPC/PPU/DSP/PNG code has 2,836/2,104/1,261/685/7,762 lines.
 Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 5; no_mangle 9;
-unsafe functions 3169; cast lines 7078. The DSP dependency adds one counted
+unsafe functions 3166; cast lines 7032. Legacy PPU pixel selection removes three
+unsafe declarations and 46 cast-containing lines; no counter increases.
+The DSP dependency adds one counted
 foreign block and removes six unsafe declarations and 126 cast-containing lines.
 The PPU dependency adds one counted
 foreign block; its compiled-source verification export adds one counted C ABI

@@ -30,7 +30,7 @@ void sm_backend_ppu_write(Ppu* ppu, uint8_t adr, uint8_t value) {
     ppu->snes = saved;
 }
 
-// Layout anchors for the shared register prefix; no upstream renderer is called.
+// Layout anchors for the state shared by register and legacy pixel operations.
 _Static_assert(offsetof(Ppu, vram) == 8, "Ppu.vram layout");
 _Static_assert(offsetof(Ppu, bgLayer) == 67142, "Ppu.bgLayer layout");
 _Static_assert(offsetof(Ppu, windowLayer) == 67244, "Ppu.windowLayer layout");
@@ -85,3 +85,16 @@ _Static_assert(sizeof(DspChannel) == 86, "DspChannel layout");
 _Static_assert(offsetof(Dsp, channel) == 136, "Dsp.channel layout");
 _Static_assert(offsetof(Dsp, sampleBuffer) == 892, "Dsp.sampleBuffer layout");
 _Static_assert(sizeof(Dsp) == 3032, "Dsp layout");
+
+int sm_backend_ppu_pixel(Ppu* ppu, int x, int y, bool sub, uint16_t sprite, int* color) {
+    // Adapt one packed sprite without changing the obsolete snapshot buffers.
+    uint8_t pixel = ppu->objPixelBuffer[x];
+    uint8_t priority = ppu->objPriorityBuffer[x];
+    ppu->objPixelBuffer[x] = sprite & 0xff;
+    int tag = sprite >> 12;
+    ppu->objPriorityBuffer[x] = (tag & 3) == 2 ? tag >> 2 : 0xff;
+    int layer = ppu_getPixel(ppu, x, y, sub, &color[0], &color[1], &color[2]);
+    ppu->objPixelBuffer[x] = pixel;
+    ppu->objPriorityBuffer[x] = priority;
+    return layer;
+}

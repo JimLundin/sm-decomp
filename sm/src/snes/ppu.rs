@@ -38,43 +38,6 @@ unsafe fn IntMax(a: i32, b: i32) -> i32 {
         b
     }
 }
-static layersPerMode: [[i32; 12]; 10] = [
-    [4, 0, 1, 4, 0, 1, 4, 2, 3, 4, 2, 3],
-    [4, 0, 1, 4, 0, 1, 4, 2, 4, 2, 5, 5],
-    [4, 0, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5],
-    [4, 0, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5],
-    [4, 0, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5],
-    [4, 0, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5],
-    [4, 0, 4, 4, 0, 4, 5, 5, 5, 5, 5, 5],
-    [4, 4, 4, 0, 4, 5, 5, 5, 5, 5, 5, 5],
-    [2, 4, 0, 1, 4, 0, 1, 4, 4, 2, 5, 5],
-    [4, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5, 5],
-];
-static prioritysPerMode: [[i32; 12]; 10] = [
-    [3, 1, 1, 2, 0, 0, 1, 1, 1, 0, 0, 0],
-    [3, 1, 1, 2, 0, 0, 1, 1, 0, 0, 5, 5],
-    [3, 1, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5],
-    [3, 1, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5],
-    [3, 1, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5],
-    [3, 1, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5],
-    [3, 1, 2, 1, 0, 0, 5, 5, 5, 5, 5, 5],
-    [3, 2, 1, 0, 0, 5, 5, 5, 5, 5, 5, 5],
-    [1, 3, 1, 1, 2, 0, 0, 1, 0, 0, 5, 5],
-    [3, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5, 5],
-];
-static layerCountPerMode: [i32; 10] = [12, 10, 8, 8, 8, 8, 6, 5, 10, 7];
-static bitDepthsPerMode: [[i32; 4]; 10] = [
-    [2, 2, 2, 2],
-    [4, 4, 2, 5],
-    [4, 4, 5, 5],
-    [8, 4, 5, 5],
-    [8, 2, 5, 5],
-    [4, 2, 5, 5],
-    [4, 5, 5, 5],
-    [8, 5, 5, 5],
-    [4, 4, 2, 5],
-    [8, 7, 5, 5],
-];
 static spriteSizes: [[i32; 2]; 8] = [
     [8, 16],
     [8, 32],
@@ -298,207 +261,27 @@ unsafe fn ppu_getPixel<const NATIVE: bool>(
     if NATIVE {
         return ppu_native_pixel(ppu, x, y, sub, starts);
     }
-    let (mut r, mut g, mut b) = (0, 0, 0);
-    let mut actMode: i32 = if (*ppu).mode as i32 == 1 && (*ppu).bg3priority as i32 != 0 {
-        8
-    } else {
-        (*ppu).mode as i32
-    };
-    actMode = if (*ppu).mode as i32 == 7 && (*ppu).m7extBg as i32 != 0 {
-        9
-    } else {
-        actMode
-    };
-    let mut layer: i32 = 5;
-    let mut pixel: i32 = 0;
-    let mut i: i32 = 0;
-    while i < layerCountPerMode[actMode as usize] {
-        let curLayer: i32 = layersPerMode[actMode as usize][i as usize];
-        let curPriority: i32 = prioritysPerMode[actMode as usize][i as usize];
-        let mut layerActive: bool = false_0 != 0;
-        if !sub {
-            layerActive = (*ppu).layer[curLayer as usize].mainScreenEnabled as i32 != 0
-                && (!(*ppu).layer[curLayer as usize].mainScreenWindowed
-                    || !ppu_window_state::<false>(ppu, curLayer, x));
-        } else {
-            layerActive = (*ppu).layer[curLayer as usize].subScreenEnabled as i32 != 0
-                && (!(*ppu).layer[curLayer as usize].subScreenWindowed
-                    || !ppu_window_state::<false>(ppu, curLayer, x));
-        }
-        if layerActive {
-            if curLayer < 4 {
-                let mut lx: i32 = x;
-                let mut ly: i32 = y;
-                if (*ppu).bgLayer[curLayer as usize].mosaicEnabled as i32 != 0
-                    && (*ppu).mosaicSize as i32 > 1
-                {
-                    lx -= lx % (*ppu).mosaicSize as i32;
-                    ly -= (ly - (*ppu).mosaicStartLine as i32) % (*ppu).mosaicSize as i32;
-                }
-                if (*ppu).mode as i32 == 7 {
-                    pixel = ppu_getPixelForMode7(ppu, lx, curLayer, curPriority != 0);
-                } else {
-                    lx += (*ppu).bgLayer[curLayer as usize].hScroll as i32;
-                    if (*ppu).mode as i32 == 5 || (*ppu).mode as i32 == 6 {
-                        lx *= 2;
-                        lx += if sub as i32 != 0
-                            || (*ppu).bgLayer[curLayer as usize].mosaicEnabled as i32 != 0
-                        {
-                            0
-                        } else {
-                            1
-                        };
-                        if (*ppu).interlace {
-                            ly *= 2;
-                            ly += if (*ppu).evenFrame as i32 != 0
-                                || (*ppu).bgLayer[curLayer as usize].mosaicEnabled as i32 != 0
-                            {
-                                0
-                            } else {
-                                1
-                            };
-                        }
-                    }
-                    ly += (*ppu).bgLayer[curLayer as usize].vScroll as i32;
-                    if (*ppu).mode as i32 == 2 || (*ppu).mode as i32 == 4 || (*ppu).mode as i32 == 6
-                    {
-                        ppu_handleOPT(ppu, curLayer, &raw mut lx, &raw mut ly);
-                    }
-                    pixel = ppu_getPixelForBgLayer::<false>(
-                        ppu,
-                        lx & 0x3ff,
-                        ly & 0x3ff,
-                        curLayer,
-                        curPriority != 0,
-                    );
-                }
-            } else {
-                pixel = 0;
-                if (*ppu).objBuffer.data[(x + kPpuExtraLeftRight as i32) as usize] as i32 >> 12
-                    == curPriority * 4 + 2
-                {
-                    pixel = (*ppu).objBuffer.data[(x + kPpuExtraLeftRight as i32) as usize] as i32
-                        & 0xff;
-                }
-            }
-        }
-        if pixel > 0 {
-            layer = curLayer;
-            break;
-        } else {
-            i += 1;
-        }
-    }
-    if (*ppu).directColor as i32 != 0
-        && layer < 4
-        && bitDepthsPerMode[actMode as usize][layer as usize] == 8
-    {
-        r = (pixel & 0x7) << 2 | (pixel & 0x100) >> 7;
-        g = (pixel & 0x38) >> 1 | (pixel & 0x200) >> 8;
-        b = (pixel & 0xc0) >> 3 | (pixel & 0x400) >> 8;
-    } else {
-        let color: u16 = (*ppu).cgram[(pixel & 0xff) as usize];
-        r = color as i32 & 0x1f;
-        g = color as i32 >> 5 & 0x1f;
-        b = color as i32 >> 10 & 0x1f;
-    }
-    if layer == 4 && pixel < 0xc0 {
-        layer = 6;
-    }
-    (layer, [r, g, b], layer != 5)
+    // The pixel loop supplies x in 0..256. Keep invalid-mode failures in Rust.
+    assert!((*ppu).mode < 10);
+    let sprite = (*ppu).objBuffer.data[x as usize];
+    let mut color = [0; 3];
+    let layer = sm_backend_ppu_pixel(ppu, x, y, sub, sprite, color.as_mut_ptr());
+    (layer, color, layer != 5)
 }
-unsafe fn ppu_handleOPT(ppu: *mut Ppu, layer: i32, lx: *mut i32, ly: *mut i32) {
-    let x: i32 = *lx;
-    let y: i32 = *ly;
-    let mut column: i32 = if (*ppu).mode as i32 == 6 {
-        x - (x & 0xf) - ((*ppu).bgLayer[layer as usize].hScroll as i32 * 2 & 0xfff0) >> 4
-    } else {
-        x - (x & 0x7) - ((*ppu).bgLayer[layer as usize].hScroll as i32 & 0xfff8) >> 3
-    };
-    if column > 0 {
-        let valid: i32 = if layer == 0 { 0x2000 } else { 0x4000 };
-        let mut hOffset: u16 = ppu_getOffsetValue(ppu, column - 1i32, 0);
-        let mut vOffset: u16 = 0;
-        if (*ppu).mode as i32 == 4 {
-            if hOffset & 0x8000 != 0 {
-                vOffset = hOffset;
-                hOffset = 0;
-            }
-        } else {
-            vOffset = ppu_getOffsetValue(ppu, column - 1i32, 1);
-        }
-        if (*ppu).mode as i32 == 6 {
-            if hOffset as i32 & valid != 0 {
-                *lx = ((hOffset as i32 & 0x3f8) + column * 8) * 2 | x & 0xf;
-            }
-        } else if hOffset as i32 & valid != 0 {
-            *lx = (hOffset as i32 & 0x3f8) + column * 8 | x & 0x7;
-        }
-        if vOffset as i32 & valid != 0 {
-            *ly = (vOffset as i32 & 0x3ff) + (y - (*ppu).bgLayer[layer as usize].vScroll as i32);
-        }
-    }
-}
-unsafe fn ppu_getOffsetValue(ppu: *mut Ppu, col: i32, row: i32) -> u16 {
-    let x: i32 = col * 8 + (*ppu).bgLayer[2i32 as usize].hScroll as i32;
-    let y: i32 = row * 8 + (*ppu).bgLayer[2i32 as usize].vScroll as i32;
-    let tileBits: i32 = if (*ppu).bgLayer[2i32 as usize].bigTiles as i32 != 0 {
-        4
-    } else {
-        3
-    };
-    let tileHighBit: i32 = if (*ppu).bgLayer[2i32 as usize].bigTiles as i32 != 0 {
-        0x200
-    } else {
-        0x100
-    };
-    let mut tilemapAdr: u16 = ((*ppu).bgLayer[2i32 as usize].tilemapAdr as i32
-        + ((y >> tileBits & 0x1f) << 5 | x >> tileBits & 0x1f))
-        as u16;
-    if x & tileHighBit != 0 && (*ppu).bgLayer[2i32 as usize].tilemapWider as i32 != 0 {
-        tilemapAdr = (tilemapAdr as i32 + 0x400) as u16;
-    }
-    if y & tileHighBit != 0 && (*ppu).bgLayer[2i32 as usize].tilemapHigher as i32 != 0 {
-        tilemapAdr = (tilemapAdr as i32
-            + if (*ppu).bgLayer[2i32 as usize].tilemapWider as i32 != 0 {
-                0x800
-            } else {
-                0x400
-            }) as u16;
-    }
-    (*ppu).vram[(tilemapAdr as i32 & 0x7fff) as usize]
-}
-unsafe fn ppu_getPixelForBgLayer<const NATIVE: bool>(
-    ppu: *mut Ppu,
-    x: i32,
-    y: i32,
-    layer: i32,
-    priority: bool,
-) -> i32 {
+unsafe fn ppu_getPixelForBgLayer(ppu: *mut Ppu, x: i32, y: i32, layer: i32) -> i32 {
     let bg = &(*ppu).bgLayer[layer as usize];
-    let big = !NATIVE && bg.bigTiles;
-    let wide = big || !NATIVE && ((*ppu).mode == 5 || (*ppu).mode == 6);
-    let bits_x = if wide { 4 } else { 3 };
-    let bits_y = if big { 4 } else { 3 };
-    let mut address = i32::from(bg.tilemapAdr) + ((y >> bits_y & 31) << 5);
-    if x & (32 << bits_x) != 0 && bg.tilemapWider {
+    let mut address = i32::from(bg.tilemapAdr) + ((y >> 3 & 31) << 5);
+    if x & 256 != 0 && bg.tilemapWider {
         address += 0x400;
     }
-    if y & (32 << bits_y) != 0 && bg.tilemapHigher {
+    if y & 256 != 0 && bg.tilemapHigher {
         address += if bg.tilemapWider { 0x800 } else { 0x400 };
     }
-    let column = x >> bits_x & 31;
-    let tile = if NATIVE {
-        *(*ppu)
-            .vram
-            .as_ptr()
-            .offset(((address & 0x7fff) + column) as isize)
-    } else {
-        (*ppu).vram[((address + column) & 0x7fff) as usize]
-    };
-    if !NATIVE && (tile & 0x2000 != 0) != priority {
-        return 0;
-    }
+    // Native addressing wraps the base before adding the column/plane offsets.
+    let tile = *(*ppu)
+        .vram
+        .as_ptr()
+        .offset(((address & 0x7fff) + (x >> 3 & 31)) as isize);
     let row = if tile & 0x8000 != 0 {
         7 - (y & 7)
     } else {
@@ -509,85 +292,26 @@ unsafe fn ppu_getPixelForBgLayer<const NATIVE: bool>(
     } else {
         7 - (x & 7)
     };
-    let mut tile_number = i32::from(tile & 0x3ff);
-    if wide && (x & 8 != 0) != (tile & 0x4000 != 0) {
-        tile_number += 1;
-    }
-    if big && (y & 8 != 0) != (tile & 0x8000 != 0) {
-        tile_number += 16;
-    }
-    let depth = if NATIVE {
-        if layer == 2 {
-            2
-        } else {
-            4
-        }
-    } else {
-        bitDepthsPerMode[(*ppu).mode as usize][layer as usize]
-    };
-    let pairs = if depth > 4 {
-        4
-    } else if depth > 2 {
-        2
-    } else {
-        1
-    };
-    let address = (i32::from(bg.tileAdr) + (tile_number & 0x3ff) * 4 * depth + row) & 0x7fff;
+    let depth = if layer == 2 { 2 } else { 4 };
+    let address = (i32::from(bg.tileAdr) + i32::from(tile & 0x3ff) * 4 * depth + row) & 0x7fff;
     let mut pixel = 0;
-    for pair in 0..pairs {
-        let word = if NATIVE {
-            *(*ppu).vram.as_ptr().offset((address + pair * 8) as isize)
-        } else {
-            (*ppu).vram[((address + pair * 8) & 0x7fff) as usize]
-        };
+    for pair in 0..depth / 2 {
+        let word = *(*ppu).vram.as_ptr().offset((address + pair * 8) as isize);
         pixel |=
             ((i32::from(word) >> column & 1) | (i32::from(word) >> (column + 7) & 2)) << (pair * 2);
     }
     if pixel == 0 {
         return 0;
     }
-    let palette = i32::from(tile & 0x1c00) >> 10;
-    let palette = if !NATIVE && (*ppu).mode == 0 {
-        palette + layer * 8
-    } else {
-        palette
-    };
-    let color = (1 << (pairs * 2)) * palette + pixel;
-    if NATIVE {
-        let priorities = [[0x8000, 0xc000], [0x7100, 0xb100], [0x1200, 0xf200]];
-        priorities[layer as usize][usize::from(tile & 0x2000 != 0)] + color
-    } else {
-        color
-    }
+    let color = (1 << depth) * (i32::from(tile & 0x1c00) >> 10) + pixel;
+    let priorities = [[0x8000, 0xc000], [0x7100, 0xb100], [0x1200, 0xf200]];
+    priorities[layer as usize][usize::from(tile & 0x2000 != 0)] + color
 }
 unsafe fn ppu_calculateMode7Starts(ppu: *mut Ppu, y: i32) {
     let (x, y) = ppu_mode7_start::<false>(ppu, y);
     (*ppu).m7startX = x as i32;
     (*ppu).m7startY = y as i32;
 }
-unsafe fn ppu_getPixelForMode7(ppu: *mut Ppu, x: i32, layer: i32, priority: bool) -> i32 {
-    let rx = u32::from((if (*ppu).m7xFlip { 255 - x } else { x }) as u8);
-    let pixel = ppu_mode7_sample(
-        ppu,
-        ((*ppu).m7startX as u32).wrapping_add(((*ppu).m7matrix[0] as u32).wrapping_mul(rx)),
-        ((*ppu).m7startY as u32).wrapping_add(((*ppu).m7matrix[2] as u32).wrapping_mul(rx)),
-        if (*ppu).m7largeField {
-            0x3ffff
-        } else {
-            u32::MAX
-        },
-        (*ppu).m7charFill,
-    );
-    if layer == 1 {
-        if (pixel & 0x80 != 0) != priority {
-            return 0;
-        }
-        i32::from(pixel & 0x7f)
-    } else {
-        i32::from(pixel)
-    }
-}
-
 unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
     let mut index: u8 = (if (*ppu).objPriority as i32 != 0 {
         (*ppu).oamAdr as i32 & 0xfe
@@ -696,11 +420,19 @@ unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
     }
     tilesFound != 0
 }
-// Only register operations use the upstream PPU. Rendering and snapshots stay local.
+// Registers and legacy pixel selection use upstream; native rendering stays local.
 #[link(name = "lakesnes_backend", kind = "static", modifiers = "-bundle")]
 unsafe extern "C" {
     fn sm_backend_ppu_read(ppu: *mut Ppu, adr: u8, h_pos: u16, v_pos: u16, bus: u8) -> u8;
     fn sm_backend_ppu_write(ppu: *mut Ppu, adr: u8, value: u8);
+    fn sm_backend_ppu_pixel(
+        ppu: *mut Ppu,
+        x: i32,
+        y: i32,
+        sub: bool,
+        sprite: u16,
+        color: *mut i32,
+    ) -> i32;
 }
 
 pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
@@ -912,12 +644,11 @@ unsafe fn ppu_native_pixel(
         for layer in 0..3 {
             if ppu_native_layer_enabled(ppu, layer, x, sub) {
                 let bg = &(*ppu).bgLayer[layer as usize];
-                let pixel = ppu_getPixelForBgLayer::<true>(
+                let pixel = ppu_getPixelForBgLayer(
                     ppu,
                     x + i32::from(bg.hScroll),
                     y + i32::from(bg.vScroll),
                     layer,
-                    false,
                 );
                 let color_mask = if layer == 2 { 3 } else { 15 };
                 if pixel != 0 && pixel & !color_mask > packed {
