@@ -608,6 +608,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    parameters, so its direct saving is zero. Park these complete formatted
    prices without builds or runtime checks. TEMP sm-tailored-next/pure-game-context.
 
+   Grouping identical type-alias RHS text is a distinct declaration price:
+   current RAM-stage input **103,972 -> 103,777 (-195)** across 186 aliases,
+   and historical **102,804 -> 102,740 (-64)** across 145 aliases. The 13-line
+   crate-local helper counts; public names and independent frontend declarations
+   remain. Tokens/text decrease and formatting controls contribute zero lines.
+   Current's larger difference includes existing blank separators. Park before
+   builds/proof/runtime checks; neither independent price joins accepted totals.
+   TEMP sm-tailored-next/type-alias-groups records the complete source prices.
+
    Those representation studies are closed. Five subsequent domain studies
    use the same repaired 106,189-line control:
 

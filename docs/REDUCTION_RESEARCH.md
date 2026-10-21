@@ -2090,6 +2090,19 @@ so its direct cohort and saving are zero. Both complete current prices are
 parked before builds or runtime validation. No maintained signatures change.
 Report: `TEMP/sm-tailored-next/pure-game-context/REPORT.md`.
 
+The separate named-alias grouping experiment also remains a price-only draft.
+Unlike the earlier shared enemy layouts, it retains every alias while sharing
+identical RHS type/signature text within a module. On the RAM-stage controls,
+current **103,972 -> 103,777 (-195)** covers 186 aliases in 33 groups/14 files;
+historical **102,804 -> 102,740 (-64)** covers 145 in 29 groups/18 files. The
+13-line crate-local macro is included, and the independent frontend is unchanged.
+Current removes 721 tokens/3,152 spelling bytes; historical removes 556/2,731.
+Formatter controls contribute zero line/token/text savings; current's larger
+price includes existing blank separators. Historical control formatting only
+normalizes newline/module order without count savings. These complete prices
+have no build, equivalence or runtime validation and are excluded from accepted
+totals. Report: `TEMP/sm-tailored-next/type-alias-groups/REPORT.md`.
+
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard
 against making progress appear larger by packing unrelated statements into
