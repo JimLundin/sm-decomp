@@ -1654,6 +1654,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    remains possible. No complete replacement price or saving is established.
    Published inputs, actual-code probe and final four-case results:
    Local/sm-decomp-experiments/20261021/native-music-dependency.
+   A current-Rust music-loop rewrite also fails the larger-savings test:
+   shared pattern readers, the full order/track loop, channel/global fades and
+   reset clearing price **97,313 -> 97,269 (-44)**, including all helpers and
+   retained code. The complete sequencer module changes **1,681 -> 1,637** lines;
+   its baseline is unchanged by the same formatter. SFX execution, public
+   wrappers, state layout and lifecycle remain charged; no full SFX rewrite is
+   claimed. Park this representation before extending it or running compiler/
+   runtime checks. It adds no macros or dependencies and is not adopted.
+   Draft and price: Local/sm-decomp-experiments/20261021/native-sequencer-rewrite.
    The complete native cartridge draft prices **97,313 -> 97,208 (-105)**:
    loading/header parsing falls from 273 to 177 lines and mapping/lifecycle
    from 156 to 147. Shared header scoring and SRAM address selection retain
