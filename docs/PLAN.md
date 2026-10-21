@@ -17,20 +17,31 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-22): **94,547 Rust lines in 89 files**, plus 220 C
-bridge and 189 C-header lines = **94,956 maintained implementation lines**.
-Counting all 677 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,661**. This complete recount includes frontend,
+Current composition (2026-10-22): **93,977 Rust lines in 89 files**, plus 265 C
+bridge and 305 C-header lines = **94,547 maintained implementation lines**.
+Counting all 804 dependency-installer lines and 28 added verifier-launcher lines
+gives **95,379**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
 lines**, plus **919 configuration/utility C/header lines** sharing the music
-dependency's types header, and **882 desktop C lines** sharing those headers,
+dependency's types header, **882 desktop C lines** sharing those headers, and
+**659 shader C / 99 shader header lines** sharing the same types header,
 disclosed separately like GL/SDL.
 The preceding 96,406 total overcounted unchanged C by four lines: its corrected
 baseline is 96,402 (198 C lines). This accounting correction is not new deletion.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
+The complete GLSL dependency replacement removes **282 maintained lines**, with
+no new macros. Normal and instrumented archives pass 38 actual old/new shader
+state/GL/diagnostic scenarios and 46 loader cases. Four old/new source-allocation
+failure checks cover recursive cleanup with returning and unwinding host errors;
+the candidate heap guard separately passes a synthetic C-unwind boundary failure.
+The final release-library consumer passes actual presenter initialization,
+22 source checks and five shader scenarios, with all 96 embedded inputs checked.
+No movie ran; GL/SDL are controlled boundaries and no physical GPU or gameplay
+coverage is claimed. Allocation representation changes are not an unsafe-code
+elimination result. Details: SHADER_DEPENDENCY.md.
 The complete desktop-host dependency replacement removes **697 maintained lines**,
 including all adapters, installers, source checks and the retained OpenGL owner.
 All **125** actual old/new host scenarios pass, comparing ordered calls, state,
@@ -1759,20 +1770,26 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    across weapons; flight, animation and trail algorithms already share code.
    This common reservation/emission proposal establishes no substantial net
    replacement. No draft, build or runtime check was warranted.
-   A complete published-shader draft now resolves the earlier ownership design:
-   Rust owns the source Vec and PNG temporaries, C scope cleanup handles recursive
-   files/paths, and destruction separates GL deletion from owned-memory release.
-   Capturing the existing GL loader's resolved pointers avoids extra SDL lookups
-   and forwarding wrappers. On independent 4d63fd38 it prices **-282 complete
-   maintained lines**, including compatibility and installer changes, with no new
-   macros. The explicit-wrapper control saves only 34. All 42 loader alias lists
-   and 35 constants have static correspondence; source-only emission passes.
-   No shader build, runtime validation, adoption or composed saving is claimed.
-   Its 659 C / 99 header input lines remain separately disclosed. The earlier
-   presumed recoverable GL unwind was not guaranteed by the non-unwinding ABI;
-   defined bounds/host failures remain part of the candidate's contract.
-   Keep this candidate separate until it passes focused shader checks. Design:
-   Local/sm-decomp-experiments/20261021/shader-dependency/ownership-design/DESIGN.md.
+   The complete published-shader replacement is now adopted and composed with
+   desktop ownership and room-scroll data: **95,661 -> 95,379 (-282)**. Rust owns
+   source vectors and PNG temporaries, C scope cleanup handles recursive files
+   and paths, and destruction separates GL deletion from owned-memory release.
+   The existing GL loader supplies pointers without additional SDL lookups or
+   forwarding wrappers. Rust loses 572 shader lines; two registration, 161 C/header
+   and 127 installer lines count against that deletion. No new macros are added.
+   Normal and instrumented archives pass 38 actual old/new state, ordered GL,
+   pixel and diagnostic scenarios plus 46 loader/fallback/reload cases. Four
+   source-allocation failure checks preserve returning/unwinding host behavior
+   and release all temporary allocations. The candidate-only heap guard check
+   injects failure at its declared C-unwind boundary; it supplies no guarantee
+   of recovery through the original non-unwinding GL ABI. The actual final
+   release-library consumer passes presenter initialization, 22 source-stamp
+   checks and five shader scenarios, with 96 library inputs source-checked.
+   Final library/frontend/verifier builds pass. No movie ran; physical GPU,
+   concurrency and gameplay coverage are not claimed. The 659 C / 99 header
+   external input remains separately disclosed. See SHADER_DEPENDENCY.md.
+   Durable source and checks:
+   Local/sm-decomp-experiments/20261021/shader-dependency/ownership-design.
    The standalone published recorder proposal also remains unpriced: its codec
    corresponds closely, but native version-2 headers, SRAM replay bases, APQ1/ABQ1
    trailers and clear-log audio preservation need substantial maintained code.
@@ -2394,15 +2411,20 @@ shared room background loading, Samus animation ownership, the message-box
 lifecycle, unused declarations, projectile animation, Mother Brain visual
 effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects,
 scrolling-sky and grapple-swing ownership, the SPC/PPU/DSP/music replacements,
-shared configuration/input and utility dependencies, and the desktop host,
-maintained Rust is **94,591**, with
+shared configuration/input and utility dependencies, the desktop host,
+room-scroll data and the shader dependency, maintained Rust is **93,977**, with
 applicable static, component and exercised movie checks passing.
-Including 220 C and 189 header lines gives **95,000**; all 677 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,705**.
+Including 265 C and 305 header lines gives **94,547**; all 804 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,379**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
-Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 6; no_mangle 46;
-unsafe functions 3090; cast lines 6665. Desktop ownership adds 32 no_mangle
+Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
+unsafe functions 3073; cast lines 6633. The shader adds 19 no_mangle attributes
+for its native callbacks and captured GL table, removes 16 counted unsafe
+functions and 32 cast-containing lines. The script excludes C-unwind callbacks;
+these residue counts do not measure all unsafe operations or establish their
+elimination. Room-scroll extraction previously removed one counted function;
+the shader's actual baseline was 3,089. Desktop ownership adds 32 no_mangle
 attributes for the explicit native-host callbacks and removes 26 counted unsafe
 functions and 120 cast-containing lines. Its internal C-unwind declarations are
 not included in the script's narrower C-ABI counters. Configuration/utilities remove 28 counted

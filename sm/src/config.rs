@@ -127,7 +127,7 @@ extern "C-unwind" {
 
 // Validate the archive at its actual frontend consumer. Headless replay never
 // links this module; every public entry also works before ParseConfigFile.
-fn check_dependency() {
+pub(crate) fn check_dependency() {
     static CHECKED: std::sync::OnceLock<()> = std::sync::OnceLock::new();
     CHECKED.get_or_init(|| {
         assert!(

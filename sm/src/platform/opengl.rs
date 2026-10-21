@@ -60,7 +60,7 @@ unsafe extern "C-unwind" fn OpenGLRenderer_Init(window: *mut SDL_Window) -> bool
     state.window = window;
     let context: SDL_GLContext = SDL_GL_CreateContext(window);
     SDL_GL_SetSwapInterval(1);
-    gl::load_with(|name| {
+    crate::platform::glsl_shader::load_with(|name| {
         sdl2_sys::SDL_GL_GetProcAddress(std::ffi::CString::new(name).expect("GL symbol").as_ptr())
             as *const c_void
     });

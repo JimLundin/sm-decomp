@@ -32,6 +32,8 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/config.rs", include_bytes!("config.rs")),
     ("sm/src/native_config.c", include_bytes!("native_config.c")),
     ("sm/src/native_config.h", include_bytes!("native_config.h")),
+    ("sm/src/native_shader.c", include_bytes!("native_shader.c")),
+    ("sm/src/native_shader.h", include_bytes!("native_shader.h")),
     (
         "sm/src/native_desktop.c",
         include_bytes!("native_desktop.c"),
