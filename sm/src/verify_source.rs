@@ -32,6 +32,14 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/config.rs", include_bytes!("config.rs")),
     ("sm/src/native_config.c", include_bytes!("native_config.c")),
     ("sm/src/native_config.h", include_bytes!("native_config.h")),
+    (
+        "sm/src/native_desktop.c",
+        include_bytes!("native_desktop.c"),
+    ),
+    (
+        "sm/src/native_desktop.h",
+        include_bytes!("native_desktop.h"),
+    ),
     ("sm/src/cpu_infra.rs", include_bytes!("cpu_infra.rs")),
     (
         "sm/src/game/callback_tables.rs",

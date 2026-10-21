@@ -17,17 +17,27 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **95,601 Rust lines in 88 files**, plus 202 C
-bridge and 139 C-header lines = **95,942 maintained implementation lines**.
-Counting all 437 dependency-installer lines and 27 added verifier-launcher lines
-gives **96,406**, down **2,479** from 98,885. This complete recount includes frontend,
+Current composition (2026-10-22): **94,591 Rust lines in 88 files**, plus 220 C
+bridge and 189 C-header lines = **95,000 maintained implementation lines**.
+Counting all 677 dependency-installer lines and 28 added verifier-launcher lines
+gives **95,705**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
 lines**, plus **919 configuration/utility C/header lines** sharing the music
-dependency's types header, disclosed separately like GL/SDL.
+dependency's types header, and **882 desktop C lines** sharing those headers,
+disclosed separately like GL/SDL.
+The preceding 96,406 total overcounted unchanged C by four lines: its corrected
+baseline is 96,402 (198 C lines). This accounting correction is not new deletion.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
+The complete desktop-host dependency replacement removes **697 maintained lines**,
+including all adapters, installers, source checks and the retained OpenGL owner.
+All **125** actual old/new host scenarios pass, comparing ordered calls, state,
+pixels and audio buffers through controlled SDL/runtime boundaries and the real
+GameOwner gate. The final installed archive separately passes **33** source,
+state, numeric and failure checks. No movie ran; physical devices, gameplay
+and multithreaded stress coverage are not claimed. See DESKTOP_DEPENDENCY.md.
 The complete configuration/input and file/string/ByteArray dependency replacement
 removes **541 maintained lines**, including all adapters, installers and verifier
 changes. Source-checked old/new comparisons pass 31 configuration scenarios,
@@ -1524,6 +1534,17 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Stop spending implementation/validation effort on roughly hundred-line enemy
    extractions or adding macros to trim local branches. Small preparatory edits
    must belong to a concrete larger replacement with a measured complete price.
+   Complete desktop host ownership now uses the pinned Zelda3 dependency,
+   retaining Rust GameOwner boundaries, verification and the OpenGL presenter.
+   The complete price is **96,402 -> 95,705 (-697)**: Rust loses 1,010 lines;
+   C/header adapters add 72, the installer 240 and the verifier launcher one.
+   All 125 actual old/new host scenarios and 33 final installed-archive checks
+   pass. Final release library/frontend/verifier and source checks pass. No movie
+   ran; controlled SDL/runtime boundaries establish no physical-device or gameplay
+   coverage. This supersedes the earlier partial -193 native frontend proposal.
+   The 882-line published desktop input is disclosed separately; existing headers
+   are shared. Details: DESKTOP_DEPENDENCY.md. Durable candidate and checks:
+   Local/sm-decomp-experiments/20261021/host-dependency.
    Complete configuration/input and file/string/ByteArray ownership now uses
    the independently published Zelda dependency with explicit compatibility
    patches. The complete replacement prices **96,947 -> 96,406 (-541)**:
@@ -1723,14 +1744,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    across weapons; flight, animation and trail algorithms already share code.
    This common reservation/emission proposal establishes no substantial net
    replacement. No draft, build or runtime check was warranted.
-   The published Zelda shader engine has an opaque three-operation interface,
-   but replacing its complete 952-line native owner needs 42 GL bindings and
-   explicit compatibility for parsing, dimensions, pass-20 failure, live config,
-   allocation, PNG lifetime and unwind cleanup. Its 659 C / 99 header lines are
-   external inputs, not a deletion estimate. Park this unpriced proposal until
-   a complete ownership/failure design establishes a credible saving. No shader
-   build or runtime check ran. Inventory and pinned inputs:
-   Local/sm-decomp-experiments/20261021/shader-dependency/PREFLIGHT.md.
+   A complete published-shader draft now resolves the earlier ownership design:
+   Rust owns the source Vec and PNG temporaries, C scope cleanup handles recursive
+   files/paths, and destruction separates GL deletion from owned-memory release.
+   Capturing the existing GL loader's resolved pointers avoids extra SDL lookups
+   and forwarding wrappers. On independent 4d63fd38 it prices **-282 complete
+   maintained lines**, including compatibility and installer changes, with no new
+   macros. The explicit-wrapper control saves only 34. All 42 loader alias lists
+   and 35 constants have static correspondence; source-only emission passes.
+   No shader build, runtime validation, adoption or composed saving is claimed.
+   Its 659 C / 99 header input lines remain separately disclosed. The earlier
+   presumed recoverable GL unwind was not guaranteed by the non-unwinding ABI;
+   defined bounds/host failures remain part of the candidate's contract.
+   Keep this candidate separate until it passes focused shader checks. Design:
+   Local/sm-decomp-experiments/20261021/shader-dependency/ownership-design/DESIGN.md.
    The standalone published recorder proposal also remains unpriced: its codec
    corresponds closely, but native version-2 headers, SRAM replay bases, APQ1/ABQ1
    trailers and clear-log audio preservation need substantial maintained code.
@@ -2352,15 +2379,18 @@ shared room background loading, Samus animation ownership, the message-box
 lifecycle, unused declarations, projectile animation, Mother Brain visual
 effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects,
 scrolling-sky and grapple-swing ownership, the SPC/PPU/DSP/music replacements,
-and shared configuration/input and utility dependencies,
-maintained Rust is **95,601**, with
+shared configuration/input and utility dependencies, and the desktop host,
+maintained Rust is **94,591**, with
 applicable static, component and exercised movie checks passing.
-Including 202 C and 139 header lines gives **95,942**; all 437 dependency-installer
-lines and 27 added launcher lines bring the complete price to **96,406**.
+Including 220 C and 189 header lines gives **95,000**; all 677 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,705**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
-Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 6; no_mangle 14;
-unsafe functions 3116; cast lines 6785. Configuration/utilities remove 28 counted
+Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 6; no_mangle 46;
+unsafe functions 3090; cast lines 6665. Desktop ownership adds 32 no_mangle
+attributes for the explicit native-host callbacks and removes 26 counted unsafe
+functions and 120 cast-containing lines. Its internal C-unwind declarations are
+not included in the script's narrower C-ABI counters. Configuration/utilities remove 28 counted
 unsafe declarations and 92 cast-containing lines. Four added no_mangle attributes
 belong to the three host/numeric/stderr callbacks and the verifier source check;
 the script does not count the two C-unwind declaration blocks. Native music

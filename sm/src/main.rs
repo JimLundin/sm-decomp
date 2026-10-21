@@ -1,373 +1,99 @@
-#![allow(
-    dead_code,
-    non_camel_case_types,
-    non_snake_case,
-    non_upper_case_globals,
-    unused_assignments,
-    unused_mut
-)]
-use ::core::ffi::{c_char, c_double, c_float, c_long, c_void};
-use ::core::mem::{size_of, transmute};
-use ::core::ptr::{null, null_mut};
-#[allow(unused_imports)]
-use ::sm as _;
-use sm::game_state::{Game, GameOwner};
-use sm::sdl_constants;
-use sm::update_place;
-mod verify;
-pub use sdl2_sys::{
-    SDL_AudioSpec, SDL_CloseAudioDevice, SDL_CreateMutex, SDL_CreateRenderer, SDL_CreateTexture,
-    SDL_CreateWindow, SDL_Delay, SDL_DestroyMutex, SDL_DestroyRenderer, SDL_DestroyTexture,
-    SDL_DestroyWindow, SDL_Event, SDL_GameControllerOpen, SDL_GetDisplayUsableBounds, SDL_GetError,
-    SDL_GetGlobalMouseState, SDL_GetModState, SDL_GetPerformanceCounter,
-    SDL_GetPerformanceFrequency, SDL_GetRendererInfo, SDL_GetTicks, SDL_GetWindowBordersSize,
-    SDL_GetWindowDisplayIndex, SDL_GetWindowFlags, SDL_GetWindowSize, SDL_HitTestResult, SDL_Init,
-    SDL_IsGameController, SDL_LockMutex, SDL_LockTexture, SDL_MixAudioFormat, SDL_NumJoysticks,
-    SDL_OpenAudioDevice, SDL_PauseAudioDevice, SDL_Point, SDL_PollEvent, SDL_Quit, SDL_Rect,
-    SDL_RenderClear, SDL_RenderCopy, SDL_RenderPresent, SDL_RenderSetLogicalSize, SDL_Renderer,
-    SDL_RendererInfo, SDL_SetHint, SDL_SetWindowBordered, SDL_SetWindowFullscreen,
-    SDL_SetWindowHitTest, SDL_SetWindowPosition, SDL_SetWindowSize, SDL_SetWindowTitle,
-    SDL_ShowCursor, SDL_ShowSimpleMessageBox, SDL_Texture, SDL_UnlockMutex, SDL_UnlockTexture,
-    SDL_bool, SDL_memset, SDL_mutex,
+#![allow(dead_code, non_snake_case, non_upper_case_globals, unused_imports)]
+use core::ffi::{c_char, c_long, c_void};
+use core::ptr::{null, null_mut};
+use sdl2_sys::SDL_MessageBoxFlags::{SDL_MESSAGEBOX_ERROR, SDL_MESSAGEBOX_WARNING};
+use sdl2_sys::{
+    SDL_CreateMutex, SDL_DestroyMutex, SDL_LockMutex, SDL_ShowSimpleMessageBox, SDL_UnlockMutex,
+    SDL_Window, SDL_mutex, Uint32,
 };
 #[cfg(not(windows))]
 use sm::c_library::{__assert_fail, stderr};
-use sm::c_library::{
-    chdir, exit, fclose, fopen, fprintf, free, getcwd, malloc, memcpy, mkdir, printf, snprintf,
-    sprintf, strcmp, strlen,
-};
-use sm::config::{g_config, FindCmdForGamepadButton, FindCmdForSdlKey, ParseConfigFile};
-use sm::cpu_infra::SnesInit;
+use sm::c_library::{exit, fprintf, memcpy};
+use sm::game_state::{Game, GameOwner};
 use sm::host::Die;
-use sm::platform::opengl::OpenGLRenderer_Create;
-use sm::rtl::{
-    RtlCheat, RtlClearKeyLog, RtlReadSram, RtlRenderAudio, RtlReset, RtlRunFrame, RtlSaveLoad,
-    RtlStopReplay,
-};
-use sm::snes::ppu::{PpuBeginDrawing, PpuGetCurrentRenderScale};
+use sm::rtl::*;
 use sm::spc_player::{SpcPlayer_Create, SpcPlayer_Initialize};
-pub use sm::types::SDL_Window;
-pub use sm::types::{__mode_t, size_t, FILE};
-sdl_constants! {
-    SDL_bool: SDL_bool;
-    SDL_TRUE, SDL_FALSE,
-}
-pub use sm::types::SDL_AudioDeviceID;
-pub use sm::types::{SDL_AudioCallback, SDL_AudioFormat, Sint32, Uint16, Uint32, Uint8};
-pub type C2RustUnnamed = u32;
-
-sdl_constants! {
-    SDL_PixelFormatEnum as C2RustUnnamed;
-    SDL_PIXELFORMAT_ARGB8888,
-}
-
-pub type C2RustUnnamed_0 = u32;
-
-sdl_constants! {
-    SDL_WindowFlags as C2RustUnnamed_0;
-    SDL_WINDOW_FULLSCREEN_DESKTOP, SDL_WINDOW_MAXIMIZED, SDL_WINDOW_MINIMIZED,
-    SDL_WINDOW_RESIZABLE, SDL_WINDOW_BORDERLESS, SDL_WINDOW_OPENGL, SDL_WINDOW_FULLSCREEN,
-}
-sdl_constants! {
-    SDL_HitTestResult: SDL_HitTestResult;
-    SDL_HITTEST_RESIZE_LEFT, SDL_HITTEST_RESIZE_BOTTOMLEFT, SDL_HITTEST_RESIZE_BOTTOM,
-    SDL_HITTEST_RESIZE_BOTTOMRIGHT, SDL_HITTEST_RESIZE_RIGHT, SDL_HITTEST_RESIZE_TOPRIGHT,
-    SDL_HITTEST_RESIZE_TOP, SDL_HITTEST_RESIZE_TOPLEFT, SDL_HITTEST_DRAGGABLE,
-    SDL_HITTEST_NORMAL,
-}
-
-pub use sm::types::{SDL_Keycode, SDL_Keymod};
-
-sdl_constants! {
-    SDL_Keymod as SDL_Keymod;
-    KMOD_ALT, KMOD_SHIFT, KMOD_CTRL,
-}
-
-pub type C2RustUnnamed_1 = i32;
-sdl_constants! {
-    SDL_GameControllerAxis as C2RustUnnamed_1;
-    SDL_CONTROLLER_AXIS_TRIGGERRIGHT, SDL_CONTROLLER_AXIS_TRIGGERLEFT,
-    SDL_CONTROLLER_AXIS_LEFTY, SDL_CONTROLLER_AXIS_LEFTX,
-}
-pub type C2RustUnnamed_2 = i32;
-
-pub type C2RustUnnamed_3 = u32;
-
-sdl_constants! {
-    SDL_EventType as C2RustUnnamed_3;
-    SDL_CONTROLLERBUTTONDOWN,
-}
-pub type C2RustUnnamed_4 = u32;
-sdl_constants! {
-    SDL_MessageBoxFlags as C2RustUnnamed_4;
-    SDL_MESSAGEBOX_WARNING, SDL_MESSAGEBOX_ERROR,
-}
-pub type C2RustUnnamed_5 = u32;
-sdl_constants! {
-    SDL_RendererFlags as C2RustUnnamed_5;
-    SDL_RENDERER_PRESENTVSYNC, SDL_RENDERER_ACCELERATED, SDL_RENDERER_SOFTWARE,
-}
-pub type C2RustUnnamed_6 = u32;
-sdl_constants! {
-    SDL_TextureAccess as C2RustUnnamed_6;
-    SDL_TEXTUREACCESS_STREAMING,
-}
-pub type C2RustUnnamed_8 = u32;
-pub const kPpuRenderFlags_NoSpriteLimits: C2RustUnnamed_8 = 8;
-pub const kPpuRenderFlags_Height240: C2RustUnnamed_8 = 4;
-pub const kPpuRenderFlags_4x4Mode7: C2RustUnnamed_8 = 2;
-pub const kPpuRenderFlags_NewRenderer: C2RustUnnamed_8 = 1;
-pub use sm::types::SaveLoadOperation as C2RustUnnamed_9;
-pub const kSaveLoad_Replay: C2RustUnnamed_9 = 3;
-pub const kSaveLoad_Load: C2RustUnnamed_9 = 2;
-pub const kSaveLoad_Save: C2RustUnnamed_9 = 1;
-pub use sm::types::KeyAction as C2RustUnnamed_10;
-pub const kKeys_Total: C2RustUnnamed_10 = 130;
-pub const kKeys_VolumeDown: C2RustUnnamed_10 = 129;
-pub const kKeys_VolumeUp: C2RustUnnamed_10 = 128;
-pub const kKeys_ToggleRenderer: C2RustUnnamed_10 = 127;
-pub const kKeys_DisplayPerf: C2RustUnnamed_10 = 126;
-pub const kKeys_WindowSmaller: C2RustUnnamed_10 = 125;
-pub const kKeys_WindowBigger: C2RustUnnamed_10 = 124;
-pub const kKeys_ReplayTurbo: C2RustUnnamed_10 = 123;
-pub const kKeys_Turbo: C2RustUnnamed_10 = 122;
-pub const kKeys_PauseDimmed: C2RustUnnamed_10 = 121;
-pub const kKeys_Pause: C2RustUnnamed_10 = 120;
-pub const kKeys_Reset: C2RustUnnamed_10 = 119;
-pub const kKeys_Fullscreen: C2RustUnnamed_10 = 118;
-pub const kKeys_StopReplay: C2RustUnnamed_10 = 117;
-pub const kKeys_ClearKeyLog: C2RustUnnamed_10 = 116;
-pub const kKeys_ToggleWhichFrame: C2RustUnnamed_10 = 115;
-pub const kKeys_CheatJump: C2RustUnnamed_10 = 114;
-pub const kKeys_CheatLife: C2RustUnnamed_10 = 113;
-pub const kKeys_ReplayRef_Last: C2RustUnnamed_10 = 112;
-pub const kKeys_ReplayRef: C2RustUnnamed_10 = 93;
-pub const kKeys_LoadRef_Last: C2RustUnnamed_10 = 92;
-pub const kKeys_LoadRef: C2RustUnnamed_10 = 73;
-pub const kKeys_Replay_Last: C2RustUnnamed_10 = 72;
-pub const kKeys_Replay: C2RustUnnamed_10 = 53;
-pub const kKeys_Save_Last: C2RustUnnamed_10 = 52;
-pub const kKeys_Save: C2RustUnnamed_10 = 33;
-pub const kKeys_Load_Last: C2RustUnnamed_10 = 32;
-pub const kKeys_Load: C2RustUnnamed_10 = 13;
-pub const kKeys_Controls_Last: C2RustUnnamed_10 = 12;
-pub const kKeys_Controls: C2RustUnnamed_10 = 1;
-pub const kKeys_Null: C2RustUnnamed_10 = 0;
-pub use sm::types::OutputMethod as C2RustUnnamed_11;
-pub const kOutputMethod_OpenGL: C2RustUnnamed_11 = 2;
-pub const kOutputMethod_SDLSoftware: C2RustUnnamed_11 = 1;
-pub const kOutputMethod_SDL: C2RustUnnamed_11 = 0;
-pub use sm::types::GamepadButton as C2RustUnnamed_12;
-pub const kGamepadBtn_Count: C2RustUnnamed_12 = 17;
-pub const kGamepadBtn_R2: C2RustUnnamed_12 = 16;
-pub const kGamepadBtn_L2: C2RustUnnamed_12 = 15;
-pub const kGamepadBtn_DpadRight: C2RustUnnamed_12 = 14;
-pub const kGamepadBtn_DpadLeft: C2RustUnnamed_12 = 13;
-pub const kGamepadBtn_DpadDown: C2RustUnnamed_12 = 12;
-pub const kGamepadBtn_DpadUp: C2RustUnnamed_12 = 11;
-pub const kGamepadBtn_R1: C2RustUnnamed_12 = 10;
-pub const kGamepadBtn_L1: C2RustUnnamed_12 = 9;
-pub const kGamepadBtn_R3: C2RustUnnamed_12 = 8;
-pub const kGamepadBtn_L3: C2RustUnnamed_12 = 7;
-pub const kGamepadBtn_Start: C2RustUnnamed_12 = 6;
-pub const kGamepadBtn_Guide: C2RustUnnamed_12 = 5;
-pub const kGamepadBtn_Back: C2RustUnnamed_12 = 4;
-pub const kGamepadBtn_Y: C2RustUnnamed_12 = 3;
-pub const kGamepadBtn_X: C2RustUnnamed_12 = 2;
-pub const kGamepadBtn_B: C2RustUnnamed_12 = 1;
-pub const kGamepadBtn_A: C2RustUnnamed_12 = 0;
-pub const kGamepadBtn_Invalid: C2RustUnnamed_12 = -1;
-pub use sm::types::RendererFuncs;
-pub const kMaxWindowScale: C2RustUnnamed_13 = 10;
-pub type C2RustUnnamed_13 = u32;
-pub const kDefaultSamples: C2RustUnnamed_13 = 2048;
-pub const kDefaultChannels: C2RustUnnamed_13 = 2;
-pub const kDefaultFreq: C2RustUnnamed_13 = 44100;
-pub const kDefaultFullscreen: C2RustUnnamed_13 = 0;
-pub const AUDIO_S16LSB: i32 = sdl2_sys::AUDIO_S16LSB as i32;
-pub const AUDIO_S16: i32 = sdl2_sys::AUDIO_S16 as i32;
-pub const SDL_MIX_MAXVOLUME: i32 = sdl2_sys::SDL_MIX_MAXVOLUME as i32;
-pub const SDL_WINDOWPOS_UNDEFINED_MASK: u32 = sdl2_sys::SDL_WINDOWPOS_UNDEFINED_MASK;
-pub const SDL_WINDOWPOS_UNDEFINED: u32 = SDL_WINDOWPOS_UNDEFINED_MASK | 0;
-pub const SDL_WINDOWPOS_CENTERED_MASK: u32 = sdl2_sys::SDL_WINDOWPOS_CENTERED_MASK;
-pub const SDL_WINDOWPOS_CENTERED: u32 = SDL_WINDOWPOS_CENTERED_MASK | 0;
-pub const SDL_BUTTON_LEFT: i32 = sdl2_sys::SDL_BUTTON_LEFT as i32;
-pub const SDL_PRESSED: i32 = sdl2_sys::SDL_PRESSED as i32;
-pub const SDL_INIT_AUDIO: u32 = sdl2_sys::SDL_INIT_AUDIO;
-pub const SDL_INIT_VIDEO: u32 = sdl2_sys::SDL_INIT_VIDEO;
-pub const SDL_INIT_GAMECONTROLLER: u32 = sdl2_sys::SDL_INIT_GAMECONTROLLER;
-pub const kDebugFlag: i32 = 0;
-#[inline]
-unsafe fn IntMin(a: i32, b: i32) -> i32 {
-    if a < b {
-        a
-    } else {
-        b
-    }
-}
-#[inline]
-unsafe fn IntMax(a: i32, b: i32) -> i32 {
-    if a > b {
-        a
-    } else {
-        b
-    }
-}
-pub static mut g_is_turbo: bool = false;
-pub static mut g_want_dump_memmap_flags: bool = false;
+use sm::types::{size_t, RendererFuncs, Snes, FILE};
+mod verify;
+const kWindowTitle: &[u8] = b"SuperMet\0";
+const NULL: *mut c_void = null_mut();
 static mut g_pixels: [u8; 245760] = [0; 245760];
 static mut g_my_pixels: [u8; 245760] = [0; 245760];
-static mut kWindowTitle: [c_char; 9] = unsafe { transmute::<[u8; 9], [c_char; 9]>(*b"SuperMet\0") };
-static mut g_win_flags: u32 = SDL_WINDOW_RESIZABLE as i32 as u32;
-static mut g_window: *mut SDL_Window = null::<SDL_Window>() as *mut SDL_Window;
-static mut g_cursor: u8 = true_0 as u8;
-static mut g_paused: u8 = 0;
-static mut g_turbo: u8 = 0;
-static mut g_replay_turbo: u8 = true_0 as u8;
-static mut g_current_window_scale: u8 = 0;
-static mut g_gamepad_buttons: u8 = 0;
-static mut g_input1_state: i32 = 0;
-static mut g_display_perf: bool = false;
-static mut g_curr_fps: i32 = 0;
-static mut g_ppu_render_flags: i32 = 0;
-static mut g_snes_height: i32 = 0;
-static mut g_snes_width: i32 = 0;
-static mut g_sdl_audio_mixer_volume: i32 = SDL_MIX_MAXVOLUME;
-static mut g_renderer_funcs: RendererFuncs = RendererFuncs {
-    Initialize: None,
-    Destroy: None,
-    BeginDraw: None,
-    EndDraw: None,
-};
-static mut g_gamepad_modifiers: u32 = 0;
-static mut g_gamepad_last_cmd: [u16; 17] = [0; 17];
+
+#[link(name = "sm_desktop", kind = "static", modifiers = "-bundle")]
+extern "C-unwind" {
+    fn sm_desktop_run(argc: i32, argv: *mut *mut c_char, owner: *const GameOwner) -> i32;
+    fn sm_desktop_HandleInput(game: *mut Game, key: i32, modifiers: i32, pressed: bool);
+    fn sm_desktop_HandleGamepadInput(game: *mut Game, button: i32, pressed: bool);
+    fn sm_desktop_HandleGamepadAxisInput(game: *mut Game, id: i32, axis: i32, value: i32);
+    fn sm_desktop_HandleCommand(game: *mut Game, command: u32, pressed: bool);
+    fn sm_desktop_DrawPpuFrameWithPerf(game: *mut Game);
+    fn sm_desktop_AudioCallback(game: *mut Game, stream: *mut u8, length: i32);
+    #[link_name = "sm_desktop_audio_mutex"]
+    static mut g_audio_mutex: *mut SDL_mutex;
+    fn sm_desktop_matches_source(index: u32, bytes: *const u8, length: usize) -> bool;
+}
+fn check_dependency() {
+    for (index, source) in [
+        include_bytes!("main.rs").as_slice(),
+        include_bytes!("native_desktop.c").as_slice(),
+        include_bytes!("native_desktop.h").as_slice(),
+        include_bytes!("types.rs").as_slice(),
+        include_bytes!("platform/opengl.rs").as_slice(),
+        include_bytes!("../../tools/install_native_desktop.py").as_slice(),
+        include_bytes!("../../tools/install_native_config.py").as_slice(),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        assert!(
+            unsafe { sm_desktop_matches_source(index as u32, source.as_ptr(), source.len()) },
+            "stale native desktop; rerun tools/install_native_desktop.py and rebuild"
+        );
+    }
+}
+
 unsafe fn host_die(error: *const c_char) {
     SDL_ShowSimpleMessageBox(
         SDL_MESSAGEBOX_ERROR as i32 as Uint32,
-        &raw const kWindowTitle as *const c_char,
+        kWindowTitle.as_ptr().cast(),
         error,
         null_mut::<SDL_Window>(),
     );
     fprintf(stderr, c"Error: %s\n".as_ptr(), error);
     exit(1);
 }
+
 unsafe fn host_warning(error: *const c_char) {
     SDL_ShowSimpleMessageBox(
         SDL_MESSAGEBOX_WARNING as i32 as Uint32,
-        &raw const kWindowTitle as *const c_char,
+        kWindowTitle.as_ptr().cast(),
         error,
         null_mut::<SDL_Window>(),
     );
     fprintf(stderr, c"Warning: %s\n".as_ptr(), error);
 }
-pub unsafe fn ChangeWindowScale(scale_step: i32) {
-    if SDL_GetWindowFlags(g_window)
-        & (SDL_WINDOW_FULLSCREEN_DESKTOP as i32
-            | SDL_WINDOW_FULLSCREEN as i32
-            | SDL_WINDOW_MINIMIZED as i32
-            | SDL_WINDOW_MAXIMIZED as i32) as Uint32
-        != 0 as Uint32
-    {
-        return;
+
+unsafe fn initialize_verify_audio(game: &mut Game) -> Result<(), String> {
+    g_audio_mutex = SDL_CreateMutex();
+    if g_audio_mutex.is_null() {
+        return Err("unable to create audio mutex".into());
     }
-    let mut screen: i32 = SDL_GetWindowDisplayIndex(g_window);
-    if screen < 0 {
-        screen = 0;
+    game.g_spc_player = SpcPlayer_Create();
+    if game.g_spc_player.is_null() {
+        SDL_DestroyMutex(g_audio_mutex);
+        return Err("unable to initialize sound driver".into());
     }
-    let mut max_scale: i32 = kMaxWindowScale as i32;
-    let mut bounds: SDL_Rect = SDL_Rect {
-        x: 0,
-        y: 0,
-        w: 0,
-        h: 0,
-    };
-    let mut bt: i32 = -1i32;
-    let mut bl: i32 = 0;
-    let mut bb: i32 = 0;
-    let mut br: i32 = 0;
-    if SDL_GetDisplayUsableBounds(screen, &raw mut bounds) == 0 {
-        if SDL_GetWindowBordersSize(g_window, &raw mut bt, &raw mut bl, &raw mut bb, &raw mut br)
-            != 0
-        {
-            bb = 1;
-            br = bb;
-            bl = br;
-            bt = 31;
-        }
-        let mw: i32 = (bounds.w - bl - br + g_snes_width / 4) / g_snes_width;
-        let mh: i32 = (bounds.h - bt - bb + g_snes_height / 4) / g_snes_height;
-        max_scale = IntMin(mw, mh);
-    }
-    let new_scale: i32 = IntMax(
-        IntMin(g_current_window_scale as i32 + scale_step, max_scale),
-        1,
-    );
-    g_current_window_scale = new_scale as u8;
-    let w: i32 = new_scale * g_snes_width;
-    let h: i32 = new_scale * g_snes_height;
-    SDL_SetWindowSize(g_window, w, h);
-    if bt >= 0 {
-        let mut mx: i32 = 0;
-        let mut my: i32 = 0;
-        SDL_GetGlobalMouseState(&raw mut mx, &raw mut my);
-        let wx: i32 = IntMax(
-            IntMin(mx - w / 2, bounds.x + bounds.w - bl - br - w),
-            bounds.x + bl,
-        );
-        let wy: i32 = IntMax(
-            IntMin(my - h / 2, bounds.y + bounds.h - bt - bb - h),
-            bounds.y + bt,
-        );
-        SDL_SetWindowPosition(g_window, wx, wy);
-    } else {
-        SDL_SetWindowPosition(
-            g_window,
-            SDL_WINDOWPOS_CENTERED as i32,
-            SDL_WINDOWPOS_CENTERED as i32,
-        );
-    };
+    SpcPlayer_Initialize(game.g_spc_player);
+    Ok(())
 }
-pub const RESIZE_BORDER: i32 = 20;
-unsafe extern "C" fn HitTestCallback(
-    win: *mut SDL_Window,
-    pt: *const SDL_Point,
-    data: *mut c_void,
-) -> SDL_HitTestResult {
-    let flags: u32 = SDL_GetWindowFlags(win) as u32;
-    if flags & SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as u32 != 0
-        || flags & SDL_WINDOW_FULLSCREEN as i32 as u32 != 0
-    {
-        return SDL_HITTEST_NORMAL;
-    }
-    if SDL_GetModState() as u32 & KMOD_CTRL as i32 as u32 != 0 {
-        return SDL_HITTEST_DRAGGABLE;
-    }
-    let mut w: i32 = 0;
-    let mut h: i32 = 0;
-    SDL_GetWindowSize(win, &raw mut w, &raw mut h);
-    if (*pt).y < RESIZE_BORDER {
-        return if (*pt).x < RESIZE_BORDER {
-            SDL_HITTEST_RESIZE_TOPLEFT
-        } else if (*pt).x >= w - RESIZE_BORDER {
-            SDL_HITTEST_RESIZE_TOPRIGHT
-        } else {
-            SDL_HITTEST_RESIZE_TOP
-        };
-    } else if (*pt).y >= h - RESIZE_BORDER {
-        return if (*pt).x < RESIZE_BORDER {
-            SDL_HITTEST_RESIZE_BOTTOMLEFT
-        } else if (*pt).x >= w - RESIZE_BORDER {
-            SDL_HITTEST_RESIZE_BOTTOMRIGHT
-        } else {
-            SDL_HITTEST_RESIZE_BOTTOM
-        };
-    } else if (*pt).x < RESIZE_BORDER {
-        return SDL_HITTEST_RESIZE_LEFT;
-    } else if (*pt).x >= w - RESIZE_BORDER {
-        return SDL_HITTEST_RESIZE_RIGHT;
-    }
-    SDL_HITTEST_NORMAL
+
+sm::forward_calls! { unsafe fn ();
+    finish_verify_audio => SDL_DestroyMutex(g_audio_mutex);
+    host_apu_lock => SDL_LockMutex(g_audio_mutex);
+    host_apu_unlock => SDL_UnlockMutex(g_audio_mutex);
 }
+
 pub unsafe fn RtlDrawPpuFrame(
     pixel_buffer: *mut u8,
     pitch: size_t,
@@ -388,937 +114,191 @@ pub unsafe fn RtlDrawPpuFrame(
         );
     }
 }
-unsafe fn DrawPpuFrameWithPerf(game: &mut Game) {
-    let render_scale: i32 = PpuGetCurrentRenderScale((*game.g_snes).ppu, g_ppu_render_flags as u32);
-    let mut pixel_buffer = null_mut::<u8>();
-    let mut pitch: i32 = 0;
-    g_renderer_funcs
-        .BeginDraw
-        .expect("non-null function pointer")(
-        g_snes_width * render_scale,
-        g_snes_height * render_scale,
-        &raw mut pixel_buffer,
-        &raw mut pitch,
-        game,
-    );
-    if g_display_perf as i32 != 0 || g_config.display_perf_title as i32 != 0 {
-        static mut history: [c_float; 64] = [0.; 64];
-        static mut average: c_float = 0.;
-        static mut history_pos: i32 = 0;
-        let before: u64 = SDL_GetPerformanceCounter() as u64;
-        RtlDrawPpuFrame(
-            pixel_buffer,
-            pitch as size_t,
-            g_ppu_render_flags as u32,
-            game,
-        );
-        let after: u64 = SDL_GetPerformanceCounter() as u64;
-        let v: c_float = (SDL_GetPerformanceFrequency() as c_double
-            / after.wrapping_sub(before) as c_double) as c_float;
-        average += v - history[history_pos as usize];
-        history[history_pos as usize] = v;
-        history_pos = history_pos + 1 & 63;
-        g_curr_fps = (average * (1.0f32 / 64 as c_float)) as i32;
-    } else {
-        RtlDrawPpuFrame(
-            pixel_buffer,
-            pitch as size_t,
-            g_ppu_render_flags as u32,
-            game,
-        );
-    }
-    if g_display_perf {
-        RenderNumber(
-            pixel_buffer.offset((pitch * render_scale) as isize),
-            pitch as size_t,
-            g_curr_fps,
-            (render_scale == 4) as i32 as u8,
-        );
-    }
-    if game.g_got_mismatch_count != 0 {
-        RenderNumber(
-            pixel_buffer.offset((pitch * render_scale) as isize),
-            pitch as size_t,
-            game.g_got_mismatch_count,
-            (render_scale == 4) as i32 as u8,
-        );
-    }
-    g_renderer_funcs.EndDraw.expect("non-null function pointer")(game);
-}
-static mut g_audio_mutex: *mut SDL_mutex = null::<SDL_mutex>() as *mut SDL_mutex;
-static mut g_audiobuffer_cur: *mut u8 = null::<u8>() as *mut u8;
-static mut g_audiobuffer_end: *mut u8 = null::<u8>() as *mut u8;
-static mut g_audiobuffer: *mut u8 = null::<u8>() as *mut u8;
-static mut g_frames_per_block: i32 = 0;
-static mut g_audio_channels: u8 = 0;
-static mut g_audio_device: SDL_AudioDeviceID = 0;
-unsafe fn initialize_verify_audio(game: &mut Game) -> Result<(), String> {
-    g_audio_mutex = SDL_CreateMutex();
-    if g_audio_mutex.is_null() {
-        return Err("unable to create audio mutex".into());
-    }
-    game.g_spc_player = SpcPlayer_Create();
-    if game.g_spc_player.is_null() {
-        SDL_DestroyMutex(g_audio_mutex);
-        return Err("unable to initialize sound driver".into());
-    }
-    SpcPlayer_Initialize(game.g_spc_player);
-    Ok(())
-}
 
-sm::forward_calls! { unsafe fn ();
-    finish_verify_audio => SDL_DestroyMutex(g_audio_mutex);
-    host_apu_lock => SDL_LockMutex(g_audio_mutex);
-    host_apu_unlock => SDL_UnlockMutex(g_audio_mutex);
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_die(message: *const c_char) {
+    Die(message);
 }
-unsafe extern "C" fn AudioCallback(userdata: *mut c_void, mut stream: *mut Uint8, mut len: i32) {
-    let owner = &*(userdata as *const GameOwner);
-    owner.with(|game| {
-        if SDL_LockMutex(g_audio_mutex) != 0 {
-            Die(c"Mutex lock failed!".as_ptr());
-        }
-        while len != 0 {
-            if g_audiobuffer_end.offset_from(g_audiobuffer_cur) as c_long == 0 as c_long {
-                RtlRenderAudio(
-                    g_audiobuffer as *mut i16,
-                    g_frames_per_block,
-                    g_audio_channels as i32,
-                    game,
-                );
-                g_audiobuffer_cur = g_audiobuffer;
-                g_audiobuffer_end = g_audiobuffer.offset(
-                    ((g_frames_per_block * g_audio_channels as i32) as usize)
-                        .wrapping_mul(size_of::<i16>() as usize) as isize,
-                );
-            }
-            let n: i32 = IntMin(
-                len,
-                g_audiobuffer_end.offset_from(g_audiobuffer_cur) as c_long as i32,
-            );
-            if g_sdl_audio_mixer_volume == SDL_MIX_MAXVOLUME {
-                memcpy(
-                    stream as *mut c_void,
-                    g_audiobuffer_cur as *const c_void,
-                    n as size_t,
-                );
-            } else {
-                SDL_memset(stream as *mut c_void, 0, n as size_t);
-                SDL_MixAudioFormat(
-                    stream,
-                    g_audiobuffer_cur,
-                    AUDIO_S16 as SDL_AudioFormat,
-                    n as Uint32,
-                    g_sdl_audio_mixer_volume,
-                );
-            }
-            g_audiobuffer_cur = g_audiobuffer_cur.offset(n as isize);
-            stream = stream.offset(n as isize);
-            len -= n;
-        }
-        SDL_UnlockMutex(g_audio_mutex);
-    });
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_stderr() -> *mut FILE {
+    stderr
 }
-static mut g_renderer: *mut SDL_Renderer = null::<SDL_Renderer>() as *mut SDL_Renderer;
-static mut g_texture: *mut SDL_Texture = null::<SDL_Texture>() as *mut SDL_Texture;
-static mut g_sdl_renderer_rect: SDL_Rect = SDL_Rect {
-    x: 0,
-    y: 0,
-    w: 0,
-    h: 0,
-};
-unsafe fn SdlRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
-    if !g_config.shader.is_null() {
-        fprintf(
-            stderr,
-            c"Warning: Shaders are supported only with the OpenGL backend\n".as_ptr(),
-        );
-    }
-    let renderer = SDL_CreateRenderer(
-        g_window,
-        -1i32,
-        (if g_config.output_method as i32 == kOutputMethod_SDLSoftware as i32 {
-            SDL_RENDERER_SOFTWARE as i32
-        } else {
-            SDL_RENDERER_ACCELERATED as i32 | SDL_RENDERER_PRESENTVSYNC as i32
-        }) as Uint32,
-    );
-    if renderer.is_null() {
-        printf(c"Failed to create renderer: %s\n".as_ptr(), SDL_GetError());
-        return false_0 != 0;
-    }
-    let mut renderer_info: SDL_RendererInfo = SDL_RendererInfo {
-        name: null::<c_char>(),
-        flags: 0,
-        num_texture_formats: 0,
-        texture_formats: [0; 16],
-        max_texture_width: 0,
-        max_texture_height: 0,
-    };
-    SDL_GetRendererInfo(renderer, &raw mut renderer_info);
-    g_renderer = renderer;
-    if !g_config.ignore_aspect_ratio {
-        SDL_RenderSetLogicalSize(renderer, g_snes_width, g_snes_height);
-    }
-    if g_config.linear_filtering {
-        SDL_SetHint(
-            sdl2_sys::SDL_HINT_RENDER_SCALE_QUALITY.as_ptr() as *const c_char,
-            c"best".as_ptr(),
-        );
-    }
-    let tex_mult: i32 = if g_ppu_render_flags & kPpuRenderFlags_4x4Mode7 as i32 != 0 {
-        4
-    } else {
-        1
-    };
-    g_texture = SDL_CreateTexture(
-        renderer,
-        SDL_PIXELFORMAT_ARGB8888 as i32 as Uint32,
-        SDL_TEXTUREACCESS_STREAMING as i32,
-        g_snes_width * tex_mult,
-        g_snes_height * tex_mult,
-    );
-    if g_texture.is_null() {
-        printf(c"Failed to create texture: %s\n".as_ptr(), SDL_GetError());
-        return false_0 != 0;
-    }
-    true_0 != 0
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_parse_config(name: *const c_char) {
+    sm::config::ParseConfigFile(name);
 }
-unsafe fn SdlRenderer_Destroy(game: &mut Game) {
-    SDL_DestroyTexture(g_texture);
-    SDL_DestroyRenderer(g_renderer);
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_find_key(key: i32, modifiers: i32) -> i32 {
+    sm::config::FindCmdForSdlKey(key, modifiers as _)
 }
-unsafe fn SdlRenderer_BeginDraw(
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_find_button(button: i32, modifiers: u32) -> i32 {
+    sm::config::FindCmdForGamepadButton(button, modifiers)
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_debug(owner: *const GameOwner) {
+    (*owner).with(|game| game.g_debug_flag = true);
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_start_game(
+    owner: *const GameOwner,
+    filename: *const c_char,
+) -> *mut Snes {
+    (*owner).with(|game| sm::cpu_infra::SnesInit(filename, game))
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_initialize_renderer(
+    owner: *const GameOwner,
+    funcs: *const RendererFuncs,
+    window: *mut SDL_Window,
+) -> bool {
+    (*owner).with(|_game| (*funcs).Initialize.expect("non-null function pointer")(window))
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_destroy_renderer(
+    owner: *const GameOwner,
+    funcs: *const RendererFuncs,
+) {
+    (*owner).with(|_game| (*funcs).Destroy.expect("non-null function pointer")());
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_begin_draw(
+    funcs: *const RendererFuncs,
     width: i32,
     height: i32,
     pixels: *mut *mut u8,
     pitch: *mut i32,
-    game: &mut Game,
 ) {
-    g_sdl_renderer_rect.w = width;
-    g_sdl_renderer_rect.h = height;
-    if SDL_LockTexture(
-        g_texture,
-        &raw mut g_sdl_renderer_rect,
-        pixels as *mut *mut c_void,
-        pitch,
-    ) != 0
-    {
-        printf(c"Failed to lock texture: %s\n".as_ptr(), SDL_GetError());
-    }
+    (*funcs).BeginDraw.expect("non-null function pointer")(width, height, pixels, pitch);
 }
-unsafe fn SdlRenderer_EndDraw(game: &mut Game) {
-    SDL_UnlockTexture(g_texture);
-    SDL_RenderClear(g_renderer);
-    SDL_RenderCopy(
-        g_renderer,
-        g_texture,
-        &raw mut g_sdl_renderer_rect,
-        null::<SDL_Rect>(),
-    );
-    SDL_RenderPresent(g_renderer);
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_end_draw(funcs: *const RendererFuncs) {
+    (*funcs).EndDraw.expect("non-null function pointer")();
 }
-static mut kSdlRendererFuncs: RendererFuncs = RendererFuncs {
-    Initialize: Some(SdlRenderer_Init as unsafe fn(*mut SDL_Window, &mut Game) -> bool),
-    Destroy: Some(SdlRenderer_Destroy as unsafe fn(&mut Game) -> ()),
-    BeginDraw: Some(
-        SdlRenderer_BeginDraw as unsafe fn(i32, i32, *mut *mut u8, *mut i32, &mut Game) -> (),
-    ),
-    EndDraw: Some(SdlRenderer_EndDraw as unsafe fn(&mut Game) -> ()),
-};
-unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -> i32 {
-    argc -= 1;
-    argv = argv.offset(1);
-    let mut config_file = null::<c_char>();
-    if argc >= 2 && strcmp(*argv, c"--config".as_ptr()) == 0 {
-        config_file = *argv.offset(1);
-        argc -= 2;
-        argv = argv.offset(2);
-    } else {
-        SwitchDirectory();
-    }
-    if argc >= 1 && strcmp(*argv, c"--debug".as_ptr()) == 0 {
-        owner.with(|game| game.g_debug_flag = true_0 != 0);
-        argc -= 1;
-        argv = argv.offset(1);
-    }
-    ParseConfigFile(config_file);
-    g_snes_width = g_config.extended_aspect_ratio as i32 * 2 + 256;
-    g_snes_height = 240;
-    g_ppu_render_flags = g_config.new_renderer as i32 * kPpuRenderFlags_NewRenderer as i32
-        | g_config.enhanced_mode7 as i32 * kPpuRenderFlags_4x4Mode7 as i32
-        | g_config.extend_y as i32 * kPpuRenderFlags_Height240 as i32
-        | g_config.no_sprite_limits as i32 * kPpuRenderFlags_NoSpriteLimits as i32;
-    if g_config.fullscreen as i32 == 1 {
-        g_win_flags ^= SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as u32;
-    } else if g_config.fullscreen as i32 == 2 {
-        g_win_flags ^= SDL_WINDOW_FULLSCREEN as i32 as u32;
-    }
-    g_current_window_scale = (if g_config.window_scale as i32 == 0 {
-        2
-    } else {
-        IntMin(g_config.window_scale as i32, kMaxWindowScale as i32)
-    }) as u8;
-    if (g_config.audio_freq as i32) < 11025 || g_config.audio_freq as i32 > 48000 {
-        g_config.audio_freq = kDefaultFreq as i32 as u16;
-    }
-    if (g_config.audio_channels as i32) < 1 || g_config.audio_channels as i32 > 2 {
-        g_config.audio_channels = kDefaultChannels as i32 as u8;
-    }
-    if g_config.audio_samples as i32 <= 0
-        || g_config.audio_samples as i32 & g_config.audio_samples as i32 - 1i32 != 0
-    {
-        g_config.audio_samples = kDefaultSamples as i32 as u16;
-    }
-    if SDL_Init(
-        SDL_INIT_VIDEO as Uint32 | SDL_INIT_AUDIO as Uint32 | SDL_INIT_GAMECONTROLLER as Uint32,
-    ) != 0
-    {
-        printf(c"Failed to init SDL: %s\n".as_ptr(), SDL_GetError());
-        return 1;
-    }
-    let custom_size: bool = g_config.window_width != 0 && g_config.window_height != 0;
-    let window_width: i32 = if custom_size as i32 != 0 {
-        g_config.window_width
-    } else {
-        g_current_window_scale as i32 * g_snes_width
-    };
-    let window_height: i32 = if custom_size as i32 != 0 {
-        g_config.window_height
-    } else {
-        g_current_window_scale as i32 * g_snes_height
-    };
-    if g_config.output_method as i32 == kOutputMethod_OpenGL as i32 {
-        g_win_flags |= SDL_WINDOW_OPENGL as i32 as u32;
-        OpenGLRenderer_Create(&raw mut g_renderer_funcs);
-    } else {
-        g_renderer_funcs = kSdlRendererFuncs;
-    }
-    let filename = if !(*argv).is_null() {
-        *argv as *const c_char
-    } else {
-        c"sm.smc".as_ptr()
-    };
-    let snes = owner.with(|game| SnesInit(filename, game));
-    if snes.is_null() {
-        let mut buf: [c_char; 256] = [0; 256];
-        snprintf(
-            &raw mut buf as *mut c_char,
-            size_of::<[c_char; 256]>() as size_t,
-            c"unable to load rom: %s".as_ptr(),
-            filename,
-        );
-        Die(&raw mut buf as *mut c_char);
-        return 1;
-    }
-    let window = SDL_CreateWindow(
-        &raw const kWindowTitle as *const c_char,
-        SDL_WINDOWPOS_UNDEFINED as i32,
-        SDL_WINDOWPOS_UNDEFINED as i32,
-        window_width,
-        window_height,
-        g_win_flags as Uint32,
-    );
-    if window.is_null() {
-        printf(c"Failed to create window: %s\n".as_ptr(), SDL_GetError());
-        return 1;
-    }
-    g_window = window;
-    SDL_SetWindowHitTest(
-        window,
-        Some(
-            HitTestCallback
-                as unsafe extern "C" fn(
-                    *mut SDL_Window,
-                    *const SDL_Point,
-                    *mut c_void,
-                ) -> SDL_HitTestResult,
-        ),
-        NULL,
-    );
-    if !owner.with(|game| {
-        g_renderer_funcs
-            .Initialize
-            .expect("non-null function pointer")(window, game)
-    }) {
-        return 1;
-    }
-    g_audio_mutex = SDL_CreateMutex();
-    if g_audio_mutex.is_null() {
-        Die(c"No mutex".as_ptr());
-    }
-    owner.with(|game| game.g_spc_player = SpcPlayer_Create());
-    owner.with(|game| SpcPlayer_Initialize(game.g_spc_player));
-    let enable_audio: bool = true_0 != 0;
-    if enable_audio {
-        let mut want: SDL_AudioSpec = SDL_AudioSpec {
-            freq: 0,
-            format: 0,
-            channels: 0,
-            silence: 0,
-            samples: 0,
-            padding: 0,
-            size: 0,
-            callback: None,
-            userdata: owner as *const GameOwner as *mut c_void,
-        };
-        let mut have: SDL_AudioSpec = SDL_AudioSpec {
-            freq: 0,
-            format: 0,
-            channels: 0,
-            silence: 0,
-            samples: 0,
-            padding: 0,
-            size: 0,
-            callback: None,
-            userdata: owner as *const GameOwner as *mut c_void,
-        };
-        want.freq = 44100;
-        want.format = AUDIO_S16 as SDL_AudioFormat;
-        want.channels = 2 as Uint8;
-        want.samples = 2048 as Uint16;
-        want.callback =
-            Some(AudioCallback as unsafe extern "C" fn(*mut c_void, *mut Uint8, i32) -> ())
-                as SDL_AudioCallback;
-        g_audio_device = SDL_OpenAudioDevice(null::<c_char>(), 0, &raw mut want, &raw mut have, 0);
-        if g_audio_device == 0 as SDL_AudioDeviceID {
-            printf(
-                c"Failed to open audio device: %s\n".as_ptr(),
-                SDL_GetError(),
-            );
-            return 1;
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_create_player(owner: *const GameOwner) {
+    (*owner).with(|game| game.g_spc_player = SpcPlayer_Create());
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_initialize_player(owner: *const GameOwner) {
+    (*owner).with(|game| SpcPlayer_Initialize(game.g_spc_player));
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_prepare_pixels(snes: *mut Snes) {
+    sm::snes::ppu::PpuBeginDrawing((*snes).snes_ppu, (&raw mut g_pixels).cast(), 1024, 0);
+    sm::snes::ppu::PpuBeginDrawing((*snes).my_ppu, (&raw mut g_my_pixels).cast(), 1024, 0);
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_read_sram(owner: *const GameOwner) {
+    (*owner).with(|game| RtlReadSram(game));
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_key(
+    owner: *const GameOwner,
+    key: i32,
+    modifiers: i32,
+    pressed: bool,
+) {
+    (*owner).with(|game| sm_desktop_HandleInput(game, key, modifiers, pressed));
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_button(owner: *const GameOwner, button: i32, pressed: bool) {
+    (*owner).with(|game| sm_desktop_HandleGamepadInput(game, button, pressed));
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_axis(owner: *const GameOwner, id: i32, axis: i32, value: i32) {
+    (*owner).with(|game| sm_desktop_HandleGamepadAxisInput(game, id, axis, value));
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_command(owner: *const GameOwner, command: u32, pressed: bool) {
+    (*owner).with(|game| sm_desktop_HandleCommand(game, command, pressed));
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_run_frame(owner: *const GameOwner, inputs: i32) -> bool {
+    (*owner).with(|game| RtlRunFrame(inputs, game))
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_present(
+    owner: *const GameOwner,
+    disable_render: *mut bool,
+) -> bool {
+    (*owner).with(|game| {
+        (*game.g_snes).disableRender = *disable_render;
+        if !*disable_render {
+            sm_desktop_DrawPpuFrameWithPerf(game);
         }
-        g_audio_channels = 2;
-        g_frames_per_block = 534 * have.freq / 32000;
-        g_audiobuffer = malloc(
-            ((g_frames_per_block * have.channels as i32) as size_t)
-                .wrapping_mul(size_of::<i16>() as size_t),
-        ) as *mut u8;
-    }
-    PpuBeginDrawing(
-        (*snes).snes_ppu,
-        &raw mut g_pixels as *mut u8,
-        (256 * 4) as size_t,
-        0,
-    );
-    PpuBeginDrawing(
-        (*snes).my_ppu,
-        &raw mut g_my_pixels as *mut u8,
-        (256 * 4) as size_t,
-        0,
-    );
-    mkdir(c"saves".as_ptr(), 0o755 as __mode_t);
-    owner.with(|game| RtlReadSram(game));
-    let mut i: i32 = 0;
-    while i < SDL_NumJoysticks() {
-        OpenOneGamepad(i);
-        i += 1;
-    }
-    if g_config.autosave {
-        owner.with(|game| HandleCommand((kKeys_Load as i32 + 0) as u32, true_0 != 0, game));
-    }
-    let mut running: bool = true_0 != 0;
-    let mut lastTick: u32 = SDL_GetTicks() as u32;
-    let mut frameCtr: u32 = 0;
-    let mut audiopaused: u8 = true_0 as u8;
-    let mut has_bug_in_title: bool = false_0 != 0;
-    while running {
-        let mut event: SDL_Event = SDL_Event { type_: 0 };
-        while SDL_PollEvent(&raw mut event) != 0 {
-            match event.type_ {
-                1619 => {
-                    OpenOneGamepad(event.cdevice.which);
-                }
-                1616 => {
-                    owner.with(|game| {
-                        HandleGamepadAxisInput(
-                            event.caxis.which,
-                            event.caxis.axis as i32,
-                            event.caxis.value as i32,
-                            game,
-                        )
-                    });
-                }
-                1617 | 1618 => {
-                    let b: i32 = RemapSdlButton(event.cbutton.button as i32);
-                    if b >= 0 {
-                        owner.with(|game| {
-                            HandleGamepadInput(
-                                b,
-                                event.type_ == SDL_CONTROLLERBUTTONDOWN as i32 as Uint32,
-                                game,
-                            )
-                        });
-                    }
-                }
-                1027 => {
-                    if SDL_GetModState() as u32 & KMOD_CTRL as i32 as u32 != 0
-                        && event.wheel.y != 0 as Sint32
-                    {
-                        ChangeWindowScale(if event.wheel.y > 0 as Sint32 {
-                            1
-                        } else {
-                            -1i32
-                        });
-                    }
-                }
-                1025 => {
-                    if event.button.button as i32 == SDL_BUTTON_LEFT
-                        && event.button.state as i32 == SDL_PRESSED
-                        && event.button.clicks as i32 == 2
-                        && g_win_flags & SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as u32 == 0
-                        && g_win_flags & SDL_WINDOW_FULLSCREEN as i32 as u32 == 0
-                        && SDL_GetModState() as u32 & KMOD_SHIFT as i32 as u32 != 0
-                    {
-                        g_win_flags ^= SDL_WINDOW_BORDERLESS as i32 as u32;
-                        SDL_SetWindowBordered(
-                            g_window,
-                            if g_win_flags & SDL_WINDOW_BORDERLESS == 0 {
-                                SDL_TRUE
-                            } else {
-                                SDL_FALSE
-                            },
-                        );
-                    }
-                }
-                768 => {
-                    owner.with(|game| {
-                        HandleInput(
-                            event.key.keysym.sym,
-                            event.key.keysym.mod_ as i32,
-                            true_0 != 0,
-                            game,
-                        )
-                    });
-                }
-                769 => {
-                    owner.with(|game| {
-                        HandleInput(
-                            event.key.keysym.sym,
-                            event.key.keysym.mod_ as i32,
-                            false_0 != 0,
-                            game,
-                        )
-                    });
-                }
-                256 => running = false_0 != 0,
-                _ => {}
-            }
-        }
-        if g_paused as i32 != audiopaused as i32 {
-            audiopaused = g_paused;
-            if g_audio_device != 0 {
-                SDL_PauseAudioDevice(g_audio_device, audiopaused as i32);
-            }
-        }
-        if g_paused != 0 {
-            SDL_Delay(16 as Uint32);
-        } else {
-            let mut inputs: i32 = g_input1_state;
-            if g_input1_state & 0xf0 != 0 {
-                g_gamepad_buttons = 0;
-            }
-            inputs |= g_gamepad_buttons as i32;
-            let is_replay: u8 = owner.with(|game| RtlRunFrame(inputs, game)) as u8;
-            frameCtr = frameCtr.wrapping_add(1);
-            let (want_bug_in_title, disable_render) = owner.with(|game| {
-                (*game.g_snes).disableRender = g_turbo ^ is_replay & g_replay_turbo != 0
-                    && frameCtr & (if g_turbo as i32 != 0 { 0xf } else { 0x7f }) as u32 != 0;
-                if !(*game.g_snes).disableRender {
-                    DrawPpuFrameWithPerf(game);
-                }
-                (game.g_got_mismatch_count != 0, (*game.g_snes).disableRender)
-            });
-            if want_bug_in_title as i32 != has_bug_in_title as i32 {
-                has_bug_in_title = want_bug_in_title;
-                let mut title: [c_char; 60] = [0; 60];
-                if want_bug_in_title {
-                    snprintf(
-                        &raw mut title as *mut c_char,
-                        size_of::<[c_char; 60]>() as size_t,
-                        c"%s | BUG FOUND!".as_ptr(),
-                        &raw const kWindowTitle as *const c_char,
-                    );
-                    SDL_SetWindowTitle(g_window, &raw mut title as *mut c_char);
-                } else {
-                    SDL_SetWindowTitle(g_window, &raw const kWindowTitle as *const c_char);
-                }
-            }
-            let mut curTick: u32 = SDL_GetTicks() as u32;
-            if !disable_render && !g_config.disable_frame_delay {
-                static mut delays: [u8; 3] = [17, 17, 16];
-                lastTick = lastTick.wrapping_add(delays[frameCtr.wrapping_rem(3) as usize] as u32);
-                if lastTick > curTick {
-                    let mut delta: u32 = lastTick.wrapping_sub(curTick);
-                    if delta > 500 {
-                        lastTick = curTick.wrapping_sub(500);
-                        delta = 500;
-                    }
-                    SDL_Delay(delta as Uint32);
-                } else if curTick.wrapping_sub(lastTick) > 500 {
-                    lastTick = curTick;
-                }
-            }
-        }
-    }
-    if g_config.autosave {
-        owner.with(|game| HandleCommand((kKeys_Save as i32 + 0) as u32, true_0 != 0, game));
-    }
-    SDL_PauseAudioDevice(g_audio_device, 1);
-    SDL_CloseAudioDevice(g_audio_device);
-    SDL_DestroyMutex(g_audio_mutex);
-    free(g_audiobuffer as *mut c_void);
-    owner.with(|game| g_renderer_funcs.Destroy.expect("non-null function pointer")(game));
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    0
+        *disable_render = (*game.g_snes).disableRender;
+        game.g_got_mismatch_count != 0
+    })
 }
-unsafe fn RenderDigit(mut dst: *mut u8, pitch: size_t, digit: i32, color: u32, big: bool) {
-    static mut kFont: [u8; 100] = [
-        0x1c, 0x36, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x36, 0x1c, 0x18, 0x1c, 0x1e, 0x18, 0x18,
-        0x18, 0x18, 0x18, 0x18, 0x7e, 0x3e, 0x63, 0x60, 0x30, 0x18, 0xc, 0x6, 0x3, 0x63, 0x7f,
-        0x3e, 0x63, 0x60, 0x60, 0x3c, 0x60, 0x60, 0x60, 0x63, 0x3e, 0x30, 0x38, 0x3c, 0x36, 0x33,
-        0x7f, 0x30, 0x30, 0x30, 0x78, 0x7f, 0x3, 0x3, 0x3, 0x3f, 0x60, 0x60, 0x60, 0x63, 0x3e,
-        0x1c, 0x6, 0x3, 0x3, 0x3f, 0x63, 0x63, 0x63, 0x63, 0x3e, 0x7f, 0x63, 0x60, 0x60, 0x30,
-        0x18, 0xc, 0xc, 0xc, 0xc, 0x3e, 0x63, 0x63, 0x63, 0x3e, 0x63, 0x63, 0x63, 0x63, 0x3e, 0x3e,
-        0x63, 0x63, 0x63, 0x7e, 0x60, 0x60, 0x60, 0x30, 0x1e,
-    ];
-    let mut p = (&raw const kFont as *const u8).offset((digit * 10) as isize);
-    if !big {
-        let mut y: i32 = 0;
-        while y < 10 {
-            crate::update_place! { previous fresh0 = p => p.offset(1); }
-            let mut v: i32 = *fresh0 as i32;
-            let mut x: i32 = 0;
-            while v != 0 {
-                if v & 1 != 0 {
-                    *(dst as *mut u32).offset(x as isize) = color;
-                }
-                x += 1;
-                v >>= 1;
-            }
-            y += 1;
-            dst = dst.offset(pitch as isize);
-        }
-    } else {
-        let mut y_0: i32 = 0;
-        while y_0 < 10 {
-            crate::update_place! { previous fresh1 = p => p.offset(1); }
-            let mut v_0: i32 = *fresh1 as i32;
-            let mut x_0: i32 = 0;
-            while v_0 != 0 {
-                if v_0 & 1 != 0 {
-                    crate::update_place! { reference fresh2 = *(dst as *mut u32).offset((x_0 * 2) as isize) => color; }
-                    *(dst as *mut u32).offset((x_0 * 2 + 1) as isize) = *fresh2;
-                    crate::update_place! { reference fresh3 = *(dst.offset(pitch as isize) as *mut u32).offset((x_0 * 2) as isize) => color; }
-                    *(dst.offset(pitch as isize) as *mut u32).offset((x_0 * 2 + 1) as isize) =
-                        *fresh3;
-                }
-                x_0 += 1;
-                v_0 >>= 1;
-            }
-            y_0 += 1;
-            dst = dst.offset(pitch.wrapping_mul(2 as size_t) as isize);
-        }
-    };
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_render_scale(game: *mut Game, flags: u32) -> i32 {
+    sm::snes::ppu::PpuGetCurrentRenderScale((*(*game).g_snes).ppu, flags)
 }
-unsafe fn RenderNumber(dst: *mut u8, pitch: size_t, n: i32, big: u8) {
-    let mut buf: [c_char; 32] = [0; 32];
-    let mut s = null_mut::<c_char>();
-    sprintf(&raw mut buf as *mut c_char, c"%d".as_ptr(), n);
-    s = &raw mut buf as *mut c_char;
-    let mut i: i32 = 2 * 4;
-    while *s != 0 {
-        RenderDigit(
-            dst.offset(
-                (pitch.wrapping_add(i as size_t).wrapping_add(4 as size_t) << big as i32) as isize,
-            ),
-            pitch,
-            *s as i32 - '0' as i32,
-            0x404040,
-            big != 0,
-        );
-        s = s.offset(1);
-        i += 8 * 4;
-    }
-    s = &raw mut buf as *mut c_char;
-    i = 2 * 4;
-    while *s != 0 {
-        RenderDigit(
-            dst.offset((i << big as i32) as isize),
-            pitch,
-            *s as i32 - '0' as i32,
-            0xffffff,
-            big != 0,
-        );
-        s = s.offset(1);
-        i += 8 * 4;
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_copy_frame(
+    game: *mut Game,
+    pixels: *mut u8,
+    pitch: usize,
+    flags: u32,
+) {
+    RtlDrawPpuFrame(pixels, pitch, flags, &mut *game);
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_mismatch_count(game: *mut Game) -> i32 {
+    (*game).g_got_mismatch_count
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_fps(value: f32) -> i32 {
+    value as i32
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_save_load(game: *mut Game, operation: i32, slot: i32) {
+    RtlSaveLoad(operation, slot, &mut *game);
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_cheat(game: *mut Game, code: c_char) {
+    RtlCheat(code, &mut *game);
+}
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_game_command(game: *mut Game, command: u32, flags: i32) {
+    let game = &mut *game;
+    match command {
+        115 => game.g_other_image = !game.g_other_image,
+        116 => RtlClearKeyLog(game),
+        117 => RtlStopReplay(game),
+        119 => RtlReset(1, game),
+        127 => game.g_new_ppu = flags & 1 != 0,
+        _ => unreachable!(),
     }
 }
-unsafe fn HandleCommand(j: u32, pressed: bool, game: &mut Game) {
-    if j <= kKeys_Controls_Last as i32 as u32 {
-        static mut kKbdRemap: [u8; 13] = [0, 4, 5, 6, 7, 2, 3, 8, 0, 9, 1, 10, 11];
-        if pressed {
-            g_input1_state |= (1i32) << kKbdRemap[j as usize] as i32;
-        } else {
-            g_input1_state &= !((1i32) << kKbdRemap[j as usize] as i32);
-        }
-        return;
-    }
-    if j == kKeys_Turbo as i32 as u32 {
-        g_turbo = pressed as u8;
-        return;
-    }
-    if !pressed {
-        return;
-    }
-    if j <= kKeys_Load_Last as i32 as u32 {
-        RtlSaveLoad(
-            kSaveLoad_Load as i32,
-            j.wrapping_sub(kKeys_Load as i32 as u32) as i32,
-            game,
-        );
-    } else if j <= kKeys_Save_Last as i32 as u32 {
-        RtlSaveLoad(
-            kSaveLoad_Save as i32,
-            j.wrapping_sub(kKeys_Save as i32 as u32) as i32,
-            game,
-        );
-    } else if j <= kKeys_Replay_Last as i32 as u32 {
-        RtlSaveLoad(
-            kSaveLoad_Replay as i32,
-            j.wrapping_sub(kKeys_Replay as i32 as u32) as i32,
-            game,
-        );
-    } else if j <= kKeys_LoadRef_Last as i32 as u32 {
-        RtlSaveLoad(
-            kSaveLoad_Load as i32,
-            (256u32)
-                .wrapping_add(j)
-                .wrapping_sub(kKeys_LoadRef as i32 as u32) as i32,
-            game,
-        );
-    } else if j <= kKeys_ReplayRef_Last as i32 as u32 {
-        RtlSaveLoad(
-            kSaveLoad_Replay as i32,
-            (256u32)
-                .wrapping_add(j)
-                .wrapping_sub(kKeys_ReplayRef as i32 as u32) as i32,
-            game,
-        );
-    } else {
-        match j {
-            113 => RtlCheat('w' as i32 as c_char, game),
-            114 => RtlCheat('q' as i32 as c_char, game),
-            115 => game.g_other_image = !game.g_other_image,
-            116 => RtlClearKeyLog(game),
-            117 => RtlStopReplay(game),
-            118 => {
-                g_win_flags ^= SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as u32;
-                SDL_SetWindowFullscreen(
-                    g_window,
-                    g_win_flags as Uint32 & SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as Uint32,
-                );
-                g_cursor = (g_cursor == 0) as i32 as u8;
-                SDL_ShowCursor(g_cursor as i32);
-            }
-            119 => RtlReset(1, game),
-            120 => g_paused = (g_paused == 0) as i32 as u8,
-            121 => g_paused = (g_paused == 0) as i32 as u8,
-            123 => g_replay_turbo = (g_replay_turbo == 0) as i32 as u8,
-            124 => ChangeWindowScale(1),
-            125 => ChangeWindowScale(-1i32),
-            126 => g_display_perf = (g_display_perf as i32 ^ 1) != 0,
-            127 => {
-                g_ppu_render_flags ^= kPpuRenderFlags_NewRenderer as i32;
-                game.g_new_ppu = g_ppu_render_flags & kPpuRenderFlags_NewRenderer as i32 != 0;
-            }
-            128 | 129 => HandleVolumeAdjustment(if j == kKeys_VolumeUp as i32 as u32 {
-                1
-            } else {
-                -1i32
-            }),
-            _ => {
-                sm::native_assertion! {
-                    '_c2rust_label;
-                    b"0\0", b"src/main.c\0", 686, b"void HandleCommand(uint32, _Bool)\0"
-                };
-            }
-        }
-    };
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_gamepad_bounds(button: i32) {
+    let _ = [0u8; 17][button as usize];
 }
-unsafe fn HandleInput(keyCode: i32, keyMod: i32, pressed: bool, game: &mut Game) {
-    let j: i32 = FindCmdForSdlKey(keyCode as SDL_Keycode, keyMod as SDL_Keymod);
-    if j != 0 {
-        HandleCommand(j as u32, pressed, game);
-    }
-}
-unsafe fn OpenOneGamepad(i: i32) {
-    if SDL_IsGameController(i) as u64 != 0 {
-        let controller = SDL_GameControllerOpen(i);
-        if controller.is_null() {
-            fprintf(
-                stderr,
-                c"Could not open gamepad %d: %s\n".as_ptr(),
-                i,
-                SDL_GetError(),
-            );
-        }
-    }
-}
-unsafe fn RemapSdlButton(button: i32) -> i32 {
-    match button {
-        0 => kGamepadBtn_A,
-        1 => kGamepadBtn_B,
-        2 => kGamepadBtn_X,
-        3 => kGamepadBtn_Y,
-        4 => kGamepadBtn_Back,
-        5 => kGamepadBtn_Guide,
-        6 => kGamepadBtn_Start,
-        7 => kGamepadBtn_L3,
-        8 => kGamepadBtn_R3,
-        9 => kGamepadBtn_L1,
-        10 => kGamepadBtn_R1,
-        11 => kGamepadBtn_DpadUp,
-        12 => kGamepadBtn_DpadDown,
-        13 => kGamepadBtn_DpadLeft,
-        14 => kGamepadBtn_DpadRight,
-        _ => -1i32,
-    }
-}
-unsafe fn HandleGamepadInput(button: i32, pressed: bool, game: &mut Game) {
-    if (g_gamepad_modifiers & ((1i32) << button) as u32 != 0) as i32 == pressed as i32 {
-        return;
-    }
-    g_gamepad_modifiers ^= ((1i32) << button) as u32;
-    if pressed {
-        g_gamepad_last_cmd[button as usize] =
-            FindCmdForGamepadButton(button, g_gamepad_modifiers) as u16;
-    }
-    if g_gamepad_last_cmd[button as usize] as i32 != 0 {
-        HandleCommand(g_gamepad_last_cmd[button as usize] as u32, pressed, game);
-    }
-}
-unsafe fn HandleVolumeAdjustment(volume_adjustment: i32) {
-    g_sdl_audio_mixer_volume = IntMin(
-        IntMax(
-            0,
-            g_sdl_audio_mixer_volume + volume_adjustment * (SDL_MIX_MAXVOLUME >> 4),
-        ),
-        SDL_MIX_MAXVOLUME,
-    );
-    printf(
-        c"[SDL mixer volume]=%i\n".as_ptr(),
-        g_sdl_audio_mixer_volume,
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_bad_command() {
+    __assert_fail(
+        c"0".as_ptr(),
+        c"src/main.c".as_ptr(),
+        686,
+        c"void HandleCommand(uint32, _Bool)".as_ptr(),
     );
 }
-unsafe fn ApproximateAtan2(mut y: c_float, mut x: c_float) -> c_float {
-    let sign_mask: u32 = 0x80000000;
-    let b: c_float = 0.596227f32;
-    let ux_s: u32 = sign_mask & *(&raw mut x as *mut u32);
-    let uy_s: u32 = sign_mask & *(&raw mut y as *mut u32);
-    let q: c_float = ((!ux_s & uy_s) >> 29 | ux_s >> 30) as c_float;
-    let mut bxy_a: c_float = b * x * y;
-    if bxy_a < 0.0f32 {
-        bxy_a = -bxy_a;
-    }
-    let num: c_float = bxy_a + y * y;
-    let mut atan_1q: c_float = num / (x * x + bxy_a + num + 0.000001f32);
-    let mut uatan_2q: u32 = ux_s ^ uy_s | *(&raw mut atan_1q as *mut u32);
-    q + *(&raw mut uatan_2q as *mut c_float)
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_host_render_audio(
+    game: *mut Game,
+    buffer: *mut i16,
+    frames: i32,
+    channels: i32,
+) {
+    RtlRenderAudio(buffer, frames, channels, &mut *game);
 }
-unsafe fn HandleGamepadAxisInput(gamepad_id: i32, axis: i32, value: i32, game: &mut Game) {
-    static mut last_gamepad_id: i32 = 0;
-    static mut last_x: i32 = 0;
-    static mut last_y: i32 = 0;
-    if axis == SDL_CONTROLLER_AXIS_LEFTX || axis == SDL_CONTROLLER_AXIS_LEFTY {
-        if last_gamepad_id != gamepad_id {
-            if value > -16000i32 && value < 16000 {
-                return;
-            }
-            last_gamepad_id = gamepad_id;
-            last_y = 0;
-            last_x = last_y;
-        }
-        *if axis == SDL_CONTROLLER_AXIS_LEFTX {
-            &raw mut last_x
-        } else {
-            &raw mut last_y
-        } = value;
-        let mut buttons: i32 = 0;
-        if last_x * last_x + last_y * last_y >= 10000 * 10000 {
-            static mut kSegmentToButtons: [u8; 8] = [
-                ((1i32) << 4) as u8,
-                ((1i32) << 4 | (1i32) << 7) as u8,
-                ((1i32) << 7) as u8,
-                ((1i32) << 7 | (1i32) << 5) as u8,
-                ((1i32) << 5) as u8,
-                ((1i32) << 5 | (1i32) << 6) as u8,
-                ((1i32) << 6) as u8,
-                ((1i32) << 6 | (1i32) << 4) as u8,
-            ];
-            let angle: u8 = (ApproximateAtan2(last_y as c_float, last_x as c_float) * 64.0f32
-                + 0.5f32) as i32 as u8;
-            buttons = kSegmentToButtons[((angle as i32 + 16 + 64) as u8 >> 5) as usize] as i32;
-        }
-        g_gamepad_buttons = buttons as u8;
-    } else if (axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT || axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
-        && (value < 12000 || value >= 16000)
-    {
-        HandleGamepadInput(
-            if axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT {
-                kGamepadBtn_L2
-            } else {
-                kGamepadBtn_R2
-            },
-            value >= 12000,
-            game,
-        );
-    }
+#[no_mangle]
+unsafe extern "C" fn sm_host_audio_callback(userdata: *mut c_void, stream: *mut u8, length: i32) {
+    (*(userdata as *const GameOwner)).with(|game| sm_desktop_AudioCallback(game, stream, length));
 }
-unsafe fn SwitchDirectory() {
-    let mut buf: [c_char; 4096] = [0; 4096];
-    if getcwd(
-        &raw mut buf as *mut c_char,
-        (size_of::<[c_char; 4096]>() as size_t).wrapping_sub(32 as size_t),
-    )
-    .is_null()
-    {
-        return;
-    }
-    let mut pos: size_t = strlen(&raw mut buf as *mut c_char);
-    let mut step: i32 = 0;
-    while pos != 0 as size_t && step < 3 {
-        memcpy(
-            (&raw mut buf as *mut c_char).offset(pos as isize) as *mut c_void,
-            c"/sm.ini".as_ptr() as *const c_void,
-            8 as size_t,
-        );
-        let f = fopen(&raw mut buf as *mut c_char, c"rb".as_ptr()) as *mut FILE;
-        if !f.is_null() {
-            fclose(f);
-            buf[pos as usize] = 0 as c_char;
-            if step != 0 {
-                printf(
-                    c"Found sm.ini in %s\n".as_ptr(),
-                    &raw mut buf as *mut c_char,
-                );
-                let err: i32 = chdir(&raw mut buf as *mut c_char);
-            }
-            return;
-        }
-        pos = pos.wrapping_sub(1);
-        while pos != 0 as size_t
-            && buf[pos as usize] as i32 != '/' as i32
-            && buf[pos as usize] as i32 != '\\' as i32
-        {
-            pos = pos.wrapping_sub(1);
-        }
-        step += 1;
-    }
-}
-pub const NULL: *mut c_void = null_mut::<c_void>();
-pub const true_0: i32 = 1;
-pub const false_0: i32 = 0;
+
 // The transpiled runtime references glibc's stderr and assertion symbols.
 // MinGW uses a stream accessor instead; FILE is passed opaquely to the CRT.
 #[cfg(windows)]
@@ -1349,6 +329,7 @@ pub unsafe extern "C" fn __assert_fail(
 
 pub fn main() {
     let owner = GameOwner::new();
+    check_dependency();
 
     #[cfg(windows)]
     unsafe {
@@ -1376,8 +357,10 @@ pub fn main() {
         .chain(::core::iter::once(null_mut()))
         .collect();
     unsafe {
-        ::std::process::exit(
-            main_0((args_ptrs.len() - 1) as i32, args_ptrs.as_mut_ptr(), &owner) as i32,
-        )
+        ::std::process::exit(sm_desktop_run(
+            (args_ptrs.len() - 1) as i32,
+            args_ptrs.as_mut_ptr(),
+            &*owner,
+        ) as i32)
     }
 }

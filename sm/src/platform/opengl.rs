@@ -1,6 +1,5 @@
 use crate::c_library::{free, malloc, printf};
 use crate::config::g_config;
-use crate::game_state::Game;
 use crate::host::Die;
 use crate::platform::glsl_shader::{GlslShader, GlslShader_CreateFromFile, GlslShader_Render};
 use crate::types::{GlTextureWithSize, RendererFuncs, SDL_GLContext, SDL_Window};
@@ -56,7 +55,7 @@ unsafe fn compile_display_shader(stage: u32, source: &CStr) -> u32 {
     shader
 }
 
-unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
+unsafe extern "C-unwind" fn OpenGLRenderer_Init(window: *mut SDL_Window) -> bool {
     let state = &mut *(&raw mut PRESENTER);
     state.window = window;
     let context: SDL_GLContext = SDL_GL_CreateContext(window);
@@ -127,14 +126,13 @@ unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool 
     true
 }
 
-unsafe fn OpenGLRenderer_Destroy(game: &mut Game) {}
+unsafe extern "C-unwind" fn OpenGLRenderer_Destroy() {}
 
-unsafe fn OpenGLRenderer_BeginDraw(
+unsafe extern "C-unwind" fn OpenGLRenderer_BeginDraw(
     width: i32,
     height: i32,
     pixels: *mut *mut u8,
     pitch: *mut i32,
-    game: &mut Game,
 ) {
     let state = &mut *(&raw mut PRESENTER);
     let size = width * height;
@@ -149,7 +147,7 @@ unsafe fn OpenGLRenderer_BeginDraw(
     *pitch = width * 4;
 }
 
-unsafe fn OpenGLRenderer_EndDraw(game: &mut Game) {
+unsafe extern "C-unwind" fn OpenGLRenderer_EndDraw() {
     let state = &mut *(&raw mut PRESENTER);
     let mut drawable_width = 0;
     let mut drawable_height = 0;
@@ -214,7 +212,8 @@ unsafe fn OpenGLRenderer_EndDraw(game: &mut Game) {
     SDL_GL_SwapWindow(state.window);
 }
 
-pub unsafe fn OpenGLRenderer_Create(funcs: *mut RendererFuncs) {
+#[export_name = "sm_host_OpenGLRenderer_Create"]
+pub unsafe extern "C-unwind" fn OpenGLRenderer_Create(funcs: *mut RendererFuncs) {
     SDL_GL_SetAttribute(
         SDL_GL_CONTEXT_PROFILE_MASK,
         sdl2_sys::SDL_GLprofile::SDL_GL_CONTEXT_PROFILE_CORE as i32,

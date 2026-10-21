@@ -638,10 +638,10 @@ crate::typed_struct! {
     }
 
     pub struct RendererFuncs {
-        pub Initialize: Option<unsafe fn(*mut SDL_Window, &mut Game) -> bool>;
-        pub Destroy: Option<unsafe fn(&mut Game) -> ()>;
-        pub BeginDraw: Option<unsafe fn(i32, i32, *mut *mut u8, *mut i32, &mut Game) -> ()>;
-        pub EndDraw: Option<unsafe fn(&mut Game) -> ()>;
+        pub Initialize: Option<unsafe extern "C-unwind" fn(*mut SDL_Window) -> bool>;
+        pub Destroy: Option<unsafe extern "C-unwind" fn() -> ()>;
+        pub BeginDraw: Option<unsafe extern "C-unwind" fn(i32, i32, *mut *mut u8, *mut i32) -> ()>;
+        pub EndDraw: Option<unsafe extern "C-unwind" fn() -> ()>;
     }
 }
 

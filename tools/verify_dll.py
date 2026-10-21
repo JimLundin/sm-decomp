@@ -20,6 +20,7 @@ def source_hash(root):
     paths.update((root / "sm" / "src").rglob("*.h"))
     paths.add(root / "tools/install_native_music.py")
     paths.add(root / "tools/install_native_config.py")
+    paths.add(root / "tools/install_native_desktop.py")
     paths.update(root / name for name in (
         "Cargo.toml", "Cargo.lock", "sm/Cargo.toml", "rust-toolchain.toml",
         "tools/verify_dll.py"))
