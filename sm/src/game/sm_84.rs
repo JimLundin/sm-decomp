@@ -16,9 +16,7 @@ use crate::game::sm_81::SaveToSram;
 use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_90::{CallSomeSamusCode, UpdateBeamTilesAndPalette};
-use crate::game::sm_91::{
-    GravitySuitPickup, LoadBlockToXrayTilemap, MakeSamusFaceForward, VariaSuitPickup,
-};
+use crate::game::sm_91::{GravitySuitPickup, MakeSamusFaceForward, VariaSuitPickup};
 
 crate::typed_struct! {
     [
@@ -29,10 +27,6 @@ crate::typed_struct! {
         pub func_ptr, instr_list_ptr: VoidP;
     }
 
-    pub struct XraySpecialCasing {
-        pub x_block, y_block: u8;
-        pub level_data_block: u16;
-    }
 }
 
 pub const NULL: *mut c_void = null_mut::<c_void>();
@@ -136,50 +130,6 @@ pub unsafe fn WriteRowOfLevelDataBlockAndBTS(
         *(ram_ptr!(game, u16; 0x10002)).offset((v2 as i32 + i * 2 >> 1) as isize) = arg0;
         *ram_ptr!(game; 0x16402, (v8 as i32 + i) as isize) = arg1 as u8;
         i += 1;
-    }
-}
-pub unsafe fn LoadXrayBlocks(game: &mut Game) {
-    let mut i: i32 = 78;
-    while i >= 0 {
-        let v1: i32 = i >> 1;
-        if word!(game.plm_header_ptr[v1]) as i32 >= 0x84df89 & 0xffff {
-            let k: u16 = i as u16;
-            let v2: u16 = *ram_ptr!(game; 0xd870, PrepareBitAccess(word!(game.plm_room_arguments[v1]), game) as isize)
-                as u16;
-            i = k as i32;
-            if (word!(game.bitmask) & v2) == 0 {
-                CalculatePlmBlockCoords(k, game);
-                let v3 = RomPtr_84(
-                    crate::rtl::rom_table_word!(
-                        game,
-                        0x84839d,
-                        (*(ram_ptr!(game, u16; 0xdf0c)).offset((k >> 1) as isize) >> 1) as isize,
-                    ),
-                    game,
-                );
-                LoadBlockToXrayTilemap(
-                    (*(v3.offset(2) as *mut u16)) & (0xfffu16),
-                    word!(game.plm_x_block),
-                    word!(game.plm_y_block),
-                    game,
-                );
-                i = k as i32;
-            }
-        }
-        i -= 2;
-    }
-    let RS = get_RoomDefRoomstate(word!(game.roomdefroomstate_ptr), game);
-    if (*RS).xray_special_casing_ptr != 0 {
-        let mut p = RomPtr_8F((*RS).xray_special_casing_ptr, game) as *const XraySpecialCasing;
-        while (*p).x_block != 0 || (*p).y_block != 0 {
-            LoadBlockToXrayTilemap(
-                (*p).level_data_block,
-                (*p).x_block as u16,
-                (*p).y_block as u16,
-                game,
-            );
-            p = p.offset(1);
-        }
     }
 }
 pub fn EnablePLMs(game: &mut Game) {

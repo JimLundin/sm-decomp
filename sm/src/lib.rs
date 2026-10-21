@@ -320,6 +320,7 @@ pub mod game {
     pub mod message_boxes;
     pub(crate) mod moving_platforms;
     pub(crate) mod minimap;
+    pub(crate) mod xray_background;
     pub(crate) mod prelude;
     pub(crate) mod projectile_flight;
     pub(crate) mod room_backgrounds;

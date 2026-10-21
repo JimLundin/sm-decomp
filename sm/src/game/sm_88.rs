@@ -15,14 +15,10 @@ use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
 use crate::game::sm_90::CallSomeSamusCode;
-use crate::game::sm_91::{
-    CanXrayShowBlocks, HdmaobjPreInstr_XraySetup, InitializeSuitPickupHdma,
-    ResponsibleForXrayStandupGlitch, Samus_LoadSuitPalette, Xray_SetupStage1_FreezeTimeBackup,
-    Xray_SetupStage2_ReadBg1_2ndScreen, Xray_SetupStage3_ReadBg1_1stScreen, Xray_SetupStage4,
-    Xray_SetupStage5, Xray_SetupStage6, Xray_SetupStage7, Xray_SetupStage8_SetBackdropColor,
-};
+use crate::game::sm_91::{InitializeSuitPickupHdma, Samus_LoadSuitPalette};
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma;
+use crate::game::xray_background::{self, finish_restore, restore_left, restore_right};
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -540,11 +536,11 @@ crate::game::callback_dispatch! {
         8948558 => [explosion_window::finish_power_bomb(k, game)]; 8954596 => explosion_window::begin_crystal_flash;
         8954633 => explosion_window::begin_explosion; 8954647 => [explosion_window::finish_crystal_flash(k, game)];
         8970129 => [()]; 8970130 => [()]; 8972070 => [()];
-        9554681 => [Xray_SetupStage1_FreezeTimeBackup(k, game)];
-        9554716 => Xray_SetupStage2_ReadBg1_2ndScreen;
-        9554775 => Xray_SetupStage3_ReadBg1_1stScreen; 9554830 => Xray_SetupStage4;
-        9556179 => Xray_SetupStage5; 9556339 => Xray_SetupStage6; 9556384 => Xray_SetupStage7;
-        9556668 => Xray_SetupStage8_SetBackdropColor; 9557650 => InitializeSuitPickupHdma;
+        9554681 => [xray_background::freeze_and_backup(k, game)];
+        9554716 => xray_background::capture_bg1_right;
+        9554775 => xray_background::capture_bg1_left; 9554830 => xray_background::build_overlay;
+        9556179 => xray_background::capture_bg2_right; 9556339 => xray_background::upload_left; 9556384 => xray_background::upload_right;
+        9556668 => xray_background::set_backdrop; 9557650 => InitializeSuitPickupHdma;
     }
 }
 pub unsafe fn HdmaobjInstr_CallFarFunc(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
@@ -803,107 +799,16 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
     }
     word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(255));
 }
-pub unsafe fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(k: u16, game: &mut Game) {
-    mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001);
-    *(ram_ptr!(game, u16; 0xa8a, 1)) = 0;
-    word! { game, 0;
-        demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
-    }
-    word!(game.hdma_table_1[0] = 255);
-    let mut v1: i16 = 4096;
-    if word!(game.fx_type) != 36 {
-        v1 = 0x2000;
-        if CanXrayShowBlocks(game) {
-            v1 = 0x4000;
-        }
-    }
-    word!(game.fx_layer_blending_config_c |= ((v1) as u16));
-    word!(game.palette_buffer[0] = 0);
-    let v2: i32 = word!(game.hdma_object_index) as i32 >> 1;
-    word!(game.reg_BG2HOFS = word!(game.hdma_object_A[v2]));
-    word!(game.reg_BG2VOFS = word!(game.hdma_object_B[v2]));
-    *ram_ptr!(game; 0x59) =
-        byte!(@pointer ram_ptr!(game, u16; 0x192c); word!(game.hdma_object_index) as i32 as isize);
-    let v3: u16 = word!(game.vram_write_queue_tail);
-    if ((word!(game.vram_write_queue_tail)) as i16).wrapping_sub(240) < 0 {
-        let mut v4: *mut VramWriteEntry =
-            gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v4).size = 2048;
-        (*v4).src.addr = ((ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
-            .offset_from(&raw mut game.g_ram as *mut u8) as c_long
-            + 4096 as c_long) as VoidP;
-        *(&raw mut (*v4).src.bank as *mut u16) = 126;
-        (*v4).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
-        word!(game.vram_write_queue_tail = (v3).wrapping_add(7));
-        word!(game.demo_input_pre_instr += 1);
-    }
-}
-pub unsafe fn HdmaobjPreInstr_XrayFunc4_DeactivateBeam(k: u16, game: &mut Game) {
-    let mut v1: i16 = 4096;
-    if word!(game.fx_type) != 36 {
-        v1 = 0x2000;
-        if CanXrayShowBlocks(game) {
-            v1 = 0x4000;
-        }
-    }
-    word!(game.fx_layer_blending_config_c |= ((v1) as u16));
-    let v2: u16 = word!(game.vram_write_queue_tail);
-    if ((word!(game.vram_write_queue_tail)) as i16).wrapping_sub(240) < 0 {
-        let mut v3: *mut VramWriteEntry =
-            gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v3).size = 2048;
-        (*v3).src.addr = ((ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
-            .offset_from(&raw mut game.g_ram as *mut u8) as c_long
-            + 6144 as c_long) as VoidP;
-        *(&raw mut (*v3).src.bank as *mut u16) = 126;
-        (*v3).vram_dst = (((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) + 1024) as u16;
-        word!(game.vram_write_queue_tail = (v2).wrapping_add(7));
-        word!(game.demo_input_pre_instr += 1);
-    }
-}
-pub unsafe fn HdmaobjPreInstr_XrayFunc5_DeactivateBeam(k: u16, game: &mut Game) {
-    let mut v1: i16 = 4096;
-    if word!(game.fx_type) != 36 {
-        v1 = 0x2000;
-        if CanXrayShowBlocks(game) {
-            v1 = 0x4000;
-        }
-    }
-    word!(game.fx_layer_blending_config_c |= ((v1) as u16));
-    if word!(game.time_is_frozen_flag) != 0 {
-        word! { game, 0;
-            time_is_frozen_flag, demo_input_pre_instr, demo_input_instr_timer, demo_input_instr_ptr,
-            xray_angle, demo_input, demo_input_new,
-        }
-        mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001);
-        *(ram_ptr!(game, u16; 0xa8a, 1)) = 0;
-        word! { game, 0;
-            demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
-        }
-        ResponsibleForXrayStandupGlitch(game);
-        *(ram_ptr!(game, u16; 0x18b4)).offset((word!(game.hdma_object_index) >> 1) as isize) = 0;
-        QueueSfx1_Max6(0xa, game);
-        if (word!(game.fx_type) as u8) != 36 {
-            *ram_ptr!(game; 0x74, 2) = 0x80;
-            *ram_ptr!(game; 0x74, 1) = 64;
-            *ram_ptr!(game; 0x74, 0) = 32;
-        }
-        word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(0xff));
-        if word!(game.samus_auto_cancel_hud_item_index) != 0 {
-            word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
-        }
-    }
-}
 static kHdmaobjPreInstr_XrayFuncs: [Func_Y_V; 6] = callback_table! { nonnull Func_Y_V;
     HdmaobjPreInstr_XrayFunc0_NoBeam, HdmaobjPreInstr_XrayFunc1_BeamWidening,
-    HdmaobjPreInstr_XrayFunc2_FullBeam, HdmaobjPreInstr_XrayFunc3_DeactivateBeam,
-    HdmaobjPreInstr_XrayFunc4_DeactivateBeam, HdmaobjPreInstr_XrayFunc5_DeactivateBeam,
+    HdmaobjPreInstr_XrayFunc2_FullBeam, restore_left,
+    restore_right, finish_restore,
 };
 pub unsafe fn HdmaobjPreInstr_Xray(k: u16, game: &mut Game) {
     let mut v1: i16 = 4096;
     if word!(game.fx_type) != 36 {
         v1 = 0x2000;
-        if CanXrayShowBlocks(game) {
+        if xray_background::can_reveal_blocks(game) {
             v1 = 0x4000;
             *(ram_ptr!(game, u16; 0x74, 0)) = 0x27;
             *(ram_ptr!(game, u16; 0x74, 1)) = 0x47;
@@ -2788,13 +2693,13 @@ crate::game::address_dispatch! {
     pub unsafe fn CallHdmaobjPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
         call (k, game); default { Unreachable(game); };
     {
-        8491739 => [()]; 8946872 => [()]; 10785852 => [()]; 9556607 => HdmaobjPreInstr_XraySetup;
+        8491739 => [()]; 8946872 => [()]; 10785852 => [()]; 9556607 => xray_background::setup_blending;
         8947439 => HdmaobjPreInstr_Xray; 8947506 => HdmaobjPreInstr_XrayFunc0_NoBeam;
         8947540 => HdmaobjPreInstr_XrayFunc1_BeamWidening;
         8947627 => HdmaobjPreInstr_XrayFunc2_FullBeam;
-        8948020 => HdmaobjPreInstr_XrayFunc3_DeactivateBeam;
-        8948154 => HdmaobjPreInstr_XrayFunc4_DeactivateBeam;
-        8948232 => HdmaobjPreInstr_XrayFunc5_DeactivateBeam;
+        8948020 => restore_left;
+        8948154 => restore_right;
+        8948232 => finish_restore;
         8948623 => explosion_window::set_power_bomb_blending;
         8948632 => explosion_window::power_bomb_afterglow;
         8949225 => [explosion_window::update_scaled(k, Phase::PowerBomb, game)];
