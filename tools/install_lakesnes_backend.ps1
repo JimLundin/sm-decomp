@@ -12,6 +12,9 @@ $files = @{
     'snes/ppu.c' = '29062d3711eff663a4411a39ebc02c8eeed529ba2363b3c81a677caed9277b6c'
     'snes/ppu.h' = 'c380d08458349a820a71418ac485355555532757ae74e4fc70e9cb8b08ba8da5'
     'snes/snes.h' = '945e7abd47bebe8e89c2dbd2a19acd50d68da762e0166f86237ad21caa69822b'
+    'snes/dsp.c' = 'ac25349b4e5758dd79529e9601442fb424a879f25a47cec15203679486cbeb1c'
+    'snes/dsp.h' = '15fb73eeff7a0c7dcb193e4c0715be389bb49c8e6283dd1a82f49d40ead0caad'
+    'snes/apu.h' = '6cfdb3f5a9086b707bd92af3f8f8d1a0014152eefc98d64ebf59403070464b89'
     'LICENSE.txt' = '9da2262b7b91dee7309173702f28192c5851197efac56e3ce3b5b751abf83bdc'
 }
 foreach ($name in $files.Keys) {

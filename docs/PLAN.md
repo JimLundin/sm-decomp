@@ -17,16 +17,24 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **97,824 Rust lines in 88 files**, plus 41 C
-bridge lines = **97,865 maintained implementation lines**. Counting all 121
+Current composition (2026-10-21): **97,346 Rust lines in 88 files**, plus 91 C
+bridge lines = **97,437 maintained implementation lines**. Counting all 124
 dependency-installer lines and eight added verifier-launcher lines gives
-**97,994**, down **891** from 98,885. This complete recount includes frontend,
+**97,569**, down **1,316** from 98,885. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
-**2,836 CPU, 2,104 SPC and 1,261 PPU C/header lines**, plus **7,762 stb header
+**2,836 CPU, 2,104 SPC, 1,261 PPU and 685 DSP C/header lines**, plus **7,762 stb header
 lines**, disclosed separately like GL/SDL.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
+The DSP dependency replacement removes **425 complete maintained lines** and
+passes **66,590** actual old/new full-state, APU-RAM, failure and PCM comparisons.
+Immediate KON/KOFF, stopped sample writes at 534, padding and partial state before
+invalid envelope/FIR failures are preserved. Native and physical-audio boot each
+pass probed and clean at **3/0**, inputs **0..2**: cycling, full-buffer, resampling
+and actual-consumer probes first execute at frame zero. Active synthesis, BRR,
+echo, envelopes and unusual states have component coverage; these boot segments
+establish no gameplay/music coverage. Details are in CPU_DEPENDENCY.md.
 The coordinated SPC/PPU replacement passes actual-code component checks and
 probed/clean physical-audio boot **3/0**, input frames **0..2**, with normal
 rendering, audio advancement and comparisons. Required SPC execution, DSP
@@ -1493,16 +1501,29 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    compatibility adapters, installers and verifier changes are counted. SPC
    removes **676 Rust / 632 complete maintained lines**; the composed PPU stage
    removes **340 Rust / 259 complete maintained lines**. Together they remove
-   **1,016 Rust / 891 complete maintained lines**, reaching the composition above.
+   **1,016 Rust / 891 complete maintained lines** before the DSP stage below.
    SPC uses revision `1da16a2`; PPU registers use `28b8fbc`. Their separate pins,
    licenses and installation are documented in SPC_DEPENDENCY.md and
    CPU_DEPENDENCY.md. The earlier combined prototype supplies no extra savings.
    PPU preserves line-zero mosaic setup, full routing bytes and temporary
    beam/open-bus views, with 77,824 final installed-archive comparisons. The
-   renderer, DSP, DMA, scheduling, snapshots and CPU hooks remain maintained and
-   included in the price. Current `snes/` owns 3,596 Rust lines; these are a gross
-   retained scope, not a deletion budget. DSP immediate key-on and sample-buffer
-   rules differ from published engines, so no DSP replacement is established.
+   renderer, DMA, scheduling, snapshots and CPU hooks remain maintained and
+   included in the price. The DSP synthesis replacement now preserves immediate
+   KON/KOFF and full-buffer behavior around the same unmodified `28b8fbc`
+   dependency. It removes **478 Rust lines**, adds **50 C bridge / three installer
+   lines**, and removes **425 complete maintained lines**. All 66,590 actual-code
+   state/RAM/failure/PCM comparisons and probed/clean native and physical-audio
+   boot **3/0** segments pass. Invalid envelope/FIR indices retain Rust's partial
+   state and failure instead of reaching unchecked foreign indexing. Existing
+   allocation, snapshots, reads and resampling retain their Rust operations.
+   The DSP dependency adds 685 external C/header lines, separately disclosed in
+   CPU_DEPENDENCY.md. Current `snes/` owns 3,118 Rust lines; these are a gross
+   retained scope, not a deletion budget. Durable DSP source/checks:
+   Local/sm-decomp-experiments/20261021/dsp-dependency.
+   A direct whole-PPU renderer substitution remains unsuitable: native VRAM
+   addressing, layer priorities, windows, Mode7, sprite storage and snapshot state
+   differ from upstream. Inspection establishes no complete compatibility-layer
+   price or saving; no renderer candidate was built or replayed.
    Continue selecting larger complete responsibilities and repeated algorithms;
    the 90,000-line stretch checkpoint still has no demonstrated remaining budget.
    Durable experiments: Local/sm-decomp-experiments/20261021/complete-backend.
@@ -2109,15 +2130,17 @@ the pinned CPU/PNG dependencies, RAM pointer chains, readable control flow and
 shared room background loading, Samus animation ownership, the message-box
 lifecycle, unused declarations, projectile animation, Mother Brain visual
 effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects,
-scrolling-sky and grapple-swing ownership, and the SPC/PPU dependency replacements,
-maintained Rust is **97,824**, with
+scrolling-sky and grapple-swing ownership, and the SPC/PPU/DSP dependency replacements,
+maintained Rust is **97,346**, with
 applicable static, component and exercised movie checks passing.
-Including 41 C bridge lines gives **97,865**; all 121 dependency-installer lines
-and eight added launcher lines bring the complete price to **97,994**.
+Including 91 C bridge lines gives **97,437**; all 124 dependency-installer lines
+and eight added launcher lines bring the complete price to **97,569**.
 The immediate volume target is complete.
-External CPU/SPC/PPU/PNG code has 2,836/2,104/1,261/7,762 lines.
-Counters: raw offsets 25; extern C blocks 6; counted C ABI exports 5; no_mangle 9;
-unsafe functions 3175; cast lines 7204. The PPU dependency adds one counted
+External CPU/SPC/PPU/DSP/PNG code has 2,836/2,104/1,261/685/7,762 lines.
+Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 5; no_mangle 9;
+unsafe functions 3169; cast lines 7078. The DSP dependency adds one counted
+foreign block and removes six unsafe declarations and 126 cast-containing lines.
+The PPU dependency adds one counted
 foreign block; its compiled-source verification export adds one counted C ABI
 export and no_mangle. SPC also adds a C-unwind boundary and two export_name
 callbacks, which this script does not count. Together the replacements remove

@@ -12,7 +12,7 @@ a time, with that per-frame comparison as the test. See
 ## Run
 
 Needs SDL2 (`apt install libsdl2-dev` on Debian/Ubuntu), rustup and the
-[pinned LakeSnes CPU and PPU-register libraries](docs/CPU_DEPENDENCY.md),
+[pinned LakeSnes CPU, PPU-register and DSP libraries](docs/CPU_DEPENDENCY.md),
 [SPC library](docs/SPC_DEPENDENCY.md) and
 [stb_image PNG library](docs/PNG_DEPENDENCY.md). Build these static libraries
 first and include their directory in `LIBRARY_PATH` when building or running.
@@ -41,7 +41,7 @@ Game logic, runtime and SNES emulation come from snesrev/sm (MIT, see
 [LICENSE-snesrev](LICENSE-snesrev)), translated to Rust with c2rust.
 The hardware adapters link unmodified LakeSnes code under its
 [CPU license](third_party/lakesnes/LICENSE.txt) and
-[PPU license](third_party/lakesnes/LICENSE-2022.txt) and
+[PPU/DSP license](third_party/lakesnes/LICENSE-2022.txt) and
 [SPC license](third_party/lakesnes/LICENSE-SPC-2021.txt); include these with
 distributed binaries. PNG decoding uses stb_image under its
 [MIT license](LICENSE-stb_image), which must also accompany distributed binaries.

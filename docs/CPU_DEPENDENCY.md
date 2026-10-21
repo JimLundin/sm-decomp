@@ -1,13 +1,14 @@
 # Pinned external hardware libraries
 
-## PPU registers
+## PPU registers and DSP synthesis
 
-The PPU register engine uses unmodified
+The PPU register and DSP synthesis engines use unmodified
 [angelo-wf/LakeSnes revision 28b8fbc](https://github.com/angelo-wf/LakeSnes/tree/28b8fbc15ad15afff003165ff4f2a8adb1c93d18).
 Its PPU register state matches the existing interface.
-The dependency adds 1,261 C/header lines, counted separately. The maintained C bridge, Rust adapter,
+The dependency adds 1,261 PPU and 685 DSP C/header lines, counted separately.
+The maintained C bridge, Rust adapters,
 installer and verifier changes are counted as project implementation.
-The custom PPU renderer, DSP, DMA, scheduling, buses, snapshots and CPU hooks stay
+The custom PPU renderer, DMA, scheduling, buses, snapshots and CPU hooks stay
 in Rust. This dependency replaces shared native/oracle consumers; it does not
 replace the entire hardware backend.
 
@@ -28,6 +29,26 @@ PPU calls use a temporary beam-position/open-bus view and restore the original
 SNES pointer. The Rust adapter preserves line-zero mosaic setup and the native
 renderer's complete routing bytes.
 The shared state remains byte-compatible with existing snapshots.
+
+DSP calls use a temporary view of the native sequencer's or emulated APU's RAM
+and restore the original pointer before returning. The Rust adapter preserves
+immediate KON/KOFF effects, alternating-cycle state and stopping sample writes
+at 534. Register reads, allocation, snapshot callbacks and output resampling
+retain their Rust operations. Invalid envelope/FIR indices still fail in Rust
+after the same partial voice updates; the C bridge checks those indices before
+the dependency could access them. Actual callers own disjoint DSP and APU RAM
+allocations; no aliasing between them is introduced or supported.
+
+The complete DSP replacement removes 478 Rust lines and adds 50 C bridge and
+three installer lines: **425 maintained lines removed**. The final code passes
+66,590 old/new full-state, APU-RAM, failure and PCM comparisons, including all
+register/value pairs, BRR filters/ranges, echo wrapping, envelope states, key
+events and sequential sample generation. Native and physical-audio boot segments
+each pass probed and clean at 3/0, inputs 0..2. Required cycle, full-buffer,
+resampling and consumer probes first execute at frame zero. These short boot
+segments establish integration, not gameplay/music coverage; active synthesis
+and unusual states have component coverage. Normal release library, frontend
+and verifier builds pass.
 
 On another 64-bit host, verify the installer’s source hashes and compile
 `sm/src/snes/backend.c` with that source directory on the include path, C11,
