@@ -25,15 +25,16 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A successful partial
 profile or pilot does not finish this goal. The latest frozen composition
-now produces **162,136 -> 110,009 (-52,127)**, with complete optimized library
+now produces **162,136 -> 109,232 (-52,904)**, with complete optimized library
 and actual frontend metadata compilation passing. The latest stages remove
-**15,793** from the previous 125,802 checkpoint, including the selected C
+**16,570** from the previous 125,802 checkpoint, including the selected C
 algorithm families, shared enemy layouts, CPU/SPC grids, dispatchers, register
 writes, byte/split-word places, initialization/transfer families, map menus,
 explosion windows, assertion emission, ordered RAM-store groups, introduction
 pages, moving platforms, getter prefixes, residual clone families, safe word
-updates, selective computed stores and ordinary standard-library imports. The
-complete profile also removes 560,317 tokens and 1,516,811 code-text bytes
+updates, selective computed stores, ordinary standard-library imports and
+graphics-transfer records. The complete profile also removes 564,355 tokens
+and 1,530,024 code-text bytes
 from its 162,136-line control. All local
 support and overlaps are counted; external GL dependency code is disclosed
 separately. No new main deletion or whole-game replay is claimed.
@@ -41,8 +42,15 @@ Map component checks exposed the original C2Rust VramWriteEntry packing defect
 again: destination offset 6 instead of 5. A separate zero-volume stage now
 repairs it; 65,536 complete-buffer stores and 8,192 actual NMI consumer cases
 match C, and both complete builds pass. The uncorrected control is preserved.
-These bounded checks do not establish whole-game correctness. Next are the
-remaining complete current-guided families and their actual composition.
+These bounded checks do not establish whole-game correctness. The new graphics
+rule learns from current `GraphicsAsset::load`: 59 complete original-C DMA
+sequences emit named loads, removing 777 lines including a 45-line helper.
+All actual-site C/old/new traces, 1,568 parameter cases and 131,072 packed-record
+cases pass in debug/release Rust. A separate two-read alignment repair costs
+zero lines and adds six tokens; it is included. Full-source inverse checks
+and complete library/frontend builds pass. Next are the remaining complete
+current-guided families and their actual composition; no under-100,000 result
+or additional production deletion is claimed.
 The earlier 789-handler executor trial now grows 809 lines on the composed
 input; reject it. Its enemy-only subset saves 217 and remains parked. The
 remaining C word-operation rules save about 265 on their separate repaired
@@ -458,7 +466,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the same clone scans. Domain judgment selects the native helper contract;
    recognition derives per-member parameters and rejects different effects.
    Price any production adoption against current Rust and validate it under
-   item 3. The isolated 110,009-line output is a partial translation profile,
+   item 3. The isolated 109,232-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
 
    The new finite typed instruction-data experiment also fails its complete
@@ -507,7 +515,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    separate controls; do not add their prices. Keep these scoped studies closed.
    Further discovery needs a new complete algorithm and replacement, not a
    repeat of these cohorts or another generic operation runner. Current-derived
-   translation recovery remains demonstrated separately at 110,009 lines.
+   translation recovery remains demonstrated separately at 109,232 lines.
 
    Further complete experiments at 105,984 reject shared object-script traversal
    (**+117 lines**), contextual Kraid ownership (**+33**) and real receiver methods

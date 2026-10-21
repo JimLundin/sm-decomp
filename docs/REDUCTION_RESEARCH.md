@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**110,009-line** historical-source composition. The current-source batch has
+**109,232-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -14,9 +14,10 @@ correspondence/component checks and both full boot replay routes pass for the
 adopted source. Neither count is below 100,000, and their savings are not added.
 The historical pipeline also fixes concrete packing and unaligned-reference
 defects; correctness costs are charged separately from code reduction.
-The subsequent shared beam-window owner removes another **205 lines**, reaching
-**105,984**, with passing component and focused/full replay checks. Maintained
-Rust needs another **5,985 lines removed** to reach 99,999. A separate
+The subsequent shared beam-window owner removes another **205 lines**, followed
+by **215** from native tracing and nonnull callback tables, reaching **105,769**.
+Component/static checks and fresh full boot replays pass. Maintained Rust needs
+another **5,770 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -1384,7 +1385,9 @@ cost of the remaining current-guided families:
 | Selected computed field writes | 110,953 | -93 |
 | Computed named-RAM writes | 110,509 | -444 |
 | Improved terminal-loop grammar | 110,509 | 0 |
-| Ordinary standard-library imports | **110,009** | **-500** |
+| Ordinary standard-library imports | 110,009 | -500 |
+| Packed DMA descriptor read repair | 110,009 | 0 |
+| Named graphics-transfer records | **109,232** | **-777** |
 
 All actual stage checks and complete optimized library/frontend builds pass.
 The getter cohort contains 47 groups / 391 functions after composition.
@@ -1398,7 +1401,7 @@ unaligned loads and ordered stores. The actual music queue now passes debug
 execution at address 1599; 66,400 original-C cases and debug/release effect
 checks pass. Its **55 lines, 4,230 tokens and 14,540 text bytes are a correctness
 cost**, not a reduction. The earlier packing fix remains in the composition.
-This historical candidate has no full-game replay result. The final 110,009
+This historical candidate has no full-game replay result. The phase14 110,009
 includes every safe word/store/import pass on its actual preceding input.
 The complete composition removes 52,127 lines, 560,317 tokens and 1,516,811
 code-text bytes from the 162,136-line frozen control, so its overall gain is
@@ -1406,9 +1409,45 @@ not merely formatting. The final import stage's paired complete builds pass;
 optimized compiler-operation correspondence covers 1,109,529 library and
 69,650 frontend lines. Reused successful build artifacts are identified in
 `phase14/RESULTS.json`; compilation is not deferred or inferred from an earlier
-source. Remaining strict gap: 10,010 lines. Local invoked Python experiment
+source. Its strict gap was 10,010 lines. Local invoked Python experiment
 rules/validators/orchestration total 14,700 lines across 163 files; the separate
 nine-line Cargo manifest and external GL dependency costs remain disclosed.
+
+The current-guided graphics rule then produces **110,009 -> 109,232 (-777)**,
+including its 45-line owner, three caller imports and module registration.
+It recognizes 59 complete original-C constant DMA sequences and their expanded
+Rust forms, emitting `GraphicsAsset::VramWords`, `VramLowBytes`, `VramHighBytes`
+or `WramBytes` loads. All descriptor fields and ordered destination/control
+registers must agree with original C. Twelve noncanonical descriptors remain
+explicit because their ordering or dynamic destination differs. Decompression
+is outside this cohort. No descriptor address escapes its original setup call.
+
+The complete profile now removes **52,904 lines, 564,355 tokens and 1,530,024
+code-text bytes** from the same 162,136-line control. The isolated historical
+gap is **9,233 lines** to reach 99,999. These figures come from a fresh complete
+recount, including the packed-read correction, rather than summed pilot prices.
+Current Rust already owns the equivalent graphics operation, so this rule
+demonstrates recovering its representation without claiming a new main deletion.
+
+All 59 actual original-C/repaired-old-Rust/emitted-Rust sites, 1,568 generic
+parameter cases and 131,072 packed-descriptor cases pass in each debug and
+optimized build. Observations include every ordered byte register write and
+the DMA trigger after executing the actual setup routine. Whole-source inverse
+correspondence reconstructs all unchanged source after replacing the selected
+calls. Complete optimized library and actual frontend metadata builds pass.
+There is no historical whole-game replay claim.
+
+The checks reproduce an inherited misaligned-pointer abort in the original
+Rust `SetupDmaTransfer`. Two packed word reads now use `read_unaligned`; this
+separate repair costs **zero lines, six tokens and 28 code-text bytes** and is
+included in the final profile. Its failure control and original source remain
+preserved. Reports, source manifests and executable rules are in
+`TEMP/sm-tailored-next/graphics-assets` and `integration/phase15`. The beam,
+tracing and nonnull-table studies remain outside this historical composition.
+Invoked local Python now totals 15,129 lines across 170 files, adding 429 lines
+in seven scripts since phase14, including lineage discovery and parked beam
+pricing. These experiment tools are separate from the 67 emitted Rust files;
+the nine-line manifest and previously disclosed dependency costs remain.
 
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard
