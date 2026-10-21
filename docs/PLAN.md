@@ -1553,6 +1553,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    saving. Park this formatted, uncompiled and unexecuted draft; no runtime or
    compatibility claim is made. It would add 379 external DMA C/header lines.
    Source and complete price: Local/sm-decomp-experiments/20261021/dma-dependency-price.
+   The complete special-attack lifecycle draft prices **97,313 -> 97,186 (-127)**.
+   It replaces Wave/Ice/Spazer/Plasma launch, orbit/flight phases, trails, clipping,
+   termination and charge-spread bombs with one owner and shared named routines;
+   no new macros. Bank 90 loses 617 lines, the owner adds 484, and real callers
+   and registrations add six. The 623-line original scope does not yield a
+   substantial replacement saving. Park before compiler/runtime validation under
+   the renewed larger-scope direction. The draft is formatted, uncompiled and
+   unexecuted; no behavior, movie-coverage or adopted saving is claimed.
+   Source and complete price: Local/sm-decomp-experiments/20261021/special-attacks.
    Continue selecting larger complete responsibilities and repeated algorithms;
    the 90,000-line stretch checkpoint still has no demonstrated remaining budget.
    Durable experiments: Local/sm-decomp-experiments/20261021/complete-backend.
