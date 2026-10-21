@@ -7,6 +7,7 @@ pub use crate::game::constants::bank_a4::*;
 pub use crate::game::constants::bank_b4::*;
 
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
+use crate::game::projectile_animation::draw_explosions;
 use crate::game::sm_80::{
     NextRandom, QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx2_Max1, QueueSfx2_Max3, QueueSfx3_Max3,
 };
@@ -17,7 +18,6 @@ use crate::game::sm_84::SpawnPLM;
 use crate::game::sm_86::{DrawEprojsWithPriority, EprojPriority, SpawnEprojWithGfx};
 use crate::game::sm_90::{CallSomeSamusCode, DrawSamusAndProjectiles};
 use crate::game::sm_91::Samus_DealDamage;
-use crate::game::sm_93::DrawBombAndProjectileExplosions;
 use crate::game::sm_94::square_slope_occupied;
 use crate::game::sm_b4::{
     ClearSpriteObjects, CreateSpriteAtPos, DrawSpriteObjects, HandleSpriteObjects,
@@ -292,7 +292,7 @@ crate::game::address_dispatch! {
 }
 pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
     DrawSpriteObjects(game);
-    DrawBombAndProjectileExplosions(game);
+    draw_explosions(game);
     DrawEprojsWithPriority(EprojPriority::Low, game);
     for phase_varE32 in 0u16..8 {
         if phase_varE32 == 3 {

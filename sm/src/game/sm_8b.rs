@@ -5,6 +5,7 @@ pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_8d::*;
 
 use crate::game::explosion_window::spawn_power_bomb;
+use crate::game::projectile_animation::draw_projectiles;
 use crate::game::sm_80::{
     memset7E, CheckEventHappened, ClearOamExt, ClearUnusedOam, CopySuperMetroidString,
     DisableIrqInterrupts, EnableNMI, GraphicsAsset, HandleFadeIn, HandleFadeOut, HasQueuedMusic,
@@ -24,7 +25,6 @@ use crate::game::sm_90::{
     KillProjectile, UpdateBeamTilesAndPalette,
 };
 use crate::game::sm_91::Samus_Initialize;
-use crate::game::sm_93::DrawPlayerExplosions2;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 
 crate::typed_struct! {
@@ -743,12 +743,12 @@ pub unsafe fn DrawIntroSprites(game: &mut Game) {
     if word!(game.cinematic_var15) != 0 {
         if (word!(game.cinematic_var15) & 0x8000) != 0 {
             DrawSamusAndProjectiles(game);
-            DrawPlayerExplosions2(game);
+            draw_projectiles(game);
             DrawCinematicSpriteObjects_Intro(game);
         } else {
             DrawCinematicSpriteObjects_Intro(game);
             DrawSamusAndProjectiles(game);
-            DrawPlayerExplosions2(game);
+            draw_projectiles(game);
         }
     } else {
         DrawCinematicSpriteObjects_Intro(game);

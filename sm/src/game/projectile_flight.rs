@@ -1,6 +1,6 @@
 //! Launch speed and flight of ordinary beams, missiles and their linked extensions.
+use crate::game::projectile_animation::initialize_super_missile;
 use crate::game::sm_90::{ClearProjectile, InitProjectilePositionDirection, SpawnProjectileTrail};
-use crate::game::sm_93::InitializeInstrForSuperMissile;
 use crate::game::sm_94::{
     BlockCollMissileHoriz, BlockCollMissileVert, BlockCollNoWaveBeamHoriz, BlockCollNoWaveBeamVert,
     BlockCollWaveBeamHoriz, BlockCollWaveBeamVert,
@@ -306,7 +306,7 @@ unsafe fn spawn_extension(game: &mut Game) {
     word!(game.projectile_y_pos[v1] = word!(game.projectile_y_pos[v2]));
     word!(game.projectile_dir[v1] = word!(game.projectile_dir[v2]));
     InitProjectilePositionDirection(r20, game);
-    InitializeInstrForSuperMissile(v0, game);
+    initialize_super_missile(v0, game);
     word!(game.projectile_bomb_pre_instructions[v1] = ((0x90b075i32) as u16));
     *(ram_ptr!(game, u16; 0xc7c)).offset((word!(game.projectile_index) >> 1) as isize) = (v0 as i32
         + (*(ram_ptr!(game, u16; 0xc7c)).offset((word!(game.projectile_index) >> 1) as isize)

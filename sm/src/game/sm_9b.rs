@@ -2,6 +2,7 @@ pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_9b::*;
 
+use crate::game::projectile_animation::trail_frame;
 use crate::game::samus_animation::DrawSamusSuitExploding;
 use crate::game::samus_animation::Samus_DrawStartingDeathAnim;
 use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max15, QueueSfx1_Max6};
@@ -12,7 +13,6 @@ use crate::game::sm_90::{
     Samus_PostGrappleCollisionDetect,
 };
 use crate::game::sm_91::{Samus_DealDamage, Samus_LoadSuitPalette, Samus_Pose_CancelGrapple};
-use crate::game::sm_93::ProjectileInsts_GetValue;
 use crate::game::sm_94::{
     kSinCosTable8bit_Sext, BlockCollGrappleBeam, BlockFunc_AC11, BlockFunc_AC31, BlockReactGrapple,
     GrappleFunc_AF87, HandleMovementAndCollForSamusGrapple,
@@ -59,7 +59,7 @@ static kIsGrappleBannedForMovementType: [u8; 28] = [
     0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1,
 ];
 pub unsafe fn ProjectileTrail_Func5(k: u16, j: u16, game: &mut Game) {
-    let R22: u16 = ProjectileInsts_GetValue(k, game);
+    let R22: u16 = trail_frame(k, game);
     let mut r18: u16 = 0;
     let mut r20: u16 = if (word!(game.ceres_status) & 0x8000) == 0 {
         let v2: i32 = k as i32 >> 1;

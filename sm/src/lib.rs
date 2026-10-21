@@ -337,7 +337,7 @@ pub mod game {
     pub mod sm_8f;
     pub mod sm_90;
     pub mod sm_91;
-    pub mod sm_93;
+    pub mod projectile_animation;
     pub mod sm_94;
     pub mod sm_9b;
     pub mod sm_a0;

@@ -17,20 +17,20 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **99,564 Rust lines in 82 files**, plus a
-four-line C bridge = **99,568 maintained implementation lines**. Counting the
-new 41-line CPU installer as well gives **99,609**. This is an actual complete
+Current composition (2026-10-21): **99,516 Rust lines in 82 files**, plus a
+four-line C bridge = **99,520 maintained implementation lines**. Counting the
+new 41-line CPU installer as well gives **99,561**. This is an actual complete
 source recount, including frontend and verifier code, all adapters, callers and
 registrations. Existing development scripts/configuration/docs are outside this
 implementation metric. The two pinned dependencies add **2,836 CPU C/header
 lines and 7,762 stb header lines**, disclosed separately, like existing GL/SDL.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
-The latest unused-declaration cleanup has complete retained-source and binding
-checks; it changes no executed behavior and needs no movie replay. The preceding
-gunship message-box check passed eleven required probes, then 120 follow-up
-frames, with normal rendering/audio and zero differences. Its 22,962 executed
-frames include boot setup; the setup prefix is not changed-code coverage.
+Projectile animation passes 112,184 component comparisons and a checkpointed
+6,562-frame drawing segment: four required probes and 120 follow-up frames,
+then the same clean segment, with normal rendering/audio and zero differences.
+The 2,218-frame cached setup prefix is separate from changed-code coverage.
+Unvisited bomb/SBA/super-missile initialization has direct component coverage.
 The under-100,000 maintained-source milestone is complete. Credits remain
 uncovered; component/static checks cover edited paths beyond movie coverage.
 Further bank retirement and the 90,000-line stretch checkpoint remain future work.
@@ -1445,24 +1445,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
 4. [ ] **Retire bank ownership by gameplay responsibility.** Select a complete
    responsibility, such as Samus movement, with an exercised boundary and named
    routines. Migrate its real callers and state transitions, then remove its
-   retired bank facade. The complete message-box lifecycle now belongs to
-   `message_boxes`, with direct display/queue/poll callers and bank 85 retired.
-   Opening/closing animation, interaction suspension and the normal/saved-message
-   cycles share control flow while retaining the original continuation bytes.
-   The complete replacement removes **55 lines (99,810 -> 99,755)**, including
-   its owner, helpers, callers and registration; component checks and the
-   exercised gunship save flow pass. Samus animation/drawing already belong
-   to `samus_animation`, and room background loading to
-   `room_backgrounds::BackgroundLoad`. Banks 85 and 92 are fully retired.
-   The unused-declaration cohort reserved for this stage is now adopted:
-   353 unused import bindings and five unreferenced Bang helpers remove
-   **191 lines (99,755 -> 99,564)**. Retained executable source, callback rows
-   and import targets are unchanged; compiler and release checks pass without
-   a movie replay. Runtime-source fingerprint changes invalidate old verifier
-   checkpoints; regenerate setup only when a selected exercised segment needs it.
-   Bang's live SNES execution path remains a future ownership task.
-   Gameplay currently totals 81,616 lines; its 30 numeric bank modules still
-   own 76,262. These are ownership scopes, not deletion budgets. File moves
+   retired bank facade. Player projectile data, impact setup, instruction playback
+   and drawing now belong to `projectile_animation`, with direct callers and
+   bank 93 retired. Fixed-record initialization and drawing share their common
+   paths while retaining flicker, clipping, live-index reloads and Ceres's stale
+   coordinate quirks. The complete replacement removes **48 lines
+   (99,564 -> 99,516)**, including helpers, callers, imports and registration;
+   component comparisons, retained-source checks and exercised drawing pass.
+   Samus animation/drawing already belong to `samus_animation`, message boxes
+   to `message_boxes`, and room backgrounds to `room_backgrounds::BackgroundLoad`.
+   Banks 85, 92 and 93 are fully retired. The unused-declaration cohort reserved
+   for this stage is also adopted. Bang's live SNES execution path remains a
+   future ownership task.
+   Gameplay currently totals 81,565 lines; its 29 numeric bank modules still
+   own 75,925. These are ownership scopes, not deletion budgets. File moves
    alone earn no volume reduction. Reassess the
    90,000-line stretch checkpoint using complete replacements, including retained
    exceptions and oracle adapters; it has no demonstrated deletion budget yet.
@@ -1677,14 +1673,33 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest static-only change: unused declarations are removed after compiler
+Latest applicable verification: projectile animation passes probed and clean
+**6562/0** drawing segments, input **2218..8779**, using a checkpoint before the
+first affected drawing call. The four required animation-advance, projectile
+draw, explosion draw and trailing-effect probes execute; the last first-hit is
+at 8659, followed by 120 frames. The separate **2218/0** setup run creates that
+checkpoint and earns no changed-code coverage. Normal comparisons, rendering
+and audio stay enabled. The initial **12000/0** exploration failed its required
+fixed-initializer probe, which had zero hits; it is not a coverage pass.
+Direct old/new components cover bomb/SBA/super-missile initialization, every
+selector, damage guard and instruction-pointer boundaries, plus drawing masks,
+clipping, actual mode-7 math, retained coordinates and live-index changes:
+112,184 full-RAM/completion/ordered-boundary comparisons. Sprite emission and
+trailing-effect calls are recording boundaries in those components. Retained
+impact/instruction code and all migrated callers have source correspondence.
+No credits coverage is claimed. Clean source fingerprint:
+`0f2ba9ac2fbd332e9ebe2dd17aa6e2dfa22dbbd0fed455c0a29a711f586de685`.
+Logs: Local/sm-decomp-experiments/20261021/projectile-animation/
+{components,setup,probed-speed,probed-segment,clean-segment}.log.
+
+Previous static-only change: unused declarations are removed after compiler
 reference checks. All 82 Rust files retain the same executable source and numeric
 callback rows outside five unreferenced Bang helpers; retained import bindings
 keep their targets and visibility. Release library/frontend/verifier builds,
 all-target and headless compiler checks, and embedded-source byte checks pass.
 No new movie run or gameplay coverage is claimed.
 
-Latest applicable verification: shared message-box lifecycle passes the gunship
+Previous applicable verification: shared message-box lifecycle passes the gunship
 acceptance scenario, with eleven required open/close, confirmation, delay,
 save-cycle, restoration and resumed-gameplay probes, then 120 follow-up frames.
 Probed and clean checks both pass **22962/0**, including the boot setup prefix;
@@ -1921,13 +1936,18 @@ literals, shared constant headers, native shader/presentation ownership and
 shared PPU pixel evaluation, native/SPC state transfers and live-typed snapshots,
 the pinned CPU/PNG dependencies, RAM pointer chains, readable control flow and
 shared room background loading, Samus animation ownership, the message-box
-lifecycle and unused declarations, maintained Rust is **99,564**, with applicable
-static and exercised checks passing. Including the four-line C bridge gives
-**99,568**; including the new 41-line installer as well gives **99,609**.
+lifecycle, unused declarations and projectile animation, maintained Rust is
+**99,516**, with applicable static and exercised checks passing.
+Including the four-line C bridge gives
+**99,520**; including the new 41-line installer as well gives **99,561**.
 The immediate volume target is complete.
 External CPU/PNG code has 2,836/7,762 lines.
 Counters: raw offsets 30; extern C blocks 5; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3264; cast lines 7516. Unused declarations remove four counted
+unsafe functions 3267; cast lines 7506. Projectile animation removes ten
+cast-containing lines and adds three counted unsafe declarations: two shared
+helpers and the SBA entry previously declared inside a callback macro. These
+replace existing unsafe operations; all other counters stay unchanged.
+Unused declarations remove four counted
 unsafe declarations and 13 cast-containing lines; no counter increases.
 Message-box ownership changes only the
 total line count. Samus animation ownership removes six
