@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**105,903-line** historical-source composition. The current-source batch has
+**105,312-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -1737,12 +1737,58 @@ identical normalized library tokens and exact frontend tokens. Complete
 optimized library/frontend builds pass; this static ownership change adds no
 runtime or replay claim. Parent independently recounted both complete roots.
 
-The full composition is now **162,136 -> 105,903 (-56,233)**, removing 591,555
+At phase24 the composition is **162,136 -> 105,903 (-56,233)**, removing 591,555
 tokens and 1,623,010 code-text bytes. The actual batch removes 2,028 lines from
 phase18, leaving **5,904** to reach 99,999. Current maintained Rust stays
 104,959. Local experiment Python is 21,557 lines/283 files, separately counted.
 The exact C/initial/current example, executable rule, source/build proofs and
 output are frozen at `TEMP/sm-tailored-next/integration/phase24/REPORT.md`.
+
+Two subsequent complete algorithm representations remove another **591 lines**
+on that actual output. The native inflater removes **509**, reaching 105,394;
+DSP synthesis removes **82**, reaching **105,312**. Every helper, import,
+allocator boundary and unchanged caller remains counted. Parent independently
+recounted all three roots and confirmed the exact one-module change per stage.
+The complete composition is now **162,136 -> 105,312 (-56,824)**, also removing
+595,722 tokens and 1,635,946 code-text bytes. It remains **5,313 lines** above
+99,999. Current maintained Rust remains 104,959, without an adoption claim.
+
+The inflater comparison follows 18 original functions and their dependencies:
+386 selected C item lines, 1,136 initial translated item lines, 913 historical
+module lines, 569 current module lines and **404 complete native module lines**.
+Item counts omit inter-item blank lines; module counts include all imports,
+blanks and wrappers. `BitReader`, `Huffman`, `Output` and `Inflater` retain
+the existing algorithm, including zero-padded EOF reads, reserved-code tables,
+overlapping copies and C allocation/growth/free behavior. This is a different
+experiment from the rejected standards-only decoder substitution. Its emitter
+recognizes the frozen input and supplies a deliberately written native template;
+it does not infer arbitrary C algorithms automatically.
+
+Fresh C/old/new debug and optimized checks pass **8,936 inflater cases** and
+**3,080 complete PNG byte/filename API comparisons** per profile. They compare
+exact outputs and ordered allocator events, including 1,320 injected failure
+cases. Undefined malformed inputs, huge allocations and zero-capacity growth
+are outside this bounded coverage. Complete library/frontend builds and source
+ownership/data checks pass. Its separate current-source price is 165 lines;
+that candidate remains unadopted and is not added to the historical saving.
+Report: `TEMP/sm-native-inflater-20261021/REPORT.md`.
+
+The DSP replacement covers complete per-sample mixing, echo/FIR, voice,
+envelope and BRR processing, retaining interpolation and noise. Shared stereo
+operations and a wrapping APU-word reader retain the existing serialized types,
+register behavior and output alias rules. **29,696 actual C/old/new cases**
+pass, alongside eight persistent streams containing **9,584 operation
+comparisons**. Intermediate stream states use SHA-256 digests; component cases
+compare complete bytes. The caller-proven disjoint DSP/APU allocations remain
+required. Complete builds/source checks pass. The separate current-source
+price is 58 lines and remains unadopted. Report:
+`TEMP/sm-tailored-next/dsp-signal-pipeline/REPORT.md`.
+
+Neither stage adds a whole-game replay or playable historical executable claim.
+All 71 Rust files and nine Cargo lines count. Experiment Python is now 22,991
+lines/312 files; templates and generated harness costs are separately disclosed.
+The frozen sequential checkpoint is
+`TEMP/sm-tailored-next/integration/phase26/REPORT.md`.
 
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard

@@ -25,9 +25,9 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A successful partial
 profile or pilot does not finish this goal. The latest frozen composition
-now produces **162,136 -> 105,903 (-56,233)**, with complete optimized library
+now produces **162,136 -> 105,312 (-56,824)**, with complete optimized library
 and actual frontend metadata compilation passing. The latest stages remove
-**19,315** from the previous 125,802 checkpoint, including the selected C
+**20,490** from the previous 125,802 checkpoint, including the selected C
 algorithm families, shared enemy layouts, CPU/SPC grids, dispatchers, register
 writes, byte/split-word places, initialization/transfer families, map menus,
 explosion windows, assertion emission, ordered RAM-store groups, introduction
@@ -38,7 +38,7 @@ beam windows, square-slope handling, Samus jump launch, enemy homing, DSP
 sample limits, solid-enemy queries, sprite drawing, wall-jump decisions,
 inside-block reactions, suit-pickup beams, initialization coroutines, Torizo
 fall/countdown, cross-file callback ownership and used-header helper ownership.
-The complete profile also removes 591,555 tokens and 1,623,010 code-text bytes from
+The complete profile also removes 595,722 tokens and 1,635,946 code-text bytes from
 its 162,136-line control. All local
 support and overlaps are counted; external GL dependency code is disclosed
 separately. These historical stages claim no new main deletion or whole-game replay.
@@ -118,6 +118,21 @@ and alignment policy remain unchanged; this static change adds no replay claim.
 Parent independently recounted both complete roots. The actual batch now removes
 **2,028 lines** from phase18; the strict remaining gap is **5,904**.
 TEMP sm-tailored-next/integration/phase24 freezes this sequential output.
+Two complete native representations then remove **591 more lines**. The existing
+inflater becomes four named owners while retaining its EOF/reserved-code and
+C allocation policies: **105,903 -> 105,394 (-509)**. All 8,936 C/old/new
+component cases and 3,080 complete PNG API comparisons pass. The DSP synthesis
+pipeline then reaches **105,312 (-82)**, with 29,696 C/old/new cases and eight
+persistent streams/9,584 operation comparisons passing. Complete builds and
+source checks pass at both exact sequential outputs; parent independently
+recounted them and confirmed only the intended module changes. The full batch
+removes **2,619 lines** from phase18, leaving **5,313** to reach 99,999.
+TEMP sm-tailored-next/integration/phase26 freezes the composition. The bounded
+inflater checks exclude undefined malformed behavior, huge allocations and
+zero-capacity growth; DSP keeps its disjoint APU/DSP allocation contract and
+uses digests for persistent intermediate state. Neither stage adds a whole-game
+replay claim. Their separate current-source prices are 165 and 58 lines and
+remain unadopted; they are not added to the historical savings.
 No whole-game or current-main reduction is claimed by these historical stages.
 The separate current-policy GL replacement prices **108,052 -> 106,886
 (-1,166)** and passes source/build checks, but runtime/adoption is parked:
@@ -554,7 +569,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the same clone scans. Domain judgment selects the native helper contract;
    recognition derives per-member parameters and rejects different effects.
    Price any production adoption against current Rust and validate it under
-   item 3. The isolated 105,903-line output is a partial translation profile,
+   item 3. The isolated 105,312-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
 
    The new finite typed instruction-data experiment also fails its complete
@@ -575,6 +590,21 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    lines while growing tokens/text; named RAM operands save 120 lines and
    shrink tokens/text. Park the named version before broad validation.
    Reports: TEMP sm-tailored-next/finite-state-programs and infix-word-math.
+
+   Further complete numeric/support prices remain small. Persistent SPC pitch
+   fields as `Wrapping<u16>` grow **17 lines** after all callers/checkpoint
+   conversions; a primitive-width control saves one. Complete builds and 115
+   layout assertions pass, but Defender ASR event 1121 blocks the numeric test
+   executable before entry; no runtime result or alternative launch is claimed.
+   A shared CPU decimal-digit recurrence saves only **41 lines**, parked before
+   builds. Compiler-resolved frontend/verifier/test consumers permit a separate
+   **132-line** C-header/type/Sfx-wrapper deletion only under application scope;
+   strict public Rust API retention saves zero. Complete builds pass, with no
+   post-removal resolved correspondence or runtime claim. That candidate and its
+   explicit public-path contraction remain parked. These are independent prices,
+   not a current-main deletion budget. Reports: TEMP
+   sm-tailored-next/{wrapping-pitch,support-consumer-liveness} and
+   sm-cpu-decimal-recurrence-20261021. Do not repeat these scoped studies.
 
    Those representation studies are closed. Five subsequent domain studies
    use the same repaired 106,189-line control:
@@ -603,7 +633,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    separate controls; do not add their prices. Keep these scoped studies closed.
    Further discovery needs a new complete algorithm and replacement, not a
    repeat of these cohorts or another generic operation runner. Current-derived
-   translation recovery remains demonstrated separately at 105,903 lines.
+   translation recovery remains demonstrated separately at 105,312 lines.
 
    Further complete experiments at 105,984 reject shared object-script traversal
    (**+117 lines**), contextual Kraid ownership (**+33**) and real receiver methods
