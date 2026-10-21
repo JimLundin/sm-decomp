@@ -1,4 +1,5 @@
 use crate::game::beam_windows::calculate_xray_window;
+use crate::game::liquid_effects::{self, WATER_WAVE};
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
@@ -391,39 +392,6 @@ pub unsafe fn HdmaobjInstr_Sleep(k: u16, hdp: *const u8, game: &mut Game) -> *co
     );
     null::<u8>()
 }
-pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> u8 {
-    if (word!(game.fx_target_y_pos) & 0x8000) != 0 {
-        return 1;
-    }
-    let r24_r22: u32 = ((word!(game.fx_y_vel) as i16 as i32) << 8) as u32;
-    if (word!(game.fx_y_vel) & 0x8000) == 0 {
-        let mut v2: u16 =
-            (r24_r22.wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos)) >> 16) as u16;
-        word!(wrapping_u32, game.fx_base_y_subpos += r24_r22);
-        if (v2 & 0x8000) != 0 {
-            v2 = -1i32 as u16;
-        }
-        word!(game.fx_base_y_pos = v2);
-        if word!(game.fx_target_y_pos) >= v2 {
-            0
-        } else {
-            word! {game; fx_base_y_pos = word!(game.fx_target_y_pos); fx_base_y_subpos = 0; }
-            1
-        }
-    } else {
-        let mut v0: u16 =
-            (r24_r22.wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos)) >> 16) as u16;
-        word!(wrapping_u32, game.fx_base_y_subpos += r24_r22);
-        if (v0 & 0x8000) != 0 {
-            v0 = 0;
-        }
-        word!(game.fx_base_y_pos = v0);
-        if word!(game.fx_target_y_pos) >= v0 {
-            word! {game; fx_base_y_pos = word!(game.fx_target_y_pos); fx_base_y_subpos = 0; }
-        }
-        (word!(game.fx_target_y_pos) >= v0) as u8
-    }
-}
 pub unsafe fn HdmaobjPreInstr_XrayFunc0_NoBeam(k: u16, game: &mut Game) {
     if (word!(game.button_config_run_b) & word!(game.joypad1_lastkeys)) != 0 {
         CalculateXrayHdmaTable(game);
@@ -687,7 +655,6 @@ pub unsafe fn HdmaobjPreInstr_FxType22_BG3Yscroll(mut k: u16, game: &mut Game) {
 crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
     HdmaobjInstr_SetFlagB [hdp] { word!(game.hdma_object_B[(k >> 1)] = 1); };
 }
-static g_word_88C46E: [i16; 16] = [0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0];
 pub unsafe fn HdmaobjPreInstr_BG3Xscroll(k: u16, game: &mut Game) {
     if word!(game.layer1_y_pos) as i32 - 1024i32 & 0x8000 != 0 {
         if (*ram_ptr!(game; 0x5b5) & 1) == 0 {
@@ -713,8 +680,8 @@ pub unsafe fn HdmaobjPreInstr_BG3Xscroll(k: u16, game: &mut Game) {
         let mut v5: u16 = word!(game.hdma_object_A[v3]);
         for i in (0i32..=30).rev().step_by(2) {
             word!(
-                game.g_word_7E9E80[(v5 >> 1)] = ((g_word_88C46E[(i >> 1) as usize]) as u16)
-                    .wrapping_add(word!(game.reg_BG1HOFS))
+                game.g_word_7E9E80[(v5 >> 1)] =
+                    ((WATER_WAVE[(i >> 1) as usize]) as u16).wrapping_add(word!(game.reg_BG1HOFS))
             );
             v5 = (v5 as i32 - 2i32 & 0x1f) as u16;
         }
@@ -1000,400 +967,6 @@ pub unsafe fn HandleEarthquakeSoundEffect(game: &mut Game) {
             earthquake_sfx_index = (v0).wrapping_add(4);
         }
     }
-}
-static unk_88B289: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x12, 0xc3e1 as VoidP);
-static unk_88B291: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x10, 0xc3f0 as VoidP);
-static unk_88B2B1: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x12, 0xc3e1 as VoidP);
-static unk_88B2B9: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x10, 0xc3f0 as VoidP);
-pub unsafe fn FxTypeFunc_2_Lava(game: &mut Game) {
-    word!(game.fx_rising_function_bank_88 = ((0x88b343i32) as u16));
-    word!(game.lava_acid_y_pos = word!(game.fx_base_y_pos));
-    SpawnHdmaObject(0x88, &raw const unk_88B289 as *const c_void, game);
-    SpawnHdmaObject(0x88, &raw const unk_88B291 as *const c_void, game);
-    SpawnBG3ScrollHdmaObject(game);
-    SpawnAnimtiles(addr_kAnimtiles_Lava as u16, game);
-}
-pub unsafe fn FxTypeFunc_4_Acid(game: &mut Game) {
-    word!(game.fx_rising_function_bank_88 = ((0x88b343i32) as u16));
-    word!(game.lava_acid_y_pos = word!(game.fx_base_y_pos));
-    SpawnHdmaObject(0x88, &raw const unk_88B2B1 as *const c_void, game);
-    SpawnHdmaObject(0x88, &raw const unk_88B2B9 as *const c_void, game);
-    SpawnBG3ScrollHdmaObject(game);
-    SpawnAnimtiles(addr_kAnimtiles_Acid as u16, game);
-}
-
-macro_rules! advance_liquid_tide {
-    (
-        $game:ident, $amplitude:literal, $sign_mask:literal, $phase:ident,
-        $nonnegative_sine_step:literal, $negative_sine_step:literal $(,)?
-    ) => {
-        word! { $game, 0; fx_y_suboffset, fx_y_offset }
-        let v0: i32 = byte!(@pointer ram_ptr!($game, u16; 0x1974); 1) as i32;
-        let v1: u16 =
-            ($amplitude).wrapping_mul((kSinCosTable8bit_Sext[v0 as usize]) as u16);
-        if (kSinCosTable8bit_Sext[v0 as usize] as u16 & $sign_mask) != 0 {
-            word!($game.fx_y_offset, wrapping_sub(1));
-        }
-        *(ram_ptr!($game, u16; 0x1970, 1)) = v1;
-        if (kSinCosTable8bit_Sext[v0 as usize] as u16 & 0x8000) == 0 {
-            $phase = (word!($game.tide_phase)).wrapping_add($nonnegative_sine_step);
-        } else {
-            $phase = (word!($game.tide_phase)).wrapping_add($negative_sine_step);
-        }
-        word!($game.tide_phase = $phase);
-    };
-}
-
-pub unsafe fn FxHandleTide(game: &mut Game) {
-    let mut v2: u16 = 0;
-    let mut v5: u16 = 0;
-    if *(ram_ptr!(game, i16; 0x197c, 1)) < 0 {
-        advance_liquid_tide!(game, 8u16, 0x1000, v2, 288, 192);
-    } else if (*(ram_ptr!(game, u16; 0x197c, 1)) & 0x4000) != 0 {
-        advance_liquid_tide!(game, 32u16, 0x400, v5, 224, 128);
-    }
-}
-
-macro_rules! start_liquid_motion_toward_target {
-    ($game:ident, $motion_state:literal) => {
-        if (word!($game.fx_y_vel) & 0x8000) == 0 {
-            if word!($game.fx_target_y_pos) < word!($game.fx_base_y_pos)
-                || word!($game.fx_target_y_pos) == word!($game.fx_base_y_pos)
-            {
-                return;
-            }
-        } else if !(word!($game.fx_target_y_pos) != word!($game.fx_base_y_pos)
-            && word!($game.fx_target_y_pos) < word!($game.fx_base_y_pos))
-        {
-            return;
-        }
-        word!($game.fx_rising_function_bank_88 = (($motion_state) as u16));
-    };
-}
-
-crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
-    HdmaobjInstr_B3A9 [hdp] { word!(game.hdma_object_C[(k >> 1)] = 112); };
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallFxRisingFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [8958787] FxRisingFunction_LavaAcid [] {
-        if word!(game.fx_y_vel) != 0 {
-            start_liquid_motion_toward_target!(game, 0x88b367i32);
-        }
-    };
-    [8958823] FxRisingFunction_LavaAcid_WaitToRise [] {
-        HandleEarthquakeSoundEffect(game);
-        word!(game.earthquake_type = 21);
-        word!(game.earthquake_timer |= (0x20u16));
-        if word!(game.fx_timer -= 1, reread) == 0 {
-            word!(game.fx_rising_function_bank_88 = ((0x88b382i32) as u16));
-        }
-    };
-    [8958850] FxRisingFunction_LavaAcid_Raising [] {
-        HandleEarthquakeSoundEffect(game);
-        word!(game.earthquake_type = 21);
-        word!(game.earthquake_timer |= (0x20u16));
-        if RaiseOrLowerFx(game) & 1 != 0 {
-            word! {game; fx_y_vel = 0; fx_rising_function_bank_88 = ((0x88b343i32) as u16); }
-        }
-    };
-    [8963112] FxRisingFunction_C428_WaterNormal [] {
-        if word!(game.fx_y_vel) != 0 {
-            start_liquid_motion_toward_target!(game, 0x88c44ci32);
-        }
-    };
-    [8963148] FxRisingFunction_WaterWaitToRise [] {
-        if word!(game.fx_timer -= 1, reread) == 0 {
-            word!(game.fx_rising_function_bank_88 = ((0x88c458i32) as u16));
-        }
-    };
-    [8963160] FxRisingFunction_WaterRising [] {
-        if RaiseOrLowerFx(game) & 1 != 0 {
-            word! {game; fx_rising_function_bank_88 = ((0x88c428i32) as u16); fx_y_vel = 0; }
-        }
-    };
-}
-static kLavaSoundEffects: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
-pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(k: u16, game: &mut Game) {
-    word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
-    if word!(game.time_is_frozen_flag) == 0 {
-        CallFxRisingFunc(
-            ((word!(game.fx_rising_function_bank_88)) as u32) | (0x880000u32),
-            game,
-        );
-        FxHandleTide(game);
-        words!(
-            game.lava_acid_y_pos,
-            lava_acid_y_subpos = (words!(game.fx_y_offset, fx_y_suboffset))
-                .wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos),)
-        );
-        word!(game.bg3_xpos = word!(game.reg_BG1HOFS));
-        *(ram_ptr!(game, u16; 0x9c00)) = 0;
-        word!(game.bg3_ypos = 0);
-        let mut v2: i16 = ((words!(game.fx_y_offset, fx_y_suboffset))
-            .wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos))
-            >> 16) as i16;
-        let v4 = if v2 >= 0 {
-            let v3: i16 = (v2).wrapping_sub((word!(game.layer1_y_pos)) as i16);
-            if v3 <= 0 {
-                ((v3 as i32 ^ 0x1f) & 0x1f | 0x100) as i16
-            } else if (v3 as u16) < 0x100 {
-                !(v3 as i32) as u8 as i16
-            } else {
-                0
-            }
-        } else {
-            0
-        };
-        *(ram_ptr!(game, u16; 0x9c00, 2)) = v4 as u16;
-        if word!(game.fx_type) == 2 && (word!(game.lava_acid_y_pos) & 0x8000) == 0 {
-            let v5: i32 = word!(game.hdma_object_index) as u8 as i32 >> 1;
-            crate::update_place! { unaligned_word fresh101 [fresh102] = &raw mut (*(ram_ptr!(game, u16; 0x192c)).offset(v5 as isize)) => (u16::from_le(fresh101.read_unaligned())).wrapping_sub(1); }
-            if fresh102 == 1 {
-                word!(game.hdma_object_C[v5] = 112);
-                QueueSfx2_Max6(
-                    kLavaSoundEffects[(word!(game.random_number) as i32 & 7) as usize] as u16,
-                    game,
-                );
-            }
-        }
-        word!(game.random_number = u16::swap_bytes(word!(game.random_number)));
-        let v8 = if (word!(game.lava_acid_y_pos) & 0x8000) == 0 {
-            let v8 =
-                (word!(game.lava_acid_y_pos) as i32 - word!(game.layer1_y_pos) as i32 + 256) as i16;
-            if v8 < 0 {
-                255
-            } else if (v8 as u16) < 0x200 {
-                v8
-            } else {
-                511
-            }
-        } else {
-            511
-        };
-        *(ram_ptr!(game, u16; 0x18d8))
-            .offset((word!(game.hdma_object_index) as u8 >> 1) as isize) =
-            (3 * ((v8 as i32 ^ 0x1ff) + 1 & 0x3ff) + 0xb62a) as u16;
-    } else {
-    }
-}
-crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
-    HdmaobjInstr_SetFlagB_Copy [hdp] { word!(game.hdma_object_B[(k >> 1)] = 1); };
-}
-pub unsafe fn HdmaobjPreInstr_LavaAcidBG2YScroll(k: u16, game: &mut Game) {
-    word!(game.g_word_7E9C44 = word!(game.reg_BG2VOFS));
-    if word!(game.time_is_frozen_flag) == 0 && (word!(game.fx_liquid_options) & 6) != 0 {
-        if (word!(game.fx_liquid_options) & 2) != 0 {
-            Handle_LavaAcidBG2YScroll_Func3(k, game);
-        } else {
-            Handle_LavaAcidBG2YScroll_Func2(k, game);
-        }
-    } else {
-        Handle_LavaAcidBG2YScroll_Func1(k, game);
-    }
-    *(ram_ptr!(game, u16; 0x18d8)).offset((word!(game.hdma_object_index) as u8 >> 1) as isize) =
-        (3 * (word!(game.reg_BG2VOFS) as i32 & 0xf) + 0xc0b1) as u16;
-}
-pub unsafe fn Handle_LavaAcidBG2YScroll_Func1(v0: u16, game: &mut Game) {
-    WriteReg(
-        (((byte!(@pointer ram_ptr!(game, u16; 0x18c0); v0 as i32 as isize)) as u32)
-            .wrapping_add(17153)) as u16,
-        0x10,
-        game,
-    );
-    let mut v1: u8 = 30;
-    let v2: u16 = (word!(game.reg_BG2VOFS)) & (0x1ffu16);
-    word_transfers!(game, descending, 16; le(g_word_7E9C46, 15) <- value(v2));
-    v1 = 254;
-}
-pub unsafe fn Handle_LavaAcidBG2YScroll_Func2(v0: u16, game: &mut Game) {
-    WriteReg(
-        (((byte!(@pointer ram_ptr!(game, u16; 0x18c0); v0 as i32 as isize)) as u32)
-            .wrapping_add(17153)) as u16,
-        0xf,
-        game,
-    );
-    let v1: i32 = v0 as i32 >> 1;
-    crate::update_place! { unaligned_word fresh54 [fresh55] = &raw mut (*(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize)) => (u16::from_le(fresh54.read_unaligned())).wrapping_sub(1); }
-    if fresh55 == 1 {
-        word!(game.hdma_object_B[v1] = 6);
-        word!(game.hdma_object_A[v1] = (word!(game.hdma_object_A[v1]) as i32 - 2i32 & 0x1e) as u16);
-    }
-    let mut v3: u8 = byte!(@pointer ram_ptr!(game, u16; 0x1914); v0 as i32 as isize);
-    let mut v4: u8 = 30;
-    for _ in 0..=15 {
-        word!(
-            game.g_word_7E9C46[(v4 >> 1)] =
-                (crate::rtl::rom_table_word!(game, 0x88b589, (v3 >> 1) as isize) as i32
-                    + word!(game.reg_BG2HOFS) as i32
-                    & 0x1ff) as u16
-        );
-        v3 = (v3 as i32 - 2i32 & 0x1e) as u8;
-        v4 = (v4 as i32 - 2i32 & 0x1e) as u8;
-    }
-}
-pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(v0: u16, game: &mut Game) {
-    WriteReg(
-        (byte!(@pointer ram_ptr!(game, u16; 0x18c0); v0 as i32 as isize) as i32 + BBAD0 as i32)
-            as SnesRegs as u16,
-        0x10,
-        game,
-    );
-    let v1: i32 = v0 as i32 >> 1;
-    crate::update_place! { unaligned_word fresh56 [fresh57] = &raw mut (*(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize)) => (u16::from_le(fresh56.read_unaligned())).wrapping_sub(1); }
-    if fresh57 == 1 {
-        word!(game.hdma_object_B[v1] = 4);
-        word!(game.hdma_object_A[v1] = (word!(game.hdma_object_A[v1]) as i32 - 2i32 & 0x1e) as u16);
-    }
-    let mut v3: u8 = (byte!(@pointer (ram_ptr!(game, u16; 0x1914)).offset(v1 as isize); 0) as i32
-        + 2 * (word!(game.reg_BG2VOFS) as i32 & 0xf)
-        & 0x1e) as u8;
-    let mut v4: u8 = (2 * (word!(game.reg_BG2VOFS) as i32 & 0xf) + 30 & 0x1e) as u8;
-    for _ in 0..=15 {
-        word!(
-            game.g_word_7E9C46[(v4 >> 1)] =
-                (crate::rtl::rom_table_word!(game, 0x88b60a, (v3 >> 1) as isize) as i32
-                    + word!(game.reg_BG2VOFS) as i32
-                    & 0x1ff) as u16
-        );
-        v4 = (v4 as i32 - 2i32 & 0x1e) as u8;
-        v3 = (v3 as i32 - 2i32 & 0x1e) as u8;
-    }
-}
-static unk_88C40F: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x11, 0xd856 as VoidP);
-static unk_88C41F: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 0xd847 as VoidP);
-pub unsafe fn FxTypeFunc_6_Water(game: &mut Game) {
-    word!(game.fx_rising_function_bank_88 = ((0x88c428i32) as u16));
-    word!(game.fx_y_pos = word!(game.fx_base_y_pos));
-    SpawnHdmaObject(0x88, &raw const unk_88C40F as *const c_void, game);
-    if (word!(game.fx_liquid_options) & 2) != 0 {
-        SpawnHdmaObject(0x88, &raw const unk_88C41F as *const c_void, game);
-    }
-    SpawnBG3ScrollHdmaObject(game);
-}
-crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
-    HdmaobjInstr_SetFlagB_Copy2 [hdp] { word!(game.hdma_object_B[(k >> 1)] = 1); };
-}
-crate::game::address_dispatch! {
-    pub unsafe fn CallFxRisingFunction(ea: u32, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
-        8958787 => FxRisingFunction_LavaAcid; 8958823 => FxRisingFunction_LavaAcid_WaitToRise;
-        8958850 => FxRisingFunction_LavaAcid_Raising; 8963112 => FxRisingFunction_C428_WaterNormal;
-        8963148 => FxRisingFunction_WaterWaitToRise; 8963160 => FxRisingFunction_WaterRising;
-    }
-}
-pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(k: u16, game: &mut Game) {
-    word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
-    if word!(game.time_is_frozen_flag) != 0 {
-        return;
-    }
-    CallFxRisingFunction(
-        ((word!(game.fx_rising_function_bank_88)) as u32) | (0x880000u32),
-        game,
-    );
-    FxHandleTide(game);
-    words!(
-        game.fx_y_pos,
-        fx_y_subpos = (words!(game.fx_y_offset, fx_y_suboffset))
-            .wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos),)
-    );
-    let v3: i16 = ((word!(game.fx_y_pos)) as i16).wrapping_sub((word!(game.layer1_y_pos)) as i16);
-    if (word!(game.fx_y_pos) as i16) < 0 {
-        word!(game.bg3_ypos = 0);
-    } else if v3 <= 0 {
-        word!(game.bg3_ypos = ((v3 as u16 ^ 0x1f) & 0x1f | 0x100));
-    } else if (v3 as u16) < 0x100 {
-        word!(game.bg3_ypos = !(v3 as i32) as u8 as u16);
-    } else {
-        word!(game.bg3_ypos = 0);
-    }
-    let v5: i32 = k as i32 >> 1;
-    let r20: u16 = (word!(game.layer1_x_pos)).wrapping_add(
-        (byte!(@pointer (ram_ptr!(game, u16; 0x192c)).offset(v5 as isize); 1) as i8) as u16,
-    );
-    crate::update_place! { unaligned_word fresh98 [fresh99] = &raw mut (*(ram_ptr!(game, u16; 0x1920)).offset(v5 as isize)) => (u16::from_le(fresh98.read_unaligned())).wrapping_sub(1); }
-    if fresh99 == 1 {
-        word!(game.hdma_object_B[v5] = 10);
-        word!(game.hdma_object_A[v5] = (word!(game.hdma_object_A[v5]) as i32 + 2 & 0x1e) as u16);
-    }
-    let mut v7: u8 = word!(game.hdma_object_A[v5]) as u8;
-    for i in (0i32..=30).rev().step_by(2) {
-        *(ram_ptr!(game, u16; 0x9c00, (v7 as i32 + 4) as isize)) =
-            ((g_word_88C46E[(i >> 1i32) as usize]) as u16).wrapping_add(r20);
-        v7 = (v7 as i32 - 2i32 & 0x1e) as u8;
-    }
-    if (word!(game.fx_liquid_options) & 1) != 0 {
-        word!(game.hdma_object_C[(k >> 1)] += 64);
-    }
-    let mut v9: i16 = (word!(game.fx_y_pos) as i32 - word!(game.layer1_y_pos) as i32 + 256) as i16;
-    if (word!(game.fx_y_pos) as i16) < 0 {
-        v9 = 511;
-    } else if v9 >= 0 {
-        if (v9 as u16) >= 0x200 {
-            v9 = 511;
-        }
-    } else {
-        v9 = (v9 as i32 & 0xf | 0x100) as i16;
-    }
-    word!(
-        game.hdma_object_table_pointers[(k >> 1)] =
-            (3 * ((v9 as i32 ^ 0x1ff) + 1 & 0x3ff) + 0xc645) as u16
-    );
-}
-crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
-    HdmaobjInstr_SetFlagB_Copy3 [hdp] { word!(game.hdma_object_B[(k >> 1)] = 1); };
-}
-pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll(k: u16, game: &mut Game) {
-    word!(game.g_word_7E9C44 = word!(game.reg_BG2HOFS));
-    if word!(game.time_is_frozen_flag) != 0 {
-        HdmaobjPreInstr_WaterBG2XScroll_Func1(k, game);
-    } else if (word!(game.fx_liquid_options) & 2) == 0 {
-        word!(game.hdma_object_channels_bitmask[(k as u8 >> 1)] = 0);
-        HdmaobjPreInstr_WaterBG2XScroll_Func1(k, game);
-    } else {
-        HdmaobjPreInstr_WaterBG2XScroll_Func2(k, game);
-    }
-    let mut v1: i16 = (word!(game.fx_y_pos) as i32 - word!(game.layer1_y_pos) as i32 + 256) as i16;
-    if (word!(game.fx_y_pos) as i16) < 0 {
-        v1 = 511;
-    } else if v1 >= 0 {
-        if (v1 as u16) >= 0x200 {
-            v1 = 511;
-        }
-    } else {
-        v1 = (word!(game.fx_y_pos) as i32 - word!(game.layer1_y_pos) as i32 & 0xf | 0x100) as i16;
-    }
-    word!(
-        game.hdma_object_table_pointers[(k as u8 >> 1)] =
-            (3 * ((v1 as i32 ^ 0x1ff) & 0x3ff) + 0xcf46) as u16
-    );
-}
-pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func2(k: u16, game: &mut Game) {
-    let v1: i32 = k as u8 as i32 >> 1;
-    crate::update_place! { unaligned_word fresh96 [fresh97] = &raw mut (*(ram_ptr!(game, u16; 0x1920)).offset(v1 as isize)) => (u16::from_le(fresh96.read_unaligned())).wrapping_sub(1); }
-    if fresh97 == 1 {
-        word!(game.hdma_object_B[v1] = 6);
-        word!(game.hdma_object_A[v1] = (word!(game.hdma_object_A[v1]) as i32 + 2 & 0x1e) as u16);
-    }
-    let mut v3: u8 = (byte!(@pointer (ram_ptr!(game, u16; 0x1914)).offset(v1 as isize); 0) as i32
-        + 2 * (word!(game.reg_BG2VOFS) as i32 & 0xf)
-        & 0x1e) as u8;
-    let mut v4: u8 = (2 * (word!(game.reg_BG2VOFS) as i32 & 0xf) + 30 & 0x1e) as u8;
-    for _ in 0..=15 {
-        *(ram_ptr!(game, u16; 0x9c46)).offset(((v4 as i32 >> 1) + 1) as isize) =
-            ((g_word_88C46E[(v3 >> 1) as usize]) as u16).wrapping_add(word!(game.reg_BG2HOFS));
-        v4 = (v4 as i32 - 2i32 & 0x1e) as u8;
-        v3 = (v3 as i32 - 2i32 & 0x1e) as u8;
-    }
-}
-pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func1(k: u16, game: &mut Game) {
-    let mut v1: u8 = 30;
-    let v2: u16 = word!(game.reg_BG2HOFS);
-    word_transfers!(game, descending, 16; native(0x9c66) <- value(v2));
-    v1 = 254;
 }
 pub unsafe fn SpawnBG3ScrollHdmaObject(game: &mut Game) {
     static unk_88D869: SpawnHdmaObject_Args =
@@ -2478,11 +2051,11 @@ crate::game::address_dispatch! {
         8957362 => HdmaobjPreInstr_SkyLandBG2Xscroll; 8957370 => HdmaobjPreInstr_SkyLandBG2Xscroll2;
         8957378 => HdmaobjPreInstr_SkyLandBG2XscrollInner;
         8958140 => HdmaobjPreInstr_FirefleaBG3XScroll;
-        8958896 => HdmaobjPreInstr_LavaAcidBG3YScroll;
-        8959189 => HdmaobjPreInstr_LavaAcidBG2YScroll; 8963214 => HdmaobjPreInstr_WaterBG3XScroll;
-        8963465 => HdmaobjPreInstr_WaterBG2XScroll;
-        8963556 => HdmaobjPreInstr_WaterBG2XScroll_Func2;
-        8963638 => HdmaobjPreInstr_WaterBG2XScroll_Func1; 8968609 => HdmaobjPreInstr_RainBg3Scroll;
+        8958896 => liquid_effects::lava_surface;
+        8959189 => liquid_effects::lava_background; 8963214 => liquid_effects::water_surface;
+        8963465 => liquid_effects::water_background;
+        8963556 => liquid_effects::water_wave;
+        8963638 => liquid_effects::water_flat; 8968609 => HdmaobjPreInstr_RainBg3Scroll;
         8968775 => HdmaobjPreInstr_SporesBG3Xscroll; 8969014 => HdmaobjPreInstr_FogBG3Scroll;
         8969175 => HdmaobjPreInstr_CheckLotsOfEventsHappened; 8969251 => HdmaobjPreInstr_DC23;
         8969321 => HdmaobjPreInstr_DC69; 8969402 => HdmaobjPreInstr_DCBA;
@@ -2525,14 +2098,14 @@ crate::game::address_dispatch! {
         8947255 => HdmaobjInstr_SetHdmaTarget; 8947276 => HdmaobjInstr_SetHdmaTablePtr;
         8947285 => HdmaobjInstr_SetHdmaTableBank; 8947306 => HdmaobjInstr_SetIndirectHdmaDataBank;
         8947330 => HdmaobjInstr_Sleep; 8955500 => HdmaobjInstr_SetFlagB;
-        8959182 => HdmaobjInstr_SetFlagB_Copy; 8963175 => HdmaobjInstr_SetFlagB_Copy2;
-        8963458 => HdmaobjInstr_SetFlagB_Copy3; 8968521 => HdmaobjInstr_SetVideoMode1;
+        8959182 => liquid_effects::start_wave; 8963175 => liquid_effects::start_wave;
+        8963458 => liquid_effects::start_wave; 8968521 => HdmaobjInstr_SetVideoMode1;
         8968577 => HdmaobjInstr_1938_RandomNumber; 8969419 => HdmaobjInstr_GotoIfEventHappened;
         8971453 => HdmaobjInstr_E4BD;
         fnHdmaobjInstr_InitMorphBallEyeBeamHdma => [{
                     HdmaobjInstr_InitMorphBallEyeBeamHdma(k, j, game)
                 }];
-        8973471 => HdmaobjInstr_EC9F_ClearVars; 8958889 => HdmaobjInstr_B3A9;
+        8973471 => HdmaobjInstr_EC9F_ClearVars; 8958889 => liquid_effects::start_lava_sound;
         8973215 => HdmaobjInsr_ConfigTitleSequenceGradientHDMA;
         8968470 => [{
                     sub_88D916(game);

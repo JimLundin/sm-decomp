@@ -73,6 +73,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/game/layer_blending.rs",
         include_bytes!("game/layer_blending.rs"),
     ),
+    (
+        "sm/src/game/liquid_effects.rs",
+        include_bytes!("game/liquid_effects.rs"),
+    ),
     ("sm/src/game/sm_88.rs", include_bytes!("game/sm_88.rs")),
     ("sm/src/game/sm_89.rs", include_bytes!("game/sm_89.rs")),
     ("sm/src/game/sm_8b.rs", include_bytes!("game/sm_8b.rs")),

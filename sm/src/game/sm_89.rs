@@ -1,11 +1,11 @@
+use crate::game::liquid_effects::{initialize_acid, initialize_lava, initialize_water};
 pub use crate::game::prelude::*;
 
 use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_88::{
     FxTypeFunc_20, FxTypeFunc_22_ScrollingSky, FxTypeFunc_24, FxTypeFunc_26_TourianEntranceStatue,
-    FxTypeFunc_28_CeresRidley, FxTypeFunc_2C_Haze, FxTypeFunc_2_Lava, FxTypeFunc_4_Acid,
-    FxTypeFunc_6_Water, FxTypeFunc_8_Spores, FxTypeFunc_A_Rain, FxTypeFunc_C,
-    FxTypeFunc_CeresElevator,
+    FxTypeFunc_28_CeresRidley, FxTypeFunc_2C_Haze, FxTypeFunc_8_Spores, FxTypeFunc_A_Rain,
+    FxTypeFunc_C, FxTypeFunc_CeresElevator,
 };
 use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
@@ -64,7 +64,7 @@ pub unsafe fn LoadFxEntry(v0: u16, game: &mut Game) {
 }
 pub fn nullsub_106(game: &mut Game) {}
 static kFxTypeFuncPtrs: [Func_V; 23] = callback_table! { nonnull Func_V;
-    nullsub_106, FxTypeFunc_2_Lava, FxTypeFunc_4_Acid, FxTypeFunc_6_Water, FxTypeFunc_8_Spores,
+    nullsub_106, initialize_lava, initialize_acid, initialize_water, FxTypeFunc_8_Spores,
     FxTypeFunc_A_Rain, FxTypeFunc_C, nullsub_106, nullsub_106, nullsub_106, nullsub_106,
     nullsub_106, nullsub_106, nullsub_106, nullsub_106, nullsub_106, FxTypeFunc_20,
     FxTypeFunc_22_ScrollingSky, FxTypeFunc_24, FxTypeFunc_26_TourianEntranceStatue,

@@ -17,18 +17,22 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **99,134 Rust lines in 85 files**, plus a
-four-line C bridge = **99,138 maintained implementation lines**. Counting the
-new 41-line CPU installer as well gives **99,179**. This is an actual complete
+Current composition (2026-10-21): **99,059 Rust lines in 86 files**, plus a
+four-line C bridge = **99,063 maintained implementation lines**. Counting the
+new 41-line CPU installer as well gives **99,104**. This is an actual complete
 source recount, including frontend and verifier code, all adapters, callers and
 registrations. Existing development scripts/configuration/docs are outside this
 implementation metric. The two pinned dependencies add **2,836 CPU C/header
 lines and 7,762 stb header lines**, disclosed separately, like existing GL/SDL.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
-Layer blending passes **5,504** actual old/new full-RAM, completion, failure-flag
-and ordered-write comparisons, including every room selector, effect priority,
-special room and invalid-selector partial state. Its probed and clean **3/0**
+Liquid setup, rising motion, tide and background HDMA tables pass **6,598**
+actual old/new full-RAM, completion and failure-flag comparisons, with 1,511
+matching ordered boundary events. Checks cover motion/clamp boundaries, all
+tide phases, wave modes, frozen updates, aliased slots and callback mutation.
+Register, sound, spawning and assertion calls are recording boundaries;
+liquid movie/hardware execution is not established. No movie ran for this change.
+Previous layer blending passes 5,504 components. Its probed and clean **3/0**
 Ceres fade-in segment, inputs 8324..8326, exercises defaults, mode selection and
 actual PPU window/screen consumption. Earlier no-op calls have component coverage;
 the setup prefix is cached separately. X-ray/Power Bomb movie execution and
@@ -1456,15 +1460,17 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
 4. [ ] **Retire bank ownership by gameplay responsibility.** Select a complete
    responsibility, such as Samus movement, with an exercised boundary and named
    routines. Migrate its real callers and state transitions, then remove its
-   retired bank facade. Room, X-ray and Power Bomb layer/window composition now
-   belongs to `layer_blending`, called directly by the HDMA object handler.
-   Ordered room settings replace callback tables; effect composition preserves
-   write order, priority, special rooms and invalid-selector partial state.
-   The complete replacement removes **113 lines (99,247 -> 99,134)**, 1,187
-   tokens and 3,954 spelling bytes, including helpers, caller and registration.
-   All 5,504 actual-code comparisons and retained-source/caller checks pass.
-   The probed/clean Ceres fade-in segment passes at **3/0**, inputs 8324..8326;
-   unvisited effects have component coverage. Bank 88 retains other duties.
+   retired bank facade. Water, lava and acid setup, rising motion, tide and
+   background HDMA tables now belong to `liquid_effects`. Shared motion,
+   surface geometry and wave-table construction retain the straddling tide
+   accesses, odd/high slot behavior and water's one-word table displacement.
+   The complete replacement removes **75 lines (99,134 -> 99,059)**, 1,500
+   tokens and 4,169 spelling bytes, including helpers, callers and registration.
+   All 6,598 actual-code comparisons and retained-source/caller checks pass.
+   Liquid movie/hardware execution remains unestablished; no movie ran.
+   Room, X-ray and Power Bomb layer/window composition already belongs to
+   `layer_blending`; its probed/clean Ceres fade-in segment passes at **3/0**,
+   inputs 8324..8326. Bank 88 retains other duties.
    X-ray background capture, hidden-block overlay, room-item revelation, upload
    and restoration already belong to `xray_background`. Its 1,201 component
    comparisons cover live descriptors, overlapping transfers and failure state;
@@ -1480,8 +1486,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Banks 85, 92, 93 and AD are fully retired. The unused-declaration cohort reserved
    for this stage is also adopted. Bang's live SNES execution path remains a
    future ownership task.
-   Gameplay currently totals 81,168 lines; its 28 numeric bank modules still
-   own 74,602. These are ownership scopes, not deletion budgets. File moves
+   Gameplay currently totals 81,088 lines; its 28 numeric bank modules still
+   own 74,175. These are ownership scopes, not deletion budgets. File moves
    alone earn no volume reduction. The complete save-file menu ownership draft
    prices **99,516 -> 99,510 (-6)**, including caller migration, imports, helpers
    and registration. It shares confirmation flow and main-menu rows, removes
@@ -1706,21 +1712,27 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest applicable verification: layer blending passes **5,504** actual old/new
-full-RAM, completion, failure-flag comparisons and **99,732** matching ordered
-byte writes. Coverage includes every valid selector and low-bit spelling,
-invalid-selector partial writes, effect priorities, special rooms, condition
-masks, ignored bits and retained color bit 7. The Ceres fade-in segment passes
-probed/clean at **3/0**, inputs 8324..8326, with six required composition and
-actual PPU window/screen-consumption probes, then two follow-up frames.
-Discovery establishes the first RAM-changing call at 8324; earlier calls from
-152 are the component-checked no-op path. The existing checkpoint before 8324
-therefore skips only unaffected history. The 8,324-frame setup/discovery prefix
-is separate from changed-code coverage. Nonempty room presets, X-ray/Power Bomb
-effects and color-math IRQ consumption have no movie-coverage claim; all effect
-composition has direct component coverage. Complete retained-source/caller and
-component-extraction correspondence, formatting, normal release library/frontend/
-verifier builds and embedded-source checks pass. Local checks:
+Latest applicable verification: liquid effects pass **6,598** actual old/new
+full-RAM, completion and failure-flag comparisons, with **1,511** matching ordered
+boundary events. Cases cover velocity/subpixel carry, target equality and
+overshoot, signed/clamped surface heights, every tide phase and amplitude,
+motion states/timers, frozen updates, all background wave modes, odd/high slots
+and aliases into liquid state and wave output. Register, sound, spawning,
+earthquake and unknown-state assertion calls record incoming RAM; modeled
+callback mutations check later reads. They do not establish hardware/audio or
+real spawning execution. Source correspondence covers all retained code,
+callers/imports, callback addresses, the shared sky/water wave table and exact
+component bodies/support. Normal release library/frontend/verifier builds,
+formatting and embedded-source checks pass. No measured liquid movie segment
+is established by existing room-only route logs; no movie ran. Local checks:
+Local/sm-decomp-experiments/20261021/liquid-effects.
+
+Previous layer blending passes 5,504 components and the probed/clean Ceres
+fade-in segment at **3/0**, inputs 8324..8326, with six composition and actual
+PPU window/screen-consumption probes plus two follow-up frames. Discovery
+establishes the first RAM-changing call at 8324; earlier calls are no-ops.
+Setup is cached separately. Unvisited effect modes have component coverage;
+color-math IRQ consumption is unestablished. Local checks:
 Local/sm-decomp-experiments/20261021/layer-blending.
 
 Previous X-ray backgrounds pass 1,201 actual-code components and retained-source/
@@ -1979,14 +1991,17 @@ shared PPU pixel evaluation, native/SPC state transfers and live-typed snapshots
 the pinned CPU/PNG dependencies, RAM pointer chains, readable control flow and
 shared room background loading, Samus animation ownership, the message-box
 lifecycle, unused declarations, projectile animation, Mother Brain visual
-effects, minimap ownership, X-ray backgrounds and layer blending, maintained Rust
-is **99,134**, with applicable static, component and exercised movie checks passing.
+effects, minimap ownership, X-ray backgrounds, layer blending and liquid effects,
+maintained Rust is **99,059**, with applicable static, component and exercised
+movie checks passing.
 Including the four-line C bridge gives
-**99,138**; including the new 41-line installer as well gives **99,179**.
+**99,063**; including the new 41-line installer as well gives **99,104**.
 The immediate volume target is complete.
 External CPU/PNG code has 2,836/7,762 lines.
 Counters: raw offsets 25; extern C blocks 5; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3228; cast lines 7405. Layer blending removes 26 unsafe
+unsafe functions 3222; cast lines 7368. Liquid effects remove six unsafe
+declarations and 37 cast-containing lines; no counter increases.
+Layer blending removes 26 unsafe
 declarations and two cast-containing lines; no counter increases.
 X-ray background ownership removes five
 counted raw-RAM offsets, five unsafe declarations and 65 cast-containing lines;
