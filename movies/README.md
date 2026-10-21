@@ -110,8 +110,8 @@ Keep probes while iterating and checking the final changed body, then remove tem
 probes and rerun the same segment on the clean build. Extend the segment far
 enough to observe the behavior's effects. After removing probes, omit both
 `--require-hit` and `--after-hits` and use the measured `--frames` count. See the
-[validation strategy](../docs/PLAN.md#validation-strategy-2026-10-20) for when
-full boot replays are required and the integration cadence.
+[validation strategy](../docs/PLAN.md#validation-strategy-2026-10-21) for selecting
+exercised segments and justifying any full replay through changed-code coverage.
 
 The DLL script builds before replaying; `--rustc` selects a compiler when it
 is not on PATH. `--no-build` checks the DLL's embedded source stamp before

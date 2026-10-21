@@ -9,9 +9,8 @@ is archived in the branch `archive/pre-transpile-2026-10-17`.
 
 1. Take the earliest unfinished item in `docs/PLAN.md`.
 2. Make one focused change in `sm/`.
-3. Select checks using `docs/PLAN.md`'s **Validation strategy**: static checks
-   for nonbehavioral edits, exercised segments for focused changes, full
-   replays for broad changes and integration batches. No new failing frames.
+3. Select and complete checks using `docs/PLAN.md`'s **Validation strategy**.
+   No new failing frames.
 4. `sh tools/progress.sh`; numbers must not go up without a reason.
 5. Commit to `main` with a message that says what changed and the verify
    result. Update `docs/PLAN.md` when an item is done or the plan changes.
