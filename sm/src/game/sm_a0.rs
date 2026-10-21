@@ -261,12 +261,12 @@ pub unsafe fn HandleRoomShaking(game: &mut Game) {
         } else {
             adjust_room_shake_scroll!(game, wrapping_add, v0);
         }
-        word!(game.earthquake_timer, wrapping_sub(1));
+        word!(game.earthquake_timer -= 1);
         if word!(game.earthquake_type) as i32 - 18i32 & 0x8000 == 0 {
             SetAllEnemiesToShakeFor2Frames(game);
         }
     }
-    word!(game.frame_counter_every_frame, wrapping_add(1));
+    word!(game.frame_counter_every_frame += 1);
 }
 pub unsafe fn SetAllEnemiesToShakeFor2Frames(game: &mut Game) {
     let mut i: i32 = 0;
@@ -533,7 +533,7 @@ pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
             v10 = ((((*ET).vram_dst) & (0x3000u16)) >> 3);
         }
         (*LD).offset_into_ram = v10;
-        word!(game.enemy_tile_load_data_write_pos, wrapping_add(7));
+        word!(game.enemy_tile_load_data_write_pos += 7);
         LD = LD.offset(1);
         let v11: u16 = enemy_gfx_data_write_ptr;
         *(ram_ptr!(game, u16; 0xef64)).offset((enemy_gfx_data_write_ptr >> 1) as isize) =
@@ -548,7 +548,7 @@ pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
     }
 }
 pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
-    word!(game.UNUSED_word_7E0E46, wrapping_add(1));
+    word!(game.UNUSED_word_7E0E46 += 1);
     word! { game, 0;
         cur_enemy_index, active_enemy_indexes_write_ptr, interactive_enemy_indexes_write_ptr,
     }
@@ -574,7 +574,7 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                     }
                 }
             }
-            word!(game.cur_enemy_index, wrapping_add(64));
+            word!(game.cur_enemy_index += 64);
         }
         *(ram_ptr!(game, u16; 0x17ac))
             .offset((word!(game.active_enemy_indexes_write_ptr) >> 1) as isize) = -1i32 as u16;
@@ -614,7 +614,7 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                     }
                 }
             }
-            word!(game.cur_enemy_index, wrapping_add(64));
+            word!(game.cur_enemy_index += 64);
         }
         *(ram_ptr!(game, u16; 0x17ac))
             .offset((word!(game.active_enemy_indexes_write_ptr) >> 1) as isize) = -1i32 as u16;
@@ -992,7 +992,7 @@ pub unsafe fn EnemyMain(game: &mut Game) {
         }
     }
     HandleSpriteObjects(game);
-    word!(game.random_enemy_counter, wrapping_add(1));
+    word!(game.random_enemy_counter += 1);
     word!(game.enemy_index_colliding_dirs[0] = -1i32 as u16);
     word!(game.enemy_index_colliding_dirs[1] = -1i32 as u16);
     word!(game.enemy_index_colliding_dirs[2] = -1i32 as u16);
@@ -1000,13 +1000,13 @@ pub unsafe fn EnemyMain(game: &mut Game) {
 }
 pub unsafe fn DecrementSamusTimers(game: &mut Game) {
     if word!(game.samus_invincibility_timer) != 0 {
-        word!(game.samus_invincibility_timer, wrapping_sub(1));
+        word!(game.samus_invincibility_timer -= 1);
     }
     if word!(game.samus_knockback_timer) != 0 {
-        word!(game.samus_knockback_timer, wrapping_sub(1));
+        word!(game.samus_knockback_timer -= 1);
     }
     if word!(game.projectile_invincibility_timer) != 0 {
-        word!(game.projectile_invincibility_timer, wrapping_sub(1));
+        word!(game.projectile_invincibility_timer -= 1);
     }
     word!(game.interactive_enemy_indexes[0] = -1i32 as u16);
     word!(game.active_enemy_indexes[0] = -1i32 as u16);
@@ -1024,7 +1024,7 @@ pub unsafe fn DeleteEnemyAndConnectedEnemies(game: &mut Game) {
     let mut v2: u16 = num_parts;
     do_until! { (v2 == 0);
         (*gEnemyData(word!(game.cur_enemy_index) as i32, game)).enemy_ptr = 0;
-        word!(game.cur_enemy_index, wrapping_add(64));
+        word!(game.cur_enemy_index += 64);
         v2 = v2.wrapping_sub(1);
     }
 }
@@ -1128,10 +1128,7 @@ pub unsafe fn DrawOneEnemy(game: &mut Game) {
         ),
         game,
     ) as *mut u16) = word!(game.cur_enemy_index);
-    word!(
-        game.enemy_drawing_queue_sizes[(varE34 >> 1)],
-        wrapping_add(2)
-    );
+    word!(game.enemy_drawing_queue_sizes[(varE34 >> 1)] += 2);
 }
 pub unsafe fn WriteEnemyOams(game: &mut Game) {
     let mut palette_index: VoidP = 0;
@@ -1230,7 +1227,7 @@ pub unsafe fn ProcessExtendedTilemap(db: u8, r22: u16, game: &mut Game) {
         );
         p = p.offset((n * 2) as isize);
     }
-    word!(game.nmi_flag_bg2_enemy_vram_transfer, wrapping_add(1));
+    word!(game.nmi_flag_bg2_enemy_vram_transfer += 1);
 }
 pub fn QueueEnemyBG2TilemapTransfers(game: &mut Game) {
     if game.nmi_flag_bg2_enemy_vram_transfer() != 0
@@ -1294,7 +1291,7 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
             if (word!(game.projectile_type[pidx]) & 0xff00) != 768
                 && (word!(game.projectile_type[pidx]) & 0xff00) != 1280
             {
-                word!(game.projectile_dir[pidx], |fresh43| (fresh43) | (0x10u16));
+                word!(game.projectile_dir[pidx] |= (0x10u16));
                 Samus_DealDamage(
                     SuitDamageDivision(word!(game.projectile_damage[pidx]), game),
                     game,
@@ -1415,7 +1412,7 @@ pub unsafe fn EprojProjCollDet(game: &mut Game) {
 pub unsafe fn HandleEprojCollWithProj(k: u16, j: u16, game: &mut Game) {
     let i: i32 = j as i32 >> 1;
     if (word!(game.projectile_type[i]) & 8) == 0 {
-        word!(game.projectile_dir[i], |fresh30| (fresh30) | (0x10u16));
+        word!(game.projectile_dir[i] |= (0x10u16));
     }
     if word!(game.eproj_flags[(k >> 1)]) == 1 {
         let v4: i32 = k as i32 >> 1;
@@ -1436,7 +1433,7 @@ pub unsafe fn HandleEprojCollWithProj(k: u16, j: u16, game: &mut Game) {
         );
         word!(game.eproj_instr_timers[j_0] = 1);
         word!(game.eproj_pre_instr[j_0] = ((0x8684fbi32) as u16));
-        word!(game.eproj_properties[j_0], |fresh31| (fresh31) & (0xfffu16));
+        word!(game.eproj_properties[j_0] &= (0xfffu16));
     };
 }
 crate::game::address_dispatch! {
@@ -1624,7 +1621,7 @@ pub unsafe fn EnemyDeathAnimation(k: u16, mut a: u16, game: &mut Game) {
         word!(game.grapple_beam_function = ((0x9bc8c5i32) as u16));
     }
     spawn_enemy_death_and_clear_slot!(a, 5i32, game, E);
-    word!(game.num_enemies_killed_in_room, wrapping_add(1));
+    word!(game.num_enemies_killed_in_room += 1);
 }
 pub unsafe fn RinkasDeathAnimation(mut a: u16, game: &mut Game) {
     let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
@@ -1769,7 +1766,7 @@ crate::prefixed_callbacks! {
                             if ((*E).properties & 0x1000) != 0
                                 || (word!(game.projectile_type[pidx]) & 8) == 0
                             {
-                                word!(game.projectile_dir[pidx], |fresh27| (fresh27) | (0x10u16));
+                                word!(game.projectile_dir[pidx] |= (0x10u16));
                             }
                             word!(game.collision_detection_index = pidx as u16);
                             CallHitboxShot(
@@ -1841,7 +1838,7 @@ crate::prefixed_callbacks! {
                                     as i16)
                                     < 0
                             {
-                                word!(game.projectile_dir[pidx], |fresh24| (fresh24) | (0x10u16));
+                                word!(game.projectile_dir[pidx] |= (0x10u16));
                                 word!(game.collision_detection_index = pidx as u16);
                                 CallHitboxShot(
                                     (words!(i32, ((*E).bank, (*hb).func_ptrA))) as u32,
@@ -1962,7 +1959,7 @@ crate::prefixed_callbacks! {
                         word! {game; earthquake_timer = 30; earthquake_type = 18; }
                     }
                     if ((*E).properties & 0x1000) != 0 || (word!(game.projectile_type[pidx]) & 8) == 0 {
-                        word!(game.projectile_dir[pidx], |fresh26| (fresh26) | (0x10u16));
+                        word!(game.projectile_dir[pidx] |= (0x10u16));
                     }
                     word!(game.collision_detection_index = pidx as u16);
                     CallEnemyAi(
@@ -1999,7 +1996,7 @@ crate::prefixed_callbacks! {
                     < (*E).y_height as i32
             {
                 word!(game.collision_detection_index = pidx as u16);
-                word!(game.projectile_dir[pidx], |fresh23| (fresh23) | (0x10u16));
+                word!(game.projectile_dir[pidx] |= (0x10u16));
                 CallEnemyAi(
                     (words!(
                         i32,
@@ -2258,7 +2255,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
         }
     }
     let v7: i32 = word!(game.collision_detection_index) as i32;
-    word!(game.projectile_dir[v7], |fresh25| (fresh25) | (0x10u16));
+    word!(game.projectile_dir[v7] |= (0x10u16));
     CreateSpriteAtPos(
         word!(game.projectile_x_pos[v7]),
         word!(game.projectile_y_pos[v7]),
@@ -2279,10 +2276,7 @@ pub unsafe fn CreateDudShot(game: &mut Game) {
         game,
     );
     QueueSfx1_Max3(0x3d, game);
-    word!(
-        game.projectile_dir[word!(game.collision_detection_index)],
-        |fresh13| (fresh13) | (0x10u16)
-    );
+    word!(game.projectile_dir[word!(game.collision_detection_index)] |= (0x10u16));
 }
 fn solid_enemy_probe_coordinate(position: u16, fraction: u16, amount: i32, negative: bool) -> u16 {
     let integer_amount = (amount >> 16) as u16;

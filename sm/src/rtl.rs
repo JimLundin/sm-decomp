@@ -1189,7 +1189,7 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
             2,
         );
     } else if c as i32 == 'q' as i32 {
-        word!(game.samus_y_pos, |fresh0| (fresh0 as i32 - 4i32) as u16);
+        word!(checked_i32, game.samus_y_pos -= 4i32);
         word!(game.samus_y_speed = -8i32 as u16);
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,

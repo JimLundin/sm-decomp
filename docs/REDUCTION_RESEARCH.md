@@ -25,7 +25,9 @@ Shared enemy callback ownership then removes **350 lines**, reaching **104,959**
 with complete builds, static/dispatch comparisons and both full boot replays.
 Native inflater ownership then removes **165 lines**, reaching **104,794**,
 with complete builds, 8,936 inflater cases and 3,080 PNG API comparisons passing.
-Maintained Rust needs another **4,795 lines removed** to reach 99,999. A separate
+Explicit compound RAM updates remove **370 more lines**, reaching **104,424**,
+with complete compiler correspondence and both full boot replay routes passing.
+Maintained Rust needs another **4,425 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -1941,7 +1943,29 @@ conditional word stores grows 115; the complete 120-call raw-memory boundary
 saves 41. Applying byte, index and annotation rules separately to committed
 main saves only six, 18 and 35 lines. These scopes are parked without builds
 or runtime checks and are not an aggregate budget. Current compound updates
-are validated separately for adoption; historical savings are not main deletions.
+are adopted separately below; historical savings are not main deletions.
+
+The current-source compound rule removes **370 lines: 104,794 -> 104,424**,
+plus 2,586 tokens and 9,250 spelling bytes. It replaces 801 updates across 35
+files, including 575 method forms, 226 closure forms and 106 post-store rereads.
+All 41 support lines and 82 Rust files count; identically formatting the control
+changes zero bytes. The existing unaligned little-endian word arm still owns
+destination capture, old load, RHS evaluation, store and reread timing. Explicit
+promoted modes retain checked/wrapping behavior and final truncation.
+
+Exact source reproduction and complete library/frontend expanded and resolved
+type/target comparisons pass. All 78 embedded library source payloads match
+their files; the corresponding 105 byte-array length types are the only allowed
+library type differences. Both frontend checkpoint strings reproduce their
+declared 23 source files before payload normalization; no compiler owner is
+omitted. Ordinary Cargo release and changed-file formatting pass. Final main
+full boot any% passes **129,712/0** and Speed Booster passes **148,406/0**, with
+normal rendering, audio and comparisons. Both bind to source hash
+`2dc2a2bdf5feed4e522b0dc7f48c003941fdff0b3ee69b99be9d1d44b9bdcfbb`.
+Static correspondence covers unchanged operations; these replays do not visit
+all updated sites or credits. The shader draft remains preserved and excluded
+from committed counts. Current proof: `compound-word-updates/current-FROZEN.json`;
+main build/replay logs: `TEMP/sm-compound-adoption-20261021`.
 
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard

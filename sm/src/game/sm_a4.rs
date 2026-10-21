@@ -318,10 +318,7 @@ pub unsafe fn Crocomire_Func_27(k: u16, game: &mut Game) {
             return;
         }
     }
-    word!(
-        game.reg_BG2VOFS,
-        wrapping_add(*(RomPtr_A4(spritemap_pointer, game) as *mut u16).offset(14))
-    );
+    word!(game.reg_BG2VOFS += *(RomPtr_A4(spritemap_pointer, game) as *mut u16).offset(14));
     Crocomire_8BA4(game);
 }
 pub unsafe fn Crocomire_8BA4(game: &mut Game) {
@@ -536,7 +533,7 @@ pub unsafe fn Crocomire_Func_52(game: &mut Game) {
     Crocomire_Func_54(game);
 }
 pub unsafe fn Crocomire_Func_53(game: &mut Game) {
-    if word!(game.g_word_7E9018, wrapping_sub(1), reread) == 0 {
+    if word!(game.g_word_7E9018 -= 1, reread) == 0 {
         word!(game.g_word_7E9018 = 6);
         let mut v0: u16 = (word!(game.random_number)) & (0x3fu16);
         if (word!(game.random_number) & 2) == 0 {
@@ -816,7 +813,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
                 if !v8 {
                     v7 = v7.wrapping_add(1);
                 }
-                word!(game.message_box_animation_y1, wrapping_add(1));
+                word!(game.message_box_animation_y1 += 1);
                 v6 = (v6).wrapping_add(2);
             }
             if ((v6) as i16).wrapping_sub(512) < 0 {
@@ -853,7 +850,7 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
         {
             break;
         }
-        if word!(game.croco_cur_vline_idx, wrapping_add(1), reread) >= 128 {
+        if word!(game.croco_cur_vline_idx += 1, reread) >= 128 {
             word!(game.croco_cur_vline_idx = 0);
             return 0;
         }
@@ -901,7 +898,7 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
     (*v9).vram_dst =
         *((rom_ptr!(game, u16; 0xa49bc7) as *mut u8).offset(v7 as i32 as isize) as *mut u16);
     word!(game.vram_write_queue_tail = (v8).wrapping_add(7));
-    word!(game.g_word_7E068A, wrapping_add(8));
+    word!(game.g_word_7E068A += 8);
     1
 }
 pub unsafe fn Crocomire_Func_68(game: &mut Game) {

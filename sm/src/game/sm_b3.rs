@@ -620,16 +620,10 @@ crate::game::callback_dispatch! {
                 let v4: bool = (*ET).var_10 == 1;
                 (*ET).var_10 = ((*ET).var_10) ^ (1u16);
                 if v4 {
-                    word!(
-                        game.eproj_properties[(botwoo_var_00 >> 1)],
-                        |fresh0| (fresh0 & !(0x2000))
-                    );
+                    word!(game.eproj_properties[(botwoo_var_00 >> 1)] &= !(0x2000));
                     *(ram_ptr!(game, u16; 0xf380)).offset((botwoo_var_00 >> 1) as isize) = 1;
                 } else {
-                    word!(
-                        game.eproj_properties[(botwoo_var_00 >> 1)],
-                        |fresh1| (fresh1) | (0x2000u16)
-                    );
+                    word!(game.eproj_properties[(botwoo_var_00 >> 1)] |= (0x2000u16));
                     *(ram_ptr!(game, u16; 0xf380)).offset((botwoo_var_00 >> 1) as isize) = 2;
                 }
                 if v2 == 0 {

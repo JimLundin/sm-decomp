@@ -545,7 +545,7 @@ crate::game::callback_dispatch! {
         MaridiaBeybladeTurtle_Func4(game);
         if (*ram_ptr!(game; 0x5b5) & 1) == 0 {
             if CheckIfEnemyTouchesSamus(k, game) != 0 {
-                word!(game.extra_samus_x_displacement, wrapping_sub(1));
+                word!(game.extra_samus_x_displacement -= 1);
             }
             let E = Get_MaridiaBeybladeTurtle(k as i32, game);
             (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
@@ -574,7 +574,7 @@ crate::game::callback_dispatch! {
         MaridiaBeybladeTurtle_Func4(game);
         if Enemy_MoveDown(k, (-1i16 as i32) << 16, game) == 0 {
             if CheckIfEnemyTouchesSamus(k, game) != 0 {
-                word!(game.extra_samus_y_displacement, wrapping_sub(1));
+                word!(game.extra_samus_y_displacement -= 1);
             }
             let E = Get_MaridiaTurtle(k as i32, game);
             let v2: u16 = ((*E).var_00).wrapping_sub(1);
@@ -630,7 +630,7 @@ crate::game::callback_dispatch! {
         } else {
             if CheckIfEnemyTouchesSamus(k, game) != 0 {
                 (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub(g_word_A28D62);
-                word!(game.extra_samus_y_displacement, wrapping_sub(g_word_A28D62));
+                word!(game.extra_samus_y_displacement -= g_word_A28D62);
                 return;
             }
             ((0xa290e1i32) as u16)
@@ -2387,9 +2387,9 @@ crate::game::callback_dispatch! {
                     .x_pos) as i16,
             ) < 0
             {
-                word!(game.extra_samus_x_displacement, wrapping_sub(4));
+                word!(game.extra_samus_x_displacement -= 4);
             } else {
-                word!(game.extra_samus_x_displacement, wrapping_add(4));
+                word!(game.extra_samus_x_displacement += 4);
             }
         }
     };
@@ -2715,12 +2715,7 @@ crate::game::callback_dispatch! {
     [10654593] MaridiaBeybladeTurtle_Instr_9381 [jp] {
         let mut R48: u16 = 0;
         if CheckIfEnemyTouchesSamus(word!(game.cur_enemy_index), game) != 0 {
-            word!(
-                game.extra_samus_x_displacement,
-                wrapping_add(
-                    (*Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game)).var_E
-                )
-            );
+            word!(game.extra_samus_x_displacement += (*Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game)).var_E);
             R48 = 1;
         }
         let E = Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game);
@@ -2750,12 +2745,10 @@ crate::game::callback_dispatch! {
                 game,
             );
             if R48 != 0 {
-                word!(game.extra_samus_y_displacement, |fresh1| (fresh1 as i32
-                    + ((*Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game))
+                word!(checked_i32, game.extra_samus_y_displacement += ((*Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game))
                         .base
                         .y_pos as i32
-                        - R50 as i32))
-                    as u16);
+                        - R50 as i32));
             }
         }
     };
@@ -3014,10 +3007,7 @@ crate::game::callback_dispatch! {
     [10660048] GunshipTop_4 [] {
         let GunshipTop = Get_GunshipTop(k as i32, game);
         let mut v2: i32 = (*GunshipTop).var_E as i32;
-        word!(
-            game.samus_y_pos,
-            wrapping_add(crate::rtl::rom_table_word!(game, 0xa2a622, v2 as isize))
-        );
+        word!(game.samus_y_pos += crate::rtl::rom_table_word!(game, 0xa2a622, v2 as isize));
         let v3 = Get_GunshipTop(k as i32 + 128, game);
         (*v3).base.y_pos = ((*v3).base.y_pos).wrapping_add(crate::rtl::rom_table_word!(
             game,
@@ -3050,7 +3040,7 @@ crate::game::callback_dispatch! {
     [10660176] GunshipTop_6 [] {
         let E = Get_GunshipTop(k as i32, game);
         let r18: u16 = ((*E).var_E).wrapping_sub(30);
-        if word!(game.samus_y_pos, wrapping_sub(1), reread) as i32 - r18 as i32 & 0x8000 != 0 {
+        if word!(game.samus_y_pos -= 1, reread) as i32 - r18 as i32 & 0x8000 != 0 {
             (*E).var_F = ((0xa2a987i32) as u16);
             let E2 = Get_GunshipTop(k as i32 + 128, game);
             enemy_instruction! {[(*E2).base]; timer = 1, instruction = addr_kGunshipTop_Ilist_A5EE as u16}
@@ -3089,7 +3079,7 @@ crate::game::callback_dispatch! {
     [10660445] GunshipTop_10 [] {
         let E = Get_GunshipTop(k as i32, game);
         let r18: u16 = ((*E).var_E).wrapping_add(18);
-        word!(game.samus_y_pos, wrapping_add(2));
+        word!(game.samus_y_pos += 2);
         if word!(game.samus_y_pos) as i32 - r18 as i32 & 0x8000 == 0 {
             (*E).var_F = ((0xa2aa94i32) as u16);
             let E2 = Get_GunshipTop(k as i32 + 128, game);
@@ -3151,7 +3141,7 @@ crate::game::callback_dispatch! {
     [10660718] GunshipTop_15 [] {
         let E = Get_GunshipTop(k as i32, game);
         let r18: u16 = ((*E).var_E).wrapping_sub(30);
-        word!(game.samus_y_pos, wrapping_sub(2));
+        word!(game.samus_y_pos -= 2);
         if word!(game.samus_y_pos) as i32 - r18 as i32 & 0x8000 != 0 {
             (*E).var_F = ((0xa2aba5i32) as u16);
             let E2 = Get_GunshipTop(k as i32 + 128, game);
@@ -3178,7 +3168,7 @@ crate::game::callback_dispatch! {
         (*gVramWriteEntry(v2 as i32, game)).size =
             crate::rtl::rom_table_word!(game, 0xa2ac11, v3 as isize);
         word!(game.vram_write_queue_tail = (v2).wrapping_add(2));
-        word!(game.substate, wrapping_add(2));
+        word!(game.substate += 2);
         if word!(game.substate) as i32 - 10i32 & 0x8000 == 0 {
             (*Get_GunshipTop(k as i32, game)).var_F = ((0xa2ac1bi32) as u16);
             word!(game.substate = 0);
@@ -3224,7 +3214,7 @@ crate::game::callback_dispatch! {
         };
     };
     [10661079] GunshipTop_19 [] {
-        word!(game.samus_y_pos, wrapping_sub(2));
+        word!(game.samus_y_pos -= 2);
         let mut v1: i16 = ((word!(game.samus_y_pos)) as i16).wrapping_sub(17);
         let E0 = Get_GunshipTop(k as i32, game);
         (*E0).base.y_pos = (word!(game.samus_y_pos)).wrapping_sub(17);
@@ -3653,7 +3643,7 @@ crate::game::callback_dispatch! {
             } else if (*E).var_05 != 0 {
                 return;
             }
-            word!(game.extra_samus_x_displacement, wrapping_add(r18));
+            word!(game.extra_samus_x_displacement += r18);
         }
     };
     MaridiaLargeSnail_Func_3 [] {

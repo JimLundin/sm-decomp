@@ -1638,7 +1638,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
     if word!(game.menu_index) & 0xff00 != 0 {
         printf(b"MENU INDEX TOO BIG!\n\0" as *const u8 as *const c_char);
         SaveBugSnapshot(game);
-        word!(game.menu_index, |fresh1| (fresh1 & 0xff));
+        word!(game.menu_index &= 0xff);
     }
     if game.g_got_mismatch_count != 0 {
         game.g_got_mismatch_count -= 1;

@@ -33,7 +33,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game)];
     [11844848] SpriteObject_Instr_RepeatLast [] {
         let v2: i32 = word!(game.sprite_object_index) as i32 >> 1;
-        word!(game.sprite_instr_list_ptrs[v2], wrapping_sub(4));
+        word!(game.sprite_instr_list_ptrs[v2] -= 4);
         word!(game.sprite_instr_timer[v2] = 0x7fff);
     };
     [11844871] SpriteObject_Instr_Terminate [] {
@@ -55,7 +55,7 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
         return;
     }
     word!(game.sprite_object_index = 62);
-    do_until! { (word!(game.sprite_object_index, wrapping_sub(2), reread) & 0x8000 != 0);
+    do_until! { (word!(game.sprite_object_index -= 2, reread) & 0x8000 != 0);
         let mut v0: i32 = word!(game.sprite_object_index) as i32 >> 1;
         if !(word!(game.sprite_instr_list_ptrs[v0]) == 0
             || (word!(game.sprite_disable_flag[v0]) & 1) != 0)

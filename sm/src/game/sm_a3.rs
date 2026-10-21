@@ -288,7 +288,7 @@ pub unsafe fn Fireflea_Touch(k: u16, game: &mut Game) {
     Enemy_NormalTouchAI_A3(game);
     EnemyDeathAnimation(k, v1, game);
     if word!(game.fireflea_darkness_level) as i32 - 12i32 & 0x8000 != 0 {
-        word!(game.fireflea_darkness_level, wrapping_add(2));
+        word!(game.fireflea_darkness_level += 2);
     }
 }
 pub unsafe fn Fireflea_Common(game: &mut Game) {
@@ -298,7 +298,7 @@ pub unsafe fn Fireflea_Common(game: &mut Game) {
         == 0
         && word!(game.fireflea_darkness_level) as i32 - 12i32 & 0x8000 != 0
     {
-        word!(game.fireflea_darkness_level, wrapping_add(2));
+        word!(game.fireflea_darkness_level += 2);
     }
 }
 macro_rules! advance_maridia_fish_sine_motion {
@@ -413,7 +413,7 @@ pub unsafe fn Elevator_Func_1(game: &mut Game) {
         CallSomeSamusCode(7, game);
         ResetProjectileData(game);
         Elevator_Func_4(game);
-        word!(game.elevator_status, wrapping_add(1));
+        word!(game.elevator_status += 1);
     } else {
         word!(game.elevator_flags = 0);
     };
@@ -430,7 +430,7 @@ pub unsafe fn Elevator_Func_2(game: &mut Game) {
     Elevator_Func_4(game);
 }
 pub unsafe fn Elevator_Func_3(game: &mut Game) {
-    word!(game.elevator_status, wrapping_add(1));
+    word!(game.elevator_status += 1);
     Elevator_Func3b(game);
 }
 pub unsafe fn Elevator_Func3b(game: &mut Game) {
@@ -1167,10 +1167,7 @@ pub unsafe fn Bang_Func_3(game: &mut Game) {
             let v9: u16 = word!(game.cur_enemy_index);
             let E = Get_Bang(word!(game.cur_enemy_index) as i32 + 64, game);
             (*E).base.properties = ((*E).base.properties) | (0x200u16);
-            word!(
-                game.enemy_drawing_queue[((v9 as i32 >> 1) + 97)],
-                |fresh1| (fresh1) | (0x200u16)
-            );
+            word!(game.enemy_drawing_queue[((v9 as i32 >> 1) + 97)] |= (0x200u16));
         } else {
             (*E0).var_20 = (*E0).var_20.wrapping_add(1);
             Bang_Func_18(game);
@@ -1189,7 +1186,7 @@ pub unsafe fn Bang_Func_4(a: u16, game: &mut Game) -> u16 {
     let v3: i32 = i >> 1;
     word! {game; projectile_x_pos[v3] = (*E).base.x_pos; projectile_y_pos[v3] = (*E).base.y_pos;
     projectile_dir[v3] = a; projectile_type[v3] = (word!(game.equipped_beams) & 0xf | 0x10); }
-    word!(game.projectile_counter, wrapping_add(1));
+    word!(game.projectile_counter += 1);
     ProjectileReflection(i as u16, game);
     word!(game.projectile_damage[v3] = (*E).var_E);
     QueueSfx1_Max6(
@@ -1483,11 +1480,7 @@ pub unsafe fn MaridiaSnail_Func_20(k: u16, game: &mut Game) -> u8 {
 }
 pub unsafe fn Reflec_Func_1(game: &mut Game) {
     if word!(game.door_transition_flag_enemies) == 0 && {
-        word!(
-            game.variables_for_enemy_graphics_drawn_hook[2],
-            wrapping_sub(1),
-            reread
-        ) == 0
+        word!(game.variables_for_enemy_graphics_drawn_hook[2] -= 1, reread) == 0
     } {
         word!(game.variables_for_enemy_graphics_drawn_hook[2] = 16);
         let mut v0: u16 = word!(game.variables_for_enemy_graphics_drawn_hook[0]);
@@ -2031,8 +2024,7 @@ crate::game::callback_dispatch! {
         let varE32: u16 = v2;
         let v3: i32 = v2 as i32 >> 1;
         if crate::rtl::rom_table_word!(game, 0xa3dcae, v3 as isize) == 0x8000 {
-            word!(game.projectile_dir[(v0 >> 1)], |fresh16| (fresh16)
-                | (0x10u16));
+            word!(game.projectile_dir[(v0 >> 1)] |= (0x10u16));
             printf(b"Possible bug. What is X?\n\0" as *const u8 as *const c_char);
             let ET = Get_Reflec(v2 as i32, game);
             if (*ET).base.health != 0 {
@@ -2050,7 +2042,7 @@ crate::game::callback_dispatch! {
             }
             let v5: i32 = v0 as i32 >> 1;
             word!(game.projectile_dir[v5] = v4 as u16);
-            word!(game.projectile_type[v5], |fresh17| (fresh17 & !(0x8000)));
+            word!(game.projectile_type[v5] &= !(0x8000));
             ProjectileReflection(v0, game);
             QueueSfx2_Max6(0x57, game);
         };
@@ -2152,12 +2144,9 @@ crate::game::callback_dispatch! {
             word!(game.sprite_palettes[v2] = (r18 | word!(game.sprite_palettes[v2]) & 0xf1ff));
         } else {
             let v3: i32 = (*E).var_00 as i32 >> 1;
-            word!(game.sprite_palettes[v3], |fresh10| (fresh10) & (0xf1ffu16));
+            word!(game.sprite_palettes[v3] &= (0xf1ffu16));
             let metroid_var_01: u16 = (*E).var_01;
-            word!(
-                game.sprite_palettes[(metroid_var_01 >> 1)],
-                |fresh11| (fresh11) & (0xf1ffu16)
-            );
+            word!(game.sprite_palettes[(metroid_var_01 >> 1)] &= (0xf1ffu16));
         };
     };
     [10742680] Metroid_Main [] {
@@ -2379,9 +2368,7 @@ crate::game::callback_dispatch! {
         if (((*E).var_F) as i16).wrapping_sub(((*E).var_05) as i16) >= 0 {
             (*E).var_F = (*E).var_05;
         }
-        word!(game.extra_samus_x_displacement, |fresh13| (fresh13 as i32
-            + ((*E).base.x_pos as i32 - (*E).var_01 as i32))
-            as u16);
+        word!(checked_i32, game.extra_samus_x_displacement += ((*E).base.x_pos as i32 - (*E).var_01 as i32));
         (*E).var_01 = (*E).base.y_pos;
         let v2: i32 = 8 * (*E).var_F as i32 >> 1;
         if Enemy_MoveDown(
@@ -2396,9 +2383,7 @@ crate::game::callback_dispatch! {
             (*E).var_F = 0;
             PlatformThatFallsWithSamus_Func_10(game);
         }
-        word!(game.extra_samus_y_displacement, |fresh14| (fresh14 as i32
-            + ((*E).base.y_pos as i32 - (*E).var_01 as i32))
-            as u16);
+        word!(checked_i32, game.extra_samus_y_displacement += ((*E).base.y_pos as i32 - (*E).var_01 as i32));
     };
     PlatformThatFallsWithSamus_Func_5 [] {
         let mut v0: u16 = addr_kPlatformThatFallsWithSamus_Ilist_9C13 as u16;
@@ -2539,7 +2524,7 @@ crate::game::callback_dispatch! {
             Bang_Func_18(game);
             let v1: i32 = word!(game.collision_detection_index) as i32;
             (*E).var_E = ((*E).var_E).wrapping_add(word!(game.projectile_damage[v1]));
-            word!(game.projectile_dir[v1], |fresh2| (fresh2) | (0x10u16));
+            word!(game.projectile_dir[v1] |= (0x10u16));
             if (*E).var_20 == 9 {
                 (*E).var_D = 1;
             }

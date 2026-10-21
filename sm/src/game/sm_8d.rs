@@ -19,12 +19,10 @@ crate::game::constants::typed_constants! { i32;
     fnCinematicFunction_Intro_Page2 = 0x8bb35f,
 }
 pub unsafe fn EnablePaletteFx(game: &mut Game) {
-    word!(game.flag_for_palette_fx_objects, |fresh1| (fresh1)
-        | (0x8000u16));
+    word!(game.flag_for_palette_fx_objects |= (0x8000u16));
 }
 pub unsafe fn DisablePaletteFx(game: &mut Game) {
-    word!(game.flag_for_palette_fx_objects, |fresh0| (fresh0
-        & !(0x8000)));
+    word!(game.flag_for_palette_fx_objects &= !(0x8000));
 }
 pub unsafe fn ClearPaletteFXObjects(game: &mut Game) {
     word_transfers!(game, descending, 8; le(palettefx_ids, 7) <- value(0));

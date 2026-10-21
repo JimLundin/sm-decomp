@@ -428,9 +428,7 @@ crate::game::callback_dispatch! {
             QueueSfx2_Max6(0x1b, game);
         }
         if SpikeyPlatform_Func_5(word!(game.cur_enemy_index), game) != 0 {
-            word!(game.extra_samus_y_displacement, |fresh17| (fresh17 as i32
-                + ((*E).base.y_pos as i32 - (*E).var_01 as i32))
-                as u16);
+            word!(checked_i32, game.extra_samus_y_displacement += ((*E).base.y_pos as i32 - (*E).var_01 as i32));
         }
         let mut v4: i16 = (((*E).var_02) as i16).wrapping_add(8);
         if (*E).var_02 as i32 - 504i32 & 0x8000 == 0 {
@@ -446,9 +444,7 @@ crate::game::callback_dispatch! {
             (*E).base.y_pos = (*E).var_C;
         }
         if SpikeyPlatform_Func_5(word!(game.cur_enemy_index), game) != 0 {
-            word!(game.extra_samus_y_displacement, |fresh18| (fresh18 as i32
-                + ((*E).base.y_pos as i32 - (*E).var_01 as i32))
-                as u16);
+            word!(checked_i32, game.extra_samus_y_displacement += ((*E).base.y_pos as i32 - (*E).var_01 as i32));
         }
     };
     @external {
@@ -3041,10 +3037,7 @@ pub unsafe fn Ridley_Func_88(k: u16, game: &mut Game) {
         let v4: i32 = k as i32 >> 1;
         let v5: u16 = word!(game.tilemap_stuff[(v4 + 17)]);
         if v5 < word!(game.tilemap_stuff[15]) {
-            word!(
-                game.tilemap_stuff[((k as i32 >> 1) + 17)],
-                wrapping_add(word!(game.tilemap_stuff[10]))
-            );
+            word!(game.tilemap_stuff[((k as i32 >> 1) + 17)] += word!(game.tilemap_stuff[10]));
             return;
         }
         if v5 != 0xffff {
@@ -3110,8 +3103,7 @@ pub unsafe fn Ridley_Func_88(k: u16, game: &mut Game) {
         if stopped {
             let v3: i32 = k as i32 >> 1;
             word! { game, 0; tilemap_stuff[(v3 + 16)], tilemap_stuff[(v3 + 17)], }
-            word!(game.tilemap_stuff[(v3 + 18)], |fresh13| (fresh13)
-                ^ (0x8000u16));
+            word!(game.tilemap_stuff[(v3 + 18)] ^= (0x8000u16));
             return;
         }
     } else {
@@ -3260,8 +3252,7 @@ pub unsafe fn Ridley_Func_96(game: &mut Game) {
             game.tilemap_stuff[(v2 + 21)] =
                 (0x8000u16).wrapping_sub(word!(game.tilemap_stuff[(v2 + 21)]),)
         );
-        word!(game.tilemap_stuff[(v2 + 18)], |fresh3| (fresh3)
-            | (0x8000u16));
+        word!(game.tilemap_stuff[(v2 + 18)] |= (0x8000u16));
         v1 = (v1).wrapping_add(20);
     }
 }
@@ -3672,10 +3663,8 @@ pub unsafe fn sub_A6DC13(j: u16, r18: u16, r20: u16, r22: u16, game: &mut Game) 
             (*v11).xcoord = x as u8;
             (*v11).ycoord = v9 as u8;
             *(&raw mut (*v11).charnum as *mut u16) = (r22) | (*(p.offset(3) as *mut u16));
-            word!(game.oam_ext[(idx >> 5)], |fresh4| (fresh4 as i32
-                | ((x as i32 & 0x100) >> 8 | (*(p as *mut i16) < 0) as i32 * 2)
-                    << 2 * (idx >> 2 & 7))
-                as u16);
+            word!(bits_i32, game.oam_ext[(idx >> 5)] |= ((x as i32 & 0x100) >> 8 | (*(p as *mut i16) < 0) as i32 * 2)
+                    << 2 * (idx >> 2 & 7));
             idx = idx + 4 & 0x1ff;
         }
         p = p.offset(5);
@@ -3729,7 +3718,7 @@ pub unsafe fn Ridley_Func_122(rect: Rect16U, game: &mut Game) -> u16 {
     }
     let v8: i32 = result as i32 >> 1;
     word! {game; projectile_x_pos[v8] = rect.x; projectile_y_pos[v8] = rect.y; }
-    word!(game.projectile_dir[v8], |fresh2| (fresh2) | (0x10u16));
+    word!(game.projectile_dir[v8] |= (0x10u16));
     result
 }
 pub unsafe fn Ridley_Func_124(rect: Rect16U, game: &mut Game) -> u8 {

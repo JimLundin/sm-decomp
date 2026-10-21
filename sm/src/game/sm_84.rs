@@ -189,7 +189,7 @@ pub fn EnablePLMs(game: &mut Game) {
     game.g_ram[0x1c23..0x1c25].copy_from_slice(&(flags | 0x8000).to_le_bytes());
 }
 pub unsafe fn DisablePLMs(game: &mut Game) {
-    word!(game.plm_flag, |fresh22| (fresh22 & !(0x8000)));
+    word!(game.plm_flag &= !(0x8000));
 }
 pub fn ClearPLMs(game: &mut Game) {
     for slot in (0..40).rev() {
@@ -362,7 +362,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                     break;
                 }
                 if *(ram_ptr!(game, u16; 0x1c37)).offset((word!(game.plm_id) >> 1) as isize) == 0 {
-                    word!(game.plm_id, wrapping_sub(2));
+                    word!(game.plm_id -= 2);
                     continue;
                 }
                 CallPlmPreInstr(
@@ -374,12 +374,11 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                 );
 
                 if word!(
-                    game.plm_instruction_timer[(word!(game.plm_id) >> 1)],
-                    wrapping_sub(1),
+                    game.plm_instruction_timer[(word!(game.plm_id) >> 1)] -= 1,
                     reread
                 ) != 0
                 {
-                    word!(game.plm_id, wrapping_sub(2));
+                    word!(game.plm_id -= 2);
                     continue;
                 }
                 base = RomBankBase(0x84, game);
@@ -439,7 +438,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                     message_pending = true;
                 }
             }
-            word!(game.plm_id, wrapping_sub(2));
+            word!(game.plm_id -= 2);
         }
     }
     *resume_state = 0;
@@ -655,7 +654,7 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
                 v26 = (v29).wrapping_add(2);
                 r3 = r3.wrapping_add(1);
                 r3 = r3.wrapping_add(1);
-                word!(game.plm_draw_tilemap_index, wrapping_add(8));
+                word!(game.plm_draw_tilemap_index += 8);
                 if word!(game.plm_draw_tilemap_index) as i32 - 512i32 & 0x8000 == 0 {
                     break '_LABEL_2;
                 }
@@ -776,7 +775,7 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
                 );
                 v16 = (v19).wrapping_add(2);
                 r3 = (r3).wrapping_add(2);
-                word!(game.plm_draw_tilemap_index, wrapping_add(8));
+                word!(game.plm_draw_tilemap_index += 8);
                 if word!(game.plm_draw_tilemap_index) as i32 - 512i32 & 0x8000 == 0 {
                     break '_LABEL_2;
                 }
@@ -968,7 +967,7 @@ pub unsafe fn WakePlmIfSamusIsBelowAndRightOfTarget(
 ) -> u8 {
     if x_r18 < word!(game.samus_x_pos) && y_r20 < word!(game.samus_y_pos) {
         let v2: i32 = k as i32 >> 1;
-        word!(game.plm_instr_list_ptrs[v2], wrapping_add(2));
+        word!(game.plm_instr_list_ptrs[v2] += 2);
         word!(game.plm_instruction_timer[v2] = 1);
         return false_0 as u8;
     }
@@ -994,7 +993,7 @@ pub unsafe fn sub_84C64C(j: u16, a: u16, game: &mut Game) -> u8 {
     if found_plm {
         let mut v3: i32 = v2 as i32 >> 1;
         if word!(game.plm_timers[v3]) == 0 {
-            word!(game.plm_timers[v3], wrapping_add(1));
+            word!(game.plm_timers[v3] += 1);
         }
     }
     word!(game.plm_header_ptr[(j >> 1)] = 0);
@@ -1066,7 +1065,7 @@ pub unsafe fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(
         SetEventHappened(0xc, game);
         (*(ram_ptr!(game, EnemyData; 0xf78))).parameter_1 = 1;
         let v2: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;
-        word!(game.level_data[v2], |fresh3| (fresh3) & (0xfffu16));
+        word!(game.level_data[v2] &= (0xfffu16));
         CallSomeSamusCode(0, game);
         spawn_hardcoded_plm(
             SpawnHardcodedPlmArgs::new(0xc, 0x1d, 0xd113 as VoidP),
@@ -1095,7 +1094,7 @@ pub unsafe fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(
         *(ram_ptr!(game, u16; 0xcd20, 7)) = 514;
         *(ram_ptr!(game, u16; 0xcd20, 13)) = 257;
         let v1: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;
-        word!(game.level_data[v1], |fresh2| (fresh2) & (0xfffu16));
+        word!(game.level_data[v1] &= (0xfffu16));
         CallSomeSamusCode(0, game);
         spawn_hardcoded_plm(
             SpawnHardcodedPlmArgs::new(0x17, 0x1d, 0xd6f8 as VoidP),
@@ -1162,7 +1161,7 @@ crate::game::callback_dispatch! {
     [8696028] PlmSetup_BTS_Brinstar_0x80_Floorplant [] {
         if (word!(game.samus_y_radius) as i32 + word!(game.samus_y_pos) as i32 - 1i32 & 0xf) == 15 {
             let v1: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;
-            word!(game.level_data[v1], |fresh20| (fresh20) & (0x8fffu16));
+            word!(game.level_data[v1] &= (0x8fffu16));
             let v2: i32 = j as i32 >> 1;
             word!(game.plm_variable[v2] = word!(game.samus_x_pos));
             word!(game.plm_variables[v2] = (word!(game.samus_y_pos)).wrapping_sub(1));
@@ -1176,7 +1175,7 @@ crate::game::callback_dispatch! {
             word!(game.plm_header_ptr[(j >> 1)] = 0);
         } else {
             let v1: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;
-            word!(game.level_data[v1], |fresh19| (fresh19) & (0x8fffu16));
+            word!(game.level_data[v1] &= (0x8fffu16));
             let v2: i32 = j as i32 >> 1;
             word!(game.plm_variable[v2] = word!(game.samus_x_pos));
             word!(game.plm_variables[v2] = (word!(game.samus_y_pos)).wrapping_add(1));
@@ -1276,7 +1275,7 @@ crate::game::callback_dispatch! {
     [8697169] PlmSetup_ClearShitroidInvisibleWall [] {
         let mut v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
         for _ in 0i16..10i16 {
-            word!(game.level_data[(v1 >> 1)], |fresh10| (fresh10) & (0xfffu16));
+            word!(game.level_data[(v1 >> 1)] &= (0xfffu16));
             v1 = (v1 as i32 + word!(game.room_width_in_blocks) as i32 * 2) as u16;
         }
         0
@@ -1635,7 +1634,7 @@ crate::game::callback_dispatch! {
         0
     };
     [8703957] PlmSetup_D0E8_GiveSamusDamage [] {
-        word!(game.samus_periodic_damage, wrapping_add(1));
+        word!(game.samus_periodic_damage += 1);
         0x41
     };
     [8704264] PlmSetup_D113_LowerNorfairChozoRoomPlug [] {
@@ -1703,7 +1702,7 @@ crate::game::callback_dispatch! {
     };
     [8711780] sub_84EE64 [] {
         WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[(j >> 1)]), 0x45, game);
-        word!(game.global_number_of_items_loaded_ctr, wrapping_add(1));
+        word!(game.global_number_of_items_loaded_ctr += 1);
         0
     };
     @functions [pub fn (j: u16, game: &mut Game) -> u8];
@@ -1911,7 +1910,7 @@ crate::game::callback_dispatch! {
                 & (0x7cu16))
                 >> 1)
         );
-        word!(game.plm_room_arguments[v1], |fresh6| (fresh6 & !(0x7c00)));
+        word!(game.plm_room_arguments[v1] &= !(0x7c00));
         WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[v1]), 0xc044, game);
         0
     };
@@ -2020,7 +2019,7 @@ crate::game::callback_dispatch! {
             game.plm_variable[v1] = *(ram_ptr!(game, u16; 0x10002))
                 .offset((word!(game.plm_block_indices[v1]) >> 1) as isize,)
         );
-        word!(game.global_number_of_items_loaded_ctr, wrapping_add(1));
+        word!(game.global_number_of_items_loaded_ctr += 1);
         0
     };
     @functions [pub unsafe fn (v0: u16, game: &mut Game) -> u8];
@@ -2088,8 +2087,8 @@ crate::game::callback_dispatch! {
                 word!(game.fx_y_vel = -128i32 as u16);
                 let v1: i32 = k as i32 >> 1;
                 word!(game.plm_instruction_timer[v1] = 1);
-                word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
-                word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
+                word!(game.plm_instr_list_ptrs[v1] += 1);
+                word!(game.plm_instr_list_ptrs[v1] += 1);
                 word!(game.plm_timers[v1] = 0);
             }
         } else {
@@ -2104,8 +2103,8 @@ crate::game::callback_dispatch! {
             word!(game.fx_timer = 1);
             let v1: i32 = k as i32 >> 1;
             word!(game.plm_instruction_timer[v1] = 1);
-            word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
-            word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
+            word!(game.plm_instr_list_ptrs[v1] += 1);
+            word!(game.plm_instr_list_ptrs[v1] += 1);
             word!(game.plm_timers[v1] = 0);
         }
     };
@@ -2168,8 +2167,8 @@ crate::game::callback_dispatch! {
             || word!(game.plm_timers[(k >> 1)]) != 0
         {
             let v1: i32 = k as i32 >> 1;
-            word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
-            word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
+            word!(game.plm_instr_list_ptrs[v1] += 1);
+            word!(game.plm_instr_list_ptrs[v1] += 1);
             word!(game.plm_instruction_timer[v1] = 1);
             word!(game.plm_pre_instrs[v1] = addr_locret_84BBDC as u16);
         }
@@ -2272,8 +2271,8 @@ crate::game::callback_dispatch! {
         {
             let v2: i32 = k as i32 >> 1;
             word!(game.plm_instruction_timer[v2] = 1);
-            word!(game.plm_instr_list_ptrs[v2], wrapping_add(1));
-            word!(game.plm_instr_list_ptrs[v2], wrapping_add(1));
+            word!(game.plm_instr_list_ptrs[v2] += 1);
+            word!(game.plm_instr_list_ptrs[v2] += 1);
         }
     };
     [8706782] PlmPreInstr_SetMetroidsClearState_Ev0x10 [] {
@@ -2374,13 +2373,12 @@ crate::game::callback_dispatch! {
     [8694921] PlmPreInstr_PositionSamusAndInvincible [] {
         word!(game.samus_x_pos = word!(game.plm_variable[v1]));
         word!(game.samus_y_pos = word!(game.plm_variables[v1]));
-        word!(game.samus_invincibility_timer, |fresh69| (fresh69)
-            | (0x10u16));
+        word!(game.samus_invincibility_timer |= (0x10u16));
     };
     [8698706] PlmPreInstr_WakePlmIfTriggered [] {
         if word!(game.plm_timers[v1]) != 0 {
-            word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
-            word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
+            word!(game.plm_instr_list_ptrs[v1] += 1);
+            word!(game.plm_instr_list_ptrs[v1] += 1);
             word!(game.plm_instruction_timer[v1] = 1);
             word!(game.plm_pre_instrs[v1] = addr_locret_84BB6A as u16);
         }
@@ -2388,7 +2386,7 @@ crate::game::callback_dispatch! {
     [8704486] PlmPreInstr_IncrementRoomArgIfShotBySuperMissile [] {
         let v2: u16 = word!(game.plm_timers[v1]);
         if (v2 & 0xf00) == 512 || (v2 & 0xf00) == 256 {
-            word!(game.plm_room_arguments[v1], wrapping_add(1));
+            word!(game.plm_room_arguments[v1] += 1);
         }
         word!(game.plm_timers[v1] = 0);
     };
@@ -2480,13 +2478,11 @@ crate::game::callback_dispatch! {
         }
     };
     [8694528] PlmInstr_MovePlmDownOneBlock [] {
-        word!(game.plm_block_indices[(k >> 1)], |fresh39| (fresh39 as i32
-            + 2 * word!(game.room_width_in_blocks) as i32)
-            as u16);
+        word!(checked_i32, game.plm_block_indices[(k >> 1)] += 2 * word!(game.room_width_in_blocks) as i32);
         plmp
     };
     [8694742] PlmInstr_ABD6 [] {
-        word!(game.plm_block_indices[(k >> 1)], wrapping_add(2));
+        word!(game.plm_block_indices[(k >> 1)] += 2);
         plmp
     };
     [8695487] PlmInstr_GotoIfMissilesFull [] {
@@ -2497,7 +2493,7 @@ crate::game::callback_dispatch! {
         *(plmp as *mut u16) as usize as *const u8
     };
     [8698661] PlmInstr_MovePlmRight4Blocks [] {
-        word!(game.plm_block_indices[(k >> 1)], wrapping_add(8));
+        word!(game.plm_block_indices[(k >> 1)] += 8);
         plmp
     };
     [8699455] PlmInstr_SetGreyDoorPreInstr [] {
@@ -2519,7 +2515,7 @@ crate::game::callback_dispatch! {
         }
     };
     [8705317] PlmInstr_EnableWaterPhysics [] {
-        word!(game.fx_liquid_options, |fresh34| (fresh34 & !(4)));
+        word!(game.fx_liquid_options &= !(4));
         plmp
     };
     [8705334] PlmInstr_DiagonalEarthquake [] {
@@ -2574,8 +2570,8 @@ crate::game::callback_dispatch! {
     };
     [8686075] PlmInstr_CollectAmmoPowerBombTank [] {
         let t: u16 = *(plmp as *mut u16);
-        word!(game.samus_max_power_bombs, wrapping_add(t));
-        word!(game.samus_power_bombs, wrapping_add(t));
+        word!(game.samus_max_power_bombs += t);
+        word!(game.samus_power_bombs += t);
         AddPowerBombsToHudTilemap(game);
         PlayRoomMusicTrackAfterAFrames(0x168, game);
         DisplayMessageBox(4, game);
@@ -2592,9 +2588,7 @@ crate::game::callback_dispatch! {
         plmp.offset(1)
     };
     [8694617] PlmInstr_MovePlmDownOneBlock_0 [] {
-        word!(game.plm_block_indices[(k >> 1)], |fresh38| (fresh38 as i32
-            + 2 * word!(game.room_width_in_blocks) as i32)
-            as u16);
+        word!(checked_i32, game.plm_block_indices[(k >> 1)] += 2 * word!(game.room_width_in_blocks) as i32);
         plmp
     };
     [8698479] PlmInstr_JumpIfSamusHasNoBombs [] {
@@ -2783,16 +2777,16 @@ crate::game::callback_dispatch! {
 ) -> *const u8];
     [8685850] PlmInstr_PickupEquipmentAddGrappleShowMessage [plmp.offset(2)] {
         let t: u16 = *(plmp as *mut u16);
-        word!(game.equipped_items, |fresh55| (fresh55) | (t));
-        word!(game.collected_items, |fresh56| (fresh56) | (t));
+        word!(game.equipped_items |= (t));
+        word!(game.collected_items |= (t));
         AddGrappleToHudTilemap(game);
         PlayRoomMusicTrackAfterAFrames(0x168, game);
         DisplayMessageBox(5, game);
     };
     [8685889] PlmInstr_PickupEquipmentAddXrayShowMessage [plmp.offset(2)] {
         let t: u16 = *(plmp as *mut u16);
-        word!(game.equipped_items, |fresh53| (fresh53) | (t));
-        word!(game.collected_items, |fresh54| (fresh54) | (t));
+        word!(game.equipped_items |= (t));
+        word!(game.collected_items |= (t));
         AddXrayToHudTilemap(game);
         PlayRoomMusicTrackAfterAFrames(0x168, game);
         DisplayMessageBox(6, game);
@@ -2805,12 +2799,9 @@ crate::game::callback_dispatch! {
         DisplayMessageBox(1, game);
     };
     [8685958] PlmInstr_CollectHealthReserveTank [plmp.offset(2)] {
-        word!(
-            game.samus_max_reserve_health,
-            wrapping_add(*(plmp as *mut u16))
-        );
+        word!(game.samus_max_reserve_health += *(plmp as *mut u16));
         if word!(game.reserve_health_mode) == 0 {
-            word!(game.reserve_health_mode, wrapping_add(1));
+            word!(game.reserve_health_mode += 1);
         }
         PlayRoomMusicTrackAfterAFrames(0x168, game);
         DisplayMessageBox(0x19, game);
@@ -3015,7 +3006,7 @@ crate::game::callback_dispatch! {
     [8694609] PlmInstr_Scroll_0_1_Blue [plmp] { *(ram_ptr!(game, u16; 0xcd20)) = 257; };
     @functions [pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8];
     [8694941] PlmInstr_DealDamage_2 [plmp] {
-        word!(game.samus_periodic_damage, wrapping_add(2));
+        word!(game.samus_periodic_damage += 2);
     };
     [8694961] PlmInstr_GiveInvincibility [plmp] { word!(game.samus_invincibility_timer = 48); };
     @functions [pub unsafe fn (
@@ -3073,7 +3064,7 @@ crate::game::callback_dispatch! {
         }
         let v4: i32 = i >> 1;
         word!(game.eproj_instr_timers[v4] = 1);
-        word!(game.eproj_instr_list_ptr[v4], wrapping_add(2));
+        word!(game.eproj_instr_list_ptr[v4] += 2);
     };
     @functions [pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8];
     [8704341] PlmInstr_FxBaseYPos_0x2D2 [plmp] { word!(game.fx_base_y_pos = 722); };
@@ -3127,21 +3118,13 @@ crate::game::callback_dispatch! {
     };
     [8705987] PlmInstr_MoveUpAndMakeBlueDoorFacingRight [plmp] {
         let v2: i32 = k as i32 >> 1;
-        let blk: u16 = word!(
-            game.plm_block_indices[v2],
-            |fresh33| (fresh33 as i32 - word!(game.room_width_in_blocks) as i32 * 2) as u16,
-            reread
-        );
+        let blk: u16 = word!(checked_i32, game.plm_block_indices[v2] -= word!(game.room_width_in_blocks) as i32 * 2, reread);
         WriteLevelDataBlockTypeAndBts(blk, 0xc041, game);
         sub_84D7EF(blk, game);
     };
     [8706010] PlmInstr_MoveUpAndMakeBlueDoorFacingLeft [plmp] {
         let v2: i32 = k as i32 >> 1;
-        let blk: u16 = word!(
-            game.plm_block_indices[v2],
-            |fresh32| (fresh32 as i32 - word!(game.room_width_in_blocks) as i32 * 2) as u16,
-            reread
-        );
+        let blk: u16 = word!(checked_i32, game.plm_block_indices[v2] -= word!(game.room_width_in_blocks) as i32 * 2, reread);
         WriteLevelDataBlockTypeAndBts(blk, 0xc040, game);
         sub_84D7EF(blk, game);
     };

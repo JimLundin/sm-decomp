@@ -46,14 +46,8 @@ pub(crate) unsafe fn advance(k: u16, kind: Flight, game: &mut Game) {
     let slot = k as i32 >> 1;
     let direction = (word!(game.projectile_dir[slot]) & 0xf) as usize;
     if kind != Flight::SuperMissile {
-        word!(
-            game.projectile_bomb_x_speed[slot],
-            wrapping_add(X_ACCELERATION[direction] as u16)
-        );
-        word!(
-            game.projectile_bomb_y_speed[slot],
-            wrapping_add(Y_ACCELERATION[direction] as u16)
-        );
+        word!(game.projectile_bomb_x_speed[slot] += X_ACCELERATION[direction] as u16);
+        word!(game.projectile_bomb_y_speed[slot] += Y_ACCELERATION[direction] as u16);
     }
     if matches!(kind, Flight::Missile | Flight::SuperMissile) {
         accelerate_missile(k, game);
@@ -197,14 +191,8 @@ unsafe fn accelerate_missile(k: u16, game: &mut Game) {
             (v3 as i32 + 4 * (word!(game.projectile_dir[v1]) as i32 & 0xf)) as u16,
             game,
         );
-        word!(
-            game.projectile_bomb_x_speed[v1],
-            wrapping_add(*(v4 as *mut u16))
-        );
-        word!(
-            game.projectile_bomb_y_speed[v1],
-            wrapping_add(*(v4.offset(2) as *mut u16))
-        );
+        word!(game.projectile_bomb_x_speed[v1] += *(v4 as *mut u16));
+        word!(game.projectile_bomb_y_speed[v1] += *(v4.offset(2) as *mut u16));
     } else {
         let v2: u16 = (word_90C301).wrapping_add(word!(game.projectile_variables[v1]));
         word!(game.projectile_variables[v1] = v2);
@@ -314,7 +302,7 @@ unsafe fn spawn_extension(game: &mut Game) {
     }
     let r20: u16 = v0;
     let v1: i32 = v0 as i32 >> 1;
-    word!(game.projectile_type[v1], |fresh66| (fresh66) | (0x8200u16));
+    word!(game.projectile_type[v1] |= (0x8200u16));
     let v2: i32 = word!(game.projectile_index) as i32 >> 1;
     word!(game.projectile_x_pos[v1] = word!(game.projectile_x_pos[v2]));
     word!(game.projectile_y_pos[v1] = word!(game.projectile_y_pos[v2]));
@@ -327,5 +315,5 @@ unsafe fn spawn_extension(game: &mut Game) {
             as i32
             & 0xff00))
         as u16;
-    word!(game.projectile_counter, wrapping_add(1));
+    word!(game.projectile_counter += 1);
 }

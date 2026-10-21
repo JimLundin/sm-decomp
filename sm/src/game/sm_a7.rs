@@ -286,8 +286,7 @@ pub unsafe fn Kraid_Func_1(game: &mut Game) {
 }
 pub unsafe fn Kraid_Arm_Shot(j: u16, game: &mut Game) {
     Kraid_SpawnExplosionEproj(j, game);
-    word!(game.projectile_dir[(j >> 1)], |fresh16| (fresh16)
-        | (0x10u16));
+    word!(game.projectile_dir[(j >> 1)] |= (0x10u16));
 }
 pub unsafe fn Kraid_CheckIfDead(game: &mut Game) -> u16 {
     ((*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 1) != 0) as u16
@@ -475,9 +474,7 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
                     } else {
                         word!(game.collision_detection_index = (v6 >> 1));
                         NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-                        word!(game.projectile_dir[(v6 >> 1)], |fresh15| {
-                            (fresh15) | (0x10u16)
-                        });
+                        word!(game.projectile_dir[(v6 >> 1)] |= (0x10u16));
                         v3 = 1;
                         v6 = 0;
                     }
@@ -864,7 +861,7 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
                 *_state_variable_ = 1;
                 return _coret_;
             }
-            word!(game.my_counter, wrapping_add(1));
+            word!(game.my_counter += 1);
             queue_transfer = true;
         }
     }
@@ -893,7 +890,7 @@ pub unsafe fn PauseHook_Kraid(game: &mut Game) {
     word!(game.vram_read_queue_tail = (v0).wrapping_add(9));
 }
 pub unsafe fn Kraid_PlaySoundEveryHalfSecond(game: &mut Game) {
-    if word!(game.kraid_unk9000, wrapping_sub(1), reread) == 0 {
+    if word!(game.kraid_unk9000 -= 1, reread) == 0 {
         QueueSfx3_Max6(0x1e, game);
         word!(game.kraid_unk9000 = 30);
     }
@@ -1130,8 +1127,7 @@ crate::game::callback_dispatch! {
     };
     [10988858] Kraid_GetsBig_SetBG2TilemapPrioBits [] {
         for v0 in (0u16..4096).step_by(2) {
-            word!(game.tilemap_stuff[(v0 >> 1)], |fresh11| (fresh11)
-                | (0x2000u16));
+            word!(game.tilemap_stuff[(v0 >> 1)] |= (0x2000u16));
         }
         let E = Get_Kraid(0x40, game);
         (*E).base.properties = ((*E).base.properties & !(0x400));
@@ -1614,7 +1610,7 @@ crate::game::callback_dispatch! {
                 < 0
             {
                 if word!(game.samus_x_pos) as i32 - 40i32 & 0x8000 == 0 {
-                    word!(game.samus_x_pos, wrapping_sub(8));
+                    word!(game.samus_x_pos -= 8);
                     word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
                 }
                 let mut kraid_min_y_pos_eject: u16 = (word!(game.samus_y_pos)).wrapping_sub(8);
@@ -1697,7 +1693,7 @@ crate::game::callback_dispatch! {
                     if hit_body {
                         Kraid_SpawnExplosionEproj(i as u16, game);
                         let v6: i32 = i >> 1;
-                        word!(game.projectile_dir[v6], |fresh14| (fresh14) | (0x10u16));
+                        word!(game.projectile_dir[v6] |= (0x10u16));
                         if (word!(game.projectile_type[v6]) & 0x10) != 0 {
                             (*E).kraid_mouth_flags = ((*E).kraid_mouth_flags) | (1u16);
                         }
@@ -1765,12 +1761,12 @@ crate::game::callback_dispatch! {
     let v5: i32 = v2 as i32 >> 1;
     if crate::rtl::rom_table_word!(game, 0xa7b3d3, (v5 + 1) as isize) & 0x1f != r18 {
         r20 = r20.wrapping_add(1);
-        word!(game.palette_buffer[v4], wrapping_sub(1));
+        word!(game.palette_buffer[v4] -= 1);
     }
     r18 = (word!(game.palette_buffer[v4])) & (0x3e0u16);
     if crate::rtl::rom_table_word!(game, 0xa7b3d3, (v5 + 1) as isize) & 0x3e0 != r18 {
         r20 = r20.wrapping_add(1);
-        word!(game.palette_buffer[v4], wrapping_sub(32));
+        word!(game.palette_buffer[v4] -= 32);
     }
     v3 = (v3).wrapping_add(2);
     v2 = (v2).wrapping_add(2);
@@ -2239,8 +2235,7 @@ pub unsafe fn Phantoon_StartDeathSequence(k: u16, game: &mut Game) {
         *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(v3 as u16 as i32 as isize) as *mut u16) =
             v4;
     }
-    word!(game.phantom_related_layer_flag, |fresh29| (fresh29)
-        | (0x4000u16));
+    word!(game.phantom_related_layer_flag |= (0x4000u16));
     (*Get_Phantoon(0xc0i32, game)).parameter_2 = 1;
 }
 pub unsafe fn Phantoon_FadeOut(a: u16, game: &mut Game) {
@@ -2939,8 +2934,7 @@ crate::game::callback_dispatch! {
                 (*EK).var_E = 0;
                 (*Get_Phantoon(0x80i32, game)).var_A = 0;
                 (*Get_Phantoon(v1 as i32 + 0x80i32, game)).var_B = 0;
-                word!(game.phantom_related_layer_flag, |fresh28| (fresh28)
-                    | (0x4000u16));
+                word!(game.phantom_related_layer_flag |= (0x4000u16));
                 (*E0).base.instruction_timer = 1;
                 let E1 = Get_Phantoon(0x40, game);
                 (*E1).base.instruction_timer = 1;
@@ -3140,8 +3134,7 @@ crate::game::callback_dispatch! {
         let v3: bool = ((*EK).var_E & 0x8000) != 0;
         if v2 || v3 {
             (*EK).var_F = ((0xa7d6b9i32) as u16);
-            word!(game.phantom_related_layer_flag, |fresh27| (fresh27)
-                | (0x4000u16));
+            word!(game.phantom_related_layer_flag |= (0x4000u16));
             let E0 = Get_Phantoon(0, game);
             (*E0).base.instruction_timer = 1;
             let E1 = Get_Phantoon(0x40, game);
@@ -3189,8 +3182,7 @@ crate::game::callback_dispatch! {
     [10999615] Phantoon_BecomeSolidAfterRainingFireballs [] {
         let E1 = Get_Phantoon(0x40, game);
         (*E1).var_F = 0;
-        word!(game.phantom_related_layer_flag, |fresh20| (fresh20
-            & !(0x4000)));
+        word!(game.phantom_related_layer_flag &= !(0x4000));
         let E = Get_Phantoon(0, game);
         (*E).base.instruction_timer = 1;
         (*E1).base.instruction_timer = 1;
@@ -3373,8 +3365,7 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x57) = 0;
         let E1 = Get_Phantoon(0x40, game);
         (*E1).parameter_1 = 0;
-        word!(game.phantom_related_layer_flag, |fresh18| (fresh18
-            & !(0x4000)));
+        word!(game.phantom_related_layer_flag &= !(0x4000));
         (*Get_Phantoon(0xc0i32, game)).parameter_1 = -1i32 as u16;
         let EK = Get_Phantoon(k as i32, game);
         (*EK).var_F = ((0xa7db3di32) as u16);
@@ -3885,8 +3876,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (v0: u16, game: &mut Game)];
     [10999388] Phantoon_BecomesSolidAndBodyVuln [] {
         Phantoon_ChangeEyeSpriteBasedOnSamusDist(game);
-        word!(game.phantom_related_layer_flag, |fresh21| (fresh21
-            & !(0x4000)));
+        word!(game.phantom_related_layer_flag &= !(0x4000));
         Phantoon_BeginSwoopingPattern(v0, game);
         let E = Get_Phantoon(0, game);
         enemy_instruction! {[(*E).base]; timer = 1, instruction = addr_kKraid_Ilist_CC47 as u16}
@@ -3921,8 +3911,7 @@ crate::game::callback_dispatch! {
     };
     [10999048] Phantoon_SpawnFireballsBeforeFight {
         (*EK).var_B = 0;
-        word!(game.phantom_related_layer_flag, |fresh30| (fresh30)
-            | (0x4000u16));
+        word!(game.phantom_related_layer_flag |= (0x4000u16));
         (*EK).var_F = ((0xa7d54ai32) as u16);
         let E3 = Get_Phantoon(0xc0, game);
         (*E3).parameter_1 = -32767i32 as u16;
@@ -3974,8 +3963,7 @@ crate::game::callback_dispatch! {
             (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as u16;
             (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as u16;
             (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
-            word!(game.phantom_related_layer_flag, |fresh26| (fresh26)
-                | (0x4000u16));
+            word!(game.phantom_related_layer_flag |= (0x4000u16));
         }
     };
     [10999799] Phantoon_SpawnRainingFireballs {

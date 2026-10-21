@@ -10,10 +10,10 @@ use crate::game::sm_90::CallSomeSamusCode;
 
 const RomPtr_87: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x87>;
 pub unsafe fn EnableAnimtiles(game: &mut Game) {
-    word!(game.animtiles_enable_flag, |fresh9| (fresh9) | (0x8000u16));
+    word!(game.animtiles_enable_flag |= (0x8000u16));
 }
 pub unsafe fn DisableAnimtiles(game: &mut Game) {
-    word!(game.animtiles_enable_flag, |fresh8| (fresh8 & !(0x8000)));
+    word!(game.animtiles_enable_flag &= !(0x8000));
 }
 pub unsafe fn ClearAnimtiles(game: &mut Game) {
     word_transfers!(game, descending, 6; le(animtiles_ids, 5) <- value(0));
@@ -149,12 +149,10 @@ crate::game::callback_dispatch! {
         }
     };
     [8880969] AnimtilesInstr_TourianStatueSetState [(j).wrapping_add(2)] {
-        word!(game.tourian_entrance_statue_animstate, |fresh5| (fresh5)
-            | (*(RomPtr_87(j, game) as *mut u16)));
+        word!(game.tourian_entrance_statue_animstate |= (*(RomPtr_87(j, game) as *mut u16)));
     };
     [8880978] AnimtilesInstr_TourianStatueClearState [(j).wrapping_add(2)] {
-        word!(game.tourian_entrance_statue_animstate, |fresh4| (fresh4
-            & !(*(RomPtr_87(j, game) as *mut u16))));
+        word!(game.tourian_entrance_statue_animstate &= !(*(RomPtr_87(j, game) as *mut u16)));
     };
     [8880987] AnimtilesInstr_Clear3PaletteColors [] {
         let v2: i32 = *(RomPtr_87(j, game) as *mut u16) as i32 >> 1;

@@ -394,7 +394,7 @@ crate::game::callback_dispatch! {
         for _ in 0..16 {
             let v5: i32 = v4 as i32 >> 1;
             if (word!(game.palette_buffer[v5]) as i32 & 0x1f) - 31i32 & 0x8000 != 0 {
-                word!(game.palette_buffer[v5], wrapping_add(1057));
+                word!(game.palette_buffer[v5] += 1057);
                 v1 -= 1;
             }
             v4 = (v4).wrapping_add(2);
@@ -978,17 +978,10 @@ pub unsafe fn NorfairLavaMan_Func_5(k: u16, game: &mut Game) {
 }
 pub unsafe fn NorfairLavaMan_Func_6(game: &mut Game) {
     if word!(game.door_transition_flag_enemies) == 0 && {
-        word!(
-            game.variables_for_enemy_graphics_drawn_hook[2],
-            wrapping_sub(1),
-            reread
-        ) == 0
+        word!(game.variables_for_enemy_graphics_drawn_hook[2] -= 1, reread) == 0
     } {
         word!(game.variables_for_enemy_graphics_drawn_hook[2] = 8);
-        word!(
-            game.variables_for_enemy_graphics_drawn_hook[1],
-            wrapping_add(1)
-        );
+        word!(game.variables_for_enemy_graphics_drawn_hook[1] += 1);
         let v0: i32 = (32 * (word!(game.variables_for_enemy_graphics_drawn_hook[1]) as i32 & 3))
             as u16 as i32
             >> 1;
@@ -1487,12 +1480,7 @@ pub unsafe fn WreckedShipRobot_Func_1(game: &mut Game) {
     if word!(game.door_transition_flag_enemies) == 0
         && word!(game.wrecked_ship_robot_palanim_timer) != 0
     {
-        if word!(
-            game.wrecked_ship_robot_palanim_timer,
-            wrapping_sub(1),
-            reread
-        ) == 0
-        {
+        if word!(game.wrecked_ship_robot_palanim_timer -= 1, reread) == 0 {
             let mut v1: i32 = 0;
             let mut i: u16 = *(ram_ptr!(game, u16; 0xd656));
             loop {
@@ -1992,11 +1980,7 @@ crate::game::callback_dispatch! {
 }
 pub unsafe fn BlueBrinstarFaceBlock_Func_1(game: &mut Game) {
     if word!(game.door_transition_flag_enemies) == 0 && {
-        word!(
-            game.variables_for_enemy_graphics_drawn_hook[2],
-            wrapping_sub(1),
-            reread
-        ) == 0
+        word!(game.variables_for_enemy_graphics_drawn_hook[2] -= 1, reread) == 0
     } {
         word!(game.variables_for_enemy_graphics_drawn_hook[2] = 16);
         let mut v0: u16 = word!(game.variables_for_enemy_graphics_drawn_hook[0]);
@@ -2672,10 +2656,7 @@ crate::game::callback_dispatch! {
             let palette_index: u16 = (*E).base.palette_index;
             NormalEnemyTouchAi(game);
             if (*E).base.health == 0 {
-                word!(
-                    game.enemy_drawing_queue[((word!(game.cur_enemy_index) as i32 >> 1) + 97)],
-                    |fresh6| (fresh6) | (0x200u16)
-                );
+                word!(game.enemy_drawing_queue[((word!(game.cur_enemy_index) as i32 >> 1) + 97)] |= (0x200u16));
                 (*E).base.palette_index = palette_index;
                 MaridiaFloater_Func_1(word!(game.cur_enemy_index), game);
                 (*E).base.palette_index = 2560;
@@ -2689,14 +2670,12 @@ crate::game::callback_dispatch! {
             if ((*E).base.ai_handler_bits & 4) != 0 {
                 let v2: i32 = word!(game.cur_enemy_index) as i32 >> 1;
                 word!(game.enemy_drawing_queue[(v2 + 109)] = (*E).base.frozen_timer);
-                word!(game.enemy_drawing_queue[(v2 + 99)], |fresh4| (fresh4)
-                    | (4u16));
+                word!(game.enemy_drawing_queue[(v2 + 99)] |= (4u16));
             }
             if ((*E).base.ai_handler_bits & 2) != 0 {
                 let v3: i32 = word!(game.cur_enemy_index) as i32 >> 1;
                 word!(game.enemy_drawing_queue[(v3 + 108)] = (*E).base.flash_timer);
-                word!(game.enemy_drawing_queue[(v3 + 99)], |fresh5| (fresh5)
-                    | (2u16));
+                word!(game.enemy_drawing_queue[(v3 + 99)] |= (2u16));
             }
             if (*E).base.health == 0 {
                 (*E).var_F = ((0xa8c569i32) as u16);
@@ -2715,10 +2694,7 @@ crate::game::callback_dispatch! {
             word!(game.enemy_drawing_queue[(v1 + 109)] = (*E).base.frozen_timer);
             word!(game.enemy_drawing_queue[(v1 + 99)] = (*E).base.ai_handler_bits);
         } else {
-            word!(
-                game.enemy_drawing_queue[((word!(game.cur_enemy_index) as i32 >> 1) + 97)],
-                |fresh3| (fresh3) | (0x200u16)
-            );
+            word!(game.enemy_drawing_queue[((word!(game.cur_enemy_index) as i32 >> 1) + 97)] |= (0x200u16));
         };
     };
     [11062135] WreckedShipRobot_Init [] {
@@ -2874,10 +2850,7 @@ crate::game::callback_dispatch! {
         );
     };
     [11069198] WreckedShipSpark_Shot [] {
-        word!(
-            game.projectile_dir[word!(game.collision_detection_index)],
-            |fresh14| (fresh14 & !(0x10))
-        );
+        word!(game.projectile_dir[word!(game.collision_detection_index)] &= !(0x10));
     };
     [11069486] BlueBrinstarFaceBlock_Init [] {
         let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
@@ -2929,10 +2902,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11069725] BlueBrinstarFaceBlock_Shot [] {
-        word!(
-            game.projectile_dir[word!(game.collision_detection_index)],
-            |fresh1| (fresh1 & !(0x10))
-        );
+        word!(game.projectile_dir[word!(game.collision_detection_index)] &= !(0x10));
     };
     [11073281] KiHunter_Shot [] {
         NormalEnemyShotAi(game);
@@ -3903,8 +3873,7 @@ crate::game::callback_dispatch! {
     [11060639] MaridiaFloater_Func_13 {
         let v4: i32 = k as i32 >> 1;
         word!(game.enemy_drawing_queue[(v4 + 100)] = 0);
-        word!(game.enemy_drawing_queue[(v4 + 97)], |fresh2| (fresh2)
-            | (0x200u16));
+        word!(game.enemy_drawing_queue[(v4 + 97)] |= (0x200u16));
         MaridiaFloater_Func_1(k, game);
         let mut v5: u16 = 0;
         EnemyDeathAnimation(k, v5, game);

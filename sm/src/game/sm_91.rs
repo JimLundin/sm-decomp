@@ -148,8 +148,8 @@ pub unsafe fn Samus_Input_05_Crouching(game: &mut Game) {
     } else {
         Samus_LookupTransitionTable(game);
         if *ram_ptr!(game; 0xa1f) == 0 {
-            word!(game.samus_y_pos, wrapping_sub(5));
-            word!(game.samus_prev_y_pos, wrapping_sub(5));
+            word!(game.samus_y_pos -= 5);
+            word!(game.samus_prev_y_pos -= 5);
         }
     };
 }
@@ -300,7 +300,7 @@ pub fn EnableDemoInput(game: &mut Game) {
 }
 pub unsafe fn DisableDemoInput(game: &mut Game) {
     word!(game.samus_input_handler = ((0x90e913i32) as u16));
-    word!(game.demo_enable, |fresh1| (fresh1 & !(0x8000)));
+    word!(game.demo_enable &= !(0x8000));
 }
 pub fn ResetDemoData(game: &mut Game) {
     game.set_demo_input_pre_instr(0);
@@ -391,7 +391,7 @@ crate::game::callback_dispatch! {
     [0x91843f] DemoInstr_ClearPreInstr [j] { word!(game.demo_input_pre_instr = 0x8447); };
     [0x918448] DemoInstr_Goto [*(RomPtr_91(j, game) as *mut u16)] { };
     [0x91844f] DemoInstr_DecTimerAndGoto [] {
-        if word!(game.demo_timer_counter, wrapping_sub(1), reread) != 0 {
+        if word!(game.demo_timer_counter -= 1, reread) != 0 {
             DemoInstr_Goto(k, j, game)
         } else {
             (j).wrapping_add(2)
@@ -1106,7 +1106,7 @@ pub unsafe fn HdmaobjPreInstr_XraySetup(k: u16, game: &mut Game) {
         *(ram_ptr!(game, u16; 0x74, 1)) = 0x47;
         *(ram_ptr!(game, u16; 0x74, 2)) = 0x87;
     }
-    word!(game.fx_layer_blending_config_c, |fresh37| (fresh37) | (v1));
+    word!(game.fx_layer_blending_config_c |= (v1));
 }
 pub unsafe fn Xray_SetupStage8_SetBackdropColor(game: &mut Game) {
     word!(game.palette_buffer[0] = 3171);
@@ -1244,10 +1244,10 @@ pub unsafe fn HandleBeamChargePalettes(game: &mut Game) -> u8 {
                     game,
                 );
             }
-            word!(game.charged_shot_glow_timer, wrapping_sub(1));
+            word!(game.charged_shot_glow_timer -= 1);
             return 0;
         }
-        if word!(game.charged_shot_glow_timer, wrapping_sub(1), reread) != 0 {
+        if word!(game.charged_shot_glow_timer -= 1, reread) != 0 {
             word_transfers!(game, descending, 15; native(0xc19e) <- value(1023));
             0
         } else {
@@ -1382,13 +1382,10 @@ pub unsafe fn HandleMiscSamusPalette(game: &mut Game) {
                 ),
                 game,
             );
-            let v2: bool =
-                (word!(game.special_samus_palette_timer, wrapping_sub(1), reread) & 0x8000) != 0;
+            let v2: bool = (word!(game.special_samus_palette_timer -= 1, reread) & 0x8000) != 0;
             if word!(game.special_samus_palette_timer) == 0 || v2 {
                 word!(game.special_samus_palette_timer = word!(game.special_samus_palette_frame));
-                if word!(game.samus_charge_palette_index, wrapping_add(1), reread) as i32 - 10i32
-                    & 0x8000
-                    == 0
+                if word!(game.samus_charge_palette_index += 1, reread) as i32 - 10i32 & 0x8000 == 0
                 {
                     word!(game.samus_charge_palette_index = 0);
                 }
@@ -1406,7 +1403,7 @@ pub unsafe fn HandleMiscSamusPalette(game: &mut Game) {
             } else {
                 Samus_LoadSuitPalette(game);
             }
-            word!(game.samus_special_super_palette_flags, wrapping_add(1));
+            word!(game.samus_special_super_palette_flags += 1);
         }
     }
 }
@@ -1468,8 +1465,7 @@ pub unsafe fn Samus_HandleScrewAttackSpeedBoostingPals(game: &mut Game) -> u8 {
             if (word!(game.speed_boost_counter) & 0xff00) != 1024 {
                 return 1;
             }
-            let v3: bool =
-                (word!(game.special_samus_palette_timer, wrapping_sub(1), reread) & 0x8000) != 0;
+            let v3: bool = (word!(game.special_samus_palette_timer -= 1, reread) & 0x8000) != 0;
             if word!(game.special_samus_palette_timer) == 0 || v3 {
                 word!(game.special_samus_palette_timer = 4);
                 let R36_0: u16 = crate::rtl::rom_table_word!(
@@ -1526,7 +1522,7 @@ pub unsafe fn Samus_SpeedBoosterShinePals(game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn Samus_HandleShinesparkingPals(game: &mut Game) -> u8 {
-    let v0: bool = (word!(game.samus_shine_timer, wrapping_sub(1), reread) & 0x8000) != 0;
+    let v0: bool = (word!(game.samus_shine_timer -= 1, reread) & 0x8000) != 0;
     if word!(game.samus_shine_timer) == 0 || v0 {
         word! { game, 0; timer_for_shine_timer, special_samus_palette_frame }
         0
@@ -1558,7 +1554,7 @@ pub unsafe fn Samus_HandleCrystalFlashPals(game: &mut Game) -> u8 {
         }
         0
     } else {
-        if (word!(game.samus_shine_timer, wrapping_sub(1), reread) as i16) <= 0 {
+        if (word!(game.samus_shine_timer -= 1, reread) as i16) <= 0 {
             word!(game.samus_shine_timer = 5);
             Samus_Copy6PalColors(
                 crate::rtl::rom_table_word!(
@@ -1621,9 +1617,7 @@ pub unsafe fn Samus_HandleXrayPals(game: &mut Game) -> u8 {
     } else {
         if word!(game.demo_timer_counter) == 0 {
             if word!(game.demo_input_pre_instr) as i32 - 2i32 & 0x8000 != 0 {
-                let v0: bool = (word!(game.special_samus_palette_timer, wrapping_sub(1), reread)
-                    & 0x8000)
-                    != 0;
+                let v0: bool = (word!(game.special_samus_palette_timer -= 1, reread) & 0x8000) != 0;
                 if word!(game.special_samus_palette_timer) == 0 || v0 {
                     word!(game.special_samus_palette_timer = 5);
                     word!(
@@ -1634,7 +1628,7 @@ pub unsafe fn Samus_HandleXrayPals(game: &mut Game) -> u8 {
                         )
                     );
                     if word!(game.special_samus_palette_frame) as i32 - 4i32 & 0x8000 != 0 {
-                        word!(game.special_samus_palette_frame, wrapping_add(2));
+                        word!(game.special_samus_palette_frame += 2);
                     }
                 }
                 return 1;
@@ -1642,8 +1636,7 @@ pub unsafe fn Samus_HandleXrayPals(game: &mut Game) -> u8 {
             word!(game.special_samus_palette_frame = 6);
             word! { game, 1; special_samus_palette_timer, demo_timer_counter }
         }
-        let v2: bool =
-            (word!(game.special_samus_palette_timer, wrapping_sub(1), reread) & 0x8000) != 0;
+        let v2: bool = (word!(game.special_samus_palette_timer -= 1, reread) & 0x8000) != 0;
         if word!(game.special_samus_palette_timer) != 0 && !v2 {
             return 1;
         }
@@ -1953,7 +1946,7 @@ pub unsafe fn ResponsibleForXrayStandupGlitch(game: &mut Game) {
     .y_radius) as u16)
         .wrapping_sub(word!(game.samus_y_radius));
     if (r18 & 0x8000) == 0 {
-        word!(game.samus_y_pos, wrapping_sub(r18));
+        word!(game.samus_y_pos -= r18);
         word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
     }
     EnableEprojs(game);
@@ -1969,7 +1962,7 @@ pub unsafe fn MakeSamusFaceForward(game: &mut Game) {
     }
     crate::game::samus_pose::finish_pose_change(game);
     if word!(game.samus_y_radius) != 24 {
-        word!(game.samus_y_pos, wrapping_sub(3));
+        word!(game.samus_y_pos -= 3);
         word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
     }
     word! {game; frame_handler_alfa = ((0x90e713i32) as u16);
@@ -2004,8 +1997,8 @@ pub unsafe fn SomeMotherBrainScripts(a: u16, game: &mut Game) {
 }
 pub unsafe fn SomeMotherBrainScripts_0(game: &mut Game) -> u8 {
     word!(
-        game.samus_y_pos,
-        |fresh27| (fresh27 as i32 - (21 - word!(game.samus_y_radius) as i32)) as u16
+        checked_i32,
+        game.samus_y_pos -= (21 - word!(game.samus_y_radius) as i32)
     );
     word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
     if *ram_ptr!(game; 0xa1e) == 4 {
@@ -2543,8 +2536,7 @@ pub unsafe fn Samus_HandleTransitionsA_7(game: &mut Game) {
         );
         amt = Samus_CollDetectChangedPose(amt, game);
     }
-    word!(game.samus_y_pos, |fresh40| (fresh40 as i32 + (amt >> 16))
-        as u16);
+    word!(checked_i32, game.samus_y_pos += (amt >> 16));
     word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
     if word!(game.used_for_ball_bounce_on_landing) != 0 {
         word! { game, 0;
@@ -2674,7 +2666,7 @@ pub unsafe fn Samus_HandleTransitionsB_5(game: &mut Game) {
     };
 }
 pub unsafe fn Samus_HandleTransitionsB_8(game: &mut Game) {
-    word!(game.samus_y_pos, wrapping_sub(5));
+    word!(game.samus_y_pos -= 5);
     word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
     word!(game.frame_handler_alfa = ((0x90e8cdi32) as u16));
 }
@@ -2922,7 +2914,7 @@ pub unsafe fn Samus_MorphBallBounceNoSpringballTrans(game: &mut Game) -> u8 {
     let mut v0: i16 = (2i16).wrapping_mul((word!(game.used_for_ball_bounce_on_landing)) as i16);
     if 2 * word!(game.used_for_ball_bounce_on_landing) as i32 != 0 {
         if v0 == 2 {
-            word!(game.used_for_ball_bounce_on_landing, wrapping_add(1));
+            word!(game.used_for_ball_bounce_on_landing += 1);
             word! {game; samus_y_dir = 1; samus_y_subspeed = g_word_909EB7;
             samus_y_speed = (g_word_909EB5).wrapping_sub(1); }
             return 1;
@@ -2931,7 +2923,7 @@ pub unsafe fn Samus_MorphBallBounceNoSpringballTrans(game: &mut Game) -> u8 {
             Unreachable(game);
         }
     } else if word!(game.samus_y_speed) as i32 - 3i32 & 0x8000 == 0 {
-        word!(game.used_for_ball_bounce_on_landing, wrapping_add(1));
+        word!(game.used_for_ball_bounce_on_landing += 1);
         word! {game; samus_y_dir = 1; samus_y_subspeed = g_word_909EB7;
         samus_y_speed = g_word_909EB5; }
         return 1;
@@ -3010,10 +3002,7 @@ pub unsafe fn Samus_HandleTransitionsC_2(game: &mut Game) {
 }
 pub unsafe fn Samus_HandleTransitionsC_3(game: &mut Game) {
     word!(game.used_for_ball_bounce_on_landing = 0);
-    word!(
-        game.samus_anim_frame_timer,
-        wrapping_add(word!(game.samus_anim_frame_buffer))
-    );
+    word!(game.samus_anim_frame_timer += word!(game.samus_anim_frame_buffer));
 }
 pub unsafe fn Samus_HandleTransitionsC_4(game: &mut Game) {
     word!(game.samus_x_pos = (word!(game.layer1_x_pos)).wrapping_add(128));
@@ -3022,7 +3011,7 @@ pub unsafe fn Samus_HandleTransitionsC_4(game: &mut Game) {
     word!(game.samus_prev_y_pos = (word!(game.layer1_y_pos)).wrapping_add(128));
 }
 pub unsafe fn Samus_HandleTransitionsC_5(game: &mut Game) {
-    word!(game.samus_y_pos, wrapping_add(5));
+    word!(game.samus_y_pos += 5);
     word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
 }
 pub unsafe fn Samus_HandleTransitionsC_6(game: &mut Game) {
@@ -3143,7 +3132,7 @@ pub unsafe fn SamusFunc_F468_NormalJump(game: &mut Game) -> u8 {
             word!(game.samus_pose = pose as u16);
             Projectile_Func7_Shinespark(game);
             if *ram_ptr!(game; 0xa23) as i32 == kMovementType_02_NormalJumping as i32 {
-                word!(game.samus_prev_y_pos = word!(game.samus_y_pos, wrapping_sub(1), reread));
+                word!(game.samus_prev_y_pos = word!(game.samus_y_pos -= 1, reread));
             }
             return 1;
         }
@@ -3550,7 +3539,7 @@ pub unsafe fn HandleJumpTransition_NormalJump(game: &mut Game) {
         if word!(game.samus_prev_pose) as i32 == kPose_27_FaceR_Crouch as i32
             || word!(game.samus_prev_pose) as i32 == kPose_28_FaceL_Crouch as i32
         {
-            word!(game.samus_y_pos, wrapping_sub(10));
+            word!(game.samus_y_pos -= 10);
         }
         Samus_InitJump(game);
     }
@@ -3655,8 +3644,7 @@ pub unsafe fn HandleCollDueToChangedPose(game: &mut Game) {
     word!(game.samus_collision_flag = cres.collision);
     amt = cres.amt;
     if word!(game.samus_collision_flag) != 0 {
-        word!(game.solid_enemy_collision_flags, |fresh11| (fresh11)
-            | (2u16));
+        word!(game.solid_enemy_collision_flags |= (2u16));
     }
     word!(game.samus_space_to_move_down_enemy = (amt >> 16) as u16);
     if off_91FE8A[word!(game.solid_enemy_collision_flags) as usize](game) != 0 {
@@ -3673,7 +3661,7 @@ pub unsafe fn HandleCollDueToChangedPose(game: &mut Game) {
     word!(game.samus_space_to_move_up_blocks = (amt >> 16) as u16);
     amt = Samus_CollDetectChangedPose((word!(game.samus_y_radius_diff) as i16 as i32) << 16, game);
     if word!(game.samus_collision_flag) != 0 {
-        word!(game.block_collision_flags, |fresh12| (fresh12) | (2u16));
+        word!(game.block_collision_flags |= (2u16));
     }
     word!(game.samus_space_to_move_down_blocks = (amt >> 16) as u16);
     if off_91FE92[word!(game.block_collision_flags) as usize](game) != 0 {
@@ -3728,8 +3716,7 @@ pub unsafe fn HandleCollDueToChangedPose_Block_CollAbove(game: &mut Game) -> u8 
     if (word!(game.solid_enemy_collision_flags) & 2) != 0 {
         return HandleCollDueToChangedPose_Block_CollBoth(game);
     }
-    word!(game.samus_y_pos, |fresh5| (fresh5 as i32 + (amt >> 16))
-        as u16);
+    word!(checked_i32, game.samus_y_pos += (amt >> 16));
     word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
     0
 }
@@ -3746,8 +3733,7 @@ pub unsafe fn HandleCollDueToChangedPose_Block_CollBelow(game: &mut Game) -> u8 
     if (word!(game.solid_enemy_collision_flags) & 1) != 0 {
         return HandleCollDueToChangedPose_Block_CollBoth(game);
     }
-    word!(game.samus_y_pos, |fresh7| (fresh7 as i32 - (amt >> 16))
-        as u16);
+    word!(checked_i32, game.samus_y_pos -= (amt >> 16));
     word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
     0
 }
@@ -3755,18 +3741,12 @@ pub unsafe fn HandleCollDueToChangedPose_Block_NoColl(game: &mut Game) -> u8 {
     match word!(game.solid_enemy_collision_flags) as i32 {
         0 => 0,
         1 => {
-            word!(
-                game.samus_y_pos,
-                wrapping_add(word!(game.samus_space_to_move_up_enemy))
-            );
+            word!(game.samus_y_pos += word!(game.samus_space_to_move_up_enemy));
             word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
             0
         }
         2 => {
-            word!(
-                game.samus_y_pos,
-                wrapping_sub(word!(game.samus_space_to_move_down_enemy))
-            );
+            word!(game.samus_y_pos -= word!(game.samus_space_to_move_down_enemy));
             word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
             0
         }
@@ -3792,9 +3772,10 @@ pub unsafe fn HandleCollDueToChangedPose_Block_CollBoth(game: &mut Game) -> u8 {
         .offset(word!(game.samus_pose) as isize))
     .y_radius as u16;
     if word!(game.samus_y_radius) as i32 - r18 as i32 & 0x8000 != 0 {
-        word!(game.samus_y_pos, |fresh6| (fresh6 as i32
-            + (word!(game.samus_y_radius) as i32 - r18 as i32))
-            as u16);
+        word!(
+            checked_i32,
+            game.samus_y_pos += (word!(game.samus_y_radius) as i32 - r18 as i32)
+        );
         word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
     }
     0

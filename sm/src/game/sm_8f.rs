@@ -498,11 +498,11 @@ crate::game::callback_dispatch! {
     [9421088] RoomCode_ScrollingSkyLand_Shakes [] {
         RoomCode_ScrollingSkyLand(game);
         RoomCode_GenRandomExplodes_Nonblank(game);
-        word!(game.earthquake_timer, |fresh17| (fresh17) | (0x8000u16));
+        word!(game.earthquake_timer |= (0x8000u16));
     };
     [9421092] RoomCode_ExplodeShakes [] {
         RoomCode_GenRandomExplodes_Nonblank(game);
-        word!(game.earthquake_timer, |fresh16| (fresh16) | (0x8000u16));
+        word!(game.earthquake_timer |= (0x8000u16));
     };
     [9430432] RoomCode_GenRandomExplodes_4th [] {
         if word!(game.time_is_frozen_flag) == 0 && (word!(game.nmi_frame_counter_word) & 3) == 0 {
@@ -519,9 +519,7 @@ crate::game::callback_dispatch! {
             && word!(game.layer1_y_pos) < 0x500
             && word!(game.layer1_x_pos) < 0x380
         {
-            word!(game.layer1_x_pos, |fresh15| (fresh15 as i32
-                + ((word!(game.layer1_x_pos) >= 0x380) as i32 + 3))
-                as u16);
+            word!(checked_i32, game.layer1_x_pos += ((word!(game.layer1_x_pos) >= 0x380) as i32 + 3));
         }
     };
     [9429686] RoomCode_Elevatube [] {
@@ -609,7 +607,7 @@ crate::game::callback_dispatch! {
                 } else {
                     ai_var_D = (*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).ai_var_D;
                 }
-                word!(game.reg_BG1VOFS, wrapping_add(ai_var_D));
+                word!(game.reg_BG1VOFS += ai_var_D);
                 word!(game.reg_BG2VOFS = (ai_var_D).wrapping_sub(48));
             } else if (*(ram_ptr!(game, EnemyData; 0xf78))).ai_var_C == 34
                 && (*(ram_ptr!(game, EnemyData; 0xf78))).ai_var_D != 0
@@ -617,9 +615,9 @@ crate::game::callback_dispatch! {
                 let fresh7 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78))).ai_var_D;
                 fresh7.write_unaligned(fresh7.read_unaligned().wrapping_sub(1));
                 if ((*(ram_ptr!(game, EnemyData; 0xf78))).ai_var_D & 1) != 0 {
-                    word!(game.layer1_x_pos, wrapping_sub(4));
+                    word!(game.layer1_x_pos -= 4);
                 } else {
-                    word!(game.layer1_x_pos, wrapping_add(4));
+                    word!(game.layer1_x_pos += 4);
                 }
             }
         }
@@ -630,22 +628,10 @@ crate::game::callback_dispatch! {
             let fresh0 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78)).offset(4)).ai_var_A;
             fresh0.write_unaligned(fresh0.read_unaligned().wrapping_sub(1));
             let v1: i32 = ai_var_A as i32 - 1i32;
-            word!(
-                game.reg_BG1HOFS,
-                wrapping_add((kRoomCode_RidleyRoomShaking_X[v1 as usize]) as u16)
-            );
-            word!(
-                game.reg_BG2HOFS,
-                wrapping_add((kRoomCode_RidleyRoomShaking_X[v1 as usize]) as u16)
-            );
-            word!(
-                game.reg_BG1VOFS,
-                wrapping_add((kRoomCode_RidleyRoomShaking_Y[v1 as usize]) as u16)
-            );
-            word!(
-                game.reg_BG2VOFS,
-                wrapping_add((kRoomCode_RidleyRoomShaking_Y[v1 as usize]) as u16)
-            );
+            word!(game.reg_BG1HOFS += (kRoomCode_RidleyRoomShaking_X[v1 as usize]) as u16);
+            word!(game.reg_BG2HOFS += (kRoomCode_RidleyRoomShaking_X[v1 as usize]) as u16);
+            word!(game.reg_BG1VOFS += (kRoomCode_RidleyRoomShaking_Y[v1 as usize]) as u16);
+            word!(game.reg_BG2VOFS += (kRoomCode_RidleyRoomShaking_Y[v1 as usize]) as u16);
         }
     };
     @forward [pub unsafe fn (game: &mut Game)];

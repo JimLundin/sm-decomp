@@ -660,7 +660,7 @@ crate::game::callback_dispatch! {
     };
     [11121468] MotherBrain_Phase3_Death_21_KeepEarthquakeGoing [] {
         if word!(game.earthquake_timer) == 0 {
-            word!(game.earthquake_timer, wrapping_sub(1));
+            word!(game.earthquake_timer -= 1);
         }
     };
     [11122561] MotherBrain_FiringBomb_DecideOnWalking [] {
@@ -1056,7 +1056,7 @@ crate::game::callback_dispatch! {
     [11112013] MotherBrainBody_FakeDeath_Ascent_13_Raise [] {
         if !((word!(game.nmi_frame_counter_word) & 3) != 0 || {
             MotherBrain_SpawnDustCloudsForAscent(game);
-            word!(game.reg_BG2VOFS, wrapping_add(2));
+            word!(game.reg_BG2VOFS += 2);
             let mut v1: u16 = ((*E).base.y_pos).wrapping_sub(2);
             (*E).base.y_pos = v1;
             v1 >= 0xbd
@@ -1155,10 +1155,7 @@ crate::game::callback_dispatch! {
                 as u16)
                 & (7u16);
             if g_byte_A9B546[v1 as usize] != 0 {
-                word!(
-                    game.plm_room_arguments[39],
-                    wrapping_add((g_byte_A9B546[v1 as usize]) as u16)
-                );
+                word!(game.plm_room_arguments[39] += (g_byte_A9B546[v1 as usize]) as u16);
                 QueueSfx2_Max6(0x6e, game);
                 let mut v2: i16 = 13;
                 let E1 = Get_MotherBrain(0x40, game);
@@ -2107,10 +2104,8 @@ pub unsafe fn MotherBrain_AddSpritemapToOam(j: u16, r18: u16, r20: u16, r22: u16
             (*oam).xcoord = x as u8;
             (*oam).ycoord = y as u8;
             *(&raw mut (*oam).charnum as *mut u16) = (r22) | (*(p.offset(3) as *mut u16));
-            word!(game.oam_ext[(idx >> 5)], |fresh6| (fresh6 as i32
-                | ((x as i32 & 0x100) >> 8 | (*(p as *mut i16) < 0) as i32 * 2)
-                    << 2 * (idx >> 2 & 7))
-                as u16);
+            word!(bits_i32, game.oam_ext[(idx >> 5)] |= ((x as i32 & 0x100) >> 8 | (*(p as *mut i16) < 0) as i32 * 2)
+                    << 2 * (idx >> 2 & 7));
             idx = idx + 4 & 0x1ff;
         }
         p = p.offset(5);
@@ -2124,13 +2119,13 @@ pub unsafe fn MotherBrain_CalculateRainbowBeamHdma(game: &mut Game) {
 pub unsafe fn MotherBrain_MoveBodyDownScrollLeft(k: u16, a: u16, game: &mut Game) {
     let E = Get_MotherBrain(0, game);
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(a);
-    word!(game.reg_BG2VOFS, wrapping_sub(a));
+    word!(game.reg_BG2VOFS -= a);
     word!(game.reg_BG2HOFS = (k as i32 + 34 - (*E).base.x_pos as i32) as u16);
 }
 pub unsafe fn MotherBrain_MoveBodyDown(a: u16, game: &mut Game) {
     let E = Get_MotherBrain(0, game);
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(a);
-    word!(game.reg_BG2VOFS, wrapping_sub(a));
+    word!(game.reg_BG2VOFS -= a);
     word!(game.reg_BG2HOFS = (34u16).wrapping_sub((*E).base.x_pos));
 }
 pub unsafe fn MotherBrain_FootstepEffect(game: &mut Game) {
@@ -2972,7 +2967,7 @@ pub unsafe fn Samus_DamageDueToRainbowBeam(game: &mut Game) {
 }
 pub unsafe fn Samus_HealDueToShitroid(game: &mut Game) -> u8 {
     if ((word!(game.samus_health) as i32 + 1 - word!(game.samus_max_health) as i32) as i16) < 0 {
-        word!(game.samus_health, wrapping_add(1));
+        word!(game.samus_health += 1);
         Samus_PlayGainingLosingHealthSfx(game);
         1
     } else {

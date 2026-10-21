@@ -43,7 +43,7 @@ pub unsafe fn PlaySamusFanfare(game: &mut Game) -> u8 {
         QueueMusic_DelayedY(1, 0xe, game);
     }
     if word!(game.substate) as i32 - 359i32 & 0x8000 != 0 {
-        word!(game.substate, wrapping_add(1));
+        word!(game.substate += 1);
         0
     } else {
         crate::game::samus_pose::record_pose_history(game);

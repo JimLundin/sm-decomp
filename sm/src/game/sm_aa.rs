@@ -356,7 +356,7 @@ pub unsafe fn Torizo_D6A6(game: &mut Game) {
     }
 }
 pub unsafe fn Torizo_D6D1(k: u16, j: u16, game: &mut Game) {
-    word!(game.projectile_dir[(j >> 1)], |fresh1| (fresh1 & !(0x10)));
+    word!(game.projectile_dir[(j >> 1)] &= !(0x10));
     let E = Get_Torizo(k as i32, game);
     (*E).var_E = ((0xaac6abi32) as u16);
     (*E).base.instruction_timer = 1;
@@ -372,7 +372,7 @@ pub unsafe fn Torizo_D6F7(k: u16, j: u16, game: &mut Game) {
     if (Torizo_Func_12(k, game) & 0x8000) == 0 {
         (*E).parameter_2 = ((*E).parameter_2) | (0x1000u16);
         (*E).var_E = ((0xaac6abi32) as u16);
-        word!(game.projectile_dir[(j >> 1)], |fresh0| (fresh0) | (0x10u16));
+        word!(game.projectile_dir[(j >> 1)] |= (0x10u16));
         (*E).base.instruction_timer = 1;
         let mut v3: u16 = if ((*E).parameter_1 & 0x2000) != 0 {
             if ((*E).parameter_1 & 0x8000) != 0 {

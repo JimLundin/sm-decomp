@@ -309,10 +309,7 @@ unsafe fn travel(p: &Motion, positive: bool, game: &mut Game) {
 unsafe fn push_samus(positive: bool, game: &mut Game) {
     let key = if positive { 0x200 } else { 0x100 };
     if word!(game.joypad1_lastkeys) & key != 0 {
-        word!(
-            game.extra_samus_x_displacement,
-            wrapping_add(if positive { 4 } else { -4i16 as u16 })
-        );
+        word!(game.extra_samus_x_displacement += if positive { 4 } else { -4i16 as u16 });
         word!(game.extra_samus_y_subdisplacement = 0);
     }
 }
@@ -432,7 +429,7 @@ unsafe fn update_timed(game: &mut Game) {
             if opening && CheckIfEnemyTouchesSamus(word!(game.cur_enemy_index), game) != 0 {
                 let displacement = (*e).base.y_pos.wrapping_sub((*e).var_40);
                 if (displacement as i16) < 0 {
-                    word!(game.extra_samus_y_displacement, wrapping_add(displacement));
+                    word!(game.extra_samus_y_displacement += displacement);
                 }
             }
         }

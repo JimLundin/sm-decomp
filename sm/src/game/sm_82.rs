@@ -315,7 +315,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                 *resume_state = stage;
                 return yielded;
             }
-            word!(game.loop_counter_transfer_enemies_to_vram, wrapping_sub(1));
+            word!(game.loop_counter_transfer_enemies_to_vram -= 1);
             if (word!(game.loop_counter_transfer_enemies_to_vram) & 0x8000) != 0 {
                 break;
             }
@@ -332,10 +332,10 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                 ))
                 .demo_code_ptr;
                 CallDemoRoomDataFunc(((r18) as u32) | (0x820000u32), game);
-                word!(game.game_state, wrapping_add(1));
+                word!(game.game_state += 1);
             }
             3 => {
-                word!(game.game_state, wrapping_add(1));
+                word!(game.game_state += 1);
             }
             _ => {
                 word!(game.game_state = kGameState_7_MainGameplayFadeIn as u16);
@@ -421,14 +421,9 @@ pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRe
     if _coret_ != 0 {
         return _coret_;
     }
-    let v0: bool = (word!(
-        game.reached_ceres_elevator_fade_timer,
-        wrapping_sub(1),
-        reread
-    ) & 0x8000)
-        != 0;
+    let v0: bool = (word!(game.reached_ceres_elevator_fade_timer -= 1, reread) & 0x8000) != 0;
     if word!(game.reached_ceres_elevator_fade_timer) == 0 || v0 {
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
         word! { game, 0; screen_fade_delay, screen_fade_counter }
     }
     kCoroutineNone as CoroutineRet
@@ -544,7 +539,7 @@ pub unsafe fn GameState_41_TransitionToDemo(game: &mut Game) -> CoroutineRet {
         return _coret_;
     }
     HdmaObjectHandler(game);
-    word!(game.game_state, wrapping_add(1));
+    word!(game.game_state += 1);
     *ram_ptr!(game; 0x51) = 15;
     kCoroutineNone as CoroutineRet
 }
@@ -567,13 +562,13 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
                     word!(game.substate = 1);
                     break 'finish_demo;
                 }
-                word!(game.demo_timer, wrapping_sub(1));
+                word!(game.demo_timer -= 1);
                 if !(word!(game.demo_timer) == 0 || (word!(game.demo_timer) & 0x8000) != 0) {
                     break 'done;
                 }
                 word! {game; substate = 0; my_counter = 90; }
             }
-            do_until! { word!(game.my_counter, wrapping_sub(1), reread) == 0;
+            do_until! { word!(game.my_counter -= 1, reread) == 0;
                 let yielded: u8 = WaitForNMI_Async(game);
                 if yielded != 0 {
                     *resume_state = 1;
@@ -585,7 +580,7 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
                 }
             }
         }
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
         word!(game.debug_disable_sounds = 0);
         *ram_ptr!(game; 0x51) = 0x80;
         word! { game, 1; screen_fade_delay, screen_fade_counter }
@@ -598,7 +593,7 @@ pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
         CheckForNextDemo(game);
     }
     EnableNMI(game);
-    word!(game.game_state, wrapping_add(1));
+    word!(game.game_state += 1);
     word! { game, 0; screen_fade_delay, screen_fade_counter }
     WaitUntilEndOfVblankAndClearHdma(game);
     DisableIrqInterrupts(game);
@@ -672,7 +667,7 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
     byte!(@pointer ram_ptr!(game, u16; 0x79f); 0) =
         (*get_RoomDefHeader(word!(game.room_ptr), game)).area_index_;
     word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
-    word!(game.demo_scene, wrapping_add(1));
+    word!(game.demo_scene += 1);
     let mut v1: u16 = 0;
     word_transfers!(game, ascending, 4;
         native(0xd830) <- value(-1i32 as u16),
@@ -870,7 +865,7 @@ pub unsafe fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
     if word!(game.num_demo_sets) == 4 {
         word!(game.demo_set = 3);
     }
-    word!(game.game_state, wrapping_add(1));
+    word!(game.game_state += 1);
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_1_OpeningCinematic(game: &mut Game) -> CoroutineRet {
@@ -891,7 +886,7 @@ pub unsafe fn GameState_7_MainGameplayFadeIn(game: &mut Game) -> CoroutineRet {
     HandleFadeIn(game);
     if *ram_ptr!(game; 0x51) == 15 {
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
     }
     kCoroutineNone as CoroutineRet
 }
@@ -1063,10 +1058,10 @@ crate::game::callback_dispatch! {
                 }
             }
             9 => {
-                word!(game.eproj_x_vel[((k as i32 >> 1) + 3)], wrapping_sub(2));
+                word!(game.eproj_x_vel[((k as i32 >> 1) + 3)] -= 2);
             }
             10 => {
-                word!(game.eproj_x_vel[((k as i32 >> 1) + 3)], wrapping_add(2));
+                word!(game.eproj_x_vel[((k as i32 >> 1) + 3)] += 2);
             }
             _ => {}
         };
@@ -1175,7 +1170,7 @@ pub unsafe fn GameState_12_Pausing_Darkening_Async(game: &mut Game) -> Coroutine
     if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
         EnableNMI(game);
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
     }
     kCoroutineNone as CoroutineRet
 }
@@ -1215,7 +1210,7 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
     word! {game; pausemenu_leftarrow_animation_frame = 0; pausemenu_palette_animation_timer = 1; }
     word! { game, 0; map_scrolling_direction, map_scrolling_speed_index }
     QueueClearingOfFxTilemap(game);
-    word!(game.game_state, wrapping_add(1));
+    word!(game.game_state += 1);
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn BackupBG2TilemapForPauseMenu(game: &mut Game) {
@@ -1342,11 +1337,11 @@ pub unsafe fn SetupMapScrollingForFileSelectMap(game: &mut Game) {
     if (224i16).wrapping_sub((r18) as i16) >= 0 {
         r18 = (32u16).wrapping_sub(r18);
         if (r18 & 0x8000) == 0 {
-            word!(game.reg_BG1HOFS, wrapping_sub(r18));
+            word!(game.reg_BG1HOFS -= r18);
         }
     } else {
         r18 = (224u16).wrapping_sub(r18);
-        word!(game.reg_BG1HOFS, wrapping_sub((v0) as u16));
+        word!(game.reg_BG1HOFS -= (v0) as u16);
     }
     r18 = (word!(game.map_min_y_scroll) as i32
         + (((word!(game.map_max_y_scroll)).wrapping_sub(word!(game.map_min_y_scroll))) as i32 >> 1)
@@ -1360,7 +1355,7 @@ pub unsafe fn SetupMapScrollingForFileSelectMap(game: &mut Game) {
     let v1: i16 = (64i16).wrapping_sub((r18) as i16);
     if (64i16).wrapping_sub((r18) as i16) >= 0 {
         r18 = (64u16).wrapping_sub(r18);
-        word!(game.reg_BG1VOFS, wrapping_sub((v1) as u16));
+        word!(game.reg_BG1VOFS -= (v1) as u16);
         if word!(game.reg_BG1VOFS) as i32 + 40 & 0x8000 != 0 {
             word!(game.reg_BG1VOFS = -40i32 as u16);
         }
@@ -1371,7 +1366,7 @@ pub unsafe fn GameState_14_Paused_Async(game: &mut Game) -> CoroutineRet {
     HandleFadeIn(game);
     if *ram_ptr!(game; 0x51) == 15 {
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
     }
     kCoroutineNone as CoroutineRet
 }
@@ -1417,7 +1412,7 @@ pub unsafe fn PauseMenu_2(game: &mut Game) {
     if *ram_ptr!(game; 0x51) == 0x80 {
         EnableNMI(game);
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.menu_index, wrapping_add(1));
+        word!(game.menu_index += 1);
     }
 }
 pub unsafe fn PauseMenu_5(game: &mut Game) {
@@ -1428,7 +1423,7 @@ pub unsafe fn PauseMenu_5(game: &mut Game) {
     if *ram_ptr!(game; 0x51) == 0x80 {
         EnableNMI(game);
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.menu_index, wrapping_add(1));
+        word!(game.menu_index += 1);
     }
 }
 pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
@@ -1440,7 +1435,7 @@ pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
     word!(game.pausemenu_lr_animation_frame = 0);
     word!(game.pausemenu_lr_animation_timer = *(rom_ptr!(game, u8; 0x82c10c) as *mut u16));
     word! { game, 1; screen_fade_delay, screen_fade_counter }
-    word!(game.menu_index, wrapping_add(1));
+    word!(game.menu_index += 1);
 }
 pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
     DisplayMapElevatorDestinations(game);
@@ -1450,7 +1445,7 @@ pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
     word!(game.pausemenu_lr_animation_timer = *(rom_ptr!(game, u8; 0x82c10c) as *mut u16));
     word! { game, 1; screen_fade_delay, screen_fade_counter }
     word!(game.pause_screen_mode = 0);
-    word!(game.menu_index, wrapping_add(1));
+    word!(game.menu_index += 1);
 }
 pub unsafe fn PauseMenu_7_EquipmentToMap_FadeIn(game: &mut Game) {
     MapScreenDrawSamusPositionIndicator(game);
@@ -1503,39 +1498,39 @@ static kMapScrollingSpeedTable: [u16; 32] = [
 ];
 pub unsafe fn MapScrolling_1_Left(game: &mut Game) {
     word!(
-        game.reg_BG1HOFS,
-        wrapping_sub(kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) >> 1) as usize])
+        game.reg_BG1HOFS -=
+            kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) >> 1) as usize]
     );
     MapScrolling_Common(game);
 }
 pub unsafe fn MapScrolling_Common(game: &mut Game) {
-    word!(game.map_scrolling_speed_index, wrapping_add(1));
-    if (word!(game.map_scrolling_speed_index, wrapping_add(1), reread) & 0xf) == 0 {
+    word!(game.map_scrolling_speed_index += 1);
+    if (word!(game.map_scrolling_speed_index += 1, reread) & 0xf) == 0 {
         QueueSfx1_Max6(0x36, game);
         word! { game, 0; map_scrolling_direction, map_scrolling_speed_index }
         if word!(game.map_scrolling_gear_switch_timer) != 0 {
-            word!(game.map_scrolling_gear_switch_timer, wrapping_sub(1));
+            word!(game.map_scrolling_gear_switch_timer -= 1);
         }
     }
 }
 pub unsafe fn MapScrolling_2_Right(game: &mut Game) {
     word!(
-        game.reg_BG1HOFS,
-        wrapping_add(kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) >> 1) as usize])
+        game.reg_BG1HOFS +=
+            kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) >> 1) as usize]
     );
     MapScrolling_Common(game);
 }
 pub unsafe fn MapScrolling_3_Up(game: &mut Game) {
     word!(
-        game.reg_BG1VOFS,
-        wrapping_sub(kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) >> 1) as usize])
+        game.reg_BG1VOFS -=
+            kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) >> 1) as usize]
     );
     MapScrolling_Common(game);
 }
 pub unsafe fn MapScrolling_4_Down(game: &mut Game) {
     word!(
-        game.reg_BG1VOFS,
-        wrapping_add(kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) >> 1) as usize])
+        game.reg_BG1VOFS +=
+            kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) >> 1) as usize]
     );
     MapScrolling_Common(game);
 }
@@ -1546,7 +1541,7 @@ pub unsafe fn GameState_16_Unpausing_Async(game: &mut Game) -> CoroutineRet {
     if *ram_ptr!(game; 0x51) == 0x80 {
         EnableNMI(game);
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
     }
     kCoroutineNone as CoroutineRet
 }
@@ -1586,7 +1581,7 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
         EnableHdmaObjects(game);
         EnableAnimtiles(game);
         QueueSamusMovementSfx(game);
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
     }
     *_state_variable_ = 0;
     0 as CoroutineRet
@@ -1814,11 +1809,11 @@ pub unsafe fn SetupMapScrollingForPauseMenu(a: u16, game: &mut Game) {
     if (224i16).wrapping_sub((r18) as i16) >= 0 {
         r18 = (32u16).wrapping_sub(r18);
         if (r18 & 0x8000) == 0 {
-            word!(game.reg_BG1HOFS, wrapping_sub(r18));
+            word!(game.reg_BG1HOFS -= r18);
         }
     } else {
         r18 = (224u16).wrapping_sub(r18);
-        word!(game.reg_BG1HOFS, wrapping_sub((v1) as u16));
+        word!(game.reg_BG1HOFS -= (v1) as u16);
     }
     r18 = (word!(game.map_min_y_scroll) as i32
         + (((word!(game.map_max_y_scroll)).wrapping_sub(word!(game.map_min_y_scroll))) as i32 >> 1)
@@ -1831,7 +1826,7 @@ pub unsafe fn SetupMapScrollingForPauseMenu(a: u16, game: &mut Game) {
         + (a as i32 - r18 as i32 & 0xfff8)) as u16;
     let mut v2: i16 = (64i16).wrapping_sub((r18) as i16);
     if v2 >= 0 {
-        word!(game.reg_BG1VOFS, wrapping_sub((v2) as u16));
+        word!(game.reg_BG1VOFS -= (v2) as u16);
         if word!(game.reg_BG1VOFS) as i32 + 40 & 0x8000 != 0 {
             word!(game.reg_BG1VOFS = -40i32 as u16);
         }
@@ -1859,7 +1854,7 @@ pub unsafe fn DetermineMapScrollLimits(game: &mut Game) {
     };
     word!(game.map_min_x_scroll = (DetermineLeftmostMapColumn(r6)).wrapping_mul(8));
     if word!(game.area_index) == 4 {
-        word!(game.map_min_x_scroll, wrapping_sub(24));
+        word!(game.map_min_x_scroll -= 24);
     }
     word!(game.map_max_x_scroll = (DetermineRightmostMapColumn(r6.offset(131))).wrapping_mul(8));
     word!(game.map_min_y_scroll = (DetermineTopmostMapColumn(r6)).wrapping_mul(8));
@@ -2085,10 +2080,7 @@ static kPauseLrButtonPressedHighlight_Y: [u16; 2] = [0x18, 0xe8];
 static kPauseLrButtonPressedHighlight_X: [u16; 2] = [0xd0, 0xd0];
 pub unsafe fn HandlePauseMenuLRPressHighlight(game: &mut Game) {
     if word!(game.pausemenu_start_lr_pressed_highlight_timer) != 0 {
-        word!(
-            game.pausemenu_start_lr_pressed_highlight_timer,
-            wrapping_sub(1)
-        );
+        word!(game.pausemenu_start_lr_pressed_highlight_timer -= 1);
         if word!(game.pausemenu_shoulder_button_highlight) != 0 {
             let v0: i32 = word!(game.pausemenu_shoulder_button_highlight) as i32 - 1i32;
             DrawMenuSpritemap(
@@ -2114,16 +2106,13 @@ pub unsafe fn HandlePauseScreenStart(game: &mut Game) {
         SetPauseScreenButtonLabelPalettes(game);
         word!(game.pausemenu_button_label_mode = v0);
         word!(game.pausemenu_start_lr_pressed_highlight_timer = 11);
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
     }
     UpdatePauseMenuLRStartVramTilemap(game);
 }
 pub unsafe fn HighlightPauseScreenButton(game: &mut Game) {
     if word!(game.pausemenu_start_lr_pressed_highlight_timer) != 0 {
-        word!(
-            game.pausemenu_start_lr_pressed_highlight_timer,
-            wrapping_sub(1)
-        );
+        word!(game.pausemenu_start_lr_pressed_highlight_timer -= 1);
         DrawMenuSpritemap(0x2b, 0x90, 0xd0, 0, game);
     }
 }
@@ -2364,13 +2353,13 @@ pub unsafe fn EquipmentScreenHandleDpad(game: &mut Game) {
     } else if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
         if (word!(game.pausemenu_equipment_category_item) & 0xff00) != 0 {
             QueueSfx1_Max6(0x37, game);
-            word!(game.pausemenu_equipment_category_item, wrapping_sub(256));
+            word!(game.pausemenu_equipment_category_item -= 256);
         }
     } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
         if (word!(game.pausemenu_equipment_category_item) & 0xff00) == 256
             || word!(game.reserve_health_mode) == 1
             || {
-                word!(game.pausemenu_equipment_category_item, wrapping_add(256));
+                word!(game.pausemenu_equipment_category_item += 256);
                 word!(game.samus_reserve_health) == 0
             }
         {
@@ -2513,31 +2502,16 @@ pub unsafe fn EquipmentScreenCategory_Tanks_1(game: &mut Game) {
                 (word!(game.samus_reserve_health) as i32 + 7 & 0xfff8) as u16
         );
     }
-    if (word!(
-        game.pausemenu_reserve_tank_delay_ctr,
-        wrapping_sub(1),
-        reread
-    ) & 7)
-        == 7
-    {
+    if (word!(game.pausemenu_reserve_tank_delay_ctr -= 1, reread) & 7) == 7 {
         QueueSfx3_Max6(0x2d, game);
     }
-    word!(
-        game.samus_health,
-        wrapping_add(kReserveTankEnergyTransferPerFrame)
-    );
+    word!(game.samus_health += kReserveTankEnergyTransferPerFrame);
     if ((word!(game.samus_health)) as i16).wrapping_sub((word!(game.samus_max_health)) as i16) < 0 {
-        word!(
-            game.samus_reserve_health,
-            wrapping_sub(kReserveTankEnergyTransferPerFrame)
-        );
+        word!(game.samus_reserve_health -= kReserveTankEnergyTransferPerFrame);
         if (word!(game.samus_reserve_health) as i16) > 0 {
             return;
         }
-        word!(
-            game.samus_health,
-            wrapping_add(word!(game.samus_reserve_health))
-        );
+        word!(game.samus_health += word!(game.samus_reserve_health));
     } else {
         word!(game.samus_health = word!(game.samus_max_health));
     }
@@ -2566,7 +2540,7 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
     } else if (word!(game.joypad1_newkeys) & 0x400) != 0 {
         if word!(game.hyper_beam_flag) == 0 && word!(game.pausemenu_equipment_category_item) != 1025
         {
-            word!(game.pausemenu_equipment_category_item, wrapping_add(256));
+            word!(game.pausemenu_equipment_category_item += 256);
             EquipmentScreenMoveToBeams(
                 (2u16).wrapping_mul((byte!(@pointer ram_ptr!(game, u16; 0x755); 1)) as u16),
                 r18,
@@ -2575,7 +2549,7 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
         }
     } else if (word!(game.joypad1_newkeys) & 0x800) != 0
         && ((word!(game.pausemenu_equipment_category_item) & 0xff00) == 0 || {
-            word!(game.pausemenu_equipment_category_item, wrapping_sub(256));
+            word!(game.pausemenu_equipment_category_item -= 256);
             EquipmentScreenMoveToBottomOfBeams(
                 (2u16).wrapping_mul((byte!(@pointer ram_ptr!(game, u16; 0x755); 1)) as u16),
                 game,
@@ -2590,7 +2564,7 @@ pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(R36: u16, game: 
     let t: i32 = word!(game.equipped_beams) as i32 & !(R36 as i32);
     if (t & 4) != 0 {
         if (R36 & 4) == 0 && (word!(game.equipped_beams) & 8) != 0 {
-            word!(game.equipped_beams, |fresh59| (fresh59 & !(8)));
+            word!(game.equipped_beams &= !(8));
             ChangePaletteValues(
                 ram_ptr!(game, u16; crate::rtl::rom_table_word!(game, 0x82c06c, 4) as i32 as isize),
                 3072,
@@ -2598,7 +2572,7 @@ pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(R36: u16, game: 
             );
         }
     } else if (t & 8) != 0 && (R36 & 8) == 0 && (word!(game.equipped_beams) & 4) != 0 {
-        word!(game.equipped_beams, |fresh60| (fresh60 & !(4)));
+        word!(game.equipped_beams &= !(4));
         ChangePaletteValues(
             ram_ptr!(game, u16; crate::rtl::rom_table_word!(game, 0x82c06c, 3) as i32 as isize),
             3072,
@@ -2624,7 +2598,7 @@ pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse(game: &mut Game) {
         EquipmentScreenMoveToBeams(0, r18, game);
     } else if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
         if (word!(game.pausemenu_equipment_category_item) & 0xff00) != 0 {
-            word!(game.pausemenu_equipment_category_item, wrapping_sub(256));
+            word!(game.pausemenu_equipment_category_item -= 256);
             EquipmentScreenMoveToScrewOrHigherOnSuits(
                 (2u16).wrapping_mul((byte!(@pointer ram_ptr!(game, u16; 0x755); 1)) as u16),
                 r18,
@@ -2633,7 +2607,7 @@ pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse(game: &mut Game) {
         }
     } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0
         && ((word!(game.pausemenu_equipment_category_item) & 0xff00) == 1280 || {
-            word!(game.pausemenu_equipment_category_item, wrapping_add(256));
+            word!(game.pausemenu_equipment_category_item += 256);
             EquipmentScreenMoveLowerOnSuitsMisc(
                 (2u16).wrapping_mul((byte!(@pointer ram_ptr!(game, u16; 0x755); 1)) as u16),
                 game,
@@ -2660,7 +2634,7 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
         }
     } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
         if word!(game.pausemenu_equipment_category_item) != 515 {
-            word!(game.pausemenu_equipment_category_item, wrapping_add(256));
+            word!(game.pausemenu_equipment_category_item += 256);
             EquipmentScreenMoveToHighJumpOrLowerInBoots(
                 (2u16).wrapping_mul((byte!(@pointer ram_ptr!(game, u16; 0x755); 1)) as u16),
                 r18,
@@ -2669,7 +2643,7 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
         }
     } else if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0
         && ((word!(game.pausemenu_equipment_category_item) & 0xff00) == 0 || {
-            word!(game.pausemenu_equipment_category_item, wrapping_sub(256));
+            word!(game.pausemenu_equipment_category_item -= 256);
             EquipmentScreenCategory_Boots_MoveUpInBoots(
                 (2u16).wrapping_mul((byte!(@pointer ram_ptr!(game, u16; 0x755); 1)) as u16),
                 game,
@@ -2840,14 +2814,10 @@ pub unsafe fn EquipmentScreenDisplayReserveTankAmount_(game: &mut Game) {
 }
 pub unsafe fn EquipmentScreenDisplayReserves_PaletteSetup(game: &mut Game) -> u16 {
     if word!(game.samus_reserve_health) != 0 {
-        let v0: bool = (word!(
-            game.pausemenu_reserve_tank_animation_timer,
-            wrapping_sub(1),
-            reread
-        ) & 0x8000)
-            != 0;
+        let v0: bool =
+            (word!(game.pausemenu_reserve_tank_animation_timer -= 1, reread) & 0x8000) != 0;
         if word!(game.pausemenu_reserve_tank_animation_timer) == 0 || v0 {
-            word!(game.pausemenu_reserve_tank_animation_frame, wrapping_add(1));
+            word!(game.pausemenu_reserve_tank_animation_frame += 1);
             let mut v1: u16 = byte!(@pointer rom_ptr!(game; 0x82c165); (2 * word!(game.pausemenu_reserve_tank_animation_frame) as i32) as isize)
                 as u16;
             if v1 == 255 {
@@ -3250,10 +3220,7 @@ pub unsafe fn UpdateSamusPositionIndicatorAnimation(game: &mut Game) -> u16 {
     if v0 == 0 {
         let mut v1: u16 = (word!(game.samus_position_indicator_animation_frame)).wrapping_add(2);
         if ((v1) as i16).wrapping_sub(8) >= 0 {
-            word!(
-                game.samus_position_indicator_animation_loop_counter,
-                wrapping_add(1)
-            );
+            word!(game.samus_position_indicator_animation_loop_counter += 1);
             v1 = 0;
         }
         word!(game.samus_position_indicator_animation_frame = v1);
@@ -3273,7 +3240,7 @@ static kDrawMenuSelectionMissile_Enable: [u16; 4] = [8, 8, 8, 8];
 static kDrawMenuSelectionMissile_SpriteMap: [u16; 4] = [0x37, 0x36, 0x35, 0x34];
 pub unsafe fn DrawMenuSelectionMissile(game: &mut Game) {
     if word!(game.cinematic_var5) != 0 {
-        if word!(game.cinematic_var5, wrapping_sub(1), reread) == 0 {
+        if word!(game.cinematic_var5 -= 1, reread) == 0 {
             word! { game;
                 eproj_id[0] = (*((ram_ptr!(game, u16; 0x1997)) as *mut u8) as i32 + 1 & 3) as u16;
                 cinematic_var5 = kDrawMenuSelectionMissile_Enable[word!(game.eproj_id[0]) as usize];
@@ -3452,7 +3419,7 @@ pub unsafe fn AdvancePaletteFade_BgPalette6(game: &mut Game) -> u8 {
                 )
             );
         }
-        word!(game.palette_change_num, wrapping_add(1));
+        word!(game.palette_change_num += 1);
         0
     } else {
         word!(game.palette_change_num = 0);
@@ -3474,7 +3441,7 @@ pub unsafe fn AdvanceGradualColorChangeOfPalette(mut k: u16, j: u16, game: &mut 
             );
             k = (k).wrapping_add(2);
         }
-        word!(game.palette_change_num, wrapping_add(1));
+        word!(game.palette_change_num += 1);
         0
     } else {
         word!(game.palette_change_num = 0);
@@ -3500,7 +3467,7 @@ pub unsafe fn AdvancePaletteFadeForAllPalettes(game: &mut Game) -> u8 {
             }
             i += 2;
         }
-        word!(game.palette_change_num, wrapping_add(1));
+        word!(game.palette_change_num += 1);
         0
     } else {
         word!(game.palette_change_num = 0);
@@ -3557,13 +3524,13 @@ pub unsafe fn sub_82DB0C(mut a: u16, game: &mut Game) -> u8 {
         word!(game.g_word_7EC404 = 0);
         while a != 0 {
             if a & 1 == 0 {
-                word!(game.g_word_7EC404, wrapping_add(32));
+                word!(game.g_word_7EC404 += 32);
             } else {
                 sub_82DB41(game);
             }
             a = (a >> 1);
         }
-        word!(game.palette_change_num, wrapping_add(1));
+        word!(game.palette_change_num += 1);
         0
     } else {
         word!(game.palette_change_num = 0);
@@ -3603,13 +3570,13 @@ pub unsafe fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
             word!(game.game_state = kGameState_19_SamusNoHealth as u16);
         }
     }
-    if word!(game.game_time_frames, wrapping_add(1), reread) as i32 - 60i32 & 0x8000 == 0 {
+    if word!(game.game_time_frames += 1, reread) as i32 - 60i32 & 0x8000 == 0 {
         word!(game.game_time_frames = 0);
-        if word!(game.game_time_seconds, wrapping_add(1), reread) as i32 - 60i32 & 0x8000 == 0 {
+        if word!(game.game_time_seconds += 1, reread) as i32 - 60i32 & 0x8000 == 0 {
             word!(game.game_time_seconds = 0);
-            if word!(game.game_time_minutes, wrapping_add(1), reread) as i32 - 60i32 & 0x8000 == 0 {
+            if word!(game.game_time_minutes += 1, reread) as i32 - 60i32 & 0x8000 == 0 {
                 word!(game.game_time_minutes = 0);
-                word!(game.game_time_hours, wrapping_add(1));
+                word!(game.game_time_hours += 1);
             }
         }
     }
@@ -3635,23 +3602,18 @@ pub unsafe fn RefillHealthFromReserveTanks(game: &mut Game) -> u8 {
         if (word!(game.nmi_frame_counter_word) & 7) == 0 {
             QueueSfx3_Max3(0x2d, game);
         }
-        let refill_in_progress: bool = if ((word!(game.samus_health, wrapping_add(1), reread))
-            as i16)
+        let refill_in_progress: bool = if ((word!(game.samus_health += 1, reread)) as i16)
             .wrapping_sub((word!(game.samus_max_health)) as i16)
             >= 0
         {
             word!(game.samus_health = word!(game.samus_max_health));
             false
         } else {
-            let v0: bool =
-                (word!(game.samus_reserve_health, wrapping_sub(1), reread) & 0x8000) != 0;
+            let v0: bool = (word!(game.samus_reserve_health -= 1, reread) & 0x8000) != 0;
             !(word!(game.samus_reserve_health) == 0)
                 && (!(v0)
                     || ({
-                        word!(
-                            game.samus_health,
-                            wrapping_add(word!(game.samus_reserve_health))
-                        );
+                        word!(game.samus_health += word!(game.samus_reserve_health));
                         false
                     }))
         };
@@ -3677,7 +3639,7 @@ pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {
         g_word_7E0DE4, g_word_7E0DE6, g_word_7E0DE8, hud_item_index,
         samus_auto_cancel_hud_item_index, samus_invincibility_timer, samus_knockback_timer,
     }
-    word!(game.game_state, wrapping_add(1));
+    word!(game.game_state += 1);
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineRet {
@@ -3703,7 +3665,7 @@ pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
         word_transfers!(game, descending, 128; le(eproj_y_subpos, 142) <- value(0));
         word! {game; g_word_7E0DE8 = 16; game_options_screen_index = 3; }
         word! { game, 0; g_word_7E0DE4, g_word_7E0DE6 }
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
         word!(game.power_bomb_explosion_status = 0);
         QueueSfx1_Max15(2, game);
         QueueSfx2_Max15(0x71, game);
@@ -3718,21 +3680,21 @@ pub unsafe fn GameState_21_SamusNoHealth(game: &mut Game) -> CoroutineRet {
     Samus_DrawWhenNotAnimatingOrDying(game);
     if HasQueuedMusic(game) == 0 {
         StartSamusDeathAnimation(game);
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
     }
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_22_SamusNoHealth_Dying(game: &mut Game) -> CoroutineRet {
     DrawSamusStartingDeathAnim_(game);
-    let v0: bool = (word!(game.g_word_7E0DE8, wrapping_sub(1), reread) & 0x8000) != 0;
+    let v0: bool = (word!(game.g_word_7E0DE8 -= 1, reread) & 0x8000) != 0;
     if word!(game.g_word_7E0DE8) == 0 || v0 {
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
     }
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_23_SamusNoHealth_Flashing(game: &mut Game) -> CoroutineRet {
     if HandleSamusDeathSequence(game) != 0 {
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
     } else {
         Samus_DrawDuringDeathAnim(game);
     }
@@ -3741,7 +3703,7 @@ pub unsafe fn GameState_23_SamusNoHealth_Flashing(game: &mut Game) -> CoroutineR
 pub unsafe fn GameState_24_SamusNoHealth_Explosion(game: &mut Game) -> CoroutineRet {
     if GameState_24_SamusNoHealth_Explosion_Helper(game) != 0 {
         word! { game, 1; screen_fade_delay, screen_fade_counter }
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
     }
     kCoroutineNone as CoroutineRet
 }
@@ -3750,7 +3712,7 @@ pub unsafe fn GameState_25_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
     if *ram_ptr!(game; 0x51) == 0x80 {
         EnableNMI(game);
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.game_state, wrapping_add(1));
+        word!(game.game_state += 1);
         word! { game, 0; menu_index, debug_disable_sounds }
     }
     kCoroutineNone as CoroutineRet
@@ -3932,12 +3894,12 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game) -> CoroutineRet];
     [8577405] DoorTransitionFunction_HandleElevator [] {
         if word!(game.elevator_flags) == 0 {
-            word!(game.game_state, wrapping_add(1));
+            word!(game.game_state += 1);
             return GameState_10_LoadingNextRoom_Async(game);
         }
         CallSomeSamusCode(0, game);
         if (word!(game.elevator_direction) & 0x8000) != 0 {
-            word!(game.game_state, wrapping_add(1));
+            word!(game.game_state += 1);
             return GameState_10_LoadingNextRoom_Async(game);
         }
         word!(game.downwards_elevator_delay_timer = 48);
@@ -3945,8 +3907,8 @@ crate::game::callback_dispatch! {
         DoorTransitionFunction_Wait48frames(game)
     };
     [8577439] DoorTransitionFunction_Wait48frames [] {
-        if (word!(game.downwards_elevator_delay_timer, wrapping_sub(1), reread) & 0x8000) != 0 {
-            word!(game.game_state, wrapping_add(1));
+        if (word!(game.downwards_elevator_delay_timer -= 1, reread) & 0x8000) != 0 {
+            word!(game.game_state += 1);
             return GameState_10_LoadingNextRoom_Async(game);
         } else {
             DetermineWhichEnemiesToProcess(game);
@@ -4270,7 +4232,7 @@ pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
     QueueSfx2_Max15(0x71, game);
     word!(game.debug_disable_sounds = -1i32 as u16);
     word!(game.door_transition_function = ((0x82e29ei32) as u16));
-    word!(game.game_state, wrapping_add(1));
+    word!(game.game_state += 1);
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_11_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRet {
@@ -4687,7 +4649,7 @@ pub unsafe fn GameOptionsMenuFunc_0(game: &mut Game) {
     if *ram_ptr!(game; 0x51) == 0x80 {
         EnableNMI(game);
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.game_options_screen_index, wrapping_add(1));
+        word!(game.game_options_screen_index += 1);
     } else if *ram_ptr!(game; 0x51) == 14 {
         let v0: u16 = *ram_ptr!(game; 0x6b) as u16;
         if (*ram_ptr!(game; 0x6b) & 4) == 0 {
@@ -4728,14 +4690,14 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
     CreateOptionsMenuObject_(initial_tile, addr_stru_82F4B8 as u16, game);
     // The first initializer leaves its palette $0E00 in A for this call.
     CreateOptionsMenuObject_(0x0e00, addr_stru_82F4C4 as u16, game);
-    word!(game.game_options_screen_index, wrapping_add(1));
+    word!(game.game_options_screen_index += 1);
     OptionsMenuFunc4(game);
 }
 pub unsafe fn GameOptionsMenu_2_FadeInOptionsScreen(game: &mut Game) {
     HandleFadeIn(game);
     if *ram_ptr!(game; 0x51) == 15 {
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.game_options_screen_index, wrapping_add(1));
+        word!(game.game_options_screen_index += 1);
     }
 }
 pub unsafe fn OptionsMenu_AddToVramQueue(game: &mut Game) {
@@ -4774,12 +4736,12 @@ static kGameOptionsMenuItemFuncs: [Func_V; 5] = callback_table! { nonnull Func_V
 pub unsafe fn GameOptionsMenu_3_OptionsScreen(game: &mut Game) {
     if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
         QueueSfx1_Max6(0x37, game);
-        if (word!(game.menu_option_index, wrapping_sub(1), reread) & 0x8000) != 0 {
+        if (word!(game.menu_option_index -= 1, reread) & 0x8000) != 0 {
             word!(game.menu_option_index = 4);
         }
     } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
         QueueSfx1_Max6(0x37, game);
-        if word!(game.menu_option_index, wrapping_add(1), reread) == 5 {
+        if word!(game.menu_option_index += 1, reread) == 5 {
             word!(game.menu_option_index = 0);
         }
     }
@@ -4872,7 +4834,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
     if *ram_ptr!(game; 0x51) == 0x80 {
         EnableNMI(game);
         word! { game, 0; screen_fade_delay, screen_fade_counter, reg_BG1VOFS }
-        word!(game.game_options_screen_index, wrapping_add(1));
+        word!(game.game_options_screen_index += 1);
         if word!(game.menu_option_index) != 0 {
             if (word!(game.menu_option_index) & 4) != 0 {
                 if word!(game.japanese_text_flag) != 0 {
@@ -4941,12 +4903,12 @@ static kGameOptionsMenuSpecialSettings: [Func_V; 3] = callback_table! { nonnull 
 pub unsafe fn GameOptionsMenu_8_SpecialSettings(game: &mut Game) {
     if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
         QueueSfx1_Max6(0x37, game);
-        if (word!(game.menu_option_index, wrapping_sub(1), reread) & 0x8000) != 0 {
+        if (word!(game.menu_option_index -= 1, reread) & 0x8000) != 0 {
             word!(game.menu_option_index = 2);
         }
     } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
         QueueSfx1_Max6(0x37, game);
-        if word!(game.menu_option_index, wrapping_add(1), reread) == 3 {
+        if word!(game.menu_option_index += 1, reread) == 3 {
             word!(game.menu_option_index = 0);
         }
     }
@@ -5028,7 +4990,7 @@ static word_82F204: [u16; 16] = [
 pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
     if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
         QueueSfx1_Max6(0x37, game);
-        let v0: u16 = word!(game.menu_option_index, wrapping_sub(1), reread);
+        let v0: u16 = word!(game.menu_option_index -= 1, reread);
         if (word!(game.menu_option_index) & 0x8000) == 0 {
             if v0 != 6 {
                 return;
@@ -5065,7 +5027,7 @@ pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
         if word_82F204[word!(game.debug_invincibility) as usize] & word!(game.joypad2_new_keys)
             == word_82F204[word!(game.debug_invincibility) as usize]
         {
-            word!(game.debug_invincibility, wrapping_add(1));
+            word!(game.debug_invincibility += 1);
         } else {
             word!(game.debug_invincibility = 0);
         }
@@ -5090,13 +5052,13 @@ pub unsafe fn OptionsMenuControllerFunc_7(game: &mut Game) {
     }
 }
 pub unsafe fn GameOptionsMenu_9_ScrollControllerSettingsDown(game: &mut Game) {
-    word!(game.reg_BG1VOFS, wrapping_add(2));
+    word!(game.reg_BG1VOFS += 2);
     if word!(game.reg_BG1VOFS) == 32 {
         word!(game.game_options_screen_index = 7);
     }
 }
 pub unsafe fn GameOptionsMenu_A_ScrollControllerSettingsUp(game: &mut Game) {
-    word!(game.reg_BG1VOFS, wrapping_sub(2));
+    word!(game.reg_BG1VOFS -= 2);
     if word!(game.reg_BG1VOFS) == 0 {
         word!(game.game_options_screen_index = 7);
     }

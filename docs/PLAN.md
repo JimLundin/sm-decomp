@@ -137,7 +137,9 @@ with complete builds, expanded bodies, full-u32 routing correspondence,
 The native inflater removes **165 more lines**, reaching **104,794**, with
 all allocation and caller costs counted. Complete release/frontend builds,
 8,936 inflater cases and 3,080 PNG API comparisons pass; the frontend-only
-change needs no game replay. Another **4,795 lines** are needed to reach 99,999;
+change needs no game replay. Explicit compound RAM updates remove **370 more
+lines**, reaching **104,424**, with complete compiler correspondence and both
+full boot replay routes passing. Another **4,425 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -728,8 +730,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **4,795-line** gap; parked small drafts are not
+   replacement yet funds the **4,425-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Explicit compound RAM updates remove **370 lines (104,794 -> 104,424)**,
+   2,586 tokens and 9,250 spelling bytes, including 41 support lines. All 801
+   updates in 35 files preserve wrapping/checked arithmetic, truncation, old
+   reads, RHS evaluation and 106 post-store rereads. The existing raw unaligned
+   word arm still owns the accesses. Identical formatting alone changes zero
+   bytes. Exact source reproduction and complete expanded/resolved compiler
+   checks pass; verifier source payloads and checkpoint fingerprints are checked
+   against their actual captured files before normalization. No owner is omitted.
+   Normal Cargo release and changed-file formatting pass. Full boot any%
+   **129712/0** and Speed Booster **148406/0** pass with normal comparisons,
+   rendering and audio. Complete static correspondence covers unchanged
+   operations; the replays check shared-RAM integration, not all 801 sites or
+   credits. TEMP sm-tailored-next/compound-word-updates holds the source proof;
+   TEMP sm-compound-adoption-20261021 holds final main builds/replays.
 
    Native inflater ownership removes **165 lines (104,959 -> 104,794)**,
    2,066 tokens and 4,638 code-text bytes. Four private owners replace 18
@@ -1196,7 +1213,17 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: shared enemy callback ownership passes clean full boot
+Latest full integration: explicit compound RAM updates pass clean full boot
+any% **129712/0** and Speed Booster **148406/0**, with normal rendering, audio
+and comparisons. All 801 source updates, including 106 rereads, retain their
+expanded operations and resolved types/targets. Both runs use the same final
+source hash, `2dc2a2bdf5feed4e522b0dc7f48c003941fdff0b3ee69b99be9d1d44b9bdcfbb`.
+The candidate matches the maintained source, with the unrelated shader draft
+preserved. No new required gameplay branch was introduced; complete static
+correspondence covers unchanged operations. Neither route visits every updated
+site or reaches credits. TEMP sm-compound-adoption-20261021 retains logs.
+
+Previous full integration: shared enemy callback ownership passes clean full boot
 any% **129712/0** and Speed Booster **148406/0**, with normal rendering, audio
 and comparisons. Probed Speed Booster **21015/0** exercises all six required
 `enemy_dispatch.{ai,pre,instr}.{entry,owner}` labels and 120 follow-up frames.
@@ -1354,11 +1381,12 @@ flight, callback entry captures, opcode grids, blast windows, indexed loops and
 combined callback/dispatch declarations, terminal loops, selected field/RAM
 store groups, the unaligned RAM repair, shared beam windows, native tracing,
 nonnull callback tables, Samus pose sequences, the packed-sprite repair,
-shared gameplay imports, enemy callback ownership and native inflater, maintained Rust is
-**104,794**, leaving **4,795** to
+shared gameplay imports, enemy callback ownership, native inflater and compound
+RAM updates, maintained Rust is **104,424**, leaving **4,425** to
 reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3330; cast lines 7941. The inflater removes 12 unsafe-function
+unsafe functions 3330; cast lines 7870. Compound updates remove 370 lines and
+71 cast-containing lines without changing the other counters. The inflater removes 12 unsafe-function
 declarations and 25 cast-containing lines. Callback grouping removes 314 counted
 unsafe declaration lines while preserving expanded signatures. Its unchanged
 Torizo two-cast expression wraps onto two lines, raising that counter by one.

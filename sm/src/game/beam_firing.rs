@@ -28,7 +28,7 @@ pub(crate) unsafe fn update_input(game: &mut Game) {
         (word!(game.flare_counter) as i32 - 60i32 & 0x8000 != 0)
     } else {
         if word!(game.flare_counter) as i32 - 120i32 & 0x8000 != 0 {
-            if word!(game.flare_counter, wrapping_add(1), reread) == 1 {
+            if word!(game.flare_counter += 1, reread) == 1 {
                 clear_animation(game);
                 fire(false, game);
             }
@@ -62,7 +62,7 @@ unsafe fn reserve_beam(game: &mut Game) -> u8 {
         return 0;
     }
     word!(game.cooldown_timer = 1);
-    word!(game.projectile_counter, wrapping_add(1));
+    word!(game.projectile_counter += 1);
     1
 }
 unsafe fn fire(charged: bool, game: &mut Game) {

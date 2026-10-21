@@ -75,6 +75,47 @@ macro_rules! ram_vars {
 // loads that destination after RHS temporaries are dropped. No value or index
 // is hoisted across ordered stores; update expressions create no closure.
 macro_rules! word {
+    // Compound arithmetic wraps at 16 bits; bits/shifts keep ordinary u16 operations.
+    // Delegate pointer capture, old load, RHS evaluation and store to the update arm.
+    ($game:ident.$field:ident$([$index:expr])? &= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::word!($game.$field$([$index])?, |old| old & $value $(, $result)?)
+    };
+    ($game:ident.$field:ident$([$index:expr])? += $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::word!($game.$field$([$index])?, |old| old.wrapping_add($value) $(, $result)?)
+    };
+    ($game:ident.$field:ident$([$index:expr])? -= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::word!($game.$field$([$index])?, |old| old.wrapping_sub($value) $(, $result)?)
+    };
+    ($game:ident.$field:ident$([$index:expr])? >>= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::word!($game.$field$([$index])?, |old| old >> $value $(, $result)?)
+    };
+    ($game:ident.$field:ident$([$index:expr])? ^= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::word!($game.$field$([$index])?, |old| old ^ $value $(, $result)?)
+    };
+    ($game:ident.$field:ident$([$index:expr])? |= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::word!($game.$field$([$index])?, |old| old | $value $(, $result)?)
+    };
+    // Explicit promoted operations retain their original RHS type and final u16 cast.
+    // Checked operations use ordinary Rust overflow/shift rules before truncation.
+    (bits_i32, $game:ident.$field:ident$([$index:expr])? |= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::word!($game.$field$([$index])?, |old| ((old as i32) | $value) as u16 $(, $result)?)
+    };
+    (checked_i32, $game:ident.$field:ident$([$index:expr])? *= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::word!($game.$field$([$index])?, |old| ((old as i32) * $value) as u16 $(, $result)?)
+    };
+    (checked_i32, $game:ident.$field:ident$([$index:expr])? += $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::word!($game.$field$([$index])?, |old| ((old as i32) + $value) as u16 $(, $result)?)
+    };
+    (checked_i32, $game:ident.$field:ident$([$index:expr])? -= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::word!($game.$field$([$index])?, |old| ((old as i32) - $value) as u16 $(, $result)?)
+    };
+    (checked_i32, $game:ident.$field:ident$([$index:expr])? <<= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::word!($game.$field$([$index])?, |old| ((old as i32) << $value) as u16 $(, $result)?)
+    };
+    (wrapping_u32, $game:ident.$field:ident$([$index:expr])? += $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::word!($game.$field$([$index])?, |old| (old as u32).wrapping_add($value) as u16 $(, $result)?)
+    };
+
     ($game:ident.$field:ident[$index:expr]) => {
         u16::from_le(
             (&raw const $game.g_ram)

@@ -68,8 +68,7 @@ pub(crate) unsafe fn finish_power_bomb(v0: u16, game: &mut Game) {
     CallSomeSamusCode(0x1e, game);
 }
 pub(crate) unsafe fn set_power_bomb_blending(k: u16, game: &mut Game) {
-    word!(game.fx_layer_blending_config_c, |fresh129| (fresh129)
-        | (0x8000u16));
+    word!(game.fx_layer_blending_config_c |= (0x8000u16));
 }
 
 macro_rules! fade_explosion_afterglow_color {
@@ -92,14 +91,11 @@ macro_rules! fade_explosion_afterglow_color {
 pub(crate) unsafe fn power_bomb_afterglow(k: u16, game: &mut Game) {
     if (word!(game.power_bomb_explosion_status) & 0x8000) != 0 {
         let v1: i32 = k as u8 as i32 >> 1;
-        if (word!(game.hdma_object_timers[v1], wrapping_sub(1), reread) & 0x8000) != 0 {
+        if (word!(game.hdma_object_timers[v1] -= 1, reread) & 0x8000) != 0 {
             crate::update_place! { reference fresh126 [fresh127] = *(ram_ptr!(game, u16; 0x1938) as *mut u8).offset(k as u8 as i32 as isize) => (*fresh126).wrapping_sub(1); }
             if fresh127 == 1 {
                 word!(game.hdma_object_instruction_timers[v1] = 1);
-                word!(
-                    game.hdma_object_instruction_list_pointers[v1],
-                    wrapping_add(2)
-                );
+                word!(game.hdma_object_instruction_list_pointers[v1] += 2);
             } else {
                 fade_explosion_afterglow_color!(game);
                 byte!(@pointer ram_ptr!(game, u16; 0x1908); k as u8 as i32 as isize) =
@@ -368,7 +364,7 @@ pub(crate) unsafe fn set_crystal_flash_blending(k: u16, game: &mut Game) {
 pub(crate) unsafe fn crystal_flash_afterglow(k: u16, game: &mut Game) {
     if (word!(game.power_bomb_explosion_status) & 0x8000) != 0 {
         let v1: i32 = k as i32 >> 1;
-        if (word!(game.hdma_object_timers[v1], wrapping_sub(1), reread) & 0x8000) != 0 {
+        if (word!(game.hdma_object_timers[v1] -= 1, reread) & 0x8000) != 0 {
             if ((*ram_ptr!(game; 0x74, 2) | *ram_ptr!(game; 0x74, 1) | *ram_ptr!(game; 0x74, 0))
                 & 0x1f)
                 != 0
@@ -378,10 +374,7 @@ pub(crate) unsafe fn crystal_flash_afterglow(k: u16, game: &mut Game) {
                     g_word_888B96 as u8;
             } else {
                 word!(game.hdma_object_instruction_timers[v1] = 1);
-                word!(
-                    game.hdma_object_instruction_list_pointers[v1],
-                    wrapping_add(2)
-                );
+                word!(game.hdma_object_instruction_list_pointers[v1] += 2);
             }
         }
     }
@@ -404,13 +397,13 @@ impl Phase {
     unsafe fn expand(self, game: &mut Game) {
         if self == Self::PreFlash {
             word!(
-                game.power_bomb_pre_explosion_flash_radius,
-                wrapping_add(word!(game.power_bomb_pre_explosion_radius_speed))
+                game.power_bomb_pre_explosion_flash_radius +=
+                    word!(game.power_bomb_pre_explosion_radius_speed)
             );
         } else {
             word!(
-                game.power_bomb_explosion_radius,
-                wrapping_add(word!(game.power_bomb_pre_explosion_radius_speed))
+                game.power_bomb_explosion_radius +=
+                    word!(game.power_bomb_pre_explosion_radius_speed)
             );
         }
     }
@@ -425,25 +418,16 @@ impl Phase {
     }
     unsafe fn accelerate(self, game: &mut Game) {
         if self == Self::PreFlash {
-            word!(
-                game.power_bomb_pre_explosion_radius_speed,
-                wrapping_sub(kPowerBombPreExplosionRadiusAccel)
-            );
+            word!(game.power_bomb_pre_explosion_radius_speed -= kPowerBombPreExplosionRadiusAccel);
         } else {
-            word!(
-                game.power_bomb_pre_explosion_radius_speed,
-                wrapping_add(kPowerBombExplosionRadiusAccel)
-            );
+            word!(game.power_bomb_pre_explosion_radius_speed += kPowerBombExplosionRadiusAccel);
         }
     }
 }
 
 unsafe fn advance_instruction(k: u16, game: &mut Game) {
     word!(game.hdma_object_instruction_timers[(k >> 1)] = 1);
-    word!(
-        game.hdma_object_instruction_list_pointers[(k >> 1)],
-        wrapping_add(2)
-    );
+    word!(game.hdma_object_instruction_list_pointers[(k >> 1)] += 2);
     word!(game.hdma_object_timers[(k >> 1)] = 0);
 }
 
@@ -506,10 +490,7 @@ pub(crate) unsafe fn update_prescaled(k: u16, phase: Phase, game: &mut Game) {
     let side = explosion_window_side(false, game);
     calculate_power_bomb_hdma(0, shape, side, game);
     phase.set_color(game);
-    word!(
-        game.pre_scaled_power_bomb_explosion_shape_def_ptr,
-        wrapping_add(192)
-    );
+    word!(game.pre_scaled_power_bomb_explosion_shape_def_ptr += 192);
     let end = if phase == Phase::PreFlash {
         0xa206
     } else {

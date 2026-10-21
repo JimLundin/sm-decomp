@@ -65,7 +65,7 @@ pub(super) unsafe fn spawn_marker(
 
 unsafe fn page_input_ready(game: &mut Game) -> bool {
     if word!(game.cinematic_var16) != 0 {
-        word!(game.cinematic_var16, wrapping_sub(1));
+        word!(game.cinematic_var16 -= 1);
         false
     } else {
         word!(game.joypad1_newkeys) != 0
@@ -202,7 +202,7 @@ pub(super) unsafe fn fade_to_scene(palette: Palette, game: &mut Game) {
         }
         ComposeFadingPalettes(game);
     }
-    if (word!(game.cinematic_var4, wrapping_sub(1), reread) & 0x8000) != 0 {
+    if (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0 {
         *ram_ptr!(game; 0x69) = 21;
         *ram_ptr!(game; 0x6b) = 0;
         *ram_ptr!(game; 0x6f) = 0;
@@ -239,7 +239,7 @@ pub(super) unsafe fn fade_to_page(palette: Palette, game: &mut Game) {
         }
         ComposeFadingPalettes(game);
     }
-    if (word!(game.cinematic_var13, wrapping_sub(1), reread) & 0x8000) != 0 {
+    if (word!(game.cinematic_var13 -= 1, reread) & 0x8000) != 0 {
         *ram_ptr!(game; 0x69) = 22;
         *ram_ptr!(game; 0x6b) = 0;
         *ram_ptr!(game; 0x6f) = 0;

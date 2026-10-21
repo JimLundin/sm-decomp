@@ -1901,7 +1901,7 @@ crate::forward_calls! { unsafe fn ( ci: *mut CollInfo, a: u16, k: u16, game: &mu
 }
 unsafe fn BlockReactGrapple_GrappleBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
     static kBlockReactGrapple_GrappleBlockPlm: [u16; 4] = [0xd0d8, 0xd0dc, 0xd0e0, 0xd0d8];
-    word!(game.grapple_beam_flags, |fresh0| (fresh0 & !(0x8000)));
+    word!(game.grapple_beam_flags &= !(0x8000));
     if *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x80 != 0 {
         0
     } else {
@@ -2161,7 +2161,7 @@ unsafe fn BlockFunc_ABE6(tmpD82: u16, game: &mut Game) -> u8 {
             break;
         }
         grapple_beam_tmpD84 = (grapple_beam_tmpD84).wrapping_add(8);
-        if word!(game.g_word_7E0D98, wrapping_sub(1), reread) == 0 {
+        if word!(game.g_word_7E0D98 -= 1, reread) == 0 {
             return 0;
         }
     }
@@ -2283,10 +2283,10 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
             15145243721762997867 => {}
             4207414038393540328 => {}
             _ => {
-                word!(game.grapple_beam_end_angle16, wrapping_add(tmpD9C));
+                word!(game.grapple_beam_end_angle16 += tmpD9C);
                 word!(game.grapple_beam_end_angles_mirror = word!(game.grapple_beam_end_angle16));
-                word!(game.grapple_beam_unkD36, |fresh5| (fresh5 & !(0x8000)));
-                if (word!(game.grapple_beam_unkD30, wrapping_sub(1), reread) & 0x8000) != 0 {
+                word!(game.grapple_beam_unkD36 &= !(0x8000));
+                if (word!(game.grapple_beam_unkD30 -= 1, reread) & 0x8000) != 0 {
                     word!(game.grapple_beam_unkD30 = 0);
                 }
                 if (word!(game.grapple_beam_unkD2E) & 0x8000) == 0 {
@@ -2353,10 +2353,10 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
                     }
                 }
             } else {
-                word!(game.grapple_beam_end_angle16, wrapping_add(tmpD9C));
+                word!(game.grapple_beam_end_angle16 += tmpD9C);
                 word!(game.grapple_beam_end_angles_mirror = word!(game.grapple_beam_end_angle16));
-                word!(game.grapple_beam_unkD36, |fresh8| (fresh8 & !(0x8000)));
-                if (word!(game.grapple_beam_unkD30, wrapping_sub(1), reread) & 0x8000) != 0 {
+                word!(game.grapple_beam_unkD36 &= !(0x8000));
+                if (word!(game.grapple_beam_unkD30 -= 1, reread) & 0x8000) != 0 {
                     word!(game.grapple_beam_unkD30 = 0);
                 }
                 if (word!(game.grapple_beam_unkD2E) & 0x8000) == 0 {
@@ -2403,7 +2403,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
         }
         1
     } else {
-        word!(game.grapple_beam_unkD36, |fresh3| (fresh3) | (0x8000u16));
+        word!(game.grapple_beam_unkD36 |= (0x8000u16));
         word! { game, 0; grapple_beam_unkD26, grapple_beam_unkD2E }
         1
     }
@@ -2515,8 +2515,9 @@ unsafe fn DrawGrappleOams3(game: &mut Game) {
     (*v2).ycoord =
         (word!(game.grapple_beam_end_y_pos) as i32 - word!(game.layer1_y_pos) as i32 - 4i32) as u8;
     *(&raw mut (*v2).charnum as *mut u16) = 14880;
-    word!(game.oam_ext[(idx >> 5)], |fresh19| (fresh19 as i32
-        | ((x as i32 & 0x100) >> 8) << 2 * (idx as i32 >> 2 & 7))
-        as u16);
+    word!(
+        bits_i32,
+        game.oam_ext[(idx >> 5)] |= ((x as i32 & 0x100) >> 8) << 2 * (idx as i32 >> 2 & 7)
+    );
     word!(game.oam_next_ptr = (idx).wrapping_add(4));
 }

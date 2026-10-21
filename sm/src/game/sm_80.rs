@@ -98,7 +98,7 @@ pub unsafe fn ReleaseButtonsFilter(v0: u16, game: &mut Game) {
         word!(game.timed_held_input_timer = word!(game.timed_held_input_timer_reset));
         word!(game.timed_held_input = 0);
     } else {
-        if (word!(game.timed_held_input_timer, wrapping_sub(1), reread) & 0x8000) == 0 {
+        if (word!(game.timed_held_input_timer -= 1, reread) & 0x8000) == 0 {
             word!(game.timed_held_input = 0);
         } else {
             word! { game;
@@ -1004,7 +1004,7 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
     word!(game.joypad1_newkeys = (RegWord & (word!(game.joypad1_prev) ^ RegWord)));
     word!(game.joypad1_newkeys2_UNUSED = (RegWord & (word!(game.joypad1_prev) ^ RegWord)));
     if RegWord != 0 && RegWord == word!(game.joypad1_prev) {
-        if word!(game.joypad1_keyrepeat_ctr, wrapping_sub(1), reread) == 0 {
+        if word!(game.joypad1_keyrepeat_ctr -= 1, reread) == 0 {
             word!(game.joypad1_newkeys2_UNUSED = word!(game.joypad1_lastkeys));
             word!(game.joypad1_keyrepeat_ctr = word!(game.joypad_ctr_repeat_next));
         }
@@ -1018,7 +1018,7 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
         word!(game.joypad2_new_keys = (v1 & (word!(game.joypad2_prev) ^ v1)));
         word!(game.joypad2_newkeys2 = (v1 & (word!(game.joypad2_prev) ^ v1)));
         if v1 != 0 && v1 == word!(game.joypad2_prev) {
-            if word!(game.joypad2_keyrepeat_ctr, wrapping_sub(1), reread) == 0 {
+            if word!(game.joypad2_keyrepeat_ctr -= 1, reread) == 0 {
                 word!(game.joypad2_newkeys2 = word!(game.joypad2_last));
                 word!(game.joypad2_keyrepeat_ctr = word!(game.joypad_ctr_repeat_next));
             }
@@ -1055,7 +1055,7 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
                     }
                     if (word!(game.joypad_dbg_2) & 0x8000) != 0 {
                         let v2: bool = (!(word!(game.joypad_dbg_flags)) & 0x8000) != 0;
-                        word!(game.joypad_dbg_flags, |fresh83| (fresh83) ^ (0x8000u16));
+                        word!(game.joypad_dbg_flags ^= (0x8000u16));
                         if v2 {
                             word! { game;
                                 joypad_dbg_missiles_swap = word!(game.samus_missiles);
@@ -1074,13 +1074,13 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
                         }
                     }
                     if (word!(game.joypad_dbg_2) & 0x40) != 0 {
-                        word!(game.joypad_dbg_flags, |fresh84| (fresh84) ^ (0x2000u16));
+                        word!(game.joypad_dbg_flags ^= (0x2000u16));
                     }
                 }
             } else {
                 word! { game, 0; joypad_dbg_1, joypad_dbg_2 }
-                word!(game.joypad2_last, |fresh85| (fresh85) & (0x10u16));
-                word!(game.joypad2_new_keys, |fresh86| (fresh86) & (0x10u16));
+                word!(game.joypad2_last &= (0x10u16));
+                word!(game.joypad2_new_keys &= (0x10u16));
             }
         } else {
             word!(game.debug_disable_sounds = 0);
@@ -1614,7 +1614,7 @@ pub unsafe fn ProcessTimer_MovingIntoPlace(game: &mut Game) -> u8 {
     }
     word!(game.timer_y_pos = v2);
     if v0 == 2 {
-        word!(game.timer_status, wrapping_add(1));
+        word!(game.timer_status += 1);
     }
     ProcessTimer_Decrement(game)
 }
@@ -1786,7 +1786,7 @@ pub unsafe fn Play20FramesOfMusic_Async(game: &mut Game) -> CoroutineRet {
                 *resume_state = 1;
                 return yielded;
             }
-            word!(game.my_counter, wrapping_add(1));
+            word!(game.my_counter += 1);
             waiting = false;
         }
     }
@@ -1824,10 +1824,10 @@ pub unsafe fn DisplayViewablePartOfRoom(game: &mut Game) {
             UploadBackgroundDataColumn(game);
         }
         NMI_ProcessVramWriteQueue(game);
-        word!(game.layer1_x_block, wrapping_add(1));
-        word!(game.bg1_x_block, wrapping_add(1));
-        word!(game.layer2_x_block, wrapping_add(1));
-        word!(game.bg2_x_block, wrapping_add(1));
+        word!(game.layer1_x_block += 1);
+        word!(game.bg1_x_block += 1);
+        word!(game.layer2_x_block += 1);
+        word!(game.bg2_x_block += 1);
         v2 += 1;
     }
 }
@@ -2243,7 +2243,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollUp(game: &mut Game) {
 }
 pub unsafe fn DebugScrollPosSaveLoad(game: &mut Game) {
     if (word!(game.joypad2_new_keys) & 0x40) != 0 {
-        word!(game.debug_saveload_scrollpos_toggle, wrapping_add(1));
+        word!(game.debug_saveload_scrollpos_toggle += 1);
     }
     if word!(game.debug_saveload_scrollpos_toggle) & 1 != 0 {
         word!(game.layer1_x_pos = word!(game.debug_saved_xscroll));
@@ -2367,8 +2367,8 @@ pub unsafe fn FixDoorsMovingUp(game: &mut Game) {
     word!(game.door_transition_frame_counter = 0);
     CalculateBgScrollAndLayerPositionBlocks(game);
     UpdatePreviousLayerBlocks(game);
-    word!(game.previous_layer1_y_block, wrapping_add(1));
-    word!(game.previous_layer2_y_block, wrapping_add(1));
+    word!(game.previous_layer1_y_block += 1);
+    word!(game.previous_layer2_y_block += 1);
     DoorTransition_Up(game);
 }
 static kDoorTransitionSetupFuncs: [Func_V; 4] = callback_table! { nonnull Func_V;
@@ -2382,54 +2382,54 @@ pub unsafe fn DoorTransitionScrollingSetup(game: &mut Game) {
 }
 pub unsafe fn DoorTransitionScrollingSetup_Right(game: &mut Game) {
     CalculateLayer2Xpos(game);
-    word!(game.layer2_x_pos, wrapping_sub(256));
+    word!(game.layer2_x_pos -= 256);
     CalculateLayer2Ypos(game);
-    word!(game.layer1_x_pos, wrapping_sub(256));
+    word!(game.layer1_x_pos -= 256);
     UpdateBgScrollOffsets(game);
     CalculateBgScrollAndLayerPositionBlocks(game);
     UpdatePreviousLayerBlocks(game);
-    word!(game.previous_layer1_x_block, wrapping_sub(1));
-    word!(game.previous_layer2_x_block, wrapping_sub(1));
+    word!(game.previous_layer1_x_block -= 1);
+    word!(game.previous_layer2_x_block -= 1);
     DoorTransition_Right(game);
 }
 pub unsafe fn DoorTransitionScrollingSetup_Left(game: &mut Game) {
     CalculateLayer2Xpos(game);
-    word!(game.layer2_x_pos, wrapping_add(256));
+    word!(game.layer2_x_pos += 256);
     CalculateLayer2Ypos(game);
-    word!(game.layer1_x_pos, wrapping_add(256));
+    word!(game.layer1_x_pos += 256);
     UpdateBgScrollOffsets(game);
     CalculateBgScrollAndLayerPositionBlocks(game);
     UpdatePreviousLayerBlocks(game);
-    word!(game.previous_layer1_x_block, wrapping_add(1));
-    word!(game.previous_layer2_x_block, wrapping_add(1));
+    word!(game.previous_layer1_x_block += 1);
+    word!(game.previous_layer2_x_block += 1);
     DoorTransition_Left(game);
 }
 pub unsafe fn DoorTransitionScrollingSetup_Down(game: &mut Game) {
     CalculateLayer2Xpos(game);
     CalculateLayer2Ypos(game);
-    word!(game.layer2_y_pos, wrapping_sub(224));
-    word!(game.layer1_y_pos, wrapping_sub(224));
+    word!(game.layer2_y_pos -= 224);
+    word!(game.layer1_y_pos -= 224);
     UpdateBgScrollOffsets(game);
     CalculateBgScrollAndLayerPositionBlocks(game);
     UpdatePreviousLayerBlocks(game);
-    word!(game.previous_layer1_y_block, wrapping_sub(1));
-    word!(game.previous_layer2_y_block, wrapping_sub(1));
+    word!(game.previous_layer1_y_block -= 1);
+    word!(game.previous_layer2_y_block -= 1);
     DoorTransition_Down(game);
 }
 pub unsafe fn DoorTransitionScrollingSetup_Up(game: &mut Game) {
     CalculateLayer2Xpos(game);
     let v1: u16 = word!(game.layer1_y_pos);
-    word!(game.layer1_y_pos, wrapping_add(31));
+    word!(game.layer1_y_pos += 31);
     CalculateLayer2Ypos(game);
-    word!(game.layer2_y_pos, wrapping_add(224));
+    word!(game.layer2_y_pos += 224);
     word!(game.layer1_y_pos = (v1).wrapping_add(256));
     UpdateBgScrollOffsets(game);
-    word!(game.door_destination_y_pos, wrapping_add(32));
+    word!(game.door_destination_y_pos += 32);
     CalculateBgScrollAndLayerPositionBlocks(game);
     UpdatePreviousLayerBlocks(game);
-    word!(game.previous_layer1_y_block, wrapping_add(1));
-    word!(game.previous_layer2_y_block, wrapping_add(1));
-    word!(game.layer1_y_pos, wrapping_sub(1));
+    word!(game.previous_layer1_y_block += 1);
+    word!(game.previous_layer2_y_block += 1);
+    word!(game.layer1_y_pos -= 1);
     DoorTransition_Up(game);
 }
 pub unsafe fn UpdatePreviousLayerBlocks(game: &mut Game) {
@@ -2451,7 +2451,7 @@ pub unsafe fn Irq_FollowDoorTransition(game: &mut Game) {
     if kDoorTransitionFuncs[(word!(game.door_direction) as i32 & 3i32) as usize](game) != 0 {
         word!(game.layer1_x_pos = word!(game.door_destination_x_pos));
         word!(game.layer1_y_pos = word!(game.door_destination_y_pos));
-        word!(game.door_transition_flag, |fresh68| (fresh68) | (0x8000u16));
+        word!(game.door_transition_flag |= (0x8000u16));
     }
 }
 pub unsafe fn DoorTransition_Right(game: &mut Game) -> u8 {
@@ -2464,8 +2464,8 @@ pub unsafe fn DoorTransition_Right(game: &mut Game) -> u8 {
         )
     );
     word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
-    word!(game.layer1_x_pos, wrapping_add(4));
-    word!(game.layer2_x_pos, wrapping_add(4));
+    word!(game.layer1_x_pos += 4);
+    word!(game.layer2_x_pos += 4);
     UpdateScrollVarsUpdateMap(game);
     word!(game.door_transition_frame_counter = (v2).wrapping_add(1));
     if v2 != 63 {
@@ -2485,8 +2485,8 @@ pub unsafe fn DoorTransition_Left(game: &mut Game) -> u8 {
         )) as u32
     );
     word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
-    word!(game.layer1_x_pos, wrapping_sub(4));
-    word!(game.layer2_x_pos, wrapping_sub(4));
+    word!(game.layer1_x_pos -= 4);
+    word!(game.layer2_x_pos -= 4);
     UpdateScrollVarsUpdateMap(game);
     word!(game.door_transition_frame_counter = (v2).wrapping_add(1));
     (v2 == 63) as u8
@@ -2503,21 +2503,21 @@ pub unsafe fn DoorTransition_Down(game: &mut Game) -> u8 {
                 )
             );
             word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
-            word!(game.layer1_y_pos, wrapping_add(4));
-            word!(game.layer2_y_pos, wrapping_add(4));
+            word!(game.layer1_y_pos += 4);
+            word!(game.layer2_y_pos += 4);
             UpdateScrollVarsUpdateMap(game);
         }
     } else {
         let v5: u16 = word!(game.reg_BG1VOFS);
         let v4: u16 = word!(game.reg_BG2VOFS);
         let v3: u16 = word!(game.layer1_y_pos);
-        word!(game.layer1_y_pos, wrapping_sub(15));
+        word!(game.layer1_y_pos -= 15);
         let v2: u16 = word!(game.layer2_y_pos);
-        word!(game.layer2_y_pos, wrapping_sub(15));
+        word!(game.layer2_y_pos -= 15);
         CalculateBgScrollAndLayerPositionBlocks(game);
         UpdatePreviousLayerBlocks(game);
-        word!(game.previous_layer1_y_block, wrapping_sub(1));
-        word!(game.previous_layer2_y_block, wrapping_sub(1));
+        word!(game.previous_layer1_y_block -= 1);
+        word!(game.previous_layer2_y_block -= 1);
         UpdateScrollVarsUpdateMap(game);
         word! {game; layer2_y_pos = v2; layer1_y_pos = v3; reg_BG2VOFS = v4; reg_BG1VOFS = v5; }
     }
@@ -2540,8 +2540,8 @@ pub unsafe fn DoorTransition_Up(game: &mut Game) -> u8 {
             )) as u32
         );
         word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
-        word!(game.layer1_y_pos, wrapping_sub(4));
-        word!(game.layer2_y_pos, wrapping_sub(4));
+        word!(game.layer1_y_pos -= 4);
+        word!(game.layer2_y_pos -= 4);
         if word!(game.door_transition_frame_counter) >= 5 {
             UpdateScrollVarsUpdateMap(game);
         } else {
@@ -2556,13 +2556,13 @@ pub unsafe fn DoorTransition_Up(game: &mut Game) -> u8 {
         let v5: u16 = word!(game.reg_BG1VOFS);
         let v4: u16 = word!(game.reg_BG2VOFS);
         let v3: u16 = word!(game.layer1_y_pos);
-        word!(game.layer1_y_pos, wrapping_sub(16));
+        word!(game.layer1_y_pos -= 16);
         let v2: u16 = word!(game.layer2_y_pos);
-        word!(game.layer2_y_pos, wrapping_sub(16));
+        word!(game.layer2_y_pos -= 16);
         CalculateBgScrollAndLayerPositionBlocks(game);
         UpdatePreviousLayerBlocks(game);
-        word!(game.previous_layer1_y_block, wrapping_add(1));
-        word!(game.previous_layer2_y_block, wrapping_add(1));
+        word!(game.previous_layer1_y_block += 1);
+        word!(game.previous_layer2_y_block += 1);
         UpdateScrollVarsUpdateMap(game);
         word! {game; layer2_y_pos = v2; layer1_y_pos = v3; reg_BG2VOFS = v4; reg_BG1VOFS = v5; }
     }

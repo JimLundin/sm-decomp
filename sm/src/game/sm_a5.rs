@@ -120,7 +120,7 @@ crate::game::callback_dispatch! {
                 (*v2).src.addr = -27648i32 as VoidP;
                 *(&raw mut (*v2).src.bank as *mut u16) = 177;
                 (*v2).vram_dst = 27904;
-                word!(game.vram_write_queue_tail, wrapping_add(7));
+                word!(game.vram_write_queue_tail += 7);
                 Draygon_Func_45(game);
             }
             (*E).var_B = (*E).var_B.wrapping_add(1);
@@ -980,16 +980,13 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
             } else {
                 let v3: i32 = v0 as i32 >> 1;
                 word!(
-                    game.sprite_x_pos[v3],
-                    wrapping_add(SignExtend8(
-                        *(rom_ptr!(game, u8; 0xa5ce07)).offset(v1 as isize) as u16,
-                    ))
+                    game.sprite_x_pos[v3] +=
+                        SignExtend8(*(rom_ptr!(game, u8; 0xa5ce07)).offset(v1 as isize) as u16,)
                 );
                 word!(
-                    game.sprite_y_pos[v3],
-                    wrapping_add(SignExtend8(
+                    game.sprite_y_pos[v3] += SignExtend8(
                         *(rom_ptr!(game, u8; 0xa5ce07)).offset((v2 as i32 + 1) as isize) as u16,
-                    ))
+                    )
                 );
             }
         }
