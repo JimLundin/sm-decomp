@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**108,261-line** historical-source composition. The current-source batch has
+**107,931-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -1543,8 +1543,67 @@ deletion credit. Final source: `TEMP/sm-tailored-next/sprite-drawing/integrated-
 frozen composition: `TEMP/sm-tailored-next/integration/phase17/REPORT.md`.
 Local prototype Python totals 17,599 lines across 220 files, separately from
 counted Rust engine support. The nine-line Cargo manifest and disclosed external
-GL dependency costs remain. Wall-jump, inside-block and suit-beam drafts are
-outside this frozen result.
+GL dependency costs remain.
+
+The next actual composition adds wall-jump decisions, inside-block reactions
+and suit-pickup rendering: **108,261 -> 107,931 (-330)**, with 2,373 tokens and
+9,330 code-text bytes removed. The respective complete reductions are 55, 154
+and 121 lines, including every helper and retained setup/cleanup routine.
+All 70 source files and the unchanged nine-line Cargo manifest count.
+
+Wall-jump tests cover 17,184 defined-domain C/old/new cases, comparing all RAM,
+ordered writes and the collision callbacks' arguments/state. Left-input priority,
+the ignored right-query return and later pose rereads remain. Two separate
+`i32::MIN` witnesses distinguish current wrapping from old debug panic and C's
+undefined negation. Adopting current wrapping costs zero lines, three tokens and
+14 bytes, included in the price; it is not historical equivalence at that input.
+
+The inside-block recognizer derives one sample/retry kernel from three C copies
+and sparse dispatch from all 112 original targets. It preserves the unusual
+masked-XOR top test, live position reads after callbacks, sample markers and
+initialized context across extension retries. All 28,312 C/old/new cases and
+292 additional Rust invalid-index cases pass. Two zero-sized-array checks retain
+the original bounds-panic payloads; their 14-token/18-byte correction to the
+initial assertion draft is counted. The real PLM implementation is a modeled
+callback boundary; that limit remains explicit.
+
+The five suit-pickup rendering phases share two ten-line row helpers. All
+69,118 C/old/new cases pass, including source/output overlap, byte/carry edges,
+real dispatch/color routines and successive rendering frames. Twenty inherited
+debug countdown panics preserve their partial RAM; optimized outputs match C.
+Acquisition and cleanup are unchanged but unexercised by these component tests.
+Its separate current-source adaptation saves only 35 lines and remains parked,
+uncompiled and unexecuted. The additional all-three-consumer hitbox-search
+experiment grows 26 lines despite successful builds; it is rejected without
+runtime checks. Previously closed decompression/SPC music cohorts were not rerun.
+
+All three actual sequential outputs pass full library/frontend builds and
+complete source correspondence. The profile is now **162,136 -> 107,931
+(-54,205)**, removing **576,909 tokens and 1,565,583 code-text bytes**. The strict
+gap is 7,932 lines, with no linked playable executable or whole-game replay.
+Final source: `TEMP/sm-tailored-next/suit-pickup-beam/integrated-v1`; frozen
+composition: `TEMP/sm-tailored-next/integration/phase18/REPORT.md`. Local Python
+prototype code totals 18,679 lines across 246 files, separate from engine support.
+The separate GL experiment targets current production startup policy with
+explicit legacy-C differences: use current `gl::load_with` and integer version
+queries, retiring the remaining compatibility adapter. Its complete price on
+the pre-suit input is **108,052 -> 106,886 (-1,166 lines)**, also removing 3,957
+tokens and 28,855 code-text bytes. All 42 adapter definitions are retired, two
+buffer-upload callers are adapted, nine renderer globals remain, and Cargo is
+unchanged. Source correspondence and complete library/frontend builds pass.
+The earlier external-GL dependency substitution is already in both inputs and
+is not counted again. Startup lookup/version/cache differences are intentional
+current-policy changes, without executed equivalence evidence.
+
+Runtime and adoption are parked. Windows Defender event 1121 at
+2026-10-21T01:16:41.050Z identifies ASR rule
+01443614-CD74-433A-B99E-2ECDC07BFC25 for the exact
+`current-gl-policy/runtime-v2/current-debug.exe` test. A DLL fallback had begun
+before that event was checked; it was stopped, and all partial comparisons are
+excluded. Accepted runtime coverage is zero. No security setting was changed,
+and the denied test must not be repackaged to evade the block. No phase19 GL
+composition was emitted; phase18 remains the validated total. Source, price,
+builds and block records remain under `TEMP/sm-tailored-next/current-gl-policy`.
 
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard

@@ -25,9 +25,9 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A successful partial
 profile or pilot does not finish this goal. The latest frozen composition
-now produces **162,136 -> 108,261 (-53,875)**, with complete optimized library
+now produces **162,136 -> 107,931 (-54,205)**, with complete optimized library
 and actual frontend metadata compilation passing. The latest stages remove
-**17,541** from the previous 125,802 checkpoint, including the selected C
+**17,871** from the previous 125,802 checkpoint, including the selected C
 algorithm families, shared enemy layouts, CPU/SPC grids, dispatchers, register
 writes, byte/split-word places, initialization/transfer families, map menus,
 explosion windows, assertion emission, ordered RAM-store groups, introduction
@@ -35,8 +35,9 @@ pages, moving platforms, getter prefixes, residual clone families, safe word
 updates, selective computed stores, ordinary standard-library imports and
 graphics-transfer records, native tracing, nonnull callback tables, corrected
 beam windows, square-slope handling, Samus jump launch, enemy homing, DSP
-sample limits, solid-enemy queries and sprite drawing. The complete profile
-also removes 574,536 tokens and 1,556,253 code-text bytes from its 162,136-line control. All local
+sample limits, solid-enemy queries, sprite drawing, wall-jump decisions,
+inside-block reactions and suit-pickup beams. The complete profile also removes
+576,909 tokens and 1,565,583 code-text bytes from its 162,136-line control. All local
 support and overlaps are counted; external GL dependency code is disclosed
 separately. These historical stages claim no new main deletion or whole-game replay.
 Map component checks exposed the original C2Rust VramWriteEntry packing defect
@@ -63,10 +64,24 @@ Homing passes 420,928 cases; DSP passes 131,079 scalar and 22,784 actual routine
 cases; solid-enemy queries pass 23,236 cases; sprites pass 266,171 cases with
 current Game tests restricted to disjoint ROM sources. Every sequential output
 passes complete builds and source correspondence. All 70 emitted files and
-support costs count. The historical gap to 99,999 remains **8,262 lines**.
-TEMP sm-tailored-next/integration/phase17 freezes the composition and limits.
-Next selected lineages are wall-jump decisions, inside-block reactions and
-suit-pickup beams; their pending drafts are outside this frozen count.
+support costs count. The next actual three-stage batch removes **330 more lines**:
+wall-jump decisions 55, inside-block reactions 154 and suit-pickup beams 121.
+Wall-jump passes 17,184 defined-domain cases; inside-block passes 28,312 cases
+and 292 exact bounds-panic controls. The suit suite passes 69,118 cases,
+retaining 20 inherited debug-countdown panic outcomes separately.
+Wall-jump `i32::MIN` wrapping explicitly follows current Rust; its zero-line
+policy cost is included and no C equivalence is claimed at that undefined input.
+Every complete build and source check passes. The historical gap to 99,999 is
+**7,932 lines**. TEMP sm-tailored-next/integration/phase18 freezes this result.
+The separate current-policy GL replacement prices **108,052 -> 106,886
+(-1,166)** and passes source/build checks, but runtime/adoption is parked:
+Defender ASR event 1121 explicitly blocks its test executable under rule
+01443614-CD74-433A-B99E-2ECDC07BFC25. All attempted fallback results are excluded;
+no GL reduction is included in phase18 and no security settings change.
+TEMP sm-tailored-next/current-gl-policy records the price, policy differences
+and block. The next selected scope is the two complete initialization
+coroutines; their 140-line body difference is not a measured replacement price.
+Current source remains the behavior authority.
 The earlier 789-handler executor trial now grows 809 lines on the composed
 input; reject it. Its enemy-only subset saves 217 and remains parked. The
 remaining C word-operation rules save about 265 on their separate repaired
@@ -487,7 +502,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the same clone scans. Domain judgment selects the native helper contract;
    recognition derives per-member parameters and rejects different effects.
    Price any production adoption against current Rust and validate it under
-   item 3. The isolated 108,261-line output is a partial translation profile,
+   item 3. The isolated 107,931-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
 
    The new finite typed instruction-data experiment also fails its complete
@@ -536,7 +551,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    separate controls; do not add their prices. Keep these scoped studies closed.
    Further discovery needs a new complete algorithm and replacement, not a
    repeat of these cohorts or another generic operation runner. Current-derived
-   translation recovery remains demonstrated separately at 108,261 lines.
+   translation recovery remains demonstrated separately at 107,931 lines.
 
    Further complete experiments at 105,984 reject shared object-script traversal
    (**+117 lines**), contextual Kraid ownership (**+33**) and real receiver methods
@@ -574,6 +589,17 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Typed ROM-record indexing was checked against its existing complete study,
    not rerun: the exact current Standing routine already appears there, and
    the full family saves only 25 lines. TEMP sm-rom-records-443e8471.
+
+   The new complete touch/shot/bomb extended-hitbox search price grows **26
+   lines**, including its distinct byte/word counts and mandatory-first/wrapping
+   traversal. Complete library/frontend builds and source checks pass; reject
+   without runtime work. This extends the old pair-only 13/29-line drafts and
+   claims no drawing-owner or bank-retirement saving. Decompression and SPC
+   music follow-ups match already closed cohorts; they were not rerun. The
+   separate current suit-beam helper price saves only **35 lines**, with no
+   compilation/runtime claim; park it while retaining the validated historical
+   121-line rule. Reports: TEMP sm-tailored-next/{enemy-spritemap-composition,
+   spc-music-scope,suit-pickup-beam}. These are not an aggregate current budget.
 
    The expanded source-first C experiment is complete: sharing 35 algorithm
    groups, retiring forwarding functions, fusing 789 instruction bodies and
