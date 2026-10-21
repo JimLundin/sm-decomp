@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**107,783-line** historical-source composition. The current-source batch has
+**106,915-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -1637,6 +1637,63 @@ support. Source, complete costs, reproduction and component limits:
 `TEMP/sm-tailored-next/initialization-coroutines/REPORT.md` and
 `TEMP/sm-tailored-next/integration/phase19/REPORT.md`. No current-main or GL
 saving is included.
+
+Phase20 separately recovers the current unaligned-ROM endpoint policy. It costs
+**zero lines, zero tokens and nine code-text bytes**. All 38 actual ROM-transfer
+calls/42 lanes are audited, including 34 odd-offset lanes. Complete builds and
+70-file inverse pass; 572 component cases cover both ROM-base alignments, all
+actual call sites, direction/overlap and 16 complete logo sequences. Three old
+debug diagnostics returned matching values: no old crash was observed. The old
+misaligned `ptr::read` violates Rust's alignment precondition even on those
+successful executions. The repair resolves phase19's tested logo alignment
+limitation without claiming a portable equivalence proof for undefined old
+accesses. Only the ROM endpoint constructor changes; RAM/table endpoints remain.
+
+Phase21 then shares Torizo's three fall/countdown/landing branches through an
+ordinary named helper learned from current Rust. **107,783 -> 107,723 (-60)**
+includes helper, both callback rows and all registrations; 481 tokens and 1,138
+code-text bytes disappear. It preserves the zero timer, timeout instruction
+pairs, speed cap, movement-return contract and live facing reread after movement.
+Complete builds and 70-file inverse pass. The 142,128-case C/old/new receipt
+is bound to four byte-identical regenerated fixtures, original headers and all
+consumed dependencies; the movement callback is controlled. Five faulty variants
+are detected. No whole-game replay or current-main deletion is claimed.
+Reports: `TEMP/sm-tailored-next/rom-transfer-alignment/REPORT.md` and
+`TEMP/sm-tailored-next/torizo-fall/INTEGRATION_REPORT.md`.
+
+Phase22 applies the adopted callback-registration ownership rule to the actual
+historical bodies. Twelve Pirate routes already use shared inline helpers and
+remain central; the other **901 original-C address/target pairs** acquire local
+registration beside their named functions. All 1,024 names and direct paths,
+28 owner routers, central precedence/defaults and index capture are counted.
+No current Game implementation is transplanted. The exact sequential price is
+**107,723 -> 106,915 (-808)**, with 3,811 tokens and 27,418 code-text bytes
+removed. Its earlier standalone 807-line price is superseded, not added.
+
+Fresh complete builds, 6,629 unchanged expanded functions, 4,696 storage/type
+items and full-u32 flattened routing pass. All 901 C identities match; 381,250
+debug/optimized tests exercise actual dispatchers with controlled leaf callbacks
+and compare full RAM, ordered arguments and pointer returns. These are selector
+checks, not gameplay-body execution. The whole historical profile now measures
+**162,136 -> 106,915 (-55,221)**, removing 581,938 tokens and 1,597,774 text bytes.
+All 70 source files count. Local experiment Python totals 20,558 lines/273 files;
+external GL costs remain disclosed separately. The gap is 6,916 lines, without
+a linked playable historical executable or whole-game replay claim.
+Final source: `TEMP/sm-tailored-next/enemy-callback-ownership/phase21-composition-v1/candidate`;
+freeze: `TEMP/sm-tailored-next/integration/phase22/REPORT.md`.
+
+The module-specific private-header audit covers 325 declarations and 11,957
+compiler owners. It identifies four unreferenced definitions, only **13 lines**;
+park that omission. Its earlier global-name occurrence rule was conservative
+across duplicated private names, but that limitation does not establish large
+dead code. Almost all surviving copies are used, including macro-expanded calls.
+A separate used-copy consolidation prices **428 lines** across 179 copies/32
+groups, including a 125-line shared module and all imports. Differing RomPtr_RAM
+variants and the four unused definitions remain. Standalone complete builds,
+source inverse, expanded declarations and immediate-call-only function use pass.
+Resolved targets and type records match across 11,792 normalized compiler
+owners. Actual sequential composition remains pending, so this price is not
+included in phase22. Artifact scope: `TEMP/sm-tailored-next/private-header-helpers`.
 
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard
