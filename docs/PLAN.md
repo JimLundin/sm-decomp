@@ -25,17 +25,18 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A successful partial
 profile or pilot does not finish this goal. The latest frozen composition
-now produces **162,136 -> 108,758 (-53,378)**, with complete optimized library
+now produces **162,136 -> 108,261 (-53,875)**, with complete optimized library
 and actual frontend metadata compilation passing. The latest stages remove
-**17,044** from the previous 125,802 checkpoint, including the selected C
+**17,541** from the previous 125,802 checkpoint, including the selected C
 algorithm families, shared enemy layouts, CPU/SPC grids, dispatchers, register
 writes, byte/split-word places, initialization/transfer families, map menus,
 explosion windows, assertion emission, ordered RAM-store groups, introduction
 pages, moving platforms, getter prefixes, residual clone families, safe word
 updates, selective computed stores, ordinary standard-library imports and
 graphics-transfer records, native tracing, nonnull callback tables, corrected
-beam windows and square-slope handling. The complete profile also removes
-569,334 tokens and 1,544,766 code-text bytes from its 162,136-line control. All local
+beam windows, square-slope handling, Samus jump launch, enemy homing, DSP
+sample limits, solid-enemy queries and sprite drawing. The complete profile
+also removes 574,536 tokens and 1,556,253 code-text bytes from its 162,136-line control. All local
 support and overlaps are counted; external GL dependency code is disclosed
 separately. These historical stages claim no new main deletion or whole-game replay.
 Map component checks exposed the original C2Rust VramWriteEntry packing defect
@@ -55,10 +56,17 @@ expanded correspondence. Beam handling passes 64,100 cases against corrected
 current behavior, explicitly including its positive-down fixes rather than
 claiming equivalence to uncorrected C. Eight square-slope entries share one
 141-line owner; 49,920 original-C/old/new cases pass in debug and release.
-All 69 emitted files and support costs count. The next selected lineage is
-the four Samus jump-launch entries and current shared water/speed policy;
-no price or under-100,000 result is established. TEMP
-sm-tailored-next/integration/phase16 freezes the composition and limitations.
+The following five families remove another **497 lines**, including a separate
+26-line packed-sprite alignment repair. Four Samus launch entries emit a shared
+97-line family from 131 C / 385 initial Rust lines; 62,624 C/old/new cases pass.
+Homing passes 420,928 cases; DSP passes 131,079 scalar and 22,784 actual routine
+cases; solid-enemy queries pass 23,236 cases; sprites pass 266,171 cases with
+current Game tests restricted to disjoint ROM sources. Every sequential output
+passes complete builds and source correspondence. All 70 emitted files and
+support costs count. The historical gap to 99,999 remains **8,262 lines**.
+TEMP sm-tailored-next/integration/phase17 freezes the composition and limits.
+Next selected lineages are wall-jump decisions, inside-block reactions and
+suit-pickup beams; their pending drafts are outside this frozen count.
 The earlier 789-handler executor trial now grows 809 lines on the composed
 input; reject it. Its enemy-only subset saves 217 and remains parked. The
 remaining C word-operation rules save about 265 on their separate repaired
@@ -477,7 +485,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the same clone scans. Domain judgment selects the native helper contract;
    recognition derives per-member parameters and rejects different effects.
    Price any production adoption against current Rust and validate it under
-   item 3. The isolated 108,758-line output is a partial translation profile,
+   item 3. The isolated 108,261-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
 
    The new finite typed instruction-data experiment also fails its complete
@@ -526,7 +534,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    separate controls; do not add their prices. Keep these scoped studies closed.
    Further discovery needs a new complete algorithm and replacement, not a
    repeat of these cohorts or another generic operation runner. Current-derived
-   translation recovery remains demonstrated separately at 108,758 lines.
+   translation recovery remains demonstrated separately at 108,261 lines.
 
    Further complete experiments at 105,984 reject shared object-script traversal
    (**+117 lines**), contextual Kraid ownership (**+33**) and real receiver methods
@@ -1066,8 +1074,8 @@ audio and comparisons. Required `sprites.wrap`, `sprites.inside` and
 `sprites.bounded` probes execute on both routes; other clipping variants have
 component coverage. The repair passes 265,737 actual current-Game comparisons
 on disjoint ROM sources, with the original debug alignment abort preserved.
-All 81 source files match the replayed candidate except for the intentionally
-excluded unrelated shader draft. Source hash:
+All 81 source files match the replayed candidate after CRLF/LF normalization,
+except for the intentionally excluded unrelated shader draft. Source hash:
 `fe8feacc6e4d8cf8258c7668badd8745c3ad00098511d0128cac4a16f1e6b1ba`.
 Neither movie reaches credits. Synthetic RAM-source aliasing remains unsupported.
 

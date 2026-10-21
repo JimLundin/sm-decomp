@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**108,758-line** historical-source composition. The current-source batch has
+**108,261-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -1494,8 +1494,55 @@ Frozen report, stages and reproduction commands:
 totals 16,193 lines across 185 files, including 1,064 lines in 15 new files;
 this experiment code remains separate from counted engine support. Cargo still
 has nine lines and the external GL dependency costs remain disclosed.
-The next specific lineage is the four Samus jump-launch entries and current
-`initialize_samus_jump` water/speed policy. It has no measured saving yet.
+
+The subsequent five-family composition is **108,758 -> 108,261 (-497)**,
+removing 5,202 tokens and 11,487 code-text bytes. These are measured sequential
+outputs; helpers, imports, registrations and repair costs are included:
+
+| Complete emission family | Net lines removed | Executed component cases |
+| --- | ---: | ---: |
+| Four Samus jump-launch entries | 63 | 62,624 |
+| Six Ridley/Shitroid homing entries | 130 | 420,928 |
+| Fourteen DSP sample-limit expressions | 79 | 131,079 scalar + 22,784 routine |
+| Solid-enemy query and temporary result type | 101 | 23,236 |
+| Twelve sprite-drawing entries, including alignment repair | 124 | 266,171 |
+
+The jump family makes the C-to-current learning path concrete: **131 original
+C -> 385 initial Rust -> 160 previously composed Rust -> 97 emitted lines**.
+An 81-line owner shares liquid selection, jump speed, optional boost and launch
+state; all four wrappers and registration count. Actual C/old/new tests compare
+every RAM byte, ordered writes and the bottom-helper call's count/state. Gravity
+Suit skipping, water precedence and fraction addition without carry remain.
+
+The homing recognizer derives axis, target, divisor, reversal, acceleration and
+screen-call placement from C. Its cases include every 16-bit distance for all
+six entries and 12,288 persistent updates. The DSP rule changes only exact
+local signed-limit expressions, preserving surrounding shifts/casts and FIR/BRR
+narrowing. Its selected alias fixtures avoid overflow in an unchanged old
+addition; it claims no arithmetic correction. The solid-enemy query preserves
+unusual fractional carry/borrow rounding and alias-sensitive collision-index
+stores; all six intentionally faulty variants are detected.
+
+Sprite sharing follows the current bounded and wrapping writers, retaining
+their different store orders, clipping, ROM lookup guards and tile transforms.
+A separate historical repair costs 26 lines before sharing removes 150. Packed
+five-byte records require unaligned word access; current's related five-line
+repair is accounted for separately below. Historical global-storage overlap
+cases pass, while current Game cases use disjoint ROM sources. Both raw and
+repaired current controls fail a synthetic Game/source overlap case; no general
+aliasing repair is claimed. Component checks do not include hardware rendering.
+
+Every sequential output passes complete optimized library/frontend builds and
+source correspondence. The full **70-file** profile is now **162,136 -> 108,261
+(-53,875)**, with **574,536 tokens / 1,556,253 code-text bytes** removed. It remains
+8,262 lines above 99,999 and has no linked playable executable or whole-game
+replay result. These rules reproduce current sharing, so none is new production
+deletion credit. Final source: `TEMP/sm-tailored-next/sprite-drawing/integrated-v1`;
+frozen composition: `TEMP/sm-tailored-next/integration/phase17/REPORT.md`.
+Local prototype Python totals 17,599 lines across 220 files, separately from
+counted Rust engine support. The nine-line Cargo manifest and disclosed external
+GL dependency costs remain. Wall-jump, inside-block and suit-beam drafts are
+outside this frozen result.
 
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard
