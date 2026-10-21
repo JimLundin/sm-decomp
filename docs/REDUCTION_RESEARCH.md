@@ -21,7 +21,9 @@ repair adds five lines, reaching **105,690**, with complete builds, component
 checks and both full boot replay routes passing as scoped below.
 The shared gameplay prelude removes **381 more lines**, reaching **105,309**;
 complete expanded-operation and resolved-binding checks pass.
-Maintained Rust needs another **5,310 lines removed** to reach 99,999. A separate
+Shared enemy callback ownership then removes **350 lines**, reaching **104,959**,
+with complete builds, static/dispatch comparisons and both full boot replays.
+Maintained Rust needs another **4,960 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -2007,6 +2009,36 @@ replay, under the plan's static-validation rule. It is a current-source saving,
 not an additional historical-pipeline reduction; earlier parked import/unused-
 declaration prices overlap and cannot be added. Frozen source, patch and proofs:
 `TEMP/sm-tailored-next/gameplay-prelude/REPORT.md` and `final/sm/src`.
+
+The resumed cross-file enemy callback experiment is also adopted:
+**105,309 -> 104,959 (-350 lines)**, removing **3,499 tokens and 29,375 code-text
+bytes**. It uses the exact earlier 913-arm scope and current bodies, replacing
+the old resource-parked 346-line price. Numeric registrations move beside their
+existing named callbacks through the existing macro. Twenty-eight owner routers
+retain central exact-route precedence, defaults and preinstruction index capture.
+All 1,002 callback names/signatures remain; no macro, import or support cost is
+omitted. This prepares ownership but retires no bank or central adapter.
+
+Complete library/frontend builds pass. Compiler expansion preserves 7,085
+functions and 4,727 storage/type items; flattening agrees over the complete u32
+address domain. Debug/optimized tests pass **381,250 cases** using the actual
+dispatchers and instrumented leaf callbacks, comparing full RAM, ordered
+arguments and pointer returns. This suite tests routing, while unchanged
+gameplay bodies have complete source correspondence. Probed boot Speed Booster
+passes **21015/0**, reaching all six central/owner family labels plus 120 frames.
+Clean full boot any% **129712/0** and Speed Booster **148406/0** pass with normal
+rendering, audio and comparisons. Neither route reaches credits; grouped probes
+do not establish every owner executes in movies.
+
+The adopted 82-file source matches the frozen replay source after CRLF/LF
+normalization, with the unrelated shader draft preserved. Replay source hash:
+`0b13d575b48aba371357ceb436af7b357440f9cbdc097ade972778b5281a02a9`.
+Progress reports 104,876 working lines including that unrelated 83-line draft
+reduction; the committed count is 104,959. The cast-line counter increases one
+because Torizo's unchanged two-cast expression wraps onto separate lines.
+Unsafe-function declaration lines fall through grouping, without changing
+expanded unsafe signatures. The remaining target gap is 4,960 lines; this result
+does not fund it. Source, patch and exact checks: `TEMP/sm-enemy-callback-current`.
 
 Three further complete current-source experiments use the same committed
 **105,769-line** control. Their independent prices are not additive:

@@ -155,7 +155,10 @@ The shared Samus pose-update sequences remove **84 more lines**, reaching
 The packed-sprite word-access repair adds five lines, reaching **105,690**.
 Shared gameplay import ownership removes another **381 lines**, reaching
 **105,309**, with complete expanded-operation and resolved-binding checks.
-Another **5,310 lines** are needed to reach 99,999;
+Shared enemy callback ownership removes **350 more lines**, reaching **104,959**,
+with complete builds, expanded bodies, full-u32 routing correspondence,
+381,250 dispatch component cases and both full boot replay routes passing.
+Another **4,960 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -694,8 +697,31 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **5,310-line** gap; parked small drafts are not
+   replacement yet funds the **4,960-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Enemy callback ownership removes **350 lines (105,309 -> 104,959)**,
+   3,499 tokens and 29,375 code-text bytes. This resumes the existing 913-arm
+   cross-file draft after its temporary resource hold, rebuilding from current
+   bodies and retaining all 1,002 named callbacks. Its old unvalidated 346-line
+   price is superseded, not added. Existing callback macros place numeric
+   registration beside definitions, with 28 owner routers and unchanged central
+   precedence, defaults and preinstruction index capture. All support counts;
+   no shared macro or import is added. This is ownership support, not bank
+   retirement. Complete library/frontend builds, 7,085 unchanged expanded
+   functions, 4,727 storage/type declarations and full-u32 flattened routes pass.
+   Another 381,250 debug/optimized dispatch cases compare full RAM, ordered
+   target/arguments and pointer returns using instrumented terminal callbacks.
+   Probed boot Speed Booster **21015/0** hits all six central/owner family
+   probes, followed by 120 frames. Clean full boot any% **129712/0** and Speed
+   Booster **148406/0** pass with normal rendering, audio and comparisons.
+   The 82-file adopted source matches the clean replay root after CRLF/LF
+   normalization, excluding the preserved unrelated shader draft. Neither
+   movie reaches credits; grouped probes do not claim every owner executes.
+   The cast-line counter rises one because the same Torizo two-cast expression
+   wraps onto two lines; expanded casts are unchanged. Unsafe declaration lines
+   fall through grouping, without changing expanded unsafe signatures.
+   TEMP sm-enemy-callback-current records the complete change and checks.
 
    Shared gameplay import ownership removes **381 lines (105,690 -> 105,309)**,
    4,481 tokens and 17,050 code-text bytes. A 39-line prelude consolidates 955
@@ -1038,10 +1064,12 @@ sm-context-casts-d914d9aa. A dynamic-bound/retained-counter range
 follow-up finds roughly 100 gross scaffold lines before replacement costs,
 not another multi-hundred-line candidate. TEMP sm-indexed-ranges-dynamic-preflight.
 
-The separate cross-file callback draft covers EnemyAi/PreInstr/Instr with
-owner-local routing and saves **346 additional lines** over the local sharing.
-Park it under the latest resource direction: formatting/price only, without
-compiler, equivalence or runtime validation. TEMP sm-unified-callbacks-crossfile-v4.
+The earlier cross-file callback draft's **346-line** formatting-only price is
+superseded by the current 350-line adoption under item 3. Its temporary resource
+hold was lifted by the user's later parallel-experiment direction. The exact
+913-arm scope was resumed without another clone scan. Historical draft:
+TEMP sm-unified-callbacks-crossfile-v4; validated current work:
+TEMP sm-enemy-callback-current. Do not add both prices.
 A macro-aware graph of 6,729 functions/callbacks and 1,274 globals found no
 large disconnected component; new candidates occupy only 48 source lines.
 No deletion is claimed. TEMP sm-dead-components-d914d9aa.
@@ -1123,7 +1151,20 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: packed-sprite word access and Samus pose sharing pass
+Latest full integration: shared enemy callback ownership passes clean full boot
+any% **129712/0** and Speed Booster **148406/0**, with normal rendering, audio
+and comparisons. Probed Speed Booster **21015/0** exercises all six required
+`enemy_dispatch.{ai,pre,instr}.{entry,owner}` labels and 120 follow-up frames.
+Every family delegates at runtime; the grouped probes do not establish every
+owner's movie execution. Dispatch component tests cover all explicit routes,
+adjacent/range/high-byte-invalid addresses and all index values; unchanged
+gameplay bodies have complete expanded correspondence. The adopted 82-file
+source matches the replayed source after CRLF/LF normalization, with the shader
+draft preserved. Replay source hash:
+`0b13d575b48aba371357ceb436af7b357440f9cbdc097ade972778b5281a02a9`.
+Neither movie reaches credits. TEMP sm-enemy-callback-current retains logs.
+
+Previous full integration: packed-sprite word access and Samus pose sharing pass
 full boot any% **129712/0** and Speed Booster **148406/0**, with normal rendering,
 audio and comparisons. Required `sprites.wrap`, `sprites.inside` and
 `sprites.bounded` probes execute on both routes; other clipping variants have
