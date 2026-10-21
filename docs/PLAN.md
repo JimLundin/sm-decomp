@@ -25,9 +25,9 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A successful partial
 profile or pilot does not finish this goal. The latest frozen composition
-now produces **162,136 -> 104,742 (-57,394)**, with complete optimized library
+now produces **162,136 -> 104,325 (-57,811)**, with complete optimized library
 and actual frontend metadata compilation passing. The latest stages remove
-**21,060** from the previous 125,802 checkpoint, including the selected C
+**21,477** from the previous 125,802 checkpoint, including the selected C
 algorithm families, shared enemy layouts, CPU/SPC grids, dispatchers, register
 writes, byte/split-word places, initialization/transfer families, map menus,
 explosion windows, assertion emission, ordered RAM-store groups, introduction
@@ -38,7 +38,7 @@ beam windows, square-slope handling, Samus jump launch, enemy homing, DSP
 sample limits, solid-enemy queries, sprite drawing, wall-jump decisions,
 inside-block reactions, suit-pickup beams, initialization coroutines, Torizo
 fall/countdown, cross-file callback ownership and used-header helper ownership.
-The complete profile also removes 601,593 tokens and 1,646,891 code-text bytes from
+The complete profile also removes 606,868 tokens and 1,658,054 code-text bytes from
 its 162,136-line control. All local
 support and overlaps are counted; external GL/SDL dependency code is disclosed
 separately. These historical stages claim no new main deletion or whole-game replay.
@@ -149,6 +149,23 @@ separately from maintained source. The actual batch removes **3,189 lines**
 from phase18; the strict historical gap is **4,743**. Parent independently
 recounted the complete roots. TEMP sm-tailored-next/integration/phase28 freezes
 the composition; all local support is counted and parked drafts remain excluded.
+Five further current-derived rules compose to **104,325 (-417)**: camera
+boundary policy 97, SPC implementation kernels 85, DMA/HDMA execution 66,
+Samus liquid decisions 105 and message drawing 64. All local helpers, seven
+changed source files and caller costs count. The final complete optimized
+library/frontend builds pass; source checks bind every actual sequential stage
+to its tested components. Camera passes 489,298 C/old/new cases, SPC passes
+352,256 C/old/new cases plus broader Rust bus-mutation checks, DMA passes
+10,178 component cases, and Samus passes 30,618 decision cases plus 67,723
+original-C classifier comparisons. Message drawing passes 199,731 cases,
+including exact bounds panics and a separate zero-line/+10-byte unaligned-read
+recovery. Old/new message equivalence is limited to aligned sources; 840 odd
+cases compare C/new. No full surrounding Samus execution or game replay is
+claimed. Parent independently recounted every incremental root and the final
+71-file output. TEMP sm-tailored-next/integration/phase29 freezes the batch.
+The historical gap is **4,326**. Experiment Python totals 26,049 lines/348 files
+and remains separately disclosed tooling, not emitted game source. Current
+main remains **104,794**; these recovered rules add no current-main deletion.
 No whole-game or current-main reduction is claimed by these historical stages.
 The separate current-policy GL replacement prices **108,052 -> 106,886
 (-1,166)** and passes source/build checks, but runtime/adoption is parked:
@@ -164,8 +181,10 @@ current-derived emission cohorts; no remaining deletion budget is established.
 Current source remains the behavior authority.
 The earlier 789-handler executor trial now grows 809 lines on the composed
 input; reject it. Its enemy-only subset saves 217 and remains parked. The
-remaining C word-operation rules save about 265 on their separate repaired
-control; their old standalone savings are not additive.
+remaining C word-operation rules were subsequently composed at phase13:
+181 safe countdown sites remove 165 lines and 270 word comparisons remove
+100, after the separately counted 55-line alignment repair. All are already
+included in phase28; there is no additional 265-line budget.
 Numeric, comparison, entity-access and initialization trials
 on current source save only 31, 69, 152 and 13 lines on their separate inputs;
 park these as volume priorities. Moving functions into associated Game
@@ -588,7 +607,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the same clone scans. Domain judgment selects the native helper contract;
    recognition derives per-member parameters and rejects different effects.
    Price any production adoption against current Rust and validate it under
-   item 3. The isolated 104,742-line output is a partial translation profile,
+   item 3. The isolated 104,325-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
 
    The new finite typed instruction-data experiment also fails its complete
@@ -633,6 +652,18 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    excluding it from the composition. Report: TEMP
    sm-tailored-next/internal-declaration-owners/REPORT.md.
 
+   Two new complete domain prices on phase28 remain too small: ending
+   particles save **17 lines**, including the named eight-word record and a
+   separately priced three-line packed-OAM repair; rectangle-contact helpers
+   save **nine lines** across six complete routines. Both are formatted prices
+   only, without compilation/runtime claims or adoption. The ending Y-word
+   store is at an odd OAM byte offset; its unaligned repair is explicit and
+   unvalidated, not disguised as equivalent old Rust behavior. An existing-data
+   gameplay liveness follow-up establishes zero historical reduction; its only
+   eight additional current occupied lines do not justify another scanner.
+   These scopes are stopped. Reports: TEMP sm-tailored-next/{ending-particles,
+   projectile-collision-geometry,gameplay-liveness-followup}.
+
    Those representation studies are closed. Five subsequent domain studies
    use the same repaired 106,189-line control:
 
@@ -660,7 +691,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    separate controls; do not add their prices. Keep these scoped studies closed.
    Further discovery needs a new complete algorithm and replacement, not a
    repeat of these cohorts or another generic operation runner. Current-derived
-   translation recovery remains demonstrated separately at 104,742 lines.
+   translation recovery remains demonstrated separately at 104,325 lines.
 
    Further complete experiments at 105,984 reject shared object-script traversal
    (**+117 lines**), contextual Kraid ownership (**+33**) and real receiver methods

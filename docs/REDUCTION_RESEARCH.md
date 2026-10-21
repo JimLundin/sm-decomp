@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**104,742-line** historical-source composition. The current-source batch has
+**104,325-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -1833,6 +1833,57 @@ is 24,212 lines in 322 files, disclosed separately. Parent independently
 recounted the complete roots. Main was 104,959 at this checkpoint. These stages
 establish neither a playable historical build nor a whole-game replay result.
 Checkpoint: `TEMP/sm-tailored-next/integration/phase28/REPORT.md`.
+
+Five more current-derived cohorts compose on that exact output. These are
+executable replacements of complete selected implementations or decision
+fragments, with surrounding historical effects retained. Copying whole current
+files would import unrelated policy differences and omit moved support costs.
+
+| Sequential rule | Before | After | Lines removed |
+| --- | ---: | ---: | ---: |
+| Camera boundary policy and scroll-cell lookup | 104,742 | 104,645 | 97 |
+| SPC shared operation helpers and consumers | 104,645 | 104,560 | 85 |
+| DMA/HDMA execution and register handling | 104,560 | 104,494 | 66 |
+| Fourteen Samus liquid decisions | 104,494 | 104,389 | 105 |
+| Message drawing, selection and HDMA layout | 104,389 | 104,325 | 64 |
+
+The actual batch removes **417 lines, 5,275 tokens and 11,163 spelling bytes**.
+All 71 Rust files and ten Cargo lines count. Parent independently recounted
+the roots; exactly seven source files change. The final optimized library and
+actual frontend metadata build pass. Each stage preserves every other file and
+binds the changed source and dependencies to its component checks. Intermediate
+composed roots receive source checks; one final batch build covers integration.
+
+Camera passes 489,298 C/old/new cases with full RAM comparisons. SPC passes
+352,256 C/old/new cases and 1,179,648 old/new cases per build profile, including
+state-mutating bus callbacks and persistent sequences. DMA passes 10,178 cases
+with ordered bus/state comparisons, including its own register effects. Samus
+passes 30,618 old/new decision cases and 67,723 original-C classifier comparisons;
+unchanged surrounding effects have source correspondence, not fresh full-routine
+execution. Targeted negative controls detect boundary/order mistakes in the
+camera, SPC and liquid suites.
+
+Message drawing passes 199,731 component cases, including 926 exact Rust bounds
+panics and full RAM snapshots at register/callback boundaries. Its explicit
+unaligned-read policy recovery costs zero lines/tokens and ten spelling bytes,
+included above. The 840 odd-source cases compare C/new; old/new equivalence is
+limited to aligned mapped words. Actual PPU, asynchronous message lifecycle and
+arbitrary aliasing are outside those checks. No whole-game replay is claimed.
+
+The large apparent Samus file gap is not a deletion budget: 818 lines in sm_90
+and 305 in sm_91 include moved beam/projectile owners, different table spelling
+and added shared macros. The selected liquid rule earns only its measured 105
+lines. Separate complete particle and rectangle-contact drafts save 17 and nine
+lines and remain uncompiled/parked; the liveness follow-up establishes zero
+historical reduction. Their prices are excluded from the composition.
+
+Phase29 reaches **162,136 -> 104,325 (-57,811)**, cumulatively removing 606,868
+tokens and 1,658,054 spelling bytes. The remaining strict gap is **4,326 lines**.
+Prototype Python adds 1,837 lines in 26 scripts, totaling 26,049 lines/348 files;
+that development tooling is separate from emitted game source. Main remains
+104,794 after its separate inflater adoption. This batch supplies no new main
+deletion or playable historical executable. Frozen report and all owner links:
+`TEMP/sm-tailored-next/integration/phase29/REPORT.md`.
 
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard
