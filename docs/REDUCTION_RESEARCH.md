@@ -73,7 +73,9 @@ Live-typed snapshots remove **239 further lines**, reaching **101,575**, with
 capture/restore/diagnostic checks and both full boot replays pass.
 The pinned CPU adapter removes **696 more Rust lines**, reaching **100,879**.
 Its 41-line installer and 2,836 external C/header lines are disclosed separately.
-Full boot replays and component checks pass; another **880 Rust lines** must go
+Full boot replays and component checks pass. The PNG/inflater replacement
+removes **777 more Rust lines**, reaching **100,102**; its four-line C bridge
+leaves 773 net Rust/C lines removed. Another **103 Rust lines** must go
 to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
@@ -95,6 +97,31 @@ neither reduces source volume in the tested scopes. Its default mode does
 preserve packed byte accesses despite physically larger Rust structs. Corrode's
 specific packing omission is repairable; layout differences alone are not a
 correctness verdict. The independent-transpiler sections record these tests.
+
+## Compatible PNG/inflater dependency (2026-10-21)
+
+Replacing the complete translated decoder and inflater with published stb_image
+v2.26 removes **777 Rust lines (100,879 -> 100,102)**, or **773 net lines** after
+its four-line maintained C bridge. The unmodified header is 7,762 external lines;
+this is dependency adoption, not a reduction in total linked program source.
+The final Rust adapter has 64 lines; all callers and source registrations count.
+The header comes from the exact published stb-sys 0.6.0 archive. No Cargo package
+or build script is added. [PNG_DEPENDENCY.md](PNG_DEPENDENCY.md) gives hashes,
+installation commands, required flags and MIT distribution instructions.
+
+The pin matters: newer stb versions reject reserved DEFLATE codes accepted by
+current Rust; older versions lack required 16-bit PNG support. The required
+zero-initialization flag preserves missing palette entries. Both memory and file
+APIs pass **13,412 comparisons on 6,704 distinct inputs**, including malformed
+headers, reserved codes, palettes, depths, filters and interlacing. The final
+linkage-only change retains the same decoder bodies and passes another **202
+focused API checks** with refreshed embedded-source validation. All five test
+sources and the installed production archive are checked against the tested
+candidate. Allocation exhaustion and every malformed stream remain unproven.
+Main source correspondence, formatting and the final normal release library/
+frontend build pass (41.24s).
+This is frontend-only, so headless gameplay replay adds no decoder coverage.
+Durable sources/checks: `Local/sm-decomp-experiments/20261021/codec-dependency/v226`.
 
 ## Pinned LakeSnes CPU replacement (2026-10-21)
 

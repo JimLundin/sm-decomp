@@ -256,7 +256,9 @@ reaching **101,575**, with component checks and both full boot replays passing.
 The pinned LakeSnes CPU adapter removes **696 more Rust lines**, reaching
 **100,879**, with complete component checks and both full boot replays passing.
 Its 41-line installer counts separately; the upstream closure is 2,836 external
-C/header lines. Another **880 lines** are needed to reach 99,999;
+C/header lines. The pinned PNG/inflater dependency removes **777 more Rust
+lines**, reaching **100,102**. Its four-line C bridge gives **773 net Rust/C
+lines removed**. Another **103 Rust lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -905,6 +907,21 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    replacements now have passing component checks and complete release builds.
    Finish their main integration before composing the already measured RAM-chain
    and residual-control-flow cohorts; do not add their standalone prices.
+
+   The complete PNG/inflater replacement removes **777 Rust lines
+   (100,879 -> 100,102)**, or **773 including its four-line C bridge**.
+   The published stb-sys 0.6.0 header supplies unmodified stb_image v2.26;
+   its 7,762 external C lines are disclosed separately. The compatibility pin,
+   PNG-only/dimension settings and zero-initialized missing palette entries are
+   mandatory. Source/installed archive identity, formatting and the final normal
+   main release library/frontend build pass (41.24s). Actual component checks pass
+   **6,704 inputs / 13,412 memory/file API comparisons**, plus 202 focused checks
+   after the final linkage-only adjustment. Allocation exhaustion and all malformed
+   streams are not proven. This frontend-only change needs no gameplay replay.
+   Decoder bodies match the tested candidate; the old inflater and registration
+   are removed. The additional extern C block is the codec dependency boundary.
+   Install and distribute as described in [PNG_DEPENDENCY.md](PNG_DEPENDENCY.md).
+   Durable source/checks: Local/sm-decomp-experiments/20261021/codec-dependency/v226.
 
    The pinned LakeSnes CPU adapter is adopted after full replay validation:
    **101,575 -> 100,879 (-696 Rust lines)**, or **655 net lines** after its
@@ -1787,10 +1804,12 @@ shared gameplay imports, enemy callback ownership, native inflater, compound
 RAM updates, shared RAM/record metadata, alias declarations, native C-string
 literals, shared constant headers, native shader/presentation ownership and
 shared PPU pixel evaluation, native/SPC state transfers and live-typed snapshots,
-and the pinned CPU dependency, maintained Rust is **100,879**, leaving **880**
-to reach 99,999. Its new installer has 41 lines; external CPU code has 2,836.
-Counters: raw offsets 30; extern C blocks 4; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3293; cast lines 7580. The CPU adds one foreign dependency
+and the pinned CPU/PNG dependencies, maintained Rust is **100,102**, leaving
+**103** to reach 99,999. The C bridge adds four implementation lines and the
+CPU installer 41 setup lines. External CPU/PNG code has 2,836/7,762 lines.
+Counters: raw offsets 30; extern C blocks 5; counted C ABI exports 4; no_mangle 8;
+unsafe functions 3288; cast lines 7577. The codec removes five unsafe declarations
+and three cast-containing lines while adding one foreign dependency boundary. The CPU adds one foreign dependency
 boundary and removes 25 unsafe declarations. Snapshot diagnostics add one unsafe
 helper and remove 14 cast-containing lines while removing 239 total lines.
 Shared state transfers add one unsafe

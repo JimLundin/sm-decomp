@@ -108,10 +108,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/platform/texture_png.rs",
         include_bytes!("platform/texture_png.rs"),
     ),
-    (
-        "sm/src/platform/texture_png/legacy_inflate.rs",
-        include_bytes!("platform/texture_png/legacy_inflate.rs"),
-    ),
     ("sm/src/ram_map.rs", include_bytes!("ram_map.rs")),
     ("sm/src/rtl.rs", include_bytes!("rtl.rs")),
     ("sm/src/snes/apu.rs", include_bytes!("snes/apu.rs")),
