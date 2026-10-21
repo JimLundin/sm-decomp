@@ -1,5 +1,5 @@
-use crate::game::callback_tables::callback_table;
-pub use crate::game::constants::game_states::*;
+pub use crate::game::prelude::*;
+
 use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_88::{
     FxTypeFunc_20, FxTypeFunc_22_ScrollingSky, FxTypeFunc_24, FxTypeFunc_26_TourianEntranceStatue,
@@ -9,12 +9,7 @@ use crate::game::sm_88::{
 };
 use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::RomPtr;
 
-pub use crate::types::Func_V;
 crate::typed_struct! {
     #[derive(Copy, Clone)]
     #[repr(C, packed)]
@@ -24,7 +19,7 @@ crate::typed_struct! {
             palette_fx_bitset, animtiles_bitset, palette_blend: u8;
     }
 }
-pub use crate::types::GameState;
+
 const RomPtr_83: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x83>;
 #[inline]
 unsafe fn get_FxDef(a: u16, game: &mut Game) -> *mut FxDef {

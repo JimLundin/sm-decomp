@@ -126,7 +126,9 @@ with complete target/operation correspondence and fresh full boot replays.
 The shared Samus pose-update sequences remove **84 more lines**, reaching
 **105,685**, with complete expanded correspondence and a focused intro replay.
 The packed-sprite word-access repair adds five lines, reaching **105,690**.
-Another **5,691 lines** are needed to reach 99,999;
+Shared gameplay import ownership removes another **381 lines**, reaching
+**105,309**, with complete expanded-operation and resolved-binding checks.
+Another **5,310 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -654,8 +656,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **5,691-line** gap; parked small drafts are not
+   replacement yet funds the **5,310-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Shared gameplay import ownership removes **381 lines (105,690 -> 105,309)**,
+   4,481 tokens and 17,050 code-text bytes. A 39-line prelude consolidates 955
+   import entries across all 32 banks, including both registrations and every
+   remaining local import. It imports shared owners only, with no bank-module
+   dependency. All existing bodies and macro paths remain unchanged. Complete
+   library/frontend builds, source inverse and expanded-operation checks pass.
+   Resolved compiler references/types match across 12,645 library and 313
+   frontend owners; only independently checked source-cache bytes are excluded.
+   All 441 tested old public type paths and 4,962 constant paths retain their
+   definitions. Public globs expose extra common names, an explicit visibility
+   tradeoff with no changed existing consumer. This import-only change needs no
+   replay under the validation strategy. It includes the sprite repair and
+   overlaps earlier parked import studies; their savings must not be added.
+   TEMP sm-tailored-next/gameplay-prelude contains the final 82-file source.
 
    The sprite experiment also repairs an actual current debug abort on packed
    five-byte ROM records. Eight word reads and two OAM writes in the two shared
@@ -1074,8 +1091,10 @@ audio and comparisons. Required `sprites.wrap`, `sprites.inside` and
 `sprites.bounded` probes execute on both routes; other clipping variants have
 component coverage. The repair passes 265,737 actual current-Game comparisons
 on disjoint ROM sources, with the original debug alignment abort preserved.
-All 81 source files match the replayed candidate after CRLF/LF normalization,
-except for the intentionally excluded unrelated shader draft. Source hash:
+The adopted repair matched its 81-file replay snapshot after CRLF/LF
+normalization, excluding the unrelated shader draft. The subsequent import-only
+prelude has complete expanded-operation and resolved-binding correspondence;
+it adds no new replay claim. Repair replay source hash:
 `fe8feacc6e4d8cf8258c7668badd8745c3ad00098511d0128cac4a16f1e6b1ba`.
 Neither movie reaches credits. Synthetic RAM-source aliasing remains unsupported.
 
@@ -1210,13 +1229,15 @@ byte-partial-product sharing, INI decoding, countdown callbacks, projectile
 flight, callback entry captures, opcode grids, blast windows, indexed loops and
 combined callback/dispatch declarations, terminal loops, selected field/RAM
 store groups, the unaligned RAM repair, shared beam windows, native tracing,
-nonnull callback tables, Samus pose sequences and the packed-sprite repair,
-maintained Rust is **105,690**, leaving **5,691** to reach 99,999. Counters:
+nonnull callback tables, Samus pose sequences, the packed-sprite repair and
+shared gameplay imports, maintained Rust is **105,309**, leaving **5,310** to
+reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
 unsafe functions 3656; cast lines 7965. The pose owner adds three unsafe
 helpers and removes two wrappers, a net increase of one declaration while
 removing 84 lines. The sprite alignment repair adds five lines, 38 tokens and
-234 token-spelling bytes for defined packed-record reads/writes. Tracing adds three unsafe helper
+234 token-spelling bytes for defined packed-record reads/writes. Shared imports
+remove 381 lines without changing the unsafe/cast counters. Tracing adds three unsafe helper
 declarations for the caller-owned output buffer and removes 92 cast-containing
 lines. Its complete implementation still removes 144 lines. The unrelated
 83-line shader draft

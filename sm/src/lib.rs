@@ -313,6 +313,7 @@ pub mod game {
     pub(crate) mod explosion_window;
     pub(crate) mod intro_pages;
     pub(crate) mod moving_platforms;
+    pub(crate) mod prelude;
     pub(crate) mod projectile_flight;
     pub(crate) mod samus_pose;
     pub mod sm_80;

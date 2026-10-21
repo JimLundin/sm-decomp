@@ -1,8 +1,8 @@
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a0::*;
 pub use crate::game::constants::bank_b4::*;
-pub use crate::game::constants::projectile_types::*;
-use crate::game::enemy_instruction;
+pub use crate::game::prelude::*;
+
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_90::ProjectileReflection;
@@ -13,18 +13,9 @@ use crate::game::sm_a0::{
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi, SineMult8bit,
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::abs16;
-use crate::rtl::words;
-use crate::rtl::{RomPtr, Unreachable};
-use ::core::ptr::null_mut;
 
-pub use crate::types::Consts_A0;
 pub use crate::types::Consts_B2;
-pub use crate::types::{Consts_86, EnemyDef, Vulnerability};
-pub use crate::types::{EnemyBase, EnemyData, LongPtr, Point16U, ProjectileType, Rect16U, VoidP};
+
 crate::game::constants::typed_constants! { Consts_B2;
     addr_kSpacePirates_Ilist_FC48 = 64584, addr_kSpacePirates_Ilist_FC0E = 64526,
     addr_kSpacePirates_Ilist_FBE6 = 64486, addr_kSpacePirates_Ilist_FBC6 = 64454,
@@ -44,7 +35,7 @@ crate::game::constants::typed_constants! { Consts_B2;
     addr_kSpacePirates_Ilist_ED36 = 60726, addr_off_B2ECEC = 60652,
     addr_kSpacePirates_Ilist_ECE4 = 60644, addr_kSpacePirates_Ilist_ECC0 = 60608,
 }
-pub use crate::types::Consts_B4;
+
 pub type Enemy_SpacePirates = crate::game::enemy_layouts::EnemyLayout72;
 
 const RomPtr_A0: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa0>;

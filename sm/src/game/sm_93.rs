@@ -1,18 +1,12 @@
-pub use crate::game::constants::projectile_types::*;
+pub use crate::game::prelude::*;
+
 use crate::game::sm_80::{InvalidInterrupt_Crash, QueueSfx2_Max6};
 use crate::game::sm_81::DrawProjectileSpritemap;
 use crate::game::sm_8b::CalcExplosion_Mode7;
 use crate::game::sm_90::{
     ClearProjectile, HandleProjectileTrails, Samus_DrawShinesparkCrashEchoProjectiles,
 };
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::rom_ptr;
-use crate::rtl::{RomPtr, Unreachable};
-use ::core::ptr::null_mut;
 
-pub use crate::types::{Point16U, VoidP};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct ProjectileDamagesAndInstrPtr {
@@ -25,7 +19,7 @@ pub struct ProjectileDataTable {
     pub damage: u16,
     pub instr_ptrs: [u16; 10],
 }
-pub use crate::types::{ProjectileInstr, ProjectileType};
+pub use crate::types::ProjectileInstr;
 const RomPtr_93: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x93>;
 #[inline]
 unsafe fn get_ProjectileDataTable(a: u16, game: &mut Game) -> *mut ProjectileDataTable {

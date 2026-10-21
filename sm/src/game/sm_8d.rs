@@ -1,14 +1,7 @@
 pub use crate::game::constants::bank_8d::*;
+pub use crate::game::prelude::*;
 use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::words;
-use crate::rtl::AddToHiLo;
-use crate::rtl::{MakePairU16, RomPtr, Unreachable};
-use ::core::ptr::{null, null_mut};
 
-pub use crate::types::{EnemyData, PairU16, VoidP};
 crate::typed_struct! {
     #[derive(Copy, Clone)]
     #[repr(C, packed)]
@@ -16,7 +9,7 @@ crate::typed_struct! {
         pub func, instrs: VoidP;
     }
 }
-pub use crate::types::Consts_8D;
+
 const RomPtr_8D: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8d>;
 #[inline]
 unsafe fn get_PalFxDef(a: u16, game: &mut Game) -> *mut PalFxDef {

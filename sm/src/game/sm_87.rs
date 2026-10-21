@@ -1,4 +1,5 @@
 pub use crate::game::constants::bank_86::*;
+pub use crate::game::prelude::*;
 use crate::game::sm_80::{
     CheckBossBitForCurArea, CheckEventHappened, QueueMusic_Delayed8, QueueSfx1_Max6,
     QueueSfx2_Max6, QueueSfx3_Max6, SetBossBitForCurArea, SetEventHappened,
@@ -6,12 +7,7 @@ use crate::game::sm_80::{
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::{RomPtr, Unreachable};
 
-pub use crate::types::Consts_86;
 const RomPtr_87: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x87>;
 pub unsafe fn EnableAnimtiles(game: &mut Game) {
     word!(game.animtiles_enable_flag, |fresh9| (fresh9) | (0x8000u16));

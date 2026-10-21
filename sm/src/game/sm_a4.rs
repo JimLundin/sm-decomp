@@ -1,9 +1,8 @@
-use crate::c_library::__assert_fail;
-use crate::game::callback_tables::callback_table;
+pub use crate::game::prelude::*;
+
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a4::*;
-pub use crate::game::constants::enemy_properties::*;
-use crate::game::enemy_instruction;
+
 use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_84::SpawnHardcodedPlm;
 use crate::game::sm_86::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
@@ -14,24 +13,7 @@ use crate::game::sm_a0::{
     NormalEnemyTouchAi, SamusLatchesOnWithGrapple,
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::abs16;
-use crate::rtl::rom_ptr;
-use crate::rtl::words;
-use crate::rtl::RomPtr;
-use crate::rtl::{AddToHiLo, SetHiLo};
-use crate::set_fields;
-pub use crate::types::Consts_A4;
-pub use crate::types::SpawnHardcodedPlmArgs;
-pub use crate::types::{Consts_86, Ram4000, Ram4000_Backups};
-pub use crate::types::{
-    EnemyBase, EnemyData, EnemyProps, Func_V, LongPtr, Point16U, SpawnHdmaObject_Args, VoidP,
-    VramWriteEntry,
-};
-use ::core::ffi::{c_char, c_long, c_void};
-use ::core::ptr::{null, null_mut};
+
 pub type Enemy_Crocomire = crate::game::enemy_layouts::EnemyLayout72;
 
 pub use crate::types::CrocomireFunc;

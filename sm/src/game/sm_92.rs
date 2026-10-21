@@ -1,10 +1,7 @@
+pub use crate::game::prelude::*;
 use crate::game::sm_80::QueueMusic_DelayedY;
 use crate::game::sm_81::DrawSamusSpritemap;
 use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::RomPtr;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]

@@ -1,10 +1,10 @@
-use crate::c_library::printf;
+pub use crate::game::prelude::*;
+
 use crate::cpu_infra::Call;
-use crate::game::callback_tables::callback_table;
+
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_b4::*;
-pub use crate::game::constants::enemy_properties::*;
-use crate::game::enemy_instruction;
+
 use crate::game::sm_80::{
     Multiply16x16, NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6,
 };
@@ -24,19 +24,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 pub use crate::game::waver::{Enemy_Waver, Waver_Func_1, Waver_Init, Waver_Instr_1, Waver_Main};
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::abs16;
-use crate::rtl::rom_ptr;
-use crate::rtl::words;
-use crate::rtl::{AddToHiLo, SetHiLo};
-use crate::rtl::{RomPtr, SnesDivide, Unreachable};
-use crate::set_fields;
-pub use crate::types::{
-    EnemyBase, EnemyData, EnemyProps, EnemySpawnData, Func_V, Func_Y_V, LongPtr, VoidP,
-};
-use ::core::ffi::c_char;
+
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct MaridiaSnailData2 {
@@ -46,7 +34,7 @@ pub struct MaridiaSnailData2 {
     pub field_6: u16,
 }
 pub use crate::types::Consts_A3;
-pub use crate::types::{Consts_86, EnemyDef};
+
 crate::game::constants::typed_constants! { Consts_A3;
     addr_kMetroid_Ilist_EA25 = 59941, addr_kMetroid_Ilist_E9CF = 59855,
     addr_locret_A3E08A = 57482, addr_kWreckedShipOrangeZoomer_Ilist_E01F = 57375,
@@ -71,8 +59,7 @@ crate::game::constants::typed_constants! { Consts_A3;
     addr_kMetalee_Ilist_8910 = 35088, addr_kWaver_Ilist_86A7 = 34471,
     addr_kSpritemap_Nothing_A3 = 32845,
 }
-pub use crate::types::Consts_B4;
-pub use crate::types::Point32;
+
 pub type Enemy_Bang = crate::game::enemy_layouts::EnemyLayout72;
 
 pub type Enemy_MaridiaFish = crate::game::enemy_layouts::EnemyLayout40;

@@ -1,8 +1,5 @@
+pub use crate::game::prelude::*;
 use crate::game::sm_81::DrawSpritemapWithBaseTile;
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::{RomPtr, Unreachable};
 
 const RomPtr_B4: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb4>;
 pub unsafe fn CreateSpriteAtPos(

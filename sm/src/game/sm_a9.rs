@@ -1,12 +1,12 @@
-use crate::c_library::printf;
+pub use crate::game::prelude::*;
+
 use crate::game::beam_windows::calculate_rainbow_window;
-use crate::game::callback_tables::callback_table;
+
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
-pub use crate::game::constants::enemy_properties::*;
-use crate::game::enemy_instruction;
+
 use crate::game::sm_80::{
     CheckEventHappened, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max3,
     QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6, SetBossBitForCurArea, SetEventHappened,
@@ -38,30 +38,16 @@ use crate::game::sm_ad::{
     MotherBrain_HealthBasedPaletteHandling, MotherBrain_Phase3_TurnLightsBackOn,
     MotherBrain_SealWall, TurnOffLightsForShitroidDeath,
 };
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::abs16;
-use crate::rtl::rom_ptr;
-use crate::rtl::{mov24, MemCpy, ReadRegWord, RomPtr, SnesDivide, Unreachable, WriteReg};
-use crate::set_fields;
-pub use crate::snes::registers::*;
-pub use crate::types::Consts_8D;
-pub use crate::types::Consts_A6;
-pub use crate::types::Consts_A9;
+
+use crate::rtl::MemCpy;
+
 pub use crate::types::Consts_B7;
-pub use crate::types::{Consts_86, ExtraEnemyRam7800, Ram7800_Kraid};
-pub use crate::types::{
-    CoroutineRet, Func_V, LongPtr, OamEnt, Point16U, Rect16U, SnesRegs, VoidP, VramWriteEntry,
-};
-pub use crate::types::{EnemyBase, EnemyData, EnemyProps};
-use ::core::ffi::{c_char, c_long};
-use ::core::ptr::null_mut;
+
 crate::game::constants::typed_constants! { Consts_B7;
     addr_kMotherBrain_Misc_TileData = 52736, addr_kDeadMonsters_TileData = 49152,
     addr_kDeadTorizo_TileData = 43008,
 }
-pub use crate::types::SpawnHardcodedPlmArgs;
+
 crate::typed_struct! {
     #[derive(Copy, Clone)]
     #[repr(C)]
@@ -69,7 +55,7 @@ crate::typed_struct! {
         pub ip, timer: u16;
     }
 }
-pub use crate::types::Enemy_MotherBrain;
+
 pub type Enemy_Shitroid = crate::game::enemy_layouts::EnemyLayout40;
 
 pub type Enemy_DeadMonsters = crate::game::enemy_layouts::EnemyLayout72Late;

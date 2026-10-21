@@ -1,9 +1,8 @@
 pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
-pub use crate::game::constants::enemy_properties::*;
-pub use crate::game::constants::samus_poses::*;
-use crate::game::enemy_instruction;
+pub use crate::game::prelude::*;
+
 use crate::game::sm_80::{
     CheckBossBitForCurArea, NextRandom, QueueMusic_Delayed8, QueueSfx2_Max6, SetBossBitForCurArea,
 };
@@ -21,24 +20,9 @@ use crate::game::sm_a0::{
     NormalEnemyShotAi, NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy,
 };
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::abs16;
-use crate::rtl::rom_ptr;
-use crate::rtl::words;
-use crate::rtl::{AddToHiLo, SetHiLo};
-use crate::rtl::{RomPtr, Unreachable};
-use crate::set_fields;
-use ::core::ffi::c_long;
-use ::core::ptr::null;
 
-pub use crate::types::Consts_84;
-pub use crate::types::Consts_86;
-pub use crate::types::Consts_8D;
 pub use crate::types::Consts_AA;
-pub use crate::types::EnemyProps;
-pub use crate::types::{EnemyBase, EnemyData, SamusPose, VoidP};
+
 crate::game::constants::typed_constants! { Consts_AA;
     addr_kShaktool_Ilist_E461 = 58465, addr_kShaktool_Ilist_E3A7 = 58279,
     addr_kTorizo_Ilist_D2BF = 53951, addr_kTorizo_Ilist_D2AD = 53933,
@@ -52,7 +36,7 @@ crate::game::constants::typed_constants! { Consts_AA;
     addr_kTorizo_Ilist_B155 = 45397, addr_kTorizo_Ilist_B0E5 = 45285,
     addr_kTorizo_ExtSprmap_87D0 = 34768, addr_kSpritemap_Nothing_AA = 32845,
 }
-pub use crate::types::SpawnHardcodedPlmArgs;
+
 pub type Enemy_Shaktool = crate::game::enemy_layouts::EnemyLayout8;
 
 pub type Enemy_Torizo = crate::game::enemy_layouts::EnemyLayout40;

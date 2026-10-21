@@ -1,6 +1,6 @@
 pub use crate::game::constants::bank_86::*;
-pub use crate::game::constants::enemy_properties::*;
-use crate::game::enemy_instruction;
+pub use crate::game::prelude::*;
+
 use crate::game::sm_80::{
     CheckEventHappened, NextRandom, QueueMusic_Delayed8, QueueSfx2_Max6, SetBossBitForCurArea,
 };
@@ -16,18 +16,9 @@ use crate::game::sm_a0::{
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SignExtend8, SwitchEnemyAiToMainAi,
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::abs16;
-use crate::rtl::words;
-use crate::rtl::AddToHiLo;
-use crate::rtl::{RomPtr, Unreachable};
-use crate::set_fields;
 
-pub use crate::types::Consts_86;
 pub use crate::types::Consts_B3;
-pub use crate::types::{EnemyBase, EnemyData, EnemyProps, Point16U, VoidP};
+
 crate::game::constants::typed_constants! { Consts_B3;
     addr_kEscapeDachora_Ilist_E964 = 59748, addr_kEscapeEtecoon_Ilist_E5DA = 58842,
     addr_kEscapeEtecoon_Ilist_E5AE = 58798, addr_kEscapeEtecoon_Ilist_E582 = 58754,
@@ -40,7 +31,7 @@ crate::game::constants::typed_constants! { Consts_B3;
     addr_kBrinstarPipeBug_Ilist_8A1D = 35357, addr_kBrinstarPipeBug_Ilist_87AB = 34731,
     addr_kUnusedSpinningTurtleEye_Ilist_86A7 = 34471, addr_kSpritemap_Nothing_B3 = 32845,
 }
-pub use crate::types::{Enemy_Botwoon, Point32, SpawnHardcodedPlmArgs};
+pub use crate::types::Enemy_Botwoon;
 pub type Enemy_EscapeDachora = crate::game::enemy_layouts::EnemyLayout8;
 
 pub type Enemy_EscapeEtecoon = crate::game::enemy_layouts::EnemyLayout8;

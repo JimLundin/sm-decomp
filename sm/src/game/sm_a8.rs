@@ -1,8 +1,7 @@
-use crate::c_library::printf;
-use crate::game::callback_tables::callback_table;
+pub use crate::game::prelude::*;
+
 pub use crate::game::constants::bank_86::*;
-pub use crate::game::constants::enemy_properties::*;
-use crate::game::enemy_instruction;
+
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max6};
 use crate::game::sm_86::SpawnEprojWithGfx;
 use crate::game::sm_88::SpawnMorphBallEyeBeamHdma;
@@ -19,22 +18,9 @@ use crate::game::sm_a0::{
     SwitchEnemyAiToMainAi,
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::abs16;
-use crate::rtl::rom_ptr;
-use crate::rtl::words;
-use crate::rtl::{AddToHiLo, SetHiLo};
-use crate::rtl::{Mult8x8, RomPtr, Unreachable, WriteReg};
-use crate::set_fields;
-pub use crate::snes::registers::*;
-pub use crate::types::Consts_86;
+
 pub use crate::types::Consts_A8;
-pub use crate::types::{EnemyBase, EnemyData, EnemyProps, EnemySpawnData};
-pub use crate::types::{Func_V, LongPtr, PairU16, Point16U, SnesRegs, VoidP, VramWriteEntry};
-use ::core::ffi::c_char;
-use ::core::ptr::null_mut;
+
 crate::game::constants::typed_constants! { Consts_A8;
     addr_locret_A8F5E3 = 62947, addr_kKiHunter_Ilist_EB10 = 60176,
     addr_kKiHunter_Ilist_EAF2 = 60146, addr_kKiHunter_Ilist_EADA = 60122,

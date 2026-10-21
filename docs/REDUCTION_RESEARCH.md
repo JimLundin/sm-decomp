@@ -19,7 +19,9 @@ by **215** from native tracing and nonnull callback tables, then **84** from
 shared Samus pose sequences, reaching **105,685**. The packed-sprite alignment
 repair adds five lines, reaching **105,690**, with complete builds, component
 checks and both full boot replay routes passing as scoped below.
-Maintained Rust needs another **5,691 lines removed** to reach 99,999. A separate
+The shared gameplay prelude removes **381 more lines**, reaching **105,309**;
+complete expanded-operation and resolved-binding checks pass.
+Maintained Rust needs another **5,310 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -1885,6 +1887,36 @@ normal rendering/audio and all comparisons. Other clipping variants have
 component coverage; neither route reaches credits. Frozen repair, controls and
 replays: `TEMP/sm-tailored-next/sprite-drawing/current-repaired` and its parent
 `REPORT.md`. This is a correctness cost, with no production deletion credit.
+
+The subsequent shared-import experiment is adopted: **105,690 -> 105,309
+(-381 lines)**, with **4,481 tokens and 17,050 code-text bytes** removed. It
+consolidates 955 import entries across all 32 banks into 119 common entries in
+a 39-line `game/prelude.rs`. All 82 source files, remaining local imports and
+both source registrations count. The prelude imports only existing shared
+owners; bank-specific gameplay calls, distinct same-name origins and uncommon
+dependencies remain explicit. Function bodies and macro paths are unchanged.
+
+This extends the original-C header lesson: declarations already shared in
+`types.rs` need not repeat their import scaffolding in every translated unit.
+The origin/name/visibility rule emits ordinary Rust imports. Public bank paths
+retain their definitions, although each public glob exposes additional common
+names. Existing consumers are verified; arbitrary external glob-import
+collisions are not an unchanged-API claim. No bank is retired by this change.
+
+Final paired library/frontend builds, formatting and an independent 81-file
+source inverse pass. External probes check 441 old public type paths and 4,962
+constant paths. Complete compiler expansion preserves all operations. A
+separate typed/resolved comparison checks ordered canonical definition targets
+and types for 12,645 library owners and 313 frontend owners, preserving external
+crate identities. Its only excluded owner is the source-cache `FILES`, whose
+actual payloads and new registration are independently checked. This closes
+the name-resolution question that expanded spelling alone cannot answer.
+
+The exact sprite repair remains included. This import-only change has no new
+replay, under the plan's static-validation rule. It is a current-source saving,
+not an additional historical-pipeline reduction; earlier parked import/unused-
+declaration prices overlap and cannot be added. Frozen source, patch and proofs:
+`TEMP/sm-tailored-next/gameplay-prelude/REPORT.md` and `final/sm/src`.
 
 Three further complete current-source experiments use the same committed
 **105,769-line** control. Their independent prices are not additive:

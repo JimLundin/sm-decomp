@@ -1,14 +1,11 @@
-use crate::c_library::{__assert_fail, memcpy, printf};
+pub use crate::game::prelude::*;
+
 use crate::cpu_infra::DebugGameOverMenu;
-use crate::game::callback_tables::callback_table;
+
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_82::*;
 pub use crate::game::constants::bank_8f::*;
-pub use crate::game::constants::buttons::*;
-pub use crate::game::constants::game_states::*;
-pub use crate::game::constants::loading_game_states::*;
-pub use crate::game::constants::samus_poses::*;
-use crate::game::enemy_instruction;
+
 use crate::game::sm_80::{
     memset7E, CalculateLayer2PosAndScrollsWhenScrolling, CheckEventHappened, ClearBG2Tilemap,
     ClearFXTilemap, ClearOamExt, ClearTimerRam, ClearUnusedOam, CopyToVramNow,
@@ -73,24 +70,11 @@ use crate::game::sm_a7::{
     UnpauseHook_Kraid_IsDead,
 };
 use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
-use crate::game_state::Game;
+
 use crate::host::{Die, Warning};
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::abs16;
-use crate::rtl::rom_ptr;
-use crate::rtl::{
-    Load24, Mult8x8, RomPtr, RtlApuWrite, SnesDivide, Unreachable, WriteReg, WriteRegWord,
-};
-pub use crate::snes::registers::*;
-pub use crate::types::RoomPlmEntry;
-pub use crate::types::{
-    size_t, CoroutineRet, Func_V, Func_V_Coroutine, Func_Y_V, Func_Y_Y, LongPtr, SnesRegs, VoidP,
-    VramWriteEntry,
-};
-use ::core::ffi::{c_char, c_long, c_void};
-use ::core::mem::transmute;
-use ::core::ptr::{null, null_mut};
+
+pub use crate::types::Func_V_Coroutine;
+
 crate::typed_struct! {
     #[derive(Copy, Clone)]
     #[repr(C, packed)]
@@ -98,7 +82,7 @@ crate::typed_struct! {
         pub func_ptr, instr_list_1_ptr, instr_list_2_ptr: VoidP;
     }
 }
-pub use crate::types::EnemyData;
+
 crate::typed_struct! {
     #[derive(Copy, Clone)]
     #[repr(C, packed)]
@@ -106,10 +90,7 @@ crate::typed_struct! {
         pub field_0, field_2: u16;
     }
 }
-pub use crate::types::Buttons;
-pub use crate::types::LoadingGameState;
-pub use crate::types::{DoorDef, SamusPose};
-pub use crate::types::{EnemyTileset, GameState, RoomDefHeader};
+
 crate::typed_struct! {
     #[derive(Copy, Clone)]
     #[repr(C, packed)]
@@ -117,10 +98,7 @@ crate::typed_struct! {
         pub tile_table_ptr, tiles_ptr, palette_ptr: LongPtr;
     }
 }
-pub use crate::types::{
-    ExpandingSquareTransitionHdma, MapIconDataPointers, MapScrollArrowData, RoomDefRoomstate,
-    StartDmaCopy,
-};
+
 crate::typed_struct! {
     #[derive(Copy, Clone)]
     #[repr(C, packed)]
@@ -152,16 +130,13 @@ crate::typed_struct! {
         pub spritemap, xpos, ypos: u16;
     }
 }
-pub use crate::types::Consts_82;
+
 pub use crate::types::Consts_83;
-pub use crate::types::{
-    Consts_60, EnemyDef, Ram3000, Ram3000_Menu, Ram3000_Misc, Ram3000_MsgBox, Ram3800, Ram4000,
-    Ram4000_Backups,
-};
+
 crate::game::constants::typed_constants! { Consts_83;
     addr_kDoorDef_947a = 38010,
 }
-pub use crate::types::Consts_8F;
+
 pub const __ASSERT_FUNCTION: [c_char; 28] =
     unsafe { transmute::<[u8; 28], [c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0") };
 crate::game::constants::typed_constants! { i32;

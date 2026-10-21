@@ -1,19 +1,10 @@
-use crate::game::callback_tables::callback_table;
+pub use crate::game::prelude::*;
+
 pub use crate::game::constants::bank_60::*;
-pub use crate::game::constants::buttons::*;
-pub use crate::game::constants::game_states::*;
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
-use crate::rtl::rom_ptr;
-use crate::rtl::words;
-use crate::rtl::AddToHiLo;
-pub use crate::snes::registers::*;
-use crate::types::TileDrawOrder;
-use ::core::ffi::{c_char, c_long, c_void};
+
 use ::core::mem::size_of;
 
-use crate::c_library::{memcmp, memcpy, memset, printf};
+use crate::c_library::memcmp;
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{
     LoadCRETilesTilesetTilesAndPalette, LoadColorsForSpritesBeamsAndEnemies,
@@ -30,13 +21,8 @@ use crate::game::sm_8d::ClearPaletteFXObjects;
 use crate::game::sm_90::{InitializeMiniMapBroken, UpdateBeamTilesAndPalette};
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::LoadEnemies;
-use crate::rtl::{
-    Load24, Mult8x8, ReadRegWord, RomPtr, RtlApuUpload, RtlApuWrite, RtlWriteSram, SnesDivide,
-    SnesModulus, Unreachable, WriteReg, WriteRegWord,
-};
-pub use crate::types::{
-    size_t, CoroutineRet, Func_U8, Func_V, LongPtr, OamEnt, SnesRegs, VoidP, VramWriteEntry,
-};
+use crate::rtl::RtlApuUpload;
+
 crate::typed_struct! {
     #[derive(Copy, Clone)]
     #[repr(C, packed)]
@@ -53,11 +39,7 @@ crate::typed_struct! {
         pub part1_size, part2_size: u16;
     }
 }
-pub use crate::types::Buttons;
-pub use crate::types::{GameState, Mode7VramWriteQueue, RoomDefHeader};
-pub use crate::types::{
-    Ram4000, Ram4000_Backups, StartDmaCopy, TileTable, TileTables, VramReadQueueEnt,
-};
+
 crate::typed_struct! {
     #[derive(Copy, Clone)]
     #[repr(C, packed)]
@@ -68,14 +50,14 @@ crate::typed_struct! {
         pub vmain: u8;
     }
 }
-pub use crate::types::Consts_60;
+
 pub use crate::types::Consts_80;
 crate::game::constants::typed_constants! { Consts_80;
     addr_word_80A060 = 41056, addrl_kDigitTilesetsWeapon = 8429011,
     addrl_kDigitTilesetsHealth = 8428991, addr_kHudTilemaps_Missiles = 39331,
     addr_kHudTilemaps_AutoReserve = 39307,
 }
-pub use crate::types::SpawnHardcodedPlmArgs;
+
 const RomPtr_80: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x80>;
 const RomPtr_92: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x92>;
 use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
