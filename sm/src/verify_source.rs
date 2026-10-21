@@ -73,7 +73,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/game/sm_8f.rs", include_bytes!("game/sm_8f.rs")),
     ("sm/src/game/sm_90.rs", include_bytes!("game/sm_90.rs")),
     ("sm/src/game/sm_91.rs", include_bytes!("game/sm_91.rs")),
-    ("sm/src/game/sm_92.rs", include_bytes!("game/sm_92.rs")),
+    (
+        "sm/src/game/samus_animation.rs",
+        include_bytes!("game/samus_animation.rs"),
+    ),
     ("sm/src/game/sm_93.rs", include_bytes!("game/sm_93.rs")),
     ("sm/src/game/sm_94.rs", include_bytes!("game/sm_94.rs")),
     ("sm/src/game/sm_9b.rs", include_bytes!("game/sm_9b.rs")),

@@ -7,6 +7,7 @@ pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_82::*;
 pub use crate::game::constants::bank_8f::*;
 
+use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
 use crate::game::sm_80::{
     memset7E, CalculateLayer2PosAndScrollsWhenScrolling, CheckEventHappened, ClearOamExt,
     ClearTimerRam, ClearUnusedOam, CopyToVramNow, DebugScrollPosSaveLoad, DecompressToMem,
@@ -47,8 +48,7 @@ use crate::game::sm_8f::{
 };
 use crate::game::sm_90::{
     CallSomeSamusCode, HandleControllerInputForGamePhysics, HandleSamusMovementAndPause,
-    MainScrollingRoutine, ResetProjectileData, Samus_DrawDuringDeathAnim,
-    Samus_DrawWhenNotAnimatingOrDying, Samus_LowHealthCheck_0, SetLiquidPhysicsType,
+    MainScrollingRoutine, ResetProjectileData, Samus_LowHealthCheck_0, SetLiquidPhysicsType,
     UpdateBeamTilesAndPalette,
 };
 use crate::game::sm_91::{

@@ -17,9 +17,9 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **99,884 Rust lines in 82 files**, plus a
-four-line C bridge = **99,888 maintained implementation lines**. Counting the
-new 41-line CPU installer as well gives **99,929**. This is an actual complete
+Current composition (2026-10-21): **99,810 Rust lines in 82 files**, plus a
+four-line C bridge = **99,814 maintained implementation lines**. Counting the
+new 41-line CPU installer as well gives **99,855**. This is an actual complete
 source recount, including frontend and verifier code, all adapters, callers and
 registrations. Existing development scripts/configuration/docs are outside this
 implementation metric. The two pinned dependencies add **2,836 CPU C/header
@@ -30,7 +30,7 @@ boot any% **129712/0** and Speed Booster with pause/resume **149031/0**, with
 normal rendering/audio.
 The under-100,000 maintained-source milestone is complete. Neither route reaches
 credits; component/static checks cover edited paths beyond movie coverage.
-Bank retirement and the 90,000-line stretch checkpoint remain future work.
+Further bank retirement and the 90,000-line stretch checkpoint remain future work.
 
 Artifact availability update (2026-10-21): the entire local TEMP
 `sm-tailored-next` tree and the original-C/parser experiment directories
@@ -1441,16 +1441,18 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
 4. [ ] **Retire bank ownership by gameplay responsibility.** Select a complete
    responsibility, such as Samus movement, with an exercised boundary and named
    routines. Migrate its real callers and state transitions, then remove its
-   retired bank facade. Room background loading now belongs to
-   `room_backgrounds::BackgroundLoad`: one eight-command interpreter serves
-   initial loading, gameplay resume and door transitions, preserving their
-   distinct DMA sequences and Kraid clearing. Both old command tables and
-   their bank entry points are removed. The complete replacement removes
-   **30 lines (99,914 -> 99,884)**, including its owner, callers and registration;
-   component checks, an exercised Ceres segment and both full replays pass.
-   Gameplay currently totals 81,852 lines; its 32 numeric bank modules still
-   own 77,950. No complete bank is retired yet. These are ownership scopes,
-   not deletion budgets. File moves alone earn no volume reduction. Reassess the
+   retired bank facade. Samus animation, drawing, echoes, atmospheric effects
+   and tile selection now belong to `samus_animation`, with real callers
+   migrated and the entire bank 92 module retired. Shared bottom visibility
+   and sprite positioning replace two dispatch tables and fourteen routines.
+   The complete replacement removes **74 lines (99,884 -> 99,810)**, including
+   its owner, callers and registration; component checks, an exercised segment
+   and both full replays pass. Relocation alone grows 23 lines and earns no
+   reduction. Initial, resume and door background loading already belong to
+   `room_backgrounds::BackgroundLoad`, with their bank entry points removed.
+   Gameplay currently totals 81,775 lines; its 31 numeric bank modules still
+   own 76,900. Bank 92 is the first complete bank retired. These are ownership
+   scopes, not deletion budgets. File moves alone earn no volume reduction. Reassess the
    90,000-line stretch checkpoint using complete replacements, including retained
    exceptions and oracle adapters; it has no demonstrated deletion budget yet.
    Local naming, unsafe removal and small duplication cleanup support that work.
@@ -1663,17 +1665,19 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: shared room background loading passes full boot any%
+Latest full integration: shared Samus animation and drawing passes full boot any%
 **129712/0** and Speed Booster with pause/resume **149031/0**, with normal
 rendering/audio and comparisons. The extended route contains the unchanged
 148,406-frame Speed Booster prefix and executes pause, resume and gameplay
 again. Both use final source fingerprint
-`d9b4cd8624cbcf052408343eeab0fd160f94ceed30864485ab4be90f5f2bdfdb`.
-All six required background probes pass in the 12,147-frame Ceres segment,
-including 600 follow-up frames. Component checks cover both backends and all
-commands, including cases absent from the movies, using recorded hardware and
-decompression boundaries. Neither movie reaches credits. Logs:
-Local/sm-decomp-experiments/20261021/room-backgrounds/{any,speed-pause,probed-speed}.log.
+`55381135efb22b472d2077517efe2e61b91f2af92091c1eeef49edb860632a8a`.
+All nine required animation, drawing, visibility, position and tile-transfer
+probes pass in the 9,861-frame segment, including 600 follow-up frames.
+Component checks cover rewritten visibility and position branches beyond movie
+coverage, including signed wraps, bounded tables and Ceres restoration. The
+retained code has token correspondence after six dispatch-call substitutions.
+Neither movie reaches credits. Logs:
+Local/sm-decomp-experiments/20261021/samus-animation/{any,speed-pause,probed-speed}.log.
 
 Previous full integration: the complete CPU, PNG, RAM-chain and readable-control-flow
 composition passes full boot any% **129712/0** and Speed Booster **148406/0**,
@@ -1897,13 +1901,15 @@ RAM updates, shared RAM/record metadata, alias declarations, native C-string
 literals, shared constant headers, native shader/presentation ownership and
 shared PPU pixel evaluation, native/SPC state transfers and live-typed snapshots,
 the pinned CPU/PNG dependencies, RAM pointer chains, readable control flow and
-shared room background loading, maintained Rust is **99,884**, with both full
-integration replays passing.
-Including the four-line C bridge gives **99,888**; including the new 41-line
-installer as well gives **99,929**. The immediate volume target is complete.
+shared room background loading and Samus animation ownership, maintained Rust
+is **99,810**, with both full integration replays passing.
+Including the four-line C bridge gives **99,814**; including the new 41-line
+installer as well gives **99,855**. The immediate volume target is complete.
 External CPU/PNG code has 2,836/7,762 lines.
 Counters: raw offsets 30; extern C blocks 5; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3274; cast lines 7568. Room background ownership removes
+unsafe functions 3268; cast lines 7529. Samus animation ownership removes six
+unsafe declarations and 39 cast-containing lines; no counter increases.
+Room background ownership removes
 14 unsafe callback/helper declarations and changes no other counter. RAM pointer
 chains remove nine cast-containing lines without changing the other counters. The codec removes
 five unsafe declarations and three cast-containing lines while adding one foreign

@@ -1,11 +1,10 @@
 pub use crate::game::prelude::*;
 
+use crate::game::samus_animation::Samus_DrawShinesparkCrashEchoProjectiles;
 use crate::game::sm_80::{InvalidInterrupt_Crash, QueueSfx2_Max6};
 use crate::game::sm_81::DrawProjectileSpritemap;
 use crate::game::sm_8b::CalcExplosion_Mode7;
-use crate::game::sm_90::{
-    ClearProjectile, HandleProjectileTrails, Samus_DrawShinesparkCrashEchoProjectiles,
-};
+use crate::game::sm_90::{ClearProjectile, HandleProjectileTrails};
 
 crate::typed_struct! {
     [
