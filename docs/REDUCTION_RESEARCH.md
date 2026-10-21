@@ -2032,6 +2032,19 @@ constant payloads remain unchecked. This is distinct from the runtime-blocked
 current-policy GL replacement. No GL/test/DLL/executable was launched or
 repackaged. Report: `TEMP/sm-tailored-next/gl-static-groups/REPORT.md`.
 
+The context-free helper experiment is distinct from the associated-function
+and receiver trials: it removes an unused injected `Game` parameter and its
+pure call operand, rather than relocating routines. On committed `5fd12431`,
+the strict public-contract-preserving version changes six private helpers and
+nine calls but saves zero lines. An explicit public-signature migration covers
+eight functions and 40 source calls: **104,424 -> 104,406 (-18)**, with 127 fewer
+tokens and 316 fewer spelling bytes. The changed public signatures belong to
+`CalculateAngleFromXY` and unused `nullsub_341`; callback and address-taken
+contracts remain excluded. Phase30 contains no injected `Game` parameters,
+so its direct cohort and saving are zero. Both complete current prices are
+parked before builds or runtime validation. No maintained signatures change.
+Report: `TEMP/sm-tailored-next/pure-game-context/REPORT.md`.
+
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard
 against making progress appear larger by packing unrelated statements into

@@ -592,6 +592,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Reports: TEMP sm-tailored-next/{ordinary-place-updates,gl-static-groups}.
    The GL administrator-policy block remains unchanged; no tests were launched.
 
+   A distinct context-pruning experiment removes injected `Game` arguments
+   from context-free helper call graphs. Preserving public Rust signatures
+   saves zero lines across six private helpers/nine calls. Explicitly changing
+   two public signatures expands the cohort to eight functions/40 source calls,
+   saving only 18 lines, 127 tokens and 316 spelling bytes. Callback/address-taken
+   contracts remain excluded. Historical phase30 has no injected `Game`
+   parameters, so its direct saving is zero. Park these complete formatted
+   prices without builds or runtime checks. TEMP sm-tailored-next/pure-game-context.
+
    Those representation studies are closed. Five subsequent domain studies
    use the same repaired 106,189-line control:
 
