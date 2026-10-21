@@ -1516,6 +1516,19 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    caller/registration costs. Park it uncompiled and without runtime claims.
    Its scope excludes the misleadingly named Chozo-statue callbacks.
    Draft: Local/sm-decomp-experiments/20261021/shaktool.
+   Pause/file-select map icons, saved/debug stations, elevators, bosses,
+   exploration masking and the Samus indicator price **98,840 -> 98,800 (-40)**
+   after helpers, callers and registration. Park before compiler/runtime work;
+   the hidden living-boss double bit-shift still needs behavioral validation.
+   Draft: Local/sm-decomp-experiments/20261021/map-icons.
+   Phantoon figure-eight acceleration/traversal and aimed swooping motion price
+   **98,840 -> 98,793 (-47)** after complete ownership/caller costs. Park before
+   compiler/runtime work; the draft's unconditional steering store still needs
+   review against the original conditional store. Surrounding fight transitions
+   already share countdown handling; inspection establishes no larger replacement.
+   Draft: Local/sm-decomp-experiments/20261021/phantoon-motion.
+   These are independent formatted prices, with no accepted savings or behavior
+   claims. Neither draft ran a movie; no relevant segment is established.
    Reassess the
    90,000-line stretch checkpoint using complete replacements, including retained
    exceptions and oracle adapters; it has no demonstrated deletion budget yet.
