@@ -23,150 +23,39 @@ Use **90,000 lines as a stretch planning checkpoint**, not a demonstrated
 forecast. This work order replaces earlier reduction and cleanup queues.
 
 Active persistent goal: keep improving the translation process until there is
-a verified path to an implementation below 100,000 lines. A successful partial
-profile or pilot does not finish this goal. The latest frozen composition
-now produces **162,136 -> 104,325 (-57,811)**, with complete optimized library
-and actual frontend metadata compilation passing. The latest stages remove
-**21,477** from the previous 125,802 checkpoint, including the selected C
-algorithm families, shared enemy layouts, CPU/SPC grids, dispatchers, register
-writes, byte/split-word places, initialization/transfer families, map menus,
-explosion windows, assertion emission, ordered RAM-store groups, introduction
-pages, moving platforms, getter prefixes, residual clone families, safe word
-updates, selective computed stores, ordinary standard-library imports and
-graphics-transfer records, native tracing, nonnull callback tables, corrected
-beam windows, square-slope handling, Samus jump launch, enemy homing, DSP
-sample limits, solid-enemy queries, sprite drawing, wall-jump decisions,
-inside-block reactions, suit-pickup beams, initialization coroutines, Torizo
-fall/countdown, cross-file callback ownership and used-header helper ownership.
-The complete profile also removes 606,868 tokens and 1,658,054 code-text bytes from
-its 162,136-line control. All local
-support and overlaps are counted; external GL/SDL dependency code is disclosed
-separately. These historical stages claim no new main deletion or whole-game replay.
-Map component checks exposed the original C2Rust VramWriteEntry packing defect
-again: destination offset 6 instead of 5. A separate zero-volume stage now
-repairs it; 65,536 complete-buffer stores and 8,192 actual NMI consumer cases
-match C, and both complete builds pass. The uncorrected control is preserved.
-These bounded checks do not establish whole-game correctness. The new graphics
-rule learns from current `GraphicsAsset::load`: 59 complete original-C DMA
-sequences emit named loads, removing 777 lines including a 45-line helper.
-All actual-site C/old/new traces, 1,568 parameter cases and 131,072 packed-record
-cases pass in debug/release Rust. A separate two-read alignment repair costs
-zero lines and adds six tokens; it is included. Full-source inverse checks
-and complete library/frontend builds pass. The latest four stages remove
-another **474 lines** on that actual output. Tracing passes 742,400 component
-cases; nonnull inference preserves all 106 tables and 111 consumers by complete
-expanded correspondence. Beam handling passes 64,100 cases against corrected
-current behavior, explicitly including its positive-down fixes rather than
-claiming equivalence to uncorrected C. Eight square-slope entries share one
-141-line owner; 49,920 original-C/old/new cases pass in debug and release.
-The following five families remove another **497 lines**, including a separate
-26-line packed-sprite alignment repair. Four Samus launch entries emit a shared
-97-line family from 131 C / 385 initial Rust lines; 62,624 C/old/new cases pass.
-Homing passes 420,928 cases; DSP passes 131,079 scalar and 22,784 actual routine
-cases; solid-enemy queries pass 23,236 cases; sprites pass 266,171 cases with
-current Game tests restricted to disjoint ROM sources. Every sequential output
-passes complete builds and source correspondence. All 70 emitted files and
-support costs count. The next actual three-stage batch removes **330 more lines**:
-wall-jump decisions 55, inside-block reactions 154 and suit-pickup beams 121.
-Wall-jump passes 17,184 defined-domain cases; inside-block passes 28,312 cases
-and 292 exact bounds-panic controls. The suit suite passes 69,118 cases,
-retaining 20 inherited debug-countdown panic outcomes separately.
-Wall-jump `i32::MIN` wrapping explicitly follows current Rust; its zero-line
-policy cost is included and no C equivalence is claimed at that undefined input.
-Every complete build and source check passes. The subsequent complete
-initialization state models remove **148 lines**: 284 original C / 690 initial
-Rust / 377 preceding-profile lines become 229. All 745 C/old/new component
-cases pass, with 2,005 coroutine invocations, 8,020 debug/optimized comparisons
-and four negative controls. All 44 full scripted sequences finish; complete
-builds and 70-file source inverse pass. No helper, caller or registration is
-added. Current diagnostic hooks were already absent historically and receive
-no deletion credit. At phase19 the unchanged historical logo setup used an
-aligned word read at an odd ROM address; its component inputs used an odd ROM
-base to align that read. Ordinary-base debug startup remained unvalidated until
-the separate recovery of current Game's unaligned ROM endpoint below. The historical
-gap at phase19 is **7,784 lines**.
-The subsequent ROM-endpoint repair adds zero lines/tokens and nine text bytes.
-All 38 affected calls/42 lanes and both ROM-base alignments pass 572 component
-cases, including 16 complete logo sequences. Three old-debug diagnostics return
-matching values; no old crash was observed. The old read still violates Rust's
-alignment precondition. This resolves the tested phase19 logo limitation.
-Torizo's three fall/countdown/landing branches then share one ordinary helper:
-**107,783 -> 107,723 (-60)**, with 142,128 actual C/old/new cases passing.
-Next, current-derived callback ownership removes **808 lines** on that exact
-output, reaching **106,915**. It retains 12 previously shared Pirate routes and
-colocates the other 901 known registrations with their existing callbacks.
-All original-C identities, 6,629 unchanged expanded functions, complete u32
-routing and 381,250 debug/optimized selector cases pass. All sequential complete
-builds and source checks pass. This batch removes **1,016 lines** from phase18,
-including every helper and the zero-line repair. The strict historical gap
-at phase22 is **6,916 lines**. Used-header helper ownership then removes **428
-more lines**, reaching **106,487**, with every shared definition, import and
-registration counted. It replaces 179 used private copies with 32 definitions;
-all 1,406 selected function values are immediate calls, with no address escape.
-Complete builds, 70-to-71-file source inverse, expanded declaration mapping and
-resolved types/targets across 11,821 normalized compiler owners pass. No runtime
-claim is added for this source-preserving ownership change. The full batch now
-removes **1,444 lines** from phase18. The strict historical gap is **6,488**;
-TEMP sm-tailored-next/integration/phase23 freezes the actual composition.
-The next current-to-historical comparison recovers a missed complete ROM-base
-cohort: **306 expressions across 24 gameplay modules** now use the existing
-`rom_at` helper, removing **584 lines** to reach **105,903**. No helper, import,
-registration or dependency is added. All 172 original-C address definitions,
-71-file source correspondence, complete compiler-expanded correspondence and
-optimized library/frontend builds pass. Pointer casts, indices, reads/writes
-and alignment policy remain unchanged; this static change adds no replay claim.
-Parent independently recounted both complete roots. The actual batch now removes
-**2,028 lines** from phase18; the strict remaining gap is **5,904**.
-TEMP sm-tailored-next/integration/phase24 freezes this sequential output.
-Two complete native representations then remove **591 more lines**. The existing
-inflater becomes four named owners while retaining its EOF/reserved-code and
-C allocation policies: **105,903 -> 105,394 (-509)**. All 8,936 C/old/new
-component cases and 3,080 complete PNG API comparisons pass. The DSP synthesis
-pipeline then reaches **105,312 (-82)**, with 29,696 C/old/new cases and eight
-persistent streams/9,584 operation comparisons passing. Complete builds and
-source checks pass at both exact sequential outputs; parent independently
-recounted them and confirmed only the intended module changes. The full batch
-removes **2,619 lines** from phase18, leaving **5,313** to reach 99,999.
-TEMP sm-tailored-next/integration/phase26 freezes the composition. The bounded
-inflater checks exclude undefined malformed behavior, huge allocations and
-zero-capacity growth; DSP keeps its disjoint APU/DSP allocation contract and
-uses digests for persistent intermediate state. Neither stage adds a whole-game
-replay claim. Their separate current-source prices are 165 and 58 lines. The
-inflater is subsequently adopted under item 3; DSP remains unadopted. Neither
-current price is added to the historical savings.
-Current-derived CPU implementation kernels then remove **169 lines**, reaching
-**105,143**. Tuple address returns and shared operation helpers replace the old
-out-pointer conventions while retaining historical hook/interrupt policies and
-the existing opcode grid. Complete builds and 471,360 original-C/old/new cases
-pass, including ordered bus-state comparisons and persistent sequences.
-Compatible published SDL declarations then remove **401 lines**, reaching
-**104,742**, including all 27 imports; Cargo adds one line. Seventeen raw
-integer/enum boundaries remain. Complete builds, 71-file source inverse, 32
-record layouts, 208 field offsets/types and 49 extern-C signatures pass on
-x86_64 Windows GNU. This SDL result is static ABI evidence, not runtime coverage.
-Selected external SDL Rust costs 28,711 lines and Windows libc 3,222, disclosed
-separately from maintained source. The actual batch removes **3,189 lines**
-from phase18; the strict historical gap is **4,743**. Parent independently
-recounted the complete roots. TEMP sm-tailored-next/integration/phase28 freezes
-the composition; all local support is counted and parked drafts remain excluded.
-Five further current-derived rules compose to **104,325 (-417)**: camera
-boundary policy 97, SPC implementation kernels 85, DMA/HDMA execution 66,
-Samus liquid decisions 105 and message drawing 64. All local helpers, seven
-changed source files and caller costs count. The final complete optimized
-library/frontend builds pass; source checks bind every actual sequential stage
-to its tested components. Camera passes 489,298 C/old/new cases, SPC passes
-352,256 C/old/new cases plus broader Rust bus-mutation checks, DMA passes
-10,178 component cases, and Samus passes 30,618 decision cases plus 67,723
-original-C classifier comparisons. Message drawing passes 199,731 cases,
-including exact bounds panics and a separate zero-line/+10-byte unaligned-read
-recovery. Old/new message equivalence is limited to aligned sources; 840 odd
-cases compare C/new. No full surrounding Samus execution or game replay is
-claimed. Parent independently recounted every incremental root and the final
-71-file output. TEMP sm-tailored-next/integration/phase29 freezes the batch.
-The historical gap is **4,326**. Experiment Python totals 26,049 lines/348 files
-and remains separately disclosed tooling, not emitted game source. Current
-main remains **104,794**; these recovered rules add no current-main deletion.
-No whole-game or current-main reduction is claimed by these historical stages.
+a verified path to an implementation below 100,000 lines. A partial profile
+does not finish this goal. The latest complete historical composition is
+**162,136 -> 103,256 (-58,880)**, also removing **630,422 tokens** and
+**1,715,783 code-text bytes**. The strict remaining gap is **3,257 lines**.
+All 71 Rust files, helpers, callers and registrations count; Cargo remains
+ten lines. External GL/SDL dependencies and experiment support are disclosed
+separately. Current Rust remains the behavior authority.
+
+The latest four-rule batch removes **1,069 lines**, **23,554 tokens** and
+**57,729 code-text bytes** from the actual 104,325-line phase29 output:
+byte-place recovery 437, native index locals 105, explicit compound RAM
+updates 442, and inferred local annotations 85. These are sequential prices,
+not sums of independent drafts. Standalone compound updates saved 451;
+composition exposes nine lines of overlap. No formatter-only savings count.
+
+Complete optimized library and actual frontend metadata builds pass. Byte
+places retain all raw pointer/index operations and pass complete expanded
+correspondence plus 327,678 C/old/new cases. Index types pass actual-input
+compiler witnesses, source inverse and 131,615 finite cases per profile.
+Compound updates preserve checked/wrapping widths, truncation and RHS order;
+all 748 updates have complete expanded and resolved-type correspondence.
+Annotation inference then passes fresh paired whole-library/frontend compiler
+checks on that actual output. Parent independently recounted every stage.
+
+The frozen output and exact reproduction are at TEMP
+sm-tailored-next/integration/phase30. Experiment Python totals 27,665 lines
+in 364 scripts, separately counted from emitted source. This is a compiled
+translation profile with the documented component/static checks, not a linked
+playable historical implementation or a whole-game replay result. It earns
+no current-main deletion. Earlier stages and their original-C lineage,
+alignment/packing repairs, component limits and rejected alternatives remain
+in [REDUCTION_RESEARCH.md](REDUCTION_RESEARCH.md). Preserve those repairs when
+composing subsequent rules; do not re-add previously counted savings.
 The separate current-policy GL replacement prices **108,052 -> 106,886
 (-1,166)** and passes source/build checks, but runtime/adoption is parked:
 Defender ASR event 1121 explicitly blocks its test executable under rule
@@ -607,7 +496,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the same clone scans. Domain judgment selects the native helper contract;
    recognition derives per-member parameters and rejects different effects.
    Price any production adoption against current Rust and validate it under
-   item 3. The isolated 104,325-line output is a partial translation profile,
+   item 3. The isolated 103,256-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
 
    The new finite typed instruction-data experiment also fails its complete
@@ -664,6 +553,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    These scopes are stopped. Reports: TEMP sm-tailored-next/{ending-particles,
    projectile-collision-geometry,gameplay-liveness-followup}.
 
+   Two further complete prices remain excluded. Current-derived PPU Mode 7,
+   windows and scanline sharing saves only 12 lines; its window/Mode 7 subset
+   saves 38 before the scanline helpers add 26. Lifting conditional RAM stores
+   into one RHS grows 115 lines across 89 conditionals despite removing tokens.
+   Both are formatted prices without build/runtime validation; park the PPU
+   study and reject the conditional-store spelling. Reports: TEMP
+   sm-ppu-current-composition-20261021 and
+   sm-tailored-next/conditional-word-stores. Do not repeat these scopes.
+
+   The complete raw-memory call boundary also saves only 41 historical lines
+   across 120 calls, including two ordinary wrappers; park without builds.
+   Applying the byte-place, native-index and annotation rules separately to
+   committed main saves only six, 18 and 35 lines. These price-only current
+   results are parked, excluded from the adoption budget and not additive.
+   Reports: TEMP sm-tailored-next/{memory-call-boundary,ram-byte-current,
+   current-native-index-locals,local-type-inference/CURRENT_PRICE.md}.
+
    Those representation studies are closed. Five subsequent domain studies
    use the same repaired 106,189-line control:
 
@@ -691,7 +597,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    separate controls; do not add their prices. Keep these scoped studies closed.
    Further discovery needs a new complete algorithm and replacement, not a
    repeat of these cohorts or another generic operation runner. Current-derived
-   translation recovery remains demonstrated separately at 104,325 lines.
+   translation recovery remains demonstrated separately at 103,256 lines.
 
    Further complete experiments at 105,984 reject shared object-script traversal
    (**+117 lines**), contextual Kraid ownership (**+33**) and real receiver methods

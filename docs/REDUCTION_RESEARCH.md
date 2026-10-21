@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**104,325-line** historical-source composition. The current-source batch has
+**103,256-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -1884,6 +1884,64 @@ that development tooling is separate from emitted game source. Main remains
 104,794 after its separate inflater adoption. This batch supplies no new main
 deletion or playable historical executable. Frozen report and all owner links:
 `TEMP/sm-tailored-next/integration/phase29/REPORT.md`.
+
+Four further representation rules now compose on that exact output:
+
+| Sequential rule | Before | After | Lines removed |
+| --- | ---: | ---: | ---: |
+| Raw-pointer low/high RAM-byte places | 104,325 | 103,888 | 437 |
+| Native bounded index locals | 103,888 | 103,783 | 105 |
+| Explicit compound RAM-word updates | 103,783 | 103,341 | 442 |
+| Inferred local annotations | 103,341 | 103,256 | 85 |
+
+The actual batch removes **1,069 lines, 23,554 tokens and 57,729 spelling
+bytes**, including every helper and all 71 source files. Final complete
+optimized library/frontend builds pass. Parent independently recounted every
+stage. Compound updates save nine fewer lines than their standalone price;
+annotation inference saves one more. Reapplying each emitter and proving its
+actual input/output accounts for those overlaps.
+
+The byte rule recovers the current `byte!(@pointer ...)` arm for 188 accesses
+missed by the older address-of-only matcher. C's `HIBYTE(random_number)` no
+longer expands into size arithmetic, casts and pointer offsets at each use.
+All pointer/index operations stay intact; only fixed byte lanes are recovered.
+Complete expanded correspondence and 327,678 C/old/new cases pass, including
+all 65,536 random-number seeds and both lanes throughout valid RAM addresses.
+
+Index inference chooses the existing native consumer type for 436 immutable
+locals/ranges, removes 1,739 casts and retains nine explicit i32 boundaries.
+Actual-input compiler witnesses check 424 byte/word operands and 1,793 index
+uses. Source inverse, complete builds and 131,615 finite cases per profile pass.
+The compound rule replaces 748 closure updates with explicit operation spelling,
+delegating to the existing raw-pointer load/store arm. Checked i32 arithmetic,
+wrapping u32 arithmetic, final u16 truncation, RHS types and evaluation order
+remain explicit. Complete expansion and resolved-type checks pass across
+11,864 library and 230 frontend compiler owners. A semicolon spelling that
+prevented ordinary formatting was rejected; the accepted price uses normal
+formatting and counts its full support.
+
+Finally, 5,093 redundant local annotations disappear where the initializer
+already fixes the type. Fresh complete expanded and typed comparisons run on
+the actual preceding output; generic conversions requiring context remain.
+Neither this rule nor compound notation changes the gameplay algorithms.
+The full-source proofs supplement the bounded component checks; they do not
+claim whole-game execution or a linked playable historical implementation.
+
+Phase30 reaches **162,136 -> 103,256 (-58,880)**, removing 630,422 tokens and
+1,715,783 spelling bytes cumulatively. Its remaining strict gap is **3,257**.
+Cargo remains ten lines; Python experiment support totals 27,665 lines in
+364 scripts and is separate from emitted engine source. Reports and executable
+rules: `TEMP/sm-tailored-next/{ram-byte-places,native-index-locals,
+compound-word-updates,local-type-inference}`. The actual composition and
+reproduction are frozen in `TEMP/sm-tailored-next/integration/phase30`.
+
+Further price-only controls are excluded: current-derived PPU Mode 7/window/
+scanline sharing saves only 12 lines (38 without scanline helpers); lifting
+conditional word stores grows 115; the complete 120-call raw-memory boundary
+saves 41. Applying byte, index and annotation rules separately to committed
+main saves only six, 18 and 35 lines. These scopes are parked without builds
+or runtime checks and are not an aggregate budget. Current compound updates
+are validated separately for adoption; historical savings are not main deletions.
 
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard
