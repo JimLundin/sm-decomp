@@ -133,7 +133,7 @@ pub unsafe fn dma_doDma(dma: *mut Dma, game: &mut Game) {
         && !game.g_fail
     {
         printf(
-            b"Warning! DMA from addr 0x%x\n\0" as *const u8 as *const c_char,
+            c"Warning! DMA from addr 0x%x\n".as_ptr(),
             words!(i32, (*dma).channel[i], aBank, aAdr),
         );
         game.g_fail = true_0 != 0;

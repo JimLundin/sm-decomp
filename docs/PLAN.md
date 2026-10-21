@@ -184,7 +184,9 @@ Shared record metadata removes **271 more lines**, reaching **103,701**, with
 complete expanded-definition/runtime correspondence and static builds.
 Shared alias declarations remove **202 more lines**, reaching **103,499**, with
 complete declaration/type identity and expanded-source checks plus release build.
-Another **3,500 lines** are needed to reach 99,999;
+Native C-string literals remove **92 more lines**, reaching **103,407**, with
+exact byte/type/lifetime checks, source correspondence and release build.
+Another **3,408 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -812,8 +814,24 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **3,500-line** gap; parked small drafts are not
+   replacement yet funds the **3,408-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Native C-string literals remove **92 lines (103,499 -> 103,407)**, 470
+   tokens and 1,913 spelling bytes, with no helpers. All 111 selected casts in
+   17 files become native literals with exactly the same bytes, terminating NUL,
+   pointer type and static lifetime. Embedded/repeated NULs and differing pointer
+   types are excluded; the entire shader file stays unchanged. Paired optimized
+   library/frontend builds, compiled literal assertions and complete expanded
+   correspondence pass on the standalone rule. Re-emitting on the actual alias
+   commit retains the same 111 proven expressions and passes a complete source
+   inverse, preserving every alias and unselected operation. The composed result
+   is measured directly; formatting alone removes zero lines. Parent normal
+   release, 17-file formatting and progress pass, with all other counters unchanged.
+   Static constant-data equivalence needs no gameplay replay. Source checkpoint
+   key changes from 5bb9937931800caf to 8e19b756787affed; regenerate checkpoints.
+   Durable rule/checks: Local/sm-decomp-experiments/20261021/native-c-strings;
+   actual composition: native-c-strings-alias43df in the same directory.
 
    Shared alias declarations remove **202 lines (103,701 -> 103,499)**, 836
    tokens and 3,476 spelling bytes, including seven support lines. Thirty-two
@@ -1519,12 +1537,13 @@ combined callback/dispatch declarations, terminal loops, selected field/RAM
 store groups, the unaligned RAM repair, shared beam windows, native tracing,
 nonnull callback tables, Samus pose sequences, the packed-sprite repair,
 shared gameplay imports, enemy callback ownership, native inflater, compound
-RAM updates and shared RAM/record metadata and alias declarations, maintained Rust
-is **103,499**, leaving **3,500** to
+RAM updates, shared RAM/record metadata, alias declarations and native C-string
+literals, maintained Rust is **103,407**, leaving **3,408** to
 reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
 unsafe functions 3330; cast lines 7870. RAM/record metadata remove 452/271 lines
 without changing any other counter. Alias grouping removes another 202 lines
+without changing the other counters. Native C-string literals remove 92 lines
 without changing the other counters. Compound updates remove 370 lines and
 71 cast-containing lines without changing the other counters. The inflater removes 12 unsafe-function
 declarations and 25 cast-containing lines. Callback grouping removes 314 counted

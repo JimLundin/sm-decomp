@@ -544,7 +544,7 @@ unsafe fn rasterize_rainbow_up(game: &mut Game) {
     *(ram_ptr!(game, u16; 0x9c00, 3)) = 16;
     *(ram_ptr!(game, u16; 0x9c00, 4)) = -25342i32 as u16;
     let v2: u16 = ((*E).var_3D).wrapping_sub(32);
-    printf(b"Carry crap!\n\0" as *const u8 as *const c_char);
+    printf(c"Carry crap!\n".as_ptr());
     if v2 >= 0x80 {
         *(ram_ptr!(game, u16; 0x9c00, 6)) = (v2 as i32 - 127i32 | 0x80) as u16;
         *(ram_ptr!(game, u16; 0x9c00, 7)) = -25340i32 as u16;

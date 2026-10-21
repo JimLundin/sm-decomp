@@ -266,11 +266,7 @@ unsafe fn host_die(error: *const c_char) {
         error,
         null_mut::<SDL_Window>(),
     );
-    fprintf(
-        stderr,
-        b"Error: %s\n\0" as *const u8 as *const c_char,
-        error,
-    );
+    fprintf(stderr, c"Error: %s\n".as_ptr(), error);
     exit(1);
 }
 unsafe fn host_warning(error: *const c_char) {
@@ -280,11 +276,7 @@ unsafe fn host_warning(error: *const c_char) {
         error,
         null_mut::<SDL_Window>(),
     );
-    fprintf(
-        stderr,
-        b"Warning: %s\n\0" as *const u8 as *const c_char,
-        error,
-    );
+    fprintf(stderr, c"Warning: %s\n".as_ptr(), error);
 }
 pub unsafe fn ChangeWindowScale(scale_step: i32) {
     if SDL_GetWindowFlags(g_window)
@@ -501,7 +493,7 @@ unsafe extern "C" fn AudioCallback(userdata: *mut c_void, mut stream: *mut Uint8
     let owner = &*(userdata as *const GameOwner);
     owner.with(|game| {
         if SDL_LockMutex(g_audio_mutex) != 0 {
-            Die(b"Mutex lock failed!\0" as *const u8 as *const c_char);
+            Die(c"Mutex lock failed!".as_ptr());
         }
         while len != 0 {
             if g_audiobuffer_end.offset_from(g_audiobuffer_cur) as c_long == 0 as c_long {
@@ -556,8 +548,7 @@ unsafe fn SdlRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
     if !g_config.shader.is_null() {
         fprintf(
             stderr,
-            b"Warning: Shaders are supported only with the OpenGL backend\n\0" as *const u8
-                as *const c_char,
+            c"Warning: Shaders are supported only with the OpenGL backend\n".as_ptr(),
         );
     }
     let renderer = SDL_CreateRenderer(
@@ -570,10 +561,7 @@ unsafe fn SdlRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
         }) as Uint32,
     );
     if renderer.is_null() {
-        printf(
-            b"Failed to create renderer: %s\n\0" as *const u8 as *const c_char,
-            SDL_GetError(),
-        );
+        printf(c"Failed to create renderer: %s\n".as_ptr(), SDL_GetError());
         return false_0 != 0;
     }
     let mut renderer_info: SDL_RendererInfo = SDL_RendererInfo {
@@ -592,7 +580,7 @@ unsafe fn SdlRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
     if g_config.linear_filtering {
         SDL_SetHint(
             sdl2_sys::SDL_HINT_RENDER_SCALE_QUALITY.as_ptr() as *const c_char,
-            b"best\0" as *const u8 as *const c_char,
+            c"best".as_ptr(),
         );
     }
     let tex_mult: i32 = if g_ppu_render_flags & kPpuRenderFlags_4x4Mode7 as i32 != 0 {
@@ -608,10 +596,7 @@ unsafe fn SdlRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
         g_snes_height * tex_mult,
     );
     if g_texture.is_null() {
-        printf(
-            b"Failed to create texture: %s\n\0" as *const u8 as *const c_char,
-            SDL_GetError(),
-        );
+        printf(c"Failed to create texture: %s\n".as_ptr(), SDL_GetError());
         return false_0 != 0;
     }
     true_0 != 0
@@ -636,10 +621,7 @@ unsafe fn SdlRenderer_BeginDraw(
         pitch,
     ) != 0
     {
-        printf(
-            b"Failed to lock texture: %s\n\0" as *const u8 as *const c_char,
-            SDL_GetError(),
-        );
+        printf(c"Failed to lock texture: %s\n".as_ptr(), SDL_GetError());
     }
 }
 unsafe fn SdlRenderer_EndDraw(game: &mut Game) {
@@ -665,14 +647,14 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
     argc -= 1;
     argv = argv.offset(1);
     let mut config_file = null::<c_char>();
-    if argc >= 2 && strcmp(*argv, b"--config\0" as *const u8 as *const c_char) == 0 {
+    if argc >= 2 && strcmp(*argv, c"--config".as_ptr()) == 0 {
         config_file = *argv.offset(1);
         argc -= 2;
         argv = argv.offset(2);
     } else {
         SwitchDirectory();
     }
-    if argc >= 1 && strcmp(*argv, b"--debug\0" as *const u8 as *const c_char) == 0 {
+    if argc >= 1 && strcmp(*argv, c"--debug".as_ptr()) == 0 {
         owner.with(|game| game.g_debug_flag = true_0 != 0);
         argc -= 1;
         argv = argv.offset(1);
@@ -709,10 +691,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
         SDL_INIT_VIDEO as Uint32 | SDL_INIT_AUDIO as Uint32 | SDL_INIT_GAMECONTROLLER as Uint32,
     ) != 0
     {
-        printf(
-            b"Failed to init SDL: %s\n\0" as *const u8 as *const c_char,
-            SDL_GetError(),
-        );
+        printf(c"Failed to init SDL: %s\n".as_ptr(), SDL_GetError());
         return 1;
     }
     let custom_size: bool = g_config.window_width != 0 && g_config.window_height != 0;
@@ -735,7 +714,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
     let filename = if !(*argv).is_null() {
         *argv as *const c_char
     } else {
-        b"sm.smc\0" as *const u8 as *const c_char
+        c"sm.smc".as_ptr()
     };
     let snes = owner.with(|game| SnesInit(filename, game));
     if snes.is_null() {
@@ -743,7 +722,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
         snprintf(
             &raw mut buf as *mut c_char,
             size_of::<[c_char; 256]>() as size_t,
-            b"unable to load rom: %s\0" as *const u8 as *const c_char,
+            c"unable to load rom: %s".as_ptr(),
             filename,
         );
         Die(&raw mut buf as *mut c_char);
@@ -758,10 +737,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
         g_win_flags as Uint32,
     );
     if window.is_null() {
-        printf(
-            b"Failed to create window: %s\n\0" as *const u8 as *const c_char,
-            SDL_GetError(),
-        );
+        printf(c"Failed to create window: %s\n".as_ptr(), SDL_GetError());
         return 1;
     }
     g_window = window;
@@ -786,7 +762,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
     }
     g_audio_mutex = SDL_CreateMutex();
     if g_audio_mutex.is_null() {
-        Die(b"No mutex\0" as *const u8 as *const c_char);
+        Die(c"No mutex".as_ptr());
     }
     owner.with(|game| game.g_spc_player = SpcPlayer_Create());
     owner.with(|game| SpcPlayer_Initialize(game.g_spc_player));
@@ -824,7 +800,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
         g_audio_device = SDL_OpenAudioDevice(null::<c_char>(), 0, &raw mut want, &raw mut have, 0);
         if g_audio_device == 0 as SDL_AudioDeviceID {
             printf(
-                b"Failed to open audio device: %s\n\0" as *const u8 as *const c_char,
+                c"Failed to open audio device: %s\n".as_ptr(),
                 SDL_GetError(),
             );
             return 1;
@@ -848,7 +824,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
         (256 * 4) as size_t,
         0,
     );
-    mkdir(b"saves\0" as *const u8 as *const c_char, 0o755 as __mode_t);
+    mkdir(c"saves".as_ptr(), 0o755 as __mode_t);
     owner.with(|game| RtlReadSram(game));
     let mut i: i32 = 0;
     while i < SDL_NumJoysticks() {
@@ -977,7 +953,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
                     snprintf(
                         &raw mut title as *mut c_char,
                         size_of::<[c_char; 60]>() as size_t,
-                        b"%s | BUG FOUND!\0" as *const u8 as *const c_char,
+                        c"%s | BUG FOUND!".as_ptr(),
                         &raw const kWindowTitle as *const c_char,
                     );
                     SDL_SetWindowTitle(g_window, &raw mut title as *mut c_char);
@@ -1066,11 +1042,7 @@ unsafe fn RenderDigit(mut dst: *mut u8, pitch: size_t, digit: i32, color: u32, b
 unsafe fn RenderNumber(dst: *mut u8, pitch: size_t, n: i32, big: u8) {
     let mut buf: [c_char; 32] = [0; 32];
     let mut s = null_mut::<c_char>();
-    sprintf(
-        &raw mut buf as *mut c_char,
-        b"%d\0" as *const u8 as *const c_char,
-        n,
-    );
+    sprintf(&raw mut buf as *mut c_char, c"%d".as_ptr(), n);
     s = &raw mut buf as *mut c_char;
     let mut i: i32 = 2 * 4;
     while *s != 0 {
@@ -1204,7 +1176,7 @@ unsafe fn OpenOneGamepad(i: i32) {
         if controller.is_null() {
             fprintf(
                 stderr,
-                b"Could not open gamepad %d: %s\n\0" as *const u8 as *const c_char,
+                c"Could not open gamepad %d: %s\n".as_ptr(),
                 i,
                 SDL_GetError(),
             );
@@ -1253,7 +1225,7 @@ unsafe fn HandleVolumeAdjustment(volume_adjustment: i32) {
         SDL_MIX_MAXVOLUME,
     );
     printf(
-        b"[SDL mixer volume]=%i\n\0" as *const u8 as *const c_char,
+        c"[SDL mixer volume]=%i\n".as_ptr(),
         g_sdl_audio_mixer_volume,
     );
 }
@@ -1336,19 +1308,16 @@ unsafe fn SwitchDirectory() {
     while pos != 0 as size_t && step < 3 {
         memcpy(
             (&raw mut buf as *mut c_char).offset(pos as isize) as *mut c_void,
-            b"/sm.ini\0" as *const u8 as *const c_char as *const c_void,
+            c"/sm.ini".as_ptr() as *const c_void,
             8 as size_t,
         );
-        let f = fopen(
-            &raw mut buf as *mut c_char,
-            b"rb\0" as *const u8 as *const c_char,
-        ) as *mut FILE;
+        let f = fopen(&raw mut buf as *mut c_char, c"rb".as_ptr()) as *mut FILE;
         if !f.is_null() {
             fclose(f);
             buf[pos as usize] = 0 as c_char;
             if step != 0 {
                 printf(
-                    b"Found sm.ini in %s\n\0" as *const u8 as *const c_char,
+                    c"Found sm.ini in %s\n".as_ptr(),
                     &raw mut buf as *mut c_char,
                 );
                 let err: i32 = chdir(&raw mut buf as *mut c_char);

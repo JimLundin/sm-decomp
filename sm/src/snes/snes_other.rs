@@ -39,7 +39,7 @@ pub unsafe fn snes_loadRom(
 ) -> bool {
     if length < 0x8000 {
         printf(
-            b"Failed to load rom: rom to small (%d bytes)\n\0" as *const u8 as *const c_char,
+            c"Failed to load rom: rom to small (%d bytes)\n".as_ptr(),
             length,
         );
         return false_0 != 0;
@@ -117,7 +117,7 @@ pub unsafe fn snes_loadRom(
     }
     if headers[used as usize].cartType as i32 > 2 {
         printf(
-            b"Failed to load rom: unsupported type (%d)\n\0" as *const u8 as *const c_char,
+            c"Failed to load rom: unsupported type (%d)\n".as_ptr(),
             headers[used as usize].cartType as i32,
         );
         return false_0 != 0;

@@ -220,7 +220,7 @@ static mut has_keynameid: [bool; 24] = [false; 24];
 unsafe fn KeyMapHash_Add(key: u16, cmd: u16) -> bool {
     if keymap_hash_size & 0xff == 0 {
         if keymap_hash_size > 10000 {
-            Die(b"Too many keys\0" as *const u8 as *const c_char);
+            Die(c"Too many keys".as_ptr());
         }
         keymap_hash = realloc(
             keymap_hash as *mut c_void,
@@ -306,17 +306,14 @@ unsafe fn ParseKeyArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
         if (*s as i32 != 0) {
             let mut key_with_mod: i32 = 0;
             loop {
-                if !StringStartsWithNoCase(s, b"Shift+\0" as *const u8 as *const c_char).is_null() {
+                if !StringStartsWithNoCase(s, c"Shift+".as_ptr()).is_null() {
                     key_with_mod |= kKeyMod_Shift as i32;
                     s = s.offset(6);
-                } else if !StringStartsWithNoCase(s, b"Ctrl+\0" as *const u8 as *const c_char)
-                    .is_null()
-                {
+                } else if !StringStartsWithNoCase(s, c"Ctrl+".as_ptr()).is_null() {
                     key_with_mod |= kKeyMod_Ctrl as i32;
                     s = s.offset(5);
                 } else {
-                    if StringStartsWithNoCase(s, b"Alt+\0" as *const u8 as *const c_char).is_null()
-                    {
+                    if StringStartsWithNoCase(s, c"Alt+".as_ptr()).is_null() {
                         break;
                     }
                     key_with_mod |= kKeyMod_Alt as i32;
@@ -325,20 +322,12 @@ unsafe fn ParseKeyArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
             }
             let key: SDL_Keycode = SDL_GetKeyFromName(s);
             if key == SDLK_UNKNOWN as i32 as SDL_Keycode {
-                fprintf(
-                    stderr,
-                    b"Unknown key: '%s'\n\0" as *const u8 as *const c_char,
-                    s,
-                );
+                fprintf(stderr, c"Unknown key: '%s'\n".as_ptr(), s);
             } else if !KeyMapHash_Add(
                 (key_with_mod as SDL_Keycode | encode_keycode(key)) as u16,
                 cmd as u16,
             ) {
-                fprintf(
-                    stderr,
-                    b"Duplicate key: '%s'\n\0" as *const u8 as *const c_char,
-                    s,
-                );
+                fprintf(stderr, c"Duplicate key: '%s'\n".as_ptr(), s);
             }
         }
         i += 1;
@@ -360,14 +349,14 @@ unsafe fn CountBits32(mut n: u32) -> i32 {
 unsafe fn GamepadMap_Add(button: i32, modifiers: u32, cmd: u16) {
     if joymap_size & 0xff == 0 {
         if joymap_size > 1000 {
-            Die(b"Too many joypad keys\0" as *const u8 as *const c_char);
+            Die(c"Too many joypad keys".as_ptr());
         }
         joymap_ents = realloc(
             joymap_ents as *mut c_void,
             (size_of::<GamepadMapEnt>() as size_t).wrapping_mul((joymap_size + 64) as size_t),
         ) as *mut GamepadMapEnt;
         if joymap_ents.is_null() {
-            Die(b"realloc failure\0" as *const u8 as *const c_char);
+            Die(c"realloc failure".as_ptr());
         }
     }
     let mut p = (&raw mut joymap_first as *mut u16).offset(button as isize);
@@ -466,11 +455,7 @@ unsafe fn ParseGamepadArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
                         break;
                     }
                 }
-                fprintf(
-                    stderr,
-                    b"Unknown gamepad button: '%s'\n\0" as *const u8 as *const c_char,
-                    s,
-                );
+                fprintf(stderr, c"Unknown gamepad button: '%s'\n".as_ptr(), s);
                 break;
             }
         }
@@ -687,14 +672,14 @@ unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
                 if section < 0 {
                     fprintf(
                         stderr,
-                        b"%s:%d: Invalid .ini section %s\n\0" as *const u8 as *const c_char,
+                        c"%s:%d: Invalid .ini section %s\n".as_ptr(),
                         filename,
                         lineno,
                         p,
                     );
                 }
             } else if *p as i32 == '!' as i32
-                && !SkipPrefix(p.offset(1), b"include \0" as *const u8 as *const c_char).is_null()
+                && !SkipPrefix(p.offset(1), c"include ".as_ptr()).is_null()
             {
                 let mut tt = p.offset(8);
                 let new_filename =
@@ -702,7 +687,7 @@ unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
                 if depth > 10 || !ParseOneConfigFile(new_filename, depth + 1) {
                     fprintf(
                         stderr,
-                        b"Warning: Unable to read %s\n\0" as *const u8 as *const c_char,
+                        c"Warning: Unable to read %s\n".as_ptr(),
                         new_filename,
                     );
                 }
@@ -710,7 +695,7 @@ unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
             } else if section == -2i32 {
                 fprintf(
                     stderr,
-                    b"%s:%d: Expecting [section]\n\0" as *const u8 as *const c_char,
+                    c"%s:%d: Expecting [section]\n".as_ptr(),
                     filename,
                     lineno,
                 );
@@ -719,14 +704,14 @@ unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
                 if v.is_null() {
                     fprintf(
                         stderr,
-                        b"%s:%d: Expecting 'key=value'\n\0" as *const u8 as *const c_char,
+                        c"%s:%d: Expecting 'key=value'\n".as_ptr(),
                         filename,
                         lineno,
                     );
                 } else if section >= 0 && !HandleIniConfig(section, p, v) {
                     fprintf(
                         stderr,
-                        b"%s:%d: Can't parse '%s'\n\0" as *const u8 as *const c_char,
+                        c"%s:%d: Can't parse '%s'\n".as_ptr(),
                         filename,
                         lineno,
                         p,
@@ -740,15 +725,14 @@ unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
 }
 pub unsafe fn ParseConfigFile(mut filename: *const c_char) {
     g_config.msuvolume = 100;
-    if !filename.is_null() || !ParseOneConfigFile(b"sm.user.ini\0" as *const u8 as *const c_char, 0)
-    {
+    if !filename.is_null() || !ParseOneConfigFile(c"sm.user.ini".as_ptr(), 0) {
         if filename.is_null() {
-            filename = b"sm.ini\0" as *const u8 as *const c_char;
+            filename = c"sm.ini".as_ptr();
         }
         if !ParseOneConfigFile(filename, 0) {
             fprintf(
                 stderr,
-                b"Warning: Unable to read config file %s\n\0" as *const u8 as *const c_char,
+                c"Warning: Unable to read config file %s\n".as_ptr(),
                 filename,
             );
         }

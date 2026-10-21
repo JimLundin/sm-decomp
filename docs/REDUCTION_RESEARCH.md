@@ -43,7 +43,13 @@ a seven-line helper. All 184 selected alias types have compiler identity witness
 all declarations and remaining expanded operations match, and release builds pass.
 The shader draft is excluded. The current rule and checks were reconstructed from
 Git and retained outside TEMP at Local/sm-decomp-experiments/20261021/alias-groups.
-Maintained Rust needs another **3,500 lines removed** to reach 99,999. A separate
+Native C-string emission removes **92 further lines**, reaching **103,407**.
+The actual after-alias composition preserves the same 111 byte/type/lifetime-
+checked expressions and every unselected operation. Complete standalone builds
+and expanded correspondence, composed source inverse, and final main release
+build pass. The shader remains unchanged. Durable sources and proof are at
+Local/sm-decomp-experiments/20261021/native-c-strings-alias43df.
+Maintained Rust needs another **3,408 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.

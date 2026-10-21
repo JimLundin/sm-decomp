@@ -594,7 +594,7 @@ unsafe fn VerifySnapshotsEq(
         game.g_fail = true_0 != 0;
         fprintf(
             stderr,
-            b"@%d: Memory compare failed (mine != theirs, prev):\n\0" as *const u8 as *const c_char,
+            c"@%d: Memory compare failed (mine != theirs, prev):\n".as_ptr(),
             game.snes_frame_counter,
         );
         let mut j: i32 = 0;
@@ -612,7 +612,7 @@ unsafe fn VerifySnapshotsEq(
                         };
                         fprintf(
                             stderr,
-                            b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8 as *const c_char,
+                            c"0x%.6X: %.4X != %.4X (%.4X)\n".as_ptr(),
                             i as i32,
                             read_word(&(*b).ram),
                             read_word(&(*a).ram),
@@ -623,7 +623,7 @@ unsafe fn VerifySnapshotsEq(
                     } else {
                         fprintf(
                             stderr,
-                            b"0x%.6X: %.2X != %.2X (%.2X)\n\0" as *const u8 as *const c_char,
+                            c"0x%.6X: %.2X != %.2X (%.2X)\n".as_ptr(),
                             i as i32,
                             (*b).ram[i as usize] as i32,
                             (*a).ram[i as usize] as i32,
@@ -637,11 +637,7 @@ unsafe fn VerifySnapshotsEq(
         if j != 0 {
             game.g_fail = true_0 != 0;
         }
-        fprintf(
-            stderr,
-            b"  total of %d failed bytes\n\0" as *const u8 as *const c_char,
-            j,
-        );
+        fprintf(stderr, c"  total of %d failed bytes\n".as_ptr(), j);
     }
     if memcmp(
         &raw mut (*b).sram as *mut u8 as *const c_void,
@@ -652,7 +648,7 @@ unsafe fn VerifySnapshotsEq(
         game.g_fail = true_0 != 0;
         fprintf(
             stderr,
-            b"@%d: SRAM compare failed (mine != theirs, prev):\n\0" as *const u8 as *const c_char,
+            c"@%d: SRAM compare failed (mine != theirs, prev):\n".as_ptr(),
             game.snes_frame_counter,
         );
         let mut j_0: i32 = 0;
@@ -667,7 +663,7 @@ unsafe fn VerifySnapshotsEq(
                     {
                         fprintf(
                             stderr,
-                            b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8 as *const c_char,
+                            c"0x%.6X: %.4X != %.4X (%.4X)\n".as_ptr(),
                             i_0 as i32,
                             *((&raw mut (*b).sram as *mut u8).offset(i_0 as isize) as *mut u16)
                                 as i32,
@@ -681,7 +677,7 @@ unsafe fn VerifySnapshotsEq(
                     } else {
                         fprintf(
                             stderr,
-                            b"0x%.6X: %.2X != %.2X (%.2X)\n\0" as *const u8 as *const c_char,
+                            c"0x%.6X: %.2X != %.2X (%.2X)\n".as_ptr(),
                             i_0 as i32,
                             (*b).sram[i_0 as usize] as i32,
                             (*a).sram[i_0 as usize] as i32,
@@ -695,11 +691,7 @@ unsafe fn VerifySnapshotsEq(
         if j_0 != 0 {
             game.g_fail = true_0 != 0;
         }
-        fprintf(
-            stderr,
-            b"  total of %d failed bytes\n\0" as *const u8 as *const c_char,
-            j_0,
-        );
+        fprintf(stderr, c"  total of %d failed bytes\n".as_ptr(), j_0);
     }
     if memcmp(
         &raw mut (*b).vram as *mut u16 as *const c_void,
@@ -710,7 +702,7 @@ unsafe fn VerifySnapshotsEq(
         game.g_fail = true_0 != 0;
         fprintf(
             stderr,
-            b"@%d: VRAM compare failed (mine != theirs, prev):\n\0" as *const u8 as *const c_char,
+            c"@%d: VRAM compare failed (mine != theirs, prev):\n".as_ptr(),
             game.snes_frame_counter,
         );
         let mut j_1: size_t = 0 as size_t;
@@ -718,7 +710,7 @@ unsafe fn VerifySnapshotsEq(
             if (*a).vram[i_1 as usize] as i32 != (*b).vram[i_1 as usize] as i32 {
                 fprintf(
                     stderr,
-                    b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8 as *const c_char,
+                    c"0x%.6X: %.4X != %.4X (%.4X)\n".as_ptr(),
                     i_1 as i32,
                     (*b).vram[i_1 as usize] as i32,
                     (*a).vram[i_1 as usize] as i32,
@@ -1071,7 +1063,7 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
     let org_pc: u16 = (*game.g_cpu).pc;
     let org_b: u8 = (*game.g_cpu).db;
     let org_dp: u16 = (*game.g_cpu).dp;
-    printf(b"RunAsmCode!\n\0" as *const u8 as *const c_char);
+    printf(c"RunAsmCode!\n".as_ptr());
     game.g_ram[0x1ffffi32 as usize] = 1;
     let dc: bool = (*game.g_snes).debug_cycles;
     crate::set_fields! {[(*game.g_cpu)]; db = (pc >> 16) as u8, a = a, x = x, y = y,
@@ -1106,7 +1098,7 @@ unsafe fn loadRom(name: *const c_char, snes: *mut Snes, game: &mut Game) -> bool
     let mut length: size_t = 0 as size_t;
     let mut file: *mut u8 = ReadWholeFile(name, &raw mut length);
     if file.is_null() {
-        puts(b"Failed to read file\0" as *const u8 as *const c_char);
+        puts(c"Failed to read file".as_ptr());
         return false_0 != 0;
     }
     let result: bool = snes_loadRom(snes, file, length as i32, game);
@@ -1368,7 +1360,7 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
             FixupCarry(kPatchedCarrys[i as usize], game);
         } else {
             printf(
-                b"0x%x double patched!\n\0" as *const u8 as *const c_char,
+                c"0x%x double patched!\n".as_ptr(),
                 kPatchedCarrys[i as usize],
             );
         }
@@ -1436,7 +1428,7 @@ pub unsafe fn SaveBugSnapshot(game: &mut Game) {
         snprintf(
             &raw mut buffer as *mut c_char,
             size_of::<[c_char; 64]>() as size_t,
-            b"saves/bug-%d.sav\0" as *const u8 as *const c_char,
+            c"saves/bug-%d.sav".as_ptr(),
             time(null_mut::<time_t>()) as i32,
         );
         RtlSaveSnapshot(&raw mut buffer as *mut c_char, true_0 != 0, game);
@@ -1577,7 +1569,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             }
             game.g_fail = false_0 != 0;
             if !game.VERIFY_ACTIVE || game.VERIFY_FAILURES == 1 {
-                printf(b"Verify failure!\n\0" as *const u8 as *const c_char);
+                printf(c"Verify failure!\n".as_ptr());
             }
         }
         // Headless recovery adopts the completed oracle frame, including the Rust
@@ -1636,7 +1628,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         *ram_ptr!(game; 0x611) = 3;
     }
     if word!(game.menu_index) & 0xff00 != 0 {
-        printf(b"MENU INDEX TOO BIG!\n\0" as *const u8 as *const c_char);
+        printf(c"MENU INDEX TOO BIG!\n".as_ptr());
         SaveBugSnapshot(game);
         word!(game.menu_index &= 0xff);
     }

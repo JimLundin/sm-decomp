@@ -81,19 +81,18 @@ unsafe extern "C" fn MessageCallback(
     }
     fprintf(
         stderr,
-        b"GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n\0" as *const u8
-            as *const c_char,
+        c"GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n".as_ptr(),
         if type_0 == GL_DEBUG_TYPE_ERROR as GLenum {
-            b"** GL ERROR **\0" as *const u8 as *const c_char
+            c"** GL ERROR **".as_ptr()
         } else {
-            b"\0" as *const u8 as *const c_char
+            c"".as_ptr()
         },
         type_0,
         severity,
         message,
     );
     if type_0 == GL_DEBUG_TYPE_ERROR as GLenum {
-        Die(b"OpenGL error!\n\0" as *const u8 as *const c_char);
+        Die(c"OpenGL error!\n".as_ptr());
     }
 }
 unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
@@ -109,7 +108,7 @@ unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool 
     gl::GetIntegerv(gl::MAJOR_VERSION, &raw mut gl_major);
     gl::GetIntegerv(gl::MINOR_VERSION, &raw mut gl_minor);
     if (gl_major, gl_minor) < (3, 3) {
-        Die(b"You need OpenGL 3.3\0" as *const u8 as *const c_char);
+        Die(c"You need OpenGL 3.3".as_ptr());
     }
     gl::GenTextures(1 as GLsizei, &raw mut g_texture.gl_texture);
     static mut kVertices: [c_float; 20] = [
@@ -165,10 +164,7 @@ unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool 
             null_mut::<GLsizei>(),
             &raw mut infolog as *mut GLchar,
         );
-        printf(
-            b"%s\n\0" as *const u8 as *const c_char,
-            &raw mut infolog as *mut c_char,
-        );
+        printf(c"%s\n".as_ptr(), &raw mut infolog as *mut c_char);
     }
     let mut fs_code = b"#version 330 core\nout vec4 FragColor; in vec2 TexCoord; uniform sampler2D texture1; void main(void) { FragColor = texture(texture1, TexCoord); }\0"
         as *const u8 as *const GLchar;
@@ -188,10 +184,7 @@ unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool 
             null_mut::<GLsizei>(),
             &raw mut infolog as *mut GLchar,
         );
-        printf(
-            b"%s\n\0" as *const u8 as *const c_char,
-            &raw mut infolog as *mut c_char,
-        );
+        printf(c"%s\n".as_ptr(), &raw mut infolog as *mut c_char);
     }
     g_program = gl::CreateProgram() as u32;
     let program: i32 = g_program as i32;
@@ -210,10 +203,7 @@ unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool 
             null_mut::<GLsizei>(),
             &raw mut infolog as *mut GLchar,
         );
-        printf(
-            b"%s\n\0" as *const u8 as *const c_char,
-            &raw mut infolog as *mut c_char,
-        );
+        printf(c"%s\n".as_ptr(), &raw mut infolog as *mut c_char);
     }
     if !g_config.shader.is_null() {
         g_glsl_shader = GlslShader_CreateFromFile(g_config.shader);

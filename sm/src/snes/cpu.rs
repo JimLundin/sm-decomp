@@ -772,7 +772,7 @@ unsafe fn test_and_update_bits(cpu: *mut Cpu, low: u32, high: u32, set: bool, ga
 pub unsafe fn DumpCpuHistory(game: &mut Game) {
     for i in 0i32..8 {
         printf(
-            b"PC history: 0x%x\n\0" as *const u8 as *const c_char,
+            c"PC history: 0x%x\n".as_ptr(),
             game.pc_hist[(game.pc_hist_ctr.wrapping_add(i as u32) & 7_) as usize],
         );
     }

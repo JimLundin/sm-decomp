@@ -2129,7 +2129,7 @@ pub unsafe fn MotherBrain_MoveBodyDown(a: u16, game: &mut Game) {
 pub unsafe fn MotherBrain_FootstepEffect(game: &mut Game) {
     word! {game; earthquake_type = 1; earthquake_timer = 4; }
     if (*Get_MotherBrain(0i32, game)).var_00 == 3 {
-        printf(b"Write to rom!\n\0" as *const u8 as *const c_char);
+        printf(c"Write to rom!\n".as_ptr());
     }
 }
 pub unsafe fn MotherBrain_Instr_Goto2(k: u16) -> u16 {

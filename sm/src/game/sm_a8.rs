@@ -983,10 +983,7 @@ pub unsafe fn NorfairLavaMan_Func_12(k: u16, game: &mut Game) {
     let mut v3: i32 = 0;
     let E = Get_NorfairLavaMan(k as i32, game);
     if -((*E).var_E as i32) - 108i32 & 0x8000 == 0 {
-        printf(
-            b"Y undefined %d!\n\0" as *const u8 as *const c_char,
-            -((*E).var_E as i16 as i32),
-        );
+        printf(c"Y undefined %d!\n".as_ptr(), -((*E).var_E as i16 as i32));
     }
     let nlmn_var_B: u16 = (*E).var_B;
     let advance_lava_phase: bool = if -((*E).var_E as i32) - 108i32 & 0x8000 == 0 || {

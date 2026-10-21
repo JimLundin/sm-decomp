@@ -500,7 +500,7 @@ unsafe fn Not_Implemented() {
         '_c2rust_label;
         b"0\0", b"src/spc_player.c\0", 383, b"void Not_Implemented(void)\0"
     };
-    printf(b"Not Implemented\n\0" as *const u8 as *const c_char);
+    printf(c"Not Implemented\n".as_ptr());
 }
 unsafe fn SpcDivHelper(mut a: i32, b: u8) -> u16 {
     let org_a: i32 = a;

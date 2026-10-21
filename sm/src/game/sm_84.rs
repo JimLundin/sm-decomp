@@ -926,7 +926,7 @@ pub unsafe fn PlmSetup_QuicksandSurfaceB(_j: u16, displacement: *mut i32, game: 
         return 0;
     }
     if displacement.is_null() {
-        printf(b"ERROR: PlmSetup_QuicksandSurfaceB is broken!!\n\0" as *const u8 as *const c_char);
+        printf(c"ERROR: PlmSetup_QuicksandSurfaceB is broken!!\n".as_ptr());
         Unreachable(game);
         return 0;
     }

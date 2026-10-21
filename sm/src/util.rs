@@ -72,7 +72,7 @@ pub unsafe fn StringStartsWithNoCase(mut a: *const c_char, mut b: *const c_char)
     }
 }
 pub unsafe fn ReadWholeFile(name: *const c_char, length: *mut size_t) -> *mut u8 {
-    let f = fopen(name, b"rb\0" as *const u8 as *const c_char) as *mut FILE;
+    let f = fopen(name, c"rb".as_ptr()) as *mut FILE;
     if f.is_null() {
         return null_mut::<u8>();
     }
@@ -81,11 +81,11 @@ pub unsafe fn ReadWholeFile(name: *const c_char, length: *mut size_t) -> *mut u8
     rewind(f);
     let buffer = malloc(size.wrapping_add(1 as size_t)) as *mut u8;
     if buffer.is_null() {
-        Die(b"malloc failed\0" as *const u8 as *const c_char);
+        Die(c"malloc failed".as_ptr());
     }
     *buffer.offset(size as isize) = 0;
     if fread(buffer as *mut c_void, 1 as size_t, size, f) as size_t != size {
-        Die(b"fread failed\0" as *const u8 as *const c_char);
+        Die(c"fread failed".as_ptr());
     }
     fclose(f);
     if !length.is_null() {
@@ -226,7 +226,7 @@ pub unsafe fn ByteArray_Resize(arr: *mut ByteArray, new_size: size_t) {
         };
         let data = realloc((*arr).data as *mut c_void, (*arr).capacity) as *mut u8;
         if data.is_null() {
-            Die(b"memory allocation failed\0" as *const u8 as *const c_char);
+            Die(c"memory allocation failed".as_ptr());
         }
         (*arr).data = data;
     }

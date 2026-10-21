@@ -96,7 +96,7 @@ unsafe fn cart_readLorom(cart: *mut Cart, mut bank: u8, adr: u16, game: &mut Gam
         return *(*cart).rom.offset(index as isize);
     }
     printf(
-        b"While trying to read from 0x%x\n\0" as *const u8 as *const c_char,
+        c"While trying to read from 0x%x\n".as_ptr(),
         words!(i32, (bank, adr)),
     );
     let snes = &*(*cart).snes;
@@ -117,7 +117,7 @@ unsafe fn cart_readLorom(cart: *mut Cart, mut bank: u8, adr: u16, game: &mut Gam
     }
     eprintln!("Direct page $44..$50: {direct_page:02X?}");
     DumpCpuHistory(game);
-    Die(b"The game crashed in cart_readLorom\0" as *const u8 as *const c_char);
+    Die(c"The game crashed in cart_readLorom".as_ptr());
     (*(*cart).snes).openBus
 }
 unsafe fn cart_writeLorom(cart: *mut Cart, bank: u8, address: u16, value: u8) {

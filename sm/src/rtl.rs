@@ -315,7 +315,7 @@ pub unsafe fn StateRecorder_RecordPatchByte(
 }
 pub unsafe fn ReadFromFile(f: *mut FILE, data: *mut c_void, n: size_t) {
     if fread(data, 1 as size_t, n, f) as size_t != n {
-        Die(b"fread failed\n\0" as *const u8 as *const c_char);
+        Die(c"fread failed\n".as_ptr());
     }
 }
 pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
@@ -565,7 +565,7 @@ pub unsafe fn StateRecorder_Save(
     ByteArray_Destroy(&raw mut arr);
 }
 pub unsafe fn StateRecorder_ClearKeyLog(sr: *mut StateRecorder, game: &mut Game) {
-    printf(b"Clearing key log!\n\0" as *const u8 as *const c_char);
+    printf(c"Clearing key log!\n".as_ptr());
     (*sr).base_snapshot.size = 0 as size_t;
     (*sr).has_base_audio_queue = true;
     (*sr).base_audio_queue = crate::audio_snapshot::ApuQueueSnapshot::capture(game).to_bytes();
@@ -741,7 +741,7 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
         } else if word!(game.bug_fix_counter) as i32 != kCurrentBugFixCounter as i32 {
             if game.g_debug_flag {
                 printf(
-                    b"bug_fix_counter %d => %d\n\0" as *const u8 as *const c_char,
+                    c"bug_fix_counter %d => %d\n".as_ptr(),
                     word!(game.bug_fix_counter) as i32,
                     kCurrentBugFixCounter as i32,
                 );
@@ -769,7 +769,7 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
     is_replay
 }
 pub unsafe fn RtlSaveSnapshot(filename: *const c_char, saving_with_bug: bool, game: &mut Game) {
-    let f = fopen(filename, b"wb\0" as *const u8 as *const c_char) as *mut FILE;
+    let f = fopen(filename, c"wb".as_ptr()) as *mut FILE;
     RtlApuLock();
     RtlSaveMusicStateToRam_Locked(game, true);
     StateRecorder_Save(&raw mut game.state_recorder, f, saving_with_bug, game);
@@ -793,37 +793,31 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
         }
         sprintf(
             &raw mut name as *mut c_char,
-            b"saves/%s.sav\0" as *const u8 as *const c_char,
+            c"saves/%s.sav".as_ptr(),
             kBugSaves[i as usize],
         );
     } else {
         sprintf(
             &raw mut name as *mut c_char,
-            b"saves/save%d.sav\0" as *const u8 as *const c_char,
+            c"saves/save%d.sav".as_ptr(),
             slot,
         );
     }
     printf(
-        b"*** %s slot %d\n\0" as *const u8 as *const c_char,
+        c"*** %s slot %d\n".as_ptr(),
         if cmd == kSaveLoad_Save as i32 {
-            b"Saving\0" as *const u8 as *const c_char
+            c"Saving".as_ptr()
         } else if cmd == kSaveLoad_Load as i32 {
-            b"Loading\0" as *const u8 as *const c_char
+            c"Loading".as_ptr()
         } else {
-            b"Replaying\0" as *const u8 as *const c_char
+            c"Replaying".as_ptr()
         },
         slot,
     );
     if cmd != kSaveLoad_Save as i32 {
-        let f = fopen(
-            &raw mut name as *mut c_char,
-            b"rb\0" as *const u8 as *const c_char,
-        ) as *mut FILE;
+        let f = fopen(&raw mut name as *mut c_char, c"rb".as_ptr()) as *mut FILE;
         if f.is_null() {
-            printf(
-                b"Failed fopen: %s\n\0" as *const u8 as *const c_char,
-                &raw mut name as *mut c_char,
-            );
+            printf(c"Failed fopen: %s\n".as_ptr(), &raw mut name as *mut c_char);
             return;
         }
         RtlApuLock();
@@ -845,7 +839,7 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
             != 0
         {
             printf(
-                b"Coroutine state: %d, %d, %d, %d, %d\n\0" as *const u8 as *const c_char,
+                c"Coroutine state: %d, %d, %d, %d, %d\n".as_ptr(),
                 *ram_ptr!(game; 0x611) as i32,
                 *ram_ptr!(game; 0x612) as i32,
                 *ram_ptr!(game; 0x613) as i32,
@@ -878,7 +872,7 @@ pub unsafe fn Load24(src: *const LongPtr) -> u32 {
     *(src as *mut u32) & 0xffffff
 }
 pub unsafe fn Unreachable(game: &mut Game) -> bool {
-    printf(b"Unreachable!\n\0" as *const u8 as *const c_char);
+    printf(c"Unreachable!\n".as_ptr());
     crate::native_assertion! {
         '_c2rust_label;
         b"0\0", b"src/sm_rtl.c\0", 512, b"_Bool Unreachable(void)\0"
@@ -907,10 +901,7 @@ pub(crate) unsafe fn rom_ptr_with_bank(bank: u8, addr: u16, game: &mut Game) -> 
 
 pub unsafe fn RomPtr(addr: u32, game: &mut Game) -> *const u8 {
     if addr & 0x8000 == 0 {
-        printf(
-            b"RomPtr - Invalid access 0x%x!\n\0" as *const u8 as *const c_char,
-            addr,
-        );
+        printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), addr);
         game.g_fail = true_0 != 0;
     }
     game.g_rom.offset(crate::rtl::lorom_offset(addr))
@@ -1216,16 +1207,10 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
     }
 }
 pub unsafe fn RtlReadSram(game: &mut Game) {
-    let f = fopen(
-        b"saves/sm.srm\0" as *const u8 as *const c_char,
-        b"rb\0" as *const u8 as *const c_char,
-    ) as *mut FILE;
+    let f = fopen(c"saves/sm.srm".as_ptr(), c"rb".as_ptr()) as *mut FILE;
     if !f.is_null() {
         if fread(game.g_sram as *mut c_void, 1 as size_t, 8192 as size_t, f) != 8192 as c_ulong {
-            fprintf(
-                stderr,
-                b"Error reading saves/sm.srm\n\0" as *const u8 as *const c_char,
-            );
+            fprintf(stderr, c"Error reading saves/sm.srm\n".as_ptr());
         }
         fclose(f);
         RtlSynchronizeWholeState(game);
@@ -1242,21 +1227,12 @@ pub unsafe fn RtlWriteSram(game: &mut Game) {
     if game.VERIFY_ACTIVE {
         return;
     }
-    rename(
-        b"saves/sm.srm\0" as *const u8 as *const c_char,
-        b"saves/sm.srm.bak\0" as *const u8 as *const c_char,
-    );
-    let f = fopen(
-        b"saves/sm.srm\0" as *const u8 as *const c_char,
-        b"wb\0" as *const u8 as *const c_char,
-    ) as *mut FILE;
+    rename(c"saves/sm.srm".as_ptr(), c"saves/sm.srm.bak".as_ptr());
+    let f = fopen(c"saves/sm.srm".as_ptr(), c"wb".as_ptr()) as *mut FILE;
     if !f.is_null() {
         fwrite(game.g_sram as *const c_void, 1 as size_t, 8192 as size_t, f);
         fclose(f);
     } else {
-        fprintf(
-            stderr,
-            b"Unable to write saves/sm.srm\n\0" as *const u8 as *const c_char,
-        );
+        fprintf(stderr, c"Unable to write saves/sm.srm\n".as_ptr());
     };
 }

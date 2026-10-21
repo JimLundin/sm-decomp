@@ -136,7 +136,7 @@ pub unsafe fn CheckEventHappened(a: u16, game: &mut Game) -> u16 {
 pub unsafe fn CopySuperMetroidString(game: &mut Game) {
     memcpy(
         game.g_sram.offset(0x1fe0) as *mut c_void,
-        b"supermetroid\0" as *const u8 as *const c_char as *const c_void,
+        c"supermetroid".as_ptr() as *const c_void,
         12 as size_t,
     );
     RtlWriteSram(game);
@@ -146,13 +146,13 @@ pub unsafe fn VerifySRAM(game: &mut Game) {
     if LoadFromSram(0, game) != 0 && LoadFromSram(1, game) != 0 && LoadFromSram(2, game) != 0 {
         memcpy(
             game.g_sram.offset(0x1fe0) as *mut c_void,
-            b"madadameyohn\0" as *const u8 as *const c_char as *const c_void,
+            c"madadameyohn".as_ptr() as *const c_void,
             12 as size_t,
         );
         RtlWriteSram(game);
     } else if memcmp(
         game.g_sram.offset(0x1fe0) as *const c_void,
-        b"supermetroid\0" as *const u8 as *const c_char as *const c_void,
+        c"supermetroid".as_ptr() as *const c_void,
         12 as size_t,
     ) == 0
     {
@@ -285,7 +285,7 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
     0 as CoroutineRet
 }
 pub unsafe fn InvalidInterrupt_Crash(game: &mut Game) {
-    printf(b"InvalidInterrupt_Crash\n\0" as *const u8 as *const c_char);
+    printf(c"InvalidInterrupt_Crash\n".as_ptr());
     Unreachable(game);
     loop {}
 }

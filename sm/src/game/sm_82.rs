@@ -711,7 +711,7 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
         !(st >= 10)
             && ({
                 if st != 0 {
-                    Die(b"Incorrect coroutine_state_0\0" as *const u8 as *const c_char);
+                    Die(c"Incorrect coroutine_state_0".as_ptr());
                 }
                 true
             })
@@ -746,13 +746,13 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
         != 0
     {
         printf(
-            b"Coroutine state: %d, %d, %d, %d\n\0" as *const u8 as *const c_char,
+            c"Coroutine state: %d, %d, %d, %d\n".as_ptr(),
             *ram_ptr!(game; 0x612) as i32,
             *ram_ptr!(game; 0x613) as i32,
             *ram_ptr!(game; 0x614) as i32,
             *ram_ptr!(game; 0x615) as i32,
         );
-        Warning(b"Coroutine State is broken!\0" as *const u8 as *const c_char);
+        Warning(c"Coroutine State is broken!".as_ptr());
     }
     *ram_ptr!(game; 0x611) = 0;
     kCoroutineNone as CoroutineRet
