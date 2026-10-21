@@ -248,7 +248,10 @@ Shared PPU pixel evaluation removes **681 more lines**, reaching **102,044**.
 Complete release, 175,040 old/new scanline comparisons and both full boot replays
 pass. Dense native rendering takes 2.6-2.7 times the former PPU time; the private
 unused background cache stops updating, with save layout and g_ram unchanged.
-Another **2,045 lines** are needed to reach 99,999;
+Shared native/SPC state transfers remove **230 more lines**, reaching **101,814**.
+All 330 compiled map rows, 1,040 complete differential cases and both full boot
+replays pass; the sequencer and DSP behavior outside those transfers is unchanged.
+Another **1,815 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -876,8 +879,27 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **2,045-line** gap; parked small drafts are not
+   replacement yet funds the **1,815-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   The complete native/SPC state-transfer replacement removes **230 lines
+   (102,044 -> 101,814)**, 2,559 tokens and 7,553 spelling bytes. Thirty-two
+   equal-width runs generate the same 283 player-map rows at compile time;
+   one shared walker replaces both directions, preserving all 659 ordered
+   copies and the final eight channel-index writes. All helpers and 82 source
+   files count. Complete main release library/frontend and formatting pass.
+   Source-bound ordinary DLL comparisons use actual production types and pass
+   **1,040 cases / 685,360 copies per side**, comparing all 66,400 player bytes
+   against both the old functions and a sequential-copy model. Parent separately
+   matched all 330 compiled channel/player rows to committed source and checked
+   every recorded old/new trace. Final full boot any% **129712/0** and Speed
+   Booster **148406/0** pass with normal rendering/audio, source fingerprint
+   `a7d82ec0f552ff40614d7cba0bb195ef057a33c307c23b46da4899c879a4798f`.
+   Neither reaches credits. The first Speed Booster loader attempt omitted the
+   SDL library environment and ran zero frames; its failure log is retained.
+   Correcting that environment reused the same compiled verifier successfully.
+   Sources, exact maps/traces and final build/replay logs:
+   Local/sm-decomp-experiments/20261021/native-sequencer.
 
    Shared PPU pixel evaluation removes **681 lines (102,725 -> 102,044)**,
    6,053 tokens and 16,513 spelling bytes. The complete 2,109-line renderer becomes
@@ -1486,7 +1508,15 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: shared PPU pixel evaluation passes clean full boot
+Latest full integration: shared native/SPC state transfers pass clean full boot
+any% **129712/0** and Speed Booster **148406/0**, with normal rendering/audio
+and comparisons. Both use final source fingerprint
+`a7d82ec0f552ff40614d7cba0bb195ef057a33c307c23b46da4899c879a4798f`.
+The adopted source exactly matches the component-checked transfer candidate,
+composed with the previous PPU replacement. Neither reaches credits. Logs:
+Local/sm-decomp-experiments/20261021/native-sequencer.
+
+Previous full integration: shared PPU pixel evaluation passes clean full boot
 any% **129712/0** and Speed Booster **148406/0**, with normal rendering, audio
 and comparisons. Both use final source fingerprint
 `2df5b594d509743f3be3aeaba787add99673680dbce2aac0543d64373225f2e0`.
@@ -1672,10 +1702,13 @@ nonnull callback tables, Samus pose sequences, the packed-sprite repair,
 shared gameplay imports, enemy callback ownership, native inflater, compound
 RAM updates, shared RAM/record metadata, alias declarations, native C-string
 literals, shared constant headers, native shader/presentation ownership and
-shared PPU pixel evaluation, maintained Rust is **102,044**, leaving **2,045** to
+shared PPU pixel evaluation and native/SPC state transfers, maintained Rust is
+**101,814**, leaving **1,815** to
 reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3316; cast lines 7600. Shared PPU evaluation removes nine unsafe
+unsafe functions 3317; cast lines 7594. Shared state transfers add one unsafe
+helper and remove six cast-containing lines while removing 230 total lines.
+Shared PPU evaluation removes nine unsafe
 declarations and 186 cast-containing lines. Shader/presentation ownership removes
 five unsafe declarations and 84 cast-containing lines. RAM/record metadata remove 452/271 lines
 without changing any other counter. Alias, C-string and constant grouping remove

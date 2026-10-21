@@ -65,7 +65,10 @@ Shared PPU pixel evaluation removes **681 more lines**, reaching **102,044**,
 with 6,053 fewer tokens and 16,513 fewer spelling bytes. Complete release,
 175,040 actual old/new scanline comparisons and both full boot replays pass.
 The native dense renderer takes 2.6-2.7x its former component time; details below.
-Maintained Rust needs another **2,045 lines removed** to reach 99,999. A separate
+Shared native/SPC state transfers remove **230 further lines**, reaching
+**101,814**, with 2,559 fewer tokens and 7,553 fewer spelling bytes. Complete
+release, source-bound differential transfer checks and both full boot replays pass.
+Maintained Rust needs another **1,815 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -86,6 +89,29 @@ neither reduces source volume in the tested scopes. Its default mode does
 preserve packed byte accesses despite physically larger Rust structs. Corrode's
 specific packing omission is repairable; layout differences alone are not a
 correctness verdict. The independent-transpiler sections record these tests.
+
+## Shared native/SPC state transfers (2026-10-21)
+
+The complete transfer responsibility shrinks **230 lines (102,044 -> 101,814)**.
+The 283 explicit player-map records become 32 equal-width consecutive destination
+runs, expanded at compile time into the identical ordered array. One walker
+handles both directions, retaining the 47 channel records, all 659 ordered copies
+and eight final channel-index writes. All helpers, wrappers and 82 Rust files
+count; music processing, sample generation, state types and Cargo are unchanged.
+
+The ordinary DLL uses actual production types and embeds the full harness and
+four source inputs, checked byte-for-byte before execution. All 330 compiled map
+rows match. **1,040 cases / 685,360 copies per side** compare every player byte,
+every ordered copy and an independent sequential-copy model over alternating
+transfers. Parent independently matched the compiled tables to committed source
+and checked all captured traces. Complete main release library/frontend, formatting
+and final full boot any% **129712/0** / Speed Booster **148406/0** pass on source
+`a7d82ec0f552ff40614d7cba0bb195ef057a33c307c23b46da4899c879a4798f`.
+Neither route reaches credits. The initial Speed Booster launch omitted the SDL
+library environment and loaded no DLL; correcting it ran the same compiled source.
+Its failed log remains. This is a state-transfer reduction, not a full music-engine
+replacement. Durable candidate, all compiled maps/traces and final main logs:
+`Local/sm-decomp-experiments/20261021/native-sequencer`.
 
 ## Shared PPU pixel evaluation (2026-10-21)
 

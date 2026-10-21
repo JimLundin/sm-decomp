@@ -196,291 +196,106 @@ static kChannel_Maps: [MemMap; 47] = [
     MemMap::new(57, 0x381),
     MemMap::new(58, 0x400),
 ];
-static kSpcPlayer_Maps: [MemMapSized; 283] = [
-    MemMapSized::new(855, 0, 4),
-    MemMapSized::new(24, 0x4, 4),
-    MemMapSized::new(28, 0x8, 4),
-    MemMapSized::new(32, 0xc, 2),
-    MemMapSized::new(34, 0xe, 2),
-    MemMapSized::new(36, 0x10, 2),
-    MemMapSized::new(38, 0x12, 1),
-    MemMapSized::new(39, 0x13, 1),
-    MemMapSized::new(40, 0x14, 2),
-    MemMapSized::new(42, 0x16, 2),
-    MemMapSized::new(44, 0x18, 2),
-    MemMapSized::new(46, 0x1a, 1),
-    MemMapSized::new(47, 0x1b, 1),
-    MemMapSized::new(8, 0x1c, 1),
-    MemMapSized::new(48, 0x20, 2),
-    MemMapSized::new(592, 0x22, 2),
-    MemMapSized::new(582, 0x24, 2),
-    MemMapSized::new(586, 0x26, 2),
-    MemMapSized::new(588, 0x28, 2),
-    MemMapSized::new(658, 0x2a, 2),
-    MemMapSized::new(684, 0x2c, 2),
-    MemMapSized::new(710, 0x2e, 2),
-    MemMapSized::new(50, 0x40, 2),
-    MemMapSized::new(52, 0x42, 1),
-    MemMapSized::new(53, 0x43, 1),
-    MemMapSized::new(54, 0x44, 1),
-    MemMapSized::new(55, 0x45, 1),
-    MemMapSized::new(56, 0x46, 1),
-    MemMapSized::new(57, 0x47, 1),
-    MemMapSized::new(58, 0x48, 1),
-    MemMapSized::new(59, 0x49, 1),
-    MemMapSized::new(60, 0x4a, 1),
-    MemMapSized::new(61, 0x4c, 1),
-    MemMapSized::new(62, 0x4d, 1),
-    MemMapSized::new(63, 0x4e, 1),
-    MemMapSized::new(64, 0x50, 1),
-    MemMapSized::new(65, 0x51, 1),
-    MemMapSized::new(66, 0x52, 2),
-    MemMapSized::new(68, 0x54, 1),
-    MemMapSized::new(69, 0x55, 1),
-    MemMapSized::new(70, 0x56, 2),
-    MemMapSized::new(72, 0x58, 2),
-    MemMapSized::new(74, 0x5a, 1),
-    MemMapSized::new(75, 0x5b, 1),
-    MemMapSized::new(76, 0x5c, 2),
-    MemMapSized::new(78, 0x5e, 1),
-    MemMapSized::new(79, 0x5f, 1),
-    MemMapSized::new(80, 0x60, 2),
-    MemMapSized::new(82, 0x62, 2),
-    MemMapSized::new(84, 0x64, 2),
-    MemMapSized::new(86, 0x66, 2),
-    MemMapSized::new(88, 0x68, 1),
-    MemMapSized::new(89, 0x69, 1),
-    MemMapSized::new(90, 0x6a, 1),
-    MemMapSized::new(736, 0xd0, 2),
-    MemMapSized::new(92, 0xd2, 2),
-    MemMapSized::new(614, 0xd4, 2),
-    MemMapSized::new(604, 0xd6, 2),
-    MemMapSized::new(608, 0xd8, 2),
-    MemMapSized::new(610, 0xda, 2),
-    MemMapSized::new(762, 0xdc, 2),
-    MemMapSized::new(788, 0xde, 2),
-    MemMapSized::new(636, 0xe0, 2),
-    MemMapSized::new(626, 0xe2, 2),
-    MemMapSized::new(630, 0xe4, 2),
-    MemMapSized::new(632, 0xe6, 2),
-    MemMapSized::new(814, 0xe8, 2),
-    MemMapSized::new(840, 0xea, 2),
-    MemMapSized::new(94, 0xee, 2),
-    MemMapSized::new(96, 0x390, 1),
-    MemMapSized::new(584, 0x392, 1),
-    MemMapSized::new(598, 0x393, 1),
-    MemMapSized::new(651, 0x394, 1),
-    MemMapSized::new(677, 0x395, 1),
-    MemMapSized::new(703, 0x396, 1),
-    MemMapSized::new(729, 0x397, 1),
-    MemMapSized::new(647, 0x398, 1),
-    MemMapSized::new(673, 0x399, 1),
-    MemMapSized::new(699, 0x39a, 1),
-    MemMapSized::new(725, 0x39b, 1),
-    MemMapSized::new(668, 0x39c, 1),
-    MemMapSized::new(694, 0x39d, 1),
-    MemMapSized::new(720, 0x39e, 1),
-    MemMapSized::new(746, 0x39f, 1),
-    MemMapSized::new(596, 0x3a0, 1),
-    MemMapSized::new(595, 0x3a1, 1),
-    MemMapSized::new(601, 0x3a2, 1),
-    MemMapSized::new(597, 0x3a3, 1),
-    MemMapSized::new(600, 0x3a4, 1),
-    MemMapSized::new(599, 0x3a5, 1),
-    MemMapSized::new(646, 0x3a6, 1),
-    MemMapSized::new(672, 0x3a7, 1),
-    MemMapSized::new(698, 0x3a8, 1),
-    MemMapSized::new(724, 0x3a9, 1),
-    MemMapSized::new(666, 0x3aa, 1),
-    MemMapSized::new(692, 0x3ab, 1),
-    MemMapSized::new(718, 0x3ac, 1),
-    MemMapSized::new(744, 0x3ad, 1),
-    MemMapSized::new(581, 0x3ae, 1),
-    MemMapSized::new(652, 0x3af, 1),
-    MemMapSized::new(678, 0x3b0, 1),
-    MemMapSized::new(704, 0x3b1, 1),
-    MemMapSized::new(730, 0x3b2, 1),
-    MemMapSized::new(594, 0x3b3, 1),
-    MemMapSized::new(653, 0x3b4, 1),
-    MemMapSized::new(679, 0x3b5, 1),
-    MemMapSized::new(705, 0x3b6, 1),
-    MemMapSized::new(731, 0x3b7, 1),
-    MemMapSized::new(655, 0x3b8, 1),
-    MemMapSized::new(657, 0x3b9, 1),
-    MemMapSized::new(681, 0x3ba, 1),
-    MemMapSized::new(683, 0x3bb, 1),
-    MemMapSized::new(707, 0x3bc, 1),
-    MemMapSized::new(709, 0x3bd, 1),
-    MemMapSized::new(733, 0x3be, 1),
-    MemMapSized::new(735, 0x3bf, 1),
-    MemMapSized::new(662, 0x3c0, 1),
-    MemMapSized::new(654, 0x3c1, 1),
-    MemMapSized::new(688, 0x3c2, 1),
-    MemMapSized::new(680, 0x3c3, 1),
-    MemMapSized::new(714, 0x3c4, 1),
-    MemMapSized::new(706, 0x3c5, 1),
-    MemMapSized::new(740, 0x3c6, 1),
-    MemMapSized::new(732, 0x3c7, 1),
-    MemMapSized::new(660, 0x3c8, 1),
-    MemMapSized::new(686, 0x3c9, 1),
-    MemMapSized::new(712, 0x3ca, 1),
-    MemMapSized::new(738, 0x3cb, 1),
-    MemMapSized::new(649, 0x3cc, 1),
-    MemMapSized::new(675, 0x3cd, 1),
-    MemMapSized::new(701, 0x3ce, 1),
-    MemMapSized::new(727, 0x3cf, 1),
-    MemMapSized::new(664, 0x3d0, 2),
-    MemMapSized::new(690, 0x3d2, 2),
-    MemMapSized::new(716, 0x3d4, 2),
-    MemMapSized::new(742, 0x3d6, 2),
-    MemMapSized::new(670, 0x3d8, 1),
-    MemMapSized::new(696, 0x3d9, 1),
-    MemMapSized::new(722, 0x3da, 1),
-    MemMapSized::new(748, 0x3db, 1),
-    MemMapSized::new(650, 0x3dc, 1),
-    MemMapSized::new(648, 0x3dd, 1),
-    MemMapSized::new(669, 0x3de, 1),
-    MemMapSized::new(656, 0x3df, 1),
-    MemMapSized::new(661, 0x3e0, 1),
-    MemMapSized::new(667, 0x3e1, 1),
-    MemMapSized::new(663, 0x3e2, 1),
-    MemMapSized::new(676, 0x3e3, 1),
-    MemMapSized::new(674, 0x3e4, 1),
-    MemMapSized::new(695, 0x3e5, 1),
-    MemMapSized::new(682, 0x3e6, 1),
-    MemMapSized::new(687, 0x3e7, 1),
-    MemMapSized::new(693, 0x3e8, 1),
-    MemMapSized::new(689, 0x3e9, 1),
-    MemMapSized::new(702, 0x3ea, 1),
-    MemMapSized::new(700, 0x3eb, 1),
-    MemMapSized::new(721, 0x3ec, 1),
-    MemMapSized::new(708, 0x3ed, 1),
-    MemMapSized::new(713, 0x3ee, 1),
-    MemMapSized::new(719, 0x3ef, 1),
-    MemMapSized::new(715, 0x3f0, 1),
-    MemMapSized::new(728, 0x3f1, 1),
-    MemMapSized::new(726, 0x3f2, 1),
-    MemMapSized::new(747, 0x3f3, 1),
-    MemMapSized::new(734, 0x3f4, 1),
-    MemMapSized::new(739, 0x3f5, 1),
-    MemMapSized::new(745, 0x3f6, 1),
-    MemMapSized::new(741, 0x3f7, 1),
-    MemMapSized::new(606, 0x3f8, 1),
-    MemMapSized::new(620, 0x3f9, 1),
-    MemMapSized::new(755, 0x3fa, 1),
-    MemMapSized::new(781, 0x3fb, 1),
-    MemMapSized::new(751, 0x3fc, 1),
-    MemMapSized::new(777, 0x3fd, 1),
-    MemMapSized::new(772, 0x3fe, 1),
-    MemMapSized::new(798, 0x3ff, 1),
-    MemMapSized::new(618, 0x440, 1),
-    MemMapSized::new(617, 0x441, 1),
-    MemMapSized::new(623, 0x442, 1),
-    MemMapSized::new(619, 0x443, 1),
-    MemMapSized::new(622, 0x444, 1),
-    MemMapSized::new(621, 0x445, 1),
-    MemMapSized::new(750, 0x446, 1),
-    MemMapSized::new(776, 0x447, 1),
-    MemMapSized::new(770, 0x448, 1),
-    MemMapSized::new(796, 0x449, 1),
-    MemMapSized::new(603, 0x44a, 1),
-    MemMapSized::new(756, 0x44b, 1),
-    MemMapSized::new(782, 0x44c, 1),
-    MemMapSized::new(616, 0x44d, 1),
-    MemMapSized::new(757, 0x44e, 1),
-    MemMapSized::new(783, 0x44f, 1),
-    MemMapSized::new(759, 0x450, 1),
-    MemMapSized::new(761, 0x451, 1),
-    MemMapSized::new(785, 0x452, 1),
-    MemMapSized::new(787, 0x453, 1),
-    MemMapSized::new(766, 0x454, 1),
-    MemMapSized::new(758, 0x455, 1),
-    MemMapSized::new(792, 0x456, 1),
-    MemMapSized::new(784, 0x457, 1),
-    MemMapSized::new(764, 0x458, 1),
-    MemMapSized::new(790, 0x459, 1),
-    MemMapSized::new(753, 0x45a, 1),
-    MemMapSized::new(779, 0x45b, 1),
-    MemMapSized::new(768, 0x45c, 2),
-    MemMapSized::new(794, 0x45e, 2),
-    MemMapSized::new(774, 0x460, 1),
-    MemMapSized::new(800, 0x461, 1),
-    MemMapSized::new(754, 0x462, 1),
-    MemMapSized::new(752, 0x463, 1),
-    MemMapSized::new(773, 0x464, 1),
-    MemMapSized::new(760, 0x465, 1),
-    MemMapSized::new(765, 0x466, 1),
-    MemMapSized::new(771, 0x467, 1),
-    MemMapSized::new(767, 0x468, 1),
-    MemMapSized::new(780, 0x469, 1),
-    MemMapSized::new(778, 0x46a, 1),
-    MemMapSized::new(799, 0x46b, 1),
-    MemMapSized::new(786, 0x46c, 1),
-    MemMapSized::new(791, 0x46d, 1),
-    MemMapSized::new(797, 0x46e, 1),
-    MemMapSized::new(793, 0x46f, 1),
-    MemMapSized::new(628, 0x470, 1),
-    MemMapSized::new(642, 0x471, 1),
-    MemMapSized::new(807, 0x472, 1),
-    MemMapSized::new(833, 0x473, 1),
-    MemMapSized::new(803, 0x474, 1),
-    MemMapSized::new(829, 0x475, 1),
-    MemMapSized::new(824, 0x476, 1),
-    MemMapSized::new(850, 0x477, 1),
-    MemMapSized::new(640, 0x478, 1),
-    MemMapSized::new(639, 0x479, 1),
-    MemMapSized::new(645, 0x47a, 1),
-    MemMapSized::new(641, 0x47b, 1),
-    MemMapSized::new(644, 0x47c, 1),
-    MemMapSized::new(643, 0x47d, 1),
-    MemMapSized::new(802, 0x47e, 1),
-    MemMapSized::new(828, 0x47f, 1),
-    MemMapSized::new(822, 0x480, 1),
-    MemMapSized::new(848, 0x481, 1),
-    MemMapSized::new(625, 0x482, 1),
-    MemMapSized::new(808, 0x483, 1),
-    MemMapSized::new(834, 0x484, 1),
-    MemMapSized::new(638, 0x485, 1),
-    MemMapSized::new(809, 0x486, 1),
-    MemMapSized::new(835, 0x487, 1),
-    MemMapSized::new(811, 0x488, 1),
-    MemMapSized::new(813, 0x489, 1),
-    MemMapSized::new(837, 0x48a, 1),
-    MemMapSized::new(839, 0x48b, 1),
-    MemMapSized::new(818, 0x48c, 1),
-    MemMapSized::new(810, 0x48d, 1),
-    MemMapSized::new(844, 0x48e, 1),
-    MemMapSized::new(836, 0x48f, 1),
-    MemMapSized::new(816, 0x490, 1),
-    MemMapSized::new(842, 0x491, 1),
-    MemMapSized::new(805, 0x492, 1),
-    MemMapSized::new(831, 0x493, 1),
-    MemMapSized::new(820, 0x494, 2),
-    MemMapSized::new(846, 0x496, 2),
-    MemMapSized::new(826, 0x498, 1),
-    MemMapSized::new(852, 0x499, 1),
-    MemMapSized::new(806, 0x49a, 1),
-    MemMapSized::new(804, 0x49b, 1),
-    MemMapSized::new(825, 0x49c, 1),
-    MemMapSized::new(812, 0x49d, 1),
-    MemMapSized::new(817, 0x49e, 1),
-    MemMapSized::new(823, 0x49f, 1),
-    MemMapSized::new(819, 0x4a0, 1),
-    MemMapSized::new(832, 0x4a1, 1),
-    MemMapSized::new(830, 0x4a2, 1),
-    MemMapSized::new(851, 0x4a3, 1),
-    MemMapSized::new(838, 0x4a4, 1),
-    MemMapSized::new(843, 0x4a5, 1),
-    MemMapSized::new(849, 0x4a6, 1),
-    MemMapSized::new(845, 0x4a7, 1),
-    MemMapSized::new(97, 0x4a9, 1),
-    MemMapSized::new(98, 0x4b1, 1),
-    MemMapSized::new(634, 0x4ba, 1),
-    MemMapSized::new(580, 0x4bb, 1),
-    MemMapSized::new(602, 0x4bc, 1),
-    MemMapSized::new(624, 0x4bd, 1),
-    MemMapSized::new(854, 0x4be, 1),
-];
+// Each run copies equal-width fields to consecutive SPC addresses.
+// Native offsets remain explicit because the sequencer's records are interleaved.
+const fn player_ram_map() -> [MemMapSized; 283] {
+    let groups: &[(u16, u16, &[u16])] = &[
+        (0x0, 4, &[855, 24, 28]),
+        (0xc, 2, &[32, 34, 36]),
+        (0x12, 1, &[38, 39]),
+        (0x14, 2, &[40, 42, 44]),
+        (0x1a, 1, &[46, 47, 8]),
+        (0x20, 2, &[48, 592, 582, 586, 588, 658, 684, 710]),
+        (0x40, 2, &[50]),
+        (0x42, 1, &[52, 53, 54, 55, 56, 57, 58, 59, 60]),
+        (0x4c, 1, &[61, 62, 63]),
+        (0x50, 1, &[64, 65]),
+        (0x52, 2, &[66]),
+        (0x54, 1, &[68, 69]),
+        (0x56, 2, &[70, 72]),
+        (0x5a, 1, &[74, 75]),
+        (0x5c, 2, &[76]),
+        (0x5e, 1, &[78, 79]),
+        (0x60, 2, &[80, 82, 84, 86]),
+        (0x68, 1, &[88, 89, 90]),
+        (
+            0xd0,
+            2,
+            &[
+                736, 92, 614, 604, 608, 610, 762, 788, 636, 626, 630, 632, 814, 840,
+            ],
+        ),
+        (0xee, 2, &[94]),
+        (0x390, 1, &[96]),
+        (
+            0x392,
+            1,
+            &[
+                584, 598, 651, 677, 703, 729, 647, 673, 699, 725, 668, 694, 720, 746, 596, 595,
+                601, 597, 600, 599, 646, 672, 698, 724, 666, 692, 718, 744, 581, 652, 678, 704,
+                730, 594, 653, 679, 705, 731, 655, 657, 681, 683, 707, 709, 733, 735, 662, 654,
+                688, 680, 714, 706, 740, 732, 660, 686, 712, 738, 649, 675, 701, 727,
+            ],
+        ),
+        (0x3d0, 2, &[664, 690, 716, 742]),
+        (
+            0x3d8,
+            1,
+            &[
+                670, 696, 722, 748, 650, 648, 669, 656, 661, 667, 663, 676, 674, 695, 682, 687,
+                693, 689, 702, 700, 721, 708, 713, 719, 715, 728, 726, 747, 734, 739, 745, 741,
+                606, 620, 755, 781, 751, 777, 772, 798,
+            ],
+        ),
+        (
+            0x440,
+            1,
+            &[
+                618, 617, 623, 619, 622, 621, 750, 776, 770, 796, 603, 756, 782, 616, 757, 783,
+                759, 761, 785, 787, 766, 758, 792, 784, 764, 790, 753, 779,
+            ],
+        ),
+        (0x45c, 2, &[768, 794]),
+        (
+            0x460,
+            1,
+            &[
+                774, 800, 754, 752, 773, 760, 765, 771, 767, 780, 778, 799, 786, 791, 797, 793,
+                628, 642, 807, 833, 803, 829, 824, 850, 640, 639, 645, 641, 644, 643, 802, 828,
+                822, 848, 625, 808, 834, 638, 809, 835, 811, 813, 837, 839, 818, 810, 844, 836,
+                816, 842, 805, 831,
+            ],
+        ),
+        (0x494, 2, &[820, 846]),
+        (
+            0x498,
+            1,
+            &[
+                826, 852, 806, 804, 825, 812, 817, 823, 819, 832, 830, 851, 838, 843, 849, 845,
+            ],
+        ),
+        (0x4a9, 1, &[97]),
+        (0x4b1, 1, &[98]),
+        (0x4ba, 1, &[634, 580, 602, 624, 854]),
+    ];
+    let mut maps = [MemMapSized::new(0, 0, 0); 283];
+    let mut output = 0;
+    let mut group = 0;
+    while group < groups.len() {
+        let (destination, width, sources) = groups[group];
+        let mut field = 0;
+        while field < sources.len() {
+            maps[output] =
+                MemMapSized::new(sources[field], destination + field as u16 * width, width);
+            output += 1;
+            field += 1;
+        }
+        group += 1;
+    }
+    assert!(output == maps.len());
+    maps
+}
+static kSpcPlayer_Maps: [MemMapSized; 283] = player_ram_map();
 unsafe fn Dsp_Write(p: *mut SpcPlayer, mut reg: u8, value: u8) {
     let hist = (*p).reg_write_history;
     if !hist.is_null() && (*hist).count < 256 {
@@ -1669,83 +1484,38 @@ pub unsafe fn SpcPlayer_Initialize(p: *mut SpcPlayer) {
     Vector_Reset_Spc(p);
     Spc_Loop_Part1(p);
 }
-pub unsafe fn SpcPlayer_CopyVariablesToRam(p: *mut SpcPlayer) {
-    let mut c = &raw mut (*p).channel as *mut Channel;
-    let mut i: i32 = 0;
-    while i < 8 {
-        let mut m = (&raw const kChannel_Maps as *const MemMap);
-        while m
-            != (&raw const kChannel_Maps as *const MemMap).offset(
-                (size_of::<[MemMap; 47]>() as usize).wrapping_div(size_of::<MemMap>() as usize)
-                    as isize,
-            )
-        {
-            memcpy(
-                (&raw mut (*p).ram as *mut u8)
-                    .offset((((*m).org_off as i32 & 0x7fff) + i * 2) as isize)
-                    as *mut c_void,
-                (c as *mut u8).offset((*m).off as i32 as isize) as *const c_void,
-                (if (*m).org_off & 0x8000 != 0 { 2 } else { 1 }) as size_t,
+unsafe fn transfer_player_ram(p: *mut SpcPlayer, to_ram: bool) {
+    let ram = &raw mut (*p).ram as *mut u8;
+    let transfer = |native: *mut u8, address: usize, size: usize| {
+        let spc = ram.add(address);
+        let (destination, source) = if to_ram { (spc, native) } else { (native, spc) };
+        memcpy(destination.cast(), source.cast(), size as size_t);
+    };
+    for i in 0..8 {
+        let channel = (&raw mut (*p).channel as *mut Channel).add(i).cast::<u8>();
+        for map in &kChannel_Maps {
+            transfer(
+                channel.add(map.off as usize),
+                (map.org_off & 0x7fff) as usize + i * 2,
+                if map.org_off & 0x8000 != 0 { 2 } else { 1 },
             );
-            m = m.offset(1);
         }
-        i += 1;
-        c = c.offset(1);
     }
-    let mut m_0 = (&raw const kSpcPlayer_Maps as *const MemMapSized);
-    while m_0
-        != (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(
-            (size_of::<[MemMapSized; 283]>() as usize)
-                .wrapping_div(size_of::<MemMapSized>() as usize) as isize,
-        )
-    {
-        memcpy(
-            (&raw mut (*p).ram as *mut u8).offset((*m_0).org_off as isize) as *mut c_void,
-            (p as *mut u8).offset((*m_0).off as i32 as isize) as *const c_void,
-            (*m_0).size as size_t,
+    for map in &kSpcPlayer_Maps {
+        transfer(
+            p.cast::<u8>().add(map.off as usize),
+            map.org_off as usize,
+            map.size as usize,
         );
-        m_0 = m_0.offset(1);
     }
 }
+pub unsafe fn SpcPlayer_CopyVariablesToRam(p: *mut SpcPlayer) {
+    transfer_player_ram(p, true);
+}
 pub unsafe fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer) {
-    let mut c = &raw mut (*p).channel as *mut Channel;
-    let mut i: i32 = 0;
-    while i < 8 {
-        let mut m = (&raw const kChannel_Maps as *const MemMap);
-        while m
-            != (&raw const kChannel_Maps as *const MemMap).offset(
-                (size_of::<[MemMap; 47]>() as usize).wrapping_div(size_of::<MemMap>() as usize)
-                    as isize,
-            )
-        {
-            memcpy(
-                (c as *mut u8).offset((*m).off as i32 as isize) as *mut c_void,
-                (&raw mut (*p).ram as *mut u8)
-                    .offset((((*m).org_off as i32 & 0x7fff) + i * 2) as isize)
-                    as *const c_void,
-                (if (*m).org_off & 0x8000 != 0 { 2 } else { 1 }) as size_t,
-            );
-            m = m.offset(1);
-        }
-        i += 1;
-        c = c.offset(1);
-    }
-    let mut m_0 = (&raw const kSpcPlayer_Maps as *const MemMapSized);
-    while m_0
-        != (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(
-            (size_of::<[MemMapSized; 283]>() as usize)
-                .wrapping_div(size_of::<MemMapSized>() as usize) as isize,
-        )
-    {
-        memcpy(
-            (p as *mut u8).offset((*m_0).off as i32 as isize) as *mut c_void,
-            (&raw mut (*p).ram as *mut u8).offset((*m_0).org_off as isize) as *const c_void,
-            (*m_0).size as size_t,
-        );
-        m_0 = m_0.offset(1);
-    }
-    for i_0 in 0i32..8 {
-        (*p).channel[i_0 as usize].index = i_0 as u8;
+    transfer_player_ram(p, false);
+    for i in 0..8 {
+        (*p).channel[i].index = i as u8;
     }
 }
 pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
