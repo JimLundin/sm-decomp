@@ -1655,6 +1655,31 @@ Reports and candidates: TEMP/sm-tailored-next/{palette-pipeline,
 state-recorder-native,samus-locomotion-cycle,actor-world-collision,beam-windows}.
 The prices are separate experiments, not an additive reduction budget.
 
+The complete CPU/SPC tracing replacement is adopted separately:
+**105,984 -> 105,840 (-144)**, also removing 785 noncomment tokens and 1,863
+token-spelling bytes. Its source lineage is **206 original C lines ->
+1,994 initial Rust -> 464 current Rust -> 320 native Rust**. The initial total
+includes duplicated declarations; the tracing table/function portion is 1,597
+lines. No helper or caller cost is moved outside the counted source.
+
+The executable emitter retains both full opcode-text tables and operand-kind
+maps exactly. It derives the twelve short immediate forms from the wide forms,
+removing the sparse 256-slot table, and shares native hex formatting and flag
+letters across the four actual formatters. It preserves padding, the terminating
+NUL, unconditional bus reads, relative-address arithmetic and post-read processor
+state. All three callers retain their signatures and output buffers.
+
+All **742,400 cases** pass across original C, initial Rust, current Rust and the
+candidate, with Rust checked in debug and release. Comparisons include the full
+256-byte output buffer and untouched tail, ordered bus addresses/count, both
+processor states, pointer replacement and a trailing guard. Effectful bus
+fixtures exercise state changes during reads. Six compiled incorrect variants
+are detected, including changed padding, operand order, read count and premature
+state capture. The actual complete library and frontend compile after adoption;
+formatting and progress checks pass. These are diagnostic-component checks, not
+a new gameplay replay or execution of every real hardware bus path. Sources,
+emitter and checks: `TEMP/sm-tailored-next/tracing-native`.
+
 A source-ownership count also clarifies the remaining search space. The repaired
 control has **83,741 lines under game/**, **13,135 root-level lines**, **2,743
 platform lines**, **6,077 SNES lines** and **493 verify-subdirectory lines**:

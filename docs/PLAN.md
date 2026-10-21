@@ -95,7 +95,9 @@ count. The subsequent complete beam-window replacement removes **205 more
 lines**, reaching **105,984**, with all imports and source registration counted.
 It owns X-ray and rainbow-beam rasterization under descriptive names, with
 direct callers and no bank facades. Component checks and focused/full replays
-pass as recorded below. Another **5,985 lines** are needed to reach 99,999;
+pass as recorded below. Native CPU/SPC tracing removes **144 more lines**,
+reaching **105,840**, with complete output/bus differential checks and builds.
+Another **5,841 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -586,8 +588,18 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **5,985-line** gap; parked small drafts are not
+   replacement yet funds the **5,841-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Complete CPU/SPC tracing removes **144 lines (105,984 -> 105,840)**.
+   One native formatter replaces C varargs and the sparse short-immediate
+   table; all opcode text, padding, NUL termination, flags and bus-read order
+   remain exact. All 742,400 original-C/initial/current/native component cases
+   pass in debug/release Rust, including stateful reads and processor-pointer
+   changes. Complete optimized library/frontend builds and static checks pass.
+   This diagnostic-only change is checked through its actual formatting bodies
+   and three caller contracts; no new gameplay replay is claimed. Reusable
+   emitter and checks: TEMP sm-tailored-next/tracing-native.
 
    Complete beam-window ownership removes **205 lines (106,189 -> 105,984)**,
    including the 668-line `beam_windows` module, direct imports/callers and
@@ -1069,11 +1081,12 @@ imports, ordered stores, PNG texture loading, beam firing, moving platforms,
 byte-partial-product sharing, INI decoding, countdown callbacks, projectile
 flight, callback entry captures, opcode grids, blast windows, indexed loops and
 combined callback/dispatch declarations, terminal loops, selected field/RAM
-store groups, the unaligned RAM repair and shared beam windows, maintained Rust
-is **105,984**, leaving **5,985** to reach 99,999. Counters:
+store groups, the unaligned RAM repair, shared beam windows and native tracing,
+maintained Rust is **105,840**, leaving **5,841** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3652; cast lines 8057. The beam-window replacement removes
-13 unsafe function declarations and 39 cast-containing lines. The unrelated
+unsafe functions 3655; cast lines 7965. Tracing adds three unsafe helper
+declarations for the caller-owned output buffer and removes 92 cast-containing
+lines. Its complete implementation still removes 144 lines. The unrelated
 83-line shader draft
 remains excluded; working-tree counts are not the committed baseline.
 Item 2's function/compound-body variant audits are complete for their stated
