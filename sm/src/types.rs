@@ -637,56 +637,6 @@ crate::typed_struct! {
         pub width, height: u16;
     }
 
-    pub struct GlslParam {
-        pub next: *mut GlslParam;
-        pub id: *mut c_char;
-        pub has_value: bool;
-        pub value, min, max: c_float;
-        pub uniform: [u32; 20];
-    }
-
-    pub struct GlslPass {
-        pub filename: *mut c_char;
-        pub scale_type_x, scale_type_y: u8;
-        pub float_framebuffer, srgb_framebuffer, mipmap_input: bool;
-        pub scale_x, scale_y: c_float;
-        pub wrap_mode, frame_count_mod, frame_count, gl_program, gl_fbo, filter, gl_texture: u32;
-        pub width, height: u16;
-        pub unif: GlslUniforms;
-    }
-
-    pub struct GlslShader {
-        pub n_pass: i32;
-        pub pass: *mut GlslPass;
-        pub first_param: *mut GlslParam;
-        pub first_texture: *mut GlslTexture;
-        pub gl_vao: *mut u32;
-        pub gl_vbo, frame_count: u32;
-        pub max_prev_frame: i32;
-        pub prev_frame: [GlTextureWithSize; 8];
-    }
-
-    pub struct GlslTexture {
-        pub next: *mut GlslTexture;
-        pub id, filename: *mut c_char;
-        pub filter, gl_texture, wrap_mode: u32;
-        pub mipmap: bool;
-        pub width, height: i32;
-    }
-
-    pub struct GlslTextureUniform {
-        pub Texture, InputSize, TextureSize, TexCoord: i32;
-    }
-
-    pub struct GlslUniforms {
-        pub Top: GlslTextureUniform;
-        pub OutputSize, FrameCount, FrameDirection, LUTTexCoord, VertexCoord: i32;
-        pub Orig: GlslTextureUniform;
-        pub Prev: [GlslTextureUniform; 7];
-        pub Pass, PassPrev: [GlslTextureUniform; 20];
-        pub Texture: [i32; 10];
-    }
-
     pub struct RendererFuncs {
         pub Initialize: Option<unsafe fn(*mut SDL_Window, &mut Game) -> bool>;
         pub Destroy: Option<unsafe fn(&mut Game) -> ()>;

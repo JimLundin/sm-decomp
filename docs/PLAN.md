@@ -158,12 +158,17 @@ The entire SNES directory is 6,075 lines, shared by native execution and oracle;
 a new renderer alone does not let us delete the old one. An external oracle must
 support instruction/PC hooks, state access, patches and snapshot comparisons.
 External dependency code and all maintained adapters must be disclosed. Preserve
-shader behavior; do not resume or bypass the administrator-blocked GL test.
+shader behavior. The user explicitly confirmed the existing DLL workflow is
+permitted (2026-10-21). Ordinary compiled DLL component tests with embedded-source
+checks may run through ctypes. Keep denied executable/build-script attempts
+recorded as failures; do not change Defender settings or disguise those attempts
+as passes. The new shader/presenter DLL comparisons below use this permitted path.
 Native audio already includes an SM sequencer and DSP, so ordinary audio playback
 libraries cannot replace its 2,507 lines of sound behavior. The broader ordered
 tile-contact scope is only 2,617 gross lines and has live callback effects; no
 multi-thousand-line gameplay saving is established. Bank retirement should follow
-actual responsibility replacement. Current committed total remains 103,313.
+actual responsibility replacement. The complete shader/presenter replacement
+below brings maintained source to 102,725 lines; no bank is retired by it.
 The reconstructed alias, constant-group and native C-string cohorts are adopted
 under item 3, excluding the entire shader file while its unrelated draft is
 present. Their old interrupted prices are not additional savings. The distinct
@@ -214,7 +219,12 @@ Native C-string literals remove **92 more lines**, reaching **103,407**, with
 exact byte/type/lifetime checks, source correspondence and release build.
 Sharing constant-group headers removes **94 more lines**, reaching **103,313**,
 with exact declaration/value/type checks, source correspondence and release build.
-Another **3,314 lines** are needed to reach 99,999;
+Owned shader passes, parameters and textures plus shared presentation setup remove
+**588 more lines**, reaching **102,725**, including all support types and callers.
+Normal release library/frontend build and 528 shader/336 presenter DLL comparisons
+pass. The existing 83-line shader draft is incorporated: the additional working-tree
+reduction is 505 lines. Actual GPU pixels are untested; no gameplay changes occur.
+Another **2,726 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -842,8 +852,28 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **3,314-line** gap; parked small drafts are not
+   replacement yet funds the **2,726-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Complete shader/presentation ownership removes **588 lines
+   (103,313 -> 102,725)**, 4,877 tokens and 15,722 spelling bytes across three
+   files. Owned vectors replace pass/parameter/LUT allocation and linked lists;
+   shared stage compilation, uniform groups and scale operations replace repeated
+   code. All callers and obsolete shared-type removal count. No dependency or
+   gameplay change. The 83-line working shader draft is preserved in a durable
+   backup and incorporated through the same Option-based parser behavior; the
+   additional reduction from that working tree is 505 lines.
+   Final normal library/frontend release build, changed-file formatting and
+   progress pass. Source-checked ordinary DLL comparisons pass **528 shader +
+   336 presenter cases**, matching 1,522,996 ordered events: committed/draft
+   shader baselines, twelve-frame history, parser and compiler failures, actual
+   presenter callbacks, resize/reuse, filtering and viewport policies. Ten test
+   sources and 78 embedded library sources match the compiled bytes; all 82
+   production files count. Independent source review passes. Controlled GL/SDL
+   callbacks establish call equivalence, not real GPU pixels; allocation
+   exhaustion is untested. Headless gameplay movies do not exercise this code.
+   Durable candidate/checks: Local/sm-decomp-experiments/20261021/native-shader.
+   Shader-library incompatibility findings are in REDUCTION_RESEARCH.md.
 
    Sharing constant-group headers removes **94 lines (103,407 -> 103,313)**,
    564 tokens and 2,162 spelling bytes, with no support additions. Forty-seven
@@ -1584,10 +1614,12 @@ store groups, the unaligned RAM repair, shared beam windows, native tracing,
 nonnull callback tables, Samus pose sequences, the packed-sprite repair,
 shared gameplay imports, enemy callback ownership, native inflater, compound
 RAM updates, shared RAM/record metadata, alias declarations, native C-string
-literals and shared constant headers, maintained Rust is **103,313**, leaving **3,314** to
+literals, shared constant headers and native shader/presentation ownership,
+maintained Rust is **102,725**, leaving **2,726** to
 reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3330; cast lines 7870. RAM/record metadata remove 452/271 lines
+unsafe functions 3325; cast lines 7786. Shader/presentation ownership removes
+five unsafe declarations and 84 cast-containing lines. RAM/record metadata remove 452/271 lines
 without changing any other counter. Alias, C-string and constant grouping remove
 202, 92 and 94 lines respectively without changing the other counters.
 Compound updates remove 370 lines and
@@ -1601,9 +1633,9 @@ removing 84 lines. The sprite alignment repair adds five lines, 38 tokens and
 234 token-spelling bytes for defined packed-record reads/writes. Shared imports
 remove 381 lines without changing the unsafe/cast counters. Tracing adds three unsafe helper
 declarations for the caller-owned output buffer and removes 92 cast-containing
-lines. Its complete implementation still removes 144 lines. The unrelated
-83-line shader draft
-remains excluded; working-tree counts are not the committed baseline.
+lines. Its complete implementation still removes 144 lines. The former
+83-line shader draft is now incorporated in the complete shader replacement,
+whose 588-line committed reduction includes those 83 lines once.
 Item 2's function/compound-body variant audits are complete for their stated
 scope. The remaining gap has no established replacement budget. The current
 hopping and local-initialization drafts remain parked; repeating completed scans or adding

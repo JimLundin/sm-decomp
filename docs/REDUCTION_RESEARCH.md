@@ -56,7 +56,12 @@ alias and C-string changes and all original body rows; final release passes.
 These three current rules remove **388 lines**, **1,870 tokens** and **7,551
 spelling bytes** from the actual 103,701-line input. Durable final source/checks:
 Local/sm-decomp-experiments/20261021/constant-groups/after-alias-strings-constants-v2.
-Maintained Rust needs another **3,314 lines removed** to reach 99,999. A separate
+Native shader/presentation ownership removes **588 more lines**, reaching
+**102,725**, with 4,877 fewer tokens and 15,722 fewer spelling bytes. Complete
+normal release library/frontend build and 528 shader/336 presenter DLL
+comparisons pass. This incorporates the former 83-line shader draft; the
+additional reduction beyond that working draft is 505 lines.
+Maintained Rust needs another **2,726 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -77,6 +82,52 @@ neither reduces source volume in the tested scopes. Its default mode does
 preserve packed byte accesses despite physically larger Rust structs. Corrode's
 specific packing omission is repairable; layout differences alone are not a
 correctness verdict. The independent-transpiler sections record these tests.
+
+## Complete shader/presentation replacement (2026-10-21)
+
+The complete replacement on `498c8a4d` removes **588 lines** across shader
+loading/rendering (1,389 -> 952), presentation (331 -> 230) and shared types
+(1,004 -> 954). All 82 production Rust files count. No dependencies are added;
+PNG/inflater behavior and GL loading remain unchanged. Owned passes, parameters
+and LUT records replace linked lists and allocation bookkeeping. Stage
+compilation, uniform lookup/binding and scaling share named operations.
+
+Normal optimized library/frontend builds and independent source review pass.
+Ordinary source-checked DLL tests compare actual implementations: **528 shader
+cases** against committed and working-draft baselines, plus **336 presenter
+cases**, matching **1,522,996 ordered events**. Twelve-frame sequences exercise
+history and resizing; cases cover presets, includes, raw byte names, NaNs,
+numeric prefixes, duplicate parameters/textures, compile/link failures, actual
+renderer callbacks, filtering/aspect flags and allocation reuse. Existing
+20-pass parameter panics, history-depth overwrite and viewport quirks remain.
+The user explicitly confirmed this ordinary DLL/ctypes workflow is permitted.
+No Defender configuration changes or denied executable results are counted.
+Controlled GL/SDL calls are tested; real GPU pixels and allocation exhaustion
+are untested. No headless gameplay replay is claimed for frontend-only code.
+Durable sources, full metrics and checks:
+`Local/sm-decomp-experiments/20261021/native-shader`.
+
+The dependency alternative was investigated first. No inspected pipeline is a
+compatible drop-in for the existing GLSL/glslp contract:
+
+- **librashader 0.12.1**, pinned at `07ac790c`, implements a complete Slang
+  pipeline. Its [stage preprocessor](https://github.com/SnowflakePowered/librashader/blob/07ac790cdb9826f37cf8e1daf5011f03e3c4daa7/librashader-preprocess/src/stage.rs)
+  uses `#pragma stage`; its [compiler input](https://github.com/SnowflakePowered/librashader/blob/07ac790cdb9826f37cf8e1daf5011f03e3c4daa7/librashader-reflect/src/front/glslang.rs)
+  uses Vulkan GLSL/SPIR-V. OpenGL is an output backend. The
+  `parse_legacy_glsl` feature concerns preset metadata and does not supply the
+  existing `VERTEX`/`FRAGMENT` shader input contract.
+- **RetroArch**, pinned at `3f90f6d`, has the correct dialect in
+  [shader_glsl.c](https://github.com/libretro/RetroArch/blob/3f90f6dc56cee2f64e92f489c5c4f4d6c935be44/gfx/drivers_shader/shader_glsl.c),
+  but rendering/history ownership also resides in frontend
+  [gl2.c](https://github.com/libretro/RetroArch/blob/3f90f6dc56cee2f64e92f489c5c4f4d6c935be44/gfx/drivers/gl2.c).
+  Extracting it adds maintained adapters and GPLv3-or-later implementation;
+  it is not a standalone library substitution for this MIT project.
+- **libplacebo's** [custom shader API](https://github.com/haasn/libplacebo/blob/master/src/include/libplacebo/shaders/custom.h)
+  parses mpv shader hooks, another contract.
+
+These are primary-source compatibility findings, not executed upstream shader
+comparisons or dependency savings. The native replacement's saving is measured
+separately and does not assume shader conversion is free.
 
 ## A directly relevant successful migration
 

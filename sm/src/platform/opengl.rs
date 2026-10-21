@@ -1,102 +1,64 @@
-use crate::c_library::{fprintf, free, malloc, printf, stderr};
+use crate::c_library::{free, malloc, printf};
 use crate::config::g_config;
 use crate::game_state::Game;
 use crate::host::Die;
-use crate::platform::glsl_shader::{GlslShader_CreateFromFile, GlslShader_Render};
-use crate::sdl_constants;
-pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data, SDL_Window};
-pub use crate::types::{
-    _IO_lock_t, __off64_t, __off_t, ptrdiff_t, size_t, GLbitfield, GLboolean, GLchar, GLenum,
-    GLfloat, GLint, GLsizei, GLsizeiptr, GLuint, SDL_GLContext, _IO_FILE, FILE, GLDEBUGPROC,
+use crate::platform::glsl_shader::{GlslShader, GlslShader_CreateFromFile, GlslShader_Render};
+use crate::types::{GlTextureWithSize, RendererFuncs, SDL_GLContext, SDL_Window};
+use sdl2_sys::SDL_GLattr::{
+    SDL_GL_CONTEXT_MAJOR_VERSION, SDL_GL_CONTEXT_MINOR_VERSION, SDL_GL_CONTEXT_PROFILE_MASK,
 };
-use ::core::ffi::{c_char, c_float, c_void};
-use ::core::mem::size_of;
-use ::core::ptr::{null, null_mut};
-pub use sdl2_sys::{
+use sdl2_sys::{
     SDL_GL_CreateContext, SDL_GL_GetDrawableSize, SDL_GL_SetAttribute, SDL_GL_SetSwapInterval,
-    SDL_GL_SwapWindow, SDL_GLattr, SDL_GameController, SDL_Renderer, SDL_SysWMmsg, SDL_Texture,
-    SDL_mutex,
+    SDL_GL_SwapWindow,
 };
-sdl_constants! {
-    SDL_GLattr: SDL_GLattr;
-    SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_MINOR_VERSION, SDL_GL_CONTEXT_MAJOR_VERSION,
+use std::ffi::{c_void, CStr};
+use std::ptr::{null, null_mut};
+
+struct Presenter {
+    window: *mut SDL_Window,
+    pixels: *mut u8,
+    capacity: usize,
+    width: i32,
+    height: i32,
+    program: u32,
+    vao: u32,
+    texture: GlTextureWithSize,
+    shader: *mut GlslShader,
 }
-pub type C2RustUnnamed = u32;
-sdl_constants! {
-    SDL_GLprofile as C2RustUnnamed;
-    SDL_GL_CONTEXT_PROFILE_CORE,
-}
-pub use crate::types::{
-    Config, GlTextureWithSize, GlslParam, GlslPass, GlslShader, GlslTexture, GlslTextureUniform,
-    GlslUniforms, RendererFuncs,
-};
-pub const true_0: i32 = 1;
-pub const GL_TEXTURE_2D: i32 = gl::TEXTURE_2D as i32;
-pub const GL_DEBUG_OUTPUT: i32 = gl::DEBUG_OUTPUT as i32;
-pub const GL_DEBUG_OUTPUT_SYNCHRONOUS: i32 = gl::DEBUG_OUTPUT_SYNCHRONOUS as i32;
-pub const GL_DEBUG_TYPE_ERROR: i32 = gl::DEBUG_TYPE_ERROR as i32;
-pub const GL_DEBUG_TYPE_OTHER: i32 = gl::DEBUG_TYPE_OTHER as i32;
-pub const GL_COLOR_BUFFER_BIT: i32 = gl::COLOR_BUFFER_BIT as i32;
-pub const GL_FALSE: i32 = gl::FALSE as i32;
-pub const GL_FLOAT: i32 = gl::FLOAT as i32;
-pub const GL_LINEAR: i32 = gl::LINEAR as i32;
-pub const GL_NEAREST: i32 = gl::NEAREST as i32;
-pub const GL_RGBA: i32 = gl::RGBA as i32;
-pub const GL_TEXTURE_MAG_FILTER: i32 = gl::TEXTURE_MAG_FILTER as i32;
-pub const GL_TEXTURE_MIN_FILTER: i32 = gl::TEXTURE_MIN_FILTER as i32;
-pub const GL_TRIANGLE_STRIP: i32 = gl::TRIANGLE_STRIP as i32;
-pub const GL_BGRA: i32 = gl::BGRA as i32;
-pub const GL_UNSIGNED_INT_8_8_8_8_REV: i32 = gl::UNSIGNED_INT_8_8_8_8_REV as i32;
-pub const GL_ARRAY_BUFFER: i32 = gl::ARRAY_BUFFER as i32;
-pub const GL_STATIC_DRAW: i32 = gl::STATIC_DRAW as i32;
-pub const GL_COMPILE_STATUS: i32 = gl::COMPILE_STATUS as i32;
-pub const GL_FRAGMENT_SHADER: i32 = gl::FRAGMENT_SHADER as i32;
-pub const GL_LINK_STATUS: i32 = gl::LINK_STATUS as i32;
-pub const GL_VERTEX_SHADER: i32 = gl::VERTEX_SHADER as i32;
-pub const kDebugFlag: i32 = 0;
-static mut g_window: *mut SDL_Window = null::<SDL_Window>() as *mut SDL_Window;
-static mut g_screen_buffer: *mut u8 = null::<u8>() as *mut u8;
-static mut g_screen_buffer_size: size_t = 0;
-static mut g_draw_width: i32 = 0;
-static mut g_draw_height: i32 = 0;
-static mut g_program: u32 = 0;
-static mut g_VAO: u32 = 0;
-static mut g_texture: GlTextureWithSize = GlTextureWithSize {
-    gl_texture: 0,
+
+static mut PRESENTER: Presenter = Presenter {
+    window: null_mut(),
+    pixels: null_mut(),
+    capacity: 0,
     width: 0,
     height: 0,
+    program: 0,
+    vao: 0,
+    texture: GlTextureWithSize {
+        gl_texture: 0,
+        width: 0,
+        height: 0,
+    },
+    shader: null_mut(),
 };
-static mut g_glsl_shader: *mut GlslShader = null::<GlslShader>() as *mut GlslShader;
-unsafe extern "C" fn MessageCallback(
-    source: GLenum,
-    type_0: GLenum,
-    id: GLuint,
-    severity: GLenum,
-    length: GLsizei,
-    message: *const GLchar,
-    userParam: *const c_void,
-) {
-    if type_0 == GL_DEBUG_TYPE_OTHER as GLenum {
-        return;
+
+unsafe fn compile_display_shader(stage: u32, source: &CStr) -> u32 {
+    let shader = gl::CreateShader(stage);
+    gl::ShaderSource(shader, 1, &source.as_ptr(), null());
+    gl::CompileShader(shader);
+    let mut status = 0;
+    gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut status);
+    if status == 0 {
+        let mut log = [0; 512];
+        gl::GetShaderInfoLog(shader, 512, null_mut(), log.as_mut_ptr());
+        printf(c"%s\n".as_ptr(), log.as_ptr());
     }
-    fprintf(
-        stderr,
-        c"GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n".as_ptr(),
-        if type_0 == GL_DEBUG_TYPE_ERROR as GLenum {
-            c"** GL ERROR **".as_ptr()
-        } else {
-            c"".as_ptr()
-        },
-        type_0,
-        severity,
-        message,
-    );
-    if type_0 == GL_DEBUG_TYPE_ERROR as GLenum {
-        Die(c"OpenGL error!\n".as_ptr());
-    }
+    shader
 }
+
 unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
-    g_window = window;
+    let state = &mut *(&raw mut PRESENTER);
+    state.window = window;
     let context: SDL_GLContext = SDL_GL_CreateContext(window);
     SDL_GL_SetSwapInterval(1);
     gl::load_with(|name| {
@@ -110,107 +72,63 @@ unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool 
     if (gl_major, gl_minor) < (3, 3) {
         Die(c"You need OpenGL 3.3".as_ptr());
     }
-    gl::GenTextures(1 as GLsizei, &raw mut g_texture.gl_texture);
-    static mut kVertices: [c_float; 20] = [
-        -1.0f32, 1.0f32, 0.0f32, 0.0f32, 0.0f32, -1.0f32, -1.0f32, 0.0f32, 0.0f32, 1.0f32, 1.0f32,
-        1.0f32, 0.0f32, 1.0f32, 0.0f32, 1.0f32, -1.0f32, 0.0f32, 1.0f32, 1.0f32,
+    gl::GenTextures(1, &mut state.texture.gl_texture);
+    const VERTICES: [f32; 20] = [
+        -1.0, 1.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, -1.0,
+        0.0, 1.0, 1.0,
     ];
-    let mut vbo: u32 = 0;
-    gl::GenBuffers(1 as GLsizei, &raw mut vbo);
-    gl::GenVertexArrays(1 as GLsizei, &raw mut g_VAO);
-    gl::BindVertexArray(g_VAO as GLuint);
-    gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, vbo as GLuint);
+    let mut vbo = 0;
+    gl::GenBuffers(1, &mut vbo);
+    gl::GenVertexArrays(1, &mut state.vao);
+    gl::BindVertexArray(state.vao);
+    gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
     gl::BufferData(
-        GL_ARRAY_BUFFER as GLenum,
-        size_of::<[c_float; 20]>() as GLsizeiptr,
-        &raw const kVertices as *const c_float as *const c_void,
-        GL_STATIC_DRAW as GLenum,
+        gl::ARRAY_BUFFER,
+        std::mem::size_of_val(&VERTICES) as isize,
+        VERTICES.as_ptr().cast(),
+        gl::STATIC_DRAW,
     );
     gl::VertexAttribPointer(
-        0 as GLuint,
-        3 as GLint,
-        GL_FLOAT as GLenum,
-        GL_FALSE as GLboolean,
-        5_usize.wrapping_mul(size_of::<c_float>() as usize) as GLsizei,
-        null::<c_void>(),
+        0,
+        3,
+        gl::FLOAT,
+        gl::FALSE,
+        5 * std::mem::size_of::<f32>() as i32,
+        null(),
     );
-    gl::EnableVertexAttribArray(0 as GLuint);
+    gl::EnableVertexAttribArray(0);
     gl::VertexAttribPointer(
-        1 as GLuint,
-        2 as GLint,
-        GL_FLOAT as GLenum,
-        GL_FALSE as GLboolean,
-        5_usize.wrapping_mul(size_of::<c_float>() as usize) as GLsizei,
-        3_usize.wrapping_mul(size_of::<c_float>() as usize) as *mut c_void,
+        1,
+        2,
+        gl::FLOAT,
+        gl::FALSE,
+        5 * std::mem::size_of::<f32>() as i32,
+        (3 * std::mem::size_of::<f32>()) as *const c_void,
     );
-    gl::EnableVertexAttribArray(1 as GLuint);
-    let mut vs_code = b"#version 330 core\nlayout(location = 0) in vec3 aPos; layout(location = 1) in vec2 aTexCoord; out vec2 TexCoord; void main(void) { gl_Position = vec4(aPos, 1.0); TexCoord = vec2(aTexCoord.x, aTexCoord.y); }\0"
-        as *const u8 as *const GLchar;
-    let vs: u32 = gl::CreateShader(GL_VERTEX_SHADER as GLenum) as u32;
-    gl::ShaderSource(
-        vs as GLuint,
-        1 as GLsizei,
-        &raw mut vs_code,
-        null::<GLint>(),
-    );
-    gl::CompileShader(vs as GLuint);
-    let mut success: i32 = 0;
-    let mut infolog: [c_char; 512] = [0; 512];
-    gl::GetShaderiv(vs as GLuint, GL_COMPILE_STATUS as GLenum, &raw mut success);
-    if success == 0 {
-        gl::GetShaderInfoLog(
-            vs as GLuint,
-            512 as GLsizei,
-            null_mut::<GLsizei>(),
-            &raw mut infolog as *mut GLchar,
-        );
-        printf(c"%s\n".as_ptr(), &raw mut infolog as *mut c_char);
-    }
-    let mut fs_code = b"#version 330 core\nout vec4 FragColor; in vec2 TexCoord; uniform sampler2D texture1; void main(void) { FragColor = texture(texture1, TexCoord); }\0"
-        as *const u8 as *const GLchar;
-    let fs: u32 = gl::CreateShader(GL_FRAGMENT_SHADER as GLenum) as u32;
-    gl::ShaderSource(
-        fs as GLuint,
-        1 as GLsizei,
-        &raw mut fs_code,
-        null::<GLint>(),
-    );
-    gl::CompileShader(fs as GLuint);
-    gl::GetShaderiv(fs as GLuint, GL_COMPILE_STATUS as GLenum, &raw mut success);
-    if success == 0 {
-        gl::GetShaderInfoLog(
-            fs as GLuint,
-            512 as GLsizei,
-            null_mut::<GLsizei>(),
-            &raw mut infolog as *mut GLchar,
-        );
-        printf(c"%s\n".as_ptr(), &raw mut infolog as *mut c_char);
-    }
-    g_program = gl::CreateProgram() as u32;
-    let program: i32 = g_program as i32;
-    gl::AttachShader(program as GLuint, vs as GLuint);
-    gl::AttachShader(program as GLuint, fs as GLuint);
-    gl::LinkProgram(program as GLuint);
-    gl::GetProgramiv(
-        program as GLuint,
-        GL_LINK_STATUS as GLenum,
-        &raw mut success,
-    );
-    if success == 0 {
-        gl::GetProgramInfoLog(
-            program as GLuint,
-            512 as GLsizei,
-            null_mut::<GLsizei>(),
-            &raw mut infolog as *mut GLchar,
-        );
-        printf(c"%s\n".as_ptr(), &raw mut infolog as *mut c_char);
+    gl::EnableVertexAttribArray(1);
+    let vertex = compile_display_shader(gl::VERTEX_SHADER,
+        c"#version 330 core\nlayout(location = 0) in vec3 aPos; layout(location = 1) in vec2 aTexCoord; out vec2 TexCoord; void main(void) { gl_Position = vec4(aPos, 1.0); TexCoord = vec2(aTexCoord.x, aTexCoord.y); }");
+    let fragment = compile_display_shader(gl::FRAGMENT_SHADER,
+        c"#version 330 core\nout vec4 FragColor; in vec2 TexCoord; uniform sampler2D texture1; void main(void) { FragColor = texture(texture1, TexCoord); }");
+    state.program = gl::CreateProgram();
+    gl::AttachShader(state.program, vertex);
+    gl::AttachShader(state.program, fragment);
+    gl::LinkProgram(state.program);
+    let mut status = 0;
+    gl::GetProgramiv(state.program, gl::LINK_STATUS, &mut status);
+    if status == 0 {
+        let mut log = [0; 512];
+        gl::GetProgramInfoLog(state.program, 512, null_mut(), log.as_mut_ptr());
+        printf(c"%s\n".as_ptr(), log.as_ptr());
     }
     if !g_config.shader.is_null() {
-        g_glsl_shader = GlslShader_CreateFromFile(g_config.shader);
+        state.shader = GlslShader_CreateFromFile(g_config.shader);
     }
-    true_0 != 0
+    true
 }
+
 unsafe fn OpenGLRenderer_Destroy(game: &mut Game) {}
+
 unsafe fn OpenGLRenderer_BeginDraw(
     width: i32,
     height: i32,
@@ -218,114 +136,95 @@ unsafe fn OpenGLRenderer_BeginDraw(
     pitch: *mut i32,
     game: &mut Game,
 ) {
-    let size: i32 = width * height;
-    if size as size_t > g_screen_buffer_size {
-        g_screen_buffer_size = size as size_t;
-        free(g_screen_buffer as *mut c_void);
-        g_screen_buffer = malloc((size * 4) as size_t) as *mut u8;
+    let state = &mut *(&raw mut PRESENTER);
+    let size = width * height;
+    if size as usize > state.capacity {
+        state.capacity = size as usize;
+        free(state.pixels.cast());
+        state.pixels = malloc((size * 4) as usize).cast();
     }
-    g_draw_width = width;
-    g_draw_height = height;
-    *pixels = g_screen_buffer;
+    state.width = width;
+    state.height = height;
+    *pixels = state.pixels;
     *pitch = width * 4;
 }
+
 unsafe fn OpenGLRenderer_EndDraw(game: &mut Game) {
-    let mut drawable_width: i32 = 0;
-    let mut drawable_height: i32 = 0;
-    SDL_GL_GetDrawableSize(g_window, &raw mut drawable_width, &raw mut drawable_height);
-    let mut viewport_width: i32 = drawable_width;
-    let mut viewport_height: i32 = drawable_height;
+    let state = &mut *(&raw mut PRESENTER);
+    let mut drawable_width = 0;
+    let mut drawable_height = 0;
+    SDL_GL_GetDrawableSize(state.window, &mut drawable_width, &mut drawable_height);
+    let mut width = drawable_width;
+    let mut height = drawable_height;
     if !g_config.ignore_aspect_ratio {
-        if viewport_width * g_draw_height < viewport_height * g_draw_width {
-            viewport_height = viewport_width * g_draw_height / g_draw_width;
+        if width * state.height < height * state.width {
+            height = width * state.height / state.width;
         } else {
-            viewport_width = viewport_height * g_draw_width / g_draw_height;
+            width = height * state.width / state.height;
         }
     }
-    let viewport_x: i32 = drawable_width - viewport_width >> 1;
-    let viewport_y: i32 = viewport_height - viewport_height >> 1;
-    gl::BindTexture(GL_TEXTURE_2D as GLenum, g_texture.gl_texture as GLuint);
-    if g_draw_width == g_texture.width as i32 && g_draw_height == g_texture.height as i32 {
+    let x = (drawable_width - width) >> 1;
+    // Preserve the current top-aligned viewport, including its zero-Y formula.
+    let y = (height - height) >> 1;
+    gl::BindTexture(gl::TEXTURE_2D, state.texture.gl_texture);
+    if state.width == state.texture.width as i32 && state.height == state.texture.height as i32 {
         gl::TexSubImage2D(
-            GL_TEXTURE_2D as GLenum,
-            0 as GLint,
-            0 as GLint,
-            0 as GLint,
-            g_draw_width as GLsizei,
-            g_draw_height as GLsizei,
-            GL_BGRA as GLenum,
-            GL_UNSIGNED_INT_8_8_8_8_REV as GLenum,
-            g_screen_buffer as *const c_void,
+            gl::TEXTURE_2D,
+            0,
+            0,
+            0,
+            state.width,
+            state.height,
+            gl::BGRA,
+            gl::UNSIGNED_INT_8_8_8_8_REV,
+            state.pixels.cast(),
         );
     } else {
-        g_texture.width = g_draw_width as u16;
-        g_texture.height = g_draw_height as u16;
+        state.texture.width = state.width as u16;
+        state.texture.height = state.height as u16;
         gl::TexImage2D(
-            GL_TEXTURE_2D as GLenum,
-            0 as GLint,
-            GL_RGBA,
-            g_draw_width as GLsizei,
-            g_draw_height as GLsizei,
-            0 as GLint,
-            GL_BGRA as GLenum,
-            GL_UNSIGNED_INT_8_8_8_8_REV as GLenum,
-            g_screen_buffer as *const c_void,
+            gl::TEXTURE_2D,
+            0,
+            gl::RGBA as i32,
+            state.width,
+            state.height,
+            0,
+            gl::BGRA,
+            gl::UNSIGNED_INT_8_8_8_8_REV,
+            state.pixels.cast(),
         );
     }
-    gl::ClearColor(0.0f32, 0.0f32, 0.0f32, 1.0f32);
-    gl::Clear(GL_COLOR_BUFFER_BIT as GLbitfield);
-    if g_glsl_shader.is_null() {
-        gl::Viewport(
-            viewport_x as GLint,
-            viewport_y as GLint,
-            viewport_width as GLsizei,
-            viewport_height as GLsizei,
-        );
-        gl::UseProgram(g_program as GLuint);
-        let filter: i32 = if g_config.linear_filtering as i32 != 0 {
-            GL_LINEAR
+    gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+    gl::Clear(gl::COLOR_BUFFER_BIT);
+    if state.shader.is_null() {
+        gl::Viewport(x, y, width, height);
+        gl::UseProgram(state.program);
+        let filter = if g_config.linear_filtering {
+            gl::LINEAR
         } else {
-            GL_NEAREST
+            gl::NEAREST
         };
-        gl::TexParameteri(
-            GL_TEXTURE_2D as GLenum,
-            GL_TEXTURE_MIN_FILTER as GLenum,
-            filter as GLint,
-        );
-        gl::TexParameteri(
-            GL_TEXTURE_2D as GLenum,
-            GL_TEXTURE_MAG_FILTER as GLenum,
-            filter as GLint,
-        );
-        gl::BindVertexArray(g_VAO as GLuint);
-        gl::DrawArrays(GL_TRIANGLE_STRIP as GLenum, 0 as GLint, 4 as GLsizei);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, filter as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, filter as i32);
+        gl::BindVertexArray(state.vao);
+        gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
     } else {
-        GlslShader_Render(
-            g_glsl_shader,
-            &raw mut g_texture,
-            viewport_x,
-            viewport_y,
-            viewport_width,
-            viewport_height,
-        );
+        GlslShader_Render(state.shader, &mut state.texture, x, y, width, height);
     }
-    SDL_GL_SwapWindow(g_window);
+    SDL_GL_SwapWindow(state.window);
 }
-static mut kOpenGLRendererFuncs: RendererFuncs = RendererFuncs {
-    Initialize: Some(OpenGLRenderer_Init as unsafe fn(*mut SDL_Window, &mut Game) -> bool),
-    Destroy: Some(OpenGLRenderer_Destroy as unsafe fn(&mut Game) -> ()),
-    BeginDraw: Some(
-        OpenGLRenderer_BeginDraw as unsafe fn(i32, i32, *mut *mut u8, *mut i32, &mut Game) -> (),
-    ),
-    EndDraw: Some(OpenGLRenderer_EndDraw as unsafe fn(&mut Game) -> ()),
-};
+
 pub unsafe fn OpenGLRenderer_Create(funcs: *mut RendererFuncs) {
     SDL_GL_SetAttribute(
         SDL_GL_CONTEXT_PROFILE_MASK,
-        SDL_GL_CONTEXT_PROFILE_CORE as i32,
+        sdl2_sys::SDL_GLprofile::SDL_GL_CONTEXT_PROFILE_CORE as i32,
     );
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    *funcs = kOpenGLRendererFuncs;
+    *funcs = RendererFuncs {
+        Initialize: Some(OpenGLRenderer_Init),
+        Destroy: Some(OpenGLRenderer_Destroy),
+        BeginDraw: Some(OpenGLRenderer_BeginDraw),
+        EndDraw: Some(OpenGLRenderer_EndDraw),
+    };
 }
-pub const NULL: *mut c_void = null_mut::<c_void>();
