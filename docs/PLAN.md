@@ -1562,6 +1562,25 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the renewed larger-scope direction. The draft is formatted, uncompiled and
    unexecuted; no behavior, movie-coverage or adopted saving is claimed.
    Source and complete price: Local/sm-decomp-experiments/20261021/special-attacks.
+   Retiring the parallel safe-word accessor interface prices **97,313 -> 97,126
+   (-187)**. Two shared methods use existing RAM-map addresses and replace all
+   235 field-specific methods without new macros. Their 764 real call sites
+   across 16 changed files absorb 237 of the 424 declaration lines removed.
+   Park this formatted, uncompiled and unexecuted draft as another small return;
+   no maintained source change or compatibility/runtime claim. Durable draft:
+   Local/sm-decomp-experiments/20261021/safe-ram-interface.
+   Broadening DMA to the existing LakeSnes bus/scheduler does not establish a
+   drop-in: current synchronous DMA, unconditional Vblank NMI, unchanged open bus,
+   direct joypad reads and native audio routing differ. No combined price or
+   runtime claim is established. The independently published Zelda hardware fork
+   and its early fast-renderer revisions also differ in layout, sprite storage,
+   rendering width and Mode7 priority. Downloaded hardware-only inputs:
+   Local/sm-decomp-experiments/20261021/zelda-hardware-dependency.
+   The next larger comparison is the complete native music/SFX sequencer and its
+   real consumers. Reusing SPC execution is unpriced: native updates are atomic
+   at 64-sample boundaries, while the physical APU interleaves opcode/DSP work;
+   initialization, uploaded-code dependence and full native/RAM save state must
+   also match. A simple backend switch proves no replacement or saving.
    Continue selecting larger complete responsibilities and repeated algorithms;
    the 90,000-line stretch checkpoint still has no demonstrated remaining budget.
    Durable experiments: Local/sm-decomp-experiments/20261021/complete-backend.
