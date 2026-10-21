@@ -23,7 +23,9 @@ The shared gameplay prelude removes **381 more lines**, reaching **105,309**;
 complete expanded-operation and resolved-binding checks pass.
 Shared enemy callback ownership then removes **350 lines**, reaching **104,959**,
 with complete builds, static/dispatch comparisons and both full boot replays.
-Maintained Rust needs another **4,960 lines removed** to reach 99,999. A separate
+Native inflater ownership then removes **165 lines**, reaching **104,794**,
+with complete builds, 8,936 inflater cases and 3,080 PNG API comparisons passing.
+Maintained Rust needs another **4,795 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -1770,7 +1772,8 @@ exact outputs and ordered allocator events, including 1,320 injected failure
 cases. Undefined malformed inputs, huge allocations and zero-capacity growth
 are outside this bounded coverage. Complete library/frontend builds and source
 ownership/data checks pass. Its separate current-source price is 165 lines;
-that candidate remains unadopted and is not added to the historical saving.
+it is subsequently adopted as recorded below, without adding that price to
+the historical saving.
 Report: `TEMP/sm-native-inflater-20261021/REPORT.md`.
 
 The DSP replacement covers complete per-sample mixing, echo/FIR, voice,
@@ -1827,7 +1830,7 @@ The frozen phase28 composition is **162,136 -> 104,742 (-57,394)**, removing
 601,593 tokens and 1,646,891 spelling bytes. It remains **4,743 lines** above
 99,999. All 71 Rust files and ten Cargo lines count; local experiment Python
 is 24,212 lines in 322 files, disclosed separately. Parent independently
-recounted the complete roots. Maintained main remains 104,959. These stages
+recounted the complete roots. Main was 104,959 at this checkpoint. These stages
 establish neither a playable historical build nor a whole-game replay result.
 Checkpoint: `TEMP/sm-tailored-next/integration/phase28/REPORT.md`.
 
@@ -2232,6 +2235,23 @@ because Torizo's unchanged two-cast expression wraps onto separate lines.
 Unsafe-function declaration lines fall through grouping, without changing
 expanded unsafe signatures. The remaining target gap is 4,960 lines; this result
 does not fund it. Source, patch and exact checks: `TEMP/sm-enemy-callback-current`.
+
+The complete native inflater is subsequently adopted: **104,959 -> 104,794
+(-165 lines)**, with 2,066 fewer tokens and 4,638 fewer code-text bytes. All
+four owners, lookup tables and C allocation boundaries count. The final module
+and unchanged PNG caller match the frozen current test inputs exactly;
+independent review and all checked source/binary/fixture hashes pass. Validation
+reuses 8,936 C/old/new inflater cases and 3,080 old/new full PNG API comparisons,
+then checks formatting and fresh complete optimized/frontend and normal Cargo
+release builds. The initial link failure was an incorrect local SDL SDK path;
+using its existing nested directory resolves it. No gameplay replay is needed
+for this frontend-only change. Undefined malformed behavior, huge allocations,
+zero-capacity growth and cross-platform execution remain outside coverage.
+The unrelated shader draft remains unchanged; working count 104,711 excludes
+no maintained files but includes that separate 83-line reduction. The committed
+gap is **4,795 lines**. This adoption adds no historical-pipeline saving.
+Reports: `TEMP/sm-native-inflater-20261021/REPORT.md` and final build logs in
+`TEMP/sm-inflater-adoption-20261021`.
 
 Three further complete current-source experiments use the same committed
 **105,769-line** control. Their independent prices are not additive:

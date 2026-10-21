@@ -131,8 +131,9 @@ TEMP sm-tailored-next/integration/phase26 freezes the composition. The bounded
 inflater checks exclude undefined malformed behavior, huge allocations and
 zero-capacity growth; DSP keeps its disjoint APU/DSP allocation contract and
 uses digests for persistent intermediate state. Neither stage adds a whole-game
-replay claim. Their separate current-source prices are 165 and 58 lines and
-remain unadopted; they are not added to the historical savings.
+replay claim. Their separate current-source prices are 165 and 58 lines. The
+inflater is subsequently adopted under item 3; DSP remains unadopted. Neither
+current price is added to the historical savings.
 Current-derived CPU implementation kernels then remove **169 lines**, reaching
 **105,143**. Tuple address returns and shared operation helpers replace the old
 out-pointer conventions while retaining historical hook/interrupt policies and
@@ -225,7 +226,10 @@ Shared gameplay import ownership removes another **381 lines**, reaching
 Shared enemy callback ownership removes **350 more lines**, reaching **104,959**,
 with complete builds, expanded bodies, full-u32 routing correspondence,
 381,250 dispatch component cases and both full boot replay routes passing.
-Another **4,960 lines** are needed to reach 99,999;
+The native inflater removes **165 more lines**, reaching **104,794**, with
+all allocation and caller costs counted. Complete release/frontend builds,
+8,936 inflater cases and 3,080 PNG API comparisons pass; the frontend-only
+change needs no game replay. Another **4,795 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -787,8 +791,22 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **4,960-line** gap; parked small drafts are not
+   replacement yet funds the **4,795-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Native inflater ownership removes **165 lines (104,959 -> 104,794)**,
+   2,066 tokens and 4,638 code-text bytes. Four private owners replace 18
+   translated functions, retaining EOF, reserved-code, overlap and C allocator
+   policies. Independent source review and frozen test-source/hash checks pass:
+   8,936 original-C/old/new inflater cases plus 3,080 full old/new PNG API
+   comparisons. Final source matches the tested module exactly. Formatting,
+   optimized library/frontend builds and normal Cargo release pass. The initial
+   release link needed the existing SDL SDK's actual nested directory; no source
+   workaround was needed. This frontend-only change requires no movie replay.
+   Malformed inputs with inherited undefined behavior, huge allocations and
+   zero-capacity growth remain outside coverage. The unrelated shader draft
+   is preserved and excluded from the count. TEMP sm-native-inflater-20261021
+   contains the checks; sm-inflater-adoption-20261021 holds final build logs.
 
    Enemy callback ownership removes **350 lines (105,309 -> 104,959)**,
    3,499 tokens and 29,375 code-text bytes. This resumes the existing 913-arm
@@ -1399,11 +1417,12 @@ flight, callback entry captures, opcode grids, blast windows, indexed loops and
 combined callback/dispatch declarations, terminal loops, selected field/RAM
 store groups, the unaligned RAM repair, shared beam windows, native tracing,
 nonnull callback tables, Samus pose sequences, the packed-sprite repair,
-shared gameplay imports and enemy callback ownership, maintained Rust is
-**104,959**, leaving **4,960** to
+shared gameplay imports, enemy callback ownership and native inflater, maintained Rust is
+**104,794**, leaving **4,795** to
 reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3342; cast lines 7966. Callback grouping removes 314 counted
+unsafe functions 3330; cast lines 7941. The inflater removes 12 unsafe-function
+declarations and 25 cast-containing lines. Callback grouping removes 314 counted
 unsafe declaration lines while preserving expanded signatures. Its unchanged
 Torizo two-cast expression wraps onto two lines, raising that counter by one.
 The pose owner adds three unsafe
