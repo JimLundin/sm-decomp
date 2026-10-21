@@ -1576,11 +1576,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    and its early fast-renderer revisions also differ in layout, sprite storage,
    rendering width and Mode7 priority. Downloaded hardware-only inputs:
    Local/sm-decomp-experiments/20261021/zelda-hardware-dependency.
-   The next larger comparison is the complete native music/SFX sequencer and its
-   real consumers. Reusing SPC execution is unpriced: native updates are atomic
-   at 64-sample boundaries, while the physical APU interleaves opcode/DSP work;
-   initialization, uploaded-code dependence and full native/RAM save state must
-   also match. A simple backend switch proves no replacement or saving.
+   The complete native music/SFX sequencer cannot directly reuse the uploaded
+   SPC driver. A source-checked DLL probe executes 32 actual native/interpreted
+   ticks from aligned entry state: all 269 ordered DSP writes and final DSP
+   states match, but mapped driver state and RAM differ. Changing one uploaded
+   instruction operand leaves native DSP writes/state and compared native fields
+   identical across another 32 ticks; interpreter writes first differ at tick
+   eight, and DSP state differs at tick 32. Native behavior is fixed in Rust;
+   executing uploaded instructions introduces a dependency it currently lacks.
+   Park this direct substitution before adapter pricing. No complete replacement
+   saving is established. A future interpreter adapter must preserve that fixed
+   behavior as well as native state, initialization and upload contracts; a
+   fallback retaining the complete native sequencer earns no deletion.
+   These are constructed single-tick comparisons, each seeded from native state,
+   with explicit idle/sound inputs and no DSP advancement. They do not validate
+   continuous execution, queue adaptation, PCM, physical upload/timing or full
+   snapshots. No movie ran. Probe and results:
+   Local/sm-decomp-experiments/20261021/native-sequencer-spc.
    Continue selecting larger complete responsibilities and repeated algorithms;
    the 90,000-line stretch checkpoint still has no demonstrated remaining budget.
    Durable experiments: Local/sm-decomp-experiments/20261021/complete-backend.
