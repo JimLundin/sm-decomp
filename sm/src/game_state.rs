@@ -8,7 +8,7 @@ use std::ffi::c_int;
 pub struct Game {
     pub g_ram: [u8; 131072],
     pub g_rom: *const u8,
-    loaded_rom: Option<LoadedRom>,
+    loaded_rom: Option<crate::rom::RomImage>,
     pub decompress_src: u32,
     pub eproj_spawn_rect: Rect16U,
     pub eproj_spawn_r22: u16,
@@ -57,13 +57,6 @@ pub struct Game {
     pub pc_bp: u32,
     pub g_debug_apu_cycles: bool,
 }
-// A registered allocation view. Cartridge reload/free are unsafe operations;
-// they must invalidate or replace this view before releasing its allocation.
-struct LoadedRom {
-    bytes: *const u8,
-    len: usize,
-}
-
 // Fixed word fields share one little-endian read/write definition. Indexed
 // fields and operations on other widths remain explicit methods below.
 macro_rules! ram_word_accessors {
@@ -502,23 +495,16 @@ impl Game {
         set_room_width_in_blocks: 0x7a5;
     }
 
-    /// Register the cartridge's ROM after a successful load.
-    ///
-    /// # Safety
-    /// `bytes` must identify `len` initialized bytes that remain allocated
-    /// until this view is replaced or the Game is discarded. Mutations must
-    /// be serialized with Game access; no concurrent writer may touch them.
-    pub(crate) unsafe fn register_rom(&mut self, bytes: *const u8, len: usize) {
-        assert!(!bytes.is_null());
-        self.loaded_rom = Some(LoadedRom { bytes, len });
+    /// Share the cartridge image without copying or borrowing its allocation.
+    pub(crate) fn register_rom(&mut self, image: crate::rom::RomImage) {
+        self.loaded_rom = Some(image);
     }
 
     /// Read a byte at a LoROM address plus a linear offset in the allocation.
     pub fn read_rom_byte(&self, address: u32, byte_offset: usize) -> u8 {
         let start = self.rom_offset(address, byte_offset, 1);
         let rom = self.loaded_rom.as_ref().expect("ROM must be loaded");
-        // Registration guarantees allocation validity; rom_offset checks bounds.
-        unsafe { *rom.bytes.add(start) }
+        rom.read(start)
     }
 
     /// Read a little-endian word at a LoROM address plus a linear byte offset.
@@ -526,8 +512,7 @@ impl Game {
     pub fn read_rom_word(&self, address: u32, byte_offset: usize) -> u16 {
         let start = self.rom_offset(address, byte_offset, 2);
         let rom = self.loaded_rom.as_ref().expect("ROM must be loaded");
-        // Registration guarantees allocation validity; bounds cover both bytes.
-        unsafe { u16::from_le_bytes([*rom.bytes.add(start), *rom.bytes.add(start + 1)]) }
+        u16::from_le_bytes([rom.read(start), rom.read(start + 1)])
     }
 
     fn rom_offset(&self, address: u32, byte_offset: usize, width: usize) -> usize {
@@ -539,7 +524,7 @@ impl Game {
         let base = crate::rtl::lorom_offset(address) as usize;
         let start = base.checked_add(byte_offset).expect("ROM offset overflow");
         let end = start.checked_add(width).expect("ROM offset overflow");
-        assert!(end <= rom.len, "ROM read outside loaded allocation");
+        assert!(end <= rom.len(), "ROM read outside loaded allocation");
         start
     }
 

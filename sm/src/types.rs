@@ -327,14 +327,6 @@ crate::typed_struct! {
         pub bigTiles, mosaicEnabled: bool;
     }
 
-    pub struct Cart {
-        pub snes: *mut Snes;
-        pub type_0: u8;
-        pub rom: *mut u8;
-        pub romSize: u32;
-        pub ram: *mut u8;
-        pub ramSize: u32;
-    }
 
     pub struct Channel {
         pub pattern_order_ptr_for_chan: u16;
@@ -952,3 +944,16 @@ macro_rules! immutable_c_strings {
     };
 }
 pub(crate) use immutable_c_strings;
+
+crate::typed_struct! {
+    #[derive(Clone)]
+    #[repr(C)]
+    pub struct Cart {
+        pub snes: *mut Snes;
+        pub type_0: u8;
+        pub rom: crate::rom::RomImage;
+        pub romSize: u32;
+        pub ram: *mut u8;
+        pub ramSize: u32;
+    }
+}

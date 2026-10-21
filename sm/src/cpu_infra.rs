@@ -904,8 +904,8 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
         return null_mut::<Snes>();
     }
     game.g_sram = (*(*game.g_snes).cart).ram;
-    game.g_rom = (*(*game.g_snes).cart).rom;
-    game.register_rom(game.g_rom, (*(*game.g_snes).cart).romSize as usize);
+    game.g_rom = (*(*game.g_snes).cart).rom.as_mut_ptr();
+    game.register_rom((*(*game.g_snes).cart).rom.clone());
     RtlSetupEmuCallbacks(
         null_mut::<u8>(),
         Some(RtlRunFrameCompare as unsafe fn(u16, i32, &mut Game) -> ()),

@@ -1,6 +1,7 @@
 use crate::c_library::{__assert_fail, free, malloc, memcpy, memset, printf};
 use crate::game_state::Game;
 use crate::host::Die;
+use crate::rom::RomImage;
 use crate::rtl::words;
 use crate::snes::cpu::DumpCpuHistory;
 pub use crate::types::{size_t, Cart, SaveLoadFunc, Snes};
@@ -10,8 +11,14 @@ use ::core::ptr::null_mut;
 pub const NULL: *mut c_void = null_mut::<c_void>();
 pub unsafe fn cart_init(snes: *mut Snes) -> *mut Cart {
     let cart = malloc(size_of::<Cart>() as size_t) as *mut Cart;
-    crate::set_fields! {[(*cart)]; snes = snes, type_0 = 0, rom = null_mut::<u8>(), romSize = 0,
-    ram = null_mut::<u8>(), ramSize = 0, };
+    cart.write(Cart {
+        snes,
+        type_0: 0,
+        rom: RomImage::default(),
+        romSize: 0,
+        ram: null_mut(),
+        ramSize: 0,
+    });
     cart
 }
 pub unsafe fn cart_reset(cart: *mut Cart) {}
@@ -30,13 +37,11 @@ pub unsafe fn cart_saveload(
 }
 pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: *mut u8, romSize: i32, ramSize: i32) {
     (*cart).type_0 = type_0 as u8;
-    if !(*cart).rom.is_null() {
-        free((*cart).rom as *mut c_void);
-    }
+    (*cart).rom = RomImage::default();
     if !(*cart).ram.is_null() {
         free((*cart).ram as *mut c_void);
     }
-    (*cart).rom = malloc(romSize as size_t) as *mut u8;
+    (*cart).rom = RomImage::zeroed(romSize as usize);
     (*cart).romSize = romSize as u32;
     if ramSize > 0 {
         (*cart).ram = malloc(ramSize as size_t) as *mut u8;
@@ -46,7 +51,7 @@ pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: *mut u8, romSize: i32
     }
     (*cart).ramSize = ramSize as u32;
     memcpy(
-        (*cart).rom as *mut c_void,
+        (*cart).rom.as_mut_ptr().cast(),
         rom as *const c_void,
         romSize as size_t,
     );
@@ -89,7 +94,7 @@ unsafe fn cart_readLorom(cart: *mut Cart, mut bank: u8, adr: u16, game: &mut Gam
     if adr >= 0x8000 || bank >= 0x40 {
         let index =
             ((u32::from(bank) << 15) | u32::from(adr & 0x7fff)) & (*cart).romSize.wrapping_sub(1);
-        return *(*cart).rom.offset(index as isize);
+        return (*cart).rom.read(index as usize);
     }
     printf(
         c"While trying to read from 0x%x\n".as_ptr(),
@@ -133,9 +138,9 @@ unsafe fn cart_readHirom(cart: *mut Cart, mut bank: u8, adr: u16) -> u8 {
         );
     }
     if adr as i32 >= 0x8000 || bank as i32 >= 0x40 {
-        return *(*cart).rom.offset(
+        return (*cart).rom.read(
             (((bank as i32 & 0x3f) << 16 | adr as i32) as u32 & (*cart).romSize.wrapping_sub(1))
-                as isize,
+                as usize,
         );
     }
     crate::native_assertion! {

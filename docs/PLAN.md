@@ -34,10 +34,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,181 Rust lines in 89 files**, plus 265 C
-bridge and 305 C-header lines = **94,751 maintained implementation lines**.
+Current composition (2026-10-22): **94,264 Rust lines in 91 files**, plus 265 C
+bridge and 305 C-header lines = **94,834 maintained implementation lines**.
 Counting all 804 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,583**. This complete recount includes frontend,
+gives **95,666**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1586,6 +1586,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    direct typed-RAM-prefix draft is not a safety solution: it introduces raw byte
    places and 87 unsafe scopes. Enemy-field flattening also retains raw pointers.
    Do not revive either merely because it exposes named fields.
+   Cart and Game now share one owned ROM image. Game byte/word readers and both
+   cartridge ROM bus-read paths use checked access; registration is safe and the
+   image stays alive across cartridge replacement. The image module forbids unsafe
+   code. SRAM, raw input copying, patch pointers and hardware ownership remain
+   unsafe; this is not completion of ROM safety. The complete change adds **28
+   maintained lines**, a safety cost with no new macros. Six actual Cart load/reload
+   scenarios and actual initialization/patch/read comparisons pass, including full
+   ROM/SRAM, all Game RAM and five exact bounds diagnostics. Seven ownership checks
+   pass. The final merged release-library consumer repeats these checks; all 98
+   library inputs and 79 installed-native source/stale checks pass. Normal release
+   library/frontend/verifier builds pass. No movie ran: the synthetic component
+   scenarios execute the changed reads, lifecycle, patching and bus consumers.
+   Allocator-event identity, physical hardware and gameplay-route coverage are not
+   claimed. Checks: Local/sm-decomp-experiments/20261022/owned-rom.
    Pose-history recording now copies the two four-byte records using checked byte
    places, preserving the previous record before replacing it. It eliminates four
    raw word reads and four raw word stores, and its entry point is safe. Direct
@@ -2480,15 +2494,19 @@ lifecycle, unused declarations, projectile animation, Mother Brain visual
 effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects,
 scrolling-sky and grapple-swing ownership, the SPC/PPU/DSP/music replacements,
 shared configuration/input and utility dependencies, the desktop host,
-room-scroll data, the shader dependency and safe pose/mechanism RAM access,
-maintained Rust is **94,181**, with
+room-scroll data, the shader dependency, safe pose/mechanism RAM access,
+gameplay continuation ownership and owned ROM reads,
+maintained Rust is **94,264**, with
 applicable static, component and exercised movie checks passing.
-Including 265 C and 305 header lines gives **94,751**; all 804 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,583**.
+Including 265 C and 305 header lines gives **94,834**; all 804 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,666**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3067; cast lines 6634. Safe pose history adds one line and
+unsafe functions 3066; cast lines 6634. Owned ROM access adds 28 lines and removes
+one unsafe registration declaration plus the Game/cart raw ROM dereferences.
+Gameplay continuation ownership adds 55 lines without changing other counters.
+These are safety/ownership costs, not reductions. Safe pose history adds one line and
 removes one unsafe function. Mechanism RAM migration adds 203 lines and removes
 five unsafe-function declarations; one existing two-cast expression now spans
 two source lines. These increases pay for checked RAM access and explicit unsafe
