@@ -214,6 +214,44 @@ macro_rules! word {
 }
 pub(crate) use word;
 
+// Checked word access for migrated callers that retain offsets, not pointers.
+// Byte places avoid borrowing the whole RAM array. Assignments evaluate the
+// value before the address; updates capture the address and old value first.
+// Keep this separate from `word!` until each caller's pointer lifetimes migrate.
+macro_rules! checked_word {
+    ($game:ident.$field:ident[$index:expr] $($tail:tt)*) => {
+        $crate::ram_map::checked_word!($game,
+            $crate::ram_map::word_arrays::$field.checked_add_signed(($index as isize).checked_mul(2).unwrap()).unwrap(); $($tail)*)
+    };
+    ($game:ident.$field:ident $($tail:tt)*) => {
+        $crate::ram_map::checked_word!($game, $crate::ram_map::words::$field; $($tail)*)
+    };
+    ($game:ident, $offset:expr;) => {{
+        let offset: usize = $offset;
+        u16::from_le_bytes([$game.g_ram[offset], $game.g_ram[offset + 1]])
+    }};
+    ($game:ident, $offset:expr; = $value:expr) => {
+        match ($value, $offset) {
+            (value, offset) => {
+                let bytes = u16::to_le_bytes(value);
+                $game.g_ram[offset] = bytes[0];
+                $game.g_ram[offset + 1] = bytes[1];
+            }
+        }
+    };
+    ($game:ident, $offset:expr; += $value:expr) => {{
+        let offset: usize = $offset;
+        let old = $crate::ram_map::checked_word!($game, offset;);
+        $crate::ram_map::checked_word!($game, offset; = old.wrapping_add($value));
+    }};
+    ($game:ident, $offset:expr; ^= $value:expr) => {{
+        let offset: usize = $offset;
+        let old = $crate::ram_map::checked_word!($game, offset;);
+        $crate::ram_map::checked_word!($game, offset; = old ^ $value);
+    }};
+}
+pub(crate) use checked_word;
+
 /// Store one SNES word without imposing host alignment.
 ///
 /// # Safety

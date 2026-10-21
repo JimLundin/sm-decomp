@@ -34,10 +34,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **93,978 Rust lines in 89 files**, plus 265 C
-bridge and 305 C-header lines = **94,548 maintained implementation lines**.
+Current composition (2026-10-22): **94,181 Rust lines in 89 files**, plus 265 C
+bridge and 305 C-header lines = **94,751 maintained implementation lines**.
 Counting all 804 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,380**. This complete recount includes frontend,
+gives **95,583**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1579,6 +1579,22 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Source-checked old/new fanfare callers pass 1,841 full-RAM/return comparisons,
    including 1,052 executions of the changed history path; release builds pass.
    No movie ran. Checks: Local/sm-decomp-experiments/20261022/safe-pose-history.
+   Moving platforms and shutters now retain RAM offsets across callbacks and use
+   checked byte places for all their RAM reads/writes, including extended fields
+   and low-before-high movement updates. Live slot/index rereads are preserved.
+   Five helpers are safe and enforce `forbid(unsafe_code)`; the owner denies
+   implicit unsafe operations. Its remaining explicit unsafe scopes are ROM
+   reads, shot handling and failure handling. The legacy shared `word!` stays
+   unchanged; only this migrated consumer uses the separate checked interface.
+   The complete migration adds **203 maintained lines** (165 in the owner, 38 in
+   shared access), a safety cost rather than a reduction. Full-RAM/completion and
+   ordered-boundary comparisons pass 6,536 actual old/new cases, including 4,518
+   callback observations and 428 matching failures. Another 47 checked-access
+   cases cover odd addresses, signed indices, wrapping and evaluation order.
+   Actual enemy-dispatch checks pass 480 full-RAM cases; final release builds pass.
+   No movie ran. Collision, sound, damage and failure calls in the mechanism
+   component are controlled boundaries; no gameplay-route/hardware coverage is
+   claimed. Checks: Local/sm-decomp-experiments/20261022/safe-mechanisms.
    A complete room-object ownership draft on 0199ea48 prices **95,661 -> 95,581
    (-80)**, including all 19 changed files, helpers, retained scripts, callers and
    registrations. It shares 25 station/gate/breakable-block handlers but still uses
@@ -2449,14 +2465,20 @@ lifecycle, unused declarations, projectile animation, Mother Brain visual
 effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects,
 scrolling-sky and grapple-swing ownership, the SPC/PPU/DSP/music replacements,
 shared configuration/input and utility dependencies, the desktop host,
-room-scroll data and the shader dependency, maintained Rust is **93,977**, with
+room-scroll data, the shader dependency and safe pose/mechanism RAM access,
+maintained Rust is **94,181**, with
 applicable static, component and exercised movie checks passing.
-Including 265 C and 305 header lines gives **94,547**; all 804 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,379**.
+Including 265 C and 305 header lines gives **94,751**; all 804 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,583**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3073; cast lines 6633. The shader adds 19 no_mangle attributes
+unsafe functions 3067; cast lines 6634. Safe pose history adds one line and
+removes one unsafe function. Mechanism RAM migration adds 203 lines and removes
+five unsafe-function declarations; one existing two-cast expression now spans
+two source lines. These increases pay for checked RAM access and explicit unsafe
+boundaries, not additional game behavior. Five migrated helpers forbid unsafe
+code. The shader adds 19 no_mangle attributes
 for its native callbacks and captured GL table, removes 16 counted unsafe
 functions and 32 cast-containing lines. The script excludes C-unwind callbacks;
 these residue counts do not measure all unsafe operations or establish their
