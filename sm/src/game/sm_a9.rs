@@ -7,6 +7,7 @@ pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
+use crate::game::mother_brain_visuals::{self, Fade};
 use crate::game::sm_80::{
     CheckEventHappened, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max3,
     QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6, SetBossBitForCurArea, SetEventHappened,
@@ -30,13 +31,6 @@ use crate::game::sm_a0::{
 use crate::game::sm_a6::{
     homing_velocity, HandleTypewriterText_Ext, HomingReversal, Ridley_Func_98,
     SetupZebesEscapeTypewriter,
-};
-use crate::game::sm_ad::{
-    EnableEarthquakeAframes, HandleMotherBrainBodyFlickering, MotherBrain_FadeFromGray_Drained,
-    MotherBrain_FadeFromGray_FakeDeath, MotherBrain_FadePalToBlack, MotherBrain_FadeToGray_Drained,
-    MotherBrain_FadeToGray_FakeDeath, MotherBrain_FadeToGray_RealDeath,
-    MotherBrain_HealthBasedPaletteHandling, MotherBrain_Phase3_TurnLightsBackOn,
-    MotherBrain_SealWall, TurnOffLightsForShitroidDeath,
 };
 
 use crate::rtl::MemCpy;
@@ -546,7 +540,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11120566] MotherBrain_Phase3_Death_5 [] {
-        HandleMotherBrainBodyFlickering(game);
+        mother_brain_visuals::flicker_body(game);
         MotherBrain_GenerateMixedExplosions(game);
         let E = Get_MotherBrain(0, game);
         (*E).var_F = (*E).var_F.wrapping_sub(1);
@@ -554,7 +548,7 @@ crate::game::callback_dispatch! {
             (*E).var_F = 16;
             let v2: u16 = ((*E).var_37).wrapping_add(1);
             (*E).var_37 = v2;
-            if MotherBrain_FadePalToBlack((v2).wrapping_sub(1), game) & 1 != 0 {
+            if mother_brain_visuals::fade(Fade::ToBlack, (v2).wrapping_sub(1), game) & 1 != 0 {
                 word!(game.enemy_bg2_tilemap_size = 710);
                 word_transfers!(game, descending, 356; le(tilemap_stuff, 355) <- value(824));
                 word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
@@ -1018,7 +1012,7 @@ crate::game::callback_dispatch! {
             (*E).var_F = 8;
             let v2: u16 = ((*E).var_37).wrapping_add(1);
             (*E).var_37 = v2;
-            if MotherBrain_FadeToGray_FakeDeath((v2).wrapping_sub(1), game) & 1 != 0 {
+            if mother_brain_visuals::fade(Fade::FakeDeathToGray, (v2).wrapping_sub(1), game) & 1 != 0 {
                 (*E).var_A = ((0xa988d3i32) as u16);
             }
         }
@@ -1118,7 +1112,7 @@ crate::game::callback_dispatch! {
         let E1 = Get_MotherBrain(0x40, game);
         let mut v3: i16 = (((*E1).base.y_pos) as i16).wrapping_add((byte!(v1; 1)) as i16);
         if (v3 as u16) >= 0xc4 {
-            EnableEarthquakeAframes(2, game);
+            mother_brain_visuals::start_earthquake(2, game);
             (*E).var_A = ((0xa9b15ei32) as u16);
             (*E).var_F = 256;
             v3 = 196;
@@ -1307,7 +1301,7 @@ crate::game::callback_dispatch! {
             (*E).var_F = 16;
             let mut v3: u16 = ((*E).var_37).wrapping_add(1);
             (*E).var_37 = v3;
-            MotherBrain_FadeToGray_Drained((v3).wrapping_sub(1), game) & 1 != 0
+            mother_brain_visuals::fade(Fade::DrainedToGray, (v3).wrapping_sub(1), game) & 1 != 0
         } {
             let E1 = Get_MotherBrain(0x40, game);
             (*E1).base.health = -29536i32 as u16;
@@ -1333,7 +1327,7 @@ crate::game::callback_dispatch! {
             (*E).var_F = 16;
             let mut v2: u16 = ((*E).var_37).wrapping_add(1);
             (*E).var_37 = v2;
-            MotherBrain_FadeFromGray_Drained((v2).wrapping_sub(1), game) & 1 != 0
+            mother_brain_visuals::fade(Fade::DrainedFromGray, (v2).wrapping_sub(1), game) & 1 != 0
         } {
             (*E).var_A = ((0xa9c0bai32) as u16);
             (*Get_MotherBrain(0x40i32, game)).var_10 = 1;
@@ -1557,7 +1551,7 @@ crate::game::callback_dispatch! {
         let E1 = Get_MotherBrain(0x40, game);
         set_fields! {[(*E1)], 0; var_32, var_33, var_12, var_14, var_10, var_11}
         word_transfers!(game, descending, 15; le(palette_buffer, 255) <- le(palette_buffer, 159));
-        MotherBrain_HealthBasedPaletteHandling(game);
+        mother_brain_visuals::update_health_palette(game);
         (*E).var_0D = 3584;
         set_fields! {[(*E1)], 0; var_E, var_F}
         (*E).var_A = ((0xa9af9di32) as u16);
@@ -1637,7 +1631,7 @@ crate::game::callback_dispatch! {
         (*E).var_F = 4;
         let v3: u16 = ((*E).var_37).wrapping_add(1);
         (*E).var_37 = v3;
-        if MotherBrain_FadeFromGray_FakeDeath((v3).wrapping_sub(1), game) & 1 != 0 {
+        if mother_brain_visuals::fade(Fade::FakeDeathFromGray, (v3).wrapping_sub(1), game) & 1 != 0 {
             let E1 = Get_MotherBrain(0x40, game);
             (*E1).var_10 = 1;
             (*E).var_00 = 2;
@@ -1675,7 +1669,7 @@ crate::game::callback_dispatch! {
     [11121033] MotherBrain_Phase3_Death_11 {
         let v2: u16 = ((*E).var_37).wrapping_add(1);
         (*E).var_37 = v2;
-        if MotherBrain_FadeToGray_RealDeath((v2).wrapping_sub(1), game) & 1 != 0 {
+        if mother_brain_visuals::fade(Fade::RealDeathToGray, (v2).wrapping_sub(1), game) & 1 != 0 {
             MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9D25 as u16, game);
             (*E).var_A = ((0xa9b1b8i32) as u16);
             (*E).var_F = 256;
@@ -1802,7 +1796,7 @@ pub unsafe fn MotherBrainsBody_FirstPhase_DoubleRet(game: &mut Game) {
             set_fields! {[(*E)], 1; var_1D, var_00}
             DisableMinimapAndMarkBossRoomAsExplored(game);
             QueueMusic_Delayed8(6, game);
-            MotherBrain_SealWall(game);
+            mother_brain_visuals::seal_wall(game);
         }
     }
     MotherBrain_SamusCollDetect(game);
@@ -1861,7 +1855,7 @@ crate::game::callback_dispatch! {
             MotherBrainsTubesFalling_HandleSmoke(k, game);
         } else {
             MotherBrain_Pal_EndScreenFlash(game);
-            EnableEarthquakeAframes(0x19, game);
+            mother_brain_visuals::start_earthquake(0x19, game);
             word! { game, 0;
                 hdma_object_channels_bitmask[0], hdma_object_channels_bitmask[1],
             }
@@ -2835,7 +2829,7 @@ crate::game::callback_dispatch! {
             MotherBrain_HandleBrainPal(game);
         }
         if (*E).var_11 != 0 {
-            MotherBrain_HealthBasedPaletteHandling(game);
+            mother_brain_visuals::update_health_palette(game);
         }
     };
     @external {
@@ -3272,7 +3266,7 @@ crate::game::callback_dispatch! {
             (*E).var_0F = ((0xa9cc98i32) as u16);
             (*E).base.vram_tiles_index = 4256;
             QueueSfx3_Max6(0x19, game);
-            TurnOffLightsForShitroidDeath(game);
+            mother_brain_visuals::lights_off(game);
             Enemy_SetInstrList(k, addr_kShitroid_Ilist_CFCE as u16, game);
             set_fields! {[(*E)], 0; var_B, var_C}
             (*Get_ShitdroidInCutscene(0i32, game)).var_A = addr_locret_A9C18D as u16;
@@ -3335,7 +3329,7 @@ crate::game::callback_dispatch! {
         let E = Get_ShitdroidInCutscene(0, game);
         let v2: u16 = ((*E).var_37).wrapping_add(1);
         (*E).var_37 = v2;
-        if MotherBrain_Phase3_TurnLightsBackOn((v2).wrapping_sub(1), game) & 1 != 0 {
+        if mother_brain_visuals::fade(Fade::LightsOn, (v2).wrapping_sub(1), game) & 1 != 0 {
             (*E).var_A = ((0xa9c1cfi32) as u16);
             CallSomeSamusCode(0x17, game);
             SomeMotherBrainScripts(3, game);

@@ -17,17 +17,23 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **99,516 Rust lines in 82 files**, plus a
-four-line C bridge = **99,520 maintained implementation lines**. Counting the
-new 41-line CPU installer as well gives **99,561**. This is an actual complete
+Current composition (2026-10-21): **99,465 Rust lines in 82 files**, plus a
+four-line C bridge = **99,469 maintained implementation lines**. Counting the
+new 41-line CPU installer as well gives **99,510**. This is an actual complete
 source recount, including frontend and verifier code, all adapters, callers and
 registrations. Existing development scripts/configuration/docs are outside this
 implementation metric. The two pinned dependencies add **2,836 CPU C/header
 lines and 7,762 stb header lines**, disclosed separately, like existing GL/SDL.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
-Projectile animation passes 112,184 component comparisons and a checkpointed
-6,562-frame drawing segment: four required probes and 120 follow-up frames,
+Mother Brain visual effects pass 644 full-RAM, return-value, ordered palette
+write and ROM-diagnostic comparisons, using the actual old/new routines and
+unchanged palette writer. All seven real fade sequences through their terminators,
+health thresholds, source wrapping and full-width table indexes are covered. Unchanged
+wall, earthquake and flicker bodies and all callers have source correspondence.
+The available movies miss these effects, so no unrelated replay was run.
+The preceding projectile animation change passes 112,184 component comparisons
+and a checkpointed 6,562-frame drawing segment: four required probes and 120 follow-up frames,
 then the same clean segment, with normal rendering/audio and zero differences.
 The 2,218-frame cached setup prefix is separate from changed-code coverage.
 Unvisited bomb/SBA/super-missile initialization has direct component coverage.
@@ -1445,20 +1451,24 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
 4. [ ] **Retire bank ownership by gameplay responsibility.** Select a complete
    responsibility, such as Samus movement, with an exercised boundary and named
    routines. Migrate its real callers and state transitions, then remove its
-   retired bank facade. Player projectile data, impact setup, instruction playback
-   and drawing now belong to `projectile_animation`, with direct callers and
-   bank 93 retired. Fixed-record initialization and drawing share their common
-   paths while retaining flicker, clipping, live-index reloads and Ceres's stale
-   coordinate quirks. The complete replacement removes **48 lines
-   (99,564 -> 99,516)**, including helpers, callers, imports and registration;
-   component comparisons, retained-source checks and exercised drawing pass.
+   retired bank facade. Mother Brain palette transitions, health palettes,
+   lighting, wall sealing, earthquakes and body flicker now belong to
+   `mother_brain_visuals`, with direct encounter callers and bank AD retired.
+   Seven fade entry points share playback while preserving palette-write order,
+   word wrapping and the drained fade's non-palette write to $017c. The complete
+   replacement removes **51 lines (99,516 -> 99,465)**, 466 tokens and 1,667
+   spelling bytes, including helpers, callers, imports and registration.
+   Component comparisons and retained-source/caller checks pass; the available
+   movies do not reach these effects and no new replay is claimed.
+   Player projectile data, impact setup, instruction playback and drawing
+   already belong to `projectile_animation`, with bank 93 retired.
    Samus animation/drawing already belong to `samus_animation`, message boxes
    to `message_boxes`, and room backgrounds to `room_backgrounds::BackgroundLoad`.
-   Banks 85, 92 and 93 are fully retired. The unused-declaration cohort reserved
+   Banks 85, 92, 93 and AD are fully retired. The unused-declaration cohort reserved
    for this stage is also adopted. Bang's live SNES execution path remains a
    future ownership task.
-   Gameplay currently totals 81,565 lines; its 29 numeric bank modules still
-   own 75,925. These are ownership scopes, not deletion budgets. File moves
+   Gameplay currently totals 81,511 lines; its 28 numeric bank modules still
+   own 75,743. These are ownership scopes, not deletion budgets. File moves
    alone earn no volume reduction. The complete save-file menu ownership draft
    prices **99,516 -> 99,510 (-6)**, including caller migration, imports, helpers
    and registration. It shares confirmation flow and main-menu rows, removes
@@ -1466,6 +1476,9 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    return does not justify adoption as a volume priority; park the draft before
    compiler/runtime validation. No behavior or movie-coverage claim is made.
    Current-source draft: Local/sm-decomp-experiments/20261021/file-select.
+   A separate complete sprite-effect pool rewrite saves only 11 lines, 117
+   tokens and 301 spelling bytes; it is also parked before compiler/runtime
+   work. Draft: Local/sm-decomp-experiments/20261021/sprite-effects.
    Reassess the
    90,000-line stretch checkpoint using complete replacements, including retained
    exceptions and oracle adapters; it has no demonstrated deletion budget yet.
@@ -1680,24 +1693,19 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest applicable verification: projectile animation passes probed and clean
-**6562/0** drawing segments, input **2218..8779**, using a checkpoint before the
-first affected drawing call. The four required animation-advance, projectile
-draw, explosion draw and trailing-effect probes execute; the last first-hit is
-at 8659, followed by 120 frames. The separate **2218/0** setup run creates that
-checkpoint and earns no changed-code coverage. Normal comparisons, rendering
-and audio stay enabled. The initial **12000/0** exploration failed its required
-fixed-initializer probe, which had zero hits; it is not a coverage pass.
-Direct old/new components cover bomb/SBA/super-missile initialization, every
-selector, damage guard and instruction-pointer boundaries, plus drawing masks,
-clipping, actual mode-7 math, retained coordinates and live-index changes:
-112,184 full-RAM/completion/ordered-boundary comparisons. Sprite emission and
-trailing-effect calls are recording boundaries in those components. Retained
-impact/instruction code and all migrated callers have source correspondence.
-No credits coverage is claimed. Clean source fingerprint:
-`0f2ba9ac2fbd332e9ebe2dd17aa6e2dfa22dbbd0fed455c0a29a711f586de685`.
-Logs: Local/sm-decomp-experiments/20261021/projectile-animation/
-{components,setup,probed-speed,probed-segment,clean-segment}.log.
+Latest applicable verification: Mother Brain visual effects pass **644** direct
+old/new component comparisons with the actual unchanged palette writer. These
+compare all RAM bytes, return values, failure flags, ordered palette-call state
+and ROM diagnostics. They cover all seven real ROM sequences through their
+terminators, phase gating and every health threshold, plus full-width table
+indexes, source-pointer wrapping, invalid-bank diagnostics and the $017c write.
+Wall sealing, earthquake and body-flicker code has exact retained-source
+correspondence; all encounter callers and source registration are checked.
+Normal release library/frontend/verifier builds and formatting pass. The final
+82-file source matches the checked candidate and embedded library bytes. The
+available movies miss Mother Brain, so no replay was selected; components do not establish endgame or credits coverage.
+Logs: Local/sm-decomp-experiments/20261021/mother-brain-visuals/
+{components,build,verifier-build}.log; source-result.json records the recount.
 
 Previous static-only change: unused declarations are removed after compiler
 reference checks. All 82 Rust files retain the same executable source and numeric
@@ -1943,14 +1951,17 @@ literals, shared constant headers, native shader/presentation ownership and
 shared PPU pixel evaluation, native/SPC state transfers and live-typed snapshots,
 the pinned CPU/PNG dependencies, RAM pointer chains, readable control flow and
 shared room background loading, Samus animation ownership, the message-box
-lifecycle, unused declarations and projectile animation, maintained Rust is
-**99,516**, with applicable static and exercised checks passing.
+lifecycle, unused declarations, projectile animation and Mother Brain visual
+effects, maintained Rust is **99,465**, with applicable static and exercised
+component checks passing.
 Including the four-line C bridge gives
-**99,520**; including the new 41-line installer as well gives **99,561**.
+**99,469**; including the new 41-line installer as well gives **99,510**.
 The immediate volume target is complete.
 External CPU/PNG code has 2,836/7,762 lines.
 Counters: raw offsets 30; extern C blocks 5; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3267; cast lines 7506. Projectile animation removes ten
+unsafe functions 3260; cast lines 7501. Mother Brain visual ownership removes
+seven unsafe declarations and five cast-containing lines; no counter increases.
+Projectile animation removes ten
 cast-containing lines and adds three counted unsafe declarations: two shared
 helpers and the SBA entry previously declared inside a callback macro. These
 replace existing unsafe operations; all other counters stay unchanged.

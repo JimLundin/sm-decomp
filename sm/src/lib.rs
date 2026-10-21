@@ -350,7 +350,7 @@ pub mod game {
     pub mod sm_a8;
     pub mod sm_a9;
     pub mod sm_aa;
-    pub mod sm_ad;
+    pub(crate) mod mother_brain_visuals;
     pub mod sm_b2;
     pub mod sm_b3;
     pub mod sm_b4;
