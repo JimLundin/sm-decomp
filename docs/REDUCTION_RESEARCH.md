@@ -61,7 +61,11 @@ Native shader/presentation ownership removes **588 more lines**, reaching
 normal release library/frontend build and 528 shader/336 presenter DLL
 comparisons pass. This incorporates the former 83-line shader draft; the
 additional reduction beyond that working draft is 505 lines.
-Maintained Rust needs another **2,726 lines removed** to reach 99,999. A separate
+Shared PPU pixel evaluation removes **681 more lines**, reaching **102,044**,
+with 6,053 fewer tokens and 16,513 fewer spelling bytes. Complete release,
+175,040 actual old/new scanline comparisons and both full boot replays pass.
+The native dense renderer takes 2.6-2.7x its former component time; details below.
+Maintained Rust needs another **2,045 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -82,6 +86,41 @@ neither reduces source volume in the tested scopes. Its default mode does
 preserve packed byte accesses despite physically larger Rust structs. Corrode's
 specific packing omission is repairable; layout differences alone are not a
 correctness verdict. The independent-transpiler sections record these tests.
+
+## Shared PPU pixel evaluation (2026-10-21)
+
+The complete replacement removes **681 lines (102,725 -> 102,044)**, including
+all helpers and callers. `ppu.rs` becomes 1,428 lines from 2,109. Native and
+legacy rendering share planar decoding, Mode7 sampling, windows and per-channel
+composition. Explicit policies retain their differing priorities, window rules,
+subscreen criteria, brightness handling and saved fixed-color packing. Sprite
+evaluation, MMIO, state copying and legacy save layout remain unchanged.
+
+Normal release library/frontend builds and independent source review pass.
+Source-checked ordinary DLL comparisons pass **7,616 cases / 175,040 scanlines**,
+covering both renderer selections, all modes, windows, sprites, color math,
+noncanonical saved fields and dense 256-row histories. Every output allocation
+and Ppu byte compares except output pointers and the unused `bgBuffers` cache.
+The cache has no remaining runtime reader and stops updating; its declaration
+and checkpoint representation remain. Existing source fingerprints invalidate
+old verifier checkpoints. This deliberately changes private cache contents;
+it does not claim whole-Ppu byte identity. `g_ram` and legacy save layout stay
+byte-compatible.
+
+Full boot any% **129712/0** and Speed Booster **148406/0** pass on final source
+fingerprint `2df5b594d509743f3be3aeaba787add99673680dbce2aac0543d64373225f2e0`.
+Neither reaches credits. Both replay branches use the same backend, so the
+separate old/new DLL comparisons supply independent pixel evidence.
+
+Measured dense native Mode1 and Mode7 cost **2.69x and 2.61x** their former PPU
+time, approximately **3.79ms and 1.12ms per 224 rows** in the optimized component
+benchmark; legacy timing is approximately unchanged. These are not whole-game
+frame timings or real GPU measurements. An eight-line inline-only candidate
+passed its comparisons but recovered only about 1% in Mode1 and none in Mode7;
+it is rejected. This replacement reduces video implementation duplication; it
+does not retire a gameplay bank or the SNES backend. Durable source, full costs,
+component results and final main build/replay logs:
+`Local/sm-decomp-experiments/20261021/ppu-render-native`.
 
 ## Complete shader/presentation replacement (2026-10-21)
 

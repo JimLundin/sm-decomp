@@ -244,7 +244,11 @@ Owned shader passes, parameters and textures plus shared presentation setup remo
 Normal release library/frontend build and 528 shader/336 presenter DLL comparisons
 pass. The existing 83-line shader draft is incorporated: the additional working-tree
 reduction is 505 lines. Actual GPU pixels are untested; no gameplay changes occur.
-Another **2,726 lines** are needed to reach 99,999;
+Shared PPU pixel evaluation removes **681 more lines**, reaching **102,044**.
+Complete release, 175,040 old/new scanline comparisons and both full boot replays
+pass. Dense native rendering takes 2.6-2.7 times the former PPU time; the private
+unused background cache stops updating, with save layout and g_ram unchanged.
+Another **2,045 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -872,8 +876,32 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **2,726-line** gap; parked small drafts are not
+   replacement yet funds the **2,045-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Shared PPU pixel evaluation removes **681 lines (102,725 -> 102,044)**,
+   6,053 tokens and 16,513 spelling bytes. The complete 2,109-line renderer becomes
+   1,428 lines, with both selected rendering paths sharing tile decoding, Mode7,
+   windows and color composition under explicit compatibility policies. All 82
+   source files count; register access, sprite evaluation and save layout remain.
+   Normal library/frontend release and independent source review pass. Ordinary
+   source-checked DLL comparisons pass **7,616 cases / 175,040 scanline checks**
+   across both paths, all eight modes, windows, sprites, color math, noncanonical
+   saved fields and 256-row histories. Every output byte and other Ppu state byte
+   compares except allocation pointers and the unused bgBuffers private cache.
+   That cache stops updating; no remaining runtime reader exists. Its field and
+   checkpoint serialization remain; existing source fingerprints invalidate old
+   verifier checkpoints. Legacy saves and g_ram keep their layouts.
+   Final full boot any% **129712/0** and Speed Booster **148406/0** pass with
+   normal rendering/audio and source fingerprint
+   `2df5b594d509743f3be3aeaba787add99673680dbce2aac0543d64373225f2e0`.
+   Neither route reaches credits; shared-backend replays are supplemented by the
+   independent old/new pixel comparisons. Dense native Mode1/Mode7 cost **2.69x /
+   2.61x** the old PPU time (about 3.79/1.12 ms per 224 rows in the DLL benchmark).
+   These are component timings, not frontend frame-rate guarantees. An eight-line
+   inlining trial recovered only about 1% and is rejected. Source and checks:
+   Local/sm-decomp-experiments/20261021/ppu-render-native, including main build and
+   both final replay logs. Complete bank retirement remains separate work.
 
    Complete shader/presentation ownership removes **588 lines
    (103,313 -> 102,725)**, 4,877 tokens and 15,722 spelling bytes across three
@@ -1458,7 +1486,16 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: explicit compound RAM updates pass clean full boot
+Latest full integration: shared PPU pixel evaluation passes clean full boot
+any% **129712/0** and Speed Booster **148406/0**, with normal rendering, audio
+and comparisons. Both use final source fingerprint
+`2df5b594d509743f3be3aeaba787add99673680dbce2aac0543d64373225f2e0`.
+The adopted PPU matches the independently compared candidate byte-for-byte.
+Replay times were 380.70s and 630.50s. Neither reaches credits. Old/new DLL
+pixel/state checks separately cover the renderer because both replay branches
+share the backend. Logs: Local/sm-decomp-experiments/20261021/ppu-render-native.
+
+Previous full integration: explicit compound RAM updates pass clean full boot
 any% **129712/0** and Speed Booster **148406/0**, with normal rendering, audio
 and comparisons. All 801 source updates, including 106 rereads, retain their
 expanded operations and resolved types/targets. Both runs use the same final
@@ -1634,11 +1671,12 @@ store groups, the unaligned RAM repair, shared beam windows, native tracing,
 nonnull callback tables, Samus pose sequences, the packed-sprite repair,
 shared gameplay imports, enemy callback ownership, native inflater, compound
 RAM updates, shared RAM/record metadata, alias declarations, native C-string
-literals, shared constant headers and native shader/presentation ownership,
-maintained Rust is **102,725**, leaving **2,726** to
+literals, shared constant headers, native shader/presentation ownership and
+shared PPU pixel evaluation, maintained Rust is **102,044**, leaving **2,045** to
 reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3325; cast lines 7786. Shader/presentation ownership removes
+unsafe functions 3316; cast lines 7600. Shared PPU evaluation removes nine unsafe
+declarations and 186 cast-containing lines. Shader/presentation ownership removes
 five unsafe declarations and 84 cast-containing lines. RAM/record metadata remove 452/271 lines
 without changing any other counter. Alias, C-string and constant grouping remove
 202, 92 and 94 lines respectively without changing the other counters.
