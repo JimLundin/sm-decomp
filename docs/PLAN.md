@@ -17,16 +17,24 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **96,409 Rust lines in 88 files**, plus 141 C
-bridge and 101 C-header lines = **96,651 maintained implementation lines**.
-Counting all 278 dependency-installer lines and 18 added verifier-launcher lines
-gives **96,947**, down **1,938** from 98,885. This complete recount includes frontend,
+Current composition (2026-10-21): **95,601 Rust lines in 88 files**, plus 202 C
+bridge and 139 C-header lines = **95,942 maintained implementation lines**.
+Counting all 437 dependency-installer lines and 27 added verifier-launcher lines
+gives **96,406**, down **2,479** from 98,885. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
-lines**, disclosed separately like GL/SDL.
+lines**, plus **919 configuration/utility C/header lines** sharing the music
+dependency's types header, disclosed separately like GL/SDL.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
+The complete configuration/input and file/string/ByteArray dependency replacement
+removes **541 maintained lines**, including all adapters, installers and verifier
+changes. Source-checked old/new comparisons pass 31 configuration scenarios,
+5,463 Boolean cases, 263,438 input lookups and 133 utility cases, plus layout,
+source-stamp and failure checks. The actual installed archive also passes
+release-library configuration/input/byte-buffer checks. No movie ran; these
+checks exercise the changed functions directly. See CONFIG_DEPENDENCY.md.
 The native music-sequencer replacement removes **366 complete maintained lines**,
 including its compatibility changes, C layout, installer and verifier costs.
 All 346 actual old/new cases, 154 C/Rust layout comparisons and 416 ordered DSP
@@ -1516,6 +1524,18 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Stop spending implementation/validation effort on roughly hundred-line enemy
    extractions or adding macros to trim local branches. Small preparatory edits
    must belong to a concrete larger replacement with a measured complete price.
+   Complete configuration/input and file/string/ByteArray ownership now uses
+   the independently published Zelda dependency with explicit compatibility
+   patches. The complete replacement prices **96,947 -> 96,406 (-541)**:
+   Rust loses 808 lines; C/headers add 99, installation adds 159 and verifier
+   launcher changes add nine. All callers and retained declarations count.
+   The standalone configuration draft's -382 is included, not additional.
+   Focused old/new state, diagnostics, input lookup, file, allocation and failure
+   checks pass, as do the actual installed-library consumer and normal release
+   builds. No movie ran. The direct verifier's missing native-library search
+   path was repaired in two of those launcher lines. Dependency sources,
+   installation, coverage and limits are in CONFIG_DEPENDENCY.md. Durable work:
+   Local/sm-decomp-experiments/20261021/config-dependency.
    The complete native/oracle backend assessment now replaces shared SPC
    instruction execution and PPU register operations with independently published
    LakeSnes dependencies. All native consumers, bus callbacks, state layout,
@@ -1697,6 +1717,26 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    no new draft, complete price, build or runtime result is claimed. Multipart
    findings: Local/sm-decomp-experiments/20261021/multipart-geometry;
    partial frontend draft: Local/sm-decomp-experiments/20261021/desktop-frontend.
+   The broader weapon-firing lifecycle preflight covers 2,459 gross lines,
+   including 451 overlapping the parked special-attack scope. Reservation,
+   rollback, ammo consumption, counter mutation and callback rereads differ
+   across weapons; flight, animation and trail algorithms already share code.
+   This common reservation/emission proposal establishes no substantial net
+   replacement. No draft, build or runtime check was warranted.
+   The published Zelda shader engine has an opaque three-operation interface,
+   but replacing its complete 952-line native owner needs 42 GL bindings and
+   explicit compatibility for parsing, dimensions, pass-20 failure, live config,
+   allocation, PNG lifetime and unwind cleanup. Its 659 C / 99 header lines are
+   external inputs, not a deletion estimate. Park this unpriced proposal until
+   a complete ownership/failure design establishes a credible saving. No shader
+   build or runtime check ran. Inventory and pinned inputs:
+   Local/sm-decomp-experiments/20261021/shader-dependency/PREFLIGHT.md.
+   The standalone published recorder proposal also remains unpriced: its codec
+   corresponds closely, but native version-2 headers, SRAM replay bases, APQ1/ABQ1
+   trailers and clear-log audio preservation need substantial maintained code.
+   The 467 recorder/helper and 41 ByteArray function lines inspected are gross
+   scope. No candidate, build, runtime result or saving is claimed. Findings:
+   Local/sm-decomp-experiments/20261021/recorder-dependency/PREFLIGHT.md.
    Continue selecting larger complete responsibilities and repeated algorithms;
    the 90,000-line stretch checkpoint still has no demonstrated remaining budget.
    Durable experiments: Local/sm-decomp-experiments/20261021/complete-backend.
@@ -2311,15 +2351,21 @@ the pinned CPU/PNG dependencies, RAM pointer chains, readable control flow and
 shared room background loading, Samus animation ownership, the message-box
 lifecycle, unused declarations, projectile animation, Mother Brain visual
 effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects,
-scrolling-sky and grapple-swing ownership, and the SPC/PPU/DSP dependency replacements,
-maintained Rust is **97,077**, with
+scrolling-sky and grapple-swing ownership, the SPC/PPU/DSP/music replacements,
+and shared configuration/input and utility dependencies,
+maintained Rust is **95,601**, with
 applicable static, component and exercised movie checks passing.
-Including 104 C bridge lines gives **97,181**; all 124 dependency-installer lines
-and eight added launcher lines bring the complete price to **97,313**.
+Including 202 C and 139 header lines gives **95,942**; all 437 dependency-installer
+lines and 27 added launcher lines bring the complete price to **96,406**.
 The immediate volume target is complete.
-External CPU/SPC/PPU/DSP/PNG code has 2,836/2,104/1,261/685/7,762 lines.
-Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 5; no_mangle 9;
-unsafe functions 3166; cast lines 7032. Legacy PPU pixel selection removes three
+External dependency counts and current coverage are listed at the top.
+Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 6; no_mangle 14;
+unsafe functions 3116; cast lines 6785. Configuration/utilities remove 28 counted
+unsafe declarations and 92 cast-containing lines. Four added no_mangle attributes
+belong to the three host/numeric/stderr callbacks and the verifier source check;
+the script does not count the two C-unwind declaration blocks. Native music
+previously added one counted export/no_mangle for its source check.
+Legacy PPU pixel selection removes three
 unsafe declarations and 46 cast-containing lines; no counter increases.
 The DSP dependency adds one counted
 foreign block and removes six unsafe declarations and 126 cast-containing lines.

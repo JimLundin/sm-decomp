@@ -30,6 +30,8 @@ pub static FILES: &[(&str, &[u8])] = &[
     ),
     ("sm/src/c_library.rs", include_bytes!("c_library.rs")),
     ("sm/src/config.rs", include_bytes!("config.rs")),
+    ("sm/src/native_config.c", include_bytes!("native_config.c")),
+    ("sm/src/native_config.h", include_bytes!("native_config.h")),
     ("sm/src/cpu_infra.rs", include_bytes!("cpu_infra.rs")),
     (
         "sm/src/game/callback_tables.rs",
@@ -171,6 +173,8 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/tracing.rs", include_bytes!("tracing.rs")),
     ("sm/src/types.rs", include_bytes!("types.rs")),
     ("sm/src/util.rs", include_bytes!("util.rs")),
+    ("sm/src/native_util.c", include_bytes!("native_util.c")),
+    ("sm/src/native_util.h", include_bytes!("native_util.h")),
     ("sm/src/verify_probe.rs", include_bytes!("verify_probe.rs")),
     (
         "sm/src/verify_source.rs",

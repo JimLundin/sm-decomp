@@ -19,6 +19,7 @@ def source_hash(root):
     paths.update((root / "sm" / "src").rglob("*.c"))
     paths.update((root / "sm" / "src").rglob("*.h"))
     paths.add(root / "tools/install_native_music.py")
+    paths.add(root / "tools/install_native_config.py")
     paths.update(root / name for name in (
         "Cargo.toml", "Cargo.lock", "sm/Cargo.toml", "rust-toolchain.toml",
         "tools/verify_dll.py"))
@@ -98,6 +99,12 @@ def check_library(host, root):
     if host.sm_verify_music_source_hash() != native_hash(root).encode():
         raise RuntimeError("stale native music; rerun tools/install_native_music.py and rebuild")
 
+    if not hasattr(host, "sm_verify_util_source_matches"):
+        raise RuntimeError("cached DLL has no utility source stamp; rebuild")
+    host.sm_verify_util_source_matches.restype = ctypes.c_bool
+    if not host.sm_verify_util_source_matches():
+        raise RuntimeError("stale native utilities; rerun tools/install_native_config.py and rebuild")
+
 
 def cargo_host(root, rustc, linker, output, source, retry=True):
     cargo = shutil.which("cargo") or str(Path(rustc).with_name("cargo.exe"))
@@ -159,6 +166,8 @@ def build(root, rustc, use_cargo=False):
     # Retain 16 codegen units; incremental compilation otherwise defaults to 256.
     common = [rustc, "--edition=2021", "-C", "opt-level=3",
               "-C", "codegen-units=16", "-A", "warnings"]
+    common += [arg for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
+               if path for arg in ("-L", f"native={path}")]
     sysroot = Path(subprocess.check_output(
         [rustc, "--print", "sysroot"], cwd=root, text=True).strip())
     host = next(line.removeprefix("host: ") for line in subprocess.check_output(

@@ -13,8 +13,9 @@ a time, with that per-frame comparison as the test. See
 
 Needs SDL2 (`apt install libsdl2-dev` on Debian/Ubuntu), rustup and the
 [pinned LakeSnes CPU, PPU and DSP libraries](docs/CPU_DEPENDENCY.md),
-[SPC interpreter and native music libraries](docs/SPC_DEPENDENCY.md) and
-[stb_image PNG library](docs/PNG_DEPENDENCY.md). Build these static libraries
+[SPC interpreter and native music libraries](docs/SPC_DEPENDENCY.md),
+[configuration/utility](docs/CONFIG_DEPENDENCY.md) and
+[stb_image PNG libraries](docs/PNG_DEPENDENCY.md). Build these static libraries
 first and include their directory in `LIBRARY_PATH` when building or running.
 Put your own ROM at `rom/sm.smc` (see [rom/README.md](rom/README.md)), then
 from the repository root:
@@ -45,7 +46,7 @@ The hardware adapters link unmodified LakeSnes code under its
 [SPC license](third_party/lakesnes/LICENSE-SPC-2021.txt); include these with
 distributed binaries. PNG decoding uses stb_image under its
 [MIT license](LICENSE-stb_image), which must also accompany distributed binaries.
-Native music sequencing uses selected Zelda3 routines with maintained SM
+Native music, configuration and utilities use selected Zelda3 routines with maintained SM
 compatibility changes under the [Zelda3 MIT license](third_party/zelda3/LICENSE.txt);
 include that notice with distributed binaries too.
 Names and labels also draw on Patrick Johnston's

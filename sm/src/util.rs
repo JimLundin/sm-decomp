@@ -1,10 +1,7 @@
-use crate::c_library::{
-    fclose, fopen, fread, free, fseek, ftell, malloc, memchr, memcpy, realloc, rewind, strchr,
-    strdup, strlen,
-};
-use crate::host::Die;
-use ::core::ffi::{c_char, c_long, c_void};
-use ::core::ptr::{null, null_mut};
+//! File, lexical and byte-array helpers from the pinned native utility dependency.
+pub use crate::types::{size_t, ByteArray, FILE};
+use core::ffi::{c_char, c_void};
+
 pub type __builtin_va_list = [__va_list_tag; 1];
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -14,241 +11,64 @@ crate::typed_struct! {
         pub overflow_arg_area, reg_save_area: *mut c_void;
     }
 }
-pub use crate::types::{size_t, ByteArray, FILE};
 pub type va_list = __gnuc_va_list;
 pub type __gnuc_va_list = __builtin_va_list;
-pub const NULL: *mut c_void = null_mut::<c_void>();
+pub const NULL: *mut c_void = core::ptr::null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 pub const SEEK_END: i32 = 2;
-pub unsafe fn NextDelim(s: *mut *mut c_char, sep: i32) -> *mut c_char {
-    let mut r = *s;
-    if !r.is_null() {
-        while *r as i32 == ' ' as i32 || *r as i32 == '\t' as i32 {
-            r = r.offset(1);
-        }
-        let mut t = strchr(r, sep);
-        *s = if !t.is_null() {
-            crate::update_place! { previous fresh0 = t => t.offset(1); }
-            *fresh0 = 0 as c_char;
-            t
-        } else {
-            null_mut::<c_char>()
-        };
-    }
-    r
+
+#[link(name = "sm_config", kind = "static", modifiers = "-bundle")]
+extern "C-unwind" {
+    #[link_name = "sm_util_NextDelim"]
+    pub fn NextDelim(cursor: *mut *mut c_char, separator: i32) -> *mut c_char;
+    #[link_name = "sm_util_StringEqualsNoCase"]
+    pub fn StringEqualsNoCase(value: *const c_char, expected: *const c_char) -> bool;
+    #[link_name = "sm_util_StringStartsWithNoCase"]
+    pub fn StringStartsWithNoCase(value: *const c_char, prefix: *const c_char) -> *const c_char;
+    #[link_name = "sm_util_ReadWholeFile"]
+    pub fn ReadWholeFile(name: *const c_char, length: *mut size_t) -> *mut u8;
+    #[link_name = "sm_util_NextLineStripComments"]
+    pub fn NextLineStripComments(cursor: *mut *mut c_char) -> *mut c_char;
+    #[link_name = "sm_util_NextPossiblyQuotedString"]
+    pub fn NextPossiblyQuotedString(cursor: *mut *mut c_char) -> *mut c_char;
+    #[link_name = "sm_util_ReplaceFilenameWithNewPath"]
+    pub fn ReplaceFilenameWithNewPath(base: *const c_char, name: *const c_char) -> *mut c_char;
+    #[link_name = "sm_util_SplitKeyValue"]
+    pub fn SplitKeyValue(value: *mut c_char) -> *mut c_char;
+    #[link_name = "sm_util_SkipPrefix"]
+    pub fn SkipPrefix(value: *const c_char, prefix: *const c_char) -> *const c_char;
+    #[link_name = "sm_util_StrSet"]
+    pub fn StrSet(target: *mut *mut c_char, value: *const c_char);
+    #[link_name = "sm_util_ByteArray_Resize"]
+    pub fn ByteArray_Resize(array: *mut ByteArray, size: size_t);
+    #[link_name = "sm_util_ByteArray_Destroy"]
+    pub fn ByteArray_Destroy(array: *mut ByteArray);
+    #[link_name = "sm_util_ByteArray_AppendData"]
+    pub fn ByteArray_AppendData(array: *mut ByteArray, data: *const u8, size: size_t);
+    #[link_name = "sm_util_ByteArray_AppendByte"]
+    pub fn ByteArray_AppendByte(array: *mut ByteArray, value: u8);
+    fn sm_util_matches_source(index: u32, bytes: *const u8, length: usize) -> bool;
 }
-#[inline]
-unsafe fn ToLower(a: i32) -> i32 {
-    a + (a >= 'A' as i32 && a <= 'Z' as i32) as i32 * 32
+
+// The installed host callback may return or unwind. Do not declare it noreturn.
+#[no_mangle]
+unsafe extern "C-unwind" fn sm_util_die(message: *const c_char) {
+    crate::host::Die(message);
 }
-pub unsafe fn StringEqualsNoCase(mut a: *const c_char, mut b: *const c_char) -> bool {
-    loop {
-        crate::update_place! { previous fresh2 = a => a.offset(1); }
-        let aa: i32 = ToLower(*fresh2 as i32);
-        crate::update_place! { previous fresh3 = b => b.offset(1); }
-        let bb: i32 = ToLower(*fresh3 as i32);
-        if aa != bb {
-            return false_0 != 0;
-        }
-        if aa == 0 {
-            return true_0 != 0;
-        }
-    }
-}
-pub unsafe fn StringStartsWithNoCase(mut a: *const c_char, mut b: *const c_char) -> *const c_char {
-    loop {
-        let aa: i32 = ToLower(*a as i32);
-        let bb: i32 = ToLower(*b as i32);
-        if bb == 0 {
-            return a;
-        }
-        if aa != bb {
-            return null::<c_char>();
-        }
-        a = a.offset(1);
-        b = b.offset(1);
-    }
-}
-pub unsafe fn ReadWholeFile(name: *const c_char, length: *mut size_t) -> *mut u8 {
-    let f = fopen(name, c"rb".as_ptr()) as *mut FILE;
-    if f.is_null() {
-        return null_mut::<u8>();
-    }
-    fseek(f, 0 as c_long, SEEK_END);
-    let size: size_t = ftell(f) as size_t;
-    rewind(f);
-    let buffer = malloc(size.wrapping_add(1 as size_t)) as *mut u8;
-    if buffer.is_null() {
-        Die(c"malloc failed".as_ptr());
-    }
-    *buffer.offset(size as isize) = 0;
-    if fread(buffer as *mut c_void, 1 as size_t, size, f) as size_t != size {
-        Die(c"fread failed".as_ptr());
-    }
-    fclose(f);
-    if !length.is_null() {
-        *length = size;
-    }
-    buffer
-}
-pub unsafe fn NextLineStripComments(s: *mut *mut c_char) -> *mut c_char {
-    let mut p = *s;
-    if p.is_null() {
-        return null_mut::<c_char>();
-    }
-    let mut eol = strchr(p, '\n' as i32);
-    *s = if !eol.is_null() {
-        eol.offset(1)
-    } else {
-        null_mut::<c_char>()
-    };
-    eol = if !eol.is_null() {
-        eol
-    } else {
-        p.offset(strlen(p) as isize)
-    };
-    let comment = memchr(
-        p as *const c_void,
-        '#' as i32,
-        eol.offset_from(p) as c_long as size_t,
-    ) as *mut c_char;
-    eol = if !comment.is_null() { comment } else { eol };
-    while eol > p
-        && (*eol.offset(-1i32 as isize) as i32 == '\r' as i32
-            || *eol.offset(-1i32 as isize) as i32 == ' ' as i32
-            || *eol.offset(-1i32 as isize) as i32 == '\t' as i32)
-    {
-        eol = eol.offset(-1);
-    }
-    *eol = 0 as c_char;
-    while *p as i32 == ' ' as i32 || *p as i32 == '\t' as i32 {
-        p = p.offset(1);
-    }
-    p
-}
-pub unsafe fn NextPossiblyQuotedString(s: *mut *mut c_char) -> *mut c_char {
-    let mut r = *s;
-    let mut t = null_mut::<c_char>();
-    while *r as i32 == ' ' as i32 || *r as i32 == '\t' as i32 {
-        r = r.offset(1);
-    }
-    if *r as i32 == '"' as i32 {
-        r = r.offset(1);
-        t = r;
-        while *t as i32 != 0 && *t as i32 != '"' as i32 {
-            t = t.offset(1);
-        }
-    } else {
-        t = r;
-        while *t as i32 != 0 && *t as i32 != ' ' as i32 && *t as i32 != '\t' as i32 {
-            t = t.offset(1);
-        }
-    }
-    if *t != 0 {
-        crate::update_place! { previous fresh1 = t => t.offset(1); }
-        *fresh1 = 0 as c_char;
-    }
-    while *t as i32 == ' ' as i32 || *t as i32 == '\t' as i32 {
-        t = t.offset(1);
-    }
-    *s = t;
-    r
-}
-pub unsafe fn ReplaceFilenameWithNewPath(
-    old_path: *const c_char,
-    new_path: *const c_char,
-) -> *mut c_char {
-    let mut olen: size_t = strlen(old_path);
-    let nlen: size_t = strlen(new_path).wrapping_add(1 as size_t);
-    while olen != 0
-        && *old_path.offset(olen.wrapping_sub(1 as size_t) as isize) as i32 != '/' as i32
-        && *old_path.offset(olen.wrapping_sub(1 as size_t) as isize) as i32 != '\\' as i32
-    {
-        olen = olen.wrapping_sub(1);
-    }
-    let result = malloc(olen.wrapping_add(nlen)) as *mut c_char;
-    memcpy(result as *mut c_void, old_path as *const c_void, olen);
-    memcpy(
-        result.offset(olen as isize) as *mut c_void,
-        new_path as *const c_void,
-        nlen,
-    );
-    result
-}
-pub unsafe fn SplitKeyValue(p: *mut c_char) -> *mut c_char {
-    let equals = strchr(p, '=' as i32);
-    if equals.is_null() {
-        return null_mut::<c_char>();
-    }
-    let mut kr = equals;
-    while kr > p
-        && (*kr.offset(-1i32 as isize) as i32 == ' ' as i32
-            || *kr.offset(-1i32 as isize) as i32 == '\t' as i32)
-    {
-        kr = kr.offset(-1);
-    }
-    *kr = 0 as c_char;
-    let mut v = equals.offset(1);
-    while *v as i32 == ' ' as i32 || *v as i32 == '\t' as i32 {
-        v = v.offset(1);
-    }
-    v
-}
-pub unsafe fn SkipPrefix(mut big: *const c_char, mut little: *const c_char) -> *const c_char {
-    while *little != 0 {
-        if *little as i32 != *big as i32 {
-            return null::<c_char>();
-        }
-        big = big.offset(1);
-        little = little.offset(1);
-    }
-    big
-}
-pub unsafe fn StrSet(rv: *mut *mut c_char, s: *const c_char) {
-    let news = strdup(s);
-    let old = *rv;
-    *rv = news;
-    free(old as *mut c_void);
-}
-pub unsafe fn ByteArray_Resize(arr: *mut ByteArray, new_size: size_t) {
-    (*arr).size = new_size;
-    if new_size > (*arr).capacity {
-        let minsize: size_t = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity >> 1i32)
-            .wrapping_add(8 as size_t);
-        (*arr).capacity = if new_size < minsize {
-            minsize
-        } else {
-            new_size
-        };
-        let data = realloc((*arr).data as *mut c_void, (*arr).capacity) as *mut u8;
-        if data.is_null() {
-            Die(c"memory allocation failed".as_ptr());
-        }
-        (*arr).data = data;
-    }
-}
-pub unsafe fn ByteArray_Destroy(arr: *mut ByteArray) {
-    let data = (*arr).data as *mut c_void;
-    (*arr).data = null_mut::<u8>();
-    free(data);
-}
-pub unsafe fn ByteArray_AppendData(arr: *mut ByteArray, data: *const u8, data_size: size_t) {
-    ByteArray_Resize(arr, (*arr).size.wrapping_add(data_size));
-    memcpy(
-        (*arr)
-            .data
-            .offset((*arr).size as isize)
-            .offset(-(data_size as isize)) as *mut c_void,
-        data as *const c_void,
-        data_size,
-    );
-}
-pub unsafe fn ByteArray_AppendByte(arr: *mut ByteArray, v: u8) {
-    ByteArray_Resize(arr, (*arr).size.wrapping_add(1 as size_t));
-    *(*arr)
-        .data
-        .offset((*arr).size.wrapping_sub(1 as size_t) as isize) = v;
+
+#[doc(hidden)]
+pub fn native_source_matches() -> bool {
+    [
+        include_bytes!("util.rs").as_slice(),
+        include_bytes!("native_util.c").as_slice(),
+        include_bytes!("native_util.h").as_slice(),
+        include_bytes!("types.rs").as_slice(),
+        include_bytes!("../../tools/install_native_config.py").as_slice(),
+    ]
+    .into_iter()
+    .enumerate()
+    .all(|(index, source)| unsafe {
+        sm_util_matches_source(index as u32, source.as_ptr(), source.len())
+    })
 }
