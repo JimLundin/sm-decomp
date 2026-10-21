@@ -9,6 +9,10 @@ with c2rust and is now being cleaned up into idiomatic Rust, one subsystem at
 a time, with that per-frame comparison as the test. See
 [docs/PLAN.md](docs/PLAN.md).
 
+Open [the interactive architecture atlas](docs/architecture.html) in a browser
+to explore the current construction, proposed gameplay ownership, shared
+behaviors, and frame execution order. It works offline without a build step.
+
 ## Run
 
 Needs SDL2 (`apt install libsdl2-dev` on Debian/Ubuntu), rustup and the

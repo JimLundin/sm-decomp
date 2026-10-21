@@ -1529,6 +1529,9 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    responsibility, such as Samus movement, with an exercised boundary and named
    routines. Migrate its real callers and state transitions, then remove its
    retired bank facade.
+   The [interactive architecture atlas](architecture.html) maps current source
+   to proposed Super Metroid responsibilities, existing sharing and frame order.
+   It is a design aid; proposed interfaces are not adopted replacements or savings.
    Renewed user direction (2026-10-21): the search is still too narrow. Prioritize
    substantial system replacements and repeated algorithms across responsibilities.
    Stop spending implementation/validation effort on roughly hundred-line enemy
