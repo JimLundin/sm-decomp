@@ -1834,6 +1834,14 @@ computed-result/store pairs occupy 844 gross lines before replacement costs.
 Pointer, timer, null-guard and string-cast envelopes provide no credible
 thousand-line replacement. These bounds do not exhaust algorithmic sharing.
 
+A distinct compiler-lint check of current headless-library control flow finds
+one type-limit comparison, two shadowed condition chains, one constant
+self-comparison and 45 mostly local Boolean diagnostics, some overlapping.
+It establishes no substantial deletion group. The final forced-lint metadata
+pass succeeds; no candidate, saving or runtime claim. This is limited compiler
+discovery, not exhaustive path analysis. Keep that cohort parked. Results:
+Local/sm-decomp-experiments/20261021/semantic-branches.
+
 Further complete-cohort pricing at 7617b682 excludes these repeats:
 
 - Index-only Eproj/PLM/HDMA slot methods: 958 replacements, 253 locals and
