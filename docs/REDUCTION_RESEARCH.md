@@ -129,6 +129,59 @@ These are primary-source compatibility findings, not executed upstream shader
 comparisons or dependency savings. The native replacement's saving is measured
 separately and does not assume shader conversion is free.
 
+## Complete CPU and codec dependency trials (2026-10-21)
+
+These isolated alternatives start from `498c8a4d` / **103,313 lines**. Neither
+is adopted, and their independent prices are not added to the shader result.
+
+| Complete replacement | Formatted source price | Result |
+| --- | ---: | --- |
+| CPU through pinned `wdc65816`, all compatibility adapters included | 1,217 -> 450; whole project 102,546 (-767) | Uncompiled; dependency build script denied |
+| PNG/inflater through `stb_image = "=0.3.0"`, 44-line adapter | 837 -> 44; whole project 102,520 (-793) | Rejected: concrete decoder incompatibility |
+
+The CPU uses [super-yane's standalone core at `ad2f1f5`](https://github.com/josefwaller/super-yane/tree/ad2f1f5d252e3cbde7ed30be48909b68df85aaae/wdc65816).
+Public registers, instruction stepping and bus callbacks permit an adapter that
+preserves the existing layout, snapshots, opcode hooks and interrupt sequencing.
+Sixteen explicit legacy handlers and two identified bus-order/read-count repairs
+are charged in its 450 lines. External production code is 3,911 Rust lines plus
+dependencies; one Cargo declaration is added. The prepared 20,480-case DLL suite
+executed **zero cases**: Defender denied the proc-macro2 build script before
+compilation. Source checks are not proof of delegated CPU equivalence. No
+compatible compiled dependency cache was found; no blocked build script was
+converted to a DLL. Preserve this prototype pending a normal dependency build.
+
+The already-inspected [w65c816 0.1.17](https://docs.rs/crate/w65c816/0.1.17/source/)
+has no dependencies or build script, with cycle callbacks and cloneable state.
+Its setters normalize stack/index registers and it has no raw-state/force-fetch
+API. That defeats direct import by the existing adapter; it does not prove a
+different adapter impossible. No replacement price or execution is claimed.
+
+The PNG alternative's external direct package contains 534 Rust and 7,987 C
+lines, with one Cargo and three build-configuration lines added locally.
+Its [bundled stb_image 2.28 decoder](https://github.com/servo/rust-stb-image/blob/c977c0799c5dee7c58402daabfa3bac4029da08f/src/stb_image.c#L4314)
+rejects reserved length symbols 286/287. An ordinary DLL containing the actual
+unchanged current Rust decoder executed three 1x1 grayscale PNGs: the normal
+control and both reserved-symbol variants return pixel `0x41`. Thus the direct
+replacement changes accepted input behavior. Upstream rejection is source
+reasoning, not an executed C comparison. Its normal build separately stopped at
+a denied libc build script; all 6,604 generated broader fixtures remain unrun.
+
+Both denied builds recorded Defender event 1121 under rule
+`01443614-CD74-433A-B99E-2ECDC07BFC25`; no settings were changed and no failures
+are reported as passes. Durable candidates, complete prices, sources and checks:
+`Local/sm-decomp-experiments/20261021/{cpu-dependency,codec-dependency}`.
+
+A bounded whole-oracle review also finds no drop-in deletion budget. Ares
+`9408cb43` exposes an [instruction tracer callback](https://github.com/ares-emulator/ares/blob/9408cb43d4948fc3ea6e152a307a34348df3fe04/ares/sfc/cpu/debugger.cpp#L19)
+and writable debugger memories, but [CPU interrupt/DMA/timing internals](https://github.com/ares-emulator/ares/blob/9408cb43d4948fc3ea6e152a307a34348df3fe04/ares/sfc/cpu/cpu.hpp#L92)
+are private and precise stop/resume/state translation remains unresolved.
+Locally, native register access, frame drawing and audio retain the same
+PPU/DMA/bus/cartridge/DSP, while Bang_Main still reaches RunAsmCode. An external
+oracle alone therefore retires none of those complete responsibilities. This
+is source feasibility, not implementation or runtime evidence; a combined
+native-backend/oracle replacement remains unpriced. Pinned source and local
+interface maps: `Local/sm-decomp-experiments/20261021/oracle-dependency`.
+
 ## A directly relevant successful migration
 
 **rav1d is a useful precedent.** Its [deduplication issue #26](https://github.com/memorysafety/rav1d/issues/26)

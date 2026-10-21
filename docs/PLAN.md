@@ -149,7 +149,7 @@ accessors remain. Reject this spelling for volume before compiler/runtime work.
 This is separate from the earlier cached Samus view.
 Durable candidate: Local/sm-decomp-experiments/20261021/typed-ram-prefix/candidate-v2.
 
-Next architectural comparisons must price complete responsibility replacement:
+Architectural comparisons must price complete responsibility replacement:
 maintained dependencies for host presentation/shaders/images, and native game
 video together with the oracle interface needed to retire the old backend.
 At a2b507ae the host graphics/shader/image scope is 2,557 lines; PPU plus DMA is
@@ -169,6 +169,26 @@ tile-contact scope is only 2,617 gross lines and has live callback effects; no
 multi-thousand-line gameplay saving is established. Bank retirement should follow
 actual responsibility replacement. The complete shader/presenter replacement
 below brings maintained source to 102,725 lines; no bank is retired by it.
+The complete CPU dependency prototype prices 1,217 -> 450 lines (-767), including
+16 legacy handlers and identified bus compatibility repairs. It is uncompiled:
+Defender denied a dependency build script; zero of 20,480 prepared cases ran.
+The direct PNG/inflater dependency prices -793 but is rejected: actual current
+Rust accepts reserved Huffman-symbol fixtures that the upstream source rejects.
+Three current-Rust DLL controls pass; the upstream C candidate was not executed.
+Their prices use the separate 103,313-line input and are not accepted savings.
+Complete costs, sources and limits are in REDUCTION_RESEARCH.md. Keep the CPU
+candidate parked pending a normal dependency build; do not repeat the direct
+codec substitution. Native shader/presentation ownership is adopted below.
+External-oracle replacement alone cannot retire PPU/DMA/bus/cartridge code:
+native register access and frame drawing still use it, and Bang_Main still calls
+RunAsmCode through Call. A complete replacement must cover those native consumers
+and oracle state/control together. Shared PPU rendering is a separate bounded
+comparison, not another unused-mode deletion scan.
+The ROM-template loader preflight is also closed: 22 fire-pillar shape callbacks
+offer only 88 gross lines, while their parameters already follow source-proven
+formulas. Decoding changed ROM operands would differ from current hardcoded Rust;
+whitelisting, validation and fallback costs are not free. No saving is claimed.
+Durable source assessment: Local/sm-decomp-experiments/20261021/rom-callback-descriptors.
 The reconstructed alias, constant-group and native C-string cohorts are adopted
 under item 3, excluding the entire shader file while its unrelated draft is
 present. Their old interrupted prices are not additional savings. The distinct
