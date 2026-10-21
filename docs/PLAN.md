@@ -253,7 +253,10 @@ All 330 compiled map rows, 1,040 complete differential cases and both full boot
 replays pass; the sequencer and DSP behavior outside those transfers is unchanged.
 Live-typed snapshots and shared byte-memory diagnostics remove **239 more lines**,
 reaching **101,575**, with component checks and both full boot replays passing.
-Another **1,576 lines** are needed to reach 99,999;
+The pinned LakeSnes CPU adapter removes **696 more Rust lines**, reaching
+**100,879**, with complete component checks and both full boot replays passing.
+Its 41-line installer counts separately; the upstream closure is 2,836 external
+C/header lines. Another **880 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -898,9 +901,32 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    remaining gap is not a prerequisite for useful implementation. At each
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
-   Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **1,576-line** gap; parked small drafts are not
-   an aggregate reduction forecast. Update the budget as candidates qualify.
+   Keep measured drafts separate from landed savings. The CPU and PNG dependency
+   replacements now have passing component checks and complete release builds.
+   Finish their main integration before composing the already measured RAM-chain
+   and residual-control-flow cohorts; do not add their standalone prices.
+
+   The pinned LakeSnes CPU adapter is adopted after full replay validation:
+   **101,575 -> 100,879 (-696 Rust lines)**, or **655 net lines** after its
+   41-line installer. The independently published upstream closure is 2,836
+   C/header lines, separately disclosed in [CPU_DEPENDENCY.md](CPU_DEPENDENCY.md).
+   Fifteen compatibility/hook handlers retain current behavior; the Rust Cpu
+   layout, 27-byte legacy save span and outer interrupt sequencing remain.
+   A fresh foreign CPU is constructed each instruction, with no persistent
+   foreign snapshot state. All seven embedded component sources match.
+   **524,288 instruction cases and 4,096 IRQ/NMI/WAI/STP cases** have zero
+   observable differences: registers, bus order/memory/history and final cycles.
+   Intermediate callback cycle fields differ in 240,214/672 cases; the actual
+   reachable bus and host callbacks do not read that field. This is deliberately
+   not whole-Cpu byte identity during callbacks. Final main release build and
+   formatting pass. Full boot any% **129712/0** and Speed Booster **148406/0**
+   pass with normal rendering/audio and source fingerprint
+   `3a08843e9e15b17aa59eeb5f1018dca693c40177a1f85e2fc1f2e8b13eb6efde`.
+   Neither reaches credits. Direct C
+   compilation and static linkage passed; earlier denied installer/build-script
+   attempts remain failures. No security settings changed. The additional extern
+   C block is the dependency boundary; unsafe declarations fall by 25.
+   Durable source/checks: Local/sm-decomp-experiments/20261021/lakesnes-cpu-dependency.
 
    Live-typed snapshots remove **239 lines (101,814 -> 101,575)**, 2,453 tokens
    and 6,196 spelling bytes. Existing Cpu/Ppu/Snes/Dma types replace separate
@@ -1550,7 +1576,15 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: live-typed snapshots pass clean full boot any%
+Latest full integration: the pinned LakeSnes CPU adapter passes full boot any%
+**129712/0** and Speed Booster **148406/0**, with normal rendering/audio and
+comparisons. Both use final source fingerprint
+`3a08843e9e15b17aa59eeb5f1018dca693c40177a1f85e2fc1f2e8b13eb6efde`.
+The adapter matches the independently compared component source; the installed
+archive matches its pinned build hash. Neither reaches credits. Logs:
+Local/sm-decomp-experiments/20261021/lakesnes-cpu-dependency/main-{any,speed}.log.
+
+Previous full integration: live-typed snapshots pass clean full boot any%
 **129712/0** and Speed Booster **148406/0**, with normal rendering/audio and
 comparisons. Both use final source fingerprint
 `d7c1ddfdc819e388baad82ca4f277e807d976a845a3e7df179ac19713d0a1a6a`.
@@ -1753,10 +1787,11 @@ shared gameplay imports, enemy callback ownership, native inflater, compound
 RAM updates, shared RAM/record metadata, alias declarations, native C-string
 literals, shared constant headers, native shader/presentation ownership and
 shared PPU pixel evaluation, native/SPC state transfers and live-typed snapshots,
-maintained Rust is **101,575**, leaving **1,576** to
-reach 99,999. Counters:
-raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3318; cast lines 7580. Snapshot diagnostics add one unsafe
+and the pinned CPU dependency, maintained Rust is **100,879**, leaving **880**
+to reach 99,999. Its new installer has 41 lines; external CPU code has 2,836.
+Counters: raw offsets 30; extern C blocks 4; counted C ABI exports 4; no_mangle 8;
+unsafe functions 3293; cast lines 7580. The CPU adds one foreign dependency
+boundary and removes 25 unsafe declarations. Snapshot diagnostics add one unsafe
 helper and remove 14 cast-containing lines while removing 239 total lines.
 Shared state transfers add one unsafe
 helper and remove six cast-containing lines while removing 230 total lines.

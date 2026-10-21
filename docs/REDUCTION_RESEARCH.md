@@ -71,7 +71,10 @@ release, source-bound differential transfer checks and both full boot replays pa
 Live-typed snapshots remove **239 further lines**, reaching **101,575**, with
 2,453 fewer tokens and 6,196 fewer spelling bytes. Complete release, source-bound
 capture/restore/diagnostic checks and both full boot replays pass.
-Maintained Rust needs another **1,576 lines removed** to reach 99,999. A separate
+The pinned CPU adapter removes **696 more Rust lines**, reaching **100,879**.
+Its 41-line installer and 2,836 external C/header lines are disclosed separately.
+Full boot replays and component checks pass; another **880 Rust lines** must go
+to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -92,6 +95,38 @@ neither reduces source volume in the tested scopes. Its default mode does
 preserve packed byte accesses despite physically larger Rust structs. Corrode's
 specific packing omission is repairable; layout differences alone are not a
 correctness verdict. The independent-transpiler sections record these tests.
+
+## Pinned LakeSnes CPU replacement (2026-10-21)
+
+The complete CPU becomes **1,217 -> 521 Rust lines (-696)** through the
+unmodified [dinkc64/LakeSnes revision 048a0d7](https://github.com/dinkc64/LakeSnes/tree/048a0d72568668f74e0cdf371dcd9e8efd614965).
+All 15 retained compatibility/hook handlers and the per-instruction register/bus
+adapter count. The 41-line installer leaves **655 net lines removed**; the
+independently published dependency has **2,836 C/header lines**, separately
+disclosed. This reduces maintained implementation, not total program source.
+Installation, pinned hashes and MIT distribution requirements are in
+[CPU_DEPENDENCY.md](CPU_DEPENDENCY.md); Unix installation is untested.
+
+Current Rust remains the behavior authority. Its Cpu layout, legacy save span,
+outer IRQ/NMI/WAI/STP sequencing, hardware bus and game hooks remain. The adapter
+constructs foreign state per instruction and synchronizes general registers at
+each real bus callback. Indexed timing needs explicit compatibility handling.
+The final source-bound component DLL passes **524,288 instruction cases and
+4,096 lifecycle cases**, with zero observable register, memory/bus/history,
+returned-cycle or panic mismatches. The seven embedded sources match disk.
+There are **240,214/672 intermediate callback-cycle differences**. Reachable
+production bus/host callbacks do not observe that field; final cycles match.
+This is not intermediate whole-Cpu byte equivalence. Future observers of that
+field would require changing the adapter.
+
+The actual main release library/frontend build passes. Full boot any%
+**129712/0** and Speed Booster **148406/0** pass on the **100,879-line** source:
+`3a08843e9e15b17aa59eeb5f1018dca693c40177a1f85e2fc1f2e8b13eb6efde`.
+Both keep normal rendering/audio; neither reaches credits. Earlier
+denied installer/build-script attempts remain failed attempts; the successful
+direct C compilation and ordinary static linkage are separate authorized builds.
+Durable sources, independent observer review and final main logs:
+`Local/sm-decomp-experiments/20261021/lakesnes-cpu-dependency`.
 
 ## Live-typed snapshots (2026-10-21)
 
