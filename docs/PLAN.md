@@ -1676,6 +1676,18 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    require compatibility work. No foreign cartridge code was built or run.
    Native draft: Local/sm-decomp-experiments/20261021/cartridge-native;
    pinned foreign inputs: Local/sm-decomp-experiments/20261021/cartridge-dependency.
+   Equipment, multipart-geometry and remaining frontend-ownership preflights
+   establish no substantial replacement to implement. Equipment initialization,
+   activation and search already share their algorithms; fixed navigation tables
+   and mutable activation descriptors cannot become one cached item model.
+   Botwoon history and Ridley joints already share traversal; the other examined
+   creatures retain different geometry and transition rules. Frontend ownership
+   retains both rendering protocols and event policies; automatic cleanup would
+   change failure behavior. Its existing **-193** is only a partial, unvalidated
+   price, with allocation semantics unresolved. Park these specific proposals;
+   no new draft, complete price, build or runtime result is claimed. Multipart
+   findings: Local/sm-decomp-experiments/20261021/multipart-geometry;
+   partial frontend draft: Local/sm-decomp-experiments/20261021/desktop-frontend.
    Continue selecting larger complete responsibilities and repeated algorithms;
    the 90,000-line stretch checkpoint still has no demonstrated remaining budget.
    Durable experiments: Local/sm-decomp-experiments/20261021/complete-backend.
