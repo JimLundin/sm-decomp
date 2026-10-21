@@ -3,7 +3,9 @@
 use crate::game_state::Game;
 use ::core::ffi::{c_char, c_double, c_float, c_long, c_schar, c_short, c_uchar, c_ushort, c_void};
 
-pub type VoidP = u16;
+crate::type_aliases! {
+    pub VoidP, PpuZbufType, Uint16, stbi__uint16 = u16;
+}
 
 crate::typed_struct! {
     [
@@ -693,97 +695,37 @@ crate::typed_struct! {
     }
 }
 
-pub type Buttons = u32;
+crate::type_aliases! {
+    pub Buttons, Consts_60, Consts_80, Consts_81, Consts_82, Consts_83, Consts_84, Consts_86,
+        Consts_87, Consts_88, Consts_89, Consts_8B, Consts_8C, Consts_8D, Consts_8F, Consts_90,
+        Consts_91, Consts_94, Consts_9B, Consts_A0, Consts_A2, Consts_A3, Consts_A4, Consts_A5,
+        Consts_A6, Consts_A7, Consts_A8, Consts_A9, Consts_AA, Consts_AD, Consts_B2, Consts_B3,
+        Consts_B4, Consts_B7, DspReg, EnemyAiBits, EnemyProps, GLSLScaleType, GLbitfield, GLenum,
+        GLuint, GameState, LiquidPhysicsType, LoadingGameState, ProjectileType, RunMode, SDL_GLattr,
+        SDL_HitTestResult, SDL_Keymod, SDL_Scancode, SDL_bool, SamusMovementType, SamusPose,
+        SnesRegs, Uint32, __mode_t, ogl_LoadStatus, stbi__uint32, KeyAction, OutputMethod,
+        SaveLoadOperation = u32;
+}
 
 pub type CalculateAngleFromXYFunc = unsafe fn(u16, &mut Game) -> u8;
 
-pub type Consts_60 = u32;
-
-pub type Consts_80 = u32;
-
-pub type Consts_81 = u32;
-
-pub type Consts_82 = u32;
-
-pub type Consts_83 = u32;
-
-pub type Consts_84 = u32;
-
-pub type Consts_86 = u32;
-
-pub type Consts_87 = u32;
-
-pub type Consts_88 = u32;
-
-pub type Consts_89 = u32;
-
-pub type Consts_8B = u32;
-
-pub type Consts_8C = u32;
-
-pub type Consts_8D = u32;
-
-pub type Consts_8F = u32;
-
-pub type Consts_90 = u32;
-
-pub type Consts_91 = u32;
-
-pub type Consts_94 = u32;
-
-pub type Consts_9B = u32;
-
-pub type Consts_A0 = u32;
-
-pub type Consts_A2 = u32;
-
-pub type Consts_A3 = u32;
-
-pub type Consts_A4 = u32;
-
-pub type Consts_A5 = u32;
-
-pub type Consts_A6 = u32;
-
-pub type Consts_A7 = u32;
-
-pub type Consts_A8 = u32;
-
-pub type Consts_A9 = u32;
-
-pub type Consts_AA = u32;
-
-pub type Consts_AD = u32;
-
-pub type Consts_B2 = u32;
-
-pub type Consts_B3 = u32;
-
-pub type Consts_B4 = u32;
-
-pub type Consts_B7 = u32;
-
-pub type CoroutineRet = u8;
+crate::type_aliases! {
+    pub CoroutineRet, Uint8 = u8;
+}
 
 pub type CrocomireFunc = unsafe fn(u16, *const u16, &mut Game) -> *const u16;
 
-pub type DspReg = u32;
+crate::type_aliases! {
+    pub FuncXY_V, Func_CalcHdma, Func_SpazerSba_V = unsafe fn(u16, u16, &mut Game) -> ();
+}
 
-pub type EnemyAiBits = u32;
+crate::type_aliases! {
+    pub Func_U8, Func_V_A = unsafe fn(&mut Game) -> u8;
+}
 
-pub type EnemyProps = u32;
-
-pub type FuncXY_V = unsafe fn(u16, u16, &mut Game) -> ();
-
-pub type Func_CalcHdma = unsafe fn(u16, u16, &mut Game) -> ();
-
-pub type Func_SpazerSba_V = unsafe fn(u16, u16, &mut Game) -> ();
-
-pub type Func_U8 = unsafe fn(&mut Game) -> u8;
-
-pub type Func_V = unsafe fn(&mut Game) -> ();
-
-pub type Func_V_A = unsafe fn(&mut Game) -> u8;
+crate::type_aliases! {
+    pub Func_V, HandlerFunc, SyncAllFunc = unsafe fn(&mut Game) -> ();
+}
 
 pub type Func_V_Coroutine = unsafe fn(&mut Game) -> CoroutineRet;
 
@@ -803,11 +745,9 @@ pub type GLDEBUGPROC = Option<
     ) -> (),
 >;
 
-pub type GLSLScaleType = u32;
-
-pub type GLbitfield = u32;
-
-pub type GLboolean = c_uchar;
+crate::type_aliases! {
+    pub GLboolean, GLubyte, stbi_uc = c_uchar;
+}
 
 pub type GLbyte = c_schar;
 
@@ -815,45 +755,29 @@ pub type GLchar = c_char;
 
 pub type GLdouble = c_double;
 
-pub type GLenum = u32;
-
 pub type GLfloat = c_float;
 
-pub type GLint = i32;
+crate::type_aliases! {
+    pub GLint, GLsizei, SDL_JoystickPowerLevel, Sint32, GamepadButton = i32;
+}
 
-pub type GLint64 = i64;
+crate::type_aliases! {
+    pub GLint64, Sint64 = i64;
+}
 
-pub type GLintptr = ptrdiff_t;
+crate::type_aliases! {
+    pub GLintptr, GLsizeiptr = ptrdiff_t;
+}
 
 pub type GLshort = c_short;
 
-pub type GLsizei = i32;
-
-pub type GLsizeiptr = ptrdiff_t;
-
-pub type GLubyte = c_uchar;
-
-pub type GLuint = u32;
-
-pub type GLushort = c_ushort;
-
-pub type GameState = u32;
-
-pub type HandlerFunc = unsafe fn(&mut Game) -> ();
-
-pub type LiquidPhysicsType = u32;
-
-pub type LoadingGameState = u32;
+crate::type_aliases! {
+    pub GLushort, stbi_us = c_ushort;
+}
 
 pub type PFN_LOADFUNCPOINTERS = Option<unsafe fn() -> i32>;
 
-pub type PpuZbufType = u16;
-
-pub type ProjectileType = u32;
-
 pub type RunFrameFunc = unsafe fn(u16, i32, &mut Game) -> ();
-
-pub type RunMode = u32;
 
 pub type SDL_AudioCallback = Option<unsafe extern "C" fn(*mut c_void, *mut Uint8, i32) -> ()>;
 
@@ -861,77 +785,31 @@ pub type SDL_AudioDeviceID = Uint32;
 
 pub type SDL_AudioFormat = Uint16;
 
-pub type SDL_FingerID = Sint64;
+crate::type_aliases! {
+    pub SDL_FingerID, SDL_GestureID, SDL_TouchID = Sint64;
+}
 
 pub type SDL_GLContext = *mut c_void;
 
-pub type SDL_GLattr = u32;
-
-pub type SDL_GestureID = Sint64;
-
-pub type SDL_HitTestResult = u32;
-
-pub type SDL_JoystickID = Sint32;
-
-pub type SDL_JoystickPowerLevel = i32;
-
-pub type SDL_Keycode = Sint32;
-
-pub type SDL_Keymod = u32;
-
-pub type SDL_Scancode = u32;
-
-pub type SDL_TouchID = Sint64;
-
-pub type SDL_bool = u32;
-
-pub type SamusMovementType = u32;
-
-pub type SamusPose = u32;
+crate::type_aliases! {
+    pub SDL_JoystickID, SDL_Keycode = Sint32;
+}
 
 pub type SaveLoadFunc = unsafe fn(*mut c_void, *mut c_void, size_t, &mut Game) -> ();
 
 pub type Sint16 = i16;
 
-pub type Sint32 = i32;
-
-pub type Sint64 = i64;
-
-pub type SnesRegs = u32;
-
-pub type SyncAllFunc = unsafe fn(&mut Game) -> ();
-
-pub type Uint16 = u16;
-
-pub type Uint32 = u32;
-
 pub type Uint64 = u64;
-
-pub type Uint8 = u8;
 
 pub type _IO_lock_t = ();
 
-pub type __mode_t = u32;
-
-pub type __off64_t = c_long;
-
-pub type __off_t = c_long;
-
-pub type __time_t = c_long;
-
-pub type ogl_LoadStatus = u32;
+crate::type_aliases! {
+    pub __off64_t, __off_t, __time_t = c_long;
+}
 
 pub type ptrdiff_t = isize;
 
 pub type size_t = usize;
-
-pub type stbi__uint16 = u16;
-
-pub type stbi__uint32 = u32;
-
-pub type stbi_uc = c_uchar;
-
-pub type stbi_us = c_ushort;
 
 pub type time_t = __time_t;
 
@@ -1063,14 +941,6 @@ pub struct _IO_FILE {
 }
 
 pub type FILE = _IO_FILE;
-
-pub type KeyAction = u32;
-
-pub type OutputMethod = u32;
-
-pub type GamepadButton = i32;
-
-pub type SaveLoadOperation = u32;
 
 #[cfg(all(feature = "frontend", not(sm_verify_dll)))]
 pub use sdl2_sys::SDL_Window;

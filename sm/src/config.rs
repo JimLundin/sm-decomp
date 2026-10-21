@@ -17,7 +17,9 @@ use ::core::ptr::{null, null_mut};
 pub use sdl2_sys::{
     SDL_GameController, SDL_GetKeyFromName, SDL_Renderer, SDL_SysWMmsg, SDL_Texture, SDL_mutex,
 };
-pub type C2RustUnnamed = u32;
+crate::type_aliases! {
+    pub C2RustUnnamed, C2RustUnnamed_2, C2RustUnnamed_4 = u32;
+}
 sdl_constants! {
     SDL_KeyCode as C2RustUnnamed;
     SDLK_RALT, SDLK_RSHIFT, SDLK_RCTRL, SDLK_LALT, SDLK_LSHIFT, SDLK_LCTRL, SDLK_UP,
@@ -70,7 +72,6 @@ pub const kOutputMethod_OpenGL: C2RustUnnamed_1 = 2;
 pub const kOutputMethod_SDLSoftware: C2RustUnnamed_1 = 1;
 pub const kOutputMethod_SDL: C2RustUnnamed_1 = 0;
 pub use crate::types::Config;
-pub type C2RustUnnamed_2 = u32;
 pub const kMsuEnabled_Opuz: C2RustUnnamed_2 = 4;
 pub const kMsuEnabled_MsuDeluxe: C2RustUnnamed_2 = 2;
 pub const kMsuEnabled_Msu: C2RustUnnamed_2 = 1;
@@ -119,7 +120,6 @@ pub const kKeyMod_Shift: C2RustUnnamed_4 = 2048;
 pub const kKeyMod_Ctrl: C2RustUnnamed_4 = 4096;
 pub const kKeyMod_Alt: C2RustUnnamed_4 = 1024;
 
-pub type C2RustUnnamed_4 = u32;
 #[inline]
 unsafe fn atoi(mut __nptr: *const c_char) -> i32 {
     strtol(__nptr, NULL as *mut *mut c_char, 10) as i32

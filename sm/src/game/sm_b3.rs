@@ -32,9 +32,9 @@ crate::game::constants::typed_constants! { Consts_B3;
     addr_kUnusedSpinningTurtleEye_Ilist_86A7 = 34471, addr_kSpritemap_Nothing_B3 = 32845,
 }
 pub use crate::types::Enemy_Botwoon;
-pub type Enemy_EscapeDachora = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_EscapeEtecoon = crate::game::enemy_layouts::EnemyLayout8;
+crate::type_aliases! {
+    pub Enemy_EscapeDachora, Enemy_EscapeEtecoon = crate::game::enemy_layouts::EnemyLayout8;
+}
 
 pub type Enemy_PipeBug = crate::game::enemy_layouts::EnemyLayout72;
 

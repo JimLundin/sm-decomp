@@ -5,7 +5,14 @@ preserving behavior. This note records primary-source research, scanner trials
 and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
-Executable translation rules learned from current Rust now produce a
+Artifact availability: the user reported system resource exhaustion, and the
+TEMP experiment trees disappeared. Historical results below are prior observed
+measurements; their local inputs, emitters and checks are presently unavailable.
+They are not a currently inspectable completion proof. Current-source work
+continues from Git in Local/sm-decomp-experiments/20261021 with one heavy compiler
+job at a time and shared baseline/dependency artifacts.
+
+Executable translation rules learned from current Rust previously produced a
 **102,539-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
@@ -31,7 +38,12 @@ Shared RAM metadata removes another **452 lines**, reaching **103,972**, with
 complete constant/export equality and static builds passing.
 Shared record metadata then removes **271 lines**, reaching **103,701**, with
 complete compiler correspondence and static builds passing.
-Maintained Rust needs another **3,702 lines removed** to reach 99,999. A separate
+Shared alias declarations remove **202 lines**, reaching **103,499**, including
+a seven-line helper. All 184 selected alias types have compiler identity witnesses;
+all declarations and remaining expanded operations match, and release builds pass.
+The shader draft is excluded. The current rule and checks were reconstructed from
+Git and retained outside TEMP at Local/sm-decomp-experiments/20261021/alias-groups.
+Maintained Rust needs another **3,500 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.

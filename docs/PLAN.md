@@ -20,7 +20,8 @@ process's lock; tell its owner to release it.
 Artifact availability update (2026-10-21): the entire local TEMP
 `sm-tailored-next` tree and the original-C/parser experiment directories
 disappeared during work. Both long and short Windows paths were checked;
-the cause and any relocation are unknown. Git source and the unrelated shader
+the user confirmed that system resources ran out. No relocated copy is known.
+Git source and the unrelated shader
 draft remain intact. Historical counts and checks below describe previously
 observed results, whose local reproduction artifacts are now unavailable.
 They cannot serve as a currently inspectable implementation or completion proof.
@@ -181,7 +182,9 @@ full boot replay routes passing. Shared RAM metadata removes **452 more lines**,
 reaching **103,972**, with complete constant/export equality and static builds.
 Shared record metadata removes **271 more lines**, reaching **103,701**, with
 complete expanded-definition/runtime correspondence and static builds.
-Another **3,702 lines** are needed to reach 99,999;
+Shared alias declarations remove **202 more lines**, reaching **103,499**, with
+complete declaration/type identity and expanded-source checks plus release build.
+Another **3,500 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -643,16 +646,11 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    were unfinished when the TEMP artifacts disappeared. Park with zero accepted
    savings; neither reproducibility nor behavior validation is established.
 
-   Grouping identical type-alias RHS text is a distinct declaration price:
-   current RAM-stage input **103,972 -> 103,777 (-195)** across 186 aliases,
-   and historical **102,804 -> 102,740 (-64)** across 145 aliases. The 13-line
-   crate-local helper counts; public names and independent frontend declarations
-   remain. Tokens/text decrease and formatting controls contribute zero lines.
-   Current's larger difference includes existing blank separators. Those prices
-   remain excluded from accepted totals. Reopen on the actual record-metadata
-   outputs for composition, full expanded/resolved alias equivalence and builds;
-   neither independent price is an additional saving.
-   TEMP sm-tailored-next/type-alias-groups records the complete source prices.
+   Same-type alias declarations qualify for adoption under item 3. The rebuilt
+   current rule excludes the shader draft and attributed aliases, using a smaller
+   seven-line helper. Its final result is measured on the actual record-metadata
+   output. The old 195-line current and 64-line historical independent prices
+   are not additional savings; their TEMP reproduction artifacts are unavailable.
 
    Those representation studies are closed. Five subsequent domain studies
    use the same repaired 106,189-line control:
@@ -814,8 +812,24 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **3,702-line** gap; parked small drafts are not
+   replacement yet funds the **3,500-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Shared alias declarations remove **202 lines (103,701 -> 103,499)**, 836
+   tokens and 3,476 spelling bytes, including seven support lines. Thirty-two
+   same-module groups preserve all 184 selected public aliases; no attributed
+   alias, independent frontend declaration or shader source is changed. Complete
+   source reproduction and independent source review pass. Compiler identity
+   witnesses cover every selected alias, including unused aliases, and a wrong
+   type is rejected. All 233 library and ten frontend alias declarations match;
+   the complete ordered expansion and all 7,109 library/84 frontend functions
+   retain their signatures and operations. Embedded source/checkpoint payloads
+   are validated against their actual providers before normalization. Reused
+   baseline source differs only in CRLF/LF spelling, explicitly checked. Normal
+   main Cargo release, formatting and progress pass; no other counter changes.
+   Static declaration equivalence requires no gameplay replay. Checkpoint source
+   fingerprints change and old checkpoints need regeneration. Durable current
+   rule and checks: Local/sm-decomp-experiments/20261021/alias-groups.
 
    Shared record metadata removes **271 lines (103,972 -> 103,701)**, 1,963
    tokens and 4,586 spelling bytes, including six added support lines. Sixteen
@@ -1484,6 +1498,12 @@ only after checking they are no longer needed and resolving paths safely.
 Preserve unrelated source changes and active build caches. Never commit ROMs,
 movies, save states or other ROM-derived files.
 
+After the resource exhaustion, run one heavy compiler job at a time. Reuse
+identical baseline builds and dependencies, stream compiler output directly to
+files, and avoid full HIR/THIR dumps when source correspondence plus targeted
+compiler witnesses establishes the required property. Finish selected current
+cohorts before starting more experiments. Keep disposable build output bounded.
+
 ## Progress
 
 Baseline at ec45c573: raw g_ram offsets 30; extern C blocks 3; counted C ABI
@@ -1499,11 +1519,13 @@ combined callback/dispatch declarations, terminal loops, selected field/RAM
 store groups, the unaligned RAM repair, shared beam windows, native tracing,
 nonnull callback tables, Samus pose sequences, the packed-sprite repair,
 shared gameplay imports, enemy callback ownership, native inflater, compound
-RAM updates and shared RAM/record metadata, maintained Rust is **103,701**, leaving **3,702** to
+RAM updates and shared RAM/record metadata and alias declarations, maintained Rust
+is **103,499**, leaving **3,500** to
 reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
 unsafe functions 3330; cast lines 7870. RAM/record metadata remove 452/271 lines
-without changing any other counter. Compound updates remove 370 lines and
+without changing any other counter. Alias grouping removes another 202 lines
+without changing the other counters. Compound updates remove 370 lines and
 71 cast-containing lines without changing the other counters. The inflater removes 12 unsafe-function
 declarations and 25 cast-containing lines. Callback grouping removes 314 counted
 unsafe declaration lines while preserving expanded signatures. Its unchanged

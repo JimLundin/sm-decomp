@@ -52,9 +52,9 @@ crate::game::constants::typed_constants! { Consts_A5;
     addr_kDraygon_Ilist_97BB = 38843, addr_kDraygon_Ilist_97B9 = 38841,
 }
 
-pub type Enemy_Draygon = crate::game::enemy_layouts::EnemyLayout104;
-
-pub type Enemy_SporeSpawn = crate::game::enemy_layouts::EnemyLayout104;
+crate::type_aliases! {
+    pub Enemy_Draygon, Enemy_SporeSpawn = crate::game::enemy_layouts::EnemyLayout104;
+}
 
 const RomPtr_A0: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa0>;
 const RomPtr_A5: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa5>;

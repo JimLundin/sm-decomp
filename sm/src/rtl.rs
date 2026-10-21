@@ -164,8 +164,9 @@ pub const kApuMaxQueueSize: C2RustUnnamed_2 = 16;
 
 pub const kCurrentBugFixCounter: C2RustUnnamed_1 = 1;
 pub use crate::types::SnesRegs;
-pub type C2RustUnnamed_1 = u32;
-pub type C2RustUnnamed_2 = u32;
+crate::type_aliases! {
+    pub C2RustUnnamed_1, C2RustUnnamed_2 = u32;
+}
 pub const NULL: *mut c_void = null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;

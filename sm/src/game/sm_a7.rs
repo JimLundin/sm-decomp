@@ -80,7 +80,9 @@ crate::game::constants::typed_constants! { Consts_A7;
     addr_kSpritemap_Nothing_A7 = 32845,
 }
 
-pub type Enemy_Phantoon = crate::game::enemy_layouts::EnemyLayout8;
+crate::type_aliases! {
+    pub Enemy_Phantoon, Enemy_Etecoon, Enemy_Dachora = crate::game::enemy_layouts::EnemyLayout8;
+}
 
 enemy_layout! {
     Enemy_Kraid {
@@ -102,10 +104,6 @@ enemy_layout! {
         words: [],
     }
 }
-
-pub type Enemy_Etecoon = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_Dachora = crate::game::enemy_layouts::EnemyLayout8;
 
 crate::game::constants::typed_constants! { i32;
     kCoroutineNone = 0,

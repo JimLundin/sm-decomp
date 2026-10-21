@@ -36,21 +36,19 @@ use crate::game::sm_b4::CreateSpriteAtPos;
 
 pub type Enemy_Ridley = crate::game::enemy_layouts::EnemyLayout104;
 
-pub type Enemy_CeresDoor = crate::game::enemy_layouts::EnemyLayout8;
+crate::type_aliases! {
+    pub Enemy_CeresDoor, Enemy_CeresSteam, Enemy_FireGeyser, Enemy_RidleysExplosion, Enemy_Zebetites
+        = crate::game::enemy_layouts::EnemyLayout8;
+}
 
-pub type Enemy_CeresSteam = crate::game::enemy_layouts::EnemyLayout8;
+crate::type_aliases! {
+    pub Enemy_FakeKraid, Enemy_SpikeyPlatform, Enemy_Boulder =
+        crate::game::enemy_layouts::EnemyLayout40;
+}
 
-pub type Enemy_FakeKraid = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_FireGeyser = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_NuclearWaffle = crate::game::enemy_layouts::EnemyLayout72;
-
-pub type Enemy_SpikeyPlatform = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_Boulder = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_CeresRidley = crate::game::enemy_layouts::EnemyLayout72;
+crate::type_aliases! {
+    pub Enemy_NuclearWaffle, Enemy_CeresRidley = crate::game::enemy_layouts::EnemyLayout72;
+}
 
 crate::typed_struct! {
     [
@@ -67,10 +65,6 @@ crate::typed_struct! {
             var_56, var_57, var_58, var_59, var_5A, var_5B, var_5C, var_5D, var_5E, var_5F: u16;
     }
 }
-
-pub type Enemy_RidleysExplosion = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_Zebetites = crate::game::enemy_layouts::EnemyLayout8;
 
 crate::game::constants::typed_constants! { i32;
     true_0 = 1, false_0 = 0,

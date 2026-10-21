@@ -56,23 +56,21 @@ crate::typed_struct! {
     }
 }
 
-pub type Enemy_Shitroid = crate::game::enemy_layouts::EnemyLayout40;
+crate::type_aliases! {
+    pub Enemy_Shitroid, Enemy_DeadTorizo, Enemy_DeadSidehopper =
+        crate::game::enemy_layouts::EnemyLayout40;
+}
 
 pub type Enemy_DeadMonsters = crate::game::enemy_layouts::EnemyLayout72Late;
 
-pub type Enemy_DeadTorizo = crate::game::enemy_layouts::EnemyLayout40;
-
 pub type Enemy_ShitroidInCutscene = crate::game::enemy_layouts::EnemyLayout72;
-
-pub type Enemy_DeadSidehopper = crate::game::enemy_layouts::EnemyLayout40;
 
 pub type Enemy_DeadEnemy = crate::game::enemy_layouts::EnemyLayout40Late;
 
-pub type Enemy_MotherBomb = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_MotherBrainBody = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_MotherBrainsTubesFalling = crate::game::enemy_layouts::EnemyLayout8;
+crate::type_aliases! {
+    pub Enemy_MotherBomb, Enemy_MotherBrainBody, Enemy_MotherBrainsTubesFalling =
+        crate::game::enemy_layouts::EnemyLayout8;
+}
 
 crate::game::constants::typed_constants! { i32;
     kCoroutineNone = 0,

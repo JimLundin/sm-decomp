@@ -74,55 +74,20 @@ crate::game::constants::typed_constants! { Consts_A2;
     addr_kSpritemap_Nothing_A2 = 32845,
 }
 
-pub type Enemy_BouncingGoofball = crate::game::enemy_layouts::EnemyLayout40;
+crate::type_aliases! {
+    pub Enemy_BouncingGoofball, Enemy_LavaSeahorse, Enemy_NorfairRio, Enemy_MaridiaTurtle,
+        Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell, Enemy_NorfairLavajumpingEnemy,
+        Enemy_Rinka, Enemy_SpikeShootingPlant, Enemy_GunshipTop, Enemy_HirisingSlowfalling,
+        Enemy_LavaquakeRocks, Enemy_MiniMaridiaTurtle, Enemy_ThinHoppingBlobs =
+        crate::game::enemy_layouts::EnemyLayout40;
+}
 
-pub type Enemy_Rio = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_Flies = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_LavaSeahorse = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_NorfairRio = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_MaridiaBeybladeTurtle = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_MaridiaTurtle = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_MaridiaLargeSnail = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_MaridiaSpikeyShell = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_MiniCrocomire = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_NorfairLavajumpingEnemy = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_Rinka = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_SpikeShootingPlant = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_Gripper = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_GunshipBottom = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_GunshipTop = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_HirisingSlowfalling = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_JetPowerRipper = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_LavaquakeRocks = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_LowerNorfairRio = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_MiniMaridiaTurtle = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_MiniMaridiaBeybladeTurtle = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_NorfairErraticFireball = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_Ripper = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_ThinHoppingBlobs = crate::game::enemy_layouts::EnemyLayout40;
+crate::type_aliases! {
+    pub Enemy_Rio, Enemy_Flies, Enemy_MaridiaBeybladeTurtle, Enemy_MiniCrocomire, Enemy_Gripper,
+        Enemy_GunshipBottom, Enemy_JetPowerRipper, Enemy_LowerNorfairRio,
+        Enemy_MiniMaridiaBeybladeTurtle, Enemy_NorfairErraticFireball, Enemy_Ripper =
+        crate::game::enemy_layouts::EnemyLayout8;
+}
 
 const RomPtr_A2: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa2>;
 crate::ram_map::ram_pointer_functions! {

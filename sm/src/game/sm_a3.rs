@@ -60,39 +60,21 @@ crate::game::constants::typed_constants! { Consts_A3;
     addr_kSpritemap_Nothing_A3 = 32845,
 }
 
-pub type Enemy_Bang = crate::game::enemy_layouts::EnemyLayout72;
+crate::type_aliases! {
+    pub Enemy_Bang, Enemy_MaridiaSnail, Enemy_Mochtroid, Enemy_Roach =
+        crate::game::enemy_layouts::EnemyLayout72;
+}
 
-pub type Enemy_MaridiaFish = crate::game::enemy_layouts::EnemyLayout40;
+crate::type_aliases! {
+    pub Enemy_MaridiaFish, Enemy_MaridiaRefillCandy, Enemy_PlatformThatFallsWithSamus,
+        Enemy_Sidehopper, Enemy_Skree, Enemy_WreckedShipOrangeZoomer, Enemy_FireZoomer,
+        Enemy_FireFlea, Enemy_Metroid = crate::game::enemy_layouts::EnemyLayout40;
+}
 
-pub type Enemy_MaridiaRefillCandy = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_MaridiaSnail = crate::game::enemy_layouts::EnemyLayout72;
-
-pub type Enemy_Metalee = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_PlatformThatFallsWithSamus = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_Reflec = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_Sidehopper = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_Skree = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_WreckedShipOrangeZoomer = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_StoneZoomer = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_Elevator = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_FireZoomer = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_FireFlea = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_Metroid = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_Mochtroid = crate::game::enemy_layouts::EnemyLayout72;
-
-pub type Enemy_Roach = crate::game::enemy_layouts::EnemyLayout72;
+crate::type_aliases! {
+    pub Enemy_Metalee, Enemy_Reflec, Enemy_StoneZoomer, Enemy_Elevator =
+        crate::game::enemy_layouts::EnemyLayout8;
+}
 
 const RomPtr_A3: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa3>;
 #[inline]

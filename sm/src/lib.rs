@@ -415,3 +415,10 @@ pub mod verify_probe;
 pub mod verify_source;
 
 pub(crate) mod native_audio;
+
+macro_rules! type_aliases {
+    ($visibility:vis $($name:ident),+ = $target:ty;) => {
+        $($visibility type $name = $target;)+
+    };
+}
+pub(crate) use type_aliases;

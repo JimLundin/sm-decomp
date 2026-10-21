@@ -73,35 +73,20 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kMiniDraygon_Ilist_86C3 = 34499, addr_kMiniDraygon_Ilist_86A7 = 34471,
     addr_kSpritemap_Nothing_A8 = 32845,
 }
-pub type Enemy_Fune = crate::game::enemy_layouts::EnemyLayout40;
+crate::type_aliases! {
+    pub Enemy_Fune, Enemy_KiHunter, Enemy_MiniDraygon, Enemy_NorfairLavaMan,
+        Enemy_WalkingLavaSeahorse, Enemy_WreckedShipGhost, Enemy_Beetom, Enemy_Kago,
+        Enemy_WreckedShipOrbs = crate::game::enemy_layouts::EnemyLayout40;
+}
 
-pub type Enemy_KiHunter = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_MiniDraygon = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_NorfairLavaMan = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_WalkingLavaSeahorse = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_WreckedShipGhost = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_WreckedShipRobot = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_WreckedShipSpark = crate::game::enemy_layouts::EnemyLayout8;
+crate::type_aliases! {
+    pub Enemy_WreckedShipRobot, Enemy_WreckedShipSpark, Enemy_MaridiaFloater, Enemy_MorphBallEye =
+        crate::game::enemy_layouts::EnemyLayout8;
+}
 
 pub type Enemy_YappingMaw = crate::game::enemy_layouts::EnemyLayout104;
 
-pub type Enemy_Beetom = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_Kago = crate::game::enemy_layouts::EnemyLayout40;
-
-pub type Enemy_MaridiaFloater = crate::game::enemy_layouts::EnemyLayout8;
-
 pub type Enemy_MaridiaPuffer = crate::game::enemy_layouts::EnemyLayout72Late;
-
-pub type Enemy_MorphBallEye = crate::game::enemy_layouts::EnemyLayout8;
-
-pub type Enemy_WreckedShipOrbs = crate::game::enemy_layouts::EnemyLayout40;
 
 const RomPtr_A8: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa8>;
 crate::ram_map::ram_pointer_functions! {
