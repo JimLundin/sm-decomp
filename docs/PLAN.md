@@ -1595,11 +1595,29 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    unchanged foreign inputs, with C assertions enabled. These are constructed
    line-one drawing cases and separate sprite scans through line 255; they do
    not establish full-state, failure, lifecycle, extended-width or movie coverage.
-   The 14-line helper is only a partial adapter cost, not a replacement price
-   or saving. Complete rendering/state adaptation and pricing remain unfinished;
-   do not adopt the sprite subset as another small extraction. Final probe:
+   The 14-line helper is only a partial adapter cost, not a saving. Sprite probe:
    Local/sm-decomp-experiments/20261021/renderer-compatibility. The original
    counterexamples remain in Local/sm-decomp-experiments/20261021/zelda-render-probe.
+   A composed renderer draft now prices **97,313 -> 97,324 (+11)**. It pairs
+   that sprite dependency with native drawing from `45a149d8b4bb`, retaining
+   Rust's cached-mosaic path, legacy rendering, lifecycle and snapshot layout.
+   Rust loses 205 lines; C adapters add 161, the installer 54 and the verifier
+   launcher one. All callers, native/C layout checks and source-hash changes
+   count. The additional published C/header inputs total 4,268 lines separately.
+   The later drawing adapter passes all 68 original row cases with checked
+   native/C layouts and source hashes. Its initial 766-pixel scratch width
+   crashed because the published backdrop loop advances by four until exact
+   equality; that attempt is excluded. The corrected 768-pixel physical buffer
+   reserves space for native u8 margins. A focused windowed Mode7 case still crashes:
+   size one and zeroed cached entries produce a negative initial span width at
+   x=129, while current Rust renders successfully. The composed draft therefore
+   retains the native mosaic implementation and its failure rules; those retained
+   costs are included, and no complete native-renderer retirement is claimed.
+   Park the final formatted, uncompiled and unexecuted draft before further
+   validation: its adapters consume the deletion. The 68 passing probes do not
+   validate the final fallback integration, extended width, full state or
+   lifecycle. No movie ran and no saving is adopted. Source, failed probes and
+   complete price: Local/sm-decomp-experiments/20261021/renderer-complete.
    The complete native music/SFX sequencer cannot directly reuse the uploaded
    SPC driver. A source-checked DLL probe executes 32 actual native/interpreted
    ticks from aligned entry state: all 269 ordered DSP writes and final DSP
