@@ -1,4 +1,5 @@
 pub use crate::game::prelude::*;
+use crate::game::room_backgrounds::BackgroundLoad;
 
 pub use crate::game::constants::bank_60::*;
 
@@ -8,8 +9,8 @@ use crate::c_library::memcmp;
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{
     LoadCRETilesTilesetTilesAndPalette, LoadColorsForSpritesBeamsAndEnemies,
-    LoadDestinationRoomThings, LoadLevelDataAndOtherThings, LoadLibraryBackground, LoadRoomMusic,
-    NullFunc, ResetSoundQueues, UpdateMusicTrackIndex,
+    LoadDestinationRoomThings, LoadLevelDataAndOtherThings, LoadRoomMusic, NullFunc,
+    ResetSoundQueues, UpdateMusicTrackIndex,
 };
 use crate::game::sm_84::{ClearPLMs, LoadRoomPlmGfx, SpawnHardcodedPlm};
 use crate::game::sm_86::ClearEprojs;
@@ -1725,10 +1726,10 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
         }
         UpdateMusicTrackIndex(game);
         NullFunc();
-        ClearBG2Tilemap(game);
+        BackgroundLoad::Initial.clear_bg2(game);
         LoadLevelDataAndOtherThings(game);
         LoadFXHeader(game);
-        LoadLibraryBackground(game);
+        BackgroundLoad::Initial.load(game);
         CalculateLayer2Xpos(game);
         CalculateLayer2Ypos(game);
         word!(game.bg2_x_scroll = word!(game.layer2_x_pos));
@@ -1792,7 +1793,7 @@ pub unsafe fn ResumeGameplay(game: &mut Game) {
     DisableNMI(game);
     DisableIrqInterrupts(game);
     LoadCRETilesTilesetTilesAndPalette(game);
-    LoadLibraryBackground(game);
+    BackgroundLoad::Initial.load(game);
     DisplayViewablePartOfRoom(game);
     LoadRoomPlmGfx(game);
     EnableNMI(game);
@@ -1835,28 +1836,6 @@ pub unsafe fn QueueClearingOfFxTilemap(game: &mut Game) {
     *(&raw mut (*v2).src.bank as *mut u16) = 126;
     (*v2).vram_dst = addr_unk_605880 as u16;
     word!(game.vram_write_queue_tail = (v1).wrapping_add(7));
-}
-pub unsafe fn ClearBG2Tilemap(game: &mut Game) {
-    crate::rtl::register_writes! { game;
-        word(VMADDL as u16, 0x4800); word(DMAP1 as u16, 0x1808);
-        word(A1T1L as u16, 0xa29a); word(A1B1 as u16, 0x80);
-        word(DAS1L as u16, 0x800); byte(VMAIN as u16, 0);
-        byte(MDMAEN as u16, 2); word(VMADDL as u16, 0x4800);
-        word(DMAP1 as u16, 0x1908); word(A1T1L as u16, 0xa29a);
-        word(A1B1 as u16, 0x80); word(DAS1L as u16, 0x800);
-        byte(VMAIN as u16, 0x80); byte(MDMAEN as u16, 2);
-    }
-}
-pub unsafe fn ClearFXTilemap(game: &mut Game) {
-    crate::rtl::register_writes! { game;
-        word(VMADDL as u16, 0x5880); word(DMAP1 as u16, 0x1808);
-        word(A1T1L as u16, 0xa2f7); word(A1B1 as u16, 0x80);
-        word(DAS1L as u16, 0x780); byte(VMAIN as u16, 0);
-        byte(MDMAEN as u16, 2); word(VMADDL as u16, 0x5880);
-        word(DMAP1 as u16, 0x1908); word(A1T1L as u16, 0xa2f8);
-        word(A1B1 as u16, 0x80); word(DAS1L as u16, 0x780);
-        byte(VMAIN as u16, 0x80); byte(MDMAEN as u16, 2);
-    }
 }
 pub unsafe fn CalculateLayer2Xpos(game: &mut Game) -> u8 {
     if *ram_ptr!(game; 0x91b) == 0 {

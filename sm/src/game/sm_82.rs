@@ -1,4 +1,5 @@
 pub use crate::game::prelude::*;
+use crate::game::room_backgrounds::BackgroundLoad;
 
 use crate::cpu_infra::DebugGameOverMenu;
 
@@ -7,17 +8,16 @@ pub use crate::game::constants::bank_82::*;
 pub use crate::game::constants::bank_8f::*;
 
 use crate::game::sm_80::{
-    memset7E, CalculateLayer2PosAndScrollsWhenScrolling, CheckEventHappened, ClearBG2Tilemap,
-    ClearFXTilemap, ClearOamExt, ClearTimerRam, ClearUnusedOam, CopyToVramNow,
-    DebugScrollPosSaveLoad, DecompressToMem, DecompressToVRAM, DisableIrqInterrupts,
-    DoorTransitionScrollingSetup, DrawTimer, EnableIrqInterruptsNow, EnableNMI, FixDoorsMovingUp,
-    GraphicsAsset, HandleFadeIn, HandleFadeOut, HandleHudTilemap, HasQueuedMusic, InitializeHud,
-    LoadFromLoadStation, LoadMirrorOfExploredMapTiles, NextRandom, PrepareBitAccess,
-    QueueClearingOfFxTilemap, QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15,
-    QueueSfx1_Max6, QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max3,
-    QueueSfx3_Max6, ReadJoypadInputs, ReleaseButtonsFilter, ResumeGameplay,
-    SaveExploredMapTilesToSaved, SetElevatorsAsUsed, SetupDmaTransfer, StartGameplay_Async,
-    Vector_NMI, Vector_RESET_Async, WaitForNMI_Async,
+    memset7E, CalculateLayer2PosAndScrollsWhenScrolling, CheckEventHappened, ClearOamExt,
+    ClearTimerRam, ClearUnusedOam, CopyToVramNow, DebugScrollPosSaveLoad, DecompressToMem,
+    DecompressToVRAM, DisableIrqInterrupts, DoorTransitionScrollingSetup, DrawTimer,
+    EnableIrqInterruptsNow, EnableNMI, FixDoorsMovingUp, GraphicsAsset, HandleFadeIn,
+    HandleFadeOut, HandleHudTilemap, HasQueuedMusic, InitializeHud, LoadFromLoadStation,
+    LoadMirrorOfExploredMapTiles, NextRandom, PrepareBitAccess, QueueClearingOfFxTilemap,
+    QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx2_Max15,
+    QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max3, QueueSfx3_Max6, ReadJoypadInputs,
+    ReleaseButtonsFilter, ResumeGameplay, SaveExploredMapTilesToSaved, SetElevatorsAsUsed,
+    SetupDmaTransfer, StartGameplay_Async, Vector_NMI, Vector_RESET_Async, WaitForNMI_Async,
 };
 use crate::game::sm_81::{
     DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,
@@ -82,10 +82,6 @@ crate::typed_struct! {
     ];
     pub struct PlmHeader_Size6 {
         pub func_ptr, instr_list_1_ptr, instr_list_2_ptr: VoidP;
-    }
-
-    pub struct LoadBg_E {
-        pub field_0, field_2: u16;
     }
 
     pub struct TileSet {
@@ -178,10 +174,6 @@ unsafe fn get_RoomPlmEntry(a: u16, game: &mut Game) -> *mut RoomPlmEntry {
 #[inline]
 unsafe fn get_DemoRoomData(a: u16, game: &mut Game) -> *mut DemoRoomData {
     RomPtr((0x820000u32) | ((a) as u32), game) as *mut DemoRoomData
-}
-#[inline]
-unsafe fn get_LoadBg_E(a: u16, game: &mut Game) -> *mut LoadBg_E {
-    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut LoadBg_E
 }
 #[inline]
 unsafe fn get_PlmHeader_Size6(a: u16, game: &mut Game) -> *mut PlmHeader_Size6 {
@@ -4039,29 +4031,7 @@ crate::game::callback_dispatch! {
             InitializeEnemies(game);
             ResetProjectileData(game);
             Samus_LoadSuitTargetPalette(game);
-            ClearFxTilemap(game);
-            let fx_tilemap_ptr = u16::from_le_bytes([game.g_ram[0x1964], game.g_ram[0x1965]]);
-            if fx_tilemap_ptr != 0 {
-                CopyToVramNow(
-                    addr_unk_605BE0 as u16,
-                    0x8a0000 | u32::from(fx_tilemap_ptr),
-                    2112,
-                    game,
-                );
-            }
-            let mut bg_data_ptr: u16 = game.read_rom_word(
-                0x8f0000 | u32::from(game.roomdefroomstate_ptr()),
-                core::mem::offset_of!(RoomDefRoomstate, bg_data_ptr),
-            );
-            if bg_data_ptr & 0x8000 != 0 {
-                do_until! { bg_data_ptr == 0;
-    let command = game.read_rom_word(0x8f0000 | u32::from(bg_data_ptr), 0);
-    bg_data_ptr = kUpdateBackgroundCommands[usize::from(command >> 1)](
-        bg_data_ptr.wrapping_add(2),
-        game,
-    );
-}
-            }
+            BackgroundLoad::Door.load(game);
         }
         if resume <= 1 {
             let mut waiting = resume == 1;
@@ -4222,83 +4192,6 @@ pub unsafe fn GameState_11_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
     }
     kCoroutineNone as CoroutineRet
 }
-static kUpdateBackgroundCommands: [Func_Y_Y; 8] = [
-    UpdateBackgroundCommand_0_Finish,
-    UpdateBackgroundCommand_2_TransferToVram,
-    UpdateBackgroundCommand_4_Decompression,
-    UpdateBackgroundCommand_6_ClearFxTilemap,
-    UpdateBackgroundCommand_8_TransferToVramAndSetBg3,
-    UpdateBackgroundCommand_A_ClearBg2Tilemap,
-    UpdateBackgroundCommand_C_ClearKraidBg2Tilemap,
-    UpdateBackgroundCommand_E_DoorDependentTransferToVRAM,
-];
-pub unsafe fn ClearFxTilemap(game: &mut Game) {
-    word_transfers!(game, descending, 960;
-        little(0x477e) <- value(6222), little(0x4efe) <- value(6222),
-    );
-    CopyToVramNow(0x5880, 0x7e4000, 0xf00, game);
-}
-pub unsafe fn ClearBg2Tilemap(game: &mut Game) {
-    word_transfers!(game, descending, 1024;
-        little(0x47fe) <- value(824), little(0x4ffe) <- value(824),
-    );
-    CopyToVramNow(0x4800, 0x7e4000, 0x1000, game);
-}
-pub unsafe fn ClearKraidBg2Tilemap(game: &mut Game) {
-    word_transfers!(game, descending, 1024; xray(1023) <- value(824), xray(2047) <- value(824));
-    CopyToVramNow(0x4000, 0x7e4000, 0x1000, game);
-    CopyToVramNow(0x4800, 0x7e4000, 0x1000, game);
-}
-pub fn UpdateBackgroundCommand_0_Finish(y: u16, game: &mut Game) -> u16 {
-    0
-}
-pub unsafe fn UpdateBackgroundCommand_E_DoorDependentTransferToVRAM(
-    j: u16,
-    game: &mut Game,
-) -> u16 {
-    if word!(game.door_def_ptr) == *(RomPtr_8F(j, game) as *mut u16) {
-        UpdateBackgroundCommand_2_TransferToVram((j).wrapping_add(2), game)
-    } else {
-        (j).wrapping_add(9)
-    }
-}
-pub unsafe fn UpdateBackgroundCommand_2_TransferToVram(j: u16, game: &mut Game) -> u16 {
-    let address = 0x8f0000 | u32::from(j);
-    let destination = game.read_rom_word(address, 3);
-    let source = u32::from(game.read_rom_word(address, 0))
-        | (u32::from(game.read_rom_byte(address, 2)) << 16);
-    let size = game.read_rom_word(address, 5);
-    CopyToVramNow(destination, source, size, game);
-    j.wrapping_add(7)
-}
-pub unsafe fn UpdateBackgroundCommand_4_Decompression(j: u16, game: &mut Game) -> u16 {
-    let address = 0x8f0000 | u32::from(j);
-    let source = u32::from(game.read_rom_word(address, 0))
-        | (u32::from(game.read_rom_byte(address, 2)) << 16);
-    let destination = usize::from(game.read_rom_word(address, 3));
-    DecompressToMem(source, game.g_ram.as_mut_ptr().add(destination), game);
-    j.wrapping_add(5)
-}
-pub unsafe fn UpdateBackgroundCommand_6_ClearFxTilemap(j: u16, game: &mut Game) -> u16 {
-    ClearFxTilemap(game);
-    j
-}
-pub unsafe fn UpdateBackgroundCommand_8_TransferToVramAndSetBg3(
-    mut j: u16,
-    game: &mut Game,
-) -> u16 {
-    j = UpdateBackgroundCommand_2_TransferToVram(j, game);
-    *ram_ptr!(game; 0x5e) = 2;
-    j
-}
-pub unsafe fn UpdateBackgroundCommand_A_ClearBg2Tilemap(j: u16, game: &mut Game) -> u16 {
-    ClearBg2Tilemap(game);
-    j
-}
-pub unsafe fn UpdateBackgroundCommand_C_ClearKraidBg2Tilemap(j: u16, game: &mut Game) -> u16 {
-    ClearKraidBg2Tilemap(game);
-    j
-}
 pub unsafe fn LoadDestinationRoomThings(game: &mut Game) {
     LoaadDesinationRoomCreBitset(game);
     LoadDoorHeader(game);
@@ -4448,86 +4341,6 @@ pub unsafe fn CheckIfColoredDoorCapSpawned(game: &mut Game) -> u8 {
     }
     word!(game.plm_instr_list_ptrs[v5] = (*get_PlmHeader_Size6(v8, game)).instr_list_2_ptr);
     1
-}
-static kLoadLibraryBackgroundFuncs: [Func_Y_Y; 8] = callback_table! { nonnull Func_Y_Y;
-    LoadLibraryBackgroundFunc_0_DONE, LoadLibraryBackgroundFunc_2_TransferToVram,
-    LoadLibraryBackgroundFunc_4_Decompress, LoadLibraryBackgroundFunc_6_ClearFxTilemap,
-    LoadLibraryBackgroundFunc_8_TransferToVramAndSetBg3,
-    LoadLibraryBackgroundFunc_A_ClearBG2Tilemap, LoadLibraryBackgroundFunc_C_ClearKraidLayer2,
-    LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram,
-};
-pub unsafe fn LoadLibraryBackground(game: &mut Game) {
-    ClearFXTilemap(game);
-    if word!(game.fx_tilemap_ptr) != 0 {
-        crate::rtl::register_writes! { game;
-            word(A1T1L as u16, word!(game.fx_tilemap_ptr)); word(VMADDL as u16, addr_unk_605BE0 as u16);
-            word(DMAP1 as u16, 0x1801); word(A1B1 as u16, 0x8a);
-            word(DAS1L as u16, 0x840); byte(VMAIN as u16, 0x80);
-            byte(MDMAEN as u16, 2);
-        }
-    }
-    let mut bg_data_ptr: u16 =
-        (*get_RoomDefRoomstate(word!(game.roomdefroomstate_ptr), game)).bg_data_ptr;
-    if bg_data_ptr & 0x8000 != 0 {
-        do_until! { (bg_data_ptr == 0);
-            let v1: u16 = *(RomPtr_8F(bg_data_ptr, game) as *mut u16);
-            bg_data_ptr = kLoadLibraryBackgroundFuncs[(v1 >> 1) as usize]
-                (
-                (bg_data_ptr).wrapping_add(2), game
-            );
-        }
-    }
-}
-pub fn LoadLibraryBackgroundFunc_0_DONE(j: u16, game: &mut Game) -> u16 {
-    0
-}
-pub unsafe fn LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram(
-    j: u16,
-    game: &mut Game,
-) -> u16 {
-    if word!(game.door_def_ptr) == (*get_LoadBg_E(j, game)).field_0 {
-        LoadLibraryBackgroundFunc_2_TransferToVram((j).wrapping_add(2), game)
-    } else {
-        (j).wrapping_add(9)
-    }
-}
-pub unsafe fn LoadLibraryBackgroundFunc_2_TransferToVram(j: u16, game: &mut Game) -> u16 {
-    let LoadBg_28 = RomPtr_8F(j, game) as *mut u16;
-    crate::rtl::register_writes! { game;
-        word(VMADDL as u16,
-        *((LoadBg_28 as *mut u8).offset(3) as *mut u16),); word(DMAP1 as u16, 0x1801);
-        word(A1T1L as u16, *LoadBg_28); word(A1B1 as u16, *LoadBg_28.offset(1));
-        word(DAS1L as u16,
-        *((LoadBg_28 as *mut u8).offset(5) as *mut u16),); byte(VMAIN as u16, 0x80);
-        byte(MDMAEN as u16, 2);
-    }
-    (j).wrapping_add(7)
-}
-pub unsafe fn LoadLibraryBackgroundFunc_4_Decompress(j: u16, game: &mut Game) -> u16 {
-    let p = RomPtr_8F(j, game);
-    DecompressToMem(
-        Load24(p as *mut LongPtr),
-        ram_ptr!(game; *(p.offset(3) as *mut u16) as i32 as isize),
-        game,
-    );
-    (j).wrapping_add(5)
-}
-pub unsafe fn LoadLibraryBackgroundFunc_6_ClearFxTilemap(j: u16, game: &mut Game) -> u16 {
-    ClearFXTilemap(game);
-    j
-}
-pub unsafe fn LoadLibraryBackgroundFunc_A_ClearBG2Tilemap(j: u16, game: &mut Game) -> u16 {
-    ClearBG2Tilemap(game);
-    j
-}
-pub use self::LoadLibraryBackgroundFunc_A_ClearBG2Tilemap as LoadLibraryBackgroundFunc_C_ClearKraidLayer2;
-pub unsafe fn LoadLibraryBackgroundFunc_8_TransferToVramAndSetBg3(
-    mut j: u16,
-    game: &mut Game,
-) -> u16 {
-    j = LoadLibraryBackgroundFunc_2_TransferToVram(j, game);
-    *ram_ptr!(game; 0x5e) = 2;
-    j
 }
 pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
     word_transfers!(game, descending, 3200;

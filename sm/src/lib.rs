@@ -321,6 +321,7 @@ pub mod game {
     pub(crate) mod moving_platforms;
     pub(crate) mod prelude;
     pub(crate) mod projectile_flight;
+    pub(crate) mod room_backgrounds;
     pub(crate) mod samus_pose;
     pub mod sm_80;
     pub mod sm_81;
