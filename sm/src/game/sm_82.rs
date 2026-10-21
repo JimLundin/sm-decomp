@@ -1,3 +1,4 @@
+use crate::game::gameplay::advance as AdvanceGameplay;
 pub use crate::game::prelude::*;
 use crate::game::room_backgrounds::BackgroundLoad;
 
@@ -11,15 +12,15 @@ use crate::game::message_boxes;
 use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
 use crate::game::sm_80::{
     memset7E, CalculateLayer2PosAndScrollsWhenScrolling, CheckEventHappened, ClearOamExt,
-    ClearTimerRam, ClearUnusedOam, CopyToVramNow, DebugScrollPosSaveLoad, DecompressToMem,
-    DecompressToVRAM, DisableIrqInterrupts, DoorTransitionScrollingSetup, DrawTimer,
-    EnableIrqInterruptsNow, EnableNMI, FixDoorsMovingUp, GraphicsAsset, HandleFadeIn,
-    HandleFadeOut, HandleHudTilemap, HasQueuedMusic, InitializeHud, LoadFromLoadStation,
-    LoadMirrorOfExploredMapTiles, NextRandom, PrepareBitAccess, QueueClearingOfFxTilemap,
-    QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx2_Max15,
-    QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max3, QueueSfx3_Max6, ReadJoypadInputs,
-    ReleaseButtonsFilter, ResumeGameplay, SaveExploredMapTilesToSaved, SetElevatorsAsUsed,
-    SetupDmaTransfer, StartGameplay_Async, Vector_NMI, Vector_RESET_Async, WaitForNMI_Async,
+    ClearTimerRam, ClearUnusedOam, CopyToVramNow, DecompressToMem, DecompressToVRAM,
+    DisableIrqInterrupts, DoorTransitionScrollingSetup, DrawTimer, EnableIrqInterruptsNow,
+    EnableNMI, FixDoorsMovingUp, GraphicsAsset, HandleFadeIn, HandleFadeOut, HandleHudTilemap,
+    HasQueuedMusic, InitializeHud, LoadFromLoadStation, LoadMirrorOfExploredMapTiles, NextRandom,
+    PrepareBitAccess, QueueClearingOfFxTilemap, QueueMusic_Delayed8, QueueMusic_DelayedY,
+    QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max15,
+    QueueSfx3_Max3, QueueSfx3_Max6, ReadJoypadInputs, ReleaseButtonsFilter, ResumeGameplay,
+    SaveExploredMapTilesToSaved, SetElevatorsAsUsed, SetupDmaTransfer, StartGameplay_Async,
+    Vector_NMI, Vector_RESET_Async, WaitForNMI_Async,
 };
 use crate::game::sm_81::{
     DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,
@@ -39,16 +40,13 @@ use crate::game::sm_8b::{
     GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,
     GameState_39_EndingAndCredits_, LoadTitleSequenceGraphics,
 };
-use crate::game::sm_8d::{
-    ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx, PaletteFxHandler,
-};
+use crate::game::sm_8d::{ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx};
 use crate::game::sm_8f::{
-    HandleRoomDefStateSelect, PauseHook_DraygonRoom, RunDoorSetupCode, RunRoomMainCode,
-    RunRoomSetupCode, UnpauseHook_DraygonRoom,
+    HandleRoomDefStateSelect, PauseHook_DraygonRoom, RunDoorSetupCode, RunRoomSetupCode,
+    UnpauseHook_DraygonRoom,
 };
 use crate::game::sm_90::{
-    CallSomeSamusCode, HandleControllerInputForGamePhysics, HandleSamusMovementAndPause,
-    MainScrollingRoutine, ResetProjectileData, Samus_LowHealthCheck_0, SetLiquidPhysicsType,
+    CallSomeSamusCode, ResetProjectileData, Samus_LowHealthCheck_0, SetLiquidPhysicsType,
     UpdateBeamTilesAndPalette,
 };
 use crate::game::sm_91::{GameState_28_Unused_, Samus_Initialize, Samus_LoadSuitTargetPalette};
@@ -57,10 +55,8 @@ use crate::game::sm_9b::{
     HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
 use crate::game::sm_a0::{
-    DecrementSamusTimers, DetermineWhichEnemiesToProcess, DrawSamusEnemiesAndProjectiles,
-    EnemyMain, EprojProjCollDet, EprojSamusCollDetect, HandleRoomShaking, InitializeEnemies,
-    LoadEnemies, ProcessEnemyPowerBombInteraction, QueueEnemyBG2TilemapTransfers,
-    SamusProjectileInteractionHandler, TransferEnemyTilesToVramAndInit,
+    DetermineWhichEnemiesToProcess, DrawSamusEnemiesAndProjectiles, EnemyMain, InitializeEnemies,
+    LoadEnemies, QueueEnemyBG2TilemapTransfers, TransferEnemyTilesToVramAndInit,
 };
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
@@ -383,7 +379,7 @@ pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRe
     if word!(game.timer_status) != 0 {
         DrawTimer(game);
     }
-    let mut _coret_: u8 = GameState_8_MainGameplay(game);
+    let mut _coret_: u8 = AdvanceGameplay(game);
     if _coret_ != 0 {
         return _coret_;
     }
@@ -398,7 +394,7 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
     if word!(game.timer_status) != 0 {
         DrawTimer(game);
     }
-    let mut _coret_: u8 = GameState_8_MainGameplay(game);
+    let mut _coret_: u8 = AdvanceGameplay(game);
     if _coret_ != 0 {
         return _coret_;
     }
@@ -429,7 +425,7 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_35_TimeUp(game: &mut Game) -> CoroutineRet {
-    let mut _coret_: u8 = GameState_8_MainGameplay(game);
+    let mut _coret_: u8 = AdvanceGameplay(game);
     if _coret_ != 0 {
         return _coret_;
     }
@@ -472,7 +468,7 @@ pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRet {
-    let mut _coret_: u8 = GameState_8_MainGameplay(game);
+    let mut _coret_: u8 = AdvanceGameplay(game);
     if _coret_ != 0 {
         return _coret_;
     }
@@ -500,7 +496,7 @@ pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRe
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_41_TransitionToDemo(game: &mut Game) -> CoroutineRet {
-    let mut _coret_: u8 = GameState_8_MainGameplay(game);
+    let mut _coret_: u8 = AdvanceGameplay(game);
     if _coret_ != 0 {
         return _coret_;
     }
@@ -519,7 +515,7 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
         }
         'finish_demo: {
             if resume != 1 {
-                let yielded: u8 = GameState_8_MainGameplay(game);
+                let yielded: u8 = AdvanceGameplay(game);
                 if yielded != 0 {
                     *resume_state = 2;
                     return yielded;
@@ -663,7 +659,7 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
 static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_V_Coroutine;
     GameState_0_Reset_Async, GameState_1_OpeningCinematic, GameState_2_GameOptionsMenu,
     GameState_3_Null, GameState_4_FileSelectMenus, GameState_5_FileSelectMap,
-    InitAndLoadGameData_Async, GameState_7_MainGameplayFadeIn, GameState_8_MainGameplay,
+    InitAndLoadGameData_Async, GameState_7_MainGameplayFadeIn, AdvanceGameplay,
     GameState_9_HitDoorBlock, GameState_10_LoadingNextRoom_Async,
     GameState_11_LoadingNextRoom_Async, GameState_12_Pausing_Darkening_Async,
     GameState_13_Pausing_Async, GameState_14_Paused_Async, GameState_15_Paused_Async,
@@ -845,7 +841,7 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game) -> CoroutineRet;
     GameState_39_EndingAndCredits => GameState_39_EndingAndCredits_(game);
 }
 pub unsafe fn GameState_7_MainGameplayFadeIn(game: &mut Game) -> CoroutineRet {
-    let mut _coret_: u8 = GameState_8_MainGameplay(game);
+    let mut _coret_: u8 = AdvanceGameplay(game);
     if _coret_ != 0 {
         return _coret_;
     }
@@ -859,60 +855,6 @@ pub unsafe fn GameState_7_MainGameplayFadeIn(game: &mut Game) -> CoroutineRet {
 pub unsafe fn GameState_28_Unused(game: &mut Game) -> CoroutineRet {
     GameState_28_Unused_(game);
     kCoroutineNone as CoroutineRet
-}
-pub unsafe fn GameState_8_MainGameplay(game: &mut Game) -> CoroutineRet {
-    crate::verify_probe::hit("coroutine.gameplay");
-    let resume_state: *mut u8 = ram_ptr!(game; 0x612);
-    let resume = *resume_state;
-    if resume == 0 {
-        DetermineWhichEnemiesToProcess(game);
-        PaletteFxHandler(game);
-        HandleControllerInputForGamePhysics(game);
-        if word!(game.debug_disable_sprite_interact) == 0 {
-            SamusProjectileInteractionHandler(game);
-        }
-        EnemyMain(game);
-    }
-    if resume == 1 || (resume == 0 && word!(game.queued_message_box_index) != 0) {
-        let yielded: u8 = message_boxes::display(word!(game.queued_message_box_index), game);
-        if yielded != 0 {
-            *resume_state = 1;
-            return yielded;
-        }
-        word!(game.queued_message_box_index = 0);
-    }
-    if resume <= 1 {
-        HandleSamusMovementAndPause(game);
-        EprojRunAll(game);
-    }
-    if resume <= 2 {
-        let yielded: u8 = PlmHandler_Async(game);
-        if yielded != 0 {
-            *resume_state = 2;
-            return yielded;
-        }
-        AnimtilesHandler(game);
-        if word!(game.debug_disable_sprite_interact) == 0 {
-            EprojSamusCollDetect(game);
-            EprojProjCollDet(game);
-            ProcessEnemyPowerBombInteraction(game);
-        }
-        MainScrollingRoutine(game);
-        let debug_scrolling_enabled: i32 = 0;
-        if debug_scrolling_enabled != 0 {
-            DebugScrollPosSaveLoad(game);
-        }
-        DrawSamusEnemiesAndProjectiles(game);
-        QueueEnemyBG2TilemapTransfers(game);
-        HandleHudTilemap(game);
-        CalculateLayer2PosAndScrollsWhenScrolling(game);
-        RunRoomMainCode(game);
-        HandleSamusOutOfHealthAndGameTile(game);
-        HandleRoomShaking(game);
-        DecrementSamusTimers(game);
-    }
-    *resume_state = 0;
-    0 as CoroutineRet
 }
 pub unsafe fn DeleteAllOptionsMenuObjects_(game: &mut Game) {
     word_transfers!(game, descending, 8;
@@ -1128,7 +1070,7 @@ pub unsafe fn DrawOptionsMenuSpritemaps(game: &mut Game) {
     }
 }
 pub unsafe fn GameState_12_Pausing_Darkening_Async(game: &mut Game) -> CoroutineRet {
-    let mut _coret_: u8 = GameState_8_MainGameplay(game);
+    let mut _coret_: u8 = AdvanceGameplay(game);
     if _coret_ != 0 {
         return _coret_;
     }
@@ -1553,7 +1495,7 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
     0 as CoroutineRet
 }
 pub unsafe fn GameState_18_Unpausing(game: &mut Game) -> CoroutineRet {
-    let mut _coret_: u8 = GameState_8_MainGameplay(game);
+    let mut _coret_: u8 = AdvanceGameplay(game);
     if _coret_ != 0 {
         return _coret_;
     }
@@ -3553,7 +3495,7 @@ pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
         word! {game; time_is_frozen_flag = 0; game_state = kGameState_8_MainGameplay as u16; }
         CallSomeSamusCode(0x10, game);
     }
-    let mut _coret_: u8 = GameState_8_MainGameplay(game);
+    let mut _coret_: u8 = AdvanceGameplay(game);
     if _coret_ != 0 {
         return _coret_;
     }
@@ -3589,7 +3531,7 @@ pub unsafe fn RefillHealthFromReserveTanks(game: &mut Game) -> u8 {
     (word!(game.samus_reserve_health) == 0) as u8
 }
 pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {
-    let mut _coret_: u8 = GameState_8_MainGameplay(game);
+    let mut _coret_: u8 = AdvanceGameplay(game);
     if _coret_ != 0 {
         return _coret_;
     }
@@ -3606,7 +3548,7 @@ pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineRet {
-    let mut _coret_: u8 = GameState_8_MainGameplay(game);
+    let mut _coret_: u8 = AdvanceGameplay(game);
     if _coret_ != 0 {
         return _coret_;
     }

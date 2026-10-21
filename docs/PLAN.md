@@ -1560,6 +1560,21 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    The [interactive architecture atlas](architecture.html) maps current source
    to proposed Super Metroid responsibilities, existing sharing and frame order.
    It is a design aid; proposed interfaces are not adopted replacements or savings.
+   User-requested [RAM ownership research](RAM_OWNERSHIP.md) now traces ten
+   producer/consumer contracts and separates live values, captured selectors,
+   cross-update handoffs and nested continuations. The first implementation moves
+   ordinary gameplay scheduling to `gameplay::advance`, migrates all real callers,
+   and names its resume points while replacing the retained raw continuation
+   pointer with checked access. The complete ownership cost is **+55 Rust lines**;
+   it is not a volume reduction or elimination of the remaining unsafe callees.
+   Actual scheduler bodies pass 18,400 full-RAM/return/ordered-call comparisons
+   and 18 persistent steps. Four snapshot counterexamples and projectile selector
+   experiments establish why value lifetimes must remain explicit. Probed and
+   clean isolated runs pass **8359/0**, with 735 callback observations across
+   Ceres inputs **8324..8358**; the earlier prefix is setup. No normal player-control,
+   message-route, later-room or credits coverage is claimed. The cited research
+   records harness limits, observed shared fields and the next experiments.
+   Durable work: Local/sm-decomp-experiments/20261022/ram-ownership.
    Renewed user direction (2026-10-21): the search is still too narrow. Prioritize
    substantial system replacements and repeated algorithms across responsibilities.
    Stop spending implementation/validation effort on roughly hundred-line enemy
