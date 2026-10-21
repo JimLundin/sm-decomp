@@ -16,9 +16,10 @@ The historical pipeline also fixes concrete packing and unaligned-reference
 defects; correctness costs are charged separately from code reduction.
 The subsequent shared beam-window owner removes another **205 lines**, followed
 by **215** from native tracing and nonnull callback tables, then **84** from
-shared Samus pose sequences, reaching **105,685**. Component/static checks,
-full boot integration and the latest focused intro replay pass as scoped below.
-Maintained Rust needs another **5,686 lines removed** to reach 99,999. A separate
+shared Samus pose sequences, reaching **105,685**. The packed-sprite alignment
+repair adds five lines, reaching **105,690**, with complete builds, component
+checks and both full boot replay routes passing as scoped below.
+Maintained Rust needs another **5,691 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -1816,6 +1817,27 @@ writes. This route visits no gameplay rooms and claims no normal movement,
 Draygon, suit, Crystal Flash or endgame execution; unchanged-effect proof covers
 unvisited callers. Final dead-import cleanup preserves all remaining replayed
 tokens and has fresh builds. Frozen experiment: `TEMP/sm-tailored-next/sibling-sequences`.
+
+The subsequent sprite emission experiment reproduces an actual current debug
+abort: five-byte sprite records contain unaligned word fields. Its separate
+production repair changes eight reads and two OAM stores in `draw_sprites` and
+`draw_bounded_sprites` to unaligned operations. Explicit tile locals preserve
+RHS-before-destination evaluation. Native endianness and store order remain.
+The complete cost is **105,685 -> 105,690 (+5 lines, +38 tokens, +234 bytes)**.
+
+All 265,737 supported current-Game component cases pass against C, comparing
+every RAM byte. The raw current debug abort is preserved. Both raw and repaired
+current helpers diverge for a synthetic source overlapping Game RAM; this is a
+separate unsupported aliasing case, not a claimed repair. The complete caller
+audit finds ROM sources only. Library/frontend builds, formatting and exact
+source correspondence pass. Full boot any% **129,712/0** and Speed Booster
+**148,406/0** pass on source hash
+`fe8feacc6e4d8cf8258c7668badd8745c3ad00098511d0128cac4a16f1e6b1ba`.
+Both execute the three required wrapping/inside/bounded sprite probes, with
+normal rendering/audio and all comparisons. Other clipping variants have
+component coverage; neither route reaches credits. Frozen repair, controls and
+replays: `TEMP/sm-tailored-next/sprite-drawing/current-repaired` and its parent
+`REPORT.md`. This is a correctness cost, with no production deletion credit.
 
 Three further complete current-source experiments use the same committed
 **105,769-line** control. Their independent prices are not additive:

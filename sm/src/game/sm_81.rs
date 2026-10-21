@@ -217,7 +217,7 @@ unsafe fn draw_sprites(
     game: &mut Game,
 ) {
     let mut index = word!(game.oam_next_ptr) as i32;
-    let mut count = *(source as *const u16) as i32;
+    let mut count = (source as *const u16).read_unaligned() as i32;
     source = source.offset(2);
     if count != 0 {
         crate::verify_probe::hit(match clip {
@@ -228,10 +228,12 @@ unsafe fn draw_sprites(
     }
     while count != 0 {
         let oam = gOamEnt(index, game);
-        let x = position.0.wrapping_add(*(source as *const u16));
+        let x = position
+            .0
+            .wrapping_add((source as *const u16).read_unaligned());
         (*oam).xcoord = x as u8;
         word!(game.oam_ext[(index >> 5)], |old| (old as i32
-            | ((x as i32 & 0x100) >> 8 | (*(source as *const i16) < 0) as i32 * 2)
+            | ((x as i32 & 0x100) >> 8 | ((source as *const i16).read_unaligned() < 0) as i32 * 2)
                 << 2 * (index >> 2 & 7))
             as u16);
         (*oam).ycoord = match clip {
@@ -246,7 +248,8 @@ unsafe fn draw_sprites(
                 }
             }
         };
-        *(&raw mut (*oam).charnum as *mut u16) = tile_word(*(source.offset(3) as *const u16));
+        let sprite_tile_word = tile_word((source.offset(3) as *const u16).read_unaligned());
+        (&raw mut (*oam).charnum as *mut u16).write_unaligned(sprite_tile_word);
         source = source.offset(5);
         index = index + 4 & 0x1ff;
         count -= 1;
@@ -262,7 +265,7 @@ unsafe fn draw_bounded_sprites(
     offscreen: bool,
     game: &mut Game,
 ) {
-    let mut n: i32 = *(pp as *mut u16) as i32;
+    let mut n: i32 = (pp as *mut u16).read_unaligned() as i32;
     pp = pp.offset(2);
     let mut idx: i32 = word!(game.oam_next_ptr) as i32;
     if n != 0 && idx < 0x200 {
@@ -274,7 +277,7 @@ unsafe fn draw_bounded_sprites(
     }
     while n != 0 && idx < 0x200 {
         let oam = gOamEnt(idx, game);
-        let mut x: i32 = position.0 as i32 + *(pp as *mut u16) as i32;
+        let mut x: i32 = position.0 as i32 + (pp as *mut u16).read_unaligned() as i32;
         let mut y: i32 = position.1 as u8 as i32 + *pp.offset(2) as i32;
         let hidden = if *pp.offset(2) & 0x80 == 0 {
             (y >= 0xe0) as i32
@@ -289,9 +292,11 @@ unsafe fn draw_bounded_sprites(
         }
         (*oam).xcoord = x as u8;
         (*oam).ycoord = y as u8;
-        *(&raw mut (*oam).charnum as *mut u16) = (palette | *(pp.offset(3) as *mut u16) & 0xf1ff);
+        let sprite_tile_word = (palette | (pp.offset(3) as *mut u16).read_unaligned() & 0xf1ff);
+        (&raw mut (*oam).charnum as *mut u16).write_unaligned(sprite_tile_word);
         word!(game.oam_ext[(idx >> 5)], |fresh9| (fresh9 as i32
-            | ((x & 0x100) >> 8 | (*(pp as *mut i16) < 0) as i32 * 2) << 2 * (idx >> 2 & 7))
+            | ((x & 0x100) >> 8 | ((pp as *mut i16).read_unaligned() < 0) as i32 * 2)
+                << 2 * (idx >> 2 & 7))
             as u16);
         idx += 4;
         pp = pp.offset(5);
