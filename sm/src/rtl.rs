@@ -75,28 +75,19 @@ macro_rules! rom_ptr {
 }
 pub(crate) use rom_ptr;
 
-/// Read a word from a fixed LoROM table, retaining pointer-before-index order.
+/// Capture the shared image before evaluating a table's signed word index.
+/// Borrow only the ROM field: index expressions can mutate Game or retain RAM pointers.
 macro_rules! rom_table_word {
-    ($game:ident, $address:literal, $index:expr $(,)?) => {
-        $crate::rtl::read_rom_table_word(
-            $game
-                .g_rom
-                .offset($crate::rtl::lorom_offset($address))
-                .cast::<u16>(),
-            $index,
-        )
+    ($game:ident, $address:expr, $index:expr $(,)?) => {
+        $game
+            .loaded_rom
+            .as_ref()
+            .expect("ROM must be loaded")
+            .clone()
+            .table_word($crate::rtl::lorom_offset($address) as usize, $index)
     };
 }
 pub(crate) use rom_table_word;
-
-use crate::ram_map::ram_ptr;
-use ::core::ffi::{c_char, c_long, c_ulong, c_void};
-use ::core::mem::size_of;
-use ::core::ptr::null_mut;
-#[inline]
-pub(crate) unsafe fn read_rom_table_word(table: *const u16, index: isize) -> u16 {
-    table.offset(index).read_unaligned()
-}
 
 use crate::c_library::{
     __assert_fail, fclose, fopen, fprintf, fread, fseek, fwrite, memcpy, memset, printf, rename,
@@ -105,6 +96,7 @@ use crate::c_library::{
 use crate::cpu_infra::RtlUpdateSnesPatchForBugfix;
 use crate::game_state::Game;
 use crate::host::{Die, RtlApuLock, RtlApuUnlock};
+use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::snes::apu::apu_cycle;
 use crate::snes::dsp::dsp_getSamples;
@@ -119,6 +111,9 @@ pub use crate::types::{size_t, LongPtr, PairU16, VoidP, FILE};
 use crate::util::{
     ByteArray_AppendByte, ByteArray_AppendData, ByteArray_Destroy, ByteArray_Resize,
 };
+use ::core::ffi::{c_char, c_long, c_ulong, c_void};
+use ::core::mem::size_of;
+use ::core::ptr::null_mut;
 crate::typed_struct! {
     [
         #[derive(Copy, Clone)]

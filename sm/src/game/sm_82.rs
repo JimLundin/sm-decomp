@@ -2763,10 +2763,8 @@ unsafe fn move_equipment_selection(
     };
     let mut found = category != 1 || word!(game.hyper_beam_flag) == 0;
     while found {
-        let mask = crate::rtl::read_rom_table_word(
-            RomPtr_82(table, game).cast::<u16>(),
-            (offset >> 1) as isize,
-        );
+        let mask =
+            crate::rtl::rom_table_word!(game, 0x820000 | table as u32, (offset >> 1) as isize,);
         let collected = if category == 1 {
             word!(game.collected_beams)
         } else {

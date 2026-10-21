@@ -99,21 +99,19 @@ fn movement_sound(game: &mut Game) {
     }
 }
 
-pub(crate) unsafe fn initialize(kind: Kind, game: &mut Game) {
+#[forbid(unsafe_code)]
+pub(crate) fn initialize(kind: Kind, game: &mut Game) {
     let e = slot(game);
     if kind == Kind::TimedShutter {
         field!(
             game,
             e,
-            var_A = unsafe {
-                crate::rtl::rom_table_word!(
-                    game,
-                    0xa2ea4e,
-                    (field!(game, e, base.current_instruction) as i32
-                        + 2 * field!(game, e, base.extra_properties) as i32)
-                        as isize
-                )
-            }
+            var_A = crate::rtl::rom_table_word!(
+                game,
+                0xa2ea4e,
+                (field!(game, e, base.current_instruction) as i32
+                    + 2 * field!(game, e, base.extra_properties) as i32) as isize
+            )
         );
         let step = if field!(game, e, base.extra_properties) != 0 {
             -8i16 as u16
@@ -131,12 +129,12 @@ pub(crate) unsafe fn initialize(kind: Kind, game: &mut Game) {
         field!(
             game,
             e,
-            var_00 = unsafe { crate::rtl::rom_table_word!(game, 0xa2ea56, i) }
+            var_00 = crate::rtl::rom_table_word!(game, 0xa2ea56, i)
         );
         field!(
             game,
             e,
-            var_01 = unsafe { crate::rtl::rom_table_word!(game, 0xa2ea56, i + 1) }
+            var_01 = crate::rtl::rom_table_word!(game, 0xa2ea56, i + 1)
         );
         return;
     }
@@ -150,22 +148,22 @@ pub(crate) unsafe fn initialize(kind: Kind, game: &mut Game) {
     field!(
         game,
         e,
-        var_D = unsafe { crate::rtl::rom_table_word!(game, 0xa28187, i) }
+        var_D = crate::rtl::rom_table_word!(game, 0xa28187, i)
     );
     field!(
         game,
         e,
-        var_C = unsafe { crate::rtl::rom_table_word!(game, 0xa28187, i + 1) }
+        var_C = crate::rtl::rom_table_word!(game, 0xa28187, i + 1)
     );
     field!(
         game,
         e,
-        var_F = unsafe { crate::rtl::rom_table_word!(game, 0xa28187, i + 2) }
+        var_F = crate::rtl::rom_table_word!(game, 0xa28187, i + 2)
     );
     field!(
         game,
         e,
-        var_E = unsafe { crate::rtl::rom_table_word!(game, 0xa28187, i + 3) }
+        var_E = crate::rtl::rom_table_word!(game, 0xa28187, i + 3)
     );
     field!(
         game,

@@ -19,6 +19,16 @@ impl RomImage {
         self.0[offset].get()
     }
 
+    // Table offsets are signed words in the allocation, not wrapping bank addresses.
+    // Retain the former unaligned load's native byte order.
+    pub(crate) fn table_word(&self, base: usize, index: isize) -> u16 {
+        let offset = index
+            .checked_mul(2)
+            .and_then(|bytes| base.checked_add_signed(bytes))
+            .expect("ROM table offset overflow");
+        u16::from_ne_bytes([self.read(offset), self.read(offset + 1)])
+    }
+
     pub fn write(&self, offset: usize, value: u8) {
         self.0[offset].set(value);
     }

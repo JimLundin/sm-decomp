@@ -8,7 +8,7 @@ use std::ffi::c_int;
 pub struct Game {
     pub g_ram: [u8; 131072],
     pub g_rom: *const u8,
-    loaded_rom: Option<crate::rom::RomImage>,
+    pub(crate) loaded_rom: Option<crate::rom::RomImage>,
     pub decompress_src: u32,
     pub eproj_spawn_rect: Rect16U,
     pub eproj_spawn_r22: u16,

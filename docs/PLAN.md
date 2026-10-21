@@ -34,10 +34,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,256 Rust lines in 92 files**, plus 265 C
-bridge and 305 C-header lines = **94,826 maintained implementation lines**.
+Current composition (2026-10-22): **94,257 Rust lines in 92 files**, plus 265 C
+bridge and 305 C-header lines = **94,827 maintained implementation lines**.
 Counting all 804 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,658**. This complete recount includes frontend,
+gives **95,659**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1600,6 +1600,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    scenarios execute the changed reads, lifecycle, patching and bus consumers.
    Allocator-event identity, physical hardware and gameplay-route coverage are not
    claimed. Checks: Local/sm-decomp-experiments/20261022/owned-rom.
+   The existing shared ROM-table interface now uses that owned image with checked
+   signed offsets and byte reads, preserving image capture before index evaluation,
+   live patch visibility, native byte order and linear bank crossings. Its 725
+   source invocations include uses inside macro templates and the migrated direct
+   equipment-selection call. No macro is added. Complete cost: **+1 maintained
+   line** across five files, a safety cost rather than a reduction. Exact-source
+   checks pass 3,000 table cases (1,598 unaligned), five evaluation/mutation cases
+   and seven safe/failure checks. Actual release-library equipment, palette and
+   mechanism-initialization callers pass 644 full-RAM/return comparisons, repeated
+   on the final library with all 99 source inputs checked. Initialization of all
+   four mechanisms now forbids unsafe code. Normal release builds pass. No movie
+   ran; unexecuted parameterized callers have unchanged expressions and full
+   compilation, not an individual execution claim. Other raw ROM consumers remain.
+   Checks: Local/sm-decomp-experiments/20261022/checked-rom-tables.
    Asset decompression now has one safe byte decoder and a checked RAM-offset
    entry point, used by all room, graphics, menu and boss callers. The module
    forbids unsafe code; its input reads the owned ROM image. One output loop
@@ -1626,9 +1640,9 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Moving platforms and shutters now retain RAM offsets across callbacks and use
    checked byte places for all their RAM reads/writes, including extended fields
    and low-before-high movement updates. Live slot/index rereads are preserved.
-   Five helpers are safe and enforce `forbid(unsafe_code)`; the owner denies
-   implicit unsafe operations. Its remaining explicit unsafe scopes are ROM
-   reads, shot handling and failure handling. The legacy shared `word!` stays
+   Five helpers and initialization are safe and enforce `forbid(unsafe_code)`;
+   the owner denies implicit unsafe operations. Its remaining explicit unsafe
+   scopes cover shot and failure handling. The legacy shared `word!` stays
    unchanged; only this migrated consumer uses the separate checked interface.
    The complete migration adds **203 maintained lines** (165 in the owner, 38 in
    shared access), a safety cost rather than a reduction. Full-RAM/completion and
@@ -2510,15 +2524,17 @@ effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects,
 scrolling-sky and grapple-swing ownership, the SPC/PPU/DSP/music replacements,
 shared configuration/input and utility dependencies, the desktop host,
 room-scroll data, the shader dependency, safe pose/mechanism RAM access,
-gameplay continuation ownership, owned ROM reads and safe asset decompression,
-maintained Rust is **94,256**, with
+gameplay continuation ownership, owned ROM reads, safe asset decompression
+and checked ROM tables, maintained Rust is **94,257**, with
 applicable static, component and exercised movie checks passing.
-Including 265 C and 305 header lines gives **94,826**; all 804 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,658**.
+Including 265 C and 305 header lines gives **94,827**; all 804 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,659**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3057; cast lines 6626. Safe asset decompression removes nine
+unsafe functions 3055; cast lines 6626. Checked ROM tables add one line and remove
+two counted unsafe declarations; all other counters are unchanged. Safe asset
+decompression removes nine
 counted unsafe declarations and eight cast-containing lines, with no counter
 increases. Its VRAM hardware interface still contains explicit unsafe operations.
 Owned ROM access adds 28 lines and removes
