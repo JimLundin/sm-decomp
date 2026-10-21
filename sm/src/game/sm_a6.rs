@@ -1,3 +1,4 @@
+use crate::game::minimap;
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
@@ -14,9 +15,7 @@ use crate::game::sm_86::{
     Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };
 use crate::game::sm_8b::CalcCeresSteamPos_Mode7;
-use crate::game::sm_90::{
-    CallSomeSamusCode, DisableMinimapAndMarkBossRoomAsExplored, Samus_SetPushedOutOfCeresRidley,
-};
+use crate::game::sm_90::{CallSomeSamusCode, Samus_SetPushedOutOfCeresRidley};
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
@@ -1358,7 +1357,7 @@ crate::game::callback_dispatch! {
                     | kEnemyProps_Invisible as i32)) as u16;
         } else {
             word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(0));
-            DisableMinimapAndMarkBossRoomAsExplored(game);
+            minimap::disable_for_boss(game);
             set_fields! {[(*E)], 0; parameter_1, parameter_2}
             Ridley_Func_99(addr_kRidley_Ilist_E538 as u16, game);
             (*E).base.palette_index = 3584;

@@ -3,6 +3,7 @@ pub use crate::game::prelude::*;
 pub use crate::game::constants::bank_86::*;
 
 use crate::game::enemy_layouts::enemy_layout;
+use crate::game::minimap;
 use crate::game::sm_80::{
     DecompressToMem, GraphicsAsset, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6,
     QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn, WaitForNMI_Async,
@@ -11,7 +12,6 @@ use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
 use crate::game::sm_84::SpawnHardcodedPlm;
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::{sub_88E487, SpawnHdmaObject};
-use crate::game::sm_90::DisableMinimapAndMarkBossRoomAsExplored;
 use crate::game::sm_a0::{
     CallEnemyPreInstr, CheckIfEnemyTouchesSamus, DetermineDirectionOfSamusFromEnemy,
     EnemyDeathAnimation, EnemyFunc_BBBF, EnemyFunc_C8AD, Enemy_ItemDrop_Kraid,
@@ -2599,7 +2599,7 @@ crate::game::callback_dispatch! {
             properties = ((*E_0).base.properties) | ((kEnemyProps_Tangible) as u16), };
             set_fields! {[(*E_0)]; kraid_var_A = ((0xa7c865i32) as u16), kraid_var_F = 300,
             kraid_next = ((0xa7c86bi32) as u16), kraid_var_C = 64, };
-            DisableMinimapAndMarkBossRoomAsExplored(game);
+            minimap::disable_for_boss(game);
             word_transfers!(game, descending, 32; native(0x2ffe) <- value(824));
             word!(game.earthquake_type = 5);
             word_transfers!(game, ascending, 16; native(0xc360) <- rom(0xa7aaa6, 0));
@@ -2766,7 +2766,7 @@ crate::game::callback_dispatch! {
         word_transfers!(game, descending, 1024; native(0x97fe) <- value(0));
         word_transfers!(game, descending, 16; native(0xc2fe) <- value(0));
         word!(game.enemy_bg2_tilemap_size = 864);
-        DisableMinimapAndMarkBossRoomAsExplored(game);
+        minimap::disable_for_boss(game);
         let E = Get_Phantoon(word!(game.cur_enemy_index) as i32, game);
         (*E).var_E = 120;
         set_fields! {[(*E)], 0; var_A, var_B}

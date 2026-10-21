@@ -66,10 +66,6 @@ crate::typed_struct! {
         pub accel, accel_sub, max_speed, max_speed_sub, decel, decel_sub: u16;
     }
 
-    pub struct DisableMinimapAndMarkBossRoomAsExploredEnt {
-        pub boss_id_: u16;
-        pub ptrs: VoidP;
-    }
 }
 
 pub use crate::types::Func_SpazerSba_V;
@@ -94,7 +90,6 @@ crate::game::constants::typed_constants! { i32;
     fnGrappleBeamFunc_ConnectedLockedInPlace = 0x9bc77e,
     fnGrappleBeamFunc_Cancel = 0x9bc856, fnGrappleBeam_Func2 = 0x9bc8c5,
 }
-const RomPtr_82: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x82>;
 const RomPtr_90: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x90>;
 const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
 crate::ram_map::ram_pointer_functions! {
@@ -1424,242 +1419,6 @@ pub use self::Samus_Movement_02_NormalJumping as Samus_Movement_19_DamageBoost;
 pub use self::Samus_Movement_07_Unused as Samus_Movement_1A_GrabbedByDraygon;
 pub use self::Samus_Movement_07_Unused as Samus_Movement_1B_ShinesparkEtc;
 pub use self::Samus_Movement_17_TurningAroundJumping as Samus_Movement_18_TurningAroundFalling;
-static kShr0x80: [u8; 8] = [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1];
-static kShr0xFc00: [u16; 8] = [0xfc00, 0x7e00, 0x3f00, 0x1f80, 0xfc0, 0x7e0, 0x3f0, 0x1f8];
-unsafe fn MarkMapTileAsExplored(r18: u16, r24: u16, game: &mut Game) {
-    let v0: u8 = (((r18) & (0xff00u16)) >> 8) as u8;
-    let R34: u16 = (word!(game.room_x_coordinate_on_map) as i32 + v0 as i32 & 0x20) as u16;
-    let r20: u16 = ((word!(game.room_x_coordinate_on_map) as i32 + v0 as i32 & 0x1f) >> 3) as u16;
-    let R22: u16 =
-        (word!(game.room_y_coordinate_on_map) as i32 + ((r24 as i32 & 0xff00) >> 8) + 1) as u16;
-    crate::update_place! { reference fresh13 = *ram_ptr!(game; 0x7f7, (r20 as i32 + 4 * (R34 as i32 + R22 as i32)) as u16 as isize) => (*fresh13)
-    | (kShr0x80
-        [(word!(game.room_x_coordinate_on_map) as i32 + v0 as i32 & 7) as usize]); }
-}
-pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
-    word!(game.debug_disable_minimap = 1);
-    word_transfers!(game, ascending, 5;
-        le(hud_tilemap, 26) <- value(11295),
-        le(hud_tilemap, 58) <- value(11295),
-        le(hud_tilemap, 90) <- value(11295),
-    );
-    let mut v2: u16 = 5;
-    while word!(game.boss_id)
-        != (*(rom_ptr!(game, DisableMinimapAndMarkBossRoomAsExploredEnt; 0x90a83a))
-            .offset(v2 as isize))
-        .boss_id_
-    {
-        v2 = v2.wrapping_sub(1);
-        if (v2 & 0x8000) != 0 {
-            return;
-        }
-    }
-    let mut i: i32 = (*(rom_ptr!(game, DisableMinimapAndMarkBossRoomAsExploredEnt; 0x90a83a))
-        .offset(v2 as isize))
-    .ptrs as i32;
-    loop {
-        let v4 = RomPtr_90(i as u16, game) as *const u16;
-        if (*v4 & 0x8000) != 0 {
-            break;
-        }
-        MarkMapTileAsExplored(*v4, *v4.offset(1), game);
-        i += 4;
-    }
-}
-pub fn InitializeMiniMapBroken() {}
-pub unsafe fn UpdateMinimap(game: &mut Game) {
-    if word!(game.debug_disable_minimap) != 0
-        || word!(game.samus_x_pos) as i32 >> 4 >= word!(game.room_width_in_blocks) as i32
-        || word!(game.samus_y_pos) as i32 >> 4 >= word!(game.room_height_in_blocks) as i32
-    {
-        return;
-    }
-    let mut r46: u16 = 0;
-    let v0: u8 = (((word!(game.samus_x_pos)) & (0xff00u16)) >> 8) as u8;
-    let r34: u16 = (word!(game.room_x_coordinate_on_map) as i32 + v0 as i32 & 0x20) as u16;
-    let r18: u16 = (word!(game.room_x_coordinate_on_map) as i32 + v0 as i32 & 0x1f) as u16;
-    let v1: u16 = (word!(game.room_x_coordinate_on_map) as i32 + v0 as i32 & 7) as u16;
-    let r20: u16 = ((word!(game.room_x_coordinate_on_map) as i32 + v0 as i32 & 0x1f) >> 3) as u16;
-    let r22: u16 = (word!(game.room_y_coordinate_on_map) as i32
-        + ((word!(game.samus_y_pos) as i32 & 0xff00) >> 8)
-        + 1) as u16;
-    let v2: u16 = (r20 as i32 + 4 * (r34 as i32 + r22 as i32)) as u16;
-    crate::update_place! { reference fresh98 = *ram_ptr!(game; 0x7f7, v2 as isize) => (*fresh98)
-    | (kShr0x80
-        [(word!(game.room_x_coordinate_on_map) as i32 + v0 as i32 & 7) as usize]); }
-    let r32: u16 = v1;
-    let r30: u16 = v2;
-    let mut v3: u16 = (v2).wrapping_sub(4);
-    let mut v4: i16 = ((v1) as i16).wrapping_sub(2);
-    if ((v1) as i16).wrapping_sub(2) < 0 {
-        v4 = (v4) & (7i16);
-        v3 = v3.wrapping_sub(1);
-        r46 = r46.wrapping_add(1);
-    }
-    let R50: u16 = v3;
-    let r52: i32 = 2 * v4 as i32;
-    let v6: i32 = r52 >> 1;
-    let mut r24: u16 =
-        (kShr0xFc00[v6 as usize]) & (u16::swap_bytes(*(ram_ptr!(game, u16; 0x7f7, v3 as isize))));
-    let mut r26: u16 = (kShr0xFc00[v6 as usize])
-        & (u16::swap_bytes(*(ram_ptr!(game, u16; 0x7f7, (v3 as i32 + 4) as isize))));
-    let mut r28: u16 = (kShr0xFc00[v6 as usize])
-        & (u16::swap_bytes(*(ram_ptr!(game, u16; 0x7f7, (v3 as i32 + 8) as isize))));
-    let mut r9 = RomPtr_82(
-        crate::rtl::rom_table_word!(game, 0x829717, word!(game.area_index) as isize),
-        game,
-    );
-    crate::update_place! { previous r15 = r9 => r9.offset(v3 as i32 as isize); }
-    let mut r38: u16 = u16::swap_bytes(*(r9 as *mut u16));
-    r9 = r9.offset(4);
-    let mut r40: u16 = u16::swap_bytes(*(r9 as *mut u16));
-    r9 = r9.offset(4);
-    let mut r42: u16 = u16::swap_bytes(*(r9 as *mut u16));
-    if (R50 & 3) == 3 {
-        let mut v10: i16 = (if r46 != 0 { r52 >> 1 } else { r32 as i32 }) as i16;
-        if v10 as i32 - 6i32 & 0x8000 == 0 {
-            let R48: u8 = (if r34 != 0 {
-                R50 as i32 - 124i32
-            } else {
-                R50 as i32 + 125
-            }) as u8;
-            let v0_0: u16 = R48 as u16;
-            let mut r44: u16 = 0;
-            r9 = r15.offset(R48 as i32 as isize);
-            byte!(r44; 0) = *ram_ptr!(game; 0x7f7, R48 as isize);
-            byte!(r44; 1) = *r9;
-            if (r34 as u8) == 32 {
-                byte!(r38; 1) = byte!(r44; 1);
-                byte!(r24; 1) = r44 as u8;
-            } else {
-                byte!(r38; 0) = byte!(r44; 1);
-                byte!(r24; 0) = r44 as u8;
-            }
-            byte!(r44; 0) = *ram_ptr!(game; 0x7f7, (v0_0 as i32 + 4) as isize);
-            r9 = r9.offset(4);
-            byte!(r44; 1) = *r9;
-            if (r34 as u8) == 32 {
-                byte!(r40; 1) = byte!(r44; 1);
-                byte!(r26; 1) = r44 as u8;
-            } else {
-                byte!(r40; 0) = byte!(r44; 1);
-                byte!(r26; 0) = r44 as u8;
-            }
-            byte!(r44; 0) = *ram_ptr!(game; 0x7f7, (v0_0 as i32 + 8) as isize);
-            r9 = r9.offset(4);
-            byte!(r44; 1) = *r9;
-            if (r34 as u8) == 32 {
-                byte!(r42; 1) = byte!(r44; 1);
-                byte!(r28; 1) = r44 as u8;
-            } else {
-                byte!(r42; 0) = byte!(r44; 1);
-                byte!(r28; 0) = r44 as u8;
-            }
-        }
-    }
-    let mut n: i32 = r52 >> 1;
-    while n != 0 {
-        r24 = (r24).wrapping_mul(2);
-        r38 = (r38).wrapping_mul(2);
-        r26 = (r26).wrapping_mul(2);
-        r40 = (r40).wrapping_mul(2);
-        r28 = (r28).wrapping_mul(2);
-        r42 = (r42).wrapping_mul(2);
-        n -= 1;
-    }
-    UpdateMinimapInside(r18, r22, r34, r30, r32, r38, r24, r40, r26, r42, r28, game);
-}
-pub unsafe fn UpdateMinimapInside(
-    r18: u16,
-    r22: u16,
-    r34: u16,
-    r30: u16,
-    r32: u16,
-    mut r38: u16,
-    mut r24: u16,
-    mut r40: u16,
-    mut r26: u16,
-    mut r42: u16,
-    mut r28: u16,
-    game: &mut Game,
-) {
-    let mut v0: u16 = 0;
-    let mut v5: i16 = 0;
-    let mut v7: i16 = 0;
-    let mut v8: i16 = 0;
-    byte!(v0; 0) = (((r34).wrapping_add(r22)) >> 8) as u8;
-    byte!(v0; 1) = ((r34) as u8).wrapping_add((r22) as u8);
-    let t: u16 = (r18 as i32 + (v0 as i32 >> 3)) as u16;
-    let mut v1: i16 = if r34 != 0 && (t as i32 & 0x1f) - 2i32 & 0x8000 != 0 {
-        ((t) as i16).wrapping_sub(1026)
-    } else {
-        ((t) as i16).wrapping_sub(34)
-    };
-    let mut v2: u16 = (2u16).wrapping_mul((v1) as u16);
-    let r0 = RomPtr(
-        Load24((rom_ptr!(game, LongPtr; 0x82964a)).offset(word!(game.area_index) as isize)),
-        game,
-    ) as *const u16;
-    let r3 = r0.offset(32);
-    let r6 = r0.offset(64);
-    let mut v3: u16 = 0;
-    for n in (1i32..=5).rev() {
-        let mut v4: bool = r38 as i32 >> 15 != 0;
-        r38 = (r38).wrapping_mul(2);
-        if !v4 || {
-            v5 = *r0.offset((v2 >> 1) as isize) as i16;
-            word!(game.has_area_map) == 0
-        } {
-            v5 = 31;
-        }
-        let v6: i32 = v3 as i32 >> 1;
-        word!(game.hud_tilemap[(v6 + 26)] = (v5 as u16 & 0xc3ff | 0x2c00));
-        v4 = r24 as i32 >> 15 != 0;
-        r24 = (r24).wrapping_mul(2);
-        if v4 {
-            word!(game.hud_tilemap[(v6 + 26)] = (*r0.offset((v2 >> 1) as isize) & 0xc3ff | 0x2800));
-        }
-        v4 = r40 as i32 >> 15 != 0;
-        r40 = (r40).wrapping_mul(2);
-        if !v4 || {
-            v7 = *r3.offset((v2 >> 1) as isize) as i16;
-            word!(game.has_area_map) == 0
-        } {
-            v7 = 31;
-        }
-        word!(game.hud_tilemap[(v6 + 58)] = (v7 as u16 & 0xc3ff | 0x2c00));
-        v4 = r26 as i32 >> 15 != 0;
-        r26 = (r26).wrapping_mul(2);
-        if v4 {
-            word!(game.hud_tilemap[(v6 + 58)] = (*r3.offset((v2 >> 1) as isize) & 0xc3ff | 0x2800));
-            if n == 3 && (word!(game.hud_tilemap[(v6 + 58)]) & 0x1ff) == 40 {
-                crate::update_place! { reference fresh99 = *ram_ptr!(game; 0x7f3, r30 as i32 as isize) => (*fresh99) | (kShr0x80[r32 as usize]); }
-            }
-        }
-        v4 = r42 as i32 >> 15 != 0;
-        r42 = (r42).wrapping_mul(2);
-        if !v4 || {
-            v8 = *r6.offset((v2 >> 1) as isize) as i16;
-            word!(game.has_area_map) == 0
-        } {
-            v8 = 31;
-        }
-        word!(game.hud_tilemap[(v6 + 90)] = (v8 as u16 & 0xc3ff | 0x2c00));
-        v4 = r28 as i32 >> 15 != 0;
-        r28 = (r28).wrapping_mul(2);
-        if v4 {
-            word!(game.hud_tilemap[(v6 + 90)] = (*r6.offset((v2 >> 1) as isize) & 0xc3ff | 0x2800));
-        }
-        v3 = (v3).wrapping_add(2);
-        v2 = (v2).wrapping_add(2);
-        if (v2 & 0x3f) == 0 {
-            v2 = (v2).wrapping_add(1984);
-        }
-    }
-    if (*ram_ptr!(game; 0x5b5) & 8) == 0 {
-        word!(game.hud_tilemap[60] |= (0x1c00u16));
-    }
-}
 pub unsafe fn Samus_HandleCooldown(game: &mut Game) {
     if word!(game.time_is_frozen_flag) != 0 {
         word!(game.cooldown_timer = 32);
@@ -4299,7 +4058,7 @@ crate::game::callback_dispatch! {
     [9496357] Samus_FrameHandlerBeta_Func17 [] {
         word!(game.samus_contact_damage_index = 0);
         RunSamusMovementHandler(game);
-        UpdateMinimap(game);
+        crate::game::minimap::update(game);
         RunFrameHandlerGamma(game);
         Samus_Animate(game);
         Samus_HitInterruption(game);
@@ -4321,7 +4080,7 @@ crate::game::callback_dispatch! {
     [9496565] Samus_FrameHandlerBeta_Func14 [] {
         word!(game.samus_contact_damage_index = 0);
         RunSamusMovementHandler(game);
-        UpdateMinimap(game);
+        crate::game::minimap::update(game);
         Samus_Animate(game);
         Samus_HitInterruption(game);
         Samus_HandleTransFromBlockColl(game);
@@ -4347,7 +4106,7 @@ crate::game::callback_dispatch! {
     };
     [9496682] Samus_Func16 [] {
         Samus_SetRadius(game);
-        UpdateMinimap(game);
+        crate::game::minimap::update(game);
         Samus_Animate(game);
         word! {game; elevator_status = 0; samus_prev_y_pos = word!(game.samus_y_pos); }
         if PlaySamusFanfare(game) & 1 != 0 {
@@ -4370,12 +4129,12 @@ crate::game::callback_dispatch! {
     };
     [9496796] SetContactDamageIndexAndUpdateMinimap [] {
         word!(game.samus_contact_damage_index = 0);
-        UpdateMinimap(game);
+        crate::game::minimap::update(game);
     };
     [9496812] Samus_Func19 [] {
         word!(game.samus_contact_damage_index = 0);
         RunSamusMovementHandler(game);
-        UpdateMinimap(game);
+        crate::game::minimap::update(game);
         Samus_Animate(game);
     };
     [9496834] Samus_LowHealthCheck [] {

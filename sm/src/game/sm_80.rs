@@ -19,7 +19,7 @@ use crate::game::sm_88::{InitializeSpecialEffectsForNewRoom, WaitUntilEndOfVblan
 use crate::game::sm_89::LoadFXHeader;
 use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
 use crate::game::sm_8d::ClearPaletteFXObjects;
-use crate::game::sm_90::{InitializeMiniMapBroken, UpdateBeamTilesAndPalette};
+use crate::game::sm_90::UpdateBeamTilesAndPalette;
 use crate::game::sm_a0::LoadEnemies;
 use crate::rtl::RtlApuUpload;
 
@@ -1380,7 +1380,6 @@ pub unsafe fn InitializeHud(game: &mut Game) {
         samus_prev_health, samus_prev_missiles, samus_prev_super_missiles, samus_prev_power_bombs,
         samus_prev_hud_item_index,
     }
-    InitializeMiniMapBroken();
     if word!(game.samus_max_missiles) != 0 {
         DrawThreeHudDigits(
             addrl_kDigitTilesetsWeapon,

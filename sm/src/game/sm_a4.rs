@@ -3,11 +3,11 @@ pub use crate::game::prelude::*;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a4::*;
 
+use crate::game::minimap;
 use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_84::SpawnHardcodedPlm;
 use crate::game::sm_86::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::SpawnHdmaObject;
-use crate::game::sm_90::DisableMinimapAndMarkBossRoomAsExplored;
 use crate::game::sm_a0::{
     Enemy_ItemDrop_Crocomire, Enemy_MoveRight_IgnoreSlopes, NormalEnemyFrozenAI, NormalEnemyShotAi,
     NormalEnemyTouchAi, SamusLatchesOnWithGrapple,
@@ -1047,7 +1047,7 @@ crate::game::callback_dispatch! {
             (*v7).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
             word!(game.vram_write_queue_tail = (v6).wrapping_add(7));
         } else {
-            DisableMinimapAndMarkBossRoomAsExplored(game);
+            minimap::disable_for_boss(game);
             word!(game.croco_word_7E069A = 0);
             let E_0 = Get_Crocomire(word!(game.cur_enemy_index) as i32, game);
             set_fields! {[(*E_0)], 0; var_A, var_E}

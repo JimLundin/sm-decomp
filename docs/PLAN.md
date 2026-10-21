@@ -17,21 +17,24 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
-Current composition (2026-10-21): **99,465 Rust lines in 82 files**, plus a
-four-line C bridge = **99,469 maintained implementation lines**. Counting the
-new 41-line CPU installer as well gives **99,510**. This is an actual complete
+Current composition (2026-10-21): **99,374 Rust lines in 83 files**, plus a
+four-line C bridge = **99,378 maintained implementation lines**. Counting the
+new 41-line CPU installer as well gives **99,419**. This is an actual complete
 source recount, including frontend and verifier code, all adapters, callers and
 registrations. Existing development scripts/configuration/docs are outside this
 implementation metric. The two pinned dependencies add **2,836 CPU C/header
 lines and 7,762 stb header lines**, disclosed separately, like existing GL/SDL.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
-Mother Brain visual effects pass 644 full-RAM, return-value, ordered palette
-write and ROM-diagnostic comparisons, using the actual old/new routines and
-unchanged palette writer. All seven real fade sequences through their terminators,
-health thresholds, source wrapping and full-width table indexes are covered. Unchanged
-wall, earthquake and flicker bodies and all callers have source correspondence.
-The available movies miss these effects, so no unrelated replay was run.
+Minimap ownership passes 1,360 actual old/new full-RAM, completion, failure-flag
+and ordered ROM-boundary comparisons, including map halves, word wrapping,
+full-width area indexes, diagnostics and the special map-station write.
+The exercised Ceres segment passes probed and clean at **35/0**, inputs
+8324..8358, with seven required drawing/exploration/flashing/upload probes and
+32 follow-up frames. The 8,324-frame setup prefix is cached separately; two
+early searches with no minimap hits failed coverage and earn no validation.
+Unchanged boss marking and all callers have source correspondence. The previous
+Mother Brain visual owner passes 644 component comparisons; movies miss it.
 The preceding projectile animation change passes 112,184 component comparisons
 and a checkpointed 6,562-frame drawing segment: four required probes and 120 follow-up frames,
 then the same clean segment, with normal rendering/audio and zero differences.
@@ -1451,15 +1454,19 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
 4. [ ] **Retire bank ownership by gameplay responsibility.** Select a complete
    responsibility, such as Samus movement, with an exercised boundary and named
    routines. Migrate its real callers and state transitions, then remove its
-   retired bank facade. Mother Brain palette transitions, health palettes,
-   lighting, wall sealing, earthquakes and body flicker now belong to
-   `mother_brain_visuals`, with direct encounter callers and bank AD retired.
-   Seven fade entry points share playback while preserving palette-write order,
-   word wrapping and the drained fade's non-palette write to $017c. The complete
-   replacement removes **51 lines (99,516 -> 99,465)**, 466 tokens and 1,667
-   spelling bytes, including helpers, callers, imports and registration.
-   Component comparisons and retained-source/caller checks pass; the available
-   movies do not reach these effects and no new replay is claimed.
+   retired bank facade. HUD minimap rendering, exploration marking and boss-room
+   suppression now belong to `minimap`, with direct gameplay/boss callers.
+   Three-row mask handling and drawing share traversal while preserving map-half
+   boundaries, byte/word truncation, column-first writes and the map-station
+   write one row before the current exploration byte. The complete replacement
+   removes **91 lines (99,465 -> 99,374)**, 1,156 tokens and 2,341 spelling bytes,
+   including helpers, callers, imports and registration. All 1,360 actual-code
+   component comparisons and retained-source/caller checks pass. The measured
+   Ceres drawing/upload segment passes probed and clean at **35/0**; setup is
+   cached before the first changed call at input 8324. Other map branches have
+   component coverage, not movie execution. Bank 90 retains other responsibilities.
+   Mother Brain palette transitions, lighting, wall sealing, earthquakes and
+   flicker already belong to `mother_brain_visuals`, with bank AD retired.
    Player projectile data, impact setup, instruction playback and drawing
    already belong to `projectile_animation`, with bank 93 retired.
    Samus animation/drawing already belong to `samus_animation`, message boxes
@@ -1467,8 +1474,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Banks 85, 92, 93 and AD are fully retired. The unused-declaration cohort reserved
    for this stage is also adopted. Bang's live SNES execution path remains a
    future ownership task.
-   Gameplay currently totals 81,511 lines; its 28 numeric bank modules still
-   own 75,743. These are ownership scopes, not deletion budgets. File moves
+   Gameplay currently totals 81,418 lines; its 28 numeric bank modules still
+   own 75,501. These are ownership scopes, not deletion budgets. File moves
    alone earn no volume reduction. The complete save-file menu ownership draft
    prices **99,516 -> 99,510 (-6)**, including caller migration, imports, helpers
    and registration. It shares confirmation flow and main-menu rows, removes
@@ -1693,19 +1700,25 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest applicable verification: Mother Brain visual effects pass **644** direct
-old/new component comparisons with the actual unchanged palette writer. These
-compare all RAM bytes, return values, failure flags, ordered palette-call state
-and ROM diagnostics. They cover all seven real ROM sequences through their
-terminators, phase gating and every health threshold, plus full-width table
-indexes, source-pointer wrapping, invalid-bank diagnostics and the $017c write.
-Wall sealing, earthquake and body-flicker code has exact retained-source
-correspondence; all encounter callers and source registration are checked.
-Normal release library/frontend/verifier builds and formatting pass. The final
-82-file source matches the checked candidate and embedded library bytes. The
-available movies miss Mother Brain, so no replay was selected; components do not establish endgame or credits coverage.
-Logs: Local/sm-decomp-experiments/20261021/mother-brain-visuals/
-{components,build,verifier-build}.log; source-result.json records the recount.
+Latest applicable verification: minimap ownership passes **1,360** actual
+old/new full-RAM, completion, failure-flag and ordered ROM-boundary comparisons.
+Cases cover real maps, every column/bit position, known/explored masks, map-station
+tiles, both map halves, coordinate/source wrapping, RAM aliases, full-width area
+indexes, invalid ROM diagnostics and room-edge guards. Boss marking, packed
+layout, tables, every caller/import and the remaining source have correspondence.
+The first 3,000-frame searches on any% and Speed Booster had zero minimap hits:
+both failed coverage despite no differences. Recorded route evidence then located
+Ceres; probes establish the first changed call at input 8324. A cached checkpoint
+immediately before that call supplies the selected **35-frame** segment, inputs
+8324..8358. Seven required probes cover calls, active drawing, explored tiles,
+completed drawing, both flash phases and the subsequent HUD VRAM upload. All
+pass through 32 follow-up frames, then the same clean segment passes **35/0**.
+Normal rendering, audio and comparisons remain enabled. Prefix frames are setup,
+not changed-code coverage; other map branches retain direct component coverage.
+Normal release library/frontend/verifier builds and formatting pass. All 83
+maintained Rust files match the checked candidate; embedded source bytes pass.
+No full movie or credits coverage is claimed. Local checks and logs:
+Local/sm-decomp-experiments/20261021/minimap.
 
 Previous static-only change: unused declarations are removed after compiler
 reference checks. All 82 Rust files retain the same executable source and numeric
@@ -1951,15 +1964,17 @@ literals, shared constant headers, native shader/presentation ownership and
 shared PPU pixel evaluation, native/SPC state transfers and live-typed snapshots,
 the pinned CPU/PNG dependencies, RAM pointer chains, readable control flow and
 shared room background loading, Samus animation ownership, the message-box
-lifecycle, unused declarations, projectile animation and Mother Brain visual
-effects, maintained Rust is **99,465**, with applicable static and exercised
-component checks passing.
+lifecycle, unused declarations, projectile animation, Mother Brain visual
+effects and minimap ownership, maintained Rust is **99,374**, with applicable
+static and exercised component checks passing.
 Including the four-line C bridge gives
-**99,469**; including the new 41-line installer as well gives **99,510**.
+**99,378**; including the new 41-line installer as well gives **99,419**.
 The immediate volume target is complete.
 External CPU/PNG code has 2,836/7,762 lines.
 Counters: raw offsets 30; extern C blocks 5; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3260; cast lines 7501. Mother Brain visual ownership removes
+unsafe functions 3259; cast lines 7472. Minimap ownership removes one unsafe
+declaration and 29 cast-containing lines; no counter increases.
+Mother Brain visual ownership removes
 seven unsafe declarations and five cast-containing lines; no counter increases.
 Projectile animation removes ten
 cast-containing lines and adds three counted unsafe declarations: two shared

@@ -1,3 +1,4 @@
+use crate::game::minimap;
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
@@ -7,8 +8,7 @@ use crate::game::sm_84::SpawnHardcodedPlm;
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::{sub_88DF34, SpawnBG3ScrollHdmaObject};
 use crate::game::sm_90::{
-    CallSomeSamusCode, DisableMinimapAndMarkBossRoomAsExplored, Samus_ReleaseFromDraygon_,
-    Samus_SetGrabbedByDraygonPose,
+    CallSomeSamusCode, Samus_ReleaseFromDraygon_, Samus_SetGrabbedByDraygonPose,
 };
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{
@@ -1196,7 +1196,7 @@ crate::game::callback_dispatch! {
         word!(game.room_loading_irq_handler = 12);
         SpawnBG3ScrollHdmaObject(game);
         (*Get_Draygon(0i32, game)).var_45 = 1;
-        DisableMinimapAndMarkBossRoomAsExplored(game);
+        minimap::disable_for_boss(game);
     };
     [10847996] Draygon_Main [] {
         let EK = Get_Draygon(word!(game.cur_enemy_index) as i32, game);

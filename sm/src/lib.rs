@@ -319,6 +319,7 @@ pub mod game {
     pub(crate) mod intro_pages;
     pub mod message_boxes;
     pub(crate) mod moving_platforms;
+    pub(crate) mod minimap;
     pub(crate) mod prelude;
     pub(crate) mod projectile_flight;
     pub(crate) mod room_backgrounds;

@@ -1,3 +1,4 @@
+use crate::game::minimap;
 pub use crate::game::prelude::*;
 
 use crate::game::beam_windows::calculate_rainbow_window;
@@ -19,7 +20,7 @@ use crate::game::sm_86::{
 use crate::game::sm_88::{MotherBrainRisingHdmaObject, SpawnMotherBrainRainbowBeamHdma};
 use crate::game::sm_89::LoadFxEntry;
 use crate::game::sm_8d::SpawnPalfxObject;
-use crate::game::sm_90::{CallSomeSamusCode, DisableMinimapAndMarkBossRoomAsExplored};
+use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::SomeMotherBrainScripts;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
@@ -1794,7 +1795,7 @@ pub unsafe fn MotherBrainsBody_FirstPhase_DoubleRet(game: &mut Game) {
         if word!(game.samus_x_pos) as i32 - 236i32 & 0x8000 != 0 && (*E1).base.health == 0 {
             let E = Get_MotherBrain(0, game);
             set_fields! {[(*E)], 1; var_1D, var_00}
-            DisableMinimapAndMarkBossRoomAsExplored(game);
+            minimap::disable_for_boss(game);
             QueueMusic_Delayed8(6, game);
             mother_brain_visuals::seal_wall(game);
         }
