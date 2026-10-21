@@ -119,6 +119,14 @@ cohorts and their composition, including shared-definition and caller costs.
 Distinguish automatically reproducing reductions already present in main
 from new algorithm sharing and cases that still require manual work.
 
+Next selection step: validate and compose the strongest remaining complete
+cohorts while discovery of larger families continues. The large-family studies
+above no longer justify repeatedly postponing useful measured replacements.
+Reopen alias grouping on the actual record-metadata outputs: its new scope is
+sequential composition and complete compiler validation, not another standalone
+price. Count only that composed result. Arbitrary single-function cleanup stays
+parked; fresh discovery must identify a previously unhandled family.
+
 The current-source composition has landed in four focused commits:
 **107,520 -> 106,189 (-1,331)**, including 159 terminal loops, 114 selected
 field groups, 472 named-RAM write groups and the alignment repair below.
@@ -613,8 +621,10 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    and historical **102,804 -> 102,740 (-64)** across 145 aliases. The 13-line
    crate-local helper counts; public names and independent frontend declarations
    remain. Tokens/text decrease and formatting controls contribute zero lines.
-   Current's larger difference includes existing blank separators. Park before
-   builds/proof/runtime checks; neither independent price joins accepted totals.
+   Current's larger difference includes existing blank separators. Those prices
+   remain excluded from accepted totals. Reopen on the actual record-metadata
+   outputs for composition, full expanded/resolved alias equivalence and builds;
+   neither independent price is an additional saving.
    TEMP sm-tailored-next/type-alias-groups records the complete source prices.
 
    Those representation studies are closed. Five subsequent domain studies
@@ -767,7 +777,9 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    may serve a selected replacement. Complete repeated-pattern cohorts can
    proceed through item 3; isolated naming/unsafe cleanup waits until item 4.
    Reopen a parked study only when the proposed representation or scope is
-   materially different, and state that difference before starting.
+   materially different, and state that difference before starting. Sequential
+   composition and validation of a selected complete cohort qualify; repeating
+   its isolated price or scanner does not.
 
 3. [ ] **Implement the strongest measured replacements and recount.** Start
    a proven candidate as soon as it is ready; an exact budget for the entire
