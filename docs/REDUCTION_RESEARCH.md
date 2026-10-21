@@ -1967,6 +1967,29 @@ all updated sites or credits. The shader draft remains preserved and excluded
 from committed counts. Current proof: `compound-word-updates/current-FROZEN.json`;
 main build/replay logs: `TEMP/sm-compound-adoption-20261021`.
 
+The complete ordinary-place compound-update follow-up is rejected. Unlike
+the named RAM rule, it covers repeated field/place assignments and captured
+old values, excluding named RAM and raw unaligned chains. Its natural compound
+spelling changes **103,256 -> 103,327 (+71)** across 1,957 historical sites and
+**104,424 -> 104,532 (+108)** across 1,703 current sites. Support accounts for
+69/79 lines and callers/imports for another 2/29. Tokens and text decrease,
+but caller spelling alone does not save physical lines. The alternative
+method-name grammar grows 386/417 lines. Formatter-only drift is zero. No
+builds, behavior proof or runtime tests were pursued after these complete
+prices. Frozen report: `TEMP/sm-tailored-next/ordinary-place-updates/REPORT.md`.
+
+A separate static legacy GL metadata study also remains rejected. Four
+declarations contain 807 symbol names; 25 Cartesian grids and five prefix
+groups generate 314 entries while leaving other names explicit. Ordered
+source-level expansion matches. Including the 18-line macro, the whole
+historical root prices **103,256 -> 103,084 (-172)** and loses 7,402 spelling
+bytes, but adds **513 syntax tokens**. All 12 runtime bodies and every other
+file stay byte-identical. This fails the selected token/text rule and is not
+composed. No compiler or runtime check was run; recursion limits and compiled
+constant payloads remain unchecked. This is distinct from the runtime-blocked
+current-policy GL replacement. No GL/test/DLL/executable was launched or
+repackaged. Report: `TEMP/sm-tailored-next/gl-static-groups/REPORT.md`.
+
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard
 against making progress appear larger by packing unrelated statements into

@@ -572,6 +572,17 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Reports: TEMP sm-tailored-next/{memory-call-boundary,ram-byte-current,
    current-native-index-locals,local-type-inference/CURRENT_PRICE.md}.
 
+   Complete ordinary-place compound updates are also rejected: 1,957
+   historical sites grow **71 lines**, and 1,703 current sites grow **108**,
+   including support/imports. The alternative method-name spelling grows
+   386/417 lines. This extends the old direct-assignment preflight to promoted
+   arithmetic and captured places; neither complete spelling saves lines.
+   Static legacy GL symbol grids remove 172 historical lines and 7,402
+   spelling bytes but add 513 tokens; reject under the token/text selection
+   rule. Both are source-only prices without builds or runtime claims.
+   Reports: TEMP sm-tailored-next/{ordinary-place-updates,gl-static-groups}.
+   The GL administrator-policy block remains unchanged; no tests were launched.
+
    Those representation studies are closed. Five subsequent domain studies
    use the same repaired 106,189-line control:
 
