@@ -460,13 +460,13 @@ pub unsafe fn LoadMenuPalettes(game: &mut Game) {
         le(palette_buffer, 1) <- rom(0x8ee400, 1),
     );
 }
-static kGameOverMenuFuncs: [Option<Func_V>; 8] = callback_table! { unsafe Func_V;
+static kGameOverMenuFuncs: [Func_V; 8] = callback_table! { nonnull Func_V;
     GameOverMenu_0_FadeOutConfigGfx, GameOverMenu_1_Init, GameOverMenu_2_PlayMusic,
     GameOverMenu_3_FadeIn, GameOverMenu_4_Main, GameOverMenu_5_FadeOutToGameMap,
     GameOverMenu_6_LoadGameMapView, GameOverMenu_7_FadeOutToSoftReset,
 };
 pub unsafe fn GameOverMenu(game: &mut Game) {
-    kGameOverMenuFuncs[word!(game.menu_index) as usize].expect("non-null function pointer")(game);
+    kGameOverMenuFuncs[word!(game.menu_index) as usize](game);
 }
 pub unsafe fn GameOverMenu_3_FadeIn(game: &mut Game) {
     HandleGameOverBabyMetroid(game);
@@ -573,7 +573,7 @@ pub unsafe fn GameOverMenu_2_PlayMusic(game: &mut Game) {
         QueueMusic_Delayed8(4, game);
     }
 }
-static kFileSelectMenuFuncs: [Option<Func_V>; 34] = callback_table! { unsafe Func_V;
+static kFileSelectMenuFuncs: [Func_V; 34] = callback_table! { nonnull Func_V;
     FileSelectMenu_0_FadeOutConfigGfx, FileSelectMenu_1_LoadFileSelectMenuBG2,
     FileSelectMenu_2_InitMain, FileSelectMenu_3_FadeInToMain, FileSelectMenu_4_Main,
     FileSelectMenu_5_FadeOutFromMain, FileSelectMenu_6_FileCopyInit,
@@ -590,7 +590,7 @@ static kFileSelectMenuFuncs: [Option<Func_V>; 34] = callback_table! { unsafe Fun
     FileSelectMenu_32_FadeOutToOptions, FileSelectMenu_33_FadeOutToTitle,
 };
 pub unsafe fn FileSelectMenu(game: &mut Game) {
-    kFileSelectMenuFuncs[word!(game.menu_index) as usize].expect("non-null function pointer")(game);
+    kFileSelectMenuFuncs[word!(game.menu_index) as usize](game);
 }
 pub unsafe fn FileSelectMenu_0_FadeOutConfigGfx(game: &mut Game) {
     HandleFadeOut(game);
@@ -1221,7 +1221,7 @@ pub unsafe fn DrawFileSelectSlotSamusHelmet(k: u16, game: &mut Game) {
         game,
     );
 }
-static kFileSelectMapFuncs: [Option<Func_V>; 23] = callback_table! { unsafe Func_V;
+static kFileSelectMapFuncs: [Func_V; 23] = callback_table! { nonnull Func_V;
     FileSelectMap_0, FileSelectMap_1, FileSelectMap_2_LoadAreaSelectForegroundTilemap,
     FileSelectMap_3_LoadAreaSelectBackgroundTilemap,
     FileSelectMap_4_SetupExpandingSquareTransition, FileSelectMap_5_ExpandingSquare,
@@ -1234,7 +1234,7 @@ static kFileSelectMapFuncs: [Option<Func_V>; 23] = callback_table! { unsafe Func
     FileSelectMap_21_MoveExpandingSquare, FileSelectMap_22,
 };
 pub unsafe fn FileSelectMap(game: &mut Game) {
-    kFileSelectMapFuncs[word!(game.menu_index) as usize].expect("non-null function pointer")(game);
+    kFileSelectMapFuncs[word!(game.menu_index) as usize](game);
 }
 pub unsafe fn FileSelectMap_22(game: &mut Game) {
     DrawAreaSelectMapLabels(game);

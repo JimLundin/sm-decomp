@@ -3527,7 +3527,7 @@ pub unsafe fn Etecoon_Func_11(k: u16, game: &mut Game) {
         (*E).var_B = g_word_A7E902;
     }
 }
-static funcs_A2A79: [Option<Func_Y_V>; 3] = callback_table! { unsafe Func_Y_V;
+static funcs_A2A79: [Func_Y_V; 3] = callback_table! { nonnull Func_Y_V;
     Etecoon_Func_13, Etecoon_Func_14, Etecoon_Func_15,
 };
 crate::game::countdown_callbacks! {
@@ -3565,7 +3565,7 @@ crate::game::countdown_callbacks! {
     Etecoon_Func_12 {
         (*E).var_A = g_word_A7E900;
         (*E).var_B = g_word_A7E902;
-        funcs_A2A79[byte!((*E).parameter_2; 0) as usize].expect("non-null function pointer")(k, game);
+        funcs_A2A79[byte!((*E).parameter_2; 0) as usize](k, game);
         (*Get_Etecoon(k as i32, game)).base.instruction_timer = 1;
     };
 }

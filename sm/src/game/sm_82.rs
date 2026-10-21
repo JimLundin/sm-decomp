@@ -724,7 +724,7 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
     word!(game.loading_game_state = kLoadingGameState_0_Intro as u16);
     word!(game.debug_disable_minimap = 0);
 }
-static kGameStateFuncs: [Option<Func_V_Coroutine>; 45] = callback_table! { unsafe Func_V_Coroutine;
+static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_V_Coroutine;
     GameState_0_Reset_Async, GameState_1_OpeningCinematic, GameState_2_GameOptionsMenu,
     GameState_3_Null, GameState_4_FileSelectMenus, GameState_5_FileSelectMap,
     InitAndLoadGameData_Async, GameState_7_MainGameplayFadeIn, GameState_8_MainGameplay,
@@ -777,8 +777,7 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
         st = word!(game.game_state) as i32 + 10;
         *ram_ptr!(game; 0x611) = st as u8;
     }
-    let mut _coret__0: u8 =
-        kGameStateFuncs[(st - 10i32) as usize].expect("non-null function pointer")(game);
+    let mut _coret__0: u8 = kGameStateFuncs[(st - 10i32) as usize](game);
     if _coret__0 != 0 {
         return _coret__0;
     }
@@ -826,7 +825,7 @@ pub unsafe fn GameState_5_FileSelectMap(game: &mut Game) -> CoroutineRet {
     FileSelectMap(game);
     kCoroutineNone as CoroutineRet
 }
-static kSfxHandlers: [Option<Func_Y_V>; 5] = callback_table! { unsafe Func_Y_V;
+static kSfxHandlers: [Func_Y_V; 5] = callback_table! { nonnull Func_Y_V;
     SfxHandlers_0_SendToApu, SfxHandlers_1_WaitForAck, SfxHandlers_2_ClearRequest,
     SfxHandlers_3_WaitForAck, SfxHandlers_4_Reset,
 };
@@ -842,8 +841,7 @@ pub unsafe fn HandleSoundEffects(game: &mut Game) {
         *ram_ptr!(game; 0x64d, 2) = 0;
     } else {
         for i in 0i32..3 {
-            kSfxHandlers[*ram_ptr!(game; 0x649, i as isize) as usize]
-                .expect("non-null function pointer")(i as u16, game);
+            kSfxHandlers[*ram_ptr!(game; 0x649, i as isize) as usize](i as u16, game);
         }
     };
 }
@@ -1409,13 +1407,13 @@ pub unsafe fn GameState_15_Paused_Async(game: &mut Game) -> CoroutineRet {
     HandlePauseScreenPaletteAnimation(game);
     kCoroutineNone as CoroutineRet
 }
-static kPauseMenuFuncs: [Option<Func_V>; 8] = callback_table! { unsafe Func_V;
+static kPauseMenuFuncs: [Func_V; 8] = callback_table! { nonnull Func_V;
     PauseMenu_0_MapScreen, PauseMenu_1_EquipmentScreen, PauseMenu_2,
     PauseMenu_3_MapToEquipment_Load, PauseMenu_4_MapToEquipment_FadeIn, PauseMenu_5,
     PauseMenu_6_EquipmentToMap_Load, PauseMenu_7_EquipmentToMap_FadeIn,
 };
 pub unsafe fn MainPauseRoutine(game: &mut Game) {
-    kPauseMenuFuncs[word!(game.menu_index) as usize].expect("non-null function pointer")(game);
+    kPauseMenuFuncs[word!(game.menu_index) as usize](game);
 }
 pub unsafe fn PauseMenu_0_MapScreen(game: &mut Game) {
     HandlePauseScreenLR(game);
@@ -1508,13 +1506,12 @@ pub unsafe fn PauseMenu_4_MapToEquipment_FadeIn(game: &mut Game) {
         word!(game.menu_index = v0);
     }
 }
-static kMapScrollingFuncs: [Option<Func_V>; 5] = callback_table! { unsafe Func_V;
+static kMapScrollingFuncs: [Func_V; 5] = callback_table! { nonnull Func_V;
     MapScrolling_0_None, MapScrolling_1_Left, MapScrolling_2_Right, MapScrolling_3_Up,
     MapScrolling_4_Down,
 };
 pub unsafe fn MapScrolling(game: &mut Game) {
-    kMapScrollingFuncs[word!(game.map_scrolling_direction) as usize]
-        .expect("non-null function pointer")(game);
+    kMapScrollingFuncs[word!(game.map_scrolling_direction) as usize](game);
 }
 pub unsafe fn MapScrolling_0_None(game: &mut Game) {
     word!(game.map_scrolling_gear_switch_timer = 4);
@@ -2362,24 +2359,22 @@ pub unsafe fn EquipmentScreenTransferBG1Tilemap(game: &mut Game) {
     GraphicsAsset::VramWords(0x7e3800, 0x3000, 0x800).load(game);
     word!(game.reg_BG1VOFS = 0);
 }
-static kEquipmentScreenCategories: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+static kEquipmentScreenCategories: [Func_V; 4] = callback_table! { nonnull Func_V;
     EquipmentScreenCategory_Tanks, EquipmentScreenCategory_Weapons,
     EquipmentScreenCategory_Suit, EquipmentScreenCategory_Boots,
 };
 pub unsafe fn EquipmentScreenMain(game: &mut Game) {
-    kEquipmentScreenCategories[word!(game.pausemenu_equipment_category_item) as u8 as usize]
-        .expect("non-null function pointer")(game);
+    kEquipmentScreenCategories[word!(game.pausemenu_equipment_category_item) as u8 as usize](game);
     EquipmentScreenDrawItemSelector(game);
     EquipmentScreenDisplayReserveTankAmount(game);
     WriteSamusWireframeTilemapAndQueue(game);
 }
-static kEquipmentScreenCategory_TanksFuncs: [Option<Func_V>; 2] = callback_table! { unsafe Func_V;
+static kEquipmentScreenCategory_TanksFuncs: [Func_V; 2] = callback_table! { nonnull Func_V;
     EquipmentScreenCategory_Tanks_0, EquipmentScreenCategory_Tanks_1,
 };
 pub unsafe fn EquipmentScreenCategory_Tanks(game: &mut Game) {
     kEquipmentScreenCategory_TanksFuncs
-        [byte!(@pointer ram_ptr!(game, u16; 0x755); 1isize) as usize]
-        .expect("non-null function pointer")(game);
+        [byte!(@pointer ram_ptr!(game, u16; 0x755); 1isize) as usize](game);
     EquipmentScreenHandleDpad(game);
     EquipmentScreenGlowingArrow(game);
 }
@@ -2410,7 +2405,7 @@ pub unsafe fn EquipmentScreenHandleDpad(game: &mut Game) {
         }
     }
 }
-static kEquipmentScreenGlowingArrowFuncs: [Option<Func_V>; 2] = callback_table! { unsafe Func_V;
+static kEquipmentScreenGlowingArrowFuncs: [Func_V; 2] = callback_table! { nonnull Func_V;
     EquipmentScreenGlowingArrowAnimated, EquipmentScreenGlowingArrowSolidOn,
 };
 pub unsafe fn EquipmentScreenGlowingArrow(game: &mut Game) {
@@ -2418,8 +2413,7 @@ pub unsafe fn EquipmentScreenGlowingArrow(game: &mut Game) {
         EquipmentScreenGlowingArrowSolidOff(game);
     } else {
         kEquipmentScreenGlowingArrowFuncs
-            [byte!(@pointer ram_ptr!(game, u16; 0x755); 1isize) as usize]
-            .expect("non-null function pointer")(game);
+            [byte!(@pointer ram_ptr!(game, u16; 0x755); 1isize) as usize](game);
     };
 }
 static kEquipmentScreenGlowingArrowPalettes0: [u16; 32] = [
@@ -4547,7 +4541,7 @@ pub unsafe fn CheckIfColoredDoorCapSpawned(game: &mut Game) -> u8 {
     word!(game.plm_instr_list_ptrs[v5] = (*get_PlmHeader_Size6(v8, game)).instr_list_2_ptr);
     1
 }
-static kLoadLibraryBackgroundFuncs: [Option<Func_Y_Y>; 8] = callback_table! { unsafe Func_Y_Y;
+static kLoadLibraryBackgroundFuncs: [Func_Y_Y; 8] = callback_table! { nonnull Func_Y_Y;
     LoadLibraryBackgroundFunc_0_DONE, LoadLibraryBackgroundFunc_2_TransferToVram,
     LoadLibraryBackgroundFunc_4_Decompress, LoadLibraryBackgroundFunc_6_ClearFxTilemap,
     LoadLibraryBackgroundFunc_8_TransferToVramAndSetBg3,
@@ -4570,7 +4564,7 @@ pub unsafe fn LoadLibraryBackground(game: &mut Game) {
         do_until! { (bg_data_ptr == 0);
             let v1: u16 = *(RomPtr_8F(bg_data_ptr, game) as *mut u16);
             bg_data_ptr = kLoadLibraryBackgroundFuncs[(v1 >> 1) as usize]
-                .expect("non-null function pointer")(
+                (
                 (bg_data_ptr).wrapping_add(2), game
             );
         }
@@ -4695,7 +4689,7 @@ pub unsafe fn CreatePlmsExecuteDoorAsmRoomSetup(game: &mut Game) {
         word!(game.elevator_status = 2);
     }
 }
-static kGameOptionsMenuFuncs: [Option<Func_V>; 13] = callback_table! { unsafe Func_V;
+static kGameOptionsMenuFuncs: [Func_V; 13] = callback_table! { nonnull Func_V;
     GameOptionsMenuFunc_0, GameOptionsMenu_1_LoadingOptionsScreen,
     GameOptionsMenu_2_FadeInOptionsScreen, GameOptionsMenu_3_OptionsScreen,
     GameOptionsMenu_4_StartGame, GameOptionsMenu_5_DissolveOutScreen,
@@ -4705,8 +4699,7 @@ static kGameOptionsMenuFuncs: [Option<Func_V>; 13] = callback_table! { unsafe Fu
     GameOptionsMenu_C_FadeOutOptionsScreenToStart,
 };
 pub unsafe fn GameState_2_GameOptionsMenu(game: &mut Game) -> CoroutineRet {
-    kGameOptionsMenuFuncs[word!(game.game_options_screen_index) as usize]
-        .expect("non-null function pointer")(game);
+    kGameOptionsMenuFuncs[word!(game.game_options_screen_index) as usize](game);
     OptionsMenuFunc1(game);
     DrawOptionsMenuSpritemaps(game);
     if word!(game.game_options_screen_index) as i32 - 2i32 & 0x8000 == 0 {
@@ -4798,7 +4791,7 @@ pub unsafe fn OptionsMenuFunc5(a: u16, mut k: u16, mut j: u16, game: &mut Game) 
         j = (j).wrapping_sub(2);
     }
 }
-static kGameOptionsMenuItemFuncs: [Option<Func_V>; 5] = callback_table! { unsafe Func_V;
+static kGameOptionsMenuItemFuncs: [Func_V; 5] = callback_table! { nonnull Func_V;
     GameOptionsMenuItemFunc_0, GameOptionsMenuItemFunc_2_ToggleJapanese,
     GameOptionsMenuItemFunc_2_ToggleJapanese, GameOptionsMenuItemFunc_4,
     GameOptionsMenuItemFunc_4,
@@ -4821,8 +4814,7 @@ pub unsafe fn GameOptionsMenu_3_OptionsScreen(game: &mut Game) {
         || (word!(game.joypad1_newkeys) as i32 & kButton_Start as i32) != 0
     {
         QueueSfx1_Max6(0x38, game);
-        kGameOptionsMenuItemFuncs[word!(game.menu_option_index) as usize]
-            .expect("non-null function pointer")(game);
+        kGameOptionsMenuItemFuncs[word!(game.menu_option_index) as usize](game);
     }
 }
 pub unsafe fn GameOptionsMenuItemFunc_0(game: &mut Game) {
@@ -4967,7 +4959,7 @@ pub unsafe fn GameOptionsMenu_6_DissolveInScreen(game: &mut Game) {
         }
     }
 }
-static kGameOptionsMenuSpecialSettings: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
+static kGameOptionsMenuSpecialSettings: [Func_V; 3] = callback_table! { nonnull Func_V;
     GameOptionsMenuSpecialSettings_0, GameOptionsMenuSpecialSettings_0,
     GameOptionsMenuSpecialSettings_2,
 };
@@ -4989,8 +4981,7 @@ pub unsafe fn GameOptionsMenu_8_SpecialSettings(game: &mut Game) {
             != 0
         {
             QueueSfx1_Max6(0x38, game);
-            kGameOptionsMenuSpecialSettings[word!(game.menu_option_index) as usize]
-                .expect("non-null function pointer")(game);
+            kGameOptionsMenuSpecialSettings[word!(game.menu_option_index) as usize](game);
         }
     } else {
         QueueSfx1_Max6(0x38, game);
@@ -5086,13 +5077,12 @@ pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
         }
     } else if word!(game.joypad1_newkeys) != 0 {
         QueueSfx1_Max6(0x38, game);
-        static kOptionsMenuControllerFuncs: [Option<Func_V>; 9] = callback_table! { unsafe Func_V;
+        static kOptionsMenuControllerFuncs: [Func_V; 9] = callback_table! { nonnull Func_V;
             OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_0,
             OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_0,
             OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_7, OptionsMenuControllerFunc_8,
         };
-        kOptionsMenuControllerFuncs[word!(game.menu_option_index) as usize]
-            .expect("non-null function pointer")(game);
+        kOptionsMenuControllerFuncs[word!(game.menu_option_index) as usize](game);
     } else if word!(game.joypad2_new_keys) != 0
         && word!(game.menu_option_index) == 8
         && word!(game.debug_invincibility) as i32 - 16i32 & 0x8000 != 0

@@ -1608,15 +1608,13 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         );
     };
 }
-static off_A2A3D3: [Option<Func_V>; 7] = callback_table! { unsafe Func_V;
+static off_A2A3D3: [Func_V; 7] = callback_table! { nonnull Func_V;
     MaridiaSpikeyShell_1, MaridiaSpikeyShell_2, MaridiaSpikeyShell_3, MaridiaSpikeyShell_4,
     MaridiaSpikeyShell_5, MaridiaSpikeyShell_6, MaridiaSpikeyShell_7,
 };
 pub unsafe fn MaridiaSpikeyShell_Main(game: &mut Game) {
     let e = Get_MaridiaSpikeyShell(word!(game.cur_enemy_index) as i32, game);
-    off_A2A3D3[((*e).var_E as i16 as i32 + 2i32) as usize].expect("non-null function pointer")(
-        game,
-    );
+    off_A2A3D3[((*e).var_E as i16 as i32 + 2i32) as usize](game);
 }
 pub unsafe fn MaridiaSpikeyShell_8(k: u16, game: &mut Game) {
     NextRandom(game);
@@ -1640,7 +1638,7 @@ crate::prefixed_callbacks! {
         (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16;
         let mssl_parameter_1_low: u16 = byte!((*E).parameter_1; 0) as u16;
         (*E).var_E = mssl_parameter_1_low;
-        off_A2A3D3[(mssl_parameter_1_low as i32 & 1i32) as usize].expect("non-null function pointer")(
+        off_A2A3D3[(mssl_parameter_1_low as i32 & 1i32) as usize](
             game,
         );
         let v3: i32 = 4 * byte!((*E).parameter_2; 0) as i32;

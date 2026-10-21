@@ -68,7 +68,7 @@ pub unsafe fn LoadFxEntry(v0: u16, game: &mut Game) {
     apply_room_fx_definition!(game, FD, palette_buffer);
 }
 pub fn nullsub_106(game: &mut Game) {}
-static kFxTypeFuncPtrs: [Option<Func_V>; 23] = callback_table! { unsafe Func_V;
+static kFxTypeFuncPtrs: [Func_V; 23] = callback_table! { nonnull Func_V;
     nullsub_106, FxTypeFunc_2_Lava, FxTypeFunc_4_Acid, FxTypeFunc_6_Water, FxTypeFunc_8_Spores,
     FxTypeFunc_A_Rain, FxTypeFunc_C, nullsub_106, nullsub_106, nullsub_106, nullsub_106,
     nullsub_106, nullsub_106, nullsub_106, nullsub_106, nullsub_106, FxTypeFunc_20,
@@ -125,7 +125,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
             game.fx_tilemap_ptr =
                 crate::rtl::rom_table_word!(game, 0x83abf0, ((*FD).type_0 >> 1) as isize)
         );
-        kFxTypeFuncPtrs[((*FD).type_0 >> 1) as usize].expect("non-null function pointer")(game);
+        kFxTypeFuncPtrs[((*FD).type_0 >> 1) as usize](game);
     }
     spawn_room_effect_bitset!(FD, palette_fx_bitset, game, 0x83ac46, SpawnPalfxObject);
     spawn_room_effect_bitset!(FD, animtiles_bitset, game, 0x83ac56, SpawnAnimtiles);

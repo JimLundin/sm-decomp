@@ -1499,13 +1499,13 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         (*Get_NorfairLavaMan(word!(game.cur_enemy_index) as i32, game)).var_04 = 256;
     };
 }
-static g_off_A8AF4F: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
+static g_off_A8AF4F: [Func_V; 3] = callback_table! { nonnull Func_V;
     NorfairLavaMan_Func_1, NorfairLavaMan_Func_2, NorfairLavaMan_Func_3,
 };
 pub unsafe fn NorfairLavaMan_Init(game: &mut Game) {
     let v0: u16 = (2u16)
         .wrapping_mul((*Get_NorfairLavaMan(word!(game.cur_enemy_index) as i32, game)).parameter_1);
-    g_off_A8AF4F[(v0 >> 1) as usize].expect("non-null function pointer")(game);
+    g_off_A8AF4F[(v0 >> 1) as usize](game);
     NorfairLavaMan_Func_4(game);
     NorfairLavaMan_Func_5(word!(game.cur_enemy_index), game);
 }

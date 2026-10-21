@@ -284,7 +284,7 @@ pub unsafe fn LayerBlendPowerBombFunc_6(game: &mut Game) {
     *ram_ptr!(game; 0x69) = 19;
     *ram_ptr!(game; 0x6b) = 4;
 }
-static kLayerBlendFuncTable: [Option<Func_Y_Y>; 27] = callback_table! { unsafe Func_Y_Y;
+static kLayerBlendFuncTable: [Func_Y_Y; 27] = callback_table! { nonnull Func_Y_Y;
     nullsub_9, nullsub_9, LayerBlendFunc_4_PhantoonIntro, LayerBlendFunc_6, LayerBlendFunc_8,
     LayerBlendFunc_A, LayerBlendFunc_C, nullsub_10, LayerBlendFunc_10, LayerBlendFunc_10,
     LayerBlendFunc_14, LayerBlendFunc_16, LayerBlendFunc_18, LayerBlendFunc_1A,
@@ -297,7 +297,7 @@ pub unsafe fn LayerBlendingHandler(game: &mut Game) {
     let v1: u8 = word!(game.fx_layer_blending_config_c) as u8;
     if word!(game.fx_layer_blending_config_c) as u8 != 0 {
         InitializeLayerBlending(game);
-        v0 = kLayerBlendFuncTable[(v1 >> 1) as usize].expect("non-null function pointer")(v0, game);
+        v0 = kLayerBlendFuncTable[(v1 >> 1) as usize](v0, game);
     }
     if (word!(game.fx_layer_blending_config_c) & 0x8000) == 0 {
         if (word!(game.fx_layer_blending_config_c) & 0x4000) != 0 {
@@ -311,7 +311,7 @@ pub unsafe fn LayerBlendingHandler(game: &mut Game) {
         HandleLayerBlendingPowerBomb(v0, game);
     };
 }
-static kLayerBlendPowerBombFuncs: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+static kLayerBlendPowerBombFuncs: [Func_V; 4] = callback_table! { nonnull Func_V;
     LayerBlendPowerBombFunc_0, LayerBlendPowerBombFunc_0, LayerBlendPowerBombFunc_4,
     LayerBlendPowerBombFunc_6,
 };
@@ -319,7 +319,7 @@ pub unsafe fn HandleLayerBlendingPowerBomb(mut j: u16, game: &mut Game) {
     if word!(game.room_ptr) as i32 == addr_kRoom_a66a as i32 {
         j = 6;
     }
-    kLayerBlendPowerBombFuncs[(j >> 1) as usize].expect("non-null function pointer")(game);
+    kLayerBlendPowerBombFuncs[(j >> 1) as usize](game);
 }
 pub unsafe fn EnableHdmaObjects(game: &mut Game) {
     word!(game.hdma_objects_enable_flag, |fresh31| (fresh31)
@@ -937,7 +937,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc5_DeactivateBeam(k: u16, game: &mut Game) 
         }
     }
 }
-static kHdmaobjPreInstr_XrayFuncs: [Option<Func_Y_V>; 6] = callback_table! { unsafe Func_Y_V;
+static kHdmaobjPreInstr_XrayFuncs: [Func_Y_V; 6] = callback_table! { nonnull Func_Y_V;
     HdmaobjPreInstr_XrayFunc0_NoBeam, HdmaobjPreInstr_XrayFunc1_BeamWidening,
     HdmaobjPreInstr_XrayFunc2_FullBeam, HdmaobjPreInstr_XrayFunc3_DeactivateBeam,
     HdmaobjPreInstr_XrayFunc4_DeactivateBeam, HdmaobjPreInstr_XrayFunc5_DeactivateBeam,
@@ -955,8 +955,7 @@ pub unsafe fn HdmaobjPreInstr_Xray(k: u16, game: &mut Game) {
     }
     word!(game.fx_layer_blending_config_c, |fresh138| (fresh138)
         | ((v1) as u16));
-    kHdmaobjPreInstr_XrayFuncs[word!(game.demo_input_pre_instr) as usize]
-        .expect("non-null function pointer")(
+    kHdmaobjPreInstr_XrayFuncs[word!(game.demo_input_pre_instr) as usize](
         (2u16).wrapping_mul(word!(game.demo_input_pre_instr)),
         game,
     );
@@ -2134,28 +2133,26 @@ pub unsafe fn HdmaobjPreInstr_DF94(v0: u16, game: &mut Game) {
         word!(game.hdma_object_instruction_list_pointers[v3] = addr_word_88DF71 as u16);
     };
 }
-static off_88E04E: [Option<Func_U8>; 7] = callback_table! { unsafe Func_U8;
+static off_88E04E: [Func_U8; 7] = callback_table! { nonnull Func_U8;
     VariaSuitPickup_0_LightBeamAppears, VariaSuitPickup_1, VariaSuitPickup_2_LightBeamWidens,
     VariaSuitPickup_3, VariaSuitPickup_4_LightBeamShrinks,
     VariaSuitPickup_5_LightBeamDissipates, VariaSuitPickup_6,
 };
 pub unsafe fn HdmaobjPreInstr_VariaSuitPickup(k: u16, game: &mut Game) {
-    if off_88E04E[word!(game.substate) as usize].expect("non-null function pointer")(game) & 1 != 0
-    {
+    if off_88E04E[word!(game.substate) as usize](game) & 1 != 0 {
         *ram_ptr!(game; 0x74, 0) = *ram_ptr!(game; 0xdf0);
         *ram_ptr!(game; 0x74, 1) = *ram_ptr!(game; 0xdf1);
         *ram_ptr!(game; 0x74, 2) = *ram_ptr!(game; 0xdf2);
         word!(game.fx_layer_blending_config_c = 18);
     }
 }
-static off_88E084: [Option<Func_U8>; 7] = callback_table! { unsafe Func_U8;
+static off_88E084: [Func_U8; 7] = callback_table! { nonnull Func_U8;
     VariaSuitPickup_0_LightBeamAppears, VariaSuitPickup_1, VariaSuitPickup_2_LightBeamWidens,
     GravitySuitPickup_3, VariaSuitPickup_4_LightBeamShrinks,
     VariaSuitPickup_5_LightBeamDissipates, GravitySuitPickup_6,
 };
 pub unsafe fn HdmaobjPreInstr_GravitySuitPickup(k: u16, game: &mut Game) {
-    if off_88E084[word!(game.substate) as usize].expect("non-null function pointer")(game) & 1 != 0
-    {
+    if off_88E084[word!(game.substate) as usize](game) & 1 != 0 {
         *ram_ptr!(game; 0x74, 0) = *ram_ptr!(game; 0xdf0);
         *ram_ptr!(game; 0x74, 1) = *ram_ptr!(game; 0xdf1);
         *ram_ptr!(game; 0x74, 2) = *ram_ptr!(game; 0xdf2);

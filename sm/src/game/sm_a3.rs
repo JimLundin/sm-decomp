@@ -507,14 +507,14 @@ pub unsafe fn Elevator_Init(game: &mut Game) {
         Elevator_Func_4(game);
     }
 }
-static off_A39540: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+static off_A39540: [Func_V; 4] = callback_table! { nonnull Func_V;
     Elevator_Func_1, Elevator_Func_2, Elevator_Func_3, Elevator_Func3b,
 };
 pub unsafe fn Elevator_Frozen(game: &mut Game) {
     if word!(game.door_transition_flag_elevator_zebetites) == 0
         && words!(game.elevator_status, elevator_flags) != 0
     {
-        off_A39540[word!(game.elevator_status) as usize].expect("non-null function pointer")(game);
+        off_A39540[word!(game.elevator_status) as usize](game);
     }
 }
 pub unsafe fn Elevator_Func_1(game: &mut Game) {
@@ -628,10 +628,10 @@ pub unsafe fn PlatformThatFalls_Init(k: u16, j: u16, game: &mut Game) {
     (*E).var_F = 0;
     (*E).var_05 = byte!((*E).parameter_2; 1) as u16;
 }
-static off_A39C97: [Option<Func_V>; 2] = callback_table! { unsafe Func_V;
+static off_A39C97: [Func_V; 2] = callback_table! { nonnull Func_V;
     PlatformThatFallsWithSamus_Func_1, PlatformThatFallsWithSamus_Func_2,
 };
-static off_A39C9B: [Option<Func_V>; 2] = callback_table! { unsafe Func_V;
+static off_A39C9B: [Func_V; 2] = callback_table! { nonnull Func_V;
     PlatformThatFallsWithSamus_Func_3, PlatformThatFallsWithSamus_Func_4,
 };
 crate::prefixed_callbacks! {
@@ -677,10 +677,10 @@ crate::prefixed_callbacks! {
         if CheckIfEnemyTouchesSamus(word!(game.cur_enemy_index), game) != 0 {
             (*E).var_00 = 1;
         }
-        off_A39C97[(*E).var_02 as usize].expect("non-null function pointer")(game);
+        off_A39C97[(*E).var_02 as usize](game);
         let v3: i32 =
             (*Get_PlatformThatFallsWithSamus(word!(game.cur_enemy_index) as i32, game)).var_00 as i32;
-        off_A39C9B[v3 as usize].expect("non-null function pointer")(game);
+        off_A39C9B[v3 as usize](game);
         if (*E).var_00 != (*E).var_06 {
             (*E).var_F = 0;
         }
@@ -1115,14 +1115,14 @@ pub unsafe fn Mochtroid_Init(game: &mut Game) {
     );
     (*E).var_F = 0;
 }
-static off_A3A7A4: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
+static off_A3A7A4: [Func_V; 3] = callback_table! { nonnull Func_V;
     Mochtroid_Func_1, Mochtroid_Func_3, Mochtroid_Func_2,
 };
 pub unsafe fn Mochtroid_Main(game: &mut Game) {
     let v0: u16 =
         (2u16).wrapping_mul((*Get_Mochtroid(word!(game.cur_enemy_index) as i32, game)).var_F);
     (*Get_Mochtroid(word!(game.cur_enemy_index) as i32, game)).var_F = 0;
-    off_A3A7A4[(v0 >> 1) as usize].expect("non-null function pointer")(game);
+    off_A3A7A4[(v0 >> 1) as usize](game);
 }
 
 macro_rules! accelerate_and_clamp_mochtroid_axis {
@@ -2841,15 +2841,12 @@ pub unsafe fn Metroid_Hurt(game: &mut Game) {
         );
     };
 }
-static off_A3EC09: [Option<Func_Y_V>; 4] = callback_table! { unsafe Func_Y_V;
+static off_A3EC09: [Func_Y_V; 4] = callback_table! { nonnull Func_Y_V;
     Metroid_Func_1, Metroid_Func_2, Metroid_Func_3, Metroid_Func_4,
 };
 pub unsafe fn Metroid_Main(game: &mut Game) {
     let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
-    off_A3EC09[(*E).var_F as usize].expect("non-null function pointer")(
-        (word!(game.samus_y_pos)).wrapping_sub(8),
-        game,
-    );
+    off_A3EC09[(*E).var_F as usize]((word!(game.samus_y_pos)).wrapping_sub(8), game);
     let r24: u16 = ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
     let v2: i32 = (*E).var_00 as i32 >> 1;
     word! {game; sprite_x_pos[v2] = (*E).base.x_pos; sprite_y_pos[v2] = (*E).base.y_pos;

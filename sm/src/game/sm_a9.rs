@@ -721,7 +721,7 @@ crate::game::callback_dispatch! {
     };
     [11122813] MotherBomb_FiringDeathBeam [] {
         let v0: i32 = (*Get_MotherBrain(0i32, game)).var_17 as i32;
-        off_A9B887[v0 as usize].expect("non-null function pointer")(game);
+        off_A9B887[v0 as usize](game);
     };
     [11122923] MotherBomb_FiringRainbowBeam_0 [] {
         MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C87 as u16, game);
@@ -2638,7 +2638,7 @@ pub unsafe fn MotherBrain_FiringBomb_Finish(game: &mut Game) {
     }
     (*E).var_A = v0;
 }
-static off_A9B887: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+static off_A9B887: [Func_V; 4] = callback_table! { nonnull Func_V;
     MotherBomb_FiringDeathBeam_0, MotherBomb_FiringDeathBeam_1, MotherBomb_FiringDeathBeam_2,
     MotherBomb_FiringDeathBeam_3,
 };

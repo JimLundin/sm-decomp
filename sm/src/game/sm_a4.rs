@@ -65,7 +65,7 @@ pub unsafe fn Crocomire_Hurt(game: &mut Game) {
     Crocomire_Func_27(word!(game.cur_enemy_index), game);
     Crocomire_Func_31(game);
 }
-static off_A486B3: [Option<CrocomireFunc>; 21] = callback_table! { unsafe CrocomireFunc;
+static off_A486B3: [CrocomireFunc; 21] = callback_table! { nonnull CrocomireFunc;
     Crocomire_Func_2, Crocomire_Func_3, Crocomire_Func_4, Crocomire_Func_5, Crocomire_Func_7,
     Crocomire_Func_8, Crocomire_Func_9, Crocomire_Func_10, Crocomire_Func_11, Crocomire_Func_13,
     Crocomire_Func_14, Crocomire_Func_15, Crocomire_Func_16, Crocomire_Func_17,
@@ -73,7 +73,7 @@ static off_A486B3: [Option<CrocomireFunc>; 21] = callback_table! { unsafe Crocom
     Crocomire_Func_24, Crocomire_Func_25, Crocomire_Func_26,
 };
 crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
-    Crocomire_Instr_1 [off_A486B3[(crocom_var_C >> 1) as usize].expect("non-null function pointer")(
+    Crocomire_Instr_1 [off_A486B3[(crocom_var_C >> 1) as usize](
             crocom_var_C,
             jp,
             game,
@@ -450,7 +450,7 @@ pub unsafe fn Crocomire_8BA4(game: &mut Game) {
     }
 }
 pub fn nullsub_305(game: &mut Game) {}
-static off_A48C14: [Option<Func_V>; 45] = callback_table! { unsafe Func_V;
+static off_A48C14: [Func_V; 45] = callback_table! { nonnull Func_V;
     Crocomire_Func_28, Crocomire_Func_52, Crocomire_Func_36, Crocomire_92CE, Crocomire_Func_54,
     Crocomire_Func_36, Crocomire_92CE, Crocomire_Func_54, Crocomire_Func_57, Crocomire_Func_60,
     Crocomire_Func_62, Crocomire_929E, Crocomire_Func_64, Crocomire_Func_65, Crocomire_Func_66,
@@ -464,7 +464,7 @@ static off_A48C14: [Option<Func_V>; 45] = callback_table! { unsafe Func_V;
 };
 pub unsafe fn Crocomire_Main(game: &mut Game) {
     let v0: i32 = (*Get_Crocomire(0i32, game)).var_A as i32 >> 1;
-    off_A48C14[v0 as usize].expect("non-null function pointer")(game);
+    off_A48C14[v0 as usize](game);
     Crocomire_Func_30(game);
     Crocomire_Func_31(game);
 }

@@ -1680,6 +1680,47 @@ formatting and progress checks pass. These are diagnostic-component checks, not
 a new gameplay replay or execution of every real hardware bus path. Sources,
 emitter and checks: `TEMP/sm-tailored-next/tracing-native`.
 
+Nonnull callback-table inference is also adopted: **105,840 -> 105,769 (-71)**,
+including three helper lines, with 786 fewer tokens and 3,430 fewer code-text
+bytes. All 79 immutable tables contain known functions in every one of their
+922 slots, so their types become ordinary function-pointer arrays. The demo-set
+slice aggregate and all 82 consumers change together. Four genuinely nullable
+tables retain `Option` and their existing failure behavior. Every selected table
+is private, with every reference accounted for and no raw-pointer escape.
+
+Complete compiler-expanded correspondence proves the same targets, casts, checked
+indices, lengths, argument order and callback bodies after removing only the
+unreachable null-failure branches. Final-source optimized library/frontend
+compilation, formatting and progress pass. Full boot any% **129,712/0** and
+Speed Booster **148,406/0** pass on the combined production source, hash
+`83c7a77846eaea50a541bb4b02b1ebaa5ac19f2cae3f47fd57c3054f3fa0e9fc`.
+These replays retain rendering, audio and all comparisons; neither reaches
+credits or executes every callback. Tracing retains its component coverage.
+The actual combined maintained-source reduction is **215 lines**. The original
+C timer table is explicitly `Func_U8 *const` with seven nonnull function entries;
+this supplies a concrete C-to-native-Rust inference rule. Emitter, full inventory,
+proof and adoption logs: `TEMP/sm-tailored-next/nonnull-tables`.
+
+Broader representation experiments use independent 105,984-line controls:
+
+| Complete experiment | Line change | Decision |
+| --- | ---: | --- |
+| Ten existing ROM-script interpreters plus allocation/scheduling | +117 | Reject; common traversal and adapters grow |
+| Shared live hardware, snapshots, checkpoints and audio diagnostics | -95 | Reject; adds 1,542 tokens and 2,921 code-text bytes |
+| Complete contextual Kraid controller | +33 | Reject for volume; owns 132 entries but adds source |
+| Kraid controller with actual receiver methods | +196 | Reject; 26 identity/order wrappers repay gains |
+| Cached raw Samus RAM view, preserving little endian | +921 | Reject; all 2,520 accesses/stores/updates and layout costs counted |
+| Remove unused generic PPU capabilities | No candidate | Only 236 gross lines identified; none proved unused |
+
+The first five complete candidates compile across library/frontend targets;
+they have no runtime-equivalence claim. The Samus study also prices local views
+and a native-endian control; all grow. State ownership includes 1,962 migrated
+field accesses and all retained cache, legacy-save and pointer-rebinding work.
+These are bounded rejections of implemented representations, not limits on
+every possible redesign. Reports are in `TEMP/sm-tailored-next/{object-lifecycle,
+contextual-kraid,samus-overlay,ppu-sm-specialization}` and
+`TEMP/sm-hardware-state-d878362a`. Do not add their independent prices.
+
 A source-ownership count also clarifies the remaining search space. The repaired
 control has **83,741 lines under game/**, **13,135 root-level lines**, **2,743
 platform lines**, **6,077 SNES lines** and **493 verify-subdirectory lines**:

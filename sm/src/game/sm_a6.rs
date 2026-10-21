@@ -3169,13 +3169,13 @@ pub unsafe fn RidleysExplosion_Func_2(game: &mut Game) {
     SpawnEnemy(0xa6, addr_stru_A6CA37 as u16, game);
 }
 pub fn locret_A6CB20(game: &mut Game) {}
-static off_A6CB21: [Option<Func_V>; 9] = callback_table! { unsafe Func_V;
+static off_A6CB21: [Func_V; 9] = callback_table! { nonnull Func_V;
     locret_A6CB20, Ridley_CBC0, Ridley_Func_71, Ridley_Func_72, Ridley_CBC7, Ridley_CBCE,
     Ridley_Func_73, Ridley_Func_74, Ridley_CBD5,
 };
 pub unsafe fn Ridley_Func_70(game: &mut Game) {
     Ridley_Func_91(game);
-    off_A6CB21[word!(game.tilemap_stuff[0]) as usize].expect("non-null function pointer")(game);
+    off_A6CB21[word!(game.tilemap_stuff[0]) as usize](game);
     Ridley_Func_86(game);
     Ridley_Func_87(game);
     let E = Get_Ridley(0, game);

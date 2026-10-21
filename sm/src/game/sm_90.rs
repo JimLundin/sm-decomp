@@ -574,7 +574,7 @@ unsafe fn Samus_HandleAnimDelay(game: &mut Game) {
     game.set_samus_anim_frame_timer(frame_buffer.wrapping_add(u16::from(delay)));
 }
 
-static kSamusIsBottomDrawnFuncs: [Option<Func_U8>; 28] = callback_table! { unsafe Func_U8;
+static kSamusIsBottomDrawnFuncs: [Func_U8; 28] = callback_table! { nonnull Func_U8;
     SamusBottomDrawn_0_Standing, SamusBottomDrawn_1, SamusBottomDrawn_1,
     SamusBottomDrawn_3_SpinJump, SamusBottomDrawn_4, SamusBottomDrawn_1, SamusBottomDrawn_1,
     SamusBottomDrawn_4, SamusBottomDrawn_4, SamusBottomDrawn_4, SamusBottomDrawn_A_Knockback,
@@ -597,11 +597,7 @@ pub unsafe fn Samus_Draw(game: &mut Game) {
         game.g_ram[0xac8..0xaca].copy_from_slice(&top_spritemap.to_le_bytes());
         let position = Samus_CalcSpritemapPos(game.samus_pose().wrapping_mul(2), game);
         DrawSamusSpritemap(top_spritemap, position.k, position.j, game);
-        if kSamusIsBottomDrawnFuncs[usize::from(game.samus_movement_type())]
-            .expect("non-null function pointer")(game)
-            & 1
-            != 0
-        {
+        if kSamusIsBottomDrawnFuncs[usize::from(game.samus_movement_type())](game) & 1 != 0 {
             // The lower table keeps the captured, word-wrapped pose; frame and position stay live.
             let frame = game.samus_anim_frame();
             let bottom_base = game.read_rom_word(0x92945d, usize::from(doubled_pose >> 1) * 2);
@@ -821,11 +817,7 @@ pub unsafe fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
                 v2 as u16,
                 game,
             );
-            if kSamusIsBottomDrawnFuncs[*ram_ptr!(game; 0xa1f) as usize]
-                .expect("non-null function pointer")(game)
-                & 1
-                != 0
-            {
+            if kSamusIsBottomDrawnFuncs[*ram_ptr!(game; 0xa1f) as usize](game) & 1 != 0 {
                 let v5: u16 = (word!(game.samus_anim_frame)).wrapping_add(
                     crate::rtl::rom_table_word!(game, 0x92945d, word!(game.samus_pose) as isize),
                 );
@@ -872,11 +864,7 @@ pub unsafe fn Samus_DrawDuringDeathAnim(game: &mut Game) {
         game,
     );
     let R36: u16 = v1;
-    if kSamusIsBottomDrawnFuncs[*ram_ptr!(game; 0xa1f) as usize].expect("non-null function pointer")(
-        game,
-    ) & 1
-        != 0
-    {
+    if kSamusIsBottomDrawnFuncs[*ram_ptr!(game; 0xa1f) as usize](game) & 1 != 0 {
         DrawSamusSpritemap(
             (word!(game.samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
                 game,
@@ -901,11 +889,7 @@ pub unsafe fn Samus_DrawWhenNotAnimatingOrDying(game: &mut Game) {
     v0 = Samus_CalcSpritemapPos((2u16).wrapping_mul(word!(game.samus_pose)), game);
     DrawSamusSpritemap(a, v0.k, v0.j, game);
     let R36: u16 = v2;
-    if kSamusIsBottomDrawnFuncs[*ram_ptr!(game; 0xa1f) as usize].expect("non-null function pointer")(
-        game,
-    ) & 1
-        != 0
-    {
+    if kSamusIsBottomDrawnFuncs[*ram_ptr!(game; 0xa1f) as usize](game) & 1 != 0 {
         DrawSamusSpritemap(
             (word!(game.samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
                 game,
@@ -1055,7 +1039,7 @@ pub unsafe fn AtmosphericTypeFunc_5_Bubbles(k: u16, j: u16, game: &mut Game) {
     let r18: u16 = byte!(@pointer (ram_ptr!(game, u16; 0xaec)).offset((j >> 1) as isize); 0) as u16;
     AtmosphericTypeFunc_Common(j, (r18).wrapping_add(390), game);
 }
-static kSamus_CalcSpritemapPos: [Option<Func_Y_To_PairU16>; 28] = callback_table! { Func_Y_To_PairU16;
+static kSamus_CalcSpritemapPos: [Func_Y_To_PairU16; 28] = callback_table! { nonnull Func_Y_To_PairU16;
     Samus_CalcSpritemapPos_Standing, Samus_CalcSpritemapPos_Default,
     Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Default,
     Samus_CalcSpritemapPos_Default, Samus_CalcSpritemapPos_Default,
@@ -1074,14 +1058,12 @@ static kSamus_CalcSpritemapPos: [Option<Func_Y_To_PairU16>; 28] = callback_table
 pub unsafe fn Samus_CalcSpritemapPos(k: u16, game: &mut Game) -> PairU16 {
     let mut v1: PairU16 = PairU16 { k: 0, j: 0 };
     if (word!(game.ceres_status) & 0x8000) == 0 {
-        v1 = kSamus_CalcSpritemapPos[*ram_ptr!(game; 0xa1f) as usize]
-            .expect("non-null function pointer")(k, game);
+        v1 = kSamus_CalcSpritemapPos[*ram_ptr!(game; 0xa1f) as usize](k, game);
     } else {
         let old_x: u16 = word!(game.samus_x_pos);
         let old_y: u16 = word!(game.samus_y_pos);
         Samus_CalcPos_Mode7(game);
-        v1 = kSamus_CalcSpritemapPos[*ram_ptr!(game; 0xa1f) as usize]
-            .expect("non-null function pointer")(k, game);
+        v1 = kSamus_CalcSpritemapPos[*ram_ptr!(game; 0xa1f) as usize](k, game);
         word! {game; samus_y_pos = old_y; samus_x_pos = old_x; }
     }
     MakePairU16(v1.k, v1.j)
@@ -2221,7 +2203,7 @@ pub unsafe fn Samus_WallJumpCheck(amt: i32, game: &mut Game) -> u8 {
 pub unsafe fn Samus_Movement_07_Unused(game: &mut Game) {
     word!(game.input_to_pose_calc = 0);
 }
-static kSamusMovementHandlers: [Option<HandlerFunc>; 28] = callback_table! { HandlerFunc;
+static kSamusMovementHandlers: [HandlerFunc; 28] = callback_table! { nonnull HandlerFunc;
     Samus_Movement_00_Standing, Samus_Movement_01_Running, Samus_Movement_02_NormalJumping,
     Samus_Movement_03_SpinJumping, Samus_Movement_04_MorphBallOnGround,
     Samus_Movement_05_Crouching, Samus_Movement_06_Falling, Samus_Movement_07_Unused,
@@ -2414,7 +2396,7 @@ pub use self::Samus_Movement_07_Unused as Samus_Movement_0B_Unused;
 pub use self::Samus_Movement_07_Unused as Samus_Movement_0C_Unused;
 pub fn Samus_Movement_0D_Unused(game: &mut Game) {}
 pub fn nullsub_13(game: &mut Game) {}
-static kSamusCrouchingEtcFuncs: [Option<HandlerFunc>; 12] = callback_table! { unsafe HandlerFunc;
+static kSamusCrouchingEtcFuncs: [HandlerFunc; 12] = callback_table! { nonnull HandlerFunc;
     nullsub_13, nullsub_13, nullsub_13, nullsub_13, SamusCrouchingEtcFunc,
     SamusCrouchingEtcFunc, nullsub_13, nullsub_13, nullsub_13, nullsub_13,
     SamusCrouchingEtcFunc, SamusCrouchingEtcFunc,
@@ -2424,8 +2406,7 @@ pub unsafe fn Samus_Movement_0F_CrouchingEtcTransition(game: &mut Game) {
         !(word!(game.samus_pose) as i32 - kPose_F1_FaceR_CrouchTrans_AimU as i32 & 0x8000 != 0)
             || (!(word!(game.samus_pose) as i32 - kPose_DB as i32 & 0x8000 == 0)
                 && ({
-                    kSamusCrouchingEtcFuncs[(word!(game.samus_pose) as i32 - 53i32) as usize]
-                        .expect("non-null function pointer")(game);
+                    kSamusCrouchingEtcFuncs[(word!(game.samus_pose) as i32 - 53i32) as usize](game);
                     true
                 }));
     if apply_movement {
@@ -3282,7 +3263,7 @@ crate::game::callback_dispatch! {
     [9493254] ProjPreInstr_SpazerSba [] {
         let v1: i32 = k as i32 >> 1;
         if (word!(game.projectile_dir[v1]) & 0xf0) != 0 {
-            kProjPreInstr_SpazerSba_FuncsA[v1 as usize].expect("non-null function pointer")(
+            kProjPreInstr_SpazerSba_FuncsA[v1 as usize](
                 k, game,
             );
         } else {
@@ -3300,7 +3281,7 @@ crate::game::callback_dispatch! {
             );
             word!(game.projectile_x_pos[v4] = (pt.x).wrapping_add(word!(game.samus_x_pos)));
             kProjPreInstr_SpazerSba_FuncsB[(word!(game.projectile_unk_A[v4]) >> 1) as usize]
-                .expect("non-null function pointer")(k, pt.y, game);
+                (k, pt.y, game);
             word! {game; cooldown_timer = 2; flare_counter = 0; }
         };
     };
@@ -3767,15 +3748,14 @@ pub unsafe fn DrawFlareAnimationComponent(k: u16, game: &mut Game) {
         }
     }
 }
-static kCheckBeamCollByDir: [Option<Func_V>; 10] = callback_table! { unsafe Func_V;
+static kCheckBeamCollByDir: [Func_V; 10] = callback_table! { nonnull Func_V;
     CheckBeamCollByDir_0459, CheckBeamCollByDir_1368, CheckBeamCollByDir_2,
     CheckBeamCollByDir_1368, CheckBeamCollByDir_0459, CheckBeamCollByDir_0459,
     CheckBeamCollByDir_1368, CheckBeamCollByDir_7, CheckBeamCollByDir_1368,
     CheckBeamCollByDir_0459,
 };
 pub unsafe fn CheckBeamCollByDir(k: u16, game: &mut Game) {
-    kCheckBeamCollByDir[(word!(game.projectile_dir[(k >> 1)]) as i32 & 0xfi32) as usize]
-        .expect("non-null function pointer")(game);
+    kCheckBeamCollByDir[(word!(game.projectile_dir[(k >> 1)]) as i32 & 0xfi32) as usize](game);
 }
 pub unsafe fn CheckBeamCollByDir_0459(game: &mut Game) {
     BlockCollNoWaveBeamVert(word!(game.projectile_index), game);
@@ -3795,15 +3775,16 @@ pub unsafe fn CheckBeamCollByDir_7(game: &mut Game) {
         -1i32 as u16;
     BlockCollNoWaveBeamHoriz(v0, game);
 }
-static kWaveBeam_CheckColl_Funcs: [Option<Func_V>; 10] = callback_table! { unsafe Func_V;
+static kWaveBeam_CheckColl_Funcs: [Func_V; 10] = callback_table! { nonnull Func_V;
     WaveBeam_CheckColl_0459, WaveBeam_CheckColl_1368, WaveBeam_CheckColl_2,
     WaveBeam_CheckColl_1368, WaveBeam_CheckColl_0459, WaveBeam_CheckColl_0459,
     WaveBeam_CheckColl_1368, WaveBeam_CheckColl_7, WaveBeam_CheckColl_1368,
     WaveBeam_CheckColl_0459,
 };
 pub unsafe fn WaveBeam_CheckColl(k: u16, game: &mut Game) {
-    kWaveBeam_CheckColl_Funcs[(word!(game.projectile_dir[(k >> 1)]) as i32 & 0xfi32) as usize]
-        .expect("non-null function pointer")(game);
+    kWaveBeam_CheckColl_Funcs[(word!(game.projectile_dir[(k >> 1)]) as i32 & 0xfi32) as usize](
+        game,
+    );
 }
 pub unsafe fn WaveBeam_CheckColl_0459(game: &mut Game) {
     BlockCollWaveBeamVert(word!(game.projectile_index), game);
@@ -4062,7 +4043,7 @@ pub unsafe fn PowerBomb_Func3(game: &mut Game) {
         ClearProjectile(word!(game.projectile_index), game);
     }
 }
-static kRunSwitchedToHudHandler: [Option<Func_U8>; 6] = callback_table! { unsafe Func_U8;
+static kRunSwitchedToHudHandler: [Func_U8; 6] = callback_table! { nonnull Func_U8;
     SwitchToHudHandler_Nothing, SwitchToHudHandler_Missiles, SwitchToHudHandler_SuperMissiles,
     SwitchToHudHandler_PowerBombs, SwitchToHudHandler_Grapple, SwitchToHudHandler_Xray,
 };
@@ -4087,9 +4068,7 @@ pub unsafe fn HandleSwitchingHudSelection(game: &mut Game) {
     };
     if let Some(mut v0) = selection {
         word!(game.hud_item_index = v0);
-        while kRunSwitchedToHudHandler[v0 as usize].expect("non-null function pointer")(game) & 1
-            != 0
-        {
+        while kRunSwitchedToHudHandler[v0 as usize](game) & 1 != 0 {
             v0 = (word!(game.hud_item_index)).wrapping_add(1);
             word!(game.hud_item_index = v0);
             if v0 as i32 - 6i32 & 0x8000 == 0 {
@@ -4316,7 +4295,7 @@ pub unsafe fn Projectile_SinLookup(j: u16, a: u16) -> Point16U {
     Point16U { x: v2, y: v4 }
 }
 static kCostOfSbaInPowerBombs: [u16; 12] = [0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0];
-static kFireSbaFuncs: [Option<Func_V_A>; 12] = callback_table! { unsafe Func_V_A;
+static kFireSbaFuncs: [Func_V_A; 12] = callback_table! { nonnull Func_V_A;
     FireSba_ClearCarry, FireSba_FireWave, FireSba_FireIce, FireSba_ClearCarry,
     FireSba_FireSpazer, FireSba_ClearCarry, FireSba_ClearCarry, FireSba_ClearCarry,
     FireSba_FirePlasma, FireSba_ClearCarry, FireSba_ClearCarry, FireSba_ClearCarry,
@@ -4332,7 +4311,7 @@ pub unsafe fn FireSba(game: &mut Game) -> u8 {
         v2 = 0;
     }
     word!(game.samus_power_bombs = v2 as u16);
-    let rv: u8 = kFireSbaFuncs[(v1 >> 1) as usize].expect("non-null function pointer")(game);
+    let rv: u8 = kFireSbaFuncs[(v1 >> 1) as usize](game);
     if word!(game.samus_power_bombs) == 0 {
         word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
     }
@@ -4598,7 +4577,7 @@ pub unsafe fn Samus_EndSuperJump(game: &mut Game) -> u8 {
     QueueSfx3_Max6(0x10, game);
     1
 }
-static kSamus_MoveHandler_ShinesparkCrash: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
+static kSamus_MoveHandler_ShinesparkCrash: [Func_V; 3] = callback_table! { nonnull Func_V;
     Samus_MoveHandler_ShinesparkCrash_0, Samus_MoveHandler_ShinesparkCrash_1,
     Samus_MoveHandler_ShinesparkCrash_2,
 };
@@ -4647,7 +4626,7 @@ pub unsafe fn Hdmaobj_CrystalFlash(game: &mut Game) -> u8 {
     word! { game, 0; samus_invincibility_timer, samus_knockback_timer, knockback_dir }
     0
 }
-static kSamusMoveHandler_CrystalFlashMainFuncs: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
+static kSamusMoveHandler_CrystalFlashMainFuncs: [Func_V; 3] = callback_table! { nonnull Func_V;
     SamusMoveHandler_CrystalFlashMain_0, SamusMoveHandler_CrystalFlashMain_1,
     SamusMoveHandler_CrystalFlashMain_2,
 };
@@ -4718,11 +4697,11 @@ pub unsafe fn BombSpread(game: &mut Game) {
         word! { game, 0; bomb_spread_charge_timeout_counter, flare_counter }
     }
 }
-static kProjPreInstr_SpazerSba_FuncsB: [Option<Func_SpazerSba_V>; 3] = callback_table! { unsafe Func_SpazerSba_V;
+static kProjPreInstr_SpazerSba_FuncsB: [Func_SpazerSba_V; 3] = callback_table! { nonnull Func_SpazerSba_V;
     ProjPreInstr_SpazerSba_FuncB_0, ProjPreInstr_SpazerSba_FuncB_1,
     ProjPreInstr_SpazerSba_FuncB_2,
 };
-static kProjPreInstr_SpazerSba_FuncsA: [Option<Func_Y_V>; 4] = callback_table! { unsafe Func_Y_V;
+static kProjPreInstr_SpazerSba_FuncsA: [Func_Y_V; 4] = callback_table! { nonnull Func_Y_V;
     ProjPreInstr_SpazerSba_FuncA_0, ProjPreInstr_SpazerSba_FuncA_1,
     ProjPreInstr_SpazerSba_FuncA_2, ProjPreInstr_SpazerSba_FuncA_3,
 };
@@ -4817,7 +4796,7 @@ pub unsafe fn FireEndOfSpazerSba(j: u16, game: &mut Game) {
         InitializeShinesparkEchoOrSpazerSba(j, game);
     }
 }
-static kHandleHudSpecificBehaviorAndProjs: [Option<Func_V>; 28] = callback_table! { unsafe Func_V;
+static kHandleHudSpecificBehaviorAndProjs: [Func_V; 28] = callback_table! { nonnull Func_V;
     HudSelectionHandler_Normal, HudSelectionHandler_Normal, HudSelectionHandler_Normal,
     HudSelectionHandler_JumpEtc, HudSelectionHandler_MorphBall, HudSelectionHandler_Normal,
     HudSelectionHandler_Normal, HudSelectionHandler_MorphBall, HudSelectionHandler_MorphBall,
@@ -4836,8 +4815,7 @@ pub unsafe fn Samus_HandleHudSpecificBehaviorAndProjs(game: &mut Game) {
         || {
             Samus_HandleCooldown(game);
             HandleSwitchingHudSelection(game);
-            kHandleHudSpecificBehaviorAndProjs[*ram_ptr!(game; 0xa1f) as usize]
-                .expect("non-null function pointer")(game);
+            kHandleHudSpecificBehaviorAndProjs[*ram_ptr!(game; 0xa1f) as usize](game);
             word!(game.time_is_frozen_flag) == 0
         }
     {
@@ -4845,7 +4823,7 @@ pub unsafe fn Samus_HandleHudSpecificBehaviorAndProjs(game: &mut Game) {
     }
 }
 pub unsafe fn HudSelectionHandler_Normal(game: &mut Game) {
-    static kHudSelectionHandler_Normal: [Option<Func_V>; 7] = callback_table! { unsafe Func_V;
+    static kHudSelectionHandler_Normal: [Func_V; 7] = callback_table! { nonnull Func_V;
         update_input, HudSelectionHandler_MissilesOrSuperMissiles,
         HudSelectionHandler_MissilesOrSuperMissiles, update_input,
         HudSelectionHandler_Grappling, HudSelectionHandler_Xray, HudSelectionHandler_TurningAround,
@@ -4859,7 +4837,7 @@ pub unsafe fn HudSelectionHandler_Normal(game: &mut Game) {
     } else {
         8
     };
-    kHudSelectionHandler_Normal[(v0 >> 1) as usize].expect("non-null function pointer")(game);
+    kHudSelectionHandler_Normal[(v0 >> 1) as usize](game);
 }
 pub unsafe fn HudSelectionHandler_Grappling(game: &mut Game) {
     GrappleBeamHandler(game);
@@ -4912,7 +4890,7 @@ pub unsafe fn HudSelectionHandler_GrabbedByDraygon(game: &mut Game) {
         HudSelectionHandler_Normal(game);
     };
 }
-static kSamusHitInterrupts: [Option<Func_U8>; 28] = callback_table! { unsafe Func_U8;
+static kSamusHitInterrupts: [Func_U8; 28] = callback_table! { nonnull Func_U8;
     Samus_HitInterrupt_Stand, Samus_HitInterrupt_Stand, Samus_HitInterrupt_Stand,
     Samus_HitInterrupt_Stand, Samus_HitInterrupt_Ball, Samus_HitInterrupt_Stand,
     Samus_HitInterrupt_Falling, Samus_HitInterrupt_Unused, Samus_HitInterrupt_Ball,
@@ -4929,10 +4907,7 @@ pub unsafe fn Samus_HitInterruption(game: &mut Game) {
         if word!(game.debug_invincibility) as i32 - 7i32 & 0x8000 != 0 {
             if word!(game.time_is_frozen_flag) == 0
                 && word!(game.knockback_dir) == 0
-                && kSamusHitInterrupts[*ram_ptr!(game; 0xa1f) as usize]
-                    .expect("non-null function pointer")(game)
-                    & 1
-                    != 0
+                && kSamusHitInterrupts[*ram_ptr!(game; 0xa1f) as usize](game) & 1 != 0
             {
                 word!(game.samus_special_transgfx_index = 1);
             }
@@ -5005,7 +4980,7 @@ pub unsafe fn Samus_HitInterrupt_Unused(game: &mut Game) -> u8 {
     }
     1
 }
-static kSamus_MoveHandler_Knockback: [Option<Func_V>; 6] = callback_table! { unsafe Func_V;
+static kSamus_MoveHandler_Knockback: [Func_V; 6] = callback_table! { nonnull Func_V;
     Samus_MoveHandler_Knockback_0, Samus_MoveHandler_Knockback_Up,
     Samus_MoveHandler_Knockback_Up, Samus_MoveHandler_Knockback_3,
     Samus_MoveHandler_Knockback_Down, Samus_MoveHandler_Knockback_Down,
@@ -5020,7 +4995,7 @@ pub unsafe fn Samus_ClearMoveVars(game: &mut Game) {
         Samus_AlignBottomWithPrevPose(game);
     }
 }
-static kSetupBombJump: [Option<Func_U8>; 28] = callback_table! { unsafe Func_U8;
+static kSetupBombJump: [Func_U8; 28] = callback_table! { nonnull Func_U8;
     SetupBombJump_StandCrouch, SetupBombJump_1, SetupBombJump_2, SetupBombJump_2,
     SetupBombJump_4, SetupBombJump_StandCrouch, SetupBombJump_1, SetupBombJump_4,
     SetupBombJump_4, SetupBombJump_4, SetupBombJump_4, SetupBombJump_1, SetupBombJump_1,
@@ -5030,9 +5005,7 @@ static kSetupBombJump: [Option<Func_U8>; 28] = callback_table! { unsafe Func_U8;
 };
 pub unsafe fn SetupBombJump(game: &mut Game) {
     if byte!(@pointer ram_ptr!(game, u16; 0xa56); 1) == 0
-        && kSetupBombJump[*ram_ptr!(game; 0xa1f) as usize].expect("non-null function pointer")(game)
-            & 1
-            != 0
+        && kSetupBombJump[*ram_ptr!(game; 0xa1f) as usize](game) & 1 != 0
     {
         word!(game.samus_special_transgfx_index = 3);
     }
@@ -5061,7 +5034,7 @@ pub unsafe fn SetupBombJump_1A(game: &mut Game) -> u8 {
     word!(game.bomb_jump_dir = 0);
     0
 }
-static kSamus_MoveHandler_BombJumpMain: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+static kSamus_MoveHandler_BombJumpMain: [Func_V; 4] = callback_table! { nonnull Func_V;
     Samus_MoveHandler_Knockback_0, Samus_HorizontalBombJump, Samus_VerticalBombJump,
     Samus_HorizontalBombJump,
 };
@@ -5594,7 +5567,7 @@ crate::game::callback_dispatch! {
     [9478967] Samus_MovementHandler_Normal [] {
         if word!(game.time_is_frozen_flag) == 0 {
             kSamusMovementHandlers[*ram_ptr!(game; 0xa1f) as usize]
-                .expect("non-null function pointer")(game);
+                (game);
             Samus_UpdateSpeedEchoPos(game);
         }
     };
@@ -5658,7 +5631,7 @@ crate::game::callback_dispatch! {
         word!(game.samus_shine_timer = 15);
         kSamus_MoveHandler_ShinesparkCrash
             [byte!(@pointer ram_ptr!(game, u16; 0xaae); 1isize) as usize]
-            .expect("non-null function pointer")(game);
+            (game);
         for i in (0i32..=2).rev().step_by(2) {
             let v1: i32 = i >> 1;
             let pt: Point16U = Projectile_SinLookup(
@@ -5782,7 +5755,7 @@ crate::game::callback_dispatch! {
     };
     [9492174] SamusMoveHandler_CrystalFlashMain [] {
         kSamusMoveHandler_CrystalFlashMainFuncs[word!(game.which_item_to_pickup) as usize]
-            .expect("non-null function pointer")(game);
+            (game);
         word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
     };
     [9492315] kSamusMoveHandler_CrystalFlashFinish [] {
@@ -5800,7 +5773,7 @@ crate::game::callback_dispatch! {
     };
     [9494328] Samus_MoveHandler_Knockback [] {
         kSamus_MoveHandler_Knockback[word!(game.knockback_dir) as usize]
-            .expect("non-null function pointer")(game);
+            (game);
         word!(game.input_to_pose_calc = 0);
     };
     [9494352] Samus_MoveHandler_Knockback_0 [] {
@@ -5827,7 +5800,7 @@ crate::game::callback_dispatch! {
     [9494578] Samus_MoveHandler_BombJumpMain [] {
         if word!(game.bomb_jump_dir) != 0 {
             kSamus_MoveHandler_BombJumpMain[word!(game.bomb_jump_dir) as u8 as usize]
-                .expect("non-null function pointer")(game);
+                (game);
         } else {
             Samus_MoveHandler_BombJumpFunc1(game);
         };
@@ -6113,15 +6086,13 @@ pub unsafe fn Samus_UpdateSuitPaletteIndex(game: &mut Game) {
 static byte_90ED50: [u8; 28] = [
     0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
-static kSamus_FootstepGraphics: [Option<Func_V>; 8] = callback_table! { unsafe Func_V;
+static kSamus_FootstepGraphics: [Func_V; 8] = callback_table! { nonnull Func_V;
     Samus_FootstepGraphics_Crateria, Samus_FootstepGraphics_1, Samus_FootstepGraphics_1,
     Samus_FootstepGraphics_1, Samus_FootstepGraphics_Maridia, Samus_FootstepGraphics_1,
     Samus_FootstepGraphics_1, Samus_FootstepGraphics_1,
 };
 pub unsafe fn Samus_FootstepGraphics(game: &mut Game) {
-    kSamus_FootstepGraphics[word!(game.area_index) as usize].expect("non-null function pointer")(
-        game,
-    );
+    kSamus_FootstepGraphics[word!(game.area_index) as usize](game);
 }
 static byte_90EDC9: [u8; 16] = [1, 0, 0, 0, 0, 2, 0, 4, 0, 4, 4, 4, 4, 0, 4, 0];
 pub unsafe fn Samus_FootstepGraphics_Crateria(game: &mut Game) {
@@ -6224,7 +6195,7 @@ pub fn Samus_PostGrappleCollisionDetect(game: &mut Game) {
         }
     }
 }
-static kSamusCodeHandlers: [Option<Func_U8>; 32] = callback_table! { unsafe Func_U8;
+static kSamusCodeHandlers: [Func_U8; 32] = callback_table! { nonnull Func_U8;
     SamusCode_00_LockSamus, SamusCode_01_UnlockSamus, SamusCode_02_ReachCeresElevator,
     SamusCode_03, SamusCode_04, SamusCode_05_SetupDrained, SamusCode_06_LockToStation,
     SamusCode_07_SetupForElevator, SamusCode_08_SetupForCeresStart,
@@ -6238,8 +6209,7 @@ static kSamusCodeHandlers: [Option<Func_U8>; 32] = callback_table! { unsafe Func
     SamusCode_1D_ClearSoundInDoor, SamusCode_1E, SamusCode_1F,
 };
 pub unsafe fn CallSomeSamusCode(a: u16, game: &mut Game) -> u16 {
-    let code: u16 = kSamusCodeHandlers[(a as i32 & 0x1fi32) as usize]
-        .expect("non-null function pointer")(game) as u16;
+    let code: u16 = kSamusCodeHandlers[(a as i32 & 0x1fi32) as usize](game) as u16;
     if code & 1 == 0 {
         return (code >> 1);
     }

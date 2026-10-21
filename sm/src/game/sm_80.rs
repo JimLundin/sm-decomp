@@ -1575,15 +1575,13 @@ pub unsafe fn DrawTwoHudDigits(addr: u32, a: u16, k: u16, game: &mut Game) {
             *(RomPtr((addr).wrapping_add((2 * (a as i32 % 10)) as u32), game) as *mut u16);
     }
 }
-static kTimerProcessFuncs: [Option<Func_U8>; 7] = callback_table! { unsafe Func_U8;
+static kTimerProcessFuncs: [Func_U8; 7] = callback_table! { nonnull Func_U8;
     ProcessTimer_Empty, ProcessTimer_CeresStart, ProcessTimer_MotherBrainStart,
     ProcessTimer_InitialDelay, ProcessTimer_MovementDelayed, ProcessTimer_MovingIntoPlace,
     ProcessTimer_Decrement,
 };
 pub unsafe fn ProcessTimer(game: &mut Game) -> u8 {
-    kTimerProcessFuncs[word!(game.timer_status) as u8 as usize].expect("non-null function pointer")(
-        game,
-    )
+    kTimerProcessFuncs[word!(game.timer_status) as u8 as usize](game)
 }
 pub unsafe fn ProcessTimer_CeresStart(game: &mut Game) -> u8 {
     ClearTimerRam(game);
@@ -2391,15 +2389,14 @@ pub unsafe fn FixDoorsMovingUp(game: &mut Game) {
     word!(game.previous_layer2_y_block, wrapping_add(1));
     DoorTransition_Up(game);
 }
-static kDoorTransitionSetupFuncs: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+static kDoorTransitionSetupFuncs: [Func_V; 4] = callback_table! { nonnull Func_V;
     DoorTransitionScrollingSetup_Right, DoorTransitionScrollingSetup_Left,
     DoorTransitionScrollingSetup_Down, DoorTransitionScrollingSetup_Up,
 };
 pub unsafe fn DoorTransitionScrollingSetup(game: &mut Game) {
     word!(game.layer1_x_pos = word!(game.door_destination_x_pos));
     word!(game.layer1_y_pos = word!(game.door_destination_y_pos));
-    kDoorTransitionSetupFuncs[(word!(game.door_direction) as i32 & 3i32) as usize]
-        .expect("non-null function pointer")(game);
+    kDoorTransitionSetupFuncs[(word!(game.door_direction) as i32 & 3i32) as usize](game);
 }
 pub unsafe fn DoorTransitionScrollingSetup_Right(game: &mut Game) {
     CalculateLayer2Xpos(game);
@@ -2465,14 +2462,11 @@ pub unsafe fn UpdateBgScrollOffsets(game: &mut Game) {
     word!(game.bg2_x_scroll = (word!(game.reg_BG2HOFS)).wrapping_sub(word!(game.layer1_x_pos)));
     word!(game.bg2_y_scroll = (word!(game.reg_BG2VOFS)).wrapping_sub(word!(game.layer1_y_pos)));
 }
-static kDoorTransitionFuncs: [Option<Func_U8>; 4] = callback_table! { unsafe Func_U8;
+static kDoorTransitionFuncs: [Func_U8; 4] = callback_table! { nonnull Func_U8;
     DoorTransition_Right, DoorTransition_Left, DoorTransition_Down, DoorTransition_Up,
 };
 pub unsafe fn Irq_FollowDoorTransition(game: &mut Game) {
-    if kDoorTransitionFuncs[(word!(game.door_direction) as i32 & 3i32) as usize]
-        .expect("non-null function pointer")(game)
-        != 0
-    {
+    if kDoorTransitionFuncs[(word!(game.door_direction) as i32 & 3i32) as usize](game) != 0 {
         word!(game.layer1_x_pos = word!(game.door_destination_x_pos));
         word!(game.layer1_y_pos = word!(game.door_destination_y_pos));
         word!(game.door_transition_flag, |fresh68| (fresh68) | (0x8000u16));

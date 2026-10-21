@@ -1349,7 +1349,7 @@ static kEprojInit_N00bTubeShards_Yvel: [i16; 10] = [
 ];
 static kEprojInit_N00bTubeReleasedAirBubbles_X: [u16; 6] = [40, 80, 104, 120, 152, 184];
 static kEprojInit_N00bTubeReleasedAirBubbles_Y: [u16; 6] = [80, 72, 84, 32, 64, 84];
-static kEprojPreInstr_SpikeShootingPlantSpikes: [Option<Func_Y_V>; 10] = callback_table! { unsafe Func_Y_V;
+static kEprojPreInstr_SpikeShootingPlantSpikes: [Func_Y_V; 10] = callback_table! { nonnull Func_Y_V;
     EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1,
     EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1,
     EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2,
@@ -3807,7 +3807,7 @@ crate::game::callback_dispatch! {
     };
     [8837595] EprojPreInstr_SpikeShootingPlantSpikes [] {
         kEprojPreInstr_SpikeShootingPlantSpikes[(word!(game.eproj_E[(k >> 1)]) >> 1) as usize]
-            .expect("non-null function pointer")(k, game);
+            (k, game);
         EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1(k, game);
     };
     [8838070] EprojPreInstr_DBF2_Func1 [] {

@@ -97,7 +97,9 @@ It owns X-ray and rainbow-beam rasterization under descriptive names, with
 direct callers and no bank facades. Component checks and focused/full replays
 pass as recorded below. Native CPU/SPC tracing removes **144 more lines**,
 reaching **105,840**, with complete output/bus differential checks and builds.
-Another **5,841 lines** are needed to reach 99,999;
+Proven-nonnull callback tables remove **71 more lines**, reaching **105,769**,
+with complete target/operation correspondence and fresh full boot replays.
+Another **5,770 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -507,6 +509,19 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    repeat of these cohorts or another generic operation runner. Current-derived
    translation recovery remains demonstrated separately at 110,009 lines.
 
+   Further complete experiments at 105,984 reject shared object-script traversal
+   (**+117 lines**), contextual Kraid ownership (**+33**) and real receiver methods
+   (**+196**). Shared live hardware/snapshot/archive state removes 95 lines but
+   adds 1,542 tokens, so reject it too. A cached raw Samus RAM view adds **921
+   lines** with endian preservation; even the native-endian control grows.
+   Complete library/frontend builds pass for these priced candidates; no runtime
+   equivalence is claimed. The PPU specialization preflight finds only 236 gross
+   lines of remaining generic capabilities and proves none unused. Keep these
+   studies closed. Native tracing and proven-nonnull callback tables instead
+   qualify for adoption. Reports: TEMP sm-tailored-next/{object-lifecycle,
+   contextual-kraid,samus-overlay,ppu-sm-specialization,nonnull-tables,
+   tracing-native} and TEMP sm-hardware-state-d878362a.
+
    The expanded source-first C experiment is complete: sharing 35 algorithm
    groups, retiring forwarding functions, fusing 789 instruction bodies and
    changing 2,381 word-arithmetic occurrences removes **7,227 generated lines**
@@ -588,8 +603,18 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **5,841-line** gap; parked small drafts are not
+   replacement yet funds the **5,770-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Complete nonnull callback-table inference removes **71 lines
+   (105,840 -> 105,769)**, including three helper lines. All 79 immutable tables,
+   922 slots, the demo-set slice aggregate and 82 consumers preserve checked
+   indices, exact function targets/casts and argument order. Four genuinely
+   nullable tables remain unchanged. Complete compiler-expanded correspondence,
+   final optimized library/frontend builds and formatting pass. Full boot any%
+   **129712/0** and Speed Booster **148406/0** pass for this broad dispatch
+   integration; unvisited entries are covered by static correspondence.
+   TEMP sm-tailored-next/nonnull-tables contains the emitter and checks.
 
    Complete CPU/SPC tracing removes **144 lines (105,984 -> 105,840)**.
    One native formatter replaces C varargs and the sparse short-immediate
@@ -966,7 +991,15 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: the shared beam-window owner passes full boot any%
+Latest full integration: nonnull callback tables and native tracing pass full
+boot any% **129712/0** and Speed Booster **148406/0**, with normal rendering,
+audio and comparisons. Complete static correspondence proves all 922 callback
+targets and 82 consumers; 742,400 diagnostic component cases cover tracing.
+Final optimized library/frontend builds pass. Source hash:
+`83c7a77846eaea50a541bb4b02b1ebaa5ac19f2cae3f47fd57c3054f3fa0e9fc`.
+Neither movie reaches credits or exercises every changed callback/diagnostic.
+
+Earlier full integration: the shared beam-window owner passes full boot any%
 **129712/0** and Speed Booster **148406/0**, with normal rendering, audio and
 comparisons. Charge Beam **28699/0** exercises seven required probes through
 the shared renderer and eye-beam cleanup plus 180 follow-up frames; the clean
@@ -1081,8 +1114,9 @@ imports, ordered stores, PNG texture loading, beam firing, moving platforms,
 byte-partial-product sharing, INI decoding, countdown callbacks, projectile
 flight, callback entry captures, opcode grids, blast windows, indexed loops and
 combined callback/dispatch declarations, terminal loops, selected field/RAM
-store groups, the unaligned RAM repair, shared beam windows and native tracing,
-maintained Rust is **105,840**, leaving **5,841** to reach 99,999. Counters:
+store groups, the unaligned RAM repair, shared beam windows, native tracing and
+nonnull callback tables, maintained Rust is **105,769**, leaving **5,770** to
+reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
 unsafe functions 3655; cast lines 7965. Tracing adds three unsafe helper
 declarations for the caller-owned output buffer and removes 92 cast-containing

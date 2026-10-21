@@ -135,7 +135,7 @@ crate::game::constants::typed_constants! { i32;
 crate::game::constants::typed_constants! { i32;
     fnGrappleBeamFunc_Inactive = 0x9bc4f0,
 }
-static kSamusInputHandlers: [Option<Func_V>; 28] = callback_table! { unsafe Func_V;
+static kSamusInputHandlers: [Func_V; 28] = callback_table! { nonnull Func_V;
     Samus_Input_00_Standing, Samus_Input_01_Running, Samus_Input_02_NormalJumping,
     Samus_Input_03_SpinJumping, Samus_Input_04_MorphBallOnGround, Samus_Input_05_Crouching,
     Samus_Input_06_Falling, Samus_Input_07_Unused, Samus_Input_08_MorphBallFalling,
@@ -149,7 +149,7 @@ static kSamusInputHandlers: [Option<Func_V>; 28] = callback_table! { unsafe Func
     Samus_Input_1A_GrabbedByDraygon, Samus_Input_1B_ShinesparkEtc,
 };
 pub unsafe fn Samus_InputHandler(game: &mut Game) {
-    kSamusInputHandlers[*ram_ptr!(game; 0xa1f) as usize].expect("non-null function pointer")(game);
+    kSamusInputHandlers[*ram_ptr!(game; 0xa1f) as usize](game);
 }
 pub unsafe fn Samus_Input_00_Standing(game: &mut Game) {
     if word!(game.samus_pose) != 0
@@ -482,19 +482,19 @@ pub unsafe fn ProcessDemoInputObject(game: &mut Game) {
         game.set_demo_input_instr_ptr(instruction_ptr.wrapping_add(6));
     }
 }
-static kDemoSetFuncPtrs_0: [Option<Func_V>; 6] = callback_table! { unsafe Func_V;
+static kDemoSetFuncPtrs_0: [Func_V; 6] = callback_table! { nonnull Func_V;
     DemoSetFunc_0, DemoSetFunc_1, DemoSetFunc_1, DemoSetFunc_2, DemoSetFunc_1, DemoSetFunc_3,
 };
-static kDemoSetFuncPtrs_1: [Option<Func_V>; 6] = callback_table! { unsafe Func_V;
+static kDemoSetFuncPtrs_1: [Func_V; 6] = callback_table! { nonnull Func_V;
     DemoSetFunc_2, DemoSetFunc_2, DemoSetFunc_1, DemoSetFunc_2, DemoSetFunc_1, DemoSetFunc_4,
 };
-static kDemoSetFuncPtrs_2: [Option<Func_V>; 6] = callback_table! { unsafe Func_V;
+static kDemoSetFuncPtrs_2: [Func_V; 6] = callback_table! { nonnull Func_V;
     DemoSetFunc_2, DemoSetFunc_5, DemoSetFunc_1, DemoSetFunc_1, DemoSetFunc_1, DemoSetFunc_1,
 };
-static kDemoSetFuncPtrs_3: [Option<Func_V>; 5] = callback_table! { unsafe Func_V;
+static kDemoSetFuncPtrs_3: [Func_V; 5] = callback_table! { nonnull Func_V;
     DemoSetFunc_6, DemoSetFunc_2, DemoSetFunc_2, DemoSetFunc_1, DemoSetFunc_7,
 };
-static kDemoSetFuncPtrs: [&'static [Option<Func_V>]; 4] = [
+static kDemoSetFuncPtrs: [&'static [Func_V]; 4] = [
     &kDemoSetFuncPtrs_0,
     &kDemoSetFuncPtrs_1,
     &kDemoSetFuncPtrs_2,
@@ -554,7 +554,7 @@ pub unsafe fn LoadDemoData(game: &mut Game) {
     LoadDemoInputObject(demo_obj, demo_obj, game);
     let set = usize::from(game.demo_set());
     let scene = usize::from(game.demo_scene());
-    let initialize_scene = kDemoSetFuncPtrs[set][scene].expect("non-null function pointer");
+    let initialize_scene = kDemoSetFuncPtrs[set][scene];
     initialize_scene(game);
     game.set_frame_handler_alfa(fnSamus_FrameHandlerAlfa_Func12 as u16);
     game.set_frame_handler_beta(fnSamus_FrameHandlerBeta_Func14 as u16);
@@ -2032,12 +2032,12 @@ pub unsafe fn MakeSamusFaceForward(game: &mut Game) {
     }
     Samus_LoadSuitPalette(game);
 }
-static kSomeMotherBrainScripts: [Option<Func_U8>; 5] = callback_table! { unsafe Func_U8;
+static kSomeMotherBrainScripts: [Func_U8; 5] = callback_table! { nonnull Func_U8;
     SomeMotherBrainScripts_0, SomeMotherBrainScripts_1, SomeMotherBrainScripts_2,
     SomeMotherBrainScripts_3_EnableHyperBeam, SomeMotherBrainScripts_4,
 };
 pub unsafe fn SomeMotherBrainScripts(a: u16, game: &mut Game) {
-    if kSomeMotherBrainScripts[a as usize].expect("non-null function pointer")(game) & 1 != 0 {
+    if kSomeMotherBrainScripts[a as usize](game) & 1 != 0 {
         word!(game.samus_last_different_pose = word!(game.samus_prev_pose));
         *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
         word!(game.samus_prev_pose = word!(game.samus_pose));
@@ -2128,7 +2128,7 @@ pub unsafe fn SomeMotherBrainScripts_4(game: &mut Game) -> u8 {
     1
 }
 pub fn nullsub_17(game: &mut Game) {}
-static off_91E6E1: [Option<Func_V>; 28] = callback_table! { unsafe Func_V;
+static off_91E6E1: [Func_V; 28] = callback_table! { nonnull Func_V;
     SamusFunc_E633_0, nullsub_17, nullsub_17, SamusFunc_E633_3, SamusFunc_E633_4, nullsub_17,
     nullsub_17, nullsub_17, SamusFunc_E633_4, nullsub_17, nullsub_17, nullsub_17, nullsub_17,
     nullsub_17, nullsub_17, nullsub_17, nullsub_17, SamusFunc_E633_17, SamusFunc_E633_17,
@@ -2136,7 +2136,7 @@ static off_91E6E1: [Option<Func_V>; 28] = callback_table! { unsafe Func_V;
     nullsub_17, nullsub_17, nullsub_17,
 };
 pub unsafe fn SamusFunc_E633(game: &mut Game) {
-    off_91E6E1[*ram_ptr!(game; 0xa1f) as usize].expect("non-null function pointer")(game);
+    off_91E6E1[*ram_ptr!(game; 0xa1f) as usize](game);
     if (word!(game.equipped_items) & 0x2000) != 0 {
         if word!(game.samus_has_momentum_flag) != 0 && word!(game.speed_boost_counter) == 0 {
             word!(game.special_samus_palette_timer = word!(game.speed_boost_counter));
@@ -2271,15 +2271,14 @@ pub unsafe fn SamusFunc_E633_20(game: &mut Game) {
     };
 }
 pub fn nullsub_18(game: &mut Game) {}
-static kSamus_HandleTransFromBlockColl: [Option<Func_V>; 6] = callback_table! { unsafe Func_V;
+static kSamus_HandleTransFromBlockColl: [Func_V; 6] = callback_table! { nonnull Func_V;
     nullsub_18, Samus_HandleTransFromBlockColl_1, Samus_HandleTransFromBlockColl_2,
     Samus_HandleTransFromBlockColl_3, Samus_HandleTransFromBlockColl_4,
     Samus_HandleTransFromBlockColl_5,
 };
 pub unsafe fn Samus_HandleTransFromBlockColl(game: &mut Game) {
     if word!(game.input_to_pose_calc) != 0 {
-        kSamus_HandleTransFromBlockColl[word!(game.input_to_pose_calc) as u8 as usize]
-            .expect("non-null function pointer")(game);
+        kSamus_HandleTransFromBlockColl[word!(game.input_to_pose_calc) as u8 as usize](game);
     }
 }
 pub unsafe fn Samus_HandleTransFromBlockColl_3(game: &mut Game) {
@@ -2287,7 +2286,7 @@ pub unsafe fn Samus_HandleTransFromBlockColl_3(game: &mut Game) {
 }
 pub use self::nullsub_164 as nullsub_18_U8;
 pub use self::Samus_HandleTransFromBlockColl_3 as Samus_HandleTransFromBlockColl_4;
-static off_91E951: [Option<Func_U8>; 6] = callback_table! { unsafe Func_U8;
+static off_91E951: [Func_U8; 6] = callback_table! { nonnull Func_U8;
     Samus_HandleTransFromBlockColl_1_0, Samus_HandleTransFromBlockColl_1_1,
     Samus_HandleTransFromBlockColl_1_2, Samus_HandleTransFromBlockColl_1_3, nullsub_18_U8,
     Samus_HandleTransFromBlockColl_1_5,
@@ -2311,11 +2310,7 @@ pub unsafe fn Samus_HandleTransFromBlockColl_2(game: &mut Game) {
 }
 pub unsafe fn Samus_HandleTransFromBlockColl_1(game: &mut Game) {
     if byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1) != 4 {
-        if off_91E951[byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1isize) as usize]
-            .expect("non-null function pointer")(game)
-            & 1
-            != 0
-        {
+        if off_91E951[byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1isize) as usize](game) & 1 != 0 {
             word!(game.samus_momentum_routine_index = 0);
         } else {
             word!(game.samus_momentum_routine_index = 5);
@@ -2504,18 +2499,18 @@ pub fn nullsub_19(game: &mut Game) {}
 pub fn nullsub_20(game: &mut Game) {}
 pub fn nullsub_21(game: &mut Game) {}
 pub fn nullsub_22(game: &mut Game) {}
-static kSamus_HandleTransitionsA: [Option<Func_V>; 9] = callback_table! { unsafe Func_V;
+static kSamus_HandleTransitionsA: [Func_V; 9] = callback_table! { nonnull Func_V;
     nullsub_18, Samus_HandleTransitionsA_1, Samus_HandleTransitionsA_2, nullsub_21, nullsub_22,
     Samus_HandleTransitionsA_5, Samus_HandleTransitionsA_6, Samus_HandleTransitionsA_7,
     Samus_HandleTransitionsA_8,
 };
-static kSamus_HandleTransitionsB: [Option<Func_V>; 11] = callback_table! { unsafe Func_V;
+static kSamus_HandleTransitionsB: [Func_V; 11] = callback_table! { nonnull Func_V;
     nullsub_18, Samus_HandleTransitionsB_1, Samus_HandleTransitionsB_2,
     Samus_HandleTransitionsB_3, Samus_HandleTransitionsB_4, Samus_HandleTransitionsB_5,
     nullsub_19, nullsub_20, Samus_HandleTransitionsB_8, Samus_HandleTransitionsB_9,
     Samus_HandleTransitionsB_10,
 };
-static kSamus_HandleTransitionsC: [Option<Func_V>; 9] = callback_table! { unsafe Func_V;
+static kSamus_HandleTransitionsC: [Func_V; 9] = callback_table! { nonnull Func_V;
     nullsub_18, Samus_HandleTransitionsC_1, Samus_HandleTransitionsC_2,
     Samus_HandleTransitionsC_3, Samus_HandleTransitionsC_4, Samus_HandleTransitionsC_5,
     Samus_HandleTransitionsC_6, Samus_HandleTransitionsC_7, Samus_HandleTransitionsC_8,
@@ -2538,14 +2533,12 @@ pub unsafe fn Samus_HandleTransitions(game: &mut Game) {
             SamusFunc_F433(game);
             Samus_SetAnimationFrameIfPoseChanged(game);
         }
-        kSamus_HandleTransitionsC[word!(game.samus_hurt_switch_index) as usize]
-            .expect("non-null function pointer")(game);
+        kSamus_HandleTransitionsC[word!(game.samus_hurt_switch_index) as usize](game);
         true
     } else if (word!(game.samus_new_pose_interrupted) & 0x8000) == 0 {
         word!(game.samus_pose = word!(game.samus_new_pose_interrupted));
         if SamusFunc_F404(game) & 1 == 0 {
-            kSamus_HandleTransitionsB[word!(game.samus_special_transgfx_index) as usize]
-                .expect("non-null function pointer")(game);
+            kSamus_HandleTransitionsB[word!(game.samus_special_transgfx_index) as usize](game);
         }
         true
     } else {
@@ -2553,8 +2546,7 @@ pub unsafe fn Samus_HandleTransitions(game: &mut Game) {
         if (word!(game.samus_new_pose) & 0x8000) == 0 {
             word!(game.samus_pose = word!(game.samus_new_pose));
             if SamusFunc_F404(game) & 1 == 0 {
-                kSamus_HandleTransitionsA[word!(game.samus_momentum_routine_index) as usize]
-                    .expect("non-null function pointer")(game);
+                kSamus_HandleTransitionsA[word!(game.samus_momentum_routine_index) as usize](game);
             }
             true
         } else {
@@ -2625,7 +2617,7 @@ pub unsafe fn Samus_HandleTransitionsA_7(game: &mut Game) {
         }
     }
 }
-static kSamus_HandleTransitionsB_1: [Option<Func_U8>; 28] = callback_table! { unsafe Func_U8;
+static kSamus_HandleTransitionsB_1: [Func_U8; 28] = callback_table! { nonnull Func_U8;
     Samus_HandleTransitionsB_1_0, Samus_HandleTransitionsB_1_0, Samus_HandleTransitionsB_1_0,
     Samus_HandleTransitionsB_1_0, Samus_HandleTransitionsB_1_4, Samus_HandleTransitionsB_1_0,
     Samus_HandleTransitionsB_1_6, Samus_HandleTransitionsB_1_7, Samus_HandleTransitionsB_1_4,
@@ -2638,8 +2630,7 @@ static kSamus_HandleTransitionsB_1: [Option<Func_U8>; 28] = callback_table! { un
     Samus_HandleTransitionsB_1_11,
 };
 pub unsafe fn Samus_HandleTransitionsB_1(game: &mut Game) {
-    kSamus_HandleTransitionsB_1[*ram_ptr!(game; 0xa23) as usize]
-        .expect("non-null function pointer")(game);
+    kSamus_HandleTransitionsB_1[*ram_ptr!(game; 0xa23) as usize](game);
     Samus_SetSpeedForKnockback_Y(game);
     word! { game, 0; bomb_jump_dir, samus_contact_damage_index }
     word!(game.samus_hurt_flash_counter = 1);
@@ -2805,13 +2796,12 @@ pub unsafe fn Samus_HandleTransitionsB_9B(game: &mut Game) {
     words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
 }
 pub fn nullsub_23(game: &mut Game) {}
-static kSamus_HandleTransitionsA_5: [Option<Func_V>; 7] = callback_table! { unsafe Func_V;
+static kSamus_HandleTransitionsA_5: [Func_V; 7] = callback_table! { nonnull Func_V;
     sub_91EFC3, Samus_HandleTransitionsA_5_1, Samus_HandleTransitionsA_5_2, nullsub_23,
     Samus_HandleTransitionsA_5_4, Samus_HandleTransitionsA_5_5, Samus_HandleTransitionsA_5_6,
 };
 pub unsafe fn Samus_HandleTransitionsA_5(game: &mut Game) {
-    kSamus_HandleTransitionsA_5[word!(game.input_to_pose_calc) as u8 as usize]
-        .expect("non-null function pointer")(game);
+    kSamus_HandleTransitionsA_5[word!(game.input_to_pose_calc) as u8 as usize](game);
 }
 pub unsafe fn Samus_HandleTransitionsA_5_4(game: &mut Game) {
     word! { game, 0; samus_y_subspeed, samus_y_speed, UNUSED_word_7E0B1A }
@@ -2828,7 +2818,7 @@ pub unsafe fn Samus_HandleTransitionsA_5_2(game: &mut Game) {
 }
 pub fn sub_91EFC3(game: &mut Game) {}
 pub use self::nullsub_164 as sub_91EFC3_rv;
-static kSamus_HandleTransitionsA_5_1: [Option<Func_U8>; 6] = callback_table! { unsafe Func_U8;
+static kSamus_HandleTransitionsA_5_1: [Func_U8; 6] = callback_table! { nonnull Func_U8;
     Samus_HandleTransitionsA_5_1_0, Samus_MorphBallBounceNoSpringballTrans,
     Samus_HandleTransitionsA_5_1_2, Samus_MorphBallBounceSpringballTrans, sub_91EFC3_rv,
     Samus_HandleTransitionsA_5_1_5,
@@ -2838,8 +2828,7 @@ pub unsafe fn Samus_HandleTransitionsA_5_1(game: &mut Game) {
     if byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1) == 4 {
         SamusFunc_F1D3(game);
     } else if kSamus_HandleTransitionsA_5_1
-        [byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1isize) as usize]
-        .expect("non-null function pointer")(game)
+        [byte!(@pointer ram_ptr!(game, u16; 0xdc6); 1isize) as usize](game)
         & 1
         == 0
     {
@@ -2876,13 +2865,13 @@ pub unsafe fn HandleLandingSoundEffectsAndGfx(game: &mut Game) {
     }
     HandleLandingGraphics(game);
 }
-static off_91F0AE: [Option<Func_V>; 8] = callback_table! { unsafe Func_V;
+static off_91F0AE: [Func_V; 8] = callback_table! { nonnull Func_V;
     HandleLandingGraphics_Crateria, HandleLandingGraphics_Brinstar,
     HandleLandingGraphics_Norfair, HandleLandingGraphics_Norfair, HandleLandingGraphics_Maridia,
     HandleLandingGraphics_Tourian, HandleLandingGraphics_Ceres, HandleLandingGraphics_Ceres,
 };
 pub unsafe fn HandleLandingGraphics(game: &mut Game) {
-    off_91F0AE[word!(game.area_index) as usize].expect("non-null function pointer")(game);
+    off_91F0AE[word!(game.area_index) as usize](game);
 }
 pub unsafe fn HandleLandingGraphics_Ceres(game: &mut Game) {
     word! { game, 0;
@@ -3137,7 +3126,7 @@ pub unsafe fn SamusFunc_F433(game: &mut Game) {
         Samus_LoadSuitPalette(game);
     }
 }
-static off_91F4A2: [Option<Func_U8>; 28] = callback_table! { unsafe Func_U8;
+static off_91F4A2: [Func_U8; 28] = callback_table! { nonnull Func_U8;
     SamusFunc_F468_Standing, SamusFunc_F468_Running, SamusFunc_F468_NormalJump,
     SamusFunc_F468_SpinJump, SamusFunc_F468_MorphBall, SamusFunc_F468_Crouching,
     SamusFunc_F468_Falling, SamusFunc_F468_Unused, SamusFunc_F468_MorphBall,
@@ -3149,14 +3138,12 @@ static off_91F4A2: [Option<Func_U8>; 28] = callback_table! { unsafe Func_U8;
     SamusFunc_F468_DamageBoost, SamusFunc_F468_Unused, SamusFunc_F468_Shinespark,
 };
 pub unsafe fn SamusFunc_F468(game: &mut Game) {
-    if off_91F4A2[*ram_ptr!(game; 0xa1f) as usize].expect("non-null function pointer")(game) & 1
-        != 0
-    {
+    if off_91F4A2[*ram_ptr!(game; 0xa1f) as usize](game) & 1 != 0 {
         *(ram_ptr!(game, u16; 0xa1e)) =
             *((&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629))).pose_x_dir)
                 .offset((8 * word!(game.samus_pose) as i32) as isize) as *mut u16);
         if (*(ram_ptr!(game, u16; 0xa1e)) & 0xff00) == 3584 {
-            off_91F4A2[14i32 as usize].expect("non-null function pointer")(game);
+            off_91F4A2[14i32 as usize](game);
             *(ram_ptr!(game, u16; 0xa1e)) =
                 *((&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629))).pose_x_dir)
                     .offset((8 * word!(game.samus_pose) as i32) as isize)
@@ -3320,13 +3307,13 @@ pub unsafe fn SamusFunc_F468_SpinJump(game: &mut Game) -> u8 {
     }
     0
 }
-static off_91F790: [Option<Func_U8>; 12] = callback_table! { unsafe Func_U8;
+static off_91F790: [Func_U8; 12] = callback_table! { nonnull Func_U8;
     Samus_CrouchTrans, Samus_CrouchTrans, Samus_MorphTrans, Samus_MorphTrans,
     MaybeUnused_sub_91F7F4, MaybeUnused_sub_91F840, Samus_StandOrUnmorphTrans,
     Samus_StandOrUnmorphTrans, Samus_StandOrUnmorphTrans, Samus_StandOrUnmorphTrans,
     Samus_StandOrUnmorphTrans, Samus_StandOrUnmorphTrans,
 };
-static off_91F7A8: [Option<Func_U8>; 4] = callback_table! { unsafe Func_U8;
+static off_91F7A8: [Func_U8; 4] = callback_table! { nonnull Func_U8;
     Samus_MorphTrans, Samus_MorphTrans, Samus_StandOrUnmorphTrans, Samus_StandOrUnmorphTrans,
 };
 pub unsafe fn SamusFunc_F468_CrouchTransEtc(game: &mut Game) -> u8 {
@@ -3336,8 +3323,7 @@ pub unsafe fn SamusFunc_F468_CrouchTransEtc(game: &mut Game) -> u8 {
             if word!(game.samus_pose) as i32 - kPose_DB as i32 & 0x8000 != 0 {
                 v0 = (2 * (word!(game.samus_pose) as i32 - 53i32)) as u16;
             } else {
-                return off_91F7A8[(word!(game.samus_pose) as i32 - 219i32) as usize]
-                    .expect("non-null function pointer")(game);
+                return off_91F7A8[(word!(game.samus_pose) as i32 - 219i32) as usize](game);
             }
         } else if word!(game.samus_pose) as i32 - kPose_F7_FaceR_StandTrans_AimU as i32 & 0x8000
             != 0
@@ -3348,7 +3334,7 @@ pub unsafe fn SamusFunc_F468_CrouchTransEtc(game: &mut Game) -> u8 {
             break 's_43;
         }
         word!(game.samus_momentum_routine_index = 7);
-        return off_91F790[(v0 >> 1) as usize].expect("non-null function pointer")(game);
+        return off_91F790[(v0 >> 1) as usize](game);
     }
     0
 }
@@ -3578,7 +3564,7 @@ pub unsafe fn SamusFunc_EC80(game: &mut Game) {
 }
 pub fn nullsub_24(game: &mut Game) {}
 pub fn nullsub_25(game: &mut Game) {}
-static kHandleJumpTrans: [Option<Func_V>; 28] = callback_table! { unsafe Func_V;
+static kHandleJumpTrans: [Func_V; 28] = callback_table! { nonnull Func_V;
     nullsub_24, nullsub_24, HandleJumpTransition_NormalJump, HandleJumpTransition_SpinJump,
     nullsub_24, nullsub_24, nullsub_24, nullsub_24, nullsub_24, nullsub_24, nullsub_24,
     nullsub_24, nullsub_24, UNUSED_sub_91FC42, nullsub_24, nullsub_24, nullsub_24, nullsub_24,
@@ -3586,7 +3572,7 @@ static kHandleJumpTrans: [Option<Func_V>; 28] = callback_table! { unsafe Func_V;
     nullsub_24, nullsub_24, nullsub_24, nullsub_25, nullsub_24, nullsub_24,
 };
 pub unsafe fn HandleJumpTransition(game: &mut Game) {
-    kHandleJumpTrans[*ram_ptr!(game; 0xa1f) as usize].expect("non-null function pointer")(game);
+    kHandleJumpTrans[*ram_ptr!(game; 0xa1f) as usize](game);
 }
 pub unsafe fn HandleJumpTransition_WallJump(game: &mut Game) {
     if *ram_ptr!(game; 0xa23) as i32 != kMovementType_14_WallJumping as i32 {
@@ -3692,11 +3678,11 @@ pub unsafe fn Samus_Func20(game: &mut Game) {
         *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
     };
 }
-static off_91FE8A: [Option<Func_U8>; 4] = callback_table! { unsafe Func_U8;
+static off_91FE8A: [Func_U8; 4] = callback_table! { nonnull Func_U8;
     HandleCollDueToChangedPose_Solid_NoColl, HandleCollDueToChangedPose_Solid_CollAbove,
     HandleCollDueToChangedPose_Solid_CollBelow, HandleCollDueToChangedPose_Solid_CollBoth,
 };
-static off_91FE92: [Option<Func_U8>; 4] = callback_table! { unsafe Func_U8;
+static off_91FE92: [Func_U8; 4] = callback_table! { nonnull Func_U8;
     HandleCollDueToChangedPose_Block_NoColl, HandleCollDueToChangedPose_Block_CollAbove,
     HandleCollDueToChangedPose_Block_CollBelow, HandleCollDueToChangedPose_Block_CollBoth,
 };
@@ -3748,10 +3734,7 @@ pub unsafe fn HandleCollDueToChangedPose(game: &mut Game) {
             | (2u16));
     }
     word!(game.samus_space_to_move_down_enemy = (amt >> 16) as u16);
-    if off_91FE8A[word!(game.solid_enemy_collision_flags) as usize]
-        .expect("non-null function pointer")(game)
-        != 0
-    {
+    if off_91FE8A[word!(game.solid_enemy_collision_flags) as usize](game) != 0 {
         word!(game.samus_pose = word!(game.samus_prev_pose));
         return;
     }
@@ -3768,10 +3751,7 @@ pub unsafe fn HandleCollDueToChangedPose(game: &mut Game) {
         word!(game.block_collision_flags, |fresh12| (fresh12) | (2u16));
     }
     word!(game.samus_space_to_move_down_blocks = (amt >> 16) as u16);
-    if off_91FE92[word!(game.block_collision_flags) as usize].expect("non-null function pointer")(
-        game,
-    ) != 0
-    {
+    if off_91FE92[word!(game.block_collision_flags) as usize](game) != 0 {
         word!(game.samus_pose = word!(game.samus_prev_pose));
     }
 }
