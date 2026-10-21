@@ -25,9 +25,9 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A successful partial
 profile or pilot does not finish this goal. The latest frozen composition
-now produces **162,136 -> 106,915 (-55,221)**, with complete optimized library
+now produces **162,136 -> 106,487 (-55,649)**, with complete optimized library
 and actual frontend metadata compilation passing. The latest stages remove
-**18,887** from the previous 125,802 checkpoint, including the selected C
+**19,315** from the previous 125,802 checkpoint, including the selected C
 algorithm families, shared enemy layouts, CPU/SPC grids, dispatchers, register
 writes, byte/split-word places, initialization/transfer families, map menus,
 explosion windows, assertion emission, ordered RAM-store groups, introduction
@@ -37,8 +37,8 @@ graphics-transfer records, native tracing, nonnull callback tables, corrected
 beam windows, square-slope handling, Samus jump launch, enemy homing, DSP
 sample limits, solid-enemy queries, sprite drawing, wall-jump decisions,
 inside-block reactions, suit-pickup beams, initialization coroutines, Torizo
-fall/countdown and cross-file callback ownership. The complete profile also
-removes 581,938 tokens and 1,597,774 code-text bytes from
+fall/countdown, cross-file callback ownership and used-header helper ownership.
+The complete profile also removes 586,549 tokens and 1,607,675 code-text bytes from
 its 162,136-line control. All local
 support and overlaps are counted; external GL dependency code is disclosed
 separately. These historical stages claim no new main deletion or whole-game replay.
@@ -80,10 +80,10 @@ cases pass, with 2,005 coroutine invocations, 8,020 debug/optimized comparisons
 and four negative controls. All 44 full scripted sequences finish; complete
 builds and 70-file source inverse pass. No helper, caller or registration is
 added. Current diagnostic hooks were already absent historically and receive
-no deletion credit. The unchanged historical logo setup still uses an aligned
-word read at an odd ROM address; these component inputs use an odd ROM base to
-align that read. Ordinary-base debug startup is unvalidated. Recover current
-Game's unaligned ROM endpoint as a separate correctness repair. The historical
+no deletion credit. At phase19 the unchanged historical logo setup used an
+aligned word read at an odd ROM address; its component inputs used an odd ROM
+base to align that read. Ordinary-base debug startup remained unvalidated until
+the separate recovery of current Game's unaligned ROM endpoint below. The historical
 gap at phase19 is **7,784 lines**.
 The subsequent ROM-endpoint repair adds zero lines/tokens and nine text bytes.
 All 38 affected calls/42 lanes and both ROM-base alignments pass 572 component
@@ -92,26 +92,34 @@ matching values; no old crash was observed. The old read still violates Rust's
 alignment precondition. This resolves the tested phase19 logo limitation.
 Torizo's three fall/countdown/landing branches then share one ordinary helper:
 **107,783 -> 107,723 (-60)**, with 142,128 actual C/old/new cases passing.
-Finally, current-derived callback ownership removes **808 lines** on that exact
+Next, current-derived callback ownership removes **808 lines** on that exact
 output, reaching **106,915**. It retains 12 previously shared Pirate routes and
 colocates the other 901 known registrations with their existing callbacks.
 All original-C identities, 6,629 unchanged expanded functions, complete u32
 routing and 381,250 debug/optimized selector cases pass. All sequential complete
 builds and source checks pass. This batch removes **1,016 lines** from phase18,
-including every helper and the zero-line repair. The strict historical gap is
-now **6,916 lines**. TEMP sm-tailored-next/integration/phase22 freezes it;
-no whole-game or current-main reduction is claimed by these historical stages.
+including every helper and the zero-line repair. The strict historical gap
+at phase22 is **6,916 lines**. Used-header helper ownership then removes **428
+more lines**, reaching **106,487**, with every shared definition, import and
+registration counted. It replaces 179 used private copies with 32 definitions;
+all 1,406 selected function values are immediate calls, with no address escape.
+Complete builds, 70-to-71-file source inverse, expanded declaration mapping and
+resolved types/targets across 11,821 normalized compiler owners pass. No runtime
+claim is added for this source-preserving ownership change. The full batch now
+removes **1,444 lines** from phase18. The strict historical gap is **6,488**;
+TEMP sm-tailored-next/integration/phase23 freezes the actual composition.
+No whole-game or current-main reduction is claimed by these historical stages.
 The separate current-policy GL replacement prices **108,052 -> 106,886
 (-1,166)** and passes source/build checks, but runtime/adoption is parked:
 Defender ASR event 1121 explicitly blocks its test executable under rule
-01443614-CD74-433A-B99E-2ECDC07BFC25. All attempted fallback results are excluded;
-no GL reduction is included in phase18 and no security settings change.
+01443614-CD74-433A-B99E-2ECDC07BFC25. All attempted fallback results are excluded.
+No current-policy GL reduction is included in the profile; no security settings change.
 TEMP sm-tailored-next/current-gl-policy records the price, policy differences
-and block. A separate private-header liveness audit finds only 13 removable
-lines and is parked. Sharing used copies instead prices 428 lines, with all
-support. Standalone builds, source/function-value checks and resolved targets
-and types pass across 11,792 normalized compiler owners. Sequential composition
-is pending; that price is not included above. TEMP sm-tailored-next/private-header-helpers.
+and block. The separate private-header liveness audit finds only 13 removable
+lines and is parked; those unused definitions remain in phase23. Five differing
+RomPtr_RAM copies also remain. The used-copy stage is recorded at
+TEMP sm-tailored-next/private-header-helpers. Continue selecting complete
+current-derived emission cohorts; no remaining deletion budget is established.
 Current source remains the behavior authority.
 The earlier 789-handler executor trial now grows 809 lines on the composed
 input; reject it. Its enemy-only subset saves 217 and remains parked. The
@@ -536,7 +544,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the same clone scans. Domain judgment selects the native helper contract;
    recognition derives per-member parameters and rejects different effects.
    Price any production adoption against current Rust and validate it under
-   item 3. The isolated 106,915-line output is a partial translation profile,
+   item 3. The isolated 106,487-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
 
    The new finite typed instruction-data experiment also fails its complete
@@ -585,7 +593,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    separate controls; do not add their prices. Keep these scoped studies closed.
    Further discovery needs a new complete algorithm and replacement, not a
    repeat of these cohorts or another generic operation runner. Current-derived
-   translation recovery remains demonstrated separately at 106,915 lines.
+   translation recovery remains demonstrated separately at 106,487 lines.
 
    Further complete experiments at 105,984 reject shared object-script traversal
    (**+117 lines**), contextual Kraid ownership (**+33**) and real receiver methods

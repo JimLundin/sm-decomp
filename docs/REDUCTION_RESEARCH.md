@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**106,915-line** historical-source composition. The current-source batch has
+**106,487-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -1692,8 +1692,34 @@ groups, including a 125-line shared module and all imports. Differing RomPtr_RAM
 variants and the four unused definitions remain. Standalone complete builds,
 source inverse, expanded declarations and immediate-call-only function use pass.
 Resolved targets and type records match across 11,792 normalized compiler
-owners. Actual sequential composition remains pending, so this price is not
-included in phase22. Artifact scope: `TEMP/sm-tailored-next/private-header-helpers`.
+owners. That standalone price is not included in phase22.
+
+The subsequent actual phase23 composition preserves the complete saving:
+**106,915 -> 106,487 (-428)**, also removing **4,611 tokens and 9,901 code-text
+bytes**. Replacement costs include 125 shared-definition lines, 74 import lines
+and one module registration. All 71 Rust files count. A fresh source inverse
+and compiler expansion compare 10,925 original and 10,778 resulting declarations
+under the explicit 179-to-32 ownership map. All **1,406 selected function-value
+uses** are immediate calls, including explicit function-type casts that are
+themselves direct call operands. Storing, comparing or passing these addresses
+is rejected. Resolved targets and parameter/expression types match across
+**11,821 normalized compiler owners**, preserving external crate identities.
+Complete library/frontend builds and exact frontend expansion pass. This
+source-preserving ownership stage adds no runtime or replay claim.
+
+The rule emits one shared Rust definition from each identical used private
+C-header definition group, with imports replacing local copies. It includes
+the moving-platform helper whose earlier emitter copied the same header body.
+Different RomPtr_RAM bodies and the four unused declarations stay untouched;
+the parked 13-line omission is not added. Final historical output is now
+**162,136 -> 106,487 (-55,649)**, removing 586,549 tokens and 1,607,675 code-text
+bytes. This actual batch removes **1,444 lines** from phase18, including the
+zero-line ROM repair. Its remaining strict gap is **6,488 lines**. Maintained
+current Rust remains separately verified at 104,959; the two budgets overlap.
+Local experiment Python now totals 21,213 lines/279 files, separate from all
+71 counted Rust files. Cargo remains nine lines; external GL costs are unchanged.
+Source/proof package: `TEMP/sm-tailored-next/private-header-helpers/sequential-final-v1`;
+frozen composition: `TEMP/sm-tailored-next/integration/phase23/REPORT.md`.
 
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard
