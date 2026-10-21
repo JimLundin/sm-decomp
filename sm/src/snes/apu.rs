@@ -83,7 +83,8 @@ pub unsafe fn apu_cycle(apu: *mut Apu, game: &mut Game) {
     }
     (*apu).cycles = (*apu).cycles.wrapping_add(1);
 }
-pub unsafe fn apu_cpuRead(apu: *mut Apu, adr: u16) -> u8 {
+#[export_name = "apu_cpuRead"]
+pub unsafe extern "C-unwind" fn apu_cpuRead(apu: *mut Apu, adr: u16) -> u8 {
     match adr {
         0xf0 | 0xf1 | 0xfa..=0xfc => return 0,
         0xf2 => return (*apu).dspAdr,
@@ -110,7 +111,8 @@ fn record_dsp_write(history: &mut DspRegWriteHistory, address: u8, value: u8) {
     }
 }
 
-pub unsafe fn apu_cpuWrite(apu: *mut Apu, adr: u16, val: u8) {
+#[export_name = "apu_cpuWrite"]
+pub unsafe extern "C-unwind" fn apu_cpuWrite(apu: *mut Apu, adr: u16, val: u8) {
     match adr {
         0xf1 => {
             for i in 0..3 {

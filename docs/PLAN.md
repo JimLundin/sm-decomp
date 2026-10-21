@@ -1485,6 +1485,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    scanline scheduling and differing DSP key-on/envelope state. Price preservation
    of these contracts before compilation; a drop-in replacement is not established.
    Independently maintained dependency code must still be disclosed separately.
+   The complete SPC700 interpreter now uses pinned, unmodified LakeSnes
+   revision `1da16a22db4d0f2e7f6960a9846ef4e1f3acbd29`, preserving the live
+   Rust state, reset/save layout, APU bus, DSP and audio scheduling. Its isolated
+   complete price is **98,840 -> 98,164 Rust lines (-676)**; including the new
+   44-line installer removes **632 maintained lines**. The separately disclosed
+   dependency adds **2,104 C/header lines**; this reduces maintained source,
+   not total program source. All 528,395 actual-code comparisons pass, including
+   2,028,312 ordered bus events, reset/save and callback panic behavior. The
+   concurrent PPU composition passes normal release frontend/library/verifier
+   builds and probed/clean physical-audio inputs **0..2 (3/0)**, with 11,572
+   SPC instructions and 1,602 DSP advances observed. No gameplay or credits
+   coverage is claimed. The separate PPU adoption will update the combined
+   composition; do not count its draft savings in this isolated SPC price.
+   Installation, license and limits: [SPC_DEPENDENCY.md](SPC_DEPENDENCY.md).
    Grapple swing placement, rope-length changes, clearance
    and swept block contact now belong to `grapple_swing`, with bank 9B callers
    migrated. Shared projection, length traversal and bidirectional sweep retain
