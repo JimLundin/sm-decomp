@@ -3,9 +3,9 @@ pub use crate::game::prelude::*;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
 
+use crate::game::message_boxes;
 use crate::game::sm_80::{CheckEventHappened, NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_81::SaveToSram;
-use crate::game::sm_85::DisplayMessageBox_Poll;
 use crate::game::sm_86::{
     Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };
@@ -3086,7 +3086,7 @@ crate::game::callback_dispatch! {
         };
     };
     [10660639] GunshipTop_13 [] {
-        let rv: i32 = DisplayMessageBox_Poll(0x1c, game);
+        let rv: i32 = message_boxes::poll(0x1c, game);
         if rv < 0 {
             return;
         }

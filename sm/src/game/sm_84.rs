@@ -3,6 +3,7 @@ pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::prelude::*;
 
+use crate::game::message_boxes;
 use crate::game::sm_80::{
     AddGrappleToHudTilemap, AddMissilesToHudTilemap, AddPowerBombsToHudTilemap,
     AddSuperMissilesToHudTilemap, AddXrayToHudTilemap, CheckBossBitForCurArea, CheckEventHappened,
@@ -13,7 +14,6 @@ use crate::game::sm_80::{
 };
 use crate::game::sm_81::SaveToSram;
 use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
-use crate::game::sm_85::{DisplayMessageBox, DisplayMessageBox_Async, DisplayMessageBox_Poll};
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_90::{CallSomeSamusCode, UpdateBeamTilesAndPalette};
 use crate::game::sm_91::{
@@ -391,7 +391,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                 if message_pending {
                     crate::verify_probe::hit("coroutine.plm.message");
                     let yielded: u8 =
-                        DisplayMessageBox_Async(word!(game.queued_message_box_index), game);
+                        message_boxes::display(word!(game.queued_message_box_index), game);
                     if yielded != 0 {
                         *resume_state = 1;
                         return yielded;
@@ -2573,7 +2573,7 @@ crate::game::callback_dispatch! {
         word!(game.samus_power_bombs += t);
         AddPowerBombsToHudTilemap(game);
         PlayRoomMusicTrackAfterAFrames(0x168, game);
-        DisplayMessageBox(4, game);
+        message_boxes::queue(4, game);
         plmp.offset(2)
     };
     [8686557] PlmInstr_ClearMusicQueueAndQueueTrack [] {
@@ -2682,7 +2682,7 @@ crate::game::callback_dispatch! {
         // map_station_byte_array; word OR with 00FF preserves the neighboring byte.
         let station = 0xd908 + usize::from(game.area_index());
         game.g_ram[station] = 0xff;
-        DisplayMessageBox(0x14, game);
+        message_boxes::queue(0x14, game);
         game.set_has_area_map(1);
         plmp
     };
@@ -2758,7 +2758,7 @@ crate::game::callback_dispatch! {
         UpdateBeamTilesAndPalette(game);
         PlayRoomMusicTrackAfterAFrames(0x168, game);
         let message = u16::from(*plmp.add(2));
-        DisplayMessageBox(message, game);
+        message_boxes::queue(message, game);
     };
     [8685811] PlmInstr_PickupEquipmentAndShowMessage [plmp.add(3)] {
         let equipment = (plmp as *const u16).read_unaligned();
@@ -2767,7 +2767,7 @@ crate::game::callback_dispatch! {
         game.set_collected_items(game.collected_items() | equipment);
         PlayRoomMusicTrackAfterAFrames(0x168, game);
         let message = u16::from(*plmp.add(2));
-        DisplayMessageBox(message, game);
+        message_boxes::queue(message, game);
     };
     @functions [pub unsafe fn (
     plmp: *const u8,
@@ -2780,7 +2780,7 @@ crate::game::callback_dispatch! {
         word!(game.collected_items |= (t));
         AddGrappleToHudTilemap(game);
         PlayRoomMusicTrackAfterAFrames(0x168, game);
-        DisplayMessageBox(5, game);
+        message_boxes::queue(5, game);
     };
     [8685889] PlmInstr_PickupEquipmentAddXrayShowMessage [plmp.offset(2)] {
         let t: u16 = *(plmp as *mut u16);
@@ -2788,14 +2788,14 @@ crate::game::callback_dispatch! {
         word!(game.collected_items |= (t));
         AddXrayToHudTilemap(game);
         PlayRoomMusicTrackAfterAFrames(0x168, game);
-        DisplayMessageBox(6, game);
+        message_boxes::queue(6, game);
     };
     [8685928] PlmInstr_CollectHealthEnergyTank [plmp.add(2)] {
         let amount = (plmp as *const u16).read_unaligned();
         game.set_samus_max_health(game.samus_max_health().wrapping_add(amount));
         game.set_samus_health(game.samus_max_health());
         PlayRoomMusicTrackAfterAFrames(0x168, game);
-        DisplayMessageBox(1, game);
+        message_boxes::queue(1, game);
     };
     [8685958] PlmInstr_CollectHealthReserveTank [plmp.offset(2)] {
         word!(game.samus_max_reserve_health += *(plmp as *mut u16));
@@ -2803,7 +2803,7 @@ crate::game::callback_dispatch! {
             word!(game.reserve_health_mode += 1);
         }
         PlayRoomMusicTrackAfterAFrames(0x168, game);
-        DisplayMessageBox(0x19, game);
+        message_boxes::queue(0x19, game);
     };
     [8685993] PlmInstr_CollectAmmoMissileTank [plmp.offset(2)] {
         let t = *(plmp as *const u16);
@@ -2811,7 +2811,7 @@ crate::game::callback_dispatch! {
         game.set_samus_missiles(game.samus_missiles().wrapping_add(t));
         AddMissilesToHudTilemap(game);
         PlayRoomMusicTrackAfterAFrames(0x168, game);
-        DisplayMessageBox(2, game);
+        message_boxes::queue(2, game);
     };
     @functions [pub unsafe fn (
     plmp: *const u8,
@@ -2824,7 +2824,7 @@ crate::game::callback_dispatch! {
         game.set_samus_super_missiles(game.samus_super_missiles().wrapping_add(amount));
         AddSuperMissilesToHudTilemap(game);
         PlayRoomMusicTrackAfterAFrames(0x168, game);
-        DisplayMessageBox(3, game);
+        message_boxes::queue(3, game);
         plmp.add(2)
     };
     @functions [pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8];
@@ -2971,20 +2971,20 @@ crate::game::callback_dispatch! {
 ) -> *const u8];
     [8686767] PlmInstr_ActivateEnergyStation [plmp] {
         if word!(game.samus_max_health) != word!(game.samus_health) {
-            DisplayMessageBox(0x15, game);
+            message_boxes::queue(0x15, game);
             word!(game.samus_health = word!(game.samus_max_health));
         }
         CallSomeSamusCode(1, game);
     };
     [8686800] PlmInstr_ActivateMissileStation [plmp] {
         if word!(game.samus_max_missiles) != word!(game.samus_missiles) {
-            DisplayMessageBox(0x16, game);
+            message_boxes::queue(0x16, game);
             word!(game.samus_missiles = word!(game.samus_max_missiles));
         }
         CallSomeSamusCode(1, game);
     };
     [8686833] PlmInstr_ActivateSaveStationAndGotoIfNo [plmp.offset(2)] {
-        let r: i32 = DisplayMessageBox_Poll(23, game);
+        let r: i32 = message_boxes::poll(23, game);
         if r < 0 {
             return plmp.offset(-(2i32 as isize));
         }
@@ -3036,7 +3036,7 @@ crate::game::callback_dispatch! {
         );
         MakeSamusFaceForward(game);
     };
-    [8695844] PlmInstr_DisplayGameSavedMessageBox [plmp] { DisplayMessageBox(0x18, game); };
+    [8695844] PlmInstr_DisplayGameSavedMessageBox [plmp] { message_boxes::queue(0x18, game); };
     [8695856] PlmInstr_EnableMovementAndSetSaveStationUsed [plmp] {
         CallSomeSamusCode(1, game);
         word!(game.save_station_lockout_flag = 1);

@@ -318,6 +318,7 @@ pub mod game {
     pub(crate) mod enemy_ram;
     pub(crate) mod explosion_window;
     pub(crate) mod intro_pages;
+    pub mod message_boxes;
     pub(crate) mod moving_platforms;
     pub(crate) mod prelude;
     pub(crate) mod projectile_flight;
@@ -328,7 +329,6 @@ pub mod game {
     pub mod sm_81;
     pub mod sm_82;
     pub mod sm_84;
-    pub mod sm_85;
     pub mod sm_86;
     pub mod sm_87;
     pub mod sm_88;

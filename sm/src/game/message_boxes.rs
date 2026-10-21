@@ -1,3 +1,4 @@
+//! Message boxes, input confirmation, animation and saved-game feedback.
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::prelude::*;
 
@@ -275,10 +276,15 @@ unsafe fn RestorePpuForMessageBox(game: &mut Game) {
         byte(CGDATA as u16, game.g_ram[0xc035]);
     }
 }
-unsafe fn OpenMessageBox_Async(game: &mut Game) -> CoroutineRet {
+unsafe fn advance_audio(game: &mut Game) {
+    HandleMusicQueue(game);
+    HandleSoundEffects(game);
+}
+
+unsafe fn animate(opening: bool, game: &mut Game) -> CoroutineRet {
     match game.g_ram[0x615] {
-        0 => game.g_ram[0x5a2..0x5a4].fill(0),
-        1 => {}
+        0 if opening => game.g_ram[0x5a2..0x5a4].fill(0),
+        0 | 1 => {}
         _ => {
             game.g_ram[0x615] = 0;
             return 0;
@@ -290,23 +296,31 @@ unsafe fn OpenMessageBox_Async(game: &mut Game) -> CoroutineRet {
             game.g_ram[0x615] = 1;
             return result;
         }
-        HandleMusicQueue(game);
-        HandleSoundEffects(game);
+        advance_audio(game);
         MsgBoxMakeHdmaTable(game);
-        let radius = u16::from_le_bytes([game.g_ram[0x5a2], game.g_ram[0x5a3]]);
-        if radius == 0x1800 {
+        let radius = word!(game.message_box_animation_y_radius);
+        // Opening draws the final radius before stopping; closing stores its underflow.
+        if opening && radius == 0x1800 {
             break;
         }
-        game.g_ram[0x5a2..0x5a4].copy_from_slice(&radius.wrapping_add(0x200).to_le_bytes());
+        let radius = if opening {
+            radius.wrapping_add(0x200)
+        } else {
+            radius.wrapping_sub(0x200)
+        };
+        word!(game.message_box_animation_y_radius = radius);
+        if !opening && radius & 0x8000 != 0 {
+            break;
+        }
     }
     game.g_ram[0x615] = 0;
     0
 }
 unsafe fn HandleMessageBoxInteraction_Async(game: &mut Game) -> CoroutineRet {
     enum Phase {
-        Confirmation,
-        Delay,
-        Dismiss,
+        Confirmation = 1,
+        Delay = 2,
+        Dismiss = 3,
     }
     let mut phase = match game.g_ram[0x615] {
         0 => {
@@ -331,15 +345,16 @@ unsafe fn HandleMessageBoxInteraction_Async(game: &mut Game) -> CoroutineRet {
         }
     };
     loop {
+        let result = WaitForNMI_NoUpdate_Async(game);
+        if result != 0 {
+            game.g_ram[0x615] = phase as u8;
+            return result;
+        }
+        if !matches!(phase, Phase::Dismiss) {
+            advance_audio(game);
+        }
         match phase {
             Phase::Confirmation => {
-                let result = WaitForNMI_NoUpdate_Async(game);
-                if result != 0 {
-                    game.g_ram[0x615] = 1;
-                    return result;
-                }
-                HandleMusicQueue(game);
-                HandleSoundEffects(game);
                 ReadJoypadInputs(game);
                 let keys = u16::from_le_bytes([game.g_ram[0x8f], game.g_ram[0x90]]);
                 if keys & kButton_A as u16 != 0 {
@@ -355,13 +370,6 @@ unsafe fn HandleMessageBoxInteraction_Async(game: &mut Game) -> CoroutineRet {
                 }
             }
             Phase::Delay => {
-                let result = WaitForNMI_NoUpdate_Async(game);
-                if result != 0 {
-                    game.g_ram[0x615] = 2;
-                    return result;
-                }
-                HandleMusicQueue(game);
-                HandleSoundEffects(game);
                 let timer =
                     u16::from_le_bytes([game.g_ram[0x77e], game.g_ram[0x77f]]).wrapping_sub(1);
                 game.g_ram[0x77e..0x780].copy_from_slice(&timer.to_le_bytes());
@@ -370,11 +378,6 @@ unsafe fn HandleMessageBoxInteraction_Async(game: &mut Game) -> CoroutineRet {
                 }
             }
             Phase::Dismiss => {
-                let result = WaitForNMI_NoUpdate_Async(game);
-                if result != 0 {
-                    game.g_ram[0x615] = 3;
-                    return result;
-                }
                 ReadJoypadInputs(game);
                 let bug_fix_counter = u16::from_le_bytes([game.g_ram[0xc2], game.g_ram[0xc3]]);
                 let keys = if bug_fix_counter == 0 {
@@ -391,148 +394,87 @@ unsafe fn HandleMessageBoxInteraction_Async(game: &mut Game) -> CoroutineRet {
     game.g_ram[0x615] = 0;
     0
 }
-unsafe fn CloseMessageBox_Async(game: &mut Game) -> CoroutineRet {
-    if matches!(game.g_ram[0x615], 0 | 1) {
-        do_until! { radius & 0x8000 != 0;
-            let result = WaitForNMI_NoUpdate_Async(game);
-            if result != 0 {
-                game.g_ram[0x615] = 1;
-                return result;
-            }
-            HandleMusicQueue(game);
-            HandleSoundEffects(game);
-            MsgBoxMakeHdmaTable(game);
-            let radius =
-                u16::from_le_bytes([game.g_ram[0x5a2], game.g_ram[0x5a3]]).wrapping_sub(0x200);
-            game.g_ram[0x5a2..0x5a4].copy_from_slice(&radius.to_le_bytes());
-        }
-    }
-    game.g_ram[0x615] = 0;
-    0
-}
-pub unsafe fn DisplayMessageBox_Async(a: u16, game: &mut Game) -> CoroutineRet {
-    enum Phase {
-        Open,
-        Interact,
-        Close,
-        SaveDelay,
-        SaveWait,
-        OpenSaved,
-        InteractSaved,
-        CloseSaved,
-        Restore,
-    }
-    let mut phase = match game.g_ram[0x614] {
+
+pub unsafe fn display(message: u16, game: &mut Game) -> CoroutineRet {
+    // These are the existing $0614 continuation bytes. The saved-message cycle
+    // advances through the same opening, interaction and closing steps.
+    const OPENING: u8 = 2;
+    const INTERACTING: u8 = 3;
+    const CLOSING: u8 = 4;
+    const OPENING_SAVED: u8 = 5;
+    const INTERACTING_SAVED: u8 = 6;
+    const CLOSING_SAVED: u8 = 7;
+    const SAVE_WAIT: u8 = 8;
+    let mut stage = game.g_ram[0x614];
+    match stage {
         0 => {
-            game.g_ram[0x1c1f..0x1c21].copy_from_slice(&a.to_le_bytes());
+            word!(game.message_box_index = message);
             CancelSoundEffects(game);
             InitializePpuForMessageBoxes(game);
             ClearMessageBoxBg3Tilemap(game);
             InitializeMessageBox(game);
-            Phase::Open
+            stage = OPENING;
         }
-        2 => Phase::Open,
-        3 => Phase::Interact,
-        4 => Phase::Close,
-        8 => Phase::SaveWait,
-        5 => Phase::OpenSaved,
-        6 => Phase::InteractSaved,
-        7 => Phase::CloseSaved,
+        OPENING..=SAVE_WAIT => {}
         _ => {
             game.g_ram[0x614] = 0;
             return 0;
         }
-    };
+    }
     loop {
-        match phase {
-            Phase::Open | Phase::OpenSaved => {
-                let saved = matches!(phase, Phase::OpenSaved);
-                let result = OpenMessageBox_Async(game);
-                if result != 0 {
-                    game.g_ram[0x614] = if saved { 5 } else { 2 };
-                    return result;
+        let result = match stage {
+            OPENING | OPENING_SAVED => animate(true, game),
+            INTERACTING | INTERACTING_SAVED => HandleMessageBoxInteraction_Async(game),
+            CLOSING | CLOSING_SAVED => animate(false, game),
+            SAVE_WAIT => WaitForNMI_NoUpdate_Async(game),
+            _ => unreachable!(),
+        };
+        if result != 0 {
+            game.g_ram[0x614] = stage;
+            return result;
+        }
+        match stage {
+            OPENING | INTERACTING | OPENING_SAVED | INTERACTING_SAVED => stage += 1,
+            CLOSING => {
+                if word!(game.message_box_index) != 28
+                    || word!(game.save_confirmation_selection) == 2
+                {
+                    break;
                 }
-                phase = if saved {
-                    Phase::InteractSaved
-                } else {
-                    Phase::Interact
-                };
-            }
-            Phase::Interact | Phase::InteractSaved => {
-                let saved = matches!(phase, Phase::InteractSaved);
-                let result = HandleMessageBoxInteraction_Async(game);
-                if result != 0 {
-                    game.g_ram[0x614] = if saved { 6 } else { 3 };
-                    return result;
-                }
-                phase = if saved {
-                    Phase::CloseSaved
-                } else {
-                    Phase::Close
-                };
-            }
-            Phase::Close | Phase::CloseSaved => {
-                let saved = matches!(phase, Phase::CloseSaved);
-                let result = CloseMessageBox_Async(game);
-                if result != 0 {
-                    game.g_ram[0x614] = if saved { 7 } else { 4 };
-                    return result;
-                }
-                if saved {
-                    game.g_ram[0x1c1f..0x1c21].copy_from_slice(&28u16.to_le_bytes());
-                    phase = Phase::Restore;
-                } else {
-                    let message = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]);
-                    if message == 28
-                        && u16::from_le_bytes([game.g_ram[0x5f9], game.g_ram[0x5fa]]) != 2
-                    {
-                        game.g_ram[0x1c1f..0x1c21].copy_from_slice(&24u16.to_le_bytes());
-                        ClearMessageBoxBg3Tilemap(game);
-                        QueueSfx1_Max6(0x2e, game);
-                        game.g_ram[0x77e..0x780].copy_from_slice(&160u16.to_le_bytes());
-                        phase = Phase::SaveDelay;
-                    } else {
-                        phase = Phase::Restore;
-                    }
-                }
-            }
-            Phase::SaveDelay => {
-                HandleMusicQueue(game);
-                HandleSoundEffects(game);
-                phase = Phase::SaveWait;
-            }
-            Phase::SaveWait => {
-                let result = WaitForNMI_NoUpdate_Async(game);
-                if result != 0 {
-                    game.g_ram[0x614] = 8;
-                    return result;
-                }
-                let timer =
-                    u16::from_le_bytes([game.g_ram[0x77e], game.g_ram[0x77f]]).wrapping_sub(1);
-                game.g_ram[0x77e..0x780].copy_from_slice(&timer.to_le_bytes());
-                if timer == 0 {
-                    InitializeMessageBox(game);
-                    phase = Phase::OpenSaved;
-                } else {
-                    phase = Phase::SaveDelay;
-                }
-            }
-            Phase::Restore => {
+                word!(game.message_box_index = 24);
                 ClearMessageBoxBg3Tilemap(game);
-                RestorePpuForMessageBox(game);
-                QueueSamusMovementSfx(game);
-                if u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) == 20 {
-                    game.g_ram[0x998..0x99a]
-                        .copy_from_slice(&(kGameState_12_Pausing as u16).to_le_bytes());
-                }
+                QueueSfx1_Max6(0x2e, game);
+                word!(game.my_counter = 160);
+                advance_audio(game);
+                stage = SAVE_WAIT;
+            }
+            CLOSING_SAVED => {
+                word!(game.message_box_index = 28);
                 break;
             }
+            SAVE_WAIT => {
+                let timer = word!(game.my_counter).wrapping_sub(1);
+                word!(game.my_counter = timer);
+                if timer == 0 {
+                    InitializeMessageBox(game);
+                    stage = OPENING_SAVED;
+                } else {
+                    advance_audio(game);
+                }
+            }
+            _ => unreachable!(),
         }
+    }
+    ClearMessageBoxBg3Tilemap(game);
+    RestorePpuForMessageBox(game);
+    QueueSamusMovementSfx(game);
+    if word!(game.message_box_index) == 20 {
+        word!(game.game_state = kGameState_12_Pausing as u16);
     }
     game.g_ram[0x614] = 0;
     0
 }
-pub fn DisplayMessageBox_Poll(a: u16, game: &mut Game) -> i32 {
+pub fn poll(a: u16, game: &mut Game) -> i32 {
     if a == u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) {
         game.g_ram[0x1c1f..0x1c21].fill(0);
         return u16::from_le_bytes([game.g_ram[0x5f9], game.g_ram[0x5fa]]) as i32;
@@ -540,6 +482,6 @@ pub fn DisplayMessageBox_Poll(a: u16, game: &mut Game) -> i32 {
     game.g_ram[0xdc8..0xdca].copy_from_slice(&a.to_le_bytes());
     -1
 }
-pub fn DisplayMessageBox(a: u16, game: &mut Game) {
+pub fn queue(a: u16, game: &mut Game) {
     game.g_ram[0xdc8..0xdca].copy_from_slice(&a.to_le_bytes());
 }

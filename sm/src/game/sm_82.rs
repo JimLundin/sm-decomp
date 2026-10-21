@@ -7,6 +7,7 @@ pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_82::*;
 pub use crate::game::constants::bank_8f::*;
 
+use crate::game::message_boxes;
 use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
 use crate::game::sm_80::{
     memset7E, CalculateLayer2PosAndScrollsWhenScrolling, CheckEventHappened, ClearOamExt,
@@ -27,7 +28,6 @@ use crate::game::sm_84::{
     ClearPLMs, ClearSoundsWhenGoingThroughDoor, EnablePLMs, PlaySpinJumpSoundIfSpinJumping,
     PlmHandler_Async, SpawnRoomPLM,
 };
-use crate::game::sm_85::DisplayMessageBox_Async;
 use crate::game::sm_86::{ClearEprojs, EnableEprojs, EprojRunAll};
 use crate::game::sm_87::{AnimtilesHandler, ClearAnimtiles, DisableAnimtiles, EnableAnimtiles};
 use crate::game::sm_88::{
@@ -877,7 +877,7 @@ pub unsafe fn GameState_8_MainGameplay(game: &mut Game) -> CoroutineRet {
         EnemyMain(game);
     }
     if resume == 1 || (resume == 0 && word!(game.queued_message_box_index) != 0) {
-        let yielded: u8 = DisplayMessageBox_Async(word!(game.queued_message_box_index), game);
+        let yielded: u8 = message_boxes::display(word!(game.queued_message_box_index), game);
         if yielded != 0 {
             *resume_state = 1;
             return yielded;
