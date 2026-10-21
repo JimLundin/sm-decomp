@@ -837,30 +837,25 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
     }
 }
 pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
-    let current_block_164: u64;
     match adr as i32 {
         0 => {
             (*ppu).brightness = (val & 0xf);
             (*ppu).forcedBlank = val & 0x80 != 0;
-            current_block_164 = 16754622181974910496;
         }
         1 => {
             (*ppu).objSize = (val >> 5);
             (*ppu).objTileAdr1 = ((val as i32 & 7) << 13) as u16;
             (*ppu).objTileAdr2 =
                 ((*ppu).objTileAdr1 as i32 + (((val as i32 & 0x18) + 8) << 9)) as u16;
-            current_block_164 = 16754622181974910496;
         }
         2 => {
             set_fields! {[(*ppu)]; oamAdr = val, oamAdrWritten = (*ppu).oamAdr,
             oamInHigh = (*ppu).oamInHighWritten, oamSecondWrite = false_0 != 0, };
-            current_block_164 = 16754622181974910496;
         }
         3 => {
             set_fields! {[(*ppu)]; objPriority = val & 0x80 != 0, oamInHigh = val & 1 != 0,
             oamInHighWritten = (*ppu).oamInHigh, oamAdr = (*ppu).oamAdrWritten,
             oamSecondWrite = false_0 != 0, };
-            current_block_164 = 16754622181974910496;
         }
         4 => {
             if (*ppu).oamInHigh {
@@ -883,7 +878,6 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
                 }
             }
             (*ppu).oamSecondWrite = !(*ppu).oamSecondWrite;
-            current_block_164 = 16754622181974910496;
         }
         5 => {
             (*ppu).mode = (val & 0x7);
@@ -892,7 +886,6 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             (*ppu).bgLayer[1i32 as usize].bigTiles = val & 0x20 != 0;
             (*ppu).bgLayer[2i32 as usize].bigTiles = val & 0x40 != 0;
             (*ppu).bgLayer[3i32 as usize].bigTiles = val & 0x80 != 0;
-            current_block_164 = 16754622181974910496;
         }
         6 => {
             (*ppu).bgLayer[0i32 as usize].mosaicEnabled = val & 0x1 != 0;
@@ -901,33 +894,45 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             (*ppu).bgLayer[3i32 as usize].mosaicEnabled = val & 0x8 != 0;
             (*ppu).mosaicSize = ((val as i32 >> 4) + 1) as u8;
             (*ppu).mosaicStartLine = 0;
-            current_block_164 = 16754622181974910496;
         }
         7 | 8 | 9 | 10 => {
             let bg = &mut (*ppu).bgLayer[usize::from(adr - 7)];
             bg.tilemapWider = val & 1 != 0;
             bg.tilemapHigher = val & 2 != 0;
             bg.tilemapAdr = u16::from(val & 0xfc) << 8;
-            current_block_164 = 16754622181974910496;
         }
         11 | 12 => {
             let first_bg = usize::from(adr - 11) * 2;
             (*ppu).bgLayer[first_bg].tileAdr = u16::from(val & 0x0f) << 12;
             (*ppu).bgLayer[first_bg + 1].tileAdr = u16::from(val & 0xf0) << 8;
-            current_block_164 = 16754622181974910496;
         }
-        13 => {
-            (*ppu).m7matrix[6] = ((u16::from(val) << 8 | u16::from((*ppu).m7prev)) & 0x1fff) as i16;
-            (*ppu).m7prev = val;
-            current_block_164 = 6174974146017752131;
+        13 | 15 | 17 | 19 => {
+            if adr == 13 {
+                (*ppu).m7matrix[6] =
+                    ((u16::from(val) << 8 | u16::from((*ppu).m7prev)) & 0x1fff) as i16;
+                (*ppu).m7prev = val;
+            }
+
+            let layer = (usize::from(adr) - 0x0d) / 2;
+            (*ppu).bgLayer[layer].hScroll = ((u16::from(val) << 8)
+                | u16::from((*ppu).scrollPrev & 0xf8)
+                | u16::from((*ppu).scrollPrev2 & 0x07))
+                & 0x3ff;
+            (*ppu).scrollPrev = val;
+            (*ppu).scrollPrev2 = val;
         }
-        15 | 17 | 19 => current_block_164 = 6174974146017752131,
-        14 => {
-            (*ppu).m7matrix[7] = ((u16::from(val) << 8 | u16::from((*ppu).m7prev)) & 0x1fff) as i16;
-            (*ppu).m7prev = val;
-            current_block_164 = 5892776923941496671;
+        14 | 16 | 18 | 20 => {
+            if adr == 14 {
+                (*ppu).m7matrix[7] =
+                    ((u16::from(val) << 8 | u16::from((*ppu).m7prev)) & 0x1fff) as i16;
+                (*ppu).m7prev = val;
+            }
+
+            let layer = (usize::from(adr) - 0x0e) / 2;
+            (*ppu).bgLayer[layer].vScroll =
+                ((u16::from(val) << 8) | u16::from((*ppu).scrollPrev)) & 0x3ff;
+            (*ppu).scrollPrev = val;
         }
-        16 | 18 | 20 => current_block_164 = 5892776923941496671,
         21 => {
             if val & 3 == 0 {
                 (*ppu).vramIncrement = 1;
@@ -938,17 +943,14 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             }
             (*ppu).vramRemapMode = ((val as i32 & 0xc) >> 2) as u8;
             (*ppu).vramIncrementOnHigh = val & 0x80 != 0;
-            current_block_164 = 16754622181974910496;
         }
         22 => {
             (*ppu).vramPointer = ((*ppu).vramPointer & 0xff00 | val as u16);
             (*ppu).vramReadBuffer = (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff) as usize];
-            current_block_164 = 16754622181974910496;
         }
         23 => {
             (*ppu).vramPointer = ((*ppu).vramPointer as i32 & 0xff | (val as i32) << 8) as u16;
             (*ppu).vramReadBuffer = (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff) as usize];
-            current_block_164 = 16754622181974910496;
         }
         24 => {
             let vramAdr: u16 = ppu_getVramRemap(ppu);
@@ -958,7 +960,6 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
                 (*ppu).vramPointer =
                     ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as u16;
             }
-            current_block_164 = 16754622181974910496;
         }
         25 => {
             let vramAdr_0: u16 = ppu_getVramRemap(ppu);
@@ -969,29 +970,24 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
                 (*ppu).vramPointer =
                     ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as u16;
             }
-            current_block_164 = 16754622181974910496;
         }
         26 => {
             set_fields! {[(*ppu)]; m7largeField = val & 0x80 != 0, m7charFill = val & 0x40 != 0,
             m7yFlip = val & 0x02 != 0, m7xFlip = val & 0x01 != 0, };
-            current_block_164 = 16754622181974910496;
         }
         27 | 28 | 29 | 30 => {
             (*ppu).m7matrix[usize::from(adr - 0x1b)] =
                 (u16::from(val) << 8 | u16::from((*ppu).m7prev)) as i16;
             (*ppu).m7prev = val;
-            current_block_164 = 16754622181974910496;
         }
         31 | 32 => {
             (*ppu).m7matrix[usize::from(adr - 0x1b)] =
                 ((u16::from(val) << 8 | u16::from((*ppu).m7prev)) & 0x1fff) as i16;
             (*ppu).m7prev = val;
-            current_block_164 = 16754622181974910496;
         }
         33 => {
             (*ppu).cgramPointer = val;
             (*ppu).cgramSecondWrite = false_0 != 0;
-            current_block_164 = 16754622181974910496;
         }
         34 => {
             if !(*ppu).cgramSecondWrite {
@@ -1002,7 +998,6 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
                     ((val as i32) << 8 | (*ppu).cgramBuffer as i32) as u16;
             }
             (*ppu).cgramSecondWrite = !(*ppu).cgramSecondWrite;
-            current_block_164 = 16754622181974910496;
         }
         35 | 36 | 37 => {
             if adr as i32 == 0x23 {
@@ -1030,35 +1025,28 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
                 val & 0x40 != 0;
             (*ppu).windowLayer[((adr as i32 - 0x23i32) * 2i32 + 1i32) as usize].window2enabled =
                 val & 0x80 != 0;
-            current_block_164 = 16754622181974910496;
         }
         38 => {
             (*ppu).window1left = val;
-            current_block_164 = 16754622181974910496;
         }
         39 => {
             (*ppu).window1right = val;
-            current_block_164 = 16754622181974910496;
         }
         40 => {
             (*ppu).window2left = val;
-            current_block_164 = 16754622181974910496;
         }
         41 => {
             (*ppu).window2right = val;
-            current_block_164 = 16754622181974910496;
         }
         42 => {
             (*ppu).windowLayer[0i32 as usize].maskLogic = (val & 0x3);
             (*ppu).windowLayer[1i32 as usize].maskLogic = (val as i32 >> 2 & 0x3) as u8;
             (*ppu).windowLayer[2i32 as usize].maskLogic = (val as i32 >> 4 & 0x3) as u8;
             (*ppu).windowLayer[3i32 as usize].maskLogic = (val as i32 >> 6 & 0x3) as u8;
-            current_block_164 = 16754622181974910496;
         }
         43 => {
             (*ppu).windowLayer[4i32 as usize].maskLogic = (val & 0x3);
             (*ppu).windowLayer[5i32 as usize].maskLogic = (val as i32 >> 2 & 0x3) as u8;
-            current_block_164 = 16754622181974910496;
         }
         44 => {
             (*ppu).screenEnabled[0] = val;
@@ -1067,7 +1055,6 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             (*ppu).layer[2].mainScreenEnabled = val & 0x04 != 0;
             (*ppu).layer[3].mainScreenEnabled = val & 0x08 != 0;
             (*ppu).layer[4].mainScreenEnabled = val & 0x10 != 0;
-            current_block_164 = 16754622181974910496;
         }
         45 => {
             (*ppu).screenEnabled[1] = val;
@@ -1076,7 +1063,6 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             (*ppu).layer[2].subScreenEnabled = val & 0x04 != 0;
             (*ppu).layer[3].subScreenEnabled = val & 0x08 != 0;
             (*ppu).layer[4].subScreenEnabled = val & 0x10 != 0;
-            current_block_164 = 16754622181974910496;
         }
         46 => {
             (*ppu).screenWindowed[0] = val;
@@ -1085,7 +1071,6 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             (*ppu).layer[2].mainScreenWindowed = val & 0x04 != 0;
             (*ppu).layer[3].mainScreenWindowed = val & 0x08 != 0;
             (*ppu).layer[4].mainScreenWindowed = val & 0x10 != 0;
-            current_block_164 = 16754622181974910496;
         }
         47 => {
             (*ppu).screenWindowed[1] = val;
@@ -1094,12 +1079,10 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             (*ppu).layer[2].subScreenWindowed = val & 0x04 != 0;
             (*ppu).layer[3].subScreenWindowed = val & 0x08 != 0;
             (*ppu).layer[4].subScreenWindowed = val & 0x10 != 0;
-            current_block_164 = 16754622181974910496;
         }
         48 => {
             set_fields! {[(*ppu)]; directColor = val & 0x01 != 0, addSubscreen = val & 0x02 != 0,
             preventMathMode = (val & 0x30) >> 4, clipMode = (val & 0xc0) >> 6, };
-            current_block_164 = 16754622181974910496;
         }
         49 => {
             (*ppu).subtractColor = val & 0x80 != 0;
@@ -1107,7 +1090,6 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             for layer in 0..6 {
                 (*ppu).mathEnabled[layer] = val & (1 << layer) != 0;
             }
-            current_block_164 = 16754622181974910496;
         }
         50 => {
             if val & 0x80 != 0 {
@@ -1119,31 +1101,11 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             if val & 0x20 != 0 {
                 (*ppu).fixedColorR = val & 0x1f;
             }
-            current_block_164 = 16754622181974910496;
         }
         51 => {
             set_fields! {[(*ppu)]; interlace = val & 0x01 != 0, objInterlace = val & 0x02 != 0,
             overscan = val & 0x04 != 0, pseudoHires = val & 0x08 != 0,
             m7extBg = val & 0x40 != 0, };
-            current_block_164 = 16754622181974910496;
-        }
-        _ => current_block_164 = 16754622181974910496,
-    }
-    match current_block_164 {
-        5892776923941496671 => {
-            let layer = (usize::from(adr) - 0x0e) / 2;
-            (*ppu).bgLayer[layer].vScroll =
-                ((u16::from(val) << 8) | u16::from((*ppu).scrollPrev)) & 0x3ff;
-            (*ppu).scrollPrev = val;
-        }
-        6174974146017752131 => {
-            let layer = (usize::from(adr) - 0x0d) / 2;
-            (*ppu).bgLayer[layer].hScroll = ((u16::from(val) << 8)
-                | u16::from((*ppu).scrollPrev & 0xf8)
-                | u16::from((*ppu).scrollPrev2 & 0x07))
-                & 0x3ff;
-            (*ppu).scrollPrev = val;
-            (*ppu).scrollPrev2 = val;
         }
         _ => {}
     };

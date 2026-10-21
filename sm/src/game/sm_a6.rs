@@ -4619,7 +4619,6 @@ crate::game::callback_dispatch! {
     [10938151] Ridley_Instr_7 [jp] { (*Get_Ridley(0, game)).var_10 = 1; };
     [10938159] Ridley_Instr_8 [jp] { (*Get_Ridley(0, game)).var_10 = 2; Ridley_Func_96(game); };
     [10938445] Ridley_Instr_11 [jp] {
-        let current_block: u64;
         let E = Get_Ridley(0, game);
         let mut r18: u16 = if (*E).var_10 != 0 {
             let mut v4: u16 = -(CalculateAngleFromXY(
@@ -4628,20 +4627,10 @@ crate::game::callback_dispatch! {
                 game,
             ) as i32
                 + 0x80) as u8 as u16;
-            if v4 < 0x50 {
-                if v4 >= 0x15 {
-                    current_block = 14379314559172793947;
-                } else {
-                    current_block = 11006700562992250127;
-                }
-            } else if v4 < 0xc0 {
-                v4 = 80;
-                current_block = 14379314559172793947;
-            } else {
-                current_block = 11006700562992250127;
-            }
-            if current_block == 11006700562992250127 {
-                v4 = 21;
+            if v4 < 0x15 || v4 >= 0xc0 {
+                v4 = 0x15;
+            } else if v4 >= 0x50 {
+                v4 = 0x50;
             }
             v4
         } else {
@@ -4651,20 +4640,10 @@ crate::game::callback_dispatch! {
                 game,
             ) as i32
                 + 0x80) as u8 as u16;
-            if v3 >= 0xb0 {
-                if v3 < 0xeb {
-                    current_block = 16663838568255336676;
-                } else {
-                    current_block = 11874048045265102773;
-                }
-            } else if v3 < 0x40 {
-                current_block = 11874048045265102773;
-            } else {
-                v3 = 176;
-                current_block = 16663838568255336676;
-            }
-            if current_block == 11874048045265102773 {
-                v3 = 235;
+            if v3 < 0x40 || v3 >= 0xeb {
+                v3 = 0xeb;
+            } else if v3 < 0xb0 {
+                v3 = 0xb0;
             }
             v3
         };

@@ -1607,40 +1607,20 @@ crate::game::callback_dispatch! {
     };
 }
 pub unsafe fn MainScrollingRoutine(game: &mut Game) {
-    let mut current_block: u64;
     if word!(game.slow_grabble_scrolling_flag) != 0 {
         if ((word!(game.samus_x_pos) & 0x8000) == 0) {
             let mut v0: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos));
-            if word!(game.samus_x_pos) < word!(game.layer1_x_pos) {
-                current_block = 8565863539623487812;
+            if word!(game.samus_x_pos) < word!(game.layer1_x_pos) || v0 < 0x60 {
+                word!(game.layer1_x_pos -= 3);
             } else if v0 >= 0xa0 {
                 word!(game.layer1_x_pos += 3);
-                current_block = 9616406889445156080;
-            } else if v0 < 0x60 {
-                current_block = 8565863539623487812;
-            } else {
-                current_block = 9616406889445156080;
-            }
-            if current_block == 8565863539623487812 {
-                word!(game.layer1_x_pos -= 3);
             }
             if (word!(game.samus_y_pos) & 0x8000) == 0 {
                 let v1: u16 = (word!(game.samus_y_pos)).wrapping_sub(word!(game.layer1_y_pos));
-                if word!(game.samus_y_pos) >= word!(game.layer1_y_pos) {
-                    if v1 >= 0x90 {
-                        word!(game.layer1_y_pos += 3);
-                        current_block = 13986801909406869559;
-                    } else if v1 >= 0x70 {
-                        current_block = 13986801909406869559;
-                    } else {
-                        current_block = 1856101646708284338;
-                    }
-                } else {
-                    current_block = 1856101646708284338;
-                }
-                if current_block == 13986801909406869559 {
-                } else {
+                if word!(game.samus_y_pos) < word!(game.layer1_y_pos) || v1 < 0x70 {
                     word!(game.layer1_y_pos -= 3);
+                } else if v1 >= 0x90 {
+                    word!(game.layer1_y_pos += 3);
                 }
             }
         }

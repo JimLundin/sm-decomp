@@ -2286,22 +2286,15 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
                     word!(game.grapple_beam_unkD30 = 0);
                 }
                 if (word!(game.grapple_beam_unkD2E) & 0x8000) == 0 {
-                    v3 = (word!(game.grapple_beam_unkD2E)).wrapping_sub(6);
-                    if ((word!(game.grapple_beam_unkD2E)) as i16).wrapping_sub(6) >= 0 {
-                        current_block = 3103951223134113261;
-                    } else {
-                        current_block = 18377268871191777778;
+                    v3 = word!(game.grapple_beam_unkD2E).wrapping_sub(6);
+                    if (word!(game.grapple_beam_unkD2E) as i16).wrapping_sub(6) < 0 {
+                        v3 = 0;
                     }
                 } else {
-                    v3 = (word!(game.grapple_beam_unkD2E)).wrapping_add(6);
-                    if ((word!(game.grapple_beam_unkD2E)) as i16).wrapping_add(6) < 0 {
-                        current_block = 3103951223134113261;
-                    } else {
-                        current_block = 18377268871191777778;
+                    v3 = word!(game.grapple_beam_unkD2E).wrapping_add(6);
+                    if (word!(game.grapple_beam_unkD2E) as i16).wrapping_add(6) >= 0 {
+                        v3 = 0;
                     }
-                }
-                if current_block == 18377268871191777778 {
-                    v3 = 0;
                 }
                 word!(game.grapple_beam_unkD2E = v3);
                 return 0;

@@ -17,6 +17,20 @@ process's lock; tell its owner to release it.
 
 ## Active direction (2026-10-20)
 
+Current composition (2026-10-21): **99,914 Rust lines in 81 files**, plus a
+four-line C bridge = **99,918 maintained implementation lines**. Counting the
+new 41-line CPU installer as well gives **99,959**. This is an actual complete
+source recount, including frontend and verifier code, all adapters, callers and
+registrations. Existing development scripts/configuration/docs are outside this
+implementation metric. The two pinned dependencies add **2,836 CPU C/header
+lines and 7,762 stb header lines**, disclosed separately, like existing GL/SDL.
+No project implementation is hidden in experiment directories.
+The final composition passes a normal release library/frontend build and full
+boot any% **129712/0** and Speed Booster **148406/0**, with normal rendering/audio.
+The under-100,000 maintained-source milestone is complete. Neither route reaches
+credits; component/static checks cover edited paths beyond movie coverage.
+Bank retirement and the 90,000-line stretch checkpoint remain future work.
+
 Artifact availability update (2026-10-21): the entire local TEMP
 `sm-tailored-next` tree and the original-C/parser experiment directories
 disappeared during work. Both long and short Windows paths were checked;
@@ -36,12 +50,12 @@ further, by tackling large structural changes before individual cleanup.
 Use **90,000 lines as a stretch planning checkpoint**, not a demonstrated
 forecast. This work order replaces earlier reduction and cleanup queues.
 
-Active persistent goal: keep improving the translation process until there is
-a verified path to an implementation below 100,000 lines. A partial profile
-does not finish this goal. The last reported complete historical composition was
+Completed immediate goal: the verified current implementation above is below
+100,000 lines. The last reported complete historical translation composition was
 **162,136 -> 102,539 (-59,597)**, also removing **636,768 tokens** and
-**1,736,945 code-text bytes**. The strict remaining gap is **2,540 lines**.
-All 71 Rust files, helpers, callers and registrations count; Cargo remains
+**1,736,945 code-text bytes**. That historical profile stopped **2,540 lines**
+above the target; it is separate from the completed current-source result.
+Its 71 Rust files, helpers, callers and registrations count; its Cargo remains
 ten lines. External GL/SDL dependencies and experiment support are disclosed
 separately. Current Rust remains the behavior authority.
 
@@ -135,9 +149,9 @@ from new algorithm sharing and cases that still require manual work.
 
 Renewed user priority (2026-10-21): identify big changes that significantly
 reduce code volume. Alias grouping is now adopted; stop expanding the remaining
-small cohorts as the primary work queue. The reconstructed enemy-field and RAM
-pointer-chain prices are frozen at -107 and -99 lines respectively, without
-build/runtime claims or adoption. Do not add their independent prices.
+small cohorts as the primary work queue. The enemy-field draft remains parked
+at -107 with unresolved alignment concerns. The complete RAM-chain cohort is
+now adopted after the larger replacements, with its composition proof below.
 
 The distinct direct typed-RAM-prefix experiment on a2b507ae replaces 4,242 reads
 and 1,399 assignments over 562 eligible fields. Its complete formatted result is
@@ -177,8 +191,8 @@ Rust accepts reserved Huffman-symbol fixtures that the upstream source rejects.
 Three current-Rust DLL controls pass; the upstream C candidate was not executed.
 Their prices use the separate 103,313-line input and are not accepted savings.
 Complete costs, sources and limits are in REDUCTION_RESEARCH.md. Keep the CPU
-candidate parked pending a normal dependency build; do not repeat the direct
-codec substitution. Native shader/presentation ownership is adopted below.
+earlier candidate parked; the later independently published CPU and compatible
+codec pins are separately validated and adopted under item 3. Native shader/presentation ownership is adopted below.
 External-oracle replacement alone cannot retire PPU/DMA/bus/cartridge code:
 native register access and frame drawing still use it, and Bang_Main still calls
 RunAsmCode through Call. A complete replacement must cover those native consumers
@@ -191,11 +205,10 @@ whitelisting, validation and fallback costs are not free. No saving is claimed.
 Durable source assessment: Local/sm-decomp-experiments/20261021/rom-callback-descriptors.
 The reconstructed alias, constant-group and native C-string cohorts are adopted
 under item 3, excluding the entire shader file while its unrelated draft is
-present. Their old interrupted prices are not additional savings. The distinct
-residual numeric control-flow trial removes 60 lines in seven guarded fusions
-across five routines, with zero formatting credit. It is frozen without builds
-or runtime checks at Local/sm-decomp-experiments/20261021/residual-control-flow
-and remains parked; no historical result or accepted deletion is claimed.
+present. Their old interrupted prices are not additional savings. The original
+60-line residual control-flow trial is superseded by the readable 89-line cohort
+below, with complete component tests and both full integration replays passing. Its
+awkward Boolean-expression spelling is rejected rather than adopted.
 
 The current-source composition has landed in four focused commits:
 **107,520 -> 106,189 (-1,331)**, including 159 terminal loops, 114 selected
@@ -259,8 +272,9 @@ Its 41-line installer counts separately; the upstream closure is 2,836 external
 C/header lines. The pinned PNG/inflater dependency removes **777 more Rust
 lines**, reaching **100,102**. Its four-line C bridge gives **773 net Rust/C
 lines removed**. The complete RAM pointer-chain cohort removes **99 more
-lines**, reaching **100,003**. Another **four Rust lines** are needed to reach 99,999;
-no remaining deletion budget or complete bank retirement is established.
+lines**, reaching **100,003**. The readable control-flow cohort removes **89**
+more, reaching **99,914**, with both full integration replays passing.
+No complete bank retirement is claimed.
 
 Component checks also found an inherited unaligned RAM reference in the
 music queue and related update captures. The historical repair changes 228
@@ -598,7 +612,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    budget was established; no oracle execution or landed savings are claimed.
    Drafts and exact counts: TEMP sm-bindings-root-9c4daf2f/samus-cycle/REPORT.md.
 
-2. [ ] **Compare the remaining large subsystem replacements.** The research-led
+2. [x] **Compare the selected large subsystem replacements.** The research-led
    follow-up uses existing AST/Pygments/Copydetect tools on 2,393 function and
    callback bodies, normalizing names and numbers. Sparse comparison took 8.6s
    and included same-file and cross-file near-miss islands. A separate 53.8s
@@ -899,15 +913,39 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    composition and validation of a selected complete cohort qualify; repeating
    its isolated price or scanner does not.
 
-3. [ ] **Implement the strongest measured replacements and recount.** Start
+3. [x] **Implement the strongest measured replacements and recount.** Start
    a proven candidate as soon as it is ready; an exact budget for the entire
    remaining gap is not a prerequisite for useful implementation. At each
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. The CPU and PNG dependency
    replacements now have passing component checks and complete release builds.
-   Finish their main integration before composing the already measured RAM-chain
-   and residual-control-flow cohorts; do not add their standalone prices.
+   Their main integration and the following RAM-chain/readable-control-flow
+   composition are complete, reaching the verified count above. The measured
+   discovery is bounded; it does not prove that all future large savings are gone.
+
+   Readable control flow removes **89 lines (100,003 -> 99,914)**, 333 tokens
+   and 2,669 spelling bytes across equipment selection, scrolling, grapple,
+   Ridley angle clamps and PPU register writes. Ordinary branch chains and a
+   named loop result replace numeric continuation tags; grouped PPU scroll arms
+   retain Mode7 side effects in order. No helpers/dependencies/imports are added.
+   This supersedes the smaller 60-line Boolean-expression draft, which was
+   rejected for readability. Ridley's macro body is formatted independently;
+   zero formatting-only savings count. All five original and adopted full
+   routine bodies match the exact component-tested pair after composition with
+   the CPU, codec, snapshot and RAM-chain changes. Complete normal main release
+   library/frontend (38.71s) and formatting pass. Source-bound actual-body DLLs
+   pass **1,145,096 comparisons in each of optimized and overflow-checked modes**,
+   including complete PPU states, signed grapple ranges/callback mutation,
+   scrolling boundaries and Ridley angle ranges. External callbacks are scripted;
+   this does not claim every edited path executes in a movie. Final full boot
+   any% **129712/0** and Speed Booster **148406/0** pass with normal rendering/
+   audio, source fingerprint
+   `a49e35e84ffd2c8e964c2b9df5414f9136ce9e1fb6ad6be255d1c541161b9e4b`.
+   Replay times are 482.51s/717.66s. No new failing frames; neither reaches credits.
+   Durable source/checks: Local/sm-decomp-experiments/20261021/residual-control-flow/
+   composition-e2530722/readable-v2. Neither complete bank retirement nor credits
+   is established by the volume result.
 
    The existing RAM-chain grammar removes **99 lines (100,102 -> 100,003)**,
    1,717 tokens and 3,580 spelling bytes across all 135 chains/24 files/five
@@ -1399,9 +1437,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    below, including its full-replay cadence. Continue choosing the strongest
    complete replacement until below 100,000; then reassess the path to 90,000.
 
-4. [ ] **Refine the smaller implementation.** Resume isolated local naming,
-   unsafe removal and small duplication cleanup after the volume pass. Whole
-   domain migrations follow the user clarification above and can precede it.
+4. [ ] **Retire bank ownership by gameplay responsibility.** Select a complete
+   responsibility, such as Samus movement, with an exercised boundary and named
+   routines. Migrate its real callers and state transitions, then remove its
+   retired bank facade. Gameplay currently totals 81,887 lines; its 32 numeric
+   bank modules still own 78,158. These are ownership scopes, not deletion budgets.
+   File moves alone earn no volume reduction. Reassess the
+   90,000-line stretch checkpoint using complete replacements, including retained
+   exceptions and oracle adapters; it has no demonstrated deletion budget yet.
+   Local naming, unsafe removal and small duplication cleanup support that work.
    Boot-to-credits coverage, remaining native Bang AI ownership, ROM bug-patch
    review and Map Rando remain later project milestones. Correctness defects
    and coverage needed by an active replacement take priority when encountered.
@@ -1611,7 +1655,17 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: the pinned LakeSnes CPU adapter passes full boot any%
+Latest full integration: the complete CPU, PNG, RAM-chain and readable-control-flow
+composition passes full boot any% **129712/0** and Speed Booster **148406/0**,
+with normal rendering/audio and comparisons. Both use final source fingerprint
+`a49e35e84ffd2c8e964c2b9df5414f9136ce9e1fb6ad6be255d1c541161b9e4b`.
+All five final routine bodies match the independently tested component source.
+Both installed native archives retain their tested hashes. The frontend codec
+has separate component coverage; the movie does not exercise PNG loading.
+Neither route reaches credits. Logs: Local/sm-decomp-experiments/20261021/
+residual-control-flow/composition-e2530722/readable-v2/main-{any,speed}.log.
+
+Previous full integration: the pinned LakeSnes CPU adapter passes full boot any%
 **129712/0** and Speed Booster **148406/0**, with normal rendering/audio and
 comparisons. Both use final source fingerprint
 `3a08843e9e15b17aa59eeb5f1018dca693c40177a1f85e2fc1f2e8b13eb6efde`.
@@ -1822,14 +1876,18 @@ shared gameplay imports, enemy callback ownership, native inflater, compound
 RAM updates, shared RAM/record metadata, alias declarations, native C-string
 literals, shared constant headers, native shader/presentation ownership and
 shared PPU pixel evaluation, native/SPC state transfers and live-typed snapshots,
-the pinned CPU/PNG dependencies and RAM pointer chains, maintained Rust is
-**100,003**, leaving **four** to reach 99,999. The C bridge adds four implementation lines and the
-CPU installer 41 setup lines. External CPU/PNG code has 2,836/7,762 lines.
+the pinned CPU/PNG dependencies, RAM pointer chains and readable control flow,
+maintained Rust is **99,914**, with both full integration replays passing.
+Including the four-line C bridge gives **99,918**; including the new 41-line
+installer as well gives **99,959**. The immediate volume target is complete.
+External CPU/PNG code has 2,836/7,762 lines.
 Counters: raw offsets 30; extern C blocks 5; counted C ABI exports 4; no_mangle 8;
 unsafe functions 3288; cast lines 7568. RAM pointer chains remove nine
-cast-containing lines without changing the other counters. The codec removes five unsafe declarations
-and three cast-containing lines while adding one foreign dependency boundary. The CPU adds one foreign dependency
-boundary and removes 25 unsafe declarations. Snapshot diagnostics add one unsafe
+cast-containing lines without changing the other counters. The codec removes
+five unsafe declarations and three cast-containing lines while adding one foreign
+dependency boundary. The CPU adds one foreign dependency boundary and removes
+25 unsafe declarations. Readable control flow changes no other counter.
+Snapshot diagnostics add one unsafe
 helper and remove 14 cast-containing lines while removing 239 total lines.
 Shared state transfers add one unsafe
 helper and remove six cast-containing lines while removing 230 total lines.
@@ -1853,8 +1911,9 @@ lines. Its complete implementation still removes 144 lines. The former
 83-line shader draft is now incorporated in the complete shader replacement,
 whose 588-line committed reduction includes those 83 lines once.
 Item 2's function/compound-body variant audits are complete for their stated
-scope. The remaining gap has no established replacement budget. The current
-hopping and local-initialization drafts remain parked; repeating completed scans or adding
-their gross matching spans does not supply that budget.
+scope. The under-100,000 milestone is complete; the 90,000-line stretch checkpoint
+has no established replacement budget. Hopping and local-initialization drafts
+remain parked; repeating completed scans or adding their gross matching spans
+does not supply that budget.
 
 Historical details before this reset remain in **ec45c573:docs/PLAN.md**.

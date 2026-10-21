@@ -2264,7 +2264,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
         if current_block == 9932683223035187777 {
         } else {
             let mut v6: u16 = 0;
-            loop {
+            let item_found = loop {
                 if (crate::rtl::rom_table_word!(game, 0x82c056, (v6 >> 1) as isize)
                     & word!(game.collected_items))
                     != 0
@@ -2272,18 +2272,15 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
                     byte!(v7; 0) = ((v6 >> 1) >> 8) as u8;
                     byte!(v7; 1) = (v6 >> 1) as u8;
                     word!(game.pausemenu_equipment_category_item = ((v7) as u16) | (2u16));
-                    current_block = 9932683223035187777;
-                    break;
+                    break true;
                 } else {
                     v6 = (v6).wrapping_add(2);
                     if (((v6) as i16).wrapping_sub(12) >= 0) {
-                        current_block = 1109700713171191020;
-                        break;
+                        break false;
                     }
                 }
-            }
-            if current_block == 9932683223035187777 {
-            } else {
+            };
+            if !item_found {
                 let mut v8: i16 = 0;
                 do_until! { ((v8).wrapping_sub(6) >= 0);
                     v8 = (v8).wrapping_add(2);

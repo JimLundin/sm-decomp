@@ -76,7 +76,9 @@ Its 41-line installer and 2,836 external C/header lines are disclosed separately
 Full boot replays and component checks pass. The PNG/inflater replacement
 removes **777 more Rust lines**, reaching **100,102**; its four-line C bridge
 leaves 773 net Rust/C lines removed. Complete RAM pointer chains remove
-**99 further lines**, reaching **100,003**; another **four** must go to reach 99,999. A separate
+**99 further lines**, reaching **100,003**. The final readable-control-flow
+candidate removes **89 more**, reaching **99,914 Rust / 99,918 Rust+C lines**;
+both final full integration replays pass. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -97,6 +99,40 @@ neither reduces source volume in the tested scopes. Its default mode does
 preserve packed byte accesses despite physically larger Rust structs. Corrode's
 specific packing omission is repairable; layout differences alone are not a
 correctness verdict. The independent-transpiler sections record these tests.
+
+## Readable control-flow composition (2026-10-21)
+
+The final candidate removes **89 lines (100,003 -> 99,914)**, 333 tokens and
+2,669 spelling bytes. Equipment selection returns a named loop result;
+scrolling, grapple and Ridley clamps use ordinary branches; PPU scroll arms
+share their real continuation. The previous 60-line draft's nested conditions
+and side-effect Boolean expressions were rejected for readability. Both prices
+cover the same five routines and are alternatives, not additive savings.
+
+All five complete original/adopted routine bodies match the component-tested
+pair on actual main, retaining the earlier RAM-chain changes elsewhere in their
+files. The revised source-bound DLLs pass **1,145,096 comparisons per arithmetic
+profile**, optimized and overflow-checked, covering full PPU objects, grapple
+signed ranges, callback mutations, scrolling boundaries and angle clamps.
+Dependent callbacks are scripted, so component coverage does not establish every
+movie context. Normal main release library/frontend and formatting pass (38.71s).
+Full boot any% **129712/0** and Speed Booster **148406/0** pass with normal
+rendering/audio on final source
+`a49e35e84ffd2c8e964c2b9df5414f9136ce9e1fb6ad6be255d1c541161b9e4b`.
+Neither reaches credits. Durable source and
+checks: `Local/sm-decomp-experiments/20261021/residual-control-flow/composition-e2530722/readable-v2`.
+
+The actual whole `sm` recount has **81 Rust files / 99,914 lines**, plus **four
+C bridge lines = 99,918 implementation lines**. Including the new 41-line CPU
+installer gives **99,959**. Existing development tools, configuration and docs
+are outside the implementation metric. External dependency source is separately
+**2,836 CPU C/header + 7,762 PNG header lines**; this result reduces maintained
+project source, not total dependency-inclusive source. From the 101,575-line
+continuation baseline, Rust falls **1,661** lines, or **1,616** after new C/setup
+costs. Both final full replays pass; bank retirement remains separate work.
+The recorded original C implementation ceiling is 100,374 lines (headers
+excluded); current Rust+C is 456 lines below it. Original-C inputs were not
+recreated during this continuation.
 
 ## Composed RAM pointer chains (2026-10-21)
 
