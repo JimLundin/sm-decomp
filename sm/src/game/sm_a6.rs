@@ -53,21 +53,21 @@ pub type Enemy_Boulder = crate::game::enemy_layouts::EnemyLayout40;
 pub type Enemy_CeresRidley = crate::game::enemy_layouts::EnemyLayout72;
 
 crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C)]
+    [
+        #[derive(Copy, Clone)]
+        #[repr(C)]
+    ];
     pub struct BabyMetroidExecState {
         pub ip, timer: u16;
     }
-}
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C)]
+
     pub struct Ram8800_Default {
         pub var_40, var_41, var_42, var_43, var_44, var_45, var_46, var_47, var_48, var_49, var_4A,
             var_4B, var_4C, var_4D, var_4E, var_4F, var_50, var_51, var_52, var_53, var_54, var_55,
             var_56, var_57, var_58, var_59, var_5A, var_5B, var_5C, var_5D, var_5E, var_5F: u16;
     }
 }
+
 pub type Enemy_RidleysExplosion = crate::game::enemy_layouts::EnemyLayout8;
 
 pub type Enemy_Zebetites = crate::game::enemy_layouts::EnemyLayout8;

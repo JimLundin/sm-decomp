@@ -23,28 +23,27 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct SpriteDrawInstr {
-    pub field_0: u16,
-    pub field_2: VoidP,
-}
 crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
+    [
+        #[derive(Copy, Clone)]
+        #[repr(C, packed)]
+    ];
+    pub struct SpriteDrawInstr {
+        pub field_0: u16;
+        pub field_2: VoidP;
+    }
+
     pub struct KraidInstrList {
         pub timer: u16;
         pub tilemap, vuln_mouth_hitbox, invuln_mouth_hitbox: VoidP;
     }
-}
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
+
     pub struct KraidSinkTable {
         pub field_0, field_2: u16;
         pub field_4: VoidP;
     }
 }
+
 pub use crate::types::Consts_A7;
 
 crate::game::constants::typed_constants! { Consts_A7;

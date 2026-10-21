@@ -25,14 +25,15 @@ use crate::game::sm_a0::{
 use crate::game::sm_a6::Ridley_Func_103;
 use crate::game::sm_b4::CreateSpriteAtPos;
 
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct ExtraEnemyRam8800 {
-    pub pad: [u8; 64],
-}
 crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
+    [
+        #[derive(Copy, Clone)]
+        #[repr(C, packed)]
+    ];
+    pub struct ExtraEnemyRam8800 {
+        pub pad: [u8; 64];
+    }
+
     pub struct Ram7800_Default {
         pub var_00, var_01, var_02, var_03, var_04, var_05, var_06, var_07, var_08, var_09, var_0A,
             var_0B, var_0C, var_0D, var_0E, var_0F, var_10, var_11, var_12, var_13, var_14, var_15,

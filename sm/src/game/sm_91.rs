@@ -26,38 +26,32 @@ use crate::game::sm_9b::{GrappleBeamFunc_BD95, GrappleBeamFunc_BEEB};
 use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
 
 crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
+    [
+        #[derive(Copy, Clone)]
+        #[repr(C, packed)]
+    ];
     pub struct DemoInputObject {
         pub ptr, pre_instr, instr_ptr: VoidP;
     }
-}
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
+
     pub struct DemoSetDef {
         pub items, missiles, super_missiles, power_bombs, health, beams, equipped_beams_: u16;
         pub demo_obj: VoidP;
     }
-}
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
+
     pub struct PoseEntry {
         pub new_input, cur_input, new_pose: u16;
     }
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct XrayBlockData {
-    pub value: u16,
-    pub addr: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct SamusCrystalFlashPalTable {
-    pub ptr: VoidP,
-    pub timer: u16,
+
+    pub struct XrayBlockData {
+        pub value: u16;
+        pub addr: VoidP;
+    }
+
+    pub struct SamusCrystalFlashPalTable {
+        pub ptr: VoidP;
+        pub timer: u16;
+    }
 }
 
 crate::typed_struct! {

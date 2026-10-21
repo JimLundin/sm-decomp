@@ -59,18 +59,18 @@ crate::game::constants::typed_constants! { LiquidPhysicsType;
 }
 
 crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
+    [
+        #[derive(Copy, Clone)]
+        #[repr(C, packed)]
+    ];
     pub struct SamusSpeedTableEntry {
         pub accel, accel_sub, max_speed, max_speed_sub, decel, decel_sub: u16;
     }
-}
 
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct DisableMinimapAndMarkBossRoomAsExploredEnt {
-    pub boss_id_: u16,
-    pub ptrs: VoidP,
+    pub struct DisableMinimapAndMarkBossRoomAsExploredEnt {
+        pub boss_id_: u16;
+        pub ptrs: VoidP;
+    }
 }
 
 pub use crate::types::Func_SpazerSba_V;

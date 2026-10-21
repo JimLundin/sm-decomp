@@ -7,18 +7,22 @@ use crate::game::sm_90::{
     ClearProjectile, HandleProjectileTrails, Samus_DrawShinesparkCrashEchoProjectiles,
 };
 
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct ProjectileDamagesAndInstrPtr {
-    pub damages: u32,
-    pub instr_ptr: VoidP,
+crate::typed_struct! {
+    [
+        #[derive(Copy, Clone)]
+        #[repr(C, packed)]
+    ];
+    pub struct ProjectileDamagesAndInstrPtr {
+        pub damages: u32;
+        pub instr_ptr: VoidP;
+    }
+
+    pub struct ProjectileDataTable {
+        pub damage: u16;
+        pub instr_ptrs: [u16; 10];
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct ProjectileDataTable {
-    pub damage: u16,
-    pub instr_ptrs: [u16; 10],
-}
+
 pub use crate::types::ProjectileInstr;
 const RomPtr_93: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x93>;
 #[inline]

@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**102,804-line** historical-source composition. The current-source batch has
+**102,539-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -29,7 +29,9 @@ Explicit compound RAM updates remove **370 more lines**, reaching **104,424**,
 with complete compiler correspondence and both full boot replay routes passing.
 Shared RAM metadata removes another **452 lines**, reaching **103,972**, with
 complete constant/export equality and static builds passing.
-Maintained Rust needs another **3,973 lines removed** to reach 99,999. A separate
+Shared record metadata then removes **271 lines**, reaching **103,701**, with
+complete compiler correspondence and static builds passing.
+Maintained Rust needs another **3,702 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -2008,6 +2010,49 @@ compiled translation profile, not a linked playable historical implementation.
 Final source and reproducible rule: `TEMP/sm-tailored-next/ram-metadata-sequences`
 (`historical-final-v2`, `current-final-v2`, `binding.json`, `REPORT.md`). Main
 build log: `TEMP/sm-ram-metadata-main-build-20261021.log`.
+
+The next declaration experiment recovers another original-C convention:
+shared packing context. C2Rust emits `Copy`/`Clone` and `repr` attributes on
+each record; current `typed_struct!` already shares consecutive field types
+but still repeats that metadata. The new arm shares identical explicit
+attributes over several same-module records. Legacy single-record syntax
+delegates to the same body. Field order/types, visibility, record/union kind,
+packing and names stay intact; macro-containing field types, generics and
+custom metadata are excluded. Selected records have no preceding documentation
+whose attachment could change. Aliases, impls and runtime callers stay intact.
+
+Applied to the actual RAM-stage outputs, complete current source changes
+**103,972 -> 103,701 (-271)** and historical source changes
+**102,804 -> 102,539 (-265)**. Current removes 1,963 tokens/4,586 spelling bytes;
+historical removes 2,136/4,956. Both charge six added helper lines. Current
+covers 116 records in 16 groups/14 consumers; historical covers 132 in 21
+groups/20 consumers. The historical standalone frontend lacks the crate-local
+macro and retains its declarations rather than adding a new export or adapter.
+
+Both final sources reproduce byte-for-byte, and complete optimized library/
+frontend builds pass. Historical checks compare every selected expanded record
+and derived implementation plus the entire remaining ordered compiler output.
+Independent current checks compare all 116 records and 348 derived impls, then
+the complete remainder with zero parser errors or missing nodes: all 6,993
+remaining library functions and 84 frontend functions preserve their qualified
+owners, signatures and operations. Every embedded source payload is checked
+against its file before normalization. The checkpoint source key changes from
+`8ef48681fb6b438b` to `400c4b06a98e46b9`; old checkpoints require regeneration.
+Parent's normal Cargo release and changed-file formatting pass. Equivalent
+declarations require static validation under PLAN, so no replay is claimed.
+
+This actual historical composition reaches **162,136 -> 102,539 (-59,597)**,
+removing 636,768 tokens and 1,736,945 spelling bytes cumulatively, with a strict
+2,540-line gap. All 71 Rust files and ten Cargo lines count. It remains a compiled
+translation profile, without a linked playable historical executable. These
+metadata rules retire no bank and do not establish the remaining current budget.
+Prototype support adds 728 Python lines in five scripts, bringing this profile's
+reported support to 28,605 lines/371 scripts. Parent independently checked all
+396 frozen artifacts, both complete source pairs, their counts and the maintained
+source correspondence, preserving the unrelated shader draft.
+Frozen recipe, support counts and proofs: `TEMP/sm-tailored-next/record-metadata-groups`
+(`current-final-v3`, `historical-final-v4`, `current-proof-independent-v3`).
+Main build: `TEMP/sm-record-metadata-main-build-20261021.log`.
 
 The complete ordinary-place compound-update follow-up is rejected. Unlike
 the named RAM rule, it covers repeated field/place assignments and captured

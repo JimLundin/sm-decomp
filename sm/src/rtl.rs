@@ -122,20 +122,15 @@ pub use crate::types::{
 use crate::util::{
     ByteArray_AppendByte, ByteArray_AppendData, ByteArray_Destroy, ByteArray_Resize,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct ApuWriteEnt {
-    pub ports: [u8; 4],
-}
-pub use crate::types::{
-    Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
-    DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, Spc, Timer,
-    WindowLayer,
-};
-pub use crate::types::{RunFrameFunc, SyncAllFunc};
 crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C)]
+    [
+        #[derive(Copy, Clone)]
+        #[repr(C)]
+    ];
+    pub struct ApuWriteEnt {
+        pub ports: [u8; 4];
+    }
+
     pub struct StateRecorder {
         pub last_inputs: u16;
         pub frames_since_last, total_frames, replay_pos, replay_pos_last_complete,
@@ -146,7 +141,18 @@ crate::typed_struct! {
         pub has_base_audio_queue: bool;
         pub base_audio_queue: [u8; 71];
     }
+
+    pub struct LoadFuncState {
+        pub p, pend: *mut u8;
+    }
 }
+pub use crate::types::{
+    Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
+    DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, Spc, Timer,
+    WindowLayer,
+};
+pub use crate::types::{RunFrameFunc, SyncAllFunc};
+
 pub use crate::types::{
     ByteArray, Channel, SaveLoadFunc, SaveLoadOperation as C2RustUnnamed_0, SfxChan, SfxRegs,
     SpcPlayer,
@@ -155,13 +161,7 @@ pub const kSaveLoad_Replay: C2RustUnnamed_0 = 3;
 pub const kSaveLoad_Load: C2RustUnnamed_0 = 2;
 pub const kSaveLoad_Save: C2RustUnnamed_0 = 1;
 pub const kApuMaxQueueSize: C2RustUnnamed_2 = 16;
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C)]
-    pub struct LoadFuncState {
-        pub p, pend: *mut u8;
-    }
-}
+
 pub const kCurrentBugFixCounter: C2RustUnnamed_1 = 1;
 pub use crate::types::SnesRegs;
 pub type C2RustUnnamed_1 = u32;

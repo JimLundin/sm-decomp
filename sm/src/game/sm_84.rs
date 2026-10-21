@@ -21,15 +21,14 @@ use crate::game::sm_91::{
 };
 
 crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
+    [
+        #[derive(Copy, Clone)]
+        #[repr(C, packed)]
+    ];
     pub struct PlmHeader_Size4 {
         pub func_ptr, instr_list_ptr: VoidP;
     }
-}
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
+
     pub struct XraySpecialCasing {
         pub x_block, y_block: u8;
         pub level_data_block: u16;

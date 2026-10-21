@@ -25,11 +25,19 @@ use crate::game::sm_b4::{
 use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
 
 crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
+    [
+        #[derive(Copy, Clone)]
+        #[repr(C, packed)]
+    ];
     pub struct EnemyPopulation {
         pub enemy_ptr: VoidP;
         pub x_pos, y_pos, init_param, properties, extra_properties, parameter1, parameter2: u16;
+    }
+
+    pub struct EnemyTileLoadData {
+        pub tile_data_size: u16;
+        pub tile_data_ptr: LongPtr;
+        pub offset_into_ram: u16;
     }
 }
 pub use crate::types::EnemyAiBits;
@@ -37,30 +45,23 @@ crate::game::constants::typed_constants! { EnemyAiBits;
     kEnemyAiBits_Frozen = 4, kEnemyAiBits_Hurt = 2,
     kEnemyAiBits_Grapple = 1,
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyTileLoadData {
-    pub tile_data_size: u16,
-    pub tile_data_ptr: LongPtr,
-    pub offset_into_ram: u16,
-}
 
 pub use crate::types::CalculateAngleFromXYFunc;
 crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C)]
+    [
+        #[derive(Copy, Clone)]
+        #[repr(C)]
+    ];
     pub struct PositionAndWidth {
         pub x_pos, x_subpos, y_pos, y_subpos, width, height: u16;
     }
-}
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C)]
+
     pub struct EnemyBlockCollInfo {
         pub ebci_r18_r20: i32;
         pub ebci_r24, ebci_r26, ebci_r28, ebci_r30, ebci_r32: u16;
     }
 }
+
 pub type Func_EnemyBlockCollInfo_U8 = unsafe fn(&mut EnemyBlockCollInfo, &mut Game) -> u8;
 
 pub const NULL: *mut c_void = null_mut::<c_void>();

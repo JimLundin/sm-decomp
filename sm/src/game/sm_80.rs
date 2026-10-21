@@ -24,25 +24,20 @@ use crate::game::sm_a0::LoadEnemies;
 use crate::rtl::RtlApuUpload;
 
 crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
+    [
+        #[derive(Copy, Clone)]
+        #[repr(C, packed)]
+    ];
     pub struct LoadStationList {
         pub room_ptr_, door_ptr: VoidP;
         pub door_bts, screen_x_pos, screen_y_pos, samus_y_offset, samus_x_offset: u16;
     }
-}
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
+
     pub struct SamusTileAnimationTileDefs {
         pub src: LongPtr;
         pub part1_size, part2_size: u16;
     }
-}
 
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
     pub struct Mode7CgvmWriteQueue {
         pub tag: u8;
         pub src_addr: LongPtr;

@@ -113,13 +113,19 @@ macro_rules! forward_calls {
     };
 }
 
-// Share consecutive field types without changing declaration order or layout.
+// Share explicit record metadata and consecutive field types without changing layout.
 macro_rules! typed_struct {
-    ($(#[$metadata:meta])* $visibility:vis struct $name:ident {
+    ($(#[$metadata:meta])* $visibility:vis struct $name:ident $fields:tt) => {
+        $crate::typed_struct!(@attributes [$(#[$metadata])*] $visibility struct $name $fields);
+    };
+    ($attributes:tt; $($visibility:vis $kind:ident $name:ident $fields:tt)+) => {
+        $($crate::typed_struct!(@attributes $attributes $visibility $kind $name $fields);)+
+    };
+    (@attributes [$(#[$metadata:meta])*] $visibility:vis $kind:ident $name:ident {
         $($field_visibility:vis $($field:ident),+ : $field_type:ty;)*
     }) => {
         $(#[$metadata])*
-        $visibility struct $name {
+        $visibility $kind $name {
             $($($field_visibility $field: $field_type,)*)*
         }
     };
