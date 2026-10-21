@@ -64,6 +64,21 @@ crate::typed_struct! {
 pub const NULL: *mut c_void = null_mut::<c_void>();
 crate::game::constants::typed_constants! { i32;
     true_0 = 1, false_0 = 0,
+    fnSamus_MovementHandler_Normal = 0x90a337, fnProjPreInstr_Empty = 0x90b169,
+    fnSamus_MoveHandlerVerticalShinespark = 0x90d0ab, fnSamus_MoveHandler_Shinespark_Diag = 0x90d0d7,
+    fnSamus_MoveHandler_Shinespark_Horiz = 0x90d106, fnSamus_MoveHandler_Knockback = 0x90df38,
+    fnSamus_MoveHandler_BombJumpStart = 0x90e025, fnSamus_Func3 = 0x90e0e6,
+    fnSamus_Func9 = 0x90e41b, fnSamus_FrameHandlerAlfa_Func11 = 0x90e695,
+    fnSamus_FrameHandlerAlfa_Func12 = 0x90e6c9, fnSamus_FrameHandlerAlfa_Func13 = 0x90e713,
+    fnSamus_FrameHandlerBeta_Func17 = 0x90e725, fnSamus_FrameHandlerBeta_Func14 = 0x90e7f5,
+    fnSamus_Func16 = 0x90e86a, fnEmptyFunction = 0x90e8cd,
+    fnj_HandleDemoRecorder_2_0 = 0x90e8d9, fnSetContactDamageIndexAndUpdateMinimap = 0x90e8dc,
+    fnnullsub_152 = 0x90e90e, fnSamus_InputHandler_E913 = 0x90e913,
+    fnSamus_Func20_ = 0x90e918, fnSamus_InputHandler_E91D = 0x90e91d,
+    fnHandleAutoJumpHack = 0x90e926, fnSamusMovementType_Xray = 0x90e94f,
+    fnSamusDrawHandler_Default = 0x90eb52,
+    fnDemoPreInstr_CheckLeaveDemo = 0x918a9b,
+    fnGrappleBeamFunc_Inactive = 0x9bc4f0,
 }
 pub const __ASSERT_FUNCTION: [c_char; 28] =
     unsafe { transmute::<[u8; 28], [c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0") };
@@ -83,27 +98,6 @@ crate::ram_map::ram_pointer_functions! {
 #[inline]
 unsafe fn get_PoseEntry(a: u16, game: &mut Game) -> *mut PoseEntry {
     RomPtr((0x910000u32) | ((a) as u32), game) as *mut PoseEntry
-}
-crate::game::constants::typed_constants! { i32;
-    fnSamus_MovementHandler_Normal = 0x90a337, fnProjPreInstr_Empty = 0x90b169,
-    fnSamus_MoveHandlerVerticalShinespark = 0x90d0ab, fnSamus_MoveHandler_Shinespark_Diag = 0x90d0d7,
-    fnSamus_MoveHandler_Shinespark_Horiz = 0x90d106, fnSamus_MoveHandler_Knockback = 0x90df38,
-    fnSamus_MoveHandler_BombJumpStart = 0x90e025, fnSamus_Func3 = 0x90e0e6,
-    fnSamus_Func9 = 0x90e41b, fnSamus_FrameHandlerAlfa_Func11 = 0x90e695,
-    fnSamus_FrameHandlerAlfa_Func12 = 0x90e6c9, fnSamus_FrameHandlerAlfa_Func13 = 0x90e713,
-    fnSamus_FrameHandlerBeta_Func17 = 0x90e725, fnSamus_FrameHandlerBeta_Func14 = 0x90e7f5,
-    fnSamus_Func16 = 0x90e86a, fnEmptyFunction = 0x90e8cd,
-    fnj_HandleDemoRecorder_2_0 = 0x90e8d9, fnSetContactDamageIndexAndUpdateMinimap = 0x90e8dc,
-    fnnullsub_152 = 0x90e90e, fnSamus_InputHandler_E913 = 0x90e913,
-    fnSamus_Func20_ = 0x90e918, fnSamus_InputHandler_E91D = 0x90e91d,
-    fnHandleAutoJumpHack = 0x90e926, fnSamusMovementType_Xray = 0x90e94f,
-    fnSamusDrawHandler_Default = 0x90eb52,
-}
-crate::game::constants::typed_constants! { i32;
-    fnDemoPreInstr_CheckLeaveDemo = 0x918a9b,
-}
-crate::game::constants::typed_constants! { i32;
-    fnGrappleBeamFunc_Inactive = 0x9bc4f0,
 }
 static kSamusInputHandlers: [Func_V; 28] = callback_table! { nonnull Func_V;
     Samus_Input_00_Standing, Samus_Input_01_Running, Samus_Input_02_NormalJumping,

@@ -34,6 +34,8 @@ struct PostGrappleCollisionSample {
 pub const NULL: *mut c_void = null_mut::<c_void>();
 crate::game::constants::typed_constants! { i32;
     true_0 = 1, false_0 = 0,
+    fnDoorTransitionFunction_HandleElevator = 0x82e17d,
+    fnGrappleBeam_Func2 = 0x9bc8c5,
 }
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
 const RomPtr_94: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x94>;
@@ -43,12 +45,6 @@ crate::ram_map::ram_pointer_functions! {
 #[inline]
 unsafe fn get_DoorDef(a: u16, game: &mut Game) -> *mut DoorDef {
     RomPtr((0x830000u32) | ((a) as u32), game) as *mut DoorDef
-}
-crate::game::constants::typed_constants! { i32;
-    fnDoorTransitionFunction_HandleElevator = 0x82e17d,
-}
-crate::game::constants::typed_constants! { i32;
-    fnGrappleBeam_Func2 = 0x9bc8c5,
 }
 
 static kAlignPos_Tab1: [u8; 512] = [

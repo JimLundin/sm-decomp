@@ -49,7 +49,14 @@ checked expressions and every unselected operation. Complete standalone builds
 and expanded correspondence, composed source inverse, and final main release
 build pass. The shader remains unchanged. Durable sources and proof are at
 Local/sm-decomp-experiments/20261021/native-c-strings-alias43df.
-Maintained Rust needs another **3,408 lines removed** to reach 99,999. A separate
+Sharing identical constant-group headers removes **94 further lines**, reaching
+**103,313**. All 1,123 declarations remain, with complete expanded correspondence
+and public value/type witnesses. Actual sequential emission preserves the prior
+alias and C-string changes and all original body rows; final release passes.
+These three current rules remove **388 lines**, **1,870 tokens** and **7,551
+spelling bytes** from the actual 103,701-line input. Durable final source/checks:
+Local/sm-decomp-experiments/20261021/constant-groups/after-alias-strings-constants-v2.
+Maintained Rust needs another **3,314 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.

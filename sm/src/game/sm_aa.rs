@@ -47,8 +47,6 @@ unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
 }
 crate::game::constants::typed_constants! { i32;
     fnnullsub_171_AA = 0xaa807b,
-}
-crate::game::constants::typed_constants! { i32;
     fnnullsub_274 = 0xaadcaa, fnnullsub_276 = 0xaae7a6,
 }
 crate::ram_map::ram_pointer_functions! {

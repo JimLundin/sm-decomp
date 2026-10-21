@@ -26,6 +26,7 @@ pub struct RoomDefStateSelect_E6E5_Finish {
 
 crate::game::constants::typed_constants! { i32;
     kCoroutineNone = 0,
+    fnPauseHook_DraygonRoom = 0x8fc8f6, fnUnpauseHook_DraygonRoom = 0x8fc8fc,
 }
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
 #[inline]
@@ -42,9 +43,6 @@ unsafe fn get_RoomDefStateSelect_E6E5_Finish(
     game: &mut Game,
 ) -> *mut RoomDefStateSelect_E6E5_Finish {
     RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefStateSelect_E6E5_Finish
-}
-crate::game::constants::typed_constants! { i32;
-    fnPauseHook_DraygonRoom = 0x8fc8f6, fnUnpauseHook_DraygonRoom = 0x8fc8fc,
 }
 // Each door callback writes its listed scroll cells in order: 0 red, 1 blue, 2 green.
 macro_rules! door_scroll_changes {

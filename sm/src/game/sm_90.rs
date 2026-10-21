@@ -76,6 +76,24 @@ crate::typed_struct! {
 pub use crate::types::Func_SpazerSba_V;
 crate::game::constants::typed_constants! { i32;
     true_0 = 1, false_0 = 0,
+    fnSamus_MovementHandler_Normal = 0x90a337, fnProjPreInstr_Beam_NoWaveBeam = 0x90aef3,
+    fnProjPreInstr_WavePlasmaEtc = 0x90b0c3,
+    fnProjPreInstr_BeamOrIceWave = 0x90b0e4,
+    fnProjPreInstr_Empty = 0x90b169,
+    fnSamus_MoveHandlerVerticalShinespark = 0x90d0ab,
+    fnSamus_Func3 = 0x90e0e6,
+    fnSamus_Func9 = 0x90e41b, fnSamus_FrameHandlerAlfa_Func11 = 0x90e695,
+    fnSamus_FrameHandlerAlfa_Func13 = 0x90e713, fnSamus_FrameHandlerBeta_Func17 = 0x90e725,
+    fnEmptyFunction = 0x90e8cd,
+    fnj_HandleDemoRecorder_2_0 = 0x90e8d9,
+    fnSetContactDamageIndexAndUpdateMinimap = 0x90e8dc,
+    fnnullsub_152 = 0x90e90e,
+    fnSamus_InputHandler_E913 = 0x90e913,
+    fnSamus_InputHandler_E91D = 0x90e91d, fnHandleAutoJumpHack = 0x90e926,
+    fnSamusDrawHandler_Default = 0x90eb52,
+    fnGrappleBeamFunc_Inactive = 0x9bc4f0, fnGrappleBeamFunc_Firing = 0x9bc703,
+    fnGrappleBeamFunc_ConnectedLockedInPlace = 0x9bc77e,
+    fnGrappleBeamFunc_Cancel = 0x9bc856, fnGrappleBeam_Func2 = 0x9bc8c5,
 }
 const RomPtr_82: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x82>;
 const RomPtr_90: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x90>;
@@ -90,72 +108,16 @@ unsafe fn get_SamusSpeedTableEntry(a: u16, game: &mut Game) -> *mut SamusSpeedTa
 }
 crate::game::constants::typed_constants! { u32;
     fnSamus_MoveHandler_ReleaseFromGrapple = 9475182,
-}
-crate::game::constants::typed_constants! { u32;
     fnSamus_ScrollFinishedHook_SporeSpawnFight = 9475465,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSamus_MovementHandler_Normal = 0x90a337, fnProjPreInstr_Beam_NoWaveBeam = 0x90aef3,
-}
-crate::game::constants::typed_constants! { i32;
-    fnProjPreInstr_WavePlasmaEtc = 0x90b0c3,
-    fnProjPreInstr_BeamOrIceWave = 0x90b0e4,
-}
-crate::game::constants::typed_constants! { i32;
-    fnProjPreInstr_Empty = 0x90b169,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSamus_MoveHandlerVerticalShinespark = 0x90d0ab,
-}
-crate::game::constants::typed_constants! { u32;
     fnSamus_MoveHandler_Shinespark_Diag = 9490647, fnSamus_MoveHandler_Shinespark_Horiz = 9490694,
-}
-crate::game::constants::typed_constants! { u32;
     fnSamus_MoveHandler_Knockback = 9494328,
     fnSamus_MoveHandler_BombJumpStart = 9494565,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSamus_Func3 = 0x90e0e6,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSamus_Func9 = 0x90e41b, fnSamus_FrameHandlerAlfa_Func11 = 0x90e695,
-}
-crate::game::constants::typed_constants! { u32;
     fnSamus_FrameHandlerAlfa_Func12 = 9496265,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSamus_FrameHandlerAlfa_Func13 = 0x90e713, fnSamus_FrameHandlerBeta_Func17 = 0x90e725,
-}
-crate::game::constants::typed_constants! { u32;
     fnSamus_FrameHandlerBeta_Func14 = 9496565, fnSamus_Func15 = 9496627,
     fnSamus_Func16 = 9496682,
-}
-crate::game::constants::typed_constants! { i32;
-    fnEmptyFunction = 0x90e8cd,
-    fnj_HandleDemoRecorder_2_0 = 0x90e8d9,
-    fnSetContactDamageIndexAndUpdateMinimap = 0x90e8dc,
-    fnnullsub_152 = 0x90e90e,
-    fnSamus_InputHandler_E913 = 0x90e913,
-}
-crate::game::constants::typed_constants! { u32;
     fnSamus_Func20_ = 9496856,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSamus_InputHandler_E91D = 0x90e91d, fnHandleAutoJumpHack = 0x90e926,
-}
-crate::game::constants::typed_constants! { u32;
     fnSamusMovementType_Xray = 9496911,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSamusDrawHandler_Default = 0x90eb52,
-}
-crate::game::constants::typed_constants! { u32;
     fnsub_90EB86 = 9497478,
-}
-crate::game::constants::typed_constants! { i32;
-    fnGrappleBeamFunc_Inactive = 0x9bc4f0, fnGrappleBeamFunc_Firing = 0x9bc703,
-    fnGrappleBeamFunc_ConnectedLockedInPlace = 0x9bc77e,
-    fnGrappleBeamFunc_Cancel = 0x9bc856, fnGrappleBeam_Func2 = 0x9bc8c5,
 }
 static kNonBeamProjectile_Sfx: [u16; 9] = [0, 3, 4, 0, 0, 0, 0, 0, 0];
 pub(crate) static kProjectileCooldown_Uncharged: [u8; 38] = [

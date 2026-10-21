@@ -107,23 +107,9 @@ enemy_layout! {
 
 crate::game::constants::typed_constants! { i32;
     kCoroutineNone = 0,
-}
-const RomPtr_A7: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa7>;
-crate::ram_map::ram_pointer_functions! {
-    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
-#[inline]
-unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
-    RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
-}
-crate::game::constants::typed_constants! { i32;
     fnnullsub_170_A7 = 0xa7804c,
-}
-crate::game::constants::typed_constants! { i32;
     fnUnpauseHook_Kraid_IsDead = 0xa7c1fb, fnUnpauseHook_Kraid_IsAlive = 0xa7c24e,
     fnKraid_UnpauseHook_IsSinking = 0xa7c2a0, fnPauseHook_Kraid = 0xa7c325,
-}
-crate::game::constants::typed_constants! { i32;
     fnnullsub_237 = 0xa7d4a8, fnPhantoon_Spawn8FireballsInCircleAtStart = 0xa7d4a9,
     fnPhantoon_WaitBetweenSpawningAndSpinningFireballs = 0xa7d4ee, fnPhantoon_SpawnFireballsBeforeFight = 0xa7d508,
     fnPhantoon_WavyFadeIn = 0xa7d54a, fnPhantoon_PickPatternForRound1 = 0xa7d596,
@@ -154,6 +140,14 @@ crate::game::constants::typed_constants! { i32;
     fnDachora_Func_4 = 0xa7f5ed, fnDachora_Func_5 = 0xa7f65e,
     fnDachora_Func_7 = 0xa7f78f, fnDachora_Func_8 = 0xa7f806,
     fnDachora_Func_11 = 0xa7f935, fnDachora_Func_12 = 0xa7f98c,
+}
+const RomPtr_A7: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa7>;
+crate::ram_map::ram_pointer_functions! {
+    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
+}
+#[inline]
+unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
+    RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];

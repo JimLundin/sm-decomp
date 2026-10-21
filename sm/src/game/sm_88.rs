@@ -48,6 +48,9 @@ pub use crate::types::Consts_89;
 pub const NULL: *mut c_void = null_mut::<c_void>();
 crate::game::constants::typed_constants! { i32;
     true_0 = 1, false_0 = 0,
+    fnDoorTransitionFunction_FadeOutScreen = 0x82e2db, fnDoorTransition_FadeInScreenAndFinish = 0x82e737,
+    fnPauseHook_Empty = 0x8883e1,
+    fnCinematicFunctionOpening = 0x8b9b68,
 }
 const RomPtr_88: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x88>;
 #[inline]
@@ -57,17 +60,10 @@ unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
 }
-crate::game::constants::typed_constants! { i32;
-    fnDoorTransitionFunction_FadeOutScreen = 0x82e2db, fnDoorTransition_FadeInScreenAndFinish = 0x82e737,
-    fnPauseHook_Empty = 0x8883e1,
-}
 crate::game::constants::typed_constants! { u32;
     fnHdmaobjInstr_InitMorphBallEyeBeamHdma = 0x88e917,
     fnHdmaobjPreInstr_MorphBallEyeBeamWidening = 0x88e9e6, fnHdmaobjPreInstr_MorphBallEyeBeamFull = 0x88ea3c,
     fnHdmaobjPreInstr_MorphBallEyeBeamFading = 0x88eacb,
-}
-crate::game::constants::typed_constants! { i32;
-    fnCinematicFunctionOpening = 0x8b9b68,
 }
 pub fn nullsub_9(j: u16, game: &mut Game) -> u16 {
     j

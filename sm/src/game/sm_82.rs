@@ -126,6 +126,12 @@ pub const __ASSERT_FUNCTION: [c_char; 28] =
     unsafe { transmute::<[u8; 28], [c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0") };
 crate::game::constants::typed_constants! { i32;
     kCoroutineNone = 0,
+    fnDoorTransitionFunction_FadeOutScreen = 0x82e2db,
+    fnDoorTransition_WaitForMusicToClear = 0x82e664,
+    fnDoorTransition_HandleTransition = 0x82e6a2, fnDoorTransition_FadeInScreenAndFinish = 0x82e737,
+    fnCinematicFunctionNone = 0x8b9a47, fnCinematicFunctionOpening = 0x8b9b68,
+    fnCinematicFunction_Intro_Initial = 0x8ba395, fnCinematicFunctionBlackoutFromCeres = 0x8bc11b,
+    fnCinematicFunctionEscapeFromCebes = 0x8bd480,
 }
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
@@ -183,21 +189,7 @@ unsafe fn get_PlmHeader_Size6(a: u16, game: &mut Game) -> *mut PlmHeader_Size6 {
 }
 crate::game::constants::typed_constants! { u32;
     fnDoorTransitionFunction_HandleElevator = 8577405,
-}
-crate::game::constants::typed_constants! { i32;
-    fnDoorTransitionFunction_FadeOutScreen = 0x82e2db,
-    fnDoorTransition_WaitForMusicToClear = 0x82e664,
-    fnDoorTransition_HandleTransition = 0x82e6a2, fnDoorTransition_FadeInScreenAndFinish = 0x82e737,
-}
-crate::game::constants::typed_constants! { u32;
     fnPauseHook_Empty = 8946657,
-}
-crate::game::constants::typed_constants! { i32;
-    fnCinematicFunctionNone = 0x8b9a47, fnCinematicFunctionOpening = 0x8b9b68,
-    fnCinematicFunction_Intro_Initial = 0x8ba395, fnCinematicFunctionBlackoutFromCeres = 0x8bc11b,
-    fnCinematicFunctionEscapeFromCebes = 0x8bd480,
-}
-crate::game::constants::typed_constants! { u32;
     fnPauseHook_DraygonRoom = 9423094, fnUnpauseHook_DraygonRoom = 9423100,
     fnUnpauseHook_Kraid_IsDead = 10994171, fnUnpauseHook_Kraid_IsAlive = 10994254,
     fnKraid_UnpauseHook_IsSinking = 10994336, fnPauseHook_Kraid = 10994469,

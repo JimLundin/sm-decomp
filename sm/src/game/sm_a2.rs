@@ -97,8 +97,6 @@ crate::game::constants::typed_constants! { i32;
     fnSamus_FrameHandlerAlfa_Func11 = 0x90e695, fnSamus_FrameHandlerBeta_Func17 = 0x90e725,
     fnMiniCrocomire_PreInstr5 = 0xa28a43, fnMiniCrocomire_PreInstr6 = 0xa28a5c,
     fnnullsub_175 = 0xa28a75,
-}
-crate::game::constants::typed_constants! { i32;
     fnSpikeShootingPlant_2 = 0xa29fba, fnSpikeShootingPlant_3 = 0xa29fec,
     fnnullsub_182 = 0xa2a01b, fnnullsub_187 = 0xa2a7d7,
     fnGunshipTop_3 = 0xa2a80c, fnGunshipTop_4 = 0xa2a8d0,

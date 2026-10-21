@@ -140,11 +140,13 @@ Reopen alias grouping on the actual record-metadata outputs: its new scope is
 sequential composition and complete compiler validation, not another standalone
 price. Count only that composed result. Arbitrary single-function cleanup stays
 parked; fresh discovery must identify a previously unhandled family.
-The selected current cohorts are shared alias declarations, redundant constant
-group headers and native C-string literals. Exclude the entire shader file from
-adoption while its unrelated draft is present. Their interrupted experimental
-prices are not accepted savings; rebuild source-bound checks before adoption.
-Residual numeric control-flow tags are a separate new current-source trial.
+The reconstructed alias, constant-group and native C-string cohorts are adopted
+under item 3, excluding the entire shader file while its unrelated draft is
+present. Their old interrupted prices are not additional savings. The distinct
+residual numeric control-flow trial removes 60 lines in seven guarded fusions
+across five routines, with zero formatting credit. It is frozen without builds
+or runtime checks at Local/sm-decomp-experiments/20261021/residual-control-flow
+and remains parked; no historical result or accepted deletion is claimed.
 
 The current-source composition has landed in four focused commits:
 **107,520 -> 106,189 (-1,331)**, including 159 terminal loops, 114 selected
@@ -186,7 +188,9 @@ Shared alias declarations remove **202 more lines**, reaching **103,499**, with
 complete declaration/type identity and expanded-source checks plus release build.
 Native C-string literals remove **92 more lines**, reaching **103,407**, with
 exact byte/type/lifetime checks, source correspondence and release build.
-Another **3,408 lines** are needed to reach 99,999;
+Sharing constant-group headers removes **94 more lines**, reaching **103,313**,
+with exact declaration/value/type checks, source correspondence and release build.
+Another **3,314 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -814,8 +818,26 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **3,408-line** gap; parked small drafts are not
+   replacement yet funds the **3,314-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Sharing constant-group headers removes **94 lines (103,407 -> 103,313)**,
+   564 tokens and 2,162 spelling bytes, with no support additions. Forty-seven
+   redundant headers in 13 gameplay files disappear; all 1,123 names, types,
+   literal spellings, visibility and existing body rows remain. No denser rows
+   or formatter-only savings count. Standalone optimized library/frontend builds
+   and complete expanded correspondence pass, including all 7,109 library and
+   84 frontend functions. Compiler witnesses evaluate 1,119 public constants;
+   the four private constants have unchanged source/expanded definitions.
+   Actual sequential emission on the alias-plus-string result passes full source
+   inverse, same-cohort binding and exact byte reproduction. A composition-only
+   newline fix consumes complete CRLFs and preserves each file's existing newline
+   spelling; the earlier 83-line trial is excluded. Parent normal release,
+   13-file formatting and progress pass; other counters remain unchanged.
+   Constant declaration equivalence needs no replay. Durable rule/checks:
+   Local/sm-decomp-experiments/20261021/constant-groups; actual final source:
+   after-alias-strings-constants-v2. The three current rules remove 388 lines,
+   1,870 tokens and 7,551 spelling bytes from the actual 103,701-line input.
 
    Native C-string literals remove **92 lines (103,499 -> 103,407)**, 470
    tokens and 1,913 spelling bytes, with no helpers. All 111 selected casts in
@@ -1537,14 +1559,14 @@ combined callback/dispatch declarations, terminal loops, selected field/RAM
 store groups, the unaligned RAM repair, shared beam windows, native tracing,
 nonnull callback tables, Samus pose sequences, the packed-sprite repair,
 shared gameplay imports, enemy callback ownership, native inflater, compound
-RAM updates, shared RAM/record metadata, alias declarations and native C-string
-literals, maintained Rust is **103,407**, leaving **3,408** to
+RAM updates, shared RAM/record metadata, alias declarations, native C-string
+literals and shared constant headers, maintained Rust is **103,313**, leaving **3,314** to
 reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
 unsafe functions 3330; cast lines 7870. RAM/record metadata remove 452/271 lines
-without changing any other counter. Alias grouping removes another 202 lines
-without changing the other counters. Native C-string literals remove 92 lines
-without changing the other counters. Compound updates remove 370 lines and
+without changing any other counter. Alias, C-string and constant grouping remove
+202, 92 and 94 lines respectively without changing the other counters.
+Compound updates remove 370 lines and
 71 cast-containing lines without changing the other counters. The inflater removes 12 unsafe-function
 declarations and 25 cast-containing lines. Callback grouping removes 314 counted
 unsafe declaration lines while preserving expanded signatures. Its unchanged

@@ -35,12 +35,8 @@ crate::ram_map::ram_pointer_functions! {
 crate::game::constants::typed_constants! { i32;
     fnSamus_MoveHandler_ReleaseFromGrapple = 0x90946e, fnSamus_MovementHandler_Normal = 0x90a337,
     fnSamusDrawHandler_Default = 0x90eb52, fnsub_90EB86 = 0x90eb86,
-}
-crate::game::constants::typed_constants! { i32;
     fnGrappleBeamFunc_Inactive = 0x9bc4f0,
     fnGrappleBeamFunc_Firing = 0x9bc703, fnGrappleBeamFunc_ConnectedLockedInPlace = 0x9bc77e,
-}
-crate::game::constants::typed_constants! { i32;
     fnGrappleBeamFunc_Cancel = 0x9bc856,
     fnGrappleBeam_Func2 = 0x9bc8c5,
 }

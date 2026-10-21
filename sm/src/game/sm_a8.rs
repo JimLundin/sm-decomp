@@ -105,8 +105,6 @@ crate::game::constants::typed_constants! { i32;
     fnsub_A8B291 = 0xa8b291, fnNorfairLavaMan_Func_13 = 0xa8b295,
     fnNorfairLavaMan_Func_15 = 0xa8b30d, fnNorfairLavaMan_Func_16 = 0xa8b31f,
     fnNorfairLavaMan_Func_17 = 0xa8b356, fnNorfairLavaMan_Func_18 = 0xa8b3a7,
-}
-crate::game::constants::typed_constants! { i32;
     fnMaridiaFloater_Func_3 = 0xa8c283, fnMaridiaFloater_Func_4 = 0xa8c2a6,
     fnMaridiaFloater_Func_5 = 0xa8c2cf, fnMaridiaFloater_Func_6 = 0xa8c36b,
     fnMaridiaFloater_Func_7 = 0xa8c3e1, fnMaridiaFloater_Func_8 = 0xa8c469,
@@ -114,8 +112,6 @@ crate::game::constants::typed_constants! { i32;
     fnMaridiaFloater_Func_11 = 0xa8c51d, fnnullsub_256 = 0xa8c568,
     fnMaridiaFloater_Func_12 = 0xa8c569, fnMaridiaFloater_Func_13 = 0xa8c59f,
     fnWreckedShipRobot_Func_1 = 0xa8cc67,
-}
-crate::game::constants::typed_constants! { i32;
     fnBlueBrinstarFaceBlock_Func_1 = 0xa8e86e,
 }
 crate::ram_map::ram_pointer_functions! {

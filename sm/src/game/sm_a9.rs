@@ -74,6 +74,8 @@ crate::type_aliases! {
 
 crate::game::constants::typed_constants! { i32;
     kCoroutineNone = 0,
+    fnEproj_Init_0x8bde_SkreeDownLeft = 0x868b15, fnMotherBrainsBody_UnpauseHook = 0xa98763,
+    fnMotherBrainsBody_FirstPhase_DoubleRet = 0xa987e1,
 }
 const RomPtr_A9: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa9>;
 const RomPtr_B7: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb7>;
@@ -81,10 +83,6 @@ use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 crate::ram_map::ram_pointer_functions! {
     gOamEnt(v: i32) -> OamEnt = [(0x370 + v) as isize];
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
-crate::game::constants::typed_constants! { i32;
-    fnEproj_Init_0x8bde_SkreeDownLeft = 0x868b15, fnMotherBrainsBody_UnpauseHook = 0xa98763,
-    fnMotherBrainsBody_FirstPhase_DoubleRet = 0xa987e1,
 }
 crate::game::constants::typed_constants! { u32;
     fnMotherBrainBody_FakeDeath_Descent_0_Pause = 11110429,

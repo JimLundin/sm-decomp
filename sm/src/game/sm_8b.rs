@@ -117,6 +117,11 @@ crate::game::constants::typed_constants! { Consts_8C;
 
 crate::game::constants::typed_constants! { i32;
     kCoroutineNone = 0,
+    fnCinematicFunctionNone = 0x8b9a47,
+    fnCinematicFunctionOpening = 0x8b9b68,
+    fnCinematicFunction_Intro_Page2 = 0x8bb35f,
+    fnSamus_FrameHandlerAlfa_Func12 = 0x90e6c9, fnSamus_Func15 = 0x90e833,
+    fnSamusDrawHandler_Default = 0x90eb52,
 }
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
@@ -136,27 +141,10 @@ crate::ram_map::ram_pointer_functions! {
 unsafe fn get_Mode7ObjectDef(a: u16, game: &mut Game) -> *mut Mode7ObjectDef {
     RomPtr((0x8b0000u32) | ((a) as u32), game) as *mut Mode7ObjectDef
 }
-crate::game::constants::typed_constants! { i32;
-    fnCinematicFunctionNone = 0x8b9a47,
-}
-crate::game::constants::typed_constants! { i32;
-    fnCinematicFunctionOpening = 0x8b9b68,
-}
 crate::game::constants::typed_constants! { u32;
     fnCinematicFunction_Intro_Initial = 9151381,
-}
-crate::game::constants::typed_constants! { i32;
-    fnCinematicFunction_Intro_Page2 = 0x8bb35f,
-}
-crate::game::constants::typed_constants! { u32;
     fnCinematicFunctionBlackoutFromCeres = 9158939,
-}
-crate::game::constants::typed_constants! { u32;
     fnCinematicFunctionEscapeFromCebes = 9163904,
-}
-crate::game::constants::typed_constants! { i32;
-    fnSamus_FrameHandlerAlfa_Func12 = 0x90e6c9, fnSamus_Func15 = 0x90e833,
-    fnSamusDrawHandler_Default = 0x90eb52,
 }
 pub unsafe fn SetupPpuForTitleSequence(game: &mut Game) {
     crate::rtl::register_writes! { game;
