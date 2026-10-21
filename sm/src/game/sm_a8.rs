@@ -406,9 +406,7 @@ crate::game::callback_dispatch! {
             (*E).var_07 = v2;
             (*E).var_08 = v2;
             (*E).var_09 = 12;
-            let v3: u16 = *((ram_ptr!(game, u16; 0xafa) as *mut u8)
-                .offset(word!(game.cur_enemy_index) as i32 as isize)
-                as *mut u16);
+            let v3: u16 = *(ram_ptr!(game, u16; 0xafa, word!(game.cur_enemy_index) as i32 as isize));
             set_fields! {[(*E)]; var_0A = v3, var_0B = v3, var_0C = v3, var_0D = g_word_A89A9E,
                 var_0E = g_word_A89A9C, };
         }
@@ -466,8 +464,7 @@ crate::game::callback_dispatch! {
             if ((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).var_07) as i16) < 0
                 || ((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).var_08) as i16) >= 0
                 || {
-                    v2 = *((ram_ptr!(game, u16; 0xafa) as *mut u8).offset(k as i32 as isize)
-                        as *mut u16) as i16;
+                    v2 = *(ram_ptr!(game, u16; 0xafa, k as i32 as isize)) as i16;
                     (v2).wrapping_sub(((*E).var_0B) as i16) < 0
                 }
                 || (v2).wrapping_sub(((*E).var_0C) as i16) >= 0
@@ -519,10 +516,10 @@ crate::game::callback_dispatch! {
             (*E).var_0E = g_word_A89A9C;
             let v6: i32 = (((*E).var_09).wrapping_add((*E).var_05)) as i32 >> 1;
             (*E).base.x_pos = (g_word_A89AA8[v6 as usize]).wrapping_add(
-                *((ram_ptr!(game, u16; 0xaf6) as *mut u8).offset(k as i32 as isize) as *mut u16),
+                *(ram_ptr!(game, u16; 0xaf6, k as i32 as isize)),
             );
             (*E).base.y_pos = (g_word_A89AA8[(v6 + 1i32) as usize]).wrapping_add(
-                *((ram_ptr!(game, u16; 0xafa) as *mut u8).offset(k as i32 as isize) as *mut u16),
+                *(ram_ptr!(game, u16; 0xafa, k as i32 as isize)),
             );
             return;
         }
@@ -2512,14 +2509,10 @@ crate::game::callback_dispatch! {
                 (*E).var_30 = 0;
             }
         } else {
-            *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset((*E).var_40 as i32 as isize)
-                as *mut u16) = 0;
-            *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset((*E).var_41 as i32 as isize)
-                as *mut u16) = 0;
-            *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset((*E).var_42 as i32 as isize)
-                as *mut u16) = 0;
-            *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset((*E).var_43 as i32 as isize)
-                as *mut u16) = 0;
+            *(ram_ptr!(game, u16; 0x1997, (*E).var_40 as i32 as isize)) = 0;
+            *(ram_ptr!(game, u16; 0x1997, (*E).var_41 as i32 as isize)) = 0;
+            *(ram_ptr!(game, u16; 0x1997, (*E).var_42 as i32 as isize)) = 0;
+            *(ram_ptr!(game, u16; 0x1997, (*E).var_43 as i32 as isize)) = 0;
             word!(game.sprite_instr_list_ptrs[((*E).var_46 >> 1)] = 0);
             if word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff {
                 word!(game.samus_input_handler = ((0x90e913i32) as u16));

@@ -2223,8 +2223,7 @@ pub unsafe fn Phantoon_StartDeathSequence(k: u16, game: &mut Game) {
     Phantoon_ChangeEyeSpriteBasedOnSamusDist(game);
     let v4: u16 = word!(game.reg_BG2HOFS);
     for v3 in (0i16..=510).rev().step_by(2) {
-        *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(v3 as u16 as i32 as isize) as *mut u16) =
-            v4;
+        *(ram_ptr!(game, u16; 0x9100, v3 as u16 as i32 as isize)) = v4;
     }
     word!(game.phantom_related_layer_flag |= (0x4000u16));
     (*Get_Phantoon(0xc0i32, game)).parameter_2 = 1;

@@ -75,7 +75,7 @@ crate::game::callback_dispatch! {
         }
     };
     [8880355] AnimtilesInstr_SetTimer [(j).wrapping_add(1)] {
-        *(ram_ptr!(game, u16; 0x1f01) as *mut u8).offset(k as i32 as isize) = *RomPtr_87(j, game);
+        *ram_ptr!(game; 0x1f01, k as i32 as isize) = *RomPtr_87(j, game);
     };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
     @prefix { let v2 = RomPtr_87(j, game); };

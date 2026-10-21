@@ -258,7 +258,8 @@ The pinned LakeSnes CPU adapter removes **696 more Rust lines**, reaching
 Its 41-line installer counts separately; the upstream closure is 2,836 external
 C/header lines. The pinned PNG/inflater dependency removes **777 more Rust
 lines**, reaching **100,102**. Its four-line C bridge gives **773 net Rust/C
-lines removed**. Another **103 Rust lines** are needed to reach 99,999;
+lines removed**. The complete RAM pointer-chain cohort removes **99 more
+lines**, reaching **100,003**. Another **four Rust lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -907,6 +908,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    replacements now have passing component checks and complete release builds.
    Finish their main integration before composing the already measured RAM-chain
    and residual-control-flow cohorts; do not add their standalone prices.
+
+   The existing RAM-chain grammar removes **99 lines (100,102 -> 100,003)**,
+   1,717 tokens and 3,580 spelling bytes across all 135 chains/24 files/five
+   templates. Ordered byte offsets, receiver evaluation and final pointer types
+   remain. No helper, import, dependency or source registration is added.
+   The composed source has a complete inverse and all 135 original caller/template
+   bodies match the previously proven cohort and its 141 contextual type witnesses.
+   All 24 actual main input/output files match the composed proof after newline
+   normalization; the intervening CPU, snapshot and codec changes are retained.
+   Earlier complete compiler expansion proves all 7,098 functions and the ordered
+   remainder after only thin pointer-cast normalization. Zero formatter credit.
+   Actual changed-file formatting and main release library/frontend pass (44.52s).
+   Static equivalence validates unchanged operations; no gameplay replay is
+   required for this representation-only commit. Final integration follows the
+   control-flow cohort. Cast-containing lines fall by nine; other counters remain.
+   Durable composition: Local/sm-decomp-experiments/20261021/
+   ram-pointer-chains-composed-6170cbea-cpu; original proof: ram-pointer-chains-e2530722.
 
    The complete PNG/inflater replacement removes **777 Rust lines
    (100,879 -> 100,102)**, or **773 including its four-line C bridge**.
@@ -1804,11 +1822,12 @@ shared gameplay imports, enemy callback ownership, native inflater, compound
 RAM updates, shared RAM/record metadata, alias declarations, native C-string
 literals, shared constant headers, native shader/presentation ownership and
 shared PPU pixel evaluation, native/SPC state transfers and live-typed snapshots,
-and the pinned CPU/PNG dependencies, maintained Rust is **100,102**, leaving
-**103** to reach 99,999. The C bridge adds four implementation lines and the
+the pinned CPU/PNG dependencies and RAM pointer chains, maintained Rust is
+**100,003**, leaving **four** to reach 99,999. The C bridge adds four implementation lines and the
 CPU installer 41 setup lines. External CPU/PNG code has 2,836/7,762 lines.
 Counters: raw offsets 30; extern C blocks 5; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3288; cast lines 7577. The codec removes five unsafe declarations
+unsafe functions 3288; cast lines 7568. RAM pointer chains remove nine
+cast-containing lines without changing the other counters. The codec removes five unsafe declarations
 and three cast-containing lines while adding one foreign dependency boundary. The CPU adds one foreign dependency
 boundary and removes 25 unsafe declarations. Snapshot diagnostics add one unsafe
 helper and remove 14 cast-containing lines while removing 239 total lines.

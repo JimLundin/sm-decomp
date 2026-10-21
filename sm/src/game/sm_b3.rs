@@ -605,9 +605,9 @@ crate::game::callback_dispatch! {
     };
     Botwoon_Func_22 [] {
         let botwoon_var_B: u16 = (*E).var_B;
-        *((ram_ptr!(game, u16; 0x9000) as *mut u8).offset(botwoon_var_B as i32 as isize) as *mut u16) =
+        *(ram_ptr!(game, u16; 0x9000, botwoon_var_B as i32 as isize)) =
             (*E).base.x_pos;
-        *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(botwoon_var_B as i32 as isize) as *mut u16) =
+        *(ram_ptr!(game, u16; 0x9002, botwoon_var_B as i32 as isize)) =
             (*E).base.y_pos;
     };
     Botwoon_Func_23 [] {
@@ -637,9 +637,9 @@ crate::game::callback_dispatch! {
             let v7: i32 = botwoo_var_00 as i32 >> 1;
             word! { game;
                 eproj_x_pos[v7] =
-                    *((ram_ptr!(game, u16; 0x9000) as *mut u8).offset(r18 as i32 as isize) as *mut u16);
+                    *(ram_ptr!(game, u16; 0x9000, r18 as i32 as isize));
                 eproj_y_pos[v7] =
-                    *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(r18 as i32 as isize) as *mut u16);
+                    *(ram_ptr!(game, u16; 0x9002, r18 as i32 as isize));
             }
             r18 = (r18 as i32 - (*E).var_C as i32 & 0x3ff) as u16;
         }

@@ -4334,15 +4334,12 @@ macro_rules! decompress_room_level_and_split_arrays {
         let size: u16 = word!($game.ram7F_start);
         memcpy(
             ram_ptr!($game, u16; 0x19602) as *mut c_void,
-            (ram_ptr!($game, u16; 0x10002) as *mut u8)
-                .offset(size as i32 as isize)
-                .offset((size >> 1) as isize) as *const c_void,
+            ram_ptr!($game; 0x10002, size as i32 as isize, (size >> 1) as isize) as *const c_void,
             size as size_t,
         );
         memcpy(
             ram_ptr!($game, c_void; 0x16402),
-            (ram_ptr!($game, u16; 0x10002) as *mut u8).offset(size as i32 as isize)
-                as *const c_void,
+            ram_ptr!($game; 0x10002, size as i32 as isize) as *const c_void,
             (size as i32 >> 1) as size_t,
         );
     };

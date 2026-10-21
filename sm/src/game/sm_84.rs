@@ -2871,7 +2871,7 @@ crate::game::callback_dispatch! {
     };
     [8686285] PlmInstr_IncrementArgumentAndJGE [] {
         let v2: u8 =
-            (*(ram_ptr!(game, u16; 0x1dc7) as *mut u8).offset(k as i32 as isize)).wrapping_add(1);
+            (*ram_ptr!(game; 0x1dc7, k as i32 as isize)).wrapping_add(1);
         if v2 >= *plmp {
             let v4: i32 = k as i32 >> 1;
             word!(game.plm_room_arguments[v4] = -1i32 as u16);

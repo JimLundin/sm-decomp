@@ -1180,18 +1180,16 @@ pub unsafe fn DrawFileSelectSamusHelmets(game: &mut Game) {
 }
 pub unsafe fn DrawFileSelectSlotSamusHelmet(k: u16, game: &mut Game) {
     let v0: u16 = k;
-    let mut v1: i16 =
-        *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(v0 as i32 as isize) as *mut u16) as i16;
+    let mut v1: i16 = *(ram_ptr!(game, u16; 0x198d, v0 as i32 as isize)) as i16;
     if v1 != 0 {
         let v2: u16 = ((v1) as u16).wrapping_sub(1);
-        *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(v0 as i32 as isize) as *mut u16) = v2;
+        *(ram_ptr!(game, u16; 0x198d, v0 as i32 as isize)) = v2;
         if v2 == 0 {
-            *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(v0 as i32 as isize) as *mut u16) = 8;
+            *(ram_ptr!(game, u16; 0x198d, v0 as i32 as isize)) = 8;
             let v3: i32 = v0 as i32 >> 1;
             let mut v4: u16 = (word!(game.eproj_id[v3])).wrapping_add(1);
             if word!(game.eproj_id[v3]) as i32 - 7i32 & 0x8000 == 0 {
-                *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(v0 as i32 as isize)
-                    as *mut u16) = 0;
+                *(ram_ptr!(game, u16; 0x198d, v0 as i32 as isize)) = 0;
                 v4 = 7;
             }
             word!(game.eproj_id[v3] = v4);
@@ -1470,9 +1468,8 @@ pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
         if word!(game.selected_save_slot) as i32 - 3i32 & 0x8000 != 0 {
             QueueSfx1_Max6(0x2a, game);
             word!(game.menu_index += 27);
-            *((ram_ptr!(game, u16; 0x198d) as *mut u8)
-                .offset((2 * (word!(game.selected_save_slot) as i32 + 2)) as u16 as i32 as isize)
-                as *mut u16) = 1;
+            *(ram_ptr!(game, u16; 0x198d, (2 * (word!(game.selected_save_slot) as i32 + 2)) as u16 as i32 as isize)) =
+                1;
             *(game.g_sram.offset(0x1fec) as *mut u16) = word!(game.selected_save_slot);
             *(game.g_sram.offset(0x1fee) as *mut u16) =
                 !(word!(game.selected_save_slot) as i32) as u16;

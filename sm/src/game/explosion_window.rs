@@ -92,7 +92,7 @@ pub(crate) unsafe fn power_bomb_afterglow(k: u16, game: &mut Game) {
     if (word!(game.power_bomb_explosion_status) & 0x8000) != 0 {
         let v1: i32 = k as u8 as i32 >> 1;
         if (word!(game.hdma_object_timers[v1] -= 1, reread) & 0x8000) != 0 {
-            crate::update_place! { reference fresh126 [fresh127] = *(ram_ptr!(game, u16; 0x1938) as *mut u8).offset(k as u8 as i32 as isize) => (*fresh126).wrapping_sub(1); }
+            crate::update_place! { reference fresh126 [fresh127] = *ram_ptr!(game; 0x1938, k as u8 as i32 as isize) => (*fresh126).wrapping_sub(1); }
             if fresh127 == 1 {
                 word!(game.hdma_object_instruction_timers[v1] = 1);
                 word!(game.hdma_object_instruction_list_pointers[v1] += 2);

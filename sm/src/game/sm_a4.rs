@@ -435,7 +435,7 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
             (*Get_Crocomire(0x100i32, game)).var_01 = 0;
             (*Get_Crocomire(0x140i32, game)).var_01 = 0;
             QueueSfx2_Max6(0x3b, game);
-            *((ram_ptr!(game, u16; 0x9015) as *mut u8).offset(1) as *mut u16) = 0;
+            *(ram_ptr!(game, u16; 0x9015, 1)) = 0;
             SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x4e, 0x3, 0xb757 as VoidP), game);
             enemy_instruction! {[(*EK).base]; instruction = addr_kCrocomire_Ilist_BFB0 as u16, timer = 1}
             (*EK).base.properties = ((*EK).base.properties) | ((kEnemyProps_Tangible) as u16);
@@ -517,12 +517,10 @@ pub unsafe fn Crocomire_Func_51(game: &mut Game) {
     Crocomire_Func_55(game);
 }
 pub unsafe fn Crocomire_Func_52(game: &mut Game) {
-    let v0: u16 = *((ram_ptr!(game, u16; 0x9015) as *mut u8).offset(1) as *mut u16);
-    if *((ram_ptr!(game, u16; 0x9015) as *mut u8).offset(1) as *mut u16) as i32 - 22i32 & 0x8000
-        != 0
-    {
-        let v1: u16 = *((ram_ptr!(game, u16; 0x9015) as *mut u8).offset(1) as *mut u16);
-        crate::update_place! { unaligned_word fresh17 = &raw mut (*((ram_ptr!(game, u16; 0x9015) as *mut u8).offset(1) as *mut u16)) => (u16::from_le(fresh17.read_unaligned())).wrapping_add(2); }
+    let v0: u16 = *(ram_ptr!(game, u16; 0x9015, 1));
+    if *(ram_ptr!(game, u16; 0x9015, 1)) as i32 - 22i32 & 0x8000 != 0 {
+        let v1: u16 = *(ram_ptr!(game, u16; 0x9015, 1));
+        crate::update_place! { unaligned_word fresh17 = &raw mut (*(ram_ptr!(game, u16; 0x9015, 1))) => (u16::from_le(fresh17.read_unaligned())).wrapping_add(2); }
         SpawnEprojWithGfx(
             crate::rtl::rom_table_word!(game, 0xa49156, (v0 >> 1) as isize),
             v1,

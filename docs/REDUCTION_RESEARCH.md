@@ -75,8 +75,8 @@ The pinned CPU adapter removes **696 more Rust lines**, reaching **100,879**.
 Its 41-line installer and 2,836 external C/header lines are disclosed separately.
 Full boot replays and component checks pass. The PNG/inflater replacement
 removes **777 more Rust lines**, reaching **100,102**; its four-line C bridge
-leaves 773 net Rust/C lines removed. Another **103 Rust lines** must go
-to reach 99,999. A separate
+leaves 773 net Rust/C lines removed. Complete RAM pointer chains remove
+**99 further lines**, reaching **100,003**; another **four** must go to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -97,6 +97,24 @@ neither reduces source volume in the tested scopes. Its default mode does
 preserve packed byte accesses despite physically larger Rust structs. Corrode's
 specific packing omission is repairable; layout differences alone are not a
 correctness verdict. The independent-transpiler sections record these tests.
+
+## Composed RAM pointer chains (2026-10-21)
+
+The unchanged byte-pointer emission rule removes **99 lines (100,102 -> 100,003)**,
+1,717 tokens and 3,580 spelling bytes on the actual CPU/snapshot/codec composition.
+All 135 chains in 24 files, including five macro templates, count; no helper or
+new import is needed. The existing macro retains each separate byte offset and
+its evaluation order, receiver and final pointer type.
+
+The actual main input/output files match the source-proven composition. Every
+selected caller/template body is unchanged from the cohort with 141 instantiated
+contextual type witnesses, and the whole source inverse retains all other work.
+That cohort also has complete normalized expanded correspondence for 7,098
+functions and the ordered remainder. All original formatter controls are byte
+identical. Actual main formatting and release library/frontend pass (44.52s). This
+representation-only change needs static validation rather than a gameplay replay.
+Durable composition: `Local/sm-decomp-experiments/20261021/ram-pointer-chains-composed-6170cbea-cpu`;
+original compiler proof: sibling `ram-pointer-chains-e2530722`.
 
 ## Compatible PNG/inflater dependency (2026-10-21)
 

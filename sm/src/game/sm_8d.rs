@@ -182,7 +182,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9303585] PalPreInstr_F621 [] {
-        if *((ram_ptr!(game, u16; 0x1e79) as *mut u8).offset(k as i32 as isize) as *mut u16) != 0 {
+        if *(ram_ptr!(game, u16; 0x1e79, k as i32 as isize)) != 0 {
             word!(game.palettefx_ids[(k >> 1)] = 0);
         }
     };
@@ -226,7 +226,7 @@ crate::game::callback_dispatch! {
         v4 = PalInstr_Goto(k, j, game);
     };
     [9291336] PalInstr_SetTimer [MakePairU16(k, (j).wrapping_add(1))] {
-        *(ram_ptr!(game, u16; 0x1edd) as *mut u8).offset(k as i32 as isize) = *RomPtr_8D(j, game);
+        *ram_ptr!(game; 0x1edd, k as i32 as isize) = *RomPtr_8D(j, game);
     };
     [9291349] PalInstr_SetColorIndex [MakePairU16(k, (j).wrapping_add(2))] {
         word!(game.palettefx_color_indexes[(k >> 1)] = *(RomPtr_8D(j, game) as *mut u16));

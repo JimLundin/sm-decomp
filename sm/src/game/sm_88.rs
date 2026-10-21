@@ -482,12 +482,7 @@ pub unsafe fn HdmaobjInstructionHandler(k: u8, game: &mut Game) {
     );
     crate::update_place! { unaligned_word fresh59 [fresh60] = &raw mut (*(ram_ptr!(game, u16; 0x18e4)).offset(kh as isize)) => (u16::from_le(fresh59.read_unaligned())).wrapping_sub(1); }
     if fresh60 == 1 {
-        let base = RomBankBase(
-            *(ram_ptr!(game, u16; 0x18c0) as *mut u8)
-                .offset(k as i32 as isize)
-                .offset(1),
-            game,
-        );
+        let base = RomBankBase(*ram_ptr!(game; 0x18c0, k as i32 as isize, 1), game);
         let mut p =
             base.offset(word!(game.hdma_object_instruction_list_pointers[kh]) as i32 as isize);
         while *(p as *mut u16) & 0x8000 != 0 {
@@ -518,7 +513,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mu
     };
     HdmaobjInstr_SetPreInstr [hdp.offset(3)] {
         word!(game.hdma_object_pre_instructions[(k >> 1)] = *(hdp as *mut u16));
-        *(ram_ptr!(game, u16; 0x18fc) as *mut u8).offset(k as i32 as isize) = *hdp.offset(2);
+        *ram_ptr!(game; 0x18fc, k as i32 as isize) = *hdp.offset(2);
     };
     HdmaobjInstr_ClearPreInstr [hdp] {
         word!(game.hdma_object_pre_instructions[(k >> 1)] = addr_locret_88858A as u16);
@@ -585,7 +580,7 @@ pub unsafe fn HdmaobjInstr_DecrementAndGotoRel(
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
     HdmaobjInstr_SetTimer [hdp.offset(1)] {
-        *(ram_ptr!(game, u16; 0x1908) as *mut u8).offset(k as i32 as isize) = *hdp;
+        *ram_ptr!(game; 0x1908, k as i32 as isize) = *hdp;
     };
     HdmaobjInstr_SetHdmaControl [hdp.offset(1)] {
         WriteReg(
@@ -629,12 +624,7 @@ pub unsafe fn HdmaobjInstr_SetIndirectHdmaDataBank(
     hdp.offset(1)
 }
 pub unsafe fn HdmaobjInstr_Sleep(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    let base = RomBankBase(
-        *(ram_ptr!(game, u16; 0x18c0) as *mut u8)
-            .offset(k as i32 as isize)
-            .offset(1),
-        game,
-    );
+    let base = RomBankBase(*ram_ptr!(game; 0x18c0, k as i32 as isize, 1), game);
     word!(
         game.hdma_object_instruction_list_pointers[(k >> 1)] =
             (hdp.offset_from(base) as c_long - 2 as c_long) as u16
@@ -816,7 +806,7 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(k: u16, game: &mut Game) {
     mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001);
-    *((ram_ptr!(game, u16; 0xa8a) as *mut u8).offset(1) as *mut u16) = 0;
+    *(ram_ptr!(game, u16; 0xa8a, 1)) = 0;
     word! { game, 0;
         demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
     }
@@ -887,7 +877,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc5_DeactivateBeam(k: u16, game: &mut Game) 
             xray_angle, demo_input, demo_input_new,
         }
         mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001);
-        *((ram_ptr!(game, u16; 0xa8a) as *mut u8).offset(1) as *mut u16) = 0;
+        *(ram_ptr!(game, u16; 0xa8a, 1)) = 0;
         word! { game, 0;
             demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
         }
@@ -1375,7 +1365,7 @@ macro_rules! advance_liquid_tide {
         if (kSinCosTable8bit_Sext[v0 as usize] as u16 & $sign_mask) != 0 {
             word!($game.fx_y_offset, wrapping_sub(1));
         }
-        *((ram_ptr!($game, u16; 0x1970) as *mut u8).offset(1) as *mut u16) = v1;
+        *(ram_ptr!($game, u16; 0x1970, 1)) = v1;
         if (kSinCosTable8bit_Sext[v0 as usize] as u16 & 0x8000) == 0 {
             $phase = (word!($game.tide_phase)).wrapping_add($nonnegative_sine_step);
         } else {
@@ -1388,9 +1378,9 @@ macro_rules! advance_liquid_tide {
 pub unsafe fn FxHandleTide(game: &mut Game) {
     let mut v2: u16 = 0;
     let mut v5: u16 = 0;
-    if *((ram_ptr!(game, u16; 0x197c) as *mut u8).offset(1) as *mut i16) < 0 {
+    if *(ram_ptr!(game, i16; 0x197c, 1)) < 0 {
         advance_liquid_tide!(game, 8u16, 0x1000, v2, 288, 192);
-    } else if (*((ram_ptr!(game, u16; 0x197c) as *mut u8).offset(1) as *mut u16) & 0x4000) != 0 {
+    } else if (*(ram_ptr!(game, u16; 0x197c, 1)) & 0x4000) != 0 {
         advance_liquid_tide!(game, 32u16, 0x400, v5, 224, 128);
     }
 }
@@ -2140,7 +2130,7 @@ pub unsafe fn VariaSuitPickup_1(game: &mut Game) -> u8 {
     byte!(@pointer ram_ptr!(game, u16; 0xdee); 0) = ((word!(game.suit_pickup_light_beam_pos))
         as u8)
         .wrapping_sub(byte!(@pointer ram_ptr!(game, u16; 0xddc); 1));
-    crate::update_place! { reference fresh17 = *(ram_ptr!(game, u16; 0xdee) as *mut u8).offset(1) => (*fresh17).wrapping_add(*(ram_ptr!(game, u16; 0xddc) as *mut u8).offset(1)); }
+    crate::update_place! { reference fresh17 = *ram_ptr!(game; 0xdee, 1) => (*fresh17).wrapping_add(*ram_ptr!(game; 0xddc, 1)); }
     for i in (0i32..=510).rev().step_by(2) {
         word!(game.hdma_table_1[(i >> 1)] = word!(game.suit_pickup_light_beam_pos));
     }
@@ -2266,7 +2256,7 @@ pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> u8 {
 pub unsafe fn VariaSuitPickup_5_LightBeamDissipates(game: &mut Game) -> u8 {
     byte!(@pointer ram_ptr!(game, u16; 0xdee); 0) =
         ((word!(game.suit_pickup_light_beam_pos)) as u8).wrapping_add(8);
-    crate::update_place! { reference fresh28 = *(ram_ptr!(game, u16; 0xdee) as *mut u8).offset(1) => (*fresh28).wrapping_sub(8); }
+    crate::update_place! { reference fresh28 = *ram_ptr!(game; 0xdee, 1) => (*fresh28).wrapping_sub(8); }
     word!(game.hdma_table_1[128] = word!(game.suit_pickup_light_beam_pos));
     if word!(game.suit_pickup_light_beam_pos) as u8 as i32 - 112i32 & 0x8000 == 0 {
         word!(game.substate += 1);
@@ -2282,7 +2272,7 @@ pub unsafe fn GravitySuitPickup_6(game: &mut Game) -> u8 {
     *ram_ptr!(game; 0x74, 1) = 64;
     *ram_ptr!(game; 0x74, 0) = 32;
     mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001);
-    *((ram_ptr!(game, u16; 0xa8a) as *mut u8).offset(1) as *mut u16) = 0;
+    *(ram_ptr!(game, u16; 0xa8a, 1)) = 0;
     word! { game, 0;
         demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
     }
@@ -2386,14 +2376,12 @@ pub unsafe fn HdmaobjInstr_E4BD(k: u16, hdp: *const u8, game: &mut Game) -> *con
     if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(2)).parameter_1 & 1) != 0 {
         word! { game, 192; kraid_unk9000, g_word_7E9006 }
         let mut v4: u32 = 12620032i32 as u32;
-        *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(1) as *mut u16) =
-            *(&raw mut v4 as *mut u16).offset(1);
-        *((ram_ptr!(game, u16; 0x9000) as *mut u8).offset(1) as *mut u16) = v4 as u16;
+        *(ram_ptr!(game, u16; 0x9002, 1)) = *(&raw mut v4 as *mut u16).offset(1);
+        *(ram_ptr!(game, u16; 0x9000, 1)) = v4 as u16;
         word!(game.g_word_7E9004 = -28288i32 as u16);
         let mut v5: u32 = 12620032i32 as u32;
-        *((ram_ptr!(game, u16; 0x9008) as *mut u8).offset(1) as *mut u16) =
-            *(&raw mut v5 as *mut u16).offset(1);
-        *((ram_ptr!(game, u16; 0x9006) as *mut u8).offset(1) as *mut u16) = v5 as u16;
+        *(ram_ptr!(game, u16; 0x9008, 1)) = *(&raw mut v5 as *mut u16).offset(1);
+        *(ram_ptr!(game, u16; 0x9006, 1)) = v5 as u16;
         word! {game; g_word_7E900A = addr_loc_889180 as u16; g_word_7E900C = 0; }
     } else {
         word! { game, 160;
@@ -2401,18 +2389,16 @@ pub unsafe fn HdmaobjInstr_E4BD(k: u16, hdp: *const u8, game: &mut Game) -> *con
             g_word_7E9015,
         }
         let mut v2: u32 = 10522880i32 as u32;
-        *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(1) as *mut u16) =
-            *(&raw mut v2 as *mut u16).offset(1);
-        *((ram_ptr!(game, u16; 0x9000) as *mut u8).offset(1) as *mut u16) = v2 as u16;
+        *(ram_ptr!(game, u16; 0x9002, 1)) = *(&raw mut v2 as *mut u16).offset(1);
+        *(ram_ptr!(game, u16; 0x9000, 1)) = v2 as u16;
         let mut v3: u32 = 10522880i32 as u32;
-        *((ram_ptr!(game, u16; 0x9008) as *mut u8).offset(1) as *mut u16) =
-            *(&raw mut v3 as *mut u16).offset(1);
-        *((ram_ptr!(game, u16; 0x9006) as *mut u8).offset(1) as *mut u16) = v3 as u16;
-        *((ram_ptr!(game, u16; 0x900c) as *mut u8).offset(1) as *mut u16) = -28416i32 as u16;
-        *((ram_ptr!(game, u16; 0x9012) as *mut u8).offset(1) as *mut u16) = -28416i32 as u16;
+        *(ram_ptr!(game, u16; 0x9008, 1)) = *(&raw mut v3 as *mut u16).offset(1);
+        *(ram_ptr!(game, u16; 0x9006, 1)) = v3 as u16;
+        *(ram_ptr!(game, u16; 0x900c, 1)) = -28416i32 as u16;
+        *(ram_ptr!(game, u16; 0x9012, 1)) = -28416i32 as u16;
         word! {game; g_word_7E9004 = -28352i32 as u16; g_word_7E900A = -28352i32 as u16; }
-        *((ram_ptr!(game, u16; 0x900f) as *mut u8).offset(1) as *mut u16) = -28352i32 as u16;
-        *((ram_ptr!(game, u16; 0x9015) as *mut u8).offset(1) as *mut u16) = -28352i32 as u16;
+        *(ram_ptr!(game, u16; 0x900f, 1)) = -28352i32 as u16;
+        *(ram_ptr!(game, u16; 0x9015, 1)) = -28352i32 as u16;
         word!(game.g_word_7E9018 = 0);
     }
     let v6: i32 = k as i32 >> 1;
@@ -2466,23 +2452,23 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
                 byte!((*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D; 1),
             );
             r20 = (r28 as i32 + v5 as i32 & 0x1ff) as u16;
-            *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(v4 as i32 as isize) as *mut u16) =
+            *(ram_ptr!(game, u16; 0x9100, v4 as i32 as isize)) =
                 word!(game.reg_BG2HOFS).wrapping_add(offset);
             v4 = v4.wrapping_add(2);
         }
         if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 & 1) != 0 {
             for i in (0i32..=126).rev().step_by(2) {
-                *((ram_ptr!(game, u16; 0x9180) as *mut u8).offset(i as isize) as *mut u16) =
-                    (word!(game.reg_BG2HOFS) as i32 + word!(game.reg_BG2HOFS) as i32
-                        - *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(i as isize) as *mut u16)
-                            as i32) as u16;
+                *(ram_ptr!(game, u16; 0x9180, i as isize)) = (word!(game.reg_BG2HOFS) as i32
+                    + word!(game.reg_BG2HOFS) as i32
+                    - *(ram_ptr!(game, u16; 0x9100, i as isize)) as i32)
+                    as u16;
             }
         } else {
             for j in (0u16..=62).rev().step_by(2) {
-                *((ram_ptr!(game, u16; 0x9140) as *mut u8).offset(j as i32 as isize) as *mut u16) =
-                    (word!(game.reg_BG2HOFS) as i32 + word!(game.reg_BG2HOFS) as i32
-                        - *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(j as i32 as isize)
-                            as *mut u16) as i32) as u16;
+                *(ram_ptr!(game, u16; 0x9140, j as i32 as isize)) = (word!(game.reg_BG2HOFS) as i32
+                    + word!(game.reg_BG2HOFS) as i32
+                    - *(ram_ptr!(game, u16; 0x9100, j as i32 as isize)) as i32)
+                    as u16;
             }
         }
     } else {
@@ -2747,14 +2733,12 @@ pub unsafe fn CinematicFunction_Intro_Func133(game: &mut Game) {
     word!(game.loop_counter_transfer_enemies_to_vram = 8);
     word! { game, 192; button_config_shoot_x_saved, button_config_itemcancel_y_saved }
     let mut v0: u32 = 12621824i32 as u32;
-    *((ram_ptr!(game, u16; 0xd84) as *mut u8).offset(1) as *mut u16) =
-        *(&raw mut v0 as *mut u16).offset(1);
-    *((ram_ptr!(game, u16; 0xd82) as *mut u8).offset(1) as *mut u16) = v0 as u16;
+    *(ram_ptr!(game, u16; 0xd84, 1)) = *(&raw mut v0 as *mut u16).offset(1);
+    *(ram_ptr!(game, u16; 0xd82, 1)) = v0 as u16;
     word!(game.button_config_run_b_saved = -26496i32 as u16);
     let mut v1: u32 = 12621824i32 as u32;
-    *((ram_ptr!(game, u16; 0xd8a) as *mut u8).offset(1) as *mut u16) =
-        *(&raw mut v1 as *mut u16).offset(1);
-    *((ram_ptr!(game, u16; 0xd88) as *mut u8).offset(1) as *mut u16) = v1 as u16;
+    *(ram_ptr!(game, u16; 0xd8a, 1)) = *(&raw mut v1 as *mut u16).offset(1);
+    *(ram_ptr!(game, u16; 0xd88, 1)) = v1 as u16;
     word!(game.button_config_aim_down_L_saved = -26496i32 as u16);
     word!(game.button_config_aim_up_R_saved = 0);
     static unk_88EC82: SpawnHdmaObject_Args =

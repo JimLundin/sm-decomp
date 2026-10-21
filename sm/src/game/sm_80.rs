@@ -436,8 +436,7 @@ pub fn ClearOamExt(game: &mut Game) {
 }
 pub unsafe fn QueueMode7Transfers(db: u8, k: u16, game: &mut Game) {
     let mut p = RomPtrWithBank(db, k, game);
-    let mut dst = (ram_ptr!(game, Mode7VramWriteQueue; 0x2d0) as *mut u8)
-        .offset(word!(game.mode7_vram_write_queue_tail) as i32 as isize);
+    let mut dst = ram_ptr!(game; 0x2d0, word!(game.mode7_vram_write_queue_tail) as i32 as isize);
     loop {
         let f: i32 = *(p as *mut u8) as i32;
         if f & 0x80 != 0 {
@@ -1867,10 +1866,7 @@ pub unsafe fn CalculateLayer2Xpos(game: &mut Game) -> u8 {
     if *ram_ptr!(game; 0x91b) != 1 {
         let t: i32 = *ram_ptr!(game; 0x91b) as i32 & 0xfe;
         let var933: u8 = (t * byte!(@pointer ram_ptr!(game, u16; 0x911); 0) as i32 >> 8) as u8;
-        word!(
-            game.layer2_x_pos = (t * *(ram_ptr!(game, u16; 0x911) as *mut u8).offset(1,) as i32
-                + var933 as i32) as u16
-        );
+        word!(game.layer2_x_pos = (t * *ram_ptr!(game; 0x911, 1) as i32 + var933 as i32) as u16);
         return 0;
     }
     1
@@ -1883,10 +1879,7 @@ pub unsafe fn CalculateLayer2Ypos(game: &mut Game) -> u8 {
     if *ram_ptr!(game; 0x91c) != 1 {
         let t: i32 = *ram_ptr!(game; 0x91c) as i32 & 0xfe;
         let var933: u8 = (t * word!(game.layer1_y_pos) as u8 as i32 >> 8) as u8;
-        word!(
-            game.layer2_y_pos = (t * *(ram_ptr!(game, u16; 0x915) as *mut u8).offset(1,) as i32
-                + var933 as i32) as u16
-        );
+        word!(game.layer2_y_pos = (t * *ram_ptr!(game; 0x915, 1) as i32 + var933 as i32) as u16);
         return 0;
     }
     1

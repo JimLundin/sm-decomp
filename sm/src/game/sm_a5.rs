@@ -100,8 +100,7 @@ macro_rules! advance_draygon_scripted_y {
         }
         (*Get_Draygon(word!($game.cur_enemy_index) as i32, $game))
             .base
-            .y_pos = *((ram_ptr!($game, u16; 0x9002) as *mut u8)
-            .offset(draygon_var_B as i32 as isize) as *mut u16);
+            .y_pos = *(ram_ptr!($game, u16; 0x9002, draygon_var_B as i32 as isize));
     };
 }
 
@@ -184,8 +183,7 @@ crate::game::callback_dispatch! {
         }
         (*Get_Draygon(word!(game.cur_enemy_index) as i32, game))
             .base
-            .y_pos = *((ram_ptr!(game, u16; 0x9002) as *mut u8)
-            .offset(draygon_var_B as i32 as isize) as *mut u16);
+            .y_pos = *(ram_ptr!(game, u16; 0x9002, draygon_var_B as i32 as isize));
         (*E).var_B = ((*E).var_B).wrapping_add(4);
         if (*E).var_B == (*E).var_C {
             (*E).var_B = 0;
@@ -427,7 +425,7 @@ crate::game::callback_dispatch! {
             }
             varE24 = (varE24).wrapping_sub((byte!(varE22; 1)) as u16);
             crate::update_place! { previous fresh4 = varE26 => varE26.wrapping_add(1); }
-            *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(fresh4 as i32 as isize) as *mut u16) = v1;
+            *(ram_ptr!(game, u16; 0x9002, fresh4 as i32 as isize)) = v1;
             varE26 = (varE26).wrapping_add(2);
             varE26 = varE26.wrapping_add(1);
             if varE26 as i32 - 2048i32 & 0x8000 == 0 {
@@ -440,7 +438,7 @@ crate::game::callback_dispatch! {
         );
         words!((*E), var_D, var_E = t);
         let v6: u16 = varE26;
-        *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(varE26 as i32 as isize) as *mut u16) =
+        *(ram_ptr!(game, u16; 0x9002, varE26 as i32 as isize)) =
             (*E).base.y_pos;
         (*E).var_B = v6;
         (*E).var_C = v6;

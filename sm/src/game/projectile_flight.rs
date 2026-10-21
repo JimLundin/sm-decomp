@@ -214,9 +214,7 @@ macro_rules! super_missile_extension_collision {
             || (word!($game.projectile_type[$projectile_slot]) & 0xf00) == 2048
         {
             let v5: u8 = word!($game.projectile_variables[$projectile_slot]) as u8;
-            if *(ram_ptr!($game, u16; 0xc7c) as *mut u8)
-                .offset(word!($game.projectile_index) as i32 as isize)
-                .offset(1)
+            if *ram_ptr!($game; 0xc7c, word!($game.projectile_index) as i32 as isize, 1)
                 != 0
             {
                 let v1: u16 = (abs16(word!($game.$speed_field[$projectile_slot])))

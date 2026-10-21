@@ -777,13 +777,8 @@ static CrocomireSpikeWallPieces_Tab3: [i8; 36] = [
 pub unsafe fn MoveEprojWithVelocity(k: u16, game: &mut Game) -> u16 {
     let v1: i32 = k as i32 >> 1;
     let v2: u16 = word!(game.eproj_x_vel[v1]);
-    let carry: i32 = *(ram_ptr!(game, u16; 0x1a27) as *mut u8)
-        .offset(k as i32 as isize)
-        .offset(1) as i32
-        + (v2 as i32 & 0xff);
-    *(ram_ptr!(game, u16; 0x1a27) as *mut u8)
-        .offset(k as i32 as isize)
-        .offset(1) = carry as u8;
+    let carry: i32 = *ram_ptr!(game; 0x1a27, k as i32 as isize, 1) as i32 + (v2 as i32 & 0xff);
+    *ram_ptr!(game; 0x1a27, k as i32 as isize, 1) = carry as u8;
     word!(
         checked_i32,
         game.eproj_x_pos[v1] += ((v2 >> 8) as i8 as i32 + (carry >> 8))
@@ -793,9 +788,8 @@ pub unsafe fn MoveEprojWithVelocity(k: u16, game: &mut Game) -> u16 {
 pub unsafe fn MoveEprojWithVelocityY(k: u16, game: &mut Game) -> u16 {
     let v1 = usize::from(k >> 1);
     let v2: u16 = word!(game.eproj_y_vel[v1]);
-    let (fraction, carry) =
-        (*(ram_ptr!(game; 0x1a6f)).offset(k as isize).offset(1)).overflowing_add(v2 as u8);
-    *(ram_ptr!(game; 0x1a6f)).offset(k as isize).offset(1) = fraction;
+    let (fraction, carry) = (*ram_ptr!(game; 0x1a6f, k as isize, 1)).overflowing_add(v2 as u8);
+    *ram_ptr!(game; 0x1a6f, k as isize, 1) = fraction;
     let result = game
         .enemy_projectile_y_pos(k)
         .wrapping_add_signed(((v2 as i16) >> 8) + carry as i16);
@@ -805,9 +799,8 @@ pub unsafe fn MoveEprojWithVelocityY(k: u16, game: &mut Game) -> u16 {
 pub unsafe fn MoveEprojWithVelocityX(k: u16, game: &mut Game) -> u16 {
     let v1 = usize::from(k >> 1);
     let v2: u16 = word!(game.eproj_x_vel[v1]);
-    let (fraction, carry) =
-        (*(ram_ptr!(game; 0x1a27)).offset(k as isize).offset(1)).overflowing_add(v2 as u8);
-    *(ram_ptr!(game; 0x1a27)).offset(k as isize).offset(1) = fraction;
+    let (fraction, carry) = (*ram_ptr!(game; 0x1a27, k as isize, 1)).overflowing_add(v2 as u8);
+    *ram_ptr!(game; 0x1a27, k as isize, 1) = fraction;
     let result = game
         .enemy_projectile_x_pos(k)
         .wrapping_add_signed(((v2 as i16) >> 8) + carry as i16);
@@ -1024,22 +1017,16 @@ static kEproj_MotherBrainRoomTurretBullets_Xvel: [i16; 8] =
 static kEproj_MotherBrainRoomTurretBullets_Yvel: [i16; 8] =
     [0, 498, 704, 498, 0, -498i16, -704i16, -498i16];
 pub unsafe fn Eproj_MotherBrainRoomTurretBullets_Func2(v0: u16, game: &mut Game) {
-    let r20: u8 = (*(ram_ptr!(game, u16; 0x1a6f) as *mut u8)
-        .offset(v0 as i32 as isize)
-        .offset(1) as i32
+    let r20: u8 = (*ram_ptr!(game; 0x1a6f, v0 as i32 as isize, 1) as i32
         + byte!(@pointer ram_ptr!(game, u16; 0x1a6f); v0 as i32 as isize) as i32
         & 7) as u8;
     let r18: u16 = word!(game.eproj_x_subpos[(v0 >> 1)]);
     if *RomPtr_86(r18, game).offset((r20 as i32 & 7) as isize) != 0 {
         byte!(@pointer ram_ptr!(game, u16; 0x1a6f); v0 as i32 as isize) = r20;
     } else {
-        let v1: i8 = -(*(ram_ptr!(game, u16; 0x1a6f) as *mut u8)
-            .offset(v0 as i32 as isize)
-            .offset(1) as i32) as i8;
-        *(ram_ptr!(game, u16; 0x1a6f) as *mut u8)
-            .offset(v0 as i32 as isize)
-            .offset(1) = v1 as u8;
-        crate::update_place! { reference fresh94 = *(ram_ptr!(game, u16; 0x1a6f) as *mut u8).offset(v0 as i32 as isize) => (*fresh94 as i32 + v1 as i32) as u8; }
+        let v1: i8 = -(*ram_ptr!(game; 0x1a6f, v0 as i32 as isize, 1) as i32) as i8;
+        *ram_ptr!(game; 0x1a6f, v0 as i32 as isize, 1) = v1 as u8;
+        crate::update_place! { reference fresh94 = *ram_ptr!(game; 0x1a6f, v0 as i32 as isize) => (*fresh94 as i32 + v1 as i32) as u8; }
     };
 }
 pub unsafe fn Eproj_SetXvelRandom(v0: u16, game: &mut Game) {
@@ -3547,11 +3534,11 @@ crate::game::callback_dispatch! {
     [8830943] EprojPreInstr_MotherBrainRoomTurrets [] {
         if Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(k, game) & 1 != 0 {
             if (*gRam7800_Default(0u16, game)).var_1D != 0 {
-                *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(k as i32 as isize) as *mut u16) =
+                *(ram_ptr!(game, u16; 0x1997, k as i32 as isize)) =
                     0;
             }
         } else if (*gRam7800_Default(0u16, game)).var_1D != 0 {
-            *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(k as i32 as isize) as *mut u16) = 0;
+            *(ram_ptr!(game, u16; 0x1997, k as i32 as isize)) = 0;
             let v5: i32 = k as i32 >> 1;
             game.eproj_spawn_pt = Point16U {
                 x: word!(game.eproj_x_pos[v5]),
@@ -3924,39 +3911,27 @@ crate::game::callback_dispatch! {
             }
         }
         word!(game.eproj_E[v1] = v2);
-        let mut v3: i8 = *(ram_ptr!(game, u16; 0x1aff) as *mut u8)
-            .offset(k as i32 as isize)
-            .offset(1) as i8;
+        let mut v3: i8 = *ram_ptr!(game; 0x1aff, k as i32 as isize, 1) as i8;
         let mut v4: bool = u8::overflowing_add(
             byte!(@pointer ram_ptr!(game, u16; 0x1ab7); k as i32 as isize),
             v3 as u8,
         )
         .1;
-        crate::update_place! { reference fresh138 = *(ram_ptr!(game, u16; 0x1ab7) as *mut u8).offset(k as i32 as isize) => (*fresh138 as i32 + v3 as i32) as u8; }
+        crate::update_place! { reference fresh138 = *ram_ptr!(game; 0x1ab7, k as i32 as isize) => (*fresh138 as i32 + v3 as i32) as u8; }
         let mut v5: u8 = (v4 as i32
-            + *(ram_ptr!(game, u16; 0x1ab7) as *mut u8)
-                .offset(k as i32 as isize)
-                .offset(1) as i32) as u8;
+            + *ram_ptr!(game; 0x1ab7, k as i32 as isize, 1) as i32) as u8;
         if ((v5 as i32 - CrocomireSpikeWallPieces_Tab3[k as usize] as i32) as i8) >= 0 {
             v5 = CrocomireSpikeWallPieces_Tab3[k as usize] as u8;
         }
-        *(ram_ptr!(game, u16; 0x1ab7) as *mut u8)
-            .offset(k as i32 as isize)
-            .offset(1) = v5;
+        *ram_ptr!(game; 0x1ab7, k as i32 as isize, 1) = v5;
         let mut v6: i8 = byte!(@pointer ram_ptr!(game, u16; 0x1ab7); k as i32 as isize) as i8;
         v4 = u8::overflowing_add(
-            *(ram_ptr!(game, u16; 0x1a27) as *mut u8)
-                .offset(k as i32 as isize)
-                .offset(1),
+            *ram_ptr!(game; 0x1a27, k as i32 as isize, 1),
             v6 as u8,
         )
         .1;
-        crate::update_place! { reference fresh139 = *(ram_ptr!(game, u16; 0x1a27) as *mut u8)
-        .offset(k as i32 as isize)
-        .offset(1) => (*fresh139 as i32 + v6 as i32) as u8; }
-        let mut v7: i8 = *(ram_ptr!(game, u16; 0x1ab7) as *mut u8)
-            .offset(k as i32 as isize)
-            .offset(1) as i8;
+        crate::update_place! { reference fresh139 = *ram_ptr!(game; 0x1a27, k as i32 as isize, 1) => (*fresh139 as i32 + v6 as i32) as u8; }
+        let mut v7: i8 = *ram_ptr!(game; 0x1ab7, k as i32 as isize, 1) as i8;
         let v9: bool = v4;
         v4 = u8::overflowing_add(v4 as u8, v7 as u8).1;
         let mut v8: i8 = (v9 as i32 + v7 as i32) as i8;
@@ -3967,10 +3942,8 @@ crate::game::callback_dispatch! {
             )
             .1 as i32)
             != 0;
-        crate::update_place! { reference fresh140 = *(ram_ptr!(game, u16; 0x1a4b) as *mut u8).offset(k as i32 as isize) => (*fresh140 as i32 + v8 as i32) as u8; }
-        crate::update_place! { reference fresh141 = *(ram_ptr!(game, u16; 0x1a4b) as *mut u8)
-        .offset(k as i32 as isize)
-        .offset(1) => (*fresh141 as i32 + v4 as i32) as u8; }
+        crate::update_place! { reference fresh140 = *ram_ptr!(game; 0x1a4b, k as i32 as isize) => (*fresh140 as i32 + v8 as i32) as u8; }
+        crate::update_place! { reference fresh141 = *ram_ptr!(game; 0x1a4b, k as i32 as isize, 1) => (*fresh141 as i32 + v4 as i32) as u8; }
         AddToHiLo(
             (ram_ptr!(game, u16; 0x1adb)).offset(v1 as isize),
             (ram_ptr!(game, u16; 0x1b23)).offset(v1 as isize),
@@ -5128,7 +5101,7 @@ crate::game::callback_dispatch! {
         NextRandom(game);
         let v2: i32 = k as i32 >> 1;
         word!(
-            game.eproj_x_vel[v2] = *((ram_ptr!(game, u16; 0x5e5) as *mut u8).offset(1) as *mut u16)
+            game.eproj_x_vel[v2] = *(ram_ptr!(game, u16; 0x5e5, 1))
         );
         word!(game.eproj_y_vel[v2] = 192);
         epjp
@@ -5270,7 +5243,7 @@ crate::game::callback_dispatch! {
         NextRandom(game);
         word!(
             game.eproj_x_vel[(k >> 1)] =
-                *((ram_ptr!(game, u16; 0x5e5) as *mut u8).offset(1) as *mut u16)
+                *(ram_ptr!(game, u16; 0x5e5, 1))
         );
     };
     @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];

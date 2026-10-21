@@ -385,7 +385,7 @@ crate::game::callback_dispatch! {
     [11110729] MotherBrainBody_0_Wait [] {
         let mut v1: i16 = 0;
         for v0 in (0u16..36).step_by(2) {
-            if *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(v0 as i32 as isize) as *mut u16)
+            if *(ram_ptr!(game, u16; 0x1997, v0 as i32 as isize))
                 == 0
             {
                 v1 += 1;

@@ -1119,7 +1119,7 @@ crate::game::callback_dispatch! {
     [11194601] Torizo_Instr_57 [jp] { SpawnEprojWithRoomGfx(addr_stru_86B1C0 as u16, 0, game); };
     [11194611] Torizo_Instr_58 [*jp as usize as *const u16] {
         let mut v2: i16 = 34;
-        while *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(v2 as u16 as i32 as isize) as *mut u16)
+        while *(ram_ptr!(game, u16; 0x1997, v2 as u16 as i32 as isize))
             != 0xb1c0
         {
             v2 = (v2).wrapping_sub(2);

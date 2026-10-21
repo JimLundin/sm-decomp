@@ -1360,18 +1360,15 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
 }
 pub unsafe fn HandleEprojCollWithSamus(k: u16, game: &mut Game) {
     word! {game; samus_invincibility_timer = 96; samus_knockback_timer = 5; }
-    let v1: u16 = *(RomPtr_86(
-        *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(k as i32 as isize) as *mut u16),
-        game,
-    ) as *mut u16)
-        .offset(5);
+    let v1: u16 =
+        *(RomPtr_86(*(ram_ptr!(game, u16; 0x1997, k as i32 as isize)), game) as *mut u16).offset(5);
     if v1 != 0 {
         let v2: i32 = k as i32 >> 1;
         word! {game; eproj_instr_list_ptr[v2] = v1; eproj_instr_timers[v2] = 1; }
     }
     let v3: i32 = k as i32 >> 1;
     if (word!(game.eproj_properties[v3]) & 0x4000) == 0 {
-        *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(k as i32 as isize) as *mut u16) = 0;
+        *(ram_ptr!(game, u16; 0x1997, k as i32 as isize)) = 0;
     }
     Samus_DealDamage(
         SuitDamageDivision((word!(game.eproj_properties[v3])) & (0xfffu16), game),

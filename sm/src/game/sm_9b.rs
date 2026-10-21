@@ -903,14 +903,14 @@ crate::game::callback_dispatch! {
                     if word!(game.samus_anim_frame) as i32 - 64i32 & 0x8000 != 0 {
                         word! {game; samus_anim_frame_timer = 8; samus_anim_frame = 64; }
                     }
-                    v1 = byte!(@pointer rom_ptr!(game; 0x9bc1c2); *(ram_ptr!(game, u16; 0xcfc) as *mut u8).offset(1) as isize)
+                    v1 = byte!(@pointer rom_ptr!(game; 0x9bc1c2); *ram_ptr!(game; 0xcfc, 1) as isize)
                         as u16;
                     false
                 })
         };
         if start_grapple_animation {
             word!(game.samus_anim_frame_timer = 15);
-            v1 = byte!(@pointer rom_ptr!(game; 0x9bc1c2); *(ram_ptr!(game, u16; 0xcfc) as *mut u8).offset(1) as isize)
+            v1 = byte!(@pointer rom_ptr!(game; 0x9bc1c2); *ram_ptr!(game; 0xcfc, 1) as isize)
                 as u16;
             word!(game.samus_anim_frame = v1);
         }

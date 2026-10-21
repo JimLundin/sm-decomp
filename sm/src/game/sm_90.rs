@@ -2220,17 +2220,17 @@ pub unsafe fn Samus_Movement_03_SpinJumping(game: &mut Game) {
     if r18 == 0 {
         if (word!(game.equipped_items) & 0x200) != 0 && (word!(game.samus_y_dir) == 2) {
             let skip_jump_restart: bool = if word!(game.liquid_physics_type) != 0 {
-                (((*((ram_ptr!(game, u16; 0xb2c) as *mut u8).offset(1) as *mut u16)) as i16)
+                (((*(ram_ptr!(game, u16; 0xb2c, 1))) as i16)
                     .wrapping_sub((kSamusPhys_JumpMinYVelWater) as i16)
                     < 0
-                    || ((*((ram_ptr!(game, u16; 0xb2c) as *mut u8).offset(1) as *mut u16)) as i16)
+                    || ((*(ram_ptr!(game, u16; 0xb2c, 1))) as i16)
                         .wrapping_sub((kSamusPhys_JumpMaxYVelWater) as i16)
                         >= 0)
             } else {
-                (((*((ram_ptr!(game, u16; 0xb2c) as *mut u8).offset(1) as *mut u16)) as i16)
+                (((*(ram_ptr!(game, u16; 0xb2c, 1))) as i16)
                     .wrapping_sub((kSamusPhys_JumpMinYVelAir) as i16)
                     < 0
-                    || ((*((ram_ptr!(game, u16; 0xb2c) as *mut u8).offset(1) as *mut u16)) as i16)
+                    || ((*(ram_ptr!(game, u16; 0xb2c, 1))) as i16)
                         .wrapping_sub((kSamusPhys_JumpMaxYVelAir) as i16)
                         >= 0)
             };
@@ -2646,7 +2646,7 @@ pub unsafe fn UpdateMinimapInside(
         if v4 {
             word!(game.hud_tilemap[(v6 + 58)] = (*r3.offset((v2 >> 1) as isize) & 0xc3ff | 0x2800));
             if n == 3 && (word!(game.hud_tilemap[(v6 + 58)]) & 0x1ff) == 40 {
-                crate::update_place! { reference fresh99 = *(ram_ptr!(game, u16; 0x7f3) as *mut u8).offset(r30 as i32 as isize) => (*fresh99) | (kShr0x80[r32 as usize]); }
+                crate::update_place! { reference fresh99 = *ram_ptr!(game; 0x7f3, r30 as i32 as isize) => (*fresh99) | (kShr0x80[r32 as usize]); }
             }
         }
         v4 = r42 as i32 >> 15 != 0;
@@ -2886,7 +2886,7 @@ crate::game::callback_dispatch! {
             byte!(@pointer (ram_ptr!(game, u16; 0xbdc)).offset(v1 as isize); 0) as u16,
         );
         let v2: u16 = (pt.x).wrapping_add(word!(game.samus_x_pos));
-        *((ram_ptr!(game, u16; 0xaae) as *mut u8).offset(k as i32 as isize) as *mut u16) =
+        *(ram_ptr!(game, u16; 0xaae, k as i32 as isize)) =
             (pt.x).wrapping_add(word!(game.samus_x_pos));
         word!(game.projectile_x_pos[v1] = v2);
         let mut v3: i16 = ((v2) as i16).wrapping_sub((word!(game.layer1_x_pos)) as i16);
@@ -2904,7 +2904,7 @@ crate::game::callback_dispatch! {
             || v5 as i32 - 256i32 & 0x8000 == 0
         {
             word!(game.speed_echo_ypos[(v1 + 3)] = 0);
-            *((ram_ptr!(game, u16; 0xaae) as *mut u8).offset(k as i32 as isize) as *mut u16) = 0;
+            *(ram_ptr!(game, u16; 0xaae, k as i32 as isize)) = 0;
             word!(game.speed_echo_xpos[(v1 + 3)] = 0);
             ClearProjectile(k, game);
         }
@@ -3555,20 +3555,18 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
         if word!(game.flare_counter) != 0 {
             let mut i: i32 = 4;
             while i >= 0 {
-                let mut v7: bool =
-                    *((ram_ptr!(game, u16; 0xcdc) as *mut u8).offset(i as isize) as *mut u16) == 1;
-                crate::update_place! { unaligned_word fresh17 = &raw mut (*((ram_ptr!(game, u16; 0xcdc) as *mut u8).offset(i as isize) as *mut u16)) => (u16::from_le(fresh17.read_unaligned())).wrapping_sub(1); }
+                let mut v7: bool = *(ram_ptr!(game, u16; 0xcdc, i as isize)) == 1;
+                crate::update_place! { unaligned_word fresh17 = &raw mut (*(ram_ptr!(game, u16; 0xcdc, i as isize))) => (u16::from_le(fresh17.read_unaligned())).wrapping_sub(1); }
                 let v8: bool = (u16::from_le(fresh17.read_unaligned()) & 0x8000) != 0;
                 if v7 || v8 {
-                    crate::update_place! { unaligned_word fresh20 [fresh21] = &raw mut (*((ram_ptr!(game, u16; 0xcd6) as *mut u8).offset(i as isize) as *mut u16)) => (u16::from_le(fresh20.read_unaligned())).wrapping_sub(1); }
+                    crate::update_place! { unaligned_word fresh20 [fresh21] = &raw mut (*(ram_ptr!(game, u16; 0xcd6, i as isize))) => (u16::from_le(fresh20.read_unaligned())).wrapping_sub(1); }
                     v7 = fresh21 == 1;
                     if v7 {
                         if i == 4 {
                             word!(game.flare_counter = 0);
                         }
                     } else {
-                        *((ram_ptr!(game, u16; 0xcdc) as *mut u8).offset(i as isize) as *mut u16) =
-                            3;
+                        *(ram_ptr!(game, u16; 0xcdc, i as isize)) = 3;
                     }
                 }
                 DrawFlareAnimationComponent(i as u16, game);
@@ -3589,19 +3587,15 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
             }
             let mut v0: u16 = 0;
             do_until! { (((v9) as i16).wrapping_sub(4) >= 0);
-                let mut v1: i16 = ((*((ram_ptr!(game, u16; 0xcdc) as *mut u8)
-                    .offset(v0 as i32 as isize) as *mut u16))
+                let mut v1: i16 = ((*(ram_ptr!(game, u16; 0xcdc, v0 as i32 as isize)))
                     as i16)
                     .wrapping_sub(1);
-                *((ram_ptr!(game, u16; 0xcdc) as *mut u8).offset(v0 as i32 as isize) as *mut u16) =
+                *(ram_ptr!(game, u16; 0xcdc, v0 as i32 as isize)) =
                     v1 as u16;
                 if v1 < 0 {
-                    let v2: u16 = (*((ram_ptr!(game, u16; 0xcd6) as *mut u8)
-                        .offset(v0 as i32 as isize)
-                        as *mut u16))
+                    let v2: u16 = (*(ram_ptr!(game, u16; 0xcd6, v0 as i32 as isize)))
                         .wrapping_add(1);
-                    *((ram_ptr!(game, u16; 0xcd6) as *mut u8).offset(v0 as i32 as isize)
-                        as *mut u16) = v2;
+                    *(ram_ptr!(game, u16; 0xcd6, v0 as i32 as isize)) = v2;
                     let mut v3: u16 = v2;
                     let r0 = RomPtr_90(
                         crate::rtl::rom_table_word!(game, 0x90c481, (v0 >> 1) as isize),
@@ -3609,20 +3603,15 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
                     );
                     let mut v4: i16 = *r0.offset(v2 as isize) as i16;
                     if v4 == 255 {
-                        *((ram_ptr!(game, u16; 0xcd6) as *mut u8).offset(v0 as i32 as isize)
-                            as *mut u16) = 0;
+                        *(ram_ptr!(game, u16; 0xcd6, v0 as i32 as isize)) = 0;
                         v3 = 0;
                     } else if v4 == 254 {
-                        let v5: u16 = (*((ram_ptr!(game, u16; 0xcd6) as *mut u8)
-                            .offset(v0 as i32 as isize)
-                            as *mut u16))
+                        let v5: u16 = (*(ram_ptr!(game, u16; 0xcd6, v0 as i32 as isize)))
                             .wrapping_sub((*r0.offset((v3 as i32 + 1) as isize)) as u16);
-                        *((ram_ptr!(game, u16; 0xcd6) as *mut u8).offset(v0 as i32 as isize)
-                            as *mut u16) = v5;
+                        *(ram_ptr!(game, u16; 0xcd6, v0 as i32 as isize)) = v5;
                         v3 = v5;
                     }
-                    *((ram_ptr!(game, u16; 0xcdc) as *mut u8).offset(v0 as i32 as isize)
-                        as *mut u16) = *r0.offset(v3 as isize) as u16;
+                    *(ram_ptr!(game, u16; 0xcdc, v0 as i32 as isize)) = *r0.offset(v3 as isize) as u16;
                 }
                 let mut v9: u16 = v0;
                 DrawFlareAnimationComponent(v0, game);

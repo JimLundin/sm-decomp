@@ -3417,7 +3417,7 @@ crate::game::callback_dispatch! {
         (*E).var_C = crate::rtl::rom_table_word!(
             game,
             0xa2be86,
-            ((((*(ram_ptr!(game, u16; 0x5e5) as *mut u8).offset(1)) as u16) & (6u16)) >> 1) as isize,
+            ((((*ram_ptr!(game; 0x5e5, 1)) as u16) & (6u16)) >> 1) as isize,
         );
         (*E).var_F = ((0xa2bf3ei32) as u16);
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_ProcessedOffscreen) as u16);

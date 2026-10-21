@@ -589,14 +589,12 @@ pub unsafe fn Xray_SetupStage1_FreezeTimeBackup(k: u16, game: &mut Game) {
     byte!(@pointer ram_ptr!(game, u16; 0xa78); 0) = 1;
     byte!(@pointer ram_ptr!(game, u16; 0x1914); k as u8 as i32 as isize) =
         word!(game.reg_BG2HOFS) as u8;
-    *(ram_ptr!(game, u16; 0x1914) as *mut u8)
-        .offset(k as u8 as i32 as isize)
-        .offset(1) = byte!(@pointer ram_ptr!(game, u16; 0xb5); 1);
+    *ram_ptr!(game; 0x1914, k as u8 as i32 as isize, 1) =
+        byte!(@pointer ram_ptr!(game, u16; 0xb5); 1);
     byte!(@pointer ram_ptr!(game, u16; 0x1920); k as u8 as i32 as isize) =
         word!(game.reg_BG2VOFS) as u8;
-    *(ram_ptr!(game, u16; 0x1920) as *mut u8)
-        .offset(k as u8 as i32 as isize)
-        .offset(1) = byte!(@pointer ram_ptr!(game, u16; 0xb7); 1);
+    *ram_ptr!(game; 0x1920, k as u8 as i32 as isize, 1) =
+        byte!(@pointer ram_ptr!(game, u16; 0xb7); 1);
     byte!(@pointer ram_ptr!(game, u16; 0x192c); k as u8 as i32 as isize) = *ram_ptr!(game; 0x59);
 }
 pub unsafe fn Xray_SetupStage2_ReadBg1_2ndScreen(game: &mut Game) {
@@ -1900,7 +1898,7 @@ pub unsafe fn Xray_Initialize(game: &mut Game) -> u8 {
     DisableAnimtiles(game);
     DisablePaletteFx(game);
     mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001);
-    *((ram_ptr!(game, u16; 0xa8a) as *mut u8).offset(1) as *mut u16) = 0;
+    *(ram_ptr!(game, u16; 0xa8a, 1)) = 0;
     word!(game.demo_input_prev = -26424i32 as u16);
     mov24(ram_ptr!(game, LongPtr; 0xa8e), 0x999098);
     word! { game, 0;
