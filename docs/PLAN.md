@@ -1576,25 +1576,30 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    and its early fast-renderer revisions also differ in layout, sprite storage,
    rendering width and Mode7 priority. Downloaded hardware-only inputs:
    Local/sm-decomp-experiments/20261021/zelda-hardware-dependency.
-   A bounded actual-code probe of historical renderer revision `1f8985903a32`
-   now passes **68 native/foreign row comparisons** when supplied with Rust's
-   evaluated sprites and brightness tables. The adapter copies the serialized
-   prefix, translates routing and packed sprites, adjusts Mode7 sprite priority,
-   and converts doubled output to the current pixel format. The 64 ordinary
-   controls also match with the foreign sprite evaluator, including the packed
-   sprite buffer and its three status flags. Four targeted cases expose a real
-   substitution failure: interlaced sprites differ in 184/177 buffer cells and
-   30/39 visible pixels; a large sprite at Y=240 differs in 59/55 cells and 30/15
-   visible pixels. The published evaluator ignores interlace and skips Y=240.
-   Thus the passing drawing-core comparison cannot justify retiring native
-   sprite evaluation. Park an unadapted whole-renderer substitution at this pin;
-   this does not reject other revisions or a fully priced compatibility adapter.
-   Checks use two deterministic seeds and constructed Mode1/Mode7 line-one
-   states, including scrolling, windows, color math and a VRAM boundary. They
-   do not cover extended width, mosaic, lifecycle, full state or failure behavior.
-   No movie ran and no complete replacement price or saving is established.
-   Probe source, pinned hardware inputs and row/sprite counterexamples:
-   Local/sm-decomp-experiments/20261021/zelda-render-probe.
+   A compatibility probe of historical renderer revision `1f8985903a32` now
+   resolves its interlace and Y=240 sprite differences. A 14-line C helper
+   maps eligible source rows onto synthetic scanline 128 and hides ineligible
+   sprites; the unmodified foreign evaluator still performs tile decoding,
+   clipping, priority and limit handling. All **1,198 actual sprite-buffer and
+   flag comparisons** pass across all sizes, both interlace fields, row edges,
+   clipping, rotation, retained overflow flags, forced blank and VRAM spill.
+   All **68 original row comparisons** now pass with foreign sprite evaluation,
+   including the four original counterexamples. Another **284 of 290** drawing
+   variants match across matrix transforms, inverted/empty windows, brightness,
+   color math and VRAM boundaries. Six expose a remaining native Mode7 mosaic
+   cache mismatch: 88..145 visible pixels differ when the native mosaic flag is
+   set with size one and a zeroed cache. The early foreign revision instead
+   selects mosaic from legacy BG flags and size greater than one. All sprite
+   buffers/flags match in those six cases, isolating this rendering difference.
+   The source-checked DLL uses the exact current release library and pinned,
+   unchanged foreign inputs, with C assertions enabled. These are constructed
+   line-one drawing cases and separate sprite scans through line 255; they do
+   not establish full-state, failure, lifecycle, extended-width or movie coverage.
+   The 14-line helper is only a partial adapter cost, not a replacement price
+   or saving. Complete rendering/state adaptation and pricing remain unfinished;
+   do not adopt the sprite subset as another small extraction. Final probe:
+   Local/sm-decomp-experiments/20261021/renderer-compatibility. The original
+   counterexamples remain in Local/sm-decomp-experiments/20261021/zelda-render-probe.
    The complete native music/SFX sequencer cannot directly reuse the uploaded
    SPC driver. A source-checked DLL probe executes 32 actual native/interpreted
    ticks from aligned entry state: all 269 ordered DSP writes and final DSP
