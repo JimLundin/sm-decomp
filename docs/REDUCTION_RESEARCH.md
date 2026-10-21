@@ -6,7 +6,7 @@ and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
 Executable translation rules learned from current Rust now produce a
-**109,232-line** historical-source composition. The current-source batch has
+**108,758-line** historical-source composition. The current-source batch has
 landed separately at **106,189 lines (-1,331)**, with 6,104 fewer tokens and
 8,460 fewer token-spelling bytes, including the eight-line alignment repair.
 All emitted support and overlap are counted. Complete builds, the documented
@@ -15,9 +15,10 @@ adopted source. Neither count is below 100,000, and their savings are not added.
 The historical pipeline also fixes concrete packing and unaligned-reference
 defects; correctness costs are charged separately from code reduction.
 The subsequent shared beam-window owner removes another **205 lines**, followed
-by **215** from native tracing and nonnull callback tables, reaching **105,769**.
-Component/static checks and fresh full boot replays pass. Maintained Rust needs
-another **5,770 lines removed** to reach 99,999. A separate
+by **215** from native tracing and nonnull callback tables, then **84** from
+shared Samus pose sequences, reaching **105,685**. Component/static checks,
+full boot integration and the latest focused intro replay pass as scoped below.
+Maintained Rust needs another **5,686 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -1387,7 +1388,11 @@ cost of the remaining current-guided families:
 | Improved terminal-loop grammar | 110,509 | 0 |
 | Ordinary standard-library imports | 110,009 | -500 |
 | Packed DMA descriptor read repair | 110,009 | 0 |
-| Named graphics-transfer records | **109,232** | **-777** |
+| Named graphics-transfer records | 109,232 | -777 |
+| Native tracing | 109,141 | -91 |
+| Proven-nonnull callback tables | 109,069 | -72 |
+| Corrected current beam-window owner | 109,010 | -59 |
+| Shared eight-entry square-slope family | **108,758** | **-252** |
 
 All actual stage checks and complete optimized library/frontend builds pass.
 The getter cohort contains 47 groups / 391 functions after composition.
@@ -1422,9 +1427,9 @@ registers must agree with original C. Twelve noncanonical descriptors remain
 explicit because their ordering or dynamic destination differs. Decompression
 is outside this cohort. No descriptor address escapes its original setup call.
 
-The complete profile now removes **52,904 lines, 564,355 tokens and 1,530,024
+At that checkpoint the profile removes **52,904 lines, 564,355 tokens and 1,530,024
 code-text bytes** from the same 162,136-line control. The isolated historical
-gap is **9,233 lines** to reach 99,999. These figures come from a fresh complete
+gap was **9,233 lines** to reach 99,999. These figures come from a fresh complete
 recount, including the packed-read correction, rather than summed pilot prices.
 Current Rust already owns the equivalent graphics operation, so this rule
 demonstrates recovering its representation without claiming a new main deletion.
@@ -1442,12 +1447,54 @@ Rust `SetupDmaTransfer`. Two packed word reads now use `read_unaligned`; this
 separate repair costs **zero lines, six tokens and 28 code-text bytes** and is
 included in the final profile. Its failure control and original source remain
 preserved. Reports, source manifests and executable rules are in
-`TEMP/sm-tailored-next/graphics-assets` and `integration/phase15`. The beam,
-tracing and nonnull-table studies remain outside this historical composition.
-Invoked local Python now totals 15,129 lines across 170 files, adding 429 lines
+`TEMP/sm-tailored-next/graphics-assets` and `integration/phase15`. Beam,
+tracing and nonnull-table studies were outside that checkpoint.
+Invoked local Python there totals 15,129 lines across 170 files, adding 429 lines
 in seven scripts since phase14, including lineage discovery and parked beam
 pricing. These experiment tools are separate from the 67 emitted Rust files;
 the nine-line manifest and previously disclosed dependency costs remain.
+
+The next actual composition adds four current-guided rules, producing
+**109,232 -> 108,758 (-474)** with 4,979 fewer tokens and 14,742 fewer code-text
+bytes. The complete 69-file profile is now **162,136 -> 108,758 (-53,378)**,
+with **569,334 tokens** and **1,544,766 code-text bytes** removed. All shared
+owners, imports, caller adaptations and registrations count. Complete optimized
+library and actual frontend metadata builds pass after every stage. Its strict
+historical-output gap is **8,759 lines**; it has no whole-game replay result.
+
+Tracing adapts the current native formatter to the historical bus API and
+passes 742,400 original-C/raw-Rust/historical/emitted component cases in debug
+and release, including output tails, bus-read order and processor state changes.
+Nonnull inference handles 106 private tables, 1,274 slots and 111 consumers,
+retaining historical mutable-static and raw-offset semantics. Complete use
+guards reject writes/escapes, and compiler-expanded correspondence proves the
+same targets, casts, indices and remaining operations. Five nullable historical
+tables remain unchanged. These two stages remove 91 and 72 lines respectively.
+
+Beam-window emission removes 59 lines including adoption of the current
+positive-down corrections. Its 64,100 component cases compare the actual
+historical candidate and callers with the validated corrected current owner,
+including all RAM, return/panic results and ordered print effects. This is
+explicitly **not equivalence to uncorrected historical positive-down behavior**.
+
+The new square-slope rule follows eight original entries across Samus, grapple,
+projectiles and enemies into current shared occupancy/span/contact operations.
+It emits a 141-line owner, retains callback names and argument order, and merges
+two private tables only after proving their occupancy bits and complete uses
+agree. The complete price is **252 lines removed**. All 49,920 actual original-C/
+historical/emitted cases pass in each debug and optimized build, comparing return
+values and every RAM byte, including collision contexts overlapping player/enemy
+storage. All 69 files pass inverse source correspondence. No complete bank is
+retired, and these historical savings are not new production deletions.
+
+Frozen report, stages and reproduction commands:
+`TEMP/sm-tailored-next/integration/phase16/REPORT.md`. Final source:
+`TEMP/sm-tailored-next/square-slopes/composed-v2/sm/src`. Invoked local Python
+totals 16,193 lines across 185 files, including 1,064 lines in 15 new files;
+this experiment code remains separate from counted engine support. Cargo still
+has nine lines and the external GL dependency costs remain disclosed.
+The next specific lineage is the four Samus jump-launch entries and current
+`initialize_samus_jump` water/speed policy. It has no measured saving yet.
 
 The follow-up experiments compare physical lines, noncomment syntax tokens
 and token-spelling bytes. All helpers and imports count. This is a guard
@@ -1739,6 +1786,78 @@ The actual combined maintained-source reduction is **215 lines**. The original
 C timer table is explicitly `Func_U8 *const` with seven nonnull function entries;
 this supplies a concrete C-to-native-Rust inference rule. Emitter, full inventory,
 proof and adoption logs: `TEMP/sm-tailored-next/nonnull-tables`.
+
+The latest adopted family shares Samus pose refresh and history:
+**105,769 -> 105,685 (-84)**, with **1,270 tokens** and **3,951 code-text bytes**
+removed. Three descriptive routines in the 21-line `samus_pose` owner replace
+36 sequences; two duplicate bank history functions and their seven callers
+are retired. All imports and both source registrations count. Original C makes
+the paired history-copy meaning explicit: each 16-bit copy preserves adjacent
+direction and movement-type bytes. The owner retains the exact ordered stores
+and the existing movement/animation routine calls, without pre-capturing values.
+
+Discovery used a materially new scope: proper sibling-statement windows rather
+than whole functions or compound blocks. The 2.87-second pass covers 45,470
+windows in 2,978 ordinary functions and 2,421 callback bodies, including small
+routines. Its 39 non-subsumed groups do not establish another large deletion
+budget; generalized RAM addresses otherwise tend to join unrelated effects.
+The exact typed-ROM-index idea was also checked against its old study, not
+repeated: the current Standing routine is token-identical to that control,
+and the complete old family saved only 25 lines without compiler/runtime proof.
+
+Samus validation proves all 7,080 remaining compiler-expanded functions match
+after exact helper inlining. Both removed wrapper bodies match the actual new
+history helper, all caller identities are accounted for, and none of the eight
+history-only callers retains a RAM pointer across the new helper call. Complete
+library/frontend builds and formatting pass. Probed and clean boot any% intro
+runs pass **2339/0**, exercising all six required helper/animation/history/tile
+probes plus 120 follow-up frames. There are 121 tile consumers after history
+writes. This route visits no gameplay rooms and claims no normal movement,
+Draygon, suit, Crystal Flash or endgame execution; unchanged-effect proof covers
+unvisited callers. Final dead-import cleanup preserves all remaining replayed
+tokens and has fresh builds. Frozen experiment: `TEMP/sm-tailored-next/sibling-sequences`.
+
+Three further complete current-source experiments use the same committed
+**105,769-line** control. Their independent prices are not additive:
+
+| Complete experiment | Result | Validation and decision |
+| --- | ---: | --- |
+| Native configuration/input collections and scalar routing | 105,669 (-100) | Complete library/frontend and paired harness builds pass; runtime launch blocked; park |
+| Standalone Mother Brain sequence owner, all 124 steps | 105,755 (-14) | Complete builds pass, code text grows 593 bytes; park |
+| Compiler-guided immutable local/parameter bindings | 105,764 (-5) | Complete builds and source-token correspondence pass; park as volume work |
+
+The configuration candidate replaces manual keyboard hash chains with a
+`BTreeMap` and gamepad lists with ordered per-button vectors. Duplicate attempts
+still count toward the keyboard limit, first keyboard bindings win, and more
+specific/newer gamepad entries retain priority. All support remains counted;
+the complete result removes 911 noncomment tokens and 2,938 code-text bytes.
+Actual before/after config sources, unchanged project helpers and real SDL key
+lookup compile into the paired harnesses, but **zero runtime tests executed**.
+Defender Exploit Guard event 1121, rule
+`01443614-CD74-433A-B99E-2ECDC07BFC25`, explicitly blocks their launch under
+administrator policy. No protection changes or repackaging were attempted.
+The old gamepad allocation requests 64 entries but grows only every 256;
+executions above 64 cannot serve as a defined-behavior reference. The native
+collections also need reconciliation of allocation-failure handling before
+adoption. Report, exact candidate and unexecuted harness:
+`TEMP/sm-config-engine-31566113`.
+
+The Mother Brain experiment re-emits current effects into one standalone owner,
+including 47 delay gates, 99 typed continuations, all dependencies and both
+source registrations. Earlier callback sharing has already absorbed nearly all
+of its old 318-line price. The complete current owner occupies 1,160 lines and
+still imports 52 bank helpers/tables/types. It removes 1,093 tokens but grows
+code-text bytes; no bank retirement, current runtime or additional endgame
+coverage is claimed. Frozen report: `TEMP/sm-motherbrain-sequence-31566113`.
+
+The immutability experiment uses real compiler diagnostics with
+`--force-warn=unused_mut`, selecting only machine-applicable removals of the
+binding qualifier. It removes 470 qualifiers across 37 files, including 178
+ordinary bindings inside existing callback/loop macro bodies. Shared macro
+definition contracts remain unchanged; 23 expansion diagnostics are excluded.
+Complete source-token correspondence allows only those removals, and library
+and actual frontend builds pass. This improves binding intent but removes only
+five formatted lines. Report: `TEMP/sm-tailored-next/immutable-bindings`.
 
 Broader representation experiments use independent 105,984-line controls:
 

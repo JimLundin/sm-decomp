@@ -25,19 +25,19 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A successful partial
 profile or pilot does not finish this goal. The latest frozen composition
-now produces **162,136 -> 109,232 (-52,904)**, with complete optimized library
+now produces **162,136 -> 108,758 (-53,378)**, with complete optimized library
 and actual frontend metadata compilation passing. The latest stages remove
-**16,570** from the previous 125,802 checkpoint, including the selected C
+**17,044** from the previous 125,802 checkpoint, including the selected C
 algorithm families, shared enemy layouts, CPU/SPC grids, dispatchers, register
 writes, byte/split-word places, initialization/transfer families, map menus,
 explosion windows, assertion emission, ordered RAM-store groups, introduction
 pages, moving platforms, getter prefixes, residual clone families, safe word
 updates, selective computed stores, ordinary standard-library imports and
-graphics-transfer records. The complete profile also removes 564,355 tokens
-and 1,530,024 code-text bytes
-from its 162,136-line control. All local
+graphics-transfer records, native tracing, nonnull callback tables, corrected
+beam windows and square-slope handling. The complete profile also removes
+569,334 tokens and 1,544,766 code-text bytes from its 162,136-line control. All local
 support and overlaps are counted; external GL dependency code is disclosed
-separately. No new main deletion or whole-game replay is claimed.
+separately. These historical stages claim no new main deletion or whole-game replay.
 Map component checks exposed the original C2Rust VramWriteEntry packing defect
 again: destination offset 6 instead of 5. A separate zero-volume stage now
 repairs it; 65,536 complete-buffer stores and 8,192 actual NMI consumer cases
@@ -48,9 +48,17 @@ sequences emit named loads, removing 777 lines including a 45-line helper.
 All actual-site C/old/new traces, 1,568 parameter cases and 131,072 packed-record
 cases pass in debug/release Rust. A separate two-read alignment repair costs
 zero lines and adds six tokens; it is included. Full-source inverse checks
-and complete library/frontend builds pass. Next are the remaining complete
-current-guided families and their actual composition; no under-100,000 result
-or additional production deletion is claimed.
+and complete library/frontend builds pass. The latest four stages remove
+another **474 lines** on that actual output. Tracing passes 742,400 component
+cases; nonnull inference preserves all 106 tables and 111 consumers by complete
+expanded correspondence. Beam handling passes 64,100 cases against corrected
+current behavior, explicitly including its positive-down fixes rather than
+claiming equivalence to uncorrected C. Eight square-slope entries share one
+141-line owner; 49,920 original-C/old/new cases pass in debug and release.
+All 69 emitted files and support costs count. The next selected lineage is
+the four Samus jump-launch entries and current shared water/speed policy;
+no price or under-100,000 result is established. TEMP
+sm-tailored-next/integration/phase16 freezes the composition and limitations.
 The earlier 789-handler executor trial now grows 809 lines on the composed
 input; reject it. Its enemy-only subset saves 217 and remains parked. The
 remaining C word-operation rules save about 265 on their separate repaired
@@ -107,7 +115,9 @@ pass as recorded below. Native CPU/SPC tracing removes **144 more lines**,
 reaching **105,840**, with complete output/bus differential checks and builds.
 Proven-nonnull callback tables remove **71 more lines**, reaching **105,769**,
 with complete target/operation correspondence and fresh full boot replays.
-Another **5,770 lines** are needed to reach 99,999;
+The shared Samus pose-update sequences remove **84 more lines**, reaching
+**105,685**, with complete expanded correspondence and a focused intro replay.
+Another **5,686 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -466,7 +476,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the same clone scans. Domain judgment selects the native helper contract;
    recognition derives per-member parameters and rejects different effects.
    Price any production adoption against current Rust and validate it under
-   item 3. The isolated 109,232-line output is a partial translation profile,
+   item 3. The isolated 108,758-line output is a partial translation profile,
    not a replacement implementation or an under-100,000 result.
 
    The new finite typed instruction-data experiment also fails its complete
@@ -515,7 +525,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    separate controls; do not add their prices. Keep these scoped studies closed.
    Further discovery needs a new complete algorithm and replacement, not a
    repeat of these cohorts or another generic operation runner. Current-derived
-   translation recovery remains demonstrated separately at 109,232 lines.
+   translation recovery remains demonstrated separately at 108,758 lines.
 
    Further complete experiments at 105,984 reject shared object-script traversal
    (**+117 lines**), contextual Kraid ownership (**+33**) and real receiver methods
@@ -529,6 +539,30 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    qualify for adoption. Reports: TEMP sm-tailored-next/{object-lifecycle,
    contextual-kraid,samus-overlay,ppu-sm-specialization,nonnull-tables,
    tracing-native} and TEMP sm-hardware-state-d878362a.
+
+   Three complete follow-ups use the committed 105,769-line control:
+   native configuration/input ownership saves **100 lines**, but actual paired
+   execution is blocked before entry by Windows administrator policy. Complete
+   library/frontend and harness builds pass; runtime coverage is zero. Preserve
+   the block and park adoption, including the old gamepad allocation boundary
+   and differing allocation-failure handling. A standalone 124-step Mother Brain
+   owner saves only **14 lines** and adds 593 code-text bytes; complete builds
+   pass, but 52 bank dependencies remain. Park without new runtime checks.
+   Compiler-guided immutable bindings remove 470 qualifiers but only **five
+   lines**; complete builds and source-token correspondence pass. Park as a
+   volume priority. These are independent prices, not an aggregate budget.
+   Reports: TEMP sm-config-engine-31566113, sm-motherbrain-sequence-31566113
+   and sm-tailored-next/immutable-bindings. None modifies maintained source.
+
+   A distinct sibling-statement search covers 45,470 proper windows in 2,978
+   ordinary functions and 2,421 callback bodies. It includes small routines
+   and arbitrary consecutive statement sequences excluded by the earlier
+   whole-function/compound-node scans. Its 39 non-subsumed groups establish
+   no large new budget; the coherent Samus pose-update family qualifies below.
+   This scope is now also closed. TEMP sm-tailored-next/sibling-sequences.
+   Typed ROM-record indexing was checked against its existing complete study,
+   not rerun: the exact current Standing routine already appears there, and
+   the full family saves only 25 lines. TEMP sm-rom-records-443e8471.
 
    The expanded source-first C experiment is complete: sharing 35 algorithm
    groups, retiring forwarding functions, fusing 789 instruction bodies and
@@ -611,8 +645,22 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **5,770-line** gap; parked small drafts are not
+   replacement yet funds the **5,686-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Complete Samus pose-sequence sharing removes **84 lines
+   (105,769 -> 105,685)**, including the 21-line owner and both registrations.
+   Three named routines replace 36 repeated sequences; two bank history
+   wrappers and their seven direct calls are retired. Six unused imports
+   disappear. All 7,080 remaining compiler-expanded functions match after
+   exact helper inlining; both removed wrapper bodies match the history helper.
+   The eight history-only callers retain no RAM pointer across the new call.
+   Optimized library/frontend builds and formatting pass. Probed and clean
+   boot any% intro checks pass **2339/0**, including all six required helper/
+   animation/history/tile-effect probes and 120 follow-up frames. This route
+   visits no gameplay rooms; unvisited callers have unchanged-effect proof.
+   Final import-only cleanup has source-token correspondence and fresh builds.
+   TEMP sm-tailored-next/sibling-sequences contains the frozen source/checks.
 
    Complete nonnull callback-table inference removes **71 lines
    (105,840 -> 105,769)**, including three helper lines. All 79 immutable tables,
@@ -999,6 +1047,14 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
+Latest focused change: shared Samus pose refresh/history passes probed and
+clean boot any% intro **2339/0**. All six required helper/effect probes execute,
+including 121 tile consumers after history writes, followed by 120 frames.
+No gameplay room or normal movement execution is claimed. Complete expanded
+correspondence covers all remaining 7,080 functions and all migrated callers;
+the final dead-import cleanup has token correspondence and fresh builds.
+The latest full integration below predates this focused change.
+
 Latest full integration: nonnull callback tables and native tracing pass full
 boot any% **129712/0** and Speed Booster **148406/0**, with normal rendering,
 audio and comparisons. Complete static correspondence proves all 922 callback
@@ -1122,11 +1178,13 @@ imports, ordered stores, PNG texture loading, beam firing, moving platforms,
 byte-partial-product sharing, INI decoding, countdown callbacks, projectile
 flight, callback entry captures, opcode grids, blast windows, indexed loops and
 combined callback/dispatch declarations, terminal loops, selected field/RAM
-store groups, the unaligned RAM repair, shared beam windows, native tracing and
-nonnull callback tables, maintained Rust is **105,769**, leaving **5,770** to
-reach 99,999. Counters:
+store groups, the unaligned RAM repair, shared beam windows, native tracing,
+nonnull callback tables and Samus pose sequences, maintained Rust is
+**105,685**, leaving **5,686** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3655; cast lines 7965. Tracing adds three unsafe helper
+unsafe functions 3656; cast lines 7965. The pose owner adds three unsafe
+helpers and removes two wrappers, a net increase of one declaration while
+removing 84 lines. Tracing adds three unsafe helper
 declarations for the caller-owned output buffer and removes 92 cast-containing
 lines. Its complete implementation still removes 144 lines. The unrelated
 83-line shader draft
