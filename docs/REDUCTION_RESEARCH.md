@@ -68,7 +68,10 @@ The native dense renderer takes 2.6-2.7x its former component time; details belo
 Shared native/SPC state transfers remove **230 further lines**, reaching
 **101,814**, with 2,559 fewer tokens and 7,553 fewer spelling bytes. Complete
 release, source-bound differential transfer checks and both full boot replays pass.
-Maintained Rust needs another **1,815 lines removed** to reach 99,999. A separate
+Live-typed snapshots remove **239 further lines**, reaching **101,575**, with
+2,453 fewer tokens and 6,196 fewer spelling bytes. Complete release, source-bound
+capture/restore/diagnostic checks and both full boot replays pass.
+Maintained Rust needs another **1,576 lines removed** to reach 99,999. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -89,6 +92,31 @@ neither reduces source volume in the tested scopes. Its default mode does
 preserve packed byte accesses despite physically larger Rust structs. Corrode's
 specific packing omission is repairable; layout differences alone are not a
 correctness verdict. The independent-transpiler sections record these tests.
+
+## Live-typed snapshots (2026-10-21)
+
+Removing the separate stored CPU/PPU/SNES/DMA projection types and sharing complete
+RAM/SRAM diagnostic traversal saves **239 lines (101,814 -> 101,575)**. Existing
+live record types store snapshots; explicit partial restore preserves all 144
+ordered operations and original cache/CPU-flag normalization points. Existing
+sprite/counter records remain for exact diagnostic Debug output. Extra captured
+pointers/caches are inert and never followed, compared or restored. Dma.pad is
+uninitialized, so only its four initialized state fields are captured. Snapshot
+storage grows **7,824 bytes across three snapshots**. No live or serialized layout
+changes; verifier checkpoints invalidate through existing source fingerprints.
+
+All support/callers and 82 Rust files count. The 24 other cpu_infra functions are
+unchanged. Complete normal main release library/frontend and formatting pass.
+Ordinary DLL comparisons bind 15 source inputs and pass **512 capture/restore
+cases, 96 complete comparisons and 22,710 exact messages**. They cover every CPU
+flags byte in both emulation modes, SRAM tail preservation, pointer/history
+topology, untouched fields and brightness-cache validity. An earlier executable
+launch was denied and ran no cases; the authorized DLL checks are separate.
+Full boot any% **129712/0** and Speed Booster **148406/0** pass on final source
+`d7c1ddfdc819e388baad82ca4f277e807d976a845a3e7df179ac19713d0a1a6a`.
+Neither reaches credits; copy performance was not benchmarked. Durable source,
+component records and final main build/replay logs:
+`Local/sm-decomp-experiments/20261021/live-snapshots`.
 
 ## Shared native/SPC state transfers (2026-10-21)
 

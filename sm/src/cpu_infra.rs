@@ -59,50 +59,13 @@ crate::typed_struct! {
     pub struct Snapshot {
         pub audio: crate::audio_snapshot::AudioSnapshot;
         pub player: crate::audio_snapshot::PlayerSnapshot;
-        pub a, x, y, sp, dp, pc: u16;
-        pub k, db, flags: u8;
-        pub cpu_waiting, cpu_emulation, cpu_stopped, cpu_irq_pending, cpu_nmi_pending: bool;
-        pub video_clock: (u16, u16, u32);
-        pub interrupt_latches, interrupt_enables: (bool, bool, bool);
-        pub h_timer: u16;
-        pub snes_open_bus: u8;
-        pub input_control: (bool, bool, u16);
-        pub wram_port_address: u32;
-        pub dma_channels: [crate::types::DmaChannel; 8];
-        pub dma_timing: (u16, u32, bool);
-        pub arithmetic: (u8, u16, u16, u16);
-        pub vTimer: u16;
+        // Extra live fields are inert: never followed, restored or compared.
+        pub cpu: Cpu;
+        pub ppu: Ppu;
+        pub dma: Dma;
+        pub snes: Snes;
         pub ram: [u8; 131072];
-        pub vram: [u16; 32768];
         pub sram: [u8; 8192];
-        pub oam: [u16; 256];
-        pub high_oam: [u8; 32];
-        pub sprite: SpriteSnapshot;
-        pub counters: CounterSnapshot;
-        pub status_flags: [bool; 3];
-        pub mode7_matrix: [i16; 8];
-        pub mode7_flags: [bool; 5];
-        pub mosaic: ([bool; 4], u8, u8);
-        pub bgmode: (u8, bool, [bool; 4]);
-        pub bg_scroll: [(u16, u16); 4];
-        pub bg_address: [(bool, bool, u16, u16); 4];
-        pub screen_routing: ([u8; 2], [u8; 2], [[bool; 4]; 5]);
-        pub window_select: (u32, [(bool, bool, bool, bool, u8); 6]);
-        pub window_bounds: [u8; 4];
-        pub fixed_color: [u8; 3];
-        pub color_math: (bool, bool, [bool; 6]);
-        pub color_selection: (u8, u8, bool, bool);
-        pub display_geometry: [bool; 6];
-        pub brightness: u8;
-        pub forced_blank: bool;
-        pub cgram: [u16; 256];
-        pub write_latches: [u8; 3];
-        pub cgram_pointer: u8;
-        pub cgram_second_write: bool;
-        pub cgram_buffer, ppu1_open_bus, ppu2_open_bus: u8;
-        pub vram_read_buffer, vram_pointer, vram_increment: u16;
-        pub vram_increment_on_high: bool;
-        pub vram_remap_mode: u8;
         // Per-run observations, not emulated or serialized audio state.
         pub apu_upload_count: u32;
         pub apu_startup_upload: bool;
@@ -429,6 +392,59 @@ fn normalize_snapshot_ram(mine: &mut [u8; 0x20000], theirs: &mut [u8; 0x20000]) 
         }
     }
 }
+unsafe fn compare_snapshot_bytes(
+    mine: &[u8],
+    theirs: &[u8],
+    previous: &[u8],
+    header: *const c_char,
+    report_limit: i32,
+    odd_word_end: usize,
+    game: &mut Game,
+) {
+    if mine == theirs {
+        return;
+    }
+    game.g_fail = true;
+    fprintf(stderr, header, game.snes_frame_counter);
+    let mut failed = 0;
+    let mut i = 0;
+    while i < mine.len() {
+        if theirs[i] != mine[i] {
+            failed += 1;
+            if failed < report_limit {
+                if (i & 1 == 0 || i < odd_word_end) && theirs[i + 1] != mine[i + 1] {
+                    let word =
+                        |bytes: &[u8]| i32::from(u16::from_le_bytes([bytes[i], bytes[i + 1]]));
+                    fprintf(
+                        stderr,
+                        c"0x%.6X: %.4X != %.4X (%.4X)\n".as_ptr(),
+                        i as i32,
+                        word(mine),
+                        word(theirs),
+                        word(previous),
+                    );
+                    i += 1;
+                    failed += 1;
+                } else {
+                    fprintf(
+                        stderr,
+                        c"0x%.6X: %.2X != %.2X (%.2X)\n".as_ptr(),
+                        i as i32,
+                        mine[i] as i32,
+                        theirs[i] as i32,
+                        previous[i] as i32,
+                    );
+                }
+            }
+        }
+        i += 1;
+    }
+    if failed != 0 {
+        game.g_fail = true;
+    }
+    fprintf(stderr, c"  total of %d failed bytes\n".as_ptr(), failed);
+}
+
 unsafe fn VerifySnapshotsEq(
     b: *mut Snapshot,
     a: *mut Snapshot,
@@ -486,216 +502,152 @@ unsafe fn VerifySnapshotsEq(
     }
     // Keep every field comparison and diagnostic in its original order.
     macro_rules! compare_snapshot_fields {
-        ($($field:ident => $message:literal),* $(,)?) => {
-            $(if (*b).$field != (*a).$field {
+        ($($projection:expr => $message:literal),* $(,)?) => {
+            $(let mine = $projection(&(*b).ppu);
+                let theirs = $projection(&(*a).ppu);
+                if mine != theirs {
                 game.g_fail = true;
-                eprintln!($message, game.snes_frame_counter, (*b).$field, (*a).$field);
+                eprintln!($message, game.snes_frame_counter, mine, theirs);
             })*
         };
     }
     compare_snapshot_fields! {
-        status_flags => "@{}: PPU status flags (rangeOver, timeOver, evenFrame) compare failed: mine {:?} != theirs {:?}",
-    }
-    if ((*b).brightness, (*b).forced_blank) != ((*a).brightness, (*a).forced_blank) {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: INIDISP (brightness, forced blank) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter,
-            ((*b).brightness, (*b).forced_blank),
-            ((*a).brightness, (*a).forced_blank)
-        );
+        |ppu: &Ppu| [ppu.rangeOver, ppu.timeOver, ppu.evenFrame] => "@{}: PPU status flags (rangeOver, timeOver, evenFrame) compare failed: mine {:?} != theirs {:?}",
     }
     compare_snapshot_fields! {
-        display_geometry => "@{}: Display geometry (interlace, OBJ interlace, overscan, pseudo-hires, frame interlace, frame overscan) compare failed: mine {:?} != theirs {:?}",
-        color_selection => "@{}: CGWSEL (clip, prevent math, subscreen, direct color) compare failed: mine {:?} != theirs {:?}",
-        color_math => "@{}: CGADSUB (subtract, half, layer enables) compare failed: mine {:?} != theirs {:?}",
-        fixed_color => "@{}: Fixed color (R, G, B) compare failed: mine {:?} != theirs {:?}",
-        window_bounds => "@{}: Window boundaries (WH0, WH1, WH2, WH3) compare failed: mine {:?} != theirs {:?}",
-        window_select => "@{}: Window selection (raw, enables, inversion, logic) compare failed: mine {:?} != theirs {:?}",
-        screen_routing => "@{}: Screen routing (enables, windows, layer flags) compare failed: mine {:?} != theirs {:?}",
-        bg_address => "@{}: BG address (wide, high, tilemap, tile data) compare failed: mine {:?} != theirs {:?}",
-        bg_scroll => "@{}: BG scroll (horizontal, vertical) compare failed: mine {:?} != theirs {:?}",
-        bgmode => "@{}: BGMODE (mode, BG3 priority, tile sizes) compare failed: mine {:?} != theirs {:?}",
-        mosaic => "@{}: Mosaic (BG enables, size, start line) compare failed: mine {:?} != theirs {:?}",
-        mode7_flags => "@{}: Mode 7 flags (large field, character fill, X flip, Y flip, EXTBG) compare failed: mine {:?} != theirs {:?}",
-        mode7_matrix => "@{}: Mode 7 matrix compare failed: mine {:?} != theirs {:?}",
-        counters => "@{}: PPU counter compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| (ppu.brightness, ppu.forcedBlank) => "@{}: INIDISP (brightness, forced blank) compare failed: mine {:?} != theirs {:?}",
     }
-    if ((*b).ppu1_open_bus, (*b).ppu2_open_bus) != ((*a).ppu1_open_bus, (*a).ppu2_open_bus) {
+    compare_snapshot_fields! {
+        |ppu: &Ppu| [
+        ppu.interlace,
+        ppu.objInterlace,
+        ppu.overscan,
+        ppu.pseudoHires,
+        ppu.frameInterlace,
+        ppu.frameOverscan,
+    ] => "@{}: Display geometry (interlace, OBJ interlace, overscan, pseudo-hires, frame interlace, frame overscan) compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| (
+        ppu.clipMode,
+        ppu.preventMathMode,
+        ppu.addSubscreen,
+        ppu.directColor,
+    ) => "@{}: CGWSEL (clip, prevent math, subscreen, direct color) compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| (ppu.subtractColor, ppu.halfColor, ppu.mathEnabled) => "@{}: CGADSUB (subtract, half, layer enables) compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| [ppu.fixedColorR, ppu.fixedColorG, ppu.fixedColorB] => "@{}: Fixed color (R, G, B) compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| [
+        ppu.window1left,
+        ppu.window1right,
+        ppu.window2left,
+        ppu.window2right,
+    ] => "@{}: Window boundaries (WH0, WH1, WH2, WH3) compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| (
+        ppu.windowsel,
+        ppu.windowLayer.map(|w| {
+            (
+                w.window1enabled,
+                w.window2enabled,
+                w.window1inversed,
+                w.window2inversed,
+                w.maskLogic,
+            )
+        }),
+    ) => "@{}: Window selection (raw, enables, inversion, logic) compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| (
+        ppu.screenEnabled,
+        ppu.screenWindowed,
+        ppu.layer.map(|layer| {
+            [
+                layer.mainScreenEnabled,
+                layer.subScreenEnabled,
+                layer.mainScreenWindowed,
+                layer.subScreenWindowed,
+            ]
+        }),
+    ) => "@{}: Screen routing (enables, windows, layer flags) compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| ppu
+        .bgLayer
+        .map(|bg| (bg.tilemapWider, bg.tilemapHigher, bg.tilemapAdr, bg.tileAdr)) => "@{}: BG address (wide, high, tilemap, tile data) compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| ppu.bgLayer.map(|bg| (bg.hScroll, bg.vScroll)) => "@{}: BG scroll (horizontal, vertical) compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| (ppu.mode, ppu.bg3priority, ppu.bgLayer.map(|bg| bg.bigTiles)) => "@{}: BGMODE (mode, BG3 priority, tile sizes) compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| (
+        ppu.bgLayer.map(|bg| bg.mosaicEnabled),
+        ppu.mosaicSize,
+        ppu.mosaicStartLine,
+    ) => "@{}: Mosaic (BG enables, size, start line) compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| [
+        ppu.m7largeField,
+        ppu.m7charFill,
+        ppu.m7xFlip,
+        ppu.m7yFlip,
+        ppu.m7extBg,
+    ] => "@{}: Mode 7 flags (large field, character fill, X flip, Y flip, EXTBG) compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| ppu.m7matrix => "@{}: Mode 7 matrix compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| CounterSnapshot {
+        horizontal: ppu.hCount,
+        vertical: ppu.vCount,
+        horizontal_second_byte: ppu.hCountSecond,
+        vertical_second_byte: ppu.vCountSecond,
+        latched: ppu.countersLatched,
+    } => "@{}: PPU counter compare failed: mine {:?} != theirs {:?}",
+    }
+    if ((*b).ppu.ppu1openBus, (*b).ppu.ppu2openBus) != ((*a).ppu.ppu1openBus, (*a).ppu.ppu2openBus)
+    {
         game.g_fail = true;
         eprintln!(
             "@{}: PPU open bus compare failed: mine {:02X}/{:02X} != theirs {:02X}/{:02X}",
             game.snes_frame_counter,
-            (*b).ppu1_open_bus,
-            (*b).ppu2_open_bus,
-            (*a).ppu1_open_bus,
-            (*a).ppu2_open_bus
-        );
-    }
-    let mine_cgram_port = (
-        (*b).cgram_pointer,
-        (*b).cgram_second_write,
-        (*b).cgram_buffer,
-    );
-    let their_cgram_port = (
-        (*a).cgram_pointer,
-        (*a).cgram_second_write,
-        (*a).cgram_buffer,
-    );
-    if mine_cgram_port != their_cgram_port {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: CGRAM port (address, second byte, buffer) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter, mine_cgram_port, their_cgram_port
-        );
-    }
-    let mine_vram_port = (
-        (*b).vram_pointer,
-        (*b).vram_increment,
-        (*b).vram_increment_on_high,
-        (*b).vram_remap_mode,
-    );
-    let their_vram_port = (
-        (*a).vram_pointer,
-        (*a).vram_increment,
-        (*a).vram_increment_on_high,
-        (*a).vram_remap_mode,
-    );
-    if mine_vram_port != their_vram_port {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: VRAM port (address, increment, high, remap) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter, mine_vram_port, their_vram_port
+            (*b).ppu.ppu1openBus,
+            (*b).ppu.ppu2openBus,
+            (*a).ppu.ppu1openBus,
+            (*a).ppu.ppu2openBus
         );
     }
     compare_snapshot_fields! {
-        vram_read_buffer => "@{}: VRAM read buffer compare failed: mine ${:04X} != theirs ${:04X}",
-        write_latches => "@{}: PPU write latch compare failed (scrollPrev, scrollPrev2, m7prev): mine {:?} != theirs {:?}",
+        |ppu: &Ppu| (ppu.cgramPointer, ppu.cgramSecondWrite, ppu.cgramBuffer) => "@{}: CGRAM port (address, second byte, buffer) compare failed: mine {:?} != theirs {:?}",
+        |ppu: &Ppu| (ppu.vramPointer, ppu.vramIncrement, ppu.vramIncrementOnHigh, ppu.vramRemapMode) => "@{}: VRAM port (address, increment, high, remap) compare failed: mine {:?} != theirs {:?}",
     }
-    if (*b).cgram != (*a).cgram {
+    compare_snapshot_fields! {
+        |ppu: &Ppu| ppu.vramReadBuffer => "@{}: VRAM read buffer compare failed: mine ${:04X} != theirs ${:04X}",
+        |ppu: &Ppu| [
+        ppu.scrollPrev,
+        ppu.scrollPrev2,
+        ppu.m7prev,
+    ] => "@{}: PPU write latch compare failed (scrollPrev, scrollPrev2, m7prev): mine {:?} != theirs {:?}",
+    }
+    if (*b).ppu.cgram != (*a).ppu.cgram {
         game.g_fail = true;
         eprintln!(
             "@{}: CGRAM compare failed (mine != theirs)",
             game.snes_frame_counter
         );
-        for (index, (&mine, &theirs)) in (*b).cgram.iter().zip(&(*a).cgram).enumerate() {
+        for (index, (&mine, &theirs)) in (*b).ppu.cgram.iter().zip(&(*a).ppu.cgram).enumerate() {
             if mine != theirs {
                 eprintln!("CGRAM ${index:03X}: ${mine:04X} != ${theirs:04X}");
             }
         }
     }
     normalize_snapshot_ram(&mut (*b).ram, &mut (*a).ram);
+    compare_snapshot_bytes(
+        &(*b).ram,
+        &(*a).ram,
+        &(*prev).ram,
+        c"@%d: Memory compare failed (mine != theirs, prev):\n".as_ptr(),
+        256,
+        0x10000,
+        game,
+    );
+    compare_snapshot_bytes(
+        &(*b).sram,
+        &(*a).sram,
+        &(*prev).sram,
+        c"@%d: SRAM compare failed (mine != theirs, prev):\n".as_ptr(),
+        128,
+        0,
+        game,
+    );
     if memcmp(
-        &raw mut (*b).ram as *mut u8 as *const c_void,
-        &raw mut (*a).ram as *mut u8 as *const c_void,
-        0x20000i32 as size_t,
-    ) != 0
-    {
-        game.g_fail = true_0 != 0;
-        fprintf(
-            stderr,
-            c"@%d: Memory compare failed (mine != theirs, prev):\n".as_ptr(),
-            game.snes_frame_counter,
-        );
-        let mut j: i32 = 0;
-        let mut i: size_t = 0 as size_t;
-        while i < 0x20000i32 as size_t {
-            if (*a).ram[i as usize] as i32 != (*b).ram[i as usize] as i32 {
-                j += 1;
-                if j < 256 {
-                    if (i & 1 as size_t == 0 as size_t || i < 0x10000i32 as size_t)
-                        && (*a).ram[i.wrapping_add(1 as size_t) as usize] as i32
-                            != (*b).ram[i.wrapping_add(1 as size_t) as usize] as i32
-                    {
-                        let read_word = |ram: &[u8; 0x20000]| {
-                            i32::from(u16::from_le_bytes([ram[i as usize], ram[i as usize + 1]]))
-                        };
-                        fprintf(
-                            stderr,
-                            c"0x%.6X: %.4X != %.4X (%.4X)\n".as_ptr(),
-                            i as i32,
-                            read_word(&(*b).ram),
-                            read_word(&(*a).ram),
-                            read_word(&(*prev).ram),
-                        );
-                        i = i.wrapping_add(1);
-                        j += 1;
-                    } else {
-                        fprintf(
-                            stderr,
-                            c"0x%.6X: %.2X != %.2X (%.2X)\n".as_ptr(),
-                            i as i32,
-                            (*b).ram[i as usize] as i32,
-                            (*a).ram[i as usize] as i32,
-                            (*prev).ram[i as usize] as i32,
-                        );
-                    }
-                }
-            }
-            i = i.wrapping_add(1);
-        }
-        if j != 0 {
-            game.g_fail = true_0 != 0;
-        }
-        fprintf(stderr, c"  total of %d failed bytes\n".as_ptr(), j);
-    }
-    if memcmp(
-        &raw mut (*b).sram as *mut u8 as *const c_void,
-        &raw mut (*a).sram as *mut u8 as *const c_void,
-        0x2000 as size_t,
-    ) != 0
-    {
-        game.g_fail = true_0 != 0;
-        fprintf(
-            stderr,
-            c"@%d: SRAM compare failed (mine != theirs, prev):\n".as_ptr(),
-            game.snes_frame_counter,
-        );
-        let mut j_0: i32 = 0;
-        let mut i_0: size_t = 0 as size_t;
-        while i_0 < 0x2000 as size_t {
-            if (*a).sram[i_0 as usize] as i32 != (*b).sram[i_0 as usize] as i32 {
-                j_0 += 1;
-                if j_0 < 128 {
-                    if i_0 & 1 as size_t == 0 as size_t
-                        && (*a).sram[i_0.wrapping_add(1 as size_t) as usize] as i32
-                            != (*b).sram[i_0.wrapping_add(1 as size_t) as usize] as i32
-                    {
-                        fprintf(
-                            stderr,
-                            c"0x%.6X: %.4X != %.4X (%.4X)\n".as_ptr(),
-                            i_0 as i32,
-                            *((&raw mut (*b).sram as *mut u8).offset(i_0 as isize) as *mut u16)
-                                as i32,
-                            *((&raw mut (*a).sram as *mut u8).offset(i_0 as isize) as *mut u16)
-                                as i32,
-                            *((&raw mut (*prev).sram as *mut u8).offset(i_0 as isize) as *mut u16)
-                                as i32,
-                        );
-                        i_0 = i_0.wrapping_add(1);
-                        j_0 += 1;
-                    } else {
-                        fprintf(
-                            stderr,
-                            c"0x%.6X: %.2X != %.2X (%.2X)\n".as_ptr(),
-                            i_0 as i32,
-                            (*b).sram[i_0 as usize] as i32,
-                            (*a).sram[i_0 as usize] as i32,
-                            (*prev).sram[i_0 as usize] as i32,
-                        );
-                    }
-                }
-            }
-            i_0 = i_0.wrapping_add(1);
-        }
-        if j_0 != 0 {
-            game.g_fail = true_0 != 0;
-        }
-        fprintf(stderr, c"  total of %d failed bytes\n".as_ptr(), j_0);
-    }
-    if memcmp(
-        &raw mut (*b).vram as *mut u16 as *const c_void,
-        &raw mut (*a).vram as *mut u16 as *const c_void,
+        &raw mut (*b).ppu.vram as *mut u16 as *const c_void,
+        &raw mut (*a).ppu.vram as *mut u16 as *const c_void,
         (size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
     ) != 0
     {
@@ -707,14 +659,14 @@ unsafe fn VerifySnapshotsEq(
         );
         let mut j_1: size_t = 0 as size_t;
         for i_1 in 0usize..32768 {
-            if (*a).vram[i_1 as usize] as i32 != (*b).vram[i_1 as usize] as i32 {
+            if (*a).ppu.vram[i_1 as usize] as i32 != (*b).ppu.vram[i_1 as usize] as i32 {
                 fprintf(
                     stderr,
                     c"0x%.6X: %.4X != %.4X (%.4X)\n".as_ptr(),
                     i_1 as i32,
-                    (*b).vram[i_1 as usize] as i32,
-                    (*a).vram[i_1 as usize] as i32,
-                    (*prev).vram[i_1 as usize] as i32,
+                    (*b).ppu.vram[i_1 as usize] as i32,
+                    (*a).ppu.vram[i_1 as usize] as i32,
+                    (*prev).ppu.vram[i_1 as usize] as i32,
                 );
                 game.g_fail = true_0 != 0;
                 j_1 = j_1.wrapping_add(1);
@@ -724,22 +676,24 @@ unsafe fn VerifySnapshotsEq(
             }
         }
     }
-    if (*b).oam != (*a).oam || (*b).high_oam != (*a).high_oam {
+    if (*b).ppu.oam != (*a).ppu.oam || (*b).ppu.highOam != (*a).ppu.highOam {
         game.g_fail = true;
         eprintln!("@{}: OAM memory compare failed", game.snes_frame_counter);
         let low = (*b)
+            .ppu
             .oam
             .iter()
-            .zip(&(*a).oam)
-            .zip(&(*prev).oam)
+            .zip(&(*a).ppu.oam)
+            .zip(&(*prev).ppu.oam)
             .enumerate()
             .filter(|(_, ((mine, theirs), _))| mine != theirs)
             .map(|(index, ((mine, theirs), previous))| (index * 2, *mine, *theirs, *previous));
         let high = (*b)
-            .high_oam
+            .ppu
+            .highOam
             .iter()
-            .zip(&(*a).high_oam)
-            .zip(&(*prev).high_oam)
+            .zip(&(*a).ppu.highOam)
+            .zip(&(*prev).ppu.highOam)
             .enumerate()
             .filter(|(_, ((mine, theirs), _))| mine != theirs)
             .map(|(index, ((mine, theirs), previous))| {
@@ -755,154 +709,7 @@ unsafe fn VerifySnapshotsEq(
         }
     }
     compare_snapshot_fields! {
-        sprite => "@{}: Sprite state compare failed: mine {:?} != theirs {:?}",
-    }
-}
-// Snapshot storage is separate from the live emulator allocations. Narrow
-// borrows let the compiler retain that distinction across the bulk copies.
-unsafe fn MakeSnapshot(s: &mut Snapshot, snes: &Snes, c: &Cpu, player: *mut SpcPlayer) {
-    (*s).player.capture(player);
-    (*s).audio.capture(snes);
-    (*s).write_latches = [
-        (*(*snes).ppu).scrollPrev,
-        (*(*snes).ppu).scrollPrev2,
-        (*(*snes).ppu).m7prev,
-    ];
-    (*s).cgram = (*(*snes).ppu).cgram;
-    (*s).cgram_pointer = (*(*snes).ppu).cgramPointer;
-    (*s).cgram_second_write = (*(*snes).ppu).cgramSecondWrite;
-    (*s).cgram_buffer = (*(*snes).ppu).cgramBuffer;
-    (*s).ppu1_open_bus = (*(*snes).ppu).ppu1openBus;
-    (*s).ppu2_open_bus = (*(*snes).ppu).ppu2openBus;
-    (*s).vram_read_buffer = (*(*snes).ppu).vramReadBuffer;
-    (*s).vram_pointer = (*(*snes).ppu).vramPointer;
-    (*s).vram_increment = (*(*snes).ppu).vramIncrement;
-    (*s).vram_increment_on_high = (*(*snes).ppu).vramIncrementOnHigh;
-    (*s).vram_remap_mode = (*(*snes).ppu).vramRemapMode;
-    (*s).a = (*c).a;
-    (*s).x = (*c).x;
-    (*s).y = (*c).y;
-    (*s).sp = (*c).sp;
-    (*s).dp = (*c).dp;
-    (*s).db = (*c).db;
-    (*s).pc = (*c).pc;
-    (*s).k = (*c).k;
-    (*s).flags = cpu_getFlags(&*c);
-    (*s).cpu_waiting = (*c).waiting;
-    (*s).cpu_emulation = (*c).e;
-    (*s).cpu_stopped = (*c).stopped;
-    (*s).cpu_irq_pending = (*c).irqWanted;
-    (*s).cpu_nmi_pending = (*c).nmiWanted;
-    (*s).video_clock = (snes.hPos, snes.vPos, snes.frames);
-    (*s).interrupt_latches = (snes.inNmi, snes.inIrq, snes.inVblank);
-    (*s).interrupt_enables = (snes.hIrqEnabled, snes.vIrqEnabled, snes.nmiEnabled);
-    (*s).h_timer = snes.hTimer;
-    (*s).snes_open_bus = snes.openBus;
-    (*s).input_control = (snes.ppuLatch, snes.autoJoyRead, snes.autoJoyTimer);
-    (*s).wram_port_address = snes.ramAdr;
-    let dma = snes.dma;
-    (*s).dma_channels = (*dma).channel;
-    (*s).dma_timing = ((*dma).hdmaTimer, (*dma).dmaTimer, (*dma).dmaBusy);
-    (*s).arithmetic = (
-        snes.multiplyA,
-        snes.multiplyResult,
-        snes.divideA,
-        snes.divideResult,
-    );
-    (*s).vTimer = (*snes).vTimer;
-    memcpy(
-        &raw mut (*s).ram as *mut u8 as *mut c_void,
-        (*snes).ram as *const c_void,
-        0x20000i32 as size_t,
-    );
-    memcpy(
-        &raw mut (*s).sram as *mut u8 as *mut c_void,
-        (*(*snes).cart).ram as *const c_void,
-        (*(*snes).cart).ramSize as size_t,
-    );
-    memcpy(
-        &raw mut (*s).vram as *mut u16 as *mut c_void,
-        &raw mut (*(*snes).ppu).vram as *mut u16 as *const c_void,
-        (size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
-    );
-    let ppu = &*(*snes).ppu;
-    (*s).brightness = ppu.brightness;
-    (*s).forced_blank = ppu.forcedBlank;
-    (*s).fixed_color = [ppu.fixedColorR, ppu.fixedColorG, ppu.fixedColorB];
-    (*s).color_math = (ppu.subtractColor, ppu.halfColor, ppu.mathEnabled);
-    (*s).display_geometry = [
-        ppu.interlace,
-        ppu.objInterlace,
-        ppu.overscan,
-        ppu.pseudoHires,
-        ppu.frameInterlace,
-        ppu.frameOverscan,
-    ];
-    (*s).color_selection = (
-        ppu.clipMode,
-        ppu.preventMathMode,
-        ppu.addSubscreen,
-        ppu.directColor,
-    );
-    (*s).window_bounds = [
-        ppu.window1left,
-        ppu.window1right,
-        ppu.window2left,
-        ppu.window2right,
-    ];
-    (*s).window_select = (
-        ppu.windowsel,
-        ppu.windowLayer.map(|w| {
-            (
-                w.window1enabled,
-                w.window2enabled,
-                w.window1inversed,
-                w.window2inversed,
-                w.maskLogic,
-            )
-        }),
-    );
-    (*s).screen_routing = (
-        ppu.screenEnabled,
-        ppu.screenWindowed,
-        ppu.layer.map(|layer| {
-            [
-                layer.mainScreenEnabled,
-                layer.subScreenEnabled,
-                layer.mainScreenWindowed,
-                layer.subScreenWindowed,
-            ]
-        }),
-    );
-    (*s).bg_address = ppu
-        .bgLayer
-        .map(|bg| (bg.tilemapWider, bg.tilemapHigher, bg.tilemapAdr, bg.tileAdr));
-    (*s).bg_scroll = ppu.bgLayer.map(|bg| (bg.hScroll, bg.vScroll));
-    (*s).bgmode = (ppu.mode, ppu.bg3priority, ppu.bgLayer.map(|bg| bg.bigTiles));
-    (*s).mosaic = (
-        ppu.bgLayer.map(|bg| bg.mosaicEnabled),
-        ppu.mosaicSize,
-        ppu.mosaicStartLine,
-    );
-    (*s).mode7_matrix = ppu.m7matrix;
-    (*s).mode7_flags = [
-        ppu.m7largeField,
-        ppu.m7charFill,
-        ppu.m7xFlip,
-        ppu.m7yFlip,
-        ppu.m7extBg,
-    ];
-    (*s).status_flags = [ppu.rangeOver, ppu.timeOver, ppu.evenFrame];
-    (*s).counters = CounterSnapshot {
-        horizontal: ppu.hCount,
-        vertical: ppu.vCount,
-        horizontal_second_byte: ppu.hCountSecond,
-        vertical_second_byte: ppu.vCountSecond,
-        latched: ppu.countersLatched,
-    };
-    (*s).oam = ppu.oam;
-    (*s).high_oam = ppu.highOam;
-    (*s).sprite = SpriteSnapshot {
+        |ppu: &Ppu| SpriteSnapshot {
         address: ppu.oamAdr,
         written_address: ppu.oamAdrWritten,
         high_table: ppu.oamInHigh,
@@ -914,149 +721,103 @@ unsafe fn MakeSnapshot(s: &mut Snapshot, snes: &Snes, c: &Cpu, player: *mut SpcP
         tile_address_2: ppu.objTileAdr2,
         size: ppu.objSize,
         legacy_pixel_prefix: ppu.objPixelBufferXX[..19].try_into().unwrap(),
+    } => "@{}: Sprite state compare failed: mine {:?} != theirs {:?}",
+    }
+}
+// Snapshot storage is separate from the live emulator allocations. Narrow
+// borrows let the compiler retain that distinction across the bulk copies.
+unsafe fn MakeSnapshot(s: &mut Snapshot, snes: &Snes, c: &Cpu, player: *mut SpcPlayer) {
+    s.player.capture(player);
+    s.audio.capture(snes);
+    s.ppu = *snes.ppu;
+    s.cpu = *c;
+    s.snes = *snes;
+    // Dma.pad is not initialized by dma_reset; capture only its state fields.
+    s.dma.channel = (*snes.dma).channel;
+    s.dma.hdmaTimer = (*snes.dma).hdmaTimer;
+    s.dma.dmaTimer = (*snes.dma).dmaTimer;
+    s.dma.dmaBusy = (*snes.dma).dmaBusy;
+    memcpy(s.ram.as_mut_ptr().cast(), snes.ram.cast(), 0x20000);
+    memcpy(
+        s.sram.as_mut_ptr().cast(),
+        (*snes.cart).ram.cast(),
+        (*snes.cart).ramSize as size_t,
+    );
+}
+// This field list preserves the historical partial restore and its phases.
+// Snapshot pointers, CPU counters and renderer caches remain inert copies.
+macro_rules! copy_snapshot_fields {
+    ($target:expr, $source:expr; $($field:ident),* $(,)?) => {
+        $($target.$field = $source.$field;)*
     };
 }
 unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
-    (*s).audio.restore(snes);
-    let ppu = &mut *(*snes).ppu;
-    ppu.brightness = (*s).brightness;
-    ppu.forcedBlank = (*s).forced_blank;
-    [ppu.fixedColorR, ppu.fixedColorG, ppu.fixedColorB] = (*s).fixed_color;
-    (ppu.subtractColor, ppu.halfColor, ppu.mathEnabled) = (*s).color_math;
-    [
-        ppu.interlace,
-        ppu.objInterlace,
-        ppu.overscan,
-        ppu.pseudoHires,
-        ppu.frameInterlace,
-        ppu.frameOverscan,
-    ] = (*s).display_geometry;
-    (
-        ppu.clipMode,
-        ppu.preventMathMode,
-        ppu.addSubscreen,
-        ppu.directColor,
-    ) = (*s).color_selection;
-    [
-        ppu.window1left,
-        ppu.window1right,
-        ppu.window2left,
-        ppu.window2right,
-    ] = (*s).window_bounds;
-    let (raw, windows) = (*s).window_select;
-    ppu.windowsel = raw;
-    for (w, (enabled1, enabled2, inverted1, inverted2, logic)) in
-        ppu.windowLayer.iter_mut().zip(windows)
-    {
-        w.window1enabled = enabled1;
-        w.window2enabled = enabled2;
-        w.window1inversed = inverted1;
-        w.window2inversed = inverted2;
-        w.maskLogic = logic;
+    s.audio.restore(snes);
+    let ppu = &mut *snes.ppu;
+    copy_snapshot_fields! {ppu, s.ppu;
+        brightness, forcedBlank, fixedColorR, fixedColorG, fixedColorB,
+        subtractColor, halfColor, mathEnabled, interlace, objInterlace,
+        overscan, pseudoHires, frameInterlace, frameOverscan,
+        clipMode, preventMathMode, addSubscreen, directColor,
+        window1left, window1right, window2left, window2right, windowsel,
     }
-    let (enabled, windowed, layers) = (*s).screen_routing;
-    ppu.screenEnabled = enabled;
-    ppu.screenWindowed = windowed;
-    for (layer, flags) in ppu.layer.iter_mut().zip(layers) {
-        [
-            layer.mainScreenEnabled,
-            layer.subScreenEnabled,
-            layer.mainScreenWindowed,
-            layer.subScreenWindowed,
-        ] = flags;
+    for (w, saved) in ppu.windowLayer.iter_mut().zip(&s.ppu.windowLayer) {
+        copy_snapshot_fields! {w, saved;
+            window1enabled, window2enabled, window1inversed, window2inversed, maskLogic,
+        }
     }
-    for (bg, (wide, high, tilemap, tiles)) in ppu.bgLayer.iter_mut().zip((*s).bg_address) {
-        bg.tilemapWider = wide;
-        bg.tilemapHigher = high;
-        bg.tilemapAdr = tilemap;
-        bg.tileAdr = tiles;
+    copy_snapshot_fields! {ppu, s.ppu; screenEnabled, screenWindowed}
+    for (layer, saved) in ppu.layer.iter_mut().zip(&s.ppu.layer) {
+        copy_snapshot_fields! {layer, saved;
+            mainScreenEnabled, subScreenEnabled, mainScreenWindowed, subScreenWindowed,
+        }
     }
-    for (bg, (horizontal, vertical)) in ppu.bgLayer.iter_mut().zip((*s).bg_scroll) {
-        bg.hScroll = horizontal;
-        bg.vScroll = vertical;
+    for (bg, saved) in ppu.bgLayer.iter_mut().zip(&s.ppu.bgLayer) {
+        copy_snapshot_fields! {bg, saved; tilemapWider, tilemapHigher, tilemapAdr, tileAdr}
     }
-    let (mode, bg3_priority, big_tiles) = (*s).bgmode;
-    ppu.mode = mode;
-    ppu.bg3priority = bg3_priority;
-    for (bg, big_tiles) in ppu.bgLayer.iter_mut().zip(big_tiles) {
-        bg.bigTiles = big_tiles;
+    for (bg, saved) in ppu.bgLayer.iter_mut().zip(&s.ppu.bgLayer) {
+        copy_snapshot_fields! {bg, saved; hScroll, vScroll}
     }
-    let (enabled, size, start_line) = (*s).mosaic;
-    for (bg, enabled) in ppu.bgLayer.iter_mut().zip(enabled) {
-        bg.mosaicEnabled = enabled;
+    copy_snapshot_fields! {ppu, s.ppu; mode, bg3priority}
+    for (bg, saved) in ppu.bgLayer.iter_mut().zip(&s.ppu.bgLayer) {
+        bg.bigTiles = saved.bigTiles;
     }
-    ppu.mosaicSize = size;
-    ppu.mosaicStartLine = start_line;
+    for (bg, saved) in ppu.bgLayer.iter_mut().zip(&s.ppu.bgLayer) {
+        bg.mosaicEnabled = saved.mosaicEnabled;
+    }
+    copy_snapshot_fields! {ppu, s.ppu; mosaicSize, mosaicStartLine}
     if !brightness_cache_is_valid(ppu) {
         ppu.lastBrightnessMult = 255;
     }
-    ppu.m7matrix = (*s).mode7_matrix;
-    [
-        ppu.m7largeField,
-        ppu.m7charFill,
-        ppu.m7xFlip,
-        ppu.m7yFlip,
-        ppu.m7extBg,
-    ] = (*s).mode7_flags;
-    [ppu.rangeOver, ppu.timeOver, ppu.evenFrame] = (*s).status_flags;
-    [ppu.scrollPrev, ppu.scrollPrev2, ppu.m7prev] = (*s).write_latches;
-    crate::set_fields! {[(*(*snes).ppu)]; cgram = (*s).cgram, cgramPointer = (*s).cgram_pointer,
-    cgramSecondWrite = (*s).cgram_second_write, cgramBuffer = (*s).cgram_buffer,
-    ppu1openBus = (*s).ppu1_open_bus, ppu2openBus = (*s).ppu2_open_bus,
-    vramReadBuffer = (*s).vram_read_buffer, vramPointer = (*s).vram_pointer,
-    vramIncrement = (*s).vram_increment, vramIncrementOnHigh = (*s).vram_increment_on_high,
-    vramRemapMode = (*s).vram_remap_mode, };
-    crate::set_fields! {[(*c)]; a = (*s).a, x = (*s).x, y = (*s).y, sp = (*s).sp, dp = (*s).dp,
-    db = (*s).db, pc = (*s).pc, k = (*s).k, };
-    (*snes).vTimer = (*s).vTimer;
-    (*c).e = (*s).cpu_emulation;
-    (*c).stopped = (*s).cpu_stopped;
-    (*c).irqWanted = (*s).cpu_irq_pending;
-    (*c).nmiWanted = (*s).cpu_nmi_pending;
-    cpu_setFlags((*s).flags, &mut *c);
-    (*c).waiting = (*s).cpu_waiting;
-    (snes.hPos, snes.vPos, snes.frames) = (*s).video_clock;
-    (snes.inNmi, snes.inIrq, snes.inVblank) = (*s).interrupt_latches;
-    (snes.hIrqEnabled, snes.vIrqEnabled, snes.nmiEnabled) = (*s).interrupt_enables;
-    snes.hTimer = (*s).h_timer;
-    snes.openBus = (*s).snes_open_bus;
-    (snes.ppuLatch, snes.autoJoyRead, snes.autoJoyTimer) = (*s).input_control;
-    snes.ramAdr = (*s).wram_port_address;
-    let dma = snes.dma;
-    (*dma).channel = (*s).dma_channels;
-    ((*dma).hdmaTimer, (*dma).dmaTimer, (*dma).dmaBusy) = (*s).dma_timing;
-    (
-        snes.multiplyA,
-        snes.multiplyResult,
-        snes.divideA,
-        snes.divideResult,
-    ) = (*s).arithmetic;
-    memcpy(
-        (*snes).ram as *mut c_void,
-        &raw const (*s).ram as *const u8 as *const c_void,
-        0x20000i32 as size_t,
-    );
-    memcpy(
-        (*(*snes).cart).ram as *mut c_void,
-        &raw const (*s).sram as *const u8 as *const c_void,
-        0x2000 as size_t,
-    );
-    memcpy(
-        &raw mut (*(*snes).ppu).vram as *mut u16 as *mut c_void,
-        &raw const (*s).vram as *const u16 as *const c_void,
-        (size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
-    );
-    let ppu = &mut *(*snes).ppu;
-    crate::set_fields! {[ppu]; hCount = (*s).counters.horizontal,
-    vCount = (*s).counters.vertical, hCountSecond = (*s).counters.horizontal_second_byte,
-    vCountSecond = (*s).counters.vertical_second_byte,
-    countersLatched = (*s).counters.latched, oam = (*s).oam, highOam = (*s).high_oam,
-    oamAdr = (*s).sprite.address, oamAdrWritten = (*s).sprite.written_address,
-    oamInHigh = (*s).sprite.high_table, oamInHighWritten = (*s).sprite.written_high_table,
-    oamSecondWrite = (*s).sprite.second_byte, oamBuffer = (*s).sprite.buffer,
-    objPriority = (*s).sprite.priority_rotation, objTileAdr1 = (*s).sprite.tile_address_1,
-    objTileAdr2 = (*s).sprite.tile_address_2, objSize = (*s).sprite.size, };
-    ppu.objPixelBufferXX[..19].copy_from_slice(&(*s).sprite.legacy_pixel_prefix);
+    copy_snapshot_fields! {ppu, s.ppu;
+        m7matrix, m7largeField, m7charFill, m7xFlip, m7yFlip, m7extBg,
+        rangeOver, timeOver, evenFrame, scrollPrev, scrollPrev2, m7prev,
+        cgram, cgramPointer, cgramSecondWrite, cgramBuffer, ppu1openBus, ppu2openBus,
+        vramReadBuffer, vramPointer, vramIncrement, vramIncrementOnHigh, vramRemapMode,
+    }
+    copy_snapshot_fields! {c, s.cpu; a, x, y, sp, dp, db, pc, k}
+    snes.vTimer = s.snes.vTimer;
+    copy_snapshot_fields! {c, s.cpu; e, stopped, irqWanted, nmiWanted}
+    cpu_setFlags(cpu_getFlags(&s.cpu), c);
+    c.waiting = s.cpu.waiting;
+    copy_snapshot_fields! {snes, s.snes;
+        hPos, vPos, frames, inNmi, inIrq, inVblank,
+        hIrqEnabled, vIrqEnabled, nmiEnabled, hTimer, openBus,
+        ppuLatch, autoJoyRead, autoJoyTimer, ramAdr,
+    }
+    let dma = &mut *snes.dma;
+    copy_snapshot_fields! {dma, s.dma; channel, hdmaTimer, dmaTimer, dmaBusy}
+    copy_snapshot_fields! {snes, s.snes; multiplyA, multiplyResult, divideA, divideResult}
+    memcpy(snes.ram.cast(), s.ram.as_ptr().cast(), 0x20000);
+    memcpy((*snes.cart).ram.cast(), s.sram.as_ptr().cast(), 0x2000);
+    (*snes.ppu).vram = s.ppu.vram;
+    let ppu = &mut *snes.ppu;
+    copy_snapshot_fields! {ppu, s.ppu;
+        hCount, vCount, hCountSecond, vCountSecond, countersLatched,
+        oam, highOam, oamAdr, oamAdrWritten, oamInHigh, oamInHighWritten,
+        oamSecondWrite, oamBuffer, objPriority, objTileAdr1, objTileAdr2, objSize,
+    }
+    ppu.objPixelBufferXX[..19].copy_from_slice(&s.ppu.objPixelBufferXX[..19]);
 }
 pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut Game) -> i32 {
     let org_sp: u16 = (*game.g_cpu).sp;

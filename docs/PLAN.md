@@ -251,7 +251,9 @@ unused background cache stops updating, with save layout and g_ram unchanged.
 Shared native/SPC state transfers remove **230 more lines**, reaching **101,814**.
 All 330 compiled map rows, 1,040 complete differential cases and both full boot
 replays pass; the sequencer and DSP behavior outside those transfers is unchanged.
-Another **1,815 lines** are needed to reach 99,999;
+Live-typed snapshots and shared byte-memory diagnostics remove **239 more lines**,
+reaching **101,575**, with component checks and both full boot replays passing.
+Another **1,576 lines** are needed to reach 99,999;
 no remaining deletion budget or complete bank retirement is established.
 
 Component checks also found an inherited unaligned RAM reference in the
@@ -604,6 +606,24 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    or scope before repeating discovery. The regions and prior results below
    guide coverage, not boundaries that candidate replacements must preserve:
 
+   The complete synchronous tile-contact experiment is now implemented and
+   parked. A shared traversal/material owner grows 45 lines; adding shared
+   oriented grapple, Samus and enemy geometry yields only **68 lines removed**
+   from its complete 102,725-line input. All 22 changed/new files, support,
+   callers and registrations count. Formatting/source integrity pass; no build
+   or runtime check is claimed. Retained callback effects, live rereads and
+   actor-specific commit order consume most of the apparent sharing budget.
+   Source: Local/sm-decomp-experiments/20261021/ordered-tile-contact.
+   The separate tile-layout preflight found no new large common builder beyond
+   already shared word transfers; its distinct clipping, stream and queue
+   contracts are recorded in the sibling tile-layout-native report. No saving
+   is claimed. The audio-core dependency preflight likewise establishes no
+   adapter budget: alternate DSPs have differing KON timing and internal state
+   contracts. The sequencer's actual state-transfer replacement is adopted below.
+   Larger selected replacements now have component results; composing the
+   previously priced pointer-chain and residual-control-flow cohorts may proceed
+   after them, with fresh complete counts and validation rather than new scans.
+
    The current-derived translation experiments are complete as scoped above.
    Reuse their executable emission passes and C effect recognizers when
    examining another complete family; do not repeat raw expansion counts or
@@ -879,8 +899,30 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **1,815-line** gap; parked small drafts are not
+   replacement yet funds the **1,576-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
+
+   Live-typed snapshots remove **239 lines (101,814 -> 101,575)**, 2,453 tokens
+   and 6,196 spelling bytes. Existing Cpu/Ppu/Snes/Dma types replace separate
+   stored projections; explicit partial restore and diagnostic projections keep
+   the original field selection and order. RAM/SRAM diagnostics share traversal
+   while preserving their limits, word grouping and exact messages. Extra captured
+   pointers/caches are inert. Uninitialized Dma.pad is never read: only its four
+   initialized state fields are captured. Storage grows 2,608 bytes per snapshot,
+   **7,824 bytes total**; g_ram and legacy/checkpoint serialized formats remain.
+   All 144 ordered restore operations match; 24 other functions are unchanged.
+   Complete main release library/frontend, formatting and progress pass. Ordinary
+   source-bound DLL tests pass **512 capture/restore cases + 96 comparisons**,
+   including all CPU flag bytes in both emulation modes, partial SRAM tails,
+   allocation/history topology and **22,710 identical diagnostic messages**.
+   The earlier denied executable ran no cases and remains recorded separately.
+   Final full boot any% **129712/0** and Speed Booster **148406/0** pass with
+   normal rendering/audio, source fingerprint
+   `d7c1ddfdc819e388baad82ca4f277e807d976a845a3e7df179ac19713d0a1a6a`.
+   Neither reaches credits. Old verifier checkpoints invalidate through the
+   existing source fingerprint. Copy performance is unbenchmarked. Durable source,
+   component results and final main logs:
+   Local/sm-decomp-experiments/20261021/live-snapshots.
 
    The complete native/SPC state-transfer replacement removes **230 lines
    (102,044 -> 101,814)**, 2,559 tokens and 7,553 spelling bytes. Thirty-two
@@ -1508,7 +1550,15 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full integration: shared native/SPC state transfers pass clean full boot
+Latest full integration: live-typed snapshots pass clean full boot any%
+**129712/0** and Speed Booster **148406/0**, with normal rendering/audio and
+comparisons. Both use final source fingerprint
+`d7c1ddfdc819e388baad82ca4f277e807d976a845a3e7df179ac19713d0a1a6a`.
+The adopted cpu_infra exactly matches the source-bound component candidate,
+composed with the prior SPC/PPU changes. Neither reaches credits. Logs:
+Local/sm-decomp-experiments/20261021/live-snapshots.
+
+Previous full integration: shared native/SPC state transfers pass clean full boot
 any% **129712/0** and Speed Booster **148406/0**, with normal rendering/audio
 and comparisons. Both use final source fingerprint
 `a7d82ec0f552ff40614d7cba0bb195ef057a33c307c23b46da4899c879a4798f`.
@@ -1702,11 +1752,13 @@ nonnull callback tables, Samus pose sequences, the packed-sprite repair,
 shared gameplay imports, enemy callback ownership, native inflater, compound
 RAM updates, shared RAM/record metadata, alias declarations, native C-string
 literals, shared constant headers, native shader/presentation ownership and
-shared PPU pixel evaluation and native/SPC state transfers, maintained Rust is
-**101,814**, leaving **1,815** to
+shared PPU pixel evaluation, native/SPC state transfers and live-typed snapshots,
+maintained Rust is **101,575**, leaving **1,576** to
 reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 3317; cast lines 7594. Shared state transfers add one unsafe
+unsafe functions 3318; cast lines 7580. Snapshot diagnostics add one unsafe
+helper and remove 14 cast-containing lines while removing 239 total lines.
+Shared state transfers add one unsafe
 helper and remove six cast-containing lines while removing 230 total lines.
 Shared PPU evaluation removes nine unsafe
 declarations and 186 cast-containing lines. Shader/presentation ownership removes
