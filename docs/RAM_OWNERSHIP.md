@@ -463,8 +463,9 @@ or that deferred spawning has equivalent same-update execution order.
 
 Follow-up source audit at `0f98f559`, checked unchanged through `4c979503` for the
 cited gameplay and RAM metadata. This identifies ownership interactions, not
-complete writer/alias closure. The aim, flare, feedback, cancellation and drain/X-ray
-experiments below have bounded execution coverage; other findings are source evidence.
+complete writer/alias closure. The aim, flare, feedback, cancellation, drain/X-ray
+and protection experiments below have bounded execution coverage; other findings
+are source evidence.
 
 **Pending aim is a one-use handoff.** Normal-jump pose handling captures the
 current pose's direction with flag `0x8000`; moonwalk-turn handling captures the
@@ -521,7 +522,8 @@ would lose this communication.[^weaponphase][^drainrestriction]
 
 Projectile protection (`$18AC`) is independent of ordinary Samus invincibility
 and of each projectile's lifetime. Firing sets it to 10/20 after placement;
-individual release and `ResetProjectileData` do not clear it. Samus initialization's
+ordinary pool release and `ResetProjectileData` do not directly clear it. Accepted
+broad release indices can alias this field, and callbacks may change it. Samus initialization's
 `$0A02..$0E0B` workspace clear excludes it too. A suspended gameplay pass does not
 reach its normal countdown until the pass completes.[^beamlaunch][^missilelaunch]
 [^contact][^weapontimers][^resetslots][^samusinit]
@@ -809,6 +811,21 @@ global writer/alias closure, production runtime binding, remaining modes/trails/
 reset, named definition/motion interfaces and raw-address retirement remain open.
 Neither production promotion nor a complete price or saving is established.
 
+The subsequent **reset-stage** passes **89 targeted full-RAM comparisons**, with
+142 ordered observations and 22 matching failures. Its canonical pool reset
+retains fractions and auxiliary words while clearing other shot state and the
+counts/cooldown. Charge, flare, glow and protection are not directly cleared. A
+checked environment adapter resets Power Bomb, HUD and echo state, then handles
+suit-target palette and a live reread of hyper state. Tests include callback
+changes, recursive reset/failure, both reset/release orders, firing-reset-firing
+and palette-reset-palette with one `Firing` value. The coordinator checked all
+115 library and 34 local compiled inputs and reviewed the result without rerunning
+it. Twenty-eight prior compiled files are unchanged; engine changes add three
+effect variants, with separate harness wiring. **The previous 3,427 suite was not
+rerun**, so the counts are separate. The preserved source is `player-projectiles/reset-stage`
+under the same experiment root. Palette execution and the remaining environment
+handoff are controlled; this is not runtime integration or complete owner closure.
+
 ### Aim capture, placement and expiry
 
 An isolated experiment against frozen `15589b48` executes the production bodies
@@ -1056,6 +1073,61 @@ phases and a full owner remain open. Reproduction:
 `Local/sm-decomp-experiments/20261022/encounter-restrictions`
 (`model.rs`, `prepare.py`, `build.py`, `check.py`, `result.json`, `RESEARCH.md`).
 
+### Samus projectile protection and suspension
+
+The pure `Protection` model names beam/missile grants, contact suppression and
+completion of a gameplay pass. It forbids unsafe code and needs no `Game` or RAM
+addresses. Grants replace the existing value: a beam's 10 can shorten a missile's
+20. Reservation, ammunition or placement rejection does not grant protection;
+failure after the grant preserves that already committed change. Protection is
+owned by Samus, not by the lifetime of an individual projectile.
+
+**345 full-RAM comparisons pass:** 87 contact cases, eight timer cases, 101 grant
+cases, 69 retention cases and 80 scheduler cases. The scheduler cases include
+**ten linked steps**. There are **931 ordered observations**, **61 matching
+failures** and **13 discriminating checks**. Actual beam/missile firing, contact,
+timer and gameplay-coordinator bodies execute; the candidate changes only the two
+grants, contact predicate and tail decrement. Actual release/reset/Samus
+initialization bodies remain unchanged on both sides.
+
+Contact first records its processing stage, then its protection gate prevents
+the projectile/bomb scan. It does not consume protection. Ordinary Samus damage
+invincibility is a separate value and does not replace this gate. Protection also
+suppresses bomb-jump contact. The unprotected damage path marks contact and applies
+damage/timers before the existing native assertion; the experiment replaces that
+abort with a controlled failure, so it supplies no playable reflected-damage route.
+[^contact][^beamlaunch][^missilelaunch]
+
+The real gameplay coordinator grants during the selected preparation callback,
+observes contact and can then suspend for an enemy message or PLM. Repeated yields
+do not regrant, repeat contact or tick protection. Resumption through completion
+ticks once at the existing tail. A value of one protects the earlier contact pass,
+then becomes zero; the next pass can initiate a bomb jump. Late callback writes
+are reread at the tick. The timer routine itself has no freeze gate; executing
+this scheduler with frozen state is a constructed case, not coverage of every
+frozen game mode.[^frame][^weapontimers]
+
+Ordinary pool release, projectile reset and Samus initialization retain protection
+in their own stores. Their callbacks may still overwrite it. **Five valid broad
+selector cases contradict unconditional release retention:** for example, `0x0D48`
+aliases its X-position clear to protection, while `0x0C44` aliases its preinstruction
+write there and stores `0xB169`. Odd variants normalize to the same addresses;
+another timer-clear alias is also checked. A typed ten-slot pool alone cannot
+close these legacy writers. They require the explicit authority transfer already
+defined for broad operations.[^resetslots][^samusinit]
+
+All **115 embedded library inputs** match `15589b48`, and **ten compiled local
+inputs** match exact hashes; the coordinator independently reviewed those inputs,
+the source substitutions and the result. The optimized DLL builds and passes.
+Placement, initialization, damage calculation, other firing/gameplay callbacks,
+message/PLM execution and palette output are controlled. Message rendering and
+the nested message/PLM implementations are not exercised by the scheduler test.
+Synthetic memory supplies the unused ROM pointer; no game ROM or movie is used.
+The small model still samples shared state through its adapter at each operation;
+persistent ownership, generic aliases, restoration and whole-game coverage remain
+open. Reproduction: `Local/sm-decomp-experiments/20261022/projectile-protection`
+(`protection.rs`, `prepare.py`, `build.py`, `check.py`, `result.json`, `RESEARCH.md`).
+
 ### Explicit gameplay continuation
 
 The implementation now lives in [gameplay.rs](../sm/src/game/gameplay.rs).
@@ -1210,8 +1282,9 @@ its own exercised checks.
 Continue the same whole-projectile draft through Samus weapon control. Typed aim,
 launch, flare, feedback and cancellation are integrated in the reviewed draft.
 Integrate the named drain outcomes into existing weapon and movement state. Exercise remaining
-cancellation producers and protection across suspension/reset using real producers
-and consumers. Close remaining shared palette/sound writers and runtime transfers.
+cancellation producers. Integrate Samus protection with its grant, contact and
+completed-pass consumers, preserving broad alias transfers and reset distinctions.
+Close remaining shared palette/sound writers and runtime transfers.
 These are new coverage questions,
 not additional pass counts for the existing firing or launch experiments.
 

@@ -1709,6 +1709,17 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    allocation synthetic; no ROM, movie or production ownership. Apply outcomes to
    existing Samus/weapon state, never a second restriction authority. Other encounter
    phases, protection across suspension/reset and writer/runtime closure remain open.
+   The protection experiment at 20261022/projectile-protection passes 345 full-RAM
+   comparisons, 931 ordered observations, 61 matching failures and 13 discriminating
+   checks. Actual grants/contact/timers/gameplay scheduling show overwrite grants,
+   bomb-contact suppression, ten linked message/PLM suspension steps and one tick
+   on completed gameplay. Release/reset/init stay unchanged: ordinary direct writes
+   retain protection, but callbacks and five valid broad release aliases can change
+   it. The pure model forbids unsafe code; all 115 library and ten local compiled
+   inputs are checked and independently reviewed. Optimized DLL passes; other
+   callbacks and the native asserted damage route are controlled. No ROM/movie,
+   reset replacement or persistent production ownership. Integrate the same Samus
+   protection state; writer/alias/runtime closure remains open.
    User-requested [RAM ownership research](RAM_OWNERSHIP.md) now traces eleven
    producer/consumer contracts and separates live values, captured selectors,
    cross-update handoffs and nested continuations. The first implementation moves

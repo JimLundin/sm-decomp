@@ -276,6 +276,16 @@ implicit synchronization. The experiment retains real drain/damage and X-ray
 bodies around the substituted rules, with HUD dispatch and other effects controlled.
 It establishes the selected contract, not a complete encounter or persistent owner.
 
+The [protection experiment](RAM_OWNERSHIP.md#samus-projectile-protection-and-suspension)
+passes **345 comparisons** through actual grant, contact, timer and gameplay
+coordinator bodies. Protection belongs to Samus: successful beam/missile placement
+replaces its duration, even when the new value is shorter. Contact observes it
+without consuming it, including for bomb jumps. Enemy-message and PLM suspension
+retain it; the completed gameplay tail advances it once. Reset and ordinary slot
+release do not directly clear it, although callbacks and accepted broad indexed
+release aliases can change it. Those compatibility paths prevent an unconditional
+claim that the projectile pool cannot write Samus protection.
+
 The full projectile draft may temporarily aggregate these inputs for comparison.
 Its final interface must give each value one authority and apply cross-owner
 effects before the next observer, including before a failure. This refinement
@@ -369,6 +379,14 @@ inputs and reported results are independently checked. Real contact reactions,
 remaining weapons/trails/reset, encounter restrictions and production runtime
 binding remain outstanding in this reviewed stage. Other out-of-pool execution
 retains reference bodies. No whole-replacement cost is established.
+
+The subsequent reviewed reset stage passes **89 targeted comparisons**, including
+recursive reset and firing/palette compositions. It resets canonical shots while
+retaining their fractions and auxiliary values; its checked environment adapter
+handles the remaining HUD, echo and palette changes in order. The previous 3,427
+suite was not rerun. Reset remains a distinct transition from release and charge
+cancellation, and its environment adapter still participates in legacy authority
+transfers. Other weapons, definition interfaces and production ownership remain open.
 
 State ownership alone will not finish the game-facing interface. This draft still
 uses raw bank addresses for definition lookup, numeric animation instruction
