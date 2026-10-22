@@ -1,3 +1,6 @@
+use crate::game::enemy_combat::{
+    apply_contact, apply_power_bomb, apply_shot, enemy_death, select_frozen_ai, shot_reaction,
+};
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 use crate::game::enemy_script::{EnemyScript, bank_base};
@@ -11,10 +14,9 @@ use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_90::ProjectileReflection;
 use crate::game::sm_a0::{
-    CosineMult8bit, EnemyDeathAnimation, EnemyFunc_BBBF, Enemy_ItemDrop_LowerNorfairSpacePirate,
-    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi, IsSamusWithinEnemy_Y,
-    NormalEnemyPowerBombAi, NormalEnemyShotAi,
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi, SineMult8bit,
+    CosineMult8bit, EnemyFunc_BBBF, Enemy_ItemDrop_LowerNorfairSpacePirate,
+    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, IsSamusWithinEnemy_Y,
+    SineMult8bit,
 };
 use crate::game::sprite_objects::create_sprite;
 
@@ -476,7 +478,7 @@ crate::game::callback_dispatch! {
             .frozen_timer
             == 0
         {
-            NormalEnemyTouchAi(game);
+            apply_contact(game);
         }
     };
     [11700089] WalkingSpacePirates_Shot [] {
@@ -487,7 +489,7 @@ crate::game::callback_dispatch! {
         {
             WalkingSpacePirates_8789(game);
         } else {
-            NormalEnemyShotAi(game);
+            apply_shot(game);
         };
     };
     [11726751] WallSpacePirates_Init [] {
@@ -541,16 +543,16 @@ crate::game::callback_dispatch! {
     WalkingSpacePirates_8789 [] {
         word!(game.special_death_item_drop_x_origin_pos = (*E).base.x_pos);
         word!(game.special_death_item_drop_y_origin_pos = (*E).base.y_pos);
-        NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+        shot_reaction(game);
         if (*E).base.health == 0 {
             let v1: u16 = word!(game.cur_enemy_index);
             if (*E).base.enemy_ptr as i32 == addr_kEnemyDef_F593 as i32 {
                 (*E).var_B = 0;
-                EnemyDeathAnimation(v1, 4, game);
+                enemy_death(v1, 4, game);
                 Enemy_ItemDrop_LowerNorfairSpacePirate(v1, game);
             } else {
                 (*E).var_B = 0;
-                EnemyDeathAnimation(v1, 4, game);
+                enemy_death(v1, 4, game);
             }
         }
     };
@@ -667,9 +669,9 @@ crate::game::callback_dispatch! {
         }
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [11698191] Enemy_GrappleReact_CancelBeam_B2 => Enemy_SwitchToFrozenAi(game);
+    [11698191] Enemy_GrappleReact_CancelBeam_B2 => select_frozen_ai(game);
     [11698241] Enemy_NormalFrozenAI_B2 => update_frozen_enemy(game);
-    [11700071] WalkingSpacePirates_Powerbomb => NormalEnemyPowerBombAi(game);
+    [11700071] WalkingSpacePirates_Powerbomb => apply_power_bomb(game);
 }
 
 crate::game::callback_dispatch! {

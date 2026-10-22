@@ -1,3 +1,7 @@
+use crate::game::enemy_combat::{
+    apply_contact, apply_shot, contact_without_death, flash_on_shot, power_bomb_without_death,
+    reduce_suit_damage, select_frozen_ai, shot_reaction,
+};
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 use crate::game::enemy_script::{EnemyScript, bank_base};
@@ -17,11 +21,10 @@ use crate::game::sm_90::{
 };
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{
-    Abs16, CalculateAngleFromXY, ConvertAngleToXy, CosineMult8bit, EnemyFunc_A6B4_UsedBySporeSpawn,
+    Abs16, CalculateAngleFromXY, ConvertAngleToXy, CosineMult8bit,
     EnemyFunc_B691, EnemyFunc_B7A1, EnemyFunc_Divide, Enemy_ItemDrop_Draygon,
-    Enemy_ItemDrop_SporeSpawn, Enemy_SwitchToFrozenAi, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
-    NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SignExtend8, SineMult8bit, SuitDamageDivision,
+    Enemy_ItemDrop_SporeSpawn,
+    SignExtend8, SineMult8bit,
     SwitchEnemyAiToMainAi,
 };
 use crate::game::sprite_objects::create_sprite;
@@ -620,7 +623,7 @@ crate::game::callback_dispatch! {
         if (*E).var_0F as i32 - 152i32 & 0x8000 != 0 {
             (*E).var_0F = ((*E).var_0F).wrapping_add(8);
         }
-        NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+        shot_reaction(game);
         sub_A5960D(game);
     };
     Draygon_Func_41 [] {
@@ -1251,11 +1254,11 @@ crate::game::callback_dispatch! {
         }
     };
     [10851818] Draygon_Touch [] {
-        NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+        contact_without_death(game);
         sub_A5960D(game);
     };
     [10851847] Draygon_Powerbomb [] {
-        NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
+        power_bomb_without_death(game);
         sub_A5960D(game);
     };
     [10863723] DraygonsEye_Init [] {
@@ -1341,7 +1344,7 @@ crate::game::callback_dispatch! {
         let mut v0: u16 = (2u16).wrapping_mul(word!(game.collision_detection_index));
         let v1: u16 = word!(game.projectile_type[word!(game.collision_detection_index)]);
         if (v1 & 0x700) != 0 || (v1 & 0x10) != 0 {
-            EnemyFunc_A6B4_UsedBySporeSpawn(game);
+            flash_on_shot(game);
             v0 = word!(game.cur_enemy_index);
             let EK = Get_SporeSpawn(v0 as i32, game);
             if (*EK).base.flash_timer != 0 {
@@ -1379,14 +1382,14 @@ crate::game::callback_dispatch! {
         }
     };
     [10874348] SporeSpawn_Touch [] {
-        NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+        contact_without_death(game);
         SporeSpawn_Func_6(game);
     };
     @forward [pub unsafe fn (game: &mut Game)];
     [10846208] Enemy_GrappleReact_NoInteract_A5 => SwitchEnemyAiToMainAi(game);
-    [10846223] Enemy_GrappleReact_CancelBeam_A5 => Enemy_SwitchToFrozenAi(game);
-    [10846243] Enemy_NormalTouchAI_A5 => NormalEnemyTouchAi(game);
-    [10846253] Enemy_NormalShotAI_A5 => NormalEnemyShotAi(game);
+    [10846223] Enemy_GrappleReact_CancelBeam_A5 => select_frozen_ai(game);
+    [10846243] Enemy_NormalTouchAI_A5 => apply_contact(game);
+    [10846253] Enemy_NormalShotAI_A5 => apply_shot(game);
     [10846273] Enemy_NormalFrozenAI_A5 => update_frozen_enemy(game);
 }
 
@@ -1429,7 +1432,7 @@ crate::game::callback_dispatch! {
         let E = Get_Draygon(0, game);
         (*E).var_0F = 24;
         let v3 = RomPtr_A0((*E).base.enemy_ptr, game);
-        Samus_DealDamage(SuitDamageDivision(*(v3.offset(6) as *mut u16), game), game);
+        Samus_DealDamage(reduce_suit_damage(*(v3.offset(6) as *mut u16), game), game);
         word! {game; earthquake_timer = 32; earthquake_type = 7; }
         create_sprite(
             word!(game.samus_x_pos),

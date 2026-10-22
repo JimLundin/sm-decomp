@@ -1,3 +1,7 @@
+use crate::game::enemy_combat::{
+    apply_contact, apply_power_bomb, apply_shot, enemy_death, grapple_death, select_frozen_ai,
+    shot_reaction,
+};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 pub use crate::game::prelude::*;
@@ -11,11 +15,9 @@ use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_a0::{
     Abs16, CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
     CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, CosineMult8bit, CosineMult8bitFull,
-    EnemyDeathAnimation, EnemyFunc_ACA8, EnemyFunc_ADA3, EnemyFunc_B7A1, EnemyFunc_C8AD,
-    EnemyGrappleDeath, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi,
+    EnemyFunc_ACA8, EnemyFunc_ADA3, EnemyFunc_B7A1, EnemyFunc_C8AD,
+    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
     GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
-    NormalEnemyPowerBombAi, NormalEnemyShotAi,
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi, SamusHurtFromGrapple,
     SamusLatchesOnWithGrappleNoInvinc, SignExtend8, SineMult8bit, SineMult8bitFull,
     SwitchEnemyAiToMainAi,
 };
@@ -2442,7 +2444,7 @@ crate::game::callback_dispatch! {
         MiniDraygon_Func_13(game);
     };
     [11045650] MiniDraygon_Shot [] {
-        NormalEnemyShotAi(game);
+        apply_shot(game);
         MiniDraygon_Func_13(game);
     };
     [11047000] MorphBallEye_Init [] {
@@ -2501,7 +2503,7 @@ crate::game::callback_dispatch! {
         );
     };
     [11052989] YappingMaw_Shot [] {
-        NormalEnemyShotAi(game);
+        apply_shot(game);
         let E = Get_YappingMaw(word!(game.cur_enemy_index) as i32, game);
         if (*E).base.health != 0 {
             if (*E).base.frozen_timer != 0 {
@@ -2551,7 +2553,7 @@ crate::game::callback_dispatch! {
         );
     };
     [11053955] Kago_Shot [] {
-        NormalEnemyShotAi(game);
+        apply_shot(game);
         word! {game; earthquake_type = 2; earthquake_timer = 16; }
         let E = Get_Kago(word!(game.cur_enemy_index) as i32, game);
         if (*E).var_B == 0 {
@@ -2561,7 +2563,7 @@ crate::game::callback_dispatch! {
         let mut v2: i16 = (((*E).var_04) as i16).wrapping_sub(1);
         (*E).var_04 = v2 as u16;
         if v2 < 0 {
-            EnemyDeathAnimation(word!(game.cur_enemy_index), 4, game);
+            enemy_death(word!(game.cur_enemy_index), 4, game);
             (*E).var_F = 1;
         }
         SpawnEprojWithGfx(
@@ -2588,7 +2590,7 @@ crate::game::callback_dispatch! {
         NorfairLavaMan_Common(game);
     };
     [11056140] NorfairLavaMan_Shot [] {
-        NormalEnemyShotAi(game);
+        apply_shot(game);
         NorfairLavaMan_Common(game);
     };
     [11058860] Beetom_Shot [] {
@@ -2627,7 +2629,7 @@ crate::game::callback_dispatch! {
         let E = Get_MaridiaFloater(word!(game.cur_enemy_index) as i32, game);
         if (*E).parameter_2 == 0 {
             let palette_index: u16 = (*E).base.palette_index;
-            NormalEnemyTouchAi(game);
+            apply_contact(game);
             if (*E).base.health == 0 {
                 word!(game.enemy_drawing_queue[((word!(game.cur_enemy_index) as i32 >> 1) + 97)] |= (0x200u16));
                 (*E).base.palette_index = palette_index;
@@ -2639,7 +2641,7 @@ crate::game::callback_dispatch! {
     [11060719] MaridiaFloater_Shot [] {
         let E = Get_MaridiaFloater(word!(game.cur_enemy_index) as i32, game);
         if (*E).parameter_2 == 0 {
-            NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+            shot_reaction(game);
             if ((*E).base.ai_handler_bits & 4) != 0 {
                 let v2: i32 = word!(game.cur_enemy_index) as i32 >> 1;
                 word!(game.enemy_drawing_queue[(v2 + 109)] = (*E).base.frozen_timer);
@@ -2729,11 +2731,11 @@ crate::game::callback_dispatch! {
         };
     };
     [11063693] WreckedShipRobotDeactivated_Shot [] {
-        NormalEnemyShotAi(game);
+        apply_shot(game);
     };
     [11063698] WreckedShipRobot_Shot [] {
         if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 1) != 0 {
-            NormalEnemyShotAi(game);
+            apply_shot(game);
             let E = Get_WreckedShipRobot(word!(game.cur_enemy_index) as i32, game);
             if (*E).base.health != 0 {
                 let mut v1: u16 = if ((*E).var_A & 0x8000) != 0 {
@@ -2878,7 +2880,7 @@ crate::game::callback_dispatch! {
         word!(game.projectile_dir[word!(game.collision_detection_index)] &= !(0x10));
     };
     [11073281] KiHunter_Shot [] {
-        NormalEnemyShotAi(game);
+        apply_shot(game);
         let old_cur_enemy_index: u16 = word!(game.cur_enemy_index);
         let EK = Get_KiHunter(word!(game.cur_enemy_index) as i32, game);
         let E1 = Get_KiHunter(word!(game.cur_enemy_index) as i32 + 64, game);
@@ -3000,14 +3002,14 @@ crate::game::callback_dispatch! {
     };
     @forward [pub unsafe fn (game: &mut Game)];
     [11042816] Enemy_GrappleReact_NoInteract_A8 => SwitchEnemyAiToMainAi(game);
-    [11042826] Enemy_GrappleReact_KillEnemy_A8 => EnemyGrappleDeath(game);
-    [11042831] Enemy_GrappleReact_CancelBeam_A8 => Enemy_SwitchToFrozenAi(game);
+    [11042826] Enemy_GrappleReact_KillEnemy_A8 => grapple_death(game);
+    [11042831] Enemy_GrappleReact_CancelBeam_A8 => select_frozen_ai(game);
     [11042836]
     Enemy_GrappleReact_SamusLatchesNoInvinc_A8 => SamusLatchesOnWithGrappleNoInvinc(game);
-    [11042846] Enemy_GrappleReact_HurtSamus_A8 => SamusHurtFromGrapple(game);
-    [11042851] Enemy_NormalTouchAI_A8 => NormalEnemyTouchAi(game);
-    [11042861] Enemy_NormalShotAI_A8 => NormalEnemyShotAi(game);
-    Enemy_NormalPowerBombAI_A8 => NormalEnemyPowerBombAi(game);
+    [11042846] Enemy_GrappleReact_HurtSamus_A8 => select_frozen_ai(game);
+    [11042851] Enemy_NormalTouchAI_A8 => apply_contact(game);
+    [11042861] Enemy_NormalShotAI_A8 => apply_shot(game);
+    Enemy_NormalPowerBombAI_A8 => apply_power_bomb(game);
     [11042881] Enemy_NormalFrozenAI_A8 => update_frozen_enemy(game);
 }
 
@@ -3849,7 +3851,7 @@ crate::game::callback_dispatch! {
         word!(game.enemy_drawing_queue[(v4 + 97)] |= (0x200u16));
         MaridiaFloater_Func_1(k, game);
         let mut v5: u16 = 0;
-        EnemyDeathAnimation(k, v5, game);
+        enemy_death(k, v5, game);
     } else {
         MaridiaFloater_Func_2(k, game);
     } after { ; };

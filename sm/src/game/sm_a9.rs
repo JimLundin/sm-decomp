@@ -1,3 +1,7 @@
+use crate::game::enemy_combat::{
+    contact_without_death, create_dud, power_bomb_without_death, reduce_suit_damage,
+    select_frozen_ai, shot_reaction,
+};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
@@ -28,10 +32,7 @@ use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::SomeMotherBrainScripts;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
-    CalculateAngleFromXY, CreateDudShot, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
-    Enemy_SwitchToFrozenAi, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy,
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAiSkipDeathAnim_CurEnemy,
-    SuitDamageDivision,
+    CalculateAngleFromXY, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
 };
 use crate::game::sm_a6::{
     homing_velocity, HandleTypewriterText_Ext, HomingReversal, Ridley_Func_98,
@@ -835,7 +836,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11124037] MotherBrain_Phase2Cut_0 [] {
-        let v0: u16 = SuitDamageDivision(0x50, game);
+        let v0: u16 = reduce_suit_damage(0x50, game);
         if ((4 * v0 as i32 + 20 - word!(game.samus_health) as i32) as i16) >= 0 {
             (*Get_MotherBrain(0i32, game)).var_A = ((0xa9bd98i32) as u16);
         } else if (word!(game.random_number) & 0xfff) < 0xfa0 {
@@ -844,7 +845,7 @@ crate::game::callback_dispatch! {
             }
         } else {
             let mut v1: u16 = 0;
-            if ((SuitDamageDivision(0xa0, game) as i32 + 20 - word!(game.samus_health) as i32)
+            if ((reduce_suit_damage(0xa0, game) as i32 + 20 - word!(game.samus_health) as i32)
                 as i16)
                 >= 0
                 || {
@@ -1140,9 +1141,9 @@ crate::game::callback_dispatch! {
         if (*E).var_00 != 0 {
             MotherBrain_Phase23_ShotReaction(game);
             if (*E).var_00 == 1 {
-                CreateDudShot(game);
+                create_dud(game);
             } else {
-                NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+                shot_reaction(game);
             }
         } else {
             let v1: u16 = ((byte!(@pointer (ram_ptr!(game, u16; 0xc18))
@@ -1159,7 +1160,7 @@ crate::game::callback_dispatch! {
                     v2 = 14;
                 }
                 (*E1).base.flash_timer = v2 as u16;
-                NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+                shot_reaction(game);
             }
         };
     };
@@ -4945,7 +4946,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11110279] MotherBrainsBody_Powerbomb [] {
-        NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
+        power_bomb_without_death(game);
         MotherBrainsBrain_Hurt(game);
     };
     [11110283] MotherBrainsBrain_Hurt [] {
@@ -4965,7 +4966,7 @@ crate::game::callback_dispatch! {
         (*E).var_A = crate::rtl::rom_table_word!(game, 0xa98b7b, v1 as isize);
     };
     [11121923] MotherBrainsBody_Shot [] {
-        CreateDudShot(game);
+        create_dud(game);
     };
     [11122118] MotherBrainsBrain_Touch [] {
         if *ram_ptr!(game; 0xa1f) == 3 {
@@ -5145,7 +5146,7 @@ crate::game::callback_dispatch! {
     };
     [11132228] DeadSidehopper_Touch [] {
         if (*Get_DeadSidehopper(word!(game.cur_enemy_index) as i32, game)).var_08 < 8 {
-            NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+            contact_without_death(game);
         } else {
             DeadSidehopper_DD31(game);
         };
@@ -5261,7 +5262,7 @@ crate::game::callback_dispatch! {
         }
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [11108367] Enemy_GrappleReact_CancelBeam_A9 => Enemy_SwitchToFrozenAi(game);
+    [11108367] Enemy_GrappleReact_CancelBeam_A9 => select_frozen_ai(game);
     [11108417] Enemy_NormalFrozenAI_A9 => update_frozen_enemy(game);
 }
 

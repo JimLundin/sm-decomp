@@ -1,3 +1,7 @@
+use crate::game::enemy_combat::{
+    apply_contact, apply_power_bomb, apply_shot, contact_without_death, grapple_death,
+    power_bomb_without_death, rinka_death, select_frozen_ai, shot_reaction,
+};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::enemy_population_ram::delete_connected;
@@ -23,12 +27,10 @@ use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
     CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, CompareDistToSamus_X, ConvertAngleToXy,
-    EnemyFunc_BC76, EnemyGrappleDeath, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
-    Enemy_MoveRight_SlopesAsWalls, Enemy_SwitchToFrozenAi, GetSamusEnemyDelta_X,
-    IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, NormalEnemyPowerBombAi,
-    NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
-    NormalEnemyTouchAiSkipDeathAnim_CurEnemy, RinkasDeathAnimation, SamusLatchesOnWithGrapple,
+    EnemyFunc_BC76, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    Enemy_MoveRight_SlopesAsWalls, GetSamusEnemyDelta_X,
+    IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
+    SamusLatchesOnWithGrapple,
 };
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 
@@ -754,7 +756,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Func4(game: &mut Game) {
             == 0
         && word!(game.samus_invincibility_timer) == 0
     {
-        NormalEnemyTouchAi(game);
+        apply_contact(game);
     }
 }
 pub unsafe fn sub_A29A6C(a: u16, game: &mut Game) {
@@ -1366,12 +1368,12 @@ pub unsafe fn Rinka_Frozen(k: u16, game: &mut Game) {
         Rinka_6(k, game);
         Rinka_8(k, game);
         let v1: u16 = 0;
-        RinkasDeathAnimation(v1, game);
+        rinka_death(v1, game);
     }
 }
 pub unsafe fn Rinka_Powerbomb(k: u16, game: &mut Game) {
     if ((*Get_Rinka(k as i32, game)).base.properties as i32 & kEnemyProps_Invisible as i32) == 0 {
-        NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
+        power_bomb_without_death(game);
         Rinka_B960(k, game);
     }
 }
@@ -1438,7 +1440,7 @@ crate::prefixed_callbacks! {
                 (*E).var_A = ((0xa2b844i32) as u16);
                 (*E).var_F = 1;
             } else {
-                RinkasDeathAnimation(0, game);
+                rinka_death(0, game);
             }
         }
     };
@@ -2078,7 +2080,7 @@ crate::game::callback_dispatch! {
         }
     };
     [10654479] MiniMaridiaBeybladeTurtle_Shot [] {
-        NormalEnemyShotAi(game);
+        apply_shot(game);
         MaridiaBeybladeTurtle_Func21(game);
     };
     [10658942] MaridiaSpikeyShell_Main [] {
@@ -2256,7 +2258,7 @@ crate::game::callback_dispatch! {
             Rinka_6(word!(game.cur_enemy_index), game);
             Rinka_8(word!(game.cur_enemy_index), game);
             let mut v2: u16 = 0;
-            RinkasDeathAnimation(v2, game);
+            rinka_death(v2, game);
         } else {
             CallRinkaFunc(
                 (((*E).var_A) as u32) | (0xa20000u32),
@@ -2266,11 +2268,11 @@ crate::game::callback_dispatch! {
         };
     };
     [10664263] Rinka_Touch [] {
-        NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+        contact_without_death(game);
         Rinka_B960(word!(game.cur_enemy_index), game);
     };
     [10664269] Rinka_Shot [] {
-        NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+        shot_reaction(game);
         Rinka_B960(word!(game.cur_enemy_index), game);
     };
     [10664909] Rio_Init [] {
@@ -2361,7 +2363,7 @@ crate::game::callback_dispatch! {
         }
     };
     [10671028] MaridiaLargeSnail_Shot [] {
-        NormalEnemyShotAi(game);
+        apply_shot(game);
         QueueSfx2_Max6(0x57, game);
     };
     [10674038] HirisingSlowfalling_Init [] {
@@ -2455,7 +2457,7 @@ crate::game::callback_dispatch! {
         move_ripper_and_reverse_on_collision!(Get_JetPowerRipper, game, v3, 7456i16, 7436i16);
     };
     [10675113] JetPowerRipper_Shot [] {
-        NormalEnemyShotAi(game);
+        apply_shot(game);
         let E = Get_JetPowerRipper(word!(game.cur_enemy_index) as i32, game);
         if (*E).base.frozen_timer != 0 {
             let mut v1: i16 = -7105i16;
@@ -2644,13 +2646,13 @@ crate::game::callback_dispatch! {
         }
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [10649615] Enemy_GrappleReact_CancelBeam_A2 => Enemy_SwitchToFrozenAi(game);
-    [10649610] Enemy_GrappleReact_KillEnemy_A2 => EnemyGrappleDeath(game);
+    [10649615] Enemy_GrappleReact_CancelBeam_A2 => select_frozen_ai(game);
+    [10649610] Enemy_GrappleReact_KillEnemy_A2 => grapple_death(game);
     [10649605] Enemy_GrappleReact_SamusLatchesOn_A2 => SamusLatchesOnWithGrapple(game);
     [10649665] Enemy_NormalFrozenAI_A2 => update_frozen_enemy(game);
-    Enemy_NormalPowerBombAI_A2 => NormalEnemyPowerBombAi(game);
-    [10649635] Enemy_NormalTouchAI_A2 => NormalEnemyTouchAi(game);
-    [10649645] Enemy_NormalShotAI_A2 => NormalEnemyShotAi(game);
+    Enemy_NormalPowerBombAI_A2 => apply_power_bomb(game);
+    [10649635] Enemy_NormalTouchAI_A2 => apply_contact(game);
+    [10649645] Enemy_NormalShotAI_A2 => apply_shot(game);
 }
 
 crate::game::callback_dispatch! {

@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,059 Rust lines in 121 files**, plus 262 C
-bridge and 296 C-header lines = **96,617 maintained implementation lines**.
+Current composition (2026-10-22): **96,234 Rust lines in 123 files**, plus 262 C
+bridge and 296 C-header lines = **96,792 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,448**. This complete recount includes frontend,
+gives **97,623**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2635,22 +2635,25 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    macros. This is required safety/ownership work, not a volume reduction.
    Contracts and limits: RAM_OWNERSHIP.md, section 6. Local reproduction:
    Local/sm-decomp-experiments/20261022/plm-pickups.
-   A separate standard-combat replacement on 461097ea has a complete formatted
-   price of **94,806 -> 95,009 (+203 Rust lines)**. It covers normal touch, shots,
-   freezing/thawing, Power Bomb damage, death-slot cleanup and dud effects;
-   collision searches and enemy-specific reactions remain outside this scope.
-   The bank loses 336 net lines, while pure decisions, checked slot/ROM access,
-   effect orchestration and registrations add 539. The existing caller facade
-   is retained and counted; this does not retire bank A0 or own persistent enemy
-   state. No new macros, dependency or hidden implementation. Formatting passes;
-   compilation and runtime validation have not run, and nothing is adopted.
-   Defer this representation as a volume candidate. Its arithmetic/helper split
-   does not establish a larger replacement; safety remains required independently
-   of this price. Further enemy ownership work must preserve captured death slots,
-   live post-sound damage targets, separately sampled projectile selectors and
-   the two different freeze/sound orderings. The source-level contracts are in
-   RAM_OWNERSHIP.md, section 3; they are not new execution coverage. Draft:
-   Local/sm-decomp-experiments/20261022/enemy-combat.
+   Standard enemy combat now belongs to `enemy_combat`: contact, projectiles,
+   Power Bombs, freeze selection, death cleanup and hit/dud effects. All callers
+   use its named routines; the old entry points and ten A0 forwarding aliases
+   retire, with twelve Power Bomb and three hitbox routes preserved. Collision
+   searches, enemy-specific reactions and persistent RAM ownership remain outside
+   this migration. Checked slot handles replace raw enemy pointers and clearing;
+   pure damage/freeze decisions and the shared RAM adapter forbid unsafe code.
+   Captured slots/ROM allocations, live selectors, freeze/sound ordering and
+   partial failure state retain their original timing. Final checks pass **2,988
+   old/new comparisons**, 4,174 ordered full-RAM/selected-ROM observations and
+   1,096 matching failures, including all affected numeric routes. Release
+   library/frontend/verifier and source/native checks pass. No movie ran; effects
+   are controlled component boundaries, without gameplay-route coverage.
+   Complete cost: **+175 Rust lines**, including both modules, callers, shared
+   helpers and registrations. This is safety/responsibility work, not volume
+   savings. Native diagnostics and effect calls remain explicitly unsafe; the
+   broader ownership and unsafe-elimination goals remain open. Contracts and
+   limits: RAM_OWNERSHIP.md, section 3. Local reproduction:
+   Local/sm-decomp-experiments/20261022/standard-combat.
    Enemy population creation now owns its search and multipart iteration state,
    with named room/dynamic initialization rules and checked RAM/ROM adapters.
    Room creation, dynamic spawning, graphics selection, spawn recording and linked
@@ -4420,15 +4423,22 @@ owned room metadata, checked door metadata, shared scroll loading, shared PLM
 spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
-owned enemy-script positions and checked enemy-definition records,
-maintained Rust is **96,059**,
+owned enemy-script positions, checked enemy-definition records and standard combat,
+maintained Rust is **96,234**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,617**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,448**.
+Including 262 C and 296 header lines gives **96,792**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,623**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2955; cast lines 6369. Checked enemy-definition records remove
+unsafe functions 2956; cast lines 6335. Standard combat adds 175 Rust lines and
+one counted unsafe helper declaration while removing 34 cast-containing lines.
+The helper replaces operations previously expanded through a death macro;
+this counter does not measure expanded operations. Raw slot/spawn-field access
+and death clearing retire in the migrated routines; checked RAM and pure rules
+forbid unsafe code. Native diagnostics and effect calls remain unsafe. Other
+counters are unchanged. This is a safety cost, not a volume reduction.
+Checked enemy-definition records remove
 24 Rust lines and ten counted unsafe declarations; all other counters are
 unchanged. Raw enemy/projectile-definition and vulnerability pointers retire;
 the shared reader/writer forbids unsafe code. Native diagnostics, surrounding

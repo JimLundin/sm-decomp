@@ -220,6 +220,7 @@ pub(crate) enum EnemyField {
     X = core::mem::offset_of!(EnemyData, x_pos),
     Y = core::mem::offset_of!(EnemyData, y_pos),
     Width = core::mem::offset_of!(EnemyData, x_width),
+    Health = core::mem::offset_of!(EnemyData, health),
     Properties = core::mem::offset_of!(EnemyData, properties),
     ExtraProperties = core::mem::offset_of!(EnemyData, extra_properties),
     AiHandlers = core::mem::offset_of!(EnemyData, ai_handler_bits),
@@ -249,6 +250,13 @@ impl EnemySlot {
     }
     pub(crate) fn set(self, field: EnemyField, value: u16, game: &mut Game) {
         native_write(game, 0xf78 + usize::from(self.0) + field as usize, value);
+    }
+    pub(crate) fn clear(self, game: &mut Game) {
+        let start = 0xf78 + usize::from(self.0);
+        game.g_ram[start..start + core::mem::size_of::<EnemyData>()].fill(0);
+    }
+    pub(crate) fn set_bank(self, value: u8, game: &mut Game) {
+        game.g_ram[0xf78 + usize::from(self.0) + core::mem::offset_of!(EnemyData, bank)] = value;
     }
     pub(crate) fn bank(self, game: &Game) -> u8 {
         game.g_ram[0xf78 + usize::from(self.0) + core::mem::offset_of!(EnemyData, bank)]

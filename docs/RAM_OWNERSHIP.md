@@ -127,8 +127,8 @@ The effect/Samus collision pass also consults invincibility and this contact
 mode. A single end-of-update damage application would change that timing.
 [^complete][^effectcontact]
 
-**Standard combat ownership preflight (source findings, not new runtime checks):**
-`NormalEnemyShotAiSkipDeathAnim` samples initial projectile damage/type and the
+**Standard combat (checked implementation adopted; RAM still owns state):**
+`enemy_combat::shot_without_death` samples initial projectile damage/type and the
 vulnerability record, then sets flash/AI state before a hurt-sound callback. After
 that callback it rereads the enemy selector for health damage and independently
 rereads the projectile selector/type. A single captured enemy/projectile pair
@@ -144,9 +144,9 @@ the resulting AI word into the frozen timer. Contact damage uses a signed wrappe
 subtraction test; shot and Power Bomb health subtraction use unsigned saturation.
 These rules cannot be replaced with one generic health update.
 
-`NormalEnemyShotAi` retains the enemy slot across the hit-sprite callback for its
+`enemy_combat::apply_shot` retains the enemy slot across the hit-sprite callback for its
 death test and enemy-definition lookup, while cause-of-death storage and death
-animation select the live current enemy. `EnemyDeathAnimation` in turn captures
+animation select the live current enemy. `enemy_combat::enemy_death` in turn captures
 its cleanup slot before spawning the explosion, reads that slot's preservation
 bit after spawning, clears its 64 bytes, and then increments the live kill count.
 An index handle can replace the retained raw pointer; recapturing the selector
@@ -154,13 +154,20 @@ at cleanup would target a different slot after callback mutation. Contact mode 4
 similarly retains its original enemy/definition while calling Samus code, then
 reads the retained definition's live vulnerability bytes.
 
-The complete isolated model/adapter draft costs **+203 Rust lines** on 461097ea,
-including its retained bank facade and registrations. It has only a formatted
-price, with no compiler or behavioral validation, and is not adopted. It separates
-decisions from RAM but retains persistent state and the existing call topology;
-the price supplies no large reduction budget. These findings narrow the contract
-for a broader enemy lifecycle owner rather than validating this draft. Local
-source: `Local/sm-decomp-experiments/20261022/enemy-combat`.
+The adopted implementation replaces retained raw pointers with checked slot
+handles, shares the existing owned ROM-record reader, removes the old standard
+combat entry points and ten A0 forwarding aliases, and migrates their callers.
+Its pure decisions forbid unsafe code; native diagnostics and effect calls remain
+explicit unsafe boundaries. Normal thawing remains in `enemy_scheduling`.
+The complete replacement costs **+175 Rust lines**, including helpers, callers
+and registration; this is safety/responsibility work, not volume savings or
+persistent enemy-state ownership. Final actual-code comparisons pass **2,988
+cases**, with 4,174 ordered full-RAM/selected-ROM observations and 1,096 matching
+failures. All twelve standard Power Bomb and three hitbox routes execute, and
+six discriminating cases confirm retained hit-sprite state, the two freeze/sound
+orders and live death preservation. Release and source/native checks pass.
+Effects are controlled boundaries; no movie ran or gameplay route is claimed.
+Local reproduction: `Local/sm-decomp-experiments/20261022/standard-combat`.
 
 ### 4. Projectile execution has several different selector lifetimes
 

@@ -1,3 +1,6 @@
+use crate::game::enemy_combat::{
+    apply_contact, apply_shot,
+};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
@@ -12,8 +15,8 @@ use crate::game::plm_spawning::SpawnHardcodedPlm;
 use crate::game::sm_86::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::SpawnHdmaObject;
 use crate::game::sm_a0::{
-    Enemy_ItemDrop_Crocomire, Enemy_MoveRight_IgnoreSlopes, NormalEnemyShotAi,
-    NormalEnemyTouchAi, SamusLatchesOnWithGrapple,
+    Enemy_ItemDrop_Crocomire, Enemy_MoveRight_IgnoreSlopes,
+    SamusLatchesOnWithGrapple,
 };
 use crate::game::sprite_objects::create_sprite;
 
@@ -992,7 +995,7 @@ pub unsafe fn Crocomire_9B86(game: &mut Game) {
 }
 pub use self::Crocomire_Func_89 as Crocomire_Func_91;
 pub unsafe fn Crocomire_Func_92(game: &mut Game) {
-    NormalEnemyTouchAi(game);
+    apply_contact(game);
     let E = Get_Crocomire(0, game);
     (*E).var_B = ((*E).var_B) | (0x4000u16);
     word!(game.extra_samus_x_displacement = -4i32 as u16);
@@ -1078,7 +1081,7 @@ crate::game::callback_dispatch! {
                 - word!(game.samus_x_pos) as i32) as i16)
                 < 0
         {
-            NormalEnemyTouchAi(game);
+            apply_contact(game);
             word!(
                 game.samus_x_pos = ((*E).base.x_pos as i32
                     - (*E).base.x_width as i32
@@ -1420,8 +1423,8 @@ crate::game::callback_dispatch! {
     };
     @forward [pub unsafe fn (game: &mut Game)];
     [10780677] Enemy_GrappleReact_SamusLatchesOn_A4 => SamusLatchesOnWithGrapple(game);
-    [10780707] Enemy_NormalTouchAI_A4 => NormalEnemyTouchAi(game);
-    [10780717] Enemy_NormalShotAI_A4 => NormalEnemyShotAi(game);
+    [10780707] Enemy_NormalTouchAI_A4 => apply_contact(game);
+    [10780717] Enemy_NormalShotAI_A4 => apply_shot(game);
     [10780737] Enemy_NormalFrozenAI_A4 => update_frozen_enemy(game);
 }
 

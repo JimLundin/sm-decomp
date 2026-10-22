@@ -1,3 +1,7 @@
+use crate::game::enemy_combat::{
+    apply_contact, apply_power_bomb, apply_shot, enemy_death, grapple_death, select_frozen_ai,
+    shot_reaction,
+};
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 use crate::game::enemy_script::{EnemyScript, bank_base};
@@ -18,12 +22,11 @@ use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{
     Abs16, CalculateAngleOfSamusFromEnemy, CalculateBlockContainingPixelPos, CallEnemyPreInstr,
     CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, ConvertAngleToXy, CosineMult8bit,
-    CosineMult8bitFull, EnemyDeathAnimation, EnemyFunc_B691, EnemyFunc_BBBF, EnemyFunc_BC76,
-    EnemyFunc_BF8A, EnemyFunc_C8AD, EnemyGrappleDeath, Enemy_ItemDrop_Metroid, Enemy_MoveDown,
-    Enemy_MoveRight_IgnoreSlopes, Enemy_MoveRight_ProcessSlopes, Enemy_SwitchToFrozenAi,
+    CosineMult8bitFull, EnemyFunc_B691, EnemyFunc_BBBF, EnemyFunc_BC76,
+    EnemyFunc_BF8A, EnemyFunc_C8AD, Enemy_ItemDrop_Metroid, Enemy_MoveDown,
+    Enemy_MoveRight_IgnoreSlopes, Enemy_MoveRight_ProcessSlopes,
     GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
-    NormalEnemyPowerBombAi, NormalEnemyShotAi,
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi, SignExtend8, SineMult8bit,
+    SignExtend8, SineMult8bit,
     SineMult8bitFull, SwitchEnemyAiToMainAi,
 };
 use crate::game::sprite_objects::create_sprite;
@@ -268,7 +271,7 @@ crate::prefixed_callbacks! {
 pub unsafe fn Fireflea_Touch(k: u16, game: &mut Game) {
     let v1: u16 = 0;
     Enemy_NormalTouchAI_A3(game);
-    EnemyDeathAnimation(k, v1, game);
+    enemy_death(k, v1, game);
     if word!(game.fireflea_darkness_level) as i32 - 12i32 & 0x8000 != 0 {
         word!(game.fireflea_darkness_level += 2);
     }
@@ -1590,7 +1593,7 @@ pub unsafe fn Metroid_Func_5(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Metroid_Powerbomb(k: u16, game: &mut Game) {
-    NormalEnemyPowerBombAi(game);
+    apply_power_bomb(game);
     if (*Get_Metroid(k as i32, game)).base.health == 0 {
         CallSomeSamusCode(0x13, game);
         *(ram_ptr!(game, u16; 0xef78)).offset(
@@ -1833,7 +1836,7 @@ crate::game::callback_dispatch! {
             if (word!(game.projectile_type[word!(game.collision_detection_index)]) & 0xf00) != 512 {
                 v5 = 0;
             }
-            EnemyDeathAnimation(
+            enemy_death(
                 (2u16).wrapping_mul(word!(game.collision_detection_index)),
                 v5,
                 game,
@@ -2120,7 +2123,7 @@ crate::game::callback_dispatch! {
                 Enemy_NormalShotAI_SkipSomeParts_A3(game);
                 if (*E).base.health == 0 {
                     (*E).var_B = 0;
-                    EnemyDeathAnimation(word!(game.cur_enemy_index), 4, game);
+                    enemy_death(word!(game.cur_enemy_index), 4, game);
                     CallSomeSamusCode(0x13, game);
                     *(ram_ptr!(game, u16; 0xef78)).offset(((*E).var_00 >> 1) as isize) = 0;
                     let metroid_var_01: u16 = (*E).var_01;
@@ -2435,12 +2438,12 @@ crate::game::callback_dispatch! {
     };
     @forward [pub unsafe fn (game: &mut Game)];
     [10715136] Enemy_GrappleReact_NoInteract_A3 => SwitchEnemyAiToMainAi(game);
-    [10715146] Enemy_GrappleReact_KillEnemy_A3 => EnemyGrappleDeath(game);
-    [10715151] Enemy_GrappleReact_CancelBeam_A3 => Enemy_SwitchToFrozenAi(game);
-    [10715171] Enemy_NormalTouchAI_A3 => NormalEnemyTouchAi(game);
-    [10715181] Enemy_NormalShotAI_A3 => NormalEnemyShotAi(game);
-    Enemy_NormalShotAI_SkipSomeParts_A3 => NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-    Enemy_NormalPowerBombAI_A3 => NormalEnemyPowerBombAi(game);
+    [10715146] Enemy_GrappleReact_KillEnemy_A3 => grapple_death(game);
+    [10715151] Enemy_GrappleReact_CancelBeam_A3 => select_frozen_ai(game);
+    [10715171] Enemy_NormalTouchAI_A3 => apply_contact(game);
+    [10715181] Enemy_NormalShotAI_A3 => apply_shot(game);
+    Enemy_NormalShotAI_SkipSomeParts_A3 => shot_reaction(game);
+    Enemy_NormalPowerBombAI_A3 => apply_power_bomb(game);
     [10715201] Enemy_NormalFrozenAI_A3 => update_frozen_enemy(game);
 }
 

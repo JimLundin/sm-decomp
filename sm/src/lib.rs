@@ -397,6 +397,8 @@ pub mod game {
     pub mod enemy_scheduling;
     pub mod enemy_script;
     pub mod enemy_animation;
+    pub mod combat_rules;
+    pub mod enemy_combat;
     pub mod waver;
 }
 

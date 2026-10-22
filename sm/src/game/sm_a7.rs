@@ -1,3 +1,7 @@
+use crate::game::enemy_combat::{
+    apply_contact, apply_shot, contact_without_death, enemy_death, power_bomb_without_death,
+    select_frozen_ai, shot_reaction,
+};
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 use crate::game::enemy_script::{EnemyScript, bank_base};
@@ -20,11 +24,10 @@ use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::{sub_88E487, SpawnHdmaObject};
 use crate::game::sm_a0::{
     CallEnemyPreInstr, CheckIfEnemyTouchesSamus, DetermineDirectionOfSamusFromEnemy,
-    EnemyDeathAnimation, EnemyFunc_BBBF, EnemyFunc_C8AD, Enemy_ItemDrop_Kraid,
-    Enemy_ItemDrop_Phantoon, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi,
-    IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
-    NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SwitchEnemyAiToMainAi,
+    EnemyFunc_BBBF, EnemyFunc_C8AD, Enemy_ItemDrop_Kraid,
+    Enemy_ItemDrop_Phantoon, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
+    SwitchEnemyAiToMainAi,
 };
 use crate::game::sprite_objects::create_sprite;
 
@@ -271,7 +274,7 @@ crate::game::callback_dispatch! {
     }
 }
 pub unsafe fn Kraid_Touch_ArmFoot(game: &mut Game) {
-    NormalEnemyTouchAi(game);
+    apply_contact(game);
 }
 pub unsafe fn Kraid_Func_1(game: &mut Game) {
     word! {game; extra_samus_x_displacement = 4; extra_samus_y_displacement = -8i32 as u16; }
@@ -465,7 +468,7 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
                     if skip_mouth_hit {
                     } else {
                         word!(game.collision_detection_index = (v6 >> 1));
-                        NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+                        shot_reaction(game);
                         word!(game.projectile_dir[(v6 >> 1)] |= (0x10u16));
                         v3 = 1;
                         v6 = 0;
@@ -682,7 +685,7 @@ pub unsafe fn Kraid_EnemyTouch_Lint(k: u16, game: &mut Game) {
                         v2 = 16;
                     }
                     word!(game.extra_samus_x_displacement = v2);
-                    NormalEnemyTouchAi(game);
+                    apply_contact(game);
                     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
                 }
             }
@@ -1597,7 +1600,7 @@ crate::game::callback_dispatch! {
                 word!(game.samus_prev_y_pos = kraid_min_y_pos_eject);
                 Kraid_Func_1(game);
                 if word!(game.samus_invincibility_timer) == 0 {
-                    NormalEnemyTouchAi(game);
+                    apply_contact(game);
                 }
             }
         }
@@ -1877,17 +1880,17 @@ crate::game::callback_dispatch! {
             let E6 = Get_Kraid(0x180, game);
             (*E6).base.properties = ((*E6).base.properties & !(0x4000));
             word!(game.cur_enemy_index = 384);
-            EnemyDeathAnimation(v4, 0x180, game);
+            enemy_death(v4, 0x180, game);
             let E7 = Get_Kraid(0x1c0, game);
             (*E7).base.properties = ((*E7).base.properties & !(0x4000));
             word!(game.cur_enemy_index = 448);
-            EnemyDeathAnimation(v4, 0x1c0, game);
+            enemy_death(v4, 0x1c0, game);
             word!(game.cur_enemy_index = 128);
-            EnemyDeathAnimation(v4, 0x80, game);
+            enemy_death(v4, 0x80, game);
             word!(game.cur_enemy_index = 192);
-            EnemyDeathAnimation(v4, 0xc0, game);
+            enemy_death(v4, 0xc0, game);
             word!(game.cur_enemy_index = 256);
-            EnemyDeathAnimation(v4, 0x100, game);
+            enemy_death(v4, 0x100, game);
             word!(game.cur_enemy_index = v7);
             SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x5, 0x1b, 0xb7bf as VoidP), game);
         }
@@ -2714,8 +2717,8 @@ crate::game::callback_dispatch! {
     [10992847 | 10992862] KraidsGoodFingernail_Touch [] {
         let v0: u16 = 0;
         printf(b"X undefined\n\0" as *const u8 as *const c_char);
-        NormalEnemyTouchAi(game);
-        EnemyDeathAnimation(word!(game.cur_enemy_index), v0, game);
+        apply_contact(game);
+        enemy_death(word!(game.cur_enemy_index), v0, game);
     };
     [10992946] KraidsGoodFingernail_Main [] {
         let v0 = gEnemyData(0, game);
@@ -2842,7 +2845,7 @@ crate::game::callback_dispatch! {
         (*E3).parameter_2 = byte!((*E3).parameter_2; 0) as u16;
     };
     [11001237] Phantoon_Touch [] {
-        NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+        contact_without_death(game);
     };
     [11001243] Phantoon_Shot [] {
         let E0 = Get_Phantoon(0, game);
@@ -2852,7 +2855,7 @@ crate::game::callback_dispatch! {
         let v1: u16 = word!(game.cur_enemy_index);
         let EK = Get_Phantoon(word!(game.cur_enemy_index) as i32, game);
         let mut health: u16 = (*EK).base.health;
-        NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+        shot_reaction(game);
         if (*EK).base.health == 0 {
             QueueSfx2_Max6(0x73, game);
             (*Get_Phantoon(0x80i32, game)).parameter_2 = 1;
@@ -2966,14 +2969,14 @@ crate::game::callback_dispatch! {
     };
     @forward [pub unsafe fn (game: &mut Game)];
     [10977280] Enemy_GrappleReact_NoInteract_A7 => SwitchEnemyAiToMainAi(game);
-    [10977295] Enemy_GrappleReact_CancelBeam_A7 => Enemy_SwitchToFrozenAi(game);
-    [10977325] Enemy_NormalShotAI_A7 => NormalEnemyShotAi(game);
+    [10977295] Enemy_GrappleReact_CancelBeam_A7 => select_frozen_ai(game);
+    [10977325] Enemy_NormalShotAI_A7 => apply_shot(game);
     [10977340]
-    Enemy_NormalPowerBombAI_SkipDeathAnim_A7 => NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
+    Enemy_NormalPowerBombAI_SkipDeathAnim_A7 => power_bomb_without_death(game);
     [10977345] Enemy_NormalFrozenAI_A7 => update_frozen_enemy(game);
     @forward [pub unsafe fn (game: &mut Game)];
-    [10982559] Kraid_Touch => NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
-    Kraid_Shot => NormalEnemyShotAi(game);
+    [10982559] Kraid_Touch => contact_without_death(game);
+    Kraid_Shot => apply_shot(game);
     @forward [pub unsafe fn (game: &mut Game)];
     [10992879] KraidsGoodFingernail_Init => KraidFingernailInit(word!(game.cur_enemy_index), game);
     [10992941] KraidsBadFingernail_Init => KraidFingernailInit(word!(game.cur_enemy_index), game);

@@ -1,3 +1,6 @@
+use crate::game::enemy_combat::{
+    apply_contact, apply_shot, contact_without_death, select_frozen_ai, shot_reaction,
+};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
@@ -19,8 +22,7 @@ use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
     CalculateAngleOfEnemyXfromEnemyY, CalculateBlockContainingPixelPos, CallEnemyPreInstr,
     CompareDistToSamus_X, EnemyFunc_C8AD, Enemy_ItemDrop_BombTorizo, Enemy_ItemDrop_GoldenTorizo,
-    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi, NormalEnemyShotAi, NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
-    NormalEnemyTouchAiSkipDeathAnim_CurEnemy,
+    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
 };
 
 pub use crate::types::Consts_AA;
@@ -342,7 +344,7 @@ pub unsafe fn Torizo_Func_12(k: u16, game: &mut Game) -> u16 {
 }
 pub use self::Torizo_Func_3 as Torizo_Func_10;
 pub unsafe fn Torizo_D6A6(game: &mut Game) {
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+    shot_reaction(game);
     let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
     if (*E).base.health == 0 {
         enemy_instruction! {[(*E).base]; instruction = addr_kTorizo_Ilist_B1C8 as u16, timer = 1}
@@ -567,7 +569,7 @@ crate::game::callback_dispatch! {
         };
     };
     [11192695] GoldTorizo_Touch [] {
-        NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+        contact_without_death(game);
     };
     [11192700] Torizo_Shot [] {
         if word!(game.area_index) != 0 {
@@ -575,7 +577,7 @@ crate::game::callback_dispatch! {
         } else {
             let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
             if (*E).var_04 | (*E).base.flash_timer == 0 {
-                NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+                shot_reaction(game);
                 if (*E).base.health == 0 {
                     (*E).var_E = ((0xaac6abi32) as u16);
                     enemy_instruction! {[(*E).base]; instruction = addr_kTorizo_Ilist_B1C8 as u16, timer = 1}
@@ -646,10 +648,10 @@ crate::game::callback_dispatch! {
         }
     };
     [11198255] Shaktool_Touch [] {
-        NormalEnemyTouchAi(game);
+        apply_contact(game);
     };
     [11198260] Shaktool_Shot [] {
-        NormalEnemyShotAi(game);
+        apply_shot(game);
         let E = Get_Shaktool(word!(game.cur_enemy_index) as i32, game);
         if (*E).base.health == 0 {
             let shakto_var_E: u16 = (*E).var_E;
@@ -814,7 +816,7 @@ crate::game::callback_dispatch! {
         }
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [11173903] Enemy_GrappleReact_CancelBeam_AA => Enemy_SwitchToFrozenAi(game);
+    [11173903] Enemy_GrappleReact_CancelBeam_AA => select_frozen_ai(game);
     [11173953] Enemy_NormalFrozenAI_AA => update_frozen_enemy(game);
 }
 

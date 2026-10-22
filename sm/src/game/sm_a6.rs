@@ -1,3 +1,7 @@
+use crate::game::enemy_combat::{
+    apply_contact, apply_shot, contact_without_death, enemy_death, power_bomb_without_death,
+    reduce_suit_damage, select_frozen_ai, shot_reaction,
+};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
@@ -25,11 +29,10 @@ use crate::game::sm_90::{CallSomeSamusCode, Samus_SetPushedOutOfCeresRidley};
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
-    CalculateAngleFromXY, CheckIfEnemyIsOnScreen, CosineMult8bit, EnemyDeathAnimation,
+    CalculateAngleFromXY, CheckIfEnemyIsOnScreen, CosineMult8bit,
     Enemy_ItemDrop_MiniKraid, Enemy_ItemDrop_Ridley, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
-    Enemy_SwitchToFrozenAi, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
-    NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SineMult8bit, SuitDamageDivision,
+    GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y,
+    SineMult8bit,
     SwitchEnemyAiToMainAi,
 };
 use crate::game::sm_a9::{
@@ -739,7 +742,7 @@ pub unsafe fn FakeKraid_9C50(game: &mut Game) {
     {
         // The death animation remains in the ROM spawn parameter for all four drops.
         let death_animation = 3;
-        EnemyDeathAnimation(word!(game.cur_enemy_index), death_animation, game);
+        enemy_death(word!(game.cur_enemy_index), death_animation, game);
         Enemy_ItemDrop_MiniKraid(word!(game.cur_enemy_index), death_animation, game);
     }
 }
@@ -3258,7 +3261,7 @@ pub unsafe fn Ridley_Func_98(game: &mut Game) {
         .base
         .enemy_ptr;
     let v1 = RomPtr_A0(enemy_ptr, game);
-    Samus_DealDamage(SuitDamageDivision(*(v1.offset(6) as *mut u16), game), game);
+    Samus_DealDamage(reduce_suit_damage(*(v1.offset(6) as *mut u16), game), game);
 }
 pub unsafe fn Ridley_Func_99(a: u16, game: &mut Game) {
     let E = Get_Ridley(0, game);
@@ -3733,7 +3736,7 @@ pub unsafe fn Ridley_Func_124(rect: Rect16U, game: &mut Game) -> u8 {
     0
 }
 crate::forward_calls! { pub unsafe fn (game: &mut Game);
-    sub_A6DF59 => NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+    sub_A6DF59 => contact_without_death(game);
     sub_A6DF60 => Ridley_Func_125(game);
 }
 pub unsafe fn Ridley_Func_125(game: &mut Game) {
@@ -3757,7 +3760,7 @@ pub unsafe fn Ridley_Func_127(game: &mut Game) {
     };
     if Ridley_Func_124(rect, game) != 0 {
         let E = Get_Ridley(0, game);
-        Samus_DealDamage(SuitDamageDivision((*E).var_1C, game), game);
+        Samus_DealDamage(reduce_suit_damage((*E).var_1C, game), game);
         word!(game.samus_invincibility_timer = 96);
         word!(game.samus_knockback_timer = 5);
         word!(
@@ -4000,9 +4003,9 @@ pub unsafe fn Zebetites_Func_3(game: &mut Game) {
         Zebetites_Func_6(game);
         (*E).var_D as i32 - 4i32 & 0x8000 == 0
     } {
-        EnemyDeathAnimation(word!(game.cur_enemy_index), 0, game);
+        enemy_death(word!(game.cur_enemy_index), 0, game);
     } else {
-        EnemyDeathAnimation(word!(game.cur_enemy_index), 0, game);
+        enemy_death(word!(game.cur_enemy_index), 0, game);
         Zebetites_Func_8(game);
     };
 }
@@ -4186,14 +4189,14 @@ crate::game::callback_dispatch! {
         let E = Get_FakeKraid(word!(game.cur_enemy_index) as i32, game);
         word!(game.special_death_item_drop_x_origin_pos = (*E).base.x_pos);
         word!(game.special_death_item_drop_y_origin_pos = (*E).base.y_pos);
-        NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+        contact_without_death(game);
         FakeKraid_9C50(game);
     };
     [10918969] FakeKraid_Shot [] {
         let E = Get_FakeKraid(word!(game.cur_enemy_index) as i32, game);
         word!(game.special_death_item_drop_x_origin_pos = (*E).base.x_pos);
         word!(game.special_death_item_drop_y_origin_pos = (*E).base.y_pos);
-        NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+        shot_reaction(game);
         FakeKraid_9C50(game);
     };
     [10920659] CeresRidley_Hurt [] {
@@ -4312,12 +4315,12 @@ crate::game::callback_dispatch! {
         MoveEnemyWithVelocity(game);
         (*E).var_F = (*E).var_F.wrapping_sub(1);
         if ((*E).var_F & 0x8000) != 0 {
-            EnemyDeathAnimation(word!(game.cur_enemy_index), 0, game);
+            enemy_death(word!(game.cur_enemy_index), 0, game);
         }
     };
     [10936202] Ridley_Shot [] {
         if word!(game.area_index) == 2 {
-            NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+            shot_reaction(game);
         } else {
             let mut v0: i16 = 13;
             let E = Get_Ridley(0, game);
@@ -4330,7 +4333,7 @@ crate::game::callback_dispatch! {
         };
     };
     [10936242] Ridley_Powerbomb [] {
-        NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
+        power_bomb_without_death(game);
     };
     [10940337] CeresSteam_Init [] {
         let E = Get_CeresSteam(word!(game.cur_enemy_index) as i32, game);
@@ -4356,7 +4359,7 @@ crate::game::callback_dispatch! {
         (*Get_CeresSteam(word!(game.cur_enemy_index) as i32, game))
             .base
             .health = 0x7fff;
-        NormalEnemyTouchAi(game);
+        apply_contact(game);
     };
     [10942149] CeresDoor_Init [] {
         let E = Get_CeresDoor(word!(game.cur_enemy_index) as i32, game);
@@ -4440,11 +4443,11 @@ crate::game::callback_dispatch! {
         );
     };
     [10943911] Zebetites_Touch [] {
-        NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
+        contact_without_death(game);
     };
     [10943916] Zebetites_Shot [] {
         QueueSfx3_Max6(9, game);
-        NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+        shot_reaction(game);
         let E = Get_Zebetites(word!(game.cur_enemy_index) as i32, game);
         let G = Get_Zebetites((*E).parameter_2 as i32, game);
         (*G).base.health = (*E).base.health;
@@ -4452,9 +4455,9 @@ crate::game::callback_dispatch! {
     };
     @forward [pub unsafe fn (game: &mut Game)];
     [10911744] Enemy_GrappleReact_NoInteract_A6 => SwitchEnemyAiToMainAi(game);
-    [10911759] Enemy_GrappleReact_CancelBeam_A6 => Enemy_SwitchToFrozenAi(game);
-    [10911779] Enemy_NormalTouchAI_A6 => NormalEnemyTouchAi(game);
-    [10911789] Enemy_NormalShotAI_A6 => NormalEnemyShotAi(game);
+    [10911759] Enemy_GrappleReact_CancelBeam_A6 => select_frozen_ai(game);
+    [10911779] Enemy_NormalTouchAI_A6 => apply_contact(game);
+    [10911789] Enemy_NormalShotAI_A6 => apply_shot(game);
     [10911809] Enemy_NormalFrozenAI_A6 => update_frozen_enemy(game);
 }
 

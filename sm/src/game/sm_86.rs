@@ -1,3 +1,6 @@
+use crate::game::enemy_combat::{
+    reduce_suit_damage,
+};
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 use crate::game::music::{QueueMusic_Delayed8};
@@ -24,7 +27,7 @@ use crate::game::sm_94::{
 };
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CalculateAngleOfSamusFromEproj, CallEnemyAi, ConvertAngleToXy,
-    SignExtend8, SpawnEnemyDrops, SuitDamageDivision,
+    SignExtend8, SpawnEnemyDrops,
 };
 use crate::game::sm_a6::Ridley_Func_103;
 use crate::game::sprite_objects::create_sprite;
@@ -4355,7 +4358,7 @@ crate::game::callback_dispatch! {
                 (*v4).health = v5 as u16;
             } else if Eproj_CheckForCollisionWithSamus(k, game) & 1 != 0 {
                 BlueRingContactExplosion(k, game);
-                Samus_DealDamage(SuitDamageDivision(0x50, game), game);
+                Samus_DealDamage(reduce_suit_damage(0x50, game), game);
                 word!(game.samus_invincibility_timer = 96);
                 word!(game.samus_knockback_timer = 5);
                 word!(

@@ -1,3 +1,7 @@
+use crate::game::enemy_combat::{
+    apply_contact, apply_shot, contact_without_death, grapple_death, power_bomb_without_death,
+    select_frozen_ai, shot_reaction,
+};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
@@ -10,12 +14,11 @@ use crate::game::plm_spawning::SpawnHardcodedPlm;
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
-    CheckIfEnemyIsOnScreen, ConvertAngleToXy, EnemyFunc_B691, EnemyGrappleDeath,
-    Enemy_ItemDrop_Botwoon, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi,
+    CheckIfEnemyIsOnScreen, ConvertAngleToXy, EnemyFunc_B691,
+    Enemy_ItemDrop_Botwoon, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
     GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsEnemyLeavingScreen, IsSamusWithinEnemy_X,
-    IsSamusWithinEnemy_Y, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy,
-    NormalEnemyShotAi, NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
-    NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SignExtend8, SwitchEnemyAiToMainAi,
+    IsSamusWithinEnemy_Y,
+    SignExtend8, SwitchEnemyAiToMainAi,
 };
 use crate::game::sprite_objects::create_sprite;
 
@@ -966,13 +969,13 @@ crate::game::callback_dispatch! {
     };
     @forward [pub unsafe fn (game: &mut Game)];
     [11763712] Enemy_GrappleReact_NoInteract_B3 => SwitchEnemyAiToMainAi(game);
-    [11763722] Enemy_GrappleReact_KillEnemy_B3 => EnemyGrappleDeath(game);
-    [11763727] Enemy_GrappleReact_CancelBeam_B3 => Enemy_SwitchToFrozenAi(game);
-    [11763747] Enemy_NormalTouchAI_B3 => NormalEnemyTouchAi(game);
-    Enemy_NormalTouchAI_SkipDeathAnim_B3 => NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
-    [11763757] Enemy_NormalShotAI_B3 => NormalEnemyShotAi(game);
-    Enemy_NormalShotAI_SkipSomeParts_B3 => NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-    Enemy_NormalPowerBombAI_SkipDeathAnim_B3 => NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
+    [11763722] Enemy_GrappleReact_KillEnemy_B3 => grapple_death(game);
+    [11763727] Enemy_GrappleReact_CancelBeam_B3 => select_frozen_ai(game);
+    [11763747] Enemy_NormalTouchAI_B3 => apply_contact(game);
+    Enemy_NormalTouchAI_SkipDeathAnim_B3 => contact_without_death(game);
+    [11763757] Enemy_NormalShotAI_B3 => apply_shot(game);
+    Enemy_NormalShotAI_SkipSomeParts_B3 => shot_reaction(game);
+    Enemy_NormalPowerBombAI_SkipDeathAnim_B3 => power_bomb_without_death(game);
     [11763777] Enemy_NormalFrozenAI_B3 => update_frozen_enemy(game);
 }
 
