@@ -2041,6 +2041,31 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    movie ran. No adoption or complete saving is claimed. The parallel standalone
    shot-block-reactions result above is not an additive saving or a second model
    to install; reuse its remaining setup findings for mechanism lifecycle ownership.
+   Shot-triggered mechanism creation now uses an owned 40-slot pool together with
+   the complete projectile owner. **122 selected comparisons**, 335 ordered
+   observations and eight expected matching failures pass: 51 allocation/prefix/
+   nesting cases and 71 mechanism/terrain consumers, including 16 persistent
+   lifecycle steps. Descending allocation, full capacity, invalid header reads,
+   initialized prefixes and nested creation preserve full RAM and completion.
+   Saved level values and script return cursors survive reuse. Header/program
+   reads and actual setup receive the complete pool/projectile handoff; nested
+   creation retains the outer block association and leaves the inner selection.
+   Native terrain now uses this same allocator instead of simulated capacity.
+   Its two native sequences cover full capacity, reuse, nested setup and scheduled
+   terrain/impact/release. The pool is explicitly unavailable while the creation
+   owner holds it. Actual encoded setup remains a retained compatibility interval;
+   native setup actions are authored. Other mechanism producers, setup/script
+   lifecycle, collision-displacement handoffs and runtime room authority remain open.
+   Pool/creation are non-Clone; model and projection forbid unsafe code. All 115
+   frozen and 108 draft compiled inputs match; 102 inherited sources are unchanged.
+   The final native-only handoff/nesting edit reran only the two native sequences;
+   all comparison implementations and their original entry are unchanged. Current
+   allocator/read functions and RAM layout correspond; optimized build and
+   formatting pass. Source/result: player-projectiles/mechanism-creation-stage.
+   The new model/projection costs **187 formatted lines**; native examples add 62.
+   New paired fixtures (203), existing-fixture growth (51), harness growth (44),
+   retained setup and final runtime costs remain separate from this partial price.
+   No terrain/slope or full projectile suite, movie, adoption or net saving is claimed.
    The frozen library
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.
