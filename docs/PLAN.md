@@ -1872,15 +1872,36 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the methods into the latest owner. Native scheduler/geometry, actual echoes,
    projection and runtime ownership remain open. No movie, adoption or complete
    saving is claimed. Source/result: 20261022/owned-projectile-sprite-output.
+   Actual presentation is now composed into the latest full owner: named pass
+   policies and geometry feed the existing shared sprite renderer, followed by
+   real crash echoes and trail playback/output. **379 selected old/new full-RAM
+   and return comparisons**, 327 ordered observations and 88 expected matching
+   failures pass. These cover scheduling, live sprite/selector changes, definition
+   replacement, checked partial output, carried Ceres coordinates, signed projection,
+   echo clipping/output aliases and all five shared-renderer modes. Every scenario
+   requires its intended completion or failure; selected callbacks must be reached.
+   Ten explicit contracts and eight persistent-owner drawing/release/reset steps
+   include echo output changing freeze state before trails capture it. One native
+   sequence initializes, animates and draws named geometry, then impacts, releases
+   and verifies that the inactive cursor no longer draws. Existing native callers
+   also pass with that inactive default; firing and motion remain encoded.
+   Models, providers and checked output forbid unsafe code. All 115 frozen and 83
+   draft compiled inputs match; 71 inherited files are unchanged, and nine current
+   gameplay/support sources match the frozen reference. Optimized DLL and formatting
+   pass. Exact source/result is preserved in player-projectiles/presentation-stage.
+   The complete changed formatted model/provider/output cohort, including the shared
+   renderer baseline, grows **842 -> 1,024 (+182 lines)**; authored examples add 199
+   separately formatted lines. Remaining bridge/fallback and final runtime costs
+   are outside this partial price. No earlier full suite or movie ran.
    This remains an **unadopted, incomplete draft**, not a production promotion or
-   a complete price. Collision, native diagnostics, projectile-sprite drawing,
-   palette/sound output and grapple-start consumers remain controlled. ROM
-   definitions are synthetic; no gameplay route or hardware coverage is established.
-   Other accepted out-of-pool operations retain reference
-   bodies, including drawing continuations; handoff tests do not retire those bodies.
-   Continue with actual projectile-sprite presentation and remaining definitions,
-   protection/suspension, real producers/callers and runtime transfers. Count every
-   adapter/fallback and close the remaining numeric-definition/motion interfaces.
+   a complete price. Collision, native diagnostics, palette/sound output and
+   grapple-start consumers remain controlled. Definitions are synthetic; no
+   gameplay route or hardware coverage is established. Accepted out-of-pool
+   operations retain reference bodies, including drawing continuations; handoff
+   tests do not retire those bodies. Continue with remaining firing/motion
+   definitions, protection/suspension, real producers/callers and runtime transfers.
+   Count every adapter/fallback and close the remaining numeric interfaces before
+   judging the complete structural replacement; this stage claims no net saving.
    The frozen library
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.
