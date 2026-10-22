@@ -9,7 +9,7 @@ use crate::game::sm_90::{
 };
 use crate::game::sm_91::Samus_LoadSuitPalette;
 use crate::game_state::Game;
-use crate::ram_map::{ram_ptr, word};
+use crate::ram_map::{checked_word as word, word_arrays as arrays, words};
 
 pub(crate) unsafe fn update_input(game: &mut Game) {
     unsafe {
@@ -29,7 +29,8 @@ pub(crate) unsafe fn update_input(game: &mut Game) {
             (word!(game.flare_counter) as i32 - 60i32 & 0x8000 != 0)
         } else {
             if word!(game.flare_counter) as i32 - 120i32 & 0x8000 != 0 {
-                if word!(game.flare_counter += 1, reread) == 1 {
+                word!(game.flare_counter += 1);
+                if word!(game.flare_counter) == 1 {
                     clear_animation(game);
                     fire(false, game);
                 }
@@ -40,53 +41,36 @@ pub(crate) unsafe fn update_input(game: &mut Game) {
             }
             return;
         };
-        if fire_uncharged {
-            word!(game.flare_counter = 0);
-            clear_animation(game);
-            fire(false, game);
-        } else {
-            word!(game.flare_counter = 0);
-            clear_animation(game);
-            fire(true, game);
-        }
+        word!(game.flare_counter = 0);
+        clear_animation(game);
+        fire(!fire_uncharged, game);
     }
 }
-pub(crate) unsafe fn clear_animation(game: &mut Game) {
-    unsafe {
-        word! { game, 0;
-            flare_animation_frame, flare_slow_sparks_anim_frame, flare_fast_sparks_anim_frame,
-            flare_animation_timer, flare_slow_sparks_anim_timer, flare_fast_sparks_anim_timer,
-        }
-    }
+#[forbid(unsafe_code)]
+pub(crate) fn clear_animation(game: &mut Game) {
+    game.g_ram[words::flare_animation_frame..words::flare_fast_sparks_anim_timer + 2].fill(0);
 }
-unsafe fn reserve_beam(game: &mut Game) -> u8 {
-    unsafe {
-        if word!(game.projectile_counter) as i32 - 5i32 & 0x8000 == 0
-            || (word!(game.cooldown_timer) as u8) != 0
-        {
-            return 0;
-        }
-        word!(game.cooldown_timer = 1);
-        word!(game.projectile_counter += 1);
-        1
+#[forbid(unsafe_code)]
+fn reserve_beam(game: &mut Game) -> bool {
+    if word!(game.projectile_counter).wrapping_sub(5) & 0x8000 == 0
+        || word!(game.cooldown_timer) as u8 != 0
+    {
+        return false;
     }
+    word!(game.cooldown_timer = 1);
+    word!(game.projectile_counter += 1);
+    true
 }
 unsafe fn fire(charged: bool, game: &mut Game) {
     unsafe {
         let hyper = !charged && word!(game.hyper_beam_flag) != 0;
-        if reserve_beam(game) & 1 != 0 {
-            let mut projectile: u16 = 0;
-            while word!(game.projectile_damage[(projectile >> 1)]) != 0 {
-                projectile = projectile.wrapping_add(2);
-                if (projectile as i16).wrapping_sub(10) < 0 {
-                    continue;
-                }
-                projectile = projectile.wrapping_sub(2);
-                break;
-            }
+        if reserve_beam(game) {
+            let slot = (0..5)
+                .find(|&slot| word!(game.projectile_damage[slot]) == 0)
+                .unwrap_or(4);
+            let mut projectile = (2 * slot) as u16;
             if InitProjectilePositionDirection(projectile, game) & 1 == 0 {
                 word!(game.projectile_invincibility_timer = 10);
-                let slot = projectile as i32 >> 1;
                 let sound = if hyper {
                     word!(game.projectile_type[slot] = -28648i32 as u16);
                     kChargedProjectile_Sfx[8]
@@ -106,18 +90,21 @@ unsafe fn fire(charged: bool, game: &mut Game) {
                 word!(game.play_resume_charging_beam_sfx = 0);
                 initialize_projectile(projectile, game);
                 if hyper {
-                    word! { game, 0; projectile_bomb_x_speed[slot], projectile_bomb_y_speed[slot] }
+                    word!(game.projectile_bomb_x_speed[slot] = 0);
+                    word!(game.projectile_bomb_y_speed[slot] = 0);
                     word!(game.projectile_index = projectile);
                     WaveBeam_CheckColl(projectile, game);
                     let projectile = word!(game.projectile_index);
-                    let slot = word!(game.projectile_index) as i32 >> 1;
-                    word!(game.projectile_damage[slot] = 1000);
-                    word!(game.projectile_bomb_pre_instructions[slot] = ((0x90b159i32) as u16));
+                    prepare_hyper(projectile, game);
                     projectile_flight::initialize_beam_speed(projectile, game);
-                    word! {game; cooldown_timer = 21; charged_shot_glow_timer = -32748i32 as u16;
-                    flare_animation_frame = 29; }
-                    word! { game, 5; flare_slow_sparks_anim_frame, flare_fast_sparks_anim_frame }
-                    word! { game, 3; flare_animation_timer, flare_slow_sparks_anim_timer, flare_fast_sparks_anim_timer }
+                    word!(game.cooldown_timer = 21);
+                    word!(game.charged_shot_glow_timer = 0x8014);
+                    word!(game.flare_animation_frame = 29);
+                    word!(game.flare_slow_sparks_anim_frame = 5);
+                    word!(game.flare_fast_sparks_anim_frame = 5);
+                    word!(game.flare_animation_timer = 3);
+                    word!(game.flare_slow_sparks_anim_timer = 3);
+                    word!(game.flare_fast_sparks_anim_timer = 3);
                     word!(game.flare_counter = 0x8000);
                 } else {
                     let manual_fire = charged
@@ -134,34 +121,17 @@ unsafe fn fire(charged: bool, game: &mut Game) {
                             kBeamAutoFireCooldowns[(beam_type as i32 & 0x3f) as usize]
                         } as u16
                     );
-                    word! { game, 0; projectile_bomb_x_speed[slot], projectile_bomb_y_speed[slot] }
+                    word!(game.projectile_bomb_x_speed[slot] = 0);
+                    word!(game.projectile_bomb_y_speed[slot] = 0);
                     word!(game.projectile_index = projectile);
-                    let survives = if beam_type & 1 != 0 {
+                    let wave = beam_type & 1 != 0;
+                    if wave {
                         WaveBeam_CheckColl(projectile, game);
-                        true
                     } else {
                         CheckBeamCollByDir(projectile, game);
                         projectile = word!(game.projectile_index);
-                        (*(ram_ptr!(game, u16; 0xc18))
-                            .offset((word!(game.projectile_index) >> 1) as isize)
-                            & 0xf00)
-                            == 0
-                    };
-                    if survives {
-                        let pre_instructions = if charged {
-                            &kFireChargedBeam_Funcs
-                        } else {
-                            &kProjectileBombPreInstr
-                        };
-                        word!(
-                            game.projectile_bomb_pre_instructions[(projectile >> 1)] =
-                                pre_instructions[(word!(game.projectile_type[(projectile >> 1)])
-                                    as i32
-                                    & 0xf)
-                                    as usize]
-                        );
-                        projectile_flight::initialize_beam_speed(projectile, game);
                     }
+                    finish_beam(projectile, charged, wave, game);
                     if charged {
                         word!(game.charged_shot_glow_timer = 4);
                     }
@@ -176,15 +146,40 @@ unsafe fn fire(charged: bool, game: &mut Game) {
     }
 }
 
+#[forbid(unsafe_code)]
+pub(crate) fn prepare_hyper(projectile: u16, game: &mut Game) {
+    let slot = usize::from(projectile >> 1);
+    word!(game.projectile_damage[slot] = 1000);
+    word!(game.projectile_bomb_pre_instructions[slot] = 0xb159);
+}
+
+/// Wave retains its caller's slot and launches unconditionally. Other beams
+/// use the selector captured after collision and test its native type word.
+pub(crate) unsafe fn finish_beam(projectile: u16, charged: bool, wave: bool, game: &mut Game) {
+    let slot = usize::from(projectile >> 1);
+    let at = arrays::projectile_type + 2 * slot;
+    if !wave && u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]]) & 0xf00 != 0 {
+        return;
+    }
+    let instructions = if charged {
+        &kFireChargedBeam_Funcs
+    } else {
+        &kProjectileBombPreInstr
+    };
+    word!(
+        game.projectile_bomb_pre_instructions[slot] =
+            instructions[usize::from(word!(game.projectile_type[slot]) & 15)]
+    );
+    unsafe { projectile_flight::initialize_beam_speed(projectile, game) };
+}
+
 static kUnchargedProjectile_Sfx: [u16; 12] = [
     0xb, 0xd, 0xc, 0xe, 0xf, 0x12, 0x10, 0x11, 0x13, 0x16, 0x14, 0x15,
 ];
 static kChargedProjectile_Sfx: [u16; 12] = [
     0x17, 0x19, 0x18, 0x1a, 0x1b, 0x1e, 0x1c, 0x1d, 0x1f, 0x22, 0x20, 0x21,
 ];
-static kBeamAutoFireCooldowns: [u8; 12] = [
-    0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19,
-];
+static kBeamAutoFireCooldowns: [u8; 12] = [0x19; 12];
 static kProjectileBombPreInstr: [u16; 12] = [
     fnProjPreInstr_Beam_NoWaveBeam as u16,
     fnProjPreInstr_BeamOrIceWave as u16,

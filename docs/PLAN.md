@@ -96,10 +96,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **101,279 Rust lines in 131 files**, plus 266 C
-bridge and 296 C-header lines = **101,841 maintained implementation lines**.
+Current composition (2026-10-22): **101,274 Rust lines in 131 files**, plus 266 C
+bridge and 296 C-header lines = **101,836 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **102,672**. This complete recount includes frontend,
+gives **102,667**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -129,6 +129,9 @@ retire; clearing, contact, sound and HDMA calls remain unsafe.
 Consolidated special-beam motion removes 50 Rust lines, five counted unsafe
 declarations and 41 cast-containing lines. Its direct raw RAM operations retire;
 sine lookup, clearing, animation and legacy effects remain unsafe.
+Checked beam input and firing remove five Rust lines, one counted unsafe
+declaration and four cast lines. Reservation, flare clearing and Hyper preparation
+forbid unsafe code; placement, collision, animation, sound and launch remain unsafe.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
 The complete GLSL dependency replacement removes **282 maintained lines**, with
@@ -2602,9 +2605,24 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    edition-2021 reference carrier; normal production uses edition 2024. Source,
    DLL and results are at player-projectiles/runtime-special-stage. This closes
    those compatibility bindings, not persistent Session ownership or a whole price.
-   The target Session contract remains open. The runtime composition still has
-   unbound effects: beam continuation and encounter effects need explicit bindings
-   or elimination.
+   Beam input and firing now use checked RAM access, with shared charge release,
+   damage-based reservation and explicit post-collision launch continuations. The
+   native type check and captured/live selector distinction remain intact. This
+   removes five maintained Rust lines, one counted unsafe declaration and four
+   cast-containing lines. Reservation, flare clearing and Hyper preparation forbid
+   unsafe code; placement, collision, animation, sound and launch remain unsafe.
+   Both remaining beam continuations bind in the same complete ownership candidate.
+   **338 three-way comparisons**, **817 ordered observations**, **32 expected failures**,
+   **52 broad-selector binding cases** and **three repeated-input sequences** pass.
+   Reservation/cooldown bounds, damage-based reuse, charge thresholds, manual/auto
+   cadence, native type checks, callback redirection and failure prefixes are covered.
+   The affected flight, bomb/SBA and session checks pass. The unchanged production
+   module compiles in the edition-2021 reference carrier; the normal Rust 2024 release
+   build and loaded DLL source checks pass. Sources/results are preserved at
+   player-projectiles/runtime-beam-stage. No movie ran; this closes compatibility
+   bindings, not persistent Session authority or a whole replacement price.
+   The target Session contract remains open. Encounter effects still need explicit
+   bindings or elimination in the runtime composition.
    Bind and validate these in the same full candidate before pricing/adopting its
    complete dependency and deletion surface under target-architecture/MIGRATION.md.
    Current Game/RAM interfaces are temporary; substantial reduction, content
@@ -4871,15 +4889,19 @@ checked sprite-object state, checked scene/enemy drawing, checked enemy scheduli
 owned enemy-script positions, checked enemy-definition records, standard combat,
 shared enemy/projectile contact, checked extension linkage, projectile animation
 and consolidated checked trails, followed by the edition 2024 migration and
-checked bomb and special-beam lifecycles, maintained Rust is **101,279**, with applicable checks passing. The edition
+checked bomb and special-beam lifecycles and beam firing, maintained Rust is
+**101,274**, with applicable checks passing. The edition
 migration has source/compiler checks only; it adds no movie coverage.
-Including 266 C and 296 header lines gives **101,841**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **102,672**.
+Including 266 C and 296 header lines gives **101,836**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **102,667**.
 The explicit unsafe scopes and their formatting add 4,909 Rust lines, putting
 the current total above the previously reached immediate volume target.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2953; cast lines 6169. Checked special-beam motion removes 50
+unsafe functions 2952; cast lines 6165. Checked beam firing removes five Rust
+lines, one counted unsafe declaration and four cast lines. Its reservation,
+flare clearing and Hyper preparation forbid unsafe code; placement, collision,
+animation, sound and launch remain unsafe. Checked special-beam motion removes 50
 Rust lines, five counted unsafe declarations and 41 cast lines. Its native pair
 and numeric helpers forbid unsafe code; raw RAM operations retire while sine
 lookup and legacy effects remain unsafe. Checked bomb lifecycle removes eight
