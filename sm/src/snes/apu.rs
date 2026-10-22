@@ -55,9 +55,9 @@ pub unsafe fn apu_saveload(apu: *mut Apu, io: &mut crate::snapshot_io::SnapshotI
 pub unsafe fn apu_cycle(apu: *mut Apu, game: &mut Game) {
     if (*apu).registers.cpuCyclesLeft == 0 {
         if game.g_debug_apu_cycles {
-            let mut line: [c_char; 80] = [0; 80];
-            getProcessorStateSpc(apu, line.as_mut_ptr());
-            puts(line.as_mut_ptr());
+            let mut line = [0u8; 80];
+            getProcessorStateSpc(apu, &mut line);
+            puts(line.as_ptr().cast());
         }
         (*apu).registers.cpuCyclesLeft = spc_runOpcode((*apu).spc) as u8;
     }

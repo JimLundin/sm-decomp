@@ -2159,6 +2159,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    music replay, gameplay or physical-device coverage is claimed. Source checking
    caught a stale post-probe artifact and rebuilt it before the clean pass.
    Checks: Local/sm-decomp-experiments/20261022/stereo-output.
+   CPU/SPC tracing now uses 512 static Rust instruction strings and checked
+   output buffers; its formatter and writers forbid unsafe code. All three real
+   diagnostic callers use typed 80-byte arrays, retaining native output, NUL
+   termination and untouched tails. This retires raw output copies, C-string
+   pointer reads and both unsafe table initializers; CPU/SPC bus and processor
+   access and native terminal output remain unsafe. Complete price: **zero net
+   Rust lines** across three files. **10,513 old/new comparisons** pass with the
+   final normal release library: 8,960 complete tracing-body cases with controlled
+   reads, 1,550 actual-library cases and all three real callers. Opcode/flag/width
+   coverage, wrapping addresses, read-time state changes and processor-pointer
+   replacement are checked. Actual cases compare hardware state and guarded text;
+   separate processes also match caller stdout. CPU/SPC text peaks at 79/56 bytes.
+   All 118 library inputs, exact string/type-table and retained-body correspondence,
+   formatting, native source checks and normal release builds pass. No movie ran:
+   this diagnostic change is exercised directly through RunCpuUntilPC, RunAsmCode
+   and apu_cycle, with no gameplay or physical-device coverage claimed.
+   Checks: Local/sm-decomp-experiments/20261022/checked-tracing.
    Runtime construction now uses typed initial values shared through the existing
    record metadata. Game owns three separately allocated oracle snapshots while
    retaining its fixed inline SNES RAM. Nine hardware constructors use typed
@@ -3210,14 +3227,18 @@ motion, checked ROM patch installation, hardware field serialization, PLM
 award/message ownership, owned APU RAM, the owned audio command queue and enemy
 population ownership, owned native audio uploads, typed runtime initialization,
 owned native-player RAM with named field transfers, DSP RAM ownership and typed
-stereo output, maintained Rust is **95,341**, with
+stereo output and checked tracing, maintained Rust is **95,341**, with
 applicable static, component and exercised movie checks passing.
 Including 262 C and 296 header lines gives **95,899**; all 803 dependency-installer
 lines and 28 added launcher lines bring the complete price to **96,730**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3024; cast lines 6538. Typed stereo output adds 12 maintained
+unsafe functions 3021; cast lines 6538. Checked tracing removes three counted
+unsafe declarations with zero net line change; other counters are unchanged.
+Raw output stores, C-string reads and two unsafe table initializers are retired;
+bus/processor access and native terminal output remain unsafe.
+Typed stereo output adds 12 maintained
 Rust lines and removes one counted unsafe declaration and one cast-containing
 line; other counters are unchanged. The resampler forbids unsafe code and retires
 both raw sample-write loops. Native callbacks and DSP handles remain unsafe.

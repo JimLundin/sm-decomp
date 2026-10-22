@@ -2,75 +2,75 @@ use crate::game_state::Game;
 use crate::snes::apu::apu_cpuRead;
 use crate::snes::snes::snes_read;
 use crate::types::{Apu, Snes};
-use core::ffi::c_char;
 use std::fmt::Write;
 
-static opcodeNames: crate::types::ImmutableCStringPointers<256> = crate::types::immutable_c_strings! {
-    b"brk          \0", b"ora ($%02x,x)  \0", b"cop #$%02x     \0", b"ora $%02x,s    \0",
-    b"tsb $%02x      \0", b"ora $%02x      \0", b"asl $%02x      \0", b"ora [$%02x]    \0",
-    b"php          \0", b"ora #$%04x   \0", b"asl          \0", b"phd          \0",
-    b"tsb $%04x    \0", b"ora $%04x    \0", b"asl $%04x    \0", b"ora $%06x  \0",
-    b"bpl $%04x    \0", b"ora ($%02x),y  \0", b"ora ($%02x)    \0", b"ora ($%02x,s),y\0",
-    b"trb $%02x      \0", b"ora $%02x,x    \0", b"asl $%02x,x    \0", b"ora [$%02x],y  \0",
-    b"clc          \0", b"ora $%04x,y  \0", b"inc          \0", b"tcs          \0",
-    b"trb $%04x    \0", b"ora $%04x,x  \0", b"asl $%04x,x  \0", b"ora $%06x,x\0",
-    b"jsr $%04x    \0", b"and ($%02x,x)  \0", b"jsl $%06x  \0", b"and $%02x,s    \0",
-    b"bit $%02x      \0", b"and $%02x      \0", b"rol $%02x      \0", b"and [$%02x]    \0",
-    b"plp          \0", b"and #$%04x   \0", b"rol          \0", b"pld          \0",
-    b"bit $%04x    \0", b"and $%04x    \0", b"rol $%04x    \0", b"and $%06x  \0",
-    b"bmi $%04x    \0", b"and ($%02x),y  \0", b"and ($%02x)    \0", b"and ($%02x,s),y\0",
-    b"bit $%02x,x    \0", b"and $%02x,x    \0", b"rol $%02x,x    \0", b"and [$%02x],y  \0",
-    b"sec          \0", b"and $%04x,y  \0", b"dec          \0", b"tsc          \0",
-    b"bit $%04x,x  \0", b"and $%04x,x  \0", b"rol $%04x,x  \0", b"and $%06x,x\0",
-    b"rti          \0", b"eor ($%02x,x)  \0", b"wdm #$%02x     \0", b"eor $%02x,s    \0",
-    b"mvp $%02x, $%02x \0", b"eor $%02x      \0", b"lsr $%02x      \0", b"eor [$%02x]    \0",
-    b"pha          \0", b"eor #$%04x   \0", b"lsr          \0", b"phk          \0",
-    b"jmp $%04x    \0", b"eor $%04x    \0", b"lsr $%04x    \0", b"eor $%06x  \0",
-    b"bvc $%04x    \0", b"eor ($%02x),y  \0", b"eor ($%02x)    \0", b"eor ($%02x,s),y\0",
-    b"mvn $%02x, $%02x \0", b"eor $%02x,x    \0", b"lsr $%02x,x    \0", b"eor [$%02x],y  \0",
-    b"cli          \0", b"eor $%04x,y  \0", b"phy          \0", b"tcd          \0",
-    b"jml $%06x  \0", b"eor $%04x,x  \0", b"lsr $%04x,x  \0", b"eor $%06x,x\0",
-    b"rts          \0", b"adc ($%02x,x)  \0", b"per $%04x    \0", b"adc $%02x,s    \0",
-    b"stz $%02x      \0", b"adc $%02x      \0", b"ror $%02x      \0", b"adc [$%02x]    \0",
-    b"pla          \0", b"adc #$%04x   \0", b"ror          \0", b"rtl          \0",
-    b"jmp ($%04x)  \0", b"adc $%04x    \0", b"ror $%04x    \0", b"adc $%06x  \0",
-    b"bvs $%04x    \0", b"adc ($%02x),y  \0", b"adc ($%02x)    \0", b"adc ($%02x,s),y\0",
-    b"stz $%02x,x    \0", b"adc $%02x,x    \0", b"ror $%02x,x    \0", b"adc [$%02x],y  \0",
-    b"sei          \0", b"adc $%04x,y  \0", b"ply          \0", b"tdc          \0",
-    b"jmp ($%04x,x)\0", b"adc $%04x,x  \0", b"ror $%04x,x  \0", b"adc $%06x,x\0",
-    b"bra $%04x    \0", b"sta ($%02x,x)  \0", b"brl $%04x    \0", b"sta $%02x,s    \0",
-    b"sty $%02x      \0", b"sta $%02x      \0", b"stx $%02x      \0", b"sta [$%02x]    \0",
-    b"dey          \0", b"bit #$%04x   \0", b"txa          \0", b"phb          \0",
-    b"sty $%04x    \0", b"sta $%04x    \0", b"stx $%04x    \0", b"sta $%06x  \0",
-    b"bcc $%04x    \0", b"sta ($%02x),y  \0", b"sta ($%02x)    \0", b"sta ($%02x,s),y\0",
-    b"sty $%02x,x    \0", b"sta $%02x,x    \0", b"stx $%02x,y    \0", b"sta [$%02x],y  \0",
-    b"tya          \0", b"sta $%04x,y  \0", b"txs          \0", b"txy          \0",
-    b"stz $%04x    \0", b"sta $%04x,x  \0", b"stz $%04x,x  \0", b"sta $%06x,x\0",
-    b"ldy #$%04x   \0", b"lda ($%02x,x)  \0", b"ldx #$%04x   \0", b"lda $%02x,s    \0",
-    b"ldy $%02x      \0", b"lda $%02x      \0", b"ldx $%02x      \0", b"lda [$%02x]    \0",
-    b"tay          \0", b"lda #$%04x   \0", b"tax          \0", b"plb          \0",
-    b"ldy $%04x    \0", b"lda $%04x    \0", b"ldx $%04x    \0", b"lda $%06x  \0",
-    b"bcs $%04x    \0", b"lda ($%02x),y  \0", b"lda ($%02x)    \0", b"lda ($%02x,s),y\0",
-    b"ldy $%02x,x    \0", b"lda $%02x,x    \0", b"ldx $%02x,y    \0", b"lda [$%02x],y  \0",
-    b"clv          \0", b"lda $%04x,y  \0", b"tsx          \0", b"tyx          \0",
-    b"ldy $%04x,x  \0", b"lda $%04x,x  \0", b"ldx $%04x,y  \0", b"lda $%06x,x\0",
-    b"cpy #$%04x   \0", b"cmp ($%02x,x)  \0", b"rep #$%02x     \0", b"cmp $%02x,s    \0",
-    b"cpy $%02x      \0", b"cmp $%02x      \0", b"dec $%02x      \0", b"cmp [$%02x]    \0",
-    b"iny          \0", b"cmp #$%04x   \0", b"dex          \0", b"wai          \0",
-    b"cpy $%04x    \0", b"cmp $%04x    \0", b"dec $%04x    \0", b"cmp $%06x  \0",
-    b"bne $%04x    \0", b"cmp ($%02x),y  \0", b"cmp ($%02x)    \0", b"cmp ($%02x,s),y\0",
-    b"pei $%02x      \0", b"cmp $%02x,x    \0", b"dec $%02x,x    \0", b"cmp [$%02x],y  \0",
-    b"cld          \0", b"cmp $%04x,y  \0", b"phx          \0", b"stp          \0",
-    b"jml [$%04x]  \0", b"cmp $%04x,x  \0", b"dec $%04x,x  \0", b"cmp $%06x,x\0",
-    b"cpx #$%04x   \0", b"sbc ($%02x,x)  \0", b"sep #$%02x     \0", b"sbc $%02x,s    \0",
-    b"cpx $%02x      \0", b"sbc $%02x      \0", b"inc $%02x      \0", b"sbc [$%02x]    \0",
-    b"inx          \0", b"sbc #$%04x   \0", b"nop          \0", b"xba          \0",
-    b"cpx $%04x    \0", b"sbc $%04x    \0", b"inc $%04x    \0", b"sbc $%06x  \0",
-    b"beq $%04x    \0", b"sbc ($%02x),y  \0", b"sbc ($%02x)    \0", b"sbc ($%02x,s),y\0",
-    b"pea #$%04x   \0", b"sbc $%02x,x    \0", b"inc $%02x,x    \0", b"sbc [$%02x],y  \0",
-    b"sed          \0", b"sbc $%04x,y  \0", b"plx          \0", b"xce          \0",
-    b"jsr ($%04x,x)\0", b"sbc $%04x,x  \0", b"inc $%04x,x  \0", b"sbc $%06x,x\0",
-};
+#[rustfmt::skip]
+static opcodeNames: [&str; 256] = [
+    "brk          ", "ora ($%02x,x)  ", "cop #$%02x     ", "ora $%02x,s    ",
+    "tsb $%02x      ", "ora $%02x      ", "asl $%02x      ", "ora [$%02x]    ",
+    "php          ", "ora #$%04x   ", "asl          ", "phd          ",
+    "tsb $%04x    ", "ora $%04x    ", "asl $%04x    ", "ora $%06x  ",
+    "bpl $%04x    ", "ora ($%02x),y  ", "ora ($%02x)    ", "ora ($%02x,s),y",
+    "trb $%02x      ", "ora $%02x,x    ", "asl $%02x,x    ", "ora [$%02x],y  ",
+    "clc          ", "ora $%04x,y  ", "inc          ", "tcs          ",
+    "trb $%04x    ", "ora $%04x,x  ", "asl $%04x,x  ", "ora $%06x,x",
+    "jsr $%04x    ", "and ($%02x,x)  ", "jsl $%06x  ", "and $%02x,s    ",
+    "bit $%02x      ", "and $%02x      ", "rol $%02x      ", "and [$%02x]    ",
+    "plp          ", "and #$%04x   ", "rol          ", "pld          ",
+    "bit $%04x    ", "and $%04x    ", "rol $%04x    ", "and $%06x  ",
+    "bmi $%04x    ", "and ($%02x),y  ", "and ($%02x)    ", "and ($%02x,s),y",
+    "bit $%02x,x    ", "and $%02x,x    ", "rol $%02x,x    ", "and [$%02x],y  ",
+    "sec          ", "and $%04x,y  ", "dec          ", "tsc          ",
+    "bit $%04x,x  ", "and $%04x,x  ", "rol $%04x,x  ", "and $%06x,x",
+    "rti          ", "eor ($%02x,x)  ", "wdm #$%02x     ", "eor $%02x,s    ",
+    "mvp $%02x, $%02x ", "eor $%02x      ", "lsr $%02x      ", "eor [$%02x]    ",
+    "pha          ", "eor #$%04x   ", "lsr          ", "phk          ",
+    "jmp $%04x    ", "eor $%04x    ", "lsr $%04x    ", "eor $%06x  ",
+    "bvc $%04x    ", "eor ($%02x),y  ", "eor ($%02x)    ", "eor ($%02x,s),y",
+    "mvn $%02x, $%02x ", "eor $%02x,x    ", "lsr $%02x,x    ", "eor [$%02x],y  ",
+    "cli          ", "eor $%04x,y  ", "phy          ", "tcd          ",
+    "jml $%06x  ", "eor $%04x,x  ", "lsr $%04x,x  ", "eor $%06x,x",
+    "rts          ", "adc ($%02x,x)  ", "per $%04x    ", "adc $%02x,s    ",
+    "stz $%02x      ", "adc $%02x      ", "ror $%02x      ", "adc [$%02x]    ",
+    "pla          ", "adc #$%04x   ", "ror          ", "rtl          ",
+    "jmp ($%04x)  ", "adc $%04x    ", "ror $%04x    ", "adc $%06x  ",
+    "bvs $%04x    ", "adc ($%02x),y  ", "adc ($%02x)    ", "adc ($%02x,s),y",
+    "stz $%02x,x    ", "adc $%02x,x    ", "ror $%02x,x    ", "adc [$%02x],y  ",
+    "sei          ", "adc $%04x,y  ", "ply          ", "tdc          ",
+    "jmp ($%04x,x)", "adc $%04x,x  ", "ror $%04x,x  ", "adc $%06x,x",
+    "bra $%04x    ", "sta ($%02x,x)  ", "brl $%04x    ", "sta $%02x,s    ",
+    "sty $%02x      ", "sta $%02x      ", "stx $%02x      ", "sta [$%02x]    ",
+    "dey          ", "bit #$%04x   ", "txa          ", "phb          ",
+    "sty $%04x    ", "sta $%04x    ", "stx $%04x    ", "sta $%06x  ",
+    "bcc $%04x    ", "sta ($%02x),y  ", "sta ($%02x)    ", "sta ($%02x,s),y",
+    "sty $%02x,x    ", "sta $%02x,x    ", "stx $%02x,y    ", "sta [$%02x],y  ",
+    "tya          ", "sta $%04x,y  ", "txs          ", "txy          ",
+    "stz $%04x    ", "sta $%04x,x  ", "stz $%04x,x  ", "sta $%06x,x",
+    "ldy #$%04x   ", "lda ($%02x,x)  ", "ldx #$%04x   ", "lda $%02x,s    ",
+    "ldy $%02x      ", "lda $%02x      ", "ldx $%02x      ", "lda [$%02x]    ",
+    "tay          ", "lda #$%04x   ", "tax          ", "plb          ",
+    "ldy $%04x    ", "lda $%04x    ", "ldx $%04x    ", "lda $%06x  ",
+    "bcs $%04x    ", "lda ($%02x),y  ", "lda ($%02x)    ", "lda ($%02x,s),y",
+    "ldy $%02x,x    ", "lda $%02x,x    ", "ldx $%02x,y    ", "lda [$%02x],y  ",
+    "clv          ", "lda $%04x,y  ", "tsx          ", "tyx          ",
+    "ldy $%04x,x  ", "lda $%04x,x  ", "ldx $%04x,y  ", "lda $%06x,x",
+    "cpy #$%04x   ", "cmp ($%02x,x)  ", "rep #$%02x     ", "cmp $%02x,s    ",
+    "cpy $%02x      ", "cmp $%02x      ", "dec $%02x      ", "cmp [$%02x]    ",
+    "iny          ", "cmp #$%04x   ", "dex          ", "wai          ",
+    "cpy $%04x    ", "cmp $%04x    ", "dec $%04x    ", "cmp $%06x  ",
+    "bne $%04x    ", "cmp ($%02x),y  ", "cmp ($%02x)    ", "cmp ($%02x,s),y",
+    "pei $%02x      ", "cmp $%02x,x    ", "dec $%02x,x    ", "cmp [$%02x],y  ",
+    "cld          ", "cmp $%04x,y  ", "phx          ", "stp          ",
+    "jml [$%04x]  ", "cmp $%04x,x  ", "dec $%04x,x  ", "cmp $%06x,x",
+    "cpx #$%04x   ", "sbc ($%02x,x)  ", "sep #$%02x     ", "sbc $%02x,s    ",
+    "cpx $%02x      ", "sbc $%02x      ", "inc $%02x      ", "sbc [$%02x]    ",
+    "inx          ", "sbc #$%04x   ", "nop          ", "xba          ",
+    "cpx $%04x    ", "sbc $%04x    ", "inc $%04x    ", "sbc $%06x  ",
+    "beq $%04x    ", "sbc ($%02x),y  ", "sbc ($%02x)    ", "sbc ($%02x,s),y",
+    "pea #$%04x   ", "sbc $%02x,x    ", "inc $%02x,x    ", "sbc [$%02x],y  ",
+    "sed          ", "sbc $%04x,y  ", "plx          ", "xce          ",
+    "jsr ($%04x,x)", "sbc $%04x,x  ", "inc $%04x,x  ", "sbc $%06x,x",
+];
 static opcodeType: [i32; 256] = [
     0, 1, 1, 1, 1, 1, 1, 1, 0, 4, 0, 0, 2, 2, 2, 3, 6, 1, 1, 1, 1, 1, 1, 1, 0, 2, 0, 0, 2, 2, 2, 3,
     2, 1, 3, 1, 1, 1, 1, 1, 0, 4, 0, 0, 2, 2, 2, 3, 6, 1, 1, 1, 1, 1, 1, 1, 0, 2, 0, 0, 2, 2, 2, 3,
@@ -81,72 +81,73 @@ static opcodeType: [i32; 256] = [
     5, 1, 1, 1, 1, 1, 1, 1, 0, 4, 0, 0, 2, 2, 2, 3, 6, 1, 1, 1, 1, 1, 1, 1, 0, 2, 0, 0, 2, 2, 2, 3,
     5, 1, 1, 1, 1, 1, 1, 1, 0, 4, 0, 0, 2, 2, 2, 3, 6, 1, 1, 1, 2, 1, 1, 1, 0, 2, 0, 0, 2, 2, 2, 3,
 ];
-static opcodeNamesSpc: crate::types::ImmutableCStringPointers<256> = crate::types::immutable_c_strings! {
-    b"nop              \0", b"tcall 0          \0", b"set1 $%02x.0       \0", b"bbs $%02x.0, $%04x \0",
-    b"or a, $%02x        \0", b"or a, $%04x      \0", b"or a, [X]        \0", b"or a, [$%02x+x]    \0",
-    b"or a, #$%02x       \0", b"or $%02x, $%02x      \0", b"or1 c, $%04x.%01x   \0", b"asl $%02x          \0",
-    b"asl $%04x        \0", b"push p           \0", b"tset $%04x       \0", b"brk              \0",
-    b"bpl $%04x        \0", b"tcall 1          \0", b"clr1 $%02x.0       \0", b"bbc $%02x.0, $%04x \0",
-    b"or a, $%02x+x      \0", b"or a, $%04x+x    \0", b"or a, $%04x+y    \0", b"or a, [$%02x]+y    \0",
-    b"or $%02x, #$%02x     \0", b"or [X], [Y]      \0", b"decw $%02x         \0", b"asl $%02x+x        \0",
-    b"asl a            \0", b"dec x            \0", b"cmp x, $%04x     \0", b"jmp [$%04x+x]    \0",
-    b"clrp             \0", b"tcall 2          \0", b"set1 $%02x.1       \0", b"bbs $%02x.1, $%04x \0",
-    b"and a, $%02x       \0", b"and a, $%04x     \0", b"and a, [X]       \0", b"and a, [$%02x+x]   \0",
-    b"and a, #$%02x      \0", b"and $%02x, $%02x     \0", b"or1 c, /$%04x.%01x  \0", b"rol $%02x          \0",
-    b"rol $%04x        \0", b"push a           \0", b"cbne $%02x, $%04x  \0", b"bra $%04x        \0",
-    b"bmi $%04x        \0", b"tcall 3          \0", b"clr1 $%02x.1       \0", b"bbc $%02x.1, $%04x \0",
-    b"and a, $%02x+x     \0", b"and a, $%04x+x   \0", b"and a, $%04x+y   \0", b"and a, [$%02x]+y   \0",
-    b"and $%02x, #$%02x    \0", b"and [X], [Y]     \0", b"incw $%02x         \0", b"rol $%02x+x        \0",
-    b"rol a            \0", b"inc x            \0", b"cmp x, $%02x       \0", b"call $%04x       \0",
-    b"setp             \0", b"tcall 4          \0", b"set1 $%02x.2       \0", b"bbs $%02x.2, $%04x \0",
-    b"eor a, $%02x       \0", b"eor a, $%04x     \0", b"eor a, [X]       \0", b"eor a, [$%02x+x]   \0",
-    b"eor a, #$%02x      \0", b"eor $%02x, $%02x     \0", b"and1 c, $%04x.%01x  \0", b"lsr $%02x          \0",
-    b"lsr $%04x        \0", b"push x           \0", b"tclr $%04x       \0", b"pcall $%02x        \0",
-    b"bvc $%04x        \0", b"tcall 5          \0", b"clr1 $%02x.2       \0", b"bbc $%02x.2, $%04x \0",
-    b"eor a, $%02x+x     \0", b"eor a, $%04x+x   \0", b"eor a, $%04x+y   \0", b"eor a, [$%02x]+y   \0",
-    b"eor $%02x, #$%02x    \0", b"eor [X], [Y]     \0", b"cmpw ya, $%02x     \0", b"lsr $%02x+x        \0",
-    b"lsr a            \0", b"mov x, a         \0", b"cmp y, $%04x     \0", b"jmp $%04x        \0",
-    b"clrc             \0", b"tcall 6          \0", b"set1 $%02x.3       \0", b"bbs $%02x.3, $%04x \0",
-    b"cmp a, $%02x       \0", b"cmp a, $%04x     \0", b"cmp a, [X]       \0", b"cmp a, [$%02x+x]   \0",
-    b"cmp a, #$%02x      \0", b"cmp $%02x, $%02x     \0", b"and1 c, /$%04x.%01x \0", b"ror $%02x          \0",
-    b"ror $%04x        \0", b"push y           \0", b"dbnz $%02x, $%04x  \0", b"ret              \0",
-    b"bvs $%04x        \0", b"tcall 7          \0", b"clr1 $%02x.3       \0", b"bbc $%02x.3, $%04x \0",
-    b"cmp a, $%02x+x     \0", b"cmp a, $%04x+x   \0", b"cmp a, $%04x+y   \0", b"cmp a, [$%02x]+y   \0",
-    b"cmp $%02x, #$%02x    \0", b"cmp [X], [Y]     \0", b"addw ya, $%02x     \0", b"ror $%02x+x        \0",
-    b"ror a            \0", b"mov a, x         \0", b"cmp y, $%02x       \0", b"reti             \0",
-    b"setc             \0", b"tcall 8          \0", b"set1 $%02x.4       \0", b"bbs $%02x.4, $%04x \0",
-    b"adc a, $%02x       \0", b"adc a, $%04x     \0", b"adc a, [X]       \0", b"adc a, [$%02x+x]   \0",
-    b"adc a, #$%02x      \0", b"adc $%02x, $%02x     \0", b"eor1 c, $%04x.%01x  \0", b"dec $%02x          \0",
-    b"dec $%04x        \0", b"mov y, #$%02x      \0", b"pop p            \0", b"mov $%02x, #$%02x    \0",
-    b"bcc $%04x        \0", b"tcall 9          \0", b"clr1 $%02x.4       \0", b"bbc $%02x.4, $%04x \0",
-    b"adc a, $%02x+x     \0", b"adc a, $%04x+x   \0", b"adc a, $%04x+y   \0", b"adc a, [$%02x]+y   \0",
-    b"adc $%02x, #$%02x    \0", b"adc [X], [Y]     \0", b"subw ya, $%02x     \0", b"dec $%02x+x        \0",
-    b"dec a            \0", b"mov x, sp        \0", b"div ya, x        \0", b"xcn a            \0",
-    b"ei               \0", b"tcall 10         \0", b"set1 $%02x.5       \0", b"bbs $%02x.5, $%04x \0",
-    b"sbc a, $%02x       \0", b"sbc a, $%04x     \0", b"sbc a, [X]       \0", b"sbc a, [$%02x+x]   \0",
-    b"sbc a, #$%02x      \0", b"sbc $%02x, $%02x     \0", b"mov1 c, $%04x.%01x  \0", b"inc $%02x          \0",
-    b"inc $%04x        \0", b"cmp y, #$%02x      \0", b"pop a            \0", b"mov [x+], a      \0",
-    b"bcs $%04x        \0", b"tcall 11         \0", b"clr1 $%02x.5       \0", b"bbc $%02x.5, $%04x \0",
-    b"sbc a, $%02x+x     \0", b"sbc a, $%04x+x   \0", b"sbc a, $%04x+y   \0", b"sbc a, [$%02x]+y   \0",
-    b"sbc $%02x, #$%02x    \0", b"sbc [X], [Y]     \0", b"movw ya, $%02x     \0", b"inc $%02x+x        \0",
-    b"inc a            \0", b"mov sp, x        \0", b"das a            \0", b"mov a, [x+]      \0",
-    b"di               \0", b"tcall 12         \0", b"set1 $%02x.6       \0", b"bbs $%02x.6, $%04x \0",
-    b"mov $%02x, a       \0", b"mov $%04x, a     \0", b"mov [X], a       \0", b"mov [$%02x+x], a   \0",
-    b"cmp x, #$%02x      \0", b"mov $%04x, x     \0", b"mov1 $%04x.%01x, c  \0", b"mov $%02x, y       \0",
-    b"mov $%04x, y     \0", b"mov x, #$%02x      \0", b"pop x            \0", b"mul ya           \0",
-    b"bne $%04x        \0", b"tcall 13         \0", b"clr1 $%02x.6       \0", b"bbc $%02x.6, $%04x \0",
-    b"mov $%02x+x, a     \0", b"mov $%04x+x, a   \0", b"mov $%04x+y, a   \0", b"mov [$%02x]+y, a   \0",
-    b"mov $%02x, x       \0", b"mov $%02x+y, x     \0", b"movw $%02x, ya     \0", b"mov $%02x+x, y     \0",
-    b"dec y            \0", b"mov a, y         \0", b"cbne $%02x+x, $%04x\0", b"daa a            \0",
-    b"clrv             \0", b"tcall 14         \0", b"set1 $%02x.7       \0", b"bbs $%02x.7, $%04x \0",
-    b"mov a, $%02x       \0", b"mov a, $%04x     \0", b"mov a, [X]       \0", b"mov a, [$%02x+x]   \0",
-    b"mov a, #$%02x      \0", b"mov x, $%04x     \0", b"not1 $%04x.%01x     \0", b"mov y, $%02x       \0",
-    b"mov y, $%04x     \0", b"notc             \0", b"pop y            \0", b"sleep            \0",
-    b"beq $%04x        \0", b"tcall 15         \0", b"clr1 $%02x.7       \0", b"bbc $%02x.7, $%04x \0",
-    b"mov a, $%02x+x     \0", b"mov a, $%04x+x   \0", b"mov a, $%04x+y   \0", b"mov a, [$%02x]+y   \0",
-    b"mov x, $%02x       \0", b"mov x, $%02x+y     \0", b"mov $%02x, $%02x     \0", b"mov y, $%02x+x     \0",
-    b"inc y            \0", b"mov y, a         \0", b"dbnz y, $%04x    \0", b"stop             \0",
-};
+#[rustfmt::skip]
+static opcodeNamesSpc: [&str; 256] = [
+    "nop              ", "tcall 0          ", "set1 $%02x.0       ", "bbs $%02x.0, $%04x ",
+    "or a, $%02x        ", "or a, $%04x      ", "or a, [X]        ", "or a, [$%02x+x]    ",
+    "or a, #$%02x       ", "or $%02x, $%02x      ", "or1 c, $%04x.%01x   ", "asl $%02x          ",
+    "asl $%04x        ", "push p           ", "tset $%04x       ", "brk              ",
+    "bpl $%04x        ", "tcall 1          ", "clr1 $%02x.0       ", "bbc $%02x.0, $%04x ",
+    "or a, $%02x+x      ", "or a, $%04x+x    ", "or a, $%04x+y    ", "or a, [$%02x]+y    ",
+    "or $%02x, #$%02x     ", "or [X], [Y]      ", "decw $%02x         ", "asl $%02x+x        ",
+    "asl a            ", "dec x            ", "cmp x, $%04x     ", "jmp [$%04x+x]    ",
+    "clrp             ", "tcall 2          ", "set1 $%02x.1       ", "bbs $%02x.1, $%04x ",
+    "and a, $%02x       ", "and a, $%04x     ", "and a, [X]       ", "and a, [$%02x+x]   ",
+    "and a, #$%02x      ", "and $%02x, $%02x     ", "or1 c, /$%04x.%01x  ", "rol $%02x          ",
+    "rol $%04x        ", "push a           ", "cbne $%02x, $%04x  ", "bra $%04x        ",
+    "bmi $%04x        ", "tcall 3          ", "clr1 $%02x.1       ", "bbc $%02x.1, $%04x ",
+    "and a, $%02x+x     ", "and a, $%04x+x   ", "and a, $%04x+y   ", "and a, [$%02x]+y   ",
+    "and $%02x, #$%02x    ", "and [X], [Y]     ", "incw $%02x         ", "rol $%02x+x        ",
+    "rol a            ", "inc x            ", "cmp x, $%02x       ", "call $%04x       ",
+    "setp             ", "tcall 4          ", "set1 $%02x.2       ", "bbs $%02x.2, $%04x ",
+    "eor a, $%02x       ", "eor a, $%04x     ", "eor a, [X]       ", "eor a, [$%02x+x]   ",
+    "eor a, #$%02x      ", "eor $%02x, $%02x     ", "and1 c, $%04x.%01x  ", "lsr $%02x          ",
+    "lsr $%04x        ", "push x           ", "tclr $%04x       ", "pcall $%02x        ",
+    "bvc $%04x        ", "tcall 5          ", "clr1 $%02x.2       ", "bbc $%02x.2, $%04x ",
+    "eor a, $%02x+x     ", "eor a, $%04x+x   ", "eor a, $%04x+y   ", "eor a, [$%02x]+y   ",
+    "eor $%02x, #$%02x    ", "eor [X], [Y]     ", "cmpw ya, $%02x     ", "lsr $%02x+x        ",
+    "lsr a            ", "mov x, a         ", "cmp y, $%04x     ", "jmp $%04x        ",
+    "clrc             ", "tcall 6          ", "set1 $%02x.3       ", "bbs $%02x.3, $%04x ",
+    "cmp a, $%02x       ", "cmp a, $%04x     ", "cmp a, [X]       ", "cmp a, [$%02x+x]   ",
+    "cmp a, #$%02x      ", "cmp $%02x, $%02x     ", "and1 c, /$%04x.%01x ", "ror $%02x          ",
+    "ror $%04x        ", "push y           ", "dbnz $%02x, $%04x  ", "ret              ",
+    "bvs $%04x        ", "tcall 7          ", "clr1 $%02x.3       ", "bbc $%02x.3, $%04x ",
+    "cmp a, $%02x+x     ", "cmp a, $%04x+x   ", "cmp a, $%04x+y   ", "cmp a, [$%02x]+y   ",
+    "cmp $%02x, #$%02x    ", "cmp [X], [Y]     ", "addw ya, $%02x     ", "ror $%02x+x        ",
+    "ror a            ", "mov a, x         ", "cmp y, $%02x       ", "reti             ",
+    "setc             ", "tcall 8          ", "set1 $%02x.4       ", "bbs $%02x.4, $%04x ",
+    "adc a, $%02x       ", "adc a, $%04x     ", "adc a, [X]       ", "adc a, [$%02x+x]   ",
+    "adc a, #$%02x      ", "adc $%02x, $%02x     ", "eor1 c, $%04x.%01x  ", "dec $%02x          ",
+    "dec $%04x        ", "mov y, #$%02x      ", "pop p            ", "mov $%02x, #$%02x    ",
+    "bcc $%04x        ", "tcall 9          ", "clr1 $%02x.4       ", "bbc $%02x.4, $%04x ",
+    "adc a, $%02x+x     ", "adc a, $%04x+x   ", "adc a, $%04x+y   ", "adc a, [$%02x]+y   ",
+    "adc $%02x, #$%02x    ", "adc [X], [Y]     ", "subw ya, $%02x     ", "dec $%02x+x        ",
+    "dec a            ", "mov x, sp        ", "div ya, x        ", "xcn a            ",
+    "ei               ", "tcall 10         ", "set1 $%02x.5       ", "bbs $%02x.5, $%04x ",
+    "sbc a, $%02x       ", "sbc a, $%04x     ", "sbc a, [X]       ", "sbc a, [$%02x+x]   ",
+    "sbc a, #$%02x      ", "sbc $%02x, $%02x     ", "mov1 c, $%04x.%01x  ", "inc $%02x          ",
+    "inc $%04x        ", "cmp y, #$%02x      ", "pop a            ", "mov [x+], a      ",
+    "bcs $%04x        ", "tcall 11         ", "clr1 $%02x.5       ", "bbc $%02x.5, $%04x ",
+    "sbc a, $%02x+x     ", "sbc a, $%04x+x   ", "sbc a, $%04x+y   ", "sbc a, [$%02x]+y   ",
+    "sbc $%02x, #$%02x    ", "sbc [X], [Y]     ", "movw ya, $%02x     ", "inc $%02x+x        ",
+    "inc a            ", "mov sp, x        ", "das a            ", "mov a, [x+]      ",
+    "di               ", "tcall 12         ", "set1 $%02x.6       ", "bbs $%02x.6, $%04x ",
+    "mov $%02x, a       ", "mov $%04x, a     ", "mov [X], a       ", "mov [$%02x+x], a   ",
+    "cmp x, #$%02x      ", "mov $%04x, x     ", "mov1 $%04x.%01x, c  ", "mov $%02x, y       ",
+    "mov $%04x, y     ", "mov x, #$%02x      ", "pop x            ", "mul ya           ",
+    "bne $%04x        ", "tcall 13         ", "clr1 $%02x.6       ", "bbc $%02x.6, $%04x ",
+    "mov $%02x+x, a     ", "mov $%04x+x, a   ", "mov $%04x+y, a   ", "mov [$%02x]+y, a   ",
+    "mov $%02x, x       ", "mov $%02x+y, x     ", "movw $%02x, ya     ", "mov $%02x+x, y     ",
+    "dec y            ", "mov a, y         ", "cbne $%02x+x, $%04x", "daa a            ",
+    "clrv             ", "tcall 14         ", "set1 $%02x.7       ", "bbs $%02x.7, $%04x ",
+    "mov a, $%02x       ", "mov a, $%04x     ", "mov a, [X]       ", "mov a, [$%02x+x]   ",
+    "mov a, #$%02x      ", "mov x, $%04x     ", "not1 $%04x.%01x     ", "mov y, $%02x       ",
+    "mov y, $%04x     ", "notc             ", "pop y            ", "sleep            ",
+    "beq $%04x        ", "tcall 15         ", "clr1 $%02x.7       ", "bbc $%02x.7, $%04x ",
+    "mov a, $%02x+x     ", "mov a, $%04x+x   ", "mov a, $%04x+y   ", "mov a, [$%02x]+y   ",
+    "mov x, $%02x       ", "mov x, $%02x+y     ", "mov $%02x, $%02x     ", "mov y, $%02x+x     ",
+    "inc y            ", "mov y, a         ", "dbnz y, $%04x    ", "stop             ",
+];
 static opcodeTypeSpc: [i32; 256] = [
     0, 0, 1, 5, 1, 2, 0, 1, 1, 4, 6, 1, 2, 0, 2, 0, 3, 0, 1, 5, 1, 2, 2, 1, 4, 0, 1, 1, 0, 0, 2, 2,
     0, 0, 1, 5, 1, 2, 0, 1, 1, 4, 6, 1, 2, 0, 5, 3, 3, 0, 1, 5, 1, 2, 2, 1, 4, 0, 1, 1, 0, 0, 1, 2,
@@ -157,22 +158,23 @@ static opcodeTypeSpc: [i32; 256] = [
     0, 0, 1, 5, 1, 2, 0, 1, 1, 2, 6, 1, 2, 1, 0, 0, 3, 0, 1, 5, 1, 2, 2, 1, 1, 1, 1, 1, 0, 0, 5, 0,
     0, 0, 1, 5, 1, 2, 0, 1, 1, 2, 6, 1, 2, 0, 0, 0, 3, 0, 1, 5, 1, 2, 2, 1, 1, 1, 4, 1, 0, 0, 3, 0,
 ];
-// These writers retain the existing caller-owned, NUL-terminated output API.
-struct TraceOutput(*mut u8);
-impl TraceOutput {
-    unsafe fn bytes(&mut self, bytes: &[u8]) {
-        core::ptr::copy_nonoverlapping(bytes.as_ptr(), self.0, bytes.len());
-        self.0 = self.0.add(bytes.len());
+// Checked writes retain the caller's NUL-terminated output and untouched tail.
+struct TraceOutput<'a>(&'a mut [u8], usize);
+#[forbid(unsafe_code)]
+impl TraceOutput<'_> {
+    fn bytes(&mut self, bytes: &[u8]) {
+        let end = self.1 + bytes.len();
+        self.0[self.1..end].copy_from_slice(bytes);
+        self.1 = end;
     }
-    unsafe fn finish(self) {
-        *self.0 = 0;
+    fn finish(self) {
+        self.0[self.1] = 0;
     }
 }
-impl std::fmt::Write for TraceOutput {
+#[forbid(unsafe_code)]
+impl std::fmt::Write for TraceOutput<'_> {
     fn write_str(&mut self, value: &str) -> std::fmt::Result {
-        unsafe {
-            self.bytes(value.as_bytes());
-        }
+        self.bytes(value.as_bytes());
         Ok(())
     }
 }
@@ -185,14 +187,10 @@ fn flag_letters<const N: usize>(uppercase: [u8; N], values: [bool; N]) -> [u8; N
         }
     })
 }
-unsafe fn instruction_text(
-    line: *mut c_char,
-    template: *const c_char,
-    operands: [u32; 2],
-    short: bool,
-) {
-    let mut out = TraceOutput(line.cast());
-    let mut remaining = std::ffi::CStr::from_ptr(template).to_bytes();
+#[forbid(unsafe_code)]
+fn instruction_text(line: &mut [u8], template: &str, operands: [u32; 2], short: bool) {
+    let mut out = TraceOutput(line, 0);
+    let mut remaining = template.as_bytes();
     let mut operand = 0;
     while let Some(offset) = remaining.iter().position(|&byte| byte == b'%') {
         out.bytes(&remaining[..offset]);
@@ -212,9 +210,9 @@ unsafe fn instruction_text(
     }
     out.finish();
 }
-pub unsafe fn getProcessorStateCpu(snes: *mut Snes, line: *mut c_char, game: &mut Game) {
-    let mut disassembly = [0 as c_char; 14];
-    getDisassemblyCpu(snes, disassembly.as_mut_ptr(), game);
+pub unsafe fn getProcessorStateCpu(snes: *mut Snes, line: &mut [u8; 80], game: &mut Game) {
+    let mut disassembly = [0; 14];
+    getDisassemblyCpu(snes, &mut disassembly, game);
     // Bus reads can change CPU fields or its owning pointer. Capture afterwards.
     let cpu = &*(*snes).cpu;
     let (bank, pc, a, x, y, sp, dp, db) =
@@ -225,27 +223,29 @@ pub unsafe fn getProcessorStateCpu(snes: *mut Snes, line: *mut c_char, game: &mu
             cpu.e, cpu.n, cpu.v, cpu.mf, cpu.xf, cpu.d, cpu.i, cpu.z, cpu.c,
         ],
     );
-    let text = std::ffi::CStr::from_ptr(disassembly.as_ptr())
+    let text = std::ffi::CStr::from_bytes_until_nul(&disassembly)
+        .unwrap()
         .to_str()
         .unwrap();
-    let mut out = TraceOutput(line.cast());
+    let mut out = TraceOutput(line, 0);
     write!(out, "CPU {bank:02x}:{pc:04x} {text} A:{a:04x} X:{x:04x} Y:{y:04x} SP:{sp:04x} DP:{dp:04x} DB:{db:02x} {} {}",
         flags[0] as char, std::str::from_utf8(&flags[1..]).unwrap()).unwrap();
     out.finish();
 }
-pub unsafe fn getProcessorStateSpc(apu: *mut Apu, line: *mut c_char) {
-    let mut disassembly = [0 as c_char; 18];
-    getDisassemblySpc(apu, disassembly.as_mut_ptr());
+pub unsafe fn getProcessorStateSpc(apu: *mut Apu, line: &mut [u8; 80]) {
+    let mut disassembly = [0; 18];
+    getDisassemblySpc(apu, &mut disassembly);
     let spc = &*(*apu).spc;
     let (pc, a, x, y, sp) = (spc.pc, spc.a, spc.x, spc.y, spc.sp);
     let flags = flag_letters(
         *b"NVPBHIZC",
         [spc.n, spc.v, spc.p, spc.b, spc.h, spc.i, spc.z, spc.c],
     );
-    let text = std::ffi::CStr::from_ptr(disassembly.as_ptr())
+    let text = std::ffi::CStr::from_bytes_until_nul(&disassembly)
+        .unwrap()
         .to_str()
         .unwrap();
-    let mut out = TraceOutput(line.cast());
+    let mut out = TraceOutput(line, 0);
     write!(
         out,
         "SPC {pc:04x} {text} A:{a:02x} X:{x:02x} Y:{y:02x} SP:{sp:02x} {}",
@@ -254,7 +254,7 @@ pub unsafe fn getProcessorStateSpc(apu: *mut Apu, line: *mut c_char) {
     .unwrap();
     out.finish();
 }
-unsafe fn getDisassemblyCpu(snes: *mut Snes, line: *mut c_char, game: &mut Game) {
+unsafe fn getDisassemblyCpu(snes: *mut Snes, line: &mut [u8; 14], game: &mut Game) {
     let address = u32::from((*(*snes).cpu).pc) | (u32::from((*(*snes).cpu).k) << 16);
     let opcode = snes_read(snes, address, game);
     let byte = snes_read(snes, address.wrapping_add(1) & 0xffffff, game);
@@ -292,7 +292,7 @@ unsafe fn getDisassemblyCpu(snes: *mut Snes, line: *mut c_char, game: &mut Game)
     };
     instruction_text(line, opcodeNames[usize::from(opcode)], operands, short);
 }
-unsafe fn getDisassemblySpc(apu: *mut Apu, line: *mut c_char) {
+unsafe fn getDisassemblySpc(apu: *mut Apu, line: &mut [u8; 18]) {
     let address = (*(*apu).spc).pc;
     let opcode = apu_cpuRead(apu, address);
     let byte = apu_cpuRead(apu, address.wrapping_add(1));

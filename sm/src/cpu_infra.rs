@@ -833,10 +833,10 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
     while game.g_calling_asm_from_c {
         let pc_0: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
         if (*game.g_snes).debug_cycles {
-            let mut line: [c_char; 80] = [0; 80];
-            getProcessorStateCpu(game.g_snes, &raw mut line as *mut c_char, game);
-            puts(&raw mut line as *mut c_char);
-            line[0i32 as usize] = 0 as c_char;
+            let mut line = [0u8; 80];
+            getProcessorStateCpu(game.g_snes, &mut line, game);
+            puts(line.as_ptr().cast());
+            line[0] = 0;
         }
         cpu_runOpcode(game.g_cpu, game);
         while (*(*game.g_snes).dma).dmaBusy {
@@ -938,9 +938,9 @@ pub unsafe fn DebugGameOverMenu() {
 pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
     loop {
         if (*game.g_snes).debug_cycles {
-            let mut line: [c_char; 80] = [0; 80];
-            getProcessorStateCpu(game.g_snes, &raw mut line as *mut c_char, game);
-            puts(&raw mut line as *mut c_char);
+            let mut line = [0u8; 80];
+            getProcessorStateCpu(game.g_snes, &mut line, game);
+            puts(line.as_ptr().cast());
         }
         cpu_runOpcode(game.g_cpu, game);
         let addr: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
