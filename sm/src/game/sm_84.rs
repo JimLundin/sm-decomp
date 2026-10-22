@@ -1417,22 +1417,6 @@ crate::game::callback_dispatch! {
         SetBts0x10FiveStepsUp(j, game);
         0
     };
-    [8701883] PlmSetup_Door_Blue [] {
-        if word!(game.projectile_index) & 0x8000 == 0
-            && (*(ram_ptr!(game, u16; 0xc18)).offset((word!(game.projectile_index) >> 1) as isize)
-                & 0xf00)
-                == 768
-        {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-        } else {
-            let index = usize::from(j >> 1) * 2;
-            let v1 = u16::from_le_bytes([game.g_ram[0x1c87 + index], game.g_ram[0x1c88 + index]]);
-            word!(
-                game.level_data[(v1 >> 1)] = (word!(game.level_data[(v1 >> 1)]) & 0xfff | 0x8000)
-            );
-        }
-        0
-    };
     [8703426] PlmSetup_D028_D02C_Unused [] {
         if word!(game.samus_pose) as i32 == kPose_81_FaceR_Screwattack as i32
             || word!(game.samus_pose) as i32 == kPose_82_FaceL_Screwattack as i32
@@ -1656,13 +1640,6 @@ crate::game::callback_dispatch! {
         retain_plm_block_bits(j, 0x0fff, game);
         0
     };
-    [8701873] PlmSetup_Door_Colored [] {
-        let index = usize::from(j >> 1) * 2;
-        let block_index =
-            u16::from_le_bytes([game.g_ram[0x1c87 + index], game.g_ram[0x1c88 + index]]);
-        WriteLevelDataBlockTypeAndBts(block_index, 0xc044, game);
-        0
-    };
     [8703790] PlmSetup_RespawningPowerBombBlock [] {
         let read_word = |game: &Game, offset: usize| {
             u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
@@ -1816,35 +1793,6 @@ crate::game::callback_dispatch! {
         install_optional_gate_block!(game, 0x84c784, v1, wrapping_add);
         0
     };
-    [8701844] PlmSetup_C794_GreyDoor [] {
-        word!(
-            game.plm_variable[v1] = ((((*((ram_ptr!(game, u16; 0x1dc7)).offset(v1 as isize) as *mut u8)
-                .offset(1,)) as u16)
-                & (0x7cu16))
-                >> 1)
-        );
-        word!(game.plm_room_arguments[v1] &= !(0x7c00));
-        WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[v1]), 0xc044, game);
-        0
-    };
-    [8701922] PlmSetup_Door_Strange [] {
-        let v2: u16 = word!(game.plm_block_indices[v1]);
-        word!(game.plm_block_indices[v1] = 0);
-        let mut v3: u16 = 78;
-        while v2 != word!(game.plm_block_indices[(v3 >> 1)]) {
-            v3 = (v3).wrapping_sub(2);
-            if (v3 & 0x8000) != 0 {
-                return 0;
-            }
-        }
-        word!(
-            game.plm_timers[(v3 >> 1)] = (*(ram_ptr!(game, u16; 0xc18))
-                .offset((word!(game.projectile_index) as i16 >> 1) as isize,)
-                & 0x1fff
-                | 0x8000)
-        );
-        0
-    };
     [8703595] PlmSetup_RespawningShotBlock [] {
         let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
         let v3: u16 = (word!(game.level_data[v2]) & 0xf000 | 0x52);
@@ -1973,6 +1921,10 @@ crate::game::callback_dispatch! {
     [8711809] sub_84EE81 => sub_84EE89(j, 0xc, game);
     [8711814] sub_84EE86 => sub_84EE89(j, 0xe, game);
     @external {
+        8701844 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::Grey, game)];
+        8701873 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::Colored, game)];
+        8701883 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::Blue, game)];
+        8701922 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::ShotSignal, game)];
         8694567 | 8696783 | 8698095 | 8698618 | 8705782 | 8705783 | 8704398 => [0];
         8696784 => [PlmSetup_ReturnCarryClear(j)]; 8696786 => [PlmSetup_ReturnCarrySet(j)];
         8696803 => [UNUSED_sub_84B3E3(j)];

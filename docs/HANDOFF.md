@@ -9,55 +9,54 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares all-source mechanism creation after block reactions at
-`89c266e2`. `mechanism_creation` owns descending slot search, ordered collision,
-hardcoded/nested and room-entry preparation, arming and synchronous setup calls.
-Main uses direct checked RAM; the candidate uses the same core and retires its
-old allocation/source sequence. The core forbids unsafe and has no Game/RAM.
-Full pools read no source data; room scratch and repeated header reads stay live.
-Placed capture, collision reacquisition, native/LE words, setup accumulators,
-nested slot reuse and displacement are preserved. Native setup dispatch, ROM
-warnings and raw displacement remain explicit dependencies. Encoded allocation
-is still RAM authoritative; complete setup families and persistent ownership
-remain unfinished.
+The latest stage shares all four ordinary door setups after creation at
+`1333a09d`: Grey, Colored, Blue and Strange/shot signal. `mechanism_doors` and
+its checked RAM adapter both forbid unsafe. Four generated bank bodies and
+candidate duplicate rules are removed; numeric dispatch identities remain.
+Preserve broad/odd slots, ordered Grey metadata writes, inactive/zero/self
+associations, signed live projectile reads, native projectile versus LE field
+words, and exact-byte colored versus rounded-word blue terrain access.
+Encoded setup remains RAM authoritative; native authored state shares the core.
+Native setup dispatch, other setup families and persistent authority remain open.
 
-Main: **103,293 Rust lines in 150 files**, unsafe declarations 2,897, casts 6,114.
-Maintained implementation 103,855; including installers/launcher 104,765.
-Prospective composition: **111,597**, **+8,304 over main**, unadopted.
-Stage adds 188 main and 102 owned lines: **+290 complete lines**, +2,410 lexical
-tokens and +9,494 LF-normalized source bytes. Verification adds 248 lines;
-implementation plus checks adds 538. No dependency or native/installer/launcher
-code is added. This is sharing with explicit cost, not reduction or unsafe removal.
+Main: **103,396 Rust lines in 152 files**, unsafe declarations 2,897, casts 6,114.
+Maintained implementation 103,958; including installers/launcher 104,868.
+Prospective composition: **111,653**, **+8,257 over main**, unadopted.
+Stage adds 103 main and removes 47 owned lines: **+56 complete lines**, +720
+lexical tokens and +2,444 LF-normalized source bytes. Verification adds 678
+lines; implementation plus checks adds 734. No dependency/native/installer code
+added. Counted unsafe/cast metrics stay unchanged despite four generated raw
+setup bodies retiring. This is priced safety/sharing, not net reduction.
 
-Use `runtime-impact-working/MECHANISM_CREATION_HANDOFF.md`,
-`mechanism-creation-price.json` and `mechanism-creation-final.log`.
-Selected results: 342 source/setup/consumer cases (47 matching failures), native
-examples, 114 contacts (14 failures), 74 closing (seven failures), 198 runtime
-collision cases (176 setup hits, one matching failure), plus passing block,
-room and motion suites. Successful lifetime cases require setup, geometry,
-drawing, impact and release. Eight new returning-diagnostic cases exercise
-image mutation/replacement before capture. Git-derived factory/reader checks
-and 167 runtime / 206 local identities pass. The unchanged old closing-only
-helper still shares a reader; no broader reference independence is claimed.
+Use `runtime-impact-working/DOOR_SETUP_HANDOFF.md`, `door-setup-price.json`
+and `door-setup-attempt-1.log`. Final checks: 570 direct comparisons over 285
+cases, 12 matching defined Grey/Colored failures, 30 real consumer/source tails,
+three separately labeled checked rejections outside old defined behavior.
+Success returns/outcomes are explicit. Source/setup suite 342/672/47 and closing
+74/120/7 pass. Runtime collision 198/545/176/1 is supplemental shared-leaf
+integration (176 setup hits, one matching failure), not independent door proof.
+Fresh old setup/helper/consumer extraction matches Git; 170 runtime and 208
+local compiled identities pass. Native Grey authored-state example passes.
 
-Production Rust 2024 release/frontend/verifier/source checks pass (48.78s after
-fixing two macro syntax errors); prospective headless release passes (48.46s).
-Carrier/harness builds took 17.98s/14.72s; final comparisons took 1.31s.
+Production Rust 2024 release/frontend/verifier/source checks pass (45.82s);
+prospective headless release passes (47.03s). Carrier 18.01s; harness 15.54s,
+then 10.51s after stronger success assertions; selected comparisons 0.82s.
 Formatting and independent review pass. No movie or full-composition runtime ran.
-Synthetic content, controlled callbacks/hardware and untested big-endian
-execution remain limitations. Production source hash:
-`57b18128f369483e8d1a04c91532723dcf96c1341ff14748c6182686037bbbda`.
+Synthetic content, controlled callbacks and untested big-endian execution remain
+limits. Unchanged closing-helper independence is not newly claimed.
+Production hash: `be699edf4227c9c84b8f5c8f217627b085ec88622d6d5d658059cda18324ecc7`.
 
-`mechanism-creation-parent/` preserves prior main/carrier/local/composition inputs.
-Block/drawing/trail/playback/initializer/placement/creation/acceleration/extension/
-flight references and caches remain. Do not overwrite those snapshots or run
-historical generation scripts. The inherited drawing Intro mismatch remains
-unresolved in `DRAWING_HANDOFF.md`. Current preparation/check commands are in
-the local mechanism handoff. Composition wiring remains distinct from main.
-Next share complete mechanism setup families and retire native dispatch, then
-close remaining consumers and runtime authority. Promotion needs the state
-migration reset/load/rewind/external-writer checks. Rendering, sound and full-game
-completion remain outside this stage's evidence.
+`door-setup-parent/` preserves previous main/carrier/local/composition sources;
+all earlier snapshots and caches remain. Do not run historical preparation
+scripts over the current carrier. Composition source lives under
+`impact-composition/sm/src`, with distinct nested-module wiring. The inherited
+Intro mismatch remains unresolved in `DRAWING_HANDOFF.md`.
+The local door handoff inventories all 115 initial setup identities. Four are
+shared here; next address the 13 break/reveal/respawn terrain setups, then gates,
+contact physics/Chozo, stations/scroll/items, room/event/boss and residual routes.
+This is setup-family progress, not full door lifecycle retirement. Remaining
+consumers and runtime promotion need reset/load/rewind/external-writer checks.
+Rendering, sound and boot-to-credits completion remain outside this evidence.
 The parallel movie/state investigation is documented in
 [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
 

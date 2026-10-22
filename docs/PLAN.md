@@ -104,42 +104,40 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares all-source mechanism creation after block
-   reactions at `89c266e2`. `mechanism_creation` owns descending allocation,
-   ordered source preparation, arming, selection and synchronous setup invocation.
-   Main collision, hardcoded/nested and room-entry callers use its checked RAM
-   adapter; the candidate's duplicate allocation/source sequencing is retired.
-   Full pools return before source reads. Room scratch stays live, headers are
-   read twice, placed headers remain captured, and collision setup reacquires ROM.
-   Hardcoded words remain native; room words remain explicitly little-endian.
-   Captured slots, setup accumulators, nested reuse and displacement are preserved.
-   The core forbids unsafe and has no Game/RAM. Encoded allocation remains RAM
-   authoritative; native setup dispatch, ROM diagnostics and raw displacement
-   remain dependencies. This closes creation sequencing, not setup-family behavior.
+   Latest verified stage shares all four ordinary door setups after creation at
+   `1333a09d`: Grey, Colored, Blue and Strange/shot signal. `mechanism_doors`
+   owns masks, ordered metadata/terrain writes, guarded bomb selection and the
+   clear-then-descending association search. Its checked RAM adapter and core
+   both forbid unsafe. Four generated bank bodies and candidate duplicate rules
+   are removed; numeric setup routes remain. Preserve broad/odd slots, inactive
+   associations, zero/self matches, signed live projectile selection, native
+   projectile words, LE RAM fields and exact-byte versus rounded-word terrain.
+   Encoded setup retains RAM authority; native authored state uses the same core.
+   Native dispatch and the other setup families remain unfinished.
 
-   Selected checks pass 342 source/setup/consumer cases (47 matching failures),
-   native authored examples, 114 contacts (14 matching failures), 74 closing cases
-   (seven matching failures), 198 runtime collision cases (176 setup hits, one
-   matching failure), plus existing block/room/motion comparisons. Success cases
-   require real setup and later geometry, drawing, impact and release outcomes.
-   Eight new returning-diagnostic cases cover image mutation/replacement before
-   capture. Independent factory/reader correspondence to Git and 167 runtime /
-   206 local compiled identities pass. The unchanged old closing-only helper
-   still shares a reader; no complete closing-reference independence is claimed.
-   Production Rust 2024 release/frontend/verifier/source checks pass (48.78s after
-   correcting two macro-call syntax errors); prospective release passes (48.46s).
-   No movie or full-composition runtime ran. Synthetic content, controlled
-   callbacks/hardware and untested big-endian execution limit these results.
+   Final checks pass 570 old-vs-main/owned comparisons over 285 defined cases,
+   including 12 matching Grey/Colored failures. Success and zero returns are
+   explicitly required. Thirty consumer/source tails cover real shot
+   preinstructions, Grey selector-table interpretation, room-entry creation and
+   collision-triggered signaling. Three checked-only rejections are outside the
+   old raw-pointer defined domain and are not equivalence claims. Existing
+   source/setup and closing suites pass; runtime collision remains supplemental
+   integration because both sides can share the new door leaf. Fresh independent
+   bodies/helpers/consumers match Git; 170 runtime / 208 local identities pass.
+   Production release/frontend/verifier/source checks pass (45.82s), as does the
+   prospective headless release (47.03s). No movie or full-composition runtime ran.
+   Synthetic content, controlled callbacks and untested big-endian execution
+   limit these results. Door lifecycle and full setup closure are not established.
 
-   Main is **103,293 Rust lines in 150 files**. The prospective composition is
-   **111,597 (+8,304)**, unadopted. This stage adds 188 main and 102 owned lines:
-   **+290 complete lines**, +2,410 lexical tokens and +9,494 LF-normalized source
-   bytes. Verification adds 248 lines including emitted references and scripts;
-   implementation plus checks adds 538. No dependency or native/installer/launcher
-   code is added. Counted unsafe declarations rise by one for the explicit adapter
-   boundary; casts are unchanged. This is priced sharing, not net reduction or
-   unsafe elimination. Setup closure, persistent authority and backend independence
-   remain open.
+   Main is **103,396 Rust lines in 152 files**. The prospective composition is
+   **111,653 (+8,257)**, unadopted. This stage adds 103 main and removes 47 owned
+   lines: **+56 complete lines**, +720 lexical tokens and +2,444 LF-normalized
+   source bytes. Verification adds 678 lines including native examples,
+   independent references and scripts; implementation plus checks adds 734.
+   No dependency or native/installer/launcher code is added. Counted unsafe
+   declarations (2,897) and casts (6,114) are unchanged; these counters do not
+   capture the four removed generated unsafe bodies. This is priced safety and
+   sharing, not net reduction. Persistent authority/backend independence remain open.
 
    Next dependencies, in order:
 
@@ -165,8 +163,13 @@ references; measure build/test time and resource growth before changing the loop
      shot/bomb/grapple/spread consumers and compare native setup/resumed tails.
    - [x] Share complete all-source mechanism allocation/initialization, migrate
      real producers and delete duplicate source sequencing with independent checks.
-   - Close remaining mechanism setup families, preserving synchronous writes,
-     nested displacement and failure prefixes before retiring native dispatch.
+   - [x] Share all four ordinary door setups, retire duplicate bank/owned rules,
+     and compare Grey/shot consumer tails against independent frozen bodies.
+   - Close remaining mechanism setup families: break/reveal/respawn terrain,
+     gates, contact physics/Chozo, stations/scroll/items, room/event/boss setup,
+     then residual aliases/diagnostics. Preserve synchronous writes, nested
+     displacement and failure prefixes before retiring native dispatch. The
+     115-identity inventory and next 13 terrain setups are in the local door handoff.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -174,9 +177,12 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified mechanism-creation continuation, with
-   `MECHANISM_CREATION_HANDOFF.md`, `mechanism-creation-price.json` and
-   `mechanism-creation-final.log`. `mechanism-creation-parent/` preserves prior
+   `runtime-impact-working/` is the verified door-setup continuation, with
+   `DOOR_SETUP_HANDOFF.md`, `door-setup-price.json` and `door-setup-attempt-1.log`.
+   `door-setup-parent/` preserves prior main/carrier/local/composition inputs.
+   Creation results remain in `MECHANISM_CREATION_HANDOFF.md`,
+   `mechanism-creation-price.json` and `mechanism-creation-final.log`.
+   `mechanism-creation-parent/` preserves prior
    main/carrier/local/composition sources. Block results remain in
    `BLOCK_HANDOFF.md`, `block-price.json` and `block-final-attempt-2.log`.
    `block-parent/` preserves prior main/carrier/local sources and composition.
@@ -341,9 +347,9 @@ content.
 
 ## Progress and references
 
-Verified mechanism-creation stage: Rust 103,293; maintained C bridge 266 and headers
-296 = **103,855 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **104,765**. The separate prospective owned
+Verified door-setup stage: Rust 103,396; maintained C bridge 266 and headers
+296 = **103,958 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **104,868**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
 unsafe declarations 2,897; cast-containing lines 6,114. These narrow counters do
