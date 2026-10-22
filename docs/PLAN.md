@@ -1948,8 +1948,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    grapple-start consumers remain controlled. Definitions are synthetic; no
    gameplay route or hardware coverage is established. Accepted out-of-pool
    operations retain reference bodies, including drawing continuations; handoff
-   tests do not retire those bodies. Compose the verified update scheduler below,
-   then continue with actual room reactions, native missile/extension and producer definitions,
+   tests do not retire those bodies. Continue with actual room reactions,
+   native missile/extension and producer definitions,
    protection/suspension, real callers and runtime authority/transfers.
    Count every adapter/fallback and close the remaining numeric interfaces before
    judging the complete structural replacement; this stage claims no net saving.
@@ -1976,6 +1976,22 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    runtime authority remain open. No movie, adoption or complete saving is claimed.
    Source/result: 20261022/scheduled-beam-lifecycle. The original wide-continuation
    and admission contracts remain in 20261022/projectile-update-pass.
+   That unchanged scheduler/provider is now integrated into the top-level full
+   candidate, preserved in player-projectiles/scheduled-flight-stage. **514
+   selected comparisons**, 651 ordered observations and ten expected matching
+   failures pass: the 453 scheduling cases, 41 actual-room scheduling cases and
+   20 additional persistent creation/update/output/release/reset steps. Eight
+   native sequences pass, including three using the actual shared flight/scans.
+   An explicit upward-retarget case requires two movements in one update pass;
+   redirected animation, committed movement on failure and surviving trail OAM
+   writes are checked. All 115 frozen and 99 draft compiled inputs match; 90
+   inherited sources are unchanged. Current dispatcher/update, seven room/motion/
+   retirement functions, two projections and five support/gameplay files match
+   the frozen source. Optimized build and formatting pass. This is the same
+   **+96-line** scheduler/provider cohort, not an additional algorithm or saving;
+   reused/new native examples add 344 lines, with reference and fixtures separate.
+   Actual block/slope/PLM reactions remain controlled. No earlier full flight or
+   lifecycle suite, movie, adoption or complete replacement price is claimed.
    The frozen library
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.
