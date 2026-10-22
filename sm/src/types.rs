@@ -206,12 +206,6 @@ crate::typed_struct! {
         pub tables: [TileTable; 1024];
     }
 
-    pub struct VramReadQueueEnt {
-        pub vram_target, dma_parameters: u16;
-        pub src: LongPtr;
-        pub size: u16;
-    }
-
     pub struct Vulnerability {
         pub power, wave, ice, ice_wave, spazer, spazer_wave, spazer_ice, spazer_ice_wave, plasma,
             plasma_wave, plasma_ice, plasma_ice_wave, missile, super_missile, bomb, power_bomb,

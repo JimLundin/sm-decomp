@@ -859,26 +859,9 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
     *_state_variable_ = 0;
     0 as CoroutineRet
 }
-pub unsafe fn PauseHook_Kraid(game: &mut Game) {
-    let v0: u16 = word!(game.vram_read_queue_tail);
-    let mut v1: u32 = word!(game.vram_read_queue_tail) as u32;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).vram_target as *mut u8).offset(word!(
-        game.vram_read_queue_tail
-    )
-        as i32
-        as isize) as *mut u16) = (((*ram_ptr!(game; 0x5d) as i32 & 0xfc) << 8) + 15872) as u16;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).dma_parameters as *mut u8)
-        .offset(v1 as isize) as *mut u16) = 129;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).dma_parameters as *mut u8)
-        .offset(v0 as i32 as isize)
-        .offset(1) as *mut u16) = 57;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).src.addr as *mut u8)
-        .offset(v0 as i32 as isize) as *mut VoidP) = 20480 as VoidP;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).src.bank).offset(v0 as i32 as isize)
-        as *mut u16) = 126;
-    *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340))).size as *mut u8)
-        .offset(v0 as i32 as isize) as *mut u16) = 1024;
-    word!(game.vram_read_queue_tail = (v0).wrapping_add(9));
+#[forbid(unsafe_code)]
+pub fn PauseHook_Kraid(game: &mut Game) {
+    crate::game::vram_read_queue::enqueue(0x5d, 15872, 0x5000, 1024, false, game);
 }
 pub unsafe fn Kraid_PlaySoundEveryHalfSecond(game: &mut Game) {
     if word!(game.kraid_unk9000 -= 1, reread) == 0 {

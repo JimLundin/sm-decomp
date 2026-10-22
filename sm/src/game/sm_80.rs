@@ -618,39 +618,6 @@ pub unsafe fn Nmi_ProcessVertScrollingDma(game: &mut Game) {
     transfer_scrolling_tilemap(0x964, [0xc948, 0xc98c], layout, game);
     transfer_scrolling_tilemap(0x980, [0xca50, 0xca94], layout, game);
 }
-pub unsafe fn NMI_ProcessVramReadQueue(game: &mut Game) {
-    if word!(game.vram_read_queue_tail) as u8 != 0 {
-        byte!((*(ram_ptr!(game, VramReadQueueEnt; 0x340))).vram_target; word!(game.vram_read_queue_tail) as u8 as i32 as isize) =
-            0;
-        let mut v0: i32 = 0;
-        WriteReg(VMAIN as u16, 0x80, game);
-        while (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(v0 as isize)).vram_target != 0 {
-            WriteRegWord(
-                VMADDL as u16,
-                (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(v0 as isize)).vram_target,
-                game,
-            );
-            ReadRegWord(RDVRAML as u16, game);
-            crate::rtl::register_writes! { game;
-                word(DMAP1 as u16,
-                (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(v0 as isize)).dma_parameters,); word(A1T1L as u16,
-                (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(v0 as isize))
-                    .src
-                    .addr,);
-                word(A1T1H as u16,
-                *((&raw mut (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(v0 as isize))
-                    .src
-                    .addr as *mut u8)
-                    .offset(1) as *mut VoidP),); word(DAS1L as u16,
-                (*(ram_ptr!(game, VramReadQueueEnt; 0x340)).offset(v0 as isize)).size,);
-                word(DAS10 as u16, 0); word(A2A1H as u16, 0);
-                byte(MDMAEN as u16, 2);
-            }
-            v0 += 1;
-        }
-        byte!(@pointer ram_ptr!(game, u16; 0x360); 0) = 0;
-    }
-}
 pub unsafe fn HasQueuedMusic(game: &mut Game) -> u8 {
     let mut v0: i32 = 14;
     while word!(game.music_queue_delay[(v0 >> 1)]) == 0 {
@@ -1115,7 +1082,7 @@ pub unsafe fn Vector_NMI(game: &mut Game) {
             NMI_ProcessMode7Queue(game);
         }
         NMI_ProcessVramWriteQueue(game);
-        NMI_ProcessVramReadQueue(game);
+        crate::game::vram_read_queue::process(game);
         WriteReg(HDMAEN as u16, game.g_ram[HDMA_ENABLE], game);
         game.g_ram[WAITING_FOR_NMI] = 0;
         game.g_ram[FRAMES_MISSED] = 0;

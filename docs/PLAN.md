@@ -34,10 +34,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,304 Rust lines in 93 files**, plus 262 C
-bridge and 296 C-header lines = **94,862 maintained implementation lines**.
+Current composition (2026-10-22): **94,305 Rust lines in 94 files**, plus 262 C
+bridge and 296 C-header lines = **94,863 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,693**. This complete recount includes frontend,
+gives **95,694**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1643,6 +1643,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Legacy endpoint expressions and C diagnostic calls remain unsafe outside the
    checked transfers. C buffering is preserved; moving that output to Rust changed
    ordering and was rejected. Checks: Local/sm-decomp-experiments/20261022/safe-word-transfers.
+   VRAM readback now owns all five X-ray/Kraid request variants and the NMI
+   consumer in one module. Checked byte access replaces every packed queue
+   pointer, and the obsolete record type is removed. The shared producer and
+   three direct gameplay entries forbid unsafe code; hardware register calls
+   remain explicit unsafe operations. Overlapping writes, the retained DMA byte,
+   low-only sentinel/tail clearing and DMA changes to later records are preserved.
+   Complete cost: **+1 maintained line**, including callers and registrations.
+   Actual-Game comparisons pass 674 producer/consumer cases and 3,530 ordered
+   register observations, then 264 actual release-library caller cases including
+   24 producer-to-NMI readbacks. All 100 old/101 final source inputs and normal
+   release builds pass. Existing unaligned-pointer requirements are eliminated;
+   old optimized execution is observed behavior, not a proof of undefined accesses.
+   No movie ran; unrelated overlay logic and physical hardware are not covered.
+   Checks: Local/sm-decomp-experiments/20261022/safe-vram-read-queue.
    Recording now owns its log and base snapshot in checked Rust storage, with
    safe input/patch encoding, rebasing and stopping. The new module forbids unsafe
    code; native ByteArray calls, declarations and installer selections are removed.
@@ -2555,15 +2569,18 @@ effects, minimap ownership, X-ray backgrounds, layer blending, liquid effects,
 scrolling-sky and grapple-swing ownership, the SPC/PPU/DSP/music replacements,
 shared configuration/input and utility dependencies, the desktop host,
 room-scroll data, the shader dependency, safe pose/mechanism RAM access,
-gameplay continuation ownership, owned ROM reads, safe asset decompression
-checked ROM tables, safe word transfers and owned recording, maintained Rust is **94,304**, with
+gameplay continuation ownership, owned ROM reads, safe asset decompression,
+checked ROM tables, safe word transfers, owned recording and checked VRAM readback,
+maintained Rust is **94,305**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **94,862**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,693**.
+Including 262 C and 296 header lines gives **94,863**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,694**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 23; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3046; cast lines 6621. Owned recording adds nine complete maintained
+unsafe functions 3042; cast lines 6614. VRAM readback adds one line, removes four
+counted unsafe declarations and seven cast-containing lines; other counters are
+unchanged. Its hardware calls remain unsafe. Owned recording adds nine complete maintained
 lines (22 Rust, minus 12 C/header and one installer line). It removes two counted
 raw offsets, six unsafe declarations and five cast-containing lines; no other
 counters increase. The safe recorder owns both buffers and the input/patch codec;

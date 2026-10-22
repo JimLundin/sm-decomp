@@ -322,6 +322,7 @@ pub mod game {
     pub(crate) mod moving_platforms;
     pub(crate) mod minimap;
     pub(crate) mod xray_background;
+    pub(crate) mod vram_read_queue;
     pub(crate) mod layer_blending;
     pub(crate) mod liquid_effects;
     pub(crate) mod scrolling_sky;

@@ -25,7 +25,7 @@ pub use crate::types::{
     Mode7VramWriteQueue, OamEnt, PairU16, Pair_Bool_Amt, Point16U, Point32, Ram3000, Ram3800,
     Ram4000, Ram8000_Default, Rect16U, RoomDefHeader, RoomDefRoomstate, RoomPlmEntry, SamusPose,
     SamusPoseParams, SnesRegs, SpawnHardcodedPlmArgs, SpawnHdmaObject_Args, StartDmaCopy,
-    TileTable, TileTables, VoidP, VramReadQueueEnt, VramWriteEntry, Vulnerability,
+    TileTable, TileTables, VoidP, VramWriteEntry, Vulnerability,
 };
 pub(crate) use ::core::ffi::{c_char, c_long, c_void};
 pub(crate) use ::core::mem::transmute;

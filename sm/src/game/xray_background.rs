@@ -23,27 +23,6 @@ crate::typed_struct! {
         pub level_data_block: u16;
     }
 }
-// Queue fields overlap: keep the word writes and their order, including stage 5's retained DMA byte.
-unsafe fn capture_screen(
-    register: usize,
-    screen: u16,
-    destination: u16,
-    retain_mode: bool,
-    game: &mut Game,
-) {
-    let tail = word!(game.vram_read_queue_tail);
-    let entry = ram_ptr!(game; 0x340, tail as isize);
-    (entry as *mut u16)
-        .write_unaligned(((game.g_ram[register] as u16 & 0xfc) << 8).wrapping_add(screen * 1024));
-    if !retain_mode {
-        (entry.add(2) as *mut u16).write_unaligned(129);
-    }
-    (entry.add(3) as *mut u16).write_unaligned(57);
-    (entry.add(4) as *mut u16).write_unaligned(destination);
-    (entry.add(6) as *mut u16).write_unaligned(126);
-    (entry.add(7) as *mut u16).write_unaligned(2048);
-    word!(game.vram_read_queue_tail = tail.wrapping_add(9));
-}
 
 unsafe fn upload_screen(source: u16, screen: u16, game: &mut Game) {
     let tail = word!(game.vram_write_queue_tail);
@@ -115,11 +94,13 @@ pub unsafe fn freeze_and_backup(k: u16, game: &mut Game) {
         byte!(@pointer ram_ptr!(game, u16; 0xb7); 1);
     byte!(@pointer ram_ptr!(game, u16; 0x192c); k as u8 as i32 as isize) = *ram_ptr!(game; 0x59);
 }
-pub unsafe fn capture_bg1_right(game: &mut Game) {
-    capture_screen(0x58, 1, 0x6800, false, game);
+#[forbid(unsafe_code)]
+pub fn capture_bg1_right(game: &mut Game) {
+    crate::game::vram_read_queue::enqueue(0x58, 1024, 0x6800, 2048, false, game);
 }
-pub unsafe fn capture_bg1_left(game: &mut Game) {
-    capture_screen(0x58, 0, 0x6000, false, game);
+#[forbid(unsafe_code)]
+pub fn capture_bg1_left(game: &mut Game) {
+    crate::game::vram_read_queue::enqueue(0x58, 0, 0x6000, 2048, false, game);
 }
 pub unsafe fn build_overlay(game: &mut Game) {
     copy_background(game);
@@ -150,7 +131,7 @@ pub unsafe fn build_overlay(game: &mut Game) {
         m -= 1;
     }
     reveal_room_items(game);
-    capture_screen(0x59, 0, 0x5000, false, game);
+    crate::game::vram_read_queue::enqueue(0x59, 0, 0x5000, 2048, false, game);
 }
 
 unsafe fn block_definition(k: u16, game: &mut Game) -> *const u8 {
@@ -347,7 +328,7 @@ pub unsafe fn capture_bg2_right(game: &mut Game) {
         word!(game.reg_BG2VOFS = (word!(game.reg_BG1VOFS)) & (0xfu16));
         *ram_ptr!(game; 0x59) = 73;
     }
-    capture_screen(0x59, 1, 0x5800, true, game);
+    crate::game::vram_read_queue::enqueue(0x59, 1024, 0x5800, 2048, true, game);
 }
 pub unsafe fn can_reveal_blocks(game: &mut Game) -> bool {
     if word!(game.room_ptr) as i32 == addr_kRoom_a66a as i32
