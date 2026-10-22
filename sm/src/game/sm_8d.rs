@@ -2,18 +2,37 @@ pub use crate::game::constants::bank_8d::*;
 pub use crate::game::prelude::*;
 use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
 
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
-    pub struct PalFxDef {
-        pub func, instrs: VoidP;
+// Each acquisition observes the current cartridge, with linear reads in that image.
+struct PaletteScript {
+    image: crate::rom::RomImage,
+    base: usize,
+}
+
+#[forbid(unsafe_code)]
+impl PaletteScript {
+    fn byte(&self, offset: usize) -> u8 {
+        self.image.read(self.base + offset)
+    }
+
+    fn word(&self, offset: usize) -> u16 {
+        u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
     }
 }
 
-const RomPtr_8D: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8d>;
-#[inline]
-unsafe fn get_PalFxDef(a: u16, game: &mut Game) -> *mut PalFxDef {
-    RomPtr((0x8d0000u32) | ((a) as u32), game) as *mut PalFxDef
+unsafe fn palette_script(address: u16, game: &mut Game) -> PaletteScript {
+    let address = 0x8d0000 | u32::from(address);
+    if address & 0x8000 == 0 {
+        printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
+        game.g_fail = true;
+    }
+    PaletteScript {
+        image: game
+            .loaded_rom
+            .as_ref()
+            .expect("ROM must be loaded")
+            .clone(),
+        base: crate::rtl::lorom_offset(address) as usize,
+    }
 }
 crate::game::constants::typed_constants! { i32;
     fnCinematicFunction_Intro_Page2 = 0x8bb35f,
@@ -38,11 +57,11 @@ pub unsafe fn SpawnPalfxObject(j: u16, game: &mut Game) {
     let v2: i32 = v1 as i32 >> 1;
     word! {game; palettefx_ids[v2] = j; palettefx_color_indexes[v2] = 0;
     palettefx_pre_instr[v2] = ((0x8dc526i32) as u16);
-    palettefx_instr_list_ptrs[v2] = (*get_PalFxDef(j, game)).instrs;
+    palettefx_instr_list_ptrs[v2] = palette_script(j, game).word(2);
     palettefx_instr_timers[v2] = 1; palettefx_timers[v2] = 0; }
-    let mut PalFxDef = get_PalFxDef(j, game);
+    let definition = palette_script(j, game);
     CallPalfxFunc(
-        (((*PalFxDef).func) as u32) | (0x8d0000u32),
+        (u32::from(definition.word(0))) | (0x8d0000u32),
         -1i32 as u16,
         v1,
         game,
@@ -76,9 +95,9 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
     let mut j: u16 = word!(game.palettefx_instr_list_ptrs[(v1 >> 1)]);
     let mut v6: u16 = 0;
     loop {
-        let p = RomPtr_8D(j, game) as *const u16;
-        v6 = *p;
-        if (*p & 0x8000) == 0 {
+        let script = palette_script(j, game);
+        v6 = script.word(0);
+        if (script.word(0) & 0x8000) == 0 {
             break;
         }
         let v7: PairU16 =
@@ -95,8 +114,8 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
     let mut v11: u16 = 0;
     do_until! { (j == 0);
         loop {
-            let mut v10 = RomPtr_8D(j, game);
-            v11 = *(v10.offset(2) as *mut u16);
+            let script = palette_script(j, game);
+            v11 = script.word(2);
             if v11 & 0x8000 != 0 {
                 break;
             }
@@ -157,8 +176,7 @@ crate::game::callback_dispatch! {
             };
             word!(
                 game.palettefx_instr_list_ptrs[v3] =
-                    *((RomPtr_8D as unsafe fn(u16, &mut Game) -> *const u8)(v4, game)
-                        .offset(v2 as isize) as *mut u16)
+                    palette_script(v4, game).word(usize::from(v2))
             );
         }
     };
@@ -203,19 +221,19 @@ crate::game::callback_dispatch! {
         MakePairU16(0, 0)
     };
     [9302470] PalInstr_SetPalfxIndex [] {
-        word!(game.samus_in_heat_palfx_index = *RomPtr_8D(j, game) as u16);
+        word!(game.samus_in_heat_palfx_index = u16::from(palette_script(j, game).byte(0)));
         MakePairU16(k, (j).wrapping_add(1))
     };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> PairU16];
     [9291215] PalInstr_Delete [MakePairU16(k, 0)] { word!(game.palettefx_ids[(k >> 1)] = 0); };
     [9291220] PalInstr_SetPreInstr [MakePairU16(k, (j).wrapping_add(2))] {
-        word!(game.palettefx_pre_instr[(k >> 1)] = *(RomPtr_8D(j, game) as *mut u16));
+        word!(game.palettefx_pre_instr[(k >> 1)] = palette_script(j, game).word(0));
     };
     [9291229] PalInstr_ClearPreInstr [MakePairU16(k, j)] {
         word!(game.palettefx_pre_instr[(k >> 1)] = addr_locret_8DC5E3 as u16);
     };
     [9291294]
-    PalInstr_Goto [MakePairU16(k, v2)] { let v2: u16 = *(RomPtr_8D(j, game) as *mut u16); };
+    PalInstr_Goto [MakePairU16(k, v2)] { let v2: u16 = palette_script(j, game).word(0); };
     [9291321] PalInstr_DecTimerGoto [MakePairU16(v4.k, v4.j)] {
         let mut v4: PairU16 = PairU16 { k: 0, j: 0 };
         let v2: i32 = k as i32 >> 1;
@@ -226,23 +244,23 @@ crate::game::callback_dispatch! {
         v4 = PalInstr_Goto(k, j, game);
     };
     [9291336] PalInstr_SetTimer [MakePairU16(k, (j).wrapping_add(1))] {
-        *ram_ptr!(game; 0x1edd, k as i32 as isize) = *RomPtr_8D(j, game);
+        *ram_ptr!(game; 0x1edd, k as i32 as isize) = palette_script(j, game).byte(0);
     };
     [9291349] PalInstr_SetColorIndex [MakePairU16(k, (j).wrapping_add(2))] {
-        word!(game.palettefx_color_indexes[(k >> 1)] = *(RomPtr_8D(j, game) as *mut u16));
+        word!(game.palettefx_color_indexes[(k >> 1)] = palette_script(j, game).word(0));
     };
     [9291358] PalInstr_QueueMusic [MakePairU16(k, (j).wrapping_add(1))] {
-        let v2 = RomPtr_8D(j, game);
-        QueueMusic_Delayed8(*v2 as u16, game);
+        let script = palette_script(j, game);
+        QueueMusic_Delayed8(u16::from(script.byte(0)), game);
     };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> PairU16];
-    @prefix { let v2 = RomPtr_8D(j, game) as *const u16; };
+    @prefix { let script = palette_script(j, game); };
     [9291370]
-    PalInstr_QueueSfx1 [MakePairU16(k, (j).wrapping_add(1))] {  QueueSfx1_Max6(*v2, game); };
+    PalInstr_QueueSfx1 [MakePairU16(k, (j).wrapping_add(1))] {  QueueSfx1_Max6(script.word(0), game); };
     [9291379]
-    PalInstr_QueueSfx2 [MakePairU16(k, (j).wrapping_add(1))] {  QueueSfx2_Max6(*v2, game); };
+    PalInstr_QueueSfx2 [MakePairU16(k, (j).wrapping_add(1))] {  QueueSfx2_Max6(script.word(0), game); };
     [9291388]
-    PalInstr_QueueSfx3 [MakePairU16(k, (j).wrapping_add(1))] {  QueueSfx3_Max6(*v2, game); };
+    PalInstr_QueueSfx3 [MakePairU16(k, (j).wrapping_add(1))] {  QueueSfx3_Max6(script.word(0), game); };
     @external {
         9291161 => [PalInstr_ColorPlus2(k, j)];
         9291170 => [PalInstr_ColorPlus3(k, j)]; 9291179 => [PalInstr_ColorPlus4(k, j)];
