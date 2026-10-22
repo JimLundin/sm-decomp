@@ -1885,7 +1885,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    sequence initializes, animates and draws named geometry, then impacts, releases
    and verifies that the inactive cursor no longer draws. Existing native callers
    also pass with that inactive default. Native beam creation is connected below;
-   frame-by-frame flight remains encoded.
+   shared room flight is connected below.
    Models, providers and checked output forbid unsafe code. All 115 frozen and 83
    draft compiled inputs match; 71 inherited files are unchanged, and nine current
    gameplay/support sources match the frozen reference. Optimized DLL and formatting
@@ -1914,15 +1914,43 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    The complete changed formatted model/provider cohort grows **633 -> 797 (+164
    lines)**; authored examples add 354 separate lines. Bridge/fallback and final
    runtime costs remain outside this partial price. No earlier full suite or movie
-   ran; native collision outcomes are controlled, and frame-by-frame flight,
-   charge-input dispatch, missile/bomb definitions and runtime authority remain open.
+   ran; at that stage native collision outcomes were controlled. Shared flight,
+   actual room motion/scans and retirement are now connected below.
+   Flight phase ordering, room movement/scans and retirement now share generic
+   routines in this same owner. **439 selected full-RAM comparisons**, 666 ordered
+   observations and 42 expected matching failures pass: 209 phase cases, 110 room
+   geometry/motion cases, 54 reaction-callback cases, 30 retirement cases, 12 actual
+   flight/scan consumers, six explicit contracts and 18 linked lifecycle steps.
+   Movement commits before bounds rejection; beam spans and horizontal rows are
+   captured before movement, while horizontal scans reread room width after each
+   reaction. Wave scans react without impacting. Reaction return bits and the
+   unblocked counter remain separate. Trail callbacks may redirect the live
+   selector; both motion axes retain their captured slot, while cleanup follows
+   the live selector. Retirement preserves beam impact placement, allocated
+   explosion animation and higher-class release.
+   Three native sequences exercise shared beam creation, actual flight/scans,
+   geometry output, impact/release and surviving trails, including diagonal
+   retargeting. Native trail output records requests; encoded linked cases execute
+   actual trail OAM output. Room reactions are controlled occupancy responses,
+   not actual block/slope/PLM code. Missile acceleration and extension collision
+   internals still use retained encoded implementations.
+   Models/providers forbid unsafe code; `Firing` remains non-Clone. All 115 frozen
+   and 94 draft compiled inputs match; 83 inherited sources are unchanged. Nine
+   current gameplay/support files, seven actual room/movement/retirement functions
+   and two used cinematic projection functions match the frozen reference.
+   Optimized DLL and formatting pass. Exact source/result is preserved in
+   player-projectiles/room-flight-stage. The changed formatted model/provider
+   cohort grows **738 -> 1,139 (+401 lines)**; native examples add 280 separate
+   lines. Retained broad bodies, final bridges and runtime integration remain
+   outside this partial price. No earlier full suite or movie ran.
    This remains an **unadopted, incomplete draft**, not a production promotion or
-   a complete price. Collision, native diagnostics, palette/sound output and
+   a complete price. Block/slope/PLM reactions, native diagnostics, palette/sound output and
    grapple-start consumers remain controlled. Definitions are synthetic; no
    gameplay route or hardware coverage is established. Accepted out-of-pool
    operations retain reference bodies, including drawing continuations; handoff
-   tests do not retire those bodies. Continue with native flight and remaining
-   producer definitions, protection/suspension, real callers and runtime transfers.
+   tests do not retire those bodies. Continue with update scheduling, actual room
+   reactions, remaining native missile/extension and producer definitions,
+   protection/suspension, real callers and runtime authority/transfers.
    Count every adapter/fallback and close the remaining numeric interfaces before
    judging the complete structural replacement; this stage claims no net saving.
    The coordinator's [complete update-pass experiment](RAM_OWNERSHIP.md#projectile-update-scheduling-over-the-complete-owner)
@@ -1943,7 +1971,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    native examples use authored motion actions. Outer freeze/HUD scheduling and
    launch-history clearing were inspected only. No movie, adoption or complete
    saving is claimed. Source/result: 20261022/projectile-update-pass. Its base is
-   presentation-stage; compose the methods into the newer beam-definition owner.
+   presentation-stage; compose the methods into the newer room-flight owner.
    The frozen library
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.
