@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,539 Rust lines in 113 files**, plus 262 C
-bridge and 296 C-header lines = **96,097 maintained implementation lines**.
+Current composition (2026-10-22): **95,547 Rust lines in 113 files**, plus 262 C
+bridge and 296 C-header lines = **96,105 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,928**. This complete recount includes frontend,
+gives **96,936**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2586,6 +2586,24 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    main-gameplay or physical-device coverage is claimed. Normal release library,
    frontend/verifier, native/source stamps, formatting and progress checks pass.
    Checks: Local/sm-decomp-experiments/20261022/room-state.
+   Door metadata, destination CRE loading, elevator-map handoff and room/door
+   setup dispatch now share `room_state`. All callers migrate, retiring six
+   bank routines and two raw record helpers. Checked records preserve byte order,
+   partial stores, captured allocations, live rereads and callback timing. The
+   complete safety cost is **+8 Rust lines**, removing two counted unsafe
+   declarations. RAM remains authoritative; native diagnostics, map operations
+   and setup callbacks remain unsafe, as do other door/room record consumers.
+   **690 actual old/new full-state comparisons**, 3,269 ordered observations and
+   74 matching controlled failures pass; 62 candidate-only short-image cases
+   check bounds and partial writes. All 120 library inputs per side and four
+   fixture inputs are checked. Probed and clean Ceres loading/first-door segments
+   each pass **3,380/0**, inputs **8250..11629**, through fade completion and two
+   further frames. The prior 8,250-frame setup remains separate; caller inspection
+   confirms the checkpoint precedes the newly changed routines. Default speed,
+   setup callbacks, map gates and scrolling execute; actual elevator-map effects
+   have component coverage only. No wider route or credits coverage is claimed.
+   Normal library/frontend/verifier builds, source/native stamps and progress pass.
+   Checks: Local/sm-decomp-experiments/20261022/door-metadata.
    Event/boss flag access and shared bit-mask preparation now live in the safe
    `progress_flags` module, which forbids unsafe code. All 15 caller files import
    it directly; the six bank-80 definitions are retired. Queries retain their
@@ -3707,16 +3725,20 @@ award/message ownership, owned APU RAM, the owned audio command queue and enemy
 population ownership, owned native audio uploads, typed runtime initialization,
 owned native-player RAM with named field transfers, DSP RAM ownership and typed
 stereo output, checked tracing, owned room-background records, checked palette
-execution, shared effect ROM records, checked animated tiles, safe progress flags
-and owned room metadata, maintained Rust is **95,539**, with applicable static,
-component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,097**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,928**.
+execution, shared effect ROM records, checked animated tiles, safe progress flags,
+owned room metadata and checked door metadata, maintained Rust is **95,547**,
+with applicable static, component and exercised movie checks passing.
+Including 262 C and 296 header lines gives **96,105**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,936**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2998; cast lines 6519. Owned room metadata changes no net Rust
-lines and removes three counted unsafe declarations; all other residue counters
+unsafe functions 2996; cast lines 6519. Checked door metadata adds eight maintained
+Rust lines and removes two counted unsafe declarations; other residue counters
+are unchanged. Raw record reads in the six migrated routines are retired; native
+diagnostics and actual map/setup effects remain unsafe. This is a safety cost.
+Owned room metadata changes no net Rust lines and removes three counted unsafe
+declarations; all other residue counters
 are unchanged. The selected metadata path has no raw ROM/RAM access; the shared
 decoder forbids unsafe code. Native diagnostics/helper calls and other room
 record consumers remain unsafe. State authority remains in RAM.

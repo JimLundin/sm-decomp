@@ -22,14 +22,6 @@ crate::game::constants::typed_constants! { i32;
     fnPauseHook_DraygonRoom = 0x8fc8f6, fnUnpauseHook_DraygonRoom = 0x8fc8fc,
 }
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
-#[inline]
-unsafe fn get_DoorDef(a: u16, game: &mut Game) -> *mut DoorDef {
-    RomPtr((0x830000u32) | ((a) as u32), game) as *mut DoorDef
-}
-#[inline]
-unsafe fn get_RoomDefRoomstate(a: u16, game: &mut Game) -> *mut RoomDefRoomstate {
-    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefRoomstate
-}
 pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
     if word!(game.time_is_frozen_flag) == 0 && (word!(game.nmi_frame_counter_word) & 1) == 0 {
         let mut Random: u16 = NextRandom(game);
@@ -194,15 +186,6 @@ crate::game::callback_dispatch! {
                 | 9409015 | 9423047 | 9423056 | 9423057 | 9423058 | 9423068 | 9423134 => [()];
     }
 }
-pub unsafe fn RunRoomSetupCode(game: &mut Game) {
-    let mut RoomDefRoomstate = get_RoomDefRoomstate(word!(game.roomdefroomstate_ptr), game);
-    if (*RoomDefRoomstate).room_setup_code != 0 {
-        CallRoomSetupCode(
-            (((*RoomDefRoomstate).room_setup_code) as u32) | (0x8f0000u32),
-            game,
-        );
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallDoorDefSetupCode(ea: u32, game: &mut Game) => ea;
     call (game); default {
@@ -263,12 +246,6 @@ crate::game::callback_dispatch! {
         word!(game.irq_enable_mode7 = 0);
     };
 
-}
-pub unsafe fn RunDoorSetupCode(game: &mut Game) {
-    let DD = get_DoorDef(word!(game.door_def_ptr), game);
-    if (*DD).door_setup_code != 0 {
-        CallDoorDefSetupCode((((*DD).door_setup_code) as u32) | (0x8f0000u32), game);
-    }
 }
 static kRoomCode_RidleyRoomShaking_X: [i16; 8] = [0, 2, 2, 2, 0, -2, -2, -2];
 static kRoomCode_RidleyRoomShaking_Y: [i16; 8] = [-2, -2, 0, 2, 2, 2, 0, -2];

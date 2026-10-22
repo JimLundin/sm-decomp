@@ -3,7 +3,10 @@ use crate::game::enemy_population_ram::initialize_room;
 use crate::game::gameplay::advance as AdvanceGameplay;
 pub use crate::game::prelude::*;
 use crate::game::room_backgrounds::BackgroundLoad;
-use crate::game::room_state::{load_header as LoadRoomHeader, load_state as LoadStateHeader};
+use crate::game::room_state::{
+    load_destination_cre, load_destination_map, load_door, load_header as LoadRoomHeader,
+    load_state as LoadStateHeader, run_door_setup, run_room_setup, save_departing_map,
+};
 
 use crate::cpu_infra::DebugGameOverMenu;
 
@@ -22,8 +25,8 @@ use crate::game::sm_80::{
     LoadFromLoadStation, LoadMirrorOfExploredMapTiles, NextRandom, QueueClearingOfFxTilemap,
     QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx2_Max15,
     QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max3, QueueSfx3_Max6, ReadJoypadInputs,
-    ReleaseButtonsFilter, ResumeGameplay, SaveExploredMapTilesToSaved, SetElevatorsAsUsed,
-    SetupDmaTransfer, StartGameplay_Async, Vector_NMI, Vector_RESET_Async, WaitForNMI_Async,
+    ReleaseButtonsFilter, ResumeGameplay, SetupDmaTransfer, StartGameplay_Async, Vector_NMI,
+    Vector_RESET_Async, WaitForNMI_Async,
 };
 use crate::game::sm_81::{
     DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,
@@ -44,9 +47,7 @@ use crate::game::sm_8b::{
     GameState_39_EndingAndCredits_, LoadTitleSequenceGraphics,
 };
 use crate::game::sm_8d::{ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx};
-use crate::game::sm_8f::{
-    PauseHook_DraygonRoom, RunDoorSetupCode, RunRoomSetupCode, UnpauseHook_DraygonRoom,
-};
+use crate::game::sm_8f::{PauseHook_DraygonRoom, UnpauseHook_DraygonRoom};
 use crate::game::sm_90::{
     CallSomeSamusCode, ResetProjectileData, Samus_LowHealthCheck_0, SetLiquidPhysicsType,
     UpdateBeamTilesAndPalette,
@@ -3614,55 +3615,12 @@ pub unsafe fn GameState_25_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
     }
     kCoroutineNone as CoroutineRet
 }
-pub unsafe fn LoaadDesinationRoomCreBitset(game: &mut Game) {
-    let destination_room = (*get_DoorDef(game.door_def_ptr(), game)).room_definition_ptr;
-    game.set_previous_cre_bitset(game.cre_bitset());
-    let room = get_RoomDefHeader(destination_room, game);
-    game.set_cre_bitset(u16::from((*room).cre_bitset_));
-}
-pub unsafe fn LoadDoorHeader(game: &mut Game) {
-    let door = get_DoorDef(game.door_def_ptr(), game);
-    game.set_room_ptr((*door).room_definition_ptr);
-    // The properties word includes the adjacent orientation byte.
-    let properties = u16::from_le_bytes([(*door).door_bitflags, (*door).door_orientation]);
-    game.set_elevator_door_properties_orientation(properties);
-    game.set_elevator_flags(game.elevator_door_properties_orientation() & 0x0080);
-    game.set_door_direction(u16::from((*door).door_orientation));
-    game.set_door_destination_x_pos(u16::from((*door).x_pos_in_room) << 8);
-    game.set_door_destination_y_pos(u16::from((*door).y_pos_in_room) << 8);
-    let mut distance = (*door).samus_distance_from_door as i16;
-    if distance < 0 {
-        distance = if game.door_direction() & 2 != 0 {
-            384
-        } else {
-            200
-        };
-    }
-    let speed = (i32::from(distance) << 8) as u32;
-    game.set_samus_door_transition_subspeed(speed as u16);
-    game.set_samus_door_transition_speed((speed >> 16) as u16);
-}
 pub unsafe fn WaitUntilEndOfVblankAndEnableIrq(game: &mut Game) {
     if (*ram_ptr!(game; 0x84) & 0x30) != 0x30 {
         EnableIrqInterruptsNow(game);
     }
 }
 pub fn PointlessFunctionStupidToo() {}
-pub unsafe fn SaveMapExploredifElevator(game: &mut Game) {
-    if game.elevator_door_properties_orientation() & 0x000f != 0 {
-        SetElevatorsAsUsed(game);
-    }
-    let door = get_DoorDef(game.door_def_ptr(), game);
-    if (*door).door_bitflags & 0x40 != 0 {
-        SaveExploredMapTilesToSaved(game);
-    }
-}
-pub unsafe fn LoadMapExploredIfElevator(game: &mut Game) {
-    let door = get_DoorDef(game.door_def_ptr(), game);
-    if (*door).door_bitflags & 0x40 != 0 {
-        LoadMirrorOfExploredMapTiles(game);
-    }
-}
 pub unsafe fn EnsureSamusDrawnEachFrame(game: &mut Game) {
     if word!(game.elevator_flags) == 0 {
         Samus_DrawWhenNotAnimatingOrDying(game);
@@ -3799,7 +3757,7 @@ crate::game::callback_dispatch! {
         kCoroutineNone as CoroutineRet
     };
     [8577783] DoorTransitionFunction_LoadDoorHeaderEtc [] {
-        LoadDoorHeader(game);
+        load_door(game);
         sub_8882AC(game);
         game.set_hdma_objects_enable_flag(game.hdma_objects_enable_flag() & 0x7fff);
         game.set_irqhandler_next_handler(8);
@@ -3840,10 +3798,10 @@ crate::game::callback_dispatch! {
         kCoroutineNone as CoroutineRet
     };
     [8577902] DoorTransitionFunction_SetupNewRoom [] {
-        SaveMapExploredifElevator(game);
+        save_departing_map(game);
         LoadRoomHeader(game);
         LoadStateHeader(game);
-        LoadMapExploredIfElevator(game);
+        load_destination_map(game);
         InitializeSpecialEffectsForNewRoom(game);
         LoadLevelScrollAndCre(game);
         game.set_door_transition_function(0xe38e);
@@ -4034,7 +3992,7 @@ pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
     EnemyMain(game);
     DrawSamusEnemiesAndProjectiles(game);
     EnsureSamusDrawnEachFrame(game);
-    LoaadDesinationRoomCreBitset(game);
+    load_destination_cre(game);
     word_transfers!(game, descending, 128;
         le(target_palettes, 127) <- value(0),
         le(target_palettes, 255) <- value(0),
@@ -4082,8 +4040,8 @@ pub unsafe fn GameState_11_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn LoadDestinationRoomThings(game: &mut Game) {
-    LoaadDesinationRoomCreBitset(game);
-    LoadDoorHeader(game);
+    load_destination_cre(game);
+    load_door(game);
     LoadRoomHeader(game);
     LoadStateHeader(game);
     LoadCRETilesTilesetTilesAndPalette(game);
@@ -4159,8 +4117,8 @@ pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
             n = (n).wrapping_add(6);
         }
     }
-    RunDoorSetupCode(game);
-    RunRoomSetupCode(game);
+    run_door_setup(game);
+    run_room_setup(game);
     if word!(game.elevator_flags) != 0 {
         word!(game.elevator_status = 2);
     }
@@ -4269,8 +4227,8 @@ pub unsafe fn CreatePlmsExecuteDoorAsmRoomSetup(game: &mut Game) {
             i += 6;
         }
     }
-    RunDoorSetupCode(game);
-    RunRoomSetupCode(game);
+    run_door_setup(game);
+    run_room_setup(game);
     if word!(game.elevator_flags) != 0 {
         word!(game.elevator_status = 2);
     }

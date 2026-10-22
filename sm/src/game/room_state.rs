@@ -1,14 +1,21 @@
-//! Room definitions, ordered state selection and the selected asset pointers.
+//! Room and door metadata, ordered state selection and setup dispatch.
 //! Checked records retain their cartridge allocation; RAM owns the live state.
 use crate::game::progress_flags::{CheckBossBitForCurArea, CheckEventHappened};
+use crate::game::sm_80::{
+    LoadMirrorOfExploredMapTiles, SaveExploredMapTilesToSaved, SetElevatorsAsUsed,
+};
+use crate::game::sm_8f::{CallDoorDefSetupCode, CallRoomSetupCode};
 use crate::game_state::Game;
 use crate::ram_map::checked_word;
 use crate::rtl::{Mult8x8, Unreachable};
-use crate::types::{RoomDefHeader as Header, RoomDefRoomstate as State};
+use crate::types::{DoorDef as Door, RoomDefHeader as Header, RoomDefRoomstate as State};
 use core::mem::offset_of;
 
 const room_record: unsafe fn(u16, &mut Game) -> crate::rom::RomRecord =
     crate::rtl::rom_bank_record::<0x8f>;
+
+const door_record: unsafe fn(u16, &mut Game) -> crate::rom::RomRecord =
+    crate::rtl::rom_bank_record::<0x83>;
 
 pub(crate) unsafe fn select_entry(address: u32, cursor: u16, game: &mut Game) -> u16 {
     let state = match address {
@@ -102,4 +109,70 @@ pub(crate) unsafe fn load_state(game: &mut Game) {
         .to_le_bytes();
     game.set_layer2_scroll_x_and_y(scroll_x, scroll_y);
     game.set_room_main_code_ptr(room_state.word(offset_of!(State, main_code_ptr)));
+}
+
+pub(crate) unsafe fn load_destination_cre(game: &mut Game) {
+    let destination =
+        door_record(game.door_def_ptr(), game).word(offset_of!(Door, room_definition_ptr));
+    game.set_previous_cre_bitset(game.cre_bitset());
+    let room = room_record(destination, game);
+    game.set_cre_bitset(u16::from(room.byte(offset_of!(Header, cre_bitset_))));
+}
+
+pub(crate) unsafe fn load_door(game: &mut Game) {
+    let door = door_record(game.door_def_ptr(), game);
+    game.set_room_ptr(door.word(offset_of!(Door, room_definition_ptr)));
+    // Properties explicitly combine little-endian bytes, unlike native ROM words.
+    let properties = u16::from_le_bytes([
+        door.byte(offset_of!(Door, door_bitflags)),
+        door.byte(offset_of!(Door, door_orientation)),
+    ]);
+    game.set_elevator_door_properties_orientation(properties);
+    game.set_elevator_flags(game.elevator_door_properties_orientation() & 0x0080);
+    game.set_door_direction(u16::from(door.byte(offset_of!(Door, door_orientation))));
+    game.set_door_destination_x_pos(u16::from(door.byte(offset_of!(Door, x_pos_in_room))) << 8);
+    game.set_door_destination_y_pos(u16::from(door.byte(offset_of!(Door, y_pos_in_room))) << 8);
+    let mut distance = door.word(offset_of!(Door, samus_distance_from_door)) as i16;
+    if distance < 0 {
+        distance = if game.door_direction() & 2 != 0 {
+            384
+        } else {
+            200
+        };
+    }
+    let speed = (i32::from(distance) << 8) as u32;
+    game.set_samus_door_transition_subspeed(speed as u16);
+    game.set_samus_door_transition_speed((speed >> 16) as u16);
+}
+
+pub(crate) unsafe fn save_departing_map(game: &mut Game) {
+    if game.elevator_door_properties_orientation() & 0x000f != 0 {
+        SetElevatorsAsUsed(game);
+    }
+    let door = door_record(game.door_def_ptr(), game);
+    if door.byte(offset_of!(Door, door_bitflags)) & 0x40 != 0 {
+        SaveExploredMapTilesToSaved(game);
+    }
+}
+
+pub(crate) unsafe fn load_destination_map(game: &mut Game) {
+    let door = door_record(game.door_def_ptr(), game);
+    if door.byte(offset_of!(Door, door_bitflags)) & 0x40 != 0 {
+        LoadMirrorOfExploredMapTiles(game);
+    }
+}
+
+pub(crate) unsafe fn run_door_setup(game: &mut Game) {
+    let code = door_record(game.door_def_ptr(), game).word(offset_of!(Door, door_setup_code));
+    if code != 0 {
+        CallDoorDefSetupCode(0x8f0000 | u32::from(code), game);
+    }
+}
+
+pub(crate) unsafe fn run_room_setup(game: &mut Game) {
+    let code =
+        room_record(game.roomdefroomstate_ptr(), game).word(offset_of!(State, room_setup_code));
+    if code != 0 {
+        CallRoomSetupCode(0x8f0000 | u32::from(code), game);
+    }
 }
