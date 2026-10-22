@@ -1,7 +1,8 @@
 //! X-ray background capture, hidden-block overlay and restoration.
 use crate::game::constants::bank_8f::*;
 use crate::game::prelude::*;
-use crate::game::sm_80::{PrepareBitAccess, QueueSfx1_Max6};
+use crate::game::progress_flags::PrepareBitAccess;
+use crate::game::sm_80::QueueSfx1_Max6;
 use crate::game::sm_84::CalculatePlmBlockCoords;
 use crate::game::sm_91::{ResponsibleForXrayStandupGlitch, __ASSERT_FUNCTION};
 const RomPtr_84: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x84>;

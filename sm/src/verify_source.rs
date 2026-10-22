@@ -4,6 +4,10 @@
 
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/progress_flags.rs",
+        include_bytes!("game/progress_flags.rs"),
+    ),
+    (
         "sm/src/native_player_ram.rs",
         include_bytes!("native_player_ram.rs"),
     ),

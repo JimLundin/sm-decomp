@@ -10,9 +10,10 @@ pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
 use crate::game::mother_brain_visuals::{self, Fade};
+use crate::game::progress_flags::{CheckEventHappened, SetBossBitForCurArea, SetEventHappened};
 use crate::game::sm_80::{
-    CheckEventHappened, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max3,
-    QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6, SetBossBitForCurArea, SetEventHappened,
+    NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6,
+    QueueSfx3_Max3, QueueSfx3_Max6,
 };
 use crate::game::sm_84::SpawnHardcodedPlm;
 use crate::game::sm_86::{

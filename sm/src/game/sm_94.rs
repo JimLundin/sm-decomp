@@ -2,7 +2,8 @@ pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_90::*;
 pub use crate::game::prelude::*;
 
-use crate::game::sm_80::CheckBossBitForCurArea;
+use crate::game::progress_flags::CheckBossBitForCurArea;
+
 use crate::game::sm_84::{SpawnPLM, SpawnPLMWithCollision};
 use crate::game::sm_90::KillProjectile;
 use crate::game::sm_a0::CalculateAngleFromXY;

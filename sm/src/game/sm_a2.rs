@@ -5,7 +5,8 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
 
 use crate::game::message_boxes;
-use crate::game::sm_80::{CheckEventHappened, NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::progress_flags::CheckEventHappened;
+use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_81::SaveToSram;
 use crate::game::sm_86::{
     Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,

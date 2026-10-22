@@ -5,13 +5,15 @@ use crate::game::item_pickups::{MessageHandoff, PickupKind, VisualUpdate};
 pub use crate::game::prelude::*;
 
 use crate::game::message_boxes;
+use crate::game::progress_flags::{
+    CheckBossBitForCurArea, CheckEventHappened, PrepareBitAccess, SetEventHappened,
+};
 use crate::game::sm_80::{
     AddGrappleToHudTilemap, AddMissilesToHudTilemap, AddPowerBombsToHudTilemap,
-    AddSuperMissilesToHudTilemap, AddXrayToHudTilemap, CheckBossBitForCurArea, CheckEventHappened,
-    PrepareBitAccess, QueueMusic_Delayed8, QueueSfx1_Max1, QueueSfx1_Max15, QueueSfx1_Max3,
-    QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx2_Max1, QueueSfx2_Max15, QueueSfx2_Max3,
-    QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max1, QueueSfx3_Max15, QueueSfx3_Max3,
-    QueueSfx3_Max6, QueueSfx3_Max9, SetEventHappened,
+    AddSuperMissilesToHudTilemap, AddXrayToHudTilemap, QueueMusic_Delayed8, QueueSfx1_Max1,
+    QueueSfx1_Max15, QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx2_Max1,
+    QueueSfx2_Max15, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max1,
+    QueueSfx3_Max15, QueueSfx3_Max3, QueueSfx3_Max6, QueueSfx3_Max9,
 };
 use crate::game::sm_81::SaveToSram;
 use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;

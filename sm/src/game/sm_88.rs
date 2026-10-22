@@ -8,10 +8,8 @@ pub use crate::game::constants::bank_87::*;
 pub use crate::game::constants::bank_8f::*;
 
 use crate::game::explosion_window::{self, Phase};
-use crate::game::sm_80::{
-    CheckBossBitForCurArea, CheckEventHappened, HandleMusicQueue, QueueMusic_Delayed8,
-    QueueSfx1_Max6, QueueSfx2_Max6, SetEventHappened,
-};
+use crate::game::progress_flags::{CheckBossBitForCurArea, CheckEventHappened, SetEventHappened};
+use crate::game::sm_80::{HandleMusicQueue, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max6};
 use crate::game::sm_84::SpawnHardcodedPlm;
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_87::SpawnAnimtiles;

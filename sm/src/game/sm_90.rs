@@ -13,13 +13,14 @@ pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_90::*;
 
 use crate::game::explosion_window::{spawn_crystal_flash, spawn_power_bomb};
+use crate::game::progress_flags::CheckEventHappened;
 use crate::game::projectile_animation::{
     advance, draw_projectiles, initialize_bomb, initialize_echo, initialize_projectile,
     initialize_sba, start_bomb_explosion, start_impact,
 };
 use crate::game::projectile_flight::{self, Flight};
 use crate::game::sm_80::{
-    CheckEventHappened, DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
+    DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
     HandleScrollingWhenTriggeringScrollDown, HandleScrollingWhenTriggeringScrollLeft,
     HandleScrollingWhenTriggeringScrollRight, HandleScrollingWhenTriggeringScrollUp,
     InvalidInterrupt_Crash, ProcessTimer, QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx1_Max9,

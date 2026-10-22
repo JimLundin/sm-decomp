@@ -1,9 +1,9 @@
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::prelude::*;
-use crate::game::sm_80::{
-    CheckBossBitForCurArea, CheckEventHappened, QueueMusic_Delayed8, QueueSfx1_Max6,
-    QueueSfx2_Max6, QueueSfx3_Max6, SetBossBitForCurArea, SetEventHappened,
+use crate::game::progress_flags::{
+    CheckBossBitForCurArea, CheckEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
+use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_8d::SpawnPalfxObject;
 use crate::ram_map::{checked_word, word_arrays};

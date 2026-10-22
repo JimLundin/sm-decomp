@@ -100,31 +100,6 @@ pub unsafe fn ReleaseButtonsFilter(v0: u16, game: &mut Game) {
             & (word!(game.previous_timed_held_input) ^ word!(game.timed_held_input)))
     );
 }
-pub fn PrepareBitAccess(a: u16, game: &mut Game) -> u16 {
-    let bitmask = 1u16 << (a & 7);
-    game.g_ram[0x5e7..0x5e9].copy_from_slice(&bitmask.to_le_bytes());
-    a >> 3
-}
-pub unsafe fn SetBossBitForCurArea(a: u16, game: &mut Game) {
-    game.g_ram[0x5e7] = a as u8; // The ROM stores the mask with an 8-bit accumulator.
-    crate::update_place! { reference fresh91 = *ram_ptr!(game; 0xd828, word!(game.area_index) as isize) => (*fresh91) | ((a) as u8); }
-}
-pub unsafe fn CheckBossBitForCurArea(a: u16, game: &mut Game) -> u8 {
-    game.g_ram[0x5e7] = a as u8; // The ROM stores the mask with an 8-bit accumulator.
-    ((a & *ram_ptr!(game; 0xd828, word!(game.area_index) as isize) as u16) != 0) as u8
-}
-pub unsafe fn SetEventHappened(a: u16, game: &mut Game) {
-    let v1: u16 = PrepareBitAccess(a, game);
-    crate::update_place! { reference fresh94 = *ram_ptr!(game; 0xd820, v1 as isize) => (*fresh94) | ((word!(game.bitmask)) as u8); }
-}
-pub unsafe fn ClearEventHappened(v0: u16, game: &mut Game) {
-    let v1: u16 = PrepareBitAccess(v0, game);
-    crate::update_place! { reference fresh20 = *ram_ptr!(game; 0xd820, v1 as isize) => (*fresh20 & !(word!(game.bitmask) as u8)); }
-}
-pub unsafe fn CheckEventHappened(a: u16, game: &mut Game) -> u16 {
-    let idx: u16 = PrepareBitAccess(a, game);
-    ((word!(game.bitmask) & *ram_ptr!(game; 0xd820, idx as isize) as u16) != 0) as u16
-}
 pub unsafe fn CopySuperMetroidString(game: &mut Game) {
     game.g_sram.write_bytes(0x1fe0, b"supermetroid");
     RtlWriteSram(game);

@@ -2012,7 +2012,7 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^pickup]: [PLM item pickup instructions](../sm/src/game/sm_84.rs#L2695).
 [^plm]: [PlmHandler_Async](../sm/src/game/sm_84.rs#L292).
 [^message]: [message_boxes::display, poll and queue](../sm/src/game/message_boxes.rs#L397).
-[^bits]: [PrepareBitAccess and event/boss operations](../sm/src/game/sm_80.rs#L111).
+[^bits]: [Checked bit-mask preparation and event/boss operations](../sm/src/game/progress_flags.rs).
 [^doorbits]: [PlmInstr_IncrementDoorHitCounterAndJGE](../sm/src/game/sm_84.rs#L2796).
 [^roomselect]: [CallRoomDefStateSelect and HandleRoomDefStateSelect](../sm/src/game/sm_8f.rs#L125).
 [^roomload]: [LoadRoomHeader and LoadStateHeader](../sm/src/game/sm_82.rs#L3711).

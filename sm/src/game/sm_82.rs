@@ -11,18 +11,18 @@ pub use crate::game::constants::bank_82::*;
 pub use crate::game::constants::bank_8f::*;
 
 use crate::game::message_boxes;
+use crate::game::progress_flags::{CheckEventHappened, PrepareBitAccess};
 use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
 use crate::game::sm_80::{
-    memset7E, CalculateLayer2PosAndScrollsWhenScrolling, CheckEventHappened, ClearOamExt,
-    ClearTimerRam, ClearUnusedOam, CopyToVramNow, DecompressToVRAM, DisableIrqInterrupts,
+    memset7E, CalculateLayer2PosAndScrollsWhenScrolling, ClearOamExt, ClearTimerRam,
+    ClearUnusedOam, CopyToVramNow, DecompressToVRAM, DisableIrqInterrupts,
     DoorTransitionScrollingSetup, DrawTimer, EnableIrqInterruptsNow, EnableNMI, FixDoorsMovingUp,
     GraphicsAsset, HandleFadeIn, HandleFadeOut, HandleHudTilemap, HasQueuedMusic, InitializeHud,
-    LoadFromLoadStation, LoadMirrorOfExploredMapTiles, NextRandom, PrepareBitAccess,
-    QueueClearingOfFxTilemap, QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15,
-    QueueSfx1_Max6, QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max3,
-    QueueSfx3_Max6, ReadJoypadInputs, ReleaseButtonsFilter, ResumeGameplay,
-    SaveExploredMapTilesToSaved, SetElevatorsAsUsed, SetupDmaTransfer, StartGameplay_Async,
-    Vector_NMI, Vector_RESET_Async, WaitForNMI_Async,
+    LoadFromLoadStation, LoadMirrorOfExploredMapTiles, NextRandom, QueueClearingOfFxTilemap,
+    QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx2_Max15,
+    QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max3, QueueSfx3_Max6, ReadJoypadInputs,
+    ReleaseButtonsFilter, ResumeGameplay, SaveExploredMapTilesToSaved, SetElevatorsAsUsed,
+    SetupDmaTransfer, StartGameplay_Async, Vector_NMI, Vector_RESET_Async, WaitForNMI_Async,
 };
 use crate::game::sm_81::{
     DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,

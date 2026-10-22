@@ -2,12 +2,11 @@ use crate::c_library::strcpy;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
 pub use crate::game::prelude::*;
+use crate::game::progress_flags::{CheckBossBitForCurArea, CheckEventHappened, SetEventHappened};
 use crate::game::scrolling_sky::{
     initialize_land, initialize_ocean, queue_land_rows, queue_ocean_rows,
 };
-use crate::game::sm_80::{
-    CheckBossBitForCurArea, CheckEventHappened, NextRandom, QueueSfx2_Max6, SetEventHappened,
-};
+use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_84::SpawnHardcodedPlm;
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_87::SpawnAnimtiles;
