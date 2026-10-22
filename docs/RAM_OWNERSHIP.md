@@ -463,8 +463,8 @@ or that deferred spawning has equivalent same-update execution order.
 
 Follow-up source audit at `0f98f559`, checked unchanged through `4c979503` for the
 cited gameplay and RAM metadata. This identifies ownership interactions, not
-complete writer/alias closure. The aim, flare and feedback experiments below have
-bounded execution coverage; the other findings in this section are source evidence.
+complete writer/alias closure. The aim, flare, feedback and cancellation experiments
+below have bounded execution coverage; other findings here are source evidence.
 
 **Pending aim is a one-use handoff.** Normal-jump pose handling captures the
 current pose's direction with flag `0x8000`; moonwalk-turn handling captures the
@@ -946,6 +946,53 @@ encounter restrictions and complete palette ownership remain open. Reproduction:
 `Local/sm-decomp-experiments/20261022/weapon-feedback` (`feedback.rs`, `adapter.rs`,
 `prepare.py`, `build.py`, `check.py`, `result.json`).
 
+### Weapon selection and cancellation
+
+The cancellation prototype distinguishes `cancel_charge`, `clear_animation` and
+the combined operation, using the same `Flare` value shape as firing. Named weapon
+choices return `Accepted` or `Unavailable`. The model and checked adapter forbid
+unsafe code; the model contains no `Game`, RAM or definition addresses. It is
+supplied for integration into the complete firing owner, not a second live control
+value. Grapple state changes remain an explicit effect on the grapple owner.
+
+**654 actual old/new full-RAM comparisons pass:** 360 direct weapon-selection
+cases, 184 actual HUD-selector cases, 105 clear/inactive-grapple cases and five
+linked/discriminating steps. They contain **497 ordered observations** and **85
+matching failures**. Frozen implementations comprise all six `SwitchToHudHandler`
+functions, `HandleSwitchingHudSelection`, `clear_animation`, the PLM clear-charge
+instruction and `GrappleBeamFunc_Inactive`. The callback bodies use their original
+signatures/return expressions; the same actual HUD selector dispatches either the
+old routines or the candidate. The PLM comparison includes its unchanged script
+pointer return. That pointer is a synthetic local byte array, not a ROM asset.
+
+Unavailable ammunition/equipment causes no charge or animation change. Accepted
+beam/missile/super-missile/Power Bomb/X-ray selection clears both before restoring
+the suit palette. Inactive grapple selection restores the palette first, then
+clears both and forces grapple inactive, including after callback changes. Active
+grapple selection succeeds without either effect. A palette failure therefore
+leaves different partial state for those callers. Nested selection during the
+palette callback also matches. The selector preserves cancellation priority,
+skipping unavailable choices, live HUD changes after callbacks, auto-cancel state,
+change-marker wrapping and invalid-index failures.[^weaponcancel]
+
+PLM cancellation leaves flare frames/timers intact. A linked call to inactive
+grapple with the resulting zero charge also retains them; selecting the ordinary
+beam then clears them. Conversely, shoot input takes grapple's start path before
+the cancellation check. A separate uninterrupted typed sequence checks charge-only
+cancellation, zero-charge grapple, unavailable missile and accepted beam selection
+without RAM decoding. These differences prevent a blanket weapon-state reset.
+
+All **115 embedded library inputs** match `15589b48`, and **seven compiled local
+inputs** match exact hashes. The optimized DLL builds and passes with preserved
+native-music linkage. Suit palette and grapple-start execution are controlled;
+their full-RAM observations, mutations and failures are compared, not their real
+implementations. The unchanged flare module is reused for its state type; this
+does not add new flare-animation coverage. No ROM or movie is used. Full grapple
+release, suit/drained/shinespark transitions, initialization, writer/alias closure
+and production ownership remain open. No adoption or complete savings are claimed.
+Reproduction: `Local/sm-decomp-experiments/20261022/weapon-cancellation`
+(`cancellation.rs`, `adapter.rs`, `prepare.py`, `build.py`, `check.py`, `result.json`).
+
 ### Explicit gameplay continuation
 
 The implementation now lives in [gameplay.rs](../sm/src/game/gameplay.rs).
@@ -1099,11 +1146,11 @@ its own exercised checks.
 
 Continue the same whole-projectile draft through Samus weapon control. Typed aim,
 launch and flare are integrated in the reviewed draft; integrate the feedback
-prototype with that same live charge next. Exercise cancellation subsets,
-drain-to-X-ray observation and protection across suspension/reset using real
-producers and consumers. Close remaining shared palette/sound writers and runtime
-transfers. These are new coverage questions, not additional pass counts for the
-existing firing or launch experiments.
+and cancellation prototypes with that same live charge next. Exercise remaining
+cancellation producers, drain-to-X-ray observation and protection across
+suspension/reset using real producers and consumers. Close remaining shared
+palette/sound writers and runtime transfers. These are new coverage questions,
+not additional pass counts for the existing firing or launch experiments.
 
 1. Codify `ExternalMotion` as ordered reset, replacement and addition operations;
    trace real sand/platform contacts through message suspension and movement.

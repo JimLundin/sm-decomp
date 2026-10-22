@@ -253,7 +253,16 @@ Samus palette modes and cannot become private beam state. The sound transition
 owns only the prefix of the current routine: debug input and time-up detection
 still execute in the coordinator after a deferred sound request. Palette output,
 special-palette handlers, sound queues and other effects remain controlled.
-Cancellation and encounter restrictions still need execution experiments.
+
+The [cancellation prototype](RAM_OWNERSHIP.md#weapon-selection-and-cancellation)
+adds **654 old/new comparisons**, including 85 matching failures, through the
+actual weapon selector and PLM/grapple cancellation bodies. Unavailable equipment
+retains charge and animation. Most accepted switches clear them before restoring
+the suit palette; inactive grapple selection restores the palette first and then
+clears them. Clearing only charge can leave animation state that inactive grapple
+also retains when charge is already zero. Shared cancellation code must preserve
+these caller-specific schedules. Palette and grapple-start effects are controlled;
+encounter restrictions and complete cancellation-writer closure remain open.
 
 The full projectile draft may temporarily aggregate these inputs for comparison.
 Its final interface must give each value one authority and apply cross-owner

@@ -1661,8 +1661,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    All 115 frozen library and eight local compiled inputs match; optimized DLL
    passes. Definitions are synthetic and palette/sound/other effect calls are
    controlled. No movie, played message/unpause route, adoption or full ownership
-   is claimed. Integrate with firing/flare; cancellation, encounter rules and
-   palette/sound writer closure remain open. Details are in RAM_OWNERSHIP.md.
+   is claimed. Integrate with firing/flare; encounter rules and palette/sound
+   writer closure remain open. Details are in RAM_OWNERSHIP.md.
+   The cancellation prototype at 20261022/weapon-cancellation passes 654 old/new
+   full-RAM comparisons, 497 ordered observations and 85 matching failures. Six
+   weapon switches share named selection/cancellation rules; the actual HUD
+   selector, PLM charge-only instruction and inactive-grapple body are exercised.
+   Inactive grapple selection restores the palette before clearing charge/flare;
+   other switches clear first. Rejected equipment and zero-charge inactive grapple
+   retain selected state. Nested palette selection and partial failures match.
+   One typed sequence needs no RAM decoding; model/adapter forbid unsafe code.
+   All 115 frozen library and seven local inputs are checked; optimized DLL passes.
+   Palette/grapple-start calls are controlled; no ROM, movie or adoption. Integrate
+   with the same Flare owner; remaining cancellation producers and runtime closure
+   are still open. Do not collapse these transitions into one blanket reset.
    User-requested [RAM ownership research](RAM_OWNERSHIP.md) now traces eleven
    producer/consumer contracts and separates live values, captured selectors,
    cross-update handoffs and nested continuations. The first implementation moves
