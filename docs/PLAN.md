@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,526 Rust lines in 115 files**, plus 262 C
-bridge and 296 C-header lines = **96,084 maintained implementation lines**.
+Current composition (2026-10-22): **95,715 Rust lines in 117 files**, plus 262 C
+bridge and 296 C-header lines = **96,273 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,915**. This complete recount includes frontend,
+gives **97,104**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2051,6 +2051,31 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    nested-mechanism-session. Carry these checks into the full candidate while
    migrating actual script effects and the shared message/session boundary.
    Current creation/door code, runtime imports and generic aliases remain open.
+   Shared dialogue control is now adopted as a pure owned model in
+   `game/dialogue.rs`, with a checked codec and legacy display bridge. Ordinary
+   and saved-feedback cycles reuse named opening/interaction/closing transitions.
+   Message identity, saved cursor and feedback timer cross effects by value;
+   the interaction child retains selection. Callback changes to the saved cursor
+   remain visible without redirecting the local invocation. The model and codec
+   forbid unsafe code; presentation/input calls remain unsafe. **330 direct +
+   825 existing nested/script/pass comparisons** pass, with **3,794 observations**
+   and **33 matching failures**. An authored nine-invocation sequence retains the
+   owner without RAM/ROM decoding and executes 160 completed feedback waits.
+   Exact reference/model/codec/bridge source, all 115+135 compiled inputs,
+   127 unchanged inherited files, optimized component build, production release
+   library and formatting pass. Source/result: 20261022/owned-dialogue-session;
+   contracts and limits: [owned dialogue](RAM_OWNERSHIP.md#owned-dialogue-controller).
+   The newer caller candidate below also composes with the same dialogue model:
+   **80 caller + 40 nested comparisons**, 1,811 observations and 50 matching
+   failures pass at 115+138 compiled inputs, 132 unchanged inherited files.
+   Source/result: 20261022/owned-dialogue-callers. These overlap earlier cases;
+   they are a composition check, not additive unique coverage. Carry that model
+   into the full candidate. Only dialogue control is adopted; animation/input,
+   queue producer/consumer closure and persistent runtime authority remain open.
+   No movie or frontend save/checkpoint ran; display/input/device leaves and room
+   loading are controlled. Complete cost: 127 model + 70 codec + 69 bridge + two
+   registration lines replace 79 display lines (**+189**), an ownership/safety cost.
+   Other progress counters are unchanged. No net saving or complete session owner.
    Those nested checks now also run through a new owned gameplay/door caller pass
    in the top-level full projectile candidate. Its caller-tagged continuation
    retains the existing mechanism owner across enemy-message, door-Vblank and
@@ -2078,8 +2103,9 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    lines. Source/result: player-projectiles/mechanism-session-stage. This owns the
    two caller passes, not the complete frame or shared dialogue service. Persistent
    runtime authority, actual phase-body migration, remaining script effects,
-   concurrent dialogue and current creation/door reconciliation, and full pricing
-   remain open. No production adoption or net saving is established.
+   current creation/door reconciliation and full pricing remain open. The shared
+   dialogue composition above reconciles its control model; child operations and
+   runtime transfer remain. No caller production adoption or net saving is established.
    The full projectile candidate now includes shared script control flow:
    13 actual commands and two wake consumers use the
    existing owned slots for sleep/release, pre-actions, counters, conditional

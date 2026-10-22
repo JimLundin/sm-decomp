@@ -1684,6 +1684,81 @@ boundary must include the in-flight call context, shared message service and
 actual script effects; the [session design](ENGINE_DESIGN.md#session-and-dialogue-continuations)
 records those responsibilities.
 
+### Owned dialogue controller
+
+The production [controller](../sm/src/game/dialogue.rs) now owns message identity,
+saved continuation and feedback countdown while executing the shared display
+protocol. `Message` distinguishes ordinary content, map acquisition, the save
+prompt and saved feedback. Opening, interaction and closing share one transition
+implementation across ordinary and feedback cycles. The model receives no `Game`,
+RAM, ROM, pointer or hardware handle and forbids unsafe code.
+
+The [codec](../sm/src/game/dialogue_ram.rs) alone maps these identities and phases
+to compatibility values. The [display bridge](../sm/src/game/message_boxes.rs)
+publishes the consumed model before each existing effect or child wait, and imports
+afterward. Its presentation/input calls remain unsafe. The interaction child owns
+save selection, queried live after closing; production retains no competing
+persistent model beside RAM. This is adopted transition logic, not full dialogue
+or session-state promotion.
+
+The experiment `Local/sm-decomp-experiments/20261022/owned-dialogue-session`
+compares the exact prior display against the actual new model/codec/bridge. Both
+enemy-message and mechanism-message callers use the replacement in the nested
+checks. **330 direct comparisons**, **2,641 ordered full-RAM observations** and
+**12 matching injected failures** pass. Cases include every imported cursor,
+five distinct nonzero yield bytes at each phase, mismatched active/requested
+messages, callback writes to the saved cursor/message/selection/counter, every
+effect/wait failure prefix, unusual confirmation selections and counter wrapping.
+Four accepted-selection cases run the complete 160-wait feedback loop. In
+particular:
+
+- A callback can write saved cursor 7 during opening. The same invocation still
+  proceeds to interaction; that observer sees 7 until a yield/completion replaces
+  it. The local phase must not be reconstructed after each effect.
+- Feedback changes the active message to Saved before clearing/sound effects,
+  then sets delay 160 before advancing audio. Saved closing restores SavePrompt
+  before cleanup, regardless of the child callback's message mutation.
+- The feedback timer wraps from zero to 65,535 before the audio observer. The
+  fixture then shortens it through that callback; this case proves the prefix,
+  not 65,536-frame playback.
+- Cleanup callbacks can change an ordinary message to MapAcquired, or change
+  MapAcquired away. The final live identity determines pause selection.
+
+The same DLL reruns **40 nested + 740 script + 45 pass comparisons**. Including
+the direct dialogue checks, it passes **1,155 comparisons**, **3,794 observations**
+and **33 matching failures**. An authored native adapter separately runs nine
+invocations through ordinary display, saved feedback and map acquisition with no
+RAM/ROM decoding. It retains the same typed state, executes 160 completed feedback
+waits and selects pausing through a named effect. These are controlled logical
+waits, not measured display timing or SRAM-save coverage.
+
+The subsequent `20261022/owned-dialogue-callers` composition applies this exact
+model/codec/bridge to `player-projectiles/mechanism-session-stage`. Its gameplay
+and door passes already own the mechanism pass. **80 caller + 40 nested
+comparisons**, **1,811 observations** and **50 matching failures** pass, along with
+the existing native eight-caller/two-creation sequence and the native dialogue
+sequence. The 40 nested cases overlap the preceding composition; do not add them
+as new unique scenarios. This independent composition leaves the full candidate's
+implementations unchanged except for display routing. Carry this shared model
+forward rather than adding a second dialogue implementation.
+
+Source review checks prior display against `9d8b6a7f`, unchanged current frame,
+gameplay, door and timer bodies, and exact production model/codec/bridge bytes.
+Compiled input checks pass at **115 frozen + 135 local**, with 127 inherited files
+unchanged, then **115 + 138**, with 132 unchanged in the newer caller composition.
+Optimized experiment builds, production headless release-library build and changed
+Rust formatting pass. The two experiment directories retain sources, scripts and
+results. Animation, input, rendering, device waits and room loading are controlled;
+probes are no-op. No movie, physical-device, frontend save/checkpoint or complete
+runtime-authority claim is made.
+
+Complete maintained implementation cost is **127 model + 70 codec + 69 bridge +
+2 registration lines**, replacing 79 display lines: **+189 lines**. The two new
+modules forbid unsafe code and retire raw RAM operations from display control;
+unsafe legacy effects remain and the counted unsafe declarations are unchanged.
+Reference/fixtures and build scripts are experiment support, not hidden production
+implementation. This is an ownership/safety cost, not a reduction.
+
 ### Named projectile animation definitions
 
 A standalone experiment separates projectile playback from instruction encoding.

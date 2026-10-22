@@ -333,6 +333,8 @@ pub mod game {
     pub(crate) mod explosion_window;
     pub(crate) mod intro_pages;
     pub mod message_boxes;
+    pub(crate) mod dialogue;
+    pub(crate) mod dialogue_ram;
     pub(crate) mod moving_platforms;
     pub(crate) mod minimap;
     pub(crate) mod xray_background;

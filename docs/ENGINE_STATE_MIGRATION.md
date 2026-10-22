@@ -286,6 +286,18 @@ masks them would not independently prove the same contract.
 
 ## Concrete next implementation cohort
 
+The shared dialogue controller is now an adopted pure model, with an explicit
+[codec](../sm/src/game/dialogue_ram.rs) and the existing
+[legacy effect bridge](../sm/src/game/message_boxes.rs). It transfers message,
+saved cursor and feedback counter before/after each legacy operation. Selection
+remains a live query of the interaction child. No separate persistent dialogue
+copy has been added to `Game`; RAM-image imports still enter through the codec.
+The [focused and composed checks](RAM_OWNERSHIP.md#owned-dialogue-controller)
+preserve invalid cursors, exact yield bytes, callback mutation and failure prefixes.
+The full candidate's gameplay/door passes also compose with the same model.
+Migrate animation/input and request consumption before retaining this owner across
+production calls; frontend save/checkpoint and generic alias closure remain open.
+
 1. Use a LaunchMotion authority-transfer experiment to implement and compare
    image import/export, before/theirs rewind, failed-frame adoption, reset,
    save/checkpoint load, replay patches and nested CPU execution. Keep results

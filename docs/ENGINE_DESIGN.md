@@ -129,9 +129,46 @@ the existing invalid-state behavior. During normal completion, finish gameplay's
 tail and decrement timers once before selecting the next frame. Room entry has
 its own completion effects and does not run the gameplay timer tail.
 
-The latest composition passes 40 nested comparisons plus the 785 existing script
-and pass cases. The outer schedulers and dialogue still use RAM; this is evidence
-for their ownership contract, not production adoption of a persistent session.
+The shared [dialogue controller](../sm/src/game/dialogue.rs) now implements this
+control flow in production through owned values and named phases/effects. Its
+[compatibility adapter](../sm/src/game/dialogue_ram.rs) encodes message identity,
+saved continuation and feedback delay; the existing display bridge consumes the
+owner before every legacy operation and imports its result. The controller and
+codec forbid unsafe code. The interaction child still owns confirmation selection,
+and animation/input/rendering remain legacy operations.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Opening
+    Opening --> Interacting
+    Interacting --> Closing
+    Closing --> Complete: Ordinary message or declined save
+    Closing --> FeedbackDelay: Accepted save prompt
+    FeedbackDelay --> SavedOpening: 160 completed waits
+    SavedOpening --> SavedInteraction
+    SavedInteraction --> SavedClosing
+    SavedClosing --> Complete: Restore save-prompt identity
+    Complete --> [*]: Cleanup, then possible pause selection
+```
+
+Every phase can suspend and resume without repeating prior effects. The saved
+cursor and the current invocation's local phase are distinct: callback changes
+to the cursor remain visible but do not redirect that invocation. Cleanup reads
+the live message after restoring display and movement sound; map acquisition
+selects pausing at that point. Save feedback reuses the same opening, interaction
+and closing transitions with a different cycle.
+
+The [dialogue experiment](RAM_OWNERSHIP.md#owned-dialogue-controller) passes 330
+direct comparisons and 825 existing script/pass/nested comparisons. An authored
+nine-invocation sequence retains this owner without RAM/ROM decoding, including
+160 completed feedback waits. A second composition with the newer owned gameplay
+and door passes passes their 80 caller and 40 nested comparisons; these overlap
+the earlier nested cases and are not additive unique coverage.
+
+Production still serializes dialogue between calls. Closing its child operations,
+queue producers/consumers and runtime imports is required before a persistent
+engine owner can replace that storage. Neither these checks nor the candidate
+outer passes establish a complete session engine or frontend checkpoint support.
 
 ## What the existing models establish
 

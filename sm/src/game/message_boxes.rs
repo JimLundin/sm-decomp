@@ -1,6 +1,6 @@
 //! Message boxes, input confirmation, animation and saved-game feedback.
-use crate::game::music::{HandleMusicQueue};
 pub use crate::game::constants::bank_60::*;
+use crate::game::music::HandleMusicQueue;
 pub use crate::game::prelude::*;
 
 use crate::game::sm_80::{QueueSfx1_Max6, ReadJoypadInputs, WaitForNMI_NoUpdate_Async};
@@ -394,84 +394,74 @@ unsafe fn HandleMessageBoxInteraction_Async(game: &mut Game) -> CoroutineRet {
     0
 }
 
-pub unsafe fn display(message: u16, game: &mut Game) -> CoroutineRet {
-    // These are the existing $0614 continuation bytes. The saved-message cycle
-    // advances through the same opening, interaction and closing steps.
-    const OPENING: u8 = 2;
-    const INTERACTING: u8 = 3;
-    const CLOSING: u8 = 4;
-    const OPENING_SAVED: u8 = 5;
-    const INTERACTING_SAVED: u8 = 6;
-    const CLOSING_SAVED: u8 = 7;
-    const SAVE_WAIT: u8 = 8;
-    let mut stage = game.g_ram[0x614];
-    match stage {
-        0 => {
-            word!(game.message_box_index = message);
-            CancelSoundEffects(game);
-            InitializePpuForMessageBoxes(game);
-            ClearMessageBoxBg3Tilemap(game);
-            InitializeMessageBox(game);
-            stage = OPENING;
+// Only this bridge enters the remaining unsafe presentation/input implementation.
+struct LegacyDialogue<'a>(&'a mut Game);
+impl crate::game::dialogue::Context for LegacyDialogue<'_> {
+    type Id = u16;
+    fn effect(
+        &mut self,
+        state: crate::game::dialogue::Dialogue<u16>,
+        effect: crate::game::dialogue::Effect,
+    ) -> crate::game::dialogue::Dialogue<u16> {
+        use crate::game::{dialogue::Effect::*, dialogue_ram};
+        dialogue_ram::publish(state, self.0);
+        unsafe {
+            match effect {
+                CancelSounds => CancelSoundEffects(self.0),
+                PrepareDisplay => InitializePpuForMessageBoxes(self.0),
+                ClearDisplay => ClearMessageBoxBg3Tilemap(self.0),
+                PrepareMessage => InitializeMessageBox(self.0),
+                SaveSound => QueueSfx1_Max6(0x2e, self.0),
+                AdvanceAudio => advance_audio(self.0),
+                RestoreDisplay => RestorePpuForMessageBox(self.0),
+                ResumeMovementSound => QueueSamusMovementSfx(self.0),
+                SelectPause => dialogue_ram::select_pause(self.0),
+            }
         }
-        OPENING..=SAVE_WAIT => {}
-        _ => {
-            game.g_ram[0x614] = 0;
-            return 0;
-        }
+        dialogue_ram::import(self.0)
     }
-    loop {
-        let result = match stage {
-            OPENING | OPENING_SAVED => animate(true, game),
-            INTERACTING | INTERACTING_SAVED => HandleMessageBoxInteraction_Async(game),
-            CLOSING | CLOSING_SAVED => animate(false, game),
-            SAVE_WAIT => WaitForNMI_NoUpdate_Async(game),
-            _ => unreachable!(),
+    fn poll(
+        &mut self,
+        state: crate::game::dialogue::Dialogue<u16>,
+        phase: crate::game::dialogue::Phase,
+    ) -> (
+        crate::game::dialogue::Dialogue<u16>,
+        crate::game::dialogue::Outcome,
+    ) {
+        use crate::game::{
+            dialogue::{Outcome, Phase::*},
+            dialogue_ram,
         };
-        if result != 0 {
-            game.g_ram[0x614] = stage;
-            return result;
-        }
-        match stage {
-            OPENING | INTERACTING | OPENING_SAVED | INTERACTING_SAVED => stage += 1,
-            CLOSING => {
-                if word!(game.message_box_index) != 28
-                    || word!(game.save_confirmation_selection) == 2
-                {
-                    break;
-                }
-                word!(game.message_box_index = 24);
-                ClearMessageBoxBg3Tilemap(game);
-                QueueSfx1_Max6(0x2e, game);
-                word!(game.my_counter = 160);
-                advance_audio(game);
-                stage = SAVE_WAIT;
+        dialogue_ram::publish(state, self.0);
+        let result = unsafe {
+            match phase {
+                Opening(_) => animate(true, self.0),
+                Interacting(_) => HandleMessageBoxInteraction_Async(self.0),
+                Closing(_) => animate(false, self.0),
+                FeedbackDelay => WaitForNMI_NoUpdate_Async(self.0),
             }
-            CLOSING_SAVED => {
-                word!(game.message_box_index = 28);
-                break;
-            }
-            SAVE_WAIT => {
-                let timer = word!(game.my_counter).wrapping_sub(1);
-                word!(game.my_counter = timer);
-                if timer == 0 {
-                    InitializeMessageBox(game);
-                    stage = OPENING_SAVED;
-                } else {
-                    advance_audio(game);
-                }
-            }
-            _ => unreachable!(),
-        }
+        };
+        let outcome =
+            std::num::NonZeroU8::new(result).map_or(Outcome::Complete, Outcome::Suspended);
+        (dialogue_ram::import(self.0), outcome)
     }
-    ClearMessageBoxBg3Tilemap(game);
-    RestorePpuForMessageBox(game);
-    QueueSamusMovementSfx(game);
-    if word!(game.message_box_index) == 20 {
-        word!(game.game_state = kGameState_12_Pausing as u16);
+    fn save_declined(&self) -> bool {
+        crate::game::dialogue_ram::save_declined(self.0)
     }
-    game.g_ram[0x614] = 0;
-    0
+}
+pub unsafe fn display(message: u16, game: &mut Game) -> CoroutineRet {
+    use crate::game::{dialogue, dialogue_ram};
+    let state = dialogue_ram::import(game);
+    let (state, outcome) = dialogue::run(
+        state,
+        dialogue_ram::message(message),
+        &mut LegacyDialogue(game),
+    );
+    dialogue_ram::publish(state, game);
+    match outcome {
+        dialogue::Outcome::Complete => 0,
+        dialogue::Outcome::Suspended(code) => code.get(),
+    }
 }
 pub fn poll(a: u16, game: &mut Game) -> i32 {
     if a == u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) {
