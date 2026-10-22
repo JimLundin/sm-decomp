@@ -2015,19 +2015,25 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    The coordinator's [mechanism consumer and suspension audit](RAM_OWNERSHIP.md#mechanism-consumers-and-suspended-execution)
    now records creation policies, room lifecycle, encounter signals, hostile-
    projectile context, X-ray queries and door-program activation. Actual PLM
-   interpreter/MessageHandoff observations pass **29 invocations**, 81 ordered
-   callback snapshots and six injected failures. Admission precedes pre-action;
-   later phases use live selection even after deletion or retargeting. Message
-   resume bypasses admission and rereads queue/program/ROM. A copied RAM image
-   resumes this component; full snapshot/checkpoint paths are untested here.
-   Exact scheduler/handoff correspondence and all 115 frozen + 112 experiment
-   compiled inputs pass; 109 inherited files are unchanged. Callbacks, drawing
-   and display are controlled; probes are no-op. This is observation, not an
-   old/new replacement comparison, movie, adoption or saving. Source/result:
-   20261022/plm-scheduler-observations. Extend the full candidate with the mechanism
-   pass, context-aware continuation and identified consumers; compare actual
-   old/new execution before claiming scheduler ownership. Do not add another
-   allocator/setup model. Runtime imports and generic aliases remain open.
+   interpreter/MessageHandoff observations led to the [owned mechanism pass](RAM_OWNERSHIP.md#owned-mechanism-pass).
+   It reuses the full candidate pool and passes **45 old/new comparisons**, 144
+   full-RAM callback observations and 12 matching failures. A native named pickup
+   retains one world through creation, yield, disabled/deleted resume, countdown,
+   release and reuse: four pass invocations and two creation steps, without RAM
+   or ROM decoding. The unchanged pass/provider also composes with the latest
+   contact stage: **159 comparisons**, 386 observations and 26 matching failures
+   include the 45 scheduler and 114 contact cases. They establish no new combined
+   contact-to-script sequence. Source/DLL inputs pass at 115+118 for the original
+   composition and 115+123 for the contact composition; 112/117 inherited files
+   respectively are unchanged. Exact scheduler/handoff correspondence, optimized
+   builds and formatting pass. Partial model/provider cost is 259+218=477 lines
+   versus 136 selected reference lines; fixtures and remaining costs stay separate.
+   Callbacks, drawing and display are controlled; probes are no-op. No production
+   adoption, movie, full save/checkpoint, outer session ownership or net saving.
+   Sources: 20261022/owned-mechanism-pass and integrated-mechanism-pass. Carry the
+   contact composition forward as one implementation. Next migrate actual script
+   operations/consumers and outer continuation, reconciling current creation/door
+   code. Runtime imports and generic aliases remain open.
    The projectile scheduler/provider is also integrated into the top-level full
    candidate, preserved in player-projectiles/scheduled-flight-stage. **514
    selected comparisons**, 651 ordered observations and ten expected matching
@@ -2119,8 +2125,9 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    boundaries; native actor/geometry responses are authored. Broader Samus
    collision scans, hardware and gameplay routes are not covered by these cases.
    No movie, earlier full creation/setup suite or unrelated projectile suite ran.
-   Next extend this full candidate with the audited mechanism pass, context-aware
-   message continuation and identified consumers. Broader setup/scripts, door
+   The coordinator's mechanism-pass composition above retains this contact
+   implementation. Next migrate actual script operations, context-aware outer
+   continuation and identified consumers. Broader setup/scripts, door
    activation, remaining real callers, protection, native missile/extension
    definitions and runtime room/projectile authority remain open. Reconcile the
    evolving current plm_spawning.rs and room-content modules instead of restoring

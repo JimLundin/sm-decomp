@@ -618,9 +618,10 @@ the eventual engine.
 The full candidate now shares creation from collisions, room entries and hardcoded
 requests, reporting 334 selected comparisons in `7314fe2f`. The subsequent
 [consumer/suspension audit](RAM_OWNERSHIP.md#mechanism-consumers-and-suspended-execution)
-runs 29 invocations of the actual interpreter with controlled callbacks. It
-establishes the following proposed mechanism-pass model; the replacement remains
-to be implemented on that candidate.
+runs 29 invocations of the actual interpreter with controlled callbacks. The
+[owned-pass follow-up](RAM_OWNERSHIP.md#owned-mechanism-pass) now implements the
+following phases on the same pool, passing 45 old/new scheduler comparisons.
+It is an experimental replacement; production scheduling still uses RAM.
 
 ```mermaid
 stateDiagram-v2
@@ -646,6 +647,15 @@ Deleting an admitted mechanism does not cancel the current continuation; later
 phases may target another slot. The session retains the outer gameplay or door
 transition while message display yields. These are logical phases, not a demand
 to serialize every transient phase or discard partial state on failure.
+
+The model takes owned execution state and returns completion or suspension.
+Its definition provider supplies commands or timed drawing steps. A native
+pickup sequence runs creation, award, yield/resume, drawing, countdown, release
+and reuse with named content and no RAM/ROM decoding. The encoded provider
+retains explicit transfers around unconverted callbacks and broad aliases.
+The pass also compiles and passes its 45 cases alongside the latest 114 contact
+cases, using the existing pool and contact implementation unchanged. This is
+one candidate to extend; the older isolated composition supplies a cross-check.
 
 The same ownership boundary must expose encounter signals, mechanism-presence
 queries, hostile-projectile spawn context, X-ray reveal queries and alternate

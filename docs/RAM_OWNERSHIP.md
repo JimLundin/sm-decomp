@@ -1455,7 +1455,8 @@ or a proof that generic indexed aliases are closed.
 | Gate and Eye Door projectiles | Capture mechanism selection/association/argument and calculate block coordinates during initialization. | Supply an ordered mechanism spawn context to hostile-projectile creation. |
 | X-ray item reveal | Read identity, progress argument and auxiliary state, then reveal the associated block. | Query the current item reveal description. |
 
-Sources: [room/door lifecycle and closing-door lookup](../sm/src/game/sm_82.rs),
+Sources: [room/door lifecycle](../sm/src/game/sm_82.rs),
+[closing-door lookup, now `door_cap_to_close`](../sm/src/game/plm_spawning.rs),
 [room loading](../sm/src/game/room_state.rs),
 [Mother Brain](../sm/src/game/sm_a9.rs#L1137),
 [Torizo](../sm/src/game/sm_aa.rs#L293),
@@ -1520,11 +1521,85 @@ implementation or saving is claimed. Reproduction files and result remain at
 `prepare.py`, `freeze.py`, `build.py`, `review_source.py`, `check.py`,
 `source-review.json` and `result.json`.
 
-Extend the full candidate with a mechanism pass and session-owned continuation,
-then route the identified consumers through the same owner. Compare actual
-old/new execution, including these retarget, lifetime and failure cases, before
-claiming the interpreter migrated. Keep external callbacks behind explicit
-authority transfers until their complete interactions move.
+The owned-pass experiment below implements that scheduler boundary on the same
+pool. External callbacks still require explicit authority transfers until their
+complete interactions move.
+
+### Owned mechanism pass
+
+`owned-mechanism-pass` adds a pure scheduler to the full candidate's preserved
+`mechanism-sources-stage`. It reuses the existing `Creation` and `Pool` unchanged.
+`Execution` owns the pass's enable state, drawing cursor, queued message and
+continuation around that world. Named `Head`, `Drawing` and `Outcome` values
+replace implicit scheduler decisions; the model contains no `Game`, RAM access
+or raw pointers and forbids unsafe code. Its definition provider can use named
+programs and commands instead of encoded script addresses.
+
+**45 actual old/new comparisons**, **144 ordered full-RAM callback observations**
+and **12 matching failures** pass. These include the original 29 observations and
+16 further cases: broad/odd selection, repeated message yields, a zero message
+on resume, continuation mutation, failures after callback mutation, and returned
+pointers below the captured bank base. Each comparison checks completion, the
+entire final RAM image, failure flag and all recorded callback identities/images.
+The selected callbacks are controlled; their production bodies are not thereby
+covered.
+
+The encoded provider consumes the typed world before each legacy callback or
+checked definition read and imports it afterward. Canonical countdown, activation
+admission, program changes and frame preparation occur on owned slots. Broad
+selection transfers only the individual field operation being observed; it must
+not eagerly read an entire out-of-pool slot. Drawing phases reread selection.
+Duration commits before the drawing-entry read; program commits before drawing.
+The shared pool and creation model remain non-Clone.
+
+Instruction cursors retain the ROM allocation and an offset. An instruction may
+return a pointer below the bank base while still inside that allocation: execution
+can continue there, while saving its program wraps to the encoded cursor. A
+message completion reacquires the current allocation. Both routes are compared.
+Unknown continuation values written by a callback remain visible to following
+callbacks until completion; invalid values imported at entry still skip the pass
+and clear the tag. These distinct lifetimes are explicit in the model and codec.
+
+One native sequence uses named pickup content, the same allocator and the same
+scheduler with **no RAM or ROM decoding**. It creates a pickup, awards it once,
+yields, deactivates the slot/disables mechanisms, resumes display and drawing,
+reactivates the retained program, counts down, releases and reuses the slot.
+Four pass invocations and two creation steps retain one world. The inventory
+counter, content and display are authored fixture behavior; this is not execution
+of the production pickup UI or inventory effect chain.
+
+The unchanged pass and provider are also composed onto the newer
+`player-projectiles/mechanism-contacts-stage` in `integrated-mechanism-pass`.
+The same 45 scheduler comparisons and the 114 existing contact comparisons pass
+in that DLL: **159 comparisons**, **386 observations**, **26 matching failures**.
+The pool, creation and contact implementation are unchanged. Only the native
+pickup fixture adds the contact interface's unreachable branch. This validates
+their compilation and selected cases together; it does not establish a new
+contact-to-script gameplay sequence or rerun the earlier full projectile suites.
+Carry this combined candidate forward; do not install a second pool or add the
+two experiments' prices.
+
+The source review matches `PlmHandler_Async`, `RomBankBase` and `MessageHandoff`
+to current source. The original experiment checks **115 frozen + 118 local
+compiled inputs**, with 112 inherited files unchanged. The contact composition
+checks **115 + 123**, with 117 inherited files unchanged. Its harness differs
+only by the added registrations and comparison entry/bridge. Optimized builds,
+changed-file formatting and all input hashes pass. Probes remain no-op.
+
+The partial scheduler/provider costs **259 + 218 = 477 formatted lines**, versus
+136 selected reference lines. The native fixture costs 245 lines, or 253 in the
+contact composition; the paired fixture is 579. The six unformatted harness
+entry/bridge lines are experiment support, including the unsafe legacy command
+handoff. Runtime wiring, real callback migration and complete replacement cost
+remain unpriced. No production adoption, movie, real drawing/UI, full save/load,
+whole-session continuation ownership or net saving is claimed.
+
+Source/results: `Local/sm-decomp-experiments/20261022/owned-mechanism-pass` and
+`20261022/integrated-mechanism-pass`. Each retains the compiled source manifest,
+DLL, `freeze.py`, `build.py`, `review.py`, `check.py`, `source-review.json` and
+`result.json`. Next migrate script operations and their actual consumers through
+this pass, integrate the outer gameplay/door continuation, and reconcile current
+production creation/closing-door code before runtime promotion.
 
 ### Named projectile animation definitions
 

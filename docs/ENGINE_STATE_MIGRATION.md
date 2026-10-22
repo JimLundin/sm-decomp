@@ -260,6 +260,14 @@ end. See [LoadFromSram](../sm/src/game/sm_81.rs#L100). Whole-image restore and
 save-game restore need distinct transition semantics. Generic indexed aliases
 remain an independent obligation.
 
+The [owned-pass experiment](RAM_OWNERSHIP.md#owned-mechanism-pass) subsequently
+compares 45 scheduler invocations with the actual interpreter. Typed pass state
+survives four native invocations without intermediate decoding; its encoded
+provider consumes/reimports the owner at legacy callbacks and broad accesses.
+This establishes a scoped pass owner. It does not promote the shared continuation
+byte to a permanent standalone field, migrate the outer gameplay/door context,
+or validate frontend save/checkpoint integration.
+
 ## Concrete next implementation cohort
 
 1. Use a LaunchMotion authority-transfer experiment to implement and compare
