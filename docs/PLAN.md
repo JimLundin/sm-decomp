@@ -1749,15 +1749,42 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    direct flight-to-emission call, owned style/selector reads and complete-state
    transfers through checked table reads. Forty-seven prior files are unchanged;
    the +361 formatted cohort cost and native-sequence limits were reviewed without
-   rerunning the suite. Trail playback/output integration remains the next step.
+   rerunning the suite.
+   Trail-side playback and checked OAM drawing now run through this same complete
+   owner. **688 selected full-RAM comparisons**, 1,277 ordered observations and
+   299 matching failures pass: 96 timing, 36 command, 96 output, 432 callback,
+   12 actual ordinary-drawing caller cases, nine explicit contracts and seven
+   linked emission/reset/drawing steps. Checks preserve cross-side commands,
+   captured freeze/cursor decisions, fresh tile resolution after duration writes,
+   unknown-command continuation regardless of diagnostic return, clipped partial
+   OAM writes and high accepted OAM addresses aliasing live trail state. Nested
+   playback/reset and mutations to flare, protection, another projectile, bomb
+   spread charging and sound-resume survive complete-owner transfers. A linked
+   sequence retains the same non-Clone `Firing`; reset preserves visual trails.
+   The native sequence now initializes a named weapon, emits named trails, plays
+   both animations and draws named trail sprites through that same generic owner.
+   Its typed drawing records output; encoded drawing executes checked OAM writes.
+   Model, provider and output adapter forbid unsafe code. All 115 frozen and 67
+   draft inputs match compiled bytes; 51 prior files are unchanged. Optimized DLL
+   and model/codec formatting pass. Six relevant gameplay/support files still
+   match main, but the frozen runtime does not establish current integration.
+   Exact source/result is preserved in trail-playback-stage. The complete changed
+   formatted model/provider/codec cohort grows **1,514 -> 1,742 (+228 lines)**;
+   the authored native example adds 93 separately formatted lines. Retained
+   broad-index bodies, remaining Legacy bridge code and final runtime transfers
+   remain outside this partial cost. These are selected component checks, not a
+   rerun or cumulative total of earlier suites. No movie, production adoption,
+   whole-replacement price or savings is claimed.
    This remains an **unadopted, incomplete draft**, not a production promotion or
-   a complete price. Collision, native diagnostics, drawing/trail, palette/sound
-   output and grapple-start consumers remain controlled. ROM definitions are
+   a complete price. Collision, native diagnostics, projectile-sprite drawing,
+   palette/sound output and grapple-start consumers remain controlled. ROM
+   definitions are
    synthetic; no gameplay route or hardware
    coverage is established. Other accepted out-of-pool operations retain reference
    bodies, including drawing continuations; handoff tests do not retire those bodies.
-   Continue with special attacks, trails, protection/suspension,
-   real producers/callers and runtime transfers. Count every adapter/fallback and
+   Continue with special attacks, remaining projectile drawing/definitions,
+   protection/suspension, real producers/callers and runtime transfers. Count every
+   adapter/fallback and
    close the remaining numeric-definition/motion interfaces. The frozen library
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.
