@@ -152,6 +152,28 @@ Complete cost is **+41 Rust lines**. Rules forbid unsafe code; RAM still owns
 state, and native diagnostics plus damage/sprite/sound calls remain unsafe.
 Local reproduction: `Local/sm-decomp-experiments/20261022/projectile-contact`.
 
+The same enemy-contact module now owns grapple search and the Power Bomb scan.
+Grapple keeps the matched slot through its AI-state write, captures the definition
+before diagnostics, then snaps to the live selected enemy for latch reactions.
+Its returned definition remains the captured one. All three grapple callers keep
+their existing result/continuation handling.
+
+Power Bombs capture the radius byte and rounded vertical radius once, then scan
+32 slots in descending order. Explosion centers and enemy fields remain live
+after diagnostics and reactions. The definition view survives the vulnerability
+diagnostic, while the final property bit belongs to the captured slot even if
+the callback redirects selection, deletes the enemy or reuses that slot.
+
+The two bank entries retire, with checked slot handles replacing retained raw
+enemy pointers. **789 old/new comparisons**, 973 ordered full-RAM/selected-ROM
+observations, 170 matching failures and ten checked short-record failures pass.
+Actual grapple result handling/damage and standard Power Bomb dispatch/damage
+execute; initial Samus setup and custom enemy reactions are controlled boundaries.
+Release/source/native checks pass; no movie or full gameplay coverage is claimed.
+The complete migration adds **13 Rust lines**, including callers. Geometry forbids
+unsafe code; persistent RAM ownership and unsafe diagnostics/effects remain.
+Local reproduction: `Local/sm-decomp-experiments/20261022/weapon-enemy-contact`.
+
 **Standard combat (checked implementation adopted; RAM still owns state):**
 `enemy_combat::shot_without_death` samples initial projectile damage/type and the
 vulnerability record, then sets flash/AI state before a hurt-sound callback. After

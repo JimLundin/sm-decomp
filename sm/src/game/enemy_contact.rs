@@ -3,15 +3,16 @@
 use crate::game::constants::bank_a0::{
     addr_kEnemyDef_DAFF, addr_kExtendedSpritemap_Nothing_A0, addr_kSpritemap_Nothing_A0,
 };
+use crate::game::contact_rules::{axis, is_shot, Bounds};
 use crate::game::enemy_ram::{native_read, EnemyField as F, EnemySlot};
+use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_a0::{CallEnemyAi, CallHitboxShot, CallHitboxTouch};
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
 use crate::rom::RomRecord;
 use crate::rtl::{rom_record, Unreachable};
-use crate::types::{EnemyDef, EnemySpawnData, ExtendedSpriteMap, Hitbox};
+use crate::types::{EnemyDef, EnemySpawnData, ExtendedSpriteMap, Hitbox, PairU16, Vulnerability};
 use core::mem::{offset_of, size_of};
-use crate::game::contact_rules::{axis, is_shot, Bounds};
 
 fn current(game: &Game) -> EnemySlot {
     EnemySlot::new(word!(game.cur_enemy_index))
@@ -346,4 +347,115 @@ unsafe fn projectile_hitbox(
         }
     }
     None
+}
+
+pub unsafe fn grapple_enemy(game: &mut Game) -> PairU16 {
+    unsafe {
+        CallSomeSamusCode(0xd, game);
+    }
+    word!(game.collision_detection_index = 0);
+    let mut index = 0usize;
+    loop {
+        word!(game.cur_enemy_index = word!(game.interactive_enemy_indexes[index]));
+        if word!(game.cur_enemy_index) == 0xffff {
+            return PairU16 { k: 0, j: 0 };
+        }
+        let enemy = current(game);
+        if enemy.word(F::Invincibility, game) == 0
+            && axis(
+                enemy.word(F::X, game),
+                word!(game.grapple_beam_end_x_pos),
+                enemy.word(F::Width, game),
+                8,
+            )
+            && axis(
+                enemy.word(F::Y, game),
+                word!(game.grapple_beam_end_y_pos),
+                enemy.word(F::Height, game),
+                8,
+            )
+        {
+            enemy.set(F::AiHandlers, 1, game);
+            let address = enemy.word(F::Definition, game);
+            let definition = unsafe { rom_record(0xa0, address, game) };
+            let reaction = match definition.word(offset_of!(EnemyDef, grapple_ai)) {
+                0x8005 => 1,
+                0x800a => 2,
+                0x800f => 3,
+                0x8014 => 4,
+                0x8019 => 5,
+                0x801e => 6,
+                _ => 0,
+            };
+            if matches!(reaction, 1 | 4 | 5) {
+                // Diagnostics can change the selected enemy before snapping the beam.
+                let selected = current(game);
+                word!(game.grapple_beam_end_x_pos = selected.word(F::X, game));
+                word!(game.grapple_beam_end_y_pos = selected.word(F::Y, game));
+            }
+            return PairU16 {
+                k: reaction,
+                j: address,
+            };
+        }
+        index += 1;
+    }
+}
+
+pub unsafe fn power_bomb_enemies(game: &mut Game) {
+    word!(game.enemy_processing_stage = 5);
+    // The scan captures the high radius byte once; callbacks can move its center.
+    let width = u16::from(game.g_ram[crate::ram_map::words::power_bomb_explosion_radius + 1]);
+    let height = (width + (width >> 1)) >> 1;
+    if width == 0 {
+        return;
+    }
+    for index in (0..32).rev() {
+        let offset = index * 0x40;
+        let enemy = EnemySlot::new(offset);
+        if enemy.word(F::Invincibility, game) != 0
+            || matches!(enemy.word(F::Definition, game), 0 | 0xdaff)
+        {
+            continue;
+        }
+        let definition = unsafe { rom_record(0xa0, enemy.word(F::Definition, game), game) };
+        let vulnerability = definition.word(offset_of!(EnemyDef, vulnerability_ptr));
+        let vulnerability = unsafe {
+            rom_record(
+                0xb4,
+                if vulnerability == 0 {
+                    0xec1c
+                } else {
+                    vulnerability
+                },
+                game,
+            )
+        };
+        if vulnerability.byte(offset_of!(Vulnerability, power_bomb)) & 0x7f != 0
+            && axis(
+                word!(game.power_bomb_explosion_x_pos),
+                enemy.word(F::X, game),
+                0,
+                width,
+            )
+            && axis(
+                word!(game.power_bomb_explosion_y_pos),
+                enemy.word(F::Y, game),
+                0,
+                height,
+            )
+        {
+            word!(game.cur_enemy_index = offset);
+            let reaction = definition.word(offset_of!(EnemyDef, powerbomb_reaction));
+            unsafe {
+                CallEnemyAi(
+                    (u32::from(enemy.bank(game)) << 16)
+                        | u32::from(if reaction == 0 { 0x8037 } else { reaction }),
+                    game,
+                );
+            }
+            // The callback may redirect selection or replace this slot's contents.
+            enemy.set(F::Properties, enemy.word(F::Properties, game) | 0x800, game);
+        }
+    }
 }

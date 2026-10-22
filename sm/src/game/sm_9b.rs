@@ -17,7 +17,8 @@ use crate::game::sm_91::{Samus_DealDamage, Samus_LoadSuitPalette, Samus_Pose_Can
 use crate::game::sm_94::{
     kSinCosTable8bit_Sext, BlockCollGrappleBeam, BlockReactGrapple, GrappleFunc_AF87,
 };
-use crate::game::sm_a0::{CalculateAngleFromXY, GrappleBeam_CollDetect_Enemy};
+use crate::game::sm_a0::CalculateAngleFromXY;
+use crate::game::enemy_contact::grapple_enemy;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -1059,7 +1060,7 @@ crate::game::callback_dispatch! {
             word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
             return;
         }
-        let pair: PairU16 = GrappleBeam_CollDetect_Enemy(game);
+        let pair: PairU16 = grapple_enemy(game);
         let v1: i32 = ProcessEnemyGrappleBeamColl(pair.k, pair.j, game);
         if v1 >= 0 {
             if v1 != 0 {
@@ -1083,7 +1084,7 @@ crate::game::callback_dispatch! {
     };
     [10209150] GrappleBeamFunc_ConnectedLockedInPlace [] {
         if !((word!(game.button_config_shoot_x) & word!(game.joypad1_lastkeys)) != 0
-            && (GrappleBeam_CollDetect_Enemy(game).k != 0
+            && (grapple_enemy(game).k != 0
                 || CheckIfGrappleIsConnectedToBlock(game) != 0))
         {
             word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
@@ -1104,7 +1105,7 @@ crate::game::callback_dispatch! {
             {
                 return;
             }
-            let keep_swinging: bool = if GrappleBeam_CollDetect_Enemy(game).k != 0 {
+            let keep_swinging: bool = if grapple_enemy(game).k != 0 {
                 word!(game.grapple_beam_flags |= (0x8000u16));
                 false
             } else {

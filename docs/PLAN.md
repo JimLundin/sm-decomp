@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,332 Rust lines in 126 files**, plus 262 C
-bridge and 296 C-header lines = **96,890 maintained implementation lines**.
+Current composition (2026-10-22): **96,345 Rust lines in 126 files**, plus 262 C
+bridge and 296 C-header lines = **96,903 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,721**. This complete recount includes frontend,
+gives **97,734**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2654,22 +2654,31 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    broader ownership and unsafe-elimination goals remain open. Contracts and
    limits: RAM_OWNERSHIP.md, section 3. Local reproduction:
    Local/sm-decomp-experiments/20261022/standard-combat.
-   The complete per-enemy contact pass now belongs to `enemy_contact`, with its
-   scheduler caller migrated and all seven bank entries retired. Ordinary and
+   Enemy contact now belongs to `enemy_contact`, including the per-enemy pass,
+   grapple search and Power Bomb scan. Scheduler, gameplay and all three grapple
+   callers use its named routines; nine bank entries are retired. Ordinary and
    multi-hitbox shots/bombs share a scan; Samus contact retains its different
    edge rules, byte count, mandatory first entry and wrapping record addresses.
    Checked enemy handles and captured ROM records replace raw slot, spawn-field,
-   sprite-map and hitbox access. Geometry forbids unsafe code. Final checks pass
-   **2,265 old/new comparisons**, 2,036 ordered full-RAM/selected-ROM observations
-   and 676 matching failures, plus twelve checked short-record failures. Explicit
-   cases confirm shot/bomb/touch order, distinct inclusive edges and stage/slot
-   aliases. Release library/frontend/verifier and source/native checks pass.
-   No movie ran; AI/hitbox reactions are controlled component boundaries, so
-   gameplay-route and full reaction execution are not claimed. Complete cost is
-   **+57 Rust lines**, including shared helpers, caller and registrations.
-   RAM still owns persistent state; diagnostics and dispatch remain unsafe.
-   This is safety/responsibility work, not a volume reduction. Local reproduction:
-   Local/sm-decomp-experiments/20261022/enemy-contact.
+   sprite-map and hitbox access. Geometry forbids unsafe code. The earlier
+   per-enemy change passed **2,265 comparisons**, 2,036 ordered observations,
+   676 matching failures and twelve checked short-record failures, costing
+   **+57 Rust lines**. Its retained operations have source correspondence here;
+   that earlier suite was not rerun. Local source/result: 20261022/enemy-contact.
+   The grapple/Power Bomb migration passes **789 old/new comparisons**, 973
+   ordered full-RAM/selected-ROM observations, 170 matching failures and ten
+   checked short-record failures. Checks execute the actual grapple result
+   consumer and standard Power Bomb damage, including persistent scans, live
+   centers, captured radii/slots, replacement ROMs and partial failure state.
+   Grapple retains its captured definition but snaps to the post-diagnostic
+   selector; Power Bomb reactions mark the original slot after callbacks.
+   Release library/frontend/verifier and source/native checks pass. No movie ran;
+   initial Samus setup and custom enemy reactions are controlled boundaries.
+   The complete new migration adds **13 Rust lines**, including callers, and
+   removes 14 cast-containing lines. RAM still owns persistent state; diagnostics
+   and dispatch remain unsafe. This is safety/responsibility work, not volume
+   savings or whole-game coverage. Local reproduction:
+   Local/sm-decomp-experiments/20261022/weapon-enemy-contact.
    Projectile contact now belongs to `projectile_contact`: player shots/bombs
    touching Samus, enemy projectiles touching Samus and enemy-projectile shot
    reactions. All five bank entries retire, with gameplay phase callers migrated.
@@ -4456,14 +4465,19 @@ spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
 owned enemy-script positions, checked enemy-definition records, standard combat and shared enemy/projectile contact,
-maintained Rust is **96,332**,
+maintained Rust is **96,345**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,890**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,721**.
+Including 262 C and 296 header lines gives **96,903**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,734**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2959; cast lines 6250. Projectile contact adds 41 Rust lines
+unsafe functions 2959; cast lines 6236. Grapple/Power Bomb contact adds 13
+Rust lines and removes 14 cast-containing lines; all other counters are unchanged.
+Raw enemy pointers and the raw radius-byte access retire in those scans; shared
+geometry forbids unsafe code. Samus setup, native diagnostics and enemy reactions
+remain unsafe. This is a safety cost, not volume savings.
+Projectile contact adds 41 Rust lines
 and removes 21 cast-containing lines; all other counters are unchanged. Raw
 projectile byte/word loads and stores retire in this complete contact family;
 shared contact rules forbid unsafe code. Native diagnostics and damage/sprite/

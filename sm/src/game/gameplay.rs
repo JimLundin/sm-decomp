@@ -21,7 +21,6 @@ use crate::game::sm_90::{
 };
 use crate::game::sm_a0::{
     DecrementSamusTimers, HandleRoomShaking,
-    ProcessEnemyPowerBombInteraction,
 };
 
 #[derive(Clone, Copy, PartialEq)]
@@ -87,7 +86,7 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
         if word!(game.debug_disable_sprite_interact) == 0 {
             crate::game::projectile_contact::enemy_projectiles_hit_samus(game);
             crate::game::projectile_contact::shoot_enemy_projectiles(game);
-            ProcessEnemyPowerBombInteraction(game);
+            crate::game::enemy_contact::power_bomb_enemies(game);
         }
         MainScrollingRoutine(game);
         let debug_scrolling_enabled: i32 = 0;
