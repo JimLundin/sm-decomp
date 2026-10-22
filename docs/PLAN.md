@@ -2034,6 +2034,32 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    contact composition forward as one implementation. Next migrate actual script
    operations/consumers and outer continuation, reconciling current creation/door
    code. Runtime imports and generic aliases remain open.
+   That composition now advances the top-level full projectile candidate with
+   shared script control flow: 13 actual commands and two wake consumers use the
+   existing owned slots for sleep/release, pre-actions, counters, conditional
+   branches and call/return. Successful canonical commands and script reads retain
+   the owner; checked read failures publish the committed prefix. Byte lanes and
+   encoded addresses stay in the provider. Both new implementation modules forbid
+   unsafe code; they introduce no macros or legacy-call wrappers. **785 selected
+   comparisons** pass: 725 direct command/wake cases, 15 actual interpreter/message
+   sequence steps and the 45 affected scheduler cases. There are 174 matching
+   ordered observations and 16 matching callback failures. Thirteen additional
+   candidate-only checks cover checked read prefixes and retained ownership;
+   they do not claim equivalence for the old raw reads outside an allocation.
+   One native five-pass lifecycle retains creation, arm/sleep, signal, call,
+   award/yield, disabled/deleted resume, return, countdown, release and reuse.
+   Award/display/drawing behavior remains authored or controlled. Exact current
+   operation bodies/returns, scheduler/handoff and RAM source pass review; all
+   **115+127 compiled inputs**, 119 unchanged inherited files, optimized build
+   and formatting pass. No movie, contact suite or unrelated projectile suite ran.
+   Partial incremental cost is **98 model + 194 provider + 11 pass-provider = 303
+   lines**, versus 87 selected reference lines: **+216**, required safety/ownership
+   work, not a saving. Reference/fixture costs remain separate: 127 reference,
+   233 new paired, 165 scheduler-fixture, 67 native-fixture and two harness lines.
+   Preserved source/result: player-projectiles/mechanism-script-stage. No production
+   adoption, whole-projectile price, outer-session ownership or net saving is
+   established. Continue this composition with remaining actual script effects,
+   context-aware outer continuation and current creation/closing-door consumers.
    The projectile scheduler/provider is also integrated into the top-level full
    candidate, preserved in player-projectiles/scheduled-flight-stage. **514
    selected comparisons**, 651 ordered observations and ten expected matching
@@ -2126,7 +2152,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    collision scans, hardware and gameplay routes are not covered by these cases.
    No movie, earlier full creation/setup suite or unrelated projectile suite ran.
    The coordinator's mechanism-pass composition above retains this contact
-   implementation. Next migrate actual script operations, context-aware outer
+   implementation. The script-control composition above advances it further;
+   next migrate remaining actual script effects, context-aware outer
    continuation and identified consumers. Broader setup/scripts, door
    activation, remaining real callers, protection, native missile/extension
    definitions and runtime room/projectile authority remain open. Reconcile the
