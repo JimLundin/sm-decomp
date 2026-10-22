@@ -25,17 +25,25 @@ fn hooks() -> &'static HostHooks {
 }
 
 pub unsafe fn Die(error: *const c_char) {
-    (hooks().die)(error);
+    unsafe {
+        (hooks().die)(error);
+    }
 }
 
 pub unsafe fn Warning(error: *const c_char) {
-    (hooks().warning)(error);
+    unsafe {
+        (hooks().warning)(error);
+    }
 }
 
 pub unsafe fn RtlApuLock() {
-    (hooks().apu_lock)();
+    unsafe {
+        (hooks().apu_lock)();
+    }
 }
 
 pub unsafe fn RtlApuUnlock() {
-    (hooks().apu_unlock)();
+    unsafe {
+        (hooks().apu_unlock)();
+    }
 }

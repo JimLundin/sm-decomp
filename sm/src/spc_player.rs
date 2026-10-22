@@ -113,7 +113,7 @@ pub const V0VOLR: DspReg = 1;
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 #[link(name = "sm_music", kind = "static", modifiers = "-bundle")]
-extern "C-unwind" {
+unsafe extern "C-unwind" {
     #[link_name = "sm_music_SetupEchoParameter_EDL"]
     fn SetupEchoParameter_EDL(p: *mut SpcPlayer, a: u8);
     #[link_name = "sm_music_WriteVolumeToDsp"]
@@ -124,229 +124,250 @@ extern "C-unwind" {
     fn Music_HandleCmdFromSnes(p: *mut SpcPlayer);
 }
 
-#[export_name = "sm_music_Dsp_Write"]
+#[unsafe(export_name = "sm_music_Dsp_Write")]
 pub unsafe extern "C-unwind" fn Dsp_Write(p: *mut SpcPlayer, mut reg: u8, value: u8) {
-    let hist = (*p).state.reg_write_history;
-    if !hist.is_null() && (*hist).count < 256 {
-        if (*hist).count == 9 && reg as i32 == 0x5d {
-            reg = (reg as i32 + 0) as u8;
+    unsafe {
+        let hist = (*p).state.reg_write_history;
+        if !hist.is_null() && (*hist).count < 256 {
+            if (*hist).count == 9 && reg as i32 == 0x5d {
+                reg = (reg as i32 + 0) as u8;
+            }
+            (*hist).addr[(*hist).count as usize] = reg;
+            (*hist).val[(*hist).count as usize] = value;
+            (*hist).count = (*hist).count.wrapping_add(1);
         }
-        (*hist).addr[(*hist).count as usize] = reg;
-        (*hist).val[(*hist).count as usize] = value;
-        (*hist).count = (*hist).count.wrapping_add(1);
-    }
-    if !(*p).state.dsp.is_null() {
-        dsp_write((*p).state.dsp, reg, value);
+        if !(*p).state.dsp.is_null() {
+            dsp_write((*p).state.dsp, reg, value);
+        }
     }
 }
-#[export_name = "sm_music_Not_Implemented"]
+#[unsafe(export_name = "sm_music_Not_Implemented")]
 pub unsafe extern "C-unwind" fn Not_Implemented() {
-    crate::native_assertion! {
-        '_c2rust_label;
-        b"0\0", b"src/spc_player.c\0", 383, b"void Not_Implemented(void)\0"
-    };
-    printf(c"Not Implemented\n".as_ptr());
+    unsafe {
+        crate::native_assertion! {
+            '_c2rust_label;
+            b"0\0", b"src/spc_player.c\0", 383, b"void Not_Implemented(void)\0"
+        };
+        printf(c"Not Implemented\n".as_ptr());
+    }
 }
-#[export_name = "sm_music_WritePitchInner"]
+#[unsafe(export_name = "sm_music_WritePitchInner")]
 pub unsafe extern "C-unwind" fn WritePitchInner(p: *mut SpcPlayer, c: *mut Channel, pitch: u16) {
-    static kBaseNoteFreqs: [u16; 13] = [
-        2143, 2270, 2405, 2548, 2700, 2860, 3030, 3211, 3402, 3604, 3818, 4045, 4286,
-    ];
-    let pp: u8 = (pitch as i32 >> 8 & 0x7f) as u8;
-    let mut q: u8 = (pp as i32 / 12) as u8;
-    let r: u8 = (pp as i32 % 12) as u8;
-    let mut t: u16 = (kBaseNoteFreqs[r as usize] as i32
-        + ((kBaseNoteFreqs[(r as i32 + 1) as usize] as i32 - kBaseNoteFreqs[r as usize] as i32)
-            as u8 as i32
-            * pitch as u8 as i32
-            >> 8)) as u16;
-    t = (t as i32 * 2) as u16;
-    while q as i32 != 6 {
-        t = (t >> 1);
-        q = q.wrapping_add(1);
-    }
-    t = ((*c).instrument_pitch_base as i32 * t as i32 >> 8) as u16;
-    if (*p).state.cur_chan_bit & (*p).state.is_chan_on == 0 {
-        let reg: u8 = ((*c).index as i32 * 16) as u8;
-        Dsp_Write(p, (reg as i32 + V0PITCHL as i32) as u8, (t as u8 & 0xff));
-        Dsp_Write(p, (reg as i32 + V0PITCHH as i32) as u8, (t >> 8) as u8);
+    unsafe {
+        static kBaseNoteFreqs: [u16; 13] = [
+            2143, 2270, 2405, 2548, 2700, 2860, 3030, 3211, 3402, 3604, 3818, 4045, 4286,
+        ];
+        let pp: u8 = (pitch as i32 >> 8 & 0x7f) as u8;
+        let mut q: u8 = (pp as i32 / 12) as u8;
+        let r: u8 = (pp as i32 % 12) as u8;
+        let mut t: u16 = (kBaseNoteFreqs[r as usize] as i32
+            + ((kBaseNoteFreqs[(r as i32 + 1) as usize] as i32 - kBaseNoteFreqs[r as usize] as i32)
+                as u8 as i32
+                * pitch as u8 as i32
+                >> 8)) as u16;
+        t = (t as i32 * 2) as u16;
+        while q as i32 != 6 {
+            t = (t >> 1);
+            q = q.wrapping_add(1);
+        }
+        t = ((*c).instrument_pitch_base as i32 * t as i32 >> 8) as u16;
+        if (*p).state.cur_chan_bit & (*p).state.is_chan_on == 0 {
+            let reg: u8 = ((*c).index as i32 * 16) as u8;
+            Dsp_Write(p, (reg as i32 + V0PITCHL as i32) as u8, (t as u8 & 0xff));
+            Dsp_Write(p, (reg as i32 + V0PITCHH as i32) as u8, (t >> 8) as u8);
+        }
     }
 }
-#[export_name = "sm_music_Channel_SetInstrument_NoSetId"]
+#[unsafe(export_name = "sm_music_Channel_SetInstrument_NoSetId")]
 pub unsafe extern "C-unwind" fn Channel_SetInstrument_NoSetId(
     p: *mut SpcPlayer,
     c: *mut Channel,
     mut instrument: u8,
 ) {
-    if instrument & 0x80 != 0 {
-        instrument = (instrument as i32 + 54 + (*p).state.percussion_base_id as i32) as u8;
+    unsafe {
+        if instrument & 0x80 != 0 {
+            instrument = (instrument as i32 + 54 + (*p).state.percussion_base_id as i32) as u8;
+        }
+        let ram = (*p).ram.clone();
+        let ip = usize::from(instrument) * 6 + 0x6c00;
+        if (*p).state.is_chan_on & (*p).state.cur_chan_bit != 0 {
+            return;
+        }
+        let reg: u8 = ((*c).index as i32 * 16) as u8;
+        if ram.read_at(ip) & 0x80 != 0 {
+            (*p).state.reg_FLG = ((*p).state.reg_FLG & 0x20 | ram.read_at(ip) & 0x1f);
+            (*p).state.reg_NON = ((*p).state.reg_NON | (*p).state.cur_chan_bit);
+            Dsp_Write(p, (reg as i32 + V0SRCN as i32) as u8, 0);
+        } else {
+            Dsp_Write(p, (reg as i32 + V0SRCN as i32) as u8, ram.read_at(ip));
+        }
+        Dsp_Write(p, (reg as i32 + V0ADSR1 as i32) as u8, ram.read_at(ip + 1));
+        Dsp_Write(p, (reg as i32 + V0ADSR2 as i32) as u8, ram.read_at(ip + 2));
+        Dsp_Write(p, (reg as i32 + V0GAIN as i32) as u8, ram.read_at(ip + 3));
+        (*c).instrument_pitch_base =
+            ((ram.read_at(ip + 4) as i32) << 8 | ram.read_at(ip + 5) as i32) as u16;
     }
-    let ram = (*p).ram.clone();
-    let ip = usize::from(instrument) * 6 + 0x6c00;
-    if (*p).state.is_chan_on & (*p).state.cur_chan_bit != 0 {
-        return;
-    }
-    let reg: u8 = ((*c).index as i32 * 16) as u8;
-    if ram.read_at(ip) & 0x80 != 0 {
-        (*p).state.reg_FLG = ((*p).state.reg_FLG & 0x20 | ram.read_at(ip) & 0x1f);
-        (*p).state.reg_NON = ((*p).state.reg_NON | (*p).state.cur_chan_bit);
-        Dsp_Write(p, (reg as i32 + V0SRCN as i32) as u8, 0);
-    } else {
-        Dsp_Write(p, (reg as i32 + V0SRCN as i32) as u8, ram.read_at(ip));
-    }
-    Dsp_Write(p, (reg as i32 + V0ADSR1 as i32) as u8, ram.read_at(ip + 1));
-    Dsp_Write(p, (reg as i32 + V0ADSR2 as i32) as u8, ram.read_at(ip + 2));
-    Dsp_Write(p, (reg as i32 + V0GAIN as i32) as u8, ram.read_at(ip + 3));
-    (*c).instrument_pitch_base =
-        ((ram.read_at(ip + 4) as i32) << 8 | ram.read_at(ip + 5) as i32) as u16;
 }
 static kEffectByteLength: [u8; 31] = [
     1, 1, 2, 3, 0, 1, 2, 1, 2, 1, 1, 3, 0, 1, 2, 3, 1, 3, 3, 0, 1, 3, 0, 3, 3, 3, 1, 2, 0, 0, 0,
 ];
-#[export_name = "sm_music_EffectByteLength"]
+#[unsafe(export_name = "sm_music_EffectByteLength")]
 pub unsafe extern "C-unwind" fn EffectByteLength(effect: u8) -> u8 {
     kEffectByteLength[(effect as i32 - 0xe0) as usize]
 }
-#[export_name = "sm_music_WantWriteKof"]
+#[unsafe(export_name = "sm_music_WantWriteKof")]
 pub unsafe extern "C-unwind" fn WantWriteKof(p: *mut SpcPlayer, c: *mut Channel) -> bool {
-    let mut loops: i32 = (*c).subroutine_num_loops as i32;
-    let mut ptr: i32 = (*c).pattern_order_ptr_for_chan as i32;
-    loop {
-        crate::update_place! { previous fresh7 = ptr => ptr + 1; }
-        let mut cmd: u8 = (*p).ram.read_at(fresh7 as usize);
-        if cmd as i32 == 0 {
-            if loops == 0 {
-                return true_0 != 0;
-            }
-            loops -= 1;
-            ptr = if loops == 0 {
-                (*c).saved_pattern_ptr as i32
+    unsafe {
+        let mut loops: i32 = (*c).subroutine_num_loops as i32;
+        let mut ptr: i32 = (*c).pattern_order_ptr_for_chan as i32;
+        loop {
+            crate::update_place! { previous fresh7 = ptr => ptr + 1; }
+            let mut cmd: u8 = (*p).ram.read_at(fresh7 as usize);
+            if cmd as i32 == 0 {
+                if loops == 0 {
+                    return true_0 != 0;
+                }
+                loops -= 1;
+                ptr = if loops == 0 {
+                    (*c).saved_pattern_ptr as i32
+                } else {
+                    (*c).pattern_start_ptr as i32
+                };
             } else {
-                (*c).pattern_start_ptr as i32
-            };
-        } else {
-            while cmd & 0x80 == 0 {
-                crate::update_place! { previous fresh8 = ptr => ptr + 1; }
-                cmd = (*p).ram.read_at(fresh8 as usize);
-            }
-            if cmd as i32 == 0xc8 {
-                return false_0 != 0;
-            }
-            if cmd as i32 == 0xef {
-                ptr = (*p).ram.read_at((ptr + 0) as usize) as i32
-                    | ((*p).ram.read_at((ptr + 1) as usize) as i32) << 8;
-            } else if cmd as i32 >= 0xe0 {
-                ptr += kEffectByteLength[(cmd as i32 - 0xe0i32) as usize] as i32;
-            } else {
-                return true_0 != 0;
+                while cmd & 0x80 == 0 {
+                    crate::update_place! { previous fresh8 = ptr => ptr + 1; }
+                    cmd = (*p).ram.read_at(fresh8 as usize);
+                }
+                if cmd as i32 == 0xc8 {
+                    return false_0 != 0;
+                }
+                if cmd as i32 == 0xef {
+                    ptr = (*p).ram.read_at((ptr + 0) as usize) as i32
+                        | ((*p).ram.read_at((ptr + 1) as usize) as i32) << 8;
+                } else if cmd as i32 >= 0xe0 {
+                    ptr += kEffectByteLength[(cmd as i32 - 0xe0i32) as usize] as i32;
+                } else {
+                    return true_0 != 0;
+                }
             }
         }
     }
 }
-#[export_name = "sm_music_CalcFinalVolume"]
+#[unsafe(export_name = "sm_music_CalcFinalVolume")]
 pub unsafe extern "C-unwind" fn CalcFinalVolume(p: *mut SpcPlayer, c: *mut Channel, vol: u8) {
-    let mut t: i32 = ((*p).state.master_volume as i32 >> 8) * vol as i32 >> 8;
-    t = t * (*c).channel_volume_master as i32 >> 8;
-    t = t * ((*c).channel_volume as i32 >> 8) >> 8;
-    (*c).final_volume = (t * t >> 8) as u8;
+    unsafe {
+        let mut t: i32 = ((*p).state.master_volume as i32 >> 8) * vol as i32 >> 8;
+        t = t * (*c).channel_volume_master as i32 >> 8;
+        t = t * ((*c).channel_volume as i32 >> 8) >> 8;
+        (*c).final_volume = (t * t >> 8) as u8;
+    }
 }
 unsafe fn Spc_Loop_Part1(p: *mut SpcPlayer) {
-    Dsp_Write(p, KOF as i32 as u8, (*p).state.key_OFF);
-    Dsp_Write(p, PMON as i32 as u8, 0);
-    Dsp_Write(p, NON as i32 as u8, (*p).state.reg_NON);
-    Dsp_Write(p, KOF as i32 as u8, 0);
-    Dsp_Write(p, KON as i32 as u8, (*p).state.key_ON);
-    if (*p).state.echo_stored_time & 0x80 == 0 {
-        Dsp_Write(p, FLG as i32 as u8, (*p).state.reg_FLG);
-        if (*p).state.echo_stored_time as i32 == (*p).state.echo_parameter_EDL as i32 {
-            Dsp_Write(p, EON as i32 as u8, (*p).state.reg_EON);
-            Dsp_Write(p, EFB as i32 as u8, (*p).state.reg_EFB);
-            Dsp_Write(
-                p,
-                EVOLR as i32 as u8,
-                ((*p).state.echo_volume_right >> 8) as u8,
-            );
-            Dsp_Write(
-                p,
-                EVOLL as i32 as u8,
-                ((*p).state.echo_volume_left >> 8) as u8,
-            );
+    unsafe {
+        Dsp_Write(p, KOF as i32 as u8, (*p).state.key_OFF);
+        Dsp_Write(p, PMON as i32 as u8, 0);
+        Dsp_Write(p, NON as i32 as u8, (*p).state.reg_NON);
+        Dsp_Write(p, KOF as i32 as u8, 0);
+        Dsp_Write(p, KON as i32 as u8, (*p).state.key_ON);
+        if (*p).state.echo_stored_time & 0x80 == 0 {
+            Dsp_Write(p, FLG as i32 as u8, (*p).state.reg_FLG);
+            if (*p).state.echo_stored_time as i32 == (*p).state.echo_parameter_EDL as i32 {
+                Dsp_Write(p, EON as i32 as u8, (*p).state.reg_EON);
+                Dsp_Write(p, EFB as i32 as u8, (*p).state.reg_EFB);
+                Dsp_Write(
+                    p,
+                    EVOLR as i32 as u8,
+                    ((*p).state.echo_volume_right >> 8) as u8,
+                );
+                Dsp_Write(
+                    p,
+                    EVOLL as i32 as u8,
+                    ((*p).state.echo_volume_left >> 8) as u8,
+                );
+            }
         }
+        (*p).state.key_ON = 0;
+        (*p).state.key_OFF = (*p).state.key_ON;
     }
-    (*p).state.key_ON = 0;
-    (*p).state.key_OFF = (*p).state.key_ON;
 }
 unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
-    let mut t: i32 = (*p).state.sfx_timer_accum as i32 + (ticks as i32 * 0x20) as u8 as i32;
-    (*p).state.sfx_timer_accum = t as u8;
-    if t >= 0x100 {
-        Sfx1_HandleCmdFromSnes(p);
-        Sfx2_HandleCmdFromSnes(p);
-        Sfx3_HandleCmdFromSnes(p);
-        if (*p).state.echo_stored_time as i32 != (*p).state.echo_parameter_EDL as i32 {
-            (*p).state.echo_stored_time = (*p).state.echo_stored_time.wrapping_add(1);
+    unsafe {
+        let mut t: i32 = (*p).state.sfx_timer_accum as i32 + (ticks as i32 * 0x20) as u8 as i32;
+        (*p).state.sfx_timer_accum = t as u8;
+        if t >= 0x100 {
+            Sfx1_HandleCmdFromSnes(p);
+            Sfx2_HandleCmdFromSnes(p);
+            Sfx3_HandleCmdFromSnes(p);
+            if (*p).state.echo_stored_time as i32 != (*p).state.echo_parameter_EDL as i32 {
+                (*p).state.echo_stored_time = (*p).state.echo_stored_time.wrapping_add(1);
+            }
         }
-    }
-    t = (*p).state.main_tempo_accum as i32
-        + (ticks as i32
-            * byte!((*p).state.tempo; (size_of::<u16>() as usize)
+        t = (*p).state.main_tempo_accum as i32
+            + (ticks as i32
+                * byte!((*p).state.tempo; (size_of::<u16>() as usize)
                     .wrapping_div(size_of::<u8>() as usize)
                     .wrapping_sub(1_) as isize) as i32) as u8 as i32;
-    (*p).state.main_tempo_accum = t as u8;
-    if t >= 256 {
-        do_until! { ((*p).state.fast_forward == 0);
-            Music_HandleCmdFromSnes(p);
-        }
-    } else if (*p).state.port_to_snes[0i32 as usize] != 0 {
-        let mut c = &raw mut (*p).state.channel as *mut Channel;
-        (*p).state.cur_chan_bit = 1;
-        while (*p).state.cur_chan_bit as i32 != 0 {
-            if byte!((*c).pattern_order_ptr_for_chan; (size_of::<u16>() as usize)
+        (*p).state.main_tempo_accum = t as u8;
+        if t >= 256 {
+            do_until! { ((*p).state.fast_forward == 0);
+                Music_HandleCmdFromSnes(p);
+            }
+        } else if (*p).state.port_to_snes[0i32 as usize] != 0 {
+            let mut c = &raw mut (*p).state.channel as *mut Channel;
+            (*p).state.cur_chan_bit = 1;
+            while (*p).state.cur_chan_bit as i32 != 0 {
+                if byte!((*c).pattern_order_ptr_for_chan; (size_of::<u16>() as usize)
                     .wrapping_div(size_of::<u8>() as usize)
                     .wrapping_sub(1_) as isize)
-                != 0
-            {
-                HandlePanAndSweep(p, c);
+                    != 0
+                {
+                    HandlePanAndSweep(p, c);
+                }
+                (*p).state.cur_chan_bit = (((*p).state.cur_chan_bit as i32) << 1) as u8;
+                c = c.offset(1);
             }
-            (*p).state.cur_chan_bit = (((*p).state.cur_chan_bit as i32) << 1) as u8;
-            c = c.offset(1);
         }
     }
 }
 unsafe fn Vector_Reset_Spc(p: *mut SpcPlayer) {
-    dsp_reset((*p).state.dsp);
-    (*p).ram.fill_range(0x500..0x1500, 0);
-    (*p).ram.fill_range(0x20..0x2f, 0);
-    (*p).ram.fill_range(0xd0..0xef, 0);
-    (*p).ram.fill_range(0x391..0x400, 0);
-    (*p).ram.fill_range(0x440..0x4bf, 0);
-    SpcPlayer_CopyVariablesFromRam(p);
-    for i in 0i32..8 {
-        (*p).state.channel[i as usize].index = i as u8;
-    }
-    SetupEchoParameter_EDL(p, 1);
-    (*p).state.reg_FLG = ((*p).state.reg_FLG | 0x20);
-    Dsp_Write(p, MVOLL as i32 as u8, 0x60);
-    Dsp_Write(p, MVOLR as i32 as u8, 0x60);
-    Dsp_Write(p, DIR as i32 as u8, 0x6d);
-    byte!((*p).state.tempo; (size_of::<u16>() as usize)
+    unsafe {
+        dsp_reset((*p).state.dsp);
+        (*p).ram.fill_range(0x500..0x1500, 0);
+        (*p).ram.fill_range(0x20..0x2f, 0);
+        (*p).ram.fill_range(0xd0..0xef, 0);
+        (*p).ram.fill_range(0x391..0x400, 0);
+        (*p).ram.fill_range(0x440..0x4bf, 0);
+        SpcPlayer_CopyVariablesFromRam(p);
+        for i in 0i32..8 {
+            (*p).state.channel[i as usize].index = i as u8;
+        }
+        SetupEchoParameter_EDL(p, 1);
+        (*p).state.reg_FLG = ((*p).state.reg_FLG | 0x20);
+        Dsp_Write(p, MVOLL as i32 as u8, 0x60);
+        Dsp_Write(p, MVOLR as i32 as u8, 0x60);
+        Dsp_Write(p, DIR as i32 as u8, 0x6d);
+        byte!((*p).state.tempo; (size_of::<u16>() as usize)
             .wrapping_div(size_of::<u8>() as usize)
             .wrapping_sub(1_) as isize) = 16;
-    (*p).state.timer_cycles = 0;
+        (*p).state.timer_cycles = 0;
+    }
 }
 pub unsafe fn Sfx_Chan_Reset(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) {
-    (*s).disable = 0xff;
-    (*s).update_adsr = 0;
-    (*sr).enabled_voices = ((*sr).enabled_voices & (*s).channel_mask);
-    (*p).state.is_chan_on = ((*p).state.is_chan_on & (*s).channel_mask);
-    (*p).state.cur_chan_bit = ((*p).state.cur_chan_bit | (*s).voice_bitset);
-    (*p).state.key_OFF = ((*p).state.key_OFF | (*s).voice_bitset);
-    let c = (&raw mut (*p).state.channel as *mut Channel).offset(((*s).voice_index >> 1) as isize);
-    Channel_SetInstrument_NoSetId(p, c, (*c).instrument_id);
-    (*c).final_volume = (*s).volume;
-    (*c).pan_flag_with_phase_invert = (*s).phase_invert;
-    if (*sr).enabled_voices == 0 {
-        set_fields! {[(*sr)], 0; cur_sound, priority, init_flag}
+    unsafe {
+        (*s).disable = 0xff;
+        (*s).update_adsr = 0;
+        (*sr).enabled_voices = ((*sr).enabled_voices & (*s).channel_mask);
+        (*p).state.is_chan_on = ((*p).state.is_chan_on & (*s).channel_mask);
+        (*p).state.cur_chan_bit = ((*p).state.cur_chan_bit | (*s).voice_bitset);
+        (*p).state.key_OFF = ((*p).state.key_OFF | (*s).voice_bitset);
+        let c =
+            (&raw mut (*p).state.channel as *mut Channel).offset(((*s).voice_index >> 1) as isize);
+        Channel_SetInstrument_NoSetId(p, c, (*c).instrument_id);
+        (*c).final_volume = (*s).volume;
+        (*c).pan_flag_with_phase_invert = (*s).phase_invert;
+        if (*sr).enabled_voices == 0 {
+            set_fields! {[(*sr)], 0; cur_sound, priority, init_flag}
+        }
     }
 }
 static kSfx1InstrListPtrs: [u16; 66] = [
@@ -392,136 +413,140 @@ static kSfx3Conf: [u8; 47] = [
     5, 2, 2, 5, 2, 2, 2, 2, 2, 2, 2, 4, 2, 4, 2,
 ];
 pub unsafe fn SfxChan_GetByte(p: *mut SpcPlayer, s: *mut SfxChan) -> u8 {
-    crate::update_place! { previous fresh31 = (*s).ptr_idx => (*s).ptr_idx.wrapping_add(1); }
-    (*p).ram
-        .read_at(((*s).ptr as i32 + fresh31 as i32) as usize)
+    unsafe {
+        crate::update_place! { previous fresh31 = (*s).ptr_idx => (*s).ptr_idx.wrapping_add(1); }
+        (*p).ram
+            .read_at(((*s).ptr as i32 + fresh31 as i32) as usize)
+    }
 }
 pub unsafe fn Sfx_RunChan(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) {
-    if (*s).disable as i32 == 0xff {
-        return;
-    }
-    (*s).instr_timer = (*s).instr_timer.wrapping_sub(1);
-    if (*s).instr_timer as i32 == 0 {
-        if (*s).legato == 0 {
-            set_fields! {[(*s)], 0; enable_pitch_slide, subnote_delta, target_note}
-            if (*s).release_flag as i32 != 0xff {
-                (*p).state.key_OFF = ((*p).state.key_OFF | (*s).voice_bitset);
-                (*s).release_timer = 2;
-                (*s).instr_timer = 1;
-                (*s).release_flag = 0xff;
-            }
-            (*s).release_timer = (*s).release_timer.wrapping_sub(1);
-            if (*s).release_timer != 0 {
-                return;
-            }
-            (*s).release_flag = 0;
-            (*p).state.cur_chan_bit = ((*p).state.cur_chan_bit & (*s).channel_mask);
-            (*p).state.reg_NON = ((*p).state.reg_NON & (*s).channel_mask);
+    unsafe {
+        if (*s).disable as i32 == 0xff {
+            return;
         }
-        let mut a: u8 = 0;
-        loop {
-            a = SfxChan_GetByte(p, s);
-            if a as i32 == 0xf9 {
-                (*s).adsr_settings = SfxChan_GetByte(p, s) as u16;
-                (*s).adsr_settings =
-                    ((*s).adsr_settings as i32 | (SfxChan_GetByte(p, s) as i32) << 8) as u16;
-                (*s).ptr_idx = ((*s).ptr_idx as i32 + 2) as u8;
-                (*s).update_adsr = 0xff;
-            } else {
-                if a as i32 == 0xf5 || a as i32 == 0xf8 {
-                    (*s).enable_pitch_slide_legato =
-                        (if a as i32 == 0xf5 { 0xf5 } else { 0 }) as u8;
-                    (*s).subnote_delta = SfxChan_GetByte(p, s);
-                    (*s).target_note = SfxChan_GetByte(p, s);
-                    (*s).enable_pitch_slide = 0xff;
-                    a = SfxChan_GetByte(p, s);
+        (*s).instr_timer = (*s).instr_timer.wrapping_sub(1);
+        if (*s).instr_timer as i32 == 0 {
+            if (*s).legato == 0 {
+                set_fields! {[(*s)], 0; enable_pitch_slide, subnote_delta, target_note}
+                if (*s).release_flag as i32 != 0xff {
+                    (*p).state.key_OFF = ((*p).state.key_OFF | (*s).voice_bitset);
+                    (*s).release_timer = 2;
+                    (*s).instr_timer = 1;
+                    (*s).release_flag = 0xff;
                 }
-                if a as i32 == 0xff {
-                    Sfx_Chan_Reset(p, sr, s);
+                (*s).release_timer = (*s).release_timer.wrapping_sub(1);
+                if (*s).release_timer != 0 {
                     return;
                 }
-                if a as i32 == 0xfe {
-                    (*s).repeat_ctr = SfxChan_GetByte(p, s);
-                    (*s).repeat_pt = (*s).ptr_idx;
-                    a = SfxChan_GetByte(p, s);
-                }
-                if a as i32 == 0xfb || a as i32 == 0xfd {
-                    if a as i32 != 0xfb && {
-                        (*s).repeat_ctr = (*s).repeat_ctr.wrapping_sub(1);
-                        (*s).repeat_ctr as i32 == 0
-                    } {
-                        continue;
+                (*s).release_flag = 0;
+                (*p).state.cur_chan_bit = ((*p).state.cur_chan_bit & (*s).channel_mask);
+                (*p).state.reg_NON = ((*p).state.reg_NON & (*s).channel_mask);
+            }
+            let mut a: u8 = 0;
+            loop {
+                a = SfxChan_GetByte(p, s);
+                if a as i32 == 0xf9 {
+                    (*s).adsr_settings = SfxChan_GetByte(p, s) as u16;
+                    (*s).adsr_settings =
+                        ((*s).adsr_settings as i32 | (SfxChan_GetByte(p, s) as i32) << 8) as u16;
+                    (*s).ptr_idx = ((*s).ptr_idx as i32 + 2) as u8;
+                    (*s).update_adsr = 0xff;
+                } else {
+                    if a as i32 == 0xf5 || a as i32 == 0xf8 {
+                        (*s).enable_pitch_slide_legato =
+                            (if a as i32 == 0xf5 { 0xf5 } else { 0 }) as u8;
+                        (*s).subnote_delta = SfxChan_GetByte(p, s);
+                        (*s).target_note = SfxChan_GetByte(p, s);
+                        (*s).enable_pitch_slide = 0xff;
+                        a = SfxChan_GetByte(p, s);
                     }
-                    (*s).ptr_idx = (*s).repeat_pt;
-                    a = SfxChan_GetByte(p, s);
+                    if a as i32 == 0xff {
+                        Sfx_Chan_Reset(p, sr, s);
+                        return;
+                    }
+                    if a as i32 == 0xfe {
+                        (*s).repeat_ctr = SfxChan_GetByte(p, s);
+                        (*s).repeat_pt = (*s).ptr_idx;
+                        a = SfxChan_GetByte(p, s);
+                    }
+                    if a as i32 == 0xfb || a as i32 == 0xfd {
+                        if a as i32 != 0xfb && {
+                            (*s).repeat_ctr = (*s).repeat_ctr.wrapping_sub(1);
+                            (*s).repeat_ctr as i32 == 0
+                        } {
+                            continue;
+                        }
+                        (*s).ptr_idx = (*s).repeat_pt;
+                        a = SfxChan_GetByte(p, s);
+                    }
+                    if (a as i32 != 0xfc) {
+                        break;
+                    }
+                    (*p).state.reg_NON = ((*p).state.reg_NON | (*s).voice_bitset);
                 }
-                if (a as i32 != 0xfc) {
-                    break;
-                }
-                (*p).state.reg_NON = ((*p).state.reg_NON | (*s).voice_bitset);
+            }
+            let c = (&raw mut (*p).state.channel as *mut Channel)
+                .offset(((*s).voice_index >> 1) as isize);
+            Channel_SetInstrument_NoSetId(p, c, a);
+            (*c).final_volume = SfxChan_GetByte(p, s);
+            (*c).pan_flag_with_phase_invert = 0;
+            WriteVolumeToDsp(p, c, ((SfxChan_GetByte(p, s) as i32) << 8) as u16);
+            a = SfxChan_GetByte(p, s);
+            if a as i32 != 0xf6 {
+                (*s).note = a;
+                (*s).subnote = 0;
+            }
+            WritePitchInner(p, c, (((*s).note as i32) << 8 | (*s).subnote as i32) as u16);
+            (*s).instr_timer = SfxChan_GetByte(p, s);
+            if (*s).update_adsr != 0 {
+                Dsp_Write(
+                    p,
+                    ((*s).voice_index_mult8 as i32 | V0ADSR1 as i32) as u8,
+                    (*s).adsr_settings as u8,
+                );
+                Dsp_Write(
+                    p,
+                    ((*s).voice_index_mult8 as i32 | V0ADSR2 as i32) as u8,
+                    ((*s).adsr_settings >> 8) as u8,
+                );
+            }
+            if (*s).legato == 0 {
+                (*p).state.key_ON = ((*p).state.key_ON | (*s).voice_bitset);
             }
         }
-        let c =
-            (&raw mut (*p).state.channel as *mut Channel).offset(((*s).voice_index >> 1) as isize);
-        Channel_SetInstrument_NoSetId(p, c, a);
-        (*c).final_volume = SfxChan_GetByte(p, s);
-        (*c).pan_flag_with_phase_invert = 0;
-        WriteVolumeToDsp(p, c, ((SfxChan_GetByte(p, s) as i32) << 8) as u16);
-        a = SfxChan_GetByte(p, s);
-        if a as i32 != 0xf6 {
-            (*s).note = a;
-            (*s).subnote = 0;
+        if (*s).enable_pitch_slide as i32 != 0xff {
+            return;
         }
-        WritePitchInner(p, c, (((*s).note as i32) << 8 | (*s).subnote as i32) as u16);
-        (*s).instr_timer = SfxChan_GetByte(p, s);
-        if (*s).update_adsr != 0 {
-            Dsp_Write(
-                p,
-                ((*s).voice_index_mult8 as i32 | V0ADSR1 as i32) as u8,
-                (*s).adsr_settings as u8,
-            );
-            Dsp_Write(
-                p,
-                ((*s).voice_index_mult8 as i32 | V0ADSR2 as i32) as u8,
-                ((*s).adsr_settings >> 8) as u8,
-            );
+        if (*s).enable_pitch_slide_legato != 0 {
+            (*s).legato = 0xff;
         }
-        if (*s).legato == 0 {
-            (*p).state.key_ON = ((*p).state.key_ON | (*s).voice_bitset);
+        if (*s).note as i32 >= (*s).target_note as i32 {
+            let t: i32 = (*s).subnote as i32 - (*s).subnote_delta as i32;
+            (*s).subnote = t as u8;
+            if t & 256 != 0 && {
+                (*s).note = (*s).note.wrapping_sub(1);
+                (*s).note as i32 == (*s).target_note as i32
+            } {
+                (*s).legato = 0;
+                (*s).enable_pitch_slide = (*s).legato;
+            }
+        } else {
+            let t_0: i32 = (*s).subnote as i32 + (*s).subnote_delta as i32;
+            (*s).subnote = t_0 as u8;
+            if t_0 & 256 != 0 && {
+                (*s).note = (*s).note.wrapping_add(1);
+                (*s).note as i32 == (*s).target_note as i32
+            } {
+                (*s).legato = 0;
+                (*s).enable_pitch_slide = (*s).legato;
+            }
         }
+        WritePitchInner(
+            p,
+            (&raw mut (*p).state.channel as *mut Channel).offset(((*s).voice_index >> 1) as isize),
+            (((*s).note as i32) << 8 | (*s).subnote as i32) as u16,
+        );
     }
-    if (*s).enable_pitch_slide as i32 != 0xff {
-        return;
-    }
-    if (*s).enable_pitch_slide_legato != 0 {
-        (*s).legato = 0xff;
-    }
-    if (*s).note as i32 >= (*s).target_note as i32 {
-        let t: i32 = (*s).subnote as i32 - (*s).subnote_delta as i32;
-        (*s).subnote = t as u8;
-        if t & 256 != 0 && {
-            (*s).note = (*s).note.wrapping_sub(1);
-            (*s).note as i32 == (*s).target_note as i32
-        } {
-            (*s).legato = 0;
-            (*s).enable_pitch_slide = (*s).legato;
-        }
-    } else {
-        let t_0: i32 = (*s).subnote as i32 + (*s).subnote_delta as i32;
-        (*s).subnote = t_0 as u8;
-        if t_0 & 256 != 0 && {
-            (*s).note = (*s).note.wrapping_add(1);
-            (*s).note as i32 == (*s).target_note as i32
-        } {
-            (*s).legato = 0;
-            (*s).enable_pitch_slide = (*s).legato;
-        }
-    }
-    WritePitchInner(
-        p,
-        (&raw mut (*p).state.channel as *mut Channel).offset(((*s).voice_index >> 1) as isize),
-        (((*s).note as i32) << 8 | (*s).subnote as i32) as u16,
-    );
 }
 pub unsafe fn Sfx_Init(
     p: *mut SpcPlayer,
@@ -529,55 +554,57 @@ pub unsafe fn Sfx_Init(
     channels: *mut SfxChan,
     which_sfx: i32,
 ) {
-    let num: i32 = if which_sfx == 0 { 4 } else { 2 };
-    static kSomeAddrs: [[u16; 3]; 3] = [
-        [0x3a6, 0x3aa, 0x3af],
-        [0x446, 0x448, 0x44b],
-        [0x47e, 0x480, 0x483],
-    ];
-    set_fields! {[(*sr)]; voice_id = 9, voices_remaining = (*p).state.is_chan_on, init_flag = 0xff,
-    chan_idx_x2 = 0, chan_idx = (*sr).chan_idx_x2, };
-    let mut i: i32 = 0;
-    while i < num {
-        set_fields! {[(*channels.offset(i as isize))], 0; voice_bitset, voice_index}
-        set_fields! {[(*channels.offset(i as isize))], 0xff; channel_mask, disable}
-        i += 1;
-    }
-    loop {
-        (*sr).voice_id = (*sr).voice_id.wrapping_sub(1);
-        if ((*sr).voice_id == 0) {
-            break;
+    unsafe {
+        let num: i32 = if which_sfx == 0 { 4 } else { 2 };
+        static kSomeAddrs: [[u16; 3]; 3] = [
+            [0x3a6, 0x3aa, 0x3af],
+            [0x446, 0x448, 0x44b],
+            [0x47e, 0x480, 0x483],
+        ];
+        set_fields! {[(*sr)]; voice_id = 9, voices_remaining = (*p).state.is_chan_on, init_flag = 0xff,
+        chan_idx_x2 = 0, chan_idx = (*sr).chan_idx_x2, };
+        let mut i: i32 = 0;
+        while i < num {
+            set_fields! {[(*channels.offset(i as isize))], 0; voice_bitset, voice_index}
+            set_fields! {[(*channels.offset(i as isize))], 0xff; channel_mask, disable}
+            i += 1;
         }
-        let t: i32 = (*sr).voices_remaining as i32;
-        (*sr).voices_remaining = (((*sr).voices_remaining as i32) << 1) as u8;
-        if t & 0x80 == 0 {
-            if (*sr).voices_to_setup == 0 {
-                return;
+        loop {
+            (*sr).voice_id = (*sr).voice_id.wrapping_sub(1);
+            if ((*sr).voice_id == 0) {
+                break;
             }
-            (*sr).voices_to_setup = (*sr).voices_to_setup.wrapping_sub(1);
-            let c = channels.offset((*sr).chan_idx as isize);
-            (*c).disable = 0;
-            (*sr).chan_voice_bitset_ptr = (kSomeAddrs[which_sfx as usize][0i32 as usize] as i32
-                + (*sr).chan_idx as i32) as u16;
-            (*sr).chan_voice_mask_ptr = (kSomeAddrs[which_sfx as usize][1i32 as usize] as i32
-                + (*sr).chan_idx as i32) as u16;
-            (*sr).chan_voice_index_ptr = (kSomeAddrs[which_sfx as usize][2i32 as usize] as i32
-                + (*sr).chan_idx as i32) as u16;
-            (*sr).chan_idx = ((*sr).chan_idx as i32 + 1) as u8;
-            (*sr).chan_idx_x2 = ((*sr).chan_idx_x2 as i32 + 2) as u8;
-            (*sr).voice_index = (((*sr).voice_id as i32 - 1i32) * 2) as u8;
-            (*c).voice_index = (*sr).voice_index;
-            let t_0: i32 = (*sr).voice_id as i32 - 1i32;
-            (*c).volume = ((*p).state.channel[t_0 as usize].final_volume as i32
-                | ((*p).state.channel[t_0 as usize].pan_flag_with_phase_invert as i32) << 8)
-                as u8;
-            let m: i32 = (1i32) << t_0;
-            (*p).state.is_chan_on = ((*p).state.is_chan_on as i32 | m) as u8;
-            (*p).state.cur_chan_bit = ((*p).state.cur_chan_bit as i32 & !m) as u8;
-            (*p).state.reg_EON = ((*p).state.reg_EON as i32 & !m) as u8;
-            (*sr).enabled_voices = ((*sr).enabled_voices as i32 | m) as u8;
-            (*c).voice_bitset = m as u8;
-            (*c).channel_mask = !m as u8;
+            let t: i32 = (*sr).voices_remaining as i32;
+            (*sr).voices_remaining = (((*sr).voices_remaining as i32) << 1) as u8;
+            if t & 0x80 == 0 {
+                if (*sr).voices_to_setup == 0 {
+                    return;
+                }
+                (*sr).voices_to_setup = (*sr).voices_to_setup.wrapping_sub(1);
+                let c = channels.offset((*sr).chan_idx as isize);
+                (*c).disable = 0;
+                (*sr).chan_voice_bitset_ptr = (kSomeAddrs[which_sfx as usize][0i32 as usize] as i32
+                    + (*sr).chan_idx as i32) as u16;
+                (*sr).chan_voice_mask_ptr = (kSomeAddrs[which_sfx as usize][1i32 as usize] as i32
+                    + (*sr).chan_idx as i32) as u16;
+                (*sr).chan_voice_index_ptr = (kSomeAddrs[which_sfx as usize][2i32 as usize] as i32
+                    + (*sr).chan_idx as i32) as u16;
+                (*sr).chan_idx = ((*sr).chan_idx as i32 + 1) as u8;
+                (*sr).chan_idx_x2 = ((*sr).chan_idx_x2 as i32 + 2) as u8;
+                (*sr).voice_index = (((*sr).voice_id as i32 - 1i32) * 2) as u8;
+                (*c).voice_index = (*sr).voice_index;
+                let t_0: i32 = (*sr).voice_id as i32 - 1i32;
+                (*c).volume = ((*p).state.channel[t_0 as usize].final_volume as i32
+                    | ((*p).state.channel[t_0 as usize].pan_flag_with_phase_invert as i32) << 8)
+                    as u8;
+                let m: i32 = (1i32) << t_0;
+                (*p).state.is_chan_on = ((*p).state.is_chan_on as i32 | m) as u8;
+                (*p).state.cur_chan_bit = ((*p).state.cur_chan_bit as i32 & !m) as u8;
+                (*p).state.reg_EON = ((*p).state.reg_EON as i32 & !m) as u8;
+                (*sr).enabled_voices = ((*sr).enabled_voices as i32 | m) as u8;
+                (*c).voice_bitset = m as u8;
+                (*c).channel_mask = !m as u8;
+            }
         }
     }
 }
@@ -612,60 +639,70 @@ pub fn SpcPlayer_Create() -> *mut SpcPlayer {
     Box::into_raw(Box::new(SpcPlayer { state, ram }))
 }
 pub unsafe fn SpcPlayer_Initialize(p: *mut SpcPlayer) {
-    Vector_Reset_Spc(p);
-    Spc_Loop_Part1(p);
+    unsafe {
+        Vector_Reset_Spc(p);
+        Spc_Loop_Part1(p);
+    }
 }
 pub unsafe fn SpcPlayer_CopyVariablesToRam(p: *mut SpcPlayer) {
-    crate::native_player_ram::save(&(*p).state, &(*p).ram);
+    unsafe {
+        crate::native_player_ram::save(&(*p).state, &(*p).ram);
+    }
 }
 pub unsafe fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer) {
-    crate::native_player_ram::load(&mut (*p).state, &(*p).ram);
+    unsafe {
+        crate::native_player_ram::load(&mut (*p).state, &(*p).ram);
+    }
 }
 pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
-    crate::native_assertion! {
-        '_c2rust_label: (*p).state.timer_cycles as i32 <= 64;
-        b"p->timer_cycles <= 64\0", b"src/spc_player.c\0", 1550,
-        b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0"
-    };
-    crate::native_assertion! {
-        '_c2rust_label_0: (*(*p).state.dsp).state.sampleOffset as i32 <= 534;
-        b"p->dsp->sampleOffset <= 534\0", b"src/spc_player.c\0", 1552,
-        b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0"
-    };
-    do_until! { (*(*p).state.dsp).state.sampleOffset as i32 == 534;
-        if (*p).state.timer_cycles as i32 >= 64 {
-            Spc_Loop_Part2(p, ((*p).state.timer_cycles >> 6));
-            Spc_Loop_Part1(p);
-            (*p).state.timer_cycles = ((*p).state.timer_cycles & 63);
-        }
-        let mut n: i32 = 534 - (*(*p).state.dsp).state.sampleOffset as i32;
-        if n > 64 - (*p).state.timer_cycles as i32 {
-            n = 64 - (*p).state.timer_cycles as i32;
-        }
-        (*p).state.timer_cycles = ((*p).state.timer_cycles as i32 + n) as u8;
-        let mut i: i32 = 0;
-        while i < n {
-            dsp_cycle((*p).state.dsp);
-            i += 1;
+    unsafe {
+        crate::native_assertion! {
+            '_c2rust_label: (*p).state.timer_cycles as i32 <= 64;
+            b"p->timer_cycles <= 64\0", b"src/spc_player.c\0", 1550,
+            b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0"
+        };
+        crate::native_assertion! {
+            '_c2rust_label_0: (*(*p).state.dsp).state.sampleOffset as i32 <= 534;
+            b"p->dsp->sampleOffset <= 534\0", b"src/spc_player.c\0", 1552,
+            b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0"
+        };
+        do_until! { (*(*p).state.dsp).state.sampleOffset as i32 == 534;
+            if (*p).state.timer_cycles as i32 >= 64 {
+                Spc_Loop_Part2(p, ((*p).state.timer_cycles >> 6));
+                Spc_Loop_Part1(p);
+                (*p).state.timer_cycles = ((*p).state.timer_cycles & 63);
+            }
+            let mut n: i32 = 534 - (*(*p).state.dsp).state.sampleOffset as i32;
+            if n > 64 - (*p).state.timer_cycles as i32 {
+                n = 64 - (*p).state.timer_cycles as i32;
+            }
+            (*p).state.timer_cycles = ((*p).state.timer_cycles as i32 + n) as u8;
+            let mut i: i32 = 0;
+            while i < n {
+                dsp_cycle((*p).state.dsp);
+                i += 1;
+            }
         }
     }
 }
 pub unsafe fn SpcPlayer_Upload(p: *mut SpcPlayer, image: crate::rom::RomImage, source: usize) {
-    Dsp_Write(p, EVOLL as i32 as u8, 0);
-    Dsp_Write(p, EVOLR as i32 as u8, 0);
-    Dsp_Write(p, KOF as i32 as u8, 0xff);
-    crate::audio_upload::transfer(image, source, |target, value| {
-        (*p).ram.write(target, value);
-    });
-    (*p).state.port_to_snes[0i32 as usize] = 0;
-    (*p).state.input_ports[3i32 as usize] = 255;
-    (*p).state.input_ports[2i32 as usize] = (*p).state.input_ports[3i32 as usize];
-    (*p).state.input_ports[1i32 as usize] = (*p).state.input_ports[2i32 as usize];
-    (*p).state.input_ports[0i32 as usize] = (*p).state.input_ports[1i32 as usize];
-    (*p).state.music_ptr_toplevel =
-        u16::from_ne_bytes([(*p).ram.read_at(0x581e), (*p).ram.read_at(0x581f)]);
-    (*p).state.counter_sf0c = 2;
-    (*p).state.key_OFF = ((*p).state.key_OFF | !((*p).state.is_chan_on));
+    unsafe {
+        Dsp_Write(p, EVOLL as i32 as u8, 0);
+        Dsp_Write(p, EVOLR as i32 as u8, 0);
+        Dsp_Write(p, KOF as i32 as u8, 0xff);
+        crate::audio_upload::transfer(image, source, |target, value| {
+            (*p).ram.write(target, value);
+        });
+        (*p).state.port_to_snes[0i32 as usize] = 0;
+        (*p).state.input_ports[3i32 as usize] = 255;
+        (*p).state.input_ports[2i32 as usize] = (*p).state.input_ports[3i32 as usize];
+        (*p).state.input_ports[1i32 as usize] = (*p).state.input_ports[2i32 as usize];
+        (*p).state.input_ports[0i32 as usize] = (*p).state.input_ports[1i32 as usize];
+        (*p).state.music_ptr_toplevel =
+            u16::from_ne_bytes([(*p).ram.read_at(0x581e), (*p).ram.read_at(0x581f)]);
+        (*p).state.counter_sf0c = 2;
+        (*p).state.key_OFF = ((*p).state.key_OFF | !((*p).state.is_chan_on));
+    }
 }
 
 // The three command ports own four, two and two independent sound voices.
@@ -673,109 +710,115 @@ unsafe fn sound_effect_channels(
     p: *mut SpcPlayer,
     group: usize,
 ) -> (*mut SfxRegs, *mut SfxChan, usize) {
-    match group {
-        0 => (
-            &raw mut (*p).state.sfx1,
-            (&raw mut (*p).state.sfx_chans_1).cast(),
-            4,
-        ),
-        1 => (
-            &raw mut (*p).state.sfx2,
-            (&raw mut (*p).state.sfx_chans_2).cast(),
-            2,
-        ),
-        2 => (
-            &raw mut (*p).state.sfx3,
-            (&raw mut (*p).state.sfx_chans_3).cast(),
-            2,
-        ),
-        _ => unreachable!(),
+    unsafe {
+        match group {
+            0 => (
+                &raw mut (*p).state.sfx1,
+                (&raw mut (*p).state.sfx_chans_1).cast(),
+                4,
+            ),
+            1 => (
+                &raw mut (*p).state.sfx2,
+                (&raw mut (*p).state.sfx_chans_2).cast(),
+                2,
+            ),
+            2 => (
+                &raw mut (*p).state.sfx3,
+                (&raw mut (*p).state.sfx_chans_3).cast(),
+                2,
+            ),
+            _ => unreachable!(),
+        }
     }
 }
 
 unsafe fn handle_sound_effect_command(p: *mut SpcPlayer, group: usize) {
-    crate::verify_probe::hit(["sfx.command.1", "sfx.command.2", "sfx.command.3"][group]);
-    let (regs, channels, count) = sound_effect_channels(p, group);
-    let sound = (*p).state.input_ports[group + 1];
-    (*p).state.input_ports[group + 1] = 255;
-    if sound == 255
-        || sound == 0
-        || match group {
-            0 => sound != 1 && sound != 2 && (*regs).priority != 0,
-            1 => sound != 0x71 && sound != 0x7e && (*regs).priority != 0,
-            _ => sound != 1 && ((*regs).some_value == 2 || sound != 2 && (*regs).priority != 0),
+    unsafe {
+        crate::verify_probe::hit(["sfx.command.1", "sfx.command.2", "sfx.command.3"][group]);
+        let (regs, channels, count) = sound_effect_channels(p, group);
+        let sound = (*p).state.input_ports[group + 1];
+        (*p).state.input_ports[group + 1] = 255;
+        if sound == 255
+            || sound == 0
+            || match group {
+                0 => sound != 1 && sound != 2 && (*regs).priority != 0,
+                1 => sound != 0x71 && sound != 0x7e && (*regs).priority != 0,
+                _ => sound != 1 && ((*regs).some_value == 2 || sound != 2 && (*regs).priority != 0),
+            }
+        {
+            if (*regs).cur_sound != 0 {
+                process_sound_effect(p, group);
+            }
+            return;
         }
-    {
+        crate::verify_probe::hit(["sfx.start.1", "sfx.start.2", "sfx.start.3"][group]);
         if (*regs).cur_sound != 0 {
-            process_sound_effect(p, group);
+            (*regs).enabled_voices = 0;
+            for i in 0..count {
+                Sfx_Chan_Reset(p, regs, channels.add(i));
+            }
         }
-        return;
-    }
-    crate::verify_probe::hit(["sfx.start.1", "sfx.start.2", "sfx.start.3"][group]);
-    if (*regs).cur_sound != 0 {
-        (*regs).enabled_voices = 0;
         for i in 0..count {
-            Sfx_Chan_Reset(p, regs, channels.add(i));
+            (*channels.add(i)).legato = 0;
         }
-    }
-    for i in 0..count {
-        (*channels.add(i)).legato = 0;
-    }
-    (*regs).cur_sound_index = ((sound as i32 - 1) * 2) as u8;
-    let (instructions, configuration): (&[u16], &[u8]) = match group {
-        0 => (&kSfx1InstrListPtrs, &kSfx1Conf),
-        1 => (&kSfx2InstrListPtrs, &kSfx2Conf),
-        _ => (&kSfx3InstrListPtrs, &kSfx3Conf),
-    };
-    (*regs).cur_ptr = instructions[((*regs).cur_sound_index >> 1) as usize];
-    (*regs).cur_sound = sound;
-    if group == 2 && (*regs).cur_sound >= 0xfe {
-        process_sound_effect(p, group);
-        return;
-    }
-    // Port 3's first two configurations also control its interruption gate.
-    let (voices, priority) = match (group, configuration[(sound - 1) as usize]) {
-        (2, 0) => {
-            (*regs).voices_to_setup = 1;
-            (*regs).some_value = 0;
-            (*regs).priority = 1;
+        (*regs).cur_sound_index = ((sound as i32 - 1) * 2) as u8;
+        let (instructions, configuration): (&[u16], &[u8]) = match group {
+            0 => (&kSfx1InstrListPtrs, &kSfx1Conf),
+            1 => (&kSfx2InstrListPtrs, &kSfx2Conf),
+            _ => (&kSfx3InstrListPtrs, &kSfx3Conf),
+        };
+        (*regs).cur_ptr = instructions[((*regs).cur_sound_index >> 1) as usize];
+        (*regs).cur_sound = sound;
+        if group == 2 && (*regs).cur_sound >= 0xfe {
+            process_sound_effect(p, group);
             return;
         }
-        (2, 1) => {
-            (*regs).voices_to_setup = 1;
-            (*regs).some_value = 2;
-            return;
-        }
-        (2, 2) | (0 | 1, 0) => (1, 0),
-        (2, 3) | (0 | 1, 2) => (2, 0),
-        (2, 4) | (1, 3) => (2, 1),
-        (2, 5) | (0 | 1, 1) => (1, 1),
-        (0, 3) => (3, 1),
-        (0, 4 | 5) => (4, 0),
-        _ => return,
-    };
-    (*regs).voices_to_setup = voices;
-    (*regs).priority = priority;
+        // Port 3's first two configurations also control its interruption gate.
+        let (voices, priority) = match (group, configuration[(sound - 1) as usize]) {
+            (2, 0) => {
+                (*regs).voices_to_setup = 1;
+                (*regs).some_value = 0;
+                (*regs).priority = 1;
+                return;
+            }
+            (2, 1) => {
+                (*regs).voices_to_setup = 1;
+                (*regs).some_value = 2;
+                return;
+            }
+            (2, 2) | (0 | 1, 0) => (1, 0),
+            (2, 3) | (0 | 1, 2) => (2, 0),
+            (2, 4) | (1, 3) => (2, 1),
+            (2, 5) | (0 | 1, 1) => (1, 1),
+            (0, 3) => (3, 1),
+            (0, 4 | 5) => (4, 0),
+            _ => return,
+        };
+        (*regs).voices_to_setup = voices;
+        (*regs).priority = priority;
+    }
 }
 
 unsafe fn process_sound_effect(p: *mut SpcPlayer, group: usize) {
-    crate::verify_probe::hit(["sfx.process.1", "sfx.process.2", "sfx.process.3"][group]);
-    let (regs, channels, count) = sound_effect_channels(p, group);
-    if (*regs).init_flag != 0xff {
-        crate::verify_probe::hit(["sfx.init.1", "sfx.init.2", "sfx.init.3"][group]);
-        Sfx_Init(p, regs, channels, group as i32);
-        for i in 0..count {
-            let channel = channels.add(i);
-            let address = usize::from((*regs).cur_ptr) + i * 2;
-            (*channel).ptr =
-                u16::from_ne_bytes([(*p).ram.read_at(address), (*p).ram.read_at(address + 1)]);
-            (*channel).voice_index_mult8 = ((*channel).voice_index as i32 * 8) as u8;
-            (*channel).ptr_idx = 0;
-            (*channel).instr_timer = 1;
+    unsafe {
+        crate::verify_probe::hit(["sfx.process.1", "sfx.process.2", "sfx.process.3"][group]);
+        let (regs, channels, count) = sound_effect_channels(p, group);
+        if (*regs).init_flag != 0xff {
+            crate::verify_probe::hit(["sfx.init.1", "sfx.init.2", "sfx.init.3"][group]);
+            Sfx_Init(p, regs, channels, group as i32);
+            for i in 0..count {
+                let channel = channels.add(i);
+                let address = usize::from((*regs).cur_ptr) + i * 2;
+                (*channel).ptr =
+                    u16::from_ne_bytes([(*p).ram.read_at(address), (*p).ram.read_at(address + 1)]);
+                (*channel).voice_index_mult8 = ((*channel).voice_index as i32 * 8) as u8;
+                (*channel).ptr_idx = 0;
+                (*channel).instr_timer = 1;
+            }
         }
-    }
-    for i in 0..count {
-        Sfx_RunChan(p, regs, channels.add(i));
+        for i in 0..count {
+            Sfx_RunChan(p, regs, channels.add(i));
+        }
     }
 }
 

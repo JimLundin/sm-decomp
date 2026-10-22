@@ -60,201 +60,223 @@ static kIsGrappleBannedForMovementType: [u8; 28] = [
     0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1,
 ];
 pub unsafe fn StartSamusDeathAnimation(game: &mut Game) {
-    let v0: u16 = *ram_ptr!(game; 0xa1f) as u16;
-    if *ram_ptr!(game; 0xa1f) == 3 {
-        QueueSfx1_Max6(0x32, game);
+    unsafe {
+        let v0: u16 = *ram_ptr!(game; 0xa1f) as u16;
+        if *ram_ptr!(game; 0xa1f) == 3 {
+            QueueSfx1_Max6(0x32, game);
+        }
+        let v1: u16 = kDeathAnimationFrames[v0 as usize] as u16;
+        if *ram_ptr!(game; 0xa1e) == 4 {
+            word!(game.samus_pose = kPose_D8_FaceL_CrystalFlashEnd as u16);
+        } else {
+            word!(game.samus_pose = kPose_D7_FaceR_CrystalFlashEnd as u16);
+        }
+        crate::game::samus_pose::finish_pose_change(game);
+        word! {game; samus_anim_frame_skip = 0; samus_anim_frame = v1; }
+        word!(game.samus_x_pos -= word!(game.layer1_x_pos));
+        word!(game.samus_y_pos -= word!(game.layer1_y_pos));
     }
-    let v1: u16 = kDeathAnimationFrames[v0 as usize] as u16;
-    if *ram_ptr!(game; 0xa1e) == 4 {
-        word!(game.samus_pose = kPose_D8_FaceL_CrystalFlashEnd as u16);
-    } else {
-        word!(game.samus_pose = kPose_D7_FaceR_CrystalFlashEnd as u16);
-    }
-    crate::game::samus_pose::finish_pose_change(game);
-    word! {game; samus_anim_frame_skip = 0; samus_anim_frame = v1; }
-    word!(game.samus_x_pos -= word!(game.layer1_x_pos));
-    word!(game.samus_y_pos -= word!(game.layer1_y_pos));
 }
 pub unsafe fn DrawSamusStartingDeathAnim_(game: &mut Game) {
-    Samus_DrawStartingDeathAnim(game);
+    unsafe {
+        Samus_DrawStartingDeathAnim(game);
+    }
 }
 pub unsafe fn HandleSamusDeathSequence(game: &mut Game) -> u16 {
-    if word!(game.g_word_7E0DE6) as i32 - 4i32 & 0x8000 != 0 {
-        QueueTransferOfSamusDeathSequence((2u16).wrapping_mul(word!(game.g_word_7E0DE6)), game);
-    }
-    if word!(game.g_word_7E0DE6 += 1, reread) as i32 - 60i32 & 0x8000 != 0 {
-        let v0: bool = (word!(game.game_options_screen_index -= 1, reread) & 0x8000) != 0;
-        if word!(game.game_options_screen_index) == 0 || v0 {
-            if word!(game.g_word_7E0DE4) != 0 {
-                word! {game; g_word_7E0DE4 = 0; game_options_screen_index = 3; }
-            } else {
-                word! { game, 1; g_word_7E0DE4, game_options_screen_index }
-            }
-            CopyPalettesForSamusDeath((word!(game.g_word_7E0DE4)).wrapping_mul(2), game);
+    unsafe {
+        if word!(game.g_word_7E0DE6) as i32 - 4i32 & 0x8000 != 0 {
+            QueueTransferOfSamusDeathSequence((2u16).wrapping_mul(word!(game.g_word_7E0DE6)), game);
         }
-        0
-    } else {
-        HandleSamusDeathSequence_Helper2(game);
-        word!(
-            game.substate = (word!(game.joypad2_last) as i32 & 0xb0
-                == kButton_A as i32 | kButton_L as i32 | kButton_R as i32)
-                as u16
-        );
-        1
+        if word!(game.g_word_7E0DE6 += 1, reread) as i32 - 60i32 & 0x8000 != 0 {
+            let v0: bool = (word!(game.game_options_screen_index -= 1, reread) & 0x8000) != 0;
+            if word!(game.game_options_screen_index) == 0 || v0 {
+                if word!(game.g_word_7E0DE4) != 0 {
+                    word! {game; g_word_7E0DE4 = 0; game_options_screen_index = 3; }
+                } else {
+                    word! { game, 1; g_word_7E0DE4, game_options_screen_index }
+                }
+                CopyPalettesForSamusDeath((word!(game.g_word_7E0DE4)).wrapping_mul(2), game);
+            }
+            0
+        } else {
+            HandleSamusDeathSequence_Helper2(game);
+            word!(
+                game.substate = (word!(game.joypad2_last) as i32 & 0xb0
+                    == kButton_A as i32 | kButton_L as i32 | kButton_R as i32)
+                    as u16
+            );
+            1
+        }
     }
 }
 pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
-    let v0 = RomPtr_9B(
-        crate::rtl::rom_table_word!(
+    unsafe {
+        let v0 = RomPtr_9B(
+            crate::rtl::rom_table_word!(
+                game,
+                0x9bb5c8,
+                (word!(game.samus_suit_palette_index) >> 1) as isize
+            ),
             game,
-            0x9bb5c8,
-            (word!(game.samus_suit_palette_index) >> 1) as isize
-        ),
-        game,
-    ) as *const u16;
-    memcpy(
-        (ram_ptr!(game, u16; 0xc000)).offset(192) as *mut c_void,
-        RomPtr_9B(*v0, game) as *const c_void,
-        32 as size_t,
-    );
-    memcpy(
-        (ram_ptr!(game, u16; 0xc000)).offset(240) as *mut c_void,
-        RomPtr_9B(addr_word_9BA120 as u16, game) as *const c_void,
-        32 as size_t,
-    );
-    QueueTransferOfSamusDeathSequence(8, game);
-    word!(game.game_options_screen_index = *(rom_ptr!(game, u8; 0x9bb823)) as u16);
-    word! { game, 0; g_word_7E0DE4, g_word_7E0DE6 }
-    GameState_24_SamusNoHealth_Explosion_2(game);
+        ) as *const u16;
+        memcpy(
+            (ram_ptr!(game, u16; 0xc000)).offset(192) as *mut c_void,
+            RomPtr_9B(*v0, game) as *const c_void,
+            32 as size_t,
+        );
+        memcpy(
+            (ram_ptr!(game, u16; 0xc000)).offset(240) as *mut c_void,
+            RomPtr_9B(addr_word_9BA120 as u16, game) as *const c_void,
+            32 as size_t,
+        );
+        QueueTransferOfSamusDeathSequence(8, game);
+        word!(game.game_options_screen_index = *(rom_ptr!(game, u8; 0x9bb823)) as u16);
+        word! { game, 0; g_word_7E0DE4, g_word_7E0DE6 }
+        GameState_24_SamusNoHealth_Explosion_2(game);
+    }
 }
 pub unsafe fn CopyPalettesForSamusDeath(v0: u16, game: &mut Game) {
-    let r20: i32 = crate::rtl::rom_table_word!(
-        game,
-        0x9bb6d2,
-        (word!(game.samus_suit_palette_index) >> 1) as isize
-    ) as i32;
-    let v1 = RomPtr_9B((r20 + v0 as i32) as u16, game) as *const u16;
-    memcpy(
-        (ram_ptr!(game, u16; 0xc000)).offset(192) as *mut c_void,
-        RomPtr_9B(*v1, game) as *const c_void,
-        32 as size_t,
-    );
-    memcpy(
-        (ram_ptr!(game, u16; 0xc000)).offset(240) as *mut c_void,
-        RomPtr_9B(
-            crate::rtl::rom_table_word!(game, 0x9bb80f, (v0 >> 1) as isize),
+    unsafe {
+        let r20: i32 = crate::rtl::rom_table_word!(
             game,
-        ) as *const c_void,
-        32 as size_t,
-    );
+            0x9bb6d2,
+            (word!(game.samus_suit_palette_index) >> 1) as isize
+        ) as i32;
+        let v1 = RomPtr_9B((r20 + v0 as i32) as u16, game) as *const u16;
+        memcpy(
+            (ram_ptr!(game, u16; 0xc000)).offset(192) as *mut c_void,
+            RomPtr_9B(*v1, game) as *const c_void,
+            32 as size_t,
+        );
+        memcpy(
+            (ram_ptr!(game, u16; 0xc000)).offset(240) as *mut c_void,
+            RomPtr_9B(
+                crate::rtl::rom_table_word!(game, 0x9bb80f, (v0 >> 1) as isize),
+                game,
+            ) as *const c_void,
+            32 as size_t,
+        );
+    }
 }
 pub unsafe fn QueueTransferOfSamusDeathSequence(v0: u16, game: &mut Game) {
-    let mut v1: u16 = word!(game.vram_write_queue_tail);
-    (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 1024;
-    v1 = (v1).wrapping_add(2);
-    let v2: i32 = v0 as i32 >> 1;
-    (*gVramWriteEntry(v1 as i32, game)).size = g_word_9BB7BF[v2 as usize];
-    v1 = (v1).wrapping_add(2);
-    crate::update_place! { previous fresh7 = v1 => v1.wrapping_add(1); }
-    *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-        fresh7 as i32,
-        game,
-    ))
-    .size as *mut u8) = 0x9b;
-    (*gVramWriteEntry(v1 as i32, game)).size = g_word_9BB7C9[v2 as usize];
-    word!(game.vram_write_queue_tail = (v1).wrapping_add(2));
+    unsafe {
+        let mut v1: u16 = word!(game.vram_write_queue_tail);
+        (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 1024;
+        v1 = (v1).wrapping_add(2);
+        let v2: i32 = v0 as i32 >> 1;
+        (*gVramWriteEntry(v1 as i32, game)).size = g_word_9BB7BF[v2 as usize];
+        v1 = (v1).wrapping_add(2);
+        crate::update_place! { previous fresh7 = v1 => v1.wrapping_add(1); }
+        *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
+            fresh7 as i32,
+            game,
+        ))
+        .size as *mut u8) = 0x9b;
+        (*gVramWriteEntry(v1 as i32, game)).size = g_word_9BB7C9[v2 as usize];
+        word!(game.vram_write_queue_tail = (v1).wrapping_add(2));
+    }
 }
 pub unsafe fn GameState_24_SamusNoHealth_Explosion_Helper(game: &mut Game) -> u16 {
-    GameState_24_SamusNoHealth_Explosion_1(game);
-    GameState_24_SamusNoHealth_Explosion_2(game)
+    unsafe {
+        GameState_24_SamusNoHealth_Explosion_1(game);
+        GameState_24_SamusNoHealth_Explosion_2(game)
+    }
 }
 pub unsafe fn GameState_24_SamusNoHealth_Explosion_1(game: &mut Game) {
-    if word!(game.substate) == 0 && word!(game.g_word_7E0DE4) != 0 {
-        let v0: i32 = word!(game.g_word_7E0DE6) as i32;
-        let dst: *mut u16 = ram_ptr!(game, u16; 0xc000);
-        let mut i: i32 = 0;
-        while i < 384 / 2 {
-            *dst.offset(i as isize) = kShadesOfWhite[v0 as usize];
-            i += 1;
-        }
-        let mut i_0: i32 = 416 / 2;
-        while i_0 < 480 / 2 {
-            *dst.offset(i_0 as isize) = kShadesOfWhite[v0 as usize];
-            i_0 += 1;
-        }
-        if word!(game.g_word_7E0DE6) as i32 - 20i32 & 0x8000 != 0 {
-            word!(game.g_word_7E0DE6 += 1);
+    unsafe {
+        if word!(game.substate) == 0 && word!(game.g_word_7E0DE4) != 0 {
+            let v0: i32 = word!(game.g_word_7E0DE6) as i32;
+            let dst: *mut u16 = ram_ptr!(game, u16; 0xc000);
+            let mut i: i32 = 0;
+            while i < 384 / 2 {
+                *dst.offset(i as isize) = kShadesOfWhite[v0 as usize];
+                i += 1;
+            }
+            let mut i_0: i32 = 416 / 2;
+            while i_0 < 480 / 2 {
+                *dst.offset(i_0 as isize) = kShadesOfWhite[v0 as usize];
+                i_0 += 1;
+            }
+            if word!(game.g_word_7E0DE6) as i32 - 20i32 & 0x8000 != 0 {
+                word!(game.g_word_7E0DE6 += 1);
+            }
         }
     }
 }
 pub unsafe fn GameState_24_SamusNoHealth_Explosion_2(game: &mut Game) -> u16 {
-    let v0: bool = (word!(game.game_options_screen_index -= 1, reread) & 0x8000) != 0;
-    if word!(game.game_options_screen_index) == 0 || v0 {
-        if word!(game.g_word_7E0DE4 += 1, reread) as i32 - 9i32 & 0x8000 == 0 {
-            word!(game.g_word_7E0DE6 = 21);
-            GameState_24_SamusNoHealth_Explosion_1(game);
-            word!(game.substate = 0);
-            return 1;
-        }
-        if word!(game.substate) == 0 || word!(game.g_word_7E0DE4) as i32 - 2i32 & 0x8000 != 0 {
-            word!(
-                game.game_options_screen_index = *(rom_ptr!(game, u8; 0x9bb823))
-                    .offset((2 * word!(game.g_word_7E0DE4) as i32) as isize,)
-                    as u16
-            );
-            CopyPalettesForSamusDeath(
+    unsafe {
+        let v0: bool = (word!(game.game_options_screen_index -= 1, reread) & 0x8000) != 0;
+        if word!(game.game_options_screen_index) == 0 || v0 {
+            if word!(game.g_word_7E0DE4 += 1, reread) as i32 - 9i32 & 0x8000 == 0 {
+                word!(game.g_word_7E0DE6 = 21);
+                GameState_24_SamusNoHealth_Explosion_1(game);
+                word!(game.substate = 0);
+                return 1;
+            }
+            if word!(game.substate) == 0 || word!(game.g_word_7E0DE4) as i32 - 2i32 & 0x8000 != 0 {
+                word!(
+                    game.game_options_screen_index = *(rom_ptr!(game, u8; 0x9bb823))
+                        .offset((2 * word!(game.g_word_7E0DE4) as i32) as isize,)
+                        as u16
+                );
+                CopyPalettesForSamusDeath(
                 (2u16).wrapping_mul(
                     (byte!(@pointer rom_ptr!(game; 0x9bb823); (2 * word!(game.g_word_7E0DE4) as i32 + 1) as isize))
                         as u16,
                 ),
                 game,
             );
-        } else {
-            word!(
-                game.game_options_screen_index = *(rom_ptr!(game, u8; 0x9bb823))
-                    .offset((2 * word!(game.g_word_7E0DE4) as i32) as isize,)
-                    as u16
-            );
+            } else {
+                word!(
+                    game.game_options_screen_index = *(rom_ptr!(game, u8; 0x9bb823))
+                        .offset((2 * word!(game.g_word_7E0DE4) as i32) as isize,)
+                        as u16
+                );
+            }
         }
+        DrawSamusSuitExploding(game);
+        0
     }
-    DrawSamusSuitExploding(game);
-    0
 }
 pub unsafe fn CancelGrappleBeamIfIncompatiblePose(game: &mut Game) {
-    if (kIsGrappleBannedForMovementType[*ram_ptr!(game; 0xa1f) as usize] == 0) {
-        if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff
-            && word!(game.grapple_beam_function) as i32 + 0x3882 & 0x8000 != 0
-        {
-            let mut v0: i16 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
-                .offset(word!(game.samus_pose) as isize))
-            .direction_shots_fired as i16;
-            if (v0 as u16 & 0xf0) == 0 {
-                if v0 as i32 == word!(game.grapple_beam_direction) as i32 {
-                    return;
+    unsafe {
+        if (kIsGrappleBannedForMovementType[*ram_ptr!(game; 0xa1f) as usize] == 0) {
+            if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff
+                && word!(game.grapple_beam_function) as i32 + 0x3882 & 0x8000 != 0
+            {
+                let mut v0: i16 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
+                    .offset(word!(game.samus_pose) as isize))
+                .direction_shots_fired as i16;
+                if (v0 as u16 & 0xf0) == 0 {
+                    if v0 as i32 == word!(game.grapple_beam_direction) as i32 {
+                        return;
+                    }
+                    if word!(game.grapple_varCF6) != 0 {
+                        QueueSfx1_Max6(7, game);
+                        word!(game.grapple_beam_function = ((0x9bc51ei32) as u16));
+                        return;
+                    }
                 }
-                if word!(game.grapple_varCF6) != 0 {
-                    QueueSfx1_Max6(7, game);
-                    word!(game.grapple_beam_function = ((0x9bc51ei32) as u16));
-                    return;
-                }
+            } else {
+                return;
             }
-        } else {
-            return;
         }
-    }
-    if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff {
-        word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
+        if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff {
+            word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
+        }
     }
 }
 pub unsafe fn CheckIfGrappleIsConnectedToBlock(game: &mut Game) -> u8 {
-    word! { game, 0;
-        grapple_beam_extension_x_velocity, grapple_beam_extension_y_velocity,
+    unsafe {
+        word! { game, 0;
+            grapple_beam_extension_x_velocity, grapple_beam_extension_y_velocity,
+        }
+        if (BlockReactGrapple(game) & 1) == 0 {
+            return 0;
+        }
+        word!(game.samus_grapple_flags = 1);
+        1
     }
-    if (BlockReactGrapple(game) & 1) == 0 {
-        return 0;
-    }
-    word!(game.samus_grapple_flags = 1);
-    1
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallGrappleNextFunc(ea: u32, game: &mut Game) => ea;
@@ -302,43 +324,45 @@ crate::game::callback_dispatch! {
     };
 }
 pub unsafe fn HandleConnectingGrapple(game: &mut Game) {
-    if *ram_ptr!(game; 0xa1f) as i32 == kMovementType_1A_GrabbedByDraygon as i32 {
-        word!(game.grapple_beam_function = ((0x9bc77ei32) as u16));
-        word!(game.grapple_beam_length_delta = 0);
-    } else {
-        let v1: i32 = 2 * word!(game.grapple_beam_direction) as i32;
-        if word!(game.samus_y_speed) != 0 || word!(game.samus_y_subspeed) != 0 {
-            word!(
-                game.grapple_beam_function =
-                    crate::rtl::rom_table_word!(game, 0x9bc3ee, v1 as isize)
-            );
-            CallGrappleNextFunc(
-                ((crate::rtl::rom_table_word!(game, 0x9bc3ee, (v1 + 1) as isize)) as u32)
-                    | (0x9b0000u32),
-                game,
-            );
-        } else if *ram_ptr!(game; 0xa1f) == 5 {
-            word!(
-                game.grapple_beam_function =
-                    crate::rtl::rom_table_word!(game, 0x9bc416, v1 as isize)
-            );
-            CallGrappleNextFunc(
-                ((crate::rtl::rom_table_word!(game, 0x9bc416, (v1 + 1) as isize)) as u32)
-                    | (0x9b0000u32),
-                game,
-            );
+    unsafe {
+        if *ram_ptr!(game; 0xa1f) as i32 == kMovementType_1A_GrabbedByDraygon as i32 {
+            word!(game.grapple_beam_function = ((0x9bc77ei32) as u16));
+            word!(game.grapple_beam_length_delta = 0);
         } else {
-            word!(
-                game.grapple_beam_function =
-                    crate::rtl::rom_table_word!(game, 0x9bc3c6, v1 as isize)
-            );
-            CallGrappleNextFunc(
-                ((crate::rtl::rom_table_word!(game, 0x9bc3c6, (v1 + 1) as isize)) as u32)
-                    | (0x9b0000u32),
-                game,
-            );
-        }
-    };
+            let v1: i32 = 2 * word!(game.grapple_beam_direction) as i32;
+            if word!(game.samus_y_speed) != 0 || word!(game.samus_y_subspeed) != 0 {
+                word!(
+                    game.grapple_beam_function =
+                        crate::rtl::rom_table_word!(game, 0x9bc3ee, v1 as isize)
+                );
+                CallGrappleNextFunc(
+                    ((crate::rtl::rom_table_word!(game, 0x9bc3ee, (v1 + 1) as isize)) as u32)
+                        | (0x9b0000u32),
+                    game,
+                );
+            } else if *ram_ptr!(game; 0xa1f) == 5 {
+                word!(
+                    game.grapple_beam_function =
+                        crate::rtl::rom_table_word!(game, 0x9bc416, v1 as isize)
+                );
+                CallGrappleNextFunc(
+                    ((crate::rtl::rom_table_word!(game, 0x9bc416, (v1 + 1) as isize)) as u32)
+                        | (0x9b0000u32),
+                    game,
+                );
+            } else {
+                word!(
+                    game.grapple_beam_function =
+                        crate::rtl::rom_table_word!(game, 0x9bc3c6, v1 as isize)
+                );
+                CallGrappleNextFunc(
+                    ((crate::rtl::rom_table_word!(game, 0x9bc3c6, (v1 + 1) as isize)) as u32)
+                        | (0x9b0000u32),
+                    game,
+                );
+            }
+        };
+    }
 }
 macro_rules! initialize_connected_grapple_angle {
     ($game:ident, $transition_graphics:literal) => {
@@ -358,55 +382,65 @@ macro_rules! initialize_connected_grapple_angle {
 }
 
 pub unsafe fn HandleConnectingGrapple_Swinging(game: &mut Game) {
-    initialize_connected_grapple_angle!(game, 9);
-    place_rope_origin(game);
+    unsafe {
+        initialize_connected_grapple_angle!(game, 9);
+        place_rope_origin(game);
+    }
 }
 pub unsafe fn HandleConnectingGrapple_StuckInPlace(game: &mut Game) {
-    initialize_connected_grapple_angle!(game, 10);
-    place_rope_origin(game);
+    unsafe {
+        initialize_connected_grapple_angle!(game, 10);
+        place_rope_origin(game);
+    }
 }
 pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> u8 {
-    let mut v0: u16 = 7;
-    while word!(game.grapple_beam_end_angle16)
-        != (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_0
-    {
-        v0 = v0.wrapping_sub(1);
-        if (v0 & 0x8000) != 0 {
-            return 0;
+    unsafe {
+        let mut v0: u16 = 7;
+        while word!(game.grapple_beam_end_angle16)
+            != (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_0
+        {
+            v0 = v0.wrapping_sub(1);
+            if (v0 & 0x8000) != 0 {
+                return 0;
+            }
         }
-    }
-    word! { game;
-        samus_new_pose_interrupted =
-            (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_2;
-        samus_x_pos = (word!(game.grapple_beam_end_x_pos)).wrapping_add(
-            (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_4,
-        );
-        samus_y_pos = (word!(game.grapple_beam_end_y_pos)).wrapping_add(
-            (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_6,
-        );
-        grapple_beam_function =
-            (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_8;
-    }
-    word! { game, 0; samus_special_transgfx_index, slow_grabble_scrolling_flag }
-    let v2: i16 =
-        ((word!(game.samus_x_pos)) as i16).wrapping_sub((word!(game.samus_prev_x_pos)) as i16);
-    if ((word!(game.samus_x_pos)) as i16).wrapping_sub((word!(game.samus_prev_x_pos)) as i16) < 0 {
-        if v2 as i32 + 12 & 0x8000 != 0 {
-            word!(game.samus_prev_x_pos = (word!(game.samus_x_pos)).wrapping_add(12));
+        word! { game;
+            samus_new_pose_interrupted =
+                (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_2;
+            samus_x_pos = (word!(game.grapple_beam_end_x_pos)).wrapping_add(
+                (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_4,
+            );
+            samus_y_pos = (word!(game.grapple_beam_end_y_pos)).wrapping_add(
+                (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_6,
+            );
+            grapple_beam_function =
+                (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_8;
         }
-    } else if v2 as i32 - 13i32 & 0x8000 == 0 {
-        word!(game.samus_prev_x_pos = (word!(game.samus_x_pos)).wrapping_sub(12));
-    }
-    let v3: i16 =
-        ((word!(game.samus_y_pos)) as i16).wrapping_sub((word!(game.samus_prev_y_pos)) as i16);
-    if ((word!(game.samus_y_pos)) as i16).wrapping_sub((word!(game.samus_prev_y_pos)) as i16) < 0 {
-        if v3 as i32 + 12 & 0x8000 != 0 {
-            word!(game.samus_prev_y_pos = (word!(game.samus_y_pos)).wrapping_add(12));
+        word! { game, 0; samus_special_transgfx_index, slow_grabble_scrolling_flag }
+        let v2: i16 =
+            ((word!(game.samus_x_pos)) as i16).wrapping_sub((word!(game.samus_prev_x_pos)) as i16);
+        if ((word!(game.samus_x_pos)) as i16).wrapping_sub((word!(game.samus_prev_x_pos)) as i16)
+            < 0
+        {
+            if v2 as i32 + 12 & 0x8000 != 0 {
+                word!(game.samus_prev_x_pos = (word!(game.samus_x_pos)).wrapping_add(12));
+            }
+        } else if v2 as i32 - 13i32 & 0x8000 == 0 {
+            word!(game.samus_prev_x_pos = (word!(game.samus_x_pos)).wrapping_sub(12));
         }
-    } else if v3 as i32 - 13i32 & 0x8000 == 0 {
-        word!(game.samus_prev_y_pos = (word!(game.samus_y_pos)).wrapping_sub(12));
+        let v3: i16 =
+            ((word!(game.samus_y_pos)) as i16).wrapping_sub((word!(game.samus_prev_y_pos)) as i16);
+        if ((word!(game.samus_y_pos)) as i16).wrapping_sub((word!(game.samus_prev_y_pos)) as i16)
+            < 0
+        {
+            if v3 as i32 + 12 & 0x8000 != 0 {
+                word!(game.samus_prev_y_pos = (word!(game.samus_y_pos)).wrapping_add(12));
+            }
+        } else if v3 as i32 - 13i32 & 0x8000 == 0 {
+            word!(game.samus_prev_y_pos = (word!(game.samus_y_pos)).wrapping_sub(12));
+        }
+        1
     }
-    1
 }
 macro_rules! place_samus_relative_to_grapple_origin {
     ($game:ident, $offset_table:literal, $offset_index:ident) => {
@@ -449,118 +483,127 @@ macro_rules! restore_grapple_start_positions {
 }
 
 pub unsafe fn UpdateGrappleBeamTilesAndIncrFlameCtr(game: &mut Game) {
-    UpdateGrappleBeamTiles(game);
-    if word!(game.flare_counter) as i32 - 120i32 & 0x8000 != 0 {
-        word!(game.flare_counter += 1);
+    unsafe {
+        UpdateGrappleBeamTiles(game);
+        if word!(game.flare_counter) as i32 - 120i32 & 0x8000 != 0 {
+            word!(game.flare_counter += 1);
+        }
     }
 }
 pub unsafe fn UpdateGrappleBeamTiles(game: &mut Game) {
-    if (word!(game.grapple_point_anim_timer -= 1, reread) & 0x8000) != 0 {
-        word!(game.grapple_point_anim_timer = 5);
-        word!(game.grapple_point_anim_ptr += 512);
-        if ((word!(game.grapple_point_anim_ptr)) as i16)
-            .wrapping_sub((crate::rtl::rom_table_word!(game, 0x9bc344, 0)) as i16)
-            >= 0
-        {
-            word!(game.grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0));
+    unsafe {
+        if (word!(game.grapple_point_anim_timer -= 1, reread) & 0x8000) != 0 {
+            word!(game.grapple_point_anim_timer = 5);
+            word!(game.grapple_point_anim_ptr += 512);
+            if ((word!(game.grapple_point_anim_ptr)) as i16)
+                .wrapping_sub((crate::rtl::rom_table_word!(game, 0x9bc344, 0)) as i16)
+                >= 0
+            {
+                word!(game.grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0));
+            }
         }
+        let mut v0: u16 = word!(game.vram_write_queue_tail);
+        (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 32;
+        v0 = (v0).wrapping_add(2);
+        (*gVramWriteEntry(v0 as i32, game)).size = word!(game.grapple_point_anim_ptr);
+        v0 = (v0).wrapping_add(2);
+        crate::update_place! { previous fresh27 = v0 => v0.wrapping_add(1); }
+        *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
+            fresh27 as i32,
+            game,
+        ))
+        .size as *mut u8) = -102i32 as u8;
+        (*gVramWriteEntry(v0 as i32, game)).size = 25088;
+        word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
+        let v1: u16 = (*ram_ptr!(game; 0xcfb) as i32 >> 1 & 0xfe) as u16;
+        v0 = (v0).wrapping_add(2);
+        (*gVramWriteEntry(v0 as i32, game)).size = 128;
+        v0 = (v0).wrapping_add(2);
+        (*gVramWriteEntry(v0 as i32, game)).size =
+            crate::rtl::rom_table_word!(game, 0x9bc346, (v1 >> 1) as isize);
+        v0 = (v0).wrapping_add(2);
+        crate::update_place! { previous fresh28 = v0 => v0.wrapping_add(1); }
+        *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
+            fresh28 as i32,
+            game,
+        ))
+        .size as *mut u8) = -102i32 as u8;
+        (*gVramWriteEntry(v0 as i32, game)).size = 25104;
+        word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
     }
-    let mut v0: u16 = word!(game.vram_write_queue_tail);
-    (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 32;
-    v0 = (v0).wrapping_add(2);
-    (*gVramWriteEntry(v0 as i32, game)).size = word!(game.grapple_point_anim_ptr);
-    v0 = (v0).wrapping_add(2);
-    crate::update_place! { previous fresh27 = v0 => v0.wrapping_add(1); }
-    *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-        fresh27 as i32,
-        game,
-    ))
-    .size as *mut u8) = -102i32 as u8;
-    (*gVramWriteEntry(v0 as i32, game)).size = 25088;
-    word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
-    let v1: u16 = (*ram_ptr!(game; 0xcfb) as i32 >> 1 & 0xfe) as u16;
-    v0 = (v0).wrapping_add(2);
-    (*gVramWriteEntry(v0 as i32, game)).size = 128;
-    v0 = (v0).wrapping_add(2);
-    (*gVramWriteEntry(v0 as i32, game)).size =
-        crate::rtl::rom_table_word!(game, 0x9bc346, (v1 >> 1) as isize);
-    v0 = (v0).wrapping_add(2);
-    crate::update_place! { previous fresh28 = v0 => v0.wrapping_add(1); }
-    *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-        fresh28 as i32,
-        game,
-    ))
-    .size as *mut u8) = -102i32 as u8;
-    (*gVramWriteEntry(v0 as i32, game)).size = 25104;
-    word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
 }
 pub unsafe fn HandleGrappleBeamFlare(game: &mut Game) {
-    if word!(game.flare_counter) != 0 {
-        if word!(game.flare_counter) == 1 {
-            word! {game; flare_animation_frame = 16; flare_animation_timer = 3; }
-        }
-        if (word!(game.flare_animation_timer -= 1, reread) & 0x8000) != 0 {
-            let mut v0: u16 = word!(game.flare_animation_frame += 1, reread);
-            if byte!(@pointer rom_ptr!(game; 0x90c487); word!(game.flare_animation_frame) as isize)
-                == 254
-            {
-                word!(
-                    game.flare_animation_frame -= (*(rom_ptr!(game, u8; 0x90c487))
-                        .offset(((word!(game.flare_animation_frame)).wrapping_add(1)) as isize,))
-                        as u16
-                );
-                v0 = word!(game.flare_animation_frame);
+    unsafe {
+        if word!(game.flare_counter) != 0 {
+            if word!(game.flare_counter) == 1 {
+                word! {game; flare_animation_frame = 16; flare_animation_timer = 3; }
             }
-            word!(
-                game.flare_animation_timer =
-                    *(rom_ptr!(game, u8; 0x90c487)).offset(v0 as isize) as u16
-            );
-        }
-        let mut r22: u16 = if *ram_ptr!(game; 0xa1e) == 4 {
-            (word!(game.flare_animation_frame))
-                .wrapping_add(crate::rtl::rom_table_word!(game, 0x93a22b, 0))
-        } else {
-            (word!(game.flare_animation_frame))
-                .wrapping_add(crate::rtl::rom_table_word!(game, 0x93a225, 0))
-        };
-        let r20: u16 = (word!(game.x_pos_of_start_of_grapple_beam_prevframe))
-            .wrapping_sub(word!(game.layer1_x_pos));
-        let r18: u16 = (word!(game.y_pos_of_start_of_grapple_beam_prevframe))
-            .wrapping_sub(word!(game.layer1_y_pos));
-        if ((word!(game.y_pos_of_start_of_grapple_beam_prevframe) as i32
-            - word!(game.layer1_y_pos) as i32
-            & 0xff00)
-            == 0)
-        {
-            DrawBeamGrappleSpritemap(r22, r20, r18, game);
+            if (word!(game.flare_animation_timer -= 1, reread) & 0x8000) != 0 {
+                let mut v0: u16 = word!(game.flare_animation_frame += 1, reread);
+                if byte!(@pointer rom_ptr!(game; 0x90c487); word!(game.flare_animation_frame) as isize)
+                    == 254
+                {
+                    word!(
+                        game.flare_animation_frame -=
+                            (*(rom_ptr!(game, u8; 0x90c487)).offset(
+                                ((word!(game.flare_animation_frame)).wrapping_add(1)) as isize,
+                            )) as u16
+                    );
+                    v0 = word!(game.flare_animation_frame);
+                }
+                word!(
+                    game.flare_animation_timer =
+                        *(rom_ptr!(game, u8; 0x90c487)).offset(v0 as isize) as u16
+                );
+            }
+            let mut r22: u16 = if *ram_ptr!(game; 0xa1e) == 4 {
+                (word!(game.flare_animation_frame))
+                    .wrapping_add(crate::rtl::rom_table_word!(game, 0x93a22b, 0))
+            } else {
+                (word!(game.flare_animation_frame))
+                    .wrapping_add(crate::rtl::rom_table_word!(game, 0x93a225, 0))
+            };
+            let r20: u16 = (word!(game.x_pos_of_start_of_grapple_beam_prevframe))
+                .wrapping_sub(word!(game.layer1_x_pos));
+            let r18: u16 = (word!(game.y_pos_of_start_of_grapple_beam_prevframe))
+                .wrapping_sub(word!(game.layer1_y_pos));
+            if ((word!(game.y_pos_of_start_of_grapple_beam_prevframe) as i32
+                - word!(game.layer1_y_pos) as i32
+                & 0xff00)
+                == 0)
+            {
+                DrawBeamGrappleSpritemap(r22, r20, r18, game);
+            }
         }
     }
 }
 pub unsafe fn GrappleBeamHandler(game: &mut Game) {
-    let mut r18: u16 = 0;
-    if word!(game.grapple_varCF6) != 0 {
-        word!(game.grapple_varCF6 -= 1);
-    }
-    word!(game.samus_grapple_flags &= !(1));
-    CancelGrappleBeamIfIncompatiblePose(game);
-    CallGrappleBeamFunc(
-        ((word!(game.grapple_beam_function)) as u32) | (0x9b0000u32),
-        game,
-    );
-    if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff
-        && word!(game.grapple_beam_function) as i32 - (0x9bc856 & 0xffff) & 0x8000 != 0
-        && (word!(game.samus_suit_palette_index) & 4) == 0
-        && word!(game.fx_type) != 0
-        && {
-            r18 = Samus_GetBottom_R18(game);
-            (word!(game.fx_y_pos) & 0x8000) == 0
+    unsafe {
+        let mut r18: u16 = 0;
+        if word!(game.grapple_varCF6) != 0 {
+            word!(game.grapple_varCF6 -= 1);
         }
-        && word!(game.fx_y_pos) as i32 - r18 as i32 & 0x8000 != 0
-    {
-        word!(game.grapple_beam_flags |= (1u16));
-    } else {
-        word!(game.grapple_beam_flags &= !(1));
-    };
+        word!(game.samus_grapple_flags &= !(1));
+        CancelGrappleBeamIfIncompatiblePose(game);
+        CallGrappleBeamFunc(
+            ((word!(game.grapple_beam_function)) as u32) | (0x9b0000u32),
+            game,
+        );
+        if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff
+            && word!(game.grapple_beam_function) as i32 - (0x9bc856 & 0xffff) & 0x8000 != 0
+            && (word!(game.samus_suit_palette_index) & 4) == 0
+            && word!(game.fx_type) != 0
+            && {
+                r18 = Samus_GetBottom_R18(game);
+                (word!(game.fx_y_pos) & 0x8000) == 0
+            }
+            && word!(game.fx_y_pos) as i32 - r18 as i32 & 0x8000 != 0
+        {
+            word!(game.grapple_beam_flags |= (1u16));
+        } else {
+            word!(game.grapple_beam_flags &= !(1));
+        };
+    }
 }
 macro_rules! initialize_grapple_endpoints {
     (
@@ -594,27 +637,29 @@ macro_rules! initialize_grapple_endpoints {
 }
 
 pub unsafe fn CheckBannedDraygonGrappleDirs(a: u16, game: &mut Game) -> u16 {
-    if a as i32 == kPose_BE_FaceL_Draygon_Move as i32 {
-        if (word!(game.joypad1_lastkeys) as i32 & kButton_Left as i32) != 0 {
-            if (word!(game.joypad1_lastkeys) as i32 & kButton_Down as i32) != 0 {
-                return 6;
+    unsafe {
+        if a as i32 == kPose_BE_FaceL_Draygon_Move as i32 {
+            if (word!(game.joypad1_lastkeys) as i32 & kButton_Left as i32) != 0 {
+                if (word!(game.joypad1_lastkeys) as i32 & kButton_Down as i32) != 0 {
+                    return 6;
+                }
+                if (word!(game.joypad1_lastkeys) as i32 & kButton_Up as i32) != 0 {
+                    return 8;
+                }
             }
-            if (word!(game.joypad1_lastkeys) as i32 & kButton_Up as i32) != 0 {
-                return 8;
-            }
+            return 7;
         }
-        return 7;
+        if (word!(game.joypad1_lastkeys) as i32 & kButton_Right as i32) == 0 {
+            return 2;
+        }
+        if (word!(game.joypad1_lastkeys) as i32 & kButton_Down as i32) != 0 {
+            return 3;
+        }
+        if (word!(game.joypad1_lastkeys) as i32 & kButton_Up as i32) == 0 {
+            return 2;
+        }
+        1
     }
-    if (word!(game.joypad1_lastkeys) as i32 & kButton_Right as i32) == 0 {
-        return 2;
-    }
-    if (word!(game.joypad1_lastkeys) as i32 & kButton_Down as i32) != 0 {
-        return 3;
-    }
-    if (word!(game.joypad1_lastkeys) as i32 & kButton_Up as i32) == 0 {
-        return 2;
-    }
-    1
 }
 macro_rules! clear_grapple_state_after_release {
     ($game:ident) => {
@@ -636,54 +681,56 @@ macro_rules! clear_grapple_state_after_release {
 }
 
 pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
-    let mut v0: u16 = 0;
-    if (word!(game.grapple_beam_unkD26) & 0x8000) == 0 {
-        v0 = (2u16).wrapping_mul(word!(game.grapple_beam_unkD26));
-        let mut v2: i16 = kSinCosTable8bit_Sext
-            [(byte!(@pointer ram_ptr!(game, u16; 0xcfa); 1) as i32 + 64) as usize];
-        if v2 >= 0 {
-            words!(
-                game.samus_y_speed,
-                samus_y_subspeed = Multiply16x16(v2 as u16, v0, game)
-            );
-            word!(game.samus_y_dir = 2);
+    unsafe {
+        let mut v0: u16 = 0;
+        if (word!(game.grapple_beam_unkD26) & 0x8000) == 0 {
+            v0 = (2u16).wrapping_mul(word!(game.grapple_beam_unkD26));
+            let mut v2: i16 = kSinCosTable8bit_Sext
+                [(byte!(@pointer ram_ptr!(game, u16; 0xcfa); 1) as i32 + 64) as usize];
+            if v2 >= 0 {
+                words!(
+                    game.samus_y_speed,
+                    samus_y_subspeed = Multiply16x16(v2 as u16, v0, game)
+                );
+                word!(game.samus_y_dir = 2);
+            } else {
+                words!(
+                    game.samus_y_speed,
+                    samus_y_subspeed = Multiply16x16(-(v2 as i32) as u16, v0, game)
+                );
+                word!(game.samus_y_dir = 1);
+            }
         } else {
-            words!(
-                game.samus_y_speed,
-                samus_y_subspeed = Multiply16x16(-(v2 as i32) as u16, v0, game)
-            );
-            word!(game.samus_y_dir = 1);
+            v0 = (-2i32 * word!(game.grapple_beam_unkD26) as i32) as u16;
+            let mut v1: i16 = kSinCosTable8bit_Sext
+                [(byte!(@pointer ram_ptr!(game, u16; 0xcfa); 1) as i32 + 64) as usize];
+            if v1 < 0 {
+                words!(
+                    game.samus_y_speed,
+                    samus_y_subspeed = Multiply16x16(-(v1 as i32) as u16, v0, game)
+                );
+                word!(game.samus_y_dir = 2);
+            } else {
+                words!(
+                    game.samus_y_speed,
+                    samus_y_subspeed = Multiply16x16(v1 as u16, v0, game)
+                );
+                word!(game.samus_y_dir = 1);
+            }
         }
-    } else {
-        v0 = (-2i32 * word!(game.grapple_beam_unkD26) as i32) as u16;
-        let mut v1: i16 = kSinCosTable8bit_Sext
-            [(byte!(@pointer ram_ptr!(game, u16; 0xcfa); 1) as i32 + 64) as usize];
-        if v1 < 0 {
-            words!(
-                game.samus_y_speed,
-                samus_y_subspeed = Multiply16x16(-(v1 as i32) as u16, v0, game)
-            );
-            word!(game.samus_y_dir = 2);
-        } else {
-            words!(
-                game.samus_y_speed,
-                samus_y_subspeed = Multiply16x16(v1 as u16, v0, game)
-            );
-            word!(game.samus_y_dir = 1);
-        }
+        word!(game.samus_x_accel_mode = 2);
+        let mut r18: u16 = (3 * (v0 as i32 >> 9)) as u16;
+        r18 = (64u16).wrapping_sub(r18);
+        let v3: u16 = abs16(
+            kSinCosTable8bit_Sext
+                [(((*ram_ptr!(game; 0xcfb)).wrapping_sub((r18) as u8)) as i32 + 64) as usize]
+                as u16,
+        );
+        words!(
+            game.samus_x_base_speed,
+            samus_x_base_subspeed = Multiply16x16(v3, v0, game)
+        );
     }
-    word!(game.samus_x_accel_mode = 2);
-    let mut r18: u16 = (3 * (v0 as i32 >> 9)) as u16;
-    r18 = (64u16).wrapping_sub(r18);
-    let v3: u16 = abs16(
-        kSinCosTable8bit_Sext
-            [(((*ram_ptr!(game; 0xcfb)).wrapping_sub((r18) as u8)) as i32 + 64) as usize]
-            as u16,
-    );
-    words!(
-        game.samus_x_base_speed,
-        samus_x_base_subspeed = Multiply16x16(v3, v0, game)
-    );
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallGrappleBeamFunc(ea: u32, game: &mut Game) => ea;

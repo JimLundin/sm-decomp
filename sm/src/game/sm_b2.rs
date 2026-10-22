@@ -15,9 +15,8 @@ use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_90::ProjectileReflection;
 use crate::game::sm_a0::{
-    CosineMult8bit, EnemyFunc_BBBF,
-    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, IsSamusWithinEnemy_Y,
-    SineMult8bit,
+    CosineMult8bit, EnemyFunc_BBBF, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    IsSamusWithinEnemy_Y, SineMult8bit,
 };
 use crate::game::sprite_objects::create_sprite;
 
@@ -51,138 +50,154 @@ crate::ram_map::ram_pointer_functions! {
     Get_SpacePirates(o: i32) -> Enemy_SpacePirates = [0xf78, o as isize];
 }
 pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
-    if ((*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
-        .base
-        .enemy_ptr as i32
-        == addr_kEnemyDef_F593 as i32)
-    {
-        let r18: u16 = word!(game.projectile_type[word!(game.collision_detection_index)]);
-        if (r18 as i32 & kProjectileType_TypeMask as i32) - kProjectileType_PowerBomb as i32
+    unsafe {
+        if ((*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
+            .base
+            .enemy_ptr as i32
+            == addr_kEnemyDef_F593 as i32)
+        {
+            let r18: u16 = word!(game.projectile_type[word!(game.collision_detection_index)]);
+            if (r18 as i32 & kProjectileType_TypeMask as i32) - kProjectileType_PowerBomb as i32
+                & 0x8000
+                == 0
+            {
+                return;
+            }
+            let enemy_ptr = (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
+                .base
+                .enemy_ptr;
+            let mut vulnerability_ptr =
+                rom_record(0xa0, enemy_ptr, game).word(offset_of!(EnemyDef, vulnerability_ptr));
+            if vulnerability_ptr == 0 {
+                vulnerability_ptr = addr_stru_B4EC1C as u16;
+            }
+            let r20 = vulnerability_ptr;
+            let vulnerable = if (r18 as i32 & kProjectileType_TypeMask as i32) != 0 {
+                if r18 as i32 & kProjectileType_TypeMask as i32 != kProjectileType_Missile as i32
+                    && r18 as i32 & kProjectileType_TypeMask as i32
+                        != kProjectileType_SuperMissile as i32
+                {
+                    true
+                } else {
+                    let v3: i16 = (((r18) & ((kProjectileType_TypeMask) as u16)) >> 8) as i16;
+                    let v = rom_record(0xb4, (r20).wrapping_add((v3) as u16), game);
+                    (v.byte(offset_of!(Vulnerability, plasma_ice_wave)) & 0xf) != 0
+                        && (v.byte(offset_of!(Vulnerability, plasma_ice_wave)) & 0xf) != 15
+                }
+            } else {
+                let v2 = rom_record(0xb4, (r20 as i32 + (r18 as i32 & 0xf)) as u16, game);
+                (v2.byte(offset_of!(Vulnerability, power)) & 0xf) != 0
+                    && (v2.byte(offset_of!(Vulnerability, power)) & 0xf) != 15
+            };
+            if !vulnerable {
+                WalkingSpacePirates_883E(game);
+                return;
+            }
+        }
+        WalkingSpacePirates_8789(game);
+    }
+}
+pub unsafe fn WalkingSpacePirates_883E(game: &mut Game) {
+    unsafe {
+        if (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
+            .base
+            .enemy_ptr as i32
+            != addr_kEnemyDef_F593 as i32
+        {
+            WalkingSpacePirates_8789(game);
+            return;
+        }
+        let v0: u16 = (2u16).wrapping_mul(word!(game.collision_detection_index));
+        let v1: i32 = word!(game.collision_detection_index) as i32;
+        let r18: u16 = word!(game.projectile_type[v1]);
+        if r18 as i32 & kProjectileType_TypeMask as i32 == kProjectileType_SuperMissile as i32 {
+            if word!(game.projectile_variables[v1]) == 0 {
+                return;
+            }
+        } else if (r18 as i32 & kProjectileType_TypeMask as i32) - kProjectileType_PowerBomb as i32
             & 0x8000
             == 0
         {
             return;
         }
-        let enemy_ptr = (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
+        (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
             .base
-            .enemy_ptr;
-        let mut vulnerability_ptr = rom_record(0xa0, enemy_ptr, game).word(offset_of!(EnemyDef, vulnerability_ptr));
-        if vulnerability_ptr == 0 {
-            vulnerability_ptr = addr_stru_B4EC1C as u16;
-        }
-        let r20 = vulnerability_ptr;
-        let vulnerable = if (r18 as i32 & kProjectileType_TypeMask as i32) != 0 {
-            if r18 as i32 & kProjectileType_TypeMask as i32 != kProjectileType_Missile as i32
-                && r18 as i32 & kProjectileType_TypeMask as i32
-                    != kProjectileType_SuperMissile as i32
-            {
-                true
-            } else {
-                let v3: i16 = (((r18) & ((kProjectileType_TypeMask) as u16)) >> 8) as i16;
-                let v = rom_record(0xb4, (r20).wrapping_add((v3) as u16), game);
-                (v.byte(offset_of!(Vulnerability, plasma_ice_wave)) & 0xf) != 0 && (v.byte(offset_of!(Vulnerability, plasma_ice_wave)) & 0xf) != 15
-            }
+            .invincibility_timer = 10;
+        let mut v2: u16 = if (word!(game.projectile_dir[v1]) & 0xf) == 7 {
+            1
+        } else if (word!(game.projectile_dir[v1]) & 0xf) == 2 {
+            8
         } else {
-            let v2 = rom_record(0xb4, (r20 as i32 + (r18 as i32 & 0xf)) as u16, game);
-            (v2.byte(offset_of!(Vulnerability, power)) & 0xf) != 0 && (v2.byte(offset_of!(Vulnerability, power)) & 0xf) != 15
+            5
         };
-        if !vulnerable {
-            WalkingSpacePirates_883E(game);
-            return;
-        }
+        word!(game.projectile_dir[v1] = v2);
+        ProjectileReflection(v0, game);
+        QueueSfx2_Max6(0x66, game);
     }
-    WalkingSpacePirates_8789(game);
-}
-pub unsafe fn WalkingSpacePirates_883E(game: &mut Game) {
-    if (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
-        .base
-        .enemy_ptr as i32
-        != addr_kEnemyDef_F593 as i32
-    {
-        WalkingSpacePirates_8789(game);
-        return;
-    }
-    let v0: u16 = (2u16).wrapping_mul(word!(game.collision_detection_index));
-    let v1: i32 = word!(game.collision_detection_index) as i32;
-    let r18: u16 = word!(game.projectile_type[v1]);
-    if r18 as i32 & kProjectileType_TypeMask as i32 == kProjectileType_SuperMissile as i32 {
-        if word!(game.projectile_variables[v1]) == 0 {
-            return;
-        }
-    } else if (r18 as i32 & kProjectileType_TypeMask as i32) - kProjectileType_PowerBomb as i32
-        & 0x8000
-        == 0
-    {
-        return;
-    }
-    (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
-        .base
-        .invincibility_timer = 10;
-    let mut v2: u16 = if (word!(game.projectile_dir[v1]) & 0xf) == 7 {
-        1
-    } else if (word!(game.projectile_dir[v1]) & 0xf) == 2 {
-        8
-    } else {
-        5
-    };
-    word!(game.projectile_dir[v1] = v2);
-    ProjectileReflection(v0, game);
-    QueueSfx2_Max6(0x66, game);
 }
 pub unsafe fn SpacePirates_Func_8(game: &mut Game) -> u16 {
-    let mut v0: u16 = 8;
-    while word!(game.projectile_type[(v0 >> 1)]) == 0 {
-        v0 = (v0).wrapping_sub(2);
-        if (v0 & 0x8000) != 0 {
-            return 0;
+    unsafe {
+        let mut v0: u16 = 8;
+        while word!(game.projectile_type[(v0 >> 1)]) == 0 {
+            v0 = (v0).wrapping_sub(2);
+            if (v0 & 0x8000) != 0 {
+                return 0;
+            }
         }
-    }
-    let v1: i32 = v0 as i32 >> 1;
-    let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
-    if ((abs16((word!(game.projectile_x_pos[v1])).wrapping_sub((*E).base.x_pos))) as i16)
-        .wrapping_sub(32)
-        >= 0
-        || ((abs16((word!(game.projectile_y_pos[v1])).wrapping_sub((*E).base.y_pos))) as i16)
+        let v1: i32 = v0 as i32 >> 1;
+        let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
+        if ((abs16((word!(game.projectile_x_pos[v1])).wrapping_sub((*E).base.x_pos))) as i16)
             .wrapping_sub(32)
             >= 0
-    {
-        return 0;
+            || ((abs16((word!(game.projectile_y_pos[v1])).wrapping_sub((*E).base.y_pos))) as i16)
+                .wrapping_sub(32)
+                >= 0
+        {
+            return 0;
+        }
+        enemy_instruction! {[(*E).base]; instruction = (if (*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32 & 0x8000 != 0 {
+            addr_kSpacePirates_Ilist_F462 as i32
+        } else {
+            addr_kSpacePirates_Ilist_F270 as i32
+        }) as u16, timer = 1}
+        1
     }
-    enemy_instruction! {[(*E).base]; instruction = (if (*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32 & 0x8000 != 0 {
-        addr_kSpacePirates_Ilist_F462 as i32
-    } else {
-        addr_kSpacePirates_Ilist_F270 as i32
-    }) as u16, timer = 1}
-    1
 }
 pub unsafe fn SpacePirates_Func_9(game: &mut Game) -> u16 {
-    let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
-    if ((abs16(((*E).var_D).wrapping_sub(word!(game.samus_x_pos)))) as i16).wrapping_sub(32) >= 0 {
-        return 0;
+    unsafe {
+        let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
+        if ((abs16(((*E).var_D).wrapping_sub(word!(game.samus_x_pos)))) as i16).wrapping_sub(32)
+            >= 0
+        {
+            return 0;
+        }
+        let mut v1: u16 = addr_kSpacePirates_Ilist_F1C4 as u16;
+        if (*E).base.x_pos == (*E).var_E {
+            v1 = addr_kSpacePirates_Ilist_F3B2 as u16;
+        }
+        enemy_instruction! {[(*E).base]; instruction = v1, timer = 1}
+        1
     }
-    let mut v1: u16 = addr_kSpacePirates_Ilist_F1C4 as u16;
-    if (*E).base.x_pos == (*E).var_E {
-        v1 = addr_kSpacePirates_Ilist_F3B2 as u16;
-    }
-    enemy_instruction! {[(*E).base]; instruction = v1, timer = 1}
-    1
 }
 pub unsafe fn SpacePirates_Func_10(game: &mut Game) -> u16 {
-    let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
-    if ((abs16((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos))) as i16).wrapping_sub(40)
-        >= 0
-        || ((abs16((word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos))) as i16)
+    unsafe {
+        let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
+        if ((abs16((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos))) as i16)
             .wrapping_sub(40)
             >= 0
-    {
-        return 0;
+            || ((abs16((word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos))) as i16)
+                .wrapping_sub(40)
+                >= 0
+        {
+            return 0;
+        }
+        enemy_instruction! {[(*E).base]; instruction = (if ((*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32 & 0x8000) != 0 {
+            addr_kSpacePirates_Ilist_F51A as i32
+        } else {
+            addr_kSpacePirates_Ilist_F32E as i32
+        }) as u16, timer = 1}
+        1
     }
-    enemy_instruction! {[(*E).base]; instruction = (if ((*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32 & 0x8000) != 0 {
-        addr_kSpacePirates_Ilist_F51A as i32
-    } else {
-        addr_kSpacePirates_Ilist_F32E as i32
-    }) as u16, timer = 1}
-    1
 }
 macro_rules! finish_space_pirate_vertical_jump {
     (
@@ -445,27 +460,29 @@ crate::game::callback_dispatch! {
     }
 }
 pub unsafe fn WalkingSpacePirates_FE4B(game: &mut Game) {
-    let mut v0: u16 = 8;
-    while word!(game.projectile_type[(v0 >> 1)]) == 0 {
-        v0 = (v0).wrapping_sub(2);
-        if (v0 & 0x8000) != 0 {
-            return;
+    unsafe {
+        let mut v0: u16 = 8;
+        while word!(game.projectile_type[(v0 >> 1)]) == 0 {
+            v0 = (v0).wrapping_sub(2);
+            if (v0 & 0x8000) != 0 {
+                return;
+            }
         }
-    }
-    let v1: i32 = v0 as i32 >> 1;
-    let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
-    if ((abs16((word!(game.projectile_x_pos[v1])).wrapping_sub((*E).base.x_pos))) as i16)
-        .wrapping_sub(32)
-        < 0
-        && ((abs16((word!(game.projectile_y_pos[v1])).wrapping_sub((*E).base.y_pos))) as i16)
+        let v1: i32 = v0 as i32 >> 1;
+        let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
+        if ((abs16((word!(game.projectile_x_pos[v1])).wrapping_sub((*E).base.x_pos))) as i16)
             .wrapping_sub(32)
             < 0
-    {
-        enemy_instruction! {[(*E).base]; instruction = (if (*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32 & 0x8000 != 0 {
-            addr_kSpacePirates_Ilist_FB58 as i32
-        } else {
-            addr_kSpacePirates_Ilist_FB4C as i32
-        }) as u16, timer = 1}
+            && ((abs16((word!(game.projectile_y_pos[v1])).wrapping_sub((*E).base.y_pos))) as i16)
+                .wrapping_sub(32)
+                < 0
+        {
+            enemy_instruction! {[(*E).base]; instruction = (if (*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32 & 0x8000 != 0 {
+                addr_kSpacePirates_Ilist_FB58 as i32
+            } else {
+                addr_kSpacePirates_Ilist_FB4C as i32
+            }) as u16, timer = 1}
+        }
     }
 }
 

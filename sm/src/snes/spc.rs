@@ -15,7 +15,7 @@ const _: () = {
 // The dependency only follows Spc fields; its Apu pointer stays opaque.
 // Keep the live Rust layout and legacy save span, including reset read order.
 #[link(name = "lakesnes_spc", kind = "static", modifiers = "-bundle")]
-extern "C-unwind" {
+unsafe extern "C-unwind" {
     pub fn spc_runOpcode(spc: *mut Spc) -> i32;
 }
 
@@ -27,13 +27,17 @@ pub fn spc_init(apu: *mut Apu) -> *mut Spc {
     }))
 }
 pub unsafe fn spc_reset(spc: *mut Spc) {
-    set_fields! {[(*spc)], 0; a, x, y, sp}
-    (*spc).pc = (apu_cpuRead((*spc).apu, 0xfffe) as i32
-        | (apu_cpuRead((*spc).apu, 0xffff) as i32) << 8) as u16;
-    set_fields! {[(*spc)]; c = false, z = false, v = false,
-    n = false, i = false, h = false, p = false, b = false,
-    stopped = false, cyclesUsed = 0, };
+    unsafe {
+        set_fields! {[(*spc)], 0; a, x, y, sp}
+        (*spc).pc = (apu_cpuRead((*spc).apu, 0xfffe) as i32
+            | (apu_cpuRead((*spc).apu, 0xffff) as i32) << 8) as u16;
+        set_fields! {[(*spc)]; c = false, z = false, v = false,
+        n = false, i = false, h = false, p = false, b = false,
+        stopped = false, cyclesUsed = 0, };
+    }
 }
 pub unsafe fn spc_saveload(spc: *mut Spc, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
-    crate::rtl::snapshot_result(io.state(&mut *spc));
+    unsafe {
+        crate::rtl::snapshot_result(io.state(&mut *spc));
+    }
 }

@@ -119,59 +119,61 @@ crate::game::callback_dispatch! {
 }
 
 pub(crate) unsafe fn advance_animation(game: &mut Game) {
-    // Callbacks may change the current index; animation writes retain this slot.
-    let index = game.cur_enemy_index();
-    if game.enemy_instructions(index).ai_handler_bits() & 4 != 0 {
-        return;
-    }
-    let timer = game.enemy_instructions(index).instruction_timer();
-    let decremented = game
-        .enemy_instructions(index)
-        .instruction_timer()
-        .wrapping_sub(1);
-    game.enemy_instructions(index)
-        .set_instruction_timer(decremented);
-    if timer != 1 {
-        let properties = game.enemy_instructions(index).extra_properties() & !0x8000;
+    unsafe {
+        // Callbacks may change the current index; animation writes retain this slot.
+        let index = game.cur_enemy_index();
+        if game.enemy_instructions(index).ai_handler_bits() & 4 != 0 {
+            return;
+        }
+        let timer = game.enemy_instructions(index).instruction_timer();
+        let decremented = game
+            .enemy_instructions(index)
+            .instruction_timer()
+            .wrapping_sub(1);
+        game.enemy_instructions(index)
+            .set_instruction_timer(decremented);
+        if timer != 1 {
+            let properties = game.enemy_instructions(index).extra_properties() & !0x8000;
+            game.enemy_instructions(index)
+                .set_extra_properties(properties);
+            return;
+        }
+        if game.enemy_instructions(index).current_instruction() & 0x8000 == 0 {
+            crate::native_assertion! {
+                @failure
+                b"E->current_instruction & 0x8000\0", b"src/sm_a0.c\0", 3399,
+                b"void ProcessEnemyInstructions(void)\0"
+            };
+        }
+        let base = bank_base(game.enemy_instructions(index).bank());
+        let image = game
+            .loaded_rom
+            .as_ref()
+            .expect("ROM must be loaded")
+            .clone();
+        let mut pc = EnemyScript::at(
+            image.clone(),
+            usize::try_from(base + game.enemy_instructions(index).current_instruction() as isize)
+                .expect("enemy script outside ROM"),
+        );
+        while pc.word(0) & 0x8000 != 0 {
+            let address =
+                (u32::from(game.enemy_instructions(index).bank()) << 16) | u32::from(pc.word(0));
+            let next = dispatch_instruction(address, game.cur_enemy_index(), pc.offset(1), game);
+            let Some(next) = next.resolve(&image, base) else {
+                return;
+            };
+            pc = next;
+        }
+        game.enemy_instructions(index)
+            .set_instruction_timer(pc.word(0));
+        game.enemy_instructions(index)
+            .set_spritemap_pointer(pc.word(2));
+        let instruction = pc.advance(4).offset_from(base) as u16;
+        game.enemy_instructions(index)
+            .set_current_instruction(instruction);
+        let properties = game.enemy_instructions(index).extra_properties() | 0x8000;
         game.enemy_instructions(index)
             .set_extra_properties(properties);
-        return;
     }
-    if game.enemy_instructions(index).current_instruction() & 0x8000 == 0 {
-        crate::native_assertion! {
-            @failure
-            b"E->current_instruction & 0x8000\0", b"src/sm_a0.c\0", 3399,
-            b"void ProcessEnemyInstructions(void)\0"
-        };
-    }
-    let base = bank_base(game.enemy_instructions(index).bank());
-    let image = game
-        .loaded_rom
-        .as_ref()
-        .expect("ROM must be loaded")
-        .clone();
-    let mut pc = EnemyScript::at(
-        image.clone(),
-        usize::try_from(base + game.enemy_instructions(index).current_instruction() as isize)
-            .expect("enemy script outside ROM"),
-    );
-    while pc.word(0) & 0x8000 != 0 {
-        let address =
-            (u32::from(game.enemy_instructions(index).bank()) << 16) | u32::from(pc.word(0));
-        let next = dispatch_instruction(address, game.cur_enemy_index(), pc.offset(1), game);
-        let Some(next) = next.resolve(&image, base) else {
-            return;
-        };
-        pc = next;
-    }
-    game.enemy_instructions(index)
-        .set_instruction_timer(pc.word(0));
-    game.enemy_instructions(index)
-        .set_spritemap_pointer(pc.word(2));
-    let instruction = pc.advance(4).offset_from(base) as u16;
-    game.enemy_instructions(index)
-        .set_current_instruction(instruction);
-    let properties = game.enemy_instructions(index).extra_properties() | 0x8000;
-    game.enemy_instructions(index)
-        .set_extra_properties(properties);
 }

@@ -17,7 +17,7 @@ impl Default for GlTextureWithSize {
 }
 
 #[link(name = "sm_config", kind = "static", modifiers = "-bundle")]
-extern "C-unwind" {
+unsafe extern "C-unwind" {
     fn sm_shader_create(filename: *const c_char, opengl_es: bool) -> *mut GlslShader;
     fn sm_shader_render(
         shader: *mut GlslShader,
@@ -62,8 +62,10 @@ fn check_dependency() {
 }
 
 pub unsafe fn GlslShader_CreateFromFile(filename: *const c_char) -> *mut GlslShader {
-    check_dependency();
-    sm_shader_create(filename, false)
+    unsafe {
+        check_dependency();
+        sm_shader_create(filename, false)
+    }
 }
 
 struct HeapOwner(*mut GlslShader);
@@ -76,8 +78,10 @@ impl Drop for HeapOwner {
 }
 
 pub unsafe fn GlslShader_Destroy(shader: *mut GlslShader) {
-    let _heap = HeapOwner(shader);
-    sm_shader_destroy_gl(shader);
+    unsafe {
+        let _heap = HeapOwner(shader);
+        sm_shader_destroy_gl(shader);
+    }
 }
 
 pub unsafe fn GlslShader_Render(
@@ -88,99 +92,117 @@ pub unsafe fn GlslShader_Render(
     width: i32,
     height: i32,
 ) {
-    check_dependency();
-    sm_shader_render(shader, texture, x, y, width, height);
+    unsafe {
+        check_dependency();
+        sm_shader_render(shader, texture, x, y, width, height);
+    }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_destroy(shader: *mut GlslShader) {
-    GlslShader_Destroy(shader);
+    unsafe {
+        GlslShader_Destroy(shader);
+    }
 }
 
 // The root stays raw during creation. This local source owner drops before an
 // ordinary failure destroys the root, and drops while the raw root leaks on panic.
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_load_resources(
     shader: *mut GlslShader,
     filename: *const c_char,
 ) -> bool {
-    let mut source = Vec::<u8>::new();
-    sm_shader_load_body(shader, filename, (&raw mut source).cast())
+    unsafe {
+        let mut source = Vec::<u8>::new();
+        sm_shader_load_body(shader, filename, (&raw mut source).cast())
+    }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_source_clear(source: *mut c_void) {
-    (*source.cast::<Vec<u8>>()).clear();
+    unsafe {
+        (*source.cast::<Vec<u8>>()).clear();
+    }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_source_data(source: *mut c_void) -> *const u8 {
-    (*source.cast::<Vec<u8>>()).as_ptr()
+    unsafe { (*source.cast::<Vec<u8>>()).as_ptr() }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_source_length(source: *mut c_void) -> usize {
-    (*source.cast::<Vec<u8>>()).len()
+    unsafe { (*source.cast::<Vec<u8>>()).len() }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_append_line(
     source: *mut c_void,
     line: *const u8,
     length: usize,
 ) {
-    let output = &mut *source.cast::<Vec<u8>>();
-    if output.try_reserve(length + 1).is_err() {
-        crate::host::Die(c"memory allocation failed".as_ptr());
+    unsafe {
+        let output = &mut *source.cast::<Vec<u8>>();
+        if output.try_reserve(length + 1).is_err() {
+            crate::host::Die(c"memory allocation failed".as_ptr());
+        }
+        output.extend_from_slice(std::slice::from_raw_parts(line, length));
+        output.push(b'\n');
     }
-    output.extend_from_slice(std::slice::from_raw_parts(line, length));
-    output.push(b'\n');
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_allocate(
     size: usize,
     alignment: usize,
     nullable: bool,
 ) -> *mut c_void {
-    let layout = Layout::from_size_align(size, alignment).unwrap();
-    let allocation = alloc_zeroed(layout);
-    if allocation.is_null() && !nullable {
-        handle_alloc_error(layout);
+    unsafe {
+        let layout = Layout::from_size_align(size, alignment).unwrap();
+        let allocation = alloc_zeroed(layout);
+        if allocation.is_null() && !nullable {
+            handle_alloc_error(layout);
+        }
+        allocation.cast()
     }
-    allocation.cast()
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_deallocate(
     pointer: *mut c_void,
     size: usize,
     alignment: usize,
 ) {
-    if !pointer.is_null() {
-        dealloc(
-            pointer.cast(),
-            Layout::from_size_align(size, alignment).unwrap(),
-        );
+    unsafe {
+        if !pointer.is_null() {
+            dealloc(
+                pointer.cast(),
+                Layout::from_size_align(size, alignment).unwrap(),
+            );
+        }
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_clone_string(value: *const c_char) -> *mut c_char {
-    CStr::from_ptr(value).to_owned().into_raw()
+    unsafe { CStr::from_ptr(value).to_owned().into_raw() }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_free_string(value: *mut c_char) {
-    if !value.is_null() {
-        drop(CString::from_raw(value));
+    unsafe {
+        if !value.is_null() {
+            drop(CString::from_raw(value));
+        }
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_set_string(target: *mut *mut c_char, value: *const c_char) {
-    let replacement = sm_shader_clone_string(value);
-    sm_shader_free_string(std::ptr::replace(target, replacement));
+    unsafe {
+        let replacement = sm_shader_clone_string(value);
+        sm_shader_free_string(std::ptr::replace(target, replacement));
+    }
 }
 
 struct FileBuffer(*mut c_void);
@@ -192,55 +214,59 @@ impl Drop for FileBuffer {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_relative_path(
     base: *const c_char,
     name: *const c_char,
 ) -> *mut c_char {
-    let allocated = FileBuffer(crate::util::ReplaceFilenameWithNewPath(base, name).cast());
-    sm_shader_clone_string(allocated.0.cast())
-}
-
-#[no_mangle]
-unsafe extern "C-unwind" fn sm_shader_upload_png(base: *const c_char, name: *const c_char) {
-    let path = CString::from_raw(sm_shader_relative_path(base, name));
-    if let Some(image) = super::texture_png::load(path.as_ptr()) {
-        let format = match image.channels {
-            4 => gl::RGBA,
-            3 => gl::RGB,
-            _ => 0x1909,
-        };
-        gl::TexImage2D(
-            gl::TEXTURE_2D,
-            0,
-            gl::RGBA as i32,
-            image.width as i32,
-            image.height as i32,
-            0,
-            format,
-            gl::UNSIGNED_BYTE,
-            image.pixels.as_ptr().cast(),
-        );
-    } else {
-        crate::c_library::fprintf(
-            crate::c_library::stderr,
-            c"Unable to read PNG '%s'\n".as_ptr(),
-            path.as_ptr(),
-        );
+    unsafe {
+        let allocated = FileBuffer(crate::util::ReplaceFilenameWithNewPath(base, name).cast());
+        sm_shader_clone_string(allocated.0.cast())
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
+unsafe extern "C-unwind" fn sm_shader_upload_png(base: *const c_char, name: *const c_char) {
+    unsafe {
+        let path = CString::from_raw(sm_shader_relative_path(base, name));
+        if let Some(image) = super::texture_png::load(path.as_ptr()) {
+            let format = match image.channels {
+                4 => gl::RGBA,
+                3 => gl::RGB,
+                _ => 0x1909,
+            };
+            gl::TexImage2D(
+                gl::TEXTURE_2D,
+                0,
+                gl::RGBA as i32,
+                image.width as i32,
+                image.height as i32,
+                0,
+                format,
+                gl::UNSIGNED_BYTE,
+                image.pixels.as_ptr().cast(),
+            );
+        } else {
+            crate::c_library::fprintf(
+                crate::c_library::stderr,
+                c"Unable to read PNG '%s'\n".as_ptr(),
+                path.as_ptr(),
+            );
+        }
+    }
+}
+
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_number(value: *const c_char) -> f32 {
-    strtod(value, null_mut()) as f32
+    unsafe { strtod(value, null_mut()) as f32 }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_linear_filtering() -> bool {
-    crate::config::g_config.linear_filtering
+    unsafe { crate::config::g_config.linear_filtering }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C-unwind" fn sm_shader_dimension(
     kind: u8,
     scale: f32,
@@ -257,43 +283,45 @@ extern "C-unwind" fn sm_shader_dimension(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C-unwind" fn sm_shader_check_index(index: usize, length: usize) {
     let _ = [0u8; 51][..length][index];
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_assert(condition: bool, site: u32) {
-    const SITES: [(&CStr, u32, &CStr); 3] = [
-        (
-            c"ctx->num_vaos < kMaxVaosInRenderCtx",
-            467,
-            c"void RenderCtx_SetTexCoords(RenderCtx *, int, uintptr_t)",
-        ),
-        (
-            c"t->gl_texture != 0",
-            504,
-            c"void GlslShader_SetShaderVars(GlslShader *, RenderCtx *, int)",
-        ),
-        (
-            c"store_pos->gl_texture == 0",
-            609,
-            c"void GlslShader_Render(GlslShader *, GlTextureWithSize *, int, int, int, int)",
-        ),
-    ];
-    if !condition {
-        let (expression, line, function) = SITES[site as usize];
-        crate::c_library::__assert_fail(
-            expression.as_ptr(),
-            c"src/glsl_shader.c".as_ptr(),
-            line,
-            function.as_ptr(),
-        );
+    unsafe {
+        const SITES: [(&CStr, u32, &CStr); 3] = [
+            (
+                c"ctx->num_vaos < kMaxVaosInRenderCtx",
+                467,
+                c"void RenderCtx_SetTexCoords(RenderCtx *, int, uintptr_t)",
+            ),
+            (
+                c"t->gl_texture != 0",
+                504,
+                c"void GlslShader_SetShaderVars(GlslShader *, RenderCtx *, int)",
+            ),
+            (
+                c"store_pos->gl_texture == 0",
+                609,
+                c"void GlslShader_Render(GlslShader *, GlTextureWithSize *, int, int, int, int)",
+            ),
+        ];
+        if !condition {
+            let (expression, line, function) = SITES[site as usize];
+            crate::c_library::__assert_fail(
+                expression.as_ptr(),
+                c"src/glsl_shader.c".as_ptr(),
+                line,
+                function.as_ptr(),
+            );
+        }
     }
 }
 
 // Use exactly the pointers resolved by the existing loader, in its lookup order.
-#[no_mangle]
+#[unsafe(no_mangle)]
 static mut sm_shader_gl: [*const c_void; 42] = [missing_gl as *const c_void; 42];
 
 extern "system" fn missing_gl() -> ! {
@@ -351,30 +379,32 @@ const PROCEDURES: [&[&str]; 42] = [
 // Associate each fallback with its unresolved canonical lookup. This also
 // keeps another function's fallback queries from overwriting an accepted slot.
 pub(super) unsafe fn load_with(mut load: impl FnMut(&str) -> *const c_void) {
-    check_dependency();
-    let mut pending = None::<(usize, usize)>;
-    gl::load_with(|name| {
-        let address = load(name);
-        if let Some((slot, next)) = pending.take() {
-            if PROCEDURES[slot].get(next) == Some(&name) {
-                if !address.is_null() {
-                    sm_shader_gl[slot] = address;
-                } else if next + 1 < PROCEDURES[slot].len() {
-                    pending = Some((slot, next + 1));
+    unsafe {
+        check_dependency();
+        let mut pending = None::<(usize, usize)>;
+        gl::load_with(|name| {
+            let address = load(name);
+            if let Some((slot, next)) = pending.take() {
+                if PROCEDURES[slot].get(next) == Some(&name) {
+                    if !address.is_null() {
+                        sm_shader_gl[slot] = address;
+                    } else if next + 1 < PROCEDURES[slot].len() {
+                        pending = Some((slot, next + 1));
+                    }
+                    return address;
                 }
-                return address;
             }
-        }
-        if let Some(slot) = PROCEDURES.iter().position(|names| names[0] == name) {
-            sm_shader_gl[slot] = if address.is_null() {
-                missing_gl as *const c_void
-            } else {
-                address
-            };
-            if address.is_null() && PROCEDURES[slot].len() > 1 {
-                pending = Some((slot, 1));
+            if let Some(slot) = PROCEDURES.iter().position(|names| names[0] == name) {
+                sm_shader_gl[slot] = if address.is_null() {
+                    missing_gl as *const c_void
+                } else {
+                    address
+                };
+                if address.is_null() && PROCEDURES[slot].len() > 1 {
+                    pending = Some((slot, 1));
+                }
             }
-        }
-        address
-    });
+            address
+        });
+    }
 }

@@ -3,7 +3,7 @@
 use crate::types::{__mode_t, size_t, time_t, FILE};
 use ::core::ffi::{c_char, c_double, c_long, c_ulong, c_void};
 
-extern "C" {
+unsafe extern "C" {
     pub fn __assert_fail(
         __assertion: *const c_char,
         __file: *const c_char,

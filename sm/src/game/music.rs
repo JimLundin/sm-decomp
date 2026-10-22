@@ -60,34 +60,38 @@ fn bank_address(game: &Game) -> u32 {
 }
 
 pub unsafe fn HandleMusicQueue(game: &mut Game) {
-    let previous = checked_word!(game.music_timer);
-    checked_word!(game.music_timer = previous.wrapping_sub(1));
-    if checked_word!(game.music_timer) & 0x8000 == 0 {
-        if previous != 1 {
-            return;
-        }
-        if checked_word!(game.music_entry) & 0x8000 != 0 {
-            checked_word!(game.music_data_index = u16::from(checked_word!(game.music_entry) as u8));
-            game.g_ram[0x64c] = 0xff;
-            APU_UploadBank(bank_address(game), game);
-            game.g_ram[0x64c] = 0;
-            retire(game);
+    unsafe {
+        let previous = checked_word!(game.music_timer);
+        checked_word!(game.music_timer = previous.wrapping_sub(1));
+        if checked_word!(game.music_timer) & 0x8000 == 0 {
+            if previous != 1 {
+                return;
+            }
+            if checked_word!(game.music_entry) & 0x8000 != 0 {
+                checked_word!(
+                    game.music_data_index = u16::from(checked_word!(game.music_entry) as u8)
+                );
+                game.g_ram[0x64c] = 0xff;
+                APU_UploadBank(bank_address(game), game);
+                game.g_ram[0x64c] = 0;
+                retire(game);
+                checked_word!(game.sound_handler_downtime = 8);
+                return;
+            }
+            let track = checked_word!(game.music_entry) as u8 & 0x7f;
+            checked_word!(game.music_track_index = checked_word!(game.music_entry) & 0x7f);
+            RtlApuWrite(APUI00, checked_word!(game.music_entry) as u8 & 0x7f, game);
+            game.g_ram[0x64c] = track;
             checked_word!(game.sound_handler_downtime = 8);
-            return;
+            retire(game);
         }
-        let track = checked_word!(game.music_entry) as u8 & 0x7f;
-        checked_word!(game.music_track_index = checked_word!(game.music_entry) & 0x7f);
-        RtlApuWrite(APUI00, checked_word!(game.music_entry) as u8 & 0x7f, game);
-        game.g_ram[0x64c] = track;
-        checked_word!(game.sound_handler_downtime = 8);
-        retire(game);
-    }
-    if checked_word!(game.music_queue_read_pos) == checked_word!(game.music_queue_write_pos) {
-        checked_word!(game.music_timer = 0);
-    } else {
-        let slot = usize::from(checked_word!(game.music_queue_read_pos) >> 1);
-        checked_word!(game.music_entry = checked_word!(game.music_queue_track[slot]));
-        checked_word!(game.music_timer = checked_word!(game.music_queue_delay[slot]));
+        if checked_word!(game.music_queue_read_pos) == checked_word!(game.music_queue_write_pos) {
+            checked_word!(game.music_timer = 0);
+        } else {
+            let slot = usize::from(checked_word!(game.music_queue_read_pos) >> 1);
+            checked_word!(game.music_entry = checked_word!(game.music_queue_track[slot]));
+            checked_word!(game.music_timer = checked_word!(game.music_queue_delay[slot]));
+        }
     }
 }
 

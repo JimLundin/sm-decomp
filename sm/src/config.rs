@@ -115,7 +115,7 @@ pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 
 #[link(name = "sm_config", kind = "static", modifiers = "-bundle")]
-extern "C-unwind" {
+unsafe extern "C-unwind" {
     #[link_name = "sm_config_state"]
     pub static mut g_config: Config;
     fn sm_config_parse_file(filename: *const c_char);
@@ -154,34 +154,42 @@ pub(crate) fn check_dependency() {
 }
 
 pub unsafe fn ParseConfigFile(filename: *const c_char) {
-    check_dependency();
-    sm_config_parse_file(filename);
+    unsafe {
+        check_dependency();
+        sm_config_parse_file(filename);
+    }
 }
 
 pub unsafe fn FindCmdForSdlKey(code: SDL_Keycode, modifiers: SDL_Keymod) -> i32 {
-    check_dependency();
-    sm_config_find_key(code, modifiers)
+    unsafe {
+        check_dependency();
+        sm_config_find_key(code, modifiers)
+    }
 }
 
 pub unsafe fn FindCmdForGamepadButton(button: i32, modifiers: u32) -> i32 {
-    check_dependency();
-    // The native public lookup bounds-checks before consulting its linked list.
-    let _ = [0u16; 17][button as usize];
-    sm_config_find_button(button, modifiers)
+    unsafe {
+        check_dependency();
+        // The native public lookup bounds-checks before consulting its linked list.
+        let _ = [0u16; 17][button as usize];
+        sm_config_find_button(button, modifiers)
+    }
 }
 
 pub unsafe fn ParseBool(value: *const c_char, result: *mut bool) -> bool {
-    check_dependency();
-    sm_config_parse_bool(value, result)
+    unsafe {
+        check_dependency();
+        sm_config_parse_bool(value, result)
+    }
 }
 
 // Preserve explicit numeric conversion and the frontend FILE pointer.
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_config_atoi(value: *const c_char) -> i32 {
-    strtol(value, null_mut(), 10) as i32
+    unsafe { strtol(value, null_mut(), 10) as i32 }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_config_stderr() -> *mut crate::types::FILE {
-    crate::c_library::stderr
+    unsafe { crate::c_library::stderr }
 }

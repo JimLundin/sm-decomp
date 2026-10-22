@@ -21,6 +21,10 @@ Both reports work offline without a build step.
 
 ## Run
 
+The maintained Rust code uses edition 2024. The requested latest-nightly switch
+is pending local Windows administrator authorization; the usable default remains
+stable. See [the toolchain status](docs/PLAN.md).
+
 Needs SDL2 (`apt install libsdl2-dev` on Debian/Ubuntu), rustup and the
 [pinned LakeSnes CPU, PPU and DSP libraries](docs/CPU_DEPENDENCY.md),
 [SPC interpreter and native music libraries](docs/SPC_DEPENDENCY.md),

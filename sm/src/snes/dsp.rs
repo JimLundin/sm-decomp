@@ -30,50 +30,58 @@ pub fn dsp_init(ram: crate::apu_ram::ApuRam) -> *mut Dsp {
     }))
 }
 pub unsafe fn dsp_reset(dsp: *mut Dsp) {
-    backend_reset(&raw mut (*dsp).state);
+    unsafe {
+        backend_reset(&raw mut (*dsp).state);
+    }
 }
 pub unsafe fn dsp_saveload(dsp: *mut Dsp, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
-    crate::rtl::snapshot_result(io.state(&mut (*dsp).state));
+    unsafe {
+        crate::rtl::snapshot_result(io.state(&mut (*dsp).state));
+    }
 }
 pub unsafe fn dsp_cycle(dsp: *mut Dsp) {
-    // KON/KOFF take effect at register-write time here, not on alternate cycles.
-    let even = (*dsp).state.evenCycle;
-    (*dsp).state.evenCycle = false;
-    // Upstream repeatedly overwrites sample 533; this engine stops at 534.
-    let offset = (*dsp).state.sampleOffset;
-    let tail = [
-        (*dsp).state.sampleBuffer[1066],
-        (*dsp).state.sampleBuffer[1067],
-    ];
-    (*dsp).state.sampleOffset = offset.min(533);
-    let failure = sm_backend_dsp_cycle(&raw mut (*dsp).state);
-    if failure != 0 {
-        (*dsp).state.sampleOffset = offset;
-        (*dsp).state.evenCycle = even;
-        if failure <= 8 {
-            let ch = &(*dsp).state.channel[(failure - 1) as usize];
-            let _ = ch.adsrRates[ch.adsrState as usize];
-        } else {
-            let _ = (*dsp).state.firBufferL[(*dsp).state.firBufferIndex as usize];
+    unsafe {
+        // KON/KOFF take effect at register-write time here, not on alternate cycles.
+        let even = (*dsp).state.evenCycle;
+        (*dsp).state.evenCycle = false;
+        // Upstream repeatedly overwrites sample 533; this engine stops at 534.
+        let offset = (*dsp).state.sampleOffset;
+        let tail = [
+            (*dsp).state.sampleBuffer[1066],
+            (*dsp).state.sampleBuffer[1067],
+        ];
+        (*dsp).state.sampleOffset = offset.min(533);
+        let failure = sm_backend_dsp_cycle(&raw mut (*dsp).state);
+        if failure != 0 {
+            (*dsp).state.sampleOffset = offset;
+            (*dsp).state.evenCycle = even;
+            if failure <= 8 {
+                let ch = &(*dsp).state.channel[(failure - 1) as usize];
+                let _ = ch.adsrRates[ch.adsrState as usize];
+            } else {
+                let _ = (*dsp).state.firBufferL[(*dsp).state.firBufferIndex as usize];
+            }
+            unreachable!();
         }
-        unreachable!();
+        if offset >= 534 {
+            (&mut (*dsp).state.sampleBuffer)[1066..].copy_from_slice(&tail);
+        }
+        (*dsp).state.sampleOffset = if offset < 534 { offset + 1 } else { offset };
+        (*dsp).state.evenCycle = !even;
     }
-    if offset >= 534 {
-        (&mut (*dsp).state.sampleBuffer)[1066..].copy_from_slice(&tail);
-    }
-    (*dsp).state.sampleOffset = if offset < 534 { offset + 1 } else { offset };
-    (*dsp).state.evenCycle = !even;
 }
 
 pub unsafe fn dsp_read(dsp: *mut Dsp, adr: u8) -> u8 {
-    (*dsp).state.ram[adr as usize]
+    unsafe { (*dsp).state.ram[adr as usize] }
 }
 
 pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, val: u8) {
-    // Keep the existing bounds failure before crossing the native boundary.
-    let _ = (*dsp).state.ram[adr as usize];
-    backend_write(&raw mut (*dsp).state, adr, val);
-    apply_keys(&mut (*dsp).state, &(*dsp).apu_memory, adr);
+    unsafe {
+        // Keep the existing bounds failure before crossing the native boundary.
+        let _ = (*dsp).state.ram[adr as usize];
+        backend_write(&raw mut (*dsp).state, adr, val);
+        apply_keys(&mut (*dsp).state, &(*dsp).apu_memory, adr);
+    }
 }
 
 #[forbid(unsafe_code)]

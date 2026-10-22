@@ -211,110 +211,118 @@ fn instruction_text(line: &mut [u8], template: &str, operands: [u32; 2], short: 
     out.finish();
 }
 pub unsafe fn getProcessorStateCpu(snes: *mut Snes, line: &mut [u8; 80], game: &mut Game) {
-    let mut disassembly = [0; 14];
-    getDisassemblyCpu(snes, &mut disassembly, game);
-    // Bus reads can change CPU fields or its owning pointer. Capture afterwards.
-    let cpu = &*(*snes).cpu;
-    let (bank, pc, a, x, y, sp, dp, db) =
-        (cpu.k, cpu.pc, cpu.a, cpu.x, cpu.y, cpu.sp, cpu.dp, cpu.db);
-    let flags = flag_letters(
-        *b"ENVMXDIZC",
-        [
-            cpu.e, cpu.n, cpu.v, cpu.mf, cpu.xf, cpu.d, cpu.i, cpu.z, cpu.c,
-        ],
-    );
-    let text = std::ffi::CStr::from_bytes_until_nul(&disassembly)
-        .unwrap()
-        .to_str()
-        .unwrap();
-    let mut out = TraceOutput(line, 0);
-    write!(out, "CPU {bank:02x}:{pc:04x} {text} A:{a:04x} X:{x:04x} Y:{y:04x} SP:{sp:04x} DP:{dp:04x} DB:{db:02x} {} {}",
+    unsafe {
+        let mut disassembly = [0; 14];
+        getDisassemblyCpu(snes, &mut disassembly, game);
+        // Bus reads can change CPU fields or its owning pointer. Capture afterwards.
+        let cpu = &*(*snes).cpu;
+        let (bank, pc, a, x, y, sp, dp, db) =
+            (cpu.k, cpu.pc, cpu.a, cpu.x, cpu.y, cpu.sp, cpu.dp, cpu.db);
+        let flags = flag_letters(
+            *b"ENVMXDIZC",
+            [
+                cpu.e, cpu.n, cpu.v, cpu.mf, cpu.xf, cpu.d, cpu.i, cpu.z, cpu.c,
+            ],
+        );
+        let text = std::ffi::CStr::from_bytes_until_nul(&disassembly)
+            .unwrap()
+            .to_str()
+            .unwrap();
+        let mut out = TraceOutput(line, 0);
+        write!(out, "CPU {bank:02x}:{pc:04x} {text} A:{a:04x} X:{x:04x} Y:{y:04x} SP:{sp:04x} DP:{dp:04x} DB:{db:02x} {} {}",
         flags[0] as char, std::str::from_utf8(&flags[1..]).unwrap()).unwrap();
-    out.finish();
+        out.finish();
+    }
 }
 pub unsafe fn getProcessorStateSpc(apu: *mut Apu, line: &mut [u8; 80]) {
-    let mut disassembly = [0; 18];
-    getDisassemblySpc(apu, &mut disassembly);
-    let spc = &*(*apu).spc;
-    let (pc, a, x, y, sp) = (spc.pc, spc.a, spc.x, spc.y, spc.sp);
-    let flags = flag_letters(
-        *b"NVPBHIZC",
-        [spc.n, spc.v, spc.p, spc.b, spc.h, spc.i, spc.z, spc.c],
-    );
-    let text = std::ffi::CStr::from_bytes_until_nul(&disassembly)
-        .unwrap()
-        .to_str()
+    unsafe {
+        let mut disassembly = [0; 18];
+        getDisassemblySpc(apu, &mut disassembly);
+        let spc = &*(*apu).spc;
+        let (pc, a, x, y, sp) = (spc.pc, spc.a, spc.x, spc.y, spc.sp);
+        let flags = flag_letters(
+            *b"NVPBHIZC",
+            [spc.n, spc.v, spc.p, spc.b, spc.h, spc.i, spc.z, spc.c],
+        );
+        let text = std::ffi::CStr::from_bytes_until_nul(&disassembly)
+            .unwrap()
+            .to_str()
+            .unwrap();
+        let mut out = TraceOutput(line, 0);
+        write!(
+            out,
+            "SPC {pc:04x} {text} A:{a:02x} X:{x:02x} Y:{y:02x} SP:{sp:02x} {}",
+            std::str::from_utf8(&flags).unwrap()
+        )
         .unwrap();
-    let mut out = TraceOutput(line, 0);
-    write!(
-        out,
-        "SPC {pc:04x} {text} A:{a:02x} X:{x:02x} Y:{y:02x} SP:{sp:02x} {}",
-        std::str::from_utf8(&flags).unwrap()
-    )
-    .unwrap();
-    out.finish();
+        out.finish();
+    }
 }
 unsafe fn getDisassemblyCpu(snes: *mut Snes, line: &mut [u8; 14], game: &mut Game) {
-    let address = u32::from((*(*snes).cpu).pc) | (u32::from((*(*snes).cpu).k) << 16);
-    let opcode = snes_read(snes, address, game);
-    let byte = snes_read(snes, address.wrapping_add(1) & 0xffffff, game);
-    let byte2 = snes_read(snes, address.wrapping_add(2) & 0xffffff, game);
-    let word = u16::from_le_bytes([byte, byte2]);
-    let long = (u32::from(snes_read(snes, address.wrapping_add(3) & 0xffffff, game)) << 16)
-        | u32::from(word);
-    let relative = (*(*snes).cpu)
-        .pc
-        .wrapping_add(2)
-        .wrapping_add_signed(i16::from(byte as i8));
-    let relative_long = (*(*snes).cpu)
-        .pc
-        .wrapping_add(3)
-        .wrapping_add_signed(word as i16);
-    let kind = opcodeType[usize::from(opcode)];
-    let short = (kind == 4 && (*(*snes).cpu).mf) || (kind == 5 && (*(*snes).cpu).xf);
-    let operands = match kind {
-        0 => [0, 0],
-        1 => [u32::from(byte), 0],
-        2 => [u32::from(word), 0],
-        3 => [long, 0],
-        4 | 5 => [
-            if short {
-                u32::from(byte)
-            } else {
-                u32::from(word)
-            },
-            0,
-        ],
-        6 => [u32::from(relative), 0],
-        7 => [u32::from(relative_long), 0],
-        8 => [u32::from(byte2), u32::from(byte)],
-        _ => unreachable!(),
-    };
-    instruction_text(line, opcodeNames[usize::from(opcode)], operands, short);
+    unsafe {
+        let address = u32::from((*(*snes).cpu).pc) | (u32::from((*(*snes).cpu).k) << 16);
+        let opcode = snes_read(snes, address, game);
+        let byte = snes_read(snes, address.wrapping_add(1) & 0xffffff, game);
+        let byte2 = snes_read(snes, address.wrapping_add(2) & 0xffffff, game);
+        let word = u16::from_le_bytes([byte, byte2]);
+        let long = (u32::from(snes_read(snes, address.wrapping_add(3) & 0xffffff, game)) << 16)
+            | u32::from(word);
+        let relative = (*(*snes).cpu)
+            .pc
+            .wrapping_add(2)
+            .wrapping_add_signed(i16::from(byte as i8));
+        let relative_long = (*(*snes).cpu)
+            .pc
+            .wrapping_add(3)
+            .wrapping_add_signed(word as i16);
+        let kind = opcodeType[usize::from(opcode)];
+        let short = (kind == 4 && (*(*snes).cpu).mf) || (kind == 5 && (*(*snes).cpu).xf);
+        let operands = match kind {
+            0 => [0, 0],
+            1 => [u32::from(byte), 0],
+            2 => [u32::from(word), 0],
+            3 => [long, 0],
+            4 | 5 => [
+                if short {
+                    u32::from(byte)
+                } else {
+                    u32::from(word)
+                },
+                0,
+            ],
+            6 => [u32::from(relative), 0],
+            7 => [u32::from(relative_long), 0],
+            8 => [u32::from(byte2), u32::from(byte)],
+            _ => unreachable!(),
+        };
+        instruction_text(line, opcodeNames[usize::from(opcode)], operands, short);
+    }
 }
 unsafe fn getDisassemblySpc(apu: *mut Apu, line: &mut [u8; 18]) {
-    let address = (*(*apu).spc).pc;
-    let opcode = apu_cpuRead(apu, address);
-    let byte = apu_cpuRead(apu, address.wrapping_add(1));
-    let byte2 = apu_cpuRead(apu, address.wrapping_add(2));
-    let word = u16::from_le_bytes([byte, byte2]);
-    let relative = (*(*apu).spc)
-        .pc
-        .wrapping_add(2)
-        .wrapping_add_signed(i16::from(byte as i8));
-    let relative2 = (*(*apu).spc)
-        .pc
-        .wrapping_add(2)
-        .wrapping_add_signed(i16::from(byte2 as i8));
-    let operands = match opcodeTypeSpc[usize::from(opcode)] {
-        0 => [0, 0],
-        1 => [u32::from(byte), 0],
-        2 => [u32::from(word), 0],
-        3 => [u32::from(relative), 0],
-        4 => [u32::from(byte2), u32::from(byte)],
-        5 => [u32::from(byte), u32::from(relative2)],
-        6 => [u32::from(word & 0x1fff), u32::from(word >> 13)],
-        _ => unreachable!(),
-    };
-    instruction_text(line, opcodeNamesSpc[usize::from(opcode)], operands, false);
+    unsafe {
+        let address = (*(*apu).spc).pc;
+        let opcode = apu_cpuRead(apu, address);
+        let byte = apu_cpuRead(apu, address.wrapping_add(1));
+        let byte2 = apu_cpuRead(apu, address.wrapping_add(2));
+        let word = u16::from_le_bytes([byte, byte2]);
+        let relative = (*(*apu).spc)
+            .pc
+            .wrapping_add(2)
+            .wrapping_add_signed(i16::from(byte as i8));
+        let relative2 = (*(*apu).spc)
+            .pc
+            .wrapping_add(2)
+            .wrapping_add_signed(i16::from(byte2 as i8));
+        let operands = match opcodeTypeSpc[usize::from(opcode)] {
+            0 => [0, 0],
+            1 => [u32::from(byte), 0],
+            2 => [u32::from(word), 0],
+            3 => [u32::from(relative), 0],
+            4 => [u32::from(byte2), u32::from(byte)],
+            5 => [u32::from(byte), u32::from(relative2)],
+            6 => [u32::from(word & 0x1fff), u32::from(word >> 13)],
+            _ => unreachable!(),
+        };
+        instruction_text(line, opcodeNamesSpc[usize::from(opcode)], operands, false);
+    }
 }

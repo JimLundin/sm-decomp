@@ -19,9 +19,7 @@ use crate::game::sm_8f::RunRoomMainCode;
 use crate::game::sm_90::{
     HandleControllerInputForGamePhysics, HandleSamusMovementAndPause, MainScrollingRoutine,
 };
-use crate::game::sm_a0::{
-    DecrementSamusTimers, HandleRoomShaking,
-};
+use crate::game::sm_a0::{DecrementSamusTimers, HandleRoomShaking};
 
 #[derive(Clone, Copy, PartialEq)]
 #[repr(u8)]
@@ -49,59 +47,61 @@ impl ResumePoint {
 /// Gameplay callbacks still have unsafe memory contracts; this is not a safe
 /// facade over them. The scheduler's continuation access itself is checked.
 pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
-    crate::verify_probe::hit("coroutine.gameplay");
-    let resume = ResumePoint::read(game);
-    if resume == ResumePoint::Start {
-        select_enemies(game);
-        PaletteFxHandler(game);
-        HandleControllerInputForGamePhysics(game);
-        if word!(game.debug_disable_sprite_interact) == 0 {
-            crate::game::projectile_contact::player_projectiles_hit_samus(game);
+    unsafe {
+        crate::verify_probe::hit("coroutine.gameplay");
+        let resume = ResumePoint::read(game);
+        if resume == ResumePoint::Start {
+            select_enemies(game);
+            PaletteFxHandler(game);
+            HandleControllerInputForGamePhysics(game);
+            if word!(game.debug_disable_sprite_interact) == 0 {
+                crate::game::projectile_contact::player_projectiles_hit_samus(game);
+            }
+            run_enemies(game);
         }
-        run_enemies(game);
+        // Read the queue after enemy callbacks, even when they changed it this pass.
+        if resume == ResumePoint::EnemyMessage
+            || (resume == ResumePoint::Start && word!(game.queued_message_box_index) != 0)
+        {
+            let yielded = message_boxes::display(word!(game.queued_message_box_index), game);
+            if yielded != 0 {
+                game.set_coroutine_state_1(ResumePoint::EnemyMessage as u8);
+                return yielded;
+            }
+            word!(game.queued_message_box_index = 0);
+        }
+        if matches!(resume, ResumePoint::Start | ResumePoint::EnemyMessage) {
+            HandleSamusMovementAndPause(game);
+            EprojRunAll(game);
+        }
+        if resume != ResumePoint::Skip {
+            let yielded = PlmHandler_Async(game);
+            if yielded != 0 {
+                game.set_coroutine_state_1(ResumePoint::RoomObjects as u8);
+                return yielded;
+            }
+            AnimtilesHandler(game);
+            // This is a new read: earlier callbacks may change interaction policy.
+            if word!(game.debug_disable_sprite_interact) == 0 {
+                crate::game::projectile_contact::enemy_projectiles_hit_samus(game);
+                crate::game::projectile_contact::shoot_enemy_projectiles(game);
+                crate::game::enemy_contact::power_bomb_enemies(game);
+            }
+            MainScrollingRoutine(game);
+            let debug_scrolling_enabled: i32 = 0;
+            if debug_scrolling_enabled != 0 {
+                DebugScrollPosSaveLoad(game);
+            }
+            draw_scene(game);
+            queue_enemy_tiles(game);
+            HandleHudTilemap(game);
+            CalculateLayer2PosAndScrollsWhenScrolling(game);
+            RunRoomMainCode(game);
+            HandleSamusOutOfHealthAndGameTile(game);
+            HandleRoomShaking(game);
+            DecrementSamusTimers(game);
+        }
+        game.set_coroutine_state_1(ResumePoint::Start as u8);
+        0 as CoroutineRet
     }
-    // Read the queue after enemy callbacks, even when they changed it this pass.
-    if resume == ResumePoint::EnemyMessage
-        || (resume == ResumePoint::Start && word!(game.queued_message_box_index) != 0)
-    {
-        let yielded = message_boxes::display(word!(game.queued_message_box_index), game);
-        if yielded != 0 {
-            game.set_coroutine_state_1(ResumePoint::EnemyMessage as u8);
-            return yielded;
-        }
-        word!(game.queued_message_box_index = 0);
-    }
-    if matches!(resume, ResumePoint::Start | ResumePoint::EnemyMessage) {
-        HandleSamusMovementAndPause(game);
-        EprojRunAll(game);
-    }
-    if resume != ResumePoint::Skip {
-        let yielded = PlmHandler_Async(game);
-        if yielded != 0 {
-            game.set_coroutine_state_1(ResumePoint::RoomObjects as u8);
-            return yielded;
-        }
-        AnimtilesHandler(game);
-        // This is a new read: earlier callbacks may change interaction policy.
-        if word!(game.debug_disable_sprite_interact) == 0 {
-            crate::game::projectile_contact::enemy_projectiles_hit_samus(game);
-            crate::game::projectile_contact::shoot_enemy_projectiles(game);
-            crate::game::enemy_contact::power_bomb_enemies(game);
-        }
-        MainScrollingRoutine(game);
-        let debug_scrolling_enabled: i32 = 0;
-        if debug_scrolling_enabled != 0 {
-            DebugScrollPosSaveLoad(game);
-        }
-        draw_scene(game);
-        queue_enemy_tiles(game);
-        HandleHudTilemap(game);
-        CalculateLayer2PosAndScrollsWhenScrolling(game);
-        RunRoomMainCode(game);
-        HandleSamusOutOfHealthAndGameTile(game);
-        HandleRoomShaking(game);
-        DecrementSamusTimers(game);
-    }
-    game.set_coroutine_state_1(ResumePoint::Start as u8);
-    0 as CoroutineRet
 }

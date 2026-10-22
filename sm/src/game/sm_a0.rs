@@ -20,9 +20,7 @@ use crate::game::sm_86::{SpawnEprojWithGfx};
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::square_slope_occupied;
-use crate::game::sprite_objects::{
-    create_sprite,
-};
+use crate::game::sprite_objects::{create_sprite};
 use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
 
 pub use crate::types::EnemyAiBits;
@@ -194,22 +192,24 @@ macro_rules! adjust_room_shake_scroll {
 }
 
 pub unsafe fn HandleRoomShaking(game: &mut Game) {
-    if word!(game.earthquake_timer) != 0
-        && word!(game.time_is_frozen_flag) == 0
-        && word!(game.earthquake_type) as i32 - 36i32 & 0x8000 != 0
-    {
-        let v0: i32 = 8 * word!(game.earthquake_type) as i32 >> 1;
-        if (word!(game.earthquake_timer) & 2) != 0 {
-            adjust_room_shake_scroll!(game, wrapping_sub, v0);
-        } else {
-            adjust_room_shake_scroll!(game, wrapping_add, v0);
+    unsafe {
+        if word!(game.earthquake_timer) != 0
+            && word!(game.time_is_frozen_flag) == 0
+            && word!(game.earthquake_type) as i32 - 36i32 & 0x8000 != 0
+        {
+            let v0: i32 = 8 * word!(game.earthquake_type) as i32 >> 1;
+            if (word!(game.earthquake_timer) & 2) != 0 {
+                adjust_room_shake_scroll!(game, wrapping_sub, v0);
+            } else {
+                adjust_room_shake_scroll!(game, wrapping_add, v0);
+            }
+            word!(game.earthquake_timer -= 1);
+            if word!(game.earthquake_type) as i32 - 18i32 & 0x8000 == 0 {
+                shake_active_enemies(game);
+            }
         }
-        word!(game.earthquake_timer -= 1);
-        if word!(game.earthquake_type) as i32 - 18i32 & 0x8000 == 0 {
-            shake_active_enemies(game);
-        }
+        word!(game.frame_counter_every_frame += 1);
     }
-    word!(game.frame_counter_every_frame += 1);
 }
 crate::game::address_dispatch! {
     pub unsafe fn CallEnemyGfxDrawHook(ea: u32, game: &mut Game) => ea;
@@ -223,36 +223,37 @@ crate::game::address_dispatch! {
     }
 }
 
-
 pub unsafe fn TransferEnemyTilesToVramAndInit(game: &mut Game) {
-    let mut source = game.enemy_tile_vram_src();
-    if game.enemy_tile_vram_src() == 0 {
-        source = 0x7000;
-        game.set_enemy_tile_vram_src(0x7000);
-        game.set_enemy_tile_vram_dst(0x6c00);
-    }
-    match source {
-        0xffff => {}
-        0xfffe => {
-            initialize_room(game);
-            game.set_enemy_tile_vram_src(0xffff);
+    unsafe {
+        let mut source = game.enemy_tile_vram_src();
+        if game.enemy_tile_vram_src() == 0 {
+            source = 0x7000;
+            game.set_enemy_tile_vram_src(0x7000);
+            game.set_enemy_tile_vram_dst(0x6c00);
         }
-        0x9800 => game.set_enemy_tile_vram_src(0xfffe),
-        _ => {
-            let tail = game.vram_write_queue_tail();
-            let cursor = game.vram_write_queue_tail();
-            game.write_vram_queue_word(cursor, 0, 2048);
-            let source = game.enemy_tile_vram_src();
-            let address = game.enemy_tile_vram_src();
-            game.write_vram_queue_word(cursor, 2, address);
-            game.set_enemy_tile_vram_src(source.wrapping_add(2048));
-            // Original word store clears the first destination byte too.
-            game.write_vram_queue_word(cursor, 4, 126);
-            let destination = game.enemy_tile_vram_dst();
-            let address = game.enemy_tile_vram_dst();
-            game.write_vram_queue_word(cursor, 5, address);
-            game.set_enemy_tile_vram_dst(destination.wrapping_add(1024));
-            game.set_vram_write_queue_tail(tail.wrapping_add(7));
+        match source {
+            0xffff => {}
+            0xfffe => {
+                initialize_room(game);
+                game.set_enemy_tile_vram_src(0xffff);
+            }
+            0x9800 => game.set_enemy_tile_vram_src(0xfffe),
+            _ => {
+                let tail = game.vram_write_queue_tail();
+                let cursor = game.vram_write_queue_tail();
+                game.write_vram_queue_word(cursor, 0, 2048);
+                let source = game.enemy_tile_vram_src();
+                let address = game.enemy_tile_vram_src();
+                game.write_vram_queue_word(cursor, 2, address);
+                game.set_enemy_tile_vram_src(source.wrapping_add(2048));
+                // Original word store clears the first destination byte too.
+                game.write_vram_queue_word(cursor, 4, 126);
+                let destination = game.enemy_tile_vram_dst();
+                let address = game.enemy_tile_vram_dst();
+                game.write_vram_queue_word(cursor, 5, address);
+                game.set_enemy_tile_vram_dst(destination.wrapping_add(1024));
+                game.set_vram_write_queue_tail(tail.wrapping_add(7));
+            }
         }
     }
 }
@@ -399,17 +400,19 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn DecrementSamusTimers(game: &mut Game) {
-    if word!(game.samus_invincibility_timer) != 0 {
-        word!(game.samus_invincibility_timer -= 1);
+    unsafe {
+        if word!(game.samus_invincibility_timer) != 0 {
+            word!(game.samus_invincibility_timer -= 1);
+        }
+        if word!(game.samus_knockback_timer) != 0 {
+            word!(game.samus_knockback_timer -= 1);
+        }
+        if word!(game.projectile_invincibility_timer) != 0 {
+            word!(game.projectile_invincibility_timer -= 1);
+        }
+        word!(game.interactive_enemy_indexes[0] = -1i32 as u16);
+        word!(game.active_enemy_indexes[0] = -1i32 as u16);
     }
-    if word!(game.samus_knockback_timer) != 0 {
-        word!(game.samus_knockback_timer -= 1);
-    }
-    if word!(game.projectile_invincibility_timer) != 0 {
-        word!(game.projectile_invincibility_timer -= 1);
-    }
-    word!(game.interactive_enemy_indexes[0] = -1i32 as u16);
-    word!(game.active_enemy_indexes[0] = -1i32 as u16);
 }
 
 crate::game::address_dispatch! {
@@ -449,7 +452,6 @@ crate::game::callback_dispatch! {
         11700286 => sm_b2::WalkingSpacePirates_883E;
     }
 }
-
 
 fn solid_enemy_probe_coordinate(position: u16, fraction: u16, amount: i32, negative: bool) -> u16 {
     let integer_amount = (amount >> 16) as u16;
@@ -688,24 +690,26 @@ pub fn EnemyFunc_AC67(k: u16, game: &mut Game) -> u16 {
     }
 }
 pub unsafe fn EnemyFunc_ACA8(base_pt: Point16U, samus_pt: Point16U, game: &mut Game) -> PairU16 {
-    let dx = samus_pt.x.wrapping_sub(base_pt.x);
-    let x = (dx as i16).wrapping_abs() as u16;
-    if x.wrapping_sub(255) & 0x8000 == 0 {
-        return PairU16 { k: x, j: 0 };
-    }
-    let dy = samus_pt.y.wrapping_sub(base_pt.y);
-    let y = (dy as i16).wrapping_abs() as u16;
-    if y.wrapping_sub(255) & 0x8000 == 0 {
-        return PairU16 { k: y, j: 0 };
-    }
-    let angle = CalculateAngleFromXY(x, y, game);
-    let horizontal = (SineMult8bit(angle, x, game) as i16).wrapping_abs() as u16;
-    let vertical = (CosineMult8bit(angle, y, game) as i16).wrapping_abs() as u16;
-    let distance = horizontal.wrapping_add(vertical);
-    let direction = CalculateAngleFromXY(dx, dy, game);
-    PairU16 {
-        k: distance,
-        j: direction,
+    unsafe {
+        let dx = samus_pt.x.wrapping_sub(base_pt.x);
+        let x = (dx as i16).wrapping_abs() as u16;
+        if x.wrapping_sub(255) & 0x8000 == 0 {
+            return PairU16 { k: x, j: 0 };
+        }
+        let dy = samus_pt.y.wrapping_sub(base_pt.y);
+        let y = (dy as i16).wrapping_abs() as u16;
+        if y.wrapping_sub(255) & 0x8000 == 0 {
+            return PairU16 { k: y, j: 0 };
+        }
+        let angle = CalculateAngleFromXY(x, y, game);
+        let horizontal = (SineMult8bit(angle, x, game) as i16).wrapping_abs() as u16;
+        let vertical = (CosineMult8bit(angle, y, game) as i16).wrapping_abs() as u16;
+        let distance = horizontal.wrapping_add(vertical);
+        let direction = CalculateAngleFromXY(dx, dy, game);
+        PairU16 {
+            k: distance,
+            j: direction,
+        }
     }
 }
 fn enemy_axis_outside_screen(
@@ -798,11 +802,7 @@ pub fn IsSamusWithinEnemy_X(k: u16, a: u16, game: &mut Game) -> u16 {
 }
 pub fn SignExtend8(a: u16) -> u16 {
     // Preserve the input high byte when bit 7 is clear.
-    if a & 0x80 != 0 {
-        a | 0xff00
-    } else {
-        a
-    }
+    if a & 0x80 != 0 { a | 0xff00 } else { a }
 }
 pub fn Abs16(a: u16) -> u16 {
     (a as i16).wrapping_abs() as u16
@@ -868,11 +868,7 @@ pub fn EnemyFunc_B691(phase: u16, pt: Point32, game: &mut Game) {
     add_enemy_vector_coordinate(&mut game.g_ram[offset..offset + 4], y);
 }
 pub unsafe fn EnemyFunc_Divide(a: u32, b: u32) -> u32 {
-    if a != 0 {
-        b.wrapping_div(a)
-    } else {
-        0
-    }
+    if a != 0 { b.wrapping_div(a) } else { 0 }
 }
 fn corrected_samus_previous_position(position: u16, previous: u16) -> Option<u16> {
     let delta = position.wrapping_sub(previous);
@@ -1021,50 +1017,58 @@ pub fn EnemyFunc_BF8A(k: u16, a: u16, amt: i32, game: &mut Game) -> u8 {
     scan_enemy_collision_block_row!(edge, game, left, columns);
 }
 pub unsafe fn CalculateAngleOfSamusFromEproj(k: u16, game: &mut Game) -> u16 {
-    let x = game
-        .samus_x_pos()
-        .wrapping_sub(game.enemy_projectile_x_pos(k));
-    let y = game
-        .samus_y_pos()
-        .wrapping_sub(game.enemy_projectile_y_pos(k));
-    CalculateAngleFromXY(x, y, game)
+    unsafe {
+        let x = game
+            .samus_x_pos()
+            .wrapping_sub(game.enemy_projectile_x_pos(k));
+        let y = game
+            .samus_y_pos()
+            .wrapping_sub(game.enemy_projectile_y_pos(k));
+        CalculateAngleFromXY(x, y, game)
+    }
 }
 pub unsafe fn CalculateAngleOfSamusFromEnemy(k: u16, game: &mut Game) -> u16 {
-    let x = GetSamusEnemyDelta_X(k, game);
-    let y = GetSamusEnemyDelta_Y(k, game);
-    CalculateAngleFromXY(x, y, game)
+    unsafe {
+        let x = GetSamusEnemyDelta_X(k, game);
+        let y = GetSamusEnemyDelta_Y(k, game);
+        CalculateAngleFromXY(x, y, game)
+    }
 }
 pub unsafe fn CalculateAngleOfEnemyXfromEnemyY(k: u16, j: u16, game: &mut Game) -> u16 {
-    let x = game
-        .enemy_coordinates(k)
-        .x_pos()
-        .wrapping_sub(game.enemy_coordinates(j).x_pos());
-    let y = game
-        .enemy_coordinates(k)
-        .y_pos()
-        .wrapping_sub(game.enemy_coordinates(j).y_pos());
-    CalculateAngleFromXY(x, y, game)
+    unsafe {
+        let x = game
+            .enemy_coordinates(k)
+            .x_pos()
+            .wrapping_sub(game.enemy_coordinates(j).x_pos());
+        let y = game
+            .enemy_coordinates(k)
+            .y_pos()
+            .wrapping_sub(game.enemy_coordinates(j).y_pos());
+        CalculateAngleFromXY(x, y, game)
+    }
 }
 pub unsafe fn CalculateAngleFromXY(x: u16, y: u16, game: &mut Game) -> u16 {
-    let quadrant = (u8::from(x & 0x8000 != 0) << 1) | u8::from(y & 0x8000 != 0);
-    let x = Abs16(x);
-    let y = Abs16(y);
-    let x_dominant = y < x;
-    let (numerator, denominator) = if x_dominant { (y, x) } else { (x, y) };
-    let div = SnesDivide(numerator.wrapping_shl(8), denominator as u8);
-    let offset = (div >> 3) as u8;
-    let angle = match (x_dominant, quadrant) {
-        (true, 0) => offset.wrapping_add(64),
-        (true, 1) => 64u8.wrapping_sub(offset),
-        (true, 2) => 192u8.wrapping_sub(offset),
-        (true, 3) => offset.wrapping_sub(64),
-        (false, 0) => 128u8.wrapping_sub(offset),
-        (false, 1) => offset,
-        (false, 2) => offset.wrapping_add(128),
-        (false, 3) => 0u8.wrapping_sub(offset),
-        _ => unreachable!(),
-    };
-    u16::from(angle)
+    unsafe {
+        let quadrant = (u8::from(x & 0x8000 != 0) << 1) | u8::from(y & 0x8000 != 0);
+        let x = Abs16(x);
+        let y = Abs16(y);
+        let x_dominant = y < x;
+        let (numerator, denominator) = if x_dominant { (y, x) } else { (x, y) };
+        let div = SnesDivide(numerator.wrapping_shl(8), denominator as u8);
+        let offset = (div >> 3) as u8;
+        let angle = match (x_dominant, quadrant) {
+            (true, 0) => offset.wrapping_add(64),
+            (true, 1) => 64u8.wrapping_sub(offset),
+            (true, 2) => 192u8.wrapping_sub(offset),
+            (true, 3) => offset.wrapping_sub(64),
+            (false, 0) => 128u8.wrapping_sub(offset),
+            (false, 1) => offset,
+            (false, 2) => offset.wrapping_add(128),
+            (false, 3) => 0u8.wrapping_sub(offset),
+            _ => unreachable!(),
+        };
+        u16::from(angle)
+    }
 }
 pub fn IsEnemyLeavingScreen(k: u16, game: &mut Game) -> u8 {
     let enemy = SolidEnemyCollisionBody::new(game, k);
@@ -1080,13 +1084,15 @@ pub fn IsEnemyLeavingScreen(k: u16, game: &mut Game) -> u8 {
     u8::from((edge as i16) < 0 || (past_screen as i16) >= 0)
 }
 unsafe fn EnemyBlockCollReact_Spike(_collision: &mut EnemyBlockCollInfo, game: &mut Game) -> u8 {
-    let behavior = game.current_block_bts() & 0x7f;
-    let plm = game.read_rom_word(0xa0c2da, usize::from(behavior) * 2);
-    if plm == 0 {
-        return 1;
+    unsafe {
+        let behavior = game.current_block_bts() & 0x7f;
+        let plm = game.read_rom_word(0xa0c2da, usize::from(behavior) * 2);
+        if plm == 0 {
+            return 1;
+        }
+        SpawnPLM(plm, game);
+        0
     }
-    SpawnPLM(plm, game);
-    0
 }
 fn EnemyBlockCollHorizReact_Slope(collision: &mut EnemyBlockCollInfo, game: &mut Game) -> u8 {
     let bts = game.current_block_bts();
@@ -1241,242 +1247,263 @@ unsafe fn Enemy_MoveRight_IgnoreSlopes_Inner(
     slope_mode: u16,
     game: &mut Game,
 ) -> u8 {
-    if amount32 == 0 {
-        return 0;
-    }
-    let top = game
-        .enemy_coordinates(k)
-        .y_pos()
-        .wrapping_sub(game.enemy_coordinates(k).y_height());
-    let rows = game
-        .enemy_coordinates(k)
-        .y_height()
-        .wrapping_add(game.enemy_coordinates(k).y_pos())
-        .wrapping_sub(1)
-        .wrapping_sub(top & 0xfff0)
-        >> 4;
-    let row_offset = u16::from((top >> 4) as u8) * u16::from(game.room_width_in_blocks() as u8);
-    let new_pos = (amount32 as u32).wrapping_add(
-        (u32::from(game.enemy_coordinates(k).x_pos()) << 16)
-            | u32::from(game.enemy_coordinates(k).x_subpos()),
-    );
-    let new_x = (new_pos >> 16) as u16;
-    let moving_left = amount32 < 0;
-    let edge = if moving_left {
-        new_x.wrapping_sub(game.enemy_coordinates(k).x_width())
-    } else {
-        game.enemy_coordinates(k)
-            .x_width()
-            .wrapping_add(new_x)
-            .wrapping_sub(1)
-    };
-    let mut collision = EnemyBlockCollInfo {
-        ebci_r18_r20: amount32,
-        ebci_r24: new_x,
-        ebci_r26: edge,
-        ebci_r28: rows,
-        ebci_r30: rows,
-        ebci_r32: slope_mode,
-    };
-    let mut block_offset = row_offset.wrapping_add(edge >> 4).wrapping_mul(2);
-    while EnemyBlockCollReact_Horiz(&mut collision, block_offset, game) & 1 == 0 {
-        // The callback can change room state; retain the original live read.
-        block_offset = block_offset.wrapping_add(game.room_width_in_blocks().wrapping_mul(2));
-        collision.ebci_r28 = collision.ebci_r28.wrapping_sub(1);
-        if collision.ebci_r28 & 0x8000 != 0 {
-            // Apply the callback-adjusted amount to the enemy's live coordinates.
-            let position = (u32::from(game.enemy_coordinates(k).x_pos()) << 16)
-                | u32::from(game.enemy_coordinates(k).x_subpos());
-            let position = position.wrapping_add(collision.ebci_r18_r20 as u32);
-            game.enemy_coordinates(k).set_x_subpos(position as u16);
-            game.enemy_coordinates(k).set_x_pos((position >> 16) as u16);
+    unsafe {
+        if amount32 == 0 {
             return 0;
         }
-    }
-    if moving_left {
-        let boundary = game
+        let top = game
             .enemy_coordinates(k)
-            .x_width()
-            .wrapping_add(1)
-            .wrapping_add(collision.ebci_r26 | 0xf);
-        if boundary <= game.enemy_coordinates(k).x_pos() {
-            game.enemy_coordinates(k).set_x_pos(boundary);
+            .y_pos()
+            .wrapping_sub(game.enemy_coordinates(k).y_height());
+        let rows = game
+            .enemy_coordinates(k)
+            .y_height()
+            .wrapping_add(game.enemy_coordinates(k).y_pos())
+            .wrapping_sub(1)
+            .wrapping_sub(top & 0xfff0)
+            >> 4;
+        let row_offset = u16::from((top >> 4) as u8) * u16::from(game.room_width_in_blocks() as u8);
+        let new_pos = (amount32 as u32).wrapping_add(
+            (u32::from(game.enemy_coordinates(k).x_pos()) << 16)
+                | u32::from(game.enemy_coordinates(k).x_subpos()),
+        );
+        let new_x = (new_pos >> 16) as u16;
+        let moving_left = amount32 < 0;
+        let edge = if moving_left {
+            new_x.wrapping_sub(game.enemy_coordinates(k).x_width())
+        } else {
+            game.enemy_coordinates(k)
+                .x_width()
+                .wrapping_add(new_x)
+                .wrapping_sub(1)
+        };
+        let mut collision = EnemyBlockCollInfo {
+            ebci_r18_r20: amount32,
+            ebci_r24: new_x,
+            ebci_r26: edge,
+            ebci_r28: rows,
+            ebci_r30: rows,
+            ebci_r32: slope_mode,
+        };
+        let mut block_offset = row_offset.wrapping_add(edge >> 4).wrapping_mul(2);
+        while EnemyBlockCollReact_Horiz(&mut collision, block_offset, game) & 1 == 0 {
+            // The callback can change room state; retain the original live read.
+            block_offset = block_offset.wrapping_add(game.room_width_in_blocks().wrapping_mul(2));
+            collision.ebci_r28 = collision.ebci_r28.wrapping_sub(1);
+            if collision.ebci_r28 & 0x8000 != 0 {
+                // Apply the callback-adjusted amount to the enemy's live coordinates.
+                let position = (u32::from(game.enemy_coordinates(k).x_pos()) << 16)
+                    | u32::from(game.enemy_coordinates(k).x_subpos());
+                let position = position.wrapping_add(collision.ebci_r18_r20 as u32);
+                game.enemy_coordinates(k).set_x_subpos(position as u16);
+                game.enemy_coordinates(k).set_x_pos((position >> 16) as u16);
+                return 0;
+            }
         }
-        game.enemy_coordinates(k).set_x_subpos(0);
-    } else {
-        let boundary =
-            (collision.ebci_r26 & 0xfff0).wrapping_sub(game.enemy_coordinates(k).x_width());
-        if boundary >= game.enemy_coordinates(k).x_pos() {
-            game.enemy_coordinates(k).set_x_pos(boundary);
+        if moving_left {
+            let boundary = game
+                .enemy_coordinates(k)
+                .x_width()
+                .wrapping_add(1)
+                .wrapping_add(collision.ebci_r26 | 0xf);
+            if boundary <= game.enemy_coordinates(k).x_pos() {
+                game.enemy_coordinates(k).set_x_pos(boundary);
+            }
+            game.enemy_coordinates(k).set_x_subpos(0);
+        } else {
+            let boundary =
+                (collision.ebci_r26 & 0xfff0).wrapping_sub(game.enemy_coordinates(k).x_width());
+            if boundary >= game.enemy_coordinates(k).x_pos() {
+                game.enemy_coordinates(k).set_x_pos(boundary);
+            }
+            game.enemy_coordinates(k).set_x_subpos(u16::MAX);
         }
-        game.enemy_coordinates(k).set_x_subpos(u16::MAX);
+        1
     }
-    1
 }
 
 pub unsafe fn Enemy_MoveDown(k: u16, amount32: i32, game: &mut Game) -> u8 {
-    if amount32 == 0 {
-        return 0;
-    }
-    let left = game
-        .enemy_coordinates(k)
-        .x_pos()
-        .wrapping_sub(game.enemy_coordinates(k).x_width());
-    let columns = game
-        .enemy_coordinates(k)
-        .x_width()
-        .wrapping_add(game.enemy_coordinates(k).x_pos())
-        .wrapping_sub(1)
-        .wrapping_sub(left & 0xfff0)
-        >> 4;
-    let new_pos = (amount32 as u32).wrapping_add(
-        (u32::from(game.enemy_coordinates(k).y_pos()) << 16)
-            | u32::from(game.enemy_coordinates(k).y_subpos()),
-    );
-    let new_y = (new_pos >> 16) as u16;
-    let moving_up = amount32 < 0;
-    let edge = if moving_up {
-        new_y.wrapping_sub(game.enemy_coordinates(k).y_height())
-    } else {
-        game.enemy_coordinates(k)
-            .y_height()
-            .wrapping_add(new_y)
-            .wrapping_sub(1)
-    };
-    let row_offset = u16::from((edge >> 4) as u8) * u16::from(game.room_width_in_blocks() as u8);
-    let mut collision = EnemyBlockCollInfo {
-        ebci_r18_r20: amount32,
-        ebci_r24: new_y,
-        ebci_r26: edge,
-        ebci_r28: columns,
-        ebci_r30: columns,
-        ebci_r32: 0,
-    };
-    let mut block_offset = row_offset.wrapping_add(left >> 4).wrapping_mul(2);
-    while EnemyBlockCollReact_Vert(&mut collision, block_offset, game) & 1 == 0 {
-        collision.ebci_r28 = collision.ebci_r28.wrapping_sub(1);
-        if collision.ebci_r28 & 0x8000 != 0 {
-            // Vertical movement stores the precomputed position, unlike horizontal.
-            game.enemy_coordinates(k).set_y_subpos(new_pos as u16);
-            game.enemy_coordinates(k).set_y_pos(new_y);
+    unsafe {
+        if amount32 == 0 {
             return 0;
         }
-        block_offset = block_offset.wrapping_add(2);
-    }
-    if moving_up {
-        let boundary = game
+        let left = game
             .enemy_coordinates(k)
-            .y_height()
-            .wrapping_add(1)
-            .wrapping_add(collision.ebci_r26 | 0xf);
-        if boundary <= game.enemy_coordinates(k).y_pos() {
-            game.enemy_coordinates(k).set_y_pos(boundary);
+            .x_pos()
+            .wrapping_sub(game.enemy_coordinates(k).x_width());
+        let columns = game
+            .enemy_coordinates(k)
+            .x_width()
+            .wrapping_add(game.enemy_coordinates(k).x_pos())
+            .wrapping_sub(1)
+            .wrapping_sub(left & 0xfff0)
+            >> 4;
+        let new_pos = (amount32 as u32).wrapping_add(
+            (u32::from(game.enemy_coordinates(k).y_pos()) << 16)
+                | u32::from(game.enemy_coordinates(k).y_subpos()),
+        );
+        let new_y = (new_pos >> 16) as u16;
+        let moving_up = amount32 < 0;
+        let edge = if moving_up {
+            new_y.wrapping_sub(game.enemy_coordinates(k).y_height())
+        } else {
+            game.enemy_coordinates(k)
+                .y_height()
+                .wrapping_add(new_y)
+                .wrapping_sub(1)
+        };
+        let row_offset =
+            u16::from((edge >> 4) as u8) * u16::from(game.room_width_in_blocks() as u8);
+        let mut collision = EnemyBlockCollInfo {
+            ebci_r18_r20: amount32,
+            ebci_r24: new_y,
+            ebci_r26: edge,
+            ebci_r28: columns,
+            ebci_r30: columns,
+            ebci_r32: 0,
+        };
+        let mut block_offset = row_offset.wrapping_add(left >> 4).wrapping_mul(2);
+        while EnemyBlockCollReact_Vert(&mut collision, block_offset, game) & 1 == 0 {
+            collision.ebci_r28 = collision.ebci_r28.wrapping_sub(1);
+            if collision.ebci_r28 & 0x8000 != 0 {
+                // Vertical movement stores the precomputed position, unlike horizontal.
+                game.enemy_coordinates(k).set_y_subpos(new_pos as u16);
+                game.enemy_coordinates(k).set_y_pos(new_y);
+                return 0;
+            }
+            block_offset = block_offset.wrapping_add(2);
         }
-        game.enemy_coordinates(k).set_y_subpos(0);
-    } else {
-        let boundary =
-            (collision.ebci_r26 & 0xfff0).wrapping_sub(game.enemy_coordinates(k).y_height());
-        if boundary >= game.enemy_coordinates(k).y_pos() {
-            game.enemy_coordinates(k).set_y_pos(boundary);
+        if moving_up {
+            let boundary = game
+                .enemy_coordinates(k)
+                .y_height()
+                .wrapping_add(1)
+                .wrapping_add(collision.ebci_r26 | 0xf);
+            if boundary <= game.enemy_coordinates(k).y_pos() {
+                game.enemy_coordinates(k).set_y_pos(boundary);
+            }
+            game.enemy_coordinates(k).set_y_subpos(0);
+        } else {
+            let boundary =
+                (collision.ebci_r26 & 0xfff0).wrapping_sub(game.enemy_coordinates(k).y_height());
+            if boundary >= game.enemy_coordinates(k).y_pos() {
+                game.enemy_coordinates(k).set_y_pos(boundary);
+            }
+            game.enemy_coordinates(k).set_y_subpos(u16::MAX);
         }
-        game.enemy_coordinates(k).set_y_subpos(u16::MAX);
+        1
     }
-    1
 }
 unsafe fn EnemyBlockCollReact_Horiz(
     collision: &mut EnemyBlockCollInfo,
     block_offset: u16,
     game: &mut Game,
 ) -> u8 {
-    game.set_cur_block_index(block_offset >> 1);
-    game.react_to_block(|block_type, game| match block_type {
-        0 | 2 | 3 | 4 | 6 | 7 => 0,
-        1 => EnemyBlockCollHorizReact_Slope(collision, game),
-        5 => EnemyBlockCollReact_HorizExt(collision, game),
-        10 => EnemyBlockCollReact_Spike(collision, game),
-        13 => EnemyBlockCollReact_VertExt(collision, game),
-        _ => 1,
-    })
+    unsafe {
+        game.set_cur_block_index(block_offset >> 1);
+        game.react_to_block(|block_type, game| match block_type {
+            0 | 2 | 3 | 4 | 6 | 7 => 0,
+            1 => EnemyBlockCollHorizReact_Slope(collision, game),
+            5 => EnemyBlockCollReact_HorizExt(collision, game),
+            10 => EnemyBlockCollReact_Spike(collision, game),
+            13 => EnemyBlockCollReact_VertExt(collision, game),
+            _ => 1,
+        })
+    }
 }
 unsafe fn EnemyBlockCollReact_Vert(
     collision: &mut EnemyBlockCollInfo,
     block_offset: u16,
     game: &mut Game,
 ) -> u8 {
-    game.set_cur_block_index(block_offset >> 1);
-    game.react_to_block(|block_type, game| match block_type {
-        0 | 2 | 3 | 4 | 6 | 7 => 0,
-        1 => EnemyBlockCollVertReact_Slope(collision, game),
-        5 => EnemyBlockCollReact_HorizExt(collision, game),
-        10 => EnemyBlockCollReact_Spike(collision, game),
-        13 => EnemyBlockCollReact_VertExt(collision, game),
-        _ => 1,
-    })
+    unsafe {
+        game.set_cur_block_index(block_offset >> 1);
+        game.react_to_block(|block_type, game| match block_type {
+            0 | 2 | 3 | 4 | 6 | 7 => 0,
+            1 => EnemyBlockCollVertReact_Slope(collision, game),
+            5 => EnemyBlockCollReact_HorizExt(collision, game),
+            10 => EnemyBlockCollReact_Spike(collision, game),
+            13 => EnemyBlockCollReact_VertExt(collision, game),
+            _ => 1,
+        })
+    }
 }
 pub unsafe fn CalculateBlockContainingPixelPos(xpos: u16, ypos: u16, game: &mut Game) {
-    let prod: u16 = Mult8x8((ypos >> 4) as u8, word!(game.room_width_in_blocks) as u8);
-    word!(game.cur_block_index = (prod as i32 + (xpos as i32 >> 4)) as u16);
+    unsafe {
+        let prod: u16 = Mult8x8((ypos >> 4) as u8, word!(game.room_width_in_blocks) as u8);
+        word!(game.cur_block_index = (prod as i32 + (xpos as i32 >> 4)) as u16);
+    }
 }
 pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
-    let mut result: u8 = 0;
-    let E = gEnemyData(k as i32, game);
-    CalculateBlockContainingPixelPos(
-        (*E).x_pos,
-        ((*E).y_pos as i32 + (*E).y_height as i32 - 1i32) as u16,
-        game,
-    );
-    if (word!(game.level_data[word!(game.cur_block_index)]) & 0xf000) == 4096
-        && (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x1f) >= 5
-    {
-        result = 1;
-        let temp_collision_DD4: u16 =
-            ((*E).y_height as i32 + (*E).y_pos as i32 - 1i32 & 0xf) as u16;
-        let temp_collision_DD6: u16 = (16
-            * (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) as i32 & 0x1f))
-            as u16;
-        if (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x80) == 0 {
-            let j: u16 =
-                (if (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x40) != 0 {
+    unsafe {
+        let mut result: u8 = 0;
+        let E = gEnemyData(k as i32, game);
+        CalculateBlockContainingPixelPos(
+            (*E).x_pos,
+            ((*E).y_pos as i32 + (*E).y_height as i32 - 1i32) as u16,
+            game,
+        );
+        if (word!(game.level_data[word!(game.cur_block_index)]) & 0xf000) == 4096
+            && (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x1f) >= 5
+        {
+            result = 1;
+            let temp_collision_DD4: u16 =
+                ((*E).y_height as i32 + (*E).y_pos as i32 - 1i32 & 0xf) as u16;
+            let temp_collision_DD6: u16 = (16
+                * (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) as i32 & 0x1f))
+                as u16;
+            if (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x80) == 0 {
+                let j: u16 = (if (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize)
+                    & 0x40)
+                    != 0
+                {
                     (*E).x_pos as i32 ^ 0xf
                 } else {
                     (*E).x_pos as i32
                 }) as u16;
-            let v4: i16 = ((byte!(@pointer rom_ptr!(game; 0x948b2b); (temp_collision_DD6 as i32 + (j as i32 & 0xf)) as isize)
-                as i32
-                & 0x1f)
-                - temp_collision_DD4 as i32
-                - 1i32) as i16;
-            if v4 < 0 {
-                (*E).y_pos = ((*E).y_pos).wrapping_add((v4) as u16);
+                let v4: i16 = ((byte!(@pointer rom_ptr!(game; 0x948b2b); (temp_collision_DD6 as i32 + (j as i32 & 0xf)) as isize)
+                    as i32
+                    & 0x1f)
+                    - temp_collision_DD4 as i32
+                    - 1i32) as i16;
+                if v4 < 0 {
+                    (*E).y_pos = ((*E).y_pos).wrapping_add((v4) as u16);
+                }
             }
         }
-    }
-    CalculateBlockContainingPixelPos((*E).x_pos, ((*E).y_pos).wrapping_sub((*E).y_height), game);
-    if (word!(game.level_data[word!(game.cur_block_index)]) & 0xf000) == 4096
-        && (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x1f) >= 5
-    {
-        result = 1;
-        let temp_collision_DD4_0: u16 =
-            ((*E).y_pos as i32 - (*E).y_height as i32 & 0xf ^ 0xf) as u16;
-        let temp_collision_DD6_0: u16 = (16
-            * (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) as i32 & 0x1f))
-            as u16;
-        if *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x80 != 0 {
-            let j_0: u16 =
-                (if (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x40) != 0 {
+        CalculateBlockContainingPixelPos(
+            (*E).x_pos,
+            ((*E).y_pos).wrapping_sub((*E).y_height),
+            game,
+        );
+        if (word!(game.level_data[word!(game.cur_block_index)]) & 0xf000) == 4096
+            && (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x1f) >= 5
+        {
+            result = 1;
+            let temp_collision_DD4_0: u16 =
+                ((*E).y_pos as i32 - (*E).y_height as i32 & 0xf ^ 0xf) as u16;
+            let temp_collision_DD6_0: u16 = (16
+                * (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) as i32 & 0x1f))
+                as u16;
+            if *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x80 != 0 {
+                let j_0: u16 = (if (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize)
+                    & 0x40)
+                    != 0
+                {
                     (*E).x_pos as i32 ^ 0xf
                 } else {
                     (*E).x_pos as i32
                 }) as u16;
-            let v7: i16 = ((byte!(@pointer rom_ptr!(game; 0x948b2b); (temp_collision_DD6_0 as i32 + (j_0 as i32 & 0xf)) as isize)
-                as i32
-                & 0x1f)
-                - temp_collision_DD4_0 as i32
-                - 1i32) as i16;
-            if v7 < 0 {
-                (*E).y_pos = ((*E).y_pos).wrapping_sub((v7) as u16);
+                let v7: i16 = ((byte!(@pointer rom_ptr!(game; 0x948b2b); (temp_collision_DD6_0 as i32 + (j_0 as i32 & 0xf)) as isize)
+                    as i32
+                    & 0x1f)
+                    - temp_collision_DD4_0 as i32
+                    - 1i32) as i16;
+                if v7 < 0 {
+                    (*E).y_pos = ((*E).y_pos).wrapping_sub((v7) as u16);
+                }
             }
         }
+        result
     }
-    result
 }

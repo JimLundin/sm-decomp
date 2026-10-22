@@ -30,234 +30,254 @@ pub fn dma_init(snes: *mut Snes) -> *mut Dma {
     }))
 }
 pub unsafe fn dma_reset(dma: *mut Dma) {
-    for i in 0..8 {
-        set_fields! {[(*dma).channel[i]]; bAdr = 0xff, aAdr = 0xffff, aBank = 0xff,
-        size = 0xffff, indBank = 0xff, tableAdr = 0xffff, };
-        set_fields! {[(*dma).channel[i]], 0xff; repCount, unusedByte}
-        (*dma).channel[i].dmaActive = false;
-        set_fields! {[(*dma).channel[i]]; hdmaActive = false, mode = 7, fixed = true,
-        decrement = true, indirect = true, fromB = true, unusedBit = true,
-        doTransfer = false, terminated = false, offIndex = 0, };
+    unsafe {
+        for i in 0..8 {
+            set_fields! {[(*dma).channel[i]]; bAdr = 0xff, aAdr = 0xffff, aBank = 0xff,
+            size = 0xffff, indBank = 0xff, tableAdr = 0xffff, };
+            set_fields! {[(*dma).channel[i]], 0xff; repCount, unusedByte}
+            (*dma).channel[i].dmaActive = false;
+            set_fields! {[(*dma).channel[i]]; hdmaActive = false, mode = 7, fixed = true,
+            decrement = true, indirect = true, fromB = true, unusedBit = true,
+            doTransfer = false, terminated = false, offIndex = 0, };
+        }
+        set_fields! {[(*dma)], 0; hdmaTimer, dmaTimer}
+        (*dma).dmaBusy = false;
     }
-    set_fields! {[(*dma)], 0; hdmaTimer, dmaTimer}
-    (*dma).dmaBusy = false;
 }
 pub unsafe fn dma_saveload(dma: *mut Dma, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
-    crate::rtl::snapshot_result(io.state(&mut *dma));
+    unsafe {
+        crate::rtl::snapshot_result(io.state(&mut *dma));
+    }
 }
 pub unsafe fn dma_read(dma: *mut Dma, address: u16) -> u8 {
-    let channel = &(*dma).channel[usize::from((address >> 4) & 7)];
-    match address & 0x0f {
-        0 => {
-            channel.mode
-                | (u8::from(channel.fixed) << 3)
-                | (u8::from(channel.decrement) << 4)
-                | (u8::from(channel.unusedBit) << 5)
-                | (u8::from(channel.indirect) << 6)
-                | (u8::from(channel.fromB) << 7)
-        }
-        1 => channel.bAdr,
-        2 => channel.aAdr as u8,
-        3 => (channel.aAdr >> 8) as u8,
-        4 => channel.aBank,
-        5 => channel.size as u8,
-        6 => (channel.size >> 8) as u8,
-        7 => channel.indBank,
-        8 => channel.tableAdr as u8,
-        9 => (channel.tableAdr >> 8) as u8,
-        10 => channel.repCount,
-        11 | 15 => channel.unusedByte,
-        _ => {
-            crate::native_assertion! {
-                @failure
-                b"0\0", b"src/snes/dma.c\0", 118, pointer __ASSERT_FUNCTION.as_ptr()
-            };
+    unsafe {
+        let channel = &(*dma).channel[usize::from((address >> 4) & 7)];
+        match address & 0x0f {
+            0 => {
+                channel.mode
+                    | (u8::from(channel.fixed) << 3)
+                    | (u8::from(channel.decrement) << 4)
+                    | (u8::from(channel.unusedBit) << 5)
+                    | (u8::from(channel.indirect) << 6)
+                    | (u8::from(channel.fromB) << 7)
+            }
+            1 => channel.bAdr,
+            2 => channel.aAdr as u8,
+            3 => (channel.aAdr >> 8) as u8,
+            4 => channel.aBank,
+            5 => channel.size as u8,
+            6 => (channel.size >> 8) as u8,
+            7 => channel.indBank,
+            8 => channel.tableAdr as u8,
+            9 => (channel.tableAdr >> 8) as u8,
+            10 => channel.repCount,
+            11 | 15 => channel.unusedByte,
+            _ => {
+                crate::native_assertion! {
+                    @failure
+                    b"0\0", b"src/snes/dma.c\0", 118, pointer __ASSERT_FUNCTION.as_ptr()
+                };
+            }
         }
     }
 }
 pub unsafe fn dma_write(dma: *mut Dma, address: u16, value: u8) {
-    let channel = &mut (*dma).channel[usize::from((address >> 4) & 7)];
-    match address & 0x0f {
-        0 => {
-            set_fields! {[channel]; mode = value & 7, fixed = value & 0x08 != 0,
-            decrement = value & 0x10 != 0, unusedBit = value & 0x20 != 0,
-            indirect = value & 0x40 != 0, fromB = value & 0x80 != 0, };
+    unsafe {
+        let channel = &mut (*dma).channel[usize::from((address >> 4) & 7)];
+        match address & 0x0f {
+            0 => {
+                set_fields! {[channel]; mode = value & 7, fixed = value & 0x08 != 0,
+                decrement = value & 0x10 != 0, unusedBit = value & 0x20 != 0,
+                indirect = value & 0x40 != 0, fromB = value & 0x80 != 0, };
+            }
+            1 => channel.bAdr = value,
+            2 => channel.aAdr = (channel.aAdr & 0xff00) | u16::from(value),
+            3 => channel.aAdr = (channel.aAdr & 0x00ff) | (u16::from(value) << 8),
+            4 => channel.aBank = value,
+            5 => channel.size = (channel.size & 0xff00) | u16::from(value),
+            6 => channel.size = (channel.size & 0x00ff) | (u16::from(value) << 8),
+            7 => channel.indBank = value,
+            8 => channel.tableAdr = (channel.tableAdr & 0xff00) | u16::from(value),
+            9 => channel.tableAdr = (channel.tableAdr & 0x00ff) | (u16::from(value) << 8),
+            10 => channel.repCount = value,
+            11 | 15 => channel.unusedByte = value,
+            _ => {}
         }
-        1 => channel.bAdr = value,
-        2 => channel.aAdr = (channel.aAdr & 0xff00) | u16::from(value),
-        3 => channel.aAdr = (channel.aAdr & 0x00ff) | (u16::from(value) << 8),
-        4 => channel.aBank = value,
-        5 => channel.size = (channel.size & 0xff00) | u16::from(value),
-        6 => channel.size = (channel.size & 0x00ff) | (u16::from(value) << 8),
-        7 => channel.indBank = value,
-        8 => channel.tableAdr = (channel.tableAdr & 0xff00) | u16::from(value),
-        9 => channel.tableAdr = (channel.tableAdr & 0x00ff) | (u16::from(value) << 8),
-        10 => channel.repCount = value,
-        11 | 15 => channel.unusedByte = value,
-        _ => {}
     }
 }
 pub unsafe fn dma_doDma(dma: *mut Dma, game: &mut Game) {
-    if (*dma).dmaTimer > 0 {
-        (*dma).dmaTimer = (*dma).dmaTimer.wrapping_sub(2);
-        return;
-    }
-    let mut i = 0;
-    while i < 8 {
-        if (*dma).channel[i].dmaActive {
-            break;
+    unsafe {
+        if (*dma).dmaTimer > 0 {
+            (*dma).dmaTimer = (*dma).dmaTimer.wrapping_sub(2);
+            return;
         }
-        i += 1;
-    }
-    if i == 8 {
-        (*dma).dmaBusy = false;
-        return;
-    }
-    if !(*dma).channel[i].fromB
-        && (*dma).channel[i].aBank & 0x80 != 0
-        && (*dma).channel[i].aAdr & 0x8000 == 0
-        && !game.g_fail
-    {
-        printf(
-            c"Warning! DMA from addr 0x%x\n".as_ptr(),
-            words!(i32, (*dma).channel[i], aBank, aAdr),
+        let mut i = 0;
+        while i < 8 {
+            if (*dma).channel[i].dmaActive {
+                break;
+            }
+            i += 1;
+        }
+        if i == 8 {
+            (*dma).dmaBusy = false;
+            return;
+        }
+        if !(*dma).channel[i].fromB
+            && (*dma).channel[i].aBank & 0x80 != 0
+            && (*dma).channel[i].aAdr & 0x8000 == 0
+            && !game.g_fail
+        {
+            printf(
+                c"Warning! DMA from addr 0x%x\n".as_ptr(),
+                words!(i32, (*dma).channel[i], aBank, aAdr),
+            );
+            game.g_fail = true_0 != 0;
+        }
+        crate::update_place! { previous fresh0 = (*dma).channel[i].offIndex => (*dma).channel[i].offIndex.wrapping_add(1); }
+        dma_transferByte(
+            dma,
+            (*dma).channel[i].aAdr,
+            (*dma).channel[i].aBank,
+            (*dma).channel[i].bAdr.wrapping_add(
+                bAdrOffsets[usize::from((*dma).channel[i].mode)][usize::from(fresh0)] as u8,
+            ),
+            (*dma).channel[i].fromB,
+            game,
         );
-        game.g_fail = true_0 != 0;
-    }
-    crate::update_place! { previous fresh0 = (*dma).channel[i].offIndex => (*dma).channel[i].offIndex.wrapping_add(1); }
-    dma_transferByte(
-        dma,
-        (*dma).channel[i].aAdr,
-        (*dma).channel[i].aBank,
-        (*dma).channel[i].bAdr.wrapping_add(
-            bAdrOffsets[usize::from((*dma).channel[i].mode)][usize::from(fresh0)] as u8,
-        ),
-        (*dma).channel[i].fromB,
-        game,
-    );
-    (*dma).channel[i].offIndex &= 3;
-    (*dma).dmaTimer = (*dma).dmaTimer.wrapping_add(6);
-    if !(*dma).channel[i].fixed {
-        (*dma).channel[i].aAdr = if (*dma).channel[i].decrement {
-            (*dma).channel[i].aAdr.wrapping_sub(1)
-        } else {
-            (*dma).channel[i].aAdr.wrapping_add(1)
-        };
-    }
-    (*dma).channel[i].size = (*dma).channel[i].size.wrapping_sub(1);
-    if (*dma).channel[i].size == 0 {
-        set_fields! {[(*dma).channel[i]]; offIndex = 0, dmaActive = false, };
-        (*dma).dmaTimer = (*dma).dmaTimer.wrapping_add(8);
+        (*dma).channel[i].offIndex &= 3;
+        (*dma).dmaTimer = (*dma).dmaTimer.wrapping_add(6);
+        if !(*dma).channel[i].fixed {
+            (*dma).channel[i].aAdr = if (*dma).channel[i].decrement {
+                (*dma).channel[i].aAdr.wrapping_sub(1)
+            } else {
+                (*dma).channel[i].aAdr.wrapping_add(1)
+            };
+        }
+        (*dma).channel[i].size = (*dma).channel[i].size.wrapping_sub(1);
+        if (*dma).channel[i].size == 0 {
+            set_fields! {[(*dma).channel[i]]; offIndex = 0, dmaActive = false, };
+            (*dma).dmaTimer = (*dma).dmaTimer.wrapping_add(8);
+        }
     }
 }
 // Advance the table pointer before the bus read, as HDMA does for every byte.
 unsafe fn hdma_read_table_byte(dma: *mut Dma, channel: usize, game: &mut Game) -> u8 {
-    crate::update_place! { previous address = (*dma).channel[channel].tableAdr => address.wrapping_add(1); }
-    snes_read(
-        (*dma).snes,
-        (u32::from((*dma).channel[channel].aBank) << 16) | u32::from(address),
-        game,
-    )
+    unsafe {
+        crate::update_place! { previous address = (*dma).channel[channel].tableAdr => address.wrapping_add(1); }
+        snes_read(
+            (*dma).snes,
+            (u32::from((*dma).channel[channel].aBank) << 16) | u32::from(address),
+            game,
+        )
+    }
 }
 unsafe fn hdma_load_indirect_address(dma: *mut Dma, channel: usize, game: &mut Game) {
-    (*dma).channel[channel].size = u16::from(hdma_read_table_byte(dma, channel, game));
-    (*dma).channel[channel].size =
-        (*dma).channel[channel].size | (u16::from(hdma_read_table_byte(dma, channel, game)) << 8);
-    (*dma).hdmaTimer = (*dma).hdmaTimer.wrapping_add(16);
+    unsafe {
+        (*dma).channel[channel].size = u16::from(hdma_read_table_byte(dma, channel, game));
+        (*dma).channel[channel].size = (*dma).channel[channel].size
+            | (u16::from(hdma_read_table_byte(dma, channel, game)) << 8);
+        (*dma).hdmaTimer = (*dma).hdmaTimer.wrapping_add(16);
+    }
 }
 pub unsafe fn dma_initHdma(dma: *mut Dma, game: &mut Game) {
-    (*dma).hdmaTimer = 0;
-    let mut hdmaHappened: bool = false_0 != 0;
-    for i in 0i32..8 {
-        let mut keep_channel_active: bool = if (*dma).channel[i as usize].hdmaActive {
-            hdmaHappened = true_0 != 0;
-            set_fields! {[(*dma).channel[i as usize]]; dmaActive = false_0 != 0, offIndex = 0,
-            tableAdr = (*dma).channel[i as usize].aAdr,
-            repCount = hdma_read_table_byte(dma, i as usize, game), };
-            if (*dma).channel[i as usize].repCount as i32 == 0 {
-                (*dma).channel[i as usize].terminated = true_0 != 0;
-                false
-            } else {
-                (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8) as u16;
-                if (*dma).channel[i as usize].indirect {
-                    hdma_load_indirect_address(dma, i as usize, game);
+    unsafe {
+        (*dma).hdmaTimer = 0;
+        let mut hdmaHappened: bool = false_0 != 0;
+        for i in 0i32..8 {
+            let mut keep_channel_active: bool = if (*dma).channel[i as usize].hdmaActive {
+                hdmaHappened = true_0 != 0;
+                set_fields! {[(*dma).channel[i as usize]]; dmaActive = false_0 != 0, offIndex = 0,
+                tableAdr = (*dma).channel[i as usize].aAdr,
+                repCount = hdma_read_table_byte(dma, i as usize, game), };
+                if (*dma).channel[i as usize].repCount as i32 == 0 {
+                    (*dma).channel[i as usize].terminated = true_0 != 0;
+                    false
+                } else {
+                    (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8) as u16;
+                    if (*dma).channel[i as usize].indirect {
+                        hdma_load_indirect_address(dma, i as usize, game);
+                    }
+                    (*dma).channel[i as usize].doTransfer = true_0 != 0;
+                    true
                 }
-                (*dma).channel[i as usize].doTransfer = true_0 != 0;
+            } else {
+                (*dma).channel[i as usize].doTransfer = false_0 != 0;
                 true
+            };
+            if keep_channel_active {
+                (*dma).channel[i as usize].terminated = false_0 != 0;
             }
-        } else {
-            (*dma).channel[i as usize].doTransfer = false_0 != 0;
-            true
-        };
-        if keep_channel_active {
-            (*dma).channel[i as usize].terminated = false_0 != 0;
         }
-    }
-    if hdmaHappened {
-        (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 16) as u16;
+        if hdmaHappened {
+            (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 16) as u16;
+        }
     }
 }
 pub unsafe fn dma_doHdma(dma: *mut Dma, game: &mut Game) {
-    (*dma).hdmaTimer = 0;
-    let mut hdmaHappened: bool = false_0 != 0;
-    let mut i: i32 = 0;
-    while i < 8 {
-        if (*dma).channel[i as usize].hdmaActive as i32 != 0
-            && !(*dma).channel[i as usize].terminated
-        {
-            hdmaHappened = true_0 != 0;
-            set_fields! {[(*dma).channel[i as usize]]; dmaActive = false_0 != 0, offIndex = 0, };
-            (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8) as u16;
-            if (*dma).channel[i as usize].doTransfer {
-                let mut j: i32 = 0;
-                while j < transferLength[(*dma).channel[i as usize].mode as usize] {
-                    (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8) as u16;
-                    if (*dma).channel[i as usize].indirect {
-                        crate::update_place! { previous fresh4 = (*dma).channel[i as usize].size => (*dma).channel[i as usize].size.wrapping_add(1); }
-                        dma_transferByte(
-                            dma,
-                            fresh4,
-                            (*dma).channel[i as usize].indBank,
-                            ((*dma).channel[i as usize].bAdr as i32
-                                + bAdrOffsets[(*dma).channel[i as usize].mode as usize][j as usize])
-                                as u8,
-                            (*dma).channel[i as usize].fromB,
-                            game,
-                        );
-                    } else {
-                        crate::update_place! { previous fresh5 = (*dma).channel[i as usize].tableAdr => (*dma).channel[i as usize].tableAdr.wrapping_add(1); }
-                        dma_transferByte(
-                            dma,
-                            fresh5,
-                            (*dma).channel[i as usize].aBank,
-                            ((*dma).channel[i as usize].bAdr as i32
-                                + bAdrOffsets[(*dma).channel[i as usize].mode as usize][j as usize])
-                                as u8,
-                            (*dma).channel[i as usize].fromB,
-                            game,
-                        );
+    unsafe {
+        (*dma).hdmaTimer = 0;
+        let mut hdmaHappened: bool = false_0 != 0;
+        let mut i: i32 = 0;
+        while i < 8 {
+            if (*dma).channel[i as usize].hdmaActive as i32 != 0
+                && !(*dma).channel[i as usize].terminated
+            {
+                hdmaHappened = true_0 != 0;
+                set_fields! {[(*dma).channel[i as usize]]; dmaActive = false_0 != 0, offIndex = 0, };
+                (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8) as u16;
+                if (*dma).channel[i as usize].doTransfer {
+                    let mut j: i32 = 0;
+                    while j < transferLength[(*dma).channel[i as usize].mode as usize] {
+                        (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 8) as u16;
+                        if (*dma).channel[i as usize].indirect {
+                            crate::update_place! { previous fresh4 = (*dma).channel[i as usize].size => (*dma).channel[i as usize].size.wrapping_add(1); }
+                            dma_transferByte(
+                                dma,
+                                fresh4,
+                                (*dma).channel[i as usize].indBank,
+                                ((*dma).channel[i as usize].bAdr as i32
+                                    + bAdrOffsets[(*dma).channel[i as usize].mode as usize]
+                                        [j as usize]) as u8,
+                                (*dma).channel[i as usize].fromB,
+                                game,
+                            );
+                        } else {
+                            crate::update_place! { previous fresh5 = (*dma).channel[i as usize].tableAdr => (*dma).channel[i as usize].tableAdr.wrapping_add(1); }
+                            dma_transferByte(
+                                dma,
+                                fresh5,
+                                (*dma).channel[i as usize].aBank,
+                                ((*dma).channel[i as usize].bAdr as i32
+                                    + bAdrOffsets[(*dma).channel[i as usize].mode as usize]
+                                        [j as usize]) as u8,
+                                (*dma).channel[i as usize].fromB,
+                                game,
+                            );
+                        }
+                        j += 1;
                     }
-                    j += 1;
+                }
+                (*dma).channel[i as usize].repCount =
+                    (*dma).channel[i as usize].repCount.wrapping_sub(1);
+                (*dma).channel[i as usize].doTransfer =
+                    (*dma).channel[i as usize].repCount & 0x80 != 0;
+                if (*dma).channel[i as usize].repCount & 0x7f == 0 {
+                    (*dma).channel[i as usize].repCount =
+                        hdma_read_table_byte(dma, i as usize, game);
+                    if (*dma).channel[i as usize].indirect {
+                        hdma_load_indirect_address(dma, i as usize, game);
+                    }
+                    if (*dma).channel[i as usize].repCount as i32 == 0 {
+                        (*dma).channel[i as usize].terminated = true_0 != 0;
+                    }
+                    (*dma).channel[i as usize].doTransfer = true_0 != 0;
                 }
             }
-            (*dma).channel[i as usize].repCount =
-                (*dma).channel[i as usize].repCount.wrapping_sub(1);
-            (*dma).channel[i as usize].doTransfer = (*dma).channel[i as usize].repCount & 0x80 != 0;
-            if (*dma).channel[i as usize].repCount & 0x7f == 0 {
-                (*dma).channel[i as usize].repCount = hdma_read_table_byte(dma, i as usize, game);
-                if (*dma).channel[i as usize].indirect {
-                    hdma_load_indirect_address(dma, i as usize, game);
-                }
-                if (*dma).channel[i as usize].repCount as i32 == 0 {
-                    (*dma).channel[i as usize].terminated = true_0 != 0;
-                }
-                (*dma).channel[i as usize].doTransfer = true_0 != 0;
-            }
+            i += 1;
         }
-        i += 1;
-    }
-    if hdmaHappened {
-        (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 16) as u16;
+        if hdmaHappened {
+            (*dma).hdmaTimer = ((*dma).hdmaTimer as i32 + 16) as u16;
+        }
     }
 }
 unsafe fn dma_transferByte(
@@ -268,41 +288,47 @@ unsafe fn dma_transferByte(
     from_b: bool,
     game: &mut Game,
 ) {
-    let address = (u32::from(a_bank) << 16) | u32::from(a_address);
-    let snes = (*dma).snes;
-    if from_b {
-        let value = snes_readBBus(snes, b_address, game);
-        snes_write(snes, address, value, game);
-    } else {
-        let value = snes_read(snes, address, game);
-        snes_writeBBus(snes, b_address, value, game);
+    unsafe {
+        let address = (u32::from(a_bank) << 16) | u32::from(a_address);
+        let snes = (*dma).snes;
+        if from_b {
+            let value = snes_readBBus(snes, b_address, game);
+            snes_write(snes, address, value, game);
+        } else {
+            let value = snes_read(snes, address, game);
+            snes_writeBBus(snes, b_address, value, game);
+        }
     }
 }
 pub unsafe fn dma_cycle(dma: *mut Dma, game: &mut Game) -> bool {
-    if (*dma).hdmaTimer > 0 {
-        (*dma).hdmaTimer = (*dma).hdmaTimer.wrapping_sub(2);
-        true
-    } else if (*dma).dmaBusy {
-        dma_doDma(dma, game);
-        true
-    } else {
-        false
+    unsafe {
+        if (*dma).hdmaTimer > 0 {
+            (*dma).hdmaTimer = (*dma).hdmaTimer.wrapping_sub(2);
+            true
+        } else if (*dma).dmaBusy {
+            dma_doDma(dma, game);
+            true
+        } else {
+            false
+        }
     }
 }
 pub unsafe fn dma_startDma(dma: *mut Dma, mask: u8, hdma: bool) {
-    let channels = &mut (*dma).channel;
-    for (i, channel) in channels.iter_mut().enumerate() {
-        let active = mask & (1 << i) != 0;
-        if hdma {
-            channel.hdmaActive = active;
-        } else {
-            channel.dmaActive = active;
+    unsafe {
+        let channels = &mut (*dma).channel;
+        for (i, channel) in channels.iter_mut().enumerate() {
+            let active = mask & (1 << i) != 0;
+            if hdma {
+                channel.hdmaActive = active;
+            } else {
+                channel.dmaActive = active;
+            }
         }
-    }
-    if !hdma {
-        (*dma).dmaBusy = mask != 0;
-        (*dma).dmaTimer = (*dma)
-            .dmaTimer
-            .wrapping_add(if (*dma).dmaBusy { 16 } else { 0 });
+        if !hdma {
+            (*dma).dmaBusy = mask != 0;
+            (*dma).dmaTimer = (*dma)
+                .dmaTimer
+                .wrapping_add(if (*dma).dmaBusy { 16 } else { 0 });
+        }
     }
 }

@@ -165,7 +165,7 @@ def build(root, rustc, use_cargo=False):
     library = output / "libsm.rlib"
     dll = output / "sm_verify.dll"
     # Retain 16 codegen units; incremental compilation otherwise defaults to 256.
-    common = [rustc, "--edition=2021", "-C", "opt-level=3",
+    common = [rustc, "--edition=2024", "-C", "opt-level=3",
               "-C", "codegen-units=16", "-A", "warnings"]
     common += [arg for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
                if path for arg in ("-L", f"native={path}")]

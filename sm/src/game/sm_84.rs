@@ -30,11 +30,13 @@ crate::game::constants::typed_constants! { i32;
 }
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
-    crate::native_assertion! {
-        '_c2rust_label: addr < 0x2000;
-        b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51, b"uint8 *RomPtr_RAM(uint16_t)\0"
-    };
-    ram_ptr!(game; addr as i32 as isize)
+    unsafe {
+        crate::native_assertion! {
+            '_c2rust_label: addr < 0x2000;
+            b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51, b"uint8 *RomPtr_RAM(uint16_t)\0"
+        };
+        ram_ptr!(game; addr as i32 as isize)
+    }
 }
 const RomPtr_84: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x84>;
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
@@ -42,49 +44,59 @@ crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
 }
 pub unsafe fn SetGoldenTorizoPalette(mut a: u16, game: &mut Game) {
-    let mut v1: i16 = ((byte!(a; 1)) as i16) & (0x78i16);
-    if (v1 as u16 & 0x40) != 0 {
-        v1 = 56;
-    }
-    let mut v2: u16 = (4 * v1 as i32 | 0x1e) as u16;
-    for i in (0i32..=30).rev().step_by(2) {
-        let v4: i32 = v2 as i32 >> 1;
-        let v5: i32 = i >> 1;
-        word! { game;
-            palette_buffer[(v5 + 160)] = crate::rtl::rom_table_word!(game, 0x848132, v4 as isize);
-            palette_buffer[(v5 + 144)] = crate::rtl::rom_table_word!(game, 0x848032, v4 as isize);
+    unsafe {
+        let mut v1: i16 = ((byte!(a; 1)) as i16) & (0x78i16);
+        if (v1 as u16 & 0x40) != 0 {
+            v1 = 56;
         }
-        v2 = (v2).wrapping_sub(2);
+        let mut v2: u16 = (4 * v1 as i32 | 0x1e) as u16;
+        for i in (0i32..=30).rev().step_by(2) {
+            let v4: i32 = v2 as i32 >> 1;
+            let v5: i32 = i >> 1;
+            word! { game;
+                palette_buffer[(v5 + 160)] = crate::rtl::rom_table_word!(game, 0x848132, v4 as isize);
+                palette_buffer[(v5 + 144)] = crate::rtl::rom_table_word!(game, 0x848032, v4 as isize);
+            }
+            v2 = (v2).wrapping_sub(2);
+        }
     }
 }
 pub unsafe fn LoadRoomPlmGfx(game: &mut Game) {
-    word!(game.plm_item_gfx_index = 0);
-    for v0 in (0i32..8).step_by(2) {
-        if word!(game.plm_item_gfx_ptrs[(v0 >> 1)]) != 0 {
-            let record =
-                crate::rtl::rom_record(0x84, word!(game.plm_item_gfx_ptrs[(v0 >> 1)]), game);
-            PlmInstr_LoadItemPlmGfx(PlmScript::at(record.image, record.base), v0 as u16, game);
+    unsafe {
+        word!(game.plm_item_gfx_index = 0);
+        for v0 in (0i32..8).step_by(2) {
+            if word!(game.plm_item_gfx_ptrs[(v0 >> 1)]) != 0 {
+                let record =
+                    crate::rtl::rom_record(0x84, word!(game.plm_item_gfx_ptrs[(v0 >> 1)]), game);
+                PlmInstr_LoadItemPlmGfx(PlmScript::at(record.image, record.base), v0 as u16, game);
+            }
         }
     }
 }
 pub unsafe fn ClearSoundsWhenGoingThroughDoor(game: &mut Game) {
-    CallSomeSamusCode(0x1d, game);
+    unsafe {
+        CallSomeSamusCode(0x1d, game);
+    }
 }
 pub unsafe fn PlaySpinJumpSoundIfSpinJumping(game: &mut Game) {
-    CallSomeSamusCode(0x1c, game);
+    unsafe {
+        CallSomeSamusCode(0x1c, game);
+    }
 }
 pub unsafe fn CalculatePlmBlockCoords(k: u16, game: &mut Game) {
-    let block_index_addr = 0x1c87 + usize::from(k >> 1) * 2; // plm_block_indices
-    let block_index = u16::from_le_bytes([
-        game.g_ram[block_index_addr],
-        game.g_ram[block_index_addr + 1],
-    ]) >> 1;
-    let room_width = u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]]) as u8;
-    let y = SnesDivide(block_index, room_width);
-    game.g_ram[0x1c2b..0x1c2d].copy_from_slice(&y.to_le_bytes()); // plm_y_block
-    let room_width = u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]]) as u8;
-    let x = SnesModulus(block_index, room_width);
-    game.g_ram[0x1c29..0x1c2b].copy_from_slice(&x.to_le_bytes()); // plm_x_block
+    unsafe {
+        let block_index_addr = 0x1c87 + usize::from(k >> 1) * 2; // plm_block_indices
+        let block_index = u16::from_le_bytes([
+            game.g_ram[block_index_addr],
+            game.g_ram[block_index_addr + 1],
+        ]) >> 1;
+        let room_width = u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]]) as u8;
+        let y = SnesDivide(block_index, room_width);
+        game.g_ram[0x1c2b..0x1c2d].copy_from_slice(&y.to_le_bytes()); // plm_y_block
+        let room_width = u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]]) as u8;
+        let x = SnesModulus(block_index, room_width);
+        game.g_ram[0x1c29..0x1c2b].copy_from_slice(&x.to_le_bytes()); // plm_x_block
+    }
 }
 pub fn WriteLevelDataBlockTypeAndBts(k: u16, a: u16, game: &mut Game) {
     // The level-data byte uses the exact offset, while BTS rounds down to a word.
@@ -99,13 +111,15 @@ pub unsafe fn WriteRowOfLevelDataBlockAndBTS(
     arg2: u16,
     game: &mut Game,
 ) {
-    let v2: u16 = word!(game.plm_block_indices[(k >> 1)]);
-    let v8: u16 = (v2 >> 1);
-    let mut i: i32 = 0;
-    while i < arg2 as i32 {
-        *(ram_ptr!(game, u16; 0x10002)).offset((v2 as i32 + i * 2 >> 1) as isize) = arg0;
-        *ram_ptr!(game; 0x16402, (v8 as i32 + i) as isize) = arg1 as u8;
-        i += 1;
+    unsafe {
+        let v2: u16 = word!(game.plm_block_indices[(k >> 1)]);
+        let v8: u16 = (v2 >> 1);
+        let mut i: i32 = 0;
+        while i < arg2 as i32 {
+            *(ram_ptr!(game, u16; 0x10002)).offset((v2 as i32 + i * 2 >> 1) as isize) = arg0;
+            *ram_ptr!(game; 0x16402, (v8 as i32 + i) as isize) = arg1 as u8;
+            i += 1;
+        }
     }
 }
 pub fn EnablePLMs(game: &mut Game) {
@@ -114,7 +128,9 @@ pub fn EnablePLMs(game: &mut Game) {
     game.g_ram[0x1c23..0x1c25].copy_from_slice(&(flags | 0x8000).to_le_bytes());
 }
 pub unsafe fn DisablePLMs(game: &mut Game) {
-    word!(game.plm_flag &= !(0x8000));
+    unsafe {
+        word!(game.plm_flag &= !(0x8000));
+    }
 }
 pub fn ClearPLMs(game: &mut Game) {
     for slot in (0..40).rev() {
@@ -124,90 +140,72 @@ pub fn ClearPLMs(game: &mut Game) {
     game.g_ram[0x1c2d..0x1c2f].copy_from_slice(&0u16.to_le_bytes()); // plm_item_gfx_index
 }
 unsafe fn collect_item(plmp: PlmScript, kind: PickupKind, game: &mut Game) -> PlmScript {
-    let amount = match kind {
-        PickupKind::Beam | PickupKind::SuperMissiles => {
-            u16::from_le_bytes([plmp.byte(0), plmp.byte(1)])
+    unsafe {
+        let amount = match kind {
+            PickupKind::Beam | PickupKind::SuperMissiles => {
+                u16::from_le_bytes([plmp.byte(0), plmp.byte(1)])
+            }
+            _ => plmp.word(0),
+        };
+        let effects = crate::game::item_pickups_ram::collect(game, kind, amount);
+        match effects.visual {
+            VisualUpdate::None => {}
+            VisualUpdate::Beams => UpdateBeamTilesAndPalette(game),
+            VisualUpdate::Grapple => AddGrappleToHudTilemap(game),
+            VisualUpdate::Xray => AddXrayToHudTilemap(game),
+            VisualUpdate::Missiles => AddMissilesToHudTilemap(game),
+            VisualUpdate::SuperMissiles => AddSuperMissilesToHudTilemap(game),
+            VisualUpdate::PowerBombs => AddPowerBombsToHudTilemap(game),
         }
-        _ => plmp.word(0),
-    };
-    let effects = crate::game::item_pickups_ram::collect(game, kind, amount);
-    match effects.visual {
-        VisualUpdate::None => {}
-        VisualUpdate::Beams => UpdateBeamTilesAndPalette(game),
-        VisualUpdate::Grapple => AddGrappleToHudTilemap(game),
-        VisualUpdate::Xray => AddXrayToHudTilemap(game),
-        VisualUpdate::Missiles => AddMissilesToHudTilemap(game),
-        VisualUpdate::SuperMissiles => AddSuperMissilesToHudTilemap(game),
-        VisualUpdate::PowerBombs => AddPowerBombsToHudTilemap(game),
+        PlayRoomMusicTrackAfterAFrames(0x168, game);
+        let message = effects.message.unwrap_or_else(|| u16::from(plmp.byte(2)));
+        message_boxes::queue(message, game);
+        plmp.advance(if effects.message.is_none() { 3 } else { 2 })
     }
-    PlayRoomMusicTrackAfterAFrames(0x168, game);
-    let message = effects.message.unwrap_or_else(|| u16::from(plmp.byte(2)));
-    message_boxes::queue(message, game);
-    plmp.advance(if effects.message.is_none() { 3 } else { 2 })
 }
 pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
-    use crate::game::enemy_ram::{native_read, native_write};
-    use crate::ram_map::checked_word as word;
-    let base = bank_base(0x84);
-    crate::verify_probe::hit("coroutine.plm");
-    let resume = game.g_ram[0x613];
+    unsafe {
+        use crate::game::enemy_ram::{native_read, native_write};
+        use crate::ram_map::checked_word as word;
+        let base = bank_base(0x84);
+        crate::verify_probe::hit("coroutine.plm");
+        let resume = game.g_ram[0x613];
 
-    if let Some(mut handoff) = MessageHandoff::resume(resume) {
-        let mut image = crate::rom::RomImage::default();
-        let mut script = PlmScript::Stop;
-        if resume == 0 {
-            if (word!(game.plm_flag) & 0x8000) == 0 {
-                return kCoroutineNone as CoroutineRet;
-            }
-            word!(game.plm_draw_tilemap_index = 0);
-            word!(game.plm_id = 78);
-        }
-        loop {
-            if !handoff.displaying() {
-                if (word!(game.plm_id) & 0x8000) != 0 {
-                    word!(game.plm_id = 0);
-                    break;
+        if let Some(mut handoff) = MessageHandoff::resume(resume) {
+            let mut image = crate::rom::RomImage::default();
+            let mut script = PlmScript::Stop;
+            if resume == 0 {
+                if (word!(game.plm_flag) & 0x8000) == 0 {
+                    return kCoroutineNone as CoroutineRet;
                 }
-                if native_read(game, 0x1c37 + usize::from(word!(game.plm_id) >> 1) * 2) == 0 {
-                    word!(game.plm_id = word!(game.plm_id).wrapping_sub(2));
-                    continue;
-                }
-                CallPlmPreInstr(
-                    ((native_read(game, 0x1cd7 + usize::from(word!(game.plm_id) >> 1) * 2)) as u32)
-                        | (0x840000u32),
-                    word!(game.plm_id),
-                    game,
-                );
-
-                let timer_slot = word!(game.plm_id) >> 1;
-                let remaining = word!(game.plm_instruction_timer[timer_slot]).wrapping_sub(1);
-                word!(game.plm_instruction_timer[timer_slot] = remaining);
-                if remaining != 0 {
-                    word!(game.plm_id = word!(game.plm_id).wrapping_sub(2));
-                    continue;
-                }
-                image = game
-                    .loaded_rom
-                    .as_ref()
-                    .expect("ROM must be loaded")
-                    .clone();
-                script = PlmScript::at(
-                    image.clone(),
-                    (base
-                        + native_read(game, 0x1d27 + usize::from(word!(game.plm_id) >> 1) * 2)
-                            as isize) as usize,
-                );
+                word!(game.plm_draw_tilemap_index = 0);
+                word!(game.plm_id = 78);
             }
             loop {
-                if handoff.displaying() {
-                    crate::verify_probe::hit("coroutine.plm.message");
-                    let yielded: u8 =
-                        message_boxes::display(word!(game.queued_message_box_index), game);
-                    if let Err(yielded) = handoff.after_display(yielded) {
-                        game.g_ram[0x613] = handoff.continuation();
-                        return yielded;
+                if !handoff.displaying() {
+                    if (word!(game.plm_id) & 0x8000) != 0 {
+                        word!(game.plm_id = 0);
+                        break;
                     }
-                    word!(game.queued_message_box_index = 0);
+                    if native_read(game, 0x1c37 + usize::from(word!(game.plm_id) >> 1) * 2) == 0 {
+                        word!(game.plm_id = word!(game.plm_id).wrapping_sub(2));
+                        continue;
+                    }
+                    CallPlmPreInstr(
+                        ((native_read(game, 0x1cd7 + usize::from(word!(game.plm_id) >> 1) * 2))
+                            as u32)
+                            | (0x840000u32),
+                        word!(game.plm_id),
+                        game,
+                    );
+
+                    let timer_slot = word!(game.plm_id) >> 1;
+                    let remaining = word!(game.plm_instruction_timer[timer_slot]).wrapping_sub(1);
+                    word!(game.plm_instruction_timer[timer_slot] = remaining);
+                    if remaining != 0 {
+                        word!(game.plm_id = word!(game.plm_id).wrapping_sub(2));
+                        continue;
+                    }
                     image = game
                         .loaded_rom
                         .as_ref()
@@ -220,116 +218,145 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                                 as isize) as usize,
                     );
                 }
-                if (script.word(0) & 0x8000) == 0 {
-                    let mut v7: i32 = word!(game.plm_id) as i32 >> 1;
-                    word!(game.plm_instruction_timer[v7] = script.word(0));
-                    word!(game.plm_instruction_draw_ptr[v7] = script.word(2));
-                    word!(
-                        game.plm_instr_list_ptrs[v7] =
-                            script.advance(4).offset_from(base) as c_long as u16
-                    );
-                    ProcessPlmDrawInstruction(word!(game.plm_id), game);
-                    CalculatePlmBlockCoords(word!(game.plm_id), game);
-                    DrawPlm(word!(game.plm_id), game);
+                loop {
+                    if handoff.displaying() {
+                        crate::verify_probe::hit("coroutine.plm.message");
+                        let yielded: u8 =
+                            message_boxes::display(word!(game.queued_message_box_index), game);
+                        if let Err(yielded) = handoff.after_display(yielded) {
+                            game.g_ram[0x613] = handoff.continuation();
+                            return yielded;
+                        }
+                        word!(game.queued_message_box_index = 0);
+                        image = game
+                            .loaded_rom
+                            .as_ref()
+                            .expect("ROM must be loaded")
+                            .clone();
+                        script = PlmScript::at(
+                            image.clone(),
+                            (base
+                                + native_read(
+                                    game,
+                                    0x1d27 + usize::from(word!(game.plm_id) >> 1) * 2,
+                                ) as isize) as usize,
+                        );
+                    }
+                    if (script.word(0) & 0x8000) == 0 {
+                        let mut v7: i32 = word!(game.plm_id) as i32 >> 1;
+                        word!(game.plm_instruction_timer[v7] = script.word(0));
+                        word!(game.plm_instruction_draw_ptr[v7] = script.word(2));
+                        word!(
+                            game.plm_instr_list_ptrs[v7] =
+                                script.advance(4).offset_from(base) as c_long as u16
+                        );
+                        ProcessPlmDrawInstruction(word!(game.plm_id), game);
+                        CalculatePlmBlockCoords(word!(game.plm_id), game);
+                        DrawPlm(word!(game.plm_id), game);
 
-                    break;
-                }
-                let next = CallPlmInstr(
-                    ((script.word(0)) as u32) | (0x840000u32),
-                    script.advance(2),
-                    word!(game.plm_id),
-                    game,
-                );
-
-                let Some(next) = next.resolve(&image, base) else {
-                    break;
-                };
-                script = next;
-                if handoff.after_instruction(word!(game.queued_message_box_index)) {
-                    native_write(
+                        break;
+                    }
+                    let next = CallPlmInstr(
+                        ((script.word(0)) as u32) | (0x840000u32),
+                        script.advance(2),
+                        word!(game.plm_id),
                         game,
-                        0x1d27 + usize::from(word!(game.plm_id) >> 1) * 2,
-                        script.offset_from(base) as u16,
                     );
+
+                    let Some(next) = next.resolve(&image, base) else {
+                        break;
+                    };
+                    script = next;
+                    if handoff.after_instruction(word!(game.queued_message_box_index)) {
+                        native_write(
+                            game,
+                            0x1d27 + usize::from(word!(game.plm_id) >> 1) * 2,
+                            script.offset_from(base) as u16,
+                        );
+                    }
                 }
+                word!(game.plm_id = word!(game.plm_id).wrapping_sub(2));
             }
-            word!(game.plm_id = word!(game.plm_id).wrapping_sub(2));
         }
+        game.g_ram[0x613] = 0;
+        0 as CoroutineRet
     }
-    game.g_ram[0x613] = 0;
-    0 as CoroutineRet
 }
 #[inline]
 unsafe fn RomPtr_84orRAM(addr: u16, game: &mut Game) -> *mut u8 {
-    if addr & 0x8000 != 0 {
-        RomPtr((0x840000u32) | ((addr) as u32), game) as *mut u8
-    } else {
-        crate::native_assertion! {
-            '_c2rust_label: addr < 0x2000;
-            b"addr < 0x2000\0", b"src/sm_84.c\0", 265, b"uint8 *RomPtr_84orRAM(uint16_t)\0"
-        };
-        RomPtr_RAM(addr, game)
+    unsafe {
+        if addr & 0x8000 != 0 {
+            RomPtr((0x840000u32) | ((addr) as u32), game) as *mut u8
+        } else {
+            crate::native_assertion! {
+                '_c2rust_label: addr < 0x2000;
+                b"addr < 0x2000\0", b"src/sm_84.c\0", 265, b"uint8 *RomPtr_84orRAM(uint16_t)\0"
+            };
+            RomPtr_RAM(addr, game)
+        }
     }
 }
 pub unsafe fn ProcessPlmDrawInstruction(k: u16, game: &mut Game) {
-    let slot = usize::from(k >> 1) * 2;
-    let draw_instruction =
-        u16::from_le_bytes([game.g_ram[0xde6c + slot], game.g_ram[0xde6d + slot]]);
-    let image = if draw_instruction & 0x8000 != 0 {
-        Some(
-            game.loaded_rom
-                .as_ref()
-                .expect("ROM must be loaded")
-                .clone(),
-        )
-    } else {
-        crate::native_assertion! {
-            '_c2rust_label: draw_instruction < 0x2000;
-            b"addr < 0x2000\0", b"src/sm_84.c\0", 265, b"uint8 *RomPtr_84orRAM(uint16_t)\0"
-        };
-        None
-    };
-    let mut cursor = usize::from(draw_instruction)
-        + if image.is_some() {
-            bank_base(0x84) as usize
+    unsafe {
+        let slot = usize::from(k >> 1) * 2;
+        let draw_instruction =
+            u16::from_le_bytes([game.g_ram[0xde6c + slot], game.g_ram[0xde6d + slot]]);
+        let image = if draw_instruction & 0x8000 != 0 {
+            Some(
+                game.loaded_rom
+                    .as_ref()
+                    .expect("ROM must be loaded")
+                    .clone(),
+            )
         } else {
-            0
+            crate::native_assertion! {
+                '_c2rust_label: draw_instruction < 0x2000;
+                b"addr < 0x2000\0", b"src/sm_84.c\0", 265, b"uint8 *RomPtr_84orRAM(uint16_t)\0"
+            };
+            None
         };
-    // RAM streams stay live: block writes can change later words in the stream.
-    // Each read borrows only for its duration; ROM streams retain their allocation.
-    let read = |position: usize, game: &Game| {
-        u16::from_ne_bytes(core::array::from_fn(|i| match &image {
-            Some(image) => image.read(position + i),
-            None => game.g_ram[position + i],
-        }))
-    };
-    let mut destination =
-        u16::from_le_bytes([game.g_ram[0x1c87 + slot], game.g_ram[0x1c88 + slot]]);
-    let origin = destination;
-    loop {
-        let command = read(cursor, game);
-        cursor += 2;
-        let stride = if command & 0x8000 != 0 {
-            usize::from(u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]])) * 2
-        } else {
-            2
+        let mut cursor = usize::from(draw_instruction)
+            + if image.is_some() {
+                bank_base(0x84) as usize
+            } else {
+                0
+            };
+        // RAM streams stay live: block writes can change later words in the stream.
+        // Each read borrows only for its duration; ROM streams retain their allocation.
+        let read = |position: usize, game: &Game| {
+            u16::from_ne_bytes(core::array::from_fn(|i| match &image {
+                Some(image) => image.read(position + i),
+                None => game.g_ram[position + i],
+            }))
         };
-        for block in 0..usize::from(command as u8) {
-            let word = read(cursor, game);
+        let mut destination =
+            u16::from_le_bytes([game.g_ram[0x1c87 + slot], game.g_ram[0x1c88 + slot]]);
+        let origin = destination;
+        loop {
+            let command = read(cursor, game);
             cursor += 2;
-            // The original word indexing rounds odd byte destinations down.
-            let offset = 0x10002 + ((usize::from(destination) + block * stride) >> 1) * 2;
-            game.g_ram[offset..offset + 2].copy_from_slice(&word.to_le_bytes());
+            let stride = if command & 0x8000 != 0 {
+                usize::from(u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]])) * 2
+            } else {
+                2
+            };
+            for block in 0..usize::from(command as u8) {
+                let word = read(cursor, game);
+                cursor += 2;
+                // The original word indexing rounds odd byte destinations down.
+                let offset = 0x10002 + ((usize::from(destination) + block * stride) >> 1) * 2;
+                game.g_ram[offset..offset + 2].copy_from_slice(&word.to_le_bytes());
+            }
+            let displacement = read(cursor, game);
+            if displacement == 0 {
+                break;
+            }
+            let x = i32::from(displacement as u8 as i8);
+            let y = i32::from((displacement >> 8) as u8 as i8);
+            let width = i32::from(u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]]));
+            destination = (i32::from(origin) + 2 * (x + y * width)) as u16;
+            cursor += 2;
         }
-        let displacement = read(cursor, game);
-        if displacement == 0 {
-            break;
-        }
-        let x = i32::from(displacement as u8 as i8);
-        let y = i32::from((displacement >> 8) as u8 as i8);
-        let width = i32::from(u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]]));
-        destination = (i32::from(origin) + 2 * (x + y * width)) as u16;
-        cursor += 2;
     }
 }
 crate::game::address_dispatch! {
@@ -350,20 +377,22 @@ unsafe fn PartiallyQueueVramForSingleScreenPlm(
     r28: u16,
     game: &mut Game,
 ) {
-    let ent = gVramWriteEntry(k as i32, game);
-    (*ent).vram_dst = (r28) | (a);
-    let size: u16 = (4u16).wrapping_mul(r20);
-    let base: VoidP = (word!(game.plm_draw_tilemap_index)).wrapping_add(0xc6c8);
-    (*ent).size = size;
-    (*ent.offset(1)).size = size;
-    (*ent).src = LongPtr {
-        addr: base,
-        bank: 126,
-    };
-    (*ent.offset(1)).src = LongPtr {
-        addr: ((base).wrapping_add(size)),
-        bank: 126,
-    };
+    unsafe {
+        let ent = gVramWriteEntry(k as i32, game);
+        (*ent).vram_dst = (r28) | (a);
+        let size: u16 = (4u16).wrapping_mul(r20);
+        let base: VoidP = (word!(game.plm_draw_tilemap_index)).wrapping_add(0xc6c8);
+        (*ent).size = size;
+        (*ent.offset(1)).size = size;
+        (*ent).src = LongPtr {
+            addr: base,
+            bank: 126,
+        };
+        (*ent.offset(1)).src = LongPtr {
+            addr: ((base).wrapping_add(size)),
+            bank: 126,
+        };
+    }
 }
 unsafe fn CalculatePlmDrawTilemapVramDst(
     k: u16,
@@ -375,268 +404,275 @@ unsafe fn CalculatePlmDrawTilemapVramDst(
     r28: u16,
     game: &mut Game,
 ) {
-    let mut a: u16 = 0;
-    let prod: u16 = ((r26 as i32 & 0xf) * 0x40) as u16;
-    let v1: u16 = (r24) & (0x1fu16);
-    if v1 >= 0x10 {
-        a = (prod as i32 + r12 as i32 + 2 * v1 as i32) as u16;
-        if (word!(game.bg1_x_offset) & 0x100) != 0 {
-            a = (a).wrapping_sub(1024);
+    unsafe {
+        let mut a: u16 = 0;
+        let prod: u16 = ((r26 as i32 & 0xf) * 0x40) as u16;
+        let v1: u16 = (r24) & (0x1fu16);
+        if v1 >= 0x10 {
+            a = (prod as i32 + r12 as i32 + 2 * v1 as i32) as u16;
+            if (word!(game.bg1_x_offset) & 0x100) != 0 {
+                a = (a).wrapping_sub(1024);
+            }
+        } else {
+            a = (prod as i32 + r9 as i32 + 2 * v1 as i32) as u16;
+            if (word!(game.bg1_x_offset) & 0x100) != 0 {
+                a = (a).wrapping_add(1024);
+            }
         }
-    } else {
-        a = (prod as i32 + r9 as i32 + 2 * v1 as i32) as u16;
-        if (word!(game.bg1_x_offset) & 0x100) != 0 {
-            a = (a).wrapping_add(1024);
-        }
+        PartiallyQueueVramForSingleScreenPlm(a, k, r20, r28, game);
     }
-    PartiallyQueueVramForSingleScreenPlm(a, k, r20, r28, game);
 }
 pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
-    let mut v35: u16 = 0;
-    let mut r22: u16 = 0;
-    let mut a: u16 = 0;
-    let mut r24: u16 = 0;
-    let mut r20: u16 = 0;
-    let mut r18: u16 = 0;
-    let r9: u16 = addr_unk_605000 as u16;
-    let r12: u16 = addr_unk_6053E0 as u16;
-    let mut v1: u16 = word!(game.plm_instruction_draw_ptr[(k >> 1)]);
-    let mut x: u16 = word!(game.plm_x_block);
-    let mut y: u16 = word!(game.plm_y_block);
-    let mut r3: u16 = 0;
-    let mut r0 = null_mut::<u16>();
-    let mut r6 = null_mut::<u16>();
-    '_LABEL_2: loop {
-        let mut r26: u16 = (word!(game.layer1_y_pos) >> 4);
-        if (word!(game.layer1_y_pos) as i32 >> 4) + 15 - y as i32 & 0x8000 != 0 {
-            return;
-        }
-        let mut v2: i16 = *(RomPtr_84orRAM(v1, game) as *mut u16) as i16;
-        if v2 < 0 {
-            r20 = ((v2) as u16) & (0x7fffu16);
-            if !(word!(game.layer1_x_pos) as i32 >> 4 == x as i32
-                || (((word!(game.layer1_x_pos) as i32 >> 4) - x as i32) as i16) < 0)
-            {
-                break;
-            }
-            let mut v20: i16 = ((word!(game.layer1_x_pos) as i32 >> 4) + 17) as i16;
-            if !(v20 as i32 != x as i32 && (v20).wrapping_sub((x) as i16) >= 0) {
-                break;
-            }
-            r24 = x;
-            r18 = 0;
-            r22 = (r26).wrapping_add(16);
-            if ((r26) as i16).wrapping_sub((y) as i16) < 0 {
-                r26 = y;
-            } else {
-                r18 = (r26).wrapping_sub(y);
-                if y as i32 + r20 as i32 - r26 as i32 & 0x8000 != 0 {
-                    return;
-                }
-                let v21: bool = r20 == r18;
-                let v22: bool = ((r20) as i16).wrapping_sub((r18) as i16) < 0;
-                r20 = (r20).wrapping_sub(r18);
-                if v22 {
-                    Unreachable(game);
-                }
-                if v21 {
-                    return;
-                }
-            }
-            r22 = (r20 as i32 + r26 as i32 - r22 as i32) as u16;
-            if !((r22 & 0x8000) != 0 || {
-                let mut v23: bool = ((r20) as i16).wrapping_sub((r22) as i16) < 0;
-                r20 = (r20).wrapping_sub(r22);
-                r20 != 0 && !v23
-            }) {
-                break;
-            }
-            v35 = k;
-            let mut v24: u16 = word!(game.vram_write_queue_tail);
-            if !(((word!(game.vram_write_queue_tail)) as i16).wrapping_sub(240) < 0
-                && (((512u16).wrapping_sub(word!(game.plm_draw_tilemap_index))) as i32 >> 3)
-                    - r20 as i32
-                    & 0x8000
-                    == 0)
-            {
-                break;
-            }
-            CalculatePlmDrawTilemapVramDst(
-                word!(game.vram_write_queue_tail),
-                r9,
-                r12,
-                r20,
-                r24,
-                r26,
-                0x8000,
-                game,
-            );
-            let mut v25 = gVramWriteEntry(v24 as i32, game);
-            (*v25.offset(1)).vram_dst = ((*v25).vram_dst).wrapping_add(1);
-            r0 = ram_ptr!(game, u16; (*v25).src.addr as i32 as isize);
-            r6 = ram_ptr!(game, u16; (*v25.offset(1)).src.addr as i32 as isize);
-            word!(game.vram_write_queue_tail = (v24).wrapping_add(14));
-            r18 = (r18).wrapping_mul(2);
-            r3 = (r18 as i32 + v1 as i32 + 2) as u16;
-            let mut v26: u16 = 0;
-            do_until! { r20 == 0;
-                x = *(RomPtr_84orRAM(r3, game) as *mut u16);
-                let mut v29: u16 = (v26).wrapping_add(2);
-                TileTables::draw_block(
-                    (&raw const game.g_ram).cast::<u8>().add(0xa000).cast(),
-                    x,
-                    [
-                        r0.add((v26 >> 1) as usize),
-                        r6.add((v26 >> 1) as usize),
-                        r0.add((v29 >> 1) as usize),
-                        r6.add((v29 >> 1) as usize),
-                    ],
-                    TileDrawOrder::Rows,
-                );
-                v26 = (v29).wrapping_add(2);
-                r3 = r3.wrapping_add(1);
-                r3 = r3.wrapping_add(1);
-                word!(game.plm_draw_tilemap_index += 8);
-                if word!(game.plm_draw_tilemap_index) as i32 - 512i32 & 0x8000 == 0 {
-                    break '_LABEL_2;
-                }
-                r20 = r20.wrapping_sub(1);
-            }
-        } else {
-            r20 = ((v2) as u16) & (0x7fffu16);
-            if y as i32 - r26 as i32 & 0x8000 != 0 {
+    unsafe {
+        let mut v35: u16 = 0;
+        let mut r22: u16 = 0;
+        let mut a: u16 = 0;
+        let mut r24: u16 = 0;
+        let mut r20: u16 = 0;
+        let mut r18: u16 = 0;
+        let r9: u16 = addr_unk_605000 as u16;
+        let r12: u16 = addr_unk_6053E0 as u16;
+        let mut v1: u16 = word!(game.plm_instruction_draw_ptr[(k >> 1)]);
+        let mut x: u16 = word!(game.plm_x_block);
+        let mut y: u16 = word!(game.plm_y_block);
+        let mut r3: u16 = 0;
+        let mut r0 = null_mut::<u16>();
+        let mut r6 = null_mut::<u16>();
+        '_LABEL_2: loop {
+            let mut r26: u16 = (word!(game.layer1_y_pos) >> 4);
+            if (word!(game.layer1_y_pos) as i32 >> 4) + 15 - y as i32 & 0x8000 != 0 {
                 return;
             }
-            r26 = y;
-            r18 = 0;
-            r24 = x;
-            r22 = ((((word!(game.layer1_x_pos)).wrapping_add(15)) as i32 >> 4) - 1i32) as u16;
-            if ((r22) as i16).wrapping_sub((x) as i16) >= 0 && r22 != x {
-                r18 = (r22).wrapping_sub(x);
-                if x as i32 + r20 as i32 == r22 as i32
-                    || ((x as i32 + r20 as i32 - r22 as i32) as i16) < 0
+            let mut v2: i16 = *(RomPtr_84orRAM(v1, game) as *mut u16) as i16;
+            if v2 < 0 {
+                r20 = ((v2) as u16) & (0x7fffu16);
+                if !(word!(game.layer1_x_pos) as i32 >> 4 == x as i32
+                    || (((word!(game.layer1_x_pos) as i32 >> 4) - x as i32) as i16) < 0)
                 {
-                    return;
+                    break;
                 }
-                r20 = (r20).wrapping_sub(r18);
-                r24 = r22;
-            }
-            r22 = (r22).wrapping_add(17);
-            if (r22 as i32 - x as i32 & 0x8000 != 0) {
-                break;
-            }
-            r22 = (r20 as i32 + r24 as i32 - 1i32 - r22 as i32) as u16;
-            if !((r22 & 0x8000) != 0 || {
-                r20 = (r20).wrapping_sub(r22);
-                r20 != 0
-            }) {
-                break;
-            }
-            v35 = k;
-            let v3: u16 = word!(game.vram_write_queue_tail);
-            if !(((word!(game.vram_write_queue_tail)) as i16).wrapping_sub(480) < 0
-                && (((512u16).wrapping_sub(word!(game.plm_draw_tilemap_index))) as i32 >> 3)
-                    - r20 as i32
-                    & 0x8000
-                    == 0)
-            {
-                break;
-            }
-            let prod: u16 = ((r26 as i32 & 0xf) * 0x40) as u16;
-            let v4: u16 = (r24) & (0x1fu16);
-            if v4 >= 0x10 {
-                let mut v8: i16 = (r12 as i32 + 2 * v4 as i32) as i16;
-                a = (prod).wrapping_add((v8) as u16);
-                if (word!(game.bg1_x_offset) & 0x100) != 0 {
-                    a = (a).wrapping_sub(1024);
+                let mut v20: i16 = ((word!(game.layer1_x_pos) as i32 >> 4) + 17) as i16;
+                if !(v20 as i32 != x as i32 && (v20).wrapping_sub((x) as i16) >= 0) {
+                    break;
                 }
-            } else {
-                let mut v5: i16 = (r9 as i32 + 2 * v4 as i32) as i16;
-                let RegWord: u16 = prod;
-                a = (RegWord).wrapping_add((v5) as u16);
-                if (word!(game.bg1_x_offset) & 0x100) != 0 {
-                    a = (a).wrapping_add(1024);
+                r24 = x;
+                r18 = 0;
+                r22 = (r26).wrapping_add(16);
+                if ((r26) as i16).wrapping_sub((y) as i16) < 0 {
+                    r26 = y;
+                } else {
+                    r18 = (r26).wrapping_sub(y);
+                    if y as i32 + r20 as i32 - r26 as i32 & 0x8000 != 0 {
+                        return;
+                    }
+                    let v21: bool = r20 == r18;
+                    let v22: bool = ((r20) as i16).wrapping_sub((r18) as i16) < 0;
+                    r20 = (r20).wrapping_sub(r18);
+                    if v22 {
+                        Unreachable(game);
+                    }
+                    if v21 {
+                        return;
+                    }
                 }
-            }
-            x = (2u16).wrapping_mul(r20);
-            let R34: u16 = (a) & (0x1fu16);
-            if (2 * r20 as i32 + (a as i32 & 0x1f) - 1i32 & 0xffe0) != 0 {
-                if ((v3) as i16).wrapping_sub(228) >= 0 || (32i16).wrapping_sub((R34) as i16) < 0 {
-                    return;
+                r22 = (r20 as i32 + r26 as i32 - r22 as i32) as u16;
+                if !((r22 & 0x8000) != 0 || {
+                    let mut v23: bool = ((r20) as i16).wrapping_sub((r22) as i16) < 0;
+                    r20 = (r20).wrapping_sub(r22);
+                    r20 != 0 && !v23
+                }) {
+                    break;
                 }
-                let v9: u16 = (2 * (32 - R34 as i32)) as u16;
-                let mut v10 = gVramWriteEntry(v3 as i32, game);
-                (*v10).size = v9;
-                (*v10.offset(2)).size = v9;
-                (*v10).vram_dst = a;
-                (*v10.offset(1)).vram_dst = (a & 0xffe0 ^ 0x400);
-                (*v10.offset(3)).vram_dst = ((*v10.offset(1)).vram_dst).wrapping_add(32);
-                (*v10.offset(2)).vram_dst = ((*v10).vram_dst).wrapping_add(32);
-                x = (4u16).wrapping_mul(r20);
-                let v11: u16 = (4 * r20 as i32 - (*v10).size as i32) as u16;
-                (*v10.offset(1)).size = v11;
-                (*v10.offset(3)).size = v11;
-                let mut v12: VoidP = (word!(game.plm_draw_tilemap_index)).wrapping_sub(14648);
-                (*v10).src.addr = (word!(game.plm_draw_tilemap_index)).wrapping_sub(14648);
-                r0 = ram_ptr!(game, u16; v12 as i32 as isize);
-                let mut v13: VoidP = ((*v10).size).wrapping_add(v12);
-                (*v10.offset(1)).src.addr = v13;
-                let v14: u16 = ((*v10.offset(1)).size).wrapping_add(v13);
-                (*v10.offset(2)).src.addr = v14;
-                r6 = ram_ptr!(game, u16; v14 as i32 as isize);
-                (*v10.offset(3)).src.addr = ((*v10.offset(2)).size).wrapping_add(v14);
-                (*v10).src.bank = 126;
-                (*v10.offset(1)).src.bank = 126;
-                (*v10.offset(2)).src.bank = 126;
-                (*v10.offset(3)).src.bank = 126;
-                word!(game.vram_write_queue_tail = (v3).wrapping_add(28));
-            } else {
-                PartiallyQueueVramForSingleScreenPlm(a, v3, r20, 0, game);
-                let mut v15 = gVramWriteEntry(v3 as i32, game);
-                (*v15.offset(1)).vram_dst = ((*v15).vram_dst).wrapping_add(32);
-                r0 = ram_ptr!(game, u16; (*v15).src.addr as i32 as isize);
-                r6 = ram_ptr!(game, u16; (*v15.offset(1)).src.addr as i32 as isize);
-                word!(game.vram_write_queue_tail = (v3).wrapping_add(14));
-            }
-            r18 = (r18).wrapping_mul(2);
-            r3 = (r18 as i32 + v1 as i32 + 2) as u16;
-            let mut v16: u16 = 0;
-            do_until! { r20 == 0;
-                x = *(RomPtr_84orRAM(r3, game) as *mut u16);
-                let mut v19: u16 = (v16).wrapping_add(2);
-                TileTables::draw_block(
-                    (&raw const game.g_ram).cast::<u8>().add(0xa000).cast(),
-                    x,
-                    [
-                        r0.add((v16 >> 1) as usize),
-                        r6.add((v16 >> 1) as usize),
-                        r0.add((v19 >> 1) as usize),
-                        r6.add((v19 >> 1) as usize),
-                    ],
-                    TileDrawOrder::Columns,
+                v35 = k;
+                let mut v24: u16 = word!(game.vram_write_queue_tail);
+                if !(((word!(game.vram_write_queue_tail)) as i16).wrapping_sub(240) < 0
+                    && (((512u16).wrapping_sub(word!(game.plm_draw_tilemap_index))) as i32 >> 3)
+                        - r20 as i32
+                        & 0x8000
+                        == 0)
+                {
+                    break;
+                }
+                CalculatePlmDrawTilemapVramDst(
+                    word!(game.vram_write_queue_tail),
+                    r9,
+                    r12,
+                    r20,
+                    r24,
+                    r26,
+                    0x8000,
+                    game,
                 );
-                v16 = (v19).wrapping_add(2);
-                r3 = (r3).wrapping_add(2);
-                word!(game.plm_draw_tilemap_index += 8);
-                if word!(game.plm_draw_tilemap_index) as i32 - 512i32 & 0x8000 == 0 {
-                    break '_LABEL_2;
+                let mut v25 = gVramWriteEntry(v24 as i32, game);
+                (*v25.offset(1)).vram_dst = ((*v25).vram_dst).wrapping_add(1);
+                r0 = ram_ptr!(game, u16; (*v25).src.addr as i32 as isize);
+                r6 = ram_ptr!(game, u16; (*v25.offset(1)).src.addr as i32 as isize);
+                word!(game.vram_write_queue_tail = (v24).wrapping_add(14));
+                r18 = (r18).wrapping_mul(2);
+                r3 = (r18 as i32 + v1 as i32 + 2) as u16;
+                let mut v26: u16 = 0;
+                do_until! { r20 == 0;
+                    x = *(RomPtr_84orRAM(r3, game) as *mut u16);
+                    let mut v29: u16 = (v26).wrapping_add(2);
+                    TileTables::draw_block(
+                        (&raw const game.g_ram).cast::<u8>().add(0xa000).cast(),
+                        x,
+                        [
+                            r0.add((v26 >> 1) as usize),
+                            r6.add((v26 >> 1) as usize),
+                            r0.add((v29 >> 1) as usize),
+                            r6.add((v29 >> 1) as usize),
+                        ],
+                        TileDrawOrder::Rows,
+                    );
+                    v26 = (v29).wrapping_add(2);
+                    r3 = r3.wrapping_add(1);
+                    r3 = r3.wrapping_add(1);
+                    word!(game.plm_draw_tilemap_index += 8);
+                    if word!(game.plm_draw_tilemap_index) as i32 - 512i32 & 0x8000 == 0 {
+                        break '_LABEL_2;
+                    }
+                    r20 = r20.wrapping_sub(1);
                 }
-                r20 = r20.wrapping_sub(1);
+            } else {
+                r20 = ((v2) as u16) & (0x7fffu16);
+                if y as i32 - r26 as i32 & 0x8000 != 0 {
+                    return;
+                }
+                r26 = y;
+                r18 = 0;
+                r24 = x;
+                r22 = ((((word!(game.layer1_x_pos)).wrapping_add(15)) as i32 >> 4) - 1i32) as u16;
+                if ((r22) as i16).wrapping_sub((x) as i16) >= 0 && r22 != x {
+                    r18 = (r22).wrapping_sub(x);
+                    if x as i32 + r20 as i32 == r22 as i32
+                        || ((x as i32 + r20 as i32 - r22 as i32) as i16) < 0
+                    {
+                        return;
+                    }
+                    r20 = (r20).wrapping_sub(r18);
+                    r24 = r22;
+                }
+                r22 = (r22).wrapping_add(17);
+                if (r22 as i32 - x as i32 & 0x8000 != 0) {
+                    break;
+                }
+                r22 = (r20 as i32 + r24 as i32 - 1i32 - r22 as i32) as u16;
+                if !((r22 & 0x8000) != 0 || {
+                    r20 = (r20).wrapping_sub(r22);
+                    r20 != 0
+                }) {
+                    break;
+                }
+                v35 = k;
+                let v3: u16 = word!(game.vram_write_queue_tail);
+                if !(((word!(game.vram_write_queue_tail)) as i16).wrapping_sub(480) < 0
+                    && (((512u16).wrapping_sub(word!(game.plm_draw_tilemap_index))) as i32 >> 3)
+                        - r20 as i32
+                        & 0x8000
+                        == 0)
+                {
+                    break;
+                }
+                let prod: u16 = ((r26 as i32 & 0xf) * 0x40) as u16;
+                let v4: u16 = (r24) & (0x1fu16);
+                if v4 >= 0x10 {
+                    let mut v8: i16 = (r12 as i32 + 2 * v4 as i32) as i16;
+                    a = (prod).wrapping_add((v8) as u16);
+                    if (word!(game.bg1_x_offset) & 0x100) != 0 {
+                        a = (a).wrapping_sub(1024);
+                    }
+                } else {
+                    let mut v5: i16 = (r9 as i32 + 2 * v4 as i32) as i16;
+                    let RegWord: u16 = prod;
+                    a = (RegWord).wrapping_add((v5) as u16);
+                    if (word!(game.bg1_x_offset) & 0x100) != 0 {
+                        a = (a).wrapping_add(1024);
+                    }
+                }
+                x = (2u16).wrapping_mul(r20);
+                let R34: u16 = (a) & (0x1fu16);
+                if (2 * r20 as i32 + (a as i32 & 0x1f) - 1i32 & 0xffe0) != 0 {
+                    if ((v3) as i16).wrapping_sub(228) >= 0
+                        || (32i16).wrapping_sub((R34) as i16) < 0
+                    {
+                        return;
+                    }
+                    let v9: u16 = (2 * (32 - R34 as i32)) as u16;
+                    let mut v10 = gVramWriteEntry(v3 as i32, game);
+                    (*v10).size = v9;
+                    (*v10.offset(2)).size = v9;
+                    (*v10).vram_dst = a;
+                    (*v10.offset(1)).vram_dst = (a & 0xffe0 ^ 0x400);
+                    (*v10.offset(3)).vram_dst = ((*v10.offset(1)).vram_dst).wrapping_add(32);
+                    (*v10.offset(2)).vram_dst = ((*v10).vram_dst).wrapping_add(32);
+                    x = (4u16).wrapping_mul(r20);
+                    let v11: u16 = (4 * r20 as i32 - (*v10).size as i32) as u16;
+                    (*v10.offset(1)).size = v11;
+                    (*v10.offset(3)).size = v11;
+                    let mut v12: VoidP = (word!(game.plm_draw_tilemap_index)).wrapping_sub(14648);
+                    (*v10).src.addr = (word!(game.plm_draw_tilemap_index)).wrapping_sub(14648);
+                    r0 = ram_ptr!(game, u16; v12 as i32 as isize);
+                    let mut v13: VoidP = ((*v10).size).wrapping_add(v12);
+                    (*v10.offset(1)).src.addr = v13;
+                    let v14: u16 = ((*v10.offset(1)).size).wrapping_add(v13);
+                    (*v10.offset(2)).src.addr = v14;
+                    r6 = ram_ptr!(game, u16; v14 as i32 as isize);
+                    (*v10.offset(3)).src.addr = ((*v10.offset(2)).size).wrapping_add(v14);
+                    (*v10).src.bank = 126;
+                    (*v10.offset(1)).src.bank = 126;
+                    (*v10.offset(2)).src.bank = 126;
+                    (*v10.offset(3)).src.bank = 126;
+                    word!(game.vram_write_queue_tail = (v3).wrapping_add(28));
+                } else {
+                    PartiallyQueueVramForSingleScreenPlm(a, v3, r20, 0, game);
+                    let mut v15 = gVramWriteEntry(v3 as i32, game);
+                    (*v15.offset(1)).vram_dst = ((*v15).vram_dst).wrapping_add(32);
+                    r0 = ram_ptr!(game, u16; (*v15).src.addr as i32 as isize);
+                    r6 = ram_ptr!(game, u16; (*v15.offset(1)).src.addr as i32 as isize);
+                    word!(game.vram_write_queue_tail = (v3).wrapping_add(14));
+                }
+                r18 = (r18).wrapping_mul(2);
+                r3 = (r18 as i32 + v1 as i32 + 2) as u16;
+                let mut v16: u16 = 0;
+                do_until! { r20 == 0;
+                    x = *(RomPtr_84orRAM(r3, game) as *mut u16);
+                    let mut v19: u16 = (v16).wrapping_add(2);
+                    TileTables::draw_block(
+                        (&raw const game.g_ram).cast::<u8>().add(0xa000).cast(),
+                        x,
+                        [
+                            r0.add((v16 >> 1) as usize),
+                            r6.add((v16 >> 1) as usize),
+                            r0.add((v19 >> 1) as usize),
+                            r6.add((v19 >> 1) as usize),
+                        ],
+                        TileDrawOrder::Columns,
+                    );
+                    v16 = (v19).wrapping_add(2);
+                    r3 = (r3).wrapping_add(2);
+                    word!(game.plm_draw_tilemap_index += 8);
+                    if word!(game.plm_draw_tilemap_index) as i32 - 512i32 & 0x8000 == 0 {
+                        break '_LABEL_2;
+                    }
+                    r20 = r20.wrapping_sub(1);
+                }
             }
-        }
-        k = v35;
-        let mut addr: u16 = r3;
-        if (r22 & 0x8000) == 0 {
-            addr = (r3 as i32 + 2 * r22 as i32) as u16;
-        }
-        let mut v31: i16 = *(RomPtr_84orRAM(addr, game) as *mut u16) as i16;
-        if v31 != 0 {
-            x = (word!(game.plm_x_block)).wrapping_add((v31 as i8) as u16);
-            let v32: u16 = (addr).wrapping_add(1);
-            y = (word!(game.plm_y_block)).wrapping_add((*RomPtr_84orRAM(v32, game) as i8) as u16);
-            v1 = (v32).wrapping_add(1);
-        } else {
-            return;
+            k = v35;
+            let mut addr: u16 = r3;
+            if (r22 & 0x8000) == 0 {
+                addr = (r3 as i32 + 2 * r22 as i32) as u16;
+            }
+            let mut v31: i16 = *(RomPtr_84orRAM(addr, game) as *mut u16) as i16;
+            if v31 != 0 {
+                x = (word!(game.plm_x_block)).wrapping_add((v31 as i8) as u16);
+                let v32: u16 = (addr).wrapping_add(1);
+                y = (word!(game.plm_y_block))
+                    .wrapping_add((*RomPtr_84orRAM(v32, game) as i8) as u16);
+                v1 = (v32).wrapping_add(1);
+            } else {
+                return;
+            }
         }
     }
 }
@@ -659,19 +695,21 @@ macro_rules! find_plm_at_block {
 }
 
 pub unsafe fn ActivateStationIfSamusCannonLinedUp(a: u16, j: u16, game: &mut Game) -> u8 {
-    find_plm_at_block!(found_plm, v2, a, game);
-    if found_plm {
-        CalculatePlmBlockCoords(word!(game.plm_id), game);
-        if ((16u16).wrapping_mul(word!(game.plm_y_block))) | 0xb == word!(game.samus_y_pos) {
-            let v3: i32 = v2 as i32 >> 1;
-            word!(game.plm_instr_list_ptrs[v3] = word!(game.plm_instruction_list_link_reg[v3]));
-            word!(game.plm_instruction_timer[v3] = 1);
-            CallSomeSamusCode(6, game);
-            return 1;
+    unsafe {
+        find_plm_at_block!(found_plm, v2, a, game);
+        if found_plm {
+            CalculatePlmBlockCoords(word!(game.plm_id), game);
+            if ((16u16).wrapping_mul(word!(game.plm_y_block))) | 0xb == word!(game.samus_y_pos) {
+                let v3: i32 = v2 as i32 >> 1;
+                word!(game.plm_instr_list_ptrs[v3] = word!(game.plm_instruction_list_link_reg[v3]));
+                word!(game.plm_instruction_timer[v3] = 1);
+                CallSomeSamusCode(6, game);
+                return 1;
+            }
         }
+        word!(game.plm_header_ptr[(j >> 1)] = 0);
+        1
     }
-    word!(game.plm_header_ptr[(j >> 1)] = 0);
-    1
 }
 pub fn DeletePlm(j: u16, game: &mut Game) {
     let header_offset = 0x1c37 + usize::from(j & !1);
@@ -721,11 +759,13 @@ fn retain_plm_block_bits(j: u16, mask: u16, game: &mut Game) {
     update_level_block_bits(usize::from(block_index >> 1), mask, 0, game);
 }
 pub unsafe fn UNUSED_sub_84B3E3(j: u16) -> u8 {
-    crate::native_assertion! {
-        '_c2rust_label;
-        b"0\0", b"src/sm_84.c\0", 1370, b"uint8 UNUSED_sub_84B3E3(uint16)\0"
-    };
-    0
+    unsafe {
+        crate::native_assertion! {
+            '_c2rust_label;
+            b"0\0", b"src/sm_84.c\0", 1370, b"uint8 UNUSED_sub_84B3E3(uint16)\0"
+        };
+        0
+    }
 }
 static g_word_84B48B: [u16; 2] = [0x200, 0x200];
 static g_word_84B48F: [u16; 2] = [0x120, 0x100];
@@ -762,43 +802,45 @@ pub fn PlmSetup_QuicksandSurface_2(j: u16, game: &mut Game) {
 /// A non-null `displacement` must point to a live, writable i32 for the
 /// duration of this call, as passed through collision PLM setup.
 pub unsafe fn PlmSetup_QuicksandSurfaceB(_j: u16, displacement: *mut i32, game: &mut Game) -> u8 {
-    let read_word = |game: &Game, offset: usize| {
-        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
-    };
-    if read_word(game, 0xb02) & 2 == 0 {
-        return 0;
-    }
-    if displacement.is_null() {
-        printf(c"ERROR: PlmSetup_QuicksandSurfaceB is broken!!\n".as_ptr());
-        Unreachable(game);
-        return 0;
-    }
-    match read_word(game, 0xb36) & 3 {
-        0 | 3 => {
-            if read_word(game, 0xb02) & 0x0f == 3 {
+    unsafe {
+        let read_word = |game: &Game, offset: usize| {
+            u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+        };
+        if read_word(game, 0xb02) & 2 == 0 {
+            return 0;
+        }
+        if displacement.is_null() {
+            printf(c"ERROR: PlmSetup_QuicksandSurfaceB is broken!!\n".as_ptr());
+            Unreachable(game);
+            return 0;
+        }
+        match read_word(game, 0xb36) & 3 {
+            0 | 3 => {
+                if read_word(game, 0xb02) & 0x0f == 3 {
+                    if read_word(game, 0xa6e) == 1 {
+                        *displacement = 0;
+                        return 1;
+                    }
+                    // Compare the unsigned middle word; retain both outside bytes.
+                    if (*displacement >> 8) as u16 > 0x30 {
+                        *displacement = ((*displacement as u32 & 0xff0000ff) | 0x3000) as i32;
+                    }
+                    let in_quicksand = read_word(game, 0x1e71).wrapping_add(1);
+                    game.g_ram[0x1e71..0x1e73].copy_from_slice(&in_quicksand.to_le_bytes());
+                }
+            }
+            2 => {
                 if read_word(game, 0xa6e) == 1 {
                     *displacement = 0;
                     return 1;
                 }
-                // Compare the unsigned middle word; retain both outside bytes.
-                if (*displacement >> 8) as u16 > 0x30 {
-                    *displacement = ((*displacement as u32 & 0xff0000ff) | 0x3000) as i32;
-                }
                 let in_quicksand = read_word(game, 0x1e71).wrapping_add(1);
                 game.g_ram[0x1e71..0x1e73].copy_from_slice(&in_quicksand.to_le_bytes());
             }
+            _ => {}
         }
-        2 => {
-            if read_word(game, 0xa6e) == 1 {
-                *displacement = 0;
-                return 1;
-            }
-            let in_quicksand = read_word(game, 0x1e71).wrapping_add(1);
-            game.g_ram[0x1e71..0x1e73].copy_from_slice(&in_quicksand.to_le_bytes());
-        }
-        _ => {}
+        0
     }
-    0
 }
 pub use self::PlmSetup_ReturnCarryClear as PlmSetup_B73B_B73F_SandFalls;
 pub unsafe fn WakePlmIfSamusIsBelowAndRightOfTarget(
@@ -807,13 +849,15 @@ pub unsafe fn WakePlmIfSamusIsBelowAndRightOfTarget(
     y_r20: u16,
     game: &mut Game,
 ) -> u8 {
-    if x_r18 < word!(game.samus_x_pos) && y_r20 < word!(game.samus_y_pos) {
-        let v2: i32 = k as i32 >> 1;
-        word!(game.plm_instr_list_ptrs[v2] += 2);
-        word!(game.plm_instruction_timer[v2] = 1);
-        return false_0 as u8;
+    unsafe {
+        if x_r18 < word!(game.samus_x_pos) && y_r20 < word!(game.samus_y_pos) {
+            let v2: i32 = k as i32 >> 1;
+            word!(game.plm_instr_list_ptrs[v2] += 2);
+            word!(game.plm_instruction_timer[v2] = 1);
+            return false_0 as u8;
+        }
+        true_0 as u8
     }
-    true_0 as u8
 }
 pub fn PlmSetup_B974(j: u16) -> u8 {
     0
@@ -831,44 +875,57 @@ crate::forward_calls! { pub unsafe fn (j: u16, game: &mut Game) -> u8;
     );
 }
 pub unsafe fn sub_84C64C(j: u16, a: u16, game: &mut Game) -> u8 {
-    find_plm_at_block!(found_plm, v2, a, game);
-    if found_plm {
-        let mut v3: i32 = v2 as i32 >> 1;
-        if word!(game.plm_timers[v3]) == 0 {
-            word!(game.plm_timers[v3] += 1);
+    unsafe {
+        find_plm_at_block!(found_plm, v2, a, game);
+        if found_plm {
+            let mut v3: i32 = v2 as i32 >> 1;
+            if word!(game.plm_timers[v3]) == 0 {
+                word!(game.plm_timers[v3] += 1);
+            }
         }
+        word!(game.plm_header_ptr[(j >> 1)] = 0);
+        1
     }
-    word!(game.plm_header_ptr[(j >> 1)] = 0);
-    1
 }
 pub unsafe fn SetBts0x10FiveStepsDown(j: u16, game: &mut Game) {
-    let v1: u16 = SetBtsTo0x10AdvanceRow((word!(game.plm_block_indices[(j >> 1)]) >> 1), game);
-    let v2: u16 = SetBtsTo0x10AdvanceRow(v1, game);
-    let v3: u16 = SetBtsTo0x10AdvanceRow(v2, game);
-    let v4: u16 = SetBtsTo0x10AdvanceRow(v3, game);
-    SetBtsTo0x10AdvanceRow(v4, game);
+    unsafe {
+        let v1: u16 = SetBtsTo0x10AdvanceRow((word!(game.plm_block_indices[(j >> 1)]) >> 1), game);
+        let v2: u16 = SetBtsTo0x10AdvanceRow(v1, game);
+        let v3: u16 = SetBtsTo0x10AdvanceRow(v2, game);
+        let v4: u16 = SetBtsTo0x10AdvanceRow(v3, game);
+        SetBtsTo0x10AdvanceRow(v4, game);
+    }
 }
 pub unsafe fn SetBtsTo0x10AdvanceRow(k: u16, game: &mut Game) -> u16 {
-    *(ram_ptr!(game, u16; 0x16402, k as isize)) =
-        ((*ram_ptr!(game; 0x16402, (k as i32 + 1) as isize) as i32) << 8 | 0x10) as u16;
-    (word!(game.room_width_in_blocks)).wrapping_add(k)
+    unsafe {
+        *(ram_ptr!(game, u16; 0x16402, k as isize)) =
+            ((*ram_ptr!(game; 0x16402, (k as i32 + 1) as isize) as i32) << 8 | 0x10) as u16;
+        (word!(game.room_width_in_blocks)).wrapping_add(k)
+    }
 }
 pub unsafe fn SetBts0x10FiveStepsUp(j: u16, game: &mut Game) {
-    let v1: u16 = SetBtsTo0x10AdvanceRowUp((word!(game.plm_block_indices[(j >> 1)]) >> 1), game);
-    let v2: u16 = SetBtsTo0x10AdvanceRowUp(v1, game);
-    let v3: u16 = SetBtsTo0x10AdvanceRowUp(v2, game);
-    let v4: u16 = SetBtsTo0x10AdvanceRowUp(v3, game);
-    SetBtsTo0x10AdvanceRowUp(v4, game);
+    unsafe {
+        let v1: u16 =
+            SetBtsTo0x10AdvanceRowUp((word!(game.plm_block_indices[(j >> 1)]) >> 1), game);
+        let v2: u16 = SetBtsTo0x10AdvanceRowUp(v1, game);
+        let v3: u16 = SetBtsTo0x10AdvanceRowUp(v2, game);
+        let v4: u16 = SetBtsTo0x10AdvanceRowUp(v3, game);
+        SetBtsTo0x10AdvanceRowUp(v4, game);
+    }
 }
 pub unsafe fn SetBtsTo0x10AdvanceRowUp(k: u16, game: &mut Game) -> u16 {
-    *(ram_ptr!(game, u16; 0x16402, k as isize)) =
-        ((*ram_ptr!(game; 0x16402, (k as i32 + 1) as isize) as i32) << 8 | 0x10) as u16;
-    (k).wrapping_sub(word!(game.room_width_in_blocks))
+    unsafe {
+        *(ram_ptr!(game, u16; 0x16402, k as isize)) =
+            ((*ram_ptr!(game; 0x16402, (k as i32 + 1) as isize) as i32) << 8 | 0x10) as u16;
+        (k).wrapping_sub(word!(game.room_width_in_blocks))
+    }
 }
 pub unsafe fn PlmSetup_C82A_DownwardsClosedGate(j: u16, setup_a: u16, game: &mut Game) -> u8 {
-    SpawnEprojWithRoomGfx(0xe659, setup_a, game);
-    SetBts0x10FiveStepsDown(j, game);
-    0
+    unsafe {
+        SpawnEprojWithRoomGfx(0xe659, setup_a, game);
+        SetBts0x10FiveStepsDown(j, game);
+        0
+    }
 }
 macro_rules! install_optional_gate_block {
     ($game:ident, $block_table:literal, $plm_index:ident, $neighbor_operation:ident) => {
@@ -898,79 +955,93 @@ pub unsafe fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(
     displacement: *mut i32,
     game: &mut Game,
 ) -> u8 {
-    if (word!(game.collected_items) & 0x200) != 0
-        && (word!(game.samus_collision_direction) & 0xf) == 3
-        && (word!(game.samus_pose) as i32 == kPose_1D_FaceR_Morphball_Ground as i32
-            || word!(game.samus_pose) as i32 == kPose_79_FaceR_Springball_Ground as i32
-            || word!(game.samus_pose) as i32 == kPose_7A_FaceL_Springball_Ground as i32)
-    {
-        SetEventHappened(0xc, game);
-        (*(ram_ptr!(game, EnemyData; 0xf78))).parameter_1 = 1;
-        let v2: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;
-        word!(game.level_data[v2] &= (0xfffu16));
-        CallSomeSamusCode(0, game);
-        spawn_hardcoded_plm(
-            SpawnHardcodedPlmArgs::new(0xc, 0x1d, 0xd113 as VoidP),
-            displacement,
-            game,
-        );
+    unsafe {
+        if (word!(game.collected_items) & 0x200) != 0
+            && (word!(game.samus_collision_direction) & 0xf) == 3
+            && (word!(game.samus_pose) as i32 == kPose_1D_FaceR_Morphball_Ground as i32
+                || word!(game.samus_pose) as i32 == kPose_79_FaceR_Springball_Ground as i32
+                || word!(game.samus_pose) as i32 == kPose_7A_FaceL_Springball_Ground as i32)
+        {
+            SetEventHappened(0xc, game);
+            (*(ram_ptr!(game, EnemyData; 0xf78))).parameter_1 = 1;
+            let v2: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;
+            word!(game.level_data[v2] &= (0xfffu16));
+            CallSomeSamusCode(0, game);
+            spawn_hardcoded_plm(
+                SpawnHardcodedPlmArgs::new(0xc, 0x1d, 0xd113 as VoidP),
+                displacement,
+                game,
+            );
+        }
+        word!(game.plm_header_ptr[(j >> 1)] = 0);
+        1
     }
-    word!(game.plm_header_ptr[(j >> 1)] = 0);
-    1
 }
 pub unsafe fn SpawnMotherBrainGlassShatteringShard(a: u16, game: &mut Game) {
-    SpawnEprojWithRoomGfx(0xcefc, a, game);
+    unsafe {
+        SpawnEprojWithRoomGfx(0xcefc, a, game);
+    }
 }
 pub unsafe fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(
     j: u16,
     displacement: *mut i32,
     game: &mut Game,
 ) -> u8 {
-    if CheckBossBitForCurArea(1, game) & 1 != 0
-        && (word!(game.samus_collision_direction) & 0xf) == 3
-        && (word!(game.samus_pose) as i32 == kPose_1D_FaceR_Morphball_Ground as i32
-            || word!(game.samus_pose) as i32 == kPose_79_FaceR_Springball_Ground as i32
-            || word!(game.samus_pose) as i32 == kPose_7A_FaceL_Springball_Ground as i32)
-    {
-        (*(ram_ptr!(game, EnemyData; 0xf78))).parameter_1 = 1;
-        *(ram_ptr!(game, u16; 0xcd20, 7)) = 514;
-        *(ram_ptr!(game, u16; 0xcd20, 13)) = 257;
-        let v1: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;
-        word!(game.level_data[v1] &= (0xfffu16));
-        CallSomeSamusCode(0, game);
-        spawn_hardcoded_plm(
-            SpawnHardcodedPlmArgs::new(0x17, 0x1d, 0xd6f8 as VoidP),
-            displacement,
-            game,
-        );
+    unsafe {
+        if CheckBossBitForCurArea(1, game) & 1 != 0
+            && (word!(game.samus_collision_direction) & 0xf) == 3
+            && (word!(game.samus_pose) as i32 == kPose_1D_FaceR_Morphball_Ground as i32
+                || word!(game.samus_pose) as i32 == kPose_79_FaceR_Springball_Ground as i32
+                || word!(game.samus_pose) as i32 == kPose_7A_FaceL_Springball_Ground as i32)
+        {
+            (*(ram_ptr!(game, EnemyData; 0xf78))).parameter_1 = 1;
+            *(ram_ptr!(game, u16; 0xcd20, 7)) = 514;
+            *(ram_ptr!(game, u16; 0xcd20, 13)) = 257;
+            let v1: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;
+            word!(game.level_data[v1] &= (0xfffu16));
+            CallSomeSamusCode(0, game);
+            spawn_hardcoded_plm(
+                SpawnHardcodedPlmArgs::new(0x17, 0x1d, 0xd6f8 as VoidP),
+                displacement,
+                game,
+            );
+        }
+        word!(game.plm_header_ptr[(j >> 1)] = 0);
+        1
     }
-    word!(game.plm_header_ptr[(j >> 1)] = 0);
-    1
 }
 pub use self::PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused as PlmSetup_D70C_NoobTube;
 pub unsafe fn sub_84D7EF(k: u16, game: &mut Game) {
-    let v1: u16 = (word!(game.room_width_in_blocks) as i32 * 2 + k as i32) as u16;
-    WriteLevelDataBlockTypeAndBts(v1, 0xd0ff, game);
-    let v2: u16 = (word!(game.room_width_in_blocks) as i32 * 2 + v1 as i32) as u16;
-    WriteLevelDataBlockTypeAndBts(v2, 0xd0fe, game);
-    WriteLevelDataBlockTypeAndBts(
-        (word!(game.room_width_in_blocks) as i32 * 2 + v2 as i32) as u16,
-        0xd0fd,
-        game,
-    );
+    unsafe {
+        let v1: u16 = (word!(game.room_width_in_blocks) as i32 * 2 + k as i32) as u16;
+        WriteLevelDataBlockTypeAndBts(v1, 0xd0ff, game);
+        let v2: u16 = (word!(game.room_width_in_blocks) as i32 * 2 + v1 as i32) as u16;
+        WriteLevelDataBlockTypeAndBts(v2, 0xd0fe, game);
+        WriteLevelDataBlockTypeAndBts(
+            (word!(game.room_width_in_blocks) as i32 * 2 + v2 as i32) as u16,
+            0xd0fd,
+            game,
+        );
+    }
 }
 pub unsafe fn SetPlmVarPtr(k: u16, a: u16, game: &mut Game) {
-    *(ram_ptr!(game, u16; word!(game.plm_variable[(k >> 1)]) as isize)) = a;
+    unsafe {
+        *(ram_ptr!(game, u16; word!(game.plm_variable[(k >> 1)]) as isize)) = a;
+    }
 }
 pub use self::PlmInstr_DamageDraygonTurret as PlmInstr_DamageDraygonTurret2;
 pub use self::PlmSetup_DraygonCannonFacingRight as PlmSetup_DraygonCannonFacingLeft;
 pub unsafe fn sub_84EE5F(j: u16, a: u16, game: &mut Game) -> u8 {
-    word!(game.plm_variables[(j >> 1)] = a);
-    sub_84EE64(j, game)
+    unsafe {
+        word!(game.plm_variables[(j >> 1)] = a);
+        sub_84EE64(j, game)
+    }
 }
 pub unsafe fn sub_84EE89(j: u16, a: u16, game: &mut Game) -> u8 {
-    word!(game.plm_variables[(j >> 1)] = a);
-    sub_84EE8E(j, game)
+    unsafe {
+        word!(game.plm_variables[(j >> 1)] = a);
+        sub_84EE8E(j, game)
+    }
 }
 crate::game::callback_dispatch! {
     /// Dispatch setup with the active collision displacement, or null outside collision.

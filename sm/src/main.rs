@@ -1,3 +1,4 @@
+#![deny(unsafe_op_in_unsafe_fn)]
 #![allow(dead_code, non_snake_case, non_upper_case_globals, unused_imports)]
 use core::ffi::{c_char, c_long, c_void};
 use core::ptr::{null, null_mut};
@@ -21,7 +22,7 @@ static mut g_pixels: [u8; 245760] = [0; 245760];
 static mut g_my_pixels: [u8; 245760] = [0; 245760];
 
 #[link(name = "sm_desktop", kind = "static", modifiers = "-bundle")]
-extern "C-unwind" {
+unsafe extern "C-unwind" {
     fn sm_desktop_run(argc: i32, argv: *mut *mut c_char, owner: *const GameOwner) -> i32;
     fn sm_desktop_HandleInput(game: *mut Game, key: i32, modifiers: i32, pressed: bool);
     fn sm_desktop_HandleGamepadInput(game: *mut Game, button: i32, pressed: bool);
@@ -54,38 +55,44 @@ fn check_dependency() {
 }
 
 unsafe fn host_die(error: *const c_char) {
-    SDL_ShowSimpleMessageBox(
-        SDL_MESSAGEBOX_ERROR as i32 as Uint32,
-        kWindowTitle.as_ptr().cast(),
-        error,
-        null_mut::<SDL_Window>(),
-    );
-    fprintf(stderr, c"Error: %s\n".as_ptr(), error);
-    exit(1);
+    unsafe {
+        SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_ERROR as i32 as Uint32,
+            kWindowTitle.as_ptr().cast(),
+            error,
+            null_mut::<SDL_Window>(),
+        );
+        fprintf(stderr, c"Error: %s\n".as_ptr(), error);
+        exit(1);
+    }
 }
 
 unsafe fn host_warning(error: *const c_char) {
-    SDL_ShowSimpleMessageBox(
-        SDL_MESSAGEBOX_WARNING as i32 as Uint32,
-        kWindowTitle.as_ptr().cast(),
-        error,
-        null_mut::<SDL_Window>(),
-    );
-    fprintf(stderr, c"Warning: %s\n".as_ptr(), error);
+    unsafe {
+        SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_WARNING as i32 as Uint32,
+            kWindowTitle.as_ptr().cast(),
+            error,
+            null_mut::<SDL_Window>(),
+        );
+        fprintf(stderr, c"Warning: %s\n".as_ptr(), error);
+    }
 }
 
 unsafe fn initialize_verify_audio(game: &mut Game) -> Result<(), String> {
-    g_audio_mutex = SDL_CreateMutex();
-    if g_audio_mutex.is_null() {
-        return Err("unable to create audio mutex".into());
+    unsafe {
+        g_audio_mutex = SDL_CreateMutex();
+        if g_audio_mutex.is_null() {
+            return Err("unable to create audio mutex".into());
+        }
+        game.g_spc_player = SpcPlayer_Create();
+        if game.g_spc_player.is_null() {
+            SDL_DestroyMutex(g_audio_mutex);
+            return Err("unable to initialize sound driver".into());
+        }
+        SpcPlayer_Initialize(game.g_spc_player);
+        Ok(())
     }
-    game.g_spc_player = SpcPlayer_Create();
-    if game.g_spc_player.is_null() {
-        SDL_DestroyMutex(g_audio_mutex);
-        return Err("unable to initialize sound driver".into());
-    }
-    SpcPlayer_Initialize(game.g_spc_player);
-    Ok(())
 }
 
 sm::forward_calls! { unsafe fn ();
@@ -100,68 +107,80 @@ pub unsafe fn RtlDrawPpuFrame(
     render_flags: u32,
     game: &mut Game,
 ) {
-    let ppu_pixels = if game.g_other_image as i32 != 0 {
-        &raw mut g_my_pixels as *mut u8
-    } else {
-        &raw mut g_pixels as *mut u8
-    };
-    for y in 0usize..240 {
-        memcpy(
-            (pixel_buffer).offset(y.wrapping_mul(pitch) as isize) as *mut c_void,
-            ppu_pixels.offset(y.wrapping_mul(256 as size_t).wrapping_mul(4 as size_t) as isize)
-                as *const c_void,
-            (256 * 4) as size_t,
-        );
+    unsafe {
+        let ppu_pixels = if game.g_other_image as i32 != 0 {
+            &raw mut g_my_pixels as *mut u8
+        } else {
+            &raw mut g_pixels as *mut u8
+        };
+        for y in 0usize..240 {
+            memcpy(
+                (pixel_buffer).offset(y.wrapping_mul(pitch) as isize) as *mut c_void,
+                ppu_pixels.offset(y.wrapping_mul(256 as size_t).wrapping_mul(4 as size_t) as isize)
+                    as *const c_void,
+                (256 * 4) as size_t,
+            );
+        }
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_die(message: *const c_char) {
-    Die(message);
+    unsafe {
+        Die(message);
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_stderr() -> *mut FILE {
-    stderr
+    unsafe { stderr }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_parse_config(name: *const c_char) {
-    sm::config::ParseConfigFile(name);
+    unsafe {
+        sm::config::ParseConfigFile(name);
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_find_key(key: i32, modifiers: i32) -> i32 {
-    sm::config::FindCmdForSdlKey(key, modifiers as _)
+    unsafe { sm::config::FindCmdForSdlKey(key, modifiers as _) }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_find_button(button: i32, modifiers: u32) -> i32 {
-    sm::config::FindCmdForGamepadButton(button, modifiers)
+    unsafe { sm::config::FindCmdForGamepadButton(button, modifiers) }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_debug(owner: *const GameOwner) {
-    (*owner).with(|game| game.g_debug_flag = true);
+    unsafe {
+        (*owner).with(|game| game.g_debug_flag = true);
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_start_game(
     owner: *const GameOwner,
     filename: *const c_char,
 ) -> *mut Snes {
-    (*owner).with(|game| sm::cpu_infra::SnesInit(filename, game))
+    unsafe { (*owner).with(|game| sm::cpu_infra::SnesInit(filename, game)) }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_initialize_renderer(
     owner: *const GameOwner,
     funcs: *const RendererFuncs,
     window: *mut SDL_Window,
 ) -> bool {
-    (*owner).with(|_game| (*funcs).Initialize.expect("non-null function pointer")(window))
+    unsafe {
+        (*owner).with(|_game| (*funcs).Initialize.expect("non-null function pointer")(window))
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_destroy_renderer(
     owner: *const GameOwner,
     funcs: *const RendererFuncs,
 ) {
-    (*owner).with(|_game| (*funcs).Destroy.expect("non-null function pointer")());
+    unsafe {
+        (*owner).with(|_game| (*funcs).Destroy.expect("non-null function pointer")());
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_begin_draw(
     funcs: *const RendererFuncs,
     width: i32,
@@ -169,176 +188,215 @@ unsafe extern "C-unwind" fn sm_host_begin_draw(
     pixels: *mut *mut u8,
     pitch: *mut i32,
 ) {
-    (*funcs).BeginDraw.expect("non-null function pointer")(width, height, pixels, pitch);
+    unsafe {
+        (*funcs).BeginDraw.expect("non-null function pointer")(width, height, pixels, pitch);
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_end_draw(funcs: *const RendererFuncs) {
-    (*funcs).EndDraw.expect("non-null function pointer")();
+    unsafe {
+        (*funcs).EndDraw.expect("non-null function pointer")();
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_create_player(owner: *const GameOwner) {
-    (*owner).with(|game| game.g_spc_player = SpcPlayer_Create());
+    unsafe {
+        (*owner).with(|game| game.g_spc_player = SpcPlayer_Create());
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_initialize_player(owner: *const GameOwner) {
-    (*owner).with(|game| SpcPlayer_Initialize(game.g_spc_player));
+    unsafe {
+        (*owner).with(|game| SpcPlayer_Initialize(game.g_spc_player));
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_prepare_pixels(snes: *mut Snes) {
-    sm::snes::ppu::PpuBeginDrawing((*snes).snes_ppu, (&raw mut g_pixels).cast(), 1024, 0);
-    sm::snes::ppu::PpuBeginDrawing((*snes).my_ppu, (&raw mut g_my_pixels).cast(), 1024, 0);
+    unsafe {
+        sm::snes::ppu::PpuBeginDrawing((*snes).snes_ppu, (&raw mut g_pixels).cast(), 1024, 0);
+        sm::snes::ppu::PpuBeginDrawing((*snes).my_ppu, (&raw mut g_my_pixels).cast(), 1024, 0);
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_read_sram(owner: *const GameOwner) {
-    (*owner).with(|game| RtlReadSram(game));
+    unsafe {
+        (*owner).with(|game| RtlReadSram(game));
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_key(
     owner: *const GameOwner,
     key: i32,
     modifiers: i32,
     pressed: bool,
 ) {
-    (*owner).with(|game| sm_desktop_HandleInput(game, key, modifiers, pressed));
+    unsafe {
+        (*owner).with(|game| sm_desktop_HandleInput(game, key, modifiers, pressed));
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_button(owner: *const GameOwner, button: i32, pressed: bool) {
-    (*owner).with(|game| sm_desktop_HandleGamepadInput(game, button, pressed));
+    unsafe {
+        (*owner).with(|game| sm_desktop_HandleGamepadInput(game, button, pressed));
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_axis(owner: *const GameOwner, id: i32, axis: i32, value: i32) {
-    (*owner).with(|game| sm_desktop_HandleGamepadAxisInput(game, id, axis, value));
+    unsafe {
+        (*owner).with(|game| sm_desktop_HandleGamepadAxisInput(game, id, axis, value));
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_command(owner: *const GameOwner, command: u32, pressed: bool) {
-    (*owner).with(|game| sm_desktop_HandleCommand(game, command, pressed));
+    unsafe {
+        (*owner).with(|game| sm_desktop_HandleCommand(game, command, pressed));
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_run_frame(owner: *const GameOwner, inputs: i32) -> bool {
-    (*owner).with(|game| RtlRunFrame(inputs, game))
+    unsafe { (*owner).with(|game| RtlRunFrame(inputs, game)) }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_present(
     owner: *const GameOwner,
     disable_render: *mut bool,
 ) -> bool {
-    (*owner).with(|game| {
-        (*game.g_snes).disableRender = *disable_render;
-        if !*disable_render {
-            sm_desktop_DrawPpuFrameWithPerf(game);
-        }
-        *disable_render = (*game.g_snes).disableRender;
-        game.g_got_mismatch_count != 0
-    })
+    unsafe {
+        (*owner).with(|game| {
+            (*game.g_snes).disableRender = *disable_render;
+            if !*disable_render {
+                sm_desktop_DrawPpuFrameWithPerf(game);
+            }
+            *disable_render = (*game.g_snes).disableRender;
+            game.g_got_mismatch_count != 0
+        })
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_render_scale(game: *mut Game, flags: u32) -> i32 {
-    sm::snes::ppu::PpuGetCurrentRenderScale((*(*game).g_snes).ppu, flags)
+    unsafe { sm::snes::ppu::PpuGetCurrentRenderScale((*(*game).g_snes).ppu, flags) }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_copy_frame(
     game: *mut Game,
     pixels: *mut u8,
     pitch: usize,
     flags: u32,
 ) {
-    RtlDrawPpuFrame(pixels, pitch, flags, &mut *game);
+    unsafe {
+        RtlDrawPpuFrame(pixels, pitch, flags, &mut *game);
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_mismatch_count(game: *mut Game) -> i32 {
-    (*game).g_got_mismatch_count
+    unsafe { (*game).g_got_mismatch_count }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_fps(value: f32) -> i32 {
     value as i32
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_save_load(game: *mut Game, operation: i32, slot: i32) {
-    RtlSaveLoad(operation, slot, &mut *game);
-}
-#[no_mangle]
-unsafe extern "C-unwind" fn sm_host_cheat(game: *mut Game, code: c_char) {
-    RtlCheat(code, &mut *game);
-}
-#[no_mangle]
-unsafe extern "C-unwind" fn sm_host_game_command(game: *mut Game, command: u32, flags: i32) {
-    let game = &mut *game;
-    match command {
-        115 => game.g_other_image = !game.g_other_image,
-        116 => RtlClearKeyLog(game),
-        117 => RtlStopReplay(game),
-        119 => RtlReset(1, game),
-        127 => game.g_new_ppu = flags & 1 != 0,
-        _ => unreachable!(),
+    unsafe {
+        RtlSaveLoad(operation, slot, &mut *game);
     }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
+unsafe extern "C-unwind" fn sm_host_cheat(game: *mut Game, code: c_char) {
+    unsafe {
+        RtlCheat(code, &mut *game);
+    }
+}
+#[unsafe(no_mangle)]
+unsafe extern "C-unwind" fn sm_host_game_command(game: *mut Game, command: u32, flags: i32) {
+    unsafe {
+        let game = &mut *game;
+        match command {
+            115 => game.g_other_image = !game.g_other_image,
+            116 => RtlClearKeyLog(game),
+            117 => RtlStopReplay(game),
+            119 => RtlReset(1, game),
+            127 => game.g_new_ppu = flags & 1 != 0,
+            _ => unreachable!(),
+        }
+    }
+}
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_gamepad_bounds(button: i32) {
     let _ = [0u8; 17][button as usize];
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_bad_command() {
-    __assert_fail(
-        c"0".as_ptr(),
-        c"src/main.c".as_ptr(),
-        686,
-        c"void HandleCommand(uint32, _Bool)".as_ptr(),
-    );
+    unsafe {
+        __assert_fail(
+            c"0".as_ptr(),
+            c"src/main.c".as_ptr(),
+            686,
+            c"void HandleCommand(uint32, _Bool)".as_ptr(),
+        );
+    }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_render_audio(
     game: *mut Game,
     buffer: *mut i16,
     frames: i32,
     channels: i32,
 ) {
-    if channels != 2 {
-        __assert_fail(
-            c"channels == 2".as_ptr(),
-            c"src/sm_rtl.c".as_ptr(),
-            679,
-            c"void RtlRenderAudio(int16 *, int, int)".as_ptr(),
-        );
+    unsafe {
+        if channels != 2 {
+            __assert_fail(
+                c"channels == 2".as_ptr(),
+                c"src/sm_rtl.c".as_ptr(),
+                679,
+                c"void RtlRenderAudio(int16 *, int, int)".as_ptr(),
+            );
+        }
+        // The host owns a separate stereo buffer. Empty requests need no pointer.
+        let output = if frames > 0 {
+            core::slice::from_raw_parts_mut(buffer.cast::<[i16; 2]>(), frames as usize)
+        } else {
+            &mut []
+        };
+        RtlRenderAudio(output, &mut *game);
     }
-    // The host owns a separate stereo buffer. Empty requests need no pointer.
-    let output = if frames > 0 {
-        core::slice::from_raw_parts_mut(buffer.cast::<[i16; 2]>(), frames as usize)
-    } else {
-        &mut []
-    };
-    RtlRenderAudio(output, &mut *game);
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn sm_host_audio_callback(userdata: *mut c_void, stream: *mut u8, length: i32) {
-    (*(userdata as *const GameOwner)).with(|game| sm_desktop_AudioCallback(game, stream, length));
+    unsafe {
+        (*(userdata as *const GameOwner))
+            .with(|game| sm_desktop_AudioCallback(game, stream, length));
+    }
 }
 
 // The transpiled runtime references glibc's stderr and assertion symbols.
 // MinGW uses a stream accessor instead; FILE is passed opaquely to the CRT.
 #[cfg(windows)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub static mut stderr: *mut FILE = std::ptr::null_mut();
 
 #[cfg(windows)]
-extern "C" {
+unsafe extern "C" {
     fn __acrt_iob_func(index: u32) -> *mut FILE;
 }
 
 #[cfg(windows)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn __assert_fail(
     assertion: *const std::ffi::c_char,
     file: *const std::ffi::c_char,
     line: u32,
     function: *const std::ffi::c_char,
 ) -> ! {
-    eprintln!(
-        "Assertion failed: {} at {}:{line} ({})",
-        std::ffi::CStr::from_ptr(assertion).to_string_lossy(),
-        std::ffi::CStr::from_ptr(file).to_string_lossy(),
-        std::ffi::CStr::from_ptr(function).to_string_lossy()
-    );
-    std::process::abort();
+    unsafe {
+        eprintln!(
+            "Assertion failed: {} at {}:{line} ({})",
+            std::ffi::CStr::from_ptr(assertion).to_string_lossy(),
+            std::ffi::CStr::from_ptr(file).to_string_lossy(),
+            std::ffi::CStr::from_ptr(function).to_string_lossy()
+        );
+        std::process::abort();
+    }
 }
 
 pub fn main() {

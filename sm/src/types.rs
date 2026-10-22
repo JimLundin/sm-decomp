@@ -656,7 +656,11 @@ crate::type_aliases! {
     pub CoroutineRet, Uint8 = u8;
 }
 
-pub type CrocomireFunc = unsafe fn(u16, crate::game::enemy_script::EnemyScript, &mut Game) -> crate::game::enemy_script::EnemyScript;
+pub type CrocomireFunc = unsafe fn(
+    u16,
+    crate::game::enemy_script::EnemyScript,
+    &mut Game,
+) -> crate::game::enemy_script::EnemyScript;
 
 crate::type_aliases! {
     pub FuncXY_V, Func_CalcHdma, Func_SpazerSba_V = unsafe fn(u16, u16, &mut Game) -> ();
@@ -861,17 +865,19 @@ impl TileTables {
         destinations: [*mut u16; 4],
         order: TileDrawOrder,
     ) {
-        let corners = match order {
-            TileDrawOrder::Rows => [0, 1, 2, 3],
-            TileDrawOrder::Columns => [0, 2, 1, 3],
-        };
-        let flip = ((block >> 10) & 3) as usize;
-        let tile_flip = (block & 0x0c00) << 4;
-        let first = (block & 0x03ff) as usize * 4;
-        for (destination, corner) in destinations.into_iter().zip(corners) {
-            let source = table.cast::<u16>().add(first + (corner ^ flip));
-            let tile = u16::from_le(source.read_unaligned()) ^ tile_flip;
-            destination.write_unaligned(tile.to_le());
+        unsafe {
+            let corners = match order {
+                TileDrawOrder::Rows => [0, 1, 2, 3],
+                TileDrawOrder::Columns => [0, 2, 1, 3],
+            };
+            let flip = ((block >> 10) & 3) as usize;
+            let tile_flip = (block & 0x0c00) << 4;
+            let first = (block & 0x03ff) as usize * 4;
+            for (destination, corner) in destinations.into_iter().zip(corners) {
+                let source = table.cast::<u16>().add(first + (corner ^ flip));
+                let tile = u16::from_le(source.read_unaligned()) ^ tile_flip;
+                destination.write_unaligned(tile.to_le());
+            }
         }
     }
 }

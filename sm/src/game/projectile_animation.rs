@@ -23,64 +23,76 @@ fn aimed_program(data: &RomRecord, direction: usize) -> u16 {
 }
 
 unsafe fn initialize_fixed(k: u16, address: u32, type_shift: u32, game: &mut Game) {
-    let slot = usize::from(k >> 1);
-    let selector = (word!(game.projectile_type[slot]) >> type_shift) & 0xf;
-    let data = record(table(address, selector as isize, game), game);
-    let damage = data.word(0);
-    word!(game.projectile_damage[slot] = damage);
-    if damage & 0x8000 != 0 {
-        InvalidInterrupt_Crash(game);
+    unsafe {
+        let slot = usize::from(k >> 1);
+        let selector = (word!(game.projectile_type[slot]) >> type_shift) & 0xf;
+        let data = record(table(address, selector as isize, game), game);
+        let damage = data.word(0);
+        word!(game.projectile_damage[slot] = damage);
+        if damage & 0x8000 != 0 {
+            InvalidInterrupt_Crash(game);
+        }
+        word!(game.projectile_bomb_instruction_ptr[slot] = data.word(2));
+        word!(game.projectile_bomb_instruction_timers[slot] = 1);
     }
-    word!(game.projectile_bomb_instruction_ptr[slot] = data.word(2));
-    word!(game.projectile_bomb_instruction_timers[slot] = 1);
 }
 pub unsafe fn initialize_super_missile(k: u16, game: &mut Game) {
-    initialize_fixed(k, 0x93842b, 8, game);
+    unsafe {
+        initialize_fixed(k, 0x93842b, 8, game);
+    }
 }
 pub unsafe fn initialize_bomb(k: u16, game: &mut Game) {
-    initialize_fixed(k, 0x9383f1, 8, game);
+    unsafe {
+        initialize_fixed(k, 0x9383f1, 8, game);
+    }
 }
 pub unsafe fn initialize_sba(k: u16, game: &mut Game) {
-    initialize_fixed(k, 0x938413, 0, game);
+    unsafe {
+        initialize_fixed(k, 0x938413, 0, game);
+    }
 }
 
 pub unsafe fn initialize_projectile(k: u16, game: &mut Game) {
-    let slot = usize::from(k >> 1);
-    let direction = usize::from(word!(game.projectile_dir[slot]) & 0xf);
-    let kind = word!(game.projectile_type[slot]);
-    let (address, selector) = if kind & 0xf00 != 0 {
-        (0x9383f1, isize::from(kind.to_ne_bytes()[1] & 0xf))
-    } else {
-        (
-            if kind & 0x10 != 0 { 0x9383d9 } else { 0x9383c1 },
-            (word!(game.projectile_type[slot]) & 0xf) as isize,
-        )
-    };
-    let data = record(table(address, selector, game), game);
-    if data.word(0) & 0x8000 != 0 {
-        InvalidInterrupt_Crash(game);
+    unsafe {
+        let slot = usize::from(k >> 1);
+        let direction = usize::from(word!(game.projectile_dir[slot]) & 0xf);
+        let kind = word!(game.projectile_type[slot]);
+        let (address, selector) = if kind & 0xf00 != 0 {
+            (0x9383f1, isize::from(kind.to_ne_bytes()[1] & 0xf))
+        } else {
+            (
+                if kind & 0x10 != 0 { 0x9383d9 } else { 0x9383c1 },
+                (word!(game.projectile_type[slot]) & 0xf) as isize,
+            )
+        };
+        let data = record(table(address, selector, game), game);
+        if data.word(0) & 0x8000 != 0 {
+            InvalidInterrupt_Crash(game);
+        }
+        // Diagnostics can mutate the captured allocation; retain the live reread.
+        word!(game.projectile_damage[slot] = data.word(0));
+        let program = aimed_program(&data, direction);
+        word!(game.projectile_bomb_instruction_ptr[slot] = program);
+        let frame = record(program, game);
+        word!(game.projectile_x_radius[slot] = u16::from(frame.byte(4)));
+        word!(game.projectile_y_radius[slot] = u16::from(frame.byte(5)));
+        word!(game.projectile_bomb_instruction_timers[slot] = 1);
     }
-    // Diagnostics can mutate the captured allocation; retain the live reread.
-    word!(game.projectile_damage[slot] = data.word(0));
-    let program = aimed_program(&data, direction);
-    word!(game.projectile_bomb_instruction_ptr[slot] = program);
-    let frame = record(program, game);
-    word!(game.projectile_x_radius[slot] = u16::from(frame.byte(4)));
-    word!(game.projectile_y_radius[slot] = u16::from(frame.byte(5)));
-    word!(game.projectile_bomb_instruction_timers[slot] = 1);
 }
 
 pub unsafe fn initialize_echo(k: u16, game: &mut Game) {
-    let slot = usize::from(k >> 1);
-    let direction = usize::from(word!(game.projectile_dir[slot]) & 0xf);
-    let selector = isize::from(game.g_ram[word_arrays::projectile_type + 2 * slot]) - 34;
-    let data = record(table(0x938403, selector, game), game);
-    word!(game.projectile_damage[slot] = data.word(0));
-    if data.word(0) & 0x8000 != 0 {
-        InvalidInterrupt_Crash(game);
+    unsafe {
+        let slot = usize::from(k >> 1);
+        let direction = usize::from(word!(game.projectile_dir[slot]) & 0xf);
+        let selector = isize::from(game.g_ram[word_arrays::projectile_type + 2 * slot]) - 34;
+        let data = record(table(0x938403, selector, game), game);
+        word!(game.projectile_damage[slot] = data.word(0));
+        if data.word(0) & 0x8000 != 0 {
+            InvalidInterrupt_Crash(game);
+        }
+        word!(game.projectile_bomb_instruction_ptr[slot] = aimed_program(&data, direction));
+        word!(game.projectile_bomb_instruction_timers[slot] = 1);
     }
-    word!(game.projectile_bomb_instruction_ptr[slot] = aimed_program(&data, direction));
-    word!(game.projectile_bomb_instruction_timers[slot] = 1);
 }
 
 pub unsafe fn start_impact(k: u16, game: &mut Game) {
@@ -118,68 +130,78 @@ pub fn start_bomb_explosion(k: u16, game: &mut Game) {
 }
 
 pub unsafe fn trail_frame(k: u16, game: &mut Game) -> u16 {
-    let slot = usize::from(k >> 1);
-    let ip = word!(game.projectile_bomb_instruction_ptr[slot]);
-    let delta = if word!(game.projectile_bomb_instruction_timers[slot]) == 1
-        && record(ip, game).word(0) & 0x8000 == 0
-    {
-        0
-    } else {
-        8
-    };
-    record(ip.wrapping_sub(delta), game).word(6)
+    unsafe {
+        let slot = usize::from(k >> 1);
+        let ip = word!(game.projectile_bomb_instruction_ptr[slot]);
+        let delta = if word!(game.projectile_bomb_instruction_timers[slot]) == 1
+            && record(ip, game).word(0) & 0x8000 == 0
+        {
+            0
+        } else {
+            8
+        };
+        record(ip.wrapping_sub(delta), game).word(6)
+    }
 }
 
 pub unsafe fn instruction_delete(k: u16, _: u16, game: &mut Game) -> u16 {
-    ClearProjectile(k, game);
-    0
+    unsafe {
+        ClearProjectile(k, game);
+        0
+    }
 }
 pub unsafe fn instruction_goto(_: u16, j: u16, game: &mut Game) -> u16 {
-    record(j, game).word(0)
+    unsafe { record(j, game).word(0) }
 }
 pub unsafe fn dispatch_instruction(ea: u32, j: u16, k: u16, game: &mut Game) -> u16 {
-    match ea {
-        0x93822f => instruction_delete(j, k, game),
-        0x938239 => instruction_goto(j, k, game),
-        _ => Unreachable(game) as u16,
+    unsafe {
+        match ea {
+            0x93822f => instruction_delete(j, k, game),
+            0x938239 => instruction_goto(j, k, game),
+            _ => Unreachable(game) as u16,
+        }
     }
 }
 
 pub unsafe fn advance(game: &mut Game) {
-    let selected = word!(game.projectile_index);
-    let slot = usize::from(selected >> 1);
-    let previous = word!(game.projectile_bomb_instruction_timers[slot]);
-    word!(game.projectile_bomb_instruction_timers[slot] = previous.wrapping_sub(1));
-    if previous != 1 {
-        return;
-    }
-    let mut cursor = word!(game.projectile_bomb_instruction_ptr[slot]);
-    loop {
-        let frame = record(cursor, game);
-        if frame.word(0) & 0x8000 == 0 {
-            word!(game.projectile_bomb_instruction_timers[slot] = frame.word(0));
-            word!(game.projectile_spritemap_pointers[slot] = frame.word(2));
-            word!(game.projectile_x_radius[slot] = u16::from(frame.byte(4)));
-            word!(game.projectile_y_radius[slot] = u16::from(frame.byte(5)));
-            word!(game.projectile_bomb_instruction_ptr[slot] = cursor.wrapping_add(8));
+    unsafe {
+        let selected = word!(game.projectile_index);
+        let slot = usize::from(selected >> 1);
+        let previous = word!(game.projectile_bomb_instruction_timers[slot]);
+        word!(game.projectile_bomb_instruction_timers[slot] = previous.wrapping_sub(1));
+        if previous != 1 {
             return;
         }
-        cursor = dispatch_instruction(
-            0x930000 | u32::from(frame.word(0)),
-            selected,
-            cursor.wrapping_add(2),
-            game,
-        );
-        if cursor == 0 {
-            return;
+        let mut cursor = word!(game.projectile_bomb_instruction_ptr[slot]);
+        loop {
+            let frame = record(cursor, game);
+            if frame.word(0) & 0x8000 == 0 {
+                word!(game.projectile_bomb_instruction_timers[slot] = frame.word(0));
+                word!(game.projectile_spritemap_pointers[slot] = frame.word(2));
+                word!(game.projectile_x_radius[slot] = u16::from(frame.byte(4)));
+                word!(game.projectile_y_radius[slot] = u16::from(frame.byte(5)));
+                word!(game.projectile_bomb_instruction_ptr[slot] = cursor.wrapping_add(8));
+                return;
+            }
+            cursor = dispatch_instruction(
+                0x930000 | u32::from(frame.word(0)),
+                selected,
+                cursor.wrapping_add(2),
+                game,
+            );
+            if cursor == 0 {
+                return;
+            }
         }
     }
 }
 
 unsafe fn draw_slots<const EXPLOSIONS: bool>(game: &mut Game) {
-    let index = if EXPLOSIONS { 18 } else { 8 };
-    word!(game.projectile_index = index);
-    continue_drawing::<EXPLOSIONS>(index, 0, 0, game);
+    unsafe {
+        let index = if EXPLOSIONS { 18 } else { 8 };
+        word!(game.projectile_index = index);
+        continue_drawing::<EXPLOSIONS>(index, 0, 0, game);
+    }
 }
 
 pub(crate) unsafe fn continue_drawing<const EXPLOSIONS: bool>(
@@ -188,69 +210,75 @@ pub(crate) unsafe fn continue_drawing<const EXPLOSIONS: bool>(
     mut y: u16,
     game: &mut Game,
 ) {
-    loop {
-        let slot = (index >> 1) as usize;
-        if word!(game.projectile_bomb_instruction_ptr[slot]) != 0 {
-            let kind = word!(game.projectile_type[slot]);
-            let visible = if EXPLOSIONS {
-                kind & 0xf00 >= 0x300
-                    && (kind & 0xf00 != 0x300 || word!(game.projectile_variables[slot]) != 0)
-            } else if kind & 0xf10 != 0 {
-                kind & 0xf00 < 0x300
-            } else if kind & 0xc != 0 {
-                (index & 2 != 0) == (word!(game.nmi_frame_counter_word) & 2 != 0)
-            } else {
-                (index & 2 == 0) == (word!(game.nmi_frame_counter_word) & 1 != 0)
-            };
-            if visible {
-                'draw: {
-                    let mode7 = word!(game.ceres_status) & 0x8000 != 0
-                        && (!EXPLOSIONS || (kind & 0xf00 != 0x300 && kind & 0xf00 != 0x500));
-                    let clip_y = if mode7 {
-                        let point = CalcExplosion_Mode7(index, game);
-                        // Ceres projectiles clip transformed Y but draw with the previous Y.
-                        // Ceres explosions discard both transformed coordinates.
-                        if EXPLOSIONS {
-                            y
+    unsafe {
+        loop {
+            let slot = (index >> 1) as usize;
+            if word!(game.projectile_bomb_instruction_ptr[slot]) != 0 {
+                let kind = word!(game.projectile_type[slot]);
+                let visible = if EXPLOSIONS {
+                    kind & 0xf00 >= 0x300
+                        && (kind & 0xf00 != 0x300 || word!(game.projectile_variables[slot]) != 0)
+                } else if kind & 0xf10 != 0 {
+                    kind & 0xf00 < 0x300
+                } else if kind & 0xc != 0 {
+                    (index & 2 != 0) == (word!(game.nmi_frame_counter_word) & 2 != 0)
+                } else {
+                    (index & 2 == 0) == (word!(game.nmi_frame_counter_word) & 1 != 0)
+                };
+                if visible {
+                    'draw: {
+                        let mode7 = word!(game.ceres_status) & 0x8000 != 0
+                            && (!EXPLOSIONS || (kind & 0xf00 != 0x300 && kind & 0xf00 != 0x500));
+                        let clip_y = if mode7 {
+                            let point = CalcExplosion_Mode7(index, game);
+                            // Ceres projectiles clip transformed Y but draw with the previous Y.
+                            // Ceres explosions discard both transformed coordinates.
+                            if EXPLOSIONS {
+                                y
+                            } else {
+                                x = point.x;
+                                point.y
+                            }
                         } else {
-                            x = point.x;
-                            point.y
-                        }
-                    } else {
-                        x = word!(game.projectile_x_pos[slot])
-                            .wrapping_sub(word!(game.layer1_x_pos));
-                        if EXPLOSIONS
-                            && (x as i32 - 304 & 0x8000 == 0 || x as i32 + 48 & 0x8000 != 0)
+                            x = word!(game.projectile_x_pos[slot])
+                                .wrapping_sub(word!(game.layer1_x_pos));
+                            if EXPLOSIONS
+                                && (x as i32 - 304 & 0x8000 == 0 || x as i32 + 48 & 0x8000 != 0)
+                            {
+                                break 'draw;
+                            }
+                            y = word!(game.projectile_y_pos[slot])
+                                .wrapping_sub(word!(game.layer1_y_pos));
+                            y
+                        };
+                        if clip_y & 0xff00 == 0
+                            && (EXPLOSIONS
+                                || word!(game.projectile_spritemap_pointers[slot]) & 0x8000 != 0)
                         {
-                            break 'draw;
+                            DrawProjectileSpritemap(index, x, y, game);
                         }
-                        y = word!(game.projectile_y_pos[slot])
-                            .wrapping_sub(word!(game.layer1_y_pos));
-                        y
-                    };
-                    if clip_y & 0xff00 == 0
-                        && (EXPLOSIONS
-                            || word!(game.projectile_spritemap_pointers[slot]) & 0x8000 != 0)
-                    {
-                        DrawProjectileSpritemap(index, x, y, game);
+                        index = word!(game.projectile_index);
                     }
-                    index = word!(game.projectile_index);
                 }
             }
-        }
-        index = index.wrapping_sub(2);
-        word!(game.projectile_index = index);
-        if index & 0x8000 != 0 {
-            break;
+            index = index.wrapping_sub(2);
+            word!(game.projectile_index = index);
+            if index & 0x8000 != 0 {
+                break;
+            }
         }
     }
 }
 
 pub unsafe fn draw_projectiles(game: &mut Game) {
-    draw_slots::<false>(game);
-    Samus_DrawShinesparkCrashEchoProjectiles(game);
-    crate::game::projectile_trails::update(game);
+    unsafe {
+        draw_slots::<false>(game);
+        Samus_DrawShinesparkCrashEchoProjectiles(game);
+        crate::game::projectile_trails::update(game);
+    }
 }
 pub unsafe fn draw_explosions(game: &mut Game) {
-    draw_slots::<true>(game);
+    unsafe {
+        draw_slots::<true>(game);
+    }
 }

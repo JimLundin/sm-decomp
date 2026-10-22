@@ -1,6 +1,4 @@
-use crate::game::enemy_combat::{
-    reduce_suit_damage,
-};
+use crate::game::enemy_combat::{reduce_suit_damage};
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 use crate::game::music::{QueueMusic_Delayed8};
@@ -23,8 +21,7 @@ use crate::game::sm_94::{
     kSinCosTable8bit_Sext, scale_sine_word, square_slope_occupied, square_slope_single_block,
 };
 use crate::game::sm_a0::{
-    CalculateAngleFromXY, CalculateAngleOfSamusFromEproj, ConvertAngleToXy,
-    SignExtend8,
+    CalculateAngleFromXY, CalculateAngleOfSamusFromEproj, ConvertAngleToXy, SignExtend8,
 };
 use crate::game::sm_a6::Ridley_Func_103;
 use crate::game::sprite_objects::create_sprite;
@@ -207,7 +204,9 @@ pub fn EnableEprojs(game: &mut Game) {
     EprojStateMut(&mut game.g_ram).write(0x198d, 0, flags);
 }
 pub unsafe fn DisableEprojs(game: &mut Game) {
-    word!(game.cinematic_var5 &= !(0x8000));
+    unsafe {
+        word!(game.cinematic_var5 &= !(0x8000));
+    }
 }
 pub fn ClearEprojs(game: &mut Game) {
     for word_index in (0..18).rev() {
@@ -215,86 +214,100 @@ pub fn ClearEprojs(game: &mut Game) {
     }
 }
 unsafe fn SpawnEprojInner(j: u16, gfx_idx: u16, game: &mut Game) -> Option<u16> {
-    let mut v3: u16 = 34;
-    while EprojState(&game.g_ram).id(usize::from(v3 >> 1)) != 0 {
-        v3 = v3.wrapping_sub(2);
-        if (v3 & 0x8000) != 0 {
-            return None;
+    unsafe {
+        let mut v3: u16 = 34;
+        while EprojState(&game.g_ram).id(usize::from(v3 >> 1)) != 0 {
+            v3 = v3.wrapping_sub(2);
+            if (v3 & 0x8000) != 0 {
+                return None;
+            }
         }
+        let v4 = usize::from(v3 >> 1);
+        EprojStateMut(&mut game.g_ram).write(0x19bb, v4, gfx_idx);
+        EprojStateMut(&mut game.g_ram).set_id(v4, j);
+        let Edef = rom_record(0x86, j, game);
+        let value = Edef.word(offset_of!(EprojDef, pre_instr_ptr));
+        EprojStateMut(&mut game.g_ram).set_preinstruction(v4, value);
+        let value = Edef.word(offset_of!(EprojDef, instr_list));
+        EprojStateMut(&mut game.g_ram).set_instruction(v4, value);
+        let radius = Edef.word(offset_of!(EprojDef, radius));
+        EprojStateMut(&mut game.g_ram).write(0x1bb3, v4, radius);
+        let value = Edef.word(offset_of!(EprojDef, properties));
+        EprojStateMut(&mut game.g_ram).set_properties(v4, value);
+        EprojStateMut(&mut game.g_ram).set_instruction_timer(v4, 1);
+        EprojStateMut(&mut game.g_ram).set_spritemap(v4, 0x8000);
+        EprojStateMut(&mut game.g_ram).clear_spawn_variables(v4);
+        CallEprojInit(
+            ((Edef.word(offset_of!(EprojDef, init_code_ptr))) as u32) | (0x860000u32),
+            v3,
+            game,
+        );
+        Some(v3)
     }
-    let v4 = usize::from(v3 >> 1);
-    EprojStateMut(&mut game.g_ram).write(0x19bb, v4, gfx_idx);
-    EprojStateMut(&mut game.g_ram).set_id(v4, j);
-    let Edef = rom_record(0x86, j, game);
-    let value = Edef.word(offset_of!(EprojDef, pre_instr_ptr));
-    EprojStateMut(&mut game.g_ram).set_preinstruction(v4, value);
-    let value = Edef.word(offset_of!(EprojDef, instr_list));
-    EprojStateMut(&mut game.g_ram).set_instruction(v4, value);
-    let radius = Edef.word(offset_of!(EprojDef, radius));
-    EprojStateMut(&mut game.g_ram).write(0x1bb3, v4, radius);
-    let value = Edef.word(offset_of!(EprojDef, properties));
-    EprojStateMut(&mut game.g_ram).set_properties(v4, value);
-    EprojStateMut(&mut game.g_ram).set_instruction_timer(v4, 1);
-    EprojStateMut(&mut game.g_ram).set_spritemap(v4, 0x8000);
-    EprojStateMut(&mut game.g_ram).clear_spawn_variables(v4);
-    CallEprojInit(((Edef.word(offset_of!(EprojDef, init_code_ptr))) as u32) | (0x860000u32), v3, game);
-    Some(v3)
 }
 pub unsafe fn SpawnEprojWithGfx(a: u16, k: u16, j: u16, game: &mut Game) -> u16 {
-    EprojStateMut(&mut game.g_ram).write(0x1993, 0, a);
-    let enemy_index = k;
-    let gfx_idx = (game.enemy_state(enemy_index).vram_tiles_index())
-        | (game.enemy_state(enemy_index).palette_index());
-    SpawnEprojInner(j, gfx_idx, game).unwrap_or(gfx_idx)
+    unsafe {
+        EprojStateMut(&mut game.g_ram).write(0x1993, 0, a);
+        let enemy_index = k;
+        let gfx_idx = (game.enemy_state(enemy_index).vram_tiles_index())
+            | (game.enemy_state(enemy_index).palette_index());
+        SpawnEprojInner(j, gfx_idx, game).unwrap_or(gfx_idx)
+    }
 }
 pub unsafe fn SpawnEprojWithRoomGfx(j: u16, a: u16, game: &mut Game) -> u16 {
-    EprojStateMut(&mut game.g_ram).write(0x1993, 0, a);
-    SpawnEprojInner(j, 0, game)
-        .unwrap_or_else(|| u16::from_le_bytes([game.g_ram[0x1997], game.g_ram[0x1998]]))
+    unsafe {
+        EprojStateMut(&mut game.g_ram).write(0x1993, 0, a);
+        SpawnEprojInner(j, 0, game)
+            .unwrap_or_else(|| u16::from_le_bytes([game.g_ram[0x1997], game.g_ram[0x1998]]))
+    }
 }
 unsafe fn EprojRunOne(k: u16, game: &mut Game) {
-    CallEprojPreInstr(
-        0x860000 | u32::from(EprojState(&game.g_ram).preinstruction(usize::from(k >> 1))),
-        k,
-        game,
-    );
-    let v1 = EprojState(&game.g_ram).index();
-    let v2 = usize::from(EprojState(&game.g_ram).index() >> 1);
-    let fresh20 = EprojStateMut(&mut game.g_ram).decrement_instruction_timer(v2);
-    if fresh20 == 1 {
-        let image = game
-            .loaded_rom
-            .as_ref()
-            .expect("ROM must be loaded")
-            .clone();
-        let mut script = EprojScript::new(image, EprojState(&game.g_ram).instruction(v2));
-        while script.word(0) & 0x8000 != 0 {
-            let instruction = 0x860000 | u32::from(script.word(0));
-            script.seek(script.offset(2).unwrap());
-            let Some(next) = CallEprojInstr(instruction, v1, &script, game) else {
-                return;
-            };
-            script.seek(next);
+    unsafe {
+        CallEprojPreInstr(
+            0x860000 | u32::from(EprojState(&game.g_ram).preinstruction(usize::from(k >> 1))),
+            k,
+            game,
+        );
+        let v1 = EprojState(&game.g_ram).index();
+        let v2 = usize::from(EprojState(&game.g_ram).index() >> 1);
+        let fresh20 = EprojStateMut(&mut game.g_ram).decrement_instruction_timer(v2);
+        if fresh20 == 1 {
+            let image = game
+                .loaded_rom
+                .as_ref()
+                .expect("ROM must be loaded")
+                .clone();
+            let mut script = EprojScript::new(image, EprojState(&game.g_ram).instruction(v2));
+            while script.word(0) & 0x8000 != 0 {
+                let instruction = 0x860000 | u32::from(script.word(0));
+                script.seek(script.offset(2).unwrap());
+                let Some(next) = CallEprojInstr(instruction, v1, &script, game) else {
+                    return;
+                };
+                script.seek(next);
+            }
+            let v7 = usize::from(v1 >> 1);
+            let value = script.word(0);
+            EprojStateMut(&mut game.g_ram).set_instruction_timer(v7, value);
+            let value = script.word(2);
+            EprojStateMut(&mut game.g_ram).set_spritemap(v7, value);
+            let value = script.bank_address().wrapping_add(4);
+            EprojStateMut(&mut game.g_ram).set_instruction(v7, value);
         }
-        let v7 = usize::from(v1 >> 1);
-        let value = script.word(0);
-        EprojStateMut(&mut game.g_ram).set_instruction_timer(v7, value);
-        let value = script.word(2);
-        EprojStateMut(&mut game.g_ram).set_spritemap(v7, value);
-        let value = script.bank_address().wrapping_add(4);
-        EprojStateMut(&mut game.g_ram).set_instruction(v7, value);
     }
 }
 pub unsafe fn EprojRunAll(game: &mut Game) {
-    if EprojState(&game.g_ram).enabled() {
-        let mut index = Some(34);
-        while let Some(mut slot) = index {
-            EprojStateMut(&mut game.g_ram).set_index(slot);
-            if EprojState(&game.g_ram).id(usize::from(slot >> 1)) != 0 {
-                EprojRunOne(slot, game);
-                slot = EprojState(&game.g_ram).index();
+    unsafe {
+        if EprojState(&game.g_ram).enabled() {
+            let mut index = Some(34);
+            while let Some(mut slot) = index {
+                EprojStateMut(&mut game.g_ram).set_index(slot);
+                if EprojState(&game.g_ram).id(usize::from(slot >> 1)) != 0 {
+                    EprojRunOne(slot, game);
+                    slot = EprojState(&game.g_ram).index();
+                }
+                index = slot.checked_sub(2);
             }
-            index = slot.checked_sub(2);
         }
     }
 }
@@ -319,96 +332,114 @@ pub enum EprojPriority {
 }
 
 pub unsafe fn DrawEprojsWithPriority(priority: EprojPriority, game: &mut Game) {
-    let pt = GetValuesForScreenShaking(game);
-    let low_priority = matches!(priority, EprojPriority::Low);
-    for slot in (0..18).rev() {
-        if EprojState(&game.g_ram).id(slot) != 0
-            && (EprojState(&game.g_ram).properties(slot) & 0x1000 != 0) == low_priority
-        {
-            DrawEprojs((slot * 2) as u16, pt, game);
+    unsafe {
+        let pt = GetValuesForScreenShaking(game);
+        let low_priority = matches!(priority, EprojPriority::Low);
+        for slot in (0..18).rev() {
+            if EprojState(&game.g_ram).id(slot) != 0
+                && (EprojState(&game.g_ram).properties(slot) & 0x1000 != 0) == low_priority
+            {
+                DrawEprojs((slot * 2) as u16, pt, game);
+            }
         }
     }
 }
 pub unsafe fn DrawEprojs(k: u16, pt: Point16U, game: &mut Game) {
-    let v1 = usize::from(k >> 1);
-    let v2: u16 = EprojState(&game.g_ram).spritemap(v1);
-    let r26: u16 = EprojState(&game.g_ram).gfx_low(v1) as u16;
-    let R28: u16 = EprojState(&game.g_ram).slot_word(0x19bb, v1) & 0xff00;
-    let r20: u16 =
-        (pt.x as i32 + game.enemy_projectile_x_pos(k) as i32 - game.layer1_x_pos() as i32) as u16;
-    if (r20 as i32 + 128 & 0xfe00) == 0 {
-        let v3: u16 = (pt.y as i32 + game.enemy_projectile_y_pos(k) as i32
-            - game.layer1_y_pos() as i32) as u16;
-        let r18: u16 = v3;
-        if (v3 & 0xff00) != 0 {
-            if (v3 as i32 + 128 & 0xfe00) == 0 {
-                DrawEprojSpritemapWithBaseTileOffscreen(0x8d, v2, r20, r18, r26, R28, game);
+    unsafe {
+        let v1 = usize::from(k >> 1);
+        let v2: u16 = EprojState(&game.g_ram).spritemap(v1);
+        let r26: u16 = EprojState(&game.g_ram).gfx_low(v1) as u16;
+        let R28: u16 = EprojState(&game.g_ram).slot_word(0x19bb, v1) & 0xff00;
+        let r20: u16 = (pt.x as i32 + game.enemy_projectile_x_pos(k) as i32
+            - game.layer1_x_pos() as i32) as u16;
+        if (r20 as i32 + 128 & 0xfe00) == 0 {
+            let v3: u16 = (pt.y as i32 + game.enemy_projectile_y_pos(k) as i32
+                - game.layer1_y_pos() as i32) as u16;
+            let r18: u16 = v3;
+            if (v3 & 0xff00) != 0 {
+                if (v3 as i32 + 128 & 0xfe00) == 0 {
+                    DrawEprojSpritemapWithBaseTileOffscreen(0x8d, v2, r20, r18, r26, R28, game);
+                }
+            } else {
+                DrawEprojSpritemapWithBaseTile(0x8d, v2, r20, r18, r26, R28, game);
             }
-        } else {
-            DrawEprojSpritemapWithBaseTile(0x8d, v2, r20, r18, r26, R28, game);
         }
     }
 }
 pub unsafe fn GetValuesForScreenShaking(game: &mut Game) -> Point16U {
-    let mut R34: u16 = 0;
-    let mut R36: u16 = 0;
-    if word!(game.earthquake_timer) != 0
-        && game.time_is_frozen_flag() == 0
-        && word!(game.earthquake_type) as i32 - 36i32 & 0x8000 != 0
-    {
-        let v0: i32 = ((4u16).wrapping_mul(word!(game.earthquake_type))) as i32 >> 1;
-        if (word!(game.earthquake_timer) & 2) != 0 {
-            R36 = -(crate::rtl::rom_table_word!(game, 0x86846b, v0 as isize) as i32) as u16;
-            R34 = -(crate::rtl::rom_table_word!(game, 0x86846b, (v0 + 1) as isize) as i32) as u16;
+    unsafe {
+        let mut R34: u16 = 0;
+        let mut R36: u16 = 0;
+        if word!(game.earthquake_timer) != 0
+            && game.time_is_frozen_flag() == 0
+            && word!(game.earthquake_type) as i32 - 36i32 & 0x8000 != 0
+        {
+            let v0: i32 = ((4u16).wrapping_mul(word!(game.earthquake_type))) as i32 >> 1;
+            if (word!(game.earthquake_timer) & 2) != 0 {
+                R36 = -(crate::rtl::rom_table_word!(game, 0x86846b, v0 as isize) as i32) as u16;
+                R34 =
+                    -(crate::rtl::rom_table_word!(game, 0x86846b, (v0 + 1) as isize) as i32) as u16;
+            } else {
+                R36 = crate::rtl::rom_table_word!(game, 0x86846b, v0 as isize);
+                R34 = crate::rtl::rom_table_word!(game, 0x86846b, (v0 + 1) as isize);
+            }
         } else {
-            R36 = crate::rtl::rom_table_word!(game, 0x86846b, v0 as isize);
-            R34 = crate::rtl::rom_table_word!(game, 0x86846b, (v0 + 1) as isize);
+            R34 = 0;
+            R36 = 0;
         }
-    } else {
-        R34 = 0;
-        R36 = 0;
+        Point16U { x: R36, y: R34 }
     }
-    Point16U { x: R36, y: R34 }
 }
 unsafe fn EprojColl_8506(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
-    if *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) != 0 {
-        word!(
-            checked_i32,
-            game.cur_block_index +=
-                *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) as i8 as i32
-        );
-        return 0xff;
+    unsafe {
+        if *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) != 0 {
+            word!(
+                checked_i32,
+                game.cur_block_index +=
+                    *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) as i8 as i32
+            );
+            return 0xff;
+        }
+        0
     }
-    0
 }
 unsafe fn EprojColl_Unknown8536(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
-    if *ram_ptr!(game; 0x16402, game.cur_block_index() as isize) != 0 {
-        word!(
-            checked_i32,
-            game.cur_block_index += *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize)
-                as i8 as i32
-                * word!(game.room_width_in_blocks) as i32
-        );
-        return 0xff;
+    unsafe {
+        if *ram_ptr!(game; 0x16402, game.cur_block_index() as isize) != 0 {
+            word!(
+                checked_i32,
+                game.cur_block_index += *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize)
+                    as i8 as i32
+                    * word!(game.room_width_in_blocks) as i32
+            );
+            return 0xff;
+        }
+        0
     }
-    0
 }
 unsafe fn EprojColl_858E(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
-    let v0: u16 = ((*ram_ptr!(game; 0x16402, game.cur_block_index() as isize)) as u16) & (0x1fu16);
-    if v0 < 5 {
-        return EprojColl_85C2(eci, v0, word!(game.cur_block_index), game);
+    unsafe {
+        let v0: u16 =
+            ((*ram_ptr!(game; 0x16402, game.cur_block_index() as isize)) as u16) & (0x1fu16);
+        if v0 < 5 {
+            return EprojColl_85C2(eci, v0, word!(game.cur_block_index), game);
+        }
+        word!(
+            game.current_slope_bts =
+                *ram_ptr!(game; 0x16402, game.cur_block_index() as isize) as u16
+        );
+        EprojColl_873D()
     }
-    word!(
-        game.current_slope_bts = *ram_ptr!(game; 0x16402, game.cur_block_index() as isize) as u16
-    );
-    EprojColl_873D()
 }
 unsafe fn EprojColl_85AD(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
-    let v0: u16 = ((*ram_ptr!(game; 0x16402, game.cur_block_index() as isize)) as u16) & (0x1fu16);
-    if v0 >= 5 {
-        EprojColl_874E(eci, game)
-    } else {
-        EprojColl_8676(eci, v0, game.cur_block_index(), 0, game)
+    unsafe {
+        let v0: u16 =
+            ((*ram_ptr!(game; 0x16402, game.cur_block_index() as isize)) as u16) & (0x1fu16);
+        if v0 >= 5 {
+            EprojColl_874E(eci, game)
+        } else {
+            EprojColl_8676(eci, v0, game.cur_block_index(), 0, game)
+        }
     }
 }
 #[derive(Copy, Clone)]
@@ -418,15 +449,19 @@ enum EprojCollisionAxis {
 }
 impl EprojCollisionAxis {
     unsafe fn radius(self, eci: *const EprojCollInfo) -> u16 {
-        match self {
-            Self::Horizontal => (*eci).eci_r28,
-            Self::Vertical => (*eci).eci_r30,
+        unsafe {
+            match self {
+                Self::Horizontal => (*eci).eci_r28,
+                Self::Vertical => (*eci).eci_r30,
+            }
         }
     }
     unsafe fn perpendicular_radius(self, eci: *const EprojCollInfo) -> u16 {
-        match self {
-            Self::Horizontal => (*eci).eci_r30,
-            Self::Vertical => (*eci).eci_r28,
+        unsafe {
+            match self {
+                Self::Horizontal => (*eci).eci_r30,
+                Self::Vertical => (*eci).eci_r28,
+            }
         }
     }
     fn position(self, k: u16, game: &Game) -> u16 {
@@ -468,113 +503,117 @@ unsafe fn eproj_square_slope(
     axis: EprojCollisionAxis,
     game: &mut Game,
 ) -> u8 {
-    crate::verify_probe::hit(match axis {
-        EprojCollisionAxis::Horizontal => "square-slope.eproj.horizontal",
-        EprojCollisionAxis::Vertical => "square-slope.eproj.vertical",
-    });
-    // Only the vertical original captures this index before the BTS/context reads.
-    let captured_index = match axis {
-        EprojCollisionAxis::Horizontal => None,
-        EprojCollisionAxis::Vertical => Some(EprojState(&game.g_ram).index()),
-    };
-    let orientation = (*ram_ptr!(game; 0x16402, block as isize) >> 6) as u16;
-    let shift = match axis {
-        EprojCollisionAxis::Horizontal => 3,
-        EprojCollisionAxis::Vertical => 2,
-    };
-    let index = slope
-        .wrapping_mul(4)
-        .wrapping_add(orientation ^ (((*eci).eci_r34 & 8) >> shift));
-    let other = axis.other_half();
-    // The original bank's table has the same solidity bits as bank 94.
-    // Sampling performs no stores; retain raw context reads after the first store.
-    let k = captured_index.unwrap_or_else(|| EprojState(&game.g_ram).index());
-    let position = axis.perpendicular_position(k, game);
-    let radius = axis.perpendicular_radius(eci);
-    let occupied = if (*eci).eci_r32 == 0 {
-        square_slope_single_block(index, position, radius, other)
-    } else {
-        square_slope_occupied(
-            index,
-            (*eci).eci_r26,
-            (*eci).eci_r32,
-            position,
-            radius,
-            other,
-        )
-    };
-    if !occupied {
-        return 0;
+    unsafe {
+        crate::verify_probe::hit(match axis {
+            EprojCollisionAxis::Horizontal => "square-slope.eproj.horizontal",
+            EprojCollisionAxis::Vertical => "square-slope.eproj.vertical",
+        });
+        // Only the vertical original captures this index before the BTS/context reads.
+        let captured_index = match axis {
+            EprojCollisionAxis::Horizontal => None,
+            EprojCollisionAxis::Vertical => Some(EprojState(&game.g_ram).index()),
+        };
+        let orientation = (*ram_ptr!(game; 0x16402, block as isize) >> 6) as u16;
+        let shift = match axis {
+            EprojCollisionAxis::Horizontal => 3,
+            EprojCollisionAxis::Vertical => 2,
+        };
+        let index = slope
+            .wrapping_mul(4)
+            .wrapping_add(orientation ^ (((*eci).eci_r34 & 8) >> shift));
+        let other = axis.other_half();
+        // The original bank's table has the same solidity bits as bank 94.
+        // Sampling performs no stores; retain raw context reads after the first store.
+        let k = captured_index.unwrap_or_else(|| EprojState(&game.g_ram).index());
+        let position = axis.perpendicular_position(k, game);
+        let radius = axis.perpendicular_radius(eci);
+        let occupied = if (*eci).eci_r32 == 0 {
+            square_slope_single_block(index, position, radius, other)
+        } else {
+            square_slope_occupied(
+                index,
+                (*eci).eci_r26,
+                (*eci).eci_r32,
+                position,
+                radius,
+                other,
+            )
+        };
+        if !occupied {
+            return 0;
+        }
+        let slot = usize::from(EprojState(&game.g_ram).index() >> 1);
+        EprojStateMut(&mut game.g_ram).write(axis.subposition_base(), slot, 0);
+        let position = if (*eci).eci_r20 & 0x8000 != 0 {
+            axis.radius(eci)
+                .wrapping_add((*eci).eci_r34 | 7)
+                .wrapping_add(1)
+        } else {
+            ((*eci).eci_r34 & 0xfff8).wrapping_sub(axis.radius(eci))
+        };
+        EprojStateMut(&mut game.g_ram).write(axis.position_base(), slot, position);
+        1
     }
-    let slot = usize::from(EprojState(&game.g_ram).index() >> 1);
-    EprojStateMut(&mut game.g_ram).write(axis.subposition_base(), slot, 0);
-    let position = if (*eci).eci_r20 & 0x8000 != 0 {
-        axis.radius(eci)
-            .wrapping_add((*eci).eci_r34 | 7)
-            .wrapping_add(1)
-    } else {
-        ((*eci).eci_r34 & 0xfff8).wrapping_sub(axis.radius(eci))
-    };
-    EprojStateMut(&mut game.g_ram).write(axis.position_base(), slot, position);
-    1
 }
 unsafe fn EprojColl_85C2(eci: *mut EprojCollInfo, a: u16, k: u16, game: &mut Game) -> u8 {
-    eproj_square_slope(eci, a, k, EprojCollisionAxis::Horizontal, game)
+    unsafe { eproj_square_slope(eci, a, k, EprojCollisionAxis::Horizontal, game) }
 }
 unsafe fn EprojColl_8676(eci: *mut EprojCollInfo, a: u16, k: u16, j: u16, game: &mut Game) -> u8 {
-    eproj_square_slope(eci, a, k, EprojCollisionAxis::Vertical, game)
+    unsafe { eproj_square_slope(eci, a, k, EprojCollisionAxis::Vertical, game) }
 }
 pub fn EprojColl_873D() -> u8 {
     0
 }
 unsafe fn EprojColl_874E(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
-    let k = EprojState(&game.g_ram).index();
-    let negative = (*eci).eci_r20 & 0x8000 != 0;
-    let block = word!(game.cur_block_index);
-    let column = SnesModulus(
-        word!(game.cur_block_index),
-        word!(game.room_width_in_blocks) as u8,
-    );
-    if game.enemy_projectile_x_pos(k) >> 4 != column {
-        return 0;
+    unsafe {
+        let k = EprojState(&game.g_ram).index();
+        let negative = (*eci).eci_r20 & 0x8000 != 0;
+        let block = word!(game.cur_block_index);
+        let column = SnesModulus(
+            word!(game.cur_block_index),
+            word!(game.room_width_in_blocks) as u8,
+        );
+        if game.enemy_projectile_x_pos(k) >> 4 != column {
+            return 0;
+        }
+        let edge_offset = if negative {
+            ((*eci).eci_r24.wrapping_sub((*eci).eci_r30) & 15) ^ 15
+        } else {
+            (*eci).eci_r30.wrapping_add((*eci).eci_r24).wrapping_sub(1) & 15
+        };
+        let row = u16::from(*ram_ptr!(game; 0x16402, block as isize) & 0x1f) * 16;
+        let bts = *ram_ptr!(game; 0x16402, block as isize);
+        if (bts & 0x80 != 0) != negative {
+            return 0;
+        }
+        let x = if bts & 0x40 != 0 {
+            game.enemy_projectile_x_pos(k) ^ 15
+        } else {
+            game.enemy_projectile_x_pos(k)
+        };
+        let index = row.wrapping_add(x & 15);
+        // Both original ROM reads remain separate and occur before the landing stores.
+        let height = *(rom_ptr!(game; 0x948b2b)).offset(index as isize) & 0x1f;
+        let adjustment = i16::from(height)
+            .wrapping_sub(edge_offset as i16)
+            .wrapping_sub(1);
+        let height = *(rom_ptr!(game; 0x948b2b)).offset(index as isize) & 0x1f;
+        if i32::from(height) - i32::from(edge_offset) != 1 && adjustment >= 0 {
+            return 0;
+        }
+        let position = if negative {
+            (*eci).eci_r24.wrapping_sub(adjustment as u16)
+        } else {
+            (*eci).eci_r24.wrapping_add(adjustment as u16)
+        };
+        EprojStateMut(&mut game.g_ram).write(0x1a93, usize::from(k >> 1), position);
+        EprojStateMut(&mut game.g_ram).write(
+            0x1a6f,
+            usize::from(k >> 1),
+            if negative { 0 } else { 0xffff },
+        );
+        1
     }
-    let edge_offset = if negative {
-        ((*eci).eci_r24.wrapping_sub((*eci).eci_r30) & 15) ^ 15
-    } else {
-        (*eci).eci_r30.wrapping_add((*eci).eci_r24).wrapping_sub(1) & 15
-    };
-    let row = u16::from(*ram_ptr!(game; 0x16402, block as isize) & 0x1f) * 16;
-    let bts = *ram_ptr!(game; 0x16402, block as isize);
-    if (bts & 0x80 != 0) != negative {
-        return 0;
-    }
-    let x = if bts & 0x40 != 0 {
-        game.enemy_projectile_x_pos(k) ^ 15
-    } else {
-        game.enemy_projectile_x_pos(k)
-    };
-    let index = row.wrapping_add(x & 15);
-    // Both original ROM reads remain separate and occur before the landing stores.
-    let height = *(rom_ptr!(game; 0x948b2b)).offset(index as isize) & 0x1f;
-    let adjustment = i16::from(height)
-        .wrapping_sub(edge_offset as i16)
-        .wrapping_sub(1);
-    let height = *(rom_ptr!(game; 0x948b2b)).offset(index as isize) & 0x1f;
-    if i32::from(height) - i32::from(edge_offset) != 1 && adjustment >= 0 {
-        return 0;
-    }
-    let position = if negative {
-        (*eci).eci_r24.wrapping_sub(adjustment as u16)
-    } else {
-        (*eci).eci_r24.wrapping_add(adjustment as u16)
-    };
-    EprojStateMut(&mut game.g_ram).write(0x1a93, usize::from(k >> 1), position);
-    EprojStateMut(&mut game.g_ram).write(
-        0x1a6f,
-        usize::from(k >> 1),
-        if negative { 0 } else { 0xffff },
-    );
-    1
 }
 unsafe fn react_to_enemy_projectile_block(
     eci: *mut EprojCollInfo,
@@ -582,15 +621,17 @@ unsafe fn react_to_enemy_projectile_block(
     slope: Func_EprojCollInfo_U8,
     game: &mut Game,
 ) -> u8 {
-    word!(game.cur_block_index = (k >> 1));
-    game.react_to_block(|block_type, game| match block_type {
-        0 | 2 | 3 | 4 | 6 | 7 | 14 => 0,
-        1 => slope(eci, game),
-        5 => EprojColl_8506(eci, game),
-        8 | 9 | 10 | 11 | 12 | 15 => 1,
-        13 => EprojColl_Unknown8536(eci, game),
-        _ => unreachable!(),
-    })
+    unsafe {
+        word!(game.cur_block_index = (k >> 1));
+        game.react_to_block(|block_type, game| match block_type {
+            0 | 2 | 3 | 4 | 6 | 7 | 14 => 0,
+            1 => slope(eci, game),
+            5 => EprojColl_8506(eci, game),
+            8 | 9 | 10 | 11 | 12 | 15 => 1,
+            13 => EprojColl_Unknown8536(eci, game),
+            _ => unreachable!(),
+        })
+    }
 }
 crate::forward_calls! { pub unsafe fn ( eci: *mut EprojCollInfo, k: u16, game: &mut Game, ) -> u8;
     EprojBlockCollisition_CheckHorizontal =>
@@ -599,110 +640,113 @@ crate::forward_calls! { pub unsafe fn ( eci: *mut EprojCollInfo, k: u16, game: &
         react_to_enemy_projectile_block(eci, k, EprojColl_85AD, game);
 }
 unsafe fn eproj_block_collision(k: u16, axis: EprojCollisionAxis, game: &mut Game) -> u8 {
-    let slot = usize::from(k >> 1);
-    let velocity_base = match axis {
-        EprojCollisionAxis::Horizontal => 0x1ab7,
-        EprojCollisionAxis::Vertical => 0x1adb,
-    };
-    let amount = i32::from(EprojState(&game.g_ram).slot_word(velocity_base, slot) as i16) << 8;
-    let y_radius = u16::from(EprojState(&game.g_ram).y_radius(slot));
-    let x_radius = u16::from(EprojState(&game.g_ram).x_radius(slot));
-    let (radius, perpendicular_radius) = match axis {
-        EprojCollisionAxis::Horizontal => (x_radius, y_radius),
-        EprojCollisionAxis::Vertical => (y_radius, x_radius),
-    };
-    let first_edge = axis
-        .perpendicular_position(k, game)
-        .wrapping_sub(perpendicular_radius)
-        & 0xfff0;
-    let span = (perpendicular_radius
-        .wrapping_add(axis.perpendicular_position(k, game))
-        .wrapping_sub(1)
-        .wrapping_sub(first_edge))
-        >> 4;
-    // The horizontal path reads room width and perpendicular position before movement.
-    let horizontal_product = match axis {
-        EprojCollisionAxis::Horizontal => Mult8x8(
-            (game.enemy_projectile_y_pos(k).wrapping_sub(y_radius) >> 4) as u8,
-            game.room_width_in_blocks() as u8,
-        ),
-        EprojCollisionAxis::Vertical => 0,
-    };
-    let position = ((amount as u32).wrapping_add(
-        (u32::from(axis.position(k, game)) << 16)
-            | u32::from(EprojState(&game.g_ram).slot_word(axis.subposition_base(), slot)),
-    ) >> 16) as u16;
-    let subposition = (amount
-        + i32::from(EprojState(&game.g_ram).slot_word(axis.subposition_base(), slot)))
-        as u16;
-    let edge = if amount < 0 {
-        position.wrapping_sub(radius)
-    } else {
-        radius.wrapping_add(position).wrapping_sub(1)
-    };
-    let mut collision = EprojCollInfo {
-        eci_r20: (amount >> 16) as u16,
-        eci_r24: position,
-        eci_r26: span,
-        eci_r28: x_radius,
-        eci_r30: y_radius,
-        eci_r32: span,
-        eci_r34: edge,
-    };
-    let mut cursor = match axis {
-        EprojCollisionAxis::Horizontal => {
-            i32::from((2 * (i32::from(horizontal_product) + i32::from(edge >> 4))) as u16)
-        }
-        EprojCollisionAxis::Vertical => {
-            let product = Mult8x8((edge >> 4) as u8, game.room_width_in_blocks() as u8);
-            let column = (game.enemy_projectile_x_pos(k).wrapping_sub(x_radius) >> 4) as i16;
-            2 * (i32::from(product) + i32::from(column))
-        }
-    };
-    loop {
-        let hit = match axis {
+    unsafe {
+        let slot = usize::from(k >> 1);
+        let velocity_base = match axis {
+            EprojCollisionAxis::Horizontal => 0x1ab7,
+            EprojCollisionAxis::Vertical => 0x1adb,
+        };
+        let amount = i32::from(EprojState(&game.g_ram).slot_word(velocity_base, slot) as i16) << 8;
+        let y_radius = u16::from(EprojState(&game.g_ram).y_radius(slot));
+        let x_radius = u16::from(EprojState(&game.g_ram).x_radius(slot));
+        let (radius, perpendicular_radius) = match axis {
+            EprojCollisionAxis::Horizontal => (x_radius, y_radius),
+            EprojCollisionAxis::Vertical => (y_radius, x_radius),
+        };
+        let first_edge = axis
+            .perpendicular_position(k, game)
+            .wrapping_sub(perpendicular_radius)
+            & 0xfff0;
+        let span = (perpendicular_radius
+            .wrapping_add(axis.perpendicular_position(k, game))
+            .wrapping_sub(1)
+            .wrapping_sub(first_edge))
+            >> 4;
+        // The horizontal path reads room width and perpendicular position before movement.
+        let horizontal_product = match axis {
+            EprojCollisionAxis::Horizontal => Mult8x8(
+                (game.enemy_projectile_y_pos(k).wrapping_sub(y_radius) >> 4) as u8,
+                game.room_width_in_blocks() as u8,
+            ),
+            EprojCollisionAxis::Vertical => 0,
+        };
+        let position = ((amount as u32).wrapping_add(
+            (u32::from(axis.position(k, game)) << 16)
+                | u32::from(EprojState(&game.g_ram).slot_word(axis.subposition_base(), slot)),
+        ) >> 16) as u16;
+        let subposition = (amount
+            + i32::from(EprojState(&game.g_ram).slot_word(axis.subposition_base(), slot)))
+            as u16;
+        let edge = if amount < 0 {
+            position.wrapping_sub(radius)
+        } else {
+            radius.wrapping_add(position).wrapping_sub(1)
+        };
+        let mut collision = EprojCollInfo {
+            eci_r20: (amount >> 16) as u16,
+            eci_r24: position,
+            eci_r26: span,
+            eci_r28: x_radius,
+            eci_r30: y_radius,
+            eci_r32: span,
+            eci_r34: edge,
+        };
+        let mut cursor = match axis {
             EprojCollisionAxis::Horizontal => {
-                EprojBlockCollisition_CheckHorizontal(&raw mut collision, cursor as u16, game)
+                i32::from((2 * (i32::from(horizontal_product) + i32::from(edge >> 4))) as u16)
             }
             EprojCollisionAxis::Vertical => {
-                EprojBlockCollisition_CheckVertical(&raw mut collision, cursor as u16, game)
+                let product = Mult8x8((edge >> 4) as u8, game.room_width_in_blocks() as u8);
+                let column = (game.enemy_projectile_x_pos(k).wrapping_sub(x_radius) >> 4) as i16;
+                2 * (i32::from(product) + i32::from(column))
             }
         };
-        if hit & 1 != 0 {
-            break;
+        loop {
+            let hit = match axis {
+                EprojCollisionAxis::Horizontal => {
+                    EprojBlockCollisition_CheckHorizontal(&raw mut collision, cursor as u16, game)
+                }
+                EprojCollisionAxis::Vertical => {
+                    EprojBlockCollisition_CheckVertical(&raw mut collision, cursor as u16, game)
+                }
+            };
+            if hit & 1 != 0 {
+                break;
+            }
+            if matches!(axis, EprojCollisionAxis::Horizontal) {
+                cursor = i32::from(
+                    (cursor as u16)
+                        .wrapping_add((i32::from(game.room_width_in_blocks()) * 2) as u16),
+                );
+            }
+            collision.eci_r26 = collision.eci_r26.wrapping_sub(1);
+            if collision.eci_r26 & 0x8000 != 0 {
+                EprojStateMut(&mut game.g_ram).write(axis.subposition_base(), slot, subposition);
+                EprojStateMut(&mut game.g_ram).write(axis.position_base(), slot, position);
+                return 0;
+            }
+            if matches!(axis, EprojCollisionAxis::Vertical) {
+                cursor += 2;
+            }
         }
-        if matches!(axis, EprojCollisionAxis::Horizontal) {
-            cursor = i32::from(
-                (cursor as u16).wrapping_add((i32::from(game.room_width_in_blocks()) * 2) as u16),
-            );
+        EprojStateMut(&mut game.g_ram).write(axis.subposition_base(), slot, 0);
+        if amount < 0 {
+            let corrected = axis
+                .radius(&raw const collision)
+                .wrapping_add(collision.eci_r34 | 15)
+                .wrapping_add(1);
+            if corrected <= axis.position(k, game) {
+                EprojStateMut(&mut game.g_ram).write(axis.position_base(), slot, corrected);
+            }
+        } else {
+            let corrected =
+                (collision.eci_r34 & 0xfff0).wrapping_sub(axis.radius(&raw const collision));
+            if corrected >= axis.position(k, game) {
+                EprojStateMut(&mut game.g_ram).write(axis.position_base(), slot, corrected);
+            }
         }
-        collision.eci_r26 = collision.eci_r26.wrapping_sub(1);
-        if collision.eci_r26 & 0x8000 != 0 {
-            EprojStateMut(&mut game.g_ram).write(axis.subposition_base(), slot, subposition);
-            EprojStateMut(&mut game.g_ram).write(axis.position_base(), slot, position);
-            return 0;
-        }
-        if matches!(axis, EprojCollisionAxis::Vertical) {
-            cursor += 2;
-        }
+        1
     }
-    EprojStateMut(&mut game.g_ram).write(axis.subposition_base(), slot, 0);
-    if amount < 0 {
-        let corrected = axis
-            .radius(&raw const collision)
-            .wrapping_add(collision.eci_r34 | 15)
-            .wrapping_add(1);
-        if corrected <= axis.position(k, game) {
-            EprojStateMut(&mut game.g_ram).write(axis.position_base(), slot, corrected);
-        }
-    } else {
-        let corrected =
-            (collision.eci_r34 & 0xfff0).wrapping_sub(axis.radius(&raw const collision));
-        if corrected >= axis.position(k, game) {
-            EprojStateMut(&mut game.g_ram).write(axis.position_base(), slot, corrected);
-        }
-    }
-    1
 }
 crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game) -> u8;
     EprojBlockCollisition_Horiz => eproj_block_collision(k, EprojCollisionAxis::Horizontal, game);
@@ -723,24 +767,26 @@ fn init_skree_particle(j: u16, x_offset: i16, x_velocity: i16, y_velocity: i16, 
 }
 
 pub unsafe fn EprojPowerBombCollision(k: u16, game: &mut Game) {
-    let r18: u16 = byte!(@pointer ram_ptr!(game, u16; 0xcea); 1) as u16;
-    if byte!(@pointer ram_ptr!(game, u16; 0xcea); 1) != 0 {
-        let r20: u16 = ((r18 as i32
-            + (byte!(@pointer ram_ptr!(game, u16; 0xcea); 1) as i32 & 1)
-            + (word!(game.power_bomb_explosion_radius) as i32 >> 9))
-            as u16
-            >> 1);
-        let v1: i32 = k as i32 >> 1;
-        if abs16(
-            (word!(game.power_bomb_explosion_x_pos) as i32 - word!(game.eproj_x_pos[v1]) as i32)
-                as u16,
-        ) < r18
-            && abs16(
-                (word!(game.power_bomb_explosion_y_pos) as i32 - word!(game.eproj_y_pos[v1]) as i32)
+    unsafe {
+        let r18: u16 = byte!(@pointer ram_ptr!(game, u16; 0xcea); 1) as u16;
+        if byte!(@pointer ram_ptr!(game, u16; 0xcea); 1) != 0 {
+            let r20: u16 = ((r18 as i32
+                + (byte!(@pointer ram_ptr!(game, u16; 0xcea); 1) as i32 & 1)
+                + (word!(game.power_bomb_explosion_radius) as i32 >> 9))
+                as u16
+                >> 1);
+            let v1: i32 = k as i32 >> 1;
+            if abs16(
+                (word!(game.power_bomb_explosion_x_pos) as i32 - word!(game.eproj_x_pos[v1]) as i32)
                     as u16,
-            ) < r20
-        {
-            word! { game, 0; eproj_id[v1], samus_x_speed_divisor }
+            ) < r18
+                && abs16(
+                    (word!(game.power_bomb_explosion_y_pos) as i32
+                        - word!(game.eproj_y_pos[v1]) as i32) as u16,
+                ) < r20
+            {
+                word! { game, 0; eproj_id[v1], samus_x_speed_divisor }
+            }
         }
     }
 }
@@ -757,53 +803,63 @@ static CrocomireSpikeWallPieces_Tab3: [i8; 36] = [
     1, 0, 1, 0,
 ];
 pub unsafe fn MoveEprojWithVelocity(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1;
-    let v2: u16 = word!(game.eproj_x_vel[v1]);
-    let carry: i32 = *ram_ptr!(game; 0x1a27, k as i32 as isize, 1) as i32 + (v2 as i32 & 0xff);
-    *ram_ptr!(game; 0x1a27, k as i32 as isize, 1) = carry as u8;
-    word!(
-        checked_i32,
-        game.eproj_x_pos[v1] += ((v2 >> 8) as i8 as i32 + (carry >> 8))
-    );
-    MoveEprojWithVelocityY(k, game)
+    unsafe {
+        let v1: i32 = k as i32 >> 1;
+        let v2: u16 = word!(game.eproj_x_vel[v1]);
+        let carry: i32 = *ram_ptr!(game; 0x1a27, k as i32 as isize, 1) as i32 + (v2 as i32 & 0xff);
+        *ram_ptr!(game; 0x1a27, k as i32 as isize, 1) = carry as u8;
+        word!(
+            checked_i32,
+            game.eproj_x_pos[v1] += ((v2 >> 8) as i8 as i32 + (carry >> 8))
+        );
+        MoveEprojWithVelocityY(k, game)
+    }
 }
 pub unsafe fn MoveEprojWithVelocityY(k: u16, game: &mut Game) -> u16 {
-    let v1 = usize::from(k >> 1);
-    let v2: u16 = word!(game.eproj_y_vel[v1]);
-    let (fraction, carry) = (*ram_ptr!(game; 0x1a6f, k as isize, 1)).overflowing_add(v2 as u8);
-    *ram_ptr!(game; 0x1a6f, k as isize, 1) = fraction;
-    let result = game
-        .enemy_projectile_y_pos(k)
-        .wrapping_add_signed(((v2 as i16) >> 8) + carry as i16);
-    word!(game.eproj_y_pos[v1] = result);
-    result
+    unsafe {
+        let v1 = usize::from(k >> 1);
+        let v2: u16 = word!(game.eproj_y_vel[v1]);
+        let (fraction, carry) = (*ram_ptr!(game; 0x1a6f, k as isize, 1)).overflowing_add(v2 as u8);
+        *ram_ptr!(game; 0x1a6f, k as isize, 1) = fraction;
+        let result = game
+            .enemy_projectile_y_pos(k)
+            .wrapping_add_signed(((v2 as i16) >> 8) + carry as i16);
+        word!(game.eproj_y_pos[v1] = result);
+        result
+    }
 }
 pub unsafe fn MoveEprojWithVelocityX(k: u16, game: &mut Game) -> u16 {
-    let v1 = usize::from(k >> 1);
-    let v2: u16 = word!(game.eproj_x_vel[v1]);
-    let (fraction, carry) = (*ram_ptr!(game; 0x1a27, k as isize, 1)).overflowing_add(v2 as u8);
-    *ram_ptr!(game; 0x1a27, k as isize, 1) = fraction;
-    let result = game
-        .enemy_projectile_x_pos(k)
-        .wrapping_add_signed(((v2 as i16) >> 8) + carry as i16);
-    word!(game.eproj_x_pos[v1] = result);
-    result
+    unsafe {
+        let v1 = usize::from(k >> 1);
+        let v2: u16 = word!(game.eproj_x_vel[v1]);
+        let (fraction, carry) = (*ram_ptr!(game; 0x1a27, k as isize, 1)).overflowing_add(v2 as u8);
+        *ram_ptr!(game; 0x1a27, k as isize, 1) = fraction;
+        let result = game
+            .enemy_projectile_x_pos(k)
+            .wrapping_add_signed(((v2 as i16) >> 8) + carry as i16);
+        word!(game.eproj_x_pos[v1] = result);
+        result
+    }
 }
 pub unsafe fn SetAreaDependentEprojPropertiesEx(k: u16, j: u16, game: &mut Game) {
-    let p = RomPtr_86(k, game) as *mut u16;
-    let mut v2: u16 = if game.area_index() == 2 {
-        *p.offset(1)
-    } else if game.area_index() == 5 {
-        *p.offset(2)
-    } else {
-        *p
-    };
-    EprojStateMut(&mut game.g_ram).set_properties(usize::from(j >> 1), v2);
+    unsafe {
+        let p = RomPtr_86(k, game) as *mut u16;
+        let mut v2: u16 = if game.area_index() == 2 {
+            *p.offset(1)
+        } else if game.area_index() == 5 {
+            *p.offset(2)
+        } else {
+            *p
+        };
+        EprojStateMut(&mut game.g_ram).set_properties(usize::from(j >> 1), v2);
+    }
 }
 static kEprojInit_9634_Xvel: [i16; 4] = [-0x200i16, -0x1f0i16, -0x1bci16, -0x16ai16];
 static kEprojInit_9634_Yvel: [i16; 4] = [0, 0x88, 0xfc, 0x16a];
 pub unsafe fn SetAreaDependentEprojProperties(j: u16, game: &mut Game) {
-    SetAreaDependentEprojPropertiesEx(addr_kRidleysFireball_Tab0 as u16, j, game);
+    unsafe {
+        SetAreaDependentEprojPropertiesEx(addr_kRidleysFireball_Tab0 as u16, j, game);
+    }
 }
 fn SetEprojSpawnPoint(k: u16, game: &mut Game) {
     let x = game.enemy_projectile_x_pos(k);
@@ -811,23 +867,27 @@ fn SetEprojSpawnPoint(k: u16, game: &mut Game) {
     game.eproj_spawn_pt = Point16U { x, y };
 }
 unsafe fn EprojInit_Common(j: u16, k: u16, a: u16, game: &mut Game) {
-    let slot = usize::from(j >> 1);
-    EprojStateMut(&mut game.g_ram).write(0x1b23, slot, a);
-    let x = game.enemy_projectile_x_pos(k);
-    EprojStateMut(&mut game.g_ram).write(0x1a4b, slot, x);
-    let y = game.enemy_projectile_y_pos(k);
-    EprojStateMut(&mut game.g_ram).write(0x1a93, slot, y);
-    let e = EprojState(&game.g_ram).slot_word(0x1aff, usize::from(k >> 1));
-    EprojStateMut(&mut game.g_ram).write(0x1aff, slot, e);
-    EprojStateMut(&mut game.g_ram).write(0x19bb, slot, 2560);
-    SetAreaDependentEprojProperties(j, game);
+    unsafe {
+        let slot = usize::from(j >> 1);
+        EprojStateMut(&mut game.g_ram).write(0x1b23, slot, a);
+        let x = game.enemy_projectile_x_pos(k);
+        EprojStateMut(&mut game.g_ram).write(0x1a4b, slot, x);
+        let y = game.enemy_projectile_y_pos(k);
+        EprojStateMut(&mut game.g_ram).write(0x1a93, slot, y);
+        let e = EprojState(&game.g_ram).slot_word(0x1aff, usize::from(k >> 1));
+        EprojStateMut(&mut game.g_ram).write(0x1aff, slot, e);
+        EprojStateMut(&mut game.g_ram).write(0x19bb, slot, 2560);
+        SetAreaDependentEprojProperties(j, game);
+    }
 }
 unsafe fn EprojInit_FireballChild(j: u16, x: u16, y: u16, handler: u16, game: &mut Game) {
-    let parent = EprojState(&game.g_ram).init_param_1();
-    let slot = usize::from(j >> 1);
-    EprojStateMut(&mut game.g_ram).write(0x1ab7, slot, x);
-    EprojStateMut(&mut game.g_ram).write(0x1adb, slot, y);
-    EprojInit_Common(j, parent, handler, game);
+    unsafe {
+        let parent = EprojState(&game.g_ram).init_param_1();
+        let slot = usize::from(j >> 1);
+        EprojStateMut(&mut game.g_ram).write(0x1ab7, slot, x);
+        EprojStateMut(&mut game.g_ram).write(0x1adb, slot, y);
+        EprojInit_Common(j, parent, handler, game);
+    }
 }
 pub use self::EprojPreInstr_96C0 as EprojPreInstr_96CE;
 static byte_8698B4: [u8; 16] = [
@@ -876,36 +936,43 @@ macro_rules! move_phantoon_orbiting_fireball {
 }
 
 pub unsafe fn Eproj_PhantomFireballs_Func1(j: u16, a: u16) -> Point16U {
-    let r24: u16 = a;
-    let r26: u16 = j;
-    let mut v2: u16 = if j as i32 - 128i32 & 0x8000 != 0 {
-        scale_sine_word((2 * j as i32) as u16, r24)
-    } else {
-        -(scale_sine_word((2i32 * (j as i32 + 0x80i32) as u8 as i32) as u16, r24) as i32) as u16
-    };
-    let r20: u16 = v2;
-    let mut v3: i16 = (r26 as i32 - 64i32) as u8 as i16;
-    let mut v4: u16 = if v3 as i32 - 128i32 & 0x8000 != 0 {
-        scale_sine_word((2 * v3 as i32) as u16, r24)
-    } else {
-        -(scale_sine_word((2i32 * (v3 as i32 + 0x80i32) as u8 as i32) as u16, r24) as i32) as u16
-    };
-    let r22: u16 = v4;
-    Point16U { x: r20, y: r22 }
+    unsafe {
+        let r24: u16 = a;
+        let r26: u16 = j;
+        let mut v2: u16 = if j as i32 - 128i32 & 0x8000 != 0 {
+            scale_sine_word((2 * j as i32) as u16, r24)
+        } else {
+            -(scale_sine_word((2i32 * (j as i32 + 0x80i32) as u8 as i32) as u16, r24) as i32) as u16
+        };
+        let r20: u16 = v2;
+        let mut v3: i16 = (r26 as i32 - 64i32) as u8 as i16;
+        let mut v4: u16 = if v3 as i32 - 128i32 & 0x8000 != 0 {
+            scale_sine_word((2 * v3 as i32) as u16, r24)
+        } else {
+            -(scale_sine_word((2i32 * (v3 as i32 + 0x80i32) as u8 as i32) as u16, r24) as i32)
+                as u16
+        };
+        let r22: u16 = v4;
+        Point16U { x: r20, y: r22 }
+    }
 }
 static kEprojInit_MiniKraidSpikes_Tab0: [i16; 3] = [-2i16, 12, 24];
 unsafe fn EprojInit_MiniKraidSpikes(j: u16, a: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1;
-    word!(game.eproj_x_vel[v2] = a);
-    let r18: u16 =
-        kEprojInit_MiniKraidSpikes_Tab0[((*gExtraEnemyRam7800(game.cur_enemy_index() as i32, game))
-            .kraid
-            .kraid_healths_8ths[0i32 as usize]
+    unsafe {
+        let v2: i32 = j as i32 >> 1;
+        word!(game.eproj_x_vel[v2] = a);
+        let r18: u16 = kEprojInit_MiniKraidSpikes_Tab0[((*gExtraEnemyRam7800(
+            game.cur_enemy_index() as i32,
+            game,
+        ))
+        .kraid
+        .kraid_healths_8ths[0i32 as usize]
             >> 1) as usize] as u16;
-    let enemy_index = game.cur_enemy_index();
-    word!(game.eproj_x_pos[v2] = game.enemy_state(enemy_index).x_pos());
-    word!(game.eproj_y_pos[v2] = (r18).wrapping_add(game.enemy_state(enemy_index).y_pos()));
-    word! { game, 0; eproj_y_subpos[v2], eproj_x_subpos[v2], eproj_y_vel[v2] }
+        let enemy_index = game.cur_enemy_index();
+        word!(game.eproj_x_pos[v2] = game.enemy_state(enemy_index).x_pos());
+        word!(game.eproj_y_pos[v2] = (r18).wrapping_add(game.enemy_state(enemy_index).y_pos()));
+        word! { game, 0; eproj_y_subpos[v2], eproj_x_subpos[v2], eproj_y_vel[v2] }
+    }
 }
 static word_86A2D6: [i16; 6] = [64, 72, 80, -64i16, -72i16, -80i16];
 pub fn sub_86A301(j: u16, game: &mut Game) {
@@ -936,23 +1003,28 @@ static kEprojInit_BombTorizoLowHealthExplode_X: [i16; 6] = [0, 12, -12i16, 0, 16
 static kEprojInit_BombTorizoLowHealthExplode_Y: [i16; 6] =
     [-8i16, -8i16, -8i16, -20i16, -20i16, -20i16];
 unsafe fn Eproj_InitXYVelRandom(j: u16, k: u16, pt: Point16U, game: &mut Game) {
-    let v2 = RomPtr_86(k, game) as *const u16;
-    let v3: i32 = j as i32 >> 1;
-    word! { game;
-        eproj_instr_list_ptr[v3] = *v2;
-        eproj_x_pos[v3] = (*v2.offset(1)).wrapping_add(pt.x);
-        eproj_x_vel[v3] = (*v2.offset(2) as i32 + NextRandom(game) as u8 as i32 - 128i32) as u16;
-        eproj_y_pos[v3] = (*v2.offset(3)).wrapping_add(pt.y);
-        eproj_y_vel[v3] = (*v2.offset(4) as i32 + NextRandom(game) as u8 as i32 - 128i32) as u16;
+    unsafe {
+        let v2 = RomPtr_86(k, game) as *const u16;
+        let v3: i32 = j as i32 >> 1;
+        word! { game;
+            eproj_instr_list_ptr[v3] = *v2;
+            eproj_x_pos[v3] = (*v2.offset(1)).wrapping_add(pt.x);
+            eproj_x_vel[v3] = (*v2.offset(2) as i32 + NextRandom(game) as u8 as i32 - 128i32) as u16;
+            eproj_y_pos[v3] = (*v2.offset(3)).wrapping_add(pt.y);
+            eproj_y_vel[v3] = (*v2.offset(4) as i32 + NextRandom(game) as u8 as i32 - 128i32) as u16;
+        }
     }
 }
 static word_86B205: [i16; 2] = [-0x1ei16, 0x1e];
 unsafe fn sub_86B279(k: u16, a: u16, game: &mut Game) {
-    let v3: i32 = k as i32 >> 1;
-    word!(
-        game.eproj_x_vel[v3] = (4 * kSinCosTable8bit_Sext[(a as i32 + 64) as usize] as i32) as u16
-    );
-    word!(game.eproj_y_vel[v3] = (4 * kSinCosTable8bit_Sext[a as usize] as i32) as u16);
+    unsafe {
+        let v3: i32 = k as i32 >> 1;
+        word!(
+            game.eproj_x_vel[v3] =
+                (4 * kSinCosTable8bit_Sext[(a as i32 + 64) as usize] as i32) as u16
+        );
+        word!(game.eproj_y_vel[v3] = (4 * kSinCosTable8bit_Sext[a as usize] as i32) as u16);
+    }
 }
 static word_86B65B: [i16; 20] = [
     -16i16, 16, -96i16, -64i16, -128i16, -32i16, -96i16, 64, -128i16, 32, 16, 16, 96, -64i16, 112,
@@ -973,13 +1045,17 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1;
-    (((word!(game.eproj_x_pos[v1]) as i32 - word!(game.layer1_x_pos) as i32) as i16) < 0
-        || ((word!(game.layer1_x_pos) as i32 + 256 - word!(game.eproj_x_pos[v1]) as i32) as i16)
-            < 0
-        || ((word!(game.eproj_y_pos[v1]) as i32 - word!(game.layer1_y_pos) as i32) as i16) < 0
-        || ((word!(game.layer1_y_pos) as i32 + 256 - word!(game.eproj_y_pos[v1]) as i32) as i16)
-            < 0) as u16
+    unsafe {
+        let v1: i32 = k as i32 >> 1;
+        (((word!(game.eproj_x_pos[v1]) as i32 - word!(game.layer1_x_pos) as i32) as i16) < 0
+            || ((word!(game.layer1_x_pos) as i32 + 256 - word!(game.eproj_x_pos[v1]) as i32)
+                as i16)
+                < 0
+            || ((word!(game.eproj_y_pos[v1]) as i32 - word!(game.layer1_y_pos) as i32) as i16) < 0
+            || ((word!(game.layer1_y_pos) as i32 + 256 - word!(game.eproj_y_pos[v1]) as i32)
+                as i16)
+                < 0) as u16
+    }
 }
 static kEprojInit_ShaktoolAttackMiddleBackCircle_X: [i16; 8] =
     [0, 12, 16, 12, 0, -12i16, -16i16, -12i16];
@@ -999,102 +1075,117 @@ static kEproj_MotherBrainRoomTurretBullets_Xvel: [i16; 8] =
 static kEproj_MotherBrainRoomTurretBullets_Yvel: [i16; 8] =
     [0, 498, 704, 498, 0, -498i16, -704i16, -498i16];
 pub unsafe fn Eproj_MotherBrainRoomTurretBullets_Func2(v0: u16, game: &mut Game) {
-    let r20: u8 = (*ram_ptr!(game; 0x1a6f, v0 as i32 as isize, 1) as i32
-        + byte!(@pointer ram_ptr!(game, u16; 0x1a6f); v0 as i32 as isize) as i32
-        & 7) as u8;
-    let r18: u16 = word!(game.eproj_x_subpos[(v0 >> 1)]);
-    if *RomPtr_86(r18, game).offset((r20 as i32 & 7) as isize) != 0 {
-        byte!(@pointer ram_ptr!(game, u16; 0x1a6f); v0 as i32 as isize) = r20;
-    } else {
-        let v1: i8 = -(*ram_ptr!(game; 0x1a6f, v0 as i32 as isize, 1) as i32) as i8;
-        *ram_ptr!(game; 0x1a6f, v0 as i32 as isize, 1) = v1 as u8;
-        crate::update_place! { reference fresh94 = *ram_ptr!(game; 0x1a6f, v0 as i32 as isize) => (*fresh94 as i32 + v1 as i32) as u8; }
-    };
+    unsafe {
+        let r20: u8 = (*ram_ptr!(game; 0x1a6f, v0 as i32 as isize, 1) as i32
+            + byte!(@pointer ram_ptr!(game, u16; 0x1a6f); v0 as i32 as isize) as i32
+            & 7) as u8;
+        let r18: u16 = word!(game.eproj_x_subpos[(v0 >> 1)]);
+        if *RomPtr_86(r18, game).offset((r20 as i32 & 7) as isize) != 0 {
+            byte!(@pointer ram_ptr!(game, u16; 0x1a6f); v0 as i32 as isize) = r20;
+        } else {
+            let v1: i8 = -(*ram_ptr!(game; 0x1a6f, v0 as i32 as isize, 1) as i32) as i8;
+            *ram_ptr!(game; 0x1a6f, v0 as i32 as isize, 1) = v1 as u8;
+            crate::update_place! { reference fresh94 = *ram_ptr!(game; 0x1a6f, v0 as i32 as isize) => (*fresh94 as i32 + v1 as i32) as u8; }
+        };
+    }
 }
 pub unsafe fn Eproj_SetXvelRandom(v0: u16, game: &mut Game) {
-    let mut Random: u16 = NextRandom(game) as u8 as u16;
-    if Random as u8 as i32 - 32i32 & 0x8000 != 0 {
-        Random = 32;
+    unsafe {
+        let mut Random: u16 = NextRandom(game) as u8 as u16;
+        if Random as u8 as i32 - 32i32 & 0x8000 != 0 {
+            Random = 32;
+        }
+        word!(game.eproj_x_vel[(v0 >> 1)] = Random);
     }
-    word!(game.eproj_x_vel[(v0 >> 1)] = Random);
 }
 pub unsafe fn Eproj_SetYvelRandom(v0: u16, game: &mut Game) {
-    let mut Random: u16 = NextRandom(game) as u8 as u16;
-    if Random as u8 as i32 - 128i32 & 0x8000 != 0 {
-        Random = 128;
+    unsafe {
+        let mut Random: u16 = NextRandom(game) as u8 as u16;
+        if Random as u8 as i32 - 128i32 & 0x8000 != 0 {
+            Random = 128;
+        }
+        word!(game.eproj_y_vel[(v0 >> 1)] = Random);
     }
-    word!(game.eproj_y_vel[(v0 >> 1)] = Random);
 }
 pub unsafe fn Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(
     k: u16,
     game: &mut Game,
 ) -> u8 {
-    let v1: i32 = k as i32 >> 1;
-    let mut v2: i16 = word!(game.eproj_y_pos[v1]) as i16;
-    let result: u8 = 1;
-    if v2 >= 0 {
-        let mut v3: i16 = (v2 as i32 + 16 - word!(game.layer1_y_pos) as i32) as i16;
-        if v3 >= 0 && v3 as i32 - 256i32 & 0x8000 != 0 {
-            let mut v4: i16 = word!(game.eproj_x_pos[v1]) as i16;
-            if v4 >= 0 {
-                let mut v5: i16 = (v4 as i32 + 4 - word!(game.layer1_x_pos) as i32) as i16;
-                if v5 >= 0 && v5 as i32 - 264i32 & 0x8000 != 0 {
-                    return 0;
+    unsafe {
+        let v1: i32 = k as i32 >> 1;
+        let mut v2: i16 = word!(game.eproj_y_pos[v1]) as i16;
+        let result: u8 = 1;
+        if v2 >= 0 {
+            let mut v3: i16 = (v2 as i32 + 16 - word!(game.layer1_y_pos) as i32) as i16;
+            if v3 >= 0 && v3 as i32 - 256i32 & 0x8000 != 0 {
+                let mut v4: i16 = word!(game.eproj_x_pos[v1]) as i16;
+                if v4 >= 0 {
+                    let mut v5: i16 = (v4 as i32 + 4 - word!(game.layer1_x_pos) as i32) as i16;
+                    if v5 >= 0 && v5 as i32 - 264i32 & 0x8000 != 0 {
+                        return 0;
+                    }
                 }
             }
         }
+        result
     }
-    result
 }
 static kMotherBrainsBomb_Yaccel: [i16; 10] =
     [7, 0x10, 0x20, 0x40, 0x70, 0xb0, 0xf0, 0x130, 0x170, 0];
 unsafe fn Eproj_CheckForBombCollisionWithRect(rect: Rect16U, game: &mut Game) -> u8 {
-    if word!(game.bomb_counter) == 0 {
-        return 0;
-    }
-    for v1 in (10i32..20).step_by(2) {
-        let v2: i32 = v1 >> 1;
-        if (word!(game.projectile_type[v2]) & 0xf00) == 1280
-            && word!(game.projectile_variables[v2]) == 0
-        {
-            let x: u16 = abs16((word!(game.projectile_x_pos[v2]) as i32 - rect.x as i32) as u16);
-            if x < word!(game.projectile_x_radius[v2])
-                || ((x as i32 - word!(game.projectile_x_radius[v2]) as i32) as u16) < rect.w
+    unsafe {
+        if word!(game.bomb_counter) == 0 {
+            return 0;
+        }
+        for v1 in (10i32..20).step_by(2) {
+            let v2: i32 = v1 >> 1;
+            if (word!(game.projectile_type[v2]) & 0xf00) == 1280
+                && word!(game.projectile_variables[v2]) == 0
             {
-                let y: u16 =
-                    abs16((word!(game.projectile_y_pos[v2]) as i32 - rect.y as i32) as u16);
-                if y < word!(game.projectile_y_radius[v2])
-                    || ((y as i32 - word!(game.projectile_y_radius[v2]) as i32) as u16) < rect.h
+                let x: u16 =
+                    abs16((word!(game.projectile_x_pos[v2]) as i32 - rect.x as i32) as u16);
+                if x < word!(game.projectile_x_radius[v2])
+                    || ((x as i32 - word!(game.projectile_x_radius[v2]) as i32) as u16) < rect.w
                 {
-                    return 1;
+                    let y: u16 =
+                        abs16((word!(game.projectile_y_pos[v2]) as i32 - rect.y as i32) as u16);
+                    if y < word!(game.projectile_y_radius[v2])
+                        || ((y as i32 - word!(game.projectile_y_radius[v2]) as i32) as u16) < rect.h
+                    {
+                        return 1;
+                    }
                 }
             }
         }
+        0
     }
-    0
 }
 unsafe fn Eproj_CheckForEnemyCollisionWithRect(k: u16, rect: Rect16U, game: &mut Game) -> u8 {
-    let v1 = gEnemyData(k as i32, game);
-    ((abs16(((*v1).x_pos as i32 - rect.x as i32) as u16) as i32 - (*v1).x_width as i32)
-        < rect.w as i32
-        && (abs16(((*v1).y_pos as i32 - rect.y as i32) as u16) as i32 - (*v1).y_height as i32)
-            < rect.h as i32) as u8
+    unsafe {
+        let v1 = gEnemyData(k as i32, game);
+        ((abs16(((*v1).x_pos as i32 - rect.x as i32) as u16) as i32 - (*v1).x_width as i32)
+            < rect.w as i32
+            && (abs16(((*v1).y_pos as i32 - rect.y as i32) as u16) as i32 - (*v1).y_height as i32)
+                < rect.h as i32) as u8
+    }
 }
 unsafe fn Eproj_CheckForCollisionWithSamus(v0: u16, game: &mut Game) -> u8 {
-    let rect: Rect16U = Eproj_GetCollDetectRect(v0, game);
-    let v1: u16 = abs16((word!(game.samus_x_pos) as i32 - rect.x as i32) as u16);
-    let mut v2: bool = v1 < word!(game.samus_x_radius);
-    let v3: u16 = (v1 as i32 - word!(game.samus_x_radius) as i32) as u16;
-    let result: u8 = 0;
-    if v2 || v3 < rect.w {
-        let v4: u16 = abs16((word!(game.samus_y_pos) as i32 - rect.y as i32) as u16);
-        v2 = v4 < word!(game.samus_y_radius);
-        let v5: u16 = (v4 as i32 - word!(game.samus_y_radius) as i32) as u16;
-        if v2 || v5 < rect.h {
-            return 1;
+    unsafe {
+        let rect: Rect16U = Eproj_GetCollDetectRect(v0, game);
+        let v1: u16 = abs16((word!(game.samus_x_pos) as i32 - rect.x as i32) as u16);
+        let mut v2: bool = v1 < word!(game.samus_x_radius);
+        let v3: u16 = (v1 as i32 - word!(game.samus_x_radius) as i32) as u16;
+        let result: u8 = 0;
+        if v2 || v3 < rect.w {
+            let v4: u16 = abs16((word!(game.samus_y_pos) as i32 - rect.y as i32) as u16);
+            v2 = v4 < word!(game.samus_y_radius);
+            let v5: u16 = (v4 as i32 - word!(game.samus_y_radius) as i32) as u16;
+            if v2 || v5 < rect.h {
+                return 1;
+            }
         }
+        result
     }
-    result
 }
 crate::forward_calls! { pub unsafe fn (a: u16, r18: u16) -> u16;
     Math_MultBySin => Math_MultBySinCos(a, r18);
@@ -1110,120 +1201,134 @@ pub unsafe fn Math_MultBySinCos(r38: u16, a: u16) -> u16 {
     }) as u16)
 }
 pub unsafe fn CheckForCollisionWithShitroid_DoubleRet(v0: u16, game: &mut Game) -> u8 {
-    if (*(ram_ptr!(game, ExtraEnemyRam7800; 0x7800)).offset(1))
-        .kraid
-        .kraid_healths_8ths[4i32 as usize]
-        == 0
-    {
-        return 0;
-    }
-    if (*gEnemyData(
-        (*(ram_ptr!(game, ExtraEnemyRam7800; 0x7800)).offset(1))
+    unsafe {
+        if (*(ram_ptr!(game, ExtraEnemyRam7800; 0x7800)).offset(1))
             .kraid
-            .kraid_healths_8ths[4i32 as usize] as i32,
-        game,
-    ))
-    .health
-        != 0
-    {
-        let rect: Rect16U = Eproj_GetCollDetectRect(v0, game);
-        return Eproj_CheckForEnemyCollisionWithRect(
+            .kraid_healths_8ths[4i32 as usize]
+            == 0
+        {
+            return 0;
+        }
+        if (*gEnemyData(
             (*(ram_ptr!(game, ExtraEnemyRam7800; 0x7800)).offset(1))
                 .kraid
-                .kraid_healths_8ths[4i32 as usize],
-            rect,
+                .kraid_healths_8ths[4i32 as usize] as i32,
             game,
-        );
+        ))
+        .health
+            != 0
+        {
+            let rect: Rect16U = Eproj_GetCollDetectRect(v0, game);
+            return Eproj_CheckForEnemyCollisionWithRect(
+                (*(ram_ptr!(game, ExtraEnemyRam7800; 0x7800)).offset(1))
+                    .kraid
+                    .kraid_healths_8ths[4i32 as usize],
+                rect,
+                game,
+            );
+        }
+        word!(game.eproj_id[(v0 >> 1)] = 0);
+        0xff
     }
-    word!(game.eproj_id[(v0 >> 1)] = 0);
-    0xff
 }
 pub unsafe fn CheckForBlueRingCollisionWithRoom(k: u16, game: &mut Game) -> u8 {
-    let v1: i32 = k as i32 >> 1;
-    let result: u8 = 1;
-    if word!(game.eproj_y_pos[v1]) as i32 - 32i32 & 0x8000 == 0
-        && word!(game.eproj_y_pos[v1]) < 0xd8
-    {
-        let mut v2: i16 = word!(game.eproj_x_pos[v1]) as i16;
-        if v2 >= 0 {
-            let mut v3: i16 = (v2 as i32 - word!(game.layer1_x_pos) as i32) as i16;
-            if v3 >= 0 && v3 as i32 - 248i32 & 0x8000 != 0 {
-                return 0;
+    unsafe {
+        let v1: i32 = k as i32 >> 1;
+        let result: u8 = 1;
+        if word!(game.eproj_y_pos[v1]) as i32 - 32i32 & 0x8000 == 0
+            && word!(game.eproj_y_pos[v1]) < 0xd8
+        {
+            let mut v2: i16 = word!(game.eproj_x_pos[v1]) as i16;
+            if v2 >= 0 {
+                let mut v3: i16 = (v2 as i32 - word!(game.layer1_x_pos) as i32) as i16;
+                if v3 >= 0 && v3 as i32 - 248i32 & 0x8000 != 0 {
+                    return 0;
+                }
             }
         }
+        result
     }
-    result
 }
 unsafe fn Eproj_GetCollDetectRect(k: u16, game: &mut Game) -> Rect16U {
-    let v1: i32 = k as i32 >> 1;
-    let rect: Rect16U = Rect16U {
-        x: word!(game.eproj_x_pos[v1]),
-        y: word!(game.eproj_y_pos[v1]),
-        w: byte!(@pointer (ram_ptr!(game, u16; 0x1bb3)).offset(v1 as isize); 0) as u16,
-        h: byte!(@pointer (ram_ptr!(game, u16; 0x1bb3)).offset(v1 as isize); 1) as u16,
-    };
-    rect
+    unsafe {
+        let v1: i32 = k as i32 >> 1;
+        let rect: Rect16U = Rect16U {
+            x: word!(game.eproj_x_pos[v1]),
+            y: word!(game.eproj_y_pos[v1]),
+            w: byte!(@pointer (ram_ptr!(game, u16; 0x1bb3)).offset(v1 as isize); 0) as u16,
+            h: byte!(@pointer (ram_ptr!(game, u16; 0x1bb3)).offset(v1 as isize); 1) as u16,
+        };
+        rect
+    }
 }
 pub unsafe fn Eproj_Earthqhake5(k: u16, game: &mut Game) {
-    word! {game; earthquake_timer = 10; earthquake_type = 5; }
-    BlueRingContactExplosion(k, game);
+    unsafe {
+        word! {game; earthquake_timer = 10; earthquake_type = 5; }
+        BlueRingContactExplosion(k, game);
+    }
 }
 pub use self::sub_869DA5 as sub_86C42E;
 pub unsafe fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(k: u16, game: &mut Game) -> u8 {
-    let v1: i32 = k as i32 >> 1;
-    let rect: Rect16U = Rect16U {
-        x: word!(game.eproj_x_pos[v1]),
-        y: word!(game.eproj_y_pos[v1]),
-        w: byte!(@pointer (ram_ptr!(game, u16; 0x1bb3)).offset(v1 as isize); 0) as u16,
-        h: byte!(@pointer (ram_ptr!(game, u16; 0x1bb3)).offset(v1 as isize); 1) as u16,
-    };
-    if Eproj_CheckForBombCollisionWithRect(rect, game) == 0 {
-        return 0;
+    unsafe {
+        let v1: i32 = k as i32 >> 1;
+        let rect: Rect16U = Rect16U {
+            x: word!(game.eproj_x_pos[v1]),
+            y: word!(game.eproj_y_pos[v1]),
+            w: byte!(@pointer (ram_ptr!(game, u16; 0x1bb3)).offset(v1 as isize); 0) as u16,
+            h: byte!(@pointer (ram_ptr!(game, u16; 0x1bb3)).offset(v1 as isize); 1) as u16,
+        };
+        if Eproj_CheckForBombCollisionWithRect(rect, game) == 0 {
+            return 0;
+        }
+        let fresh2 = &raw mut (*(ram_ptr!(game, ExtraEnemyRam7800; 0x7800)).offset(1))
+            .kraid
+            .kraid_mouth_flags;
+        fresh2.write_unaligned(fresh2.read_unaligned().wrapping_sub(1));
+        word! { game, 0; eproj_x_vel[v1], eproj_y_vel[v1], eproj_id[v1] }
+        game.eproj_spawn_pt = Point16U {
+            x: word!(game.eproj_x_pos[v1]),
+            y: word!(game.eproj_y_pos[v1]),
+        };
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
+        game.eproj_spawn_pt = Point16U {
+            x: word!(game.eproj_x_pos[v1]),
+            y: word!(game.eproj_y_pos[v1]),
+        };
+        crate::game::enemy_drops::spawn(addr_kEnemyDef_EC3F as u16, k, 0, game);
+        1
     }
-    let fresh2 = &raw mut (*(ram_ptr!(game, ExtraEnemyRam7800; 0x7800)).offset(1))
-        .kraid
-        .kraid_mouth_flags;
-    fresh2.write_unaligned(fresh2.read_unaligned().wrapping_sub(1));
-    word! { game, 0; eproj_x_vel[v1], eproj_y_vel[v1], eproj_id[v1] }
-    game.eproj_spawn_pt = Point16U {
-        x: word!(game.eproj_x_pos[v1]),
-        y: word!(game.eproj_y_pos[v1]),
-    };
-    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
-    game.eproj_spawn_pt = Point16U {
-        x: word!(game.eproj_x_pos[v1]),
-        y: word!(game.eproj_y_pos[v1]),
-    };
-    crate::game::enemy_drops::spawn(addr_kEnemyDef_EC3F as u16, k, 0, game);
-    1
 }
 pub unsafe fn MoveMotherBrainBomb(k: u16, a: u16, game: &mut Game) -> u8 {
-    let v2: i32 = k as i32 >> 1;
-    word!(checked_i32, game.eproj_y_vel[v2] += a as i32);
-    MoveEprojWithVelocity(k, game);
-    if word!(game.eproj_x_pos[v2]) as i32 - 240i32 & 0x8000 == 0 {
-        word!(game.eproj_x_vel[v2] = -(word!(game.eproj_x_vel[v2]) as i32) as u16);
+    unsafe {
+        let v2: i32 = k as i32 >> 1;
+        word!(checked_i32, game.eproj_y_vel[v2] += a as i32);
+        MoveEprojWithVelocity(k, game);
+        if word!(game.eproj_x_pos[v2]) as i32 - 240i32 & 0x8000 == 0 {
+            word!(game.eproj_x_vel[v2] = -(word!(game.eproj_x_vel[v2]) as i32) as u16);
+        }
+        if word!(game.eproj_y_pos[v2]) as i32 - 208i32 & 0x8000 != 0 {
+            return 0;
+        }
+        word!(game.eproj_y_pos[v2] = 208);
+        word!(
+            game.eproj_x_vel[v2] = (if word!(game.eproj_x_vel[v2]) & 0x8000 != 0 {
+                -(word!(game.eproj_E[v2]) as i32)
+            } else {
+                word!(game.eproj_E[v2]) as i32
+            }) as u16
+        );
+        word!(game.eproj_y_vel[v2] = -512i32 as u16);
+        1
     }
-    if word!(game.eproj_y_pos[v2]) as i32 - 208i32 & 0x8000 != 0 {
-        return 0;
-    }
-    word!(game.eproj_y_pos[v2] = 208);
-    word!(
-        game.eproj_x_vel[v2] = (if word!(game.eproj_x_vel[v2]) & 0x8000 != 0 {
-            -(word!(game.eproj_E[v2]) as i32)
-        } else {
-            word!(game.eproj_E[v2]) as i32
-        }) as u16
-    );
-    word!(game.eproj_y_vel[v2] = -512i32 as u16);
-    1
 }
 pub unsafe fn SpawnMotherBrainDeathBeam(x: u16, game: &mut Game) {
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_MotherBrainDeathBeamFired as u16,
-        word!(game.eproj_E[(x >> 1)]),
-        game,
-    );
+    unsafe {
+        SpawnEprojWithRoomGfx(
+            addr_kEproj_MotherBrainDeathBeamFired as u16,
+            word!(game.eproj_E[(x >> 1)]),
+            game,
+        );
+    }
 }
 static kEprojInit_MotherBrainsDrool: [i16; 12] =
     [6, 0x14, 0xe, 0x12, 8, 0x17, 0xa, 0x13, 0xb, 0x19, 0xc, 0x12];
@@ -1259,10 +1364,12 @@ macro_rules! integrate_shard_velocity_xy {
 }
 
 unsafe fn EprojInit_KiHunterAcidSpitCommon(k: u16, j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1;
-    word!(game.eproj_y_vel[v2] = 0);
-    word!(game.eproj_y_pos[v2] = ((*gEnemyData(k as i32, game)).y_pos as i32 - 16i32) as u16);
-    word! { game, 0; eproj_y_subpos[v2], eproj_x_subpos[v2] }
+    unsafe {
+        let v2: i32 = j as i32 >> 1;
+        word!(game.eproj_y_vel[v2] = 0);
+        word!(game.eproj_y_pos[v2] = ((*gEnemyData(k as i32, game)).y_pos as i32 - 16i32) as u16);
+        word! { game, 0; eproj_y_subpos[v2], eproj_x_subpos[v2] }
+    }
 }
 static word_86D082: u16 = 0xe0;
 static g_word_86D086: u16 = 0x200;
@@ -1270,27 +1377,33 @@ static g_word_86D084: u16 = 0x30;
 static word_86D21A: [i16; 8] = [0, 32, 32, 32, 0, -32i16, -32i16, -32i16];
 static word_86D22A: [i16; 8] = [-32i16, -32i16, 0, 32, 32, 32, 0, -32i16];
 unsafe fn EprojInit_WreckedShipRobotLaserCommon(k: u16, j: u16, game: &mut Game) {
-    let v2 = gEnemyData(k as i32, game);
-    let v3: i32 = j as i32 >> 1;
-    word!(game.eproj_y_pos[v3] = ((*v2).y_pos as i32 - 16i32) as u16);
-    word!(
-        game.eproj_x_pos[v3] = ((*v2).x_pos as i32
-            + (if word!(game.eproj_x_vel[v3]) & 0x8000 != 0 {
-                -4i32
-            } else {
-                4
-            })) as u16
-    );
-    word! { game, 0; eproj_y_subpos[v3], eproj_x_subpos[v3] }
-    if (((*v2).x_width as i32 + (*v2).x_pos as i32 - word!(game.layer1_x_pos) as i32) as i16) >= 0
-        && (((*v2).x_pos as i32 - (*v2).x_width as i32 - 257i32 - word!(game.layer1_x_pos) as i32)
-            as i16)
-            < 0
-        && (((*v2).y_height as i32 + (*v2).y_pos as i32 - word!(game.layer1_y_pos) as i32) as i16)
+    unsafe {
+        let v2 = gEnemyData(k as i32, game);
+        let v3: i32 = j as i32 >> 1;
+        word!(game.eproj_y_pos[v3] = ((*v2).y_pos as i32 - 16i32) as u16);
+        word!(
+            game.eproj_x_pos[v3] = ((*v2).x_pos as i32
+                + (if word!(game.eproj_x_vel[v3]) & 0x8000 != 0 {
+                    -4i32
+                } else {
+                    4
+                })) as u16
+        );
+        word! { game, 0; eproj_y_subpos[v3], eproj_x_subpos[v3] }
+        if (((*v2).x_width as i32 + (*v2).x_pos as i32 - word!(game.layer1_x_pos) as i32) as i16)
             >= 0
-        && (((*v2).y_pos as i32 - (*v2).y_height as i32 - 224i32) as i16) < 0
-    {
-        QueueSfx2_Max6(0x67, game);
+            && (((*v2).x_pos as i32
+                - (*v2).x_width as i32
+                - 257i32
+                - word!(game.layer1_x_pos) as i32) as i16)
+                < 0
+            && (((*v2).y_height as i32 + (*v2).y_pos as i32 - word!(game.layer1_y_pos) as i32)
+                as i16)
+                >= 0
+            && (((*v2).y_pos as i32 - (*v2).y_height as i32 - 224i32) as i16) < 0
+        {
+            QueueSfx2_Max6(0x67, game);
+        }
     }
 }
 static kEprojInit_N00bTubeShards_X: [i16; 10] = [
@@ -1369,8 +1482,10 @@ crate::game::callback_dispatch! {
     };
 }
 pub unsafe fn Eproj_NamiFuneFireball_After(v0: u16, game: &mut Game) {
-    if EprojPreInstrHelper_DBF2_Func2(v0, game) != 0 {
-        word!(game.eproj_id[(v0 >> 1)] = 0);
+    unsafe {
+        if EprojPreInstrHelper_DBF2_Func2(v0, game) != 0 {
+            word!(game.eproj_id[(v0 >> 1)] = 0);
+        }
     }
 }
 crate::game::address_dispatch! {
@@ -1383,18 +1498,22 @@ crate::game::address_dispatch! {
 pub use self::EprojPreInstr_DBF2_MoveX1 as Eproj_LavaThrownByLavaman_MoveX1;
 pub use self::Eproj_NorfairLavaquakeRocks_Func3 as Eproj_LavaThrownByLavaman_MoveX2;
 pub unsafe fn sub_86E0A4(v0: u16, game: &mut Game) {
-    if sub_86E0B0(v0, game) != 0 {
-        word!(game.eproj_id[(v0 >> 1)] = 0);
+    unsafe {
+        if sub_86E0B0(v0, game) != 0 {
+            word!(game.eproj_id[(v0 >> 1)] = 0);
+        }
     }
 }
 pub use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as sub_86E0B0;
 unsafe fn EprojInit_SpawnedGate_Common(j: u16, v1: u16, game: &mut Game) {
-    let v2: u16 = word!(game.plm_id);
-    CalculatePlmBlockCoords(word!(game.plm_id), game);
-    let v3: i32 = j as i32 >> 1;
-    word!(game.eproj_E[v3] = word!(game.plm_block_indices[(v2 >> 1)]));
-    word!(game.eproj_x_pos[v3] = (16u16).wrapping_mul(word!(game.plm_x_block)));
-    word!(game.eproj_y_pos[v3] = (v1 as i32 + 16 * word!(game.plm_y_block) as i32) as u16);
+    unsafe {
+        let v2: u16 = word!(game.plm_id);
+        CalculatePlmBlockCoords(word!(game.plm_id), game);
+        let v3: i32 = j as i32 >> 1;
+        word!(game.eproj_E[v3] = word!(game.plm_block_indices[(v2 >> 1)]));
+        word!(game.eproj_x_pos[v3] = (16u16).wrapping_mul(word!(game.plm_x_block)));
+        word!(game.eproj_y_pos[v3] = (v1 as i32 + 16 * word!(game.plm_y_block) as i32) as u16);
+    }
 }
 fn CheckIfEprojIsOffScreen(k: u16, game: &mut Game) -> u16 {
     if (game
@@ -1413,30 +1532,34 @@ fn CheckIfEprojIsOffScreen(k: u16, game: &mut Game) -> u16 {
     1
 }
 pub unsafe fn Eproj_FuncE722(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1;
-    let mut v2: i16 = word!(game.eproj_x_pos[v1]) as i16;
-    let result: u16 = 1;
-    if v2 >= 0 && v2 as i32 - 512i32 & 0x8000 != 0 {
-        let mut v3: i16 = word!(game.eproj_y_pos[v1]) as i16;
-        if v3 >= 0 && v3 as i32 - 512i32 & 0x8000 != 0 {
-            return 0;
+    unsafe {
+        let v1: i32 = k as i32 >> 1;
+        let mut v2: i16 = word!(game.eproj_x_pos[v1]) as i16;
+        let result: u16 = 1;
+        if v2 >= 0 && v2 as i32 - 512i32 & 0x8000 != 0 {
+            let mut v3: i16 = word!(game.eproj_y_pos[v1]) as i16;
+            if v3 >= 0 && v3 as i32 - 512i32 & 0x8000 != 0 {
+                return 0;
+            }
         }
+        result
     }
-    result
 }
 pub unsafe fn Eproj_AngleToSamus(j: u16, r18: u16, r20: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1;
-    word! {game; eproj_x_pos[v1] = r18; eproj_y_pos[v1] = r20; }
-    let v2: u16 = (64
-        - CalculateAngleFromXY(
-            (word!(game.samus_x_pos) as i32 - word!(game.eproj_x_pos[v1]) as i32) as u16,
-            (word!(game.samus_y_pos) as i32 - word!(game.eproj_y_pos[v1]) as i32) as u16,
-            game,
-        ) as i32) as u8 as u16;
-    word!(game.g_word_7E97DC[v1] = v2);
-    let pt: Point32 = ConvertAngleToXy(v2, word!(game.cinematic_var8), game);
-    word! {game; eproj_x_vel[v1] = (pt.x >> 16) as u16; eproj_E[v1] = pt.x as u16;
-    eproj_y_vel[v1] = (pt.y >> 16) as u16; eproj_F[v1] = pt.y as u16; }
+    unsafe {
+        let v1: i32 = j as i32 >> 1;
+        word! {game; eproj_x_pos[v1] = r18; eproj_y_pos[v1] = r20; }
+        let v2: u16 = (64
+            - CalculateAngleFromXY(
+                (word!(game.samus_x_pos) as i32 - word!(game.eproj_x_pos[v1]) as i32) as u16,
+                (word!(game.samus_y_pos) as i32 - word!(game.eproj_y_pos[v1]) as i32) as u16,
+                game,
+            ) as i32) as u8 as u16;
+        word!(game.g_word_7E97DC[v1] = v2);
+        let pt: Point32 = ConvertAngleToXy(v2, word!(game.cinematic_var8), game);
+        word! {game; eproj_x_vel[v1] = (pt.x >> 16) as u16; eproj_E[v1] = pt.x as u16;
+        eproj_y_vel[v1] = (pt.y >> 16) as u16; eproj_F[v1] = pt.y as u16; }
+    }
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallBotwoonEprojFunc(ea: u32, k: u16, game: &mut Game) => ea;
@@ -1485,20 +1608,24 @@ crate::game::callback_dispatch! {
     }
 }
 pub unsafe fn Eproj_BotwoonsBodyHurtFlashHandling2(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1;
-    word!(game.eproj_gfx_idx[v1] |= 0xe00);
-    if (*(ram_ptr!(game, EnemyData; 0xf78))).flash_timer != 0
-        && (word!(game.random_enemy_counter) & 2) != 0
-    {
-        word!(game.eproj_gfx_idx[v1] &= 0xf1ff);
+    unsafe {
+        let v1: i32 = j as i32 >> 1;
+        word!(game.eproj_gfx_idx[v1] |= 0xe00);
+        if (*(ram_ptr!(game, EnemyData; 0xf78))).flash_timer != 0
+            && (word!(game.random_enemy_counter) & 2) != 0
+        {
+            word!(game.eproj_gfx_idx[v1] &= 0xf1ff);
+        }
     }
 }
 pub unsafe fn QueueSmallExplosionSfx(game: &mut Game) {
     QueueSfx2_Max6(0x24, game);
 }
 pub unsafe fn sub_86EC0C(k: u16, game: &mut Game) {
-    if sub_86EC18(k, game) != 0 {
-        word!(game.eproj_id[(k >> 1)] = 0);
+    unsafe {
+        if sub_86EC18(k, game) != 0 {
+            word!(game.eproj_id[(k >> 1)] = 0);
+        }
     }
 }
 pub use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as sub_86EC18;

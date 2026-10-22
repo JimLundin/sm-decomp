@@ -22,8 +22,7 @@ use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
     CalculateAngleOfEnemyXfromEnemyY, CalculateBlockContainingPixelPos, CallEnemyPreInstr,
-    CompareDistToSamus_X, EnemyFunc_C8AD,
-    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    CompareDistToSamus_X, EnemyFunc_C8AD, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
 };
 
 pub use crate::types::Consts_AA;
@@ -167,15 +166,17 @@ pub fn Torizo_Instr_7(k: u16, jp: EnemyScript) -> EnemyScript {
     jp
 }
 pub unsafe fn Torizo_C620(k: u16, game: &mut Game) {
-    if word!(game.area_index) == 0 && (word!(game.random_number) & 0x8142) == 0 {
-        let health: u16 = (*Get_Torizo(k as i32, game)).base.health;
-        if health != 0 && health < 0x15e {
-            SpawnEprojWithGfx(
-                health,
-                k,
-                addr_kEproj_BombTorizoLowHealthInitialDrool as u16,
-                game,
-            );
+    unsafe {
+        if word!(game.area_index) == 0 && (word!(game.random_number) & 0x8142) == 0 {
+            let health: u16 = (*Get_Torizo(k as i32, game)).base.health;
+            if health != 0 && health < 0x15e {
+                SpawnEprojWithGfx(
+                    health,
+                    k,
+                    addr_kEproj_BombTorizoLowHealthInitialDrool as u16,
+                    game,
+                );
+            }
         }
     }
 }
@@ -335,218 +336,246 @@ crate::game::callback_dispatch! {
     }
 }
 pub unsafe fn Torizo_Func_8(game: &mut Game) {
-    if word!(game.area_index) != 0 {
-        Torizo_D658(game);
+    unsafe {
+        if word!(game.area_index) != 0 {
+            Torizo_D658(game);
+        }
     }
 }
 pub unsafe fn Torizo_Func_12(k: u16, game: &mut Game) -> u16 {
-    let E = Get_Torizo(k as i32, game);
-    ((*E).parameter_1 as i32 ^ (*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32) as u16
+    unsafe {
+        let E = Get_Torizo(k as i32, game);
+        ((*E).parameter_1 as i32 ^ (*E).base.x_pos as i32 - word!(game.samus_x_pos) as i32) as u16
+    }
 }
 pub use self::Torizo_Func_3 as Torizo_Func_10;
 pub unsafe fn Torizo_D6A6(game: &mut Game) {
-    shot_reaction(game);
-    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
-    if (*E).base.health == 0 {
-        enemy_instruction! {[(*E).base]; instruction = addr_kTorizo_Ilist_B1C8 as u16, timer = 1}
-        (*E).parameter_2 = ((*E).parameter_2) | (0xc000u16);
-        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
+    unsafe {
+        shot_reaction(game);
+        let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
+        if (*E).base.health == 0 {
+            enemy_instruction! {[(*E).base]; instruction = addr_kTorizo_Ilist_B1C8 as u16, timer = 1}
+            (*E).parameter_2 = ((*E).parameter_2) | (0xc000u16);
+            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
+        }
     }
 }
 pub unsafe fn Torizo_D6D1(k: u16, j: u16, game: &mut Game) {
-    word!(game.projectile_dir[(j >> 1)] &= !(0x10));
-    let E = Get_Torizo(k as i32, game);
-    (*E).var_E = ((0xaac6abi32) as u16);
-    (*E).base.instruction_timer = 1;
-    let mut v3: u16 = if ((*E).parameter_1 & 0x8000) != 0 {
-        addr_kTorizo_Ilist_D2AD as u16
-    } else {
-        addr_kTorizo_Ilist_D1F1 as u16
-    };
-    (*E).base.current_instruction = v3;
-}
-pub unsafe fn Torizo_D6F7(k: u16, j: u16, game: &mut Game) {
-    let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
-    if (Torizo_Func_12(k, game) & 0x8000) == 0 {
-        (*E).parameter_2 = ((*E).parameter_2) | (0x1000u16);
+    unsafe {
+        word!(game.projectile_dir[(j >> 1)] &= !(0x10));
+        let E = Get_Torizo(k as i32, game);
         (*E).var_E = ((0xaac6abi32) as u16);
-        word!(game.projectile_dir[(j >> 1)] |= (0x10u16));
         (*E).base.instruction_timer = 1;
-        let mut v3: u16 = if ((*E).parameter_1 & 0x2000) != 0 {
-            if ((*E).parameter_1 & 0x8000) != 0 {
-                addr_kTorizo_Ilist_CEFF as u16
-            } else {
-                addr_kTorizo_Ilist_CE43 as u16
-            }
-        } else if ((*E).parameter_1 & 0x8000) != 0 {
-            addr_kTorizo_Ilist_CEA5 as u16
+        let mut v3: u16 = if ((*E).parameter_1 & 0x8000) != 0 {
+            addr_kTorizo_Ilist_D2AD as u16
         } else {
-            addr_kTorizo_Ilist_CDE1 as u16
+            addr_kTorizo_Ilist_D1F1 as u16
         };
         (*E).base.current_instruction = v3;
-    } else {
-        Torizo_D6A6(game);
-    };
+    }
+}
+pub unsafe fn Torizo_D6F7(k: u16, j: u16, game: &mut Game) {
+    unsafe {
+        let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
+        if (Torizo_Func_12(k, game) & 0x8000) == 0 {
+            (*E).parameter_2 = ((*E).parameter_2) | (0x1000u16);
+            (*E).var_E = ((0xaac6abi32) as u16);
+            word!(game.projectile_dir[(j >> 1)] |= (0x10u16));
+            (*E).base.instruction_timer = 1;
+            let mut v3: u16 = if ((*E).parameter_1 & 0x2000) != 0 {
+                if ((*E).parameter_1 & 0x8000) != 0 {
+                    addr_kTorizo_Ilist_CEFF as u16
+                } else {
+                    addr_kTorizo_Ilist_CE43 as u16
+                }
+            } else if ((*E).parameter_1 & 0x8000) != 0 {
+                addr_kTorizo_Ilist_CEA5 as u16
+            } else {
+                addr_kTorizo_Ilist_CDE1 as u16
+            };
+            (*E).base.current_instruction = v3;
+        } else {
+            Torizo_D6A6(game);
+        };
+    }
 }
 pub unsafe fn Shaktool_D956(k: u16, jp: EnemyScript, a: u16, game: &mut Game) -> EnemyScript {
-    let E = Get_Shaktool(k as i32, game);
-    let v3: i32 = a as u8 as i32;
-    words!(
-        (*E).base,
-        x_pos,
-        x_subpos += ((kSinCosTable8bit_Sext[(v3 + 64) as usize] as i32) << 8) as u32
-    );
-    words!(
-        (*E).base,
-        y_pos,
-        y_subpos += ((kSinCosTable8bit_Sext[v3 as usize] as i32) << 8) as u32
-    );
-    jp
+    unsafe {
+        let E = Get_Shaktool(k as i32, game);
+        let v3: i32 = a as u8 as i32;
+        words!(
+            (*E).base,
+            x_pos,
+            x_subpos += ((kSinCosTable8bit_Sext[(v3 + 64) as usize] as i32) << 8) as u32
+        );
+        words!(
+            (*E).base,
+            y_pos,
+            y_subpos += ((kSinCosTable8bit_Sext[v3 as usize] as i32) << 8) as u32
+        );
+        jp
+    }
 }
 pub use self::Torizo_Instr_7 as Shaktool_Instr_6;
 pub unsafe fn Shaktool_DB0E(k: u16, a: u16, game: &mut Game) {
-    let shakt_var_E: u16 = (*Get_Shaktool(k as i32, game)).var_E;
-    (*Get_Shaktool(shakt_var_E as i32, game)).parameter_1 = a;
-    (*Get_Shaktool(shakt_var_E as i32 + 64i32, game)).parameter_1 = a;
-    (*Get_Shaktool(shakt_var_E as i32 + 128i32, game)).parameter_1 = a;
-    (*Get_Shaktool(shakt_var_E as i32 + 192i32, game)).parameter_1 = a;
-    (*Get_Shaktool(shakt_var_E as i32 + 256i32, game)).parameter_1 = a;
-    (*Get_Shaktool(shakt_var_E as i32 + 320i32, game)).parameter_1 = a;
-    (*Get_Shaktool(shakt_var_E as i32 + 384i32, game)).parameter_1 = a;
+    unsafe {
+        let shakt_var_E: u16 = (*Get_Shaktool(k as i32, game)).var_E;
+        (*Get_Shaktool(shakt_var_E as i32, game)).parameter_1 = a;
+        (*Get_Shaktool(shakt_var_E as i32 + 64i32, game)).parameter_1 = a;
+        (*Get_Shaktool(shakt_var_E as i32 + 128i32, game)).parameter_1 = a;
+        (*Get_Shaktool(shakt_var_E as i32 + 192i32, game)).parameter_1 = a;
+        (*Get_Shaktool(shakt_var_E as i32 + 256i32, game)).parameter_1 = a;
+        (*Get_Shaktool(shakt_var_E as i32 + 320i32, game)).parameter_1 = a;
+        (*Get_Shaktool(shakt_var_E as i32 + 384i32, game)).parameter_1 = a;
+    }
 }
 pub unsafe fn Shaktool_DB27(k: u16, a: u16, game: &mut Game) {
-    let shakto_var_E: u16 = (*Get_Shaktool(k as i32, game)).var_E;
-    (*Get_Shaktool(shakto_var_E as i32, game)).var_A = a;
-    (*Get_Shaktool(shakto_var_E as i32 + 64i32, game)).var_A = a;
-    (*Get_Shaktool(shakto_var_E as i32 + 128i32, game)).var_A = a;
-    (*Get_Shaktool(shakto_var_E as i32 + 192i32, game)).var_A = a;
-    (*Get_Shaktool(shakto_var_E as i32 + 256i32, game)).var_A = a;
-    (*Get_Shaktool(shakto_var_E as i32 + 320i32, game)).var_A = a;
-    (*Get_Shaktool(shakto_var_E as i32 + 384i32, game)).var_A = a;
+    unsafe {
+        let shakto_var_E: u16 = (*Get_Shaktool(k as i32, game)).var_E;
+        (*Get_Shaktool(shakto_var_E as i32, game)).var_A = a;
+        (*Get_Shaktool(shakto_var_E as i32 + 64i32, game)).var_A = a;
+        (*Get_Shaktool(shakto_var_E as i32 + 128i32, game)).var_A = a;
+        (*Get_Shaktool(shakto_var_E as i32 + 192i32, game)).var_A = a;
+        (*Get_Shaktool(shakto_var_E as i32 + 256i32, game)).var_A = a;
+        (*Get_Shaktool(shakto_var_E as i32 + 320i32, game)).var_A = a;
+        (*Get_Shaktool(shakto_var_E as i32 + 384i32, game)).var_A = a;
+    }
 }
 pub unsafe fn Shaktool_DB40(k: u16, a: u16, game: &mut Game) {
-    let shakto_var_E: u16 = (*Get_Shaktool(k as i32, game)).var_E;
-    (*Get_Shaktool(shakto_var_E as i32, game)).var_B = a;
-    (*Get_Shaktool(shakto_var_E as i32 + 64i32, game)).var_B = a;
-    (*Get_Shaktool(shakto_var_E as i32 + 128i32, game)).var_B = a;
-    (*Get_Shaktool(shakto_var_E as i32 + 192i32, game)).var_B = a;
-    (*Get_Shaktool(shakto_var_E as i32 + 256i32, game)).var_B = a;
-    (*Get_Shaktool(shakto_var_E as i32 + 320i32, game)).var_B = a;
-    (*Get_Shaktool(shakto_var_E as i32 + 384i32, game)).var_B = a;
+    unsafe {
+        let shakto_var_E: u16 = (*Get_Shaktool(k as i32, game)).var_E;
+        (*Get_Shaktool(shakto_var_E as i32, game)).var_B = a;
+        (*Get_Shaktool(shakto_var_E as i32 + 64i32, game)).var_B = a;
+        (*Get_Shaktool(shakto_var_E as i32 + 128i32, game)).var_B = a;
+        (*Get_Shaktool(shakto_var_E as i32 + 192i32, game)).var_B = a;
+        (*Get_Shaktool(shakto_var_E as i32 + 256i32, game)).var_B = a;
+        (*Get_Shaktool(shakto_var_E as i32 + 320i32, game)).var_B = a;
+        (*Get_Shaktool(shakto_var_E as i32 + 384i32, game)).var_B = a;
+    }
 }
 pub unsafe fn Shaktool_DB59(k: u16, game: &mut Game) {
-    let mut shakto_var_E: u16 = (*Get_Shaktool(k as i32, game)).var_E;
-    let Shaktool = Get_Shaktool(shakto_var_E as i32 + 192, game);
-    (*Shaktool).var_D = ((*Shaktool).var_D) ^ (0x8000u16);
-    let v3 = Get_Shaktool(shakto_var_E as i32 + 384, game);
-    let mut shakto_var_B: u16 = (*v3).var_B;
-    let v5 = Get_Shaktool(shakto_var_E as i32 + 64, game);
-    (*v3).var_B = (((*v5).var_B ^ 0x8000) & 0xff00);
-    (*v5).var_B = ((shakto_var_B ^ 0x8000) & 0xff00);
-    let v6 = Get_Shaktool(shakto_var_E as i32 + 320, game);
-    let mut v7: u16 = (*v6).var_B;
-    let v8 = Get_Shaktool(shakto_var_E as i32 + 128, game);
-    (*v6).var_B = (((*v8).var_B ^ 0x8000) & 0xff00);
-    (*v8).var_B = ((v7 ^ 0x8000) & 0xff00);
-    let v9 = Get_Shaktool(shakto_var_E as i32 + 256, game);
-    let mut v10: u16 = (*v9).var_B;
-    let v11 = Get_Shaktool(shakto_var_E as i32 + 192, game);
-    (*v9).var_B = (((*v11).var_B ^ 0x8000) & 0xff00);
-    (*v11).var_B = ((v10 ^ 0x8000) & 0xff00);
-    let v12 = Get_Shaktool(shakto_var_E as i32 + 384, game);
-    let mut x_subpos: u16 = (*v12).base.x_subpos;
-    let v14 = Get_Shaktool(shakto_var_E as i32, game);
-    (*v12).base.x_subpos = (*v14).base.x_subpos;
-    (*v14).base.x_subpos = x_subpos;
-    crate::update_place! { previous mut y_subpos: u16 = (*v12).base.y_subpos => (*v14).base.y_subpos; }
-    (*v14).base.y_subpos = y_subpos;
-    crate::update_place! { previous mut x_pos: u16 = (*v12).base.x_pos => (*v14).base.x_pos; }
-    (*v14).base.x_pos = x_pos;
-    crate::update_place! { previous mut y_pos: u16 = (*v12).base.y_pos => (*v14).base.y_pos; }
-    (*v14).base.y_pos = y_pos;
-    (*Get_Shaktool(shakto_var_E as i32 + 64i32, game))
-        .base
-        .x_subpos = 0x8000;
-    (*Get_Shaktool(shakto_var_E as i32 + 128i32, game))
-        .base
-        .x_subpos = 0x8000;
-    (*Get_Shaktool(shakto_var_E as i32 + 192i32, game))
-        .base
-        .x_subpos = 0x8000;
-    (*Get_Shaktool(shakto_var_E as i32 + 256i32, game))
-        .base
-        .x_subpos = 0x8000;
-    (*Get_Shaktool(shakto_var_E as i32 + 320i32, game))
-        .base
-        .x_subpos = 0x8000;
-    (*Get_Shaktool(shakto_var_E as i32 + 64i32, game))
-        .base
-        .y_subpos = 0x8000;
-    (*Get_Shaktool(shakto_var_E as i32 + 128i32, game))
-        .base
-        .y_subpos = 0x8000;
-    (*Get_Shaktool(shakto_var_E as i32 + 192i32, game))
-        .base
-        .y_subpos = 0x8000;
-    (*Get_Shaktool(shakto_var_E as i32 + 256i32, game))
-        .base
-        .y_subpos = 0x8000;
-    (*Get_Shaktool(shakto_var_E as i32 + 320i32, game))
-        .base
-        .y_subpos = 0x8000;
+    unsafe {
+        let mut shakto_var_E: u16 = (*Get_Shaktool(k as i32, game)).var_E;
+        let Shaktool = Get_Shaktool(shakto_var_E as i32 + 192, game);
+        (*Shaktool).var_D = ((*Shaktool).var_D) ^ (0x8000u16);
+        let v3 = Get_Shaktool(shakto_var_E as i32 + 384, game);
+        let mut shakto_var_B: u16 = (*v3).var_B;
+        let v5 = Get_Shaktool(shakto_var_E as i32 + 64, game);
+        (*v3).var_B = (((*v5).var_B ^ 0x8000) & 0xff00);
+        (*v5).var_B = ((shakto_var_B ^ 0x8000) & 0xff00);
+        let v6 = Get_Shaktool(shakto_var_E as i32 + 320, game);
+        let mut v7: u16 = (*v6).var_B;
+        let v8 = Get_Shaktool(shakto_var_E as i32 + 128, game);
+        (*v6).var_B = (((*v8).var_B ^ 0x8000) & 0xff00);
+        (*v8).var_B = ((v7 ^ 0x8000) & 0xff00);
+        let v9 = Get_Shaktool(shakto_var_E as i32 + 256, game);
+        let mut v10: u16 = (*v9).var_B;
+        let v11 = Get_Shaktool(shakto_var_E as i32 + 192, game);
+        (*v9).var_B = (((*v11).var_B ^ 0x8000) & 0xff00);
+        (*v11).var_B = ((v10 ^ 0x8000) & 0xff00);
+        let v12 = Get_Shaktool(shakto_var_E as i32 + 384, game);
+        let mut x_subpos: u16 = (*v12).base.x_subpos;
+        let v14 = Get_Shaktool(shakto_var_E as i32, game);
+        (*v12).base.x_subpos = (*v14).base.x_subpos;
+        (*v14).base.x_subpos = x_subpos;
+        crate::update_place! { previous mut y_subpos: u16 = (*v12).base.y_subpos => (*v14).base.y_subpos; }
+        (*v14).base.y_subpos = y_subpos;
+        crate::update_place! { previous mut x_pos: u16 = (*v12).base.x_pos => (*v14).base.x_pos; }
+        (*v14).base.x_pos = x_pos;
+        crate::update_place! { previous mut y_pos: u16 = (*v12).base.y_pos => (*v14).base.y_pos; }
+        (*v14).base.y_pos = y_pos;
+        (*Get_Shaktool(shakto_var_E as i32 + 64i32, game))
+            .base
+            .x_subpos = 0x8000;
+        (*Get_Shaktool(shakto_var_E as i32 + 128i32, game))
+            .base
+            .x_subpos = 0x8000;
+        (*Get_Shaktool(shakto_var_E as i32 + 192i32, game))
+            .base
+            .x_subpos = 0x8000;
+        (*Get_Shaktool(shakto_var_E as i32 + 256i32, game))
+            .base
+            .x_subpos = 0x8000;
+        (*Get_Shaktool(shakto_var_E as i32 + 320i32, game))
+            .base
+            .x_subpos = 0x8000;
+        (*Get_Shaktool(shakto_var_E as i32 + 64i32, game))
+            .base
+            .y_subpos = 0x8000;
+        (*Get_Shaktool(shakto_var_E as i32 + 128i32, game))
+            .base
+            .y_subpos = 0x8000;
+        (*Get_Shaktool(shakto_var_E as i32 + 192i32, game))
+            .base
+            .y_subpos = 0x8000;
+        (*Get_Shaktool(shakto_var_E as i32 + 256i32, game))
+            .base
+            .y_subpos = 0x8000;
+        (*Get_Shaktool(shakto_var_E as i32 + 320i32, game))
+            .base
+            .y_subpos = 0x8000;
+    }
 }
 pub unsafe fn Shaktool_DC07(k: u16, game: &mut Game) {
-    let E = Get_Shaktool(k as i32, game);
-    let mut v2: u16 = if ((*E).parameter_1 & 0x8000) != 0 {
-        ((*E).var_B).wrapping_sub((*E).var_A)
-    } else {
-        ((*E).var_A).wrapping_sub((*E).var_B)
-    };
-    (*E).var_C = (4u16).wrapping_mul((byte!(v2; 1)) as u16);
+    unsafe {
+        let E = Get_Shaktool(k as i32, game);
+        let mut v2: u16 = if ((*E).parameter_1 & 0x8000) != 0 {
+            ((*E).var_B).wrapping_sub((*E).var_A)
+        } else {
+            ((*E).var_A).wrapping_sub((*E).var_B)
+        };
+        (*E).var_C = (4u16).wrapping_mul((byte!(v2; 1)) as u16);
+    }
 }
 pub unsafe fn Shaktool_DC2A(k: u16, game: &mut Game) {
-    let E = Get_Shaktool(k as i32, game);
-    let v3: i32 = byte!((*E).var_B; 1) as i32;
-    let v5: i32 = k as i32 >> 1;
-    words!(
-        (*E).base,
-        x_pos,
-        x_subpos = (((crate::rtl::rom_table_word!(game, 0xaae0bd, v3 as isize) as i16 as i32)
-            << 8i32) as u32)
-            .wrapping_add(words!((
-                word!(game.enemy_drawing_queue[(v5 + 91)]),
-                word!(game.enemy_drawing_queue[(v5 + 92)])
-            )),)
-    );
-    words!(
-        (*E).base,
-        y_pos,
-        y_subpos = (((crate::rtl::rom_table_word!(game, 0xaae03d, v3 as isize) as i16 as i32)
-            << 8i32) as u32)
-            .wrapping_add(words!((
-                word!(game.enemy_drawing_queue[(v5 + 93)]),
-                word!(game.enemy_drawing_queue[(v5 + 94)])
-            )),)
-    );
+    unsafe {
+        let E = Get_Shaktool(k as i32, game);
+        let v3: i32 = byte!((*E).var_B; 1) as i32;
+        let v5: i32 = k as i32 >> 1;
+        words!(
+            (*E).base,
+            x_pos,
+            x_subpos = (((crate::rtl::rom_table_word!(game, 0xaae0bd, v3 as isize) as i16 as i32)
+                << 8i32) as u32)
+                .wrapping_add(words!((
+                    word!(game.enemy_drawing_queue[(v5 + 91)]),
+                    word!(game.enemy_drawing_queue[(v5 + 92)])
+                )),)
+        );
+        words!(
+            (*E).base,
+            y_pos,
+            y_subpos = (((crate::rtl::rom_table_word!(game, 0xaae03d, v3 as isize) as i16 as i32)
+                << 8i32) as u32)
+                .wrapping_add(words!((
+                    word!(game.enemy_drawing_queue[(v5 + 93)]),
+                    word!(game.enemy_drawing_queue[(v5 + 94)])
+                )),)
+        );
+    }
 }
 pub unsafe fn Shaktool_DC6F(k: u16, game: &mut Game) {
-    let E = Get_Shaktool(k as i32, game);
-    Shaktool_DB40(k, (*E).var_A, game);
-    let shakto_var_E: u16 = (*E).var_E;
-    (*Get_Shaktool(shakto_var_E as i32, game)).var_C = g_word_AADEE9[0i32 as usize];
-    (*Get_Shaktool(shakto_var_E as i32 + 64i32, game)).var_C = g_word_AADEE9[1i32 as usize];
-    (*Get_Shaktool(shakto_var_E as i32 + 128i32, game)).var_C = g_word_AADEE9[2i32 as usize];
-    (*Get_Shaktool(shakto_var_E as i32 + 192i32, game)).var_C = g_word_AADEE9[3i32 as usize];
-    (*Get_Shaktool(shakto_var_E as i32 + 256i32, game)).var_C = g_word_AADEE9[4i32 as usize];
-    (*Get_Shaktool(shakto_var_E as i32 + 320i32, game)).var_C = g_word_AADEE9[5i32 as usize];
-    (*Get_Shaktool(shakto_var_E as i32 + 384i32, game)).var_C = g_word_AADEE9[6i32 as usize];
+    unsafe {
+        let E = Get_Shaktool(k as i32, game);
+        Shaktool_DB40(k, (*E).var_A, game);
+        let shakto_var_E: u16 = (*E).var_E;
+        (*Get_Shaktool(shakto_var_E as i32, game)).var_C = g_word_AADEE9[0i32 as usize];
+        (*Get_Shaktool(shakto_var_E as i32 + 64i32, game)).var_C = g_word_AADEE9[1i32 as usize];
+        (*Get_Shaktool(shakto_var_E as i32 + 128i32, game)).var_C = g_word_AADEE9[2i32 as usize];
+        (*Get_Shaktool(shakto_var_E as i32 + 192i32, game)).var_C = g_word_AADEE9[3i32 as usize];
+        (*Get_Shaktool(shakto_var_E as i32 + 256i32, game)).var_C = g_word_AADEE9[4i32 as usize];
+        (*Get_Shaktool(shakto_var_E as i32 + 320i32, game)).var_C = g_word_AADEE9[5i32 as usize];
+        (*Get_Shaktool(shakto_var_E as i32 + 384i32, game)).var_C = g_word_AADEE9[6i32 as usize];
+    }
 }
 pub unsafe fn sub_AAE784(game: &mut Game) {
-    word_transfers!(game, descending, 16;
-        le(target_palettes, 175) <- table(kChozoStatue_Palettes3, 15),
-        le(target_palettes, 159) <- table(kChozoStatue_Palettes2, 15),
-    );
-    SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xc, 0x1d, 0xd6d6 as VoidP), game);
+    unsafe {
+        word_transfers!(game, descending, 16;
+            le(target_palettes, 175) <- table(kChozoStatue_Palettes3, 15),
+            le(target_palettes, 159) <- table(kChozoStatue_Palettes2, 15),
+        );
+        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xc, 0x1d, 0xd6d6 as VoidP), game);
+    }
 }
 
 crate::game::callback_dispatch! {

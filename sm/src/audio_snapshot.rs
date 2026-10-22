@@ -42,39 +42,43 @@ crate::typed_struct! {
 impl PlayerSnapshot {
     /// The player, DSP and any attached history must be live and exclusive.
     pub(crate) unsafe fn capture(&mut self, player: *mut SpcPlayer) {
-        self.valid = !player.is_null();
-        if !self.valid {
-            return;
+        unsafe {
+            self.valid = !player.is_null();
+            if !self.valid {
+                return;
+            }
+            self.player = (*player).state;
+            (*player).ram.copy_to(&mut self.ram);
+            self.dsp = (*(*player).state.dsp).state;
+            self.has_history = !(*player).state.reg_write_history.is_null();
+            if self.has_history {
+                self.history = *(*player).state.reg_write_history;
+            }
+            self.player.dsp = core::ptr::null_mut();
+            self.player.ram = core::ptr::null_mut();
+            self.player.reg_write_history = core::ptr::null_mut();
+            self.dsp.apu_ram = core::ptr::null_mut();
         }
-        self.player = (*player).state;
-        (*player).ram.copy_to(&mut self.ram);
-        self.dsp = (*(*player).state.dsp).state;
-        self.has_history = !(*player).state.reg_write_history.is_null();
-        if self.has_history {
-            self.history = *(*player).state.reg_write_history;
-        }
-        self.player.dsp = core::ptr::null_mut();
-        self.player.ram = core::ptr::null_mut();
-        self.player.reg_write_history = core::ptr::null_mut();
-        self.dsp.apu_ram = core::ptr::null_mut();
     }
 
     /// Destination allocations must be live with the same history topology.
     pub(crate) unsafe fn restore(&self, player: *mut SpcPlayer) {
-        if !self.valid {
-            return;
-        }
-        let dsp = (*player).state.dsp;
-        let history = (*player).state.reg_write_history;
-        assert_eq!(self.has_history, !history.is_null());
-        (*player).state = self.player;
-        (*player).ram.copy_from(&self.ram);
-        (*player).state.ram = (*player).ram.as_mut_ptr();
-        (*player).state.dsp = dsp;
-        (*player).state.reg_write_history = history;
-        (*dsp).restore_state(&self.dsp);
-        if self.has_history {
-            *history = self.history;
+        unsafe {
+            if !self.valid {
+                return;
+            }
+            let dsp = (*player).state.dsp;
+            let history = (*player).state.reg_write_history;
+            assert_eq!(self.has_history, !history.is_null());
+            (*player).state = self.player;
+            (*player).ram.copy_from(&self.ram);
+            (*player).state.ram = (*player).ram.as_mut_ptr();
+            (*player).state.dsp = dsp;
+            (*player).state.reg_write_history = history;
+            (*dsp).restore_state(&self.dsp);
+            if self.has_history {
+                *history = self.history;
+            }
         }
     }
 }
@@ -249,27 +253,31 @@ impl AudioSnapshot {
 
     /// The SNES and all three audio allocations must be initialized and live.
     pub(crate) unsafe fn capture(&mut self, snes: *const Snes) {
-        let apu = (*snes).apu;
-        (*apu).ram.copy_to(&mut self.ram);
-        self.apu = (*apu).registers;
-        self.spc = *(*apu).spc;
-        self.dsp = (*(*apu).dsp).state;
-        self.catchup_cycles = (*snes).apuCatchupCycles;
-        // These links belong to the live emulator, never to a snapshot.
-        self.spc.apu = core::ptr::null_mut();
-        self.dsp.apu_ram = core::ptr::null_mut();
+        unsafe {
+            let apu = (*snes).apu;
+            (*apu).ram.copy_to(&mut self.ram);
+            self.apu = (*apu).registers;
+            self.spc = *(*apu).spc;
+            self.dsp = (*(*apu).dsp).state;
+            self.catchup_cycles = (*snes).apuCatchupCycles;
+            // These links belong to the live emulator, never to a snapshot.
+            self.spc.apu = core::ptr::null_mut();
+            self.dsp.apu_ram = core::ptr::null_mut();
+        }
     }
 
     /// The destination allocations must be live and exclusively accessible.
     pub(crate) unsafe fn restore(&self, snes: *mut Snes) {
-        let apu = (*snes).apu;
-        let spc = (*apu).spc;
-        let dsp = (*apu).dsp;
-        (*apu).ram.copy_from(&self.ram);
-        (*apu).registers = self.apu;
-        *spc = self.spc;
-        (*spc).apu = apu;
-        (*dsp).restore_state(&self.dsp);
-        (*snes).apuCatchupCycles = self.catchup_cycles;
+        unsafe {
+            let apu = (*snes).apu;
+            let spc = (*apu).spc;
+            let dsp = (*apu).dsp;
+            (*apu).ram.copy_from(&self.ram);
+            (*apu).registers = self.apu;
+            *spc = self.spc;
+            (*spc).apu = apu;
+            (*dsp).restore_state(&self.dsp);
+            (*snes).apuCatchupCycles = self.catchup_cycles;
+        }
     }
 }

@@ -19,7 +19,7 @@ pub const false_0: i32 = 0;
 pub const SEEK_END: i32 = 2;
 
 #[link(name = "sm_config", kind = "static", modifiers = "-bundle")]
-extern "C-unwind" {
+unsafe extern "C-unwind" {
     #[link_name = "sm_util_NextDelim"]
     pub fn NextDelim(cursor: *mut *mut c_char, separator: i32) -> *mut c_char;
     #[link_name = "sm_util_StringEqualsNoCase"]
@@ -44,9 +44,11 @@ extern "C-unwind" {
 }
 
 // The installed host callback may return or unwind. Do not declare it noreturn.
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_util_die(message: *const c_char) {
-    crate::host::Die(message);
+    unsafe {
+        crate::host::Die(message);
+    }
 }
 
 #[doc(hidden)]

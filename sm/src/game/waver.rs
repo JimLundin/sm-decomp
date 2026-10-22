@@ -140,49 +140,54 @@ pub fn Waver_Init(game: &mut Game) {
 }
 
 pub unsafe fn Waver_Main(game: &mut Game) {
-    let index = game.cur_enemy_index();
-    let horizontal_velocity = {
-        let enemy = WaverRam::new(game, index);
-        ((u32::from(enemy.velocity_integer()) << 16) | u32::from(enemy.velocity_fraction())) as i32
-    };
-    if Enemy_MoveRight_IgnoreSlopes(index, horizontal_velocity, game) != 0 {
-        {
-            let mut enemy = WaverRam::new(game, index);
-            // The ROM reverses the middle two bytes of the 16.16 velocity.
-            let middle = (enemy.velocity_fraction() >> 8) | (enemy.velocity_integer() << 8);
-            let reversed = middle.wrapping_neg();
-            enemy.set_velocity_integer((reversed >> 8) as u8 as i8 as i16 as u16);
-            enemy.set_velocity_fraction(((middle as u8 as i8 as i16).wrapping_neg() as u16) << 8);
-            enemy.set_animation((enemy.animation() ^ 1) & 1);
-        }
-        Waver_Func_1(game);
-    } else {
-        // Read the current index again at the same point as the original.
-        let vertical_index = game.cur_enemy_index();
-        let phase = WaverRam::new(game, index).sine_phase() as u8 as u16;
-        let vertical_velocity = i32::from(SineMult8bit(phase, 4, game) as i16) << 16;
-        let collided = Enemy_MoveDown(vertical_index, vertical_velocity, game) != 0;
-        let mut enemy = WaverRam::new(game, index);
-        if collided {
-            enemy.set_sine_phase(enemy.sine_phase().wrapping_add(0x80) as u8 as u16);
+    unsafe {
+        let index = game.cur_enemy_index();
+        let horizontal_velocity = {
+            let enemy = WaverRam::new(game, index);
+            ((u32::from(enemy.velocity_integer()) << 16) | u32::from(enemy.velocity_fraction()))
+                as i32
+        };
+        if Enemy_MoveRight_IgnoreSlopes(index, horizontal_velocity, game) != 0 {
+            {
+                let mut enemy = WaverRam::new(game, index);
+                // The ROM reverses the middle two bytes of the 16.16 velocity.
+                let middle = (enemy.velocity_fraction() >> 8) | (enemy.velocity_integer() << 8);
+                let reversed = middle.wrapping_neg();
+                enemy.set_velocity_integer((reversed >> 8) as u8 as i8 as i16 as u16);
+                enemy.set_velocity_fraction(
+                    ((middle as u8 as i8 as i16).wrapping_neg() as u16) << 8,
+                );
+                enemy.set_animation((enemy.animation() ^ 1) & 1);
+            }
+            Waver_Func_1(game);
         } else {
-            enemy.set_sine_phase(enemy.sine_phase().wrapping_add(2));
-        }
-    }
-    if WaverRam::new(game, index).sine_phase() & 0x7f == 56 {
-        {
+            // Read the current index again at the same point as the original.
+            let vertical_index = game.cur_enemy_index();
+            let phase = WaverRam::new(game, index).sine_phase() as u8 as u16;
+            let vertical_velocity = i32::from(SineMult8bit(phase, 4, game) as i16) << 16;
+            let collided = Enemy_MoveDown(vertical_index, vertical_velocity, game) != 0;
             let mut enemy = WaverRam::new(game, index);
-            enemy.set_animation(enemy.animation() | 2);
+            if collided {
+                enemy.set_sine_phase(enemy.sine_phase().wrapping_add(0x80) as u8 as u16);
+            } else {
+                enemy.set_sine_phase(enemy.sine_phase().wrapping_add(2));
+            }
         }
-        Waver_Func_1(game);
-    }
-    if WaverRam::new(game, index).animation_finished() != 0 {
-        {
-            let mut enemy = WaverRam::new(game, index);
-            enemy.set_animation_finished(0);
-            enemy.set_animation(enemy.animation() & 1);
+        if WaverRam::new(game, index).sine_phase() & 0x7f == 56 {
+            {
+                let mut enemy = WaverRam::new(game, index);
+                enemy.set_animation(enemy.animation() | 2);
+            }
+            Waver_Func_1(game);
         }
-        Waver_Func_1(game);
+        if WaverRam::new(game, index).animation_finished() != 0 {
+            {
+                let mut enemy = WaverRam::new(game, index);
+                enemy.set_animation_finished(0);
+                enemy.set_animation(enemy.animation() & 1);
+            }
+            Waver_Func_1(game);
+        }
     }
 }
 

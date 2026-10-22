@@ -41,11 +41,41 @@ and defines evidence for eventual backend retirement. Independence is a
 completion gate for the new-engine slice, not a prerequisite to current work.
 This handoff changes documentation only; it claims no new engine verification.
 
-Toolchain direction (user clarification, 2026-10-22): migrate to Rust edition
-2024 and the latest nightly, using modern syntax where it improves the code.
-The explicitly requested parallel migration is underway in an isolated checkout;
-its toolchain and edition changes are not yet adopted or verified on main.
-Preserve exact behavior and coordinate the single heavy compiler with other work.
+Toolchain direction (user clarification, 2026-10-22): use Rust edition 2024
+and the latest nightly, with modern syntax where it improves the code. The
+package and direct verifier launcher now select edition 2024. All three crate
+roots deny `unsafe_op_in_unsafe_fn`; remaining legacy operations have explicit
+unsafe scopes, and native imports/exports use the required unsafe syntax.
+The callback macro keeps safe declarations outside unsafe scopes. Its modern
+`expr` fragments retain disjoint matching arms. This is an edition migration,
+not removal of raw operations or completion of the safety requirement.
+
+Edition verification uses installed rustc **1.99.1 (58cf8f9c3 2026-10-13)**,
+`x86_64-pc-windows-gnu`: release library/frontend/verifier builds, all-target
+and headless compiler checks, and DLL library/native-source checks pass.
+The adopted main source also passes the normal release build and loaded DLL
+host/library/native-source checks after refreshing its local native archives.
+The 129-file source audit admits only the enumerated compiler insertions;
+79 final changed files reproduce from audited source plus targeted formatting.
+Ten callback compile witnesses pass, including four E0133 rejections for raw
+operations in safe declarations. Original-edition headless metadata compilation
+also passes denied `if_let_rescope`, `tail_expr_drop_order` and unsafe-operation
+lints. Named owner/probe guards and frontend allocation/drop sites were reviewed;
+no lifetime rewrite was needed. No movie ran: these are syntax/source/compiler
+checks, not new gameplay coverage. Targeted formatting passes with
+`skip_children=true,reorder_modules=false,reorder_imports=false`. Repository-wide
+`cargo fmt --check` fails on both the baseline and this change; existing import/
+module ordering and unrelated formatting drift remain. Checks are under local
+`sm-decomp-experiments/rust-2024-migration`.
+
+Upstream rustup metadata identifies the latest nightly as **2026-10-22**,
+**1.101.0-nightly (1a2c4797e 2026-10-21)**. It is installed with rustfmt/clippy,
+but Defender event 1121, rule `01443614-CD74-433A-B99E-2ECDC07BFC25`, prevents
+its compiler from executing. The nightly version has not been runtime-verified.
+Keep the usable stable default until the administrator authorizes that compiler;
+the separate pending pin is `nightly-2026-10-22`. Do not bypass the block.
+The nightly switch and its checks remain unfinished. Coordinate the single
+heavy compiler with other work.
 
 ## Active direction (2026-10-20)
 
@@ -66,10 +96,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,428 Rust lines in 129 files**, plus 266 C
-bridge and 296 C-header lines = **96,990 maintained implementation lines**.
+Current composition (2026-10-22): **101,337 Rust lines in 129 files**, plus 266 C
+bridge and 296 C-header lines = **101,899 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,821**. This complete recount includes frontend,
+gives **102,730**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -85,6 +115,14 @@ drawing-reader change adds 27 Rust lines and checked extension linkage adds six;
 these four existing C lines are not new
 implementation or a deletion. Checked projectile animation removes 30 Rust lines,
 and consolidated checked trails remove another ten, including registrations/callers.
+Edition 2024 adds **4,909 Rust lines** for explicit unsafe scopes, the callback
+macro distinction, and their formatting. All of that cost is counted. The
+unsafe-declaration line metric rises 2,954 -> 2,958 because of macro syntax/
+formatting, and cast-containing lines 6,170 -> 6,217 from wrapping; no game
+operations or casts were added. Raw offsets (21), C blocks (7), C exports (6)
+and no_mangle occurrences (65) stay unchanged. Maintained C and installers
+are unchanged. The current source is above 100,000 lines again; the earlier
+reduction milestone remains historical, and further reduction is still required.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
 The complete GLSL dependency replacement removes **282 maintained lines**, with
@@ -180,7 +218,8 @@ and a checkpointed 6,562-frame drawing segment: four required probes and 120 fol
 then the same clean segment, with normal rendering/audio and zero differences.
 The 2,218-frame cached setup prefix is separate from changed-code coverage.
 Unvisited bomb/SBA/super-missile initialization has direct component coverage.
-The under-100,000 maintained-source milestone is complete. Credits remain
+The under-100,000 maintained-source milestone was reached before the edition
+2024 scope expansion; the current total is above that threshold. Credits remain
 uncovered; component/static checks cover edited paths beyond movie coverage.
 Further bank retirement and the 90,000-line stretch checkpoint remain future work.
 
@@ -203,11 +242,12 @@ further, by tackling large structural changes before individual cleanup.
 Use **90,000 lines as a stretch planning checkpoint**, not a demonstrated
 forecast. This work order replaces earlier reduction and cleanup queues.
 
-Completed immediate goal: the verified current implementation above is below
-100,000 lines. The last reported complete historical translation composition was
+The verified implementation reached below 100,000 lines before the edition
+migration; its explicit scopes now put the current total above that target.
+The last reported complete historical translation composition was
 **162,136 -> 102,539 (-59,597)**, also removing **636,768 tokens** and
 **1,736,945 code-text bytes**. That historical profile stopped **2,540 lines**
-above the target; it is separate from the completed current-source result.
+above the target; it is separate from that later reduction milestone.
 Its 71 Rust files, helpers, callers and registrations count; its Cargo remains
 ten lines. External GL/SDL dependencies and experiment support are disclosed
 separately. Current Rust remains the behavior authority.
@@ -4793,14 +4833,18 @@ dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
 owned enemy-script positions, checked enemy-definition records, standard combat,
 shared enemy/projectile contact, checked extension linkage, projectile animation
-and consolidated checked trails, maintained Rust is **96,428**,
-with applicable static, component and exercised movie checks passing.
-Including 266 C and 296 header lines gives **96,990**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,821**.
-The immediate volume target is complete.
+and consolidated checked trails, followed by the edition 2024 migration,
+maintained Rust is **101,337**, with applicable checks passing. The edition
+migration has source/compiler checks only; it adds no movie coverage.
+Including 266 C and 296 header lines gives **101,899**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **102,730**.
+The explicit unsafe scopes and their formatting add 4,909 Rust lines, putting
+the current total above the previously reached immediate volume target.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2954; cast lines 6170. Consolidated checked trails remove ten
+unsafe functions 2958; cast lines 6217. The edition migration adds four counted
+declaration lines and 47 cast-containing lines through macro syntax and wrapping;
+it adds no raw operations or casts. Consolidated checked trails remove ten
 Rust lines, one counted unsafe declaration and 25 cast-containing lines. Raw
 ROM/RAM traversal and OAM stores retire; native OAM output forbids unsafe code.
 Native diagnostics and projection remain unsafe; other counters are unchanged.
@@ -5154,7 +5198,8 @@ lines. Its complete implementation still removes 144 lines. The former
 83-line shader draft is now incorporated in the complete shader replacement,
 whose 588-line committed reduction includes those 83 lines once.
 Item 2's function/compound-body variant audits are complete for their stated
-scope. The under-100,000 milestone is complete; the 90,000-line stretch checkpoint
+scope. The under-100,000 milestone was reached before the edition migration;
+the current total exceeds it. The 90,000-line stretch checkpoint
 has no established replacement budget. Hopping and local-initialization drafts
 remain parked; repeating completed scans or adding their gross matching spans
 does not supply that budget.

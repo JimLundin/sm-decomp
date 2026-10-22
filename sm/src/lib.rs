@@ -7,6 +7,7 @@
 //!
 //! Gameplay and runtime state is owned by `game_state::Game` and passed
 //! explicitly through Rust calls; C ABI remains at external boundaries.
+#![deny(unsafe_op_in_unsafe_fn)]
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
@@ -66,6 +67,7 @@ macro_rules! update_place {
 
 // Each instruction row declares Name [result] { effects }; [] keeps a full body.
 // A shared prefix runs inside each function, before its effects and result.
+// Only unsafe declarations authorize unsafe operations in their emitted bodies.
 macro_rules! instruction_callbacks {
     ($visibility:vis unsafe fn $parameters:tt; @prefix $prefix:tt; $($name:ident $tail:tt $body:tt;)*) => {
         $($crate::instruction_callbacks!(@function [$visibility unsafe fn $name $parameters] $prefix $tail $body);)*
@@ -85,6 +87,12 @@ macro_rules! instruction_callbacks {
     ($visibility:vis fn $parameters:tt -> $result:ty; $($entries:tt)*) => {
         $crate::instruction_callbacks!($visibility fn $parameters -> $result; @prefix {}; $($entries)*);
     };
+    (@function [$visibility:vis unsafe fn $($header:tt)*] {$($prefix:tt)*} [$tail:expr] {$($body:tt)*}) => {
+        $visibility unsafe fn $($header)* { unsafe { $($prefix)* $($body)* $tail } }
+    };
+    (@function [$visibility:vis unsafe fn $($header:tt)*] {$($prefix:tt)*} [] {$($body:tt)*}) => {
+        $visibility unsafe fn $($header)* { unsafe { $($prefix)* $($body)* } }
+    };
     (@function [$($header:tt)*] {$($prefix:tt)*} [$tail:expr] {$($body:tt)*}) => {
         $($header)* { $($prefix)* $($body)* $tail }
     };
@@ -100,10 +108,10 @@ pub(crate) use instruction_callbacks as prefixed_callbacks;
 #[macro_export]
 macro_rules! forward_calls {
     ($visibility:vis unsafe fn $parameters:tt -> $result:ty; $($name:ident => $call:expr;)+) => {
-        $($visibility unsafe fn $name $parameters -> $result { $call })+
+        $($visibility unsafe fn $name $parameters -> $result { unsafe { $call }})+
     };
     ($visibility:vis unsafe fn $parameters:tt; $($name:ident => $call:expr;)+) => {
-        $($visibility unsafe fn $name $parameters { $call; })+
+        $($visibility unsafe fn $name $parameters { unsafe { $call; }})+
     };
     ($visibility:vis fn $parameters:tt -> $result:ty; $($name:ident => $call:expr;)+) => {
         $($visibility fn $name $parameters -> $result { $call })+
@@ -225,11 +233,11 @@ pub mod game {
             { $($before:tt)* } [$condition:expr] $effects:block
             $(else $otherwise:block)? $(after { $($after:tt)* })?
         ) => {
-            $($header)* {
+            $($header)* { unsafe {
                 $($before)*
                 if $condition $effects $(else $otherwise)?
                 $($($after)*)?
-            }
+            }}
         };
     }
     pub(crate) use countdown_callbacks;
@@ -242,13 +250,13 @@ pub mod game {
             { $($pattern:pat => $target:tt $(::$tail:ident)*;)* })*) => {
             $(
                 $(#[$metadata])*
-                $visibility unsafe fn $name $parameters $(-> $result)? {
+                $visibility unsafe fn $name $parameters $(-> $result)? { unsafe {
                     $($($setup)*)?
                     match $selector {
                         $($pattern => $crate::game::address_dispatch!(@call $arguments $target $(::$tail)*),)*
                         _ => $fallback
                     }
-                }
+                }}
             )*
         };
         (@call ($($argument:expr),* $(,)?) $target:path) => {
@@ -298,7 +306,7 @@ pub mod game {
                 }
             )*
             $(#[$metadata])*
-            $visibility unsafe fn $name $parameters $(-> $result)? {
+            $visibility unsafe fn $name $parameters $(-> $result)? { unsafe {
                 $($($setup)*)?
                 match $selector {
                     $($($($pattern => $crate::game::address_dispatch!(@call $arguments $callback),)?)*)*
@@ -307,7 +315,7 @@ pub mod game {
                     $($($external_pattern => $crate::game::address_dispatch!(@call $arguments $target $(::$path_tail)*),)*)?
                     _ => $fallback
                 }
-            }
+            }}
         };
     }
     pub(crate) use callback_dispatch;

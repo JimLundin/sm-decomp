@@ -1,7 +1,7 @@
 [package]
 name = "sm"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 license = "MIT"
 publish = false
 description = "Super Metroid in Rust, with the original ROM as a per-frame differential oracle"

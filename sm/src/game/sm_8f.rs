@@ -3,9 +3,7 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
 pub use crate::game::prelude::*;
 use crate::game::progress_flags::SetEventHappened;
-use crate::game::scrolling_sky::{
-    initialize_land, initialize_ocean, queue_land_rows, queue_ocean_rows,
-};
+use crate::game::scrolling_sky::{initialize_land, initialize_ocean, queue_land_rows, queue_ocean_rows};
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::plm_spawning::SpawnHardcodedPlm;
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
@@ -23,45 +21,53 @@ crate::game::constants::typed_constants! { i32;
 }
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
 pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
-    if word!(game.time_is_frozen_flag) == 0 && (word!(game.nmi_frame_counter_word) & 1) == 0 {
-        let mut Random: u16 = NextRandom(game);
-        let x: u16 = (word!(game.layer1_x_pos)).wrapping_add((Random as u8) as u16);
-        let y: u16 = (word!(game.layer1_y_pos)).wrapping_add((byte!(Random; 1)) as u16);
-        let prod: u16 = Mult8x8((y >> 4) as u8, word!(game.room_width_in_blocks) as u8);
-        if (*(ram_ptr!(game, u16; 0x10002)).offset((prod as i32 + (x as i32 >> 4)) as isize)
-            & 0x3ff)
-            != 255
-        {
-            RoomCode_GenRandomExplodes(x, y, game);
+    unsafe {
+        if word!(game.time_is_frozen_flag) == 0 && (word!(game.nmi_frame_counter_word) & 1) == 0 {
+            let mut Random: u16 = NextRandom(game);
+            let x: u16 = (word!(game.layer1_x_pos)).wrapping_add((Random as u8) as u16);
+            let y: u16 = (word!(game.layer1_y_pos)).wrapping_add((byte!(Random; 1)) as u16);
+            let prod: u16 = Mult8x8((y >> 4) as u8, word!(game.room_width_in_blocks) as u8);
+            if (*(ram_ptr!(game, u16; 0x10002)).offset((prod as i32 + (x as i32 >> 4)) as isize)
+                & 0x3ff)
+                != 255
+            {
+                RoomCode_GenRandomExplodes(x, y, game);
+            }
         }
     }
 }
 pub unsafe fn RoomCode_GenRandomExplodes(x_r18: u16, y_r20: u16, game: &mut Game) {
-    static kRoomCode_GenRandomExplodes_Sprite: [u8; 8] = [3, 3, 9, 12, 12, 18, 18, 21];
-    static kRoomCode_GenRandomExplodes_Sfx: [u8; 8] = [0x24, 0, 0, 0x25, 0, 0, 0, 0];
-    let v1: u16 = (NextRandom(game)) & (0xfu16);
-    if v1 < 8 {
-        let v2: u16 = kRoomCode_GenRandomExplodes_Sfx[v1 as usize] as u16;
-        if v2 != 0 {
-            QueueSfx2_Max6(v2, game);
+    unsafe {
+        static kRoomCode_GenRandomExplodes_Sprite: [u8; 8] = [3, 3, 9, 12, 12, 18, 18, 21];
+        static kRoomCode_GenRandomExplodes_Sfx: [u8; 8] = [0x24, 0, 0, 0x25, 0, 0, 0, 0];
+        let v1: u16 = (NextRandom(game)) & (0xfu16);
+        if v1 < 8 {
+            let v2: u16 = kRoomCode_GenRandomExplodes_Sfx[v1 as usize] as u16;
+            if v2 != 0 {
+                QueueSfx2_Max6(v2, game);
+            }
         }
+        create_sprite(
+            x_r18,
+            y_r20,
+            kRoomCode_GenRandomExplodes_Sprite[(v1 as i32 & 7) as usize] as u16,
+            0,
+            game,
+        );
     }
-    create_sprite(
-        x_r18,
-        y_r20,
-        kRoomCode_GenRandomExplodes_Sprite[(v1 as i32 & 7) as usize] as u16,
-        0,
-        game,
-    );
 }
 pub unsafe fn PauseHook_DraygonRoom(game: &mut Game) {
-    word!(game.irqhandler_next_handler = 4);
+    unsafe {
+        word!(game.irqhandler_next_handler = 4);
+    }
 }
 pub unsafe fn UnpauseHook_DraygonRoom(game: &mut Game) -> CoroutineRet {
-    if word!(game.hdma_object_channels_bitmask[1]) == 8 {
-        word!(game.irqhandler_next_handler = 12);
+    unsafe {
+        if word!(game.hdma_object_channels_bitmask[1]) == 8 {
+            word!(game.irqhandler_next_handler = 12);
+        }
+        kCoroutineNone as CoroutineRet
     }
-    kCoroutineNone as CoroutineRet
 }
 
 static kRoomCode_SpawnCeresFallingDebris_Tab: [u16; 16] = [
@@ -400,10 +406,12 @@ crate::game::callback_dispatch! {
     }
 }
 pub unsafe fn RunRoomMainCode(game: &mut Game) {
-    if word!(game.room_main_code_ptr) != 0 {
-        CallRoomCode(
-            ((word!(game.room_main_code_ptr)) as u32) | (0x8f0000u32),
-            game,
-        );
+    unsafe {
+        if word!(game.room_main_code_ptr) != 0 {
+            CallRoomCode(
+                ((word!(game.room_main_code_ptr)) as u32) | (0x8f0000u32),
+                game,
+            );
+        }
     }
 }

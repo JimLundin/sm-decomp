@@ -24,7 +24,7 @@ crate::typed_struct! {
 const RomPtr_83: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x83>;
 #[inline]
 unsafe fn get_FxDef(a: u16, game: &mut Game) -> *mut FxDef {
-    RomPtr((0x830000u32) | ((a) as u32), game) as *mut FxDef
+    unsafe { RomPtr((0x830000u32) | ((a) as u32), game) as *mut FxDef }
 }
 
 macro_rules! apply_room_fx_definition {
@@ -57,11 +57,13 @@ macro_rules! apply_room_fx_definition {
 }
 
 pub unsafe fn LoadFxEntry(v0: u16, game: &mut Game) {
-    let FD = get_FxDef(
-        (word!(game.room_layer3_asm_ptr) as i32 + 16 * (v0 as i32 & 7)) as u16,
-        game,
-    );
-    apply_room_fx_definition!(game, FD, palette_buffer);
+    unsafe {
+        let FD = get_FxDef(
+            (word!(game.room_layer3_asm_ptr) as i32 + 16 * (v0 as i32 & 7)) as u16,
+            game,
+        );
+        apply_room_fx_definition!(game, FD, palette_buffer);
+    }
 }
 pub fn nullsub_106(game: &mut Game) {}
 static kFxTypeFuncPtrs: [Func_V; 23] = callback_table! { nonnull Func_V;
@@ -96,72 +98,80 @@ macro_rules! spawn_room_effect_bitset {
 }
 
 pub unsafe fn LoadFXHeader(game: &mut Game) {
-    let mut entry_ptr: u16 = word!(game.room_layer3_asm_ptr);
-    if entry_ptr == 0 {
-        return;
-    }
-    loop {
-        let door_ptr: u16 = (*get_FxDef(entry_ptr, game)).door_ptr;
-        if door_ptr == 0 {
-            break;
-        }
-        if door_ptr == 0xffff {
+    unsafe {
+        let mut entry_ptr: u16 = word!(game.room_layer3_asm_ptr);
+        if entry_ptr == 0 {
             return;
         }
-        if door_ptr == word!(game.door_def_ptr) {
-            break;
+        loop {
+            let door_ptr: u16 = (*get_FxDef(entry_ptr, game)).door_ptr;
+            if door_ptr == 0 {
+                break;
+            }
+            if door_ptr == 0xffff {
+                return;
+            }
+            if door_ptr == word!(game.door_def_ptr) {
+                break;
+            }
+            entry_ptr = (entry_ptr).wrapping_add(16);
         }
-        entry_ptr = (entry_ptr).wrapping_add(16);
+        let FD = get_FxDef(entry_ptr, game);
+        apply_room_fx_definition!(game, FD, target_palettes);
+        word!(game.fx_type = (*FD).type_0 as u16);
+        if (*FD).type_0 != 0 {
+            word!(
+                game.fx_tilemap_ptr =
+                    crate::rtl::rom_table_word!(game, 0x83abf0, ((*FD).type_0 >> 1) as isize)
+            );
+            kFxTypeFuncPtrs[((*FD).type_0 >> 1) as usize](game);
+        }
+        spawn_room_effect_bitset!(FD, palette_fx_bitset, game, 0x83ac46, SpawnPalfxObject);
+        spawn_room_effect_bitset!(FD, animtiles_bitset, game, 0x83ac56, SpawnAnimtiles);
     }
-    let FD = get_FxDef(entry_ptr, game);
-    apply_room_fx_definition!(game, FD, target_palettes);
-    word!(game.fx_type = (*FD).type_0 as u16);
-    if (*FD).type_0 != 0 {
-        word!(
-            game.fx_tilemap_ptr =
-                crate::rtl::rom_table_word!(game, 0x83abf0, ((*FD).type_0 >> 1) as isize)
-        );
-        kFxTypeFuncPtrs[((*FD).type_0 >> 1) as usize](game);
-    }
-    spawn_room_effect_bitset!(FD, palette_fx_bitset, game, 0x83ac46, SpawnPalfxObject);
-    spawn_room_effect_bitset!(FD, animtiles_bitset, game, 0x83ac56, SpawnAnimtiles);
 }
 pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
-    let mut v1: i16 = 0;
-    if (word!(game.ceres_status) & 0x8000) != 0 {
-        if (112i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0
-            && (144i16).wrapping_sub((word!(game.samus_x_pos)) as i16) >= 0
-            && word!(game.samus_y_pos) as i32 - 128i32 & 0x8000 != 0
-            && word!(game.samus_y_pos) as i32 - 75i32 & 0x8000 == 0
-            && word!(game.samus_y_speed) == 0
-            && word!(game.samus_y_subspeed) == 0
-            && word!(game.game_state) as i32 == kGameState_8_MainGameplay as i32
-        {
-            CallSomeSamusCode(2, game);
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.game_state = 32);
-        }
-        crate::update_place! { unaligned_word fresh0 = &raw mut (*(ram_ptr!(game, u16; 0x7e1, 2))) => (u16::from_le(fresh0.read_unaligned())).wrapping_sub(1); }
-        if *(ram_ptr!(game, i16; 0x7e1, 2)) < 0 {
-            let v0: i32 = ((6u16).wrapping_mul(*(ram_ptr!(game, u16; 0x7e1)))) as i32 >> 1;
-            *(ram_ptr!(game, u16; 0x7e1, 2)) =
-                crate::rtl::rom_table_word!(game, 0x89ad5f, v0 as isize);
-            word!(game.reg_M7B = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 1) as isize));
-            word!(game.reg_M7C = -(word!(game.reg_M7B) as i32) as u16);
-            word!(game.reg_M7A = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 2) as isize));
-            word!(game.reg_M7D = word!(game.reg_M7A));
-            if *(ram_ptr!(game, i16; 0x7e1)) < 0 {
-                v1 = ((*(ram_ptr!(game, u16; 0x7e1))) as i16).wrapping_sub(1);
-                if *(ram_ptr!(game, u16; 0x7e1)) == 0x8001 {
-                    v1 = 0;
-                }
-            } else {
-                v1 = ((*(ram_ptr!(game, u16; 0x7e1))) as i16).wrapping_add(1);
-                if *(ram_ptr!(game, u16; 0x7e1)) == 67 {
-                    v1 = -32700i16;
-                }
+    unsafe {
+        let mut v1: i16 = 0;
+        if (word!(game.ceres_status) & 0x8000) != 0 {
+            if (112i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0
+                && (144i16).wrapping_sub((word!(game.samus_x_pos)) as i16) >= 0
+                && word!(game.samus_y_pos) as i32 - 128i32 & 0x8000 != 0
+                && word!(game.samus_y_pos) as i32 - 75i32 & 0x8000 == 0
+                && word!(game.samus_y_speed) == 0
+                && word!(game.samus_y_subspeed) == 0
+                && word!(game.game_state) as i32 == kGameState_8_MainGameplay as i32
+            {
+                CallSomeSamusCode(2, game);
+                word! { game, 0; screen_fade_delay, screen_fade_counter }
+                word!(game.game_state = 32);
             }
-            *(ram_ptr!(game, u16; 0x7e1)) = v1 as u16;
+            crate::update_place! { unaligned_word fresh0 = &raw mut (*(ram_ptr!(game, u16; 0x7e1, 2))) => (u16::from_le(fresh0.read_unaligned())).wrapping_sub(1); }
+            if *(ram_ptr!(game, i16; 0x7e1, 2)) < 0 {
+                let v0: i32 = ((6u16).wrapping_mul(*(ram_ptr!(game, u16; 0x7e1)))) as i32 >> 1;
+                *(ram_ptr!(game, u16; 0x7e1, 2)) =
+                    crate::rtl::rom_table_word!(game, 0x89ad5f, v0 as isize);
+                word!(
+                    game.reg_M7B = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 1) as isize)
+                );
+                word!(game.reg_M7C = -(word!(game.reg_M7B) as i32) as u16);
+                word!(
+                    game.reg_M7A = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 2) as isize)
+                );
+                word!(game.reg_M7D = word!(game.reg_M7A));
+                if *(ram_ptr!(game, i16; 0x7e1)) < 0 {
+                    v1 = ((*(ram_ptr!(game, u16; 0x7e1))) as i16).wrapping_sub(1);
+                    if *(ram_ptr!(game, u16; 0x7e1)) == 0x8001 {
+                        v1 = 0;
+                    }
+                } else {
+                    v1 = ((*(ram_ptr!(game, u16; 0x7e1))) as i16).wrapping_add(1);
+                    if *(ram_ptr!(game, u16; 0x7e1)) == 67 {
+                        v1 = -32700i16;
+                    }
+                }
+                *(ram_ptr!(game, u16; 0x7e1)) = v1 as u16;
+            }
         }
     }
 }

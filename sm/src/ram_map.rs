@@ -258,7 +258,9 @@ pub(crate) use checked_word;
 /// `destination` must be valid for writing two bytes. It may be unaligned.
 #[inline]
 pub(crate) unsafe fn write_word(value: u16, destination: *mut u16) {
-    destination.write_unaligned(value.to_le());
+    unsafe {
+        destination.write_unaligned(value.to_le());
+    }
 }
 
 ram_vars! {
@@ -965,10 +967,10 @@ macro_rules! ram_pointer_functions {
     ($($name:ident($index:ident: $index_type:ty) -> $target:ty = [$($offset:expr),+ $(,)?];)*) => {
         $(
             #[inline]
-            unsafe fn $name($index: $index_type, game: &mut $crate::game_state::Game) -> *mut $target {
+            unsafe fn $name($index: $index_type, game: &mut $crate::game_state::Game) -> *mut $target { unsafe {
                 (&raw mut game.g_ram as *mut ::core::primitive::u8)
                     $(.offset($offset))+ as *mut $target
-            }
+            }}
         )*
     };
 }

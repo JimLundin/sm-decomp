@@ -46,7 +46,9 @@ impl RoomEntry {
 }
 
 pub unsafe fn SpawnHardcodedPlm(args: SpawnHardcodedPlmArgs, game: &mut Game) {
-    spawn_hardcoded_plm(args, core::ptr::null_mut(), game);
+    unsafe {
+        spawn_hardcoded_plm(args, core::ptr::null_mut(), game);
+    }
 }
 
 // Nested setup spawns retain the calling collision's displacement.
@@ -55,84 +57,92 @@ pub(crate) unsafe fn spawn_hardcoded_plm(
     displacement: *mut i32,
     game: &mut Game,
 ) {
-    let Some(slot) = free_slot(game) else { return };
-    let row = u16::from(args.block_y) * u16::from(checked_word!(game.room_width_in_blocks) as u8);
-    checked_word!(
-        game.plm_block_indices[slot] = row.wrapping_add(u16::from(args.block_x)).wrapping_mul(2)
-    );
-    checked_word!(game.plm_header_ptr[slot] = args.header);
-    checked_word!(game.plm_room_arguments[slot] = 0);
-    checked_word!(game.plm_variables[slot] = 0);
-    checked_word!(game.plm_pre_instrs[slot] = 0x8469);
-    let header = header_record(args.header, game);
-    arm(slot, header.word(2), game);
-    checked_word!(game.plm_id = (slot * 2) as u16);
-    CallPlmHeaderFunc(
-        0x840000 | u32::from(header.word(0)),
-        (slot * 2) as u16,
-        displacement,
-        addr_kDefaultPlmDrawInstruction as u16,
-        game,
-    );
+    unsafe {
+        let Some(slot) = free_slot(game) else { return };
+        let row =
+            u16::from(args.block_y) * u16::from(checked_word!(game.room_width_in_blocks) as u8);
+        checked_word!(
+            game.plm_block_indices[slot] =
+                row.wrapping_add(u16::from(args.block_x)).wrapping_mul(2)
+        );
+        checked_word!(game.plm_header_ptr[slot] = args.header);
+        checked_word!(game.plm_room_arguments[slot] = 0);
+        checked_word!(game.plm_variables[slot] = 0);
+        checked_word!(game.plm_pre_instrs[slot] = 0x8469);
+        let header = header_record(args.header, game);
+        arm(slot, header.word(2), game);
+        checked_word!(game.plm_id = (slot * 2) as u16);
+        CallPlmHeaderFunc(
+            0x840000 | u32::from(header.word(0)),
+            (slot * 2) as u16,
+            displacement,
+            addr_kDefaultPlmDrawInstruction as u16,
+            game,
+        );
+    }
 }
 
 pub unsafe fn SpawnRoomPLM(address: u16, game: &mut Game) {
-    let Some(slot) = free_slot(game) else { return };
-    let entry = if address == 0x12 {
-        RoomEntry::Scratch
-    } else {
-        RoomEntry::Rom(crate::rtl::rom_bank_record::<0x8f>(address, game))
-    };
-    let y = u16::from(entry.byte(3, game));
-    let row = y * u16::from(checked_word!(game.room_width_in_blocks) as u8);
-    let x = u16::from(entry.byte(2, game));
-    checked_word!(game.plm_block_indices[slot] = row.wrapping_add(x).wrapping_mul(2));
-    checked_word!(game.plm_room_arguments[slot] = entry.word(4, game));
-    let header_address = entry.word(0, game);
-    checked_word!(game.plm_header_ptr[slot] = entry.word(0, game));
-    checked_word!(game.plm_variables[slot] = 0);
-    checked_word!(game.plm_pre_instrs[slot] = 0x84e6);
-    let header = header_record(header_address, game);
-    // Room entries and their headers explicitly read little-endian words.
-    arm(slot, u16::from_le(header.word(2)), game);
-    checked_word!(game.plm_id = (slot * 2) as u16);
-    CallPlmHeaderFunc(
-        0x840000 | u32::from(u16::from_le(header.word(0))),
-        (slot * 2) as u16,
-        core::ptr::null_mut(),
-        addr_kDefaultPlmDrawInstruction as u16,
-        game,
-    );
+    unsafe {
+        let Some(slot) = free_slot(game) else { return };
+        let entry = if address == 0x12 {
+            RoomEntry::Scratch
+        } else {
+            RoomEntry::Rom(crate::rtl::rom_bank_record::<0x8f>(address, game))
+        };
+        let y = u16::from(entry.byte(3, game));
+        let row = y * u16::from(checked_word!(game.room_width_in_blocks) as u8);
+        let x = u16::from(entry.byte(2, game));
+        checked_word!(game.plm_block_indices[slot] = row.wrapping_add(x).wrapping_mul(2));
+        checked_word!(game.plm_room_arguments[slot] = entry.word(4, game));
+        let header_address = entry.word(0, game);
+        checked_word!(game.plm_header_ptr[slot] = entry.word(0, game));
+        checked_word!(game.plm_variables[slot] = 0);
+        checked_word!(game.plm_pre_instrs[slot] = 0x84e6);
+        let header = header_record(header_address, game);
+        // Room entries and their headers explicitly read little-endian words.
+        arm(slot, u16::from_le(header.word(2)), game);
+        checked_word!(game.plm_id = (slot * 2) as u16);
+        CallPlmHeaderFunc(
+            0x840000 | u32::from(u16::from_le(header.word(0))),
+            (slot * 2) as u16,
+            core::ptr::null_mut(),
+            addr_kDefaultPlmDrawInstruction as u16,
+            game,
+        );
+    }
 }
 
 /// Prepare a PLM at the current collision block and invoke its legacy setup.
 pub unsafe fn SpawnPLM(header: u16, game: &mut Game) -> u8 {
-    SpawnPLMWithCollision(header, core::ptr::null_mut(), game)
+    unsafe { SpawnPLMWithCollision(header, core::ptr::null_mut(), game) }
 }
 
 /// # Safety
 /// Setup requires initialized runtime state. A non-null displacement must stay
 /// live and writable through setup and any nested PLM spawns.
 pub unsafe fn SpawnPLMWithCollision(header: u16, displacement: *mut i32, game: &mut Game) -> u8 {
-    let Some(slot) = free_slot(game) else {
-        return 0;
-    };
-    checked_word!(game.plm_block_indices[slot] = game.cur_block_index().wrapping_mul(2));
-    checked_word!(game.plm_header_ptr[slot] = header);
-    checked_word!(game.plm_pre_instrs[slot] = 0x853d);
-    // Collision spawning uses checked window reads and reacquires ROM for setup.
-    let address = 0x840000 | u32::from(header);
-    arm(slot, game.read_rom_word(address, 2), game);
-    checked_word!(game.plm_room_arguments[slot] = 0);
-    checked_word!(game.plm_variables[slot] = 0);
-    checked_word!(game.plm_id = (slot * 2) as u16);
-    CallPlmHeaderFunc(
-        0x840000 | u32::from(game.read_rom_word(address, 0)),
-        (slot * 2) as u16,
-        displacement,
-        0,
-        game,
-    )
+    unsafe {
+        let Some(slot) = free_slot(game) else {
+            return 0;
+        };
+        checked_word!(game.plm_block_indices[slot] = game.cur_block_index().wrapping_mul(2));
+        checked_word!(game.plm_header_ptr[slot] = header);
+        checked_word!(game.plm_pre_instrs[slot] = 0x853d);
+        // Collision spawning uses checked window reads and reacquires ROM for setup.
+        let address = 0x840000 | u32::from(header);
+        arm(slot, game.read_rom_word(address, 2), game);
+        checked_word!(game.plm_room_arguments[slot] = 0);
+        checked_word!(game.plm_variables[slot] = 0);
+        checked_word!(game.plm_id = (slot * 2) as u16);
+        CallPlmHeaderFunc(
+            0x840000 | u32::from(game.read_rom_word(address, 0)),
+            (slot * 2) as u16,
+            displacement,
+            0,
+            game,
+        )
+    }
 }
 
 #[forbid(unsafe_code)]
@@ -158,26 +168,28 @@ fn door_cap_to_close(block: u16, game: &mut Game) -> Option<(usize, u16)> {
 
 /// Restart an existing colored cap, or spawn the direction's closing object.
 pub(crate) unsafe fn close_door(game: &mut Game) {
-    let door = crate::rtl::rom_bank_record::<0x83>(checked_word!(game.door_def_ptr), game);
-    let row = u16::from(door.byte(offset_of!(DoorDef, y_pos_plm)))
-        * u16::from(checked_word!(game.room_width_in_blocks) as u8);
-    let block = row
-        .wrapping_add(u16::from(door.byte(offset_of!(DoorDef, x_pos_plm))))
-        .wrapping_mul(2);
-    if let Some((slot, header)) = door_cap_to_close(block, game) {
-        checked_word!(game.plm_instr_list_ptrs[slot] = header_record(header, game).word(4));
-        return;
-    }
-    let address = checked_word!(game.door_direction)
-        .wrapping_mul(2)
-        .wrapping_add(addr_kDoorClosingPlmIds as u16);
-    let header = crate::rtl::rom_bank_record::<0x8f>(address, game);
-    if header.word(0) != 0 {
-        game.g_ram[0x12..0x14].copy_from_slice(&header.word(0).to_ne_bytes());
+    unsafe {
         let door = crate::rtl::rom_bank_record::<0x83>(checked_word!(game.door_def_ptr), game);
-        game.g_ram[0x14..0x16]
-            .copy_from_slice(&door.word(offset_of!(DoorDef, x_pos_plm)).to_ne_bytes());
-        game.g_ram[0x16..0x18].copy_from_slice(&0u16.to_ne_bytes());
-        SpawnRoomPLM(0x12, game);
+        let row = u16::from(door.byte(offset_of!(DoorDef, y_pos_plm)))
+            * u16::from(checked_word!(game.room_width_in_blocks) as u8);
+        let block = row
+            .wrapping_add(u16::from(door.byte(offset_of!(DoorDef, x_pos_plm))))
+            .wrapping_mul(2);
+        if let Some((slot, header)) = door_cap_to_close(block, game) {
+            checked_word!(game.plm_instr_list_ptrs[slot] = header_record(header, game).word(4));
+            return;
+        }
+        let address = checked_word!(game.door_direction)
+            .wrapping_mul(2)
+            .wrapping_add(addr_kDoorClosingPlmIds as u16);
+        let header = crate::rtl::rom_bank_record::<0x8f>(address, game);
+        if header.word(0) != 0 {
+            game.g_ram[0x12..0x14].copy_from_slice(&header.word(0).to_ne_bytes());
+            let door = crate::rtl::rom_bank_record::<0x83>(checked_word!(game.door_def_ptr), game);
+            game.g_ram[0x14..0x16]
+                .copy_from_slice(&door.word(offset_of!(DoorDef, x_pos_plm)).to_ne_bytes());
+            game.g_ram[0x16..0x18].copy_from_slice(&0u16.to_ne_bytes());
+            SpawnRoomPLM(0x12, game);
+        }
     }
 }

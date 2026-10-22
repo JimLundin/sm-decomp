@@ -320,58 +320,60 @@ impl State for RecordingBytes {
 }
 
 unsafe fn machine(game: &mut Game, archive: &mut Archive<'_>) -> Result<(), String> {
-    // Game's allocation/ROM view and callbacks belong to SnesInit. Oracle
-    // scratch snapshots are overwritten before use on the next paired frame.
-    game.g_ram.state(archive)?;
-    game.decompress_src.state(archive)?;
-    game.eproj_spawn_rect.state(archive)?;
-    game.eproj_spawn_r22.state(archive)?;
-    game.eproj_spawn_pt.state(archive)?;
-    game.eproj_spawn_varE24.state(archive)?;
-    game.message_box_das0l_value.state(archive)?;
-    game.k_out.state(archive)?;
-    game.apu_queue.state(archive)?;
-    game.g_runmode.state(archive)?;
-    game.g_calling_asm_from_c.state(archive)?;
-    game.g_calling_asm_from_c_ret.state(archive)?;
-    game.g_fail.state(archive)?;
-    game.g_use_my_apu_code.state(archive)?;
-    game.hookmode.state(archive)?;
-    game.hookcnt.state(archive)?;
-    game.hookadr.state(archive)?;
-    game.hook_orgbyte.state(archive)?;
-    game.hook_fixbug_orgbyte.state(archive)?;
-    game.kPatchedCarrysOrg.state(archive)?;
-    game.VERIFY_ACTIVE.state(archive)?;
-    game.VERIFY_FAILURES.state(archive)?;
-    game.g_got_mismatch_count.state(archive)?;
-    game.g_other_image.state(archive)?;
-    game.g_debug_flag.state(archive)?;
-    game.g_new_ppu.state(archive)?;
-    game.snes_frame_counter.state(archive)?;
-    game.pc_hist.state(archive)?;
-    game.pc_hist_ctr.state(archive)?;
-    game.pc_bp.state(archive)?;
-    game.g_debug_apu_cycles.state(archive)?;
-    game.state_recorder.state(archive)?;
-    let snes = game.g_snes;
-    (*snes).state(archive)?;
-    (*(*snes).cpu).state(archive)?;
-    (*(*snes).dma).state(archive)?;
-    (*(*snes).input1).state(archive)?;
-    (*(*snes).input2).state(archive)?;
-    (*(*snes).snes_ppu).state(archive)?;
-    (*(*snes).my_ppu).state(archive)?;
-    (*(*snes).apu).state(archive)?;
-    (*(*(*snes).apu).spc).state(archive)?;
-    (*(*(*snes).apu).dsp).state.state(archive)?;
-    (*game.g_spc_player).state.state(archive)?;
-    (*game.g_spc_player).ram.state(archive)?;
-    (*(*game.g_spc_player).state.dsp).state.state(archive)?;
-    let mut save_bytes = game.g_sram.bytes(0..8192);
-    archive.bytes(&mut save_bytes)?;
-    game.g_sram.write_bytes(0, &save_bytes);
-    Ok(())
+    unsafe {
+        // Game's allocation/ROM view and callbacks belong to SnesInit. Oracle
+        // scratch snapshots are overwritten before use on the next paired frame.
+        game.g_ram.state(archive)?;
+        game.decompress_src.state(archive)?;
+        game.eproj_spawn_rect.state(archive)?;
+        game.eproj_spawn_r22.state(archive)?;
+        game.eproj_spawn_pt.state(archive)?;
+        game.eproj_spawn_varE24.state(archive)?;
+        game.message_box_das0l_value.state(archive)?;
+        game.k_out.state(archive)?;
+        game.apu_queue.state(archive)?;
+        game.g_runmode.state(archive)?;
+        game.g_calling_asm_from_c.state(archive)?;
+        game.g_calling_asm_from_c_ret.state(archive)?;
+        game.g_fail.state(archive)?;
+        game.g_use_my_apu_code.state(archive)?;
+        game.hookmode.state(archive)?;
+        game.hookcnt.state(archive)?;
+        game.hookadr.state(archive)?;
+        game.hook_orgbyte.state(archive)?;
+        game.hook_fixbug_orgbyte.state(archive)?;
+        game.kPatchedCarrysOrg.state(archive)?;
+        game.VERIFY_ACTIVE.state(archive)?;
+        game.VERIFY_FAILURES.state(archive)?;
+        game.g_got_mismatch_count.state(archive)?;
+        game.g_other_image.state(archive)?;
+        game.g_debug_flag.state(archive)?;
+        game.g_new_ppu.state(archive)?;
+        game.snes_frame_counter.state(archive)?;
+        game.pc_hist.state(archive)?;
+        game.pc_hist_ctr.state(archive)?;
+        game.pc_bp.state(archive)?;
+        game.g_debug_apu_cycles.state(archive)?;
+        game.state_recorder.state(archive)?;
+        let snes = game.g_snes;
+        (*snes).state(archive)?;
+        (*(*snes).cpu).state(archive)?;
+        (*(*snes).dma).state(archive)?;
+        (*(*snes).input1).state(archive)?;
+        (*(*snes).input2).state(archive)?;
+        (*(*snes).snes_ppu).state(archive)?;
+        (*(*snes).my_ppu).state(archive)?;
+        (*(*snes).apu).state(archive)?;
+        (*(*(*snes).apu).spc).state(archive)?;
+        (*(*(*snes).apu).dsp).state.state(archive)?;
+        (*game.g_spc_player).state.state(archive)?;
+        (*game.g_spc_player).ram.state(archive)?;
+        (*(*game.g_spc_player).state.dsp).state.state(archive)?;
+        let mut save_bytes = game.g_sram.bytes(0..8192);
+        archive.bytes(&mut save_bytes)?;
+        game.g_sram.write_bytes(0, &save_bytes);
+        Ok(())
+    }
 }
 
 fn input_fingerprint(inputs: &[u16]) -> u64 {
@@ -386,25 +388,27 @@ fn input_fingerprint(inputs: &[u16]) -> u64 {
 /// Capture/read exact continuation bytes for local round-trip checks as well
 /// as disk checkpoints. The caller owns an initialized, idle verifier Game.
 pub(super) unsafe fn capture(game: &mut Game) -> Result<Vec<u8>, String> {
-    if !game.VERIFY_ACTIVE
-        || game.g_runmode != sm::cpu_infra::RM_BOTH as u8
-        || (*game.g_snes).disableRender
-        || game.g_other_image
-        || game.VERIFY_FAILURES != 0
-        || game.g_fail
-        || game.g_calling_asm_from_c
-        || game.state_recorder.replay_mode
-        || !(*game.g_spc_player).state.reg_write_history.is_null()
-        || (*(*game.g_snes).cart).ramSize != 8192
-    {
-        return Err("checkpoint requires a successful, idle verifier frame".into());
+    unsafe {
+        if !game.VERIFY_ACTIVE
+            || game.g_runmode != sm::cpu_infra::RM_BOTH as u8
+            || (*game.g_snes).disableRender
+            || game.g_other_image
+            || game.VERIFY_FAILURES != 0
+            || game.g_fail
+            || game.g_calling_asm_from_c
+            || game.state_recorder.replay_mode
+            || !(*game.g_spc_player).state.reg_write_history.is_null()
+            || (*(*game.g_snes).cart).ramSize != 8192
+        {
+            return Err("checkpoint requires a successful, idle verifier frame".into());
+        }
+        let mut archive = Archive::Save(Vec::new());
+        machine(game, &mut archive)?;
+        let Archive::Save(bytes) = archive else {
+            unreachable!()
+        };
+        Ok(bytes)
     }
-    let mut archive = Archive::Save(Vec::new());
-    machine(game, &mut archive)?;
-    let Archive::Save(bytes) = archive else {
-        unreachable!()
-    };
-    Ok(bytes)
 }
 
 pub(super) unsafe fn save(
@@ -414,29 +418,31 @@ pub(super) unsafe fn save(
     inputs: &[u16],
     completed: usize,
 ) -> Result<(), String> {
-    let payload = capture(game)?;
-    let mut bytes = Vec::from(MAGIC.as_slice());
-    for word in [
-        compatibility(),
-        fingerprint(rom),
-        input_fingerprint(&inputs[..completed]),
-        completed as u64,
-        u64::from(game.g_use_my_apu_code),
-        fingerprint(&payload),
-    ] {
-        bytes.extend_from_slice(&word.to_le_bytes());
+    unsafe {
+        let payload = capture(game)?;
+        let mut bytes = Vec::from(MAGIC.as_slice());
+        for word in [
+            compatibility(),
+            fingerprint(rom),
+            input_fingerprint(&inputs[..completed]),
+            completed as u64,
+            u64::from(game.g_use_my_apu_code),
+            fingerprint(&payload),
+        ] {
+            bytes.extend_from_slice(&word.to_le_bytes());
+        }
+        bytes.extend_from_slice(&payload);
+        // create_new prevents silently replacing a checkpoint under another run.
+        use std::io::Write;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(path)
+            .map_err(|e| format!("{}: {e}", path.display()))?;
+        file.write_all(&bytes)
+            .map_err(|e| format!("{}: {e}", path.display()))?;
+        Ok(())
     }
-    bytes.extend_from_slice(&payload);
-    // create_new prevents silently replacing a checkpoint under another run.
-    use std::io::Write;
-    let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(path)
-        .map_err(|e| format!("{}: {e}", path.display()))?;
-    file.write_all(&bytes)
-        .map_err(|e| format!("{}: {e}", path.display()))?;
-    Ok(())
 }
 
 pub(super) unsafe fn load(
@@ -445,37 +451,39 @@ pub(super) unsafe fn load(
     rom: &[u8],
     inputs: &[u16],
 ) -> Result<usize, String> {
-    let bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
-    if bytes.len() < 56 || &bytes[..8] != MAGIC {
-        return Err("not a verifier checkpoint".into());
+    unsafe {
+        let bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
+        if bytes.len() < 56 || &bytes[..8] != MAGIC {
+            return Err("not a verifier checkpoint".into());
+        }
+        let word = |at| u64::from_le_bytes(bytes[at..at + 8].try_into().unwrap());
+        let completed = usize::try_from(word(32)).map_err(|_| "checkpoint frame overflow")?;
+        if word(8) != compatibility() {
+            return Err("checkpoint runtime changed; regenerate from boot".into());
+        }
+        if word(16) != fingerprint(rom) {
+            return Err("checkpoint ROM differs".into());
+        }
+        if completed > inputs.len() || word(24) != input_fingerprint(&inputs[..completed]) {
+            return Err("checkpoint input prefix differs".into());
+        }
+        if word(40) != u64::from(game.g_use_my_apu_code) {
+            return Err("checkpoint audio backend differs".into());
+        }
+        if word(48) != fingerprint(&bytes[56..]) {
+            return Err("checkpoint payload is corrupt".into());
+        }
+        let mut archive = Archive::Load(&bytes[56..]);
+        machine(game, &mut archive)?;
+        if !matches!(archive, Archive::Load([])) {
+            return Err("checkpoint has extra state bytes".into());
+        }
+        sm::cpu_infra::RtlUpdateSnesPatchForBugfix(game);
+        // Verify that every serialized field survives reconstruction. Pointers
+        // remain those established by this process's normal initialization.
+        if capture(game)? != bytes[56..] {
+            return Err("checkpoint state did not round-trip".into());
+        }
+        Ok(completed)
     }
-    let word = |at| u64::from_le_bytes(bytes[at..at + 8].try_into().unwrap());
-    let completed = usize::try_from(word(32)).map_err(|_| "checkpoint frame overflow")?;
-    if word(8) != compatibility() {
-        return Err("checkpoint runtime changed; regenerate from boot".into());
-    }
-    if word(16) != fingerprint(rom) {
-        return Err("checkpoint ROM differs".into());
-    }
-    if completed > inputs.len() || word(24) != input_fingerprint(&inputs[..completed]) {
-        return Err("checkpoint input prefix differs".into());
-    }
-    if word(40) != u64::from(game.g_use_my_apu_code) {
-        return Err("checkpoint audio backend differs".into());
-    }
-    if word(48) != fingerprint(&bytes[56..]) {
-        return Err("checkpoint payload is corrupt".into());
-    }
-    let mut archive = Archive::Load(&bytes[56..]);
-    machine(game, &mut archive)?;
-    if !matches!(archive, Archive::Load([])) {
-        return Err("checkpoint has extra state bytes".into());
-    }
-    sm::cpu_infra::RtlUpdateSnesPatchForBugfix(game);
-    // Verify that every serialized field survives reconstruction. Pointers
-    // remain those established by this process's normal initialization.
-    if capture(game)? != bytes[56..] {
-        return Err("checkpoint state did not round-trip".into());
-    }
-    Ok(completed)
 }
