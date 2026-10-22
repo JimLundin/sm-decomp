@@ -1663,6 +1663,25 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Thirty-eight prior compiled files are unchanged. The existing architecture
    diagram now distinguishes shared firing mechanics, caller-specific policies
    and the unadopted named-definition prototypes.
+   Definition playback and trail sampling now use the actual animation bundle
+   in the complete generic `Firing` owner. Providers receive and return that owner
+   by value across diagnostics; no detached animation state survives callbacks.
+   **1,992 selected full-RAM comparisons**, 1,569 ordered observations and 287
+   matching failures pass: 348 playback, 351 trail sampling, 72 whole-owner
+   callbacks, 798 changed animation consumers, 89 reset and 334 missile/shared
+   reservation cases. All 115 frozen and 50 draft inputs match compiled bytes;
+   optimized DLL and formatting pass. Preserved definition-stage includes three
+   native-definition sequences, one carrying unrelated projectile, flare,
+   sound-resume and protection state through the same `Firing<Label, Sprite>`.
+   Playback and sampling are generic; firing, flight, initialization and drawing
+   still use encoded definitions. Native storage is not an entirely native
+   weapon lifecycle. These selected checks do not rerun or replace the earlier
+   lifecycle totals; no movie ran. The formatted model/provider cohort grows
+   **989 -> 1,194 lines (+205)**; 78 authored native-example lines are separate.
+   This is a prototype architecture cost, not a whole-replacement price, adopted
+   reduction or new unsafe-elimination result. Broad-index reference bodies and
+   runtime bridges remain; initialization, drawing and trail-emission definition
+   interfaces still need closure.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, drawing/trail, palette/sound
    output and grapple-start consumers remain controlled. ROM definitions are
