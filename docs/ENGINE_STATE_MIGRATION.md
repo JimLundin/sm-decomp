@@ -66,10 +66,11 @@ from the component result alone.
 The [integrated setup checks](RAM_OWNERSHIP.md#integrated-mechanism-setup-and-terrain)
 now place selected setup policies on the existing pool instead of calling the
 raw setup bodies. Candidate terrain and projectile consumers observe their effects.
-This closes that selected setup interval, not all mechanism authority: room-entry
-and hardcoded creation, the PLM interpreter, suspension and reset/load imports still
-need a complete producer/consumer audit. Use the full candidate's richer schema
-as the implementation to extend; the independent coordinator composition supplies
+The full candidate subsequently shares collision, room-entry and hardcoded
+creation (`7314fe2f`). This closes selected creation/setup intervals, not all
+mechanism authority: the PLM interpreter, external consumers, suspension and
+reset/load imports still need migration. Use that richer schema as the
+implementation to extend; the independent coordinator composition supplies
 additional checks rather than a second owner.
 
 ## One RAM allocation serves both execution branches
@@ -232,6 +233,32 @@ If promoted later, the continuation owner must include the active session/call
 context and raw-import handling, or keep each operation's typed continuation
 within its scoped lifetime. A PLM message model cannot simply appropriate the
 shared byte because its common values happen to be zero and one.
+
+## Mechanism continuation boundary
+
+The [interpreter observations](RAM_OWNERSHIP.md#mechanism-consumers-and-suspended-execution)
+exercise 29 actual scheduler invocations through controlled callbacks. A yield
+retains the message queue and selected mechanism; resume consumes their live
+values without repeating slot admission, pre-action or timer decrement. Completed
+display clears the queue and reacquires the selected program and ROM allocation.
+These fields belong to the suspended operation's state-transfer contract, not
+just the two-variant `MessageHandoff` value.
+
+The owner must retain the session mode, outer gameplay/door continuation and
+mechanism pass together. Pool activation is independent: clearing the active
+header while suspended does not cancel the continuation. A generic reset of
+all slot fields would also lose the stale associations and cursors retained by
+`ClearPLMs`. Existing native callbacks require explicit export/execute/import
+until their identified encounter, projectile and presentation consumers migrate.
+
+The component experiment copies the yielded RAM image into a fresh `Game` and
+resumes it. It does not exercise either frontend snapshot path or the verifier
+checkpoint. Nor does ordinary SRAM loading restore this continuation: its main
+copy is `0xd7c0..0xde1c`, followed by player and map data; the normal mechanism
+arrays lie outside that range and the instruction timers begin at its exclusive
+end. See [LoadFromSram](../sm/src/game/sm_81.rs#L100). Whole-image restore and
+save-game restore need distinct transition semantics. Generic indexed aliases
+remain an independent obligation.
 
 ## Concrete next implementation cohort
 

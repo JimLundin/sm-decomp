@@ -615,10 +615,44 @@ independently inspected. Carry that full implementation forward. Keep the
 independent composition as a cross-check, with one allocator and setup model in
 the eventual engine.
 
-Creation from room entries and hardcoded requests, full PLM script consumption,
-message suspension and runtime imports are the next ownership audit. A pool is
-not persistently authoritative until all those producers and consumers participate
-in its state transfers. The checked room grid remains a separate migration.
+The full candidate now shares creation from collisions, room entries and hardcoded
+requests, reporting 334 selected comparisons in `7314fe2f`. The subsequent
+[consumer/suspension audit](RAM_OWNERSHIP.md#mechanism-consumers-and-suspended-execution)
+runs 29 invocations of the actual interpreter with controlled callbacks. It
+establishes the following proposed mechanism-pass model; the replacement remains
+to be implemented on that candidate.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Select
+    Select --> PreAction: Admit active mechanism
+    Select --> Complete: No remaining slots
+    PreAction --> Countdown: Reacquire live selection
+    Countdown --> Select: Still waiting
+    Countdown --> Script: Timer expires
+    Script --> Select: Command stops
+    Script --> Script: Command continues
+    Script --> Display: Continuing command requests message
+    Display --> Suspended: Display yields
+    Suspended --> Display: Session resumes with live queue and selection
+    Display --> Script: Complete; reacquire selected program
+    Script --> Drawing: Commit duration, draw entry and next program
+    Drawing --> Select: Process, locate and draw with live selection
+    Complete --> [*]
+```
+
+The pass owns traversal and continuation, separately from slot activation.
+Deleting an admitted mechanism does not cancel the current continuation; later
+phases may target another slot. The session retains the outer gameplay or door
+transition while message display yields. These are logical phases, not a demand
+to serialize every transient phase or discard partial state on failure.
+
+The same ownership boundary must expose encounter signals, mechanism-presence
+queries, hostile-projectile spawn context, X-ray reveal queries and alternate
+door-program activation. Source searches found those direct consumers outside
+the PLM interpreter. Use named operations at their existing observation points.
+Persistent authority still requires their migration, complete script consumption
+and runtime imports; the checked room grid remains a separate migration.
 
 The earlier named-transition experiment advanced the interface without migrating
 the remaining producer, flight or runtime ownership. Its changed model/provider

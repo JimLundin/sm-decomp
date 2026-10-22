@@ -2012,10 +2012,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    stage; its 115 frozen and 110 candidate compiled inputs were
    independently inspected, without rerunning that suite. Carry the full candidate
    forward; do not install the independent cross-check's modules or add prices.
-   Coordinator follow-up is the ownership audit of remaining creation sources,
-   PLM script/suspension consumers and runtime imports. Continue implementation
-   in the full candidate rather than another parallel allocator/setup model.
-   That unchanged scheduler/provider is now integrated into the top-level full
+   The coordinator's [mechanism consumer and suspension audit](RAM_OWNERSHIP.md#mechanism-consumers-and-suspended-execution)
+   now records creation policies, room lifecycle, encounter signals, hostile-
+   projectile context, X-ray queries and door-program activation. Actual PLM
+   interpreter/MessageHandoff observations pass **29 invocations**, 81 ordered
+   callback snapshots and six injected failures. Admission precedes pre-action;
+   later phases use live selection even after deletion or retargeting. Message
+   resume bypasses admission and rereads queue/program/ROM. A copied RAM image
+   resumes this component; full snapshot/checkpoint paths are untested here.
+   Exact scheduler/handoff correspondence and all 115 frozen + 112 experiment
+   compiled inputs pass; 109 inherited files are unchanged. Callbacks, drawing
+   and display are controlled; probes are no-op. This is observation, not an
+   old/new replacement comparison, movie, adoption or saving. Source/result:
+   20261022/plm-scheduler-observations. Extend the full candidate with the mechanism
+   pass, context-aware continuation and identified consumers; compare actual
+   old/new execution before claiming scheduler ownership. Do not add another
+   allocator/setup model. Runtime imports and generic aliases remain open.
+   The projectile scheduler/provider is also integrated into the top-level full
    candidate, preserved in player-projectiles/scheduled-flight-stage. **514
    selected comparisons**, 651 ordered observations and ten expected matching
    failures pass: the 453 scheduling cases, 41 actual-room scheduling cases and

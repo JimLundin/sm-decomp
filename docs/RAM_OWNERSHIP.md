@@ -1418,10 +1418,113 @@ the independent experiment in `integrated-inspection.json`.
 
 Carry that full candidate forward as the single implementation. The independent
 188-case composition is a cross-check and its separate modules should not be
-installed alongside it. Next, audit the remaining room-entry/hardcoded producers,
-PLM script consumers, suspension and runtime imports against this same owner;
-continue complete implementations in the full candidate rather than creating
-another parallel allocator or setup model.
+installed alongside it. The full candidate subsequently unified collision,
+hardcoded and room-entry creation in `7314fe2f`, reporting 334 comparisons,
+648 observations and 47 matching failures. That result extends the same owner;
+it does not close script execution or persistent runtime authority.
+
+### Mechanism consumers and suspended execution
+
+The source audit through `7314fe2f` and the `plm-scheduler-observations`
+experiment identify the next boundary around the existing pool. Production
+`plm_spawning` still uses RAM authority. Its three entries share allocation but
+preserve different initialization contracts:
+
+| Creation source | Captured input and ordered differences |
+| --- | --- |
+| Collision | Capture the current collision block. Use pre-action `0x853d`; arm before clearing argument/auxiliary. Reacquire ROM for setup; pass setup argument zero and the live optional displacement. |
+| Hardcoded | Compute the block from explicit coordinates and the low byte of room width. Clear argument/auxiliary before resolving the header; use pre-action `0x8469`. Retain the header allocation; pass setup argument `0x8da0` and any nested collision displacement. |
+| Room entry | Read the six-byte entry from ROM or live scratch storage. Retain its room argument, read its header twice, then clear auxiliary and use pre-action `0x84e6`. Retain the header allocation; pass `0x8da0` and no displacement. |
+
+All three select a free slot before reading definitions. These are compatibility
+policies under one creation interface, not three pools. The setup argument is
+observable: `PlmSetup_C82A_DownwardsClosedGate` forwards it to enemy-projectile
+creation. See [creation](../sm/src/game/plm_spawning.rs) and
+[gate setup](../sm/src/game/sm_84.rs#L829).
+
+Named field searches outside the allocator and PLM bank identify these additional
+interactions. This is a source audit, not experimental coverage of those callers
+or a proof that generic indexed aliases are closed.
+
+| Owner/caller | Observed interaction | Proposed explicit operation |
+| --- | --- | --- |
+| Room loading | Spawn room entries before door and room setup. Door transition clears mechanism activation before creation, then later invokes the scheduler under its own continuation. | Initialize room mechanisms; continue room entry. |
+| Closing-door lookup | Search associations descending, then check activity. An inactive first match shadows a lower active match. Update the timer and alternate program only after progress checks. | Activate the closing-door program, preserving first-match semantics. |
+| Mother Brain shot reaction | Add the hit-derived value directly to argument slot 39. | Apply the encounter's mechanism signal at that same point. |
+| Torizo | Search the headers for a specific mechanism identity before advancing the encounter. | Query whether the required mechanism is present. |
+| Gate and Eye Door projectiles | Capture mechanism selection/association/argument and calculate block coordinates during initialization. | Supply an ordered mechanism spawn context to hostile-projectile creation. |
+| X-ray item reveal | Read identity, progress argument and auxiliary state, then reveal the associated block. | Query the current item reveal description. |
+
+Sources: [room/door lifecycle and closing-door lookup](../sm/src/game/sm_82.rs),
+[room loading](../sm/src/game/room_state.rs),
+[Mother Brain](../sm/src/game/sm_a9.rs#L1137),
+[Torizo](../sm/src/game/sm_aa.rs#L293),
+[gate initialization](../sm/src/game/sm_86.rs#L1403),
+[Eye Door initialization](../sm/src/game/sm_86.rs#L2041), and
+[X-ray reveal](../sm/src/game/xray_background.rs#L471).
+
+`ClearPLMs` clears activation headers and the item-graphics index only. Slot
+associations, arguments, timers and cursors survive. Enable/disable changes the
+flag rather than resetting the pool. Graphics loading is a separate consumer.
+Consequently, replacing room entry with construction of a zeroed pool would
+change behavior. See [lifecycle helpers](../sm/src/game/sm_84.rs#L63).
+
+The executable follow-up runs the actual `PlmHandler_Async` and `MessageHandoff`
+with controlled pre-actions, instructions, drawing phases and message display.
+**29 invocations**, **81 ordered callback snapshots** and **six expected failures**
+pass. Assertions cover the selected phase/slot sequences, returns, continuation
+and committed fields; full RAM is captured at each callback. This is observation
+of the existing interpreter, not an old/new scheduler comparison.
+
+- Fresh disabled entry preserves selection/draw state. Invalid continuation
+  values 2 and 255 clear the tag and skip the pass. An enabled empty pass resets
+  drawing and finishes with selection zero.
+- Activity is admitted before the pre-action. Clearing that header, clearing
+  the pool or disabling mechanisms inside the callback does not cancel admitted
+  work. Timer and program access use the selection after the callback, including
+  inactive, odd and broad selections. Timer zero wraps to `0xffff`.
+- Duration, draw entry and next program commit before drawing. Process, coordinate
+  calculation and Draw each reread selection; the observations require different
+  slots when the preceding phase retargets it.
+- A null instruction return ends script work before checking a queued message.
+  A duration frame also leaves a queued message alone. A non-null pointer or
+  bank-relative return can enter display, saving the cursor to the slot selected
+  after the command.
+- Yield preserves the exact nonzero return (2 tested), while the PLM continuation
+  tag becomes 1. Queue and selection stay live. Resume bypasses enable, activity,
+  pre-action and countdown admission; completed display clears the live queue,
+  reacquires ROM and reads the live selected program.
+- Replacing the ROM allocation during a command and retaining its old returned
+  pointer exercises that lifetime. After display completes, execution reads the
+  new allocation's duration, 9 rather than 4. The fixture retains both allocations;
+  this establishes no safety guarantee for an unretained raw pointer.
+- Failures in the pre-action, instruction, each drawing phase and display retain
+  their committed prefix. Display failure leaves the saved program but does not
+  set a fresh continuation tag; the tag is stored only on an actual yield.
+
+A yielded RAM image copied into a fresh `Game` resumes the same scheduler path.
+This checks the component's encoded continuation, not frontend save/load or the
+verifier checkpoint format. The shared continuation byte also serves startup and
+Kraid; its permanent owner must include session context, as described in the
+[state-transfer audit](ENGINE_STATE_MIGRATION.md#mechanism-continuation-boundary).
+
+`review_source.py` checks exact current-source bodies for `RomBankBase` and
+`PlmHandler_Async`, plus the complete `MessageHandoff` suffix. `check.py` verifies
+all **115 frozen library inputs** against `15589b48` and **112 experiment inputs**
+against the DLL and manifest. Of 110 inherited setup-stage inputs, only the
+harness changes; 109 are byte-identical. The optimized DLL passes these checks.
+The probe sink is a no-op. Actual drawing, geometry, UI, whole-game execution,
+movie coverage and replacement adoption are not established. No production
+implementation or saving is claimed. Reproduction files and result remain at
+`Local/sm-decomp-experiments/20261022/plm-scheduler-observations`:
+`prepare.py`, `freeze.py`, `build.py`, `review_source.py`, `check.py`,
+`source-review.json` and `result.json`.
+
+Extend the full candidate with a mechanism pass and session-owned continuation,
+then route the identified consumers through the same owner. Compare actual
+old/new execution, including these retarget, lifetime and failure cases, before
+claiming the interpreter migrated. Keep external callbacks behind explicit
+authority transfers until their complete interactions move.
 
 ### Named projectile animation definitions
 
