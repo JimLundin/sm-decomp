@@ -870,6 +870,53 @@ Trail/collision output, sound and other native effects are controlled. No movie,
 production binding or full replacement price is established. Preserved source:
 `player-projectiles/missile-stage` under the same local experiment root.
 
+### Integrated animation and trail definition owner
+
+The reviewed **definition-stage** puts `Animation<Cursor, Sprite>` directly inside
+each shot. Generic playback and trail sampling use scoped access through `Owner`;
+definition operations take and return that complete owner by value. The encoded
+provider alone interprets playback opcodes and cursor strides. An animation copy
+does not survive beside a live `Firing` through a diagnostic.
+
+**1,992 selected full-RAM/return comparisons pass**, with **1,569 ordered
+observations** and **287 matching failures**: 348 playback cases, 351 trail cases,
+72 complete-owner callback cases, 798 animation consumers, 89 reset cases and
+334 missile/reservation cases. Diagnostics mutate charge, counts, protection,
+feedback and another projectile, or recursively reset the owner. Those changes
+survive the resumed animation operation. Canonical playback release invokes the
+existing owned release; the reference invokes actual `ClearProjectile`. Out-of-pool
+execution still uses retained reference bodies.
+
+The selected scopes deliberately differ from the standalone playback's 363 cases:
+release is now actual behavior rather than that experiment's controlled release
+effect. The 3,427-case cancellation suite and 686-case encounter suite were not
+rerun. These are selected consumer checks, not an additive full-projectile total.
+
+Three native-definition sequences pass, including one using the **same
+`Firing<Label, Sprite>` data structure**. It retains other-shot damage, shared
+charge, deferred sound state and protection while sampling and advancing named
+frames with no byte image or RAM/ROM decoding. Its terminal result is `Release`;
+the native sequence does not execute the full release operation. Firing, flight,
+initialization, reset and drawing remain bound to the encoded variant. The generic
+data structure does not establish a completely native weapon lifecycle.
+
+The coordinator checked **115 embedded library inputs** against `15589b48` and
+**50 compiled draft inputs/hashes**, inspected the changed field bundle, codec,
+providers and harness, and reviewed the result without rerunning it. Forty of the
+prior 44 compiled files are unchanged; only `engine.rs`, `codec.rs`, `animation.rs`
+and harness wiring change, with six new definition/provider/check files. Models
+and checked providers forbid unsafe code. Sound, collision, drawing, trail output
+and native diagnostics remain controlled; definitions are synthetic. There is no
+movie or production integration result.
+
+The changed model/provider cohort is **989 -> 1,194 formatted lines (+205)**:
+engine, codec and animation versus those files plus playback, trail selection
+and the encoded provider. Native example/assertion sources are another 78 lines.
+Retained reference paths and runtime transport are not priced by that comparison;
+it is an architecture cost, not a complete saving. Initialization, remaining
+definition consumers and global writer/alias/runtime closure stay open.
+Preserved source: `Local/sm-decomp-experiments/20261022/player-projectiles/definition-stage`.
+
 ### Named projectile animation definitions
 
 A standalone experiment separates projectile playback from instruction encoding.
@@ -910,8 +957,9 @@ are not executed. No ROM or movie is loaded. Initialization, trail readers, atta
 definition conversion, complete malformed-data coverage and production integration
 remain open. Integrating this seam requires moving the **complete `Firing`** through
 diagnostics; retaining its copied `Animation` while another owner can mutate that
-shot would violate the ownership contract. No full replacement cost or savings
-are established. Reproduction:
+shot would violate the ownership contract. The later reviewed definition stage
+implements that complete-owner transfer for playback and sampling. No full
+replacement cost or savings are established. Reproduction:
 `Local/sm-decomp-experiments/20261022/named-projectile-animation`
 (`playback.rs`, `compatibility.rs`, `native.rs`, `harness.rs`, `prepare.py`,
 `build.py`, `check.py`, `result.json`).
@@ -950,8 +998,9 @@ The optimized build and source-checked run pass against `15589b48`: all **115
 library inputs** and **nine compiled local inputs** match. Native diagnostics
 are controlled. The sequence does not execute trail allocation, Mode 7 position,
 offset tables, left/right trail scripts or drawing. Full-`Firing` diagnostic
-transport, production integration, complete malformed-data coverage and the full
-replacement cost remain open. No ROM or movie ran. The earlier 363-case playback
+transport is addressed by the later definition stage; production integration,
+complete malformed-data coverage and the full replacement cost remain open.
+No ROM or movie ran. The earlier 363-case playback
 suite was not rerun. Reproduction:
 `Local/sm-decomp-experiments/20261022/named-projectile-trail-selection`
 (`trail.rs`, `compatibility.rs`, `native_trail.rs`, `harness.rs`, `prepare.py`,

@@ -1682,6 +1682,10 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    reduction or new unsafe-elimination result. Broad-index reference bodies and
    runtime bridges remain; initialization, drawing and trail-emission definition
    interfaces still need closure.
+   The coordinator independently verified definition-stage's 115+50 compiled
+   inputs, complete-owner transport and native-sequence scope. Forty prior compiled
+   files are unchanged; the codec's field regrouping and the +205 cohort price
+   were reviewed. Details are in the engine design and RAM ownership research.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, drawing/trail, palette/sound
    output and grapple-start consumers remain controlled. ROM definitions are

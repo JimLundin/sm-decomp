@@ -436,13 +436,26 @@ boundary, beyond naming numeric pointers. The model and both providers forbid
 unsafe code. Compatibility still preserves partial writes, live state after a
 diagnostic, wrapped operands and the captured projectile slot.
 
-This is a standalone playback experiment. It is not integrated into `Firing`:
-the local diagnostic protocol transfers only its animation state. Integration
-must move the complete `Firing` through those effects so callbacks cannot leave a
-stale animation copy beside a live projectile owner. Actual release internals,
-initialization, trail reads, attack definitions, complete malformed-data behavior
-and production ownership remain open. The Rust definitions are synthetic, not
-converted game content; there is no movie coverage or whole-replacement price.
+The standalone playback experiment transfers only its animation state. The
+[reviewed integration](RAM_OWNERSHIP.md#integrated-animation-and-trail-definition-owner)
+now places that bundle inside each shot and moves the complete `Firing` through
+definition effects. Scoped access replaces a detached animation copy, so callbacks
+can change other shots, charge, feedback and protection without losing those changes.
+Its **1,992 selected comparisons** include recursive reset and the changed
+animation, reset and missile consumers. Broad-index paths still use reference bodies.
+
+Three synthetic native-definition sequences also pass. One uses the same
+`Firing<Label, Sprite>` data structure for playback and trail sampling without RAM
+or ROM decoding, retaining the surrounding weapon state. This proves those two
+generic operations: firing, initialization, release and drawing still use the
+encoded implementation. Native game content, remaining attack interfaces,
+production ownership and complete malformed-data coverage remain open.
+
+The changed model/provider cohort grows from **989 to 1,194 formatted lines
+(+205)**. Native example/assertion sources add 78 separately counted lines;
+retained broad paths and the runtime bridge are not included in that cohort price.
+This is an interface/ownership cost, not a full replacement price or a saving.
+No movie coverage is claimed.
 
 The [trail-sampling follow-up](RAM_OWNERSHIP.md#named-trail-sampling)
 passes **351 targeted comparisons**. A trail can preview the upcoming timed frame
