@@ -578,6 +578,37 @@ the end of the frame. The encoded provider still uses RAM for room/mechanism sta
 and retains the actual setup/slopes. The symbolic provider authors those actions;
 persistent room ownership and complete mechanism conversion remain open.
 
+The [owned mechanism follow-up](RAM_OWNERSHIP.md#owned-mechanism-allocation-and-selected-setup)
+now moves allocation and five setup policies into an owned pool alongside the
+projectile owner. **270 comparisons** cover the earlier reactions plus every free
+slot, nested creation, partial failure, release and reuse. A native lifecycle uses
+named definitions, programs, signals and tiles through the same methods.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Available
+    Available --> Preparing: Capture association and definition
+    Preparing --> Active: Prepare program and run setup
+    Preparing --> Available: Setup cancels activation
+    Active --> Available: Release activation
+    note right of Available
+      Association and other fields survive.
+      Reuse replaces only specified fields.
+    end note
+```
+
+These are conceptual lifetime phases, not a new stored tag that discards partial
+state. An inactive slot may still receive an association signal. A nested spawn
+can reuse a released slot before the original setup resumes; retain its captured
+action and slot instead of treating reuse as cancellation. Respawn setup places a
+restoration marker and preserves solidity until later script behavior removes it.
+The encoded provider still transfers authority at legacy observation points and
+uses a byte-owned room grid. Complete script execution, message suspension, wider
+setup families and runtime promotion remain open. The full candidate has since
+integrated allocation with terrain/slopes in `mechanism-creation-stage`. Extend
+that existing pool with these setup policies and tests; keep one allocator. The
+combined setup/terrain owner has not yet been tested.
+
 The earlier named-transition experiment advanced the interface without migrating
 the remaining producer, flight or runtime ownership. Its changed model/provider
 cohort adds **138 formatted lines**, plus 216 separate authored-example lines;

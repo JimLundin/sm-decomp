@@ -53,6 +53,16 @@ the current block or selected projectile. Persistent room ownership must migrate
 these setup writers and their later consumers together; the pure reaction protocol
 alone does not transfer authority over the room or mechanism pool.
 
+The [mechanism-pool follow-up](RAM_OWNERSHIP.md#owned-mechanism-allocation-and-selected-setup)
+now holds projectile and mechanism state in one typed world during creation,
+selected setup, release and reuse. It publishes at definition failures and setup
+callbacks, then imports callback mutations before continuing. The signed hit-kind
+read can alias a cleared mechanism association; its explicit compatibility read
+must observe that pending write. This is a concrete reason to preserve authority
+transfers beyond nominal field boundaries. The room grid and full PLM scheduler
+remain outside this ownership interval; no persistent runtime promotion follows
+from the component result alone.
+
 ## One RAM allocation serves both execution branches
 
 `Game::new` initializes the large allocation in place. `SnesInit` passes the

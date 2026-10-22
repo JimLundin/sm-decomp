@@ -1977,21 +1977,27 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    runtime authority remain open. No movie, adoption or complete saving is claimed.
    Source/result: 20261022/scheduled-beam-lifecycle. The original wide-continuation
    and admission contracts remain in 20261022/projectile-update-pass.
-   The coordinator's [shot-to-room protocol](RAM_OWNERSHIP.md#synchronous-shot-to-room-reaction-protocol)
-   now calls the actual mechanism allocator and five selected setup routes.
-   **187 comparisons**, 328 ordered observations and eight matching failures pass:
-   163 direct cases, 24 linked update/draw steps and six separate symbolic sequences.
-   Blocking, scan termination and allocation success are independent; setup runs
-   synchronously and retains its captured block association across selector changes.
-   All 115 frozen and 105 draft compiled inputs match; 97 inherited files are
-   unchanged. Current-source reconstruction, optimized DLL and formatting pass.
-   The partial model/provider/declaration cohort is 207 lines versus 109 reference
-   reaction lines; this excludes retained setup/slopes, routing and runtime costs.
-   The native fixture has 130 lines, paired fixture 580, retained reference 531.
-   Room/mechanism RAM authority and actual setup bodies remain; symbolic setup is
-   authored. No movie, adoption, full earlier-suite rerun or complete saving is
-   claimed. Source/result: 20261022/shot-block-reactions. Compose with the latest
-   full projectile candidate and close mechanism lifecycle ownership next.
+   The coordinator's [owned mechanism pool](RAM_OWNERSHIP.md#owned-mechanism-allocation-and-selected-setup)
+   now replaces allocation and five setup policies inside the shot-to-room prototype.
+   **270 comparisons**, 419 ordered observations and 20 matching failures pass:
+   the 187 reaction cases, 76 allocator/setup cases and seven retained-world steps.
+   The 24 linked projectile update/draw steps execute the candidate pool/setup.
+   One native mechanism lifecycle, two association cases and six prior symbolic
+   reactions pass. Release preserves fields beyond activation; nested creation
+   can reuse the slot before original setup resumes. Signed hit-kind reads can
+   alias the just-cleared association. Preserve both behaviors explicitly.
+   All 115 frozen and 109 draft compiled inputs match; 102 inherited files are
+   unchanged. Current-source review, optimized DLL and formatting pass. The ROM
+   binding now retains missing window/extent checks, and a missing synthetic
+   colored-door follow-up definition is supplied; the prior 187 result did not
+   establish those checks. Model/provider cost is 363 formatted lines versus 100
+   selected reference lines; native/new paired fixtures are 191/390 lines.
+   Complete routing, scheduler, fallback and runtime costs remain unpriced.
+   Room geometry stays byte-owned; full PLM scheduling, message suspension and
+   wider setup remain open. No movie, adoption or saving is claimed. Source/result:
+   20261022/mechanism-spawn. Port its selected setup policies/tests onto the existing
+   allocator in player-projectiles/mechanism-creation-stage; keep one allocator
+   and do not add independent prices. That combined setup owner is not yet tested.
    That unchanged scheduler/provider is now integrated into the top-level full
    candidate, preserved in player-projectiles/scheduled-flight-stage. **514
    selected comparisons**, 651 ordered observations and ten expected matching

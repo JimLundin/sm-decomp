@@ -1291,6 +1291,81 @@ Source/result: `Local/sm-decomp-experiments/20261022/shot-block-reactions`
 the mechanism allocation/setup lifecycle and composing this boundary with the
 latest complete projectile candidate before promoting persistent runtime state.
 
+The subsequent mechanism experiment restores missing ROM-window/extent checks
+in this synthetic-ROM reference binding and supplies the previously absent
+colored-door follow-up definition. Use its 270-case result below for that linked
+path and invalid-header behavior; the earlier 187-case result did not establish
+those checks.
+
+### Owned mechanism allocation and selected setup
+
+`mechanism-spawn` replaces the retained allocator and five selected setup routes
+with `World<Owner, Schema>`, containing the projectile owner and a forty-slot
+mechanism pool. Slot state includes activation, association, pre-action, program,
+script timer, drawing entry, signal/timer, argument, auxiliary state, saved block
+content and return link. The schema supplies identities, so a native instance
+uses named cells, definitions, programs, signals and tiles. The model and encoded
+provider both forbid unsafe code.
+
+**270 comparisons**, **419 ordered observations** and **20 expected matching
+failures** pass. This includes the 187 reaction cases rerun with the corrected
+definition binding/fixture, 76 new allocator/setup cases and seven steps retaining
+the same world through creation, release, reuse and association signaling. The
+existing 24 linked projectile update/draw steps now execute the candidate allocator
+and setup policies. One native mechanism lifecycle, two native association cases
+and the six prior symbolic reaction sequences pass separately.
+
+The owned behavior preserves these contracts:
+
+- Search from the last slot down using only the active header. Full capacity
+  returns before reading the current block or definitions. Every possible free
+  slot is tested, including zero and the final slot.
+- Capture the block, header and inactive pre-action before reading the program.
+  Prepare timers, drawing and selection before reading/invoking setup. Invalid
+  windows and truncated definitions retain the first write prefix; setup failures
+  retain the prepared slot. The return link and saved block are not reset by
+  allocation.
+- Blue Door cancellation and explicit release clear only activation. Association
+  and other state survive. Strange Door clears its own association, then searches
+  all slots, including inactive ones; a cleared zero association may find itself.
+  Its signed projectile-kind read can alias the association just cleared, so that
+  compatibility read must observe the pending change.
+- Setup can change the allocated association, selector, saved data and return
+  link. Nested creation can reuse the same slot after a callback releases it.
+  The original setup then continues with its captured setup action and slot,
+  observing the newly prepared contents. A slot-generation rejection would alter
+  this tested behavior.
+- Respawning shot-block setup saves the restoration marker before placing it.
+  Its solid bit survives: a solid shootable block becomes a solid placeholder at
+  this stage. Removal is later script behavior, outside this experiment.
+
+The compatibility provider owns pool decoding/encoding and checked room edits.
+It publishes before definition failure points, setup callbacks and the aliased
+signal read. The room grid remains byte-owned. Native providers author room
+geometry operations but use the same allocator, setup decisions, association
+search and release methods. This proves an owned creation/setup/reuse interval;
+it does not migrate the complete PLM interpreter, message suspension, broader
+setup routes, collision-displacement pointers, room loading or runtime authority.
+
+All **115 frozen library and 109 local compiled inputs** match; 102 inherited
+sources are unchanged. Six current functions, five macro bodies and `ram_map`
+match their frozen sources. The retained reference is unchanged apart from the
+checked ROM binding and a release adapter that omits the unused null continuation.
+The binding preserves window/extent checks over synthetic ROM; it cannot represent
+a missing loaded-ROM owner. Optimized DLL, formatting and source review pass.
+
+The partial model/provider price is **363 formatted lines** (169 model, 194
+provider), versus 100 for the selected reference allocation/setup/release cohort.
+The native fixture has 191 lines and new paired fixture 390. Complete caller,
+scheduler, fallback and runtime costs remain unpriced; no savings or production
+adoption are claimed. No movie ran. Source/result:
+`Local/sm-decomp-experiments/20261022/mechanism-spawn` (`prepare.py`, `freeze.py`,
+`build.py`, `check.py`, `review.py`). The concurrent full candidate now has its
+own integrated allocator in `player-projectiles/mechanism-creation-stage`, including
+shared terrain/slopes. Use that composition as the base and port these selected
+setup policies and tests onto its existing pool. Do not install a second allocator
+or add the independent prices. The combined setup/terrain owner is not yet tested.
+
 ### Named projectile animation definitions
 
 A standalone experiment separates projectile playback from instruction encoding.
