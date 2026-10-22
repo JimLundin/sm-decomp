@@ -83,6 +83,14 @@ new packages alone establishes neither ownership nor backend independence.
 
 ## Work order
 
+**Coordination reset (2026-10-22): implementation is paused at the user's
+request.** The previous reduction agent has wound down; its migration child is
+complete and older inspected project threads are inactive. Keep the work order
+below, but resume only on a new implementation request under ITERATION.md.
+The next assignment should resolve the preserved beam-launch draft as one
+bounded change, with independent caller/validation investigation if assigned.
+Do not automatically restart the former task queues.
+
 1. [x] **Test Samus domain alternatives.** Complete; the tested representations
    did not establish the proposed large volume payoff.
 2. [x] **Compare the selected large subsystem replacements.** Complete for the
@@ -95,7 +103,7 @@ new packages alone establishes neither ownership nor backend independence.
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Current stage shares ordinary flight phases and linked-extension contact
+   Latest verified stage, **e3fadf56**, shares ordinary flight phases and linked-extension contact
    through `projectile_flight_control`, following the room, terminal and phase
    stages at `ff02c9b7`, `de9bf05e` and `ba0d94c1`. The core and extension RAM
    adapter forbid unsafe code. The extension macro, two axis wrappers and owned
@@ -120,9 +128,14 @@ new packages alone establishes neither ownership nor backend independence.
 
    Next dependencies, in order:
 
-   - Share remaining launch, missile acceleration and extension creation,
-     migrate consumers and delete retained implementations. Ordinary flight
-     ordering and extension contact are shared; do not duplicate them again.
+   - Review and resolve the preserved **untested beam-launch draft** first.
+     Three main files and local `launch.rs` were edited before wind-down;
+     carrier copies and reference wiring are not synchronized. See
+     [the restart handoff](HANDOFF.md#paused-launch-draft) before building or
+     adopting it. Preserve an independent old decoder in the comparisons.
+   - Then select missile acceleration and extension creation as explicit
+     dependent changes, migrating consumers and deleting retained implementations.
+     Ordinary flight ordering and extension contact are already shared.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -286,13 +299,17 @@ content.
 
 ## Progress and references
 
-Current shared-extension stage: Rust 101,646; maintained C bridge 266 and headers
+Verified shared-extension stage at e3fadf56: Rust 101,646; maintained C bridge 266 and headers
 296 = **102,208 implementation lines**. Including 803 dependency-installer and
 28 added verifier-launcher lines gives **103,039**.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
 unsafe declarations 2,936; cast-containing lines 6,150. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
+The paused launch draft adds 13 uncommitted Rust lines (checkout 101,659),
+and reduces cast-containing lines by four (checkout 6,146); other residue
+counters are unchanged. This is preserved unverified work, not an adopted
+increase or a new verification result.
 
 External source is disclosed separately: CPU 2,836, SPC 2,104, PPU 1,261, DSP 685,
 music 1,659, stb 7,762, configuration/utilities 919, desktop 882, and shader

@@ -9,6 +9,10 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+The latest verified implementation is `e3fadf56`. Work is now paused at the
+user's request; the main checkout additionally contains the untested draft
+described below. Previous passing builds do not validate that dirty checkout.
+
 The phase stage at `ba0d94c1` now also shares linked-extension contact through
 `projectile_flight_control`. The core and new extension RAM adapter forbid unsafe
 code. Both RAM and owned paths use the same follow/move/collide/retire rules,
@@ -33,6 +37,42 @@ The extension stage removes 5 main lines and adds 12 owned-draft lines:
 **+7 complete lines, +245 lexical tokens, -170 normalized text bytes**.
 These are safety/architecture costs, not volume savings. The substantial
 reduction and removal of all unsafe operations remain unfinished.
+
+## Paused launch draft
+
+The reduction agent wound down on 2026-10-22 and paused its ongoing goal.
+Its Rust-migration child is completed. No compiler, check, helper or tool session
+was left running by that task. Resume only after a new implementation request.
+The coordinator found one other running project thread; the inspected older
+verification, reduction, architecture and cleanup threads were already inactive.
+
+Three main files remain uncommitted, based on `e3fadf56`:
+
+- `sm/src/game/launch_motion.rs`: shared beam speed data/selection and aim decoder.
+- `sm/src/game/launch_motion_ram.rs`: shared decoding after subpixel clearing.
+- `sm/src/game/projectile_flight.rs`: checked beam speed selection.
+
+They were targeted-formatted but **not compiled, compared, fully priced or
+committed**. Their net main delta is +13 lines. Preserve them for review; the
+extension-stage results below apply to the committed baseline only.
+
+In `runtime-impact-working/`, owned `launch.rs` is also modified. Its local
+launch-motion modules and `runtime-source` have not been synchronized, so the
+new draft is not ready to build. `launch-parent/` preserves pre-draft production,
+owned launch, harness/preparation and relevant previous composition inputs.
+The local `WIND_DOWN.md` records the full stop point. Preserve existing caches,
+backups and results; `impact-composition/` still holds the verified extension
+composition, not this new launch draft.
+
+On restart, agree the beam-launch boundary and deletion before extending the
+draft. Reuse `prepare_flight_control.py` and the selected launch/beam comparisons.
+Keep the saved old aim decoder independent of the new shared decoder on the
+reference side; sharing both would hide a regression. Cover invalid-direction
+diagnostics, kind bounds, captured selection, odd/broad indices, fraction writes
+aliasing direction and Y writes aliasing history before X rereads. Synchronize
+the actual new inputs, then perform the required comparisons, production build/
+source checks and complete price. Resolve this change before starting missile
+acceleration or extension creation. Follow ITERATION.md for the division of work.
 
 ## Local work and validation
 

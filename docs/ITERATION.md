@@ -115,25 +115,43 @@ short-lived locks. No reservation locks or new scheduling service are needed.
 
 ## Apply it to the current projectile work
 
-Shared room scans and impact/retirement are landed at `de9bf05e`. The next
-dependency is remaining flight behavior; inspect ongoing edits before assigning
-it again. A second worker can independently trace flight consumers and prepare
-cases against the landed lifecycle interface. Runtime reset/load/rewind and
-external-writer audits can proceed read-only alongside that work.
+Current completion status and the next dependency live in PLAN, with draft
+details in [HANDOFF.md](HANDOFF.md#paused-launch-draft). Read those before a new
+assignment. The 2026-10-22 wind-down preserved an untested beam-launch draft;
+review its boundary and deletion before extending it. Keep missile acceleration
+and extension creation behind that dependency instead of opening all three.
 
-Share remaining flight behavior against that interface, migrate consumers and
-remove the duplicate paths. Then reprice and validate the complete composition
-and its authority transfers. At `de9bf05e` the unadopted overhead is +9,065 lines.
-Keep the distinction between RAM compatibility and persistent Session authority.
-Two workers rewriting the same owner or outer coordinator are dependent work.
+For the first explicit restart, the implementer can resolve the launch draft
+while a validation investigator independently traces aliasing, diagnostics and
+actual launch consumers. The integrator owns shared wiring and final comparisons.
+Keep the saved old decoder independent of the new one. Defer runtime ownership
+implementation until its prerequisites are ready; its existing audit remains a
+reference. Preserve the distinction between RAM compatibility and persistent
+Session authority. Two workers rewriting the same owner are dependent work.
 
-The existing `runtime-impact-stage/check_impact.py` accepts export names to select
-cases; its `build.py --library` builds the reference carrier separately from the
-harness. Reuse this split when inputs match, and extend the active working copy
-for the new behavior. The frozen stage is historical; its passing checks cannot
-substitute for validating changed production code. The carrier is edition 2021;
-final production compilation is edition 2024. Paths and limitations are in
+The active `runtime-impact-working/check_flight_control.py` accepts export names
+to select cases; `build.py --library` builds the reference carrier separately
+from the harness. Reuse this split when inputs match. The frozen stages are
+historical; their passing checks cannot validate changed production code.
+The carrier is edition 2021; final production compilation is edition 2024.
+Paths and current preparation constraints are in
 [HANDOFF.md](HANDOFF.md#local-work-and-validation).
+
+Observation during wind-down: one other project agent was running; inspected
+older verification/reduction/architecture/cleanup threads were inactive. The
+active agent was already using serial compilers, selected cases and a reused
+working cache. The next improvement therefore needs to address the cost of
+maintaining and validating both paths, not merely repeat those instructions.
+The two latest completed changes (`ba0d94c1`, `e3fadf56`) add 96 lines to the
+complete prospective composition combined; their safety improvements do not
+establish net reduction or persistent state ownership.
+
+The latter commit reports 180.62s across six compiler invocations (carrier,
+harness, production and prospective composition, including changed-source
+rebuilds), versus 3.57s for its final selected comparison run. These are reported
+stage timings, not total cycle time; required rebuilds are not automatically
+redundant. Measure which compiled inputs changed before consolidating builds.
+More simultaneous compiler jobs are not the next experiment on this machine.
 
 ## Windows shell setup
 
