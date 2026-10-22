@@ -104,50 +104,44 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares complete projectile playback and trail selection
-   through `projectile_playback` and `projectile_trail_selection`, following all
-   five initializers at `43a4a1c9`, placement at `eaa19aa2`, extension creation at
-   `0abd00a3`, acceleration at `f4674fa2`, beam launch at `8730d00e` and extension
-   contact at `e3fadf56`. RAM and owned paths share timer decrement, captured
-   selector/cursor, ordered Show fields, fresh wrapped Jump operand, release and
-   unknown continuation, and fresh upcoming/active trail-marker capture. Actual
-   HandleProjectile and trail-place consumers redirect; old playback/trail and
-   three dispatch/delete/goto helpers are removed. Both shared cores forbid unsafe
-   code; the checked RAM adapter retains explicit ROM-capture and native diagnostic
-   unsafe calls. This does not eliminate those dependencies. Drawing, remaining
-   trail algorithms, block reactions and broader unsafe removal remain.
+   Latest verified stage shares complete trail reservation, placement, side playback
+   and native OAM output through `projectile_trail_emission`,
+   `projectile_trail_playback` and the checked `projectile_trails` adapter, following
+   playback/trail selection at `28dbc603` and all earlier shared launch, flight,
+   placement and initialization stages. Both shared cores forbid unsafe and use no
+   Game/RAM. Actual flight and special-attack callers use safe emission; the owned
+   path delegates the same OAM writer and removes its duplicate algorithms.
+   Preserve left-Y/left-X/right-Y/right-X publication, captured freeze/cursors,
+   left-wide/right-wrapped commands and live rereads after overlapping OAM writes.
+   Six explicit unsafe ROM/Mode7/diagnostic calls remain in the adapter; their
+   dependency removal and persistent Session authority are not established.
 
-   Final selected comparisons pass 217 three-way playback/trail scenarios,
-   including ten genuine selector aliases and one matching diagnostic failure,
-   72 checked short-record scenarios at slots 0/19/20 (216 expected failures), and
-   771 owned definition/native cases with 142 matching failures. Distinct sprite,
-   radii and full-RAM prefixes expose ordered partial writes. Returning unknown,
-   reset/replacement, captured/current images and native labels/markers execute.
-   Eleven scheduler cases cover actual preinstruction/playback/live tails, odd
-   release, alias writes, clear-before-mandatory-playback and owned continuation
-   at 22 with actual later playback 3/1. Canonical owned cases reject fallback.
-   Thirty-eight actual Place/Emit cases require selection before Mode7/offset
-   diagnostics and all four coordinates; distinct data proves live type/direction.
-   Initializer cases 234 and short prefixes 105 also pass after shared FrameView
-   native-word decoding changes. Independent checked reference and callers match
-   pre-change Git source. All 154 runtime and 202 draft compiled inputs match.
-   Formatting, normal release library/frontend/verifier and loaded DLL source
-   checks pass. No movie ran. Synthetic content/controlled hardware do not prove
-   natural encounters or full-game fidelity. Native diagnostics stop at assertion
-   entry; returning continuation uses owned independent historical comparisons.
-   Missing-ROM owned publication and big-endian execution remain unestablished.
+   Final selected checks pass 248 three-way runtime cases (10 matching failures),
+   20 checked short-record scenarios (60 expected failures), 38 targeted placement,
+   512 owned emission and 688 owned playback cases, plus three actual flight and
+   three Wave/Ice/Spazer consumer cases. Sixty OAM alias cases exercise all ten
+   trail arrays. Full-RAM prefixes, required entry/marker hits, canonical rejection
+   of fallback, returning unknowns and linked continuations execute. Independent
+   old checked source matches Git; final 157 runtime and 202 draft compiled inputs
+   match after caller cleanup. Formatting, normal Rust 2024 release library,
+   frontend/verifier and loaded DLL source checks pass. The prospective Rust 2024
+   headless release composition builds. No movie or full-composition runtime
+   comparison ran. Synthetic content/controlled hardware do not establish natural
+   encounters or full-game fidelity. Native diagnostics stop at entry. Right-only
+   short playback, absent-ROM owned publication and big-endian execution remain
+   unestablished; complete right/wrapped commands and left short prefixes execute.
 
-   Main is **102,184 Rust lines in 142 files**. The prospective composition is
-   **111,033 (+8,849)**, unadopted and without full-composition runtime/movie
-   comparison; its Rust 2024 headless release library builds. This stage adds 224
-   main lines and removes 145 owned lines; formatted composition adds **79 complete
-   lines**, 818 lexical tokens and 2,631 normalized bytes. Local verification grows
-   1,963 actual lines (977 with both baselines equally formatted); including checks
-   adds 2,042 actual lines. Formatting expansion is disclosed, not savings.
-   Main removes five counted unsafe declarations; casts remain 6,130. No dependency
-   or maintained native/installer/launcher code is added. This is necessary sharing
-   with a source-size cost, not volume reduction. Persistent Session authority,
-   substantial reduction and complete unsafe removal remain unfinished.
+   Main is **102,537 Rust lines in 144 files**. The prospective composition is
+   **111,130 (+8,593)**, unadopted and without full-composition runtime/movie
+   comparison. This stage adds 353 main lines and removes 256 composition-owned
+   lines; formatted composition adds **97 complete lines**, 1,005 lexical tokens
+   and 2,667 normalized bytes. Local verification grows 982 actual lines (435
+   with both baselines equally formatted); including checks adds 1,079 actual
+   lines. Formatting expansion is disclosed, not savings. Main removes four
+   counted unsafe declarations and two caller unsafe scopes; casts remain 6,130.
+   No dependency or maintained native/installer/launcher code is added. This is
+   necessary sharing with a source-size cost. Drawing, block reactions, runtime
+   authority, substantial reduction and complete unsafe removal remain unfinished.
 
    Next dependencies, in order:
 
@@ -165,8 +159,10 @@ references; measure build/test time and resource growth before changing the loop
      duplicate sequencing/table selection with independent failure-prefix checks.
    - [x] Share playback and trail selection, migrate HandleProjectile/trail-place
      consumers, retire old bodies/helpers and compare scheduler/continuation tails.
-   - Share the remaining complete trail emission/placement/playback consumers and
-     drawing responsibility, then close block reactions and runtime authority.
+   - [x] Share complete trail emission/placement/side playback and native OAM
+     output, migrate real flight/special callers and retire duplicate owned bodies.
+   - Share the complete projectile drawing responsibility, including sprite output
+     and echo/trail tails, then close block reactions and runtime authority.
      Trace and validate each complete interaction before retiring its dependencies.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
@@ -175,9 +171,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified playback/trail continuation, including
-   `playback-final-results.json`, `playback-main-source-check.json`,
-   `playback-composition-price.json` and `PLAYBACK_HANDOFF.md`.
+   `runtime-impact-working/` is the verified complete-trail continuation, including
+   `trail-final-results.json`, `trail-main-source-check.json`,
+   `trail-composition-price.json` and `TRAIL_HANDOFF.md`.
+   `trail-parent/` and `trail-composition-parent/` preserve prior inputs.
    `playback-parent/` and `playback-composition-parent/` preserve prior inputs.
    Initializer references remain in `initialization-parent/`; placement, creation,
    acceleration, extension and independent flight snapshots/caches remain preserved.
@@ -335,12 +332,12 @@ content.
 
 ## Progress and references
 
-Verified shared-playback stage: Rust 102,184; maintained C bridge 266 and headers
-296 = **102,746 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **103,656**. The separate prospective owned
+Verified complete-trail stage: Rust 102,537; maintained C bridge 266 and headers
+296 = **103,099 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **104,009**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,922; cast-containing lines 6,130. These narrow counters do
+unsafe declarations 2,918; cast-containing lines 6,130. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 The isolated launch draft is now synchronized and verified; its original source

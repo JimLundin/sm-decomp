@@ -1,10 +1,11 @@
-//! Projectile trail emission, placement, playback and checked OAM output.
+//! Checked trail state/content adapter and native OAM output.
+//! ROM capture, Mode7 and native diagnostics remain explicit unsafe dependencies.
+use crate::game::projectile_trail_emission::{self as emission, Context, Half, Owner, Point, Write};
+use crate::game::projectile_trail_playback::{self as playback, Definitions, Instruction, Presentation};
 use crate::game::projectile_playback_ram::trail_frame;
-use crate::game::sm_8b::CalcExplosion_Mode7;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as word, word_arrays as a};
-use crate::rtl::{rom_bank_record, Unreachable};
-
+use crate::rom::RomRecord;
 #[derive(Clone, Copy)]
 struct Side {
     timer: usize,
@@ -30,54 +31,102 @@ const SIDES: [Side; 2] = [
     },
 ];
 
-pub unsafe fn emit(projectile: u16, game: &mut Game) {
-    unsafe {
-        let kind = word!(game.projectile_type[projectile >> 1]);
-        let style = if kind & 0xf00 != 0 {
-            let class = kind.to_ne_bytes()[1] & 15;
-            if class >= 3 {
-                return;
-            }
-            u16::from(class) + 31
-        } else {
-            kind & 63
+impl Owner for &mut Game {
+    type Cursor = u16;
+    type Sprite = u16;
+    fn remaining(&self, pair: usize, half: Half) -> u16 {
+        word!(self,SIDES[half as usize].timer+2*pair;)
+    }
+    fn cursor(&self, pair: usize, half: Half) -> u16 {
+        word!(self,SIDES[half as usize].script+2*pair;)
+    }
+    fn y(&self, pair: usize, half: Half) -> u16 {
+        word!(self,SIDES[half as usize].y+2*pair;)
+    }
+    fn write(&mut self, pair: usize, half: Half, value: Write<u16, u16>) {
+        let fields = SIDES[half as usize];
+        let (field, value) = match value {
+            Write::Timer(v) => (fields.timer, v),
+            Write::Cursor(v) => (fields.script, v),
+            Write::Tile(v) => (fields.tile, v),
+            Write::X(v) => (fields.x, v),
+            Write::Y(v) => (fields.y, v),
         };
-        let Some(pair) = (0..18)
-            .rev()
-            .find(|&i| word!(game.projectiletrail_left_instr_timer[i]) == 0)
-        else {
-            return;
-        };
-        word!(game.projectiletrail_left_instr_timer[pair] = 1);
-        word!(game.projectiletrail_right_instr_timer[pair] = 1);
-        word!(
-            game.projectiletrail_left_instr_list_ptr[pair] =
-                crate::rtl::rom_table_word!(game, 0x90b5bb, style as isize)
-        );
-        word!(
-            game.projectiletrail_right_instr_list_ptr[pair] =
-                crate::rtl::rom_table_word!(game, 0x90b609, style as isize)
-        );
-        place(word!(game.projectile_index), (2 * pair) as u16, game);
+        word!(self,field+2*pair;=value);
     }
 }
-
-pub unsafe fn place(projectile: u16, pair: u16, game: &mut Game) {
-    unsafe {
-        let marker = trail_frame(projectile, game);
-        let index = usize::from(projectile >> 1);
-        let (x, y) = if word!(game.ceres_status) & 0x8000 == 0 {
-            (
-                word!(game.projectile_x_pos[index]),
-                word!(game.projectile_y_pos[index]),
-            )
-        } else {
-            let point = CalcExplosion_Mode7(projectile, game);
-            (
-                word!(game.layer1_x_pos).wrapping_add(point.x),
-                word!(game.layer1_y_pos).wrapping_add(point.y),
-            )
+#[forbid(unsafe_code)]
+pub(crate) fn style(kind: u16) -> Option<u16> {
+    if kind & 0xf00 == 0 {
+        Some(kind & 63)
+    } else {
+        let class = kind.to_ne_bytes()[1] & 15;
+        (class < 3).then_some(u16::from(class) + 31)
+    }
+}
+struct Offsets(RomRecord);
+impl emission::Offsets for Offsets {
+    fn left_y(&self) -> i8 {
+        self.0.byte(1) as i8
+    }
+    fn left_x(&self) -> i8 {
+        self.0.byte(0) as i8
+    }
+    fn right_y(&self) -> i8 {
+        self.0.byte(3) as i8
+    }
+    fn right_x(&self) -> i8 {
+        self.0.byte(2) as i8
+    }
+}
+struct Ram {
+    frozen: bool,
+}
+impl<'a> Context<&'a mut Game> for Ram {
+    type Style = u16;
+    type Marker = u16;
+    type Offsets = Offsets;
+    fn style(&self, game: &&mut Game, projectile: u16) -> Option<u16> {
+        style(word!(game.projectile_type[projectile >> 1]))
+    }
+    fn script(&mut self, game: &'a mut Game, style: u16, half: Half) -> (&'a mut Game, u16) {
+        let address = match half {
+            Half::Left => 0x90b5bb,
+            Half::Right => 0x90b609,
         };
+        let cursor = crate::rtl::rom_table_word!(game, address, style as isize);
+        (game, cursor)
+    }
+    fn selected_projectile(&self, game: &&mut Game) -> u16 {
+        word!(game.projectile_index)
+    }
+    fn marker(&mut self, game: &'a mut Game, projectile: u16) -> (&'a mut Game, u16) {
+        let marker = trail_frame(projectile, game);
+        (game, marker)
+    }
+    fn origin(&mut self, game: &'a mut Game, projectile: u16) -> (&'a mut Game, Point) {
+        let index = usize::from(projectile >> 1);
+        let point = if word!(game.ceres_status) & 0x8000 == 0 {
+            Point {
+                x: word!(game.projectile_x_pos[index]),
+                y: word!(game.projectile_y_pos[index]),
+            }
+        } else {
+            let point = unsafe { crate::game::sm_8b::CalcExplosion_Mode7(projectile, game) };
+            Point {
+                x: word!(game.layer1_x_pos).wrapping_add(point.x),
+                y: word!(game.layer1_y_pos).wrapping_add(point.y),
+            }
+        };
+        (game, point)
+    }
+    fn offsets(
+        &mut self,
+        game: &'a mut Game,
+        projectile: u16,
+        marker: u16,
+    ) -> (&'a mut Game, Offsets) {
+        let index = usize::from(projectile >> 1);
         let kind = word!(game.projectile_type[index]);
         let table = if kind & 0x20 != 0 {
             0x9ba4e3
@@ -88,70 +137,115 @@ pub unsafe fn place(projectile: u16, pair: u16, game: &mut Game) {
         };
         let first = crate::rtl::rom_table_word!(game, table, (kind & 15) as isize)
             .wrapping_add(2 * (word!(game.projectile_dir[index]) & 15));
-        let second = rom_bank_record::<0x9b>(first, game)
+        let second = unsafe { crate::rtl::rom_bank_record::<0x9b>(first, game) }
             .word(0)
             .wrapping_add(marker.wrapping_mul(4));
-        let data = rom_bank_record::<0x9b>(second, game);
-        let index = usize::from(pair >> 1);
-        let coordinate =
-            |origin: u16, offset: u8| origin.wrapping_add(offset as i8 as u16).wrapping_sub(4);
-        // Preserve the per-field read/write order, including prefixes on short reads.
-        word!(game.projectiletrail_left_y_pos[index] = coordinate(y, data.byte(1)));
-        word!(game.projectiletrail_left_x_pos[index] = coordinate(x, data.byte(0)));
-        word!(game.projectiletrail_right_y_pos[index] = coordinate(y, data.byte(3)));
-        word!(game.projectiletrail_right_x_pos[index] = coordinate(x, data.byte(2)));
+        let data = unsafe { crate::rtl::rom_bank_record::<0x9b>(second, game) };
+        (game, Offsets(data))
     }
 }
-
-unsafe fn advance(pair: usize, side: usize, game: &mut Game) -> bool {
-    unsafe {
-        let fields = SIDES[side];
-        let remaining = word!(game, fields.timer + 2 * pair;);
-        if remaining == 0 {
-            return false;
+/// Original encoded cursor arithmetic: left keeps a wide counter, right wraps.
+#[derive(Clone, Copy)]
+pub(crate) struct ProgramCounter {
+    value: i32,
+    half: Half,
+}
+#[forbid(unsafe_code)]
+impl ProgramCounter {
+    pub(crate) fn new(cursor: u16, half: Half) -> Self {
+        Self {
+            value: i32::from(cursor),
+            half,
         }
-        word!(game, fields.timer + 2 * pair; = remaining.wrapping_sub(1));
-        if remaining != 1 {
-            return true;
+    }
+    pub(crate) fn address(self) -> u16 {
+        self.value as u16
+    }
+    pub(crate) fn following(self) -> u16 {
+        (self.value + 4) as u16
+    }
+    pub(crate) fn instruction(self, value: u16) -> Instruction<Self> {
+        if value & 0x8000 == 0 {
+            return Instruction::Frame { duration: value };
         }
-        let mut cursor = i32::from(word!(game, fields.script + 2 * pair;));
-        let duration = loop {
-            let value = rom_bank_record::<0x90>(cursor as u16, game).word(0);
-            if value & 0x8000 == 0 {
-                break value;
-            }
-            match value {
-                0xb525 => word!(game.projectiletrail_left_y_pos[pair] += 1),
-                0xb587 => word!(game.projectiletrail_right_y_pos[pair] += 1),
-                0xb5b3 => word!(game.projectiletrail_left_y_pos[pair] += u16::MAX),
-                _ => {
-                    Unreachable(game);
-                }
-            }
-            cursor = if side == 0 {
-                cursor + 2
-            } else {
-                i32::from((cursor as u16).wrapping_add(2))
-            };
+        let next = Self {
+            value: match self.half {
+                Half::Left => self.value + 2,
+                Half::Right => i32::from((self.value as u16).wrapping_add(2)),
+            },
+            ..self
         };
-        word!(game, fields.timer + 2 * pair; = duration);
-        if duration == 0 {
-            return false;
+        match value {
+            0xb525 => Instruction::Move {
+                target: Half::Left,
+                delta_y: 1,
+                next,
+            },
+            0xb587 => Instruction::Move {
+                target: Half::Right,
+                delta_y: 1,
+                next,
+            },
+            0xb5b3 => Instruction::Move {
+                target: Half::Left,
+                delta_y: -1,
+                next,
+            },
+            _ => Instruction::Unknown { next },
         }
-        let tile = rom_bank_record::<0x90>(cursor as u16, game).word(2);
-        word!(game, fields.tile + 2 * pair; = tile);
-        word!(game, fields.script + 2 * pair; = (cursor + 4) as u16);
-        true
     }
 }
-
+impl<'a> Definitions<&'a mut Game> for Ram {
+    type Cursor = ProgramCounter;
+    fn start(&mut self, cursor: u16, half: Half) -> ProgramCounter {
+        ProgramCounter::new(cursor, half)
+    }
+    fn instruction(
+        &mut self,
+        game: &'a mut Game,
+        cursor: ProgramCounter,
+    ) -> (&'a mut Game, Instruction<ProgramCounter>) {
+        let value = unsafe { crate::rtl::rom_bank_record::<0x90>(cursor.address(), game) }.word(0);
+        (game, cursor.instruction(value))
+    }
+    fn frame(&mut self, game: &'a mut Game, cursor: ProgramCounter) -> (&'a mut Game, u16, u16) {
+        let sprite = unsafe { crate::rtl::rom_bank_record::<0x90>(cursor.address(), game) }.word(2);
+        (game, sprite, cursor.following())
+    }
+    fn unknown(&mut self, game: &'a mut Game) -> &'a mut Game {
+        unsafe { crate::rtl::Unreachable(game) };
+        game
+    }
+}
+impl<'a> Presentation<&'a mut Game> for Ram {
+    fn draw(&mut self, game: &'a mut Game, pair: usize, half: Half) -> &'a mut Game {
+        draw(pair, half as usize, self.frozen, game);
+        game
+    }
+}
+pub fn emit(projectile: u16, game: &mut Game) {
+    emission::emit(game, projectile, &mut Ram { frozen: false });
+}
+pub fn place(projectile: u16, pair: u16, game: &mut Game) {
+    emission::place(
+        game,
+        projectile,
+        usize::from(pair >> 1),
+        &mut Ram { frozen: false },
+    );
+}
+pub fn update(game: &mut Game) {
+    crate::verify_probe::hit("trails.update");
+    let frozen = word!(game.time_is_frozen_flag) != 0;
+    playback::present(game, frozen, &mut Ram { frozen });
+}
 #[forbid(unsafe_code)]
 fn native_word(game: &mut Game, address: usize, value: u16) {
     game.g_ram[address..address + 2].copy_from_slice(&value.to_ne_bytes());
 }
 
 #[forbid(unsafe_code)]
-fn draw(pair: usize, side: usize, frozen: bool, game: &mut Game) {
+pub(crate) fn draw(pair: usize, side: usize, frozen: bool, game: &mut Game) {
     let saved = word!(game.oam_next_ptr);
     if (saved as i16).wrapping_sub(512) >= 0 {
         return;
@@ -177,20 +271,6 @@ fn draw(pair: usize, side: usize, frozen: bool, game: &mut Game) {
             let tile = word!(game, fields.tile + 2 * pair;);
             native_word(game, entry + 2, tile);
             word!(game.oam_next_ptr = saved.wrapping_add(4));
-        }
-    }
-}
-
-pub unsafe fn update(game: &mut Game) {
-    unsafe {
-        crate::verify_probe::hit("trails.update");
-        let frozen = word!(game.time_is_frozen_flag) != 0;
-        for pair in (0..18).rev() {
-            for side in 0..2 {
-                if frozen || advance(pair, side, game) {
-                    draw(pair, side, frozen, game);
-                }
-            }
         }
     }
 }

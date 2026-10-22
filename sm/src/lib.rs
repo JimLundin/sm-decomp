@@ -367,6 +367,8 @@ pub mod game {
     pub(crate) mod projectile_playback;
     pub(crate) mod projectile_playback_ram;
     pub(crate) mod projectile_trail_selection;
+    pub(crate) mod projectile_trail_emission;
+    pub(crate) mod projectile_trail_playback;
     pub(crate) mod projectile_room;
     pub(crate) mod projectile_lifecycle;
     pub(crate) mod projectile_lifecycle_ram;

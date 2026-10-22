@@ -75,7 +75,7 @@ pub unsafe fn update(mut selected: u16, kind: Kind, game: &mut Game) {
     word!(game.projectile_timers[slot] = previous.wrapping_sub(1));
     if previous == 1 {
         word!(game.projectile_timers[slot] = 4);
-        unsafe { projectile_trails::emit(selected, game) };
+        projectile_trails::emit(selected, game);
         selected = word!(game.projectile_index);
     }
     unsafe { resume(selected, kind, (2 * slot) as u16, previous_x, game) };

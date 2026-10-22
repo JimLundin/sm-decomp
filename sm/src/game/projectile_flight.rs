@@ -41,7 +41,7 @@ impl<'a> control::Context<&'a mut Game> for FlightContext {
         previous == 1
     }
     fn trail(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
-        unsafe { crate::game::projectile_trails::emit(slot, game) };
+        crate::game::projectile_trails::emit(slot, game);
         game
     }
     fn advance(&mut self, game: &'a mut Game, slot: u16, kind: Flight) -> &'a mut Game {
