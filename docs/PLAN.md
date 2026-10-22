@@ -104,43 +104,44 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares projectile drawing in `projectile_presentation`
-   and the checked `projectile_presentation_ram` adapter, following complete trails
-   at `bf1f6775`. Ordinary/explosion scheduling, projection, sprite geometry/output,
-   crash echoes and trail tails are shared with the owned candidate. Real scene,
-   Samus, intro and trail-projection callers migrate; superseded bank/owned bodies
-   are removed. Preserve carried Ceres coordinates, live selector rereads, warning
-   before ROM capture, partial OAM writes and echo-before-trail ordering.
-   The shared rules forbid unsafe and use no Game/RAM. Output remains Game/OAM
-   dependent; the native warning and five trail ROM/diagnostic unsafe calls remain.
-   Persistent Session authority and independent rendering are not established.
+   Latest verified stage shares projectile block reactions after drawing at
+   `a16e4536`. `projectile_block_reactions` owns classification, extensions,
+   trigger selection and square/surface slope rules; its checked RAM adapter
+   replaces the raw shot dispatcher and per-scan CollInfo conversion. Actual
+   bomb/grapple triggers and spread-bomb slopes share the same rules. Owned
+   duplicate algorithms and slope tables are removed. Preserve the initial
+   room-size rejection, extension redirects without rechecking that bound,
+   lazy slope reads, mixed native/LE words, captured BTS, diagnostic-before-ROM
+   capture and B974 scan writes before synchronous mechanism spawning.
+   The shared core forbids unsafe and has no Game/RAM. Two native spawn/warning
+   calls remain in the adapter; surrounding bomb/Samus/grapple raw CollInfo
+   boundaries and mechanism allocation/setup remain explicit dependencies.
 
-   Selected checks pass 90 three-way runtime drawing cases (18 matching failures,
-   three broad continuations), 379 presentation cases (88 matching failures),
-   23 dependency cases (11 matching failures) and 38 trail-placement cases.
-   These include all five clipping modes, short-record prefixes, actual scene/
-   Samus/intro consumers, native named geometry, diagnostic ROM replacement,
-   OAM aliases and linked drawing/reset/trail tails. Old renderer/source matches
-   frozen Git; 161 runtime and 203 local compiled inputs match. Two additional
-   fresh-process runtime repetitions pass. An inherited Intro fixture failure
-   remains unexplained; its original compiled inputs/log were not retained, and
-   no stale-build diagnosis is established. Current assertion-free checks pass.
-   Production Rust 2024 release/frontend/verifier and loaded source checks pass;
-   the prospective headless composition builds. Changed code formatting passes
-   except unchanged baseline formatting in scene_drawing/verify_source. No movie
-   or full-composition runtime comparison ran. Synthetic content/controlled
-   hardware, native diagnostic substitution and untested big-endian execution
-   limit the fidelity claim; full-game coverage remains unestablished.
+   Final checks pass 85 direct native/caller/extension comparisons, nine trigger/
+   diagnostic cases and six prefix scenarios (ten explicitly expected failures).
+   Existing selected suites pass 429 room cases (five matching failures), 529
+   motion/room cases (42 matching failures) and 198 runtime collision cases
+   (176 setup hits, one matching failure). Explicit successful native setup,
+   resumed scans and later release execute. Failure checks include real partial
+   PLM initialization, B974 scan prefixes, truncated ROM and redirected out-of-
+   range cells. Fresh Git-derived raw/checked-ROM references stay independent;
+   old/native route assertions and 165 runtime / 204 local source identities pass.
+   Runtime evidence pairs frozen-vs-native and native-vs-owned comparisons; it is
+   not three wholly independent implementations. Formatting, production Rust
+   2024 release/frontend/verifier and loaded-source checks pass; the prospective
+   headless composition builds. No movie or full-composition runtime ran.
+   Synthetic content, controlled diagnostics/hardware and untested big-endian
+   execution limit these results. Native setup ownership is not established.
 
-   Main is **102,762 Rust lines in 146 files**. The prospective composition is
-   **111,137 (+8,375)**, unadopted. This stage adds 225 main lines and removes 218
-   composition-owned lines: **+7 complete lines**, -110 lexical tokens and -2,497
-   LF-normalized source bytes. Local verification adds 815 lines; implementation
-   plus local checks adds 822. No dependency or native/installer/launcher code is
-   added. Main removes ten counted unsafe declarations and nine cast-containing
-   lines; these narrow counters do not establish complete unsafe removal.
-   Block reactions, runtime authority, substantial reduction and backend
-   independence remain unfinished.
+   Main is **103,105 Rust lines in 148 files**. The prospective composition is
+   **111,307 (+8,202)**, unadopted. This stage adds 343 main lines and removes 173
+   owned lines: **+170 complete lines**, +502 lexical tokens and +1,524 LF-normalized
+   source bytes. Local verification adds 1,490 lines, including independent
+   emitted references and fixture/preparation code; implementation plus checks
+   adds 1,660. No dependency or native/installer/launcher code is added. Main
+   removes twelve counted unsafe declarations and seven cast-containing lines.
+   This is priced sharing/safety work, not net reduction. Mechanism closure,
+   persistent authority, the line target and backend independence remain open.
 
    Next dependencies, in order:
 
@@ -162,8 +163,10 @@ references; measure build/test time and resource growth before changing the loop
      output, migrate real flight/special callers and retire duplicate owned bodies.
    - [x] Share projectile drawing, sprite output and echo/trail tails; migrate
      actual callers and remove duplicate bodies with independent comparisons.
-   - Close block reactions, tracing and validating the complete interaction before
-     retiring its remaining dependencies.
+   - [x] Share block reactions, slopes and trigger selection; migrate actual
+     shot/bomb/grapple/spread consumers and compare native setup/resumed tails.
+   - Close the remaining mechanism allocation/setup dependencies, preserving
+     synchronous writes and failure prefixes before retiring their native paths.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -171,10 +174,12 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified drawing continuation, including
-   `drawing-results.json`, `drawing-price.json`, `drawing-final-check.log` and
-   `DRAWING_HANDOFF.md`. `drawing-parent/` and `drawing-composition-parent/`
-   preserve the preceding inputs. The trail handoff/results remain available.
+   `runtime-impact-working/` is the verified block-reaction continuation, with
+   `BLOCK_HANDOFF.md`, `block-price.json` and `block-final-attempt-2.log`.
+   `block-parent/` preserves prior main/carrier/local sources and composition.
+   Drawing inputs/results remain in `drawing-parent/`, `drawing-composition-parent/`
+   and `DRAWING_HANDOFF.md`, including its unresolved inherited Intro mismatch.
+   The trail handoff/results also remain available.
    `trail-parent/` and `trail-composition-parent/` preserve prior inputs.
    `playback-parent/` and `playback-composition-parent/` preserve prior inputs.
    Initializer references remain in `initialization-parent/`; placement, creation,
@@ -333,12 +338,12 @@ content.
 
 ## Progress and references
 
-Verified drawing stage: Rust 102,762; maintained C bridge 266 and headers
-296 = **103,324 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **104,234**. The separate prospective owned
+Verified block-reaction stage: Rust 103,105; maintained C bridge 266 and headers
+296 = **103,667 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **104,577**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,908; cast-containing lines 6,121. These narrow counters do
+unsafe declarations 2,896; cast-containing lines 6,114. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 The isolated launch draft is now synchronized and verified; its original source

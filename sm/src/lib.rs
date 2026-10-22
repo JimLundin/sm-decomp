@@ -372,6 +372,8 @@ pub mod game {
     pub(crate) mod projectile_presentation;
     pub(crate) mod projectile_presentation_ram;
     pub(crate) mod projectile_room;
+    pub(crate) mod projectile_block_reactions;
+    pub(crate) mod projectile_block_reactions_ram;
     pub(crate) mod projectile_lifecycle;
     pub(crate) mod projectile_lifecycle_ram;
     pub(crate) mod room_backgrounds;

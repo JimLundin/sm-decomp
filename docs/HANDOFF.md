@@ -9,47 +9,52 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares projectile presentation after complete trails at
-`bf1f6775`. `projectile_presentation` owns ordinary/explosion scheduling and
-projection; `projectile_presentation_ram` adapts checked state, sprite output,
-crash echoes and trail tails. Actual scene/Samus/intro/trail-projection callers
-migrate. The owned candidate delegates the same rules/output and removes its
-duplicates. Preserve carried Ceres coordinates, live selectors, diagnostic-before-
-ROM-capture ordering, partial writes and echo-before-trail effects. Shared rules
-forbid unsafe and use no Game/RAM; output still depends on Game/OAM. One native
-warning and five trail ROM/diagnostic unsafe calls remain.
+The latest stage shares projectile block reactions after drawing at `a16e4536`.
+`projectile_block_reactions` owns classification, extensions, trigger selection
+and lazy square/surface rules; `projectile_block_reactions_ram` replaces the raw
+shot dispatch/CollInfo conversion. Bomb/grapple triggers and spread-bomb slopes
+use the same rules. Owned duplicates and slope-table copies are retired.
+The core forbids unsafe and has no Game/RAM. Two native spawn/warning calls and
+surrounding raw bomb/Samus/grapple CollInfo boundaries remain. This does not
+establish persistent projectile/mechanism ownership.
 
-Main: **102,762 Rust lines in 146 files**, unsafe declarations 2,908, casts 6,121.
-Maintained implementation 103,324; including installers/launcher 104,234.
-Prospective composition: **111,137**, **+8,375 over main**, unadopted.
-Stage adds 225 main lines and removes 218 owned lines: **+7 complete lines**,
--110 lexical tokens, -2,497 LF-normalized source bytes. Local checks add 815
-lines; including implementation adds 822. No new external dependency or maintained
-native/installer/launcher source.
+Main: **103,105 Rust lines in 148 files**, unsafe declarations 2,896, casts 6,114.
+Maintained implementation 103,667; including installers/launcher 104,577.
+Prospective composition: **111,307**, **+8,202 over main**, unadopted.
+Stage adds 343 main lines and removes 173 owned lines: **+170 complete lines**,
++502 lexical tokens, +1,524 LF-normalized source bytes. Local verification adds
+1,490 lines including emitted independent references; implementation plus checks
+adds 1,660. No external dependency or native/installer/launcher source added.
 
-Use `runtime-impact-working/DRAWING_HANDOFF.md`, `drawing-results.json`,
-`drawing-price.json` and `drawing-final-check.log`. Four selected exports pass:
-90 runtime drawing, 379 presentation, 23 dependency and 38 placement cases.
-Checks include all five clipping modes, short records, OAM aliases, actual callers,
-linked tails and independent old renderer/source identity. Final compiled inputs:
-161 runtime / 203 local. Production Rust 2024 release/frontend/verifier and loaded
-source checks pass (52.48s); prospective headless release builds (46.36s after a
-10.45s failed registration/visibility integration build). Two fresh-process runtime
-repetitions pass. The inherited Intro fixture mismatch remains unexplained; its
-original log/compiled inputs were not retained. No stale-build claim is supported.
+Use `runtime-impact-working/BLOCK_HANDOFF.md`, `block-price.json` and
+`block-final-attempt-2.log`. Selected direct results: 85 native/caller/extension
+comparisons, nine trigger/diagnostic cases, six prefix scenarios, ten explicitly
+expected failures. Other suites: 429 room, 529 motion/room and 198 runtime cases;
+the last has **176 setup hits and one matching failure**. Explicit native
+setup-to-release cases pass, as do real PLM partial initialization, B974 prefixes,
+redirect failure and returning diagnostic ROM replacement. Source identities:
+165 runtime / 204 local; fresh raw/checked-ROM reference extraction matches Git.
+Runtime comparisons pair frozen-vs-native with native-vs-owned, rather than
+claiming three fully independent implementations. Independent review found no
+remaining blocker for the staged change.
 
-No movie/full-composition runtime/full-game proof. Synthetic content, controlled
-hardware, substituted native diagnostics and untested big-endian execution remain
-limits. Nine changed gameplay files pass formatting; scene_drawing and verify_source
-retain unrelated baseline formatting differences. `git diff --check` passes.
+Production Rust 2024 release/frontend/verifier and loaded-source checks pass
+(46.15s); prospective headless release passes (45.02s after a 21.27s failed
+re-export visibility integration build). Changed gameplay formatting passes;
+verify_source retains unrelated baseline formatting. No movie or full-composition
+runtime ran. Synthetic content, controlled hardware/diagnostics and untested
+big-endian execution remain limitations. Sharing does not establish the complete
+mechanism allocator/setup lifecycle or full-game fidelity.
 
-`drawing-parent/` and `drawing-composition-parent/` preserve pre-drawing inputs.
-Prior trail/playback/initializer/placement/creation/acceleration/extension/flight
-references and caches remain. Preserve composition-specific wiring/visibility;
-never rerun older composition generation scripts over current wiring.
-Next close block reactions and runtime authority. Full owner promotion still needs
-reset/load/rewind/external-writer checks from state migration. Independent renderer,
-sound, content and full-game completion remain outside this stage's evidence.
+`block-parent/` preserves previous main/carrier/local inputs and composition.
+Drawing/trail/playback/initializer/placement/creation/acceleration/extension/flight
+references and caches remain. The unresolved inherited drawing Intro mismatch
+is recorded in `DRAWING_HANDOFF.md`; this stage does not resolve it. Preserve
+composition-specific wiring/visibility; do not rerun historical generation scripts.
+Next close mechanism allocation/setup dependencies, then remaining consumers and
+runtime authority. Promotion still needs reset/load/rewind/external-writer checks
+from state migration. Independent rendering, sound and full-game completion remain
+outside this stage's evidence.
 The parallel movie/state investigation is documented in
 [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
 

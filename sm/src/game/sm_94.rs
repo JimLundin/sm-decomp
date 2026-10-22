@@ -24,7 +24,6 @@ crate::typed_struct! {
         pub ci_r24, ci_r26, ci_r28, ci_r30, ci_r32, ci_r38, ci_r40: u16;
     }
 }
-pub type Func_CollInfo_U8 = unsafe fn(*mut CollInfo, &mut Game) -> u8;
 
 /// Stack-owned sample state for checking Samus's edges after releasing grapple.
 struct PostGrappleCollisionSample {
@@ -69,7 +68,7 @@ static kAlignPos_Tab1: [u8; 512] = [
     3, 20, 20, 20, 20, 20, 20, 14, 11, 8, 5, 2, 0, 0, 0, 0, 0, 16, 13, 10, 7, 4, 1, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0,
 ];
-static kAlignYPos_Tab0: [u8; 512] = [
+pub(super) static kAlignYPos_Tab0: [u8; 512] = [
     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16, 16, 16, 16, 16, 16, 16, 0, 0, 0, 0, 0,
     0, 0, 0, 16, 16, 16, 16, 16, 16, 16, 16, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 15, 14, 13, 12, 11, 10,
@@ -90,7 +89,7 @@ static kAlignYPos_Tab0: [u8; 512] = [
     20, 20, 20, 20, 14, 11, 8, 5, 2, 0, 0, 0, 0, 0, 16, 13, 10, 7, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0,
 ];
-static kTab948E54: [u8; 20] = [
+pub(super) static kTab948E54: [u8; 20] = [
     0, 0, 0x80, 0x80, 0, 0x80, 0, 0x80, 0, 0, 0, 0x80, 0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
 ];
 static kBlockColl_Horiz_Slope_NonSquare_Tab: [u16; 64] = [
@@ -852,21 +851,30 @@ pub unsafe fn BlockColl_Vert_Door(ci: *mut CollInfo, game: &mut Game) -> u8 {
     }
 }
 pub(crate) fn BlockReact_HorizExt(_ci: *mut CollInfo, game: &mut Game) -> u8 {
-    let offset = i16::from(game.current_block_bts() as i8);
-    if offset == 0 {
-        return 0;
+    if let Some(cell) = crate::game::projectile_block_reactions::redirect(
+        ShotAxis::X,
+        i16::from(game.current_block_bts() as i8),
+        || game.room_width_in_blocks(),
+        || game.cur_block_index(),
+    ) {
+        game.set_cur_block_index(cell);
+        0xff
+    } else {
+        0
     }
-    game.set_cur_block_index(game.cur_block_index().wrapping_add(offset as u16));
-    0xff
 }
 pub(crate) fn BlockReact_VertExt(_ci: *mut CollInfo, game: &mut Game) -> u8 {
-    let offset = i16::from(game.current_block_bts() as i8);
-    if offset == 0 {
-        return 0;
+    if let Some(cell) = crate::game::projectile_block_reactions::redirect(
+        ShotAxis::Y,
+        i16::from(game.current_block_bts() as i8),
+        || game.room_width_in_blocks(),
+        || game.cur_block_index(),
+    ) {
+        game.set_cur_block_index(cell);
+        0xff
+    } else {
+        0
     }
-    let block_offset = (offset as u16).wrapping_mul(game.room_width_in_blocks());
-    game.set_cur_block_index(game.cur_block_index().wrapping_add(block_offset));
-    0xff
 }
 fn samus_block_span(position: u16, radius: u16) -> u16 {
     let first_block_edge = position.wrapping_sub(radius) & 0xfff0;
@@ -1456,82 +1464,20 @@ unsafe fn BlockBombedReact_Special(ci: *mut CollInfo, game: &mut Game) -> u8 {
         1
     }
 }
-unsafe fn BlockReact_ShootableAir(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    unsafe {
-        let v0: u8 = *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize);
-        if (v0 & 0x80) == 0 {
-            let t: u16 = *(RomPtr_94(0x9ea6u16, game) as *mut u16).offset(v0 as isize);
-            if t == 0xb974 {
-                (*ci).ci_r38 = 0;
-                (*ci).ci_r40 = 0xffff;
-            }
-            SpawnPLM(t, game);
-        }
-        0
-    }
-}
-unsafe fn BlockReact_Shootable(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    unsafe {
-        let v0: u8 = *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize);
-        if (v0 & 0x80) != 0 {
-            let kBlockShotBombGrappleReaction_ShootableBlock_RegionPlm =
-                RomPtr_94(0x9fc6, game) as *mut u16;
-            let v2 = RomPtr_94(
-                *kBlockShotBombGrappleReaction_ShootableBlock_RegionPlm
-                    .offset(word!(game.area_index) as isize),
-                game,
-            ) as *mut u16;
-            SpawnPLM(*v2.offset((v0 as i32 & 0x7f) as isize), game);
-        } else {
-            let t: u16 = *(RomPtr_94(0x9ea6u16, game) as *mut u16).offset(v0 as isize);
-            if t == 0xb974 {
-                (*ci).ci_r38 = 0;
-                (*ci).ci_r40 = 0xffff;
-            }
-            SpawnPLM(t, game);
-        }
-        1
-    }
-}
-unsafe fn BlockReact_BombableAir(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    unsafe {
-        let kBlockShotBombGrappleReact_BombableBlockPlm = RomPtr_94(0xa012, game) as *mut u16;
-        let v0: u8 = *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize);
-        if (v0 & 0x80) == 0 {
-            SpawnPLM(
-                *kBlockShotBombGrappleReact_BombableBlockPlm.offset(v0 as isize),
-                game,
-            );
-        }
-        0
-    }
-}
-unsafe fn BlockReact_BombableBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    unsafe {
-        let kBlockShotBombGrappleReact_BombableBlockPlm = RomPtr_94(0xa012, game) as *mut u16;
-        let v0: u8 = *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize);
-        if (v0 & 0x80) == 0 {
-            SpawnPLM(
-                *kBlockShotBombGrappleReact_BombableBlockPlm.offset(v0 as isize),
-                game,
-            );
-        }
-        1
-    }
-}
+
 unsafe fn BlockBombedReact(ci: *mut CollInfo, v0: u16, game: &mut Game) {
     unsafe {
         word!(game.cur_block_index = (v0 >> 1));
         game.react_to_block(|block_type, game| match block_type {
             0 | 1 | 2 | 3 | 6 => 0,
-            4 => BlockReact_ShootableAir(ci, game),
+            4 => crate::game::projectile_block_reactions_ram::trigger(&mut *ci, false, false, game),
             5 => BlockReact_HorizExt(ci, game),
-            7 => BlockReact_BombableAir(ci, game),
+            7 => crate::game::projectile_block_reactions_ram::trigger(&mut *ci, true, false, game),
             8 | 9 | 10 | 14 => 1,
             11 => BlockBombedReact_Special(ci, game),
-            12 => BlockReact_Shootable(ci, game),
+            12 => crate::game::projectile_block_reactions_ram::trigger(&mut *ci, false, true, game),
             13 => BlockReact_VertExt(ci, game),
-            15 => BlockReact_BombableBlock(ci, game),
+            15 => crate::game::projectile_block_reactions_ram::trigger(&mut *ci, true, true, game),
             _ => unreachable!(),
         });
     }
@@ -1629,69 +1575,7 @@ unsafe fn BlockFunc_A11A(mut a: u16, r24: u16, r26: u16, r28: u16, game: &mut Ga
         }
     }
 }
-unsafe fn BlockShotReactHoriz_Slope(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    unsafe {
-        if (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x1f) < 5 {
-            BlockShotReactVert_Slope_Square(
-                ci,
-                ((*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize)) as u16)
-                    & (0x1fu16),
-                word!(game.cur_block_index),
-                game,
-            )
-        } else {
-            BlockShotReactVert_Slope_NonSquare(ci, game)
-        }
-    }
-}
-unsafe fn BlockShotReactVert_Slope(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    unsafe {
-        if (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x1f) < 5 {
-            BlockShotReactHoriz_Slope_Square(
-                ci,
-                ((*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize)) as u16)
-                    & (0x1fu16),
-                word!(game.cur_block_index),
-                game,
-            )
-        } else {
-            BlockShotReactHoriz_Slope_NonSquare(ci, game)
-        }
-    }
-}
-unsafe fn react_to_shot_block(
-    ci: *mut CollInfo,
-    k: u16,
-    slope: Func_CollInfo_U8,
-    game: &mut Game,
-) -> u8 {
-    unsafe {
-        if k >= word!(game.room_size_in_blocks) {
-            return 1;
-        }
-        word!(game.cur_block_index = (k >> 1));
-        let v1 = game.react_to_block(|block_type, game| match block_type {
-            0 | 2 | 3 | 6 => 0,
-            1 => slope(ci, game),
-            4 => BlockReact_ShootableAir(ci, game),
-            5 => BlockReact_HorizExt(ci, game),
-            7 => BlockReact_BombableAir(ci, game),
-            8 | 9 | 10 | 11 | 14 => 1,
-            12 => BlockReact_Shootable(ci, game),
-            13 => BlockReact_VertExt(ci, game),
-            15 => BlockReact_BombableBlock(ci, game),
-            _ => unreachable!(),
-        });
-        if v1 != 0 {
-            (*ci).ci_r40 = (*ci).ci_r40.wrapping_sub(1);
-        }
-        v1
-    }
-}
-crate::forward_calls! { unsafe fn (ci: *mut CollInfo, k: u16, game: &mut Game) -> u8;
-    BlockShotReactHoriz => react_to_shot_block(ci, k, BlockShotReactHoriz_Slope, game);
-    BlockShotReactVert => react_to_shot_block(ci, k, BlockShotReactVert_Slope, game);
-}
+
 use crate::game::projectile_room::{self as room_scan, Axis as ShotAxis, Field, Kind, Scan};
 
 #[forbid(unsafe_code)]
@@ -1761,39 +1645,10 @@ impl<'a> room_scan::Context<&'a mut Game> for RoomScan {
         game: &'a mut Game,
         axis: ShotAxis,
         block: u16,
-        scan: Scan,
+        mut scan: Scan,
     ) -> (&'a mut Game, Scan, u8) {
-        let mut ci = CollInfo {
-            ci_r18_r20: scan.displacement,
-            ci_r24: scan.position,
-            ci_r26: scan.span,
-            ci_r28: scan.edge,
-            ci_r30: scan.missile,
-            ci_r32: scan.auxiliary,
-            ci_r38: scan.remaining,
-            ci_r40: scan.unblocked,
-        };
-        // Reactions borrow this scan synchronously and may change every field.
-        let hit = unsafe {
-            match axis {
-                ShotAxis::X => BlockShotReactHoriz(&raw mut ci, block, game),
-                ShotAxis::Y => BlockShotReactVert(&raw mut ci, block, game),
-            }
-        };
-        (
-            game,
-            Scan {
-                displacement: ci.ci_r18_r20,
-                position: ci.ci_r24,
-                span: ci.ci_r26,
-                edge: ci.ci_r28,
-                missile: ci.ci_r30,
-                auxiliary: ci.ci_r32,
-                remaining: ci.ci_r38,
-                unblocked: ci.ci_r40,
-            },
-            hit,
-        )
+        let hit = crate::game::projectile_block_reactions_ram::react(&mut scan, block, axis, game);
+        (game, scan, hit)
     }
     fn retire(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
         unsafe { KillProjectile(slot, game) };
@@ -1811,61 +1666,15 @@ crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game) -> u8;
     BlockCollMissileHoriz => scan_room(k, ShotAxis::X, Kind::Missile, game);
     BlockCollMissileVert => scan_room(k, ShotAxis::Y, Kind::Missile, game);
 }
-unsafe fn BlockShotReact_Slope_NonSquare(ci: *mut CollInfo, j: u16, k: u16, game: &mut Game) -> u8 {
-    unsafe {
-        let v2: u16 = (word!(game.projectile_x_pos[(j >> 1)]) as i32 & 0xf
-            ^ (if (*ram_ptr!(game; 0x16402, k as isize) & 0x40) != 0 {
-                0xf
-            } else {
-                0
-            })) as u16;
-        let v4: u16 = (word!(game.projectile_y_pos[(j >> 1)]) as i32 & 0xf
-            ^ (if (*ram_ptr!(game; 0x16402, k as isize) & 0x80) != 0 {
-                0xf
-            } else {
-                0
-            })) as u16;
-        let v5: u16 = ((kAlignYPos_Tab0[(16 * (*ram_ptr!(game; 0x16402, k as isize) as i32 & 0x1f)
-            + (v2 as i32 & 0xf)) as usize]) as u16)
-            & (0x1fu16);
-        if ((v5) as i16).wrapping_sub((v4) as i16) <= 0 {
-            set_fields! {[(*ci)], 0; ci_r38, ci_r40}
-            1
-        } else {
-            0
-        }
-    }
-}
+
 unsafe fn BlockShotReactVert_Slope_NonSquare(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    unsafe {
-        let v0: u16 = word!(game.cur_block_index);
-        let v1: u16 = word!(game.projectile_index);
-        let div: u16 = SnesDivide(
-            word!(game.cur_block_index),
-            word!(game.room_width_in_blocks) as u8,
-        );
-        if word!(game.projectile_y_pos[(v1 >> 1)]) as i32 >> 4 == div as i32 {
-            BlockShotReact_Slope_NonSquare(ci, v1, v0, game)
-        } else {
-            0
-        }
-    }
+    u8::from(crate::game::projectile_block_reactions::surface(
+        ShotAxis::X,
+        unsafe { &mut *ci },
+        game,
+    ))
 }
-unsafe fn BlockShotReactHoriz_Slope_NonSquare(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    unsafe {
-        let v0: u16 = word!(game.cur_block_index);
-        let v1: u16 = word!(game.projectile_index);
-        let mod_0: u16 = SnesModulus(
-            word!(game.cur_block_index),
-            word!(game.room_width_in_blocks) as u8,
-        );
-        if word!(game.projectile_x_pos[(v1 >> 1)]) as i32 >> 4 == mod_0 as i32 {
-            BlockShotReact_Slope_NonSquare(ci, v1, v0, game)
-        } else {
-            0
-        }
-    }
-}
+
 pub unsafe fn BlockCollSpreadBomb(k: u16, game: &mut Game) -> u8 {
     unsafe {
         let v1: i32 = k as i32 >> 1;
@@ -1889,53 +1698,7 @@ pub unsafe fn BlockCollSpreadBomb(k: u16, game: &mut Game) -> u8 {
         })
     }
 }
-unsafe fn shot_square_slope(
-    ci: *mut CollInfo,
-    slope: u16,
-    block: u16,
-    axis: ShotAxis,
-    game: &mut Game,
-) -> u8 {
-    unsafe {
-        let orientation = u16::from(*ram_ptr!(game; 0x16402, block as isize) >> 6);
-        let shift = match axis {
-            ShotAxis::X => 2,
-            ShotAxis::Y => 3,
-        };
-        let mut index = slope
-            .wrapping_mul(4)
-            .wrapping_add(orientation ^ (((*ci).ci_r28 & 8) >> shift));
-        let other = match axis {
-            ShotAxis::X => 1,
-            ShotAxis::Y => 2,
-        };
-        crate::verify_probe::hit(match axis {
-            ShotAxis::X => "square-slope.shot.horizontal",
-            ShotAxis::Y => "square-slope.shot.vertical",
-        });
-        // No stores or callbacks occur before sampling; the projectile slot is stable.
-        let k = word!(game.projectile_index);
-        let position = shot_word(axis.pair().0, k, game);
-        if (*ci).ci_r30 != 0 {
-            if position & 8 != 0 {
-                index ^= other;
-            }
-            return u8::from(kTab948E54[index as usize] != 0);
-        }
-        let radius = shot_word(axis.radius(), k, game);
-        let occupied = if (*ci).ci_r26 == 0 {
-            square_slope_single_block(index, position, radius, other)
-        } else {
-            square_slope_occupied(index, (*ci).ci_r38, (*ci).ci_r26, position, radius, other)
-        };
-        u8::from(occupied)
-    }
-}
 
-crate::forward_calls! { unsafe fn ( ci: *mut CollInfo, a: u16, k: u16, game: &mut Game, ) -> u8;
-    BlockShotReactVert_Slope_Square => shot_square_slope(ci, a, k, ShotAxis::Y, game);
-    BlockShotReactHoriz_Slope_Square => shot_square_slope(ci, a, k, ShotAxis::X, game);
-}
 unsafe fn BlockReactGrapple_GrappleBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
     unsafe {
         static kBlockReactGrapple_GrappleBlockPlm: [u16; 4] = [0xd0d8, 0xd0dc, 0xd0e0, 0xd0d8];
@@ -2037,14 +1800,14 @@ pub unsafe fn BlockReactGrapple(game: &mut Game) -> u8 {
         game.react_to_block(|block_type, game| match block_type {
             0 | 2 | 3 | 6 => 0,
             1 | 8 | 9 | 11 => 1,
-            4 => BlockReact_ShootableAir(&raw mut ci, game),
+            4 => crate::game::projectile_block_reactions_ram::trigger(&mut ci, false, false, game),
             5 => BlockReact_HorizExt(&raw mut ci, game),
-            7 => BlockReact_BombableAir(&raw mut ci, game),
+            7 => crate::game::projectile_block_reactions_ram::trigger(&mut ci, true, false, game),
             10 => BlockReactGrapple_SpikeBlock(&raw mut ci, game),
-            12 => BlockReact_Shootable(&raw mut ci, game),
+            12 => crate::game::projectile_block_reactions_ram::trigger(&mut ci, false, true, game),
             13 => BlockReact_VertExt(&raw mut ci, game),
             14 => BlockReactGrapple_GrappleBlock(&raw mut ci, game),
-            15 => BlockReact_BombableBlock(&raw mut ci, game),
+            15 => crate::game::projectile_block_reactions_ram::trigger(&mut ci, true, true, game),
             _ => unreachable!(),
         })
     }
