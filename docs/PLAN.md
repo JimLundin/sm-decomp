@@ -34,10 +34,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,275 Rust lines in 96 files**, plus 262 C
-bridge and 296 C-header lines = **94,833 maintained implementation lines**.
+Current composition (2026-10-22): **94,312 Rust lines in 97 files**, plus 262 C
+bridge and 296 C-header lines = **94,870 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,664**. This complete recount includes frontend,
+gives **95,701**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1589,7 +1589,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Cart and Game now share one owned ROM image. Game byte/word readers and both
    cartridge ROM bus-read paths use checked access; registration is safe and the
    image stays alive across cartridge replacement. The image module forbids unsafe
-   code. SRAM, raw input copying, patch pointers and hardware ownership remain
+   code. Raw input copying, patch pointers and hardware ownership remain
    unsafe; this is not completion of ROM safety. The complete change adds **28
    maintained lines**, a safety cost with no new macros. Six actual Cart load/reload
    scenarios and actual initialization/patch/read comparisons pass, including full
@@ -1600,6 +1600,24 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    scenarios execute the changed reads, lifecycle, patching and bus consumers.
    Allocator-event identity, physical hardware and gameplay-route coverage are not
    claimed. Checks: Local/sm-decomp-experiments/20261022/owned-rom.
+   Cart and Game now also share owned SRAM bytes. Gameplay save/load, checksums,
+   signatures, copy/clear/selection, both cartridge mappings, reset, recorder bases,
+   oracle snapshot transfers and verifier checkpoints use checked access. Three
+   save-payload loops replace retained RAM pointers with offsets. The owner
+   forbids unsafe code; its explicit legacy snapshot pointer still feeds the
+   unsafe SaveLoadFunc contract, preserving live callback aliases. Migrating that
+   callback and native file/hardware interfaces remains open. This is not complete
+   SRAM safety. Complete cost: **+37 maintained lines**, with no new macros.
+   All **858** actual old/new comparisons pass, including full-bank LoROM/HiROM
+   sweeps, non-power-of-two masks, F0 read/write asymmetry, cartridge reloads,
+   both checksum copies, real copy/clear/menu callers, partial snapshot tails,
+   callback mutation, short file reads, recorder files and checkpoint round trips.
+   Five ownership/bounds checks pass. Oracle snapshot transfer statements are
+   exercised directly; the rest of cpu_infra has exact source correspondence.
+   All 103 old/104 final library inputs, final release library/frontend/verifier
+   builds and installed-native source checks pass. No movie ran; synthetic
+   scenarios establish no gameplay-route, physical-device or allocator-event
+   coverage. Checks: Local/sm-decomp-experiments/20261022/owned-sram.
    The existing shared ROM-table interface now uses that owned image with checked
    signed offsets and byte reads, preserving image capture before index evaluation,
    live patch visibility, native byte order and linear bank crossings. Its 725
@@ -2618,14 +2636,17 @@ shared configuration/input and utility dependencies, the desktop host,
 room-scroll data, the shader dependency, safe pose/mechanism RAM access,
 gameplay continuation ownership, owned ROM reads, safe asset decompression,
 checked ROM tables, safe word transfers, owned recording, checked VRAM readback
-owned sprite drawing and checked Mode 7 transfers, maintained Rust is **94,275**, with
+owned sprite drawing, checked Mode 7 transfers and owned SRAM, maintained Rust is **94,312**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **94,833**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,664**.
+Including 262 C and 296 header lines gives **94,870**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,701**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
-Counters: raw offsets 23; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3039; cast lines 6579. Mode 7 transfers remove 37 lines, one
+Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
+unsafe functions 3039; cast lines 6579. Owned SRAM adds 37 maintained lines and
+removes two counted raw RAM offsets; other counters are unchanged. The byte owner
+forbids unsafe code, but the legacy snapshot callback and native file/hardware
+interfaces remain unsafe. This is a safety cost, not a reduction. Mode 7 transfers remove 37 lines, one
 counted unsafe declaration and 22 cast-containing lines; other counters are
 unchanged. Owned sprite drawing adds seven maintained
 lines and removes two counted unsafe declarations and 13 cast-containing lines.

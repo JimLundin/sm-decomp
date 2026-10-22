@@ -935,7 +935,7 @@ crate::typed_struct! {
         pub type_0: u8;
         pub rom: crate::rom::RomImage;
         pub romSize: u32;
-        pub ram: *mut u8;
+        pub ram: crate::save_ram::SaveRam;
         pub ramSize: u32;
     }
 }

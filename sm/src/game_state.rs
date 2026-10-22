@@ -17,7 +17,7 @@ pub struct Game {
     pub message_box_das0l_value: u16,
     pub k_out: u16,
 
-    pub g_sram: *mut u8,
+    pub g_sram: crate::save_ram::SaveRam,
     pub g_rtl_memory_ptr: *mut u8,
     pub g_rtl_runframe: Option<RunFrameFunc>,
     pub g_rtl_syncall: Option<SyncAllFunc>,
@@ -692,13 +692,14 @@ impl Game {
         // All fields in this mechanical ownership batch are integers,
         // integer arrays, bools, raw pointers, Option<fn>, or plain structs
         // composed only of those types, plus the explicitly initialized ROM
-        // view and recording buffers. Zero is a valid representation for
+        // view, save bytes and recording buffers. Zero is a valid representation for
         // each; zeroed function options are still written explicitly below.
         // The entire allocation is initialized in place, avoiding a stack
         // temporary containing the 128 KiB RAM and three large snapshots.
         unsafe {
             core::ptr::write_bytes(game, 0, 1);
             core::ptr::addr_of_mut!((*game).loaded_rom).write(None);
+            core::ptr::addr_of_mut!((*game).g_sram).write(crate::save_ram::SaveRam::default());
             core::ptr::addr_of_mut!((*game).state_recorder).write(StateRecorder::default());
             core::ptr::addr_of_mut!((*game).g_rtl_runframe).write(None);
             core::ptr::addr_of_mut!((*game).g_rtl_syncall).write(None);

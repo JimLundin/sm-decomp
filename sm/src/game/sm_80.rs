@@ -126,28 +126,15 @@ pub unsafe fn CheckEventHappened(a: u16, game: &mut Game) -> u16 {
     ((word!(game.bitmask) & *ram_ptr!(game; 0xd820, idx as isize) as u16) != 0) as u16
 }
 pub unsafe fn CopySuperMetroidString(game: &mut Game) {
-    memcpy(
-        game.g_sram.offset(0x1fe0) as *mut c_void,
-        c"supermetroid".as_ptr() as *const c_void,
-        12 as size_t,
-    );
+    game.g_sram.write_bytes(0x1fe0, b"supermetroid");
     RtlWriteSram(game);
 }
 pub unsafe fn VerifySRAM(game: &mut Game) {
     word!(game.num_demo_sets = 3);
     if LoadFromSram(0, game) != 0 && LoadFromSram(1, game) != 0 && LoadFromSram(2, game) != 0 {
-        memcpy(
-            game.g_sram.offset(0x1fe0) as *mut c_void,
-            c"madadameyohn".as_ptr() as *const c_void,
-            12 as size_t,
-        );
+        game.g_sram.write_bytes(0x1fe0, b"madadameyohn");
         RtlWriteSram(game);
-    } else if memcmp(
-        game.g_sram.offset(0x1fe0) as *const c_void,
-        c"supermetroid".as_ptr() as *const c_void,
-        12 as size_t,
-    ) == 0
-    {
+    } else if game.g_sram.bytes(0x1fe0..0x1fec) == b"supermetroid" {
         word!(game.num_demo_sets = 4);
     }
 }

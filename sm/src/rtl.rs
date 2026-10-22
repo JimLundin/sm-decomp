@@ -230,7 +230,7 @@ pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
     game.snes_frame_counter = 0;
     snes_reset(game.g_snes, true_0 != 0, game);
     if mode & 1 == 0 {
-        memset(game.g_sram as *mut c_void, 0, 0x2000 as size_t);
+        game.g_sram.fill(0..0x2000, 0);
     }
     *ram_ptr!(game; 0x611) = 1;
     RtlApuLock();
@@ -316,11 +316,8 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
         } else {
             RtlReset(2, game);
             if game.state_recorder.base_snapshot.size == 8192 as size_t {
-                memcpy(
-                    game.g_sram as *mut c_void,
-                    game.state_recorder.base_snapshot.as_mut_ptr() as *const c_void,
-                    8192 as size_t,
-                );
+                game.g_sram
+                    .write_bytes(0, &game.state_recorder.base_snapshot.as_slice()[..8192]);
             }
             is_reset = true_0 != 0;
         }
@@ -1054,18 +1051,18 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
 pub unsafe fn RtlReadSram(game: &mut Game) {
     let f = fopen(c"saves/sm.srm".as_ptr(), c"rb".as_ptr()) as *mut FILE;
     if !f.is_null() {
-        if fread(game.g_sram as *mut c_void, 1 as size_t, 8192 as size_t, f) != 8192 as c_ulong {
+        let mut bytes = game.g_sram.bytes(0..8192);
+        let count = fread(bytes.as_mut_ptr().cast(), 1, 8192, f);
+        game.g_sram.write_bytes(0, &bytes);
+        if count != 8192 {
             fprintf(stderr, c"Error reading saves/sm.srm\n".as_ptr());
         }
         fclose(f);
         RtlSynchronizeWholeState(game);
         recording_allocation(game.state_recorder.base_snapshot.resize(8192));
         game.state_recorder.has_base_audio_queue = false;
-        memcpy(
-            game.state_recorder.base_snapshot.as_mut_ptr().cast(),
-            game.g_sram as *const c_void,
-            8192 as size_t,
-        );
+        game.g_sram
+            .read_bytes(0, game.state_recorder.base_snapshot.as_mut_slice());
     }
 }
 pub unsafe fn RtlWriteSram(game: &mut Game) {
@@ -1075,7 +1072,8 @@ pub unsafe fn RtlWriteSram(game: &mut Game) {
     rename(c"saves/sm.srm".as_ptr(), c"saves/sm.srm.bak".as_ptr());
     let f = fopen(c"saves/sm.srm".as_ptr(), c"wb".as_ptr()) as *mut FILE;
     if !f.is_null() {
-        fwrite(game.g_sram as *const c_void, 1 as size_t, 8192 as size_t, f);
+        let bytes = game.g_sram.bytes(0..8192);
+        fwrite(bytes.as_ptr().cast(), 1, 8192, f);
         fclose(f);
     } else {
         fprintf(stderr, c"Unable to write saves/sm.srm\n".as_ptr());

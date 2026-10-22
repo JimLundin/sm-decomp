@@ -214,7 +214,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         }
         if let Some(saved_sram) = saved_sram {
             sm::rtl::RtlReadSram(game);
-            if std::slice::from_raw_parts(game.g_sram, 8192) != saved_sram.as_slice() {
+            if game.g_sram.bytes(0..8192) != saved_sram {
                 return Err("loaded SRAM differs from saves/sm.srm".into());
             }
         }

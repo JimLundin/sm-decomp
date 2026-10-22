@@ -420,6 +420,7 @@ pub mod host;
 
 pub mod game_state;
 pub mod rom;
+pub mod save_ram;
 pub mod recording;
 
 /// Execution requirements for focused verifier scenarios.

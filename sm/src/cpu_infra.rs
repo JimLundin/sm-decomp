@@ -729,11 +729,9 @@ unsafe fn MakeSnapshot(s: &mut Snapshot, snes: &Snes, c: &Cpu, player: *mut SpcP
     s.dma.dmaTimer = (*snes.dma).dmaTimer;
     s.dma.dmaBusy = (*snes.dma).dmaBusy;
     memcpy(s.ram.as_mut_ptr().cast(), snes.ram.cast(), 0x20000);
-    memcpy(
-        s.sram.as_mut_ptr().cast(),
-        (*snes.cart).ram.cast(),
-        (*snes.cart).ramSize as size_t,
-    );
+    (*snes.cart)
+        .ram
+        .read_bytes(0, &mut s.sram[..(*snes.cart).ramSize as usize]);
 }
 // This field list preserves the historical partial restore and its phases.
 // Snapshot pointers, CPU counters and renderer caches remain inert copies.
@@ -800,7 +798,7 @@ unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
     copy_snapshot_fields! {dma, s.dma; channel, hdmaTimer, dmaTimer, dmaBusy}
     copy_snapshot_fields! {snes, s.snes; multiplyA, multiplyResult, divideA, divideResult}
     memcpy(snes.ram.cast(), s.ram.as_ptr().cast(), 0x20000);
-    memcpy((*snes.cart).ram.cast(), s.sram.as_ptr().cast(), 0x2000);
+    (*snes.cart).ram.write_bytes(0, &s.sram[..0x2000]);
     (*snes.ppu).vram = s.ppu.vram;
     let ppu = &mut *snes.ppu;
     copy_snapshot_fields! {ppu, s.ppu;
@@ -903,7 +901,7 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
     if !loaded {
         return null_mut::<Snes>();
     }
-    game.g_sram = (*(*game.g_snes).cart).ram;
+    game.g_sram = (*(*game.g_snes).cart).ram.clone();
     game.g_rom = (*(*game.g_snes).cart).rom.as_mut_ptr();
     game.register_rom((*(*game.g_snes).cart).rom.clone());
     RtlSetupEmuCallbacks(

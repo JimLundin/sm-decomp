@@ -1,4 +1,4 @@
-use crate::c_library::{__assert_fail, free, malloc, memcpy, memset, printf};
+use crate::c_library::{__assert_fail, malloc, memcpy, printf};
 use crate::game_state::Game;
 use crate::host::Die;
 use crate::rom::RomImage;
@@ -16,7 +16,7 @@ pub unsafe fn cart_init(snes: *mut Snes) -> *mut Cart {
         type_0: 0,
         rom: RomImage::default(),
         romSize: 0,
-        ram: null_mut(),
+        ram: crate::save_ram::SaveRam::default(),
         ramSize: 0,
     });
     cart
@@ -30,7 +30,7 @@ pub unsafe fn cart_saveload(
 ) {
     func.expect("non-null function pointer")(
         ctx,
-        (*cart).ram as *mut c_void,
+        (*cart).ram.legacy_snapshot_ptr().cast(),
         (*cart).ramSize as size_t,
         game,
     );
@@ -38,17 +38,10 @@ pub unsafe fn cart_saveload(
 pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: *mut u8, romSize: i32, ramSize: i32) {
     (*cart).type_0 = type_0 as u8;
     (*cart).rom = RomImage::default();
-    if !(*cart).ram.is_null() {
-        free((*cart).ram as *mut c_void);
-    }
+    (*cart).ram = crate::save_ram::SaveRam::default();
     (*cart).rom = RomImage::zeroed(romSize as usize);
     (*cart).romSize = romSize as u32;
-    if ramSize > 0 {
-        (*cart).ram = malloc(ramSize as size_t) as *mut u8;
-        memset((*cart).ram as *mut c_void, 0, ramSize as size_t);
-    } else {
-        (*cart).ram = null_mut::<u8>();
-    }
+    (*cart).ram = crate::save_ram::SaveRam::zeroed(ramSize.max(0) as usize);
     (*cart).ramSize = ramSize as u32;
     memcpy(
         (*cart).rom.as_mut_ptr().cast(),
@@ -88,7 +81,7 @@ unsafe fn cart_readLorom(cart: *mut Cart, mut bank: u8, adr: u16, game: &mut Gam
     if (matches!(bank, 0x70..=0x7d) || bank >= 0xf0) && adr < 0x8000 && (*cart).ramSize > 0 {
         let index =
             ((u32::from(bank & 0xf) << 15) | u32::from(adr)) & (*cart).ramSize.wrapping_sub(1);
-        return *(*cart).ram.offset(index as isize);
+        return (*cart).ram.read(index as usize);
     }
     bank &= 0x7f;
     if adr >= 0x8000 || bank >= 0x40 {
@@ -125,16 +118,16 @@ unsafe fn cart_writeLorom(cart: *mut Cart, bank: u8, address: u16, value: u8) {
     if (matches!(bank, 0x70..=0x7d) || bank > 0xf0) && address < 0x8000 && (*cart).ramSize > 0 {
         let index =
             ((u32::from(bank & 0xf) << 15) | u32::from(address)) & (*cart).ramSize.wrapping_sub(1);
-        *(*cart).ram.offset(index as isize) = value;
+        (*cart).ram.write(index as usize, value);
     }
 }
 unsafe fn cart_readHirom(cart: *mut Cart, mut bank: u8, adr: u16) -> u8 {
     bank = (bank & 0x7f);
     if (bank as i32) < 0x40 && adr as i32 >= 0x6000 && (adr as i32) < 0x8000 && (*cart).ramSize > 0
     {
-        return *(*cart).ram.offset(
+        return (*cart).ram.read(
             (((bank as i32 & 0x3f) << 13 | adr as i32 & 0x1fff) as u32
-                & (*cart).ramSize.wrapping_sub(1)) as isize,
+                & (*cart).ramSize.wrapping_sub(1)) as usize,
         );
     }
     if adr as i32 >= 0x8000 || bank as i32 >= 0x40 {
@@ -153,9 +146,10 @@ unsafe fn cart_writeHirom(cart: *mut Cart, mut bank: u8, adr: u16, val: u8) {
     bank = (bank & 0x7f);
     if (bank as i32) < 0x40 && adr as i32 >= 0x6000 && (adr as i32) < 0x8000 && (*cart).ramSize > 0
     {
-        *(*cart).ram.offset(
+        (*cart).ram.write(
             (((bank as i32 & 0x3f) << 13 | adr as i32 & 0x1fff) as u32
-                & (*cart).ramSize.wrapping_sub(1)) as isize,
-        ) = val;
+                & (*cart).ramSize.wrapping_sub(1)) as usize,
+            val,
+        );
     }
 }

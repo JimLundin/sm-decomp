@@ -34,6 +34,7 @@ fn compatibility() -> u64 {
         include_str!("../cpu_infra.rs"),
         include_str!("../rtl.rs"),
         include_str!("../recording.rs"),
+        include_str!("../save_ram.rs"),
         include_str!("../audio_snapshot.rs"),
         include_str!("../spc_player.rs"),
         include_str!("../snes/snes.rs"),
@@ -379,7 +380,9 @@ unsafe fn machine(game: &mut Game, archive: &mut Archive<'_>) -> Result<(), Stri
     (*(*(*snes).apu).dsp).state(archive)?;
     (*game.g_spc_player).state(archive)?;
     (*(*game.g_spc_player).dsp).state(archive)?;
-    archive.bytes(std::slice::from_raw_parts_mut(game.g_sram, 8192))?;
+    let mut save_bytes = game.g_sram.bytes(0..8192);
+    archive.bytes(&mut save_bytes)?;
+    game.g_sram.write_bytes(0, &save_bytes);
     Ok(())
 }
 

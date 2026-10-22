@@ -81,41 +81,37 @@ pub unsafe fn SaveToSram(a: u16, game: &mut Game) {
     word!(game.sram_save_station_index = word!(game.load_station_index));
     word!(game.sram_area_index = word!(game.area_index));
     let mut v5: u16 = crate::rtl::rom_table_word!(game, 0x81812b, (r18 >> 1) as isize);
-    let mut v6: *mut u16 = ram_ptr!(game, u16; 0xd7c0);
-    do_until! { (v6 == ram_ptr!(game, u16; 0xde1c));
-        crate::update_place! { previous fresh94 = v6 => v6.offset(1); }
-        let mut v7: u16 = *fresh94;
-        *(game.g_sram.offset((2 * (v5 as i32 >> 1)) as isize) as *mut u16) = v7;
+    for offset in (0xd7c0..0xde1c).step_by(2) {
+        let v7 = u16::from_ne_bytes(game.g_ram[offset..offset + 2].try_into().unwrap());
+        game.g_sram.set_word((2 * (v5 as i32 >> 1)) as usize, v7);
         r20 = (r20).wrapping_add(v7);
         v5 = (v5).wrapping_add(2);
     }
     let v8: u16 = r18;
     let v9: u16 = r20;
     let v10: i32 = r18 as i32 >> 1;
-    *(game.g_sram.offset((2 * v10) as isize) as *mut u16) = r20;
-    *(game.g_sram.offset((2 * v10 + 0x1ff0) as isize) as *mut u16) = v9;
+    game.g_sram.set_word((2 * v10) as usize, r20);
+    game.g_sram.set_word((2 * v10 + 0x1ff0) as usize, v9);
     let mut v11: u16 = !(v9 as i32) as u16;
-    *(game.g_sram.offset((2 * v10 + 8) as isize) as *mut u16) = v11;
-    *(game.g_sram.offset((2 * v10 + 0x1ff8) as isize) as *mut u16) = v11;
+    game.g_sram.set_word((2 * v10 + 8) as usize, v11);
+    game.g_sram.set_word((2 * v10 + 0x1ff8) as usize, v11);
     RtlWriteSram(game);
 }
 pub unsafe fn LoadFromSram(a: u16, game: &mut Game) -> u8 {
     let mut r20: u16 = 0;
     let r18: u16 = (2 * (a as i32 & 3)) as u16;
     let mut v1: u16 = crate::rtl::rom_table_word!(game, 0x81812b, (a as i32 & 3) as isize);
-    let mut v2: *mut u16 = ram_ptr!(game, u16; 0xd7c0);
-    do_until! { (v2 == ram_ptr!(game, u16; 0xde1c));
-        let v3: u16 = *(game.g_sram as *mut u16).offset((v1 >> 1) as isize);
-        crate::update_place! { previous fresh1 = v2 => v2.offset(1); }
-        *fresh1 = v3;
+    for offset in (0xd7c0..0xde1c).step_by(2) {
+        let v3: u16 = game.g_sram.word((2 * (v1 >> 1)) as usize);
+        game.g_ram[offset..offset + 2].copy_from_slice(&v3.to_ne_bytes());
         r20 = (r20).wrapping_add(v3);
         v1 = (v1).wrapping_add(2);
     }
     let v4: i32 = r18 as i32 >> 1;
-    if r20 == *(game.g_sram as *mut u16).offset(v4 as isize)
-        && r20 ^ 0xffff == *(game.g_sram.offset(0x8) as *mut u16).offset(v4 as isize)
-        || r20 == *(game.g_sram.offset(0x1ff0) as *mut u16).offset(v4 as isize)
-            && r20 ^ 0xffff == *(game.g_sram.offset(0x1ff8) as *mut u16).offset(v4 as isize)
+    if r20 == game.g_sram.word((2 * v4) as usize)
+        && r20 ^ 0xffff == game.g_sram.word((0x8 + 2 * v4) as usize)
+        || r20 == game.g_sram.word((0x1ff0 + 2 * v4) as usize)
+            && r20 ^ 0xffff == game.g_sram.word((0x1ff8 + 2 * v4) as usize)
     {
         word_transfers!(game, descending, 48; native(0xa00) <- le(player_data_saved, 47));
         UnpackMapFromSave(game);
@@ -125,17 +121,12 @@ pub unsafe fn LoadFromSram(a: u16, game: &mut Game) -> u8 {
     } else {
         r20 = 0;
         let mut v7: u16 = crate::rtl::rom_table_word!(game, 0x81812b, (r18 >> 1) as isize);
-        let mut v8: u16 = (ram_ptr!(game, u16; 0xd7c0) as *mut u8)
-            .offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
         let mut v9: u16 = 0;
-        do_until! { (v8 as c_long
-                == (ram_ptr!(game, u16; 0xde1c) as *mut u8)
-                    .offset_from(&raw mut game.g_ram as *mut u8) as c_long);
-            *(game.g_sram as *mut u16).offset((v7 >> 1) as isize) = v9;
+        for _ in (0xd7c0..0xde1c).step_by(2) {
+            game.g_sram.set_word((2 * (v7 >> 1)) as usize, v9);
             v9 = (v9).wrapping_add(r20);
             r20 = v9;
             v7 = (v7).wrapping_add(2);
-            v8 = (v8).wrapping_add(2);
         }
         word! { game, 0; load_station_index, area_index }
         1
@@ -857,21 +848,22 @@ pub unsafe fn FileSelectMenu_13_FileCopyDoIt(game: &mut Game) {
         crate::rtl::rom_table_word!(game, 0x81812b, word!(game.eproj_id[16]) as isize);
     let dst_addr: u16 =
         crate::rtl::rom_table_word!(game, 0x81812b, word!(game.eproj_id[17]) as isize);
-    memcpy(
-        game.g_sram.offset(dst_addr as isize) as *mut c_void,
-        game.g_sram.offset(src_addr as isize) as *const c_void,
-        1628 as size_t,
+    game.g_sram.copy_within(
+        src_addr as usize..src_addr as usize + 1628,
+        dst_addr as usize,
     );
     let v2: i32 = word!(game.eproj_id[16]) as i32;
-    let v10: i32 = *(game.g_sram.offset((2 * v2 + 0x1ff0) as isize) as *mut u16) as i32;
-    let v9: i32 = *(game.g_sram.offset((2 * v2 + 0x1ff8) as isize) as *mut u16) as i32;
-    let v8: i32 = *(game.g_sram.offset((2 * v2 + 0) as isize) as *mut u16) as i32;
+    let v10: i32 = game.g_sram.word((2 * v2 + 0x1ff0) as usize) as i32;
+    let v9: i32 = game.g_sram.word((2 * v2 + 0x1ff8) as usize) as i32;
+    let v8: i32 = game.g_sram.word((2 * v2) as usize) as i32;
     let v4: i32 = word!(game.eproj_id[17]) as i32;
-    *(game.g_sram.offset((2 * v4 + 8) as isize) as *mut u16) =
-        *(game.g_sram.offset((2 * v2 + 8) as isize) as *mut u16);
-    *(game.g_sram.offset((2 * v4) as isize) as *mut u16) = v8 as u16;
-    *(game.g_sram.offset((2 * v4 + 0x1ff8) as isize) as *mut u16) = v9 as u16;
-    *(game.g_sram.offset((2 * v4 + 0x1ff0) as isize) as *mut u16) = v10 as u16;
+    game.g_sram.set_word(
+        (2 * v4 + 8) as usize,
+        game.g_sram.word((2 * v2 + 8) as usize),
+    );
+    game.g_sram.set_word((2 * v4) as usize, v8 as u16);
+    game.g_sram.set_word((2 * v4 + 0x1ff8) as usize, v9 as u16);
+    game.g_sram.set_word((2 * v4 + 0x1ff0) as usize, v10 as u16);
     word!(game.menu_index += 1);
     word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
     word!(game.nonempty_save_slots |= (kBitShl_16bit[word!(game.eproj_id[17]) as usize]));
@@ -897,10 +889,10 @@ pub unsafe fn FileSelectMenu_14_CopyCompleted(game: &mut Game) {
     if word!(game.joypad1_newkeys) != 0 {
         QueueSfx1_Max6(0x37, game);
         word!(game.menu_index += 1);
-        let mut slot: i32 = *(game.g_sram.offset(0x1fec) as *mut u16) as i32;
+        let mut slot: i32 = game.g_sram.word(0x1fec) as i32;
         if slot & 0x8000 != 0
-            || *(game.g_sram.offset(0x1fec) as *mut u16) as i32 - 3i32 & 0x8000 == 0
-            || slot & *(game.g_sram.offset(0x1fee) as *mut u16) as i32 != 0
+            || game.g_sram.word(0x1fec) as i32 - 3i32 & 0x8000 == 0
+            || slot & game.g_sram.word(0x1fee) as i32 != 0
         {
             slot = 0;
         }
@@ -1012,17 +1004,14 @@ pub unsafe fn FileSelectMenu_25_FileClearDoClear(game: &mut Game) {
     DrawBorderAroundDataClearMode(game);
     let sram_addr: i32 =
         crate::rtl::rom_table_word!(game, 0x81812b, word!(game.eproj_id[16]) as isize) as i32;
-    memset(
-        game.g_sram.offset(sram_addr as isize) as *mut c_void,
-        0,
-        1628 as size_t,
-    );
+    game.g_sram
+        .fill(sram_addr as usize..sram_addr as usize + 1628, 0);
     let v1: u16 = (2u16).wrapping_mul(word!(game.eproj_id[16]));
     let v2: i32 = word!(game.eproj_id[16]) as i32;
-    *(game.g_sram.offset((2 * v2) as isize) as *mut u16) = 0;
-    *(game.g_sram.offset((2 * v2 + 8) as isize) as *mut u16) = 0;
-    *(game.g_sram.offset((2 * v2 + 0x1ff0) as isize) as *mut u16) = 0;
-    *(game.g_sram.offset((2 * v2 + 0x1ff8) as isize) as *mut u16) = 0;
+    game.g_sram.set_word((2 * v2) as usize, 0);
+    game.g_sram.set_word((2 * v2 + 8) as usize, 0);
+    game.g_sram.set_word((2 * v2 + 0x1ff0) as usize, 0);
+    game.g_sram.set_word((2 * v2 + 0x1ff8) as usize, 0);
     word!(game.menu_index += 1);
     NewSaveFile(game);
     LoadFromSram(word!(game.eproj_id[16]), game);
@@ -1152,12 +1141,11 @@ pub unsafe fn FileSelectMenu_1_LoadFileSelectMenuBG2(game: &mut Game) {
 }
 pub unsafe fn FileSelectMenu_2_InitMain(game: &mut Game) {
     let mut v0: u16 = 0;
-    if *(game.g_sram.offset(0x1fec) as *mut u16) & 0x8000 != 0
-        || *(game.g_sram.offset(0x1fec) as *mut u16) as i32 - 3i32 & 0x8000 == 0
+    if game.g_sram.word(0x1fec) & 0x8000 != 0
+        || game.g_sram.word(0x1fec) as i32 - 3i32 & 0x8000 == 0
         || {
-            v0 = *(game.g_sram.offset(0x1fec) as *mut u16);
-            (*(game.g_sram.offset(0x1fee) as *mut u16) & *(game.g_sram.offset(0x1fec) as *mut u16))
-                != 0
+            v0 = game.g_sram.word(0x1fec);
+            (game.g_sram.word(0x1fee) & game.g_sram.word(0x1fec)) != 0
         }
     {
         v0 = 0;
@@ -1376,9 +1364,9 @@ pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
             word!(game.menu_index += 27);
             *(ram_ptr!(game, u16; 0x198d, (2 * (word!(game.selected_save_slot) as i32 + 2)) as u16 as i32 as isize)) =
                 1;
-            *(game.g_sram.offset(0x1fec) as *mut u16) = word!(game.selected_save_slot);
-            *(game.g_sram.offset(0x1fee) as *mut u16) =
-                !(word!(game.selected_save_slot) as i32) as u16;
+            game.g_sram.set_word(0x1fec, word!(game.selected_save_slot));
+            game.g_sram
+                .set_word(0x1fee, !(word!(game.selected_save_slot) as i32) as u16);
             RtlWriteSram(game);
             if LoadFromSram(word!(game.selected_save_slot), game) != 0 {
                 NewSaveFile(game);
