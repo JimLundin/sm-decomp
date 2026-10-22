@@ -1636,6 +1636,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    progression, cancellation subsets and the drain-to-X-ray restriction retain
    distinct observation points. Continue these producer/consumer experiments in
    the full candidate; persistent writer/alias closure is still open.
+   The flare follow-up at 20261022/weapon-flare now passes 324 actual old/new
+   full-RAM/failure-flag cases, 529 ordered observations and 66 matching failures.
+   Beam/hyper/grapple flare and tile-before-charge increment use a pure shared
+   state bundle and named duration sequences, with a checked adapter; both forbid
+   unsafe code. One additional typed sequence runs without RAM decoding. All 115
+   frozen library and seven local compiled inputs are checked. Sprite geometry,
+   sound/tile output and native diagnostics are controlled, definitions synthetic;
+   no movie or adoption. Integrate with the same charge owner; palette/glow,
+   sound resumption, cancellation and encounter rules still need experiments.
    User-requested [RAM ownership research](RAM_OWNERSHIP.md) now traces eleven
    producer/consumer contracts and separates live values, captured selectors,
    cross-update handoffs and nested continuations. The first implementation moves

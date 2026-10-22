@@ -233,8 +233,16 @@ slot; ordinary firing does not. Failure and rejection therefore have named,
 caller-specific meanings. A separate sequence retains the typed pending state
 without intermediate RAM decoding. The model and checked experiment adapter
 forbid unsafe code; production integration and global writer closure remain open.
-The preceding 68-fixture discovery experiment is preserved separately. Other rows
-above remain source-audited findings without new gameplay execution coverage.
+The preceding 68-fixture discovery experiment is preserved separately.
+
+The [scheduled flare prototype](RAM_OWNERSHIP.md#scheduled-beam-and-grapple-flare-transitions)
+also makes beam/hyper/grapple visual progression and the later grapple charge
+increment explicit. **324 old/new comparisons** pass, with 66 matching failures.
+It preserves entry-selected mode, post-draw charge rereads and tile-before-increment
+ordering. Named sequence lookup keeps ROM addresses in the adapter. This must
+join the same charge owner as firing; sprite geometry/output and other effects
+remain controlled. Palette/glow, sound restoration, cancellation and encounter
+restrictions above still have source-audited rather than new execution coverage.
 
 The full projectile draft may temporarily aggregate these inputs for comparison.
 Its final interface must give each value one authority and apply cross-owner
@@ -310,17 +318,18 @@ through foreign execution, preserve nesting and failures, and encode those rules
 in the actual callers. The whole-projectile implementation and full cost remain
 open; no savings or gameplay-route coverage follow from this prototype.
 
-The [reviewed full draft stage](RAM_OWNERSHIP.md#whole-projectile-draft-first-firing-slice)
-passes 1,295 comparisons, with controlled foreign calls. Its owner crosses
+The [reviewed full draft stage](RAM_OWNERSHIP.md#whole-projectile-draft)
+passes 1,634 comparisons, with controlled foreign calls. Its owner crosses
 those calls by value, rereads returned inputs, and publishes partial state before
 diverging on an invalid table lookup. It covers beam input/firing, flight,
 acceleration, extensions, release, projectile animation/drawing decisions and
-linked production cooldown. Beam firing now calls owned initialization directly,
-removing that legacy effect and its publish/import round trip. Placement, launch
-speed, real contact reactions, remaining weapons/trails/reset and production
-runtime integration remain outstanding in this stage. The typed aim experiment
-above is supplied for integration into the same candidate. Retained out-of-pool
-execution still uses reference bodies. No whole-replacement cost is established.
+linked production cooldown. Beam firing and extension creation now call owned
+placement and initialization directly, removing those legacy effects and their
+publish/import round trips. Broad-index placement uses the checked adapter and
+the same aim model. Launch speed, real contact reactions, remaining weapons/trails/
+reset and production runtime integration remain outstanding in this stage.
+Other out-of-pool execution retains reference bodies. No whole-replacement cost
+is established.
 
 State ownership alone will not finish the game-facing interface. This draft still
 uses raw bank addresses for definition lookup, numeric animation instruction
