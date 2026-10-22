@@ -2131,6 +2131,34 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    lines. Source/result: player-projectiles/mechanism-closing-stage. Continue this
    composition with the shared dialogue model, actual phase/script effects and
    runtime authority. Full pricing and production adoption remain open.
+   The same full candidate now carries dialogue, mechanism/projectile state and
+   the applicable caller continuation through dialogue effects by value. The
+   coordinator's animation/input model and codec are reused unchanged; the bridge
+   relinquishes every usable owner before a compatibility effect and reconstructs
+   only from its result. The generic composition forbids unsafe code. **241
+   comparisons**, 10,613 ordered state observations and 99 matching failures pass:
+   108 new dialogue/caller cases, 80 affected callers, 45 scheduler cases and only
+   the eight closing consumers. New cases cover queue/active-message separation,
+   callback mutation of projectile/slot/continuation state, live selection,
+   save selection/output, saved feedback and three RAM-image resumes. Two native
+   sequences retain one owner each over two caller invocations, using actual
+   projectile release/cooldown, mechanism deletion, dialogue suspension and script
+   return/drawing. Native effects are authored; encoded output bodies execute with
+   controlled device/input/audio and room-loading leaves. No movie or earlier
+   projectile/creation/contact/direct-script/child-transition sweep ran.
+   Optimized build, formatting, mechanical pass/session/script correspondence,
+   current reference bodies and all **115+146 compiled inputs** pass; 126 inherited
+   inputs are unchanged. Composition adds **202 lines**, plus the reused 295-line
+   dialogue model and 120-line codec to this external candidate. No new
+   implementation macros or maintained-main savings. Separate support costs:
+   71 dialogue bridge, 53 output reference, 128 child reference and 661 child fixture
+   lines; native fixture +198, closing fixture +11, nested reference/binding/fixture
+   +2/-9/+7 and harness +21. These are ownership/safety costs, not a completed
+   reduction. Sources, DLL and results: player-projectiles/mechanism-dialogue-stage
+   (166 files preserved). Main's pending dialogue-child changes belong to the
+   coordinator and are untouched. Continue this complete candidate with actual
+   award/queue producers and remaining phase/script effects; runtime adoption,
+   complete safety and net pricing remain open.
    The full projectile candidate now includes shared script control flow:
    13 actual commands and two wake consumers use the
    existing owned slots for sleep/release, pre-actions, counters, conditional
