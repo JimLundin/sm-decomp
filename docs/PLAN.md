@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,083 Rust lines in 121 files**, plus 262 C
-bridge and 296 C-header lines = **96,641 maintained implementation lines**.
+Current composition (2026-10-22): **96,059 Rust lines in 121 files**, plus 262 C
+bridge and 296 C-header lines = **96,617 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,472**. This complete recount includes frontend,
+gives **97,448**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -3248,6 +3248,17 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Complete cost: **+93 Rust lines**, six fewer counted unsafe declarations and
    74 fewer cast lines. Other callback RAM operations and behavior calls remain
    unsafe; RAM still owns enemy state. This is safety work, not volume savings.
+   Enemy definitions, projectile definitions and vulnerability records now share
+   the existing checked ROM reader across all six banks. Ten raw-pointer reader
+   functions retire, including every typed raw access in this record family.
+   Kraid's live definition write uses the same owned record; native byte/word
+   reads, captured allocation identity and partial effects remain unchanged.
+   **1,389 actual old/new comparisons** pass across all 25 changed routines,
+   including 1,884 ordered full-RAM and selected-ROM observations and 580 matching failures.
+   Thirteen short-record checks and normal release/source checks pass. No movie
+   ran; sound, AI dispatch and related effects are controlled component boundaries.
+   Complete reduction: **24 Rust lines and ten unsafe declarations**. Raw RAM
+   operations and native diagnostics remain unsafe; wider state ownership is open.
    Event/boss flag access and shared bit-mask preparation now live in the safe
    `progress_flags` module, which forbids unsafe code. All 15 caller files import
    it directly; the six bank-80 definitions are retired. Queries retain their
@@ -4373,16 +4384,21 @@ execution, shared effect ROM records, checked animated tiles, safe progress flag
 owned room metadata, checked door metadata, shared scroll loading, shared PLM
 spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
-checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling
-and owned enemy-script positions,
-maintained Rust is **96,083**,
+checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
+owned enemy-script positions and checked enemy-definition records,
+maintained Rust is **96,059**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,641**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,472**.
+Including 262 C and 296 header lines gives **96,617**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,448**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2965; cast lines 6369. Owned enemy-script positions add 93 Rust
+unsafe functions 2955; cast lines 6369. Checked enemy-definition records remove
+24 Rust lines and ten counted unsafe declarations; all other counters are
+unchanged. Raw enemy/projectile-definition and vulnerability pointers retire;
+the shared reader/writer forbids unsafe code. Native diagnostics, surrounding
+RAM operations and behavior calls remain unsafe.
+Owned enemy-script positions add 93 Rust
 lines across nineteen source files, removing six counted unsafe declarations and
 74 cast-containing lines. Raw script traversal, parameter loads and pointer
 control results retire across the full callback family; the cursor module forbids

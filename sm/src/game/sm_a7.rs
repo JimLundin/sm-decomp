@@ -1,3 +1,5 @@
+use crate::rtl::rom_record;
+use core::mem::offset_of;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
@@ -147,10 +149,6 @@ crate::game::constants::typed_constants! { i32;
 const RomPtr_A7: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa7>;
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
-#[inline]
-unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
-    RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
@@ -1389,7 +1387,7 @@ crate::game::callback_dispatch! {
             let enemy_ptr: u16 = (*Get_Kraid(word!(game.cur_enemy_index) as i32, game))
                 .base
                 .enemy_ptr;
-            (*get_EnemyDef_A2(enemy_ptr, game)).shot_ai = ((0xa7804ci32) as u16);
+            rom_record(0xa0, enemy_ptr, game).set_word(offset_of!(EnemyDef, shot_ai), ((0xa7804ci32) as u16));
             let E1 = Get_Kraid(0x40, game);
             let v3: u16 = ((*E1).base.properties as i32
                 | kEnemyProps_Tangible as i32

@@ -1,3 +1,5 @@
+use crate::rtl::rom_record;
+use core::mem::offset_of;
 use crate::game::music::{QueueMusic_Delayed8};
 use crate::game::eproj_script::EprojScript;
 pub use crate::game::prelude::*;
@@ -59,14 +61,6 @@ const RomPtr_A1: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_p
 const RomPtr_B4: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb4>;
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
-#[inline]
-unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
-    RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
-}
-#[inline]
-unsafe fn get_EprojDef(a: u16, game: &mut Game) -> *mut EprojDef {
-    RomPtr((0x860000u32) | ((a) as u32), game) as *mut EprojDef
 }
 crate::ram_map::ram_pointer_functions! {
     gRam7800_Default(a: u16) -> Ram7800_Default = [(0x7800 + a as i32) as isize];
@@ -237,19 +231,19 @@ unsafe fn SpawnEprojInner(j: u16, gfx_idx: u16, game: &mut Game) -> Option<u16> 
     let v4 = usize::from(v3 >> 1);
     EprojStateMut(&mut game.g_ram).write(0x19bb, v4, gfx_idx);
     EprojStateMut(&mut game.g_ram).set_id(v4, j);
-    let Edef = get_EprojDef(j, game);
-    let value = (*Edef).pre_instr_ptr;
+    let Edef = rom_record(0x86, j, game);
+    let value = Edef.word(offset_of!(EprojDef, pre_instr_ptr));
     EprojStateMut(&mut game.g_ram).set_preinstruction(v4, value);
-    let value = (*Edef).instr_list;
+    let value = Edef.word(offset_of!(EprojDef, instr_list));
     EprojStateMut(&mut game.g_ram).set_instruction(v4, value);
-    let radius = (*Edef).radius;
+    let radius = Edef.word(offset_of!(EprojDef, radius));
     EprojStateMut(&mut game.g_ram).write(0x1bb3, v4, radius);
-    let value = (*Edef).properties;
+    let value = Edef.word(offset_of!(EprojDef, properties));
     EprojStateMut(&mut game.g_ram).set_properties(v4, value);
     EprojStateMut(&mut game.g_ram).set_instruction_timer(v4, 1);
     EprojStateMut(&mut game.g_ram).set_spritemap(v4, 0x8000);
     EprojStateMut(&mut game.g_ram).clear_spawn_variables(v4);
-    CallEprojInit((((*Edef).init_code_ptr) as u32) | (0x860000u32), v3, game);
+    CallEprojInit(((Edef.word(offset_of!(EprojDef, init_code_ptr))) as u32) | (0x860000u32), v3, game);
     Some(v3)
 }
 pub unsafe fn SpawnEprojWithGfx(a: u16, k: u16, j: u16, game: &mut Game) -> u16 {
@@ -1547,7 +1541,7 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
     let v1: i32 = k as i32 >> 1;
     let varE28: u16 = word!(game.eproj_enemy_header_ptr[v1]);
     if (varE28 != 0) {
-        let mut v2: u16 = (*get_EnemyDef_A2(varE28, game)).item_drop_chances_ptr;
+        let mut v2: u16 = rom_record(0xa0, varE28, game).word(offset_of!(EnemyDef, item_drop_chances_ptr));
         if (v2 != 0) {
             let mut Random: u8 = 0;
             do_until! { (Random != 0);
@@ -1658,13 +1652,13 @@ pub unsafe fn RespawnEnemy(v0: u16, game: &mut Game) {
     (*E).vram_tiles_index = (*ESD).vram_tiles_index;
     set_fields! {[(*E)], 0; frozen_timer, flash_timer, invincibility_timer, timer, frame_counter, ai_var_A, ai_var_B, ai_var_C, ai_var_D, ai_var_E, ai_preinstr}
     (*E).instruction_timer = 1;
-    let Edef = get_EnemyDef_A2((*E).enemy_ptr, game);
-    (*E).x_width = (*Edef).x_radius;
-    (*E).y_height = (*Edef).y_radius;
-    (*E).health = (*Edef).health;
-    (*E).layer = (*Edef).layer as u16;
-    *(&raw mut (*E).bank as *mut u16) = *(&raw mut (*Edef).bank as *mut u16);
-    CallEnemyAi((words!(i32, (*Edef), bank, ai_init)) as u32, game);
+    let Edef = rom_record(0xa0, (*E).enemy_ptr, game);
+    (*E).x_width = Edef.word(offset_of!(EnemyDef, x_radius));
+    (*E).y_height = Edef.word(offset_of!(EnemyDef, y_radius));
+    (*E).health = Edef.word(offset_of!(EnemyDef, health));
+    (*E).layer = Edef.byte(offset_of!(EnemyDef, layer)) as u16;
+    *(&raw mut (*E).bank as *mut u16) = Edef.word(offset_of!(EnemyDef, bank));
+    CallEnemyAi((words!(i32, (Edef.byte(offset_of!(EnemyDef, bank)), Edef.word(offset_of!(EnemyDef, ai_init))))) as u32, game);
 }
 crate::game::callback_dispatch! {
     unsafe fn CallEprojInit(ea: u32, j: u16, game: &mut Game) => ea;

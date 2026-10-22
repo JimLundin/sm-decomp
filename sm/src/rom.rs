@@ -59,6 +59,16 @@ impl RomRecord {
         u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
     }
 
+    pub(crate) fn set_word(&self, offset: usize, value: u16) {
+        let start = self
+            .base
+            .checked_add(offset)
+            .expect("ROM record offset overflow");
+        for (index, byte) in value.to_ne_bytes().into_iter().enumerate() {
+            self.image.write(start + index, byte);
+        }
+    }
+
     // Load24 includes the adjacent fourth byte in a native read before masking.
     pub(crate) fn load24(&self, offset: usize) -> u32 {
         u32::from_ne_bytes(core::array::from_fn(|i| self.byte(offset + i))) & 0xffffff

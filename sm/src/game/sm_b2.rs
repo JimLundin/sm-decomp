@@ -1,3 +1,5 @@
+use crate::rtl::rom_record;
+use core::mem::offset_of;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 pub use crate::game::constants::bank_86::*;
@@ -41,14 +43,6 @@ crate::game::constants::typed_constants! { Consts_B2;
 pub type Enemy_SpacePirates = crate::game::enemy_layouts::EnemyLayout72;
 
 const RomPtr_A0: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa0>;
-#[inline]
-unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
-    RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
-}
-#[inline]
-unsafe fn get_Vulnerability(a: u16, game: &mut Game) -> *mut Vulnerability {
-    RomPtr((0xb40000u32) | ((a) as u32), game) as *mut Vulnerability
-}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_SpacePirates(o: i32) -> Enemy_SpacePirates = [0xf78, o as isize];
@@ -69,7 +63,7 @@ pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
         let enemy_ptr = (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
             .base
             .enemy_ptr;
-        let mut vulnerability_ptr = (*get_EnemyDef_A2(enemy_ptr, game)).vulnerability_ptr;
+        let mut vulnerability_ptr = rom_record(0xa0, enemy_ptr, game).word(offset_of!(EnemyDef, vulnerability_ptr));
         if vulnerability_ptr == 0 {
             vulnerability_ptr = addr_stru_B4EC1C as u16;
         }
@@ -82,12 +76,12 @@ pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
                 true
             } else {
                 let v3: i16 = (((r18) & ((kProjectileType_TypeMask) as u16)) >> 8) as i16;
-                let v = get_Vulnerability((r20).wrapping_add((v3) as u16), game);
-                ((*v).plasma_ice_wave & 0xf) != 0 && ((*v).plasma_ice_wave & 0xf) != 15
+                let v = rom_record(0xb4, (r20).wrapping_add((v3) as u16), game);
+                (v.byte(offset_of!(Vulnerability, plasma_ice_wave)) & 0xf) != 0 && (v.byte(offset_of!(Vulnerability, plasma_ice_wave)) & 0xf) != 15
             }
         } else {
-            let v2 = get_Vulnerability((r20 as i32 + (r18 as i32 & 0xf)) as u16, game);
-            ((*v2).power & 0xf) != 0 && ((*v2).power & 0xf) != 15
+            let v2 = rom_record(0xb4, (r20 as i32 + (r18 as i32 & 0xf)) as u16, game);
+            (v2.byte(offset_of!(Vulnerability, power)) & 0xf) != 0 && (v2.byte(offset_of!(Vulnerability, power)) & 0xf) != 15
         };
         if !vulnerable {
             WalkingSpacePirates_883E(game);

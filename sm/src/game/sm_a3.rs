@@ -1,3 +1,5 @@
+use crate::rtl::rom_record;
+use core::mem::offset_of;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 pub use crate::game::prelude::*;
@@ -79,10 +81,6 @@ crate::type_aliases! {
 }
 
 const RomPtr_A3: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa3>;
-#[inline]
-unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
-    RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
-}
 crate::game::constants::typed_constants! { i32;
     fnBang_Func_6 = 0xa3bca5,
     fnBang_Func_7 = 0xa3bcc1, fnBang_Func_8 = 0xa3bcc5,
@@ -1767,7 +1765,7 @@ crate::game::callback_dispatch! {
         NextRandom(game);
         let E = Get_Sidehopper(word!(game.cur_enemy_index) as i32, game);
         set_fields! {[(*E)], 0; var_03, var_04, var_05}
-        let v2: u16 = (2u16).wrapping_mul((*get_EnemyDef_A2((*E).base.enemy_ptr, game)).field_2A);
+        let v2: u16 = (2u16).wrapping_mul(rom_record(0xa0, (*E).base.enemy_ptr, game).word(offset_of!(EnemyDef, field_2A)));
         (*E).var_06 = v2;
         let mut v4: u16 = if (*E).parameter_1 != 0 {
             crate::rtl::rom_table_word!(game, 0xa3aaca, ((*E).var_06 >> 1) as isize)
@@ -1776,7 +1774,7 @@ crate::game::callback_dispatch! {
         };
         (*E).var_00 = v4;
         Sidehopper_Func_3(game);
-        if (*get_EnemyDef_A2((*E).base.enemy_ptr, game)).field_2A != 0 {
+        if rom_record(0xa0, (*E).base.enemy_ptr, game).word(offset_of!(EnemyDef, field_2A)) != 0 {
             (*E).var_05 = 2;
         }
         let v6: i32 = (*E).var_05 as i32 >> 1;

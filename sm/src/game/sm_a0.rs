@@ -1,3 +1,5 @@
+use crate::rtl::rom_record;
+use core::mem::offset_of;
 use crate::game::enemy_scheduling::{shake_active_enemies, update_frozen_enemy};
 use crate::game::enemy_population_ram::initialize_room;
 pub use crate::game::prelude::*;
@@ -46,20 +48,7 @@ crate::typed_struct! {
 pub type Func_EnemyBlockCollInfo_U8 = unsafe fn(&mut EnemyBlockCollInfo, &mut Game) -> u8;
 
 pub const NULL: *mut c_void = null_mut::<c_void>();
-const RomPtr_86: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x86>;
 use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
-#[inline]
-unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
-    RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
-}
-#[inline]
-unsafe fn get_EprojDef(a: u16, game: &mut Game) -> *mut EprojDef {
-    RomPtr((0x860000u32) | ((a) as u32), game) as *mut EprojDef
-}
-#[inline]
-unsafe fn get_Vulnerability(a: u16, game: &mut Game) -> *mut Vulnerability {
-    RomPtr((0xb40000u32) | ((a) as u32), game) as *mut Vulnerability
-}
 #[inline]
 unsafe fn get_ExtendedSpriteMap(db: u8, a: u16, game: &mut Game) -> *mut ExtendedSpriteMap {
     RomPtr((words!(i32, (db, a))) as u32, game) as *mut ExtendedSpriteMap
@@ -550,7 +539,7 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
 pub unsafe fn HandleEprojCollWithSamus(k: u16, game: &mut Game) {
     word! {game; samus_invincibility_timer = 96; samus_knockback_timer = 5; }
     let v1: u16 =
-        *(RomPtr_86(*(ram_ptr!(game, u16; 0x1997, k as i32 as isize)), game) as *mut u16).offset(5);
+        rom_record(0x86, *(ram_ptr!(game, u16; 0x1997, k as i32 as isize)), game).word(offset_of!(EprojDef, hit_instruction_list));
     if v1 != 0 {
         let v2: i32 = k as i32 >> 1;
         word! {game; eproj_instr_list_ptr[v2] = v1; eproj_instr_timers[v2] = 1; }
@@ -616,7 +605,7 @@ pub unsafe fn HandleEprojCollWithProj(k: u16, j: u16, game: &mut Game) {
         word!(game.eproj_G[j_0] = word!(game.projectile_type[i]));
         word!(
             game.eproj_instr_list_ptr[j_0] =
-                (*get_EprojDef(word!(game.eproj_id[j_0]), game,)).shot_instruction_list
+                rom_record(0x86, word!(game.eproj_id[j_0]), game,).word(offset_of!(EprojDef, shot_instruction_list))
         );
         word!(game.eproj_instr_timers[j_0] = 1);
         word!(game.eproj_pre_instr[j_0] = ((0x8684fbi32) as u16));
@@ -701,7 +690,7 @@ pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
     (*E).ai_handler_bits = 1;
     let mut v0: u16 = 0;
     let enemy_ptr: u16 = (*E).enemy_ptr;
-    let mut grapple_ai: VoidP = (*get_EnemyDef_A2((*E).enemy_ptr, game)).grapple_ai;
+    let mut grapple_ai: VoidP = rom_record(0xa0, (*E).enemy_ptr, game).word(offset_of!(EnemyDef, grapple_ai));
     if grapple_ai as i32 != 0xa08000 & 0xffff {
         v0 = 1;
         if grapple_ai as i32 != 0xa08005 & 0xffff {
@@ -753,24 +742,23 @@ pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
             || (*E).enemy_ptr == 0
             || (*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32)
         {
-            let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
-            if (((*get_Vulnerability(
-                (if (*ED).vulnerability_ptr != 0u16 {
-                    (*ED).vulnerability_ptr as i32
+            let ED = rom_record(0xa0, (*E).enemy_ptr, game);
+            if ((rom_record(0xb4,
+                (if ED.word(offset_of!(EnemyDef, vulnerability_ptr)) != 0u16 {
+                    ED.word(offset_of!(EnemyDef, vulnerability_ptr)) as i32
                 } else {
                     addr_stru_B4EC1C as i32
                 }) as u16,
                 game,
-            ))
-            .power_bomb
+            ).byte(offset_of!(Vulnerability, power_bomb))
                 & 0x7f)
                 != 0)
                 && abs16((word!(game.power_bomb_explosion_x_pos)).wrapping_sub((*E).x_pos)) < rx
                 && abs16((word!(game.power_bomb_explosion_y_pos)).wrapping_sub((*E).y_pos)) < ry
             {
                 word!(game.cur_enemy_index = i as u16);
-                let func: u16 = (if (*ED).powerbomb_reaction != 0 {
-                    (*ED).powerbomb_reaction as i32
+                let func: u16 = (if ED.word(offset_of!(EnemyDef, powerbomb_reaction)) != 0 {
+                    ED.word(offset_of!(EnemyDef, powerbomb_reaction)) as i32
                 } else {
                     0xa08037 & 0xffff
                 }) as u16;
@@ -841,7 +829,7 @@ crate::prefixed_callbacks! {
         if (*E).spritemap_pointer == 0 {
             return;
         }
-        let touch_ai: u16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).touch_ai;
+        let touch_ai: u16 = rom_record(0xa0, (*E).enemy_ptr, game).word(offset_of!(EnemyDef, touch_ai));
         if touch_ai as i32 == 0xa0804c & 0xffff || touch_ai as i32 == 0xa0804b & 0xffff {
             return;
         }
@@ -897,7 +885,7 @@ crate::prefixed_callbacks! {
         {
             return;
         }
-        let shot_ai: u16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai;
+        let shot_ai: u16 = rom_record(0xa0, (*E).enemy_ptr, game).word(offset_of!(EnemyDef, shot_ai));
         if shot_ai as i32 == 0xa0804c & 0xffff || shot_ai as i32 == 0xa0804b & 0xffff {
             return;
         }
@@ -980,7 +968,7 @@ crate::prefixed_callbacks! {
         {
             return;
         }
-        let shot_ai: u16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai;
+        let shot_ai: u16 = rom_record(0xa0, (*E).enemy_ptr, game).word(offset_of!(EnemyDef, shot_ai));
         if shot_ai as i32 == 0xa0804c & 0xffff
             || shot_ai as i32 == 0xa0804b & 0xffff
             || word!(game.bomb_counter) == 0
@@ -1052,9 +1040,9 @@ crate::prefixed_callbacks! {
         if (*E).frozen_timer != 0 {
             (*E).ai_handler_bits = 4;
         } else {
-            let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
-            (*E).flash_timer = (if (*ED).hurt_ai_time != 0 {
-                (*ED).hurt_ai_time as i32
+            let ED = rom_record(0xa0, (*E).enemy_ptr, game);
+            (*E).flash_timer = (if ED.byte(offset_of!(EnemyDef, hurt_ai_time)) != 0 {
+                ED.byte(offset_of!(EnemyDef, hurt_ai_time)) as i32
             } else {
                 4
             }) as u16;
@@ -1068,7 +1056,7 @@ crate::prefixed_callbacks! {
             CallEnemyAi(
                 (words!(
                     i32,
-                    ((*E).bank, (*get_EnemyDef_A2((*E).enemy_ptr, game)).main_ai)
+                    ((*E).bank, rom_record(0xa0, (*E).enemy_ptr, game).word(offset_of!(EnemyDef, main_ai)))
                 )) as u32,
                 game,
             );
@@ -1077,9 +1065,9 @@ crate::prefixed_callbacks! {
         word! {game; grapple_beam_end_x_pos = (*E).x_pos; grapple_beam_end_y_pos = (*E).y_pos; }
     };
     SamusLatchesOnWithGrappleParalyze [] {
-        let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
-        (*E).flash_timer = (if (*ED).hurt_ai_time != 0 {
-            (*ED).hurt_ai_time as i32
+        let ED = rom_record(0xa0, (*E).enemy_ptr, game);
+        (*E).flash_timer = (if ED.byte(offset_of!(EnemyDef, hurt_ai_time)) != 0 {
+            ED.byte(offset_of!(EnemyDef, hurt_ai_time)) as i32
         } else {
             4
         }) as u16;
@@ -1102,8 +1090,8 @@ crate::prefixed_callbacks! {
                 return;
             }
         }
-        let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
-        if (*ED).touch_ai as i32 == 0xa0804c & 0xffff || (*ED).touch_ai as i32 == 0xa0804b & 0xffff {
+        let ED = rom_record(0xa0, (*E).enemy_ptr, game);
+        if ED.word(offset_of!(EnemyDef, touch_ai)) as i32 == 0xa0804c & 0xffff || ED.word(offset_of!(EnemyDef, touch_ai)) as i32 == 0xa0804b & 0xffff {
             return;
         }
         if (abs16((word!(game.samus_x_pos)).wrapping_sub((*E).x_pos)) as i32
@@ -1114,7 +1102,7 @@ crate::prefixed_callbacks! {
                 < (*E).y_height as i32
             && ((*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32 || (*E).frozen_timer == 0)
         {
-            CallEnemyAi((words!(i32, ((*E).bank, (*ED).touch_ai))) as u32, game);
+            CallEnemyAi((words!(i32, ((*E).bank, ED.word(offset_of!(EnemyDef, touch_ai))))) as u32, game);
         }
     };
     EprojCollHandler [] {
@@ -1152,7 +1140,7 @@ crate::prefixed_callbacks! {
                     CallEnemyAi(
                         (words!(
                             i32,
-                            ((*E).bank, (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai)
+                            ((*E).bank, rom_record(0xa0, (*E).enemy_ptr, game).word(offset_of!(EnemyDef, shot_ai)))
                         )) as u32,
                         game,
                     );
@@ -1187,7 +1175,7 @@ crate::prefixed_callbacks! {
                 CallEnemyAi(
                     (words!(
                         i32,
-                        ((*E).bank, (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai)
+                        ((*E).bank, rom_record(0xa0, (*E).enemy_ptr, game).word(offset_of!(EnemyDef, shot_ai)))
                     )) as u32,
                     game,
                 );
@@ -1196,9 +1184,9 @@ crate::prefixed_callbacks! {
         }
     };
     NormalEnemyTouchAiSkipDeathAnim [] {
-        let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
+        let ED = rom_record(0xa0, (*E).enemy_ptr, game);
         if word!(game.samus_contact_damage_index) == 0 {
-            Samus_DealDamage(SuitDamageDivision((*ED).damage, game), game);
+            Samus_DealDamage(SuitDamageDivision(ED.word(offset_of!(EnemyDef, damage)), game), game);
             word!(game.samus_invincibility_timer = 96);
             word!(game.samus_knockback_timer = 5);
             word!(
@@ -1221,24 +1209,20 @@ crate::prefixed_callbacks! {
             }
             200
         };
-        let vp: u16 = (if (*ED).vulnerability_ptr != 0 {
-            (*ED).vulnerability_ptr as i32
+        let vp: u16 = (if ED.word(offset_of!(EnemyDef, vulnerability_ptr)) != 0 {
+            ED.word(offset_of!(EnemyDef, vulnerability_ptr)) as i32
         } else {
             addr_stru_B4EC1C as i32
         }) as u16;
         word!(
-            game.last_enemy_power = *(&raw mut (*(get_Vulnerability
-                as unsafe fn(u16, &mut Game) -> *mut Vulnerability)(
-                (r20).wrapping_add(vp), game,
-            ))
-            .power as *mut u16)
+            game.last_enemy_power = rom_record(0xb4, (r20).wrapping_add(vp), game).word(offset_of!(Vulnerability, power))
         );
         let varE32: u16 = (word!(game.last_enemy_power)) & (0x7fu16);
         if (word!(game.last_enemy_power) & 0x7f) != 0 {
             let dmg: u16 = ((r22 as i32 >> 1) * varE32 as i32) as u16;
             if dmg != 0 {
-                (*E).flash_timer = (if (*ED).hurt_ai_time != 0 {
-                    (*ED).hurt_ai_time as i32
+                (*E).flash_timer = (if ED.byte(offset_of!(EnemyDef, hurt_ai_time)) != 0 {
+                    ED.byte(offset_of!(EnemyDef, hurt_ai_time)) as i32
                 } else {
                     4
                 }) as u16;
@@ -1259,11 +1243,11 @@ pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game: &mut Game) {
 }
 pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim(game: &mut Game) {
     let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    let mut vulnerability_ptr: u16 = (*get_EnemyDef_A2((*v0).enemy_ptr, game)).vulnerability_ptr;
+    let mut vulnerability_ptr: u16 = rom_record(0xa0, (*v0).enemy_ptr, game).word(offset_of!(EnemyDef, vulnerability_ptr));
     if vulnerability_ptr == 0 {
         vulnerability_ptr = -5092i32 as u16;
     }
-    let power_bomb: u8 = (*get_Vulnerability(vulnerability_ptr, game)).power_bomb;
+    let power_bomb: u8 = rom_record(0xb4, vulnerability_ptr, game).byte(offset_of!(Vulnerability, power_bomb));
     if power_bomb != 255 {
         let varE32: u16 = ((power_bomb) as u16) & (0x7fu16);
         if (power_bomb & 0x7f) != 0 {
@@ -1271,9 +1255,9 @@ pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim(game: &mut Game) {
             if ttt != 0 {
                 (*gEnemyData(word!(game.cur_enemy_index) as i32, game)).invincibility_timer = 48;
                 let j = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-                let mut EnemyDef_A2 = get_EnemyDef_A2((*j).enemy_ptr, game);
-                let mut hurt_ai_time: i16 = (*EnemyDef_A2).hurt_ai_time as i16;
-                if (*EnemyDef_A2).hurt_ai_time == 0 {
+                let mut EnemyDef_A2 = rom_record(0xa0, (*j).enemy_ptr, game);
+                let mut hurt_ai_time: i16 = EnemyDef_A2.byte(offset_of!(EnemyDef, hurt_ai_time)) as i16;
+                if EnemyDef_A2.byte(offset_of!(EnemyDef, hurt_ai_time)) == 0 {
                     hurt_ai_time = 4;
                 }
                 let v6 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
@@ -1305,12 +1289,12 @@ pub unsafe fn NormalEnemyShotAi(game: &mut Game) {
         (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).cause_of_death = j;
         let mut death_anim: u16 = 2;
         if j == 2 {
-            let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
-            if (*ED).death_anim as i32 - 3i32 & 0x8000 == 0 {
-                death_anim = (*ED).death_anim;
+            let ED = rom_record(0xa0, (*E).enemy_ptr, game);
+            if ED.word(offset_of!(EnemyDef, death_anim)) as i32 - 3i32 & 0x8000 == 0 {
+                death_anim = ED.word(offset_of!(EnemyDef, death_anim));
             }
         } else {
-            death_anim = (*get_EnemyDef_A2((*E).enemy_ptr, game)).death_anim;
+            death_anim = rom_record(0xa0, (*E).enemy_ptr, game).word(offset_of!(EnemyDef, death_anim));
         }
         EnemyDeathAnimation((*E).enemy_ptr, death_anim, game);
     }
@@ -1332,7 +1316,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
     let mut pd: u16 = word!(game.projectile_damage[v0]);
     let r18: u16 = word!(game.projectile_type[v0]);
     let j = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    let mut vulnerability_ptr: u16 = (*get_EnemyDef_A2((*j).enemy_ptr, game)).vulnerability_ptr;
+    let mut vulnerability_ptr: u16 = rom_record(0xa0, (*j).enemy_ptr, game).word(offset_of!(EnemyDef, vulnerability_ptr));
     if vulnerability_ptr == 0 {
         vulnerability_ptr = addr_stru_B4EC1C as u16;
     }
@@ -1341,30 +1325,30 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
         let mut v5: i16 = ((r18) as i16) & (0xf00i16);
         if (r18 & 0xf00) == 256 || v5 == 512 {
             let mut v6: i16 = ((r18 as i32 & 0xf00) >> 8) as i16;
-            varE32 = (((*get_Vulnerability((r20).wrapping_add((v6) as u16), game)).plasma_ice_wave)
+            varE32 = ((rom_record(0xb4, (r20).wrapping_add((v6) as u16), game).byte(offset_of!(Vulnerability, plasma_ice_wave)))
                 as u16)
                 & (0x7fu16);
             true
         } else if v5 == 1280 {
-            varE32 = (((*get_Vulnerability(r20, game)).bomb) as u16) & (0x7fu16);
+            varE32 = ((rom_record(0xb4, r20, game).byte(offset_of!(Vulnerability, bomb))) as u16) & (0x7fu16);
             true
         } else {
             !(v5 != 768)
                 && ({
-                    varE32 = (((*get_Vulnerability(r20, game)).power_bomb) as u16) & (0x7fu16);
+                    varE32 = ((rom_record(0xb4, r20, game).byte(offset_of!(Vulnerability, power_bomb))) as u16) & (0x7fu16);
                     true
                 })
         }
     } else {
         word!(
             game.last_enemy_power =
-                (*get_Vulnerability((r20 as i32 + (r18 as i32 & 0xf)) as u16, game,)).power as u16
+                rom_record(0xb4, (r20 as i32 + (r18 as i32 & 0xf)) as u16, game,).byte(offset_of!(Vulnerability, power)) as u16
         );
         varE32 = (word!(game.last_enemy_power)) & (0x7fu16);
         if word!(game.last_enemy_power) != 255 {
             !((r18 & 0x10) != 0)
                 || ({
-                    let charged_beam: u8 = (*get_Vulnerability(r20, game)).charged_beam;
+                    let charged_beam: u8 = rom_record(0xb4, r20, game).byte(offset_of!(Vulnerability, charged_beam));
                     !(charged_beam == 255)
                         && ({
                             let v4: u16 = ((charged_beam) as u16) & (0xfu16);
@@ -1396,16 +1380,16 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
         if r42 != 0 {
             pd = r42;
             let v10 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-            let mut EnemyDef_A2 = get_EnemyDef_A2((*v10).enemy_ptr, game);
-            let mut hurt_ai_time: i16 = (*EnemyDef_A2).hurt_ai_time as i16;
-            if (*EnemyDef_A2).hurt_ai_time == 0 {
+            let mut EnemyDef_A2 = rom_record(0xa0, (*v10).enemy_ptr, game);
+            let mut hurt_ai_time: i16 = EnemyDef_A2.byte(offset_of!(EnemyDef, hurt_ai_time)) as i16;
+            if EnemyDef_A2.byte(offset_of!(EnemyDef, hurt_ai_time)) == 0 {
                 hurt_ai_time = 4;
             }
             let v13 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
             (*v13).flash_timer = ((hurt_ai_time) as u16).wrapping_add(8);
             (*v13).ai_handler_bits = ((*v13).ai_handler_bits) | (2u16);
             if (*v13).frozen_timer == 0 {
-                let hurt_sfx: u16 = (*get_EnemyDef_A2((*v13).enemy_ptr, game)).hurt_sfx;
+                let hurt_sfx: u16 = rom_record(0xa0, (*v13).enemy_ptr, game).word(offset_of!(EnemyDef, hurt_sfx));
                 if hurt_sfx != 0 {
                     QueueSfx2_Max3(hurt_sfx, game);
                 }

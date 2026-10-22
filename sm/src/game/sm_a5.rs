@@ -1,3 +1,5 @@
+use crate::rtl::rom_record;
+use core::mem::offset_of;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
@@ -62,10 +64,6 @@ const RomPtr_A0: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_p
 const RomPtr_A5: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa5>;
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
-#[inline]
-unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
-    RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
 crate::game::constants::typed_constants! { i32;
     fnSamus_ScrollFinishedHook_SporeSpawnFight = 0x909589, fnGrappleBeam_Func2 = 0x9bc8c5,
@@ -692,7 +690,7 @@ pub unsafe fn Draygon_Func_24(k: u16, game: &mut Game) {
     let E = Get_Draygon(0, game);
     if (word!(game.samus_grapple_flags) & 1) != 0 {
         (*E).base.flash_timer =
-            (((*get_EnemyDef_A2((*E).base.enemy_ptr, game)).hurt_ai_time) as u16).wrapping_add(8);
+            ((rom_record(0xa0, (*E).base.enemy_ptr, game).byte(offset_of!(EnemyDef, hurt_ai_time))) as u16).wrapping_add(8);
         (*E).base.ai_handler_bits = ((*E).base.ai_handler_bits) | (2u16);
     } else {
         let v4: u16 = Abs16(((*E).base.x_pos).wrapping_sub(256));
@@ -726,7 +724,7 @@ pub unsafe fn Draygon_Func_25(k: u16, game: &mut Game) {
     let E = Get_Draygon(0, game);
     if (word!(game.samus_grapple_flags) & 1) != 0 {
         (*E).base.flash_timer =
-            (((*get_EnemyDef_A2((*E).base.enemy_ptr, game)).hurt_ai_time) as u16).wrapping_add(8);
+            ((rom_record(0xa0, (*E).base.enemy_ptr, game).byte(offset_of!(EnemyDef, hurt_ai_time))) as u16).wrapping_add(8);
         (*E).base.ai_handler_bits = ((*E).base.ai_handler_bits) | (2u16);
     } else if word!(game.random_number) as u8 != 0 {
         (*E).base.x_pos =
