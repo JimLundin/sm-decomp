@@ -1,3 +1,4 @@
+use crate::game::enemy_drops::{scatter, DropSource};
 use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, select_frozen_ai, shot_reaction,
 };
@@ -21,7 +22,7 @@ use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
     CalculateAngleOfEnemyXfromEnemyY, CalculateBlockContainingPixelPos, CallEnemyPreInstr,
-    CompareDistToSamus_X, EnemyFunc_C8AD, Enemy_ItemDrop_BombTorizo, Enemy_ItemDrop_GoldenTorizo,
+    CompareDistToSamus_X, EnemyFunc_C8AD,
     Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
 };
 
@@ -863,9 +864,9 @@ crate::game::callback_dispatch! {
         SetBossBitForCurArea(4, game);
         QueueMusic_Delayed8(g_word_AAB09A, game);
         if word!(game.area_index) != 0 {
-            Enemy_ItemDrop_GoldenTorizo(k, game);
+            scatter(DropSource::GoldenTorizo, k, 0, game);
         } else {
-            Enemy_ItemDrop_BombTorizo(k, game);
+            scatter(DropSource::BombTorizo, k, 0, game);
         }
     };
     [11186801] Torizo_Instr_6 [jp] { sub_82DAF7(0x600, game); };

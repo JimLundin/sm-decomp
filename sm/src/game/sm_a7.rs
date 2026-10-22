@@ -1,3 +1,4 @@
+use crate::game::enemy_drops::{scatter, DropSource};
 use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, enemy_death, power_bomb_without_death,
     select_frozen_ai, shot_reaction,
@@ -24,8 +25,8 @@ use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::{sub_88E487, SpawnHdmaObject};
 use crate::game::sm_a0::{
     CallEnemyPreInstr, CheckIfEnemyTouchesSamus, DetermineDirectionOfSamusFromEnemy,
-    EnemyFunc_BBBF, EnemyFunc_C8AD, Enemy_ItemDrop_Kraid,
-    Enemy_ItemDrop_Phantoon, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    EnemyFunc_BBBF, EnemyFunc_C8AD,
+    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
     IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
 };
 use crate::game::sprite_objects::create_sprite;
@@ -1402,7 +1403,7 @@ crate::game::callback_dispatch! {
             (*Get_Kraid(0x140i32, game)).base.properties = v4;
             (*Get_Kraid(0i32, game)).kraid_var_A = ((0xa7c715i32) as u16);
             word!(game.camera_distance_index = 0);
-            Enemy_ItemDrop_Kraid(enemy_ptr, game);
+            scatter(DropSource::Kraid, enemy_ptr, 0, game);
             Kraid_DrawRoomBg(game);
         }
     };
@@ -3372,7 +3373,7 @@ crate::game::callback_dispatch! {
             (*E1).var_D = 12;
             if Phantoon_Func_9(game) & 1 != 0 {
                 crate::update_place! { reference fresh22 = *ram_ptr!(game; 0x69) => (*fresh22) | (2u8); }
-                Enemy_ItemDrop_Phantoon(k, game);
+                scatter(DropSource::Phantoon, k, 0, game);
                 let E0 = Get_Phantoon(0, game);
                 let v4: u16 = ((*E0).base.properties) | ((kEnemyProps_Deleted) as u16);
                 (*E0).base.properties = v4;

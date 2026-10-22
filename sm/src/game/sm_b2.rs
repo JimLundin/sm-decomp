@@ -1,3 +1,4 @@
+use crate::game::enemy_drops::{scatter, DropSource};
 use crate::game::enemy_combat::{
     apply_contact, apply_power_bomb, apply_shot, enemy_death, select_frozen_ai, shot_reaction,
 };
@@ -14,7 +15,7 @@ use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_90::ProjectileReflection;
 use crate::game::sm_a0::{
-    CosineMult8bit, EnemyFunc_BBBF, Enemy_ItemDrop_LowerNorfairSpacePirate,
+    CosineMult8bit, EnemyFunc_BBBF,
     Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, IsSamusWithinEnemy_Y,
     SineMult8bit,
 };
@@ -549,7 +550,7 @@ crate::game::callback_dispatch! {
             if (*E).base.enemy_ptr as i32 == addr_kEnemyDef_F593 as i32 {
                 (*E).var_B = 0;
                 enemy_death(v1, 4, game);
-                Enemy_ItemDrop_LowerNorfairSpacePirate(v1, game);
+                scatter(DropSource::LowerNorfairPirate, v1, 0, game);
             } else {
                 (*E).var_B = 0;
                 enemy_death(v1, 4, game);

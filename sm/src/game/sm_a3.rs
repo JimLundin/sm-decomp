@@ -1,3 +1,4 @@
+use crate::game::enemy_drops::{scatter, DropSource};
 use crate::game::enemy_combat::{
     apply_contact, apply_power_bomb, apply_shot, enemy_death, grapple_death, select_frozen_ai,
     shot_reaction,
@@ -23,7 +24,7 @@ use crate::game::sm_a0::{
     Abs16, CalculateAngleOfSamusFromEnemy, CalculateBlockContainingPixelPos, CallEnemyPreInstr,
     CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, ConvertAngleToXy, CosineMult8bit,
     CosineMult8bitFull, EnemyFunc_B691, EnemyFunc_BBBF, EnemyFunc_BC76,
-    EnemyFunc_BF8A, EnemyFunc_C8AD, Enemy_ItemDrop_Metroid, Enemy_MoveDown,
+    EnemyFunc_BF8A, EnemyFunc_C8AD, Enemy_MoveDown,
     Enemy_MoveRight_IgnoreSlopes, Enemy_MoveRight_ProcessSlopes,
     GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
     SignExtend8, SineMult8bit,
@@ -2128,7 +2129,7 @@ crate::game::callback_dispatch! {
                     *(ram_ptr!(game, u16; 0xef78)).offset(((*E).var_00 >> 1) as isize) = 0;
                     let metroid_var_01: u16 = (*E).var_01;
                     *(ram_ptr!(game, u16; 0xef78)).offset((metroid_var_01 >> 1) as isize) = 0;
-                    Enemy_ItemDrop_Metroid(metroid_var_01, game);
+                    scatter(DropSource::Metroid, metroid_var_01, 0, game);
                 }
             }
         } else if (*E).var_F == 2 {

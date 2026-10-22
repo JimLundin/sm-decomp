@@ -1,3 +1,4 @@
+use crate::game::enemy_drops::{scatter, DropSource};
 use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, enemy_death, power_bomb_without_death,
     reduce_suit_damage, select_frozen_ai, shot_reaction,
@@ -30,7 +31,7 @@ use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CheckIfEnemyIsOnScreen, CosineMult8bit,
-    Enemy_ItemDrop_MiniKraid, Enemy_ItemDrop_Ridley, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
     GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y,
     SineMult8bit,
 };
@@ -742,7 +743,7 @@ pub unsafe fn FakeKraid_9C50(game: &mut Game) {
         // The death animation remains in the ROM spawn parameter for all four drops.
         let death_animation = 3;
         enemy_death(word!(game.cur_enemy_index), death_animation, game);
-        Enemy_ItemDrop_MiniKraid(word!(game.cur_enemy_index), death_animation, game);
+        scatter(DropSource::MiniKraid, word!(game.cur_enemy_index), death_animation, game);
     }
 }
 
@@ -2441,7 +2442,7 @@ crate::game::callback_dispatch! {
         let k: u16 = 0;
         printf(b"Warning: X undefined\n\0" as *const u8 as *const c_char);
         SetBossBitForCurArea(1, game);
-        Enemy_ItemDrop_Ridley(k, game);
+        scatter(DropSource::Ridley, k, 0, game);
         QueueMusic_Delayed8(3, game);
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
         (*E).var_A = addr_locret_A6C600 as u16;

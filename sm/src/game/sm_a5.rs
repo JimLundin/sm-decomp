@@ -1,3 +1,4 @@
+use crate::game::enemy_drops::{scatter, DropSource};
 use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, flash_on_shot, power_bomb_without_death,
     reduce_suit_damage, select_frozen_ai, shot_reaction,
@@ -22,8 +23,7 @@ use crate::game::sm_90::{
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{
     Abs16, CalculateAngleFromXY, ConvertAngleToXy, CosineMult8bit,
-    EnemyFunc_B691, EnemyFunc_B7A1, EnemyFunc_Divide, Enemy_ItemDrop_Draygon,
-    Enemy_ItemDrop_SporeSpawn,
+    EnemyFunc_B691, EnemyFunc_B7A1, EnemyFunc_Divide,
     SignExtend8, SineMult8bit,
 };
 use crate::game::sprite_objects::create_sprite;
@@ -358,7 +358,7 @@ crate::game::callback_dispatch! {
             (*Get_Draygon(0x40i32, game)).base.properties = v1;
             let v2: u16 = word!(game.area_index);
             crate::update_place! { unaligned_word fresh3 = &raw mut (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize))) => (u16::from_le(fresh3.read_unaligned())) | (1u16); }
-            Enemy_ItemDrop_Draygon(v2, game);
+            scatter(DropSource::Draygon, v2, 0, game);
             Draygon_Func_44(game);
         }
     };
@@ -1499,7 +1499,7 @@ crate::game::callback_dispatch! {
             properties = ((*E).base.properties & 0x5bff | 0xa000), };
     };
     [10872981] Draygon_Instr_23 [jp.offset(1)] { QueueSfx2_Max6(jp.word(0), game); };
-    [10873009] Draygon_Instr_30 [jp] { Enemy_ItemDrop_SporeSpawn(k, game); };
+    [10873009] Draygon_Instr_30 [jp] { scatter(DropSource::SporeSpawn, k, 0, game); };
     [10873018] Draygon_Instr_20 [jp.offset(1)] {
         (*Get_Draygon(word!(game.cur_enemy_index) as i32, game)).var_A = jp.word(0);
     };

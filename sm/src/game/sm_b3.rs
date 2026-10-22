@@ -1,3 +1,4 @@
+use crate::game::enemy_drops::{scatter, DropSource};
 use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, grapple_death, power_bomb_without_death,
     select_frozen_ai, shot_reaction,
@@ -15,7 +16,7 @@ use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
     CheckIfEnemyIsOnScreen, ConvertAngleToXy, EnemyFunc_B691,
-    Enemy_ItemDrop_Botwoon, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
     GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsEnemyLeavingScreen, IsSamusWithinEnemy_X,
     IsSamusWithinEnemy_Y,
     SignExtend8,
@@ -788,7 +789,7 @@ pub unsafe fn Botwoon_Func_11(k: u16, game: &mut Game) {
 }
 pub unsafe fn Botwoon_Func_17(k: u16, game: &mut Game) {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb79b as VoidP), game);
-    Enemy_ItemDrop_Botwoon(k, game);
+    scatter(DropSource::Botwoon, k, 0, game);
     let E = Get_Botwoon(k as i32, game);
     set_fields! {[(*E)], 0; var_23, var_24, var_25}
 }

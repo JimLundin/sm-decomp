@@ -1,3 +1,4 @@
+use crate::game::enemy_drops::{scatter, DropSource};
 use crate::game::enemy_combat::{
     apply_contact, apply_shot,
 };
@@ -15,7 +16,7 @@ use crate::game::plm_spawning::SpawnHardcodedPlm;
 use crate::game::sm_86::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::SpawnHdmaObject;
 use crate::game::sm_a0::{
-    Enemy_ItemDrop_Crocomire, Enemy_MoveRight_IgnoreSlopes,
+    Enemy_MoveRight_IgnoreSlopes,
 };
 use crate::game::sprite_objects::create_sprite;
 
@@ -1228,7 +1229,7 @@ crate::game::callback_dispatch! {
             set_fields! {[(*E).base]; y_pos = ((*E).base.y_pos).wrapping_add(21), y_height = 28,
                 x_width = 40, };
             SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb753 as VoidP), game);
-            Enemy_ItemDrop_Crocomire(0, game);
+            scatter(DropSource::Crocomire, 0, 0, game);
             Crocomire_9BB3(game);
         };
     };

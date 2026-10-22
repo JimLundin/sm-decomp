@@ -411,10 +411,6 @@ pub unsafe fn DecrementSamusTimers(game: &mut Game) {
     word!(game.interactive_enemy_indexes[0] = -1i32 as u16);
     word!(game.active_enemy_indexes[0] = -1i32 as u16);
 }
-pub unsafe fn SpawnEnemyDrops(a: u16, k: u16, varE20: u16, game: &mut Game) {
-    game.eproj_spawn_varE24 = a;
-    SpawnEprojWithGfx(varE20, k, addr_kEproj_Pickup as u16, game);
-}
 
 crate::game::address_dispatch! {
     pub unsafe fn CallHitboxTouch(ea: u32, game: &mut Game) => ea;
@@ -902,67 +898,6 @@ pub fn EnemyFunc_B7A1(game: &mut Game) {
     {
         game.set_samus_prev_x_pos(previous);
     }
-}
-unsafe fn spawn_nearby_enemy_item_drops(
-    definition: u16,
-    index: u16,
-    count: u16,
-    spawn_parameter: u16,
-    game: &mut Game,
-) {
-    for _ in 0..count {
-        // X origin is read before RNG; Y origin and random high byte are live afterward.
-        let x = game.special_death_item_drop_x_origin_pos();
-        let random = NextRandom(game);
-        game.eproj_spawn_pt.x = x.wrapping_add(random & 0x1f).wrapping_sub(16);
-        let y = game.special_death_item_drop_y_origin_pos();
-        let random_y = (game.random_number() & 0x1f00) >> 8;
-        game.eproj_spawn_pt.y = y.wrapping_add(random_y).wrapping_sub(16);
-        SpawnEnemyDrops(definition, index, spawn_parameter, game);
-    }
-}
-
-unsafe fn spawn_area_enemy_item_drops(
-    definition: u16,
-    index: u16,
-    x: u16,
-    y: u16,
-    x_mask: u16,
-    game: &mut Game,
-) {
-    for _ in 0..16 {
-        game.eproj_spawn_pt.x = (NextRandom(game) & x_mask).wrapping_add(x);
-        game.eproj_spawn_pt.y = ((game.random_number() & 0x3f00) >> 8).wrapping_add(y);
-        SpawnEnemyDrops(definition, index, 0, game);
-    }
-}
-
-pub unsafe fn Enemy_ItemDrop_MiniKraid(k: u16, death_animation: u16, game: &mut Game) {
-    spawn_nearby_enemy_item_drops(addr_kEnemyDef_E0FF as u16, k, 4, death_animation, game);
-}
-crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game);
-    Enemy_ItemDrop_LowerNorfairSpacePirate =>
-        spawn_nearby_enemy_item_drops(addr_kEnemyDef_F593 as u16, k, 5, 0, game);
-    Enemy_ItemDrop_Metroid =>
-        spawn_nearby_enemy_item_drops(addr_kEnemyDef_DD7F as u16, k, 5, 0, game);
-    Enemy_ItemDrop_Ridley =>
-        spawn_area_enemy_item_drops(addr_kEnemyDef_E17F as u16, k, 64, 320, 127, game);
-    Enemy_ItemDrop_Crocomire =>
-        spawn_area_enemy_item_drops(addr_kEnemyDef_DDBF as u16, k, 576, 96, 127, game);
-    Enemy_ItemDrop_Phantoon =>
-        spawn_area_enemy_item_drops(addr_kEnemyDef_E4BF as u16, k, 64, 96, 127, game);
-    Enemy_ItemDrop_Botwoon =>
-        spawn_area_enemy_item_drops(addr_kEnemyDef_F293 as u16, k, 64, 128, 127, game);
-    Enemy_ItemDrop_Kraid =>
-        spawn_area_enemy_item_drops(addr_kEnemyDef_E2BF as u16, k, 128, 352, 255, game);
-    Enemy_ItemDrop_BombTorizo =>
-        spawn_area_enemy_item_drops(addr_kEnemyDef_EEFF as u16, k, 64, 96, 127, game);
-    Enemy_ItemDrop_GoldenTorizo =>
-        spawn_area_enemy_item_drops(addr_kEnemyDef_EEFF as u16, k, 128, 288, 255, game);
-    Enemy_ItemDrop_SporeSpawn =>
-        spawn_area_enemy_item_drops(addr_kEnemyDef_DF3F as u16, k, 64, 528, 127, game);
-    Enemy_ItemDrop_Draygon =>
-        spawn_area_enemy_item_drops(addr_kEnemyDef_DE3F as u16, k, 128, 352, 255, game);
 }
 pub fn CompareDistToSamus_X(k: u16, a: u16, game: &mut Game) -> u8 {
     let delta = GetSamusEnemyDelta_X(k, game);

@@ -399,6 +399,8 @@ pub mod game {
     pub mod enemy_animation;
     pub mod combat_rules;
     pub mod enemy_combat;
+    pub mod drop_rules;
+    pub mod enemy_drops;
     pub mod enemy_contact;
     pub mod contact_rules;
     pub mod projectile_contact;

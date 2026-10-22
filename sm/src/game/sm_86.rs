@@ -27,7 +27,7 @@ use crate::game::sm_94::{
 };
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CalculateAngleOfSamusFromEproj, CallEnemyAi, ConvertAngleToXy,
-    SignExtend8, SpawnEnemyDrops,
+    SignExtend8,
 };
 use crate::game::sm_a6::Ridley_Func_103;
 use crate::game::sprite_objects::create_sprite;
@@ -1203,7 +1203,7 @@ pub unsafe fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(k: u16, game: &mut Game)
         x: word!(game.eproj_x_pos[v1]),
         y: word!(game.eproj_y_pos[v1]),
     };
-    SpawnEnemyDrops(addr_kEnemyDef_EC3F as u16, k, 0, game);
+    crate::game::enemy_drops::spawn(addr_kEnemyDef_EC3F as u16, k, 0, game);
     1
 }
 pub unsafe fn MoveMotherBrainBomb(k: u16, a: u16, game: &mut Game) -> u8 {
@@ -1534,109 +1534,6 @@ pub unsafe fn Eproj_Pickup_Missiles(game: &mut Game) {
 pub unsafe fn Eproj_Pickup_SuperMissiles(game: &mut Game) {
     Samus_RestoreSuperMissiles(1, game);
     QueueSfx2_Max1(4, game);
-}
-static byte_86F25E: [u8; 6] = [1, 2, 4, 6, 5, 3];
-pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
-    let mut i: i32 = 0;
-    let mut v9: i8 = 0;
-    let mut r18: u8 = 0;
-    let mut r22: u8 = 0;
-    let v1: i32 = k as i32 >> 1;
-    let varE28: u16 = word!(game.eproj_enemy_header_ptr[v1]);
-    if (varE28 != 0) {
-        let mut v2: u16 = rom_record(0xa0, varE28, game).word(offset_of!(EnemyDef, item_drop_chances_ptr));
-        if (v2 != 0) {
-            let mut Random: u8 = 0;
-            do_until! { (Random != 0);
-                Random = NextRandom(game) as u8;
-            }
-            let mut r20: u8 = 255;
-            let mut r24: u16 = 0;
-            let mut v5: u16 = 1;
-            let update_health_bias: bool = !(game
-                .samus_reserve_health()
-                .wrapping_add(game.samus_health())
-                >= 0x1e)
-                || (!(game
-                    .samus_reserve_health()
-                    .wrapping_add(game.samus_health())
-                    < 0x32)
-                    && ({
-                        v5 = 0;
-                        true
-                    }));
-            if update_health_bias {
-                word!(game.health_drop_bias_flag = v5);
-            }
-            let mut v7 = RomPtr_B4(v2, game);
-            if word!(game.health_drop_bias_flag) as u8 != 0 {
-                r18 = (*v7.offset(1)).wrapping_add(*v7);
-                r22 = 3;
-            } else {
-                r18 = *v7.offset(3);
-                r22 = 8;
-                if game.samus_health() != game.samus_max_health()
-                    || game.samus_reserve_health() != game.samus_max_reserve_health()
-                {
-                    r18 = ((*v7.offset(1) as i32 + *v7 as i32) as u8).wrapping_add(r18);
-                    r22 = (r22) | (3u8);
-                }
-                if game.samus_missiles() != game.samus_max_missiles() {
-                    r18 = (*v7.offset(2)).wrapping_add(r18);
-                    r22 = (r22) | (4u8);
-                }
-                if game.samus_super_missiles() != game.samus_max_super_missiles() {
-                    r20 = (r20).wrapping_sub(*v7.offset(4));
-                    r22 = (r22) | (0x10u8);
-                }
-                if game.samus_power_bombs() != game.samus_max_power_bombs() {
-                    r20 = (r20 as i32 - *v7.offset(5) as i32) as u8;
-                    r22 = (r22 | 0x20);
-                }
-            }
-            i = 0;
-            i = 0;
-            while i != 4 {
-                if r18 == 0 {
-                    r22 = (r22 >> 4);
-                    v2 = v2.wrapping_add(4);
-                    i = 4;
-                    break;
-                } else {
-                    v9 = ((r22) as i8) & (1i8);
-                    r22 = (r22 >> 1);
-                    if v9 != 0 {
-                        let v10 = RomPtr_B4(v2, game);
-                        let RegWord: u16 = Mult8x8(r20, *v10);
-                        let divved: i32 = SnesDivide(RegWord, r18) as i32;
-                        let v12: u16 = r24;
-                        let v13: u16 = (divved + v12 as i32) as u16;
-                        if v13 >= ((Random) as u16) {
-                            return byte_86F25E[i as usize] as u16;
-                        }
-                        r24 = v13;
-                    }
-                    v2 = v2.wrapping_add(1);
-                    i += 1;
-                }
-            }
-            do_until! { (i == 6);
-                v9 = ((r22) as i8) & (1i8);
-                r22 = (r22 >> 1);
-                if v9 != 0 {
-                    let v14 = RomPtr_B4(v2, game);
-                    if (r24).wrapping_add((*v14) as u16) >= ((Random) as u16) {
-                        return byte_86F25E[i as usize] as u16;
-                    }
-                    r24 = (r24 as i32 + *v14 as i32) as u16;
-                }
-                v2 = v2.wrapping_add(1);
-                i += 1;
-            }
-        }
-    }
-    i = 3;
-    byte_86F25E[i as usize] as u16
 }
 pub unsafe fn RespawnEnemy(v0: u16, game: &mut Game) {
     word!(game.cur_enemy_index = v0);
@@ -2880,7 +2777,7 @@ crate::game::callback_dispatch! {
         word! {game; eproj_x_pos[v2] = game.eproj_spawn_pt.x;
             eproj_y_pos[v2] = game.eproj_spawn_pt.y; eproj_gfx_idx[v2] = 0;
             eproj_enemy_header_ptr[v2] = game.eproj_spawn_varE24; }
-        let v3: u16 = RandomDropRoutine(j, game);
+        let v3: u16 = crate::game::enemy_drops::select(j, game);
         if v3 != 0 && v3 as i32 - 6i32 & 0x8000 != 0 {
             let v4: u16 = (2u16).wrapping_mul(v3);
             word!(game.eproj_E[v2] = v4);
@@ -4817,7 +4714,7 @@ crate::game::callback_dispatch! {
             x: word!(game.eproj_x_pos[v1]),
             y: word!(game.eproj_y_pos[v1]),
         };
-        SpawnEnemyDrops(addr_kEnemyDef_DDBF as u16, k, 0, game);
+        crate::game::enemy_drops::spawn(addr_kEnemyDef_DDBF as u16, k, 0, game);
         epjp.offset(0)
     };
     [8820750] EprojInstr_980E [] {
@@ -4826,7 +4723,7 @@ crate::game::callback_dispatch! {
             x: word!(game.eproj_x_pos[v2]),
             y: word!(game.eproj_y_pos[v2]),
         };
-        SpawnEnemyDrops(addr_kEnemyDef_E4FF as u16, k, 0, game);
+        crate::game::enemy_drops::spawn(addr_kEnemyDef_E4FF as u16, k, 0, game);
         epjp.offset(0)
     };
     [8822864] EprojInstr_SetPreInstrAndRun [] {
@@ -4845,7 +4742,7 @@ crate::game::callback_dispatch! {
             x: word!(game.eproj_x_pos[v2]),
             y: word!(game.eproj_y_pos[v2]),
         };
-        SpawnEnemyDrops(
+        crate::game::enemy_drops::spawn(
             (if word!(game.area_index) != 0 {
                 epjp.word(2) as i32
             } else {
@@ -4889,7 +4786,7 @@ crate::game::callback_dispatch! {
             x: word!(game.eproj_x_pos[v1]),
             y: word!(game.eproj_y_pos[v1]),
         };
-        SpawnEnemyDrops(addr_kEnemyDef_E83F as u16, k, 0, game);
+        crate::game::enemy_drops::spawn(addr_kEnemyDef_E83F as u16, k, 0, game);
         epjp.offset(0)
     };
     [8840499] EprojInstr_SetYVel [] {
@@ -5042,7 +4939,7 @@ crate::game::callback_dispatch! {
             x: word!(game.eproj_x_pos[v1]),
             y: word!(game.eproj_y_pos[v1]),
         };
-        SpawnEnemyDrops(addr_kEnemyDef_DE7F as u16, k, 0, game);
+        crate::game::enemy_drops::spawn(addr_kEnemyDef_DE7F as u16, k, 0, game);
         epjp.offset(0)
     };
     [8819829] EprojInstr_DisableCollisionsWithSamus [] {
@@ -5197,7 +5094,7 @@ crate::game::callback_dispatch! {
             x: word!(game.eproj_x_pos[(k >> 1)]),
             y: word!(game.eproj_y_pos[(k >> 1)]),
         };
-        SpawnEnemyDrops(addr_kEnemyDef_E7FF as u16, k, 0, game);
+        crate::game::enemy_drops::spawn(addr_kEnemyDef_E7FF as u16, k, 0, game);
     };
     @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
     [8836594] EprojInstr_SetN00bTubeShardX [None] {
@@ -5244,7 +5141,7 @@ crate::game::callback_dispatch! {
             x: word!(game.eproj_x_pos[v2]),
             y: word!(game.eproj_y_pos[v2]),
         };
-        SpawnEnemyDrops(addr_kEnemyDef_DF7F as u16, k, 0, game);
+        crate::game::enemy_drops::spawn(addr_kEnemyDef_DF7F as u16, k, 0, game);
     };
     [8838263] EprojInstr_SpawnSporesEproj [epjp.offset(0)] {
         let v2: i32 = k as i32 >> 1;
@@ -5275,7 +5172,7 @@ crate::game::callback_dispatch! {
     [8842903] EprojInstr_QueueSfx2_24 [epjp.offset(0)] { QueueSfx2_Max1(0x24, game); };
     [8842915] EprojInstr_QueueSfx2_B [epjp.offset(0)] { QueueSfx2_Max1(0xb, game); };
     [8842927] EprojInstr_EEAF [] {
-        let v2: u16 = RandomDropRoutine(k, game);
+        let v2: u16 = crate::game::enemy_drops::select(k, game);
         if k != 0 && v2 as i32 - 6i32 & 0x8000 != 0 {
             let v3: u16 = (2u16).wrapping_mul(v2);
             let v4: i32 = k as i32 >> 1;

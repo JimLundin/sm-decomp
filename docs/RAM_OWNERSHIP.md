@@ -560,6 +560,32 @@ Use a session-mode lease as a design concept: the active mode defines the storag
 interpretation and reset rules. Do not infer that unused slot data can be erased,
 or that deferred spawning has equivalent same-update execution order.
 
+Drop generation now uses `enemy_drops` and the safe `drop_rules` model. Twelve
+named source patterns replace the creature-specific scatter wrappers. Nearby
+placement captures X before RNG, then reads Y and the random high byte afterward;
+area placement uses fixed origins. Every spawn remains synchronous, so its
+allocation, initializer and RNG use finish before the next scatter iteration.
+
+Selection captures the enemy definition/table address before drawing a nonzero
+random low byte. Health bias is forced on below 30, off from 50, and retained in
+between, using the original wrapping health sum and low-byte flag test. The
+initial table view is captured after its diagnostic and traversed linearly;
+enabled rows wrap their bank address and capture the then-current ROM separately.
+Weight totals/budgets retain byte wrapping and conditional read order. The model
+owns only these temporary calculations; persistent bias and effect slots remain
+in RAM. RNG and allocation/effect interfaces remain explicitly unsafe.
+
+Final checks pass **1,316 comparisons**, 7,286 ordered full-RAM/spawn/selected-ROM
+observations, 360 matching failures and ten checked short-record failures. They
+cover every source pattern and selection result, the actual allocation/pickup
+initializer, conversion instruction and selected real RNG consumers. Both source
+profiles and retained bodies have complete correspondence. Release/source/native
+checks pass; no movie or pickup-collection coverage is claimed. Constructed
+definitions and callback mutations are not a gameplay route. Complete cost is
+**+32 Rust lines**, including both modules, callers and registrations. Sixteen
+old helpers retire; the rules forbid unsafe code. Local reproduction:
+`Local/sm-decomp-experiments/20261022/enemy-drops`.
+
 ### 11. Samus weapon control crosses projectiles, grapple and encounters
 
 Follow-up source audit at `0f98f559`, checked unchanged through `4c979503` for the
@@ -2874,7 +2900,7 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^tiles]: [SetSamusTilesDefsForCurAnim](../sm/src/game/samus_animation.rs#L863).
 [^animation]: [Samus_AnimDelayFunc_7/8/9/13](../sm/src/game/samus_animation.rs#L231).
 [^effectmap]: [effect/cinematic/options aliases](../sm/src/ram_map.rs); search `eproj_index`, `eproj_id`, `optionsmenu_cur_data`.
-[^drops]: [SpawnEnemyDrops](../sm/src/game/sm_a0.rs#L1012).
+[^drops]: [Drop spawning, scattering and selection](../sm/src/game/enemy_drops.rs); [drop patterns and weights](../sm/src/game/drop_rules.rs).
 [^validation]: [Validation strategy](PLAN.md#validation-strategy-2026-10-21).
 [^launchmap]: [Directional movement and projectile-array RAM metadata](../sm/src/ram_map.rs#L554); the movement record starts at the `$0DA0` stride declaration.
 [^launchwriters]: [Horizontal collision results](../sm/src/game/sm_90.rs#L277), [vertical collision results](../sm/src/game/sm_90.rs#L569), [four no-collision writes](../sm/src/game/sm_90.rs#L862).
