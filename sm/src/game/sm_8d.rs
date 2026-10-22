@@ -1,6 +1,55 @@
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::prelude::*;
 use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::ram_map::words as ram;
+use palette_ram::{native_word, read, write, write_native, SlotWord::*};
+
+// Transitional checked access: RAM stays authoritative, with no decoded state
+// or borrow retained across callbacks. Byte indices may alias adjacent fields.
+mod palette_ram {
+    #![forbid(unsafe_code)]
+    use crate::{game_state::Game, ram_map::word_arrays};
+
+    pub(super) fn native_word(address: usize, game: &Game) -> u16 {
+        u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]])
+    }
+    pub(super) fn read(address: usize, game: &Game) -> u16 {
+        u16::from_le(native_word(address, game))
+    }
+    pub(super) fn write_native(address: usize, value: u16, game: &mut Game) {
+        game.g_ram[address..address + 2].copy_from_slice(&value.to_ne_bytes());
+    }
+    pub(super) fn write(address: usize, value: u16, game: &mut Game) {
+        write_native(address, value.to_le(), game);
+    }
+
+    #[derive(Clone, Copy)]
+    #[repr(usize)]
+    pub(super) enum SlotWord {
+        Id = word_arrays::palettefx_ids,
+        Color = word_arrays::palettefx_color_indexes,
+        PreInstruction = word_arrays::palettefx_pre_instr,
+        Instruction = word_arrays::palettefx_instr_list_ptrs,
+        InstructionTimer = word_arrays::palettefx_instr_timers,
+        Timer = word_arrays::palettefx_timers,
+    }
+    impl SlotWord {
+        pub(super) fn address(self, index: u16) -> usize {
+            self as usize + usize::from(index & !1)
+        }
+        pub(super) fn read(self, index: u16, game: &Game) -> u16 {
+            read(self.address(index), game)
+        }
+        pub(super) fn write(self, index: u16, value: u16, game: &mut Game) {
+            write(self.address(index), value, game);
+        }
+        pub(super) fn decrement(self, index: u16, game: &mut Game) -> u16 {
+            let previous = self.read(index, game);
+            self.write(index, previous.wrapping_sub(1), game);
+            previous
+        }
+    }
+}
 
 // Each acquisition observes the current cartridge, with linear reads in that image.
 struct PaletteScript {
@@ -34,263 +83,298 @@ unsafe fn palette_script(address: u16, game: &mut Game) -> PaletteScript {
         base: crate::rtl::lorom_offset(address) as usize,
     }
 }
-crate::game::constants::typed_constants! { i32;
-    fnCinematicFunction_Intro_Page2 = 0x8bb35f,
-}
-pub unsafe fn EnablePaletteFx(game: &mut Game) {
-    word!(game.flag_for_palette_fx_objects |= (0x8000u16));
-}
-pub unsafe fn DisablePaletteFx(game: &mut Game) {
-    word!(game.flag_for_palette_fx_objects &= !(0x8000));
-}
-pub unsafe fn ClearPaletteFXObjects(game: &mut Game) {
-    word_transfers!(game, descending, 8; le(palettefx_ids, 7) <- value(0));
-}
-pub unsafe fn SpawnPalfxObject(j: u16, game: &mut Game) {
-    let mut v1: u16 = 14;
-    while word!(game.palettefx_ids[(v1 >> 1)]) != 0 {
-        v1 = (v1).wrapping_sub(2);
-        if (v1 & 0x8000) != 0 {
-            return;
-        }
-    }
-    let v2: i32 = v1 as i32 >> 1;
-    word! {game; palettefx_ids[v2] = j; palettefx_color_indexes[v2] = 0;
-    palettefx_pre_instr[v2] = ((0x8dc526i32) as u16);
-    palettefx_instr_list_ptrs[v2] = palette_script(j, game).word(2);
-    palettefx_instr_timers[v2] = 1; palettefx_timers[v2] = 0; }
-    let definition = palette_script(j, game);
-    CallPalfxFunc(
-        (u32::from(definition.word(0))) | (0x8d0000u32),
-        -1i32 as u16,
-        v1,
+
+#[forbid(unsafe_code)]
+pub fn EnablePaletteFx(game: &mut Game) {
+    write(
+        ram::flag_for_palette_fx_objects,
+        read(ram::flag_for_palette_fx_objects, game) | 0x8000,
         game,
     );
 }
-pub fn PalPreInstr_nullsub_129(k: u16) {}
+#[forbid(unsafe_code)]
+pub fn DisablePaletteFx(game: &mut Game) {
+    write(
+        ram::flag_for_palette_fx_objects,
+        read(ram::flag_for_palette_fx_objects, game) & !0x8000,
+        game,
+    );
+}
+#[forbid(unsafe_code)]
+pub fn ClearPaletteFXObjects(game: &mut Game) {
+    for slot in (0..8).rev() {
+        Id.write(2 * slot, 0, game);
+    }
+}
+pub unsafe fn SpawnPalfxObject(definition: u16, game: &mut Game) {
+    let Some(slot) = (0..8).rev().map(|i| 2 * i).find(|&i| Id.read(i, game) == 0) else {
+        return;
+    };
+    Id.write(slot, definition, game);
+    Color.write(slot, 0, game);
+    PreInstruction.write(slot, 0xc526, game);
+    Instruction.write(slot, palette_script(definition, game).word(2), game);
+    InstructionTimer.write(slot, 1, game);
+    Timer.write(slot, 0, game);
+    let definition = palette_script(definition, game);
+    CallPalfxFunc(0x8d0000 | u32::from(definition.word(0)), 0xffff, slot, game);
+}
 pub unsafe fn PaletteFxHandler(game: &mut Game) {
-    if (word!(game.flag_for_palette_fx_objects) & 0x8000) != 0 {
-        let mut i: i32 = 14;
-        while i >= 0 {
-            word!(game.palettefx_index = i as u16);
-            if word!(game.palettefx_ids[(i >> 1)]) != 0 {
-                PalFx_ProcessOne(i as u16, game);
-                i = word!(game.palettefx_index) as i32;
+    if read(ram::flag_for_palette_fx_objects, game) & 0x8000 != 0 {
+        let mut slot = 14i32;
+        while slot >= 0 {
+            write(ram::palettefx_index, slot as u16, game);
+            if Id.read(slot as u16, game) != 0 {
+                PalFx_ProcessOne(slot as u16, game);
+                slot = i32::from(read(ram::palettefx_index, game));
             }
-            i -= 2;
+            slot -= 2;
         }
     }
 }
 pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
-    CallPalFxPreInstr(
-        ((word!(game.palettefx_pre_instr[(k >> 1)])) as u32) | (0x8d0000u32),
-        k,
-        game,
-    );
-    let mut v1: u16 = word!(game.palettefx_index);
-    crate::update_place! { unaligned_word fresh2 [fresh3] = &raw mut (*(ram_ptr!(game, u16; 0x1ecd)).offset((v1 >> 1) as isize)) => (u16::from_le(fresh2.read_unaligned())).wrapping_sub(1); }
-    if fresh3 != 1 {
+    CallPalFxPreInstr(0x8d0000 | u32::from(PreInstruction.read(k, game)), k, game);
+    let mut slot = read(ram::palettefx_index, game);
+    if InstructionTimer.decrement(slot, game) != 1 {
         return;
     }
-    let mut j: u16 = word!(game.palettefx_instr_list_ptrs[(v1 >> 1)]);
-    let mut v6: u16 = 0;
-    loop {
-        let script = palette_script(j, game);
-        v6 = script.word(0);
-        if (script.word(0) & 0x8000) == 0 {
-            break;
+    let mut cursor = Instruction.read(slot, game);
+    let duration = loop {
+        let script = palette_script(cursor, game);
+        let instruction = script.word(0);
+        if instruction & 0x8000 == 0 {
+            break instruction;
         }
-        let v7: PairU16 =
-            CallPalInstr(((v6) as u32) | (0x8d0000u32), v1, (j).wrapping_add(2), game);
-        v1 = v7.k;
-        j = v7.j;
-        if v7.j == 0 {
+        let next = CallPalInstr(
+            0x8d0000 | u32::from(instruction),
+            slot,
+            cursor.wrapping_add(2),
+            game,
+        );
+        slot = next.k;
+        cursor = next.j;
+        if cursor == 0 {
+            return;
+        }
+    };
+    InstructionTimer.write(slot, duration, game);
+    let mut color = Color.read(slot, game);
+    // Instructions now receive a color byte index in k, rather than a slot index.
+    loop {
+        let instruction = loop {
+            let value = palette_script(cursor, game).word(2);
+            if value & 0x8000 != 0 {
+                break value;
+            }
+            write(
+                crate::ram_map::word_arrays::palette_buffer + usize::from(color & !1),
+                value,
+                game,
+            );
+            color = color.wrapping_add(2);
+            cursor = cursor.wrapping_add(2);
+        };
+        let next = CallPalInstr(0x8d0000 | u32::from(instruction), color, cursor, game);
+        color = next.k;
+        cursor = next.j;
+        if cursor == 0 {
             return;
         }
     }
-    let v8: i32 = v1 as i32 >> 1;
-    word!(game.palettefx_instr_timers[v8] = v6);
-    let mut color_idx: u16 = word!(game.palettefx_color_indexes[v8]);
-    let mut v11: u16 = 0;
-    do_until! { (j == 0);
-        loop {
-            let script = palette_script(j, game);
-            v11 = script.word(2);
-            if v11 & 0x8000 != 0 {
-                break;
-            }
-            word!(game.palette_buffer[(color_idx >> 1)] = v11);
-            color_idx = (color_idx).wrapping_add(2);
-            j = (j).wrapping_add(2);
-        }
-        let v12: PairU16 = CallPalInstr(((v11) as u32) | (0x8d0000u32), color_idx, j, game);
-        color_idx = v12.k;
-        j = v12.j;
-    }
 }
-crate::forward_calls! { pub unsafe fn (k: u16, j: u16) -> PairU16;
-    PalInstr_ColorPlus2 => MakePairU16((k).wrapping_add(4), (j).wrapping_add(2));
-    PalInstr_ColorPlus3 => MakePairU16((k).wrapping_add(6), (j).wrapping_add(2));
-    PalInstr_ColorPlus4 => MakePairU16((k).wrapping_add(8), (j).wrapping_add(2));
-    PalInstr_ColorPlus8 => MakePairU16((k).wrapping_add(16), (j).wrapping_add(2));
-    PalInstr_ColorPlus9 => MakePairU16((k).wrapping_add(18), (j).wrapping_add(2));
-    PalInstr_ColorPlus15 => MakePairU16((k).wrapping_add(30), (j).wrapping_add(2));
+
+#[forbid(unsafe_code)]
+fn miniboss_dead(game: &Game) -> bool {
+    native_word(0xd828 + usize::from(read(ram::area_index, game)), game) & 2 != 0
 }
-crate::game::callback_dispatch! {
-    pub unsafe fn CallPalFxPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [9298443] PalPreInstr_E1BC [] {
-        if word!(game.cinematic_function) as i32 == 0x8bb35f & 0xffff {
-            let v1: i32 = k as i32 >> 1;
-            word!(game.palettefx_instr_list_ptrs[v1] = addr_off_8DE192 as u16);
-            word!(game.palettefx_instr_timers[v1] = 1);
-        }
-    };
-    [9298656] PalPreInstr_CheckEnemy0Health [] {
-        if (*(ram_ptr!(game, EnemyData; 0xf78))).health == 0 {
-            word!(game.palettefx_ids[(k >> 1)] = 0);
-        }
-    };
-    [9298809] PalPreInstr_SamusInHeat [] {
-        if (word!(game.equipped_items) & 0x21) == 0 {
-            words!(
-                game.samus_periodic_damage,
-                samus_periodic_subdamage += 0x4000
-            );
-            if (word!(game.nmi_frame_counter_word) & 7) == 0 && word!(game.samus_health) > 0x46 {
-                QueueSfx3_Max6(0x2d, game);
+
+pub unsafe fn CallPalFxPreInstr(ea: u32, k: u16, game: &mut Game) {
+    match ea {
+        9291046 => (),
+        9298443 => {
+            // Intro-page palette transition.
+            if read(ram::cinematic_function, game) == 0xb35f {
+                Instruction.write(k, addr_off_8DE192 as u16, game);
+                InstructionTimer.write(k, 1, game);
             }
         }
-        if word!(game.samus_in_heat_palfx_index) != word!(game.samus_in_heat_palettefx_prev_index) {
-            word!(game.samus_in_heat_palettefx_prev_index = word!(game.samus_in_heat_palfx_index));
-            let v2: u16 = (2u16).wrapping_mul(word!(game.samus_in_heat_palfx_index));
-            let v3: i32 = k as i32 >> 1;
-            word!(game.palettefx_instr_timers[v3] = 1);
-            let mut v4: u16 = if (word!(game.equipped_items) & 0x20) != 0 {
-                addr_off_8DE3E0 as u16
-            } else if (word!(game.equipped_items) & 1) != 0 {
-                addr_off_8DE400 as u16
-            } else {
-                addr_off_8DE420 as u16
-            };
-            word!(
-                game.palettefx_instr_list_ptrs[v3] =
-                    palette_script(v4, game).word(usize::from(v2))
-            );
+        9298656 => {
+            // Retire the effect when enemy zero dies.
+            if native_word(0xf78 + core::mem::offset_of!(EnemyData, health), game) == 0 {
+                Id.write(k, 0, game);
+            }
         }
-    };
-    [9301081] PalPreInstr_SwitchIfYpos [] {
-        if word!(game.samus_y_pos) < 0x380 {
-            let v2: i32 = k as i32 >> 1;
-            word!(game.palettefx_instr_timers[v2] = 1);
-            word!(game.palettefx_instr_list_ptrs[v2] = addr_word_8DEB43 as u16);
+        9298809 => {
+            // Heat damage and suit-dependent script selection.
+            if read(ram::equipped_items, game) & 0x21 == 0 {
+                let low = u32::from(native_word(ram::samus_periodic_subdamage, game));
+                let high = u32::from(native_word(ram::samus_periodic_damage, game));
+                let damage = (low | (high << 16)).wrapping_add(0x4000);
+                write_native(ram::samus_periodic_subdamage, damage as u16, game);
+                write_native(ram::samus_periodic_damage, (damage >> 16) as u16, game);
+                if read(ram::nmi_frame_counter_word, game) & 7 == 0
+                    && read(ram::samus_health, game) > 0x46
+                {
+                    QueueSfx3_Max6(0x2d, game);
+                }
+            }
+            if read(ram::samus_in_heat_palfx_index, game)
+                != read(ram::samus_in_heat_palettefx_prev_index, game)
+            {
+                write(
+                    ram::samus_in_heat_palettefx_prev_index,
+                    read(ram::samus_in_heat_palfx_index, game),
+                    game,
+                );
+                let offset = read(ram::samus_in_heat_palfx_index, game).wrapping_mul(2);
+                InstructionTimer.write(k, 1, game);
+                let table = if read(ram::equipped_items, game) & 0x20 != 0 {
+                    addr_off_8DE3E0
+                } else if read(ram::equipped_items, game) & 1 != 0 {
+                    addr_off_8DE400
+                } else {
+                    addr_off_8DE420
+                };
+                Instruction.write(
+                    k,
+                    palette_script(table as u16, game).word(usize::from(offset)),
+                    game,
+                );
+            }
         }
-    };
-    [9301380] PalPreInstr_SwitchIfYpos2 [] {
-        if word!(game.samus_y_pos) < 0x380 {
-            let v2: i32 = k as i32 >> 1;
-            word!(game.palettefx_instr_timers[v2] = 1);
-            word!(game.palettefx_instr_list_ptrs[v2] = addr_word_8DEC76 as u16);
+        9301081 | 9301380 => {
+            if read(ram::samus_y_pos, game) < 0x380 {
+                InstructionTimer.write(k, 1, game);
+                Instruction.write(
+                    k,
+                    if ea == 9301081 {
+                        addr_word_8DEB43
+                    } else {
+                        addr_word_8DEC76
+                    } as u16,
+                    game,
+                );
+            }
         }
-    };
-    [9301701] PalPreInstr_DeletePalfxIfMinibossDead [] {
-        if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 2) != 0 {
-            word!(game.palettefx_ids[(k >> 1)] = 0);
+        9301701 => {
+            if miniboss_dead(game) {
+                Id.write(k, 0, game);
+            }
         }
-    };
-    [9303585] PalPreInstr_F621 [] {
-        if *(ram_ptr!(game, u16; 0x1e79, k as i32 as isize)) != 0 {
-            word!(game.palettefx_ids[(k >> 1)] = 0);
+        9303585 => {
+            // This flag lookup uses the unrounded byte index.
+            if native_word(ram::flag_for_palette_fx_objects + usize::from(k), game) != 0 {
+                Id.write(k, 0, game);
+            }
         }
-    };
-    @external {
-        9291046 => [PalPreInstr_nullsub_129(k)];
-    }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallPalInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> PairU16 => ea;
-    call (k, j, game); default {
+        _ => {
             Unreachable(game);
-            PairU16 { k: 0, j: 0 }
-        };
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> PairU16];
-    [9291157] PalInstr_Wait [] {
-        *(ram_ptr!(game, u16; 0x1ebd)).offset((word!(game.palettefx_index) >> 1) as isize) =
-            (j).wrapping_add(4);
-        MakePairU16(0, 0)
-    };
-    [9302470] PalInstr_SetPalfxIndex [] {
-        word!(game.samus_in_heat_palfx_index = u16::from(palette_script(j, game).byte(0)));
-        MakePairU16(k, (j).wrapping_add(1))
-    };
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> PairU16];
-    [9291215] PalInstr_Delete [MakePairU16(k, 0)] { word!(game.palettefx_ids[(k >> 1)] = 0); };
-    [9291220] PalInstr_SetPreInstr [MakePairU16(k, (j).wrapping_add(2))] {
-        word!(game.palettefx_pre_instr[(k >> 1)] = palette_script(j, game).word(0));
-    };
-    [9291229] PalInstr_ClearPreInstr [MakePairU16(k, j)] {
-        word!(game.palettefx_pre_instr[(k >> 1)] = addr_locret_8DC5E3 as u16);
-    };
-    [9291294]
-    PalInstr_Goto [MakePairU16(k, v2)] { let v2: u16 = palette_script(j, game).word(0); };
-    [9291321] PalInstr_DecTimerGoto [MakePairU16(v4.k, v4.j)] {
-        let mut v4: PairU16 = PairU16 { k: 0, j: 0 };
-        let v2: i32 = k as i32 >> 1;
-        crate::update_place! { unaligned_word fresh4 [fresh5] = &raw mut (*(ram_ptr!(game, u16; 0x1edd)).offset(v2 as isize)) => (u16::from_le(fresh4.read_unaligned())).wrapping_sub(1); }
-        if fresh5 == 1 {
-            return MakePairU16(k, (j).wrapping_add(2));
         }
-        v4 = PalInstr_Goto(k, j, game);
-    };
-    [9291336] PalInstr_SetTimer [MakePairU16(k, (j).wrapping_add(1))] {
-        *ram_ptr!(game; 0x1edd, k as i32 as isize) = palette_script(j, game).byte(0);
-    };
-    [9291349] PalInstr_SetColorIndex [MakePairU16(k, (j).wrapping_add(2))] {
-        word!(game.palettefx_color_indexes[(k >> 1)] = palette_script(j, game).word(0));
-    };
-    [9291358] PalInstr_QueueMusic [MakePairU16(k, (j).wrapping_add(1))] {
-        let script = palette_script(j, game);
-        QueueMusic_Delayed8(u16::from(script.byte(0)), game);
-    };
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> PairU16];
-    @prefix { let script = palette_script(j, game); };
-    [9291370]
-    PalInstr_QueueSfx1 [MakePairU16(k, (j).wrapping_add(1))] {  QueueSfx1_Max6(script.word(0), game); };
-    [9291379]
-    PalInstr_QueueSfx2 [MakePairU16(k, (j).wrapping_add(1))] {  QueueSfx2_Max6(script.word(0), game); };
-    [9291388]
-    PalInstr_QueueSfx3 [MakePairU16(k, (j).wrapping_add(1))] {  QueueSfx3_Max6(script.word(0), game); };
-    @external {
-        9291161 => [PalInstr_ColorPlus2(k, j)];
-        9291170 => [PalInstr_ColorPlus3(k, j)]; 9291179 => [PalInstr_ColorPlus4(k, j)];
-        9291188 => [PalInstr_ColorPlus8(k, j)]; 9291197 => [PalInstr_ColorPlus9(k, j)];
-        9291206 => [PalInstr_ColorPlus15(k, j)];
     }
 }
-crate::game::callback_dispatch! {
-    pub unsafe fn CallPalfxFunc(ea: u32, k: u16, j: u16, game: &mut Game) => ea;
-    call (k, j, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game)];
-    [9298436] PalInit_E1BC [] {
-        word!(game.palettefx_pre_instr[(j >> 1)] = ((0x8de20bi32) as u16));
-    };
-    [9299008] PalInit_F761_Norfair1 [] {
-        let mut v2: u16 = if (word!(game.equipped_items) & 0x20) != 0 {
-            addr_off_8DE8B6 as u16
-        } else if (word!(game.equipped_items) & 1) != 0 {
-            addr_off_8DE68A as u16
-        } else {
-            addr_kPalfxInstrList_E45E as u16
-        };
-        word!(game.palettefx_instr_list_ptrs[(j >> 1)] = v2);
-    };
-    [9303856] PalInit_F779_Brinstar8 [] {
-        if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 2) != 0 {
-            word!(game.palettefx_ids[(j >> 1)] = 0);
+
+pub unsafe fn CallPalInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> PairU16 {
+    let (k, j) = match ea {
+        9291157 => {
+            // Save the continuation for the live active slot.
+            write_native(
+                Instruction.address(read(ram::palettefx_index, game)),
+                j.wrapping_add(4),
+                game,
+            );
+            (0, 0)
+        }
+        9291161 => (k.wrapping_add(4), j.wrapping_add(2)),
+        9291170 => (k.wrapping_add(6), j.wrapping_add(2)),
+        9291179 => (k.wrapping_add(8), j.wrapping_add(2)),
+        9291188 => (k.wrapping_add(16), j.wrapping_add(2)),
+        9291197 => (k.wrapping_add(18), j.wrapping_add(2)),
+        9291206 => (k.wrapping_add(30), j.wrapping_add(2)),
+        9291215 => {
+            Id.write(k, 0, game);
+            (k, 0)
+        }
+        9291220 => {
+            PreInstruction.write(k, palette_script(j, game).word(0), game);
+            (k, j.wrapping_add(2))
+        }
+        9291229 => {
+            PreInstruction.write(k, addr_locret_8DC5E3 as u16, game);
+            (k, j)
+        }
+        9291294 => (k, palette_script(j, game).word(0)),
+        9291321 => {
+            // A completed countdown skips its unread jump operand.
+            let cursor = if Timer.decrement(k, game) == 1 {
+                j.wrapping_add(2)
+            } else {
+                palette_script(j, game).word(0)
+            };
+            (k, cursor)
+        }
+        9291336 => {
+            // This instruction addresses a byte at k, without rounding odd k down.
+            game.g_ram[crate::ram_map::word_arrays::palettefx_timers + usize::from(k)] =
+                palette_script(j, game).byte(0);
+            (k, j.wrapping_add(1))
+        }
+        9291349 => {
+            Color.write(k, palette_script(j, game).word(0), game);
+            (k, j.wrapping_add(2))
+        }
+        9291358 => {
+            QueueMusic_Delayed8(u16::from(palette_script(j, game).byte(0)), game);
+            (k, j.wrapping_add(1))
+        }
+        9291370 | 9291379 | 9291388 => {
+            // Sound operands are words although the cursor advances by one byte.
+            let script = palette_script(j, game);
+            let sound = script.word(0);
+            match ea {
+                9291370 => QueueSfx1_Max6(sound, game),
+                9291379 => QueueSfx2_Max6(sound, game),
+                _ => QueueSfx3_Max6(sound, game),
+            }
+            (k, j.wrapping_add(1))
+        }
+        9302470 => {
+            // Select the next heat-palette variant.
+            write(
+                ram::samus_in_heat_palfx_index,
+                u16::from(palette_script(j, game).byte(0)),
+                game,
+            );
+            (k, j.wrapping_add(1))
+        }
+        _ => {
+            Unreachable(game);
+            (0, 0)
         }
     };
-    @external {
-        9291397 => [()];
+    PairU16 { k, j }
+}
+
+pub unsafe fn CallPalfxFunc(ea: u32, _k: u16, slot: u16, game: &mut Game) {
+    match ea {
+        9291397 => (),
+        9298436 => PreInstruction.write(slot, 0xe20b, game),
+        9299008 => {
+            let script = if read(ram::equipped_items, game) & 0x20 != 0 {
+                addr_off_8DE8B6
+            } else if read(ram::equipped_items, game) & 1 != 0 {
+                addr_off_8DE68A
+            } else {
+                addr_kPalfxInstrList_E45E
+            };
+            Instruction.write(slot, script as u16, game);
+        }
+        9303856 => {
+            if miniboss_dead(game) {
+                Id.write(slot, 0, game);
+            }
+        }
+        _ => {
+            Unreachable(game);
+        }
     }
 }

@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,390 Rust lines in 111 files**, plus 262 C
-bridge and 296 C-header lines = **95,948 maintained implementation lines**.
+Current composition (2026-10-22): **95,474 Rust lines in 111 files**, plus 262 C
+bridge and 296 C-header lines = **96,032 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,779**. This complete recount includes frontend,
+gives **96,863**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2350,33 +2350,43 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    enabled. Unvisited initial-transfer and special-clear paths have component
    coverage; no wider route or physical-device coverage is claimed.
    Checks: Local/sm-decomp-experiments/20261022/background-records.
-   Palette-effect definitions and scripts now use checked, owned ROM reads.
-   The reader implementation forbids unsafe code and retires this bank's raw ROM
-   pointer traversal and packed definition loads. Native-endian words, low-window
-   diagnostics/aliases, linear table/color offsets and wrapped numeric cursors
-   remain distinct. Each acquisition observes the current cartridge; operand
-   reads remain before sound callbacks and subsequent reads observe their effects.
-   Complete safety cost: **+18 Rust lines** in one file, with no new macros,
-   dependencies or counted unsafe declarations. RAM operations, dispatch and
-   native diagnostics remain unsafe; bank/state ownership is still unfinished.
-   **2,316 actual old/new full-RAM comparisons**, 472 ordered sound observations
-   and 56 matching failures pass. Real sound queues run behind four forwarding
-   hooks; controlled mutation/rebinding/failure checks preserve live rereads and
-   partial writes. All instruction forms, spawn/initializers, heat tables, odd
-   indices, bank edges and repeated execution are covered. Fifteen candidate-only
-   short-image/read-boundary checks also verify preceding RAM effects; undefined
-   out-of-allocation legacy reads are not compared. Odd native loads compare
-   observed optimized behavior, not a proof of defined pointer operations.
-   Twelve low-window diagnostic scenarios match stdout exactly. All 118 library
-   inputs and the single fixture input are checked, including every test-only
-   source change. Normal release library/frontend/verifier, native-source and
-   formatting checks pass. Probed and clean any% boot each pass **154/0**, inputs
-   **0..153**: inputs 0..150 are setup; definition acquisition, instruction/color
-   execution, wait and actual CGRAM upload run at 151, followed by two frames.
-   Normal oracle comparisons, rendering and audio remain enabled. Heat/gameplay
-   and other unvisited script branches have component coverage; no wider movie,
+   Palette effects now use checked ROM and RAM access throughout their lifecycle.
+   The ROM reader, RAM adapter, enable/disable/clear routines and shared miniboss
+   query forbid unsafe code. Raw RAM traversal, timer updates, enemy-field reads,
+   palette writes and split damage operations in this bank are retired. Slot fields
+   use the existing RAM metadata and preserve broad/odd index aliases; timer-byte
+   writes deliberately retain unrounded indices. RAM remains the single authority,
+   with no whole-RAM mutable borrow or decoded state held across callbacks. Full
+   state ownership and bank retirement are still unfinished.
+   Direct instruction/initializer dispatch removes the internal forwarding bodies
+   and shares Y-position selection, miniboss checks and sound dispatch. All real
+   lifecycle callers remain connected. Native/little-endian distinctions, damage
+   carry/store order, callback-time rereads, live handler index changes, linear ROM
+   offsets, wrapped cursors and retained cartridge owners are preserved. Native
+   diagnostics and music queuing still require unsafe calls.
+   This RAM/dispatch step adds **84 Rust lines**, removes nine counted unsafe
+   declarations and 11 cast-containing lines, with no new macros or dependencies.
+   The preceding owned-ROM step's 18-line cost is already counted. This is a
+   safety cost, not volume savings. **3,558 actual old/new full-RAM comparisons**,
+   589 ordered sound/ROM-owner observations and 62 matching controlled failures
+   pass on the final source. Cases cover every instruction and preinstruction,
+   spawn/initialization, enabled/disabled/cleared handling, aliased slots, heat and
+   damage overflow, callback mutation/rebinding and partial writes. Real sound
+   queues run behind four forwarding hooks; assertions use a declared C-unwind
+   test boundary, with production ABI unchanged. The fixture also observes ROM
+   owner counts. All test-only changes, 118 library inputs and the fixture input
+   are checked. Fifteen candidate-only short-image/read-boundary checks and twelve
+   exact low-window diagnostic scenarios pass. Undefined out-of-allocation legacy
+   reads are excluded; odd native pointer operations compare observed optimized
+   behavior, not a proof that those old operations were defined.
+   Normal release library/frontend/verifier, native/source stamps and formatting
+   pass. Probed and clean any% boot each pass **154/0**, inputs **0..153**. Inputs
+   0..150 are setup. Required enable, spawn, ready timer, duration write, palette
+   write, wait and actual CGRAM upload probes execute at 151, followed by two
+   frames. Normal comparisons, rendering and audio remain enabled. Heat, clearing,
+   disabling and other unvisited branches have component coverage; no wider movie,
    credits or physical-device coverage is claimed.
-   Checks: Local/sm-decomp-experiments/20261022/palette-scripts.
+   Checks: Local/sm-decomp-experiments/20261022/palette-ram.
    Runtime construction now uses typed initial values shared through the existing
    record metadata. Game owns three separately allocated oracle snapshots while
    retaining its fixed inline SNES RAM. Nine hardware constructors use typed
@@ -3428,16 +3438,21 @@ motion, checked ROM patch installation, hardware field serialization, PLM
 award/message ownership, owned APU RAM, the owned audio command queue and enemy
 population ownership, owned native audio uploads, typed runtime initialization,
 owned native-player RAM with named field transfers, DSP RAM ownership and typed
-stereo output, checked tracing, owned room-background records and palette scripts,
-maintained Rust is **95,390**, with
+stereo output, checked tracing, owned room-background records and checked palette
+execution, maintained Rust is **95,474**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **95,948**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,779**.
+Including 262 C and 296 header lines gives **96,032**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,863**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3022; cast lines 6538. Owned palette scripts add 18 maintained
-Rust lines; all other residue counters are unchanged. Raw ROM traversal and
+unsafe functions 3013; cast lines 6527. Checked palette execution adds 84
+maintained Rust lines, removes nine counted unsafe declarations and 11
+cast-containing lines; all other residue counters are unchanged. Local raw RAM
+operations are retired, and the RAM adapter and safe lifecycle routines forbid
+unsafe code. RAM authority, native diagnostics and music remain as described in
+item 4. This is a safety cost, not volume savings. Owned palette scripts add 18
+maintained Rust lines; all other residue counters are unchanged. Raw ROM traversal and
 packed definition loads in palette effects are retired; the reader forbids
 unsafe code. RAM and native calls remain unsafe. This is a safety cost, not
 volume savings. Owned room-background records add 31
