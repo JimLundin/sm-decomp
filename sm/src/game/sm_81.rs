@@ -1,4 +1,5 @@
 pub use crate::game::prelude::*;
+use crate::game::sprite_drawing::{Clip, SpriteMap};
 
 pub use crate::game::constants::bank_82::*;
 
@@ -52,12 +53,7 @@ crate::game::constants::typed_constants! { i32;
 }
 const RomPtr_81: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x81>;
 const RomPtr_82: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x82>;
-const RomPtr_8C: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8c>;
-const RomPtr_92: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x92>;
-const RomPtr_93: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x93>;
-use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 crate::ram_map::ram_pointer_functions! {
-    gOamEnt(v: i32) -> OamEnt = [(0x370 + v) as isize];
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
 }
 #[inline]
@@ -182,146 +178,57 @@ pub unsafe fn PackMapToSave(game: &mut Game) {
         }
     }
 }
-#[derive(Clone, Copy)]
-enum SpriteY {
-    None,
-    Inside,
-    Outside,
-}
-
-// All wrapping writers emit X, extension bits, Y, then tile data. Keep the
-// source reads between those stores: a source may overlap the OAM buffer.
-unsafe fn draw_sprites(
-    mut source: *const u8,
-    position: (u16, u16),
-    tile_word: impl Fn(u16) -> u16,
-    clip: SpriteY,
-    game: &mut Game,
-) {
-    let mut index = word!(game.oam_next_ptr) as i32;
-    let mut count = (source as *const u16).read_unaligned() as i32;
-    source = source.offset(2);
-    if count != 0 {
-        crate::verify_probe::hit(match clip {
-            SpriteY::None => "sprites.wrap",
-            SpriteY::Inside => "sprites.inside",
-            SpriteY::Outside => "sprites.outside",
-        });
+// The native warning is an explicit remaining unsafe boundary. Sprite decoding
+// and OAM writes use the owned image and checked bytes in sprite_drawing.
+unsafe fn sprite_map(bank: u8, address: u16, game: &mut Game) -> SpriteMap {
+    let address = u32::from(bank) << 16 | u32::from(address);
+    if address & 0x8000 == 0 {
+        printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
+        game.g_fail = true;
     }
-    while count != 0 {
-        let oam = gOamEnt(index, game);
-        let x = position
-            .0
-            .wrapping_add((source as *const u16).read_unaligned());
-        (*oam).xcoord = x as u8;
-        word!(
-            bits_i32,
-            game.oam_ext[(index >> 5)] |= ((x as i32 & 0x100) >> 8
-                | ((source as *const i16).read_unaligned() < 0) as i32 * 2)
-                << 2 * (index >> 2 & 7)
-        );
-        (*oam).ycoord = match clip {
-            SpriteY::None => (position.1 as u8).wrapping_add(*source.offset(2)),
-            SpriteY::Inside | SpriteY::Outside => {
-                let y = *source.offset(2) as i32 + position.1 as u8 as i32;
-                let inside = (y & 0x100 == 0) == (*source.offset(2) & 0x80 == 0);
-                if inside == matches!(clip, SpriteY::Inside) {
-                    y as u8
-                } else {
-                    0xf0
-                }
-            }
-        };
-        let sprite_tile_word = tile_word((source.offset(3) as *const u16).read_unaligned());
-        (&raw mut (*oam).charnum as *mut u16).write_unaligned(sprite_tile_word);
-        source = source.offset(5);
-        index = index + 4 & 0x1ff;
-        count -= 1;
+    SpriteMap {
+        image: game
+            .loaded_rom
+            .as_ref()
+            .expect("ROM must be loaded")
+            .clone(),
+        offset: crate::rtl::lorom_offset(address) as usize,
     }
-    word!(game.oam_next_ptr = index as u16);
-}
-
-// Bounded cinematic sprites use the 224-line clipping rule and do not wrap OAM.
-unsafe fn draw_bounded_sprites(
-    mut pp: *const u8,
-    position: (u16, u16),
-    palette: u16,
-    offscreen: bool,
-    game: &mut Game,
-) {
-    let mut n: i32 = (pp as *mut u16).read_unaligned() as i32;
-    pp = pp.offset(2);
-    let mut idx: i32 = word!(game.oam_next_ptr) as i32;
-    if n != 0 && idx < 0x200 {
-        crate::verify_probe::hit(if offscreen {
-            "sprites.bounded-outside"
-        } else {
-            "sprites.bounded"
-        });
-    }
-    while n != 0 && idx < 0x200 {
-        let oam = gOamEnt(idx, game);
-        let mut x: i32 = position.0 as i32 + (pp as *mut u16).read_unaligned() as i32;
-        let mut y: i32 = position.1 as u8 as i32 + *pp.offset(2) as i32;
-        let hidden = if *pp.offset(2) & 0x80 == 0 {
-            (y >= 0xe0) as i32
-        } else if y & 0x100 != 0 {
-            ((y as u8) >= 0xe0) as i32
-        } else {
-            ((y as u8) < 0xe0) as i32
-        } != 0;
-        if hidden != offscreen {
-            x = 0x180;
-            y = 0xe0;
-        }
-        (*oam).xcoord = x as u8;
-        (*oam).ycoord = y as u8;
-        let sprite_tile_word = (palette | (pp.offset(3) as *mut u16).read_unaligned() & 0xf1ff);
-        (&raw mut (*oam).charnum as *mut u16).write_unaligned(sprite_tile_word);
-        word!(
-            bits_i32,
-            game.oam_ext[(idx >> 5)] |= ((x & 0x100) >> 8
-                | ((pp as *mut i16).read_unaligned() < 0) as i32 * 2)
-                << 2 * (idx >> 2 & 7)
-        );
-        idx += 4;
-        pp = pp.offset(5);
-        n -= 1;
-    }
-    word!(game.oam_next_ptr = idx as u16);
 }
 pub unsafe fn DrawSpritemap(db: u8, j: u16, x: u16, y: u16, palette: u16, game: &mut Game) {
-    draw_bounded_sprites(RomPtrWithBank(db, j, game), (x, y), palette, false, game);
+    sprite_map(db, j, game).draw((x, y), |tile| palette | tile & 0xf1ff, Clip::Bounded, game);
 }
 pub unsafe fn DrawSpritemapOffScreen(j: u16, x: u16, y: u16, palette: u16, game: &mut Game) {
-    draw_bounded_sprites(RomPtr_8C(j, game), (x, y), palette, true, game);
+    sprite_map(0x8c, j, game).draw(
+        (x, y),
+        |tile| palette | tile & 0xf1ff,
+        Clip::BoundedOutside,
+        game,
+    );
 }
 pub unsafe fn DrawMenuSpritemap(a: u16, k: u16, j: u16, chr_r3: u16, game: &mut Game) {
-    let pp = RomPtr_82(
+    let pp = sprite_map(
+        0x82,
         crate::rtl::rom_table_word!(game, 0x82c569, a as isize),
         game,
     );
-    draw_sprites(
-        pp,
-        (k, j),
-        |tile| chr_r3 | tile & 0xf1ff,
-        SpriteY::None,
-        game,
-    );
+    pp.draw((k, j), |tile| chr_r3 | tile & 0xf1ff, Clip::None, game);
 }
 pub unsafe fn DrawSamusSpritemap(a: u16, x_pos: u16, y_pos: u16, game: &mut Game) {
     if crate::rtl::rom_table_word!(game, 0x92808d, a as isize) == 0 {
         return;
     }
-    let pp = RomPtr_92(
+    let pp = sprite_map(
+        0x92,
         crate::rtl::rom_table_word!(game, 0x92808d, a as isize),
         game,
     );
-    draw_sprites(pp, (x_pos, y_pos), |tile| tile, SpriteY::None, game);
+    pp.draw((x_pos, y_pos), |tile| tile, Clip::None, game);
 }
 pub unsafe fn DrawBeamGrappleSpritemap(a: u16, x_r20: u16, y_r18: u16, game: &mut Game) {
     DrawGrappleOrProjectileSpritemap(
-        RomPtr_93(
+        sprite_map(
+            0x93,
             crate::rtl::rom_table_word!(game, 0x93a1a1, a as isize),
             game,
         ),
@@ -332,19 +239,21 @@ pub unsafe fn DrawBeamGrappleSpritemap(a: u16, x_r20: u16, y_r18: u16, game: &mu
 }
 pub unsafe fn DrawProjectileSpritemap(k: u16, x_r20: u16, y_r18: u16, game: &mut Game) {
     DrawGrappleOrProjectileSpritemap(
-        RomPtr_93(word!(game.projectile_spritemap_pointers[(k >> 1)]), game),
+        sprite_map(
+            0x93,
+            u16::from_ne_bytes([
+                game.g_ram[0xcb8 + usize::from(k >> 1) * 2],
+                game.g_ram[0xcb9 + usize::from(k >> 1) * 2],
+            ]),
+            game,
+        ),
         x_r20,
         y_r18,
         game,
     );
 }
-pub unsafe fn DrawGrappleOrProjectileSpritemap(
-    pp: *const u8,
-    x_r20: u16,
-    y_r18: u16,
-    game: &mut Game,
-) {
-    draw_sprites(pp, (x_r20, y_r18), |tile| tile, SpriteY::None, game);
+fn DrawGrappleOrProjectileSpritemap(pp: SpriteMap, x_r20: u16, y_r18: u16, game: &mut Game) {
+    pp.draw((x_r20, y_r18), |tile| tile, Clip::None, game);
 }
 pub unsafe fn DrawSpritemapWithBaseTile(
     db: u8,
@@ -358,12 +267,11 @@ pub unsafe fn DrawSpritemapWithBaseTile(
     if j == 0 {
         return;
     }
-    let pp = RomPtrWithBank(db, j, game) as *mut u8;
-    draw_sprites(
-        pp,
+    let pp = sprite_map(db, j, game);
+    pp.draw(
         (r20_x, r18_y),
         |tile| (r3 as i32 | r0 as i32 + tile as i32) as u16,
-        SpriteY::None,
+        Clip::None,
         game,
     );
 }
@@ -376,12 +284,11 @@ pub unsafe fn DrawSpritemapWithBaseTile2(
     r0: u16,
     game: &mut Game,
 ) {
-    let pp = RomPtrWithBank(db, j, game);
-    draw_sprites(
-        pp,
+    let pp = sprite_map(db, j, game);
+    pp.draw(
         (r20_x, r18_y),
         |tile| (r3 as i32 | r0 as i32 + tile as i32) as u16,
-        SpriteY::Inside,
+        Clip::Inside,
         game,
     );
 }
@@ -394,12 +301,11 @@ pub unsafe fn DrawSpritemapWithBaseTileOffscreen(
     r0: u16,
     game: &mut Game,
 ) {
-    let pp = RomPtrWithBank(db, j, game);
-    draw_sprites(
-        pp,
+    let pp = sprite_map(db, j, game);
+    pp.draw(
         (r20_x, r18_y),
         |tile| (r3 as i32 | r0 as i32 + tile as i32) as u16,
-        SpriteY::Outside,
+        Clip::Outside,
         game,
     );
 }

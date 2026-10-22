@@ -34,10 +34,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,305 Rust lines in 94 files**, plus 262 C
-bridge and 296 C-header lines = **94,863 maintained implementation lines**.
+Current composition (2026-10-22): **94,312 Rust lines in 95 files**, plus 262 C
+bridge and 296 C-header lines = **94,870 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,694**. This complete recount includes frontend,
+gives **95,701**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1657,6 +1657,24 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    old optimized execution is observed behavior, not a proof of undefined accesses.
    No movie ran; unrelated overlay logic and physical hardware are not covered.
    Checks: Local/sm-decomp-experiments/20261022/safe-vram-read-queue.
+   ROM sprite emission now uses one owned-image decoder and checked OAM writer
+   for all eleven menu, Samus, projectile, enemy and cinematic drawing adapters.
+   Five clipping policies preserve their distinct write order, wrapping, tile
+   transforms and packed extension bits. The new module forbids unsafe code;
+   native lower-bank warnings remain explicit in the bank-81 source selector.
+   The raw-pointer helper has only two current callers and is now private with
+   an owned source. Existing public drawing adapters remain available. Complete
+   price: **+7 maintained lines**, including adapters and registrations, with no
+   new macros. This is safety work; it establishes no large volume saving.
+   All 1,872 actual old/final comparisons pass, including empty maps, odd and
+   overlapping OAM addresses, clipping edges, multiple wraps and 22 actual NMI
+   uploads. The latter assert all 544 PPU OAM bytes and compare typed machine
+   state. Five branch probes, 245 exact diagnostic bytes and a checked ROM-end
+   failure pass. All 108 unaffected ordinary bank-81 functions retain exact source.
+   Final release library/frontend/verifier builds and all 102 library source
+   inputs pass. No movie ran; the synthetic maps establish no gameplay-route,
+   visible-pixel or physical-device coverage. Checks:
+   Local/sm-decomp-experiments/20261022/owned-sprites.
    Recording now owns its log and base snapshot in checked Rust storage, with
    safe input/patch encoding, rebasing and stopping. The new module forbids unsafe
    code; native ByteArray calls, declarations and installer selections are removed.
@@ -2570,15 +2588,19 @@ scrolling-sky and grapple-swing ownership, the SPC/PPU/DSP/music replacements,
 shared configuration/input and utility dependencies, the desktop host,
 room-scroll data, the shader dependency, safe pose/mechanism RAM access,
 gameplay continuation ownership, owned ROM reads, safe asset decompression,
-checked ROM tables, safe word transfers, owned recording and checked VRAM readback,
-maintained Rust is **94,305**, with
+checked ROM tables, safe word transfers, owned recording, checked VRAM readback
+and owned sprite drawing, maintained Rust is **94,312**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **94,863**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,694**.
+Including 262 C and 296 header lines gives **94,870**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,701**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 23; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3042; cast lines 6614. VRAM readback adds one line, removes four
+unsafe functions 3040; cast lines 6601. Owned sprite drawing adds seven maintained
+lines and removes two counted unsafe declarations and 13 cast-containing lines.
+Its checked ROM/OAM writer forbids unsafe code; the native warning remains an
+explicit unsafe boundary. Other counters are unchanged. This is a safety cost,
+not a reduction. VRAM readback adds one line, removes four
 counted unsafe declarations and seven cast-containing lines; other counters are
 unchanged. Its hardware calls remain unsafe. Owned recording adds nine complete maintained
 lines (22 Rust, minus 12 C/header and one installer line). It removes two counted
