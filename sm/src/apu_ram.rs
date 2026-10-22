@@ -1,0 +1,44 @@
+//! Stable APU memory shared with the native DSP; snapshots copy its bytes.
+#![forbid(unsafe_code)]
+use std::{cell::Cell, rc::Rc};
+
+#[derive(Clone)]
+pub struct ApuRam(Rc<[Cell<u8>]>);
+
+impl ApuRam {
+    pub fn new() -> Self {
+        Self((0..65536).map(|_| Cell::new(0)).collect())
+    }
+
+    pub fn read(&self, address: u16) -> u8 {
+        self.0[usize::from(address)].get()
+    }
+
+    pub fn write(&self, address: u16, value: u8) {
+        self.0[usize::from(address)].set(value);
+    }
+
+    pub fn fill(&self, value: u8) {
+        for cell in &*self.0 {
+            cell.set(value);
+        }
+    }
+
+    pub fn copy_to(&self, output: &mut [u8; 65536]) {
+        for (byte, cell) in output.iter_mut().zip(self.0.iter()) {
+            *byte = cell.get();
+        }
+    }
+
+    pub fn copy_from(&self, input: &[u8; 65536]) {
+        for (cell, &byte) in self.0.iter().zip(input) {
+            cell.set(byte);
+        }
+    }
+
+    /// Borrow the stable buffer for the native DSP. Keep an owner alive for the
+    /// entire use of the pointer, and serialize all access through the game gate.
+    pub fn as_mut_ptr(&self) -> *mut u8 {
+        self.0.as_ptr().cast::<u8>().cast_mut()
+    }
+}

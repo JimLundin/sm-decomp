@@ -287,12 +287,10 @@ crate::typed_struct! {
         pub header: VoidP;
     }
 
-    pub struct Apu {
-        pub spc: *mut Spc;
-        pub dsp: *mut Dsp;
-        pub ram: [u8; 65536];
+    pub struct ApuRegisters {
         pub romReadable: bool;
         pub dspAdr: u8;
+        pub snapshot_padding0: [u8; 2];
         pub cycles: u32;
         pub inPorts: [u8; 6];
         pub outPorts: [u8; 4];
@@ -954,4 +952,13 @@ crate::typed_struct! {
         pub ram: crate::save_ram::SaveRam;
         pub ramSize: u32;
     }
+}
+
+// The SPC dependency treats this pointer as opaque and uses the Rust bus calls.
+// RAM has its own stable allocation; register snapshots never copy its owner.
+pub struct Apu {
+    pub spc: *mut Spc,
+    pub dsp: *mut Dsp,
+    pub ram: crate::apu_ram::ApuRam,
+    pub registers: ApuRegisters,
 }

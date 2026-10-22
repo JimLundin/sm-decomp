@@ -3,6 +3,7 @@
 //! New library source files must be listed here; missing entries fail closed.
 
 pub static FILES: &[(&str, &[u8])] = &[
+    ("sm/src/apu_ram.rs", include_bytes!("apu_ram.rs")),
     (
         "sm/src/game/launch_motion.rs",
         include_bytes!("game/launch_motion.rs"),

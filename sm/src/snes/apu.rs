@@ -1,15 +1,15 @@
-use crate::c_library::{malloc, puts};
+use crate::c_library::puts;
 use crate::game_state::Game;
 use crate::snes::dsp::{dsp_cycle, dsp_init, dsp_read, dsp_reset, dsp_saveload, dsp_write};
 use crate::snes::spc::{spc_init, spc_reset, spc_runOpcode, spc_saveload};
 use crate::tracing::getProcessorStateSpc;
-pub use crate::types::{size_t, Apu, DspRegWriteHistory};
+pub use crate::types::{size_t, Apu, ApuRegisters, DspRegWriteHistory, Timer};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
-// History follows the legacy snapshot span; removing its union must not move it.
+// Register serialization retains the forty bytes following legacy APU RAM.
 const _: () = {
-    assert!(core::mem::offset_of!(Apu, history) == 65592);
-    assert!(size_of::<Apu>() == 66112);
+    assert!(core::mem::offset_of!(ApuRegisters, history) == 40);
+    assert!(size_of::<ApuRegisters>() == 556);
 };
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
@@ -20,54 +20,73 @@ static bootRom: [u8; 64] = [
     0xf6, 0xda, 0, 0xba, 0xf4, 0xc4, 0xf4, 0xdd, 0x5d, 0xd0, 0xdb, 0x1f, 0, 0, 0xc0, 0xff,
 ];
 pub unsafe fn apu_init() -> *mut Apu {
-    let apu = malloc(size_of::<Apu>() as size_t) as *mut Apu;
-    core::ptr::write_bytes(apu, 0, 1);
+    let apu = Box::into_raw(Box::new(Apu {
+        spc: core::ptr::null_mut(),
+        dsp: core::ptr::null_mut(),
+        ram: crate::apu_ram::ApuRam::new(),
+        registers: ApuRegisters {
+            romReadable: false,
+            dspAdr: 0,
+            snapshot_padding0: [0; 2],
+            cycles: 0,
+            inPorts: [0; 6],
+            outPorts: [0; 4],
+            timer: [Timer {
+                cycles: 0,
+                divider: 0,
+                target: 0,
+                counter: 0,
+                enabled: false,
+            }; 3],
+            cpuCyclesLeft: 0,
+            pad: [0; 6],
+            history: DspRegWriteHistory {
+                count: 0,
+                addr: [0; 256],
+                val: [0; 256],
+            },
+        },
+    }));
     (*apu).spc = spc_init(apu);
-    (*apu).dsp = dsp_init(&raw mut (*apu).ram as *mut u8);
+    (*apu).dsp = dsp_init((*apu).ram.as_mut_ptr());
     apu
 }
 pub unsafe fn apu_reset(apu: *mut Apu) {
-    (*apu).romReadable = true;
+    (*apu).registers.romReadable = true;
     spc_reset((*apu).spc);
     dsp_reset((*apu).dsp);
     (*apu).ram.fill(0);
-    set_fields! {[(*apu)], 0; dspAdr, cycles}
-    (*apu).inPorts.fill(0);
-    (*apu).outPorts.fill(0);
-    for timer in &mut (*apu).timer {
+    set_fields! {[(*apu).registers], 0; dspAdr, cycles}
+    (*apu).registers.inPorts.fill(0);
+    (*apu).registers.outPorts.fill(0);
+    for timer in &mut (*apu).registers.timer {
         set_fields! {[timer], 0; cycles, divider, target, counter}
         timer.enabled = false;
     }
-    (*apu).cpuCyclesLeft = 7;
-    (*apu).history.count = 0;
+    (*apu).registers.cpuCyclesLeft = 7;
+    (*apu).registers.history.count = 0;
 }
 pub unsafe fn apu_saveload(apu: *mut Apu, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
-    crate::rtl::snapshot_region(
-        io,
-        &raw mut (*apu).ram as *mut u8 as *mut u8,
-        (65586 as size_t)
-            .wrapping_add(6 as size_t)
-            .wrapping_sub(16 as size_t),
-    );
+    crate::rtl::snapshot_result(io.state(&mut *apu));
     dsp_saveload((*apu).dsp, io);
     spc_saveload((*apu).spc, io);
 }
 
 pub unsafe fn apu_cycle(apu: *mut Apu, game: &mut Game) {
-    if (*apu).cpuCyclesLeft == 0 {
+    if (*apu).registers.cpuCyclesLeft == 0 {
         if game.g_debug_apu_cycles {
             let mut line: [c_char; 80] = [0; 80];
             getProcessorStateSpc(apu, line.as_mut_ptr());
             puts(line.as_mut_ptr());
         }
-        (*apu).cpuCyclesLeft = spc_runOpcode((*apu).spc) as u8;
+        (*apu).registers.cpuCyclesLeft = spc_runOpcode((*apu).spc) as u8;
     }
-    (*apu).cpuCyclesLeft = (*apu).cpuCyclesLeft.wrapping_sub(1);
-    if (*apu).cycles & 0x1f == 0 {
+    (*apu).registers.cpuCyclesLeft = (*apu).registers.cpuCyclesLeft.wrapping_sub(1);
+    if (*apu).registers.cycles & 0x1f == 0 {
         dsp_cycle((*apu).dsp);
     }
     for i in 0..3 {
-        let timer = &mut (*apu).timer[i];
+        let timer = &mut (*apu).registers.timer[i];
         if timer.cycles == 0 {
             timer.cycles = if i == 2 { 16 } else { 128 };
             if timer.enabled {
@@ -80,26 +99,26 @@ pub unsafe fn apu_cycle(apu: *mut Apu, game: &mut Game) {
         }
         timer.cycles = timer.cycles.wrapping_sub(1);
     }
-    (*apu).cycles = (*apu).cycles.wrapping_add(1);
+    (*apu).registers.cycles = (*apu).registers.cycles.wrapping_add(1);
 }
 #[export_name = "apu_cpuRead"]
 pub unsafe extern "C-unwind" fn apu_cpuRead(apu: *mut Apu, adr: u16) -> u8 {
     match adr {
         0xf0 | 0xf1 | 0xfa..=0xfc => return 0,
-        0xf2 => return (*apu).dspAdr,
-        0xf3 => return dsp_read((*apu).dsp, (*apu).dspAdr & 0x7f),
-        0xf4..=0xf9 => return (*apu).inPorts[usize::from(adr - 0xf4)],
+        0xf2 => return (*apu).registers.dspAdr,
+        0xf3 => return dsp_read((*apu).dsp, (*apu).registers.dspAdr & 0x7f),
+        0xf4..=0xf9 => return (*apu).registers.inPorts[usize::from(adr - 0xf4)],
         0xfd..=0xff => {
-            let timer = &mut (*apu).timer[usize::from(adr - 0xfd)];
+            let timer = &mut (*apu).registers.timer[usize::from(adr - 0xfd)];
             crate::update_place! { previous value = timer.counter => 0; }
             return value;
         }
         _ => {}
     }
-    if (*apu).romReadable && adr >= 0xffc0 {
+    if (*apu).registers.romReadable && adr >= 0xffc0 {
         return bootRom[usize::from(adr - 0xffc0)];
     }
-    (*apu).ram[usize::from(adr)]
+    (*apu).ram.read(adr)
 }
 fn record_dsp_write(history: &mut DspRegWriteHistory, address: u8, value: u8) {
     let index = history.count as i32;
@@ -116,33 +135,33 @@ pub unsafe extern "C-unwind" fn apu_cpuWrite(apu: *mut Apu, adr: u16, val: u8) {
         0xf1 => {
             for i in 0..3 {
                 let enabled = val & (1 << i) != 0;
-                let timer = &mut (*apu).timer[i];
+                let timer = &mut (*apu).registers.timer[i];
                 if !timer.enabled && enabled {
                     set_fields! {[timer], 0; divider, counter}
                 }
                 timer.enabled = enabled;
             }
             if val & 0x10 != 0 {
-                (*apu).inPorts[0] = 0;
-                (*apu).inPorts[1] = 0;
+                (*apu).registers.inPorts[0] = 0;
+                (*apu).registers.inPorts[1] = 0;
             }
             if val & 0x20 != 0 {
-                (*apu).inPorts[2] = 0;
-                (*apu).inPorts[3] = 0;
+                (*apu).registers.inPorts[2] = 0;
+                (*apu).registers.inPorts[3] = 0;
             }
-            (*apu).romReadable = val & 0x80 != 0;
+            (*apu).registers.romReadable = val & 0x80 != 0;
         }
-        0xf2 => (*apu).dspAdr = val,
+        0xf2 => (*apu).registers.dspAdr = val,
         0xf3 => {
-            record_dsp_write(&mut (*apu).history, (*apu).dspAdr, val);
-            if ((*apu).dspAdr as i32) < 0x80 {
-                dsp_write((*apu).dsp, (*apu).dspAdr, val);
+            record_dsp_write(&mut (*apu).registers.history, (*apu).registers.dspAdr, val);
+            if ((*apu).registers.dspAdr as i32) < 0x80 {
+                dsp_write((*apu).dsp, (*apu).registers.dspAdr, val);
             }
         }
-        0xf4..=0xf7 => (*apu).outPorts[usize::from(adr - 0xf4)] = val,
-        0xf8..=0xf9 => (*apu).inPorts[usize::from(adr - 0xf4)] = val,
-        0xfa..=0xfc => (*apu).timer[usize::from(adr - 0xfa)].target = val,
+        0xf4..=0xf7 => (*apu).registers.outPorts[usize::from(adr - 0xf4)] = val,
+        0xf8..=0xf9 => (*apu).registers.inPorts[usize::from(adr - 0xf4)] = val,
+        0xfa..=0xfc => (*apu).registers.timer[usize::from(adr - 0xfa)].target = val,
         _ => {}
     }
-    (*apu).ram[usize::from(adr)] = val;
+    (*apu).ram.write(adr, val);
 }

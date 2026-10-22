@@ -36,6 +36,7 @@ fn compatibility() -> u64 {
         include_str!("../recording.rs"),
         include_str!("../save_ram.rs"),
         include_str!("../snapshot_io.rs"),
+        include_str!("../apu_ram.rs"),
         include_str!("../audio_snapshot.rs"),
         include_str!("../spc_player.rs"),
         include_str!("../snes/snes.rs"),
@@ -133,10 +134,20 @@ macro_rules! fields {
     };
 }
 
-fields!(Apu {
-    ram, romReadable, dspAdr, cycles, inPorts, outPorts, timer, cpuCyclesLeft,
-    history
-} skip { spc, dsp, pad });
+fields!(Apu { ram, registers } skip { spc, dsp });
+fields!(ApuRegisters {
+    romReadable, dspAdr, cycles, inPorts, outPorts, timer, cpuCyclesLeft, history
+} skip { pad, snapshot_padding0 });
+impl State for sm::apu_ram::ApuRam {
+    fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
+        for offset in 0..65536 {
+            let mut byte = self.read(offset as u16);
+            byte.state(archive)?;
+            self.write(offset as u16, byte);
+        }
+        Ok(())
+    }
+}
 
 fields!(BgLayer {
     hScroll, vScroll, tilemapWider, tilemapHigher, tilemapAdr, tileAdr, bigTiles,

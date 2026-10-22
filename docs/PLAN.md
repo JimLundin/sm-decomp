@@ -42,10 +42,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,806 Rust lines in 104 files**, plus 262 C
-bridge and 296 C-header lines = **95,364 maintained implementation lines**.
+Current composition (2026-10-22): **94,908 Rust lines in 105 files**, plus 262 C
+bridge and 296 C-header lines = **95,466 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,195**. This complete recount includes frontend,
+gives **96,297**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1728,8 +1728,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    cases pass. All 104 old/105 final library inputs, release library/frontend/
    verifier builds and native source checks pass. No movie ran; synthetic fixtures
    establish no gameplay-route, physical-device or allocator-event coverage.
-   The raw bridge now remains only for APU and main-RAM regions, which retain
-   pointers and APU layout padding. Do not replace it with whole-RAM mutable views.
+   At that stage the raw bridge remained for APU and main-RAM regions, retaining
+   pointers and APU layout padding. Do not introduce whole-RAM mutable views.
    Checks: Local/sm-decomp-experiments/20261022/snapshot-stream.
    APU write history now uses a named field instead of a union with an unused
    pointer member. This removes **nine maintained lines**, including the retired
@@ -1758,9 +1758,37 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    phases are unchanged. Synthetic old fixtures initialize padding before byte
    comparisons; no identity of previously uninitialized bytes is claimed.
    No movie ran; gameplay-route, physical-audio and allocator-event coverage remain
-   unestablished. APU/main-RAM ownership and their remaining serializer are next;
+   unestablished. APU/main-RAM ownership and their serializer remained next;
    raw hardware ownership, allocation and native diagnostics also remain unsafe.
    Checks: Local/sm-decomp-experiments/20261022/snapshot-fields.
+   APU RAM now owns a stable 65,536-byte allocation with checked byte access;
+   its module forbids unsafe code. Audio snapshots contain detached bytes and
+   registers, and restoring them preserves the live RAM allocation and rebuilds
+   DSP/SPC links. APU construction initializes a Rust value instead of raw-zeroing
+   a malloc allocation. Explicit register serialization preserves the 65,576-byte
+   APU block, including padding, in the unchanged 275,493-byte frontend snapshot.
+   The APU raw snapshot span and three RTL raw transfers are retired; typed DSP
+   copying retains the destination RAM link. The generic raw snapshot bridge now
+   remains only for main RAM. Native DSP pointer access, reverse transfer into
+   native-player RAM and raw hardware ownership remain explicit unsafe boundaries;
+   this does not complete APU/native safety. No whole-main-RAM borrow is introduced.
+   Complete cost is **+102 maintained Rust lines across 11 files**, including the
+   new owner, both snapshot codecs, callers and registrations; no new macros.
+   All **232 actual old/new comparisons** pass on the final merged library:
+   snapshot bytes/order/post-effects, padding and arbitrary valid field patterns,
+   APU bus/timers, real SPC instructions, DSP directory/BRR/echo consumption,
+   audio rewind, recorder/load/replay/clear and checkpoint callers. Address wrapping,
+   retained owners, detached snapshots and invalid history failure order are covered.
+   Twenty native truncation failures, an allocation-failure/recovery pair, seven
+   stream checks, four constructor checks and five owner/copy checks also pass.
+   All 109 old/112 final library inputs, native source checks, formatting and normal
+   release library/frontend/verifier builds pass. Probed and clean physical-audio
+   boot each pass **3/0**, inputs **0..2**: RAM read/write, DSP consumer and snapshot
+   capture/restore probes all first execute at zero, followed by two frames.
+   Normal comparisons, rendering and audio remain enabled. These boot frames
+   establish no gameplay or active-music coverage; broader audio states have the
+   component checks above. No physical-device or allocator-event identity is claimed.
+   Checks: Local/sm-decomp-experiments/20261022/owned-apu.
    The existing shared ROM-table interface now uses that owned image with checked
    signed offsets and byte reads, preserving image capture before index evaluation,
    live patch visibility, native byte order and linear bank crossings. Its 725
@@ -2792,15 +2820,20 @@ gameplay continuation ownership, owned ROM reads, safe asset decompression,
 checked ROM tables, safe word transfers, owned recording, checked VRAM readback
 owned sprite drawing, checked Mode 7 transfers, owned SRAM, checked snapshot
 streams, owned enemy-projectile scripts, named APU history and explicit launch
-motion, checked ROM patch installation, hardware field serialization and PLM
-award/message ownership, maintained Rust is **94,806**, with
+motion, checked ROM patch installation, hardware field serialization, PLM
+award/message ownership and owned APU RAM, maintained Rust is **94,908**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **95,364**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,195**.
+Including 262 C and 296 header lines gives **95,466**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,297**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3035; cast lines 6573. PLM award/message ownership adds 154
+unsafe functions 3035; cast lines 6573. Owned APU RAM adds 102 maintained lines;
+the residue counters are unchanged. Four raw-copy sites and raw-zeroed APU
+allocation are retired. The new byte owner forbids unsafe code; native DSP
+pointer access, reverse native-player transfer and raw hardware links remain.
+This is a safety/ownership cost, not volume savings or complete unsafe elimination.
+PLM award/message ownership adds 154
 maintained lines and one counted unsafe declaration for the explicit legacy
 script/effect bridge; the pure model and checked adapter forbid unsafe code.
 Raw inventory operations and the retained continuation pointer are retired;

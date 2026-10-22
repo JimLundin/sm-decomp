@@ -399,6 +399,7 @@ pub mod platform {
     mod texture_png;
 }
 
+pub mod apu_ram;
 pub(crate) mod audio_snapshot;
 #[doc(hidden)]
 pub mod c_library;

@@ -103,3 +103,11 @@ pub unsafe fn dsp_getSamples(dsp: *mut Dsp, sampleData: *mut i16, samplesPerFram
     }
     (*dsp).sampleOffset = 0;
 }
+
+impl Dsp {
+    pub(crate) fn copy_state_from(&mut self, source: &Self) {
+        let ram = self.apu_ram;
+        *self = *source;
+        self.apu_ram = ram;
+    }
+}

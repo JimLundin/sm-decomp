@@ -827,7 +827,7 @@ pub unsafe fn RtlApuWrite(adr: u32, val: u8, game: &mut Game) {
     };
     if word!(game.is_uploading_apu) != 0 {
         snes_catchupApu(game.g_snes, game);
-        (*(*game.g_snes).apu).inPorts[(adr & 0x3) as usize] = val;
+        (*(*game.g_snes).apu).registers.inPorts[(adr & 0x3) as usize] = val;
         return;
     }
     game.g_apu_write.ports[(adr & 0x3) as usize] = val;
@@ -886,7 +886,7 @@ unsafe fn RtlPopApuState_Locked(game: &mut Game) {
     let input_ports = if game.g_use_my_apu_code as i32 != 0 {
         &raw mut (*game.g_spc_player).input_ports as *mut u8
     } else {
-        &raw mut (*(*game.g_snes).apu).inPorts as *mut u8
+        &raw mut (*(*game.g_snes).apu).registers.inPorts as *mut u8
     };
     if game.g_apu_queue_size as i32 != 0 {
         crate::update_place! { previous fresh1 = game.g_apu_queue_size => game.g_apu_queue_size.wrapping_sub(1); }
@@ -936,14 +936,10 @@ unsafe fn RtlRestoreMusicAfterLoad_Locked(is_reset: bool, game: &mut Game) {
     if game.g_use_my_apu_code {
         memcpy(
             &raw mut (*game.g_spc_player).ram as *mut u8 as *mut c_void,
-            &raw mut (*(*game.g_snes).apu).ram as *mut u8 as *const c_void,
+            (*(*game.g_snes).apu).ram.as_mut_ptr().cast::<c_void>(),
             65536i32 as size_t,
         );
-        memcpy(
-            &raw mut (*(*game.g_spc_player).dsp).ram as *mut u8 as *mut c_void,
-            &raw mut (*(*(*game.g_snes).apu).dsp).ram as *mut u8 as *const c_void,
-            (size_of::<Dsp>() as size_t).wrapping_sub(8 as size_t),
-        );
+        (*(*game.g_spc_player).dsp).copy_state_from(&*(*(*game.g_snes).apu).dsp);
         SpcPlayer_CopyVariablesFromRam(game.g_spc_player);
     }
     if is_reset {
@@ -971,16 +967,10 @@ unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands
             i -= 1;
         }
         SpcPlayer_CopyVariablesToRam(game.g_spc_player);
-        memcpy(
-            &raw mut (*(*(*game.g_snes).apu).dsp).ram as *mut u8 as *mut c_void,
-            &raw mut (*(*game.g_spc_player).dsp).ram as *mut u8 as *const c_void,
-            (size_of::<Dsp>() as size_t).wrapping_sub(8 as size_t),
-        );
-        memcpy(
-            &raw mut (*(*game.g_snes).apu).ram as *mut u8 as *mut c_void,
-            &raw mut (*game.g_spc_player).ram as *mut u8 as *const c_void,
-            65536i32 as size_t,
-        );
+        (*(*(*game.g_snes).apu).dsp).copy_state_from(&*(*game.g_spc_player).dsp);
+        (*(*game.g_snes).apu)
+            .ram
+            .copy_from(&(*game.g_spc_player).ram);
     }
 }
 pub unsafe fn RtlRenderAudio(audio_buffer: *mut i16, samples: i32, channels: i32, game: &mut Game) {

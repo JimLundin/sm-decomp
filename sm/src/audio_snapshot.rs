@@ -1,6 +1,8 @@
 //! Rewind the emulated APU without transferring ownership of its allocations.
 
-use crate::types::{Apu, Dsp, DspChannel, DspRegWriteHistory, Snes, Spc, SpcPlayer, Timer};
+use crate::types::{
+    ApuRegisters, Dsp, DspChannel, DspRegWriteHistory, Snes, Spc, SpcPlayer, Timer,
+};
 use crate::{game_state::Game, rtl::ApuWriteEnt};
 
 #[derive(Copy, Clone)]
@@ -144,7 +146,8 @@ impl PlayerSnapshot {
 
 #[derive(Copy, Clone)]
 pub struct AudioSnapshot {
-    apu: Apu,
+    ram: [u8; 65536],
+    apu: ApuRegisters,
     spc: Spc,
     dsp: Dsp,
     catchup_cycles: f64,
@@ -155,22 +158,25 @@ impl AudioSnapshot {
     #[forbid(unsafe_code)]
     pub(crate) fn first_difference(&self, other: &Self) -> Option<&'static str> {
         macro_rules! fields {
-            ($ty:ident, $left:expr, $right:expr, [$($excluded:ident),*], $($field:ident),+ $(,)?) => {
+            ($ty:ident as $label:ident, $left:expr, $right:expr, [$($excluded:ident),*], $($field:ident),+ $(,)?) => {
                 // Exhaustive patterns make added fields require an explicit choice.
                 let $ty { $($excluded: _,)* $($field: _,)+ } = $left;
                 let left = $left;
                 let right = $right;
                 $(if left.$field != right.$field {
-                    return Some(concat!(stringify!($ty), ".", stringify!($field)));
+                    return Some(concat!(stringify!($label), ".", stringify!($field)));
                 })+
             };
+            ($ty:ident, $($args:tt)*) => { fields!($ty as $ty, $($args)*); };
+        }
+        if self.ram != other.ram {
+            return Some("Apu.ram");
         }
         fields!(
-            Apu,
+            ApuRegisters as Apu,
             &self.apu,
             &other.apu,
-            [spc, dsp, pad, timer, history],
-            ram,
+            [pad, snapshot_padding0, timer, history],
             romReadable,
             dspAdr,
             cycles,
@@ -307,13 +313,12 @@ impl AudioSnapshot {
     /// The SNES and all three audio allocations must be initialized and live.
     pub(crate) unsafe fn capture(&mut self, snes: *const Snes) {
         let apu = (*snes).apu;
-        self.apu = *apu;
+        (*apu).ram.copy_to(&mut self.ram);
+        self.apu = (*apu).registers;
         self.spc = *(*apu).spc;
         self.dsp = *(*apu).dsp;
         self.catchup_cycles = (*snes).apuCatchupCycles;
         // These links belong to the live emulator, never to a snapshot.
-        self.apu.spc = core::ptr::null_mut();
-        self.apu.dsp = core::ptr::null_mut();
         self.spc.apu = core::ptr::null_mut();
         self.dsp.apu_ram = core::ptr::null_mut();
     }
@@ -323,9 +328,8 @@ impl AudioSnapshot {
         let apu = (*snes).apu;
         let spc = (*apu).spc;
         let dsp = (*apu).dsp;
-        *apu = self.apu;
-        (*apu).spc = spc;
-        (*apu).dsp = dsp;
+        (*apu).ram.copy_from(&self.ram);
+        (*apu).registers = self.apu;
         *spc = self.spc;
         (*spc).apu = apu;
         *dsp = self.dsp;

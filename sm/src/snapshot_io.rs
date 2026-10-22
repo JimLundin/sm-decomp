@@ -62,7 +62,8 @@ impl SnapshotIo<'_> {
 // Hardware values are serialized field by field. Explicit padding fields retain
 // the original byte format without interpreting a Rust allocation as a byte slice.
 use crate::types::{
-    BgLayer, Cpu, Dma, DmaChannel, Dsp, DspChannel, Layer, Ppu, Snes, Spc, WindowLayer,
+    Apu, ApuRegisters, BgLayer, Cpu, Dma, DmaChannel, Dsp, DspChannel, Layer, Ppu, Snes, Spc,
+    Timer, WindowLayer,
 };
 
 pub(crate) struct Fields<'a> {
@@ -233,3 +234,19 @@ state_record!(WindowLayer, 5, {
 } skip {
 
 });
+
+impl State for crate::apu_ram::ApuRam {
+    const SIZE: usize = 65536;
+    fn transfer(&mut self, fields: &mut Fields<'_>) {
+        for offset in 0..65536 {
+            let mut byte = self.read(offset as u16);
+            byte.transfer(fields);
+            self.write(offset as u16, byte);
+        }
+    }
+}
+state_record!(Apu, 65576, { ram, registers } skip { spc, dsp });
+state_record!(ApuRegisters, 40, {
+    romReadable, dspAdr, snapshot_padding0, cycles, inPorts, outPorts, timer, cpuCyclesLeft, pad
+} skip { history });
+state_record!(Timer, 5, { cycles, divider, target, counter, enabled } skip { });

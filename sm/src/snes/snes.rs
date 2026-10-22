@@ -120,7 +120,7 @@ pub unsafe fn snes_readBBus(snes: *mut Snes, address: u8, game: &mut Game) -> u8
         0x40..=0x7f => {
             (*snes).apuCatchupCycles = 32.0;
             snes_catchupApu(snes, game);
-            (*(*snes).apu).outPorts[usize::from(address & 3)]
+            (*(*snes).apu).registers.outPorts[usize::from(address & 3)]
         }
         0x80 => {
             crate::update_place! { previous address = (*snes).ramAdr => (*snes).ramAdr.wrapping_add(1); }
