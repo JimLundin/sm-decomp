@@ -2159,6 +2159,33 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    coordinator and are untouched. Continue this complete candidate with actual
    award/queue producers and remaining phase/script effects; runtime adoption,
    complete safety and net pricing remain open.
+   All nine real inventory awards now run on that aggregate owner, reusing the
+   current `Inventory::collect` rules. Visual and delayed-music effects receive
+   the complete state; the message operand is read afterward from the retained
+   script allocation. A zero operand clears the queue and skips dialogue. The
+   inventory codec, award sequence and checked operand provider forbid unsafe
+   code, replacing the selected raw script loads. **313 comparisons**, 14,053
+   ordered state observations and 90 matching failures pass: 132 direct award
+   cases, 56 actual award/call/dialogue/return consumer steps, 80 affected callers
+   and 45 scheduler cases. Checks cover all nine numeric routes, odd and bank-edge
+   operands, inventory/slot/queue mutation, script mutation versus ROM replacement,
+   nested awards, committed failure prefixes and fresh returned weapon inputs.
+   Three candidate-only bounds failures preserve the completed prefix; they claim
+   no old raw-pointer equivalence outside an allocation. A native two-call sequence
+   retains the real award, visual/music mutations, dialogue and script return in
+   one world. Visual/music/input/device leaves remain controlled. No movie,
+   prior projectile/contact/creation/direct-script or dialogue sweep ran.
+   Optimized build, formatting, exact current award/model/codec bodies, nine
+   dispatch identities and all **115+153 compiled inputs** pass; 140 inherited
+   inputs are unchanged. Caller correspondence includes the concurrent
+   `LoadEnemies` to `load_room_assets` rename; its phase is controlled, not new
+   loader coverage. Incremental implementation cost is **193 lines** plus the
+   reused 137-line inventory module. Separate support: 63 reference codec,
+   23 award reference, 421 direct fixture lines; native fixture +104, nested child
+   fixture +92, scheduler binding +5 and harness +17. No new implementation macros,
+   production adoption or savings. Sources/DLL/results: player-projectiles/
+   mechanism-awards-stage. Continue closing the remaining script/phase effects
+   and runtime authority in this candidate; full pricing and safety remain open.
    The full projectile candidate now includes shared script control flow:
    13 actual commands and two wake consumers use the
    existing owned slots for sleep/release, pre-actions, counters, conditional
