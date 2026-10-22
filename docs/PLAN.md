@@ -1884,7 +1884,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    include echo output changing freeze state before trails capture it. One native
    sequence initializes, animates and draws named geometry, then impacts, releases
    and verifies that the inactive cursor no longer draws. Existing native callers
-   also pass with that inactive default; firing and motion remain encoded.
+   also pass with that inactive default. Native beam creation is connected below;
+   frame-by-frame flight remains encoded.
    Models, providers and checked output forbid unsafe code. All 115 frozen and 83
    draft compiled inputs match; 71 inherited files are unchanged, and nine current
    gameplay/support sources match the frozen reference. Optimized DLL and formatting
@@ -1893,13 +1894,35 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    renderer baseline, grows **842 -> 1,024 (+182 lines)**; authored examples add 199
    separately formatted lines. Remaining bridge/fallback and final runtime costs
    are outside this partial price. No earlier full suite or movie ran.
+   Beam creation, placement and launch now share generic routines with named
+   kind/sound/velocity providers in that same owner. **940 selected full-RAM and
+   return comparisons**, 645 ordered observations and 154 matching failures pass:
+   165 creation/input cases, 345 placement/extension cases, 395 launch cases, four
+   missile consumers, 27 persistent firing/animation/output/release/reset steps and
+   four explicit partial-failure contracts. Input-only charging and unchanged codec
+   sweeps are excluded. Fifteen authored native scenarios include ordinary,
+   charged and hyper creation through actual geometry output, impact, release and
+   reuse; sound can change the live kind, wave fire retains its captured slot and
+   non-wave fire follows the collision selector. Reservation remains independent
+   of damage-based reuse and animation presence. Launch reuses `LaunchMotion`;
+   no second firing or placement algorithm is maintained. Models/providers forbid
+   unsafe code, and `Firing` remains non-Clone. All 115 frozen and 87 draft compiled
+   inputs match; 77 inherited files are unchanged. Nine current gameplay/support
+   files match the frozen source; the used projection functions still match within
+   the independently changed cinematic bank. Optimized DLL and formatting pass.
+   Exact source/result is preserved in player-projectiles/beam-definition-stage.
+   The complete changed formatted model/provider cohort grows **633 -> 797 (+164
+   lines)**; authored examples add 354 separate lines. Bridge/fallback and final
+   runtime costs remain outside this partial price. No earlier full suite or movie
+   ran; native collision outcomes are controlled, and frame-by-frame flight,
+   charge-input dispatch, missile/bomb definitions and runtime authority remain open.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, palette/sound output and
    grapple-start consumers remain controlled. Definitions are synthetic; no
    gameplay route or hardware coverage is established. Accepted out-of-pool
    operations retain reference bodies, including drawing continuations; handoff
-   tests do not retire those bodies. Continue with remaining firing/motion
-   definitions, protection/suspension, real producers/callers and runtime transfers.
+   tests do not retire those bodies. Continue with native flight and remaining
+   producer definitions, protection/suspension, real callers and runtime transfers.
    Count every adapter/fallback and close the remaining numeric interfaces before
    judging the complete structural replacement; this stage claims no net saving.
    The frozen library
