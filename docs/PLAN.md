@@ -123,15 +123,21 @@ new packages alone establishes neither ownership nor backend independence.
      the reset/load/rewind and external-writer checks from state migration.
      Independent caller/fixture investigation can run alongside implementation.
 
+   Handoff at user request: the shared flight controller and RAM/owned adapters
+   are drafted and formatted, but uncompiled, untested and uncommitted. The
+   current worktree counts 101,651 Rust lines (+114); complete replacement cost
+   is not yet measured. Preserve these edits and the independent flight-parent
+   reference. [HANDOFF.md](HANDOFF.md) records the files and remaining checks.
+
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
    `runtime-impact-working/` is the continuation; `runtime-impact-stage/`
    preserves checked source/results and the prospective composition. Earlier
    room checks remain in `runtime-room-stage/`. Read the relevant commands,
-   filenames and capture limitations in [HANDOFF.md](HANDOFF.md). Its older
-   interruption section is historical; do not restart or overwrite landed
-   changes. The inherited comparison carrier is edition 2021; current
-   production is edition 2024. Check final-source correspondence explicitly.
+   filenames and capture limitations in [HANDOFF.md](HANDOFF.md). Do not restart
+   or overwrite landed changes. The inherited comparison carrier is edition
+   2021; current production is edition 2024. Check final-source correspondence
+   explicitly.
 
    If stuck for more than an hour on one item, record the findings here and stop.
 
