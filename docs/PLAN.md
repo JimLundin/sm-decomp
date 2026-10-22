@@ -60,10 +60,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,419 Rust lines in 128 files**, plus 262 C
-bridge and 296 C-header lines = **96,977 maintained implementation lines**.
+Current composition (2026-10-22): **96,435 Rust lines in 128 files**, plus 262 C
+bridge and 296 C-header lines = **96,993 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,808**. This complete recount includes frontend,
+gives **97,824**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2639,8 +2639,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    `MessageHandoff` models plus a separate checked RAM adapter. Both modules
    forbid unsafe code. Awards commit before effects; message and selector reads
    retain their original timing, and resuming display never repeats the award.
-   All nine numeric instruction routes remain. Raw script traversal and unsafe
-   visual/music/display calls remain explicit legacy boundaries. Final-source
+   All nine numeric instruction routes remain. At that stage, raw script traversal
+   and unsafe visual/music/display calls remained legacy boundaries. Final-source
    checks pass **144 linked production pickups, 1,814 controlled instruction
    comparisons and 1,008 actual executor-body steps**, including 7,794 ordered
    observations and 17 timing counterexamples. Controlled callbacks and synthetic
@@ -2651,6 +2651,40 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    macros. This is required safety/ownership work, not a volume reduction.
    Contracts and limits: RAM_OWNERSHIP.md, section 6. Local reproduction:
    Local/sm-decomp-experiments/20261022/plm-pickups.
+   The complete PLM instruction cursor interface now uses retained `RomImage`
+   ownership and the existing checked `EnemyScript` value as `PlmScript`.
+   All 110 numeric command routes, the interpreter, item collection and the
+   room-graphics caller use explicit linear positions, jumps and stops. This
+   shares cursor storage/read mechanics, not enemy/PLM scheduling policies.
+   Raw instruction pointers and numeric pointers retire. The interpreter also
+   replaces its raw RAM reads/writes with checked access, preserving native
+   header/preinstruction/continuation fields and ordinary little-endian words.
+   Numeric jumps retain the interpreter's captured allocation; message completion
+   reacquires current ROM and the live selected slot. Stop still precedes the
+   queued-message check. Calls preserve the four-byte native Load24 read before
+   masking, and item message operands remain sampled after visual/music effects.
+   All **1,015 old/new comparisons**, 2,354 ordered full-RAM/selected-ROM
+   observations and 166 matching controlled failures pass. Forty candidate-only
+   short-record checks fail safely; the old out-of-bounds pointer paths are not
+   executed. Checks cover all routes, cursor alignment/bank crossing, counter
+   and condition branches, callback mutation/failure, real preinstructions,
+   real block drawing/coordinate consumers, repeated message yields/resumption
+   and room-graphics loading/diagnostics. All 135 compiled inputs per side,
+   retained-source/caller checks, formatting, normal release library/frontend/
+   verifier builds and final source/native checks pass. No movie ran; message
+   display, sound, spawning and player effects are controlled boundaries. These
+   are component results, not gameplay-route, device or independent-engine proof.
+   Complete maintained implementation cost is **+16 Rust lines**, including
+   the shared reader and all callers. The shared cursor module forbids unsafe
+   code; RAM-owned slots, raw drawing streams and unsafe gameplay/effect calls
+   remain. This is a transitional bridge under target-architecture/MIGRATION.md.
+   Retire it when validated named sequences and the full room-mechanism owner
+   replace instruction consumers, slot writers, nested continuations and runtime
+   imports together; the finished Session interface must expose no ROM/RAM
+   addresses. Continue the complete player-projectile/session composition under
+   the accepted target architecture, rather than treating checked storage as
+   persistent domain ownership. Local reproduction and external verification
+   fixtures: Local/sm-decomp-experiments/20261022/plm-script.
    Standard enemy combat now belongs to `enemy_combat`: contact, projectiles,
    Power Bombs, grapple latching/results, freeze selection, death cleanup and
    hit/dud effects. All callers
@@ -4539,14 +4573,19 @@ spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
 owned enemy-script positions, checked enemy-definition records, standard combat and shared enemy/projectile contact,
-maintained Rust is **96,419**,
+maintained Rust is **96,435**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,977**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,808**.
+Including 262 C and 296 header lines gives **96,993**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,824**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2955; cast lines 6209. Shared pickup appearance adds two Rust
+unsafe functions 2953; cast lines 6206. Checked PLM instruction cursors add 16
+Rust lines and remove two counted unsafe declarations and three cast-containing
+lines. Raw instruction pointers and interpreter RAM operations retire; all
+replacement code is counted. Slot ownership and drawing/effect calls remain
+legacy dependencies. This is a safety cost, not a volume saving; other counters
+are unchanged. Shared pickup appearance adds two Rust
 lines and two counted unsafe declarations, while removing five cast-containing
 lines. The named initialization/conversion entries replace macro-generated bank
 functions; raw RAM operations retire. Shared setup/dismissal forbid unsafe code.

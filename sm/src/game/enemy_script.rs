@@ -45,6 +45,10 @@ impl EnemyScript {
         // Original script words use native byte order, including unaligned data.
         u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
     }
+    pub fn load24(&self, offset: isize) -> u32 {
+        // Load24 reads the adjacent fourth byte before masking the native word.
+        u32::from_ne_bytes(core::array::from_fn(|i| self.byte(offset + i as isize))) & 0xffffff
+    }
     pub fn advance(&self, bytes: isize) -> Self {
         let (image, position) = self.cursor();
         Self::at(
