@@ -182,6 +182,101 @@ must name which identity is retained and which is reloaded. The actual block
 collision routines perform movement, reactions and possible projectile death;
 they are not read-only geometry queries.[^shotcollision]
 
+**Enemy-hit protocol (source audit on `04859525`, not new execution coverage):**
+the ordinary and multibox enemy collision searches select the first eligible hit.
+They request shaking for a super missile, then mark the projectile's direction
+with `0x10` unless plasma penetration is allowed, publish the collision selector,
+and call the selected shot reaction. They return after that reaction; the enemy
+executor continues. The mark is visible to the reaction. It is not slot deletion.
+[^enemyshotsearch]
+
+Successful Reflec and reflecting Space Pirate reactions replace the direction
+word before calling `ProjectileReflection`, thereby removing that mark. Reflec
+also clears projectile type bit `0x8000`; the pirate retains it. Samus/projectile
+contact rejects that bit, while the enemy shot searches do not. Thus reflection
+can enable contact with Samus without moving the projectile to the hostile-shot
+pool or disabling enemy contact. Represent target eligibility separately from
+the state owner; an exclusive player/enemy faction swap would invent a rule.
+Other contact gates still apply, and the selected Samus-damage branch contains a
+native assertion. This source trace establishes eligibility, not a successfully
+played reflected-hit route.[^reflection][^contact]
+
+The caller-specific exceptional paths matter too. A reflecting pirate can return
+before changing direction for an unactivated super missile. Reflec's `0x8000`
+table result instead retains the mark and performs its unusual damage path:
+the table lookup byte offset is also used as an enemy byte offset, while the damage
+callee uses the live enemy selector. Do not substitute the initially contacted
+enemy for that retained offset. This is a source-observed quirk, not proof of
+natural reachability or a reason to normalize it.[^reflection]
+
+The ownership interface therefore needs two ordered operations: prepare the
+contact, then execute/apply its reaction before the next observer. A single
+`Hit -> Delete` outcome loses the reflected continuation. The existing 120
+reflection steps below exercise `ProjectileReflection` with controlled callees;
+they do not execute either reflector's full shot reaction or these collision
+searches. Those integrations remain a distinct experiment.
+
+**Retirement is also several transitions.** For beams and missiles,
+`KillProjectile` starts an impact animation and installs the inactive flight
+handler; the impact retains a nonzero damage word and an allocated slot.
+Higher projectile classes can instead clear immediately. The animation's delete
+instruction later calls `ClearProjectile`. The following differences must survive
+an owned lifecycle; no single `active` flag or record default captures them.
+[^shotretirement][^shotimpact]
+
+| Operation | State effect that callers can distinguish |
+| --- | --- |
+| Mark enemy contact | Sets a direction flag; a reaction can replace it before flight sees it |
+| Begin beam/missile impact | Changes type to impact, sets damage to 8 and animation timer to 1; keeps the slot and count |
+| Clear one projectile | Clears fractions and most slot fields, installs inactive flight, decrements the applicable count; retains trail timer and auxiliary word |
+| Reset projectile system | Clears trail timers but retains position fractions and auxiliary words; zeroes counts/cooldown/Power Bomb flag and performs selected HUD, speed-echo and palette work |
+
+Allocation/reservation has its own observed rules too: beam reservation increments
+the count before placement, searches damage words, and reuses the last beam slot
+when the search finds none. The count is not interchangeable with the number of
+nonempty records. These are named weapon rules to preserve behind the interface,
+not a mandate to expose counters or RAM fields to engine callers.[^beamlaunch]
+
+**Room-contact protocol (same source audit):** beam/missile collision commits
+position and subposition before its bounds rejection. Returning zero can still
+mean the shot moved. A normal nonwave beam samples its span and stops when all
+sampled cells block, subject to explicit counter overrides. A missile samples
+one center cell and uses its reaction result directly. The raw room-size
+precheck returns blocking without decrementing the beam's hit counter; it is
+another reason that these are different policies, not one generic hit test.
+[^roomshotscan]
+
+Each block reaction runs before the scan continues. Shootable/bombable air and
+solid blocks return their own collision classification regardless of whether
+`SpawnPLM` found a free mechanism slot. The special `B974` header changes scan
+counters before attempting allocation. Wave beams still perform these reactions
+and obey scan termination even though they do not enter impact here.
+[^roomshotreaction]
+
+`SpawnPLM` initializes the selected slot and calls setup synchronously. Setup
+can immediately wake another mechanism or alter live level geometry. Gate lookup
+searches block associations from the last slot down without requiring an active
+header, so an old association can win. Strange Door uses the same kind of lookup
+and samples projectile type through a signed global selector shift. These are
+source-confirmed setup contracts; this audit has not enumerated ROM tables to
+prove every setup reachable from every shot family.[^roomshotsetup]
+
+Extension blocks redirect the shared block cursor and retry without another
+room-size check. The outer scan then advances its original sample offset;
+horizontal scans reread room width for that advance. Slope reactions and gate
+setups also read the global projectile selector, which can differ from the
+collision function's explicit argument. No whole-scan geometry/shot snapshot is
+proven interchangeable with these reads.[^roomshotcursor]
+
+The proposed interface separates blocking, scan continuation and mechanism
+allocation results, and applies each selected mechanism response before the
+next sample. Its decisive comparisons should include air/solid versus solid/solid
+spans, rejected bounds after movement, full mechanism capacity with `B974`, stale
+gate associations, and a later sample observing an earlier setup's geometry
+change. These are proposed experiments, not results of the existing launch or
+controlled flight tests. Local reading notes:
+`Local/sm-decomp-experiments/20261022/projectile-room-contact/RESEARCH.md`.
+
 ### 5. Enemy-projectile scripts have a different capture protocol
 
 `EprojRunAll` descends from byte index 34. `EprojRunOne` calls the selected
@@ -581,6 +676,30 @@ are claimed from this prototype. Reproduction remains outside the repository at
 `Local/sm-decomp-experiments/20261022/projectile-authority` (`prepare.py`,
 `build.py`, `check.py`); it uses the frozen population library and synthetic fixture.
 
+### Whole-projectile draft: first firing slice
+
+The unadopted draft's complete beam charge/firing policy passes **202 comparisons**,
+including **761 ordered full-RAM callback observations** and **40 matching failures**.
+It runs the frozen production firing body against the typed policy, using the
+real `Game` layout with controlled placement, sound, initialization, collision,
+launch, special-attack and palette callees. Cases include charge thresholds,
+reservation/full pools, manual/automatic/filtered firing, selector redirection,
+nested firing, and writes preceding invalid table indices or callback failures.
+One comparison retains typed state through 20 input-only steps without reimport.
+
+The owner crosses each foreign operation by value. Returned inputs are sampled
+again; invalid-table handling publishes partial state and diverges. The coordinator
+independently checked all **115 embedded library inputs** against `15589b48`, all
+**five compiled draft hashes**, and preservation of the original firing body.
+It reviewed the reported run without repeating it. Local draft and result:
+`Local/sm-decomp-experiments/20261022/player-projectiles`.
+
+This is the first executable slice of the larger replacement, not a completed
+persistent projectile owner. The harness imports at entry and publishes on return;
+global writer closure, production runtime binding and the complete lifecycle are
+still open. All foreign gameplay calls are controlled. No movie ran, and no whole
+replacement price, savings, or downstream collision/animation coverage is claimed.
+
 ### Explicit gameplay continuation
 
 The implementation now lives in [gameplay.rs](../sm/src/game/gameplay.rs).
@@ -767,7 +886,7 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^prepare]: [Samus_FrameHandlerAlfa_Func11/12](../sm/src/game/sm_90.rs#L4009).
 [^hud]: [Samus_HandleHudSpecificBehaviorAndProjs](../sm/src/game/sm_90.rs#L3477).
 [^enemies]: [EnemyMain](../sm/src/game/sm_a0.rs#L879).
-[^contact]: [SamusProjectileInteractionHandler](../sm/src/game/sm_a0.rs#L1259).
+[^contact]: [SamusProjectileInteractionHandler](../sm/src/game/sm_a0.rs#L1043).
 [^complete]: [Samus_FrameHandlerBeta_Func17](../sm/src/game/sm_90.rs#L4058).
 [^effectcontact]: [EprojSamusCollDetect](../sm/src/game/sm_a0.rs#L1332).
 [^shotcollision]: [beam_block_collision and missile_block_collision](../sm/src/game/sm_94.rs#L1648).
@@ -793,9 +912,16 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^splitwords]: [words! ordering](../sm/src/rtl.rs#L2); [SetHiLo](../sm/src/rtl.rs#L787).
 [^samusinit]: [Samus_Initialize workspace clear and distance initialization](../sm/src/game/sm_91.rs#L1260).
 [^resetlaunch]: [Vector_RESET_Async bulk clears](../sm/src/game/sm_80.rs#L188).
-[^resetslots]: [ResetProjectileData](../sm/src/game/sm_90.rs#L1488).
+[^resetslots]: [ResetProjectileData](../sm/src/game/sm_90.rs#L1468).
 [^distance]: [MainScrollingRoutine](../sm/src/game/sm_90.rs#L611); [Samus_CalcDistanceMoved_Y](../sm/src/game/sm_90.rs#L755).
 [^beamlaunch]: [beam_firing launch and collision order](../sm/src/game/beam_firing.rs#L77).
 [^missilelaunch]: [HudSelectionHandler_MissilesOrSuperMissiles](../sm/src/game/sm_90.rs#L2507); [accelerate_missile](../sm/src/game/projectile_flight.rs#L180).
-[^reflection]: [ProjectileReflection](../sm/src/game/sm_90.rs#L2480); [Reflec_Shot](../sm/src/game/sm_a3.rs#L1925); [Space Pirate reflection](../sm/src/game/sm_b2.rs#L107).
+[^reflection]: [ProjectileReflection](../sm/src/game/sm_90.rs#L2460); [Reflec_Shot](../sm/src/game/sm_a3.rs#L1923); [Space Pirate reflection](../sm/src/game/sm_b2.rs#L97).
 [^launchmodel]: [LaunchMotion and typed inputs/output](../sm/src/game/launch_motion.rs); [transition serialization and initialization](../sm/src/game/launch_motion_ram.rs); migrated callers in [sm_90](../sm/src/game/sm_90.rs), symbols `record_movement` and `finish_projectile_phase`.
+[^enemyshotsearch]: [EprojCollHandler_Multibox](../sm/src/game/sm_a0.rs#L1486); [EprojCollHandler](../sm/src/game/sm_a0.rs#L1714); [EnemyCollisionHandler](../sm/src/game/sm_a0.rs#L1032).
+[^shotretirement]: [ResetProjectileData](../sm/src/game/sm_90.rs#L1468); [ClearProjectile](../sm/src/game/sm_90.rs#L1504); [KillProjectile](../sm/src/game/sm_90.rs#L1566).
+[^shotimpact]: [start_impact](../sm/src/game/projectile_animation.rs#L102); [instruction_delete and advance](../sm/src/game/projectile_animation.rs#L185).
+[^roomshotscan]: [react_to_shot_block, beam_block_collision and missile_block_collision](../sm/src/game/sm_94.rs#L1538).
+[^roomshotreaction]: [Shootable/bombable reactions and scan overrides](../sm/src/game/sm_94.rs#L1359); [PlmSetup_B974](../sm/src/game/sm_84.rs#L941).
+[^roomshotsetup]: [SpawnPLM and SpawnPLMWithCollision](../sm/src/game/sm_84.rs#L249); [find_plm_at_block](../sm/src/game/sm_84.rs#L766); [sub_84C64C](../sm/src/game/sm_84.rs#L956); [Strange Door and respawning shot block](../sm/src/game/sm_84.rs#L1882).
+[^roomshotcursor]: [Extension reactions](../sm/src/game/sm_94.rs#L800); [ShotAxis::advance and slope reactions](../sm/src/game/sm_94.rs#L1570); [Game::react_to_block](../sm/src/game_state.rs); [gate triggers](../sm/src/game/sm_84.rs#L1370).

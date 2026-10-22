@@ -1581,6 +1581,14 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    RAM_OWNERSHIP.md. No production state promotion, movie coverage or savings are
    claimed. Generic native indexed aliases still require a complete access-path
    migration or explicit legacy execution interval; two mutable copies are invalid.
+   The contact audit now distinguishes provisional retirement, reflection, impact
+   animation and slot release, plus synchronous room-mechanism reactions during
+   collision scans. The design records the resulting owner interactions; these
+   source findings add no collision-route coverage. The full projectile draft's
+   first beam charge/firing slice passes 202 comparisons with controlled callees,
+   including 761 ordered RAM observations and 40 matching failures. It remains
+   unadopted, with lifecycle/runtime integration and complete price still open.
+   Details and limits are in RAM_OWNERSHIP.md; no new savings are claimed.
    User-requested [RAM ownership research](RAM_OWNERSHIP.md) now traces ten
    producer/consumer contracts and separates live values, captured selectors,
    cross-update handoffs and nested continuations. The first implementation moves

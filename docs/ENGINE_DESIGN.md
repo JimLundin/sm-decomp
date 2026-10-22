@@ -190,6 +190,56 @@ unrelated bytes too. Then expand to the complete projectile responsibility, pric
 all retained compatibility, callers and registrations. Small commits can advance
 this design, but a collection of temporary value models does not complete it.
 
+## Projectile interactions define the interface
+
+The [contact and retirement audit](RAM_OWNERSHIP.md#4-projectile-execution-has-several-different-selector-lifetimes)
+refines the proposed owner beyond a bag of projectile fields. The following is a
+partial ordinary beam/missile lifecycle, not a complete replacement enum:
+
+```mermaid
+stateDiagram-v2
+    Flying --> ContactMarked: Nonpenetrating enemy contact
+    ContactMarked --> Flying: Reflected beam launches immediately
+    ContactMarked --> AwaitingLaunch: Reflected missile is reinitialized
+    AwaitingLaunch --> Flying: Next missile update samples launch motion
+    ContactMarked --> Released: Later flight update retires it
+    Flying --> Impact: Stopping block reaction
+    Impact --> Released: Animation delete instruction
+```
+
+Contact preparation and reaction are separate observation points. The enemy
+reaction sees the retirement mark and can replace it with a reflected direction.
+An impact animation still occupies a projectile slot. A release and a system reset
+retain different old fields and have different count, HUD and palette effects.
+Do not implement all of these operations as `shot = None` or a default record.
+Compatibility residue can stay in the adapter where it has no gameplay meaning;
+facts used by later gameplay remain part of the owner's explicit rules.
+
+Reflection also changes target eligibility independently of ownership. Reflec
+enables the existing projectile to interact with Samus; reflecting pirates retain
+the previous eligibility flag. Neither moves the shot to the hostile-projectile
+pool. Enemy contact remains separately eligible. The model needs explicit contact
+policy, rather than treating every reflection as a change to an exclusive faction.
+The source's asserted Samus-damage path remains a validation limitation.
+
+The proposed interface has these responsibilities:
+
+| Operation | Owner interaction and completion point |
+| --- | --- |
+| Prepare enemy contact | Record the selected projectile and provisional retirement mark before the encounter reaction |
+| React to contact | Encounter decides its response; apply redirection, target eligibility and launch/reinitialization at the original call point |
+| Advance through room geometry | Preserve movement and each synchronous block/mechanism reaction before testing subsequent cells or axes |
+| Begin impact | Projectile retains allocation and owns gameplay animation; apply sound, shake and cooldown effects in their existing order |
+| Retire / reset | Distinct projectile transitions, with explicit selected effects on Samus/HUD/presentation |
+
+These names describe the target protocol, not new public functions already in
+production. The implementation may use internal continuations while a foreign
+reaction is outstanding. It must retain captured identity and resume with the
+returned live state. A final outcome list cannot defer effects that the next
+reaction or collision sample currently observes. The source audit adds no new
+movie or collision-handler execution coverage; tests of the launch calculation
+alone do not validate these caller interactions.
+
 ## First authority-transfer result
 
 The [follow-up experiment](RAM_OWNERSHIP.md#persistent-authority-transfer-before-the-full-projectile-replacement)
@@ -208,6 +258,13 @@ untracked RAM writer. Its interface should make the inactive owner unavailable
 through foreign execution, preserve nesting and failures, and encode those rules
 in the actual callers. The whole-projectile implementation and full cost remain
 open; no savings or gameplay-route coverage follow from this prototype.
+
+The [first firing slice of the full draft](RAM_OWNERSHIP.md#whole-projectile-draft-first-firing-slice)
+then passes 202 comparisons, with controlled foreign calls. Its owner crosses
+those calls by value, rereads returned inputs, and publishes partial state before
+diverging on an invalid table lookup. This validates the selected firing policy
+and transfer interface; flight, contact, animation, retirement and production
+runtime integration remain outstanding. No whole-replacement cost is established.
 
 ## Shared behavior and coordination
 
