@@ -395,6 +395,8 @@ pub mod game {
     pub mod sprite_objects;
     pub mod scene_drawing;
     pub mod enemy_scheduling;
+    pub mod enemy_script;
+    pub mod enemy_animation;
     pub mod waver;
 }
 

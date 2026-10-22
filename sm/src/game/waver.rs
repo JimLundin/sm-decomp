@@ -1,6 +1,7 @@
 //! Waver: horizontal 16.16 motion with a sine-wave vertical phase.
 //! RAM views are scoped between legacy movement calls. Animation words are
 //! read from the loaded ROM; no ROM-derived data is stored in this module.
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_a0::{Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, SineMult8bit};
 use crate::game_state::Game;
@@ -112,7 +113,7 @@ impl<'a> WaverRam<'a> {
     }
 }
 
-pub fn Waver_Instr_1(_k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
+pub fn Waver_Instr_1(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
     let index = game.cur_enemy_index();
     WaverRam::new(game, index).set_animation_finished(1);
     jp

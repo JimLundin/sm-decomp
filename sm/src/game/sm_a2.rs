@@ -1,3 +1,4 @@
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::enemy_population_ram::delete_connected;
 pub use crate::game::prelude::*;
@@ -317,7 +318,7 @@ fn set_goofball_animation(index: u16, instruction: u16, game: &mut Game) {
     game.enemy_instructions(index).set_instruction_timer(1);
     game.enemy_instructions(index).set_timer(0);
 }
-pub fn BouncingGoofball_Instr_88C5(_k: u16, jp: *const u16) -> *const u16 {
+pub fn BouncingGoofball_Instr_88C5(_k: u16, jp: EnemyScript) -> EnemyScript {
     jp
 }
 fn set_mini_crocomire_preinstruction(index: u16, preinstruction: u16, state: u16, game: &mut Game) {
@@ -2653,21 +2654,21 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); core::ptr::null::<u16>() };
-    @functions [pub unsafe fn (_k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
+    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10651846] BouncingGoofball_Instr_88C6 [jp] {
         let index = game.cur_enemy_index();
         let offset = 0xf78 + usize::from(index) + core::mem::offset_of!(Enemy_BouncingGoofball, var_02);
         game.g_ram[offset..offset + 2].copy_from_slice(&0u16.to_le_bytes());
         QueueSfx2_Max6(0xe, game);
     };
-    [10652030] MiniCrocomire_Instr_897E [jp.add(1)] {
-        let parameter = *jp;
+    [10652030] MiniCrocomire_Instr_897E [jp.offset(1)] {
+        let parameter = jp.word(0);
         let index = game.cur_enemy_index();
         SpawnEprojWithGfx(parameter, index, addr_Eproj_DBF2 as u16, game);
     };
-    @functions [pub fn (_k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let index = game.cur_enemy_index(); };
     [10652048]
     MiniCrocomire_Instr_8990 [jp] {  set_mini_crocomire_preinstruction(index, 0x8a43, 0, game); };
@@ -2675,9 +2676,9 @@ crate::game::callback_dispatch! {
     MiniCrocomire_Instr_899D [jp] {  set_mini_crocomire_preinstruction(index, 0x8a5c, 1, game); };
     @functions [pub unsafe fn (
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     game: &mut Game,
-) -> *const u16];
+) -> EnemyScript];
     [10654593] MaridiaBeybladeTurtle_Instr_9381 [jp] {
         let mut R48: u16 = 0;
         if CheckIfEnemyTouchesSamus(word!(game.cur_enemy_index), game) != 0 {
@@ -2719,7 +2720,7 @@ crate::game::callback_dispatch! {
         }
     };
     [10654738]
-    MaridiaBeybladeTurtle_Instr_9412 [addr_kMaridiaBeybladeTurtle_Ilist_8C72 as i32 as usize as *const u16] {
+    MaridiaBeybladeTurtle_Instr_9412 [EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8C72 as u16)] {
         let mut v4: i16 = 0;
         let E = Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game);
         let xd: u16 = ((*E).var_C).wrapping_sub((*E).base.x_pos);
@@ -2734,7 +2735,7 @@ crate::game::callback_dispatch! {
         if ((*Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game)).var_E & 0x8000)
             != 0
         {
-            return addr_kMaridiaBeybladeTurtle_Ilist_8B80 as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8B80 as u16);
         }
     };
     [10654791] MaridiaBeybladeTurtle_Instr_9447 [jp] {
@@ -2742,14 +2743,14 @@ crate::game::callback_dispatch! {
             ((0xa28f3fi32) as u16);
     };
     [10654801]
-    MaridiaBeybladeTurtle_Instr_9451 [addr_kMaridiaBeybladeTurtle_Ilist_8C02 as i32 as usize as *const u16] {
+    MaridiaBeybladeTurtle_Instr_9451 [EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8C02 as u16)] {
         let E = Get_MaridiaTurtle(word!(game.cur_enemy_index) as i32, game);
         (*E).var_A = ((0xa28f8di32) as u16);
         (*E).var_E = -1i32 as u16;
         (*E).var_00 = 16;
     };
     [10654827]
-    MaridiaBeybladeTurtle_Instr_946B [addr_kMaridiaBeybladeTurtle_Ilist_8C02 as i32 as usize as *const u16] {
+    MaridiaBeybladeTurtle_Instr_946B [EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8C02 as u16)] {
         let E = Get_MaridiaTurtle(word!(game.cur_enemy_index) as i32, game);
         (*E).var_A = ((0xa28f8di32) as u16);
         (*E).var_E = 1;
@@ -2761,14 +2762,14 @@ crate::game::callback_dispatch! {
                 & 0x8000)
                 == 0
             {
-                return addr_kMaridiaBeybladeTurtle_Ilist_8D40 as i32 as usize as *const u16;
+                return EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8D40 as u16);
             } else {
-                return addr_kMaridiaBeybladeTurtle_Ilist_8C62 as i32 as usize as *const u16;
+                return EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8C62 as u16);
             }
         }
     };
     [10654881]
-    MaridiaBeybladeTurtle_Instr_94A1 [addr_kMaridiaBeybladeTurtle_Ilist_8B80 as i32 as usize as *const u16] {
+    MaridiaBeybladeTurtle_Instr_94A1 [EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8B80 as u16)] {
         let E = Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game);
         if CheckIfEnemyTouchesSamus(word!(game.cur_enemy_index), game) != 0 {
             (*E).var_A = ((0xa2925ei32) as u16);
@@ -2776,7 +2777,7 @@ crate::game::callback_dispatch! {
             (*E).var_A = ((0xa29142i32) as u16);
         }
         if ((*E).var_E & 0x8000) == 0 {
-            return addr_kMaridiaBeybladeTurtle_Ilist_8C72 as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8C72 as u16);
         }
     };
     [10654919] MaridiaBeybladeTurtle_Instr_94C7 [jp] {
@@ -2784,9 +2785,9 @@ crate::game::callback_dispatch! {
         (*E).var_A = ((0xa29239i32) as u16);
     };
     [10654929] MaridiaBeybladeTurtle_Instr_94D1 [jp] { QueueSfx2_Max6(0x3a, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10657578] SpikeShootingPlant_Instr_9F2A [jp] { QueueSfx2_Max6(0x34, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10657941] SpikeShootingPlant_Instr_A095 [jp] {
         let E = Get_SpikeShootingPlant(k as i32, game);
         (*E).var_F = ((0xa29fbai32) as u16);
@@ -2796,18 +2797,18 @@ crate::game::callback_dispatch! {
     };
     [10657959] SpikeShootingPlant_Instr_A0A7 [jp.offset(1)] {
         SpawnEprojWithGfx(
-            *jp,
+            jp.word(0),
             word!(game.cur_enemy_index),
             addr_kEproj_SpikeShootingPlantSpikes as u16,
             game,
         );
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10659181]
     MaridiaSpikeyShell_Instr_A56D [jp] { (*Get_MaridiaSpikeyShell(k as i32, game)).var_E = 0; };
     [10659185]
     MaridiaSpikeyShell_Instr_A571 [jp] { (*Get_MaridiaSpikeyShell(k as i32, game)).var_E = 1; };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10664371] Rinka_Instr_B9B3 [jp] {
         let E = Get_Rinka(k as i32, game);
         (*E).base.properties = ((*E).base.properties as i32
@@ -2835,14 +2836,14 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     game: &mut Game,
-) -> *const u16];
+) -> EnemyScript];
     [10665614] NorfairLavajumpingEnemy_Instr_BE8E [] {
         (*Get_NorfairLavajumpingEnemy(word!(game.cur_enemy_index) as i32, game)).var_00 = 1;
         jp
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10666441] NorfairRio_Instr_C1C9 [jp] {
         (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_01 = 1;
     };
@@ -2876,7 +2877,7 @@ crate::game::callback_dispatch! {
     [10666551] NorfairRio_Instr_C237 [jp] {
         (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = 12;
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10667730] LowerNorfairRio_Instr_C6D2 [jp] {
         (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_01 = 1;
     };
@@ -2886,7 +2887,7 @@ crate::game::callback_dispatch! {
     [10667752] LowerNorfairRio_Instr_C6E8 [jp] {
         (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = 1;
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10668907] MaridiaLargeSnail_Instr_CB6B [jp] { QueueSfx2_Max6(0xe, game); };
     [10669235] MaridiaLargeSnail_Instr_CCB3 [jp] {
         (*Get_MaridiaLargeSnail(word!(game.cur_enemy_index) as i32, game)).var_02 = 1;
@@ -2897,7 +2898,7 @@ crate::game::callback_dispatch! {
     [10669257] MaridiaLargeSnail_Instr_CCC9 [jp] {
         (*Get_MaridiaLargeSnail(word!(game.cur_enemy_index) as i32, game)).var_03 = 0;
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10675707] LavaSeahorse_Instr_E5FB [] {
         (*Get_LavaSeahorse(word!(game.cur_enemy_index) as i32, game)).var_02 = 1;
         jp

@@ -656,7 +656,7 @@ crate::type_aliases! {
     pub CoroutineRet, Uint8 = u8;
 }
 
-pub type CrocomireFunc = unsafe fn(u16, *const u16, &mut Game) -> *const u16;
+pub type CrocomireFunc = unsafe fn(u16, crate::game::enemy_script::EnemyScript, &mut Game) -> crate::game::enemy_script::EnemyScript;
 
 crate::type_aliases! {
     pub FuncXY_V, Func_CalcHdma, Func_SpazerSba_V = unsafe fn(u16, u16, &mut Game) -> ();

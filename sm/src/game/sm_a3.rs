@@ -1,3 +1,4 @@
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 pub use crate::game::prelude::*;
 
@@ -2446,9 +2447,9 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); core::ptr::null::<u16>() };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10717526] Metalee_Instr_1 [] {
         (*Get_Metalee(word!(game.cur_enemy_index) as i32, game)).var_E = 1;
         jp
@@ -2458,10 +2459,10 @@ crate::game::callback_dispatch! {
         jp
     };
     [10741344] Zoomer_Instr_SetPreinstr [] {
-        (*gEnemyData(k as i32, game)).ai_preinstr = *jp;
+        (*gEnemyData(k as i32, game)).ai_preinstr = jp.word(0);
         jp.offset(1)
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10719382] MaridiaFish_Instr_3 [jp] {
         (*Get_MaridiaFish(word!(game.cur_enemy_index) as i32, game))
             .base
@@ -2477,9 +2478,9 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     game: &mut Game,
-) -> *const u16];
+) -> EnemyScript];
     [10722411] PlatformThatFallsWithSamus_Instr_3 [jp] {
         (*Get_PlatformThatFallsWithSamus(word!(game.cur_enemy_index) as i32, game)).var_02 = 0;
     };
@@ -2492,12 +2493,12 @@ crate::game::callback_dispatch! {
     [10722444] PlatformThatFallsWithSamus_Instr_2 [jp] {
         (*Get_PlatformThatFallsWithSamus(word!(game.cur_enemy_index) as i32, game)).var_02 = 1;
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
-    [10725992] Sidehopper_Func_1 [jp.offset(1)] { QueueSfx2_Max3(*jp, game); };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    [10725992] Sidehopper_Func_1 [jp.offset(1)] { QueueSfx2_Max3(jp.word(0), game); };
     [10726142] Sidehopper_Instr_1 [jp] {
         (*Get_Sidehopper(word!(game.cur_enemy_index) as i32, game)).var_04 = 1;
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10728489] MaridiaRefillCandy_Instr_1 [jp] {
         (*Get_MaridiaRefillCandy(word!(game.cur_enemy_index) as i32, game)).var_00 = 4;
     };
@@ -2507,18 +2508,18 @@ crate::game::callback_dispatch! {
     [10728511] MaridiaRefillCandy_Instr_3 [jp] {
         (*Get_MaridiaRefillCandy(word!(game.cur_enemy_index) as i32, game)).var_00 = 12;
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10730104] Bang_Instr_1 [jp] { QueueSfx2_Max6(0x56, game); };
     [10730152]
     Bang_Instr_2 [jp] { (*Get_Bang(word!(game.cur_enemy_index) as i32, game)).var_22 = 1; };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10734646]
-    MaridiaSnail_Instr_1 [jp.offset(1)] { (*Get_MaridiaSnail(k as i32, game)).var_F = *jp; };
+    MaridiaSnail_Instr_1 [jp.offset(1)] { (*Get_MaridiaSnail(k as i32, game)).var_F = jp.word(0); };
     [10734655]
-    MaridiaSnail_Instr_2 [jp.offset(1)] { (*Get_MaridiaSnail(k as i32, game)).var_D = *jp; };
+    MaridiaSnail_Instr_2 [jp.offset(1)] { (*Get_MaridiaSnail(k as i32, game)).var_D = jp.word(0); };
     [10734664] MaridiaSnail_Instr_4 [jp.offset(1)] {
         let E = Get_MaridiaSnail(k as i32, game);
-        (*E).var_07 = *jp;
+        (*E).var_07 = jp.word(0);
         (*E).var_C = *((&raw mut (*(rom_ptr!(game, MaridiaSnailData2; 0xa3cd42))
             )
         .field_6 as *mut u8)
@@ -2526,28 +2527,28 @@ crate::game::callback_dispatch! {
     };
     [10734687] MaridiaSnail_Instr_3 [jp.offset(2)] {
         let E = Get_MaridiaSnail(k as i32, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp);
-        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(*jp.offset(1));
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(jp.word(0));
+        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(jp.word(2));
     };
-    @functions [pub unsafe fn (k: u16, mut jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, mut jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10734712] MaridiaSnail_Instr_5 [] {
         if (*Get_MaridiaSnail(k as i32, game)).var_08 == 2 || (NextRandom(game) & 1) != 0 {
             jp = jp.offset(-(3i32 as isize));
         }
         jp
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
-    [10738632] Reflec_Instr_1 [jp.offset(1)] { (*Get_Reflec(k as i32, game)).parameter_2 = *jp; };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    [10738632] Reflec_Instr_1 [jp.offset(1)] { (*Get_Reflec(k as i32, game)).parameter_2 = jp.word(0); };
     @functions [pub unsafe fn (
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     game: &mut Game,
-) -> *const u16];
+) -> EnemyScript];
     [10739650] WreckedShipOrangeZoomer_Func_1 [] {
-        (*Get_WreckedShipOrangeZoomer(k as i32, game)).var_F = *jp;
+        (*Get_WreckedShipOrangeZoomer(k as i32, game)).var_F = jp.word(0);
         jp.offset(1)
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10742437] Metroid_Instr_2 [jp] { QueueSfx2_Max6(0x50, game); };
     [10742449] Metroid_Instr_1 [jp] {
         let v2: i32 = NextRandom(game) as i32 & 7;

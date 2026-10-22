@@ -1,3 +1,4 @@
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
 pub use crate::game::prelude::*;
@@ -21,10 +22,6 @@ pub type Enemy_Crocomire = crate::game::enemy_layouts::EnemyLayout72;
 pub use crate::types::CrocomireFunc;
 const RomPtr_A4: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa4>;
 use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
-#[inline]
-unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
-    RomPtr((((bank as i32) << 16i32) + 0x8000i32) as u32, game).offset(-(0x8000i32 as isize))
-}
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
@@ -46,33 +43,33 @@ static off_A486B3: [CrocomireFunc; 21] = callback_table! { nonnull CrocomireFunc
     Crocomire_Func_18, Crocomire_Func_21, Crocomire_Func_22, Crocomire_Func_23,
     Crocomire_Func_24, Crocomire_Func_25, Crocomire_Func_26,
 };
-pub unsafe fn Crocomire_Func_5(k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
+pub unsafe fn Crocomire_Func_5(k: u16, mut jp: EnemyScript, game: &mut Game) -> EnemyScript {
     let E = Get_Crocomire(0, game);
     if ((*E).var_B & 0x800) != 0 && {
         (*E).var_B = ((*E).var_B & !(0x800));
         (*E).var_D != 0
     } {
-        jp = addr_kCrocomire_Ilist_BC30 as i32 as usize as *const u16;
+        jp = EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16);
         (*E).var_C = 12;
     } else if (((*E).base.x_pos) as i16).wrapping_sub((g_word_A486A2) as i16) < 0 {
-        jp = addr_kCrocomire_Ilist_BE7E as i32 as usize as *const u16;
+        jp = EnemyScript::jump(addr_kCrocomire_Ilist_BE7E as u16);
         (*E).var_C = 10;
-    } else if (((jp as *mut u8).offset_from(RomBankBase((*gEnemyData(0i32, game)).bank, game))
+    } else if ((jp.offset_from(bank_base((*gEnemyData(0i32, game)).bank))
         as c_long
         - addr_kCrocomire_Ilist_BC34 as i32 as c_long) as i16)
         >= 0
     {
-        return addr_kCrocomire_Ilist_BBCE as i32 as usize as *const u16;
+        return EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16);
     }
     jp
 }
-crate::instruction_callbacks! { pub unsafe fn (k: u16, mut jp: *const u16, game: &mut Game) -> *const u16;
+crate::instruction_callbacks! { pub unsafe fn (k: u16, mut jp: EnemyScript, game: &mut Game) -> EnemyScript;
     Crocomire_Func_7 [jp] {
         let E = Get_Crocomire(0, game);
         let crocom_var_B: u16 = (*E).var_B;
         if (crocom_var_B & 0x800) != 0 {
             (*E).var_B = (crocom_var_B) & (0xf7ffu16);
-            jp = addr_kCrocomire_Ilist_BC30 as i32 as usize as *const u16;
+            jp = EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16);
             (*E).var_C = 12;
         } else {
             let crocom_var_F: u16 = (*E).var_F;
@@ -86,7 +83,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, mut jp: *const u16, game:
                 );
                 QueueSfx3_Max6(0x1c, game);
             } else {
-                jp = addr_kCrocomire_Ilist_BBCA as i32 as usize as *const u16;
+                jp = EnemyScript::jump(addr_kCrocomire_Ilist_BBCA as u16);
                 (*E).var_C = 6;
             }
         }
@@ -96,12 +93,12 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, mut jp: *const u16, game:
         let crocom_var_B: u16 = (*E).var_B;
         if (crocom_var_B & 0x800) != 0 {
             (*E).var_B = (crocom_var_B) & (0xf7ffu16);
-            jp = addr_kCrocomire_Ilist_BC30 as i32 as usize as *const u16;
+            jp = EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16);
             (*E).var_C = 12;
         }
     };
 }
-crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16;
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript;
     Crocomire_Func_9 [] {
         let E = Get_Crocomire(0, game);
         let crocom_var_D: u16 = (*E).var_D;
@@ -111,23 +108,23 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
             (*E).var_D != 0
         } {
             (*E).var_C = 12;
-            addr_kCrocomire_Ilist_BC34 as i32 as usize as *const u16
+            EnemyScript::jump(addr_kCrocomire_Ilist_BC34 as u16)
         } else {
             (*E).var_C = 6;
-            addr_kCrocomire_Ilist_BBCE as i32 as usize as *const u16
+            EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16)
         }
     };
     Crocomire_Func_10 [jp] {
         let E = Get_Crocomire(0, game);
         if (((*E).base.x_pos) as i16).wrapping_sub((g_word_A486A2) as i16) >= 0 {
             (*E).var_C = 6;
-            return addr_kCrocomire_Ilist_BBCE as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16);
         }
     };
-    Crocomire_Func_11 [addr_kCrocomire_Ilist_BD2A as i32 as usize as *const u16] {
+    Crocomire_Func_11 [EnemyScript::jump(addr_kCrocomire_Ilist_BD2A as u16)] {
         (*Get_Crocomire(0, game)).var_C = 6;
     };
-    Crocomire_Func_12 [addr_kCrocomire_Ilist_BCD8 as i32 as usize as *const u16] {
+    Crocomire_Func_12 [EnemyScript::jump(addr_kCrocomire_Ilist_BCD8 as u16)] {
         let E = Get_Crocomire(0, game);
         (*E).var_B = ((*E).var_B & !(0x400));
     };
@@ -136,13 +133,13 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         if ((*E).var_B & 0x800) != 0 {
             (*E).var_B = ((*E).var_B & !(0x800));
             (*E).var_C = 20;
-            return addr_kCrocomire_Ilist_BC30 as i32 as usize as *const u16;
-        } else if (((jp as *mut u8).offset_from(RomBankBase((*gEnemyData(0, game)).bank, game))
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16);
+        } else if ((jp.offset_from(bank_base((*gEnemyData(0, game)).bank))
             as c_long
             - addr_kCrocomire_Ilist_BDA2 as i32 as c_long) as i16)
             >= 0
         {
-            return addr_kCrocomire_Ilist_BD2A as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BD2A as u16);
         }
     };
     Crocomire_Func_14 [jp] {
@@ -150,13 +147,13 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         if ((*E).var_B & 0x800) != 0 {
             (*E).var_B = ((*E).var_B & !(0x800));
             (*E).var_C = 12;
-            return addr_kCrocomire_Ilist_BC30 as i32 as usize as *const u16;
-        } else if (((jp as *mut u8).offset_from(RomBankBase((*gEnemyData(0, game)).bank, game))
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16);
+        } else if ((jp.offset_from(bank_base((*gEnemyData(0, game)).bank))
             as c_long
             - addr_kCrocomire_Ilist_BDA2 as i32 as c_long) as i16)
             >= 0
         {
-            return addr_kCrocomire_Ilist_BD2A as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BD2A as u16);
         }
     };
     Crocomire_Func_15 [jp] {
@@ -164,13 +161,13 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         if ((*E).var_B & 0x800) != 0 {
             (*E).var_B = ((*E).var_B & !(0x800));
             (*E).var_C = 12;
-            return addr_kCrocomire_Ilist_BC30 as i32 as usize as *const u16;
-        } else if (((jp as *mut u8).offset_from(RomBankBase((*gEnemyData(0, game)).bank, game))
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16);
+        } else if ((jp.offset_from(bank_base((*gEnemyData(0, game)).bank))
             as c_long
             - addr_kCrocomire_Ilist_BDA2 as i32 as c_long) as i16)
             >= 0
         {
-            return addr_kCrocomire_Ilist_BD2A as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BD2A as u16);
         }
     };
     Crocomire_Func_16 [jp] {
@@ -180,7 +177,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         if v1 as i32 - 2i32 & 0x8000 != 0 {
             (*E).var_D = 0;
             (*E).var_C = 6;
-            return addr_kCrocomire_Ilist_BBCE as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16);
         }
     };
     Crocomire_Func_17 [jp] {
@@ -194,7 +191,7 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
             QueueSfx2_Max6(0x54, game);
         } else {
             (*Get_Crocomire(word!(game.cur_enemy_index) as i32, game)).var_C = 10;
-            return addr_kCrocomire_Ilist_BD8E as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BD8E as u16);
         }
     };
     Crocomire_Func_18 [result] {
@@ -205,13 +202,13 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16, game: &mu
         (*E).var_C = 30;
     };
 }
-pub unsafe fn Crocomire_Func_20(k: u16, game: &mut Game) -> *const u16 {
+pub unsafe fn Crocomire_Func_20(k: u16, game: &mut Game) -> EnemyScript {
     (*Get_Crocomire(k as i32, game)).var_C = 20;
     let E = Get_Crocomire(0, game);
     (*E).var_B = (*E).var_B;
-    addr_kCrocomire_Ilist_BAEA as i32 as usize as *const u16
+    EnemyScript::jump(addr_kCrocomire_Ilist_BAEA as u16)
 }
-pub unsafe fn Crocomire_Func_21(k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
+pub unsafe fn Crocomire_Func_21(k: u16, mut jp: EnemyScript, game: &mut Game) -> EnemyScript {
     let E = Get_Crocomire(0, game);
     if ((*E).var_B & 0x100) != 0 {
         jp = Crocomire_Func_2(word!(game.cur_enemy_index), jp, game);
@@ -223,7 +220,7 @@ pub unsafe fn Crocomire_Func_21(k: u16, mut jp: *const u16, game: &mut Game) -> 
     }
     jp
 }
-pub unsafe fn Crocomire_Func_22(mut k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
+pub unsafe fn Crocomire_Func_22(mut k: u16, mut jp: EnemyScript, game: &mut Game) -> EnemyScript {
     k = word!(game.cur_enemy_index);
     jp = Crocomire_Func_2(k, jp, game);
     let E = Get_Crocomire(0, game);
@@ -234,7 +231,7 @@ pub unsafe fn Crocomire_Func_22(mut k: u16, mut jp: *const u16, game: &mut Game)
     }
     jp
 }
-pub unsafe fn Crocomire_Func_23(mut k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
+pub unsafe fn Crocomire_Func_23(mut k: u16, mut jp: EnemyScript, game: &mut Game) -> EnemyScript {
     k = word!(game.cur_enemy_index);
     let E = Get_Crocomire(0, game);
     if (*E).base.x_pos as i32 - 672i32 & 0x8000 != 0 {
@@ -248,14 +245,14 @@ pub unsafe fn Crocomire_Func_23(mut k: u16, mut jp: *const u16, game: &mut Game)
         }
         if ((*E).var_B & 0x4000) != 0 {
             (*E).var_D = 5;
-            jp = addr_kCrocomire_Ilist_BCD8 as i32 as usize as *const u16;
+            jp = EnemyScript::jump(addr_kCrocomire_Ilist_BCD8 as u16);
             (*E).var_F = (*E).var_C;
             (*E).var_C = 42;
         }
     }
     jp
 }
-pub unsafe fn Crocomire_Func_24(mut k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
+pub unsafe fn Crocomire_Func_24(mut k: u16, mut jp: EnemyScript, game: &mut Game) -> EnemyScript {
     k = word!(game.cur_enemy_index);
     let E = Get_Crocomire(0, game);
     if (*E).var_D == 0 || {
@@ -270,11 +267,11 @@ pub unsafe fn Crocomire_Func_24(mut k: u16, mut jp: *const u16, game: &mut Game)
         (*E).var_C = 36;
         (*Get_Crocomire(0x40i32, game)).var_D = 0;
         (*E).var_B = ((*E).var_B) | (0x400u16);
-        return addr_kCrocomire_Ilist_BCD8 as i32 as usize as *const u16;
+        return EnemyScript::jump(addr_kCrocomire_Ilist_BCD8 as u16);
     }
     jp
 }
-pub unsafe fn Crocomire_Func_25(mut k: u16, mut jp: *const u16, game: &mut Game) -> *const u16 {
+pub unsafe fn Crocomire_Func_25(mut k: u16, mut jp: EnemyScript, game: &mut Game) -> EnemyScript {
     k = word!(game.cur_enemy_index);
     let E = Get_Crocomire(0, game);
     let crocom_var_B: u16 = (*E).var_B;
@@ -285,14 +282,14 @@ pub unsafe fn Crocomire_Func_25(mut k: u16, mut jp: *const u16, game: &mut Game)
     (*E).var_C = 40;
     jp
 }
-pub unsafe fn Crocomire_Func_26(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
+pub unsafe fn Crocomire_Func_26(k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
     let E = Get_Crocomire(0, game);
     if (*E).var_D != 0 {
         let crocom_var_B: u16 = (*E).var_B;
         if (crocom_var_B & 0x4000) != 0 {
             (*E).var_D = (*E).var_D.wrapping_sub(1);
             QueueSfx2_Max6(0x3b, game);
-            return addr_kCrocomire_Ilist_BCD8 as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BCD8 as u16);
         } else {
             (*E).var_B = (crocom_var_B) & (0xbfffu16);
             (*E).var_C = 12;
@@ -301,7 +298,7 @@ pub unsafe fn Crocomire_Func_26(k: u16, jp: *const u16, game: &mut Game) -> *con
         (*E).var_B = ((*E).var_B & !(0x4000));
         (*E).base.instruction_timer = 1;
         (*E).var_C = (*E).var_F;
-        return addr_kCrocomire_Ilist_BCD8 as i32 as usize as *const u16;
+        return EnemyScript::jump(addr_kCrocomire_Ilist_BCD8 as u16);
     }
     jp
 }
@@ -482,7 +479,7 @@ pub unsafe fn Crocomire_Func_43(game: &mut Game) {
     if ((word!(game.random_number)) as i16).wrapping_sub(4096) >= 0 {
         v1 = -(v1 as i32) as u16;
     }
-    Crocomire_Func_87(null::<u16>(), v1, game);
+    Crocomire_Func_87(EnemyScript::Stop, v1, game);
 }
 pub unsafe fn Crocomire_Func_49(game: &mut Game) {
     Crocomire_Func_50(game);
@@ -966,7 +963,7 @@ pub unsafe fn Crocomire_Func_70(game: &mut Game) {
         }
     };
 }
-pub unsafe fn Crocomire_Func_87(jp: *const u16, a: u16, game: &mut Game) -> *const u16 {
+pub unsafe fn Crocomire_Func_87(jp: EnemyScript, a: u16, game: &mut Game) -> EnemyScript {
     let E = Get_Crocomire(0, game);
     game.eproj_spawn_pt = Point16U {
         x: (a as i32 + (*E).base.x_pos as i32 + (word!(game.random_number) as i32 & 7)) as u16,
@@ -989,8 +986,8 @@ pub unsafe fn Crocomire_9B86(game: &mut Game) {
     word!(game.camera_distance_index = 0);
     crate::update_place! { unaligned_word fresh10 = &raw mut (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize))) => (u16::from_le(fresh10.read_unaligned())) | (2u16); }
     QueueMusic_Delayed8(6, game);
-    Crocomire_Func_87(null::<u16>(), 0xfff0, game);
-    Crocomire_Func_87(null::<u16>(), 0x10, game);
+    Crocomire_Func_87(EnemyScript::Stop, 0xfff0, game);
+    Crocomire_Func_87(EnemyScript::Stop, 0x10, game);
     Crocomire_9BB3(game);
 }
 pub use self::Crocomire_Func_89 as Crocomire_Func_91;
@@ -1429,9 +1426,9 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); core::ptr::null::<u16>() };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10782374] Crocomire_Instr_1 [off_A486B3[(crocom_var_C >> 1) as usize](
             crocom_var_C,
             jp,
@@ -1439,10 +1436,10 @@ crate::game::callback_dispatch! {
         )] {
         let crocom_var_C: u16 = (*Get_Crocomire(word!(game.cur_enemy_index) as i32, game)).var_C;
     };
-    Crocomire_Func_2 [addr_kCrocomire_Ilist_BADE as i32 as usize as *const u16] {
+    Crocomire_Func_2 [EnemyScript::jump(addr_kCrocomire_Ilist_BADE as u16)] {
         (*Get_Crocomire(k as i32, game)).base.instruction_timer = 1;
     };
-    Crocomire_Func_3 [addr_kCrocomire_Ilist_BBCE as i32 as usize as *const u16] {
+    Crocomire_Func_3 [EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16)] {
         (*Get_Crocomire(0, game)).var_C = 4;
     };
     Crocomire_Func_4 [jp] {
@@ -1451,24 +1448,24 @@ crate::game::callback_dispatch! {
         if v1 as i32 - 224i32 & 0x8000 != 0 {
             (*E).var_B = ((*E).var_B) | (0x8000u16);
             (*E).var_C = 18;
-            return addr_kCrocomire_Ilist_BC56 as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BC56 as u16);
         }
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10782546] Crocomire_Instr_14 [] {
         if (word!(game.random_number) as i32 & 0xfff) - 1024i32 & 0x8000 != 0 {
             let E = Get_Crocomire(0, game);
             (*E).var_C = 8;
             (*E).var_F = 0;
-            return addr_kCrocomire_Ilist_BB36 as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BB36 as u16);
         }
         jp
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10783995] Crocomire_Instr_11 [jp] { QueueSfx2_Max6(0x74, game); };
     [10784007] Crocomire_Instr_7 [jp] { QueueSfx2_Max6(0x25, game); };
     [10784019] Crocomire_Instr_19 [jp] { QueueSfx2_Max6(0x75, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10784711] Crocomire_Instr_2 [jp] {
         word! {game; earthquake_type = 4; earthquake_timer = 5; }
         QueueSfx2_Max6(0x76, game);
@@ -1484,7 +1481,7 @@ crate::game::callback_dispatch! {
     };
     [10784762] Crocomire_Instr_3 [Crocomire_Instr_4(k, jp, game)] { Crocomire_Func_43(game); };
     [10784767] Crocomire_Instr_15 [Crocomire_Instr_4(k, jp, game)] { Crocomire_Func_43(game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10784797] Crocomire_Instr_16 [] {
         if Enemy_MoveRight_IgnoreSlopes(
             word!(game.cur_enemy_index),
@@ -1493,7 +1490,7 @@ crate::game::callback_dispatch! {
         ) != 0
         {
             (*Get_Crocomire(0, game)).var_C = 14;
-            addr_kCrocomire_Ilist_BF3C as i32 as usize as *const u16
+            EnemyScript::jump(addr_kCrocomire_Ilist_BF3C as u16)
         } else {
             let mut v2: u16 = 32;
             if word!(game.random_number) as i32 - 2048i32 & 0x8000 == 0 {
@@ -1525,7 +1522,7 @@ crate::game::callback_dispatch! {
     Crocomire_Instr_18 [jp] { Enemy_MoveRight_IgnoreSlopes(k, (4i16 as i32) << 16, game); };
     [10784911] Crocomire_Instr_12 [Crocomire_Instr_13(k, jp, game)] { Crocomire_Func_43(game); };
     [10784916] Crocomire_Instr_17 [Crocomire_Instr_18(k, jp, game)] { Crocomire_Func_43(game); };
-    @forward [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10787483] Crocomire_Instr_8 => Crocomire_Func_87(jp, 0xffe0, game);
     [10787488] Crocomire_Instr_6 => Crocomire_Func_87(jp, 0, game);
     [10787493] Crocomire_Instr_9 => Crocomire_Func_87(jp, 0xfff0, game);

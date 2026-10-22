@@ -1,3 +1,4 @@
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a0::*;
@@ -678,17 +679,17 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); core::ptr::null::<u16>() };
+    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
     @functions [pub unsafe fn (
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     game: &mut Game,
-) -> *const u16];
+) -> EnemyScript];
     @prefix {
         if Enemy_MoveDown(
             word!(game.cur_enemy_index),
-            (*jp as i16 as i32) << 16,
+            (jp.word(0) as i16 as i32) << 16,
             game,
         ) == 0
         {
@@ -696,42 +697,42 @@ crate::game::callback_dispatch! {
         }
     };
     [11726400]
-    SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight [addr_kSpacePirates_Ilist_ED36 as i32 as usize as *const u16] {
+    SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight [EnemyScript::jump(addr_kSpacePirates_Ilist_ED36 as u16)] {
 
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         (*E).var_C = ((*E).var_C) ^ (1u16);
         if (*E).var_C != 0 {
-            return addr_off_B2ECEC as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_off_B2ECEC as u16);
         }
     };
     [11726450]
-    SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft [addr_off_B2EDAC as i32 as usize as *const u16] {
+    SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft [EnemyScript::jump(addr_off_B2EDAC as u16)] {
 
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         (*E).var_C = ((*E).var_C) ^ (1u16);
         if (*E).var_C != 0 {
-            return addr_kSpacePirates_Ilist_EDF6 as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kSpacePirates_Ilist_EDF6 as u16);
         }
     };
     @functions [pub unsafe fn (
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     game: &mut Game,
-) -> *const u16];
-    [11726500] SpacePirates_Instr_RandomNewDirFaceR [result as usize as *const u16] {
+) -> EnemyScript];
+    [11726500] SpacePirates_Instr_RandomNewDirFaceR [EnemyScript::jump(result)] {
         let result: u16 = addr_kSpacePirates_Ilist_ED36 as u16;
         let v4: u16 = (NextRandom(game)) & (1u16);
         (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game)).var_C = v4;
         if v4 != 0 {
-            return addr_off_B2ECEC as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_off_B2ECEC as u16);
         }
     };
-    [11726524] SpacePirates_Instr_RandomNewDirFaceL [result as usize as *const u16] {
+    [11726524] SpacePirates_Instr_RandomNewDirFaceL [EnemyScript::jump(result)] {
         let result: u16 = addr_off_B2EDAC as u16;
         let v4: u16 = (NextRandom(game)) & (1u16);
         (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game)).var_C = v4;
         if v4 != 0 {
-            return addr_kSpacePirates_Ilist_EDF6 as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kSpacePirates_Ilist_EDF6 as u16);
         }
     };
     [11726548] SpacePirates_Instr_PrepareWallJumpR [jp] {
@@ -748,7 +749,7 @@ crate::game::callback_dispatch! {
         (*E).var_E = (*E).base.y_pos;
         (*E).var_F = 192;
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11726634] SpacePirates_Instr_FireLaserL [jp] {
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         word!(
@@ -772,38 +773,38 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     game: &mut Game,
-) -> *const u16];
+) -> EnemyScript];
     [11726723] SpacePirates_Instr_SetEnemyFunc [] {
-        (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game)).var_A = *jp;
+        (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game)).var_A = jp.word(0);
         jp.offset(1)
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11726739] SpacePirates_Instr_PlaySfx [jp] { QueueSfx2_Max6(0x66, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11728182] SpacePirates_Instr_20 [jp.offset(1)] {
         (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
             .base
-            .palette_index = *jp;
+            .palette_index = jp.word(0);
     };
-    [11728198] SpacePirates_Instr_16 [jp.offset(1)] { QueueSfx2_Max6(*jp, game); };
+    [11728198] SpacePirates_Instr_16 [jp.offset(1)] { QueueSfx2_Max6(jp.word(0), game); };
     [11728228] SpacePirates_Instr_15 [jp.offset(3)] {
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         game.eproj_spawn_rect = Rect16U {
             x: (*E).base.x_pos,
             y: (*E).base.y_pos,
-            w: *jp.offset(1),
-            h: *jp.offset(2),
+            w: jp.word(2),
+            h: jp.word(4),
         };
         SpawnEprojWithGfx(
-            *jp,
+            jp.word(0),
             word!(game.cur_enemy_index),
             addr_kEproj_PirateClaw as u16,
             game,
         );
     };
-    [11728272] SpacePirates_Instr_18 [(*E).var_C as usize as *const u16] {
+    [11728272] SpacePirates_Instr_18 [EnemyScript::jump((*E).var_C)] {
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         (*E).base.instruction_timer = 1;
         (*E).var_C =
@@ -814,7 +815,7 @@ crate::game::callback_dispatch! {
             }) as u16;
     };
     [11728342] SpacePirates_Instr_17 [jp] { (*Get_SpacePirates(k as i32, game)).var_00 = 0; };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11729257] SpacePirates_Instr_19 [] {
         let E = Get_SpacePirates(k as i32, game);
         (*E).var_00 = 1536;
@@ -829,12 +830,12 @@ crate::game::callback_dispatch! {
             ((*E).var_E as i32 + ((((*E).var_D).wrapping_sub((*E).var_E)) as i32 >> 1)) as u16;
         jp
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11730024] SpacePirates_Instr_12 [jp.offset(1)] {
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         game.eproj_spawn_pt = Point16U {
             x: (((*E).base.x_pos).wrapping_sub(24)),
-            y: (((*E).base.y_pos).wrapping_sub(*jp)),
+            y: (((*E).base.y_pos).wrapping_sub(jp.word(0))),
         };
         game.eproj_spawn_r22 = 0;
         SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 0, game);
@@ -843,13 +844,13 @@ crate::game::callback_dispatch! {
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         game.eproj_spawn_pt = Point16U {
             x: (((*E).base.x_pos).wrapping_add(24)),
-            y: (((*E).base.y_pos).wrapping_sub(*jp)),
+            y: (((*E).base.y_pos).wrapping_sub(jp.word(0))),
         };
         game.eproj_spawn_r22 = 1;
         SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 1, game);
     };
     [11730104] SpacePirates_Instr_11 [jp.offset(1)] {
-        (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game)).var_A = *jp;
+        (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game)).var_A = jp.word(0);
     };
     [11730120] SpacePirates_Instr_13 [] {
         if IsSamusWithinEnemy_Y(word!(game.cur_enemy_index), 0x10, game) != 0 {
@@ -859,9 +860,9 @@ crate::game::callback_dispatch! {
                     .x_pos) as i16,
             ) >= 0
             {
-                return addr_kSpacePirates_Ilist_FC0E as i32 as usize as *const u16;
+                return EnemyScript::jump(addr_kSpacePirates_Ilist_FC0E as u16);
             }
-            addr_kSpacePirates_Ilist_FB8C as i32 as usize as *const u16
+            EnemyScript::jump(addr_kSpacePirates_Ilist_FB8C as u16)
         } else {
             if ((word!(game.samus_x_pos)) as i16).wrapping_sub(
                 ((*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
@@ -869,9 +870,9 @@ crate::game::callback_dispatch! {
                     .x_pos) as i16,
             ) >= 0
             {
-                return addr_kSpacePirates_Ilist_FB64 as i32 as usize as *const u16;
+                return EnemyScript::jump(addr_kSpacePirates_Ilist_FB64 as u16);
             }
-            addr_kSpacePirates_Ilist_FBE6 as i32 as usize as *const u16
+            EnemyScript::jump(addr_kSpacePirates_Ilist_FBE6 as u16)
         }
     };
 }

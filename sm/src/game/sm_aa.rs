@@ -1,3 +1,4 @@
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
 pub use crate::game::constants::bank_84::*;
@@ -42,10 +43,6 @@ pub type Enemy_Shaktool = crate::game::enemy_layouts::EnemyLayout8;
 
 pub type Enemy_Torizo = crate::game::enemy_layouts::EnemyLayout40;
 
-#[inline]
-unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
-    RomPtr((((bank as i32) << 16i32) + 0x8000i32) as u32, game).offset(-(0x8000i32 as isize))
-}
 crate::game::constants::typed_constants! { i32;
     fnnullsub_171_AA = 0xaa807b,
     fnnullsub_274 = 0xaadcaa, fnnullsub_276 = 0xaae7a6,
@@ -163,7 +160,7 @@ pub unsafe fn Torizo_C2B0(game: &mut Game) {
         le(palette_buffer, 159) <- table(kTorizo_Palettes_4, 15),
     );
 }
-pub fn Torizo_Instr_7(k: u16, jp: *const u16) -> *const u16 {
+pub fn Torizo_Instr_7(k: u16, jp: EnemyScript) -> EnemyScript {
     jp
 }
 pub unsafe fn Torizo_C620(k: u16, game: &mut Game) {
@@ -388,7 +385,7 @@ pub unsafe fn Torizo_D6F7(k: u16, j: u16, game: &mut Game) {
         Torizo_D6A6(game);
     };
 }
-pub unsafe fn Shaktool_D956(k: u16, jp: *const u16, a: u16, game: &mut Game) -> *const u16 {
+pub unsafe fn Shaktool_D956(k: u16, jp: EnemyScript, a: u16, game: &mut Game) -> EnemyScript {
     let E = Get_Shaktool(k as i32, game);
     let v3: i32 = a as u8 as i32;
     words!(
@@ -822,16 +819,16 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); core::ptr::null::<u16>() };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11174004] Enemy_ClearAiPreInstr_AA [jp] {
         (*gEnemyData(k as i32, game)).ai_preinstr = ((0xaa807bi32) as u16);
     };
     [11173995] Enemy_SetAiPreInstr_AA [jp.offset(1)] {
-        (*gEnemyData(k as i32, game)).ai_preinstr = *jp;
+        (*gEnemyData(k as i32, game)).ai_preinstr = jp.word(0);
     };
-    [11186332] Torizo_Instr_3 [jp.offset(1)] { (*Get_Torizo(k as i32, game)).var_E = *jp; };
+    [11186332] Torizo_Instr_3 [jp.offset(1)] { (*Get_Torizo(k as i32, game)).var_E = jp.word(0); };
     [11186461] Torizo_Instr_31 [jp] {
         let E = Get_Torizo(k as i32, game);
         (*E).parameter_2 = ((*E).parameter_2) | (0x8000u16);
@@ -875,39 +872,39 @@ crate::game::callback_dispatch! {
         QueueMusic_Delayed8(g_word_AAB098, game);
         SpawnPalfxObject(addr_stru_8DF759 as u16, game);
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11190985] Torizo_Instr_2 [jp] { (*Get_Torizo(k as i32, game)).var_04 = 30583; };
     [11190993] Torizo_Instr_8 [jp] { (*Get_Torizo(k as i32, game)).var_04 = 0; };
     [11191001] Torizo_Instr_25 [] {
         if ((*Get_Torizo(k as i32, game)).parameter_2 & 0x4000) != 0 {
-            return *jp as usize as *const u16;
+            return EnemyScript::jump(jp.word(0));
         }
         if word!(game.area_index) != 0 {
-            *jp.offset(1) as usize as *const u16
+            EnemyScript::jump(jp.word(2))
         } else {
             jp.offset(2)
         }
     };
-    [11191021] Torizo_Instr_22 [jp.offset(1)] { (*Get_Torizo(k as i32, game)).var_00 = *jp; };
-    [11191031] Torizo_Instr_19 [(*Get_Torizo(k as i32, game)).var_00 as usize as *const u16] { };
-    [11191037] Torizo_Instr_32 [(*Get_Torizo(k as i32, game)).var_01 as usize as *const u16] { };
-    [11191043] Torizo_Instr_30 [null::<u16>()] {
-        let a: u16 = *jp;
+    [11191021] Torizo_Instr_22 [jp.offset(1)] { (*Get_Torizo(k as i32, game)).var_00 = jp.word(0); };
+    [11191031] Torizo_Instr_19 [EnemyScript::jump((*Get_Torizo(k as i32, game)).var_00)] { };
+    [11191037] Torizo_Instr_32 [EnemyScript::jump((*Get_Torizo(k as i32, game)).var_01)] { };
+    [11191043] Torizo_Instr_30 [EnemyScript::Stop] {
+        let a: u16 = jp.word(0);
         for _ in 0..=5 {
             SpawnEprojWithRoomGfx(addr_kEproj_BombTorizoLowHealthExplode as u16, a, game);
         }
         let E = Get_Torizo(k as i32, game);
-        (*E).base.current_instruction = (jp.offset(1) as *mut u8)
-            .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
+        (*E).base.current_instruction = jp.offset(1)
+            .offset_from(bank_base((*gEnemyData(k as i32, game)).bank))
             as c_long as u16;
         set_fields! {[(*E).base], 40; flash_timer, instruction_timer}
     };
-    [11191087] Torizo_Instr_34 [null::<u16>()] {
+    [11191087] Torizo_Instr_34 [EnemyScript::Stop] {
         // The instruction dispatcher leaves this handler address in A.
         SpawnEprojWithRoomGfx(addr_kEproj_BombTorizoDeathExplosion as u16, 0xc32f, game);
         let E = Get_Torizo(k as i32, game);
-        (*E).base.current_instruction = (jp as *mut u8)
-            .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
+        (*E).base.current_instruction = jp
+            .offset_from(bank_base((*gEnemyData(k as i32, game)).bank))
             as c_long as u16;
         set_fields! {[(*E).base], 1; flash_timer, instruction_timer}
     };
@@ -955,14 +952,14 @@ crate::game::callback_dispatch! {
         (*E).var_09 = (*E).var_09.wrapping_add(1);
     };
     [11191244] Torizo_Instr_4 [jp.offset(1)] {
-        let v2: u16 = *jp;
+        let v2: u16 = jp.word(0);
         let E = Get_Torizo(k as i32, game);
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_add((g_word_AAC3EE[(v2 >> 1) as usize]) as u16);
         (*E).base.y_pos = ((*E).base.y_pos)
             .wrapping_add((g_word_AAC40E[((v2 as i32 & 0xf) >> 1) as usize]) as u16);
     };
     [11191326] Torizo_Instr_40 [jp.offset(1)] {
-        let v2: u16 = *jp;
+        let v2: u16 = jp.word(0);
         let E = Get_Torizo(k as i32, game);
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub((g_word_AAC440[(v2 >> 1) as usize]) as u16);
         (*E).base.y_pos = ((*E).base.y_pos)
@@ -970,13 +967,13 @@ crate::game::callback_dispatch! {
     };
     [11191408] Torizo_Instr_16 [] {
         let E = Get_Torizo(k as i32, game);
-        (*E).var_A = g_word_AAC4BD[(*jp >> 1) as usize] as u16;
+        (*E).var_A = g_word_AAC4BD[(jp.word(0) >> 1) as usize] as u16;
         if Enemy_MoveRight_IgnoreSlopes(k, ((*E).var_A as i16 as i32) << 16, game) != 0 {
             (*E).var_03 = 0;
             if ((*E).parameter_1 & 0x8000) != 0 {
-                addr_kTorizo_Ilist_B962 as i32 as usize as *const u16
+                EnemyScript::jump(addr_kTorizo_Ilist_B962 as u16)
             } else {
-                addr_kTorizo_Ilist_BDD8 as i32 as usize as *const u16
+                EnemyScript::jump(addr_kTorizo_Ilist_BDD8 as u16)
             }
         } else {
             EnemyFunc_C8AD(k, game);
@@ -996,13 +993,13 @@ crate::game::callback_dispatch! {
     };
     [11191525] Torizo_Instr_27 [] {
         let E = Get_Torizo(k as i32, game);
-        (*E).var_A = g_word_AAC532[(*jp >> 1) as usize] as u16;
+        (*E).var_A = g_word_AAC532[(jp.word(0) >> 1) as usize] as u16;
         if Enemy_MoveRight_IgnoreSlopes(k, ((*E).var_A as i16 as i32) << 16, game) != 0 {
             (*E).var_03 = 0;
             if ((*E).parameter_1 & 0x8000) != 0 {
-                addr_kTorizo_Ilist_BD0E as i32 as usize as *const u16
+                EnemyScript::jump(addr_kTorizo_Ilist_BD0E as u16)
             } else {
-                addr_kTorizo_Ilist_C188 as i32 as usize as *const u16
+                EnemyScript::jump(addr_kTorizo_Ilist_C188 as u16)
             }
         } else {
             EnemyFunc_C8AD(k, game);
@@ -1022,12 +1019,12 @@ crate::game::callback_dispatch! {
     };
     [11191642] Torizo_Instr_23 [] {
         if ((*Get_Torizo(k as i32, game)).var_B & 0x8000) != 0 {
-            *jp as usize as *const u16
+            EnemyScript::jump(jp.word(0))
         } else {
             jp.offset(1)
         }
     };
-    [11191655] Torizo_Instr_14 [*jp as usize as *const u16] {
+    [11191655] Torizo_Instr_14 [EnemyScript::jump(jp.word(0))] {
         if CompareDistToSamus_X(k, 0x38, game) & 1 != 0 {
             return jp.offset(1);
         }
@@ -1038,11 +1035,11 @@ crate::game::callback_dispatch! {
         {
             return jp.offset(1);
         }
-        (*E).var_00 = (jp.offset(1) as *mut u8)
-            .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
+        (*E).var_00 = jp.offset(1)
+            .offset_from(bank_base((*gEnemyData(k as i32, game)).bank))
             as c_long as u16;
     };
-    [11191691] Torizo_Instr_15 [*jp as usize as *const u16] {
+    [11191691] Torizo_Instr_15 [EnemyScript::jump(jp.word(0))] {
         if CompareDistToSamus_X(k, 0x20, game) & 1 != 0 || (Torizo_Func_12(k, game) & 0x8000) != 0 {
             return jp.offset(1);
         }
@@ -1050,8 +1047,8 @@ crate::game::callback_dispatch! {
     };
     [11191716] Torizo_Instr_26 [] {
         let E = Get_Torizo(k as i32, game);
-        (*E).var_00 = (jp.offset(2) as *mut u8)
-            .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
+        (*E).var_00 = jp.offset(2)
+            .offset_from(bank_base((*gEnemyData(k as i32, game)).bank))
             as c_long as u16;
         if word!(game.samus_missiles) < 5
             || (word!(game.nmi_frame_counter_word) as i32
@@ -1060,9 +1057,9 @@ crate::game::callback_dispatch! {
                 & 8)
                 != 0
         {
-            *jp as usize as *const u16
+            EnemyScript::jump(jp.word(0))
         } else {
-            *jp.offset(1) as usize as *const u16
+            EnemyScript::jump(jp.word(2))
         }
     };
     [11191755] Torizo_Instr_18 [jp] {
@@ -1073,7 +1070,7 @@ crate::game::callback_dispatch! {
     };
     [11191779] Torizo_Instr_20 [jp.offset(1)] {
         SpawnEprojWithGfx(
-            *jp,
+            jp.word(0),
             k,
             addr_kEproj_BombTorizoSonicBoom as u16,
             game,
@@ -1081,7 +1078,7 @@ crate::game::callback_dispatch! {
     };
     [11191794] Torizo_Instr_44 [jp.offset(1)] {
         SpawnEprojWithGfx(
-            *jp,
+            jp.word(0),
             k,
             addr_kEproj_GoldenTorizoSonicBoom as u16,
             game,
@@ -1090,18 +1087,18 @@ crate::game::callback_dispatch! {
     [11191809] Torizo_Instr_21 [jp.offset(1)] {
         SpawnEprojWithRoomGfx(
             addr_kEproj_BombTorizoExplosiveSwipe as u16,
-            *jp,
+            jp.word(0),
             game,
         );
     };
     [11191824] Torizo_Instr_17 [jp] { QueueSfx2_Max6(0x27, game); };
     [11191832] Torizo_Instr_13 [jp] { QueueSfx2_Max6(0x4b, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11193038] Torizo_Instr_39 [] {
         if (*Get_Torizo(k as i32, game)).base.y_pos == 375 {
             jp.offset(1)
         } else {
-            *jp as usize as *const u16
+            EnemyScript::jump(jp.word(0))
         }
     };
     [11193054] Torizo_Instr_41 [jp] { Torizo_C298(game); };
@@ -1117,7 +1114,7 @@ crate::game::callback_dispatch! {
         (*E).parameter_2 = ((*E).parameter_2 & !(0x1000));
     };
     [11194601] Torizo_Instr_57 [jp] { SpawnEprojWithRoomGfx(addr_stru_86B1C0 as u16, 0, game); };
-    [11194611] Torizo_Instr_58 [*jp as usize as *const u16] {
+    [11194611] Torizo_Instr_58 [EnemyScript::jump(jp.word(0))] {
         let mut v2: i16 = 34;
         while *(ram_ptr!(game, u16; 0x1997, v2 as u16 as i32 as isize))
             != 0xb1c0
@@ -1128,20 +1125,20 @@ crate::game::callback_dispatch! {
             }
         }
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let E = Get_Torizo(k as i32, game); };
     [11194747] Torizo_Instr_59 [jp] {  (*E).var_06 = ((*E).var_06 & !(0x8000)); };
     [11194759] Torizo_Instr_62 [jp] {  (*E).var_06 = ((*E).var_06) | (0x8000u16); };
     [11194855] Torizo_Instr_63 [jp] {  (*E).parameter_2 = ((*E).parameter_2 & !(0x2000)); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11195279] Torizo_Instr_56 [jp] { QueueSfx2_Max6(0x34, game); };
     [11195287] Torizo_Instr_60 [jp] { QueueSfx2_Max6(0x67, game); };
     [11195295] Torizo_Instr_46 [jp] { QueueSfx2_Max6(0x48, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11195360] Torizo_Instr_47 [jp] {
         SpawnEprojWithRoomGfx(addr_kEproj_GoldenTorizoSuperMissile as u16, 0, game);
     };
-    [11195370] Torizo_Instr_49 [*jp as usize as *const u16] {
+    [11195370] Torizo_Instr_49 [EnemyScript::jump(jp.word(0))] {
         if (Torizo_Func_12(k, game) & 0x8000) == 0
             || CompareDistToSamus_X(k, 4, game) & 1 == 0
             || CompareDistToSamus_X(k, 0x28, game) & 1 != 0
@@ -1158,9 +1155,9 @@ crate::game::callback_dispatch! {
         (*Get_Torizo(k as i32, game)).var_09 = 0;
     };
     [11195446] Torizo_Instr_61 [jp.offset(1)] {
-        SpawnEprojWithRoomGfx(addr_kEproj_GoldenTorizoEyeBeam as u16, *jp, game);
+        SpawnEprojWithRoomGfx(addr_kEproj_GoldenTorizoEyeBeam as u16, jp.word(0), game);
     };
-    [11195461] Torizo_Instr_53 [*jp as usize as *const u16] {
+    [11195461] Torizo_Instr_53 [EnemyScript::jump(jp.word(0))] {
         if (Torizo_Func_12(k, game) & 0x8000) != 0
             || CompareDistToSamus_X(k, 0x20, game) & 1 == 0
             || CompareDistToSamus_X(k, 0x60, game) & 1 != 0
@@ -1168,30 +1165,30 @@ crate::game::callback_dispatch! {
         {
             return jp.offset(1);
         }
-        (*Get_Torizo(k as i32, game)).var_00 = (jp.offset(1) as *mut u8)
-            .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
+        (*Get_Torizo(k as i32, game)).var_00 = jp.offset(1)
+            .offset_from(bank_base((*gEnemyData(k as i32, game)).bank))
             as c_long as u16;
     };
-    [11195508] Torizo_Instr_55 [*jp as usize as *const u16] {
+    [11195508] Torizo_Instr_55 [EnemyScript::jump(jp.word(0))] {
         let E = Get_Torizo(k as i32, game);
         if (*E).base.health > 0x788 || (NextRandom(game) & 0x102) != 0 {
-            return jp.offset(1) as usize as *const u16;
+            return jp.offset(1);
         }
         (*E).var_09 = 0;
-        (*E).var_00 = (jp.offset(1) as *mut u8)
-            .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
+        (*E).var_00 = jp.offset(1)
+            .offset_from(bank_base((*gEnemyData(k as i32, game)).bank))
             as c_long as u16;
     };
-    [11195547] Torizo_Instr_52 [*jp as usize as *const u16] {
+    [11195547] Torizo_Instr_52 [EnemyScript::jump(jp.word(0))] {
         let E = Get_Torizo(k as i32, game);
         if (*E).base.health <= 0x2a30 || ((*E).parameter_2 & 0x2000) == 0 {
             return jp.offset(1);
         }
-        (*E).var_00 = (jp.offset(1) as *mut u8)
-            .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
+        (*E).var_00 = jp.offset(1)
+            .offset_from(bank_base((*gEnemyData(k as i32, game)).bank))
             as c_long as u16;
     };
-    [11195578] Torizo_Instr_50 [*jp as usize as *const u16] {
+    [11195578] Torizo_Instr_50 [EnemyScript::jump(jp.word(0))] {
         if CompareDistToSamus_X(k, 0x70, game) & 1 == 0 {
             return jp.offset(1);
         }
@@ -1210,7 +1207,7 @@ crate::game::callback_dispatch! {
     [11195635] Torizo_Instr_43 [jp] {
         SpawnEprojWithGfx(0, k, addr_kEproj_GoldenTorizosChozoOrbs as u16, game);
     };
-    [11195645] Torizo_Instr_51 [*jp as usize as *const u16] {
+    [11195645] Torizo_Instr_51 [EnemyScript::jump(jp.word(0))] {
         let E = Get_Torizo(k as i32, game);
         if (*E).var_09 < 8
             && (CompareDistToSamus_X(k, 0x20, game) & 1 != 0
@@ -1222,8 +1219,8 @@ crate::game::callback_dispatch! {
         Torizo_C22D(k, game);
     };
     [11195686] Torizo_Instr_45 [] {
-        (*Get_Torizo(k as i32, game)).var_00 = (jp.offset(2) as *mut u8)
-            .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
+        (*Get_Torizo(k as i32, game)).var_00 = jp.offset(2)
+            .offset_from(bank_base((*gEnemyData(k as i32, game)).bank))
             as c_long as u16;
         if word!(game.samus_missiles) < 0x20
             || (word!(game.nmi_frame_counter_word) as i32
@@ -1232,20 +1229,20 @@ crate::game::callback_dispatch! {
                 & 8)
                 != 0
         {
-            *jp as usize as *const u16
+            EnemyScript::jump(jp.word(0))
         } else {
-            *jp.offset(1) as usize as *const u16
+            EnemyScript::jump(jp.word(2))
         }
     };
     [11195725] Torizo_Instr_54 [] {
         let E = Get_Torizo(k as i32, game);
-        (*E).var_A = g_word_AAD59A[(*jp >> 1) as usize] as u16;
+        (*E).var_A = g_word_AAD59A[(jp.word(0) >> 1) as usize] as u16;
         if Enemy_MoveRight_IgnoreSlopes(k, ((*E).var_A as i16 as i32) << 16, game) != 0 {
             (*E).var_03 = 0;
             if ((*E).parameter_1 & 0x8000) != 0 {
-                addr_kTorizo_Ilist_D203 as i32 as usize as *const u16
+                EnemyScript::jump(addr_kTorizo_Ilist_D203 as u16)
             } else {
-                addr_kTorizo_Ilist_D2BF as i32 as usize as *const u16
+                EnemyScript::jump(addr_kTorizo_Ilist_D2BF as u16)
             }
         } else {
             EnemyFunc_C8AD(k, game);
@@ -1263,7 +1260,7 @@ crate::game::callback_dispatch! {
             }
         }
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let E = Get_Shaktool(k as i32, game); };
     [11196721] Shaktool_Instr_2 [Shaktool_D956(k, jp, ((*EX).var_D) ^ (0x80u16), game)] {
 
@@ -1287,7 +1284,7 @@ crate::game::callback_dispatch! {
             game,
         )] {
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11196858] Shaktool_Instr_1 [] {
         let shakt_var_E: u16 = (*Get_Shaktool(k as i32, game)).var_E;
         (*Get_Shaktool(shakt_var_E as i32, game)).var_F =
@@ -1306,18 +1303,18 @@ crate::game::callback_dispatch! {
             crate::rtl::rom_table_word!(game, 0xaadedb, 6);
         jp
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11199529] Shaktool_Instr_9 [jp] {
         word! {game; fx_timer = 32; fx_y_vel = 64; }
     };
     [11199542] Shaktool_Instr_11 [jp] { word!(game.fx_base_y_pos = 722); };
     [11199549] Shaktool_Instr_10 [jp] { CallSomeSamusCode(1, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11199871] Shaktool_Instr_8 [jp] { QueueSfx2_Max6(0x1c, game); };
     [11199879] Shaktool_Instr_13 [jp] { QueueSfx2_Max6(0x4b, game); };
     [11199887] Shaktool_Instr_12 [jp.offset(1)] {
         let e = Get_Shaktool(k as i32, game);
-        let arg: u16 = *jp;
+        let arg: u16 = jp.word(0);
         CalculateBlockContainingPixelPos(
             ((*e).base.x_pos).wrapping_add(arg),
             ((*e).base.y_pos).wrapping_add(28),
@@ -1339,7 +1336,7 @@ crate::game::callback_dispatch! {
     };
     [11199960] Shaktool_Instr_7 [jp.offset(1)] {
         let E = Get_Shaktool(k as i32, game);
-        (*E).var_C = *jp;
+        (*E).var_C = jp.word(0);
         Enemy_MoveRight_IgnoreSlopes(
             k,
             (crate::rtl::rom_table_word!(game, 0xaae630, ((*E).var_C >> 1) as isize) as i16 as i32)

@@ -1,3 +1,4 @@
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
 pub use crate::game::constants::bank_86::*;
@@ -976,16 +977,16 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); core::ptr::null::<u16>() };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11763819] Enemy_SetAiPreInstr_B3 [jp.offset(1)] {
-        (*gEnemyData(k as i32, game)).ai_preinstr = *jp;
+        (*gEnemyData(k as i32, game)).ai_preinstr = jp.word(0);
     };
     [11763828] Enemy_ClearAiPreInstr_B3 [jp] {
         (*gEnemyData(k as i32, game)).ai_preinstr = ((0xb3807bi32) as u16);
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game); };
     [11769031] Botwoon_Instr_1 [jp] {  (*E).base.x_width = 8; (*E).base.y_height = 16; };
     [11769047] Botwoon_Instr_2 [jp] {  set_fields! {[(*E).base], 12; x_width, y_height} };
@@ -997,39 +998,39 @@ crate::game::callback_dispatch! {
     [11769143] Botwoon_Instr_8 [jp] {  (*E).base.x_width = 16; (*E).base.y_height = 8; };
     [11769159] Botwoon_Instr_9 [jp] {  set_fields! {[(*E).base], 12; x_width, y_height} };
     [11769175] Botwoon_Instr_10 [jp] {  (*E).base.x_width = 8; (*E).base.y_height = 16; };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11769191] Botwoon_Instr_SetSpitting [jp] {
         (*Get_Botwoon(word!(game.cur_enemy_index) as i32, game)).var_5A = 1;
     };
     [11769202] Botwoon_Instr_QueueSpitSfx [jp] { QueueSfx2_Max6(0x7c, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11789637] EscapeEtecoon_Instr_1 [] {
         if word!(game.lava_acid_y_pos) >= 0xce {
             jp.offset(1)
         } else {
-            *jp as usize as *const u16
+            EnemyScript::jump(jp.word(0))
         }
     };
     [11789840] EscapeEtecoon_Instr_2 [jp.offset(1)] {
         let E = Get_EscapeEtecoon(k as i32, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp);
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(jp.word(0));
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11791016] EscapeDachora_Instr_2 [] {
         if word!(game.lava_acid_y_pos) >= 0xce {
             jp.offset(1)
         } else {
-            *jp as usize as *const u16
+            EnemyScript::jump(jp.word(0))
         }
     };
     [11791032] EscapeDachora_Instr_3 [] {
         if CheckEventHappened(0xf, game) != 0 {
-            *jp as usize as *const u16
+            EnemyScript::jump(jp.word(0))
         } else {
             jp.offset(1)
         }
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let E = Get_EscapeDachora(word!(game.cur_enemy_index) as i32, game); };
     [11791049] EscapeDachora_Instr_1 [jp] {  (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(6); };
     [11791063] EscapeDachora_Instr_4 [jp] {  (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(6); };

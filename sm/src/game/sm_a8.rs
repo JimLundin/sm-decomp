@@ -1,3 +1,4 @@
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 pub use crate::game::prelude::*;
 
@@ -1042,7 +1043,7 @@ pub unsafe fn NorfairLavaMan_Func_19(k: u16, game: &mut Game) {
         word!(game.enemy_drawing_queue[(v1 + 64)] = 8);
     }
 }
-pub fn Beetom_Instr_1(k: u16, jp: *const u16) -> *const u16 {
+pub fn Beetom_Instr_1(k: u16, jp: EnemyScript) -> EnemyScript {
     jp
 }
 pub use crate::game::sm_a3::Sidehopper_Func_2 as Beetom_Func_2;
@@ -1488,12 +1489,12 @@ pub unsafe fn WreckedShipRobot_Func_2(k: u16, game: &mut Game) {
 // Movement callbacks can change the live enemy index. Keep the captured
 // robot for its state/coordinate stores and reread the index before each call.
 unsafe fn move_wrecked_ship_robot(
-    jp: *const u16,
+    jp: EnemyScript,
     motion: (u16, i16),
     instructions: (u16, Option<u16>),
     restore_y_first: bool,
     game: &mut Game,
-) -> *const u16 {
+) -> EnemyScript {
     let (facing, step) = motion;
     let (wall_instruction, edge_instruction) = instructions;
     WreckedShipRobot_Func_2(word!(game.cur_enemy_index), game);
@@ -1501,7 +1502,7 @@ unsafe fn move_wrecked_ship_robot(
     (*robot).var_A = facing;
     if Enemy_MoveRight_IgnoreSlopes(word!(game.cur_enemy_index), (step as i32) << 16, game) != 0 {
         (*robot).var_B = (*robot).var_B.wrapping_add(8);
-        return wall_instruction as usize as *const u16;
+        return EnemyScript::jump(wall_instruction);
     }
     if CheckIfEnemyTouchesSamus(word!(game.cur_enemy_index), game) != 0 {
         word! {game; extra_samus_x_subdisplacement = 0; extra_samus_x_displacement = step as u16; }
@@ -1530,24 +1531,24 @@ unsafe fn move_wrecked_ship_robot(
     }
     if !ground {
         (*robot).var_A = if step < 0 { 512 } else { 0xfe00 };
-        return edge_instruction as usize as *const u16;
+        return EnemyScript::jump(edge_instruction);
     }
     jp
 }
 
-pub unsafe fn WreckedShipRobot_Instr_7(k: u16, jp: *const u16) -> *const u16 {
-    addr_kWreckedShipRobot_Ilist_C92D as i32 as usize as *const u16
+pub unsafe fn WreckedShipRobot_Instr_7(k: u16, jp: EnemyScript) -> EnemyScript {
+    EnemyScript::jump(addr_kWreckedShipRobot_Ilist_C92D as u16)
 }
-pub unsafe fn WreckedShipRobot_Instr_10(k: u16, jp: *const u16) -> *const u16 {
-    addr_stru_A8C6E9 as i32 as usize as *const u16
+pub unsafe fn WreckedShipRobot_Instr_10(k: u16, jp: EnemyScript) -> EnemyScript {
+    EnemyScript::jump(addr_stru_A8C6E9 as u16)
 }
 pub unsafe fn WreckedShipRobot_CommonInstr(
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     r50: u16,
     r48: u16,
     game: &mut Game,
-) -> *const u16 {
+) -> EnemyScript {
     let E = Get_WreckedShipRobot(k as i32, game);
     if (*E).var_B != 0 {
         WreckedShipRobot_Func_2(k, game);
@@ -1555,16 +1556,16 @@ pub unsafe fn WreckedShipRobot_CommonInstr(
         let v3: u16 = ((word!(game.random_number) as i32 & 0x1f) + 16) as u16;
         (*E).var_B = v3;
         SpawnEprojWithGfx(v3, word!(game.cur_enemy_index), r48, game);
-        return r50 as usize as *const u16;
+        return EnemyScript::jump(r50);
     }
     jp
 }
 pub unsafe fn WreckedShipRobot_D10C(
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     r50: u16,
     game: &mut Game,
-) -> *const u16 {
+) -> EnemyScript {
     let E = Get_WreckedShipRobot(k as i32, game);
     if (*E).var_B != 0 {
         WreckedShipRobot_Func_2(k, game);
@@ -1577,17 +1578,17 @@ pub unsafe fn WreckedShipRobot_D10C(
             addr_kEproj_WreckedShipRobotLaserHorizontal as u16,
             game,
         );
-        return r50 as usize as *const u16;
+        return EnemyScript::jump(r50);
     }
     jp
 }
 pub unsafe fn WreckedShipRobot_D147(
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     r48: u16,
     r50: u16,
     game: &mut Game,
-) -> *const u16 {
+) -> EnemyScript {
     let E = Get_WreckedShipRobot(k as i32, game);
     if (*E).var_B != 0 {
         WreckedShipRobot_Func_2(k, game);
@@ -1595,7 +1596,7 @@ pub unsafe fn WreckedShipRobot_D147(
         let v3: u16 = ((word!(game.random_number) as i32 & 0x1f) + 16) as u16;
         (*E).var_B = v3;
         SpawnEprojWithGfx(v3, word!(game.cur_enemy_index), r48, game);
-        return r50 as usize as *const u16;
+        return EnemyScript::jump(r50);
     }
     jp
 }
@@ -3011,9 +3012,9 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); core::ptr::null::<u16>() };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11044751] MiniDraygon_Instr_2 [jp] { QueueSfx2_Max6(0x5e, game); };
     [11044763] MiniDraygon_Instr_1 [jp] {
         if (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game).offset(30)).cause_of_death
@@ -3041,9 +3042,9 @@ crate::game::callback_dispatch! {
         set_fields! {[(*E)], 0; var_0C, var_0B}
         (*E).var_C = ((0xa88a34i32) as u16);
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11048485] Fune_Instr_2 [jp] { QueueSfx2_Max9(0x1f, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix {
         word!(
             game.cinematic_var9 = *(&raw mut (*(Get_Fune
@@ -3091,7 +3092,7 @@ crate::game::callback_dispatch! {
             game,
         );
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11048597] Fune_Instr_3 [jp] {
         let E = Get_Fune(word!(game.cur_enemy_index) as i32, game);
         (*E).var_A = ((*E).var_A).wrapping_add(4);
@@ -3108,7 +3109,7 @@ crate::game::callback_dispatch! {
             (*E).var_B = ((0xa8975ci32) as u16);
         }
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11051207] YappingMaw_Instr_2 [jp] {
         let E = Get_YappingMaw(word!(game.cur_enemy_index) as i32, game);
         (*E).var_32 = crate::rtl::rom_table_word!(game, 0xa8a0ab, 0);
@@ -3144,10 +3145,10 @@ crate::game::callback_dispatch! {
             QueueSfx2_Max6(0x2f, game);
         }
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11054610] NorfairLavaMan_Instr_1 [jp.offset(1)] {
         if CheckIfEnemyIsOnScreen(game) == 0 {
-            QueueSfx2_Max6(*jp, game);
+            QueueSfx2_Max6(jp.word(0), game);
         }
     };
     [11054630] NorfairLavaMan_Instr_8 [jp] {
@@ -3238,7 +3239,7 @@ crate::game::callback_dispatch! {
     [11054916] NorfairLavaMan_Instr_3 [jp] {
         (*Get_NorfairLavaMan(word!(game.cur_enemy_index) as i32, game)).var_04 = 256;
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11063441] WreckedShipRobot_Instr_3 [] {
         let E = Get_WreckedShipRobot(word!(game.cur_enemy_index) as i32, game);
         if ((word!(game.layer1_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) < 0
@@ -3267,7 +3268,7 @@ crate::game::callback_dispatch! {
         if (*E1).var_A as i32 == 0xa8f6f3 & 0xffff {
             enemy_instruction! {[(*E1).base]; instruction = r18, timer = 1}
         }
-        result as usize as *const u16
+        EnemyScript::jump(result)
     };
     [11072996] KiHunter_Instr_2 [] {
         (*Get_KiHunter(word!(game.cur_enemy_index) as i32, game)).var_A = ((0xa8f5f0i32) as u16);
@@ -3277,13 +3278,13 @@ crate::game::callback_dispatch! {
         (*Get_KiHunter(word!(game.cur_enemy_index) as i32, game)).var_A = ((0xa8f68bi32) as u16);
         jp
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11067164] WalkingLavaSeahorse_Instr_4 [jp] { WalkingLavaSeahorse_DF20(0, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11067187] WalkingLavaSeahorse_Instr_3 [jp] { WalkingLavaSeahorse_DF20(2, game); };
     [11067193] WalkingLavaSeahorse_Instr_5 [jp] { WalkingLavaSeahorse_DF20(4, game); };
     [11067199]
-    WalkingLavaSeahorse_Instr_6 [addr_kWalkingLavaSeahorse_Ilist_DBE7 as i32 as usize as *const u16] {
+    WalkingLavaSeahorse_Instr_6 [EnemyScript::jump(addr_kWalkingLavaSeahorse_Ilist_DBE7 as u16)] {
         let E = Get_WalkingLavaSeahorse(word!(game.cur_enemy_index) as i32, game);
         (*E).var_A = ((0xa8de4bi32) as u16);
         let mut v3: i16 = ((word!(game.random_number)) as i16) & (3i16);
@@ -3292,7 +3293,7 @@ crate::game::callback_dispatch! {
         }
         (*E).var_04 = v3 as u16;
         if ((*E).var_D & 0x8000) == 0 {
-            return addr_kWalkingLavaSeahorse_Ilist_DC57 as i32 as usize as *const u16;
+            return EnemyScript::jump(addr_kWalkingLavaSeahorse_Ilist_DC57 as u16);
         }
     };
     [11067235]
@@ -3305,9 +3306,9 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (
     k: u16,
-    mut jp: *const u16,
+    mut jp: EnemyScript,
     game: &mut Game,
-) -> *const u16];
+) -> EnemyScript];
     [11067249] WalkingLavaSeahorse_Instr_1 [] {
         let E = Get_WalkingLavaSeahorse(word!(game.cur_enemy_index) as i32, game);
         if Enemy_MoveRight_IgnoreSlopes(
@@ -3316,10 +3317,10 @@ crate::game::callback_dispatch! {
             game,
         ) != 0
         {
-            jp = addr_stru_A8DBE9 as i32 as usize as *const u16;
+            jp = EnemyScript::jump(addr_stru_A8DBE9 as u16);
             let mut wlse_var_D: i16 = (*E).var_D as i16;
             if wlse_var_D < 0 {
-                jp = addr_stru_A8DC59 as i32 as usize as *const u16;
+                jp = EnemyScript::jump(addr_stru_A8DC59 as u16);
             }
             (*E).var_D = -(wlse_var_D as i32) as u16;
         } else {
@@ -3327,7 +3328,7 @@ crate::game::callback_dispatch! {
         }
         jp
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11068957] WreckedShipSpark_Instr_2 [jp] {
         let E = Get_WreckedShipSpark(word!(game.cur_enemy_index) as i32, game);
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
@@ -3336,10 +3337,10 @@ crate::game::callback_dispatch! {
         let E = Get_WreckedShipSpark(word!(game.cur_enemy_index) as i32, game);
         (*E).base.properties = ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16;
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11073234] KiHunter_Instr_4 [jp] { sub_A8F6DC(k, addr_loc_A8CF18 as u16, game); };
     [11073240] KiHunter_Instr_5 [jp] { sub_A8F6DC(k, addr_loc_A8CF26 as u16, game); };
-    @forward [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11062537] WreckedShipRobot_Instr_4 => move_wrecked_ship_robot(
         jp,
         (0xfe00, -4),
@@ -3374,7 +3375,7 @@ crate::game::callback_dispatch! {
         false,
         game,
     );
-    @forward [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11062991] WreckedShipRobot_Instr_15 => move_wrecked_ship_robot(
         jp,
         (512, 4),
@@ -3404,7 +3405,7 @@ crate::game::callback_dispatch! {
     );
     [11063371]
     WreckedShipRobot_Instr_17 => move_wrecked_ship_robot(jp, (512, -4), (addr_stru_A8C6E9 as u16, None), false, game);
-    @forward [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11063494] WreckedShipRobot_Instr_14 => WreckedShipRobot_CommonInstr(
         k,
         jp,
@@ -3419,12 +3420,12 @@ crate::game::callback_dispatch! {
         addr_kEproj_WreckedShipRobotLaserUpLeft as u16,
         game,
     );
-    @forward [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11063552]
     WreckedShipRobot_Instr_13 => WreckedShipRobot_D10C(k, jp, addr_kWreckedShipRobot_Ilist_CB09 as u16, game);
     [11063559]
     WreckedShipRobot_Instr_1 => WreckedShipRobot_D10C(k, jp, addr_kWreckedShipRobot_Ilist_C8BD as u16, game);
-    @forward [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11063601] WreckedShipRobot_Instr_12 => WreckedShipRobot_D147(
         k,
         jp,

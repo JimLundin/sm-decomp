@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,990 Rust lines in 119 files**, plus 262 C
-bridge and 296 C-header lines = **96,548 maintained implementation lines**.
+Current composition (2026-10-22): **96,083 Rust lines in 121 files**, plus 262 C
+bridge and 296 C-header lines = **96,641 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,379**. This complete recount includes frontend,
+gives **97,472**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2245,8 +2245,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    with **191 top-level and 130 runtime files** preserved and byte-compared.
    This step adds **297 candidate implementation/integration lines**, plus 526 new
    fixture, 37 existing-fixture and 46 harness lines. No new implementation macros
-   or maintained-main savings; main remains 95,990 Rust lines with unchanged
-   progress counters. The prior hud-selection-stage's 9,126-line, 77-file recount
+   or maintained-main savings; this draft leaves adopted source and progress
+   counters unchanged. The prior hud-selection-stage's 9,126-line, 77-file recount
    has a different scope from extracted old references and establishes no net
    deletion budget. Continue the remaining flight/script and session bindings in
    this full candidate, then price all retired code, adapters and registrations.
@@ -3199,6 +3199,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    ROM diagnostics and behavioral callbacks remain unsafe; RAM still owns state.
    This is safety work, not volume savings. Wider behavior has component coverage;
    full-game unsafe elimination and state ownership remain open.
+   Enemy animation now owns its interpreter, shared controls and instruction
+   routing. The complete callback family uses owned ROM positions and explicit
+   jump/stop results, including the Crocomire function table and Waver. The safe
+   `enemy_script` module forbids unsafe code; raw script-parameter reads and
+   numeric pointer casts retire. Preserve captured images/bank origins, live
+   callback selectors, native words, partial stores and zero-jump semantics.
+   **3,325 actual old/new comparisons** pass, including all 465 numeric entries,
+   all 21 Crocomire sub-dispatch entries and callback mutation/failure cases.
+   Probed and clean loading pass **78/0**, inputs **8250..8327**, with real script
+   callbacks, frame commits and looping jumps. Nine short-script failures also
+   pass. Wider behaviors have component coverage; external effects are controlled.
+   Release library/frontend/verifier, native stamps and source/format checks pass.
+   Defender blocked the optional frontend usage launch; frontend execution is
+   unverified. All 25 embedded native inputs match the adopted source.
+   Complete cost: **+93 Rust lines**, six fewer counted unsafe declarations and
+   74 fewer cast lines. Other callback RAM operations and behavior calls remain
+   unsafe; RAM still owns enemy state. This is safety work, not volume savings.
    Event/boss flag access and shared bit-mask preparation now live in the safe
    `progress_flags` module, which forbids unsafe code. All 15 caller files import
    it directly; the six bank-80 definitions are retired. Queries retain their
@@ -4324,15 +4341,22 @@ execution, shared effect ROM records, checked animated tiles, safe progress flag
 owned room metadata, checked door metadata, shared scroll loading, shared PLM
 spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
-checked sprite-object state, checked scene/enemy drawing and checked enemy scheduling,
-maintained Rust is **95,990**,
+checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling
+and owned enemy-script positions,
+maintained Rust is **96,083**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,548**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,379**.
+Including 262 C and 296 header lines gives **96,641**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,472**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2971; cast lines 6443. Checked enemy scheduling adds 63 Rust
+unsafe functions 2965; cast lines 6369. Owned enemy-script positions add 93 Rust
+lines across nineteen source files, removing six counted unsafe declarations and
+74 cast-containing lines. Raw script traversal, parameter loads and pointer
+control results retire across the full callback family; the cursor module forbids
+unsafe code. Enemy-specific RAM manipulation and behavior calls remain unsafe.
+Other counters are unchanged. This is a safety cost, not volume savings.
+Checked enemy scheduling adds 63 Rust
 lines across twenty source files, removing two counted unsafe declarations and
 twenty cast-containing lines. Raw slot/list access retires in four routines;
 the safe shared enemy adapter also serves population loading and drawing. ROM

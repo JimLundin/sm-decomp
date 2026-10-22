@@ -1,3 +1,4 @@
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
 use crate::game::minimap;
@@ -1392,29 +1393,29 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); core::ptr::null::<u16>() };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10851549] Draygon_Instr_1 [] {
-        (*Get_Draygon(0i32, game)).base.current_instruction = *jp;
-        (*Get_Draygon(0x40i32, game)).base.current_instruction = *jp.offset(1);
-        (*Get_Draygon(0x80i32, game)).base.current_instruction = *jp.offset(2);
-        (*Get_Draygon(0xc0i32, game)).base.current_instruction = *jp.offset(3);
+        (*Get_Draygon(0i32, game)).base.current_instruction = jp.word(0);
+        (*Get_Draygon(0x40i32, game)).base.current_instruction = jp.word(2);
+        (*Get_Draygon(0x80i32, game)).base.current_instruction = jp.word(4);
+        (*Get_Draygon(0xc0i32, game)).base.current_instruction = jp.word(6);
         (*Get_Draygon(0i32, game)).base.instruction_timer = 1;
         (*Get_Draygon(0x40i32, game)).base.instruction_timer = 1;
         (*Get_Draygon(0x80i32, game)).base.instruction_timer = 1;
         (*Get_Draygon(0xc0i32, game)).base.instruction_timer = 1;
         jp.offset(4)
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
-    [10852150] Draygon_Instr_13 [jp.offset(1)] { (*Get_Draygon(k as i32, game)).var_A = *jp; };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    [10852150] Draygon_Instr_13 [jp.offset(1)] { (*Get_Draygon(k as i32, game)).var_A = jp.word(0); };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let pt: Point16U = Draygon_Func_47(game); };
     [10852159] Draygon_Instr_8 [jp] {  create_sprite(pt.x, pt.y, 21, 0, game); };
     [10852178] Draygon_Instr_7 [jp] {  create_sprite(pt.x, pt.y, 3, 0, game); };
     [10852197] Draygon_Instr_6 [jp] {  create_sprite(pt.x, pt.y, 29, 0, game); };
     [10852216] Draygon_Instr_9 [jp] {  create_sprite(pt.x, pt.y, 24, 0, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10852501] Draygon_Instr_2 [jp] { word!(game.room_loading_irq_handler = 12); };
     [10852563] Draygon_Instr_11 [jp] {
         let E2 = Get_Draygon(0x80, game);
@@ -1443,12 +1444,12 @@ crate::game::callback_dispatch! {
     [10853514] Draygon_Instr_17 [jp] { word!(game.room_loading_irq_handler = 12); };
     [10853898] Draygon_Instr_14 [jp.offset(2)] {
         let E = Get_Draygon(0, game);
-        (*E).var_5E = *jp;
-        (*E).var_5F = *jp.offset(1);
+        (*E).var_5E = jp.word(0);
+        (*E).var_5F = jp.word(2);
     };
-    [10854231] Draygon_Instr_16 [jp.offset(1)] { (*Get_Draygon(0, game)).var_A = *jp; };
-    [10854240] Draygon_Instr_10 [jp.offset(1)] { QueueSfx2_Max6(*jp, game); };
-    [10854254] Draygon_Instr_4 [jp.offset(1)] { QueueSfx3_Max6(*jp, game); };
+    [10854231] Draygon_Instr_16 [jp.offset(1)] { (*Get_Draygon(0, game)).var_A = jp.word(0); };
+    [10854240] Draygon_Instr_10 [jp.offset(1)] { QueueSfx2_Max6(jp.word(0), game); };
+    [10854254] Draygon_Instr_4 [jp.offset(1)] { QueueSfx3_Max6(jp.word(0), game); };
     [10854268] Draygon_Instr_12 [jp] {
         let E = Get_Draygon(0, game);
         game.eproj_spawn_pt = Point16U {
@@ -1477,9 +1478,9 @@ crate::game::callback_dispatch! {
             game,
         );
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
-    [10863739] Draygon_Instr_3 [jp.offset(1)] { (*Get_Draygon(0x40, game)).var_A = *jp; };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    [10863739] Draygon_Instr_3 [jp.offset(1)] { (*Get_Draygon(0x40, game)).var_A = jp.word(0); };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10872671] Draygon_Instr_25 [jp] {
         let E = Get_Draygon(0, game);
         if (*E).var_0B as i32 - 40i32 & 0x8000 != 0 {
@@ -1489,22 +1490,22 @@ crate::game::callback_dispatch! {
     [10872689] Draygon_Instr_24 [jp] { (*Get_Draygon(0, game)).var_2F = 0; };
     [10872877] Draygon_Instr_21 [jp.offset(2)] {
         let E = Get_Draygon(0, game);
-        (*E).var_0B = *jp;
-        (*E).var_0C = *jp.offset(1);
+        (*E).var_0B = jp.word(0);
+        (*E).var_0C = jp.word(2);
     };
-    [10872946] Draygon_Instr_22 [jp.offset(1)] { word!(game.kraid_unk9000 = *jp); };
+    [10872946] Draygon_Instr_22 [jp.offset(1)] { word!(game.kraid_unk9000 = jp.word(0)); };
     [10872956] Draygon_Instr_27 [jp] {
         let E = Get_Draygon(0, game);
         set_fields! {[(*E).base]; x_pos = 128, y_pos = 624,
             properties = ((*E).base.properties & 0x5bff | 0xa000), };
     };
-    [10872981] Draygon_Instr_23 [jp.offset(1)] { QueueSfx2_Max6(*jp, game); };
+    [10872981] Draygon_Instr_23 [jp.offset(1)] { QueueSfx2_Max6(jp.word(0), game); };
     [10873009] Draygon_Instr_30 [jp] { Enemy_ItemDrop_SporeSpawn(k, game); };
     [10873018] Draygon_Instr_20 [jp.offset(1)] {
-        (*Get_Draygon(word!(game.cur_enemy_index) as i32, game)).var_A = *jp;
+        (*Get_Draygon(word!(game.cur_enemy_index) as i32, game)).var_A = jp.word(0);
     };
     [10873034] Draygon_Instr_29 [jp.offset(1)] {
-        let v2: u16 = *jp;
+        let v2: u16 = jp.word(0);
         word_transfers!(game, ascending, 16;
             le(palette_buffer, 144) <- rom(0xa5e3f9, (v2 as i32 >> 1)),
         );
@@ -1516,7 +1517,7 @@ crate::game::callback_dispatch! {
         );
     };
     [10873116] Draygon_Instr_19 [jp.offset(1)] {
-        let v2: u16 = *jp;
+        let v2: u16 = jp.word(0);
         word_transfers!(game, ascending, 16;
             le(target_palettes, 144) <- rom(0xa5e3f9, (v2 as i32 >> 1)),
         );

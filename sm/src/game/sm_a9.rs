@@ -1,3 +1,4 @@
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
 use crate::game::enemy_population_ram::spawn_enemy;
@@ -3639,9 +3640,9 @@ pub unsafe fn ShitroidInCutscene_UpdateSpeedAndAngle(
     let E = Get_ShitdroidInCutscene(k as i32, game);
     crate::game::sm_a6::steer_enemy_speed_and_angle!(r22, E, r18, r20);
 }
-crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16) -> *const u16;
-    Shitroid_Instr_1 [addr_kShitroid_Ilist_CFA2 as i32 as usize as *const u16] { };
-    Shitroid_Instr_2 [addr_kShitroid_Ilist_CFB8 as i32 as usize as *const u16] { };
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: EnemyScript) -> EnemyScript;
+    Shitroid_Instr_1 [EnemyScript::jump(addr_kShitroid_Ilist_CFA2 as u16)] { };
+    Shitroid_Instr_2 [EnemyScript::jump(addr_kShitroid_Ilist_CFB8 as u16)] { };
 }
 pub unsafe fn MotherBrain_Pal_ProcessInvincibility(game: &mut Game) {
     if (*Get_MotherBrain(0i32, game)).var_00 == 4 {
@@ -4868,10 +4869,10 @@ pub unsafe fn Shitroid_HandleCrySoundEffect(k: u16, a: u16, game: &mut Game) -> 
     }
     a
 }
-crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: *const u16) -> *const u16;
-    Shitroid_Instr_3 [addr_kShitroid_Ilist_F90E as i32 as usize as *const u16] { };
-    Shitroid_Instr_4 [addr_kShitroid_Ilist_F924 as i32 as usize as *const u16] { };
-    Shitroid_Instr_6 [addr_kShitroid_Ilist_F93A as i32 as usize as *const u16] { };
+crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: EnemyScript) -> EnemyScript;
+    Shitroid_Instr_3 [EnemyScript::jump(addr_kShitroid_Ilist_F90E as u16)] { };
+    Shitroid_Instr_4 [EnemyScript::jump(addr_kShitroid_Ilist_F924 as u16)] { };
+    Shitroid_Instr_6 [EnemyScript::jump(addr_kShitroid_Ilist_F93A as u16)] { };
 }
 
 crate::game::callback_dispatch! {
@@ -5265,9 +5266,9 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); core::ptr::null::<u16>() };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11136208] sub_A9ECD0 [] {
         let mut v2: u16 = ((0xa9d910i32) as u16);
         let E = Get_DeadMonsters(k as i32, game);
@@ -5279,16 +5280,16 @@ crate::game::callback_dispatch! {
     };
     [11139476] Shitroid_Instr_5 [] {
         if (word!(game.random_number) & 0x8000) == 0 {
-            return *jp as usize as *const u16;
+            return EnemyScript::jump(jp.word(0));
         }
         QueueSfx2_Max6(0x52, game);
         jp.offset(1)
     };
     @functions [pub unsafe fn (
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     game: &mut Game,
-) -> *const u16];
+) -> EnemyScript];
     [11113910] MotherBrain_Instr_MoveBodyUp10Left4 [jp] {
         MotherBrain_MoveBodyDownScrollLeft(4, 0xfff6, game);
     };
@@ -5312,7 +5313,7 @@ crate::game::callback_dispatch! {
         (*E).base.x_pos = (*E).base.x_pos.wrapping_add(1);
         MotherBrain_MoveBodyDown(0xfffe, game);
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11113996] MotherBrain_Instr_MoveRight2 [jp] {
         let E = Get_MotherBrain(0, game);
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(2);
@@ -5321,9 +5322,9 @@ crate::game::callback_dispatch! {
     [11114012] MotherBrain_Instr_MoveUp1 [jp] { MotherBrain_MoveBodyDown(1, game); };
     @functions [pub unsafe fn (
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     game: &mut Game,
-) -> *const u16];
+) -> EnemyScript];
     [11114018] MotherBrain_Instr_MoveUp1Right3_Sfx [jp] {
         MotherBrain_FootstepEffect(game);
         let E = Get_MotherBrain(0, game);
@@ -5335,7 +5336,7 @@ crate::game::callback_dispatch! {
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(15);
         MotherBrain_MoveBodyDown(0xfffe, game);
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11114056] MotherBrain_Instr_Down4Right6 [jp] {
         let E = Get_MotherBrain(0, game);
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(6);
@@ -5348,9 +5349,9 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     game: &mut Game,
-) -> *const u16];
+) -> EnemyScript];
     [11114088] MotherBrain_Instr_Up2Left1_Sfx [jp] {
         MotherBrain_FootstepEffect(game);
         let E = Get_MotherBrain(0, game);
@@ -5363,7 +5364,7 @@ crate::game::callback_dispatch! {
         (*E).base.x_pos = (*E).base.x_pos.wrapping_sub(1);
         MotherBrain_MoveBodyDown(2, game);
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11114132] MotherBrain_Instr_MoveLeft2 [jp] {
         let E = Get_MotherBrain(0, game);
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(2);
@@ -5372,9 +5373,9 @@ crate::game::callback_dispatch! {
     [11114148] MotherBrain_Instr_MoveDown1 [jp] { MotherBrain_MoveBodyDown(0xffff, game); };
     @functions [pub unsafe fn (
     k: u16,
-    jp: *const u16,
+    jp: EnemyScript,
     game: &mut Game,
-) -> *const u16];
+) -> EnemyScript];
     [11114154] MotherBrain_Instr_MoveDown1Left3 [jp] {
         let E = Get_MotherBrain(0, game);
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(3);
@@ -5413,10 +5414,10 @@ crate::game::callback_dispatch! {
     [11115208] MotherBrain_Instr_SpawnEprojToOffset [jp.offset(3)] {
         let E = Get_MotherBrain(0, game);
         game.eproj_spawn_pt = Point16U {
-            x: (((*E).base.x_pos).wrapping_add(*jp)),
-            y: (((*E).base.y_pos).wrapping_add(*jp.offset(1))),
+            x: (((*E).base.x_pos).wrapping_add(jp.word(0))),
+            y: (((*E).base.y_pos).wrapping_add(jp.word(2))),
         };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, *jp.offset(2), game);
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, jp.word(4), game);
     };
     [11115247] MotherBrain_Instr_SpawnDeathBeamEproj [jp] {
         QueueSfx2_Max6(0x63, game);

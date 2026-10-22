@@ -49,10 +49,6 @@ pub const NULL: *mut c_void = null_mut::<c_void>();
 const RomPtr_86: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x86>;
 use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 #[inline]
-unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
-    RomPtr((((bank as i32) << 16i32) + 0x8000i32) as u32, game).offset(-(0x8000i32 as isize))
-}
-#[inline]
 unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
     RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
@@ -182,9 +178,6 @@ crate::game::constants::typed_constants! { u32;
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
-}
-pub unsafe fn EnemyInstr_Goto(_k: u16, jp: *const u16) -> *const u16 {
-    *jp as usize as *const u16
 }
 static kRoomShakes: [u16; 144] = [
     1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0,
@@ -422,114 +415,6 @@ crate::game::address_dispatch! {
         0xa80000..=0xa8ffff => [sm_a8::DispatchEnemyPreInstr(ea, k, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyPreInstr(ea, k, game)];
         0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyPreInstr(ea, k, game)];
-    }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 => ea;
-    call (k, j, game); default {
-            Unreachable(game);
-            null::<u16>()
-        };
-    @functions [pub fn (k: u16, _jp: *const u16, game: &mut Game) -> *const u16];
-    [10846332 | 11174012] EnemyInstr_StopScript [] {
-        let properties = game.enemy_instructions(k).properties() | kEnemyProps_Deleted as u16;
-        game.enemy_instructions(k).set_properties(properties);
-        core::ptr::null()
-    };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
-    [10649872 | 10846480 | 10977552 | 11043088 | 11174160 | 11698448 | 11763984]
-    EnemyInstr_DecTimerAndGoto [] {
-        let timer = game.enemy_instructions(k).timer();
-        let decremented = game.enemy_instructions(k).timer().wrapping_sub(1);
-        game.enemy_instructions(k).set_timer(decremented);
-        if timer == 1 {
-            jp.add(1)
-        } else {
-            EnemyInstr_Goto(k, jp)
-        }
-    };
-    [10649891 | 10846499 | 10977571 | 11043107 | 11174179 | 11698467 | 11764003]
-    EnemyInstr_SetTimer [jp.add(1)] { game.enemy_instructions(k).set_timer(*jp); };
-    [10649903 | 10715439 | 10780975 | 10846511 | 10912047 | 10977583 | 11043119 | 11108655 | 11174191 | 11698479 | 11764015]
-    EnemyInstr_Sleep [core::ptr::null()] {
-        let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
-        let instruction = (jp as *const u8).sub(2).offset_from(base_ptr) as u16;
-        game.enemy_instructions(k)
-            .set_current_instruction(instruction);
-    };
-    [10846522 | 11174202 | 11698490] EnemyInstr_WaitNframes [core::ptr::null()] {
-        let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
-        game.enemy_instructions(k).set_instruction_timer(*jp);
-        let instruction = (jp as *const u8).add(2).offset_from(base_ptr) as u16;
-        game.enemy_instructions(k)
-            .set_current_instruction(instruction);
-    };
-    @functions [pub unsafe fn (_k: u16, jp: *const u16, game: &mut Game) -> *const u16];
-    [11174219] EnemyInstr_CopyToVram [] {
-        let tail = game.vram_write_queue_tail();
-        let cursor = game.vram_write_queue_tail();
-        let source = jp as *const u8;
-        let word = (source as *const u16).read_unaligned();
-        game.write_vram_queue_word(cursor, 0, word);
-        let word = (source.add(2) as *const u16).read_unaligned();
-        game.write_vram_queue_word(cursor, 2, word);
-        let word = (source.add(3) as *const u16).read_unaligned();
-        game.write_vram_queue_word(cursor, 3, word);
-        let word = (source.add(5) as *const u16).read_unaligned();
-        game.write_vram_queue_word(cursor, 5, word);
-        game.set_vram_write_queue_tail(tail.wrapping_add(7));
-        (jp as usize).wrapping_add(7) as *const u16
-    };
-    @functions [pub fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
-    [10649971 | 10715507 | 11043187] EnemyInstr_EnableOffScreenProcessing [] {
-        let properties = game.enemy_instructions(k).properties() | 0x800;
-        game.enemy_instructions(k).set_properties(properties);
-        jp
-    };
-    @functions [pub fn (
-    k: u16,
-    jp: *const u16,
-    game: &mut Game,
-) -> *const u16];
-    [10649981 | 10715517 | 11043197] EnemyInstr_DisableOffScreenProcessing [] {
-        let properties = game.enemy_instructions(k).properties() & !0x800;
-        game.enemy_instructions(k).set_properties(properties);
-        jp
-    };
-    @external {
-        10649837 => [EnemyInstr_Goto(k, j)];
-        10651845 => [sm_a2::BouncingGoofball_Instr_88C5(k, j)];
-        10715373 => [EnemyInstr_Goto(k, j)];
-        10716899 => sm_a3::Waver_Instr_1;
-        10780909 => [EnemyInstr_Goto(k, j)];
-        10846445 => [EnemyInstr_Goto(k, j)];
-        10911981 => [EnemyInstr_Goto(k, j)];
-        10977517 => [EnemyInstr_Goto(k, j)];
-        10991155 => [sm_a7::Kraid_Instr_1(k, j)];
-        11043053 => [EnemyInstr_Goto(k, j)];
-        11056990 => [sm_a8::Beetom_Instr_1(k, j)];
-        11062987 => [sm_a8::WreckedShipRobot_Instr_7(k, j)];
-        11063490 => [sm_a8::WreckedShipRobot_Instr_10(k, j)];
-        11128756 => [sm_a9::Shitroid_Instr_1(k, j)];
-        11128778 => [sm_a9::Shitroid_Instr_2(k, j)];
-        11139360 => [sm_a9::Shitroid_Instr_3(k, j)]; 11139382 => [sm_a9::Shitroid_Instr_4(k, j)];
-        11139472 => [sm_a9::Shitroid_Instr_6(k, j)];
-        11174125 => [EnemyInstr_Goto(k, j)];
-        11190984 => [sm_aa::Torizo_Instr_7(k, j)];
-        11196831 => [sm_aa::Shaktool_Instr_6(k, j)];
-        11698413 => [EnemyInstr_Goto(k, j)];
-        11763949 => [EnemyInstr_Goto(k, j)];
-        0xa20000..=0xa2ffff => [sm_a2::DispatchEnemyInstr(ea, k, j, game)];
-        0xa30000..=0xa3ffff => [sm_a3::DispatchEnemyInstr(ea, k, j, game)];
-        0xa40000..=0xa4ffff => [sm_a4::DispatchEnemyInstr(ea, k, j, game)];
-        0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyInstr(ea, k, j, game)];
-        0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyInstr(ea, k, j, game)];
-        0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyInstr(ea, k, j, game)];
-        0xa80000..=0xa8ffff => [sm_a8::DispatchEnemyInstr(ea, k, j, game)];
-        0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
-        0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyInstr(ea, k, j, game)];
-        0xb20000..=0xb2ffff => [sm_b2::DispatchEnemyInstr(ea, k, j, game)];
-        0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyInstr(ea, k, j, game)];
     }
 }
 pub unsafe fn DecrementSamusTimers(game: &mut Game) {
@@ -2268,56 +2153,6 @@ pub fn IsEnemyLeavingScreen(k: u16, game: &mut Game) -> u8 {
         .wrapping_sub(game.layer1_x_pos());
     let past_screen = edge.wrapping_sub(256).wrapping_sub(enemy.x_width());
     u8::from((edge as i16) < 0 || (past_screen as i16) >= 0)
-}
-pub unsafe fn ProcessEnemyInstructions(game: &mut Game) {
-    // Callbacks may change the current index; animation writes retain this slot.
-    let index = game.cur_enemy_index();
-    if game.enemy_instructions(index).ai_handler_bits() & 4 != 0 {
-        return;
-    }
-    let timer = game.enemy_instructions(index).instruction_timer();
-    let decremented = game
-        .enemy_instructions(index)
-        .instruction_timer()
-        .wrapping_sub(1);
-    game.enemy_instructions(index)
-        .set_instruction_timer(decremented);
-    if timer != 1 {
-        let properties = game.enemy_instructions(index).extra_properties() & !0x8000;
-        game.enemy_instructions(index)
-            .set_extra_properties(properties);
-        return;
-    }
-    if game.enemy_instructions(index).current_instruction() & 0x8000 == 0 {
-        crate::native_assertion! {
-            @failure
-            b"E->current_instruction & 0x8000\0", b"src/sm_a0.c\0", 3399,
-            b"void ProcessEnemyInstructions(void)\0"
-        };
-    }
-    let base_ptr = RomBankBase(game.enemy_instructions(index).bank(), game);
-    let mut pc = base_ptr.add(usize::from(
-        game.enemy_instructions(index).current_instruction(),
-    )) as *const u16;
-    while *pc & 0x8000 != 0 {
-        let address = (u32::from(game.enemy_instructions(index).bank()) << 16) | u32::from(*pc);
-        pc = CallEnemyInstr(address, game.cur_enemy_index(), pc.add(1), game);
-        if pc.is_null() {
-            return;
-        }
-        if (pc as usize) < 0x10000 {
-            pc = base_ptr.add(pc as usize) as *const u16;
-        }
-    }
-    game.enemy_instructions(index).set_instruction_timer(*pc);
-    game.enemy_instructions(index)
-        .set_spritemap_pointer(*pc.add(1));
-    let instruction = (pc as *const u8).add(4).offset_from(base_ptr) as u16;
-    game.enemy_instructions(index)
-        .set_current_instruction(instruction);
-    let properties = game.enemy_instructions(index).extra_properties() | 0x8000;
-    game.enemy_instructions(index)
-        .set_extra_properties(properties);
 }
 unsafe fn EnemyBlockCollReact_Spike(_collision: &mut EnemyBlockCollInfo, game: &mut Game) -> u8 {
     let behavior = game.current_block_bts() & 0x7f;

@@ -1,3 +1,4 @@
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
 use crate::game::decompression::decompress_to_ram;
@@ -554,7 +555,7 @@ pub unsafe fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
         v0 = (v0).wrapping_add(2);
     }
 }
-pub fn Kraid_Instr_1(k: u16, jp: *const u16) -> *const u16 {
+pub fn Kraid_Instr_1(k: u16, jp: EnemyScript) -> EnemyScript {
     jp
 }
 pub unsafe fn KraidLintCommon_Main(k: u16, game: &mut Game) {
@@ -2981,11 +2982,11 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); core::ptr::null::<u16>() };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10977418] EnemyInstr_Call_A7 [] {
-        CallEnemyInstrExtFunc(((*jp) as u32) | (0xa70000u32), k, game);
+        CallEnemyInstrExtFunc(((jp.word(0)) as u32) | (0xa70000u32), k, game);
         jp.offset(1)
     };
     [10979983] Kraid_Instr_9 [] {
@@ -2995,12 +2996,12 @@ crate::game::callback_dispatch! {
         {
             let E1 = Get_Kraid(0x40, game);
             if (*E1).base.current_instruction as i32 + 0x75bf & 0x8000 != 0 {
-                return addr_kKraid_Ilist_8A41 as i32 as usize as *const u16;
+                return EnemyScript::jump(addr_kKraid_Ilist_8A41 as u16);
             }
         }
         jp
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10991158] Kraid_Instr_DecYpos [jp] {
         let E = Get_Kraid(0, game);
         (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);

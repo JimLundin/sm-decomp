@@ -1,3 +1,4 @@
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
 use crate::game::enemy_population_ram::spawn_enemy;
@@ -3804,7 +3805,7 @@ pub unsafe fn Ridley_Func_129(game: &mut Game) {
         SpawnEprojWithRoomGfx(0xe509, v2, game);
     }
 }
-pub unsafe fn Ridley_E90C(k: u16, jp: *const u16, a: u16, game: &mut Game) -> *const u16 {
+pub unsafe fn Ridley_E90C(k: u16, jp: EnemyScript, a: u16, game: &mut Game) -> EnemyScript {
     word!(game.cinematic_var9 = a);
     let E = Get_Ridley(0, game);
     SpawnEprojWithRoomGfx(0x9642, (*E).var_10, game);
@@ -3854,12 +3855,12 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [10942373] CeresDoor_Func_4 [] {
-        CeresSteam_Instr_5(word!(game.cur_enemy_index), null::<u16>(), game);
+        CeresSteam_Instr_5(word!(game.cur_enemy_index), EnemyScript::Stop, game);
         if word!(game.ceres_status) & 1 != 0 {
             (*Get_CeresDoor(word!(game.cur_enemy_index) as i32, game))
                 .base
                 .palette_index = 3584;
-            CeresDoor_Instr_2(word!(game.cur_enemy_index), null::<u16>(), game);
+            CeresDoor_Instr_2(word!(game.cur_enemy_index), EnemyScript::Stop, game);
         }
     };
     [10942544] CeresDoor_Func_7 [] {
@@ -4458,11 +4459,11 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); core::ptr::null::<u16>() };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10915247] FireGeyser_Instr_1 [jp] { QueueSfx2_Max6(0x61, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10915347]
     FireGeyser_Instr_2 [jp] { set_fire_geyser_shape(g_word_A68DBB, g_word_A68DE7, true, game); };
     [10915373]
@@ -4516,7 +4517,7 @@ crate::game::callback_dispatch! {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
         (*E1).base.properties = ((*E1).base.properties) | (0x400u16);
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10918694] FakeKraid_Instr_2 [jp] {
         let E = Get_FakeKraid(word!(game.cur_enemy_index) as i32, game);
         if (*E).var_E != 0 {
@@ -4547,21 +4548,21 @@ crate::game::callback_dispatch! {
             if ((*E).var_C & 0x8000) != 0 {
                 if ((*Get_FakeKraid(word!(game.cur_enemy_index) as i32, game)).var_B & 0x8000) == 0
                 {
-                    return addr_stru_A699C6 as i32 as usize as *const u16;
+                    return EnemyScript::jump(addr_stru_A699C6 as u16);
                 }
-                addr_stru_A699AE as i32 as usize as *const u16
+                EnemyScript::jump(addr_stru_A699AE as u16)
             } else {
                 if ((*E).var_B & 0x8000) != 0 {
-                    return addr_stru_A69A14 as i32 as usize as *const u16;
+                    return EnemyScript::jump(addr_stru_A69A14 as u16);
                 }
-                addr_stru_A699FC as i32 as usize as *const u16
+                EnemyScript::jump(addr_stru_A699FC as u16)
             }
         } else {
             (*E).var_E = ((word!(game.random_number) as i32 & 3) + 3) as u16;
             if ((*E).var_C & 0x8000) != 0 {
-                return addr_kFakeKraid_Ilist_99DC as i32 as usize as *const u16;
+                return EnemyScript::jump(addr_kFakeKraid_Ilist_99DC as u16);
             }
-            addr_kFakeKraid_Ilist_9A2A as i32 as usize as *const u16
+            EnemyScript::jump(addr_kFakeKraid_Ilist_9A2A as u16)
         }
     };
     [10918834] FakeKraid_Instr_3 [jp] {
@@ -4570,15 +4571,15 @@ crate::game::callback_dispatch! {
         }
     };
     [10918852] FakeKraid_Instr_4 [jp] { FakeKraid_InstrHelper_45(k, 0, 0xfffc, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10918914] FakeKraid_Instr_5 [jp] { FakeKraid_InstrHelper_45(k, 8, 4, game); };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10937534] Ridley_Instr_5 [jp] {
         (*Get_Ridley(0, game)).var_0F = 89;
         QueueSfx2_Max6(0x59, game);
     };
     [10937546] Ridley_Instr_6 [jp] { (*Get_Ridley(0, game)).var_0F = 0; };
-    [10937554] Ridley_Instr_10 [*jp as usize as *const u16] {
+    [10937554] Ridley_Instr_10 [EnemyScript::jump(jp.word(0))] {
         if word!(game.area_index) == 2
             || word!(game.samus_health) as i32 - 30i32 & 0x8000 == 0
         {
@@ -4588,34 +4589,34 @@ crate::game::callback_dispatch! {
     };
     [10937582] Ridley_Instr_4 [] {
         if (*Get_Ridley(0, game)).var_1B != 0 {
-            *jp as usize as *const u16
+            EnemyScript::jump(jp.word(0))
         } else {
-            *jp.offset(1) as usize as *const u16
+            EnemyScript::jump(jp.word(2))
         }
     };
     [10937592] Ridley_Instr_3 [] {
         if (*Get_Ridley(0, game)).var_1B != 0 {
             jp.offset(1)
         } else {
-            *jp as usize as *const u16
+            EnemyScript::jump(jp.word(0))
         }
     };
     [10937601] Ridley_Instr_2 [jp.offset(1)] {
         word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
         word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
-        (*Get_Ridley(0, game)).var_1D = *jp;
+        (*Get_Ridley(0, game)).var_1D = jp.word(0);
     };
     [10937623] Ridley_Instr_1 [] {
         if (*Get_Ridley(0, game)).var_10 != 0 {
-            *jp as usize as *const u16
+            EnemyScript::jump(jp.word(0))
         } else {
             jp.offset(1)
         }
     };
     [10937631] Ridley_Instr_14 [jp.offset(2)] {
         let E = Get_Ridley(0, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp);
-        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(*jp.offset(1));
+        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(jp.word(0));
+        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(jp.word(2));
     };
     [10938140] Ridley_Instr_9 [jp] { (*Get_Ridley(0, game)).var_10 = 0; Ridley_Func_96(game); };
     [10938151] Ridley_Instr_7 [jp] { (*Get_Ridley(0, game)).var_10 = 1; };
@@ -4652,13 +4653,13 @@ crate::game::callback_dispatch! {
         (*E).var_19 = Math_MultBySin(0x500, r18);
         (*E).var_1A = Math_MultByCos(0x500, r18);
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let E = Get_Ridley(0, game); };
     [10938729]
     Ridley_Instr_15 [jp] {  (*E).var_A = ((0xa6a6afi32) as u16); (*E).var_C = -352i32 as u16; };
     [10938742]
     Ridley_Instr_16 [jp] {  (*E).var_A = ((0xa6b2f3i32) as u16); (*E).var_C = -352i32 as u16; };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10940701] CeresSteam_Instr_1 [jp] {
         let E = Get_CeresSteam(k as i32, game);
         (*E).base.properties = ((*E).base.properties as i32
@@ -4666,11 +4667,11 @@ crate::game::callback_dispatch! {
             as u16;
     };
     [10940711]
-    CeresSteam_Instr_2 [CeresSteam_Instr_3(k, RomPtr_A6(*jp.offset(1), game) as *mut u16, game)] {
+    CeresSteam_Instr_2 [CeresSteam_Instr_3(k, { let record = crate::rtl::rom_record(0xa6, jp.word(2), game); EnemyScript::at(record.image, record.base) }, game)] {
         let E = Get_CeresSteam(k as i32, game);
         crate::update_place! { previous fresh0 = (*E).var_D => (*E).var_D.wrapping_sub(1); }
         if fresh0 != 1 {
-            return *jp as usize as *const u16;
+            return EnemyScript::jump(jp.word(0));
         }
     };
     [10940725] CeresSteam_Instr_3 [jp] {
@@ -4682,7 +4683,7 @@ crate::game::callback_dispatch! {
         if abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos))) >= 0x30
             || abs16(((*E).base.y_pos).wrapping_sub(word!(game.samus_y_pos))) >= 0x30
         {
-            *jp as usize as *const u16
+            EnemyScript::jump(jp.word(0))
         } else {
             jp.offset(1)
         }
@@ -4691,17 +4692,17 @@ crate::game::callback_dispatch! {
         if *(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 1 != 0 {
             jp.offset(1)
         } else {
-            *jp as usize as *const u16
+            EnemyScript::jump(jp.word(0))
         }
     };
     [10942072] CeresDoor_Instr_8 [] {
         if word!(game.ceres_status) != 0 {
             jp.offset(1)
         } else {
-            *jp as usize as *const u16
+            EnemyScript::jump(jp.word(0))
         }
     };
-    @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10942091] CeresSteam_Instr_4 [jp] {
         let E = Get_CeresSteam(k as i32, game);
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
@@ -4723,7 +4724,7 @@ crate::game::callback_dispatch! {
         (*E).base.properties = ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
     };
     [10942141] CeresDoor_Instr_7 [jp] { QueueSfx3_Max6(0x2c, game); };
-    @forward [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
+    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10938628] Ridley_Instr_12 => Ridley_E90C(k, jp, 0, game);
     [10938633] Ridley_Instr_13 => Ridley_E90C(k, jp, 0xe, game);
 }
