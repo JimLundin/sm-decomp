@@ -23,7 +23,7 @@ pub use crate::types::{
     ExpandingSquareTransitionHdma, ExtendedSpriteMap, ExtraEnemyRam7800, ExtraEnemyRam8000,
     Func_U8, Func_V, Func_Y_V, Func_Y_Y, Hitbox, LongPtr, MapIconDataPointers, MapScrollArrowData,
     OamEnt, PairU16, Pair_Bool_Amt, Point16U, Point32, Ram3000, Ram3800, Ram4000, Ram8000_Default,
-    Rect16U, RoomDefHeader, RoomDefRoomstate, RoomPlmEntry, SamusPose, SamusPoseParams, SnesRegs,
+    Rect16U, RoomDefHeader, RoomDefRoomstate, SamusPose, SamusPoseParams, SnesRegs,
     SpawnHardcodedPlmArgs, SpawnHdmaObject_Args, StartDmaCopy, TileTable, TileTables, VoidP,
     VramWriteEntry, Vulnerability,
 };

@@ -15,7 +15,7 @@ pub use crate::game::constants::bank_82::*;
 pub use crate::game::constants::bank_8f::*;
 
 use crate::game::message_boxes;
-use crate::game::progress_flags::{CheckEventHappened, PrepareBitAccess};
+use crate::game::progress_flags::CheckEventHappened;
 use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
 use crate::game::sm_80::{
     memset7E, CalculateLayer2PosAndScrollsWhenScrolling, ClearOamExt, ClearTimerRam,
@@ -31,7 +31,7 @@ use crate::game::sm_80::{
 use crate::game::sm_81::{
     DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,
 };
-use crate::game::plm_spawning::SpawnRoomPLM;
+use crate::game::plm_spawning::close_door;
 use crate::game::sm_84::{
     ClearPLMs, ClearSoundsWhenGoingThroughDoor, EnablePLMs, PlaySpinJumpSoundIfSpinJumping,
     PlmHandler_Async,
@@ -77,10 +77,6 @@ crate::typed_struct! {
         #[derive(Copy, Clone)]
         #[repr(C, packed)]
     ];
-    pub struct PlmHeader_Size6 {
-        pub func_ptr, instr_list_1_ptr, instr_list_2_ptr: VoidP;
-    }
-
     pub struct DemoRoomData {
         pub room_ptr_: VoidP;
         pub door_ptr, door_slot, screen_x_pos, screen_y_pos, samus_x_offs, samus_y_offs,
@@ -137,10 +133,6 @@ crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
 }
 #[inline]
-unsafe fn get_DoorDef(a: u16, game: &mut Game) -> *mut DoorDef {
-    RomPtr((0x830000u32) | ((a) as u32), game) as *mut DoorDef
-}
-#[inline]
 unsafe fn get_RoomDefHeader(a: u16, game: &mut Game) -> *mut RoomDefHeader {
     RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefHeader
 }
@@ -155,10 +147,6 @@ unsafe fn get_EnemyTileset(a: u16, game: &mut Game) -> *mut EnemyTileset {
 #[inline]
 unsafe fn get_DemoRoomData(a: u16, game: &mut Game) -> *mut DemoRoomData {
     RomPtr((0x820000u32) | ((a) as u32), game) as *mut DemoRoomData
-}
-#[inline]
-unsafe fn get_PlmHeader_Size6(a: u16, game: &mut Game) -> *mut PlmHeader_Size6 {
-    RomPtr((0x840000u32) | ((a) as u32), game) as *mut PlmHeader_Size6
 }
 crate::game::constants::typed_constants! { u32;
     fnDoorTransitionFunction_HandleElevator = 8577405,
@@ -3864,7 +3852,7 @@ crate::game::callback_dispatch! {
             ClearPLMs(game);
             initialize_door_objects(game);
             LoadFXHeader(game);
-            SpawnDoorClosingPLM(game);
+            close_door(game);
             UpdateBeamTilesAndPalette(game);
             LoadColorsForSpritesBeamsAndEnemies(game);
             LoadEnemies(game);
@@ -4050,56 +4038,6 @@ pub unsafe fn LoadCRETilesTilesetTilesAndPalette(game: &mut Game) {
     decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c6)), 0xc200, game);
 }
 
-pub unsafe fn SpawnDoorClosingPLM(game: &mut Game) {
-    if CheckIfColoredDoorCapSpawned(game) == 0 {
-        let v0 = RomPtr_8F(
-            (2 * word!(game.door_direction) as i32 + addr_kDoorClosingPlmIds as i32) as u16,
-            game,
-        ) as *const u16;
-        if *v0 != 0 {
-            let rp: *mut RoomPlmEntry = ram_ptr!(game, RoomPlmEntry; 0x12);
-            (*rp).plm_header_ptr_ = *v0;
-            *(&raw mut (*rp).x_block as *mut u16) = *(&raw mut (*(get_DoorDef
-                as unsafe fn(u16, &mut Game) -> *mut DoorDef)(
-                word!(game.door_def_ptr), game
-            ))
-            .x_pos_plm as *mut u16);
-            (*rp).plm_room_argument = 0;
-            SpawnRoomPLM(0x12, game);
-        }
-    }
-}
-pub unsafe fn CheckIfColoredDoorCapSpawned(game: &mut Game) -> u8 {
-    let DD = get_DoorDef(word!(game.door_def_ptr), game);
-    let v2: u16 = (2
-        * (Mult8x8((*DD).y_pos_plm, word!(game.room_width_in_blocks) as u8) as i32
-            + (*DD).x_pos_plm as i32)) as u16;
-    let mut v3: u16 = 78;
-    while v2 != word!(game.plm_block_indices[(v3 >> 1)]) {
-        v3 = (v3).wrapping_sub(2);
-        if (v3 & 0x8000) != 0 {
-            return 0;
-        }
-    }
-    let v5: i32 = v3 as i32 >> 1;
-    if word!(game.plm_header_ptr[v5]) == 0 {
-        return 0;
-    }
-    let v6: i16 = word!(game.plm_room_arguments[v5]) as i16;
-    if v6 >= 0 {
-        let idx: i32 = PrepareBitAccess(v6 as u16, game) as i32;
-        if (word!(game.bitmask) & *ram_ptr!(game; 0xd8b0, idx as isize) as u16) != 0 {
-            return 0;
-        }
-    }
-    word!(game.plm_instruction_timer[v5] = 1);
-    let v8: u16 = word!(game.plm_header_ptr[v5]);
-    if v8 == 0 {
-        return 0;
-    }
-    word!(game.plm_instr_list_ptrs[v5] = (*get_PlmHeader_Size6(v8, game)).instr_list_2_ptr);
-    1
-}
 static kGameOptionsMenuFuncs: [Func_V; 13] = callback_table! { nonnull Func_V;
     GameOptionsMenuFunc_0, GameOptionsMenu_1_LoadingOptionsScreen,
     GameOptionsMenu_2_FadeInOptionsScreen, GameOptionsMenu_3_OptionsScreen,

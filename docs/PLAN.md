@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,509 Rust lines in 114 files**, plus 262 C
-bridge and 296 C-header lines = **96,067 maintained implementation lines**.
+Current composition (2026-10-22): **95,492 Rust lines in 114 files**, plus 262 C
+bridge and 296 C-header lines = **96,050 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,898**. This complete recount includes frontend,
+gives **96,881**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2807,6 +2807,30 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    8,250-frame prefix before these loaders; no wider route or credits is claimed.
    Normal library/frontend/verifier builds, source/native checks, formatting
    and progress pass. Checks: Local/sm-decomp-experiments/20261022/room-content-loading.
+   Door closing now belongs to `plm_spawning`. Checked slot/flag/timer selection
+   forbids unsafe code; checked records and ordered scratch stores replace its
+   raw door/header/table/RAM access. The first matching block still wins even
+   if its slot is empty; the header is reread after timer reset, and fallback
+   spawning reacquires the live door after writing the scratch header. Two bank
+   routines, two pointer helpers and two unused record types retire. Complete
+   savings: **17 Rust lines**, three counted unsafe declarations and five cast
+   lines. RAM remains authoritative; native diagnostics and PLM setup stay unsafe.
+   **351 actual old/new full-state comparisons**, 1,397 ordered full-RAM snapshots,
+   172 actual setup calls and 35 matching controlled failures pass. Cases cover
+   first-match/empty/duplicate/full slots, broad geometry and opened-door flags,
+   unaligned/bank-edge records, table-address wrapping, live header/scratch reads,
+   ROM replacement and partial writes. Nineteen candidate-only short-record
+   cases check bounds and retained effects. All 121 library inputs per side and
+   four fixture inputs are checked; native diagnostic output matches as well.
+   Removing the unused shared type invalidates checkpoint/native source stamps;
+   the native dependency is refreshed and a guarded boot prefix passes **11,540/0**,
+   establishing no door-closing calls before its new checkpoint. Probed and clean
+   first-door segments each pass **90/0**, inputs **11540..11629**. Closing selects
+   the fallback/zero-header branch at 11546; fade completes at 11627, then two
+   further frames. Reactivating colored caps and spawning nonzero closing objects
+   have component coverage only; no wider route or credits coverage is claimed.
+   Normal library/frontend/verifier builds, source/native checks, formatting and
+   progress pass. Checks: Local/sm-decomp-experiments/20261022/door-closing.
    Event/boss flag access and shared bit-mask preparation now live in the safe
    `progress_flags` module, which forbids unsafe code. All 15 caller files import
    it directly; the six bank-80 definitions are retired. Queries retain their
@@ -3930,14 +3954,18 @@ owned native-player RAM with named field transfers, DSP RAM ownership and typed
 stereo output, checked tracing, owned room-background records, checked palette
 execution, shared effect ROM records, checked animated tiles, safe progress flags,
 owned room metadata, checked door metadata, shared scroll loading, shared PLM
-spawning and room-content loading, maintained Rust is **95,509**, with applicable static, component and
-exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,067**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,898**.
+spawning, room-content loading and door closing, maintained Rust is **95,492**,
+with applicable static, component and exercised movie checks passing.
+Including 262 C and 296 header lines gives **96,050**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,881**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2992; cast lines 6509. Shared room-content loading removes seven Rust lines,
+unsafe functions 2989; cast lines 6504. Checked door closing removes 17 Rust lines,
+three counted unsafe declarations and five cast-containing lines. Raw door/header,
+table, scratch and slot accesses retire; slot/flag/timer selection forbids unsafe
+code. Native diagnostics and PLM setup remain unsafe. Other counters are unchanged.
+Shared room-content loading removes seven Rust lines,
 two counted unsafe declarations and four cast-containing lines. Its asset-pointer
 reader and array splitting forbid unsafe code; two raw memcpy calls and native
 pointer/list loads retire. Native diagnostics and actual setup callbacks remain

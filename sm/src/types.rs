@@ -169,12 +169,6 @@ crate::typed_struct! {
             bg_data_ptr, room_setup_code: VoidP;
     }
 
-    pub struct RoomPlmEntry {
-        pub plm_header_ptr_: VoidP;
-        pub x_block, y_block: u8;
-        pub plm_room_argument: u16;
-    }
-
     pub struct SamusPoseParams {
         pub pose_x_dir, movement_type, new_pose_unless_buttons, direction_shots_fired,
             y_offset_to_gfx, field_5, y_radius, field_7: u8;
