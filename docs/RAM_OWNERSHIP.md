@@ -190,13 +190,35 @@ must name which identity is retained and which is reloaded. The actual block
 collision routines perform movement, reactions and possible projectile death;
 they are not read-only geometry queries.[^shotcollision]
 
-**Enemy-hit protocol (source audit on `04859525`, not new execution coverage):**
+**Enemy-hit protocol (checked contact pass adopted; reactions remain legacy):**
 the ordinary and multibox enemy collision searches select the first eligible hit.
 They request shaking for a super missile, then mark the projectile's direction
 with `0x10` unless plasma penetration is allowed, publish the collision selector,
 and call the selected shot reaction. They return after that reaction; the enemy
 executor continues. The mark is visible to the reaction. It is not slot deletion.
 [^enemyshotsearch]
+
+The complete pass now uses `enemy_contact::process_contacts`. Its shot, bomb and
+Samus phases each capture the live enemy selector, while ordinary versus
+multi-hitbox selection is retained for the whole pass. The shared projectile
+scan preserves the four different entry gates and samples the bank before an
+ordinary shot-definition diagnostic. Hitbox diagnostics can change the live
+bank and positions while retained records still identify their original ROM
+allocation. Touch caches Samus bounds before the first map diagnostic, visits
+its first entry even for count zero, and wraps each entry address. Projectile
+map traversal is linear; shots use a byte count and bombs a native word.
+
+All seven entries retire from A0, with the scheduler calling the complete pass.
+Final actual-code checks pass **2,265 comparisons**, 2,036 ordered full-RAM and
+selected-ROM observations and 676 matching failures. Twelve truncated-record
+checks fail safely. Cases exercise count widths, wrapping traversal, first-hit
+selection, opposing inclusive edges, retained versus live selectors, stage/slot
+aliases and persistent shot/bomb/Samus sequences. Reactions are controlled
+boundaries; no movie, full enemy-reaction or gameplay-route coverage is claimed.
+Release and source/native checks pass. Complete cost is **+57 Rust lines**;
+this removes raw access in the pass, while state stays in RAM and native
+diagnostics/dispatch remain unsafe. Local reproduction:
+`Local/sm-decomp-experiments/20261022/enemy-contact`.
 
 Successful Reflec and reflecting Space Pirate reactions replace the direction
 word before calling `ProjectileReflection`, thereby removing that mark. Reflec
@@ -2793,7 +2815,7 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^missilelaunch]: [HudSelectionHandler_MissilesOrSuperMissiles](../sm/src/game/sm_90.rs#L2507); [accelerate_missile](../sm/src/game/projectile_flight.rs#L180).
 [^reflection]: [ProjectileReflection](../sm/src/game/sm_90.rs#L2460); [Reflec_Shot](../sm/src/game/sm_a3.rs#L1923); [Space Pirate reflection](../sm/src/game/sm_b2.rs#L97).
 [^launchmodel]: [LaunchMotion and typed inputs/output](../sm/src/game/launch_motion.rs); [transition serialization and initialization](../sm/src/game/launch_motion_ram.rs); migrated callers in [sm_90](../sm/src/game/sm_90.rs), symbols `record_movement` and `finish_projectile_phase`.
-[^enemyshotsearch]: [EprojCollHandler_Multibox](../sm/src/game/sm_a0.rs#L1486); [EprojCollHandler](../sm/src/game/sm_a0.rs#L1714); [EnemyCollisionHandler](../sm/src/game/sm_a0.rs#L1032).
+[^enemyshotsearch]: [projectile_contacts](../sm/src/game/enemy_contact.rs#L213); [projectile_hitbox](../sm/src/game/enemy_contact.rs#L340); [process_contacts](../sm/src/game/enemy_contact.rs#L63).
 [^shotretirement]: [ResetProjectileData](../sm/src/game/sm_90.rs#L1468); [ClearProjectile](../sm/src/game/sm_90.rs#L1504); [KillProjectile](../sm/src/game/sm_90.rs#L1566).
 [^shotimpact]: [start_impact](../sm/src/game/projectile_animation.rs#L102); [instruction_delete and advance](../sm/src/game/projectile_animation.rs#L185).
 [^bombowner]: [Bomb fuse and explosion](../sm/src/game/sm_90.rs#L2659); [Power Bomb fuse](../sm/src/game/sm_90.rs#L2676).

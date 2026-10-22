@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,234 Rust lines in 123 files**, plus 262 C
-bridge and 296 C-header lines = **96,792 maintained implementation lines**.
+Current composition (2026-10-22): **96,291 Rust lines in 124 files**, plus 262 C
+bridge and 296 C-header lines = **96,849 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,623**. This complete recount includes frontend,
+gives **97,680**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2654,6 +2654,22 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    broader ownership and unsafe-elimination goals remain open. Contracts and
    limits: RAM_OWNERSHIP.md, section 3. Local reproduction:
    Local/sm-decomp-experiments/20261022/standard-combat.
+   The complete per-enemy contact pass now belongs to `enemy_contact`, with its
+   scheduler caller migrated and all seven bank entries retired. Ordinary and
+   multi-hitbox shots/bombs share a scan; Samus contact retains its different
+   edge rules, byte count, mandatory first entry and wrapping record addresses.
+   Checked enemy handles and captured ROM records replace raw slot, spawn-field,
+   sprite-map and hitbox access. Geometry forbids unsafe code. Final checks pass
+   **2,265 old/new comparisons**, 2,036 ordered full-RAM/selected-ROM observations
+   and 676 matching failures, plus twelve checked short-record failures. Explicit
+   cases confirm shot/bomb/touch order, distinct inclusive edges and stage/slot
+   aliases. Release library/frontend/verifier and source/native checks pass.
+   No movie ran; AI/hitbox reactions are controlled component boundaries, so
+   gameplay-route and full reaction execution are not claimed. Complete cost is
+   **+57 Rust lines**, including shared helpers, caller and registrations.
+   RAM still owns persistent state; diagnostics and dispatch remain unsafe.
+   This is safety/responsibility work, not a volume reduction. Local reproduction:
+   Local/sm-decomp-experiments/20261022/enemy-contact.
    Enemy population creation now owns its search and multipart iteration state,
    with named room/dynamic initialization rules and checked RAM/ROM adapters.
    Room creation, dynamic spawning, graphics selection, spawn recording and linked
@@ -4423,15 +4439,21 @@ owned room metadata, checked door metadata, shared scroll loading, shared PLM
 spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
-owned enemy-script positions, checked enemy-definition records and standard combat,
-maintained Rust is **96,234**,
+owned enemy-script positions, checked enemy-definition records, standard combat and enemy contact,
+maintained Rust is **96,291**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,792**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,623**.
+Including 262 C and 296 header lines gives **96,849**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,680**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2956; cast lines 6335. Standard combat adds 175 Rust lines and
+unsafe functions 2959; cast lines 6271. Enemy contact adds 57 Rust lines and
+three counted unsafe declarations as named functions replace macro-generated
+bodies, while removing 64 cast-containing lines. Raw enemy/spawn fields and
+sprite-map/hitbox pointers retire in the contact pass; checked geometry forbids
+unsafe code. Native diagnostics and reaction dispatch remain unsafe. Other
+counters are unchanged. This is a safety cost, not a volume reduction.
+Standard combat adds 175 Rust lines and
 one counted unsafe helper declaration while removing 34 cast-containing lines.
 The helper replaces operations previously expanded through a death macro;
 this counter does not measure expanded operations. Raw slot/spawn-field access

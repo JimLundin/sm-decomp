@@ -220,6 +220,7 @@ pub(crate) enum EnemyField {
     X = core::mem::offset_of!(EnemyData, x_pos),
     Y = core::mem::offset_of!(EnemyData, y_pos),
     Width = core::mem::offset_of!(EnemyData, x_width),
+    Height = core::mem::offset_of!(EnemyData, y_height),
     Health = core::mem::offset_of!(EnemyData, health),
     Properties = core::mem::offset_of!(EnemyData, properties),
     ExtraProperties = core::mem::offset_of!(EnemyData, extra_properties),

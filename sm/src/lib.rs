@@ -399,6 +399,7 @@ pub mod game {
     pub mod enemy_animation;
     pub mod combat_rules;
     pub mod enemy_combat;
+    pub mod enemy_contact;
     pub mod waver;
 }
 

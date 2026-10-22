@@ -7,7 +7,7 @@ use crate::game::enemy_animation::advance_animation;
 use crate::game::enemy_ram::{native_write, EnemyField as F, EnemySlot};
 use crate::game::scene_drawing::queue_enemy;
 use crate::game::sm_a0::{
-    CallEnemyAi, EnemyCollisionHandler, EnemyWithNormalSpritesIsOffScreen,
+    CallEnemyAi, EnemyWithNormalSpritesIsOffScreen,
 };
 use crate::game::sprite_objects::update_sprites;
 use crate::game_state::Game;
@@ -182,7 +182,7 @@ unsafe fn process_enemy(enemy: EnemySlot, game: &mut Game) {
         } else if word!(game.debug_disable_sprite_interact) == 0 {
             if !frozen(game) {
                 unsafe {
-                    EnemyCollisionHandler(game);
+                    crate::game::enemy_contact::process_contacts(game);
                 }
                 if enemy.word(F::Definition, game) == 0 {
                     return;
