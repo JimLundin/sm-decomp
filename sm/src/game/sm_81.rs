@@ -179,24 +179,14 @@ pub unsafe fn PackMapToSave(game: &mut Game) {
         }
     }
 }
-// The native warning is an explicit remaining unsafe boundary. Sprite decoding
-// and OAM writes use the owned image and checked bytes in sprite_drawing.
-unsafe fn sprite_map(bank: u8, address: u16, game: &mut Game) -> SpriteMap {
-    unsafe {
-        let address = u32::from(bank) << 16 | u32::from(address);
-        if address & 0x8000 == 0 {
-            printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
-            game.g_fail = true;
-        }
-        SpriteMap {
-            image: game
-                .loaded_rom
-                .as_ref()
-                .expect("ROM must be loaded")
-                .clone(),
-            offset: crate::rtl::lorom_offset(address) as usize,
-        }
-    }
+// All map users share checked capture and the explicit native warning boundary.
+fn sprite_map(bank: u8, address: u16, game: &mut Game) -> SpriteMap {
+    crate::game::projectile_presentation_ram::sprite_map(
+        bank,
+        address,
+        game,
+        &mut crate::game::projectile_presentation_ram::Native,
+    )
 }
 pub unsafe fn DrawSpritemap(db: u8, j: u16, x: u16, y: u16, palette: u16, game: &mut Game) {
     unsafe {
@@ -223,18 +213,13 @@ pub unsafe fn DrawMenuSpritemap(a: u16, k: u16, j: u16, chr_r3: u16, game: &mut 
         pp.draw((k, j), |tile| chr_r3 | tile & 0xf1ff, Clip::None, game);
     }
 }
-pub unsafe fn DrawSamusSpritemap(a: u16, x_pos: u16, y_pos: u16, game: &mut Game) {
-    unsafe {
-        if crate::rtl::rom_table_word!(game, 0x92808d, a as isize) == 0 {
-            return;
-        }
-        let pp = sprite_map(
-            0x92,
-            crate::rtl::rom_table_word!(game, 0x92808d, a as isize),
-            game,
-        );
-        pp.draw((x_pos, y_pos), |tile| tile, Clip::None, game);
-    }
+pub fn DrawSamusSpritemap(a: u16, x_pos: u16, y_pos: u16, game: &mut Game) {
+    crate::game::projectile_presentation_ram::samus(
+        a,
+        (x_pos, y_pos),
+        game,
+        &mut crate::game::projectile_presentation_ram::Native,
+    );
 }
 pub unsafe fn DrawBeamGrappleSpritemap(a: u16, x_r20: u16, y_r18: u16, game: &mut Game) {
     unsafe {
@@ -250,23 +235,7 @@ pub unsafe fn DrawBeamGrappleSpritemap(a: u16, x_r20: u16, y_r18: u16, game: &mu
         );
     }
 }
-pub unsafe fn DrawProjectileSpritemap(k: u16, x_r20: u16, y_r18: u16, game: &mut Game) {
-    unsafe {
-        DrawGrappleOrProjectileSpritemap(
-            sprite_map(
-                0x93,
-                u16::from_ne_bytes([
-                    game.g_ram[0xcb8 + usize::from(k >> 1) * 2],
-                    game.g_ram[0xcb9 + usize::from(k >> 1) * 2],
-                ]),
-                game,
-            ),
-            x_r20,
-            y_r18,
-            game,
-        );
-    }
-}
+
 fn DrawGrappleOrProjectileSpritemap(pp: SpriteMap, x_r20: u16, y_r18: u16, game: &mut Game) {
     pp.draw((x_r20, y_r18), |tile| tile, Clip::None, game);
 }

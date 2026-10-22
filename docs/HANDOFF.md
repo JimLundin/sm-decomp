@@ -9,46 +9,47 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest verified stage shares complete trail emission, placement and side
-playback in `projectile_trail_emission` / `projectile_trail_playback`, with the
-checked `projectile_trails` adapter and one native OAM writer. It follows playback
-at `28dbc603` and the prior shared flight, launch, placement and initializer stages.
-Both cores forbid unsafe and have no Game/RAM. Real flight and Wave/Ice/Spazer
-consumers migrate; duplicate owned rules/OAM output are removed. Preserve ordered
-coordinate writes, native decoding, left-wide/right-wrapped cursors, captured
-freeze, cross-side commands and live rereads after overlapping output writes.
-Six explicit ROM/Mode7/diagnostic unsafe call sites remain. Persistent authority,
-projectile drawing, block reactions and complete unsafe removal remain unfinished.
+The latest stage shares projectile presentation after complete trails at
+`bf1f6775`. `projectile_presentation` owns ordinary/explosion scheduling and
+projection; `projectile_presentation_ram` adapts checked state, sprite output,
+crash echoes and trail tails. Actual scene/Samus/intro/trail-projection callers
+migrate. The owned candidate delegates the same rules/output and removes its
+duplicates. Preserve carried Ceres coordinates, live selectors, diagnostic-before-
+ROM-capture ordering, partial writes and echo-before-trail effects. Shared rules
+forbid unsafe and use no Game/RAM; output still depends on Game/OAM. One native
+warning and five trail ROM/diagnostic unsafe calls remain.
 
-Main is **102,537 Rust lines in 144 files**, unsafe declarations 2,918 and casts 6,130.
-Maintained implementation 103,099; including installers/launcher 104,009.
-Prospective composition **111,130**, **+8,593 over main**, remains unadopted.
-Stage adds 353 main lines and removes 256 composition-owned lines; formatted
-composition adds **97 lines, 1,005 tokens, 2,667 normalized bytes**. Local checks
-add 982 actual lines, 435 equally formatted; implementation plus checks adds
-1,079 actual lines. No dependency/native/installer/launcher or derived asset added.
+Main: **102,762 Rust lines in 146 files**, unsafe declarations 2,908, casts 6,121.
+Maintained implementation 103,324; including installers/launcher 104,234.
+Prospective composition: **111,137**, **+8,375 over main**, unadopted.
+Stage adds 225 main lines and removes 218 owned lines: **+7 complete lines**,
+-110 lexical tokens, -2,497 LF-normalized source bytes. Local checks add 815
+lines; including implementation adds 822. No new external dependency or maintained
+native/installer/launcher source.
 
-Current local handoff: `runtime-impact-working/TRAIL_HANDOFF.md`; final results,
-source and composition price: `trail-final-results.json`,
-`trail-main-source-check.json`, `trail-composition-price.json`.
-All seven selected exports pass: 248 runtime, 20 short-record, 38 placement,
-512 owned emission, 688 owned playback, three actual flight and three special
-consumer cases. Sixty OAM alias scenarios target all ten trail arrays. Final 157
-runtime / 202 draft compiled inputs match after caller cleanup; independent old
-checked source matches Git. Production Rust 2024 release/frontend/verifier and
-loaded source checks pass (48.13s), prospective headless composition builds
-(50.47s); refreshed carrier/harness builds 12.65/2.90s, selected checks 3.11s.
-No movie/full-composition runtime/full-game proof. Synthetic content and controlled
-hardware remain limits; native diagnostics stop at entry. Right-only short
-playback, absent-ROM owned publication and big-endian execution remain unverified.
+Use `runtime-impact-working/DRAWING_HANDOFF.md`, `drawing-results.json`,
+`drawing-price.json` and `drawing-final-check.log`. Four selected exports pass:
+90 runtime drawing, 379 presentation, 23 dependency and 38 placement cases.
+Checks include all five clipping modes, short records, OAM aliases, actual callers,
+linked tails and independent old renderer/source identity. Final compiled inputs:
+161 runtime / 203 local. Production Rust 2024 release/frontend/verifier and loaded
+source checks pass (52.48s); prospective headless release builds (46.36s after a
+10.45s failed registration/visibility integration build). Two fresh-process runtime
+repetitions pass. The inherited Intro fixture mismatch remains unexplained; its
+original log/compiled inputs were not retained. No stale-build claim is supported.
 
-`trail-parent/` and `trail-composition-parent/` preserve prior inputs. Older
-playback/initializer/placement/creation/acceleration/extension/flight references
-and caches remain. Keep existing composition caller/visibility adaptations;
+No movie/full-composition runtime/full-game proof. Synthetic content, controlled
+hardware, substituted native diagnostics and untested big-endian execution remain
+limits. Nine changed gameplay files pass formatting; scene_drawing and verify_source
+retain unrelated baseline formatting differences. `git diff --check` passes.
+
+`drawing-parent/` and `drawing-composition-parent/` preserve pre-drawing inputs.
+Prior trail/playback/initializer/placement/creation/acceleration/extension/flight
+references and caches remain. Preserve composition-specific wiring/visibility;
 never rerun older composition generation scripts over current wiring.
-Next share the complete projectile drawing responsibility and its sprite/echo/
-trail consumers, then close block reactions and runtime authority. Full owner
-promotion still needs reset/load/rewind/external-writer checks from state migration.
+Next close block reactions and runtime authority. Full owner promotion still needs
+reset/load/rewind/external-writer checks from state migration. Independent renderer,
+sound, content and full-game completion remain outside this stage's evidence.
 The parallel movie/state investigation is documented in
 [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
 

@@ -561,10 +561,18 @@ pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
         if (word!(game.speed_echoes_index) & 0x8000) == 0 {
             if (word!(game.speed_boost_counter) & 0xff00) == 1024 {
                 if word!(game.speed_echo_xpos[1]) != 0 {
-                    Samus_DrawEcho(2, game);
+                    crate::game::projectile_presentation_ram::echo(
+                        2,
+                        game,
+                        &mut crate::game::projectile_presentation_ram::Native,
+                    );
                 }
                 if word!(game.speed_echo_xpos[0]) != 0 {
-                    Samus_DrawEcho(0, game);
+                    crate::game::projectile_presentation_ram::echo(
+                        0,
+                        game,
+                        &mut crate::game::projectile_presentation_ram::Native,
+                    );
                 }
             }
             return;
@@ -602,7 +610,11 @@ pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
                         })
                 };
                 if !(skip_echo) {
-                    Samus_DrawEcho(i as u16, game);
+                    crate::game::projectile_presentation_ram::echo(
+                        i as u16,
+                        game,
+                        &mut crate::game::projectile_presentation_ram::Native,
+                    );
                 }
             }
         }
@@ -611,31 +623,7 @@ pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Samus_DrawEcho(j: u16, game: &mut Game) {
-    unsafe {
-        let v1: i32 = j as i32 >> 1;
-        let v2: i16 = (word!(game.speed_echo_ypos[v1]) as i32
-            - (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(word!(game.samus_pose) as isize))
-                .y_offset_to_gfx as i32
-            - word!(game.layer1_y_pos) as i32) as i16;
-        if v2 >= 0 && v2 as i32 - 248i32 & 0x8000 != 0 {
-            DrawSamusSpritemap(
-                word!(game.samus_top_half_spritemap_index),
-                (word!(game.speed_echo_xpos[v1])).wrapping_sub(word!(game.layer1_x_pos)),
-                v2 as u16,
-                game,
-            );
-            if word!(game.samus_bottom_half_spritemap_index) != 0 {
-                DrawSamusSpritemap(
-                    word!(game.samus_bottom_half_spritemap_index),
-                    (word!(game.speed_echo_xpos[v1])).wrapping_sub(word!(game.layer1_x_pos)),
-                    v2 as u16,
-                    game,
-                );
-            }
-        }
-    }
-}
+
 pub unsafe fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
     unsafe {
         if (word!(game.nmi_frame_counter_word) & 1) != 0 {
@@ -675,18 +663,7 @@ pub unsafe fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn Samus_DrawShinesparkCrashEchoProjectiles(game: &mut Game) {
-    unsafe {
-        if (word!(game.nmi_frame_counter_word) & 1) != 0 {
-            if word!(game.speed_echo_xspeed[3]) != 0 {
-                Samus_DrawEcho(6, game);
-            }
-            if word!(game.speed_echo_xspeed[2]) != 0 {
-                Samus_DrawEcho(4, game);
-            }
-        }
-    }
-}
+
 pub unsafe fn Samus_DrawStartingDeathAnim(game: &mut Game) {
     unsafe {
         let v0: bool = (word!(game.samus_anim_frame_timer -= 1, reread) & 0x8000) != 0;

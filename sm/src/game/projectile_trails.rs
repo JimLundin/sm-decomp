@@ -1,5 +1,5 @@
 //! Checked trail state/content adapter and native OAM output.
-//! ROM capture, Mode7 and native diagnostics remain explicit unsafe dependencies.
+//! ROM capture and native diagnostics remain explicit unsafe dependencies.
 use crate::game::projectile_trail_emission::{self as emission, Context, Half, Owner, Point, Write};
 use crate::game::projectile_trail_playback::{self as playback, Definitions, Instruction, Presentation};
 use crate::game::projectile_playback_ram::trail_frame;
@@ -112,10 +112,10 @@ impl<'a> Context<&'a mut Game> for Ram {
                 y: word!(game.projectile_y_pos[index]),
             }
         } else {
-            let point = unsafe { crate::game::sm_8b::CalcExplosion_Mode7(projectile, game) };
+            let (x, y) = crate::game::projectile_presentation_ram::project(projectile, game);
             Point {
-                x: word!(game.layer1_x_pos).wrapping_add(point.x),
-                y: word!(game.layer1_y_pos).wrapping_add(point.y),
+                x: word!(game.layer1_x_pos).wrapping_add(x),
+                y: word!(game.layer1_y_pos).wrapping_add(y),
             }
         };
         (game, point)

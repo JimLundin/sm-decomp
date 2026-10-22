@@ -3,7 +3,7 @@
 use crate::game::enemy_ram::{
     native_read as read, native_write as write, EnemyField as F, EnemySlot,
 };
-use crate::game::projectile_animation::draw_explosions;
+use crate::game::projectile_presentation_ram::draw_explosions;
 use crate::game::sm_81::{
     DrawSpritemapWithBaseTile, DrawSpritemapWithBaseTile2, DrawSpritemapWithBaseTileOffscreen,
 };

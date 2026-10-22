@@ -7,7 +7,7 @@ pub use crate::game::constants::bank_8d::*;
 
 use crate::game::explosion_window::spawn_power_bomb;
 use crate::game::progress_flags::CheckEventHappened;
-use crate::game::projectile_animation::draw_projectiles;
+use crate::game::projectile_presentation_ram::draw_projectiles;
 use crate::game::sm_80::{
     memset7E, ClearOamExt, ClearUnusedOam, CopySuperMetroidString, DisableIrqInterrupts, EnableNMI,
     GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,
@@ -610,22 +610,7 @@ pub unsafe fn Samus_CalcPos_Mode7(game: &mut Game) {
         word!(game.samus_y_pos = (word!(game.reg_M7Y)).wrapping_sub(r26));
     }
 }
-pub unsafe fn CalcExplosion_Mode7(k: u16, game: &mut Game) -> Point16U {
-    unsafe {
-        let v1: i32 = k as i32 >> 1;
-        let r34: u16 = (word!(game.projectile_x_pos[v1])).wrapping_sub(word!(game.reg_M7X));
-        let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(word!(game.projectile_y_pos[v1]));
-        let mut r26: u16 = (Smult16x16(r34, word!(game.reg_M7A)) >> 8) as u16;
-        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
-        let r20: u16 =
-            (r26 as i32 + word!(game.reg_M7X) as i32 - word!(game.layer1_x_pos) as i32) as u16;
-        r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
-        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
-        let r18: u16 =
-            (word!(game.reg_M7Y) as i32 - r26 as i32 - word!(game.layer1_y_pos) as i32) as u16;
-        Point16U { x: r20, y: r18 }
-    }
-}
+
 pub unsafe fn CalcCeresSteamPos_Mode7(mut pt: Point16U, game: &mut Game) -> Point16U {
     unsafe {
         let r34: u16 = (pt.x).wrapping_sub(word!(game.reg_M7X));
