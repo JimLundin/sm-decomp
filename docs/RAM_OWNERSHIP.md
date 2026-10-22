@@ -463,8 +463,8 @@ or that deferred spawning has equivalent same-update execution order.
 
 Follow-up source audit at `0f98f559`, checked unchanged through `4c979503` for the
 cited gameplay and RAM metadata. This identifies ownership interactions, not
-complete writer/alias closure. The aim and flare experiments below have bounded
-execution coverage; the other findings in this section are source evidence.
+complete writer/alias closure. The aim, flare and feedback experiments below have
+bounded execution coverage; the other findings in this section are source evidence.
 
 **Pending aim is a one-use handoff.** Normal-jump pose handling captures the
 current pose's direction with flag `0x8000`; moonwalk-turn handling captures the
@@ -760,33 +760,41 @@ are claimed from this prototype. Reproduction remains outside the repository at
 
 ### Whole-projectile draft
 
-The latest reviewed stage of this unadopted candidate passes **1,634 full-RAM
-comparisons**, **1,679 ordered observations** and **181 matching failures**.
+The latest reviewed stage of this unadopted candidate passes **2,330 full-RAM
+comparisons**, **2,258 ordered observations** and **302 matching failures**.
 It includes beam input/firing, typed pending aim and placement, initialization,
-flight, acceleration, extensions, release, animation, trail-frame sampling and
-drawing decisions. Beam firing and extension creation call both owned placement
-and initialization directly. Their former legacy effects and publish/import
-round trips are removed. Broad-index placement also uses the checked adapter
-and the same pure aim model; other out-of-pool paths retain reference bodies.
+launch, flight, acceleration, extensions, release, animation, trail-frame sampling,
+drawing decisions and beam/hyper/grapple flare. Beam firing and extension creation
+call owned placement, initialization and launch directly. Their former legacy
+effects and publish/import round trips are removed. Broad-index placement and
+launch use checked adapters and the same pure models. Launch preserves Y writes
+before aliased history rereads and the diagnostic order; other out-of-pool paths
+retain reference bodies. Firing owns one `Flare` charge/frame/timer bundle, with
+the complete `Firing` value moving through each remaining effect.
 
 State crosses remaining foreign operations by value. Returned inputs are sampled
 again; invalid-table handling publishes partial state and diverges. Cases include
 charge/reservation rules, pending/default/fallback aim, ignored extension rejection,
 live camera changes, odd selectors, callback redirection, partial failure,
 definition edits/replacement, damage-write ordering, script deletion/goto and
-Ceres coordinate quirks. A persistent firing sequence also retains typed state
-through input-only steps without reimport.
+Ceres coordinate quirks. Linked cases exercise firing-to-flare, grapple drawing
+before tiles/charge increment, and nested firing during a draw callback. Persistent
+sequences retain typed state without intermediate RAM decoding.
 
 The coordinator independently checked all **115 embedded library inputs** against
-`15589b48` and **sixteen compiled draft inputs/hashes**, reviewed the integrated
-placement/adapter source and inspected the result without repeating its run.
-Reproduction: `Local/sm-decomp-experiments/20261022/player-projectiles/aim-stage`.
-The older `beam-stage/` (202), `flight-stage/` (425) and `animation-stage/` (1,295)
-remain preserved. Counts are not additive or unchanged-suite comparisons:
-controlled-initializer and placement cases changed as those calls became owned.
+`15589b48` and **23 compiled draft inputs/hashes**, reviewed the integrated
+flare/effect source and inspected the result without repeating its run. The
+preceding launch stage separately passed 1,945 comparisons, 1,638 observations
+and 227 matching failures; its twenty compiled draft inputs were also checked.
+The two reused launch-motion files match current-main bytes in both stages.
+Reproduction: `Local/sm-decomp-experiments/20261022/player-projectiles/flare-stage`.
+The older `beam-stage/` (202), `flight-stage/` (425), `animation-stage/` (1,295),
+`aim-stage/` (1,634) and `launch-stage/` (1,945) remain preserved. Counts are not
+additive or unchanged-suite comparisons: controlled initializer, placement and
+launch cases changed as those calls became owned.
 
-Speed initialization, collision, drawing/trail consumers, special attacks,
-palette and native diagnostics remain controlled in this stage. Definitions are
+Collision, drawing/trail consumers, special attacks, palette and native diagnostics
+remain controlled in this stage. Definitions are
 synthetic; no movie ran. The harness imports at entry and publishes on return;
 global writer/alias closure, production runtime binding, remaining modes/trails/
 reset, named definition/motion interfaces and raw-address retirement remain open.
@@ -893,6 +901,50 @@ resumption, grapple start/release, cancellation and encounter restrictions are
 outside this experiment. No movie, production adoption, full weapon ownership or
 saving is claimed. Reproduction: `Local/sm-decomp-experiments/20261022/weapon-flare`
 (`flare.rs`, `adapter.rs`, `prepare.py`, `build.py`, `check.py`, `result.json`).
+
+### Weapon glow and sound continuity
+
+A pure feedback model makes glow progression and sound continuity explicit with
+`ResumeRequest::{Idle, Ready, Deferred}` and named palette/sound effects. Imported
+request payloads survive until the original transition consumes them. Charge is
+a live input from the shared flare owner. The model and checked adapter forbid
+unsafe code; the model has no `Game` or RAM/ROM addresses. The prototype's grouping
+does not establish exclusive ownership: the palette cursor serves other Samus
+palette modes, and movement also writes the echo-sound flag.
+
+**390 actual old/new full-RAM comparisons pass:** 177 palette cases, 160 sound
+cases, 48 direct restoration cases and five linked steps. They contain **535
+ordered observations** and **96 matching failures**. Frozen source bodies include
+`HandleBeamChargePalettes`, the outer `Samus_HandlePalette` dispatcher,
+`HandleMiscSamusPalette`, `Samus_ShootCheck` and `QueueSamusMovementSfx`.
+The replacement changes only the sound prefix of `Samus_ShootCheck`; its exact
+debug/time-up tail stays in the coordinator. A deferred sound request becomes
+ready and skips the ordinary sound/echo/spin work, while that tail still executes.
+
+Ordinary glow decrements before highlight/restoration selection. Hyper palette
+application precedes decrement and its live reread. Charge-palette progression
+likewise rereads the phase after the palette callback. Special-palette routing can
+skip charge handling entirely. A ready sound request can clear and then republish
+in the same call; echo clearing precedes its cue, and end-spin sound precedes the
+live charge/held-input check. Direct restoration has different queue limits and
+boost selection and does not consume the deferred request. A linked sequence
+executes the actual hurt-flash producer at 39-to-40, consumption, direct restore,
+deferral and later consumption. One separate typed sequence advances sound/glow
+without RAM decoding.[^weaponglow][^weaponsound]
+
+All **115 embedded library inputs** match `15589b48`, and **eight compiled local
+inputs** match their exact hashes. The optimized DLL builds and passes using the
+preserved native-music ABI. The original native/value word-transfer macro performs
+the highlight write; only its unused private-ROM helper is removed from local
+support. Special-palette handlers, visor processing, palette copies, sound queues,
+movement callbacks, diagnostics and event queries are controlled. The outer
+dispatch table preserves the tested missing-entry/bounds behavior but does not
+execute those special handlers. Definitions are synthetic; no movie or played
+message/unpause route ran. This is supplied for integration with firing/flare,
+not production promotion or complete writer/alias/runtime closure. Cancellation,
+encounter restrictions and complete palette ownership remain open. Reproduction:
+`Local/sm-decomp-experiments/20261022/weapon-feedback` (`feedback.rs`, `adapter.rs`,
+`prepare.py`, `build.py`, `check.py`, `result.json`).
 
 ### Explicit gameplay continuation
 
@@ -1045,12 +1097,13 @@ its own exercised checks.
 
 ## Next ownership experiments
 
-Continue the same whole-projectile draft through Samus weapon control. Typed aim
-is now integrated in the reviewed draft; combine the flare transitions with its
-single charge state. Next exercise palette/glow progression, cancellation subsets,
-drain-to-X-ray observation, protection across suspension/reset and sound-request
-deferral using real producers and consumers. These are new coverage questions,
-not additional pass counts for the existing firing or launch experiments.
+Continue the same whole-projectile draft through Samus weapon control. Typed aim,
+launch and flare are integrated in the reviewed draft; integrate the feedback
+prototype with that same live charge next. Exercise cancellation subsets,
+drain-to-X-ray observation and protection across suspension/reset using real
+producers and consumers. Close remaining shared palette/sound writers and runtime
+transfers. These are new coverage questions, not additional pass counts for the
+existing firing or launch experiments.
 
 1. Codify `ExternalMotion` as ordered reset, replacement and addition operations;
    trace real sand/platform contacts through message suspension and movement.

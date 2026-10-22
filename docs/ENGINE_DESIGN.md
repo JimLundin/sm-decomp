@@ -239,10 +239,21 @@ The [scheduled flare prototype](RAM_OWNERSHIP.md#scheduled-beam-and-grapple-flar
 also makes beam/hyper/grapple visual progression and the later grapple charge
 increment explicit. **324 old/new comparisons** pass, with 66 matching failures.
 It preserves entry-selected mode, post-draw charge rereads and tile-before-increment
-ordering. Named sequence lookup keeps ROM addresses in the adapter. This must
-join the same charge owner as firing; sprite geometry/output and other effects
-remain controlled. Palette/glow, sound restoration, cancellation and encounter
-restrictions above still have source-audited rather than new execution coverage.
+ordering. Named sequence lookup keeps ROM addresses in the adapter. The reviewed
+full draft now integrates these transitions with firing through one `Flare` bundle;
+the complete `Firing` value crosses effects. Sprite geometry/output and other
+effects remain controlled.
+
+The [weapon-feedback prototype](RAM_OWNERSHIP.md#weapon-glow-and-sound-continuity)
+adds **390 old/new comparisons**, including 96 matching failures, for palette/glow,
+sound-request deferral/republication and direct movement-sound restoration. A
+linked sequence executes the actual hurt-flash producer. Charge remains a live
+input from the shared flare owner; the charge-palette cursor also serves other
+Samus palette modes and cannot become private beam state. The sound transition
+owns only the prefix of the current routine: debug input and time-up detection
+still execute in the coordinator after a deferred sound request. Palette output,
+special-palette handlers, sound queues and other effects remain controlled.
+Cancellation and encounter restrictions still need execution experiments.
 
 The full projectile draft may temporarily aggregate these inputs for comparison.
 Its final interface must give each value one authority and apply cross-owner
@@ -319,17 +330,21 @@ in the actual callers. The whole-projectile implementation and full cost remain
 open; no savings or gameplay-route coverage follow from this prototype.
 
 The [reviewed full draft stage](RAM_OWNERSHIP.md#whole-projectile-draft)
-passes 1,634 comparisons, with controlled foreign calls. Its owner crosses
+passes 2,330 comparisons, with controlled foreign calls. Its owner crosses
 those calls by value, rereads returned inputs, and publishes partial state before
 diverging on an invalid table lookup. It covers beam input/firing, flight,
 acceleration, extensions, release, projectile animation/drawing decisions and
 linked production cooldown. Beam firing and extension creation now call owned
-placement and initialization directly, removing those legacy effects and their
-publish/import round trips. Broad-index placement uses the checked adapter and
-the same aim model. Launch speed, real contact reactions, remaining weapons/trails/
-reset and production runtime integration remain outstanding in this stage.
-Other out-of-pool execution retains reference bodies. No whole-replacement cost
-is established.
+placement, initialization and launch directly, removing those legacy effects and
+their publish/import round trips. Broad-index placement and launch use checked
+adapters and the same pure models; launch preserves Y-write-before-history-reread
+alias behavior. The subsequent flare integration retains one charge/frame/timer
+bundle and covers firing-to-flare, grapple draw-to-increment and nested firing
+during a draw effect. Both preserved stages have independently checked compiled
+inputs and reviewed results. Real contact reactions, remaining weapons/trails/
+reset, feedback integration and production runtime binding remain outstanding in
+this reviewed stage. Other out-of-pool execution retains reference bodies. No
+whole-replacement cost is established.
 
 State ownership alone will not finish the game-facing interface. This draft still
 uses raw bank addresses for definition lookup, numeric animation instruction

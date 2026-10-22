@@ -1586,12 +1586,12 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    collision scans. The design records the resulting owner interactions; these
    source findings add no collision-route coverage. Continue the concrete full
    projectile draft at Local/sm-decomp-experiments/20261022/player-projectiles.
-   Its owned aim, placement, firing, launch, flight and animation now pass
-   **1,945 full-RAM comparisons**: 180 beam/persistent, 209 flight, 470 animation,
+   Its owned aim, placement, firing, launch, flight, animation and flare now pass
+   **2,330 full-RAM comparisons**: 180 beam/persistent, 209 flight, 470 animation,
    120 acceleration, 168 drawing, 40 firing/definition, 353 placement and 395 launch
-   scenarios, plus ten linked production cooldown checks. There are 1,638 matching
-   ordered callback observations and 227 matching failures; 1,024 pending-aim codec
-   checks also pass. Canonical firing and extensions call placement, animation
+   scenarios, 385 flare cases, plus ten linked production cooldown checks.
+   There are 2,258 matching ordered callback observations and 302 matching failures;
+   1,024 pending-aim codec checks also pass. Canonical firing and extensions call placement, animation
    initialization and launch directly, removing their legacy effects and round
    trips. Pending aim is typed; rejected extension placement remains nonterminal.
    Broad-index placement and launch use checked adapters. Launch reuses the existing
@@ -1600,16 +1600,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    wrapped coordinates, Y-speed writes before aliased history rereads, diagnostic
    callback ordering and persistent input/placement/launch sequences. Previous
    animation, drawing, extension and collision-handoff cases remain, with obsolete
-   stub-only cases removed. The models and codec forbid unsafe code. All 115 frozen
-   library and twenty draft inputs match compiled bytes; optimized DLL and format
-   checks pass. Exact compiled stages are preserved locally: animation-stage
-   (1,295), aim-stage (1,634) and the current launch-stage (1,945).
+   stub-only cases removed. Flare uses one charge/frame/timer bundle in `Firing`,
+   which crosses effects by value; firing-to-flare, grapple drawing-to-increment
+   and nested firing during a draw are covered. The models and codec forbid unsafe
+   code. All 115 frozen library and 23 draft inputs match compiled bytes; optimized
+   DLL and format checks pass. The coordinator independently reviewed source,
+   compiled inputs and results for both launch and flare integration. Exact compiled
+   stages are preserved locally: animation-stage (1,295), aim-stage (1,634),
+   launch-stage (1,945) and the current flare-stage (2,330).
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics and drawing/trail consumers
    remain controlled. ROM definitions are synthetic; no gameplay route or hardware
    coverage is established. Other accepted out-of-pool operations retain reference
    bodies, including drawing continuations; handoff tests do not retire those bodies.
-   Integrate the shared flare model next, then remaining weapon modes, trails/reset,
+   Integrate the feedback model next, then remaining weapon modes, trails/reset,
    real producers/callers and runtime transfers. Count every adapter/fallback and
    close the remaining numeric-definition/motion interfaces. The frozen library
    predates current main; final integration requires current-source builds.
@@ -1646,8 +1650,19 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    unsafe code. One additional typed sequence runs without RAM decoding. All 115
    frozen library and seven local compiled inputs are checked. Sprite geometry,
    sound/tile output and native diagnostics are controlled, definitions synthetic;
-   no movie or adoption. Integrate with the same charge owner; palette/glow,
-   sound resumption, cancellation and encounter rules still need experiments.
+   no movie or adoption. It is integrated with the same charge owner in the draft.
+   The feedback prototype at 20261022/weapon-feedback passes 390 actual old/new
+   full-RAM comparisons, 535 ordered observations and 96 matching failures. It
+   covers glow/palette routing, deferred and republished sound requests, direct
+   movement-sound restoration and the actual hurt-flash request producer. The
+   sound prefix has a pure transition; the exact debug/time-up tail still executes
+   after deferral. Charge stays a live input, and the palette cursor remains shared
+   with other Samus modes. One separate typed sequence needs no RAM decoding.
+   All 115 frozen library and eight local compiled inputs match; optimized DLL
+   passes. Definitions are synthetic and palette/sound/other effect calls are
+   controlled. No movie, played message/unpause route, adoption or full ownership
+   is claimed. Integrate with firing/flare; cancellation, encounter rules and
+   palette/sound writer closure remain open. Details are in RAM_OWNERSHIP.md.
    User-requested [RAM ownership research](RAM_OWNERSHIP.md) now traces eleven
    producer/consumer contracts and separates live values, captured selectors,
    cross-update handoffs and nested continuations. The first implementation moves
