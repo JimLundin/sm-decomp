@@ -1825,14 +1825,37 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    and post-trail continuations still retain actual reference bodies; their bridge
    costs and final runtime transfers remain outside this partial price. No earlier
    suite was rerun, and no movie, production adoption or net saving is claimed.
+   Named impact, bomb flash/explosion and shared slot release are now composed
+   into this latest owner, retaining the trail-sprite and special-attack state.
+   **349 selected full-RAM comparisons**, 300 ordered observations and 70 matching
+   failures pass: 103 transition entries, 108 callback cases, three contracts,
+   32 linked transition/animation/drawing/release/reset steps, 40 shared-release
+   cases and 63 selected bomb consumers. Eight additional candidate-only checks
+   require exact short-definition rejection and preserved prefix writes; the raw
+   reference is not executed outside its defined source extent. Beam entry remains
+   before feedback; ballistic feedback precedes the live kind reread. Re-impacting
+   a beam burst still selects heavy impact. All callbacks transport the full owner.
+   Canonical release now belongs to the generic pool; four native-kind transition
+   sequences execute it after playback instead of stopping at the Release result.
+   The existing native trail-emission/drawing sequence also passes with the added
+   kind type. These native cases still do not supply native firing or motion.
+   All 115 frozen and 75 draft inputs match compiled bytes; 61 prior files are
+   unchanged. Optimized DLL and model/provider formatting pass. Models forbid
+   unsafe code. Exact source/result is preserved in transition-stage. The changed
+   formatted model/provider cohort grows **1,767 -> 1,915 (+148 lines)**; authored
+   examples add 234 separately formatted lines. Broad-index reference bodies and
+   final runtime bridges remain outside this partial price. Earlier full suites
+   were not rerun; no movie, production adoption or complete savings are claimed.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, projectile-sprite drawing,
    palette/sound output and grapple-start consumers remain controlled. ROM
-   definitions are synthetic; no gameplay route or hardware coverage is established. Other accepted out-of-pool operations retain reference
+   definitions are synthetic; no gameplay route or hardware coverage is established.
+   Other accepted out-of-pool operations retain reference
    bodies, including drawing continuations; handoff tests do not retire those bodies.
-   Continue with named visual transitions, remaining projectile drawing/definitions,
+   Continue with actual projectile-sprite presentation and remaining definitions,
    protection/suspension, real producers/callers and runtime transfers. Count every
-   adapter/fallback and close the remaining numeric-definition/motion interfaces. The frozen library
+   adapter/fallback and close the remaining numeric-definition/motion interfaces.
+   The frozen library
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.
    The earlier beam-stage details and limits are in RAM_OWNERSHIP.md.
