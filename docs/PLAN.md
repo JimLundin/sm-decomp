@@ -1876,48 +1876,48 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    and its early fast-renderer revisions also differ in layout, sprite storage,
    rendering width and Mode7 priority. Downloaded hardware-only inputs:
    Local/sm-decomp-experiments/20261021/zelda-hardware-dependency.
-   A compatibility probe of historical renderer revision `1f8985903a32` now
-   resolves its interlace and Y=240 sprite differences. A 14-line C helper
+   Renderer replacement remains parked. Historical sprite revision `1f8985903a32`
+   needs a 14-line C helper for its interlace and Y=240 differences. The helper
    maps eligible source rows onto synthetic scanline 128 and hides ineligible
    sprites; the unmodified foreign evaluator still performs tile decoding,
    clipping, priority and limit handling. All **1,198 actual sprite-buffer and
    flag comparisons** pass across all sizes, both interlace fields, row edges,
    clipping, rotation, retained overflow flags, forced blank and VRAM spill.
-   All **68 original row comparisons** now pass with foreign sprite evaluation,
-   including the four original counterexamples. Another **284 of 290** drawing
-   variants match across matrix transforms, inverted/empty windows, brightness,
-   color math and VRAM boundaries. Six expose a remaining native Mode7 mosaic
-   cache mismatch: 88..145 visible pixels differ when the native mosaic flag is
-   set with size one and a zeroed cache. The early foreign revision instead
-   selects mosaic from legacy BG flags and size greater than one. All sprite
-   buffers/flags match in those six cases, isolating this rendering difference.
-   The source-checked DLL uses the exact current release library and pinned,
-   unchanged foreign inputs, with C assertions enabled. These are constructed
-   line-one drawing cases and separate sprite scans through line 255; they do
-   not establish full-state, failure, lifecycle, extended-width or movie coverage.
-   The 14-line helper is only a partial adapter cost, not a saving. Sprite probe:
-   Local/sm-decomp-experiments/20261021/renderer-compatibility. The original
-   counterexamples remain in Local/sm-decomp-experiments/20261021/zelda-render-probe.
-   A composed renderer draft now prices **97,313 -> 97,324 (+11)**. It pairs
+   Its source-checked probe also passes all 68 original row cases; six further
+   drawing cases exposed stale native Mode7 mosaic-cache differences. Sprite
+   checks and original counterexamples remain in
+   Local/sm-decomp-experiments/20261021/{renderer-compatibility,zelda-render-probe}.
+   The complete composed draft prices **97,313 -> 97,324 (+11)**. It pairs
    that sprite dependency with native drawing from `45a149d8b4bb`, retaining
    Rust's cached-mosaic path, legacy rendering, lifecycle and snapshot layout.
    Rust loses 205 lines; C adapters add 161, the installer 54 and the verifier
    launcher one. All callers, native/C layout checks and source-hash changes
    count. The additional published C/header inputs total 4,268 lines separately.
-   The later drawing adapter passes all 68 original row cases with checked
-   native/C layouts and source hashes. Its initial 766-pixel scratch width
-   crashed because the published backdrop loop advances by four until exact
-   equality; that attempt is excluded. The corrected 768-pixel physical buffer
-   reserves space for native u8 margins. A focused windowed Mode7 case still crashes:
-   size one and zeroed cached entries produce a negative initial span width at
-   x=129, while current Rust renders successfully. The composed draft therefore
-   retains the native mosaic implementation and its failure rules; those retained
-   costs are included, and no complete native-renderer retirement is claimed.
-   Park the final formatted, uncompiled and unexecuted draft before further
-   validation: its adapters consume the deletion. The 68 passing probes do not
-   validate the final fallback integration, extended width, full state or
-   lifecycle. No movie ran and no saving is adopted. Source, failed probes and
-   complete price: Local/sm-decomp-experiments/20261021/renderer-complete.
+   The adapter's original scratch-buffer crash and stale-mosaic crash are
+   excluded from passing results. A corrected 768-pixel physical buffer meets
+   the published backdrop loop's four-pixel stride. The formatted complete draft
+   retains native mosaic behavior and failures; it remains uncompiled and
+   unexecuted. Separate passing probes do not validate that integration. Draft,
+   failed probes and complete price:
+   Local/sm-decomp-experiments/20261021/renderer-complete.
+   A distinct cached-mosaic correction now resolves the nonpositive initial
+   span in the published renderer, adjusting both sample origin and first
+   coordinate advance. All **290 actual old/new line-image comparisons** pass,
+   including the formerly crashing window case, stale caches, multiple mosaic
+   sizes, color math and both sprite evaluators; the correction executes 624
+   times. All 103 frozen reference-library inputs, the installed PPU source hash
+   and native/C layouts are checked. Current PPU source is unchanged from that
+   reference. These constructed line-one cases do not validate a complete
+   replacement, full state, lifecycle, extended width or failure behavior.
+   Rust's checked cache indices, zero-width failure and already-written pixel
+   prefix still need preservation; subscreen failures depend on whether color
+   math consumes that pixel. The eight affected routines and whole dispatcher
+   occupy only 275 lines in the parked draft, including shared legacy behavior
+   that must remain. Removing the fallback therefore establishes no substantial
+   replacement budget before those compatibility costs. Park this follow-up
+   before integration or further runtime checks. No movie ran; no complete new
+   price, main-source saving or unsafe-code elimination is claimed. Durable probe:
+   Local/sm-decomp-experiments/20261022/renderer-mosaic.
    The complete native music/SFX sequencer cannot directly reuse the uploaded
    SPC driver. A source-checked DLL probe executes 32 actual native/interpreted
    ticks from aligned entry state: all 269 ordered DSP writes and final DSP
