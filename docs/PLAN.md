@@ -104,44 +104,42 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares projectile block reactions after drawing at
-   `a16e4536`. `projectile_block_reactions` owns classification, extensions,
-   trigger selection and square/surface slope rules; its checked RAM adapter
-   replaces the raw shot dispatcher and per-scan CollInfo conversion. Actual
-   bomb/grapple triggers and spread-bomb slopes share the same rules. Owned
-   duplicate algorithms and slope tables are removed. Preserve the initial
-   room-size rejection, extension redirects without rechecking that bound,
-   lazy slope reads, mixed native/LE words, captured BTS, diagnostic-before-ROM
-   capture and B974 scan writes before synchronous mechanism spawning.
-   The shared core forbids unsafe and has no Game/RAM. Two native spawn/warning
-   calls remain in the adapter; surrounding bomb/Samus/grapple raw CollInfo
-   boundaries and mechanism allocation/setup remain explicit dependencies.
+   Latest verified stage shares all-source mechanism creation after block
+   reactions at `89c266e2`. `mechanism_creation` owns descending allocation,
+   ordered source preparation, arming, selection and synchronous setup invocation.
+   Main collision, hardcoded/nested and room-entry callers use its checked RAM
+   adapter; the candidate's duplicate allocation/source sequencing is retired.
+   Full pools return before source reads. Room scratch stays live, headers are
+   read twice, placed headers remain captured, and collision setup reacquires ROM.
+   Hardcoded words remain native; room words remain explicitly little-endian.
+   Captured slots, setup accumulators, nested reuse and displacement are preserved.
+   The core forbids unsafe and has no Game/RAM. Encoded allocation remains RAM
+   authoritative; native setup dispatch, ROM diagnostics and raw displacement
+   remain dependencies. This closes creation sequencing, not setup-family behavior.
 
-   Final checks pass 85 direct native/caller/extension comparisons, nine trigger/
-   diagnostic cases and six prefix scenarios (ten explicitly expected failures).
-   Existing selected suites pass 429 room cases (five matching failures), 529
-   motion/room cases (42 matching failures) and 198 runtime collision cases
-   (176 setup hits, one matching failure). Explicit successful native setup,
-   resumed scans and later release execute. Failure checks include real partial
-   PLM initialization, B974 scan prefixes, truncated ROM and redirected out-of-
-   range cells. Fresh Git-derived raw/checked-ROM references stay independent;
-   old/native route assertions and 165 runtime / 204 local source identities pass.
-   Runtime evidence pairs frozen-vs-native and native-vs-owned comparisons; it is
-   not three wholly independent implementations. Formatting, production Rust
-   2024 release/frontend/verifier and loaded-source checks pass; the prospective
-   headless composition builds. No movie or full-composition runtime ran.
-   Synthetic content, controlled diagnostics/hardware and untested big-endian
-   execution limit these results. Native setup ownership is not established.
+   Selected checks pass 342 source/setup/consumer cases (47 matching failures),
+   native authored examples, 114 contacts (14 matching failures), 74 closing cases
+   (seven matching failures), 198 runtime collision cases (176 setup hits, one
+   matching failure), plus existing block/room/motion comparisons. Success cases
+   require real setup and later geometry, drawing, impact and release outcomes.
+   Eight new returning-diagnostic cases cover image mutation/replacement before
+   capture. Independent factory/reader correspondence to Git and 167 runtime /
+   206 local compiled identities pass. The unchanged old closing-only helper
+   still shares a reader; no complete closing-reference independence is claimed.
+   Production Rust 2024 release/frontend/verifier/source checks pass (48.78s after
+   correcting two macro-call syntax errors); prospective release passes (48.46s).
+   No movie or full-composition runtime ran. Synthetic content, controlled
+   callbacks/hardware and untested big-endian execution limit these results.
 
-   Main is **103,105 Rust lines in 148 files**. The prospective composition is
-   **111,307 (+8,202)**, unadopted. This stage adds 343 main lines and removes 173
-   owned lines: **+170 complete lines**, +502 lexical tokens and +1,524 LF-normalized
-   source bytes. Local verification adds 1,490 lines, including independent
-   emitted references and fixture/preparation code; implementation plus checks
-   adds 1,660. No dependency or native/installer/launcher code is added. Main
-   removes twelve counted unsafe declarations and seven cast-containing lines.
-   This is priced sharing/safety work, not net reduction. Mechanism closure,
-   persistent authority, the line target and backend independence remain open.
+   Main is **103,293 Rust lines in 150 files**. The prospective composition is
+   **111,597 (+8,304)**, unadopted. This stage adds 188 main and 102 owned lines:
+   **+290 complete lines**, +2,410 lexical tokens and +9,494 LF-normalized source
+   bytes. Verification adds 248 lines including emitted references and scripts;
+   implementation plus checks adds 538. No dependency or native/installer/launcher
+   code is added. Counted unsafe declarations rise by one for the explicit adapter
+   boundary; casts are unchanged. This is priced sharing, not net reduction or
+   unsafe elimination. Setup closure, persistent authority and backend independence
+   remain open.
 
    Next dependencies, in order:
 
@@ -165,8 +163,10 @@ references; measure build/test time and resource growth before changing the loop
      actual callers and remove duplicate bodies with independent comparisons.
    - [x] Share block reactions, slopes and trigger selection; migrate actual
      shot/bomb/grapple/spread consumers and compare native setup/resumed tails.
-   - Close the remaining mechanism allocation/setup dependencies, preserving
-     synchronous writes and failure prefixes before retiring their native paths.
+   - [x] Share complete all-source mechanism allocation/initialization, migrate
+     real producers and delete duplicate source sequencing with independent checks.
+   - Close remaining mechanism setup families, preserving synchronous writes,
+     nested displacement and failure prefixes before retiring native dispatch.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -174,7 +174,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified block-reaction continuation, with
+   `runtime-impact-working/` is the verified mechanism-creation continuation, with
+   `MECHANISM_CREATION_HANDOFF.md`, `mechanism-creation-price.json` and
+   `mechanism-creation-final.log`. `mechanism-creation-parent/` preserves prior
+   main/carrier/local/composition sources. Block results remain in
    `BLOCK_HANDOFF.md`, `block-price.json` and `block-final-attempt-2.log`.
    `block-parent/` preserves prior main/carrier/local sources and composition.
    Drawing inputs/results remain in `drawing-parent/`, `drawing-composition-parent/`
@@ -338,12 +341,12 @@ content.
 
 ## Progress and references
 
-Verified block-reaction stage: Rust 103,105; maintained C bridge 266 and headers
-296 = **103,667 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **104,577**. The separate prospective owned
+Verified mechanism-creation stage: Rust 103,293; maintained C bridge 266 and headers
+296 = **103,855 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **104,765**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,896; cast-containing lines 6,114. These narrow counters do
+unsafe declarations 2,897; cast-containing lines 6,114. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 The isolated launch draft is now synchronized and verified; its original source

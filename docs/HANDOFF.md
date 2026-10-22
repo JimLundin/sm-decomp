@@ -9,52 +9,55 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares projectile block reactions after drawing at `a16e4536`.
-`projectile_block_reactions` owns classification, extensions, trigger selection
-and lazy square/surface rules; `projectile_block_reactions_ram` replaces the raw
-shot dispatch/CollInfo conversion. Bomb/grapple triggers and spread-bomb slopes
-use the same rules. Owned duplicates and slope-table copies are retired.
-The core forbids unsafe and has no Game/RAM. Two native spawn/warning calls and
-surrounding raw bomb/Samus/grapple CollInfo boundaries remain. This does not
-establish persistent projectile/mechanism ownership.
+The latest stage shares all-source mechanism creation after block reactions at
+`89c266e2`. `mechanism_creation` owns descending slot search, ordered collision,
+hardcoded/nested and room-entry preparation, arming and synchronous setup calls.
+Main uses direct checked RAM; the candidate uses the same core and retires its
+old allocation/source sequence. The core forbids unsafe and has no Game/RAM.
+Full pools read no source data; room scratch and repeated header reads stay live.
+Placed capture, collision reacquisition, native/LE words, setup accumulators,
+nested slot reuse and displacement are preserved. Native setup dispatch, ROM
+warnings and raw displacement remain explicit dependencies. Encoded allocation
+is still RAM authoritative; complete setup families and persistent ownership
+remain unfinished.
 
-Main: **103,105 Rust lines in 148 files**, unsafe declarations 2,896, casts 6,114.
-Maintained implementation 103,667; including installers/launcher 104,577.
-Prospective composition: **111,307**, **+8,202 over main**, unadopted.
-Stage adds 343 main lines and removes 173 owned lines: **+170 complete lines**,
-+502 lexical tokens, +1,524 LF-normalized source bytes. Local verification adds
-1,490 lines including emitted independent references; implementation plus checks
-adds 1,660. No external dependency or native/installer/launcher source added.
+Main: **103,293 Rust lines in 150 files**, unsafe declarations 2,897, casts 6,114.
+Maintained implementation 103,855; including installers/launcher 104,765.
+Prospective composition: **111,597**, **+8,304 over main**, unadopted.
+Stage adds 188 main and 102 owned lines: **+290 complete lines**, +2,410 lexical
+tokens and +9,494 LF-normalized source bytes. Verification adds 248 lines;
+implementation plus checks adds 538. No dependency or native/installer/launcher
+code is added. This is sharing with explicit cost, not reduction or unsafe removal.
 
-Use `runtime-impact-working/BLOCK_HANDOFF.md`, `block-price.json` and
-`block-final-attempt-2.log`. Selected direct results: 85 native/caller/extension
-comparisons, nine trigger/diagnostic cases, six prefix scenarios, ten explicitly
-expected failures. Other suites: 429 room, 529 motion/room and 198 runtime cases;
-the last has **176 setup hits and one matching failure**. Explicit native
-setup-to-release cases pass, as do real PLM partial initialization, B974 prefixes,
-redirect failure and returning diagnostic ROM replacement. Source identities:
-165 runtime / 204 local; fresh raw/checked-ROM reference extraction matches Git.
-Runtime comparisons pair frozen-vs-native with native-vs-owned, rather than
-claiming three fully independent implementations. Independent review found no
-remaining blocker for the staged change.
+Use `runtime-impact-working/MECHANISM_CREATION_HANDOFF.md`,
+`mechanism-creation-price.json` and `mechanism-creation-final.log`.
+Selected results: 342 source/setup/consumer cases (47 matching failures), native
+examples, 114 contacts (14 failures), 74 closing (seven failures), 198 runtime
+collision cases (176 setup hits, one matching failure), plus passing block,
+room and motion suites. Successful lifetime cases require setup, geometry,
+drawing, impact and release. Eight new returning-diagnostic cases exercise
+image mutation/replacement before capture. Git-derived factory/reader checks
+and 167 runtime / 206 local identities pass. The unchanged old closing-only
+helper still shares a reader; no broader reference independence is claimed.
 
-Production Rust 2024 release/frontend/verifier and loaded-source checks pass
-(46.15s); prospective headless release passes (45.02s after a 21.27s failed
-re-export visibility integration build). Changed gameplay formatting passes;
-verify_source retains unrelated baseline formatting. No movie or full-composition
-runtime ran. Synthetic content, controlled hardware/diagnostics and untested
-big-endian execution remain limitations. Sharing does not establish the complete
-mechanism allocator/setup lifecycle or full-game fidelity.
+Production Rust 2024 release/frontend/verifier/source checks pass (48.78s after
+fixing two macro syntax errors); prospective headless release passes (48.46s).
+Carrier/harness builds took 17.98s/14.72s; final comparisons took 1.31s.
+Formatting and independent review pass. No movie or full-composition runtime ran.
+Synthetic content, controlled callbacks/hardware and untested big-endian
+execution remain limitations. Production source hash:
+`57b18128f369483e8d1a04c91532723dcf96c1341ff14748c6182686037bbbda`.
 
-`block-parent/` preserves previous main/carrier/local inputs and composition.
-Drawing/trail/playback/initializer/placement/creation/acceleration/extension/flight
-references and caches remain. The unresolved inherited drawing Intro mismatch
-is recorded in `DRAWING_HANDOFF.md`; this stage does not resolve it. Preserve
-composition-specific wiring/visibility; do not rerun historical generation scripts.
-Next close mechanism allocation/setup dependencies, then remaining consumers and
-runtime authority. Promotion still needs reset/load/rewind/external-writer checks
-from state migration. Independent rendering, sound and full-game completion remain
-outside this stage's evidence.
+`mechanism-creation-parent/` preserves prior main/carrier/local/composition inputs.
+Block/drawing/trail/playback/initializer/placement/creation/acceleration/extension/
+flight references and caches remain. Do not overwrite those snapshots or run
+historical generation scripts. The inherited drawing Intro mismatch remains
+unresolved in `DRAWING_HANDOFF.md`. Current preparation/check commands are in
+the local mechanism handoff. Composition wiring remains distinct from main.
+Next share complete mechanism setup families and retire native dispatch, then
+close remaining consumers and runtime authority. Promotion needs the state
+migration reset/load/rewind/external-writer checks. Rendering, sound and full-game
+completion remain outside this stage's evidence.
 The parallel movie/state investigation is documented in
 [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
 

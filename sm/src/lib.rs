@@ -388,6 +388,8 @@ pub mod game {
     pub mod sm_81;
     pub mod sm_82;
     pub mod plm_spawning;
+    pub(crate) mod mechanism_creation;
+    pub(crate) mod mechanism_creation_ram;
     pub mod sm_84;
     pub mod item_pickups;
     pub mod item_pickups_ram;
