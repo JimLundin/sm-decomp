@@ -843,6 +843,33 @@ palette and other effects remain controlled. There is no duplicate `Restrictions
 owner, production binding, movie coverage or complete replacement price. The
 preserved stage is `player-projectiles/encounter-stage` under the same local root.
 
+The reviewed **missile-stage** adds **334 targeted full-RAM comparisons**, with
+253 ordered observations and 60 matching failures. Normal and super missiles use
+the existing reservation, placement, launch and animation owner; the shared
+reservation rule is also exercised through beam firing. It keeps the count's
+wrapping comparison and low-byte cooldown gate. Empty ammunition or an occupied
+missile pool reverses the count increment but retains cooldown 1. Beams instead
+reuse their last slot after successful reservation. These are distinct caller
+policies around the same mechanic.[^beamlaunch][^missilelaunch]
+
+The candidate represents ammunition expenditure and HUD cancellation as ordered
+Samus effects. Later selection, kind and remaining-ammunition queries are sampled
+after intervening effects. The actual source and fixtures cover sound callbacks
+that change selection/type or reenter firing, invalid-definition failures and
+automatic selection cancellation. Eight compositions explicitly require success
+into flight/animation and super-missile extensions, or missile-reset-beam firing
+with the later protection grant overwriting 20 with 10.
+
+The coordinator independently checked all **115 library inputs** and **44 compiled
+draft inputs/hashes**, both actual missile reference functions and tables, and the
+reviewed shared reservation/codec changes. Thirty-eight prior compiled files are
+unchanged; `engine.rs`, `codec.rs` and harness wiring change, with three new missile
+files. The reported result was reviewed without rerunning it or the prior suites.
+Named missile motion variants replace their numeric encoding in the model.
+Trail/collision output, sound and other native effects are controlled. No movie,
+production binding or full replacement price is established. Preserved source:
+`player-projectiles/missile-stage` under the same local experiment root.
+
 ### Named projectile animation definitions
 
 A standalone experiment separates projectile playback from instruction encoding.

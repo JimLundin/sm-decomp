@@ -1658,6 +1658,11 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    formatting pass. Preserved missile-stage records these selected checks; earlier
    suites were not rerun. Collision/trail output and other native callbacks remain
    controlled; no movie, production adoption or complete reduction is claimed.
+   The coordinator independently reviewed missile-stage's 115+44 compiled inputs,
+   actual reference functions/tables, shared reservation and named motion codec.
+   Thirty-eight prior compiled files are unchanged. The existing architecture
+   diagram now distinguishes shared firing mechanics, caller-specific policies
+   and the unadopted named-definition prototypes.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, drawing/trail, palette/sound
    output and grapple-start consumers remain controlled. ROM definitions are

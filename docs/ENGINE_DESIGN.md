@@ -395,6 +395,16 @@ the X-ray query. There is no second restriction record. Its composed sequence
 retains `Firing` between operations; drag and reset environment effects still
 publish/import through the legacy adapter. The prior suites were not rerun.
 
+The reviewed missile stage adds **334 targeted comparisons**, using the same
+reservation, placement, launch and animation implementation as beams. Sharing
+reservation does not make the whole firing policy interchangeable: beams reuse
+the last beam slot when every damage word is occupied; missiles undo the reserved
+count and stop. Empty ammunition also undoes only the count, retaining the new
+cooldown. Later selection, projectile kind and ammunition observations remain
+live after effects. Eight linked paths require successful execution into flight,
+animation and extension handling, or reset followed by beam firing. Trail/collision
+outputs remain controlled; no production ownership or complete saving is established.
+
 State ownership alone will not finish the game-facing interface. This draft still
 uses raw bank addresses for definition lookup, numeric animation instruction
 pointers and `Motion::Legacy` for some behaviors. These are explicit compatibility
