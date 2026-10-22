@@ -1846,6 +1846,19 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    examples add 234 separately formatted lines. Broad-index reference bodies and
    final runtime bridges remain outside this partial price. Earlier full suites
    were not rerun; no movie, production adoption or complete savings are claimed.
+   The separate [projectile sprite-output extension](RAM_OWNERSHIP.md#owned-projectile-sprite-output)
+   connects the special-stage owner to the actual shared sprite renderer through
+   a named sprite boundary. **228 selected comparisons**, 289 ordered observations
+   and 36 matching failures pass, plus one native named-request sequence. Checks
+   cover ordinary/explosion callers, definition replacement and live sprite changes,
+   partial output/failure, aliases, Ceres coordinates and following trails. All
+   115 frozen and 77 draft compiled inputs match; 68 inherited files are unchanged.
+   Optimized DLL and formatting pass. The changed model/provider cohort adds
+   **69 formatted lines (745 -> 814)**, with 64 native-example lines separate.
+   This snapshot predates the fifth kind parameter and generic release; compose
+   the methods into the latest owner. Native scheduler/geometry, actual echoes,
+   projection and runtime ownership remain open. No movie, adoption or complete
+   saving is claimed. Source/result: 20261022/owned-projectile-sprite-output.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, projectile-sprite drawing,
    palette/sound output and grapple-start consumers remain controlled. ROM

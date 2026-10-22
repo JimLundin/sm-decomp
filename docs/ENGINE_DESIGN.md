@@ -541,13 +541,20 @@ named trail requests there; its compatibility provider performs actual checked
 trail output. The reviewed model/provider/codec cohort adds 228 formatted lines,
 with 93 separate native-example lines. These are partial costs, not savings.
 
-The [next presentation boundary](RAM_OWNERSHIP.md#projectile-presentation-still-to-close)
-is actual projectile-spritemap output, including its definition lifetime, followed
-by echoes and trails. The scheduler must preserve Ceres's carried coordinates and
-its live selector reread. A pass of independent sprite requests would miss those
-rules. Native sprite identities should reach the existing shared renderer through
-definitions, while the compatibility adapter preserves ordered output aliases.
-Current native examples do not execute that consumer. The old trail reference's
+The [projectile-output extension](RAM_OWNERSHIP.md#owned-projectile-sprite-output)
+now connects a named sprite boundary on the complete owner to the actual shared
+renderer. **228 selected comparisons** cover output, drawing callers, definition
+changes and the following trail pass. The compatibility adapter preserves ordered
+output aliases; the existing renderer is reused. A native sequence initializes,
+advances and presents named sprites, recording requests without RAM decoding.
+It does not yet execute the full native scheduler or native geometry.
+
+The [presentation contract](RAM_OWNERSHIP.md#projectile-presentation-still-to-close)
+still requires named visibility/entry policies in the scheduler, preserving Ceres's
+carried coordinates and its live selector reread. A pass of independent sprite
+requests would miss those rules. Compose the output extension with the latest kind
+and release model; the methods add 69 formatted model/provider lines plus 64 native
+example lines. Complete costs and production ownership remain open. The old trail reference's
 potentially unaligned stores establish observed Windows output, not portable
 defined-Rust semantics; current runtime ownership remains open.
 

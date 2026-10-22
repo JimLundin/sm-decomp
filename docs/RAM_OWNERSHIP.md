@@ -1377,6 +1377,71 @@ sprite-output implementation; extending its definition boundary does not justify
 second renderer. A queued rendering result is only valid after its current
 same-pass observations are accounted for.
 
+### Owned projectile sprite output
+
+The `owned-projectile-sprite-output` experiment extends preserved special-stage
+with a named sprite presentation boundary on the same complete `Firing`. The draw
+scheduler calls it for canonical slots; broad slots retain the original consumer.
+The boundary captures the argument shot's sprite identity, transfers the owner to
+output and resumes with the returned owner. Its generic model and encoded provider
+forbid unsafe code. The shared `sprite_drawing.rs` implementation is reused exactly;
+this experiment does not introduce another sprite renderer.
+
+**228 selected old/new full-RAM comparisons pass**, with **289 ordered observations
+and 36 matching failures**: 90 direct output cases, 64 ordinary/explosion drawing
+callers, 54 callback cases, 11 truncated geometry cases, five explicit contracts
+and four linked drawing/reset/trail steps. Every case checks its expected success
+or failure as well as comparing both implementations. A missing controlled
+diagnostic handler initially caused matching artificial failures; the explicit
+output assertion caught that fixture error, and the final source fixes it.
+
+The compatibility cases run the actual shared sprite-output loop and its current
+projectile consumer. Two harness substitutions expose otherwise private/native
+boundaries: diagnostic output becomes a controlled callback, and retrieval of the
+private ROM owner uses the fixture's corresponding owned image. The lookup captures
+that image after diagnostics, preserving edits/replacement and the original sprite
+address when the callback changes the shot's live sprite. Projection and crash
+echoes remain controlled; the following trail playback/output runs its real bodies.
+
+The explicit contracts distinguish:
+
+- A replaced definition image from a changed live sprite: output uses the captured
+  sprite address in the newly selected image, while the changed live sprite survives.
+- Truncated geometry after X/Y publication: partial output remains and the final
+  output cursor has not yet advanced.
+- Ceres ordinary drawing using transformed X and retained Y, and Ceres explosion
+  drawing discarding both projected coordinates.
+- The echo boundary changing freeze state before the following trail pass captures it.
+
+Callbacks also mutate other shot damage, charge/protection/resume state, selector,
+camera and trails; nested output and reset are exercised. High output addresses
+alias projectile/trail state, which is imported before subsequent owned operations.
+The four linked steps retain one owner across drawing, reset and trail progression.
+
+One separate native sequence initializes and advances a named weapon, then presents
+two named sprites while retaining the surrounding owner. Its output records named
+requests and changes unrelated owner state; it does **not** execute native geometry,
+the full draw scheduler, firing, motion or release. The scheduler still uses encoded
+cursor/type/sprite-validity rules. This result closes the selected compatibility
+output interaction, not the entire native presentation interface.
+
+The final optimized DLL and model/provider/native formatting pass. All **115 frozen
+library and 77 draft compiled inputs** match their sources; 68 inherited inputs
+are unchanged. Six current drawing/support files match the frozen reference, while
+the runtime has advanced. The changed model/provider cohort is **745 -> 814 formatted
+lines (+69)**; the native example adds 64 lines. The unchanged shared renderer is
+96 formatted lines, the reference/output adapter 34, and the comparison fixture
+519; harness changes and final runtime bridges remain outside the partial model
+price. No whole-replacement saving, movie execution or production adoption is claimed.
+
+Compose these methods with the latest fifth kind parameter and generic slot release;
+do not replace that newer owner with this special-stage snapshot. The next native
+seam is the scheduler's named visibility/entry policies and actual geometry provider.
+Local sources and reproduction are in
+`Local/sm-decomp-experiments/20261022/owned-projectile-sprite-output`
+(`projectile_presentation.rs`, `encoded_presentation.rs`, `sprite_output_checks.rs`,
+`native_presentation.rs`, `prepare.py`, `build.py`, `check.py`).
+
 ### Aim capture, placement and expiry
 
 An isolated experiment against frozen `15589b48` executes the production bodies
