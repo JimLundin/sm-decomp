@@ -12,6 +12,8 @@ migrate. Preserve the established observation and suspension points. Checked RAM
 access is a transitional compatibility adapter, not the final domain interface.
 Keep byte-compatible encoding for verification while moving the behavior itself
 into models that need no Game, RAM, raw pointers or unsafe calls.
+The coordinated [engine design](ENGINE_DESIGN.md) defines the proposed owners,
+ordered outcomes and [state-transfer constraints](ENGINE_STATE_MIGRATION.md).
 
 Git concurrency (user direction, 2026-10-19): agents must not manually
 reserve or hold Git locks, including index.lock and branch ref locks.
@@ -1568,6 +1570,17 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    The [interactive architecture atlas](architecture.html) maps current source
    to proposed Super Metroid responsibilities, existing sharing and frame order.
    It is a design aid; proposed interfaces are not adopted replacements or savings.
+   The coordinated [engine design](ENGINE_DESIGN.md) separates adopted pure rules
+   from authoritative persistent state. The next substantial gameplay candidate
+   is the complete player-projectile lifecycle, including consumers and runtime
+   authority transfers; it has no established whole-replacement price yet.
+   The [state migration audit](ENGINE_STATE_MIGRATION.md) traces reset/load,
+   replay, inline CPU, physical writes and oracle rewind/adoption. A frozen-source
+   transfer prototype passes 60 comparisons and 14 discriminating checks, with
+   controlled frame execution and checkpoint-RAM-only limits documented in
+   RAM_OWNERSHIP.md. No production state promotion, movie coverage or savings are
+   claimed. Generic native indexed aliases still require a complete access-path
+   migration or explicit legacy execution interval; two mutable copies are invalid.
    User-requested [RAM ownership research](RAM_OWNERSHIP.md) now traces ten
    producer/consumer contracts and separates live values, captured selectors,
    cross-update handoffs and nested continuations. The first implementation moves
