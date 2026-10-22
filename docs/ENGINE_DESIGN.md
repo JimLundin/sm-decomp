@@ -516,6 +516,33 @@ release work unchanged; release disables the selected animation gate while
 retaining trail data. These results guide named queries for the native scheduler;
 they do not establish one universal occupied flag or complete native firing.
 
+The [complete update-pass experiment](RAM_OWNERSHIP.md#projectile-update-scheduling-over-the-complete-owner)
+now makes motion-before-animation sequencing explicit. **453 selected comparisons**
+and five native scheduling sequences pass. The pass captures admission and motion,
+then advances the live selected animation unconditionally, even when motion has
+just released the shot. Release can therefore be followed by the timer wrapping
+from zero while its cursor remains absent. Animation callbacks may select where
+iteration continues without changing which animation receives its final writes.
+
+```mermaid
+flowchart LR
+    Slot[Visit projectile slot] --> Gate{Animation scheduled?}
+    Gate -->|Yes| Motion[Run captured motion]
+    Motion --> Animation[Advance live selected animation]
+    Animation --> Select[Read next selection]
+    Select --> Previous[Step to previous slot]
+    Gate -->|No| Previous
+    Previous --> Slot
+```
+
+This describes one pass's ordering; the loop ends after the first slot, and an
+out-of-pool selection transfers to an explicit compatibility continuation. Eight
+linked steps retain the owner through initialization, update, actual drawing,
+release, reset and surviving trails. Native scenarios use authored motion actions,
+so they establish the scheduling contract rather than native flight. The model
+and provider add 96 formatted lines; runtime promotion and the complete price
+remain open. Compose these methods with the newer beam-creation draft.
+
 This advances the domain interface but does not migrate native firing, flight,
 complete bomb processing, drawing or runtime authority. The changed model/provider
 cohort adds **138 formatted lines**, plus 216 separate authored-example lines;

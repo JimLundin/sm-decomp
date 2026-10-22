@@ -1925,6 +1925,25 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    producer definitions, protection/suspension, real callers and runtime transfers.
    Count every adapter/fallback and close the remaining numeric interfaces before
    judging the complete structural replacement; this stage claims no net saving.
+   The coordinator's [complete update-pass experiment](RAM_OWNERSHIP.md#projectile-update-scheduling-over-the-complete-owner)
+   passes **453 selected comparisons**, 470 ordered observations and six expected
+   matching failures, plus five native scheduling sequences. Motion receives the
+   captured slot/selector; animation always follows admitted motion and uses the
+   live selection. Release during motion can therefore leave the absent cursor's
+   timer at `0xffff`. The loop rereads selection after animation, preserving wide
+   out-of-pool continuation. Eight linked steps retain the owner through actual
+   initialization, update, drawing, release, reset and surviving trails.
+   All 115 frozen and 88 draft compiled inputs match; 81 inherited files are
+   unchanged. Optimized DLL and formatting pass. The model/provider cohort adds
+   **96 formatted lines (531 -> 627)**; native examples add 213 separate lines.
+   Reference routing/continuation (95 lines), fixtures (572) and final bridges
+   remain separate from that partial price. Thirty dispatcher routes use owned
+   behavior or inactivity, three plasma subphases retain reference implementations,
+   and two exotic motion bodies are controlled. Collision/feedback are controlled;
+   native examples use authored motion actions. Outer freeze/HUD scheduling and
+   launch-history clearing were inspected only. No movie, adoption or complete
+   saving is claimed. Source/result: 20261022/projectile-update-pass. Its base is
+   presentation-stage; compose the methods into the newer beam-definition owner.
    The frozen library
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.

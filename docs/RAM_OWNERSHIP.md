@@ -1056,7 +1056,7 @@ distinctions:[^projectilepresence]
 | May the pool reserve another shot? | Reservation count and cooldown; the reservation commits before slot selection and initialization. |
 | May beam/missile firing reuse this slot? | Damage is zero. Beam and missile search still have different full-pool policies. |
 | May bomb firing reuse this slot? | Kind is zero, independently of damage. |
-| Does this slot participate in update/drawing? | Animation cursor is nonzero; a zero duration alone does not disable it. Visibility and sprite validity add further drawing conditions. |
+| Is this slot admitted when the update/draw pass visits it? | Animation cursor is nonzero; a zero duration alone does not disable it. Visibility and sprite validity add further drawing conditions. Animation after admitted motion follows the separate ordering contract below. |
 | Did release handle this slot? | The generic return value reports a canonical index, not previous occupancy. Releasing an already-clear slot can still decrement a reservation. |
 
 A separate `native-projectile-presence` sequence uses optional named kinds,
@@ -1082,6 +1082,80 @@ Optional identities are a demonstrated representation choice; the complete nativ
 kind taxonomy and all callers still need composition. Local source/result is in
 `Local/sm-decomp-experiments/20261022/native-projectile-presence`
 (`native_presence.rs`, `build.py`, `check.py`). No movie or adoption is claimed.
+
+The complete update-pass follow-up below now exercises the motion-before-playback
+contract left open by the optional-presence example. Native flight and runtime
+authority remain separate migration work.
+
+### Projectile update scheduling over the complete owner
+
+`projectile-update-pass` composes the preserved `presentation-stage` owner with
+the actual projectile update loop and existing owned flight, bomb, special-attack
+and animation algorithms. The new scheduler itself forbids unsafe code and needs
+no Game, RAM, ROM or numeric animation identity. It moves the complete owner
+through motion, selected animation and an explicit compatibility continuation.
+Its cursor-presence query is shared with presentation; reservation and reuse
+predicates remain separate.[^projectilepresence]
+
+The experiment passes **453 selected old/new comparisons**, **470 ordered
+observations** and **six expected matching failures**. Every case requires its
+intended completion or failure, and requested mutation callbacks must execute.
+There are 280 route/timer cases, 154 ordering/release/retarget cases, five
+failure-selection baselines, six injected failures and eight linked lifecycle
+steps. Full RAM, returned completion, failure flags and state at external
+observations match. Five separate native scheduling sequences also pass.
+
+| Decision | Explicit behavior to preserve |
+| --- | --- |
+| Enter the pass | Start at the last projectile slot and visit slots in reverse order. |
+| Admit a slot | Test its animation cursor once, before motion; capture that slot and its motion selector. |
+| Finish motion | Always advance animation after admitted motion, using the live selected slot. Motion may have released the original shot or selected a different, unscheduled slot. |
+| Continue iteration | Reread selection after animation, then subtract one slot. Skipped slots do not perform this reread. |
+| Release during motion | Release clears the animation timer, then the unconditional animation step wraps it to `0xffff` without reading a definition. The next pass skips its absent cursor. |
+| Change selection during a definition callback | Playback finishes writing the animation it captured; the loop then continues from the changed selection. |
+| Leave the canonical pool | Transfer ownership to the compatibility continuation with the original wide loop cursor. A selected `0xffff` leads to cursor 65,533 after subtraction, not immediate termination. |
+
+The linked sequence retains `Firing` between initialization, three update passes,
+actual sprite drawing, release, reset and subsequent trail playback. It requires
+visible sprite output, later absence of that shot, and continued visual trails
+after release/reset. Existing external adapters still publish and reimport the
+owner at their declared boundaries; this does not prove persistent runtime
+authority. A fixture conflict between the low diagnostic entry and launch record
+was caught by the explicit drawing assertion and corrected before the accepted
+run. Equality alone was insufficient to establish that the consumer ran.
+
+Native sequences use optional named animation/sprite/kind identities. They cover
+release followed by animation, retargeting to an absent cursor, a definition
+callback changing the loop selection, the wide compatibility handoff, and
+playback-driven release across repeated passes. Motion actions are authored
+scheduler stimuli, **not converted native flight physics**. The native broad-index
+case records the handoff; the paired compatibility case executes its continuation.
+
+All **115 frozen library and 88 draft compiled inputs** match; 81 inherited
+sources are unchanged. The base presentation DLL's 115+83 inputs were checked
+before copying. The current update loop and dispatcher match the frozen source;
+five relevant complete source files also match. All 35 dispatcher routes are
+represented: 30 use the owned algorithms or inactive behavior, three plasma
+subphase entries retain reference implementations, and SpeedEcho/UnknownProj8027
+motion bodies are controlled. Collision, feedback and diagnostics remain controlled
+external boundaries. Synthetic definitions establish no movie or hardware route.
+
+Optimized DLL and formatting pass. The changed formatted model/provider cohort
+is **531 -> 627 lines (+96)**, including the new scheduler, routing provider and
+effect variants. Native examples add 213 separate lines; the comparison fixture
+has 572 and reference dispatch/continuation 95. These are partial costs, not a
+complete replacement price or savings. No movie or production adoption is claimed.
+Source/results are preserved under
+`Local/sm-decomp-experiments/20261022/projectile-update-pass`
+(`prepare.py`, `freeze.py`, `build.py`, `check.py`, `price.py`). This base predates
+`beam-definition-stage`; compose the scheduler methods into the latest owner.
+
+Outer scheduling remains a distinct source finding: the normal HUD caller checks
+freeze after its HUD behavior, but the two front-facing poses bypass that branch;
+the alternate alpha handler calls the pass directly. Do not add an unconditional
+freeze guard inside the projectile pass. The subsequent `Samus_Func10` launch
+history clear also remains outside it. Those outer caller branches were inspected,
+not exercised by this experiment.[^projectilepresence]
 
 ### Named projectile animation definitions
 
