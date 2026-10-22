@@ -1616,13 +1616,27 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    integration. Exact compiled stages are preserved locally: animation-stage
    (1,295), aim-stage (1,634), launch-stage
    (1,945), flare-stage (2,330), feedback-stage (2,772) and cancellation-stage (3,427).
+   The same draft now includes complete projectile reset: **89 focused old/new
+   full-RAM comparisons**, 142 ordered observations and 22 matching failures pass.
+   Reset preserves position fractions, auxiliary words, charge/flare and protection;
+   it clears trail timers and pool counts/cooldown. A checked environment adapter
+   handles the distinct HUD, speed-echo, Power Bomb flag and palette work, including
+   the live hyper-beam reread after the target-palette callback. Recursive reset,
+   callback mutation/failure, reset/release order and single-owner firing/reset/firing
+   and palette/reset/palette sequences are covered. The reset model and adapter
+   forbid unsafe code. All 115 frozen and 34 current draft inputs match compiled
+   bytes; optimized DLL and formatting pass. Exact source/result is preserved in
+   reset-stage. These are 89 additional selected checks, not a rerun or a new total
+   for the prior 3,427-case stage. Earlier Rust inputs are unchanged except three
+   reset effect declarations and harness wiring. Door/elevator callers, actual
+   palette output and production runtime transfer remain unexercised here.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, drawing/trail, palette/sound
    output and grapple-start consumers remain controlled. ROM definitions are
    synthetic; no gameplay route or hardware
    coverage is established. Other accepted out-of-pool operations retain reference
    bodies, including drawing continuations; handoff tests do not retire those bodies.
-   Continue with remaining weapon modes, trails/reset, encounter restrictions,
+   Continue with remaining weapon modes, trails, encounter restrictions,
    real producers/callers and runtime transfers. Count every adapter/fallback and
    close the remaining numeric-definition/motion interfaces. The frozen library
    predates current main; final integration requires current-source builds.
