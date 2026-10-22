@@ -2077,56 +2077,54 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    movie ran. No adoption or complete saving is claimed. The parallel standalone
    shot-block-reactions result above is not an additive saving or a second model
    to install; reuse its remaining setup findings for mechanism lifecycle ownership.
-   Collision, hardcoded and room-entry mechanism producers now use the same owned
-   allocator in the full candidate, with source-specific initialization and the
-   five shared setup policies. **334 selected comparisons**, 648 ordered
-   observations and 47 expected matching failures pass: 121 producer/prefix/ROM-
-   lifetime cases and 213 affected setup/terrain/projectile comparisons. These
-   include seven retained-pool steps and 48 persistent projectile lifecycle steps.
-   Hardcoded and room entries initialize arguments before program reads;
-   collision initializes them afterward. Room-entry failures preserve each
-   completed block/argument prefix. Full capacity avoids entry and header reads.
-   Hardcoded and room creation retain their captured header record; collision
-   reacquires ROM for setup. In-place mutation and allocation replacement at an
-   explicit controlled observation point distinguish these contracts. Nested
-   hardcoded creation preserves the captured outer slot and leaves inner selection.
-   The setup accumulator and optional collision displacement cross the explicit
-   compatibility interval. Actual quicksand setup changes the uniquely borrowed
-   displacement, including before a later injected callback failure.
-   No-op, Blue Door, Colored Door, Strange Door and Respawning Shot Block use the
-   shared safe model; checks reject accidental fallback for these policies. Eye
-   Door and quicksand remain exercised legacy setup. Release preserves stale
-   associations, saved level and return cursors; nested creation can reuse the
-   released slot before captured outer setup resumes. Strange Door's signed hit
-   lookup can alias its newly cleared association. Colored Door preserves odd
-   byte offsets while BTS and word accesses round down. The three geometry
-   policies execute during firing, with their geometry consumed by subsequent
-   scheduled flight/output/release. Each linked scenario requires its selected
-   setup to execute.
-   Definition reads, geometry operations and legacy setup consume the complete
-   pool/projectile owner before RAM execution and reconstruct it afterward.
-   Native terrain keeps its pool unavailable during transfer. Three authored
-   native sequences, two association cases and a typed placed-mechanism case pass.
-   The typed setup fixture uses minimal player input; native terrain responses
-   and initial collision remain authored/controlled. Public producer entries are
-   exercised directly; broader real callers and nested legacy setup routes still
-   need migration into the runtime owner.
-   Pool/creation are non-Clone; model, projection and checked source decoder forbid
-   unsafe code. All 115 frozen and 113 draft compiled inputs match; 103 inherited
-   sources are unchanged. Main's complete plm_spawning.rs maps exactly to the
-   compiled reference after explicit ROM/setup rebinding and three observation
-   hooks. Its byte layout and source-reader contracts were inspected. Optimized
+   The full candidate now combines all three mechanism creation forms with eight
+   owned setup policies, including quicksand and both nested Chozo-hand triggers.
+   The source stage previously passed 334 comparisons with 48 linked projectile
+   steps; that suite was not rerun for this contact-only extension. The current
+   **114 selected comparisons**, 242 ordered observations and 14 expected matching
+   failures pass: 58 quicksand cases, 50 hand-trigger cases, two diagnostic-prefix
+   failures and four affected creation consumers. Two authored native hand/child
+   sequences execute the same contact and creation models.
+   Quicksand preserves the unsigned middle-word comparison, outside displacement
+   bytes, vertical-direction masking and the contact-damage override. Its optional
+   displacement is a unique safe borrow; changes survive later callback failures.
+   The quicksand flag still wraps. Chozo-hand admission retains Space Jump/boss,
+   collision direction and grounded-ball pose conditions. Boss-query mutations
+   precede live pose sampling; the event callback precedes the live block read.
+   Actual event/boss operations, enemy activation, scroll edits, level clearing and
+   Samus locking execute in order. Child creation carries the complete pool and
+   projectile owner plus the same collision displacement. Callbacks can reset
+   projectiles, change room width or release/reuse the outer slot. Final release
+   still targets that captured outer slot; child selection remains live.
+   No-op, Blue Door, Colored Door, Strange Door and Respawning Shot Block retain
+   the shared safe setup model. Collision, hardcoded and room-entry creation use
+   one allocator. Their different prefix order and captured-versus-live ROM
+   contracts remain as verified in player-projectiles/mechanism-sources-stage.
+   Header/entry failures preserve completed prefixes; full capacity avoids reads.
+   Saved state and return cursors survive reuse. Setup queries retain descending
+   stale-association behavior, signed projectile aliases and odd geometry offsets.
+   Existing firing/flight/output consumers are preserved, without claiming that
+   the earlier 334 comparisons reran or that all wider setup routes are owned.
+   Model/projection and the checked contact provider forbid unsafe code; pool and
+   creation remain non-Clone. All 115 frozen and 118 draft compiled inputs match;
+   105 inherited sources are unchanged. Three actual contact bodies, the current
+   progress module, real Samus lock functions and RAM layout correspond. Optimized
    DLL and changed-file formatting pass. Source/result:
-   player-projectiles/mechanism-sources-stage. The mechanism model/provider cohort
-   grows **364 -> 576 (+212 formatted lines)**, plus three shared effect-field
-   lines: **+215 implementation lines**. Native fixtures add 12; the current-source
-   reference (143), new paired fixture (441), existing fixture growth (32) and
-   formatted harness growth (47) remain separate from this partial price.
-   No broad terrain/slope or full projectile suite, movie, production adoption or
-   net saving is claimed. Continue with wider setup/script lifecycle, actual
-   creation callers and nested collision handoffs, protection/suspension, native
-   missile/extension definitions and runtime room/projectile authority. Keep
-   reconciling current plm_spawning.rs instead of restoring its retired bank facade.
+   player-projectiles/mechanism-contacts-stage. The changed model/provider adds
+   **253 formatted implementation lines**, reusing the existing 37-line progress
+   module. Native fixtures add 120. Reference (109), new paired fixture (417),
+   existing fixture growth (23) and formatted harness growth (59) remain separate
+   from this partial price. No production adoption or net saving is claimed.
+   Diagnostic output/assertion and extra callback mutations are controlled
+   boundaries; native actor/geometry responses are authored. Broader Samus
+   collision scans, hardware and gameplay routes are not covered by these cases.
+   No movie, earlier full creation/setup suite or unrelated projectile suite ran.
+   Next extend this full candidate with the audited mechanism pass, context-aware
+   message continuation and identified consumers. Broader setup/scripts, door
+   activation, remaining real callers, protection, native missile/extension
+   definitions and runtime room/projectile authority remain open. Reconcile the
+   evolving current plm_spawning.rs and room-content modules instead of restoring
+   their retired bank facades or adding another allocator/setup model.
    The frozen library
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.
