@@ -866,30 +866,19 @@ pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
         }
     }
 }
-pub unsafe fn SpcPlayer_Upload(p: *mut SpcPlayer, mut data: *const u8) {
+pub unsafe fn SpcPlayer_Upload(p: *mut SpcPlayer, image: crate::rom::RomImage, source: usize) {
     Dsp_Write(p, EVOLL as i32 as u8, 0);
     Dsp_Write(p, EVOLR as i32 as u8, 0);
     Dsp_Write(p, KOF as i32 as u8, 0xff);
-    loop {
-        let mut numbytes: i32 = *(data as *mut u16) as i32;
-        if numbytes == 0 {
-            break;
-        }
-        let mut target: i32 = *(data.offset(2) as *mut u16) as i32;
-        data = data.offset(4);
-        do_until! { (numbytes == 0);
-            crate::update_place! { previous fresh32 = data => data.offset(1); }
-            crate::update_place! { previous fresh33 = target => target + 1; }
-            (*p).ram[(fresh33 & 0xffff) as usize] = *fresh32;
-            numbytes -= 1;
-        }
-    }
+    crate::audio_upload::transfer(image, source, |target, value| {
+        (*p).ram[usize::from(target)] = value;
+    });
     (*p).port_to_snes[0i32 as usize] = 0;
     (*p).input_ports[3i32 as usize] = 255;
     (*p).input_ports[2i32 as usize] = (*p).input_ports[3i32 as usize];
     (*p).input_ports[1i32 as usize] = (*p).input_ports[2i32 as usize];
     (*p).input_ports[0i32 as usize] = (*p).input_ports[1i32 as usize];
-    (*p).music_ptr_toplevel = *((&raw mut (*p).ram as *mut u8).offset(0x581e) as *mut u16);
+    (*p).music_ptr_toplevel = u16::from_ne_bytes([(*p).ram[0x581e], (*p).ram[0x581f]]);
     (*p).counter_sf0c = 2;
     (*p).key_OFF = ((*p).key_OFF | !((*p).is_chan_on));
 }

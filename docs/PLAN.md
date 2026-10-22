@@ -42,10 +42,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,190 Rust lines in 108 files**, plus 262 C
-bridge and 296 C-header lines = **95,748 maintained implementation lines**.
+Current composition (2026-10-22): **95,215 Rust lines in 109 files**, plus 262 C
+bridge and 296 C-header lines = **95,773 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,579**. This complete recount includes frontend,
+gives **96,604**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1836,6 +1836,36 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    that path; the shorter boot run claims only the six exercised paths above.
    No gameplay, active-music or physical-device coverage is claimed.
    Checks: Local/sm-decomp-experiments/20261022/apu-queue.
+   Native audio uploads now retain the registered ROM image before the audio lock
+   and decode headers/payloads through checked bytes. The format decoder forbids
+   unsafe code; all production callers use it. Linear source movement, wrapped
+   16-bit destinations, ordered overlapping blocks, zero termination and live ROM
+   patch visibility are preserved. Startup recognition still compares mapped
+   aliases, and the lower-window native warning retains its bytes and timing.
+   Source pointer traversal and three raw word loads are retired; the final music
+   pointer is assembled from checked native-player RAM indices. DSP calls and the
+   native destination handle remain unsafe. The physical bus uploader is unchanged.
+   Complete ownership cost is **+25 Rust lines across seven files**, including
+   decoder, callers and registrations; no new macros or dependencies.
+   All **480 actual old/new cases** pass on the final merged library, including
+   empty/maximal/overlapping blocks, destination/source bank crossings, source
+   replacement and patching during lock, startup counters, full native checkpoint
+   state, queue state and ordered DSP writes. Four exact native-diagnostic pairs
+   and eleven owner/bounds/partial-effect checks pass. Truncated sources fail after
+   their written prefix and the original initial DSP writes. Odd source addresses
+   now use defined byte reads; old optimized observations do not prove that the
+   retired unaligned reads were defined. All 113 old/116 final library inputs,
+   native source checks, formatting and normal release library/frontend/verifier
+   builds pass. Probed and clean native-audio boot each pass **153/0**, inputs
+   **0..152**: inputs 0..149 are logo/setup; upload entry, nonempty block decoding,
+   byte writes and music-pointer completion first execute at 150, followed by two
+   frames of real audio processing. Six blocks transfer 57,841 bytes. Normal
+   comparisons, rendering and audio remain enabled. This establishes no gameplay,
+   active-song or physical-device coverage; wider upload cases use components.
+   Native-player field/RAM synchronization remains unsafe: the DSP retains a
+   pointer into its inline RAM. A whole-player or whole-RAM mutable borrow would
+   not be a valid replacement, even if it ended before the next native call.
+   Checks: Local/sm-decomp-experiments/20261022/audio-upload.
    The existing shared ROM-table interface now uses that owned image with checked
    signed offsets and byte reads, preserving image capture before index evaluation,
    live patch visibility, native byte order and linear bank crossings. Its 725
@@ -2869,14 +2899,19 @@ owned sprite drawing, checked Mode 7 transfers, owned SRAM, checked snapshot
 streams, owned enemy-projectile scripts, named APU history and explicit launch
 motion, checked ROM patch installation, hardware field serialization, PLM
 award/message ownership, owned APU RAM, the owned audio command queue and enemy
-population ownership, maintained Rust is **95,190**, with
+population ownership and owned native audio uploads, maintained Rust is **95,215**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **95,748**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,579**.
+Including 262 C and 296 header lines gives **95,773**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,604**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3034; cast lines 6542. Enemy population ownership adds 310
+unsafe functions 3034; cast lines 6540. Owned native audio uploads add 25 maintained
+lines and remove two cast-containing lines; other residue counters are unchanged.
+Source pointer traversal and three raw word loads are retired. The owned-source
+decoder forbids unsafe code; native DSP calls, destination handles and field/RAM
+synchronization remain unsafe. This is a safety cost, not a volume reduction.
+Enemy population ownership adds 310
 maintained lines and one counted unsafe declaration for the shared initializer
 handoff, while removing 12 cast-containing lines. Its model forbids unsafe code;
 raw population/enemy pointer access and initialization clearing in these paths

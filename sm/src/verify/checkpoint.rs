@@ -34,6 +34,7 @@ fn compatibility() -> u64 {
         include_str!("../snapshot_io.rs"),
         include_str!("../apu_ram.rs"),
         include_str!("../apu_queue.rs"),
+        include_str!("../audio_upload.rs"),
         include_str!("../audio_snapshot.rs"),
         include_str!("../spc_player.rs"),
         include_str!("../snes/snes.rs"),

@@ -63,7 +63,7 @@ pub unsafe fn APU_UploadBank(addr: u32, game: &mut Game) {
         crate::native_audio::upload(addr, game);
         return;
     }
-    RtlApuUpload(RomPtr(addr, game), game);
+    RtlApuUpload(addr, game);
 }
 pub unsafe fn NextRandom(game: &mut Game) -> u16 {
     let mut RegWord: u16 = ((byte!(@pointer ram_ptr!(game, u16; 0x5e5); 0)) as u16).wrapping_mul(5);

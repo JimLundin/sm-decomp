@@ -403,6 +403,7 @@ pub mod platform {
 
 pub mod apu_queue;
 pub mod apu_ram;
+pub mod audio_upload;
 pub(crate) mod audio_snapshot;
 #[doc(hidden)]
 pub mod c_library;

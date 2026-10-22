@@ -839,14 +839,24 @@ unsafe fn RtlPopApuState_Locked(game: &mut Game) {
         crate::apu_queue::ApuQueue::apply_ports(writes, ports);
     }
 }
-pub unsafe fn RtlApuUpload(p: *const u8, game: &mut Game) {
+pub unsafe fn RtlApuUpload(address: u32, game: &mut Game) {
+    if address & 0x8000 == 0 {
+        printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
+        game.g_fail = true;
+    }
+    let source = lorom_offset(address) as usize;
+    let image = game
+        .loaded_rom
+        .as_ref()
+        .expect("ROM must be loaded")
+        .clone();
     let version = if game.g_snes.is_null() {
         0
     } else {
         (*game.g_snes).runningWhichVersion
     };
     if version == 1 || version == 2 {
-        let startup = p == RomPtr(0xcf8000, game);
+        let startup = source == lorom_offset(0xcf8000) as usize;
         let snapshot = if version == 1 {
             &mut game.g_snapshot_theirs
         } else {
@@ -857,7 +867,7 @@ pub unsafe fn RtlApuUpload(p: *const u8, game: &mut Game) {
     }
     RtlApuLock();
     game.apu_queue.reset();
-    SpcPlayer_Upload(game.g_spc_player, p);
+    SpcPlayer_Upload(game.g_spc_player, image, source);
     RtlApuUnlock();
 }
 unsafe fn RtlRestoreMusicAfterLoad_Locked(is_reset: bool, game: &mut Game) {
