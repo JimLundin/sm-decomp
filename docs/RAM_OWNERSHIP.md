@@ -126,6 +126,41 @@ The effect/Samus collision pass also consults invincibility and this contact
 mode. A single end-of-update damage application would change that timing.
 [^complete][^effectcontact]
 
+**Standard combat ownership preflight (source findings, not new runtime checks):**
+`NormalEnemyShotAiSkipDeathAnim` samples initial projectile damage/type and the
+vulnerability record, then sets flash/AI state before a hurt-sound callback. After
+that callback it rereads the enemy selector for health damage and independently
+rereads the projectile selector/type. A single captured enemy/projectile pair
+would therefore change this interaction. The original health target becomes
+captured only after the sound call. The beam-only `last_enemy_power` write also
+matters: non-beam lethal checks can observe its earlier value.
+
+Freezing through vulnerability byte 255 captures the enemy before its optional
+sound, then reads the area and writes freeze state after sound returns. Lethal
+ice damage writes freeze state before playing sound and leaves health unchanged.
+Normal thawing has another deliberate quirk: clearing the frozen AI bit copies
+the resulting AI word into the frozen timer. Contact damage uses a signed wrapped
+subtraction test; shot and Power Bomb health subtraction use unsigned saturation.
+These rules cannot be replaced with one generic health update.
+
+`NormalEnemyShotAi` retains the enemy slot across the hit-sprite callback for its
+death test and enemy-definition lookup, while cause-of-death storage and death
+animation select the live current enemy. `EnemyDeathAnimation` in turn captures
+its cleanup slot before spawning the explosion, reads that slot's preservation
+bit after spawning, clears its 64 bytes, and then increments the live kill count.
+An index handle can replace the retained raw pointer; recapturing the selector
+at cleanup would target a different slot after callback mutation. Contact mode 4
+similarly retains its original enemy/definition while calling Samus code, then
+reads the retained definition's live vulnerability bytes.
+
+The complete isolated model/adapter draft costs **+203 Rust lines** on 461097ea,
+including its retained bank facade and registrations. It has only a formatted
+price, with no compiler or behavioral validation, and is not adopted. It separates
+decisions from RAM but retains persistent state and the existing call topology;
+the price supplies no large reduction budget. These findings narrow the contract
+for a broader enemy lifecycle owner rather than validating this draft. Local
+source: `Local/sm-decomp-experiments/20261022/enemy-combat`.
+
 ### 4. Projectile execution has several different selector lifetimes
 
 **Producer/consumer:** `projectile_flight::update` receives `k`, decrements that

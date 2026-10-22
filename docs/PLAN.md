@@ -1619,6 +1619,22 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    macros. This is required safety/ownership work, not a volume reduction.
    Contracts and limits: RAM_OWNERSHIP.md, section 6. Local reproduction:
    Local/sm-decomp-experiments/20261022/plm-pickups.
+   A separate standard-combat replacement on 461097ea has a complete formatted
+   price of **94,806 -> 95,009 (+203 Rust lines)**. It covers normal touch, shots,
+   freezing/thawing, Power Bomb damage, death-slot cleanup and dud effects;
+   collision searches and enemy-specific reactions remain outside this scope.
+   The bank loses 336 net lines, while pure decisions, checked slot/ROM access,
+   effect orchestration and registrations add 539. The existing caller facade
+   is retained and counted; this does not retire bank A0 or own persistent enemy
+   state. No new macros, dependency or hidden implementation. Formatting passes;
+   compilation and runtime validation have not run, and nothing is adopted.
+   Defer this representation as a volume candidate. Its arithmetic/helper split
+   does not establish a larger replacement; safety remains required independently
+   of this price. Further enemy ownership work must preserve captured death slots,
+   live post-sound damage targets, separately sampled projectile selectors and
+   the two different freeze/sound orderings. The source-level contracts are in
+   RAM_OWNERSHIP.md, section 3; they are not new execution coverage. Draft:
+   Local/sm-decomp-experiments/20261022/enemy-combat.
    Renewed user direction (2026-10-21): the search is still too narrow. Prioritize
    substantial system replacements and repeated algorithms across responsibilities.
    Stop spending implementation/validation effort on roughly hundred-line enemy
