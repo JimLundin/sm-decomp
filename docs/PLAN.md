@@ -1686,6 +1686,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    inputs, complete-owner transport and native-sequence scope. Forty prior compiled
    files are unchanged; the codec's field regrouping and the +205 cohort price
    were reviewed. Details are in the engine design and RAM ownership research.
+   The five weapon-entry initializers now use named definition providers with the
+   same complete generic owner. **786 selected full-RAM comparisons**, 491 ordered
+   observations and 178 matching failures pass: 159 diagnostic/owner cases,
+   293 initialization/firing/extension cases and 334 missile/shared-reservation
+   cases. Checks preserve ordinary damage writes after diagnostics, other modes'
+   earlier writes, captured direction/slot/allocation, live definition edits,
+   replacement-ROM radius reads and nested reset. Five native sequences initialize
+   that same owner from named weapons, then sample trails and play animation;
+   firing selection, movement, actual release and rendering still use compatibility
+   interfaces. All 115 frozen and 53 draft compiled inputs match; 46 prior files
+   are unchanged. Optimized DLL and formatting pass. Six relevant gameplay source
+   files match current main; the frozen runtime still requires final integration.
+   Preserved initialization-stage records these selected checks, not a new
+   cumulative lifecycle total. The formatted model/provider cohort grows another
+   **71 lines (1,194 -> 1,265)**, with 70 authored native-example lines separate.
+   No new unsafe elimination, production savings or movie coverage is claimed.
+   Impact/bomb-explosion transitions and drawing still use encoded definitions.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, drawing/trail, palette/sound
    output and grapple-start consumers remain controlled. ROM definitions are
