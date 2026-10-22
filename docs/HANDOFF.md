@@ -9,9 +9,9 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest verified implementation is `e3fadf56`. Work is now paused at the
-user's request; the main checkout additionally contains the untested draft
-described below. Previous passing builds do not validate that dirty checkout.
+The latest verified gameplay implementation is `e3fadf56`. The user authorized
+immediate build-pipeline preparation. The untested draft below is now isolated;
+main and the working comparison harness use the verified gameplay baseline.
 
 The phase stage at `ba0d94c1` now also shares linked-extension contact through
 `projectile_flight_control`. The core and new extension RAM adapter forbid unsafe
@@ -46,21 +46,26 @@ was left running by that task. Resume only after a new implementation request.
 The coordinator found one other running project thread; the inspected older
 verification, reduction, architecture and cleanup threads were already inactive.
 
-Three main files remain uncommitted, based on `e3fadf56`:
+Three drafted main files, based on `e3fadf56`, are preserved locally:
 
 - `sm/src/game/launch_motion.rs`: shared beam speed data/selection and aim decoder.
 - `sm/src/game/launch_motion_ram.rs`: shared decoding after subpixel clearing.
 - `sm/src/game/projectile_flight.rs`: checked beam speed selection.
 
-They were targeted-formatted but **not compiled, compared, fully priced or
-committed**. Their net main delta is +13 lines. Preserve them for review; the
+They were targeted-formatted but **not behavior-compared, fully priced or
+committed**. They compile in production, but that does not establish correctness.
+Their net main delta is +13 lines. Preserve them for review; the
 extension-stage results below apply to the committed baseline only.
 
-In `runtime-impact-working/`, owned `launch.rs` is also modified. Its local
-launch-motion modules and `runtime-source` have not been synchronized, so the
-new draft is not ready to build. `launch-parent/` preserves pre-draft production,
+In `runtime-impact-working/launch-draft/`, the three production drafts,
+`owned-launch.rs`, `main.patch` and `source-hashes.json` preserve exact edited
+bytes. Main and working `launch.rs` were restored to the verified baseline to
+leave the next session runnable. The draft's local launch-motion modules and
+`runtime-source` were not synchronized, so applying it requires that work first.
+`launch-parent/` preserves pre-draft production,
 owned launch, harness/preparation and relevant previous composition inputs.
-The local `WIND_DOWN.md` records the full stop point. Preserve existing caches,
+The local `WIND_DOWN.md` records the historical dirty stop point; this section
+supersedes its draft locations. Preserve existing caches,
 backups and results; `impact-composition/` still holds the verified extension
 composition, not this new launch draft.
 
@@ -223,7 +228,15 @@ Stream compiler output to local logs.
 
 Carrier: `python prepare_flight_control.py`, `python build.py --library`,
 `python build.py`, then `python check_flight_control.py` with selected export
-names. Preparation does not compile; reuse unchanged libraries. Formatter:
+names. The existing local build.py now reuses content-checked library/harness
+outputs and separate incremental caches; a changed fixture does not rebuild
+the library. Logs are runtime-build.log and harness-build.log. Compiler options,
+dependency bytes, native libraries and output bytes determine reuse; keep the
+compiled-input assertions in the selected checks. The paused launch draft still
+requires synchronized inputs before these current checks can pass on that draft.
+For production, use `python tools/verify_dll.py --build-only --frontend-check`
+with the installed SDK environment; it now shares normal Cargo flags/artifacts.
+Preparation does not compile; reuse unchanged libraries. Formatter:
 `rustfmt --edition 2024 --config skip_children=true,reorder_modules=false,reorder_imports=false`.
 Repository-wide formatting already fails on the baseline. Do not format
 `verify_source.rs` wholesale or introduce unrelated formatting changes.

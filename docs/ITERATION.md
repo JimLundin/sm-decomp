@@ -172,11 +172,43 @@ Get-Command cargo,rustc,python,sh
 
 The current stable compiler is intentional while the requested nightly remains
 blocked as recorded in PLAN. Coordinate the machine-wide compiler slot before
-building. For repeated scenarios on identical source, use the launcher's
-`--no-build`; when a matching Cargo release library exists, use `--cargo` to
-reuse it. A standalone DLL build uses its own direct-rustc cache. Switching
-between those paths can compile the game twice. Keep the environment unchanged
-through build and source checks.
+building. The launcher now selects Cargo automatically with this SDL2 environment.
+Use this single final-build command, then the selected replay:
+
+```powershell
+python tools/verify_dll.py --build-only --frontend-check
+python tools/verify_dll.py rom/sm.smc movies/any.inputs --checkpoint-in target/selected.smvchk --frames 120 --no-build
+```
+
+The checkpoint and 120-frame suffix above are placeholders: use the actual
+selected scenario, required probes and effect tail. Normal builds and launcher
+builds now use the same options. The default replay command also reuses matching
+artifacts; `--no-build` explicitly rejects stale ones. `--direct` retains the
+standalone path with checked unchanged-build reuse. Keep the environment stable.
+
+The active local `runtime-impact-working/build.py` now hashes rustc dependency
+files, compiler/options, native archives, linked library and output bytes before
+skipping a component build. Runtime and harness have separate incremental caches
+and logs (`runtime-build.log`, `harness-build.log`). A fixture-only edit rebuilds
+the harness; call `python build.py --library` and `python build.py` without
+rebuilding unchanged inputs. Existing compiled-source assertions remain required.
+The launch draft is preserved under `runtime-impact-working/launch-draft/`;
+main and the harness use the verified baseline. Applying it still needs
+synchronized reference wiring and behavioral validation.
+
+Measured runner improvement (2026-10-22): unchanged component library/harness
+reuse took 0.08–0.12s each, versus a 21.37s unchanged library compile before the
+fix. A backdated fixture edit correctly rebuilt the harness in 7.28s; restoring
+it rebuilt in 7.73s, then reused in 0.11s. Switching normal Cargo to the old
+launcher rebuilt the host in 6.50s; unchanged unified invocations compiled
+nothing and checked source in 0.72–1.08s. Standalone reuse took 0.42s after its
+20.90s build. These are selected local build timings, not full refactor-cycle
+speedups. Seven actual-code component suites pass on the verified baseline;
+backdated source recovery and stale-source rejection pass.
+
+The committed launcher change adds 79 lines; the existing local comparison
+runner grows 17 to 65 lines (+48) for checked reuse and incremental compilation.
+Both costs are disclosed. No new runner, registry or scheduling service is added.
 
 ## Measure the next three implementation changes
 
@@ -189,9 +221,9 @@ then change the largest measured cost. Commit timestamps alone are not timings.
 
 Next optimizations, conditional on those measurements:
 
-- If compilation dominates, first remove accidental duplicate library builds
-  across Cargo and the direct-rustc launcher. Use one matching path per source
-  snapshot. Keep the required final release/frontend/verifier checks.
+- The duplicate unchanged-build work above is fixed. Keep one matching path per
+  source snapshot and the required final release/frontend/verifier checks.
+  Measure changed-source builds before changing optimization or package boundaries.
 - If harness preparation dominates, extend the existing actual-code comparison
   entry points to select the missing cases. Avoid rebuilding an independent
   copy of the algorithm for each test. Keep frozen references distinguishable

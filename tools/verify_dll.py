@@ -107,32 +107,49 @@ def check_library(host, root):
         raise RuntimeError("stale native utilities; rerun tools/install_native_config.py and rebuild")
 
 
-def cargo_host(root, rustc, linker, output, source, retry=True):
+def cargo_host(root, rustc, output, source, frontend=False, retry=True):
     cargo = shutil.which("cargo") or str(Path(rustc).with_name("cargo.exe"))
-    sdk = [arg for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
-           if path for arg in ("-L", f"native={path}")]
     # Backdated files in another checkout can look fresh in a shared target
     # directory. Keep this game's and host's artifacts with their source.
-    result = subprocess.run(
-        [cargo, "rustc", "-p", "sm", "--release", "--example", "sm_verify", "--locked",
-         "--target-dir", str(root / "target"), "--message-format=json",
-         "--", "-C", f"linker={linker}",
-         "-C", "linker-flavor=ld", "-C", "debuginfo=0", "-A", "warnings"] + sdk,
-        cwd=root, env=dict(os.environ, RUSTC=rustc, SM_VERIFY_SOURCE_HASH=source),
-        text=True, encoding="utf-8",
-        stdout=subprocess.PIPE,
-    )
+    # Use the same flags as cargo build. Per-host rustc flags make alternating
+    # normal builds and replays compile the DLL again on unchanged source.
+    command = [cargo, "build", "-p", "sm", "--release", "--example", "sm_verify",
+               "--locked", "-j", "1", "--target-dir", str(root / "target"),
+               "--message-format=json"]
+    if frontend:
+        command.extend(["--lib", "--bin", "sm"])
     dll = None
-    for line in result.stdout.splitlines():
-        message = json.loads(line)
-        if message["reason"] == "compiler-message":
-            if message["message"]["level"] in ("error", "failure-note"):
-                print(message["message"]["rendered"] or "", end="", file=sys.stderr)
-        elif (message["reason"] == "compiler-artifact"
-              and message["target"]["name"] == "sm_verify"):
-            dll = next((Path(name) for name in message["filenames"]
-                        if name.endswith(".dll")), None)
-    result.check_returncode()
+    compiled = []
+    log_path = output / "build.log"
+    with log_path.open("w", encoding="utf-8") as log:
+        process = subprocess.Popen(
+            command, cwd=root,
+            env=dict(os.environ, RUSTC=rustc, SM_VERIFY_SOURCE_HASH=source),
+            text=True, encoding="utf-8", stdout=subprocess.PIPE, stderr=log,
+        )
+        try:
+            for line in process.stdout:
+                log.write(line)
+                message = json.loads(line)
+                if message["reason"] == "compiler-message":
+                    if message["message"]["level"] in ("error", "failure-note"):
+                        print(message["message"]["rendered"] or "", end="", file=sys.stderr)
+                elif message["reason"] == "compiler-artifact":
+                    if not message["fresh"]:
+                        compiled.append(message["target"]["name"])
+                    if message["target"]["name"] == "sm_verify":
+                        dll = next((Path(name) for name in message["filenames"]
+                                    if name.endswith(".dll")), None)
+            result = process.wait()
+        finally:
+            process.stdout.close()
+            if process.poll() is None:
+                process.terminate()
+                process.wait()
+    print(f"Cargo compiled: {', '.join(compiled) or 'none (reused)'}; log {log_path}",
+          file=sys.stderr, flush=True)
+    if result:
+        raise subprocess.CalledProcessError(result, command)
     if dll is None:
         raise RuntimeError("Cargo did not report the verifier DLL")
     # Inspect in a separate process so a stale DLL is unloaded before rebuilding.
@@ -141,7 +158,10 @@ def cargo_host(root, rustc, linker, output, source, retry=True):
         cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
     )
     if checked.returncode:
-        if not retry:
+        failure = checked.stderr.strip()
+        # Native installation/source-list errors cannot be repaired by another
+        # Rust build. Retry only Cargo's backdated game-source freshness failure.
+        if not retry or "stale game-library source:" not in failure:
             raise RuntimeError(checked.stderr.strip() or "unable to inspect game library")
         print(checked.stderr.strip(), file=sys.stderr)
         print("Rebuilding sm after game-library source check failed", file=sys.stderr)
@@ -149,7 +169,7 @@ def cargo_host(root, rustc, linker, output, source, retry=True):
         # changing source contents. The crate root is always a library input.
         # This also works with pre-existing/seeded targets lacking CACHEDIR.TAG.
         (root / "sm/src/lib.rs").touch()
-        return cargo_host(root, rustc, linker, output, source, retry=False)
+        return cargo_host(root, rustc, output, source, frontend, retry=False)
     # Preserve --no-build's existing path. An unchanged DLL can still be loaded
     # by another replay; do not overwrite it merely to refresh its timestamp.
     cached = output / "sm_verify.dll"
@@ -158,12 +178,28 @@ def cargo_host(root, rustc, linker, output, source, retry=True):
     return cached
 
 
-def build(root, rustc, use_cargo=False):
+def build(root, rustc, use_cargo=None, frontend=False):
     source = source_hash(root)
     output = root / "target" / "verify-dll"
     output.mkdir(parents=True, exist_ok=True)
     library = output / "libsm.rlib"
     dll = output / "sm_verify.dll"
+    sdk = [Path(path) for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
+           if path]
+    compiler = subprocess.check_output([rustc, "-vV"], cwd=root, text=True)
+    host = next(line.removeprefix("host: ") for line in compiler.splitlines()
+                if line.startswith("host: "))
+    if host != "x86_64-pc-windows-gnu":
+        raise RuntimeError("DLL host requires the pinned x86_64-pc-windows-gnu toolchain")
+    if use_cargo is None:
+        use_cargo = any((path / "libSDL2.dll.a").is_file() for path in sdk)
+    if frontend and not use_cargo:
+        raise RuntimeError("--frontend-check requires the Cargo/SDL2 build path")
+    if use_cargo:
+        dll = cargo_host(root, rustc, output, source, frontend)
+        if source_hash(root) != source:
+            raise RuntimeError("source changed during build; rebuild before replay")
+        return dll
     # Retain 16 codegen units; incremental compilation otherwise defaults to 256.
     common = [rustc, "--edition=2024", "-C", "opt-level=3",
               "-C", "codegen-units=16", "-A", "warnings"]
@@ -171,18 +207,38 @@ def build(root, rustc, use_cargo=False):
                if path for arg in ("-L", f"native={path}")]
     sysroot = Path(subprocess.check_output(
         [rustc, "--print", "sysroot"], cwd=root, text=True).strip())
-    host = next(line.removeprefix("host: ") for line in subprocess.check_output(
-        [rustc, "-vV"], cwd=root, text=True).splitlines() if line.startswith("host: "))
-    if host != "x86_64-pc-windows-gnu":
-        raise RuntimeError("DLL host requires the pinned x86_64-pc-windows-gnu toolchain")
     # The bundled GNU linker cannot read bigobj emitted for the large game;
     # Rust's bundled lld handles those object files without external tools.
     linker = sysroot / "lib" / "rustlib" / host / "bin" / "gcc-ld" / "ld.lld.exe"
-    if use_cargo:
-        dll = cargo_host(root, rustc, linker, output, source)
-        if source_hash(root) != source:
-            raise RuntimeError("source changed during build; rebuild before replay")
-        return dll
+    # Direct-rustc builds have no Cargo freshness check. Bind reuse to source,
+    # compiler/options, native archives and output bytes; inspect in a child so
+    # the DLL is unloaded before any rebuild.
+    stamp = output / "direct-build.json"
+    native = sorted({path.resolve() for directory in sdk for path in directory.glob("*.a")})
+    def build_identity():
+        return hashlib.sha256(json.dumps([
+            source, common, compiler,
+            [(str(path), hashlib.sha256(path.read_bytes()).hexdigest()) for path in native],
+            [(name, os.environ.get(name, "")) for name in
+             ("PATH", "LIBRARY_PATH", "RUSTFLAGS", "CARGO_ENCODED_RUSTFLAGS")],
+        ]).encode()).hexdigest()
+
+    identity = build_identity()
+    if stamp.exists() and dll.exists() and library.exists():
+        try:
+            saved = json.loads(stamp.read_text())
+            if saved == {"inputs": identity, "dll": hashlib.sha256(dll.read_bytes()).hexdigest(),
+                         "library": hashlib.sha256(library.read_bytes()).hexdigest()}:
+                checked = subprocess.run(
+                    [sys.executable, str(root / "tools/verify_dll.py"), "--check-library", str(dll)],
+                    cwd=root, capture_output=True, text=True,
+                )
+                if checked.returncode == 0:
+                    print("Direct compiler: none (reused)", file=sys.stderr, flush=True)
+                    return dll
+        except (OSError, ValueError):
+            pass
+    stamp.unlink(missing_ok=True)
     subprocess.run(
         common + ["--crate-name", "sm", "--crate-type", "rlib", "--cfg",
                   "sm_verify_dll", "-C", f"incremental={output / 'incremental-sm'}",
@@ -198,13 +254,22 @@ def build(root, rustc, use_cargo=False):
     )
     if source_hash(root) != source:
         raise RuntimeError("source changed during build; rebuild before replay")
+    if build_identity() != identity:
+        raise RuntimeError("native inputs changed during build; rebuild before replay")
+    stamp.write_text(json.dumps({"inputs": identity,
+                                "dll": hashlib.sha256(dll.read_bytes()).hexdigest(),
+                                "library": hashlib.sha256(library.read_bytes()).hexdigest()}))
     return dll
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("rom", type=Path)
-    parser.add_argument("inputs", type=Path)
+    parser.add_argument("rom", type=Path, nargs="?")
+    parser.add_argument("inputs", type=Path, nargs="?")
+    parser.add_argument("--build-only", action="store_true",
+                        help="build and check compiled sources without starting a replay")
+    parser.add_argument("--frontend-check", action="store_true",
+                        help="include release library/frontend checks in the same Cargo build")
     parser.add_argument("--frames", type=int)
     parser.add_argument("--checkpoint-in", type=Path,
                         help="resume a local verifier checkpoint; --frames counts from that point")
@@ -217,13 +282,24 @@ def main():
                              "fail if the movie or --frames limit ends earlier")
     parser.add_argument("--no-build", action="store_true",
                         help="reuse target/verify-dll/sm_verify.dll if its source still matches")
-    parser.add_argument("--cargo", action="store_true",
-                        help="reuse Cargo release compilation (requires the SDL2 environment)")
+    build_path = parser.add_mutually_exclusive_group()
+    build_path.add_argument("--cargo", action="store_const", dest="cargo", const=True,
+                            default=None, help="use Cargo release compilation (automatic with SDL2)")
+    build_path.add_argument("--direct", action="store_const", dest="cargo", const=False,
+                            help="use standalone rustc without SDL2; separate from Cargo artifacts")
     parser.add_argument("--rustc", default=shutil.which("rustc") or str(
         Path.home() / ".cargo" / "bin" / "rustc.exe"))
     args = parser.parse_args()
     if os.name != "nt":
         parser.error("use cargo run --release -- verify on Linux")
+    if not args.build_only and (args.rom is None or args.inputs is None):
+        parser.error("rom and inputs are required unless --build-only is used")
+    if args.frontend_check and args.no_build:
+        parser.error("--frontend-check requires a build")
+    if args.build_only and (args.frames is not None or args.checkpoint_in is not None
+                           or args.checkpoint_out is not None or args.require_hit
+                           or args.after_hits is not None):
+        parser.error("--build-only cannot request replay frames, checkpoints or probes")
     if args.frames is not None and not 1 <= args.frames <= 2**64 - 1:
         parser.error("--frames must be a positive u64")
     if args.after_hits is not None:
@@ -235,7 +311,8 @@ def main():
     started = time.perf_counter()
     source = source_hash(root)
     # Paths are resolved before changing cwd so invocation works from anywhere.
-    rom, inputs = args.rom.resolve(), args.inputs.resolve()
+    rom = args.rom.resolve() if args.rom else None
+    inputs = args.inputs.resolve() if args.inputs else None
     replay_args = [str(rom), str(inputs)]
     if args.frames is not None:
         replay_args.extend(["--frames", str(args.frames)])
@@ -249,7 +326,7 @@ def main():
             replay_args.extend([option, str(path.resolve())])
     dll = root / "target" / "verify-dll" / "sm_verify.dll"
     if not args.no_build:
-        dll = build(root, args.rustc, args.cargo)
+        dll = build(root, args.rustc, args.cargo, args.frontend_check)
     os.chdir(root)
     host = load_host(dll)
     check_source(host, source)
@@ -258,6 +335,8 @@ def main():
         raise RuntimeError("source changed before replay; rebuild before replay")
     print(f"Verifier build/check: {time.perf_counter() - started:.2f}s; source {source}",
           file=sys.stderr, flush=True)
+    if args.build_only:
+        return 0
     if args.checkpoint_in is not None or args.checkpoint_out is not None or args.require_hit:
         if not hasattr(host, "sm_verify_args"):
             raise RuntimeError("cached DLL predates segment options; run without --no-build")

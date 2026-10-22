@@ -31,8 +31,8 @@ the same verifier through Python without SDL2:
 python tools/verify_dll.py rom/sm.smc movies/any.inputs
 ```
 
-After a Cargo release build on Windows, `--cargo` validates and reuses its
-library, compiling only the DLL host. This mode needs Cargo and the SDL2
+With the installed SDL2 SDK on `LIBRARY_PATH`, the launcher automatically uses
+Cargo's normal release artifacts. `--cargo` selects it explicitly. This mode needs Cargo and the SDL2
 MinGW SDK. Set `LIBRARY_PATH` to the SDK's `lib` directory; runtime DLLs are
 loaded from that directory or its sibling `bin` directory:
 
@@ -42,6 +42,19 @@ cargo build --release
 python tools/verify_dll.py rom/sm.smc movies/any.inputs --cargo
 ```
 
+For final release library, frontend, verifier and loaded-source checks, one
+invocation builds the necessary targets with the same flags and no replay:
+
+```powershell
+python tools/verify_dll.py --build-only --frontend-check
+```
+
+The next selected replay reuses those artifacts. `--build-only` alone checks
+the verifier/library without adding frontend compilation. Build logs are streamed
+to `target/verify-dll/build.log`; the launcher reports which targets compiled.
+Normal Cargo builds and launcher builds use identical compiler options, so
+switching between them no longer recompiles an unchanged host.
+
 Cargo checks the game and DLL host, including the verifier's included source
 files. Unchanged runs reuse both compilations and leave the cached DLL intact.
 Build errors stop before replay. Keep the SDL2 environment for subsequent
@@ -50,6 +63,12 @@ Build errors stop before replay. Keep the SDL2 environment for subsequent
 The Cargo verifier keeps game and host artifacts in this checkout's `target/`,
 including when `CARGO_TARGET_DIR` points elsewhere. Sharing package artifacts
 between checkouts can make older source timestamps incorrectly appear fresh.
+
+Without the SDL2 environment, the standalone rustc path remains available;
+`--direct` selects it explicitly. It uses separate artifacts and incremental
+compilation, and skips unchanged builds only when source, compiler/options,
+native archives and output bytes match. Compiled-source checks still run.
+Use one path throughout an iteration to keep its cache useful.
 
 For a late gameplay change, the verifier can save a local checkpoint and
 replay a short suffix with the same oracle, rendered-frame checks and audio

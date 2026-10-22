@@ -84,7 +84,10 @@ new packages alone establishes neither ownership nor backend independence.
 ## Work order
 
 **Coordination reset (2026-10-22): implementation is paused at the user's
-request.** The previous reduction agent has wound down; its migration child is
+request.** The user has authorized immediate build-pipeline improvements before
+the next long-running implementation session. These are complete as recorded
+in ITERATION.md; the preserved gameplay draft still needs its next explicit
+bounded assignment. The previous reduction agent has wound down; its migration child is
 complete and older inspected project threads are inactive. Keep the work order
 below, but resume only on a new implementation request under ITERATION.md.
 The next assignment should resolve the preserved beam-launch draft as one
@@ -129,8 +132,10 @@ Do not automatically restart the former task queues.
    Next dependencies, in order:
 
    - Review and resolve the preserved **untested beam-launch draft** first.
-     Three main files and local `launch.rs` were edited before wind-down;
-     carrier copies and reference wiring are not synchronized. See
+     Three main files and local `launch.rs` were edited before wind-down.
+     Their exact draft bytes/patch are now isolated under `launch-draft/` in
+     the continuation directory; main and the harness use the verified baseline.
+     The draft's carrier copies and reference wiring need synchronization. See
      [the restart handoff](HANDOFF.md#paused-launch-draft) before building or
      adopting it. Preserve an independent old decoder in the comparisons.
    - Then select missile acceleration and extension creation as explicit
@@ -301,15 +306,16 @@ content.
 
 Verified shared-extension stage at e3fadf56: Rust 101,646; maintained C bridge 266 and headers
 296 = **102,208 implementation lines**. Including 803 dependency-installer and
-28 added verifier-launcher lines gives **103,039**.
+the previously added 28 verifier-launcher lines gives **103,039**. The current
+build-reuse fix adds 79 maintained launcher lines, giving **103,118** on the
+same installer/launcher-inclusive basis; Rust/native implementation is unchanged.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
 unsafe declarations 2,936; cast-containing lines 6,150. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
-The paused launch draft adds 13 uncommitted Rust lines (checkout 101,659),
-and reduces cast-containing lines by four (checkout 6,146); other residue
-counters are unchanged. This is preserved unverified work, not an adopted
-increase or a new verification result.
+The isolated launch draft would add 13 Rust lines and remove four counted cast
+lines. It remains unverified and unapplied; the checkout uses the verified
+101,646-line baseline. Its source bytes and patch are preserved outside Git.
 
 External source is disclosed separately: CPU 2,836, SPC 2,104, PPU 1,261, DSP 685,
 music 1,659, stb 7,762, configuration/utilities 919, desktop 882, and shader
@@ -322,8 +328,13 @@ changing that boundary.
 Iteration change, 2026-10-22: front-load the active queue and validation, move
 historical detail out of the required reading path, reuse selected checks, and
 coordinate parallel work through one integration/compiler lane. The inspection
-found repeated plan updates and multiple build paths; no overall speedup is yet
-measured. Compare the next three implementation cycles as described in the guide.
+found repeated plan updates and multiple build paths. The existing launcher now
+uses identical Cargo flags for normal/verification builds, automatically reuses
+Cargo with SDL2, offers one release/frontend/verifier check command, streams logs,
+and skips identical direct builds with source/compiler/native/output checks.
+The active local component runner similarly reuses checked inputs and incremental
+codegen. Measured unchanged-build timings and stale-input tests are in ITERATION.md;
+no full-cycle speedup is claimed. Compare the next implementation cycles.
 
 Detailed completed/parked experiments, accounting and historical check results
 remain in Git at `de9bf05e:docs/PLAN.md`. Consult only the relevant portion when
