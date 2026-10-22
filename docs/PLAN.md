@@ -2192,40 +2192,51 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    buttons remain sampled inputs. Every compatibility effect relinquishes inventory,
    mechanisms, dialogue and continuation; returned state is authoritative. The
    selection model forbids unsafe code and has no Game/RAM dependency.
-   Player preparation now accepts an explicit effect handler and has no fixture
-   dependency of its own. The same complete candidate builds against the runtime
-   frozen at **f7ce6b8a**, replacing its old 15589b48 library. Its seven real bindings
-   call radius, input dispatch, suit selection, acceleration, block-inside detection,
-   grapple and X-ray. Their current-main source bytes still match. The direct
-   preparation entry executes in 18 comparisons; other cases record ordered
-   boundaries. This is partial runtime composition, not a production session adapter.
-   **220 selected comparisons**, 1,259 ordered observations and 26 matching failures
-   pass: 146 affected player cases and 74 real-runtime cases. Checks cover both Alfa
-   orders, persistent preparation, dry/water/lava physics and precedence, suit effects,
-   active input transitions, inactive grapple, and rejected/accepted X-ray entry.
-   Actual X-ray initialization disables mechanisms and freezes subsequent projectile
-   updates through the complete-owner transfer; actual HDMA allocation and register
-   writes match RAM and serialized DMA state. Boundary mutation and four injected
-   failures preserve the committed prefix. Synthetic ROM records and an attached
-   DMA/cart bus exercise these paths; no CPU/render/audio advancement is claimed.
-   Other projectile and session effects remain controlled. Seven inherited gameplay
-   caller steps retain firing -> terrain -> mechanism creation -> created-script
-   execution. No movie, native-only lifecycle or frontend checkpoint ran; selection,
-   contact, creation and dialogue sweeps were not repeated after handler injection.
-   Optimized library/DLL builds, formatting, exact current reference bodies and
-   handler source-inverse checks pass. All **124+159 compiled inputs** match their
-   sources; 154 inherited candidate inputs are unchanged. The library differs from
-   its Git source only by 13 disclosed fixture-support lines exposing existing ROM
-   registration and typed DMA/bus initialization. Sources/DLL/results are preserved
-   in player-projectiles/runtime-player-stage: 184 top-level files and 130 runtime
-   files, byte-compared. The preceding hud-selection-stage retains its 308 selection/
-   consumer comparisons and 9,126-line, 77-file implementation/support recount.
-   Runtime binding adds **31 candidate implementation/integration lines**, plus 319
-   fixture and 11 harness lines; the 13 library fixture lines are separate. No new
-   macros or maintained-main savings. Explicit unsafe runtime calls remain. Extracted
-   old references have a different scope and cannot establish a net deletion budget.
-   Continue replacing the remaining fixture-bound phase/projectile/script effects
-   in this same full candidate, then price all retired code, adapters and registrations.
+   Player preparation and its projectile bridge now accept explicit dependencies;
+   neither implementation refers to the fixture adapter. The shared checked
+   environment supplies cartridge data, placement/launch inputs, flare sequences
+   and effect results while retaining complete-session handoffs. It forbids unsafe
+   code. Runtime feedback binds actual sound queues, palettes/visor, beam/grapple
+   drawing, grapple tile queues, selection restoration and reset presentation.
+   The sound caller includes the preserved debug/time-up tail and its event-query
+   scratch-mask write; this checked tail forbids unsafe code. Its prefix no longer
+   substitutes for the whole caller. Other projectile/session effects remain
+   explicit caller-supplied dependencies; this is not a production session adapter.
+   **342 selected comparisons** pass: 122 new actual-runtime feedback comparisons,
+   146 affected player cases and 74 affected runtime-preparation cases. The latter
+   retain 1,259 matching ordered observations and 26 matching failures. New feedback
+   sequences retain one session through multiple operations, comparing against the
+   actual runtime callers: complete RAM, returns, six diagnostic failure flags and
+   one drawing panic match. All 401 new runtime-effect hits use actual dependencies;
+   they are hit counts, not paired observation counts. Cases cover charge/hyper/visor
+   palettes, deferred sound and restoration, beam/grapple OAM output, grapple start
+   and VRAM tile queues, HUD selection, reset/palette allocation and full preparation
+   followed by output. Required effects and actual OAM/queue writes are checked.
+   Previous real X-ray preparation still covers HDMA allocation/register writes,
+   matching DMA state, and freeze/mechanism-disable writes surviving ownership
+   transfer. Seven inherited gameplay caller steps retain firing -> terrain ->
+   mechanism creation -> created-script execution. Synthetic ROM records and an
+   attached DMA/cart bus are used; no CPU/render/audio advancement, movie, native-only
+   lifecycle or frontend checkpoint is claimed. Unaffected selection, contact,
+   creation and dialogue sweeps were not repeated.
+   The candidate uses the runtime frozen at **f7ce6b8a**. Optimized library/DLL builds,
+   formatting, current reference bodies, and source inverses for dependency
+   injection, shared input reads and the sound tail pass. Eight reached runtime
+   source units and the movement-sound caller still match main; concurrent scene/
+   enemy changes in sm_82 remain outside this selected caller. All **124+162 compiled
+   inputs** match their sources; 153 inherited candidate inputs are unchanged. The
+   library differs from its Git source only by 18 fixture-support lines exposing ROM
+   registration/ownership and typed DMA/bus initialization. Sources/DLL/results:
+   player-projectiles/runtime-feedback-stage, with 187 top-level files and 130 runtime
+   files preserved and byte-compared. Earlier complete stages remain intact.
+   This step adds **242 candidate implementation/integration lines**, plus 446 new
+   fixture lines, 19 existing-fixture lines and 22 harness lines. Library fixture
+   support adds five lines to its preceding 13. No new macros or maintained-main
+   savings. Explicit unsafe runtime calls remain. The prior hud-selection-stage's
+   9,126-line, 77-file implementation/support recount has a different scope from
+   extracted old references; those references cannot establish a net deletion budget.
+   Continue binding the remaining collision/flight/script and session effects in
+   this same full candidate, then price all retired code, adapters and registrations.
    Runtime adoption, complete safety and substantial net savings remain open.
    The full projectile candidate now includes shared script control flow:
    13 actual commands and two wake consumers use the
