@@ -117,3 +117,39 @@ pub fn visible(position: u16, camera: u16) -> bool {
     let delta = position.wrapping_sub(camera);
     delta.wrapping_add(64) & 0x8000 == 0 && delta.wrapping_sub(320) & 0x8000 != 0
 }
+
+pub trait ExtensionContext<O>: Context<O> {
+    fn speed(&self, owner: &O, slot: u16, axis: Axis) -> i16;
+    fn impacted(&self, owner: &O, slot: u16) -> bool;
+    fn shift_extension(&mut self, owner: &mut O, parent: u16, child: u16, axis: Axis, delta: i16);
+    fn select(&mut self, owner: &mut O, slot: u16);
+}
+/// Follow the parent at low speed; otherwise collide the linked child first.
+pub fn contact_extension<O>(
+    mut owner: O,
+    parent: u16,
+    child: u16,
+    axis: Axis,
+    context: &mut impl ExtensionContext<O>,
+) -> O {
+    let speed = context.speed(&owner, parent, axis);
+    let magnitude = speed.unsigned_abs() & 0xff00;
+    if magnitude.wrapping_sub(0xb00) & 0x8000 != 0 {
+        if context.impacted(&owner, parent) {
+            return context.release(owner, child);
+        }
+        context.shift_extension(&mut owner, parent, child, axis, 0);
+    } else {
+        let distance = (magnitude >> 8) as i16 - 10;
+        let delta = if speed < 0 { distance } else { -distance };
+        context.shift_extension(&mut owner, parent, child, axis, delta);
+        context.select(&mut owner, child);
+        owner = context.collide(owner, child, Flight::Missile, axis).0;
+        // A failed collision keeps its own selector and writes; restore only on return.
+        context.select(&mut owner, parent);
+        if context.impacted(&owner, parent) {
+            owner = context.release(owner, child);
+        }
+    }
+    owner
+}

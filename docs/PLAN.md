@@ -95,34 +95,34 @@ new packages alone establishes neither ownership nor backend independence.
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Current stage shares ordinary flight phase ordering through
-   `projectile_flight_control`, following the room and terminal stages at
-   `ff02c9b7` and `de9bf05e`. Its independent core forbids unsafe code. The RAM
-   adapter uses checked trail timers and offscreen positions; update-extension
-   and offscreen cleanup are safe. Launch setup, missile acceleration, extension
-   creation/contact, block reactions and broader unsafe elimination remain.
+   Current stage shares ordinary flight phases and linked-extension contact
+   through `projectile_flight_control`, following the room, terminal and phase
+   stages at `ff02c9b7`, `de9bf05e` and `ba0d94c1`. The core and extension RAM
+   adapter forbid unsafe code. The extension macro, two axis wrappers and owned
+   contact algorithm are removed. Launch setup, missile acceleration, extension
+   creation, block reactions and broader unsafe elimination remain.
 
-   Saved production versus current flight passes 444 actual-code comparisons,
-   including selector-changing room callbacks and 72 matching failures. The
+   Saved production comparisons pass 1,044 cases, including 600 new RAM/owned
+   extension cases, selector-changing room callbacks and 96 matching failures. The
    owned flight, broad compatibility, room, session and beam checks also pass.
    All 143 runtime and 201 draft compiled inputs match. Formatting, normal
    release library/frontend/verifier builds and loaded DLL source checks pass.
    No movie ran. Synthetic content and controlled hardware do not establish
    scheduler encounters or full-game fidelity.
 
-   Main is **101,651 Rust lines in 135 files**. The prospective composition is
-   **110,691 (+9,040)** and remains unadopted, without full-composition runtime
+   Main is **101,646 Rust lines in 135 files**. The prospective composition is
+   **110,698 (+9,052)** and remains unadopted, without full-composition runtime
    or movie comparison. Its Rust 2024 headless release library builds.
-   This stage adds 114 main lines and removes 25 draft
-   lines: **+89 complete lines**, +1,650 lexical tokens, for shared behavior and
-   checked access. This is not volume reduction. Persistent Session authority
+   This stage removes 5 main lines and adds 12 draft lines: **+7 complete lines**,
+   +245 lexical tokens and -170 normalized text bytes, for shared behavior and
+   checked access. This is not net line reduction. Persistent Session authority
    and the substantial reduction remain unfinished.
 
    Next dependencies, in order:
 
-   - Share remaining launch/missile/linked-extension behavior, migrate its
-     consumers and delete retained implementations. Ordinary update/advance/
-     collision ordering is already shared; do not implement another controller.
+   - Share remaining launch, missile acceleration and extension creation,
+     migrate consumers and delete retained implementations. Ordinary flight
+     ordering and extension contact are shared; do not duplicate them again.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -131,9 +131,10 @@ new packages alone establishes neither ownership nor backend independence.
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
    `runtime-impact-working/` is the verified flight continuation, including
-   `flight-control-final-results.json` and `flight-composition-price.json`.
+   `extension-final-results.json` and `extension-composition-price.json`.
    `runtime-impact-stage/` preserves the previous terminal stage; the independent
-   flight reference remains in the working directory's `flight-parent/`.
+   flight reference remains in `flight-parent/`; `extension-parent/` saves the
+   immediately preceding source and composition changes.
    Earlier room checks remain in `runtime-room-stage/`. Read the relevant commands,
    filenames and capture limitations in [HANDOFF.md](HANDOFF.md). Do not restart
    or overwrite landed changes. The inherited comparison carrier is edition
@@ -285,11 +286,11 @@ content.
 
 ## Progress and references
 
-Current shared-flight stage: Rust 101,651; maintained C bridge 266 and headers
-296 = **102,213 implementation lines**. Including 803 dependency-installer and
-28 added verifier-launcher lines gives **103,044**.
+Current shared-extension stage: Rust 101,646; maintained C bridge 266 and headers
+296 = **102,208 implementation lines**. Including 803 dependency-installer and
+28 added verifier-launcher lines gives **103,039**.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,937; cast-containing lines 6,156. These narrow counters do
+unsafe declarations 2,936; cast-containing lines 6,150. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 
