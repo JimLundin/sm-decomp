@@ -118,6 +118,40 @@ pub fn visible(position: u16, camera: u16) -> bool {
     delta.wrapping_add(64) & 0x8000 == 0 && delta.wrapping_sub(320) & 0x8000 != 0
 }
 
+pub trait MissileContext<O> {
+    type Record;
+    fn activate(&mut self, owner: &mut O, slot: u16, variable: u16);
+    fn acceleration(&mut self, owner: O, slot: u16) -> (O, Self::Record);
+    fn add_acceleration(&mut self, owner: O, slot: u16, record: &Self::Record, axis: Axis) -> O;
+    fn launch(&mut self, owner: O, slot: u16, speed: u16) -> O;
+    fn heavy(&self, owner: &O, slot: u16) -> bool;
+    fn spawn(&mut self, owner: O) -> O;
+}
+pub fn missile_acceleration_address(kind: u16, direction: u16) -> u16 {
+    let table = if kind & 0x200 != 0 { 0xc32b } else { 0xc303 };
+    table + 4 * (direction & 15)
+}
+pub fn accelerate_missile<O>(
+    mut owner: O,
+    slot: u16,
+    variable: u16,
+    context: &mut impl MissileContext<O>,
+) -> O {
+    if variable & 0xff00 != 0 {
+        let (owner, record) = context.acceleration(owner, slot);
+        let owner = context.add_acceleration(owner, slot, &record, Axis::X);
+        context.add_acceleration(owner, slot, &record, Axis::Y)
+    } else {
+        let speed = variable + 0x100;
+        context.activate(&mut owner, slot, speed);
+        owner = context.launch(owner, slot, speed);
+        if context.heavy(&owner, slot) {
+            owner = context.spawn(owner);
+        }
+        owner
+    }
+}
+
 pub trait ExtensionContext<O>: Context<O> {
     fn speed(&self, owner: &O, slot: u16, axis: Axis) -> i16;
     fn impacted(&self, owner: &O, slot: u16) -> bool;

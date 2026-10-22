@@ -9,10 +9,10 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest verified gameplay stage shares beam-speed selection and aim decoding
-through `launch_motion`, following extension contact at `e3fadf56`. The user
-requested the next iteration under ITERATION.md. Main, the current comparison
-carrier and the owned launch draft are synchronized and behavior-compared.
+The latest verified gameplay stage shares complete missile acceleration through
+`projectile_flight_control`, following beam launch at `8730d00e` and extension
+contact at `e3fadf56`. The user authorized ongoing coordinated worker iterations.
+Main and the current RAM/owned comparison carrier are synchronized and compared.
 
 The phase stage at `ba0d94c1` now also shares linked-extension contact through
 `projectile_flight_control`. The core and new extension RAM adapter forbid unsafe
@@ -23,21 +23,36 @@ owned position helper are removed. Current production and draft callers use
 the axis-parameterized contact entry.
 
 This follows shared room scans (`ff02c9b7`) and terminal impact/retirement
-(`de9bf05e`). Missile acceleration, extension creation,
+(`de9bf05e`). Extension creation,
 block reactions, persistent Session authority and broader unsafe elimination
 remain unfinished. Checked RAM is transitional; the destination has independent
 owned domain state. Never retain an authoritative typed owner across
 RAM-authoritative execution; transfer the complete owner.
 
-Main is **101,659 Rust lines in 135 files**, with 2,936 counted unsafe declarations
-and 6,146 cast-containing lines. Maintained implementation is 102,221 lines;
-including installers/launcher, 103,131. The full prospective composition is
-**110,689 Rust lines**, **+9,030 over main**, and remains unadopted.
+Main is **101,703 Rust lines in 135 files**, with 2,935 counted unsafe declarations
+and 6,144 cast-containing lines. Maintained implementation is 102,265 lines;
+including installers/launcher, 103,175. The full prospective composition is
+**110,767 Rust lines**, **+9,064 over main**, and remains unadopted.
 
-The extension stage removes 5 main lines and adds 12 owned-draft lines:
-**+7 complete lines, +245 lexical tokens, -170 normalized text bytes**.
+The acceleration stage adds 44 main and 34 owned-draft lines:
+**+78 complete lines, +851 lexical tokens, +2,866 normalized text bytes**.
+Existing local comparisons add 206 lines; including checks gives +284 lines.
 These are safety/architecture costs, not volume savings. The substantial
 reduction and removal of all unsafe operations remain unfinished.
+
+The acceleration handoff is in `runtime-impact-working/ACCELERATION_PROPOSAL.md`.
+The controller and adapters retain captured records, X-before-Y writes, activation
+before launch, live-kind reread and live-selector extension linking. Both duplicate
+acceleration bodies and raw ROM loads are removed. ROM capture and legacy launch/
+spawn still require unsafe calls. `acceleration-parent/` preserves prior inputs.
+Selected results and price: `acceleration-final-results.json`,
+`acceleration-composition-price.json` and `acceleration-main-source-check.json`.
+The existing runner selects `runtime_acceleration_experiment` (600 comparisons,
+128 matched failures, 24 short-record scenarios through both checked paths) and
+`owned_acceleration_experiment` (24 diagnostic cases, six matched failures).
+Final production/source and Rust 2024 composition builds pass. No movie or
+full-composition runtime comparison is claimed. Extension creation is next;
+the existing worker's read-only proposal awaits its explicit implementation lane.
 
 ## Paused launch draft
 
@@ -83,7 +98,7 @@ Final production and prospective Rust 2024 headless release builds pass.
 Results: `launch-final-results.json`, `launch-final-check.log`,
 `launch-main-source-check.json`, `launch-production-build.log`,
 `launch-composition-price.json` and `launch-composition-build.log`.
-Missile acceleration and extension creation are the next explicit dependencies.
+Missile acceleration is now shared; extension creation is the next dependency.
 
 ## Local work and validation
 

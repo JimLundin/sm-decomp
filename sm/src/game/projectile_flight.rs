@@ -63,7 +63,7 @@ impl<'a> control::Context<&'a mut Game> for FlightContext {
         (game, control::AXES[direction])
     }
     fn missile(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
-        unsafe { accelerate_missile(slot, game) };
+        accelerate_missile(slot, game);
         game
     }
     fn collide(
@@ -115,11 +115,6 @@ pub(crate) unsafe fn initialize_speed(k: u16, speed: u16, game: &mut Game) {
     }
 }
 
-const RomPtr_90: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x90>;
-use crate::game::constants::bank_90::{
-    addr_kSuperMissileAccelerations, addr_kSuperMissileAccelerations2,
-};
-
 #[forbid(unsafe_code)]
 fn delete_offscreen(game: &mut Game) -> u8 {
     let position = |base, game: &Game| {
@@ -147,33 +142,48 @@ pub(crate) unsafe fn initialize_beam_speed(slot: u16, game: &mut Game) {
     unsafe { initialize_speed(slot, BEAM_SPEEDS[index], game) };
 }
 
-unsafe fn accelerate_missile(k: u16, game: &mut Game) {
-    unsafe {
-        static word_90C301: u16 = 0x100;
-        let mut v3: u16 = 0;
-        let v1: i32 = k as i32 >> 1;
-        if (word!(game.projectile_variables[v1]) & 0xff00) != 0 {
-            if (word!(game.projectile_type[v1]) & 0x200) != 0 {
-                v3 = addr_kSuperMissileAccelerations2 as u16;
-            } else {
-                v3 = addr_kSuperMissileAccelerations as u16;
-            }
-            let v4 = RomPtr_90(
-                (v3 as i32 + 4 * (word!(game.projectile_dir[v1]) as i32 & 0xf)) as u16,
-                game,
-            );
-            word!(game.projectile_bomb_x_speed[v1] += *(v4 as *mut u16));
-            word!(game.projectile_bomb_y_speed[v1] += *(v4.offset(2) as *mut u16));
-        } else {
-            let v2: u16 = (word_90C301).wrapping_add(word!(game.projectile_variables[v1]));
-            word!(game.projectile_variables[v1] = v2);
-            if (v2 & 0xff00) != 0 {
-                initialize_speed(k, word!(game.projectile_variables[v1]), game);
-                if (word!(game.projectile_type[v1]) & 0x200) != 0 {
-                    spawn_extension(game);
-                }
-            }
+#[forbid(unsafe_code)]
+fn accelerate_missile(slot: u16, game: &mut Game) {
+    let variable = checked_word!(game.projectile_variables[(slot >> 1)]);
+    control::accelerate_missile(game, slot, variable, &mut FlightContext);
+}
+impl<'a> control::MissileContext<&'a mut Game> for FlightContext {
+    type Record = crate::rom::RomRecord;
+    fn activate(&mut self, game: &mut &'a mut Game, slot: u16, variable: u16) {
+        checked_word!(game.projectile_variables[(slot >> 1)] = variable);
+    }
+    fn acceleration(&mut self, game: &'a mut Game, slot: u16) -> (&'a mut Game, Self::Record) {
+        let address = control::missile_acceleration_address(
+            checked_word!(game.projectile_type[(slot >> 1)]),
+            checked_word!(game.projectile_dir[(slot >> 1)]),
+        );
+        let record = unsafe { crate::rtl::rom_bank_record::<0x90>(address, game) };
+        (game, record)
+    }
+    #[forbid(unsafe_code)]
+    fn add_acceleration(
+        &mut self,
+        game: &'a mut Game,
+        slot: u16,
+        record: &Self::Record,
+        axis: Axis,
+    ) -> &'a mut Game {
+        match axis {
+            Axis::X => checked_word!(game.projectile_bomb_x_speed[(slot >> 1)] += record.word(0)),
+            Axis::Y => checked_word!(game.projectile_bomb_y_speed[(slot >> 1)] += record.word(2)),
         };
+        game
+    }
+    fn launch(&mut self, game: &'a mut Game, slot: u16, speed: u16) -> &'a mut Game {
+        unsafe { initialize_speed(slot, speed, game) };
+        game
+    }
+    fn heavy(&self, game: &&mut Game, slot: u16) -> bool {
+        checked_word!(game.projectile_type[(slot >> 1)]) & 0x200 != 0
+    }
+    fn spawn(&mut self, game: &'a mut Game) -> &'a mut Game {
+        unsafe { spawn_extension(game) };
+        game
     }
 }
 
