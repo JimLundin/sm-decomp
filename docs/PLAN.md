@@ -2243,14 +2243,46 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    ownership/registration and typed DMA/bus initialization; its verified library
    was reused. Sources/DLL/results: player-projectiles/runtime-collision-stage,
    with **191 top-level and 130 runtime files** preserved and byte-compared.
-   This step adds **297 candidate implementation/integration lines**, plus 526 new
-   fixture, 37 existing-fixture and 46 harness lines. No new implementation macros
+   The collision binding step adds **297 candidate implementation/integration
+   lines**, plus 526 new fixture, 37 existing-fixture and 46 harness lines. It adds
+   no implementation macros or maintained-main savings; adopted source and
+   progress counters remain unchanged by that draft.
+   The same complete candidate now connects canonical flight to checked sprite,
+   echo and trail output through explicit runtime data/effect bindings. Existing
+   flight, animation, trail, projection, drawing and complete-session transfer
+   algorithms are unchanged; the drawing adapter no longer refers to fixtures and
+   still forbids unsafe code. Runtime missile spending preserves the original
+   wrapping decrement. The existing native sprite warning remains an explicit
+   unsafe boundary; this is not complete unsafe elimination or production adoption.
+   **115 selected comparisons** pass: 92 actual-runtime flight/preparation/drawing
+   sequences and 23 affected presentation dependency cases. Full RAM, completion,
+   15 failures and one runtime diagnostic flag match. All **247 paired external
+   frame-boundary states** and 46 paired fixture observations match; 1,594 runtime
+   effect hits are recorded separately. Required effects and actual OAM writes
+   are checked. Cases cover ordinary/wave/ice/plasma/hyper flight, charged and
+   uncharged preparation, missile ammo use, super-missile extensions, both speed
+   directions, collision-created mechanisms, impact/release and trails surviving
+   projectile release. Projection, frozen trails, two-part echoes, OAM wrap/limits,
+   short sprite data and diagnostic-time cartridge replacement are exercised.
+   No hardware advancement or movie ran. Other collision, feedback, gameplay and
+   dialogue sweeps were not repeated. Runtime continuation outside the canonical
+   pool and other session effects remain explicitly unbound in this composition.
+   Optimized DLL build, formatting, complete presentation dependency/caller source
+   inverse and all **124+167 compiled inputs** pass; 161 inherited candidate sources
+   are unchanged. Sixteen reached runtime units and the movement-sound caller match
+   main after concurrent enemy commit **0c705294**. The f7ce6b8a runtime library and
+   its 18 fixture-support lines are unchanged and reused. Sources/DLL/results:
+   player-projectiles/runtime-flight-stage, with **193 top-level and 130 runtime
+   files** preserved and byte-compared. Earlier stages remain intact.
+   This step adds **37 candidate implementation/integration lines**, plus 483 new
+   fixture, 26 existing-fixture and 18 harness lines. No new implementation macros
    or maintained-main savings; this draft leaves adopted source and progress
    counters unchanged. The prior hud-selection-stage's 9,126-line, 77-file recount
    has a different scope from extracted old references and establishes no net
-   deletion budget. Continue the remaining flight/script and session bindings in
-   this full candidate, then price all retired code, adapters and registrations.
-   Runtime adoption, complete safety and substantial structural savings remain open.
+   deletion budget. Continue the remaining bomb/SBA, script, compatibility and
+   session bindings in this full candidate, then price all retired code, adapters
+   and registrations. Substantial structural savings, complete safety and runtime
+   adoption remain open.
    The full projectile candidate now includes shared script control flow:
    13 actual commands and two wake consumers use the
    existing owned slots for sleep/release, pre-actions, counters, conditional
