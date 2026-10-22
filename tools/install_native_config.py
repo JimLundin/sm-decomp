@@ -35,8 +35,7 @@ SYMBOLS = {
 
 UTILITY_NAMES = """NextDelim StringEqualsNoCase StringStartsWithNoCase ReadWholeFile
     NextLineStripComments NextPossiblyQuotedString ReplaceFilenameWithNewPath
-    SplitKeyValue SkipPrefix StrSet ByteArray_Resize ByteArray_Destroy
-    ByteArray_AppendData ByteArray_AppendByte""".split()
+    SplitKeyValue SkipPrefix StrSet""".split()
 
 
 def utility_source(source):

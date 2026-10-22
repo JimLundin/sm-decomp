@@ -598,11 +598,6 @@ crate::typed_struct! {
         pub maskLogic: u8;
     }
 
-    pub struct ByteArray {
-        pub data: *mut u8;
-        pub size, capacity: size_t;
-    }
-
     pub struct Config {
         pub window_width, window_height: i32;
         pub enhanced_mode7, new_renderer, ignore_aspect_ratio: bool;

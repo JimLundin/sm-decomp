@@ -2,6 +2,7 @@
 //! Unlike frontend save states, these preserve both PPUs and live audio state.
 //! Pointers and padding are never serialized; initialized allocations stay owned
 //! by the new host. These files are disposable, ROM-derived, and must stay local.
+use sm::recording::RecordingBytes;
 use sm::{
     game_state::Game,
     rtl::{ApuWriteEnt, StateRecorder},
@@ -32,6 +33,7 @@ fn compatibility() -> u64 {
         include_str!("../native_audio.rs"),
         include_str!("../cpu_infra.rs"),
         include_str!("../rtl.rs"),
+        include_str!("../recording.rs"),
         include_str!("../audio_snapshot.rs"),
         include_str!("../spc_player.rs"),
         include_str!("../snes/snes.rs"),
@@ -297,7 +299,7 @@ fields!(StateRecorder {
     log, base_snapshot, has_base_audio_queue, base_audio_queue
 } skip {});
 
-impl State for ByteArray {
+impl State for RecordingBytes {
     fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
         let mut length = self.size as u64;
         length.state(archive)?;
@@ -307,17 +309,12 @@ impl State for ByteArray {
                 return Err("truncated checkpoint log".into());
             }
             unsafe {
-                sm::util::ByteArray_Resize(self, length);
-                if length != 0 {
-                    core::ptr::write_bytes(self.data, 0, length);
-                }
+                sm::rtl::recording_allocation(self.resize(length));
             }
+            self.as_mut_slice().fill(0);
         }
         if self.size != 0 {
-            // Save reads initialized log bytes; load resized and initialized them.
-            unsafe {
-                archive.bytes(std::slice::from_raw_parts_mut(self.data, self.size))?;
-            }
+            archive.bytes(self.as_mut_slice())?;
         }
         Ok(())
     }

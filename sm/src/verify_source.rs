@@ -151,6 +151,7 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/game/waver.rs", include_bytes!("game/waver.rs")),
     ("sm/src/game_state.rs", include_bytes!("game_state.rs")),
     ("sm/src/rom.rs", include_bytes!("rom.rs")),
+    ("sm/src/recording.rs", include_bytes!("recording.rs")),
     ("sm/src/host.rs", include_bytes!("host.rs")),
     ("sm/src/lib.rs", include_bytes!("lib.rs")),
     ("sm/src/native_audio.rs", include_bytes!("native_audio.rs")),

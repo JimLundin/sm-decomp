@@ -34,10 +34,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,282 Rust lines in 92 files**, plus 265 C
-bridge and 305 C-header lines = **94,852 maintained implementation lines**.
-Counting all 804 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,684**. This complete recount includes frontend,
+Current composition (2026-10-22): **94,304 Rust lines in 93 files**, plus 262 C
+bridge and 296 C-header lines = **94,862 maintained implementation lines**.
+Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
+gives **95,693**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1643,6 +1643,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Legacy endpoint expressions and C diagnostic calls remain unsafe outside the
    checked transfers. C buffering is preserved; moving that output to Rust changed
    ordering and was rejected. Checks: Local/sm-decomp-experiments/20261022/safe-word-transfers.
+   Recording now owns its log and base snapshot in checked Rust storage, with
+   safe input/patch encoding, rebasing and stopping. The new module forbids unsafe
+   code; native ByteArray calls, declarations and installer selections are removed.
+   Logical shrink retains initialized tails, including replay reads beyond the
+   shortened log length. RAM patches still wrap and mirror one byte at a time;
+   native file/snapshot callbacks and that external mirror remain unsafe. Complete
+   cost: **+9 maintained lines**, including 22 Rust lines, minus 12 C/header and
+   one installer line. No new macros. Actual old/final comparisons pass 486 buffer,
+   codec and replay cases, plus 104 save/load, clear/rebase, frame/cheat, SRAM and
+   checkpoint cases. Two checked failure/recovery cases pass. The initialized
+   synthetic hardware fixture compares complete file, RAM and continuation bytes;
+   version-2/legacy headers, SRAM/full bases, APQ1/ABQ1 trailers and short reads are
+   covered. Final library/frontend/verifier builds and all 100 embedded library
+   inputs pass; dependent configuration/shader and desktop archives are rebuilt.
+   No movie ran; gameplay, physical devices and allocator-event identity are not
+   claimed. This safety change establishes no large volume saving. Checks:
+   Local/sm-decomp-experiments/20261022/owned-recorder.
    Pose-history recording now copies the two four-byte records using checked byte
    places, preserving the previous record before replacing it. It eliminates four
    raw word reads and four raw word stores, and its entry point is safe. Direct
@@ -2539,14 +2556,19 @@ scrolling-sky and grapple-swing ownership, the SPC/PPU/DSP/music replacements,
 shared configuration/input and utility dependencies, the desktop host,
 room-scroll data, the shader dependency, safe pose/mechanism RAM access,
 gameplay continuation ownership, owned ROM reads, safe asset decompression
-checked ROM tables and safe word transfers, maintained Rust is **94,282**, with
+checked ROM tables, safe word transfers and owned recording, maintained Rust is **94,304**, with
 applicable static, component and exercised movie checks passing.
-Including 265 C and 305 header lines gives **94,852**; all 804 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,684**.
+Including 262 C and 296 header lines gives **94,862**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,693**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
-Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3052; cast lines 6626. Safe word transfers add 25 lines and remove
+Counters: raw offsets 23; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
+unsafe functions 3046; cast lines 6621. Owned recording adds nine complete maintained
+lines (22 Rust, minus 12 C/header and one installer line). It removes two counted
+raw offsets, six unsafe declarations and five cast-containing lines; no other
+counters increase. The safe recorder owns both buffers and the input/patch codec;
+file and native snapshot interfaces remain unsafe. This is a safety cost, not a
+reduction. Safe word transfers add 25 lines and remove
 three counted unsafe declarations; other counters are unchanged. This is a safety
 cost, not a reduction or elimination of the remaining unsafe caller expressions.
 Checked ROM tables add one line and remove

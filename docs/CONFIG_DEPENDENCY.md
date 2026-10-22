@@ -1,7 +1,7 @@
 # Configuration and utility dependency
 
-Configuration parsing, keyboard/gamepad mapping, byte-string/file helpers and
-ByteArray storage use selected [Zelda3 sources](https://github.com/snesrev/zelda3/tree/45a149d8b4bb8098f53d1009f76e76e7d8b79bbf/src)
+Configuration parsing, keyboard/gamepad mapping and byte-string/file helpers
+use selected [Zelda3 sources](https://github.com/snesrev/zelda3/tree/45a149d8b4bb8098f53d1009f76e76e7d8b79bbf/src)
 at revision `45a149d8b4bb8098f53d1009f76e76e7d8b79bbf`. Current Rust defines the
 behavior; the installer applies explicit compatibility changes to that pin.
 Include the [MIT notice](../third_party/zelda3/LICENSE.txt) with distributed binaries.
@@ -34,17 +34,22 @@ File buffers and pointers into them keep their original lifetime. Rust still
 checks invalid gamepad indices. `Die` may return or unwind; foreign declarations
 do not mark it as nonreturning. Builds keep exception support and signed wrapping.
 
-The utilities preserve partial allocation state, failure order, aliased string
-replacement and Destroy's unchanged size/capacity fields. Two explicit casts
+The utilities preserve partial allocation state, failure order and aliased string
+replacement. Two explicit casts
 retain the native `c_ulong` file-read result and `c_long` comment-span length.
 No malformed-input behavior was intentionally repaired.
 
-The complete replacement removes **541 maintained lines**: Rust loses 808;
+The initial replacement removed **541 maintained lines**: Rust lost 808;
 C/header adapters add 99, the installer adds 159, and the verifier launcher
 adds nine. Registration and verifier Rust changes are included in the Rust
 count. The fetched dependency adds 529 configuration C, 110 configuration-header
 and 280 utility C lines, plus the same 103-line types header already used by
 native music. Dependency code is disclosed separately from maintained savings.
+
+Recorder buffers subsequently moved to owned Rust storage in `recording.rs`,
+which forbids unsafe code. The installer no longer selects the four ByteArray
+functions; their Rust/C declarations and layout checks are retired. Logical
+shrink retains initialized bytes, including short-read and replay behavior.
 
 Source-checked old/new DLL comparisons pass 31 configuration scenarios, 5,463
 Boolean cases, 263,438 key/gamepad lookups, 133 utility cases, 32 layout checks,

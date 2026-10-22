@@ -417,6 +417,7 @@ pub mod host;
 
 pub mod game_state;
 pub mod rom;
+pub mod recording;
 
 /// Execution requirements for focused verifier scenarios.
 pub mod verify_probe;

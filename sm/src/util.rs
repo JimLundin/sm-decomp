@@ -1,5 +1,5 @@
-//! File, lexical and byte-array helpers from the pinned native utility dependency.
-pub use crate::types::{size_t, ByteArray, FILE};
+//! File and lexical helpers from the pinned native utility dependency.
+pub use crate::types::{size_t, FILE};
 use core::ffi::{c_char, c_void};
 
 pub type __builtin_va_list = [__va_list_tag; 1];
@@ -40,14 +40,6 @@ extern "C-unwind" {
     pub fn SkipPrefix(value: *const c_char, prefix: *const c_char) -> *const c_char;
     #[link_name = "sm_util_StrSet"]
     pub fn StrSet(target: *mut *mut c_char, value: *const c_char);
-    #[link_name = "sm_util_ByteArray_Resize"]
-    pub fn ByteArray_Resize(array: *mut ByteArray, size: size_t);
-    #[link_name = "sm_util_ByteArray_Destroy"]
-    pub fn ByteArray_Destroy(array: *mut ByteArray);
-    #[link_name = "sm_util_ByteArray_AppendData"]
-    pub fn ByteArray_AppendData(array: *mut ByteArray, data: *const u8, size: size_t);
-    #[link_name = "sm_util_ByteArray_AppendByte"]
-    pub fn ByteArray_AppendByte(array: *mut ByteArray, value: u8);
     fn sm_util_matches_source(index: u32, bytes: *const u8, length: usize) -> bool;
 }
 
