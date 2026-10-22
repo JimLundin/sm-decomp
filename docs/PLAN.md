@@ -1650,7 +1650,9 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    The coordinated [engine design](ENGINE_DESIGN.md) separates adopted pure rules
    from authoritative persistent state. The next substantial gameplay candidate
    is the complete player-projectile lifecycle, including consumers and runtime
-   authority transfers; it has no established whole-replacement price yet.
+   authority transfers. Its first current-main integration costs **+9,211 Rust
+   lines** without completing legacy retirement; the full deletion surface remains
+   open. See the concrete composition price below before adding more adapters.
    The [state migration audit](ENGINE_STATE_MIGRATION.md) traces reset/load,
    replay, inline CPU, physical writes and oracle rewind/adoption. A frozen-source
    transfer prototype passes 60 comparisons and 14 discriminating checks, with
@@ -2643,10 +2645,33 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    were added; no production implementation or owner changed. The reference carrier
    remains edition 2021; production remains edition 2024. Source/DLL/results are
    preserved at player-projectiles/runtime-encounter-stage. Main metrics are unchanged.
-   The target Session contract remains open. Next price the same complete candidate,
-   including every retained dependency, adapter and concrete deletion, under
-   target-architecture/MIGRATION.md. This audit establishes no replacement savings
-   or persistent production ownership.
+   A concrete integration of that candidate into main at **07f77021** compiles as
+   a Rust 2024 headless release library. It replaces the gameplay and door outer
+   coordinators, uses actual runtime bindings, and reuses six existing modules
+   unchanged: dialogue/state, item pickups/state and launch motion/state. The
+   formatted complete source prices **101,274 -> 110,485 (+9,211) Rust lines**:
+   **9,367 new lines in 83 files**, minus **156 net existing lines**. Maintained
+   native code, dependencies and installers are unchanged. Twelve existing helpers
+   gain crate visibility; their bodies are unchanged. Seventy added modules forbid
+   unsafe code, but the integration deletes no retained projectile raw operations.
+   Firing, flight, animation, trails, bombs, special attacks and the bank-owned
+   collision/PLM implementations remain: compatibility bindings call them, and
+   consumers outside the new coordinators have not all migrated. The typed owner
+   also returns to RAM at the outer boundary; persistent Session authority remains
+   open. The earlier component comparisons do not verify this new composition.
+   Final targeted formatting and the optimized headless library build pass in
+   **47.80s** with stable rustc 1.99.1, edition 2024. No new frontend/verifier build,
+   linked runtime comparison or movie ran. This is an unadopted integration cost,
+   not a completed lifecycle replacement or reduction. Exact sources, build and
+   accounting are preserved at player-projectiles/integration-cost-stage.
+   Do not adopt the outer wiring alone. Continue the complete replacement by
+   sharing algorithms between the owned model and retained checked adapters, then
+   migrate remaining consumers and remove their retired implementations. Start
+   with the duplicated projectile room scans: main's ShotAxis/beam/missile scan
+   helpers and the draft's collide_room_with. Keep native field access, ordered
+   position writes, aliasing, live room-width reads and synchronous reactions;
+   price the shared algorithm plus both adapters. Merely adding checked wrappers
+   or another dispatch layer does not resolve the duplication found here.
    Current Game/RAM interfaces are temporary; substantial reduction, content
    extraction and complete unsafe elimination remain required beyond binding checks.
    The full projectile candidate now includes shared script control flow:
