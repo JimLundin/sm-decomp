@@ -1726,6 +1726,25 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    broad-index reference bodies and final runtime bridges; it is not a complete
    replacement price. Collision internals, audio and HDMA output remain controlled;
    fuse-flash/explosion definitions remain encoded. No movie or adoption is claimed.
+   Trail emission/placement now owns all 18 pairs inside this same generic `Firing`;
+   flight emits directly, replacing the former controlled spawn effect. Style and
+   selected-projectile reads use the authoritative owner. Script lookup, marker
+   sampling, projection and offset definitions transport the complete owner; no
+   detached trail pool survives effects. **603 selected full-RAM comparisons**,
+   718 ordered observations and 143 matching failures pass: 484 emission/placement
+   cases, 24 flight callers, four linked missile callers, 89 reset cases and two
+   checked initializer-table failures. Three emission-table failures preserve
+   committed timers/scripts. The initializer read now also transports the owner,
+   retaining the sound-resume clear made after the sound callback if lookup fails.
+   One native sequence initializes a named weapon, advances animation and emits
+   named trails in a persistent `Firing<Label, Sprite, Trail>`. All 115 frozen and
+   62 draft inputs match compiled bytes; 47 prior files are unchanged. Optimized
+   DLL and model/codec formatting pass. Exact source/result is in emission-stage.
+   The formatted model/provider/codec cohort grows **1,257 -> 1,618 (+361 lines)**;
+   54 authored native-example lines are separate. Retained broad-index bodies and
+   final runtime bridges remain outside this partial cost. Projection, collision
+   and other native outputs are controlled; side playback/drawing and runtime
+   adoption remain open. No movie, production savings or complete price is claimed.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, drawing/trail, palette/sound
    output and grapple-start consumers remain controlled. ROM definitions are
