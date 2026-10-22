@@ -602,27 +602,41 @@ in RAM. RNG and allocation/effect interfaces remain explicitly unsafe.
 
 Pickup collection now uses the same owner. Five resource/amount/sound entries
 replace the unsafe function-pointer reward table. Expiry decrements little-endian
-RAM before the grapple query; the later timer and grapple positions retain native
-word reads. Body contact captures both byte radii before checking X then Y, using
+RAM before the grapple query; later timer and grapple positions also use
+little-endian word reads. Earlier notes incorrectly called those reads native;
+both the old `word!` and current checked macro decode little-endian bytes. Body contact captures both byte radii before checking X then Y, using
 the existing contact geometry. The queried state and reward code remain live;
 the incoming slot remains captured through restoration and sound effects. Only
 after those effects complete does the original slot enter its exit script, using
 the same ordered little-endian writes. The scheduler still rereads its live index
 after collection. No RAM borrow is retained across the query or effect calls.
 
-Generation passes **1,316 comparisons**, 7,286 ordered RAM/spawn/selected-ROM
-observations, 360 matching failures and ten checked short-record failures.
-Collection separately passes **876 comparisons**, 2,167 ordered RAM/spawn
-observations and 86 matching failures. Actual inventory restoration, sound
-queuing, grapple query, scheduler and exit-script deletion execute. Source/data
-correspondence and release/source/native checks pass. No movie ran; synthetic
-scripts and controlled callback mutations do not establish gameplay routes.
-Generation costs +32 Rust lines and collection removes three, for a complete
-combined cost of +29. The rules forbid unsafe code; collection retains the unsafe
-grapple query. Effect slots remain RAM-owned; enemy respawning uses the population
-adapter described above.
-Local reproduction: `Local/sm-decomp-experiments/20261022/enemy-drops` and
-`Local/sm-decomp-experiments/20261022/pickup-collection`.
+Initialization and conversion now share checked pickup setup. The initial spawn
+commits position, graphics and definition before selection. Both entries capture
+their incoming slot through selection effects and write the doubled drop code
+before consulting the then-current ROM instruction table. Initialization rejects
+drop code zero, whereas conversion rejects index zero; the distinction and the
+wrapped signed threshold are preserved. Accepted conversion activates collection
+and clears property bit 14 while retaining the respawn marker. A zero instruction
+address stops conversion. Rejection retains each entry's original write order.
+Initialization and collection share dismissal; both shared helpers forbid unsafe
+code. ROM table reads retain native word order, separately from little-endian RAM.
+
+Generation passes **1,316 comparisons**, 7,286 ordered observations and 360 matching
+failures, plus ten candidate short-record failures. Collection passes **876**,
+2,167 observations and 86 matching failures. Appearance passes **652 comparisons**,
+1,419 ordered full-RAM/spawn/selected-ROM observations and 108 matching failures.
+Checks include actual allocation, selector/RNG, collection, expiry, deletion and
+respawning through the no-op AI route, including 400-update lifetimes. Missing
+and short instruction tables retain partial state. Source/caller correspondence,
+release builds and embedded/native checks pass. No movie ran; synthetic scripts
+and controlled selection boundaries do not establish gameplay routes. Generation
+costs +32 Rust lines, collection removes three and appearance adds two: +31 in
+total, counting every replacement and caller. Effect slots remain RAM-owned;
+unsafe RNG, spawning, diagnostics and grapple queries still need migration.
+Local reproduction: `Local/sm-decomp-experiments/20261022/enemy-drops`,
+`Local/sm-decomp-experiments/20261022/pickup-collection` and
+`Local/sm-decomp-experiments/20261022/drop-appearance`.
 
 ### 11. Samus weapon control crosses projectiles, grapple and encounters
 

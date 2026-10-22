@@ -2715,28 +2715,6 @@ crate::game::callback_dispatch! {
             eproj_y_subpos[v2] = (*v3).y_subpos; eproj_y_vel[v2] = -768i32 as u16;
             eproj_x_vel[v2] = 768; }
     };
-    [8843049] EprojInit_F337 [] {
-        word! {game; eproj_x_pos[v2] = game.eproj_spawn_pt.x;
-            eproj_y_pos[v2] = game.eproj_spawn_pt.y; eproj_gfx_idx[v2] = 0;
-            eproj_enemy_header_ptr[v2] = game.eproj_spawn_varE24; }
-        let v3: u16 = crate::game::enemy_drops::select(j, game);
-        if v3 != 0 && v3 as i32 - 6i32 & 0x8000 != 0 {
-            let v4: u16 = (2u16).wrapping_mul(v3);
-            word!(game.eproj_E[v2] = v4);
-            word!(
-                game.eproj_instr_list_ptr[v2] =
-                    crate::rtl::rom_table_word!(game, 0x86ef04, (v4 >> 1) as isize)
-            );
-            word!(game.eproj_instr_timers[v2] = 1);
-            word!(game.eproj_F[v2] = 400);
-            word!(game.eproj_killed_enemy_index[(j >> 1)] = -1i32 as u16);
-        } else {
-            let v5: i32 = j as i32 >> 1;
-            word! {game; eproj_instr_list_ptr[v5] = addr_word_86ECA3 as u16;
-                eproj_instr_timers[v5] = 1; eproj_properties[v5] = 12288;
-                eproj_pre_instr[v5] = (0x86efdf & 0xffff) as u16; }
-        };
-    };
     @functions [unsafe fn (j: u16, game: &mut Game)];
     @prefix { let enemy_index = game.cur_enemy_index(); };
     [8822252] EprojInit_MiniKraidSpit [] {
@@ -2848,6 +2826,7 @@ crate::game::callback_dispatch! {
     [8840666]
     EprojInit_ClosedUpwardsShotGate => EprojInit_SpawnedGate_Common(j, -0x40i32 as u16, game);
     @external {
+        8843049 => [crate::game::enemy_drops::initialize(j, game)];
         8817357 => [{
                     init_skree_particle(j, 6, 320, -769, game);
                 }];
@@ -5046,29 +5025,8 @@ crate::game::callback_dispatch! {
     [8842891] EprojInstr_QueueSfx2_9 [epjp.offset(0)] { QueueSfx2_Max1(9, game); };
     [8842903] EprojInstr_QueueSfx2_24 [epjp.offset(0)] { QueueSfx2_Max1(0x24, game); };
     [8842915] EprojInstr_QueueSfx2_B [epjp.offset(0)] { QueueSfx2_Max1(0xb, game); };
-    [8842927] EprojInstr_EEAF [] {
-        let v2: u16 = crate::game::enemy_drops::select(k, game);
-        if k != 0 && v2 as i32 - 6i32 & 0x8000 != 0 {
-            let v3: u16 = (2u16).wrapping_mul(v2);
-            let v4: i32 = k as i32 >> 1;
-            word!(game.eproj_E[v4] = v3);
-            word!(
-                game.eproj_instr_list_ptr[v4] =
-                    crate::rtl::rom_table_word!(game, 0x86ef04, (v3 >> 1) as isize)
-            );
-            word!(game.eproj_instr_timers[v4] = 1);
-            word!(game.eproj_F[v4] = 400);
-            word!(game.eproj_pre_instr[v4] = ((0x86efe0i32) as u16));
-            word!(game.eproj_properties[v4] &= ((!(0x4000i32)) as u16));
-            epjp.jump(word!(game.eproj_instr_list_ptr[v4]))
-        } else {
-            let v6: i32 = k as i32 >> 1;
-            word! {game; eproj_instr_timers[v6] = 1; eproj_properties[v6] = 12288;
-                eproj_pre_instr[v6] = ((0x86efdfi32) as u16); eproj_instr_list_ptr[v6] = 0xeca3; }
-            epjp.jump(0xeca3)
-        }
-    };
     @external {
+        8842927 => [j.jump(crate::game::enemy_drops::convert(k, game))];
         8843024 => [{ crate::game::enemy_population_ram::respawn_from_drop(k, game); j.offset(0) }];
         8815019 => [EprojInstr_Goto(k, j)];
         8815024 => [EprojInstr_GotoRel(k, j)];

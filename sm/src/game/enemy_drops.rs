@@ -155,13 +155,57 @@ pub unsafe fn collect(index: u16, game: &mut Game) {
         award(slot, game);
     }
     // Award and sound complete before the original slot changes to its exit script.
-    for (base, value) in [
-        (a::eproj_instr_list_ptr, 0xeca3u16),
-        (a::eproj_instr_timers, 1),
-        (a::eproj_properties, 0x3000),
-        (a::eproj_pre_instr, 0xefdf),
-    ] {
-        let at = base + offset;
-        game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    dismiss(slot, game);
+}
+
+#[forbid(unsafe_code)]
+fn dismiss(slot: usize, game: &mut Game) {
+    word!(game.eproj_instr_list_ptr[slot] = 0xeca3);
+    word!(game.eproj_instr_timers[slot] = 1);
+    word!(game.eproj_properties[slot] = 0x3000);
+    word!(game.eproj_pre_instr[slot] = 0xefdf);
+}
+
+#[forbid(unsafe_code)]
+fn begin_pickup(slot: usize, kind: u16, game: &mut Game) {
+    let code = kind.wrapping_mul(2);
+    word!(game.eproj_E[slot] = code);
+    let instruction = crate::rtl::rom_table_word!(game, 0x86ef04, (code >> 1) as isize);
+    word!(game.eproj_instr_list_ptr[slot] = instruction);
+    word!(game.eproj_instr_timers[slot] = 1);
+    word!(game.eproj_F[slot] = 400);
+}
+
+pub unsafe fn initialize(index: u16, game: &mut Game) {
+    let slot = usize::from(index >> 1);
+    word!(game.eproj_x_pos[slot] = game.eproj_spawn_pt.x);
+    word!(game.eproj_y_pos[slot] = game.eproj_spawn_pt.y);
+    word!(game.eproj_gfx_idx[slot] = 0);
+    word!(game.eproj_enemy_header_ptr[slot] = game.eproj_spawn_varE24);
+    let kind = unsafe { select(index, game) };
+    if kind != 0 && kind.wrapping_sub(6) & 0x8000 != 0 {
+        begin_pickup(slot, kind, game);
+        word!(game.eproj_killed_enemy_index[slot] = 0xffff);
+    } else {
+        dismiss(slot, game);
+    }
+}
+
+pub unsafe fn convert(index: u16, game: &mut Game) -> u16 {
+    let kind = unsafe { select(index, game) };
+    let slot = usize::from(index >> 1);
+    // Conversion tests the incoming index, unlike initialization's drop-code test.
+    if index != 0 && kind.wrapping_sub(6) & 0x8000 != 0 {
+        begin_pickup(slot, kind, game);
+        word!(game.eproj_pre_instr[slot] = 0xefe0);
+        word!(game.eproj_properties[slot] = word!(game.eproj_properties[slot]) & !0x4000);
+        word!(game.eproj_instr_list_ptr[slot])
+    } else {
+        // Conversion writes its exit address last.
+        word!(game.eproj_instr_timers[slot] = 1);
+        word!(game.eproj_properties[slot] = 0x3000);
+        word!(game.eproj_pre_instr[slot] = 0xefdf);
+        word!(game.eproj_instr_list_ptr[slot] = 0xeca3);
+        0xeca3
     }
 }
