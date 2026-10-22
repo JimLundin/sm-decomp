@@ -9,9 +9,15 @@ with c2rust and is now being cleaned up into idiomatic Rust, one subsystem at
 a time, with that per-frame comparison as the test. See
 [docs/PLAN.md](docs/PLAN.md).
 
-Open [the interactive architecture atlas](docs/architecture.html) in a browser
-to explore the current construction, proposed gameplay ownership, shared
-behaviors, and frame execution order. It works offline without a build step.
+The accepted destination is our own purpose-built Rust game and engine. The
+[architecture handoff](docs/target-architecture/README.md) includes a standalone
+interactive report and a staged migration plan. Windows workers can keep the
+current emulated backend and oracle for development comparisons while replacing
+responsibilities. Existing run and verification commands continue to apply.
+
+The earlier [interactive architecture atlas](docs/architecture.html) records
+current construction, migration experiments, and observed frame execution order.
+Both reports work offline without a build step.
 
 ## Run
 

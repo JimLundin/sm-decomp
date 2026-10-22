@@ -1,5 +1,10 @@
 # Super Metroid engine design
 
+The accepted destination is now [architecture revision 3](target-architecture/README.md).
+This earlier design records migration experiments and current-runtime contracts.
+Use the [migration handoff](target-architecture/MIGRATION.md) to apply those findings
+without treating the current compatibility interfaces as the finished Session.
+
 The target is a game expressed through owned state, named transitions and ordered
 interactions. A reader should find running, firing, collecting an item, opening a
 door or advancing a boss encounter without knowing a memory bank or RAM address.
