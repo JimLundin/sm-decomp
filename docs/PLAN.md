@@ -1584,11 +1584,26 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    The contact audit now distinguishes provisional retirement, reflection, impact
    animation and slot release, plus synchronous room-mechanism reactions during
    collision scans. The design records the resulting owner interactions; these
-   source findings add no collision-route coverage. The full projectile draft's
-   first beam charge/firing slice passes 202 comparisons with controlled callees,
-   including 761 ordered RAM observations and 40 matching failures. It remains
-   unadopted, with lifecycle/runtime integration and complete price still open.
-   Details and limits are in RAM_OWNERSHIP.md; no new savings are claimed.
+   source findings add no collision-route coverage. Continue the concrete full
+   projectile draft at Local/sm-decomp-experiments/20261022/player-projectiles.
+   Its owned beam input/firing, flight phases, linked-extension collision and
+   release now pass **425 full-RAM comparisons**: 202 beam/persistent scenarios,
+   213 flight/extension/release scenarios and ten linked production cooldown
+   checks. There are 1,175 matching ordered callback observations and 54 matching
+   failures. Cases cover callback redirection, odd extension selectors, offscreen
+   edges/wrap, live camera changes and failures before selector restoration.
+   The model and codec forbid unsafe code; state crosses legacy calls by value,
+   and a divergent failure interface publishes partial state before a bad lookup.
+   All 115 frozen library inputs and seven draft inputs are checked. The initial
+   202-case build/result is preserved separately in its beam-stage directory.
+   This is still an **unadopted, incomplete draft**, not a production promotion or
+   a complete price. Acceleration and contact/trail calls are controlled; accepted
+   out-of-pool accesses explicitly run retained reference bodies through the
+   compatibility interface. These checks validate the handoff, not removal of
+   those implementations. Finish animation, acceleration, remaining weapon modes,
+   trails, real callers and runtime transfers in this same candidate, then count
+   every retained adapter/fallback. No movie ran and no savings are claimed.
+   The earlier beam-stage details and limits are in RAM_OWNERSHIP.md.
    User-requested [RAM ownership research](RAM_OWNERSHIP.md) now traces ten
    producer/consumer contracts and separates live values, captured selectors,
    cross-update handoffs and nested continuations. The first implementation moves
