@@ -547,6 +547,31 @@ RAM operations are removed from the migrated paths rather than hidden in that
 helper. This is ownership/safety work, not volume savings. Local reproduction:
 `Local/sm-decomp-experiments/20261022/enemy-population`.
 
+Respawning now joins the population adapter. Pickup markers retain their signed
+`<= -2` gate and low-15-bit slot; the instruction routes directly to the owner.
+The slot is captured before population diagnostics, and the population origin
+wraps at 16 bits before a linear native-endian record read. Shared safe placement
+copies the eight population fields. Saved palette/tile indices are restored,
+then only the original timers, frame counter and six script variables clear.
+Subpositions, AI-handler flags, shake and spritemap remain intact. Definition
+width, height, health, layer and bank/hurt byte pair commit in their original
+order, preserving partial state when a checked read fails. The initializer always
+runs and observes the live selector; it is not reset after diagnostic mutation.
+
+Respawn checks pass **462 actual old/new comparisons**, 695 ordered full-RAM,
+spawn-state and selected-ROM observations, and 79 matching failures. They include
+the actual pickup instruction, expiry/exit-script scheduler, Orange Zoomer
+initializer, nested respawn, ROM replacement and truncated definition failures.
+Eight short population records separately fail through candidate checked reads;
+the old raw out-of-bounds path is not executed. Shared room/dynamic placement has
+exact expanded-source correspondence and 30 included comparisons. Release builds
+and embedded/native source checks pass. No movie ran; constructed scripts and
+controlled callbacks do not establish a gameplay route. The complete +40-line
+cost includes callers and shared placement. One added counted unsafe declaration
+names the marker-to-initializer handoff; raw pointers retire, while diagnostics
+and AI remain unsafe. Local reproduction:
+`Local/sm-decomp-experiments/20261022/enemy-respawn`.
+
 ### 10. Effect slots belong to a session mode as well as an effect
 
 The enemy-projectile executor also spawns pickups. Its RAM aliases cinematic
@@ -594,7 +619,8 @@ correspondence and release/source/native checks pass. No movie ran; synthetic
 scripts and controlled callback mutations do not establish gameplay routes.
 Generation costs +32 Rust lines and collection removes three, for a complete
 combined cost of +29. The rules forbid unsafe code; collection retains the unsafe
-grapple query. Effect slots remain RAM-owned, and enemy respawning is unchanged.
+grapple query. Effect slots remain RAM-owned; enemy respawning uses the population
+adapter described above.
 Local reproduction: `Local/sm-decomp-experiments/20261022/enemy-drops` and
 `Local/sm-decomp-experiments/20261022/pickup-collection`.
 

@@ -23,7 +23,7 @@ use crate::game::sm_94::{
     kSinCosTable8bit_Sext, scale_sine_word, square_slope_occupied, square_slope_single_block,
 };
 use crate::game::sm_a0::{
-    CalculateAngleFromXY, CalculateAngleOfSamusFromEproj, CallEnemyAi, ConvertAngleToXy,
+    CalculateAngleFromXY, CalculateAngleOfSamusFromEproj, ConvertAngleToXy,
     SignExtend8,
 };
 use crate::game::sm_a6::Ridley_Func_103;
@@ -1502,31 +1502,6 @@ pub unsafe fn sub_86EC0C(k: u16, game: &mut Game) {
     }
 }
 pub use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as sub_86EC18;
-pub unsafe fn RespawnEnemy(v0: u16, game: &mut Game) {
-    word!(game.cur_enemy_index = v0);
-    let v1 = RomPtr_A1(
-        (word!(game.room_enemy_population_ptr)).wrapping_add((v0 >> 2)),
-        game,
-    );
-    let E = gEnemyData(v0 as i32, game);
-    set_fields! {[(*E)]; enemy_ptr = *(v1 as *mut u16), x_pos = *(v1.offset(2) as *mut u16),
-    y_pos = *(v1.offset(4) as *mut u16), current_instruction = *(v1.offset(6) as *mut u16),
-    properties = *(v1.offset(8) as *mut u16),
-    extra_properties = *(v1.offset(10) as *mut u16),
-    parameter_1 = *(v1.offset(12) as *mut u16), parameter_2 = *(v1.offset(14) as *mut u16), };
-    let ESD = gEnemySpawnData(v0 as i32, game);
-    (*E).palette_index = (*ESD).palette_index;
-    (*E).vram_tiles_index = (*ESD).vram_tiles_index;
-    set_fields! {[(*E)], 0; frozen_timer, flash_timer, invincibility_timer, timer, frame_counter, ai_var_A, ai_var_B, ai_var_C, ai_var_D, ai_var_E, ai_preinstr}
-    (*E).instruction_timer = 1;
-    let Edef = rom_record(0xa0, (*E).enemy_ptr, game);
-    (*E).x_width = Edef.word(offset_of!(EnemyDef, x_radius));
-    (*E).y_height = Edef.word(offset_of!(EnemyDef, y_radius));
-    (*E).health = Edef.word(offset_of!(EnemyDef, health));
-    (*E).layer = Edef.byte(offset_of!(EnemyDef, layer)) as u16;
-    *(&raw mut (*E).bank as *mut u16) = Edef.word(offset_of!(EnemyDef, bank));
-    CallEnemyAi((words!(i32, (Edef.byte(offset_of!(EnemyDef, bank)), Edef.word(offset_of!(EnemyDef, ai_init))))) as u32, game);
-}
 crate::game::callback_dispatch! {
     unsafe fn CallEprojInit(ea: u32, j: u16, game: &mut Game) => ea;
     call (j, game); default { Unreachable(game); };
@@ -4903,15 +4878,6 @@ crate::game::callback_dispatch! {
         word!(game.eproj_y_vel[v2] = 192);
         epjp.offset(0)
     };
-    [8843024] EprojInstr_HandleRespawningEnemy [] {
-        if (word!(game.eproj_killed_enemy_index[(k >> 1)]) as i16) <= -2i16 {
-            RespawnEnemy(
-                (word!(game.eproj_killed_enemy_index[(k >> 1)])) & (0x7fffu16),
-                game,
-            );
-        }
-        epjp.offset(0)
-    };
     @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
     [8817910] EprojInstr_SetPreInstrA [epjp.offset(0)] {
         word!(game.eproj_pre_instr[(k >> 1)] = (0x868dff & 0xffff) as u16);
@@ -5103,6 +5069,7 @@ crate::game::callback_dispatch! {
         }
     };
     @external {
+        8843024 => [{ crate::game::enemy_population_ram::respawn_from_drop(k, game); j.offset(0) }];
         8815019 => [EprojInstr_Goto(k, j)];
         8815024 => [EprojInstr_GotoRel(k, j)];
         8822906 => [{

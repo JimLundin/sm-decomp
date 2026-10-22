@@ -59,7 +59,8 @@ fn configure(index: u16, shape: EnemyShape, game: &mut Game) {
         write(game, slot(index) + offset, value);
     }
 }
-fn place(index: u16, entry: PopulationEntry, creation: Creation, game: &mut Game) {
+#[forbid(unsafe_code)]
+fn place_entry(index: u16, entry: PopulationEntry, game: &mut Game) {
     for (offset, value) in [
         (offset_of!(EnemyData, enemy_ptr), entry.definition),
         (offset_of!(EnemyData, x_pos), entry.x),
@@ -78,6 +79,9 @@ fn place(index: u16, entry: PopulationEntry, creation: Creation, game: &mut Game
     ] {
         write(game, slot(index) + offset, value);
     }
+}
+fn place(index: u16, entry: PopulationEntry, creation: Creation, game: &mut Game) {
+    place_entry(index, entry, game);
     write(game, slot(index) + offset_of!(EnemyData, frame_counter), 0);
     write(game, slot(index) + offset_of!(EnemyData, timer), 0);
     if creation.clear_script_variables() {
@@ -467,4 +471,73 @@ unsafe fn load_tile_data(game: &mut Game) {
         }
     }
     word!(game.enemy_tile_load_data_write_pos = 0);
+}
+
+pub unsafe fn respawn_from_drop(projectile: u16, game: &mut Game) {
+    let marker = word!(game.eproj_killed_enemy_index[projectile >> 1]);
+    if (marker as i16) <= -2 {
+        unsafe { respawn(marker & 0x7fff, game) };
+    }
+}
+
+unsafe fn respawn(index: u16, game: &mut Game) {
+    use crate::game::enemy_ram::{EnemyField as F, EnemySlot};
+    let enemy = EnemySlot::new(index);
+    let target = slot(index);
+    let saved = spawn(index);
+    word!(game.cur_enemy_index = index);
+    let population = unsafe {
+        rom_record(
+            0xa1,
+            word!(game.room_enemy_population_ptr).wrapping_add(index >> 2),
+            game,
+        )
+    };
+    place_entry(index, population.population(), game);
+    for (target, source) in [
+        (F::Palette, offset_of!(EnemySpawnData, palette_index)),
+        (F::Tile, offset_of!(EnemySpawnData, vram_tiles_index)),
+    ] {
+        enemy.set(target, read(game, saved + source), game);
+    }
+    // Respawning preserves subpositions, AI flags, shake and the current spritemap.
+    for field in [F::Frozen, F::Flash, F::Invincibility] {
+        enemy.set(field, 0, game);
+    }
+    write(game, target + offset_of!(EnemyData, timer), 0);
+    enemy.set(F::Frame, 0, game);
+    game.g_ram
+        [target + offset_of!(EnemyData, ai_var_A)..target + offset_of!(EnemyData, parameter_1)]
+        .fill(0);
+    write(game, target + offset_of!(EnemyData, instruction_timer), 1);
+    let definition = unsafe { rom_record(0xa0, enemy.word(F::Definition, game), game) };
+    // Read and commit each field in order, including partial state on short records.
+    enemy.set(
+        F::Width,
+        definition.word(offset_of!(EnemyDef, x_radius)),
+        game,
+    );
+    enemy.set(
+        F::Height,
+        definition.word(offset_of!(EnemyDef, y_radius)),
+        game,
+    );
+    enemy.set(
+        F::Health,
+        definition.word(offset_of!(EnemyDef, health)),
+        game,
+    );
+    enemy.set(
+        F::Layer,
+        u16::from(definition.byte(offset_of!(EnemyDef, layer))),
+        game,
+    );
+    write(
+        game,
+        target + offset_of!(EnemyData, bank),
+        definition.word(offset_of!(EnemyDef, bank)),
+    );
+    let initializer = u32::from(definition.byte(offset_of!(EnemyDef, bank))) << 16
+        | u32::from(definition.word(offset_of!(EnemyDef, ai_init)));
+    unsafe { CallEnemyAi(initializer, game) };
 }

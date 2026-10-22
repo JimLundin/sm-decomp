@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,377 Rust lines in 128 files**, plus 262 C
-bridge and 296 C-header lines = **96,935 maintained implementation lines**.
+Current composition (2026-10-22): **96,417 Rust lines in 128 files**, plus 262 C
+bridge and 296 C-header lines = **96,975 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,766**. This complete recount includes frontend,
+gives **97,806**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2682,7 +2682,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    writes, native grapple reads, live reads after the query, captured slot identity
    and reward/sound completion before the exit script. Persistent slots and health
    bias remain RAM-owned; RNG, spawning, diagnostics and the grapple query remain
-   unsafe. Respawning and complete effect-pool ownership remain open.
+   unsafe. Respawning uses the population owner; complete effect-pool ownership
+   remains open.
    Generation passes **1,316 old/new comparisons**, with all patterns, selector
    results, actual allocation/initialization and selected real RNG paths exercised.
    Collection passes **876 comparisons**, 2,167 ordered RAM/spawn observations and
@@ -2738,9 +2739,22 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Local/sm-decomp-experiments/20261022/projectile-contact.
    Enemy population creation now owns its search and multipart iteration state,
    with named room/dynamic initialization rules and checked RAM/ROM adapters.
-   Room creation, dynamic spawning, graphics selection, spawn recording and linked
-   retirement use the new owner; all five legacy entry points and their raw
-   population record/helper are retired, and all real callers are migrated.
+   Room creation, dynamic spawning, graphics selection, spawn recording, linked
+   retirement and pickup-triggered respawning use the owner. Seven legacy entry
+   points and their raw population/enemy pointers retire; real callers are migrated.
+   Respawning shares population placement while preserving its distinct reset
+   fields, saved graphics, captured slot and live initializer selector. Definition
+   fields commit sequentially, retaining partial state on checked read failures.
+   Its direct entry, pickup instruction, exit-script scheduler and real Orange
+   Zoomer initializer pass **462 old/new comparisons**, 695 ordered RAM/spawn/ROM
+   observations and 79 matching failures; eight short population records separately
+   fail through checked reads. Shared room/dynamic placement has exact expanded
+   correspondence and 30 included comparisons. Release/source/native checks pass.
+   No movie ran; constructed scripts and controlled boundaries establish no gameplay
+   route. Respawning adds **40 Rust lines**, including shared placement and callers,
+   removes two cast lines and adds one counted unsafe declaration for the explicit
+   marker-to-initializer handoff. Raw pointer operations retire; diagnostics and AI
+   calls remain unsafe. Local reproduction: Local/sm-decomp-experiments/20261022/enemy-respawn.
    The pure model forbids unsafe code. Initializer callbacks and invalid-ROM
    diagnostics remain explicit unsafe interfaces; persistent enemy state and the
    broader enemy executor still reside in the compatibility layout. Final checks
@@ -4506,14 +4520,19 @@ spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
 owned enemy-script positions, checked enemy-definition records, standard combat and shared enemy/projectile contact,
-maintained Rust is **96,377**,
+maintained Rust is **96,417**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,935**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,766**.
+Including 262 C and 296 header lines gives **96,975**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,806**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2952; cast lines 6216. Checked pickup collection removes three
+unsafe functions 2953; cast lines 6214. Checked enemy respawning adds 40 Rust
+lines and one counted unsafe declaration, while removing two cast-containing
+lines. The extra declaration names the pickup-marker handoff into initialization;
+raw population/enemy/spawn pointers and caller RAM reads retire. This is a safety
+cost, not volume savings; other counters are unchanged.
+Checked pickup collection removes three
 Rust lines, four counted unsafe declarations and ten cast-containing lines;
 other counters are unchanged. The reward function-pointer table and raw
 collection RAM access retire; resource restoration and sound queuing are safe,
