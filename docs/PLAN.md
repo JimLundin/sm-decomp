@@ -1636,12 +1636,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    live movement drag at the X-ray query. No second restriction state is stored.
    Actual drain damage, weapon preparation, HUD selection and beam-input consumers
    execute, including eight added switching/charged-release compositions and one
-   uninterrupted owner/query sequence. The actor and X-ray coordinator bodies
-   remain retained; HUD routing, projectile processing, HDMA and remaining native
+   composed owner/query sequence. The latter retains `Firing` between operations;
+   drag/reset effects still publish/import through the legacy adapter. The actor
+   and X-ray coordinator bodies remain retained; HUD routing, projectile processing, HDMA and remaining native
    effects are controlled. All 115 frozen and 41 draft inputs match compiled
    bytes; optimized DLL and format checks pass. Preserved encounter-stage records
    these selected checks separately from cancellation-stage and reset-stage;
    neither earlier suite was rerun. No movie or production adoption is claimed.
+   The coordinator independently reviewed all 115 library and 41 compiled draft
+   inputs, existing-state reuse and the retained transfer boundaries.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, drawing/trail, palette/sound
    output and grapple-start consumers remain controlled. ROM definitions are
@@ -1654,6 +1657,19 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.
    The earlier beam-stage details and limits are in RAM_OWNERSHIP.md.
+   The standalone named-animation prototype at 20261022/named-projectile-animation
+   passes 363 old/new full-RAM comparisons: 224 playback, 135 callback and four
+   linked steps, with 204 ordered observations and 58 matching failures. One shared
+   playback algorithm runs both checked encoded definitions and a separate
+   persistent sequence of named Rust definitions with no RAM/ROM decoding. Model
+   and both providers forbid unsafe code. All 115 frozen and seven local compiled
+   inputs are checked; optimized DLL passes. The compatibility provider preserves
+   partial-state diagnostics, returned-state rereads, captured slot/definition
+   lifetime and wrapped operands. Release and diagnostics are controlled; actual
+   slot-clear internals are untested here. Full-Firing transport, initialization,
+   trails, authored attack conversion, malformed-data closure and production
+   integration remain open. No ROM/movie, adoption or complete price is claimed.
+   Details: [named-animation findings](RAM_OWNERSHIP.md#named-projectile-animation-definitions).
    The aim-handoff experiment now passes 68 full-RAM expected-state comparisons
    (14 partial failures), eight linked sequences and four counterexamples. Captured
    aim is consumed once; origin uses the live pose, and reservation rejection

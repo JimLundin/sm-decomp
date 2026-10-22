@@ -826,6 +826,69 @@ rerun**, so the counts are separate. The preserved source is `player-projectiles
 under the same experiment root. Palette execution and the remaining environment
 handoff are controlled; this is not runtime integration or complete owner closure.
 
+The subsequent **encounter-stage** passes **686 targeted full-RAM comparisons**,
+1,921 ordered observations and 11 matching failures. It applies drain refresh and
+release to the existing `Firing` cooldown and bomb reservations, with movement drag
+supplied live by Samus. The actual HUD selector and beam-input consumer now execute
+around the same drain/X-ray cases, plus eight switching/charged-release compositions.
+The coordinator independently checked all 115 library and 41 draft compiled inputs
+and reviewed the source/result without rerunning the suite. Neither the earlier
+3,427-case suite nor reset's 89-case suite was rerun.
+
+The final composed sequence retains `Firing` between refresh, preparation, query,
+release and reset; `Legacy::perform` still publishes/imports at drag and environment
+effects. It is not a sequence without RAM decoding. The actor/X-ray coordinator
+remains legacy code; movement-specific HUD routing, projectile processing, HDMA,
+palette and other effects remain controlled. There is no duplicate `Restrictions`
+owner, production binding, movie coverage or complete replacement price. The
+preserved stage is `player-projectiles/encounter-stage` under the same local root.
+
+### Named projectile animation definitions
+
+A standalone experiment separates projectile playback from instruction encoding.
+`Animation<Cursor, Sprite>` holds duration, selected sprite, contact radii and the
+next cursor. `advance` interprets semantic `Show`, `Jump` and `Release` commands
+through a definition provider. It contains no `Game`, RAM/ROM address, opcode or
+hardware call. The compatibility provider contains the encoded cursors and
+instruction decoding; a second provider uses ordinary Rust labels, sprites and
+nodes. Playback and both providers forbid unsafe code.
+
+**363 actual old/new full-RAM comparisons pass:** 224 direct playback cases, 135
+callback cases and four linked steps, with **204 ordered observations** and
+**58 matching failures**. The reference executes the frozen production `advance`,
+`get_ProjectileInstr` and instruction-dispatch macro with its original macro
+support. Cases cover normal, odd and broad valid selectors; countdown boundaries;
+show/jump/release/unknown commands; low-bank diagnostics; wrapped jump operands;
+definition replacement/mutation; selector/timer/cursor changes; and partial
+failure.[^projectileplayback]
+
+The compatibility provider publishes partial animation state before a diagnostic,
+imports the returned state for the captured slot, then captures the current
+definition allocation. It preserves frame-field read order, a jump to zero ending
+the step, wrapped cursor arithmetic and unknown-command recovery. A changed live
+projectile selector does not redirect the captured slot. Numeric encodings stay
+in this provider, including the unusual failure behavior; eager immutable decoding
+of every existing definition is not established by these cases.
+
+One additional persistent sequence runs the **same playback algorithm from Rust
+definitions without any byte image or RAM/ROM decoding**. Named `Start`, `Redirect`,
+`Burst` and `Done` nodes demonstrate duration waiting, jump, changed sprite/radii
+and release. This is a synthetic authored example, not extracted game content or
+additional old/new comparisons.
+
+The optimized DLL and source-checked run pass. All **115 embedded library inputs**
+match `15589b48`; all **seven compiled experiment inputs** match exact local hashes.
+Release and diagnostic callees are controlled: actual `ClearProjectile` internals
+are not executed. No ROM or movie is loaded. Initialization, trail readers, attack
+definition conversion, complete malformed-data coverage and production integration
+remain open. Integrating this seam requires moving the **complete `Firing`** through
+diagnostics; retaining its copied `Animation` while another owner can mutate that
+shot would violate the ownership contract. No full replacement cost or savings
+are established. Reproduction:
+`Local/sm-decomp-experiments/20261022/named-projectile-animation`
+(`playback.rs`, `compatibility.rs`, `native.rs`, `harness.rs`, `prepare.py`,
+`build.py`, `check.py`, `result.json`).
+
 ### Aim capture, placement and expiry
 
 An isolated experiment against frozen `15589b48` executes the production bodies
@@ -1281,10 +1344,13 @@ its own exercised checks.
 
 Continue the same whole-projectile draft through Samus weapon control. Typed aim,
 launch, flare, feedback and cancellation are integrated in the reviewed draft.
-Integrate the named drain outcomes into existing weapon and movement state. Exercise remaining
-cancellation producers. Integrate Samus protection with its grant, contact and
+Drain outcomes now use existing weapon state in the reviewed encounter stage;
+movement and environment effects still transfer through the legacy adapter.
+Exercise remaining cancellation producers. Integrate Samus protection with its grant, contact and
 completed-pass consumers, preserving broad alias transfers and reset distinctions.
 Close remaining shared palette/sound writers and runtime transfers.
+Integrate the named-animation definition seam by transporting the complete owner
+through diagnostics, then close initializer, trail and attack-definition consumers.
 These are new coverage questions,
 not additional pass counts for the existing firing or launch experiments.
 
@@ -1358,6 +1424,7 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^enemyshotsearch]: [EprojCollHandler_Multibox](../sm/src/game/sm_a0.rs#L1486); [EprojCollHandler](../sm/src/game/sm_a0.rs#L1714); [EnemyCollisionHandler](../sm/src/game/sm_a0.rs#L1032).
 [^shotretirement]: [ResetProjectileData](../sm/src/game/sm_90.rs#L1468); [ClearProjectile](../sm/src/game/sm_90.rs#L1504); [KillProjectile](../sm/src/game/sm_90.rs#L1566).
 [^shotimpact]: [start_impact](../sm/src/game/projectile_animation.rs#L102); [instruction_delete and advance](../sm/src/game/projectile_animation.rs#L185).
+[^projectileplayback]: [get_ProjectileInstr](../sm/src/game/projectile_animation.rs#L33); [advance and instruction dispatch](../sm/src/game/projectile_animation.rs#L188).
 [^roomshotscan]: [react_to_shot_block, beam_block_collision and missile_block_collision](../sm/src/game/sm_94.rs#L1538).
 [^roomshotreaction]: [Shootable/bombable reactions and scan overrides](../sm/src/game/sm_94.rs#L1359); [PlmSetup_B974](../sm/src/game/sm_84.rs#L941).
 [^roomshotsetup]: [SpawnPLM and SpawnPLMWithCollision](../sm/src/game/sm_84.rs#L249); [find_plm_at_block](../sm/src/game/sm_84.rs#L766); [sub_84C64C](../sm/src/game/sm_84.rs#L956); [Strange Door and respawning shot block](../sm/src/game/sm_84.rs#L1882).

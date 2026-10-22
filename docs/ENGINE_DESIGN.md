@@ -388,6 +388,13 @@ suite was not rerun. Reset remains a distinct transition from release and charge
 cancellation, and its environment adapter still participates in legacy authority
 transfers. Other weapons, definition interfaces and production ownership remain open.
 
+The reviewed encounter stage adds **686 targeted comparisons** through drain,
+weapon preparation, actual HUD selection and beam input. It applies drain changes
+to the existing cooldown and bomb reservations and samples Samus movement drag at
+the X-ray query. There is no second restriction record. Its composed sequence
+retains `Firing` between operations; drag and reset environment effects still
+publish/import through the legacy adapter. The prior suites were not rerun.
+
 State ownership alone will not finish the game-facing interface. This draft still
 uses raw bank addresses for definition lookup, numeric animation instruction
 pointers and `Motion::Legacy` for some behaviors. These are explicit compatibility
@@ -397,6 +404,35 @@ Retaining a captured definition allocation while observing its live contents is
 also an existing contract; eagerly decoding every definition would require its
 own equivalence argument. Both definition and state migration costs belong in
 the complete replacement price.
+
+## Animation definitions separated from playback
+
+The [named-animation experiment](RAM_OWNERSHIP.md#named-projectile-animation-definitions)
+implements one playback algorithm with two definition providers. The algorithm
+advances a duration, follows a jump, selects a sprite and contact radii, or returns
+`Release`. It has no `Game`, RAM/ROM address, encoded opcode or hardware dependency.
+
+| Boundary | Responsibility |
+| --- | --- |
+| Playback state | Current definition cursor, remaining duration, sprite identity and contact radii |
+| Authored definitions | Named frames and jumps, explicit durations, sprites and release nodes |
+| Compatibility definitions | Decode the existing instruction format, preserve captured definition lifetime and ordered diagnostics |
+| Projectile owner | Apply playback results and perform actual slot release; transport the complete owner through foreign effects |
+
+The same algorithm passes **363 old/new comparisons** using synthetic encoded
+definitions and a separate persistent sequence using ordinary Rust definitions.
+The latter requires no RAM/ROM decoding. This demonstrates a replaceable encoding
+boundary, beyond naming numeric pointers. The model and both providers forbid
+unsafe code. Compatibility still preserves partial writes, live state after a
+diagnostic, wrapped operands and the captured projectile slot.
+
+This is a standalone playback experiment. It is not integrated into `Firing`:
+the local diagnostic protocol transfers only its animation state. Integration
+must move the complete `Firing` through those effects so callbacks cannot leave a
+stale animation copy beside a live projectile owner. Actual release internals,
+initialization, trail reads, attack definitions, complete malformed-data behavior
+and production ownership remain open. The Rust definitions are synthetic, not
+converted game content; there is no movie coverage or whole-replacement price.
 
 ## Shared behavior and coordination
 
