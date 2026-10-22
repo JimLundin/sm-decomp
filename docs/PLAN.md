@@ -1995,9 +1995,9 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Complete routing, scheduler, fallback and runtime costs remain unpriced.
    Room geometry stays byte-owned; full PLM scheduling, message suspension and
    wider setup remain open. No movie, adoption or saving is claimed. Source/result:
-   20261022/mechanism-spawn. Port its selected setup policies/tests onto the existing
-   allocator in player-projectiles/mechanism-creation-stage; keep one allocator
-   and do not add independent prices. That combined setup owner is not yet tested.
+   20261022/mechanism-spawn. Its selected setup policies/tests are now integrated
+   into the existing full candidate below. Keep one allocator and do not add the
+   standalone and integrated prices.
    That unchanged scheduler/provider is now integrated into the top-level full
    candidate, preserved in player-projectiles/scheduled-flight-stage. **514
    selected comparisons**, 651 ordered observations and ten expected matching
@@ -2047,31 +2047,46 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    movie ran. No adoption or complete saving is claimed. The parallel standalone
    shot-block-reactions result above is not an additive saving or a second model
    to install; reuse its remaining setup findings for mechanism lifecycle ownership.
-   Shot-triggered mechanism creation now uses an owned 40-slot pool together with
-   the complete projectile owner. **122 selected comparisons**, 335 ordered
-   observations and eight expected matching failures pass: 51 allocation/prefix/
-   nesting cases and 71 mechanism/terrain consumers, including 16 persistent
-   lifecycle steps. Descending allocation, full capacity, invalid header reads,
-   initialized prefixes and nested creation preserve full RAM and completion.
-   Saved level values and script return cursors survive reuse. Header/program
-   reads and actual setup receive the complete pool/projectile handoff; nested
-   creation retains the outer block association and leaves the inner selection.
-   Native terrain now uses this same allocator instead of simulated capacity.
-   Its two native sequences cover full capacity, reuse, nested setup and scheduled
-   terrain/impact/release. The pool is explicitly unavailable while the creation
-   owner holds it. Actual encoded setup remains a retained compatibility interval;
-   native setup actions are authored. Other mechanism producers, setup/script
-   lifecycle, collision-displacement handoffs and runtime room authority remain open.
+   Shot-triggered mechanism creation and five setup policies now share one owned
+   40-slot pool with the complete projectile owner. **213 selected comparisons**,
+   465 ordered observations and 15 expected matching failures pass: 87 direct
+   allocation/setup cases, seven retained-pool steps and 119 terrain/projectile
+   consumers, including 48 persistent lifecycle steps. No-op, Blue Door, Colored
+   Door, Strange Door and Respawning Shot Block use the shared safe model; the
+   candidate checks reject accidental fallback for these policies. A real Eye Door
+   setup still exercises the explicit compatibility interval.
+   Release preserves stale associations, saved level and return cursors. Nested
+   creation can reuse the released slot before the captured outer setup resumes.
+   Strange Door clears its association before signed projectile-kind lookup;
+   that lookup can alias the cleared field. Descending association lookup includes
+   inactive slots and can match the cleared slot itself. Colored Door preserves
+   the exact odd byte offset, while BTS and word accesses round down. Header reads
+   preserve window/extent failures and the initialized prefix. The three geometry
+   policies execute during firing, with their geometry consumed by subsequent
+   scheduled flight/output/release. Each linked scenario requires its selected
+   setup to execute.
+   Definition reads, observation hooks, geometry operations and legacy setup
+   consume the complete pool/projectile owner before RAM execution and reconstruct
+   it afterward. Native terrain retains the same allocator and explicitly makes
+   its pool unavailable during transfer. Three authored native sequences and two
+   association cases cover typed setup, capacity/reuse and the prior scheduled
+   terrain lifecycle. The typed setup fixture uses a minimal player input; native
+   terrain responses and initial collision remain authored/controlled.
    Pool/creation are non-Clone; model and projection forbid unsafe code. All 115
-   frozen and 108 draft compiled inputs match; 102 inherited sources are unchanged.
-   The final native-only handoff/nesting edit reran only the two native sequences;
-   all comparison implementations and their original entry are unchanged. Current
-   allocator/read functions and RAM layout correspond; optimized build and
-   formatting pass. Source/result: player-projectiles/mechanism-creation-stage.
-   The new model/projection costs **187 formatted lines**; native examples add 62.
-   New paired fixtures (203), existing-fixture growth (51), harness growth (44),
-   retained setup and final runtime costs remain separate from this partial price.
-   No terrain/slope or full projectile suite, movie, adoption or net saving is claimed.
+   frozen and 110 draft compiled inputs match; 102 inherited sources are unchanged.
+   Six actual setup bodies, deletion, geometry writes, checked header reads and RAM
+   layout correspond to current source. Optimized DLL and formatting pass. The
+   final setup-specific fixture correction is included in all 213 comparisons.
+   Source/result: player-projectiles/mechanism-setup-stage. Model/projection grows
+   **187 -> 364 (+177 formatted lines)**; native fixtures add 251. New paired
+   fixtures (452), existing-fixture growth (37) and formatted harness growth (11)
+   remain separate from this partial price. No broad terrain/slope or full
+   projectile suite, movie, adoption or net saving is claimed.
+   Continue with the remaining mechanism producers and setup/script lifecycle,
+   collision-displacement and suspension handoffs, native missile/extension
+   definitions, and runtime room/projectile authority. Main's shared PLM spawning
+   has independently moved to plm_spawning.rs; reconcile that current implementation
+   during final integration instead of restoring its retired bank facade.
    The frozen library
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.
