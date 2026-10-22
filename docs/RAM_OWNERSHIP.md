@@ -463,8 +463,8 @@ or that deferred spawning has equivalent same-update execution order.
 
 Follow-up source audit at `0f98f559`, checked unchanged through `4c979503` for the
 cited gameplay and RAM metadata. This identifies ownership interactions, not
-complete writer/alias closure. The aim, flare, feedback and cancellation experiments
-below have bounded execution coverage; other findings here are source evidence.
+complete writer/alias closure. The aim, flare, feedback, cancellation and drain/X-ray
+experiments below have bounded execution coverage; other findings are source evidence.
 
 **Pending aim is a one-use handoff.** Normal-jump pose handling captures the
 current pose's direction with flag `0x8000`; moonwalk-turn handling captures the
@@ -760,17 +760,21 @@ are claimed from this prototype. Reproduction remains outside the repository at
 
 ### Whole-projectile draft
 
-The latest reviewed stage of this unadopted candidate passes **2,330 full-RAM
-comparisons**, **2,258 ordered observations** and **302 matching failures**.
+The latest reviewed stage of this unadopted candidate passes **3,427 full-RAM
+comparisons**, **3,366 ordered observations** and **483 matching failures**.
 It includes beam input/firing, typed pending aim and placement, initialization,
 launch, flight, acceleration, extensions, release, animation, trail-frame sampling,
-drawing decisions and beam/hyper/grapple flare. Beam firing and extension creation
-call owned placement, initialization and launch directly. Their former legacy
+drawing decisions, beam/hyper/grapple flare, palette/glow, sound continuity and
+weapon selection/cancellation. Beam firing and extension creation call owned
+placement, initialization and launch directly. Their former legacy
 effects and publish/import round trips are removed. Broad-index placement and
 launch use checked adapters and the same pure models. Launch preserves Y writes
 before aliased history rereads and the diagnostic order; other out-of-pool paths
 retain reference bodies. Firing owns one `Flare` charge/frame/timer bundle, with
-the complete `Firing` value moving through each remaining effect.
+the complete `Firing` value moving through each remaining effect. Feedback reads
+that live charge, and cancellation acts on it directly; there is no separate
+`Control` or duplicated charge input. Shared Samus palette/echo writers outside
+this draft still prevent a claim of complete authority.
 
 State crosses remaining foreign operations by value. Returned inputs are sampled
 again; invalid-table handling publishes partial state and diverges. Cases include
@@ -779,23 +783,28 @@ live camera changes, odd selectors, callback redirection, partial failure,
 definition edits/replacement, damage-write ordering, script deletion/goto and
 Ceres coordinate quirks. Linked cases exercise firing-to-flare, grapple drawing
 before tiles/charge increment, and nested firing during a draw callback. Persistent
-sequences retain typed state without intermediate RAM decoding.
+sequences retain typed state without intermediate RAM decoding. The latest
+composition spans PLM charge clear, inactive grapple, unavailable missile and
+accepted beam selection, 24 firing updates, flare/palette, and grapple selection.
+It retains the full owner between steps; remaining legacy effects still transfer
+state. The sound routine's original debug/time-up tail follows its owned prefix.
 
 The coordinator independently checked all **115 embedded library inputs** against
-`15589b48` and **23 compiled draft inputs/hashes**, reviewed the integrated
-flare/effect source and inspected the result without repeating its run. The
+`15589b48` and **30 compiled draft inputs/hashes**, reviewed the integrated
+feedback/cancellation source and inspected the result without repeating its run. The
 preceding launch stage separately passed 1,945 comparisons, 1,638 observations
 and 227 matching failures; its twenty compiled draft inputs were also checked.
-The two reused launch-motion files match current-main bytes in both stages.
-Reproduction: `Local/sm-decomp-experiments/20261022/player-projectiles/flare-stage`.
+The two reused launch-motion files also match current-main bytes in this stage.
+Reproduction: `Local/sm-decomp-experiments/20261022/player-projectiles/cancellation-stage`.
 The older `beam-stage/` (202), `flight-stage/` (425), `animation-stage/` (1,295),
-`aim-stage/` (1,634) and `launch-stage/` (1,945) remain preserved. Counts are not
-additive or unchanged-suite comparisons: controlled initializer, placement and
+`aim-stage/` (1,634), `launch-stage/` (1,945), `flare-stage/` (2,330) and
+`feedback-stage/` (2,772) remain preserved. Counts are not additive or
+unchanged-suite comparisons: controlled initializer, placement and
 launch cases changed as those calls became owned.
 
-Collision, drawing/trail consumers, special attacks, palette and native diagnostics
-remain controlled in this stage. Definitions are
-synthetic; no movie ran. The harness imports at entry and publishes on return;
+Collision, drawing/trail consumers, special attacks, palette output and native
+diagnostics remain controlled in this stage. Definitions are synthetic; no movie
+ran. The harness imports at entry and publishes on return;
 global writer/alias closure, production runtime binding, remaining modes/trails/
 reset, named definition/motion interfaces and raw-address retirement remain open.
 Neither production promotion nor a complete price or saving is established.
@@ -993,6 +1002,60 @@ and production ownership remain open. No adoption or complete savings are claime
 Reproduction: `Local/sm-decomp-experiments/20261022/weapon-cancellation`
 (`cancellation.rs`, `adapter.rs`, `prepare.py`, `build.py`, `check.py`, `result.json`).
 
+### Drain restriction and X-ray observation
+
+A bounded prototype names `DrainRefresh`, `DrainRelease` and `WeaponPreparation`
+transitions and a live X-ray restriction query. Its pure model forbids unsafe code
+and contains no RAM addresses or `Game`. Ordered outcomes update the same firing
+delay, bomb reservations and movement drag used by their ordinary owners. It is
+not an independent persistent restriction record or a replacement for all encounter
+behavior. The surrounding drain and X-ray routines retain their legacy operations.
+
+**678 actual old/new full-RAM comparisons pass:** 280 drain cases, 39 cooldown
+cases, 330 X-ray cases, 15 callback cases, five linked steps and nine additional
+coordinator cases. There are **1,883 ordered RAM observations**, **11 matching
+failures** and **nine discriminating checks**. Actual extracted implementations
+include `Shitroid_Func_16`, `Samus_DamageDueToShitroid`, `Samus_HandleCooldown`,
+`Samus_HandleHudSpecificBehaviorAndProjs`, `HudSelectionHandler_Xray`,
+`XrayRunHandler` and `Xray_Initialize`. The candidate substitutes only the restriction
+writes, preparation countdown and exact query; the real surrounding bodies execute.
+
+Drain refresh publishes 8/5/2 before movement and damage. Preparation changes the
+delay to 7 before the selected X-ray handler; that combination rejects activation.
+A direct query before preparation sees 8 and does not match. Another preparation
+without refresh reaches 6 and also ceases to match. These constructed schedules
+establish the phase dependency, not natural gameplay reachability. Low-health drain
+release clears drag before bomb reservations and retains delay, including across
+its callbacks and partial failures. Changing the live enemy selector does not
+redirect the already captured enemy record.[^drainrestriction][^weaponphase]
+
+The real HUD coordinator queries after switching. Callback changes to any member
+of the tuple alter that later result, which rejects a cached frame-start query.
+Rejected X-ray leaves time unfrozen and projectile processing runs; activation
+normally freezes time and suppresses it. A later callback thaw is observed before
+that decision. Forward-facing poses bypass cooldown/HUD processing while still
+updating projectiles, and an already frozen entry uses delay 32. An unconditional
+encounter freeze or permanent disabled bit would not preserve those behaviors.
+
+Successful X-ray publishes interrupted pose, freeze state, transition graphics
+and its 256-word HDMA table before disabling other systems. A failure at a disable
+call retains those writes. The later X-ray angle rereads facing, so a callback can
+change the angle without changing the earlier interrupted pose. These are controlled
+observations, not evidence of naturally mutating disable callbacks.
+
+All **115 embedded library inputs** match `15589b48`, and **ten compiled local
+inputs** match exact hashes. The coordinator independently checked those inputs,
+the result and the three current gameplay source files without repeating the run.
+The optimized DLL builds and passes. HUD dispatch is controlled to select the real
+X-ray handler; it does not exercise all movement-specific HUD choices. Instruction
+selection, encounter script, sound, system-disable, projectile-update and HDMA-spawn
+effects are controlled. A synthetic allocation supplies the pointer passed to the
+spawn substitute; no game ROM or movie is used. Existing unsafe enemy access and
+X-ray setup remain. Complete writer/alias closure, runtime binding, other encounter
+phases and a full owner remain open. Reproduction:
+`Local/sm-decomp-experiments/20261022/encounter-restrictions`
+(`model.rs`, `prepare.py`, `build.py`, `check.py`, `result.json`, `RESEARCH.md`).
+
 ### Explicit gameplay continuation
 
 The implementation now lives in [gameplay.rs](../sm/src/game/gameplay.rs).
@@ -1145,11 +1208,11 @@ its own exercised checks.
 ## Next ownership experiments
 
 Continue the same whole-projectile draft through Samus weapon control. Typed aim,
-launch and flare are integrated in the reviewed draft; integrate the feedback
-and cancellation prototypes with that same live charge next. Exercise remaining
-cancellation producers, drain-to-X-ray observation and protection across
-suspension/reset using real producers and consumers. Close remaining shared
-palette/sound writers and runtime transfers. These are new coverage questions,
+launch, flare, feedback and cancellation are integrated in the reviewed draft.
+Integrate the named drain outcomes into existing weapon and movement state. Exercise remaining
+cancellation producers and protection across suspension/reset using real producers
+and consumers. Close remaining shared palette/sound writers and runtime transfers.
+These are new coverage questions,
 not additional pass counts for the existing firing or launch experiments.
 
 1. Codify `ExternalMotion` as ordered reset, replacement and addition operations;

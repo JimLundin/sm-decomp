@@ -1612,8 +1612,9 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    and 30 draft inputs match compiled bytes; optimized DLL and format checks pass.
    Eleven relevant gameplay/support source files still match current-main bytes;
    this does not establish integration with the changed runtime. The coordinator
-   independently reviewed both launch and flare integration. Exact compiled stages
-   are preserved locally: animation-stage (1,295), aim-stage (1,634), launch-stage
+   independently reviewed launch, flare and combined feedback/cancellation
+   integration. Exact compiled stages are preserved locally: animation-stage
+   (1,295), aim-stage (1,634), launch-stage
    (1,945), flare-stage (2,330), feedback-stage (2,772) and cancellation-stage (3,427).
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, drawing/trail, palette/sound

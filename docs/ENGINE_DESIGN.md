@@ -262,7 +262,19 @@ the suit palette; inactive grapple selection restores the palette first and then
 clears them. Clearing only charge can leave animation state that inactive grapple
 also retains when charge is already zero. Shared cancellation code must preserve
 these caller-specific schedules. Palette and grapple-start effects are controlled;
-encounter restrictions and complete cancellation-writer closure remain open.
+complete cancellation-writer closure remains open.
+
+The [drain/X-ray experiment](RAM_OWNERSHIP.md#drain-restriction-and-x-ray-observation)
+passes **678 old/new comparisons**, with 11 matching failures and nine discriminating
+checks. `DrainRefresh`, `DrainRelease` and `WeaponPreparation` name the transitions;
+X-ray queries their current result. Refresh supplies firing delay, bomb reservations
+and movement drag; release clears only the latter two. The restriction matches at
+the subsequent preparation phase, not for every later call until release. Rejected
+X-ray still allows ordinary projectile processing. These outcomes must update the
+existing Samus/weapon state; a separate mutable restriction copy would recreate
+implicit synchronization. The experiment retains real drain/damage and X-ray
+bodies around the substituted rules, with HUD dispatch and other effects controlled.
+It establishes the selected contract, not a complete encounter or persistent owner.
 
 The full projectile draft may temporarily aggregate these inputs for comparison.
 Its final interface must give each value one authority and apply cross-owner
@@ -339,7 +351,7 @@ in the actual callers. The whole-projectile implementation and full cost remain
 open; no savings or gameplay-route coverage follow from this prototype.
 
 The [reviewed full draft stage](RAM_OWNERSHIP.md#whole-projectile-draft)
-passes 2,330 comparisons, with controlled foreign calls. Its owner crosses
+passes 3,427 comparisons, with controlled foreign calls. Its owner crosses
 those calls by value, rereads returned inputs, and publishes partial state before
 diverging on an invalid table lookup. It covers beam input/firing, flight,
 acceleration, extensions, release, projectile animation/drawing decisions and
@@ -349,11 +361,14 @@ their publish/import round trips. Broad-index placement and launch use checked
 adapters and the same pure models; launch preserves Y-write-before-history-reread
 alias behavior. The subsequent flare integration retains one charge/frame/timer
 bundle and covers firing-to-flare, grapple draw-to-increment and nested firing
-during a draw effect. Both preserved stages have independently checked compiled
-inputs and reviewed results. Real contact reactions, remaining weapons/trails/
-reset, feedback integration and production runtime binding remain outstanding in
-this reviewed stage. Other out-of-pool execution retains reference bodies. No
-whole-replacement cost is established.
+during a draw effect. Feedback and cancellation now also use that same `Firing`
+value, with no separate live control/charge copy. One composition spans PLM charge
+clear, inactive grapple, rejected/accepted selection, firing, flare, palette and
+grapple selection; legacy effects still perform explicit transfers. Compiled
+inputs and reported results are independently checked. Real contact reactions,
+remaining weapons/trails/reset, encounter restrictions and production runtime
+binding remain outstanding in this reviewed stage. Other out-of-pool execution
+retains reference bodies. No whole-replacement cost is established.
 
 State ownership alone will not finish the game-facing interface. This draft still
 uses raw bank addresses for definition lookup, numeric animation instruction
