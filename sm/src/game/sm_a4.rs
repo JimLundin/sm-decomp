@@ -13,7 +13,7 @@ use crate::game::sm_a0::{
     Enemy_ItemDrop_Crocomire, Enemy_MoveRight_IgnoreSlopes, NormalEnemyFrozenAI, NormalEnemyShotAi,
     NormalEnemyTouchAi, SamusLatchesOnWithGrapple,
 };
-use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::game::sprite_objects::create_sprite;
 
 pub type Enemy_Crocomire = crate::game::enemy_layouts::EnemyLayout72;
 
@@ -542,7 +542,7 @@ pub unsafe fn Crocomire_Func_53(game: &mut Game) {
         let y: u16 = (word!(game.lava_acid_y_pos) as i32 + 16
             - (((word!(game.random_number)) & (0x1f00u16)) as i32 >> 8))
             as u16;
-        CreateSpriteAtPos(x, y, 21, 0, game);
+        create_sprite(x, y, 21, 0, game);
     }
 }
 pub unsafe fn Crocomire_Func_54(game: &mut Game) {

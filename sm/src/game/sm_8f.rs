@@ -15,7 +15,7 @@ use crate::game::sm_89::RoomCode_CeresElevatorShaft;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_94::Samus_MoveDown_NoSolidColl;
 use crate::game::sm_a6::HandleCeresRidleyGetawayCutscene;
-use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::game::sprite_objects::create_sprite;
 
 crate::game::constants::typed_constants! { i32;
     kCoroutineNone = 0,
@@ -46,7 +46,7 @@ pub unsafe fn RoomCode_GenRandomExplodes(x_r18: u16, y_r20: u16, game: &mut Game
             QueueSfx2_Max6(v2, game);
         }
     }
-    CreateSpriteAtPos(
+    create_sprite(
         x_r18,
         y_r20,
         kRoomCode_GenRandomExplodes_Sprite[(v1 as i32 & 7) as usize] as u16,

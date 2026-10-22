@@ -17,7 +17,7 @@ use crate::game::sm_a0::{
     SamusLatchesOnWithGrappleNoInvinc, SignExtend8, SineMult8bit, SineMult8bitFull,
     SwitchEnemyAiToMainAi,
 };
-use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::game::sprite_objects::create_sprite;
 
 pub use crate::types::Consts_A8;
 
@@ -648,7 +648,7 @@ crate::game::callback_dispatch! {
 }
         let v3: u16 = ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
         (*E).var_47 = v3;
-        (*E).var_46 = CreateSpriteAtPos(
+        (*E).var_46 = create_sprite(
             (*E).base.x_pos,
             (R34).wrapping_add((*E).base.y_pos),
             R36,

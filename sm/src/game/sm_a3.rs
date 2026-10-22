@@ -22,7 +22,7 @@ use crate::game::sm_a0::{
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi, SignExtend8, SineMult8bit,
     SineMult8bitFull, SwitchEnemyAiToMainAi,
 };
-use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::game::sprite_objects::create_sprite;
 pub use crate::game::waver::{Waver_Init, Waver_Instr_1, Waver_Main};
 
 #[derive(Copy, Clone)]
@@ -2010,14 +2010,14 @@ crate::game::callback_dispatch! {
     [10742351] Metroid_Init [] {
         let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
         (*E).base.current_instruction = addr_kMetroid_Ilist_E9CF as u16;
-        (*E).var_00 = CreateSpriteAtPos(
+        (*E).var_00 = create_sprite(
             (*E).base.x_pos,
             (*E).base.y_pos,
             50,
             ((*E).base.vram_tiles_index) | ((*E).base.palette_index),
             game,
         );
-        (*E).var_01 = CreateSpriteAtPos(
+        (*E).var_01 = create_sprite(
             (*E).base.x_pos,
             (*E).base.y_pos,
             52,

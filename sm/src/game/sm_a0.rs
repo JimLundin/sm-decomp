@@ -20,8 +20,8 @@ use crate::game::sm_86::{DrawEprojsWithPriority, EprojPriority, SpawnEprojWithGf
 use crate::game::sm_90::{CallSomeSamusCode, DrawSamusAndProjectiles};
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::square_slope_occupied;
-use crate::game::sm_b4::{
-    CreateSpriteAtPos, DrawSpriteObjects, HandleSpriteObjects,
+use crate::game::sprite_objects::{
+    create_sprite, draw_sprites, update_sprites,
 };
 use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
 
@@ -267,7 +267,7 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
-    DrawSpriteObjects(game);
+    draw_sprites(game);
     draw_explosions(game);
     DrawEprojsWithPriority(EprojPriority::Low, game);
     for phase_varE32 in 0u16..8 {
@@ -772,7 +772,7 @@ pub unsafe fn EnemyMain(game: &mut Game) {
             active_enemy_indexes_index += 2;
         }
     }
-    HandleSpriteObjects(game);
+    update_sprites(game);
     word!(game.random_enemy_counter += 1);
     word!(game.enemy_index_colliding_dirs[0] = -1i32 as u16);
     word!(game.enemy_index_colliding_dirs[1] = -1i32 as u16);
@@ -1091,7 +1091,7 @@ pub unsafe fn HandleEprojCollWithProj(k: u16, j: u16, game: &mut Game) {
     }
     if word!(game.eproj_flags[(k >> 1)]) == 1 {
         let v4: i32 = k as i32 >> 1;
-        CreateSpriteAtPos(
+        create_sprite(
             word!(game.projectile_x_pos[v4]),
             word!(game.projectile_y_pos[v4]),
             6,
@@ -1783,7 +1783,7 @@ pub unsafe fn NormalEnemyShotAi(game: &mut Game) {
     let varE2E: u16 = NormalEnemyShotAiSkipDeathAnim(game);
     let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
     if varE2E != 0 {
-        CreateSpriteAtPos((*E).x_pos, (*E).y_pos, 55, 0, game);
+        create_sprite((*E).x_pos, (*E).y_pos, 55, 0, game);
     }
     if (*E).health == 0 {
         let j: u16 = ((byte!(@pointer (ram_ptr!(game, u16; 0xc18))
@@ -1810,7 +1810,7 @@ pub unsafe fn EnemyFunc_A6B4_UsedBySporeSpawn(game: &mut Game) {
     let varE2E: u16 = NormalEnemyShotAiSkipDeathAnim(game);
     if varE2E != 0 {
         let ED = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        CreateSpriteAtPos((*ED).x_pos, (*ED).y_pos, 55, 0, game);
+        create_sprite((*ED).x_pos, (*ED).y_pos, 55, 0, game);
     }
 }
 pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
@@ -1931,7 +1931,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
     }
     let v7: i32 = word!(game.collision_detection_index) as i32;
     word!(game.projectile_dir[v7] |= (0x10u16));
-    CreateSpriteAtPos(
+    create_sprite(
         word!(game.projectile_x_pos[v7]),
         word!(game.projectile_y_pos[v7]),
         6,
@@ -1943,7 +1943,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
 }
 pub unsafe fn CreateDudShot(game: &mut Game) {
     let v0: i32 = word!(game.collision_detection_index) as i32;
-    CreateSpriteAtPos(
+    create_sprite(
         word!(game.projectile_x_pos[v0]),
         word!(game.projectile_y_pos[v0]),
         6,

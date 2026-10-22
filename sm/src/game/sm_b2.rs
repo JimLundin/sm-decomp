@@ -12,7 +12,7 @@ use crate::game::sm_a0::{
     NormalEnemyFrozenAI, NormalEnemyPowerBombAi, NormalEnemyShotAi,
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi, SineMult8bit,
 };
-use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::game::sprite_objects::create_sprite;
 
 pub use crate::types::Consts_B2;
 
@@ -423,14 +423,14 @@ crate::game::callback_dispatch! {
         }
     };
     SpacePirates_FB11 [] {
-        CreateSpriteAtPos(
+        create_sprite(
             ((*E).base.x_pos).wrapping_sub(8),
             ((*E).base.y_pos).wrapping_add(28),
             10,
             0,
             game,
         );
-        CreateSpriteAtPos(
+        create_sprite(
             ((*E).base.x_pos).wrapping_add(8),
             ((*E).base.y_pos).wrapping_add(28),
             10,

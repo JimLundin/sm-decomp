@@ -25,7 +25,7 @@ use crate::game::sm_a0::{
     SignExtend8, SpawnEnemyDrops, SuitDamageDivision,
 };
 use crate::game::sm_a6::Ridley_Func_103;
-use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::game::sprite_objects::create_sprite;
 
 crate::typed_struct! {
     [
@@ -4722,7 +4722,7 @@ crate::game::callback_dispatch! {
             words!((word!(game.eproj_F[v1]), word!(game.eproj_E[v1]))),
         );
         if (*ram_ptr!(game; 0x5b5) & 3) == 0 {
-            CreateSpriteAtPos(
+            create_sprite(
                 word!(game.eproj_x_pos[v1]),
                 word!(game.eproj_y_pos[v1]),
                 48,
@@ -5264,7 +5264,7 @@ crate::game::callback_dispatch! {
         let y: u16 = ((game.enemy_projectile_y_pos(k) as i32
             + (((game.random_number()) & (0x3f00u16)) as i32 >> 8)) as u16)
             .wrapping_sub(32);
-        CreateSpriteAtPos(x, y, epjp.word(0), 0, game);
+        create_sprite(x, y, epjp.word(0), 0, game);
     };
     [8842519] EprojInstr_ED17 [epjp.offset(2)] {
         let x: u16 = (game.enemy_projectile_x_pos(k) as i32 + (NextRandom(game) as i32 & 0x1f)
@@ -5272,7 +5272,7 @@ crate::game::callback_dispatch! {
         let y: u16 = ((game.enemy_projectile_y_pos(k) as i32
             + (((game.random_number()) & (0x1f00u16)) as i32 >> 8)) as u16)
             .wrapping_sub(16);
-        CreateSpriteAtPos(x, y, epjp.word(0), 0, game);
+        create_sprite(x, y, epjp.word(0), 0, game);
     };
     [8842891] EprojInstr_QueueSfx2_9 [epjp.offset(0)] { QueueSfx2_Max1(9, game); };
     [8842903] EprojInstr_QueueSfx2_24 [epjp.offset(0)] { QueueSfx2_Max1(0x24, game); };

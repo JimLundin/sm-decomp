@@ -5,7 +5,7 @@ use crate::game::enemy_population::{
     Creation, EnemyShape, PopulationEntry, SearchResult, SpawnSearch, SpawnSequence,
 };
 use crate::game::sm_a0::CallEnemyAi;
-use crate::game::sm_b4::ClearSpriteObjects;
+use crate::game::sprite_objects::clear_sprites;
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
 use crate::rom::RomRecord as Record;
@@ -392,9 +392,7 @@ pub(crate) unsafe fn load_room_assets(game: &mut Game) {
     }
     word!(game.enemy_tile_vram_src = 0);
     word!(game.flag_disable_projectile_interaction = 0);
-    unsafe {
-        ClearSpriteObjects(game);
-    }
+    clear_sprites(game);
 }
 
 unsafe fn stage_tilesets(game: &mut Game) {

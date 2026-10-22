@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,718 Rust lines in 117 files**, plus 262 C
-bridge and 296 C-header lines = **96,276 maintained implementation lines**.
+Current composition (2026-10-22): **95,733 Rust lines in 117 files**, plus 262 C
+bridge and 296 C-header lines = **96,291 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,107**. This complete recount includes frontend,
+gives **97,122**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -3076,6 +3076,26 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    coverage. Complete savings: **2 Rust lines**, two unsafe declarations and three
    cast-containing lines. Enemy AI, sprites and broader state ownership remain.
    Checks: Local/sm-decomp-experiments/20261022/enemy-staging.
+   The complete bank-B4 sprite-effect pool now lives in `sprite_objects`; callers
+   use its creation, update, drawing and clearing entries. Raw RAM pointers and
+   native ROM dereferences retire in favor of scoped checked words and shared
+   owned-image records. Preserve live callback indices, captured creation slots,
+   native store order, unusual culling and the clear block's untouched first word.
+   Native word stores and clearing forbid unsafe code; ROM diagnostics, unknown
+   instruction handling and the shared renderer remain unsafe. RAM still owns state.
+   **429 actual old/new comparisons**, 412 ordered full-RAM observations, 104
+   completed renderer calls and 94 matching failures/stops pass, plus six candidate
+   record-bounds failures. All 124 library inputs per side and four fixture inputs
+   are checked. Probed and clean loading pass **106/0**, inputs **8250..8355**:
+   clear at 8276, completed update/draw passes from 8324, fade complete at 8353,
+   then two follow-up frames. Guarded **8250/0** setup proves no earlier pool entry.
+   Active sprite behavior has component coverage, not movie coverage: the first
+   3,750-frame segment had zero differences but failed all active-sprite probes;
+   it was not extended or counted as active coverage. Complete release library,
+   frontend, verifier and native/source checks pass. The replacement costs **15
+   Rust lines**, removes two counted unsafe declarations and four cast lines, and
+   retires the bank without retaining a facade. This is safety work, not volume
+   savings. Checks: Local/sm-decomp-experiments/20261022/sprite-objects.
    Event/boss flag access and shared bit-mask preparation now live in the safe
    `progress_flags` module, which forbids unsafe code. All 15 caller files import
    it directly; the six bank-80 definitions are retired. Queries retain their
@@ -4200,15 +4220,21 @@ stereo output, checked tracing, owned room-background records, checked palette
 execution, shared effect ROM records, checked animated tiles, safe progress flags,
 owned room metadata, checked door metadata, shared scroll loading, shared PLM
 spawning, room-content loading, door closing, checked music control and shared
-dialogue control, checked room graphics and checked enemy graphics staging,
-maintained Rust is **95,718**,
+dialogue control, checked room graphics, checked enemy graphics staging and
+checked sprite-object state,
+maintained Rust is **95,733**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,276**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,107**.
+Including 262 C and 296 header lines gives **96,291**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,122**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2977; cast lines 6479. Checked enemy graphics staging removes
+unsafe functions 2975; cast lines 6475. The complete sprite-object replacement
+adds 15 Rust lines, removing two counted unsafe declarations and four cast lines.
+Raw pool RAM/ROM access retires; native stores and clearing forbid unsafe code.
+ROM diagnostics, unknown-instruction handling and shared rendering remain unsafe;
+other counters are unchanged. This is a safety cost; RAM remains the state owner.
+Checked enemy graphics staging removes
 two Rust lines across five files, two unsafe declarations and three cast lines.
 Raw palette/tile copying, record traversal and enemy clearing retire; native RAM
 access and copying forbid unsafe code. Shared ROM diagnostics and sprite calls

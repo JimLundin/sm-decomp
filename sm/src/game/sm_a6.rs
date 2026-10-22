@@ -35,7 +35,7 @@ use crate::game::sm_a9::{
     ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2, WriteColorsToPalette,
     WriteColorsToTargetPalette,
 };
-use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::game::sprite_objects::create_sprite;
 
 pub type Enemy_Ridley = crate::game::enemy_layouts::EnemyLayout104;
 
@@ -536,8 +536,8 @@ crate::game::callback_dispatch! {
         let pair: PairU16 = NuclearWaffle_Func_6((*E).var_21, game);
         let v8: u16 = pair.j;
         if pair.j != (*E).var_33 {
-            CreateSpriteAtPos((*E).base.x_pos, (*E).base.y_pos, 46, (*E).var_34, game);
-            CreateSpriteAtPos(
+            create_sprite((*E).base.x_pos, (*E).base.y_pos, 46, (*E).var_34, game);
+            create_sprite(
                 (*E).base.x_pos,
                 (*E).base.y_pos,
                 (pair.k).wrapping_add(44),
@@ -573,14 +573,14 @@ pub unsafe fn NuclearWaffle_Func_3(varE32: u16, game: &mut Game) {
         let v13: u16 = pair.j;
         if pair.j != (*ET).var_08 {
             let v5: i32 = nwe_var_00 as i32 >> 1;
-            CreateSpriteAtPos(
+            create_sprite(
                 word!(game.eproj_x_pos[v5]),
                 word!(game.eproj_y_pos[v5]),
                 46,
                 (*E).var_34,
                 game,
             );
-            CreateSpriteAtPos(
+            create_sprite(
                 word!(game.eproj_x_pos[v5]),
                 word!(game.eproj_y_pos[v5]),
                 (pair.k).wrapping_add(44),
@@ -621,14 +621,14 @@ pub unsafe fn NuclearWaffle_Func_4(varE32: u16, game: &mut Game) {
         if pair.j != (*ET).var_18 {
             let r38: u16 = (*E).var_34;
             let v5: i32 = nwe_var_10 as i32 >> 1;
-            CreateSpriteAtPos(
+            create_sprite(
                 word!(game.sprite_x_pos[v5]),
                 word!(game.sprite_y_pos[v5]),
                 46,
                 r38,
                 game,
             );
-            CreateSpriteAtPos(
+            create_sprite(
                 word!(game.sprite_x_pos[v5]),
                 word!(game.sprite_y_pos[v5]),
                 (pair.k).wrapping_add(44),
@@ -4134,7 +4134,7 @@ crate::game::callback_dispatch! {
         do_until! { (v15 == 0);
             let v13: u16 = ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
             (*E).var_34 = v13;
-            let r18: u16 = CreateSpriteAtPos((*E).base.x_pos, (*E).base.y_pos, 43, v13, game);
+            let r18: u16 = create_sprite((*E).base.x_pos, (*E).base.y_pos, 43, v13, game);
             (*Get_NuclearWaffle(
                 word!(game.cur_enemy_index) as i32 + (*E).var_2A as i32,
                 game,

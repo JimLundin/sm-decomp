@@ -23,7 +23,7 @@ use crate::game::sm_a0::{
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SwitchEnemyAiToMainAi,
 };
-use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::game::sprite_objects::create_sprite;
 
 crate::typed_struct! {
     [
@@ -1019,7 +1019,7 @@ pub unsafe fn Kraid_SpawnRandomQuakeProjs(game: &mut Game) {
     }
     let x: u16 = ((*Get_Kraid(0i32, game)).base.x_pos).wrapping_add(v0);
     let y: u16 = (448 - (((word!(game.random_number)) & (0x3f00u16)) as i32 >> 8)) as u16;
-    CreateSpriteAtPos(x, y, 21, 0, game);
+    create_sprite(x, y, 21, 0, game);
     let v1: u16 = (if (word!(game.random_number) & 0x10) != 0 {
         addr_kEproj_RocksWhenKraidRisesRight as i32
     } else {

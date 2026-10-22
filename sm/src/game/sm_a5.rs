@@ -21,7 +21,7 @@ use crate::game::sm_a0::{
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SignExtend8, SineMult8bit, SuitDamageDivision,
     SwitchEnemyAiToMainAi,
 };
-use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::game::sprite_objects::create_sprite;
 
 pub use crate::types::Consts_A5;
 
@@ -574,7 +574,7 @@ crate::game::callback_dispatch! {
                 (*E).base.x_pos as i32 - 32i32
             }) as u16;
             let y: u16 = ((*E).base.y_pos).wrapping_sub(16);
-            CreateSpriteAtPos(x, y, 61, 0, game);
+            create_sprite(x, y, 61, 0, game);
         }
         (*E).var_43 = ((64u8).wrapping_sub(
             (CalculateAngleFromXY(
@@ -739,7 +739,7 @@ pub unsafe fn Draygon_Func_25(k: u16, game: &mut Game) {
                 (*E).base.x_pos as i32 - 32i32
             }) as u16;
             let y: u16 = ((*E).base.y_pos).wrapping_sub(16);
-            CreateSpriteAtPos(x, y, 61, 0, game);
+            create_sprite(x, y, 61, 0, game);
         }
         words!((*E), var_05, var_09 += 0x2000);
         if (*E).var_05 as i32 - 160i32 & 0x8000 == 0
@@ -799,14 +799,14 @@ pub unsafe fn Draygon_Func_34(game: &mut Game) {
     if (word!(game.nmi_frame_counter_word) & 7) == 0 {
         let x: u16 = ((NextRandom(game) as i32 & 0x7f) + 192) as u16;
         let y: u16 = ((((word!(game.random_number)) & (0x3f00u16)) as i32 >> 8) + 400) as u16;
-        CreateSpriteAtPos(x, y, 21, 0, game);
+        create_sprite(x, y, 21, 0, game);
     }
 }
 pub unsafe fn Draygon_Func_35(game: &mut Game) {
     let mut Draygon = Get_Draygon(word!(game.cur_enemy_index) as i32, game);
     if ((*Draygon).base.frame_counter & 0x7f) == 0 {
         Draygon = Get_Draygon(0, game);
-        CreateSpriteAtPos(
+        create_sprite(
             ((*Draygon).base.x_pos).wrapping_sub(16),
             ((*Draygon).base.y_pos).wrapping_sub(16),
             24,
@@ -937,7 +937,7 @@ pub unsafe fn Draygon_Func_43(game: &mut Game) {
     let mut v2: u16 = 20;
     for _ in 0i16..=2i16 {
         let v3: i32 = v2 as i32 >> 1;
-        CreateSpriteAtPos(
+        create_sprite(
             crate::rtl::rom_table_word!(game, 0xa5a1c7, v3 as isize),
             crate::rtl::rom_table_word!(game, 0xa5a1c7, (v3 + 1) as isize),
             59,
@@ -948,7 +948,7 @@ pub unsafe fn Draygon_Func_43(game: &mut Game) {
     }
     for _ in 0i16..=2i16 {
         let v5: i32 = v2 as i32 >> 1;
-        CreateSpriteAtPos(
+        create_sprite(
             crate::rtl::rom_table_word!(game, 0xa5a1c7, v5 as isize),
             crate::rtl::rom_table_word!(game, 0xa5a1c7, (v5 + 1) as isize),
             60,
@@ -962,10 +962,10 @@ pub unsafe fn Draygon_Func_44(game: &mut Game) {
     word_transfers!(game, descending, 32; le(sprite_instr_list_ptrs, 31) <- value(0));
 }
 pub unsafe fn Draygon_Func_45(game: &mut Game) {
-    CreateSpriteAtPos(16, 384, 59, 0xe00, game);
-    CreateSpriteAtPos(16, 384, 59, 0xe00, game);
-    CreateSpriteAtPos(16, 384, 59, 0xe00, game);
-    CreateSpriteAtPos(16, 384, 59, 0xe00, game);
+    create_sprite(16, 384, 59, 0xe00, game);
+    create_sprite(16, 384, 59, 0xe00, game);
+    create_sprite(16, 384, 59, 0xe00, game);
+    create_sprite(16, 384, 59, 0xe00, game);
 }
 pub unsafe fn Draygon_Func_46(game: &mut Game) {
     for v0 in (56u16..=62).rev().step_by(2) {
@@ -1067,7 +1067,7 @@ pub unsafe fn sub_A5E9F5(game: &mut Game) {
         NextRandom(game);
         let x: u16 = ((word!(game.random_number) as i32 & 0x3f) + 96) as u16;
         let y: u16 = ((((word!(game.random_number)) & (0xf00u16)) as i32 >> 8) + 480) as u16;
-        CreateSpriteAtPos(x, y, 21, 0, game);
+        create_sprite(x, y, 21, 0, game);
     }
 }
 crate::game::address_dispatch! {
@@ -1410,10 +1410,10 @@ crate::game::callback_dispatch! {
     [10852150] Draygon_Instr_13 [jp.offset(1)] { (*Get_Draygon(k as i32, game)).var_A = *jp; };
     @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
     @prefix { let pt: Point16U = Draygon_Func_47(game); };
-    [10852159] Draygon_Instr_8 [jp] {  CreateSpriteAtPos(pt.x, pt.y, 21, 0, game); };
-    [10852178] Draygon_Instr_7 [jp] {  CreateSpriteAtPos(pt.x, pt.y, 3, 0, game); };
-    [10852197] Draygon_Instr_6 [jp] {  CreateSpriteAtPos(pt.x, pt.y, 29, 0, game); };
-    [10852216] Draygon_Instr_9 [jp] {  CreateSpriteAtPos(pt.x, pt.y, 24, 0, game); };
+    [10852159] Draygon_Instr_8 [jp] {  create_sprite(pt.x, pt.y, 21, 0, game); };
+    [10852178] Draygon_Instr_7 [jp] {  create_sprite(pt.x, pt.y, 3, 0, game); };
+    [10852197] Draygon_Instr_6 [jp] {  create_sprite(pt.x, pt.y, 29, 0, game); };
+    [10852216] Draygon_Instr_9 [jp] {  create_sprite(pt.x, pt.y, 24, 0, game); };
     @functions [pub unsafe fn (k: u16, jp: *const u16, game: &mut Game) -> *const u16];
     [10852501] Draygon_Instr_2 [jp] { word!(game.room_loading_irq_handler = 12); };
     [10852563] Draygon_Instr_11 [jp] {
@@ -1432,7 +1432,7 @@ crate::game::callback_dispatch! {
         let v3 = RomPtr_A0((*E).base.enemy_ptr, game);
         Samus_DealDamage(SuitDamageDivision(*(v3.offset(6) as *mut u16), game), game);
         word! {game; earthquake_timer = 32; earthquake_type = 7; }
-        CreateSpriteAtPos(
+        create_sprite(
             word!(game.samus_x_pos),
             (word!(game.samus_y_pos)).wrapping_add(16),
             21,
@@ -1547,7 +1547,7 @@ crate::game::callback_dispatch! {
         let y: u16 = ((*E).base.y_pos as i32
             + (((word!(game.random_number)) & (0x3f00u16)) as i32 >> 8)
             - 32i32) as u16;
-        CreateSpriteAtPos(x, y, 3, 0, game);
+        create_sprite(x, y, 3, 0, game);
         QueueSfx2_Max6(0x25, game);
     };
 }

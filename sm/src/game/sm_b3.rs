@@ -15,7 +15,7 @@ use crate::game::sm_a0::{
     NormalEnemyShotAi, NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SignExtend8, SwitchEnemyAiToMainAi,
 };
-use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::game::sprite_objects::create_sprite;
 
 pub use crate::types::Consts_B3;
 
@@ -797,7 +797,7 @@ pub unsafe fn Botwoon_Func_18(k: u16, game: &mut Game) {
                 (*E).var_24 = 12;
                 let x: u16 = ((NextRandom(game) as i32 & 0x1f) + 232) as u16;
                 let y: u16 = ((*E).var_23 as i32 + (NextRandom(game) as i32 & 0x1f) - 8i32) as u16;
-                CreateSpriteAtPos(x, y, 29, 2560, game);
+                create_sprite(x, y, 29, 2560, game);
                 Botwoon_QueueExplosionSfx(game);
             }
             let v3: i16 = (((*E).var_25) as i16).wrapping_sub(1);
@@ -809,7 +809,7 @@ pub unsafe fn Botwoon_Func_18(k: u16, game: &mut Game) {
                     let y_0: u16 = ((*Get_Botwoon(k as i32, game)).var_23 as i32
                         + ((NextRandom(game) as i32 & 0x1f) - 8i32))
                         as u16;
-                    CreateSpriteAtPos(x_0, y_0, 9, 2560, game);
+                    create_sprite(x_0, y_0, 9, 2560, game);
                 }
             }
         }
