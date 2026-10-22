@@ -42,10 +42,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,908 Rust lines in 105 files**, plus 262 C
-bridge and 296 C-header lines = **95,466 maintained implementation lines**.
+Current composition (2026-10-22): **94,880 Rust lines in 106 files**, plus 262 C
+bridge and 296 C-header lines = **95,438 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,297**. This complete recount includes frontend,
+gives **96,269**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1789,6 +1789,33 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    establish no gameplay or active-music coverage; broader audio states have the
    component checks above. No physical-device or allocator-event identity is claimed.
    Checks: Local/sm-decomp-experiments/20261022/owned-apu.
+   Audio command production, buffering, playback delivery, queued save-state
+   delivery and rewind now share one owned `ApuQueue` model. Its module forbids
+   unsafe code. Five scattered Game fields, the separate snapshot layout and
+   ApuWriteEnt are retired. Checked queue operations replace raw entry traversal,
+   raw port offsets and both pending-command memsets. The upload gate uses checked
+   RAM bytes. Full-queue merging, empty-frame throttling, wrapped counters, upload
+   reset behavior and lock observation order are retained. Reset still preserves
+   inactive entries. The 71-byte recorder extension, checkpoint field order and
+   existing difference labels are unchanged; native hardware calls remain unsafe.
+   Complete reduction is **28 Rust lines across eight files**, counting the model,
+   caller/codec adaptations and registrations, with no new macros or dependencies.
+   Final-source checks pass **3,622 actual old/new cases**, including **1,280
+   persistent queue steps**. They compare queue/RAM/port state, lock observations,
+   snapshot diagnostics, actual audio buffers, upload/reset effects, queued saves,
+   recorder/load/replay/clear and checkpoints. The private pop body is exercised
+   with exact source; linked production rendering separately consumes the queue.
+   Wider counter states and lock-time mutation have component coverage. All 112
+   old/113 final library inputs, native source checks, formatting and normal
+   release library/frontend/verifier builds pass. Probed and clean physical-audio
+   boot each pass **3/0**, inputs **0..2**, with normal comparisons/rendering/audio:
+   push, pop, nonempty port application, audio processing and snapshot capture/
+   restore first execute at zero, followed by two frames. The initial six-frame
+   selection had zero differences but missed the queued-write probe; it is not
+   a coverage pass and was not extended. Direct production-writer cases cover
+   that path; the shorter boot run claims only the six exercised paths above.
+   No gameplay, active-music or physical-device coverage is claimed.
+   Checks: Local/sm-decomp-experiments/20261022/apu-queue.
    The existing shared ROM-table interface now uses that owned image with checked
    signed offsets and byte reads, preserving image capture before index evaluation,
    live patch visibility, native byte order and linear bank crossings. Its 725
@@ -2821,14 +2848,19 @@ checked ROM tables, safe word transfers, owned recording, checked VRAM readback
 owned sprite drawing, checked Mode 7 transfers, owned SRAM, checked snapshot
 streams, owned enemy-projectile scripts, named APU history and explicit launch
 motion, checked ROM patch installation, hardware field serialization, PLM
-award/message ownership and owned APU RAM, maintained Rust is **94,908**, with
+award/message ownership, owned APU RAM and the owned audio command queue,
+maintained Rust is **94,880**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **95,466**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,297**.
+Including 262 C and 296 header lines gives **95,438**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,269**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3035; cast lines 6573. Owned APU RAM adds 102 maintained lines;
+unsafe functions 3033; cast lines 6554. Owned audio command queuing removes 28
+maintained lines, two counted unsafe declarations and 19 cast-containing lines;
+other residue counters are unchanged. Raw queue traversal and pending-command
+memsets are retired; the queue model forbids unsafe code. Native audio interfaces
+and hardware handles remain unsafe. Owned APU RAM adds 102 maintained lines;
 the residue counters are unchanged. Four raw-copy sites and raw-zeroed APU
 allocation are retired. The new byte owner forbids unsafe code; native DSP
 pointer access, reverse native-player transfer and raw hardware links remain.

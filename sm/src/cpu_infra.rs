@@ -1094,19 +1094,19 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             && game.g_snapshot_mine.apu_upload_count == 1
             && game.g_snapshot_mine.apu_startup_upload
             && apu_queue_before == 0
-            && apu_before.ports == [0xff; 4]
-            && game.g_apu_queue_size == 0
-            && game.g_apu_write_ent_pos == 0
-            && game.g_apu_time_since_empty == 0
+            && apu_before == [0xff; 4]
+            && game.apu_queue.size == 0
+            && game.apu_queue.position == 0
+            && game.apu_queue.time_since_empty == 0
             && game.g_snapshot_mine.ram[0x998..0x99a] == [1, 0]
             && game.g_snapshot_mine.ram[0x79b..0x79d] == [0, 0]
-            && game.g_apu_write.ports == [0, 0xff, 0, 0xff]
-            && apu_theirs.ports == [0; 4];
-        if game.g_apu_write.ports != apu_theirs.ports && !startup_reset {
+            && game.apu_queue.pending == [0, 0xff, 0, 0xff]
+            && apu_theirs == [0; 4];
+        if game.apu_queue.pending != apu_theirs && !startup_reset {
             game.g_fail = true;
             eprintln!(
                 "@{}: APU queued ports compare failed: mine {:02X?} != theirs {:02X?}",
-                game.snes_frame_counter, game.g_apu_write.ports, apu_theirs.ports
+                game.snes_frame_counter, game.apu_queue.pending, apu_theirs
             );
         }
         if !game.g_use_my_apu_code {

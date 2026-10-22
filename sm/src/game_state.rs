@@ -1,6 +1,6 @@
 //! Explicit per-game ownership; RAM bytes retain their exact SNES layout.
 use crate::cpu_infra::Snapshot;
-use crate::rtl::{ApuWriteEnt, StateRecorder};
+use crate::rtl::StateRecorder;
 use crate::types::*;
 use std::ffi::c_int;
 /// State for one game and its differential oracle. Keep this heap allocation
@@ -22,11 +22,7 @@ pub struct Game {
     pub g_rtl_runframe: Option<RunFrameFunc>,
     pub g_rtl_syncall: Option<SyncAllFunc>,
     pub state_recorder: StateRecorder,
-    pub g_apu_write: ApuWriteEnt,
-    pub g_apu_write_ents: [ApuWriteEnt; 16],
-    pub g_apu_time_since_empty: u8,
-    pub g_apu_write_ent_pos: u8,
-    pub g_apu_queue_size: u8,
+    pub apu_queue: crate::apu_queue::ApuQueue,
     pub g_runmode: u8,
     pub g_snes: *mut Snes,
     pub g_cpu: *mut Cpu,
@@ -80,6 +76,11 @@ macro_rules! ram_word_accessors {
 
 // Initialize the large RAM and oracle snapshots directly on the heap.
 impl Game {
+    /// APU upload flag at $7E:0617.
+    pub fn uploading_apu(&self) -> bool {
+        self.g_ram[0x617] != 0 || self.g_ram[0x618] != 0
+    }
+
     ram_word_accessors! {
         read;
         /// super_missiles count/capacity in the original RAM layout.

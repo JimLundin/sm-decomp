@@ -1,97 +1,25 @@
 //! Rewind the emulated APU without transferring ownership of its allocations.
 
+use crate::game_state::Game;
 use crate::types::{
     ApuRegisters, Dsp, DspChannel, DspRegWriteHistory, Snes, Spc, SpcPlayer, Timer,
 };
-use crate::{game_state::Game, rtl::ApuWriteEnt};
 
-#[derive(Copy, Clone)]
-pub(crate) struct ApuQueueSnapshot {
-    pub pending: ApuWriteEnt,
-    entries: [ApuWriteEnt; 16],
-    pub size: u8,
-    pub position: u8,
-    pub time_since_empty: u8,
-}
+pub(crate) use crate::apu_queue::ApuQueue as ApuQueueSnapshot;
 
 impl ApuQueueSnapshot {
-    pub(crate) fn to_bytes(self) -> [u8; 71] {
-        let mut bytes = [0; 71];
-        bytes[..4].copy_from_slice(&self.pending.ports);
-        for (entry, ports) in self.entries.iter().zip(bytes[4..68].chunks_exact_mut(4)) {
-            ports.copy_from_slice(&entry.ports);
-        }
-        bytes[68..].copy_from_slice(&[self.size, self.position, self.time_since_empty]);
-        bytes
-    }
-
-    pub(crate) fn from_bytes(bytes: &[u8; 71]) -> Self {
-        assert!(bytes[68] <= 16, "invalid saved APU queue size");
-        let mut entries = [ApuWriteEnt { ports: [0; 4] }; 16];
-        for (entry, ports) in entries.iter_mut().zip(bytes[4..68].chunks_exact(4)) {
-            entry.ports.copy_from_slice(ports);
-        }
-        Self {
-            pending: ApuWriteEnt {
-                ports: bytes[..4].try_into().unwrap(),
-            },
-            entries,
-            size: bytes[68],
-            position: bytes[69],
-            time_since_empty: bytes[70],
-        }
-    }
-
-    pub(crate) fn first_difference(&self, other: &Self) -> Option<&'static str> {
-        let Self {
-            pending: ApuWriteEnt { ports: pending },
-            entries,
-            size,
-            position,
-            time_since_empty,
-        } = self;
-        if *pending != other.pending.ports {
-            return Some("pending.ports");
-        }
-        for (ApuWriteEnt { ports }, other) in entries.iter().zip(&other.entries) {
-            if *ports != other.ports {
-                return Some("entries.ports");
-            }
-        }
-        if *size != other.size {
-            return Some("size");
-        }
-        if *position != other.position {
-            return Some("position");
-        }
-        if *time_since_empty != other.time_since_empty {
-            return Some("time_since_empty");
-        }
-        None
-    }
-
     pub(crate) fn capture(game: &Game) -> Self {
-        Self {
-            pending: game.g_apu_write,
-            entries: game.g_apu_write_ents,
-            size: game.g_apu_queue_size,
-            position: game.g_apu_write_ent_pos,
-            time_since_empty: game.g_apu_time_since_empty,
-        }
+        game.apu_queue
     }
 
     pub(crate) fn restore(self, game: &mut Game) {
-        game.g_apu_write = self.pending;
-        game.g_apu_write_ents = self.entries;
-        game.g_apu_queue_size = self.size;
-        game.g_apu_write_ent_pos = self.position;
-        game.g_apu_time_since_empty = self.time_since_empty;
+        game.apu_queue = self;
     }
 
     pub(crate) fn select_runtime(self, theirs: Self, game: &mut Game) {
         if game.g_use_my_apu_code {
             self.restore(game);
-            game.g_apu_write = theirs.pending;
+            game.apu_queue.pending = theirs.pending;
         } else {
             theirs.restore(game);
         }

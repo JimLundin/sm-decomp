@@ -3,11 +3,7 @@
 //! Pointers and padding are never serialized; initialized allocations stay owned
 //! by the new host. These files are disposable, ROM-derived, and must stay local.
 use sm::recording::RecordingBytes;
-use sm::{
-    game_state::Game,
-    rtl::{ApuWriteEnt, StateRecorder},
-    types::*,
-};
+use sm::{apu_queue::ApuQueue, game_state::Game, rtl::StateRecorder, types::*};
 use std::path::Path;
 
 const MAGIC: &[u8; 8] = b"SMVERIFY";
@@ -37,6 +33,7 @@ fn compatibility() -> u64 {
         include_str!("../save_ram.rs"),
         include_str!("../snapshot_io.rs"),
         include_str!("../apu_ram.rs"),
+        include_str!("../apu_queue.rs"),
         include_str!("../audio_snapshot.rs"),
         include_str!("../spc_player.rs"),
         include_str!("../snes/snes.rs"),
@@ -288,9 +285,9 @@ fields!(Rect16U {
     x, y, w, h
 } skip {  });
 
-fields!(ApuWriteEnt {
-    ports
-} skip {  });
+fields!(ApuQueue {
+    pending, entries, time_since_empty, position, size
+} skip { });
 
 fields!(StateRecorder {
     last_inputs, frames_since_last, total_frames, replay_pos, replay_pos_last_complete,
@@ -330,11 +327,7 @@ unsafe fn machine(game: &mut Game, archive: &mut Archive<'_>) -> Result<(), Stri
     game.eproj_spawn_varE24.state(archive)?;
     game.message_box_das0l_value.state(archive)?;
     game.k_out.state(archive)?;
-    game.g_apu_write.state(archive)?;
-    game.g_apu_write_ents.state(archive)?;
-    game.g_apu_time_since_empty.state(archive)?;
-    game.g_apu_write_ent_pos.state(archive)?;
-    game.g_apu_queue_size.state(archive)?;
+    game.apu_queue.state(archive)?;
     game.g_runmode.state(archive)?;
     game.g_calling_asm_from_c.state(archive)?;
     game.g_calling_asm_from_c_ret.state(archive)?;

@@ -110,32 +110,21 @@ use crate::spc_player::{
     SpcPlayer_CopyVariablesFromRam, SpcPlayer_CopyVariablesToRam, SpcPlayer_GenerateSamples,
     SpcPlayer_Initialize, SpcPlayer_Upload,
 };
+pub use crate::types::Dsp;
 pub use crate::types::{size_t, LongPtr, PairU16, VoidP, FILE};
+pub use crate::types::{RunFrameFunc, SyncAllFunc};
 use ::core::ffi::{c_char, c_long, c_ulong, c_void};
 use ::core::mem::size_of;
 use ::core::ptr::null_mut;
-crate::typed_struct! {
-    [
-        #[derive(Copy, Clone)]
-        #[repr(C)]
-    ];
-    pub struct ApuWriteEnt {
-        pub ports: [u8; 4];
-    }
-
-}
-pub use crate::types::Dsp;
-pub use crate::types::{RunFrameFunc, SyncAllFunc};
 
 pub use crate::types::SaveLoadOperation as C2RustUnnamed_0;
 pub const kSaveLoad_Replay: C2RustUnnamed_0 = 3;
 pub const kSaveLoad_Load: C2RustUnnamed_0 = 2;
 pub const kSaveLoad_Save: C2RustUnnamed_0 = 1;
-pub const kApuMaxQueueSize: C2RustUnnamed_2 = 16;
 
 pub const kCurrentBugFixCounter: C2RustUnnamed_1 = 1;
 crate::type_aliases! {
-    pub C2RustUnnamed_1, C2RustUnnamed_2 = u32;
+    pub C2RustUnnamed_1 = u32;
 }
 pub const NULL: *mut c_void = null_mut::<c_void>();
 pub const true_0: i32 = 1;
@@ -825,91 +814,30 @@ pub unsafe fn RtlApuWrite(adr: u32, val: u8, game: &mut Game) {
         b"adr >= APUI00 && adr <= APUI03\0", b"src/sm_rtl.c\0", 571,
         b"void RtlApuWrite(uint32, uint8)\0"
     };
-    if word!(game.is_uploading_apu) != 0 {
+    if game.uploading_apu() {
         snes_catchupApu(game.g_snes, game);
         (*(*game.g_snes).apu).registers.inPorts[(adr & 0x3) as usize] = val;
         return;
     }
-    game.g_apu_write.ports[(adr & 0x3) as usize] = val;
-}
-unsafe fn IsFrameEmpty(w: *mut ApuWriteEnt) -> bool {
-    (*w).ports[0i32 as usize] as i32 == 255
-        && (*w).ports[1i32 as usize] as i32 == 255
-        && (*w).ports[2i32 as usize] as i32 == 255
-        && (*w).ports[3i32 as usize] as i32 == 255
+    game.apu_queue.write((adr & 3) as usize, val);
 }
 pub unsafe fn RtlPushApuState(game: &mut Game) {
     RtlApuLock();
-    if word!(game.is_uploading_apu) == 0 {
-        if game.g_apu_queue_size as i32 == 0 {
-            game.g_apu_time_since_empty = 0;
-        } else {
-            if game.g_apu_time_since_empty as i32 >= 32
-                && IsFrameEmpty(&raw mut game.g_apu_write) as i32 != 0
-            {
-                game.g_apu_time_since_empty = (game.g_apu_time_since_empty as i32 - 4i32) as u8;
-                RtlApuUnlock();
-                return;
-            }
-            game.g_apu_time_since_empty = game.g_apu_time_since_empty.wrapping_add(1);
-        }
-        crate::update_place! { previous fresh2 = game.g_apu_write_ent_pos => game.g_apu_write_ent_pos.wrapping_add(1); }
-        let w0 = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt)
-            .offset((fresh2 as i32 & kApuMaxQueueSize as i32 - 1i32) as isize);
-        if game.g_apu_queue_size as i32 == kApuMaxQueueSize as i32 {
-            let w1 = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
-                (game.g_apu_write_ent_pos as i32 & kApuMaxQueueSize as i32 - 1i32) as isize,
-            );
-            for i in 0i32..4 {
-                if (*w1).ports[i as usize] as i32 == 255 {
-                    (*w1).ports[i as usize] = (*w0).ports[i as usize];
-                }
-            }
-        } else {
-            game.g_apu_queue_size = game.g_apu_queue_size.wrapping_add(1);
-        }
-        *w0 = game.g_apu_write as ApuWriteEnt;
-        memset(
-            &raw mut game.g_apu_write as *mut c_void,
-            0xff,
-            size_of::<ApuWriteEnt>() as size_t,
-        );
-    } else {
-        game.g_apu_queue_size = 0;
-    }
+    game.apu_queue.push(game.uploading_apu());
     RtlApuUnlock();
 }
 unsafe fn RtlPopApuState_Locked(game: &mut Game) {
-    if word!(game.is_uploading_apu) != 0 {
+    if game.uploading_apu() {
         return;
     }
-    let input_ports = if game.g_use_my_apu_code as i32 != 0 {
-        &raw mut (*game.g_spc_player).input_ports as *mut u8
-    } else {
-        &raw mut (*(*game.g_snes).apu).registers.inPorts as *mut u8
-    };
-    if game.g_apu_queue_size as i32 != 0 {
-        crate::update_place! { previous fresh1 = game.g_apu_queue_size => game.g_apu_queue_size.wrapping_sub(1); }
-        let w = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
-            (game.g_apu_write_ent_pos as i32 - fresh1 as i32 & kApuMaxQueueSize as i32 - 1i32)
-                as isize,
-        );
-        for i in 0i32..4 {
-            if (*w).ports[i as usize] as i32 != 255 {
-                *input_ports.offset(i as isize) = (*w).ports[i as usize];
-            }
-        }
+    if let Some(writes) = game.apu_queue.pop() {
+        let ports: &mut [u8] = if game.g_use_my_apu_code {
+            &mut (*game.g_spc_player).input_ports
+        } else {
+            &mut (*(*game.g_snes).apu).registers.inPorts
+        };
+        crate::apu_queue::ApuQueue::apply_ports(writes, ports);
     }
-}
-unsafe fn RtlResetApuQueue(game: &mut Game) {
-    game.g_apu_queue_size = 0;
-    game.g_apu_time_since_empty = game.g_apu_queue_size;
-    game.g_apu_write_ent_pos = game.g_apu_time_since_empty;
-    memset(
-        &raw mut game.g_apu_write as *mut c_void,
-        0xff,
-        size_of::<ApuWriteEnt>() as size_t,
-    );
 }
 pub unsafe fn RtlApuUpload(p: *const u8, game: &mut Game) {
     let version = if game.g_snes.is_null() {
@@ -928,7 +856,7 @@ pub unsafe fn RtlApuUpload(p: *const u8, game: &mut Game) {
         snapshot.apu_startup_upload = startup;
     }
     RtlApuLock();
-    RtlResetApuQueue(game);
+    game.apu_queue.reset();
     SpcPlayer_Upload(game.g_spc_player, p);
     RtlApuUnlock();
 }
@@ -945,26 +873,13 @@ unsafe fn RtlRestoreMusicAfterLoad_Locked(is_reset: bool, game: &mut Game) {
     if is_reset {
         SpcPlayer_Initialize(game.g_spc_player);
     }
-    RtlResetApuQueue(game);
+    game.apu_queue.reset();
 }
 unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands: bool) {
     if game.g_use_my_apu_code {
-        let spc_player = game.g_spc_player;
-        let mut i: i32 = if include_queued_commands {
-            game.g_apu_queue_size as i32
-        } else {
-            0
-        };
-        while i != 0 {
-            let we = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
-                (game.g_apu_write_ent_pos as i32 - i & kApuMaxQueueSize as i32 - 1i32) as isize,
-            );
-            for j in 0i32..4 {
-                if (*we).ports[j as usize] as i32 != 255 {
-                    (*spc_player).input_ports[j as usize] = (*we).ports[j as usize];
-                }
-            }
-            i -= 1;
+        if include_queued_commands {
+            game.apu_queue
+                .apply_queued(&mut (*game.g_spc_player).input_ports);
         }
         SpcPlayer_CopyVariablesToRam(game.g_spc_player);
         (*(*(*game.g_snes).apu).dsp).copy_state_from(&*(*game.g_spc_player).dsp);
@@ -981,7 +896,7 @@ pub unsafe fn RtlRenderAudio(audio_buffer: *mut i16, samples: i32, channels: i32
     RtlApuLock();
     RtlPopApuState_Locked(game);
     if !game.g_use_my_apu_code {
-        if word!(game.is_uploading_apu) == 0 {
+        if !game.uploading_apu() {
             while ((*(*(*game.g_snes).apu).dsp).sampleOffset as i32) < 534 {
                 apu_cycle((*game.g_snes).apu, game);
             }
