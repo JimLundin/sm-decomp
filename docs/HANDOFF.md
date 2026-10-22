@@ -9,57 +9,58 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest verified gameplay stage shares all five initializer variants through
-`projectile_initialization`, following placement at `eaa19aa2`, extension creation
-at `0abd00a3`, acceleration at `f4674fa2`, beam launch at `8730d00e` and extension
-contact at `e3fadf56`. The user authorized ongoing coordinated worker iterations.
+The latest verified stage shares playback/trail selection through
+`projectile_playback` and `projectile_trail_selection`, following initialization
+at 43a4a1c9, placement at eaa19aa2, extension creation at 0abd00a3, acceleration
+at f4674fa2, beam launch at 8730d00e and extension contact at e3fadf56.
 Main and current RAM/owned comparison carrier are synchronized and compared.
 
-RAM and owned Firing share captured launch/table/slot selection, variant-specific
-ordered damage/diagnostic writes, aimed/fixed cursor, ordinary current-image radius
-reads and timer-last completion. All 17 actual producer calls migrate. The old
-five initializer entries and fixed/aimed helpers are removed. Shared core forbids
-unsafe code; checked RAM adapter retains three explicit unsafe native diagnostic
-and ROM-capture calls. This is transitional safety, not dependency elimination.
+Scoped state operations preserve timer-before-cursor, captured odd selectors,
+ordered Show fields, fresh wrapped Jump operand, zero-target/unknown/release
+continuation and fresh active/upcoming marker capture. Actual HandleProjectile
+and trail-place callers migrate; old playback/trail/three dispatch helper bodies
+are removed. Shared cores forbid unsafe; checked RAM provider retains explicit
+native ROM-capture and diagnostic unsafe calls. No persistent promotion or
+complete dependency removal follows. Drawing, remaining trails, block reactions
+and external/reset/load/rewind ownership remain unfinished.
 
-Main is **101,960 Rust lines in 139 files**, with 2,927 counted unsafe declarations
-and 6,130 cast-containing lines. Maintained implementation is 102,522 lines;
-including installers/launcher, 103,432. The prospective composition is
-**110,954 Rust lines**, **+8,994 over main**, and remains unadopted.
-This stage adds 112 main and 23 owned lines; formatted full composition adds
-**135 lines, 1,210 lexical tokens and 4,009 normalized text bytes**.
-Local verification adds 409 lines; including checks adds 544. No dependencies or
-maintained native/installer/launcher code are added. Substantial reduction,
-persistent Session ownership and complete unsafe removal remain unfinished.
+Main is **102,184 Rust lines in 142 files**, unsafe declarations 2,922 and casts 6,130.
+Maintained implementation 102,746; including installers/launcher 103,656.
+Prospective composition **111,033**, **+8,849 over main**, remains unadopted.
+Stage adds 224 main and removes 145 owned lines; formatted complete composition
+adds **79 lines, 818 lexical tokens, 2,631 normalized bytes**. Verification grows
+1,963 actual lines; equally formatted old/new delta 977. Including checks adds
+2,042 actual lines. Formatting growth is disclosed, not counted as savings.
+No dependency/native/installer/launcher or ROM-derived asset added.
 
-The current local handoff is `runtime-impact-working/INITIALIZATION_HANDOFF.md`.
-Selected results/price/source: `initialization-final-results.json`,
-`initialization-composition-price.json`, `initialization-main-source-check.json`.
-Independent checked references/callers match `eaa19aa2`; 150 runtime and 202 draft
-compiled inputs match. Selected comparisons pass 234 three-way initializer cases,
-105 short-record scenarios at slots0/19/20 with discriminating timer37 prefixes,
-786 owned diagnostic/native cases, 21 reflection/crash-finish caller cases,
-seven bomb/Power Bomb/spread/all-four-SBA, three beam and two Spazer-echo producers.
-Missile placement and RAM/owned extension creation consumers also pass. Exact
-initializer variant/slot hits and bounded downstream animation/effects are required.
-Final production/source and Rust2024 composition builds pass.
+Current local handoff: `runtime-impact-working/PLAYBACK_HANDOFF.md`.
+Final results/price/source: `playback-final-results.json`,
+`playback-composition-price.json`, `playback-main-source-check.json`.
+Independent checked references/callers match 43a4a1c9; 154 runtime + 202 draft compiled
+inputs match. Passing 217 three-way playback/trail,72 short scenarios (216 failures),
+771 owned definition/native,11 scheduler,38 trail-place,234 initializer and105 short
+initializer scenarios. Exact hits and downstream effects cover actual scheduler
+alias/release, clear-before-mandatory-playback, owned wide continuation 22 with
+later raw playback 3/1, marker-before-Mode7/offset callbacks and four coordinates.
+Distinct Mode7 data detects stale type/direction rereads. Canonical paths reject
+fallback. Final normal production/source and Rust 2024 headless composition builds
+pass. No movie/full-composition runtime/full-game fidelity claim. Synthetic ROM,
+controlled hardware/diagnostics remain limits; native diagnostics stop at entry,
+returning continuation is independent owned/historical comparison. Missing-ROM
+publication and big-endian execution remain unestablished.
 
-No movie or full-composition runtime comparison is claimed. Synthetic content,
-controlled hardware and constructed producers do not prove scheduler encounters
-or full-game fidelity. Crash/reflection/created-child animation is called directly.
-Native damage diagnostics stop at assertion entry; returning reset/ROM-replacement
-continuation is compared with the independent historical reference in owned cases.
-Missing-ROM owned publication remains unestablished; short checked images are present.
-`initialization-parent/` and `initialization-composition-parent/` preserve prior inputs;
-placement/creation/acceleration/extension/flight references and caches remain.
+`playback-parent/` and `playback-composition-parent/` preserve previous inputs.
+Initializer/placement/creation/acceleration/extension/flight references remain;
+reuse all active caches. Composition preserves real beam callers and explicit
+Rust 2024 unsafe scope in runtime_external_flight resume; both playback calls
+redirect. Local carrier wrappers remain separate from real composition calls.
 
-Next share playback and trail selection, redirect HandleProjectile and trail-place
-consumers, remove the old playback/trail/dispatch helper bodies, and preserve
-native-endian reads, captured odd/broad selectors, fresh jump/marker records and
-callback failure prefixes. Then close remaining consumers, block reactions and
-runtime authority transfers. Never retain an authoritative typed owner across a
-RAM-authoritative interval; transfer the complete owner. Owner promotion still
-needs reset/load/rewind and external-writer checks from state migration.
+Next share complete remaining trail algorithms and drawing, trace consumers,
+then close block reactions and runtime authority transfers. Price all retained
+code; never retain two mutable authorities across legacy intervals. Promotion
+still needs reset/load/rewind/external-writer checks from state migration.
+The parallel movie/state investigation is documented in
+[MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
 
 ## Paused launch draft
 
@@ -190,8 +191,8 @@ to reproduce the local owned work; a fresh Git checkout alone lacks that work.
 
 ## Next dependency
 
-Launch, missile acceleration, extension creation, placement, initialization, phase ordering
-and contact are now shared;
+Launch, missile acceleration, extension creation, placement, initialization, playback,
+trail selection, phase ordering and contact are now shared;
 do not implement a second controller or adopt outer wiring alone. Price helpers, adapters, callers,
 registrations and deletions together. Then finish remaining consumers and runtime
 authority transfers; promotion of the owner still needs reset/load/rewind and

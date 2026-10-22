@@ -1,5 +1,5 @@
 //! Projectile trail emission, placement, playback and checked OAM output.
-use crate::game::projectile_animation::trail_frame;
+use crate::game::projectile_playback_ram::trail_frame;
 use crate::game::sm_8b::CalcExplosion_Mode7;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as word, word_arrays as a};

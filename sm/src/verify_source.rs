@@ -4,6 +4,18 @@
 
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/projectile_playback.rs",
+        include_bytes!("game/projectile_playback.rs"),
+    ),
+    (
+        "sm/src/game/projectile_playback_ram.rs",
+        include_bytes!("game/projectile_playback_ram.rs"),
+    ),
+    (
+        "sm/src/game/projectile_trail_selection.rs",
+        include_bytes!("game/projectile_trail_selection.rs"),
+    ),
+    (
         "sm/src/game/projectile_initialization.rs",
         include_bytes!("game/projectile_initialization.rs"),
     ),

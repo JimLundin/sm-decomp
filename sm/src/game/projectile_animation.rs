@@ -3,13 +3,8 @@ use crate::game::samus_animation::Samus_DrawShinesparkCrashEchoProjectiles;
 use crate::game::sm_80::QueueSfx2_Max6;
 use crate::game::sm_81::DrawProjectileSpritemap;
 use crate::game::sm_8b::CalcExplosion_Mode7;
-use crate::game::sm_90::ClearProjectile;
 use crate::game_state::Game;
-use crate::ram_map::{checked_word as word, word_arrays};
-use crate::rom::RomRecord;
-use crate::rtl::Unreachable;
-
-const record: unsafe fn(u16, &mut Game) -> RomRecord = crate::rtl::rom_bank_record::<0x93>;
+use crate::ram_map::checked_word as word;
 
 #[forbid(unsafe_code)]
 fn table(address: u32, index: isize, game: &Game) -> u16 {
@@ -25,73 +20,6 @@ pub fn start_bomb_explosion(k: u16, game: &mut Game) {
     let slot = usize::from(k >> 1);
     word!(game.projectile_bomb_instruction_ptr[slot] = table(0x938683, 0, game));
     word!(game.projectile_bomb_instruction_timers[slot] = 1);
-}
-
-pub unsafe fn trail_frame(k: u16, game: &mut Game) -> u16 {
-    unsafe {
-        let slot = usize::from(k >> 1);
-        let ip = word!(game.projectile_bomb_instruction_ptr[slot]);
-        let delta = if word!(game.projectile_bomb_instruction_timers[slot]) == 1
-            && record(ip, game).word(0) & 0x8000 == 0
-        {
-            0
-        } else {
-            8
-        };
-        record(ip.wrapping_sub(delta), game).word(6)
-    }
-}
-
-pub unsafe fn instruction_delete(k: u16, _: u16, game: &mut Game) -> u16 {
-    unsafe {
-        ClearProjectile(k, game);
-        0
-    }
-}
-pub unsafe fn instruction_goto(_: u16, j: u16, game: &mut Game) -> u16 {
-    unsafe { record(j, game).word(0) }
-}
-pub unsafe fn dispatch_instruction(ea: u32, j: u16, k: u16, game: &mut Game) -> u16 {
-    unsafe {
-        match ea {
-            0x93822f => instruction_delete(j, k, game),
-            0x938239 => instruction_goto(j, k, game),
-            _ => Unreachable(game) as u16,
-        }
-    }
-}
-
-pub unsafe fn advance(game: &mut Game) {
-    unsafe {
-        let selected = word!(game.projectile_index);
-        let slot = usize::from(selected >> 1);
-        let previous = word!(game.projectile_bomb_instruction_timers[slot]);
-        word!(game.projectile_bomb_instruction_timers[slot] = previous.wrapping_sub(1));
-        if previous != 1 {
-            return;
-        }
-        let mut cursor = word!(game.projectile_bomb_instruction_ptr[slot]);
-        loop {
-            let frame = record(cursor, game);
-            if frame.word(0) & 0x8000 == 0 {
-                word!(game.projectile_bomb_instruction_timers[slot] = frame.word(0));
-                word!(game.projectile_spritemap_pointers[slot] = frame.word(2));
-                word!(game.projectile_x_radius[slot] = u16::from(frame.byte(4)));
-                word!(game.projectile_y_radius[slot] = u16::from(frame.byte(5)));
-                word!(game.projectile_bomb_instruction_ptr[slot] = cursor.wrapping_add(8));
-                return;
-            }
-            cursor = dispatch_instruction(
-                0x930000 | u32::from(frame.word(0)),
-                selected,
-                cursor.wrapping_add(2),
-                game,
-            );
-            if cursor == 0 {
-                return;
-            }
-        }
-    }
 }
 
 unsafe fn draw_slots<const EXPLOSIONS: bool>(game: &mut Game) {

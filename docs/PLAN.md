@@ -85,7 +85,7 @@ new packages alone establishes neither ownership nor backend independence.
 
 **Coordinated iterations (2026-10-22): the user authorized ongoing worker
 supervision, lifecycle/commit coordination and resource oversight.** The
-beam launch, missile acceleration, extension creation, placement and initialization are shared below;
+beam launch, missile acceleration, extension creation, placement, initialization and playback are shared below;
 remaining consumers and unsafe dependencies are next. One implementer and one independent read-only caller/
 validation investigator work through a single integration/compiler lane.
 Build-pipeline preparation is complete; previous task queues and ownership
@@ -104,50 +104,50 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares all five projectile initializer variants through
-   `projectile_initialization`, following placement at `eaa19aa2`, extension
-   creation at `0abd00a3`, acceleration at `f4674fa2`, beam launch at `8730d00e`
-   and extension contact at `e3fadf56`. RAM and owned paths share captured slot,
-   definition/table selection, variant-specific damage/diagnostic ordering,
-   aimed/fixed entry, ordinary current-image radius reads and timer-last writes.
-   All 17 production calls migrate; the old five initializer entries, fixed
-   helper and aimed helper are removed. The shared core forbids unsafe code;
-   the RAM adapter checks state/content reads but retains three explicit unsafe
-   native diagnostic/ROM-capture calls. This does not eliminate those dependencies.
-   Block reactions, remaining animation consumers and broader unsafe removal remain.
+   Latest verified stage shares complete projectile playback and trail selection
+   through `projectile_playback` and `projectile_trail_selection`, following all
+   five initializers at `43a4a1c9`, placement at `eaa19aa2`, extension creation at
+   `0abd00a3`, acceleration at `f4674fa2`, beam launch at `8730d00e` and extension
+   contact at `e3fadf56`. RAM and owned paths share timer decrement, captured
+   selector/cursor, ordered Show fields, fresh wrapped Jump operand, release and
+   unknown continuation, and fresh upcoming/active trail-marker capture. Actual
+   HandleProjectile and trail-place consumers redirect; old playback/trail and
+   three dispatch/delete/goto helpers are removed. Both shared cores forbid unsafe
+   code; the checked RAM adapter retains explicit ROM-capture and native diagnostic
+   unsafe calls. This does not eliminate those dependencies. Drawing, remaining
+   trail algorithms, block reactions and broader unsafe removal remain.
 
-   Selected final comparisons pass 234 three-way initializer cases, including
-   14 matching failures, 105 checked short-record scenarios at slots 0/19/20,
-   and 786 owned diagnostic/native cases with 178 matching failures. Distinct
-   incoming timer 37 exposes early timer writes on every short-record failure.
-   Captured old allocation, diagnostic/reset continuation, live replacement-image
-   frame reads, native/signed/table-spill selection and partial writes execute.
-   Canonical owned cases reject accidental initialization fallback. Actual
-   reflection/crash-finish callers pass 21 cases, including counts 3/4 and poses
-   201..206, with exact initializer hits and direct animation advancement.
-   Seven bomb/Power Bomb/spread/all-four-SBA, three beam and two Spazer-echo
-   producer cases assert entry/slot hits and bounded downstream effects.
-   Missile placement and RAM/owned extension creation consumers also pass.
-   Independent checked reference and saved callers match pre-change Git source.
-   All 150 runtime and 202 draft compiled inputs match. Formatting, normal
-   release library/frontend/verifier and loaded DLL source checks pass.
-   No movie ran. Synthetic content and controlled hardware do not establish
-   scheduler encounters or full-game fidelity. Created-child and crash/reflection
-   animation checks call consumers directly. Native damage diagnostics stop at
-   their assertion entry; returning continuation uses the independent historical
-   reference in the owned constructed comparison. Missing-ROM owned publication
-   remains unestablished; short-record checks use a present image.
+   Final selected comparisons pass 217 three-way playback/trail scenarios,
+   including ten genuine selector aliases and one matching diagnostic failure,
+   72 checked short-record scenarios at slots 0/19/20 (216 expected failures), and
+   771 owned definition/native cases with 142 matching failures. Distinct sprite,
+   radii and full-RAM prefixes expose ordered partial writes. Returning unknown,
+   reset/replacement, captured/current images and native labels/markers execute.
+   Eleven scheduler cases cover actual preinstruction/playback/live tails, odd
+   release, alias writes, clear-before-mandatory-playback and owned continuation
+   at 22 with actual later playback 3/1. Canonical owned cases reject fallback.
+   Thirty-eight actual Place/Emit cases require selection before Mode7/offset
+   diagnostics and all four coordinates; distinct data proves live type/direction.
+   Initializer cases 234 and short prefixes 105 also pass after shared FrameView
+   native-word decoding changes. Independent checked reference and callers match
+   pre-change Git source. All 154 runtime and 202 draft compiled inputs match.
+   Formatting, normal release library/frontend/verifier and loaded DLL source
+   checks pass. No movie ran. Synthetic content/controlled hardware do not prove
+   natural encounters or full-game fidelity. Native diagnostics stop at assertion
+   entry; returning continuation uses owned independent historical comparisons.
+   Missing-ROM owned publication and big-endian execution remain unestablished.
 
-   Main is **101,960 Rust lines in 139 files**. The prospective composition is
-   **110,954 (+8,994)** and remains unadopted, without full-composition runtime
-   or movie comparison. Its Rust 2024 headless release library builds.
-   This stage adds 112 main and 23 owned lines; formatted composition gives
-   **+135 complete lines**, +1,210 lexical tokens and +4,009 normalized text bytes.
-   Local verification adds 409 lines; including checks gives +544 lines.
-   Main removes six counted unsafe declarations; cast lines remain 6,130.
-   No dependencies or maintained native/launcher code are added. This shares
-   necessary safe sequencing with an explicit size cost; it is not volume reduction.
-   Persistent Session authority and the substantial reduction remain unfinished.
+   Main is **102,184 Rust lines in 142 files**. The prospective composition is
+   **111,033 (+8,849)**, unadopted and without full-composition runtime/movie
+   comparison; its Rust 2024 headless release library builds. This stage adds 224
+   main lines and removes 145 owned lines; formatted composition adds **79 complete
+   lines**, 818 lexical tokens and 2,631 normalized bytes. Local verification grows
+   1,963 actual lines (977 with both baselines equally formatted); including checks
+   adds 2,042 actual lines. Formatting expansion is disclosed, not savings.
+   Main removes five counted unsafe declarations; casts remain 6,130. No dependency
+   or maintained native/installer/launcher code is added. This is necessary sharing
+   with a source-size cost, not volume reduction. Persistent Session authority,
+   substantial reduction and complete unsafe removal remain unfinished.
 
    Next dependencies, in order:
 
@@ -163,9 +163,11 @@ references; measure build/test time and resource growth before changing the loop
      Ordinary flight ordering and extension contact are already shared.
    - [x] Share all five initializer variants, migrate actual producers and remove
      duplicate sequencing/table selection with independent failure-prefix checks.
-   - Share playback and trail selection, migrate HandleProjectile and trail-place
-     consumers, and retire the old playback/trail/dispatch helper bodies. Preserve
-     native byte order, captured selectors, fresh record captures and callback tails.
+   - [x] Share playback and trail selection, migrate HandleProjectile/trail-place
+     consumers, retire old bodies/helpers and compare scheduler/continuation tails.
+   - Share the remaining complete trail emission/placement/playback consumers and
+     drawing responsibility, then close block reactions and runtime authority.
+     Trace and validate each complete interaction before retiring its dependencies.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -173,12 +175,12 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified initializer continuation, including
-   `initialization-final-results.json`, `initialization-main-source-check.json`,
-   `initialization-composition-price.json` and `INITIALIZATION_HANDOFF.md`.
-   `initialization-parent/` and `initialization-composition-parent/` preserve prior
-   inputs. Placement references remain in `placement-parent/`, creation references
-   in `creation-parent/` and acceleration references in `acceleration-parent/`.
+   `runtime-impact-working/` is the verified playback/trail continuation, including
+   `playback-final-results.json`, `playback-main-source-check.json`,
+   `playback-composition-price.json` and `PLAYBACK_HANDOFF.md`.
+   `playback-parent/` and `playback-composition-parent/` preserve prior inputs.
+   Initializer references remain in `initialization-parent/`; placement, creation,
+   acceleration, extension and independent flight snapshots/caches remain preserved.
    `runtime-impact-stage/` preserves the previous terminal stage; the independent
    flight reference remains in `flight-parent/`; `extension-parent/` saves the
    immediately preceding source and composition changes.
@@ -333,12 +335,12 @@ content.
 
 ## Progress and references
 
-Verified shared-initializer stage: Rust 101,960; maintained C bridge 266 and headers
-296 = **102,522 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **103,432**. The separate prospective owned
+Verified shared-playback stage: Rust 102,184; maintained C bridge 266 and headers
+296 = **102,746 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **103,656**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,927; cast-containing lines 6,130. These narrow counters do
+unsafe declarations 2,922; cast-containing lines 6,130. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 The isolated launch draft is now synchronized and verified; its original source

@@ -19,7 +19,8 @@ pub use crate::game::constants::bank_90::*;
 
 use crate::game::explosion_window::spawn_crystal_flash;
 use crate::game::progress_flags::CheckEventHappened;
-use crate::game::projectile_animation::{advance, draw_projectiles, start_impact};
+use crate::game::projectile_animation::{draw_projectiles, start_impact};
+use crate::game::projectile_playback_ram::advance;
 use crate::game::projectile_flight::{self, Flight};
 use crate::game::sm_80::{
     DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
