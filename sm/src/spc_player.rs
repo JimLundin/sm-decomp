@@ -28,40 +28,6 @@ pub const EDL: DspReg = 125;
 pub const DIR: DspReg = 93;
 pub const MVOLR: DspReg = 28;
 pub const MVOLL: DspReg = 12;
-crate::typed_struct! {
-    [
-        #[derive(Copy, Clone)]
-        #[repr(C)]
-    ];
-    pub struct MemMapSized {
-        pub off, org_off, size: u16;
-    }
-
-    pub struct MemMap {
-        pub off, org_off: u16;
-    }
-}
-
-impl MemMapSized {
-    const fn new(native_offset: u16, spc_offset: u16, byte_count: u16) -> Self {
-        Self {
-            off: native_offset,
-            org_off: spc_offset,
-            size: byte_count,
-        }
-    }
-}
-
-impl MemMap {
-    // The high bit of encoded_spc_offset selects a two-byte copy.
-    const fn new(native_offset: u16, encoded_spc_offset: u16) -> Self {
-        Self {
-            off: native_offset,
-            org_off: encoded_spc_offset,
-        }
-    }
-}
-
 pub use crate::types::DspReg;
 pub const FIR7: DspReg = 127;
 pub const ENDX: DspReg = 124;
@@ -158,155 +124,6 @@ extern "C-unwind" {
     fn Music_HandleCmdFromSnes(p: *mut SpcPlayer);
 }
 
-static kChannel_Maps: [MemMap; 47] = [
-    MemMap::new(0, 0x8030),
-    MemMap::new(3, 0x70),
-    MemMap::new(4, 0x71),
-    MemMap::new(5, 0x80),
-    MemMap::new(6, 0x90),
-    MemMap::new(7, 0x91),
-    MemMap::new(8, 0xa0),
-    MemMap::new(9, 0xa1),
-    MemMap::new(10, 0xb0),
-    MemMap::new(11, 0xb1),
-    MemMap::new(12, 0xc0),
-    MemMap::new(13, 0xc1),
-    MemMap::new(14, 0x100),
-    MemMap::new(15, 0x200),
-    MemMap::new(16, 0x201),
-    MemMap::new(17, 0x210),
-    MemMap::new(18, 0x211),
-    MemMap::new(20, 0x8220),
-    MemMap::new(22, 0x8230),
-    MemMap::new(24, 0x8240),
-    MemMap::new(26, 0x280),
-    MemMap::new(27, 0x281),
-    MemMap::new(28, 0x290),
-    MemMap::new(29, 0x291),
-    MemMap::new(30, 0x2a0),
-    MemMap::new(31, 0x2a1),
-    MemMap::new(32, 0x2b0),
-    MemMap::new(33, 0x2b1),
-    MemMap::new(34, 0x2c0),
-    MemMap::new(35, 0x2c1),
-    MemMap::new(36, 0x2d0),
-    MemMap::new(37, 0x2d1),
-    MemMap::new(38, 0x2e0),
-    MemMap::new(39, 0x2f0),
-    MemMap::new(40, 0x8300),
-    MemMap::new(42, 0x8310),
-    MemMap::new(44, 0x320),
-    MemMap::new(45, 0x321),
-    MemMap::new(46, 0x8330),
-    MemMap::new(48, 0x8340),
-    MemMap::new(50, 0x350),
-    MemMap::new(51, 0x351),
-    MemMap::new(52, 0x8360),
-    MemMap::new(54, 0x8370),
-    MemMap::new(56, 0x380),
-    MemMap::new(57, 0x381),
-    MemMap::new(58, 0x400),
-];
-// Each run copies equal-width fields to consecutive SPC addresses.
-// Native offsets remain explicit because the sequencer's records are interleaved.
-const fn player_ram_map() -> [MemMapSized; 283] {
-    let groups: &[(u16, u16, &[u16])] = &[
-        (0x0, 4, &[855, 24, 28]),
-        (0xc, 2, &[32, 34, 36]),
-        (0x12, 1, &[38, 39]),
-        (0x14, 2, &[40, 42, 44]),
-        (0x1a, 1, &[46, 47, 8]),
-        (0x20, 2, &[48, 592, 582, 586, 588, 658, 684, 710]),
-        (0x40, 2, &[50]),
-        (0x42, 1, &[52, 53, 54, 55, 56, 57, 58, 59, 60]),
-        (0x4c, 1, &[61, 62, 63]),
-        (0x50, 1, &[64, 65]),
-        (0x52, 2, &[66]),
-        (0x54, 1, &[68, 69]),
-        (0x56, 2, &[70, 72]),
-        (0x5a, 1, &[74, 75]),
-        (0x5c, 2, &[76]),
-        (0x5e, 1, &[78, 79]),
-        (0x60, 2, &[80, 82, 84, 86]),
-        (0x68, 1, &[88, 89, 90]),
-        (
-            0xd0,
-            2,
-            &[
-                736, 92, 614, 604, 608, 610, 762, 788, 636, 626, 630, 632, 814, 840,
-            ],
-        ),
-        (0xee, 2, &[94]),
-        (0x390, 1, &[96]),
-        (
-            0x392,
-            1,
-            &[
-                584, 598, 651, 677, 703, 729, 647, 673, 699, 725, 668, 694, 720, 746, 596, 595,
-                601, 597, 600, 599, 646, 672, 698, 724, 666, 692, 718, 744, 581, 652, 678, 704,
-                730, 594, 653, 679, 705, 731, 655, 657, 681, 683, 707, 709, 733, 735, 662, 654,
-                688, 680, 714, 706, 740, 732, 660, 686, 712, 738, 649, 675, 701, 727,
-            ],
-        ),
-        (0x3d0, 2, &[664, 690, 716, 742]),
-        (
-            0x3d8,
-            1,
-            &[
-                670, 696, 722, 748, 650, 648, 669, 656, 661, 667, 663, 676, 674, 695, 682, 687,
-                693, 689, 702, 700, 721, 708, 713, 719, 715, 728, 726, 747, 734, 739, 745, 741,
-                606, 620, 755, 781, 751, 777, 772, 798,
-            ],
-        ),
-        (
-            0x440,
-            1,
-            &[
-                618, 617, 623, 619, 622, 621, 750, 776, 770, 796, 603, 756, 782, 616, 757, 783,
-                759, 761, 785, 787, 766, 758, 792, 784, 764, 790, 753, 779,
-            ],
-        ),
-        (0x45c, 2, &[768, 794]),
-        (
-            0x460,
-            1,
-            &[
-                774, 800, 754, 752, 773, 760, 765, 771, 767, 780, 778, 799, 786, 791, 797, 793,
-                628, 642, 807, 833, 803, 829, 824, 850, 640, 639, 645, 641, 644, 643, 802, 828,
-                822, 848, 625, 808, 834, 638, 809, 835, 811, 813, 837, 839, 818, 810, 844, 836,
-                816, 842, 805, 831,
-            ],
-        ),
-        (0x494, 2, &[820, 846]),
-        (
-            0x498,
-            1,
-            &[
-                826, 852, 806, 804, 825, 812, 817, 823, 819, 832, 830, 851, 838, 843, 849, 845,
-            ],
-        ),
-        (0x4a9, 1, &[97]),
-        (0x4b1, 1, &[98]),
-        (0x4ba, 1, &[634, 580, 602, 624, 854]),
-    ];
-    let mut maps = [MemMapSized::new(0, 0, 0); 283];
-    let mut output = 0;
-    let mut group = 0;
-    while group < groups.len() {
-        let (destination, width, sources) = groups[group];
-        let mut field = 0;
-        while field < sources.len() {
-            maps[output] =
-                MemMapSized::new(sources[field], destination + field as u16 * width, width);
-            output += 1;
-            field += 1;
-        }
-        group += 1;
-    }
-    assert!(output == maps.len());
-    maps
-}
-static kSpcPlayer_Maps: [MemMapSized; 283] = player_ram_map();
 #[export_name = "sm_music_Dsp_Write"]
 pub unsafe extern "C-unwind" fn Dsp_Write(p: *mut SpcPlayer, mut reg: u8, value: u8) {
     let hist = (*p).state.reg_write_history;
@@ -798,45 +615,11 @@ pub unsafe fn SpcPlayer_Initialize(p: *mut SpcPlayer) {
     Vector_Reset_Spc(p);
     Spc_Loop_Part1(p);
 }
-unsafe fn transfer_player_ram(p: *mut SpcPlayer, to_ram: bool) {
-    let ram = &(*p).ram;
-    let transfer = |native: *mut u8, address: usize, size: usize| {
-        for offset in 0..size {
-            if to_ram {
-                ram.write_at(address + offset, *native.add(offset));
-            } else {
-                *native.add(offset) = ram.read_at(address + offset);
-            }
-        }
-    };
-    for i in 0..8 {
-        let channel = (&raw mut (*p).state.channel as *mut Channel)
-            .add(i)
-            .cast::<u8>();
-        for map in &kChannel_Maps {
-            transfer(
-                channel.add(map.off as usize),
-                (map.org_off & 0x7fff) as usize + i * 2,
-                if map.org_off & 0x8000 != 0 { 2 } else { 1 },
-            );
-        }
-    }
-    for map in &kSpcPlayer_Maps {
-        transfer(
-            p.cast::<u8>().add(map.off as usize),
-            map.org_off as usize,
-            map.size as usize,
-        );
-    }
-}
 pub unsafe fn SpcPlayer_CopyVariablesToRam(p: *mut SpcPlayer) {
-    transfer_player_ram(p, true);
+    crate::native_player_ram::save(&(*p).state, &(*p).ram);
 }
 pub unsafe fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer) {
-    transfer_player_ram(p, false);
-    for i in 0..8 {
-        (*p).state.channel[i].index = i as u8;
-    }
+    crate::native_player_ram::load(&mut (*p).state, &(*p).ram);
 }
 pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
     crate::native_assertion! {

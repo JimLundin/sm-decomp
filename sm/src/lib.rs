@@ -457,6 +457,7 @@ pub mod verify_probe;
 pub mod verify_source;
 
 pub(crate) mod native_audio;
+mod native_player_ram;
 
 macro_rules! type_aliases {
     ($visibility:vis $($name:ident),+ = $target:ty;) => {

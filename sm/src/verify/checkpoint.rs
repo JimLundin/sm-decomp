@@ -38,6 +38,7 @@ fn compatibility() -> u64 {
         include_str!("../audio_upload.rs"),
         include_str!("../audio_snapshot.rs"),
         include_str!("../spc_player.rs"),
+        include_str!("../native_player_ram.rs"),
         include_str!("../snes/snes.rs"),
         include_str!("../snes/cpu.rs"),
         include_str!("../snes/ppu.rs"),

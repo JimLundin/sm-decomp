@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,335 Rust lines in 110 files**, plus 262 C
-bridge and 296 C-header lines = **95,893 maintained implementation lines**.
+Current composition (2026-10-22): **95,309 Rust lines in 111 files**, plus 262 C
+bridge and 296 C-header lines = **95,867 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,724**. This complete recount includes frontend,
+gives **96,698**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1939,17 +1939,18 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    frames of real audio processing. Six blocks transfer 57,841 bytes. Normal
    comparisons, rendering and audio remain enabled. This establishes no gameplay,
    active-song or physical-device coverage; wider upload cases use components.
-   Native-player field/RAM synchronization still uses raw native offsets. The
-   subsequent RAM ownership change below removes the inline-RAM pointer constraint.
+   Subsequent native-player RAM ownership and named-field mapping below retire
+   the inline-RAM pointer constraint and raw native-offset synchronization.
    Checks: Local/sm-decomp-experiments/20261022/audio-upload.
    Native player RAM now uses the existing checked `ApuRam` owner. The native
    state prefix and DSP share its stable allocation; snapshots copy detached bytes
    and restore into the destination owner. Reset, uploads, Rust instrument/script
    reads, checkpoint reconstruction and native/physical save-load transfers all
    use that owner. Five memsets, two memcpy calls, instrument pointer traversal
-   and one raw word load are retired; native field-offset traversal and native
-   music/DSP interfaces remain unsafe. No whole-player or whole-RAM mutable borrow
-   was introduced. The constructor and byte owner forbid unsafe code.
+   and one raw word load are retired. The subsequent named-field change removes
+   field-offset traversal; native music/DSP interfaces remain unsafe. No whole-player
+   or whole-RAM mutable borrow was introduced. The constructor and byte owner
+   forbid unsafe code.
    Complete cost: **+45 Rust lines** across seven source/header files, including
    caller and checkpoint changes; no new dependency or gameplay macros.
    **301 actual old/new comparisons**, 128 C/Rust layout checks and six ownership/
@@ -1965,6 +1966,24 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    capture and two subsequent frames. No gameplay or physical-device claim.
    Checks: Local/sm-decomp-experiments/20261022/native-player-ram. Frozen older
    libraries require the preserved old native music archive; see SPC_DEPENDENCY.md.
+   Native-player field/RAM synchronization now uses named scalar/array values in
+   a module that forbids unsafe code. Shared SFX layouts and transfer schemas
+   replace raw record traversal, preserving native byte order, unmapped fields
+   and channel-index restoration. Compiler checks establish all **659 transfers**
+   across **794 distinct bytes**, with no overlapping fields or RAM destinations.
+   No callbacks occur during transfer, so grouping by owner preserves observations.
+   Complete reduction: **26 Rust lines**, including the 185-line module, its three
+   private macros, callers and registrations; no dependency changes. Raw player
+   handles and native music/DSP interfaces remain unsafe.
+   The final normal library passes **1,787 actual old/new comparisons**, including
+   every mapped byte in both directions, repeated transfers, reset, recorder
+   rebasing, native/physical save and replay loads, and checkpoint restoration.
+   Continuous synthesis matches 48 buffers, 38,434 nonzero samples and 5,590 DSP
+   writes. Six ownership/bounds checks, all 117 old/118 new library source inputs
+   plus checkpoint sources, native stamps, formatting and normal release builds
+   pass. No movie ran: complete compiled mapping correspondence and direct real
+   consumer checks cover the representation change. No gameplay or physical-device
+   coverage is claimed. Checks: Local/sm-decomp-experiments/20261022/native-player-fields.
    Runtime construction now uses typed initial values shared through the existing
    record metadata. Game owns three separately allocated oracle snapshots while
    retaining its fixed inline SNES RAM. Nine hardware constructors use typed
@@ -3015,18 +3034,23 @@ streams, owned enemy-projectile scripts, named APU history and explicit launch
 motion, checked ROM patch installation, hardware field serialization, PLM
 award/message ownership, owned APU RAM, the owned audio command queue and enemy
 population ownership, owned native audio uploads, typed runtime initialization
-and owned native-player RAM, maintained Rust is **95,335**, with
+and owned native-player RAM with named field transfers, maintained Rust is **95,309**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **95,893**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,724**.
+Including 262 C and 296 header lines gives **95,867**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,698**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3026; cast lines 6539. Owned native-player RAM adds 45 maintained
+unsafe functions 3025; cast lines 6539. Named native-player RAM fields remove 26
+maintained Rust lines and one counted unsafe declaration. Raw native-offset
+traversal is retired; the named transfer module forbids unsafe code. Player
+handles and native music/DSP interfaces remain unsafe. Other counters are unchanged.
+Owned native-player RAM adds 45 maintained
 Rust lines and removes one counted unsafe declaration and one cast-containing
 line. Five memsets and two memcpy calls are retired; checked byte ownership
-replaces inline RAM, but native field offsets and music/DSP interfaces remain
-unsafe. Other counters are unchanged. This is a safety cost, not volume savings.
+replaces inline RAM. The subsequent named-field change retires native field
+offsets; music/DSP interfaces remain unsafe. Other counters are unchanged.
+This is a safety cost, not volume savings.
 Typed runtime initialization adds 75
 maintained Rust lines and removes seven counted unsafe declarations. Nine raw
 hardware allocations, ten raw-zeroing sites and two uninitialized Box/assume_init
