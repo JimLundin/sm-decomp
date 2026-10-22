@@ -434,6 +434,21 @@ initialization, trail reads, attack definitions, complete malformed-data behavio
 and production ownership remain open. The Rust definitions are synthetic, not
 converted game content; there is no movie coverage or whole-replacement price.
 
+The [trail-sampling follow-up](RAM_OWNERSHIP.md#named-trail-sampling)
+passes **351 targeted comparisons**. A trail can preview the upcoming timed frame
+on the last tick, before playback changes the visible sprite. The shared model
+therefore asks definitions for an `Upcoming` or `Active` trail marker. Its native
+sequence demonstrates that distinction without RAM/ROM decoding; the compatibility
+provider preserves the original cursor-relative lookup and repeated diagnostics.
+This does not yet own trail allocation, position, side animations or drawing.
+
+Attack initialization also needs an explicit policy: ordinary projectile setup,
+fixed-entry setup and echo setup differ in when they publish damage and whether
+they initialize collision radii. A named definition must not imply that all fields
+are applied atomically.
+The [definition-consumer trace](RAM_OWNERSHIP.md#definition-consumers-still-to-migrate)
+records these remaining boundaries and distinguishes source findings from tests.
+
 ## Shared behavior and coordination
 
 Reuse complete mechanics already present: beam flight policies, projectile

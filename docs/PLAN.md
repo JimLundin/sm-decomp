@@ -1643,6 +1643,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    bytes; optimized DLL and format checks pass. Preserved encounter-stage records
    these selected checks separately from cancellation-stage and reset-stage;
    neither earlier suite was rerun. No movie or production adoption is claimed.
+   The coordinator independently reviewed all 115 library and 41 compiled draft
+   inputs for encounter-stage, existing-state reuse and retained transfer boundaries.
    Normal and super-missile firing now use the same reservation, placement, launch
    and animation owner. **334 focused old/new full-RAM comparisons**, 253 ordered
    observations and 60 matching failures pass, including the changed shared beam
@@ -1656,8 +1658,6 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    formatting pass. Preserved missile-stage records these selected checks; earlier
    suites were not rerun. Collision/trail output and other native callbacks remain
    controlled; no movie, production adoption or complete reduction is claimed.
-   The coordinator independently reviewed all 115 library and 41 compiled draft
-   inputs, existing-state reuse and the retained transfer boundaries.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, drawing/trail, palette/sound
    output and grapple-start consumers remain controlled. ROM definitions are
@@ -1683,6 +1683,18 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    trails, authored attack conversion, malformed-data closure and production
    integration remain open. No ROM/movie, adoption or complete price is claimed.
    Details: [named-animation findings](RAM_OWNERSHIP.md#named-projectile-animation-definitions).
+   Its trail-selection follow-up at 20261022/named-projectile-trail-selection
+   passes 351 full-RAM/return comparisons (224 direct, 120 callback, seven linked
+   steps), 263 ordered observations and 73 matching failures. Named Upcoming/Active
+   samples preserve last-tick preview before the visible animation changes; only
+   the adapter computes the preceding encoded record and repeats diagnostics.
+   One native Rust sequence needs no RAM/ROM decoding. Model and adapter forbid
+   unsafe code; optimized build and all 115+9 compiled inputs pass. Diagnostics are
+   controlled; actual trail allocation/position/side scripts/drawing, full-Firing
+   transport and production integration remain open. Earlier playback363 was not
+   rerun; no ROM/movie, adoption or full price. The definition-consumer source trace
+   records initializer damage/radius order and distinct trail identities/schedules;
+   it adds no execution coverage. Details: [trail findings](RAM_OWNERSHIP.md#named-trail-sampling).
    The aim-handoff experiment now passes 68 full-RAM expected-state comparisons
    (14 partial failures), eight linked sequences and four counterexamples. Captured
    aim is consumed once; origin uses the live pose, and reservation rejection

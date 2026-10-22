@@ -889,6 +889,73 @@ are established. Reproduction:
 (`playback.rs`, `compatibility.rs`, `native.rs`, `harness.rs`, `prepare.py`,
 `build.py`, `check.py`, `result.json`).
 
+### Named trail sampling
+
+The follow-up reuses the same generic playback and definition interface, adding
+`TrailDefinitions::sample_trail` and a pure `Upcoming`/`Active` selection. With one
+tick remaining, an upcoming timed frame supplies the trail marker even before
+playback selects its sprite. An upcoming command, or any other remaining duration,
+uses the active sample. The compatibility provider implements that active sample
+as the record eight bytes before the captured cursor. It is not an unconditional
+cache of the last displayed frame; imported cursors and callbacks can differ.
+
+**351 actual old/new full-RAM and return-value comparisons pass:** 224 trail cases,
+120 callback cases and seven linked sample/playback steps. There are **263 ordered
+observations** and **73 matching failures**. The reference executes the actual
+frozen `trail_frame` and linked `advance`. Normal, odd and broad valid selectors,
+timer boundaries, timed frames and commands, wrapping to the preceding record,
+selector/cursor/timer mutation, definition mutation/replacement and partial
+diagnostic failures are exercised.[^projectiletrailframe]
+
+The query captures its cursor and timer decision before diagnostics. It resolves
+the selected definition again before reading the trail marker, even when the
+first check sampled that same record. A second diagnostic can replace the
+definition allocation; retaining the first frame view would change the result.
+The model preserves that observation point through its provider interface.
+Both this model and the checked compatibility provider forbid unsafe code.
+
+One separate persistent sequence uses named Rust definitions with no byte image
+or RAM/ROM decoding. It explicitly samples a `Burst` trail while the visible sprite
+is still `Charge`, then advances playback, and checks command fallback. This is
+synthetic authored content, not an additional differential count.
+
+The optimized build and source-checked run pass against `15589b48`: all **115
+library inputs** and **nine compiled local inputs** match. Native diagnostics
+are controlled. The sequence does not execute trail allocation, Mode 7 position,
+offset tables, left/right trail scripts or drawing. Full-`Firing` diagnostic
+transport, production integration, complete malformed-data coverage and the full
+replacement cost remain open. No ROM or movie ran. The earlier 363-case playback
+suite was not rerun. Reproduction:
+`Local/sm-decomp-experiments/20261022/named-projectile-trail-selection`
+(`trail.rs`, `compatibility.rs`, `native_trail.rs`, `harness.rs`, `prepare.py`,
+`build.py`, `check.py`, `result.json`).
+
+### Definition consumers still to migrate
+
+This is a current-source trace, not new execution coverage. It identifies the
+contracts that a named attack/animation definition must support:
+
+| Consumer | Required behavior |
+| --- | --- |
+| Ordinary projectile initialization | Capture direction and definition selection; check damage before publishing it, then reread damage from the retained definition after any diagnostic. Publish the directional entry before resolving initial radii; set the timer last. |
+| Fixed-entry and echo initialization | Publish damage before the invalid-damage diagnostic. Fixed-entry setup then takes one entry; echo selects by captured direction. Neither directly initializes radii. |
+| Trail allocation | Select trail scripts from the argument projectile's type, search only left-side timers for a free pair, and publish both timers and scripts before positioning. Positioning receives the live projectile selector. |
+| Trail positioning | Capture the trail marker first. Mode 7 projection precedes the captured projectile's live type/direction lookup. Apply signed offsets with wrapping; keep left-Y, left-X, right-Y, right-X write order. |
+| Trail side playback | Zero timer means inactive; timed frames can finish a side with zero duration. Movement commands advance that side's script and position. Frozen drawing skips progression but can still draw an active side. |
+
+The initializer retains a definition allocation across the damage diagnostic but
+observes its live contents. An eagerly copied immutable record would change
+mutation/replacement cases unless the compatibility provider preserves those
+reads. Native authored definitions can be immutable; that does not make legacy
+definition capture eager.[^projectiledefinitions]
+
+Trail emission runs during projectile flight before the later animation advance.
+Its separate side scripts have different zero-timer and command rules from
+projectile playback. Sharing named definition access is supported; one generic
+script executor has not been established. Trail script choice, position sampling,
+pair reservation and side playback therefore remain distinct operations to close
+with actual consumers.[^flight][^trailpipeline]
+
 ### Aim capture, placement and expiry
 
 An isolated experiment against frozen `15589b48` executes the production bodies
@@ -1425,6 +1492,9 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^shotretirement]: [ResetProjectileData](../sm/src/game/sm_90.rs#L1468); [ClearProjectile](../sm/src/game/sm_90.rs#L1504); [KillProjectile](../sm/src/game/sm_90.rs#L1566).
 [^shotimpact]: [start_impact](../sm/src/game/projectile_animation.rs#L102); [instruction_delete and advance](../sm/src/game/projectile_animation.rs#L185).
 [^projectileplayback]: [get_ProjectileInstr](../sm/src/game/projectile_animation.rs#L33); [advance and instruction dispatch](../sm/src/game/projectile_animation.rs#L188).
+[^projectiletrailframe]: [trail_frame](../sm/src/game/projectile_animation.rs#L170).
+[^projectiledefinitions]: [Fixed and directional initialization](../sm/src/game/projectile_animation.rs#L36); [echo initialization](../sm/src/game/projectile_animation.rs#L148).
+[^trailpipeline]: [HandleProjectile and SpawnProjectileTrail](../sm/src/game/sm_90.rs#L2036); [trail side playback and drawing](../sm/src/game/sm_90.rs#L2100); [ProjectileTrail_Func5](../sm/src/game/sm_9b.rs#L61).
 [^roomshotscan]: [react_to_shot_block, beam_block_collision and missile_block_collision](../sm/src/game/sm_94.rs#L1538).
 [^roomshotreaction]: [Shootable/bombable reactions and scan overrides](../sm/src/game/sm_94.rs#L1359); [PlmSetup_B974](../sm/src/game/sm_84.rs#L941).
 [^roomshotsetup]: [SpawnPLM and SpawnPLMWithCollision](../sm/src/game/sm_84.rs#L249); [find_plm_at_block](../sm/src/game/sm_84.rs#L766); [sub_84C64C](../sm/src/game/sm_84.rs#L956); [Strange Door and respawning shot block](../sm/src/game/sm_84.rs#L1882).
