@@ -1,3 +1,4 @@
+use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
 use crate::game::enemy_population_ram::spawn_enemy;
 use crate::game::minimap;
@@ -27,7 +28,7 @@ use crate::game::sm_91::SomeMotherBrainScripts;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CreateDudShot, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
-    Enemy_SwitchToFrozenAi, NormalEnemyFrozenAI, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy,
+    Enemy_SwitchToFrozenAi, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy,
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAiSkipDeathAnim_CurEnemy,
     SuitDamageDivision,
 };
@@ -5260,7 +5261,7 @@ crate::game::callback_dispatch! {
     };
     @forward [pub unsafe fn (game: &mut Game)];
     [11108367] Enemy_GrappleReact_CancelBeam_A9 => Enemy_SwitchToFrozenAi(game);
-    [11108417] Enemy_NormalFrozenAI_A9 => NormalEnemyFrozenAI(game);
+    [11108417] Enemy_NormalFrozenAI_A9 => update_frozen_enemy(game);
 }
 
 crate::game::callback_dispatch! {

@@ -1,4 +1,5 @@
 //! Byte-backed views of enemy slots in the original RAM layout.
+#![forbid(unsafe_code)]
 use crate::game_state::Game;
 use crate::types::{EnemyData, Ram7800_Kraid};
 
@@ -206,5 +207,50 @@ impl MiniKraidSpitState<'_> {
     }
     pub(crate) fn x_offset(&self) -> u16 {
         self.read(core::mem::offset_of!(Ram7800_Kraid, field_4))
+    }
+}
+
+/// Captured native enemy fields; the handle survives callbacks without a RAM borrow.
+#[derive(Clone, Copy)]
+pub(crate) struct EnemySlot(u16);
+
+#[repr(usize)]
+pub(crate) enum EnemyField {
+    Definition = core::mem::offset_of!(EnemyData, enemy_ptr),
+    X = core::mem::offset_of!(EnemyData, x_pos),
+    Y = core::mem::offset_of!(EnemyData, y_pos),
+    Width = core::mem::offset_of!(EnemyData, x_width),
+    Properties = core::mem::offset_of!(EnemyData, properties),
+    ExtraProperties = core::mem::offset_of!(EnemyData, extra_properties),
+    AiHandlers = core::mem::offset_of!(EnemyData, ai_handler_bits),
+    Map = core::mem::offset_of!(EnemyData, spritemap_pointer),
+    Palette = core::mem::offset_of!(EnemyData, palette_index),
+    Tile = core::mem::offset_of!(EnemyData, vram_tiles_index),
+    Layer = core::mem::offset_of!(EnemyData, layer),
+    Flash = core::mem::offset_of!(EnemyData, flash_timer),
+    Frozen = core::mem::offset_of!(EnemyData, frozen_timer),
+    Invincibility = core::mem::offset_of!(EnemyData, invincibility_timer),
+    Shake = core::mem::offset_of!(EnemyData, shake_timer),
+    Frame = core::mem::offset_of!(EnemyData, frame_counter),
+}
+
+pub(crate) fn native_read(game: &Game, address: usize) -> u16 {
+    u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]])
+}
+pub(crate) fn native_write(game: &mut Game, address: usize, value: u16) {
+    game.g_ram[address..address + 2].copy_from_slice(&value.to_ne_bytes());
+}
+impl EnemySlot {
+    pub(crate) fn new(index: u16) -> Self {
+        Self(index)
+    }
+    pub(crate) fn word(self, field: EnemyField, game: &Game) -> u16 {
+        native_read(game, 0xf78 + usize::from(self.0) + field as usize)
+    }
+    pub(crate) fn set(self, field: EnemyField, value: u16, game: &mut Game) {
+        native_write(game, 0xf78 + usize::from(self.0) + field as usize, value);
+    }
+    pub(crate) fn bank(self, game: &Game) -> u8 {
+        game.g_ram[0xf78 + usize::from(self.0) + core::mem::offset_of!(EnemyData, bank)]
     }
 }

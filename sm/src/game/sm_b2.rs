@@ -1,3 +1,4 @@
+use crate::game::enemy_scheduling::{update_frozen_enemy};
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a0::*;
 pub use crate::game::constants::bank_b4::*;
@@ -9,7 +10,7 @@ use crate::game::sm_90::ProjectileReflection;
 use crate::game::sm_a0::{
     CosineMult8bit, EnemyDeathAnimation, EnemyFunc_BBBF, Enemy_ItemDrop_LowerNorfairSpacePirate,
     Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi, IsSamusWithinEnemy_Y,
-    NormalEnemyFrozenAI, NormalEnemyPowerBombAi, NormalEnemyShotAi,
+    NormalEnemyPowerBombAi, NormalEnemyShotAi,
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi, SineMult8bit,
 };
 use crate::game::sprite_objects::create_sprite;
@@ -672,7 +673,7 @@ crate::game::callback_dispatch! {
     };
     @forward [pub unsafe fn (game: &mut Game)];
     [11698191] Enemy_GrappleReact_CancelBeam_B2 => Enemy_SwitchToFrozenAi(game);
-    [11698241] Enemy_NormalFrozenAI_B2 => NormalEnemyFrozenAI(game);
+    [11698241] Enemy_NormalFrozenAI_B2 => update_frozen_enemy(game);
     [11700071] WalkingSpacePirates_Powerbomb => NormalEnemyPowerBombAi(game);
 }
 

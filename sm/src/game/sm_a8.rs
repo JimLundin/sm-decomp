@@ -1,3 +1,4 @@
+use crate::game::enemy_scheduling::{update_frozen_enemy};
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
@@ -12,7 +13,7 @@ use crate::game::sm_a0::{
     EnemyDeathAnimation, EnemyFunc_ACA8, EnemyFunc_ADA3, EnemyFunc_B7A1, EnemyFunc_C8AD,
     EnemyGrappleDeath, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi,
     GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
-    NormalEnemyFrozenAI, NormalEnemyPowerBombAi, NormalEnemyShotAi,
+    NormalEnemyPowerBombAi, NormalEnemyShotAi,
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi, SamusHurtFromGrapple,
     SamusLatchesOnWithGrappleNoInvinc, SignExtend8, SineMult8bit, SineMult8bitFull,
     SwitchEnemyAiToMainAi,
@@ -3006,7 +3007,7 @@ crate::game::callback_dispatch! {
     [11042851] Enemy_NormalTouchAI_A8 => NormalEnemyTouchAi(game);
     [11042861] Enemy_NormalShotAI_A8 => NormalEnemyShotAi(game);
     Enemy_NormalPowerBombAI_A8 => NormalEnemyPowerBombAi(game);
-    [11042881] Enemy_NormalFrozenAI_A8 => NormalEnemyFrozenAI(game);
+    [11042881] Enemy_NormalFrozenAI_A8 => update_frozen_enemy(game);
 }
 
 crate::game::callback_dispatch! {

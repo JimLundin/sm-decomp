@@ -1,3 +1,4 @@
+use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
 use crate::game::minimap;
 pub use crate::game::prelude::*;
@@ -15,8 +16,7 @@ use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{
     Abs16, CalculateAngleFromXY, ConvertAngleToXy, CosineMult8bit, EnemyFunc_A6B4_UsedBySporeSpawn,
     EnemyFunc_B691, EnemyFunc_B7A1, EnemyFunc_Divide, Enemy_ItemDrop_Draygon,
-    Enemy_ItemDrop_SporeSpawn, Enemy_SwitchToFrozenAi, NormalEnemyFrozenAI,
-    NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
+    Enemy_ItemDrop_SporeSpawn, Enemy_SwitchToFrozenAi, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SignExtend8, SineMult8bit, SuitDamageDivision,
     SwitchEnemyAiToMainAi,
@@ -1388,7 +1388,7 @@ crate::game::callback_dispatch! {
     [10846223] Enemy_GrappleReact_CancelBeam_A5 => Enemy_SwitchToFrozenAi(game);
     [10846243] Enemy_NormalTouchAI_A5 => NormalEnemyTouchAi(game);
     [10846253] Enemy_NormalShotAI_A5 => NormalEnemyShotAi(game);
-    [10846273] Enemy_NormalFrozenAI_A5 => NormalEnemyFrozenAI(game);
+    [10846273] Enemy_NormalFrozenAI_A5 => update_frozen_enemy(game);
 }
 
 crate::game::callback_dispatch! {

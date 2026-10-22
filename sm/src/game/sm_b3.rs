@@ -1,3 +1,4 @@
+use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::prelude::*;
@@ -11,7 +12,7 @@ use crate::game::sm_a0::{
     CheckIfEnemyIsOnScreen, ConvertAngleToXy, EnemyFunc_B691, EnemyGrappleDeath,
     Enemy_ItemDrop_Botwoon, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi,
     GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsEnemyLeavingScreen, IsSamusWithinEnemy_X,
-    IsSamusWithinEnemy_Y, NormalEnemyFrozenAI, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy,
+    IsSamusWithinEnemy_Y, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy,
     NormalEnemyShotAi, NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SignExtend8, SwitchEnemyAiToMainAi,
 };
@@ -971,7 +972,7 @@ crate::game::callback_dispatch! {
     [11763757] Enemy_NormalShotAI_B3 => NormalEnemyShotAi(game);
     Enemy_NormalShotAI_SkipSomeParts_B3 => NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
     Enemy_NormalPowerBombAI_SkipDeathAnim_B3 => NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
-    [11763777] Enemy_NormalFrozenAI_B3 => NormalEnemyFrozenAI(game);
+    [11763777] Enemy_NormalFrozenAI_B3 => update_frozen_enemy(game);
 }
 
 crate::game::callback_dispatch! {

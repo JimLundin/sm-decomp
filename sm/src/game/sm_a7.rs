@@ -1,3 +1,4 @@
+use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
 use crate::game::decompression::decompress_to_ram;
 pub use crate::game::prelude::*;
@@ -18,8 +19,7 @@ use crate::game::sm_a0::{
     CallEnemyPreInstr, CheckIfEnemyTouchesSamus, DetermineDirectionOfSamusFromEnemy,
     EnemyDeathAnimation, EnemyFunc_BBBF, EnemyFunc_C8AD, Enemy_ItemDrop_Kraid,
     Enemy_ItemDrop_Phantoon, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi,
-    IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, NormalEnemyFrozenAI,
-    NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
+    IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SwitchEnemyAiToMainAi,
 };
@@ -2971,7 +2971,7 @@ crate::game::callback_dispatch! {
     [10977325] Enemy_NormalShotAI_A7 => NormalEnemyShotAi(game);
     [10977340]
     Enemy_NormalPowerBombAI_SkipDeathAnim_A7 => NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
-    [10977345] Enemy_NormalFrozenAI_A7 => NormalEnemyFrozenAI(game);
+    [10977345] Enemy_NormalFrozenAI_A7 => update_frozen_enemy(game);
     @forward [pub unsafe fn (game: &mut Game)];
     [10982559] Kraid_Touch => NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
     Kraid_Shot => NormalEnemyShotAi(game);

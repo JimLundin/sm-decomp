@@ -1,3 +1,4 @@
+use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
 pub use crate::game::prelude::*;
 
@@ -10,7 +11,7 @@ use crate::game::plm_spawning::SpawnHardcodedPlm;
 use crate::game::sm_86::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::SpawnHdmaObject;
 use crate::game::sm_a0::{
-    Enemy_ItemDrop_Crocomire, Enemy_MoveRight_IgnoreSlopes, NormalEnemyFrozenAI, NormalEnemyShotAi,
+    Enemy_ItemDrop_Crocomire, Enemy_MoveRight_IgnoreSlopes, NormalEnemyShotAi,
     NormalEnemyTouchAi, SamusLatchesOnWithGrapple,
 };
 use crate::game::sprite_objects::create_sprite;
@@ -1424,7 +1425,7 @@ crate::game::callback_dispatch! {
     [10780677] Enemy_GrappleReact_SamusLatchesOn_A4 => SamusLatchesOnWithGrapple(game);
     [10780707] Enemy_NormalTouchAI_A4 => NormalEnemyTouchAi(game);
     [10780717] Enemy_NormalShotAI_A4 => NormalEnemyShotAi(game);
-    [10780737] Enemy_NormalFrozenAI_A4 => NormalEnemyFrozenAI(game);
+    [10780737] Enemy_NormalFrozenAI_A4 => update_frozen_enemy(game);
 }
 
 crate::game::callback_dispatch! {

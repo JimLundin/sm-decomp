@@ -3,6 +3,7 @@
 //! Samus preparation includes projectile work; enemy processing and a possible
 //! message suspension separate it from movement/pose completion. Callbacks
 //! observe live RAM. Only the entry resume point is held across those callbacks.
+use crate::game::enemy_scheduling::{select_enemies, run_enemies};
 use crate::game::scene_drawing::{draw_scene, queue_enemy_tiles};
 use crate::game::message_boxes;
 use crate::game::prelude::*;
@@ -19,8 +20,7 @@ use crate::game::sm_90::{
     HandleControllerInputForGamePhysics, HandleSamusMovementAndPause, MainScrollingRoutine,
 };
 use crate::game::sm_a0::{
-    DecrementSamusTimers, DetermineWhichEnemiesToProcess,
-    EnemyMain, EprojProjCollDet, EprojSamusCollDetect, HandleRoomShaking,
+    DecrementSamusTimers, EprojProjCollDet, EprojSamusCollDetect, HandleRoomShaking,
     ProcessEnemyPowerBombInteraction,
     SamusProjectileInteractionHandler,
 };
@@ -54,13 +54,13 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
     crate::verify_probe::hit("coroutine.gameplay");
     let resume = ResumePoint::read(game);
     if resume == ResumePoint::Start {
-        DetermineWhichEnemiesToProcess(game);
+        select_enemies(game);
         PaletteFxHandler(game);
         HandleControllerInputForGamePhysics(game);
         if word!(game.debug_disable_sprite_interact) == 0 {
             SamusProjectileInteractionHandler(game);
         }
-        EnemyMain(game);
+        run_enemies(game);
     }
     // Read the queue after enemy callbacks, even when they changed it this pass.
     if resume == ResumePoint::EnemyMessage

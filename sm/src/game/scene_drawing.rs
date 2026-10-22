@@ -1,5 +1,8 @@
 //! Layer-ordered scene drawing and live enemy graphics compatibility.
 #![deny(unsafe_op_in_unsafe_fn)]
+use crate::game::enemy_ram::{
+    native_read as read, native_write as write, EnemyField as F, EnemySlot,
+};
 use crate::game::projectile_animation::draw_explosions;
 use crate::game::sm_81::{
     DrawSpritemapWithBaseTile, DrawSpritemapWithBaseTile2, DrawSpritemapWithBaseTileOffscreen,
@@ -11,17 +14,9 @@ use crate::game::sprite_objects::draw_sprites;
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
 use crate::rtl::{rom_record, Unreachable};
-use crate::types::{EnemyData, EnemySpawnData};
+use crate::types::EnemySpawnData;
 use core::mem::offset_of;
 
-#[forbid(unsafe_code)]
-fn read(game: &Game, address: usize) -> u16 {
-    u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]])
-}
-#[forbid(unsafe_code)]
-fn write(game: &mut Game, address: usize, value: u16) {
-    game.g_ram[address..address + 2].copy_from_slice(&value.to_ne_bytes());
-}
 unsafe fn queue_address(addr: u16) -> usize {
     if addr >= 0x2000 {
         unsafe {
@@ -37,8 +32,8 @@ unsafe fn queue_address(addr: u16) -> usize {
 }
 
 pub(crate) unsafe fn queue_enemy(game: &mut Game) {
-    let enemy = 0xf78 + usize::from(word!(game.cur_enemy_index));
-    let layer = read(game, enemy + offset_of!(EnemyData, layer)).wrapping_mul(2) >> 1;
+    let enemy = EnemySlot::new(word!(game.cur_enemy_index));
+    let layer = enemy.word(F::Layer, game).wrapping_mul(2) >> 1;
     // The stored index is evaluated before the queue address and its assertion.
     let index = word!(game.cur_enemy_index);
     let destination = word!(game.enemy_drawing_queue_sizes[layer])
@@ -93,50 +88,40 @@ pub(crate) unsafe fn draw_scene(game: &mut Game) {
 }
 
 unsafe fn draw_enemy(game: &mut Game) {
-    let index = usize::from(word!(game.cur_enemy_index));
-    let enemy = 0xf78 + index;
-    let spawn = 0x7000 + index;
+    let index = word!(game.cur_enemy_index);
+    let enemy = EnemySlot::new(index);
+    let spawn = 0x7000 + usize::from(index);
     // This slot stays captured across ROM diagnostics and sprite emission.
-    let field = |game: &Game, offset| read(game, enemy + offset);
-    let bank = |game: &Game| game.g_ram[enemy + offset_of!(EnemyData, bank)];
     let mut x = read(game, spawn + offset_of!(EnemySpawnData, xpos2))
-        .wrapping_add(field(game, offset_of!(EnemyData, x_pos)))
+        .wrapping_add(enemy.word(F::X, game))
         .wrapping_sub(word!(game.layer1_x_pos));
     let y = read(game, spawn + offset_of!(EnemySpawnData, ypos2))
-        .wrapping_add(field(game, offset_of!(EnemyData, y_pos)))
+        .wrapping_add(enemy.word(F::Y, game))
         .wrapping_sub(word!(game.layer1_y_pos));
-    let shake = field(game, offset_of!(EnemyData, shake_timer));
+    let shake = enemy.word(F::Shake, game);
     if shake != 0 {
-        x = x.wrapping_add(
-            if field(game, offset_of!(EnemyData, frame_counter)) & 2 == 0 {
-                1
-            } else {
-                0xffff
-            },
-        );
-        write(
-            game,
-            enemy + offset_of!(EnemyData, shake_timer),
-            shake.wrapping_sub(1),
-        );
+        x = x.wrapping_add(if enemy.word(F::Frame, game) & 2 == 0 {
+            1
+        } else {
+            0xffff
+        });
+        enemy.set(F::Shake, shake.wrapping_sub(1), game);
     }
-    let frozen = field(game, offset_of!(EnemyData, frozen_timer));
-    let palette = if field(game, offset_of!(EnemyData, flash_timer)) != 0
-        && word!(game.random_enemy_counter) & 2 != 0
-    {
+    let frozen = enemy.word(F::Frozen, game);
+    let palette = if enemy.word(F::Flash, game) != 0 && word!(game.random_enemy_counter) & 2 != 0 {
         0
     } else if frozen != 0 && (frozen >= 0x5a || frozen & 2 != 0) {
         0xc00
     } else {
-        field(game, offset_of!(EnemyData, palette_index))
+        enemy.word(F::Palette, game)
     };
-    let tile = field(game, offset_of!(EnemyData, vram_tiles_index));
-    if field(game, offset_of!(EnemyData, extra_properties)) & 4 == 0 {
+    let tile = enemy.word(F::Tile, game);
+    if enemy.word(F::ExtraProperties, game) & 4 == 0 {
         word!(game.enemy_processing_stage = 1);
         unsafe {
             DrawSpritemapWithBaseTile(
-                bank(game),
-                field(game, offset_of!(EnemyData, spritemap_pointer)),
+                enemy.bank(game),
+                enemy.word(F::Map, game),
                 x,
                 y,
                 palette,
@@ -146,31 +131,23 @@ unsafe fn draw_enemy(game: &mut Game) {
         }
         return;
     }
-    if field(game, offset_of!(EnemyData, spritemap_pointer)) & 0x8000 == 0 {
+    if enemy.word(F::Map, game) & 0x8000 == 0 {
         unsafe {
             Unreachable(game);
         }
     }
-    let mut remaining = i32::from(
-        unsafe {
-            rom_record(
-                bank(game),
-                field(game, offset_of!(EnemyData, spritemap_pointer)),
-                game,
-            )
-        }
-        .byte(0),
-    );
-    let mut cursor = field(game, offset_of!(EnemyData, spritemap_pointer)).wrapping_add(2);
+    let mut remaining =
+        i32::from(unsafe { rom_record(enemy.bank(game), enemy.word(F::Map, game), game) }.byte(0));
+    let mut cursor = enemy.word(F::Map, game).wrapping_add(2);
     loop {
-        let part = unsafe { rom_record(bank(game), cursor, game) };
-        let tilemap = unsafe { rom_record(bank(game), part.word(4), game) }.word(0) == 0xfffe;
+        let part = unsafe { rom_record(enemy.bank(game), cursor, game) };
+        let tilemap = unsafe { rom_record(enemy.bank(game), part.word(4), game) }.word(0) == 0xfffe;
         let part_x = x.wrapping_add(part.word(0));
         let part_y = y.wrapping_add(part.word(2));
         if tilemap {
-            if field(game, offset_of!(EnemyData, extra_properties)) & 0x8000 != 0 {
+            if enemy.word(F::ExtraProperties, game) & 0x8000 != 0 {
                 unsafe {
-                    copy_enemy_tilemap(bank(game), part.word(4), game);
+                    copy_enemy_tilemap(enemy.bank(game), part.word(4), game);
                 }
             }
         } else if (u32::from(part_x) + 128) & 0xfe00 == 0 && (u32::from(part_y) + 128) & 0xfe00 == 0
@@ -182,7 +159,7 @@ unsafe fn draw_enemy(game: &mut Game) {
             };
             unsafe {
                 draw(
-                    bank(game),
+                    enemy.bank(game),
                     part.word(4),
                     part_x,
                     part_y,

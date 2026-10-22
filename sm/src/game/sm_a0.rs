@@ -1,4 +1,4 @@
-use crate::game::scene_drawing::queue_enemy;
+use crate::game::enemy_scheduling::{shake_active_enemies, update_frozen_enemy};
 use crate::game::enemy_population_ram::initialize_room;
 pub use crate::game::prelude::*;
 
@@ -18,7 +18,7 @@ use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::square_slope_occupied;
 use crate::game::sprite_objects::{
-    create_sprite, update_sprites,
+    create_sprite,
 };
 use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
 
@@ -228,21 +228,10 @@ pub unsafe fn HandleRoomShaking(game: &mut Game) {
         }
         word!(game.earthquake_timer -= 1);
         if word!(game.earthquake_type) as i32 - 18i32 & 0x8000 == 0 {
-            SetAllEnemiesToShakeFor2Frames(game);
+            shake_active_enemies(game);
         }
     }
     word!(game.frame_counter_every_frame += 1);
-}
-pub unsafe fn SetAllEnemiesToShakeFor2Frames(game: &mut Game) {
-    let mut i: i32 = 0;
-    loop {
-        let v1: i32 = i >> 1;
-        if word!(game.active_enemy_indexes[v1]) == 0xffff {
-            break;
-        }
-        (*gEnemyData(word!(game.active_enemy_indexes[v1]) as i32, game)).shake_timer = 2;
-        i += 2;
-    }
 }
 crate::game::address_dispatch! {
     pub unsafe fn CallEnemyGfxDrawHook(ea: u32, game: &mut Game) => ea;
@@ -288,81 +277,6 @@ pub unsafe fn TransferEnemyTilesToVramAndInit(game: &mut Game) {
             game.set_vram_write_queue_tail(tail.wrapping_add(7));
         }
     }
-}
-pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
-    word!(game.UNUSED_word_7E0E46 += 1);
-    word! { game, 0;
-        cur_enemy_index, active_enemy_indexes_write_ptr, interactive_enemy_indexes_write_ptr,
-    }
-    if word!(game.flag_process_all_enemies) != 0 {
-        do_until! { (word!(game.cur_enemy_index) as i32 - 2048i32 & 0x8000 == 0);
-            let v5: u16 = word!(game.cur_enemy_index);
-            let v6 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-            if (*v6).enemy_ptr != 0 && (*v6).enemy_ptr as i32 != addr_kEnemyDef_DAFF as i32 {
-                if ((*v6).properties & 0x200) != 0 {
-                    (*v6).enemy_ptr = 0;
-                } else {
-                    let v7: u16 = word!(game.active_enemy_indexes_write_ptr);
-                    let v8: i32 = word!(game.active_enemy_indexes_write_ptr) as i32 >> 1;
-                    word!(game.active_enemy_indexes[v8] = word!(game.cur_enemy_index));
-                    word!(game.interactive_enemy_indexes[v8] = v5);
-                    word!(game.active_enemy_indexes_write_ptr = (v7).wrapping_add(2));
-                    if ((*v6).properties & 0x400) == 0 {
-                        let v9: u16 = word!(game.interactive_enemy_indexes_write_ptr);
-                        *(ram_ptr!(game, u16; 0x17ec)).offset(
-                            (word!(game.interactive_enemy_indexes_write_ptr) >> 1) as isize,
-                        ) = v5;
-                        word!(game.interactive_enemy_indexes_write_ptr = (v9).wrapping_add(2));
-                    }
-                }
-            }
-            word!(game.cur_enemy_index += 64);
-        }
-        *(ram_ptr!(game, u16; 0x17ac))
-            .offset((word!(game.active_enemy_indexes_write_ptr) >> 1) as isize) = -1i32 as u16;
-        *(ram_ptr!(game, u16; 0x17ec))
-            .offset((word!(game.interactive_enemy_indexes_write_ptr) >> 1) as isize) = -1i32 as u16;
-    } else {
-        do_until! { (word!(game.cur_enemy_index) as i32 - 2048i32 & 0x8000 == 0);
-            let v0: u16 = word!(game.cur_enemy_index);
-            let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-            if (*v1).enemy_ptr != 0 && (*v1).enemy_ptr as i32 != addr_kEnemyDef_DAFF as i32 {
-                let properties: u16 = (*v1).properties;
-                if (properties & 0x200) != 0 {
-                    (*v1).enemy_ptr = 0;
-                } else if (properties & 0x800) != 0
-                    || ((*v1).ai_handler_bits & 4) != 0
-                    || (((*v1).x_width as i32 + (*v1).x_pos as i32
-                        - word!(game.layer1_x_pos) as i32) as i16)
-                        >= 0
-                        && (((*v1).x_width as i32 + word!(game.layer1_x_pos) as i32 + 256
-                            - (*v1).x_pos as i32) as i16)
-                            >= 0
-                        && (((*v1).y_pos as i32 + 8 - word!(game.layer1_y_pos) as i32) as i16) >= 0
-                        && ((word!(game.layer1_y_pos) as i32 + 248 - (*v1).y_pos as i32) as i16)
-                            >= 0
-                {
-                    let v3: u16 = word!(game.active_enemy_indexes_write_ptr);
-                    *(ram_ptr!(game, u16; 0x17ac))
-                        .offset((word!(game.active_enemy_indexes_write_ptr) >> 1) as isize) =
-                        word!(game.cur_enemy_index);
-                    word!(game.active_enemy_indexes_write_ptr = (v3).wrapping_add(2));
-                    if ((*v1).properties & 0x400) == 0 {
-                        let v4: u16 = word!(game.interactive_enemy_indexes_write_ptr);
-                        *(ram_ptr!(game, u16; 0x17ec)).offset(
-                            (word!(game.interactive_enemy_indexes_write_ptr) >> 1) as isize,
-                        ) = v0;
-                        word!(game.interactive_enemy_indexes_write_ptr = (v4).wrapping_add(2));
-                    }
-                }
-            }
-            word!(game.cur_enemy_index += 64);
-        }
-        *(ram_ptr!(game, u16; 0x17ac))
-            .offset((word!(game.active_enemy_indexes_write_ptr) >> 1) as isize) = -1i32 as u16;
-        *(ram_ptr!(game, u16; 0x17ec))
-            .offset((word!(game.interactive_enemy_indexes_write_ptr) >> 1) as isize) = -1i32 as u16;
-    };
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallEnemyAi(ea: u32, game: &mut Game) => ea;
@@ -618,128 +532,6 @@ crate::game::callback_dispatch! {
         0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyInstr(ea, k, j, game)];
     }
 }
-pub unsafe fn EnemyMain(game: &mut Game) {
-    if word!(game.first_free_enemy_index) != 0 {
-        if word!(game.enemy_index_to_shake) != 0xffff {
-            (*gEnemyData(word!(game.enemy_index_to_shake) as i32, game)).shake_timer = 64;
-            word!(game.enemy_index_to_shake = -1i32 as u16);
-        }
-        let mut active_enemy_indexes_index: i32 = 0;
-        loop {
-            let v1: u16 = word!(game.active_enemy_indexes[(active_enemy_indexes_index >> 1)]);
-            if v1 == 0xffff {
-                break;
-            }
-            word!(game.cur_enemy_index = v1);
-            let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-            'process_enemy: {
-                let run_ai = if ((*E).properties & 0x400) == 0 {
-                    if (*E).invincibility_timer != 0 {
-                        (*E).invincibility_timer = (*E).invincibility_timer.wrapping_sub(1);
-                        true
-                    } else if word!(game.debug_disable_sprite_interact) == 0 {
-                        if word!(game.debug_time_frozen_for_enemies)
-                            | word!(game.time_is_frozen_flag)
-                            == 0
-                        {
-                            EnemyCollisionHandler(game);
-                            if (*E).enemy_ptr == 0 {
-                                break 'process_enemy;
-                            }
-                        }
-                        ((*E).extra_properties & 1) == 0
-                    } else {
-                        true
-                    }
-                } else {
-                    true
-                };
-                if run_ai {
-                    word!(game.UNUSED_word_7E17A2 = 0);
-                    let ran_ai = if word!(game.debug_time_frozen_for_enemies)
-                        | word!(game.time_is_frozen_flag)
-                        == 0
-                    {
-                        let mut v6: i16 = 0;
-                        let mut ai_handler_bits: u16 = (*E).ai_handler_bits;
-                        if ai_handler_bits != 0 {
-                            do_until! { (v8 != 0);
-                                v6 += 1;
-                                let mut v8: i8 = ((ai_handler_bits) as i8) & (1i8);
-                                ai_handler_bits = (ai_handler_bits >> 1);
-                            }
-                        }
-                        CallEnemyAi(
-                            (words!(
-                                i32,
-                                (
-                                    (*E).bank,
-                                    (*get_EnemyDef_A2(
-                                        ((*E).enemy_ptr as i32 + 2i32 * v6 as i32) as u16,
-                                        game,
-                                    ))
-                                    .main_ai
-                                )
-                            )) as u32,
-                            game,
-                        );
-                        true
-                    } else {
-                        let ED = get_EnemyDef_A2((*E).enemy_ptr, game);
-                        if (*ED).time_is_frozen_ai != 0 {
-                            CallEnemyAi(
-                                (words!(i32, ((*E).bank, (*ED).time_is_frozen_ai))) as u32,
-                                game,
-                            );
-                            true
-                        } else {
-                            false
-                        }
-                    };
-                    if ran_ai
-                        && word!(game.debug_time_frozen_for_enemies)
-                            | word!(game.time_is_frozen_flag)
-                            == 0
-                    {
-                        (*E).frame_counter = (*E).frame_counter.wrapping_add(1);
-                        if ((*E).properties & 0x2000) != 0 {
-                            word!(game.enemy_processing_stage = 2);
-                            ProcessEnemyInstructions(game);
-                        }
-                    }
-                }
-                if ((*E).extra_properties & 1) != 0
-                    && ((*E).flash_timer == 1 || (*E).frozen_timer == 1)
-                {
-                    (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).cause_of_death = 0;
-                    EnemyDeathAnimation(word!(game.cur_enemy_index), 0, game);
-                }
-                if (((*E).extra_properties & 4) != 0
-                    || EnemyWithNormalSpritesIsOffScreen(game) == 0)
-                    && ((*E).properties & 0x300) == 0
-                    && (word!(game.UNUSED_word_7E17A2) & 1) == 0
-                {
-                    queue_enemy(game);
-                }
-            }
-            if (*E).flash_timer != 0
-                && word!(game.debug_time_frozen_for_enemies) | word!(game.time_is_frozen_flag) == 0
-            {
-                (*E).flash_timer = (*E).flash_timer.wrapping_sub(1);
-                if (*E).flash_timer as i32 - 8i32 & 0x8000 != 0 {
-                    (*E).ai_handler_bits = ((*E).ai_handler_bits & !(2));
-                }
-            }
-            active_enemy_indexes_index += 2;
-        }
-    }
-    update_sprites(game);
-    word!(game.random_enemy_counter += 1);
-    word!(game.enemy_index_colliding_dirs[0] = -1i32 as u16);
-    word!(game.enemy_index_colliding_dirs[1] = -1i32 as u16);
-    word!(game.enemy_index_colliding_dirs[2] = -1i32 as u16);
-    word!(game.enemy_index_colliding_dirs[3] = -1i32 as u16);
-}
 pub unsafe fn DecrementSamusTimers(game: &mut Game) {
     if word!(game.samus_invincibility_timer) != 0 {
         word!(game.samus_invincibility_timer -= 1);
@@ -758,18 +550,6 @@ pub unsafe fn SpawnEnemyDrops(a: u16, k: u16, varE20: u16, game: &mut Game) {
     SpawnEprojWithGfx(varE20, k, addr_kEproj_Pickup as u16, game);
 }
 
-pub unsafe fn NormalEnemyFrozenAI(game: &mut Game) {
-    let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    (*v0).flash_timer = 0;
-    if (*v0).frozen_timer == 0 || {
-        (*v0).frozen_timer = (*v0).frozen_timer.wrapping_sub(1);
-        (word!(game.equipped_beams) & 2) == 0
-    } {
-        let v1: u16 = ((*v0).ai_handler_bits) & (0xfffbu16);
-        (*v0).ai_handler_bits = v1;
-        (*v0).frozen_timer = v1;
-    }
-}
 pub unsafe fn EnemyCollisionHandler(game: &mut Game) {
     if ((*gEnemyData(word!(game.cur_enemy_index) as i32, game)).extra_properties & 4) != 0 {
         EprojCollHandler_Multibox(game);
@@ -990,7 +770,7 @@ crate::game::callback_dispatch! {
     Enemy_NormalShotAI_SkipSomeParts_A0 => NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
     Enemy_NormalPowerBombAI_A0 => NormalEnemyPowerBombAi(game);
     Enemy_NormalPowerBombAI_SkipDeathAnim_A0 => NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
-    Enemy_NormalFrozenAI => NormalEnemyFrozenAI(game);
+    Enemy_NormalFrozenAI => update_frozen_enemy(game);
     [10846278] CreateADudShot => CreateDudShot(game);
     @external {
         10649676 => [()];

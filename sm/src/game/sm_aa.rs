@@ -1,3 +1,4 @@
+use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::music::{QueueMusic_Delayed8};
 pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_86::*;
@@ -17,8 +18,7 @@ use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
     CalculateAngleOfEnemyXfromEnemyY, CalculateBlockContainingPixelPos, CallEnemyPreInstr,
     CompareDistToSamus_X, EnemyFunc_C8AD, Enemy_ItemDrop_BombTorizo, Enemy_ItemDrop_GoldenTorizo,
-    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi, NormalEnemyFrozenAI,
-    NormalEnemyShotAi, NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
+    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi, NormalEnemyShotAi, NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy,
 };
 
@@ -818,7 +818,7 @@ crate::game::callback_dispatch! {
     };
     @forward [pub unsafe fn (game: &mut Game)];
     [11173903] Enemy_GrappleReact_CancelBeam_AA => Enemy_SwitchToFrozenAi(game);
-    [11173953] Enemy_NormalFrozenAI_AA => NormalEnemyFrozenAI(game);
+    [11173953] Enemy_NormalFrozenAI_AA => update_frozen_enemy(game);
 }
 
 crate::game::callback_dispatch! {

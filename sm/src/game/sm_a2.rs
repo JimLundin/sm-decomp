@@ -1,3 +1,4 @@
+use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::enemy_population_ram::delete_connected;
 pub use crate::game::prelude::*;
 
@@ -23,7 +24,7 @@ use crate::game::sm_a0::{
     CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, CompareDistToSamus_X, ConvertAngleToXy,
     EnemyFunc_BC76, EnemyGrappleDeath, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
     Enemy_MoveRight_SlopesAsWalls, Enemy_SwitchToFrozenAi, GetSamusEnemyDelta_X,
-    IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, NormalEnemyFrozenAI, NormalEnemyPowerBombAi,
+    IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, NormalEnemyPowerBombAi,
     NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy, RinkasDeathAnimation, SamusLatchesOnWithGrapple,
@@ -1359,7 +1360,7 @@ pub unsafe fn Rinka_Frozen(k: u16, game: &mut Game) {
     if Rinka_9(k, game) & 1 != 0 {
         (*Get_Rinka(k as i32, game)).base.frozen_timer = 0;
     }
-    NormalEnemyFrozenAI(game);
+    update_frozen_enemy(game);
     if (*Get_Rinka(0i32, game)).var_1D != 0 {
         Rinka_6(k, game);
         Rinka_8(k, game);
@@ -2645,7 +2646,7 @@ crate::game::callback_dispatch! {
     [10649615] Enemy_GrappleReact_CancelBeam_A2 => Enemy_SwitchToFrozenAi(game);
     [10649610] Enemy_GrappleReact_KillEnemy_A2 => EnemyGrappleDeath(game);
     [10649605] Enemy_GrappleReact_SamusLatchesOn_A2 => SamusLatchesOnWithGrapple(game);
-    [10649665] Enemy_NormalFrozenAI_A2 => NormalEnemyFrozenAI(game);
+    [10649665] Enemy_NormalFrozenAI_A2 => update_frozen_enemy(game);
     Enemy_NormalPowerBombAI_A2 => NormalEnemyPowerBombAi(game);
     [10649635] Enemy_NormalTouchAI_A2 => NormalEnemyTouchAi(game);
     [10649645] Enemy_NormalShotAI_A2 => NormalEnemyShotAi(game);

@@ -1,3 +1,4 @@
+use crate::game::enemy_scheduling::{select_enemies, run_enemies};
 use crate::game::scene_drawing::{draw_scene, queue_enemy_tiles};
 use crate::game::music::{
     HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY, LoadRoomMusic,
@@ -64,7 +65,6 @@ use crate::game::sm_9b::{
     HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
 use crate::game::sm_a0::{
-    DetermineWhichEnemiesToProcess, EnemyMain,
     TransferEnemyTilesToVramAndInit,
 };
 use crate::game::sm_a7::{
@@ -3628,16 +3628,16 @@ crate::game::callback_dispatch! {
             word!(game.game_state += 1);
             return GameState_10_LoadingNextRoom_Async(game);
         } else {
-            DetermineWhichEnemiesToProcess(game);
-            EnemyMain(game);
+            select_enemies(game);
+            run_enemies(game);
             draw_scene(game);
             EnsureSamusDrawnEachFrame(game);
         }
         kCoroutineNone as CoroutineRet
     };
     [8577694] DoorTransitionFunction_WaitForSoundsToFinish [] {
-        DetermineWhichEnemiesToProcess(game);
-        EnemyMain(game);
+        select_enemies(game);
+        run_enemies(game);
         draw_scene(game);
         EnsureSamusDrawnEachFrame(game);
         if game.sfx_queue_is_empty(0) && game.sfx_queue_is_empty(1) && game.sfx_queue_is_empty(2) {
@@ -3649,8 +3649,8 @@ crate::game::callback_dispatch! {
         if AdvancePaletteFadeForAllPalettes_0xc(game) != 0 {
             game.set_door_transition_function(0xe2f7);
         } else {
-            DetermineWhichEnemiesToProcess(game);
-            EnemyMain(game);
+            select_enemies(game);
+            run_enemies(game);
             draw_scene(game);
             EnsureSamusDrawnEachFrame(game);
         }
@@ -3864,8 +3864,8 @@ crate::game::callback_dispatch! {
     };
     [8578871] DoorTransition_FadeInScreenAndFinish [] {
         AnimtilesHandler(game);
-        DetermineWhichEnemiesToProcess(game);
-        EnemyMain(game);
+        select_enemies(game);
+        run_enemies(game);
         EprojRunAll(game);
         draw_scene(game);
         EnsureSamusDrawnEachFrame(game);
@@ -3888,8 +3888,8 @@ pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
         door_transition_flag_enemies, door_transition_flag_elevator_zebetites,
     }
     word! { game, 0; debug_disable_minimap, save_station_lockout_flag }
-    DetermineWhichEnemiesToProcess(game);
-    EnemyMain(game);
+    select_enemies(game);
+    run_enemies(game);
     draw_scene(game);
     EnsureSamusDrawnEachFrame(game);
     load_destination_cre(game);

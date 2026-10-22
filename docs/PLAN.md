@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,927 Rust lines in 118 files**, plus 262 C
-bridge and 296 C-header lines = **96,485 maintained implementation lines**.
+Current composition (2026-10-22): **95,990 Rust lines in 119 files**, plus 262 C
+bridge and 296 C-header lines = **96,548 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,316**. This complete recount includes frontend,
+gives **97,379**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -3161,6 +3161,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    across six files, twelve fewer cast-containing lines, unchanged unsafe count.
    Raw memory operations retire, but unsafe call boundaries remain. This is safety
    work, not volume savings. Checks: Local/sm-decomp-experiments/20261022/scene-drawing.
+   Enemy selection, ordered passes, shaking and frozen updates now belong to
+   `enemy_scheduling`; four bank-A0 routines retire and their callers migrate.
+   Captured enemy handles and checked native words replace raw slot/list accesses;
+   population loading and scene drawing share the same safe native-word helpers.
+   `enemy_ram` forbids unsafe code. Callback order, live versus captured indices,
+   native versus little-endian writes and overlapping list terminators remain.
+   **980 scheduler and 663 drawing old/new comparisons** pass. Probed and clean
+   loading pass **77/0**, inputs **8250..8326**, exercising actual selection, AI,
+   frame increments and instructions; shared native access begins at 8276.
+   Guarded setup, complete release builds and source checks pass. Complete cost:
+   **+63 Rust lines**, two fewer unsafe declarations and twenty fewer cast lines.
+   ROM diagnostics and behavioral callbacks remain unsafe; RAM still owns state.
+   This is safety work, not volume savings. Wider behavior has component coverage;
+   full-game unsafe elimination and state ownership remain open.
    Event/boss flag access and shared bit-mask preparation now live in the safe
    `progress_flags` module, which forbids unsafe code. All 15 caller files import
    it directly; the six bank-80 definitions are retired. Queries retain their
@@ -4286,15 +4300,21 @@ execution, shared effect ROM records, checked animated tiles, safe progress flag
 owned room metadata, checked door metadata, shared scroll loading, shared PLM
 spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
-checked sprite-object state and checked scene/enemy drawing,
-maintained Rust is **95,927**,
+checked sprite-object state, checked scene/enemy drawing and checked enemy scheduling,
+maintained Rust is **95,990**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,485**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,316**.
+Including 262 C and 296 header lines gives **96,548**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,379**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2973; cast lines 6463. Scene/enemy drawing adds 90 Rust lines
+unsafe functions 2971; cast lines 6443. Checked enemy scheduling adds 63 Rust
+lines across twenty source files, removing two counted unsafe declarations and
+twenty cast-containing lines. Raw slot/list access retires in four routines;
+the safe shared enemy adapter also serves population loading and drawing. ROM
+diagnostics and behavior callbacks remain unsafe; RAM remains authoritative.
+Other counters are unchanged. This is a safety cost, not volume savings.
+Scene/enemy drawing adds 90 Rust lines
 across six files, removing twelve cast-containing lines. Raw drawing-queue,
 enemy/spawn-field and multipart-record operations and tilemap memcpy retire;
 native RAM helpers and VRAM submission forbid unsafe code. Assertions, ROM

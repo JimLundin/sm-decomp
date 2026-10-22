@@ -4,6 +4,7 @@ use crate::game::constants::{bank_a0::*, bank_a4::*};
 use crate::game::enemy_population::{
     Creation, EnemyShape, PopulationEntry, SearchResult, SpawnSearch, SpawnSequence,
 };
+use crate::game::enemy_ram::{native_read as read, native_write as write};
 use crate::game::sm_a0::CallEnemyAi;
 use crate::game::sprite_objects::clear_sprites;
 use crate::game_state::Game;
@@ -13,14 +14,6 @@ use crate::rtl::rom_record;
 use crate::types::{EnemyData, EnemyDef, EnemySpawnData, EnemyTileset};
 use core::mem::offset_of;
 
-#[forbid(unsafe_code)]
-fn read(game: &Game, address: usize) -> u16 {
-    u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]])
-}
-#[forbid(unsafe_code)]
-fn write(game: &mut Game, address: usize, value: u16) {
-    game.g_ram[address..address + 2].copy_from_slice(&value.to_ne_bytes());
-}
 fn slot(index: u16) -> usize {
     0xf78 + usize::from(index)
 }

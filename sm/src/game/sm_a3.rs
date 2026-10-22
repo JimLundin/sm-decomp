@@ -1,3 +1,4 @@
+use crate::game::enemy_scheduling::{update_frozen_enemy};
 pub use crate::game::prelude::*;
 
 use crate::cpu_infra::Call;
@@ -18,7 +19,7 @@ use crate::game::sm_a0::{
     EnemyFunc_BF8A, EnemyFunc_C8AD, EnemyGrappleDeath, Enemy_ItemDrop_Metroid, Enemy_MoveDown,
     Enemy_MoveRight_IgnoreSlopes, Enemy_MoveRight_ProcessSlopes, Enemy_SwitchToFrozenAi,
     GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
-    NormalEnemyFrozenAI, NormalEnemyPowerBombAi, NormalEnemyShotAi,
+    NormalEnemyPowerBombAi, NormalEnemyShotAi,
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi, SignExtend8, SineMult8bit,
     SineMult8bitFull, SwitchEnemyAiToMainAi,
 };
@@ -2441,7 +2442,7 @@ crate::game::callback_dispatch! {
     [10715181] Enemy_NormalShotAI_A3 => NormalEnemyShotAi(game);
     Enemy_NormalShotAI_SkipSomeParts_A3 => NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
     Enemy_NormalPowerBombAI_A3 => NormalEnemyPowerBombAi(game);
-    [10715201] Enemy_NormalFrozenAI_A3 => NormalEnemyFrozenAI(game);
+    [10715201] Enemy_NormalFrozenAI_A3 => update_frozen_enemy(game);
 }
 
 crate::game::callback_dispatch! {
