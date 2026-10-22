@@ -85,8 +85,8 @@ new packages alone establishes neither ownership nor backend independence.
 
 **Coordinated iterations (2026-10-22): the user authorized ongoing worker
 supervision, lifecycle/commit coordination and resource oversight.** The
-beam-launch dependency is resolved below; missile acceleration is the next
-bounded implementation. One implementer and one independent read-only caller/
+beam launch, missile acceleration and extension creation are shared below;
+remaining consumers and unsafe dependencies are next. One implementer and one independent read-only caller/
 validation investigator work through a single integration/compiler lane.
 Build-pipeline preparation is complete; previous task queues and ownership
 experiments are not automatically restarted. Preserve active caches and saved
@@ -104,42 +104,46 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares complete missile acceleration through
-   `projectile_flight_control`, following beam launch at `8730d00e` and extension
-   contact at `e3fadf56`. Both RAM and owned paths use one captured ROM record,
-   ordered X/read/store then Y/read/store, and activation/launch/live-kind/spawn
-   ordering. The duplicate acceleration bodies and raw ROM acceleration loads
-   are removed. Checked LE RAM and native ROM reads preserve broad/odd aliases;
-   owned canonical admission and complete-owner fallback are unchanged. The
-   controller forbids unsafe code; legacy ROM capture, launch and spawn calls
-   remain unsafe. Extension creation, block reactions and broader unsafe
+   Latest verified stage shares complete extension creation through
+   `projectile_flight_control`, following missile acceleration at `f4674fa2`,
+   beam launch at `8730d00e` and extension contact at `e3fadf56`. RAM and owned
+   paths share first-free damage allocation and prepare/place/initialize/arm/
+   link/count ordering. Full pools return before parent admission or content
+   lookup. Checked RAM preserves child kind OR before parent capture, ordered
+   X/Y/direction copies, ignored placement rejection, captured child identity,
+   native link and final live counter reread. Both duplicate creation bodies
+   and the production flight module's last raw `word!` uses are removed.
+   The controller forbids unsafe code; placement, animation and ROM capture
+   retain legacy unsafe dependencies. Block reactions and broader unsafe
    elimination remain.
 
-   Saved production/current RAM/owned acceleration passes 600 comparisons,
-   including 128 matching failures, plus 24 short-record scenarios through both
-   checked paths and 24 returning/mutating diagnostic cases with six matching
-   failures. Canonical owned cases reject accidental acceleration fallback.
-   Reflection/history/activation, live-selector link, table spill and invalid
-   outer-phase failure prefixes execute. Launch, extension contact, flight,
-   beam, broad compatibility and session consumers also pass. Independent
-   references match pre-change Git source; raw out-of-allocation reference
-   reads are never invoked for short-record checks.
+   Saved production/current RAM/owned creation passes 266 comparisons,
+   including 56 matching failures and two actual animation/draw continuations,
+   plus 20 returning/mutating diagnostic cases. Canonical owned cases reject
+   accidental creation fallback. First-free/full pools, stale kind selectors,
+   parent-copy aliases, rejected placement, short checked records, captured ROM
+   and child, live selector and counter-alias linkage execute. Acceleration,
+   extension contact, flight, beam, broad compatibility and session consumers
+   also pass. Independent references match pre-change Git source; short creation
+   records execute the saved production path's already-checked initializer.
    All 144 runtime and 202 draft compiled inputs match. Formatting, normal
    release library/frontend/verifier builds and loaded DLL source checks pass.
    No movie ran. Synthetic content and controlled hardware do not establish
-   scheduler encounters or full-game fidelity. Production diagnostics are
-   compared through their native assertion entry; continuation is constructed
-   on the owned comparison path.
+   scheduler encounters or full-game fidelity. The created-child check calls
+   animation/drawing directly; it does not establish scheduler order.
+   Production diagnostics stop at their native assertion entry; returning
+   continuation is constructed on the owned comparison path.
 
-   Main is **101,703 Rust lines in 135 files**. The prospective composition is
-   **110,767 (+9,064)** and remains unadopted, without full-composition runtime
+   Main is **101,748 Rust lines in 135 files**. The prospective composition is
+   **110,837 (+9,089)** and remains unadopted, without full-composition runtime
    or movie comparison. Its Rust 2024 headless release library builds.
-   This stage adds 44 main and 34 owned-draft lines: **+78 complete lines**,
-   +851 lexical tokens and +2,866 normalized text bytes for shared behavior and
-   checked failure handling. Main removes one unsafe declaration and two counted
-   cast lines. Existing local verification grows 206 lines; including checks
-   gives +284 lines for this stage. No dependencies or maintained native/launcher
-   code are added. This is necessary safety work, not volume reduction.
+   This stage adds 45 main and 23 owned-draft lines; formatted composition
+   gives **+70 complete lines**, +724 lexical tokens and +2,695 normalized text
+   bytes for shared behavior and checked access. Main removes one unsafe
+   declaration and two counted cast lines. Existing local verification grows
+   219 lines; including checks gives +289 lines for this stage. No dependencies
+   or maintained native/launcher code are added. This is necessary safety work,
+   not volume reduction.
    Persistent Session authority
    and the substantial reduction remain unfinished.
 
@@ -150,8 +154,8 @@ references; measure build/test time and resource growth before changing the loop
      [the handoff](HANDOFF.md#paused-launch-draft) describes the verified continuation.
    - [x] Share missile acceleration and retire both duplicate bodies with
      canonical owned, broad RAM, failure-prefix and consumer comparisons.
-   - Select extension creation as the next explicit dependent change,
-     migrating consumers and deleting retained implementations.
+   - [x] Share extension creation, migrate both callers and delete duplicate
+     bodies with canonical/broad allocation, failure-prefix and consumer checks.
      Ordinary flight ordering and extension contact are already shared.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
@@ -160,10 +164,11 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified acceleration continuation, including
-   `acceleration-final-results.json`, `acceleration-main-source-check.json`,
-   `acceleration-composition-price.json` and the worker handoff in
-   `ACCELERATION_PROPOSAL.md`. `acceleration-parent/` preserves prior inputs.
+   `runtime-impact-working/` is the verified creation continuation, including
+   `creation-final-results.json`, `creation-main-source-check.json`,
+   `creation-composition-price.json` and the worker handoff in
+   `CREATION_HANDOFF.md`. `creation-parent/` preserves prior inputs; the completed
+   acceleration references remain in `acceleration-parent/`.
    `runtime-impact-stage/` preserves the previous terminal stage; the independent
    flight reference remains in `flight-parent/`; `extension-parent/` saves the
    immediately preceding source and composition changes.
@@ -318,12 +323,12 @@ content.
 
 ## Progress and references
 
-Verified shared-acceleration stage: Rust 101,703; maintained C bridge 266 and headers
-296 = **102,265 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **103,175**. The separate prospective owned
+Verified shared-creation stage: Rust 101,748; maintained C bridge 266 and headers
+296 = **102,310 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **103,220**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,935; cast-containing lines 6,144. These narrow counters do
+unsafe declarations 2,934; cast-containing lines 6,142. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 The isolated launch draft is now synchronized and verified; its original source

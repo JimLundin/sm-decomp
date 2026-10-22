@@ -6,7 +6,7 @@ use crate::game::sm_94::{
     BlockCollWaveBeamHoriz, BlockCollWaveBeamVert,
 };
 use crate::game_state::Game;
-use crate::ram_map::{checked_word, word, word_arrays as arrays};
+use crate::ram_map::{checked_word, word_arrays as arrays};
 use crate::rtl::Unreachable;
 
 pub use crate::game::projectile_flight_control::Flight;
@@ -182,7 +182,7 @@ impl<'a> control::MissileContext<&'a mut Game> for FlightContext {
         checked_word!(game.projectile_type[(slot >> 1)]) & 0x200 != 0
     }
     fn spawn(&mut self, game: &'a mut Game) -> &'a mut Game {
-        unsafe { spawn_extension(game) };
+        spawn_extension(game);
         game
     }
 }
@@ -250,26 +250,42 @@ pub(crate) fn link_extension(slot: u16, game: &mut Game) {
         .copy_from_slice(&(value & 0xff00).wrapping_add(slot).to_ne_bytes());
 }
 
-unsafe fn spawn_extension(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = 0;
-        while word!(game.projectile_damage[(v0 >> 1)]) != 0 {
-            v0 = (v0).wrapping_add(2);
-            if ((v0) as i16).wrapping_sub(10) >= 0 {
-                return;
-            }
-        }
-        let r20: u16 = v0;
-        let v1: i32 = v0 as i32 >> 1;
-        word!(game.projectile_type[v1] |= (0x8200u16));
-        let v2: i32 = word!(game.projectile_index) as i32 >> 1;
-        word!(game.projectile_x_pos[v1] = word!(game.projectile_x_pos[v2]));
-        word!(game.projectile_y_pos[v1] = word!(game.projectile_y_pos[v2]));
-        word!(game.projectile_dir[v1] = word!(game.projectile_dir[v2]));
-        InitProjectilePositionDirection(r20, game);
-        initialize_super_missile(v0, game);
-        word!(game.projectile_bomb_pre_instructions[v1] = ((0x90b075i32) as u16));
-        link_extension(v0, game);
-        word!(game.projectile_counter += 1);
+#[forbid(unsafe_code)]
+fn spawn_extension(game: &mut Game) {
+    control::spawn_extension(game, &mut FlightContext);
+}
+impl<'a> control::CreationContext<&'a mut Game> for FlightContext {
+    fn occupied(&self, game: &&mut Game, slot: u16) -> bool {
+        checked_word!(game.projectile_damage[(slot >> 1)]) != 0
+    }
+    #[forbid(unsafe_code)]
+    fn prepare(&mut self, game: &'a mut Game, slot: u16) -> (&'a mut Game, bool) {
+        let child = slot >> 1;
+        checked_word!(
+            game.projectile_type[child] = checked_word!(game.projectile_type[child]) | 0x8200
+        );
+        let parent = checked_word!(game.projectile_index) >> 1;
+        checked_word!(game.projectile_x_pos[child] = checked_word!(game.projectile_x_pos[parent]));
+        checked_word!(game.projectile_y_pos[child] = checked_word!(game.projectile_y_pos[parent]));
+        checked_word!(game.projectile_dir[child] = checked_word!(game.projectile_dir[parent]));
+        (game, true)
+    }
+    fn place(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
+        unsafe { InitProjectilePositionDirection(slot, game) };
+        game
+    }
+    fn initialize(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
+        unsafe { initialize_super_missile(slot, game) };
+        game
+    }
+    fn arm(&mut self, game: &mut &'a mut Game, slot: u16) {
+        checked_word!(game.projectile_bomb_pre_instructions[(slot >> 1)] = 0xb075);
+    }
+    fn link(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
+        link_extension(slot, game);
+        game
+    }
+    fn count(&mut self, game: &mut &'a mut Game) {
+        checked_word!(game.projectile_counter += 1);
     }
 }

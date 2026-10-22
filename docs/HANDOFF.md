@@ -9,9 +9,10 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest verified gameplay stage shares complete missile acceleration through
-`projectile_flight_control`, following beam launch at `8730d00e` and extension
-contact at `e3fadf56`. The user authorized ongoing coordinated worker iterations.
+The latest verified gameplay stage shares complete extension creation through
+`projectile_flight_control`, following missile acceleration at `f4674fa2`, beam
+launch at `8730d00e` and extension contact at `e3fadf56`.
+The user authorized ongoing coordinated worker iterations.
 Main and the current RAM/owned comparison carrier are synchronized and compared.
 
 The phase stage at `ba0d94c1` now also shares linked-extension contact through
@@ -23,36 +24,40 @@ owned position helper are removed. Current production and draft callers use
 the axis-parameterized contact entry.
 
 This follows shared room scans (`ff02c9b7`) and terminal impact/retirement
-(`de9bf05e`). Extension creation,
-block reactions, persistent Session authority and broader unsafe elimination
+(`de9bf05e`). Block reactions, placement/animation dependencies, persistent
+Session authority and broader unsafe elimination
 remain unfinished. Checked RAM is transitional; the destination has independent
 owned domain state. Never retain an authoritative typed owner across
 RAM-authoritative execution; transfer the complete owner.
 
-Main is **101,703 Rust lines in 135 files**, with 2,935 counted unsafe declarations
-and 6,144 cast-containing lines. Maintained implementation is 102,265 lines;
-including installers/launcher, 103,175. The full prospective composition is
-**110,767 Rust lines**, **+9,064 over main**, and remains unadopted.
+Main is **101,748 Rust lines in 135 files**, with 2,934 counted unsafe declarations
+and 6,142 cast-containing lines. Maintained implementation is 102,310 lines;
+including installers/launcher, 103,220. The full prospective composition is
+**110,837 Rust lines**, **+9,089 over main**, and remains unadopted.
 
-The acceleration stage adds 44 main and 34 owned-draft lines:
-**+78 complete lines, +851 lexical tokens, +2,866 normalized text bytes**.
-Existing local comparisons add 206 lines; including checks gives +284 lines.
+The creation stage adds 45 main and 23 owned-draft lines; formatted composition
+gives **+70 complete lines, +724 lexical tokens, +2,695 normalized text bytes**.
+Existing local comparisons add 219 lines; including checks gives +289 lines.
 These are safety/architecture costs, not volume savings. The substantial
 reduction and removal of all unsafe operations remain unfinished.
 
-The acceleration handoff is in `runtime-impact-working/ACCELERATION_PROPOSAL.md`.
-The controller and adapters retain captured records, X-before-Y writes, activation
-before launch, live-kind reread and live-selector extension linking. Both duplicate
-acceleration bodies and raw ROM loads are removed. ROM capture and legacy launch/
-spawn still require unsafe calls. `acceleration-parent/` preserves prior inputs.
-Selected results and price: `acceleration-final-results.json`,
-`acceleration-composition-price.json` and `acceleration-main-source-check.json`.
-The existing runner selects `runtime_acceleration_experiment` (600 comparisons,
-128 matched failures, 24 short-record scenarios through both checked paths) and
-`owned_acceleration_experiment` (24 diagnostic cases, six matched failures).
+The creation handoff is in `runtime-impact-working/CREATION_HANDOFF.md`.
+The shared controller retains full-pool early return, child kind OR before parent
+capture, ordered X/Y/direction copies, ignored placement rejection, captured child,
+native linkage and final live count. Both duplicate creation bodies and the
+production flight module's last raw `word!` uses are removed. Placement/animation
+and ROM capture still require unsafe calls. `creation-parent/` preserves prior
+inputs, including the previous composition files; acceleration references remain.
+Selected results and price: `creation-final-results.json`,
+`creation-composition-price.json` and `creation-main-source-check.json`.
+The existing runner selects `runtime_creation_experiment` (266 comparisons,
+56 matched failures, two animation/draw continuations) and
+`owned_creation_experiment` (20 returning diagnostic cases). Selected acceleration,
+flight, extension, beam, broad compatibility and session consumers also pass.
 Final production/source and Rust 2024 composition builds pass. No movie or
-full-composition runtime comparison is claimed. Extension creation is next;
-the existing worker's read-only proposal awaits its explicit implementation lane.
+full-composition runtime comparison is claimed. Created children call actual
+animation/drawing directly; this does not establish scheduler order. Remaining
+consumers and unsafe dependencies precede persistent owner promotion.
 
 ## Paused launch draft
 
@@ -98,7 +103,8 @@ Final production and prospective Rust 2024 headless release builds pass.
 Results: `launch-final-results.json`, `launch-final-check.log`,
 `launch-main-source-check.json`, `launch-production-build.log`,
 `launch-composition-price.json` and `launch-composition-build.log`.
-Missile acceleration is now shared; extension creation is the next dependency.
+Missile acceleration and extension creation are now shared; remaining consumers
+and runtime authority transfers are next.
 
 ## Local work and validation
 
@@ -182,8 +188,8 @@ to reproduce the local owned work; a fresh Git checkout alone lacks that work.
 
 ## Next dependency
 
-Share remaining launch, missile acceleration and extension creation and remove
-their duplicate implementations. Phase ordering and contact are already shared;
+Launch, missile acceleration, extension creation, phase ordering and contact
+are now shared;
 do not implement a second controller or adopt outer wiring alone. Price helpers, adapters, callers,
 registrations and deletions together. Then finish remaining consumers and runtime
 authority transfers; promotion of the owner still needs reset/load/rewind and
@@ -217,9 +223,10 @@ frames add no coverage. Keep the independent reference separate from new code.
 
 ## Tools and continuation rules
 
-The Rust migration agent completed; gameplay work is single-agent. No compiler
-is left running after the completed builds above. New subagents require
-authorization. Use PowerShell with `login:false`, `rg`, and one heavy compiler
+The Rust migration agent completed. The user authorized coordinated gameplay
+implementation and independent read-only review through one integration lane.
+No compiler is left running after the completed builds above.
+Use PowerShell with `login:false`, `rg`, and one heavy compiler
 at a time across the machine (`-j 1`). Recheck HEAD/index before every Git write;
 never reserve Git locks. Commit small verified changes to main and run
 `sh tools/progress.sh`. Never commit ROMs, states, ROM-derived assets or harnesses.

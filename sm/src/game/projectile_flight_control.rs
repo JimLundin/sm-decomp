@@ -158,6 +158,35 @@ pub trait ExtensionContext<O>: Context<O> {
     fn shift_extension(&mut self, owner: &mut O, parent: u16, child: u16, axis: Axis, delta: i16);
     fn select(&mut self, owner: &mut O, slot: u16);
 }
+
+pub trait CreationContext<O> {
+    fn occupied(&self, owner: &O, slot: u16) -> bool;
+    /// False means a compatibility call completed creation with the whole owner.
+    fn prepare(&mut self, owner: O, slot: u16) -> (O, bool);
+    fn place(&mut self, owner: O, slot: u16) -> O;
+    fn initialize(&mut self, owner: O, slot: u16) -> O;
+    fn arm(&mut self, owner: &mut O, slot: u16);
+    fn link(&mut self, owner: O, slot: u16) -> O;
+    fn count(&mut self, owner: &mut O);
+}
+pub fn spawn_extension<O>(owner: O, context: &mut impl CreationContext<O>) -> O {
+    let Some(slot) = (0..5)
+        .map(|i| 2 * i)
+        .find(|&slot| !context.occupied(&owner, slot))
+    else {
+        return owner;
+    };
+    let (mut owner, prepared) = context.prepare(owner, slot);
+    if prepared {
+        // Rejected placement still initializes, links and counts the captured child.
+        owner = context.place(owner, slot);
+        owner = context.initialize(owner, slot);
+        context.arm(&mut owner, slot);
+        owner = context.link(owner, slot);
+        context.count(&mut owner);
+    }
+    owner
+}
 /// Follow the parent at low speed; otherwise collide the linked child first.
 pub fn contact_extension<O>(
     mut owner: O,
