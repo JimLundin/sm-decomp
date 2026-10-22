@@ -176,3 +176,52 @@ pub(crate) unsafe fn run_room_setup(game: &mut Game) {
         CallRoomSetupCode(0x8f0000 | u32::from(code), game);
     }
 }
+
+/// Load scroll data and retain the selected record for the initial PLM list.
+/// Door loading reacquires that record later, after its scrolling suspension.
+pub(crate) unsafe fn load_scrolls<const INITIAL: bool>(game: &mut Game) -> crate::rom::RomRecord {
+    let state = room_record(game.roomdefroomstate_ptr(), game);
+    let mut cursor = state.word(offset_of!(State, rdf_scroll_ptr));
+    if cursor & 0x8000 == 0 {
+        generate_scrolls::<INITIAL>(cursor as u8, game);
+    } else {
+        for offset in (0..50).step_by(2) {
+            let value = room_record(cursor, game).word(0);
+            game.g_ram[0xcd20 + offset..0xcd22 + offset].copy_from_slice(&value.to_ne_bytes());
+            cursor = cursor.wrapping_add(2);
+        }
+    }
+    state
+}
+
+#[forbid(unsafe_code)]
+fn generate_scrolls<const INITIAL: bool>(bottom_color: u8, game: &mut Game) {
+    let bottom_row = (game.room_height_in_scrolls() as u8).wrapping_sub(1);
+    let (mut row, mut cell, mut color) = (0i8, 0u8, 2u8);
+    loop {
+        if i32::from(row) == i32::from(bottom_row) {
+            color = bottom_color.wrapping_add(1);
+        }
+        let mut column = 0i8;
+        loop {
+            game.g_ram[0xcd20 + usize::from(cell)] = color;
+            cell = cell.wrapping_add(1);
+            column += 1;
+            if i32::from(column) == i32::from(game.room_width_in_scrolls() as u8) {
+                break;
+            }
+        }
+        // Initial loading tests the wrapped i8; door loading tests the wider sum.
+        let next_row = if INITIAL {
+            row += 1;
+            i32::from(row)
+        } else {
+            let previous = row;
+            row = row.wrapping_add(1);
+            i32::from(previous) + 1
+        };
+        if next_row == i32::from(game.room_height_in_scrolls() as u8) {
+            return;
+        }
+    }
+}

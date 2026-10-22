@@ -4083,35 +4083,9 @@ pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
         decompress_to_ram(0xb9a09d, 0xa000, game);
         decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c0)), 0xa800, game);
     }
-    let RD = get_RoomDefRoomstate(word!(game.roomdefroomstate_ptr), game);
-    let mut rdf_scroll_ptr: i16 = (*RD).rdf_scroll_ptr as i16;
-    if rdf_scroll_ptr >= 0 {
-        let scrollval: u16 = (*RD).rdf_scroll_ptr;
-        let r20: u8 = ((word!(game.room_height_in_scrolls)) as u8).wrapping_sub(1);
-        let mut v8: u8 = 2;
-        let mut v9: u8 = 0;
-        let mut v10: i8 = 0;
-        do_until! { (v10 as i32 == word!(game.room_height_in_scrolls) as u8 as i32);
-            if v10 as i32 == r20 as i32 {
-                v8 = ((scrollval) as u8).wrapping_add(1);
-            }
-            let mut v11: i8 = 0;
-            do_until! { (v11 as i32 == word!(game.room_width_in_scrolls) as u8 as i32);
-            crate::update_place! { previous fresh145 = v9 => v9.wrapping_add(1); }
-            *ram_ptr!(game; 0xcd20, fresh145 as isize) = v8;
-            v11 += 1;
-        }
-            v10 += 1;
-        }
-    } else {
-        for m in (0u16..50).step_by(2) {
-            *(ram_ptr!(game, u16; 0xcd20, m as isize)) =
-                *(RomPtr_8F(rdf_scroll_ptr as u16, game) as *mut u16);
-            rdf_scroll_ptr = (rdf_scroll_ptr).wrapping_add(2);
-        }
-    }
-    if (*RD).room_plm_header_ptr != 0 {
-        let mut n: u16 = (*RD).room_plm_header_ptr;
+    let state = crate::game::room_state::load_scrolls::<true>(game);
+    if state.word(core::mem::offset_of!(RoomDefRoomstate, room_plm_header_ptr)) != 0 {
+        let mut n = state.word(core::mem::offset_of!(RoomDefRoomstate, room_plm_header_ptr));
         while (*get_RoomPlmEntry(n, game)).plm_header_ptr_ != 0 {
             SpawnRoomPLM(n, game);
             n = (n).wrapping_add(6);
@@ -4189,34 +4163,7 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
         }
         decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c0)), 0xa800, game);
     }
-    let RD = get_RoomDefRoomstate(word!(game.roomdefroomstate_ptr), game);
-    let mut rdf_scroll_ptr: i16 = (*RD).rdf_scroll_ptr as i16;
-    if rdf_scroll_ptr >= 0 {
-        let r18: u16 = (*RD).rdf_scroll_ptr;
-        let r20: u8 = ((word!(game.room_height_in_scrolls)) as u8).wrapping_sub(1);
-        let mut v8: u8 = 2;
-        let mut v9: u8 = 0;
-        let mut v10: i8 = 0;
-        do_until! { (v12 as i32 + 1 == word!(game.room_height_in_scrolls) as u8 as i32);
-            if v10 as i32 == r20 as i32 {
-                v8 = ((r18) as u8).wrapping_add(1);
-            }
-            let mut v12: i8 = v10;
-            let mut v11: i8 = 0;
-            do_until! { (v11 as i32 == word!(game.room_width_in_scrolls) as u8 as i32);
-            crate::update_place! { previous fresh35 = v9 => v9.wrapping_add(1); }
-            *ram_ptr!(game; 0xcd20, fresh35 as isize) = v8;
-            v11 += 1;
-        }
-            v10 = (v12).wrapping_add(1);
-        }
-    } else {
-        for m in (0u16..50).step_by(2) {
-            *(ram_ptr!(game, u16; 0xcd20, m as isize)) =
-                *(RomPtr_8F(rdf_scroll_ptr as u16, game) as *mut u16);
-            rdf_scroll_ptr = (rdf_scroll_ptr).wrapping_add(2);
-        }
-    };
+    crate::game::room_state::load_scrolls::<false>(game);
 }
 pub unsafe fn CreatePlmsExecuteDoorAsmRoomSetup(game: &mut Game) {
     let mut RoomDefRoomstate = get_RoomDefRoomstate(word!(game.roomdefroomstate_ptr), game);

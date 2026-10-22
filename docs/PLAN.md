@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,547 Rust lines in 113 files**, plus 262 C
-bridge and 296 C-header lines = **96,105 maintained implementation lines**.
+Current composition (2026-10-22): **95,543 Rust lines in 113 files**, plus 262 C
+bridge and 296 C-header lines = **96,101 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,936**. This complete recount includes frontend,
+gives **96,932**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2653,6 +2653,26 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    have component coverage only. No wider route or credits coverage is claimed.
    Normal library/frontend/verifier builds, source/native stamps and progress pass.
    Checks: Local/sm-decomp-experiments/20261022/door-metadata.
+   Initial and door scroll loading now share checked record reads and generation.
+   The generator forbids unsafe code, preserving the distinct signed row-counter
+   tests, byte cursor wrap, live dimensions and ordered writes. Initial loading
+   retains its captured state record for the later PLM pointer read. Complete
+   savings are **4 Rust lines**. One counted unsafe declaration is added for the
+   shared native ROM diagnostic boundary; raw scroll-table/record operations
+   are retired. Other level-loading copies and PLM operations remain unsafe.
+   **378 actual old/new full-state comparisons**, 30,035 ordered scroll writes,
+   130 actual PLM spawns and 93 matching controlled failures/stops pass, including
+   bounded prefixes for nonterminating dimensions. Seventy-two candidate-only
+   short-image cases check partial reads/writes. All 120 library inputs per side,
+   four fixture inputs and test-only changes are checked. Probed and clean Ceres
+   loading/first-door segments each pass **3,380/0**, inputs **8250..11629**, through
+   fade completion and two further frames. Both generated paths, the initial
+   list terminator, display and scrolling consumers execute. Table data and
+   nonempty/zero-pointer PLM lists have component coverage. Two earlier attempts
+   missed spawn/null-pointer probes; the route was not extended. The cached setup
+   precedes these loaders; no wider route or credits coverage is claimed.
+   Normal builds, source/native stamps, formatting and progress pass.
+   Checks: Local/sm-decomp-experiments/20261022/room-scroll-loading.
    Event/boss flag access and shared bit-mask preparation now live in the safe
    `progress_flags` module, which forbids unsafe code. All 15 caller files import
    it directly; the six bank-80 definitions are retired. Queries retain their
@@ -3775,14 +3795,19 @@ population ownership, owned native audio uploads, typed runtime initialization,
 owned native-player RAM with named field transfers, DSP RAM ownership and typed
 stereo output, checked tracing, owned room-background records, checked palette
 execution, shared effect ROM records, checked animated tiles, safe progress flags,
-owned room metadata and checked door metadata, maintained Rust is **95,547**,
-with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,105**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,936**.
+owned room metadata, checked door metadata and shared scroll loading, maintained
+Rust is **95,543**, with applicable static, component and exercised movie checks passing.
+Including 262 C and 296 header lines gives **96,101**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,932**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2996; cast lines 6519. Checked door metadata adds eight maintained
+unsafe functions 2997; cast lines 6513. Shared checked scroll loading removes four
+Rust lines and six cast-containing lines, while adding one counted unsafe
+declaration for the shared native diagnostic boundary. Other counters are
+unchanged. Its generated path forbids unsafe code; raw scroll reads/writes and
+the initial retained room-record pointer are retired. RAM remains authoritative.
+Checked door metadata adds eight maintained
 Rust lines and removes two counted unsafe declarations; other residue counters
 are unchanged. Raw record reads in the six migrated routines are retired; native
 diagnostics and actual map/setup effects remain unsafe. This is a safety cost.
