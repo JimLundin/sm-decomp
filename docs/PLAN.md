@@ -2051,6 +2051,35 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    nested-mechanism-session. Carry these checks into the full candidate while
    migrating actual script effects and the shared message/session boundary.
    Current creation/door code, runtime imports and generic aliases remain open.
+   Those nested checks now also run through a new owned gameplay/door caller pass
+   in the top-level full projectile candidate. Its caller-tagged continuation
+   retains the existing mechanism owner across enemy-message, door-Vblank and
+   mechanism-message suspension. Entry decisions stay captured while callback
+   changes to persisted continuation bytes remain observable. **120 comparisons**,
+   1,811 ordered full-RAM observations and 50 matching failures pass: 80 new caller
+   cases plus the coordinator's 40 nested frame/dialogue cases, now routing both
+   callers through the replacement. Cases cover all entry tags, both interaction
+   reads, live queues, direction-dependent door completion, every selected phase's
+   failure prefix and real call/return/countdown/release across six caller steps.
+   Actual frame dispatch, dialogue control flow and gameplay timer consumers run
+   in the nested cases; loading, animation, input and device leaves stay controlled.
+   One native eight-call, two-creation lifecycle retains the same world through
+   gameplay and door continuations without RAM/ROM decoding. A copied RAM image
+   resumes the component; frontend save/checkpoint formats remain untested here.
+   Exact 9d8b6a7f caller/frame/dialogue/timer bodies, script/pass references and
+   RAM source pass review. All **115+134 compiled inputs**, 124 unchanged inherited
+   files, optimized build and formatting pass; the donor's 115+130 compiled inputs
+   were source-checked without rerunning its old implementation. No movie or
+   earlier projectile/creation/contact/script suite ran. Partial incremental cost
+   is **197 model + 141 provider = 338 lines**, versus 142 selected reference lines
+   (**+196**), with no new macros. Separate support costs: 186 new reference,
+   572 new paired-fixture, 125 native-fixture delta, 83 scheduler-fixture delta,
+   four harness, and 314/224/478 reused-and-rebound nested reference/binding/fixture
+   lines. Source/result: player-projectiles/mechanism-session-stage. This owns the
+   two caller passes, not the complete frame or shared dialogue service. Persistent
+   runtime authority, actual phase-body migration, remaining script effects,
+   concurrent dialogue and current creation/door reconciliation, and full pricing
+   remain open. No production adoption or net saving is established.
    The full projectile candidate now includes shared script control flow:
    13 actual commands and two wake consumers use the
    existing owned slots for sleep/release, pre-actions, counters, conditional
