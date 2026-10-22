@@ -1,3 +1,4 @@
+use crate::snapshot_io::{Block, SnapshotIo, TransferError};
 // Split-word assembly evaluates high then low. The i32 form retains signed
 // casts, including sign extension of the low operand. Repeated receivers and
 // operands are evaluated separately. Set/add keep pointer-before-value order
@@ -122,14 +123,11 @@ crate::typed_struct! {
         pub ports: [u8; 4];
     }
 
-    pub struct LoadFuncState {
-        pub p, pend: *mut u8;
-    }
 }
 pub use crate::types::Dsp;
 pub use crate::types::{RunFrameFunc, SyncAllFunc};
 
-pub use crate::types::{SaveLoadFunc, SaveLoadOperation as C2RustUnnamed_0};
+pub use crate::types::SaveLoadOperation as C2RustUnnamed_0;
 pub const kSaveLoad_Replay: C2RustUnnamed_0 = 3;
 pub const kSaveLoad_Load: C2RustUnnamed_0 = 2;
 pub const kSaveLoad_Save: C2RustUnnamed_0 = 1;
@@ -168,31 +166,37 @@ pub unsafe fn recording_allocation(result: crate::recording::BufferResult) {
         panic!("allocation error callback returned");
     }
 }
-pub unsafe fn saveFunc(
-    ctx_in: *mut c_void,
-    data: *mut c_void,
-    data_size: size_t,
-    _game: &mut Game,
-) {
-    let bytes = if data_size == 0 {
-        &[]
-    } else {
-        std::slice::from_raw_parts(data.cast::<u8>(), data_size)
-    };
-    recording_allocation((*ctx_in.cast::<RecordingBytes>()).extend(bytes));
+// Native diagnostics stay at the boundary; stream bookkeeping is checked Rust.
+pub(crate) unsafe fn snapshot_result(result: Result<(), TransferError>) {
+    match result {
+        Ok(()) => {}
+        Err(TransferError::Allocation(error)) => recording_allocation(Err(error)),
+        Err(TransferError::Truncated) => {
+            crate::native_assertion! {
+                '_c2rust_label;
+                b"(size_t)(st->pend - st->p) >= data_size\0", b"src/sm_rtl.c\0", 59,
+                b"void loadFunc(void *, void *, size_t)\0"
+            };
+        }
+    }
 }
-pub unsafe fn loadFunc(ctx: *mut c_void, data: *mut c_void, data_size: size_t, game: &mut Game) {
-    let st = ctx as *mut LoadFuncState;
-    crate::native_assertion! {
-        '_c2rust_label: (*st).pend.offset_from((*st).p) as c_long as size_t >= data_size;
-        b"(size_t)(st->pend - st->p) >= data_size\0", b"src/sm_rtl.c\0", 59,
-        b"void loadFunc(void *, void *, size_t)\0"
-    };
-    memcpy(data, (*st).p as *const c_void, data_size);
-    (*st).p = (*st).p.offset(data_size as isize);
+
+// Hardware regions include padding and retained raw aliases. Keep raw copies
+// until field-based serializers replace them; never borrow all RAM mutably.
+pub(crate) unsafe fn snapshot_region(io: &mut SnapshotIo<'_>, data: *mut u8, size: usize) {
+    let result = io.block(size, |block| {
+        if size != 0 {
+            let (destination, source) = match block {
+                Block::Save(bytes) => (bytes.as_mut_ptr(), data as *const u8),
+                Block::Load(bytes) => (data, bytes.as_ptr()),
+            };
+            memcpy(destination.cast(), source.cast(), size);
+        }
+    });
+    snapshot_result(result);
 }
-unsafe fn LoadSnesState(func: Option<SaveLoadFunc>, ctx: *mut c_void, game: &mut Game) {
-    snes_saveload(game.g_snes, func, ctx, game);
+
+unsafe fn FinishLoadSnesState(game: &mut Game) {
     crate::snes::ppu::PpuRestoreRenderRouting(&mut *(*game.g_snes).ppu);
     (*(*game.g_snes).cpu).e = false_0 != 0;
     let next: u32 = ((*(*game.g_snes)
@@ -216,9 +220,6 @@ unsafe fn LoadSnesState(func: Option<SaveLoadFunc>, ctx: *mut c_void, game: &mut
             .offset(((*(*game.g_snes).cpu).sp as i32 + 4) as isize) = (0xf71b - 1i32 >> 8) as u8;
     }
     RtlSynchronizeWholeState(game);
-}
-unsafe fn SaveSnesState(func: Option<SaveLoadFunc>, ctx: *mut c_void, game: &mut Game) {
-    snes_saveload(game.g_snes, func, ctx, game);
 }
 
 pub unsafe fn ReadFromFile(f: *mut FILE, data: *mut c_void, n: size_t) {
@@ -295,21 +296,12 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
         replay_pos_last_complete = 0, replay_pos = game.state_recorder.replay_pos_last_complete,
         replay_frame_counter = 0, };
         if game.state_recorder.base_snapshot.size > 8192 as size_t {
-            let mut state: LoadFuncState = LoadFuncState {
-                p: game.state_recorder.base_snapshot.as_mut_ptr(),
-                pend: game
-                    .state_recorder
-                    .base_snapshot
-                    .as_mut_ptr()
-                    .offset(game.state_recorder.base_snapshot.size as isize),
-            };
-            LoadSnesState(
-                Some(loadFunc as unsafe fn(*mut c_void, *mut c_void, size_t, &mut Game) -> ()),
-                &raw mut state as *mut c_void,
-                game,
-            );
+            let mut state = SnapshotIo::Load(game.state_recorder.base_snapshot.as_slice());
+            snes_saveload(game.g_snes, &mut state);
+            let complete = state.remaining() == 0;
+            FinishLoadSnesState(game);
             crate::native_assertion! {
-                '_c2rust_label_0: state.p == state.pend;
+                '_c2rust_label_0: complete;
                 b"state.p == state.pend\0", b"src/sm_rtl.c\0", 219,
                 b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0"
             };
@@ -334,18 +326,13 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
         let mut arr = RecordingBytes::default();
         recording_allocation(arr.resize(hdr[6] as usize));
         ReadFromFile(f, arr.as_mut_ptr() as *mut c_void, arr.size);
-        let mut state_0: LoadFuncState = LoadFuncState {
-            p: arr.as_mut_ptr(),
-            pend: arr.as_mut_ptr().offset(arr.size as isize),
-        };
-        LoadSnesState(
-            Some(loadFunc as unsafe fn(*mut c_void, *mut c_void, size_t, &mut Game) -> ()),
-            &raw mut state_0 as *mut c_void,
-            game,
-        );
+        let mut state = SnapshotIo::Load(arr.as_slice());
+        snes_saveload(game.g_snes, &mut state);
+        let complete = state.remaining() == 0;
+        FinishLoadSnesState(game);
         drop(arr);
         crate::native_assertion! {
-            '_c2rust_label_2: state_0.p == state_0.pend;
+            '_c2rust_label_2: complete;
             b"state.p == state.pend\0", b"src/sm_rtl.c\0", 240,
             b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0"
         };
@@ -399,11 +386,7 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
 pub unsafe fn StateRecorder_Save(f: *mut FILE, saving_with_bug: bool, game: &mut Game) {
     let mut hdr: [u32; 16] = [0i32 as u32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let mut arr = RecordingBytes::default();
-    SaveSnesState(
-        Some(saveFunc as unsafe fn(*mut c_void, *mut c_void, size_t, &mut Game) -> ()),
-        &raw mut arr as *mut c_void,
-        game,
-    );
+    snes_saveload(game.g_snes, &mut SnapshotIo::Save(&mut arr));
     let sr = &game.state_recorder;
     crate::native_assertion! {
         '_c2rust_label: sr.base_snapshot.size == 0 as size_t
@@ -486,10 +469,9 @@ pub unsafe fn StateRecorder_ClearKeyLog(game: &mut Game) {
     } else {
         None
     };
-    SaveSnesState(
-        Some(saveFunc as unsafe fn(*mut c_void, *mut c_void, size_t, &mut Game) -> ()),
-        &raw mut game.state_recorder.base_snapshot as *mut c_void,
-        game,
+    snes_saveload(
+        game.g_snes,
+        &mut SnapshotIo::Save(&mut game.state_recorder.base_snapshot),
     );
     if let Some(snapshots) = live_audio {
         snapshots.0.restore(game.g_snes);

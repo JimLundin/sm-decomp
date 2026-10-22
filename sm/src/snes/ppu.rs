@@ -3,7 +3,7 @@ use ::core::ffi::{c_char, c_void};
 use ::core::mem::{size_of, transmute};
 
 use crate::c_library::{__assert_fail, malloc, memcpy, memset};
-pub use crate::types::{size_t, Ppu, PpuPixelPrioBufs, PpuZbufType, SaveLoadFunc, Snes};
+pub use crate::types::{size_t, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes};
 crate::type_aliases! {
     pub C2RustUnnamed_0, C2RustUnnamed_1, C2RustUnnamed_2, C2RustUnnamed_3 = u32;
 }
@@ -81,17 +81,11 @@ pub unsafe fn ppu_reset(ppu: *mut Ppu) {
     (*ppu).forcedBlank = true;
 }
 
-pub unsafe fn ppu_saveload(
-    ppu: *mut Ppu,
-    func: Option<SaveLoadFunc>,
-    ctx: *mut c_void,
-    game: &mut Game,
-) {
-    func.expect("non-null function pointer")(
-        ctx,
-        &raw mut (*ppu).vram as *mut c_void,
+pub unsafe fn ppu_saveload(ppu: *mut Ppu, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
+    crate::rtl::snapshot_region(
+        io,
+        &raw mut (*ppu).vram as *mut u8,
         (67313 as size_t).wrapping_sub(8 as size_t),
-        game,
     );
 }
 // These duplicate renderer inputs are outside the legacy serialized PPU range.

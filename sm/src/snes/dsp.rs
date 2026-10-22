@@ -1,7 +1,6 @@
 use crate::c_library::malloc;
-use crate::game_state::Game;
-pub use crate::types::{size_t, Dsp, SaveLoadFunc};
-use core::{ffi::c_void, mem::size_of};
+pub use crate::types::{size_t, Dsp};
+use core::mem::size_of;
 
 // The shared DSP state is also used by the native music sequencer and snapshots.
 #[link(name = "lakesnes_backend", kind = "static", modifiers = "-bundle")]
@@ -28,17 +27,11 @@ pub unsafe fn dsp_init(ram: *mut u8) -> *mut Dsp {
 pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     backend_reset(dsp);
 }
-pub unsafe fn dsp_saveload(
-    dsp: *mut Dsp,
-    func: Option<SaveLoadFunc>,
-    ctx: *mut c_void,
-    game: &mut Game,
-) {
-    func.expect("non-null function pointer")(
-        ctx,
-        &raw mut (*dsp).ram as *mut c_void,
+pub unsafe fn dsp_saveload(dsp: *mut Dsp, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
+    crate::rtl::snapshot_region(
+        io,
+        &raw mut (*dsp).ram as *mut u8,
         (size_of::<Dsp>() as size_t).wrapping_sub(8 as size_t),
-        game,
     );
 }
 pub unsafe fn dsp_cycle(dsp: *mut Dsp) {

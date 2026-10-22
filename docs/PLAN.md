@@ -34,10 +34,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,312 Rust lines in 97 files**, plus 262 C
-bridge and 296 C-header lines = **94,870 maintained implementation lines**.
+Current composition (2026-10-22): **94,295 Rust lines in 98 files**, plus 262 C
+bridge and 296 C-header lines = **94,853 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,701**. This complete recount includes frontend,
+gives **95,684**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1604,10 +1604,9 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    signatures, copy/clear/selection, both cartridge mappings, reset, recorder bases,
    oracle snapshot transfers and verifier checkpoints use checked access. Three
    save-payload loops replace retained RAM pointers with offsets. The owner
-   forbids unsafe code; its explicit legacy snapshot pointer still feeds the
-   unsafe SaveLoadFunc contract, preserving live callback aliases. Migrating that
-   callback and native file/hardware interfaces remains open. This is not complete
-   SRAM safety. Complete cost: **+37 maintained lines**, with no new macros.
+   forbids unsafe code. The snapshot-stream replacement below removes its final
+   raw pointer escape; native file/hardware interfaces remain unsafe. The SRAM
+   ownership change costs **+37 maintained lines**, with no new macros.
    All **858** actual old/new comparisons pass, including full-bank LoROM/HiROM
    sweeps, non-power-of-two masks, F0 read/write asymmetry, cartridge reloads,
    both checksum copies, real copy/clear/menu callers, partial snapshot tails,
@@ -1618,6 +1617,24 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    builds and installed-native source checks pass. No movie ran; synthetic
    scenarios establish no gameplay-route, physical-device or allocator-event
    coverage. Checks: Local/sm-decomp-experiments/20261022/owned-sram.
+   Snapshot transfer now has one checked stream instead of SaveLoadFunc, raw
+   context pointers and the LoadFuncState pointer cursor. All hardware adapters,
+   recorder callers and SRAM use it; the stream module forbids unsafe code.
+   The complete replacement removes **17 maintained lines**, including its owner,
+   callers and registrations. It retains the 275,493-byte frontend snapshot
+   format, transfer order, per-block truncation checks and CPU/Snes post-effects.
+   All **145** actual old/new comparisons pass: 33 raw snapshot cases, 104
+   recorder/load/replay/clear/checkpoint cases and eight synchronization callbacks
+   that resize the loaded replay base. Twenty native truncation failures have
+   identical diagnostics; an allocation-failure pair and seven checked-stream
+   cases pass. All 104 old/105 final library inputs, release library/frontend/
+   verifier builds and native source checks pass. No movie ran; synthetic fixtures
+   establish no gameplay-route, physical-device or allocator-event coverage.
+   The raw hardware copy bridge remains explicitly unsafe: legacy regions include
+   padding and retained pointers. Do not replace it with whole-RAM mutable views.
+   Field-based serialization must preserve these spans and their failure phases;
+   it remains required work, not an elimination result of this stream change.
+   Checks: Local/sm-decomp-experiments/20261022/snapshot-stream.
    The existing shared ROM-table interface now uses that owned image with checked
    signed offsets and byte reads, preserving image capture before index evaluation,
    live patch visibility, native byte order and linear bank crossings. Its 725
@@ -2647,17 +2664,23 @@ shared configuration/input and utility dependencies, the desktop host,
 room-scroll data, the shader dependency, safe pose/mechanism RAM access,
 gameplay continuation ownership, owned ROM reads, safe asset decompression,
 checked ROM tables, safe word transfers, owned recording, checked VRAM readback
-owned sprite drawing, checked Mode 7 transfers and owned SRAM, maintained Rust is **94,312**, with
+owned sprite drawing, checked Mode 7 transfers, owned SRAM and checked snapshot
+streams, maintained Rust is **94,295**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **94,870**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,701**.
+Including 262 C and 296 header lines gives **94,853**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,684**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3039; cast lines 6579. Owned SRAM adds 37 maintained lines and
+unsafe functions 3038; cast lines 6579. Checked snapshot streams remove 17
+maintained lines and one counted unsafe function; other counters are unchanged.
+The stream owns checked cursor/output handling, and the SRAM pointer escape is
+removed. Hardware copies and native file/error interfaces remain unsafe.
+Owned SRAM adds 37 maintained lines and
 removes two counted raw RAM offsets; other counters are unchanged. The byte owner
-forbids unsafe code, but the legacy snapshot callback and native file/hardware
-interfaces remain unsafe. This is a safety cost, not a reduction. Mode 7 transfers remove 37 lines, one
+forbids unsafe code; the subsequent stream change retires its legacy snapshot
+callback. Native file/hardware interfaces remain unsafe. The SRAM ownership cost
+is not a reduction. Mode 7 transfers remove 37 lines, one
 counted unsafe declaration and 22 cast-containing lines; other counters are
 unchanged. Owned sprite drawing adds seven maintained
 lines and removes two counted unsafe declarations and 13 cast-containing lines.

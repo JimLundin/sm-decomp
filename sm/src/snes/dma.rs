@@ -5,7 +5,7 @@ use ::core::mem::{size_of, transmute};
 
 use crate::c_library::{__assert_fail, malloc, printf};
 use crate::snes::snes::{snes_read, snes_readBBus, snes_write, snes_writeBBus};
-pub use crate::types::{size_t, Dma, SaveLoadFunc, Snes};
+pub use crate::types::{size_t, Dma, Snes};
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 pub const __ASSERT_FUNCTION: [c_char; 34] =
@@ -39,19 +39,13 @@ pub unsafe fn dma_reset(dma: *mut Dma) {
     set_fields! {[(*dma)], 0; hdmaTimer, dmaTimer}
     (*dma).dmaBusy = false;
 }
-pub unsafe fn dma_saveload(
-    dma: *mut Dma,
-    func: Option<SaveLoadFunc>,
-    ctx: *mut c_void,
-    game: &mut Game,
-) {
-    func.expect("non-null function pointer")(
-        ctx,
-        &raw mut (*dma).channel as *mut c_void,
+pub unsafe fn dma_saveload(dma: *mut Dma, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
+    crate::rtl::snapshot_region(
+        io,
+        &raw mut (*dma).channel as *mut u8,
         (225 as size_t)
             .wrapping_add(7 as size_t)
             .wrapping_sub(8 as size_t),
-        game,
     );
 }
 pub unsafe fn dma_read(dma: *mut Dma, address: u16) -> u8 {

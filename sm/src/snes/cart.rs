@@ -4,7 +4,7 @@ use crate::host::Die;
 use crate::rom::RomImage;
 use crate::rtl::words;
 use crate::snes::cpu::DumpCpuHistory;
-pub use crate::types::{size_t, Cart, SaveLoadFunc, Snes};
+pub use crate::types::{size_t, Cart, Snes};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
 use ::core::ptr::null_mut;
@@ -22,18 +22,11 @@ pub unsafe fn cart_init(snes: *mut Snes) -> *mut Cart {
     cart
 }
 pub unsafe fn cart_reset(cart: *mut Cart) {}
-pub unsafe fn cart_saveload(
-    cart: *mut Cart,
-    func: Option<SaveLoadFunc>,
-    ctx: *mut c_void,
-    game: &mut Game,
-) {
-    func.expect("non-null function pointer")(
-        ctx,
-        (*cart).ram.legacy_snapshot_ptr().cast(),
-        (*cart).ramSize as size_t,
-        game,
-    );
+pub unsafe fn cart_saveload(cart: *mut Cart, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
+    let ram = &(*cart).ram;
+    let mut bytes = ram.bytes(0..(*cart).ramSize as usize);
+    crate::rtl::snapshot_result(io.transfer(&mut bytes));
+    ram.write_bytes(0, &bytes);
 }
 pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: *mut u8, romSize: i32, ramSize: i32) {
     (*cart).type_0 = type_0 as u8;

@@ -719,8 +719,6 @@ crate::type_aliases! {
     pub SDL_JoystickID, SDL_Keycode = Sint32;
 }
 
-pub type SaveLoadFunc = unsafe fn(*mut c_void, *mut c_void, size_t, &mut Game) -> ();
-
 pub type Sint16 = i16;
 
 pub type Uint64 = u64;

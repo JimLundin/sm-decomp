@@ -52,15 +52,4 @@ impl SaveRam {
     pub fn copy_within(&self, source: Range<usize>, destination: usize) {
         self.write_bytes(destination, &self.bytes(source));
     }
-
-    // The legacy SaveLoadFunc still receives a raw buffer and Game together.
-    // Cell permits its live accesses through either owner without a held borrow.
-    // Migrating that callback contract remains separate unsafe-memory work.
-    pub(crate) fn legacy_snapshot_ptr(&self) -> *mut u8 {
-        if self.0.is_empty() {
-            std::ptr::null_mut()
-        } else {
-            self.0.as_ptr().cast::<u8>().cast_mut()
-        }
-    }
 }

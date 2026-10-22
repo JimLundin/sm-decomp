@@ -1,9 +1,7 @@
 //! Legacy-compatible SPC700 execution through the pinned LakeSnes dependency.
 use crate::c_library::malloc;
-use crate::game_state::Game;
 use crate::snes::apu::apu_cpuRead;
-use crate::types::{Apu, SaveLoadFunc, Spc};
-use core::ffi::c_void;
+use crate::types::{Apu, Spc};
 use core::mem::{offset_of, size_of};
 
 const _: () = {
@@ -33,11 +31,6 @@ pub unsafe fn spc_reset(spc: *mut Spc) {
     n = false, i = false, h = false, p = false, b = false,
     stopped = false, cyclesUsed = 0, };
 }
-pub unsafe fn spc_saveload(
-    spc: *mut Spc,
-    func: Option<SaveLoadFunc>,
-    ctx: *mut c_void,
-    game: &mut Game,
-) {
-    func.expect("non-null function pointer")(ctx, &raw mut (*spc).a as *mut c_void, 15, game);
+pub unsafe fn spc_saveload(spc: *mut Spc, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
+    crate::rtl::snapshot_region(io, &raw mut (*spc).a as *mut u8, 15);
 }

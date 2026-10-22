@@ -14,7 +14,7 @@ use crate::snes::ppu::{
     ppu_checkOverscan, ppu_handleVblank, ppu_init, ppu_read, ppu_reset, ppu_runLine, ppu_saveload,
     ppu_write,
 };
-pub use crate::types::{size_t, SaveLoadFunc, Snes};
+pub use crate::types::{size_t, Snes};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
 pub const true_0: i32 = 1;
@@ -32,20 +32,15 @@ pub unsafe fn snes_init(ram: *mut u8) -> *mut Snes {
     input1 = input_init(snes), input2 = input_init(snes), };
     snes
 }
-pub unsafe fn snes_saveload(
-    snes: *mut Snes,
-    func: Option<SaveLoadFunc>,
-    ctx: *mut c_void,
-    game: &mut Game,
-) {
-    cpu_saveload((*snes).cpu, func, ctx, game);
-    apu_saveload((*snes).apu, func, ctx, game);
-    dma_saveload((*snes).dma, func, ctx, game);
-    ppu_saveload((*snes).ppu, func, ctx, game);
-    cart_saveload((*snes).cart, func, ctx, game);
-    func.expect("non-null function pointer")(ctx, &raw mut (*snes).hPos as *mut c_void, 54, game);
-    func.expect("non-null function pointer")(ctx, (*snes).ram as *mut c_void, 0x20000, game);
-    func.expect("non-null function pointer")(ctx, &raw mut (*snes).ramAdr as *mut c_void, 4, game);
+pub unsafe fn snes_saveload(snes: *mut Snes, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
+    cpu_saveload((*snes).cpu, io);
+    apu_saveload((*snes).apu, io);
+    dma_saveload((*snes).dma, io);
+    ppu_saveload((*snes).ppu, io);
+    cart_saveload((*snes).cart, io);
+    crate::rtl::snapshot_region(io, &raw mut (*snes).hPos as *mut u8, 54);
+    crate::rtl::snapshot_region(io, (*snes).ram as *mut u8, 0x20000);
+    crate::rtl::snapshot_region(io, &raw mut (*snes).ramAdr as *mut u8, 4);
     (*snes).runningWhichVersion = 0;
 }
 pub unsafe fn snes_reset(snes: *mut Snes, hard: bool, game: &mut Game) {

@@ -3,7 +3,7 @@ use crate::game_state::Game;
 use crate::snes::dsp::{dsp_cycle, dsp_init, dsp_read, dsp_reset, dsp_saveload, dsp_write};
 use crate::snes::spc::{spc_init, spc_reset, spc_runOpcode, spc_saveload};
 use crate::tracing::getProcessorStateSpc;
-pub use crate::types::{size_t, Apu, DspRegWriteHistory, SaveLoadFunc};
+pub use crate::types::{size_t, Apu, DspRegWriteHistory};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
 pub const true_0: i32 = 1;
@@ -36,22 +36,16 @@ pub unsafe fn apu_reset(apu: *mut Apu) {
     (*apu).cpuCyclesLeft = 7;
     (*apu).c2rust_unnamed.hist.count = 0;
 }
-pub unsafe fn apu_saveload(
-    apu: *mut Apu,
-    func: Option<SaveLoadFunc>,
-    ctx: *mut c_void,
-    game: &mut Game,
-) {
-    func.expect("non-null function pointer")(
-        ctx,
-        &raw mut (*apu).ram as *mut u8 as *mut c_void,
+pub unsafe fn apu_saveload(apu: *mut Apu, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
+    crate::rtl::snapshot_region(
+        io,
+        &raw mut (*apu).ram as *mut u8 as *mut u8,
         (65586 as size_t)
             .wrapping_add(6 as size_t)
             .wrapping_sub(16 as size_t),
-        game,
     );
-    dsp_saveload((*apu).dsp, func, ctx, game);
-    spc_saveload((*apu).spc, func, ctx, game);
+    dsp_saveload((*apu).dsp, io);
+    spc_saveload((*apu).spc, io);
 }
 
 pub unsafe fn apu_cycle(apu: *mut Apu, game: &mut Game) {

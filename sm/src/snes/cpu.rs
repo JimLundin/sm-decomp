@@ -4,7 +4,7 @@ use crate::game_state::Game;
 use crate::host::Die;
 use crate::rtl::words;
 use crate::snes::snes::{snes_cpuRead, snes_cpuWrite};
-use crate::types::{Cpu, SaveLoadFunc, Snes};
+use crate::types::{Cpu, Snes};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
 static CYCLES_PER_OPCODE: [u8; 256] = [
@@ -48,13 +48,8 @@ pub unsafe fn cpu_reset(cpu: *mut Cpu, game: &mut Game) {
     finish_reset(&mut *cpu);
 }
 
-pub unsafe fn cpu_saveload(
-    cpu: *mut Cpu,
-    func: Option<SaveLoadFunc>,
-    ctx: *mut c_void,
-    game: &mut Game,
-) {
-    func.expect("non-null function pointer")(ctx, &raw mut (*cpu).a as *mut c_void, 27, game);
+pub unsafe fn cpu_saveload(cpu: *mut Cpu, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
+    crate::rtl::snapshot_region(io, &raw mut (*cpu).a as *mut u8, 27);
     (*cpu).spBreakpoint = 0;
 }
 
