@@ -2274,15 +2274,50 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    its 18 fixture-support lines are unchanged and reused. Sources/DLL/results:
    player-projectiles/runtime-flight-stage, with **193 top-level and 130 runtime
    files** preserved and byte-compared. Earlier stages remain intact.
-   This step adds **37 candidate implementation/integration lines**, plus 483 new
-   fixture, 26 existing-fixture and 18 harness lines. No new implementation macros
-   or maintained-main savings; this draft leaves adopted source and progress
-   counters unchanged. The prior hud-selection-stage's 9,126-line, 77-file recount
-   has a different scope from extracted old references and establishes no net
-   deletion budget. Continue the remaining bomb/SBA, script, compatibility and
-   session bindings in this full candidate, then price all retired code, adapters
-   and registrations. Substantial structural savings, complete safety and runtime
-   adoption remain open.
+   The flight binding step adds **37 candidate implementation/integration lines**,
+   plus 483 new fixture, 26 existing-fixture and 18 harness lines. It adds no
+   implementation macros or maintained-main savings.
+   The same complete candidate now binds ordinary bombs, spread bombs, Power Bombs
+   and the four SBA families to actual runtime dependencies. Ammunition decrements,
+   explosion origins, HDMA enable/start and both contact paths carry the existing
+   complete-session authority transfer. Bomb/SBA, animation, drawing and update
+   models remain byte-identical to runtime-flight-stage; independent owned models
+   still forbid unsafe code. Native bomb contact, nested native PLM creation and
+   HDMA dependencies remain unsafe compatibility execution, not eliminated calls.
+   **62 selected actual-runtime comparisons** pass, including six full gameplay
+   preparation sequences. All complete RAM, returns, DMA snapshots and **195 paired
+   external-boundary states** match; all cases complete and no diagnostic flag is
+   raised. The candidate records 707 runtime-effect hits separately. Checks cover
+   bomb placement, zero/last/high-bit ammunition, fuse flash and detonation, spread
+   motion/contact, bomb-created room mechanisms, SBA spending, construction,
+   near-transition orbit states, release and drawing. Selected phase/fuse states
+   are constructed explicitly; no natural full-lifetime/movie coverage is claimed.
+   Required Power Bomb startup calls reach actual DMA-register writes in four
+   scenarios. Frozen startup preserves deferred status; unfreezing reaches the
+   real HDMA handler. Free, one-free and full channel pools are checked. Created
+   channels execute synthetic instruction records through the actual handler,
+   and their resulting table pointers are required. Attached typed DMA/cart bus
+   state is compared; no CPU/render/audio advancement or physical display is run.
+   Only these affected producer/consumer scenarios ran; prior collision, flight,
+   feedback and dialogue sweeps were not repeated. No movie ran.
+   Optimized runtime-library/DLL builds, formatting, fixture source inverses and
+   all **124+169 compiled inputs** pass; 164 inherited candidate sources are
+   unchanged. Twenty reached runtime units and the movement-sound caller still
+   match main after concurrent enemy-record commit **061bfeb8**. The frozen f7ce6b8a
+   library changes only by a five-line access gate forwarding to the existing
+   private Power Bomb startup body; total fixture support is 23 lines. The candidate
+   receives that leaf as an explicit dependency and contains no fixture reference.
+   Sources/DLL/results: player-projectiles/runtime-bomb-stage, with **195 top-level
+   and 130 runtime files** preserved and byte-compared. Earlier stages remain intact.
+   This step adds **37 candidate implementation/integration lines**, plus 510 new
+   fixture, five existing-fixture and 11 harness lines; runtime fixture support
+   grows by five lines. No new implementation macros or maintained-main savings;
+   this draft leaves adopted source and progress counters unchanged. The prior
+   hud-selection-stage's 9,126-line, 77-file recount has a different scope from
+   extracted old references and establishes no net deletion budget. Continue the
+   remaining script, compatibility and session bindings in this full candidate,
+   then price all retired code, adapters and registrations. Substantial structural
+   savings, complete safety and runtime adoption remain open.
    The full projectile candidate now includes shared script control flow:
    13 actual commands and two wake consumers use the
    existing owned slots for sleep/release, pre-actions, counters, conditional
