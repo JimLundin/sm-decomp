@@ -1620,6 +1620,16 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    not a typed old/new replacement. Synthetic pose definitions and controlled
    remaining callees limit coverage; 115 frozen library and five local compiled
    inputs are checked. No movie ran. Local work: 20261022/aim-handoff.
+   Its typed follow-up at 20261022/owned-aim passes 383 actual old/new full-RAM
+   comparisons (322 direct, 37 linked steps, 24 real extension compositions),
+   149 ordered observations and 44 matching failures. Capture, consumption,
+   expiry and placement now have a pure model and checked adapter, both forbidding
+   unsafe code. Extension creation ignores placement rejection and still initializes;
+   partial failure remains distinct. Separately, 1,024 codec cases and one
+   uninterrupted typed-owner sequence pass. All 115 frozen library and ten local
+   compiled inputs are checked. Synthetic definitions and controlled remaining
+   callees limit coverage; no movie or production promotion. Integrate this code
+   into the same whole-projectile candidate and include all adapter/caller costs.
    The source-only weapon-control audit refines the design: Samus owns shared
    beam/grapple charge, aim, resources and global contact protection; projectiles
    own reservations/lifecycles with ordered effects on Samus. Drawing/palette

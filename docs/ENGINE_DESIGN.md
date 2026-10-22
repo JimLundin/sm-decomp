@@ -224,12 +224,17 @@ The names below are proposed operations, not new production functions:
 | Restore weapon sound | Ordinary, deferred and republished resume requests differ; message/unpause completion also has a direct restoration path. |
 | Cancel / reset | Clear-charge, clear-charge-and-flare, projectile reset and Samus initialization retain different state. Keep the named causes and affected values explicit. |
 
-The aim experiment executes production placement and selected producers: **68
-full-RAM fixture comparisons**, including 14 expected partial failures, plus eight
-linked sequences and four counterexamples. It establishes that captured aim and
-live origin cannot be collapsed into one pose snapshot. This is behavior discovery,
-not an old/new typed replacement test. Other rows above are source-audited findings;
-their gameplay execution and complete writer/alias closure remain unestablished.
+The [typed aim follow-up](RAM_OWNERSHIP.md#typed-aim-and-placement-follow-up)
+implements capture, one-use consumption, phase expiry, default/fallback selection
+and live-origin placement. **383 actual old/new comparisons** pass, including
+44 matching failures and 24 real extension-caller compositions. The latter show
+that extension creation ignores placement rejection and still initializes its
+slot; ordinary firing does not. Failure and rejection therefore have named,
+caller-specific meanings. A separate sequence retains the typed pending state
+without intermediate RAM decoding. The model and checked experiment adapter
+forbid unsafe code; production integration and global writer closure remain open.
+The preceding 68-fixture discovery experiment is preserved separately. Other rows
+above remain source-audited findings without new gameplay execution coverage.
 
 The full projectile draft may temporarily aggregate these inputs for comparison.
 Its final interface must give each value one authority and apply cross-owner
@@ -305,14 +310,27 @@ through foreign execution, preserve nesting and failures, and encode those rules
 in the actual callers. The whole-projectile implementation and full cost remain
 open; no savings or gameplay-route coverage follow from this prototype.
 
-The [firing and flight stages of the full draft](RAM_OWNERSHIP.md#whole-projectile-draft-first-firing-slice)
-then pass 425 comparisons, with controlled foreign calls. Its owner crosses
+The [reviewed full draft stage](RAM_OWNERSHIP.md#whole-projectile-draft-first-firing-slice)
+passes 1,295 comparisons, with controlled foreign calls. Its owner crosses
 those calls by value, rereads returned inputs, and publishes partial state before
-diverging on an invalid table lookup. These stages cover beam input/firing, flight,
-linked-extension collision, release and linked production cooldown checks.
-Animation, acceleration, remaining weapons/trails, actual contact reactions and
-production runtime integration remain outstanding. Retained out-of-pool execution
-still uses reference bodies. No whole-replacement cost is established.
+diverging on an invalid table lookup. It covers beam input/firing, flight,
+acceleration, extensions, release, projectile animation/drawing decisions and
+linked production cooldown. Beam firing now calls owned initialization directly,
+removing that legacy effect and its publish/import round trip. Placement, launch
+speed, real contact reactions, remaining weapons/trails/reset and production
+runtime integration remain outstanding in this stage. The typed aim experiment
+above is supplied for integration into the same candidate. Retained out-of-pool
+execution still uses reference bodies. No whole-replacement cost is established.
+
+State ownership alone will not finish the game-facing interface. This draft still
+uses raw bank addresses for definition lookup, numeric animation instruction
+pointers and `Motion::Legacy` for some behaviors. These are explicit compatibility
+debt. Named attack/animation definitions and remaining motion transitions must
+replace them, with address decoding and observed failure behavior in the adapter.
+Retaining a captured definition allocation while observing its live contents is
+also an existing contract; eagerly decoding every definition would require its
+own equivalence argument. Both definition and state migration costs belong in
+the complete replacement price.
 
 ## Shared behavior and coordination
 

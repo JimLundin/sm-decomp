@@ -484,6 +484,15 @@ before storing X/Y. Reservation rejection leaves pending aim available;
 `Samus_Func10` later clears it. Captured aim, live origin and launch history thus
 have three different observation contracts.[^aimplacement][^aiminput][^aimclear]
 
+Placement's rejection result has different callers. Beam and missile firing
+stop on rejection. Super-missile extension creation first copies its parent's
+position/direction, ignores placement rejection, then initializes and links the
+extension. Rejection decrements the count before extension creation increments
+it, leaving the original count; copied origin/direction remain on this path.
+Origin-table failure instead stops before that initialization. The typed follow-up
+below exercises this distinction through the actual extension caller with a
+controlled initializer.[^extensionplacement][^beamlaunch][^missilelaunch]
+
 | State | Proposed owner | Observed interaction |
 | --- | --- | --- |
 | Charge/control (`flare_counter`) | Samus weapon control | Beam and grapple use one counter; other consumers include contact attacks, bomb spread, PLM cancellation and encounter transitions. |
@@ -785,6 +794,23 @@ accesses explicitly execute retained reference bodies. Animation, remaining weap
 rules, production callers and runtime authority closure are still unfinished.
 These checks establish no movie coverage or complete replacement price.
 
+The preserved `animation-stage/` expands the same candidate through projectile
+initialization, impact/playback, trail-frame sampling, drawing decisions and
+missile acceleration/extension creation: **1,295 comparisons**, **1,824 ordered
+observations** and **134 matching failures** pass. Beam firing and extension
+creation call the owned initializer directly. Its old initialization effect is
+removed. Eight checks specific to that controlled initializer were retired;
+the final total is not an unchanged-suite comparison with the earlier 1,303 stage.
+The coordinator independently checked all 115 embedded library inputs against
+`15589b48` and eleven compiled draft inputs/hashes, and reviewed the final result
+without repeating its run. Checks include live definition edits/replacement,
+damage-write ordering, script deletion/goto, Ceres coordinate quirks and partial
+failures. Placement, speed initialization, collision, drawing/trail consumers and
+native diagnostics remain controlled; definitions are synthetic. No movie ran.
+This is still an unadopted draft. Whole-owner integration, remaining modes/trails/
+reset, named definition/motion interfaces, raw-address retirement and the complete
+cost are open. The two older compiled stages remain available separately.
+
 ### Aim capture, placement and expiry
 
 An isolated experiment against frozen `15589b48` executes the production bodies
@@ -814,6 +840,43 @@ handoff behavior, not complete pose/weapon writer closure or gameplay reachabili
 of unusual indices. Reproduction: `Local/sm-decomp-experiments/20261022/aim-handoff`
 (`prepare.py`, `build.py`, `check.py`, `result.json`). No production change or
 saving is claimed.
+
+### Typed aim and placement follow-up
+
+The next isolated prototype implements `PendingAim` capture, consumption and
+expiry, plus `PlacementAim` default/fallback selection and live-origin placement.
+Its domain model contains no RAM/ROM addresses or `Game`; the separate checked
+adapter projects results in their original order. The model and adapter both
+forbid unsafe code. It preserves imported capture-marker residue for compatibility
+without collapsing the captured direction into a Boolean flag.
+
+**383 actual old/new full-RAM comparisons pass:** 322 direct cases, 37 linked
+steps and 24 extension-caller compositions. They include **149 ordered full-RAM
+callback observations** and **44 matching failures**. The actual jump/turn/phase
+bodies replace only pending-aim capture/expiry stores; placement is replaced in
+full. Real beam firing and extension creation compose with both placements, with
+their other callees controlled. All ten origin directions, both posture tables,
+odd/broad selectors, coordinate wrap, invalid directions, pending/default/fallback
+selection and writes before bounds failure are covered.
+
+The extension cases exercise ignored rejection, pending consumption, invalid
+origin failure and selector redirection by the controlled initializer. An explicit
+check confirms that rejected placement still initializes the copied extension
+and balances its count decrement/increment. Separately, 1,024 marker/direction
+codec cases round-trip and **one typed-owner sequence** captures/replaces/consumes/
+expires pending aim without intermediate RAM decoding. Those are distinct from
+the 383 full-RAM comparisons.
+
+All **115 embedded library inputs** match `15589b48`, and all **ten compiled local
+inputs** match their exact hashes. The optimized experiment DLL builds and passes
+with synthetic pose definitions and the frozen library's preserved native-music
+ABI. No game ROM or movie is used. Broad-index writes remain compatibility-adapter
+operations; the surrounding producer bodies and controlled effects are not an
+unsafe-elimination result. This code is supplied for the full projectile draft,
+not adopted as a persistent production owner. Global writer/alias and runtime
+closure, full integration cost and gameplay-route coverage remain open.
+Reproduction: `Local/sm-decomp-experiments/20261022/owned-aim` (`aim.rs`,
+`adapter.rs`, `prepare.py`, `build.py`, `check.py`, `result.json`).
 
 ### Explicit gameplay continuation
 
@@ -966,8 +1029,9 @@ its own exercised checks.
 
 ## Next ownership experiments
 
-Continue the same whole-projectile draft through Samus weapon control. The aim
-handoff now has the fixture/sequence coverage above. Next exercise shared
+Continue the same whole-projectile draft through Samus weapon control. Integrate
+the typed aim/placement follow-up, preserving extension's ignored rejection and
+partial failure. Next exercise shared
 beam/grapple charge, scheduled flare/glow progression, cancellation subsets,
 drain-to-X-ray observation, protection across suspension/reset and sound-request
 deferral using real producers and consumers. These are new coverage questions,
@@ -1059,3 +1123,4 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^weapontimers]: [DecrementSamusTimers](../sm/src/game/sm_a0.rs#L888); [gameplay completion](../sm/src/game/gameplay.rs).
 [^weaponsound]: [Samus_ShootCheck](../sm/src/game/sm_90.rs#L5133); [hurt-flash producer](../sm/src/game/sm_91.rs#L795); [QueueSamusMovementSfx](../sm/src/game/sm_82.rs#L3301); [message completion](../sm/src/game/message_boxes.rs#L468); [unpause completion](../sm/src/game/sm_82.rs#L1483).
 [^weaponcancel]: [PLM charge cancellation](../sm/src/game/sm_84.rs#L3100); [HUD switching](../sm/src/game/sm_90.rs#L2747); [mode transitions](../sm/src/game/sm_90.rs#L4985).
+[^extensionplacement]: [spawn_extension](../sm/src/game/projectile_flight.rs#L269).
