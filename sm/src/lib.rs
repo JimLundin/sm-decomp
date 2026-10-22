@@ -423,6 +423,7 @@ pub mod host;
 
 pub mod game_state;
 pub mod rom;
+pub mod rom_patches;
 pub mod save_ram;
 pub mod snapshot_io;
 pub mod recording;

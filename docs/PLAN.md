@@ -42,10 +42,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,453 Rust lines in 101 files**, plus 262 C
-bridge and 296 C-header lines = **95,011 maintained implementation lines**.
+Current composition (2026-10-22): **94,464 Rust lines in 102 files**, plus 262 C
+bridge and 296 C-header lines = **95,022 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,842**. This complete recount includes frontend,
+gives **95,853**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1649,6 +1649,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Final release library/frontend/verifier builds and all 106 embedded source
    inputs pass, including the installed backend/music/utility source checks.
    Checks: Local/sm-decomp-experiments/20261022/eproj-script.
+   ROM patch installation now owns the shared image through checked byte access.
+   Its 85 startup patches retain their ordered bytes and native-audio branch;
+   bug-fix updates, carry traps and all hook resume-byte reads use the same owner.
+   The owner forbids unsafe code, and bug-fix updates are safe. Native
+   invalid-address diagnostics and CPU correction callbacks remain unsafe boundaries.
+   This complete four-file change costs **+11 maintained lines**, including the
+   patch data, callers and registration; it is safety work, not a volume saving.
+   All **209** actual old/new cases pass: 12 startup cases, all 45 bug-hook
+   addresses, byte patches, carry traps and counter updates compare full ROM,
+   RAM, relevant CPU state and hook bookkeeping. Two original hook-index failures
+   preserve partial state. Nine owner/patch/bounds checks include a truncated
+   installation's written prefix. All ordered startup bytes and the unchanged
+   hook correction/dispatch bodies retain source correspondence. No movie ran;
+   executing all patched game routines is not claimed from these component checks.
+   Final release library/frontend/verifier builds, all 109 embedded inputs and
+   installed backend/music/utility source checks pass.
+   Checks: Local/sm-decomp-experiments/20261022/rom-patches.
    Cart and Game now also share owned SRAM bytes. Gameplay save/load, checksums,
    signatures, copy/clear/selection, both cartridge mappings, reset, recorder bases,
    oracle snapshot transfers and verifier checkpoints use checked access. Three
@@ -2729,14 +2746,18 @@ gameplay continuation ownership, owned ROM reads, safe asset decompression,
 checked ROM tables, safe word transfers, owned recording, checked VRAM readback
 owned sprite drawing, checked Mode 7 transfers, owned SRAM, checked snapshot
 streams, owned enemy-projectile scripts, named APU history and explicit launch
-motion, maintained Rust is **94,453**, with
+motion and checked ROM patch installation, maintained Rust is **94,464**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **95,011**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,842**.
+Including 262 C and 296 header lines gives **95,022**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,853**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3036; cast lines 6574. Launch-motion ownership adds 113 lines
+unsafe functions 3035; cast lines 6573. Checked ROM patch installation adds 11
+maintained lines for ownership and checked reads/writes, removes one counted
+unsafe declaration and one cast-containing line; other counters are unchanged.
+Native diagnostics and CPU correction callbacks remain unsafe.
+Launch-motion ownership adds 113 lines
 for the pure model, checked adapter and registrations, retaining these counters.
 Named APU history removes nine maintained
 lines, one union and two unsafe scopes; the counted residue metrics are unchanged.
