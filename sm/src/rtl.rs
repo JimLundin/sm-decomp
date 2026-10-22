@@ -103,7 +103,6 @@ use crate::ram_map::word;
 use crate::recording::RecordingBytes;
 pub use crate::recording::StateRecorder;
 use crate::snes::apu::apu_cycle;
-use crate::snes::dsp::dsp_getSamples;
 use crate::snes::ppu::ppu_copy;
 pub use crate::snes::registers::*;
 use crate::snes::snes::{snes_catchupApu, snes_read, snes_reset, snes_saveload, snes_write};
@@ -893,11 +892,7 @@ unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands
             .copy_from_ram(&(*game.g_spc_player).ram);
     }
 }
-pub unsafe fn RtlRenderAudio(audio_buffer: *mut i16, samples: i32, channels: i32, game: &mut Game) {
-    crate::native_assertion! {
-        '_c2rust_label: channels == 2;
-        b"channels == 2\0", b"src/sm_rtl.c\0", 679, b"void RtlRenderAudio(int16 *, int, int)\0"
-    };
+pub unsafe fn RtlRenderAudio(audio_buffer: &mut [[i16; 2]], game: &mut Game) {
     RtlApuLock();
     RtlPopApuState_Locked(game);
     if !game.g_use_my_apu_code {
@@ -905,11 +900,15 @@ pub unsafe fn RtlRenderAudio(audio_buffer: *mut i16, samples: i32, channels: i32
             while ((*(*(*game.g_snes).apu).dsp).state.sampleOffset as i32) < 534 {
                 apu_cycle((*game.g_snes).apu, game);
             }
-            dsp_getSamples((*(*game.g_snes).apu).dsp, audio_buffer, samples);
+            (*(*(*game.g_snes).apu).dsp)
+                .state
+                .write_samples(audio_buffer);
         }
     } else {
         SpcPlayer_GenerateSamples(game.g_spc_player);
-        dsp_getSamples((*game.g_spc_player).state.dsp, audio_buffer, samples);
+        (*(*game.g_spc_player).state.dsp)
+            .state
+            .write_samples(audio_buffer);
     }
     RtlApuUnlock();
 }

@@ -248,7 +248,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         }
         // Initialization and checkpoint loading are setup, not segment hits.
         sm::verify_probe::configure(&required_probes)?;
-        let mut discarded_audio = [0; 534 * 2];
+        let mut discarded_audio = [[0; 2]; 534];
         let mut coverage = ReplayCoverage::default();
         // Optional console diagnostics share the normal CLI and DLL replay path.
         let trace = std::env::var_os("SM_VERIFY_TRACE").is_some();
@@ -266,7 +266,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             core::ptr::write_bytes(&raw mut super::g_my_pixels, 0, 1);
             sm::rtl::RtlRunFrame(i32::from(pad), game);
             // Advance the music driver once per frame without playing audio.
-            sm::rtl::RtlRenderAudio(discarded_audio.as_mut_ptr(), 534, 2, game);
+            sm::rtl::RtlRenderAudio(&mut discarded_audio, game);
             coverage.observe(game, index, trace);
             completed = offset + 1;
             if completed % 10_000 == 0 {

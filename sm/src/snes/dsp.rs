@@ -99,19 +99,18 @@ fn apply_keys(state: &mut DspState, ram: &crate::apu_ram::ApuRam, adr: u8) {
         }
     }
 }
-pub unsafe fn dsp_getSamples(dsp: *mut Dsp, sampleData: *mut i16, samplesPerFrame: i32) {
-    let adder: f64 = 534.0f64 / samplesPerFrame as f64;
-    let mut location: f64 = 0.0f64;
-    let mut i: i32 = 0;
-    while i < samplesPerFrame {
-        *sampleData.offset((i * 2) as isize) =
-            (*dsp).state.sampleBuffer[(location as i32 * 2) as usize];
-        *sampleData.offset((i * 2 + 1) as isize) =
-            (*dsp).state.sampleBuffer[(location as i32 * 2 + 1) as usize];
-        location += adder;
-        i += 1;
+#[forbid(unsafe_code)]
+impl DspState {
+    pub fn write_samples(&mut self, output: &mut [[i16; 2]]) {
+        let adder = 534.0 / output.len() as f64;
+        let mut location = 0.0;
+        for frame in output {
+            let index = (location as i32 * 2) as usize;
+            *frame = [self.sampleBuffer[index], self.sampleBuffer[index + 1]];
+            location += adder;
+        }
+        self.sampleOffset = 0;
     }
-    (*dsp).state.sampleOffset = 0;
 }
 
 #[forbid(unsafe_code)]

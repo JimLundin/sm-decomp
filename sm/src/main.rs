@@ -292,7 +292,21 @@ unsafe extern "C-unwind" fn sm_host_render_audio(
     frames: i32,
     channels: i32,
 ) {
-    RtlRenderAudio(buffer, frames, channels, &mut *game);
+    if channels != 2 {
+        __assert_fail(
+            c"channels == 2".as_ptr(),
+            c"src/sm_rtl.c".as_ptr(),
+            679,
+            c"void RtlRenderAudio(int16 *, int, int)".as_ptr(),
+        );
+    }
+    // The host owns a separate stereo buffer. Empty requests need no pointer.
+    let output = if frames > 0 {
+        core::slice::from_raw_parts_mut(buffer.cast::<[i16; 2]>(), frames as usize)
+    } else {
+        &mut []
+    };
+    RtlRenderAudio(output, &mut *game);
 }
 #[no_mangle]
 unsafe extern "C" fn sm_host_audio_callback(userdata: *mut c_void, stream: *mut u8, length: i32) {
