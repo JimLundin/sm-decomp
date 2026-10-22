@@ -1,5 +1,7 @@
 //! Room and door metadata, ordered state selection and setup dispatch.
 //! Checked records retain their cartridge allocation; RAM owns the live state.
+use crate::game::decompression::decompress_to_ram;
+use crate::game::plm_spawning::SpawnRoomPLM;
 use crate::game::progress_flags::{CheckBossBitForCurArea, CheckEventHappened};
 use crate::game::sm_80::{
     LoadMirrorOfExploredMapTiles, SaveExploredMapTilesToSaved, SetElevatorsAsUsed,
@@ -179,7 +181,7 @@ pub(crate) unsafe fn run_room_setup(game: &mut Game) {
 
 /// Load scroll data and retain the selected record for the initial PLM list.
 /// Door loading reacquires that record later, after its scrolling suspension.
-pub(crate) unsafe fn load_scrolls<const INITIAL: bool>(game: &mut Game) -> crate::rom::RomRecord {
+unsafe fn load_scrolls<const INITIAL: bool>(game: &mut Game) -> crate::rom::RomRecord {
     let state = room_record(game.roomdefroomstate_ptr(), game);
     let mut cursor = state.word(offset_of!(State, rdf_scroll_ptr));
     if cursor & 0x8000 == 0 {
@@ -223,5 +225,77 @@ fn generate_scrolls<const INITIAL: bool>(bottom_color: u8, game: &mut Game) {
         if next_row == i32::from(game.room_height_in_scrolls() as u8) {
             return;
         }
+    }
+}
+
+// Legacy Load24 reads a native dword and masks its high byte, including the
+// adjacent RAM byte in that read. Keep its byte order without an unaligned load.
+#[forbid(unsafe_code)]
+fn asset_pointer(offset: usize, game: &Game) -> u32 {
+    u32::from_ne_bytes(game.g_ram[offset..offset + 4].try_into().unwrap()) & 0xffffff
+}
+
+#[forbid(unsafe_code)]
+fn decompress_level(game: &mut Game) {
+    decompress_to_ram(asset_pointer(0x7bd, game), 0x10000, game);
+    let size = usize::from(checked_word!(game.ram7F_start));
+    for (source, destination, count) in [
+        (0x10002 + size + size / 2, 0x19602, size),
+        (0x10002 + size, 0x16402, size / 2),
+    ] {
+        for index in 0..count {
+            game.g_ram[destination + index] = game.g_ram[source + index];
+        }
+    }
+}
+
+/// Initial entry creates objects now; door entry waits for the later setup phase.
+pub(crate) unsafe fn load_level<const INITIAL: bool>(game: &mut Game) {
+    if INITIAL {
+        word_transfers!(game, descending, 12800; le(level_data, 12799) <- value(0x8000));
+    } else {
+        word_transfers!(game, descending, 3200;
+            le(level_data, 3199) <- value(0x8000),
+            native(0x13200) <- value(0x8000),
+            native(0x14b00) <- value(0x8000),
+            native(0x16400) <- value(0x8000),
+        );
+    }
+    decompress_level(game);
+    if checked_word!(game.area_index) == 6 {
+        decompress_to_ram(asset_pointer(0x7c0, game), 0xa000, game);
+    } else {
+        if INITIAL || checked_word!(game.cre_bitset) & 2 != 0 {
+            decompress_to_ram(0xb9a09d, 0xa000, game);
+        }
+        decompress_to_ram(asset_pointer(0x7c0, game), 0xa800, game);
+    }
+    let state = load_scrolls::<INITIAL>(game);
+    if INITIAL {
+        initialize_objects::<true>(state, game);
+    }
+}
+
+pub(crate) unsafe fn initialize_door_objects(game: &mut Game) {
+    let state = room_record(game.roomdefroomstate_ptr(), game);
+    initialize_objects::<false>(state, game);
+}
+
+unsafe fn initialize_objects<const INITIAL: bool>(state: crate::rom::RomRecord, game: &mut Game) {
+    let mut cursor = i32::from(state.word(offset_of!(State, room_plm_header_ptr)));
+    if cursor != 0 {
+        while room_record(cursor as u16, game).word(0) != 0 {
+            SpawnRoomPLM(cursor as u16, game);
+            cursor = if INITIAL {
+                i32::from((cursor as u16).wrapping_add(6))
+            } else {
+                cursor + 6
+            };
+        }
+    }
+    run_door_setup(game);
+    run_room_setup(game);
+    if checked_word!(game.elevator_flags) != 0 {
+        checked_word!(game.elevator_status = 2);
     }
 }

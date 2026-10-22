@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,516 Rust lines in 114 files**, plus 262 C
-bridge and 296 C-header lines = **96,074 maintained implementation lines**.
+Current composition (2026-10-22): **95,509 Rust lines in 114 files**, plus 262 C
+bridge and 296 C-header lines = **96,067 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,905**. This complete recount includes frontend,
+gives **96,898**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2767,6 +2767,35 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    pass. RAM stays authoritative; native diagnostics and setup/displacement
    callbacks remain unsafe. Three counted unsafe declarations are removed.
    Checks: Local/sm-decomp-experiments/20261022/plm-spawning.
+   Initial and door level/content loading now share `room_state`: array clearing,
+   level decompression and splitting, tile tables, scrolls and object/setup order.
+   The checked asset-pointer reader and array splitting forbid unsafe code,
+   replacing unaligned native pointer loads and two raw memcpy calls. Initial
+   entry retains its selected room record; door objects still initialize later
+   from freshly selected state. Traversal preserves native header reads, live
+   cartridge reacquisition and the distinct u16/i32 list counters, including
+   wrapping through address zero. Three bank routines and two raw helpers retire.
+   Complete savings: **7 Rust lines**, two counted unsafe declarations and four
+   cast-containing lines. Diagnostics and setup callbacks remain unsafe; RAM
+   remains authoritative, so this does not complete room-state ownership.
+   **415 actual old/new full-state comparisons**, 4,104 full-RAM phase comparisons,
+   1,040 actual PLM spawn calls and 76 matching controlled failures pass. Tests
+   cover copy order/captured size, odd lengths and the nonoverlap boundary,
+   tile/CRE branches, live pointer rereads, bank-wrapping lists, captured versus
+   fresh state, cartridge replacement and door/room/elevator ordering. Old memcpy
+   equivalence is checked only for defined nonoverlapping sizes **0..=0x3c00**;
+   larger overlapping copies have no claimed old-code equivalence. Twenty-seven
+   candidate-only short-record cases check bounds and partial effects. All 121
+   library inputs per side, four fixture inputs and test-only changes are checked.
+   Probed and clean Ceres loading/first-door segments each pass **3,380/0**,
+   inputs **8250..11629**. Initial loading executes at 8296, door loading at 11543,
+   delayed object/setup at 11546, and fade completion at 11627, then two frames.
+   Copies, Ceres tile tables, scrolls, list completion, setup and downstream
+   display/scrolling all execute. Other tile/CRE branches and nonempty/wrapped
+   lists have component coverage. Caller/state inspection justifies the cached
+   8,250-frame prefix before these loaders; no wider route or credits is claimed.
+   Normal library/frontend/verifier builds, source/native checks, formatting
+   and progress pass. Checks: Local/sm-decomp-experiments/20261022/room-content-loading.
    Event/boss flag access and shared bit-mask preparation now live in the safe
    `progress_flags` module, which forbids unsafe code. All 15 caller files import
    it directly; the six bank-80 definitions are retired. Queries retain their
@@ -3889,15 +3918,19 @@ population ownership, owned native audio uploads, typed runtime initialization,
 owned native-player RAM with named field transfers, DSP RAM ownership and typed
 stereo output, checked tracing, owned room-background records, checked palette
 execution, shared effect ROM records, checked animated tiles, safe progress flags,
-owned room metadata, checked door metadata, shared scroll loading and shared PLM
-spawning, maintained Rust is **95,516**, with applicable static, component and
+owned room metadata, checked door metadata, shared scroll loading, shared PLM
+spawning and room-content loading, maintained Rust is **95,509**, with applicable static, component and
 exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,074**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,905**.
+Including 262 C and 296 header lines gives **96,067**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,898**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2994; cast lines 6513. Shared PLM spawning removes 27 Rust lines
+unsafe functions 2992; cast lines 6509. Shared room-content loading removes seven Rust lines,
+two counted unsafe declarations and four cast-containing lines. Its asset-pointer
+reader and array splitting forbid unsafe code; two raw memcpy calls and native
+pointer/list loads retire. Native diagnostics and actual setup callbacks remain
+unsafe. Other counters are unchanged. Shared PLM spawning removes 27 Rust lines
 and three counted unsafe declarations; other residue counters are unchanged.
 Raw entry/header reads, hardcoded local pointers and slot reads are retired;
 the shared allocation, initialization and entry decoder forbid unsafe code.

@@ -5,7 +5,7 @@ pub use crate::game::prelude::*;
 use crate::game::room_backgrounds::BackgroundLoad;
 use crate::game::room_state::{
     load_destination_cre, load_destination_map, load_door, load_header as LoadRoomHeader,
-    load_state as LoadStateHeader, run_door_setup, run_room_setup, save_departing_map,
+    load_state as LoadStateHeader, initialize_door_objects, load_level, save_departing_map,
 };
 
 use crate::cpu_infra::DebugGameOverMenu;
@@ -145,20 +145,12 @@ unsafe fn get_RoomDefHeader(a: u16, game: &mut Game) -> *mut RoomDefHeader {
     RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefHeader
 }
 #[inline]
-unsafe fn get_RoomDefRoomstate(a: u16, game: &mut Game) -> *mut RoomDefRoomstate {
-    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefRoomstate
-}
-#[inline]
 unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
     RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
 #[inline]
 unsafe fn get_EnemyTileset(a: u16, game: &mut Game) -> *mut EnemyTileset {
     RomPtr((0xb40000u32) | ((a) as u32), game) as *mut EnemyTileset
-}
-#[inline]
-unsafe fn get_RoomPlmEntry(a: u16, game: &mut Game) -> *mut RoomPlmEntry {
-    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomPlmEntry
 }
 #[inline]
 unsafe fn get_DemoRoomData(a: u16, game: &mut Game) -> *mut DemoRoomData {
@@ -3804,7 +3796,7 @@ crate::game::callback_dispatch! {
         LoadStateHeader(game);
         load_destination_map(game);
         InitializeSpecialEffectsForNewRoom(game);
-        LoadLevelScrollAndCre(game);
+        load_level::<false>(game);
         game.set_door_transition_function(0xe38e);
         kCoroutineNone as CoroutineRet
     };
@@ -3870,7 +3862,7 @@ crate::game::callback_dispatch! {
             ClearAnimtiles(game);
             ClearPaletteFXObjects(game);
             ClearPLMs(game);
-            CreatePlmsExecuteDoorAsmRoomSetup(game);
+            initialize_door_objects(game);
             LoadFXHeader(game);
             SpawnDoorClosingPLM(game);
             UpdateBeamTilesAndPalette(game);
@@ -4058,46 +4050,6 @@ pub unsafe fn LoadCRETilesTilesetTilesAndPalette(game: &mut Game) {
     decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c6)), 0xc200, game);
 }
 
-macro_rules! decompress_room_level_and_split_arrays {
-    ($game:ident) => {
-        decompress_to_ram(Load24(ram_ptr!($game, LongPtr; 0x7bd)), 0x10000, $game);
-        let size: u16 = word!($game.ram7F_start);
-        memcpy(
-            ram_ptr!($game, u16; 0x19602) as *mut c_void,
-            ram_ptr!($game; 0x10002, size as i32 as isize, (size >> 1) as isize) as *const c_void,
-            size as size_t,
-        );
-        memcpy(
-            ram_ptr!($game, c_void; 0x16402),
-            ram_ptr!($game; 0x10002, size as i32 as isize) as *const c_void,
-            (size as i32 >> 1) as size_t,
-        );
-    };
-}
-
-pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
-    word_transfers!(game, descending, 12800; le(level_data, 12799) <- value(0x8000));
-    decompress_room_level_and_split_arrays!(game);
-    if word!(game.area_index) == 6 {
-        decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c0)), 0xa000, game);
-    } else {
-        decompress_to_ram(0xb9a09d, 0xa000, game);
-        decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c0)), 0xa800, game);
-    }
-    let state = crate::game::room_state::load_scrolls::<true>(game);
-    if state.word(core::mem::offset_of!(RoomDefRoomstate, room_plm_header_ptr)) != 0 {
-        let mut n = state.word(core::mem::offset_of!(RoomDefRoomstate, room_plm_header_ptr));
-        while (*get_RoomPlmEntry(n, game)).plm_header_ptr_ != 0 {
-            SpawnRoomPLM(n, game);
-            n = (n).wrapping_add(6);
-        }
-    }
-    run_door_setup(game);
-    run_room_setup(game);
-    if word!(game.elevator_flags) != 0 {
-        word!(game.elevator_status = 2);
-    }
-}
 pub unsafe fn SpawnDoorClosingPLM(game: &mut Game) {
     if CheckIfColoredDoorCapSpawned(game) == 0 {
         let v0 = RomPtr_8F(
@@ -4147,39 +4099,6 @@ pub unsafe fn CheckIfColoredDoorCapSpawned(game: &mut Game) -> u8 {
     }
     word!(game.plm_instr_list_ptrs[v5] = (*get_PlmHeader_Size6(v8, game)).instr_list_2_ptr);
     1
-}
-pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
-    word_transfers!(game, descending, 3200;
-        le(level_data, 3199) <- value(0x8000),
-        native(0x13200) <- value(0x8000),
-        native(0x14b00) <- value(0x8000),
-        native(0x16400) <- value(0x8000),
-    );
-    decompress_room_level_and_split_arrays!(game);
-    if word!(game.area_index) == 6 {
-        decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c0)), 0xa000, game);
-    } else {
-        if (word!(game.cre_bitset) & 2) != 0 {
-            decompress_to_ram(0xb9a09d, 0xa000, game);
-        }
-        decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c0)), 0xa800, game);
-    }
-    crate::game::room_state::load_scrolls::<false>(game);
-}
-pub unsafe fn CreatePlmsExecuteDoorAsmRoomSetup(game: &mut Game) {
-    let mut RoomDefRoomstate = get_RoomDefRoomstate(word!(game.roomdefroomstate_ptr), game);
-    if (*RoomDefRoomstate).room_plm_header_ptr != 0 {
-        let mut i: i32 = (*RoomDefRoomstate).room_plm_header_ptr as i32;
-        while (*get_RoomPlmEntry(i as u16, game)).plm_header_ptr_ != 0 {
-            SpawnRoomPLM(i as u16, game);
-            i += 6;
-        }
-    }
-    run_door_setup(game);
-    run_room_setup(game);
-    if word!(game.elevator_flags) != 0 {
-        word!(game.elevator_status = 2);
-    }
 }
 static kGameOptionsMenuFuncs: [Func_V; 13] = callback_table! { nonnull Func_V;
     GameOptionsMenuFunc_0, GameOptionsMenu_1_LoadingOptionsScreen,

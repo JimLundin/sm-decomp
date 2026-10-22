@@ -8,7 +8,7 @@ use crate::c_library::memcmp;
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{
     LoadCRETilesTilesetTilesAndPalette, LoadColorsForSpritesBeamsAndEnemies,
-    LoadDestinationRoomThings, LoadLevelDataAndOtherThings, LoadRoomMusic, NullFunc,
+    LoadDestinationRoomThings, LoadRoomMusic, NullFunc,
     ResetSoundQueues, UpdateMusicTrackIndex,
 };
 use crate::game::plm_spawning::SpawnHardcodedPlm;
@@ -1586,7 +1586,7 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
         UpdateMusicTrackIndex(game);
         NullFunc();
         BackgroundLoad::Initial.clear_bg2(game);
-        LoadLevelDataAndOtherThings(game);
+        crate::game::room_state::load_level::<true>(game);
         LoadFXHeader(game);
         BackgroundLoad::Initial.load(game);
         CalculateLayer2Xpos(game);
