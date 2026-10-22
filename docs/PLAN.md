@@ -1793,17 +1793,37 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    remain outside this partial cost. These are selected component checks, not a
    rerun or cumulative total of earlier suites. No movie, production adoption,
    whole-replacement price or savings is claimed.
+   Special-attack selection, four-shot production and pursuit/orbit/release updates
+   now use this same owner, its initializers, trail emission and slot release.
+   Named motion variants replace the six primary special-attack selectors; the
+   shared orbit step is owned once. **784 selected full-RAM comparisons**, 809
+   ordered observations and 204 matching failures pass: 200 selection, 192
+   production, 293 motion, 45 trail-callback and 15 beam-input cases, seven explicit
+   contracts and 32 linked steps. Four persistent-owner sequences run input/firing,
+   motion, animation, drawing and reset; explicitly constructed near-transition
+   states shorten the checks. Ammunition is still spent before refusal, including
+   zero-ammo firing; the HUD tail reads ammunition after callbacks. Wave motion
+   retains its original slot while a redirected selector controls later sound.
+   Ice release, plasma phases, paired Spazer retirement, clipping and partial
+   writes match. Checked orbit arithmetic also matches 3,584 defined reference
+   inputs; one out-of-range input checks only the new safe rejection. Invalid
+   plasma-phase coverage stops at an injected diagnostic failure; the subsequent
+   nonterminating path is retained but not executed. Models/codec forbid unsafe
+   code. All 115 frozen and 71 draft inputs match compiled bytes; 64 prior files
+   are unchanged. Optimized DLL and formatting pass. Exact source/result is in
+   special-stage. The changed formatted model/codec cohort grows **728 -> 1,199
+   (+471 lines)**, including 425 model and 24 geometry lines. Broad-index updates
+   and post-trail continuations still retain actual reference bodies; their bridge
+   costs and final runtime transfers remain outside this partial price. No earlier
+   suite was rerun, and no movie, production adoption or net saving is claimed.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, projectile-sprite drawing,
    palette/sound output and grapple-start consumers remain controlled. ROM
-   definitions are
-   synthetic; no gameplay route or hardware
-   coverage is established. Other accepted out-of-pool operations retain reference
+   definitions are synthetic; no gameplay route or hardware coverage is established. Other accepted out-of-pool operations retain reference
    bodies, including drawing continuations; handoff tests do not retire those bodies.
-   Continue with special attacks, remaining projectile drawing/definitions,
+   Continue with named visual transitions, remaining projectile drawing/definitions,
    protection/suspension, real producers/callers and runtime transfers. Count every
-   adapter/fallback and
-   close the remaining numeric-definition/motion interfaces. The frozen library
+   adapter/fallback and close the remaining numeric-definition/motion interfaces. The frozen library
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.
    The earlier beam-stage details and limits are in RAM_OWNERSHIP.md.
