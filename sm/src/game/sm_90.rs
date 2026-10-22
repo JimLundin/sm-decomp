@@ -1,4 +1,6 @@
 use crate::game::special_attacks::{self, Kind as SpecialKind};
+use crate::game::projectile_initialization::Initialization;
+use crate::game::projectile_initialization_ram::initialize;
 use crate::game::bomb_lifecycle::{self, Kind as BombKind, SPREAD_FRACTIONS as kBombSpread_Tab3};
 use crate::game::music::{PlayRoomMusicTrackAfterAFrames};
 use crate::game::beam_firing::{clear_animation, update_input};
@@ -17,10 +19,7 @@ pub use crate::game::constants::bank_90::*;
 
 use crate::game::explosion_window::spawn_crystal_flash;
 use crate::game::progress_flags::CheckEventHappened;
-use crate::game::projectile_animation::{
-    advance, draw_projectiles, initialize_bomb, initialize_echo, initialize_projectile,
-    initialize_sba, start_impact,
-};
+use crate::game::projectile_animation::{advance, draw_projectiles, start_impact};
 use crate::game::projectile_flight::{self, Flight};
 use crate::game::sm_80::{
     DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
@@ -2053,7 +2052,7 @@ pub unsafe fn ProjectileReflection(r20: u16, game: &mut Game) {
         let v1: i32 = r20 as i32 >> 1;
         let v2: u16 = word!(game.projectile_type[v1]);
         if (v2 & 0x100) != 0 {
-            initialize_projectile(r20, game);
+            initialize(r20, Initialization::Projectile, game);
             word!(game.projectile_bomb_pre_instructions[v1] = ((0x90af68i32) as u16));
             word!(game.projectile_variables[v1] = 240);
         } else if (v2 & 0x200) != 0 {
@@ -2062,13 +2061,13 @@ pub unsafe fn ProjectileReflection(r20: u16, game: &mut Game) {
                 byte!(@pointer (ram_ptr!(game, u16; 0xc7c)).offset(v1 as isize); 0) as u16,
                 game,
             );
-            initialize_projectile(k, game);
+            initialize(k, Initialization::Projectile, game);
             let v3: i32 = k as i32 >> 1;
             word!(game.projectile_bomb_pre_instructions[v3] = ((0x90afe5i32) as u16));
             word!(game.projectile_variables[v3] = 240);
         } else {
             projectile_flight::initialize_beam_speed(r20, game);
-            initialize_projectile(v0, game);
+            initialize(v0, Initialization::Projectile, game);
             word!(
                 game.projectile_bomb_pre_instructions[v1] =
                     kFireChargedBeam_Funcs[(word!(game.projectile_type[v1]) as i32 & 0xf) as usize]
@@ -2119,7 +2118,7 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
                 QueueSfx1_Max6(kNonBeamProjectile_Sfx[(v4 >> 1) as usize], game);
             }
             projectile_flight::initialize_speed(r20, 0, game);
-            initialize_projectile(r20, game);
+            initialize(r20, Initialization::Projectile, game);
             let mut v7: u16 = word!(game.projectile_type[v1]);
             if (v7 & 0x200) != 0 {
                 word!(game.projectile_bomb_pre_instructions[v1] = ((0x90afe5i32) as u16));
@@ -2174,7 +2173,7 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
                         word!(game.projectile_x_pos[v4] = word!(game.samus_x_pos));
                         word!(game.projectile_y_pos[v4] = word!(game.samus_y_pos));
                         word!(game.projectile_variables[v4] = 60);
-                        initialize_bomb(v2, game);
+                        initialize(v2, Initialization::Bomb, game);
                         word!(game.projectile_bomb_pre_instructions[v4] = ((0x90b0aei32) as u16));
                         word!(
                             game.cooldown_timer =
@@ -2205,7 +2204,7 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
                 word! {game; projectile_type[v1] = 1280; projectile_dir[v1] = 0;
                 projectile_x_pos[v1] = word!(game.samus_x_pos);
                 projectile_y_pos[v1] = word!(game.samus_y_pos); projectile_variables[v1] = 60; }
-                initialize_bomb(v0, game);
+                initialize(v0, Initialization::Bomb, game);
                 word!(game.projectile_bomb_pre_instructions[v1] = ((0x90b099i32) as u16));
                 word!(game.cooldown_timer = kNonBeamProjectileCooldowns[5i32 as usize] as u16);
             }
@@ -2588,7 +2587,7 @@ pub unsafe fn FireSba_FireWave(game: &mut Game) -> u8 {
                 projectile_y_pos[v1] =
                     ((kFireSba_FireWave_Y[v1 as usize]) as u16).wrapping_add(word!(game.samus_y_pos));
             }
-            initialize_sba(i as u16, game);
+            initialize(i as u16, Initialization::SpecialAttack, game);
         }
         word!(game.projectile_counter = 4);
         word!(
@@ -2618,7 +2617,7 @@ pub unsafe fn FireSba_FireIce(game: &mut Game) -> u8 {
             word!(game.projectile_bomb_pre_instructions[v2] = ((0x90cf09i32) as u16));
             word!(game.projectile_variables[v2] = kIcePlasmaSbaProjectileOriginAngles[v2 as usize]);
             word!(game.projectile_bomb_y_speed[v2] = 600);
-            initialize_projectile(i as u16, game);
+            initialize(i as u16, Initialization::Projectile, game);
         }
         word!(game.projectile_counter = 4);
         word!(
@@ -2652,12 +2651,12 @@ pub unsafe fn FireSba_FireSpazer(game: &mut Game) -> u8 {
             }
             if ((i - 4i32) as i16) >= 0 {
                 word!(game.projectile_type[(i >> 1)] = -32732i32 as u16);
-                initialize_echo(i as u16, game);
+                initialize(i as u16, Initialization::Echo, game);
             } else {
                 word!(
                     game.projectile_type[(i >> 1)] = (word!(game.equipped_beams) & 0x100f | 0x8010)
                 );
-                initialize_sba(i as u16, game);
+                initialize(i as u16, Initialization::SpecialAttack, game);
             }
         }
         word!(game.projectile_counter = 4);
@@ -2685,7 +2684,7 @@ pub unsafe fn FireSba_FirePlasma(game: &mut Game) -> u8 {
             projectile_bomb_pre_instructions[v2] = ((0x90d793i32) as u16);
             projectile_variables[v2] = kIcePlasmaSbaProjectileOriginAngles[v2 as usize];
             projectile_bomb_x_speed[v2] = 40; projectile_bomb_y_speed[v2] = 0; }
-            initialize_sba(i as u16, game);
+            initialize(i as u16, Initialization::SpecialAttack, game);
         }
         word!(game.projectile_counter = 4);
         word!(
@@ -2945,7 +2944,7 @@ pub unsafe fn BombSpread(game: &mut Game) {
                 let v1: i32 = v0 as i32 >> 1;
                 word! {game; projectile_type[v1] = -31488i32 as u16; projectile_dir[v1] = 0;
                 projectile_bomb_pre_instructions[v1] = ((0x90d8f7i32) as u16); }
-                initialize_bomb(v0, game);
+                initialize(v0, Initialization::Bomb, game);
                 word! {game; projectile_x_pos[v1] = word!(game.samus_x_pos);
                 projectile_bomb_x_subpos[v1] = 0; projectile_y_pos[v1] = word!(game.samus_y_pos);
                 projectile_bomb_y_subpos[v1] = 0; }
@@ -3927,7 +3926,7 @@ crate::game::callback_dispatch! {
                 word!(game.speed_echo_xpos[2] = word!(game.samus_x_pos));
                 word!(game.speed_echo_ypos[2] = word!(game.samus_y_pos));
                 word!(game.projectile_type[3] = addr_loc_908029 as u16);
-                initialize_echo(6, game);
+                initialize(6, Initialization::Echo, game);
                 word!(game.projectile_bomb_pre_instructions[3] = ((0x90d4d2i32) as u16));
                 word!(
                     game.projectile_variables[3] = kShinesparkCrashFinish_Tab0
@@ -3940,7 +3939,7 @@ crate::game::callback_dispatch! {
             word! {game; speed_echo_xspeed[3] = 64; speed_echo_xpos[3] = word!(game.samus_x_pos);
                 speed_echo_ypos[3] = word!(game.samus_y_pos);
                 projectile_type[4] = addr_loc_908029 as u16; }
-            initialize_echo(8, game);
+            initialize(8, Initialization::Echo, game);
             word!(game.projectile_bomb_pre_instructions[4] = ((0x90d4d2i32) as u16));
             word!(
                 game.projectile_variables[4] = kShinesparkCrashFinish_Tab0

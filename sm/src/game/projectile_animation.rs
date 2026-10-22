@@ -1,6 +1,6 @@
 //! Player projectile definitions, instruction playback and drawing.
 use crate::game::samus_animation::Samus_DrawShinesparkCrashEchoProjectiles;
-use crate::game::sm_80::{InvalidInterrupt_Crash, QueueSfx2_Max6};
+use crate::game::sm_80::QueueSfx2_Max6;
 use crate::game::sm_81::DrawProjectileSpritemap;
 use crate::game::sm_8b::CalcExplosion_Mode7;
 use crate::game::sm_90::ClearProjectile;
@@ -14,85 +14,6 @@ const record: unsafe fn(u16, &mut Game) -> RomRecord = crate::rtl::rom_bank_reco
 #[forbid(unsafe_code)]
 fn table(address: u32, index: isize, game: &Game) -> u16 {
     crate::rtl::rom_table_word!(game, address, index)
-}
-
-#[forbid(unsafe_code)]
-fn aimed_program(data: &RomRecord, direction: usize) -> u16 {
-    // Preserve the ten-entry field's bounds check before reading the selected word.
-    data.word([2, 4, 6, 8, 10, 12, 14, 16, 18, 20][direction])
-}
-
-unsafe fn initialize_fixed(k: u16, address: u32, type_shift: u32, game: &mut Game) {
-    unsafe {
-        let slot = usize::from(k >> 1);
-        let selector = (word!(game.projectile_type[slot]) >> type_shift) & 0xf;
-        let data = record(table(address, selector as isize, game), game);
-        let damage = data.word(0);
-        word!(game.projectile_damage[slot] = damage);
-        if damage & 0x8000 != 0 {
-            InvalidInterrupt_Crash(game);
-        }
-        word!(game.projectile_bomb_instruction_ptr[slot] = data.word(2));
-        word!(game.projectile_bomb_instruction_timers[slot] = 1);
-    }
-}
-pub unsafe fn initialize_super_missile(k: u16, game: &mut Game) {
-    unsafe {
-        initialize_fixed(k, 0x93842b, 8, game);
-    }
-}
-pub unsafe fn initialize_bomb(k: u16, game: &mut Game) {
-    unsafe {
-        initialize_fixed(k, 0x9383f1, 8, game);
-    }
-}
-pub unsafe fn initialize_sba(k: u16, game: &mut Game) {
-    unsafe {
-        initialize_fixed(k, 0x938413, 0, game);
-    }
-}
-
-pub unsafe fn initialize_projectile(k: u16, game: &mut Game) {
-    unsafe {
-        let slot = usize::from(k >> 1);
-        let direction = usize::from(word!(game.projectile_dir[slot]) & 0xf);
-        let kind = word!(game.projectile_type[slot]);
-        let (address, selector) = if kind & 0xf00 != 0 {
-            (0x9383f1, isize::from(kind.to_ne_bytes()[1] & 0xf))
-        } else {
-            (
-                if kind & 0x10 != 0 { 0x9383d9 } else { 0x9383c1 },
-                (word!(game.projectile_type[slot]) & 0xf) as isize,
-            )
-        };
-        let data = record(table(address, selector, game), game);
-        if data.word(0) & 0x8000 != 0 {
-            InvalidInterrupt_Crash(game);
-        }
-        // Diagnostics can mutate the captured allocation; retain the live reread.
-        word!(game.projectile_damage[slot] = data.word(0));
-        let program = aimed_program(&data, direction);
-        word!(game.projectile_bomb_instruction_ptr[slot] = program);
-        let frame = record(program, game);
-        word!(game.projectile_x_radius[slot] = u16::from(frame.byte(4)));
-        word!(game.projectile_y_radius[slot] = u16::from(frame.byte(5)));
-        word!(game.projectile_bomb_instruction_timers[slot] = 1);
-    }
-}
-
-pub unsafe fn initialize_echo(k: u16, game: &mut Game) {
-    unsafe {
-        let slot = usize::from(k >> 1);
-        let direction = usize::from(word!(game.projectile_dir[slot]) & 0xf);
-        let selector = isize::from(game.g_ram[word_arrays::projectile_type + 2 * slot]) - 34;
-        let data = record(table(0x938403, selector, game), game);
-        word!(game.projectile_damage[slot] = data.word(0));
-        if data.word(0) & 0x8000 != 0 {
-            InvalidInterrupt_Crash(game);
-        }
-        word!(game.projectile_bomb_instruction_ptr[slot] = aimed_program(&data, direction));
-        word!(game.projectile_bomb_instruction_timers[slot] = 1);
-    }
 }
 
 #[forbid(unsafe_code)]

@@ -1,5 +1,6 @@
 //! Launch speed and flight of ordinary beams, missiles and their linked extensions.
-use crate::game::projectile_animation::initialize_super_missile;
+use crate::game::projectile_initialization::Initialization;
+use crate::game::projectile_initialization_ram::initialize;
 use crate::game::sm_90::ClearProjectile;
 use crate::game::sm_94::{
     BlockCollMissileHoriz, BlockCollMissileVert, BlockCollNoWaveBeamHoriz, BlockCollNoWaveBeamVert,
@@ -275,7 +276,7 @@ impl<'a> control::CreationContext<&'a mut Game> for FlightContext {
         game
     }
     fn initialize(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
-        unsafe { initialize_super_missile(slot, game) };
+        initialize(slot, Initialization::SuperMissile, game);
         game
     }
     fn arm(&mut self, game: &mut &'a mut Game, slot: u16) {

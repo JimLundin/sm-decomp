@@ -9,62 +9,57 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest verified gameplay stage shares complete placement through
-`projectile_placement`, following extension creation at `0abd00a3`, missile
-acceleration at `f4674fa2`, beam launch at `8730d00e` and extension contact at `e3fadf56`.
-The user authorized ongoing coordinated worker iterations.
-Main and the current RAM/owned comparison carrier are synchronized and compared.
+The latest verified gameplay stage shares all five initializer variants through
+`projectile_initialization`, following placement at `eaa19aa2`, extension creation
+at `0abd00a3`, acceleration at `f4674fa2`, beam launch at `8730d00e` and extension
+contact at `e3fadf56`. The user authorized ongoing coordinated worker iterations.
+Main and current RAM/owned comparison carrier are synchronized and compared.
 
-The phase stage at `ba0d94c1` now also shares linked-extension contact through
-`projectile_flight_control`. The core and new extension RAM adapter forbid unsafe
-code. Both RAM and owned paths use the same follow/move/collide/retire rules,
-restoring the parent's selector only after a successful collision return.
-The raw extension-access macro, two axis wrappers, owned contact algorithm and
-owned position helper are removed. Current production and draft callers use
-the axis-parameterized contact entry.
+RAM and owned Firing share captured launch/table/slot selection, variant-specific
+ordered damage/diagnostic writes, aimed/fixed cursor, ordinary current-image radius
+reads and timer-last completion. All 17 actual producer calls migrate. The old
+five initializer entries and fixed/aimed helpers are removed. Shared core forbids
+unsafe code; checked RAM adapter retains three explicit unsafe native diagnostic
+and ROM-capture calls. This is transitional safety, not dependency elimination.
 
-This follows shared room scans (`ff02c9b7`) and terminal impact/retirement
-(`de9bf05e`). Block reactions, animation dependencies, persistent
-Session authority and broader unsafe elimination
-remain unfinished. Checked RAM is transitional; the destination has independent
-owned domain state. Never retain an authoritative typed owner across
-RAM-authoritative execution; transfer the complete owner.
+Main is **101,960 Rust lines in 139 files**, with 2,927 counted unsafe declarations
+and 6,130 cast-containing lines. Maintained implementation is 102,522 lines;
+including installers/launcher, 103,432. The prospective composition is
+**110,954 Rust lines**, **+8,994 over main**, and remains unadopted.
+This stage adds 112 main and 23 owned lines; formatted full composition adds
+**135 lines, 1,210 lexical tokens and 4,009 normalized text bytes**.
+Local verification adds 409 lines; including checks adds 544. No dependencies or
+maintained native/installer/launcher code are added. Substantial reduction,
+persistent Session ownership and complete unsafe removal remain unfinished.
 
-Main is **101,848 Rust lines in 137 files**, with 2,933 counted unsafe declarations
-and 6,130 cast-containing lines. Maintained implementation is 102,410 lines;
-including installers/launcher, 103,320. The full prospective composition is
-**110,819 Rust lines**, **+8,971 over main**, and remains unadopted.
+The current local handoff is `runtime-impact-working/INITIALIZATION_HANDOFF.md`.
+Selected results/price/source: `initialization-final-results.json`,
+`initialization-composition-price.json`, `initialization-main-source-check.json`.
+Independent checked references/callers match `eaa19aa2`; 150 runtime and 202 draft
+compiled inputs match. Selected comparisons pass 234 three-way initializer cases,
+105 short-record scenarios at slots0/19/20 with discriminating timer37 prefixes,
+786 owned diagnostic/native cases, 21 reflection/crash-finish caller cases,
+seven bomb/Power Bomb/spread/all-four-SBA, three beam and two Spazer-echo producers.
+Missile placement and RAM/owned extension creation consumers also pass. Exact
+initializer variant/slot hits and bounded downstream animation/effects are required.
+Final production/source and Rust2024 composition builds pass.
 
-The placement stage adds 100 main lines and removes 118 owned-draft lines;
-formatted composition gives **-18 complete lines, +462 lexical tokens,
-+41 normalized text bytes**. Existing local comparisons add 385 lines;
-including checks gives +367 lines.
-These are safety/architecture costs, not volume savings. The substantial
-reduction and removal of all unsafe operations remain unfinished.
+No movie or full-composition runtime comparison is claimed. Synthetic content,
+controlled hardware and constructed producers do not prove scheduler encounters
+or full-game fidelity. Crash/reflection/created-child animation is called directly.
+Native damage diagnostics stop at assertion entry; returning reset/ROM-replacement
+continuation is compared with the independent historical reference in owned cases.
+Missing-ROM owned publication remains unestablished; short checked images are present.
+`initialization-parent/` and `initialization-composition-parent/` preserve prior inputs;
+placement/creation/acceleration/extension/flight references and caches remain.
 
-The placement handoff is in `runtime-impact-working/PLACEMENT_HANDOFF.md`.
-The shared controller retains pose capture, one-use pending consumption, fallback
-and rejection rules, direction-before-height and live posture/X/Y ordering.
-Beam and missile callers honor rejection; extension creation continues its tail.
-The bank body/tables, owned origin calculation and broad-placement duplicate are
-removed. Core and checked RAM adapter forbid unsafe code; owned providers publish
-prior writes on a failed pose-byte read. Animation/other ROM capture still require
-unsafe calls. `placement-parent/` and `placement-composition-parent/` preserve prior
-inputs; creation/acceleration references remain.
-Selected results and price: `placement-final-results.json`,
-`placement-composition-price.json` and `placement-main-source-check.json`.
-The existing runner selects `runtime_placement_experiment` (350 comparisons,
-54 matched failures, 96 checked short-record cases), `owned_placement_experiment`
-(353 comparisons, 54 matching failures, 15 native cases) and
-`runtime_placement_missiles` (16 actual accepted/rejected caller cases).
-Selected creation, flight, extension, beam, broad compatibility and session
-consumers also pass. All 147 runtime and 202 draft compiled inputs match.
-Final production/source and Rust 2024 composition builds pass. No movie or
-full-composition runtime comparison is claimed. Created children call actual
-animation/drawing directly; this does not establish scheduler order. Remaining
-consumers and unsafe dependencies precede persistent owner promotion.
-Short pose checks never execute the old raw pointer path out of allocation.
-Missing-ROM owned publication remains unestablished; present short images are checked.
+Next share playback and trail selection, redirect HandleProjectile and trail-place
+consumers, remove the old playback/trail/dispatch helper bodies, and preserve
+native-endian reads, captured odd/broad selectors, fresh jump/marker records and
+callback failure prefixes. Then close remaining consumers, block reactions and
+runtime authority transfers. Never retain an authoritative typed owner across a
+RAM-authoritative interval; transfer the complete owner. Owner promotion still
+needs reset/load/rewind and external-writer checks from state migration.
 
 ## Paused launch draft
 
@@ -195,8 +190,8 @@ to reproduce the local owned work; a fresh Git checkout alone lacks that work.
 
 ## Next dependency
 
-Launch, missile acceleration, extension creation, placement, phase ordering and contact
-are now shared;
+Launch, missile acceleration, extension creation, placement, initialization, phase ordering
+and contact are now shared;
 do not implement a second controller or adopt outer wiring alone. Price helpers, adapters, callers,
 registrations and deletions together. Then finish remaining consumers and runtime
 authority transfers; promotion of the owner still needs reset/load/rewind and

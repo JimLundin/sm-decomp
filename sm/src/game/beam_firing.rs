@@ -1,5 +1,6 @@
 //! Beam charge input and the complete uncharged, charged and hyper firing sequence.
-use crate::game::projectile_animation::initialize_projectile;
+use crate::game::projectile_initialization::Initialization;
+use crate::game::projectile_initialization_ram::initialize;
 use crate::game::projectile_flight;
 use crate::game::sm_80::QueueSfx1_Max15;
 use crate::game::sm_90::{
@@ -88,7 +89,7 @@ unsafe fn fire(charged: bool, game: &mut Game) {
                 };
                 QueueSfx1_Max15(sound, game);
                 word!(game.play_resume_charging_beam_sfx = 0);
-                initialize_projectile(projectile, game);
+                initialize(projectile, Initialization::Projectile, game);
                 if hyper {
                     word!(game.projectile_bomb_x_speed[slot] = 0);
                     word!(game.projectile_bomb_y_speed[slot] = 0);

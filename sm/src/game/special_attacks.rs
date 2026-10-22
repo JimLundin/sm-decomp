@@ -1,5 +1,6 @@
 //! Special-beam motion and retirement; RAM remains authoritative across effects.
-use crate::game::projectile_animation::initialize_echo;
+use crate::game::projectile_initialization::Initialization;
+use crate::game::projectile_initialization_ram::initialize;
 use crate::game::projectile_trails;
 use crate::game::sm_80::QueueSfx1_Max6;
 use crate::game::sm_90::{ClearProjectile, Projectile_SinLookup};
@@ -261,7 +262,7 @@ unsafe fn finish_spazer(selected: u16, game: &mut Game) {
     word!(game.projectile_bomb_pre_instructions[slot] = 0xdc9c);
     if (selected as i16).wrapping_sub(4) < 0 {
         word!(game.projectile_type[slot] = 0x8024);
-        unsafe { initialize_echo(selected, game) };
+        initialize(selected, Initialization::Echo, game);
     }
 }
 
