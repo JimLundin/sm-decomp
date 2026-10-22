@@ -485,6 +485,11 @@ before the right lookup: failure can leave an allocated, partially configured pa
 The model preserves that sequence through explicit owner transfers. One native
 sequence needs no RAM/ROM decoding. Complete-Firing integration, side playback and
 drawing remain open; this standalone pool is not a production state promotion.
+The source trace places side advancement in the draw phase, with left then right
+processing and one freeze decision per pass. Commands can target either side.
+Projectile reset clears the shots' emission countdowns without directly clearing
+existing visual trail pairs. Preserve those lifetimes and scheduling points when
+closing the remaining consumer, with rendering bytes handled by its adapter.
 
 The [definition-consumer trace](RAM_OWNERSHIP.md#definition-consumers-still-to-migrate)
 records the remaining contracts and distinguishes source findings from tests.

@@ -1778,6 +1778,11 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    integration, side playback/drawing, reset and production migration remain open.
    No ROM/movie, adoption or savings. Preserved work: 20261022/owned-trail-emission;
    details: [emission contract](RAM_OWNERSHIP.md#owned-trail-emission-and-placement).
+   Next trail consumer checks must preserve draw-phase side advancement, one
+   captured freeze decision, cross-side movement commands and partial clipped
+   output. Projectile reset clears shot emission countdowns, not visual-pair
+   timers through its direct stores. These distinctions are source findings;
+   exercise emission/reset/playback and actual output before changing scheduling.
    The aim-handoff experiment now passes 68 full-RAM expected-state comparisons
    (14 partial failures), eight linked sequences and four counterexamples. Captured
    aim is consumed once; origin uses the live pose, and reservation rejection

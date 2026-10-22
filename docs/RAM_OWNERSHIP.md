@@ -1110,7 +1110,9 @@ their stated subsets; this table adds no execution coverage:
 | Fixed-entry and echo initialization | Publish damage before the invalid-damage diagnostic. Fixed-entry setup then takes one entry; echo selects by captured direction. Neither directly initializes radii. |
 | Trail allocation | Select trail scripts from the argument projectile's type, search only left-side timers for a free pair, and publish both timers and scripts before positioning. Positioning receives the live projectile selector. |
 | Trail positioning | Capture the trail marker first. Mode 7 projection precedes the captured projectile's live type/direction lookup. Apply signed offsets with wrapping; keep left-Y, left-X, right-Y, right-X write order. |
-| Trail side playback | Zero timer means inactive; timed frames can finish a side with zero duration. Movement commands advance that side's script and position. Frozen drawing skips progression but can still draw an active side. |
+| Trail side playback | Zero timer means inactive; a zero-duration frame ends that side without updating its tile or stored cursor. Commands choose their target side explicitly, which need not be the executing side. Frozen drawing skips progression but can still draw an active side. |
+| Trail drawing | Capture the freeze decision once, visit pairs last to first, and advance/draw left before right. Preserve the live camera and output-capacity checks between sides. |
+| Projectile reset | Clear each shot's emission countdown (`projectile_timers`); the routine's direct stores do not clear the visual trail pairs. Keep subsequent palette callbacks as separate effects. |
 
 The initializer retains a definition allocation across the damage diagnostic but
 observes its live contents. An eagerly copied immutable record would change
@@ -1125,6 +1127,26 @@ script executor has not been established. Trail script choice, position sampling
 pair reservation and side playback therefore remain distinct operations. The
 remaining closure includes side playback/drawing, complete-owner emission and
 actual producer/consumer integration.[^flight][^trailpipeline]
+
+The side interpreter is called by `draw_projectiles`, after ordinary projectile
+drawing and shinespark echoes. It captures the freeze flag once for the whole
+pass. On a duration expiry, it follows a local script cursor through movement
+commands; callbacks can change the pool, but do not replace that captured cursor.
+The next duration commits before the tile is looked up through a fresh definition
+resolution. A zero duration preserves the stored cursor and tile. The three known
+commands name left-down, right-down and left-up; either side's script can dispatch
+any of them. Restricting command access to the executing side would narrow the
+current contract.[^trailpipeline]
+
+Drawing also has a partial-write contract in the compatibility renderer. After
+capacity and X clipping succeed, it writes X as a word before checking Y. A Y-clipped
+sprite can therefore change the output bytes without advancing the output cursor.
+This belongs in the output adapter while the domain requests a trail sprite; an
+atomic visible-sprite append would not reproduce the current output image.
+These are source findings, not newly executed cases. The next experiment must
+exercise cross-side commands, repeated definition resolution, frozen passes,
+left/right output ordering, clipping with partial output, and emission followed
+by projectile reset and side playback.[^trailpipeline][^resetslots]
 
 ### Aim capture, placement and expiry
 
