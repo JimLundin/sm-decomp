@@ -96,10 +96,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **101,337 Rust lines in 129 files**, plus 266 C
-bridge and 296 C-header lines = **101,899 maintained implementation lines**.
+Current composition (2026-10-22): **101,329 Rust lines in 130 files**, plus 266 C
+bridge and 296 C-header lines = **101,891 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **102,730**. This complete recount includes frontend,
+gives **102,722**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -123,6 +123,9 @@ operations or casts were added. Raw offsets (21), C blocks (7), C exports (6)
 and no_mangle occurrences (65) stay unchanged. Maintained C and installers
 are unchanged. The current source is above 100,000 lines again; the earlier
 reduction milestone remains historical, and further reduction is still required.
+Consolidated checked bomb fuses and motion then remove eight Rust lines and
+seven cast-containing lines. Direct raw-memory operations in those routines
+retire; clearing, contact, sound and HDMA calls remain unsafe.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
 The complete GLSL dependency replacement removes **282 maintained lines**, with
@@ -2565,8 +2568,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    byte-compared. Draft cost is **52 lines**, separately 204 reference, 706
    fixture/harness, five runtime-support and 133 Python lines; two source-input
    copies add 6,434 reference-capture lines. No whole-replacement price is claimed.
+   Bomb, Power Bomb and spread-bomb updates now share a checked lifecycle module.
+   Five bank bodies retire; captured/live selectors and native split-word order
+   remain explicit. Shared fuse logic and named coordinate pairs remove eight
+   maintained Rust lines and seven cast lines; clearing/contact/native effects
+   remain unsafe and RAM remains authoritative. The same full ownership candidate
+   binds both remaining bomb compatibility operations. **207 three-way comparisons**
+   pass with **230 ordered observations**, **15 expected failures**, **79 broad-slot
+   cases** and **12 multi-step sequences**. Scalar-selector and Power Bomb origin
+   aliases, signed fixed-point extremes, both bounce phases and callback mutation/
+   failure are covered. Affected bomb, animation and session checks pass. The
+   unchanged production module builds with edition 2024; the inherited, explicitly
+   source-checked reference carrier remains edition 2021. Synthetic content and
+   controlled hardware provide no movie coverage or complete-current-engine claim.
+   Source/DLL/results are frozen at player-projectiles/runtime-bomb-compat-stage
+   (`result-script.json`); no complete replacement price or state promotion is claimed.
    The target Session contract remains open. The runtime composition still has
-   unbound effects: remaining off-pool bomb/SBA lifecycle operations, beam
+   unbound effects: remaining off-pool SBA lifecycle operations, beam
    continuation and encounter effects need explicit bindings or elimination.
    Bind and validate these in the same full candidate before pricing/adopting its
    complete dependency and deletion surface under target-architecture/MIGRATION.md.
@@ -4833,16 +4851,19 @@ dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
 owned enemy-script positions, checked enemy-definition records, standard combat,
 shared enemy/projectile contact, checked extension linkage, projectile animation
-and consolidated checked trails, followed by the edition 2024 migration,
-maintained Rust is **101,337**, with applicable checks passing. The edition
+and consolidated checked trails, followed by the edition 2024 migration and
+checked bomb lifecycle, maintained Rust is **101,329**, with applicable checks passing. The edition
 migration has source/compiler checks only; it adds no movie coverage.
-Including 266 C and 296 header lines gives **101,899**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **102,730**.
+Including 266 C and 296 header lines gives **101,891**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **102,722**.
 The explicit unsafe scopes and their formatting add 4,909 Rust lines, putting
 the current total above the previously reached immediate volume target.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2958; cast lines 6217. The edition migration adds four counted
+unsafe functions 2958; cast lines 6210. Checked bomb lifecycle removes eight
+Rust lines and seven cast-containing lines; its native pair access and numeric
+helpers forbid unsafe code. Direct raw RAM operations retire, while clearing,
+contact, sound and HDMA effects remain unsafe. The edition migration adds four counted
 declaration lines and 47 cast-containing lines through macro syntax and wrapping;
 it adds no raw operations or casts. Consolidated checked trails remove ten
 Rust lines, one counted unsafe declaration and 25 cast-containing lines. Raw

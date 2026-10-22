@@ -1,3 +1,4 @@
+use crate::game::bomb_lifecycle::{self, Kind as BombKind, SPREAD_FRACTIONS as kBombSpread_Tab3};
 use crate::game::music::{PlayRoomMusicTrackAfterAFrames};
 use crate::game::beam_firing::{clear_animation, update_input};
 use crate::game::launch_motion::MovementDirection;
@@ -13,11 +14,11 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_90::*;
 
-use crate::game::explosion_window::{spawn_crystal_flash, spawn_power_bomb};
+use crate::game::explosion_window::spawn_crystal_flash;
 use crate::game::progress_flags::CheckEventHappened;
 use crate::game::projectile_animation::{
     advance, draw_projectiles, initialize_bomb, initialize_echo, initialize_projectile,
-    initialize_sba, start_bomb_explosion, start_impact,
+    initialize_sba, start_impact,
 };
 use crate::game::projectile_flight::{self, Flight};
 use crate::game::sm_80::{
@@ -39,11 +40,10 @@ use crate::game::sm_91::{
     Samus_LoadSuitTargetPalette, Samus_RestoreHealth, XrayRunHandler,
 };
 use crate::game::sm_94::{
-    scale_sine_word, BlockCollNoWaveBeamHoriz, BlockCollNoWaveBeamVert, BlockCollSpreadBomb,
-    BlockCollWaveBeamHoriz, BlockCollWaveBeamVert, BlockInsideDetection, BombOrPowerBomb_Func1,
-    HandleGrappleBeamGfx, PostGrappleCollisionDetect_X, PostGrappleCollisionDetect_Y,
-    Samus_AlignYPosSlope, Samus_MoveDown_NoSolidColl, Samus_MoveRight_NoSolidColl,
-    WallJumpBlockCollDetect,
+    scale_sine_word, BlockCollNoWaveBeamHoriz, BlockCollNoWaveBeamVert, BlockCollWaveBeamHoriz,
+    BlockCollWaveBeamVert, BlockInsideDetection, HandleGrappleBeamGfx,
+    PostGrappleCollisionDetect_X, PostGrappleCollisionDetect_Y, Samus_AlignYPosSlope,
+    Samus_MoveDown_NoSolidColl, Samus_MoveRight_NoSolidColl, WallJumpBlockCollDetect,
 };
 use crate::game::sm_9b::{
     GrappleBeamFunc_BF1B, GrappleBeamHandler, HandleGrappleBeamFlare,
@@ -1755,22 +1755,6 @@ crate::game::callback_dispatch! {
     pub unsafe fn CallProjPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { Unreachable(game); };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [9482393] ProjPreInstr_Bomb [] {
-        if (word!(game.projectile_dir[(k >> 1)]) & 0xf0) != 0 {
-            ClearProjectile(k, game);
-        } else {
-            Bomb_Func2(game);
-            BombOrPowerBomb_Func1(k, game);
-        };
-    };
-    [9482414] ProjPreInstr_PowerBomb [] {
-        if (word!(game.projectile_dir[(k >> 1)]) & 0xf0) != 0 {
-            ClearProjectile(k, game);
-        } else {
-            PowerBomb_Func3(game);
-            BombOrPowerBomb_Func1(k, game);
-        };
-    };
     [9491666] ProjPreInstr_SpeedEcho [] {
         let mut v5: i16 = 0;
         let v1: i32 = k as i32 >> 1;
@@ -1835,80 +1819,6 @@ crate::game::callback_dispatch! {
                 ProjPreInstr_PlasmaSbaFunc_0(k, game);
             }
         };
-    };
-    [9492727] ProjPreInstr_SpreadBomb [] {
-        let v1: i32 = k as i32 >> 1;
-        if (word!(game.projectile_dir[v1]) & 0xf0) != 0 {
-            ClearProjectile(k, game);
-            return;
-        }
-        Bomb_Func2(game);
-        if word!(game.projectile_variables[v1]) != 0 {
-            AddToHiLo(
-                (ram_ptr!(game, u16; 0xbf0)).offset(v1 as isize),
-                (ram_ptr!(game, u16; 0xc90)).offset(v1 as isize),
-                words!(game.samus_y_accel, samus_y_subaccel),
-            );
-            AddToHiLo(
-                (ram_ptr!(game, u16; 0xb78)).offset(v1 as isize),
-                (ram_ptr!(game, u16; 0xba0)).offset(v1 as isize),
-                words!((
-                    word!(game.projectile_bomb_y_speed[v1]),
-                    word!(game.projectile_timers[v1])
-                )),
-            );
-            if BlockCollSpreadBomb(k, game) & 1 != 0 {
-                AddToHiLo(
-                    (ram_ptr!(game, u16; 0xb78)).offset(v1 as isize),
-                    (ram_ptr!(game, u16; 0xba0)).offset(v1 as isize),
-                    -(words!(
-                        i32,
-                        (
-                            word!(game.projectile_bomb_y_speed[v1]),
-                            word!(game.projectile_timers[v1])
-                        )
-                    )) as u32,
-                );
-                if (word!(game.projectile_bomb_y_speed[v1]) & 0x8000) != 0 {
-                    word! { game, 0; projectile_bomb_y_speed[v1], projectile_y_radius[v1] }
-                } else {
-                    word!(game.projectile_timers[v1] = kBombSpread_Tab3[(v1 - 5i32) as usize]);
-                    word!(game.projectile_bomb_y_speed[v1] = word!(game.projectile_unk_A[v1]));
-                }
-                return;
-            }
-            let t: u16 = word!(game.projectile_bomb_x_speed[v1]);
-            if t & 0x8000 != 0 {
-                AddToHiLo(
-                    (ram_ptr!(game, u16; 0xb64)).offset(v1 as isize),
-                    (ram_ptr!(game, u16; 0xb8c)).offset(v1 as isize),
-                    -(((((t) as i16) & (0x7fffi16)) as i32) << 8i32) as u32,
-                );
-            } else {
-                AddToHiLo(
-                    (ram_ptr!(game, u16; 0xb64)).offset(v1 as isize),
-                    (ram_ptr!(game, u16; 0xb8c)).offset(v1 as isize),
-                    ((t as i16 as i32) << 8) as u32,
-                );
-            }
-        }
-        if BlockCollSpreadBomb(k, game) & 1 != 0 {
-            let t_0: u16 = word!(game.projectile_bomb_x_speed[v1]);
-            word!(game.projectile_bomb_x_speed[v1] ^= (0x8000u16));
-            if t_0 & 0x8000 == 0 {
-                AddToHiLo(
-                    (ram_ptr!(game, u16; 0xb64)).offset(v1 as isize),
-                    (ram_ptr!(game, u16; 0xb8c)).offset(v1 as isize),
-                    -((t_0 as i16 as i32) << 8i32) as u32,
-                );
-            } else {
-                AddToHiLo(
-                    (ram_ptr!(game, u16; 0xb64)).offset(v1 as isize),
-                    (ram_ptr!(game, u16; 0xb8c)).offset(v1 as isize),
-                    (((((t_0) as i16) & (0x7fffi16)) as i32) << 8) as u32,
-                );
-            }
-        }
     };
     [9498579] ProjPreInstr_UnknownProj8027 [] {
         static kProjPreInstr_UnknownProj8027_X: [i16; 4] = [-4, -4, 4, 4];
@@ -2180,6 +2090,9 @@ crate::game::callback_dispatch! {
         };
     };
     @external {
+        9482393 => [bomb_lifecycle::update(k, BombKind::Bomb, game)];
+        9482414 => [bomb_lifecycle::update(k, BombKind::PowerBomb, game)];
+        9492727 => [bomb_lifecycle::update(k, BombKind::Spread, game)];
         9482601 => [()];
         9481971 => [projectile_flight::update(k, Flight::NonWave, 4, game)];
         9482058 => [projectile_flight::collide(2, Flight::NonWave, game)];
@@ -2715,49 +2628,6 @@ pub unsafe fn HudSelectionHandler_MorphBall_Helper2(game: &mut Game) -> u8 {
             word!(game.cooldown_timer += 1);
             word!(game.bomb_counter += 1);
             1
-        }
-    }
-}
-pub unsafe fn Bomb_Func2(game: &mut Game) {
-    unsafe {
-        let v0: u16 = word!(game.projectile_index);
-        let v1: i32 = word!(game.projectile_index) as i32 >> 1;
-        let v2: u16 = word!(game.projectile_variables[v1]);
-        if v2 != 0 {
-            let v3: u16 = (v2).wrapping_sub(1);
-            word!(game.projectile_variables[v1] = v3);
-            if v3 != 0 {
-                if v3 == 15 {
-                    word!(game.projectile_bomb_instruction_ptr[v1] += 28);
-                }
-            } else {
-                QueueSfx2_Max6(8, game);
-                start_bomb_explosion(v0, game);
-            }
-        }
-    }
-}
-pub unsafe fn PowerBomb_Func3(game: &mut Game) {
-    unsafe {
-        let v0: u16 = word!(game.projectile_index);
-        let v1: i32 = word!(game.projectile_index) as i32 >> 1;
-        let v2: u16 = word!(game.projectile_variables[v1]);
-        if v2 != 0 {
-            let v3: u16 = (v2).wrapping_sub(1);
-            word!(game.projectile_variables[v1] = v3);
-            if v3 != 0 {
-                if v3 == 15 {
-                    word!(game.projectile_bomb_instruction_ptr[v1] += 28);
-                }
-            } else {
-                word!(game.power_bomb_explosion_x_pos = word!(game.projectile_x_pos[v1]));
-                word!(game.power_bomb_explosion_y_pos = word!(game.projectile_y_pos[v1]));
-                EnableHdmaObjects(game);
-                spawn_power_bomb(game);
-                word!(game.projectile_variables[(v0 >> 1)] = -1i32 as u16);
-            }
-        } else if word!(game.power_bomb_flag) == 0 {
-            ClearProjectile(word!(game.projectile_index), game);
         }
     }
 }
@@ -3439,7 +3309,6 @@ pub unsafe fn SamusMoveHandler_CrystalFlashMain_2(game: &mut Game) {
 static kBombSpread_Tab0: [u16; 5] = [0x78, 0x6e, 0x64, 0x6e, 0x78];
 static kBombSpread_Tab1: [u16; 5] = [0x8100, 0x8080, 0, 0x80, 0x100];
 static kBombSpread_Tab2: [u16; 5] = [0, 1, 2, 1, 0];
-static kBombSpread_Tab3: [u16; 5] = [0, 0, 0x8000, 0, 0];
 pub unsafe fn BombSpread(game: &mut Game) {
     unsafe {
         if word!(game.bomb_functions[0]) as i32 != 0x90d8f7 & 0xffff {
