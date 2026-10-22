@@ -1643,6 +1643,19 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    bytes; optimized DLL and format checks pass. Preserved encounter-stage records
    these selected checks separately from cancellation-stage and reset-stage;
    neither earlier suite was rerun. No movie or production adoption is claimed.
+   Normal and super-missile firing now use the same reservation, placement, launch
+   and animation owner. **334 focused old/new full-RAM comparisons**, 253 ordered
+   observations and 60 matching failures pass, including the changed shared beam
+   reservation rule. Empty ammunition/full-pool rejection retains the cooldown
+   write; ammunition and HUD updates remain explicit Samus effects. Named missile
+   motions replace their numeric selectors in the model. Cases cover input, pool,
+   ammunition, type/pose, auto-cancel, callback mutation, nested firing and partial
+   failures. Eight linked paths require successful completion plus trail/collision
+   and super-missile extension observations, or missile/reset/beam protection grants.
+   All 115 frozen and 44 draft inputs match compiled bytes; optimized DLL and
+   formatting pass. Preserved missile-stage records these selected checks; earlier
+   suites were not rerun. Collision/trail output and other native callbacks remain
+   controlled; no movie, production adoption or complete reduction is claimed.
    The coordinator independently reviewed all 115 library and 41 compiled draft
    inputs, existing-state reuse and the retained transfer boundaries.
    This remains an **unadopted, incomplete draft**, not a production promotion or
@@ -1651,7 +1664,7 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    synthetic; no gameplay route or hardware
    coverage is established. Other accepted out-of-pool operations retain reference
    bodies, including drawing continuations; handoff tests do not retire those bodies.
-   Continue with remaining weapon modes, trails, protection/suspension,
+   Continue with bombs and special attacks, trails, protection/suspension,
    real producers/callers and runtime transfers. Count every adapter/fallback and
    close the remaining numeric-definition/motion interfaces. The frozen library
    predates current main; final integration requires current-source builds.
