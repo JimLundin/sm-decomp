@@ -2121,7 +2121,7 @@ crate::game::callback_dispatch! {
         EnablePaletteFx(game);
         word! { game, 0; door_def_ptr, layer1_x_pos, layer1_y_pos, cinematic_var16 }
         word_transfers!(game, descending, 1024; cinematic_bg(1023) <- native(0x197fe));
-        word_transfers!(game, descending, 128; pause_map(127) <- rom_native(0x8cd81b, 127));
+        word_transfers!(game, descending, 128; pause_map(127) <- rom(0x8cd81b, 127));
         word! {game; cinematic_var11 = -1i32 as u16; cinematic_function = ((0x8ba5a7i32) as u16); }
         QueueMusic_Delayed8(0, game);
         QueueMusic_Delayed8(0xff3f, game);

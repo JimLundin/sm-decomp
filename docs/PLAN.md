@@ -34,10 +34,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,257 Rust lines in 92 files**, plus 265 C
-bridge and 305 C-header lines = **94,827 maintained implementation lines**.
+Current composition (2026-10-22): **94,282 Rust lines in 92 files**, plus 265 C
+bridge and 305 C-header lines = **94,852 maintained implementation lines**.
 Counting all 804 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,659**. This complete recount includes frontend,
+gives **95,684**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1629,6 +1629,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Windows stdout bytes. Normal release library/frontend/verifier builds pass.
    No movie ran; synthetic streams establish no gameplay-route or physical-device
    coverage. Checks: Local/sm-decomp-experiments/20261022/safe-decompression.
+   All 199 shared word-transfer invocations now use checked RAM byte places,
+   owned ROM images and typed tables. The module and expanded transfer loop
+   forbid unsafe code, preserving lane order, directional overlap, captured
+   values, argument temporaries and native/little-endian interpretation. Three
+   existing palette tables change signedness without changing their bytes. The
+   odd cinematic ROM address now has defined byte access. Complete cost is **+25
+   maintained lines**, including callers. Source-checked comparisons pass 1,864
+   byte-level cases and 240 actual release-library menu, grapple and statue/palette
+   caller cases, with all 99 library inputs checked. Evaluation/lifetime, bounds
+   and exact 280-byte diagnostic checks pass; normal release builds pass. No movie
+   ran. Full PLM slots exercise the real no-slot branch, not spawned PLM behavior.
+   Legacy endpoint expressions and C diagnostic calls remain unsafe outside the
+   checked transfers. C buffering is preserved; moving that output to Rust changed
+   ordering and was rejected. Checks: Local/sm-decomp-experiments/20261022/safe-word-transfers.
    Pose-history recording now copies the two four-byte records using checked byte
    places, preserving the previous record before replacing it. It eliminates four
    raw word reads and four raw word stores, and its entry point is safe. Direct
@@ -2525,14 +2539,17 @@ scrolling-sky and grapple-swing ownership, the SPC/PPU/DSP/music replacements,
 shared configuration/input and utility dependencies, the desktop host,
 room-scroll data, the shader dependency, safe pose/mechanism RAM access,
 gameplay continuation ownership, owned ROM reads, safe asset decompression
-and checked ROM tables, maintained Rust is **94,257**, with
+checked ROM tables and safe word transfers, maintained Rust is **94,282**, with
 applicable static, component and exercised movie checks passing.
-Including 265 C and 305 header lines gives **94,827**; all 804 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,659**.
+Including 265 C and 305 header lines gives **94,852**; all 804 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,684**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 25; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3055; cast lines 6626. Checked ROM tables add one line and remove
+unsafe functions 3052; cast lines 6626. Safe word transfers add 25 lines and remove
+three counted unsafe declarations; other counters are unchanged. This is a safety
+cost, not a reduction or elimination of the remaining unsafe caller expressions.
+Checked ROM tables add one line and remove
 two counted unsafe declarations; all other counters are unchanged. Safe asset
 decompression removes nine
 counted unsafe declarations and eight cast-containing lines, with no counter

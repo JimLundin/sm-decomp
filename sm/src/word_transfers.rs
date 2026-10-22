@@ -1,116 +1,133 @@
-//! Ordered native-word and little-endian RAM transfers.
-//!
-//! Endpoints are raw pointers: this seam never borrows Game or its RAM. Each
-//! iteration reads one source and then writes its destination before moving to
-//! the next lane. Overlapping copies therefore retain directional propagation.
-//! Callers must preserve bounds, traversal, scalar snapshots and live rereads.
+//! Ordered word transfers over captured RAM offsets, ROM images and tables.
+#![forbid(unsafe_code)]
+use crate::game_state::Game;
+use crate::rom::RomImage;
 
-#[derive(Clone, Copy)]
-pub(crate) enum WordEndpoint {
-    Native(*mut u16),
-    NativeUnaligned(*mut u16),
-    LittleEndian(*mut u16),
+#[derive(Clone)]
+pub(crate) enum WordEndpoint<'a> {
+    // The flag selects native byte order; false selects SNES little-endian.
+    Ram(isize, bool),
+    Rom(RomImage, isize),
+    Table(&'a [u16], isize),
     Value(u16),
 }
 
-impl WordEndpoint {
-    unsafe fn read(self, byte_offset: isize) -> u16 {
-        match self {
-            Self::Native(pointer) => pointer.byte_offset(byte_offset).read(),
-            Self::NativeUnaligned(pointer) => pointer.byte_offset(byte_offset).read_unaligned(),
-            Self::LittleEndian(pointer) => {
-                u16::from_le(pointer.byte_offset(byte_offset).read_unaligned())
+impl WordEndpoint<'_> {
+    pub(crate) fn shifted(&self, words: isize) -> Self {
+        let mut result = self.clone();
+        match &mut result {
+            Self::Ram(base, _) | Self::Rom(_, base) | Self::Table(_, base) => {
+                *base = base.checked_add(words.checked_mul(2).unwrap()).unwrap();
             }
-            Self::Value(value) => value,
+            Self::Value(_) => {}
         }
+        result
     }
 
-    unsafe fn write(self, byte_offset: isize, value: u16) {
+    // RAM is handled at the macro call site, without borrowing the RAM array.
+    pub(crate) fn read(&self, byte_offset: isize) -> u16 {
         match self {
-            Self::Native(pointer) => pointer.byte_offset(byte_offset).write(value),
-            Self::NativeUnaligned(pointer) => {
-                pointer.byte_offset(byte_offset).write_unaligned(value);
+            Self::Rom(image, base) => {
+                let offset = address(*base, byte_offset);
+                u16::from_ne_bytes([image.read(offset), image.read(offset + 1)])
             }
-            Self::LittleEndian(pointer) => {
-                pointer
-                    .byte_offset(byte_offset)
-                    .write_unaligned(value.to_le());
+            Self::Table(words, base) => {
+                let offset = address(*base, byte_offset);
+                u16::from_ne_bytes([
+                    words[offset / 2].to_ne_bytes()[offset & 1],
+                    words[(offset + 1) / 2].to_ne_bytes()[(offset + 1) & 1],
+                ])
             }
-            Self::Value(_) => unreachable!("a transfer destination must be memory"),
+            Self::Value(value) => *value,
+            Self::Ram(..) => unreachable!("RAM reads stay at the transfer call site"),
         }
     }
 }
 
-/// `step` is a signed byte stride from the explicitly supplied first word.
-/// Lanes retain their order, including duplicate or overlapping destinations.
-pub(crate) unsafe fn transfer_words(
-    count: usize,
-    step: isize,
-    lanes: &[(WordEndpoint, WordEndpoint)],
-) {
-    for index in 0..count {
-        let offset = index as isize * step;
-        for &(destination, source) in lanes {
-            let value = source.read(offset);
-            destination.write(offset, value);
-        }
-    }
+pub(crate) fn address(base: isize, displacement: isize) -> usize {
+    base.checked_add(displacement).unwrap().try_into().unwrap()
 }
 
-// These forms name actual memory endpoints, not arbitrary loop bodies.
-// `value` takes an invariant scalar; memory values must remain source endpoints.
+// Callers retain any legacy address diagnostics before capturing the image.
+pub(crate) fn rom_source(address: u32, game: &mut Game) -> WordEndpoint<'static> {
+    WordEndpoint::Rom(
+        game.loaded_rom
+            .as_ref()
+            .expect("ROM must be loaded")
+            .clone(),
+        crate::rtl::lorom_offset(address),
+    )
+}
+
+// Capture count, stride and endpoints in order before touching output. Every
+// lane reads then writes one word, so overlaps propagate in traversal order.
+// The loop uses byte places rather than a whole-Game/RAM borrow: callers may
+// still retain legacy enemy pointers outside this fully checked operation.
 macro_rules! word_transfers {
     ($game:ident, $direction:tt, $count:expr;
-        $($destination:ident($($dst:tt)*) <- $source:ident($($src:tt)*)),+ $(,)?) => {
-        $crate::word_transfers::transfer_words(
+        $($destination:ident($($dst:tt)*) <- $source:ident($($src:tt)*)),+ $(,)?) => {{
+        match (
             $count,
             word_transfers!(@step $direction),
             &[$((word_transfers!(@endpoint $game, $destination($($dst)*)),
                  word_transfers!(@endpoint $game, $source($($src)*)))),+],
-        )
-    };
-    (@step ascending) => { 2 };
-    (@step descending) => { -2 };
+        ) { (count, step, lanes) => {
+        let (count, step, lanes): (usize, isize, &[_]) = (count, step, lanes);
+        #[forbid(unsafe_code)]
+        {
+            use $crate::word_transfers::{address, WordEndpoint};
+            for index in 0..count {
+                let offset = (index as isize).checked_mul(step).unwrap();
+                for (destination, source) in lanes {
+                    let value = match source {
+                        WordEndpoint::Ram(base, native) => {
+                            let at = address(*base, offset);
+                            let bytes = [$game.g_ram[at], $game.g_ram[at + 1]];
+                            if *native { u16::from_ne_bytes(bytes) } else { u16::from_le_bytes(bytes) }
+                        }
+                        source => source.read(offset),
+                    };
+                    let WordEndpoint::Ram(base, native) = destination else {
+                        unreachable!("a transfer destination must be RAM");
+                    };
+                    let at = address(*base, offset);
+                    let bytes = if *native { value.to_ne_bytes() } else { value.to_le_bytes() };
+                    $game.g_ram[at] = bytes[0];
+                    $game.g_ram[at + 1] = bytes[1];
+                }
+            }
+        }
+        } }
+    }};
+    (@step ascending) => { 2isize };
+    (@step descending) => { -2isize };
     (@step $stride:expr) => { $stride };
     (@endpoint $game:ident, le($field:ident, $index:expr)) => {
-        $crate::word_transfers::WordEndpoint::LittleEndian(
-            (&raw mut $game.g_ram).cast::<u8>()
-                .add($crate::ram_map::word_arrays::$field)
-                .cast::<u16>().offset($index as isize),
+        $crate::word_transfers::WordEndpoint::Ram(
+            ($crate::ram_map::word_arrays::$field as isize)
+                .checked_add(($index as isize).checked_mul(2).unwrap()).unwrap(), false,
         )
     };
     (@endpoint $game:ident, native($address:expr)) => {
-        $crate::word_transfers::WordEndpoint::Native(
-            (&raw mut $game.g_ram).cast::<u8>().offset($address as isize).cast::<u16>(),
-        )
+        $crate::word_transfers::WordEndpoint::Ram($address as isize, true)
     };
     (@endpoint $game:ident, little($address:expr)) => {
-        $crate::word_transfers::WordEndpoint::LittleEndian(
-            (&raw mut $game.g_ram).cast::<u8>().offset($address as isize).cast::<u16>(),
-        )
+        $crate::word_transfers::WordEndpoint::Ram($address as isize, false)
     };
-    (@endpoint $game:ident, rom($address:expr, $index:expr)) => {
-        $crate::word_transfers::WordEndpoint::NativeUnaligned(
-            $game.g_rom.offset($crate::rtl::lorom_offset($address))
-                .cast::<u16>().offset($index as isize).cast_mut(),
-        )
-    };
-    (@endpoint $game:ident, rom_native($address:expr, $index:expr)) => {
-        $crate::word_transfers::WordEndpoint::Native(
-            $game.g_rom.offset($crate::rtl::lorom_offset($address))
-                .cast::<u16>().offset($index as isize).cast_mut(),
-        )
-    };
+    (@endpoint $game:ident, rom($address:expr, $index:expr)) => {{
+        let image = $game.loaded_rom.as_ref().expect("ROM must be loaded").clone();
+        let base = $crate::rtl::lorom_offset($address);
+        let offset = ($index as isize).checked_mul(2).unwrap();
+        $crate::word_transfers::WordEndpoint::Rom(image, base.checked_add(offset).unwrap())
+    }};
     (@endpoint $game:ident, table($table:ident, $index:expr)) => {
-        $crate::word_transfers::WordEndpoint::Native(
-            ($table.as_ptr() as *mut u16).offset($index as isize),
-        )
+        $crate::word_transfers::WordEndpoint::Table(&$table, 0).shifted($index as isize)
     };
     (@endpoint $game:ident, value($value:expr)) => {
         $crate::word_transfers::WordEndpoint::Value($value)
     };
-    (@endpoint $game:ident, native_ptr($pointer:expr)) => {
-        $crate::word_transfers::WordEndpoint::Native($pointer as *mut u16)
+    (@endpoint $game:ident, captured($source:ident, $index:expr)) => {
+        $source.shifted($index as isize)
     };
     (@endpoint $game:ident, pause_map($index:expr)) => {
         word_transfers!(@endpoint $game, native(0x3000 + 2 * ($index)))

@@ -4827,15 +4827,23 @@ pub unsafe fn OptionsMenuFunc6(game: &mut Game) {
     for v0 in (0u16..14).step_by(2) {
         let v1: i32 = v0 as i32 >> 1;
         let v2: u16 = crate::rtl::rom_table_word!(game, 0x82f639, v1 as isize);
-        let v3 = RomPtr_82(
-            crate::rtl::rom_table_word!(game, 0x82f647, word!(game.eproj_F[(v1 + 13)]) as isize),
-            game,
-        ) as *const u16;
+        let address = 0x820000
+            | u32::from(crate::rtl::rom_table_word!(
+                game,
+                0x82f647,
+                word!(game.eproj_F[(v1 + 13)]) as isize
+            ));
+        if address & 0x8000 == 0 {
+            // Keep this diagnostic on the existing C stream and its buffer.
+            printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
+            game.g_fail = true;
+        }
+        let source = crate::word_transfers::rom_source(address, game);
         word_transfers!(game, ascending, 3;
-            native(0x3000 + v2 as isize) <- native_ptr(v3),
+            native(0x3000 + v2 as isize) <- captured(source, 0),
         );
         word_transfers!(game, ascending, 3;
-            native(0x3040 + v2 as isize) <- native_ptr(v3.offset(3)),
+            native(0x3040 + v2 as isize) <- captured(source, 3),
         );
     }
     if word!(game.eproj_instr_list_ptr[0]) != 5 && word!(game.eproj_instr_list_ptr[0]) != 6 {
