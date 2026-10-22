@@ -330,6 +330,8 @@ pub mod game {
     pub(crate) mod grapple_swing;
     pub(crate) mod gameplay;
     pub(crate) mod prelude;
+    pub(crate) mod launch_motion;
+    pub(crate) mod launch_motion_ram;
     pub(crate) mod projectile_flight;
     pub(crate) mod room_backgrounds;
     pub(crate) mod room_scrolls;

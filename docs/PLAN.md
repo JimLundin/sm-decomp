@@ -5,6 +5,14 @@ playing from boot to credits. SNES emulation remains the current video/audio
 backend and verification oracle; it is not the long-term engine architecture.
 Map Rando support comes after vanilla.
 
+Engine direction (user clarification, 2026-10-22): gameplay should be coordinated
+state machines with owned state, named inputs, transitions and outcomes. Remove
+implicit communication through RAM as complete producer/consumer interactions
+migrate. Preserve the established observation and suspension points. Checked RAM
+access is a transitional compatibility adapter, not the final domain interface.
+Keep byte-compatible encoding for verification while moving the behavior itself
+into models that need no Game, RAM, raw pointers or unsafe calls.
+
 Git concurrency (user direction, 2026-10-19): agents must not manually
 reserve or hold Git locks, including index.lock and branch ref locks.
 Use Git's normal short-lived locks only for the actual Git write. Builds,
@@ -34,10 +42,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,340 Rust lines in 99 files**, plus 262 C
-bridge and 296 C-header lines = **94,898 maintained implementation lines**.
+Current composition (2026-10-22): **94,453 Rust lines in 101 files**, plus 262 C
+bridge and 296 C-header lines = **95,011 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,729**. This complete recount includes frontend,
+gives **95,842**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1575,6 +1583,26 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    message-route, later-room or credits coverage is claimed. The cited research
    records harness limits, observed shared fields and the next experiments.
    Durable work: Local/sm-decomp-experiments/20261022/ram-ownership.
+   The next complete handoff now has a pure `LaunchMotion` state model: movement
+   replaces one directional record; firing observes without consuming; finishing
+   projectile processing clears those records. All eight directional writers,
+   the phase clear and the launch calculation use it through a separate checked
+   RAM adapter. Both new modules forbid unsafe code. The legacy flight diagnostic
+   and surrounding movement/collision code remain unsafe; persistent state still
+   resides in RAM. This is one migrated gameplay contract, not the engine rebuild.
+   Source research establishes cross-direction fractional inheritance, a separately
+   retained absolute-Y fraction, and different reflection/activation timing.
+   **13,958 actual old/new comparisons and steps** pass, including 704 ordered
+   callback observations, 120 reflection steps, 160 missile activation steps and
+   40 linked production checks. Five discriminating model checks and 32 early-
+   sampling counterexamples reject incorrect simplifications. All 108 embedded
+   inputs and release library/frontend/verifier builds pass. No movie ran;
+   collision/animation/extension callbacks are controlled and these constructed
+   sequences do not establish gameplay-route or hardware coverage. The complete
+   cost is **+113 maintained Rust lines**: 84 model + 67 adapter + 10 registration
+   lines, minus 48 net caller/calculation lines. No new gameplay macros or hidden
+   maintained code. This is required ownership/safety work, not volume savings.
+   Local reproduction: Local/sm-decomp-experiments/20261022/launch-motion.
    Renewed user direction (2026-10-21): the search is still too narrow. Prioritize
    substantial system replacements and repeated algorithms across responsibilities.
    Stop spending implementation/validation effort on roughly hundred-line enemy
@@ -2700,14 +2728,17 @@ room-scroll data, the shader dependency, safe pose/mechanism RAM access,
 gameplay continuation ownership, owned ROM reads, safe asset decompression,
 checked ROM tables, safe word transfers, owned recording, checked VRAM readback
 owned sprite drawing, checked Mode 7 transfers, owned SRAM, checked snapshot
-streams, owned enemy-projectile scripts and named APU history, maintained Rust is **94,340**, with
+streams, owned enemy-projectile scripts, named APU history and explicit launch
+motion, maintained Rust is **94,453**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **94,898**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,729**.
+Including 262 C and 296 header lines gives **95,011**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,842**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3036; cast lines 6574. Named APU history removes nine maintained
+unsafe functions 3036; cast lines 6574. Launch-motion ownership adds 113 lines
+for the pure model, checked adapter and registrations, retaining these counters.
+Named APU history removes nine maintained
 lines, one union and two unsafe scopes; the counted residue metrics are unchanged.
 Owned enemy-projectile scripts add 54
 maintained lines for checked reads, captured ROM ownership and explicit results;

@@ -1,4 +1,6 @@
 use crate::game::beam_firing::{clear_animation, update_input};
+use crate::game::launch_motion::MovementDirection;
+use crate::game::launch_motion_ram;
 pub use crate::game::prelude::*;
 use crate::game::samus_animation::{
     HandleAtmosphericEffects, PlaySamusFanfare, Samus_Animate, Samus_Draw, Samus_DrawEchoes,
@@ -294,15 +296,9 @@ unsafe fn move_samus_horizontal_collision<const LEFT: bool>(mut amt: i32, game: 
     } else {
         amt = Samus_MoveRight_NoSolidColl(if LEFT { -amt } else { amt }, game);
         if LEFT {
-            words!(
-                game.projectile_init_speed_samus_moved_left,
-                projectile_init_speed_samus_moved_left_fract = amt as u32
-            );
+            launch_motion_ram::record_movement(game, MovementDirection::Left, amt);
         } else {
-            words!(
-                game.projectile_init_speed_samus_moved_right,
-                projectile_init_speed_samus_moved_right_fract = amt as u32
-            );
+            launch_motion_ram::record_movement(game, MovementDirection::Right, amt);
         }
         if ((word!(game.samus_collision_direction) & 1) != 0) == LEFT {
             word!(game.samus_collision_flag = 0);
@@ -576,10 +572,7 @@ pub unsafe fn Samus_MoveUp(mut amt: i32, game: &mut Game) {
         Samus_MoveUp_NoColl(amt, game);
     } else {
         amt = Samus_MoveDown_NoSolidColl(-amt, game);
-        words!(
-            game.projectile_init_speed_samus_moved_up,
-            projectile_init_speed_samus_moved_up_fract = amt as u32
-        );
+        launch_motion_ram::record_movement(game, MovementDirection::Up, amt);
         Samus_MoveUp_SetPoseCalcInput(game);
     };
 }
@@ -593,8 +586,7 @@ pub unsafe fn Samus_MoveDown(mut amt: i32, game: &mut Game) {
         Samus_MoveDown_NoColl(amt, game);
     } else {
         amt = Samus_MoveDown_NoSolidColl(amt, game);
-        word!(game.projectile_init_speed_samus_moved_down_fract = amt as u16);
-        word!(game.projectile_init_speed_samus_moved_down = (amt >> 16) as u16);
+        launch_motion_ram::record_movement(game, MovementDirection::Down, amt);
         Samus_MoveDown_SetPoseCalcInput(game);
     };
 }
@@ -861,31 +853,19 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
 }
 pub unsafe fn Samus_MoveRight_NoColl(amt: i32, game: &mut Game) {
     words!(game.samus_x_pos, samus_x_subpos += amt as u32);
-    words!(
-        game.projectile_init_speed_samus_moved_right,
-        projectile_init_speed_samus_moved_right_fract = amt as u32
-    );
+    launch_motion_ram::record_movement(game, MovementDirection::Right, amt);
 }
 pub unsafe fn Samus_MoveLeft_NoColl(amt: i32, game: &mut Game) {
     words!(game.samus_x_pos, samus_x_subpos += -amt as u32);
-    words!(
-        game.projectile_init_speed_samus_moved_left,
-        projectile_init_speed_samus_moved_left_fract = -amt as u32
-    );
+    launch_motion_ram::record_movement(game, MovementDirection::Left, -amt);
 }
 pub unsafe fn Samus_MoveDown_NoColl(amt: i32, game: &mut Game) {
     words!(game.samus_y_pos, samus_y_subpos += amt as u32);
-    words!(
-        game.projectile_init_speed_samus_moved_down,
-        projectile_init_speed_samus_moved_down_fract = amt as u32
-    );
+    launch_motion_ram::record_movement(game, MovementDirection::Down, amt);
 }
 pub unsafe fn Samus_MoveUp_NoColl(amt: i32, game: &mut Game) {
     words!(game.samus_y_pos, samus_y_subpos += -amt as u32);
-    words!(
-        game.projectile_init_speed_samus_moved_up,
-        projectile_init_speed_samus_moved_up_fract = -amt as u32
-    );
+    launch_motion_ram::record_movement(game, MovementDirection::Up, -amt);
 }
 pub unsafe fn Samus_InitJump(game: &mut Game) {
     crate::verify_probe::hit("samus.jump.normal");
@@ -4577,13 +4557,8 @@ pub unsafe fn Samus_JumpCheck(game: &mut Game) {
     };
 }
 pub unsafe fn Samus_Func10(game: &mut Game) {
-    word! { game, 0;
-        projectile_init_speed_samus_moved_left, projectile_init_speed_samus_moved_left_fract,
-        projectile_init_speed_samus_moved_right, projectile_init_speed_samus_moved_right_fract,
-        projectile_init_speed_samus_moved_up, projectile_init_speed_samus_moved_up_fract,
-        projectile_init_speed_samus_moved_down, projectile_init_speed_samus_moved_down_fract,
-        samus_anim_frame_skip, new_projectile_direction_changed_pose,
-    }
+    launch_motion_ram::finish_projectile_phase(game);
+    word! { game, 0; samus_anim_frame_skip, new_projectile_direction_changed_pose }
     word!(checked_i32, game.UNUSED_word_7E0DFA <<= 8);
     *(ram_ptr!(game, u16; 0xa10)) = *(ram_ptr!(game, u16; 0xa1e));
 }

@@ -237,6 +237,153 @@ Use a session-mode lease as a design concept: the active mode defines the storag
 interpretation and reset rules. Do not infer that unused slot data can be erased,
 or that deferred spawning has equivalent same-update execution order.
 
+## Target: coordinated gameplay state machines
+
+The proposed engine has explicit state and transitions for Samus, weapon flight,
+creatures/encounters, room mechanisms, room/session lifecycle and progression.
+Each state machine owns its rules and emits named outcomes consumed at specified
+points by another owner. Movement can produce launch history and contact effects;
+pickups can commit progression and request a message; a message can suspend a
+room script. These are proposals derived from the contracts above, not completed
+interfaces. The existing order, lifetime and byte-alias rules constrain each move.
+
+The gameplay coordinator advances these state machines in the established order
+and preserves continuations across suspension. Typed outcomes should capture
+decisions such as movement replaced, projectile reflected, item acquired or room
+script suspended. Apply them at their present observation points: a frame-end
+event flush would lose the contacts, reflection timing and pickup/message
+ordering traced above. Each owner can contain several internal state machines;
+there is no requirement to make every instruction a public interface.
+
+Definitions describe authored room, creature, equipment and attack data. Live
+state describes what those definitions are doing now. Rendering/audio consume
+presentation requests, while gameplay animation transitions remain with their
+behavior owner. A compatibility adapter continues to encode byte-compatible RAM
+until the migrated state is directly owned by the engine; its names and offsets
+do not define the long-term behavior interface.
+
+The concrete launch migration below is the first value model in this note with
+explicit record, observation and clear transitions. The existing named gameplay
+continuation owner preserves scheduling; it does not yet make the complete game
+a collection of independent state machines. Contact, pose/animation, reflection,
+room scripts, progression and mode-dependent effect storage remain migration
+work. Their traced contracts provide the next interfaces to design and test.
+
+## Launch-motion handoff: closed source trace
+
+Follow-up source study on `dc20e538`, before adopting a typed launch model.
+The complete directional records extend beyond the initially interesting
+`$0DA8..$0DB7` range: the down fraction ends at `$0DB9`. Each row below is a
+little-endian word; the names are established by `ram_map`'s `$0DA0` stride.
+[^launchmap]
+
+| Address | Meaning | Direct gameplay writer |
+| --- | --- | --- |
+| `$0DA8` | Absolute previous-movement Y fraction | `Samus_CalcDistanceMoved_Y`; initialization |
+| `$0DAA`, `$0DAC` | Left integer, fraction | Horizontal collision result; `Samus_MoveLeft_NoColl` |
+| `$0DAE`, `$0DB0` | Right integer, fraction | Horizontal collision result; `Samus_MoveRight_NoColl` |
+| `$0DB2`, `$0DB4` | Up integer, fraction | `Samus_MoveUp`; `Samus_MoveUp_NoColl` |
+| `$0DB6`, `$0DB8` | Down integer, fraction | `Samus_MoveDown`; `Samus_MoveDown_NoColl` |
+
+Those are the named directional write sites: the horizontal helper has separate
+left/right branches, followed by two vertical collision branches and four
+no-collision functions. Each replaces the selected record with the actual
+movement result; it does not accumulate movement or clear the opposite direction.
+Left/up no-collision callers negate their supplied movement amount; preserve the
+resulting 32 bits. `SetHiLo` writes fraction before integer, as does the explicit
+downward pair.[^launchwriters][^splitwords]
+
+`Samus_Func10` clears the eight directional words in left/right/up/down order,
+integer then fraction, after firing and projectile handling. It leaves `$0DA8`
+intact. `Samus_Initialize` clears the encompassing `$0A02..$0E0B` workspace and
+initializes absolute Y distance to integer 1, fraction 0. Reset also bulk-clears
+the region. `ResetProjectileData` clears projectile slots but does not clear these
+movement records.[^inheritance][^samusinit][^resetlaunch][^resetslots]
+
+The nonlocal coupling is in the launch reads. Define
+`pack(fraction, integer) = (fraction >> 8) | ((integer & 255) << 8)`.
+`initialize_speed` reads these four odd-address words:[^launch]
+
+| Read | Exact composed value |
+| --- | --- |
+| `$0DA9` for leftward fire | `pack(absolute_y_fraction, left_integer)` |
+| `$0DAD` for rightward fire | `pack(left_fraction, right_integer)` |
+| `$0DB1` for upward fire | `pack(right_fraction, up_integer)` |
+| `$0DB5` for downward fire | `pack(up_fraction, down_integer)` |
+
+These are cross-record reads, not each direction's own 16.16-to-8.8 conversion.
+Upward inheritance is additionally disabled when the low byte of `up_integer`
+is zero; otherwise it becomes `(word($0DB1) >> 2) | 0xC000`. Launch adds/subtracts
+the selected base speed with 16-bit wrapping. Down fraction is currently written
+and reset but has no direct launch read in this traced implementation.[^launch]
+
+`$0DA8` has a separate lifecycle. Normal scrolling computes absolute current-minus-
+previous 16.16 Y displacement plus `1 << 16`, choosing the subtraction direction
+by signed integer-position comparison. It runs after movement and contact, before
+refreshing previous position. Slow grapple scrolling skips this calculation and
+retains the previous fraction. Thus the launch input is sampled from a persisted
+movement observation, not necessarily this update's measured vertical velocity.
+[^distance]
+
+There are three launch timings. Ordinary beam firing reads history during Samus
+preparation. New missiles first initialize with base speed zero; their first
+projectile update can initialize again in the same preparation. The delayed
+acceleration branch tests a zero high byte, adds `$0100`, and initializes from
+the new value; that branch always crosses into a nonzero high byte on its first
+execution. It is not a multi-update countdown.[^beamlaunch][^missilelaunch]
+
+Reflection adds another consumer: enemy shot reactions call `ProjectileReflection`
+after preparation has cleared directional history. Beams immediately resample
+that state and the independently retained absolute Y fraction. Missiles/supers
+instead set their variable to 240 and reinitialize on their next projectile
+update, after the intervening movement/scrolling opportunity. A launch snapshot
+taken only when the player presses fire misses this interaction.[^reflection]
+
+Useful counterexamples for experiments, derived from these source rules:
+
+- Clear every directional record, leave absolute Y fraction `$8000`, fire left
+  with base `$0400`: horizontal speed is `$FC80`, not `$FC00`.
+- Leave left fraction `$8000` and right integer 1: rightward inheritance is
+  `$0180` regardless of the right fraction. Combining only each direction's own
+  integer/fraction changes it.
+- Record two rightward movements: the second replaces the first. Summing them,
+  or deriving launch history from net position change, is a different model.
+- Reflect a beam after preparation, then a missile: immediate beam launch and
+  next-update missile launch must read at their different execution points.
+
+These are constructed/source-composed scenarios, not claimed movie observations.
+The implementation now encodes `LaunchMotion` with four signed 16.16 records,
+`record_movement`, `finish_projectile_phase` and `launch` transitions/observation.
+`launch` receives typed aim, base speed and the separately sampled absolute-Y
+fraction, and returns signed X/Y launch velocity. Its pure calculation preserves
+the cross-record rules above. `launch_motion_ram` supplies the existing state at
+the actual execution point and serializes the transition's writes.[^launchmodel]
+
+All eight direct directional-history writes, their ordinary phase clear and
+`initialize_speed` now use this model/adapter. Both new modules declare
+`forbid(unsafe_code)`; the flight caller retains the legacy invalid-direction
+callback and its unsafe contract. Global workspace initialization/reset remain
+outside the directional transition owner. RAM is still the persistent storage:
+Samus does not yet retain a `LaunchMotion` field directly. This is an implemented
+focused migration, not a completed engine rebuild; validation results belong in
+the experiment section, not in this source study.[^launchmodel][^samusinit]
+
+The adapter also needs precise access order. `initialize_speed` clears X/Y
+subpositions, reads direction, computes and writes Y speed, then reads horizontal
+inheritance and writes X speed. Ordinary projectile slots are disjoint from
+launch history, but arbitrary in-bounds indices can alias it: `k=$021C` clears
+`$0DA8`; `k=$01BC` writes Y speed at `$0DAC`, affecting the subsequent `$0DAD`
+read. Preserve that sequence or establish the accepted slot domain explicitly.
+These cases are constructed aliases, not established reachable gameplay.
+[^launch][^launchmap]
+
+The selected movement writers keep no local RAM pointer across their collision
+calls, but reflected launch runs below `EnemyMain`'s retained enemy pointer.
+Its later reads rule out introducing a whole-RAM borrow in the adapter without
+migrating that caller path. Copy values at the specified point, keep direct
+byte accesses scoped, and preserve the remaining unsafe caller contract.
+[^enemies][^reflection][^word]
+
 ## Comparing interface choices
 
 | Choice | What it makes explicit | Main limitation here | Recommendation |
@@ -372,18 +519,68 @@ passed on the composed pre-ROM source with all 97 embedded inputs checked.
 Independent changes retain their own validation; the replay is not claimed as
 validation of a later ROM ownership implementation.
 
+### Launch state and reflection experiments
+
+The adopted launch model/adapter and the migrated source routines pass **13,958
+old/new comparisons and persistent steps**, checking full Game RAM, completion
+and ordered callback inputs. Selection targeted the new contract and the source
+hazards above; no movie ran.
+
+| Scenario | Comparisons / steps |
+| --- | ---: |
+| Launch direction, flags, speed wrapping, asymmetric histories, normal/odd slots and invalid directions | 12,288 |
+| In-bounds off-table slot aliases, including subpixel clear and Y-before-X dependencies | 890 |
+| Actual movement writers with solid/block collision outcomes and callback mutations | 384 |
+| Actual phase clear, retaining absolute-Y fraction and unrelated fields | 16 |
+| Persistent firing, clear, post-clear launch, movement and distance-accounting sequences | 60 |
+| Linked production movement and phase-clear functions from the final release library | 40 |
+| Actual beam/missile/super reflection, followed by movement and missile reinitialization | 120 |
+| Initial missile launch followed by its first acceleration/initialization | 160 |
+
+All **704 ordered callback observations** agree. The harness compiles original
+and adopted Rust function bodies with the actual RAM macros, split-word helpers,
+launch model and adapter against the real compiled `Game`. Movement collision,
+pose reactions, animation initialization, clearing and extension spawning are
+recording/mutating substitutes. The selected missile branch never requests ROM
+acceleration data; an unexpected request fails the harness. Invalid-direction
+diagnostics are controlled callbacks; the real flight caller retains its original
+`Unreachable` call. This does not validate downstream collision, animation,
+extension, native assertion, rendering or hardware implementations, nor prove
+that unusual slot aliases occur in gameplay.
+
+Five discriminating checks exercise cross-direction fraction dependence,
+replacement rather than accumulation, repeated non-consuming launch, the upward
+low-byte gate, retained absolute-Y fraction, and Y-commit-before-X-sample ordering
+(the replacement check also checks repeated launch). The executed reflection
+sequences produce **32 counterexamples** to sampling reflected missile velocity
+at reflection time instead of at its subsequent activation. These are constructed
+actual-code scenarios, not recorded player encounters. Global initialization and
+reset are retained source findings, not newly executed paths here.
+
+Normal release library/frontend/verifier builds and all **108 embedded library
+source comparisons** pass. Both new modules enforce `forbid(unsafe_code)`.
+Complete source cost is **+113 Rust lines**: 84 model, 67 adapter and 10 registration
+lines, offset by 48 removed caller/calculation lines. No unsafe declarations were
+hidden; the surrounding unsafe functions remain counted. Durable local reproduction
+is `Local/sm-decomp-experiments/20261022/launch-motion/experiment.py`, with frozen
+original Rust, build logs and generated comparison DLL. No ROM or game snapshots
+are committed. Further cleanup of reflection or collision internals still needs
+its own exercised checks.
+
 ## Next ownership experiments
 
 1. Codify `ExternalMotion` as ordered reset, replacement and addition operations;
    trace real sand/platform contacts through message suspension and movement.
-2. Codify launch inheritance at its actual cross-update handoff; compare against
-   the tempting but different rule of sampling Samus's velocity at firing time.
+2. Move the now-explicit launch state into owned Samus state when its remaining
+   initialization/reset and camera-accounting dependencies can migrate together.
+   The calculation, eight movement writers and ordinary phase clear are adopted;
+   RAM persistence remains transitional.
 3. Replace retained enemy pointers with slot offsets while preserving live
    rereads, then test reaction-induced deletion/reuse and instruction selection.
 4. Model PLM item-award/message continuation together, preserving already-committed
    progression during suspension. Keep its scheduler distinct from enemy scripts.
 
-These are identified next experiments, not completed migrations. An exhaustive
+The remaining items are identified next experiments, not completed migrations. An exhaustive
 writer inventory, full gameplay reachability of selector mutations, safe ROM and
 RAM access throughout the engine, and boot-to-credits coverage remain open.
 
@@ -401,7 +598,7 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^platform]: [moving_platforms::travel and react](../sm/src/game/moving_platforms.rs).
 [^movement]: [Samus_MoveY_WithSpeedCalc](../sm/src/game/sm_90.rs#L448); [Samus_CalcDisplacementMoveLeft/Right](../sm/src/game/sm_90.rs#L3932).
 [^inheritance]: [Samus movement inheritance writes](../sm/src/game/sm_90.rs#L287); [Samus_Func10](../sm/src/game/sm_90.rs#L4579).
-[^launch]: [projectile_flight::initialize_speed](../sm/src/game/projectile_flight.rs#L119).
+[^launch]: Original `initialize_speed` source: `dc20e538:sm/src/game/projectile_flight.rs`; current [flight caller](../sm/src/game/projectile_flight.rs#L110), [launch calculation](../sm/src/game/launch_motion.rs), and [ordered byte adapter](../sm/src/game/launch_motion_ram.rs).
 [^prepare]: [Samus_FrameHandlerAlfa_Func11/12](../sm/src/game/sm_90.rs#L4009).
 [^hud]: [Samus_HandleHudSpecificBehaviorAndProjs](../sm/src/game/sm_90.rs#L3477).
 [^enemies]: [EnemyMain](../sm/src/game/sm_a0.rs#L879).
@@ -426,3 +623,14 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^effectmap]: [effect/cinematic/options aliases](../sm/src/ram_map.rs); search `eproj_index`, `eproj_id`, `optionsmenu_cur_data`.
 [^drops]: [SpawnEnemyDrops](../sm/src/game/sm_a0.rs#L1012).
 [^validation]: [Validation strategy](PLAN.md#validation-strategy-2026-10-21).
+[^launchmap]: [Directional movement and projectile-array RAM metadata](../sm/src/ram_map.rs#L554); the movement record starts at the `$0DA0` stride declaration.
+[^launchwriters]: [Horizontal collision results](../sm/src/game/sm_90.rs#L277), [vertical collision results](../sm/src/game/sm_90.rs#L569), [four no-collision writes](../sm/src/game/sm_90.rs#L862).
+[^splitwords]: [words! ordering](../sm/src/rtl.rs#L2); [SetHiLo](../sm/src/rtl.rs#L787).
+[^samusinit]: [Samus_Initialize workspace clear and distance initialization](../sm/src/game/sm_91.rs#L1260).
+[^resetlaunch]: [Vector_RESET_Async bulk clears](../sm/src/game/sm_80.rs#L188).
+[^resetslots]: [ResetProjectileData](../sm/src/game/sm_90.rs#L1488).
+[^distance]: [MainScrollingRoutine](../sm/src/game/sm_90.rs#L611); [Samus_CalcDistanceMoved_Y](../sm/src/game/sm_90.rs#L755).
+[^beamlaunch]: [beam_firing launch and collision order](../sm/src/game/beam_firing.rs#L77).
+[^missilelaunch]: [HudSelectionHandler_MissilesOrSuperMissiles](../sm/src/game/sm_90.rs#L2507); [accelerate_missile](../sm/src/game/projectile_flight.rs#L180).
+[^reflection]: [ProjectileReflection](../sm/src/game/sm_90.rs#L2480); [Reflec_Shot](../sm/src/game/sm_a3.rs#L1925); [Space Pirate reflection](../sm/src/game/sm_b2.rs#L107).
+[^launchmodel]: [LaunchMotion and typed inputs/output](../sm/src/game/launch_motion.rs); [transition serialization and initialization](../sm/src/game/launch_motion_ram.rs); migrated callers in [sm_90](../sm/src/game/sm_90.rs), symbols `record_movement` and `finish_projectile_phase`.

@@ -108,32 +108,9 @@ pub(crate) unsafe fn update_extension(k: u16, game: &mut Game) {
 }
 
 pub(crate) unsafe fn initialize_speed(k: u16, speed: u16, game: &mut Game) {
-    let slot = k as i32 >> 1;
-    word! { game, 0; projectile_bomb_x_subpos[slot], projectile_bomb_y_subpos[slot] }
-    let direction = word!(game.projectile_dir[slot]) & 0xf;
-    let vertical = match direction {
-        0 | 1 | 8 | 9 => {
-            let inherited = if word!(game.projectile_init_speed_samus_moved_up) as u8 != 0 {
-                (*(ram_ptr!(game; 0xdb1) as *const u16) >> 2) | 0xc000
-            } else {
-                0
-            };
-            inherited.wrapping_sub(speed)
-        }
-        3 | 4 | 5 | 6 => (*(ram_ptr!(game; 0xdb5) as *const u16)).wrapping_add(speed),
-        2 | 7 => 0,
-        _ => {
-            Unreachable(game);
-            return;
-        }
-    };
-    word!(game.projectile_bomb_y_speed[slot] = vertical);
-    let horizontal = match direction {
-        1 | 2 | 3 => (*(ram_ptr!(game; 0xdad) as *const u16)).wrapping_add(speed),
-        6 | 7 | 8 => (*(ram_ptr!(game; 0xda9) as *const u16)).wrapping_sub(speed),
-        _ => 0,
-    };
-    word!(game.projectile_bomb_x_speed[slot] = horizontal);
+    if !crate::game::launch_motion_ram::initialize(k, speed, game) {
+        Unreachable(game);
+    }
 }
 
 const RomPtr_90: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x90>;
