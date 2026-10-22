@@ -34,10 +34,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,349 Rust lines in 99 files**, plus 262 C
-bridge and 296 C-header lines = **94,907 maintained implementation lines**.
+Current composition (2026-10-22): **94,340 Rust lines in 99 files**, plus 262 C
+bridge and 296 C-header lines = **94,898 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,738**. This complete recount includes frontend,
+gives **95,729**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1656,6 +1656,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Field-based serialization must preserve these spans and their failure phases;
    it remains required work, not an elimination result of this stream change.
    Checks: Local/sm-decomp-experiments/20261022/snapshot-stream.
+   APU write history now uses a named field instead of a union with an unused
+   pointer member. This removes **nine maintained lines**, including the retired
+   checkpoint adapter and new layout assertions. Audio snapshot comparison now
+   forbids unsafe code. All **56** actual old/new history-write, reset, save-state,
+   rewind and checkpoint comparisons pass, including full-buffer and invalid-index
+   failure ordering. The 66,112-byte APU layout and history offset 65,592 remain
+   unchanged. Release library/frontend/verifier and native source checks pass;
+   all 105 old sources (line-ending normalized) and 106 final source bytes match.
+   No movie ran; these synthetic cases establish no gameplay or physical audio
+   coverage. Layout witnesses for 13 hardware records also confirm serialized
+   padding in DMA/APU/DSP/PPU/Snes. DMA leaves padding uninitialized, while other
+   initialized padding can survive loads/resets; whole-record typed copies also
+   need auditing before making padding explicit. The complete hardware field
+   serializer remains unimplemented. Checks: Local/sm-decomp-experiments/20261022/hardware-fields.
    The existing shared ROM-table interface now uses that owned image with checked
    signed offsets and byte reads, preserving image capture before index evaluation,
    live patch visibility, native byte order and linear bank crossings. Its 725
@@ -2686,14 +2700,16 @@ room-scroll data, the shader dependency, safe pose/mechanism RAM access,
 gameplay continuation ownership, owned ROM reads, safe asset decompression,
 checked ROM tables, safe word transfers, owned recording, checked VRAM readback
 owned sprite drawing, checked Mode 7 transfers, owned SRAM, checked snapshot
-streams and owned enemy-projectile scripts, maintained Rust is **94,349**, with
+streams, owned enemy-projectile scripts and named APU history, maintained Rust is **94,340**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **94,907**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,738**.
+Including 262 C and 296 header lines gives **94,898**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,729**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3036; cast lines 6574. Owned enemy-projectile scripts add 54
+unsafe functions 3036; cast lines 6574. Named APU history removes nine maintained
+lines, one union and two unsafe scopes; the counted residue metrics are unchanged.
+Owned enemy-projectile scripts add 54
 maintained lines for checked reads, captured ROM ownership and explicit results;
 this is a safety cost, not a reduction. They remove two counted unsafe declarations
 and five cast-containing lines; other counters are unchanged. Existing unsafe

@@ -6,6 +6,11 @@ use crate::tracing::getProcessorStateSpc;
 pub use crate::types::{size_t, Apu, DspRegWriteHistory};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
+// History follows the legacy snapshot span; removing its union must not move it.
+const _: () = {
+    assert!(core::mem::offset_of!(Apu, history) == 65592);
+    assert!(size_of::<Apu>() == 66112);
+};
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 static bootRom: [u8; 64] = [
@@ -34,7 +39,7 @@ pub unsafe fn apu_reset(apu: *mut Apu) {
         timer.enabled = false;
     }
     (*apu).cpuCyclesLeft = 7;
-    (*apu).c2rust_unnamed.hist.count = 0;
+    (*apu).history.count = 0;
 }
 pub unsafe fn apu_saveload(apu: *mut Apu, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
     crate::rtl::snapshot_region(
@@ -129,7 +134,7 @@ pub unsafe extern "C-unwind" fn apu_cpuWrite(apu: *mut Apu, adr: u16, val: u8) {
         }
         0xf2 => (*apu).dspAdr = val,
         0xf3 => {
-            record_dsp_write(&mut (*apu).c2rust_unnamed.hist, (*apu).dspAdr, val);
+            record_dsp_write(&mut (*apu).history, (*apu).dspAdr, val);
             if ((*apu).dspAdr as i32) < 0x80 {
                 dsp_write((*apu).dsp, (*apu).dspAdr, val);
             }

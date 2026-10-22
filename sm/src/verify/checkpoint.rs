@@ -135,7 +135,7 @@ macro_rules! fields {
 
 fields!(Apu {
     ram, romReadable, dspAdr, cycles, inPorts, outPorts, timer, cpuCyclesLeft,
-    c2rust_unnamed
+    history
 } skip { spc, dsp, pad });
 
 fields!(BgLayer {
@@ -319,13 +319,6 @@ impl State for RecordingBytes {
             archive.bytes(self.as_mut_slice())?;
         }
         Ok(())
-    }
-}
-
-impl State for ApuHistory {
-    fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
-        // The runtime uses the initialized history arm, never padpad.
-        unsafe { self.hist.state(archive) }
     }
 }
 

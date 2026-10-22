@@ -152,6 +152,7 @@ pub struct AudioSnapshot {
 
 impl AudioSnapshot {
     /// Compare emulated values, excluding allocation links and layout padding.
+    #[forbid(unsafe_code)]
     pub(crate) fn first_difference(&self, other: &Self) -> Option<&'static str> {
         macro_rules! fields {
             ($ty:ident, $left:expr, $right:expr, [$($excluded:ident),*], $($field:ident),+ $(,)?) => {
@@ -168,7 +169,7 @@ impl AudioSnapshot {
             Apu,
             &self.apu,
             &other.apu,
-            [spc, dsp, pad, timer, c2rust_unnamed],
+            [spc, dsp, pad, timer, history],
             ram,
             romReadable,
             dspAdr,
@@ -274,18 +275,15 @@ impl AudioSnapshot {
                 echoEnable
             );
         }
-        // The maintained APU uses the history member of this layout union.
-        unsafe {
-            fields!(
-                DspRegWriteHistory,
-                &self.apu.c2rust_unnamed.hist,
-                &other.apu.c2rust_unnamed.hist,
-                [],
-                count,
-                addr,
-                val
-            );
-        }
+        fields!(
+            DspRegWriteHistory,
+            &self.apu.history,
+            &other.apu.history,
+            [],
+            count,
+            addr,
+            val
+        );
         if self.catchup_cycles.to_bits() != other.catchup_cycles.to_bits() {
             return Some("Snes.apuCatchupCycles");
         }

@@ -299,12 +299,7 @@ crate::typed_struct! {
         pub timer: [Timer; 3];
         pub cpuCyclesLeft: u8;
         pub pad: [u8; 6];
-        pub c2rust_unnamed: ApuHistory;
-    }
-
-    pub union ApuHistory {
-        pub hist: DspRegWriteHistory;
-        pub padpad: *mut c_void;
+        pub history: DspRegWriteHistory;
     }
 
     pub struct BgLayer {
