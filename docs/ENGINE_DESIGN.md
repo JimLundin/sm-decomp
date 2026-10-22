@@ -541,14 +541,22 @@ linked steps retain the owner through initialization, update, actual drawing,
 release, reset and surviving trails. Native scenarios use authored motion actions,
 so they establish the scheduling contract rather than native flight. The model
 and provider add 96 formatted lines; runtime promotion and the complete price
-remain open. Compose these methods with the newer beam-creation draft.
+remain open.
 
-This advances the domain interface but does not migrate native firing, flight,
-complete bomb processing, drawing or runtime authority. The changed model/provider
+The [composed beam lifecycle](RAM_OWNERSHIP.md#scheduled-beam-lifecycle-with-shared-room-flight)
+now runs creation, the scheduler, shared flight/room scans, animation, drawing,
+impact/release and reuse together. **675 selected comparisons** and seven new
+native lifecycles pass. No second gameplay algorithm was needed. Room reactions
+can make a shot move twice in one pass by changing selection; captured axis targets,
+live cleanup targets and the next iteration must remain distinct. Actual
+block/slope/PLM reactions, remaining native definitions and runtime authority are
+still open. The native direction field also still combines aim and retirement.
+
+The earlier named-transition experiment advanced the interface without migrating
+the remaining producer, flight or runtime ownership. Its changed model/provider
 cohort adds **138 formatted lines**, plus 216 separate authored-example lines;
-no whole-replacement price or production adoption is established. Compose this
-experiment's methods into the latest full owner, preserving its newer trail sprite
-parameter and special-attack changes.
+no whole-replacement price or production adoption is established. Its methods are
+included in the later full owner; use that composition for the next migration.
 
 The [trail-emission experiment](RAM_OWNERSHIP.md#owned-trail-emission-and-placement)
 passes **466 comparisons** using typed trail pairs, named scripts and signed offset

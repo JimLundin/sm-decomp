@@ -1948,30 +1948,34 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    grapple-start consumers remain controlled. Definitions are synthetic; no
    gameplay route or hardware coverage is established. Accepted out-of-pool
    operations retain reference bodies, including drawing continuations; handoff
-   tests do not retire those bodies. Continue with update scheduling, actual room
-   reactions, remaining native missile/extension and producer definitions,
+   tests do not retire those bodies. Compose the verified update scheduler below,
+   then continue with actual room reactions, native missile/extension and producer definitions,
    protection/suspension, real callers and runtime authority/transfers.
    Count every adapter/fallback and close the remaining numeric interfaces before
    judging the complete structural replacement; this stage claims no net saving.
-   The coordinator's [complete update-pass experiment](RAM_OWNERSHIP.md#projectile-update-scheduling-over-the-complete-owner)
-   passes **453 selected comparisons**, 470 ordered observations and six expected
-   matching failures, plus five native scheduling sequences. Motion receives the
-   captured slot/selector; animation always follows admitted motion and uses the
-   live selection. Release during motion can therefore leave the absent cursor's
-   timer at `0xffff`. The loop rereads selection after animation, preserving wide
-   out-of-pool continuation. Eight linked steps retain the owner through actual
-   initialization, update, drawing, release, reset and surviving trails.
-   All 115 frozen and 88 draft compiled inputs match; 81 inherited files are
-   unchanged. Optimized DLL and formatting pass. The model/provider cohort adds
-   **96 formatted lines (531 -> 627)**; native examples add 213 separate lines.
-   Reference routing/continuation (95 lines), fixtures (572) and final bridges
-   remain separate from that partial price. Thirty dispatcher routes use owned
-   behavior or inactivity, three plasma subphases retain reference implementations,
-   and two exotic motion bodies are controlled. Collision/feedback are controlled;
-   native examples use authored motion actions. Outer freeze/HUD scheduling and
-   launch-history clearing were inspected only. No movie, adoption or complete
-   saving is claimed. Source/result: 20261022/projectile-update-pass. Its base is
-   presentation-stage; compose the methods into the newer room-flight owner.
+   The coordinator's [scheduled beam lifecycle](RAM_OWNERSHIP.md#scheduled-beam-lifecycle-with-shared-room-flight)
+   now composes that flight model with beam creation and the unchanged update
+   scheduler. **675 comparisons**, 950 ordered observations and 78 expected matching
+   failures pass: 78 persistent lifecycle steps, 144 room-reaction cases and the
+   prior 453 scheduler comparisons. Seven new native scheduled lifecycles and five
+   prior native scheduler sequences pass. Actual movement/scans, animation,
+   projectile/trail output, impact/release, reset and reuse execute together.
+   Room reactions can cause a shot to move twice in one pass. Preserve captured
+   motion/axis targets, live cleanup/animation targets and post-animation selection.
+   Release during motion still permits the absent cursor's timer to wrap afterward.
+   All 115 frozen and 100 draft compiled inputs match; 91 inherited sources are
+   unchanged. The captured flight build's models match the later room-flight-stage
+   after formatting; that later fixture adds checks. Current source correspondence,
+   optimized DLL and formatting pass. The same scheduler/provider cohort adds
+   **96 formatted lines (414 -> 510)**, not a second algorithm or additive saving.
+   New native fixtures add 137 lines and the new paired fixture has 361. Remaining
+   reference/harness and runtime costs are outside this partial price. Initial
+   collision, actual block/slope/PLM reactions and feedback remain controlled.
+   Native trail drawing records requests; native aim/retirement still share an
+   encoded direction field. Outer scheduling, remaining native definitions and
+   runtime authority remain open. No movie, adoption or complete saving is claimed.
+   Source/result: 20261022/scheduled-beam-lifecycle. The original wide-continuation
+   and admission contracts remain in 20261022/projectile-update-pass.
    The frozen library
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.

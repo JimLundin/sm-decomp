@@ -1157,6 +1157,74 @@ freeze guard inside the projectile pass. The subsequent `Samus_Func10` launch
 history clear also remains outside it. Those outer caller branches were inspected,
 not exercised by this experiment.[^projectilepresence]
 
+### Scheduled beam lifecycle with shared room flight
+
+The follow-up `scheduled-beam-lifecycle` composes the unchanged update scheduler
+with the newer beam-creation and room-flight models. It now executes the shared
+position update and room scan, rather than treating the entire collision call as
+a recording boundary. The actual block/slope/PLM reaction within the scan remains
+controlled. No second firing, flight, scan or animation algorithm was added.
+
+**675 selected comparisons**, **950 ordered observations** and **78 expected
+matching failures** pass. This includes 78 linked steps across six ordinary,
+charged and hyper beam configurations, 144 room-reaction mutation/failure cases,
+and the prior 453 scheduler comparisons rerun over the composed implementation.
+Seven new native scheduled lifecycles and the five prior native scheduling
+sequences pass separately. The 72 injected room-reaction failures occur after
+movement has committed; full RAM and the observed state before each callback
+match, including partial changes before failure.
+
+The paired sequences retain the same `Firing` between creation, repeated update
+passes, ordinary/explosion drawing, requested retirement, reset and reuse. They
+require actual motion, scan callbacks, visible projectile output, impact/release
+and successful reuse. Each normal compatibility effect still publishes and
+reimports at its declared boundary. That remaining adapter work is distinct from
+the lifetime of the owner between calls.
+
+Native sequences use the existing named beam definitions, shared launch/flight,
+room scans, trail emission/playback, animation and geometry renderer. Straight
+beams enter impact animation on blocking contact; wave/hyper beams continue
+through the authored blocking response until retirement is requested. The latter
+path exercises release during motion followed by unconditional animation. Visual
+trail state outlives the released shot. Native trail drawing records requests;
+paired encoded sequences execute its existing output path. The renderer's output
+sink remains the compatibility Game; gameplay performs no RAM decode between
+these native transitions. Aim/retirement still share the legacy direction field,
+so this is not the completed native state representation.
+
+A native retargeting case exposes a further sequencing rule: the room reaction
+selects another slot; offscreen cleanup releases that selected slot, then animation
+still runs for it. The post-animation selection makes the loop revisit the original
+shot, causing a second movement step in the same pass. The reaction redirects only
+once in this fixture. A generic once-per-entity update would change this behavior.
+The 144 paired cases also cover live room-width changes, kind changes, recursive
+scans, reset during a reaction and failures. Callback return bits and the scan's
+unblocked count remain separate inputs, not one Boolean collision result.
+
+All **115 frozen library and 100 draft compiled inputs** match; 91 inherited files
+are unchanged. The captured 94-input flight build predates the final
+`room-flight-stage` fixture expansion. Its seven changed model/example sources
+correspond after formatting; the later stage adds checks, not a different flight
+algorithm. The 261-line room reference prefix reconstructs from frozen Rust;
+its 11-line binding supplies scalar multiplication, routing and controlled block
+reactions. Current update/dispatch, seven room/movement/retirement functions and
+five complete gameplay/support files match their frozen inputs.
+
+Optimized DLL and formatting pass. Relative to the captured owner, adding the
+already-tested scheduler/provider costs **96 formatted lines (414 -> 510)**.
+This is the same integration cohort counted previously, not another additive
+saving or algorithm. New native fixture code adds 137 lines and the new paired
+lifecycle fixture has 361; retained reference/harness and final runtime costs are
+not a complete replacement price. No earlier full suite or movie ran.
+
+Source/result: `Local/sm-decomp-experiments/20261022/scheduled-beam-lifecycle`
+(`prepare.py`, `freeze.py`, `build.py`, `check.py`, `review.py`). Initial firing
+collision, block/slope/PLM reactions, feedback and diagnostics remain controlled.
+Definitions are synthetic. No production promotion, movie route, whole-game
+behavior or complete savings are established. Next, close actual room reactions,
+remaining missile/extension and producer definitions, outer scheduling/protection,
+and runtime authority transfers; preserve the complete execution order above.
+
 ### Named projectile animation definitions
 
 A standalone experiment separates projectile playback from instruction encoding.
