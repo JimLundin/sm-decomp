@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,715 Rust lines in 117 files**, plus 262 C
-bridge and 296 C-header lines = **96,273 maintained implementation lines**.
+Current composition (2026-10-22): **95,717 Rust lines in 117 files**, plus 262 C
+bridge and 296 C-header lines = **96,275 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,104**. This complete recount includes frontend,
+gives **97,106**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2063,7 +2063,11 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    owner without RAM/ROM decoding and executes 160 completed feedback waits.
    Exact reference/model/codec/bridge source, all 115+135 compiled inputs,
    127 unchanged inherited files, optimized component build, production release
-   library and formatting pass. Source/result: 20261022/owned-dialogue-session;
+   library and formatting pass. Both new modules are now registered with the
+   verifier source list (+2 lines); normal release library/frontend/verifier
+   builds and complete library/native source checks pass. Registration changes
+   source validation only; no additional movie ran for that correction.
+   Source/result: 20261022/owned-dialogue-session;
    contracts and limits: [owned dialogue](RAM_OWNERSHIP.md#owned-dialogue-controller).
    The newer caller candidate below also composes with the same dialogue model:
    **80 caller + 40 nested comparisons**, 1,811 observations and 50 matching
@@ -4087,11 +4091,12 @@ owned native-player RAM with named field transfers, DSP RAM ownership and typed
 stereo output, checked tracing, owned room-background records, checked palette
 execution, shared effect ROM records, checked animated tiles, safe progress flags,
 owned room metadata, checked door metadata, shared scroll loading, shared PLM
-spawning, room-content loading, door closing and checked music control,
-maintained Rust is **95,526**,
+spawning, room-content loading, door closing, checked music control and shared
+dialogue control,
+maintained Rust is **95,717**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,084**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,915**.
+Including 262 C and 296 header lines gives **96,275**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,106**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
