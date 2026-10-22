@@ -1745,6 +1745,11 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    final runtime bridges remain outside this partial cost. Projection, collision
    and other native outputs are controlled; side playback/drawing and runtime
    adoption remain open. No movie, production savings or complete price is claimed.
+   The coordinator independently checked emission-stage's 115+62 compiled inputs,
+   direct flight-to-emission call, owned style/selector reads and complete-state
+   transfers through checked table reads. Forty-seven prior files are unchanged;
+   the +361 formatted cohort cost and native-sequence limits were reviewed without
+   rerunning the suite. Trail playback/output integration remains the next step.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, drawing/trail, palette/sound
    output and grapple-start consumers remain controlled. ROM definitions are

@@ -1104,6 +1104,17 @@ reset and checked table failures. It puts the trail pool inside `Firing` and use
 that owner for style and projectile selection as well as callback transfers.
 Its scope and partial cost are recorded in PLAN; this extends the standalone
 owner described above. Side playback/output is a separate integration step.
+The coordinator independently checked all **115+62 compiled inputs**, the direct
+flight-to-emission call, complete-owner style/selector reads and checked-table
+transfers. Forty-seven prior files are unchanged. The selected suite contains
+484 emission/placement, 24 flight, four missile, 89 reset and two initializer
+table-failure cases, with 718 ordered observations and 143 matching failures.
+The latter failures retain the sound-resume clear performed after its callback.
+The formatted model/provider/codec cost was independently recounted at
+**1,257 -> 1,618 (+361)**; 54 authored native-example lines are separate. The
+review did not rerun the suite. The native sequence retains surrounding state in
+the same `Firing<Label, Sprite, Trail>`; its trail sprites still use the encoded
+tile representation and it does not perform side playback or rendering.
 
 ### Owned trail playback and drawing
 
