@@ -34,10 +34,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,312 Rust lines in 95 files**, plus 262 C
-bridge and 296 C-header lines = **94,870 maintained implementation lines**.
+Current composition (2026-10-22): **94,275 Rust lines in 96 files**, plus 262 C
+bridge and 296 C-header lines = **94,833 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,701**. This complete recount includes frontend,
+gives **95,664**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1657,6 +1657,21 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    old optimized execution is observed behavior, not a proof of undefined accesses.
    No movie ran; unrelated overlay logic and physical hardware are not covered.
    Checks: Local/sm-decomp-experiments/20261022/safe-vram-read-queue.
+   Mode 7 ROM enqueue, direct cinematic record writes and NMI consumption now
+   use checked byte access, with one shared register sequence for VRAM/palette
+   records. Both obsolete packed types are removed. Complete reduction: **37
+   maintained lines**, including all callers, helpers and registrations; no new
+   macros. ROM streams retain linear cursor advance, while cinematic writers
+   retain per-record u16 wrap, overlapping stores and their original counters.
+   Safe enqueue/access helpers forbid unsafe code; C diagnostics and hardware
+   calls remain explicit unsafe operations. Checks pass 958 actual-Game queue
+   comparisons, 2,486 ordered register observations and a checked ROM-end failure,
+   then 277 actual release-library cinematic/Ceres/NMI cases, including 24 table
+   failures with matching write prefixes and 16 producer-to-NMI uploads. All 102
+   old/103 final source inputs, exact C diagnostics and normal release builds pass.
+   Old optimized unaligned accesses are observed behavior, not a proof of undefined
+   operations. No movie ran; unrelated cinematic logic and physical hardware are
+   not covered. Checks: Local/sm-decomp-experiments/20261022/safe-mode7-queue.
    ROM sprite emission now uses one owned-image decoder and checked OAM writer
    for all eleven menu, Samus, projectile, enemy and cinematic drawing adapters.
    Five clipping policies preserve their distinct write order, wrapping, tile
@@ -2589,14 +2604,16 @@ shared configuration/input and utility dependencies, the desktop host,
 room-scroll data, the shader dependency, safe pose/mechanism RAM access,
 gameplay continuation ownership, owned ROM reads, safe asset decompression,
 checked ROM tables, safe word transfers, owned recording, checked VRAM readback
-and owned sprite drawing, maintained Rust is **94,312**, with
+owned sprite drawing and checked Mode 7 transfers, maintained Rust is **94,275**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **94,870**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,701**.
+Including 262 C and 296 header lines gives **94,833**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,664**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 23; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3040; cast lines 6601. Owned sprite drawing adds seven maintained
+unsafe functions 3039; cast lines 6579. Mode 7 transfers remove 37 lines, one
+counted unsafe declaration and 22 cast-containing lines; other counters are
+unchanged. Owned sprite drawing adds seven maintained
 lines and removes two counted unsafe declarations and 13 cast-containing lines.
 Its checked ROM/OAM writer forbids unsafe code; the native warning remains an
 explicit unsafe boundary. Other counters are unchanged. This is a safety cost,

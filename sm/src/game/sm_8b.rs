@@ -475,19 +475,12 @@ crate::game::callback_dispatch! {
         let mut v3: u16 = (j).wrapping_add(4);
         let mut v4: u16 = word!(game.mode7_vram_write_queue_tail);
         do_until! { (n == 0);
-    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0)
-        .offset(v4 as i32 as isize) as *mut u16) = 128;
-    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_1 as *mut u8)
-        .offset(v4 as i32 as isize) as *mut u16) = v3;
-    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-        .offset(v4 as isize) as *mut u16) = 139;
-    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-        .offset((v4 as i32 + 1) as isize) as *mut u16) = r18x;
-    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-        .offset((v4 as i32 + 3) as isize) as *mut u16) = r22;
-    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1
-        as *mut u8)
-        .offset(v4 as i32 as isize) as *mut u16) = 0;
+    crate::game::mode7_transfers::write_word(v4, 0, 128, game);
+    crate::game::mode7_transfers::write_word(v4, 1, v3, game);
+    crate::game::mode7_transfers::write_word(v4, 3, 139, game);
+    crate::game::mode7_transfers::write_word(v4, 4, r18x, game);
+    crate::game::mode7_transfers::write_word(v4, 6, r22, game);
+    crate::game::mode7_transfers::write_word(v4, 8, 0, game);
     v4 = (v4).wrapping_add(9);
     v3 = (v3).wrapping_add(r18x);
     r22 = (r22).wrapping_add(128);
@@ -503,19 +496,12 @@ crate::game::callback_dispatch! {
         let mut v3: u16 = (j).wrapping_add(4);
         let mut v4: u16 = word!(game.mode7_vram_write_queue_tail);
         do_until! { (n == 0);
-    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0)
-        .offset(v4 as i32 as isize) as *mut u16) = 128;
-    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_1 as *mut u8)
-        .offset(v4 as i32 as isize) as *mut u16) = v3;
-    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-        .offset(v4 as isize) as *mut u16) = 139;
-    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-        .offset((v4 as i32 + 1) as isize) as *mut u16) = r20;
-    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-        .offset((v4 as i32 + 3) as isize) as *mut u16) = r22;
-    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1
-        as *mut u8)
-        .offset(v4 as i32 as isize) as *mut u16) = 2;
+    crate::game::mode7_transfers::write_word(v4, 0, 128, game);
+    crate::game::mode7_transfers::write_word(v4, 1, v3, game);
+    crate::game::mode7_transfers::write_word(v4, 3, 139, game);
+    crate::game::mode7_transfers::write_word(v4, 4, r20, game);
+    crate::game::mode7_transfers::write_word(v4, 6, r22, game);
+    crate::game::mode7_transfers::write_word(v4, 8, 2, game);
     v4 = (v4).wrapping_add(9);
     v3 = (v3).wrapping_add(r20);
     r22 = r22.wrapping_add(1);
@@ -2760,48 +2746,14 @@ crate::game::callback_dispatch! {
     [9165523] CinematicFunction_Intro_Func118 [] {
         let v0: u16 = word!(game.cinematic_var4);
         let v1: u16 = word!(game.mode7_vram_write_queue_tail);
-        let mut v2: u32 = word!(game.mode7_vram_write_queue_tail) as u32;
-        if word!(game.cinematic_var4) as i32 - 8i32 & 0x8000 != 0 {
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0).offset(word!(
-                game.mode7_vram_write_queue_tail
-            )
-                as i32
-                as isize) as *mut u16) = 192;
-            let v3: i32 = v0 as i32;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_1 as *mut u8)
-                .offset(v2 as isize) as *mut u16) =
-                kCinematicFunction_Intro_Func118_Tab0[v3 as usize];
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-                .offset(v1 as isize) as *mut u16) = 127;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-                .offset((v1 as i32 + 1) as isize) as *mut u16) = 2048;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-                .offset((v1 as i32 + 3) as isize) as *mut u16) =
-                kCinematicFunction_Intro_Func118_Tab1[v3 as usize];
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1
-                as *mut u8)
-                .offset(v1 as i32 as isize) as *mut u16) = 128;
-        } else {
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0).offset(word!(
-                game.mode7_vram_write_queue_tail
-            )
-                as i32
-                as isize) as *mut u16) = 128;
-            let v4: i32 = v0 as i32;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_1 as *mut u8)
-                .offset(v2 as isize) as *mut u16) =
-                kCinematicFunction_Intro_Func118_Tab0[v4 as usize];
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-                .offset(v1 as isize) as *mut u16) = 127;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-                .offset((v1 as i32 + 1) as isize) as *mut u16) = 2048;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-                .offset((v1 as i32 + 3) as isize) as *mut u16) =
-                kCinematicFunction_Intro_Func118_Tab1[v4 as usize];
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1
-                as *mut u8)
-                .offset(v1 as i32 as isize) as *mut u16) = 0;
-        }
+        let high_plane = word!(game.cinematic_var4) as i32 - 8i32 & 0x8000 != 0;
+        crate::game::mode7_transfers::write_word(v1, 0, if high_plane { 192 } else { 128 }, game);
+        // Keep the first store before either table lookup, including bounds failures.
+        crate::game::mode7_transfers::write_word(v1, 1, kCinematicFunction_Intro_Func118_Tab0[v0 as usize], game);
+        crate::game::mode7_transfers::write_word(v1, 3, 127, game);
+        crate::game::mode7_transfers::write_word(v1, 4, 2048, game);
+        crate::game::mode7_transfers::write_word(v1, 6, kCinematicFunction_Intro_Func118_Tab1[v0 as usize], game);
+        crate::game::mode7_transfers::write_word(v1, 8, if high_plane { 128 } else { 0 }, game);
         word!(game.mode7_vram_write_queue_tail = (v1).wrapping_add(9));
         if word!(game.cinematic_var4 += 1, reread) as i32 - 16i32 & 0x8000 == 0 {
             *ram_ptr!(game; 0x55) = 1;

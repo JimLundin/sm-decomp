@@ -4,8 +4,6 @@ use crate::game::room_backgrounds::BackgroundLoad;
 
 pub use crate::game::constants::bank_60::*;
 
-use ::core::mem::size_of;
-
 use crate::c_library::memcmp;
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{
@@ -39,12 +37,6 @@ crate::typed_struct! {
         pub part1_size, part2_size: u16;
     }
 
-    pub struct Mode7CgvmWriteQueue {
-        pub tag: u8;
-        pub src_addr: LongPtr;
-        pub count, vram_addr: u16;
-        pub vmain: u8;
-    }
 }
 
 pub use crate::types::Consts_80;
@@ -56,7 +48,6 @@ crate::game::constants::typed_constants! { Consts_80;
 
 const RomPtr_80: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x80>;
 const RomPtr_92: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x92>;
-use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
 }
@@ -436,73 +427,12 @@ pub fn ClearOamExt(game: &mut Game) {
     game.g_ram[0x570..0x590].fill(0);
 }
 pub unsafe fn QueueMode7Transfers(db: u8, k: u16, game: &mut Game) {
-    let mut p = RomPtrWithBank(db, k, game);
-    let mut dst = ram_ptr!(game; 0x2d0, word!(game.mode7_vram_write_queue_tail) as i32 as isize);
-    loop {
-        let f: i32 = *(p as *mut u8) as i32;
-        if f & 0x80 != 0 {
-            *dst.offset(9) = 0;
-            memcpy(dst as *mut c_void, p as *const c_void, 9 as size_t);
-            p = p.offset(9);
-            dst = dst.offset(9);
-        } else {
-            if (f & 0x40 == 0) {
-                break;
-            }
-            *dst.offset(7) = 0;
-            memcpy(dst as *mut c_void, p as *const c_void, 7 as size_t);
-            p = p.offset(7);
-            dst = dst.offset(7);
-        }
+    let address = (u32::from(db) << 16) | u32::from(k);
+    if address & 0x8000 == 0 {
+        printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
+        game.g_fail = true;
     }
-    word!(
-        game.mode7_vram_write_queue_tail =
-            dst.offset_from(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0) as *mut u8) as c_long as u16
-    );
-}
-pub unsafe fn NMI_ProcessMode7Queue(game: &mut Game) {
-    if word!(game.mode7_vram_write_queue_tail) != 0 {
-        NMI_ProcessMode7QueueInner(ram_ptr!(game; 0x2d0), game);
-        *(&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0 as *mut u16) = 0;
-        word!(game.mode7_vram_write_queue_tail = 0);
-    }
-}
-pub unsafe fn NMI_ProcessMode7QueueInner(mut p: *const u8, game: &mut Game) {
-    loop {
-        let mut v2: u8 = 0;
-        loop {
-            v2 = *p;
-            if (v2 & 0x80) == 0 {
-                break;
-            }
-            WriteReg(DMAP1 as u16, (v2) & (0x1fu8), game);
-            let v5 = p as *mut Mode7CgvmWriteQueue;
-            crate::rtl::register_writes! { game;
-                word(A1T1L as u16, (*v5).src_addr.addr); byte(A1B1 as u16, (*v5).src_addr.bank);
-                word(DAS1L as u16, (*v5).count);
-            }
-            if v2 & 0x40 != 0 {
-                WriteReg(BBAD1 as u16, 0x19, game);
-            } else {
-                WriteReg(BBAD1 as u16, 0x18, game);
-            }
-            crate::rtl::register_writes! { game;
-                word(VMADDL as u16, (*v5).vram_addr); byte(VMAIN as u16, (*v5).vmain);
-                byte(MDMAEN as u16, 2);
-            }
-            p = p.offset(size_of::<Mode7CgvmWriteQueue>() as isize);
-        }
-        if v2 & 0x40 == 0 {
-            break;
-        }
-        crate::rtl::register_writes! { game;
-            byte(DMAP1 as u16, (v2) & (0x1fu8)); word(A1T1L as u16, *(p.offset(1) as *mut u16));
-            byte(A1B1 as u16, *p.offset(3)); word(DAS1L as u16, *(p as *mut u16).offset(2));
-            byte(BBAD1 as u16, 0x22); byte(CGADD as u16, *p.offset(6));
-            byte(MDMAEN as u16, 2);
-        }
-        p = p.offset(7);
-    }
+    crate::game::mode7_transfers::enqueue_rom(address, game);
 }
 pub unsafe fn NMI_ProcessVramWriteQueue(game: &mut Game) {
     let tail = game.vram_write_queue_tail();
@@ -1079,7 +1009,7 @@ pub unsafe fn Vector_NMI(game: &mut Game) {
             }
         }
         if game.g_ram[BG_MODE] == 7 || game.g_ram[BG_MODE_FAKE] == 7 {
-            NMI_ProcessMode7Queue(game);
+            crate::game::mode7_transfers::process(game);
         }
         NMI_ProcessVramWriteQueue(game);
         crate::game::vram_read_queue::process(game);

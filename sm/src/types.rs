@@ -106,13 +106,6 @@ crate::typed_struct! {
         pub xpos, ypos, pause_screen_animation_id, joypad_input, map_scroll_dir: u16;
     }
 
-    pub struct Mode7VramWriteQueue {
-        pub field_0: u8;
-        pub field_1: u16;
-        pub gap3: [u8; 2];
-        pub field_5: u16;
-    }
-
     pub struct ProjectileInstr {
         pub timer: u16;
         pub spritemap_ptr: VoidP;
