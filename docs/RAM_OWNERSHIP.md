@@ -575,16 +575,28 @@ Weight totals/budgets retain byte wrapping and conditional read order. The model
 owns only these temporary calculations; persistent bias and effect slots remain
 in RAM. RNG and allocation/effect interfaces remain explicitly unsafe.
 
-Final checks pass **1,316 comparisons**, 7,286 ordered full-RAM/spawn/selected-ROM
-observations, 360 matching failures and ten checked short-record failures. They
-cover every source pattern and selection result, the actual allocation/pickup
-initializer, conversion instruction and selected real RNG consumers. Both source
-profiles and retained bodies have complete correspondence. Release/source/native
-checks pass; no movie or pickup-collection coverage is claimed. Constructed
-definitions and callback mutations are not a gameplay route. Complete cost is
-**+32 Rust lines**, including both modules, callers and registrations. Sixteen
-old helpers retire; the rules forbid unsafe code. Local reproduction:
-`Local/sm-decomp-experiments/20261022/enemy-drops`.
+Pickup collection now uses the same owner. Five resource/amount/sound entries
+replace the unsafe function-pointer reward table. Expiry decrements little-endian
+RAM before the grapple query; the later timer and grapple positions retain native
+word reads. Body contact captures both byte radii before checking X then Y, using
+the existing contact geometry. The queried state and reward code remain live;
+the incoming slot remains captured through restoration and sound effects. Only
+after those effects complete does the original slot enter its exit script, using
+the same ordered little-endian writes. The scheduler still rereads its live index
+after collection. No RAM borrow is retained across the query or effect calls.
+
+Generation passes **1,316 comparisons**, 7,286 ordered RAM/spawn/selected-ROM
+observations, 360 matching failures and ten checked short-record failures.
+Collection separately passes **876 comparisons**, 2,167 ordered RAM/spawn
+observations and 86 matching failures. Actual inventory restoration, sound
+queuing, grapple query, scheduler and exit-script deletion execute. Source/data
+correspondence and release/source/native checks pass. No movie ran; synthetic
+scripts and controlled callback mutations do not establish gameplay routes.
+Generation costs +32 Rust lines and collection removes three, for a complete
+combined cost of +29. The rules forbid unsafe code; collection retains the unsafe
+grapple query. Effect slots remain RAM-owned, and enemy respawning is unchanged.
+Local reproduction: `Local/sm-decomp-experiments/20261022/enemy-drops` and
+`Local/sm-decomp-experiments/20261022/pickup-collection`.
 
 ### 11. Samus weapon control crosses projectiles, grapple and encounters
 

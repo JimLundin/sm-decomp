@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,380 Rust lines in 128 files**, plus 262 C
-bridge and 296 C-header lines = **96,938 maintained implementation lines**.
+Current composition (2026-10-22): **96,377 Rust lines in 128 files**, plus 262 C
+bridge and 296 C-header lines = **96,935 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,769**. This complete recount includes frontend,
+gives **97,766**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2672,28 +2672,29 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Types, AI reset and beam snapping forbid unsafe code. Persistent RAM ownership
    and native/effect calls remain; this is safety work, not volume savings.
    Local reproduction: Local/sm-decomp-experiments/20261022/grapple-reactions.
-   Enemy drop generation now belongs to `enemy_drops`, with all spawn/scatter
-   callers and both selector consumers migrated. Twelve named source patterns
-   replace per-creature wrappers; `drop_rules` owns pattern data, pickup mapping
-   and the weighted-selection calculations, forbidding unsafe code. Sixteen old
-   helpers retire. Checked records replace raw table traversal, and multiplication
-   and division no longer call unsafe helpers in this path. Health-bias hysteresis,
-   zero-byte RNG retries, byte wrapping, linear initial tables versus wrapping row
-   addresses and per-row diagnostics retain their exact order. Scatter retains
-   captured X/live Y reads and synchronous allocation/initialization between drops.
-   Final checks pass **1,316 old/new comparisons**, 7,286 ordered full-RAM/spawn/
-   selected-ROM observations, 360 matching failures and ten checked short-record
-   failures. All twelve patterns, six selector results, actual allocation/pickup
-   initialization, conversion instruction and selected real RNG paths execute.
-   Complete source/pattern correspondence, release library/frontend/verifier and
-   source/native checks pass. No movie ran; synthetic definitions and controlled
-   RNG/spawn mutations do not establish gameplay or pickup-collection coverage.
-   Complete cost is **+32 Rust lines**, including models, adapters, callers and
-   registrations. Three counted unsafe declarations and six cast lines retire.
-   RNG, native diagnostics and spawning remain unsafe; RAM owns persistent bias
-   and effect slots. This is data/safety work, not volume savings or complete
-   effect-pool ownership. Local reproduction:
-   Local/sm-decomp-experiments/20261022/enemy-drops.
+   Enemy drop generation and collection now belong to `enemy_drops`. All
+   spawn/scatter callers, selector consumers and the pickup preinstruction route
+   use it directly. Twelve source patterns and five resource/amount/sound rewards
+   live in `drop_rules`, which forbids unsafe code. Twenty-two legacy helpers
+   retire across both changes, along with the unsafe reward function-pointer table.
+   Checked records replace raw drop tables; collection replaces raw RAM access
+   and shares contact geometry. Collection retains little-endian expiry/exit
+   writes, native grapple reads, live reads after the query, captured slot identity
+   and reward/sound completion before the exit script. Persistent slots and health
+   bias remain RAM-owned; RNG, spawning, diagnostics and the grapple query remain
+   unsafe. Respawning and complete effect-pool ownership remain open.
+   Generation passes **1,316 old/new comparisons**, with all patterns, selector
+   results, actual allocation/initialization and selected real RNG paths exercised.
+   Collection passes **876 comparisons**, 2,167 ordered RAM/spawn observations and
+   86 matching failures, including actual restoration, sound queues, grapple query,
+   scheduler and exit-script deletion. Complete retained-source/data correspondence,
+   release library/frontend/verifier and source/native checks pass. No movie ran;
+   constructed definitions and controlled callback mutations establish component
+   coverage, not gameplay routes. Generation adds 32 Rust lines; collection removes
+   three, including every replacement and caller. The combined cost is +29 lines,
+   with seven counted unsafe declarations and sixteen cast lines removed.
+   Local reproduction: Local/sm-decomp-experiments/20261022/{enemy-drops,
+   pickup-collection}.
    Enemy contact now belongs to `enemy_contact`, including the per-enemy pass,
    grapple search and Power Bomb scan. Scheduler, gameplay and all three grapple
    callers use its named routines; nine bank entries are retired. Ordinary and
@@ -4505,14 +4506,19 @@ spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
 owned enemy-script positions, checked enemy-definition records, standard combat and shared enemy/projectile contact,
-maintained Rust is **96,380**,
+maintained Rust is **96,377**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,938**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,769**.
+Including 262 C and 296 header lines gives **96,935**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,766**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2956; cast lines 6226. Shared enemy drop generation adds 32
+unsafe functions 2952; cast lines 6216. Checked pickup collection removes three
+Rust lines, four counted unsafe declarations and ten cast-containing lines;
+other counters are unchanged. The reward function-pointer table and raw
+collection RAM access retire; resource restoration and sound queuing are safe,
+while the grapple query remains unsafe.
+Shared enemy drop generation adds 32
 Rust lines and removes three counted unsafe declarations and six cast-containing
 lines; all other residue counters are unchanged. Sixteen old helpers retire;
 pattern data and weight calculations forbid unsafe code. Raw drop-table traversal

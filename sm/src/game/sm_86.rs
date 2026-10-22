@@ -18,10 +18,7 @@ use crate::game::sm_80::{
 use crate::game::sm_81::{DrawEprojSpritemapWithBaseTile, DrawEprojSpritemapWithBaseTileOffscreen};
 use crate::game::sm_84::CalculatePlmBlockCoords;
 use crate::game::sm_90::CallSomeSamusCode;
-use crate::game::sm_91::{
-    Samus_DealDamage, Samus_RestoreHealth, Samus_RestoreMissiles, Samus_RestorePowerBombs,
-    Samus_RestoreSuperMissiles,
-};
+use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::{
     kSinCosTable8bit_Sext, scale_sine_word, square_slope_occupied, square_slope_single_block,
 };
@@ -190,12 +187,6 @@ impl EprojStateMut<'_> {
     }
     fn set_instruction(&mut self, word_index: usize, value: u16) {
         self.write(0x1b47, word_index, value);
-    }
-    fn finish_pickup(&mut self, word_index: usize) {
-        self.set_instruction(word_index, addr_word_86ECA3 as u16);
-        self.set_instruction_timer(word_index, 1);
-        self.set_properties(word_index, 0x3000);
-        self.set_preinstruction(word_index, fnEprojPreInstr_Empty as u16);
     }
     fn clear_spawn_variables(&mut self, word_index: usize) {
         // E/F, timer, X/Y subpositions, then G, in the original store order.
@@ -1511,30 +1502,6 @@ pub unsafe fn sub_86EC0C(k: u16, game: &mut Game) {
     }
 }
 pub use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as sub_86EC18;
-static off_86F0AD: [Option<Func_V>; 7] = callback_table! { unsafe Func_V;
-    None, Eproj_Pickup_SmallHealth, Eproj_Pickup_BigHealth, Eproj_Pickup_PowerBombs,
-    Eproj_Pickup_Missiles, Eproj_Pickup_SuperMissiles, None,
-};
-pub unsafe fn Eproj_Pickup_SmallHealth(game: &mut Game) {
-    Samus_RestoreHealth(5, game);
-    QueueSfx2_Max1(1, game);
-}
-pub unsafe fn Eproj_Pickup_BigHealth(game: &mut Game) {
-    Samus_RestoreHealth(0x14, game);
-    QueueSfx2_Max1(2, game);
-}
-pub unsafe fn Eproj_Pickup_PowerBombs(game: &mut Game) {
-    Samus_RestorePowerBombs(1, game);
-    QueueSfx2_Max1(5, game);
-}
-pub unsafe fn Eproj_Pickup_Missiles(game: &mut Game) {
-    Samus_RestoreMissiles(2, game);
-    QueueSfx2_Max1(3, game);
-}
-pub unsafe fn Eproj_Pickup_SuperMissiles(game: &mut Game) {
-    Samus_RestoreSuperMissiles(1, game);
-    QueueSfx2_Max1(4, game);
-}
 pub unsafe fn RespawnEnemy(v0: u16, game: &mut Game) {
     word!(game.cur_enemy_index = v0);
     let v1 = RomPtr_A1(
@@ -4518,65 +4485,6 @@ crate::game::callback_dispatch! {
             word!(game.eproj_gfx_idx[v1] &= 0xf1ff);
         }
     };
-    [8843232] EprojPreInstr_Pickup [] {
-        let fresh53 = EprojStateMut(&mut game.g_ram).add_word(0x1b23, v1 as usize, u16::MAX);
-        if (fresh53 != 0) {
-            let skip_pickup_collision: bool = (CallSomeSamusCode(0xd, game) != 0)
-                && ((word!(game.eproj_F[v1]) as i32 - 384i32 & 0x8000 != 0)
-                    && ({
-                        let mut v2: u16 = abs16(
-                            (word!(game.eproj_x_pos[v1]) as i32
-                                - word!(game.grapple_beam_end_x_pos) as i32)
-                                as u16,
-                        );
-                        (v2 as i32 - 16i32 & 0x8000 != 0)
-                            && ({
-                                let mut v3: u16 = abs16(
-                                    (word!(game.eproj_y_pos[v1]) as i32
-                                        - word!(game.grapple_beam_end_y_pos) as i32)
-                                        as u16,
-                                );
-                                (v3 as i32 - 16i32 & 0x8000 != 0)
-                                    && ({
-                                        off_86F0AD[(word!(game.eproj_E[v1]) >> 1) as usize]
-                                            .expect("non-null function pointer")(
-                                            game
-                                        );
-                                        true
-                                    })
-                            })
-                    }));
-            if skip_pickup_collision {
-            } else {
-                let v5: i32 = k as i32 >> 1;
-                let varE20: u16 = EprojState(&game.g_ram).x_radius(v5 as usize) as u16;
-                let varE22: u16 = EprojState(&game.g_ram).y_radius(v5 as usize) as u16;
-                let v6: u16 = abs16(
-                    game.samus_x_pos()
-                        .wrapping_sub(game.enemy_projectile_x_pos(k)),
-                );
-                let mut v7: bool = v6 < game.samus_x_radius();
-                let v8: u16 = v6.wrapping_sub(game.samus_x_radius());
-                if v7 || v8 < varE20 {
-                    let v9: u16 = abs16(
-                        game.samus_y_pos()
-                            .wrapping_sub(game.enemy_projectile_y_pos(k)),
-                    );
-                    v7 = v9 < game.samus_y_radius();
-                    let v10: u16 = v9.wrapping_sub(game.samus_y_radius());
-                    if v7 || v10 < varE22 {
-                        off_86F0AD[(word!(game.eproj_E[v5]) >> 1) as usize]
-                            .expect("non-null function pointer")(game);
-                        let v11: i32 = k as i32 >> 1;
-                        EprojStateMut(&mut game.g_ram).finish_pickup(v11 as usize);
-                    }
-                }
-                return;
-            }
-        }
-        let v4: i32 = k as i32 >> 1;
-        EprojStateMut(&mut game.g_ram).finish_pickup(v4 as usize);
-    };
     [8844272] EprojPreInstr_Sparks [] {
         if (word!(game.eproj_y_vel[v1]) & 0x8000) == 0 {
             if EprojBlockCollisition_Vertical(k, game) & 1 != 0 {
@@ -4633,6 +4541,7 @@ crate::game::callback_dispatch! {
     [8837784]
     EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1 => EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, game);
     @external {
+        8843232 => [crate::game::enemy_drops::collect(k, game)];
         8825112 => [()]; 8814960 => [()]; 8815867 => [()];
         8818004 => [()];
         8819980 => [()];

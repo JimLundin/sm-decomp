@@ -96,3 +96,72 @@ pub unsafe fn select(index: u16, game: &mut Game) -> u16 {
     }
     6
 }
+
+fn award(slot: usize, game: &mut Game) {
+    use crate::game::drop_rules::{Resource, REWARDS};
+    use crate::game::sm_91::{
+        Samus_RestoreHealth, Samus_RestoreMissiles, Samus_RestorePowerBombs,
+        Samus_RestoreSuperMissiles,
+    };
+    let (resource, amount, sound) =
+        REWARDS[usize::from(word!(game.eproj_E[slot]) >> 1)].expect("non-null function pointer");
+    match resource {
+        Resource::Health => Samus_RestoreHealth(amount, game),
+        Resource::Missiles => Samus_RestoreMissiles(amount, game),
+        Resource::SuperMissiles => Samus_RestoreSuperMissiles(amount, game),
+        Resource::PowerBombs => Samus_RestorePowerBombs(amount, game),
+    }
+    crate::game::sm_80::QueueSfx2_Max1(u16::from(sound), game);
+}
+
+/// Advance expiry, then attempt grapple collection before body contact.
+pub unsafe fn collect(index: u16, game: &mut Game) {
+    use crate::game::contact_rules::axis;
+    use crate::ram_map::word_arrays as a;
+    let slot = usize::from(index >> 1);
+    let offset = slot * 2;
+    let timer = a::eproj_F + offset;
+    let remaining = u16::from_le_bytes([game.g_ram[timer], game.g_ram[timer + 1]]).wrapping_sub(1);
+    game.g_ram[timer..timer + 2].copy_from_slice(&remaining.to_le_bytes());
+    if remaining != 0 {
+        // The query precedes the live lifetime and coordinate reads.
+        let grapple = unsafe { crate::game::sm_90::CallSomeSamusCode(0xd, game) } != 0
+            && word!(game.eproj_F[slot]).wrapping_sub(384) & 0x8000 != 0
+            && ((word!(game.eproj_x_pos[slot]).wrapping_sub(word!(game.grapple_beam_end_x_pos))
+                as i16)
+                .wrapping_abs() as u16)
+                < 16
+            && ((word!(game.eproj_y_pos[slot]).wrapping_sub(word!(game.grapple_beam_end_y_pos))
+                as i16)
+                .wrapping_abs() as u16)
+                < 16;
+        if !grapple {
+            let x_radius = u16::from(game.g_ram[a::eproj_radius + offset]);
+            let y_radius = u16::from(game.g_ram[a::eproj_radius + offset + 1]);
+            if !axis(
+                game.samus_x_pos(),
+                game.enemy_projectile_x_pos(index),
+                game.samus_x_radius(),
+                x_radius,
+            ) || !axis(
+                game.samus_y_pos(),
+                game.enemy_projectile_y_pos(index),
+                game.samus_y_radius(),
+                y_radius,
+            ) {
+                return;
+            }
+        }
+        award(slot, game);
+    }
+    // Award and sound complete before the original slot changes to its exit script.
+    for (base, value) in [
+        (a::eproj_instr_list_ptr, 0xeca3u16),
+        (a::eproj_instr_timers, 1),
+        (a::eproj_properties, 0x3000),
+        (a::eproj_pre_instr, 0xefdf),
+    ] {
+        let at = base + offset;
+        game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    }
+}

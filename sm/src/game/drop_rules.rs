@@ -89,3 +89,22 @@ impl Weights {
         }
     }
 }
+
+#[derive(Clone, Copy)]
+pub(crate) enum Resource {
+    Health,
+    Missiles,
+    SuperMissiles,
+    PowerBombs,
+}
+
+// Drop codes 0 and 6 have no collectible reward. E stores twice the code.
+pub(crate) const REWARDS: [Option<(Resource, u16, u8)>; 7] = [
+    None,
+    Some((Resource::Health, 5, 1)),
+    Some((Resource::Health, 20, 2)),
+    Some((Resource::PowerBombs, 1, 5)),
+    Some((Resource::Missiles, 2, 3)),
+    Some((Resource::SuperMissiles, 1, 4)),
+    None,
+];
