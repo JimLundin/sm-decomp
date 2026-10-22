@@ -1024,6 +1024,65 @@ Local reproduction: `Local/sm-decomp-experiments/20261022/named-projectile-trans
 `transition_checks.rs`, `prepare.py`, `build.py`, `check.py`). No game assets were
 added to the repository.
 
+### Integrated transitions and explicit projectile presence
+
+The coordinator reviewed `player-projectiles/transition-stage`, which composes the
+named transitions with special-attack/trail state and generic canonical release.
+Its **349 selected comparisons**, 300 observations and 70 matching failures have
+verified correspondence for all **115 frozen library and 75 draft compiled inputs**;
+61 inherited inputs are unchanged. Eight separate candidate-only checks require
+exact short-definition rejection and committed prefix writes. The raw reference
+is not run on those truncated inputs. The release reference body still matches
+current Rust exactly. This review did not rerun the completed suite.
+
+The shared release resets shot state while preserving emission countdown and the
+auxiliary word, then decrements the appropriate reservation count with the legacy
+wrapping/clamping rule. It leaves visual trail pairs and surrounding weapon state
+intact. The 32 linked steps cover transitions, animation, drawing, release and
+reset; 40 release cases include odd and broad indices. Four native-kind sequences
+now apply actual canonical release after playback, and the existing native trail
+sequence also passes. The reviewed model/provider cohort is **1,767 -> 1,915
+formatted lines (+148)**, with 234 separate authored-example lines. These remain
+partial costs and selected coverage; runtime promotion is open.
+
+The native definitions in that stage default to `Beam`, `Start` and `Charge`.
+Those defaults suffice for its selected operations but do not define absence for
+future allocation and scheduling. The source has several independent predicates;
+replacing them with one `active` or `occupied` flag would discard observable
+distinctions:[^projectilepresence]
+
+| Question | Existing rule to preserve |
+| --- | --- |
+| May the pool reserve another shot? | Reservation count and cooldown; the reservation commits before slot selection and initialization. |
+| May beam/missile firing reuse this slot? | Damage is zero. Beam and missile search still have different full-pool policies. |
+| May bomb firing reuse this slot? | Kind is zero, independently of damage. |
+| Does this slot participate in update/drawing? | Animation cursor is nonzero; a zero duration alone does not disable it. Visibility and sprite validity add further drawing conditions. |
+| Did release handle this slot? | The generic return value reports a canonical index, not previous occupancy. Releasing an already-clear slot can still decrement a reservation. |
+
+A separate `native-projectile-presence` sequence uses optional named kinds,
+cursors and sprites **in the same existing owner**, without adding an independently
+mutable activity flag. Actual reservation, initialization, playback and canonical
+release run unchanged. Initialization supplies an entry before a sprite has been
+selected. Playback can request release with duration zero while its cursor remains
+present. Applying release changes kind/cursor/sprite to absent and preserves the
+retained fields; the selected animation gate then skips the slot without opening
+a definition. An additional release checks the non-idempotent reservation effect.
+
+**One native sequence passes** with the final optimized DLL and formatting checks.
+All **115 frozen library and 76 draft compiled inputs** match; 74 inherited inputs
+are unchanged and only harness wiring differs. No shared engine algorithm changes
+were needed; the authored optional-definition adapter and sequence add **177
+formatted lines**. The four relevant current source/caller files match the frozen
+reference. This is a native representation witness, not additional old/new
+comparisons or converted game content. Native firing, motion-before-playback,
+the full scheduler, geometry and runtime authority remain unestablished.
+
+Use these distinct named predicates when migrating producers and scheduling.
+Optional identities are a demonstrated representation choice; the complete native
+kind taxonomy and all callers still need composition. Local source/result is in
+`Local/sm-decomp-experiments/20261022/native-projectile-presence`
+(`native_presence.rs`, `build.py`, `check.py`). No movie or adoption is claimed.
+
 ### Named projectile animation definitions
 
 A standalone experiment separates projectile playback from instruction encoding.
@@ -1981,6 +2040,7 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^shotretirement]: [ResetProjectileData](../sm/src/game/sm_90.rs#L1468); [ClearProjectile](../sm/src/game/sm_90.rs#L1504); [KillProjectile](../sm/src/game/sm_90.rs#L1566).
 [^shotimpact]: [start_impact](../sm/src/game/projectile_animation.rs#L102); [instruction_delete and advance](../sm/src/game/projectile_animation.rs#L185).
 [^bombowner]: [Bomb fuse and explosion](../sm/src/game/sm_90.rs#L2659); [Power Bomb fuse](../sm/src/game/sm_90.rs#L2676).
+[^projectilepresence]: [Beam reservation and damage-based slot search](../sm/src/game/beam_firing.rs#L56); [missile slot search](../sm/src/game/sm_90.rs#L2487); [bomb kind-based slot search](../sm/src/game/sm_90.rs#L2555); [scheduled projectile processing](../sm/src/game/sm_90.rs#L2038); [release](../sm/src/game/sm_90.rs#L1504).
 [^projectilepresentation]: [Projectile draw scheduling](../sm/src/game/projectile_animation.rs#L217); [sprite lookup and projectile output](../sm/src/game/sm_81.rs#L174); [shared sprite output](../sm/src/game/sprite_drawing.rs#L29); [Ceres projection](../sm/src/game/sm_8b.rs#L580); [crash echoes](../sm/src/game/samus_animation.rs#L629).
 [^projectileplayback]: [get_ProjectileInstr](../sm/src/game/projectile_animation.rs#L33); [advance and instruction dispatch](../sm/src/game/projectile_animation.rs#L188).
 [^projectiletrailframe]: [trail_frame](../sm/src/game/projectile_animation.rs#L170).

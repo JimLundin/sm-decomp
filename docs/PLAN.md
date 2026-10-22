@@ -1846,6 +1846,19 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    examples add 234 separately formatted lines. Broad-index reference bodies and
    final runtime bridges remain outside this partial price. Earlier full suites
    were not rerun; no movie, production adoption or complete savings are claimed.
+   The coordinator independently reviewed transition-stage's 115+75 compiled
+   inputs, 61 unchanged inherited files, actual release body, native-sequence limits
+   and +148/+234 model/example prices without rerunning its suite. The follow-up
+   at 20261022/native-projectile-presence passes one native sequence with optional
+   kind/cursor/sprite identities using unchanged reservation, initialization,
+   playback and release. All 115+76 compiled inputs match; 74 inherited files are
+   unchanged, with only harness wiring changed. The authored adapter/example adds
+   177 formatted lines and no shared engine algorithm. Preserve separate damage-
+   based reuse, kind-based reuse, animation scheduling and reservation queries;
+   do not derive them from one activity flag. A release request retains a cursor
+   until release is applied, and repeated release can decrement reservations.
+   Native firing/full scheduling and runtime authority remain open. Details:
+   [presence contract](RAM_OWNERSHIP.md#integrated-transitions-and-explicit-projectile-presence).
    The separate [projectile sprite-output extension](RAM_OWNERSHIP.md#owned-projectile-sprite-output)
    connects the special-stage owner to the actual shared sprite renderer through
    a named sprite boundary. **228 selected comparisons**, 289 ordered observations

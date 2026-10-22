@@ -493,6 +493,7 @@ stateDiagram-v2
     BeamBurst --> ReleaseRequested: Playback reaches release
     MissileBurst --> ReleaseRequested: Playback reaches release
     BombExplosion --> ReleaseRequested: Playback reaches release
+    ReleaseRequested --> Released: Apply slot release
     BeamBurst --> MissileBurst: Reimpact uses legacy heavy path
 ```
 
@@ -501,8 +502,19 @@ chart. Beam impact installs its entry before feedback; ballistic impact emits
 feedback before rereading the kind and choosing its entry. Each effect transports
 the complete owner. Bomb explosion preserves kind/damage/radii/cooldown, unlike
 projectile impact. The legacy beam-burst reimpact rule is named explicitly.
-Allocation persists through these transitions; native playback returns a release
-request, and the native examples stop before actual slot release.
+Allocation persists through these transitions. The original experiment stops at
+playback's release request; the reviewed
+[transition/release integration](RAM_OWNERSHIP.md#integrated-transitions-and-explicit-projectile-presence)
+now applies canonical release in four native-kind sequences and passes 349 selected
+compatibility comparisons.
+
+Presence has several meanings here. Beam/missile slot search checks damage, bomb
+search checks kind, and scheduling checks the animation cursor. Reservation counts
+are independent. A further native sequence represents absent kind/cursor/sprite
+with optional values in the same owner. Existing initialization, playback and
+release work unchanged; release disables the selected animation gate while
+retaining trail data. These results guide named queries for the native scheduler;
+they do not establish one universal occupied flag or complete native firing.
 
 This advances the domain interface but does not migrate native firing, flight,
 complete bomb processing, drawing or runtime authority. The changed model/provider
