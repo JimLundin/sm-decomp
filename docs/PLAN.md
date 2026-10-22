@@ -1702,7 +1702,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    cumulative lifecycle total. The formatted model/provider cohort grows another
    **71 lines (1,194 -> 1,265)**, with 70 authored native-example lines separate.
    No new unsafe elimination, production savings or movie coverage is claimed.
-   Impact/bomb-explosion transitions and drawing still use encoded definitions.
+   That stage retains encoded impact/bomb-explosion transitions and drawing;
+   the named-transition experiment below extends the former.
    The coordinator independently checked initialization-stage's 115+53 compiled
    inputs, actual initializer/provider order, captured live definition views and
    five native-sequence limits. Forty-six prior files are unchanged. The +71
@@ -1750,6 +1751,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    transfers through checked table reads. Forty-seven prior files are unchanged;
    the +361 formatted cohort cost and native-sequence limits were reviewed without
    rerunning the suite.
+   The separate [named visual-transition experiment](RAM_OWNERSHIP.md#named-projectile-visual-transitions)
+   extends emission-stage with a projectile-kind type parameter. The same owner
+   now runs initialization, impact, bomb flash/explosion and playback with native
+   kind/entry names. **344 selected full-RAM comparisons**, 365 ordered
+   observations and 78 matching failures pass, plus four separate native sequences.
+   The model preserves feedback-before-live-kind selection for ballistic impact,
+   entry-before-feedback for beams and the legacy beam-burst heavy-reimpact rule.
+   All 115 frozen and 66 draft compiled inputs match; 53 inherited files are
+   unchanged. Animation/bomb reference reconstruction and current gameplay-source
+   checks pass. The complete changed model/provider cohort grows **1,402 -> 1,540
+   (+138 formatted lines)**; authored examples separately add 216 lines. Native
+   playback returns Release but does not execute slot release. Native firing,
+   flight, complete bomb processing, drawing and runtime ownership remain open.
+   No movie, production adoption or complete saving is claimed. Integrate its
+   methods into the latest owner without overwriting the newer trail sprite
+   generic or special-attack work. Source/result and the final review are preserved
+   in 20261022/named-projectile-transitions; the review did not rerun its suite.
    Trail-side playback and checked OAM drawing now run through this same complete
    owner. **688 selected full-RAM comparisons**, 1,277 ordered observations and
    299 matching failures pass: 96 timing, 36 command, 96 output, 432 callback,

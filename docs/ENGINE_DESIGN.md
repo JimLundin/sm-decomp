@@ -476,6 +476,41 @@ movement, actual release and rendering still use compatibility interfaces. The
 reviewed model/provider cohort grows another **71 lines**; no complete saving is
 established.
 
+The [visual-transition experiment](RAM_OWNERSHIP.md#named-projectile-visual-transitions)
+now gives this same storage a native projectile-kind type. Initialization, impact,
+bomb flash/explosion and playback work with named kinds and entries. The shared
+transition model contains no RAM, ROM addresses or type-bit masks; its encoded
+provider translates the existing representation. Four authored native sequences
+exercise those operations, while **344 selected old/new comparisons** check their
+compatibility paths and actual bomb consumers.
+
+```mermaid
+stateDiagram-v2
+    FlyingBeam --> BeamBurst: Begin beam impact
+    FlyingMissile --> MissileBurst: Begin ordinary or heavy impact
+    BombFuse --> BombFlash: Fuse reaches flash point
+    BombFlash --> BombExplosion: Fuse expires
+    BeamBurst --> ReleaseRequested: Playback reaches release
+    MissileBurst --> ReleaseRequested: Playback reaches release
+    BombExplosion --> ReleaseRequested: Playback reaches release
+    BeamBurst --> MissileBurst: Reimpact uses legacy heavy path
+```
+
+These are selected lifecycle transitions, not an exhaustive projectile state
+chart. Beam impact installs its entry before feedback; ballistic impact emits
+feedback before rereading the kind and choosing its entry. Each effect transports
+the complete owner. Bomb explosion preserves kind/damage/radii/cooldown, unlike
+projectile impact. The legacy beam-burst reimpact rule is named explicitly.
+Allocation persists through these transitions; native playback returns a release
+request, and the native examples stop before actual slot release.
+
+This advances the domain interface but does not migrate native firing, flight,
+complete bomb processing, drawing or runtime authority. The changed model/provider
+cohort adds **138 formatted lines**, plus 216 separate authored-example lines;
+no whole-replacement price or production adoption is established. Compose this
+experiment's methods into the latest full owner, preserving its newer trail sprite
+parameter and special-attack changes.
+
 The [trail-emission experiment](RAM_OWNERSHIP.md#owned-trail-emission-and-placement)
 passes **466 comparisons** using typed trail pairs, named scripts and signed offset
 definitions. Its allocator deliberately tests only the left side for availability.

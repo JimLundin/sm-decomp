@@ -956,6 +956,74 @@ whole-replacement price or production saving. Diagnostics remain controlled,
 broad-index fallbacks remain, and no movie or production integration is claimed.
 Preserved source: `Local/sm-decomp-experiments/20261022/player-projectiles/initialization-stage`.
 
+### Named projectile visual transitions
+
+The `named-projectile-transitions` experiment extends the preserved emission-stage
+owner with a projectile-kind type parameter. Its native example uses `Beam`,
+`Missile`, `SuperMissile`, `Bomb`, `BeamBurst` and `MissileBurst` in the **same
+`Firing` storage** used by named initialization and playback. The transition model
+has named entry and feedback requests; type-bit decoding, table addresses, sound
+identifiers and cursor arithmetic belong to its compatibility provider. The model
+and both providers forbid unsafe code. These six example variants are not yet a
+complete taxonomy of every projectile or special attack.
+
+The actual `start_impact`, `start_bomb_explosion` and bomb-fuse bodies establish
+these contracts:[^shotimpact][^bombowner]
+
+| Transition | Ownership and ordering |
+| --- | --- |
+| Begin beam impact | Capture the initial family; replace the phase and install its entry before sound. Sound-callback changes to kind/cursor survive. Finish by setting duration to one and damage to eight; retain radii. |
+| Begin ballistic impact | Capture the family, emit sound unless cinematic, then reread the captured slot's kind. Replace its phase, select ordinary/heavy entry, apply heavy-impact shake, then clamp cooldown with the existing wrapped rule. Finish with duration one and damage eight. |
+| Flash a bomb fuse | Change the animation entry at the existing fuse countdown point. The compatibility provider advances the cursor; native definitions select a named entry. |
+| Begin bomb explosion | Install the explosion entry and duration one. Preserve kind, damage, radii and cooldown. This is distinct from projectile impact. |
+| Impact an existing beam burst | Preserve the legacy heavy ballistic path. The native kind model states that rule explicitly instead of inheriting it from overlapping type/phase bits. |
+
+Feedback and entry resolution receive and return the complete owner by value.
+The captured projectile slot remains distinct from the live selected projectile.
+An impact continues to occupy its slot; playback's later `Release` outcome is a
+separate operation. Synchronous feedback cannot be delayed to a frame-end queue
+without first establishing that its intervening observations are irrelevant.
+
+**344 selected old/new full-RAM comparisons pass**, with **365 ordered observations
+and 78 matching failures**: 103 direct impact/explosion entries, 108 callback
+cases, three explicit contracts and 130 bomb visual-consumer checks. The latter
+include 127 selected cases and three linked paths through fuse flash,
+explosion/contact, actual release, reset and beam firing. They use compatibility
+definitions. Callback cases exercise kind/cursor/timer/damage changes, a redirected
+selector, unrelated shot/charge/protection/resume/trail mutations, ROM edits and
+replacement, nested reset/impact and injected sound failure. Broad indices retain
+the old bodies; their comparisons do not establish a native broad-index model.
+
+Four separate native sequences initialize/play the same typed owner through beam
+impact, missile promotion during feedback, bomb flash/explosion and beam-burst
+reimpact. They use authored synthetic definitions without RAM/ROM decoding.
+Playback returns `Release`; those native examples **do not execute actual release**.
+They also do not execute native firing, flight, a complete bomb lifecycle or drawing.
+The missile example reuses an authored sample initializer; it is not converted
+missile game content. These four sequences are separate from the 344 comparisons.
+
+The optimized DLL and final source checks pass. All **115 frozen library and 66
+experiment inputs** match compiled bytes; 53 inherited inputs are unchanged from
+emission-stage. Reference animation/bomb bodies reconstruct exactly. Five relevant
+gameplay files and two retained RTL helpers still match current main; the complete
+runtime has advanced. The final review checked source/result correspondence without
+rerunning the suite. Its complete changed model/provider cohort is **1,402 -> 1,540
+formatted lines (+138)**. Authored native examples grow separately from 159 to 375
+lines (+216). Retained broad paths, the legacy bridge and test harnesses are outside
+that partial price; this establishes no complete replacement saving.
+
+No movie ran, and no production adoption is claimed. The reference retains raw,
+potentially unaligned impact-table reads; deliberately truncated versions of those
+reads were not tested. Results establish observed Windows behavior for the selected
+inputs, not defined portable behavior for every old raw access. Compose the methods
+into the latest owner without replacing its newer trail sprite generic or special
+attack work. Runtime authority and remaining kind/definition consumers stay open.
+
+Local reproduction: `Local/sm-decomp-experiments/20261022/named-projectile-transitions`
+(`transitions.rs`, `encoded_transitions.rs`, `native_transitions.rs`,
+`transition_checks.rs`, `prepare.py`, `build.py`, `check.py`). No game assets were
+added to the repository.
+
 ### Named projectile animation definitions
 
 A standalone experiment separates projectile playback from instruction encoding.
@@ -1775,6 +1843,7 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^enemyshotsearch]: [EprojCollHandler_Multibox](../sm/src/game/sm_a0.rs#L1486); [EprojCollHandler](../sm/src/game/sm_a0.rs#L1714); [EnemyCollisionHandler](../sm/src/game/sm_a0.rs#L1032).
 [^shotretirement]: [ResetProjectileData](../sm/src/game/sm_90.rs#L1468); [ClearProjectile](../sm/src/game/sm_90.rs#L1504); [KillProjectile](../sm/src/game/sm_90.rs#L1566).
 [^shotimpact]: [start_impact](../sm/src/game/projectile_animation.rs#L102); [instruction_delete and advance](../sm/src/game/projectile_animation.rs#L185).
+[^bombowner]: [Bomb fuse and explosion](../sm/src/game/sm_90.rs#L2659); [Power Bomb fuse](../sm/src/game/sm_90.rs#L2676).
 [^projectileplayback]: [get_ProjectileInstr](../sm/src/game/projectile_animation.rs#L33); [advance and instruction dispatch](../sm/src/game/projectile_animation.rs#L188).
 [^projectiletrailframe]: [trail_frame](../sm/src/game/projectile_animation.rs#L170).
 [^projectiledefinitions]: [Fixed and directional initialization](../sm/src/game/projectile_animation.rs#L36); [echo initialization](../sm/src/game/projectile_animation.rs#L148).
