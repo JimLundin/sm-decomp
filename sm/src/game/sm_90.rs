@@ -1,3 +1,4 @@
+use crate::game::special_attacks::{self, Kind as SpecialKind};
 use crate::game::bomb_lifecycle::{self, Kind as BombKind, SPREAD_FRACTIONS as kBombSpread_Tab3};
 use crate::game::music::{PlayRoomMusicTrackAfterAFrames};
 use crate::game::beam_firing::{clear_animation, update_input};
@@ -71,7 +72,6 @@ crate::typed_struct! {
 
 }
 
-pub use crate::types::Func_SpazerSba_V;
 crate::game::constants::typed_constants! { i32;
     true_0 = 1, false_0 = 0,
     fnSamus_MovementHandler_Normal = 0x90a337, fnProjPreInstr_Beam_NoWaveBeam = 0x90aef3,
@@ -1787,39 +1787,6 @@ crate::game::callback_dispatch! {
             ClearProjectile(k, game);
         }
     };
-    [9492371] ProjPreInstr_PlasmaSba [] {
-        let v1: i32 = k as i32 >> 1;
-        if (word!(game.projectile_dir[v1]) & 0xf0) != 0 {
-            ClearProjectile(k, game);
-        } else {
-            word! {game; cooldown_timer = 2; flare_counter = 0; }
-            let pt: Point16U = Projectile_SinLookup(
-                word!(game.projectile_variables[v1]),
-                word!(game.projectile_bomb_x_speed[v1]),
-            );
-            word!(game.projectile_x_pos[v1] = (pt.x).wrapping_add(word!(game.samus_x_pos)));
-            word!(game.projectile_y_pos[v1] = (pt.y).wrapping_add(word!(game.samus_y_pos)));
-            word!(
-                game.projectile_variables[v1] = (((word!(game.used_for_sba_attacksB60)) as u8)
-                    .wrapping_add((word!(game.projectile_variables[v1])) as u8,))
-                    as u16
-            );
-            let mut v3: i16 = (2i16).wrapping_mul((word!(game.projectile_bomb_y_speed[v1])) as i16);
-            if v3 != 0 {
-                if v3 == 2 {
-                    ProjPreInstr_PlasmaSbaFunc_1(k, game);
-                } else {
-                    if v3 != 4 {
-                        Unreachable(game);
-                        loop {}
-                    }
-                    ProjPreInstr_PlasmaSbaFunc_2(k, game);
-                }
-            } else {
-                ProjPreInstr_PlasmaSbaFunc_0(k, game);
-            }
-        };
-    };
     [9498579] ProjPreInstr_UnknownProj8027 [] {
         static kProjPreInstr_UnknownProj8027_X: [i16; 4] = [-4, -4, 4, 4];
         static kProjPreInstr_UnknownProj8027_Y: [i16; 4] = [4, -4, -4, 4];
@@ -1851,245 +1818,16 @@ crate::game::callback_dispatch! {
             }
         }
     };
-    @functions [pub unsafe fn (mut k: u16, game: &mut Game)];
-    [9490185] ProjPreInstr_IceSba [] {
-        let v1: i32 = k as i32 >> 1;
-        if (word!(game.projectile_dir[v1]) & 0xf0) != 0 {
-            QueueSfx1_Max6(0x24, game);
-            ClearProjectile(k, game);
-        } else {
-            crate::update_place! { unaligned_word fresh49 [fresh50] = &raw mut (*(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize)) => (u16::from_le(fresh49.read_unaligned())).wrapping_sub(1); }
-            let mut v2: bool = fresh50 == 1;
-            if v2 {
-                word!(game.projectile_timers[v1] = 4);
-                crate::game::projectile_trails::emit(k, game);
-                k = word!(game.projectile_index);
-            }
-            let v3: i32 = k as i32 >> 1;
-            let pt: Point16U = Projectile_SinLookup(word!(game.projectile_variables[v3]), 0x20);
-            word!(game.projectile_x_pos[v3] = (pt.x).wrapping_add(word!(game.samus_x_pos)));
-            word!(game.projectile_y_pos[v3] = (pt.y).wrapping_add(word!(game.samus_y_pos)));
-            word!(
-                game.projectile_variables[v3] = (((word!(game.used_for_sba_attacksB60)) as u8)
-                    .wrapping_add((word!(game.projectile_variables[v3])) as u8,))
-                    as u16
-            );
-            crate::update_place! { unaligned_word fresh53 [fresh54] = &raw mut (*(ram_ptr!(game, u16; 0xbf0)).offset(v3 as isize)) => (u16::from_le(fresh53.read_unaligned())).wrapping_sub(1); }
-            v2 = fresh54 == 1;
-            if v2 {
-                word!(game.projectile_bomb_pre_instructions[v3] = ((0x90cf7ai32) as u16));
-                word!(game.projectile_bomb_x_speed[v3] = 40);
-                QueueSfx1_Max6(0x24, game);
-            }
-            word! {game; cooldown_timer = 2; flare_counter = 0; }
-        };
-    };
-    [9490298] ProjPreInstr_IceSba2 [] {
-        let mut pt: Point16U = Point16U { x: 0, y: 0 };
-
-        let mut v7: i16 = 0;
-        let v1: i32 = k as i32 >> 1;
-        let clear_projectile: bool = ((word!(game.projectile_dir[v1]) & 0xf0) != 0)
-            || ({
-                crate::update_place! { unaligned_word fresh45 [fresh46] = &raw mut (*(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize)) => (u16::from_le(fresh45.read_unaligned())).wrapping_sub(1); }
-                if fresh46 == 1 {
-                    word!(game.projectile_timers[v1] = 4);
-                    crate::game::projectile_trails::emit(k, game);
-                    k = word!(game.projectile_index);
-                }
-                let mut v3: i32 = k as i32 >> 1;
-                pt = Projectile_SinLookup(
-                    word!(game.projectile_variables[v3]),
-                    word!(game.projectile_bomb_x_speed[v3]),
-                );
-                pt.x = (pt.x).wrapping_add(word!(game.samus_x_pos));
-                word!(game.projectile_x_pos[v3] = pt.x);
-                let mut v5: i16 = ((pt.x) as i16).wrapping_sub((word!(game.layer1_x_pos)) as i16);
-                (v5 as i32 + 32 & 0x8000 != 0
-                    || v5 as i32 - 288i32 & 0x8000 == 0
-                    || {
-                        let mut v6: i16 =
-                            ((pt.y) as i16).wrapping_add((word!(game.samus_y_pos)) as i16);
-                        word!(
-                            game.projectile_y_pos[v3] =
-                                (pt.y).wrapping_add(word!(game.samus_y_pos))
-                        );
-                        v7 = (v6).wrapping_sub((word!(game.layer1_y_pos)) as i16);
-                        v7 as i32 - 16i32 & 0x8000 != 0
-                    }
-                    || v7 as i32 - 256i32 & 0x8000 == 0)
-                    || ({
-                        word! { game;
-                            projectile_variables[v3] = (((word!(game.used_for_sba_attacksB60)) as u8)
-                                .wrapping_add((word!(game.projectile_variables[v3])) as u8))
-                                as u16;
-                            projectile_bomb_x_speed[v3] =
-                                (((word!(game.projectile_bomb_x_speed[v3])) as u8).wrapping_add(8))
-                                    as u16;
-                            cooldown_timer = 2;
-                            flare_counter = 0;
-                        }
-                        false
-                    })
-            });
-        if clear_projectile {
-            ClearProjectile(k, game);
-        };
-    };
-    [9493000] ProjPreInstr_WaveSba [] {
-        let v1: i32 = k as i32 >> 1;
-        let mut v2: bool = false;
-        let mut v3: bool = false;
-        if (word!(game.projectile_dir[v1]) & 0xf0) != 0
-            || {
-                v2 = word!(game.projectile_bomb_y_speed[v1]) == 1;
-                v3 = ((word!(game.projectile_bomb_y_speed[v1])) as i16).wrapping_sub(1) < 0;
-                word!(game.projectile_bomb_y_speed[v1] -= 1);
-                v2 as i32 != 0
-            }
-            || v3
-        {
-            QueueSfx1_Max6(0x29, game);
-            ClearProjectile(k, game);
-            return;
-        }
-        let R34: u16 = word!(game.projectile_bomb_x_speed[v1]);
-        crate::update_place! { unaligned_word fresh37 [fresh38] = &raw mut (*(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize)) => (u16::from_le(fresh37.read_unaligned())).wrapping_sub(1); }
-        v2 = fresh38 == 1;
-        if v2 {
-            word!(game.projectile_timers[v1] = 4);
-            crate::game::projectile_trails::emit(k, game);
-            k = word!(game.projectile_index);
-        }
-        if ((word!(game.samus_x_pos)) as i16)
-            .wrapping_sub((word!(game.projectile_x_pos[v1])) as i16)
-            < 0
-        {
-            if word!(game.projectile_bomb_x_speed[v1]) as i32 + 2047 & 0x8000 == 0 {
-                word!(game.projectile_bomb_x_speed[v1] -= 64);
-            }
-        } else if word!(game.projectile_bomb_x_speed[v1]) as i32 - 2048i32 & 0x8000 != 0 {
-            word!(game.projectile_bomb_x_speed[v1] += 64);
-        }
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0xb64)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0xb8c)).offset(v1 as isize),
-            ((word!(game.projectile_bomb_x_speed[v1]) as i16 as i32) << 8) as u32,
-        );
-        if ((word!(game.samus_y_pos)) as i16)
-            .wrapping_sub((word!(game.projectile_y_pos[v1])) as i16)
-            < 0
-        {
-            if word!(game.projectile_variables[v1]) as i32 + 2047 & 0x8000 == 0 {
-                word!(game.projectile_variables[v1] -= 64);
-            }
-        } else if word!(game.projectile_variables[v1]) as i32 - 2048i32 & 0x8000 != 0 {
-            word!(game.projectile_variables[v1] += 64);
-        }
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0xb78)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0xba0)).offset(v1 as isize),
-            ((word!(game.projectile_variables[v1]) as i16 as i32) << 8) as u32,
-        );
-        if k == 6 {
-            if (word!(game.projectile_bomb_x_speed[3]) & 0x8000) != 0 {
-                if (R34 & 0x8000) == 0 {
-                    QueueSfx1_Max6(0x28, game);
-                }
-            } else if (R34 & 0x8000) != 0 {
-                QueueSfx1_Max6(0x28, game);
-            }
-        }
-        word! {game; cooldown_timer = 2; flare_counter = 0; }
-    };
-    [9493254] ProjPreInstr_SpazerSba [] {
-        let v1: i32 = k as i32 >> 1;
-        if (word!(game.projectile_dir[v1]) & 0xf0) != 0 {
-            kProjPreInstr_SpazerSba_FuncsA[v1 as usize](
-                k, game,
-            );
-        } else {
-            let v2: i32 = k as i32 >> 1;
-            crate::update_place! { unaligned_word fresh32 [fresh33] = &raw mut (*(ram_ptr!(game, u16; 0xc90)).offset(v2 as isize)) => (u16::from_le(fresh32.read_unaligned())).wrapping_sub(1); }
-            if fresh33 == 1 {
-                word!(game.projectile_timers[v2] = 4);
-                crate::game::projectile_trails::emit(k, game);
-                k = word!(game.projectile_index);
-            }
-            let v4: i32 = k as i32 >> 1;
-            let pt: Point16U = Projectile_SinLookup(
-                word!(game.projectile_variables[v4]),
-                word!(game.projectile_bomb_x_speed[v4]),
-            );
-            word!(game.projectile_x_pos[v4] = (pt.x).wrapping_add(word!(game.samus_x_pos)));
-            kProjPreInstr_SpazerSba_FuncsB[(word!(game.projectile_unk_A[v4]) >> 1) as usize]
-                (k, pt.y, game);
-            word! {game; cooldown_timer = 2; flare_counter = 0; }
-        };
-    };
-    [9493660] ProjPreInstr_EndOfSpazerSba [] {
-        let v1: i32 = k as i32 >> 1;
-        let clear_projectile: bool = ((word!(game.projectile_dir[v1]) & 0xf0) != 0)
-            || ({
-                crate::update_place! { unaligned_word fresh30 [fresh31] = &raw mut (*(ram_ptr!(game, u16; 0xc90)).offset(v1 as isize)) => (u16::from_le(fresh30.read_unaligned())).wrapping_sub(1); }
-                if fresh31 == 1 {
-                    word!(game.projectile_timers[v1] = 4);
-                    crate::game::projectile_trails::emit(k, game);
-                    k = word!(game.projectile_index);
-                }
-                let mut v3: i32 = k as i32 >> 1;
-                let mut v4: u16 = (word!(game.projectile_y_pos[v3])).wrapping_add(8);
-                word!(game.projectile_y_pos[v3] = v4);
-                (v4 as i32 - word!(game.layer1_y_pos) as i32 - 248i32 & 0x8000 == 0)
-                    || ({
-                        word! {game; cooldown_timer = 2; flare_counter = 0; }
-                        false
-                    })
-            });
-        if clear_projectile {
-            ClearProjectile(k, game);
-        };
-    };
-    @functions [pub unsafe fn (j: u16, game: &mut Game)];
-    [9492449] ProjPreInstr_PlasmaSbaFunc_0 [] {
-        let v1: i32 = j as i32 >> 1;
-        let v2: u16 = (((word!(game.projectile_bomb_x_speed[v1])) as u8).wrapping_add(4)) as u16;
-        word!(game.projectile_bomb_x_speed[v1] = v2);
-        if v2 as i32 - 192i32 & 0x8000 == 0 {
-            word!(game.projectile_bomb_y_speed[v1] = 1);
-        }
-    };
-    [9492474] ProjPreInstr_PlasmaSbaFunc_1 [] {
-        let v1: i32 = j as i32 >> 1;
-        let v2: u16 = (((word!(game.projectile_bomb_x_speed[v1])) as u8).wrapping_sub(4)) as u16;
-        word!(game.projectile_bomb_x_speed[v1] = v2);
-        if v2 as i32 - 45i32 & 0x8000 != 0 {
-            word!(game.projectile_bomb_y_speed[v1] = 2);
-        }
-    };
-    [9492499] ProjPreInstr_PlasmaSbaFunc_2 [] {
-        let v1: i32 = j as i32 >> 1;
-        if word!(game.projectile_x_pos[v1]) as i32 - word!(game.layer1_x_pos) as i32 + 32 & 0x8000
-            != 0
-            || word!(game.projectile_x_pos[v1]) as i32 - word!(game.layer1_x_pos) as i32 - 288i32
-                & 0x8000
-                == 0
-            || word!(game.projectile_y_pos[v1]) as i32 - word!(game.layer1_y_pos) as i32 - 16i32
-                & 0x8000
-                != 0
-            || word!(game.projectile_y_pos[v1]) as i32 - word!(game.layer1_y_pos) as i32 - 256i32
-                & 0x8000
-                == 0
-        {
-            ClearProjectile(j, game);
-        } else {
-            word!(
-                game.projectile_bomb_x_speed[v1] =
-                    (((word!(game.projectile_bomb_x_speed[v1])) as u8).wrapping_add(4)) as u16
-            );
-        };
-    };
     @external {
+        9492371 => [special_attacks::update(k, SpecialKind::Plasma, game)];
+        9490185 => [special_attacks::update(k, SpecialKind::Ice, game)];
+        9490298 => [special_attacks::update(k, SpecialKind::IceReleased, game)];
+        9493000 => [special_attacks::update(k, SpecialKind::Wave, game)];
+        9493254 => [special_attacks::update(k, SpecialKind::Spazer, game)];
+        9493660 => [special_attacks::update(k, SpecialKind::SpazerReleased, game)];
+        9492449 => [special_attacks::plasma_radius(k, false, game)];
+        9492474 => [special_attacks::plasma_radius(k, true, game)];
+        9492499 => [special_attacks::depart_plasma(k, game)];
         9482393 => [bomb_lifecycle::update(k, BombKind::Bomb, game)];
         9482414 => [bomb_lifecycle::update(k, BombKind::PowerBomb, game)];
         9492727 => [bomb_lifecycle::update(k, BombKind::Spread, game)];
@@ -3338,120 +3076,6 @@ pub unsafe fn BombSpread(game: &mut Game) {
                         & 0xf) as usize] as u16
             );
             word! { game, 0; bomb_spread_charge_timeout_counter, flare_counter }
-        }
-    }
-}
-static kProjPreInstr_SpazerSba_FuncsB: [Func_SpazerSba_V; 3] = callback_table! { nonnull Func_SpazerSba_V;
-    ProjPreInstr_SpazerSba_FuncB_0, ProjPreInstr_SpazerSba_FuncB_1,
-    ProjPreInstr_SpazerSba_FuncB_2,
-};
-static kProjPreInstr_SpazerSba_FuncsA: [Func_Y_V; 4] = callback_table! { nonnull Func_Y_V;
-    ProjPreInstr_SpazerSba_FuncA_0, ProjPreInstr_SpazerSba_FuncA_1,
-    ProjPreInstr_SpazerSba_FuncA_2, ProjPreInstr_SpazerSba_FuncA_3,
-};
-pub unsafe fn ProjPreInstr_SpazerSba_FuncA_0(k: u16, game: &mut Game) {
-    unsafe {
-        ClearProjectile(k, game);
-        ClearProjectile(4, game);
-    }
-}
-pub unsafe fn ProjPreInstr_SpazerSba_FuncA_1(k: u16, game: &mut Game) {
-    unsafe {
-        ClearProjectile(k, game);
-        ClearProjectile(6, game);
-    }
-}
-pub unsafe fn ProjPreInstr_SpazerSba_FuncA_2(k: u16, game: &mut Game) {
-    unsafe {
-        ClearProjectile(k, game);
-        ClearProjectile(0, game);
-    }
-}
-pub unsafe fn ProjPreInstr_SpazerSba_FuncA_3(k: u16, game: &mut Game) {
-    unsafe {
-        ClearProjectile(k, game);
-        ClearProjectile(2, game);
-    }
-}
-pub unsafe fn ProjPreInstr_SpazerSba_FuncB_0(j: u16, r22: u16, game: &mut Game) {
-    unsafe {
-        static kProjPreInstr_SpazerSba_Yspeed: [i16; 4] = [2, -2, 2, -2];
-        let v1: i32 = j as i32 >> 1;
-        word!(game.projectile_y_pos[v1] = (r22).wrapping_add(word!(game.samus_y_pos)));
-        let v2: u16 = ((byte!(@pointer (ram_ptr!(game, u16; 0xbf0)).offset(v1 as isize); 0))
-            .wrapping_add(byte!(@pointer (ram_ptr!(game, u16; 0xc7c)).offset(v1 as isize); 0)))
-            as u16;
-        word!(game.projectile_variables[v1] = v2);
-        if v2 == 128 {
-            word! {game; projectile_bomb_x_speed[v1] = 160;
-            projectile_bomb_y_speed[v1] = kProjPreInstr_SpazerSba_Yspeed[v1 as usize] as u16;
-            projectile_dir[v1] = 0; projectile_unk_A[v1] = 2; }
-        }
-    }
-}
-pub unsafe fn ProjPreInstr_SpazerSba_FuncB_1(j: u16, r22: u16, game: &mut Game) {
-    unsafe {
-        static kSpazerProjectileYSpeed: [i16; 4] = [-2, 2, -2, 2];
-        let v1: u16 = (r22 as i32 + word!(game.samus_y_pos) as i32 - 114i32) as u16;
-        let v2: i32 = j as i32 >> 1;
-        word!(game.projectile_y_pos[v2] = v1);
-        if v1 as i32 - word!(game.layer1_y_pos) as i32 - 16i32 & 0x8000 != 0 {
-            FireEndOfSpazerSba(j, game);
-        } else {
-            word!(
-                game.projectile_variables[v2] =
-                    ((*((ram_ptr!(game, u16; 0xbf0)).offset(v2 as isize) as *mut u8)).wrapping_add(
-                        *((ram_ptr!(game, u16; 0xc7c)).offset(v2 as isize) as *mut u8),
-                    )) as u16
-            );
-            let v3: u16 = (word!(game.projectile_bomb_x_speed[v2])).wrapping_sub(5);
-            word!(game.projectile_bomb_x_speed[v2] = v3);
-            if v3 == 0 {
-                word!(
-                    game.projectile_bomb_y_speed[v2] = kSpazerProjectileYSpeed[v2 as usize] as u16
-                );
-                word!(
-                    game.projectile_variables[v2] =
-                        (((word!(game.projectile_variables[v2])) as u8).wrapping_add(0x80)) as u16
-                );
-                word!(game.projectile_unk_A[v2] = 4);
-                if j == 0 {
-                    QueueSfx1_Max6(0x26, game);
-                }
-            }
-        };
-    }
-}
-pub unsafe fn ProjPreInstr_SpazerSba_FuncB_2(j: u16, r22: u16, game: &mut Game) {
-    unsafe {
-        let v1: u16 = (r22 as i32 + word!(game.samus_y_pos) as i32 - 114i32) as u16;
-        word!(game.projectile_y_pos[(j >> 1)] = v1);
-        if v1 as i32 - word!(game.layer1_y_pos) as i32 - 16i32 & 0x8000 != 0 || {
-            let mut v2: i32 = j as i32 >> 1;
-            word!(
-                game.projectile_variables[v2] =
-                    ((*((ram_ptr!(game, u16; 0xbf0)).offset(v2 as isize) as *mut u8)).wrapping_add(
-                        *((ram_ptr!(game, u16; 0xc7c)).offset(v2 as isize) as *mut u8),
-                    )) as u16
-            );
-            let mut v3: u16 = (word!(game.projectile_bomb_x_speed[v2])).wrapping_add(5);
-            word!(game.projectile_bomb_x_speed[v2] = v3);
-            v3 as i32 - 96i32 & 0x8000 == 0
-        } {
-            FireEndOfSpazerSba(j, game);
-        }
-    }
-}
-pub unsafe fn FireEndOfSpazerSba(j: u16, game: &mut Game) {
-    unsafe {
-        static kFireEndOfSpazerSba: [i16; 4] = [16, 16, -16, -16];
-        let v1: i32 = j as i32 >> 1;
-        word!(game.projectile_x_pos[v1] += (kFireEndOfSpazerSba[v1 as usize]) as u16);
-        word! {game; projectile_dir[v1] = 5; projectile_timers[v1] = 4;
-        projectile_bomb_pre_instructions[v1] = ((0x90dc9ci32) as u16); }
-        if ((j) as i16).wrapping_sub(4) < 0 {
-            word!(game.projectile_type[(j >> 1)] = -32732i32 as u16);
-            initialize_echo(j, game);
         }
     }
 }
