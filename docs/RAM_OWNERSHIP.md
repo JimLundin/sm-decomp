@@ -180,6 +180,45 @@ an arbitrary-length event queue. Display may also change session state when
 closing message 20. Replaying the pickup on resume or deferring the item award
 until message dismissal would change behavior.[^plm][^message]
 
+**Adopted model:** `item_pickups::Inventory` owns the nine award transitions and
+returns named visual/message effects. Its checked RAM adapter commits only the
+affected inventory group before effects run; it retains no inventory snapshot
+across those calls. `MessageHandoff` names instruction execution and suspended
+display. The queued message, current PLM selector and saved script position stay
+live at their original observation points. Both new modules forbid unsafe code.
+The compatibility bridge retains raw script operands and unsafe visual/music
+calls; script traversal, drawing and persistent RAM ownership remain transitional.
+
+Beam masks execute in the original order inside the model, followed by one
+equipped-beam store. The original intermediate stores had no callback, volatile
+access or fallible operation between them. Likewise, storing an unchanged nonzero
+reserve mode adds no observable effect under serialized Game access. Ammunition
+adds to current and maximum separately; only an energy tank refills current to
+the new maximum. Beam/equipment messages are read after visual/music effects.
+
+Final-source checks pass **144 actual linked pickup comparisons**, **1,814
+controlled instruction comparisons** and **1,008 actual executor-body steps**,
+including 7,794 ordered callback observations and 434 matching injected boundary
+failures. Full RAM, return values and failure flags match. Seventeen discriminating
+checks reject early message reads and repeated awards. Cases include wrapping
+amounts, both beam exclusions, reserve modes, repeated yields, invalid continuation,
+disabled/inactive slots, null instruction returns with stale messages, and selector,
+queue and inventory mutation in callbacks. The controlled executor uses recording
+visual/music/display/drawing/preinstruction boundaries; its scenarios do not
+establish gameplay-route or actual message animation coverage. No movie ran.
+Odd script cases compare observed optimized host behavior, not defined alignment
+of the old raw dereferences. Retained bank code and all numeric routes match.
+
+Normal release library/frontend/verifier, all **111 embedded library inputs**
+and installed native source checks pass. Complete ownership cost is **+154
+maintained Rust lines**, including
+model, adapter, bridge, callers and registrations; no new macros. The explicit
+legacy bridge adds one counted unsafe declaration while retiring raw inventory
+operations and the retained continuation pointer. This is a safety/ownership
+step, not volume savings or completion of PLM safety. Local reproduction is
+`Local/sm-decomp-experiments/20261022/plm-pickups`; its synthetic inputs remain
+outside the repository.
+
 ### 7. Progression selects room instances and survives room retirement
 
 **Producers:** pickup/door instructions and event/boss setters mutate persistent
@@ -577,8 +616,10 @@ its own exercised checks.
    RAM persistence remains transitional.
 3. Replace retained enemy pointers with slot offsets while preserving live
    rereads, then test reaction-induced deletion/reuse and instruction selection.
-4. Model PLM item-award/message continuation together, preserving already-committed
-   progression during suspension. Keep its scheduler distinct from enemy scripts.
+4. Extend the adopted PLM award/message model through safe script traversal and
+   owned progression persistence when their remaining writers and consumers can
+   migrate together. Award timing and message continuation are adopted above;
+   keep the PLM scheduler distinct from enemy scripts.
 
 The remaining items are identified next experiments, not completed migrations. An exhaustive
 writer inventory, full gameplay reachability of selector mutations, safe ROM and

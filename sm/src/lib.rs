@@ -342,6 +342,8 @@ pub mod game {
     pub mod sm_81;
     pub mod sm_82;
     pub mod sm_84;
+    pub mod item_pickups;
+    pub mod item_pickups_ram;
     pub mod sm_86;
     pub mod eproj_script;
     pub mod sm_87;

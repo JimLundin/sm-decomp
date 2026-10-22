@@ -42,10 +42,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,652 Rust lines in 102 files**, plus 262 C
-bridge and 296 C-header lines = **95,210 maintained implementation lines**.
+Current composition (2026-10-22): **94,806 Rust lines in 104 files**, plus 262 C
+bridge and 296 C-header lines = **95,364 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,041**. This complete recount includes frontend,
+gives **96,195**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1603,6 +1603,22 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    lines, minus 48 net caller/calculation lines. No new gameplay macros or hidden
    maintained code. This is required ownership/safety work, not volume savings.
    Local reproduction: Local/sm-decomp-experiments/20261022/launch-motion.
+   PLM item awards and message continuation now use pure `Inventory` and
+   `MessageHandoff` models plus a separate checked RAM adapter. Both modules
+   forbid unsafe code. Awards commit before effects; message and selector reads
+   retain their original timing, and resuming display never repeats the award.
+   All nine numeric instruction routes remain. Raw script traversal and unsafe
+   visual/music/display calls remain explicit legacy boundaries. Final-source
+   checks pass **144 linked production pickups, 1,814 controlled instruction
+   comparisons and 1,008 actual executor-body steps**, including 7,794 ordered
+   observations and 17 timing counterexamples. Controlled callbacks and synthetic
+   inputs establish no movie-route or message-animation coverage; no movie ran.
+   Normal release library/frontend/verifier, 111 embedded library inputs and
+   installed native source checks pass. Complete ownership cost is **+154
+   maintained Rust lines**, including all callers/registrations, with no new
+   macros. This is required safety/ownership work, not a volume reduction.
+   Contracts and limits: RAM_OWNERSHIP.md, section 6. Local reproduction:
+   Local/sm-decomp-experiments/20261022/plm-pickups.
    Renewed user direction (2026-10-21): the search is still too narrow. Prioritize
    substantial system replacements and repeated algorithms across responsibilities.
    Stop spending implementation/validation effort on roughly hundred-line enemy
@@ -2760,15 +2776,21 @@ gameplay continuation ownership, owned ROM reads, safe asset decompression,
 checked ROM tables, safe word transfers, owned recording, checked VRAM readback
 owned sprite drawing, checked Mode 7 transfers, owned SRAM, checked snapshot
 streams, owned enemy-projectile scripts, named APU history and explicit launch
-motion, checked ROM patch installation and hardware field serialization,
-maintained Rust is **94,652**, with
+motion, checked ROM patch installation, hardware field serialization and PLM
+award/message ownership, maintained Rust is **94,806**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **95,210**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,041**.
+Including 262 C and 296 header lines gives **95,364**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,195**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3034; cast lines 6573. Hardware field serialization adds 188
+unsafe functions 3035; cast lines 6573. PLM award/message ownership adds 154
+maintained lines and one counted unsafe declaration for the explicit legacy
+script/effect bridge; the pure model and checked adapter forbid unsafe code.
+Raw inventory operations and the retained continuation pointer are retired;
+script traversal and unsafe effect calls remain. Other residue counters are
+unchanged. This is an ownership/safety cost, not savings.
+Hardware field serialization adds 188
 maintained lines and removes one counted unsafe checkpoint function; other
 residue counters are unchanged. Seven raw-copy sites are retired; APU/main-RAM
 transfers, hardware allocation and pointer ownership remain unsafe.

@@ -1,6 +1,7 @@
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_86::*;
+use crate::game::item_pickups::{MessageHandoff, PickupKind, VisualUpdate};
 pub use crate::game::prelude::*;
 
 use crate::game::message_boxes;
@@ -289,15 +290,33 @@ pub unsafe fn SpawnPLMWithCollision(header: u16, displacement: *mut i32, game: &
         game,
     )
 }
+unsafe fn collect_item(plmp: *const u8, kind: PickupKind, game: &mut Game) -> *const u8 {
+    let amount = match kind {
+        PickupKind::Beam | PickupKind::SuperMissiles => u16::from_le_bytes([*plmp, *plmp.add(1)]),
+        _ => (plmp as *const u16).read_unaligned(),
+    };
+    let effects = crate::game::item_pickups_ram::collect(game, kind, amount);
+    match effects.visual {
+        VisualUpdate::None => {}
+        VisualUpdate::Beams => UpdateBeamTilesAndPalette(game),
+        VisualUpdate::Grapple => AddGrappleToHudTilemap(game),
+        VisualUpdate::Xray => AddXrayToHudTilemap(game),
+        VisualUpdate::Missiles => AddMissilesToHudTilemap(game),
+        VisualUpdate::SuperMissiles => AddSuperMissilesToHudTilemap(game),
+        VisualUpdate::PowerBombs => AddPowerBombsToHudTilemap(game),
+    }
+    PlayRoomMusicTrackAfterAFrames(0x168, game);
+    let message = effects.message.unwrap_or_else(|| u16::from(*plmp.add(2)));
+    message_boxes::queue(message, game);
+    plmp.add(if effects.message.is_none() { 3 } else { 2 })
+}
 pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
     crate::verify_probe::hit("coroutine.plm");
-    let resume_state: *mut u8 = ram_ptr!(game; 0x613);
-    let resume = *resume_state;
+    let resume = game.g_ram[0x613];
 
-    if resume <= 1 {
+    if let Some(mut handoff) = MessageHandoff::resume(resume) {
         let mut base = null::<u8>();
         let mut v5 = null::<u8>();
-        let mut message_pending = resume == 1;
         if resume == 0 {
             if (word!(game.plm_flag) & 0x8000) == 0 {
                 return kCoroutineNone as CoroutineRet;
@@ -305,7 +324,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
             word! {game; plm_draw_tilemap_index = 0; plm_id = 78; }
         }
         loop {
-            if !message_pending {
+            if !handoff.displaying() {
                 if (word!(game.plm_id) & 0x8000) != 0 {
                     word!(game.plm_id = 0);
                     break;
@@ -338,12 +357,12 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                 );
             }
             loop {
-                if message_pending {
+                if handoff.displaying() {
                     crate::verify_probe::hit("coroutine.plm.message");
                     let yielded: u8 =
                         message_boxes::display(word!(game.queued_message_box_index), game);
-                    if yielded != 0 {
-                        *resume_state = 1;
+                    if let Err(yielded) = handoff.after_display(yielded) {
+                        game.g_ram[0x613] = handoff.continuation();
                         return yielded;
                     }
                     word!(game.queued_message_box_index = 0);
@@ -352,8 +371,6 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                         *(ram_ptr!(game, u16; 0x1d27)).offset((word!(game.plm_id) >> 1) as isize)
                             as i32 as isize,
                     );
-
-                    message_pending = false;
                 }
                 if (*(v5 as *mut u16) & 0x8000) == 0 {
                     let mut v7: i32 = word!(game.plm_id) as i32 >> 1;
@@ -381,16 +398,15 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                 if (v5 as usize) < 0x10000i32 as usize {
                     v5 = base.offset(v5 as usize as isize);
                 }
-                if word!(game.queued_message_box_index) != 0 {
+                if handoff.after_instruction(word!(game.queued_message_box_index)) {
                     *(ram_ptr!(game, u16; 0x1d27)).offset((word!(game.plm_id) >> 1) as isize) =
                         v5.offset_from(base) as c_long as u16;
-                    message_pending = true;
                 }
             }
             word!(game.plm_id -= 2);
         }
     }
-    *resume_state = 0;
+    game.g_ram[0x613] = 0;
     0 as CoroutineRet
 }
 #[inline]
@@ -2517,15 +2533,7 @@ crate::game::callback_dispatch! {
             PlmInstr_Goto(plmp, k)
         }
     };
-    [8686075] PlmInstr_CollectAmmoPowerBombTank [] {
-        let t: u16 = *(plmp as *mut u16);
-        word!(game.samus_max_power_bombs += t);
-        word!(game.samus_power_bombs += t);
-        AddPowerBombsToHudTilemap(game);
-        PlayRoomMusicTrackAfterAFrames(0x168, game);
-        message_boxes::queue(4, game);
-        plmp.offset(2)
-    };
+    [8686075] PlmInstr_CollectAmmoPowerBombTank [collect_item(plmp, PickupKind::PowerBombs, game)] {};
     [8686557] PlmInstr_ClearMusicQueueAndQueueTrack [] {
         word_transfers!(game, descending, 8;
             le(music_queue_track, 7) <- value(0),
@@ -2695,88 +2703,24 @@ crate::game::callback_dispatch! {
     _k: u16,
     game: &mut Game,
 ) -> *const u8];
-    [8685744] PlmInstr_PickupBeamAndShowMessage [plmp.add(3)] {
-        let beam = u16::from_le_bytes([*plmp, *plmp.add(1)]);
-        let read_word = |game: &Game, offset: usize| {
-            u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
-        };
-        game.set_collected_beams(read_word(game, 0x9a8) | beam);
-        game.set_equipped_beams(read_word(game, 0x9a6) | beam);
-        // Spazer and Plasma are mutually exclusive; retain both ordered masks.
-        game.set_equipped_beams(read_word(game, 0x9a6) & !((beam << 1) & 8));
-        game.set_equipped_beams(read_word(game, 0x9a6) & !((beam >> 1) & 4));
-        UpdateBeamTilesAndPalette(game);
-        PlayRoomMusicTrackAfterAFrames(0x168, game);
-        let message = u16::from(*plmp.add(2));
-        message_boxes::queue(message, game);
-    };
-    [8685811] PlmInstr_PickupEquipmentAndShowMessage [plmp.add(3)] {
-        let equipment = (plmp as *const u16).read_unaligned();
-        let equipped = u16::from_le_bytes([game.g_ram[0x9a2], game.g_ram[0x9a3]]);
-        game.set_equipped_items(equipped | equipment);
-        game.set_collected_items(game.collected_items() | equipment);
-        PlayRoomMusicTrackAfterAFrames(0x168, game);
-        let message = u16::from(*plmp.add(2));
-        message_boxes::queue(message, game);
-    };
+    [8685744] PlmInstr_PickupBeamAndShowMessage [collect_item(plmp, PickupKind::Beam, game)] {};
+    [8685811] PlmInstr_PickupEquipmentAndShowMessage [collect_item(plmp, PickupKind::Equipment, game)] {};
     @functions [pub unsafe fn (
     plmp: *const u8,
     k: u16,
     game: &mut Game,
 ) -> *const u8];
-    [8685850] PlmInstr_PickupEquipmentAddGrappleShowMessage [plmp.offset(2)] {
-        let t: u16 = *(plmp as *mut u16);
-        word!(game.equipped_items |= (t));
-        word!(game.collected_items |= (t));
-        AddGrappleToHudTilemap(game);
-        PlayRoomMusicTrackAfterAFrames(0x168, game);
-        message_boxes::queue(5, game);
-    };
-    [8685889] PlmInstr_PickupEquipmentAddXrayShowMessage [plmp.offset(2)] {
-        let t: u16 = *(plmp as *mut u16);
-        word!(game.equipped_items |= (t));
-        word!(game.collected_items |= (t));
-        AddXrayToHudTilemap(game);
-        PlayRoomMusicTrackAfterAFrames(0x168, game);
-        message_boxes::queue(6, game);
-    };
-    [8685928] PlmInstr_CollectHealthEnergyTank [plmp.add(2)] {
-        let amount = (plmp as *const u16).read_unaligned();
-        game.set_samus_max_health(game.samus_max_health().wrapping_add(amount));
-        game.set_samus_health(game.samus_max_health());
-        PlayRoomMusicTrackAfterAFrames(0x168, game);
-        message_boxes::queue(1, game);
-    };
-    [8685958] PlmInstr_CollectHealthReserveTank [plmp.offset(2)] {
-        word!(game.samus_max_reserve_health += *(plmp as *mut u16));
-        if word!(game.reserve_health_mode) == 0 {
-            word!(game.reserve_health_mode += 1);
-        }
-        PlayRoomMusicTrackAfterAFrames(0x168, game);
-        message_boxes::queue(0x19, game);
-    };
-    [8685993] PlmInstr_CollectAmmoMissileTank [plmp.offset(2)] {
-        let t = *(plmp as *const u16);
-        game.set_samus_max_missiles(game.samus_max_missiles().wrapping_add(t));
-        game.set_samus_missiles(game.samus_missiles().wrapping_add(t));
-        AddMissilesToHudTilemap(game);
-        PlayRoomMusicTrackAfterAFrames(0x168, game);
-        message_boxes::queue(2, game);
-    };
+    [8685850] PlmInstr_PickupEquipmentAddGrappleShowMessage [collect_item(plmp, PickupKind::Grapple, game)] {};
+    [8685889] PlmInstr_PickupEquipmentAddXrayShowMessage [collect_item(plmp, PickupKind::Xray, game)] {};
+    [8685928] PlmInstr_CollectHealthEnergyTank [collect_item(plmp, PickupKind::Energy, game)] {};
+    [8685958] PlmInstr_CollectHealthReserveTank [collect_item(plmp, PickupKind::Reserve, game)] {};
+    [8685993] PlmInstr_CollectAmmoMissileTank [collect_item(plmp, PickupKind::Missiles, game)] {};
     @functions [pub unsafe fn (
     plmp: *const u8,
     _k: u16,
     game: &mut Game,
 ) -> *const u8];
-    [8686034] PlmInstr_CollectAmmoSuperMissileTank [] {
-        let amount = u16::from_le_bytes([*plmp, *plmp.add(1)]);
-        game.set_samus_max_super_missiles(game.samus_max_super_missiles().wrapping_add(amount));
-        game.set_samus_super_missiles(game.samus_super_missiles().wrapping_add(amount));
-        AddSuperMissilesToHudTilemap(game);
-        PlayRoomMusicTrackAfterAFrames(0x168, game);
-        message_boxes::queue(3, game);
-        plmp.add(2)
-    };
+    [8686034] PlmInstr_CollectAmmoSuperMissileTank [collect_item(plmp, PickupKind::SuperMissiles, game)] {};
     @functions [pub unsafe fn (plmp: *const u8, k: u16, game: &mut Game) -> *const u8];
     [8686116] PlmInstr_SetLinkReg [plmp.add(2)] {
         let link = (plmp as *const u16).read_unaligned();
