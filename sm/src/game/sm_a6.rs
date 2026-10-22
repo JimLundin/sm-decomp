@@ -1,3 +1,4 @@
+use crate::game::music::{QueueMusic_Delayed8};
 use crate::game::enemy_population_ram::spawn_enemy;
 use crate::game::minimap;
 pub use crate::game::prelude::*;
@@ -10,8 +11,8 @@ use crate::game::progress_flags::{
     CheckEventHappened, ClearEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
 use crate::game::sm_80::{
-    NextRandom, QueueMode7Transfers, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max3,
-    QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
+    NextRandom, QueueMode7Transfers, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6,
+    QueueSfx3_Max3, QueueSfx3_Max6,
 };
 use crate::game::sm_81::DrawSpritemap;
 use crate::game::sm_86::{

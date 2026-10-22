@@ -1,8 +1,9 @@
+use crate::game::music::{QueueMusic_Delayed8};
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::prelude::*;
 
 use crate::game::progress_flags::{CheckEventHappened, SetBossBitForCurArea};
-use crate::game::sm_80::{NextRandom, QueueMusic_Delayed8, QueueSfx2_Max6};
+use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::plm_spawning::SpawnHardcodedPlm;
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_a0::{

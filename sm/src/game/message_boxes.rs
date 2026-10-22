@@ -1,10 +1,9 @@
 //! Message boxes, input confirmation, animation and saved-game feedback.
+use crate::game::music::{HandleMusicQueue};
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::prelude::*;
 
-use crate::game::sm_80::{
-    HandleMusicQueue, QueueSfx1_Max6, ReadJoypadInputs, WaitForNMI_NoUpdate_Async,
-};
+use crate::game::sm_80::{QueueSfx1_Max6, ReadJoypadInputs, WaitForNMI_NoUpdate_Async};
 use crate::game::sm_82::{CancelSoundEffects, HandleSoundEffects, QueueSamusMovementSfx};
 
 use crate::rtl::ReadReg;

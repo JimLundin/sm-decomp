@@ -1,12 +1,12 @@
+use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8};
 pub use crate::game::prelude::*;
 use crate::game::sprite_drawing::{Clip, SpriteMap};
 
 pub use crate::game::constants::bank_82::*;
 
 use crate::game::sm_80::{
-    GraphicsAsset, HandleFadeIn, HandleFadeOut, HasQueuedMusic, LoadFromLoadStation,
-    LoadMirrorOfExploredMapTiles, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx3_Max6, ScreenOff,
-    ScreenOn,
+    GraphicsAsset, HandleFadeIn, HandleFadeOut, LoadFromLoadStation, LoadMirrorOfExploredMapTiles,
+    QueueSfx1_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn,
 };
 use crate::game::sm_82::{
     AdvanceGradualColorChangeOfPalette, DisplayMapElevatorDestinations,

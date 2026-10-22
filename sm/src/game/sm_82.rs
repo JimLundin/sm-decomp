@@ -1,3 +1,7 @@
+use crate::game::music::{
+    HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY, LoadRoomMusic,
+    LoadNewMusicTrackIfChanged,
+};
 use crate::game::decompression::decompress_to_ram;
 use crate::game::enemy_population_ram::initialize_room;
 use crate::game::gameplay::advance as AdvanceGameplay;
@@ -21,12 +25,11 @@ use crate::game::sm_80::{
     memset7E, CalculateLayer2PosAndScrollsWhenScrolling, ClearOamExt, ClearTimerRam,
     ClearUnusedOam, CopyToVramNow, DecompressToVRAM, DisableIrqInterrupts,
     DoorTransitionScrollingSetup, DrawTimer, EnableIrqInterruptsNow, EnableNMI, FixDoorsMovingUp,
-    GraphicsAsset, HandleFadeIn, HandleFadeOut, HandleHudTilemap, HasQueuedMusic, InitializeHud,
+    GraphicsAsset, HandleFadeIn, HandleFadeOut, HandleHudTilemap, InitializeHud,
     LoadFromLoadStation, LoadMirrorOfExploredMapTiles, NextRandom, QueueClearingOfFxTilemap,
-    QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx2_Max15,
-    QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max3, QueueSfx3_Max6, ReadJoypadInputs,
-    ReleaseButtonsFilter, ResumeGameplay, SetupDmaTransfer, StartGameplay_Async, Vector_NMI,
-    Vector_RESET_Async, WaitForNMI_Async,
+    QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max15,
+    QueueSfx3_Max3, QueueSfx3_Max6, ReadJoypadInputs, ReleaseButtonsFilter, ResumeGameplay,
+    SetupDmaTransfer, StartGameplay_Async, Vector_NMI, Vector_RESET_Async, WaitForNMI_Async,
 };
 use crate::game::sm_81::{
     DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,
@@ -3641,46 +3644,7 @@ pub unsafe fn LoadEnemyGfxToVram(game: &mut Game) {
         }
     }
 }
-pub unsafe fn LoadRoomMusic(game: &mut Game) {
-    if (word!(game.game_state) as i32) < kGameState_40_TransitionToDemo as i32
-        && word!(game.room_music_data_index) != 0
-        && word!(game.room_music_data_index) != word!(game.music_data_index)
-    {
-        QueueMusic_Delayed8(0, game);
-        QueueMusic_Delayed8((word!(game.room_music_data_index)) | (0xff00u16), game);
-    }
-}
-pub unsafe fn UpdateMusicTrackIndex(game: &mut Game) {
-    if (word!(game.game_state) as i32) < kGameState_40_TransitionToDemo as i32
-        && word!(game.room_music_track_index) != 0
-    {
-        let mut r18: u16 = ((word!(game.room_music_data_index) as i32) << 8) as u16;
-        r18 = (r18) | (word!(game.room_music_track_index));
-        let mut r20: u16 = ((word!(game.music_data_index) as i32) << 8) as u16;
-        r20 = (r20) | (word!(game.music_track_index));
-        if r18 != r20 {
-            word!(game.music_track_index = word!(game.room_music_track_index));
-        }
-    }
-}
-pub unsafe fn LoadNewMusicTrackIfChanged(game: &mut Game) {
-    if word!(game.game_state) < 0x28 && word!(game.room_music_track_index) != 0 {
-        let mut r18: u16 = ((word!(game.room_music_data_index) as i32) << 8) as u16;
-        r18 = (r18) | (word!(game.room_music_track_index));
-        let mut r20: u16 = ((word!(game.music_data_index) as i32) << 8) as u16;
-        r20 = (r20) | (word!(game.music_track_index));
-        if r18 != r20 {
-            QueueMusic_DelayedY(word!(game.room_music_track_index), 6, game);
-        }
-    }
-}
 pub fn NullFunc() {}
-pub unsafe fn PlayRoomMusicTrackAfterAFrames(a: u16, game: &mut Game) {
-    if (word!(game.game_state) as i32) < kGameState_40_TransitionToDemo as i32 {
-        QueueMusic_DelayedY(0, a, game);
-        QueueMusic_Delayed8(word!(game.music_track_index), game);
-    }
-}
 pub unsafe fn LoadColorsForSpritesBeamsAndEnemies(game: &mut Game) {
     word_transfers!(game, descending, 16; le(target_palettes, 223) <- rom(0x9a8000, 223));
     word_transfers!(game, descending, 16; native(0xc3de) <- native(0xc1de));

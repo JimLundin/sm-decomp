@@ -1,10 +1,11 @@
+use crate::game::music::{QueueMusic_Delayed8};
 pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::prelude::*;
 
 use crate::game::progress_flags::{CheckBossBitForCurArea, SetBossBitForCurArea};
-use crate::game::sm_80::{NextRandom, QueueMusic_Delayed8, QueueSfx2_Max6};
+use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_82::sub_82DAF7;
 use crate::game::plm_spawning::{SpawnHardcodedPlm, SpawnPLM};
 use crate::game::sm_84::SetGoldenTorizoPalette;

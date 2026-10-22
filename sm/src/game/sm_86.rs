@@ -1,3 +1,4 @@
+use crate::game::music::{QueueMusic_Delayed8};
 use crate::game::eproj_script::EprojScript;
 pub use crate::game::prelude::*;
 
@@ -5,10 +6,9 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a0::*;
 use crate::game::progress_flags::PrepareBitAccess;
 use crate::game::sm_80::{
-    NextRandom, QueueMusic_Delayed8, QueueSfx1_Max1, QueueSfx1_Max15, QueueSfx1_Max3,
-    QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx2_Max1, QueueSfx2_Max15, QueueSfx2_Max3,
-    QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max1, QueueSfx3_Max15, QueueSfx3_Max3,
-    QueueSfx3_Max6, QueueSfx3_Max9,
+    NextRandom, QueueSfx1_Max1, QueueSfx1_Max15, QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx1_Max9,
+    QueueSfx2_Max1, QueueSfx2_Max15, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx2_Max9,
+    QueueSfx3_Max1, QueueSfx3_Max15, QueueSfx3_Max3, QueueSfx3_Max6, QueueSfx3_Max9,
 };
 use crate::game::sm_81::{DrawEprojSpritemapWithBaseTile, DrawEprojSpritemapWithBaseTileOffscreen};
 use crate::game::sm_84::CalculatePlmBlockCoords;

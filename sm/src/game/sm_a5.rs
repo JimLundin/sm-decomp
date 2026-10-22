@@ -1,9 +1,10 @@
+use crate::game::music::{QueueMusic_Delayed8};
 use crate::game::minimap;
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
 
-use crate::game::sm_80::{NextRandom, QueueMusic_Delayed8, QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::plm_spawning::SpawnHardcodedPlm;
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::{sub_88DF34, SpawnBG3ScrollHdmaObject};

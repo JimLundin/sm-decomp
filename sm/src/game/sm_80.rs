@@ -1,3 +1,4 @@
+use crate::game::music::{HandleMusicQueue, LoadRoomMusic, UpdateMusicTrackIndex};
 use crate::game::decompression::{self, decompress_to_ram};
 pub use crate::game::prelude::*;
 use crate::game::room_backgrounds::BackgroundLoad;
@@ -8,8 +9,7 @@ use crate::c_library::memcmp;
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{
     LoadCRETilesTilesetTilesAndPalette, LoadColorsForSpritesBeamsAndEnemies,
-    LoadDestinationRoomThings, LoadRoomMusic, NullFunc,
-    ResetSoundQueues, UpdateMusicTrackIndex,
+    LoadDestinationRoomThings, NullFunc, ResetSoundQueues,
 };
 use crate::game::plm_spawning::SpawnHardcodedPlm;
 use crate::game::sm_84::{ClearPLMs, LoadRoomPlmGfx};
@@ -228,11 +228,8 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
         RtlApuWrite(APUI02, 0, game);
         RtlApuWrite(APUI03, 0, game);
         word!(game.random_number = 97);
-        word! { game, 0;
-            music_timer, music_queue_delay[0], music_queue_delay[1], music_queue_delay[2],
-            music_queue_delay[3], music_queue_delay[4], music_queue_delay[5], music_queue_delay[6],
-            music_queue_delay[7], enable_debug,
-        }
+        crate::game::music::reset_delays(game);
+        word!(game.enable_debug = 0);
         VerifySRAM(game);
         word! { game, 0; debug_disable_sounds, sound_handler_downtime }
     }
@@ -510,85 +507,6 @@ pub unsafe fn Nmi_ProcessVertScrollingDma(game: &mut Game) {
     let layout = ScrollingDmaLayout::Row;
     transfer_scrolling_tilemap(0x964, [0xc948, 0xc98c], layout, game);
     transfer_scrolling_tilemap(0x980, [0xca50, 0xca94], layout, game);
-}
-pub unsafe fn HasQueuedMusic(game: &mut Game) -> u8 {
-    let mut v0: i32 = 14;
-    while word!(game.music_queue_delay[(v0 >> 1)]) == 0 {
-        v0 -= 2;
-        if v0 < 0 {
-            return 0;
-        }
-    }
-    1
-}
-pub unsafe fn HandleMusicQueue(game: &mut Game) {
-    crate::update_place! { unaligned_word fresh74 [fresh75] = &raw mut (*(ram_ptr!(game, u16; 0x63f))) => (u16::from_le(fresh74.read_unaligned())).wrapping_sub(1); }
-    let v0: bool = fresh75 == 1;
-    if (word!(game.music_timer) & 0x8000) == 0 {
-        if !v0 {
-            return;
-        }
-        if (word!(game.music_entry) & 0x8000) != 0 {
-            word!(game.music_data_index = word!(game.music_entry) as u8 as u16);
-            *ram_ptr!(game; 0x64c) = -1i32 as u8;
-            APU_UploadBank(
-                Load24(
-                    (rom_ptr!(game, LongPtr; 0x8fe7e1) as *mut u8)
-                        .offset(word!(game.music_entry) as u8 as i32 as isize)
-                        as *mut LongPtr,
-                ),
-                game,
-            );
-            *ram_ptr!(game; 0x64c) = 0;
-            let v5: i32 = word!(game.music_queue_read_pos) as i32;
-            word! { game, 0;
-                music_queue_track[(v5 >> 1)], music_queue_delay[(v5 >> 1)],
-            }
-            word!(game.music_queue_read_pos = (v5 + 2 & 0xe) as u16);
-            word!(game.sound_handler_downtime = 8);
-            return;
-        }
-        let v1: u8 = ((word!(game.music_entry)) as u8) & (0x7fu8);
-        word!(game.music_track_index = (word!(game.music_entry)) & (0x7fu16));
-        RtlApuWrite(APUI00, ((word!(game.music_entry)) as u8) & (0x7fu8), game);
-        *ram_ptr!(game; 0x64c) = v1;
-        word!(game.sound_handler_downtime = 8);
-        let v2: i32 = word!(game.music_queue_read_pos) as i32;
-        word! { game, 0;
-            music_queue_track[(v2 >> 1)], music_queue_delay[(v2 >> 1)],
-        }
-        word!(game.music_queue_read_pos = (v2 + 2 & 0xe) as u16);
-    }
-    if word!(game.music_queue_read_pos) == word!(game.music_queue_write_pos) {
-        word!(game.music_timer = 0);
-    } else {
-        let v4: i32 = word!(game.music_queue_read_pos) as i32 >> 1;
-        word!(game.music_entry = word!(game.music_queue_track[v4]));
-        word!(game.music_timer = word!(game.music_queue_delay[v4]));
-    };
-}
-pub unsafe fn QueueMusic_Delayed8(a: u16, game: &mut Game) {
-    if (word!(game.game_state) as i32) < kGameState_40_TransitionToDemo as i32
-        && word!(game.music_queue_write_pos) as i32 + 2 & 0xe
-            != word!(game.music_queue_read_pos) as i32
-    {
-        let mut v1: i8 = word!(game.music_queue_write_pos) as i8;
-        let v2: i32 = word!(game.music_queue_write_pos) as i32 >> 1;
-        word! {game; music_queue_track[v2] = a; music_queue_delay[v2] = 8;
-        music_queue_write_pos = (v1 as i32 + 2 & 0xe) as u16; }
-    }
-}
-pub unsafe fn QueueMusic_DelayedY(a: u16, j: u16, game: &mut Game) {
-    if word!(game.game_state) < 0x28 {
-        let v2: i32 = word!(game.music_queue_write_pos) as i32;
-        word!(game.music_queue_track[(v2 >> 1)] = a);
-        let mut v4: i32 = j as i32;
-        if j < 8 {
-            v4 = 8;
-        }
-        word!(game.music_queue_delay[(v2 >> 1)] = v4 as u16);
-        word!(game.music_queue_write_pos = (v2 + 2 & 0xe) as u16);
-    }
 }
 // Byte-backed queue layout from ram_map: three channels, sixteen slots each.
 fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Game) {

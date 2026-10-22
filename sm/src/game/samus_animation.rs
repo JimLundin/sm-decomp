@@ -1,10 +1,8 @@
 //! Samus animation, sprite selection, echoes, atmospheric graphics and tile uploads.
+use crate::game::music::{QueueMusic_DelayedY, PlayRoomMusicTrackAfterAFrames};
 pub use crate::game::prelude::*;
-use crate::game::sm_80::{
-    NextRandom, QueueMusic_DelayedY, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
-};
+use crate::game::sm_80::{NextRandom, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6};
 use crate::game::sm_81::DrawSamusSpritemap;
-use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
 use crate::game::sm_8b::Samus_CalcPos_Mode7;
 use crate::game::sm_90::{
     false_0, fnHandleAutoJumpHack, fnSamus_InputHandler_E91D, kLiquidPhysicsType_Water,

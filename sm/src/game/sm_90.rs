@@ -1,3 +1,4 @@
+use crate::game::music::{PlayRoomMusicTrackAfterAFrames};
 use crate::game::beam_firing::{clear_animation, update_input};
 use crate::game::launch_motion::MovementDirection;
 use crate::game::launch_motion_ram;
@@ -27,7 +28,6 @@ use crate::game::sm_80::{
     QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max6, QueueSfx3_Max9,
 };
 use crate::game::sm_81::DrawBeamGrappleSpritemap;
-use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
 use crate::game::sm_86::{EnableEprojs, SpawnEprojWithGfx};
 use crate::game::sm_88::EnableHdmaObjects;
 use crate::game::sm_8b::Samus_CalcPos_Mode7;

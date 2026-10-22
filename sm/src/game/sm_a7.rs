@@ -1,3 +1,4 @@
+use crate::game::music::{QueueMusic_Delayed8};
 use crate::game::decompression::decompress_to_ram;
 pub use crate::game::prelude::*;
 
@@ -6,8 +7,8 @@ pub use crate::game::constants::bank_86::*;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::minimap;
 use crate::game::sm_80::{
-    GraphicsAsset, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max15,
-    QueueSfx2_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn, WaitForNMI_Async,
+    GraphicsAsset, NextRandom, QueueSfx1_Max6, QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max6,
+    ScreenOff, ScreenOn, WaitForNMI_Async,
 };
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
 use crate::game::plm_spawning::SpawnHardcodedPlm;

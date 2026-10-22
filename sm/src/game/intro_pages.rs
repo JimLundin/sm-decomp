@@ -1,10 +1,11 @@
 //! Intro narrative pages, scene entry, crossfades and Japanese text continuations.
 //! Numeric callbacks select these operations; Game retains the cinematic state.
 
+use crate::game::music::{QueueMusic_Delayed8};
 use super::constants::bank_8d::addr_kPalfx_E1BC;
 use super::constants::bank_91::{addr_stru_91877E, addr_stru_918784};
 use super::constants::samus_poses::kPose_02_FaceL_Normal;
-use super::sm_80::{EnableNMI, HandleFadeOut, QueueMusic_Delayed8};
+use super::sm_80::{EnableNMI, HandleFadeOut};
 use super::sm_88::SpawnIntroCutsceneCrossfadeHdma;
 use super::sm_8b::{
     addr_kCinematicBgObjectDef_8BCF5D, addr_kCinematicSpriteObjectDef_8BCE55,

@@ -1,3 +1,4 @@
+use crate::game::music::{QueueMusic_Delayed8, PlayRoomMusicTrackAfterAFrames};
 use crate::game::plm_spawning::spawn_hardcoded_plm;
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_84::*;
@@ -11,13 +12,12 @@ use crate::game::progress_flags::{
 };
 use crate::game::sm_80::{
     AddGrappleToHudTilemap, AddMissilesToHudTilemap, AddPowerBombsToHudTilemap,
-    AddSuperMissilesToHudTilemap, AddXrayToHudTilemap, QueueMusic_Delayed8, QueueSfx1_Max1,
-    QueueSfx1_Max15, QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx2_Max1,
-    QueueSfx2_Max15, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max1,
-    QueueSfx3_Max15, QueueSfx3_Max3, QueueSfx3_Max6, QueueSfx3_Max9,
+    AddSuperMissilesToHudTilemap, AddXrayToHudTilemap, QueueSfx1_Max1, QueueSfx1_Max15,
+    QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx2_Max1, QueueSfx2_Max15,
+    QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max1, QueueSfx3_Max15,
+    QueueSfx3_Max3, QueueSfx3_Max6, QueueSfx3_Max9,
 };
 use crate::game::sm_81::SaveToSram;
-use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_90::{CallSomeSamusCode, UpdateBeamTilesAndPalette};
 use crate::game::sm_91::{GravitySuitPickup, MakeSamusFaceForward, VariaSuitPickup};
@@ -2373,12 +2373,7 @@ crate::game::callback_dispatch! {
     };
     [8686075] PlmInstr_CollectAmmoPowerBombTank [collect_item(plmp, PickupKind::PowerBombs, game)] {};
     [8686557] PlmInstr_ClearMusicQueueAndQueueTrack [] {
-        word_transfers!(game, descending, 8;
-            le(music_queue_track, 7) <- value(0),
-            le(music_queue_delay, 7) <- value(0),
-        );
-        word!(game.music_queue_read_pos = word!(game.music_queue_write_pos));
-        word! { game, 0; music_timer, music_entry }
+        crate::game::music::clear_queue(game);
         QueueMusic_Delayed8(*plmp as u16, game);
         plmp.offset(1)
     };

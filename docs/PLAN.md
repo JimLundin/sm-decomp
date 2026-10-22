@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,492 Rust lines in 114 files**, plus 262 C
-bridge and 296 C-header lines = **96,050 maintained implementation lines**.
+Current composition (2026-10-22): **95,526 Rust lines in 115 files**, plus 262 C
+bridge and 296 C-header lines = **96,084 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,881**. This complete recount includes frontend,
+gives **96,915**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2865,6 +2865,33 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    have component coverage only; no wider route or credits coverage is claimed.
    Normal library/frontend/verifier builds, source/native checks, formatting and
    progress pass. Checks: Local/sm-decomp-experiments/20261022/door-closing.
+   Music queueing, consumption and room-track selection now share `music`.
+   Eight bank routines retire; all 20 caller units migrate, including startup
+   delay reset and the actual PLM clear-then-read-operand instruction. Shared
+   enqueue, command retirement and packed track comparison remove duplication.
+   Checked queue/timer/RAM and native-dword ROM-table reads replace raw access;
+   safe helpers and seven public control/query functions forbid unsafe code.
+   Preserve the two distinct full-queue policies, broad/odd RAM indices, captured
+   cursors, the live timer test, bank/track retirement order, callback rereads and
+   overlapping data/track bits. RAM stays authoritative; APU upload/write calls
+   remain unsafe. Complete safety cost: **+34 Rust lines across 23 files**, with
+   seven counted unsafe declarations and 18 cast-containing lines removed.
+   **1,706 actual old/new full-state comparisons**, 4,970 ordered full-RAM
+   snapshots, 98 real native bank uploads, 96 actual port writes and 272 matching
+   controlled failures pass. Five candidate short-table cases check partial
+   state and checked failures. Startup fragments are source-extracted; the real
+   boot replay below also executes reset. All 121 old/122 new library inputs and
+   four fixture inputs are checked. Twenty caller units have retained-body
+   correspondence outside the migrated routines/reset/clear fragments.
+   Probed and clean native-audio boot each pass **176/0**, inputs **0..175**:
+   reset at 150, enqueue at 151, bank upload at 160, track write at 169, nonzero
+   PCM at 173, then two frames. The first 400-frame attempt had no differences
+   but missed variable-delay and intro-audio probes; it is not a coverage pass
+   and the route was not extended. Variable-delay commands, room selection,
+   clearing, aliases and failures have component coverage. Physical APU, gameplay
+   and credits execution are not claimed. Normal library/frontend/verifier builds,
+   native/source checks, formatting and progress pass.
+   Checks: Local/sm-decomp-experiments/20261022/music-control.
    Event/boss flag access and shared bit-mask preparation now live in the safe
    `progress_flags` module, which forbids unsafe code. All 15 caller files import
    it directly; the six bank-80 definitions are retired. Queries retain their
@@ -3988,14 +4015,20 @@ owned native-player RAM with named field transfers, DSP RAM ownership and typed
 stereo output, checked tracing, owned room-background records, checked palette
 execution, shared effect ROM records, checked animated tiles, safe progress flags,
 owned room metadata, checked door metadata, shared scroll loading, shared PLM
-spawning, room-content loading and door closing, maintained Rust is **95,492**,
+spawning, room-content loading, door closing and checked music control,
+maintained Rust is **95,526**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,050**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,881**.
+Including 262 C and 296 header lines gives **96,084**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,915**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2989; cast lines 6504. Checked door closing removes 17 Rust lines,
+unsafe functions 2982; cast lines 6486. Checked music control adds 34 Rust lines
+across 23 files, removing seven counted unsafe declarations and 18 cast-containing
+lines. Shared queue/room logic and checked table/RAM access replace raw operations;
+the safe control/query helpers forbid unsafe code. APU upload/write calls remain
+unsafe. Other counters are unchanged; this is a safety cost, not volume savings.
+Checked door closing removes 17 Rust lines,
 three counted unsafe declarations and five cast-containing lines. Raw door/header,
 table, scratch and slot accesses retire; slot/flag/timer selection forbids unsafe
 code. Native diagnostics and PLM setup remain unsafe. Other counters are unchanged.

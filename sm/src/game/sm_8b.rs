@@ -1,3 +1,4 @@
+use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 use super::intro_pages;
 pub use crate::game::prelude::*;
 
@@ -9,9 +10,8 @@ use crate::game::progress_flags::CheckEventHappened;
 use crate::game::projectile_animation::draw_projectiles;
 use crate::game::sm_80::{
     memset7E, ClearOamExt, ClearUnusedOam, CopySuperMetroidString, DisableIrqInterrupts, EnableNMI,
-    GraphicsAsset, HandleFadeIn, HandleFadeOut, HasQueuedMusic, QueueMode7Transfers,
-    QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15, QueueSfx2_Max6, QueueSfx3_Max6,
-    WaitForNMI_Async,
+    GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,
+    QueueSfx2_Max6, QueueSfx3_Max6, WaitForNMI_Async,
 };
 use crate::game::sm_81::{DrawSpritemap, DrawSpritemapOffScreen, SaveToSram};
 use crate::game::sm_88::{

@@ -1,6 +1,7 @@
+use crate::game::music::{QueueMusic_Delayed8};
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::prelude::*;
-use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::ram_map::words as ram;
 use palette_ram::{native_word, read, write, write_native, SlotWord::*};
 
