@@ -2422,11 +2422,36 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    implementation/caller cost is **+34 lines**, separately 432 fixture/harness,
    16 runtime-observation and 270 Python-support lines. Maintained main and its
    counters remain unchanged. Reproduction is recorded in this status commit.
-   The target Session contract remains open: bind mechanism closing in the same
-   draft, then price and integrate the complete ownership path under
-   target-architecture/MIGRATION.md. Current Game/RAM interfaces are temporary;
-   substantial reduction, content extraction and complete unsafe elimination
-   remain required beyond these binding checks.
+   Mechanism closing now receives explicit runtime data/setup bindings in this
+   same draft. The outer door phase consumes its complete caller before the
+   RAM-owned factory interval and imports it afterward; the checked closing
+   adapter forbids unsafe code and has no fixture dependency. Native setup and
+   diagnostic execution remain unsafe. This is temporary method-level ownership,
+   not persistent Session authority or backend independence.
+   **66 actual-runtime comparisons**, **23 ordered RAM/APU observations**,
+   **eight matching failures** and **six downstream interpreter/door consumers**
+   pass. Cases include live/captured slots, released associations, saved-open
+   flags, full pools, coordinate wrapping, callback mutations, ROM replacement
+   and checked short reads with committed prefixes. Actual external setups run;
+   both room-placed and fallback door caps reach required block drawing through
+   the full loading sequence. Synthetic records, no-op movement/draw routes and
+   controlled device waits limit these checks; no movie ran. The affected
+   inherited closing, session and dialogue checks also pass.
+   Optimized builds, formatting, exact generator/caller reproduction and **135
+   runtime + 178 draft compiled inputs** pass; 172 inherited inputs are unchanged.
+   Frozen source/DLL/results: player-projectiles/runtime-closing-stage, with 249
+   top-level files and three source trees byte-compared. Incremental implementation
+   and caller cost is **+8 lines**, separately 552 fixture/harness, nine runtime
+   observation and 199 Python-support lines. Maintained main and its counters
+   remain unchanged; there is still no whole-replacement deletion claim.
+   The target Session contract remains open. The current runtime composition
+   still terminates on unbound projectile effects outside its selected cases:
+   off-pool animation/flight/bomb/SBA/trail operations, beam continuation,
+   legacy motion and encounter effects need explicit bindings or elimination.
+   Bind and validate these in the same full candidate before pricing/adopting its
+   complete dependency and deletion surface under target-architecture/MIGRATION.md.
+   Current Game/RAM interfaces are temporary; substantial reduction, content
+   extraction and complete unsafe elimination remain required beyond binding checks.
    The full projectile candidate now includes shared script control flow:
    13 actual commands and two wake consumers use the
    existing owned slots for sleep/release, pre-actions, counters, conditional
