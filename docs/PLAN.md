@@ -1737,6 +1737,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    unsafe calls. Park this volume-only proposal before compilation/runtime checks;
    it supplies no safety or adopted-reduction claim. Durable draft and price:
    Local/sm-decomp-experiments/20261022/room-object-model.
+   A broader PLM drawing draft on 614b8bc3 prices **95,664 -> 95,591 (-73)**,
+   including command application, clipping, tile expansion, VRAM queue writes,
+   shared block rendering, all callers and registrations across six files.
+   It replaces horizontal/vertical expansion loops with one traversal and adds
+   no macros. This extends the earlier tile-loop preflight to the complete
+   drawing responsibility, but still does not establish a substantial reduction.
+   Park before compilation/runtime checks. The draft uses checked RAM/ROM
+   accesses while retaining native assertion/failure boundaries; its behavior
+   and safety migration remain unvalidated. No main-source saving or movie
+   coverage is claimed. Gate-handler sharing already overlaps the parked
+   room-object proposal; do not restart that narrower extraction. Continue
+   seeking larger responsibility replacements without treating these prices
+   as a remaining deletion budget. Durable formatted draft and complete price:
+   Local/sm-decomp-experiments/20261022/plm-drawing.
    The latest data-extraction goal also calls for authored room/asset definitions
    to live as data. Door-entry scroll changes now use 63 ordered cell/color
    sequences for all 74 dispatch identities, removing separate callback definitions,
