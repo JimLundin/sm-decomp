@@ -242,9 +242,8 @@ static kSaveConfirmationSelectionTilemap: [u16; 96] = [
     0x3c4e, 0x3c4e, 0x3c4e, 0x3c4e, 0x2cf8, 0x2ce4, 0x2cf2, 0x3c4e, 0x3c4e, 0x3c4e, 0x3c4e, 0x38cc,
     0x38cd, 0x3ced, 0x3cee, 0x3c4e, 0x3c4e, 0x3c4e, 0x3c4e, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe,
 ];
-unsafe fn ToggleSaveConfirmationSelection(game: &mut Game) {
-    let selection = u16::from_le_bytes([game.g_ram[0x5f9], game.g_ram[0x5fa]]) ^ 2;
-    game.g_ram[0x5f9..0x5fb].copy_from_slice(&selection.to_le_bytes());
+unsafe fn DrawSaveConfirmationSelection(game: &mut Game) {
+    let selection = u16::from_le_bytes([game.g_ram[0x5f9], game.g_ram[0x5fa]]);
     let row = if selection == 2 { 64 } else { 32 };
     WriteMessageBoxTilemapRow(128, &kSaveConfirmationSelectionTilemap[row..row + 32], game);
     crate::rtl::register_writes! { game;
@@ -280,120 +279,6 @@ unsafe fn advance_audio(game: &mut Game) {
     HandleSoundEffects(game);
 }
 
-unsafe fn animate(opening: bool, game: &mut Game) -> CoroutineRet {
-    match game.g_ram[0x615] {
-        0 if opening => game.g_ram[0x5a2..0x5a4].fill(0),
-        0 | 1 => {}
-        _ => {
-            game.g_ram[0x615] = 0;
-            return 0;
-        }
-    }
-    loop {
-        let result = WaitForNMI_NoUpdate_Async(game);
-        if result != 0 {
-            game.g_ram[0x615] = 1;
-            return result;
-        }
-        advance_audio(game);
-        MsgBoxMakeHdmaTable(game);
-        let radius = word!(game.message_box_animation_y_radius);
-        // Opening draws the final radius before stopping; closing stores its underflow.
-        if opening && radius == 0x1800 {
-            break;
-        }
-        let radius = if opening {
-            radius.wrapping_add(0x200)
-        } else {
-            radius.wrapping_sub(0x200)
-        };
-        word!(game.message_box_animation_y_radius = radius);
-        if !opening && radius & 0x8000 != 0 {
-            break;
-        }
-    }
-    game.g_ram[0x615] = 0;
-    0
-}
-unsafe fn HandleMessageBoxInteraction_Async(game: &mut Game) -> CoroutineRet {
-    enum Phase {
-        Confirmation = 1,
-        Delay = 2,
-        Dismiss = 3,
-    }
-    let mut phase = match game.g_ram[0x615] {
-        0 => {
-            let message = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]);
-            if matches!(message, 23 | 28) {
-                game.g_ram[0x5f9..0x5fb].fill(0);
-                Phase::Confirmation
-            } else {
-                game.g_ram[0x77e..0x780].copy_from_slice(&10u16.to_le_bytes());
-                if !matches!(message, 20 | 21 | 22 | 24) {
-                    game.g_ram[0x77e..0x780].copy_from_slice(&360u16.to_le_bytes());
-                }
-                Phase::Delay
-            }
-        }
-        1 => Phase::Confirmation,
-        2 => Phase::Delay,
-        3 => Phase::Dismiss,
-        _ => {
-            game.g_ram[0x615] = 0;
-            return 0;
-        }
-    };
-    loop {
-        let result = WaitForNMI_NoUpdate_Async(game);
-        if result != 0 {
-            game.g_ram[0x615] = phase as u8;
-            return result;
-        }
-        if !matches!(phase, Phase::Dismiss) {
-            advance_audio(game);
-        }
-        match phase {
-            Phase::Confirmation => {
-                ReadJoypadInputs(game);
-                let keys = u16::from_le_bytes([game.g_ram[0x8f], game.g_ram[0x90]]);
-                if keys & kButton_A as u16 != 0 {
-                    break;
-                }
-                if keys & kButton_B as u16 != 0 {
-                    game.g_ram[0x5f9..0x5fb].copy_from_slice(&2u16.to_le_bytes());
-                    break;
-                }
-                if keys & (kButton_Select | kButton_Left | kButton_Right) as u16 != 0 {
-                    ToggleSaveConfirmationSelection(game);
-                    QueueSfx1_Max6(0x37, game);
-                }
-            }
-            Phase::Delay => {
-                let timer =
-                    u16::from_le_bytes([game.g_ram[0x77e], game.g_ram[0x77f]]).wrapping_sub(1);
-                game.g_ram[0x77e..0x780].copy_from_slice(&timer.to_le_bytes());
-                if timer == 0 {
-                    phase = Phase::Dismiss;
-                }
-            }
-            Phase::Dismiss => {
-                ReadJoypadInputs(game);
-                let bug_fix_counter = u16::from_le_bytes([game.g_ram[0xc2], game.g_ram[0xc3]]);
-                let keys = if bug_fix_counter == 0 {
-                    u16::from_le_bytes([game.g_ram[0x8f], game.g_ram[0x90]])
-                } else {
-                    game.joypad1_lastkeys()
-                };
-                if keys != 0 {
-                    break;
-                }
-            }
-        }
-    }
-    game.g_ram[0x615] = 0;
-    0
-}
-
 // Only this bridge enters the remaining unsafe presentation/input implementation.
 struct LegacyDialogue<'a>(&'a mut Game);
 impl crate::game::dialogue::Context for LegacyDialogue<'_> {
@@ -416,37 +301,38 @@ impl crate::game::dialogue::Context for LegacyDialogue<'_> {
                 RestoreDisplay => RestorePpuForMessageBox(self.0),
                 ResumeMovementSound => QueueSamusMovementSfx(self.0),
                 SelectPause => dialogue_ram::select_pause(self.0),
+                DrawRadius => MsgBoxMakeHdmaTable(self.0),
+                DrawSelection => DrawSaveConfirmationSelection(self.0),
+                SelectionSound => QueueSfx1_Max6(0x37, self.0),
             }
         }
         dialogue_ram::import(self.0)
     }
-    fn poll(
+    fn wait(
         &mut self,
         state: crate::game::dialogue::Dialogue<u16>,
-        phase: crate::game::dialogue::Phase,
     ) -> (
         crate::game::dialogue::Dialogue<u16>,
         crate::game::dialogue::Outcome,
     ) {
-        use crate::game::{
-            dialogue::{Outcome, Phase::*},
-            dialogue_ram,
-        };
+        use crate::game::{dialogue::Outcome, dialogue_ram};
         dialogue_ram::publish(state, self.0);
-        let result = unsafe {
-            match phase {
-                Opening(_) => animate(true, self.0),
-                Interacting(_) => HandleMessageBoxInteraction_Async(self.0),
-                Closing(_) => animate(false, self.0),
-                FeedbackDelay => WaitForNMI_NoUpdate_Async(self.0),
-            }
-        };
+        let result = unsafe { WaitForNMI_NoUpdate_Async(self.0) };
         let outcome =
             std::num::NonZeroU8::new(result).map_or(Outcome::Complete, Outcome::Suspended);
         (dialogue_ram::import(self.0), outcome)
     }
-    fn save_declined(&self) -> bool {
-        crate::game::dialogue_ram::save_declined(self.0)
+    fn input(
+        &mut self,
+        state: crate::game::dialogue::Dialogue<u16>,
+    ) -> (
+        crate::game::dialogue::Dialogue<u16>,
+        crate::game::dialogue::Input,
+    ) {
+        use crate::game::dialogue_ram;
+        dialogue_ram::publish(state, self.0);
+        unsafe { ReadJoypadInputs(self.0) };
+        (dialogue_ram::import(self.0), dialogue_ram::input(self.0))
     }
 }
 pub unsafe fn display(message: u16, game: &mut Game) -> CoroutineRet {

@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,733 Rust lines in 117 files**, plus 262 C
-bridge and 296 C-header lines = **96,291 maintained implementation lines**.
+Current composition (2026-10-22): **95,837 Rust lines in 117 files**, plus 262 C
+bridge and 296 C-header lines = **96,395 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,122**. This complete recount includes frontend,
+gives **97,226**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2080,6 +2080,31 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    loading are controlled. Complete cost: 127 model + 70 codec + 69 bridge + two
    registration lines replace 79 display lines (**+189**), an ownership/safety cost.
    Other progress counters are unchanged. No net saving or complete session owner.
+   The same production owner now contains animation and input transitions too.
+   Parent-to-child calls require no RAM transfer. Radius, selection and child
+   continuation remain live across external effects; reading and saved feedback
+   share one `delay_remaining` because both use `my_counter`. The first component
+   comparison caught an incorrect separate-timer draft; it was corrected before
+   adoption. **911 child/display/nested + 80 caller comparisons** pass, with
+   **9,511 observations** and **52 matching failures**. Actual radius-table and
+   selection-tilemap writes execute; wait readiness, input acquisition, audio,
+   registers and unrelated frame/room operations are controlled. Four native
+   lifecycles retain one owner across 676 completed waits/invocations with no
+   RAM/ROM decoding. Two nested paths resume copied RAM images; frontend
+   save/checkpoint remains untested. All 115+142 compiled inputs, 130 unchanged
+   inherited files, exact reference/model/codec/bridge/output source, optimized
+   component build, production release library and formatting pass. Source/result:
+   20261022/owned-dialogue-children; [contracts](RAM_OWNERSHIP.md#animation-and-input-inside-the-dialogue-owner).
+   The coordinator independently reran the latest mechanism-awards composition
+   with these exact model/codec bytes: 313 comparisons, 14,053 observations and
+   90 matching failures pass, with all 115+153 compiled inputs checked. Its caller
+   cases overlap; do not add unique coverage totals. Carry that full candidate
+   forward. Remaining output/input acquisition, queue closure and runtime imports
+   prevent persistent production promotion; no movie or complete engine claim.
+   Complete maintained increment: **+104 Rust lines** (model +168, codec +50,
+   message-box implementation -114), removing two counted unsafe declarations.
+   The model/codec forbid unsafe code; external operations remain unsafe. Other
+   counters are unchanged. This is an ownership/safety cost, not volume savings.
    Those nested checks now also run through a new owned gameplay/door caller pass
    in the top-level full projectile candidate. Its caller-tagged continuation
    retains the existing mechanism owner across enemy-message, door-Vblank and
@@ -4222,14 +4247,18 @@ owned room metadata, checked door metadata, shared scroll loading, shared PLM
 spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state,
-maintained Rust is **95,733**,
+maintained Rust is **95,837**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,291**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,122**.
+Including 262 C and 296 header lines gives **96,395**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,226**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2975; cast lines 6475. The complete sprite-object replacement
+unsafe functions 2973; cast lines 6475. Dialogue animation/input ownership adds
+104 Rust lines and removes two counted unsafe declarations. Both children now
+execute in the existing safe owner; the shared timer alias is explicit. External
+input/audio/display calls remain unsafe and other counters are unchanged. This
+is an ownership/safety cost, not a reduction. The complete sprite-object replacement
 adds 15 Rust lines, removing two counted unsafe declarations and four cast lines.
 Raw pool RAM/ROM access retires; native stores and clearing forbid unsafe code.
 ROM diagnostics, unknown-instruction handling and shared rendering remain unsafe;

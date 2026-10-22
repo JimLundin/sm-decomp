@@ -132,10 +132,11 @@ its own completion effects and does not run the gameplay timer tail.
 The shared [dialogue controller](../sm/src/game/dialogue.rs) now implements this
 control flow in production through owned values and named phases/effects. Its
 [compatibility adapter](../sm/src/game/dialogue_ram.rs) encodes message identity,
-saved continuation and feedback delay; the existing display bridge consumes the
-owner before every legacy operation and imports its result. The controller and
-codec forbid unsafe code. The interaction child still owns confirmation selection,
-and animation/input/rendering remain legacy operations.
+parent/child continuations, radius, selection and delay; the existing display
+bridge consumes the owner before every external operation and imports its result.
+The controller and codec forbid unsafe code. Animation and input transitions run
+inside the same owner. Waiting, input acquisition, audio and display output remain
+external operations; parent-to-child calls require no compatibility transfer.
 
 ```mermaid
 stateDiagram-v2
@@ -158,14 +159,25 @@ the live message after restoring display and movement sound; map acquisition
 selects pausing at that point. Save feedback reuses the same opening, interaction
 and closing transitions with a different cycle.
 
-The [dialogue experiment](RAM_OWNERSHIP.md#owned-dialogue-controller) passes 330
-direct comparisons and 825 existing script/pass/nested comparisons. An authored
-nine-invocation sequence retains this owner without RAM/ROM decoding, including
-160 completed feedback waits. A second composition with the newer owned gameplay
-and door passes passes their 80 caller and 40 nested comparisons; these overlap
-the earlier nested cases and are not additive unique coverage.
+Input has confirmation, minimum-reading-delay and dismissal phases. Confirm wins
+over cancel, then navigation toggles selection. Dismissal does not advance audio
+and preserves the existing held-versus-new-key policy. Opening presents its final
+radius before completing; closing retains its underflow value.
 
-Production still serializes dialogue between calls. Closing its child operations,
+Reading delay and save feedback share **one timer**. The active phase supplies its
+meaning; separate counters would lose the existing alias. The first owned-child
+comparison caught exactly that error, before adoption. The child wait token also
+needs its invoking phase: animation and confirmation share their first saved token,
+while an input-only token terminates animation as an invalid continuation.
+
+The [latest dialogue experiment](RAM_OWNERSHIP.md#animation-and-input-inside-the-dialogue-owner)
+passes 911 child/display/nested comparisons and 80 affected caller comparisons.
+Four native lifecycles retain one owner over 676 waits without RAM/ROM decoding.
+The full projectile candidate also composes this exact model with actual awards
+and caller/script consumers: its separately rerun 313 comparisons pass. These
+suites overlap in caller coverage; they do not form an additive unique-case total.
+
+Production still serializes dialogue between calls. Closing the remaining output,
 queue producers/consumers and runtime imports is required before a persistent
 engine owner can replace that storage. Neither these checks nor the candidate
 outer passes establish a complete session engine or frontend checkpoint support.

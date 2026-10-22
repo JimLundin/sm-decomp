@@ -288,15 +288,19 @@ masks them would not independently prove the same contract.
 
 The shared dialogue controller is now an adopted pure model, with an explicit
 [codec](../sm/src/game/dialogue_ram.rs) and the existing
-[legacy effect bridge](../sm/src/game/message_boxes.rs). It transfers message,
-saved cursor and feedback counter before/after each legacy operation. Selection
-remains a live query of the interaction child. No separate persistent dialogue
-copy has been added to `Game`; RAM-image imports still enter through the codec.
-The [focused and composed checks](RAM_OWNERSHIP.md#owned-dialogue-controller)
+[legacy effect bridge](../sm/src/game/message_boxes.rs). Parent, animation and
+input transitions share message, parent/child cursors, radius, selection and a
+single delay counter. Reading and saved feedback alias the same `my_counter`;
+there is no separate reading counter or ownership of `my_counter2`. No separate
+persistent dialogue copy has been added to `Game`; RAM-image imports still enter
+through the codec. The [focused and composed checks](RAM_OWNERSHIP.md#animation-and-input-inside-the-dialogue-owner)
 preserve invalid cursors, exact yield bytes, callback mutation and failure prefixes.
-The full candidate's gameplay/door passes also compose with the same model.
-Migrate animation/input and request consumption before retaining this owner across
-production calls; frontend save/checkpoint and generic alias closure remain open.
+The full candidate's gameplay/door/award passes compose with the same model.
+Complete output/input acquisition, request consumption and runtime imports before
+retaining this owner across production calls. In particular, map-station facts,
+save-station confirmation polling and the scripted award queue remain producers
+and consumers; a completed display alone does not close that ownership.
+Frontend save/checkpoint and generic alias closure remain open.
 
 1. Use a LaunchMotion authority-transfer experiment to implement and compare
    image import/export, before/theirs rewind, failed-frame adoption, reset,

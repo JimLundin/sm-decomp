@@ -1686,20 +1686,21 @@ records those responsibilities.
 
 ### Owned dialogue controller
 
-The production [controller](../sm/src/game/dialogue.rs) now owns message identity,
+The production [controller](../sm/src/game/dialogue.rs) first acquired message identity,
 saved continuation and feedback countdown while executing the shared display
-protocol. `Message` distinguishes ordinary content, map acquisition, the save
+protocol. Its animation/input extension below now retains the children too.
+`Message` distinguishes ordinary content, map acquisition, the save
 prompt and saved feedback. Opening, interaction and closing share one transition
 implementation across ordinary and feedback cycles. The model receives no `Game`,
 RAM, ROM, pointer or hardware handle and forbids unsafe code.
 
 The [codec](../sm/src/game/dialogue_ram.rs) alone maps these identities and phases
 to compatibility values. The [display bridge](../sm/src/game/message_boxes.rs)
-publishes the consumed model before each existing effect or child wait, and imports
-afterward. Its presentation/input calls remain unsafe. The interaction child owns
-save selection, queried live after closing; production retains no competing
-persistent model beside RAM. This is adopted transition logic, not full dialogue
-or session-state promotion.
+publishes the consumed model before external operations, and imports afterward.
+Its presentation/input calls remain unsafe. Selection was initially a live child
+query; the extension below places it in the same owner. Production retains no
+competing persistent model beside RAM. This is adopted transition logic, not full
+dialogue or session-state promotion.
 
 The experiment `Local/sm-decomp-experiments/20261022/owned-dialogue-session`
 compares the exact prior display against the actual new model/codec/bridge. Both
@@ -1758,6 +1759,79 @@ modules forbid unsafe code and retire raw RAM operations from display control;
 unsafe legacy effects remain and the counted unsafe declarations are unchanged.
 Reference/fixtures and build scripts are experiment support, not hidden production
 implementation. This is an ownership/safety cost, not a reduction.
+
+#### Animation and input inside the dialogue owner
+
+Animation and interaction now execute inside the existing `Dialogue` value.
+The bridge no longer serializes into RAM just to call these children. It supplies
+three operations: an ordered effect, a wait result, and acquired input. The model
+owns radius, confirmation selection, child continuation and one shared delay.
+New-key/held-key and compatibility-policy decoding stay in the checked codec.
+The model and codec retain `forbid(unsafe_code)`.
+
+The first comparison exposed an incorrect two-counter draft: the old interaction
+writes `$077E`, which is **`my_counter`**, also used by saved feedback. It is not
+`my_counter2`. The corrected owner has one `delay_remaining`, interpreted by the
+active phase. Both the reference and replacement overwrite it with 10/360 for
+reading and 160 for feedback. The failing draft was corrected before adoption;
+there is no accepted result or duplicate timer from that version.
+
+The same lifetime distinction applies to the child cursor. Animation accepts its
+initial/first-wait tokens; input interprets the first wait as confirmation and also
+has reading/dismissal tokens. The invoked operation supplies that interpretation,
+independently of callback changes to the saved outer cursor. Each invocation keeps
+its local phase while publishing/importing live saved values.
+
+`Local/sm-decomp-experiments/20261022/owned-dialogue-children` passes **911
+comparisons**, **8,679 ordered observations** and **seven matching injected
+failures**. These include every child cursor for both animation directions and
+input, wrapping/misaligned radius cases, all content policies, input priority,
+unusual selection values, both dismissal-key policies, delay wrapping, callback
+mutation and failures after committed writes. Seven full display lifecycles and
+six nested gameplay/door frame invocations use actual parent and child control.
+Two nested sequences resume copied RAM images in fresh `Game` values.
+
+The existing **80 caller comparisons** also pass in that DLL: **991 comparisons,
+9,511 observations and 52 matching failures** combined. Actual radius-table and
+selection-tilemap output bodies execute; audio, wait readiness, input acquisition,
+register writes and unrelated room/frame phases are controlled. Observations use
+lossless sparse encodings of complete RAM, not hashes or selected-field snapshots.
+Full final RAM, completion and failure flags also match.
+
+Four native lifecycles use the same parent/animation/input implementation and
+retain one owner across **676 invocations/completed waits**: ordinary acquisition,
+save confirmation with a selection toggle, accepted save feedback and map
+acquisition. All animation and input phases execute, including the full reading
+and feedback delays. This establishes logical transition order; real-time input,
+physical display timing and SRAM saving are not exercised.
+
+The coordinator also reran the full candidate's `mechanism-awards-stage` with
+these exact production model/codec bytes. **313 comparisons**, **14,053
+observations** and **90 matching failures** pass: 132 awards, 56 actual
+award/caller/dialogue/return consumers, 80 callers and 45 scheduler cases. Three
+checked-read prefixes and the native actual-award sequence pass. All **115+153
+compiled inputs** and 140 unchanged inherited sources are checked. This confirms
+composition through the existing owner; it does not add an independent allocator
+or dialogue model. Caller cases overlap the direct-child composition. The
+candidate's 202-line dialogue-composition and 193-line award increments remain
+its separately reported costs, not maintained-main savings.
+
+Source review checks the exact prior animation/input/toggle bodies at `ab982394`,
+the inherited parent/frame/caller bodies, and the actual production model, codec,
+bridge and output bodies. All **115 frozen + 142 local compiled inputs** match;
+130 inherited inputs are unchanged. Optimized component and production headless
+release-library builds and changed Rust formatting pass. Sources, checks and
+results remain in the experiment directory, including the independent award
+composition review. No movie or frontend save/checkpoint ran. Ordinary output
+initialization, physical input/device behavior, queue closure and complete runtime
+authority remain open.
+
+This complete maintained increment adds **104 Rust lines**: the model grows
+127→295, the codec 70→120, and `message_boxes` shrinks 476→362. Two counted unsafe
+function declarations and the children's raw state operations retire. External
+display/input calls remain unsafe; no broader unsafe-elimination claim is made.
+The 484-line paired fixture, 99-line native example and source/build support remain
+experiment costs. This is a safety/ownership increase, not a reduction.
 
 ### Named projectile animation definitions
 
@@ -2687,7 +2761,7 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^trail]: [SpawnProjectileTrail](../sm/src/game/sm_90.rs#L2076); [ProjectileTrail_Func5](../sm/src/game/sm_9b.rs#L61).
 [^pickup]: [PLM item pickup instructions](../sm/src/game/sm_84.rs#L2544).
 [^plm]: [PlmHandler_Async](../sm/src/game/sm_84.rs#L151).
-[^message]: [message_boxes::display, poll and queue](../sm/src/game/message_boxes.rs#L397).
+[^message]: [message_boxes::display, poll and queue](../sm/src/game/message_boxes.rs#L338).
 [^bits]: [Checked bit-mask preparation and event/boss operations](../sm/src/game/progress_flags.rs).
 [^doorbits]: [PlmInstr_IncrementDoorHitCounterAndJGE](../sm/src/game/sm_84.rs#L2579).
 [^roomselect]: [Ordered room-state selection](../sm/src/game/room_state.rs).
@@ -2736,6 +2810,6 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^weaponphase]: [Samus_HandleCooldown](../sm/src/game/sm_90.rs#L1402); [Samus_HandleHudSpecificBehaviorAndProjs](../sm/src/game/sm_90.rs#L3457).
 [^drainrestriction]: [Shitroid_Func_16](../sm/src/game/sm_a9.rs#L4526); [Xray_Initialize](../sm/src/game/sm_91.rs#L1337); [Mother Brain rainbow phases](../sm/src/game/sm_a9.rs#L720).
 [^weapontimers]: [DecrementSamusTimers](../sm/src/game/sm_a0.rs#L888); [gameplay completion](../sm/src/game/gameplay.rs).
-[^weaponsound]: [Samus_ShootCheck](../sm/src/game/sm_90.rs#L5133); [hurt-flash producer](../sm/src/game/sm_91.rs#L795); [QueueSamusMovementSfx](../sm/src/game/sm_82.rs#L3301); [message completion](../sm/src/game/message_boxes.rs#L468); [unpause completion](../sm/src/game/sm_82.rs#L1483).
+[^weaponsound]: [Samus_ShootCheck](../sm/src/game/sm_90.rs#L5133); [hurt-flash producer](../sm/src/game/sm_91.rs#L795); [QueueSamusMovementSfx](../sm/src/game/sm_82.rs#L3301); [message completion](../sm/src/game/dialogue.rs#L167); [unpause completion](../sm/src/game/sm_82.rs#L1483).
 [^weaponcancel]: [PLM charge cancellation](../sm/src/game/sm_84.rs#L2938); [HUD switching](../sm/src/game/sm_90.rs#L2747); [mode transitions](../sm/src/game/sm_90.rs#L4985).
 [^extensionplacement]: [spawn_extension](../sm/src/game/projectile_flight.rs#L269).
