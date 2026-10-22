@@ -734,7 +734,7 @@ unsafe fn MakeSnapshot(s: &mut Snapshot, snes: &Snes, c: &Cpu, player: *mut SpcP
     s.ppu = *snes.ppu;
     s.cpu = *c;
     s.snes = *snes;
-    // Dma.pad is not initialized by dma_reset; capture only its state fields.
+    // DMA rewind retains its four historical fields, excluding the outer padding.
     s.dma.channel = (*snes.dma).channel;
     s.dma.hdmaTimer = (*snes.dma).hdmaTimer;
     s.dma.dmaTimer = (*snes.dma).dmaTimer;

@@ -20,6 +20,7 @@ extern "C-unwind" {
 
 pub unsafe fn spc_init(apu: *mut Apu) -> *mut Spc {
     let spc = malloc(size_of::<Spc>()) as *mut Spc;
+    core::ptr::write_bytes(spc, 0, 1);
     (*spc).apu = apu;
     spc
 }
@@ -32,5 +33,5 @@ pub unsafe fn spc_reset(spc: *mut Spc) {
     stopped = false, cyclesUsed = 0, };
 }
 pub unsafe fn spc_saveload(spc: *mut Spc, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
-    crate::rtl::snapshot_region(io, &raw mut (*spc).a as *mut u8, 15);
+    crate::rtl::snapshot_result(io.state(&mut *spc));
 }

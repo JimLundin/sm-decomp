@@ -21,6 +21,8 @@ const _: () = {
 
 pub unsafe fn dsp_init(ram: *mut u8) -> *mut Dsp {
     let dsp = malloc(size_of::<Dsp>() as size_t) as *mut Dsp;
+    // Initialize the explicit saved padding before any typed state copies.
+    core::ptr::write_bytes(dsp, 0, 1);
     (*dsp).apu_ram = ram;
     dsp
 }
@@ -28,11 +30,7 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     backend_reset(dsp);
 }
 pub unsafe fn dsp_saveload(dsp: *mut Dsp, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
-    crate::rtl::snapshot_region(
-        io,
-        &raw mut (*dsp).ram as *mut u8,
-        (size_of::<Dsp>() as size_t).wrapping_sub(8 as size_t),
-    );
+    crate::rtl::snapshot_result(io.state(&mut *dsp));
 }
 pub unsafe fn dsp_cycle(dsp: *mut Dsp) {
     // KON/KOFF take effect at register-write time here, not on alternate cycles.

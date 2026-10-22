@@ -344,6 +344,7 @@ crate::typed_struct! {
         pub snes: *mut Snes;
         pub channel: [DmaChannel; 8];
         pub hdmaTimer: u16;
+        pub snapshot_padding0: [u8; 2];
         pub dmaTimer: u32;
         pub dmaBusy: bool;
         pub pad: [u8; 7];
@@ -351,16 +352,20 @@ crate::typed_struct! {
 
     pub struct DmaChannel {
         pub bAdr: u8;
+        pub snapshot_padding0: [u8; 1];
         pub aAdr: u16;
         pub aBank: u8;
+        pub snapshot_padding1: [u8; 1];
         pub size: u16;
         pub indBank: u8;
+        pub snapshot_padding2: [u8; 1];
         pub tableAdr: u16;
         pub repCount, unusedByte: u8;
         pub dmaActive, hdmaActive: bool;
         pub mode: u8;
         pub fixed, decrement, indirect, fromB, unusedBit, doTransfer, terminated: bool;
         pub offIndex: u8;
+        pub snapshot_padding3: [u8; 1];
     }
 
     pub struct Dsp {
@@ -370,6 +375,7 @@ crate::typed_struct! {
         pub dirPage: u16;
         pub evenCycle, mute, reset: bool;
         pub masterVolumeL, masterVolumeR: i8;
+        pub snapshot_padding0: [u8; 1];
         pub noiseSample: i16;
         pub noiseRate, noiseCounter: u16;
         pub echoWrites: bool;
@@ -377,32 +383,41 @@ crate::typed_struct! {
         pub echoBufferAdr, echoDelay, echoRemain, echoBufferIndex: u16;
         pub firBufferIndex: u8;
         pub firValues: [i8; 8];
+        pub snapshot_padding1: [u8; 1];
         pub firBufferL, firBufferR: [i16; 8];
         pub sampleBuffer: [i16; 1068];
         pub sampleOffset: u16;
+        pub snapshot_padding2: [u8; 2];
     }
 
     pub struct DspChannel {
         pub pitch, pitchCounter: u16;
         pub pitchModulation: bool;
+        pub snapshot_padding0: [u8; 1];
         pub decodeBuffer: [i16; 19];
         pub srcn: u8;
+        pub snapshot_padding1: [u8; 1];
         pub decodeOffset: u16;
         pub previousFlags: u8;
+        pub snapshot_padding2: [u8; 1];
         pub old, older: i16;
         pub useNoise: bool;
+        pub snapshot_padding3: [u8; 1];
         pub adsrRates: [u16; 4];
         pub rateCounter: u16;
         pub adsrState: u8;
+        pub snapshot_padding4: [u8; 1];
         pub sustainLevel: u16;
         pub useGain: bool;
         pub gainMode: u8;
         pub directGain: bool;
+        pub snapshot_padding5: [u8; 1];
         pub gainValue, gain: u16;
         pub keyOn, keyOff: bool;
         pub sampleOut: i16;
         pub volumeL, volumeR: i8;
         pub echoEnable: bool;
+        pub snapshot_padding6: [u8; 1];
     }
 
     pub struct DspRegWriteHistory {
@@ -425,19 +440,23 @@ crate::typed_struct! {
         pub vram: [u16; 32768];
         pub vramPointer: u16;
         pub vramIncrementOnHigh: bool;
+        pub snapshot_padding0: [u8; 1];
         pub vramIncrement: u16;
         pub vramRemapMode: u8;
+        pub snapshot_padding1: [u8; 1];
         pub vramReadBuffer: u16;
         pub cgram: [u16; 256];
         pub cgramPointer: u8;
         pub cgramSecondWrite: bool;
         pub cgramBuffer: u8;
+        pub snapshot_padding2: [u8; 1];
         pub oam: [u16; 256];
         pub highOam: [u8; 32];
         pub oamAdr, oamAdrWritten: u8;
         pub oamInHigh, oamInHighWritten, oamSecondWrite: bool;
         pub oamBuffer: u8;
         pub objPriority: bool;
+        pub snapshot_padding3: [u8; 1];
         pub objTileAdr1, objTileAdr2: u16;
         pub objSize: u8;
         pub objPixelBufferXX, objPriorityBufferXX: [u8; 256];
@@ -458,6 +477,7 @@ crate::typed_struct! {
         pub brightness, mode: u8;
         pub bg3priority, evenFrame, pseudoHires, overscan, frameOverscan, interlace, frameInterlace,
             directColor: bool;
+        pub snapshot_padding4: [u8; 1];
         pub hCount, vCount: u16;
         pub hCountSecond, vCountSecond, countersLatched: bool;
         pub ppu1openBus, ppu2openBus, pixelbuffer_placeholder: u8;
@@ -517,10 +537,13 @@ crate::typed_struct! {
         pub padpad: [u8; 2];
         pub apuCatchupCycles: c_double;
         pub hIrqEnabled, vIrqEnabled, nmiEnabled: bool;
+        pub snapshot_padding0: [u8; 1];
         pub hTimer, vTimer: u16;
         pub inNmi, inIrq, inVblank: bool;
+        pub snapshot_padding1: [u8; 1];
         pub portAutoReadX: [u16; 4];
         pub autoJoyRead: bool;
+        pub snapshot_padding2: [u8; 1];
         pub autoJoyTimer: u16;
         pub ppuLatch: bool;
         pub multiplyA: u8;

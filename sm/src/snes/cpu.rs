@@ -49,7 +49,7 @@ pub unsafe fn cpu_reset(cpu: *mut Cpu, game: &mut Game) {
 }
 
 pub unsafe fn cpu_saveload(cpu: *mut Cpu, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
-    crate::rtl::snapshot_region(io, &raw mut (*cpu).a as *mut u8, 27);
+    crate::rtl::snapshot_result(io.state(&mut *cpu));
     (*cpu).spBreakpoint = 0;
 }
 

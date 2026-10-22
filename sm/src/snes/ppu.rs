@@ -50,8 +50,7 @@ static spriteSizes: [[i32; 2]; 8] = [
 ];
 pub unsafe fn ppu_init(snes: *mut Snes) -> *mut Ppu {
     let ppu = malloc(size_of::<Ppu>() as size_t) as *mut Ppu;
-    (*ppu).renderBuffer = core::ptr::null_mut();
-    (*ppu).renderPitch = 0;
+    core::ptr::write_bytes(ppu, 0, 1);
     (*ppu).snes = snes;
     ppu
 }
@@ -72,7 +71,7 @@ pub unsafe fn ppu_reset(ppu: *mut Ppu) {
     let snes = (*ppu).snes;
     let pitch = (*ppu).renderPitch;
     let render_buffer = (*ppu).renderBuffer;
-    // The first reset initializes a partially constructed allocation.
+    // Reset also clears saved padding and renderer caches.
     core::ptr::write_bytes(ppu, 0, 1);
     (*ppu).renderBuffer = render_buffer;
     (*ppu).renderPitch = pitch;
@@ -82,11 +81,7 @@ pub unsafe fn ppu_reset(ppu: *mut Ppu) {
 }
 
 pub unsafe fn ppu_saveload(ppu: *mut Ppu, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
-    crate::rtl::snapshot_region(
-        io,
-        &raw mut (*ppu).vram as *mut u8,
-        (67313 as size_t).wrapping_sub(8 as size_t),
-    );
+    crate::rtl::snapshot_result(io.state(&mut *ppu));
 }
 // These duplicate renderer inputs are outside the legacy serialized PPU range.
 pub fn PpuRestoreRenderRouting(ppu: &mut Ppu) {

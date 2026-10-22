@@ -23,6 +23,8 @@ static bAdrOffsets: [[i32; 4]; 8] = [
 static transferLength: [i32; 8] = [1, 2, 2, 4, 4, 4, 2, 4];
 pub unsafe fn dma_init(snes: *mut Snes) -> *mut Dma {
     let dma = malloc(size_of::<Dma>() as size_t) as *mut Dma;
+    // Initialize the explicit saved padding before any typed state copies.
+    core::ptr::write_bytes(dma, 0, 1);
     (*dma).snes = snes;
     dma
 }
@@ -40,13 +42,7 @@ pub unsafe fn dma_reset(dma: *mut Dma) {
     (*dma).dmaBusy = false;
 }
 pub unsafe fn dma_saveload(dma: *mut Dma, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
-    crate::rtl::snapshot_region(
-        io,
-        &raw mut (*dma).channel as *mut u8,
-        (225 as size_t)
-            .wrapping_add(7 as size_t)
-            .wrapping_sub(8 as size_t),
-    );
+    crate::rtl::snapshot_result(io.state(&mut *dma));
 }
 pub unsafe fn dma_read(dma: *mut Dma, address: u16) -> u8 {
     let channel = &(*dma).channel[usize::from((address >> 4) & 7)];

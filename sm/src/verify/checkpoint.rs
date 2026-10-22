@@ -163,43 +163,29 @@ fields!(Cpu {
     nmiWanted, waiting, stopped, cyclesUsed, spBreakpoint, in_emu
 } skip { mem });
 
-unsafe fn dma_state(dma: *mut Dma, archive: &mut Archive<'_>) -> Result<(), String> {
-    // dma_reset initializes these fields, but never initializes pad. Project
-    // directly from the allocation: do not read pad or form a reference to Dma.
-    // Wildcards check exhaustiveness without binding or reading any fields.
-    let Dma {
-        channel: _,
-        hdmaTimer: _,
-        dmaTimer: _,
-        dmaBusy: _,
-        snes: _,
-        pad: _,
-    } = *dma;
-    (*dma).channel.state(archive)?;
-    (*dma).hdmaTimer.state(archive)?;
-    (*dma).dmaTimer.state(archive)?;
-    (*dma).dmaBusy.state(archive)
-}
+fields!(Dma {
+    channel, hdmaTimer, dmaTimer, dmaBusy
+} skip { snes, pad, snapshot_padding0 });
 
 fields!(DmaChannel {
     bAdr, aAdr, aBank, size, indBank, tableAdr, repCount, unusedByte, dmaActive,
     hdmaActive, mode, fixed, decrement, indirect, fromB, unusedBit, doTransfer,
     terminated, offIndex
-} skip {  });
+} skip { snapshot_padding0, snapshot_padding1, snapshot_padding2, snapshot_padding3 });
 
 fields!(Dsp {
     ram, channel, dirPage, evenCycle, mute, reset, masterVolumeL, masterVolumeR,
     noiseSample, noiseRate, noiseCounter, echoWrites, echoVolumeL, echoVolumeR,
     feedbackVolume, echoBufferAdr, echoDelay, echoRemain, echoBufferIndex,
     firBufferIndex, firValues, firBufferL, firBufferR, sampleBuffer, sampleOffset
-} skip { apu_ram });
+} skip { apu_ram, snapshot_padding0, snapshot_padding1, snapshot_padding2 });
 
 fields!(DspChannel {
     pitch, pitchCounter, pitchModulation, decodeBuffer, srcn, decodeOffset,
     previousFlags, old, older, useNoise, adsrRates, rateCounter, adsrState,
     sustainLevel, useGain, gainMode, directGain, gainValue, gain, keyOn, keyOff,
     sampleOut, volumeL, volumeR, echoEnable
-} skip {  });
+} skip { snapshot_padding0, snapshot_padding1, snapshot_padding2, snapshot_padding3, snapshot_padding4, snapshot_padding5, snapshot_padding6 });
 
 fields!(DspRegWriteHistory {
     count, addr, val
@@ -229,7 +215,7 @@ fields!(Ppu {
     windowsel, extraLeftCur, extraRightCur, extraLeftRight, screenEnabled,
     screenWindowed, mosaicEnabled, lastBrightnessMult, lineHasSprites, bgBuffers,
     objBuffer, renderPitch, brightnessMult, brightnessMultHalf, mosaicModulo
-} skip { snes, renderBuffer });
+} skip { snes, renderBuffer, snapshot_padding0, snapshot_padding1, snapshot_padding2, snapshot_padding3, snapshot_padding4 });
 
 fields!(PpuPixelPrioBufs {
     data
@@ -254,7 +240,7 @@ fields!(Snes {
     vIrqEnabled, nmiEnabled, hTimer, vTimer, inNmi, inIrq, inVblank, portAutoReadX,
     autoJoyRead, autoJoyTimer, ppuLatch, multiplyA, multiplyResult, divideA,
     divideResult, fastMem, openBus
-} skip { cpu, apu, ppu, snes_ppu, my_ppu, dma, cart, input1, input2, ram, padx, padpad });
+} skip { cpu, apu, ppu, snes_ppu, my_ppu, dma, cart, input1, input2, ram, padx, padpad, snapshot_padding0, snapshot_padding1, snapshot_padding2 });
 
 fields!(Spc {
     a, x, y, sp, pc, c, z, v, n, i, h, p, b, stopped, cyclesUsed
@@ -364,7 +350,7 @@ unsafe fn machine(game: &mut Game, archive: &mut Archive<'_>) -> Result<(), Stri
     let snes = game.g_snes;
     (*snes).state(archive)?;
     (*(*snes).cpu).state(archive)?;
-    dma_state((*snes).dma, archive)?;
+    (*(*snes).dma).state(archive)?;
     (*(*snes).input1).state(archive)?;
     (*(*snes).input2).state(archive)?;
     (*(*snes).snes_ppu).state(archive)?;

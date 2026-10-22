@@ -42,10 +42,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,464 Rust lines in 102 files**, plus 262 C
-bridge and 296 C-header lines = **95,022 maintained implementation lines**.
+Current composition (2026-10-22): **94,652 Rust lines in 102 files**, plus 262 C
+bridge and 296 C-header lines = **95,210 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,853**. This complete recount includes frontend,
+gives **96,041**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1696,10 +1696,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    cases pass. All 104 old/105 final library inputs, release library/frontend/
    verifier builds and native source checks pass. No movie ran; synthetic fixtures
    establish no gameplay-route, physical-device or allocator-event coverage.
-   The raw hardware copy bridge remains explicitly unsafe: legacy regions include
-   padding and retained pointers. Do not replace it with whole-RAM mutable views.
-   Field-based serialization must preserve these spans and their failure phases;
-   it remains required work, not an elimination result of this stream change.
+   The raw bridge now remains only for APU and main-RAM regions, which retain
+   pointers and APU layout padding. Do not replace it with whole-RAM mutable views.
    Checks: Local/sm-decomp-experiments/20261022/snapshot-stream.
    APU write history now uses a named field instead of a union with an unused
    pointer member. This removes **nine maintained lines**, including the retired
@@ -1710,11 +1708,27 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    unchanged. Release library/frontend/verifier and native source checks pass;
    all 105 old sources (line-ending normalized) and 106 final source bytes match.
    No movie ran; these synthetic cases establish no gameplay or physical audio
-   coverage. Layout witnesses for 13 hardware records also confirm serialized
-   padding in DMA/APU/DSP/PPU/Snes. DMA leaves padding uninitialized, while other
-   initialized padding can survive loads/resets; whole-record typed copies also
-   need auditing before making padding explicit. The complete hardware field
-   serializer remains unimplemented. Checks: Local/sm-decomp-experiments/20261022/hardware-fields.
+   coverage. Checks: Local/sm-decomp-experiments/20261022/hardware-fields.
+   CPU, SPC, DMA, DSP, PPU, SNES registers and ramAdr now use checked field
+   serialization in the existing unsafe-forbidden snapshot module, retiring
+   seven raw-copy sites. Saved padding is explicit data; initialized nonzero
+   padding survives load/reset and audio snapshot copies. Previously partial
+   DMA/DSP/SPC/PPU allocations are fully initialized before typed borrows. DMA
+   checkpoints can use the ordinary safe field codec; their raw adapter is removed.
+   This costs **188 maintained lines**, including two shared codec macros,
+   field lists, explicit padding, initialization and all affected consumers.
+   It is a safety cost, not a volume reduction or hardware-ownership completion.
+   All **176** actual old/new comparisons, **311** layout comparisons across
+   13 records, 20 matching native truncation failures, one allocation-failure pair,
+   seven stream checks and four constructor-initialization checks pass. All 106
+   old/109 final embedded sources, normal release library/frontend/verifier builds
+   and native source checks pass. The 275,493-byte snapshot and block failure
+   phases are unchanged. Synthetic old fixtures initialize padding before byte
+   comparisons; no identity of previously uninitialized bytes is claimed.
+   No movie ran; gameplay-route, physical-audio and allocator-event coverage remain
+   unestablished. APU/main-RAM ownership and their remaining serializer are next;
+   raw hardware ownership, allocation and native diagnostics also remain unsafe.
+   Checks: Local/sm-decomp-experiments/20261022/snapshot-fields.
    The existing shared ROM-table interface now uses that owned image with checked
    signed offsets and byte reads, preserving image capture before index evaluation,
    live patch visibility, native byte order and linear bank crossings. Its 725
@@ -2746,14 +2760,19 @@ gameplay continuation ownership, owned ROM reads, safe asset decompression,
 checked ROM tables, safe word transfers, owned recording, checked VRAM readback
 owned sprite drawing, checked Mode 7 transfers, owned SRAM, checked snapshot
 streams, owned enemy-projectile scripts, named APU history and explicit launch
-motion and checked ROM patch installation, maintained Rust is **94,464**, with
+motion, checked ROM patch installation and hardware field serialization,
+maintained Rust is **94,652**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **95,022**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,853**.
+Including 262 C and 296 header lines gives **95,210**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,041**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3035; cast lines 6573. Checked ROM patch installation adds 11
+unsafe functions 3034; cast lines 6573. Hardware field serialization adds 188
+maintained lines and removes one counted unsafe checkpoint function; other
+residue counters are unchanged. Seven raw-copy sites are retired; APU/main-RAM
+transfers, hardware allocation and pointer ownership remain unsafe.
+Checked ROM patch installation adds 11
 maintained lines for ownership and checked reads/writes, removes one counted
 unsafe declaration and one cast-containing line; other counters are unchanged.
 Native diagnostics and CPU correction callbacks remain unsafe.

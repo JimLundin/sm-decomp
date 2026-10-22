@@ -216,7 +216,13 @@ impl AudioSnapshot {
             Dsp,
             &self.dsp,
             &other.dsp,
-            [apu_ram, channel],
+            [
+                apu_ram,
+                channel,
+                snapshot_padding0,
+                snapshot_padding1,
+                snapshot_padding2
+            ],
             ram,
             dirPage,
             evenCycle,
@@ -247,7 +253,15 @@ impl AudioSnapshot {
                 DspChannel,
                 left,
                 right,
-                [],
+                [
+                    snapshot_padding0,
+                    snapshot_padding1,
+                    snapshot_padding2,
+                    snapshot_padding3,
+                    snapshot_padding4,
+                    snapshot_padding5,
+                    snapshot_padding6
+                ],
                 pitch,
                 pitchCounter,
                 pitchModulation,

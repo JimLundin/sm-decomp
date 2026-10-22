@@ -38,9 +38,9 @@ pub unsafe fn snes_saveload(snes: *mut Snes, io: &mut crate::snapshot_io::Snapsh
     dma_saveload((*snes).dma, io);
     ppu_saveload((*snes).ppu, io);
     cart_saveload((*snes).cart, io);
-    crate::rtl::snapshot_region(io, &raw mut (*snes).hPos as *mut u8, 54);
+    crate::rtl::snapshot_result(io.state(&mut *snes));
     crate::rtl::snapshot_region(io, (*snes).ram as *mut u8, 0x20000);
-    crate::rtl::snapshot_region(io, &raw mut (*snes).ramAdr as *mut u8, 4);
+    crate::rtl::snapshot_result(io.state(&mut (*snes).ramAdr));
     (*snes).runningWhichVersion = 0;
 }
 pub unsafe fn snes_reset(snes: *mut Snes, hard: bool, game: &mut Game) {
