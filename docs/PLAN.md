@@ -2110,6 +2110,27 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    current creation/door reconciliation and full pricing remain open. The shared
    dialogue composition above reconciles its control model; child operations and
    runtime transfer remain. No caller production adoption or net saving is established.
+   Door closing now also uses the same owned pool and factory in that candidate.
+   Restarting a cap preserves selection; fallback creation retains scratch writes
+   even with a full pool. Descending association lookup stops at an inactive
+   matching slot. Record-read failures retain the armed timer, and diagnostic
+   mutations preserve live pointer/width changes and the subsequent program write.
+   **74 comparisons**, 120 ordered full-RAM observations and seven matching failures
+   pass, including eight door-loading calls through actual room-source creation,
+   closing, setup and script consumption. The native fixture retains one world
+   through four closing calls and three successful creations, including reuse and
+   full-pool rejection. Remaining room-loading and drawing leaves are controlled;
+   this is not a complete room-loader or gameplay-route test. Current closing and
+   all shared creation bodies, progress source and DoorDef layout pass review;
+   all **115+138 compiled inputs**, 130 unchanged inherited sources, optimized
+   build and formatting pass. No movie or earlier creation/contact/script/session
+   suite ran. Incremental implementation cost is **41 model + 72 provider = 113
+   lines**, versus 43 selected reference lines (**+70**); no new macros or allocator.
+   Separate support costs are 55 reference, 462 paired-fixture, 53 native-fixture
+   delta, 13 caller-fixture delta, one scheduler observation and three harness
+   lines. Source/result: player-projectiles/mechanism-closing-stage. Continue this
+   composition with the shared dialogue model, actual phase/script effects and
+   runtime authority. Full pricing and production adoption remain open.
    The full projectile candidate now includes shared script control flow:
    13 actual commands and two wake consumers use the
    existing owned slots for sleep/release, pre-actions, counters, conditional
