@@ -287,6 +287,11 @@ crate::typed_struct! {
         pub header: VoidP;
     }
 
+}
+
+// These detached records have typed zero/false/null power-on values.
+crate::typed_struct! {
+    initial; [#[derive(Copy, Clone)] #[repr(C)]];
     pub struct ApuRegisters {
         pub romReadable: bool;
         pub dspAdr: u8;
@@ -601,6 +606,10 @@ crate::typed_struct! {
         pub maskLogic: u8;
     }
 
+}
+
+crate::typed_struct! {
+    [#[derive(Copy, Clone)] #[repr(C)]];
     pub struct Config {
         pub window_width, window_height: i32;
         pub enhanced_mode7, new_renderer, ignore_aspect_ratio: bool;

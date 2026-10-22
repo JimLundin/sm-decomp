@@ -49,8 +49,7 @@ pub struct CounterSnapshot {
     pub latched: bool,
 }
 crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C)]
+    initial; [#[derive(Copy, Clone)] #[repr(C)]];
     pub struct Snapshot {
         pub audio: crate::audio_snapshot::AudioSnapshot;
         pub player: crate::audio_snapshot::PlayerSnapshot;
@@ -1080,9 +1079,9 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         );
         (*game.g_snes).runningWhichVersion = 0xff;
         VerifySnapshotsEq(
-            &raw mut game.g_snapshot_mine,
-            &raw mut game.g_snapshot_theirs,
-            &raw mut game.g_snapshot_before,
+            &raw mut *game.g_snapshot_mine,
+            &raw mut *game.g_snapshot_theirs,
+            &raw mut *game.g_snapshot_before,
             game,
         );
         // Check commands before queue consumption/driver latching. The patched

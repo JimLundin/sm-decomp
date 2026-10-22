@@ -1,4 +1,4 @@
-use crate::c_library::{__assert_fail, malloc, memcpy, printf};
+use crate::c_library::{__assert_fail, memcpy, printf};
 use crate::game_state::Game;
 use crate::host::Die;
 use crate::rom::RomImage;
@@ -6,20 +6,18 @@ use crate::rtl::words;
 use crate::snes::cpu::DumpCpuHistory;
 pub use crate::types::{size_t, Cart, Snes};
 use ::core::ffi::{c_char, c_void};
-use ::core::mem::size_of;
 use ::core::ptr::null_mut;
 pub const NULL: *mut c_void = null_mut::<c_void>();
-pub unsafe fn cart_init(snes: *mut Snes) -> *mut Cart {
-    let cart = malloc(size_of::<Cart>() as size_t) as *mut Cart;
-    cart.write(Cart {
+#[forbid(unsafe_code)]
+pub fn cart_init(snes: *mut Snes) -> *mut Cart {
+    Box::into_raw(Box::new(Cart {
         snes,
         type_0: 0,
         rom: RomImage::default(),
         romSize: 0,
         ram: crate::save_ram::SaveRam::default(),
         ramSize: 0,
-    });
-    cart
+    }))
 }
 pub unsafe fn cart_reset(cart: *mut Cart) {}
 pub unsafe fn cart_saveload(cart: *mut Cart, io: &mut crate::snapshot_io::SnapshotIo<'_>) {

@@ -26,13 +26,15 @@ impl ApuQueueSnapshot {
     }
 }
 
-#[derive(Copy, Clone)]
-pub struct PlayerSnapshot {
-    valid: bool,
-    player: SpcPlayer,
-    dsp: Dsp,
-    has_history: bool,
-    history: DspRegWriteHistory,
+crate::typed_struct! {
+    initial; [#[derive(Copy, Clone)]];
+    pub struct PlayerSnapshot {
+        valid: bool;
+        player: SpcPlayer;
+        dsp: Dsp;
+        has_history: bool;
+        history: DspRegWriteHistory;
+    }
 }
 
 impl PlayerSnapshot {
@@ -72,13 +74,15 @@ impl PlayerSnapshot {
     }
 }
 
-#[derive(Copy, Clone)]
-pub struct AudioSnapshot {
-    ram: [u8; 65536],
-    apu: ApuRegisters,
-    spc: Spc,
-    dsp: Dsp,
-    catchup_cycles: f64,
+crate::typed_struct! {
+    initial; [#[derive(Copy, Clone)]];
+    pub struct AudioSnapshot {
+        ram: [u8; 65536];
+        apu: ApuRegisters;
+        spc: Spc;
+        dsp: Dsp;
+        catchup_cycles: f64;
+    }
 }
 
 impl AudioSnapshot {

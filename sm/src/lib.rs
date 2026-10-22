@@ -115,6 +115,20 @@ macro_rules! forward_calls {
 
 // Share explicit record metadata and consecutive field types without changing layout.
 macro_rules! typed_struct {
+    (initial; $attributes:tt; $($visibility:vis struct $name:ident {
+        $($field_visibility:vis $($field:ident),+ : $field_type:ty;)*
+    })+) => {
+        $($crate::typed_struct!(@attributes $attributes $visibility struct $name {
+            $($field_visibility $($field),+: $field_type;)*
+        });
+        #[forbid(unsafe_code)]
+        impl $crate::initial_state::InitialState for $name {
+            const INITIAL: Self = Self {
+                $($($field: <$field_type as $crate::initial_state::InitialState>::INITIAL,)*)*
+            };
+        })+
+    };
+
     ($(#[$metadata:meta])* $visibility:vis struct $name:ident $fields:tt) => {
         $crate::typed_struct!(@attributes [$(#[$metadata])*] $visibility struct $name $fields);
     };
@@ -403,6 +417,7 @@ pub mod platform {
 
 pub mod apu_queue;
 pub mod apu_ram;
+mod initial_state;
 pub mod audio_upload;
 pub(crate) mod audio_snapshot;
 #[doc(hidden)]

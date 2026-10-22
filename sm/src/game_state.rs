@@ -1,5 +1,6 @@
 //! Explicit per-game ownership; RAM bytes retain their exact SNES layout.
 use crate::cpu_infra::Snapshot;
+use crate::initial_state::InitialState;
 use crate::rtl::StateRecorder;
 use crate::types::*;
 use std::ffi::c_int;
@@ -30,9 +31,9 @@ pub struct Game {
     pub g_calling_asm_from_c_ret: i32,
     pub g_fail: bool,
     pub g_use_my_apu_code: bool,
-    pub g_snapshot_mine: Snapshot,
-    pub g_snapshot_theirs: Snapshot,
-    pub g_snapshot_before: Snapshot,
+    pub g_snapshot_mine: Box<Snapshot>,
+    pub g_snapshot_theirs: Box<Snapshot>,
+    pub g_snapshot_before: Box<Snapshot>,
     pub hookmode: u32,
     pub hookcnt: u32,
     pub hookadr: u32,
@@ -74,7 +75,7 @@ macro_rules! ram_word_accessors {
     };
 }
 
-// Initialize the large RAM and oracle snapshots directly on the heap.
+// Oracle snapshots own separate allocations, keeping construction stack usage bounded.
 impl Game {
     /// APU upload flag at $7E:0617.
     pub fn uploading_apu(&self) -> bool {
@@ -687,27 +688,60 @@ impl Game {
     }
 
     /// Preserve the original zero initialization, including RM_BOTH (0).
+    #[forbid(unsafe_code)]
     pub fn new() -> Box<Self> {
-        let mut storage = Box::<Self>::new_uninit();
-        let game = storage.as_mut_ptr();
-        // All fields in this mechanical ownership batch are integers,
-        // integer arrays, bools, raw pointers, Option<fn>, or plain structs
-        // composed only of those types, plus the explicitly initialized ROM
-        // view, save bytes and recording buffers. Zero is a valid representation for
-        // each; zeroed function options are still written explicitly below.
-        // The entire allocation is initialized in place, avoiding a stack
-        // temporary containing the 128 KiB RAM and three large snapshots.
-        unsafe {
-            core::ptr::write_bytes(game, 0, 1);
-            core::ptr::addr_of_mut!((*game).loaded_rom).write(None);
-            core::ptr::addr_of_mut!((*game).g_sram).write(crate::save_ram::SaveRam::default());
-            core::ptr::addr_of_mut!((*game).state_recorder).write(StateRecorder::default());
-            core::ptr::addr_of_mut!((*game).g_rtl_runframe).write(None);
-            core::ptr::addr_of_mut!((*game).g_rtl_syncall).write(None);
-            core::ptr::addr_of_mut!((*game).g_use_my_apu_code).write(true);
-            core::ptr::addr_of_mut!((*game).g_new_ppu).write(true);
-            storage.assume_init()
-        }
+        Box::new(Self {
+            g_ram: [0; 131072],
+            g_rom: core::ptr::null(),
+            loaded_rom: None,
+            decompress_src: 0,
+            eproj_spawn_rect: Rect16U {
+                x: 0,
+                y: 0,
+                w: 0,
+                h: 0,
+            },
+            eproj_spawn_r22: 0,
+            eproj_spawn_pt: Point16U { x: 0, y: 0 },
+            eproj_spawn_varE24: 0,
+            message_box_das0l_value: 0,
+            k_out: 0,
+            g_sram: Default::default(),
+            g_rtl_memory_ptr: core::ptr::null_mut(),
+            g_rtl_runframe: None,
+            g_rtl_syncall: None,
+            state_recorder: StateRecorder::default(),
+            apu_queue: Default::default(),
+            g_runmode: 0,
+            g_snes: core::ptr::null_mut(),
+            g_cpu: core::ptr::null_mut(),
+            g_calling_asm_from_c: false,
+            g_calling_asm_from_c_ret: 0,
+            g_fail: false,
+            g_use_my_apu_code: true,
+            g_snapshot_mine: Box::new(Snapshot::INITIAL),
+            g_snapshot_theirs: Box::new(Snapshot::INITIAL),
+            g_snapshot_before: Box::new(Snapshot::INITIAL),
+            hookmode: 0,
+            hookcnt: 0,
+            hookadr: 0,
+            hook_orgbyte: [0; 1024],
+            hook_fixbug_orgbyte: [0; 1024],
+            kPatchedCarrysOrg: [0; 155],
+            currently_installed_bug_fix_counter: 0,
+            VERIFY_ACTIVE: false,
+            VERIFY_FAILURES: 0,
+            g_spc_player: core::ptr::null_mut(),
+            g_got_mismatch_count: 0,
+            g_other_image: false,
+            g_debug_flag: false,
+            g_new_ppu: true,
+            snes_frame_counter: 0,
+            pc_hist: [0; 8],
+            pc_hist_ctr: 0,
+            pc_bp: 0,
+            g_debug_apu_cycles: false,
+        })
     }
 }
 // Mutex ownership is explicit and supplied through SDL userdata. No global

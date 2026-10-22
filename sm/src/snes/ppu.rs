@@ -1,8 +1,9 @@
 use crate::game_state::Game;
+use crate::initial_state::InitialState;
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::{size_of, transmute};
 
-use crate::c_library::{__assert_fail, malloc, memcpy, memset};
+use crate::c_library::{__assert_fail, memcpy, memset};
 pub use crate::types::{size_t, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes};
 crate::type_aliases! {
     pub C2RustUnnamed_0, C2RustUnnamed_1, C2RustUnnamed_2, C2RustUnnamed_3 = u32;
@@ -48,11 +49,12 @@ static spriteSizes: [[i32; 2]; 8] = [
     [16, 32],
     [16, 32],
 ];
-pub unsafe fn ppu_init(snes: *mut Snes) -> *mut Ppu {
-    let ppu = malloc(size_of::<Ppu>() as size_t) as *mut Ppu;
-    core::ptr::write_bytes(ppu, 0, 1);
-    (*ppu).snes = snes;
-    ppu
+#[forbid(unsafe_code)]
+pub fn ppu_init(snes: *mut Snes) -> *mut Ppu {
+    Box::into_raw(Box::new(Ppu {
+        snes,
+        ..Ppu::INITIAL
+    }))
 }
 pub unsafe fn ppu_copy(ppu: *mut Ppu, ppu_src: *mut Ppu) {
     let snes = (*ppu).snes;
@@ -72,10 +74,12 @@ pub unsafe fn ppu_reset(ppu: *mut Ppu) {
     let pitch = (*ppu).renderPitch;
     let render_buffer = (*ppu).renderBuffer;
     // Reset also clears saved padding and renderer caches.
-    core::ptr::write_bytes(ppu, 0, 1);
-    (*ppu).renderBuffer = render_buffer;
-    (*ppu).renderPitch = pitch;
-    (*ppu).snes = snes;
+    *ppu = Ppu {
+        snes,
+        renderBuffer: render_buffer,
+        renderPitch: pitch,
+        ..Ppu::INITIAL
+    };
     set_fields! {[(*ppu)], 1; vramIncrement, mosaicSize, mosaicStartLine}
     (*ppu).forcedBlank = true;
 }

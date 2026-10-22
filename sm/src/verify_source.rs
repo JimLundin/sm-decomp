@@ -3,6 +3,10 @@
 //! New library source files must be listed here; missing entries fail closed.
 
 pub static FILES: &[(&str, &[u8])] = &[
+    (
+        "sm/src/initial_state.rs",
+        include_bytes!("initial_state.rs"),
+    ),
     ("sm/src/audio_upload.rs", include_bytes!("audio_upload.rs")),
     ("sm/src/apu_queue.rs", include_bytes!("apu_queue.rs")),
     ("sm/src/apu_ram.rs", include_bytes!("apu_ram.rs")),

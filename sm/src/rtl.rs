@@ -97,6 +97,7 @@ use crate::c_library::{
 use crate::cpu_infra::RtlUpdateSnesPatchForBugfix;
 use crate::game_state::Game;
 use crate::host::{Die, RtlApuLock, RtlApuUnlock};
+use crate::initial_state::InitialState;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::recording::RecordingBytes;
@@ -442,14 +443,10 @@ pub unsafe fn StateRecorder_ClearKeyLog(game: &mut Game) {
     game.state_recorder.base_audio_queue =
         crate::audio_snapshot::ApuQueueSnapshot::capture(game).to_bytes();
     let live_audio = if game.g_use_my_apu_code {
-        // These snapshots contain only zero-valid scalars, arrays and pointers.
-        // Initialize on the heap to avoid large stack temporaries.
-        let mut storage = Box::<(
-            crate::audio_snapshot::AudioSnapshot,
-            crate::audio_snapshot::PlayerSnapshot,
-        )>::new_uninit();
-        core::ptr::write_bytes(storage.as_mut_ptr(), 0, 1);
-        let mut snapshots = storage.assume_init();
+        let mut snapshots = Box::new((
+            crate::audio_snapshot::AudioSnapshot::INITIAL,
+            crate::audio_snapshot::PlayerSnapshot::INITIAL,
+        ));
         snapshots.0.capture(game.g_snes);
         snapshots.1.capture(game.g_spc_player);
         // Replay restores the queue separately, so do not deliver it early.

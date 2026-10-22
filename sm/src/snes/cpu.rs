@@ -1,12 +1,12 @@
-use crate::c_library::{__assert_fail, malloc, memset, printf};
+use crate::c_library::{__assert_fail, printf};
 use crate::cpu_infra::{CpuOpcodeHook, HookedFunctionRts};
 use crate::game_state::Game;
 use crate::host::Die;
+use crate::initial_state::InitialState;
 use crate::rtl::words;
 use crate::snes::snes::{snes_cpuRead, snes_cpuWrite};
 use crate::types::{Cpu, Snes};
 use ::core::ffi::{c_char, c_void};
-use ::core::mem::size_of;
 static CYCLES_PER_OPCODE: [u8; 256] = [
     7, 6, 7, 4, 5, 3, 5, 6, 3, 2, 2, 4, 6, 4, 6, 5, 2, 5, 5, 7, 5, 4, 6, 6, 2, 4, 2, 2, 6, 4, 7, 5,
     6, 6, 8, 4, 3, 3, 5, 6, 4, 2, 2, 5, 4, 4, 6, 5, 2, 5, 5, 7, 4, 4, 6, 6, 2, 4, 2, 2, 4, 4, 7, 5,
@@ -26,12 +26,13 @@ unsafe fn write_byte(cpu: *mut Cpu, adr: u32, val: u8, game: &mut Game) {
     snes_cpuWrite((*cpu).mem as *mut Snes, adr, val, game);
 }
 
-pub unsafe fn cpu_init(mem: *mut c_void, memType: i32) -> *mut Cpu {
-    let cpu = malloc(size_of::<Cpu>()) as *mut Cpu;
-    memset(cpu as *mut c_void, 0, size_of::<Cpu>());
-    (*cpu).mem = mem;
-    (*cpu).memType = memType as u8;
-    cpu
+#[forbid(unsafe_code)]
+pub fn cpu_init(mem: *mut c_void, memType: i32) -> *mut Cpu {
+    Box::into_raw(Box::new(Cpu {
+        mem,
+        memType: memType as u8,
+        ..Cpu::INITIAL
+    }))
 }
 
 fn finish_reset(cpu: &mut Cpu) {

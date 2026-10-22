@@ -1,4 +1,5 @@
-use crate::c_library::{__assert_fail, malloc, memcpy, memset, printf};
+use crate::c_library::{__assert_fail, memcpy, memset, printf};
+use crate::initial_state::InitialState;
 use crate::snes::dsp::{dsp_cycle, dsp_init, dsp_reset, dsp_write};
 pub use crate::types::{size_t, Channel, DspRegWriteHistory, SfxChan, SfxRegs, SpcPlayer};
 use ::core::ffi::{c_char, c_void};
@@ -793,8 +794,7 @@ crate::forward_calls! { pub unsafe fn (p: *mut SpcPlayer);
     );
 }
 pub unsafe fn SpcPlayer_Create() -> *mut SpcPlayer {
-    let p = malloc(size_of::<SpcPlayer>() as size_t) as *mut SpcPlayer;
-    memset(p as *mut c_void, 0, size_of::<SpcPlayer>() as size_t);
+    let p = Box::into_raw(Box::new(SpcPlayer::INITIAL));
     (*p).dsp = dsp_init(&raw mut (*p).ram as *mut u8);
     (*p).reg_write_history = null_mut::<DspRegWriteHistory>();
     p

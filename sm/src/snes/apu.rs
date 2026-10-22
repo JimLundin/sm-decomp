@@ -1,5 +1,6 @@
 use crate::c_library::puts;
 use crate::game_state::Game;
+use crate::initial_state::InitialState;
 use crate::snes::dsp::{dsp_cycle, dsp_init, dsp_read, dsp_reset, dsp_saveload, dsp_write};
 use crate::snes::spc::{spc_init, spc_reset, spc_runOpcode, spc_saveload};
 use crate::tracing::getProcessorStateSpc;
@@ -24,28 +25,7 @@ pub unsafe fn apu_init() -> *mut Apu {
         spc: core::ptr::null_mut(),
         dsp: core::ptr::null_mut(),
         ram: crate::apu_ram::ApuRam::new(),
-        registers: ApuRegisters {
-            romReadable: false,
-            dspAdr: 0,
-            snapshot_padding0: [0; 2],
-            cycles: 0,
-            inPorts: [0; 6],
-            outPorts: [0; 4],
-            timer: [Timer {
-                cycles: 0,
-                divider: 0,
-                target: 0,
-                counter: 0,
-                enabled: false,
-            }; 3],
-            cpuCyclesLeft: 0,
-            pad: [0; 6],
-            history: DspRegWriteHistory {
-                count: 0,
-                addr: [0; 256],
-                val: [0; 256],
-            },
-        },
+        registers: ApuRegisters::INITIAL,
     }));
     (*apu).spc = spc_init(apu);
     (*apu).dsp = dsp_init((*apu).ram.as_mut_ptr());

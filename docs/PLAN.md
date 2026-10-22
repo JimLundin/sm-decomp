@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,215 Rust lines in 109 files**, plus 262 C
-bridge and 296 C-header lines = **95,773 maintained implementation lines**.
+Current composition (2026-10-22): **95,290 Rust lines in 110 files**, plus 262 C
+bridge and 296 C-header lines = **95,848 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,604**. This complete recount includes frontend,
+gives **96,679**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1887,6 +1887,22 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    pointer into its inline RAM. A whole-player or whole-RAM mutable borrow would
    not be a valid replacement, even if it ended before the next native call.
    Checks: Local/sm-decomp-experiments/20261022/audio-upload.
+   Runtime construction now uses typed initial values shared through the existing
+   record metadata. Game owns three separately allocated oracle snapshots while
+   retaining its fixed inline SNES RAM. Nine hardware constructors use typed
+   allocations; PPU reset and recorder audio snapshots also stop zeroing raw storage.
+   Explicit saved padding is initialized; implicit Rust padding is not compared
+   or serialized. Hardware pointer links and native calls remain unfinished safety
+   work. Complete cost: **+75 Rust lines**, including all callers and registrations.
+   **92 actual old/new comparisons** pass for construction, fully dirtied PPU
+   reset, pointer topology and repeated native/physical recorder rebasing. The
+   unoptimized constructor and native recorder also pass on a 2 MiB thread stack.
+   Normal release library/frontend/verifier and all 117 current library inputs
+   pass. Native and physical-audio boot each pass probed and clean at **3/0**,
+   inputs **0..2**: snapshot capture/restore and actual video/audio consumers
+   execute at zero, followed by two frames. Constructors are setup and have direct
+   checks; no gameplay, active-song or physical-device coverage is claimed.
+   Checks: Local/sm-decomp-experiments/20261022/typed-initialization.
    The existing shared ROM-table interface now uses that owned image with checked
    signed offsets and byte reads, preserving image capture before index evaluation,
    live patch visibility, native byte order and linear bank crossings. Its 725
@@ -2920,14 +2936,21 @@ owned sprite drawing, checked Mode 7 transfers, owned SRAM, checked snapshot
 streams, owned enemy-projectile scripts, named APU history and explicit launch
 motion, checked ROM patch installation, hardware field serialization, PLM
 award/message ownership, owned APU RAM, the owned audio command queue and enemy
-population ownership and owned native audio uploads, maintained Rust is **95,215**, with
+population ownership, owned native audio uploads and typed runtime initialization,
+maintained Rust is **95,290**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **95,773**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,604**.
+Including 262 C and 296 header lines gives **95,848**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,679**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3034; cast lines 6540. Owned native audio uploads add 25 maintained
+unsafe functions 3027; cast lines 6540. Typed runtime initialization adds 75
+maintained Rust lines and removes seven counted unsafe declarations. Nine raw
+hardware allocations, ten raw-zeroing sites and two uninitialized Box/assume_init
+sequences are retired. Typed construction is checked by `forbid(unsafe_code)`;
+hardware links, native calls and other RAM manipulation remain unsafe. No other
+residue counter increases. This is a safety cost, not a volume reduction.
+Owned native audio uploads add 25 maintained
 lines and remove two cast-containing lines; other residue counters are unchanged.
 Source pointer traversal and three raw word loads are retired. The owned-source
 decoder forbids unsafe code; native DSP calls, destination handles and field/RAM

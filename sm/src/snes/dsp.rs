@@ -1,4 +1,4 @@
-use crate::c_library::malloc;
+use crate::initial_state::InitialState;
 pub use crate::types::{size_t, Dsp};
 use core::mem::size_of;
 
@@ -19,12 +19,12 @@ const _: () = {
     assert!(size_of::<Dsp>() == 3032);
 };
 
-pub unsafe fn dsp_init(ram: *mut u8) -> *mut Dsp {
-    let dsp = malloc(size_of::<Dsp>() as size_t) as *mut Dsp;
-    // Initialize the explicit saved padding before any typed state copies.
-    core::ptr::write_bytes(dsp, 0, 1);
-    (*dsp).apu_ram = ram;
-    dsp
+#[forbid(unsafe_code)]
+pub fn dsp_init(ram: *mut u8) -> *mut Dsp {
+    Box::into_raw(Box::new(Dsp {
+        apu_ram: ram,
+        ..Dsp::INITIAL
+    }))
 }
 pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     backend_reset(dsp);

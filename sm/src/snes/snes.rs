@@ -1,5 +1,6 @@
-use crate::c_library::{__assert_fail, malloc, memset};
+use crate::c_library::{__assert_fail, memset};
 use crate::game_state::Game;
+use crate::initial_state::InitialState;
 use crate::rtl::words;
 use crate::rtl::RtlApuWrite;
 use crate::snes::apu::{apu_cycle, apu_init, apu_reset, apu_saveload};
@@ -16,13 +17,11 @@ use crate::snes::ppu::{
 };
 pub use crate::types::{size_t, Snes};
 use ::core::ffi::{c_char, c_void};
-use ::core::mem::size_of;
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 
 pub unsafe fn snes_init(ram: *mut u8) -> *mut Snes {
-    let snes = malloc(size_of::<Snes>() as size_t) as *mut Snes;
-    core::ptr::write_bytes(snes, 0, 1);
+    let snes = Box::into_raw(Box::new(Snes::INITIAL));
     set_fields! {[(*snes)]; ram = ram, debug_cycles = false_0 != 0,
     debug_apu_cycles = false_0 != 0, runningWhichVersion = 0, disableRender = false, };
     set_fields! {[(*snes)], 0; cpuMemOps, cpuCyclesLeft}
