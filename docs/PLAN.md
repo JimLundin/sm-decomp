@@ -1944,11 +1944,12 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    lines. Retained broad bodies, final bridges and runtime integration remain
    outside this partial price. No earlier full suite or movie ran.
    This remains an **unadopted, incomplete draft**, not a production promotion or
-   a complete price. Block/slope/PLM reactions, native diagnostics, palette/sound output and
-   grapple-start consumers remain controlled. Definitions are synthetic; no
+   a complete price. Terrain reactions and selected actual mechanism setups are
+   connected below; native diagnostics, palette/sound output and grapple-start
+   consumers remain controlled. Definitions are synthetic; no
    gameplay route or hardware coverage is established. Accepted out-of-pool
    operations retain reference bodies, including drawing continuations; handoff
-   tests do not retire those bodies. Continue with actual room reactions,
+   tests do not retire those bodies. Continue with mechanism lifecycle ownership,
    native missile/extension and producer definitions,
    protection/suspension, real callers and runtime authority/transfers.
    Count every adapter/fallback and close the remaining numeric interfaces before
@@ -2007,6 +2008,39 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    reused/new native examples add 344 lines, with reference and fixtures separate.
    Actual block/slope/PLM reactions remain controlled. No earlier full flight or
    lifecycle suite, movie, adoption or complete replacement price is claimed.
+   The full candidate now replaces those controlled terrain responses with shared
+   material/extension dispatch and square/profile slope algorithms. **381 selected
+   comparisons**, 649 ordered observations and five expected matching failures
+   pass: 92 classification, 182 slope, nine extension/bounds, 37 mechanism and 41
+   scan-consumer cases, four explicit contracts and 16 persistent lifecycle steps.
+   Byte-offset rejection leaves the beam counter and block cursor untouched;
+   extensions retry without another size check. Slopes use the live projectile
+   selection, and their counter overrides precede the wrapper's decrement.
+   Mechanism requests preserve air/solid classification independently of capacity.
+   The special scan-ending header still ends wave scans when the pool is full.
+   Actual initial-collision dispatch, mechanism allocation and three selected setup
+   routes are retained reference bodies, not controlled occupancy responses.
+   Checks execute no-op, Respawning Shot Block and Strange Door setup, including
+   immediate terrain edits and descending stale-association lookup. Additional
+   controlled callback mutations vary selection, width, later terrain and reset.
+   Failure cases retain committed movement and the initialized mechanism prefix.
+   Two native sequences use the same terrain/slope algorithms; one links creation,
+   scheduled movement, immediate terrain mutation, impact output and release.
+   Native mechanism responses are authored and do not model the full PLM pool.
+   Encoded lifecycles execute actual initial collision, allocation/setup, projectile
+   and trail output, release and reset. Native initial collision remains controlled.
+   Models/providers forbid unsafe code; `Firing` remains non-Clone. All 115 frozen
+   and 105 draft compiled inputs match; 95 inherited files are unchanged. Sixteen
+   terrain/geometry functions, two slope tables, ten initial-collision functions,
+   retry/division/read helpers, allocator and exercised setup bodies match current
+   source. Optimized build and formatting pass. Exact source/result is preserved
+   in player-projectiles/terrain-stage. The changed formatted model/provider cohort
+   grows **419 -> 729 (+310 lines)**; native examples add 198 separate lines.
+   Retained reference (453), paired fixture (877) and harness growth (81) remain
+   separate from this partial price. No earlier full flight/scheduler suite or
+   movie ran. No adoption or complete saving is claimed. The parallel standalone
+   shot-block-reactions result above is not an additive saving or a second model
+   to install; reuse its remaining setup findings for mechanism lifecycle ownership.
    The frozen library
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.
