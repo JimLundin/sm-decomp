@@ -544,6 +544,43 @@ state without requiring the compatibility bytes to disappear first.
 
 ## Experiment results
 
+### Persistent authority transfer before the full projectile replacement
+
+An isolated experiment on `15589b48` keeps `LaunchMotion` alive across typed
+movement, repeated firing and phase clear. Its `LaunchOwner` holds
+`Option<LaunchMotion>`: publishing consumes that value before legacy execution;
+import reconstructs it before typed execution resumes. Typed access while the
+runtime owns the bytes fails. The bridge and model forbid unsafe code. This is
+an unadopted transfer experiment, not a second field added beside live Game RAM.
+
+**60 comparisons pass:** 50 compare the entire 128 KiB RAM image, eight compare
+produced projectile fields during uninterrupted typed execution, one compares
+complete frontend snapshot bytes and one compares an actual bus read. Fourteen
+discriminating checks reject missing publication, a stale value after an external
+write/restore, or typed access during runtime ownership. The linked library's
+115 embedded inputs and all seven experiment source inputs match their frozen
+bytes. The release component DLL compiles; no movie ran.
+
+The experiment calls the real banked/mirrored/CPU/WRAM-port writers, replay codec
+and decoder, `snes_saveload`, and hard/soft `snes_reset`. It also exercises the
+exact oracle capture/restore bodies, including their audio methods, using local
+structurally equivalent snapshot types because those implementations are private.
+The restore-before-Rust and adopted-result schedules use controlled execution,
+not actual CPU/Rust frames. The checkpoint check uses the exact RAM archive stage,
+including partial writes before truncation; the complete checkpoint file and
+hardware restore are outside this experiment. Nested entry, suspension and a
+failing callback are controlled operations. Legacy off-slot launch is explicitly
+given runtime authority, preserving its Y-store/history/X-read alias sequence.
+
+This supports publish/take/import at the selected execution points. It does not
+establish that every production entry uses those points, prevent arbitrary native
+RAM writes while a future owner is active, or implement the whole projectile
+lifecycle. The next draft must close those access paths and include all retained
+legacy execution, caller and runtime costs. No maintained code changes or savings
+are claimed from this prototype. Reproduction remains outside the repository at
+`Local/sm-decomp-experiments/20261022/projectile-authority` (`prepare.py`,
+`build.py`, `check.py`); it uses the frozen population library and synthetic fixture.
+
 ### Explicit gameplay continuation
 
 The implementation now lives in [gameplay.rs](../sm/src/game/gameplay.rs).
