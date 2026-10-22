@@ -2088,8 +2088,8 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^message]: [message_boxes::display, poll and queue](../sm/src/game/message_boxes.rs#L397).
 [^bits]: [Checked bit-mask preparation and event/boss operations](../sm/src/game/progress_flags.rs).
 [^doorbits]: [PlmInstr_IncrementDoorHitCounterAndJGE](../sm/src/game/sm_84.rs#L2796).
-[^roomselect]: [CallRoomDefStateSelect and HandleRoomDefStateSelect](../sm/src/game/sm_8f.rs#L125).
-[^roomload]: [LoadRoomHeader and LoadStateHeader](../sm/src/game/sm_82.rs#L3711).
+[^roomselect]: [Ordered room-state selection](../sm/src/game/room_state.rs).
+[^roomload]: [Room-header and selected-state loading](../sm/src/game/room_state.rs).
 [^save]: [SaveToSram and LoadFromSram](../sm/src/game/sm_81.rs#L71).
 [^pose]: [samus_pose](../sm/src/game/samus_pose.rs#L1).
 [^posemap]: [pose/history metadata](../sm/src/ram_map.rs); search `samus_pose`, `samus_prev_pose`, `samus_last_different_pose`.

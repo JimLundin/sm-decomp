@@ -353,6 +353,7 @@ pub mod game {
     pub(crate) mod sprite_drawing;
     pub(crate) mod samus_pose;
     pub mod progress_flags;
+    pub mod room_state;
     pub mod sm_80;
     pub mod sm_81;
     pub mod sm_82;

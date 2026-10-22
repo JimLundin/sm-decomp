@@ -2,7 +2,7 @@ use crate::c_library::strcpy;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
 pub use crate::game::prelude::*;
-use crate::game::progress_flags::{CheckBossBitForCurArea, CheckEventHappened, SetEventHappened};
+use crate::game::progress_flags::SetEventHappened;
 use crate::game::scrolling_sky::{
     initialize_land, initialize_ocean, queue_land_rows, queue_ocean_rows,
 };
@@ -17,12 +17,6 @@ use crate::game::sm_94::Samus_MoveDown_NoSolidColl;
 use crate::game::sm_a6::HandleCeresRidleyGetawayCutscene;
 use crate::game::sm_b4::CreateSpriteAtPos;
 
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct RoomDefStateSelect_E6E5_Finish {
-    pub code_ptr: VoidP,
-}
-
 crate::game::constants::typed_constants! { i32;
     kCoroutineNone = 0,
     fnPauseHook_DraygonRoom = 0x8fc8f6, fnUnpauseHook_DraygonRoom = 0x8fc8fc,
@@ -36,14 +30,6 @@ unsafe fn get_DoorDef(a: u16, game: &mut Game) -> *mut DoorDef {
 unsafe fn get_RoomDefRoomstate(a: u16, game: &mut Game) -> *mut RoomDefRoomstate {
     RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefRoomstate
 }
-#[inline]
-unsafe fn get_RoomDefStateSelect_E6E5_Finish(
-    a: u16,
-    game: &mut Game,
-) -> *mut RoomDefStateSelect_E6E5_Finish {
-    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefStateSelect_E6E5_Finish
-}
-
 pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
     if word!(game.time_is_frozen_flag) == 0 && (word!(game.nmi_frame_counter_word) & 1) == 0 {
         let mut Random: u16 = NextRandom(game);
@@ -119,63 +105,6 @@ macro_rules! select_room_earthquake_update {
     };
 }
 
-crate::game::callback_dispatch! {
-    pub unsafe fn CallRoomDefStateSelect(ea: u32, k: u16, game: &mut Game) -> u16 => ea;
-    call (k, game); default Unreachable(game) as u16;
-    @functions [pub unsafe fn (k: u16, game: &mut Game) -> u16];
-    [9430502] RoomDefStateSelect_Finish [] {
-        word!(game.roomdefroomstate_ptr = k);
-        0
-    };
-    [9430527] RoomDefStateSelect_TourianBoss01 [] {
-        if CheckBossBitForCurArea(1, game) & 1 == 0 {
-            return (k).wrapping_add(2);
-        }
-        let v1 = RomPtr_8F(k, game) as *const u16;
-        RoomDefStateSelect_Finish(*v1, game)
-    };
-    [9430546] RoomDefStateSelect_IsEventSet [] {
-        let v1 = RomPtr_8F(k, game);
-        if CheckEventHappened(*v1 as u16, game) != 0 {
-            RoomDefStateSelect_Finish(*(v1.offset(1) as *mut u16), game)
-        } else {
-            (k).wrapping_add(3)
-        }
-    };
-    [9430569] RoomDefStateSelect_IsBossDead [] {
-        let v1 = RomPtr_8F(k, game);
-        if CheckBossBitForCurArea(*v1 as u16, game) & 1 != 0 {
-            RoomDefStateSelect_Finish(*(v1.offset(1) as *mut u16), game)
-        } else {
-            (k).wrapping_add(3)
-        }
-    };
-    [9430610] RoomDefStateSelect_MorphBallMissiles [] {
-        if (word!(game.collected_items) & 4) == 0 || word!(game.samus_max_missiles) == 0 {
-            return (k).wrapping_add(2);
-        }
-        let v1 = RomPtr_8F(k, game) as *const u16;
-        RoomDefStateSelect_Finish(*v1, game)
-    };
-    [9430633] RoomDefStateSelect_PowerBombs [] {
-        if word!(game.samus_max_power_bombs) == 0 {
-            return (k).wrapping_add(2);
-        }
-        let v1 = RomPtr_8F(k, game) as *const u16;
-        RoomDefStateSelect_Finish(*v1, game)
-    };
-}
-pub unsafe fn HandleRoomDefStateSelect(k: u16, game: &mut Game) {
-    let mut v1: u16 = (k).wrapping_add(11);
-    do_until! { (v1 == 0);
-        let event_pointer: u16 = (*get_RoomDefStateSelect_E6E5_Finish(v1, game)).code_ptr;
-        v1 = CallRoomDefStateSelect(
-            ((event_pointer) as u32) | (0x8f0000u32),
-            (v1).wrapping_add(2),
-            game,
-        );
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallRoomSetupCode(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };

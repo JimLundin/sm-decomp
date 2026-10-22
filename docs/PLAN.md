@@ -44,7 +44,7 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,539 Rust lines in 112 files**, plus 262 C
+Current composition (2026-10-22): **95,539 Rust lines in 113 files**, plus 262 C
 bridge and 296 C-header lines = **96,097 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
 gives **96,928**. This complete recount includes frontend,
@@ -2509,6 +2509,35 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    enabled. Unvisited initial-transfer and special-clear paths have component
    coverage; no wider route or physical-device coverage is claimed.
    Checks: Local/sm-decomp-experiments/20261022/background-records.
+   Room-header loading, ordered state selection and selected asset pointers now
+   live in `room_state`, with both initial-load and door callers migrated. Checked,
+   owned records replace raw ROM/RAM traversal and packed header/tileset reads in
+   this complete metadata path. Shared predicates replace selector forwarding
+   bodies; obsolete finish/tileset records and pointer helpers are removed. The
+   ROM decoder's new native-endian long-pointer read forbids unsafe code. Field
+   stores, scratch effects, linear record offsets, wrapped cursors, captured ROM
+   owners and live width/height rereads retain their original order. RAM remains
+   authoritative; native diagnostics and legacy helper calls remain unsafe.
+   Complete cost is **zero net Rust lines**, including the new module, decoder,
+   callers and registrations; three counted unsafe declarations are removed.
+   **1,123 actual old/new full-state comparisons**, 2,118 ordered observations
+   and 88 matching controlled failures pass. Cases cover all selectors, fall-through,
+   inline defaults, bank edges, dimension truncation, ROM mutation/rebinding and
+   partial field writes. Eighty-four candidate-only short-image checks preserve
+   unread operands and partial-record boundaries; undefined legacy short reads are
+   excluded. Odd raw selector loads compare observed optimized behavior, not proof
+   of their definedness. All 119 baseline / 120 candidate library inputs, four
+   fixture inputs and test-only changes are checked. Flag hooks forward to actual
+   implementations; test assertions declare C-unwind without changing production.
+   Probed and clean Ceres loading each pass **77/0**, inputs **8250..8326**. Header,
+   default selection, state and graphics/palette consumers run at 8256; level data
+   at 8296; actual room-code/frame consumption at 8324, then two further frames.
+   The 8,250-frame setup is cached separately with an entry guard proving no metadata
+   load runs there. Normal comparisons/rendering/audio remain enabled. Conditional
+   selection and unusual records have component coverage; no wider route, credits,
+   main-gameplay or physical-device coverage is claimed. Normal release library,
+   frontend/verifier, native/source stamps, formatting and progress checks pass.
+   Checks: Local/sm-decomp-experiments/20261022/room-state.
    Event/boss flag access and shared bit-mask preparation now live in the safe
    `progress_flags` module, which forbids unsafe code. All 15 caller files import
    it directly; the six bank-80 definitions are retired. Queries retain their
@@ -3630,16 +3659,21 @@ award/message ownership, owned APU RAM, the owned audio command queue and enemy
 population ownership, owned native audio uploads, typed runtime initialization,
 owned native-player RAM with named field transfers, DSP RAM ownership and typed
 stereo output, checked tracing, owned room-background records, checked palette
-execution, shared effect ROM records, checked animated tiles and safe progress
-flag access, maintained Rust is **95,539**, with applicable static, component and
-exercised movie checks passing.
+execution, shared effect ROM records, checked animated tiles, safe progress flags
+and owned room metadata, maintained Rust is **95,539**, with applicable static,
+component and exercised movie checks passing.
 Including 262 C and 296 header lines gives **96,097**; all 803 dependency-installer
 lines and 28 added launcher lines bring the complete price to **96,928**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3001; cast lines 6519. Safe progress flags add 23 maintained Rust
-lines and remove five counted unsafe declarations; all other residue counters are
+unsafe functions 2998; cast lines 6519. Owned room metadata changes no net Rust
+lines and removes three counted unsafe declarations; all other residue counters
+are unchanged. The selected metadata path has no raw ROM/RAM access; the shared
+decoder forbids unsafe code. Native diagnostics/helper calls and other room
+record consumers remain unsafe. State authority remains in RAM.
+Safe progress flags add 23 maintained Rust lines and remove five counted unsafe
+declarations; all other residue counters are
 unchanged. The flag/mask module forbids unsafe code and replaces its raw RAM
 operations; all callers move from the retired bank definitions. This is a safety
 and responsibility cost, not volume savings or complete progression ownership.

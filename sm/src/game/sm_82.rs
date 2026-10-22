@@ -3,6 +3,7 @@ use crate::game::enemy_population_ram::initialize_room;
 use crate::game::gameplay::advance as AdvanceGameplay;
 pub use crate::game::prelude::*;
 use crate::game::room_backgrounds::BackgroundLoad;
+use crate::game::room_state::{load_header as LoadRoomHeader, load_state as LoadStateHeader};
 
 use crate::cpu_infra::DebugGameOverMenu;
 
@@ -44,8 +45,7 @@ use crate::game::sm_8b::{
 };
 use crate::game::sm_8d::{ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx};
 use crate::game::sm_8f::{
-    HandleRoomDefStateSelect, PauseHook_DraygonRoom, RunDoorSetupCode, RunRoomSetupCode,
-    UnpauseHook_DraygonRoom,
+    PauseHook_DraygonRoom, RunDoorSetupCode, RunRoomSetupCode, UnpauseHook_DraygonRoom,
 };
 use crate::game::sm_90::{
     CallSomeSamusCode, ResetProjectileData, Samus_LowHealthCheck_0, SetLiquidPhysicsType,
@@ -77,10 +77,6 @@ crate::typed_struct! {
     ];
     pub struct PlmHeader_Size6 {
         pub func_ptr, instr_list_1_ptr, instr_list_2_ptr: VoidP;
-    }
-
-    pub struct TileSet {
-        pub tile_table_ptr, tiles_ptr, palette_ptr: LongPtr;
     }
 
     pub struct DemoRoomData {
@@ -149,10 +145,6 @@ unsafe fn get_RoomDefHeader(a: u16, game: &mut Game) -> *mut RoomDefHeader {
 #[inline]
 unsafe fn get_RoomDefRoomstate(a: u16, game: &mut Game) -> *mut RoomDefRoomstate {
     RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefRoomstate
-}
-#[inline]
-unsafe fn get_TileSet(a: u16, game: &mut Game) -> *mut TileSet {
-    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut TileSet
 }
 #[inline]
 unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
@@ -3649,44 +3641,6 @@ pub unsafe fn LoadDoorHeader(game: &mut Game) {
     let speed = (i32::from(distance) << 8) as u32;
     game.set_samus_door_transition_subspeed(speed as u16);
     game.set_samus_door_transition_speed((speed >> 16) as u16);
-}
-pub unsafe fn LoadRoomHeader(game: &mut Game) {
-    let room = get_RoomDefHeader(game.room_ptr(), game);
-    game.set_room_index(u16::from((*room).semiunique_room_number));
-    game.set_area_index(u16::from((*room).area_index_));
-    game.set_room_x_coordinate_on_map(u16::from((*room).x_coordinate_on_map));
-    game.set_room_y_coordinate_on_map(u16::from((*room).y_coordinate_on_map));
-    game.set_room_width_in_scrolls(u16::from((*room).width));
-    game.set_room_width_in_blocks(game.room_width_in_scrolls().wrapping_mul(16));
-    game.set_room_height_in_scrolls(u16::from((*room).height));
-    game.set_room_height_in_blocks(game.room_height_in_scrolls().wrapping_mul(16));
-    game.set_up_scroller(u16::from((*room).up_scroller_));
-    game.set_down_scroller(u16::from((*room).down_scroller_));
-    game.set_door_list_pointer((*room).ptr_to_doorout);
-    HandleRoomDefStateSelect(game.room_ptr(), game);
-    let product = Mult8x8(
-        game.room_width_in_blocks() as u8,
-        game.room_height_in_blocks() as u8,
-    );
-    game.set_room_size_in_blocks(product.wrapping_mul(2));
-}
-pub unsafe fn LoadStateHeader(game: &mut Game) {
-    let room_state = get_RoomDefRoomstate(game.roomdefroomstate_ptr(), game);
-    let graphics_set = usize::from((*room_state).graphics_set);
-    let tileset_ptr = game.read_rom_word(0x8fe7a7, 2 * graphics_set);
-    let tileset = get_TileSet(tileset_ptr, game);
-    game.set_tileset_tile_table_pointer((*tileset).tile_table_ptr);
-    game.set_tileset_tiles_pointer((*tileset).tiles_ptr);
-    game.set_tileset_compr_palette_ptr((*tileset).palette_ptr);
-    game.set_room_compr_level_data_ptr((*room_state).compressed_room_map_ptr);
-    game.set_room_music_data_index(u16::from((*room_state).music_track));
-    game.set_room_music_track_index(u16::from((*room_state).music_control));
-    game.set_room_layer3_asm_ptr((*room_state).room_layer3_fx_ptr);
-    game.set_room_enemy_population_ptr((*room_state).enemy_population_ptr_);
-    game.set_room_enemy_tilesets_ptr((*room_state).enemy_tilesets_ptr);
-    let [scroll_x, scroll_y] = (*room_state).vertical_screen_nudge_limit.to_le_bytes();
-    game.set_layer2_scroll_x_and_y(scroll_x, scroll_y);
-    game.set_room_main_code_ptr((*room_state).main_code_ptr);
 }
 pub unsafe fn WaitUntilEndOfVblankAndEnableIrq(game: &mut Game) {
     if (*ram_ptr!(game; 0x84) & 0x30) != 0x30 {

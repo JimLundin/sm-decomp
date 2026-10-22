@@ -58,4 +58,11 @@ impl RomRecord {
     pub(crate) fn word(&self, offset: usize) -> u16 {
         u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
     }
+
+    pub(crate) fn long(&self, offset: usize) -> crate::types::LongPtr {
+        crate::types::LongPtr {
+            addr: self.word(offset),
+            bank: self.byte(offset + 2),
+        }
+    }
 }
