@@ -20,7 +20,7 @@ use crate::game::sm_89::LoadFXHeader;
 use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
 use crate::game::sm_8d::ClearPaletteFXObjects;
 use crate::game::sm_90::UpdateBeamTilesAndPalette;
-use crate::game::sm_a0::LoadEnemies;
+use crate::game::enemy_population_ram::load_room_assets;
 use crate::rtl::RtlApuUpload;
 
 crate::typed_struct! {
@@ -1492,7 +1492,7 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
         ClearPaletteFXObjects(game);
         UpdateBeamTilesAndPalette(game);
         load_sprite_palettes(game);
-        LoadEnemies(game);
+        load_room_assets(game);
         LoadRoomMusic(game);
     }
     if resume <= 2 {

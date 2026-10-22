@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,720 Rust lines in 117 files**, plus 262 C
-bridge and 296 C-header lines = **96,278 maintained implementation lines**.
+Current composition (2026-10-22): **95,718 Rust lines in 117 files**, plus 262 C
+bridge and 296 C-header lines = **96,276 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,109**. This complete recount includes frontend,
+gives **97,107**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -3025,16 +3025,30 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    diagnostics remain unsafe. Safety cost: **+3 Rust lines**, removing three
    counted unsafe declarations and four cast-containing lines.
    **372 actual old/new full-state comparisons**, 27,602 ordered RAM observations,
-   372 actual DMA calls, 256 decompressions and 140 matching failures pass.
+   372 entries at DMA boundaries, 256 at decompression boundaries and 140
+   matching controlled failures pass.
    Probed and clean initial loading pass **106/0**, inputs **8250..8355**; the
    first door passes **90/0**, inputs **11540..11629**, through fade completion
    and two following frames. The door uses fixed placement; sequential placement,
    null/empty/wrapped lists and unusual records have component coverage.
    Setup is separate: guarded prefixes establish no earlier graphics calls and,
    after the concurrent dialogue adoption, no dialogue execution before 11540.
-   Initial enemy staging still uses linear retained records and packed load data;
-   migrate that boundary without conflating its traversal with this wrapped list.
    Checks: Local/sm-decomp-experiments/20261022/room-graphics.
+   Initial enemy graphics staging now belongs to `enemy_population_ram`, sharing
+   checked ROM ownership with population loading. Four bank routines, the packed
+   pointer type, a raw tileset helper and the duplicate record reader retire.
+   Preserve linear traversal, palette destination capture, live size/count reads,
+   the fifth record's overlap with the write position, and do-while chunk copying.
+   Checked native RAM access and copying forbid unsafe code; ROM diagnostics and
+   sprite-object calls remain unsafe. RAM is still the persistent state owner.
+   **447 old/new comparisons**, 23,237 ordered RAM observations, 9,340 completed
+   palette/tile copies and 164 matching failures/stops pass, plus two candidate
+   bounds cases. Probed and clean loading/door segments pass **106/0 + 90/0**,
+   inputs **8250..8355** and **11540..11629**, through transfers, initialization
+   and fade completion. Guarded setup is separate; unvisited paths have component
+   coverage. Complete savings: **2 Rust lines**, two unsafe declarations and three
+   cast-containing lines. Enemy AI, sprites and broader state ownership remain.
+   Checks: Local/sm-decomp-experiments/20261022/enemy-staging.
    Event/boss flag access and shared bit-mask preparation now live in the safe
    `progress_flags` module, which forbids unsafe code. All 15 caller files import
    it directly; the six bank-80 definitions are retired. Queries retain their
@@ -4159,15 +4173,20 @@ stereo output, checked tracing, owned room-background records, checked palette
 execution, shared effect ROM records, checked animated tiles, safe progress flags,
 owned room metadata, checked door metadata, shared scroll loading, shared PLM
 spawning, room-content loading, door closing, checked music control and shared
-dialogue control and checked room graphics,
-maintained Rust is **95,720**,
+dialogue control, checked room graphics and checked enemy graphics staging,
+maintained Rust is **95,718**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,278**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,109**.
+Including 262 C and 296 header lines gives **96,276**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,107**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2979; cast lines 6482. Checked room graphics adds three Rust
+unsafe functions 2977; cast lines 6479. Checked enemy graphics staging removes
+two Rust lines across five files, two unsafe declarations and three cast lines.
+Raw palette/tile copying, record traversal and enemy clearing retire; native RAM
+access and copying forbid unsafe code. Shared ROM diagnostics and sprite calls
+remain unsafe, with other counters unchanged. RAM authority is not yet retired.
+Checked room graphics adds three Rust
 lines across four files, removing three counted unsafe declarations and four
 cast-containing lines. Raw record/asset-pointer reads retire, and sprite palette
 loading forbids unsafe code. Hardware calls and native diagnostics remain unsafe;

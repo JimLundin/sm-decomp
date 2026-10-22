@@ -705,11 +705,8 @@ pub const fn lorom_offset(address: u32) -> isize {
 }
 
 /// Capture a checked record while preserving the legacy low-window diagnostic.
-pub(crate) unsafe fn rom_bank_record<const BANK: u8>(
-    addr: u16,
-    game: &mut Game,
-) -> crate::rom::RomRecord {
-    let address = (u32::from(BANK) << 16) | u32::from(addr);
+pub(crate) unsafe fn rom_record(bank: u8, addr: u16, game: &mut Game) -> crate::rom::RomRecord {
+    let address = (u32::from(bank) << 16) | u32::from(addr);
     if address & 0x8000 == 0 {
         printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
         game.g_fail = true;
@@ -722,6 +719,13 @@ pub(crate) unsafe fn rom_bank_record<const BANK: u8>(
             .clone(),
         base: lorom_offset(address) as usize,
     }
+}
+
+pub(crate) unsafe fn rom_bank_record<const BANK: u8>(
+    addr: u16,
+    game: &mut Game,
+) -> crate::rom::RomRecord {
+    rom_record(BANK, addr, game)
 }
 
 /// Resolve a word address in a fixed ROM bank through the maintained validator.

@@ -21,23 +21,10 @@ use crate::game::sm_90::{CallSomeSamusCode, DrawSamusAndProjectiles};
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::square_slope_occupied;
 use crate::game::sm_b4::{
-    ClearSpriteObjects, CreateSpriteAtPos, DrawSpriteObjects, HandleSpriteObjects,
+    CreateSpriteAtPos, DrawSpriteObjects, HandleSpriteObjects,
 };
 use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
 
-crate::typed_struct! {
-    [
-        #[derive(Copy, Clone)]
-        #[repr(C, packed)]
-    ];
-
-
-    pub struct EnemyTileLoadData {
-        pub tile_data_size: u16;
-        pub tile_data_ptr: LongPtr;
-        pub offset_into_ram: u16;
-    }
-}
 pub use crate::types::EnemyAiBits;
 crate::game::constants::typed_constants! { EnemyAiBits;
     kEnemyAiBits_Frozen = 4, kEnemyAiBits_Hurt = 2,
@@ -71,7 +58,6 @@ unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
     ram_ptr!(game; addr as i32 as isize)
 }
 const RomPtr_86: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x86>;
-const RomPtr_A1: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa1>;
 use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 #[inline]
 unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
@@ -80,10 +66,6 @@ unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
 #[inline]
 unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
     RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
-}
-#[inline]
-unsafe fn get_EnemyTileset(a: u16, game: &mut Game) -> *mut EnemyTileset {
-    RomPtr((0xb40000u32) | ((a) as u32), game) as *mut EnemyTileset
 }
 #[inline]
 unsafe fn get_EprojDef(a: u16, game: &mut Game) -> *mut EprojDef {
@@ -313,52 +295,7 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
     CallEnemyGfxDrawHook(Load24(ram_ptr!(game, LongPtr; 0x178c)), game);
 }
 
-pub unsafe fn LoadEnemies(game: &mut Game) {
-    word!(game.debug_time_frozen_for_enemies = 0);
-    (*(ram_ptr!(game, LongPtr; 0x178c))).bank = 160;
-    (*(ram_ptr!(game, LongPtr; 0x178c))).addr = ((0xa0804ci32) as u16);
-    word!(game.enemy_bg2_tilemap_size = 2048);
-    word! { game, 0; UNUSED_word_7E179E, UNUSED_word_7E17A0, boss_id }
-    ClearEnemyDataAndProcessEnemySet(game);
-    LoadEnemyTileData(game);
-    word! { game, 0; enemy_tile_vram_src, flag_disable_projectile_interaction }
-    ClearSpriteObjects(game);
-}
-pub unsafe fn ClearEnemyDataAndProcessEnemySet(game: &mut Game) {
-    memset(ram_ptr!(game, c_void; 0xf78), 0, 2048 as size_t);
-    if *(RomPtr_A1(word!(game.room_enemy_population_ptr), game) as *mut u16) != 0xffff {
-        ProcessEnemyTilesets(game);
-    }
-}
 
-pub unsafe fn LoadEnemyTileData(game: &mut Game) {
-    for i in (0i32..=510).rev().step_by(2) {
-        (*gEnemySpawnData(i, game)).some_flag =
-            crate::rtl::rom_table_word!(game, 0x9ad200, ((i >> 1) + 3072) as isize);
-    }
-    if word!(game.enemy_tile_load_data_write_pos) != 0 {
-        let mut v1: u16 = 0;
-        let mut load_data: *mut EnemyTileLoadData = ram_ptr!(game, EnemyTileLoadData; 0xe5a);
-        do_until! { (v1 == word!(game.enemy_tile_load_data_write_pos));
-            let mut v2: u16 = (*load_data).tile_data_ptr.addr;
-            let r18: u16 = ((*load_data).tile_data_size).wrapping_add(v2);
-            let mut v3: u16 = (*load_data).offset_into_ram;
-            let db: u8 = (*load_data).tile_data_ptr.bank;
-            do_until! { (v2 == r18);
-            memcpy(
-                ram_ptr!(game, c_void; (0x7000 + v3 as i32) as isize),
-                RomPtrWithBank(db, v2, game) as *const c_void,
-                8 as size_t,
-            );
-            v3 = (v3).wrapping_add(8);
-            v2 = (v2).wrapping_add(8);
-        }
-            load_data = load_data.offset(1);
-            v1 = (v1).wrapping_add(7);
-        }
-        word!(game.enemy_tile_load_data_write_pos = 0);
-    }
-}
 pub unsafe fn TransferEnemyTilesToVramAndInit(game: &mut Game) {
     let mut source = game.enemy_tile_vram_src();
     if game.enemy_tile_vram_src() == 0 {
@@ -389,49 +326,6 @@ pub unsafe fn TransferEnemyTilesToVramAndInit(game: &mut Game) {
             game.set_enemy_tile_vram_dst(destination.wrapping_add(1024));
             game.set_vram_write_queue_tail(tail.wrapping_add(7));
         }
-    }
-}
-pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
-    word!(game.enemy_tile_load_data_write_pos = 0);
-    let mut r30: u16 = 2048;
-    word! { game, 0;
-        enemy_def_ptr[0], enemy_def_ptr[1], enemy_def_ptr[2], enemy_def_ptr[3],
-        enemy_gfxdata_tiles_index[0], enemy_gfxdata_tiles_index[1], enemy_gfxdata_tiles_index[2],
-        enemy_gfxdata_tiles_index[3], enemy_gfxdata_vram_ptr[0], enemy_gfxdata_vram_ptr[1],
-        enemy_gfxdata_vram_ptr[2], enemy_gfxdata_vram_ptr[3],
-    }
-    let mut enemy_gfx_data_write_ptr: u16 = 0;
-    let mut next_enemy_tiles_index: u16 = 0;
-    let mut ET = get_EnemyTileset(word!(game.room_enemy_tilesets_ptr), game);
-    let mut LD: *mut EnemyTileLoadData = ram_ptr!(game, EnemyTileLoadData; 0xe5a);
-    while (*ET).enemy_def != 0xffff {
-        let ED = get_EnemyDef_A2((*ET).enemy_def, game);
-        memcpy(
-            (ram_ptr!(game, u16; 0xc200))
-                .offset(((byte!((*ET).vram_dst; 0) as i32 + 8) * 16) as isize)
-                as *mut c_void,
-            RomPtrWithBank((*ED).bank, (*ED).palette_ptr, game) as *const c_void,
-            32 as size_t,
-        );
-        (*LD).tile_data_size = ((*ED).tile_data_size) & (0x7fffu16);
-        (*LD).tile_data_ptr = (*ED).tile_data;
-        let mut v10: u16 = r30;
-        if ((*ED).tile_data_size & 0x8000) != 0 {
-            v10 = ((((*ET).vram_dst) & (0x3000u16)) >> 3);
-        }
-        (*LD).offset_into_ram = v10;
-        word!(game.enemy_tile_load_data_write_pos += 7);
-        LD = LD.offset(1);
-        let v11: u16 = enemy_gfx_data_write_ptr;
-        *(ram_ptr!(game, u16; 0xef64)).offset((enemy_gfx_data_write_ptr >> 1) as isize) =
-            next_enemy_tiles_index;
-        word!(game.enemy_def_ptr[(v11 >> 1)] = (*ET).enemy_def);
-        word!(game.enemy_gfxdata_vram_ptr[(v11 >> 1)] = (*ET).vram_dst);
-        enemy_gfx_data_write_ptr = (enemy_gfx_data_write_ptr).wrapping_add(2);
-        next_enemy_tiles_index =
-            (next_enemy_tiles_index as i32 + ((*ED).tile_data_size as i32 >> 5)) as u16;
-        r30 = (r30).wrapping_add((*ED).tile_data_size);
-        ET = ET.offset(1);
     }
 }
 pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {

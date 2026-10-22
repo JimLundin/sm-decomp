@@ -3,7 +3,7 @@ use crate::game::music::{
     LoadNewMusicTrackIfChanged,
 };
 use crate::game::decompression::decompress_to_ram;
-use crate::game::enemy_population_ram::initialize_room;
+use crate::game::enemy_population_ram::{initialize_room, load_room_assets};
 use crate::game::gameplay::advance as AdvanceGameplay;
 pub use crate::game::prelude::*;
 use crate::game::room_backgrounds::BackgroundLoad;
@@ -63,7 +63,7 @@ use crate::game::sm_9b::{
     HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
 use crate::game::sm_a0::{
-    DetermineWhichEnemiesToProcess, DrawSamusEnemiesAndProjectiles, EnemyMain, LoadEnemies,
+    DetermineWhichEnemiesToProcess, DrawSamusEnemiesAndProjectiles, EnemyMain,
     QueueEnemyBG2TilemapTransfers, TransferEnemyTilesToVramAndInit,
 };
 use crate::game::sm_a7::{
@@ -3773,7 +3773,7 @@ crate::game::callback_dispatch! {
             close_door(game);
             UpdateBeamTilesAndPalette(game);
             load_sprite_palettes(game);
-            LoadEnemies(game);
+            load_room_assets(game);
             initialize_room(game);
             ResetProjectileData(game);
             Samus_LoadSuitTargetPalette(game);
