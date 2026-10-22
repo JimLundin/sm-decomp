@@ -4,13 +4,16 @@ use crate::game::decompression::decompress_to_ram;
 use crate::game::plm_spawning::SpawnRoomPLM;
 use crate::game::progress_flags::{CheckBossBitForCurArea, CheckEventHappened};
 use crate::game::sm_80::{
-    LoadMirrorOfExploredMapTiles, SaveExploredMapTilesToSaved, SetElevatorsAsUsed,
+    CopyToVramNow, DecompressToVRAM, LoadMirrorOfExploredMapTiles, SaveExploredMapTilesToSaved,
+    SetElevatorsAsUsed,
 };
 use crate::game::sm_8f::{CallDoorDefSetupCode, CallRoomSetupCode};
 use crate::game_state::Game;
 use crate::ram_map::checked_word;
-use crate::rtl::{Mult8x8, Unreachable};
+use crate::rtl::{rom_bank_record, Mult8x8, Unreachable, WriteRegWord};
+use crate::snes::registers::{VMADDL, VMAIN};
 use crate::types::{DoorDef as Door, RoomDefHeader as Header, RoomDefRoomstate as State};
+use crate::types::{EnemyDef, EnemyTileset};
 use core::mem::offset_of;
 
 const room_record: unsafe fn(u16, &mut Game) -> crate::rom::RomRecord =
@@ -298,4 +301,55 @@ unsafe fn initialize_objects<const INITIAL: bool>(state: crate::rom::RomRecord, 
     if checked_word!(game.elevator_flags) != 0 {
         checked_word!(game.elevator_status = 2);
     }
+}
+
+pub(crate) unsafe fn load_enemy_graphics(game: &mut Game) {
+    let mut cursor = i32::from(checked_word!(game.room_enemy_tilesets_ptr));
+    if cursor == 0 {
+        return;
+    }
+    let mut next_tile = 0x7000u16;
+    loop {
+        // Reacquire each bank address: this list wraps, unlike initial staging.
+        let enemy =
+            rom_bank_record::<0xb4>(cursor as u16, game).word(offset_of!(EnemyTileset, enemy_def));
+        if enemy == 0xffff {
+            return;
+        }
+        let definition = rom_bank_record::<0xa0>(enemy, game);
+        let size = definition.word(offset_of!(EnemyDef, tile_data_size));
+        let destination = if size & 0x8000 != 0 {
+            let tileset = rom_bank_record::<0xb4>(cursor as u16, game);
+            (tileset.word(offset_of!(EnemyTileset, vram_dst)) & 0xf000) >> 4 | 0x6000
+        } else {
+            let destination = next_tile;
+            next_tile = next_tile.wrapping_add(size >> 1);
+            destination
+        };
+        CopyToVramNow(
+            destination,
+            definition.load24(offset_of!(EnemyDef, tile_data)),
+            size & 0x7fff,
+            game,
+        );
+        cursor += 4;
+    }
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn load_sprite_palettes(game: &mut Game) {
+    word_transfers!(game, descending, 16; le(target_palettes, 223) <- rom(0x9a8000, 223));
+    word_transfers!(game, descending, 16; native(0xc3de) <- native(0xc1de));
+    word_transfers!(game, descending, 16; native(0xc31e) <- rom(0x9afc00, 15));
+}
+
+pub(crate) unsafe fn load_tiles_and_palette(game: &mut Game) {
+    game.set_elevator_flags(0);
+    crate::rtl::register_writes! { game;
+        word(VMAIN as u16, 0x80); word(VMADDL as u16, 0x2800);
+    }
+    DecompressToVRAM(0xb98000, 0x5000, game);
+    WriteRegWord(VMADDL as u16, 0, game);
+    DecompressToVRAM(asset_pointer(0x7c3, game), 0, game);
+    decompress_to_ram(asset_pointer(0x7c6, game), 0xc200, game);
 }

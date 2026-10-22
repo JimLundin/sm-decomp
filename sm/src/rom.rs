@@ -59,6 +59,11 @@ impl RomRecord {
         u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
     }
 
+    // Load24 includes the adjacent fourth byte in a native read before masking.
+    pub(crate) fn load24(&self, offset: usize) -> u32 {
+        u32::from_ne_bytes(core::array::from_fn(|i| self.byte(offset + i))) & 0xffffff
+    }
+
     pub(crate) fn long(&self, offset: usize) -> crate::types::LongPtr {
         crate::types::LongPtr {
             addr: self.word(offset),

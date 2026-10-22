@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,717 Rust lines in 117 files**, plus 262 C
-bridge and 296 C-header lines = **96,275 maintained implementation lines**.
+Current composition (2026-10-22): **95,720 Rust lines in 117 files**, plus 262 C
+bridge and 296 C-header lines = **96,278 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,106**. This complete recount includes frontend,
+gives **97,109**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2968,6 +2968,24 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    and credits execution are not claimed. Normal library/frontend/verifier builds,
    native/source checks, formatting and progress pass.
    Checks: Local/sm-decomp-experiments/20261022/music-control.
+   Room graphics setup now joins `room_state`: enemy VRAM loading, shared sprite
+   palettes and CRE/tileset/palette decompression. Three bank definitions and two
+   raw pointer helpers retire; both caller units migrate. Checked records retain
+   native dword reads, wrapped bank reacquisition and allocation/live-read order.
+   Sprite-palette loading forbids unsafe code; hardware calls and native
+   diagnostics remain unsafe. Safety cost: **+3 Rust lines**, removing three
+   counted unsafe declarations and four cast-containing lines.
+   **372 actual old/new full-state comparisons**, 27,602 ordered RAM observations,
+   372 actual DMA calls, 256 decompressions and 140 matching failures pass.
+   Probed and clean initial loading pass **106/0**, inputs **8250..8355**; the
+   first door passes **90/0**, inputs **11540..11629**, through fade completion
+   and two following frames. The door uses fixed placement; sequential placement,
+   null/empty/wrapped lists and unusual records have component coverage.
+   Setup is separate: guarded prefixes establish no earlier graphics calls and,
+   after the concurrent dialogue adoption, no dialogue execution before 11540.
+   Initial enemy staging still uses linear retained records and packed load data;
+   migrate that boundary without conflating its traversal with this wrapped list.
+   Checks: Local/sm-decomp-experiments/20261022/room-graphics.
    Event/boss flag access and shared bit-mask preparation now live in the safe
    `progress_flags` module, which forbids unsafe code. All 15 caller files import
    it directly; the six bank-80 definitions are retired. Queries retain their
@@ -4092,15 +4110,20 @@ stereo output, checked tracing, owned room-background records, checked palette
 execution, shared effect ROM records, checked animated tiles, safe progress flags,
 owned room metadata, checked door metadata, shared scroll loading, shared PLM
 spawning, room-content loading, door closing, checked music control and shared
-dialogue control,
-maintained Rust is **95,717**,
+dialogue control and checked room graphics,
+maintained Rust is **95,720**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,275**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,106**.
+Including 262 C and 296 header lines gives **96,278**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,109**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2982; cast lines 6486. Checked music control adds 34 Rust lines
+unsafe functions 2979; cast lines 6482. Checked room graphics adds three Rust
+lines across four files, removing three counted unsafe declarations and four
+cast-containing lines. Raw record/asset-pointer reads retire, and sprite palette
+loading forbids unsafe code. Hardware calls and native diagnostics remain unsafe;
+other counters are unchanged. This is a safety cost, not volume savings.
+Checked music control adds 34 Rust lines
 across 23 files, removing seven counted unsafe declarations and 18 cast-containing
 lines. Shared queue/room logic and checked table/RAM access replace raw operations;
 the safe control/query helpers forbid unsafe code. APU upload/write calls remain

@@ -8,6 +8,7 @@ use crate::game::gameplay::advance as AdvanceGameplay;
 pub use crate::game::prelude::*;
 use crate::game::room_backgrounds::BackgroundLoad;
 use crate::game::room_state::{
+    load_enemy_graphics, load_sprite_palettes, load_tiles_and_palette,
     load_destination_cre, load_destination_map, load_door, load_header as LoadRoomHeader,
     load_state as LoadStateHeader, initialize_door_objects, load_level, save_departing_map,
 };
@@ -138,14 +139,6 @@ crate::ram_map::ram_pointer_functions! {
 #[inline]
 unsafe fn get_RoomDefHeader(a: u16, game: &mut Game) -> *mut RoomDefHeader {
     RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefHeader
-}
-#[inline]
-unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
-    RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
-}
-#[inline]
-unsafe fn get_EnemyTileset(a: u16, game: &mut Game) -> *mut EnemyTileset {
-    RomPtr((0xb40000u32) | ((a) as u32), game) as *mut EnemyTileset
 }
 #[inline]
 unsafe fn get_DemoRoomData(a: u16, game: &mut Game) -> *mut DemoRoomData {
@@ -3610,46 +3603,7 @@ pub unsafe fn EnsureSamusDrawnEachFrame(game: &mut Game) {
         Samus_DrawWhenNotAnimatingOrDying(game);
     }
 }
-pub unsafe fn LoadEnemyGfxToVram(game: &mut Game) {
-    let mut dst: u16 = 0x7000;
-    let mut v0: u16 = word!(game.room_enemy_tilesets_ptr);
-    if word!(game.room_enemy_tilesets_ptr) != 0 {
-        let mut i: i32 = word!(game.room_enemy_tilesets_ptr) as i32;
-        loop {
-            let enemy_def: u16 = (*get_EnemyTileset(v0, game)).enemy_def;
-            if enemy_def == 0xffff {
-                break;
-            }
-            let mut ED: *mut EnemyDef = get_EnemyDef_A2(enemy_def, game);
-            let mut vram_update_size: u16 = 0;
-            let mut vram_update_dst: u16 = 0;
-            if ((*ED).tile_data_size & 0x8000) != 0 {
-                vram_update_size = ((*ED).tile_data_size) & (0x7fffu16);
-                vram_update_dst =
-                    ((((*get_EnemyTileset(i as u16, game)).vram_dst) & (0xf000u16)) as i32 >> 4
-                        | 0x6000) as u16;
-            } else {
-                vram_update_size = (*ED).tile_data_size;
-                vram_update_dst = dst;
-                dst = (dst as i32 + ((*ED).tile_data_size as i32 >> 1)) as u16;
-            }
-            CopyToVramNow(
-                vram_update_dst,
-                Load24(&raw mut (*ED).tile_data),
-                vram_update_size,
-                game,
-            );
-            i += 4;
-            v0 = i as u16;
-        }
-    }
-}
 pub fn NullFunc() {}
-pub unsafe fn LoadColorsForSpritesBeamsAndEnemies(game: &mut Game) {
-    word_transfers!(game, descending, 16; le(target_palettes, 223) <- rom(0x9a8000, 223));
-    word_transfers!(game, descending, 16; native(0xc3de) <- native(0xc1de));
-    word_transfers!(game, descending, 16; native(0xc31e) <- rom(0x9afc00, 15));
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallDoorTransitionFunction_Async(ea: u32, game: &mut Game) -> CoroutineRet => ea;
     call (game); default Unreachable(game) as CoroutineRet;
@@ -3808,7 +3762,7 @@ crate::game::callback_dispatch! {
         crate::verify_probe::hit("coroutine.door");
         let resume = game.coroutine_state_1();
         if resume == 0 {
-            LoadEnemyGfxToVram(game);
+            load_enemy_graphics(game);
             LoadRoomMusic(game);
             ClearEprojs(game);
             ClearAnimtiles(game);
@@ -3818,7 +3772,7 @@ crate::game::callback_dispatch! {
             LoadFXHeader(game);
             close_door(game);
             UpdateBeamTilesAndPalette(game);
-            LoadColorsForSpritesBeamsAndEnemies(game);
+            load_sprite_palettes(game);
             LoadEnemies(game);
             initialize_room(game);
             ResetProjectileData(game);
@@ -3989,17 +3943,7 @@ pub unsafe fn LoadDestinationRoomThings(game: &mut Game) {
     load_door(game);
     LoadRoomHeader(game);
     LoadStateHeader(game);
-    LoadCRETilesTilesetTilesAndPalette(game);
-}
-pub unsafe fn LoadCRETilesTilesetTilesAndPalette(game: &mut Game) {
-    word!(game.elevator_flags = 0);
-    crate::rtl::register_writes! { game;
-        word(VMAIN as u16, 0x80); word(VMADDL as u16, (addr_unk_605000 as i32 >> 1) as u16);
-    }
-    DecompressToVRAM(0xb98000, addr_unk_605000 as u16, game);
-    WriteRegWord(VMADDL as u16, 0, game);
-    DecompressToVRAM(Load24(ram_ptr!(game, LongPtr; 0x7c3)), 0, game);
-    decompress_to_ram(Load24(ram_ptr!(game, LongPtr; 0x7c6)), 0xc200, game);
+    load_tiles_and_palette(game);
 }
 
 static kGameOptionsMenuFuncs: [Func_V; 13] = callback_table! { nonnull Func_V;

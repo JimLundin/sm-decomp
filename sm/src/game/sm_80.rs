@@ -1,3 +1,4 @@
+use crate::game::room_state::{load_sprite_palettes, load_tiles_and_palette};
 use crate::game::music::{HandleMusicQueue, LoadRoomMusic, UpdateMusicTrackIndex};
 use crate::game::decompression::{self, decompress_to_ram};
 pub use crate::game::prelude::*;
@@ -8,7 +9,6 @@ pub use crate::game::constants::bank_60::*;
 use crate::c_library::memcmp;
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{
-    LoadCRETilesTilesetTilesAndPalette, LoadColorsForSpritesBeamsAndEnemies,
     LoadDestinationRoomThings, NullFunc, ResetSoundQueues,
 };
 use crate::game::plm_spawning::SpawnHardcodedPlm;
@@ -1491,7 +1491,7 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
         ClearEprojs(game);
         ClearPaletteFXObjects(game);
         UpdateBeamTilesAndPalette(game);
-        LoadColorsForSpritesBeamsAndEnemies(game);
+        load_sprite_palettes(game);
         LoadEnemies(game);
         LoadRoomMusic(game);
     }
@@ -1569,7 +1569,7 @@ pub unsafe fn ResumeGameplay(game: &mut Game) {
     WriteRegWord(MDMAEN as u16, 0, game);
     DisableNMI(game);
     DisableIrqInterrupts(game);
-    LoadCRETilesTilesetTilesAndPalette(game);
+    load_tiles_and_palette(game);
     BackgroundLoad::Initial.load(game);
     DisplayViewablePartOfRoom(game);
     LoadRoomPlmGfx(game);
