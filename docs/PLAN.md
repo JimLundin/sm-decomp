@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,341 Rust lines in 111 files**, plus 262 C
-bridge and 296 C-header lines = **95,899 maintained implementation lines**.
+Current composition (2026-10-22): **95,372 Rust lines in 111 files**, plus 262 C
+bridge and 296 C-header lines = **95,930 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,730**. This complete recount includes frontend,
+gives **96,761**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2216,6 +2216,32 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    this diagnostic change is exercised directly through RunCpuUntilPC, RunAsmCode
    and apu_cycle, with no gameplay or physical-device coverage claimed.
    Checks: Local/sm-decomp-experiments/20261022/checked-tracing.
+   Initial and door background loading now share checked, owned ROM records.
+   The record decoder forbids unsafe code; all raw ROM reads and direct RAM
+   pointer operations in this module are retired. Initial records retain native
+   byte order, aliased-window warnings, captured allocation identity and live
+   rereads between register writes. Door records retain checked little-endian
+   reads and captured transfer arguments. Conditional door commands preserve
+   their separate native read and wrapped cursor. Register/decompression order,
+   initial versus door clears and forced-blank behavior remain unchanged.
+   Complete safety cost: **+31 Rust lines** in one file, including the decoder
+   and explicit native diagnostic helper. Hardware and diagnostics remain unsafe.
+   **904 actual old/new comparisons**, 13,590 ordered register events and 92
+   matching failures pass with real DMA/decompression and full hardware/RAM
+   observations. Checks include odd commands, linear bank-edge reads, conditional
+   cursor wrapping, allocation rebinding, live ROM mutations and partial effects
+   before injected register failures. Odd native loads compare observed optimized
+   behavior; checked reads remove their alignment requirement. All 118 library
+   inputs, test-only source additions, native stamps, formatting and normal
+   release builds pass.
+   Probed and clean Speed Booster segments each pass **3,335/0**, inputs
+   **8295..11629**: initial loading at 8296; door commands, decompression and
+   transfers at 11546; completed fade at 11627, followed by two frames. The
+   8,295-frame setup prefix is cached separately; an entry guard proves that no
+   background load runs there. Normal comparisons, rendering and audio remain
+   enabled. Unvisited initial-transfer and special-clear paths have component
+   coverage; no wider route or physical-device coverage is claimed.
+   Checks: Local/sm-decomp-experiments/20261022/background-records.
    Runtime construction now uses typed initial values shared through the existing
    record metadata. Game owns three separately allocated oracle snapshots while
    retaining its fixed inline SNES RAM. Nine hardware constructors use typed
@@ -3267,15 +3293,21 @@ motion, checked ROM patch installation, hardware field serialization, PLM
 award/message ownership, owned APU RAM, the owned audio command queue and enemy
 population ownership, owned native audio uploads, typed runtime initialization,
 owned native-player RAM with named field transfers, DSP RAM ownership and typed
-stereo output and checked tracing, maintained Rust is **95,341**, with
+stereo output, checked tracing and owned room-background records,
+maintained Rust is **95,372**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **95,899**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,730**.
+Including 262 C and 296 header lines gives **95,930**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,761**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3021; cast lines 6538. Checked tracing removes three counted
-unsafe declarations with zero net line change; other counters are unchanged.
+unsafe functions 3022; cast lines 6538. Owned room-background records add 31
+maintained Rust lines and one counted unsafe declaration for the explicit native
+diagnostic boundary. Module raw ROM/RAM operations are retired; the owned record
+decoder forbids unsafe code. Hardware calls and native diagnostics remain unsafe.
+Other counters are unchanged; this is a safety cost, not volume savings.
+Checked tracing removes three counted unsafe declarations with zero net line
+change; other counters are unchanged.
 Raw output stores, C-string reads and two unsafe table initializers are retired;
 bus/processor access and native terminal output remain unsafe.
 Typed stereo output adds 12 maintained

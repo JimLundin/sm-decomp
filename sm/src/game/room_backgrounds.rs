@@ -3,8 +3,6 @@ use crate::game::decompression::decompress_to_ram;
 use crate::game::prelude::*;
 use crate::game::sm_80::CopyToVramNow;
 
-const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
-
 #[derive(Clone, Copy)]
 pub(crate) enum BackgroundLoad {
     Initial,
@@ -16,9 +14,9 @@ impl BackgroundLoad {
         self.clear_fx(game);
         match self {
             Self::Initial => {
-                if word!(game.fx_tilemap_ptr) != 0 {
+                if u16::from_le_bytes([game.g_ram[0x1964], game.g_ram[0x1965]]) != 0 {
                     crate::rtl::register_writes! { game;
-                        word(A1T1L as u16, word!(game.fx_tilemap_ptr)); word(VMADDL as u16, 0x5be0);
+                        word(A1T1L as u16, u16::from_le_bytes([game.g_ram[0x1964], game.g_ram[0x1965]])); word(VMADDL as u16, 0x5be0);
                         word(DMAP1 as u16, 0x1801); word(A1B1 as u16, 0x8a);
                         word(DAS1L as u16, 0x840); byte(VMAIN as u16, 0x80);
                         byte(MDMAEN as u16, 2);
@@ -32,22 +30,12 @@ impl BackgroundLoad {
                 }
             }
         }
-        let mut cursor = match self {
-            Self::Initial => {
-                (*(RomPtr_8F(word!(game.roomdefroomstate_ptr), game) as *const RoomDefRoomstate))
-                    .bg_data_ptr
-            }
-            Self::Door => game.read_rom_word(
-                0x8f0000 | u32::from(game.roomdefroomstate_ptr()),
-                core::mem::offset_of!(RoomDefRoomstate, bg_data_ptr),
-            ),
-        };
+        let mut cursor = self
+            .record(game.roomdefroomstate_ptr(), game)
+            .word(core::mem::offset_of!(RoomDefRoomstate, bg_data_ptr));
         if cursor & 0x8000 != 0 {
             while cursor != 0 {
-                let command = match self {
-                    Self::Initial => *(RomPtr_8F(cursor, game) as *const u16),
-                    Self::Door => game.read_rom_word(0x8f0000 | u32::from(cursor), 0),
-                };
+                let command = self.record(cursor, game).word(0);
                 cursor = self.execute(command, cursor.wrapping_add(2), game);
             }
         }
@@ -59,29 +47,14 @@ impl BackgroundLoad {
             0 => return 0,
             1 => return self.transfer(cursor, game),
             2 => {
-                match self {
-                    Self::Initial => {
-                        let p = RomPtr_8F(cursor, game);
-                        decompress_to_ram(
-                            Load24(p as *mut LongPtr),
-                            *(p.offset(3) as *mut u16) as usize,
-                            game,
-                        );
-                    }
-                    Self::Door => {
-                        let address = 0x8f0000 | u32::from(cursor);
-                        let source = u32::from(game.read_rom_word(address, 0))
-                            | (u32::from(game.read_rom_byte(address, 2)) << 16);
-                        let destination = usize::from(game.read_rom_word(address, 3));
-                        decompress_to_ram(source, destination, game);
-                    }
-                }
+                let data = self.record(cursor, game);
+                decompress_to_ram(data.source(), usize::from(data.word(3)), game);
                 return cursor.wrapping_add(5);
             }
             3 => self.clear_fx(game),
             4 => {
                 cursor = self.transfer(cursor, game);
-                *ram_ptr!(game; 0x5e) = 2;
+                game.g_ram[0x5e] = 2;
             }
             5 => self.clear_bg2(game),
             6 => match self {
@@ -94,8 +67,8 @@ impl BackgroundLoad {
                 }
             },
             7 => {
-                let door = (RomPtr_8F(cursor, game) as *const u16).read_unaligned();
-                return if word!(game.door_def_ptr) == door {
+                let door = Self::Initial.record(cursor, game).word(0);
+                return if game.door_def_ptr() == door {
                     self.transfer(cursor.wrapping_add(2), game)
                 } else {
                     cursor.wrapping_add(9)
@@ -107,27 +80,49 @@ impl BackgroundLoad {
     }
 
     unsafe fn transfer(self, cursor: u16, game: &mut Game) -> u16 {
+        let data = self.record(cursor, game);
         match self {
             Self::Initial => {
-                let p = RomPtr_8F(cursor, game) as *mut u16;
                 crate::rtl::register_writes! { game;
-                    word(VMADDL as u16, *((p as *mut u8).offset(3) as *mut u16));
-                    word(DMAP1 as u16, 0x1801); word(A1T1L as u16, *p);
-                    word(A1B1 as u16, *p.offset(1));
-                    word(DAS1L as u16, *((p as *mut u8).offset(5) as *mut u16));
+                    word(VMADDL as u16, data.word(3));
+                    word(DMAP1 as u16, 0x1801); word(A1T1L as u16, data.word(0));
+                    word(A1B1 as u16, data.word(2));
+                    word(DAS1L as u16, data.word(5));
                     byte(VMAIN as u16, 0x80); byte(MDMAEN as u16, 2);
                 }
             }
             Self::Door => {
-                let address = 0x8f0000 | u32::from(cursor);
-                let destination = game.read_rom_word(address, 3);
-                let source = u32::from(game.read_rom_word(address, 0))
-                    | (u32::from(game.read_rom_byte(address, 2)) << 16);
-                let size = game.read_rom_word(address, 5);
+                let destination = data.word(3);
+                let source = data.source();
+                let size = data.word(5);
                 CopyToVramNow(destination, source, size, game);
             }
         }
         cursor.wrapping_add(7)
+    }
+
+    unsafe fn record(self, cursor: u16, game: &mut Game) -> BackgroundRecord {
+        if cursor & 0x8000 == 0 {
+            match self {
+                Self::Initial => {
+                    printf(
+                        c"RomPtr - Invalid access 0x%x!\n".as_ptr(),
+                        0x8f0000 | u32::from(cursor),
+                    );
+                    game.g_fail = true;
+                }
+                Self::Door => panic!("ROM address must select a LoROM window"),
+            }
+        }
+        BackgroundRecord {
+            image: game
+                .loaded_rom
+                .as_ref()
+                .expect("ROM must be loaded")
+                .clone(),
+            base: crate::rtl::lorom_offset(0x8f0000 | u32::from(cursor)) as usize,
+            mode: self,
+        }
     }
 
     unsafe fn clear_fx(self, game: &mut Game) {
@@ -170,5 +165,41 @@ unsafe fn clear_tilemap_with_dma(
         word(DMAP1 as u16, 0x1908); word(A1T1L as u16, high);
         word(A1B1 as u16, 0x80); word(DAS1L as u16, size);
         byte(VMAIN as u16, 0x80); byte(MDMAEN as u16, 2);
+    }
+}
+
+// Keep the allocation and read live bytes between effects, as the old record pointer did.
+struct BackgroundRecord {
+    image: crate::rom::RomImage,
+    base: usize,
+    mode: BackgroundLoad,
+}
+
+#[forbid(unsafe_code)]
+impl BackgroundRecord {
+    fn bytes<const N: usize>(&self, offset: usize) -> [u8; N] {
+        let start = self.base + offset;
+        assert!(
+            start + N <= self.image.len(),
+            "ROM read outside loaded allocation"
+        );
+        std::array::from_fn(|i| self.image.read(start + i))
+    }
+
+    fn word(&self, offset: usize) -> u16 {
+        let bytes = self.bytes(offset);
+        match self.mode {
+            BackgroundLoad::Initial => u16::from_ne_bytes(bytes),
+            BackgroundLoad::Door => u16::from_le_bytes(bytes),
+        }
+    }
+
+    fn source(&self) -> u32 {
+        match self.mode {
+            BackgroundLoad::Initial => u32::from_ne_bytes(self.bytes(0)) & 0xffffff,
+            BackgroundLoad::Door => {
+                u32::from(self.word(0)) | (u32::from(self.bytes::<1>(2)[0]) << 16)
+            }
+        }
     }
 }
