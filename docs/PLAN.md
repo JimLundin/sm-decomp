@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,485 Rust lines in 111 files**, plus 262 C
-bridge and 296 C-header lines = **96,043 maintained implementation lines**.
+Current composition (2026-10-22): **95,516 Rust lines in 111 files**, plus 262 C
+bridge and 296 C-header lines = **96,074 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,874**. This complete recount includes frontend,
+gives **96,905**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2433,45 +2433,50 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    enabled. Unvisited initial-transfer and special-clear paths have component
    coverage; no wider route or physical-device coverage is claimed.
    Checks: Local/sm-decomp-experiments/20261022/background-records.
-   Palette and animated-tile definitions/scripts now share owned ROM records.
-   The reader forbids unsafe code and retains a captured cartridge allocation,
-   checked linear offsets and native-endian words. It replaces the private palette
-   reader and all animated-tile raw ROM loads. Wrapped script cursors remain distinct
-   from linear record offsets, and byte operands retain their original widths.
-   Low-window diagnostics and their failure-flag order are unchanged. Animated-tile
-   RAM operations, native diagnostics and effect calls still require unsafe code.
-   This shared-reader step adds **11 Rust lines** across four files, counting the
-   decoder, constructor and both consumers; residue counters are unchanged. It is
-   a safety cost, not volume savings. No new macros or dependencies are introduced.
-   Palette RAM already uses checked access throughout its lifecycle. Its adapter,
-   enable/disable/clear routines and miniboss query forbid unsafe code. Slot fields
-   use existing metadata, retaining broad/odd aliases and unrounded timer bytes.
-   RAM remains authoritative, with no whole-RAM mutable borrow or decoded state
-   held across callbacks. Full state ownership and bank retirement remain open.
-   The preceding palette RAM/dispatch and owned-ROM steps cost 84 and 18 lines,
-   already counted. Direct dispatch, callback-time rereads, damage carry/store
-   order, native/little-endian distinctions and ROM owner lifetimes are preserved.
-   Final shared-source checks pass **3,558 palette** and **2,673 animated-tile
-   old/new comparisons**, with 589 and 3,507 ordered observations and 62 and 73
-   matching controlled failures respectively. Full RAM/hardware comparisons cover
-   every instruction, initialization, timer/alias boundaries, callback mutation,
-   cartridge rebinding and partial effects. Animated-tile checks include 24 composed
-   spawn/handler/real-DMA sequences over three updates and 208 DMA triggers overall.
+   Palette and animated tiles now use checked ROM and RAM operations. The shared
+   ROM reader forbids unsafe code, retaining captured cartridge allocation,
+   native-endian words, linear record offsets and wrapped script cursors. Native
+   diagnostics preserve their failure-flag order. RAM remains authoritative through
+   checked byte access, without whole-RAM mutable borrows or a second mutable owner.
+   Full state ownership and bank retirement remain open; native diagnostics and
+   effect calls still require unsafe code.
+   Animated-tile execution now uses the existing checked-word interface throughout.
+   Enable/disable/clear and the shared countdown helper forbid unsafe code. Direct
+   instruction dispatch shares jumps, sound, boss/event branches and statue changes;
+   two unreferenced Samus forwarding functions are removed. Captured processor slots,
+   live handler-index rereads, unrounded timer-byte writes, broad word aliases,
+   wrapped target-palette indices and linear palette clears retain their behavior.
+   This RAM/dispatch step adds **31 Rust lines** in one file, removes seven counted
+   unsafe declarations and eight cast-containing lines. Other residue counters are
+   unchanged. No new adapter, macro or dependency is introduced. This is a safety
+   cost, not volume savings. The shared-reader step's 11 lines are already counted.
+   **3,182 actual old/new animated-tile comparisons** pass on the final source,
+   including 5,689 ordered register/effect observations with incoming RAM hashes and
+   exact ROM-owner counts, 400 actual DMA triggers and 91 matching controlled
+   failures. Checks cover every instruction, spawning, lifecycle flags/clearing,
+   three-update transfer sequences, timer/alias boundaries, cartridge rebinding,
+   partial effects and 27 populated-slot callback cases. Those cases distinguish
+   skipped pending slots from the original slot's completed stores. Seventeen
+   short-image checks and exact low-window diagnostic comparisons also pass.
    Music, sound, boss/event and palette-spawn hooks forward to real implementations;
-   enemy-projectile spawning is modeled. Register observations precede real hardware
-   execution. Test assertions use C-unwind; production ABI remains unchanged.
-   All 118 library inputs and test-only changes are checked for each suite. Fifteen
-   palette and seventeen animation short-image checks pass, along with matching
-   exact low-window diagnostic output. Out-of-allocation legacy reads are excluded;
-   odd native reads compare observed optimized behavior, not proof of definedness.
-   Normal release library/frontend/verifier, native/source stamps and formatting
-   pass. Probed and clean any% boot each pass **154/0**, inputs **0..153**. Required
-   shared capture, palette enable/spawn, ready timer, duration, color, wait and actual
-   CGRAM-upload probes first execute at 151, followed by two frames. Inputs 0..150
-   are setup. Normal comparisons, rendering and audio remain enabled. Animated
-   tiles and unvisited palette branches have component coverage only; no animated-
-   tile movie, wider route, credits or physical-device coverage is claimed.
-   Checks: Local/sm-decomp-experiments/20261022/effect-records.
+   enemy-projectile spawning is modeled. Register hooks precede real hardware.
+   Assertions use a declared C-unwind test boundary; production ABI is unchanged.
+   All 118 library inputs, four fixture inputs and test-only changes are checked.
+   Normal release library/frontend/verifier, native/source stamps, formatting and
+   progress checks pass. No movie ran for this step: no animated-tile movie segment
+   is established, and unrelated title frames add no execution coverage. Component
+   tests exercise actual script execution and DMA/hardware consumers; no movie,
+   wider route, credits or physical-device coverage is claimed for this RAM change.
+   Palette code is unchanged. Its preceding shared-reader validation passes 3,558
+   comparisons, 589 sound/owner observations and 62 controlled failures, plus fifteen
+   short-image checks. Probed/clean any% boot passed **154/0**, inputs **0..153**:
+   shared capture, palette enable/spawn, timer/duration/color/wait and actual CGRAM
+   upload first ran at 151, with two following frames and normal oracle/render/audio
+   checks. Inputs 0..150 are setup; this remains palette-only movie coverage.
+   Palette's adapter, enable/disable/clear routines and miniboss query forbid unsafe
+   code. Its earlier RAM/dispatch and owned-ROM costs of 84 and 18 lines are counted.
+   Checks: Local/sm-decomp-experiments/20261022/animation-ram; preceding palette
+   checks: Local/sm-decomp-experiments/20261022/effect-records.
    Runtime construction now uses typed initial values shared through the existing
    record metadata. Game owns three separately allocated oracle snapshots while
    retaining its fixed inline SNES RAM. Nine hardware constructors use typed
@@ -3524,17 +3529,22 @@ award/message ownership, owned APU RAM, the owned audio command queue and enemy
 population ownership, owned native audio uploads, typed runtime initialization,
 owned native-player RAM with named field transfers, DSP RAM ownership and typed
 stereo output, checked tracing, owned room-background records, checked palette
-execution and shared effect ROM records, maintained Rust is **95,485**, with
-applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,043**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,874**.
+execution, shared effect ROM records and checked animated tiles, maintained Rust
+is **95,516**, with applicable static, component and exercised movie checks passing.
+Including 262 C and 296 header lines gives **96,074**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,905**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3013; cast lines 6527. Shared effect ROM records add 11 maintained
+unsafe functions 3006; cast lines 6519. Checked animated tiles add 31 maintained
+Rust lines, remove seven counted unsafe declarations and eight cast-containing
+lines; all other residue counters are unchanged. Raw RAM operations are retired,
+and enable/disable/clear plus the countdown helper forbid unsafe code. Native
+diagnostics and effect calls remain unsafe; RAM authority and bank ownership remain.
+This is a safety cost, not volume savings. Shared effect ROM records add 11 maintained
 Rust lines, with no residue-counter changes. Animated-tile raw ROM loads are retired
-and palette decoding is shared; the reader forbids unsafe code. Animated-tile RAM,
-native diagnostics and effect calls remain unsafe. This is a safety cost, not
+and palette decoding is shared; the reader forbids unsafe code. Native diagnostics
+and effect calls remain unsafe. This is a safety cost, not
 volume savings or completed state ownership. Checked palette execution adds 84
 maintained Rust lines, removes nine counted unsafe declarations and 11
 cast-containing lines; all other residue counters are unchanged. Local raw RAM
