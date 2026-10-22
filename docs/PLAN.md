@@ -85,7 +85,7 @@ new packages alone establishes neither ownership nor backend independence.
 
 **Coordinated iterations (2026-10-22): the user authorized ongoing worker
 supervision, lifecycle/commit coordination and resource oversight.** The
-beam launch, missile acceleration and extension creation are shared below;
+beam launch, missile acceleration, extension creation and placement are shared below;
 remaining consumers and unsafe dependencies are next. One implementer and one independent read-only caller/
 validation investigator work through a single integration/compiler lane.
 Build-pipeline preparation is complete; previous task queues and ownership
@@ -104,44 +104,49 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares complete extension creation through
-   `projectile_flight_control`, following missile acceleration at `f4674fa2`,
-   beam launch at `8730d00e` and extension contact at `e3fadf56`. RAM and owned
-   paths share first-free damage allocation and prepare/place/initialize/arm/
-   link/count ordering. Full pools return before parent admission or content
-   lookup. Checked RAM preserves child kind OR before parent capture, ordered
-   X/Y/direction copies, ignored placement rejection, captured child identity,
-   native link and final live counter reread. Both duplicate creation bodies
-   and the production flight module's last raw `word!` uses are removed.
-   The controller forbids unsafe code; placement, animation and ROM capture
-   retain legacy unsafe dependencies. Block reactions and broader unsafe
-   elimination remain.
+   Latest verified stage shares complete projectile placement through
+   `projectile_placement`, following extension creation at `0abd00a3`, missile
+   acceleration at `f4674fa2`, beam launch at `8730d00e` and extension contact
+   at `e3fadf56`. RAM and owned paths share pending-aim consumption, default/
+   fallback direction, rejection count and ordered direction/height/posture/X/Y
+   placement. Beam and missile callers honor rejection; extension creation
+   continues its initialization/link/count tail. The bank placement body and
+   four origin tables, owned origin calculation and broad-placement duplicate
+   are removed. Shared core and checked RAM adapter forbid unsafe code. Owned
+   providers publish prior writes on a failed pose-byte read. Animation and
+   other ROM capture retain legacy unsafe dependencies. Block reactions and
+   broader unsafe elimination remain.
 
-   Saved production/current RAM/owned creation passes 266 comparisons,
-   including 56 matching failures and two actual animation/draw continuations,
-   plus 20 returning/mutating diagnostic cases. Canonical owned cases reject
-   accidental creation fallback. First-free/full pools, stale kind selectors,
-   parent-copy aliases, rejected placement, short checked records, captured ROM
-   and child, live selector and counter-alias linkage execute. Acceleration,
-   extension contact, flight, beam, broad compatibility and session consumers
-   also pass. Independent references match pre-change Git source; short creation
-   records execute the saved production path's already-checked initializer.
-   All 144 runtime and 202 draft compiled inputs match. Formatting, normal
+   Saved production/current RAM/owned placement passes 350 comparisons,
+   including 54 matching failures, plus 96 checked short-record cases.
+   Owned placement passes 353 cases, including 54 matching failures, and its
+   native provider passes 15 named-input compositions. Sixteen actual missile
+   caller cases assert count/ammunition/protection/cooldown/HUD results after
+   accepted or rejected placement. Canonical cases reject accidental placement
+   fallback. Marker-only pending values, one-use consumption, distinct current/
+   previous heights, odd/broad/max selectors, origin arithmetic and failure
+   prefixes execute. Creation, extension, flight, beam, broad compatibility and
+   session consumers also pass. Independent placement/missile references match
+   pre-change Git source; short-record checks assert new checked prefixes and
+   never run the old raw pointer path out of allocation.
+   All 147 runtime and 202 draft compiled inputs match. Formatting, normal
    release library/frontend/verifier builds and loaded DLL source checks pass.
    No movie ran. Synthetic content and controlled hardware do not establish
    scheduler encounters or full-game fidelity. The created-child check calls
    animation/drawing directly; it does not establish scheduler order.
    Production diagnostics stop at their native assertion entry; returning
-   continuation is constructed on the owned comparison path.
+   continuation is constructed on the owned comparison path. Missing-ROM owned
+   publication is not established; short-record checks use a present image.
 
-   Main is **101,748 Rust lines in 135 files**. The prospective composition is
-   **110,837 (+9,089)** and remains unadopted, without full-composition runtime
+   Main is **101,848 Rust lines in 137 files**. The prospective composition is
+   **110,819 (+8,971)** and remains unadopted, without full-composition runtime
    or movie comparison. Its Rust 2024 headless release library builds.
-   This stage adds 45 main and 23 owned-draft lines; formatted composition
-   gives **+70 complete lines**, +724 lexical tokens and +2,695 normalized text
-   bytes for shared behavior and checked access. Main removes one unsafe
-   declaration and two counted cast lines. Existing local verification grows
-   219 lines; including checks gives +289 lines for this stage. No dependencies
+   This stage adds 100 main lines and removes 118 owned-draft lines; formatted
+   composition gives **-18 complete lines**, +462 lexical tokens and +41 normalized
+   text bytes. This is a safety result with a small line decrease, not a material
+   text reduction. Main removes one unsafe declaration and twelve counted cast
+   lines. Existing local verification grows 385 lines; including checks gives
+   +367 lines for this stage. No dependencies
    or maintained native/launcher code are added. This is necessary safety work,
    not volume reduction.
    Persistent Session authority
@@ -156,6 +161,8 @@ references; measure build/test time and resource growth before changing the loop
      canonical owned, broad RAM, failure-prefix and consumer comparisons.
    - [x] Share extension creation, migrate both callers and delete duplicate
      bodies with canonical/broad allocation, failure-prefix and consumer checks.
+   - [x] Share complete placement, migrate beam/missile/extension callers and
+     remove bank/owned/broad duplicates with independent failure-prefix checks.
      Ordinary flight ordering and extension contact are already shared.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
@@ -164,11 +171,12 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified creation continuation, including
-   `creation-final-results.json`, `creation-main-source-check.json`,
-   `creation-composition-price.json` and the worker handoff in
-   `CREATION_HANDOFF.md`. `creation-parent/` preserves prior inputs; the completed
-   acceleration references remain in `acceleration-parent/`.
+   `runtime-impact-working/` is the verified placement continuation, including
+   `placement-final-results.json`, `placement-main-source-check.json`,
+   `placement-composition-price.json` and the worker handoff in
+   `PLACEMENT_HANDOFF.md`. `placement-parent/` and `placement-composition-parent/`
+   preserve prior inputs. Creation references remain in `creation-parent/` and
+   acceleration references in `acceleration-parent/`.
    `runtime-impact-stage/` preserves the previous terminal stage; the independent
    flight reference remains in `flight-parent/`; `extension-parent/` saves the
    immediately preceding source and composition changes.
@@ -323,12 +331,12 @@ content.
 
 ## Progress and references
 
-Verified shared-creation stage: Rust 101,748; maintained C bridge 266 and headers
-296 = **102,310 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **103,220**. The separate prospective owned
+Verified shared-placement stage: Rust 101,848; maintained C bridge 266 and headers
+296 = **102,410 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **103,320**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,934; cast-containing lines 6,142. These narrow counters do
+unsafe declarations 2,933; cast-containing lines 6,130. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 The isolated launch draft is now synchronized and verified; its original source

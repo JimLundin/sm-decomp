@@ -1840,67 +1840,6 @@ pub(crate) static kFireChargedBeam_Funcs: [u16; 12] = [
     fnProjPreInstr_Beam_NoWaveBeam as u16,
     fnProjPreInstr_WavePlasmaEtc as u16,
 ];
-static kProjectileOriginOffsets3_X: [i16; 10] = [2, 13, 11, 13, 2, -5, -14, -11, -19, -2];
-static kProjectileOriginOffsets3_Y: [i16; 10] = [-8, -13, 1, 4, 13, 13, 4, 1, -19, -8];
-static kProjectileOriginOffsets4_X: [i16; 10] = [2, 15, 15, 13, 2, -5, -13, -13, -15, -2];
-static kProjectileOriginOffsets4_Y: [i16; 10] = [-8, -16, -2, 1, 13, 13, 1, -2, -16, -8];
-pub unsafe fn InitProjectilePositionDirection(r20: u16, game: &mut Game) -> u8 {
-    unsafe {
-        let mut v0: u16 = word!(game.samus_pose);
-        let mut direction_shots_fired: u16 = 0;
-        if word!(game.new_projectile_direction_changed_pose) != 0 {
-            direction_shots_fired = word!(game.new_projectile_direction_changed_pose) as u8 as u16;
-            word!(game.new_projectile_direction_changed_pose = 0);
-        } else {
-            direction_shots_fired = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
-                .offset(v0 as isize))
-            .direction_shots_fired as u16;
-            if (direction_shots_fired & 0xf0) != 0 {
-                if direction_shots_fired != 16 || {
-                    byte!(direction_shots_fired; 0) =
-                        (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
-                            .offset(word!(game.samus_last_different_pose) as isize))
-                        .direction_shots_fired;
-                    (direction_shots_fired & 0xf0) != 0
-                } {
-                    word!(game.projectile_counter -= 1);
-                    return 1;
-                }
-                direction_shots_fired = direction_shots_fired as u8 as u16;
-                v0 = word!(game.samus_pose);
-            }
-        }
-        let v2: i32 = r20 as i32 >> 1;
-        word!(game.projectile_dir[v2] = direction_shots_fired);
-        let r22: u16 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(v0 as isize))
-            .y_offset_to_gfx as u16;
-        let v3: u16 = (2 * (word!(game.projectile_dir[v2]) as i32 & 0xf)) as u16;
-        if word!(game.samus_pose) as i32 == kPose_75_FaceL_Moonwalk_AimUL as i32
-            || word!(game.samus_pose) as i32 == kPose_76_FaceR_Moonwalk_AimUR as i32
-            || *ram_ptr!(game; 0xa1f) == 1
-        {
-            let v6: i32 = v3 as i32 >> 1;
-            word! { game;
-                projectile_x_pos[v2] = (word!(game.samus_x_pos))
-                    .wrapping_add((kProjectileOriginOffsets4_X[v6 as usize]) as u16);
-                projectile_y_pos[v2] = (word!(game.samus_y_pos) as i32
-                    + kProjectileOriginOffsets4_Y[v6 as usize] as i32
-                    - r22 as i32) as u16;
-            }
-            0
-        } else {
-            let v4: i32 = v3 as i32 >> 1;
-            word! { game;
-                projectile_x_pos[v2] = (word!(game.samus_x_pos))
-                    .wrapping_add((kProjectileOriginOffsets3_X[v4 as usize]) as u16);
-                projectile_y_pos[v2] = (word!(game.samus_y_pos) as i32
-                    + kProjectileOriginOffsets3_Y[v4 as usize] as i32
-                    - r22 as i32) as u16;
-            }
-            0
-        }
-    }
-}
 pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
     unsafe {
         if word!(game.hyper_beam_flag) != 0 {
@@ -2163,7 +2102,7 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
             }
         }
         let r20: u16 = v0;
-        if InitProjectilePositionDirection(r20, game) & 1 == 0 {
+        if crate::game::projectile_placement_ram::place(r20, game) & 1 == 0 {
             word!(game.projectile_invincibility_timer = 20);
             if word!(game.hud_item_index) == 2 {
                 word!(game.samus_super_missiles -= 1);

@@ -9,9 +9,9 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest verified gameplay stage shares complete extension creation through
-`projectile_flight_control`, following missile acceleration at `f4674fa2`, beam
-launch at `8730d00e` and extension contact at `e3fadf56`.
+The latest verified gameplay stage shares complete placement through
+`projectile_placement`, following extension creation at `0abd00a3`, missile
+acceleration at `f4674fa2`, beam launch at `8730d00e` and extension contact at `e3fadf56`.
 The user authorized ongoing coordinated worker iterations.
 Main and the current RAM/owned comparison carrier are synchronized and compared.
 
@@ -24,40 +24,47 @@ owned position helper are removed. Current production and draft callers use
 the axis-parameterized contact entry.
 
 This follows shared room scans (`ff02c9b7`) and terminal impact/retirement
-(`de9bf05e`). Block reactions, placement/animation dependencies, persistent
+(`de9bf05e`). Block reactions, animation dependencies, persistent
 Session authority and broader unsafe elimination
 remain unfinished. Checked RAM is transitional; the destination has independent
 owned domain state. Never retain an authoritative typed owner across
 RAM-authoritative execution; transfer the complete owner.
 
-Main is **101,748 Rust lines in 135 files**, with 2,934 counted unsafe declarations
-and 6,142 cast-containing lines. Maintained implementation is 102,310 lines;
-including installers/launcher, 103,220. The full prospective composition is
-**110,837 Rust lines**, **+9,089 over main**, and remains unadopted.
+Main is **101,848 Rust lines in 137 files**, with 2,933 counted unsafe declarations
+and 6,130 cast-containing lines. Maintained implementation is 102,410 lines;
+including installers/launcher, 103,320. The full prospective composition is
+**110,819 Rust lines**, **+8,971 over main**, and remains unadopted.
 
-The creation stage adds 45 main and 23 owned-draft lines; formatted composition
-gives **+70 complete lines, +724 lexical tokens, +2,695 normalized text bytes**.
-Existing local comparisons add 219 lines; including checks gives +289 lines.
+The placement stage adds 100 main lines and removes 118 owned-draft lines;
+formatted composition gives **-18 complete lines, +462 lexical tokens,
++41 normalized text bytes**. Existing local comparisons add 385 lines;
+including checks gives +367 lines.
 These are safety/architecture costs, not volume savings. The substantial
 reduction and removal of all unsafe operations remain unfinished.
 
-The creation handoff is in `runtime-impact-working/CREATION_HANDOFF.md`.
-The shared controller retains full-pool early return, child kind OR before parent
-capture, ordered X/Y/direction copies, ignored placement rejection, captured child,
-native linkage and final live count. Both duplicate creation bodies and the
-production flight module's last raw `word!` uses are removed. Placement/animation
-and ROM capture still require unsafe calls. `creation-parent/` preserves prior
-inputs, including the previous composition files; acceleration references remain.
-Selected results and price: `creation-final-results.json`,
-`creation-composition-price.json` and `creation-main-source-check.json`.
-The existing runner selects `runtime_creation_experiment` (266 comparisons,
-56 matched failures, two animation/draw continuations) and
-`owned_creation_experiment` (20 returning diagnostic cases). Selected acceleration,
-flight, extension, beam, broad compatibility and session consumers also pass.
+The placement handoff is in `runtime-impact-working/PLACEMENT_HANDOFF.md`.
+The shared controller retains pose capture, one-use pending consumption, fallback
+and rejection rules, direction-before-height and live posture/X/Y ordering.
+Beam and missile callers honor rejection; extension creation continues its tail.
+The bank body/tables, owned origin calculation and broad-placement duplicate are
+removed. Core and checked RAM adapter forbid unsafe code; owned providers publish
+prior writes on a failed pose-byte read. Animation/other ROM capture still require
+unsafe calls. `placement-parent/` and `placement-composition-parent/` preserve prior
+inputs; creation/acceleration references remain.
+Selected results and price: `placement-final-results.json`,
+`placement-composition-price.json` and `placement-main-source-check.json`.
+The existing runner selects `runtime_placement_experiment` (350 comparisons,
+54 matched failures, 96 checked short-record cases), `owned_placement_experiment`
+(353 comparisons, 54 matching failures, 15 native cases) and
+`runtime_placement_missiles` (16 actual accepted/rejected caller cases).
+Selected creation, flight, extension, beam, broad compatibility and session
+consumers also pass. All 147 runtime and 202 draft compiled inputs match.
 Final production/source and Rust 2024 composition builds pass. No movie or
 full-composition runtime comparison is claimed. Created children call actual
 animation/drawing directly; this does not establish scheduler order. Remaining
 consumers and unsafe dependencies precede persistent owner promotion.
+Short pose checks never execute the old raw pointer path out of allocation.
+Missing-ROM owned publication remains unestablished; present short images are checked.
 
 ## Paused launch draft
 
@@ -103,7 +110,7 @@ Final production and prospective Rust 2024 headless release builds pass.
 Results: `launch-final-results.json`, `launch-final-check.log`,
 `launch-main-source-check.json`, `launch-production-build.log`,
 `launch-composition-price.json` and `launch-composition-build.log`.
-Missile acceleration and extension creation are now shared; remaining consumers
+Missile acceleration, extension creation and placement are now shared; remaining consumers
 and runtime authority transfers are next.
 
 ## Local work and validation
@@ -188,7 +195,7 @@ to reproduce the local owned work; a fresh Git checkout alone lacks that work.
 
 ## Next dependency
 
-Launch, missile acceleration, extension creation, phase ordering and contact
+Launch, missile acceleration, extension creation, placement, phase ordering and contact
 are now shared;
 do not implement a second controller or adopt outer wiring alone. Price helpers, adapters, callers,
 registrations and deletions together. Then finish remaining consumers and runtime

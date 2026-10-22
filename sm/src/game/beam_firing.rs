@@ -5,7 +5,7 @@ use crate::game::sm_80::QueueSfx1_Max15;
 use crate::game::sm_90::{
     fnProjPreInstr_BeamOrIceWave, fnProjPreInstr_Beam_NoWaveBeam, fnProjPreInstr_WavePlasmaEtc,
     kFireChargedBeam_Funcs, kProjectileCooldown_Uncharged, CheckBeamCollByDir, FireSba,
-    InitProjectilePositionDirection, WaveBeam_CheckColl,
+    WaveBeam_CheckColl,
 };
 use crate::game::sm_91::Samus_LoadSuitPalette;
 use crate::game_state::Game;
@@ -69,7 +69,7 @@ unsafe fn fire(charged: bool, game: &mut Game) {
                 .find(|&slot| word!(game.projectile_damage[slot]) == 0)
                 .unwrap_or(4);
             let mut projectile = (2 * slot) as u16;
-            if InitProjectilePositionDirection(projectile, game) & 1 == 0 {
+            if crate::game::projectile_placement_ram::place(projectile, game) & 1 == 0 {
                 word!(game.projectile_invincibility_timer = 10);
                 let sound = if hyper {
                     word!(game.projectile_type[slot] = -28648i32 as u16);
