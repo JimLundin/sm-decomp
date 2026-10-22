@@ -104,40 +104,40 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares all four ordinary door setups after creation at
-   `1333a09d`: Grey, Colored, Blue and Strange/shot signal. `mechanism_doors`
-   owns masks, ordered metadata/terrain writes, guarded bomb selection and the
-   clear-then-descending association search. Its checked RAM adapter and core
-   both forbid unsafe. Four generated bank bodies and candidate duplicate rules
-   are removed; numeric setup routes remain. Preserve broad/odd slots, inactive
-   associations, zero/self matches, signed live projectile selection, native
-   projectile words, LE RAM fields and exact-byte versus rounded-word terrain.
-   Encoded setup retains RAM authority; native authored state uses the same core.
-   Native dispatch and the other setup families remain unfinished.
+   Latest verified stage shares all 13 break/reveal/respawn/retained-terrain
+   setups after doors at `56fd8a2b`. `mechanism_terrain_setup` and its checked
+   adapter forbid unsafe. Thirteen generated bodies and a dead helper are removed;
+   numeric setup routes remain. Candidate duplicate shot-reveal logic is retired.
+   Preserve lazy physics/projectile gates, exact 0/1/0x41 results, captured
+   saved-then-level writes, instruction advance before terrain reads, CF2E's LE
+   projectile words versus other native reads, and native byte-offset BTS stores.
+   Broad/odd slots retain defined aliases. Encoded setup remains RAM authoritative;
+   authored native cells use the shared core. Seventeen of the initial 115 setup
+   identities are now shared; remaining families and native dispatch stay open.
 
-   Final checks pass 570 old-vs-main/owned comparisons over 285 defined cases,
-   including 12 matching Grey/Colored failures. Success and zero returns are
-   explicitly required. Thirty consumer/source tails cover real shot
-   preinstructions, Grey selector-table interpretation, room-entry creation and
-   collision-triggered signaling. Three checked-only rejections are outside the
-   old raw-pointer defined domain and are not equivalence claims. Existing
-   source/setup and closing suites pass; runtime collision remains supplemental
-   integration because both sides can share the new door leaf. Fresh independent
-   bodies/helpers/consumers match Git; 170 runtime / 208 local identities pass.
-   Production release/frontend/verifier/source checks pass (45.82s), as does the
-   prospective headless release (47.03s). No movie or full-composition runtime ran.
-   Synthetic content, controlled callbacks and untested big-endian execution
-   limit these results. Door lifecycle and full setup closure are not established.
+   Final checks pass 1,486 old-vs-main/owned comparisons over 743 defined cases,
+   including 12 matching failures with explicit expected results. Twenty-one
+   successful tails cover 18 actual restore/render comparisons through both
+   instruction aliases, two changed-solidity scans and a grapple caller's 0x41
+   continuation. Five new-only cases (three bounds failures and two successful
+   unaligned BTS writes) are outside old raw-pointer defined behavior. The actual
+   grapple source also uses unaligned BTS and is new checked-path integration.
+   Native examples assert all 13 outputs plus rejection/advance program variants.
+   Source/setup and closing suites pass; runtime collision is supplemental
+   shared-leaf integration. Fresh Git-derived references and 173 runtime / 210
+   local identities pass. Production release/frontend/verifier/source checks
+   pass (46.56s); prospective release passes (51.21s). No movie/full-composition
+   runtime ran. Synthetic content, shared unchanged downstream draw helpers,
+   controlled callbacks and untested big-endian execution limit these results.
 
-   Main is **103,396 Rust lines in 152 files**. The prospective composition is
-   **111,653 (+8,257)**, unadopted. This stage adds 103 main and removes 47 owned
-   lines: **+56 complete lines**, +720 lexical tokens and +2,444 LF-normalized
-   source bytes. Verification adds 678 lines including native examples,
-   independent references and scripts; implementation plus checks adds 734.
+   Main is **103,488 Rust lines in 154 files**. The prospective composition is
+   **111,760 (+8,272)**, unadopted. This stage adds 92 main and 15 owned lines:
+   **+107 complete lines**, +861 lexical tokens and +3,772 LF-normalized source
+   bytes. Verification adds 970 lines; implementation plus checks adds 1,077.
    No dependency or native/installer/launcher code is added. Counted unsafe
-   declarations (2,897) and casts (6,114) are unchanged; these counters do not
-   capture the four removed generated unsafe bodies. This is priced safety and
-   sharing, not net reduction. Persistent authority/backend independence remain open.
+   declarations remain 2,897; cast-containing lines fall by 34 to 6,080. Counters
+   do not capture removed generated unsafe bodies. This is priced safety/sharing,
+   not net reduction. Persistent authority and backend independence remain open.
 
    Next dependencies, in order:
 
@@ -165,11 +165,14 @@ references; measure build/test time and resource growth before changing the loop
      real producers and delete duplicate source sequencing with independent checks.
    - [x] Share all four ordinary door setups, retire duplicate bank/owned rules,
      and compare Grey/shot consumer tails against independent frozen bodies.
-   - Close remaining mechanism setup families: break/reveal/respawn terrain,
-     gates, contact physics/Chozo, stations/scroll/items, room/event/boss setup,
+   - [x] Share all 13 break/reveal/respawn/retained terrain setups and retire
+     duplicate bodies with independent restore/render and actual caller checks.
+   - Close remaining mechanism setup families: gates, contact physics/Chozo,
+     stations/scroll/items, room/event/boss setup,
      then residual aliases/diagnostics. Preserve synchronous writes, nested
      displacement and failure prefixes before retiring native dispatch. The
-     115-identity inventory and next 13 terrain setups are in the local door handoff.
+     115-identity inventory is in the local door handoff; next are 14 gate
+     trigger/placement variants. The terrain handoff records current scope.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -177,8 +180,11 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified door-setup continuation, with
-   `DOOR_SETUP_HANDOFF.md`, `door-setup-price.json` and `door-setup-attempt-1.log`.
+   `runtime-impact-working/` is the verified terrain-setup continuation, with
+   `TERRAIN_SETUP_HANDOFF.md`, `terrain-setup-price.json` and
+   `terrain-setup-final.log`. `terrain-setup-parent/` preserves prior inputs.
+   Door results remain in `DOOR_SETUP_HANDOFF.md`, `door-setup-price.json`
+   and `door-setup-attempt-1.log`.
    `door-setup-parent/` preserves prior main/carrier/local/composition inputs.
    Creation results remain in `MECHANISM_CREATION_HANDOFF.md`,
    `mechanism-creation-price.json` and `mechanism-creation-final.log`.
@@ -347,12 +353,12 @@ content.
 
 ## Progress and references
 
-Verified door-setup stage: Rust 103,396; maintained C bridge 266 and headers
-296 = **103,958 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **104,868**. The separate prospective owned
+Verified terrain-setup stage: Rust 103,488; maintained C bridge 266 and headers
+296 = **104,050 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **104,960**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,897; cast-containing lines 6,114. These narrow counters do
+unsafe declarations 2,897; cast-containing lines 6,080. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 The isolated launch draft is now synchronized and verified; its original source

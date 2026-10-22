@@ -752,12 +752,6 @@ fn update_level_block_bits(word_index: usize, mask: u16, bits: u16, game: &mut G
     let block = u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]]);
     game.g_ram[offset..offset + 2].copy_from_slice(&((block & mask) | bits).to_le_bytes());
 }
-fn retain_plm_block_bits(j: u16, mask: u16, game: &mut Game) {
-    // Both indices are byte offsets; the original word indexing rounds them down.
-    let slot_offset = 0x1c87 + usize::from(j & !1);
-    let block_index = u16::from_le_bytes([game.g_ram[slot_offset], game.g_ram[slot_offset + 1]]);
-    update_level_block_bits(usize::from(block_index >> 1), mask, 0, game);
-}
 pub unsafe fn UNUSED_sub_84B3E3(j: u16) -> u8 {
     unsafe {
         crate::native_assertion! {
@@ -1273,17 +1267,6 @@ crate::game::callback_dispatch! {
         *(ram_ptr!(game, u16; 0xcd20, 2)) = 0;
         0
     };
-    [8698232] PlmSetup_B9C1_CrittersEscapeBlock [] {
-        if *(ram_ptr!(game, u16; 0xc18)).offset((word!(game.projectile_index) >> 1) as isize) != 0 {
-            let v1: i32 = j as i32 >> 1;
-            let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
-            let v3: u16 = (word!(game.level_data[v2]) & 0xf000 | 0x9f);
-            word! {game; plm_variable[v1] = v3; level_data[v2] = (v3) & (0x8fffu16); }
-        } else {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-        }
-        0
-    };
     [8698309] PlmSetup_B9ED_CrittersEscapeBlock [] {
         let v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
         WriteLevelDataBlockTypeAndBts(v1, 0xc04f, game);
@@ -1417,119 +1400,6 @@ crate::game::callback_dispatch! {
         SetBts0x10FiveStepsUp(j, game);
         0
     };
-    [8703426] PlmSetup_D028_D02C_Unused [] {
-        if word!(game.samus_pose) as i32 == kPose_81_FaceR_Screwattack as i32
-            || word!(game.samus_pose) as i32 == kPose_82_FaceL_Screwattack as i32
-        {
-            let v1: i32 = j as i32 >> 1;
-            let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
-            let v3: u16 = word!(game.level_data[v2]);
-            word! {game; plm_variable[v1] = v3; level_data[v2] = (v3) & (0xfffu16); }
-            0
-        } else {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-            1
-        }
-    };
-    [8703466] PlmSetup_RespawningSpeedBoostBlock [] {
-        if (word!(game.speed_boost_counter) & 0xf00) == 1024
-            || word!(game.samus_pose) as i32 == kPose_C9_FaceR_Shinespark_Horiz as i32
-            || word!(game.samus_pose) as i32 == kPose_CA_FaceL_Shinespark_Horiz as i32
-            || word!(game.samus_pose) as i32 == kPose_CB_FaceR_Shinespark_Vert as i32
-            || word!(game.samus_pose) as i32 == kPose_CC_FaceL_Shinespark_Vert as i32
-            || word!(game.samus_pose) as i32 == kPose_CD_FaceR_Shinespark_Diag as i32
-            || word!(game.samus_pose) as i32 == kPose_CE_FaceL_Shinespark_Diag as i32
-        {
-            let v1: i32 = j as i32 >> 1;
-            let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
-            let v3: u16 = (word!(game.level_data[v2]) & 0xf000 | 0xb6);
-            word! {game; plm_variable[v1] = v3; level_data[v2] = (v3) & (0xfffu16); }
-            0
-        } else {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-            1
-        }
-    };
-    [8703543] PlmSetup_RespawningCrumbleBlock [] {
-        if (word!(game.samus_collision_direction) & 0xf) == 3 {
-            let v1: i32 = j as i32 >> 1;
-            let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
-            let v3: u16 = (word!(game.level_data[v2]) & 0xf000 | 0xbc);
-            word! {game; plm_variable[v1] = v3; level_data[v2] = (v3) & (0x8fffu16);
-                plm_instruction_timer[v1] = 4; }
-        } else {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-        }
-        1
-    };
-    [8703619] PlmSetup_RespawningBombBlock [] {
-        if (word!(game.speed_boost_counter) & 0xf00) == 1024
-            || word!(game.samus_pose) as i32 == kPose_81_FaceR_Screwattack as i32
-            || word!(game.samus_pose) as i32 == kPose_82_FaceL_Screwattack as i32
-            || word!(game.samus_pose) as i32 == kPose_C9_FaceR_Shinespark_Horiz as i32
-            || word!(game.samus_pose) as i32 == kPose_CA_FaceL_Shinespark_Horiz as i32
-            || word!(game.samus_pose) as i32 == kPose_CB_FaceR_Shinespark_Vert as i32
-            || word!(game.samus_pose) as i32 == kPose_CC_FaceL_Shinespark_Vert as i32
-            || word!(game.samus_pose) as i32 == kPose_CD_FaceR_Shinespark_Diag as i32
-            || word!(game.samus_pose) as i32 == kPose_CE_FaceL_Shinespark_Diag as i32
-        {
-            let v2: i32 = j as i32 >> 1;
-            let v3: i32 = word!(game.plm_block_indices[v2]) as i32 >> 1;
-            let v4: u16 = (word!(game.level_data[v3]) & 0xf000 | 0x58);
-            word! {game; plm_variable[v2] = v4; level_data[v3] = (v4) & (0xfffu16); }
-            0
-        } else {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-            1
-        }
-    };
-    [8703706] PlmSetup_RespawningBombBlock2 [] {
-        let mut v1: i16 = ((*(ram_ptr!(game, u16; 0xc18))
-            .offset((word!(game.projectile_index) >> 1) as isize))
-            as i16)
-            & (0xf00i16);
-        if v1 == 1280 {
-            let v5: i32 = j as i32 >> 1;
-            advance_plm_instruction(v5 as usize, 3, game);
-            let v6: i32 = word!(game.plm_block_indices[v5]) as i32 >> 1;
-            let v7: u16 = (word!(game.level_data[v6]) & 0xf000 | 0x58);
-            word! {game; plm_variable[v5] = v7; level_data[v6] = (v7) & (0x8fffu16); }
-        } else if v1 == 768 {
-            let v2: i32 = j as i32 >> 1;
-            let v3: i32 = word!(game.plm_block_indices[v2]) as i32 >> 1;
-            let v4: u16 = (word!(game.level_data[v3]) & 0xf000 | 0x58);
-            word! {game; plm_variable[v2] = v4; level_data[v3] = (v4) & (0x8fffu16); }
-        } else {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-        }
-        0
-    };
-    [8703847] PlmSetup_D08C_SuperMissileBlockRespawning [] {
-        let mut v1: i16 = ((*(ram_ptr!(game, u16; 0xc18))
-            .offset((word!(game.projectile_index) >> 1) as isize))
-            as i16)
-            & (0xf00i16);
-        if v1 == 1280 {
-            word!(game.plm_instr_list_ptrs[(j >> 1)] = addr_kPlmInstrList_C922 as u16);
-        } else if v1 == 512 {
-            let v2: i32 = j as i32 >> 1;
-            let v3: i32 = word!(game.plm_block_indices[v2]) as i32 >> 1;
-            let v4: u16 = (word!(game.level_data[v3]) & 0xf000 | 0x9f);
-            word! {game; plm_variable[v2] = v4; level_data[v3] = (v4) & (0x8fffu16); }
-        } else {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-        }
-        0
-    };
-    [8703904] PlmSetup_D08C_CrumbleBlock [] {
-        if (*(ram_ptr!(game, u16; 0xc18)).offset((word!(game.projectile_index) >> 1) as isize)
-            & 0xf00)
-            != 1280
-        {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-        }
-        0
-    };
     [8703957] PlmSetup_D0E8_GiveSamusDamage [] {
         word!(game.samus_periodic_damage += 1);
         0x41
@@ -1628,39 +1498,6 @@ crate::game::callback_dispatch! {
             advance_plm_instruction(slot, 1, game);
             advance_plm_instruction(slot, 1, game);
             write_word(game, 0xde1c + index, 1);
-        }
-        0
-    };
-    [8696769] PlmSetup_DeactivatePlm [] {
-        retain_plm_block_bits(j, 0x8fff, game);
-        0
-    };
-    [8696788] PlmSetup_D094_EnemyBreakableBlock [] {
-        // Turn the spike into air, retaining its tile and flip bits.
-        retain_plm_block_bits(j, 0x0fff, game);
-        0
-    };
-    [8703790] PlmSetup_RespawningPowerBombBlock [] {
-        let read_word = |game: &Game, offset: usize| {
-            u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
-        };
-        let write_word = |game: &mut Game, offset: usize, value: u16| {
-            game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
-        };
-        let projectile_index = usize::from(read_word(game, 0xdde) >> 1) * 2;
-        let projectile_type = read_word(game, 0xc18 + projectile_index) & 0x0f00;
-        let index = usize::from(j >> 1) * 2;
-        match projectile_type {
-            0x0500 => write_word(game, 0x1d27 + index, addr_kPlmInstrList_C91C as u16),
-            0x0300 => {
-                let block_index = usize::from(read_word(game, 0x1c87 + index) >> 1) * 2;
-                let block = read_word(game, 0x10002 + block_index);
-                let revealed = (block & 0xf000) | 0x0057;
-                write_word(game, 0x1e17 + index, revealed);
-                // Keep the original reveal mask and variable-before-level write order.
-                write_word(game, 0x10002 + block_index, revealed & 0x8fff);
-            }
-            _ => write_word(game, 0x1c37 + index, 0),
         }
         0
     };
@@ -1793,19 +1630,6 @@ crate::game::callback_dispatch! {
         install_optional_gate_block!(game, 0x84c784, v1, wrapping_add);
         0
     };
-    [8703595] PlmSetup_RespawningShotBlock [] {
-        let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
-        let v3: u16 = (word!(game.level_data[v2]) & 0xf000 | 0x52);
-        word! {game; plm_variable[v1] = v3; level_data[v2] = (v3) & (0x8fffu16); }
-        0
-    };
-    [8703925] PlmSetup_D0DC_BreakableGrappleBlock [] {
-        let v2: u16 = word!(game.plm_block_indices[v1]);
-        word!(game.plm_variable[v1] = word!(game.level_data[(v2 >> 1)]));
-        *(ram_ptr!(game, u16; 0x16402, (v2 >> 1) as isize)) =
-            ((*ram_ptr!(game; 0x16402, ((v2 as i32 >> 1) + 1) as isize) as i32) << 8) as u16;
-        0x41
-    };
     [8705526] PlmSetup_MotherBrainGlass [] {
         word!(game.plm_room_arguments[v1] = 0);
         WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[v1]), 0x8044, game);
@@ -1921,6 +1745,19 @@ crate::game::callback_dispatch! {
     [8711809] sub_84EE81 => sub_84EE89(j, 0xc, game);
     [8711814] sub_84EE86 => sub_84EE89(j, 0xe, game);
     @external {
+        8703426 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::ScrewAttack, game)];
+        8703466 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::SpeedBoost, game)];
+        8703543 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::Crumble, game)];
+        8703595 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::Shot, game)];
+        8703619 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::BombContact, game)];
+        8703706 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::BombShot, game)];
+        8703790 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::PowerBombShot, game)];
+        8703847 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::SuperMissileShot, game)];
+        8703904 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::PowerBombTrigger, game)];
+        8698232 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::CrittersEscape, game)];
+        8703925 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::Grapple, game)];
+        8696769 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::Deactivate, game)];
+        8696788 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::EnemyBreakable, game)];
         8701844 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::Grey, game)];
         8701873 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::Colored, game)];
         8701883 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::Blue, game)];
