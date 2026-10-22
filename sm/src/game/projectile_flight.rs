@@ -6,7 +6,7 @@ use crate::game::sm_94::{
     BlockCollWaveBeamHoriz, BlockCollWaveBeamVert,
 };
 use crate::game_state::Game;
-use crate::ram_map::{ram_ptr, word};
+use crate::ram_map::{checked_word, ram_ptr, word};
 use crate::rtl::{abs16, Unreachable};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -267,6 +267,16 @@ unsafe fn collide_extension_x(game: &mut Game) {
     );
 }
 
+#[forbid(unsafe_code)]
+pub(crate) fn link_extension(slot: u16, game: &mut Game) {
+    let address = crate::ram_map::word_arrays::projectile_variables
+        + usize::from(checked_word!(game.projectile_index) & !1);
+    // This field used native raw loads/stores; the selector uses little endian.
+    let value = u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]]);
+    game.g_ram[address..address + 2]
+        .copy_from_slice(&(value & 0xff00).wrapping_add(slot).to_ne_bytes());
+}
+
 unsafe fn spawn_extension(game: &mut Game) {
     let mut v0: u16 = 0;
     while word!(game.projectile_damage[(v0 >> 1)]) != 0 {
@@ -285,10 +295,6 @@ unsafe fn spawn_extension(game: &mut Game) {
     InitProjectilePositionDirection(r20, game);
     initialize_super_missile(v0, game);
     word!(game.projectile_bomb_pre_instructions[v1] = ((0x90b075i32) as u16));
-    *(ram_ptr!(game, u16; 0xc7c)).offset((word!(game.projectile_index) >> 1) as isize) = (v0 as i32
-        + (*(ram_ptr!(game, u16; 0xc7c)).offset((word!(game.projectile_index) >> 1) as isize)
-            as i32
-            & 0xff00))
-        as u16;
+    link_extension(v0, game);
     word!(game.projectile_counter += 1);
 }

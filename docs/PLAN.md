@@ -60,10 +60,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,462 Rust lines in 128 files**, plus 266 C
-bridge and 296 C-header lines = **97,024 maintained implementation lines**.
+Current composition (2026-10-22): **96,468 Rust lines in 128 files**, plus 266 C
+bridge and 296 C-header lines = **97,030 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,855**. This complete recount includes frontend,
+gives **97,861**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -74,8 +74,9 @@ disclosed separately like GL/SDL.
 Accounting correction: the earlier 96,406 -> 96,402 adjustment excluded the
 four-line `sm/native/stb_image.c` compilation unit. It is maintained glue and is
 included in the complete total above. The prior 96,993 implementation / 97,824
-installer-inclusive totals become 96,997 / 97,828 on this same basis. The current
-drawing-reader change adds 27 Rust lines; these four existing C lines are not new
+installer-inclusive totals become 96,997 / 97,828 on this same basis. The
+drawing-reader change adds 27 Rust lines and checked extension linkage adds six;
+these four existing C lines are not new
 implementation or a deletion.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
@@ -2444,10 +2445,35 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    and caller cost is **+8 lines**, separately 552 fixture/harness, nine runtime
    observation and 199 Python-support lines. Maintained main and its counters
    remain unchanged; there is still no whole-replacement deletion claim.
-   The target Session contract remains open. The current runtime composition
-   still terminates on unbound projectile effects outside its selected cases:
-   off-pool animation/flight/bomb/SBA/trail operations, beam continuation,
-   legacy motion and encounter effects need explicit bindings or elimination.
+   The same candidate now binds broad-selector flight, extension creation/contact,
+   legacy motion dispatch and the wide projectile-update continuation to actual
+   runtime execution. Animation after a redirected selector uses the real advance
+   routine. Complete ownership is published before those intervals. **206 selected
+   actual-runtime comparisons**, **14 ordered RAM/APU observations**, **11 matching
+   injected failure prefixes** and **two extension sequences reaching OAM** pass.
+   Odd/high selectors, movement-history aliases, diagnostic mutation, redirected
+   extension linkage and scheduler resumption beyond the pool are covered. Native
+   assertions are intercepted at diagnostic entry; synthetic content and controlled
+   device state supply no movie, physical-device or new gameplay-route coverage.
+   The checked extension-link helper is now adopted in main: native-order checked
+   bytes replace its raw parent-field load/store, and the helper forbids unsafe
+   code. Another **240 original-expression/current-helper comparisons** cover
+   byte order, odd/high selectors, selector aliasing and wrapping. Its exact
+   compiled source and the complete caller transformation are checked; normal
+   release library/frontend/verifier builds pass. This adds **six maintained Rust
+   lines** and removes two cast-containing lines; other counters are unchanged.
+   Remaining flight and factory operations are still unsafe.
+   Affected inherited flight, session and closing checks pass on the final draft.
+   Source reproduction, formatting and **135 runtime + 181 draft compiled inputs**
+   pass; 175 inherited inputs are unchanged. Frozen source/DLL/final results:
+   player-projectiles/runtime-flight-compat-stage (`result-script.json`). Its
+   262 top-level files and three source trees are byte-compared. Incremental draft
+   cost is 84 adapter lines plus an 11-line copy of the adopted linkage helper;
+   separately 585 fixture/harness, six runtime-observation and 174 Python-support
+   lines. This is not the complete replacement price or lifecycle adoption.
+   The target Session contract remains open. The runtime composition still has
+   unbound effects: remaining off-pool animation/bomb/SBA/trail operations, beam
+   continuation and encounter effects need explicit bindings or elimination.
    Bind and validate these in the same full candidate before pricing/adopting its
    complete dependency and deletion surface under target-architecture/MIGRATION.md.
    Current Game/RAM interfaces are temporary; substantial reduction, content
@@ -4711,15 +4737,20 @@ owned room metadata, checked door metadata, shared scroll loading, shared PLM
 spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
-owned enemy-script positions, checked enemy-definition records, standard combat and shared enemy/projectile contact,
-maintained Rust is **96,462**,
+owned enemy-script positions, checked enemy-definition records, standard combat,
+shared enemy/projectile contact and checked extension linkage,
+maintained Rust is **96,468**,
 with applicable static, component and exercised movie checks passing.
-Including 266 C and 296 header lines gives **97,024**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,855**.
+Including 266 C and 296 header lines gives **97,030**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,861**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2953; cast lines 6206. Checked PLM drawing-stream reads add 27
+unsafe functions 2953; cast lines 6204. Checked extension linkage adds six Rust
+lines and removes two cast-containing lines. Its native-order parent-field
+read/write and selector access forbid unsafe code; the surrounding factory and
+flight calls remain unsafe. Other counters are unchanged; this is a safety cost.
+Checked PLM drawing-stream reads add 27
 Rust lines and change no other counter; native assertions and the remaining
 drawing/effect paths still require unsafe calls. Checked PLM instruction cursors add 16
 Rust lines and remove two counted unsafe declarations and three cast-containing
