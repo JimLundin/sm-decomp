@@ -81,7 +81,7 @@ typedef struct SpcPlayer {
   SfxChan sfx_chans_2[2], sfx_chans_3[2];
   uint8 last_written_edl;
   uint8 input_ports[4];
-  uint8 ram[65536];
+  uint8 *ram;
 } SpcPlayer;
 
 void Dsp_Write(SpcPlayer *p, uint8 reg, uint8 value) __asm__("sm_music_Dsp_Write");

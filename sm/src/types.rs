@@ -563,7 +563,7 @@ crate::typed_struct! {
         pub cyclesUsed: u8;
     }
 
-    pub struct SpcPlayer {
+    pub struct NativePlayerState {
         pub reg_write_history: *mut DspRegWriteHistory;
         pub timer_cycles: u8;
         pub dsp: *mut Dsp;
@@ -593,7 +593,7 @@ crate::typed_struct! {
         pub sfx_chans_2, sfx_chans_3: [SfxChan; 2];
         pub last_written_edl: u8;
         pub input_ports: [u8; 4];
-        pub ram: [u8; 65536];
+        pub ram: *mut u8;
     }
 
     pub struct Timer {
@@ -971,3 +971,11 @@ pub struct Apu {
     pub ram: crate::apu_ram::ApuRam,
     pub registers: ApuRegisters,
 }
+
+// The C music interface sees only the first field. RAM ownership stays in Rust.
+#[repr(C)]
+pub struct SpcPlayer {
+    pub state: NativePlayerState,
+    pub ram: crate::apu_ram::ApuRam,
+}
+const _: () = assert!(core::mem::offset_of!(SpcPlayer, state) == 0);

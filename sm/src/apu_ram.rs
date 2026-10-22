@@ -11,17 +11,35 @@ impl ApuRam {
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        self.0[usize::from(address)].get()
+        self.read_at(usize::from(address))
+    }
+
+    pub fn read_at(&self, address: usize) -> u8 {
+        self.0[address].get()
+    }
+
+    pub fn write_at(&self, address: usize, value: u8) {
+        self.0[address].set(value);
+    }
+
+    pub fn fill_range(&self, range: std::ops::Range<usize>, value: u8) {
+        for cell in &self.0[range] {
+            cell.set(value);
+        }
+    }
+
+    pub fn copy_from_ram(&self, input: &Self) {
+        for (destination, source) in self.0.iter().zip(input.0.iter()) {
+            destination.set(source.get());
+        }
     }
 
     pub fn write(&self, address: u16, value: u8) {
-        self.0[usize::from(address)].set(value);
+        self.write_at(usize::from(address), value);
     }
 
     pub fn fill(&self, value: u8) {
-        for cell in &*self.0 {
-            cell.set(value);
-        }
+        self.fill_range(0..65536, value);
     }
 
     pub fn copy_to(&self, output: &mut [u8; 65536]) {

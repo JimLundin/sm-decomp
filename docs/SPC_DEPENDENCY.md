@@ -92,7 +92,11 @@ adapter. The verifier checks the installed archive's C/header/installer stamp
 as well as the usual compiled Rust sources. No generated implementation is
 stored outside the count: selection and patch code are maintained in the installer.
 
-`sm/src/native_music.h` follows the existing Rust state layout. The replacement
+`sm/src/native_music.h` follows Rust's `NativePlayerState` layout, which is the
+first field of `SpcPlayer`. Its RAM pointer refers to a separate `ApuRam` owner;
+snapshots copy bytes without copying that owner. The DSP uses the same allocation.
+Rebuild the native archive after this layout change; old frozen Rust libraries
+still require the matching archive with inline player RAM. The replacement
 keeps SFX, scheduling, allocation, upload, snapshots and native shared primitives
 in Rust. Compatibility changes preserve native tables, pitch envelopes, tremolo,
 fade completion, song commands, busy-channel ordering and the `cutk` flag.

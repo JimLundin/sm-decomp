@@ -256,7 +256,7 @@ fields!(Spc {
     a, x, y, sp, pc, c, z, v, n, i, h, p, b, stopped, cyclesUsed
 } skip { apu });
 
-fields!(SpcPlayer {
+fields!(NativePlayerState {
     timer_cycles, port_to_snes, last_value_from_snes, counter_sf0c, always_zero,
     temp_accum, ttt, did_affect_volumepitch_flag, addr0, addr1, lfsr_value, is_chan_on,
     fast_forward, word_20, music_ptr_toplevel, block_count, sfx_timer_accum, chn,
@@ -268,8 +268,8 @@ fields!(SpcPlayer {
     echo_volume_right, echo_volume_fade_add_left, echo_volume_fade_add_right,
     echo_volume_fade_ticks, echo_volume_fade_target_left, echo_volume_fade_target_right,
     p_echoBuffer, memset_ptr, memset_ctr, disable_sfx2, byte_4B1, channel, sfx1, sfx2,
-    sfx3, sfx_chans_1, sfx_chans_2, sfx_chans_3, last_written_edl, input_ports, ram
-} skip { reg_write_history, dsp });
+    sfx3, sfx_chans_1, sfx_chans_2, sfx_chans_3, last_written_edl, input_ports
+} skip { reg_write_history, dsp, ram });
 
 fields!(Timer {
     cycles, divider, target, counter, enabled
@@ -364,8 +364,9 @@ unsafe fn machine(game: &mut Game, archive: &mut Archive<'_>) -> Result<(), Stri
     (*(*snes).apu).state(archive)?;
     (*(*(*snes).apu).spc).state(archive)?;
     (*(*(*snes).apu).dsp).state(archive)?;
-    (*game.g_spc_player).state(archive)?;
-    (*(*game.g_spc_player).dsp).state(archive)?;
+    (*game.g_spc_player).state.state(archive)?;
+    (*game.g_spc_player).ram.state(archive)?;
+    (*(*game.g_spc_player).state.dsp).state(archive)?;
     let mut save_bytes = game.g_sram.bytes(0..8192);
     archive.bytes(&mut save_bytes)?;
     game.g_sram.write_bytes(0, &save_bytes);
@@ -392,7 +393,7 @@ pub(super) unsafe fn capture(game: &mut Game) -> Result<Vec<u8>, String> {
         || game.g_fail
         || game.g_calling_asm_from_c
         || game.state_recorder.replay_mode
-        || !(*game.g_spc_player).reg_write_history.is_null()
+        || !(*game.g_spc_player).state.reg_write_history.is_null()
         || (*(*game.g_snes).cart).ramSize != 8192
     {
         return Err("checkpoint requires a successful, idle verifier frame".into());

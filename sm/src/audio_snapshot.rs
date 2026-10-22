@@ -2,7 +2,8 @@
 
 use crate::game_state::Game;
 use crate::types::{
-    ApuRegisters, Dsp, DspChannel, DspRegWriteHistory, Snes, Spc, SpcPlayer, Timer,
+    ApuRegisters, Dsp, DspChannel, DspRegWriteHistory, NativePlayerState, Snes, Spc, SpcPlayer,
+    Timer,
 };
 
 pub(crate) use crate::apu_queue::ApuQueue as ApuQueueSnapshot;
@@ -30,7 +31,8 @@ crate::typed_struct! {
     initial; [#[derive(Copy, Clone)]];
     pub struct PlayerSnapshot {
         valid: bool;
-        player: SpcPlayer;
+        player: NativePlayerState;
+        ram: [u8; 65536];
         dsp: Dsp;
         has_history: bool;
         history: DspRegWriteHistory;
@@ -44,13 +46,15 @@ impl PlayerSnapshot {
         if !self.valid {
             return;
         }
-        self.player = *player;
-        self.dsp = *(*player).dsp;
-        self.has_history = !(*player).reg_write_history.is_null();
+        self.player = (*player).state;
+        (*player).ram.copy_to(&mut self.ram);
+        self.dsp = *(*player).state.dsp;
+        self.has_history = !(*player).state.reg_write_history.is_null();
         if self.has_history {
-            self.history = *(*player).reg_write_history;
+            self.history = *(*player).state.reg_write_history;
         }
         self.player.dsp = core::ptr::null_mut();
+        self.player.ram = core::ptr::null_mut();
         self.player.reg_write_history = core::ptr::null_mut();
         self.dsp.apu_ram = core::ptr::null_mut();
     }
@@ -60,12 +64,14 @@ impl PlayerSnapshot {
         if !self.valid {
             return;
         }
-        let dsp = (*player).dsp;
-        let history = (*player).reg_write_history;
+        let dsp = (*player).state.dsp;
+        let history = (*player).state.reg_write_history;
         assert_eq!(self.has_history, !history.is_null());
-        *player = self.player;
-        (*player).dsp = dsp;
-        (*player).reg_write_history = history;
+        (*player).state = self.player;
+        (*player).ram.copy_from(&self.ram);
+        (*player).state.ram = (*player).ram.as_mut_ptr();
+        (*player).state.dsp = dsp;
+        (*player).state.reg_write_history = history;
         *dsp = self.dsp;
         (*dsp).apu_ram = (*player).ram.as_mut_ptr();
         if self.has_history {

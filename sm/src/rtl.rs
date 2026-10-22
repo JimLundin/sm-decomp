@@ -829,7 +829,7 @@ unsafe fn RtlPopApuState_Locked(game: &mut Game) {
     }
     if let Some(writes) = game.apu_queue.pop() {
         let ports: &mut [u8] = if game.g_use_my_apu_code {
-            &mut (*game.g_spc_player).input_ports
+            &mut (*game.g_spc_player).state.input_ports
         } else {
             &mut (*(*game.g_snes).apu).registers.inPorts
         };
@@ -869,12 +869,10 @@ pub unsafe fn RtlApuUpload(address: u32, game: &mut Game) {
 }
 unsafe fn RtlRestoreMusicAfterLoad_Locked(is_reset: bool, game: &mut Game) {
     if game.g_use_my_apu_code {
-        memcpy(
-            &raw mut (*game.g_spc_player).ram as *mut u8 as *mut c_void,
-            (*(*game.g_snes).apu).ram.as_mut_ptr().cast::<c_void>(),
-            65536i32 as size_t,
-        );
-        (*(*game.g_spc_player).dsp).copy_state_from(&*(*(*game.g_snes).apu).dsp);
+        (*game.g_spc_player)
+            .ram
+            .copy_from_ram(&(*(*game.g_snes).apu).ram);
+        (*(*game.g_spc_player).state.dsp).copy_state_from(&*(*(*game.g_snes).apu).dsp);
         SpcPlayer_CopyVariablesFromRam(game.g_spc_player);
     }
     if is_reset {
@@ -886,13 +884,13 @@ unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands
     if game.g_use_my_apu_code {
         if include_queued_commands {
             game.apu_queue
-                .apply_queued(&mut (*game.g_spc_player).input_ports);
+                .apply_queued(&mut (*game.g_spc_player).state.input_ports);
         }
         SpcPlayer_CopyVariablesToRam(game.g_spc_player);
-        (*(*(*game.g_snes).apu).dsp).copy_state_from(&*(*game.g_spc_player).dsp);
+        (*(*(*game.g_snes).apu).dsp).copy_state_from(&*(*game.g_spc_player).state.dsp);
         (*(*game.g_snes).apu)
             .ram
-            .copy_from(&(*game.g_spc_player).ram);
+            .copy_from_ram(&(*game.g_spc_player).ram);
     }
 }
 pub unsafe fn RtlRenderAudio(audio_buffer: *mut i16, samples: i32, channels: i32, game: &mut Game) {
@@ -911,7 +909,7 @@ pub unsafe fn RtlRenderAudio(audio_buffer: *mut i16, samples: i32, channels: i32
         }
     } else {
         SpcPlayer_GenerateSamples(game.g_spc_player);
-        dsp_getSamples((*game.g_spc_player).dsp, audio_buffer, samples);
+        dsp_getSamples((*game.g_spc_player).state.dsp, audio_buffer, samples);
     }
     RtlApuUnlock();
 }
