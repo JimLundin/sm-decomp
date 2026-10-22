@@ -2008,8 +2008,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Partial model/provider price: 187 -> 353 (+166); native additions 76+9+47,
    paired fixture 333, existing room fixture +5. Remaining costs stay separate.
    No movie, adoption or complete saving. Source: 20261022/integrated-mechanism-setup.
-   The full candidate concurrently incorporates the richer schema and reports
-   213 comparisons; its 115 frozen and 110 candidate compiled inputs were
+   The full candidate incorporated the richer schema at its 213-comparison setup
+   stage; its 115 frozen and 110 candidate compiled inputs were
    independently inspected, without rerunning that suite. Carry the full candidate
    forward; do not install the independent cross-check's modules or add prices.
    Coordinator follow-up is the ownership audit of remaining creation sources,
@@ -2064,46 +2064,56 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    movie ran. No adoption or complete saving is claimed. The parallel standalone
    shot-block-reactions result above is not an additive saving or a second model
    to install; reuse its remaining setup findings for mechanism lifecycle ownership.
-   Shot-triggered mechanism creation and five setup policies now share one owned
-   40-slot pool with the complete projectile owner. **213 selected comparisons**,
-   465 ordered observations and 15 expected matching failures pass: 87 direct
-   allocation/setup cases, seven retained-pool steps and 119 terrain/projectile
-   consumers, including 48 persistent lifecycle steps. No-op, Blue Door, Colored
-   Door, Strange Door and Respawning Shot Block use the shared safe model; the
-   candidate checks reject accidental fallback for these policies. A real Eye Door
-   setup still exercises the explicit compatibility interval.
-   Release preserves stale associations, saved level and return cursors. Nested
-   creation can reuse the released slot before the captured outer setup resumes.
-   Strange Door clears its association before signed projectile-kind lookup;
-   that lookup can alias the cleared field. Descending association lookup includes
-   inactive slots and can match the cleared slot itself. Colored Door preserves
-   the exact odd byte offset, while BTS and word accesses round down. Header reads
-   preserve window/extent failures and the initialized prefix. The three geometry
+   Collision, hardcoded and room-entry mechanism producers now use the same owned
+   allocator in the full candidate, with source-specific initialization and the
+   five shared setup policies. **334 selected comparisons**, 648 ordered
+   observations and 47 expected matching failures pass: 121 producer/prefix/ROM-
+   lifetime cases and 213 affected setup/terrain/projectile comparisons. These
+   include seven retained-pool steps and 48 persistent projectile lifecycle steps.
+   Hardcoded and room entries initialize arguments before program reads;
+   collision initializes them afterward. Room-entry failures preserve each
+   completed block/argument prefix. Full capacity avoids entry and header reads.
+   Hardcoded and room creation retain their captured header record; collision
+   reacquires ROM for setup. In-place mutation and allocation replacement at an
+   explicit controlled observation point distinguish these contracts. Nested
+   hardcoded creation preserves the captured outer slot and leaves inner selection.
+   The setup accumulator and optional collision displacement cross the explicit
+   compatibility interval. Actual quicksand setup changes the uniquely borrowed
+   displacement, including before a later injected callback failure.
+   No-op, Blue Door, Colored Door, Strange Door and Respawning Shot Block use the
+   shared safe model; checks reject accidental fallback for these policies. Eye
+   Door and quicksand remain exercised legacy setup. Release preserves stale
+   associations, saved level and return cursors; nested creation can reuse the
+   released slot before captured outer setup resumes. Strange Door's signed hit
+   lookup can alias its newly cleared association. Colored Door preserves odd
+   byte offsets while BTS and word accesses round down. The three geometry
    policies execute during firing, with their geometry consumed by subsequent
    scheduled flight/output/release. Each linked scenario requires its selected
    setup to execute.
-   Definition reads, observation hooks, geometry operations and legacy setup
-   consume the complete pool/projectile owner before RAM execution and reconstruct
-   it afterward. Native terrain retains the same allocator and explicitly makes
-   its pool unavailable during transfer. Three authored native sequences and two
-   association cases cover typed setup, capacity/reuse and the prior scheduled
-   terrain lifecycle. The typed setup fixture uses a minimal player input; native
-   terrain responses and initial collision remain authored/controlled.
-   Pool/creation are non-Clone; model and projection forbid unsafe code. All 115
-   frozen and 110 draft compiled inputs match; 102 inherited sources are unchanged.
-   Six actual setup bodies, deletion, geometry writes, checked header reads and RAM
-   layout correspond to current source. Optimized DLL and formatting pass. The
-   final setup-specific fixture correction is included in all 213 comparisons.
-   Source/result: player-projectiles/mechanism-setup-stage. Model/projection grows
-   **187 -> 364 (+177 formatted lines)**; native fixtures add 251. New paired
-   fixtures (452), existing-fixture growth (37) and formatted harness growth (11)
-   remain separate from this partial price. No broad terrain/slope or full
-   projectile suite, movie, adoption or net saving is claimed.
-   Continue with the remaining mechanism producers and setup/script lifecycle,
-   collision-displacement and suspension handoffs, native missile/extension
-   definitions, and runtime room/projectile authority. Main's shared PLM spawning
-   has independently moved to plm_spawning.rs; reconcile that current implementation
-   during final integration instead of restoring its retired bank facade.
+   Definition reads, geometry operations and legacy setup consume the complete
+   pool/projectile owner before RAM execution and reconstruct it afterward.
+   Native terrain keeps its pool unavailable during transfer. Three authored
+   native sequences, two association cases and a typed placed-mechanism case pass.
+   The typed setup fixture uses minimal player input; native terrain responses
+   and initial collision remain authored/controlled. Public producer entries are
+   exercised directly; broader real callers and nested legacy setup routes still
+   need migration into the runtime owner.
+   Pool/creation are non-Clone; model, projection and checked source decoder forbid
+   unsafe code. All 115 frozen and 113 draft compiled inputs match; 103 inherited
+   sources are unchanged. Main's complete plm_spawning.rs maps exactly to the
+   compiled reference after explicit ROM/setup rebinding and three observation
+   hooks. Its byte layout and source-reader contracts were inspected. Optimized
+   DLL and changed-file formatting pass. Source/result:
+   player-projectiles/mechanism-sources-stage. The mechanism model/provider cohort
+   grows **364 -> 576 (+212 formatted lines)**, plus three shared effect-field
+   lines: **+215 implementation lines**. Native fixtures add 12; the current-source
+   reference (143), new paired fixture (441), existing fixture growth (32) and
+   formatted harness growth (47) remain separate from this partial price.
+   No broad terrain/slope or full projectile suite, movie, production adoption or
+   net saving is claimed. Continue with wider setup/script lifecycle, actual
+   creation callers and nested collision handoffs, protection/suspension, native
+   missile/extension definitions and runtime room/projectile authority. Keep
+   reconciling current plm_spawning.rs instead of restoring its retired bank facade.
    The frozen library
    predates current main; final integration requires current-source builds.
    No movie ran and no savings are claimed.
