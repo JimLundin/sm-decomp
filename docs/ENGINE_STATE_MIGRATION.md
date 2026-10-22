@@ -268,6 +268,22 @@ This establishes a scoped pass owner. It does not promote the shared continuatio
 byte to a permanent standalone field, migrate the outer gameplay/door context,
 or validate frontend save/checkpoint integration.
 
+The subsequent [nested-session comparisons](RAM_OWNERSHIP.md#mechanisms-inside-session-and-dialogue-continuations)
+execute the actual frame/gameplay/door and dialogue control flow around that pass.
+The latest script composition passes 40 nested cases, including RAM-image resume
+into fresh `Game` values. Selected mode, in-flight frame dispatch, caller phase,
+mechanism continuation and active dialogue have distinct lifetimes. Changing the
+mode alone retains the suspended dispatch; an explicit frame-continuation write
+can redirect it. A changed request also does not replace an already active dialogue,
+and completion clears the live request. Preserve all of these relationships on
+import rather than reconstructing a pending call solely from the selected mode.
+
+The child animation/input continuation is controlled in this experiment. The
+actual frontend snapshot/checkpoint paths, startup/Kraid interpretations and
+complete generic-write closure remain open. These component comparisons include
+continuation bytes without oracle normalization; a movie whose normalization
+masks them would not independently prove the same contract.
+
 ## Concrete next implementation cohort
 
 1. Use a LaunchMotion authority-transfer experiment to implement and compare

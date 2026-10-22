@@ -2031,11 +2031,28 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Callbacks, drawing and display are controlled; probes are no-op. No production
    adoption, movie, full save/checkpoint, outer session ownership or net saving.
    Sources: 20261022/owned-mechanism-pass and integrated-mechanism-pass. Carry the
-   contact composition forward as one implementation. Next migrate actual script
-   operations/consumers and outer continuation, reconciling current creation/door
-   code. Runtime imports and generic aliases remain open.
-   That composition now advances the top-level full projectile candidate with
-   shared script control flow: 13 actual commands and two wake consumers use the
+   contact composition forward into the full script candidate below.
+   The coordinator's [nested-session composition](RAM_OWNERSHIP.md#mechanisms-inside-session-and-dialogue-continuations)
+   now executes actual frame/gameplay/door/message control flow around that owner.
+   It passes 36 nested comparisons on the earlier pass and **40** on the newer
+   script stage, including four real call/message/return/countdown/release steps.
+   The final DLL passes **825 comparisons**, 1,153 full-RAM callback observations
+   and 21 matching failures: 40 nested, 740 script and 45 pass cases. Mode selection
+   differs from captured frame dispatch; an explicit imported continuation can
+   redirect a pending call. Queued request and active dialogue are separate; the
+   caller clears the live queue on completion. Gameplay timers tick once after
+   nested completion; room entry retains its own tail. Two RAM-image imports
+   resume the pending path; frontend snapshots/checkpoints remain untested here.
+   Exact source bodies, all 115+130 compiled inputs and 125 unchanged inherited
+   files pass review. Optimized build/fixture formatting pass. Implementation is
+   unchanged; bindings, room loading and animation/input/device leaves are
+   controlled, and probes no-op. No movie, adoption, persistent outer owner or
+   saving. Source/result: 20261022/integrated-mechanism-session, preceded by
+   nested-mechanism-session. Carry these checks into the full candidate while
+   migrating actual script effects and the shared message/session boundary.
+   Current creation/door code, runtime imports and generic aliases remain open.
+   The full projectile candidate now includes shared script control flow:
+   13 actual commands and two wake consumers use the
    existing owned slots for sleep/release, pre-actions, counters, conditional
    branches and call/return. Successful canonical commands and script reads retain
    the owner; checked read failures publish the committed prefix. Byte lanes and

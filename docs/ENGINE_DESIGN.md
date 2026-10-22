@@ -86,6 +86,53 @@ and trigger transitions; those decisions belong with Samus. The renderer should
 eventually consume their visual results. Moving the current animation code wholesale
 to a renderer would change its ownership incorrectly.
 
+## Session and dialogue continuations
+
+The [nested-session experiment](RAM_OWNERSHIP.md#mechanisms-inside-session-and-dialogue-continuations)
+compares the owned mechanism pass inside the actual frame, gameplay, door-entry
+and message-display control flow. The proposed owners must preserve these
+separate state lifetimes:
+
+| State | Owner and transition rule |
+| --- | --- |
+| Selected game mode | Session selects the next fresh frame's schedule. Changing this value alone does not redirect a suspended frame. |
+| In-flight frame | Session retains the dispatch context until completion or an explicit imported continuation override. A new frame resets nested continuations before input. |
+| Gameplay or room-entry phase | Its caller retains which work has completed. Resuming a mechanism message repeats neither Samus preparation nor room loading. |
+| Mechanism pass | Retains selection and script continuation independently of activation. Resuming display can continue a deactivated slot. |
+| Message request and active dialogue | One message service owns the overwriteable request and the separate active dialogue cycle. A resumed display does not replace its active message merely because its caller now supplies another request. |
+| Dialogue animation/input wait | The dialogue owner retains its child continuation. The experiment controls these leaf operations; their complete migration is still required. |
+
+```mermaid
+flowchart TD
+    Mode[Selected mode] -->|Select a fresh frame| Frame[In-flight frame]
+    Frame --> Gameplay[Gameplay continuation]
+    Frame --> Entry[Room-entry continuation]
+    Gameplay --> EnemyMessage[Enemy-message wait]
+    Gameplay --> Mechanisms[Mechanism pass]
+    Entry --> Mechanisms
+    EnemyMessage --> Dialogue[Shared active dialogue]
+    Mechanisms --> Dialogue
+    Dialogue --> Leaf[Animation and input waits]
+```
+
+The queue holds one overwriteable request. The experiment changes the queued
+request from 12 to 77 while dialogue 12 is suspended. Display continues dialogue
+12, then its caller clears the live request, including 77.
+Preserve this consumption rule through the message service. Both enemy and
+mechanism callers should share the dialogue implementation while retaining their
+own continuation. The active dialogue fields can themselves change through legacy
+callbacks; they remain part of the explicit transfer boundary.
+
+Imported continuation state can also redirect the in-flight frame independently
+of the selected mode. Compatibility import must preserve that distinction and
+the existing invalid-state behavior. During normal completion, finish gameplay's
+tail and decrement timers once before selecting the next frame. Room entry has
+its own completion effects and does not run the gameplay timer tail.
+
+The latest composition passes 40 nested comparisons plus the 785 existing script
+and pass cases. The outer schedulers and dialogue still use RAM; this is evidence
+for their ownership contract, not production adoption of a persistent session.
+
 ## What the existing models establish
 
 The following are real implementations, not the full proposed owner interfaces:

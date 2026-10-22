@@ -1601,6 +1601,89 @@ DLL, `freeze.py`, `build.py`, `review.py`, `check.py`, `source-review.json` and
 this pass, integrate the outer gameplay/door continuation, and reconcile current
 production creation/closing-door code before runtime promotion.
 
+### Mechanisms inside session and dialogue continuations
+
+`nested-mechanism-session` runs the existing owned pass inside source-exact
+`RunOneFrameOfGameInner`, `gameplay::advance`, the load-more-things door phase,
+`GameState_11_LoadingNextRoom_Async`, `message_boxes::display` and
+`DecrementSamusTimers`. The comparison changes only the nested PLM implementation
+between the reference interpreter and the candidate. Other gameplay/room-loading
+callbacks, the selected game-state table, device waits and dialogue animation/input
+leaves are controlled bindings. Actual dialogue opening/interaction/closing and
+saved-message-cycle routing execute; actual UI rendering and input policy do not.
+
+The original composition passes **36 comparisons**, **873 ordered full-RAM
+callback observations** and **five matching failures**. The follow-up
+`integrated-mechanism-session` applies the same checks to the newer
+`player-projectiles/mechanism-script-stage`, preserving its implementation. Four
+additional frame steps execute real script call/return/release around a message,
+including disabled/deactivated resume and following countdown. Its **40 nested
+comparisons** pass with **979 observations** and the same five failures. The final
+DLL also passes the 740 script/wake/sequence comparisons and 45 pass comparisons:
+**825 comparisons**, **1,153 observations**, **21 matching failures** in total.
+The script suite's 13 candidate-only read/transfer checks and native lifecycle
+also execute; they are not added to the comparison count. Contact and unrelated
+projectile suites are not rerun.
+
+The discriminating sequences establish:
+
+- An enemy message can suspend first, then the same gameplay frame can suspend
+  for a mechanism message. Neither resume repeats earlier preparation, movement
+  or enemy processing. The actual Samus/protection timer tail executes once after
+  the mechanism completes, not on each yielded invocation.
+- A suspended frame keeps its captured dispatch when the live game mode changes.
+  Separately changing the encoded frame continuation can redirect the next resume:
+  a constructed override resumes the pending mechanism under room entry while
+  the live mode still says gameplay. Import must preserve both state values.
+- A queued request changed from 12 to 77 does not replace active dialogue 12 on
+  resume. The PLM caller supplies the live request, but resumed display uses its
+  active dialogue state. Completion clears the live queue and continues the live
+  selected program, even after that slot is deactivated and mechanisms disabled.
+- Door entry can first yield for scrolling and then yield inside a mechanism
+  message. Loading does not repeat. The actual completion performs the
+  direction-specific X adjustment, advances the door phase and allows timer
+  drawing; it does not decrement gameplay's protection timer.
+- The actual saved-message feedback cycle changes to message 24, waits, runs the
+  second display cycle and restores message 28. Cancelled confirmation avoids
+  that cycle. The test shortens the retained wait counter from 160 to 1 before
+  resume; it does not claim 160-frame timing or an SRAM save operation.
+- Message 20 changes the live game mode to pausing while the already-running
+  gameplay frame still completes its tail. A late dialogue callback's interaction
+  policy change affects the later collision group after the earlier group ran.
+- Fresh frames reset nested continuations before input. Invalid display tags
+  clear only the display continuation; an invalid gameplay continuation can leave
+  child tags behind and reach the frame's existing diagnostic. A global cleanup
+  on every resume would change both behaviors.
+- RAM images copied into fresh `Game` values resume the captured nested path.
+  One sequence preserves a controlled dialogue-leaf continuation through import.
+  These are RAM-image transfers, not the frontend snapshot or verifier checkpoint
+  formats, and the actual leaf continuation policy remains untested here.
+- Failures in gameplay preparation, the mechanism command, dialogue opening,
+  mechanism drawing and HUD retain their already committed state and continuation
+  prefixes. Completion, final full RAM, failure flag, callback order/identities,
+  every callback RAM image and diagnostic sequence are compared.
+
+The implementation modules, pool and providers are unchanged in each composition.
+Only the inherited harness and callback fixture receive registrations, observation
+routing and controls. `review.py` establishes exact current-source correspondence
+for the outer bodies, PLM interpreter and handoff; `check.py` verifies the compiled
+inputs. The first composition has **115 frozen + 126 local inputs**, 121 inherited
+files unchanged; the script composition has **115 + 130**, 125 inherited files
+unchanged. Optimized builds and changed-fixture formatting pass. Probes are no-op;
+no movie, hardware/device execution, real rendering, full save/load, production
+adoption or complete session ownership is claimed.
+
+This adds no implementation or saving. The experiment contains 312 reference
+lines, 220 controlled-binding lines and 455 paired-fixture lines, or 478 fixture
+lines in the script composition, plus harness/callback support. Sources/results:
+`Local/sm-decomp-experiments/20261022/nested-mechanism-session` and
+`20261022/integrated-mechanism-session` retain `freeze.py`, `build.py`, `review.py`,
+`check.py`, `bindings.json`, source manifests, `source-review.json` and `result.json`.
+Continue with the full script candidate and these nested checks. The next owner
+boundary must include the in-flight call context, shared message service and
+actual script effects; the [session design](ENGINE_DESIGN.md#session-and-dialogue-continuations)
+records those responsibilities.
+
 ### Named projectile animation definitions
 
 A standalone experiment separates projectile playback from instruction encoding.
