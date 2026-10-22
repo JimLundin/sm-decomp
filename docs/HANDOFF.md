@@ -3,6 +3,42 @@
 Read [PLAN.md](PLAN.md) first; it remains authoritative. This handoff records
 the interruption point at the user's request, not a completed refactor.
 
+## Resumed work: shared room scans completed
+
+This update supersedes the interruption state below. `projectile_room.rs` is now
+registered, compiled, checked and used by main's six scan entry points. The owned
+draft now calls the same safe kernel. The old scan bodies and unused span entry
+points are removed, and the retained slope reader uses checked native RAM access.
+Block reactions and retirement remain unsafe; the complete safety goal is open.
+
+Main is 101,351 Rust lines (+77), with 2,943 counted unsafe declarations (-9).
+Both adapters and the deleted owned draft logic together reduce the prospective
+composition by 21 lines to 110,464; its remaining +9,113 overhead is unadopted.
+The full prospective Rust 2024 headless library also compiles (44.11s).
+
+Final checks: 529 comparisons in each controlled RAM/owned suite, 196 actual
+room/PLM comparisons in each path (165 direct scan sequences), 92 flight, 170
+session and 338 beam comparisons. All 139 runtime and 197 draft compiled inputs
+match, with 17 retained consumers checked against current main. Normal production
+release library/frontend/verifier builds and DLL source checks pass. No movie ran.
+PLAN records the precise coverage and limits.
+
+Frozen continuation source/results are at the experiment root below under
+`runtime-room-stage/`; working copies remain in `runtime-room-working/`.
+Use `room-final-results.json`, `main-source-check-room.json`,
+`room-production-source-check.json` and `room-composition-price.json`. The
+prospective source is `room-composition/`, with its compiled library saved as
+`room-composition.rlib`. Do not restart the scan draft or overwrite these sources
+from the older encounter snapshot.
+
+Next: replace the duplicated impact/retirement and remaining flight algorithms,
+migrate their consumers and remove retained implementations. Keep the full game,
+exact behavior, owned-state destination and substantial reduction objective.
+The nightly constraint and tools below are unchanged. No compiler or subagent is
+left running by this work.
+
+## Historical interruption point
+
 ## Objective and current state
 
 Preserve the complete game and exact behavior, including quirks, while reducing

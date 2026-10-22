@@ -359,6 +359,7 @@ pub mod game {
     pub(crate) mod launch_motion;
     pub(crate) mod launch_motion_ram;
     pub(crate) mod projectile_flight;
+    pub(crate) mod projectile_room;
     pub(crate) mod room_backgrounds;
     pub(crate) mod room_scrolls;
     pub mod samus_animation;

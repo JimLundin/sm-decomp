@@ -3,6 +3,10 @@
 //! New library source files must be listed here; missing entries fail closed.
 
 pub static FILES: &[(&str, &[u8])] = &[
+    (
+        "sm/src/game/projectile_room.rs",
+        include_bytes!("game/projectile_room.rs"),
+    ),
     ("sm/src/game/special_attacks.rs", include_bytes!("game/special_attacks.rs")),
     ("sm/src/game/bomb_lifecycle.rs", include_bytes!("game/bomb_lifecycle.rs")),
     ("sm/src/game/projectile_trails.rs", include_bytes!("game/projectile_trails.rs")),

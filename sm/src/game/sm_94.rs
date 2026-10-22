@@ -1692,235 +1692,124 @@ crate::forward_calls! { unsafe fn (ci: *mut CollInfo, k: u16, game: &mut Game) -
     BlockShotReactHoriz => react_to_shot_block(ci, k, BlockShotReactHoriz_Slope, game);
     BlockShotReactVert => react_to_shot_block(ci, k, BlockShotReactVert_Slope, game);
 }
-#[derive(Copy, Clone)]
-enum ShotAxis {
-    Horizontal,
-    Vertical,
-}
+use crate::game::projectile_room::{self as room_scan, Axis as ShotAxis, Field, Kind, Scan};
+
+#[forbid(unsafe_code)]
 impl ShotAxis {
     fn pair(self) -> (usize, usize) {
         match self {
-            Self::Horizontal => (0xb64, 0xb8c),
-            Self::Vertical => (0xb78, 0xba0),
+            Self::X => (0xb64, 0xb8c),
+            Self::Y => (0xb78, 0xba0),
         }
     }
     fn radius(self) -> usize {
         match self {
-            Self::Horizontal => 0xbb4,
-            Self::Vertical => 0xbc8,
+            Self::X => 0xbb4,
+            Self::Y => 0xbc8,
         }
     }
-    fn speed(self) -> usize {
-        match self {
-            Self::Horizontal => 0xbdc,
-            Self::Vertical => 0xbf0,
-        }
-    }
-    fn other(self) -> Self {
-        match self {
-            Self::Horizontal => Self::Vertical,
-            Self::Vertical => Self::Horizontal,
-        }
-    }
-    unsafe fn scrolls(self, game: &mut Game) -> u16 {
-        unsafe {
-            match self {
-                Self::Horizontal => word!(game.room_width_in_scrolls),
-                Self::Vertical => word!(game.room_height_in_scrolls),
-            }
-        }
-    }
-    unsafe fn react(self, ci: *mut CollInfo, block: u16, game: &mut Game) -> u8 {
-        unsafe {
-            match self {
-                Self::Horizontal => BlockShotReactHoriz(ci, block, game),
-                Self::Vertical => BlockShotReactVert(ci, block, game),
-            }
-        }
-    }
-    unsafe fn advance(self, block: u16, game: &mut Game) -> u16 {
-        unsafe {
-            match self {
-                Self::Horizontal => {
-                    block.wrapping_add(word!(game.room_width_in_blocks).wrapping_mul(2))
+}
+#[forbid(unsafe_code)]
+fn shot_word(base: usize, k: u16, game: &Game) -> u16 {
+    let at = base + usize::from(k >> 1) * 2;
+    u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]])
+}
+#[forbid(unsafe_code)]
+impl room_scan::State for &mut Game {
+    fn field(&self, slot: u16, axis: ShotAxis, field: Field) -> u16 {
+        let base = match field {
+            Field::Position => axis.pair().0,
+            Field::Fraction => axis.pair().1,
+            Field::Radius => axis.radius(),
+            Field::Speed => {
+                if axis == ShotAxis::X {
+                    0xbdc
+                } else {
+                    0xbf0
                 }
-                Self::Vertical => block.wrapping_add(2),
             }
-        }
-    }
-}
-unsafe fn shot_word(base: usize, k: u16, game: &mut Game) -> u16 {
-    unsafe {
-        (game.g_ram.as_ptr().add(base + usize::from(k >> 1) * 2) as *const u16).read_unaligned()
-    }
-}
-unsafe fn shot_span(k: u16, axis: ShotAxis, game: &mut Game) -> u16 {
-    unsafe {
-        let other = axis.other();
-        let first =
-            shot_word(other.pair().0, k, game).wrapping_sub(shot_word(other.radius(), k, game))
-                & 0xfff0;
-        shot_word(other.radius(), k, game)
-            .wrapping_add(shot_word(other.pair().0, k, game))
-            .wrapping_sub(1)
-            .wrapping_sub(first)
-            >> 4
-    }
-}
-crate::forward_calls! { unsafe fn (k: u16, game: &mut Game) -> u16;
-    BlockGetSomePos1 => shot_span(k, ShotAxis::Horizontal, game);
-    BlockGetSomePos2 => shot_span(k, ShotAxis::Vertical, game);
-}
-unsafe fn move_shot(k: u16, axis: ShotAxis, amount: i32, game: &mut Game) {
-    unsafe {
-        let (position, subposition) = axis.pair();
-        AddToHiLo(
-            game.g_ram
-                .as_mut_ptr()
-                .add(position + usize::from(k >> 1) * 2) as *mut u16,
-            game.g_ram
-                .as_mut_ptr()
-                .add(subposition + usize::from(k >> 1) * 2) as *mut u16,
-            amount as u32,
-        );
-    }
-}
-unsafe fn beam_block_collision(k: u16, axis: ShotAxis, wave: bool, game: &mut Game) -> u8 {
-    unsafe {
-        let amount = i32::from(shot_word(axis.speed(), k, game) as i16) << 8;
-        let span = shot_span(k, axis, game);
-        // Horizontal traversal computes the row before updating the split position.
-        let row = match axis {
-            ShotAxis::Horizontal => Mult8x8(
-                (shot_word(0xb78, k, game).wrapping_sub(shot_word(0xbc8, k, game)) >> 4) as u8,
-                word!(game.room_width_in_blocks) as u8,
-            ),
-            ShotAxis::Vertical => 0,
-        };
-        move_shot(k, axis, amount, game);
-        let position = shot_word(axis.pair().0, k, game);
-        let edge = if amount < 0 {
-            shot_word(axis.pair().0, k, game).wrapping_sub(shot_word(axis.radius(), k, game))
-        } else {
-            shot_word(axis.radius(), k, game)
-                .wrapping_add(shot_word(axis.pair().0, k, game))
-                .wrapping_sub(1)
-        };
-        let mut block = match axis {
-            ShotAxis::Horizontal => row.wrapping_add(edge >> 4).wrapping_mul(2),
-            ShotAxis::Vertical => {
-                // Wave reads room width before the X edge; nonwave reverses those reads.
-                let column = if wave {
-                    0
-                } else {
-                    shot_word(0xb64, k, game).wrapping_sub(shot_word(0xbb4, k, game)) >> 4
-                };
-                let row = Mult8x8((edge >> 4) as u8, word!(game.room_width_in_blocks) as u8);
-                let column = if wave {
-                    shot_word(0xb64, k, game).wrapping_sub(shot_word(0xbb4, k, game)) >> 4
-                } else {
-                    column
-                };
-                row.wrapping_add(column).wrapping_mul(2)
+            Field::ScreenHigh => {
+                return u16::from(self.g_ram[axis.pair().0 + usize::from(slot >> 1) * 2 + 1]);
             }
         };
-        if span.wrapping_sub(16) & 0x8000 == 0 {
-            return 0;
+        shot_word(base, slot, self)
+    }
+    fn move_by(&mut self, slot: u16, axis: ShotAxis, amount: i32) {
+        let (position, fraction) = axis.pair();
+        let low = u32::from(shot_word(fraction, slot, self));
+        let high = u32::from(shot_word(position, slot, self));
+        let sum = (low | high << 16).wrapping_add(amount as u32);
+        let at = usize::from(slot >> 1) * 2;
+        self.g_ram[fraction + at..fraction + at + 2].copy_from_slice(&(sum as u16).to_ne_bytes());
+        self.g_ram[position + at..position + at + 2]
+            .copy_from_slice(&((sum >> 16) as u16).to_ne_bytes());
+    }
+}
+struct RoomScan;
+impl<'a> room_scan::Context<&'a mut Game> for RoomScan {
+    fn width(&self, owner: &&mut Game) -> u16 {
+        crate::ram_map::checked_word!(owner.room_width_in_blocks)
+    }
+    fn scrolls(&self, owner: &&mut Game, axis: ShotAxis) -> u16 {
+        match axis {
+            ShotAxis::X => crate::ram_map::checked_word!(owner.room_width_in_scrolls),
+            ShotAxis::Y => crate::ram_map::checked_word!(owner.room_height_in_scrolls),
         }
-        if !wave && (i16::from((edge >> 8) as u8)).wrapping_sub(axis.scrolls(game) as i16) >= 0 {
-            return 0;
-        }
+    }
+    fn react(
+        &mut self,
+        game: &'a mut Game,
+        axis: ShotAxis,
+        block: u16,
+        scan: Scan,
+    ) -> (&'a mut Game, Scan, u8) {
         let mut ci = CollInfo {
-            ci_r18_r20: amount,
-            ci_r24: position,
-            ci_r26: span,
-            ci_r28: edge,
-            ci_r30: 0,
-            ci_r32: 0,
-            ci_r38: span,
-            ci_r40: span,
+            ci_r18_r20: scan.displacement,
+            ci_r24: scan.position,
+            ci_r26: scan.span,
+            ci_r28: scan.edge,
+            ci_r30: scan.missile,
+            ci_r32: scan.auxiliary,
+            ci_r38: scan.remaining,
+            ci_r40: scan.unblocked,
         };
-        if wave {
-            let other = axis.other();
-            let high = *game
-                .g_ram
-                .as_ptr()
-                .add(other.pair().0 + usize::from(k >> 1) * 2 + 1);
-            if high & 0x80 != 0
-                || i16::from(high).wrapping_sub(other.scrolls(game) as i16) >= 0
-                || i16::from((edge >> 8) as u8).wrapping_sub(axis.scrolls(game) as i16) >= 0
-            {
-                return 0;
+        // Reactions borrow this scan synchronously and may change every field.
+        let hit = unsafe {
+            match axis {
+                ShotAxis::X => BlockShotReactHoriz(&raw mut ci, block, game),
+                ShotAxis::Y => BlockShotReactVert(&raw mut ci, block, game),
             }
-        }
-        do_until! { ci.ci_r38 & 0x8000 != 0;
-            axis.react(&raw mut ci, block, game);
-            block = axis.advance(block, game);
-            ci.ci_r38 = ci.ci_r38.wrapping_sub(1);
-        }
-        if wave || ci.ci_r40 & 0x8000 == 0 {
-            return 0;
-        }
-        KillProjectile(k, game);
-        1
+        };
+        (
+            game,
+            Scan {
+                displacement: ci.ci_r18_r20,
+                position: ci.ci_r24,
+                span: ci.ci_r26,
+                edge: ci.ci_r28,
+                missile: ci.ci_r30,
+                auxiliary: ci.ci_r32,
+                remaining: ci.ci_r38,
+                unblocked: ci.ci_r40,
+            },
+            hit,
+        )
     }
+    fn retire(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
+        unsafe { KillProjectile(slot, game) };
+        game
+    }
+}
+unsafe fn scan_room(k: u16, axis: ShotAxis, kind: Kind, game: &mut Game) -> u8 {
+    room_scan::collide(game, k, axis, kind, &mut RoomScan).1
 }
 crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game) -> u8;
-    BlockCollNoWaveBeamHoriz => beam_block_collision(k, ShotAxis::Horizontal, false, game);
-    BlockCollNoWaveBeamVert => beam_block_collision(k, ShotAxis::Vertical, false, game);
-    BlockCollWaveBeamHoriz => beam_block_collision(k, ShotAxis::Horizontal, true, game);
-    BlockCollWaveBeamVert => beam_block_collision(k, ShotAxis::Vertical, true, game);
-}
-unsafe fn missile_block_collision(k: u16, axis: ShotAxis, game: &mut Game) -> u8 {
-    unsafe {
-        let amount = i32::from(shot_word(axis.speed(), k, game) as i16) << 8;
-        let row = match axis {
-            ShotAxis::Horizontal => Mult8x8(
-                (shot_word(0xb78, k, game) >> 4) as u8,
-                word!(game.room_width_in_blocks) as u8,
-            ),
-            ShotAxis::Vertical => 0,
-        };
-        move_shot(k, axis, amount, game);
-        if matches!(axis, ShotAxis::Horizontal) {
-            let _subposition = shot_word(0xb8c, k, game);
-        }
-        let position = shot_word(axis.pair().0, k, game);
-        let block = match axis {
-            ShotAxis::Horizontal => row
-                .wrapping_add(shot_word(0xb64, k, game) >> 4)
-                .wrapping_mul(2),
-            ShotAxis::Vertical => {
-                let row = Mult8x8(
-                    (shot_word(0xb78, k, game) >> 4) as u8,
-                    word!(game.room_width_in_blocks) as u8,
-                );
-                row.wrapping_add(shot_word(0xb64, k, game) >> 4)
-                    .wrapping_mul(2)
-            }
-        };
-        let mut ci = CollInfo {
-            ci_r18_r20: amount,
-            ci_r24: position,
-            ci_r26: 0,
-            ci_r28: position,
-            ci_r30: 1,
-            ci_r32: 0,
-            ci_r38: 0,
-            ci_r40: 0,
-        };
-        if i16::from((position >> 8) as u8).wrapping_sub(axis.scrolls(game) as i16) >= 0
-            || axis.react(&raw mut ci, block, game) == 0
-        {
-            return 0;
-        }
-        KillProjectile(k, game);
-        1
-    }
-}
-crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game) -> u8;
-    BlockCollMissileHoriz => missile_block_collision(k, ShotAxis::Horizontal, game);
-    BlockCollMissileVert => missile_block_collision(k, ShotAxis::Vertical, game);
+    BlockCollNoWaveBeamHoriz => scan_room(k, ShotAxis::X, Kind::Beam, game);
+    BlockCollNoWaveBeamVert => scan_room(k, ShotAxis::Y, Kind::Beam, game);
+    BlockCollWaveBeamHoriz => scan_room(k, ShotAxis::X, Kind::Wave, game);
+    BlockCollWaveBeamVert => scan_room(k, ShotAxis::Y, Kind::Wave, game);
+    BlockCollMissileHoriz => scan_room(k, ShotAxis::X, Kind::Missile, game);
+    BlockCollMissileVert => scan_room(k, ShotAxis::Y, Kind::Missile, game);
 }
 unsafe fn BlockShotReact_Slope_NonSquare(ci: *mut CollInfo, j: u16, k: u16, game: &mut Game) -> u8 {
     unsafe {
@@ -2010,19 +1899,19 @@ unsafe fn shot_square_slope(
     unsafe {
         let orientation = u16::from(*ram_ptr!(game; 0x16402, block as isize) >> 6);
         let shift = match axis {
-            ShotAxis::Horizontal => 2,
-            ShotAxis::Vertical => 3,
+            ShotAxis::X => 2,
+            ShotAxis::Y => 3,
         };
         let mut index = slope
             .wrapping_mul(4)
             .wrapping_add(orientation ^ (((*ci).ci_r28 & 8) >> shift));
         let other = match axis {
-            ShotAxis::Horizontal => 1,
-            ShotAxis::Vertical => 2,
+            ShotAxis::X => 1,
+            ShotAxis::Y => 2,
         };
         crate::verify_probe::hit(match axis {
-            ShotAxis::Horizontal => "square-slope.shot.horizontal",
-            ShotAxis::Vertical => "square-slope.shot.vertical",
+            ShotAxis::X => "square-slope.shot.horizontal",
+            ShotAxis::Y => "square-slope.shot.vertical",
         });
         // No stores or callbacks occur before sampling; the projectile slot is stable.
         let k = word!(game.projectile_index);
@@ -2044,8 +1933,8 @@ unsafe fn shot_square_slope(
 }
 
 crate::forward_calls! { unsafe fn ( ci: *mut CollInfo, a: u16, k: u16, game: &mut Game, ) -> u8;
-    BlockShotReactVert_Slope_Square => shot_square_slope(ci, a, k, ShotAxis::Vertical, game);
-    BlockShotReactHoriz_Slope_Square => shot_square_slope(ci, a, k, ShotAxis::Horizontal, game);
+    BlockShotReactVert_Slope_Square => shot_square_slope(ci, a, k, ShotAxis::Y, game);
+    BlockShotReactHoriz_Slope_Square => shot_square_slope(ci, a, k, ShotAxis::X, game);
 }
 unsafe fn BlockReactGrapple_GrappleBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
     unsafe {
