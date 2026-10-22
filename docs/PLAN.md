@@ -2621,10 +2621,32 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    build and loaded DLL source checks pass. Sources/results are preserved at
    player-projectiles/runtime-beam-stage. No movie ran; this closes compatibility
    bindings, not persistent Session authority or a whole replacement price.
-   The target Session contract remains open. Encounter effects still need explicit
-   bindings or elimination in the runtime composition.
-   Bind and validate these in the same full candidate before pricing/adopting its
-   complete dependency and deletion surface under target-architecture/MIGRATION.md.
+   The encounter dependency audit corrects the earlier binding task: drain/X-ray
+   observation variants are fixture labels, not effects emitted by the running
+   candidate. `SetMovementDrag` belongs to the older isolated drain model, whose
+   refresh/release/query callers are fixtures only. The running candidate already
+   relinquishes its complete owner around legacy enemy execution and the actual
+   X-ray leaf. Do not add unused bindings for those labels.
+   Selected actual drain -> owned HUD -> actual X-ray transfers now pass **127
+   full-RAM comparisons**, **801 ordered observations** and **eight expected failures**.
+   Refresh, release, repeated preparation, exact restriction tuples, standing/
+   crouching, facing, frozen entry, callback mutation/failure and invalid prior
+   movement are covered. Actual release executes the actor/Samus/palette/music
+   calls; an explicit later neutral-pose interval permits activation. No immediate
+   X-ray activation from the drained pose is claimed. **100 allocator checks**
+   confirm actual HDMA allocation; DMA/PPU state and APU queue bytes match.
+   These are selected transfers, not an encounter through the enemy scheduler or
+   a movie. Content is synthetic, hardware controlled, and HDMA playback untested.
+   The existing **170 session comparisons** also pass. All 138 runtime and 194 draft
+   inputs match compiled bytes; 26 retained bodies link to current main through
+   the audited edition migration. Only six observation points and fixture wiring
+   were added; no production implementation or owner changed. The reference carrier
+   remains edition 2021; production remains edition 2024. Source/DLL/results are
+   preserved at player-projectiles/runtime-encounter-stage. Main metrics are unchanged.
+   The target Session contract remains open. Next price the same complete candidate,
+   including every retained dependency, adapter and concrete deletion, under
+   target-architecture/MIGRATION.md. This audit establishes no replacement savings
+   or persistent production ownership.
    Current Game/RAM interfaces are temporary; substantial reduction, content
    extraction and complete unsafe elimination remain required beyond binding checks.
    The full projectile candidate now includes shared script control flow:
