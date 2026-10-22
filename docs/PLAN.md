@@ -34,10 +34,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,295 Rust lines in 98 files**, plus 262 C
-bridge and 296 C-header lines = **94,853 maintained implementation lines**.
+Current composition (2026-10-22): **94,349 Rust lines in 99 files**, plus 262 C
+bridge and 296 C-header lines = **94,907 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **95,684**. This complete recount includes frontend,
+gives **95,738**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1600,6 +1600,27 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    scenarios execute the changed reads, lifecycle, patching and bus consumers.
    Allocator-event identity, physical hardware and gameplay-route coverage are not
    claimed. Checks: Local/sm-decomp-experiments/20261022/owned-rom.
+   Enemy-projectile scripts now keep an owned ROM image and checked linear
+   cursor across instruction callbacks. All 94 numeric routes use explicit
+   stop/offset results; numeric zero stops while linear bank-zero movement
+   continues. The cursor module forbids unsafe code. Existing raw RAM operations,
+   independent palette-source reads and other unsafe callees remain; this is not
+   completion of projectile safety. The complete four-file change costs **+54
+   maintained lines**, with no new macros. It is safety work, not a volume saving.
+   All **910** actual old/new instruction cases and **264** actual executor
+   scenarios pass, comparing full RAM and completion/failure state through **880**
+   persistent updates. They cover all 91 explicit instruction entry points,
+   the three remaining external routes, timer gates, absolute/relative branches,
+   delete/sleep, linear bank crossings, preinstruction effects and final writes.
+   Fifteen owner/patch/bounds checks pass. All 94 routes and the unchanged bank
+   spans retain source correspondence. Callback selector reloads/captures retain
+   their exact statements; arbitrary callback selector mutation is not established
+   by these synthetic executor scenarios. No movie ran; gameplay-route, rendering
+   and hardware execution are not claimed. The old optimized unaligned accesses
+   provide observed comparisons, not proof that those old reads were defined.
+   Final release library/frontend/verifier builds and all 106 embedded source
+   inputs pass, including the installed backend/music/utility source checks.
+   Checks: Local/sm-decomp-experiments/20261022/eproj-script.
    Cart and Game now also share owned SRAM bytes. Gameplay save/load, checksums,
    signatures, copy/clear/selection, both cartridge mappings, reset, recorder bases,
    oracle snapshot transfers and verifier checkpoints use checked access. Three
@@ -2664,15 +2685,19 @@ shared configuration/input and utility dependencies, the desktop host,
 room-scroll data, the shader dependency, safe pose/mechanism RAM access,
 gameplay continuation ownership, owned ROM reads, safe asset decompression,
 checked ROM tables, safe word transfers, owned recording, checked VRAM readback
-owned sprite drawing, checked Mode 7 transfers, owned SRAM and checked snapshot
-streams, maintained Rust is **94,295**, with
+owned sprite drawing, checked Mode 7 transfers, owned SRAM, checked snapshot
+streams and owned enemy-projectile scripts, maintained Rust is **94,349**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **94,853**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **95,684**.
+Including 262 C and 296 header lines gives **94,907**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **95,738**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3038; cast lines 6579. Checked snapshot streams remove 17
+unsafe functions 3036; cast lines 6574. Owned enemy-projectile scripts add 54
+maintained lines for checked reads, captured ROM ownership and explicit results;
+this is a safety cost, not a reduction. They remove two counted unsafe declarations
+and five cast-containing lines; other counters are unchanged. Existing unsafe
+RAM operations and callees remain. Checked snapshot streams remove 17
 maintained lines and one counted unsafe function; other counters are unchanged.
 The stream owns checked cursor/output handling, and the SRAM pointer escape is
 removed. Hardware copies and native file/error interfaces remain unsafe.

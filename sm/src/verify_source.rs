@@ -106,6 +106,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/message_boxes.rs"),
     ),
     ("sm/src/game/sm_86.rs", include_bytes!("game/sm_86.rs")),
+    (
+        "sm/src/game/eproj_script.rs",
+        include_bytes!("game/eproj_script.rs"),
+    ),
     ("sm/src/game/sm_87.rs", include_bytes!("game/sm_87.rs")),
     (
         "sm/src/game/layer_blending.rs",

@@ -1,3 +1,4 @@
+use crate::game::eproj_script::EprojScript;
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
@@ -55,14 +56,6 @@ const RomPtr_86: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_p
 const RomPtr_A0: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa0>;
 const RomPtr_A1: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa1>;
 const RomPtr_B4: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb4>;
-#[inline]
-unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
-    RomPtr(
-        (((bank as i32) << 16i32) as u32).wrapping_add(0x8000u32),
-        game,
-    )
-    .offset(-(0x8000i32 as isize))
-}
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
 }
@@ -280,28 +273,26 @@ unsafe fn EprojRunOne(k: u16, game: &mut Game) {
     let v2 = usize::from(EprojState(&game.g_ram).index() >> 1);
     let fresh20 = EprojStateMut(&mut game.g_ram).decrement_instruction_timer(v2);
     if fresh20 == 1 {
-        let base = RomBankBase(0x86, game);
-        let mut p = base.add(usize::from(EprojState(&game.g_ram).instruction(v2)));
-        while *(p as *const u16) & 0x8000 != 0 {
-            p = CallEprojInstr(
-                0x860000 | u32::from(*(p as *const u16)),
-                v1,
-                p.offset(2),
-                game,
-            );
-            if (p as usize) < 0x10000 {
-                if p.is_null() {
-                    return;
-                }
-                p = base.add(p as usize);
-            }
+        let image = game
+            .loaded_rom
+            .as_ref()
+            .expect("ROM must be loaded")
+            .clone();
+        let mut script = EprojScript::new(image, EprojState(&game.g_ram).instruction(v2));
+        while script.word(0) & 0x8000 != 0 {
+            let instruction = 0x860000 | u32::from(script.word(0));
+            script.seek(script.offset(2).unwrap());
+            let Some(next) = CallEprojInstr(instruction, v1, &script, game) else {
+                return;
+            };
+            script.seek(next);
         }
         let v7 = usize::from(v1 >> 1);
-        let value = *(p as *mut u16);
+        let value = script.word(0);
         EprojStateMut(&mut game.g_ram).set_instruction_timer(v7, value);
-        let value = *(p.offset(2) as *mut u16);
+        let value = script.word(2);
         EprojStateMut(&mut game.g_ram).set_spritemap(v7, value);
-        let value = p.offset(4).offset_from(base) as c_long as u16;
+        let value = script.bank_address().wrapping_add(4);
         EprojStateMut(&mut game.g_ram).set_instruction(v7, value);
     }
 }
@@ -327,9 +318,11 @@ crate::game::address_dispatch! {
                 }];
     }
 }
-crate::instruction_callbacks! { pub unsafe fn (k: u16, epjp: *const u8) -> *const u8;
-    EprojInstr_Goto [*(epjp as *mut u16) as usize as *const u8] { };
-    EprojInstr_GotoRel [epjp.offset(*epjp as i8 as i32 as isize)] { };
+pub fn EprojInstr_Goto(k: u16, epjp: &EprojScript) -> Option<usize> {
+    epjp.jump(epjp.word(0))
+}
+pub fn EprojInstr_GotoRel(k: u16, epjp: &EprojScript) -> Option<usize> {
+    epjp.offset(epjp.byte(0) as i8 as isize)
 }
 pub enum EprojPriority {
     Low,
@@ -4771,39 +4764,39 @@ crate::game::callback_dispatch! {
     }
 }
 crate::game::callback_dispatch! {
-    unsafe fn CallEprojInstr(ea: u32, k: u16, j: *const u8, game: &mut Game) -> *const u8 => ea;
+    unsafe fn CallEprojInstr(ea: u32, k: u16, j: &EprojScript, game: &mut Game) -> Option<usize> => ea;
     call (k, j, game); default {
             Unreachable(game);
-            null::<u8>()
+            None
         };
-    @functions [pub fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
+    @functions [pub fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
     [8814932]
-    EprojInstr_Delete [null()] { EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0); };
-    @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
-    [8814937] EprojInstr_Sleep [null()] {
-        let value = (epjp.offset_from(RomBankBase(0x86, game)) as c_long - 2 as c_long) as u16;
+    EprojInstr_Delete [None] { EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0); };
+    @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
+    [8814937] EprojInstr_Sleep [None] {
+        let value = (epjp.bank_address() as c_long - 2 as c_long) as u16;
         EprojStateMut(&mut game.g_ram).set_instruction(usize::from(k >> 1), value);
     };
     [8814945] EprojInstr_SetPreInstr_ [epjp.offset(2)] {
-        let value = *(epjp as *mut u16);
+        let value = epjp.word(0);
         EprojStateMut(&mut game.g_ram).set_preinstruction(usize::from(k >> 1), value);
     };
-    @functions [pub fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
+    @functions [pub fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
     [8814954] EprojInstr_ClearPreInstr [] {
         EprojStateMut(&mut game.g_ram).set_preinstruction(usize::from(k >> 1), 0x8170);
-        epjp
+        epjp.offset(0)
     };
     [8826770] EprojInstr_MoveY_Minus4 [] {
         EprojStateMut(&mut game.g_ram).add_word(0x1a93, usize::from(k >> 1), (-4i16) as u16);
-        epjp
+        epjp.offset(0)
     };
-    @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
+    @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
     [8814961] EprojInstr_CallFunc [] {
-        CallEprojFunc(Load24(epjp as *mut LongPtr), k as u32, game);
+        CallEprojFunc(epjp.long(), k as u32, game);
         epjp.offset(3)
     };
     [8815061] EprojInstr_SetTimer [] {
-        let value = *(epjp as *mut u16);
+        let value = epjp.word(0);
         EprojStateMut(&mut game.g_ram).set_timer(usize::from(k >> 1), value);
         epjp.offset(2)
     };
@@ -4818,7 +4811,7 @@ crate::game::callback_dispatch! {
                 eproj_properties[v3] = (word!(game.eproj_properties[v3]) & 0x5fff | 0x2000); }
             word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
         }
-        epjp
+        epjp.offset(0)
     };
     [8819312] EprojInstr_9270 [] {
         let v1: i32 = k as i32 >> 1;
@@ -4827,7 +4820,7 @@ crate::game::callback_dispatch! {
             y: word!(game.eproj_y_pos[v1]),
         };
         SpawnEnemyDrops(addr_kEnemyDef_DDBF as u16, k, 0, game);
-        epjp
+        epjp.offset(0)
     };
     [8820750] EprojInstr_980E [] {
         let v2: i32 = k as i32 >> 1;
@@ -4836,17 +4829,17 @@ crate::game::callback_dispatch! {
             y: word!(game.eproj_y_pos[v2]),
         };
         SpawnEnemyDrops(addr_kEnemyDef_E4FF as u16, k, 0, game);
-        epjp
+        epjp.offset(0)
     };
     [8822864] EprojInstr_SetPreInstrAndRun [] {
-        word!(game.eproj_pre_instr[(k >> 1)] = *(epjp as *mut u16));
-        epjp
+        word!(game.eproj_pre_instr[(k >> 1)] = epjp.word(0));
+        epjp.offset(0)
     };
     [8823742] EprojInstr_A3BE [] {
         let v1: i32 = k as i32 >> 1;
         word!(game.eproj_x_pos[v1] = word!(game.eproj_E[v1]));
         word!(game.eproj_y_pos[v1] = word!(game.eproj_F[v1]));
-        epjp
+        epjp.offset(0)
     };
     [8825738] EprojInstr_SpawnEnemyDrops [] {
         let v2: i32 = k as i32 >> 1;
@@ -4856,9 +4849,9 @@ crate::game::callback_dispatch! {
         };
         SpawnEnemyDrops(
             (if word!(game.area_index) != 0 {
-                *(epjp.offset(2) as *mut u16) as i32
+                epjp.word(2) as i32
             } else {
-                *(epjp as *mut u16) as i32
+                epjp.word(0) as i32
             }) as u16,
             k,
             0,
@@ -4870,27 +4863,27 @@ crate::game::callback_dispatch! {
         let v2: i32 = k as i32 >> 1;
         word!(game.eproj_x_pos[v2] = word!(game.eproj_E[v2]));
         word!(game.eproj_y_pos[v2] = word!(game.eproj_F[v2]));
-        epjp
+        epjp.offset(0)
     };
     [8827198] sub_86B13E [] {
-        ((if (word!(game.eproj_E[(k >> 1)]) & 0x8000) != 0 {
-            addr_off_86B166 as i32
+        epjp.jump(if word!(game.eproj_E[(k >> 1)]) & 0x8000 != 0 {
+            addr_off_86B166 as u16
         } else {
-            addr_off_86B14B as i32
-        }) as usize as *const u8)
+            addr_off_86B14B as u16
+        })
     };
     [8828917] EprojInstr_Earthquake [] {
         word!(game.earthquake_type = 1);
         word!(game.earthquake_timer |= 0x20);
-        epjp
+        epjp.offset(0)
     };
     [8828993] EprojInstr_AddToYpos [] {
-        word!(checked_i32, game.eproj_y_pos[(k >> 1)] += *(epjp as *mut u16) as i32);
+        word!(checked_i32, game.eproj_y_pos[(k >> 1)] += epjp.word(0) as i32);
         epjp.offset(2)
     };
     [8833232] EprojInstr_Add12ToY [] {
         word!(checked_i32, game.eproj_y_pos[(k >> 1)] += 12);
-        epjp
+        epjp.offset(0)
     };
     [8839146] EprojInstr_DFEA [] {
         let v1: i32 = k as i32 >> 1;
@@ -4899,17 +4892,17 @@ crate::game::callback_dispatch! {
             y: word!(game.eproj_y_pos[v1]),
         };
         SpawnEnemyDrops(addr_kEnemyDef_E83F as u16, k, 0, game);
-        epjp
+        epjp.offset(0)
     };
     [8840499] EprojInstr_SetYVel [] {
-        word!(game.eproj_y_vel[(k >> 1)] = *(epjp as *mut u16));
+        word!(game.eproj_y_vel[(k >> 1)] = epjp.word(0));
         epjp.offset(2)
     };
     @functions [pub unsafe fn (
     k: u16,
-    epjp: *const u8,
+    epjp: &EprojScript,
     game: &mut Game,
-) -> *const u8];
+) -> Option<usize>];
     [8815046] EprojInstr_DecTimerAndGotoIfNonZero [] {
         if EprojStateMut(&mut game.g_ram).decrement_timer(usize::from(k >> 1)) == 1 {
             epjp.offset(2)
@@ -4928,16 +4921,16 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (
     k: u16,
-    epjp: *const u8,
+    epjp: &EprojScript,
     game: &mut Game,
-) -> *const u8];
+) -> Option<usize>];
     [8815071] EprojInstr_MoveRandomlyWithinRadius [epjp.offset(4)] {
         let mut v4: i8 = 0;
         let mut v6: i16 = 0;
         let r18: u16 = NextRandom(game);
         do_until! { (v4 >= 0);
     let mut Random: i8 = NextRandom(game) as i8;
-    v4 = ((*epjp as i32 & Random as i32) - *epjp.offset(1) as i32) as i8;
+    v4 = ((epjp.byte(0) as i32 & Random as i32) - epjp.byte(1) as i32) as i8;
 }
         word!(checked_i32, game.eproj_x_pos[(k >> 1)] += if r18 & 0x8000 != 0 {
                 -(v4 as u8 as i32)
@@ -4947,7 +4940,7 @@ crate::game::callback_dispatch! {
         do_until! { ((v6 as u16 & 0x80) == 0);
     *(&raw mut v6 as *mut u8) = NextRandom(game) as u8;
     *(&raw mut v6 as *mut u8) =
-        ((*epjp.offset(2) as i32 & v6 as i32) - *epjp.offset(3) as i32) as u8;
+        ((epjp.byte(2) as i32 & v6 as i32) - epjp.byte(3) as i32) as u8;
 }
         v6 = v6 as u8 as i16;
         if (r18 & 0x4000) != 0 {
@@ -4958,50 +4951,50 @@ crate::game::callback_dispatch! {
     [8815152] EprojInstr_SetProjectileProperties [epjp.offset(2)] {
         let slot = usize::from(k >> 1);
         let properties = EprojState(&game.g_ram).slot_word(0x1bd7, slot);
-        let mask = *(epjp as *mut u16);
+        let mask = epjp.word(0);
         EprojStateMut(&mut game.g_ram).set_properties(slot, properties | mask);
     };
     [8815164] EprojInstr_ClearProjectileProperties [epjp.offset(2)] {
         let slot = usize::from(k >> 1);
         let properties = EprojState(&game.g_ram).slot_word(0x1bd7, slot);
-        let mask = *(epjp as *mut u16);
+        let mask = epjp.word(0);
         EprojStateMut(&mut game.g_ram).set_properties(slot, properties & mask);
     };
-    [8815176] EprojInstr_EnableCollisionWithSamusProj [epjp] {
+    [8815176] EprojInstr_EnableCollisionWithSamusProj [epjp.offset(0)] {
         word!(game.eproj_properties[(k >> 1)] |= 0x8000);
     };
-    [8815186] EprojInstr_DisableCollisionWithSamusProj [epjp] {
+    [8815186] EprojInstr_DisableCollisionWithSamusProj [epjp.offset(0)] {
         word!(game.eproj_properties[(k >> 1)] &= !(0x8000));
     };
-    [8815196] EprojInstr_DisableCollisionWithSamus [epjp] {
+    [8815196] EprojInstr_DisableCollisionWithSamus [epjp.offset(0)] {
         word!(game.eproj_properties[(k >> 1)] |= 0x2000);
     };
-    [8815206] EprojInstr_EnableCollisionWithSamus [epjp] {
+    [8815206] EprojInstr_EnableCollisionWithSamus [epjp.offset(0)] {
         word!(game.eproj_properties[(k >> 1)] &= !(0x2000));
     };
-    [8815216] EprojInstr_SetToNotDieOnContact [epjp] {
+    [8815216] EprojInstr_SetToNotDieOnContact [epjp.offset(0)] {
         word!(game.eproj_properties[(k >> 1)] |= 0x4000);
     };
-    @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
-    [8815226] EprojInstr_SetToDieOnContact [epjp] {
+    @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
+    [8815226] EprojInstr_SetToDieOnContact [epjp.offset(0)] {
         word!(game.eproj_properties[(k >> 1)] &= !(0x4000));
     };
-    [8815236] EprojInstr_SetLowPriority [epjp] {
+    [8815236] EprojInstr_SetLowPriority [epjp.offset(0)] {
         word!(game.eproj_properties[(k >> 1)] |= 0x1000);
     };
-    [8815246] EprojInstr_SetHighPriority [epjp] {
+    [8815246] EprojInstr_SetHighPriority [epjp.offset(0)] {
         word!(game.eproj_properties[(k >> 1)] &= !(0x1000));
     };
     [8815256] EprojInstr_SetXyRadius [epjp.offset(2)] {
-        word!(game.eproj_radius[(k >> 1)] = *(epjp as *mut u16));
+        word!(game.eproj_radius[(k >> 1)] = epjp.word(0));
     };
-    [8815265] EprojInstr_SetXyRadiusZero [epjp] { word!(game.eproj_radius[(k >> 1)] = 0); };
+    [8815265] EprojInstr_SetXyRadiusZero [epjp.offset(0)] { word!(game.eproj_radius[(k >> 1)] = 0); };
     @functions [pub unsafe fn (
     k: u16,
-    epjp: *const u8,
+    epjp: &EprojScript,
     game: &mut Game,
-) -> *const u8];
-    [8815269] EprojInstr_CalculateDirectionTowardsSamus [epjp] {
+) -> Option<usize>];
+    [8815269] EprojInstr_CalculateDirectionTowardsSamus [epjp.offset(0)] {
         let v2: i32 = k as i32 >> 1;
         let x: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.eproj_x_pos[v2]));
         let y: u16 = (word!(game.samus_y_pos)).wrapping_sub(word!(game.eproj_y_pos[v2]));
@@ -5013,9 +5006,9 @@ crate::game::callback_dispatch! {
         word!(game.eproj_y_vel[v4] = kSinCosTable8bit_Sext[v5 as usize] as u16);
     };
     [8815317] EprojInstr_WriteColorsToPalette [epjp.offset(5)] {
-        let mut v3: u16 = *(epjp.offset(2) as *mut u16);
-        let mut n: i32 = *epjp.offset(4) as i32;
-        let mut v4: u16 = *(epjp as *mut u16);
+        let mut v3: u16 = epjp.word(2);
+        let mut n: i32 = epjp.byte(4) as i32;
+        let mut v4: u16 = epjp.word(0);
         do_until! { ((n & 0x8000) != 0);
     word!(game.palette_buffer[(v3 >> 1)] = *(RomPtr_86(v4, game) as *mut u16));
     v4 = (v4 as i32 + 2) as u16;
@@ -5023,28 +5016,28 @@ crate::game::callback_dispatch! {
     n -= 1;
 }
     };
-    @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
-    [8815357] EprojInstr_QueueMusic [epjp.offset(1)] { QueueMusic_Delayed8(*epjp as u16, game); };
-    [8815369] EprojInstr_QueueSfx1_Max6 [epjp.offset(1)] { QueueSfx1_Max6(*epjp as u16, game); };
-    [8815378] EprojInstr_QueueSfx2_Max6 [epjp.offset(1)] { QueueSfx2_Max6(*epjp as u16, game); };
-    [8815387] EprojInstr_QueueSfx3_Max6 [epjp.offset(1)] { QueueSfx3_Max6(*epjp as u16, game); };
-    [8815396] EprojInstr_QueueSfx1_Max15 [epjp.offset(1)] { QueueSfx1_Max15(*epjp as u16, game); };
-    [8815405] EprojInstr_QueueSfx2_Max15 [epjp.offset(1)] { QueueSfx2_Max15(*epjp as u16, game); };
-    [8815414] EprojInstr_QueueSfx3_Max15 [epjp.offset(1)] { QueueSfx3_Max15(*epjp as u16, game); };
-    [8815423] EprojInstr_QueueSfx1_Max3 [epjp.offset(1)] { QueueSfx1_Max3(*epjp as u16, game); };
-    [8815432] EprojInstr_QueueSfx2_Max3 [epjp.offset(1)] { QueueSfx2_Max3(*epjp as u16, game); };
-    [8815441] EprojInstr_QueueSfx3_Max3 [epjp.offset(1)] { QueueSfx3_Max3(*epjp as u16, game); };
-    [8815450] EprojInstr_QueueSfx1_Max9 [epjp.offset(1)] { QueueSfx1_Max9(*epjp as u16, game); };
-    [8815459] EprojInstr_QueueSfx2_Max9 [epjp.offset(1)] { QueueSfx2_Max9(*epjp as u16, game); };
-    [8815468] EprojInstr_QueueSfx3_Max9 [epjp.offset(1)] { QueueSfx3_Max9(*epjp as u16, game); };
-    [8815477] EprojInstr_QueueSfx1_Max1 [epjp.offset(1)] { QueueSfx1_Max1(*epjp as u16, game); };
-    [8815486] EprojInstr_QueueSfx2_Max1 [epjp.offset(1)] { QueueSfx2_Max1(*epjp as u16, game); };
-    [8815495] EprojInstr_QueueSfx3_Max1 [epjp.offset(1)] { QueueSfx3_Max1(*epjp as u16, game); };
+    @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
+    [8815357] EprojInstr_QueueMusic [epjp.offset(1)] { QueueMusic_Delayed8(epjp.byte(0) as u16, game); };
+    [8815369] EprojInstr_QueueSfx1_Max6 [epjp.offset(1)] { QueueSfx1_Max6(epjp.byte(0) as u16, game); };
+    [8815378] EprojInstr_QueueSfx2_Max6 [epjp.offset(1)] { QueueSfx2_Max6(epjp.byte(0) as u16, game); };
+    [8815387] EprojInstr_QueueSfx3_Max6 [epjp.offset(1)] { QueueSfx3_Max6(epjp.byte(0) as u16, game); };
+    [8815396] EprojInstr_QueueSfx1_Max15 [epjp.offset(1)] { QueueSfx1_Max15(epjp.byte(0) as u16, game); };
+    [8815405] EprojInstr_QueueSfx2_Max15 [epjp.offset(1)] { QueueSfx2_Max15(epjp.byte(0) as u16, game); };
+    [8815414] EprojInstr_QueueSfx3_Max15 [epjp.offset(1)] { QueueSfx3_Max15(epjp.byte(0) as u16, game); };
+    [8815423] EprojInstr_QueueSfx1_Max3 [epjp.offset(1)] { QueueSfx1_Max3(epjp.byte(0) as u16, game); };
+    [8815432] EprojInstr_QueueSfx2_Max3 [epjp.offset(1)] { QueueSfx2_Max3(epjp.byte(0) as u16, game); };
+    [8815441] EprojInstr_QueueSfx3_Max3 [epjp.offset(1)] { QueueSfx3_Max3(epjp.byte(0) as u16, game); };
+    [8815450] EprojInstr_QueueSfx1_Max9 [epjp.offset(1)] { QueueSfx1_Max9(epjp.byte(0) as u16, game); };
+    [8815459] EprojInstr_QueueSfx2_Max9 [epjp.offset(1)] { QueueSfx2_Max9(epjp.byte(0) as u16, game); };
+    [8815468] EprojInstr_QueueSfx3_Max9 [epjp.offset(1)] { QueueSfx3_Max9(epjp.byte(0) as u16, game); };
+    [8815477] EprojInstr_QueueSfx1_Max1 [epjp.offset(1)] { QueueSfx1_Max1(epjp.byte(0) as u16, game); };
+    [8815486] EprojInstr_QueueSfx2_Max1 [epjp.offset(1)] { QueueSfx2_Max1(epjp.byte(0) as u16, game); };
+    [8815495] EprojInstr_QueueSfx3_Max1 [epjp.offset(1)] { QueueSfx3_Max1(epjp.byte(0) as u16, game); };
     @functions [pub unsafe fn (
     k: u16,
-    epjp: *const u8,
+    epjp: &EprojScript,
     game: &mut Game,
-) -> *const u8];
+) -> Option<usize>];
     [8817768] EprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops [] {
         let v1: i32 = k as i32 >> 1;
         game.eproj_spawn_pt = Point16U {
@@ -5052,15 +5045,15 @@ crate::game::callback_dispatch! {
             y: word!(game.eproj_y_pos[v1]),
         };
         SpawnEnemyDrops(addr_kEnemyDef_DE7F as u16, k, 0, game);
-        epjp
+        epjp.offset(0)
     };
     [8819829] EprojInstr_DisableCollisionsWithSamus [] {
         word!(game.eproj_properties[(k >> 1)] |= 0x2000);
-        epjp
+        epjp.offset(0)
     };
     [8823894] EprojInstr_GotoWithProbability25 [] {
         if (NextRandom(game) & 0xc000) == 0xc000 {
-            *(epjp as *mut u16) as usize as *const u8
+            epjp.jump(epjp.word(0))
         } else {
             epjp.offset(2)
         }
@@ -5074,14 +5067,14 @@ crate::game::callback_dispatch! {
             amt as u32,
         );
         if (word!(game.eproj_x_vel[v2]) & 0x8000) == 0 {
-            *(epjp.offset(2) as *mut u16) as usize as *const u8
+            epjp.jump(epjp.word(2))
         } else {
-            *(epjp as *mut u16) as usize as *const u8
+            epjp.jump(epjp.word(0))
         }
     };
     [8828906] EprojInstr_SpawnTourianStatueUnlockingParticle [] {
         SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueUnlockingParticle as u16, k, game);
-        epjp
+        epjp.offset(0)
     };
     [8828952] EprojInstr_SpawnTourianStatueUnlockingParticleTail [] {
         SpawnEprojWithRoomGfx(
@@ -5089,13 +5082,13 @@ crate::game::callback_dispatch! {
             k,
             game,
         );
-        epjp
+        epjp.offset(0)
     };
     [8833774] EprojInstr_MotherBrainPurpleBreathIsActive [] {
         (*(ram_ptr!(game, ExtraEnemyRam7800; 0x7800)).offset(1))
             .kraid
             .kraid_hurt_frame = 0;
-        epjp
+        epjp.offset(0)
     };
     [8836577] EprojInstr_AssignNewN00bTubeShardVelocity [] {
         NextRandom(game);
@@ -5104,7 +5097,7 @@ crate::game::callback_dispatch! {
             game.eproj_x_vel[v2] = *(ram_ptr!(game, u16; 0x5e5, 1))
         );
         word!(game.eproj_y_vel[v2] = 192);
-        epjp
+        epjp.offset(0)
     };
     [8843024] EprojInstr_HandleRespawningEnemy [] {
         if (word!(game.eproj_killed_enemy_index[(k >> 1)]) as i16) <= -2i16 {
@@ -5113,29 +5106,29 @@ crate::game::callback_dispatch! {
                 game,
             );
         }
-        epjp
+        epjp.offset(0)
     };
-    @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
-    [8817910] EprojInstr_SetPreInstrA [epjp] {
+    @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
+    [8817910] EprojInstr_SetPreInstrA [epjp.offset(0)] {
         word!(game.eproj_pre_instr[(k >> 1)] = (0x868dff & 0xffff) as u16);
     };
-    [8817917] EprojInstr_SetPreInstrB [epjp] {
+    [8817917] EprojInstr_SetPreInstrB [epjp.offset(0)] {
         word!(game.eproj_pre_instr[(k >> 1)] = (0x868dca & 0xffff) as u16);
     };
-    @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
-    [8820154] EprojInstr_95BA [epjp] {
+    @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
+    [8820154] EprojInstr_95BA [epjp.offset(0)] {
         EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
         SpawnEprojWithRoomGfx(addr_stru_86966C as u16, k, game);
         EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
         SpawnEprojWithRoomGfx(addr_stru_86967A as u16, k, game);
     };
-    [8820205] EprojInstr_95ED [epjp] {
+    [8820205] EprojInstr_95ED [epjp.offset(0)] {
         EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
         SpawnEprojWithRoomGfx(addr_stru_869688 as u16, k, game);
         EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
         SpawnEprojWithRoomGfx(addr_stru_869696 as u16, k, game);
     };
-    [8820256] EprojInstr_9620 [epjp] {
+    [8820256] EprojInstr_9620 [epjp.offset(0)] {
         let count = EprojStateMut(&mut game.g_ram).decrement_byte(0x1aff, usize::from(k));
         if count as i8 >= 0 {
             let handler = EprojState(&game.g_ram).slot_word(0x1b23, usize::from(k >> 1));
@@ -5144,16 +5137,16 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (
     k: u16,
-    epjp: *const u8,
+    epjp: &EprojScript,
     game: &mut Game,
-) -> *const u8];
-    [8827497] EprojInstr_SetVelTowardsSamus1 [epjp] {
+) -> Option<usize>];
+    [8827497] EprojInstr_SetVelTowardsSamus1 [epjp.offset(0)] {
         sub_86B279(k, (CalculateAngleOfSamusFromEproj(k, game) & 0x7f), game);
     };
-    [8827506] EprojInstr_SetVelTowardsSamus2 [epjp] {
+    [8827506] EprojInstr_SetVelTowardsSamus2 [epjp.offset(0)] {
         sub_86B279(k, (CalculateAngleOfSamusFromEproj(k, game) | 0x80), game);
     };
-    @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
+    @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
     [8827832] EprojInstr_GotoIfFunc1 [] {
         if ((*gExtraEnemyRam7800(word!(game.eproj_F[(k >> 1)]) as i32, game))
             .kraid
@@ -5161,24 +5154,23 @@ crate::game::callback_dispatch! {
             & 0x8000)
             == 0
         {
-            *(epjp as *mut u16) as usize as *const u8
+            epjp.jump(epjp.word(0))
         } else {
             epjp.offset(2)
         }
     };
-    [8827958] EprojInstr_ResetXYpos2 [epjp] {
+    [8827958] EprojInstr_ResetXYpos2 [epjp.offset(0)] {
         let v2: i32 = k as i32 >> 1;
         word!(game.eproj_x_pos[v2] = word!(game.eproj_E[v2]));
         word!(game.eproj_y_pos[v2] = word!(game.eproj_F[v2]));
     };
-    @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
+    @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
     [8831347]
-    EprojInstr_SwitchJump [*(epjp.offset(word!(game.eproj_E[(k >> 1)]) as i32 as isize) as *mut u16) as usize
-            as *const u8] {
+    EprojInstr_SwitchJump [epjp.jump(epjp.word(word!(game.eproj_E[(k >> 1)]) as isize))] {
     };
-    [8831412] EprojInstr_UserPalette0 [epjp] { word!(game.eproj_gfx_idx[(k >> 1)] = 0); };
-    @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
-    [8835420] EprojInstr_D15C [epjp] {
+    [8831412] EprojInstr_UserPalette0 [epjp.offset(0)] { word!(game.eproj_gfx_idx[(k >> 1)] = 0); };
+    @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
+    [8835420] EprojInstr_D15C [epjp.offset(0)] {
         EprojPreInstr_KagosBugs_Func1(k, game);
         EprojPreInstr_KagosBugs_Func2(k, game);
         let v2: i32 = k as i32 >> 1;
@@ -5196,59 +5188,59 @@ crate::game::callback_dispatch! {
         }
         word! {game; eproj_x_vel[v2] = v4; eproj_pre_instr[v2] = ((0x86d0eci32) as u16); }
     };
-    [8835510] EprojInstr_D1B6 [epjp] {
+    [8835510] EprojInstr_D1B6 [epjp.offset(0)] {
         let v1: i32 = k as i32 >> 1;
         word!(game.eproj_G[v1] = (game.random_number() & 0x1f).wrapping_add(1));
         word!(game.eproj_pre_instr[v1] = ((0x86d0cai32) as u16));
     };
-    [8835527] EprojInstr_D1C7 [epjp] { word!(game.eproj_gfx_idx[(k >> 1)] = 0); };
-    [8835534] EprojInstr_D1CE [epjp] {
+    [8835527] EprojInstr_D1C7 [epjp.offset(0)] { word!(game.eproj_gfx_idx[(k >> 1)] = 0); };
+    [8835534] EprojInstr_D1CE [epjp.offset(0)] {
         game.eproj_spawn_pt = Point16U {
             x: word!(game.eproj_x_pos[(k >> 1)]),
             y: word!(game.eproj_y_pos[(k >> 1)]),
         };
         SpawnEnemyDrops(addr_kEnemyDef_E7FF as u16, k, 0, game);
     };
-    @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
-    [8836594] EprojInstr_SetN00bTubeShardX [null::<u8>()] {
+    @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
+    [8836594] EprojInstr_SetN00bTubeShardX [None] {
         let v2: i32 = k as i32 >> 1;
         if word!(game.nmi_frame_counter_word) & 1 != 0 {
             word!(game.eproj_x_pos[v2] = word!(game.eproj_F[v2]));
-            word!(game.eproj_spritemap_ptr[v2] = *(epjp as *mut u16));
+            word!(game.eproj_spritemap_ptr[v2] = epjp.word(0));
         } else {
             word! {game; eproj_x_pos[v2] = (128 - word!(game.eproj_F[v2]) as i32 + 128) as u16;
-                eproj_spritemap_ptr[v2] = *(epjp.offset(2) as *mut u16); }
+                eproj_spritemap_ptr[v2] = epjp.word(2); }
         }
         word!(
             game.eproj_instr_list_ptr[v2] =
-                (epjp.offset_from(RomBankBase(0x86, game)) as c_long + 4 as c_long) as u16
+                (epjp.bank_address() as c_long + 4 as c_long) as u16
         );
         word!(game.eproj_instr_timers[v2] = 1);
     };
-    [8836650] EprojInstr_D62A [null::<u8>()] {
+    [8836650] EprojInstr_D62A [None] {
         if word!(game.nmi_frame_counter_word) & 1 != 0 {
             word!(game.eproj_x_pos[(k >> 1)] = word!(game.eproj_F[(k >> 1)]));
         } else {
             word!(game.eproj_x_pos[(k >> 1)] = -4608i32 as u16);
         }
         let v2: i32 = k as i32 >> 1;
-        word!(game.eproj_spritemap_ptr[v2] = *(epjp as *mut u16));
+        word!(game.eproj_spritemap_ptr[v2] = epjp.word(0));
         word!(
             game.eproj_instr_list_ptr[v2] =
-                (epjp.offset_from(RomBankBase(0x86, game)) as c_long + 2 as c_long) as u16
+                (epjp.bank_address() as c_long + 2 as c_long) as u16
         );
         word!(game.eproj_instr_timers[v2] = 1);
     };
-    [8836762] EprojInstr_SetXvelRandom [epjp] {
+    [8836762] EprojInstr_SetXvelRandom [epjp.offset(0)] {
         NextRandom(game);
         word!(
             game.eproj_x_vel[(k >> 1)] =
                 *(ram_ptr!(game, u16; 0x5e5, 1))
         );
     };
-    @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
-    [8838234] EprojInstr_DC5A [epjp] { word!(game.eproj_properties[(k >> 1)] = 12288); };
-    [8838241] EprojInstr_SpawnEnemyDrops_0 [epjp] {
+    @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
+    [8838234] EprojInstr_DC5A [epjp.offset(0)] { word!(game.eproj_properties[(k >> 1)] = 12288); };
+    [8838241] EprojInstr_SpawnEnemyDrops_0 [epjp.offset(0)] {
         let v2: i32 = k as i32 >> 1;
         game.eproj_spawn_pt = Point16U {
             x: word!(game.eproj_x_pos[v2]),
@@ -5256,7 +5248,7 @@ crate::game::callback_dispatch! {
         };
         SpawnEnemyDrops(addr_kEnemyDef_DF7F as u16, k, 0, game);
     };
-    [8838263] EprojInstr_SpawnSporesEproj [epjp] {
+    [8838263] EprojInstr_SpawnSporesEproj [epjp.offset(0)] {
         let v2: i32 = k as i32 >> 1;
         game.eproj_spawn_pt = Point16U {
             x: word!(game.eproj_x_pos[v2]),
@@ -5264,14 +5256,14 @@ crate::game::callback_dispatch! {
         };
         SpawnEprojWithRoomGfx(addr_kEproj_Spores as u16, 0, game);
     };
-    @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
+    @functions [pub unsafe fn (k: u16, epjp: &EprojScript, game: &mut Game) -> Option<usize>];
     [8842467] EprojInstr_ECE3 [epjp.offset(2)] {
         let x: u16 = (game.enemy_projectile_x_pos(k) as i32 + (NextRandom(game) as i32 & 0x3f)
             - 32i32) as u16;
         let y: u16 = ((game.enemy_projectile_y_pos(k) as i32
             + (((game.random_number()) & (0x3f00u16)) as i32 >> 8)) as u16)
             .wrapping_sub(32);
-        CreateSpriteAtPos(x, y, *(epjp as *mut u16), 0, game);
+        CreateSpriteAtPos(x, y, epjp.word(0), 0, game);
     };
     [8842519] EprojInstr_ED17 [epjp.offset(2)] {
         let x: u16 = (game.enemy_projectile_x_pos(k) as i32 + (NextRandom(game) as i32 & 0x1f)
@@ -5279,11 +5271,11 @@ crate::game::callback_dispatch! {
         let y: u16 = ((game.enemy_projectile_y_pos(k) as i32
             + (((game.random_number()) & (0x1f00u16)) as i32 >> 8)) as u16)
             .wrapping_sub(16);
-        CreateSpriteAtPos(x, y, *(epjp as *mut u16), 0, game);
+        CreateSpriteAtPos(x, y, epjp.word(0), 0, game);
     };
-    [8842891] EprojInstr_QueueSfx2_9 [epjp] { QueueSfx2_Max1(9, game); };
-    [8842903] EprojInstr_QueueSfx2_24 [epjp] { QueueSfx2_Max1(0x24, game); };
-    [8842915] EprojInstr_QueueSfx2_B [epjp] { QueueSfx2_Max1(0xb, game); };
+    [8842891] EprojInstr_QueueSfx2_9 [epjp.offset(0)] { QueueSfx2_Max1(9, game); };
+    [8842903] EprojInstr_QueueSfx2_24 [epjp.offset(0)] { QueueSfx2_Max1(0x24, game); };
+    [8842915] EprojInstr_QueueSfx2_B [epjp.offset(0)] { QueueSfx2_Max1(0xb, game); };
     [8842927] EprojInstr_EEAF [] {
         let v2: u16 = RandomDropRoutine(k, game);
         if k != 0 && v2 as i32 - 6i32 & 0x8000 != 0 {
@@ -5298,12 +5290,12 @@ crate::game::callback_dispatch! {
             word!(game.eproj_F[v4] = 400);
             word!(game.eproj_pre_instr[v4] = ((0x86efe0i32) as u16));
             word!(game.eproj_properties[v4] &= ((!(0x4000i32)) as u16));
-            word!(game.eproj_instr_list_ptr[v4]) as usize as *const u8
+            epjp.jump(word!(game.eproj_instr_list_ptr[v4]))
         } else {
             let v6: i32 = k as i32 >> 1;
             word! {game; eproj_instr_timers[v6] = 1; eproj_properties[v6] = 12288;
                 eproj_pre_instr[v6] = ((0x86efdfi32) as u16); eproj_instr_list_ptr[v6] = 0xeca3; }
-            0xeca3i32 as usize as *const u8
+            epjp.jump(0xeca3)
         }
     };
     @external {
@@ -5311,12 +5303,12 @@ crate::game::callback_dispatch! {
         8815024 => [EprojInstr_GotoRel(k, j)];
         8822906 => [{
                     EprojPreInstr_PirateMotherBrainLaser_MoveRight(k, game);
-                    j
+                    j.offset(0)
                 }];
         8822876 => [{
                     EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k, game);
-                    j
+                    j.offset(0)
                 }];
-        8815070 => [j];
+        8815070 => [j.offset(0)];
     }
 }

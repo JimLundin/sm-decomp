@@ -341,6 +341,7 @@ pub mod game {
     pub mod sm_82;
     pub mod sm_84;
     pub mod sm_86;
+    pub mod eproj_script;
     pub mod sm_87;
     pub mod sm_88;
     pub mod sm_89;
